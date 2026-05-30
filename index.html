@@ -2351,28 +2351,29 @@ const game = {
 window.onload = () => { game.init(); };
 </script>
 
-
-
-
-<!-- 存檔按鈕 -->
+<!-- 💾 存檔按鈕 -->
 <button onclick="toggleSavePanel()" 
 style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px;border-radius:8px;">
-💾 存檔
+💾
 </button>
 
-<!-- 存檔面板 -->
-<div id="savePanel" style="display:none;position:fixed;top:50px;right:10px;background:#222;color:#fff;padding:15px;border-radius:10px;z-index:9999;width:200px;">
+<!-- 📦 存檔面板 -->
+<div id="savePanel" style="display:none;position:fixed;top:50px;right:10px;background:#222;color:#fff;padding:15px;border-radius:10px;z-index:9999;width:220px;">
 <h4>存檔系統</h4>
+
 <select id="saveSlot">
   <option value="1">存檔1</option>
   <option value="2">存檔2</option>
   <option value="3">存檔3</option>
 </select><br><br>
+
 <button onclick="saveGame()">存檔</button>
 <button onclick="loadGame()">讀取</button>
 <button onclick="exportSave()">導出</button><br><br>
+
 <input type="file" id="importFile" style="width:100%;">
 <button onclick="importSave()">導入</button><br><br>
+
 <button onclick="toggleSavePanel()">關閉</button>
 </div>
 
@@ -2380,6 +2381,68 @@ style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px;border-radiu
 function toggleSavePanel(){
   let panel = document.getElementById("savePanel");
   panel.style.display = (panel.style.display === "none") ? "block" : "none";
+}
+
+// ⭐ 正確抓資料
+function getData(){
+  return JSON.stringify(game.state);
+}
+
+// ⭐ 正確寫回資料
+function setData(data){
+  let obj = JSON.parse(data);
+  game.state = obj;
+
+  if (typeof updateUI === "function") updateUI();
+  if (typeof render === "function") render();
+}
+
+function saveGame(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = getData();
+  localStorage.setItem("save_"+slot, data);
+  alert("已存到存檔"+slot);
+}
+
+function loadGame(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = localStorage.getItem("save_"+slot);
+  if(data){
+    setData(data);
+    location.reload();
+  } else {
+    alert("此存檔為空");
+  }
+}
+
+function exportSave(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = localStorage.getItem("save_"+slot);
+  if(!data){ alert("沒有存檔"); return;}
+
+  let isIOS = /iPhone|iPad/.test(navigator.userAgent);
+
+  if(isIOS){
+    prompt("請複製存檔碼：", data);
+  }else{
+    let blob = new Blob([data], {type:"text/plain"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "save_"+slot+".txt";
+    a.click();
+  }
+}
+
+function importSave(){
+  let file = document.getElementById("importFile").files[0];
+  if(!file){ alert("請選擇檔案"); return;}
+  let reader = new FileReader();
+  reader.onload = function(e){
+    let slot = document.getElementById("saveSlot").value;
+    localStorage.setItem("save_"+slot, e.target.result);
+    alert("導入完成到存檔"+slot);
+  };
+  reader.readAsText(file);
 }
 </script>
 
