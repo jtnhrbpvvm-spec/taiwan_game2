@@ -2351,12 +2351,11 @@ const game = {
 window.onload = () => { game.init(); };
 </script>
 
-<!-- ====== Save System Injection START ====== -->
+<!-- ===== FINAL STABLE SAVE SYSTEM (FULL LOCALSTORAGE) ===== -->
 <style>
 #saveBtn{position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;font-size:16px;}
 #savePanel{position:fixed;top:0;left:0;width:100%;height:100%;background:#000a;display:none;z-index:9998;}
 #saveBox{background:#fff;margin:60px auto;padding:20px;width:90%;max-width:400px;border-radius:10px;}
-.slot{margin:8px 0;}
 </style>
 
 <button id="saveBtn">💾 存檔</button>
@@ -2364,7 +2363,8 @@ window.onload = () => { game.init(); };
 <div id="savePanel">
   <div id="saveBox">
     <h3>存檔系統</h3>
-    <div id="slots"></div>
+    <button onclick="exportSave()">📥 匯出存檔</button>
+    <br><br>
     <input type="file" id="importFile">
     <br><br>
     <button onclick="closeSave()">關閉</button>
@@ -2372,81 +2372,51 @@ window.onload = () => { game.init(); };
 </div>
 
 <script>
-let currentSlot = 1;
-
-function openSave(){
+document.getElementById('saveBtn').onclick=function(){
   document.getElementById('savePanel').style.display='block';
-  renderSlots();
 }
+
 function closeSave(){
   document.getElementById('savePanel').style.display='none';
 }
 
-document.getElementById('saveBtn').onclick=openSave;
-
-function getGameData(){
-  return window.game?.state || window.player || window.data || {};
-}
-
-function setGameData(data){
-  if(window.game && window.game.state){
-    Object.assign(window.game.state,data);
-  }else{
-    window.game = data;
+// ===== 匯出 =====
+function exportSave(){
+  let data = {};
+  for(let i=0;i<localStorage.length;i++){
+    let key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
   }
-}
 
-function saveToSlot(slot){
-  let data = getGameData();
-  localStorage.setItem('save_slot_'+slot, JSON.stringify(data));
-  currentSlot = slot;
-
-  // export txt (iOS compatible)
   let blob = new Blob([JSON.stringify(data)],{type:'text/plain'});
   let a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'save_slot_'+slot+'.txt';
+  a.download = 'save.txt';
   a.click();
 }
 
-function loadSlot(slot){
-  let data = localStorage.getItem('save_slot_'+slot);
-  if(!data) return alert('無存檔');
-  data = JSON.parse(data);
-  setGameData(data);
-  location.reload();
-}
-
-function renderSlots(){
-  let el = document.getElementById('slots');
-  el.innerHTML='';
-  for(let i=1;i<=3;i++){
-    let div=document.createElement('div');
-    div.className='slot';
-    div.innerHTML=`
-      存檔${i}
-      <button onclick="saveToSlot(${i})">存</button>
-      <button onclick="loadSlot(${i})">讀</button>
-    `;
-    el.appendChild(div);
-  }
-}
-
+// ===== 匯入 =====
 document.getElementById('importFile').addEventListener('change',function(e){
-  let file=e.target.files[0];
+  let file = e.target.files[0];
   if(!file) return;
-  let reader=new FileReader();
-  reader.onload=function(){
-    let data=JSON.parse(reader.result);
-    setGameData(data);
-    localStorage.setItem('save_slot_'+currentSlot, JSON.stringify(data));
-    alert('匯入成功');
+
+  let reader = new FileReader();
+  reader.onload = function(){
+    let data = JSON.parse(reader.result);
+
+    localStorage.clear();
+
+    for(let key in data){
+      localStorage.setItem(key, data[key]);
+    }
+
+    alert('讀取成功');
     location.reload();
   };
   reader.readAsText(file);
 });
 </script>
-<!-- ====== Save System Injection END ====== -->
+<!-- ===== END SAVE SYSTEM ===== -->
 
 </body>
 </html>
