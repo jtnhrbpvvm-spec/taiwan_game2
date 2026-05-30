@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天堂放置版 - 經典重現</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Courier Prime', 'Microsoft JhengHei', monospace;
+            background-color: #000;
+            color: #d1d5db;
+            user-select: none;
+            line-height: 1.4;
+            font-size: 1.125rem;
+        }
+
+        /* 顏色定義 */
+        .c-sys { color: #a1a1aa; }
+        .c-info { color: #60a5fa; }
+        .c-warn { color: #facc15; }
+        .c-err { color: #f87171; }
+        .c-success { color: #4ade80; }
+        .c-title { color: #c084fc; font-weight: bold; }
+        .c-item { color: #e5e7eb; }
+        
+        /* 裝備強化與祝福顏色 */
+        .c-enchant { color: #38bdf8; } 
+        .c-enchant-success { color: #38bdf8; } 
+        .c-blessed { color: #fde047; text-shadow: 0 0 4px #ca8a04; font-weight: bold; } 
+        .c-magic { color: #f97316; } 
+        
+        /* 藥水專屬顏色 */
+        .c-potion-red { color: #ef4444; } 
+        .c-potion-orange { color: #f97316; } 
+        .c-potion-white { color: #ffffff; } 
+        .c-potion-purple { color: #c084fc; } 
+
+        /* 超越安定值專屬顏色 */
+        .c-over-1 { color: #4ade80; text-shadow: 0 0 3px #14532d; font-weight: bold; } 
+        .c-over-2 { color: #c084fc; text-shadow: 0 0 4px #581c87; font-weight: bold; } 
+        .c-over-3 { color: #f97316; text-shadow: 0 0 4px #7c2d12; font-weight: bold; } 
+        .c-over-4 { color: #ef4444; text-shadow: 0 0 6px #7f1d1d; font-weight: bold; } 
+
+        .panel-border {
+            border: 1px solid #3f3f46;
+            background-color: #09090b;
+        }
+
+        .log-area {
+            overflow-y: auto;
+            word-wrap: break-word;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+        .btn-ui {
+            background-color: #1f2937;
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            padding: 2px 10px;
+            font-size: 0.95rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-ui:hover:not(:disabled) {
+            background-color: #374151;
+            border-color: #6b7280;
+            color: #f3f4f6;
+        }
+        .btn-ui:active:not(:disabled) {
+            background-color: #111827;
+        }
+        .btn-ui:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .tab-btn {
+            background-color: #09090b;
+            border: 1px solid #3f3f46;
+            border-bottom: none;
+            color: #9ca3af;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.1s;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        .tab-btn:hover {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .tab-btn.active {
+            background-color: #1f2937;
+            color: #facc15;
+            font-weight: bold;
+            border-color: #52525b;
+        }
+
+        .bar-container {
+            display: inline-block;
+            width: 160px;
+            background-color: #27272a;
+            border: 1px solid #52525b;
+            height: 18px;
+            vertical-align: middle;
+            margin-left: 8px;
+            position: relative;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .bar-fill { height: 100%; transition: width 0.1s; }
+        .bar-fill.hp { background-color: #991b1b; }
+        .bar-fill.mp { background-color: #1e3a8a; }
+        .bar-fill.exp { background-color: #ca8a04; }
+        .bar-text {
+            position: absolute;
+            inset: 0;
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 18px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .list-item {
+            padding: 8px 4px;
+            border-bottom: 1px dashed #27272a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-item:hover { background-color: #18181b; }
+        
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(2px);
+        }
+
+        .spell-grid-item {
+            background-color: #1f2937;
+            border: 1px solid #3f3f46;
+            border-radius: 4px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            min-height: 80px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col p-2">
+
+    <!-- 創角/主選單畫面 -->
+    <div id="char-creation-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay block">
+        <div class="panel-border p-8 max-w-lg w-full rounded-md">
+            <h1 class="text-4xl c-warn mb-6 text-center font-bold">天堂放置版</h1>
+            
+            <div id="start-menu" class="flex flex-col gap-4 mb-6">
+                <button class="btn-ui py-3 text-xl w-full c-success" onclick="game.showCreation()">新冒險 (分配能力點數)</button>
+                <button id="btn-load-game" class="btn-ui py-3 text-xl w-full c-info" onclick="game.loadGame()">讀取存檔</button>
+            </div>
+
+            <div id="creation-menu" class="hidden">
+                <div class="c-sys mb-6 text-center text-lg">請分配您的初始能力點數。</div>
+                <div class="grid grid-cols-2 gap-y-4 mb-8 px-6 text-lg">
+                    <div class="flex items-center">力量 (STR): <span id="create-str" class="c-info w-8 inline-block text-right ml-2">8</span></div>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-ui px-4" onclick="game.adjustStat('str', -1)">-</button>
+                        <button class="btn-ui px-4" onclick="game.adjustStat('str', 1)">+</button>
+                    </div>
+                    <div class="flex items-center">敏捷 (DEX): <span id="create-dex" class="c-info w-8 inline-block text-right ml-2">8</span></div>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-ui px-4" onclick="game.adjustStat('dex', -1)">-</button>
+                        <button class="btn-ui px-4" onclick="game.adjustStat('dex', 1)">+</button>
+                    </div>
+                    <div class="flex items-center">體質 (CON): <span id="create-con" class="c-info w-8 inline-block text-right ml-2">8</span></div>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-ui px-4" onclick="game.adjustStat('con', -1)">-</button>
+                        <button class="btn-ui px-4" onclick="game.adjustStat('con', 1)">+</button>
+                    </div>
+                    <div class="flex items-center">智力 (INT): <span id="create-int" class="c-info w-8 inline-block text-right ml-2">8</span></div>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-ui px-4" onclick="game.adjustStat('int', -1)">-</button>
+                        <button class="btn-ui px-4" onclick="game.adjustStat('int', 1)">+</button>
+                    </div>
+                    <div class="flex items-center">精神 (WIS): <span id="create-wis" class="c-info w-8 inline-block text-right ml-2">8</span></div>
+                    <div class="flex justify-end gap-2">
+                        <button class="btn-ui px-4" onclick="game.adjustStat('wis', -1)">-</button>
+                        <button class="btn-ui px-4" onclick="game.adjustStat('wis', 1)">+</button>
+                    </div>
+                </div>
+                <div class="text-center mb-6 text-xl">
+                    剩餘點數: <span id="create-points" class="c-warn font-bold">25</span>
+                </div>
+                <div class="flex gap-4">
+                    <button class="btn-ui py-3 flex-1 text-lg" onclick="game.showStartMenu()">返回</button>
+                    <button id="btn-start" class="btn-ui py-3 flex-1 text-lg c-success" disabled onclick="game.startGame()">進入世界</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 強化 Modal -->
+    <div id="enchant-modal" class="fixed inset-0 z-40 items-center justify-center modal-overlay hidden">
+        <div class="panel-border p-6 max-w-md w-full rounded-md">
+            <h3 class="text-2xl c-warn mb-4 border-b border-gray-700 pb-2 font-bold">強化裝備</h3>
+            <div class="c-sys mb-4">請選擇要用來強化 <span id="enchant-target-name" class="font-bold text-xl"></span> 的卷軸：</div>
+            <div id="enchant-scroll-list" class="space-y-3 mb-6 max-h-56 overflow-y-auto custom-scroll pr-2"></div>
+            <div class="text-right border-t border-gray-700 pt-4">
+                <button class="btn-ui py-2 px-6" onclick="game.closeEnchantModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主遊戲介面 -->
+    <div id="main-ui" class="flex-1 flex gap-3 hidden h-full">
+        
+        <!-- 左側：角色狀態與日誌 -->
+        <div class="w-1/4 flex flex-col gap-3 h-full">
+            <div class="panel-border p-5 flex-shrink-0 rounded-md">
+                <div class="c-title text-2xl mb-3 border-b border-gray-800 pb-2">角色狀態</div>
+                <div class="text-xl mb-2">等級 <span id="ui-level" class="c-warn font-bold">1</span></div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center">體力:<div class="bar-container flex-1"><div class="bar-fill hp" id="ui-hp-bar" style="width: 100%;"></div><span class="bar-text" id="ui-hp-text">12/12</span></div></div>
+                    <div class="flex items-center">魔力:<div class="bar-container flex-1"><div class="bar-fill mp" id="ui-mp-bar" style="width: 100%;"></div><span class="bar-text" id="ui-mp-text">10/10</span></div></div>
+                    <div class="flex items-center">經驗:<div class="bar-container flex-1"><div class="bar-fill exp" id="ui-exp-bar" style="width: 0%;"></div><span class="bar-text" id="ui-exp-text">0.00%</span></div></div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-4 border-t border-gray-800 pt-4">
+                    <div>力量: <span id="ui-str" class="font-bold">8</span></div>
+                    <div>防禦(AC): <span id="ui-ac" class="c-info font-bold">10</span></div>
+                    <div>敏捷: <span id="ui-dex" class="font-bold">8</span></div>
+                    <div>魔防(MR): <span id="ui-mr" class="c-magic font-bold">0%</span></div>
+                    <div>體質: <span id="ui-con" class="font-bold">8</span></div>
+                    <div>迴避(ER): <span id="ui-er" class="font-bold">0</span></div>
+                    <div>智力: <span id="ui-int" class="font-bold">8</span></div>
+                    <div>額外傷害: <span id="ui-dmg" class="font-bold">0</span></div>
+                    <div>精神: <span id="ui-wis" class="font-bold">8</span></div>
+                    <div>額外命中: <span id="ui-hit" class="font-bold">0</span></div>
+                </div>
+                
+                <div class="mt-4 border-t border-gray-800 pt-4 text-xl">
+                    <span class="c-warn">金幣: <span id="ui-adena" class="font-bold">0</span></span>
+                </div>
+                <div id="ui-buffs" class="mt-3 text-sm min-h-[28px] text-gray-400"></div>
+            </div>
+
+            <!-- 自動攻擊魔法選單 -->
+            <div class="panel-border p-3 flex-shrink-0 rounded-md bg-zinc-900 border-zinc-800 flex items-center justify-between gap-3 shadow-inner">
+                <span class="c-magic font-bold ml-1">自動施放攻擊魔法:</span>
+                <select id="cfg-auto-attack" class="bg-black c-sys border border-gray-600 py-1 px-2 flex-1 rounded outline-none cursor-pointer" onchange="game.updateSettings()">
+                    <option value="none">無 (純物理攻擊)</option>
+                </select>
+            </div>
+
+            <div class="panel-border p-4 flex-1 flex flex-col min-h-0 rounded-md">
+                <div class="c-title mb-2 text-xl flex justify-between border-b border-gray-800 pb-2">
+                    <span>系統與獲得資訊</span>
+                </div>
+                <div id="system-log" class="log-area flex-1 custom-scroll"></div>
+            </div>
+        </div>
+
+        <!-- 中間：操作區 -->
+        <div class="w-2/4 flex flex-col h-full">
+            <div class="flex text-lg items-end gap-1 px-1">
+                <button class="tab-btn active" onclick="game.switchTab('inv')">裝備與背包</button>
+                <button class="tab-btn" onclick="game.switchTab('magic')">已學習魔法</button>
+                <button class="tab-btn" onclick="game.switchTab('shop')">商店與設定</button>
+            </div>
+            
+            <div class="panel-border p-5 flex-1 flex flex-col min-h-0 relative rounded-b-md rounded-tr-md">
+                
+                <!-- 裝備與背包 -->
+                <div id="tab-inv" class="flex-1 flex gap-3 h-full overflow-hidden">
+                    <div class="flex-1 flex flex-col h-full bg-slate-900 border border-slate-700 rounded-md p-3">
+                        <div class="c-title mb-2 text-lg border-b border-slate-700 pb-1">目前裝備</div>
+                        <div id="equip-list" class="flex-1 overflow-y-auto custom-scroll space-y-1 pr-1"></div>
+                    </div>
+                    <div class="flex-1 flex flex-col h-full bg-zinc-900 border border-zinc-700 rounded-md p-3">
+                        <div class="c-title mb-2 text-lg border-b border-zinc-700 pb-1 flex justify-between"><span>背包清單</span></div>
+                        <div id="inventory-list" class="flex-1 overflow-y-auto custom-scroll space-y-1 pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- 魔法 -->
+                <div id="tab-magic" class="flex-1 flex flex-col h-full overflow-hidden hidden">
+                    <div class="c-title mb-3 text-xl border-b border-gray-800 pb-2 flex justify-between">
+                        <span>已學習魔法</span>
+                        <span class="text-base c-sys font-normal">最高可使用至 <span id="ui-max-spell-lv">一</span> 階魔法</span>
+                    </div>
+                    <div id="skill-list" class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-4"></div>
+                </div>
+
+                <!-- 商店/設定 -->
+                <div id="tab-shop" class="flex-1 flex flex-col h-full overflow-hidden hidden">
+                    <div class="flex-1 overflow-y-auto custom-scroll pr-2">
+                        <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">消耗品商店</div>
+                        <div class="grid grid-cols-1 gap-3 mb-8">
+                            <div class="list-item"><span class="c-potion-red">治癒藥水 (HP+15)</span> <div class="flex items-center gap-3"><span class="c-warn">37 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_red')">購買</button></div></div>
+                            <div class="list-item"><span class="c-potion-orange">強力治癒藥水 (HP+40)</span> <div class="flex items-center gap-3"><span class="c-warn">200 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_orange')">購買</button></div></div>
+                            <div class="list-item"><span class="c-potion-white">終極治癒藥水 (HP+60)</span> <div class="flex items-center gap-3"><span class="c-warn">600 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_clear')">購買</button></div></div>
+                            <div class="list-item"><span class="c-potion-purple">加速魔力回復藥水</span> <div class="flex items-center gap-3"><span class="c-warn">1046 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_blue')">購買</button></div></div>
+                            <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-item">對武器施法的卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">75,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_weapon')">購買</button></div></div>
+                            <div class="list-item"><span class="c-item">對盔甲施法的卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">30,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_armor')">購買</button></div></div>
+                        </div>
+
+                        <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">自動功能設定</div>
+                        <div class="space-y-4 c-sys bg-gray-900 p-4 rounded border border-gray-800 mb-8">
+                            <div class="flex items-center flex-wrap gap-3">
+                                <span>體力低於</span>
+                                <input type="number" id="cfg-hp-threshold" class="w-20 bg-black border border-gray-600 text-center text-white py-1 rounded" value="5" onchange="game.updateSettings()">
+                                <span>時自動使用:</span>
+                                <select id="cfg-hp-type" class="bg-black border border-gray-600 text-white py-1 px-2 rounded" onchange="game.updateSettings()">
+                                    <option value="potion_red">治癒藥水</option>
+                                    <option value="potion_orange">強力治癒藥水</option>
+                                    <option value="potion_clear">終極治癒藥水</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2 border-b border-gray-700 pb-4">
+                                <input type="checkbox" id="cfg-auto-buy" onchange="game.updateSettings()" class="w-5 h-5 accent-gray-500 cursor-pointer"> 
+                                <label for="cfg-auto-buy" class="cursor-pointer hover:text-white">藥水耗盡時自動購買至 100 瓶 (將扣除金幣)</label>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 border-b border-gray-700 pb-4 mt-4">
+                                <input type="checkbox" id="cfg-auto-mp" onchange="game.updateSettings()" class="w-5 h-5 accent-gray-500 cursor-pointer"> 
+                                <label for="cfg-auto-mp" class="cursor-pointer hover:text-white">自動購買並使用加速魔力回復藥水 (每次1瓶)</label>
+                            </div>
+                            
+                            <div class="flex items-center flex-wrap gap-3 pt-2">
+                                <span class="c-success">體力低於</span>
+                                <input type="number" id="cfg-heal-threshold" class="w-20 bg-black border border-gray-600 text-center text-white py-1 rounded" value="50" onchange="game.updateSettings()">
+                                <span class="c-success">時自動施放治癒法術:</span>
+                                <select id="cfg-heal-spell" class="bg-black border border-gray-600 text-white py-1 px-2 rounded flex-1" onchange="game.updateSettings()">
+                                    <option value="none">無</option>
+                                </select>
+                            </div>
+                            <div class="text-xs c-sys italic">治癒法術冷卻時間為 3 秒。必須先學會對應法術才會顯示。</div>
+                        </div>
+                        
+                        <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">系統存檔</div>
+                        <div class="flex gap-4 c-sys bg-gray-900 p-4 rounded border border-gray-800">
+                             <button class="btn-ui flex-1 py-2 c-success border-green-800 hover:bg-green-900 !text-lg" onclick="game.saveGame()">儲存進度</button>
+                             <button class="btn-ui flex-1 py-2 c-err border-red-800 hover:bg-red-900 !text-lg" onclick="game.deleteSave()">刪除存檔</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：戰鬥區 -->
+        <div class="w-1/4 flex flex-col gap-3 h-full">
+            <div class="panel-border p-4 flex-shrink-0 flex justify-between items-center rounded-md">
+                <span class="c-title text-xl">目前位置:</span>
+                <select id="map-select" class="bg-black c-sys border border-gray-600 py-1 px-2 rounded outline-none cursor-pointer" onchange="game.changeMap(this.value)">
+                    <option value="knight_village">騎士村周邊</option>
+                    <option value="desert">風木沙漠周邊</option>
+                    <option value="gludio_dungeon">古魯丁地監周邊</option>
+                    <option value="knight_cave_1f">騎士洞穴1樓</option>
+                    <option value="knight_cave_2f">騎士洞穴2樓</option>
+                    <option value="knight_cave_3f">騎士洞穴3樓</option>
+                    <option value="knight_cave_4f">騎士洞穴4樓</option>
+                    <option value="antaras_lair" class="text-yellow-500 font-bold">安塔瑞斯棲息地</option>
+                </select>
+            </div>
+
+            <div class="panel-border p-5 flex-shrink-0 text-center min-h-[110px] flex flex-col justify-center rounded-md bg-gray-900">
+                <div id="target-name" class="c-err font-bold text-2xl mb-4">尋找目標中...</div>
+                <div class="flex items-center justify-center">
+                    <span class="mr-3 c-sys">體力:</span>
+                    <div class="bar-container w-full max-w-[200px] hidden" id="target-hp-container">
+                        <div class="bar-fill hp" id="target-hp-bar" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-border p-4 flex-1 flex flex-col min-h-0 rounded-md">
+                <div class="c-title mb-2 text-xl border-b border-gray-800 pb-2">戰鬥資訊</div>
+                <div id="combat-log" class="log-area flex-1 custom-scroll"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// --- 工具函數 ---
+const chineseNumbers = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+function getChineseNumber(num) {
+    if (num >= 0 && num <= 10) return chineseNumbers[num];
+    return num; 
+}
+
+const compareItems = (keyA, keyB, inventory) => {
+    let itemA = inventory[keyA];
+    let itemB = inventory[keyB];
+    let defA = ITEMS[itemA.itemId];
+    let defB = ITEMS[itemB.itemId];
+    
+    const typeOrder = {
+        'potion_hp': 1, 'potion_mp': 1, 'scroll': 2, 'book': 3, 
+        'weapon': 4, 'helmet': 5, 'armor': 6, 'shield': 7, 
+        'cloak': 8, 'leggings': 9, 'gloves': 10, 'boots': 11, 
+        'amulet': 12, 'earring': 13, 'belt': 14, 'ring': 15 
+    };
+    
+    let tA = typeOrder[defA.type] || 99;
+    let tB = typeOrder[defB.type] || 99;
+    if (tA !== tB) return tA - tB;
+    
+    let bA = itemA.isBlessed || defA.isBlessed ? 1 : 0;
+    let bB = itemB.isBlessed || defB.isBlessed ? 1 : 0;
+    if (bA !== bB) return bB - bA; 
+    
+    const getSellPrice = (it, d) => {
+        if (d.type === 'book') return 100 * Math.pow(SPELLS[d.spellId].level, 2);
+        if (['weapon','helmet','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring'].includes(d.type) && Number(it.enchant) === 0 && (it.isBlessed || d.isBlessed)) return 10000;
+        if (['weapon','helmet','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring'].includes(d.type) && Number(it.enchant) === 0) return 100;
+        return 0;
+    };
+    let pA = getSellPrice(itemA, defA);
+    let pB = getSellPrice(itemB, defB);
+    if (pA !== pB) return pB - pA; 
+    
+    if (defA.type === 'weapon') {
+        const getMaxDmg = (dice, enchant, isBlessed) => {
+            if(!dice) return 0;
+            let max = 0;
+            dice.split('+').forEach(p => {
+                if(p.includes('d') || p.includes('D')) {
+                    let [num, sides] = p.toLowerCase().split('d').map(Number);
+                    max += num * sides;
+                } else {
+                    max += Number(p);
+                }
+            });
+            return max + Number(enchant) + (isBlessed ? 1 : 0);
+        };
+        let dmA = getMaxDmg(defA.dice, itemA.enchant, itemA.isBlessed);
+        let dmB = getMaxDmg(defB.dice, itemB.enchant, itemB.isBlessed);
+        if (dmA !== dmB) return dmB - dmA; 
+    } else if (['helmet','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring'].includes(defA.type)) {
+        const getACValue = (it, d) => {
+            let ac = d.ac || 0;
+            ac -= Number(it.enchant);
+            if (it.isBlessed) ac -= 1;
+            return ac;
+        };
+        let acA = getACValue(itemA, defA);
+        let acB = getACValue(itemB, defB);
+        if (acA !== acB) return acA - acB;
+    }
+    
+    if (Number(itemA.enchant) !== Number(itemB.enchant)) return Number(itemB.enchant) - Number(itemA.enchant);
+    return defA.name.localeCompare(defB.name);
+};
+
+
+// --- 資料庫定義 ---
+const EXP_TABLE = [0];
+const earlyExp = [125, 175, 200, 250, 546, 1105, 1695, 2465, 3439, 4641, 6095, 7825, 9855, 12209, 14911, 17985, 21455, 25345, 29679, 34481];
+EXP_TABLE.push(...earlyExp);
+const midExp = {21: 40000, 22: 45585, 23: 51935, 24: 58849, 25: 66351, 26: 74465, 27: 83215, 28: 92625, 29: 102719, 30: 113521, 31: 125055, 32: 137345, 33: 150415, 34: 164289, 35: 178991, 36: 194545, 37: 210975, 38: 228305, 39: 246559, 40: 265761, 41: 285935, 42: 307105, 44: 352529, 45: 729360, 46: 1508416, 47: 3495263, 48: 9912189};
+for(let i=21; i<=48; i++) EXP_TABLE[i] = midExp[i] || (EXP_TABLE[i-1] * 1.1);
+for(let i=49; i<=90; i++) EXP_TABLE[i] = 36065092;
+
+const ITEMS = {
+    dagger_orc: { name: '歐西斯匕首', type: 'weapon', hands: 1, speed: 800, safe: 6, dice: '1d3', hit: 2 },
+    short_sword_orc: { name: '歐西斯短劍', type: 'weapon', hands: 1, speed: 900, safe: 6, dice: '1d4', hit: 0 },
+    broadsword: { name: '闊劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d5', hit: 0 },
+    club: { name: '木棒', type: 'weapon', hands: 1, speed: 1100, safe: 6, dice: '1d6', hit: 0 },
+    long_sword: { name: '長劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d10', hit: 0 },
+    short_sword_gnome: { name: '小侏儒短劍', type: 'weapon', hands: 1, speed: 900, safe: 6, dice: '1d7', hit: 0 },
+    fauchard: { name: '法丘', type: 'weapon', hands: 2, speed: 1200, safe: 6, dice: '1d16', hit: 0 },
+    battle_axe: { name: '戰斧', type: 'weapon', hands: 2, speed: 1400, safe: 6, dice: '1d18', hit: 0 },
+    scimitar: { name: '彎刀', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d8', hit: 0 },
+    magic_staff: { name: '巫術魔法杖', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d3', hit: 0, mDmg: 1 },
+    giant_axe: { name: '巨斧', type: 'weapon', hands: 2, speed: 1200, safe: 6, dice: '1d23', hit: 0 },
+    berserk_axe: { name: '狂戰士斧', type: 'weapon', hands: 2, speed: 1000, safe: 6, dice: '1d19', hit: 0 },
+    dagger_ori: { name: '奧里哈魯根短劍', type: 'weapon', hands: 1, speed: 900, safe: 6, dice: '1d7', hit: 0, isUndeadSlayer: true },
+    dagger_mithril: { name: '米索莉短劍', type: 'weapon', hands: 1, speed: 800, safe: 6, dice: '1d6', hit: 0, isUndeadSlayer: true },
+    sword_tsurugi: { name: '瑟魯基之劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d13', hit: 2 },
+    katana: { name: '武士刀', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d11', hit: 1 },
+    
+    helm_orc: { name: '歐西斯頭盔', type: 'helmet', safe: 4, ac: -1 },
+    ring_mail_orc: { name: '歐西斯環甲', type: 'armor', safe: 4, ac: -4 },
+    boots_short: { name: '短統靴', type: 'boots', safe: 4, ac: -1 },
+    chain_mail_orc: { name: '歐西斯鏈甲', type: 'armor', safe: 4, ac: -4 },
+    studded_leather: { name: '銀釘皮甲', type: 'armor', safe: 4, ac: -3 },
+    boots_long: { name: '長靴', type: 'boots', safe: 4, ac: -2 },
+    shield_small: { name: '小盾牌', type: 'shield', safe: 4, ac: -1 },
+    helm_gnome: { name: '侏儒鐵盔', type: 'helmet', safe: 4, ac: -2 },
+    cloak_gnome: { name: '侏儒斗篷', type: 'cloak', safe: 4, ac: 0 },
+    shield_gnome: { name: '侏儒圓盾', type: 'shield', safe: 4, ac: -2 },
+    scale_mail: { name: '鱗甲', type: 'armor', safe: 4, ac: -4 },
+    shield_large: { name: '大盾牌', type: 'shield', safe: 4, ac: -2 },
+    
+    antic_cloak: { name: '抗魔法斗篷', type: 'cloak', safe: 4, ac: -1, mr: 10 },
+    orc_cloak: { name: '歐西斯斗篷', type: 'cloak', safe: 4, ac: 0 },
+    antic_chain_mail: { name: '抗魔法鏈甲', type: 'armor', safe: 4, ac: -5, mr: 4 },
+    arkai_shield: { name: '阿克海盾牌', type: 'shield', safe: 4, ac: -1 },
+    steel_helmet: { name: '鋼盔', type: 'helmet', safe: 4, ac: -1 },
+    helm_heal_magic: { name: '治癒魔法頭盔', type: 'helmet', safe: 4, ac: -1 },
+    cloak_protector: { name: '保護者斗篷', type: 'cloak', safe: 4, ac: -3 },
+    armor_rattan: { name: '藤甲', type: 'armor', safe: 4, ac: -6 },
+    helm_str_magic: { name: '力量魔法頭盔', type: 'helmet', safe: 4, ac: -1 },
+    armor_bronze: { name: '青銅盔甲', type: 'armor', safe: 4, ac: -6 },
+    gloves_normal: { name: '手套', type: 'gloves', safe: 4, ac: 0 },
+    armor_metal: { name: '金屬盔甲', type: 'armor', safe: 4, ac: -7 },
+    armor_crystal: { name: '水晶盔甲', type: 'armor', safe: 4, ac: -8 },
+    
+    belt_ogre: { name: '歐吉皮帶', type: 'belt', safe: 0, ac: 0 },
+    amulet_wis: { name: '精神項鍊', type: 'amulet', safe: 0, ac: 0 },
+    amulet_con: { name: '體質項鍊', type: 'amulet', safe: 0, ac: 0 },
+    ring_earth: { name: '地靈戒指', type: 'ring', safe: 0, ac: 0 },
+    belt_body: { name: '身體腰帶', type: 'belt', safe: 0, ac: 0 },
+    belt_soul: { name: '靈魂腰帶', type: 'belt', safe: 0, ac: 0 },
+    belt_mind: { name: '精神腰帶', type: 'belt', safe: 0, ac: 0 },
+
+    scroll_weapon: { name: '對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: false, price: 75000 },
+    scroll_weapon_blessed: { name: '受祝福的對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: true },
+    scroll_armor: { name: '對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: false, price: 30000 },
+    scroll_armor_blessed: { name: '受祝福的對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: true },
+    scroll_accessory: { name: '對飾品施法的卷軸', type: 'scroll', target: 'accessory', isBlessed: false },
+    
+    potion_red: { name: '治癒藥水', type: 'potion_hp', heal: 15, price: 37 },
+    potion_orange: { name: '強力治癒藥水', type: 'potion_hp', heal: 40, price: 200 },
+    potion_clear: { name: '終極治癒藥水', type: 'potion_hp', heal: 60, price: 600 },
+    potion_blue: { name: '加速魔力回復藥水', type: 'potion_mp', duration: 600, price: 1046 },
+
+    book_light: { name: '魔法書(光箭)', type: 'book', spellId: 'light_arrow' },
+    book_heal: { name: '魔法書(初級治癒術)', type: 'book', spellId: 'heal' },
+    book_shield: { name: '魔法書(保護罩)', type: 'book', spellId: 'shield' },
+    book_vampire: { name: '魔法書(吸血鬼之吻)', type: 'book', spellId: 'vampire' },
+    book_dex: { name: '魔法書(通暢氣脈術)', type: 'book', spellId: 'dex_buff' },
+    book_slow: { name: '魔法書(緩速術)', type: 'book', spellId: 'slow' },
+    book_earth: { name: '魔法書(地裂術)', type: 'book', spellId: 'earth' },
+    book_dark: { name: '魔法書(黑闇之影)', type: 'book', spellId: 'darkness' },
+    book_zombie: { name: '魔法書(造屍術)', type: 'book', spellId: 'create_zombie' },
+    book_sleep_mist: { name: '魔法書(沉睡之霧)', type: 'book', spellId: 'sleep_mist' },
+    book_disease: { name: '魔法書(疾病術)', type: 'book', spellId: 'disease' },
+    book_immune: { name: '魔法書(聖結界)', type: 'book', spellId: 'immune_to_harm' },
+    book_berserker: { name: '魔法書(狂暴術)', type: 'book', spellId: 'berserkers' },
+    book_weapon_break: { name: '魔法書(壞物術)', type: 'book', spellId: 'weapon_break' },
+    book_fire_arrow: { name: '魔法書(烈炎術)', type: 'book', spellId: 'fire_arrow' },
+    book_fireball: { name: '魔法書(燃燒的火球)', type: 'book', spellId: 'fireball' },
+    book_summon: { name: '魔法書(召喚術)', type: 'book', spellId: 'summon_ogre' },
+    book_tame: { name: '魔法書(迷魅術)', type: 'book', spellId: 'tame_monster' },
+    book_lightning_storm: { name: '魔法書(雷霆風暴)', type: 'book', spellId: 'lightning_storm' },
+    book_resurrect: { name: '魔法書(返生術)', type: 'book', spellId: 'resurrection' },
+    book_full_heal: { name: '魔法書(體力回復術)', type: 'book', spellId: 'full_heal' },
+    book_high_heal: { name: '魔法書(高級治癒術)', type: 'book', spellId: 'high_heal' },
+    book_mid_heal: { name: '魔法書(中級治癒術)', type: 'book', spellId: 'mid_heal' },
+    book_call_lightning: { name: '魔法書(極道落雷)', type: 'book', spellId: 'call_lightning' },
+    book_str_buff: { name: '魔法書(體魄強健術)', type: 'book', spellId: 'str_buff' },
+    book_detection: { name: '魔法書(無所遁形術)', type: 'book', spellId: 'detection' },
+    book_enchant_weapon: { name: '魔法書(擬似魔法武器)', type: 'book', spellId: 'enchant_weapon' }
+};
+
+const SPELLS = {
+    light_arrow: { id: 'light_arrow', name: '光箭', level: 1, type: 'attack', mp: 3, dice: '1d4', baseDmg: 3 },
+    heal: { id: 'heal', name: '初級治癒術', level: 1, type: 'heal', mp: 4, healBase: 15 },
+    shield: { id: 'shield', name: '保護罩', level: 1, type: 'buff', mp: 2, duration: 1200 },
+    vampire: { id: 'vampire', name: '吸血鬼之吻', level: 4, type: 'attack', mp: 13, dice: '4d4', baseDmg: 6, healDice: '4d4' },
+    dex_buff: { id: 'dex_buff', name: '通暢氣脈術', level: 4, type: 'buff', mp: 45, duration: 1200 },
+    slow: { id: 'slow', name: '緩速術', level: 4, type: 'attack', mp: 20, duration: 30 },
+    earth: { id: 'earth', name: '地裂術', level: 6, type: 'attack', mp: 25, dice: '6d8', baseDmg: 16 },
+    darkness: { id: 'darkness', name: '黑闇之影', level: 5, type: 'attack', mp: 25, duration: 20 },
+    create_zombie: { id: 'create_zombie', name: '造屍術', level: 6, type: 'buff', mp: 35, duration: 3600 },
+    sleep_mist: { id: 'sleep_mist', name: '沉睡之霧', level: 9, type: 'attack', mp: 40 },
+    
+    disease: { id: 'disease', name: '疾病術', level: 7, type: 'attack', mp: 30, duration: 30 },
+    immune_to_harm: { id: 'immune_to_harm', name: '聖結界', level: 9, type: 'buff', mp: 30, duration: 32 },
+    berserkers: { id: 'berserkers', name: '狂暴術', level: 7, type: 'buff', mp: 40, duration: 1200 },
+    weapon_break: { id: 'weapon_break', name: '壞物術', level: 4, type: 'attack', mp: 25, duration: 20 },
+    fire_arrow: { id: 'fire_arrow', name: '烈炎術', level: 6, type: 'attack', mp: 30, dice: '9d6', baseDmg: 20 },
+    fireball: { id: 'fireball', name: '燃燒的火球', level: 4, type: 'attack', mp: 16, dice: '1d16' },
+    summon_ogre: { id: 'summon_ogre', name: '召喚術', level: 7, type: 'buff', mp: 50, duration: 3600 },
+    tame_monster: { id: 'tame_monster', name: '迷魅術', level: 5, type: 'buff', mp: 30, duration: 3600 },
+    lightning_storm: { id: 'lightning_storm', name: '雷霆風暴', level: 9, type: 'attack', mp: 48, dice: '1d18' },
+    resurrection: { id: 'resurrection', name: '返生術', level: 8, type: 'passive' },
+    full_heal: { id: 'full_heal', name: '體力回復術', level: 7, type: 'heal', mp: 35, healBase: 70 },
+    high_heal: { id: 'high_heal', name: '高級治癒術', level: 5, type: 'heal', mp: 20, healBase: 50 },
+    mid_heal: { id: 'mid_heal', name: '中級治癒術', level: 3, type: 'heal', mp: 11, healBase: 30 },
+    call_lightning: { id: 'call_lightning', name: '極道落雷', level: 5, type: 'attack', mp: 25, dice: '5d16', baseDmg: 0 },
+    str_buff: { id: 'str_buff', name: '體魄強健術', level: 6, type: 'buff', mp: 0, duration: 1200 }, 
+    detection: { id: 'detection', name: '無所遁形術', level: 2, type: 'passive' },
+    enchant_weapon: { id: 'enchant_weapon', name: '擬似魔法武器', level: 2, type: 'buff', mp: 20, duration: 1800 }
+};
+
+const MAPS = {
+    knight_village: {
+        name: '騎士村周邊',
+        monsters: [
+            { id: 'goblin', name: '哥布林', level: 2, hp: 3, ac: 10, exp: 5, atkSpeed: 2000, dice: '1d4', weight: 98, adena: [10,30], drops: [{id:'broadsword', rate: 1}, {id:'book_light', rate: 1}, {id:'book_shield', rate: 0.5}] },
+            { id: 'orc', name: '妖魔', level: 2, hp: 6, ac: 10, exp: 5, atkSpeed: 2000, dice: '1d4', weight: 98, adena: [10,30], drops: [{id:'dagger_orc', rate: 1}, {id:'short_sword_orc', rate: 5}, {id:'helm_orc', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'book_light', rate: 1}] },
+            { id: 'earth_spirit', name: '地靈', level: 3, hp: 7, ac: 10, exp: 10, atkSpeed: 2000, dice: '1d6', weight: 97, adena: [11,32], drops: [{id:'club', rate: 1}, {id:'boots_short', rate: 1}, {id:'book_light', rate: 1}] },
+            { id: 'orc_archer', name: '妖魔弓箭手', level: 3, hp: 12, ac: 10, exp: 10, atkSpeed: 3000, dice: '1d2+1d6', weight: 97, adena: [11,32], drops: [{id:'helm_orc', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'chain_mail_orc', rate: 1}, {id:'book_light', rate: 1}] },
+            { id: 'gnome', name: '侏儒', level: 5, hp: 30, ac: 10, exp: 26, atkSpeed: 2000, dice: '1d6+1', weight: 95, adena: [13,36], drops: [{id:'short_sword_gnome', rate: 1}, {id:'helm_gnome', rate: 0.5}, {id:'cloak_gnome', rate: 5}, {id:'shield_gnome', rate: 8}, {id:'book_shield', rate: 0.5}] }
+        ]
+    },
+    desert: {
+        name: '風木沙漠周邊',
+        monsters: [
+            { id: 'earth_spirit', name: '地靈', level: 3, hp: 7, ac: 10, exp: 10, atkSpeed: 2000, dice: '1d6', weight: 97, adena: [11,32], drops: [{id:'club', rate: 1}, {id:'boots_short', rate: 1}, {id:'book_light', rate: 1}] },
+            { id: 'orc_archer', name: '妖魔弓箭手', level: 3, hp: 12, ac: 10, exp: 10, atkSpeed: 3000, dice: '1d2+1d6', weight: 97, adena: [11,32], drops: [{id:'helm_orc', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'chain_mail_orc', rate: 1}, {id:'book_light', rate: 1}] },
+            { id: 'gnome', name: '侏儒', level: 5, hp: 30, ac: 10, exp: 26, atkSpeed: 2000, dice: '1d6+1', weight: 95, adena: [13,36], drops: [{id:'short_sword_gnome', rate: 1}, {id:'helm_gnome', rate: 0.5}, {id:'cloak_gnome', rate: 5}, {id:'shield_gnome', rate: 8}, {id:'book_shield', rate: 0.5}] },
+            { id: 'werewolf', name: '狼人', level: 9, hp: 50, ac: 4, exp: 82, atkSpeed: 2000, dice: '1d8+2', weight: 91, adena: [22,50], drops: [{id:'long_sword', rate: 2}, {id:'studded_leather', rate: 3}, {id:'boots_short', rate: 1}, {id:'boots_long', rate: 0.3}, {id:'book_shield', rate: 0.5}, {id:'book_dex', rate: 0.5}, {id:'book_vampire', rate: 0.5}] },
+            { id: 'lycan', name: '萊肯', level: 17, hp: 120, ac: -4, exp: 290, atkSpeed: 2000, dice: '1d12+3', weight: 83, adena: [56,102], drops: [{id:'fauchard', rate: 1}, {id:'battle_axe', rate: 2}, {id:'scale_mail', rate: 4}, {id:'studded_leather', rate: 3}, {id:'boots_long', rate: 0.3}, {id:'shield_large', rate: 3}, {id:'book_dex', rate: 0.5}, {id:'book_vampire', rate: 0.5}, {id:'book_slow', rate: 0.5}] }
+        ]
+    },
+    gludio_dungeon: {
+        name: '古魯丁地監周邊',
+        monsters: [
+            { id: 'skeleton', name: '骷髏', level: 10, hp: 80, ac: 3, exp: 101, atkSpeed: 2000, dice: '1d8+4', isUndead: true, weight: 10, adena: [25,54], drops: [{id:'scimitar', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'antic_cloak', rate: 1}, {id:'shield_large', rate: 3}, {id:'book_cure_path', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'zombie', name: '人形殭屍', level: 6, hp: 45, ac: 8, exp: 37, atkSpeed: 2000, dice: '2d4', isUndead: true, weight: 10, adena: [10,120], drops: [{id:'book_vampire', rate: 0.5}, {id:'book_dark', rate: 0.1}, {id:'book_zombie', rate: 0.1}] },
+            { id: 'cerberus', name: '夏洛伯', level: 14, hp: 100, ac: 3, exp: 101, atkSpeed: 1000, dice: '1d8+1', weight: 10, adena: [41,78], drops: [{id:'book_slow', rate: 0.5}, {id:'book_earth', rate: 0.1}, {id:'book_sleep_mist', rate: 0.2}] },
+            { id: 'orc_fighter', name: '妖魔鬥士', level: 8, hp: 50, ac: 5, exp: 65, atkSpeed: 2000, dice: '1d12', weight: 10, adena: [20,45], drops: [{id:'helm_orc', rate: 1}, {id:'antic_cloak', rate: 1}, {id:'orc_cloak', rate: 5}, {id:'antic_chain_mail', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'chain_mail_orc', rate: 1}, {id:'arkai_shield', rate: 10}] },
+            { id: 'spartoi', name: '史巴托', level: 16, hp: 120, ac: -3, exp: 257, atkSpeed: 2000, dice: '3d6+4', hitBonus: 2, isUndead: true, weight: 84, adena: [50,93], drops: [{id:'scimitar', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'shield_large', rate: 3}, {id:'armor_bronze', rate: 0.3}, {id:'book_enchant_weapon', rate: 0.5}, {id:'book_detection', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'ogre', name: '歐吉', level: 28, hp: 500, ac: -18, exp: 785, atkSpeed: 2000, dice: '4d10+8', weight: 72, adena: [135,225], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'helm_str_magic', rate: 0.2}, {id:'armor_rattan', rate: 3}, {id:'belt_ogre', rate: 0.05}, {id:'dagger_ori', rate: 0.1}] },
+            { id: 'elder', name: '長者', level: 21, hp: 250, ac: -5, exp: 442, atkSpeed: 2000, dice: '2d8+5', weight: 79, adena: [80,140], drops: [{id:'cloak_protector', rate: 5}, {id:'book_call_lightning', rate: 0.8}, {id:'book_high_heal', rate: 0.5}, {id:'book_zombie', rate: 0.1}, {id:'book_lightning_storm', rate: 0.1}, {id:'book_enchant_weapon', rate: 0.5}, {id:'book_detection', rate: 0.5}, {id:'book_heal', rate: 1}, {id:'book_mid_heal', rate: 0.8}, {id:'dagger_ori', rate: 0.1}] },
+            { id: 'yangolian', name: '楊果里恩', level: 18, hp: 200, ac: -5, exp: 325, atkSpeed: 1000, dice: '2d8+3', hitBonus: 2, weight: 82, adena: [61,110], drops: [{id:'book_slow', rate: 0.5}, {id:'book_tame', rate: 0.3}, {id:'book_sleep_mist', rate: 0.2}] },
+            { id: 'casto', name: '卡司特', level: 21, hp: 200, ac: -10, exp: 442, atkSpeed: 2000, dice: '4d8+3', hitBonus: 5, weight: 79, adena: [80,140], drops: [{id:'battle_axe', rate: 2}, {id:'giant_axe', rate: 2}, {id:'book_slow', rate: 0.5}, {id:'book_summon', rate: 0.02}] },
+            { id: 'casto_king', name: '卡司特王', level: 33, hp: 300, ac: -13, exp: 1090, atkSpeed: 2000, dice: '4d12+5', hitBonus: 5, weight: 67, adena: [184,302], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'helm_heal_magic', rate: 0.5}, {id:'book_slow', rate: 0.5}, {id:'book_full_heal', rate: 0.1}, {id:'dagger_ori', rate: 0.1}] },
+            { id: 'troll', name: '食人妖精', level: 22, hp: 250, ac: -6, exp: 485, atkSpeed: 2000, dice: '3d8+5', hitBonus: 3, weight: 78, adena: [46,359], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_fire_arrow', rate: 0.2}] }
+        ]
+    },
+    knight_cave_1f: {
+        name: '騎士洞穴1樓',
+        monsters: [
+            { id: 'orc', name: '妖魔', level: 2, hp: 6, ac: 10, exp: 5, atkSpeed: 2000, dice: '1d4', weight: 98, adena: [10,30], drops: [{id:'dagger_orc', rate: 1}, {id:'short_sword_orc', rate: 5}, {id:'helm_orc', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'book_light', rate: 1}] },
+            { id: 'orc_archer', name: '妖魔弓箭手', level: 3, hp: 12, ac: 10, exp: 10, atkSpeed: 3000, dice: '1d2+1d6', weight: 97, adena: [11,32], drops: [{id:'helm_orc', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'chain_mail_orc', rate: 1}, {id:'book_light', rate: 1}] },
+            { id: 'werewolf', name: '狼人', level: 9, hp: 50, ac: 4, exp: 82, atkSpeed: 2000, dice: '1d8+2', weight: 91, adena: [22,50], drops: [{id:'long_sword', rate: 2}, {id:'studded_leather', rate: 3}, {id:'boots_short', rate: 1}, {id:'boots_long', rate: 0.3}, {id:'book_shield', rate: 0.5}, {id:'book_dex', rate: 0.5}, {id:'book_vampire', rate: 0.5}] },
+            { id: 'zombie', name: '人形殭屍', level: 6, hp: 45, ac: 8, exp: 37, atkSpeed: 2000, dice: '2d4', isUndead: true, weight: 94, adena: [10,120], drops: [{id:'book_vampire', rate: 0.5}, {id:'book_dark', rate: 0.1}, {id:'book_zombie', rate: 0.1}] },
+            { id: 'orc_fighter', name: '妖魔鬥士', level: 8, hp: 50, ac: 5, exp: 65, atkSpeed: 2000, dice: '1d12', weight: 92, adena: [20,45], drops: [{id:'helm_orc', rate: 1}, {id:'antic_cloak', rate: 1}, {id:'orc_cloak', rate: 5}, {id:'antic_chain_mail', rate: 1}, {id:'ring_mail_orc', rate: 5}, {id:'chain_mail_orc', rate: 1}, {id:'arkai_shield', rate: 10}] },
+            { id: 'skeleton', name: '骷髏', level: 10, hp: 80, ac: 3, exp: 101, atkSpeed: 2000, dice: '1d8+4', isUndead: true, weight: 90, adena: [25,54], drops: [{id:'scimitar', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'antic_cloak', rate: 1}, {id:'shield_large', rate: 3}, {id:'book_dex', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'cerberus', name: '夏洛伯', level: 14, hp: 100, ac: 3, exp: 101, atkSpeed: 1000, dice: '1d8+1', weight: 86, adena: [41,78], drops: [{id:'book_slow', rate: 0.5}, {id:'book_earth', rate: 0.1}, {id:'book_sleep_mist', rate: 0.2}] }
+        ]
+    },
+    knight_cave_2f: {
+        name: '騎士洞穴2樓',
+        monsters: [
+            { id: 'zombie', name: '人形殭屍', level: 6, hp: 45, ac: 8, exp: 37, atkSpeed: 2000, dice: '2d4', isUndead: true, weight: 20, adena: [10,120], drops: [{id:'book_vampire', rate: 0.5}, {id:'book_dark', rate: 0.1}, {id:'book_zombie', rate: 0.1}] },
+            { id: 'spartoi', name: '史巴托', level: 16, hp: 120, ac: -3, exp: 257, atkSpeed: 2000, dice: '3d6+4', hitBonus: 2, isUndead: true, weight: 84, adena: [50,93], drops: [{id:'scimitar', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'shield_large', rate: 3}, {id:'armor_bronze', rate: 0.3}, {id:'book_enchant_weapon', rate: 0.5}, {id:'book_detection', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'troll', name: '食人妖精', level: 22, hp: 250, ac: -6, exp: 485, atkSpeed: 2000, dice: '3d8+5', hitBonus: 3, weight: 78, adena: [46,359], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_fire_arrow', rate: 0.2}] },
+            { id: 'ghoul', name: '食屍鬼', level: 16, hp: 110, ac: -4, exp: 257, atkSpeed: 2000, dice: '2d10+3', isUndead: true, weight: 84, adena: [50,93], drops: [{id:'book_slow', rate: 0.5}, {id:'book_zombie', rate: 0.1}, {id:'book_berserker', rate: 0.1}, {id:'book_enchant_weapon', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'hellhound', name: '地獄犬', level: 24, hp: 120, ac: -20, exp: 577, atkSpeed: 2000, dice: '3d10+3', hitBonus: 3, weight: 76, adena: [102,173], drops: [{id:'magic_staff', rate: 2}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_immune', rate: 0.03}] }
+        ]
+    },
+    knight_cave_3f: {
+        name: '騎士洞穴3樓',
+        monsters: [
+            { id: 'troll', name: '食人妖精', level: 22, hp: 250, ac: -6, exp: 485, atkSpeed: 2000, dice: '3d8+5', hitBonus: 3, weight: 78, adena: [46,359], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_fire_arrow', rate: 0.2}] },
+            { id: 'troll_king', name: '食人妖精王', level: 30, hp: 400, ac: -13, exp: 901, atkSpeed: 2000, dice: '4d8+6', hitBonus: 5, weight: 70, adena: [153,254], drops: [{id:'club', rate: 5}, {id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'helm_str_magic', rate: 0.2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_disease', rate: 0.1}, {id:'dagger_ori', rate: 0.1}] },
+            { id: 'ghoul', name: '食屍鬼', level: 16, hp: 110, ac: -4, exp: 257, atkSpeed: 2000, dice: '2d10+3', isUndead: true, weight: 84, adena: [50,93], drops: [{id:'book_slow', rate: 0.5}, {id:'book_zombie', rate: 0.1}, {id:'book_berserker', rate: 0.1}, {id:'book_enchant_weapon', rate: 0.5}, {id:'dagger_mithril', rate: 0.5}] },
+            { id: 'hellhound', name: '地獄犬', level: 24, hp: 120, ac: -20, exp: 577, atkSpeed: 2000, dice: '3d10+3', hitBonus: 3, weight: 76, adena: [102,173], drops: [{id:'magic_staff', rate: 2}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_immune', rate: 0.03}] }
+        ]
+    },
+    knight_cave_4f: {
+        name: '騎士洞穴4樓',
+        monsters: [
+            { id: 'troll', name: '食人妖精', level: 22, hp: 250, ac: -6, exp: 485, atkSpeed: 2000, dice: '3d8+5', hitBonus: 3, weight: 78, adena: [46,359], drops: [{id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_fire_arrow', rate: 0.2}] },
+            { id: 'troll_king', name: '食人妖精王', level: 30, hp: 400, ac: -13, exp: 901, atkSpeed: 2000, dice: '4d8+6', hitBonus: 5, weight: 70, adena: [153,254], drops: [{id:'club', rate: 5}, {id:'battle_axe', rate: 2}, {id:'berserk_axe', rate: 1}, {id:'giant_axe', rate: 2}, {id:'helm_str_magic', rate: 0.2}, {id:'armor_rattan', rate: 3}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_disease', rate: 0.1}, {id:'dagger_ori', rate: 0.1}] },
+            { id: 'hellhound', name: '地獄犬', level: 24, hp: 120, ac: -20, exp: 577, atkSpeed: 2000, dice: '3d10+3', hitBonus: 3, weight: 76, adena: [102,173], drops: [{id:'magic_staff', rate: 2}, {id:'book_fireball', rate: 0.5}, {id:'book_weapon_break', rate: 0.4}, {id:'book_immune', rate: 0.03}] }
+        ]
+    },
+    antaras_lair: {
+        name: '安塔瑞斯棲息地',
+        monsters: [
+            { id: 'antaras', name: '安塔瑞斯', level: 90, hp: 180000, ac: -99, exp: 8101, atkSpeed: 2000, dice: '8d10+20', hitBonus: 45, isBoss: true, weight: 1, adena: [1305,2054], drops: [
+                {id:'katana', rate: 3}, {id:'sword_tsurugi', rate: 1}, {id:'armor_crystal', rate: 3}, {id:'armor_metal', rate: 1}, {id:'gloves_normal', rate: 1}, 
+                {id:'amulet_wis', rate: 0.1}, {id:'amulet_con', rate: 0.1}, {id:'ring_earth', rate: 0.01}, {id:'belt_body', rate: 0.01}, {id:'belt_soul', rate: 0.01}, {id:'belt_mind', rate: 0.01}, 
+                {id:'book_weapon_break', rate: 0.4}, {id:'book_slow', rate: 0.5}, {id:'book_tame', rate: 0.3}, {id:'book_str_buff', rate: 0.1}, {id:'book_earth', rate: 0.1}, {id:'book_full_heal', rate: 0.1}, {id:'book_summon', rate: 0.02}, {id:'book_resurrect', rate: 5}
+            ] }
+        ]
+    }
+};
+
+function rollDice(diceStr) {
+    if(!diceStr) return 0;
+    const parts = diceStr.split('+');
+    let total = 0;
+    for(let part of parts) {
+        if(part.includes('d') || part.includes('D')) {
+            const [num, sides] = part.toLowerCase().split('d').map(Number);
+            for(let i=0; i<num; i++) total += Math.floor(Math.random() * sides) + 1;
+        } else {
+            total += Number(part);
+        }
+    }
+    return total;
+}
+
+const game = {
+    state: {
+        isPlaying: false,
+        level: 1, exp: 0, adena: 0, hp: 0, maxHp: 0, mp: 0, maxMp: 0,
+        baseStats: { str: 8, dex: 8, con: 8, int: 8, wis: 8 },
+        createPoints: 25, bonusPoints: 0,
+        
+        inventory: {}, 
+        equipment: { weapon: null, shield: null, helmet: null, tshirt: null, armor: null, leggings: null, boots: null, cloak: null, gloves: null, amulet: null, earring1: null, earring2: null, ring1: null, ring2: null, belt: null },
+        spells: [],
+        buffs: {},
+        settings: { autoHpThreshold: 5, autoHpType: 'potion_red', autoBuyHp: false, autoBuyMp: false, autoAttack: 'none', autoBuffs: [], autoHealSpell: 'none', autoHealThreshold: 50 },
+        
+        currentMap: 'knight_village',
+        targetMonster: null,
+        
+        battleLoop: null, monsterLoop: null, magicLoop: null, regenLoop: null, tickLoop: null,
+        potionCooldown: 0,
+        autoHealCd: 0,
+        
+        enchantTargetKey: null,
+        zombieTick: 0,
+        monsterSpecialTick: 0,
+        antarasDeadUntil: 0
+    },
+
+    init: function() {
+        this.checkSaveFile();
+    },
+
+    // --- 選單與存檔系統 ---
+    checkSaveFile: function() {
+        if (localStorage.getItem('lineageIdleSave')) {
+            document.getElementById('btn-load-game').style.display = 'block';
+        } else {
+            document.getElementById('btn-load-game').style.display = 'none';
+        }
+    },
+    showCreation: function() {
+        document.getElementById('start-menu').classList.add('hidden');
+        document.getElementById('creation-menu').classList.remove('hidden');
+        this.updateCreateUI();
+    },
+    showStartMenu: function() {
+        document.getElementById('creation-menu').classList.add('hidden');
+        document.getElementById('start-menu').classList.remove('hidden');
+    },
+    saveGame: function() {
+        const saveData = {
+            level: this.state.level, exp: this.state.exp, adena: this.state.adena,
+            hp: this.state.hp, maxHp: this.state.maxHp, mp: this.state.mp, maxMp: this.state.maxMp,
+            baseStats: this.state.baseStats, bonusPoints: this.state.bonusPoints,
+            inventory: this.state.inventory, equipment: this.state.equipment, spells: this.state.spells,
+            settings: this.state.settings, currentMap: this.state.currentMap, antarasDeadUntil: this.state.antarasDeadUntil
+        };
+        localStorage.setItem('lineageIdleSave', JSON.stringify(saveData));
+        this.logSystem('遊戲進度已儲存。', 'reward');
+    },
+    loadGame: function() {
+        const savedDataStr = localStorage.getItem('lineageIdleSave');
+        if (savedDataStr) {
+            try {
+                const savedData = JSON.parse(savedDataStr);
+                
+                let migratedInv = {};
+                for (let oldKey in savedData.inventory) {
+                    let item = savedData.inventory[oldKey];
+                    if (item.isBlessed === undefined) item.isBlessed = false;
+                    let newKey = this.getItemKey(item.itemId, item.enchant, item.isBlessed);
+                    migratedInv[newKey] = item;
+                }
+                savedData.inventory = migratedInv;
+
+                let equipmentMap = {};
+                for (let slot in savedData.equipment) {
+                    let eqKey = savedData.equipment[slot];
+                    if (!eqKey) {
+                        equipmentMap[slot] = null;
+                        continue;
+                    }
+                    
+                    if (savedData.inventory[eqKey]) {
+                        equipmentMap[slot] = eqKey;
+                    } else if (savedData.inventory[eqKey + '_false']) {
+                        equipmentMap[slot] = eqKey + '_false';
+                    } else if (savedData.inventory[eqKey + '_true']) {
+                        equipmentMap[slot] = eqKey + '_true';
+                    } else {
+                        equipmentMap[slot] = null;
+                    }
+                }
+                savedData.equipment = equipmentMap;
+
+                Object.assign(this.state, savedData);
+                this.state.buffs = {}; 
+                this.state.targetMonster = null;
+                this.state.zombieTick = 0;
+                this.state.monsterSpecialTick = 0;
+                
+                if(!this.state.settings.autoHealSpell) this.state.settings.autoHealSpell = 'none';
+                if(!this.state.settings.autoHealThreshold) this.state.settings.autoHealThreshold = 50;
+                if(this.state.settings.autoBuyMp === undefined) this.state.settings.autoBuyMp = false;
+                
+                document.getElementById('char-creation-modal').style.display = 'none';
+                document.getElementById('main-ui').classList.remove('hidden');
+                
+                this.updateUI();
+                this.renderInventory();
+                this.renderSkills();
+                this.updateSettingsUI();
+                
+                document.getElementById('cfg-hp-threshold').value = this.state.settings.autoHpThreshold;
+                document.getElementById('cfg-hp-type').value = this.state.settings.autoHpType;
+                document.getElementById('cfg-auto-buy').checked = this.state.settings.autoBuyHp;
+                document.getElementById('cfg-auto-mp').checked = this.state.settings.autoBuyMp;
+                document.getElementById('cfg-heal-threshold').value = this.state.settings.autoHealThreshold;
+                document.getElementById('map-select').value = this.state.currentMap;
+                
+                this.logSystem('讀取存檔成功！歡迎回來。', 'reward');
+                
+                this.startLoops();
+                this.startBattle();
+            } catch (e) {
+                console.error("Load failed", e);
+                alert("讀取存檔失敗。");
+            }
+        }
+    },
+    deleteSave: function() {
+        localStorage.removeItem('lineageIdleSave');
+        this.logSystem('存檔已刪除。', 'danger');
+    },
+
+    logCombat: function(msg, type='normal') {
+        const el = document.getElementById('combat-log');
+        let color = 'c-sys';
+        if (type === 'danger') color = 'c-err';
+        else if (type === 'hit') color = 'c-info';
+        else if (type === 'success') color = 'c-success';
+        else if (type === 'magic') color = 'c-magic'; 
+        
+        el.insertAdjacentHTML('beforeend', `<div class="${color}">> ${msg}</div>`);
+        el.scrollTop = el.scrollHeight;
+        if(el.children.length > 50) el.firstChild.remove();
+    },
+    logSystem: function(msg, type='normal') {
+        const el = document.getElementById('system-log');
+        let color = 'c-sys';
+        if (type === 'danger') color = 'c-err';
+        else if (type === 'reward') color = 'c-success';
+        else if (type === 'blessed') color = 'c-blessed';
+        else if (type === 'enchant-success') color = 'c-enchant-success';
+        
+        el.insertAdjacentHTML('beforeend', `<div class="${color}">> ${msg}</div>`);
+        el.scrollTop = el.scrollHeight;
+        if(el.children.length > 50) el.firstChild.remove();
+    },
+
+    switchTab: function(tabId) {
+        document.getElementById('tab-inv').classList.add('hidden');
+        document.getElementById('tab-magic').classList.add('hidden');
+        document.getElementById('tab-shop').classList.add('hidden');
+        document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        if(tabId === 'inv') this.renderInventory();
+        if(tabId === 'magic') this.renderSkills();
+    },
+
+    adjustStat: function(stat, amount) {
+        if(amount > 0 && this.state.createPoints > 0 && this.state.baseStats[stat] < 18) {
+            this.state.baseStats[stat]++;
+            this.state.createPoints--;
+        } else if(amount < 0 && this.state.baseStats[stat] > 8) {
+            this.state.baseStats[stat]--;
+            this.state.createPoints++;
+        }
+        this.updateCreateUI();
+    },
+    updateCreateUI: function() {
+        ['str','dex','con','int','wis'].forEach(s => document.getElementById(`create-${s}`).innerText = this.state.baseStats[s]);
+        document.getElementById('create-points').innerText = this.state.createPoints;
+        document.getElementById('btn-start').disabled = this.state.createPoints > 0;
+    },
+    startGame: function() {
+        document.getElementById('char-creation-modal').style.display = 'none';
+        document.getElementById('main-ui').classList.remove('hidden');
+        
+        this.addInventory('dagger_orc', 1, 0, false);
+        this.addInventory('potion_red', 50, 0, false);
+        
+        this.calculateMaxHpMp();
+        this.state.hp = this.state.maxHp;
+        this.state.mp = this.state.maxMp;
+        this.updateUI();
+        this.renderInventory();
+        this.renderSkills();
+        
+        this.logSystem('歡迎來到天堂放置版。你的冒險開始了！', 'reward');
+        
+        this.startLoops();
+        this.startBattle();
+    },
+
+    getEffStat: function(stat) {
+        let val = this.state.baseStats[stat];
+        if (stat === 'wis' || stat === 'con') {
+            let amuKey = this.state.equipment.amulet;
+            if (amuKey && this.state.inventory[amuKey]) {
+                let amuName = ITEMS[this.state.inventory[amuKey].itemId].name;
+                if (stat === 'wis' && amuName === '精神項鍊') val += 1;
+                if (stat === 'con' && amuName === '體質項鍊') val += 1;
+            }
+        }
+        return val;
+    },
+
+    getConBonus: function() {
+        let con = this.getEffStat('con');
+        return con <= 15 ? 0 : con - 15;
+    },
+    calculateMaxHpMp: function() {
+        let effCon = this.getEffStat('con');
+        let conBonus = effCon <= 15 ? 0 : effCon - 15;
+        let calcMaxHp = 12 + (this.state.level * (6 + conBonus));
+        
+        let beltKey = this.state.equipment.belt;
+        if (beltKey && this.state.inventory[beltKey]) {
+            let beltName = ITEMS[this.state.inventory[beltKey].itemId].name;
+            if (beltName === '身體腰帶') calcMaxHp += 50;
+            if (beltName === '靈魂腰帶') calcMaxHp += 25;
+        }
+        this.state.maxHp = calcMaxHp;
+        
+        let effWis = this.getEffStat('wis');
+        let wisBonus = -1;
+        if(effWis >= 11 && effWis <= 13) wisBonus = 0;
+        if(effWis >= 12 && effWis <= 13) wisBonus = 1;
+        if(effWis >= 14 && effWis <= 15) wisBonus = 2;
+        if(effWis >= 16 && effWis <= 17) wisBonus = 3;
+        if(effWis === 18) wisBonus = 4;
+        if(effWis > 18) wisBonus = 4 + (effWis - 18);
+        
+        let calcMaxMp = 10 + (this.state.level * (6 + wisBonus));
+        if (beltKey && this.state.inventory[beltKey]) {
+            let beltName = ITEMS[this.state.inventory[beltKey].itemId].name;
+            if (beltName === '精神腰帶') calcMaxMp += 50;
+            if (beltName === '靈魂腰帶') calcMaxMp += 25;
+        }
+        this.state.maxMp = calcMaxMp;
+        
+        if(this.state.hp > this.state.maxHp) this.state.hp = this.state.maxHp;
+        if(this.state.mp > this.state.maxMp) this.state.mp = this.state.maxMp;
+    },
+    getAC: function() {
+        let ac = 10;
+        ac -= Math.floor(this.state.level / 8);
+        let dex = this.state.baseStats.dex + (this.state.buffs.dex_buff ? 5 : 0);
+        let div = dex < 10 ? 8 : dex < 13 ? 7 : dex < 16 ? 6 : dex < 18 ? 5 : 4;
+        ac -= Math.floor(dex / div);
+        
+        for(let slot in this.state.equipment) {
+            let itemKey = this.state.equipment[slot];
+            if(itemKey && this.state.inventory[itemKey]) {
+                let item = this.state.inventory[itemKey];
+                if(ITEMS[item.itemId].ac !== undefined) {
+                    ac += ITEMS[item.itemId].ac;
+                    ac -= Number(item.enchant);
+                    if (item.isBlessed) ac -= 1;
+                }
+            }
+        }
+        if(this.state.buffs.shield) ac -= 2;
+        if(this.state.buffs.berserkers) ac += 10;
+        return ac;
+    },
+    getDamageReduction: function() {
+        let dr = 0;
+        for(let slot in this.state.equipment) {
+            if (slot === 'weapon') continue; 
+            let itemKey = this.state.equipment[slot];
+            if(itemKey && this.state.inventory[itemKey]) {
+                let item = this.state.inventory[itemKey];
+                if(item.isBlessed && ITEMS[item.itemId].type !== 'weapon') dr += 1;
+            }
+        }
+        return dr;
+    },
+    getStrBonus: function() {
+        let str = this.state.baseStats.str + (this.state.buffs.str_buff ? 5 : 0);
+        let dmg = 0, hit = 0;
+        if(str===8) { dmg=-2; hit=-1; }
+        else if(str===9) { dmg=-1; hit=-1; }
+        else if(str===10) { dmg=-1; hit=0; }
+        else if(str===11) { dmg=0; hit=0; }
+        else if(str===12) { dmg=0; hit=1; }
+        else if(str===13) { dmg=1; hit=1; }
+        else if(str===14) { dmg=1; hit=2; }
+        else if(str===15) { dmg=2; hit=2; }
+        else if(str===16) { dmg=2; hit=3; }
+        else if(str===17) { dmg=3; hit=3; }
+        else if(str>17) {
+            dmg=3; hit=3;
+            for(let i=18; i<=str; i++) { if(dmg === hit) hit++; else dmg++; }
+        }
+        return { dmg, hit };
+    },
+    getDexBonus: function() {
+        let dex = this.state.baseStats.dex + (this.state.buffs.dex_buff ? 5 : 0);
+        let hit = 0, er = 0;
+        if(dex===8) { hit=-1; er=0; }
+        else if(dex===9) { hit=0; er=0; }
+        else if(dex===10) { hit=0; er=1; }
+        else if(dex===11) { hit=1; er=1; }
+        else if(dex===12) { hit=1; er=2; }
+        else if(dex===13) { hit=2; er=2; }
+        else if(dex===14) { hit=2; er=3; }
+        else if(dex===15) { hit=3; er=3; }
+        else if(dex===16) { hit=3; er=4; }
+        else if(dex===17) { hit=4; er=4; }
+        else if(dex===18) { hit=4; er=5; }
+        else if(dex>18) {
+            hit = 4 + (dex - 18);
+            er = 5 + Math.floor((dex - 18) / 2);
+        }
+        return { hit, er };
+    },
+    getMeleeHit: function() {
+        let strBonus = this.getStrBonus().hit;
+        let dexBonus = this.getDexBonus().hit;
+        let wpnHit = 0;
+        let wKey = this.state.equipment.weapon;
+        if(wKey && this.state.inventory[wKey]) {
+            let item = this.state.inventory[wKey];
+            wpnHit = (ITEMS[item.itemId].hit || 0) + Number(item.enchant);
+            if (item.isBlessed) wpnHit += 1;
+        }
+        return strBonus + dexBonus + wpnHit;
+    },
+    getMeleeDmg: function() {
+        let strBonus = this.getStrBonus().dmg;
+        let wpnDmg = 0;
+        let wKey = this.state.equipment.weapon;
+        if(wKey && this.state.inventory[wKey]) {
+            let item = this.state.inventory[wKey];
+            wpnDmg = Number(item.enchant);
+            if (item.isBlessed) wpnDmg += 1;
+        }
+        if (this.state.buffs.enchant_weapon) wpnDmg += 2;
+        if (this.state.buffs.berserkers) wpnDmg += 5;
+        if (this.state.buffs.player_weapon_break > 0) wpnDmg -= 10;
+        return strBonus + wpnDmg;
+    },
+    getMagicDmg: function() {
+        let int = this.state.baseStats.int;
+        let m = 0;
+        if(int===8) m=-1; 
+        else if(int>=9&&int<=11) m=0; 
+        else if(int>=12&&int<=14) m=1; 
+        else if(int===15) m=1;
+        else if(int>=16&&int<=17) m=2; 
+        else if(int===18) m=3; 
+        else if(int>18) m=3+(int-18);
+        
+        let wKey = this.state.equipment.weapon;
+        if(wKey && this.state.inventory[wKey]) {
+            let item = this.state.inventory[wKey];
+            if(ITEMS[item.itemId].mDmg) m += ITEMS[item.itemId].mDmg;
+        }
+        
+        return m + Math.floor(this.state.level / 4);
+    },
+    getMR: function() {
+        let effWis = this.getEffStat('wis');
+        let mr = 0;
+        if(effWis<=14) mr=0; 
+        else if(effWis>=15&&effWis<=16) mr=3; 
+        else if(effWis===17) mr=6; 
+        else if(effWis===18) mr=10; 
+        else if(effWis>18&&effWis<=26) mr=10+(effWis-18)*5; 
+        else if(effWis>26) mr=50+(effWis-26)*2;
+        mr += Math.floor(this.state.level / 4);
+
+        for(let slot in this.state.equipment) {
+            let itemKey = this.state.equipment[slot];
+            if(itemKey && this.state.inventory[itemKey]) {
+                let item = this.state.inventory[itemKey];
+                if(ITEMS[item.itemId].mr !== undefined) {
+                    mr += ITEMS[item.itemId].mr;
+                }
+            }
+        }
+        return Math.min(100, mr);
+    },
+    getER: function() {
+        return this.getDexBonus().er;
+    },
+    
+    getAvailableSpells: function() {
+        let spells = new Set(this.state.spells);
+        let helmKey = this.state.equipment.helmet;
+        if (helmKey && this.state.inventory[helmKey]) {
+            let helmId = this.state.inventory[helmKey].itemId;
+            if (helmId === 'helm_heal_magic') {
+                spells.add('heal');
+                spells.add('mid_heal');
+            }
+            if (helmId === 'helm_str_magic') {
+                spells.add('enchant_weapon');
+                spells.add('str_buff');
+                spells.add('detection');
+            }
+        }
+        return Array.from(spells);
+    },
+
+    updateUI: function() {
+        document.getElementById('ui-level').innerText = this.state.level;
+        document.getElementById('ui-hp-text').innerText = `${Math.floor(this.state.hp)}/${this.state.maxHp}`;
+        document.getElementById('ui-hp-bar').style.width = `${Math.max(0, (this.state.hp/this.state.maxHp)*100)}%`;
+        document.getElementById('ui-mp-text').innerText = `${Math.floor(this.state.mp)}/${this.state.maxMp}`;
+        document.getElementById('ui-mp-bar').style.width = `${Math.max(0, (this.state.mp/this.state.maxMp)*100)}%`;
+        
+        let reqExp = EXP_TABLE[this.state.level] || 36065092;
+        let expPct = ((this.state.exp/reqExp)*100).toFixed(2);
+        document.getElementById('ui-exp-bar').style.width = `${Math.min(100, expPct)}%`;
+        document.getElementById('ui-exp-text').innerText = `${expPct}%`;
+        
+        document.getElementById('ui-adena').innerText = this.state.adena.toLocaleString();
+        
+        document.getElementById('ui-str').innerText = this.getEffStat('str') + (this.state.buffs.str_buff ? ' (+5)' : '');
+        document.getElementById('ui-dex').innerText = this.getEffStat('dex') + (this.state.buffs.dex_buff ? ' (+5)' : '');
+        document.getElementById('ui-con').innerText = this.getEffStat('con');
+        document.getElementById('ui-int').innerText = this.getEffStat('int');
+        document.getElementById('ui-wis').innerText = this.getEffStat('wis');
+        
+        document.getElementById('ui-ac').innerText = this.getAC();
+        document.getElementById('ui-mr').innerText = this.getMR() + '%';
+        document.getElementById('ui-er').innerText = this.getER();
+        document.getElementById('ui-dmg').innerText = this.getMeleeDmg() >= 0 ? `+${this.getMeleeDmg()}` : this.getMeleeDmg();
+        document.getElementById('ui-hit').innerText = this.getMeleeHit() >= 0 ? `+${this.getMeleeHit()}` : this.getMeleeHit();
+
+        let buffHtml = '';
+        if(this.state.buffs.dex_buff) buffHtml += '<span class="c-success mr-2">[通暢氣脈]</span>';
+        if(this.state.buffs.str_buff) buffHtml += '<span class="c-success mr-2">[體魄強健]</span>';
+        if(this.state.buffs.enchant_weapon) buffHtml += '<span class="c-success mr-2">[擬似魔武]</span>';
+        if(this.state.buffs.shield) buffHtml += '<span class="c-info mr-2">[保護罩]</span>';
+        if(this.state.buffs.immune_to_harm) buffHtml += '<span class="c-warn mr-2">[聖結界]</span>';
+        if(this.state.buffs.berserkers) buffHtml += '<span class="c-err mr-2">[狂暴術]</span>';
+        if(this.state.buffs.create_zombie) buffHtml += '<span class="c-warn mr-2">[隨從:殭屍]</span>';
+        if(this.state.buffs.summon_ogre) buffHtml += '<span class="c-warn mr-2">[隨從:食妖]</span>';
+        if(this.state.buffs.tame_monster) buffHtml += '<span class="c-warn mr-2">[迷魅術]</span>';
+        if(this.state.buffs.potion_blue) buffHtml += '<span class="c-potion-purple mr-2">[魔力藥水]</span>';
+        if(this.state.buffs.player_weapon_break) buffHtml += '<span class="c-err mr-2">[武器受損]</span>';
+        if(this.state.buffs.poison_storm) buffHtml += '<span class="c-err mr-2">[毒氣風暴]</span>';
+        document.getElementById('ui-buffs').innerHTML = buffHtml || '無附加狀態';
+    },
+
+    getItemColorClass: function(item, def) {
+        if (!item || !def) return 'c-item';
+        
+        if (item.isBlessed || def.isBlessed) return 'c-blessed';
+        
+        if (def.type === 'potion_hp') {
+            if (item.itemId === 'potion_red') return 'c-potion-red';
+            if (item.itemId === 'potion_orange') return 'c-potion-orange';
+            if (item.itemId === 'potion_clear') return 'c-potion-white';
+        }
+        if (item.itemId === 'potion_blue') return 'c-potion-purple';
+        
+        let isEquip = ['weapon','helmet','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring'].includes(def.type);
+        
+        if (isEquip) {
+            let safeLimit = def.safe !== undefined ? def.safe : 0;
+            let overEnchant = Number(item.enchant) - safeLimit;
+
+            if (overEnchant >= 4) return 'c-over-4';
+            if (overEnchant === 3) return 'c-over-3';
+            if (overEnchant === 2) return 'c-over-2';
+            if (overEnchant === 1) return 'c-over-1';
+        }
+        
+        if (Number(item.enchant) > 0) return 'c-enchant';
+        
+        return 'c-item';
+    },
+
+    getDisplayName: function(item, def) {
+        let name = def.name;
+        if (item.isBlessed && !def.isBlessed) name = '受祝福的 ' + name;
+        if (item.enchant > 0) name = `+${item.enchant} ` + name;
+        return name;
+    },
+
+    getItemKey: function(itemId, enchant, isBlessed = false) {
+        return `${itemId}_${enchant}_${isBlessed}`;
+    },
+    addInventory: function(itemId, count, enchant = 0, isBlessed = false) {
+        let def = ITEMS[itemId];
+        if(!def) return;
+        let key = this.getItemKey(itemId, enchant, isBlessed);
+        if(this.state.inventory[key]) {
+            this.state.inventory[key].count += count;
+        } else {
+            this.state.inventory[key] = { itemId: itemId, enchant: Number(enchant), count: count, isBlessed: isBlessed };
+        }
+        if(!this.state.isPlaying) return;
+        this.renderInventory();
+    },
+    removeInventory: function(itemKey, count) {
+        if(this.state.inventory[itemKey]) {
+            this.state.inventory[itemKey].count -= count;
+            if(this.state.inventory[itemKey].count <= 0) {
+                for(let slot in this.state.equipment) {
+                    if(this.state.equipment[slot] === itemKey) this.state.equipment[slot] = null;
+                }
+                delete this.state.inventory[itemKey];
+            }
+            this.renderInventory();
+            this.updateUI();
+        }
+    },
+    
+    renderInventory: function() {
+        const invList = document.getElementById('inventory-list');
+        const eqList = document.getElementById('equip-list');
+        if(!invList || !eqList) return;
+        
+        invList.innerHTML = '';
+        eqList.innerHTML = '';
+        
+        let slotNames = {
+            'weapon': '武器', 'helmet': '頭盔', 'armor': '盔甲', 
+            'shield': '盾牌', 'cloak': '斗篷', 'boots': '靴子', 'belt': '腰帶',
+            'amulet': '項鍊', 'ring': '戒指', 'gloves': '手套'
+        };
+
+        let equippedPairs = [];
+        for(let slot in this.state.equipment) {
+            let itemKey = this.state.equipment[slot];
+            if(itemKey && this.state.inventory[itemKey]) {
+                equippedPairs.push({slot: slot, key: itemKey});
+            }
+        }
+        
+        equippedPairs.sort((a, b) => compareItems(a.key, b.key, this.state.inventory));
+
+        let hasEquip = equippedPairs.length > 0;
+        
+        equippedPairs.forEach(pair => {
+            let slot = pair.slot;
+            let itemKey = pair.key;
+            let item = this.state.inventory[itemKey];
+            let def = ITEMS[item.itemId];
+            
+            let displayName = this.getDisplayName(item, def);
+            let colorClass = this.getItemColorClass(item, def);
+
+            let html = `<div class="py-2 border-b border-dashed border-slate-700 hover:bg-white/5 transition-colors">
+                <div class="mb-2 text-sm"><span class="c-item">[${slotNames[slot] || slot.toUpperCase()}] <span class="${colorClass}">${displayName}</span></span></div>
+                <div class="flex gap-1 flex-wrap justify-end">
+                    <button class="btn-ui" onclick="game.openEnchantModal('${itemKey}')">強化</button>
+                    <button class="btn-ui" onclick="game.unequip('${slot}')">卸下</button>
+                </div>
+            </div>`;
+            eqList.insertAdjacentHTML('beforeend', html);
+        });
+
+        if(!hasEquip) eqList.innerHTML = '<div class="c-sys italic p-2 text-sm">目前無任何裝備。</div>';
+
+        let itemKeys = Object.keys(this.state.inventory);
+        if(itemKeys.length === 0) {
+            invList.innerHTML = '<div class="c-sys italic p-2 text-sm">背包是空的。</div>';
+            return;
+        }
+
+        itemKeys.sort((a,b) => compareItems(a, b, this.state.inventory));
+
+        itemKeys.forEach(key => {
+            let item = this.state.inventory[key];
+            let def = ITEMS[item.itemId];
+            
+            let equippedCount = 0;
+            for(let slot in this.state.equipment) { if(this.state.equipment[slot] === key) equippedCount++; }
+            let displayCount = item.count - equippedCount;
+            
+            if(displayCount <= 0) return;
+
+            let displayName = this.getDisplayName(item, def);
+            let qty = displayCount > 1 ? ` <span class="c-sys">x${displayCount}</span>` : '';
+            
+            let actions = '';
+            if(['weapon','helmet','armor','shield','cloak','boots','belt','amulet','ring','gloves'].includes(def.type)) {
+                actions += `<button class="btn-ui border-yellow-700 text-yellow-300" onclick="game.equip('${key}')">裝備</button> `;
+                if(def.type !== 'belt' && def.type !== 'amulet' && def.type !== 'ring') actions += `<button class="btn-ui" onclick="game.openEnchantModal('${key}')">強化</button> `;
+            } else if(def.type === 'book') {
+                actions += `<button class="btn-ui c-success border-green-800" onclick="game.learnSpell('${key}')">學習</button> `;
+            } else if(def.type.startsWith('potion')) {
+                actions += `<button class="btn-ui c-info border-blue-800" onclick="game.usePotion('${key}')">使用</button> `;
+            }
+
+            let canSell = false;
+            let sellPrice = 0;
+            if (['weapon','helmet','armor','shield','cloak','boots','belt','amulet','ring','gloves'].includes(def.type) && item.enchant === 0) {
+                if(item.isBlessed) { canSell = true; sellPrice = 10000; }
+                else { canSell = true; sellPrice = 100; }
+            } else if (def.type === 'book') {
+                canSell = true;
+                sellPrice = 100 * Math.pow(SPELLS[def.spellId].level, 2);
+            }
+
+            if (canSell) {
+                actions += `<button class="btn-ui c-sys border-gray-700" onclick="game.sellItem('${key}', ${sellPrice})" title="售價: ${sellPrice} 金幣">販賣</button>`;
+            }
+
+            let colorClass = this.getItemColorClass(item, def);
+
+            let html = `<div class="py-2 border-b border-dashed border-zinc-700 hover:bg-white/5 transition-colors">
+                <div class="mb-2 text-sm"><span class="${colorClass}">${displayName}${qty}</span></div>
+                <div class="flex gap-1 flex-wrap justify-end">${actions}</div>
+            </div>`;
+            invList.insertAdjacentHTML('beforeend', html);
+        });
+    },
+
+    equip: function(itemKey) {
+        let item = this.state.inventory[itemKey];
+        if(!item) return;
+        let def = ITEMS[item.itemId];
+        let slotToEquip = def.type;
+        
+        if(def.type === 'weapon' && def.hands === 2 && this.state.equipment.shield) {
+            this.state.equipment.shield = null;
+        }
+        if(def.type === 'shield' && this.state.equipment.weapon) {
+            let wpn = this.state.inventory[this.state.equipment.weapon];
+            if(wpn && ITEMS[wpn.itemId].hands === 2) this.state.equipment.weapon = null;
+        }
+
+        this.state.equipment[slotToEquip] = itemKey;
+        this.calculateMaxHpMp();
+        this.logSystem(`裝備了 ${this.getDisplayName(item, def)}。`);
+        this.updateSettingsUI(); 
+        this.updateUI();
+        this.renderInventory();
+        this.renderSkills();
+    },
+    unequip: function(slot) {
+        if(this.state.equipment[slot]) {
+            this.state.equipment[slot] = null;
+            this.calculateMaxHpMp();
+            this.updateSettingsUI();
+            this.updateUI();
+            this.renderInventory();
+            this.renderSkills();
+        }
+    },
+
+    usePotion: function(itemKey) {
+        let item = this.state.inventory[itemKey];
+        if(!item) return;
+        let def = ITEMS[item.itemId];
+        this.removeInventory(itemKey, 1);
+        
+        if(def.type === 'potion_hp') {
+            let con = this.getEffStat('con');
+            let bonus = 0;
+            if(con>=18&&con<=24) bonus=1; else if(con>=25&&con<=30) bonus=2; else if(con>=31&&con<=35) bonus=3; else if(con>=36&&con<=40) bonus=4; else if(con>=41&&con<=45) bonus=5; else if(con>=46&&con<=50) bonus=6;
+            this.state.hp = Math.min(this.state.maxHp, this.state.hp + def.heal + bonus);
+            this.logCombat(`使用了 ${def.name}。恢復了 ${def.heal+bonus} 點體力。`, 'hit');
+        } else if(def.type === 'potion_mp') {
+            this.state.buffs.potion_blue = def.duration;
+            this.logCombat(`使用了 魔力藥水。魔力回復速度提升。`, 'hit');
+        }
+        this.updateUI();
+    },
+    learnSpell: function(itemKey) {
+        let item = this.state.inventory[itemKey];
+        if(!item) return;
+        let def = ITEMS[item.itemId];
+        let spellId = def.spellId;
+        
+        if(this.state.spells.includes(spellId)) {
+            this.logSystem(`你已經學會了 ${SPELLS[spellId].name}。`, 'warn');
+        } else {
+            this.state.spells.push(spellId);
+            this.removeInventory(itemKey, 1);
+            this.logSystem(`學會了新魔法：${SPELLS[spellId].name}！`, 'reward');
+            this.renderSkills();
+            this.updateSettingsUI();
+        }
+    },
+
+    sellItem: function(itemKey, price) {
+        let item = this.state.inventory[itemKey];
+        if(!item) return;
+        let def = ITEMS[item.itemId];
+        
+        let canSell = false;
+        if (['weapon','helmet','armor','shield','cloak','boots','belt','amulet','ring','gloves'].includes(def.type) && item.enchant === 0) canSell = true;
+        if (def.type === 'book') canSell = true;
+
+        if(!canSell) {
+            this.logSystem(`此物品無法販賣。`, 'danger');
+            return;
+        }
+
+        this.removeInventory(itemKey, 1);
+        this.state.adena += price;
+        this.logSystem(`賣出了 ${this.getDisplayName(item, def)}，獲得 ${price} 金幣。`, 'reward');
+        this.updateUI();
+    },
+
+    // --- 強化系統 ---
+    openEnchantModal: function(itemKey) {
+        let item = this.state.inventory[itemKey];
+        if(!item) return;
+        let def = ITEMS[item.itemId];
+        
+        this.state.enchantTargetKey = itemKey;
+        
+        let displayName = this.getDisplayName(item, def);
+        let colorClass = this.getItemColorClass(item, def);
+        
+        document.getElementById('enchant-target-name').innerText = displayName;
+        document.getElementById('enchant-target-name').className = `font-bold text-xl ${colorClass}`;
+        
+        let scrollList = document.getElementById('enchant-scroll-list');
+        scrollList.innerHTML = '';
+        
+        let targetType = def.type === 'weapon' ? 'weapon' : (def.type === 'belt' || def.type === 'amulet' || def.type === 'ring' || def.type === 'earring' ? 'accessory' : 'armor');
+        let foundScrolls = false;
+
+        for(let key in this.state.inventory) {
+            let sItem = this.state.inventory[key];
+            let sDef = ITEMS[sItem.itemId];
+            if(sDef.type === 'scroll' && sDef.target === targetType) {
+                foundScrolls = true;
+                let sColorClass = this.getItemColorClass(sItem, sDef);
+                scrollList.insertAdjacentHTML('beforeend', `
+                    <div class="list-item bg-gray-900 rounded p-2 border border-gray-700">
+                        <span class="text-lg ${sColorClass}">${sDef.name} <span class="c-sys">x${sItem.count}</span></span>
+                        <button class="btn-ui c-info border-blue-700" onclick="game.doEnchant('${key}')">使用</button>
+                    </div>
+                `);
+            }
+        }
+        if(!foundScrolls) {
+            scrollList.innerHTML = `<div class="c-sys italic p-2 text-sm">背包中沒有可用的強化卷軸。</div>`;
+        }
+
+        document.getElementById('enchant-modal').classList.remove('hidden');
+    },
+    closeEnchantModal: function() {
+        this.state.enchantTargetKey = null;
+        document.getElementById('enchant-modal').classList.add('hidden');
+    },
+    doEnchant: function(scrollKey) {
+        let itemKey = this.state.enchantTargetKey;
+        let item = this.state.inventory[itemKey];
+        let scroll = this.state.inventory[scrollKey];
+        
+        if(!item || !scroll) { this.closeEnchantModal(); return; }
+        
+        let itemDef = ITEMS[item.itemId];
+        let isWeapon = itemDef.type === 'weapon';
+        let safeLimit = itemDef.safe !== undefined ? itemDef.safe : 0;
+        let isBlessed = ITEMS[scroll.itemId].isBlessed;
+        let currentEnchant = Number(item.enchant); 
+        
+        let success = false;
+        let noChange = false;
+        
+        if(currentEnchant < safeLimit) {
+            success = true;
+        } else {
+            if(isWeapon) {
+                if(currentEnchant >= 9) {
+                    let r = Math.random() * 6;
+                    if(r < 1) success = true; else if(r < 2) noChange = true;
+                } else {
+                    if(Math.random() < Number(1/3)) success = true;
+                }
+            } else {
+                if(safeLimit === 4) {
+                    let den = currentEnchant === 0 ? 1 : currentEnchant;
+                    if(Math.random() < Number(1/den)) success = true;
+                } else if(safeLimit === 0) {
+                    let den = currentEnchant === 0 ? 2 : currentEnchant * 2;
+                    if(Math.random() < Number(1/den)) success = true;
+                } else {
+                    let den = currentEnchant === 0 ? 1 : currentEnchant;
+                    if(Math.random() < Number(1/den)) success = true;
+                }
+            }
+        }
+        
+        let wasEquipped = false;
+        let slotName = '';
+        for(let slot in this.state.equipment) {
+            if(this.state.equipment[slot] === itemKey) {
+                wasEquipped = true;
+                slotName = slot;
+                break;
+            }
+        }
+
+        this.removeInventory(scrollKey, 1);
+        
+        let nameBefore = this.getDisplayName(item, itemDef);
+
+        if(success) {
+            let boost = 1;
+            if(isBlessed) {
+                let r = Math.random();
+                if(r < 0.33) boost = 3; else if(r < 0.66) boost = 2;
+            }
+            
+            this.removeInventory(itemKey, 1); 
+            this.addInventory(item.itemId, 1, currentEnchant + boost, item.isBlessed); 
+            
+            if(wasEquipped) {
+                this.state.equipment[slotName] = this.getItemKey(item.itemId, currentEnchant + boost, item.isBlessed);
+            }
+
+            let nameAfter = this.getDisplayName({enchant: currentEnchant + boost, isBlessed: item.isBlessed}, itemDef);
+            this.logSystem(`${nameAfter} 持續發出銀色的光芒。`, 'enchant-success');
+        } else if(noChange) {
+            this.logSystem(`${nameBefore} 發出微弱銀色的光芒，沒有任何變化。`);
+        } else {
+            this.logSystem(`${nameBefore} 強烈的發出 銀色的光芒就消失了。`, 'danger');
+            this.removeInventory(itemKey, 1); 
+        }
+        
+        this.closeEnchantModal();
+        this.updateUI();
+        this.renderInventory();
+    },
+
+    buyItem: function(itemId) {
+        let def = ITEMS[itemId];
+        if(this.state.adena >= def.price) {
+            this.state.adena -= def.price;
+            this.addInventory(itemId, 1, 0, false); 
+            this.logSystem(`購買了 ${def.name}。`);
+            this.updateUI();
+        } else {
+            this.logSystem(`金幣不足，無法購買 ${def.name}。`, 'danger');
+        }
+    },
+    updateSettingsUI: function() {
+        let atkSel = document.getElementById('cfg-auto-attack');
+        let healSel = document.getElementById('cfg-heal-spell');
+        
+        let availSpells = this.getAvailableSpells();
+        
+        let currentAtk = this.state.settings.autoAttack;
+        atkSel.innerHTML = '<option value="none">無 (純物理攻擊)</option>';
+        availSpells.forEach(id => {
+            let reqLevel = SPELLS[id].level * 4;
+            if(SPELLS[id].type === 'attack' && this.state.level >= reqLevel) {
+                atkSel.innerHTML += `<option value="${id}">${SPELLS[id].name}</option>`;
+            }
+        });
+        let optionExists = Array.from(atkSel.options).some(opt => opt.value === currentAtk);
+        if (optionExists) atkSel.value = currentAtk;
+        else { atkSel.value = 'none'; this.state.settings.autoAttack = 'none'; }
+        
+        let currentHeal = this.state.settings.autoHealSpell;
+        healSel.innerHTML = '<option value="none">無</option>';
+        availSpells.forEach(id => {
+            let sp = SPELLS[id];
+            let reqLevel = sp.level * 4;
+            if(sp.type === 'heal' && this.state.level >= reqLevel) {
+                healSel.innerHTML += `<option value="${id}">${sp.name}</option>`;
+            }
+        });
+        let healOptionExists = Array.from(healSel.options).some(opt => opt.value === currentHeal);
+        if (healOptionExists) healSel.value = currentHeal;
+        else { healSel.value = 'none'; this.state.settings.autoHealSpell = 'none'; }
+        
+        let maxLvl = Math.max(1, Math.floor(this.state.level/4));
+        document.getElementById('ui-max-spell-lv').innerText = getChineseNumber(maxLvl);
+    },
+    updateSettings: function() {
+        this.state.settings.autoHpThreshold = parseInt(document.getElementById('cfg-hp-threshold').value) || 5;
+        this.state.settings.autoHpType = document.getElementById('cfg-hp-type').value;
+        this.state.settings.autoBuyHp = document.getElementById('cfg-auto-buy').checked;
+        this.state.settings.autoBuyMp = document.getElementById('cfg-auto-mp').checked;
+        this.state.settings.autoAttack = document.getElementById('cfg-auto-attack').value;
+        this.state.settings.autoHealThreshold = parseInt(document.getElementById('cfg-heal-threshold').value) || 50;
+        this.state.settings.autoHealSpell = document.getElementById('cfg-heal-spell').value;
+    },
+    toggleAutoBuff: function(spellId, isChecked) {
+        if(isChecked) { if(!this.state.settings.autoBuffs.includes(spellId)) this.state.settings.autoBuffs.push(spellId); }
+        else { this.state.settings.autoBuffs = this.state.settings.autoBuffs.filter(id => id !== spellId); }
+    },
+    getSpellCost: function(spell) {
+        let int = this.state.baseStats.int;
+        let reduction = 0;
+        if(int>=13 && spell.level>=2) {
+            if(int===13) reduction = 1;
+            else if(int===14) reduction = spell.level>=3 ? 2 : 1;
+            else if(int===15) reduction = spell.level>=4 ? 3 : (spell.level===3?2:1);
+            else if(int>=16) reduction = spell.level; 
+        }
+        return Math.max(1, spell.mp - reduction);
+    },
+    renderSkills: function() {
+        const list = document.getElementById('skill-list');
+        list.innerHTML = '';
+        
+        let availSpells = this.getAvailableSpells();
+        if(availSpells.length === 0) {
+            list.innerHTML = '<div class="c-sys italic p-2 text-sm">尚未學習任何魔法。</div>';
+            return;
+        }
+
+        let spellsByLevel = {};
+        for (let i = 1; i <= 10; i++) { spellsByLevel[i] = []; }
+
+        availSpells.forEach(id => { spellsByLevel[SPELLS[id].level].push(SPELLS[id]); });
+
+        for (let lvl = 1; lvl <= 10; lvl++) {
+            if (spellsByLevel[lvl].length > 0) {
+                let lvlTitle = `${getChineseNumber(lvl)}階魔法`;
+                
+                let groupHtml = `<div class="mb-4">
+                    <div class="text-sm c-sys border-b border-gray-800 pb-1 mb-2">${lvlTitle}</div>
+                    <div class="grid grid-cols-5 gap-2">`;
+                
+                spellsByLevel[lvl].forEach(spell => {
+                    let reqLevel = spell.level * 4;
+                    let canUse = this.state.level >= reqLevel;
+                    let isBuff = spell.type === 'buff';
+                    let isPassive = spell.type === 'passive';
+                    let isHeal = spell.type === 'heal';
+                    let checked = this.state.settings.autoBuffs.includes(spell.id) ? 'checked' : '';
+                    
+                    let isEquipSpell = !this.state.spells.includes(spell.id);
+                    let equipMark = isEquipSpell ? '<span class="text-xs c-warn block">[裝備]</span>' : '';
+                    
+                    let autoHtml = '';
+                    if (isPassive) {
+                        autoHtml = `<span class="c-sys text-xs mt-1 block">常駐被動</span>`;
+                    } else if (isBuff && canUse && !isHeal) {
+                        autoHtml = `<label class="cursor-pointer c-sys hover:text-white mt-1 text-xs"><input type="checkbox" class="w-3 h-3 align-middle" ${checked} onchange="game.toggleAutoBuff('${spell.id}', this.checked)"> 自動</label>`;
+                    } else if (!canUse) {
+                        this.state.settings.autoBuffs = this.state.settings.autoBuffs.filter(bid => bid !== spell.id);
+                    }
+
+                    groupHtml += `
+                        <div class="spell-grid-item ${canUse ? '' : 'opacity-30'}">
+                            <span class="${isBuff?'c-success':(isPassive?'c-info':'c-err')} text-sm font-bold block mb-1">${spell.name}</span>
+                            ${equipMark}
+                            <span class="c-sys text-xs block">${spell.mp!==undefined?'MP:'+spell.mp:''}</span>
+                            ${autoHtml}
+                        </div>`;
+                });
+                
+                groupHtml += `</div></div>`;
+                list.insertAdjacentHTML('beforeend', groupHtml);
+            }
+        }
+        
+        this.updateSettingsUI();
+    },
+
+    // --- 戰鬥系統 ---
+    changeMap: function(mapId) {
+        if (mapId === 'antaras_lair' && this.state.antarasDeadUntil && Date.now() < this.state.antarasDeadUntil) {
+            this.stopBattle();
+            this.state.currentMap = mapId;
+            let leftSecs = Math.ceil((this.state.antarasDeadUntil - Date.now()) / 1000);
+            this.state.targetMonster = null;
+            document.getElementById('target-name').innerText = `安塔瑞斯尚未重生... (${leftSecs}秒)`;
+            document.getElementById('target-hp-container').classList.add('hidden');
+            this.logSystem(`移動到了 ${MAPS[mapId].name}。但安塔瑞斯尚未重生。`);
+            setTimeout(() => { if(this.state.isPlaying && this.state.currentMap === 'antaras_lair') this.spawnMonster(); }, 5000);
+            return;
+        }
+
+        this.state.currentMap = mapId;
+        this.logSystem(`移動到了 ${MAPS[mapId].name}。`);
+        this.stopBattle();
+        this.state.targetMonster = null;
+        document.getElementById('target-name').innerText = '尋找目標中...';
+        document.getElementById('target-hp-container').classList.add('hidden');
+        setTimeout(() => this.startBattle(), 1000);
+    },
+    spawnMonster: function() {
+        if(this.state.hp <= 0) return;
+        
+        if (this.state.currentMap === 'antaras_lair') {
+            if (this.state.antarasDeadUntil && Date.now() < this.state.antarasDeadUntil) {
+                let leftSecs = Math.ceil((this.state.antarasDeadUntil - Date.now()) / 1000);
+                document.getElementById('target-name').innerText = `安塔瑞斯尚未重生... (${leftSecs}秒)`;
+                document.getElementById('target-hp-container').classList.add('hidden');
+                setTimeout(() => { if(this.state.isPlaying && this.state.currentMap === 'antaras_lair') this.spawnMonster(); }, 5000);
+                return;
+            }
+        }
+
+        const map = MAPS[this.state.currentMap];
+        let totalW = map.monsters.reduce((s, m) => s + m.weight, 0);
+        let r = Math.random() * totalW;
+        let selected = map.monsters[0];
+        for(let m of map.monsters) { if(r < m.weight) { selected = m; break; } r -= m.weight; }
+        
+        this.state.targetMonster = { ...selected, maxHp: selected.hp, debuffs: {} };
+        this.state.zombieTick = 0;
+        this.state.monsterSpecialTick = 0;
+        
+        let availSpells = this.getAvailableSpells();
+        if (selected.name === '史巴托' && availSpells.includes('detection') && this.state.level >= SPELLS['detection'].level * 4) {
+            this.state.targetMonster.debuffs.sleep = 5;
+            this.logCombat(`【無所遁形術】看破了史巴托的潛伏，使其停止行動 5 秒。`, 'info');
+        }
+        
+        document.getElementById('target-name').innerText = `[等級 ${selected.level}] ${selected.name}`;
+        document.getElementById('target-hp-container').classList.remove('hidden');
+        this.updateMonsterHpBar();
+    },
+    updateMonsterHpBar: function() {
+        if(!this.state.targetMonster) return;
+        document.getElementById('target-hp-bar').style.width = `${Math.max(0, (this.state.targetMonster.hp/this.state.targetMonster.maxHp)*100)}%`;
+    },
+    playerAttack: function() {
+        if(!this.state.targetMonster || this.state.hp <= 0) return;
+        
+        let dmg = 0; let isHit = false;
+        
+        let wKey = this.state.equipment.weapon;
+        let wpn = null;
+        let wDef = null;
+        if(wKey && this.state.inventory[wKey]) {
+            wpn = this.state.inventory[wKey];
+            wDef = ITEMS[wpn.itemId];
+        }
+        
+        let dice = wDef ? wDef.dice : '1d2';
+        
+        let tAc = this.state.targetMonster.ac;
+        if (this.state.targetMonster.debuffs?.disease > 0) tAc += 8;
+        
+        let hBonus = this.getMeleeHit();
+        let roll = rollDice('1d20');
+        
+        let isCrit = false;
+        if(roll === 1) isHit = false;
+        else if(roll === 20) { isHit = true; isCrit = true; }
+        else if(roll + hBonus + (this.state.level - this.state.targetMonster.level) >= 10 - tAc) isHit = true;
+        
+        if(isHit) {
+            let dDmg = isCrit ? parseInt(dice.split('d')[1]) : rollDice(dice);
+            let bonusUndead = 0;
+            if (this.state.targetMonster.isUndead && wDef && wDef.isUndeadSlayer) {
+                bonusUndead = Math.floor(Math.random() * 4) + 3; 
+            }
+            dmg = Math.max(1, dDmg + this.getMeleeDmg() + bonusUndead);
+            
+            let undeadText = bonusUndead > 0 ? ` (不死加成 +${bonusUndead})` : '';
+            this.logCombat(`你命中了 ${this.state.targetMonster.name} 造成 ${dmg} 點傷害${isCrit?' (爆擊！)':''}${undeadText}。`, 'hit');
+        } else {
+            this.logCombat(`你的攻擊未命中 ${this.state.targetMonster.name}。`);
+        }
+
+        if(isHit) {
+            this.state.targetMonster.hp -= dmg;
+            this.updateMonsterHpBar();
+            if(this.state.targetMonster.hp <= 0) this.monsterDied();
+        }
+    },
+    playerMagicAttack: function() {
+        if(!this.state.targetMonster || this.state.hp <= 0) return;
+        
+        let sId = this.state.settings.autoAttack;
+        if (sId === 'none' || !SPELLS[sId]) return;
+        
+        let spell = SPELLS[sId];
+        if(!this.getAvailableSpells().includes(spell.id)) return;
+        if(this.state.level < spell.level * 4) return;
+        
+        if (spell.id === 'darkness' && this.state.targetMonster.debuffs?.darkness > 0) return;
+        if (spell.id === 'disease' && this.state.targetMonster.debuffs?.disease > 0) return;
+        if (spell.id === 'weapon_break' && this.state.targetMonster.debuffs?.weapon_break > 0) return;
+        if (spell.id === 'slow' && this.state.targetMonster.debuffs?.slow > 0) return;
+        
+        let cost = this.getSpellCost(spell);
+        if(this.state.mp < cost) return;
+        
+        this.state.mp -= cost;
+        this.updateUI();
+        
+        if (spell.id === 'slow') {
+            this.state.targetMonster.debuffs.slow = spell.duration; 
+            if (this.state.targetMonster.isBoss) {
+                this.logCombat(`施放了 ${spell.name}，但對頭目無效。`, 'magic');
+            } else {
+                this.logCombat(`施放了 ${spell.name}，${this.state.targetMonster.name} 動作變慢了。`, 'magic');
+            }
+            return;
+        }
+
+        if (spell.id === 'sleep_mist') {
+            let secs = rollDice('1d8');
+            this.state.targetMonster.debuffs.sleep = secs;
+            this.logCombat(`施放了 ${spell.name}，${this.state.targetMonster.name} 陷入沉睡 ${secs} 秒。`, 'magic');
+            return;
+        }
+        
+        if (spell.id === 'darkness') {
+            this.state.targetMonster.debuffs.darkness = spell.duration;
+            this.logCombat(`施放了 ${spell.name}，${this.state.targetMonster.name} 被黑闇籠罩(命中-5)。`, 'magic');
+            return;
+        }
+
+        if (spell.id === 'disease') {
+            this.state.targetMonster.debuffs.disease = spell.duration;
+            this.logCombat(`施放了 ${spell.name}，${this.state.targetMonster.name} 感染了疾病(命中-4, AC+8)。`, 'magic');
+            return;
+        }
+
+        if (spell.id === 'weapon_break') {
+            this.state.targetMonster.debuffs.weapon_break = spell.duration;
+            this.logCombat(`施放了 ${spell.name}，${this.state.targetMonster.name} 武器受損(傷害-10)。`, 'magic');
+            return;
+        }
+
+        if (spell.dice) {
+            let targetMR = this.state.targetMonster.mr || 0;
+            
+            if (spell.id === 'fireball') {
+                let totalDmg = 0;
+                for(let i=0; i<3; i++) {
+                    let d = rollDice('1d16');
+                    if (i === 2) d += this.getMagicDmg(); 
+                    d = Math.max(1, Math.floor(d * (100 - targetMR) / 100));
+                    if (this.state.targetMonster.id === 'antaras') d = Math.max(1, Math.floor(d * 0.1));
+                    totalDmg += d;
+                    this.logCombat(`施放了 ${spell.name}，造成 ${d} 點傷害。`, 'magic');
+                }
+                this.state.targetMonster.hp -= totalDmg;
+            } else if (spell.id === 'lightning_storm') {
+                let totalDmg = 0;
+                for(let i=0; i<9; i++) {
+                    let d = rollDice('1d18');
+                    if (i === 8) d += this.getMagicDmg();
+                    d = Math.max(1, Math.floor(d * (100 - targetMR) / 100));
+                    if (this.state.targetMonster.id === 'antaras') d = Math.max(1, Math.floor(d * 0.1));
+                    totalDmg += d;
+                    this.logCombat(`施放了 ${spell.name}，造成 ${d} 點傷害。`, 'magic');
+                }
+                this.state.targetMonster.hp -= totalDmg;
+            } else {
+                let dmg = rollDice(spell.dice) + (spell.baseDmg||0) + this.getMagicDmg();
+                dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                
+                if (this.state.targetMonster.id === 'antaras') {
+                    dmg = Math.max(1, Math.floor(dmg * 0.1));
+                }
+
+                if(spell.healDice) {
+                    let h = rollDice(spell.healDice);
+                    this.state.hp = Math.min(this.state.maxHp, this.state.hp + h);
+                    this.updateUI();
+                }
+                this.logCombat(`施放了 ${spell.name}，造成 ${dmg} 點傷害。`, 'magic');
+                this.state.targetMonster.hp -= dmg;
+            }
+
+            this.updateMonsterHpBar();
+            if(this.state.targetMonster.hp <= 0) this.monsterDied();
+        }
+    },
+    monsterAttack: function() {
+        if(!this.state.targetMonster || this.state.hp <= 0) return;
+        
+        if (this.state.buffs.tame_monster && !this.state.targetMonster.isBoss) {
+            if (Math.random() < (1 / this.state.targetMonster.level)) {
+                let p = this.state.targetMonster.dice.split('+');
+                let selfDmg = rollDice(p[0]) + (p[1] ? parseInt(p[1]) : 0);
+                this.state.targetMonster.hp -= selfDmg;
+                this.logCombat(`${this.state.targetMonster.name} 被迷魅，攻擊了自己造成 ${selfDmg} 點傷害！`, 'success');
+                this.updateMonsterHpBar();
+                if(this.state.targetMonster.hp <= 0) this.monsterDied();
+                return;
+            }
+        }
+        
+        if(Math.random()*100 <= this.getER()) {
+            this.logCombat(`你閃避了 ${this.state.targetMonster.name} 的攻擊！`, 'success');
+            return;
+        }
+        
+        let roll = rollDice('1d20');
+        let isHit = false; let isCrit = false;
+        
+        let darknessPenalty = (this.state.targetMonster.debuffs?.darkness > 0) ? -5 : 0;
+        let diseasePenalty = (this.state.targetMonster.debuffs?.disease > 0) ? -4 : 0;
+        
+        let monsterLvl = this.state.targetMonster.level;
+        let extraHit = Math.floor(monsterLvl / 2) + Math.floor(monsterLvl / 10) * 2;
+        if (this.state.targetMonster.hitBonus) extraHit += this.state.targetMonster.hitBonus;
+        
+        if(roll === 1) isHit = false;
+        else if(roll === 20) { isHit = true; isCrit = true; }
+        else if(roll + extraHit + darknessPenalty + diseasePenalty + (this.state.targetMonster.level - this.state.level) >= 10 - this.getAC()) isHit = true;
+        
+        if(isHit) {
+            let parts = this.state.targetMonster.dice.split('+');
+            let dDmg = isCrit ? parseInt(parts[0].split('d')[1]) : rollDice(parts[0]);
+            let baseD = parts[1] ? parseInt(parts[1]) : 0;
+            if (this.state.targetMonster.debuffs?.weapon_break > 0) baseD -= 10;
+            
+            let dr = this.getDamageReduction();
+            let dmg = Math.max(1, dDmg + baseD - dr); 
+            if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+            
+            this.state.hp -= dmg;
+            this.logCombat(`${this.state.targetMonster.name} 命中了你，造成 ${dmg} 點傷害。`, 'danger');
+            this.updateUI();
+            
+            if(this.state.hp <= 0) this.checkPlayerDeath();
+        } else {
+            this.logCombat(`${this.state.targetMonster.name} 的攻擊未命中。`);
+        }
+    },
+    monsterDied: function() {
+        let m = this.state.targetMonster;
+        this.state.exp += m.exp;
+        
+        let multi = m.isBoss ? 10 : 1;
+        let goldMsg = '';
+        if (Math.random() < 0.70) {
+            let adena = m.adena[0] + Math.floor(Math.random()*(m.adena[1]-m.adena[0]+1));
+            this.state.adena += adena;
+            goldMsg = `獲得 ${adena} 金幣。`;
+        }
+        
+        if (goldMsg) this.logSystem(`擊敗了 ${m.name}。${goldMsg}`);
+        else this.logSystem(`擊敗了 ${m.name}。`);
+        
+        let lv = m.level;
+        
+        if (lv >= 11) {
+            if(Math.random()*100 < 0.5 * multi) { this.addInventory('scroll_armor',1,0,false); this.logSystem(`${m.name} 給你 對盔甲施法的卷軸。`, 'reward'); }
+            if(Math.random()*100 < 0.01 * multi) { this.addInventory('scroll_armor_blessed',1,0,false); this.logSystem(`${m.name} 給你 受祝福的 對盔甲施法的卷軸。`, 'blessed'); }
+        }
+        if (lv >= 21) {
+            if(Math.random()*100 < 0.5 * multi) { this.addInventory('scroll_weapon',1,0,false); this.logSystem(`${m.name} 給你 對武器施法的卷軸。`, 'reward'); }
+            if(Math.random()*100 < 0.01 * multi) { this.addInventory('scroll_weapon_blessed',1,0,false); this.logSystem(`${m.name} 給你 受祝福的 對武器施法的卷軸。`, 'blessed'); }
+        }
+        if (lv >= 31) {
+            if(Math.random()*100 < 0.1 * multi) { this.addInventory('scroll_accessory',1,0,false); this.logSystem(`${m.name} 給你 對飾品施法的卷軸。`, 'reward'); }
+        }
+        
+        if(m.drops) {
+            m.drops.forEach(d => { 
+                if(Math.random()*100 < d.rate*multi) {
+                    if(ITEMS[d.id].type === 'book' && this.state.spells.includes(ITEMS[d.id].spellId)) {
+                        let sell = 100 * Math.pow(SPELLS[ITEMS[d.id].spellId].level, 2);
+                        this.state.adena += sell;
+                        this.logSystem(`賣出重複的 ${ITEMS[d.id].name} 獲得 ${sell} 金幣。`);
+                    } else {
+                        let isEquip = ['weapon','helmet','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring'].includes(ITEMS[d.id].type);
+                        let isBlessed = false;
+                        if (isEquip && Math.random() < 0.01) isBlessed = true;
+
+                        this.addInventory(d.id, 1, 0, isBlessed);
+                        
+                        let def = ITEMS[d.id];
+                        let name = def.name;
+                        if (def.isUndeadSlayer) name += ' (不死加成)';
+                        if (isBlessed) name = '受祝福的 ' + name;
+                        
+                        let logType = isBlessed ? 'blessed' : 'reward';
+                        this.logSystem(`${m.name} 給你 ${name}。`, logType);
+                    }
+                }
+            });
+        }
+        
+        if (m.id === 'antaras') {
+            this.state.antarasDeadUntil = Date.now() + 600000;
+        }
+
+        document.getElementById('target-name').innerText = '尋找目標中...';
+        document.getElementById('target-hp-container').classList.add('hidden');
+        
+        this.state.targetMonster = null;
+        this.checkLevelUp();
+        this.updateUI();
+        
+        if (this.state.currentMap === 'antaras_lair' && m.id === 'antaras') {
+            setTimeout(() => { if(this.state.isPlaying) this.spawnMonster(); }, 1000);
+        } else {
+            setTimeout(() => { if(this.state.isPlaying) this.spawnMonster(); }, 500);
+        }
+    },
+    checkPlayerDeath: function() {
+        if(this.state.hp <= 0) {
+            let availSpells = this.getAvailableSpells();
+            if (availSpells.includes('resurrection') && this.state.mp >= 50) {
+                this.state.mp -= 50;
+                this.state.hp = 1;
+                this.logCombat(`【返生術】發動！消耗 50 MP，免於一死。`, 'magic');
+                this.updateUI();
+                return;
+            }
+            this.playerDied();
+        }
+    },
+    playerDied: function() {
+        this.stopBattle();
+        let req = EXP_TABLE[this.state.level] || 36065092;
+        let pen = Math.floor(req * 0.1);
+        this.state.exp = Math.max(0, this.state.exp - pen);
+        this.state.hp = Math.floor(this.state.maxHp * 0.1);
+        this.logSystem(`你死亡了！失去經驗值。`, 'danger');
+        this.updateUI();
+        
+        setTimeout(() => { this.logSystem('在村莊中復活。'); this.startBattle(); }, 3000);
+    },
+    checkLevelUp: function() {
+        let req = EXP_TABLE[this.state.level] || 36065092;
+        if(this.state.exp >= req && this.state.level < 90) {
+            this.state.level++;
+            this.state.exp -= req;
+            this.calculateMaxHpMp();
+            this.state.hp = this.state.maxHp;
+            this.state.mp = this.state.maxMp;
+            
+            if(this.state.level >= 50) {
+                this.state.bonusPoints++;
+                this.logSystem(`獲得 1 點額外能力點數。(介面尚未實作)`, 'reward');
+            }
+            
+            this.logSystem(`升級了！達到 等級 ${this.state.level}。`, 'reward');
+            this.updateSettingsUI();
+            this.renderSkills(); 
+            this.checkLevelUp();
+        }
+    },
+
+    // --- 迴圈 ---
+    startLoops: function() {
+        this.state.regenLoop = setInterval(() => {
+            if(this.state.hp > 0 && this.state.hp < this.state.maxHp && !this.state.buffs.berserkers) {
+                let con = this.getEffStat('con');
+                this.state.hp = Math.min(this.state.maxHp, this.state.hp + (con<=13?1:con-12));
+            }
+            if(this.state.mp < this.state.maxMp) {
+                let wis = this.getEffStat('wis');
+                let r = wis<=14?1:wis<=16?2:wis===17?3:4;
+                if(this.state.buffs.potion_blue) r += (wis<=11?1:1+(wis-10));
+                this.state.mp = Math.min(this.state.maxMp, this.state.mp + r);
+            }
+            this.updateUI();
+        }, 16000); 
+        
+        this.state.tickLoop = setInterval(() => {
+            if(!this.state.isPlaying || this.state.hp <= 0) return;
+            
+            let needUpdate = false;
+            
+            // Player Buffs
+            for(let key in this.state.buffs) {
+                if(this.state.buffs[key] > 0) {
+                    this.state.buffs[key]--;
+                    if(this.state.buffs[key] <= 0) { 
+                        delete this.state.buffs[key]; 
+                        needUpdate = true; 
+                        let bName = SPELLS[key] ? SPELLS[key].name : key;
+                        if (key === 'potion_blue') bName = '魔力藥水';
+                        if (key === 'player_weapon_break') bName = '武器受損';
+                        if (key === 'poison_storm') bName = '毒氣風暴';
+                        this.logSystem(`${bName} 狀態消失。`);
+                    }
+                }
+            }
+
+            // Monster Debuffs & Specials
+            if(this.state.targetMonster) {
+                if (this.state.targetMonster.debuffs) {
+                    for(let k in this.state.targetMonster.debuffs) {
+                        if(this.state.targetMonster.debuffs[k] > 0) {
+                            this.state.targetMonster.debuffs[k]--;
+                            if(this.state.targetMonster.debuffs[k] <= 0) {
+                                if (k === 'slow') this.logCombat(`${this.state.targetMonster.name} 的緩速狀態結束了。`);
+                                if (k === 'sleep') this.logCombat(`${this.state.targetMonster.name} 醒來了！`);
+                                if (k === 'darkness') this.logCombat(`${this.state.targetMonster.name} 恢復了視力。`);
+                                if (k === 'disease') this.logCombat(`${this.state.targetMonster.name} 從疾病中恢復。`);
+                            }
+                        }
+                    }
+                }
+                
+                this.state.monsterSpecialTick++;
+                let st = this.state.monsterSpecialTick;
+                let tm = this.state.targetMonster;
+                
+                if (st % 5 === 0 && !(tm.debuffs?.sleep > 0)) {
+                    if (tm.name === '地獄犬') {
+                        let dmg = rollDice('3d8');
+                        let targetMR = this.getMR();
+                        dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                        if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+                        this.state.hp -= dmg;
+                        this.logCombat(`地獄犬發動噴火，對你造成必定命中的 ${dmg} 點魔法傷害！`, 'danger');
+                        needUpdate = true;
+                        this.checkPlayerDeath();
+                    } else if (tm.name === '長者') {
+                        let dmg = rollDice('3d16');
+                        let targetMR = this.getMR();
+                        dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                        if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+                        this.state.hp -= dmg;
+                        this.logCombat(`長者發動極道落雷，對你造成必定命中的 ${dmg} 點魔法傷害！`, 'danger');
+                        needUpdate = true;
+                        this.checkPlayerDeath();
+                    }
+                }
+                
+                if (tm.id === 'antaras' && !(tm.debuffs?.sleep > 0)) {
+                    if (st % 8 === 0) {
+                        let dmg = rollDice('5d20');
+                        let targetMR = this.getMR();
+                        dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                        if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+                        this.state.hp -= dmg;
+                        this.logCombat(`安塔瑞斯施展地裂術，對你造成必定命中的 ${dmg} 點魔法傷害！`, 'danger');
+                        needUpdate = true;
+                        this.checkPlayerDeath();
+                    }
+                    if (st % 30 === 0) {
+                        this.state.buffs.poison_storm = 15;
+                        this.logCombat(`安塔瑞斯施展了毒氣風暴！`, 'danger');
+                        needUpdate = true;
+                    }
+                    if (st % 40 === 0) {
+                        this.state.buffs.player_weapon_break = 20;
+                        this.logCombat(`安塔瑞斯施展了壞物術，你的武器傷害降低了！`, 'danger');
+                        needUpdate = true;
+                    }
+                    if (st % 12 === 0 && tm.hp < tm.maxHp * 0.5) {
+                        let dmg = rollDice('10d20');
+                        let targetMR = this.getMR();
+                        dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                        if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+                        this.state.hp -= dmg;
+                        this.logCombat(`安塔瑞斯發動大地怒吼，對你造成必定命中的 ${dmg} 點魔法傷害！`, 'danger');
+                        needUpdate = true;
+                        this.checkPlayerDeath();
+                    }
+                }
+            }
+            
+            if (this.state.buffs.poison_storm > 0 && this.state.buffs.poison_storm % 3 === 0) {
+                let dmg = 100;
+                let targetMR = this.getMR();
+                dmg = Math.max(1, Math.floor(dmg * (100 - targetMR) / 100));
+                if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.7));
+                this.state.hp -= dmg;
+                this.logCombat(`你受到毒氣風暴的侵蝕，損失了 ${dmg} 點體力。`, 'danger');
+                needUpdate = true;
+                this.checkPlayerDeath();
+            }
+            
+            // Zombie Summon Attack
+            if (this.state.targetMonster && this.state.buffs.create_zombie > 0) {
+                this.state.zombieTick++;
+                if (this.state.zombieTick >= 2) {
+                    this.state.zombieTick = 0;
+                    let roll = rollDice('1d20');
+                    let isHit = false;
+                    if(roll === 20) isHit = true;
+                    else if(roll !== 1 && roll + (this.state.level - this.state.targetMonster.level) >= 10 - this.state.targetMonster.ac) isHit = true;
+
+                    if (isHit) {
+                        let dmg = rollDice('2d4');
+                        this.state.targetMonster.hp -= dmg;
+                        this.logCombat(`隨從(人形殭屍) 命中了 ${this.state.targetMonster.name} 造成 ${dmg} 點傷害。`, 'success');
+                        this.updateMonsterHpBar();
+                        if(this.state.targetMonster.hp <= 0) this.monsterDied();
+                    } else {
+                        this.logCombat(`隨從(人形殭屍) 的攻擊未命中 ${this.state.targetMonster.name}。`);
+                    }
+                }
+            }
+
+            // Ogre Summon Attack
+            if (this.state.targetMonster && this.state.buffs.summon_ogre > 0) {
+                if (this.state.zombieTick === 0) { 
+                    let roll = rollDice('1d20');
+                    let isHit = false;
+                    if(roll === 20) isHit = true;
+                    else if(roll !== 1 && roll + (this.state.level - this.state.targetMonster.level) >= 10 - this.state.targetMonster.ac) isHit = true;
+
+                    if (isHit) {
+                        let dmg = rollDice('2d8') * 4;
+                        this.state.targetMonster.hp -= dmg;
+                        this.logCombat(`召喚的食人妖精 連續猛擊了 ${this.state.targetMonster.name} 造成 ${dmg} 點傷害。`, 'success');
+                        this.updateMonsterHpBar();
+                        if(this.state.targetMonster.hp <= 0) this.monsterDied();
+                    }
+                }
+            }
+
+            let availSpells = this.getAvailableSpells();
+
+            // Auto Buffs
+            for(let sId of this.state.settings.autoBuffs) {
+                let sp = SPELLS[sId];
+                if(availSpells.includes(sId) && this.state.level >= sp.level * 4) {
+                    let shouldCast = (!this.state.buffs[sId] || this.state.buffs[sId] <= 0);
+
+                    if (shouldCast) {
+                        let cost = this.getSpellCost(sp);
+                        if(this.state.mp >= cost) {
+                            this.state.mp -= cost;
+                            if(sp.healBase) {
+                                this.state.hp = Math.min(this.state.maxHp, this.state.hp + sp.healBase + this.getMagicDmg());
+                            } else {
+                                this.state.buffs[sId] = sp.duration;
+                            }
+                            this.logCombat(`自動施放了 ${sp.name}。`, 'info');
+                            needUpdate = true;
+                        }
+                    }
+                } else if (!availSpells.includes(sId)) {
+                    this.state.settings.autoBuffs = this.state.settings.autoBuffs.filter(bid => bid !== sId);
+                }
+            }
+            
+            // Auto Heal Magic
+            if (this.state.autoHealCd > 0) this.state.autoHealCd--;
+            if (this.state.autoHealCd <= 0 && this.state.hp <= this.state.settings.autoHealThreshold) {
+                let hId = this.state.settings.autoHealSpell;
+                if (hId && hId !== 'none' && availSpells.includes(hId)) {
+                    let sp = SPELLS[hId];
+                    if (this.state.level >= sp.level * 4) {
+                        let cost = this.getSpellCost(sp);
+                        if(this.state.mp >= cost) {
+                            this.state.mp -= cost;
+                            this.state.hp = Math.min(this.state.maxHp, this.state.hp + sp.healBase + this.getMagicDmg());
+                            this.logCombat(`自動施放了 ${sp.name}。`, 'info');
+                            this.state.autoHealCd = 3;
+                            needUpdate = true;
+                        }
+                    }
+                }
+            }
+
+            if(needUpdate) this.updateUI();
+
+            // Potions (HP)
+            if(this.state.potionCooldown > 0) this.state.potionCooldown--;
+            if(this.state.potionCooldown <= 0 && this.state.hp < this.state.maxHp && this.state.hp <= this.state.settings.autoHpThreshold) {
+                let type = this.state.settings.autoHpType;
+                
+                let potKey = null;
+                for(let k in this.state.inventory) {
+                    if(this.state.inventory[k].itemId === type) { potKey = k; break; }
+                }
+
+                if(!potKey && this.state.settings.autoBuyHp && this.state.adena >= ITEMS[type].price * 100) {
+                    this.state.adena -= ITEMS[type].price * 100;
+                    this.addInventory(type, 100, 0, false);
+                    potKey = Object.keys(this.state.inventory).find(k => this.state.inventory[k].itemId === type);
+                    this.logSystem(`自動購買了 100 瓶 ${ITEMS[type].name}。`);
+                }
+                
+                if(potKey && this.state.inventory[potKey].count > 0) {
+                    this.usePotion(potKey);
+                    this.state.potionCooldown = 1;
+                }
+            }
+            
+            // Auto Blue Potion (MP)
+            if (this.state.settings.autoBuyMp && (!this.state.buffs.potion_blue || this.state.buffs.potion_blue <= 0)) {
+                let mpPotKey = Object.keys(this.state.inventory).find(k => this.state.inventory[k].itemId === 'potion_blue');
+                if (!mpPotKey || this.state.inventory[mpPotKey].count <= 0) {
+                    if (this.state.adena >= 1046) {
+                        this.state.adena -= 1046;
+                        this.addInventory('potion_blue', 1, 0, false);
+                        mpPotKey = Object.keys(this.state.inventory).find(k => this.state.inventory[k].itemId === 'potion_blue');
+                        this.logSystem(`自動購買了 1 瓶 加速魔力回復藥水。`);
+                    }
+                }
+                if (mpPotKey && this.state.inventory[mpPotKey].count > 0) {
+                    this.usePotion(mpPotKey);
+                }
+            }
+            
+        }, 1000);
+    },
+    startBattle: function() {
+        this.state.isPlaying = true;
+        if(!this.state.targetMonster) this.spawnMonster();
+        
+        const playerLoopFn = () => {
+            if(!this.state.isPlaying || this.state.hp <= 0) return;
+            if(this.state.targetMonster) this.playerAttack();
+            let wKey = this.state.equipment.weapon;
+            let speed = (wKey && this.state.inventory[wKey]) ? ITEMS[this.state.inventory[wKey].itemId].speed : 1200;
+            this.state.battleLoop = setTimeout(playerLoopFn, speed);
+        };
+
+        const magicLoopFn = () => {
+            if(!this.state.isPlaying || this.state.hp <= 0) return;
+            if(this.state.targetMonster) this.playerMagicAttack();
+            this.state.magicLoop = setTimeout(magicLoopFn, 3000);
+        };
+
+        const monsterLoopFn = () => {
+            if(!this.state.isPlaying || this.state.hp <= 0) return;
+            if(this.state.targetMonster) {
+                if (this.state.targetMonster.debuffs?.sleep > 0) {
+                    this.state.monsterLoop = setTimeout(monsterLoopFn, 1000);
+                    return;
+                }
+                this.monsterAttack();
+            }
+            let speed = this.state.targetMonster ? this.state.targetMonster.atkSpeed : 2000;
+            if (this.state.targetMonster?.debuffs?.slow > 0 && !this.state.targetMonster.isBoss) speed += 1000;
+            this.state.monsterLoop = setTimeout(monsterLoopFn, speed);
+        };
+        
+        this.state.battleLoop = setTimeout(playerLoopFn, 1000);
+        this.state.magicLoop = setTimeout(magicLoopFn, 3000);
+        this.state.monsterLoop = setTimeout(monsterLoopFn, 2000);
+    },
+    stopBattle: function() {
+        this.state.isPlaying = false;
+        clearTimeout(this.state.battleLoop);
+        clearTimeout(this.state.magicLoop);
+        clearTimeout(this.state.monsterLoop);
+    }
+};
+
+window.onload = () => { game.init(); };
+</script>
+
+<div style="position:fixed;bottom:10px;right:10px;background:#222;color:#fff;padding:10px;border-radius:8px;z-index:9999">
+<h4>存檔系統</h4>
+<select id="saveSlot">
+  <option value="1">存檔1</option>
+  <option value="2">存檔2</option>
+  <option value="3">存檔3</option>
+</select><br><br>
+<button onclick="saveGame()">存檔</button>
+<button onclick="loadGame()">讀取</button>
+<button onclick="exportSave()">導出</button><br><br>
+<input type="file" id="importFile">
+<button onclick="importSave()">導入</button>
+</div>
+
+<script>
+function getData(){
+  return localStorage.getItem("gameData") || "";
+}
+function setData(data){
+  localStorage.setItem("gameData", data);
+}
+
+function saveGame(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = getData();
+  localStorage.setItem("save_"+slot, data);
+  alert("已存到存檔"+slot);
+}
+
+function loadGame(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = localStorage.getItem("save_"+slot);
+  if(data){
+    setData(data);
+    location.reload();
+  } else {
+    alert("此存檔為空");
+  }
+}
+
+function exportSave(){
+  let slot = document.getElementById("saveSlot").value;
+  let data = localStorage.getItem("save_"+slot);
+  if(!data){ alert("沒有存檔"); return;}
+  let blob = new Blob([data], {type:"text/plain"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "save_"+slot+".txt";
+  a.click();
+}
+
+function importSave(){
+  let file = document.getElementById("importFile").files[0];
+  if(!file){ alert("請選擇檔案"); return;}
+  let reader = new FileReader();
+  reader.onload = function(e){
+    let slot = document.getElementById("saveSlot").value;
+    localStorage.setItem("save_"+slot, e.target.result);
+    alert("導入完成到存檔"+slot);
+  };
+  reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
