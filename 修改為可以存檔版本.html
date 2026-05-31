@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全升級器01</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#1a1a1a;
+    color:white;
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+}
+
+.panel{
+    border:2px solid #444;
+    border-radius:10px;
+    padding:20px;
+    margin-top:20px;
+}
+
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin:5px;
+}
+
+.primary{
+    background:#2196F3;
+    color:white;
+}
+
+.success{
+    background:#4CAF50;
+    color:white;
+}
+
+#log{
+    background:black;
+    padding:15px;
+    min-height:180px;
+    margin-top:20px;
+    white-space:pre-wrap;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>天堂放置版安全升級器01</h1>
+
+<div class="panel">
+
+<input
+type="file"
+id="fileInput"
+accept=".html">
+
+<br><br>
+
+<button
+class="primary"
+onclick="upgradeFile()">
+開始升級 </button>
+
+<button
+class="success"
+id="downloadBtn"
+disabled>
+下載新版HTML </button>
+
+</div>
+
+<div id="log"></div>
+
+<script>
+
+let upgradedHtml = "";
+let originalFileName = "";
+
+function log(msg){
+
+    document
+    .getElementById("log")
+    .textContent += msg + "\n";
+}
+
+async function upgradeFile(){
+
+    const file =
+        document
+        .getElementById(
+            "fileInput"
+        )
+        .files[0];
+
+    if(!file){
+
+        alert(
+            "請先選擇HTML"
+        );
+
+        return;
+    }
+
+    originalFileName =
+        file.name;
+
+    let html =
+        await file.text();
+
+    log("讀取完成");
+
+    const toolbar = `
+
+<div id="saveToolbar"
+style="
+padding:10px;
+text-align:center;
+border-bottom:1px solid #555;
+">
+
+<button
+onclick="game.saveGame()">
+💾儲存
+</button>
+
+<button
+onclick="game.exportSave()">
+📤匯出存檔
+</button>
+
+<button
+onclick="
+document
+.getElementById(
+'import-save-file'
+)
+.click()
+">
+📥匯入存檔
+</button>
+
+<input
+type="file"
+id="import-save-file"
+accept=".json"
+style="display:none"
+onchange="game.importSave(event)">
+
+</div>
+
+`;
+
+    if(html.includes("<body")){
+
+        html =
+            html.replace(
+                /(<body[^>]*>)/i,
+                "$1\n" +
+                toolbar
+            );
+
+        log(
+            "已加入頂部工具列"
+        );
+    }
+
+    if(
+        !html.includes(
+            "exportSave:"
+        )
+    ){
+
+        const exportCode = `
+
+exportSave:function(){
+
+    const saveData = {
+
+        level:this.state.level,
+
+        exp:this.state.exp,
+
+        adena:this.state.adena,
+
+        hp:this.state.hp,
+
+        maxHp:this.state.maxHp,
+
+        mp:this.state.mp,
+
+        maxMp:this.state.maxMp,
+
+        baseStats:
+        this.state.baseStats,
+
+        bonusPoints:
+        this.state.bonusPoints,
+
+        inventory:
+        this.state.inventory,
+
+        equipment:
+        this.state.equipment,
+
+        spells:
+        this.state.spells,
+
+        settings:
+        this.state.settings,
+
+        currentMap:
+        this.state.currentMap,
+
+        antarasDeadUntil:
+        this.state.antarasDeadUntil
+
+    };
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    saveData,
+                    null,
+                    2
+                )
+            ],
+            {
+                type:
+                'application/json'
+            }
+        );
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+    const a =
+        document.createElement(
+            'a'
+        );
+
+    a.href = url;
+
+    a.download =
+        'save.json';
+
+    a.click();
+
+    URL.revokeObjectURL(
+        url
+    );
+
+},
+`;
+
+        html =
+            html.replace(
+                /saveGame:\s*function\s*\(\)\s*\{/,
+                exportCode +
+                "\nsaveGame:function(){"
+            );
+
+        log(
+            "已加入匯出功能"
+        );
+    }
+
+    if(
+        !html.includes(
+            "importSave:"
+        )
+    ){
+
+        const importCode = `
+
+importSave:function(event){
+
+    const file =
+        event.target.files[0];
+
+    if(!file)
+        return;
+
+    const reader =
+        new FileReader();
+
+    reader.onload =
+    (e)=>{
+
+        try{
+
+            const saveData =
+                JSON.parse(
+                    e.target.result
+                );
+
+            localStorage.setItem(
+                'lineageIdleSave',
+                JSON.stringify(
+                    saveData
+                )
+            );
+
+            alert(
+                '匯入成功'
+            );
+
+            location.reload();
+
+        }catch(err){
+
+            alert(
+                '檔案格式錯誤'
+            );
+        }
+    };
+
+    reader.readAsText(
+        file
+    );
+},
+`;
+
+        html =
+            html.replace(
+                /loadGame:\s*function\s*\(\)\s*\{/,
+                importCode +
+                "\nloadGame:function(){"
+            );
+
+        log(
+            "已加入匯入功能"
+        );
+    }
+
+    upgradedHtml =
+        html;
+
+    document
+    .getElementById(
+        "downloadBtn"
+    )
+    .disabled =
+    false;
+
+    log(
+        "升級完成"
+    );
+}
+
+document
+.getElementById(
+    "downloadBtn"
+)
+.addEventListener(
+    "click",
+    ()=>{
+
+        const blob =
+            new Blob(
+                [
+                    upgradedHtml
+                ],
+                {
+                    type:
+                    "text/html"
+                }
+            );
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+        const a =
+            document
+            .createElement(
+                "a"
+            );
+
+        a.href =
+            url;
+
+        a.download =
+            originalFileName
+            .replace(
+                ".html",
+                "_step1.html"
+            );
+
+        a.click();
+
+        URL.revokeObjectURL(
+            url
+        );
+    }
+);
+
+</script>
+
+</body>
+</html>
