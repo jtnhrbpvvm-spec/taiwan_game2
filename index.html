@@ -31,29 +31,6 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col p-2">
 
-<div class="panel-border p-2 mb-2 flex gap-2 justify-center items-center">
-    <button class="btn-ui c-success" onclick="game.saveGame()">
-        💾儲存
-    </button>
-
-    <button class="btn-ui c-info" onclick="game.exportSave()">
-        📤匯出存檔
-    </button>
-
-    <button class="btn-ui c-warn"
-        onclick="document.getElementById('import-save-file').click()">
-        📥匯入存檔
-    </button>
-
-    <input
-        type="file"
-        id="import-save-file"
-        accept=".json"
-        style="display:none"
-        onchange="game.importSave(event)">
-</div>
-
-
     <!-- 創角畫面 -->
     <div id="char-creation-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay block">
         <div class="panel-border p-8 max-w-lg w-full rounded-md">
@@ -659,45 +636,7 @@ const game = {
         document.getElementById('creation-menu').classList.add('hidden');
         document.getElementById('start-menu').classList.remove('hidden');
     },
-    
-exportSave: function() {
-
-    const saveData = {
-        level:this.state.level,
-        exp:this.state.exp,
-        adena:this.state.adena,
-        hp:this.state.hp,
-        maxHp:this.state.maxHp,
-        mp:this.state.mp,
-        maxMp:this.state.maxMp,
-        baseStats:this.state.baseStats,
-        bonusPoints:this.state.bonusPoints,
-        inventory:this.state.inventory,
-        equipment:this.state.equipment,
-        spells:this.state.spells,
-        settings:this.state.settings,
-        currentMap:this.state.currentMap,
-        antarasDeadUntil:this.state.antarasDeadUntil
-    };
-
-    const blob = new Blob(
-        [JSON.stringify(saveData,null,2)],
-        {type:'application/json'}
-    );
-
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lineage_idle_save.json';
-    a.click();
-
-    URL.revokeObjectURL(url);
-
-    this.logSystem('存檔已匯出','reward');
-},
-
-saveGame: function(){
+    saveGame: function() {
         const saveData = {
             level: this.state.level, exp: this.state.exp, adena: this.state.adena,
             hp: this.state.hp, maxHp: this.state.maxHp, mp: this.state.mp, maxMp: this.state.maxMp,
@@ -708,46 +647,7 @@ saveGame: function(){
         localStorage.setItem('lineageIdleSave', JSON.stringify(saveData));
         this.logSystem('遊戲進度已儲存。', 'reward');
     },
-    
-importSave: function(event){
-
-    const file = event.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = (e)=>{
-
-        try{
-
-            const saveData =
-                JSON.parse(e.target.result);
-
-            localStorage.setItem(
-                'lineageIdleSave',
-                JSON.stringify(saveData)
-            );
-
-            alert('匯入成功');
-
-            if(confirm('立即重新載入？')){
-                location.reload();
-            }
-
-        }catch(err){
-
-            alert('JSON格式錯誤');
-            console.error(err);
-
-        }
-
-    };
-
-    reader.readAsText(file);
-},
-
-loadGame: function(){
+    loadGame: function() {
         const savedDataStr = localStorage.getItem('lineageIdleSave');
         if (savedDataStr) {
             try {
@@ -2485,5 +2385,123 @@ loadGame: function(){
 
 window.onload = () => { game.init(); };
 </script>
-</body>
+
+<style>
+#saveToolsWrap{
+position:fixed;
+top:10px;
+right:10px;
+z-index:999999;
+}
+#saveToolsMenu{
+display:none;
+background:#fff;
+border:1px solid #ccc;
+padding:8px;
+box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.saveToolBtn{
+background:#ffffff;
+color:#000000;
+border:2px solid #444;
+border-radius:6px;
+padding:8px 12px;
+font-weight:bold;
+cursor:pointer;
+margin:3px;
+}
+</style>
+
+<div id="saveToolsWrap">
+<button id="saveToolsToggle">💾</button>
+<div id="saveToolsMenu">
+<button id="exportSaveBtn" class="saveToolBtn">匯出存檔</button>
+<button id="importSaveBtn" class="saveToolBtn">匯入存檔</button>
+<input type="file" id="importSaveFile" accept=".json" style="display:none">
+</div>
+</div>
+
+<script>
+(function(){
+
+const SAVE_KEY='lineageIdleSave';
+
+document.getElementById('saveToolsToggle')
+.addEventListener('click',()=>{
+ const menu=document.getElementById('saveToolsMenu');
+ menu.style.display=(menu.style.display==='block')?'none':'block';
+});
+
+function exportSave(){
+
+ const raw=localStorage.getItem(SAVE_KEY);
+
+ if(!raw){
+   alert('找不到 '+SAVE_KEY+' 存檔');
+   return;
+ }
+
+ const data={
+   saveKey:SAVE_KEY,
+   saveData:JSON.parse(raw)
+ };
+
+ const blob=new Blob(
+   [JSON.stringify(data,null,2)],
+   {type:'application/json'}
+ );
+
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='lineageIdleSave.json';
+ a.click();
+}
+
+function importSave(data){
+
+ if(!data.saveData){
+   alert('存檔格式錯誤');
+   return;
+ }
+
+ localStorage.setItem(
+   SAVE_KEY,
+   JSON.stringify(data.saveData)
+ );
+
+ if(confirm('匯入檔案完成！\n\n按下確定後將重新整理網頁。')){
+   setTimeout(()=>location.reload(),300);
+ }
+}
+
+document.getElementById('exportSaveBtn')
+.addEventListener('click',exportSave);
+
+document.getElementById('importSaveBtn')
+.addEventListener('click',()=>{
+ document.getElementById('importSaveFile').click();
+});
+
+document.getElementById('importSaveFile')
+.addEventListener('change',(e)=>{
+
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+   try{
+      importSave(JSON.parse(reader.result));
+   }catch(err){
+      alert('JSON格式錯誤');
+   }
+ };
+
+ reader.readAsText(file);
+});
+
+})();
+</script>
+\n</body>
 </html>
