@@ -1719,20 +1719,20 @@ const game = {
             dmg = Math.max(1, dDmg + this.getMeleeDmg() + bonusUndead);
             this.logCombat(`你命中了 ${this.state.targetMonster.name} 造成 ${dmg} 點傷害${isCrit?' (爆擊！)':''}${bonusUndead > 0 ? ` (弱點加成 +${bonusUndead})` : ''}。`, 'hit');
             
-            if (wDef && wDef.id === 'staff_mana') {
+            if (wpn && wpn.itemId === 'staff_mana') {
                 this.state.mp = Math.min(this.state.maxMp, this.state.mp + 1);
                 this.logCombat(`瑪那魔杖吸收了 1 點魔力。`);
                 this.updateUI();
             }
             
-            if (wDef && wDef.id === 'hammer_thor' && Math.random() * 100 < (5 + Number(wpn.enchant))) {
+            if (wpn && wpn.itemId === 'hammer_thor' && Math.random() * 100 < (5 + Number(wpn.enchant))) {
                 let sp = SPELLS['call_lightning'];
                 let finalDmg = this.calcMagicDmgToMonster(rollDice(sp.dice) + (sp.baseDmg||0) + this.getMagicDmg());
                 this.logCombat(`雷神之槌發動了 極道落雷，造成 ${finalDmg} 點傷害。`, 'magic');
                 this.state.targetMonster.hp -= finalDmg;
             }
             
-            if (wDef && wDef.id === 'sword_dk_fire' && Math.random() < 0.03) {
+            if (wpn && wpn.itemId === 'sword_dk_fire' && Math.random() < 0.03) {
                 let sp = SPELLS['fire_arrow'];
                 let finalDmg = this.calcMagicDmgToMonster(rollDice(sp.dice) + (sp.baseDmg||0) + this.getMagicDmg());
                 this.logCombat(`死亡騎士的烈炎之劍發動了 烈炎術，造成 ${finalDmg} 點傷害。`, 'magic');
