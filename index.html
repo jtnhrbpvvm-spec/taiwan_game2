@@ -800,6 +800,9 @@ const game = {
                 let amuName = ITEMS[this.state.inventory[amuKey].itemId].name;
                 if (stat === 'wis' && amuName === '精神項鍊') val += 1;
                 if (stat === 'con' && amuName === '體質項鍊') val += 1;
+		 if (stat === 'str' && amuName === '力量項鍊') val += 1;
+                if (stat === 'dex' && amuName === '敏捷項鍊') val += 1;
+                if (stat === 'int' && amuName === '智力項鍊') val += 1;
             }
         }
         if (stat === 'str' && this.state.equipment.gloves) {
