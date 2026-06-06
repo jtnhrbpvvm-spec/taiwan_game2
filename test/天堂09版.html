@@ -6813,7 +6813,7 @@ document.getElementById('importSaveFile').addEventListener('change',(e)=>{
 
 document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
 
- if(!confirm('請先至商店與設置內存檔後再匯出')) return;
+ if(!confirm('請於「自動化設定儲存遊戲進度」後才下載存檔')) return;
 
  const raw=getSave();
  if(!raw){alert('找不到存檔');return;}
@@ -6855,5 +6855,4 @@ document.getElementById('importTextBtn').addEventListener('click',()=>{
 
 })();
 </script>
-\n</body>
 </html>
