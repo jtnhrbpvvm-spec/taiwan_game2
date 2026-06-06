@@ -6854,7 +6854,7 @@ document.getElementById('importSaveBtn').addEventListener('click',()=>{
 });
 
 document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
- if(!confirm('請先至商店與設置內存檔後再匯出')) return;
+ if(!confirm('請先至「自動化設定儲存遊戲進度」後再匯出')) return;
 
  const raw=localStorage.getItem(SAVE_KEY);
  if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
