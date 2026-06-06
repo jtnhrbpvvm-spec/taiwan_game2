@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>網頁遊戲存檔功能注入器_V3.1</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1000px;margin:auto;padding:20px}
+button{padding:10px 16px;margin:5px}
+#log{border:1px solid #ccc;padding:10px;height:250px;overflow:auto;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>網頁遊戲存檔功能注入器 V3.1</h1>
+
+<input type="file" id="fileInput" accept=".html">
+<button onclick="inject()">開始修改</button>
+<button id="downloadBtn" disabled>下載修改版</button>
+
+<div id="log"></div>
+
+<script>
+let modifiedHtml="";
+let originalName="";
+
+function log(msg){
+ document.getElementById("log").textContent += msg + "\n";
+}
+
+function buildInjection(){
+return `
+<style>
+#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:999999;}
+#saveToolsMenu{display:none;background:#fff;border:1px solid #ccc;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.saveToolBtn{
+background:#fff;color:#000;border:2px solid #444;border-radius:6px;
+padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;
+}
+#saveToolsToggle{
+    font-size:42px;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    cursor:pointer;
+}
+#saveTextArea{
+width:320px;height:120px;margin-top:8px;display:block;
+white-space:pre-wrap;
+}
+</style>
+
+<div id="saveToolsWrap">
+<button id="saveToolsToggle">💾</button>
+<div id="saveToolsMenu">
+<button id="exportSaveBtn" class="saveToolBtn">匯出存檔</button>
+<button id="importSaveBtn" class="saveToolBtn">匯入存檔</button>
+<button id="exportTextBtn" class="saveToolBtn">以純文字匯出</button>
+<button id="importTextBtn" class="saveToolBtn">以純文字匯入</button>
+<input type="file" id="importSaveFile" accept=".json" style="display:none">
+<textarea id="saveTextArea" placeholder="可在此貼上或複製存檔文字"></textarea>
+</div>
+</div>
+
+<script>
+(function(){
+const SAVE_KEY='lineageIdleSave';
+
+document.getElementById('saveToolsToggle').addEventListener('click',()=>{
+ const menu=document.getElementById('saveToolsMenu');
+ menu.style.display=menu.style.display==='block'?'none':'block';
+});
+
+function exportSave(){
+ if(!confirm('請先至商店與設置內存檔後再匯出')) return;
+
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
+
+ const data={saveKey:SAVE_KEY,saveData:JSON.parse(raw)};
+
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='lineageIdleSave.json';
+ a.click();
+}
+
+function importSave(data){
+ if(!data.saveData){ alert('存檔格式錯誤'); return; }
+
+ localStorage.setItem(SAVE_KEY,JSON.stringify(data.saveData));
+
+ if(confirm('匯入檔案完成！\\n\\n按下確定後將重新整理網頁。')){
+   setTimeout(()=>location.reload(),300);
+ }
+}
+
+document.getElementById('exportSaveBtn').addEventListener('click',exportSave);
+
+document.getElementById('importSaveBtn').addEventListener('click',()=>{
+ document.getElementById('importSaveFile').click();
+});
+
+document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
+ if(!confirm('請先至商店與設置內存檔後再匯出')) return;
+
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
+
+ const textArea=document.getElementById('saveTextArea');
+
+ textArea.value=raw;
+ textArea.focus();
+ textArea.select();
+ textArea.setSelectionRange(0,textArea.value.length);
+
+ try{
+    await navigator.clipboard.writeText(raw);
+    alert('存檔文字已顯示於文字框\\n\\n已自動全選並複製到剪貼簿。');
+ }catch(e){
+
+    try{
+       document.execCommand('copy');
+       alert('存檔文字已顯示於文字框\\n\\n已自動全選並複製到剪貼簿。');
+    }catch(err){
+       alert('存檔文字已顯示於文字框\\n\\n請按 Ctrl+C 複製。');
+    }
+
+ }
+});
+
+document.getElementById('importTextBtn').addEventListener('click',()=>{
+ const txt=document.getElementById('saveTextArea').value.trim();
+
+ if(!txt){ alert('請先貼上存檔文字'); return; }
+
+ try{
+   const parsed=JSON.parse(txt);
+   localStorage.setItem(SAVE_KEY,JSON.stringify(parsed));
+
+   if(confirm('匯入檔案完成！\\n\\n按下確定後將重新整理網頁。')){
+      setTimeout(()=>location.reload(),300);
+   }
+ }catch(err){
+   alert('存檔文字格式錯誤');
+ }
+});
+
+document.getElementById('importSaveFile').addEventListener('change',(e)=>{
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+ reader.onload=()=>{
+   try{
+      importSave(JSON.parse(reader.result));
+   }catch(err){
+      alert('JSON格式錯誤');
+   }
+ };
+ reader.readAsText(file);
+});
+
+})();
+<\/script>
+`;
+}
+
+async function inject(){
+ const file=document.getElementById('fileInput').files[0];
+ if(!file){alert('請選擇HTML');return;}
+
+ originalName=file.name;
+ let html=await file.text();
+
+ const code=buildInjection();
+
+ if(html.includes('</body>')){
+   html=html.replace('</body>', code + '\\n</body>');
+ }else{
+   html+=code;
+ }
+
+ modifiedHtml=html;
+ document.getElementById('downloadBtn').disabled=false;
+ log('注入完成');
+}
+
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+ const blob=new Blob([modifiedHtml],{type:'text/html'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download=originalName.replace('.html','_存檔版V3.1.html');
+ a.click();
+});
+</script>
+</body>
+</html>
