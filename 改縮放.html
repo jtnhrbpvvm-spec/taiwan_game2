@@ -25,7 +25,7 @@ let modifiedHtml="";
 let originalName="";
 
 function log(t){
- document.getElementById('log').textContent += t + "\\n";
+ document.getElementById('log').textContent += t + "\n";
 }
 
 function buildCode(){
@@ -81,7 +81,7 @@ document.getElementById('injectBtn').onclick = async ()=>{
  const code=buildCode();
 
  if(html.includes('</body>')){
-   html=html.replace('</body>', code + '\\n</body>');
+   html=html.replace('</body>', code + '\n</body>');
  }else{
    html += code;
  }

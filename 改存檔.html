@@ -223,7 +223,7 @@ async function inject(){
  const code=buildInjection();
 
  if(html.includes('</body>')){
-   html=html.replace('</body>', code + '\\n</body>');
+   html=html.replace('</body>', code + '\n</body>');
  }else{
    html+=code;
  }
