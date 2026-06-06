@@ -6735,14 +6735,23 @@ window.onload = () => {
 </script>
 
 <style>
-#saveToolsWrap{position:fixed;top:10px;right:10px;z-index:99999999;}
+#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:999999;touch-action:none;user-select:none;}
 #saveToolsMenu{display:none;background:#fff;border:1px solid #ccc;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
-#saveToolsToggle{font-size:38px;width:72px;height:72px;border-radius:50%;cursor:pointer;}
 .saveToolBtn{
 background:#fff;color:#000;border:2px solid #444;border-radius:6px;
 padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;
 }
-#saveTextArea{width:340px;height:140px;display:block;margin-top:8px;}
+#saveToolsToggle{
+    font-size:42px;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    cursor:pointer;
+}
+#saveTextArea{
+width:320px;height:120px;margin-top:8px;display:block;
+white-space:pre-wrap;
+}
 </style>
 
 <div id="saveToolsWrap">
@@ -6759,93 +6768,129 @@ padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;
 
 <script>
 (function(){
-const SAVE_KEY='lineage_idle_save';
+const SAVE_KEY='lineageIdleSave';
 
-function getSave(){
- return localStorage.getItem(SAVE_KEY);
+
+const wrap=document.getElementById('saveToolsWrap');
+
+try{
+ const savedPos=JSON.parse(localStorage.getItem('saveToolsWrapPos')||'null');
+ if(savedPos){
+   wrap.style.left=savedPos.left+'px';
+   wrap.style.top=savedPos.top+'px';
+   wrap.style.right='auto';
+ }
+}catch(e){}
+
+let dragging=false,startX=0,startY=0;
+
+function dragStart(e){
+ const p=e.touches?e.touches[0]:e;
+ dragging=true;
+ startX=p.clientX-wrap.offsetLeft;
+ startY=p.clientY-wrap.offsetTop;
 }
 
+function dragMove(e){
+ if(!dragging) return;
+ const p=e.touches?e.touches[0]:e;
+ wrap.style.left=(p.clientX-startX)+'px';
+ wrap.style.top=(p.clientY-startY)+'px';
+ wrap.style.right='auto';
+}
+
+function dragEnd(){
+ if(!dragging) return;
+ dragging=false;
+ localStorage.setItem('saveToolsWrapPos',JSON.stringify({
+   left:wrap.offsetLeft,
+   top:wrap.offsetTop
+ }));
+}
+
+wrap.addEventListener('mousedown',dragStart);
+document.addEventListener('mousemove',dragMove);
+document.addEventListener('mouseup',dragEnd);
+
+wrap.addEventListener('touchstart',dragStart,{passive:true});
+document.addEventListener('touchmove',dragMove,{passive:true});
+document.addEventListener('touchend',dragEnd);
+
+
 document.getElementById('saveToolsToggle').addEventListener('click',()=>{
- const m=document.getElementById('saveToolsMenu');
- m.style.display=(m.style.display==='block')?'none':'block';
+ const menu=document.getElementById('saveToolsMenu');
+ menu.style.display=menu.style.display==='block'?'none':'block';
 });
 
-document.getElementById('exportSaveBtn').addEventListener('click',()=>{
-
+function exportSave(){
  if(!confirm('請先至商店與設置內存檔後再匯出')) return;
 
- const raw=getSave();
- if(!raw){alert('找不到存檔');return;}
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
 
- const blob=new Blob([raw],{type:'application/json'});
+ const data={saveKey:SAVE_KEY,saveData:JSON.parse(raw)};
+
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
- a.download='lineage_idle_save.json';
+ a.download='lineageIdleSave.json';
  a.click();
-});
+}
+
+function importSave(data){
+ if(!data.saveData){ alert('存檔格式錯誤'); return; }
+
+ localStorage.setItem(SAVE_KEY,JSON.stringify(data.saveData));
+
+ if(confirm('匯入檔案完成！\n\n按下確定後將重新整理網頁。')){
+   setTimeout(()=>location.reload(),300);
+ }
+}
+
+document.getElementById('exportSaveBtn').addEventListener('click',exportSave);
 
 document.getElementById('importSaveBtn').addEventListener('click',()=>{
  document.getElementById('importSaveFile').click();
 });
 
-document.getElementById('importSaveFile').addEventListener('change',(e)=>{
-
- const file=e.target.files[0];
- if(!file) return;
-
- const reader=new FileReader();
-
- reader.onload=()=>{
-   try{
-      JSON.parse(reader.result);
-      localStorage.setItem(SAVE_KEY,reader.result);
-
-      if(confirm('匯入完成，按確定重新整理')){
-         setTimeout(()=>location.reload(),300);
-      }
-   }catch(err){
-      alert('存檔格式錯誤');
-   }
- };
-
- reader.readAsText(file);
-});
-
 document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
-
  if(!confirm('請先至商店與設置內存檔後再匯出')) return;
 
- const raw=getSave();
- if(!raw){alert('找不到存檔');return;}
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
 
- const ta=document.getElementById('saveTextArea');
- ta.value=raw;
- ta.focus();
- ta.select();
- ta.setSelectionRange(0,ta.value.length);
+ const textArea=document.getElementById('saveTextArea');
+
+ textArea.value=raw;
+ textArea.focus();
+ textArea.select();
+ textArea.setSelectionRange(0,textArea.value.length);
 
  try{
-   await navigator.clipboard.writeText(raw);
-   alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
+    await navigator.clipboard.writeText(raw);
+    alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
  }catch(e){
-   alert('存檔文字已全選，請按 Ctrl+C 複製。');
+
+    try{
+       document.execCommand('copy');
+       alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
+    }catch(err){
+       alert('存檔文字已顯示於文字框\n\n請按 Ctrl+C 複製。');
+    }
+
  }
 });
 
 document.getElementById('importTextBtn').addEventListener('click',()=>{
-
  const txt=document.getElementById('saveTextArea').value.trim();
 
- if(!txt){
-   alert('請先貼上存檔文字');
-   return;
- }
+ if(!txt){ alert('請先貼上存檔文字'); return; }
 
  try{
-   JSON.parse(txt);
-   localStorage.setItem(SAVE_KEY,txt);
+   const parsed=JSON.parse(txt);
+   localStorage.setItem(SAVE_KEY,JSON.stringify(parsed));
 
-   if(confirm('匯入完成，按確定重新整理')){
+   if(confirm('匯入檔案完成！\n\n按下確定後將重新整理網頁。')){
       setTimeout(()=>location.reload(),300);
    }
  }catch(err){
@@ -6853,44 +6898,22 @@ document.getElementById('importTextBtn').addEventListener('click',()=>{
  }
 });
 
+document.getElementById('importSaveFile').addEventListener('change',(e)=>{
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+ reader.onload=()=>{
+   try{
+      importSave(JSON.parse(reader.result));
+   }catch(err){
+      alert('JSON格式錯誤');
+   }
+ };
+ reader.readAsText(file);
+});
+
 })();
 </script>
+\n</body>
 </html>
-<style id="auto-scale-upgrade">
-html,body{
- overflow-x:auto !important;
-}
-</style>
-
-<script>
-(function(){
-
-function autoScaleGame(){
-
- const w = window.innerWidth;
-
- let scale = 1;
-
- if(w < 500){
-    scale = 0.60;
- }else if(w < 800){
-    scale = 0.75;
- }else if(w < 1200){
-    scale = 0.90;
- }
-
- document.body.style.transform = 'scale(' + scale + ')';
- document.body.style.transformOrigin = 'top left';
- document.body.style.width = (100 / scale) + '%';
-
- console.log('Auto Scale:', scale);
-}
-
-window.addEventListener('resize', autoScaleGame);
-window.addEventListener('load', autoScaleGame);
-
-setTimeout(autoScaleGame,500);
-setTimeout(autoScaleGame,1500);
-
-})();
-</script>
