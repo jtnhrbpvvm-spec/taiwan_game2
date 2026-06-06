@@ -6915,5 +6915,44 @@ document.getElementById('importSaveFile').addEventListener('change',(e)=>{
 
 })();
 </script>
+\n
+<style id="auto-scale-upgrade">
+html,body{
+ overflow-x:auto !important;
+}
+</style>
+
+<script>
+(function(){
+
+function autoScaleGame(){
+
+ const w = window.innerWidth;
+
+ let scale = 1;
+
+ if(w < 500){
+    scale = 0.60;
+ }else if(w < 800){
+    scale = 0.75;
+ }else if(w < 1200){
+    scale = 0.90;
+ }
+
+ document.body.style.transform = 'scale(' + scale + ')';
+ document.body.style.transformOrigin = 'top left';
+ document.body.style.width = (100 / scale) + '%';
+
+ console.log('Auto Scale:', scale);
+}
+
+window.addEventListener('resize', autoScaleGame);
+window.addEventListener('load', autoScaleGame);
+
+setTimeout(autoScaleGame,500);
+setTimeout(autoScaleGame,1500);
+
+})();
+</script>
 \n</body>
 </html>
