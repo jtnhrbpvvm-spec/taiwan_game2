@@ -576,7 +576,7 @@ const DB = {
         "arm_87": { n: "保護者斗篷", type: "arm", slot: "cloak", ac: 3, req: "all", safe: 4, p: 8500, gachaWeight: 50 },
         "arm_88": { n: "隱身斗篷", type: "arm", slot: "cloak", ac: 1, d: "穿戴時等同維持隱身術：非BOSS敵人在滿血時不會主動攻擊，受創後才會反擊（卸下即失效）。", req: "all", safe: 4, p: 100000, gachaWeight: 1 },
         "clk_mr": { n: "抗魔法斗篷", type: "arm", slot: "cloak", ac: 1, mr: 10, mrPerEn: 2, req: "all", safe: 4, p: 3300, gachaWeight: 100 },
-        "arm_89": { n: "瑪那斗篷", type: "arm", slot: "cloak", ac: 2, req: "mage", safe: 4, p: 7200, gachaWeight: 10 },
+        "arm_89": { n: "瑪那斗篷", type: "arm", slot: "cloak", ac: 2, req: "mage", safe: 4, p: 7200, mpR: 5, gachaWeight: 10 },
         "bot_short": { n: "短統靴", type: "arm", slot: "boots", ac: 1, req: "all", safe: 4, p: 299, gachaWeight: 100 },
         "arm_90": { n: "長靴", type: "arm", slot: "boots", ac: 2, req: "all", safe: 4, p: 3260, gachaWeight: 100 },
         "arm_91": { n: "皮涼鞋", type: "arm", slot: "boots", ac: 0, req: "all", safe: 4, p: 20, gachaWeight: 100 },
@@ -758,6 +758,7 @@ const DB = {
 		"new_item_elfwing": { n: "精靈羽翼", p: 10, gachaWeight: 100 },
 		"new_item_mermaid_scale": { n: "人魚之鱗", p: 10, gachaWeight: 10 },
 		"new_item_239": { n: "潘朵拉抽獎卷", p: 0, gachaWeight: 0 },
+		"new_item_240": { n: "變形怪的血", p: 1, gachaWeight: 0 },
 		
 		        // ===== 法師魔法書 =====
         "bk_heal1": { type: "skillbk", n: "魔法書(初級治癒術)", p: 100, sk: "sk_heal1", gachaWeight: 100 },
@@ -1443,8 +1444,8 @@ const DB = {
         '蟑螂人': [['arm_42',3], ['potion_haste',1], ['new_item_158',0.1]],
         '蟹人': [['scroll_armor',0.3], ['bk_break',0.1], ['bk_str_up',0.01]],
         '西瑪': [['arm_87',5], ['arm_90',10], ['arm_57',1], ['amu_str',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',2], ['bk_haste_spell',1], ['potion_blue',1], ['bk_greater_haste',1], ['bk_elf_stormeye',1], ['bk_weaken',1]],
-        '變形怪': [['scroll_poly',1], ['scroll_acc',0.01], ['potion_blue',1]],
-        '變形怪首領': [['wpn_2hsword',5], ['wpn_38',10], ['wpn_strwand',1], ['arm_60',10], ['clk_mr',10], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['bk_fireball',3], ['bk_str_up',1], ['bk_haste_spell',1], ['bk_summon',0.5], ['scroll_poly',1], ['potion_blue',1], ['bk_elf_magicerase',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5]],
+        '變形怪': [['scroll_poly',1], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_240',0.1]],
+        '變形怪首領': [['wpn_2hsword',5], ['wpn_38',10], ['wpn_strwand',1], ['arm_60',10], ['clk_mr',10], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['bk_fireball',3], ['bk_str_up',1], ['bk_haste_spell',1], ['bk_summon',0.5], ['scroll_poly',1], ['potion_blue',1], ['bk_elf_magicerase',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5], ['new_item_240',10]],
         '那魯加妖魔': [['wpn_2hsword',0.1], ['wpn_invader',0.5], ['wpn_damascus',0.2], ['arm_64',5], ['arm_104',3], ['acc_123',0.01], ['potion_haste',1], ['new_item_146',1], ['new_item_157',5], ['new_item_200',0.1]],
         '邪惡蜥蜴': [['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_slow',0.5], ['bk_heal2',0.2], ['bk_holy_light',0.1], ['bk_cancel',0.02], ['bk_earthquake',0.02], ['bk_rock_prison',0.5], ['bk_quake',0.005], ['bk_elf_release',0.05], ['new_item_232',0.01]],
         '都達瑪拉妖魔': [['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['potion_haste',1], ['new_item_147',1], ['new_item_150',1], ['new_item_158',0.5], ['new_item_199',0.01], ['scroll_acc',0.001]],
@@ -2440,10 +2441,10 @@ function tick() {
     if(player.hot && !player.dead) {
         if(--player.hot.cd <= 0) {
             player.hot.cd = player.hot.interval;
-            let heal = roll(player.hot.valDice[0], player.hot.valDice[1]) + player.d.magicDmg;
+            let heal = Math.max(1, roll(player.hot.valDice[0], player.hot.valDice[1]) + player.d.magicDmg);
             player.hp = Math.min(player.mhp, player.hp + heal);
             player.hot.ticksLeft--;
-            logCombat(`${player.hot.skName} 回復了 ${heal} 點 HP。`, 'heal');
+            logCombat(`${player.hot.skName} 回復了 ${heal} 點 HP。${player.hot.msg || ''}`, 'heal');
             if(player.hot.ticksLeft <= 0) {
                 player.hot = null;
                 logCombat('持續回復效果結束。', 'heal');
@@ -3446,7 +3447,7 @@ function castSkill(skId) {
             if(player.hot && player.hot.ticksLeft > 0) return false;  // 已在持續中，不重複施放
             player.mp -= cost;
             player.hot = { valDice: sk.valDice, interval: sk.hot.interval, ticksLeft: sk.hot.ticks,
-                           cd: sk.hot.interval, skName: sk.n };
+                           cd: sk.hot.interval, skName: sk.n, msg: sk.msg };
             player.cds.healSk = sk.hot.interval * sk.hot.ticks;  // 鎖定CD至HoT結束
             logCombat(`施放 ${sk.n}，開始持續回復 HP。`, 'heal');
             return true;
@@ -3467,7 +3468,7 @@ function castSkill(skId) {
         }
         // 一般瞬間治癒
         player.mp -= cost;
-        let heal = (sk.valBase || 0) + roll(sk.valDice[0], sk.valDice[1]) + player.d.magicDmg;
+        let heal = Math.max(1, (sk.valBase || 0) + roll(sk.valDice[0], sk.valDice[1]) + player.d.magicDmg);
         player.hp = Math.min(player.mhp, player.hp + heal);
         player.cds.healSk = getAutoCastInterval();
         logCombat(`施放 ${sk.n}，恢復了 ${heal} 點 HP。${sk.msg || ''}`, 'heal');
@@ -5286,21 +5287,38 @@ function renderTarasQuest(div) {
         return;
     }
 
-    // 👇 這裡填寫你資料庫中「不死族的鑰匙」與「不死族的骨頭」的正確 ID
-    let reqIds = ['new_item_214', 'new_item_212']; 
-    let hasAll = reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    // 水晶試煉：不死族的鑰匙 + 不死族的骨頭 → 水晶魔杖
+    let crystalReq = ['new_item_214', 'new_item_212'];
+    let hasCrystal = crystalReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    // 瑪那試煉：變形怪的血 + 魔法書(魔法相消術) → 瑪那魔杖 或 瑪那斗篷
+    let manaReq = ['new_item_240', 'bk_cancel'];
+    let hasMana = manaReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
 
-    let html = `<div class="p-4 text-slate-300">
-        塔拉斯：年輕的法師啊，若你能帶來<b>不死族的鑰匙</b>與<b>不死族的骨頭</b>各一個，我便將這把蘊含魔力的水晶魔杖交給你。<br><br>
-        目前收集：${hasAll ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}
-    </div>`;
+    let html = `<div class="p-4 text-slate-300">塔拉斯：年輕的法師啊，你想挑戰哪一項試煉？</div>`;
 
-    if (hasAll) {
-        // 👇 這裡的 'wpn_crystal' 請改成你資料庫中「水晶魔杖」的真實 ID
-        html += `<div class="p-4">
-            <button class="btn w-full bg-blue-800 py-3 text-lg font-bold" onclick="doTarasExchange('wpn_crystalwand')">兌換：水晶魔杖</button>
+    // ===== 水晶試煉 =====
+    html += `<div class="p-4 border-t border-slate-700">
+        <div class="text-cyan-300 font-bold text-lg mb-2">水晶試煉</div>
+        <div class="text-slate-300 text-sm mb-3">帶來<b>不死族的鑰匙</b>與<b>不死族的骨頭</b>各一個，換取蘊含魔力的水晶魔杖。<br>
+        目前收集：${hasCrystal ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
+    if (hasCrystal) {
+        html += `<button class="btn w-full bg-blue-800 py-3 text-lg font-bold" onclick="doTarasExchange('wpn_crystalwand')">兌換：水晶魔杖</button>`;
+    }
+    html += `</div>`;
+
+    // ===== 瑪那試煉 =====
+    html += `<div class="p-4 border-t border-slate-700">
+        <div class="text-purple-300 font-bold text-lg mb-2">瑪那試煉</div>
+        <div class="text-slate-300 text-sm mb-3">帶來<b>變形怪的血</b>與<b>魔法書(魔法相消術)</b>各一個，選擇換取瑪那魔杖或瑪那斗篷。<br>
+        目前收集：${hasMana ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
+    if (hasMana) {
+        html += `<div class="grid grid-cols-1 gap-3">
+            <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doTarasManaExchange('wpn_manawand')">兌換：瑪那魔杖</button>
+            <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doTarasManaExchange('arm_89')">兌換：瑪那斗篷</button>
         </div>`;
     }
+    html += `</div>`;
+
     div.innerHTML = html;
 }
 function renderGunterQuest(div) {
@@ -5405,6 +5423,24 @@ function doGunterExchange(reqId, rewardId) {
 function doTarasExchange(rewardId) {
     // 👇 一樣，這裡請對應上面設定的材料 ID
     let reqIds = ['new_item_214', 'new_item_212'];
+    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+
+    // 扣除材料
+    reqIds.forEach(id => {
+        let item = player.inv.find(i => i.id === id);
+        item.cnt--;
+        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
+    });
+
+    gainItem(rewardId, 1, false, true);
+    logSys(`塔拉斯：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
+    closeNpcInteraction();
+    renderTabs();
+}
+
+function doTarasManaExchange(rewardId) {
+    // 瑪那試煉：變形怪的血 + 魔法書(魔法相消術) → 瑪那魔杖 或 瑪那斗篷
+    let reqIds = ['new_item_240', 'bk_cancel'];
     if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
 
     // 扣除材料
@@ -6735,23 +6771,14 @@ window.onload = () => {
 </script>
 
 <style>
-#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:999999;touch-action:none;user-select:none;}
+#saveToolsWrap{position:fixed;top:10px;right:10px;z-index:99999999;}
 #saveToolsMenu{display:none;background:#fff;border:1px solid #ccc;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+#saveToolsToggle{font-size:38px;width:72px;height:72px;border-radius:50%;cursor:pointer;}
 .saveToolBtn{
 background:#fff;color:#000;border:2px solid #444;border-radius:6px;
 padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;
 }
-#saveToolsToggle{
-    font-size:42px;
-    width:72px;
-    height:72px;
-    border-radius:50%;
-    cursor:pointer;
-}
-#saveTextArea{
-width:320px;height:120px;margin-top:8px;display:block;
-white-space:pre-wrap;
-}
+#saveTextArea{width:340px;height:140px;display:block;margin-top:8px;}
 </style>
 
 <div id="saveToolsWrap">
@@ -6768,129 +6795,93 @@ white-space:pre-wrap;
 
 <script>
 (function(){
-const SAVE_KEY='lineageIdleSave';
+const SAVE_KEY='lineage_idle_save';
 
-
-const wrap=document.getElementById('saveToolsWrap');
-
-try{
- const savedPos=JSON.parse(localStorage.getItem('saveToolsWrapPos')||'null');
- if(savedPos){
-   wrap.style.left=savedPos.left+'px';
-   wrap.style.top=savedPos.top+'px';
-   wrap.style.right='auto';
- }
-}catch(e){}
-
-let dragging=false,startX=0,startY=0;
-
-function dragStart(e){
- const p=e.touches?e.touches[0]:e;
- dragging=true;
- startX=p.clientX-wrap.offsetLeft;
- startY=p.clientY-wrap.offsetTop;
+function getSave(){
+ return localStorage.getItem(SAVE_KEY);
 }
-
-function dragMove(e){
- if(!dragging) return;
- const p=e.touches?e.touches[0]:e;
- wrap.style.left=(p.clientX-startX)+'px';
- wrap.style.top=(p.clientY-startY)+'px';
- wrap.style.right='auto';
-}
-
-function dragEnd(){
- if(!dragging) return;
- dragging=false;
- localStorage.setItem('saveToolsWrapPos',JSON.stringify({
-   left:wrap.offsetLeft,
-   top:wrap.offsetTop
- }));
-}
-
-wrap.addEventListener('mousedown',dragStart);
-document.addEventListener('mousemove',dragMove);
-document.addEventListener('mouseup',dragEnd);
-
-wrap.addEventListener('touchstart',dragStart,{passive:true});
-document.addEventListener('touchmove',dragMove,{passive:true});
-document.addEventListener('touchend',dragEnd);
-
 
 document.getElementById('saveToolsToggle').addEventListener('click',()=>{
- const menu=document.getElementById('saveToolsMenu');
- menu.style.display=menu.style.display==='block'?'none':'block';
+ const m=document.getElementById('saveToolsMenu');
+ m.style.display=(m.style.display==='block')?'none':'block';
 });
 
-function exportSave(){
- if(!confirm('請先至「自動化設定保存進度」後再匯出')) return;
+document.getElementById('exportSaveBtn').addEventListener('click',()=>{
 
- const raw=localStorage.getItem(SAVE_KEY);
- if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
+ if(!confirm('請先至商店與設置內存檔後再匯出')) return;
 
- const data={saveKey:SAVE_KEY,saveData:JSON.parse(raw)};
+ const raw=getSave();
+ if(!raw){alert('找不到存檔');return;}
 
- const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const blob=new Blob([raw],{type:'application/json'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
- a.download='lineageIdleSave.json';
+ a.download='lineage_idle_save.json';
  a.click();
-}
-
-function importSave(data){
- if(!data.saveData){ alert('存檔格式錯誤'); return; }
-
- localStorage.setItem(SAVE_KEY,JSON.stringify(data.saveData));
-
- if(confirm('匯入檔案完成！\n\n按下確定後將重新整理網頁。')){
-   setTimeout(()=>location.reload(),300);
- }
-}
-
-document.getElementById('exportSaveBtn').addEventListener('click',exportSave);
+});
 
 document.getElementById('importSaveBtn').addEventListener('click',()=>{
  document.getElementById('importSaveFile').click();
 });
 
+document.getElementById('importSaveFile').addEventListener('change',(e)=>{
+
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+   try{
+      JSON.parse(reader.result);
+      localStorage.setItem(SAVE_KEY,reader.result);
+
+      if(confirm('匯入完成，按確定重新整理')){
+         setTimeout(()=>location.reload(),300);
+      }
+   }catch(err){
+      alert('存檔格式錯誤');
+   }
+ };
+
+ reader.readAsText(file);
+});
+
 document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
- if(!confirm('請先至「自動化設定儲存遊戲進度」後再匯出')) return;
 
- const raw=localStorage.getItem(SAVE_KEY);
- if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
+ if(!confirm('請先至商店與設置內存檔後再匯出')) return;
 
- const textArea=document.getElementById('saveTextArea');
+ const raw=getSave();
+ if(!raw){alert('找不到存檔');return;}
 
- textArea.value=raw;
- textArea.focus();
- textArea.select();
- textArea.setSelectionRange(0,textArea.value.length);
+ const ta=document.getElementById('saveTextArea');
+ ta.value=raw;
+ ta.focus();
+ ta.select();
+ ta.setSelectionRange(0,ta.value.length);
 
  try{
-    await navigator.clipboard.writeText(raw);
-    alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
+   await navigator.clipboard.writeText(raw);
+   alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
  }catch(e){
-
-    try{
-       document.execCommand('copy');
-       alert('存檔文字已顯示於文字框\n\n已自動全選並複製到剪貼簿。');
-    }catch(err){
-       alert('存檔文字已顯示於文字框\n\n請按 Ctrl+C 複製。');
-    }
-
+   alert('存檔文字已全選，請按 Ctrl+C 複製。');
  }
 });
 
 document.getElementById('importTextBtn').addEventListener('click',()=>{
+
  const txt=document.getElementById('saveTextArea').value.trim();
 
- if(!txt){ alert('請先貼上存檔文字'); return; }
+ if(!txt){
+   alert('請先貼上存檔文字');
+   return;
+ }
 
  try{
-   const parsed=JSON.parse(txt);
-   localStorage.setItem(SAVE_KEY,JSON.stringify(parsed));
+   JSON.parse(txt);
+   localStorage.setItem(SAVE_KEY,txt);
 
-   if(confirm('匯入檔案完成！\n\n按下確定後將重新整理網頁。')){
+   if(confirm('匯入完成，按確定重新整理')){
       setTimeout(()=>location.reload(),300);
    }
  }catch(err){
@@ -6898,23 +6889,9 @@ document.getElementById('importTextBtn').addEventListener('click',()=>{
  }
 });
 
-document.getElementById('importSaveFile').addEventListener('change',(e)=>{
- const file=e.target.files[0];
- if(!file) return;
-
- const reader=new FileReader();
- reader.onload=()=>{
-   try{
-      importSave(JSON.parse(reader.result));
-   }catch(err){
-      alert('JSON格式錯誤');
-   }
- };
- reader.readAsText(file);
-});
-
 })();
 </script>
+\n
 <style id="auto-scale-upgrade">
 html,body{
  overflow-x:auto !important;
@@ -6952,5 +6929,7 @@ setTimeout(autoScaleGame,500);
 setTimeout(autoScaleGame,1500);
 
 })();
-</script></body>
+</script>
+
+</body>
 </html>
