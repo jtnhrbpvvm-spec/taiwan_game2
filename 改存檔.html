@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>網頁遊戲存檔功能注入器_V3.1</title>
+<title>網頁遊戲存檔功能注入器0.9</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:1000px;margin:auto;padding:20px}
 button{padding:10px 16px;margin:5px}
@@ -11,7 +11,7 @@ button{padding:10px 16px;margin:5px}
 </style>
 </head>
 <body>
-<h1>網頁遊戲存檔功能注入器 V3.1</h1>
+<h1>網頁遊戲存檔功能注入器0.9</h1>
 
 <input type="file" id="fileInput" accept=".html">
 <button onclick="inject()">開始修改</button>
@@ -63,7 +63,7 @@ white-space:pre-wrap;
 
 <script>
 (function(){
-const SAVE_KEY='lineageIdleSave';
+const SAVE_KEY='lineage_idle_save';
 
 
 const wrap=document.getElementById('saveToolsWrap');
@@ -128,7 +128,7 @@ function exportSave(){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
- a.download='lineageIdleSave.json';
+ a.download='lineage_idle_save.json';
  a.click();
 }
 
