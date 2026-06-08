@@ -40,7 +40,7 @@
         .bar-bg { background: #334155; height: 20px; position: relative; border-radius: 999px; overflow: hidden; }
         .bar-fill { height: 100%; transition: width 0.2s ease-out; }
         .bar-text { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 12px; line-height: 20px; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.9); }
-        .c-blessed { color: #facc15; } .c-ancient { color: #2dd4bf; } .c-rare { color: #fb923c; } .c-attr { color: #22d3ee; } .c-anc-bless { color: #c084fc; }
+        .c-blessed { color: #facc15; } .c-ancient { color: #c084fc; } .c-rare { color: #fb923c; } .c-attr { color: #22d3ee; } .c-anc-bless { color: #e3a625; }
         /* 屬性詞綴 12 色：元素分色（火紅/水藍/風綠/地琥珀），階級越高越鮮明，靈系發光 */
         .c-attr-fire1  { color: #fca5a5; } .c-attr-fire3  { color: #ef4444; } .c-attr-fire5  { color: #dc2626; }
         .c-attr-water1 { color: #93c5fd; } .c-attr-water3 { color: #3b82f6; } .c-attr-water5 { color: #2563eb; }
@@ -109,35 +109,82 @@
 
         /* 遠古物品的紅色螢光呼吸特效（亮度比照祝福） */
         @keyframes ancientGlow {
-            0%, 100% { filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.5)); }
-            50% { filter: drop-shadow(0 0 10px rgba(45, 212, 191, 1)); }
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.5)); }
+            50% { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 1)); }
         }
         .ancient-glow { animation: ancientGlow 2s infinite ease-in-out; }
 
-        /* 遠古+祝福：紫色螢光呼吸特效（亮度比照祝福） */
-        /* 遠古+祝福：高亮絢麗紫光（雙層光暈 + 亮度/飽和提升 + 較快脈動） */
+        /* 遠古+祝福：紫↔金 交替螢光（維持顯眼度，雙層光暈 + 亮度/飽和提升 + 較快脈動） */
         @keyframes ancBlessGlow {
             0%, 100% {
-                filter: drop-shadow(0 0 6px rgba(240, 171, 252, 1))
-                        drop-shadow(0 0 16px rgba(216, 90, 245, 0.95))
-                        drop-shadow(0 0 28px rgba(168, 85, 247, 0.6))
-                        brightness(1.35) saturate(1.85) hue-rotate(0deg);
+                filter: drop-shadow(0 0 8px rgba(192, 132, 252, 1))
+                        drop-shadow(0 0 20px rgba(168, 85, 247, 0.98))
+                        drop-shadow(0 0 36px rgba(147, 51, 234, 0.72))
+                        brightness(1.45) saturate(1.9);
             }
             50% {
-                filter: drop-shadow(0 0 14px rgba(245, 200, 255, 1))
-                        drop-shadow(0 0 30px rgba(232, 121, 249, 1))
-                        drop-shadow(0 0 46px rgba(192, 132, 252, 0.85))
-                        brightness(1.65) saturate(2.15) hue-rotate(28deg);
+                filter: drop-shadow(0 0 14px rgba(255, 226, 150, 1))
+                        drop-shadow(0 0 30px rgba(243, 188, 72, 1))
+                        drop-shadow(0 0 50px rgba(214, 150, 30, 0.9))
+                        brightness(1.6) saturate(2.0);
             }
         }
         .anc-bless-glow { animation: ancBlessGlow 1.3s infinite ease-in-out; }
 
-        /* 三詞綴(屬性+遠古+祝福)：高亮度 紅→藍→綠→琥珀 循環變換光 */
+        /* 屬性+遠古：紫光（顏色同單遠古，顯眼度＝雙詞綴） */
+        @keyframes ancientGlowStrong {
+            0%, 100% {
+                filter: drop-shadow(0 0 7px rgba(192, 132, 252, 1))
+                        drop-shadow(0 0 18px rgba(168, 85, 247, 0.95))
+                        drop-shadow(0 0 32px rgba(147, 51, 234, 0.65))
+                        brightness(1.35) saturate(1.8);
+            }
+            50% {
+                filter: drop-shadow(0 0 16px rgba(214, 170, 255, 1))
+                        drop-shadow(0 0 34px rgba(184, 104, 250, 1))
+                        drop-shadow(0 0 54px rgba(150, 60, 235, 0.9))
+                        brightness(1.65) saturate(2.05);
+            }
+        }
+        .ancient-glow-strong { animation: ancientGlowStrong 1.3s infinite ease-in-out; }
+
+        /* 屬性+祝福：金光（顏色同單祝福，顯眼度＝雙詞綴） */
+        @keyframes blessGlowStrong {
+            0%, 100% {
+                filter: drop-shadow(0 0 7px rgba(255, 224, 130, 1))
+                        drop-shadow(0 0 18px rgba(250, 204, 21, 0.95))
+                        drop-shadow(0 0 32px rgba(217, 160, 10, 0.65))
+                        brightness(1.35) saturate(1.8);
+            }
+            50% {
+                filter: drop-shadow(0 0 16px rgba(255, 240, 165, 1))
+                        drop-shadow(0 0 34px rgba(253, 224, 71, 1))
+                        drop-shadow(0 0 54px rgba(234, 180, 20, 0.9))
+                        brightness(1.65) saturate(2.05);
+            }
+        }
+        .bless-glow-strong { animation: blessGlowStrong 1.3s infinite ease-in-out; }
+
+        /* 血盟敵人名稱：固定鮮紅 + 紅色脈動醒目特效 */
+        @keyframes pledgeNameGlow {
+            0%, 100% { text-shadow: 0 0 4px #ff0000, 0 0 8px #ff3b3b; }
+            50%      { text-shadow: 0 0 10px #ff0000, 0 0 20px #ff2d2d, 0 0 32px #ff5555; }
+        }
+        .mob-name-pledge { color: #ff2d2d !important; animation: pledgeNameGlow 1s infinite ease-in-out; }
+
+        /* 頭目名稱：保留等差顏色，疊加金色脈動專屬特效（與血盟不同） */
+        @keyframes bossNameGlow {
+            0%, 100% { text-shadow: 0 0 4px rgba(251,191,36,0.7), 0 0 8px rgba(245,158,11,0.5); letter-spacing: 0; }
+            50%      { text-shadow: 0 0 12px rgba(251,191,36,1), 0 0 22px rgba(217,119,6,0.85); letter-spacing: 0.5px; }
+        }
+        .mob-name-boss { animation: bossNameGlow 1.6s infinite ease-in-out; }
+
+        /* 三詞綴(屬性+遠古+祝福)：紅→藍→綠→琥珀 循環變換光（顏色不變，顯眼度最高，恆定強光+大光暈） */
         @keyframes triGlow {
-            0%, 100% { filter: drop-shadow(0 0 7px rgba(239, 68, 68, 1))  drop-shadow(0 0 18px rgba(239, 68, 68, 0.7))  brightness(1.45) saturate(2); }
-            25%      { filter: drop-shadow(0 0 7px rgba(59, 130, 246, 1)) drop-shadow(0 0 18px rgba(59, 130, 246, 0.7)) brightness(1.45) saturate(2); }
-            50%      { filter: drop-shadow(0 0 7px rgba(34, 197, 94, 1))  drop-shadow(0 0 18px rgba(34, 197, 94, 0.7))  brightness(1.45) saturate(2); }
-            75%      { filter: drop-shadow(0 0 7px rgba(245, 158, 11, 1)) drop-shadow(0 0 18px rgba(245, 158, 11, 0.7)) brightness(1.45) saturate(2); }
+            0%, 100% { filter: drop-shadow(0 0 11px rgba(239, 68, 68, 1))  drop-shadow(0 0 28px rgba(239, 68, 68, 0.85))  drop-shadow(0 0 52px rgba(239, 68, 68, 0.55))  brightness(1.75) saturate(2.2); }
+            25%      { filter: drop-shadow(0 0 11px rgba(59, 130, 246, 1)) drop-shadow(0 0 28px rgba(59, 130, 246, 0.85)) drop-shadow(0 0 52px rgba(59, 130, 246, 0.55)) brightness(1.75) saturate(2.2); }
+            50%      { filter: drop-shadow(0 0 11px rgba(34, 197, 94, 1))  drop-shadow(0 0 28px rgba(34, 197, 94, 0.85))  drop-shadow(0 0 52px rgba(34, 197, 94, 0.55))  brightness(1.75) saturate(2.2); }
+            75%      { filter: drop-shadow(0 0 11px rgba(245, 158, 11, 1)) drop-shadow(0 0 28px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 52px rgba(245, 158, 11, 0.55)) brightness(1.75) saturate(2.2); }
         }
         .tri-glow { animation: triGlow 2.4s infinite linear; }
     </style>
@@ -210,7 +257,7 @@
         <div class="w-[340px] flex flex-col gap-4">
             <!-- 新增了 id="status-panel"，並加入去底色與加深背景的樣式確保文字可讀 -->
             <div id="status-panel" class="panel bg-cover bg-top bg-no-repeat" style="background-blend-mode: multiply; background-color: rgba(30, 41, 59, 0.85);">
-                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span>狀態</span><span id="st-class" class="text-white text-base font-normal">騎士</span></div>
+                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span id="st-classname">職業</span><span id="st-class" class="text-white text-base font-normal cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
                 <div class="p-4 space-y-3 text-base">
                     <div class="flex justify-between text-slate-400 border-b border-slate-700 pb-2"><span>等級</span> <span class="text-white font-bold text-xl" id="st-lv">1</span></div>
                     <div class="flex justify-between text-slate-400"><span>防禦 (AC)</span> <span class="text-white font-bold" id="st-ac">10</span></div>
@@ -533,7 +580,7 @@ const DB = {
         "wpn_28": { n: "三叉戟", type: "wpn", dmgS: 5, dmgL: 4, hit: 0, spd: 1.2, req: "knight,elf", safe: 6, p: 35, gachaWeight: 100 },
         "wpn_siruge": { n: "瑟魯基之劍", type: "wpn", dmgS: 16, dmgL: 10, hit: 2, spd: 1.1, req: "knight", safe: 6, p: 41196, gachaWeight: 10 },
         "wpn_29": { n: "尤米弓", type: "wpn", isBow: true, ranged: true, dmgS: 3, dmgL: 3, hit: 0, dmgBonus: 3, spd: 1.0, req: "elf", safe: 6, p: 32680, gachaWeight: 10 },
-        "wpn_shortbow": { n: "短弓", type: "wpn", isBow: true, ranged: true, dmgS: 2, dmgL: 2, hit: 0, dmgBonus: -1, spd: 1.0, req: "elf", safe: 6, p: 10, gachaWeight: 100 },
+        "wpn_shortbow": { n: "短弓", type: "wpn", isBow: true, ranged: true, dmgS: 2, dmgL: 2, hit: 0, dmgBonus: -1, spd: 1.0, req: "all", safe: 6, p: 10, gachaWeight: 100 },
         "wpn_30": { n: "米索莉箭", type: "wpn", isArrow: true, dmgS: 10, dmgL: 9, hit: 0, p: 1, unBonus: true, gachaWeight: 0 },
         "wpn_31": { n: "十字弓", type: "wpn", isBow: true, ranged: true, dmgS: 3, dmgL: 2, hit: 3, dmgBonus: 2, spd: 1.0, req: "knight,elf", safe: 6, p: 59400, gachaWeight: 10 },
         "wpn_32": { n: "獵人之弓", type: "wpn", isBow: true, ranged: true, dmgS: 2, dmgL: 2, hit: 5, dmgBonus: 1, spd: 1.0, req: "all", safe: 6, p: 11000, gachaWeight: 20 },
@@ -819,6 +866,7 @@ const DB = {
 		"new_item_mermaid_scale": { n: "人魚之鱗", p: 10, gachaWeight: 10 },
 		"new_item_239": { n: "潘朵拉抽獎卷", p: 0, gachaWeight: 0 },
 		"new_item_240": { n: "變形怪的血", p: 1, gachaWeight: 0 },
+		"new_item_241": { n: "王族搜索狀", p: 1000, gachaWeight: 0, d: "擊敗血盟敵人必定取得。可向血盟盟主交出，換取盟主的祝福。" },
 		
 		        // ===== 法師魔法書 =====
         "bk_heal1": { type: "skillbk", n: "魔法書(初級治癒術)", p: 100, sk: "sk_heal1", gachaWeight: 100 },
@@ -955,6 +1003,12 @@ const DB = {
     mobs: {
         "orc": { n: "妖魔", lv: 2, s: "S", beh: "被動", race: "妖魔", e: "fire", hp: 6, ac: 10, mr: 0, exp: 5, goldMin: 10, goldMax: 30, atkSpd: 2, dmg: [1, 2], db: 0, hit: 0 },
         "goblin": { n: "哥布林", lv: 2, s: "S", beh: "被動", race: "哥布林", e: "earth", hp: 3, ac: 10, mr: 2, exp: 5, goldMin: 10, goldMax: 30, atkSpd: 2, dmg: [1, 2], db: 0, hit: 0 },
+        "esti_enemy": { n: "依詩蒂", img: "assets/icons/monsters/依詩蒂.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女騎士", seeInsight: true, hp: 20, ac: -10, mr: 0, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 10], db: 0, hit: 2, regenHp: 15, scale: { hpC: 20, acBase: -10, acDiv: 2, mrBase: 0, mrDiv: 10, dmgSides: 10, dbDiv: 2, hitBase: 2, hitDiv: 3, atkSpd: 0.67 }, mag: { skn: "衝擊之暈", cd: 50, chance: 0.2, type: "extra_attack", stunChance: 10 } },
+        "aton_enemy": { n: "阿頓", img: "assets/icons/monsters/阿頓.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男騎士", seeInsight: true, hp: 18, ac: -10, mr: 0, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.6, dmg: [1, 14], db: 0, hit: 0, regenHp: 15, scale: { hpC: 18, acBase: -10, acDiv: 2, mrBase: 0, mrDiv: 10, dmgSides: 14, dbDiv: 2, hitBase: 0, hitDiv: 3, atkSpd: 0.6 }, mag: { skn: "衝擊之暈", cd: 50, chance: 0.2, type: "extra_attack", stunChance: 10 } },
+        "julian_enemy": { n: "朱利安", img: "assets/icons/monsters/朱利安.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男妖精", hp: 12, ac: -15, mr: 25, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 9], db: 0, hit: 5, regenHp: 15, scale: { hpC: 12, acBase: -15, acDiv: 3, mrBase: 25, mrDiv: 3, dmgSides: 9, dbDiv: 3, hitBase: 5, hitDiv: 3, atkSpd: 0.67 }, mag: { skn: "三重矢", cd: 50, chance: 0.2, type: "multi_attack", times: 3 } },
+        "ovi_enemy": { n: "歐薇", img: "assets/icons/monsters/歐薇.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女妖精", hp: 10, ac: -18, mr: 25, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 8], db: 0, hit: 5, regenHp: 15, scale: { hpC: 10, acBase: -18, acDiv: 3, mrBase: 25, mrDiv: 3, dmgSides: 8, dbDiv: 4, hitBase: 5, hitDiv: 3, atkSpd: 0.67 }, mag: { skn: "生命的祝福", cd: 50, chance: 0.2, type: "pledge_bless", healDice: [1, 20], dur: 18, interval: 3 } },
+        "joe_enemy": { n: "喬", img: "assets/icons/monsters/喬.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男法師", hp: 10, ac: -10, mr: 15, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 5, regenHp: 15, scale: { hpC: 10, acBase: -10, acDiv: 4, mrBase: 15, mrDiv: 8, dmgSides: 4, dbDiv: 6, hitBase: 5, hitDiv: 5, atkSpd: 0.67 }, mag: { skn: "光箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "none" }, mag2: { skn: "地裂術", cd: 50, chance: 0.2, dmg: [8, 6], dbLv: 1, ele: "earth" } },
+        "senis_enemy": { n: "賽尼斯", img: "assets/icons/monsters/賽尼斯.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女法師", hp: 8, ac: -11, mr: 18, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 0, regenHp: 15, scale: { hpC: 8, acBase: -11, acDiv: 4, mrBase: 18, mrDiv: 8, dmgSides: 4, dbDiv: 6, hitBase: 0, hitDiv: 5, atkSpd: 0.67 }, mag: { skn: "冰箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "water" }, mag2: { skn: "冰矛圍籬", cd: 50, chance: 0.2, dmg: [5, 10], dbLv: 1, ele: "water", sec: { type: "freeze", pbase: 150 } } },
         "orc_archer": { n: "妖魔弓箭手", lv: 3, s: "S", beh: "被動", race: "妖魔", e: "fire", hp: 12, ac: 10, mr: 2, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
         "gremlin": { n: "地靈", lv: 3, s: "S", beh: "被動", race: "地靈", e: "earth", hp: 7, ac: 10, mr: 2, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
         "nm_001": { n: "污染的地精靈", lv: 3, s: "S", beh: "被動", race: "元素", elem: true, e: "earth", hp: 10, ac: 10, mr: 10, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
@@ -1421,7 +1475,7 @@ const DB = {
         '不死鳥': [['wpn_katana',5], ['wpn_siruge',1], ['amr_plate',5], ['arm_88',0.1], ['arm_63',10], ['acc_117',0.01], ['amu_str',0.1], ['acc_120',0.1], ['acc_128',1], ['acc_129',1], ['acc_130',0.5], ['acc_131',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_159',0.1], ['bk_sleep_mist',1], ['bk_holy_barrier',0.1], ['bk_meteor',0.05], ['potion_blue',1], ['bk_fire_storm',0.5], ['bk_elf_dancefire',1], ['bk_blaze',1]],
         '亞力安': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_slow',0.5], ['bk_mummy_curse',0.5], ['bk_heal2',0.1], ['bk_holy_light',0.1], ['bk_haste_spell',0.5], ['bk_earthquake',0.1], ['bk_rock_prison',0.5], ['bk_greater_haste',0.1], ['bk_quake',0.005], ['bk_elf_groundtrap',0.1]],
         '人形殭屍': [['bk_vampire',0.1], ['bk_dark_shadow',0.1]],
-        '人魚': [['scroll_acc',0.01], ['new_item_mermaid_scale', 0.1]],
+        '人魚': [['scroll_acc',0.01], ['new_item_mermaid_scale', 1]],
         '伊弗利特': [['wpn_katana',2], ['amr_plate',5], ['arm_63',10], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_fireball',3], ['bk_dex_up',1], ['bk_str_up',1], ['bk_cancel',1], ['potion_blue',1], ['bk_fire_storm',0.2], ['bk_elf_magicerase',1], ['bk_elf_triple',1], ['bk_blaze',1]],
         '伊萊克頓': [['acc_127',0.001], ['scroll_armor',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_thunder',0.05], ['bk_summon',0.002], ['bk_thunder_storm',0.001], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.05]],
         '侏儒': [['wpn_26',1], ['hlm_gnome',2], ['arm_86',5], ['shd_gnome',3], ['new_item_169',1], ['scroll_poly',1], ['new_item_180',100]],
@@ -1511,7 +1565,7 @@ const DB = {
         '莫妮亞': [['arm_87',1], ['scroll_weapon',1], ['scroll_armor',1.5], ['bk_slow',0.5], ['bk_heal2',0.5], ['bk_holy_light',0.1], ['scroll_poly',1], ['potion_blue',1]],
         '萊肯': [['wpn_battleaxe',3], ['wpn_halberd',0.5], ['arm_65',1], ['arm_66',1], ['arm_105',2], ['arm_90',1], ['new_item_151',5], ['bk_dex_up',0.05], ['bk_vampire',0.1], ['bk_slow',0.1], ['new_item_195',1]],
         '蘑菇': [['new_item_166',100]],
-        '蛇女': [['scroll_weapon',0.2], ['scroll_acc',0.01], ['bk_break',0.5], ['new_item_221',0.1], ['new_item_208',1]],
+        '蛇女': [['scroll_weapon',0.2], ['scroll_acc',0.01], ['bk_break',0.5], ['new_item_221',1], ['new_item_208',1]],
         '蜥蜴人': [['wpn_37',0.5], ['arm_105',1], ['arm_42',3], ['new_item_160',5], ['scroll_acc',0.001]],
         '蟑螂人': [['arm_42',3], ['potion_haste',1], ['new_item_158',0.1]],
         '蟹人': [['scroll_armor',0.3], ['bk_break',0.1], ['bk_str_up',0.01]],
@@ -1526,7 +1580,7 @@ const DB = {
         '長老': [['arm_87',0.5], ['new_item_150',1], ['bk_thunder',0.1], ['bk_heal2',0.5], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_234',0.1]],
         '閃電球': [['arm_45',0.05], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_thunder_storm',0.001]],
         '阿吐巴妖魔': [['wpn_damascus',0.1], ['arm_60',0.5], ['arm_64',3], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['new_item_145',1], ['new_item_157',5], ['new_item_202',1]],
-        '阿西塔基奧': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_fireball',0.5], ['bk_dex_up',0.1], ['bk_str_up',0.05], ['bk_haste_spell',0.1], ['bk_earthquake',0.1], ['new_item_192',0.01], ['new_item_194',0.1]],
+        '阿西塔基奧': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_fireball',0.5], ['bk_dex_up',0.1], ['bk_str_up',0.05], ['bk_haste_spell',0.1], ['bk_earthquake',0.1], ['new_item_192',0.01], ['new_item_194',1]],
         '阿魯巴': [['wpn_18',2], ['bk_str_up',0.05], ['bk_haste_spell',0.5], ['bk_earthquake',0.1], ['bk_rock_prison',0.5], ['bk_greater_haste',0.1], ['bk_quake',0.005]],
         '雪人': [['bk_elf_release',0.1], ['scroll_acc',0.01]],
         '雪怪': [['wpn_18',1], ['scroll_acc',0.01], ['new_item_195',1]],
@@ -1603,10 +1657,10 @@ function flushAwaySummary() {
 }
 
 let player = {
-    cls: null, lv: 1, exp: 0, gold: 1000, hp: 0, mhp: 0, mp: 0, mmp: 0,
+    cls: null, name: null, lv: 1, exp: 0, gold: 1000, hp: 0, mhp: 0, mp: 0, mmp: 0, blessings: {},
     base: { str:0, dex:0, con:0, int:0, wis:0, cha:8 }, bonus: 0, alloc: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, junkPrefs: {}, bloodPledge: null, magicShieldCd: 0,
     inv: [], eq: { wpn: null, arrow: null, helm: null, armor: null, shield: null, cloak: null, tshirt: null, gloves: null, boots: null, ring1: null, ring2: null, amulet: null, belt: null },
-    skills: [], buffs: { haste: 0, brave: 0, blue: 0, cautious: 0, elfcookie: 0, poly: 0, shield: 0 }, poly: null,
+    skills: [], buffs: { haste: 0, brave: 0, blue: 0, cautious: 0, elfcookie: 0, poly: 0, shield: 0, sk_magic_shield: 0 }, poly: null,
     summon: null, manualCd: {}, elfEle: null, hot: null,
     cds: { pot: 0, atkSk: 0, healSk: 0 }, dead: false, statuses: { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0, magicseal: 0 },
     d: { str:0, dex:0, con:0, int:0, wis:0, cha:8,
@@ -2032,14 +2086,27 @@ d.mr += (baseMr + bonusMr);
         }
     }
     
+    // 騎士：背包中持有的魔法頭盔也授予技能（擁有即可、不需裝備；背包與裝備都沒有對應頭盔時技能才會消失）
+    if (p.cls === 'knight') {
+        (p.inv || []).forEach(it => {
+            let _gd = DB.items[it.id];
+            if (_gd && _gd.grantSkills) {
+                _gd.grantSkills.forEach(sk => {
+                    if (!player.grantedSkills.includes(sk)) player.grantedSkills.push(sk);
+                    if (!player.skills.includes(sk)) player.skills.push(sk);
+                });
+            }
+        });
+    }
+    p._setPoly = null;   // 套裝變身僅在穿著時生效；每次重算先清除，卸下套裝即消失
     if(setCheck['leather'] >= 4) { d.ac -= 3; }   // 皮套裝（原作未實作，依 DB.sets 補上）
     if(setCheck['bone'] >= 3) { d.ac -= 2; p.mhp += 10; }
-    if(setCheck['dk'] >= 4) { d.ac -= 4; applyPolyForce(getPolyState(true)); }
+    if(setCheck['dk'] >= 4) { d.ac -= 4; p._setPoly = getPolyState(true); }
     if(setCheck['silver'] >= 4) { d.ac -= 3; }
     if(setCheck['oasis'] >= 4) { d.ac -= 3; }
     if(setCheck['gnome'] >= 3) { d.ac -= 1; p.mhp += 5; }
     if(setCheck['mage'] >= 2) { p.mmp += 50; }
-    if(setCheck['kurt'] >= 4) { d.ac -= 4; applyPolyForce(getPolyState(false, true)); }
+    if(setCheck['kurt'] >= 4) { d.ac -= 4; p._setPoly = getPolyState(false, true); }
     if(setCheck['steel'] >= 5) { d.ac -= 2; d.dr += 2; }
     if(setCheck['mr'] >= 3) { d.mr += 5; } 
     if(setCheck['guard'] >= 3) { d.ac -= 1; }
@@ -2084,9 +2151,10 @@ d.mr += (baseMr + bonusMr);
         if(p.elfEle === 'wind')  d.resWind  += 50;
     }
 
-    // 變身：依規格分別計入 近距離/遠距離/額外/魔法/MP恢復/AC/ER/MR/攻速
-    if(p.buffs.poly > 0 && p.poly) {
-        let pf = p.poly;
+    // 變身：套裝變身（_setPoly，僅穿著套裝時生效、卸下立即消失）優先於藥水變身（buffs.poly 計時）
+    let _polyForm = p._setPoly || ((p.buffs.poly > 0 && p.poly) ? p.poly : null);
+    if(_polyForm) {
+        let pf = _polyForm;
         d.meleeDmg  += (pf.md  || 0); d.meleeHit  += (pf.mh || 0);   // 近距離傷害 / 命中
         d.rangedDmg += (pf.rd  || 0); d.rangedHit += (pf.rh || 0);   // 遠距離傷害 / 命中
         d.extraDmg  += (pf.ed  || 0); d.extraHit  += (pf.eh || 0);   // 額外傷害 / 命中
@@ -2100,6 +2168,15 @@ d.mr += (baseMr + bonusMr);
     }
     
     if(p.buffs.sk_soul_up > 0) { p.mhp = Math.floor(p.mhp * 1.2); p.mmp = Math.floor(p.mmp * 1.2); }
+    // 盟主的祝福（8 小時，存檔保留、死亡清空）：依到期時間判斷是否生效
+    if(p.blessings) {
+        let _now = Date.now();
+        if(p.blessings.precise > _now) d.extraHit += 3;                    // 精準目標
+        if(p.blessings.blaze   > _now) { d.hpR += 15; d.mpR += 3; }        // 灼熱靈氣
+        if(p.blessings.brave   > _now) { d.extraDmg += 3; d.extraMp += 6; }// 勇敢靈氣
+        if(p.blessings.support > _now) d.dr += 3;                          // 援護盟友
+    }
+
     d.spdMult = spdMult;   // 速度倍率（受加速/勇敢藥水/精靈餅乾/變身影響），供自動施法間隔使用
     d.aspd = d.aspd * spdMult;
 
@@ -2481,6 +2558,11 @@ function tick() {
 
         // --- 異常狀態處理（倒數、中毒 DoT），死亡則跳過 ---
         if (processMobStatusTick(m, i)) continue;
+        // 常駐被動：HP 未滿 100% 時每秒回復（依等級 15 / 40），不受異常狀態影響
+        if (m.regenHp && state.ticks % 10 === 0 && m.curHp > 0 && m.curHp < m.hp) {
+            m.curHp = Math.min(m.hp, m.curHp + m.regenHp);
+            if (!state.ff) renderMobs();
+        }
         // --- 冰凍 / 暈眩 / 石化 / 沉睡：無法行動 ---
         if (mobActDisabled(m)) continue;
         
@@ -2489,6 +2571,26 @@ function tick() {
         
         // 👇 新增這行：無所遁形術限定「史巴托」滿血時停止行動 ---
         if(m.n === "史巴托" && (player.buffs.sk_reveal > 0 || player.buffs.sk_helm_str2 > 0) && m.curHp === m.hp) continue;
+
+        // 野外＋血盟：傳送術（HP<20% 時，戰鬥中每 3 秒判定一次，10% 機率直接脫離戰鬥消失；不視為擊殺，玩家無經驗/金錢/掉落）
+        if (m.wild && m.race === '血盟' && m.curHp > 0) {
+            if (m.curHp < m.hp * 0.2) {
+                if (m._tpCd === undefined) m._tpCd = 30;
+                if (--m._tpCd <= 0) {
+                    m._tpCd = 30;
+                    if (Math.random() < 0.1) {
+                        logCombat(`<span class="${getMobColor(m.lv)}">${m.n}</span> 施放 傳送術，脫離了戰鬥（未被擊殺，你沒有獲得經驗值、金錢與掉落物）。`, 'enemy');
+                        mapState.mobs[i] = null;
+                        if (mapState.spawnAt) mapState.spawnAt[i] = null;   // 該格交由出怪排程重生
+                        if (mapState.targetIdx === i) mapState.targetIdx = -1;
+                        if (!state.ff) renderMobs();
+                        continue;
+                    }
+                }
+            } else {
+                m._tpCd = 30;   // HP 回到 20% 以上：重置判定計時
+            }
+        }
 
         if(m._atkCd === undefined) m._atkCd = Math.max(1, Math.floor(m.atkSpd * 10));
         m._atkCd--;
@@ -2528,6 +2630,13 @@ function tick() {
     }
 
     if(!player.dead) summonTick();
+    if(!player.dead) pledgeBlessTick();   // 生命的祝福：場上血盟怪物持續治療
+    // 盟主祝福到期清理（每秒檢查；到期即移除並重算屬性）
+    if(!player.dead && player.blessings && state.ticks % 10 === 0) {
+        let _changed = false;
+        for(let k in player.blessings) { if(player.blessings[k] > 0 && player.blessings[k] <= Date.now()) { player.blessings[k] = 0; _changed = true; } }
+        if(_changed) { calcStats(); updateUI(); }
+    }
 
     // HoT 持續回復（體力回復術 / 生命的祝福）
     if(player.hot && !player.dead) {
@@ -2647,6 +2756,48 @@ function regenTick() {
     updateUI(); 
 }
 
+// 純BOSS房（不會出現一般怪與血盟特殊敵人）
+const PURE_BOSS_MAPS = ['antaras_lair', 'fafurion_lair', 'valakas_lair'];
+
+// 血盟敵人：等級與能力隨玩家等級縮放，於生成當下依各自的 scale 參數計算
+function applyPledgeEnemyScaling(mob) {
+    let L = Math.max(1, player.lv);
+    let s = mob.scale || {};
+    mob.lv = L;
+    mob.hp = (s.hpC || 20) * L;
+    mob.curHp = mob.hp;
+    mob.ac = (s.acBase !== undefined ? s.acBase : -10) - Math.floor(L / (s.acDiv || 2));
+    mob.mr = (s.mrBase || 0) + Math.floor(L / (s.mrDiv || 10));
+    mob.exp = 100 * L;
+    mob.goldMin = 1136;
+    mob.goldMax = Math.max(1136, 100 * L);   // 低等時 100×等級<1136，夾住以免區間為負
+    mob.dmg = [1, s.dmgSides || 10];
+    mob.db = Math.floor(L / (s.dbDiv || 2));
+    mob.hit = (s.hitBase || 0) + Math.floor(L / (s.hitDiv || 3));
+    mob.atkSpd = s.atkSpd || 0.67;
+    mob.regenHp = (L >= 50) ? 40 : 15;   // 常駐被動：HP 未滿時每秒回復量
+}
+
+// 生命的祝福：每 tick 推進；達到間隔時為場上所有血盟怪物（HP 未滿）回復，持續期滿自動結束
+function pledgeBlessTick() {
+    let pb = mapState.pledgeBless;
+    if(!pb) return;
+    pb.left--;
+    pb.nextIn--;
+    if(pb.nextIn <= 0) {
+        pb.nextIn = pb.interval;
+        let healed = false;
+        mapState.mobs.forEach(m => {
+            if(m && m.race === '血盟' && m.curHp > 0 && m.curHp < m.hp) {
+                m.curHp = Math.min(m.hp, m.curHp + roll(pb.dice[0], pb.dice[1]) + pb.bonus);
+                healed = true;
+            }
+        });
+        if(healed && !state.ff) renderMobs();
+    }
+    if(pb.left <= 0) mapState.pledgeBless = null;
+}
+
 function spawnMob(idx) {
     let pool = DB.maps[mapState.current];
     if(!pool) return;
@@ -2662,11 +2813,22 @@ function spawnMob(idx) {
     } else {
         let safePool = normalPool.length > 0 ? normalPool : pool;
         mobId = safePool[Math.floor(Math.random() * safePool.length)];
+        // 血盟特殊敵人：已加入特羅斯陣營者，於非BOSS房狩獵地區有 1% 機率遇到敵對血盟。
+        // 從「符合條件(陣營/角色性別職業未被排除/該名稱尚未在場上)」的敵人中平均抽一隻；場上可同時有多隻不同名的血盟敵人，但不會有同名兩隻。
+        if(player.bloodPledge === 'tros' && !PURE_BOSS_MAPS.includes(mapState.current) && Math.random() < 0.01) {
+            let onField = mapState.mobs.filter(m => m).map(m => m.n);
+            let candidates = Object.keys(DB.mobs).filter(id => {
+                let d = DB.mobs[id];
+                return d.pledgeEnemy && d.excludeAvatar !== player.avatar && !onField.includes(d.n);
+            });
+            if(candidates.length > 0) mobId = candidates[Math.floor(Math.random() * candidates.length)];
+        }
     }
     
     let base = DB.mobs[mobId];
     if(!base) return;
     mapState.mobs[idx] = { ...base, curHp: base.hp, uid: uid(), _magCd: {}, justHit: false, st: newMobStatus() };
+    if(base.pledgeEnemy) applyPledgeEnemyScaling(mapState.mobs[idx]);   // 血盟敵人：依玩家等級縮放
     renderMobs();
 }
 
@@ -2678,6 +2840,13 @@ function getMobColor(mobLv) {
     if (diff >= -4) return "text-white";
     if (diff >= -9) return "text-green-300";
     return "text-slate-500"; // <= -10
+}
+
+// 怪物名稱顯示用 class：血盟＝固定鮮紅+紅色醒目特效（不受等差影響）；頭目＝保留等差顏色+金色專屬特效
+function getMobNameClass(m) {
+    if (m && m.race === '血盟') return 'mob-name-pledge font-bold';
+    if (m && m.boss) return getMobColor(m.lv) + ' font-bold mob-name-boss';
+    return getMobColor(m.lv) + ' font-bold';
 }
 
 function getTarget() {
@@ -2916,7 +3085,7 @@ function playerAttack() {
     }
 }
 
-function enemyPhysicalAttack(mob, idx) {
+function enemyPhysicalAttack(mob, idx, stunChance = 0) {
     if(player.dead) return;
 
     if (roll(1, 100) <= player.d.er) {
@@ -2971,14 +3140,28 @@ function enemyPhysicalAttack(mob, idx) {
         if(player.buffs.sk_holy_barrier > 0) totalDmg = Math.floor(totalDmg * 0.7);
         if(player.statuses.freeze > 0) totalDmg += 400;
 
+        // 常駐被動：看破（敵人版）— 命中時依機率造成兩倍傷害（5 + 等級/10 %）
+        let mobInsightPrefix = '';
+        if(mob.seeInsight) {
+            let insightRate = Math.min(15, 5 + Math.floor((mob.lv || 1) / 10));
+            if(Math.random() * 100 < insightRate) {
+                totalDmg *= 2;
+                mobInsightPrefix = `<span class="text-fuchsia-300 font-bold">【看破】${mob.n}看穿了你的破綻！</span> `;
+            }
+        }
+
         totalDmg = Math.max(1, totalDmg);
         player.hp -= totalDmg;
 
-        let atkMsg = `<span class="${getMobColor(mob.lv)}">${mob.n}</span> 擊中你，造成 ${totalDmg} 點傷害。`;
+        let atkMsg = `${mobInsightPrefix}<span class="${getMobColor(mob.lv)}">${mob.n}</span> 擊中你，造成 ${totalDmg} 點傷害。`;
         if(heavy) atkMsg += " (重擊!)";
         logCombat(atkMsg, 'enemy');
         
         if (player.hp <= 0) killPlayer();
+        else if (stunChance > 0 && Math.random() * 100 < stunChance) {   // 衝擊之暈：命中後依機率附加暈眩
+            player.statuses.stun = 60;
+            logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 的衝擊使你暈眩了！`, 'enemy');
+        }
         else updateUI();
     } else {
         logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 的攻擊未命中。`, 'miss');
@@ -2993,6 +3176,7 @@ function killPlayer() {
     player.summon = null;
     player.buffs.sk_charm = 0;
     player.skills.forEach(s => { if(DB.skills[s] && DB.skills[s].summon) player.buffs[s] = 0; });
+    player.blessings = {};   // 死亡清空所有盟主祝福
     let msg = "你的角色已經死亡。";
     if (player.lv >= 5) {
         player.exp = Math.max(0, player.exp - Math.floor(getExpReq(player.lv) * 0.1));
@@ -3015,6 +3199,36 @@ function applyMobMagic(mob, sk) {
     if(!sk) return;
     
     if(player.buffs.sk_magic_shield > 0 && sk.dmg) { player.buffs.sk_magic_shield = 0; player.magicShieldCd = 3; logCombat(`魔法屏障吸收了攻擊！（3 秒內無法再次施展魔法屏障）`, 'magic'); return; }
+    
+    // 衝擊之暈：追加一次一般攻擊（含看破判定），命中時依機率附加暈眩
+    if(sk.type === 'extra_attack') {
+        if(player.dead) return;
+        let idx = mapState.mobs.indexOf(mob);
+        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '衝擊之暈'}，追加一次攻擊！`, 'enemy');
+        enemyPhysicalAttack(mob, idx, sk.stunChance || 0);
+        return;
+    }
+    // 三重矢：立即額外進行多次一般攻擊（各自依一般攻擊計算命中）
+    if(sk.type === 'multi_attack') {
+        if(player.dead) return;
+        let idx = mapState.mobs.indexOf(mob);
+        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '三重矢'}，連續攻擊！`, 'enemy');
+        let times = sk.times || 3;
+        for(let t = 0; t < times; t++) { if(player.dead) break; enemyPhysicalAttack(mob, idx, 0); }
+        return;
+    }
+    // 生命的祝福：場上所有血盟怪物（含自己）每 interval 秒回復 healDice + 等級/3 HP，持續 dur 秒
+    if(sk.type === 'pledge_bless') {
+        mapState.pledgeBless = {
+            left: (sk.dur || 18) * 10,
+            interval: (sk.interval || 3) * 10,
+            nextIn: (sk.interval || 3) * 10,
+            dice: sk.healDice || [1, 20],
+            bonus: Math.floor((mob.lv || 1) / 3)
+        };
+        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 施放 ${sk.skn || '生命的祝福'}，血盟同伴開始恢復生命！`, 'enemy');
+        return;
+    }
     
     // 抗魔係數
     let mrFactor = 1.0;
@@ -3098,7 +3312,7 @@ function applyMobMagic(mob, sk) {
 
     if(sk.dmg) {
         let baseMagicDmg = roll(sk.dmg[0], sk.dmg[1]);
-        let extraMagicDmg = sk.db || 0;
+        let extraMagicDmg = (sk.db || 0) + (sk.dbLv ? (mob.lv || 0) : 0);   // dbLv：傷害加值=怪物等級（即玩家等級）
         
         let resFactor = 1.0;
         if(sk.ele === 'fire' && player.d.resFire) resFactor -= player.d.resFire/100;
@@ -3153,6 +3367,48 @@ function applyMobMagic(mob, sk) {
     }
 }
 
+// 野外+血盟掉寶的強化等級機率：安定值+1/+2/+3/+4 = 0.1%/0.01%/0.001%/0.0001%，其餘平分 +0~+安定值
+function rollPledgeDropEnhance(safe) {
+    safe = safe || 0;
+    let r = Math.random();
+    if (r < 0.000001) return safe + 4;   // 0.0001%
+    if (r < 0.000011) return safe + 3;   // 0.001%
+    if (r < 0.000111) return safe + 2;   // 0.01%
+    if (r < 0.001111) return safe + 1;   // 0.1%
+    // 其餘機率平均分配給 +0 ~ +安定值（安定值=0 時即固定 +0）
+    let buckets = safe + 1;
+    let lvl = Math.floor(((r - 0.001111) / (1 - 0.001111)) * buckets);
+    return Math.min(lvl, safe);
+}
+
+// 野外+血盟敵人擊殺掉寶：1% 機率獲得 1 件物品（抽法同潘朵拉抽獎卷；武器/防具/飾品同樣 1% 各詞綴，且依機率附帶強化等級）
+function pledgeBonusDrop(mob) {
+    if (Math.random() >= 0.01) return;   // 1% 機率
+    let id = getWeightedGachaResult();
+    let d0 = DB.items[id];
+    if (!d0) return;
+    let isEquip = ((d0.type === 'wpn' && !d0.isArrow) || d0.type === 'arm' || d0.type === 'acc');
+    let item;
+    if (isEquip) {
+        // 詞綴：與潘朵拉/gainItem 相同，各 1%
+        let attr = (Math.random() < 0.01) ? rollAttrAffix() : false;
+        let bless = (Math.random() < 0.01);
+        let anc = (Math.random() < 0.01);
+        let en = rollPledgeDropEnhance(d0.safe || 0);   // 依物品安定值決定強化等級
+        player.inv.push({ id: id, uid: uid(), cnt: 1, en: en, bless: bless, anc: anc, attr: attr, lock: false, junk: false });
+        renderTabs();
+        if (d0.grantSkills) { calcStats(); renderSkillSelects(); }
+        item = { id: id, en: en, bless: bless, anc: anc, attr: attr, cnt: 1 };
+    } else {
+        // 非裝備：交給 gainItem 處理（含卷軸變祝福與堆疊），靜默後自行顯示掉落訊息
+        let info = gainItem(id, 1, true, false);
+        item = info || { id: id, en: 0, bless: false, anc: false, attr: false, cnt: 1 };
+    }
+    let fullName = getItemFullName(item);
+    let colorClass = getItemColor(item);
+    logSys(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 攜帶的 <span class="${colorClass} font-bold">${fullName}</span> 掉落了！`);
+}
+
 function killMob(idx) {
     let mob = mapState.mobs[idx];
     logCombat(`擊敗了 <span class="${getMobColor(mob.lv)}">${mob.n}</span>！`, 'player-heavy');  // 👈 新增
@@ -3181,6 +3437,15 @@ function killMob(idx) {
         }
     }
     
+    // === 血盟敵人：擊敗必定掉落「王族搜索狀」（100%）===
+    if (mob.race === '血盟') {
+        gainItem('new_item_241', 1);
+        logSys(`<span class="text-amber-300 font-bold">擊敗血盟敵人，取得了 王族搜索狀！</span>`);
+    }
+
+    // === 野外＋血盟敵人：1% 機率額外掉落一件「攜帶物」（抽法同潘朵拉，裝備可能已強化）===
+    if (mob.wild && mob.race === '血盟') pledgeBonusDrop(mob);
+
     // === 怪物專屬掉落（依「怪物掉落資料.md」）：每樣物品各自獨立判定一次 ===
     let dropList = MOB_DROPS[mob.n] || [];
     dropList.forEach(entry => {
@@ -3874,7 +4139,7 @@ function autoActions() {
         { id: 'set-magicbarrier', pot: 'scroll_magicbarrier', b: 'sk_magic_shield' }
     ];
     buffs.forEach(cfg => {
-        if (document.getElementById(cfg.id).checked && player.buffs[cfg.b] <= 0) {
+        if (document.getElementById(cfg.id).checked && (player.buffs[cfg.b] || 0) <= 0) {
             if(cfg.req && player.cls !== cfg.req) return;
             let item = player.inv.find(i => i.id === cfg.pot);
             if(item) {
@@ -3994,18 +4259,18 @@ function gainItem(id, cnt=1, silent=false, forceNormal=false) {
             }
         }
     
-    let ex = player.inv.find(i => i.id === id && i.en === 0 && i.bless === bless && i.anc === anc && i.attr === attr && !i.lock);
-    if(ex) ex.cnt += cnt;
+    let ex = player.inv.find(i => i.id === id && i.en === 0 && i.bless === bless && i.anc === anc && i.attr === attr);
+    if(ex) ex.cnt += cnt;   // 不論是否鎖定都疊加；僅加數量、不更動既有堆疊的鎖定/廢品狀態
     else player.inv.push({ id: id, uid: uid(), cnt: cnt, en: 0, bless: bless, anc: anc, attr: attr, lock: false, junk: !attr && !bless && !anc && !!(player.junkPrefs && player.junkPrefs[id]) });
     
     // 紀錄這次產生的物品屬性
     let itemInfo = { id: id, cnt: cnt, en: 0, bless: bless, anc: anc, attr: attr };
     
     if (!silent && d) {
-        let p = (getAttrAffix(attr) ? getAttrAffix(attr).n + " " : "") + (bless ? "祝福的 " : "") + (anc ? "遠古 " : "");
-        logSys(`獲得物品: <span class="${getItemColor(itemInfo)} font-bold">${p}${d.n}${cnt>1?' ('+cnt+')':''}</span>`);
+        logSys(`獲得物品: <span class="font-bold">${getItemFullName(itemInfo)}</span>`);
     }
     renderTabs();
+    if(DB.items[id] && DB.items[id].grantSkills) { calcStats(); renderSkillSelects(); }   // 取得授予技能的頭盔：立即生效
     
     return itemInfo; // 👈 讓拉霸機可以讀取最終產生的物品
 }
@@ -4054,40 +4319,48 @@ function isElementCounter(e, te) {
 
 function getItemColor(item) {
     let d = DB.items[item.id];
-    // 文字顏色優先序：屬性 > 遠古 > 祝福 > 白色（無詞綴）。
-    // 祝福光芒特效於圖示處依 item.bless 另外套用，與文字顏色獨立
-    //   → 例：屬性+祝福 = 屬性色 + 祝福光芒；遠古+祝福 = 遠古色 + 祝福光芒。
+    // 名字顏色 = 最靠近名字的詞綴：祝福(金) > 遠古(紫) > 屬性(各自色) > 基底白
+    if (item.bless || (d && d.isB)) return 'c-blessed';
+    if (item.anc) return 'c-ancient';
     if (getAttrAffix(item.attr)) {
         let cls = 'c-attr-' + item.attr;
         if (item.attr.charAt(item.attr.length - 1) === '5') cls += ' c-attr-glow';
         return cls;
     }
-    if (item.anc && item.bless) return 'c-anc-bless';   // 遠古+祝福(無屬性)：紫字
-    if (item.anc) return 'c-ancient';
-    if (item.bless) return 'c-blessed';
-    if (d.isB) return 'c-blessed';   // 祝福的卷軸(基底 isB)：名稱套用與祝福詞綴相同的金色(c-blessed)
     return d.c || 'text-white';
 }
 
-// 圖示光芒特效：只依「祝福 / 遠古」決定，與文字顏色(屬性優先)獨立；屬性不影響光芒。
-//   遠古+祝福 → 紫光；遠古 → 紅光；祝福(含祝福卷軸基底 isB) → 黃光；皆無 → 無光芒。
+// 圖示光芒：依詞綴組合決定顏色與顯眼度（與文字顏色獨立）。
+//   單祝福→金光、單遠古→紫光（原樣）；屬性+遠古→紫光(加強)、屬性+祝福→金光(加強)，顯眼度比照雙詞綴；
+//   遠古+祝福→紫金交替(顯眼)；三詞綴→變色循環，顯眼度最高。
 function getGlowClass(item, d) {
     let bless = (item && item.bless) || (d && d.isB);
     let anc = item && item.anc;
     let attr = !!(item && getAttrAffix(item.attr));
-    if (attr && anc && bless) return 'tri-glow';   // 三詞綴(屬性+遠古+祝福)：高亮紅藍綠琥珀變換光
-    if (anc && bless) return 'anc-bless-glow';
-    if (anc) return 'ancient-glow';
-    if (bless) return 'bless-glow';
+    if (attr && anc && bless) return 'tri-glow';           // 三詞綴：高亮變色循環（顯眼度最高）
+    if (anc && bless) return 'anc-bless-glow';             // 遠古+祝福：紫金交替（顯眼）
+    if (attr && anc) return 'ancient-glow-strong';         // 屬性+遠古：紫光（顯眼度＝雙詞綴）
+    if (attr && bless) return 'bless-glow-strong';         // 屬性+祝福：金光（顯眼度＝雙詞綴）
+    if (anc) return 'ancient-glow';                        // 單遠古：紫光（原樣）
+    if (bless) return 'bless-glow';                        // 單祝福：金光（原樣）
     return '';
 }
 
+// 物品全名（HTML：各詞綴分段各自上色；順序 屬性→遠古→祝福的→[+N]名字；名字顏色＝最靠近的詞綴）
 function getItemFullName(item) {
     let d = DB.items[item.id];
     if(!d) return "未知的物品";
-    let p = (getAttrAffix(item.attr) ? getAttrAffix(item.attr).n + " " : "") + (item.bless ? "祝福的 " : "") + (item.anc ? "遠古 " : "");
+    let segs = '';
+    let aff = getAttrAffix(item.attr);
+    if (aff) {
+        let acls = 'c-attr-' + item.attr + (item.attr.charAt(item.attr.length - 1) === '5' ? ' c-attr-glow' : '');
+        segs += `<span class="${acls}">${aff.n} </span>`;   // 屬性詞綴：12 種專屬色
+    }
+    if (item.anc)   segs += `<span class="c-ancient">遠古 </span>`;     // 遠古：固定紫
+    if (item.bless) segs += `<span class="c-blessed">祝福的 </span>`;   // 祝福的：固定金
     let en = item.en > 0 ? `+${item.en} ` : "";
-    return `${p}${en}${d.n}${item.cnt>1 ? ` (${item.cnt})`:''}`;
+    let cnt = item.cnt > 1 ? ` (${item.cnt})` : "";
+    return `${segs}<span class="${getItemColor(item)}">${en}${d.n}${cnt}</span>`;
 }
 
 function useItem(u, silent = false) {
@@ -4380,7 +4653,7 @@ function openEnhanceModal(scroll) {
     activeScroll = scroll;
     let targets = Object.values(player.eq).filter(e => e && DB.items[e.id].type === scroll.target);
     
-    document.getElementById('modal-item-name').innerText = getItemFullName(scroll) + " (選擇目標)";
+    document.getElementById('modal-item-name').innerHTML = getItemFullName(scroll) + " (選擇目標)";
     document.getElementById('modal-item-name').className = `text-xl font-bold mb-3 border-b border-slate-600 pb-3 ${getItemColor(scroll)}`;
     document.getElementById('modal-item-desc').innerHTML = "請選擇身上要強化的裝備：";
     
@@ -4588,7 +4861,8 @@ function updateUI() {
     if (player.cls === 'knight') clsDisplayName = '騎士';
     else if (player.cls === 'mage') clsDisplayName = '法師';
     else if (player.cls === 'elf') clsDisplayName = '妖精';
-    document.getElementById('st-class').innerText = clsDisplayName;
+    if(document.getElementById('st-classname')) document.getElementById('st-classname').innerText = clsDisplayName;
+    if(!window._editingName) document.getElementById('st-class').innerText = (player.name || '');   // 未取名則不顯示任何文字（仍可點擊命名）
     
     // 處理背景圖片：抓取 player.avatar 決定背景圖 (加上 bg-top 防止頭部裁切)
     let bgImageName = player.avatar || clsDisplayName; 
@@ -4665,6 +4939,7 @@ function updateUI() {
     
     if (player.inv.find(i=>i.id==='candle')) document.getElementById('btn-candle').classList.remove('hidden');
     else document.getElementById('btn-candle').classList.add('hidden');
+    updateSummonLock();   // 同步召喚類技能互斥鎖定（含迷魅生效時鎖定召喚增益）
 }
 
 function renderMobs() {
@@ -4691,7 +4966,7 @@ function renderMobs() {
 
             html += `<div class="mob-target ${act}" onclick="setTarget(${i})">
                         <div class="flex justify-center text-lg mb-2">
-                            <span class="${getMobColor(m.lv)} font-bold">${m.n}</span>
+                            <span class="${getMobNameClass(m)}">${m.n}</span>
                         </div>
                         ${badges}
                         <div class="flex justify-center mb-3">
@@ -4860,7 +5135,7 @@ player.inv.forEach(i => {
             let imgUrl = getIconUrl(sk, true);
             if(sk.type === 'manual') {
                 // 手動施放技能：顯示可點擊的施放按鈕
-                tDiv.innerHTML += `<button onclick="manualCast('${sid}')" ${isAvail?'':'disabled'}
+                tDiv.innerHTML += `<button id="manual-btn-${sid}" data-unavail="${isAvail?'0':'1'}" onclick="manualCast('${sid}')" ${isAvail?'':'disabled'}
                     class="px-2 py-1 text-xs border rounded whitespace-nowrap flex items-center gap-1 transition-colors
                     ${isAvail?'border-amber-500 text-amber-300 hover:bg-amber-900/40 cursor-pointer':'border-slate-600 text-slate-500 opacity-50 cursor-not-allowed'}">
                     <img src="${imgUrl}" onerror="this.style.display='none';" class="w-4 h-4 object-contain pointer-events-none">
@@ -4879,6 +5154,47 @@ player.inv.forEach(i => {
     }
     // 還原各分頁捲動位置
     ['tab-items','tab-weapons','tab-armors','tab-equip','tab-skill'].forEach(id => { let el = document.getElementById(id); if(el && _scroll[id] != null) el.scrollTop = _scroll[id]; });
+    updateSummonLock();
+}
+
+// ===== 召喚類技能互斥：迷魅 / 召喚 / 造屍 / 召喚屬性精靈 / 召喚強力屬性精靈 同時只能開啟一個 =====
+const SUMMON_BUFF_IDS = ['sk_zombie', 'sk_summon', 'sk_elf_summon', 'sk_elf_summon2'];
+function summonBuffChecked() {
+    for (let id of SUMMON_BUFF_IDS) { let c = document.getElementById('auto-sk-' + id); if (c && c.checked) return id; }
+    return null;
+}
+function updateSummonLock() {
+    let checkedBuff = summonBuffChecked();
+    let charmActive = !!(player.buffs && player.buffs.sk_charm > 0);
+    // 4 個召喚增益勾選框：已勾選一個→其餘鎖定；或迷魅生效→全部鎖定（仍保留各自的等級/條件不可用狀態）
+    SUMMON_BUFF_IDS.forEach(id => {
+        let c = document.getElementById('auto-sk-' + id);
+        if (!c) return;
+        let unavail = c.dataset.unavail === '1';
+        let lock = checkedBuff ? (checkedBuff !== id) : charmActive;
+        c.disabled = unavail || lock;
+        let lbl = c.closest('label');
+        if (lbl) lbl.classList.toggle('opacity-50', unavail || lock);
+    });
+    // 迷魅手動按鈕：任一召喚增益被勾選→鎖定（灰色不可選）
+    let charmBtn = document.getElementById('manual-btn-sk_charm');
+    if (charmBtn) {
+        let unavail = charmBtn.dataset.unavail === '1';
+        let lock = !!checkedBuff;
+        charmBtn.disabled = unavail || lock;
+        charmBtn.classList.toggle('opacity-50', unavail || lock);
+        charmBtn.classList.toggle('cursor-not-allowed', unavail || lock);
+    }
+}
+function onSummonToggle(sid) {
+    let c = document.getElementById('auto-sk-' + sid);
+    if (c && c.checked) {
+        // 只能勾選一個：取消其他召喚增益，並解除迷魅，確保互斥一致
+        SUMMON_BUFF_IDS.forEach(id => { if (id !== sid) { let o = document.getElementById('auto-sk-' + id); if (o) o.checked = false; } });
+        if (player.buffs) player.buffs.sk_charm = 0;
+        if (player.summon && player.summon.skId === 'sk_charm') player.summon = null;
+    }
+    updateSummonLock();
 }
 
 function renderSkillSelects() {
@@ -4904,7 +5220,8 @@ function renderSkillSelects() {
         if(sk.type === 'heal' && !sk.autoBuff) hHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
         if(sk.type === 'buff' || (sk.type === 'heal' && sk.autoBuff)) {
             let checked = document.getElementById(`auto-sk-${sid}`)?.checked ? 'checked' : '';
-            buffHtml += `<label class="cursor-pointer flex items-center gap-2 ${isAvail?'':'opacity-50'}"><input type="checkbox" id="auto-sk-${sid}" ${checked} ${isAvail?'':'disabled'}> <span class="text-purple-300">${sk.n}</span></label>`;
+            let sumAttr = sk.summon ? ` onchange="onSummonToggle('${sid}')" data-summon="1" data-unavail="${isAvail?'0':'1'}"` : '';
+            buffHtml += `<label class="cursor-pointer flex items-center gap-2 ${isAvail?'':'opacity-50'}"><input type="checkbox" id="auto-sk-${sid}" ${checked} ${isAvail?'':'disabled'}${sumAttr}> <span class="text-purple-300">${sk.n}</span></label>`;
         }
         if(sk.type === 'convert') {
             let checked = document.getElementById(`auto-sk-${sid}`)?.checked ? 'checked' : '';
@@ -4920,6 +5237,7 @@ function renderSkillSelects() {
     if(prevAtk && _atkEl.querySelector(`option[value="${prevAtk}"]`)) _atkEl.value = prevAtk;
     if(prevHeal && _healEl.querySelector(`option[value="${prevHeal}"]`)) _healEl.value = prevHeal;
     document.getElementById('auto-buff-skills').innerHTML = buffHtml;
+    updateSummonLock();
 }
 
 // 1. 定義輔助函數 (請確保它在 openModal 外面或上方)
@@ -5383,11 +5701,13 @@ function sellAllJunk() {
     if (toSell.length === 0) { logSys('<span class="text-slate-400">沒有勾選為廢品的道具。</span>'); return; }
     let totalGold = 0, totalCount = 0;
     toSell.forEach(i => { totalGold += getSellPrice(i) * i.cnt; totalCount += i.cnt; });
+    let _grantSold = toSell.some(i => DB.items[i.id] && DB.items[i.id].grantSkills);
     player.inv = player.inv.filter(i => !toSell.includes(i));
     player.gold += totalGold;
     logSys(`一鍵賣出 ${toSell.length} 件(共 ${totalCount} 個)廢品，獲得 <span class="text-yellow-400 font-bold">${totalGold}</span> 金幣。`);
     renderTabs();
     updateUI();
+    if(_grantSold) { calcStats(); renderSkillSelects(); }
     saveGame();
 }
 
@@ -5404,6 +5724,7 @@ function toggleLock(uid) {
 function sellItem(uid, count, unitPrice) {
     let item = player.inv.find(i => i.uid === uid);
     if (!item || item.lock) return;
+    let _wasGrant = !!(DB.items[item.id] && DB.items[item.id].grantSkills);   // 賣出授予技能頭盔時需重算
     let sellCount = Math.min(count, item.cnt);
     let totalGot = sellCount * unitPrice;
     player.gold += totalGot;
@@ -5417,6 +5738,7 @@ function sellItem(uid, count, unitPrice) {
     }
     renderTabs();
     updateUI();
+    if(_wasGrant) { calcStats(); renderSkillSelects(); }   // 失去授予技能頭盔：立即更新
 }
 
 function closeModal() { document.getElementById('item-modal').classList.add('hidden'); }
@@ -5594,13 +5916,59 @@ const PLEDGE_CFG = {
 const PLEDGE_GIFT = [ { id: 'scroll_weapon', n: '對武器施法的卷軸', cnt: 5 }, { id: 'scroll_armor', n: '對盔甲施法的卷軸', cnt: 10 } ];
 function pledgeCountItem(id) { return player.inv.filter(i => i.id === id).reduce((s, i) => s + i.cnt, 0); }
 
+// 盟主的祝福（8 小時，存檔保留、死亡清空、可刷新）
+const BLESSING_DEFS = {
+    precise: { n: '精準目標', desc: '額外命中 +3' },
+    blaze:   { n: '灼熱靈氣', desc: 'HP自然恢復量 +15、MP自然恢復量 +3' },
+    brave:   { n: '勇敢靈氣', desc: '額外傷害 +3、額外魔法點數 +6' },
+    support: { n: '援護盟友', desc: '傷害減免 +3' }
+};
+function blessingRemainText(key) {
+    let exp = player.blessings && player.blessings[key];
+    if (!exp || exp <= Date.now()) return '未啟用';
+    let sec = Math.floor((exp - Date.now()) / 1000);
+    let h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+    return `生效中・剩餘 ${h} 小時 ${m} 分`;
+}
+
 function renderPledgeNPC(div, faction) {
     let cfg = PLEDGE_CFG[faction];
-    let dialogue = '', hint = '', btn = '';
+
+    // 已加入本陣營：盟主祝福介面
     if (player.bloodPledge === faction) {
-        dialogue = `${cfg.name}：讓我們一起為血盟努力，並肩作戰吧！`;
-        btn = `<button class="btn w-full bg-red-900 hover:bg-red-800 border-red-600 text-red-200 py-3 text-lg font-bold mt-4" onclick="leavePledge('${faction}')">退出血盟</button>`;
-    } else if (player.bloodPledge === cfg.enemy) {
+        let warrant = pledgeCountItem('new_item_241');
+        let cards = Object.keys(BLESSING_DEFS).map(key => {
+            let def = BLESSING_DEFS[key];
+            let active = player.blessings && player.blessings[key] > Date.now();
+            return `<button class="btn text-left ${active ? 'bg-amber-700 border-amber-400' : 'bg-amber-900/70 hover:bg-amber-800 border-amber-600'} py-2 px-2.5 flex flex-col gap-0.5 leading-tight" onclick="activateBlessing('${key}')">
+                <div class="font-bold text-amber-100 text-sm">${def.n}</div>
+                <div class="text-[11px] text-slate-300">${def.desc}</div>
+                <div class="text-[10px] ${active ? 'text-green-300' : 'text-slate-500'}">${blessingRemainText(key)}</div>
+            </button>`;
+        }).join('');
+        div.innerHTML = `
+        <div class="flex flex-row gap-4 items-start p-3">
+            <div class="w-[200px] h-[280px] border-4 border-amber-800 p-2 bg-slate-950/40 rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.9)] outline outline-1 outline-offset-4 outline-amber-700/40 flex items-center justify-center shrink-0 overflow-hidden">
+                <img src="${cfg.img}" alt="${cfg.name}" onerror="this.style.display='none';" class="w-full h-full object-cover object-top rounded pointer-events-none drop-shadow-[0_10px_15px_rgba(0,0,0,0.8)]">
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col gap-2.5">
+                <div class="text-slate-200 text-base leading-relaxed">${cfg.name}：讓我們一起為血盟努力，並肩作戰吧！</div>
+                <div class="flex gap-2">
+                    <button class="btn bg-red-800 hover:bg-red-700 border-red-500 text-red-100 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="siegeComingSoon('攻城戰')"><span class="text-base">⚔ 攻城戰</span><span class="text-[10px] text-red-300 font-normal">(未開放)</span></button>
+                    <button class="btn bg-amber-700 hover:bg-amber-600 border-amber-400 text-amber-50 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="siegeComingSoon('領賞')"><span class="text-base">🏆 領賞</span><span class="text-[10px] text-amber-200 font-normal">(未開放)</span></button>
+                </div>
+                <div class="text-center text-amber-300 font-bold text-base">交出王族搜索狀，獲取盟主的祝福</div>
+                <div class="text-center text-slate-400 text-xs">持有王族搜索狀：<span class="text-green-400 font-bold">${warrant}</span> 張（每項消耗 1 張；已生效可再選以刷新）</div>
+                <div class="grid grid-cols-2 gap-2">${cards}</div>
+                <button class="btn bg-red-950 hover:bg-red-900 border-red-700 text-red-300 py-1.5 px-4 text-sm rounded mt-1 mx-auto" onclick="leavePledge('${faction}')">退出血盟</button>
+            </div>
+        </div>`;
+        return;
+    }
+
+    // 未加入：招募介面
+    let dialogue = '', hint = '', btn = '';
+    if (player.bloodPledge === cfg.enemy) {
         dialogue = `<span class="text-red-400 font-bold">${cfg.name}：你已是敵對陣營（${cfg.enemyName}血盟）的人，不想死就快滾！</span>`;
     } else if (player.lv < 20) {
         dialogue = `${cfg.name}：我要找的是更強大的盟友。`;
@@ -5621,6 +5989,31 @@ function renderPledgeNPC(div, faction) {
             </div>
         </div>
     `;
+}
+
+// 攻城戰 / 領賞（功能未開放，暫為佔位；未來依攻城戰結果領賞）
+function siegeComingSoon(label) {
+    alert((label || '此') + '功能尚未開放，敬請期待！');
+}
+
+// 交出 1 張王族搜索狀，獲得（或刷新）盟主祝福，持續 8 小時
+function activateBlessing(key) {
+    if (!BLESSING_DEFS[key]) return;
+    let idx = player.inv.findIndex(i => i.id === 'new_item_241');
+    if (idx === -1 || player.inv[idx].cnt <= 0) {
+        alert('你沒有王族搜索狀，無法換取盟主的祝福。\n（擊敗血盟敵人可必定取得）');
+        return;
+    }
+    player.inv[idx].cnt -= 1;
+    if (player.inv[idx].cnt <= 0) player.inv.splice(idx, 1);
+    if (!player.blessings) player.blessings = {};
+    player.blessings[key] = Date.now() + 8 * 3600 * 1000;   // 8 小時（已生效則刷新）
+    logSys(`你交出 1 張 王族搜索狀，獲得盟主的祝福：<span class="text-amber-300 font-bold">${BLESSING_DEFS[key].n}</span>（持續 8 小時）。`);
+    calcStats();
+    renderTabs();
+    updateUI();
+    saveGame();
+    renderPledgeNPC(document.getElementById('interaction-content'), player.bloodPledge);
 }
 
 function confirmJoinPledge(faction) {
@@ -6384,6 +6777,7 @@ function startGame() {
     };
     player.avatar = avatarMap[curCreate.rawCls] || '男騎士';
     player.cls = curCreate.cls; 
+    player.name = null;   // 預設未取名，狀態欄顯示「點擊取名」，玩家可點擊命名
     
     let b = createBase[curCreate.cls];
     player.base = { str: b.str+curCreate.str, dex: b.dex+curCreate.dex, con: b.con+curCreate.con, int: b.int+curCreate.int, wis: b.wis+curCreate.wis, cha: b.cha+curCreate.cha };
@@ -6498,6 +6892,29 @@ function saveGame() {
     logSys(`遊戲進度已儲存。`);
 }
 
+// 合併同一性物品堆疊（相容舊存檔：修復前被拆分的相同卷軸/物品會重新合併）。
+// 僅合併未強化(en===0)的物品；強化品(+N)維持獨立。鎖定不列入同一性比對（與 gainItem 一致），
+// 但合併後只要其中任一原堆疊為鎖定，即保留鎖定狀態（保護不被誤賣；鎖定仍可用於強化）。
+function consolidateInventory() {
+    if (!player.inv) return;
+    let seen = {};
+    let out = [];
+    player.inv.forEach(it => {
+        if ((it.en || 0) !== 0) { out.push(it); return; }   // 強化品不合併
+        let key = it.id + '|' + (it.bless ? 1 : 0) + '|' + (it.anc ? 1 : 0) + '|' + (it.attr || '');
+        if (seen[key]) {
+            let base = seen[key];
+            base.cnt += (it.cnt || 1);
+            if (it.lock) base.lock = true;
+        } else {
+            seen[key] = it;
+            out.push(it);
+        }
+    });
+    out.forEach(it => { if (it.lock) it.junk = false; });   // 鎖定的堆疊不視為廢品
+    player.inv = out;
+}
+
 function loadGame() {
     let s = localStorage.getItem('lineage_idle_save');
     if (s) {
@@ -6528,11 +6945,20 @@ function loadGame() {
         if(player.buffs) player.buffs.sk_resurrection = 0;
         if(player.reviveScrollCd === undefined) player.reviveScrollCd = 0;
         if(player.magicShieldCd === undefined) player.magicShieldCd = 0;   // 相容舊存檔：魔法屏障抵擋後冷卻
+        // 修復舊版「召喚死亡後 buff 未清除」卡關：載入時若目前沒有召喚物，清除殘留的召喚 buff，
+        // 讓自動施放能立即重新召喚（不必等死亡復活或 buff 自然倒數）。
+        if(!player.summon && player.buffs) {
+            (player.skills || []).forEach(s => { if(DB.skills[s] && DB.skills[s].summon) player.buffs[s] = 0; });
+            player.buffs.sk_charm = 0;
+        }
         if(player.bloodPledge === undefined) player.bloodPledge = null;   // 相容舊存檔：血盟陣營（null/esti/tros）
+        if(player.name === undefined) player.name = null;   // 相容舊存檔：未取名則狀態欄顯示「點擊取名」
+        if(!player.blessings || typeof player.blessings !== 'object') player.blessings = {};   // 相容舊存檔：盟主祝福
         // 相容舊存檔：屬性詞綴舊版僅為 true/false，新版需為 12 種代碼之一；非法值一律清除（視為普通武器）
         let _normAttr = (i) => { if (i && !getAttrAffix(i.attr)) i.attr = false; };
         player.inv.forEach(_normAttr);
         for (let k in player.eq) _normAttr(player.eq[k]);
+        consolidateInventory();   // 相容舊存檔：合併修復前被拆分的相同卷軸/物品堆疊
         if(!player.statuses) player.statuses = { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0 };
         if (player.eq.arrow === undefined) player.eq.arrow = null; // 相容舊存檔
         // 相容舊存檔：手套曾被錯存於 eq.glove（單數），搬移到正確的 gloves 欄位
@@ -7146,41 +7572,71 @@ function doCraft(npcId, recipeIdx) {
 let gachaRolling = false; // 防止玩家狂點按鈕
 
 function renderPandoraGacha(div) {
-    // 1. 判斷背包內是否有潘朵拉抽獎卷，並取得數量
     let ticketId = "new_item_239";
     let ticketItem = player.inv.find(i => i.id === ticketId);
-    let hasTicket = ticketItem && ticketItem.cnt > 0;
-    let ticketCount = hasTicket ? ticketItem.cnt : 0;
+    let ticketCount = (ticketItem && ticketItem.cnt > 0) ? ticketItem.cnt : 0;
+    if (!window._gachaMode) window._gachaMode = 'single';
+    let mode = window._gachaMode;
 
-    // 2. 根據是否有抽獎卷，動態設定說明文字與按鈕文字
-    let descText = hasTicket 
-        ? `使用 <span class="text-green-400 font-bold">潘朵拉抽獎卷</span> (目前擁有: ${ticketCount} 張)，就有機會抽中世界上的任意稀世珍寶！`
-        : `支付 <span class="text-yellow-400 font-bold">30,000 金幣</span>，就有機會抽中世界上的任意稀世珍寶！`;
+    let cells = '';
+    for (let k = 0; k < 10; k++) {
+        cells += `<div class="bg-slate-900 border-2 border-purple-700 rounded-lg aspect-square overflow-hidden"><div class="gacha10-icon w-full h-full flex items-center justify-center text-xl" data-idx="${k}">❓</div></div>`;
+    }
 
-    let btnText = hasTicket 
-        ? `🎰 抽獎 (使用抽獎卷)`
-        : `🎰 抽獎！ (30,000 金幣)`;
-
-    // 3. 將變數帶入 HTML 模板中
     let html = `
     <div class="flex flex-col items-center justify-start h-full p-4 w-full">
-        <h3 class="text-3xl font-bold text-purple-400 mb-2 drop-shadow-md">潘朵拉的黑市</h3>
-        <p class="text-slate-300 text-sm mb-6 text-center">${descText}</p>
-        
-        <div id="gacha-display" class="w-48 h-48 bg-slate-900 border-4 border-purple-700 rounded-xl shadow-[0_0_30px_rgba(126,34,206,0.6)] flex flex-col items-center justify-center mb-6 relative overflow-hidden">
-            <span class="text-6xl" id="gacha-icon">❓</span>
-            <div id="gacha-name" class="absolute bottom-0 w-full text-center text-sm font-bold text-white bg-black/80 px-2 py-1.5 hidden"></div>
+        <h3 class="text-3xl font-bold text-purple-400 mb-1 drop-shadow-md">潘朵拉的黑市</h3>
+        <p class="text-slate-300 text-xs mb-1 text-center">擁有潘朵拉抽獎卷：<span id="gacha-ticket-count" class="text-green-400 font-bold">${ticketCount}</span> 張</p>
+        <p class="text-slate-400 text-xs mb-3 text-center">抽中的武器 / 防具 / 飾品各有 1% 機率帶有 屬性 / 遠古 / 祝福 詞綴！</p>
+
+        <div class="flex gap-2 mb-4">
+            <button id="gacha-tab-single" class="btn py-1.5 px-4 text-sm rounded-full ${mode==='single'?'bg-purple-700 border-purple-500':'bg-slate-700 border-slate-600'}" onclick="setGachaMode('single')">單抽</button>
+            <button id="gacha-tab-ten" class="btn py-1.5 px-4 text-sm rounded-full ${mode==='ten'?'bg-purple-700 border-purple-500':'bg-slate-700 border-slate-600'}" onclick="setGachaMode('ten')">10 連抽</button>
         </div>
 
-        <button id="btn-gacha" class="btn bg-purple-700 hover:bg-purple-600 border-purple-500 py-4 px-10 text-xl font-bold rounded-full shadow-[0_0_15px_rgba(126,34,206,0.5)] transition-all transform hover:scale-105" onclick="doPandoraGacha()">
-            ${btnText}
-        </button>
-        <p id="gacha-msg" class="text-yellow-300 mt-4 font-bold text-lg h-8"></p>
+        <div id="gacha-single" class="${mode==='single'?'':'hidden'} flex flex-col items-center w-full">
+            <div id="gacha-display" class="w-44 h-44 bg-slate-900 border-4 border-purple-700 rounded-xl shadow-[0_0_30px_rgba(126,34,206,0.6)] flex flex-col items-center justify-center mb-4 relative overflow-hidden">
+                <span class="text-6xl" id="gacha-icon">❓</span>
+                <div id="gacha-name" class="absolute bottom-0 w-full text-center text-sm font-bold text-white bg-black/80 px-2 py-1.5 hidden"></div>
+            </div>
+            <button id="btn-gacha" class="btn bg-purple-700 hover:bg-purple-600 border-purple-500 py-3 px-8 text-lg font-bold rounded-full shadow-[0_0_15px_rgba(126,34,206,0.5)] transition-all transform hover:scale-105" onclick="doPandoraGacha()">
+                🎰 抽獎（${ticketCount>0?'1 張抽獎卷':'30,000 金幣'}）
+            </button>
+        </div>
+
+        <div id="gacha-ten" class="${mode==='ten'?'':'hidden'} flex flex-col items-center w-full">
+            <div class="grid grid-cols-5 gap-1.5 w-full max-w-sm mb-3">${cells}</div>
+            <button id="btn-gacha10" class="btn bg-purple-700 hover:bg-purple-600 border-purple-500 py-3 px-8 text-lg font-bold rounded-full shadow-[0_0_15px_rgba(126,34,206,0.5)] transition-all transform hover:scale-105" onclick="doPandoraGacha10()">
+                🎰 10 連抽（${ticketCount>=10?'10 張抽獎卷':'300,000 金幣'}）
+            </button>
+            <div id="gacha10-results" class="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-3 text-sm"></div>
+        </div>
+
+        <p id="gacha-msg" class="text-yellow-300 mt-3 font-bold text-base min-h-8 text-center"></p>
     </div>
     `;
-    
+
     div.innerHTML = html;
 }
+
+// 切換單抽 / 10連抽（抽獎進行中不可切換）
+function setGachaMode(m) {
+    if (gachaRolling) return;
+    window._gachaMode = m;
+    document.getElementById('gacha-single').classList.toggle('hidden', m !== 'single');
+    document.getElementById('gacha-ten').classList.toggle('hidden', m !== 'ten');
+    document.getElementById('gacha-tab-single').className = `btn py-1.5 px-4 text-sm rounded-full ${m==='single'?'bg-purple-700 border-purple-500':'bg-slate-700 border-slate-600'}`;
+    document.getElementById('gacha-tab-ten').className = `btn py-1.5 px-4 text-sm rounded-full ${m==='ten'?'bg-purple-700 border-purple-500':'bg-slate-700 border-slate-600'}`;
+    document.getElementById('gacha-msg').innerHTML = '';
+}
+
+// 更新面板上顯示的抽獎卷數量
+function refreshGachaTicketCount() {
+    let t = player.inv.find(i => i.id === 'new_item_239');
+    let el = document.getElementById('gacha-ticket-count');
+    if (el) el.innerText = t ? t.cnt : 0;
+}
+
 
 function getWeightedGachaResult() {
     let totalWeight = 0;
@@ -7312,6 +7768,7 @@ function doPandoraGacha() {
     updateUI(); 
     saveGame(); 
     
+    refreshGachaTicketCount();
     gachaRolling = true;
     let btn = document.getElementById('btn-gacha');
     btn.disabled = true;
@@ -7397,6 +7854,137 @@ function doPandoraGacha() {
             saveGame(); 
         }
     }, 80); 
+}
+
+// 10 連抽：10 格同時旋轉，一次抽 10 樣（每樣各自 1% 機率帶屬性/遠古/祝福詞綴）
+function doPandoraGacha10() {
+    if (gachaRolling) return;
+    let ticketId = "new_item_239";
+    let cost = 300000;
+    let usedTicket = false;
+    let ticketIndex = player.inv.findIndex(i => i.id === ticketId);
+    let ticketCnt = (ticketIndex !== -1) ? player.inv[ticketIndex].cnt : 0;
+
+    if (ticketCnt >= 10) {
+        player.inv[ticketIndex].cnt -= 10;
+        if (player.inv[ticketIndex].cnt <= 0) player.inv.splice(ticketIndex, 1);
+        usedTicket = true;
+    } else if (player.gold >= cost) {
+        player.gold -= cost;
+    } else {
+        document.getElementById('gacha-msg').innerHTML = `<span class="text-red-400">10 連抽需要 10 張潘朵拉抽獎卷，或 ${cost} 金幣！</span>`;
+        return;
+    }
+    let costText = usedTicket ? "10 張潘朵拉抽獎卷" : `${cost} 金幣`;
+
+    updateUI();
+    saveGame();
+    refreshGachaTicketCount();
+
+    gachaRolling = true;
+    let btn = document.getElementById('btn-gacha10');
+    btn.disabled = true;
+    btn.classList.remove('hover:scale-105');
+    document.getElementById('gacha-msg').innerHTML = '<span class="text-slate-300">命運的齒輪開始轉動...</span>';
+    document.getElementById('gacha10-results').innerHTML = '';
+
+    let iconEls = Array.from(document.querySelectorAll('.gacha10-icon'));
+    iconEls.forEach(el => {
+        let cell = el.parentElement;
+        cell.classList.remove('border-yellow-400', 'animate-pulse');
+        cell.classList.add('border-purple-700');
+    });
+
+    let itemIds = Object.keys(DB.items);
+    let rollCount = 0;
+    let rollInterval = setInterval(() => {
+        // 10 格同時隨機展示（與單抽相同的旋轉呈現）
+        iconEls.forEach(el => {
+            let rid = itemIds[Math.floor(Math.random() * itemIds.length)];
+            let img = getIconUrl(DB.items[rid]);
+            el.innerHTML = `<img src="${img}" onerror="this.src='https://placehold.co/100x100/1e293b/ffffff?text=?';" class="w-full h-full object-contain opacity-60">`;
+        });
+        rollCount++;
+
+        if (rollCount > 15) {
+            clearInterval(rollInterval);
+
+            // 一次抽 10 樣，逐一進背包（gainItem 會做 1% 屬性/遠古/祝福詞綴判定）
+            let results = [];
+            for (let k = 0; k < 10; k++) {
+                let fid = getWeightedGachaResult();
+                let gi = gainItem(fid, 1, false, false);
+                if (!gi) gi = { id: fid, en: 0, bless: false, anc: false, attr: false, cnt: 1 };
+                results.push(gi);
+            }
+
+            let jackpotNames = [];
+            results.forEach((gi, k) => {
+                let d = DB.items[gi.id];
+                let img = getIconUrl(d);
+                let glow = getGlowClass(gi, d);
+                let el = iconEls[k];
+                if (!el) return;
+                el.innerHTML = `<img src="${img}" onerror="this.src='https://placehold.co/100x100/1e293b/ffffff?text=?';" class="w-full h-full object-contain ${glow}">`;
+                if (d.gachaWeight === 1) {   // 傳說大獎：該格金框高亮
+                    let cell = el.parentElement;
+                    cell.classList.remove('border-purple-700');
+                    cell.classList.add('border-yellow-400', 'animate-pulse');
+                    jackpotNames.push(getItemFullName(gi));
+                }
+            });
+
+            // 結果清單（10 個彩色名稱）
+            document.getElementById('gacha10-results').innerHTML =
+                results.map(gi => `<span class="${getItemColor(gi)}">${getItemFullName(gi)}</span>`).join('、');
+
+            if (jackpotNames.length > 0) {
+                document.getElementById('gacha-msg').innerHTML = `🌟 <span class="text-yellow-300 font-extrabold text-xl drop-shadow-[0_0_10px_rgba(253,224,71,0.8)]">傳說降臨！</span> 本次 10 連抽出 ${jackpotNames.length} 件傳說！`;
+                let flash = document.createElement('div');
+                flash.className = 'fixed inset-0 bg-white z-50 pointer-events-none transition-opacity duration-1000 ease-out';
+                document.body.appendChild(flash);
+                void flash.offsetWidth;
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 1000);
+                jackpotNames.forEach(nm => logSys(`【系統廣播】一道金光劃破天際！玩家在黑市 10 連抽中抽中了傳說級的 <span class="text-yellow-300 font-bold">${nm}</span>！`));
+            } else {
+                document.getElementById('gacha-msg').innerHTML = `恭喜完成 10 連抽，獲得 10 件物品！`;
+            }
+            logSys(`在潘朵拉黑市花費 ${costText} 進行 10 連抽，獲得 10 件物品。`);
+
+            gachaRolling = false;
+            btn.disabled = false;
+            btn.classList.add('hover:scale-105');
+            saveGame();
+        }
+    }, 80);
+}
+
+/* ===== 玩家自訂名稱：點擊左上狀態欄名稱 → 輸入框 → 確認 ===== */
+function startEditName() {
+    if (window._editingName || !player.cls) return;
+    window._editingName = true;
+    let el = document.getElementById('st-class');
+    let cur = (player.name || '').replace(/"/g, '&quot;');
+    el.innerHTML = `<input id="name-edit-input" type="text" maxlength="12" value="${cur}" `
+        + `onclick="event.stopPropagation()" `
+        + `onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditName();}else if(event.key==='Escape'){cancelEditName();}" `
+        + `class="w-24 px-1 py-0.5 text-black text-sm rounded align-middle"> `
+        + `<button onclick="event.stopPropagation();confirmEditName()" class="text-green-400 font-bold align-middle">✓</button>`;
+    let input = document.getElementById('name-edit-input');
+    if (input) { input.focus(); input.select(); }
+}
+function confirmEditName() {
+    let input = document.getElementById('name-edit-input');
+    let v = input ? input.value.trim() : '';
+    player.name = v ? v.slice(0, 12) : null;   // 留空則回到未取名狀態（顯示「點擊取名」）
+    window._editingName = false;
+    updateUI();
+    saveGame();
+}
+function cancelEditName() {
+    window._editingName = false;
+    updateUI();
 }
 
 window.onload = () => {
