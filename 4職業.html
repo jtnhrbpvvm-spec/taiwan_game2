@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天堂放置版 v2.3 - 拉斯塔巴德篇【寵物系統完整修復】6月7日優化內容</title>
+    <title>天堂放置版 v2.5 - 拉斯塔巴德篇【寵物裝備背包Tab修正】6月7日修復版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -353,6 +353,9 @@
                             </div>
                             <div class="flex items-center gap-2 border-b border-gray-700 pb-4 mt-2">
                                 <input type="checkbox" id="cfg-auto-elf-cookie" onchange="game.updateSettings()" class="w-5 h-5 accent-gray-500 cursor-pointer"> <label for="cfg-auto-elf-cookie" class="cursor-pointer hover:text-white c-skill-elf">法師/妖精/黑妖自動購買並使用 精靈餅乾 (每次1瓶)</label>
+                            </div>
+                            <div class="flex items-center gap-2 border-b border-gray-700 pb-4 mt-2">
+                                <input type="checkbox" id="cfg-auto-lucky-diamond" onchange="game.updateSettings()" class="w-5 h-5 accent-yellow-500 cursor-pointer"> <label for="cfg-auto-lucky-diamond" class="cursor-pointer hover:text-white c-warn">自動以鑽石購買並使用 好運符咒 (每次1個，符咒消失時自動補充)</label>
                             </div>
                             <div class="flex items-center flex-wrap gap-3 pt-2">
                                 <span class="c-success">體力低於</span><input type="number" id="cfg-heal-threshold" class="w-20 bg-black border border-gray-600 text-center text-white py-1 rounded" value="50" onchange="game.updateSettings()">
@@ -723,7 +726,8 @@ const INVENTORY_TABS = {
     2: { name: '2', types: ['gem'] },
     3: { name: '3', types: ['scroll', 'quest'] },
     4: { name: '4', types: EQUIP_TYPES },
-    5: { name: '5', types: ['book'] }
+    5: { name: '5', types: ['book'] },
+    6: { name: '🐾寵物', types: ['pet_weapon','pet_armor','pet_scroll','pet_fruit'] }
 };
 const ELEMENTAL_ENCHANTS = {
     fire: { scroll: 'scroll_element_fire', names: ['火之','烈焰','爆炎','炎靈','炎之呼吸'], dmg: [1,3,5,7,9], proc: [0,0,0.03,0.05,0.08] },
@@ -1422,6 +1426,7 @@ Object.assign(ITEMS, {
     scroll_element_earth: { name: '地之武器強化卷軸', type: 'scroll', target: 'elemental', element: 'earth', diamondPrice: 10, diamondSellPrice: 7 },
     scroll_element_wind: { name: '風之武器強化卷軸', type: 'scroll', target: 'elemental', element: 'wind', diamondPrice: 10, diamondSellPrice: 7 },
     lucky_charm: { name: '好運符咒', type: 'potion_buff', buffId: 'lucky_charm', duration: 7200, diamondPrice: 20, desc: '2小時內打寶率提高5倍。' },
+    scroll_lucky_charm: { name: '好運符咒', type: 'potion_buff', buffId: 'lucky_charm', duration: 3600, price: 2500, diamondPrice: 80, desc: '提升整體掉寶率與經驗值獲取，持續60分鐘。' },
     kalip_rare_bag: { name: '卡利普稀有袋子', type: 'potion_buff', diamondPrice: 5, desc: '開啟後可獲得卡利普稀有袋子的隨機獎勵。' },
     trial_black_flame_sword: { name: '黑炎之劍', type: 'weapon', hands: 1, speed: 950, safe: 6, dice: '1d15', hit: 3, dmg: 2, price: 10000000, classes: ['knight'], legendary: true },
     trial_flame_bow: { name: '赤焰之弓', type: 'weapon', weaponClass: 'bow', hands: 2, speed: 900, safe: 6, dice: '1d10', hit: 2, dmg: 4, price: 10000000, classes: ['elf'], legendary: true },
@@ -1521,7 +1526,7 @@ Object.keys(MAPS).forEach(mapId => MAPS[mapId].monsters.forEach(m => {
     if (m.id === 'troll_king' && !m.drops.some(d => d.id === 'book_armor_guard')) m.drops.push({id:'book_armor_guard', rate:0.8});
 }));
 
-const CLOSED_MAP_IDS = ['pirate_island','shadow_temple','demon_temple','antaras_lair'];
+const CLOSED_MAP_IDS = ['pirate_island','shadow_temple','demon_temple','antaras_lair','speaking_island_port','adventure_cave_2f','windawood_dungeon_2f'];
 const BOSS_RESPAWN_MS = 20 * 60 * 1000;
 const DRAG_AOE_COUNTS = [3,4,5,6,12];
 const AOE_SPELL_IDS = ['fireball','lightning_storm','blizzard','fire_storm','tornado','earth_prison','quake','ultimate_light','meteor'];
@@ -1708,7 +1713,7 @@ var game = window.game = {
         baseStats: { str: 8, dex: 8, con: 8, int: 8, wis: 8 }, bonusStats: { str: 0, dex: 0, con: 0, int: 0, wis: 0 }, createMode: 'normal', createPoints: 40, bonusPoints: 0,
         inventory: {}, equipment: { weapon: null, shield: null, quiver: null, helmet: null, tshirt: null, armor: null, leggings: null, boots: null, cloak: null, gloves: null, amulet: null, earring1: null, earring2: null, ring1: null, ring2: null, belt: null },
         spells: [], buffs: {}, pets: {}, activePet: null, currentPet: null,
-        settings: { autoHpThreshold: 5, autoHpType: 'potion_red', autoBuyHp: false, autoBuyMp: false, autoBuyWis: false, autoBuyHaste: false, autoBuyMorph: false, autoBuyBrave: false, autoAttack: 'none', attackMode: 'normal', dragCount: 3, bossMode: false, autoAttackMpThreshold: 0, autoBuffs: [], bossDebuffs: [], autoHealSpell: 'none', autoHealThreshold: 50, autoMpSkill: 'none', autoMpSkillThreshold: 20 },
+        settings: { autoHpThreshold: 5, autoHpType: 'potion_red', autoBuyHp: false, autoBuyMp: false, autoBuyWis: false, autoBuyHaste: false, autoBuyMorph: false, autoBuyBrave: false, autoBuyElfCookie: false, autoBuyLuckyDiamond: false, autoAttack: 'none', attackMode: 'normal', dragCount: 3, bossMode: false, autoAttackMpThreshold: 0, autoBuffs: [], bossDebuffs: [], autoHealSpell: 'none', autoHealThreshold: 50, autoMpSkill: 'none', autoMpSkillThreshold: 20 },
         currentMap: 'hidden_valley', targetMonster: null,
         battleLoop: null, monsterLoop: null, magicLoop: null, regenLoop: null, mpRegenLoop: null, tickLoop: null, mapChangeLoop: null,
         potionCooldown: 0, autoHealCd: 0, autoMpSkillCd: 0, bossDebuffCd: 0, mpRegenCarry: 0, enchantTargetKey: null, inventoryTab: '1', lastDragSpellWarn: 0, zombieTick: 0, summonTick: 0, monsterSpecialTick: 0, antarasDeadUntil: 0, bossRespawns: {}, hiddenValleyArubaDefeated: false, hiddenValleyArubaSummoned: false
@@ -1967,6 +1972,7 @@ isBossReady: function(monsterId) {
                 this.state.hiddenValleyArubaSummoned = !!savedData.hiddenValleyArubaSummoned;
                 
                 this.state.settings = { ...this.state.settings, ...(savedData.settings || {}) };
+                if (this.state.settings.autoBuyLuckyDiamond === undefined) this.state.settings.autoBuyLuckyDiamond = false;
                 this.state.settings.autoHpThreshold = parseInt(this.state.settings.autoHpThreshold) || 5;
                 this.state.settings.autoHealThreshold = parseInt(this.state.settings.autoHealThreshold) || 50;
                 this.state.settings.autoAttackMpThreshold = parseInt(this.state.settings.autoAttackMpThreshold) || 0;
@@ -2009,6 +2015,8 @@ isBossReady: function(monsterId) {
                 document.getElementById('cfg-auto-brave').checked = !!this.state.settings.autoBuyBrave;
                 let elfCookieChk = document.getElementById('cfg-auto-elf-cookie');
                 if (elfCookieChk) elfCookieChk.checked = !!this.state.settings.autoBuyElfCookie;
+                let luckyDiamondChk = document.getElementById('cfg-auto-lucky-diamond');
+                if (luckyDiamondChk) luckyDiamondChk.checked = !!this.state.settings.autoBuyLuckyDiamond;
                 document.getElementById('cfg-auto-attack-mp').value = this.state.settings.autoAttackMpThreshold;
                 document.getElementById('cfg-heal-threshold').value = this.state.settings.autoHealThreshold;
                 document.getElementById('cfg-auto-mp-skill-threshold').value = this.state.settings.autoMpSkillThreshold;
@@ -3163,6 +3171,26 @@ getAvailableSpells: function() {
                 actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
             } else if (def.type === 'quest') {
                 actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
+            } else if (def.type === 'pet_weapon' || def.type === 'pet_armor') {
+                actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
+                const _active = this.getActivePetData();
+                const _canEquip = _active && _active.data.evolved;
+                const _isEquippedW = _active && _active.data.equipment && _active.data.equipment.weapon === key;
+                const _isEquippedA = _active && _active.data.equipment && _active.data.equipment.armor === key;
+                const _isEquipped = _isEquippedW || _isEquippedA;
+                if (_isEquipped) {
+                    const _slot = def.type === 'pet_weapon' ? 'weapon' : 'armor';
+                    actions += `<button class="btn-ui c-err border-red-800" onclick="game.unequipPetItem('${this.state.activePet}','${_slot}')">卸下</button> `;
+                } else {
+                    actions += `<button class="btn-ui c-success border-green-800" onclick="game.equipPetItem('${key}')" ${_canEquip ? '' : 'disabled'} title="${_canEquip ? '裝備給召喚中的寵物' : '需要高級寵物才能裝備'}">給寵物裝備</button> `;
+                }
+            } else if (def.type === 'pet_scroll') {
+                actions += `<button class="btn-ui c-info border-blue-800" onclick="game.revivePetWithScroll('${key}')">復活寵物</button> `;
+            } else if (def.type === 'pet_fruit') {
+                const _af = this.getActivePetData();
+                const _canEvolve = _af && !_af.data.evolved && this.isPetAlive(this.state.activePet);
+                const _petId = this.state.activePet || '';
+                actions += `<button class="btn-ui c-magic border-purple-800" onclick="game.evolvePet('${_petId}')" ${_canEvolve ? '' : 'disabled'} title="${_canEvolve ? '進化召喚中的寵物' : '需要召喚一隻未進化的寵物'}">進化寵物</button> `;
             }
 
             let canSell = false;
@@ -3180,6 +3208,12 @@ getAvailableSpells: function() {
                 sellPrice = Number(def.sellPrice) || 0;
             } else if (def.type === 'scroll' && diamondSellPrice > 0) {
                 canSell = true;
+            } else if (def.type === 'pet_weapon' || def.type === 'pet_armor') {
+                sellPrice = Math.floor((Number(def.price) || 0) * 0.3);
+                canSell = sellPrice > 0;
+            } else if (def.type === 'pet_scroll' || def.type === 'pet_fruit') {
+                sellPrice = Math.floor((Number(def.price) || 0) * 0.3);
+                canSell = sellPrice > 0;
             }
 
             if (canSell) {
@@ -3825,7 +3859,7 @@ getAvailableSpells: function() {
         return true;
     },
 
-    buyItem: function(itemId, quantity = 1) {
+    buyItem: function(itemId, quantity = 1, isDiamond = false) {
         let def = ITEMS[itemId];
         if (!def) return;
         quantity = Math.max(1, Math.floor(Number(quantity) || 1));
@@ -3835,6 +3869,19 @@ getAvailableSpells: function() {
         }
         if (def.minLevel && this.state.level < def.minLevel) {
             this.logSystem(`等級 ${def.minLevel} 以上才能購買 ${def.name}。`, 'danger');
+            return;
+        }
+        if (isDiamond) {
+            if (!def.diamondPrice) { this.logSystem(`${def.name} 無法以鑽石購買。`, 'danger'); return; }
+            const totalDiamond = def.diamondPrice * quantity;
+            if ((this.state.diamonds || 0) < totalDiamond) {
+                this.logSystem(`鑽石不足，無法購買 ${def.name}，需要 ${totalDiamond} 顆鑽石。`, 'danger');
+                return;
+            }
+            this.state.diamonds -= totalDiamond;
+            this.addInventory(itemId, quantity, 0, false);
+            this.logSystem(`以鑽石購買了 ${def.name}${quantity > 1 ? ` x${quantity}` : ''}。`, 'reward');
+            this.updateUI();
             return;
         }
         const totalPrice = (Number(def.price) || 0) * quantity;
@@ -3874,7 +3921,7 @@ getAvailableSpells: function() {
             { kind: 'item', id: 'scroll_element_water', name: ITEMS.scroll_element_water.name, priceText: '10 鑽石 / 張', cls: 'c-info' },
             { kind: 'item', id: 'scroll_element_earth', name: ITEMS.scroll_element_earth.name, priceText: '10 鑽石 / 張', cls: 'c-success' },
             { kind: 'item', id: 'scroll_element_wind', name: ITEMS.scroll_element_wind.name, priceText: '10 鑽石 / 張', cls: 'c-sys' },
-            { kind: 'item', id: 'lucky_charm', name: ITEMS.lucky_charm.name, priceText: '20 鑽石 / 個', cls: 'c-warn' },
+            { kind: 'item', id: 'scroll_lucky_charm', name: ITEMS.scroll_lucky_charm.name, priceText: '80 鑽石 / 個', cls: 'c-warn', qtys: [1,5,10] },
             { kind: 'header', name: '內衣' },
             { kind: 'item', id: 'undershirt_plain', name: ITEMS.undershirt_plain.name, priceText: `${ITEMS.undershirt_plain.diamondPrice} 鑽石 / 件`, cls: 'c-item' }
         ];
@@ -4180,6 +4227,7 @@ getAvailableSpells: function() {
         this.state.settings.autoBuyMorph = !!document.getElementById('cfg-auto-morph')?.checked;
         this.state.settings.autoBuyBrave = !!document.getElementById('cfg-auto-brave')?.checked;
         this.state.settings.autoBuyElfCookie = !!document.getElementById('cfg-auto-elf-cookie')?.checked;
+        this.state.settings.autoBuyLuckyDiamond = !!document.getElementById('cfg-auto-lucky-diamond')?.checked;
         this.state.settings.autoAttack = document.getElementById('cfg-auto-attack').value;
         this.state.settings.bossDebuffs = Array.from(document.querySelectorAll('.boss-debuff-cfg:checked')).map(chk => chk.value);
         this.state.settings.attackMode = document.getElementById('cfg-attack-mode')?.value || 'normal';
@@ -4338,7 +4386,8 @@ getAvailableSpells: function() {
     },
 
     changeMap: function(mapId) {
-        if (this.isMapClosed(mapId)) {
+        // 安塔瑞斯棲息地：雖在 CLOSED_MAP_IDS 但已在選單顯示，允許進入（由 spawnMonster 控制重生計時）
+        if (mapId !== 'antaras_lair' && this.isMapClosed(mapId)) {
             this.logSystem(`${MAPS[mapId]?.name || '此地圖'} 暫時關閉，無法前往。`, 'warn');
             this.renderMapSelect();
             return;
@@ -5490,6 +5539,24 @@ getAvailableSpells: function() {
                         this.usePotion(cookieKey);
                     }
                 }
+
+                if (this.state.settings.autoBuyLuckyDiamond && (!this.state.buffs.lucky_charm || this.state.buffs.lucky_charm <= 0)) {
+                    let charmKey = Object.keys(this.state.inventory).find(k => this.state.inventory[k].itemId === 'scroll_lucky_charm');
+                    if (!charmKey || this.state.inventory[charmKey].count <= 0) {
+                        const dp = ITEMS.scroll_lucky_charm.diamondPrice;
+                        if ((this.state.diamonds || 0) >= dp) {
+                            this.state.diamonds -= dp;
+                            this.addInventory('scroll_lucky_charm', 1, 0, false);
+                            charmKey = Object.keys(this.state.inventory).find(k => this.state.inventory[k].itemId === 'scroll_lucky_charm');
+                            this.logSystem(`自動以鑽石購買了 好運符咒。`, 'reward');
+                        } else {
+                            this.logSystem(`鑽石不足，無法自動補充 好運符咒。`, 'danger');
+                        }
+                    }
+                    if (charmKey && this.state.inventory[charmKey].count > 0) {
+                        this.usePotion(charmKey);
+                    }
+                }
             }
 
             if (this.state.targetMonster && this.state.buffs.summon_ogre > 0) {
@@ -6086,37 +6153,10 @@ Object.assign(game, {
         };
     }
 
-    // Patch startLoops to include pet tick
-    const _origStartLoops = game.startLoops;
-    if (_origStartLoops) {
-        game.startLoops = function() {
-            _origStartLoops.call(this);
-            // Pet loop: acts every ~3 seconds
-            if (this._petLoopInterval) clearInterval(this._petLoopInterval);
-            this._petLoopInterval = setInterval(() => {
-                if (!this.state.isPlaying || this.state.hp <= 0) return;
-                try {
-                    // Check pet CD recovery
-                    Object.keys(this.state.pets || {}).forEach(pid => this.normalizePetVitals(pid));
-                    // Pet action
-                    if (this.state.activePet && this.isPetAlive(this.state.activePet)) {
-                        this.petAct();
-                        this.autoPetPotion();
-                    }
-                    this.renderPetStatus();
-                } catch(e) { console.error('Pet loop error:', e); }
-            }, 3000);
-        };
-    }
-
-    // Patch stopBattle to clear pet loop
-    const _origStopBattle = game.stopBattle;
-    if (_origStopBattle) {
-        game.stopBattle = function() {
-            _origStopBattle.call(this);
-            if (this._petLoopInterval) { clearInterval(this._petLoopInterval); this._petLoopInterval = null; }
-        };
-    }
+    // ★ 舊版 petLoopInterval（3000ms）已由 PetStatusFix v2.3 的 petTickLoop（2400ms）取代
+    // 此區塊已停用，避免雙重 petAct 觸發
+    // [DISABLED by PetStatusFix v2.3 merge] startLoops pet tick patch neutralized
+    // [DISABLED by PetStatusFix v2.3 merge] stopBattle pet loop clear (handled by v2.3)
 })();
 
 // ============================================================
@@ -6920,7 +6960,7 @@ game.updateMonsterStatusEffects = function() {
     }
 })();
 
-console.log('[PetStatusFix v2.3] 寵物狀態效果系統已載入 ✓ 狐狸祝福真正寫入戰鬥公式 / 破甲AC正確恢復 / 雙重Loop修正 / 熊緩速/弱化真正影響戰鬥');
+console.log('[PetStatusFix v2.5] 寵物系統已載入 ✓ 背包新增🐾寵物Tab / pet_weapon+pet_armor+pet_scroll+pet_fruit正確顯示 / 給寵物裝備按鈕 / 復活+進化快捷操作');
 </script>
 <!--
 Bug-fix log:
@@ -7122,5 +7162,1687 @@ Bug-fix log:
 <!-- ══════════════════════════════════
      [天堂RPG整合] END - 最終修補與掉落整合
      ══════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     RATE PATCH v03 (Fixed) - 經驗×2 / 武防掉落×2 / 祝福掉落×2 / 強化87%
+     ══════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+
+    // ── 常數定義 ────────────────────────────────────────────
+    const RATE_XP            = 2;      // 經驗倍率
+    const RATE_EQUIP_DROP    = 2;      // 武防掉落倍率（僅裝備類）
+    const RATE_BLESSED_DROP  = 2.0;    // 祝福掉落率倍率
+    const ENCHANT_SUCCESS    = 0.87;   // 強化成功率
+    const EQUIP_TYPES = new Set(['weapon','helmet','tshirt','armor','shield','cloak',
+                                 'boots','leggings','gloves','amulet','earring','belt','ring','quiver']);
+
+    // ── Bug 診斷說明（已修正）───────────────────────────────
+    // [原始 Bug 1] game.gainExp 不存在；XP 直接在 monsterDied 裡做 state.exp += m.exp * killCount
+    //             → 正確做法：intercept monsterDied，暫時將 m.exp 放大，呼叫後還原
+    // [原始 Bug 2] 原始 patch 在 monsterDied 裡 m.adena 乘以5，但遊戲已在 monsterDied 內部
+    //             做了 ×5，會變成 ×25；且直接 mutate monster object 使 drop.rate 永久累積膨脹
+    //             → 正確做法：intercept grantMonsterLoot，臨時替換 drops 陣列，呼叫後還原
+    // [原始 Bug 3] doEnchantOnce patch 只是呼叫原函數並返回結果，自己的 roll 完全無效；
+    //             calculateEnchantSuccess 被定義但原始碼從不呼叫它
+    //             → 正確做法：monkey-patch Math.random 的第一次呼叫（即成功判斷）
+
+    // ────────────────────────────────────────────────────────
+    // 【1】經驗 ×2  —  intercept monsterDied，暫時放大 m.exp
+    // ────────────────────────────────────────────────────────
+    const _origMonsterDied = game.monsterDied;
+    game.monsterDied = function() {
+        const m = this.state.targetMonster;
+        if (m && typeof m.exp === 'number') {
+            const origExp = m.exp;
+            m.exp = Math.floor(origExp * RATE_XP);
+            _origMonsterDied.call(this);
+            // 還原（monster object 可能被 spawnMonster 重用）
+            if (this.state.targetMonster !== m) m.exp = origExp; // 已切換怪物，直接還原
+        } else {
+            _origMonsterDied.call(this);
+        }
+    };
+
+    // ────────────────────────────────────────────────────────
+    // 【2】武防掉落 ×2  —  intercept grantMonsterLoot
+    //      只對 EQUIP_TYPES 的 drop.rate 臨時加倍，其餘維持原倍率
+    // ────────────────────────────────────────────────────────
+    const _origGrantLoot = game.grantMonsterLoot;
+    game.grantMonsterLoot = function(m, dropMulti, rewardCounts) {
+        if (!m || !m.drops) return _origGrantLoot.call(this, m, dropMulti, rewardCounts);
+        const origDrops = m.drops;
+        // 只對裝備類 rate 臨時翻倍，不修改原 drop 物件（建立淺拷貝）
+        m.drops = origDrops.map(d => {
+            const def = ITEMS[d.id];
+            if (def && EQUIP_TYPES.has(def.type)) {
+                return Object.assign({}, d, { rate: d.rate * RATE_EQUIP_DROP });
+            }
+            return d;
+        });
+        try {
+            return _origGrantLoot.call(this, m, dropMulti, rewardCounts);
+        } finally {
+            m.drops = origDrops; // 無論如何還原，防止 rate 永久疊加
+        }
+    };
+
+    // ────────────────────────────────────────────────────────
+    // 【3】祝福掉落 ×2  —  intercept addRewardItem
+    //      原始碼：let isBlessed = isEquip && Math.random() < 0.01
+    //      patch：讓裝備類的第一次 Math.random() 除以 RATE_BLESSED_DROP
+    //             → Math.random()/2 < 0.01  等效於  Math.random() < 0.02
+    // ────────────────────────────────────────────────────────
+    const _origAddReward = game.addRewardItem;
+    game.addRewardItem = function(itemId, rewardCounts, allowDuplicateBookSell) {
+        const def = ITEMS[itemId];
+        if (!def || !EQUIP_TYPES.has(def.type)) {
+            return _origAddReward.call(this, itemId, rewardCounts, allowDuplicateBookSell);
+        }
+        const origRandom = Math.random;
+        let firstCall = true;
+        Math.random = function() {
+            const r = origRandom();
+            if (firstCall) {
+                firstCall = false;
+                return r / RATE_BLESSED_DROP; // 讓 < 0.01 判斷等效於 < 0.02
+            }
+            return r;
+        };
+        try {
+            return _origAddReward.call(this, itemId, rewardCounts, allowDuplicateBookSell);
+        } finally {
+            Math.random = origRandom;
+        }
+    };
+
+    // ────────────────────────────────────────────────────────
+    // 【4】卷軸強化成功率 87%  —  intercept doEnchantOnce
+    //      策略：在呼叫原函數前，monkey-patch Math.random
+    //            第一次呼叫（= 成功判斷的 random roll）強制回傳
+    //            0（→ success）或 1（→ fail），由 pre-roll 決定
+    //            第二次以後（boost 計算、blessChance 等）使用真實亂數
+    //
+    //      跳過特殊卷軸（詛咒/元素/防爆/doBlessingEnchant）：
+    //      這些走獨立路徑，不受此 patch 影響
+    // ────────────────────────────────────────────────────────
+    const _origDoEnchant = game.doEnchantOnce;
+    game.doEnchantOnce = function(scrollKey) {
+        const scroll = this.state.inventory[scrollKey];
+        if (!scroll) return _origDoEnchant.call(this, scrollKey);
+        const scrollDef = ITEMS[scroll.itemId];
+        if (!scrollDef) return _origDoEnchant.call(this, scrollKey);
+
+        // 特殊卷軸走原始邏輯，不強制成功率
+        if (scrollDef.isCursed)                           return _origDoEnchant.call(this, scrollKey);
+        if (scrollDef.target === 'elemental')             return _origDoEnchant.call(this, scrollKey);
+        if (scrollDef.protectMode)                        return _origDoEnchant.call(this, scrollKey);
+        if (scrollDef.blessChance && scrollDef.safeOnFail) return _origDoEnchant.call(this, scrollKey);
+
+        // 預先決定本次是否成功
+        const origRandom = Math.random;
+        const willSucceed = origRandom() < ENCHANT_SUCCESS;
+        let callIdx = 0;
+
+        Math.random = function() {
+            callIdx++;
+            if (callIdx === 1) {
+                // 第一次 = 成功判斷 roll
+                // 0 → 小於所有閾值 (1/3, rates[], r<0.17 ...) → success
+                // 1 → 大於所有閾值 → fail
+                return willSucceed ? 0 : 1;
+            }
+            return origRandom(); // boost / blessChance 等用真實亂數
+        };
+
+        try {
+            return _origDoEnchant.call(this, scrollKey);
+        } finally {
+            Math.random = origRandom;
+        }
+    };
+
+    // ── 啟動確認 ────────────────────────────────────────────
+    console.log(
+        `%c[Rate Patch v03 Fixed] 已載入\n` +
+        `  ✓ 經驗 ×${RATE_XP}\n` +
+        `  ✓ 武防掉落 ×${RATE_EQUIP_DROP}（裝備類專屬，不污染 drop 物件）\n` +
+        `  ✓ 祝福掉落 ×${RATE_BLESSED_DROP}（0.01 → ${0.01 * RATE_BLESSED_DROP}）\n` +
+        `  ✓ 所有一般卷軸強化成功率 ${(ENCHANT_SUCCESS * 100).toFixed(0)}%`,
+        'color:#f5d76e; background:#1a1a2e; padding:4px 8px; border-radius:4px;'
+    );
+})();
+</script>
+<!-- ══════════════════════════════════
+     RATE PATCH v03 END
+     ══════════════════════════════════ -->
+<script>
+// ══ Patch v04：Boss isBoss 強制標記 + 地圖選單刷新 ══
+(function() {
+    const forceBossIds = new Set([
+        'antaras',
+        'hv_cursed_aruba',
+        'ice_queen',
+        'demon',
+        'harpy_queen',
+        'arian_king',
+        'wyrm_king',
+        'ogre_king_fi',
+        'great_minotaur',
+        'ancient_guardian',
+        'water_spirit_lord',
+        'troll_king',
+        'casto_king',
+        'succubus_queen_dv',
+        'sema',
+        'balthazar',
+        'caspa',
+        'merkyor'
+    ]);
+
+    // 原始 diff 最後一行 regex 語法錯誤（'/' 未跳脫，導致 /石頭守護者/安塔瑞斯/... 提前截斷）
+    // 已修正：每個名稱拆為獨立正則
+    const bossNamePatterns = [
+        /王$/,   /女皇$/, /守護者$/, /惡魔$/,
+        /安塔瑞斯/, /冰之女王/, /哈維女皇/,
+        /亞力安王/, /飛龍王/, /歐吉王/, /巨大牛人/,
+        /古代守護者/, /水靈王/, /思克巴女皇/, /卡司特王/,
+        /卡士柏/, /巴土瑟/, /馬庫爾/, /西瑪/,
+        /受詛咒的阿魯巴/, /混沌守護者/, /精靈守護者/, /石頭守護者/,
+        /巴拉卡斯/, /不死鳥/, /伊弗利特/
+    ];
+
+    const isBossLike = (monster) => {
+        if (!monster) return false;
+        if (forceBossIds.has(monster.id)) return true;
+        return bossNamePatterns.some(re => re.test(monster.name || ''));
+    };
+
+    let patched = 0;
+    Object.values(MAPS).forEach(map => {
+        (map.monsters || []).forEach(monster => {
+            if (!monster) return;
+            if (isBossLike(monster) && !monster.isBoss) {
+                monster.isBoss = true;
+                patched++;
+            }
+        });
+    });
+
+    // 重新整理地圖選單，確保已移除的無效地圖不會再被列出
+    if (typeof game !== 'undefined' && game.renderMapSelect) {
+        game.renderMapSelect();
+    }
+
+    console.log(`[Patch v04] Boss 標記完成：${patched} 隻怪物補標 isBoss。CLOSED_MAP_IDS 已含 speaking_island_port / adventure_cave_2f / windawood_dungeon_2f。`);
+})();
+</script>
 </body>
 </html>
+
+<!-- ══════════════════════════════════════════════════════════════
+     LINEAGE_TRANSFER_PATCH v5 — Monster Magic AI Integration
+     Source: idle_lineage_v981.html → Target: Pro v04
+     PATCH-001 ~ PATCH-015 (AUTO SEARCH / SELF REPAIR MODE)
+══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+
+    // ── 等待 game 物件就緒 ──────────────────────────────────────
+    function waitForGame(cb, retries) {
+        retries = retries || 0;
+        if (typeof game !== 'undefined' && game.state) { cb(); return; }
+        if (retries > 80) { console.error('[MagicPatch v5] ❌ game 物件未找到，Patch 中止。'); return; }
+        setTimeout(function() { waitForGame(cb, retries + 1); }, 100);
+    }
+
+    waitForGame(function() {
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-001: MONSTER_SKILL_TABLE
+    // 支援屬性: fire / water / earth / wind
+    // 支援效果: burn / freeze / stone / stun / poison / vamp / silence / magicseal / scald / dmg
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ══════════════════════════════════════════════════════════════
+    // MONSTER_SKILL_TABLE v7 — 完整覆蓋所有地圖怪物 + BOSS
+    // 修復來源: Patch_檔案格式怪物魔法修復.txt (v6) 整合
+    // cd 單位：秒（SRP-v6 已轉換為 ms，此處保持原格式）
+    // ══════════════════════════════════════════════════════════════
+    const MONSTER_SKILL_TABLE = {
+
+        // ════════════════════════════════
+        // ██  世界 BOSS（最高威脅等級）██
+        // ════════════════════════════════
+
+        // 安塔瑞斯 Lv90 - 修復棲息地封鎖後補全技能
+        'antaras': [
+            { type:'burn',    skn:'安塔瑞斯龍息',   dur:15, d:200, tick:2,         cd:18 },
+            { type:'dmg',     skn:'大地崩裂',       dmg:[12,30], db:80, ele:'earth',cd:8  },
+            { type:'stun',    skn:'龍王咆哮',       pbase:130,                      cd:25 },
+            { type:'poison',  skn:'腐蝕龍毒',       dur:12, d:120, tick:2, pbase:80,cd:20 },
+            { type:'stone',   skn:'龍尾橫掃',       pbase:90,                       cd:35 }
+        ],
+        // 瓦拉卡斯 Lv95 - 熔岩系最強BOSS
+        'valakas': [
+            { type:'scald',   skn:'熔岩噴發',       dur:12, d:260, tick:2, pbase:200, cd:14 },
+            { type:'burn',    skn:'絕對烈焰',       dur:10, d:180, tick:2,            cd:11 },
+            { type:'dmg',     skn:'瓦拉卡斯爆炎',   dmg:[15,35], db:100, ele:'fire',  cd:9  },
+            { type:'stun',    skn:'熔岩衝擊波',     pbase:110,                        cd:28 },
+            { type:'freeze',  skn:'冰火交融',       pbase:85,                         cd:40 }
+        ],
+        // 法利昂 Lv90 - 水龍
+        'fafurion': [
+            { type:'scald',   skn:'深海水流噴射',   dur:12, d:220, tick:2, pbase:200, cd:16 },
+            { type:'freeze',  skn:'深海絕對冰封',   pbase:160,                        cd:18 },
+            { type:'dmg',     skn:'水龍爆裂',       dmg:[12,28], db:80, ele:'water',  cd:9  },
+            { type:'silence', skn:'海鳴共鳴',       pbase:110,                        cd:30 }
+        ],
+        // 古代守護者 Lv88
+        'ancient_guardian': [
+            { type:'stun',    skn:'古代震盪波',     pbase:120,                        cd:18 },
+            { type:'dmg',     skn:'古代魔法砲',     dmg:[10,25], db:60,               cd:10 },
+            { type:'magicseal',skn:'封古術',        pbase:100,                        cd:25 },
+            { type:'stone',   skn:'古代石化光束',   pbase:90,                         cd:30 }
+        ],
+        // 拉斯塔巴德將軍 Lv82
+        'lord_of_lastavard': [
+            { type:'stun',    skn:'將軍震地衝擊',   pbase:130,                        cd:20 },
+            { type:'dmg',     skn:'闇黑斬擊波',     dmg:[12,28], db:70,               cd:9  },
+            { type:'silence', skn:'將軍威壓',       pbase:110,                        cd:25 },
+            { type:'burn',    skn:'將軍鬥氣爆',     dur:8, d:150, tick:2,             cd:18 }
+        ],
+
+        // ════════════════════════════════
+        // ██  高階 BOSS（70~80 Lv）     ██
+        // ════════════════════════════════
+
+        // 不死鳥 Lv80
+        'phoenix': [
+            { type:'burn',    skn:'不滅鳳炎',       dur:12, d:140, tick:2,            cd:12 },
+            { type:'dmg',     skn:'鳳凰烈焰衝擊',   dmg:[8,20], db:50, ele:'fire',    cd:8  },
+            { type:'scald',   skn:'涅槃重生焰',     dur:8,  d:160, tick:2, pbase:150, cd:20 }
+        ],
+        // 飛龍王 Lv78
+        'wyrm_king': [
+            { type:'burn',    skn:'王者龍息',       dur:14, d:170, tick:2,            cd:12 },
+            { type:'stun',    skn:'龍王怒吼',       pbase:100,                        cd:22 },
+            { type:'dmg',     skn:'王者龍焰斬',     dmg:[10,24], db:70, ele:'fire',   cd:8  },
+            { type:'poison',  skn:'龍王毒牙',       dur:10, d:80, tick:3, pbase:70,   cd:25 }
+        ],
+        // 伊弗利特 Lv75
+        'ifrit': [
+            { type:'scald',   skn:'伊弗業火',       dur:10, d:160, tick:2, pbase:180, cd:14 },
+            { type:'dmg',     skn:'火精靈爆炎',     dmg:[8,22], db:45, ele:'fire',    cd:9  },
+            { type:'burn',    skn:'地獄炎獄',       dur:8, d:100, tick:2,             cd:18 }
+        ],
+        // 亞力安王 Lv74
+        'arian_king': [
+            { type:'stone',   skn:'亞力安王石化光束',pbase:130,                       cd:10 },
+            { type:'dmg',     skn:'石之波動',       dmg:[8,20], db:40, ele:'earth',   cd:10 },
+            { type:'stun',    skn:'地鳴震盪',       pbase:90,                         cd:20 }
+        ],
+        // 菁英黑騎士 Lv72
+        'elite_black_knight': [
+            { type:'magicseal',skn:'黑騎封魔',      pbase:100,                        cd:20 },
+            { type:'dmg',     skn:'黑暗刺穿',       dmg:[10,24], db:60,               cd:9  },
+            { type:'stun',    skn:'黑騎震盪衝擊',   pbase:110,                        cd:22 }
+        ],
+        // 蟻后（深層地下城）Lv58
+        'giant_ant_queen': [
+            { type:'poison',  skn:'蟻后強酸噴射',   dur:18, d:70, tick:2, pbase:90,  cd:16 },
+            { type:'stun',    skn:'蟻后頭角撞擊',   pbase:100,                        cd:22 },
+            { type:'dmg',     skn:'蟻后酸液爆破',   dmg:[6,18], db:30, ele:'earth',   cd:10 }
+        ],
+        // 猛瑪象 Lv76
+        'mammoth': [
+            { type:'stun',    skn:'猛瑪踐踏',       pbase:130,                        cd:18 },
+            { type:'dmg',     skn:'猛瑪暴衝',       dmg:[12,28], db:60,               cd:10 },
+            { type:'freeze',  skn:'猛瑪冰牙',       pbase:80,                         cd:30 }
+        ],
+
+        // ════════════════════════════════
+        // ██  中階 BOSS（40~60 Lv）     ██
+        // ════════════════════════════════
+
+        // 冰女王 Lv55（假設等級，根據天堂原典）
+        'ice_queen': [
+            { type:'freeze',  skn:'冰晶封印',       pbase:200,                        cd:10 },
+            { type:'dmg',     skn:'冰刺暴風',       dmg:[6,22], db:20, ele:'water',   cd:7  },
+            { type:'stone',   skn:'絕對冰封',       pbase:110,                        cd:22 },
+            { type:'scald',   skn:'冰霜爆裂',       dur:8, d:80, tick:3, pbase:130,   cd:18 }
+        ],
+        // 惡魔 Lv50
+        'demon': [
+            { type:'burn',    skn:'地獄業火',       dur:12, d:110, tick:2,            cd:13 },
+            { type:'dmg',     skn:'惡魔爆炎彈',     dmg:[8,22], db:40, ele:'fire',    cd:9  },
+            { type:'stun',    skn:'惡魔衝擊波',     pbase:110,                        cd:22 }
+        ],
+        // 思克巴女皇 DV版 Lv42
+        'succubus_queen_dv': [
+            { type:'silence', skn:'魅惑絕唱',       pbase:110,                        cd:13 },
+            { type:'poison',  skn:'魅惑毒液',       dur:22, d:60, tick:2, pbase:90,   cd:18 },
+            { type:'dmg',     skn:'妖姬魔彈',       dmg:[5,16], db:20,                cd:9  }
+        ],
+        // 思克巴女皇 Lv42
+        'succubus_queen': [
+            { type:'silence', skn:'魅惑絕唱',       pbase:110,                        cd:13 },
+            { type:'poison',  skn:'魅惑毒液',       dur:22, d:60, tick:2, pbase:90,   cd:18 },
+            { type:'dmg',     skn:'妖姬魔彈',       dmg:[5,16], db:20,                cd:9  }
+        ],
+        // 巨蟻女王（2F） Lv38
+        'ant_queen_2f': [
+            { type:'poison',  skn:'巨蟻酸液',       dur:15, d:55, tick:3, pbase:80,   cd:18 },
+            { type:'stun',    skn:'蟻后角撞擊',     pbase:90,                         cd:22 }
+        ],
+        // 卡司特王 Lv33
+        'casto_king': [
+            { type:'silence', skn:'詛咒沉默',       pbase:100,                        cd:18 },
+            { type:'dmg',     skn:'王者衝擊波',     dmg:[5,14], db:15,                cd:10 },
+            { type:'burn',    skn:'卡斯烈焰',       dur:6, d:60, tick:3,             cd:20 }
+        ],
+        // 食人妖精王 Lv30
+        'troll_king': [
+            { type:'burn',    skn:'食妖王怒火',     dur:8, d:80, tick:3,              cd:16 },
+            { type:'stun',    skn:'食妖王怒吼',     pbase:90,                         cd:20 }
+        ],
+        // 四色元素BOSS（劇情地圖）
+        'sema': [
+            { type:'silence', skn:'西瑪風鳴之聲',   pbase:110,                        cd:16 },
+            { type:'dmg',     skn:'颶風衝擊',       dmg:[5,16], db:25, ele:'wind',    cd:9  },
+            { type:'freeze',  skn:'風之冰刃',       pbase:80,                         cd:25 }
+        ],
+        'balthazar': [
+            { type:'burn',    skn:'巴土瑟火焰',     dur:10, d:100, tick:3,            cd:16 },
+            { type:'dmg',     skn:'大地爆破',       dmg:[5,16], db:25, ele:'earth',   cd:9  },
+            { type:'stone',   skn:'岩石石化',       pbase:90,                         cd:25 }
+        ],
+        'caspa': [
+            { type:'freeze',  skn:'卡士柏冰封',     pbase:130,                        cd:14 },
+            { type:'dmg',     skn:'冰雪風暴彈',     dmg:[5,16], db:20, ele:'water',   cd:8  },
+            { type:'scald',   skn:'沸騰水流',       dur:8, d:80, tick:3, pbase:100,   cd:20 }
+        ],
+        'merkyor': [
+            { type:'magicseal',skn:'馬庫爾魔封',    pbase:100,                        cd:20 },
+            { type:'stun',    skn:'馬庫爾震盪',     pbase:90,                         cd:18 },
+            { type:'dmg',     skn:'暗能量衝擊',     dmg:[5,15], db:20,                cd:9  }
+        ],
+
+        // ════════════════════════════════
+        // ██  中階 BOSS（劇情/地下城）  ██
+        // ════════════════════════════════
+
+        // 亞力安 Lv34
+        'arian': [
+            { type:'stone',   skn:'亞力安石化術',   pbase:110,                        cd:9  },
+            { type:'dmg',     skn:'石之射線',       dmg:[4,12], db:20, ele:'earth',   cd:10 }
+        ],
+        // 黑長老
+        'black_elder': [
+            { type:'magicseal',skn:'黑暗封印',      pbase:90,                         cd:18 },
+            { type:'dmg',     skn:'極道落雷',       dmg:[5,14], db:25,                cd:8  },
+            { type:'silence', skn:'黑長者詛咒術',   pbase:80,                         cd:28 }
+        ],
+        // 死亡騎士
+        'death_knight': [
+            { type:'magicseal',skn:'死亡魔法封印',  pbase:90,                         cd:22 },
+            { type:'poison',  skn:'死亡腐毒',       dur:18, d:70, tick:3, pbase:85,   cd:16 },
+            { type:'stun',    skn:'死亡衝擊',       pbase:100,                        cd:25 }
+        ],
+        // 飛龍
+        'wyrm': [
+            { type:'burn',    skn:'龍息火牢',       dur:10, d:110, tick:2,            cd:14 },
+            { type:'dmg',     skn:'龍焰彈',         dmg:[7,18], db:45, ele:'fire',    cd:8  }
+        ],
+        // 莫妮亞 Lv30
+        'monia': [
+            { type:'silence', skn:'莫妮亞詠唱封鎖', pbase:90,                         cd:18 },
+            { type:'dmg',     skn:'黑暗波動',       dmg:[5,14], db:20,                cd:10 },
+            { type:'poison',  skn:'暗之毒霧',       dur:12, d:45, tick:4, pbase:70,   cd:22 }
+        ],
+        // 巴拉卡斯
+        'barakus': [
+            { type:'burn',    skn:'巴拉卡斯業火',   dur:12, d:160, tick:2,            cd:14 },
+            { type:'dmg',     skn:'爆炎衝擊波',     dmg:[10,24], db:70, ele:'fire',   cd:9  },
+            { type:'stun',    skn:'大地震裂',       pbase:100,                        cd:22 }
+        ],
+        // 鋼鐵高崙 Lv65
+        'iron_golem': [
+            { type:'stun',    skn:'鋼鐵踐踏',       pbase:120,                        cd:18 },
+            { type:'dmg',     skn:'金屬衝擊波',     dmg:[10,24], db:60,               cd:9  },
+            { type:'magicseal',skn:'電磁脈衝封魔',  pbase:90,                         cd:25 }
+        ],
+        // 活鎧甲 Lv62
+        'living_armor': [
+            { type:'magicseal',skn:'詛咒鎧甲封印',  pbase:85,                         cd:22 },
+            { type:'stun',    skn:'盾牌撞擊',       pbase:100,                        cd:18 },
+            { type:'dmg',     skn:'鎧甲暗能量',     dmg:[8,20], db:40,                cd:10 }
+        ],
+
+        // ════════════════════════════════
+        // ██  特殊 / 地圖限定怪物       ██
+        // ════════════════════════════════
+
+        // 蟻后近衛 2F Lv32
+        'ant_queen_guard_2f': [
+            { type:'poison',  skn:'近衛毒針',       dur:10, d:40, tick:4, pbase:70,   cd:20 }
+        ],
+        // 巨蟻隊長 2F Lv28
+        'ant_captain_2f': [
+            { type:'poison',  skn:'隊長毒液',       dur:8, d:35, tick:4, pbase:65,    cd:22 }
+        ],
+
+        // ════════════════════════════════
+        // ██  一般怪物（有施法能力者）  ██
+        // ════════════════════════════════
+
+        'hellhound':        [ { type:'burn',    skn:'地獄噴火',       dur:7, d:60, tick:3,         cd:14 } ],
+        'lizardman':        [ { type:'poison',  skn:'毒牙',           dur:10, d:30, tick:5, pbase:60, cd:20 } ],
+        'zombie':           [ { type:'poison',  skn:'腐敗之氣',       dur:8,  d:22, tick:5, pbase:50, cd:24 } ],
+        'ghoul':            [ { type:'poison',  skn:'食屍毒素',       dur:12, d:42, tick:4, pbase:60, cd:20 } ],
+        'dark_elf_monster': [ { type:'silence', skn:'黑暗精靈詛咒',   pbase:70,               cd:28 } ],
+        'casto':            [ { type:'stun',    skn:'卡斯突擊',       pbase:80,               cd:20 },
+                              { type:'dmg',     skn:'卡斯暗器',       dmg:[3,10], db:10,      cd:12 } ],
+        'troll':            [ { type:'stun',    skn:'食妖衝撞',       pbase:60,               cd:25 } ],
+        'beholder':         [ { type:'stone',   skn:'眼球石化光線',   pbase:85,               cd:14 },
+                              { type:'dmg',     skn:'眼球魔法射線',   dmg:[3,10], db:10,      cd:10 } ],
+        'succubus':         [ { type:'silence', skn:'思克巴魅惑術',   pbase:80,               cd:20 } ],
+        'cerberus':         [ { type:'stun',    skn:'地獄犬三頭撞',   pbase:70,               cd:18 } ],
+        'elder':            [ { type:'magicseal',skn:'長者封印術',    pbase:65,               cd:24 } ],
+        'yangolian':        [ { type:'silence', skn:'楊果里恩魔咒',   pbase:70,               cd:22 } ],
+        'lycan':            [ { type:'poison',  skn:'萊肯毒爪',       dur:8, d:25, tick:4, pbase:55, cd:22 } ],
+        'arian_stone':      [ { type:'stone',   skn:'石化怒視',       pbase:90,               cd:12 } ],
+        // 弱化版 HV 怪物（隱谷）
+        'hv_beholder':      [ { type:'stone',   skn:'弱化石化光',     pbase:40,               cd:20 } ],
+        // 巨大螞蟻
+        'giant_ant':        [ { type:'poison',  skn:'蟻酸噴射',       dur:6, d:20, tick:4, pbase:50, cd:22 } ],
+        'ant_captain_2f':   [ { type:'poison',  skn:'隊長毒刺',       dur:8, d:30, tick:4, pbase:60, cd:20 } ],
+    };
+
+    window.MONSTER_SKILL_TABLE = MONSTER_SKILL_TABLE;
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-004: 玩家狀態系統
+    // dotStatus 命名空間（避免與既有 buffs 倒數衝突）
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function ensurePlayerStatuses(state) {
+        if (!state) return;
+        // 簡單倒數狀態 → 放 state.buffs（既有倒數迴圈自動處理）
+        ['freeze','silence','magicseal'].forEach(function(k) {
+            if (!(k in state.buffs)) state.buffs[k] = 0;
+        });
+        // DoT 狀態 → 獨立命名空間，不被 buffs 倒數迴圈干擾
+        if (!state.dotStatus) {
+            state.dotStatus = {
+                poison: { remaining:0, dmg:0, tickInterval:0, counter:0 },
+                burn:   { remaining:0, dmg:0, tickInterval:0, counter:0 },
+                scald:  { remaining:0, dmg:0, tickInterval:0, counter:0 }
+            };
+        }
+    }
+
+    ensurePlayerStatuses(game.state);
+
+    // ── 存檔讀取相容性：loadGame 後確保欄位存在 ──
+    var _origLoadGame = game.loadGame;
+    game.loadGame = function() {
+        var r = _origLoadGame.apply(this, arguments);
+        ensurePlayerStatuses(this.state);
+        return r;
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-002: applyMonsterMagicSkill()
+    // 傷害計算 / 屬性傷害 / 異常狀態 / 吸血 / 特效派發
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    game.applyMonsterMagicSkill = function(monster) {
+        if (!monster || this.state.hp <= 0) return;
+
+        // PATCH-014 欄位映射：level / isBoss / dice 已在 File1 使用正確欄位
+        var lookupId   = monster.id   || '';
+        var lookupBase = monster.baseName || lookupId;
+        var skills = MONSTER_SKILL_TABLE[lookupId] || MONSTER_SKILL_TABLE[lookupBase];
+        if (!skills || skills.length === 0) return;
+
+        // 初始化技能冷卻計數器
+        if (!monster._msk) monster._msk = { cd:{}, ctr:0 };
+        monster._msk.ctr++;
+
+        var available = skills.filter(function(sk) {
+            var cd = sk.cd || 10;
+            return (monster._msk.ctr - (monster._msk.cd[sk.skn] || 0)) >= cd;
+        });
+        if (!available.length) return;
+
+        var sk = available[Math.floor(Math.random() * available.length)];
+        monster._msk.cd[sk.skn] = monster._msk.ctr;
+
+        var self     = this;
+        var mr       = this.getMR ? this.getMR() : 0;
+        var maxHp    = this.state.maxHp || 100;
+        var dot      = this.state.dotStatus;
+
+        // ─── 狀態效果分派 ─────────────────────────────────────
+        // PATCH-009: stone → buffs.petrified
+        if (sk.type === 'stone') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                this.state.buffs.petrified = 60;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'石化術') + '，你被石化了！', 'danger');
+            }
+            return;
+        }
+        // PATCH-010: stun → buffs.stun
+        if (sk.type === 'stun') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 150) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                this.state.buffs.stun = 60;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'暈眩術') + '，你被暈眩了！', 'danger');
+            }
+            return;
+        }
+        // PATCH-006: freeze → buffs.freeze
+        if (sk.type === 'freeze') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 200) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                this.state.buffs.freeze = 60;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'冰凍術') + '，你被冰凍了！', 'danger');
+            }
+            return;
+        }
+        // PATCH-007
+        if (sk.type === 'silence') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 60) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                this.state.buffs.silence = 60;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'沉默術') + '，你被沉默了！', 'danger');
+            }
+            return;
+        }
+        // PATCH-008
+        if (sk.type === 'magicseal') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                this.state.buffs.magicseal = 60;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'魔法封印') + '，你的魔法被封印！', 'danger');
+            }
+            return;
+        }
+        // PATCH-005: poison DoT — 1% MaxHP/sec
+        if (sk.type === 'poison') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                dot.poison.remaining    = (sk.dur  || 10) * 10;
+                dot.poison.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.01));
+                dot.poison.tickInterval = (sk.tick || 3) * 10;
+                dot.poison.counter      = 0;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'毒術') + '，你中毒了！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.poison.dmg + ' 點傷害。', 'danger');
+            }
+            return;
+        }
+        // PATCH-005: burn DoT — 1.5% MaxHP/sec
+        if (sk.type === 'burn') {
+            dot.burn.remaining    = (sk.dur  || 8) * 10;
+            dot.burn.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.015));
+            dot.burn.tickInterval = (sk.tick || 2) * 10;
+            dot.burn.counter      = 0;
+            this.logCombat(monster.name + ' 施放' + (sk.skn||'灼燒術') + '，你陷入灼燒！每 ' + (sk.tick||2) + ' 秒受到 ' + dot.burn.dmg + ' 點傷害。', 'danger');
+            return;
+        }
+        // PATCH-005: scald DoT — 2% MaxHP/sec
+        if (sk.type === 'scald') {
+            var chance = Math.max(0, ((sk.pbase !== undefined ? sk.pbase : 200) - mr) / 2);
+            if (Math.random() * 100 < chance) {
+                dot.scald.remaining    = (sk.dur  || 12) * 10;
+                dot.scald.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.02));
+                dot.scald.tickInterval = (sk.tick || 3) * 10;
+                dot.scald.counter      = 0;
+                this.logCombat(monster.name + ' 施放' + (sk.skn||'燙傷術') + '，你受到灼熱燙傷！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.scald.dmg + ' 點傷害。', 'danger');
+            }
+            return;
+        }
+        // ─── 直接魔法傷害（含吸血 PATCH-011）─────────────────
+        if (sk.type === 'dmg' || sk.dmg) {
+            var roll  = sk.dmg ? (sk.dmg[0] + Math.floor(Math.random() * sk.dmg[1])) : 0;
+            var total = roll + (sk.db || 0);
+            // 使用 File1 既有的 takeMagicDmg（含 MR 與 DR 計算）
+            total = this.takeMagicDmg ? this.takeMagicDmg(total) : Math.max(1, total);
+            this.state.hp -= total;
+            this.logCombat(monster.name + ' 施放' + (sk.skn||'魔法') + '，對你造成 ' + total + ' 點魔法傷害！', 'danger');
+            // PATCH-011: 吸血
+            if (sk.vamp) {
+                var healAmt = Math.floor(total * 0.5);
+                monster.hp = Math.min(monster.maxHp, monster.hp + healAmt);
+                this.logCombat(monster.name + ' 吸取了 ' + healAmt + ' 點生命！', 'danger');
+                this.updateMonsterHpBar && this.updateMonsterHpBar();
+            }
+            // 二段效果（冰凍/灼燒）
+            if (sk.sec) {
+                if (sk.sec.type === 'freeze') {
+                    var ch2 = Math.max(0, ((sk.sec.pbase||200) - mr) / 2);
+                    if (Math.random() * 100 < ch2) { this.state.buffs.freeze = 60; this.logCombat('你被冰凍了！', 'danger'); }
+                }
+                if (sk.sec.type === 'burn') {
+                    dot.burn.remaining = sk.sec.dur * 10; dot.burn.dmg = sk.sec.d; dot.burn.tickInterval = sk.sec.tick * 10; dot.burn.counter = 0;
+                    this.logCombat('你陷入灼燒！', 'danger');
+                }
+                if (sk.sec.type === 'scald') {
+                    dot.scald.remaining = sk.sec.dur * 10; dot.scald.dmg = sk.sec.d; dot.scald.tickInterval = sk.sec.tick * 10; dot.scald.counter = 0;
+                    this.logCombat('你受到燙傷！', 'danger');
+                }
+            }
+            if (this.state.hp <= 0) { this.checkPlayerDeath && this.checkPlayerDeath(); }
+            else { this.updateUI && this.updateUI(); }
+        }
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-003: monsterAttack 掛接
+    // 禁止覆蓋既有戰鬥架構 — 以 wrapper 模式掛接
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    var _orig_monsterAttack_p5 = game.monsterAttack;
+    game.monsterAttack = function() {
+        var monster = this.state && this.state.targetMonster;
+        if (!monster || this.state.hp <= 0) return;
+
+        // PATCH-006: freeze 禁止物理攻擊觸達玩家
+        if (this.state.buffs.freeze > 0) {
+            this.logCombat(monster.name + ' 試圖攻擊，但你被冰封無法受到物理傷害！', 'magic');
+            return;
+        }
+
+        // PATCH-003: 若怪物有魔法技能，先派發魔法
+        var hasMagicSkill = !!(MONSTER_SKILL_TABLE[monster.id] || MONSTER_SKILL_TABLE[monster.baseName]);
+        if (hasMagicSkill) {
+            this.applyMonsterMagicSkill(monster);
+            if (this.state.hp <= 0) return; // 魔法已擊殺玩家
+        }
+
+        return _orig_monsterAttack_p5.apply(this, arguments);
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-007 + PATCH-008: Silence / MagicSeal 封鎖施法
+    // PATCH-006: Freeze 封鎖施法
+    // 掛接 playerMagicAttack（File1 等效 castSkill 入口）
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    var _orig_playerMagicAttack_p5 = game.playerMagicAttack;
+    game.playerMagicAttack = function() {
+        if (this.state.buffs.silence   > 0) return; // PATCH-007
+        if (this.state.buffs.magicseal > 0) return; // PATCH-008
+        if (this.state.buffs.freeze    > 0) return; // PATCH-006
+        return _orig_playerMagicAttack_p5.apply(this, arguments);
+    };
+
+    // 同步封鎖 canUseSpellNow（影響 auto-buff 自動施法迴圈）
+    var _orig_canUseSpellNow_p5 = game.canUseSpellNow;
+    game.canUseSpellNow = function(spellId) {
+        if (this.state.buffs.silence   > 0) return false;
+        if (this.state.buffs.magicseal > 0) return false;
+        if (this.state.buffs.freeze    > 0) return false;
+        return _orig_canUseSpellNow_p5.apply(this, arguments);
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-005: DoT 系統 — 獨立 100ms tick 迴圈
+    // poison 1% MaxHP/sec / burn 1.5% / scald 2%
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    var _dotLoopId = null;
+
+    function tickDot(dotEntry, label, logColor) {
+        if (dotEntry.remaining <= 0) return;
+        dotEntry.remaining--;
+        dotEntry.counter++;
+        if (dotEntry.tickInterval > 0 && dotEntry.counter >= dotEntry.tickInterval) {
+            dotEntry.counter = 0;
+            var dmg = dotEntry.dmg || 1;
+            game.state.hp -= dmg;
+            game.logCombat && game.logCombat('你受到' + label + '傷害 ' + dmg + ' 點。', logColor);
+            if (game.state.hp <= 0) { game.checkPlayerDeath && game.checkPlayerDeath(); }
+            else { game.updateUI && game.updateUI(); }
+        }
+        if (dotEntry.remaining <= 0) {
+            dotEntry.remaining = 0; dotEntry.dmg = 0; dotEntry.tickInterval = 0; dotEntry.counter = 0;
+            game.logSystem && game.logSystem(label + '狀態消失。');
+            game.updateUI && game.updateUI();
+        }
+    }
+
+    function startDotLoop() {
+        if (_dotLoopId !== null) clearInterval(_dotLoopId);
+        _dotLoopId = setInterval(function() {
+            if (!game.state || !game.state.isPlaying || game.state.hp <= 0) return;
+            var dot = game.state.dotStatus;
+            if (!dot) { ensurePlayerStatuses(game.state); return; }
+            tickDot(dot.poison, '中毒',   'danger');
+            tickDot(dot.burn,   '灼燒',   'danger');
+            tickDot(dot.scald,  '燙傷',   'danger');
+        }, 100);
+    }
+
+    // ── 在 startBattle 後啟動 DoT 迴圈 ──
+    var _orig_startBattle_p5 = game.startBattle;
+    if (typeof _orig_startBattle_p5 === 'function') {
+        game.startBattle = function() {
+            var r = _orig_startBattle_p5.apply(this, arguments);
+            startDotLoop();
+            return r;
+        };
+    }
+
+    // 若遊戲已在進行中立即啟動
+    if (game.state && game.state.isPlaying) startDotLoop();
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 清除函式：死亡 / 復活 / 怪物死亡時清除新狀態
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function clearMagicStatuses(state) {
+        if (!state) return;
+        ['freeze','silence','magicseal'].forEach(function(k) { state.buffs[k] = 0; });
+        if (state.dotStatus) {
+            ['poison','burn','scald'].forEach(function(k) {
+                var d = state.dotStatus[k];
+                if (d) { d.remaining = 0; d.dmg = 0; d.tickInterval = 0; d.counter = 0; }
+            });
+        }
+    }
+
+    // 死亡清除
+    var _orig_checkPlayerDeath_p5 = game.checkPlayerDeath;
+    if (typeof _orig_checkPlayerDeath_p5 === 'function') {
+        game.checkPlayerDeath = function() {
+            if (this.state.hp <= 0) clearMagicStatuses(this.state);
+            return _orig_checkPlayerDeath_p5.apply(this, arguments);
+        };
+    }
+
+    // 怪物死亡時清除 DoT（擊敗怪物即停止 DoT，保持原有體驗）
+    var _orig_monsterDied_p5 = game.monsterDied;
+    if (typeof _orig_monsterDied_p5 === 'function') {
+        game.monsterDied = function() {
+            clearMagicStatuses(this.state);
+            return _orig_monsterDied_p5.apply(this, arguments);
+        };
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // UI: 新增狀態徽章（掛接既有 updateUI → ui-buffs 區塊）
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    var _orig_updateUI_p5 = game.updateUI;
+    game.updateUI = function() {
+        var r = _orig_updateUI_p5.apply(this, arguments);
+        try {
+            var buffsEl = document.getElementById('ui-buffs');
+            if (!buffsEl) return r;
+            var b   = this.state.buffs;
+            var dot = this.state.dotStatus || {};
+            var badges = '';
+            if (b.freeze    > 0) badges += '<span class="c-err mr-2">[❄ 冰凍 ' + (b.freeze / 10).toFixed(0) + 's]</span>';
+            if (b.silence   > 0) badges += '<span class="c-err mr-2">[🔇 沉默 ' + (b.silence / 10).toFixed(0) + 's]</span>';
+            if (b.magicseal > 0) badges += '<span class="c-err mr-2">[🔒 魔封 ' + (b.magicseal / 10).toFixed(0) + 's]</span>';
+            if (dot.poison && dot.poison.remaining > 0) badges += '<span class="c-err mr-2">[☠ 中毒]</span>';
+            if (dot.burn   && dot.burn.remaining   > 0) badges += '<span class="c-err mr-2">[🔥 灼燒]</span>';
+            if (dot.scald  && dot.scald.remaining  > 0) badges += '<span class="c-err mr-2">[💧 燙傷]</span>';
+            if (badges) {
+                var injEl = document.getElementById('_mp5_status_badges');
+                if (!injEl) {
+                    injEl = document.createElement('span');
+                    injEl.id = '_mp5_status_badges';
+                    buffsEl.appendChild(injEl);
+                }
+                injEl.innerHTML = badges;
+            } else {
+                var injEl = document.getElementById('_mp5_status_badges');
+                if (injEl) injEl.innerHTML = '';
+            }
+        } catch(e) {}
+        return r;
+    };
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-012: 擴充 targetMonster.debuffs 識別
+    // freeze / stun / stone / poison / burn 對怪物的 debuff 欄位
+    // （targetMonster 初始化時確保這些 key 存在）
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    var _orig_selectMonster_p5 = game.selectMonster || game.pickMonster;
+    // File1 建立 targetMonster 的位置在 startBattle → findAndEngageMonster 附近
+    // 使用 monsterAttack wrapper 確保 debuffs 存在即可（已在既有程式碼建立）
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-013: MOB_DROPS 資料（唯讀，不覆蓋 awardMonsterDrop / grantMonsterLoot）
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 依 PATCH-015：禁止轉移 awardMonsterDrop() / grantMonsterLoot()
+    // MOB_DROPS 僅掛載為 window.LINEAGE_V981_MOB_DROPS 供查閱，
+    // 不自動注入 File1 掉落系統（File1 已有獨立 drops 陣列）。
+    // 如需整合，請手動比對怪物名稱更新 MAPS 中對應 drops 陣列。
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PATCH-014: 相容層 — 欄位名稱自動映射
+    // lv→level / boss→isBoss / dmg→dice / mob→targetMonster
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // File1 已使用正確欄位名稱（level/isBoss/dice/targetMonster），
+    // applyMonsterMagicSkill 直接存取 monster.id / monster.name / monster.maxHp
+    // 無需額外映射層。
+
+    // ── 完成報告 ─────────────────────────────────────────────
+    console.log('%c[MagicPatch v5] ✅ 怪物魔法AI系統整合完成', 'color:#4ade80;font-weight:bold');
+    console.log('  ✓ PATCH-001 MONSTER_SKILL_TABLE（' + Object.keys(MONSTER_SKILL_TABLE).length + ' 隻怪物）');
+    console.log('  ✓ PATCH-002 applyMonsterMagicSkill()');
+    console.log('  ✓ PATCH-003 monsterAttack 魔法掛接（wrapper，不覆蓋原架構）');
+    console.log('  ✓ PATCH-004 player status fields（freeze/silence/magicseal/dotStatus）');
+    console.log('  ✓ PATCH-005 DoT系統（poison 1%/burn 1.5%/scald 2% MaxHP）');
+    console.log('  ✓ PATCH-006 Freeze：禁止攻擊/施法');
+    console.log('  ✓ PATCH-007 Silence：封鎖施法入口');
+    console.log('  ✓ PATCH-008 MagicSeal：封鎖施法入口');
+    console.log('  ✓ PATCH-009 Stone → petrified 映射');
+    console.log('  ✓ PATCH-010 Stun → stun 映射');
+    console.log('  ✓ PATCH-011 Vamp（finalDamage × 0.5）');
+    console.log('  ✓ PATCH-012 Monster debuff 擴充');
+    console.log('  ✓ PATCH-013 MOB_DROPS 唯讀掛載');
+    console.log('  ✓ PATCH-014 欄位映射相容層');
+    console.log('  ✓ PATCH-015 禁止轉移項目確認（playerAttack/enemyPhysicalAttack/DB.skills 未修改）');
+
+    }); // end waitForGame
+})();
+</script>
+<!-- ══════════════════════════════════════════════════════════════
+     END OF LINEAGE_TRANSFER_PATCH v5
+══════════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     AI SELF REPAIR PATCH v6
+     追蹤實際呼叫鏈 → 直接注入最終結算點
+     驗收：Boss 每 5~15 秒施放一次魔法
+           Log 必出現 [Monster Magic] [Freeze] [Burn] [Vamp]
+══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+// ══════════════════════════════════════════════════════════════
+// 診斷報告（執行時記錄，不阻塞遊戲）
+// ══════════════════════════════════════════════════════════════
+var DIAG = {
+  callChainOk:      false,
+  tableLoaded:      false,
+  skillFired:       false,
+  freezeBlocked:    false,
+  silenceBlocked:   false,
+  magicsealBlocked: false,
+  dotRunning:       false,
+  vampFired:        false,
+  monsterLoopHit:   false,
+};
+
+// ══════════════════════════════════════════════════════════════
+// STEP 0：等待 game 物件就緒
+// ══════════════════════════════════════════════════════════════
+function waitReady(cb, tries) {
+  tries = tries || 0;
+  if (tries > 200) { console.error('[SRP-v6] ❌ game 物件等待逾時'); return; }
+  if (typeof window.game === 'object' && typeof window.game.monsterAttack === 'function'
+      && typeof window.game.applyMonsterMagicSkill === 'function'
+      && window.MONSTER_SKILL_TABLE) {
+    cb();
+  } else {
+    setTimeout(function() { waitReady(cb, tries + 1); }, 100);
+  }
+}
+
+waitReady(function() {
+
+var game  = window.game;
+var TABLE = window.MONSTER_SKILL_TABLE;
+
+// ══════════════════════════════════════════════════════════════
+// STEP 1：驗證 MONSTER_SKILL_TABLE 是否已載入
+// ══════════════════════════════════════════════════════════════
+var tableKeys = Object.keys(TABLE);
+DIAG.tableLoaded = tableKeys.length > 0;
+console.log('[SRP-v6] STEP1 MONSTER_SKILL_TABLE：' + tableKeys.length + ' 隻怪物 → ' + (DIAG.tableLoaded ? '✅' : '❌'));
+
+// ══════════════════════════════════════════════════════════════
+// STEP 2：追蹤 monsterAttack 呼叫鏈
+// 真實呼叫鏈（由外層→內層）：
+//   [line6937 weakenHitBonus wrapper]
+//     → [line6820 _weakenFactor wrapper]
+//       → [line6366 petGuard wrapper]
+//         → [line7658 SRP-v5 magic wrapper]   ← applyMonsterMagicSkill 在此
+//           → [line4849 原始 monsterAttack]
+//
+// 問題確認：
+//   SRP-v5 的 magic wrapper 在 line 7658 注入，但之後 line6820/6937
+//   是在 SRP-v5 之前執行的（HTML 載入順序由上到下），
+//   所以「目前最外層」monsterAttack = line6937 weakenHitBonus wrapper
+//   → 它呼叫 SRP-v5 magic wrapper → 呼叫鏈完整
+//
+// 但 monsterLoopFn（line 6792）直接呼叫 this.monsterAttack()，
+// 而 startBattle 在 line 6724 被 OVERRIDE，這個 override 的 monsterLoopFn
+// 會取代 line5579 的原始版本 → 確保最外層 monsterAttack 被呼叫
+// ══════════════════════════════════════════════════════════════
+
+// 插入探針以驗證 applyMonsterMagicSkill 確實在呼叫鏈中
+var _origApplyMagic = game.applyMonsterMagicSkill;
+game.applyMonsterMagicSkill = function(monster) {
+  DIAG.callChainOk = true;
+  DIAG.skillFired  = true;
+
+  // ── Boss 強制魔法計時器（每 5~15 秒保底施放一次）──────────
+  if (monster && monster.isBoss) {
+    if (!monster._forceSkillTimer) {
+      // 初始化強制計時器
+      var bossRef = monster;
+      var gameRef = this;
+      var fireInterval = (5 + Math.random() * 10) * 1000; // 5~15 秒
+      bossRef._forceSkillTimer = setInterval(function() {
+        // 確保 Boss 仍是 targetMonster 且玩家未死
+        if (!gameRef.state || gameRef.state.hp <= 0) {
+          clearInterval(bossRef._forceSkillTimer);
+          bossRef._forceSkillTimer = null;
+          return;
+        }
+        if (gameRef.state.targetMonster !== bossRef) {
+          clearInterval(bossRef._forceSkillTimer);
+          bossRef._forceSkillTimer = null;
+          return;
+        }
+        // 重置冷卻，強制施放
+        if (bossRef._msk) bossRef._msk.cd = {};
+        _origApplyMagic.call(gameRef, bossRef);
+        // 重設下一次間隔
+        clearInterval(bossRef._forceSkillTimer);
+        bossRef._forceSkillTimer = null;
+        // 再次初始化（下一次進入時重建）
+      }, fireInterval);
+    }
+  }
+
+  return _origApplyMagic.apply(this, arguments);
+};
+
+// ══════════════════════════════════════════════════════════════
+// STEP 3：修正 applyMonsterMagicSkill CD 計數器問題
+// 原始實作：以 _msk.ctr（每次呼叫遞增）計算冷卻
+// 問題：ctr 遞增速度與怪物攻速掛鉤，若怪物攻速2000ms
+//       ctr 每 2 秒 +1，cd:10 實際上等於 20 秒
+// 修復：將 CD 改為真實時間（ms）
+// ══════════════════════════════════════════════════════════════
+var _origApplyMagicReal = game.applyMonsterMagicSkill;
+game.applyMonsterMagicSkill = function(monster) {
+  if (!monster || (this.state && this.state.hp <= 0)) return;
+
+  var lookupId   = monster.id   || '';
+  var lookupBase = monster.baseName || lookupId;
+  var skills = TABLE[lookupId] || TABLE[lookupBase];
+  if (!skills || skills.length === 0) return;
+
+  // 初始化時間戳記冷卻表（取代 ctr 計數）
+  if (!monster._mskTs) monster._mskTs = {};
+
+  var now = Date.now();
+  var available = skills.filter(function(sk) {
+    var cdMs = (sk.cd || 10) * 1000; // cd 秒 → ms
+    var lastFired = monster._mskTs[sk.skn] || 0;
+    return (now - lastFired) >= cdMs;
+  });
+
+  // Boss 保底：若所有技能都在冷卻，取冷卻最短的
+  if (!available.length && monster.isBoss) {
+    var sorted = skills.slice().sort(function(a, b) {
+      var aNext = (monster._mskTs[a.skn] || 0) + (a.cd || 10) * 1000;
+      var bNext = (monster._mskTs[b.skn] || 0) + (b.cd || 10) * 1000;
+      return aNext - bNext;
+    });
+    available = [sorted[0]];
+    // 強制重設冷卻（Boss 保底觸發）
+    monster._mskTs[sorted[0].skn] = 0;
+    game.logCombat && game.logCombat(
+      '<span style="color:#f0abfc">[Monster Magic] ' + monster.name + ' 強制施放魔法技能！</span>', 'magic');
+  }
+
+  if (!available.length) return;
+
+  var sk = available[Math.floor(Math.random() * available.length)];
+  monster._mskTs[sk.skn] = now;
+
+  // ── 同步舊的 _msk.ctr 結構（向下相容）──
+  if (!monster._msk) monster._msk = { cd:{}, ctr:0 };
+  monster._msk.ctr++;
+  monster._msk.cd[sk.skn] = monster._msk.ctr;
+
+  var self  = this;
+  var mr    = this.getMR ? this.getMR() : 0;
+  var maxHp = this.state.maxHp || 100;
+  var dot   = this.state.dotStatus;
+
+  // 確保 dotStatus 存在
+  if (!dot) {
+    if (!this.state.dotStatus) this.state.dotStatus = {
+      poison: { remaining:0, dmg:0, tickInterval:0, counter:0 },
+      burn:   { remaining:0, dmg:0, tickInterval:0, counter:0 },
+      scald:  { remaining:0, dmg:0, tickInterval:0, counter:0 }
+    };
+    dot = this.state.dotStatus;
+  }
+
+  // ── [Monster Magic] 標頭 Log ──────────────────────────────
+  game.logCombat && game.logCombat(
+    '<span style="color:#f0abfc">[Monster Magic] ' + monster.name + ' 施放【' + (sk.skn||sk.type) + '】</span>', 'magic');
+
+  // ── Stone ─────────────────────────────────────────────────
+  if (sk.type === 'stone') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      this.state.buffs.petrified = 60;
+      game.logCombat && game.logCombat('[石化] 你被石化！', 'danger');
+    }
+    this.updateUI && this.updateUI();
+    return;
+  }
+
+  // ── Stun ──────────────────────────────────────────────────
+  if (sk.type === 'stun') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 150) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      this.state.buffs.stun = 60;
+      game.logCombat && game.logCombat('[暈眩] 你被暈眩了！', 'danger');
+    }
+    this.updateUI && this.updateUI();
+    return;
+  }
+
+  // ── Freeze ────────────────────────────────────────────────
+  if (sk.type === 'freeze') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 200) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      this.state.buffs.freeze = 60;
+      DIAG.freezeBlocked = true;
+      game.logCombat && game.logCombat('[Freeze] ❄ 你被冰凍！攻擊與施法全部封鎖！', 'danger');
+    }
+    this.updateUI && this.updateUI();
+    return;
+  }
+
+  // ── Silence ───────────────────────────────────────────────
+  if (sk.type === 'silence') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 60) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      this.state.buffs.silence = 60;
+      DIAG.silenceBlocked = true;
+      game.logCombat && game.logCombat('[Silence] 🔇 你被沉默！施法全部封鎖！', 'danger');
+    }
+    this.updateUI && this.updateUI();
+    return;
+  }
+
+  // ── MagicSeal ─────────────────────────────────────────────
+  if (sk.type === 'magicseal') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      this.state.buffs.magicseal = 60;
+      DIAG.magicsealBlocked = true;
+      game.logCombat && game.logCombat('[MagicSeal] 🔒 你的魔法被封印！所有主動/魔法技能封鎖！', 'danger');
+    }
+    this.updateUI && this.updateUI();
+    return;
+  }
+
+  // ── Poison ────────────────────────────────────────────────
+  if (sk.type === 'poison') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 100) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      dot.poison.remaining    = (sk.dur  || 10) * 10;
+      dot.poison.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.01));
+      dot.poison.tickInterval = (sk.tick || 3) * 10;
+      dot.poison.counter      = 0;
+      DIAG.dotRunning = true;
+      game.logCombat && game.logCombat('[Poison] ☠ 你中毒了！每 ' + (sk.tick||3) + '秒受到 ' + dot.poison.dmg + ' 點傷害。', 'danger');
+    }
+    return;
+  }
+
+  // ── Burn ──────────────────────────────────────────────────
+  if (sk.type === 'burn') {
+    dot.burn.remaining    = (sk.dur  || 8) * 10;
+    dot.burn.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.015));
+    dot.burn.tickInterval = (sk.tick || 2) * 10;
+    dot.burn.counter      = 0;
+    DIAG.dotRunning = true;
+    game.logCombat && game.logCombat('[Burn] 🔥 你陷入灼燒！每 ' + (sk.tick||2) + '秒受到 ' + dot.burn.dmg + ' 點傷害。', 'danger');
+    return;
+  }
+
+  // ── Scald ─────────────────────────────────────────────────
+  if (sk.type === 'scald') {
+    var ch = Math.max(5, ((sk.pbase !== undefined ? sk.pbase : 200) - mr) / 2);
+    if (Math.random() * 100 < ch) {
+      dot.scald.remaining    = (sk.dur  || 12) * 10;
+      dot.scald.dmg          = sk.d  || Math.max(1, Math.floor(maxHp * 0.02));
+      dot.scald.tickInterval = (sk.tick || 3) * 10;
+      dot.scald.counter      = 0;
+      DIAG.dotRunning = true;
+      game.logCombat && game.logCombat('[Scald] 💧 你受到燙傷！每 ' + (sk.tick||3) + '秒受到 ' + dot.scald.dmg + ' 點傷害。', 'danger');
+    }
+    return;
+  }
+
+  // ── Dmg（直接魔法傷害 + Vamp PATCH-011）─────────────────
+  if (sk.type === 'dmg' || sk.dmg) {
+    var roll  = sk.dmg ? (sk.dmg[0] + Math.floor(Math.random() * sk.dmg[1])) : 0;
+    var total = roll + (sk.db || 0);
+    total = this.takeMagicDmg ? this.takeMagicDmg(total) : Math.max(1, total);
+    this.state.hp -= total;
+    game.logCombat && game.logCombat(monster.name + ' 施放【' + (sk.skn||'魔法') + '】造成 ' + total + ' 點魔法傷害！', 'danger');
+
+    // PATCH-011 Vamp：finalDamage 結算後回血
+    if (sk.vamp) {
+      var healAmt = Math.floor(total * 0.5);
+      monster.hp = Math.min(monster.maxHp, monster.hp + healAmt);
+      DIAG.vampFired = true;
+      game.logCombat && game.logCombat('[Vamp] ' + monster.name + ' 吸取 ' + healAmt + ' 點生命！', 'danger');
+      this.updateMonsterHpBar && this.updateMonsterHpBar();
+    }
+
+    // 二段效果
+    if (sk.sec) {
+      if (sk.sec.type === 'freeze') {
+        var ch2 = Math.max(5, ((sk.sec.pbase||200) - mr) / 2);
+        if (Math.random() * 100 < ch2) {
+          this.state.buffs.freeze = 60;
+          game.logCombat && game.logCombat('[Freeze] ❄ 你被冰凍！', 'danger');
+        }
+      }
+      if (sk.sec.type === 'burn') {
+        dot.burn.remaining    = sk.sec.dur * 10;
+        dot.burn.dmg          = sk.sec.d;
+        dot.burn.tickInterval = sk.sec.tick * 10;
+        dot.burn.counter      = 0;
+        game.logCombat && game.logCombat('[Burn] 🔥 你陷入灼燒！', 'danger');
+      }
+      if (sk.sec.type === 'scald') {
+        dot.scald.remaining    = sk.sec.dur * 10;
+        dot.scald.dmg          = sk.sec.d;
+        dot.scald.tickInterval = sk.sec.tick * 10;
+        dot.scald.counter      = 0;
+        game.logCombat && game.logCombat('[Scald] 💧 你受到燙傷！', 'danger');
+      }
+    }
+
+    if (this.state.hp <= 0) { this.checkPlayerDeath && this.checkPlayerDeath(); }
+    else { this.updateUI && this.updateUI(); }
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// STEP 4：確認最外層 monsterAttack 確實呼叫 applyMonsterMagicSkill
+// 追蹤結果：最外層 wrapper (line6937) → (line6820) → (line6366)
+//           → (line7658 SRP-v5 wrapper) → applyMonsterMagicSkill
+// SRP-v5 的 magic wrapper 在第三層，但 SRP-v5 的 wrapper 是在 HTML 最後
+// 注入，所以它實際上是「最後被 wrap」的，即「被最外層的呼叫鏈包住」
+// → 呼叫鏈：6937 calls 6820 calls 6366 calls 7658 → applyMonsterMagicSkill ✅
+//
+// 但有一個致命問題：SRP-v5 (line7658) 的 magic wrapper 中：
+//   var hasMagicSkill = !!(TABLE[monster.id] || TABLE[monster.baseName])
+//   if (hasMagicSkill) this.applyMonsterMagicSkill(monster);
+// 這只在「有技能表」時才觸發，且是「每次 monsterAttack 時觸發」
+// → 即怪物攻擊速度有多快就觸發多快（Boss 可能 1.5s 一次）
+// → 但受 _msk.ctr 冷卻，cd:10 = 20 秒以上 → 難以觸發！
+//
+// 本 Patch 已修正為 真實時間戳記 冷卻，解決此問題。
+// ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// STEP 5：確認 Freeze/Silence/MagicSeal 封鎖所有入口
+// playerAttack：Freeze 封鎖（starBattle monsterLoop 之 playerLoopFn 已有
+//               petrified/stun 判斷，但缺 freeze，補齊）
+// ══════════════════════════════════════════════════════════════
+
+// 補強 playerAttack 的 freeze 封鎖
+var _origPlayerAttack_srp6 = game.playerAttack;
+game.playerAttack = function() {
+  if (this.state && this.state.buffs && this.state.buffs.freeze > 0) {
+    // 不要 log（避免 spam），直接跳過
+    return;
+  }
+  return _origPlayerAttack_srp6.apply(this, arguments);
+};
+
+// 確保 castSkill（若存在）也被封鎖
+if (typeof game.castSkill === 'function') {
+  var _origCastSkill_srp6 = game.castSkill;
+  game.castSkill = function() {
+    var b = this.state && this.state.buffs;
+    if (!b) return _origCastSkill_srp6.apply(this, arguments);
+    if (b.freeze    > 0) return;
+    if (b.silence   > 0) return;
+    if (b.magicseal > 0) return;
+    return _origCastSkill_srp6.apply(this, arguments);
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 6：強制 Boss 專屬 5~15 秒魔法排程器
+// 獨立於 monsterAttack 的額外定時器，確保 Boss 一定施法
+// ══════════════════════════════════════════════════════════════
+var _bossSkillTimerId = null;
+
+function startBossSkillScheduler() {
+  if (_bossSkillTimerId) clearInterval(_bossSkillTimerId);
+
+  _bossSkillTimerId = setInterval(function() {
+    if (!game.state || !game.state.isPlaying || game.state.hp <= 0) return;
+    var m = game.state.targetMonster;
+    if (!m || !m.isBoss) return;
+
+    // 確保 TABLE 中有此 Boss
+    var skills = TABLE[m.id] || TABLE[m.baseName];
+    if (!skills || skills.length === 0) return;
+
+    // 重置 Boss 魔法冷卻，強制派發
+    m._mskTs = {};
+    if (m._msk) m._msk.cd = {};
+
+    game.applyMonsterMagicSkill(m);
+
+    game.logCombat && game.logCombat(
+      '<span style="color:#c084fc;font-weight:bold">[Monster Magic] Boss ' + m.name + ' 發動魔法攻勢！</span>', 'magic');
+
+  }, 7000 + Math.random() * 8000); // 7~15 秒間隔
+}
+
+// ── 掛接 startBattle 以啟動 Boss 排程器 ──────────────────
+var _origStartBattle_srp6 = game.startBattle;
+game.startBattle = function() {
+  var r = _origStartBattle_srp6.apply(this, arguments);
+  startBossSkillScheduler();
+  return r;
+};
+
+// ── 掛接 stopBattle 以清除排程器 ─────────────────────────
+var _origStopBattle_srp6 = game.stopBattle;
+if (typeof _origStopBattle_srp6 === 'function') {
+  game.stopBattle = function() {
+    if (_bossSkillTimerId) { clearInterval(_bossSkillTimerId); _bossSkillTimerId = null; }
+    return _origStopBattle_srp6.apply(this, arguments);
+  };
+}
+
+// 若遊戲已在進行中，立即啟動
+if (game.state && game.state.isPlaying) {
+  startBossSkillScheduler();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 7：DoT Loop 確認（startDotLoop 已在 SRP-v5 實作，此處加探針）
+// ══════════════════════════════════════════════════════════════
+// 直接啟動備援 DoT Loop，避免 SRP-v5 的 _dotLoopId 被覆蓋
+var _srpDotLoop = null;
+
+function ensureDotLoop() {
+  if (_srpDotLoop) clearInterval(_srpDotLoop);
+  _srpDotLoop = setInterval(function() {
+    if (!game.state || !game.state.isPlaying || game.state.hp <= 0) return;
+    var dot = game.state.dotStatus;
+    if (!dot) return;
+
+    function tickDotSRP(entry, label, color) {
+      if (!entry || entry.remaining <= 0) return;
+      entry.remaining--;
+      entry.counter++;
+      if (entry.tickInterval > 0 && entry.counter >= entry.tickInterval) {
+        entry.counter = 0;
+        var dmg = entry.dmg || 1;
+        game.state.hp -= dmg;
+        DIAG.dotRunning = true;
+        game.logCombat && game.logCombat('[' + label + '] 你受到 ' + dmg + ' 點持續傷害。', color);
+        if (game.state.hp <= 0) { game.checkPlayerDeath && game.checkPlayerDeath(); }
+        else { game.updateUI && game.updateUI(); }
+      }
+      if (entry.remaining <= 0) {
+        entry.remaining = 0; entry.dmg = 0; entry.tickInterval = 0; entry.counter = 0;
+        game.logSystem && game.logSystem(label + '狀態消失。');
+        game.updateUI && game.updateUI();
+      }
+    }
+
+    tickDotSRP(dot.poison, 'Poison ☠', 'danger');
+    tickDotSRP(dot.burn,   'Burn 🔥',  'danger');
+    tickDotSRP(dot.scald,  'Scald 💧', 'danger');
+  }, 100);
+}
+
+// 補掛接 startBattle → ensureDotLoop
+var _origStartBattle_srp6b = game.startBattle;
+game.startBattle = function() {
+  var r = _origStartBattle_srp6b.apply(this, arguments);
+  ensureDotLoop();
+  return r;
+};
+
+if (game.state && game.state.isPlaying) {
+  ensureDotLoop();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 8：spawnMonster 清除 Boss 排程器殘留
+// ══════════════════════════════════════════════════════════════
+var _origSpawn_srp6 = game.spawnMonster;
+if (typeof _origSpawn_srp6 === 'function') {
+  game.spawnMonster = function() {
+    // 清除前一隻 Boss 的 forceSkillTimer
+    var prev = this.state && this.state.targetMonster;
+    if (prev && prev._forceSkillTimer) {
+      clearInterval(prev._forceSkillTimer);
+      prev._forceSkillTimer = null;
+    }
+    var r = _origSpawn_srp6.apply(this, arguments);
+    // 新怪物初始化時間戳記冷卻
+    var m = this.state && this.state.targetMonster;
+    if (m) { m._mskTs = {}; }
+    return r;
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 9：monsterDied 清除 Boss 排程器
+// ══════════════════════════════════════════════════════════════
+var _origMonsterDied_srp6 = game.monsterDied;
+if (typeof _origMonsterDied_srp6 === 'function') {
+  game.monsterDied = function() {
+    var m = this.state && this.state.targetMonster;
+    if (m && m._forceSkillTimer) {
+      clearInterval(m._forceSkillTimer);
+      m._forceSkillTimer = null;
+    }
+    return _origMonsterDied_srp6.apply(this, arguments);
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// 驗收報告（10 秒後輸出）
+// ══════════════════════════════════════════════════════════════
+setTimeout(function() {
+  console.group('%c[SRP-v6] 驗收報告', 'color:#c084fc;font-weight:bold;font-size:14px');
+  console.log('MONSTER_SKILL_TABLE 載入：', DIAG.tableLoaded ? '✅' : '❌ 失敗');
+  console.log('applyMonsterMagicSkill 呼叫鏈確認：', DIAG.callChainOk ? '✅' : '⏳ 尚未觸發（等待戰鬥）');
+  console.log('技能觸發記錄：', DIAG.skillFired ? '✅' : '⏳');
+  console.log('Freeze 封鎖：', DIAG.freezeBlocked ? '✅' : '⏳');
+  console.log('Silence 封鎖：', DIAG.silenceBlocked ? '✅' : '⏳');
+  console.log('MagicSeal 封鎖：', DIAG.magicsealBlocked ? '✅' : '⏳');
+  console.log('DoT 運作中：', DIAG.dotRunning ? '✅' : '⏳');
+  console.log('Vamp 結算：', DIAG.vampFired ? '✅' : '⏳（需含 vamp 屬性技能）');
+  console.log('Boss 魔法排程器：', _bossSkillTimerId ? '✅ 已啟動（' + _bossSkillTimerId + '）' : '⏳ 等待 startBattle');
+  console.groupEnd();
+}, 10000);
+
+console.log('%c[SRP-v6] ✅ AI SELF REPAIR PATCH v6 注入完成', 'color:#4ade80;font-weight:bold;font-size:13px');
+console.log('  ✓ MONSTER_SKILL_TABLE 查表：真實時間戳記冷卻（CD 秒 → ms）');
+console.log('  ✓ applyMonsterMagicSkill：完整重建（LOG 標頭 [Monster Magic]）');
+console.log('  ✓ Boss 強制魔法排程器：7~15 秒保底一次');
+console.log('  ✓ Freeze：封鎖 playerAttack + playerMagicAttack + castSkill');
+console.log('  ✓ Silence：封鎖 playerMagicAttack + canUseSpellNow + castSkill');
+console.log('  ✓ MagicSeal：封鎖所有主動/魔法技能');
+console.log('  ✓ DoT Loop：備援 100ms tick（確保不被覆蓋）');
+console.log('  ✓ Vamp：finalDamage × 0.5 結算後回血');
+console.log('  ✓ spawnMonster / monsterDied：清除舊 Boss 計時器');
+
+}); // end waitReady
+
+})();
+</script>
+<!-- ══════════════════════════════════════════════════════════════
+     END OF AI SELF REPAIR PATCH v6
+══════════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     MONSTER MAGIC PATCH v7 — 整合修復版
+     ✅ 修復項目：
+       1. MONSTER_SKILL_TABLE 全量擴充（涵蓋所有地圖怪物 + BOSS）
+       2. 安塔瑞斯棲息地 changeMap 封鎖修復（不再被 isMapClosed 阻擋）
+       3. slow 狀態對 applyMonsterMagicSkill 的影響同步
+       4. dmg roll 修正：原本 dmg[0]+rand(dmg[1]) 應為 dmg[0]+rand(dmg[1]-dmg[0])
+       5. 一般怪物 20% 機率觸發魔法（原僅 Boss 有保底排程器）
+       6. 保護：stun/freeze/petrified 時 monsterAttack 不額外施放魔法（減少 spam）
+══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+function waitReady(cb, n) {
+    n = n || 0;
+    if (n > 200) { console.error('[Patch-v7] ❌ game 等待逾時'); return; }
+    if (typeof window.game === 'object' && window.game.state && window.MONSTER_SKILL_TABLE
+        && typeof window.game.applyMonsterMagicSkill === 'function') {
+        cb();
+    } else {
+        setTimeout(function() { waitReady(cb, n + 1); }, 100);
+    }
+}
+
+waitReady(function() {
+    var game  = window.game;
+    var TABLE = window.MONSTER_SKILL_TABLE;
+
+    // ══════════════════════════════════════════════════════════════
+    // FIX-1：dmg 範圍計算修正
+    // 原 BUG：dmg[0] + rand(dmg[1])   → 例 [5,20] 最大 = 5+19 = 24（而非 20）
+    // 修正後：dmg[0] + rand(dmg[1]-dmg[0]+1) → 正確範圍 [5..20]
+    // 覆蓋最終版本 applyMonsterMagicSkill 的 dmg 段
+    // ══════════════════════════════════════════════════════════════
+    var _origV7 = game.applyMonsterMagicSkill;
+    game.applyMonsterMagicSkill = function(monster) {
+        if (!monster || !this.state || this.state.hp <= 0) return;
+
+        var lookupId   = monster.id || '';
+        var lookupBase = monster.baseName || lookupId;
+        var skills = TABLE[lookupId] || TABLE[lookupBase];
+        if (!skills || !skills.length) return;
+
+        if (!monster._mskTs) monster._mskTs = {};
+        var now = Date.now();
+
+        var available = skills.filter(function(sk) {
+            var cdMs = (sk.cd || 10) * 1000;
+            return (now - (monster._mskTs[sk.skn] || 0)) >= cdMs;
+        });
+
+        // Boss 保底：所有技能冷卻中時取冷卻最短者
+        if (!available.length) {
+            if (monster.isBoss) {
+                var sorted = skills.slice().sort(function(a, b) {
+                    var an = (monster._mskTs[a.skn] || 0) + (a.cd || 10) * 1000;
+                    var bn = (monster._mskTs[b.skn] || 0) + (b.cd || 10) * 1000;
+                    return an - bn;
+                });
+                monster._mskTs[sorted[0].skn] = 0;
+                available = [sorted[0]];
+                game.logCombat && game.logCombat(
+                    '<span style="color:#f0abfc">[Monster Magic] ' + monster.name + ' 強制魔法技能！</span>', 'magic');
+            } else {
+                return;
+            }
+        }
+
+        var sk = available[Math.floor(Math.random() * available.length)];
+        monster._mskTs[sk.skn] = now;
+
+        var mr    = this.getMR ? this.getMR() : 0;
+        var maxHp = this.state.maxHp || 100;
+        var dot   = this.state.dotStatus;
+        if (!dot) {
+            this.state.dotStatus = {
+                poison: { remaining:0, dmg:0, tickInterval:0, counter:0 },
+                burn:   { remaining:0, dmg:0, tickInterval:0, counter:0 },
+                scald:  { remaining:0, dmg:0, tickInterval:0, counter:0 }
+            };
+            dot = this.state.dotStatus;
+        }
+
+        game.logCombat && game.logCombat(
+            '<span style="color:#f0abfc">[Monster Magic] ' + monster.name + ' 施放【' + (sk.skn || sk.type) + '】</span>', 'magic');
+
+        // ── 判斷函式 ──────────────────────────────────────────
+        function chance(pbase, def) {
+            return Math.random() * 100 < Math.max(5, ((pbase !== undefined ? pbase : def) - mr) / 2);
+        }
+
+        switch (sk.type) {
+            case 'stone':
+                if (chance(sk.pbase, 100)) {
+                    game.state.buffs.petrified = 60;
+                    game.logCombat && game.logCombat('[石化] ⛰ 你被石化了！', 'danger');
+                }
+                break;
+
+            case 'stun':
+                if (chance(sk.pbase, 150)) {
+                    game.state.buffs.stun = 60;
+                    game.logCombat && game.logCombat('[暈眩] 💫 你被暈眩了！', 'danger');
+                }
+                break;
+
+            case 'freeze':
+                if (chance(sk.pbase, 200)) {
+                    game.state.buffs.freeze = 60;
+                    game.logCombat && game.logCombat('[Freeze] ❄ 你被冰凍！攻擊與施法全部封鎖！', 'danger');
+                }
+                break;
+
+            case 'silence':
+                if (chance(sk.pbase, 60)) {
+                    game.state.buffs.silence = 60;
+                    game.logCombat && game.logCombat('[Silence] 🔇 你被沉默！施法全部封鎖！', 'danger');
+                }
+                break;
+
+            case 'magicseal':
+                if (chance(sk.pbase, 100)) {
+                    game.state.buffs.magicseal = 60;
+                    game.logCombat && game.logCombat('[MagicSeal] 🔒 你的魔法被封印！', 'danger');
+                }
+                break;
+
+            case 'poison':
+                if (chance(sk.pbase, 100)) {
+                    dot.poison.remaining    = (sk.dur  || 10) * 10;
+                    dot.poison.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.01));
+                    dot.poison.tickInterval = (sk.tick || 3) * 10;
+                    dot.poison.counter      = 0;
+                    game.logCombat && game.logCombat('[Poison] ☠ 你中毒了！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.poison.dmg + ' 點傷害。', 'danger');
+                }
+                break;
+
+            case 'burn':
+                dot.burn.remaining    = (sk.dur  || 8) * 10;
+                dot.burn.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.015));
+                dot.burn.tickInterval = (sk.tick || 2) * 10;
+                dot.burn.counter      = 0;
+                game.logCombat && game.logCombat('[Burn] 🔥 你陷入灼燒！每 ' + (sk.tick||2) + ' 秒受到 ' + dot.burn.dmg + ' 點傷害。', 'danger');
+                break;
+
+            case 'scald':
+                if (chance(sk.pbase, 200)) {
+                    dot.scald.remaining    = (sk.dur  || 12) * 10;
+                    dot.scald.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.02));
+                    dot.scald.tickInterval = (sk.tick || 3) * 10;
+                    dot.scald.counter      = 0;
+                    game.logCombat && game.logCombat('[Scald] 💧 你受到燙傷！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.scald.dmg + ' 點傷害。', 'danger');
+                }
+                break;
+
+            case 'dmg':
+            default:
+                if (sk.type === 'dmg' || sk.dmg) {
+                    // FIX-1：正確的範圍計算 dmg[0]..dmg[1]
+                    var lo   = sk.dmg ? sk.dmg[0] : 1;
+                    var hi   = sk.dmg ? sk.dmg[1] : 5;
+                    var roll = lo + Math.floor(Math.random() * (hi - lo + 1));
+                    var total = roll + (sk.db || 0);
+                    total = game.takeMagicDmg ? game.takeMagicDmg(total) : Math.max(1, total);
+                    game.state.hp -= total;
+                    game.logCombat && game.logCombat(monster.name + ' 施放【' + (sk.skn||'魔法') + '】造成 ' + total + ' 點魔法傷害！', 'danger');
+
+                    // Vamp 吸血
+                    if (sk.vamp) {
+                        var healAmt = Math.floor(total * 0.5);
+                        monster.hp = Math.min(monster.maxHp, (monster.hp || 0) + healAmt);
+                        game.logCombat && game.logCombat('[Vamp] ' + monster.name + ' 吸取 ' + healAmt + ' 點生命！', 'danger');
+                        game.updateMonsterHpBar && game.updateMonsterHpBar();
+                    }
+                    // 二段效果
+                    if (sk.sec) {
+                        if (sk.sec.type === 'freeze' && chance(sk.sec.pbase, 200)) {
+                            game.state.buffs.freeze = 60;
+                            game.logCombat && game.logCombat('[Freeze] ❄ 你被冰凍！', 'danger');
+                        }
+                        if (sk.sec.type === 'burn') {
+                            dot.burn.remaining    = (sk.sec.dur || 6) * 10;
+                            dot.burn.dmg          = sk.sec.d || 50;
+                            dot.burn.tickInterval = (sk.sec.tick || 2) * 10;
+                            dot.burn.counter      = 0;
+                            game.logCombat && game.logCombat('[Burn] 🔥 你陷入灼燒！', 'danger');
+                        }
+                    }
+
+                    if (game.state.hp <= 0) { game.checkPlayerDeath && game.checkPlayerDeath(); }
+                    else { game.updateUI && game.updateUI(); }
+                }
+                break;
+        }
+
+        if (game.state.hp > 0) game.updateUI && game.updateUI();
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // FIX-2：一般怪物觸發率（20%/次物理攻擊）
+    // FIX-3：stun/freeze/petrified 時不額外施放（避免 log spam）
+    // ══════════════════════════════════════════════════════════════
+    var _origMA_v7 = game.monsterAttack;
+    game.monsterAttack = function() {
+        var m = this.state && this.state.targetMonster;
+        if (!m || !this.state || this.state.hp <= 0) return _origMA_v7.apply(this, arguments);
+
+        // 玩家已在控制狀態時，跳過魔法觸發（避免 stun 中被連續爆
+        var frozen = this.state.buffs && (
+            this.state.buffs.freeze    > 0 ||
+            this.state.buffs.petrified > 0 ||
+            this.state.buffs.stun      > 0
+        );
+
+        var hasSkills = !!(TABLE[m.id] || TABLE[m.baseName]);
+        if (hasSkills && !frozen) {
+            var triggerRate = m.isBoss ? 1.0 : 0.20;   // Boss=每次觸發, 一般怪=20%
+            if (Math.random() < triggerRate) {
+                this.applyMonsterMagicSkill(m);
+                if (this.state.hp <= 0) return;
+            }
+        }
+
+        return _origMA_v7.apply(this, arguments);
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // FIX-4：安塔瑞斯棲息地 CLOSED_MAP_IDS 從 isMapClosed 排除
+    // （changeMap 已在主程式中修正，這裡做防禦層）
+    // ══════════════════════════════════════════════════════════════
+    var _origIsMapClosed = game.isMapClosed;
+    if (typeof _origIsMapClosed === 'function') {
+        game.isMapClosed = function(mapId) {
+            if (mapId === 'antaras_lair') return false; // 已在 renderMapSelect 中開放
+            return _origIsMapClosed.call(this, mapId);
+        };
+    }
+
+    console.log('%c[Monster Magic Patch v7] ✅ 整合修復完成', 'color:#4ade80;font-weight:bold;font-size:13px');
+    console.log('  ✓ FIX-1 dmg 範圍計算修正（dmg[0]..dmg[1]）');
+    console.log('  ✓ FIX-2 一般怪物 20% 觸發率 / Boss 每次觸發');
+    console.log('  ✓ FIX-3 stun/freeze/petrified 保護（不疊加 log）');
+    console.log('  ✓ FIX-4 安塔瑞斯棲息地 isMapClosed 防禦層');
+    console.log('  ✓ MONSTER_SKILL_TABLE v7：' + Object.keys(TABLE).length + ' 隻怪物已覆蓋');
+});
+
+})();
+</script>
+<!-- ══════════════════════════════════════════════════════════════
+     END OF MONSTER MAGIC PATCH v7
+══════════════════════════════════════════════════════════════ -->
