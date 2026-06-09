@@ -33,14 +33,6 @@
         .mob-target { padding: 0.75rem; border: 2px solid #334155; border-radius: 0.5rem; background: #0f172a; cursor: pointer; flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; transition: all 0.2s; min-height: 185px;}
         .mob-target.active { border-color: #ef4444; background: #450a0a; }
         .mob-target:hover:not(.active) { background: #1e293b; }
-        /* 區域背景：背景圖由 JS 依地圖/分類設為 inline 樣式（特殊地圖逐張不同）；卡片較不透明，使背景不過於顯眼 */
-        #battle-view.has-bg { background-size: cover; background-position: center; border-radius: 0.5rem; }
-        #battle-view.has-bg .mob-target { background: rgba(15,23,42,0.66); border-color: rgba(148,163,184,0.5); }
-        #battle-view.has-bg .mob-target.active { background: rgba(69,10,10,0.72); border-color: #ef4444; }
-        #battle-view.has-bg .mob-target:hover:not(.active) { background: rgba(30,41,59,0.72); }
-        #town-view.has-bg { background-size: cover; background-position: center; border-radius: 0.5rem; }
-        #town-view.has-bg #town-npc-container > div { background: rgba(30,41,59,0.72); }
-        #town-view.has-bg #town-npc-container > div:hover { background: rgba(51,65,85,0.78); }
         .tip-host { cursor: help; }
         .stat-row { display: contents; }
         .stat-row.row-hidden { display: none; }
@@ -700,13 +692,12 @@ const DB = {
         "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-amber-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "item_nightvision": { n: "夜之視野", p: 1, c: "text-indigo-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "candle": { n: "回憶蠟燭", type: "misc", req: "all", p: 100000, c: "text-red-500", d: "退還所有能力點數，重新分配", eff: "reset", gachaWeight: 0 },
-        "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升力量+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
-        "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升敏捷+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
-        "panacea_con": { n: "萬能藥(CON)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升體質+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "con", plv: 50, gachaWeight: 0 },
-        "panacea_int": { n: "萬能藥(INT)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升智力+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "int", plv: 50, gachaWeight: 0 },
-        "panacea_wis": { n: "萬能藥(WIS)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升精神+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "wis", plv: 50, gachaWeight: 0 },
-        "panacea_white": { n: "純白的萬能藥", type: "misc", req: "all", p: 5000, c: "text-slate-100", d: "純白無瑕的萬能藥原料。使用回憶蠟燭重置配點時，依已使用過的萬能藥瓶數獲得。可在象牙塔的塔斯處，以 3 個製作成任一屬性的萬能藥。", gachaWeight: 10 },
-        "panacea_cha": { n: "萬能藥(CHA)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升魅力+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限30）", eff: "panacea", pstat: "cha", plv: 50, gachaWeight: 0 },
+        "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升力量+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
+        "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升敏捷+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
+        "panacea_con": { n: "萬能藥(CON)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升體質+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "con", plv: 50, gachaWeight: 0 },
+        "panacea_int": { n: "萬能藥(INT)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升智力+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "int", plv: 50, gachaWeight: 0 },
+        "panacea_wis": { n: "萬能藥(WIS)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升精神+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "wis", plv: 50, gachaWeight: 0 },
+        "panacea_cha": { n: "萬能藥(CHA)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升魅力+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限30）", eff: "panacea", pstat: "cha", plv: 50, gachaWeight: 0 },
         
         "new_item_142": { n: "哨子", type: "pot", req: "all", p: 165, d: "可用於呼叫或解散寵物", eff: "whistle", gachaWeight: 0 },
         "new_item_collar_husky": { n: "項圈 (哈士奇)", p: 10, gachaWeight: 0 },
@@ -1210,8 +1201,7 @@ const DB = {
             n: "象牙塔",
             npcs: [
                 { id: "npc_paro", n: "帕羅", title: "雜貨商人", type: "shop", d: "販售各種日常消耗品。" },
-                { id: "npc_taras", n: "塔拉斯", title: "試煉", type: "quest", d: "法師的試煉：收集不死族的遺物換取專屬魔杖。" },
-                { id: "npc_tas", n: "塔斯", title: "製作", type: "craft", d: "以 3 個純白的萬能藥，製作任一屬性的萬能藥。" }
+                { id: "npc_taras", n: "塔拉斯", title: "試煉", type: "quest", d: "法師的試煉：收集不死族的遺物換取專屬魔杖。" }
             ]
         },
         "town_witon": {
@@ -1237,7 +1227,7 @@ const DB = {
 
         // 二階魔法 (Lv 8)
         "sk_antidote": { n: "解毒術", type: "heal", tier: 2, reqM: 8, reqE: 16, mp: 8, msg: "你感覺毒素消退了。" },
-        "sk_cold_shiver": { n: "寒冷戰慄", type: "atk", tier: 2, reqM: 8, reqE: 16, mp: 9, dmgType: "magic", ele: "none", dmgDice: [1, 8], lifesteal: true, healSlot: true },
+        "sk_cold_shiver": { n: "寒冷戰慄", type: "atk", tier: 2, reqM: 8, reqE: 16, mp: 9, dmgType: "magic", ele: "none", dmgDice: [1, 8], lifesteal: true },
         "sk_poison_curse": { n: "毒咒", type: "atk", tier: 2, reqM: 8, reqE: 16, mp: 10, dmgType: "magic", status: { kind: "poison", pbase: 100, dur: 15, tick: 3, dmg: [1, 8] }, msg: "你使目標中毒了。" },
         "sk_ench_wpn": { n: "擬似魔法武器", type: "buff", tier: 2, reqM: 8, reqE: 16, mp: 20, dur: 1800, d: { extraDmg: 2 }, msg: "你的武器暫時被注入了魔法力量。" },
         "sk_reveal": { n: "無所遁形術", type: "buff", tier: 2, reqM: 8, reqE: 16, mp: 8, dur: 180 },
@@ -1258,7 +1248,7 @@ const DB = {
         // 四階魔法 (Lv 16)
         "sk_dex_up": { n: "通暢氣脈術", type: "buff", tier: 4, reqM: 16, reqE: 32, mp: 45, dur: 1200, d: { dex: 5 }, msg: "你覺得身手變得更靈活。" },
         "sk_break": { n: "壞物術", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 20, dmgType: "magic", status: { kind: "broken", pbase: 150, dur: 25 } },
-        "sk_vampire": { n: "吸血鬼之吻", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 13, dmgType: "magic", ele: "none", dmgDice: [2, 8], lifesteal: true, healSlot: true },
+        "sk_vampire": { n: "吸血鬼之吻", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 13, dmgType: "magic", ele: "none", dmgDice: [2, 8], lifesteal: true },
         "sk_slow": { n: "緩速術", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 20, dmgType: "magic", status: { kind: "slow", pbase: 150, dur: 30 } },
         "sk_rock_prison": { n: "岩牢", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 11, dmgType: "magic", ele: "earth", target: "all", dmgDice: [4, 5] },
         "sk_magic_shield": { n: "魔法屏障", type: "buff", tier: 4, reqM: 16, reqE: 32, mp: 16, dur: 16 },
@@ -1471,27 +1461,27 @@ const DB = {
         '夢幻之島大鬼火': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['potion_blue',1]],
         '夢魘': [['wpn_2hsword',3], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['potion_blue',1], ['panacea_wis',1], ['bk_elf_triple',0.1]],
         '冰人': [['wpn_battleaxe',1], ['potion_haste',1], ['new_item_150',1], ['potion_blue',1], ['new_item_195',1]],
-        '不死鳥': [['arm_69', 10], ['wpn_katana',5], ['wpn_siruge',1], ['amr_plate',5], ['arm_88',0.1], ['arm_63',10], ['acc_117',0.01], ['amu_str',0.1], ['acc_120',0.1], ['acc_128',1], ['acc_129',1], ['acc_130',0.5], ['acc_131',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_159',0.1], ['bk_sleep_mist',1], ['bk_holy_barrier',0.1], ['bk_meteor',0.05], ['potion_blue',1], ['bk_fire_storm',0.5], ['bk_elf_dancefire',1], ['bk_blaze',1]],
+        '不死鳥': [['wpn_katana',5], ['wpn_siruge',1], ['amr_plate',5], ['arm_88',0.1], ['arm_63',10], ['acc_117',0.01], ['amu_str',0.1], ['acc_120',0.1], ['acc_128',1], ['acc_129',1], ['acc_130',0.5], ['acc_131',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_159',0.1], ['bk_sleep_mist',1], ['bk_holy_barrier',0.1], ['bk_meteor',0.05], ['potion_blue',1], ['bk_fire_storm',0.5], ['bk_elf_dancefire',1], ['bk_blaze',1]],
         '亞力安': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_slow',0.5], ['bk_mummy_curse',0.5], ['bk_heal2',0.1], ['bk_holy_light',0.1], ['bk_haste_spell',0.5], ['bk_earthquake',0.1], ['bk_rock_prison',0.5], ['bk_greater_haste',0.1], ['bk_quake',0.005], ['bk_elf_groundtrap',0.1]],
         '人形殭屍': [['bk_vampire',0.1], ['bk_dark_shadow',0.1]],
         '人魚': [['scroll_acc',0.01], ['new_item_mermaid_scale', 1]],
-        '伊弗利特': [['arm_69', 10], ['wpn_katana',2], ['amr_plate',5], ['arm_63',10], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_fireball',3], ['bk_dex_up',1], ['bk_str_up',1], ['bk_cancel',1], ['potion_blue',1], ['bk_fire_storm',0.2], ['bk_elf_magicerase',1], ['bk_elf_triple',1], ['bk_blaze',1]],
+        '伊弗利特': [['wpn_katana',2], ['amr_plate',5], ['arm_63',10], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_fireball',3], ['bk_dex_up',1], ['bk_str_up',1], ['bk_cancel',1], ['potion_blue',1], ['bk_fire_storm',0.2], ['bk_elf_magicerase',1], ['bk_elf_triple',1], ['bk_blaze',1]],
         '伊萊克頓': [['acc_127',0.001], ['scroll_armor',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_thunder',0.05], ['bk_summon',0.002], ['bk_thunder_storm',0.001], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.05]],
         '侏儒': [['wpn_26',1], ['hlm_gnome',2], ['arm_86',5], ['shd_gnome',3], ['new_item_169',1], ['scroll_poly',1], ['new_item_180',100]],
         '侏儒戰士': [['wpn_23',0.5], ['wpn_26',2], ['hlm_gnome',3], ['arm_86',5], ['shd_gnome',3], ['potion_haste',1], ['new_item_180',100]],
-        '克特': [['wpn_12', 1], ['wpn_katana',1], ['wpn_longsword',10], ['wpn_2hsword',3], ['arm_60',5], ['tsh_tshirt',3], ['arm_87',10], ['arm_105',10], ['arm_106',0.5], ['arm_90',10], ['glv_glove',5], ['arm_110',1], ['arm_101',1], ['amr_kurt',1], ['arm_97',1], ['hlm_kurt',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['potion_blue',1], ['bk_berserk',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5]],
+        '克特': [['wpn_katana',1], ['wpn_longsword',10], ['wpn_2hsword',3], ['arm_60',5], ['tsh_tshirt',3], ['arm_87',10], ['arm_105',10], ['arm_106',0.5], ['arm_90',10], ['glv_glove',5], ['arm_110',1], ['arm_101',1], ['amr_kurt',1], ['arm_97',1], ['hlm_kurt',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['potion_blue',1], ['bk_berserk',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5]],
         '冰原狼人': [['new_item_150',1], ['new_item_151',1], ['new_item_154',5], ['new_item_157',5], ['new_item_160',5]],
         '冰原老虎': [['potion_haste',1], ['scroll_acc',0.01], ['new_item_150',1], ['new_item_195',1]],
         '冰石高崙': [['wpn_2',3], ['glv_crystal',0.01], ['bk_ice_lance',0.001], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.05]],
         '卡司特': [['wpn_battleaxe',3], ['wpn_giantaxe',0.5], ['new_item_154',5], ['new_item_155',0.5], ['bk_summon',0.01], ['potion_blue',1]],
         '卡司特王': [['wpn_battleaxe',2], ['wpn_giantaxe',0.5], ['wpn_berserker',0.01], ['arm_45',0.1], ['scroll_weapon',1], ['scroll_armor',2], ['new_item_155',0.5], ['new_item_156',0.05], ['potion_blue',1], ['bk_disease',0.1]],
         '卡士柏': [['arm_87',5], ['arm_90',10], ['arm_55',1], ['acc_117',0.01], ['amu_str',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['bk_fireball',5], ['potion_blue',1], ['bk_elf_dancefire',1], ['bk_elf_earthshield',1], ['bk_blaze',1]],
-        '史巴托': [['hlm_mr', 0.5], ['wpn_scimitar',1], ['arm_42',3], ['arm_60',1], ['scroll_acc',0.001], ['arm_105',1], ['new_item_150',1]],
-        '哈柏哥布林': [['hlm_mr', 0.5], ['wpn_9',3], ['arm_42',3], ['potion_haste',1], ['new_item_180',100]],
+        '史巴托': [['wpn_scimitar',1], ['arm_42',3], ['arm_60',1], ['scroll_acc',0.001], ['arm_105',1], ['new_item_150',1]],
+        '哈柏哥布林': [['wpn_9',3], ['arm_42',3], ['potion_haste',1], ['new_item_180',100]],
         '哈維': [['arm_62',0.5], ['new_item_150',1], ['bk_haste_spell',0.5], ['bk_holy_dash',0.05], ['potion_blue',1], ['bk_greater_haste',0.01], ['new_item_195',1], ['bk_elf_stormeye',0.001]],
-        '哥布林': [['hlm_mr', 0.05], ['wpn_9',1], ['wpn_10',1], ['arm_42',5], ['bot_short',3], ['potion_heal',3]],
+        '哥布林': [['wpn_9',1], ['wpn_10',1], ['arm_42',5], ['bot_short',3], ['potion_heal',3]],
         '地獄犬': [['wpn_witchwand',0.5], ['scroll_acc',0.01], ['new_item_150',1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['bk_fireball',0.5], ['bk_break',0.5], ['bk_holy_barrier',0.001], ['new_item_195',1]],
-        '地精靈王': [['arm_69', 1], ['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_con',1]],
+        '地精靈王': [['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_con',1]],
         '地靈': [['wpn_10',3], ['bot_short',1], ['new_item_179',50]],
         '夏洛伯': [['bk_slow',0.1], ['bk_earthquake',0.01], ['scroll_acc',0.001], ['new_item_144',1]],
         '多眼怪': [['scroll_weapon',1], ['new_item_160',5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_mummy_curse',0.5], ['bk_cancel',0.05], ['bk_elf_release',0.1], ['bk_weaken',0.1], ['bk_disease',0.1], ['bk_elf_triple',0.01]],
@@ -1502,26 +1492,26 @@ const DB = {
         '妖魔弓箭手': [['wpn_8',1], ['hlm_oasis',2], ['arm_64',1], ['amr_oasis',5], ['clk_oasis',3], ['new_item_179',50]],
         '妖魔殭屍': [['wpn_33',0.1], ['hlm_oasis',2], ['arm_64',3], ['amr_oasis',5], ['arm_104',1]],
         '妖魔法師': [['wpn_oakwand',1], ['wpn_38',0.1], ['wpn_strwand',0.01], ['new_item_150',1], ['bk_heal2',0.01], ['potion_blue',1], ['bk_blaze',0.001]],
-        '妖魔鬥士': [['arm_69', 0.1], ['hlm_oasis',2], ['arm_64',2], ['amr_oasis',3], ['clk_oasis',1], ['arm_104',1], ['arm_63',1]],
+        '妖魔鬥士': [['hlm_oasis',2], ['arm_64',2], ['amr_oasis',3], ['clk_oasis',1], ['arm_104',1], ['arm_63',1]],
         '安塔瑞斯': [['wpn_katana',10], ['wpn_siruge',5], ['amr_plate',10], ['arm_88',1], ['glv_glove',20], ['arm_81',0.1], ['acc_116',0.1], ['acc_117',0.1], ['acc_121',1], ['acc_122',1], ['acc_127',5], ['acc_128',5], ['acc_129',5], ['blt_body',1], ['acc_130',1], ['acc_131',1], ['potion_haste',1], ['scroll_weapon',100], ['scroll_armor',100], ['scroll_acc',50], ['new_item_150',1], ['new_item_151',50], ['new_item_152',5], ['new_item_153',1], ['new_item_154',50], ['new_item_155',5], ['new_item_156',1], ['bk_break',10], ['bk_slow',10], ['bk_charm',10], ['bk_str_up',5], ['bk_earthquake',5], ['bk_regen',5], ['bk_summon',2], ['bk_resurrection',1], ['new_item_191',100], ['potion_blue',1]],
         '安普長老': [['new_item_150',1], ['new_item_154',5], ['new_item_179',50], ['new_item_182',1], ['potion_blue',1], ['bk_rock_prison',0.1]],
-        '密密': [['hlm_mr', 1], ['arm_42',1], ['potion_strong',1], ['potion_haste',1], ['potion_blue',1]],
+        '密密': [['arm_42',1], ['potion_strong',1], ['potion_haste',1], ['potion_blue',1]],
         '巨大兵蟻': [['arm_60',0.3], ['arm_47',0.01], ['potion_haste',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['potion_brave',1]],
         '巨大鱷魚': [['scroll_armor',10], ['scroll_acc',1], ['new_item_154',1], ['bk_thunder',1], ['potion_brave',1]],
         '巨蟻': [['arm_45',0.01], ['potion_haste',1], ['new_item_154',5], ['potion_brave',1]],
-        '巨蟻女皇': [['arm_69', 10], ['wpn_katana',3], ['amr_plate',5], ['arm_63',5], ['arm_47',1], ['acc_121',0.1], ['acc_127',1], ['blt_body',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['bk_heal2',1], ['bk_charm',1], ['bk_earthquake',1], ['bk_regen',0.5], ['potion_blue',1], ['bk_rock_prison',5], ['bk_greater_haste',1], ['new_item_195',1], ['bk_elf_magicerase',1], ['bk_dark_shadow',1]],
+        '巨蟻女皇': [['wpn_katana',3], ['amr_plate',5], ['arm_63',5], ['arm_47',1], ['acc_121',0.1], ['acc_127',1], ['blt_body',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['bk_heal2',1], ['bk_charm',1], ['bk_earthquake',1], ['bk_regen',0.5], ['potion_blue',1], ['bk_rock_prison',5], ['bk_greater_haste',1], ['new_item_195',1], ['bk_elf_magicerase',1], ['bk_dark_shadow',1]],
         '巫師': [['arm_87',0.5], ['arm_90',1], ['amu_str',0.001], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',0.1], ['bk_haste_spell',0.1], ['potion_blue',1], ['bk_greater_haste',0.05], ['bk_elf_stormeye',0.05], ['bk_weaken',0.1]],
         '巴土瑟': [['arm_87',5], ['arm_90',10], ['arm_54',1], ['acc_117',0.01], ['amu_int',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['bk_cancel',0.1], ['potion_blue',1], ['bk_quake',0.1], ['bk_elf_groundtrap',5], ['bk_elf_earthbless',1]],
         '巴拉卡斯': [['wpn_katana',10], ['wpn_siruge',5], ['amr_plate',10], ['arm_88',1], ['glv_glove',10], ['arm_82',0.1], ['acc_116',0.2], ['acc_117',0.2], ['amu_str',0.2], ['amu_int',0.2], ['acc_127',6], ['acc_128',6], ['acc_129',6], ['blt_body',1], ['acc_130',1], ['acc_131',1], ['potion_haste',1], ['scroll_weapon',100], ['scroll_armor',100], ['scroll_acc',50], ['new_item_150',1], ['new_item_151',100], ['new_item_152',10], ['new_item_153',2], ['new_item_157',100], ['new_item_158',10], ['new_item_159',2], ['bk_fireball',20], ['bk_slow',15], ['bk_charm',15], ['bk_str_up',10], ['bk_haste_spell',10], ['bk_summon',3], ['bk_invisible',1], ['bk_resurrection',1], ['new_item_192',100], ['potion_blue',1]],
         '巴風特': [['wpn_katana',2], ['wpn_2hsword',5], ['amr_plate',5], ['arm_88',0.1], ['glv_glove',10], ['acc_116',0.01], ['acc_127',0.5], ['acc_129',0.5], ['blt_body',0.1], ['acc_131',0.1], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_charm',1], ['bk_earthquake',2], ['bk_summon',0.2], ['bk_rock_prison',5], ['bk_quake',1], ['new_item_195',1], ['bk_elf_dancefire',1], ['bk_magic_shield',1], ['bk_weaken',1], ['bk_bless_wpn',0.1]],
         '希爾黛斯': [['new_item_160',0.5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_slow',0.5], ['bk_ice_lance',0.001], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.1], ['bk_elf_lifebless',0.01],['new_item_213',1]],
-        '強盜': [['arm_69', 0.5], ['hlm_mr', 0.5], ['wpn_shortbow',1], ['wpn_32',0.01], ['arm_42',2], ['arm_66',3], ['arm_98',0.1], ['arm_49',1], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_225',0.1]],
-        '強盜頭目': [['hlm_mr', 5], ['wpn_katana',1], ['wpn_silversword',3], ['arm_62',5], ['arm_87',5], ['scroll_acc',0.1], ['arm_42',10], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['item_nightvision',10]],
+        '強盜': [['wpn_shortbow',1], ['wpn_32',0.01], ['arm_42',2], ['arm_66',3], ['arm_98',0.1], ['arm_49',1], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_225',0.1]],
+        '強盜頭目': [['wpn_katana',1], ['wpn_silversword',3], ['arm_62',5], ['arm_87',5], ['scroll_acc',0.1], ['arm_42',10], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['item_nightvision',10]],
         '影魔': [['acc_129',0.005], ['acc_131',0.001], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_magic_shield',0.01], ['bk_dark_shadow',0.1]],
         '思克巴': [['acc_117',0.001], ['bk_ice_lance',0.01], ['bk_summon',0.02], ['bk_blizzard',0.005], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_release',0.1], ['bk_elf_lifespring',0.1], ['bk_elf_triple',0.05], ['new_item_226',0.01]],
         '思克巴女皇': [['acc_116',0.001], ['scroll_acc',0.01], ['bk_ice_lance',0.01], ['bk_summon',0.003], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.1], ['bk_mana_drain',0.1], ['new_item_235',0.01]],
         '怪手': [['glv_glove',0.1], ['arm_99',0.001], ['new_item_150',1]],
-        '惡魔': [['arm_69', 10], ['wpn_katana',5], ['wpn_2hsword',10], ['wpn_siruge',1], ['wpn_33',1], ['wpn_flaming_angel',0.5], ['amr_plate',5], ['arm_88',0.1], ['arm_63',10], ['arm_99',1], ['acc_117',0.01], ['amu_str',0.1], ['amu_int',0.15], ['acc_128',1], ['acc_129',1], ['acc_130',0.5], ['acc_131',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_159',0.1], ['bk_holy_barrier',0.5], ['potion_blue',1], ['bk_fire_storm',0.1], ['bk_elf_blazewpn',0.5]],
+        '惡魔': [['wpn_katana',5], ['wpn_2hsword',10], ['wpn_siruge',1], ['wpn_33',1], ['wpn_flaming_angel',0.5], ['amr_plate',5], ['arm_88',0.1], ['arm_63',10], ['arm_99',1], ['acc_117',0.01], ['amu_str',0.1], ['amu_int',0.15], ['acc_128',1], ['acc_129',1], ['acc_130',0.5], ['acc_131',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_159',0.1], ['bk_holy_barrier',0.5], ['potion_blue',1], ['bk_fire_storm',0.1], ['bk_elf_blazewpn',0.5]],
         '杜賓狗': [['new_item_143',10], ['new_item_179',100]],
         '格利芬': [['arm_62',0.5], ['potion_haste',1], ['new_item_150',1], ['new_item_152',0.5], ['new_item_155',0.5], ['new_item_158',0.5], ['new_item_161',0.5], ['bk_tornado',0.001], ['bk_elf_release',0.1], ['bk_elf_winddash',0.05], ['bk_elf_stormeye',0.001], ['bk_magic_shield',0.01]],
         '楊果里恩': [['scroll_weapon',0.1], ['scroll_armor',0.3], ['scroll_acc',0.01], ['bk_slow',0.1], ['bk_charm',0.05], ['bk_rock_prison',0.5]],
@@ -1531,7 +1521,7 @@ const DB = {
         '死亡騎士': [['wpn_katana',5], ['wpn_2hsword',10], ['wpn_33',1], ['amr_plate',5], ['arm_88',0.1], ['glv_glove',10], ['glv_dk',1], ['amr_dk',1], ['bot_dk',1], ['hlm_dk',1], ['acc_117',1], ['amu_str',0.1], ['acc_128',0.5], ['acc_129',0.5], ['acc_130',0.1], ['acc_131',0.1], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_zombie',3], ['bk_tornado',0.5], ['bk_resurrection',0.1], ['bk_disease',3], ['bk_solid_shield',1], ['bk_blaze',1]],
         '死神': [['wpn_16',1], ['wpn_giantaxe',0.1], ['wpn_flaming_angel',0.001], ['arm_61',0.5], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['potion_blue',1], ['bk_elf_stormshot',0.01], ['bk_disease',0.1]],
         '毒蠍': [['arm_46',0.01], ['potion_haste',1], ['bk_thunder',0.01], ['bk_cancel',0.01], ['bk_rock_prison',0.5], ['bk_quake',0.001]],
-        '水精靈王': [['arm_69', 1], ['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_int',1]],
+        '水精靈王': [['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_int',1]],
         '污染的潘': [['new_item_163',100]],
 		'污染的安特': [['new_item_141',1], ['new_item_237',100]],
         '法利昂': [['wpn_katana',10], ['wpn_siruge',5], ['amr_plate',10], ['arm_88',1], ['glv_glove',20], ['arm_80',0.1], ['acc_116',0.1], ['acc_117',0.1], ['acc_120',1], ['acc_127',5], ['acc_128',5], ['acc_129',5], ['blt_body',1], ['acc_130',1], ['acc_131',1], ['potion_haste',1], ['scroll_weapon',100], ['scroll_armor',100], ['scroll_acc',50], ['new_item_150',1], ['new_item_151',50], ['new_item_152',5], ['new_item_153',1], ['new_item_160',50], ['new_item_161',5], ['new_item_162',1], ['bk_slow',10], ['bk_holy_light',10], ['bk_regen',5], ['bk_summon',2], ['bk_blizzard',1], ['bk_resurrection',1], ['new_item_190',100], ['potion_blue',1], ['bk_elf_eleres',1]],
@@ -1539,9 +1529,9 @@ const DB = {
         '海星': [['potion_haste',1], ['bk_ice_spike',0.1], ['scroll_acc',0.01]],
         '漂浮之眼': [['new_item_143',20], ['new_item_150',1]],
         '火炎蛋': [['scroll_weapon',1], ['scroll_armor',2], ['bk_fireball',0.1], ['bk_holy_light',0.1], ['scroll_poly',1], ['new_item_192',0.01], ['potion_blue',1]],
-        '火焰弓箭手': [['hlm_mr', 1], ['wpn_32',0.1], ['arm_42',2], ['arm_67',4], ['arm_90',1], ['bk_dex_up',0.05], ['bk_slow',0.1], ['new_item_192',0.01]],
-        '火焰戰士': [['hlm_mr', 1], ['wpn_longsword',1], ['arm_42',2], ['arm_62',1], ['arm_105',3], ['potion_haste',1], ['new_item_192',0.01]],
-        '火精靈王': [['arm_69', 1], ['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_str',1]],
+        '火焰弓箭手': [['wpn_32',0.1], ['arm_42',2], ['arm_67',4], ['arm_90',1], ['bk_dex_up',0.05], ['bk_slow',0.1], ['new_item_192',0.01]],
+        '火焰戰士': [['wpn_longsword',1], ['arm_42',2], ['arm_62',1], ['arm_105',3], ['potion_haste',1], ['new_item_192',0.01]],
+        '火精靈王': [['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_str',1]],
         '火蜥蜴': [['potion_haste',1], ['new_item_155',0.5], ['new_item_158',0.5], ['new_item_192',0.01], ['bk_fire_storm',0.001], ['bk_elf_magicerase',0.01], ['bk_elf_stormeye',0.01], ['bk_shock_stun',0.01]],
         '烈炎獸': [['scroll_weapon',1], ['scroll_armor',2], ['bk_holy_barrier',0.002], ['scroll_acc',0.01], ['new_item_192',0.01], ['bk_elf_magicerase',0.1], ['bk_shock_stun',0.05]],
         '熔岩高崙': [['wpn_2hsword',0.5], ['wpn_18',1], ['wpn_giantaxe',0.5], ['bk_slow',0.5], ['bk_str_up',0.05], ['scroll_acc',0.01], ['new_item_192',0.01], ['bk_elf_triple',0.01]],
@@ -1549,7 +1539,7 @@ const DB = {
         '牧羊犬': [['new_item_143',10], ['new_item_179',100]],
 		'哈士奇': [['new_item_143',10], ['new_item_179',100]],
         '狼': [['wpn_5',1], ['new_item_195',1], ['new_item_179',100]],
-        '狼人': [['arm_69', 0.1], ['wpn_longsword',0.1], ['wpn_2',1], ['wpn_10',3], ['wpn_13',2], ['arm_66',0.5], ['arm_103',1], ['bot_short',0.5], ['bk_dex_up',0.01], ['bk_vampire',0.05]],
+        '狼人': [['wpn_longsword',0.1], ['wpn_2',1], ['wpn_10',3], ['wpn_13',2], ['arm_66',0.5], ['arm_103',1], ['bot_short',0.5], ['bk_dex_up',0.01], ['bk_vampire',0.05]],
         '獨眼巨人': [['arm_62',1], ['arm_47',0.01], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_str_up',0.05], ['bk_summon',0.002], ['bk_rock_prison',0.5], ['bk_quake',0.003], ['bk_elf_groundtrap',0.1], ['bk_elf_earthbless',0.01], ['bk_weaken',0.1], ['bk_seal',0.05], ['new_item_227',0.01]],
         '獨角獸': [['wpn_18',3], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_poly',1], ['panacea_cha',1]],
         '甘地妖魔': [['potion_heal',1], ['new_item_148',1], ['new_item_150',1], ['new_item_201',1]],
@@ -1557,7 +1547,7 @@ const DB = {
         '穴居人': [['wpn_battleaxe',1], ['wpn_giantaxe',0.1], ['arm_61',0.5], ['scroll_acc',0.001]],
         '紅鬼魂': [['amr_robe',3], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_elf_seal',0.05], ['bk_dark_shadow',0.1]],
         '紙人': [['scroll_poly',1], ['scroll_acc',0.01]],
-        '羅孚妖魔': [['arm_69', 0.2], ['arm_63',3], ['potion_haste',1], ['new_item_149',1], ['new_item_157',5]],
+        '羅孚妖魔': [['arm_63',3], ['potion_haste',1], ['new_item_149',1], ['new_item_157',5]],
         '艾爾摩士兵': [['wpn_4',1], ['wpn_halberd',0.5], ['wpn_14',1], ['arm_66',3], ['arm_68',2], ['bot_short',2], ['glv_glove',0.5], ['scroll_armor',2], ['scroll_acc',0.01], ['potion_brave',1]],
         '艾爾摩將軍': [['wpn_2hsword',0.5], ['arm_60',1], ['arm_65',1], ['arm_90',1], ['glv_glove',0.5], ['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_shock_stun',0.05], ['bk_reduction_armor',0.01], ['bk_spike_armor',0.001]],
         '艾爾摩法師': [['wpn_witchwand',1], ['scroll_weapon',1], ['bk_full_heal',0.01], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_bless_wpn',0.005]],
@@ -1565,34 +1555,34 @@ const DB = {
         '萊肯': [['wpn_battleaxe',3], ['wpn_halberd',0.5], ['arm_65',1], ['arm_66',1], ['arm_105',2], ['arm_90',1], ['new_item_151',5], ['bk_dex_up',0.05], ['bk_vampire',0.1], ['bk_slow',0.1], ['new_item_195',1]],
         '蘑菇': [['new_item_166',100]],
         '蛇女': [['scroll_weapon',0.2], ['scroll_acc',0.01], ['bk_break',0.5], ['new_item_221',1], ['new_item_208',1]],
-        '蜥蜴人': [['hlm_mr', 0.5], ['wpn_37',0.5], ['arm_105',1], ['arm_42',3], ['new_item_160',5], ['scroll_acc',0.001]],
-        '蟑螂人': [['hlm_mr', 0.3], ['arm_42',3], ['potion_haste',1], ['new_item_158',0.1]],
+        '蜥蜴人': [['wpn_37',0.5], ['arm_105',1], ['arm_42',3], ['new_item_160',5], ['scroll_acc',0.001]],
+        '蟑螂人': [['arm_42',3], ['potion_haste',1], ['new_item_158',0.1]],
         '蟹人': [['scroll_armor',0.3], ['bk_break',0.1], ['bk_str_up',0.01]],
         '西瑪': [['arm_87',5], ['arm_90',10], ['arm_57',1], ['amu_str',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',2], ['bk_haste_spell',1], ['potion_blue',1], ['bk_greater_haste',1], ['bk_elf_stormeye',1], ['bk_weaken',1]],
         '變形怪': [['scroll_poly',1], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_240',1]],
         '變形怪首領': [['wpn_2hsword',5], ['wpn_38',10], ['wpn_strwand',1], ['arm_60',10], ['clk_mr',10], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['bk_fireball',3], ['bk_str_up',1], ['bk_haste_spell',1], ['bk_summon',0.5], ['scroll_poly',1], ['potion_blue',1], ['bk_elf_magicerase',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5], ['new_item_240',10]],
         '那魯加妖魔': [['wpn_2hsword',0.1], ['wpn_invader',0.5], ['wpn_damascus',0.2], ['arm_64',5], ['arm_104',3], ['acc_123',0.01], ['potion_haste',1], ['new_item_146',1], ['new_item_157',5], ['new_item_200',1]],
         '邪惡蜥蜴': [['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_slow',0.5], ['bk_heal2',0.2], ['bk_holy_light',0.1], ['bk_cancel',0.02], ['bk_earthquake',0.02], ['bk_rock_prison',0.5], ['bk_quake',0.005], ['bk_elf_release',0.05], ['new_item_232',0.01]],
-        '都達瑪拉妖魔': [['hlm_mr', 0.5], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['potion_haste',1], ['new_item_147',1], ['new_item_150',1], ['new_item_158',0.5], ['new_item_199',1], ['scroll_acc',0.001]],
+        '都達瑪拉妖魔': [['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['potion_haste',1], ['new_item_147',1], ['new_item_150',1], ['new_item_158',0.5], ['new_item_199',1], ['scroll_acc',0.001]],
         '鋼鐵高崙': [['scroll_weapon',1], ['scroll_armor',2], ['bk_str_up',0.05], ['new_item_164',1], ['new_item_180',100], ['potion_blue',1], ['bk_elf_soul',0.001], ['bk_elf_steelguard',0.001], ['bk_weaken',0.1], ['item_ancientkey',1]],
         '夢幻之島鎧甲守衛': [['arm_60',1], ['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['bk_spike_armor',0.05]],
         '長老': [['arm_87',0.5], ['new_item_150',1], ['bk_thunder',0.1], ['bk_heal2',0.5], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_234',0.1]],
         '夢幻之島閃電球': [['arm_45',0.1], ['scroll_weapon',1], ['scroll_armor',2], ['bk_thunder_storm',0.05]],
-        '阿吐巴妖魔': [['hlm_mr', 0.5], ['wpn_damascus',0.1], ['arm_60',0.5], ['arm_64',3], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['new_item_145',1], ['new_item_157',5], ['new_item_202',1]],
+        '阿吐巴妖魔': [['wpn_damascus',0.1], ['arm_60',0.5], ['arm_64',3], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['new_item_145',1], ['new_item_157',5], ['new_item_202',1]],
         '阿西塔基奧': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_fireball',0.5], ['bk_dex_up',0.1], ['bk_str_up',0.05], ['bk_haste_spell',0.1], ['bk_earthquake',0.1], ['new_item_192',0.01], ['new_item_194',1]],
         '阿魯巴': [['wpn_18',2], ['bk_str_up',0.05], ['bk_haste_spell',0.5], ['bk_earthquake',0.1], ['bk_rock_prison',0.5], ['bk_greater_haste',0.1], ['bk_quake',0.005]],
         '雪人': [['bk_elf_release',0.1], ['scroll_acc',0.01]],
         '雪怪': [['wpn_18',1], ['scroll_acc',0.01], ['new_item_195',1]],
-        '風精靈王': [['arm_69', 1], ['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_dex',1]],
+        '風精靈王': [['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_dex',1]],
         '飛龍': [['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_160',5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_holy_dash',1], ['potion_blue',1], ['bk_quake',1], ['bk_elf_magicerase',1], ['bk_elf_stormeye',1], ['bk_elf_triple',1]],
         '食人妖精': [['wpn_battleaxe',3], ['wpn_giantaxe',1], ['arm_61',0.6], ['scroll_weapon',0.2], ['scroll_armor',0.5], ['bk_fireball',0.1], ['bk_break',0.5], ['bk_elf_release',0.05], ['new_item_217',0.1], ['bk_blaze',0.01]],
         '食人妖精王': [['wpn_battleaxe',3], ['wpn_10',2], ['wpn_giantaxe',0.5], ['wpn_berserker',0.02], ['arm_61',0.5], ['arm_47',0.05], ['scroll_weapon',1], ['scroll_armor',1.5], ['new_item_158',0.5], ['bk_fireball',0.5], ['bk_break',0.5], ['bk_holy_light',0.1], ['potion_blue',1], ['bk_disease',0.1], ['bk_shock_stun',0.01]],
         '食屍鬼': [['scroll_weapon',0.1], ['bk_berserk',0.01], ['new_item_204',1], ['new_item_205',1]],
         '馬庫爾': [['arm_87',5], ['arm_90',10], ['arm_56',1], ['acc_116',0.01], ['amu_str',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_160',5], ['new_item_161',0.5], ['new_item_162',0.1], ['potion_blue',1], ['bk_elf_soul',1], ['bk_elf_lifespring',1]],
-        '骷髏': [['hlm_mr', 0.1], ['wpn_scimitar',1], ['arm_42',5], ['clk_mr',0.1], ['arm_105',0.5], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',50], ['new_item_203',1], ['new_item_214',1]],
-        '骷髏弓箭手': [['hlm_mr', 0.1], ['wpn_3',1], ['arm_42',3], ['clk_mr',0.1], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',50]],
-        '骷髏斧手': [['hlm_mr', 0.1], ['wpn_1',5], ['arm_42',3], ['clk_mr',0.3], ['potion_haste',1], ['new_item_150',1], ['new_item_183',50]],
-        '骷髏槍兵': [['hlm_mr', 0.1], ['wpn_4',3], ['arm_42',3], ['clk_mr',0.3], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',50]],
+        '骷髏': [['wpn_scimitar',1], ['arm_42',5], ['clk_mr',0.1], ['arm_105',0.5], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',3], ['new_item_203',1], ['new_item_214',1]],
+        '骷髏弓箭手': [['wpn_3',1], ['arm_42',3], ['clk_mr',0.1], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',3]],
+        '骷髏斧手': [['wpn_1',5], ['arm_42',3], ['clk_mr',0.3], ['potion_haste',1], ['new_item_150',1], ['new_item_183',5]],
+        '骷髏槍兵': [['wpn_4',3], ['arm_42',3], ['clk_mr',0.3], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.01], ['new_item_183',3]],
         '骷髏神射手': [['wpn_3',3], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['acc_120',0.001], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_charm',0.1], ['new_item_212',1]],
         '骷髏警衛': [['wpn_14',2], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_charm',0.1], ['new_item_212',0.1]],
         '骷髏鬥士': [['wpn_battleaxe',3], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_haste_spell',0.1], ['bk_solid_shield',0.01]],
@@ -1601,8 +1591,8 @@ const DB = {
         '鱷魚': [['arm_45',0.01], ['new_item_154',5], ['bk_thunder',0.005], ['potion_brave',1]],
         '黑暗精靈': [['wpn_elfbow',0.5], ['wpn_30',3], ['clk_elf',0.5], ['arm_71',0.3], ['bk_tornado',0.001], ['bk_invisible',0.001], ['potion_blue',1], ['new_item_195',1], ['bk_elf_release',0.1], ['bk_meditation',0.1], ['item_blueflute',1]],
         '黑長者': [['clk_mr',10], ['glv_glove',5], ['arm_84',1], ['arm_96',1], ['acc_130',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['bk_thunder',3], ['bk_charm',1], ['bk_str_up',1], ['potion_blue',1], ['bk_ice_spike',5], ['new_item_195',1], ['bk_elf_soul',1], ['bk_elf_lifespring',1]],
-        '黑騎士': [['hlm_mr', 0.5], ['wpn_2hsword',0.1], ['wpn_16',1], ['wpn_17',1], ['wpn_21',2], ['wpn_28',3], ['arm_42',5], ['arm_60',1], ['tsh_tshirt',0.1], ['arm_87',1], ['bot_short',2], ['arm_90',1], ['new_item_151',5], ['new_item_154',5], ['new_item_157',5], ['new_item_160',5], ['potion_blue',1], ['new_item_196',1], ['new_item_198',1]],
-        '黑騎士搜索隊': [['hlm_mr', 0.5], ['wpn_2hsword',0.1], ['wpn_16',1], ['wpn_17',1], ['wpn_21',2], ['wpn_28',3], ['arm_42',5], ['arm_60',1], ['tsh_tshirt',0.1], ['arm_87',1], ['bot_short',2], ['arm_90',1], ['new_item_151',5], ['new_item_154',5], ['new_item_157',5], ['new_item_160',5], ['potion_blue',1], ['new_item_197',0.1]],
+        '黑騎士': [['wpn_2hsword',0.1], ['wpn_16',1], ['wpn_17',1], ['wpn_21',2], ['wpn_28',3], ['arm_42',5], ['arm_60',1], ['tsh_tshirt',0.1], ['arm_87',1], ['bot_short',2], ['arm_90',1], ['new_item_151',5], ['new_item_154',5], ['new_item_157',5], ['new_item_160',5], ['potion_blue',1], ['new_item_196',1], ['new_item_198',1]],
+        '黑騎士搜索隊': [['wpn_2hsword',0.1], ['wpn_16',1], ['wpn_17',1], ['wpn_21',2], ['wpn_28',3], ['arm_42',5], ['arm_60',1], ['tsh_tshirt',0.1], ['arm_87',1], ['bot_short',2], ['arm_90',1], ['new_item_151',5], ['new_item_154',5], ['new_item_157',5], ['new_item_160',5], ['potion_blue',1], ['new_item_197',0.1]],
         '鼠人': [['arm_61',0.5], ['potion_haste',1], ['bk_dex_up',0.05], ['bk_haste_spell',0.1]],
         '龍蠅': [['scroll_weapon',1], ['scroll_armor',2], ['bk_vampire',0.5], ['new_item_192',0.01]],
         '龍龜': [['bk_cancel',0.01], ['scroll_acc',0.01], ['bk_ice_spike',0.5], ['new_item_206',1]],
@@ -1889,7 +1879,6 @@ function logCombat(msg, type="player") {
     if (type === "player") { colorClass = "text-blue-300"; } // 我方普攻 (淺藍)
     else if (type === "player-heavy") { colorClass = "text-yellow-300 font-bold"; } // 我方重擊 (黃色粗體)
     else if (type === "player-crit") { colorClass = "text-yellow-500 font-bold"; } // 我方爆擊 (橘黃粗體)
-    else if (type === "player-graze") { colorClass = "text-blue-300/60"; } // 我方擦傷 (比一般命中更淡的藍)
     else if (type === "enemy") { colorClass = "text-red-400"; } // 敵方攻擊 (紅色)
     else if (type === "magic") { colorClass = "text-cyan-300"; } // 魔法技能 (青色)
     else if (type === "heal") { colorClass = "text-green-300"; } // 恢復效果 (綠色)
@@ -3128,7 +3117,7 @@ function playerAttack() {
         if(result.heavy && result.crit) { tag = 'player-crit'; ext = ' (會心一擊!)'; }
         else if(result.crit) { tag = 'player-crit'; ext = ' (爆擊!)'; }
         else if(result.heavy) { tag = 'player-heavy'; ext = ' (重擊!)'; }
-        else if(result.graze) { tag = 'player-graze'; ext = ' (擦傷!)'; }
+        else if(result.graze) { ext = ' (擦傷!)'; }
 
         // 簡化戰鬥資訊，不顯示遠/近距離[cite: 8]
         logCombat(`${killPrefix}命中 <span class="${getMobColor(target.lv)}">${target.n}</span>，造成 ${result.dmg} 點傷害。${ext}`, tag);
@@ -4286,7 +4275,7 @@ function autoActions() {
     // 瞬間移動卷軸：戰鬥中出現 BOSS 時自動使用（自動使用必定為未裝備傳送控制戒指的傳送術效果）
     {
         let tChk = document.getElementById('set-teleport');
-        if (tChk && tChk.checked && mapState.mobs.some(m => m && m.boss) && !isSiegeArea(mapState.current) && !PURE_BOSS_MAPS.includes(mapState.current)) {   // 攻城區與純BOSS房(安塔瑞斯/法利昂/巴拉卡斯)：BOSS為目標，不自動瞬移
+        if (tChk && tChk.checked && mapState.mobs.some(m => m && m.boss)) {
             let item = player.inv.find(i => i.id === 'scroll_teleport');
             if (!item) {
                 let buyChk = document.getElementById('set-auto-buy-teleport');
@@ -4321,13 +4310,13 @@ function autoActions() {
         }
     });
 
-    // 輔助：心靈轉換 / 魂體轉換 自動轉換（每 3 秒一次；HP < 30% 暫停；安全區(村莊)暫停；MP 達 90% 以上不轉換）
-    if(state.ticks % 30 === 0 && hpPct >= 30 && !mapState.current.startsWith('town_')) {
+    // 輔助：心靈轉換 / 魂體轉換 自動轉換（每 3 秒一次；HP < 30% 時暫停；MP 已滿則不轉換）
+    if(state.ticks % 30 === 0 && hpPct >= 30) {
         player.skills.forEach(sid => {
             let sk = DB.skills[sid];
             if(sk.type !== 'convert') return;
             let chk = document.getElementById(`auto-sk-${sid}`);
-            if(chk && chk.checked && player.mp < player.mmp * 0.9) castSkill(sid);
+            if(chk && chk.checked && player.mp < player.mmp) castSkill(sid);
         });
     }
 }
@@ -4599,12 +4588,12 @@ function useItem(u, silent = false) {
             const STAT_CN = { str:'力量', dex:'敏捷', con:'體質', int:'智力', wis:'精神', cha:'魅力' };
             let st = d.pstat, cap = (st === 'cha') ? 30 : 60;
             if (d.plv && player.lv < d.plv) { if(!silent) logSys(`等級不足，需要等級 ${d.plv} 才能使用 ${d.n}。`); return; }
-            if ((player.panaceaUsed || 0) >= 20) { if(!silent) logSys(`萬能藥最多只能使用 20 瓶，使用回憶蠟燭後可重新使用。`); return; }
+            if ((player.panaceaUsed || 0) >= 10) { if(!silent) logSys(`萬能藥最多只能使用 10 瓶，使用回憶蠟燭後可重新使用。`); return; }
             if (naturalStat(st) >= cap) { if(!silent) logSys(`${STAT_CN[st]}已達上限（${cap}），無法再使用 ${d.n}。`); return; }
             if (!player.panacea) player.panacea = { str:0, dex:0, con:0, int:0, wis:0, cha:0 };
             player.panacea[st] = (player.panacea[st] || 0) + 1;
             player.panaceaUsed = (player.panaceaUsed || 0) + 1;
-            if(!silent) logSys(`使用了 ${d.n}，${STAT_CN[st]} 永久 +1！（萬能藥已使用 ${player.panaceaUsed}/20）`);
+            if(!silent) logSys(`使用了 ${d.n}，${STAT_CN[st]} 永久 +1！（萬能藥已使用 ${player.panaceaUsed}/10）`);
             // 落到下方 consume(item) + calcStats()，由 useItem 結尾 updateUI 刷新
         } else if (d.eff === 'reset') {
             if(confirm("確定重置所有配點？")) resetStatsCandle();
@@ -5002,7 +4991,6 @@ function updateUI() {
     document.getElementById('st-lv').innerText = player.lv;
     { let rb = document.getElementById('btn-return-town'); if (rb) rb.textContent = siegeVictoryActive() ? '回城' : '回村'; }
     { let vb = document.getElementById('victory-badge'); if (vb) vb.style.display = siegeVictoryActive() ? 'inline-flex' : 'none'; }   // 攻城獲勝淡金黃標記（inline-flex 讓👑與文字水平置中）
-    applyAreaBackground();   // 區域背景：地監/攻城→戰鬥區、城堡→村莊畫面
     
     // 處理顯示文字：只顯示 騎士、法師、妖精
     let clsDisplayName = '';
@@ -5364,8 +5352,8 @@ function renderSkillSelects() {
         
         let dis = isAvail ? '' : 'disabled class="text-slate-500"';
         
-        if(sk.type === 'atk' && !sk.healSlot) aHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
-        if((sk.type === 'heal' && !sk.autoBuff && !['sk_antidote','sk_holy_light','sk_cancel'].includes(sid)) || (sk.type === 'atk' && sk.healSlot)) hHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
+        if(sk.type === 'atk') aHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
+        if(sk.type === 'heal' && !sk.autoBuff && !['sk_antidote','sk_holy_light','sk_cancel'].includes(sid)) hHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
         let __isPurify = (sid === 'sk_antidote' || sid === 'sk_holy_light' || sid === 'sk_cancel');
         if(sk.type === 'buff' || (sk.type === 'heal' && sk.autoBuff) || __isPurify) {
             let checked = document.getElementById(`auto-sk-${sid}`)?.checked ? 'checked' : '';
@@ -5543,7 +5531,7 @@ function openModal(item, isEq, slot) {
     if (isEq) {
         act += `<button class="col-span-2 w-full btn border-red-700 bg-red-900 hover:bg-red-800 text-red-200 py-3 text-lg font-bold" onclick="unequipItem('${slot}')">卸除</button>`;
     } else {
-        if(d.type === 'pot' || d.type === 'skillbk' || d.eff === 'panacea') {   // 萬能藥(misc/eff=panacea)亦顯示使用按鈕
+        if(d.type === 'pot' || d.type === 'skillbk') {
             act += `<button class="col-span-2 w-full btn border-green-700 bg-emerald-800 hover:bg-emerald-700 text-green-100 py-3 text-lg font-bold" onclick="useItem('${item.uid}')">使用</button>`;
         }
         if(d.type === 'scroll') {
@@ -5933,7 +5921,7 @@ const MAP_CATEGORIES = {
     ],
     special: [
         {v:'training',t:'新兵修練場'}, {v:'dream_island',t:'夢幻之島'},
-        {v:'antaras_lair',t:'安塔瑞斯棲息地',c:'#fb923c'}, {v:'fafurion_lair',t:'法利昂洞穴',c:'#60a5fa'}, {v:'valakas_lair',t:'巴拉卡斯巢穴',c:'#f87171'}
+        {v:'antaras_lair',t:'安塔瑞斯棲息地',c:'#fb923c'}, {v:'fafurion_lair',t:'法利昂巢穴',c:'#60a5fa'}, {v:'valakas_lair',t:'巴拉卡斯巢穴',c:'#f87171'}
     ]
 };
 function mapCategoryOf(v) {
@@ -6262,7 +6250,7 @@ function interactNPC(npcId, townId) {
         renderFinnCraft(contentDiv, npc.id);
     } else if (npc.id === 'npc_joel' || npc.id === 'npc_ryan') { 
         renderJoelCraft(contentDiv, npc.id);
-    } else if (['npc_nalien', 'npc_rekne', 'npc_narupa', 'npc_elfqueen', 'npc_elf', 'npc_ent', 'npc_pan', 'npc_moliya', 'npc_hector', 'npc_herbert', 'npc_lumiel', 'npc_ibelbin', 'npc_tas'].includes(npc.id)) {
+    } else if (['npc_nalien', 'npc_rekne', 'npc_narupa', 'npc_elfqueen', 'npc_elf', 'npc_ent', 'npc_pan', 'npc_moliya', 'npc_hector', 'npc_herbert', 'npc_lumiel', 'npc_ibelbin'].includes(npc.id)) {
         renderUniversalCraft(contentDiv, npc.id);
     } else if (npc.id === 'npc_os') {
         renderOsQuest(contentDiv);
@@ -6903,31 +6891,6 @@ const ELF_ELE = {
 };
 const ELF_SWITCH_COST = 500000;
 
-const SPECIAL_AREA_BG = {   // 特殊地圖：逐張對應背景
-    training: 'train.png',
-    dream_island: 'Dream Island.png',
-    antaras_lair: "Antharas's Lair.png",
-    fafurion_lair: "Fafurion's Lair.png",
-    valakas_lair: "Valakas' Lair.png"
-};
-const CATEGORY_AREA_BG = { wild: 'forest.png', dungeon: 'dungeon.png', siege: 'castle.png' };   // 戰鬥區依分類
-const TOWN_AREA_BG = { village: 'village.png', castle: 'castle.png' };                            // 村莊畫面依分類
-function applyAreaBackground() {
-    let cur = mapState.current, cat = mapCategoryOf(cur);
-    let ov = a => `linear-gradient(rgba(15,23,42,${a}), rgba(15,23,42,${a}))`;
-    let bv = document.getElementById('battle-view');
-    if (bv) {
-        let img = SPECIAL_AREA_BG[cur] || CATEGORY_AREA_BG[cat] || null;   // 特殊地圖逐張優先，否則依分類(野外/地監/攻城)
-        if (img) { bv.style.backgroundImage = `${ov(0.68)}, url("assets/background/${img}")`; bv.classList.add('has-bg'); }
-        else { bv.style.backgroundImage = ''; bv.classList.remove('has-bg'); }
-    }
-    let tv = document.getElementById('town-view');
-    if (tv) {
-        let timg = TOWN_AREA_BG[cat] || null;
-        if (timg) { tv.style.backgroundImage = `${ov(0.7)}, url("assets/background/${timg}")`; tv.classList.add('has-bg'); }
-        else { tv.style.backgroundImage = ''; tv.classList.remove('has-bg'); }
-    }
-}
 function applyElfBorder() {
     if(!document.body) return;
     let e = (player.cls === 'elf' && player.elfEle) ? ELF_ELE[player.elfEle] : null;
@@ -7015,9 +6978,7 @@ function getShopItemsForNpc(npcId) {
             'bk_reveal', 'bk_load_up', 'bk_firearrow', 'bk_hell_fang',
             
             // 三階一般魔法 (保留原本設定的幾本)
-            'bk_heal_mid', 'bk_shield2', 'bk_energy_sense', 'bk_chill',
-            // 追加販售
-            'bk_aurora', 'bk_dark_blind', 'bk_undead_bane'
+            'bk_heal_mid', 'bk_shield2', 'bk_energy_sense', 'bk_chill'
         ];
     // 👇 更新范吉爾的商品清單 (各類金屬、皮製防具與盾牌)
     } else if (npcId === 'npc_vangil') {
@@ -7492,9 +7453,7 @@ function resetStatsCandle() {
     // 還原為「創角時的初始狀態」：base = 純職業起始能力（不含創角分配）
     player.base = { str: b.str, dex: b.dex, con: b.con, int: b.int, wis: b.wis, cha: b.cha };
     player.alloc = { str:0, dex:0, con:0, int:0, wis:0, cha:0 };
-    let _usedPanacea = player.panaceaUsed || 0;   // 重置前先記錄已使用的萬能藥瓶數
     player.panacea = { str:0, dex:0, con:0, int:0, wis:0, cha:0 }; player.panaceaUsed = 0;   // 回憶蠟燭同時清空萬能藥的加成與使用次數
-    if (_usedPanacea > 0) { gainItem('panacea_white', _usedPanacea, true, true); logSys(`回收已使用的萬能藥，獲得 <span class="text-slate-100 font-bold">純白的萬能藥</span> ×${_usedPanacea}。`); }
     // 可重新分配的點數 = 創角可分配點數 + (等級-49) 升級點數
     player.bonus = b.pts + Math.max(0, player.lv - 49);
     // 重置點數時：自動賣出背包內所有項圈，並解除對應夥伴
@@ -7517,14 +7476,6 @@ function resetStatsCandle() {
 
 // 1. 定義製作配方
 const CRAFT_RECIPES = {
-    npc_tas: [
-        { result: 'panacea_str', req: [{ id: 'panacea_white', cnt: 3 }] },
-        { result: 'panacea_dex', req: [{ id: 'panacea_white', cnt: 3 }] },
-        { result: 'panacea_int', req: [{ id: 'panacea_white', cnt: 3 }] },
-        { result: 'panacea_con', req: [{ id: 'panacea_white', cnt: 3 }] },
-        { result: 'panacea_wis', req: [{ id: 'panacea_white', cnt: 3 }] },
-        { result: 'panacea_cha', req: [{ id: 'panacea_white', cnt: 3 }] }
-    ],
     'npc_moli': [
         {
             result: 'arm_48', // 皮帽子
@@ -8003,7 +7954,7 @@ function doCraft(npcId, recipeIdx) {
         renderFinnCraft(document.getElementById('interaction-content'), npcId);
     } else if (npcId === 'npc_joel' || npcId === 'npc_ryan') {
         renderJoelCraft(document.getElementById('interaction-content'), npcId);
-    } else if (['npc_nalien', 'npc_rekne', 'npc_narupa', 'npc_elfqueen', 'npc_elf', 'npc_ent', 'npc_pan', 'npc_moliya', 'npc_hector', 'npc_herbert', 'npc_lumiel', 'npc_ibelbin', 'npc_tas'].includes(npcId)) {
+    } else if (['npc_nalien', 'npc_rekne', 'npc_narupa', 'npc_elfqueen', 'npc_elf', 'npc_ent', 'npc_pan', 'npc_moliya', 'npc_hector', 'npc_herbert', 'npc_lumiel', 'npc_ibelbin'].includes(npcId)) {
         renderUniversalCraft(document.getElementById('interaction-content'), npcId);
     }
 
