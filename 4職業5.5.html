@@ -175,7 +175,6 @@
                 <button class="tab-btn" onclick="game.switchTab('diamond')">鑽石商店</button>
                 <button class="tab-btn" onclick="game.switchTab('craft')">製作</button>
                 <button class="tab-btn" onclick="game.switchTab('settings')">設定</button>
-                <button class="tab-btn" onclick="game.switchTab('boss-book')" style="color:#f87171">Boss圖鑑</button>
             </div>
             <div class="panel-border p-5 flex-1 flex flex-col min-h-0 relative rounded-b-md rounded-tr-md">
                 <div id="tab-inv" class="flex-1 flex gap-3 h-full overflow-hidden">
@@ -335,10 +334,6 @@
                     </div>
                 </div>
 
-                <div id="tab-boss-book" class="flex-1 flex flex-col h-full overflow-y-auto hidden" style="padding:12px">
-                    <div style="color:#f87171;font-weight:bold;font-size:1.1em;margin-bottom:8px">⚔ Boss 圖鑑</div>
-                    <div id="boss-book-content" class="text-sm"></div>
-                </div>
                 <div id="tab-settings" class="flex-1 flex flex-col h-full overflow-hidden hidden">
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2">
                         <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">自動功能設定</div>
@@ -641,17 +636,6 @@ const ITEMS = {
     fire_dragon_scale: { name: '火龍鱗', type: 'quest', dropRate: 0.05 },
     water_dragon_scale_armor: { name: '水龍鱗盔甲', type: 'armor', safe: 4, ac: -8, mr: 10, dropRate: 0.01, legendary: true },
     fire_dragon_scale_armor: { name: '火龍鱗盔甲', type: 'armor', safe: 4, ac: -8, dropRate: 0.01, legendary: true, desc: '火龍鱗打造的高階盔甲。' },
-
-    // ── BOSS系統擴充 Patch v04 新物品 ──
-    boss_soul:          { name: 'Boss魂',        type: 'material', dropRate: 0.25, sellPrice: 2000, desc: 'Boss留下的靈魂結晶。' },
-    ancient_equip_box:  { name: '古代裝備封印箱', type: 'material', dropRate: 0.05, sellPrice: 5000, desc: '封存著古代裝備的箱子。' },
-    blessed_equip_box:  { name: '祝福裝備箱',    type: 'material', dropRate: 0.08, sellPrice: 3000, desc: '受到神力祝福的裝備箱。' },
-    dragon_equip_box:   { name: '龍族裝備箱',    type: 'material', dropRate: 0.03, sellPrice: 8000, desc: '龍族的強力裝備箱。' },
-    legendary_fragment: { name: '傳說碎片',      type: 'material', dropRate: 0.01, sellPrice: 20000, desc: '傳說裝備的碎片，極度稀有。' },
-    dragon_heart:       { name: '龍之心',        type: 'material', dropRate: 0.02, sellPrice: 15000, desc: '龍族的心臟，散發著熾熱的力量。' },
-    antaras_box:        { name: '安塔瑞斯寶盒',  type: 'material', dropRate: 0.03, sellPrice: 10000, desc: '安塔瑞斯的寶藏。' },
-    fafurion_box:       { name: '法利昂寶盒',    type: 'material', dropRate: 0.03, sellPrice: 10000, desc: '法利昂的寶藏。' },
-    valakas_box:        { name: '巴拉卡斯寶盒',  type: 'material', dropRate: 0.03, sellPrice: 10000, desc: '巴拉卡斯的寶藏。' },
     valakas_heart: { name: '巴拉卡斯之心', type: 'quest', unique: true },
     ice_queen_staff: { name: '冰之女王魔杖', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d3', hit: 0, mDmg: 2, dropRate: 0.03, legendary: true , classes: ['wizard'] },
     ice_queen_earring: { name: '冰之女王耳環', type: 'earring', safe: 0, ac: -1, mr: 3, dropRate: 0.03, legendary: true },
@@ -910,27 +894,25 @@ function getMonsterAiProfile(monster) {
     // [PATCH BOSS_DAMAGE_TABLE_PATCH 2026-06-09]
     // World Boss: damageMultiplier:2.5, trueDamageRate:0.30
     if (id === 'antaras' || id === 'valakas' || id === 'fafurion') {
-        // [PATCH_ATK_v01] attackSpeedMultiplier:1.30 → atkSpeedMult:0.77
-        const atkSpeedMult = 0.77;
+        const atkSpeedMult = id === 'fafurion' ? 0.82 : 0.80;
         const hitBonusAdd  = id === 'fafurion' ? 6 : 8;
         const threatMult   = id === 'fafurion' ? 1.6 : 1.8;
         return { damageMult: 2.5, trueDamageRate: 0.30, atkSpeedMult, hitBonusAdd, threatMult };
     }
     // Tier 1 Boss
-    if (id === 'death_knight')       return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 7, threatMult: 1.6 }; // PATCH_ATK_v01
-    if (id === 'demon')              return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 6, threatMult: 1.5 }; // PATCH_ATK_v01
-    if (id === 'lord_of_lastavard')  return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 6, threatMult: 1.5 }; // PATCH_ATK_v01
-    if (id === 'deep_sea_horror')    return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 6, threatMult: 1.5 }; // PATCH_ATK_v01
+    if (id === 'death_knight')       return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.82, hitBonusAdd: 7, threatMult: 1.6 };
+    if (id === 'demon')              return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
+    if (id === 'lord_of_lastavard')  return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
+    if (id === 'deep_sea_horror')    return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
     // Tier 2 Boss
-    if (id === 'spirit_elder')       return { damageMult: 2.2, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.4 }; // PATCH_ATK_v01
-    if (id === 'wyrm_king')          return { damageMult: 2.2, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.4 }; // PATCH_ATK_v01
-    if (id === 'phoenix')            return { damageMult: 2.2, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.4 }; // PATCH_ATK_v01
-    if (id === 'ifrit')              return { damageMult: 2.2, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.4 }; // PATCH_ATK_v01
-    if (id === 'ancient_guardian')   return { damageMult: 2.2, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.4 }; // PATCH_ATK_v01
+    if (id === 'spirit_elder')       return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'wyrm_king')          return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'phoenix')            return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'ifrit')              return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'ancient_guardian')   return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
     // All Other Bosses: damageMultiplier:2.0, trueDamageRate:0.22
-    // [PATCH_ATK_v01] 一般BOSS: trueDamageRate:0.25, attackSpeedMult:1.30→atkSpeedMult:0.77
     if (monster && monster.isBoss) {
-        return { damageMult: 2.0, trueDamageRate: 0.25, atkSpeedMult: 0.77, hitBonusAdd: 5, threatMult: 1.25 };
+        return { damageMult: 2.0, trueDamageRate: 0.20, atkSpeedMult: 0.90, hitBonusAdd: 5, threatMult: 1.25 };
     }
     // Elite (non-boss)
     if (isElite) {
@@ -1211,8 +1193,7 @@ const MAPS = {
         { id: 'antaras', name: '安塔瑞斯', level: 93, hp: 90000, ac: -99, mr: 100, exp: 8101, atkSpeed: 2000, dice: '8d10+20', hitBonus: 35, isBoss: true, weight: 1, adena: [1305,2054], drops: [{id:'book_knight_counter_barrier', rate: 0.5}, 
             {id:'katana', rate: 3}, {id:'sword_tsurugi', rate: 1}, {id:'armor_crystal', rate: 3}, {id:'armor_metal', rate: 1}, {id:'gloves_normal', rate: 1}, 
             {id:'amulet_wis', rate: 0.1}, {id:'amulet_con', rate: 0.1}, {id:'ring_earth', rate: 0.01}, {id:'belt_body', rate: 0.01}, {id:'belt_soul', rate: 0.01}, {id:'belt_mind', rate: 0.01}, 
-            {id:'book_weapon_break', rate: 0.5}, {id:'book_slow', rate: 0.5}, {id:'book_tame', rate: 0.5}, {id:'book_str_buff', rate: 0.5}, {id:'book_earth', rate: 0.5}, {id:'book_full_heal', rate: 0.5}, {id:'book_summon', rate: 0.5}, {id:'book_resurrect', rate: 5},
-            {id:'dragon_heart', rate: 2}, {id:'antaras_box', rate: 3}
+            {id:'book_weapon_break', rate: 0.5}, {id:'book_slow', rate: 0.5}, {id:'book_tame', rate: 0.5}, {id:'book_str_buff', rate: 0.5}, {id:'book_earth', rate: 0.5}, {id:'book_full_heal', rate: 0.5}, {id:'book_summon', rate: 0.5}, {id:'book_resurrect', rate: 5}
         ] }
     ]}
 };
@@ -1827,41 +1808,6 @@ Object.keys(MAPS).forEach(mapId => MAPS[mapId].monsters.forEach(m => {
 }));
 
 const CLOSED_MAP_IDS = ['pirate_island','shadow_temple','demon_temple','antaras_lair','fafurion_lair','valakas_lair','speaking_island_port','adventure_cave_2f','windawood_dungeon_2f'];
-
-// ═══════════════════════════════════════════════════════════
-// BOSS_SYSTEM_EXPANSION_PATCH_v04
-// ═══════════════════════════════════════════════════════════
-
-// PATCH-1: 預設 Boss 掉落（當 boss.drops 為空時使用）
-const DEFAULT_BOSS_DROPS = [
-    { id:'scroll_weapon',         rate: 15  },
-    { id:'scroll_armor',          rate: 20  },
-    { id:'scroll_weapon_blessed', rate: 3   },
-    { id:'scroll_armor_blessed',  rate: 5   },
-    { id:'fire_dragon_scale',     rate: 10  },
-    { id:'gem_high_diamond',      rate: 5   }
-];
-
-// PATCH-3: 世界 Boss 重生時間（秒）
-const WORLD_BOSS_RESPAWN = {
-    antaras: 21600,   // 6 小時
-    fafurion: 21600,
-    valakas:  21600
-};
-
-// PATCH-4: 一般 Boss 重生時間（毫秒）
-const BOSS_DOMAIN_RESPAWN_MS = 1800 * 1000;  // 30 分鐘
-const NORMAL_BOSS_RESPAWN_MS = 3600 * 1000;  // 60 分鐘
-
-// PATCH-7: BOSS 領域專屬掉落
-const BOSS_DOMAIN_LOOT = [
-    { id:'boss_soul',          rate: 25 },
-    { id:'ancient_equip_box',  rate: 5  },
-    { id:'blessed_equip_box',  rate: 8  },
-    { id:'dragon_equip_box',   rate: 3  },
-    { id:'legendary_fragment', rate: 1  }
-];
-
 const BOSS_RESPAWN_MS = 20 * 60 * 1000;
 const DRAG_AOE_COUNTS = [3,4,5,6,12];
 const AOE_SPELL_IDS = ['fireball','lightning_storm','blizzard','fire_storm','tornado','earth_prison','quake','ultimate_light','meteor'];
@@ -1961,7 +1907,7 @@ MAPS.fafurion_lair = {
             {id:'water_dragon_scale', rate: 5}, {id:'water_dragon_scale_armor', rate: 0.05},
             {id:'gem_high_sapphire', rate: 2}, {id:'gem_high_diamond', rate: 1},
             {id:'scroll_weapon_blessed', rate: 0.5}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}
-        , {id:'dragon_heart', rate: 2}, {id:'fafurion_box', rate: 3}] }
+        ] }
     ]
 };
 
@@ -1974,30 +1920,8 @@ MAPS.valakas_lair = {
             {id:'fire_dragon_scale', rate: 5}, {id:'fire_dragon_scale_armor', rate: 0.05},
             {id:'valakas_heart', rate: 0.05}, {id:'katana', rate: 3},
             {id:'scroll_weapon_blessed', rate: 0.5}, {id:'gem_high_ruby', rate: 2}, {id:'gem_high_diamond', rate: 1},
-            {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1},
-            {id:'dragon_heart', rate: 2}, {id:'valakas_box', rate: 3}
+            {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}
         ] }
-    ]
-};
-
-// ─── PATCH-BOSS-DOMAIN-v02：BOSS 領域 ────────────────────────
-MAPS.boss_domain = {
-    name: 'BOSS領域',
-    monsters: [
-        { id: 'bandit_boss', name: '強盜頭目', level: 35, hp: 5000, ac: -25, mr: 50, exp: 2500, atkSpeed: 1600, dice: '5d10+10', hitBonus: 43, isBoss: true, weight: 18, adena: [300,600], drops: [] },
-        { id: 'nightmare', name: '夢魘', level: 40, hp: 1500, ac: -42, mr: 80, exp: 1600, atkSpeed: 1800, dice: '4d10+8', hitBonus: 40, isBoss: true, weight: 20, adena: [200,400], drops: [] },
-        { id: 'fire_spirit_king', name: '火精靈王', level: 43, hp: 1500, ac: -53, mr: 45, exp: 1800, atkSpeed: 1800, dice: '3d10+8', hitBonus: 40, isBoss: true, weight: 20, adena: [150,300], drops: [] },
-        { id: 'water_spirit_king', name: '水精靈王', level: 43, hp: 2500, ac: -53, mr: 45, exp: 1800, atkSpeed: 1800, dice: '3d10+8', hitBonus: 40, isBoss: true, weight: 20, adena: [150,300], drops: [] },
-        { id: 'wind_spirit_king', name: '風精靈王', level: 43, hp: 1500, ac: -53, mr: 45, exp: 1800, atkSpeed: 1800, dice: '3d10+8', hitBonus: 43, isBoss: true, weight: 20, adena: [150,300], drops: [] },
-        { id: 'earth_spirit_king', name: '地精靈王', level: 43, hp: 2000, ac: -53, mr: 45, exp: 1800, atkSpeed: 1800, dice: '3d10+8', hitBonus: 49, isBoss: true, weight: 20, adena: [150,300], drops: [] },
-        { id: 'unicorn', name: '獨角獸', level: 43, hp: 3000, ac: -48, mr: 45, exp: 2100, atkSpeed: 1800, dice: '4d10+10', hitBonus: 43, isBoss: true, weight: 18, adena: [200,400], drops: [] },
-        { id: 'doppelganger_boss', name: '變形怪首領', level: 50, hp: 13000, ac: -63, mr: 80, exp: 5200, atkSpeed: 1600, dice: '6d12+20', hitBonus: 60, isBoss: true, weight: 12, adena: [1000,2000], drops: [] },
-        { id: 'baphomet', name: '巴風特', level: 50, hp: 14000, ac: -65, mr: 80, exp: 5600, atkSpeed: 1600, dice: '6d12+20', hitBonus: 65, isBoss: true, weight: 12, adena: [1000,2000], drops: [] },
-        { id: 'kurt', name: '克特', level: 51, hp: 15000, ac: -67, mr: 65, exp: 5900, atkSpeed: 1200, dice: '5d8+12', hitBonus: 67, isBoss: true, weight: 15, adena: [1500,3000], drops: [] },
-        { id: 'death_knight', name: '死亡騎士', level: 52, hp: 18000, ac: -65, mr: 100, exp: 6500, atkSpeed: 1200, dice: '5d8+12', hitBonus: 70, isBoss: true, weight: 15, adena: [1500,3000], drops: [] },
-        { id: 'demon', name: '惡魔', level: 61, hp: 26666, ac: -75, mr: 100, exp: 8000, atkSpeed: 1500, dice: '8d12+30', hitBonus: 76, isBoss: true, weight: 10, adena: [1500,3000], drops: [] },
-        { id: 'wyrm', name: '飛龍', level: 48, hp: 11000, ac: -58, mr: 80, exp: 5777, atkSpeed: 1400, dice: '3d12+18', hitBonus: 59, isBoss: true, weight: 18, adena: [800,1600], drops: [] },
-        { id: 'black_elder', name: '黑長者', level: 50, hp: 12000, ac: -45, mr: 90, exp: 2501, atkSpeed: 2000, dice: '6d8+8', hitBonus: 57, isBoss: true, weight: 18, adena: [1000,2000], drops: [] }
     ]
 };
 
@@ -2135,17 +2059,11 @@ var game = window.game = {
     renderMapSelect: function() {
         const select = document.getElementById('map-select');
         // 排除三龍巢穴（另行附加）及所有 CLOSED 地圖
-        // [PATCH-BOSS-DOMAIN-v02] BOSS領域獨立顯示
-        const bossZones = ['boss_domain'];
         const bossLairs = ['antaras_lair','fafurion_lair','valakas_lair'];
-        let keys = Object.keys(MAPS).filter(k => !bossZones.includes(k) && !bossLairs.includes(k) && !CLOSED_MAP_IDS.includes(k));
+        let keys = Object.keys(MAPS).filter(k => !bossLairs.includes(k) && !CLOSED_MAP_IDS.includes(k));
         keys.sort((a, b) => MAPS[a].name.localeCompare(MAPS[b].name, 'zh-TW'));
         select.innerHTML = '';
         keys.forEach(k => { select.innerHTML += `<option value="${k}">${MAPS[k].name}</option>`; });
-        // BOSS領域 — 亮紅色
-        if (MAPS['boss_domain']) {
-            select.innerHTML += `<option value="boss_domain" style="color:#ff4d4d;font-weight:bold;text-shadow:0 0 6px rgba(255,77,77,.65)">${MAPS['boss_domain'].name}</option>`;
-        }
         // 三龍巢穴 — 依指定顏色附加於清單末尾
         select.innerHTML += `<option value="antaras_lair" style="color:#f59e0b;font-weight:bold">${MAPS['antaras_lair'].name}</option>`;
         if (MAPS['fafurion_lair']) select.innerHTML += `<option value="fafurion_lair" style="color:#60a5fa;font-weight:bold">${MAPS['fafurion_lair'].name}</option>`;
@@ -2322,7 +2240,7 @@ isBossReady: function(monsterId) {
             hp: this.state.hp, maxHp: this.state.maxHp, mp: this.state.mp, maxMp: this.state.maxMp,
             baseStats: this.state.baseStats, bonusStats: this.state.bonusStats, bonusPoints: this.state.bonusPoints,
             inventory: this.state.inventory, equipment: this.state.equipment, spells: this.state.spells,
-            settings: this.state.settings, currentMap: this.state.currentMap, antarasDeadUntil: this.state.antarasDeadUntil, bossRespawns: this.state.bossRespawns, bossBook: this.state.bossBook, hiddenValleyArubaDefeated: this.state.hiddenValleyArubaDefeated, hiddenValleyArubaSummoned: this.state.hiddenValleyArubaSummoned
+            settings: this.state.settings, currentMap: this.state.currentMap, antarasDeadUntil: this.state.antarasDeadUntil, bossRespawns: this.state.bossRespawns, hiddenValleyArubaDefeated: this.state.hiddenValleyArubaDefeated, hiddenValleyArubaSummoned: this.state.hiddenValleyArubaSummoned
         };
         localStorage.setItem('lineageIdleSave', JSON.stringify(saveData));
         this.logSystem('遊戲進度已儲存。', 'reward');
@@ -2386,7 +2304,6 @@ isBossReady: function(monsterId) {
                 this.state.currentMap = savedData.currentMap || 'hidden_valley';
                 this.state.antarasDeadUntil = savedData.antarasDeadUntil || 0;
                 this.state.bossRespawns = savedData.bossRespawns || {};
-                this.state.bossBook = savedData.bossBook || {};
                 this.state.hiddenValleyArubaDefeated = !!savedData.hiddenValleyArubaDefeated;
                 this.state.hiddenValleyArubaSummoned = !!savedData.hiddenValleyArubaSummoned;
                 
@@ -2533,7 +2450,6 @@ isBossReady: function(monsterId) {
         document.getElementById('tab-diamond').classList.add('hidden');
         document.getElementById('tab-craft').classList.add('hidden');
         document.getElementById('tab-settings').classList.add('hidden');
-        if (document.getElementById('tab-boss-book')) document.getElementById('tab-boss-book').classList.add('hidden');
         document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         let target = evt && evt.target ? evt.target : document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`);
@@ -2544,7 +2460,6 @@ isBossReady: function(monsterId) {
         if(tabId === 'diamond') this.renderDiamondShop();
         if(tabId === 'craft') this.renderGemExchange();
         if(tabId === 'settings') this.updateSettingsUI();
-        if(tabId === 'boss-book') this.renderBossBook();
     },
     switchCharPanel: function(panelId) {
         let stats = document.getElementById('char-panel-stats');
@@ -8615,132 +8530,6 @@ setTimeout(autoScaleGame,1500);
 
     }); // end waitForGame
 })();
-
-// ═══════════════════════════════════════════════════════════
-// BOSS_SYSTEM_EXPANSION_PATCH_v04 – Boss 死亡整合流程
-// ═══════════════════════════════════════════════════════════
-(function() {
-    if (typeof game === 'undefined') return;
-
-    // ── PATCH-5: 初始化 bossBook ──
-    if (!game.state.bossBook) game.state.bossBook = {};
-
-    // ── PATCH-5: Boss 圖鑑 UI 渲染 ──
-    game.renderBossBook = function() {
-        const el = document.getElementById('tab-boss-book');
-        if (!el) return;
-        const book = this.state.bossBook || {};
-        const entries = Object.values(book);
-        if (entries.length === 0) {
-            el.innerHTML = '<div class="text-gray-500 text-center mt-8">尚未擊敗任何 Boss。</div>';
-            return;
-        }
-        const fmtTime = t => t ? new Date(t).toLocaleString('zh-TW') : '-';
-        el.innerHTML = entries.map(b => `
-            <div class="mb-3 p-3 rounded" style="background:#111;border:1px solid #3f3f46">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold" style="color:#f87171">【Lv.${b.level}】${b.name}</span>
-                    <span class="text-yellow-400 font-bold">擊殺 ${b.killCount} 次</span>
-                </div>
-                <div class="text-xs text-gray-400">首次：${fmtTime(b.firstKillTime)}</div>
-                <div class="text-xs text-gray-400">最近：${fmtTime(b.lastKillTime)}</div>
-                ${b.drops && b.drops.length ? `<div class="text-xs text-gray-500 mt-1">掉落：${b.drops.slice(0,5).map(d=>d.id).join('、')}${b.drops.length>5?'…':''}</div>` : ''}
-            </div>`).join('');
-    };
-
-    // ── PATCH-6: Boss 擊殺公告 ──
-    game.announceBossKill = function(m) {
-        const name = this.state.name || '勇士';
-        const isWorld = ['antaras','fafurion','valakas'].includes(m.id);
-        if (isWorld) {
-            this.logSystem(`【🌍 世界公告】勇士 ${name} 成功討伐 ${m.name}！震撼全伺服器！`, 'blessed');
-        } else {
-            this.logSystem(`【⚔ Boss 擊殺】${name} 擊敗了 ${m.name}！`, 'reward');
-        }
-    };
-
-    // ── 包裝 monsterDied，整合 PATCH-3/4/5/6/7/9 ──
-    const _origMonsterDied_v04 = game.monsterDied;
-    game.monsterDied = function() {
-        const m = this.state.targetMonster;
-
-        // PATCH-7: 若在 boss_domain，臨時追加 BOSS 領域專屬掉落
-        if (m && m.isBoss && this.state.currentMap === 'boss_domain' &&
-            typeof BOSS_DOMAIN_LOOT !== 'undefined') {
-            const existingIds = (m.drops || []).map(d => d.id);
-            BOSS_DOMAIN_LOOT.forEach(d => {
-                if (!existingIds.includes(d.id) && typeof ITEMS !== 'undefined' && ITEMS[d.id]) {
-                    m.drops = m.drops || [];
-                    m.drops.push({ id: d.id, rate: d.rate });
-                }
-            });
-        }
-
-        // PATCH-1: Boss 保底掉落 — 若 drops 不為空且本次沒東西掉，強制掉一件
-        let hadDrops = false;
-        let origGrantLoot = null;
-        if (m && m.isBoss && m.drops && m.drops.length > 0) {
-            const _origGrant = this.grantMonsterLoot;
-            origGrantLoot = _origGrant;
-            let dropped = false;
-            this.grantMonsterLoot = function(mon, dropMulti, rewardCounts) {
-                _origGrant.call(this, mon, dropMulti, rewardCounts);
-                if (mon === m && !dropped) {
-                    dropped = Object.keys(rewardCounts).length > 0;
-                    if (!dropped) {
-                        // 保底：隨機取一件有效物品強制掉落
-                        const validDrops = m.drops.filter(d => typeof ITEMS !== 'undefined' && ITEMS[d.id]);
-                        if (validDrops.length > 0) {
-                            const forced = validDrops[Math.floor(Math.random() * validDrops.length)];
-                            this.addRewardItem(forced.id, rewardCounts, true);
-                        }
-                    }
-                    hadDrops = true;
-                }
-            };
-        }
-
-        // 執行原始 monsterDied（含掉金、掉物、舊respawn邏輯）
-        _origMonsterDied_v04.call(this);
-
-        // 還原 grantMonsterLoot
-        if (origGrantLoot) this.grantMonsterLoot = origGrantLoot;
-
-        if (!m || !m.isBoss) return;
-
-        // PATCH-3+4: 依 Boss 類型設定重生時間
-        const worldBossIds = ['antaras','fafurion','valakas'];
-        if (typeof WORLD_BOSS_RESPAWN !== 'undefined' && worldBossIds.includes(m.id)) {
-            const sec = WORLD_BOSS_RESPAWN[m.id] || 21600;
-            this.state.bossRespawns[m.id] = Date.now() + sec * 1000;
-            if (m.id === 'antaras') this.state.antarasDeadUntil = this.state.bossRespawns[m.id];
-        } else if (this.state.currentMap === 'boss_domain' && typeof BOSS_DOMAIN_RESPAWN_MS !== 'undefined') {
-            this.state.bossRespawns[m.id] = Date.now() + BOSS_DOMAIN_RESPAWN_MS;
-        } else if (typeof NORMAL_BOSS_RESPAWN_MS !== 'undefined') {
-            this.state.bossRespawns[m.id] = Date.now() + NORMAL_BOSS_RESPAWN_MS;
-        }
-
-        // PATCH-5: 更新 Boss 圖鑑
-        const book = this.state.bossBook = this.state.bossBook || {};
-        if (!book[m.id]) {
-            book[m.id] = {
-                name: m.name, level: m.level || 0, killCount: 1,
-                firstKill: true, firstKillTime: Date.now(), lastKillTime: Date.now(),
-                drops: m.drops ? m.drops.slice() : []
-            };
-        } else {
-            book[m.id].killCount++;
-            book[m.id].lastKillTime = Date.now();
-        }
-
-        // PATCH-6: 擊殺公告
-        this.announceBossKill(m);
-
-        // PATCH-9: 存檔同步（若已有 boss book，確保包含於存檔）
-        // bossBook 在 state 內，saveGame 自動包含 — 此處僅標記需更新
-    };
-})();
-
 </script>
 <!-- ══════════════════════════════════════════════════════════════
      END OF LINEAGE_TRANSFER_PATCH v5
@@ -9658,8 +9447,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9695,8 +9484,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9733,8 +9522,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9780,8 +9569,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9827,8 +9616,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9865,8 +9654,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9903,8 +9692,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9941,8 +9730,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -9979,8 +9768,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10015,8 +9804,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10063,8 +9852,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10109,8 +9898,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10163,8 +9952,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.2,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.86,
       "hitBonusAdd": 5,
       "threatMult": 1.4
     }
@@ -10217,8 +10006,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10267,8 +10056,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10321,8 +10110,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10387,8 +10176,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10397,7 +10186,6 @@ waitReady(function() {
     "name": "克特",
     "en": "Kurt",
     "aliases": [
-      "kurt",
       "kurtz"
     ],
     "level": 51,
@@ -10445,8 +10233,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10509,8 +10297,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.5,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.84,
       "hitBonusAdd": 6,
       "threatMult": 1.5
     }
@@ -10568,8 +10356,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.0,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
       "hitBonusAdd": 5,
       "threatMult": 1.25
     }
@@ -10624,8 +10412,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.2,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.86,
       "hitBonusAdd": 5,
       "threatMult": 1.4
     }
@@ -10685,8 +10473,8 @@ waitReady(function() {
     ],
     "ai": {
       "damageMult": 2.5,
-      "trueDamageRate": 0.25,
-      "atkSpeedMult": 0.77,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.84,
       "hitBonusAdd": 6,
       "threatMult": 1.5
     }
@@ -10902,28 +10690,28 @@ waitReady(function() {
       "threatMult": 1.8
     }
   }
-  ,"受詛咒的阿魯巴": {"name":"受詛咒的阿魯巴","en":"Cursed Aruba","aliases":[],"level":12,"hp":360,"ac":-5,"mr":0,"atkMin":1,"atkMax":15,"atkAdd":0,"hit":6,"atkText":"1~15+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"古代傀儡": {"name":"古代傀儡","en":"Ancient Golem","aliases":[],"level":30,"hp":380,"ac":-18,"mr":0,"atkMin":1,"atkMax":30,"atkAdd":0,"hit":7,"atkText":"1~30+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"巨蟻女王": {"name":"巨蟻女王","en":"Ant Queen","aliases":[],"level":38,"hp":2500,"ac":-26,"mr":50,"atkMin":1,"atkMax":60,"atkAdd":0,"hit":12,"atkText":"1~60+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"巨大蟻后": {"name":"巨大蟻后","en":"Giant Ant Queen","aliases":[],"level":58,"hp":9000,"ac":-62,"mr":60,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":24,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"水靈王": {"name":"水靈王","en":"Water Spirit Lord","aliases":[],"level":62,"hp":2600,"ac":-50,"mr":65,"atkMin":3,"atkMax":80,"atkAdd":0,"hit":20,"atkText":"3~80+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"海賊島飛龍": {"name":"海賊島飛龍","en":"Drake Pirate","aliases":[],"level":68,"hp":9000,"ac":-66,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":27,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"深海恐怖": {"name":"深海恐怖","en":"Deep Sea Horror","aliases":[],"level":70,"hp":11000,"ac":-70,"mr":75,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"思克巴女皇": {"name":"思克巴女皇","en":"Succubus Queen","aliases":[],"level":70,"hp":12000,"ac":-72,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"哈維女皇": {"name":"哈維女皇","en":"Harpy Queen","aliases":[],"level":72,"hp":8000,"ac":-68,"mr":60,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"菁英黑騎士": {"name":"菁英黑騎士","en":"Elite Black Knight","aliases":[],"level":72,"hp":7000,"ac":-72,"mr":75,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":31,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"艾爾摩將軍": {"name":"艾爾摩將軍","en":"Elmore General","aliases":[],"level":72,"hp":8500,"ac":-65,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":26,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"亞力安王": {"name":"亞力安王","en":"Arian King","aliases":[],"level":74,"hp":9000,"ac":-70,"mr":65,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"精靈長老": {"name":"精靈長老","en":"Spirit Elder","aliases":[],"level":74,"hp":13000,"ac":-74,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"歐吉王": {"name":"歐吉王","en":"Ogre King","aliases":[],"level":76,"hp":12000,"ac":-74,"mr":55,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"猛瑪象": {"name":"猛瑪象","en":"Mammoth","aliases":[],"level":76,"hp":14000,"ac":-76,"mr":65,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":30,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"飛龍王": {"name":"飛龍王","en":"Wyrm King","aliases":[],"level":78,"hp":13000,"ac":-76,"mr":80,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":31,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"巨大牛人": {"name":"巨大牛人","en":"Great Minotaur","aliases":[],"level":80,"hp":16000,"ac":-80,"mr":70,"atkMin":1,"atkMax":150,"atkAdd":0,"hit":31,"atkText":"1~150+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.4}}
-  ,"冰之女王": {"name":"冰之女王","en":"Ice Queen","aliases":[],"level":82,"hp":20000,"ac":-80,"mr":95,"atkMin":1,"atkMax":160,"atkAdd":0,"hit":30,"atkText":"1~160+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":6,"threatMult":1.5}}
-  ,"拉斯塔巴德將軍": {"name":"拉斯塔巴德將軍","en":"Lord of Lastavard","aliases":[],"level":82,"hp":26000,"ac":-86,"mr":95,"atkMin":1,"atkMax":180,"atkAdd":0,"hit":34,"atkText":"1~180+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":6,"threatMult":1.5}}
-  ,"古代守護者": {"name":"古代守護者","en":"Ancient Guardian","aliases":[],"level":88,"hp":42000,"ac":-90,"mr":95,"atkMin":1,"atkMax":200,"atkAdd":0,"hit":34,"atkText":"1~200+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":6,"threatMult":1.5}}
-  ,"食人妖精王": {"name":"食人妖精王","en":"Troll King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
-  ,"卡司特王": {"name":"卡司特王","en":"Casto King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate": 0.25,"atkSpeedMult": 0.77,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"受詛咒的阿魯巴": {"name":"受詛咒的阿魯巴","en":"Cursed Aruba","aliases":[],"level":12,"hp":360,"ac":-5,"mr":0,"atkMin":1,"atkMax":15,"atkAdd":0,"hit":6,"atkText":"1~15+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"古代傀儡": {"name":"古代傀儡","en":"Ancient Golem","aliases":[],"level":30,"hp":380,"ac":-18,"mr":0,"atkMin":1,"atkMax":30,"atkAdd":0,"hit":7,"atkText":"1~30+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"巨蟻女王": {"name":"巨蟻女王","en":"Ant Queen","aliases":[],"level":38,"hp":2500,"ac":-26,"mr":50,"atkMin":1,"atkMax":60,"atkAdd":0,"hit":12,"atkText":"1~60+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"巨大蟻后": {"name":"巨大蟻后","en":"Giant Ant Queen","aliases":[],"level":58,"hp":9000,"ac":-62,"mr":60,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":24,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"水靈王": {"name":"水靈王","en":"Water Spirit Lord","aliases":[],"level":62,"hp":2600,"ac":-50,"mr":65,"atkMin":3,"atkMax":80,"atkAdd":0,"hit":20,"atkText":"3~80+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"海賊島飛龍": {"name":"海賊島飛龍","en":"Drake Pirate","aliases":[],"level":68,"hp":9000,"ac":-66,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":27,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"深海恐怖": {"name":"深海恐怖","en":"Deep Sea Horror","aliases":[],"level":70,"hp":11000,"ac":-70,"mr":75,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"思克巴女皇": {"name":"思克巴女皇","en":"Succubus Queen","aliases":[],"level":70,"hp":12000,"ac":-72,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"哈維女皇": {"name":"哈維女皇","en":"Harpy Queen","aliases":[],"level":72,"hp":8000,"ac":-68,"mr":60,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"菁英黑騎士": {"name":"菁英黑騎士","en":"Elite Black Knight","aliases":[],"level":72,"hp":7000,"ac":-72,"mr":75,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":31,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"艾爾摩將軍": {"name":"艾爾摩將軍","en":"Elmore General","aliases":[],"level":72,"hp":8500,"ac":-65,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":26,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"亞力安王": {"name":"亞力安王","en":"Arian King","aliases":[],"level":74,"hp":9000,"ac":-70,"mr":65,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"精靈長老": {"name":"精靈長老","en":"Spirit Elder","aliases":[],"level":74,"hp":13000,"ac":-74,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"歐吉王": {"name":"歐吉王","en":"Ogre King","aliases":[],"level":76,"hp":12000,"ac":-74,"mr":55,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"猛瑪象": {"name":"猛瑪象","en":"Mammoth","aliases":[],"level":76,"hp":14000,"ac":-76,"mr":65,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":30,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"飛龍王": {"name":"飛龍王","en":"Wyrm King","aliases":[],"level":78,"hp":13000,"ac":-76,"mr":80,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":31,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"巨大牛人": {"name":"巨大牛人","en":"Great Minotaur","aliases":[],"level":80,"hp":16000,"ac":-80,"mr":70,"atkMin":1,"atkMax":150,"atkAdd":0,"hit":31,"atkText":"1~150+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"冰之女王": {"name":"冰之女王","en":"Ice Queen","aliases":[],"level":82,"hp":20000,"ac":-80,"mr":95,"atkMin":1,"atkMax":160,"atkAdd":0,"hit":30,"atkText":"1~160+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"拉斯塔巴德將軍": {"name":"拉斯塔巴德將軍","en":"Lord of Lastavard","aliases":[],"level":82,"hp":26000,"ac":-86,"mr":95,"atkMin":1,"atkMax":180,"atkAdd":0,"hit":34,"atkText":"1~180+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"古代守護者": {"name":"古代守護者","en":"Ancient Guardian","aliases":[],"level":88,"hp":42000,"ac":-90,"mr":95,"atkMin":1,"atkMax":200,"atkAdd":0,"hit":34,"atkText":"1~200+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"食人妖精王": {"name":"食人妖精王","en":"Troll King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"卡司特王": {"name":"卡司特王","en":"Casto King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
 };
 
     const normalizeBossKey = (value) => String(value ?? '')
@@ -11000,11 +10788,6 @@ waitReady(function() {
     const applyBossDataToMonster = (monster, boss) => {
         if (!monster || !boss) return false;
 
-        // [PATCH-1] 若 boss.drops 為空，套用預設掉落
-        if (!boss.drops || boss.drops.length === 0) {
-            boss.drops = (typeof DEFAULT_BOSS_DROPS !== 'undefined') ? JSON.parse(JSON.stringify(DEFAULT_BOSS_DROPS)) : [];
-        }
-
         monster.isBoss = true;
         monster.level = boss.level;
         monster.hp = boss.hp;
@@ -11034,7 +10817,6 @@ waitReady(function() {
         monster.bossSkills = cloneList(boss.skills);
         monster.bossDrops = cloneList(boss.drops);
         monster.bossSpecial = cloneList(boss.special);
-        monster.drops = cloneList(boss.drops); // [PATCH-BOSS-DOMAIN-v02] 同步掉落
         monster.bossAiProfile = { ...boss.ai };
 
         return true;
@@ -11079,62 +10861,6 @@ waitReady(function() {
     };
 
     window.BOSS_MASTER_TABLE = BOSS_MASTER_TABLE;
-
-    // ─── 掉寶重整 Patch v01: 為全 isBoss 補充標準掉落 ────────
-    const STANDARD_BOSS_DROPS = [
-        {id:'scroll_weapon',         rate: 15},
-        {id:'scroll_armor',          rate: 20},
-        {id:'scroll_weapon_blessed', rate: 3},
-        {id:'scroll_armor_blessed',  rate: 5},
-        {id:'fire_dragon_scale',     rate: 10},
-        {id:'gem_high_diamond',      rate: 5}
-    ];
-    const STANDARD_NORMAL_DROPS = [
-        {id:'potion_red',     rate: 25},
-        {id:'potion_orange',  rate: 10},
-        {id:'scroll_armor',   rate: 0.3},
-        {id:'scroll_weapon',  rate: 0.15},
-        {id:'scroll_morph',   rate: 1}
-    ];
-    const STANDARD_ELITE_DROPS = [
-        {id:'scroll_weapon_blessed', rate: 0.3},
-        {id:'scroll_armor_blessed',  rate: 0.5},
-        {id:'ancient_scroll',        rate: 1}
-    ];
-    // 世界 Boss
-    const WORLD_BOSS_IDS = ['antaras','valakas','fafurion'];
-    const STANDARD_WORLD_BOSS_DROPS = [
-        {id:'scroll_weapon_blessed', rate: 15},
-        {id:'fire_dragon_scale',     rate: 25},
-        {id:'gem_high_diamond',      rate: 10},
-        {id:'ancient_scroll',        rate: 5}
-    ];
-    Object.values(window.MAPS || {}).forEach(function(map) {
-        (map.monsters || []).forEach(function(m) {
-            var existingIds = (m.drops || []).map(function(d){ return d.id; });
-            var addDropIfMissing = function(list) {
-                list.forEach(function(d) {
-                    if (!existingIds.includes(d.id)) {
-                        m.drops = m.drops || [];
-                        m.drops.push({id: d.id, rate: d.rate});
-                        existingIds.push(d.id);
-                    }
-                });
-            };
-            if (m.isBoss) {
-                if (WORLD_BOSS_IDS.includes(m.id)) {
-                    addDropIfMissing(STANDARD_WORLD_BOSS_DROPS);
-                } else {
-                    addDropIfMissing(STANDARD_BOSS_DROPS);
-                }
-            } else if (m.isElite || (m.id && m.id.startsWith('elite_'))) {
-                addDropIfMissing(STANDARD_ELITE_DROPS);
-            } else {
-                addDropIfMissing(STANDARD_NORMAL_DROPS);
-            }
-        });
-    });
-    // ─── 掉寶重整 Patch v01 END ──────────────────────────────
     window.BOSS_ALIAS_TABLE = BOSS_ALIAS_TABLE;
     window.BOSS_MASTER_PATCH_REPORT = applyBossMasterTable();
 
