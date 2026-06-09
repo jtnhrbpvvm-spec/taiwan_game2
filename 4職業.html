@@ -897,10 +897,10 @@ function getMonsterAiProfile(monster) {
         const atkSpeedMult = id === 'fafurion' ? 0.82 : 0.80;
         const hitBonusAdd  = id === 'fafurion' ? 6 : 8;
         const threatMult   = id === 'fafurion' ? 1.6 : 1.8;
-        return { damageMult: 2.8, trueDamageRate: 0.30, atkSpeedMult, hitBonusAdd, threatMult };
+        return { damageMult: 2.5, trueDamageRate: 0.30, atkSpeedMult, hitBonusAdd, threatMult };
     }
     // Tier 1 Boss
-    if (id === 'death_knight')       return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.82, hitBonusAdd: 7, threatMult: 1.6 };
+    if (id === 'death_knight')       return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.82, hitBonusAdd: 7, threatMult: 1.6 };
     if (id === 'demon')              return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
     if (id === 'lord_of_lastavard')  return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
     if (id === 'deep_sea_horror')    return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
@@ -912,7 +912,7 @@ function getMonsterAiProfile(monster) {
     if (id === 'ancient_guardian')   return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
     // All Other Bosses: damageMultiplier:2.0, trueDamageRate:0.22
     if (monster && monster.isBoss) {
-        return { damageMult: 2.0, trueDamageRate: 0.22, atkSpeedMult: 0.90, hitBonusAdd: 5, threatMult: 1.25 };
+        return { damageMult: 2.0, trueDamageRate: 0.20, atkSpeedMult: 0.90, hitBonusAdd: 5, threatMult: 1.25 };
     }
     // Elite (non-boss)
     if (isElite) {
@@ -7582,6 +7582,8 @@ Bug-fix log:
     // ── 常數定義 ────────────────────────────────────────────
     const RATE_XP            = 2;      // 經驗倍率
     const RATE_EQUIP_DROP    = 2;      // 武防掉落倍率（僅裝備類）
+    const LUCKY_CHARM_DROP_MULTIPLIER = 5;  // 好運符咒掉寶倍率
+    const LUCKY_CHARM_EXP_MULTIPLIER  = 2;  // 好運符咒經驗倍率
     const RATE_BLESSED_DROP  = 2.0;    // 祝福掉落率倍率
     const ENCHANT_SUCCESS    = 0.50;   // 強化成功率
     const EQUIP_TYPES = new Set(['weapon','helmet','tshirt','armor','shield','cloak',
@@ -7605,10 +7607,17 @@ Bug-fix log:
         const m = this.state.targetMonster;
         if (m && typeof m.exp === 'number') {
             const origExp = m.exp;
-            m.exp = Math.floor(origExp * RATE_XP);
+            let expRate = RATE_XP;
+            if (
+                this.state &&
+                this.state.buffs &&
+                this.state.buffs.lucky_charm > 0
+            ) {
+                expRate *= LUCKY_CHARM_EXP_MULTIPLIER;
+            }
+            m.exp = Math.floor(origExp * expRate);
             _origMonsterDied.call(this);
-            // 還原（monster object 可能被 spawnMonster 重用）
-            if (this.state.targetMonster !== m) m.exp = origExp; // 已切換怪物，直接還原
+            m.exp = origExp; // 無條件還原
         } else {
             _origMonsterDied.call(this);
         }
@@ -7626,7 +7635,15 @@ Bug-fix log:
         m.drops = origDrops.map(d => {
             const def = ITEMS[d.id];
             if (def && EQUIP_TYPES.has(def.type)) {
-                return Object.assign({}, d, { rate: d.rate * RATE_EQUIP_DROP });
+                return Object.assign({}, d, {
+                    rate: d.rate * RATE_EQUIP_DROP * (
+                        (
+                            this.state &&
+                            this.state.buffs &&
+                            this.state.buffs.lucky_charm > 0
+                        ) ? LUCKY_CHARM_DROP_MULTIPLIER : 1
+                    )
+                });
             }
             return d;
         });
@@ -9394,6 +9411,1468 @@ waitReady(function() {
     };
 })();
 </script>
+
+<script>
+/* ============================================================
+ * BOSS MASTER DATA PATCH v1
+ * Source: 檔案2 + 檔案3
+ * Purpose: 將所有 BOSS 的 HP / 攻擊 / AC / MR / 技能 / 魔法 / 掉落 / 特殊參數
+ *          整合為單一資料表，並在載入後自動覆寫到現有怪物資料。
+ * ============================================================ */
+(function() {
+    const BOSS_MASTER_TABLE = {
+  "巨大鱷魚": {
+    "name": "巨大鱷魚",
+    "en": "Giant Crocodile",
+    "aliases": [
+      "giant_crocodile"
+    ],
+    "level": 32,
+    "hp": 4000,
+    "ac": -23,
+    "mr": 10,
+    "atkMin": 4,
+    "atkMax": 28,
+    "atkAdd": 0,
+    "hit": 35,
+    "atkText": "4~28 + 0 額外傷害 (命中+35)",
+    "skills": [
+      "無"
+    ],
+    "drops": [
+      "無專屬掉落"
+    ],
+    "special": [
+      "無"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "強盜頭目": {
+    "name": "強盜頭目",
+    "en": "Bandit Boss",
+    "aliases": [
+      "bandit_boss"
+    ],
+    "level": 35,
+    "hp": 5000,
+    "ac": -25,
+    "mr": 50,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 63,
+    "hit": 43,
+    "atkText": "1~100 + 63 額外傷害 (命中+43)",
+    "skills": [
+      "無"
+    ],
+    "drops": [
+      "紅騎士之劍",
+      "銀長劍",
+      "皮革盔甲",
+      "保護者斗篷",
+      "飾品強化卷軸",
+      "夜之視野"
+    ],
+    "special": [
+      "無"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "夢魘": {
+    "name": "夢魘",
+    "en": "Nightmare",
+    "aliases": [
+      "nightmare"
+    ],
+    "level": 40,
+    "hp": 1500,
+    "ac": -42,
+    "mr": 80,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 20,
+    "hit": 40,
+    "atkText": "1~100 + 20 額外傷害 (命中+40)",
+    "skills": [
+      "無"
+    ],
+    "drops": [
+      "雙手劍",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "藍色藥水",
+      "萬能藥(精神)",
+      "精靈水晶(三重矢)"
+    ],
+    "special": [
+      "無"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "西瑪": {
+    "name": "西瑪",
+    "en": "Sema",
+    "aliases": [
+      "sema"
+    ],
+    "level": 42,
+    "hp": 8000,
+    "ac": -32,
+    "mr": 80,
+    "atkMin": 4,
+    "atkMax": 31,
+    "atkAdd": 62,
+    "hit": 55,
+    "atkText": "4~31 + 62 額外傷害 (命中+55)",
+    "skills": [
+      "極光雷電 (魔法): 2d80 +182 傷害 (風屬性)"
+    ],
+    "drops": [
+      "保護者斗篷",
+      "長靴",
+      "西瑪之帽",
+      "力量項鍊",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "藍寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "通暢氣脈術",
+      "加速術",
+      "強力加速術",
+      "精靈水晶(暴風之眼)",
+      "弱化術"
+    ],
+    "special": [
+      "極光雷電 (魔法): 2d80 +182 傷害 (風屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "巴土瑟": {
+    "name": "巴土瑟",
+    "en": "Batus",
+    "aliases": [
+      "balthazar",
+      "batus"
+    ],
+    "level": 43,
+    "hp": 8000,
+    "ac": -32,
+    "mr": 80,
+    "atkMin": 3,
+    "atkMax": 45,
+    "atkAdd": 62,
+    "hit": 55,
+    "atkText": "3~45 + 62 額外傷害 (命中+55)",
+    "skills": [
+      "地裂術 (魔法): 3d80 +183 傷害 (地屬性)"
+    ],
+    "drops": [
+      "保護者斗篷",
+      "長靴",
+      "巴土瑟之帽",
+      "變形控制戒指",
+      "智力項鍊",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "綠寶石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "魔法相消術",
+      "精靈水晶(地面障礙)",
+      "精靈水晶(大地的祝福)"
+    ],
+    "special": [
+      "地裂術 (魔法): 3d80 +183 傷害 (地屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "火精靈王": {
+    "name": "火精靈王",
+    "en": "Fire Spirit King",
+    "aliases": [
+      "fire_spirit_king"
+    ],
+    "level": 43,
+    "hp": 1500,
+    "ac": -53,
+    "mr": 45,
+    "atkMin": 3,
+    "atkMax": 41,
+    "atkAdd": 43,
+    "hit": 40,
+    "atkText": "3~41 + 43 額外傷害 (命中+40)",
+    "skills": [
+      "爆炎的火球 (魔法): 1d50 +53 傷害 (火屬性，必中)"
+    ],
+    "drops": [
+      "精靈鏈甲",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "復活卷軸",
+      "藍色藥水",
+      "萬能藥(力量)"
+    ],
+    "special": [
+      "爆炎的火球 (魔法): 1d50 +53 傷害 (火屬性，必中)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "水精靈王": {
+    "name": "水精靈王",
+    "en": "Water Spirit King",
+    "aliases": [
+      "water_spirit_king"
+    ],
+    "level": 43,
+    "hp": 2500,
+    "ac": -53,
+    "mr": 45,
+    "atkMin": 3,
+    "atkMax": 21,
+    "atkAdd": 33,
+    "hit": 40,
+    "atkText": "3~21 + 33 額外傷害 (命中+40)",
+    "skills": [
+      "水柱 (魔法): 3d30 +43 傷害 (水屬性，必中)"
+    ],
+    "drops": [
+      "精靈鏈甲",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "復活卷軸",
+      "藍色藥水",
+      "萬能藥(智力)"
+    ],
+    "special": [
+      "水柱 (魔法): 3d30 +43 傷害 (水屬性，必中)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "風精靈王": {
+    "name": "風精靈王",
+    "en": "Wind Spirit King",
+    "aliases": [
+      "wind_spirit_king"
+    ],
+    "level": 43,
+    "hp": 1500,
+    "ac": -53,
+    "mr": 45,
+    "atkMin": 3,
+    "atkMax": 41,
+    "atkAdd": 10,
+    "hit": 43,
+    "atkText": "3~41 + 10 額外傷害 (命中+43)",
+    "skills": [
+      "龍捲風 (魔法): 4d30 +30 傷害 (風屬性，必中)"
+    ],
+    "drops": [
+      "精靈鏈甲",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "復活卷軸",
+      "藍色藥水",
+      "萬能藥(敏捷)"
+    ],
+    "special": [
+      "龍捲風 (魔法): 4d30 +30 傷害 (風屬性，必中)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "地精靈王": {
+    "name": "地精靈王",
+    "en": "Earth Spirit King",
+    "aliases": [
+      "earth_spirit_king"
+    ],
+    "level": 43,
+    "hp": 2000,
+    "ac": -53,
+    "mr": 45,
+    "atkMin": 2,
+    "atkMax": 61,
+    "atkAdd": 80,
+    "hit": 49,
+    "atkText": "2~61 + 80 額外傷害 (命中+49)",
+    "skills": [
+      "巨石之擊 (魔法): 2d60 +23 傷害 (地屬性，必中)"
+    ],
+    "drops": [
+      "精靈鏈甲",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "復活卷軸",
+      "藍色藥水",
+      "萬能藥(體質)"
+    ],
+    "special": [
+      "巨石之擊 (魔法): 2d60 +23 傷害 (地屬性，必中)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "獨角獸": {
+    "name": "獨角獸",
+    "en": "Unicorn",
+    "aliases": [
+      "unicorn"
+    ],
+    "level": 43,
+    "hp": 3000,
+    "ac": -48,
+    "mr": 45,
+    "atkMin": 2,
+    "atkMax": 31,
+    "atkAdd": 60,
+    "hit": 43,
+    "atkText": "2~31 + 60 額外傷害 (命中+43)",
+    "skills": [
+      "無"
+    ],
+    "drops": [
+      "露西錘",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "變形卷軸",
+      "萬能藥(魅力)"
+    ],
+    "special": [
+      "無"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "卡士柏": {
+    "name": "卡士柏",
+    "en": "Casper",
+    "aliases": [
+      "caspa",
+      "casper"
+    ],
+    "level": 44,
+    "hp": 8000,
+    "ac": -32,
+    "mr": 80,
+    "atkMin": 3,
+    "atkMax": 70,
+    "atkAdd": 32,
+    "hit": 56,
+    "atkText": "3~70 + 32 額外傷害 (命中+56)",
+    "skills": [
+      "燃燒的火球 (魔法): 2d100 +196 傷害 (火屬性)"
+    ],
+    "drops": [
+      "保護者斗篷",
+      "長靴",
+      "卡士柏之帽",
+      "變形控制戒指",
+      "力量項鍊",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "紅寶石",
+      "品質紅寶石",
+      "高品質紅寶石",
+      "燃燒的火球",
+      "精靈水晶(舞躍之火)",
+      "精靈水晶(大地屏障)",
+      "烈炎術"
+    ],
+    "special": [
+      "燃燒的火球 (魔法): 2d100 +196 傷害 (火屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "馬庫爾": {
+    "name": "馬庫爾",
+    "en": "Marcus",
+    "aliases": [
+      "merkyor",
+      "marcus"
+    ],
+    "level": 45,
+    "hp": 8000,
+    "ac": -32,
+    "mr": 80,
+    "atkMin": 1,
+    "atkMax": 120,
+    "atkAdd": 45,
+    "hit": 56,
+    "atkText": "1~120 + 45 額外傷害 (命中+56)",
+    "skills": [
+      "光箭 (魔法): 1d120 +90 傷害"
+    ],
+    "drops": [
+      "保護者斗篷",
+      "長靴",
+      "馬庫爾之帽",
+      "傳送控制戒指",
+      "力量項鍊",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "藍寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "精靈水晶(魂體轉換)",
+      "精靈水晶(生命之泉)"
+    ],
+    "special": [
+      "光箭 (魔法): 1d120 +90 傷害"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "伊弗利特": {
+    "name": "伊弗利特",
+    "en": "Ifrit",
+    "aliases": [
+      "ifrit"
+    ],
+    "level": 45,
+    "hp": 11000,
+    "ac": -38,
+    "mr": 40,
+    "atkMin": 1,
+    "atkMax": 130,
+    "atkAdd": 72,
+    "hit": 58,
+    "atkText": "1~130 + 72 額外傷害 (命中+58)",
+    "skills": [
+      "火之矛 (魔法): 3d120 +245 傷害 (火屬性)"
+    ],
+    "drops": [
+      "武士刀",
+      "金屬盔甲",
+      "鏈甲",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "品質鑽石",
+      "高品質鑽石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "品質紅寶石",
+      "高品質紅寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "燃燒的火球",
+      "通暢氣脈術",
+      "體魄強健術",
+      "魔法相消術",
+      "藍色藥水",
+      "火風暴",
+      "精靈水晶(魔法消除)",
+      "精靈水晶(三重矢)",
+      "烈炎術"
+    ],
+    "special": [
+      "火之矛 (魔法): 3d120 +245 傷害 (火屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.2,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.86,
+      "hitBonusAdd": 5,
+      "threatMult": 1.4
+    }
+  },
+  "飛龍": {
+    "name": "飛龍",
+    "en": "Wyvern",
+    "aliases": [
+      "wyrm"
+    ],
+    "level": 48,
+    "hp": 11000,
+    "ac": -58,
+    "mr": 80,
+    "atkMin": 1,
+    "atkMax": 140,
+    "atkAdd": 148,
+    "hit": 59,
+    "atkText": "1~140 + 148 額外傷害 (命中+59)",
+    "skills": [
+      "火焰噴吐 (魔法): 3d120 +248 傷害 (火屬性)"
+    ],
+    "drops": [
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "綠寶石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "紅寶石",
+      "品質紅寶石",
+      "高品質紅寶石",
+      "藍寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "神聖疾走",
+      "藍色藥水",
+      "震裂術",
+      "精靈水晶(魔法消除)",
+      "精靈水晶(暴風之眼)",
+      "精靈水晶(三重矢)"
+    ],
+    "special": [
+      "火焰噴吐 (魔法): 3d120 +248 傷害 (火屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "黑長者": {
+    "name": "黑長者",
+    "en": "Black Elder",
+    "aliases": [
+      "black_elder"
+    ],
+    "level": 50,
+    "hp": 12000,
+    "ac": -45,
+    "mr": 90,
+    "atkMin": 1,
+    "atkMax": 200,
+    "atkAdd": 121,
+    "hit": 57,
+    "atkText": "1~200 + 121 額外傷害 (命中+57)",
+    "skills": [
+      "龍捲風 (魔法): 4d100 +148 傷害 (風屬性)",
+      "靈光箭 (魔法): 1d100 +50 傷害 (70%機率)"
+    ],
+    "drops": [
+      "抗魔法斗篷",
+      "手套",
+      "黑長者長袍",
+      "黑長者涼鞋",
+      "光明精神腰帶",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "極道落雷",
+      "迷魅術",
+      "體魄強健術",
+      "藍色藥水",
+      "冰錐",
+      "精靈玉",
+      "精靈水晶(魂體轉換)",
+      "精靈水晶(生命之泉)"
+    ],
+    "special": [
+      "龍捲風 (魔法): 4d100 +148 傷害 (風屬性)",
+      "靈光箭 (魔法): 1d100 +50 傷害 (70%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "變形怪首領": {
+    "name": "變形怪首領",
+    "en": "Doppelganger Boss",
+    "aliases": [
+      "doppelganger_boss"
+    ],
+    "level": 50,
+    "hp": 13000,
+    "ac": -63,
+    "mr": 80,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 151,
+    "hit": 60,
+    "atkText": "1~100 + 151 額外傷害 (命中+60)",
+    "skills": [
+      "冰雪暴 (魔法): 2d100 +148 傷害 (水屬性，50%機率)",
+      "火風暴 (魔法): 2d110 +248 傷害 (火屬性，20%機率)"
+    ],
+    "drops": [
+      "雙手劍",
+      "巫術魔法杖",
+      "力量魔法杖",
+      "金屬盔甲",
+      "抗魔法斗篷",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "燃燒的火球",
+      "體魄強健術",
+      "加速術",
+      "召喚術",
+      "變形卷軸",
+      "藍色藥水",
+      "精靈水晶(魔法消除)",
+      "衝擊之暈",
+      "增幅防禦",
+      "尖刺盔甲",
+      "堅固防護",
+      "變形怪的血"
+    ],
+    "special": [
+      "冰雪暴 (魔法): 2d100 +148 傷害 (水屬性，50%機率)",
+      "火風暴 (魔法): 2d110 +248 傷害 (火屬性，20%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "巴風特": {
+    "name": "巴風特",
+    "en": "Baphomet",
+    "aliases": [
+      "baphomet"
+    ],
+    "level": 50,
+    "hp": 14000,
+    "ac": -65,
+    "mr": 80,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 152,
+    "hit": 65,
+    "atkText": "1~100 + 152 額外傷害 (命中+65)",
+    "skills": [
+      "地裂術 (魔法): 3d100 +252 傷害 (地屬性，50%機率)",
+      "震裂術 (魔法): 6d100 +130 傷害 (地屬性，40%機率)"
+    ],
+    "drops": [
+      "武士刀",
+      "雙手劍",
+      "金屬盔甲",
+      "隱身斗篷",
+      "手套",
+      "傳送控制戒指",
+      "光明身體腰帶",
+      "光明靈魂腰帶",
+      "身體腰帶",
+      "光明靈魂腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "綠寶石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "迷魅術",
+      "地裂術",
+      "召喚術",
+      "岩牢",
+      "震裂術",
+      "精靈玉",
+      "精靈水晶(舞躍之火)",
+      "魔法屏障",
+      "弱化術",
+      "祝福魔法武器"
+    ],
+    "special": [
+      "地裂術 (魔法): 3d100 +252 傷害 (地屬性，50%機率)",
+      "震裂術 (魔法): 6d100 +130 傷害 (地屬性，40%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "克特": {
+    "name": "克特",
+    "en": "Kurt",
+    "aliases": [
+      "kurtz"
+    ],
+    "level": 51,
+    "hp": 15000,
+    "ac": -67,
+    "mr": 65,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 120,
+    "hit": 67,
+    "atkText": "1~100 + 120 額外傷害 (命中+67)",
+    "skills": [
+      "盾擊 (物理): 造成暈眩 (持續6秒，30%機率)",
+      "極道落雷 (魔法): 2d100 +199 傷害 (風屬性)"
+    ],
+    "drops": [
+      "武士刀",
+      "長劍",
+      "雙手劍",
+      "青銅盔甲",
+      "T恤",
+      "保護者斗篷",
+      "大盾牌",
+      "反射之盾",
+      "長靴",
+      "手套",
+      "銀騎士之盾",
+      "克特手套",
+      "克特盔甲",
+      "克特長靴",
+      "克特頭盔",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "藍色藥水",
+      "狂暴術",
+      "衝擊之暈",
+      "增幅防禦",
+      "尖刺盔甲",
+      "堅固防護"
+    ],
+    "special": [
+      "盾擊 (物理): 造成暈眩 (持續6秒，30%機率)",
+      "極道落雷 (魔法): 2d100 +199 傷害 (風屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "死亡騎士": {
+    "name": "死亡騎士",
+    "en": "Death Knight",
+    "aliases": [
+      "death_knight"
+    ],
+    "level": 52,
+    "hp": 18000,
+    "ac": -65,
+    "mr": 100,
+    "atkMin": 1,
+    "atkMax": 100,
+    "atkAdd": 135,
+    "hit": 70,
+    "atkText": "1~100 + 135 額外傷害 (命中+70)",
+    "skills": [
+      "地面震裂 (魔法): 5d100 +499 傷害 (地屬性，20%機率)",
+      "吸血鬼之吻 (魔法): 1d100 +199 傷害，並吸取生命 (恢復1d212)",
+      "光球 (魔法): 1d200 +199 傷害 (20%機率)"
+    ],
+    "drops": [
+      "武士刀",
+      "雙手劍",
+      "骰子匕首",
+      "金屬盔甲",
+      "隱身斗篷",
+      "手套",
+      "死亡騎士手套",
+      "死亡騎士盔甲",
+      "死亡騎士長靴",
+      "死亡騎士頭盔",
+      "變形控制戒指",
+      "力量項鍊",
+      "光明身體腰帶",
+      "光明靈魂腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "造屍術",
+      "龍捲風",
+      "返生術",
+      "疾病術",
+      "堅固防護",
+      "烈炎術"
+    ],
+    "special": [
+      "地面震裂 (魔法): 5d100 +499 傷害 (地屬性，20%機率)",
+      "吸血鬼之吻 (魔法): 1d100 +199 傷害，並吸取生命 (恢復1d212)",
+      "光球 (魔法): 1d200 +199 傷害 (20%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.5,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.84,
+      "hitBonusAdd": 6,
+      "threatMult": 1.5
+    }
+  },
+  "巨蟻女皇": {
+    "name": "巨蟻女皇",
+    "en": "Ant Queen",
+    "aliases": [
+      "ant_queen"
+    ],
+    "level": 57,
+    "hp": 16000,
+    "ac": -80,
+    "mr": 60,
+    "atkMin": 1,
+    "atkMax": 300,
+    "atkAdd": 85,
+    "hit": 70,
+    "atkText": "1~300 + 85 額外傷害 (命中+70)",
+    "skills": [
+      "震裂術 (魔法): 5d100 +99 傷害 (地屬性)"
+    ],
+    "drops": [
+      "武士刀",
+      "金屬盔甲",
+      "鏈甲",
+      "力量魔法頭盔",
+      "體質項鍊",
+      "光明身體腰帶",
+      "身體腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "綠寶石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "紅寶石",
+      "品質紅寶石",
+      "高品質紅寶石",
+      "高級治癒術",
+      "迷魅術",
+      "地裂術",
+      "體力回復術",
+      "藍色藥水",
+      "岩牢",
+      "強力加速術",
+      "精靈玉",
+      "精靈水晶(魔法消除)",
+      "黑暗之影"
+    ],
+    "special": [
+      "震裂術 (魔法): 5d100 +99 傷害 (地屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.0,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.9,
+      "hitBonusAdd": 5,
+      "threatMult": 1.25
+    }
+  },
+  "不死鳥": {
+    "name": "不死鳥",
+    "en": "Phoenix",
+    "aliases": [
+      "phoenix"
+    ],
+    "level": 59,
+    "hp": 18500,
+    "ac": -63,
+    "mr": 150,
+    "atkMin": 1,
+    "atkMax": 350,
+    "atkAdd": 65,
+    "hit": 75,
+    "atkText": "1~350 + 65 額外傷害 (命中+75)",
+    "skills": [
+      "火焰雨 (魔法): 2d100 +318 傷害 (火屬性)，附加灼燒 (每3秒100傷害，持續20秒)",
+      "流星雨 (魔法): 4d100 +318 傷害 (火屬性，20%機率)"
+    ],
+    "drops": [
+      "武士刀",
+      "瑟魯基之劍",
+      "金屬盔甲",
+      "隱身斗篷",
+      "鏈甲",
+      "變形控制戒指",
+      "力量項鍊",
+      "敏捷項鍊",
+      "光明精神腰帶",
+      "光明靈魂腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "高品質紅寶石",
+      "沉睡之霧",
+      "聖結界",
+      "流星雨",
+      "藍色藥水",
+      "火風暴",
+      "精靈水晶(舞躍之火)",
+      "烈炎術"
+    ],
+    "special": [
+      "火焰雨 (魔法): 2d100 +318 傷害 (火屬性)，附加灼燒 (每3秒100傷害，持續20秒)",
+      "流星雨 (魔法): 4d100 +318 傷害 (火屬性，20%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.2,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.86,
+      "hitBonusAdd": 5,
+      "threatMult": 1.4
+    }
+  },
+  "惡魔": {
+    "name": "惡魔",
+    "en": "Devil",
+    "aliases": [
+      "demon"
+    ],
+    "level": 61,
+    "hp": 26666,
+    "ac": -75,
+    "mr": 100,
+    "atkMin": 6,
+    "atkMax": 66,
+    "atkAdd": 66,
+    "hit": 76,
+    "atkText": "6~66 + 66 額外傷害 (命中+76)",
+    "skills": [
+      "火焰之舞 (魔法): 6d66 +666 傷害 (火屬性，30%機率)，附加灼燒 (每5秒66傷害，持續20秒)",
+      "禁地封印 (魔法): 造成魔法封印 (30%機率)",
+      "地面震裂 (魔法): 5d100 +499 傷害 (地屬性，20%機率)"
+    ],
+    "drops": [
+      "武士刀",
+      "雙手劍",
+      "瑟魯基之劍",
+      "骰子匕首",
+      "熾炎天使弓",
+      "金屬盔甲",
+      "隱身斗篷",
+      "鏈甲",
+      "力量手套",
+      "變形控制戒指",
+      "力量項鍊",
+      "智力項鍊",
+      "光明精神腰帶",
+      "光明靈魂腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "品質鑽石",
+      "高品質鑽石",
+      "高品質紅寶石",
+      "聖結界",
+      "藍色藥水",
+      "火風暴",
+      "精靈水晶(烈炎武器)"
+    ],
+    "special": [
+      "火焰之舞 (魔法): 6d66 +666 傷害 (火屬性，30%機率)，附加灼燒 (每5秒66傷害，持續20秒)",
+      "禁地封印 (魔法): 造成魔法封印 (30%機率)",
+      "地面震裂 (魔法): 5d100 +499 傷害 (地屬性，20%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.5,
+      "trueDamageRate": 0.2,
+      "atkSpeedMult": 0.84,
+      "hitBonusAdd": 6,
+      "threatMult": 1.5
+    }
+  },
+  "安塔瑞斯": {
+    "name": "安塔瑞斯",
+    "en": "Antaras",
+    "aliases": [
+      "antaras"
+    ],
+    "level": 93,
+    "hp": 120000,
+    "ac": -80,
+    "mr": 150,
+    "atkMin": 2,
+    "atkMax": 250,
+    "atkAdd": 265,
+    "hit": 95,
+    "atkText": "2~250 + 265 額外傷害 (命中+95)",
+    "skills": [
+      "毒氣風暴 (魔法): 造成中毒 (每3秒100傷害，持續12秒)",
+      "地裂術 (魔法): 5d100 +499 傷害 (地屬性)",
+      "大地怒吼 (魔法): 1d500 +999 傷害 (地屬性，30%機率)"
+    ],
+    "drops": [
+      "武士刀",
+      "瑟魯基之劍",
+      "金屬盔甲",
+      "隱身斗篷",
+      "手套",
+      "地龍鱗盔甲",
+      "傳送控制戒指",
+      "變形控制戒指",
+      "體質項鍊",
+      "精神項鍊",
+      "光明身體腰帶",
+      "光明精神腰帶",
+      "光明靈魂腰帶",
+      "身體腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "綠寶石",
+      "品質綠寶石",
+      "高品質綠寶石",
+      "壞物術",
+      "緩速術",
+      "迷魅術",
+      "體魄強健術",
+      "地裂術",
+      "體力回復術",
+      "召喚術",
+      "返生術",
+      "地龍鱗",
+      "藍色藥水"
+    ],
+    "special": [
+      "毒氣風暴 (魔法): 造成中毒 (每3秒100傷害，持續12秒)",
+      "地裂術 (魔法): 5d100 +499 傷害 (地屬性)",
+      "大地怒吼 (魔法): 1d500 +999 傷害 (地屬性，30%機率)"
+    ],
+    "ai": {
+      "damageMult": 2.5,
+      "trueDamageRate": 0.3,
+      "atkSpeedMult": 0.8,
+      "hitBonusAdd": 8,
+      "threatMult": 1.8
+    }
+  },
+  "法利昂": {
+    "name": "法利昂",
+    "en": "Fafurion",
+    "aliases": [
+      "fafurion"
+    ],
+    "level": 93,
+    "hp": 120000,
+    "ac": -80,
+    "mr": 150,
+    "atkMin": 2,
+    "atkMax": 350,
+    "atkAdd": 265,
+    "hit": 95,
+    "atkText": "2~350 + 265 額外傷害 (命中+95)",
+    "skills": [
+      "巨水炮 (魔法): 3d100 +250 傷害 (水屬性)",
+      "寒冰噴吐 (魔法): 4d100 +399 傷害 (水屬性，30%機率)，附加冰凍",
+      "冰裂術 (魔法): 1d100 +200 傷害 (水屬性)，對冰凍目標額外+666傷害"
+    ],
+    "drops": [
+      "武士刀",
+      "瑟魯基之劍",
+      "金屬盔甲",
+      "隱身斗篷",
+      "手套",
+      "水龍鱗盔甲",
+      "傳送控制戒指",
+      "變形控制戒指",
+      "敏捷項鍊",
+      "光明身體腰帶",
+      "光明精神腰帶",
+      "光明靈魂腰帶",
+      "身體腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "藍寶石",
+      "品質藍寶石",
+      "高品質藍寶石",
+      "緩速術",
+      "聖潔之光",
+      "體力回復術",
+      "召喚術",
+      "冰雪暴",
+      "返生術",
+      "水龍鱗",
+      "藍色藥水",
+      "精靈水晶(屬性防禦)"
+    ],
+    "special": [
+      "巨水炮 (魔法): 3d100 +250 傷害 (水屬性)",
+      "寒冰噴吐 (魔法): 4d100 +399 傷害 (水屬性，30%機率)，附加冰凍",
+      "冰裂術 (魔法): 1d100 +200 傷害 (水屬性)，對冰凍目標額外+666傷害"
+    ],
+    "ai": {
+      "damageMult": 2.5,
+      "trueDamageRate": 0.3,
+      "atkSpeedMult": 0.8,
+      "hitBonusAdd": 8,
+      "threatMult": 1.8
+    }
+  },
+  "巴拉卡斯": {
+    "name": "巴拉卡斯",
+    "en": "Valakas",
+    "aliases": [
+      "valakas"
+    ],
+    "level": 95,
+    "hp": 150000,
+    "ac": -99,
+    "mr": 200,
+    "atkMin": 3,
+    "atkMax": 350,
+    "atkAdd": 565,
+    "hit": 99,
+    "atkText": "3~350 + 565 額外傷害 (命中+99)",
+    "skills": [
+      "火牢 (魔法): 造成灼燒 (每3秒200傷害，持續21秒，10%機率)",
+      "流星雨 (魔法): 5d100 +560 傷害 (火屬性)，附加燙傷 (每3秒100傷害，持續15秒)",
+      "火焰噴吐 (魔法): 2d100 +1200 傷害 (火屬性)"
+    ],
+    "drops": [
+      "武士刀",
+      "瑟魯基之劍",
+      "金屬盔甲",
+      "隱身斗篷",
+      "手套",
+      "火龍鱗盔甲",
+      "傳送控制戒指",
+      "變形控制戒指",
+      "力量項鍊",
+      "智力項鍊",
+      "光明身體腰帶",
+      "光明精神腰帶",
+      "光明靈魂腰帶",
+      "身體腰帶",
+      "光明精神腰帶",
+      "自我加速藥水",
+      "對武器施法的卷軸",
+      "對盔甲施法的卷軸",
+      "飾品強化卷軸",
+      "魔法寶石",
+      "鑽石",
+      "品質鑽石",
+      "高品質鑽石",
+      "紅寶石",
+      "品質紅寶石",
+      "高品質紅寶石",
+      "燃燒的火球",
+      "緩速術",
+      "迷魅術",
+      "體魄強健術",
+      "加速術",
+      "召喚術",
+      "隱身術",
+      "返生術",
+      "火龍鱗",
+      "藍色藥水"
+    ],
+    "special": [
+      "火牢 (魔法): 造成灼燒 (每3秒200傷害，持續21秒，10%機率)",
+      "流星雨 (魔法): 5d100 +560 傷害 (火屬性)，附加燙傷 (每3秒100傷害，持續15秒)",
+      "火焰噴吐 (魔法): 2d100 +1200 傷害 (火屬性)"
+    ],
+    "ai": {
+      "damageMult": 2.5,
+      "trueDamageRate": 0.3,
+      "atkSpeedMult": 0.8,
+      "hitBonusAdd": 8,
+      "threatMult": 1.8
+    }
+  }
+  ,"受詛咒的阿魯巴": {"name":"受詛咒的阿魯巴","en":"Cursed Aruba","aliases":[],"level":12,"hp":360,"ac":-5,"mr":0,"atkMin":1,"atkMax":15,"atkAdd":0,"hit":6,"atkText":"1~15+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"古代傀儡": {"name":"古代傀儡","en":"Ancient Golem","aliases":[],"level":30,"hp":380,"ac":-18,"mr":0,"atkMin":1,"atkMax":30,"atkAdd":0,"hit":7,"atkText":"1~30+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"巨蟻女王": {"name":"巨蟻女王","en":"Ant Queen","aliases":[],"level":38,"hp":2500,"ac":-26,"mr":50,"atkMin":1,"atkMax":60,"atkAdd":0,"hit":12,"atkText":"1~60+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"巨大蟻后": {"name":"巨大蟻后","en":"Giant Ant Queen","aliases":[],"level":58,"hp":9000,"ac":-62,"mr":60,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":24,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"水靈王": {"name":"水靈王","en":"Water Spirit Lord","aliases":[],"level":62,"hp":2600,"ac":-50,"mr":65,"atkMin":3,"atkMax":80,"atkAdd":0,"hit":20,"atkText":"3~80+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"海賊島飛龍": {"name":"海賊島飛龍","en":"Drake Pirate","aliases":[],"level":68,"hp":9000,"ac":-66,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":27,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"深海恐怖": {"name":"深海恐怖","en":"Deep Sea Horror","aliases":[],"level":70,"hp":11000,"ac":-70,"mr":75,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"思克巴女皇": {"name":"思克巴女皇","en":"Succubus Queen","aliases":[],"level":70,"hp":12000,"ac":-72,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"哈維女皇": {"name":"哈維女皇","en":"Harpy Queen","aliases":[],"level":72,"hp":8000,"ac":-68,"mr":60,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"菁英黑騎士": {"name":"菁英黑騎士","en":"Elite Black Knight","aliases":[],"level":72,"hp":7000,"ac":-72,"mr":75,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":31,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"艾爾摩將軍": {"name":"艾爾摩將軍","en":"Elmore General","aliases":[],"level":72,"hp":8500,"ac":-65,"mr":70,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":26,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"亞力安王": {"name":"亞力安王","en":"Arian King","aliases":[],"level":74,"hp":9000,"ac":-70,"mr":65,"atkMin":1,"atkMax":120,"atkAdd":0,"hit":28,"atkText":"1~120+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"精靈長老": {"name":"精靈長老","en":"Spirit Elder","aliases":[],"level":74,"hp":13000,"ac":-74,"mr":90,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":30,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"歐吉王": {"name":"歐吉王","en":"Ogre King","aliases":[],"level":76,"hp":12000,"ac":-74,"mr":55,"atkMin":1,"atkMax":130,"atkAdd":0,"hit":28,"atkText":"1~130+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"猛瑪象": {"name":"猛瑪象","en":"Mammoth","aliases":[],"level":76,"hp":14000,"ac":-76,"mr":65,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":30,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"飛龍王": {"name":"飛龍王","en":"Wyrm King","aliases":[],"level":78,"hp":13000,"ac":-76,"mr":80,"atkMin":1,"atkMax":140,"atkAdd":0,"hit":31,"atkText":"1~140+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"巨大牛人": {"name":"巨大牛人","en":"Great Minotaur","aliases":[],"level":80,"hp":16000,"ac":-80,"mr":70,"atkMin":1,"atkMax":150,"atkAdd":0,"hit":31,"atkText":"1~150+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.86,"hitBonusAdd":5,"threatMult":1.4}}
+  ,"冰之女王": {"name":"冰之女王","en":"Ice Queen","aliases":[],"level":82,"hp":20000,"ac":-80,"mr":95,"atkMin":1,"atkMax":160,"atkAdd":0,"hit":30,"atkText":"1~160+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"拉斯塔巴德將軍": {"name":"拉斯塔巴德將軍","en":"Lord of Lastavard","aliases":[],"level":82,"hp":26000,"ac":-86,"mr":95,"atkMin":1,"atkMax":180,"atkAdd":0,"hit":34,"atkText":"1~180+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.5,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"古代守護者": {"name":"古代守護者","en":"Ancient Guardian","aliases":[],"level":88,"hp":42000,"ac":-90,"mr":95,"atkMin":1,"atkMax":200,"atkAdd":0,"hit":34,"atkText":"1~200+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.2,"trueDamageRate":0.2,"atkSpeedMult":0.84,"hitBonusAdd":6,"threatMult":1.5}}
+  ,"食人妖精王": {"name":"食人妖精王","en":"Troll King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+  ,"卡司特王": {"name":"卡司特王","en":"Casto King","aliases":[],"level":60,"hp":8000,"ac":-60,"mr":55,"atkMin":1,"atkMax":100,"atkAdd":0,"hit":22,"atkText":"1~100+0","skills":[],"drops":[],"special":[],"ai":{"damageMult":2.0,"trueDamageRate":0.2,"atkSpeedMult":0.9,"hitBonusAdd":5,"threatMult":1.25}}
+};
+
+    const normalizeBossKey = (value) => String(value ?? '')
+        .toLowerCase()
+        .replace(/[\s\-_.()（）,，、:：'"+/\\|]+/g, '');
+
+    const bossLookup = new Map();
+    Object.values(BOSS_MASTER_TABLE).forEach((boss) => {
+        const keys = [boss.name, boss.en, ...(boss.aliases || [])];
+        keys.forEach((k) => bossLookup.set(normalizeBossKey(k), boss));
+    });
+
+    const BOSS_ALIAS_TABLE = {
+      "antaras":"安塔瑞斯","earth_dragon":"安塔瑞斯","安塔瑞斯":"安塔瑞斯",
+      "valakas":"巴拉卡斯","fire_dragon":"巴拉卡斯","巴拉卡斯":"巴拉卡斯",
+      "fafurion":"法利昂","water_dragon":"法利昂","法利昂":"法利昂",
+      "death_knight":"死亡騎士","dk":"死亡騎士","死亡騎士":"死亡騎士",
+      "black_elder":"黑長者","黑長者":"黑長者",
+      "ice_queen":"冰之女王","冰之女王":"冰之女王",
+      "demon":"惡魔","惡魔":"惡魔",
+      "ifrit":"伊弗利特","伊弗利特":"伊弗利特",
+      "phoenix":"不死鳥","不死鳥":"不死鳥",
+      "wyrm":"飛龍","飛龍":"飛龍",
+      "wyrm_king":"飛龍王","飛龍王":"飛龍王",
+      "spirit_elder":"精靈長老","精靈長老":"精靈長老",
+      "water_spirit_lord":"水靈王","水靈王":"水靈王",
+      "ant_queen":"巨蟻女王","ant_queen_2f":"巨蟻女王","巨蟻女王":"巨蟻女王",
+      "giant_ant_queen":"巨大蟻后","巨大蟻后":"巨大蟻后",
+      "ogre_king":"歐吉王","ogre_king_fi":"歐吉王","歐吉王":"歐吉王",
+      "harpy_queen":"哈維女皇","哈維女皇":"哈維女皇",
+      "great_minotaur":"巨大牛人","巨大牛人":"巨大牛人",
+      "lord_of_lastavard":"拉斯塔巴德將軍","拉斯塔巴德將軍":"拉斯塔巴德將軍",
+      "succubus_queen":"思克巴女皇","思克巴女皇":"思克巴女皇",
+      "arian_king":"亞力安王","亞力安王":"亞力安王",
+      "ancient_guardian":"古代守護者","古代守護者":"古代守護者",
+      "ancient_golem":"古代傀儡","ancient_golem_sr":"古代傀儡","古代傀儡":"古代傀儡",
+      "deep_sea_horror":"深海恐怖","深海恐怖":"深海恐怖",
+      "troll_king":"食人妖精王","食人妖精王":"食人妖精王",
+      "casto_king":"卡司特王","卡司特王":"卡司特王",
+      "elite_black_knight":"菁英黑騎士","菁英黑騎士":"菁英黑騎士",
+      "mammoth":"猛瑪象","猛瑪象":"猛瑪象",
+      "cursed_aruba":"受詛咒的阿魯巴","hv_cursed_aruba":"受詛咒的阿魯巴","受詛咒的阿魯巴":"受詛咒的阿魯巴",
+      "drake_pirate":"海賊島飛龍","海賊島飛龍":"海賊島飛龍",
+      "elmore_general":"艾爾摩將軍","艾爾摩將軍":"艾爾摩將軍"
+    };
+
+    const pickBoss = (monster) => {
+        const rawKeys = [
+            monster && monster.id,
+            monster && monster.name,
+            monster && monster.n,
+            monster && monster.baseName,
+            monster && monster.title
+        ].filter(Boolean);
+
+        // 1. Normalized direct lookup
+        for (const key of rawKeys.map(normalizeBossKey)) {
+            if (bossLookup.has(key)) return bossLookup.get(key);
+        }
+
+        // 2. BOSS_ALIAS_TABLE fallback → BOSS_MASTER_TABLE
+        for (const rawKey of rawKeys) {
+            const canonical = BOSS_ALIAS_TABLE[rawKey];
+            if (canonical && BOSS_MASTER_TABLE[canonical]) {
+                return BOSS_MASTER_TABLE[canonical];
+            }
+        }
+
+        return null;
+    };
+
+    const cloneList = (arr) => Array.isArray(arr) ? arr.slice() : [];
+
+    const applyBossDataToMonster = (monster, boss) => {
+        if (!monster || !boss) return false;
+
+        monster.isBoss = true;
+        monster.level = boss.level;
+        monster.hp = boss.hp;
+        monster.ac = boss.ac;
+        monster.mr = boss.mr;
+        monster.hitBonus = boss.hit;
+
+        monster.bossData = {
+            name: boss.name,
+            en: boss.en,
+            level: boss.level,
+            hp: boss.hp,
+            ac: boss.ac,
+            mr: boss.mr,
+            atkMin: boss.atkMin,
+            atkMax: boss.atkMax,
+            atkAdd: boss.atkAdd,
+            hit: boss.hit,
+            atkText: boss.atkText,
+            skills: cloneList(boss.skills),
+            drops: cloneList(boss.drops),
+            special: cloneList(boss.special),
+            ai: { ...boss.ai }
+        };
+
+        monster.bossSummary = `Lv${boss.level} HP ${boss.hp} / ATK ${boss.atkMin}~${boss.atkMax} + ${boss.atkAdd} / AC ${boss.ac} / MR ${boss.mr}%`;
+        monster.bossSkills = cloneList(boss.skills);
+        monster.bossDrops = cloneList(boss.drops);
+        monster.bossSpecial = cloneList(boss.special);
+        monster.bossAiProfile = { ...boss.ai };
+
+        return true;
+    };
+
+    const applyBossMasterTable = () => {
+        if (!window.MAPS) return { applied: 0, unmatched: [] };
+
+        let applied = 0;
+        const unmatched = new Set();
+
+        Object.values(window.MAPS).forEach((map) => {
+            (map.monsters || []).forEach((monster) => {
+                const boss = pickBoss(monster);
+                if (boss) {
+                    if (applyBossDataToMonster(monster, boss)) applied++;
+                } else if (monster && monster.isBoss) {
+                    unmatched.add(monster.name || monster.n || monster.id || 'unknown');
+                }
+            });
+        });
+
+        return { applied, unmatched: Array.from(unmatched) };
+    };
+
+    const originalGetMonsterAiProfile = window.getMonsterAiProfile;
+    window.getMonsterAiProfile = function(monster) {
+        const boss = pickBoss(monster);
+        if (boss) return { ...boss.ai };
+
+        if (typeof originalGetMonsterAiProfile === 'function') {
+            return originalGetMonsterAiProfile.call(this, monster);
+        }
+
+        return {
+            damageMult: 1.5,
+            trueDamageRate: 0.10,
+            atkSpeedMult: 0.92,
+            hitBonusAdd: 2,
+            threatMult: 1.15
+        };
+    };
+
+    window.BOSS_MASTER_TABLE = BOSS_MASTER_TABLE;
+    window.BOSS_ALIAS_TABLE = BOSS_ALIAS_TABLE;
+    window.BOSS_MASTER_PATCH_REPORT = applyBossMasterTable();
+
+    if (!window.BOSS_MASTER_PATCH_REPORT || !window.BOSS_MASTER_PATCH_REPORT.applied) {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.BOSS_MASTER_PATCH_REPORT = applyBossMasterTable();
+        }, { once: true });
+    }
+})();
+</script>
+
+
 <!-- ══════════════════════════════════════════════════════════════
      END OF MONSTER MAGIC PATCH v7
 ══════════════════════════════════════════════════════════════ -->
