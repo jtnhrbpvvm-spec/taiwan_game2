@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天堂放置版 v2.5 - 拉斯塔巴德篇【寵物裝備背包Tab修正】6月7日修復版</title>
+    <title>天堂放置版0608 v2.5_ - 拉斯塔巴德篇【寵物裝備背包Tab修正】6月8日魔法攻擊實裝調整</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -223,7 +223,7 @@
                         <div class="grid grid-cols-1 gap-3 mb-8">
                             <div class="list-item"><span class="c-potion-red">治癒藥水</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-red" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 37 金幣</option><option value="100">x100 / 3,700 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_red', Number(document.getElementById('buy-qty-potion-red').value))">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-orange">強力治癒藥水</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-orange" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 200 金幣</option><option value="100">x100 / 20,000 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_orange', Number(document.getElementById('buy-qty-potion-orange').value))">購買</button></div></div>
-                            <div class="list-item"><span class="c-potion-white">終極治癒藥水</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-clear" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 600 金幣</option><option value="100">x100 / 60,000 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_clear', Number(document.getElementById('buy-qty-potion-clear').value))">購買</button></div></div>
+                            <div class="list-item"><span class="c-potion-white">終極治癒藥水</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-clear" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 60 金幣</option><option value="100">x100 / 60,00 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_clear', Number(document.getElementById('buy-qty-potion-clear').value))">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-blue">藍色藥水</span> <div class="flex items-center gap-3"><span class="c-warn">1046 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_blue')">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-purple">慎重藥水</span> <div class="flex items-center gap-3"><span class="c-warn">750 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_wisdom')">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-purple">加速藥水</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-haste" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 300 金幣</option><option value="100">x100 / 30,000 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_haste', Number(document.getElementById('buy-qty-potion-haste').value))">購買</button></div></div>
@@ -231,8 +231,8 @@
                             <div class="list-item"><span class="c-skill-elf">精靈餅乾</span> <div class="flex items-center gap-3"><select id="buy-qty-potion-elf-cookie" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 1,200 金幣</option><option value="100">x100 / 120,000 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_elf_cookie', Number(document.getElementById('buy-qty-potion-elf-cookie').value))">購買</button></div></div>
                             <div class="list-item"><span class="c-legendary">變身卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">1,300 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_morph')">購買</button></div></div>
                             <div class="list-item"><span class="c-magic">水晶魔杖</span> <div class="flex items-center gap-3"><span class="c-warn">1,000,000 金幣</span><span class="c-sys text-sm">30等法師</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('staff_crystal_mana')">購買</button></div></div>
-                            <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-item">對武器施法的卷軸</span> <div class="flex items-center gap-3"><select id="buy-qty-scroll-weapon" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 75,00 金幣</option><option value="100">x100 / 7,500,00 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_weapon', Number(document.getElementById('buy-qty-scroll-weapon').value))">購買</button></div></div>
-                            <div class="list-item"><span class="c-item">對盔甲施法的卷軸</span> <div class="flex items-center gap-3"><select id="buy-qty-scroll-armor" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 35,00 金幣</option><option value="100">x100 / 3,500,00 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_armor', Number(document.getElementById('buy-qty-scroll-armor').value))">購買</button></div></div>
+                            <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-item">對武器施法的卷軸</span> <div class="flex items-center gap-3"><select id="buy-qty-scroll-weapon" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 75,000 金幣</option><option value="100">x100 / 7,500,00 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_weapon', Number(document.getElementById('buy-qty-scroll-weapon').value))">購買</button></div></div>
+                            <div class="list-item"><span class="c-item">對盔甲施法的卷軸</span> <div class="flex items-center gap-3"><select id="buy-qty-scroll-armor" class="bg-black border border-gray-600 text-white py-1 px-2 rounded"><option value="1">x1 / 35,000 金幣</option><option value="100">x100 / 3,500,00 金幣</option></select> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_armor', Number(document.getElementById('buy-qty-scroll-armor').value))">購買</button></div></div>
                             <div class="list-item"><span class="c-err">受詛咒的對武器施法的卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">1,000,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_weapon_cursed')">購買</button></div></div>
                             <div class="list-item"><span class="c-err">受詛咒的對盔甲施法的卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">1,000,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_armor_cursed')">購買</button></div></div>
                             <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-info">寵物復活卷軸 <span class="c-sys text-sm">復活後 HP/MP 50%</span></span> <div class="flex items-center gap-3"><span class="c-warn">50,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_pet_resurrection')">購買</button></div></div>
@@ -310,10 +310,30 @@
                             <div class="list-item"><span class="c-legendary">古老的皮盔甲</span><div class="flex gap-1 flex-wrap justify-end"><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_leather_armor','ancient_leather_armor','ancient_scroll')">100%</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_leather_armor','ancient_leather_armor','ancient_scroll_2',1)">2%x1</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_leather_armor','ancient_leather_armor','ancient_scroll_2',10)">2%x10</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_leather_armor','ancient_leather_armor','ancient_scroll_2',50)">2%x50</button></div></div>
                             <div class="list-item"><span class="c-legendary">古老的長袍盔甲</span><div class="flex gap-1 flex-wrap justify-end"><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_robe_armor','ancient_robe_armor','ancient_scroll')">100%</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_robe_armor','ancient_robe_armor','ancient_scroll_2',1)">2%x1</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_robe_armor','ancient_robe_armor','ancient_scroll_2',10)">2%x10</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_robe_armor','ancient_robe_armor','ancient_scroll_2',50)">2%x50</button></div></div>
                             <div class="list-item"><span class="c-legendary">古老的鱗甲</span><div class="flex gap-1 flex-wrap justify-end"><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_scale_armor','ancient_scale_armor','ancient_scroll')">100%</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_scale_armor','ancient_scale_armor','ancient_scroll_2',1)">2%x1</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_scale_armor','ancient_scale_armor','ancient_scroll_2',10)">2%x10</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_scale_armor','ancient_scale_armor','ancient_scroll_2',50)">2%x50</button></div></div>
-                            <div class="list-item"><span class="c-legendary">古老的金屬盔甲</span><div class="flex gap-1 flex-wrap justify-end"><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll')">100%</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',1)">2%x1</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',10)">2%x10</button><button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',50)">2%x50</button></div></div>
+<div class="list-item">
+                                <span class="c-legendary">古老的金屬盔甲</span>
+                                <div class="flex gap-1 flex-wrap justify-end">
+                                    <button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll')">100%</button>
+                                    <button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',1)">2%x1</button>
+                                    <button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',10)">2%x10</button>
+                                    <button class="btn-ui !px-2 !py-1" onclick="game.craftAncientItem('sealed_forgotten_metal_armor','ancient_metal_armor','ancient_scroll_2',50)">2%x50</button>
+                                </div>
+                            </div>
+                            
+                            <div class="list-item border-t border-gray-800 pt-4">
+                                <span class="c-legendary">古巨劍</span>
+                                <div class="flex items-center justify-between w-full mt-1">
+                                    <span class="text-xs text-gray-500">消耗：古老的巨劍 x2</span>
+                                    <div class="flex gap-1 flex-wrap justify-end">
+                                        <button class="btn-ui !px-2 !py-1" onclick="game.craftMagicGreatSword()">100% 升級</button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
+
                 <div id="tab-settings" class="flex-1 flex flex-col h-full overflow-hidden hidden">
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2">
                         <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">自動功能設定</div>
@@ -398,24 +418,24 @@
                 <label class="c-warn text-sm flex items-center gap-1 cursor-pointer"><input type="checkbox" id="cfg-boss-mode" onchange="game.toggleBossMode()" class="accent-yellow-500"> BOSS</label>
                 <div id="map-info" class="w-full text-xs leading-relaxed c-sys mt-2 min-h-[2.2rem]"></div>
             </div>
-            <div class="panel-border p-5 flex-shrink-0 text-center min-h-[110px] flex flex-col justify-center rounded-md bg-gray-900">
-                <div id="target-name" class="c-err font-bold text-2xl mb-4">尋找目標中...</div>
+            <div class="panel-border p-3 flex-shrink-0 text-center min-h-[80px] flex flex-col justify-center rounded-md bg-gray-900">
+                <div id="target-name" class="c-err font-bold text-lg mb-2">尋找目標中...</div>
                 <div class="flex items-center justify-center">
-                    <span class="mr-3 c-sys">體力:</span>
-                    <div class="bar-container w-full max-w-[200px] hidden" id="target-hp-container"><div class="bar-fill hp" id="target-hp-bar" style="width: 100%;"></div></div>
+                    <span class="mr-2 c-sys text-sm">體力:</span>
+                    <div class="bar-container w-full max-w-[150px] hidden" id="target-hp-container"><div class="bar-fill hp" id="target-hp-bar" style="width: 100%;"></div></div>
                 </div>
-                <div id="target-debuffs" class="mt-3 min-h-[24px] text-sm c-sys"></div>
+                <div id="target-debuffs" class="mt-2 min-h-[20px] text-xs c-sys"></div>
             </div>
-            <div class="panel-border p-4 flex-1 basis-0 flex flex-col min-h-0 rounded-md">
+
+            <div class="panel-border p-4 flex-[3] basis-0 flex flex-col min-h-0 rounded-md">
                 <div class="c-title mb-2 text-xl border-b border-gray-800 pb-2">戰鬥資訊</div>
                 <div id="combat-log" class="log-area flex-1 custom-scroll"></div>
             </div>
-            <div class="panel-border p-4 flex-1 basis-0 flex flex-col min-h-0 rounded-md">
+
+            <div class="panel-border p-4 flex-[2] basis-0 flex flex-col min-h-0 rounded-md">
                 <div class="c-title mb-2 text-xl border-b border-gray-800 pb-2"><span>系統與獲得資訊</span></div>
                 <div id="system-log" class="log-area flex-1 custom-scroll"></div>
             </div>
-        </div>
-    </div>
 
 <script>
 const chineseNumbers = ["零","一","二","三","四","五","六","七","八","九","十"];
@@ -583,10 +603,10 @@ const ITEMS = {
     ring_wind: { name: '風靈戒指', type: 'ring', safe: 0, ac: 0, mr: 6, dropRate: 0.15 },
     amulet_str: { name: '力量項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.3, desc: '力量+1' },
     amulet_hidden_valley: { name: '隱藏之谷項鍊', type: 'amulet', safe: 0, ac: 0, hp: 5, mp: 5, dropRate: 100, unique: true, desc: 'HP+5 / MP+5' },
-    scroll_weapon: { name: '對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: false, price: 75000 },
+    scroll_weapon: { name: '對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: false, price: 7500 },
     scroll_weapon_blessed: { name: '受祝福的對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: true },
     scroll_weapon_cursed: { name: '受詛咒的對武器施法的卷軸', type: 'scroll', target: 'weapon', isCursed: true, price: 1000000 },
-    scroll_armor: { name: '對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: false, price: 35000 },
+    scroll_armor: { name: '對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: false, price: 3500 },
     scroll_armor_blessed: { name: '受祝福的對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: true },
     scroll_armor_cursed: { name: '受詛咒的對盔甲施法的卷軸', type: 'scroll', target: 'armor', isCursed: true, price: 1000000 },
     scroll_accessory: { name: '對飾品施法的卷軸', type: 'scroll', target: 'accessory', isBlessed: false },
@@ -867,6 +887,41 @@ function rollMonsterMagicDamage(monster) {
     return rollDice('1d4');
 }
 
+function getMonsterAiProfile(monster) {
+    const id = String(monster && (monster.id || monster.baseName || '') || '');
+    const name = String(monster && monster.name || '');
+    const isElite = !!(monster && (monster.isElite || id.startsWith('elite_') || /菁英/.test(name)));
+    // [PATCH BOSS_DAMAGE_TABLE_PATCH 2026-06-09]
+    // World Boss: damageMultiplier:2.5, trueDamageRate:0.30
+    if (id === 'antaras' || id === 'valakas' || id === 'fafurion') {
+        const atkSpeedMult = id === 'fafurion' ? 0.82 : 0.80;
+        const hitBonusAdd  = id === 'fafurion' ? 6 : 8;
+        const threatMult   = id === 'fafurion' ? 1.6 : 1.8;
+        return { damageMult: 2.8, trueDamageRate: 0.30, atkSpeedMult, hitBonusAdd, threatMult };
+    }
+    // Tier 1 Boss
+    if (id === 'death_knight')       return { damageMult: 2.5, trueDamageRate: 0.25, atkSpeedMult: 0.82, hitBonusAdd: 7, threatMult: 1.6 };
+    if (id === 'demon')              return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
+    if (id === 'lord_of_lastavard')  return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
+    if (id === 'deep_sea_horror')    return { damageMult: 2.5, trueDamageRate: 0.20, atkSpeedMult: 0.84, hitBonusAdd: 6, threatMult: 1.5 };
+    // Tier 2 Boss
+    if (id === 'spirit_elder')       return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'wyrm_king')          return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'phoenix')            return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'ifrit')              return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    if (id === 'ancient_guardian')   return { damageMult: 2.2, trueDamageRate: 0.20, atkSpeedMult: 0.86, hitBonusAdd: 5, threatMult: 1.4 };
+    // All Other Bosses: damageMultiplier:2.0, trueDamageRate:0.22
+    if (monster && monster.isBoss) {
+        return { damageMult: 2.0, trueDamageRate: 0.22, atkSpeedMult: 0.90, hitBonusAdd: 5, threatMult: 1.25 };
+    }
+    // Elite (non-boss)
+    if (isElite) {
+        return { damageMult: 1.6, trueDamageRate: 0.20, atkSpeedMult: 0.88, hitBonusAdd: 4, threatMult: 1.35 };
+    }
+    // Monster Normal
+    return { damageMult: 1.5, trueDamageRate: 0.10, atkSpeedMult: 0.92, hitBonusAdd: 2, threatMult: 1.15 };
+}
+
 const GEM_EXCHANGES = {
     kalip_basic: {
         name: '卡利普的袋子',
@@ -1109,30 +1164,30 @@ const MAPS = {
     fire_dragon_cave: { name: '火龍窟', monsters: [
         { id: 'dragon_fly', name: '龍蠅', level: 55, hp: 1200, ac: -42, exp: 2900, atkSpeed: 1600, dice: '5d12+12', hitBonus: 16, weight: 72, adena: [300,500], drops: [{id:'fire_dragon_scale', rate: 0.2}, {id:'gem_ruby', rate: 2}, {id:'gem_quality_ruby', rate: 0.5}] },
         { id: 'fire_warrior', name: '火焰戰士', level: 58, hp: 1500, ac: -46, exp: 3300, atkSpeed: 1800, dice: '6d10+16', hitBonus: 18, weight: 66, adena: [360,620], drops: [{id:'scroll_weapon', rate: 0.4}, {id:'fire_dragon_scale', rate: 0.3}, {id:'gem_ruby', rate: 2}, {id:'gem_quality_ruby', rate: 0.7}] },
-        { id: 'fire_archer', name: '火焰弓箭手', level: 60, hp: 1350, ac: -46, exp: 3500, atkSpeed: 1600, dice: '5d12+18', hitBonus: 22, weight: 66, adena: [360,620], drops: [{id:'potion_haste', rate: 4}, {id:'fire_dragon_scale', rate: 0.3}, {id:'gem_ruby', rate: 2}, {id:'gem_quality_ruby', rate: 0.7}, {id:'crystal_elf_triple_arrow', rate: 0.01}] },
-        { id: 'fire_salamander', name: '火蜥蜴', level: 62, hp: 1700, ac: -50, exp: 3800, atkSpeed: 1800, dice: '6d12+18', hitBonus: 20, weight: 58, adena: [400,700], drops: [{id:'book_fire_storm', rate: 0.15}, {id:'fire_dragon_scale', rate: 0.4}, {id:'gem_quality_ruby', rate: 1}, {id:'gem_high_ruby', rate: 0.15}] },
-        { id: 'fire_egg', name: '火炎蛋', level: 63, hp: 2100, ac: -52, exp: 4000, atkSpeed: 2200, dice: '6d10+20', hitBonus: 18, weight: 54, adena: [430,760], drops: [{id:'scroll_armor', rate: 0.8}, {id:'fire_dragon_scale', rate: 0.5}, {id:'gem_quality_ruby', rate: 1}, {id:'gem_high_ruby', rate: 0.15}] },
-        { id: 'lava_golem', name: '熔岩高崙', level: 68, hp: 3200, ac: -58, exp: 4800, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 38, adena: [520,900], drops: [{id:'armor_metal', rate: 1}, {id:'fire_dragon_scale', rate: 0.5}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}] },
-        { id: 'ifrit', name: '伊弗利特', level: 75, hp: 9000, ac: -70, mr: 70, exp: 6500, atkSpeed: 1600, dice: '8d10+25', hitBonus: 26, isBoss: true, weight: 10, adena: [900,1800], drops: [{id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'katana', rate: 1}, {id:'fire_dragon_scale', rate: 2}, {id:'book_fire_storm', rate: 0.5}, {id:'gem_high_ruby', rate: 0.8}] },
-        { id: 'phoenix', name: '不死鳥', level: 80, hp: 18000, ac: -78, mr: 85, exp: 7600, atkSpeed: 1400, dice: '8d12+28', hitBonus: 30, isBoss: true, weight: 6, adena: [1200,2400], drops: [{id:'katana', rate: 2}, {id:'scroll_weapon_blessed', rate: 0.3}, {id:'fire_dragon_scale', rate: 3}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_diamond', rate: 0.4}] },
-        { id: 'valakas', name: '巴拉卡斯', level: 93, hp: 90000, ac: -99, mr: 100, exp: 8101, atkSpeed: 2000, dice: '8d10+24', hitBonus: 36, isBoss: true, weight: 1, adena: [1305,2054], drops: [{id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'book_fire_storm', rate: 0.5}, {id:'fire_dragon_scale', rate: 5}, {id:'fire_dragon_scale_armor', rate: 0.05}, {id:'valakas_heart', rate: 0.05}, {id:'katana', rate: 3}, {id:'scroll_weapon_blessed', rate: 0.5}, {id:'gem_high_ruby', rate: 2}, {id:'gem_high_diamond', rate: 1}] }
+        { id: 'fire_archer', name: '火焰弓箭手', level: 60, hp: 1350, ac: -46, exp: 3500, atkSpeed: 1600, dice: '5d12+18', hitBonus: 22, weight: 66, adena: [360,620], drops: [{id:'potion_haste', rate: 4}, {id:'fire_dragon_scale', rate: 0.3}, {id:'gem_ruby', rate: 2}, {id:'gem_quality_ruby', rate: 0.7}, {id:'crystal_elf_triple_arrow', rate: 0.01}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'fire_salamander', name: '火蜥蜴', level: 62, hp: 1700, ac: -50, exp: 3800, atkSpeed: 1800, dice: '6d12+18', hitBonus: 20, weight: 58, adena: [400,700], drops: [{id:'book_fire_storm', rate: 0.15}, {id:'fire_dragon_scale', rate: 0.4}, {id:'gem_quality_ruby', rate: 1}, {id:'gem_high_ruby', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'fire_egg', name: '火炎蛋', level: 63, hp: 2100, ac: -52, exp: 4000, atkSpeed: 2200, dice: '6d10+20', hitBonus: 18, weight: 54, adena: [430,760], drops: [{id:'scroll_armor', rate: 0.8}, {id:'fire_dragon_scale', rate: 0.5}, {id:'gem_quality_ruby', rate: 1}, {id:'gem_high_ruby', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'lava_golem', name: '熔岩高崙', level: 68, hp: 3200, ac: -58, exp: 4800, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 38, adena: [520,900], drops: [{id:'armor_metal', rate: 1}, {id:'fire_dragon_scale', rate: 0.5}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'ifrit', name: '伊弗利特', level: 75, hp: 9000, ac: -70, mr: 70, exp: 6500, atkSpeed: 1600, dice: '8d10+25', hitBonus: 26, isBoss: true, weight: 10, adena: [900,1800], drops: [{id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'katana', rate: 1}, {id:'fire_dragon_scale', rate: 2}, {id:'book_fire_storm', rate: 0.5}, {id:'gem_high_ruby', rate: 0.8}, {id:'ring_morph_short', rate: 0.05}, {id:'ring_teleport_short', rate: 0.05}] },
+        { id: 'phoenix', name: '不死鳥', level: 80, hp: 18000, ac: -78, mr: 85, exp: 7600, atkSpeed: 1400, dice: '8d12+28', hitBonus: 30, isBoss: true, weight: 6, adena: [1200,2400], drops: [{id:'katana', rate: 2}, {id:'scroll_weapon_blessed', rate: 0.3}, {id:'fire_dragon_scale', rate: 3}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_diamond', rate: 0.4}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.07}] }
+        // PATCH-003: 巴拉卡斯已移至 valakas_lair
     ]},
     oren_area: { name: '歐瑞與象牙塔', monsters: [
         { id: 'ice_man', name: '冰人', level: 58, hp: 1400, ac: -45, exp: 3300, atkSpeed: 2000, dice: '6d10+14', hitBonus: 17, weight: 70, adena: [330,580], drops: [{id:'gem_sapphire', rate: 2}, {id:'gem_quality_sapphire', rate: 0.8}, {id:'potion_blue', rate: 2}] },
-        { id: 'snow_tiger', name: '冰原老虎', level: 60, hp: 1500, ac: -48, exp: 3500, atkSpeed: 1400, dice: '6d12+14', hitBonus: 22, weight: 68, adena: [350,600], drops: [{id:'potion_haste', rate: 4}, {id:'gem_sapphire', rate: 2}, {id:'gem_quality_sapphire', rate: 0.6}] },
-        { id: 'iron_golem', name: '鋼鐵高崙', level: 65, hp: 3600, ac: -60, exp: 4300, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 44, adena: [450,820], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'sword_damascus_two_handed', rate: 0.02}, {id:'armor_metal', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}] },
-        { id: 'living_armor', name: '活鎧甲', level: 62, hp: 2200, ac: -54, exp: 3800, atkSpeed: 1800, dice: '7d10+18', hitBonus: 20, weight: 58, adena: [390,720], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'armor_metal', rate: 1}, {id:'scroll_armor', rate: 0.5}, {id:'gem_quality_diamond', rate: 0.6}, {id:'crystal_elf_triple_arrow', rate: 0.1}] },
-        { id: 'ivory_wizard', name: '象牙塔魔法師', level: 66, hp: 2400, ac: -55, mr: 75, exp: 4500, atkSpeed: 2000, dice: '7d10+20', hitBonus: 22, weight: 48, adena: [500,900], drops: [{id:'crystal_dark_armor_break', rate: 0.01}, {id:'bow_ivory_long', rate: 0.03}, {id:'book_blizzard', rate: 0.3}, {id:'book_tornado', rate: 0.3}, {id:'mana_cloak', rate: 0.08}, {id:'gem_quality_sapphire', rate: 0.8}] },
-        { id: 'ice_queen', name: '冰之女王', level: 82, hp: 20000, ac: -80, mr: 95, exp: 7800, atkSpeed: 1600, dice: '8d12+26', hitBonus: 30, isBoss: true, weight: 5, adena: [1300,2600], drops: [{id:'book_blizzard', rate: 0.5}, {id:'ice_queen_staff', rate: 0.2}, {id:'ice_queen_earring', rate: 0.2}, {id:'scroll_armor_blessed', rate: 0.3}, {id:'gem_high_sapphire', rate: 1.5}, {id:'gem_high_diamond', rate: 0.6}] },
-        { id: 'demon', name: '惡魔', level: 85, hp: 26000, ac: -84, mr: 95, exp: 8000, atkSpeed: 1500, dice: '8d12+30', hitBonus: 32, isBoss: true, weight: 4, adena: [1500,3000], drops: [{id:'book_knight_counter_barrier', rate: 0.5}, {id:'claw_hades', rate: 0.05}, {id:'demon_blood', rate: 2}, {id:'book_immune', rate: 0.5}, {id:'scroll_weapon_blessed', rate: 0.3}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}] }
+        { id: 'snow_tiger', name: '冰原老虎', level: 60, hp: 1500, ac: -48, exp: 3500, atkSpeed: 1400, dice: '6d12+14', hitBonus: 22, weight: 68, adena: [350,600], drops: [{id:'potion_haste', rate: 4}, {id:'gem_sapphire', rate: 2}, {id:'gem_quality_sapphire', rate: 0.6}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'iron_golem', name: '鋼鐵高崙', level: 65, hp: 3600, ac: -60, exp: 4300, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 44, adena: [450,820], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'sword_damascus_two_handed', rate: 0.02}, {id:'armor_metal', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'living_armor', name: '活鎧甲', level: 62, hp: 2200, ac: -54, exp: 3800, atkSpeed: 1800, dice: '7d10+18', hitBonus: 20, weight: 58, adena: [390,720], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'armor_metal', rate: 1}, {id:'scroll_armor', rate: 0.5}, {id:'gem_quality_diamond', rate: 0.6}, {id:'crystal_elf_triple_arrow', rate: 0.1}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'ivory_wizard', name: '象牙塔魔法師', level: 66, hp: 2400, ac: -55, mr: 75, exp: 4500, atkSpeed: 2000, dice: '7d10+20', hitBonus: 22, weight: 48, adena: [500,900], drops: [{id:'crystal_dark_armor_break', rate: 0.01}, {id:'bow_ivory_long', rate: 0.03}, {id:'book_blizzard', rate: 0.3}, {id:'book_tornado', rate: 0.3}, {id:'mana_cloak', rate: 0.08}, {id:'gem_quality_sapphire', rate: 0.8}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'ice_queen', name: '冰之女王', level: 82, hp: 20000, ac: -80, mr: 95, exp: 7800, atkSpeed: 1600, dice: '8d12+26', hitBonus: 30, isBoss: true, weight: 5, adena: [1300,2600], drops: [{id:'book_blizzard', rate: 0.5}, {id:'ice_queen_staff', rate: 0.2}, {id:'ice_queen_earring', rate: 0.2}, {id:'scroll_armor_blessed', rate: 0.3}, {id:'gem_high_sapphire', rate: 1.5}, {id:'gem_high_diamond', rate: 0.6}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}] },
+        { id: 'demon', name: '惡魔', level: 85, hp: 26000, ac: -84, mr: 95, exp: 8000, atkSpeed: 1500, dice: '8d12+30', hitBonus: 32, isBoss: true, weight: 4, adena: [1500,3000], drops: [{id:'book_knight_counter_barrier', rate: 0.5}, {id:'claw_hades', rate: 0.05}, {id:'demon_blood', rate: 2}, {id:'book_immune', rate: 0.5}, {id:'scroll_weapon_blessed', rate: 0.3}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}] }
     ]},
     forgotten_island: { name: '遺忘之島', monsters: [
-        { id: 'harpy_queen', name: '哈維女皇', level: 72, hp: 8000, ac: -68, mr: 60, exp: 6000, atkSpeed: 1300, dice: '7d12+22', hitBonus: 28, isBoss: true, weight: 14, adena: [800,1600], drops: [{id:'ring_harpy', rate: 0.2}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_emerald', rate: 0.6}, {id:'gem_high_sapphire', rate: 0.4}] },
-        { id: 'arian_king', name: '亞力安王', level: 74, hp: 9000, ac: -70, mr: 65, exp: 6300, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, isBoss: true, weight: 13, adena: [850,1700], drops: [{id:'ancient_scroll', rate: 0.5}, {id:'scroll_weapon', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'gem_high_emerald', rate: 0.5}] },
-        { id: 'wyrm_king', name: '飛龍王', level: 78, hp: 13000, ac: -76, mr: 80, exp: 7200, atkSpeed: 1600, dice: '8d12+26', hitBonus: 31, isBoss: true, weight: 10, adena: [1000,2000], drops: [{id:'claw_beast_king', rate: 0.05}, {id:'wyrm_claw', rate: 1}, {id:'ancient_scroll', rate: 0.6}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_sapphire', rate: 1}] },
-        { id: 'ogre_king_fi', name: '歐吉王', level: 76, hp: 12000, ac: -74, mr: 55, exp: 6800, atkSpeed: 2000, dice: '8d12+28', hitBonus: 28, isBoss: true, weight: 12, adena: [900,1800], drops: [{id:'belt_ogre', rate: 0.3}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_diamond', rate: 0.7}, {id:'gem_high_emerald', rate: 0.4}] },
-        { id: 'great_minotaur', name: '巨大牛人', level: 80, hp: 16000, ac: -80, mr: 70, exp: 7600, atkSpeed: 1800, dice: '8d12+30', hitBonus: 31, isBoss: true, weight: 8, adena: [1100,2200], drops: [{id:'ancient_scroll', rate: 0.8}, {id:'ancient_great_sword', rate: 0.1}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}] },
-        { id: 'ancient_guardian', name: '古代守護者', level: 88, hp: 42000, ac: -90, mr: 95, exp: 8101, atkSpeed: 1700, dice: '9d12+34', hitBonus: 34, isBoss: true, weight: 3, adena: [1800,3600], drops: [{id:'ancient_sword', rate: 0.01}, {id:'ancient_crossbow', rate: 0.01}, {id:'ancient_dual_blade', rate: 0.01}, {id:'ancient_staff', rate: 0.01}, {id:'ancient_robe_armor', rate: 0.01}, {id:'ancient_metal_armor', rate: 0.01}, {id:'ancient_scroll', rate: 2}, {id:'ancient_great_sword', rate: 0.01}, {id:'ancient_leather_armor', rate: 0.01}, {id:'gem_high_diamond', rate: 1.5}, {id:'gem_high_sapphire', rate: 1}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_emerald', rate: 1}] }
+        { id: 'harpy_queen', name: '哈維女皇', level: 72, hp: 8000, ac: -68, mr: 60, exp: 6000, atkSpeed: 1300, dice: '7d12+22', hitBonus: 28, isBoss: true, weight: 14, adena: [800,1600], drops: [{id:'ring_harpy', rate: 0.2}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_emerald', rate: 0.6}, {id:'gem_high_sapphire', rate: 0.4}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.07}] },
+        { id: 'arian_king', name: '亞力安王', level: 74, hp: 9000, ac: -70, mr: 65, exp: 6300, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, isBoss: true, weight: 13, adena: [850,1700], drops: [{id:'ancient_scroll', rate: 0.5}, {id:'scroll_weapon', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'gem_high_emerald', rate: 0.5}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.07}] },
+        { id: 'wyrm_king', name: '飛龍王', level: 78, hp: 13000, ac: -76, mr: 80, exp: 7200, atkSpeed: 1600, dice: '8d12+26', hitBonus: 31, isBoss: true, weight: 10, adena: [1000,2000], drops: [{id:'claw_beast_king', rate: 0.05}, {id:'wyrm_claw', rate: 1}, {id:'ancient_scroll', rate: 0.6}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_sapphire', rate: 1}, {id:'ring_morph_short', rate: 0.08}, {id:'ring_teleport_short', rate: 0.08}] },
+        { id: 'ogre_king_fi', name: '歐吉王', level: 76, hp: 12000, ac: -74, mr: 55, exp: 6800, atkSpeed: 2000, dice: '8d12+28', hitBonus: 28, isBoss: true, weight: 12, adena: [900,1800], drops: [{id:'belt_ogre', rate: 0.3}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_diamond', rate: 0.7}, {id:'gem_high_emerald', rate: 0.4}, {id:'ring_morph_short', rate: 0.08}, {id:'ring_teleport_short', rate: 0.08}] },
+        { id: 'great_minotaur', name: '巨大牛人', level: 80, hp: 16000, ac: -80, mr: 70, exp: 7600, atkSpeed: 1800, dice: '8d12+30', hitBonus: 31, isBoss: true, weight: 8, adena: [1100,2200], drops: [{id:'ancient_scroll', rate: 0.8}, {id:'ancient_great_sword', rate: 0.1}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'ring_morph_short', rate: 0.09}, {id:'ring_teleport_short', rate: 0.09}] },
+        { id: 'ancient_guardian', name: '古代守護者', level: 88, hp: 42000, ac: -90, mr: 95, exp: 8101, atkSpeed: 1700, dice: '9d12+34', hitBonus: 34, isBoss: true, weight: 3, adena: [1800,3600], drops: [{id:'ancient_sword', rate: 0.01}, {id:'ancient_crossbow', rate: 0.01}, {id:'ancient_dual_blade', rate: 0.01}, {id:'ancient_staff', rate: 0.01}, {id:'ancient_robe_armor', rate: 0.01}, {id:'ancient_metal_armor', rate: 0.01}, {id:'ancient_scroll', rate: 2}, {id:'ancient_great_sword', rate: 0.01}, {id:'ancient_leather_armor', rate: 0.01}, {id:'gem_high_diamond', rate: 1.5}, {id:'gem_high_sapphire', rate: 1}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_emerald', rate: 1}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}] }
     ]},
     antaras_lair: { name: '安塔瑞斯棲息地', monsters: [
         { id: 'antaras', name: '安塔瑞斯', level: 93, hp: 90000, ac: -99, mr: 100, exp: 8101, atkSpeed: 2000, dice: '8d10+20', hitBonus: 35, isBoss: true, weight: 1, adena: [1305,2054], drops: [{id:'book_knight_counter_barrier', rate: 0.5}, 
@@ -1193,16 +1248,16 @@ Object.assign(ITEMS, {
 });
 
 Object.assign(SPELLS, {
-    elf_resist_magic: { id: 'elf_resist_magic', name: '魔法防禦', level: 1, type: 'buff', mp: 5, duration: 1200, classes: ['elf'] },
+    elf_resist_magic: { id: 'elf_resist_magic', name: '魔法防禦', level: 1, type: 'buff', mp: 10, duration: 1200, classes: ['elf'], stat: { mr: 10 } },
     elf_body_to_mind: { id: 'elf_body_to_mind', name: '心靈轉換', level: 2, type: 'mp_convert', mp: 0, hpCost: 8, mpGain: 2, classes: ['elf'] },
     elf_soul_to_mind: { id: 'elf_soul_to_mind', name: '魂體轉換', level: 3, type: 'mp_convert', mp: 0, hpCost: 50, mpGain: 15, classes: ['elf'] },
     elf_triple_arrow: { id: 'elf_triple_arrow', name: '三重矢', level: 3, type: 'buff', mp: 10, duration: 600, classes: ['elf'] },
-    elf_clear_mind: { id: 'elf_clear_mind', name: '淨化精神', level: 3, type: 'buff', mp: 10, duration: 1200, classes: ['elf'] },
+    elf_clear_mind: { id: 'elf_clear_mind', name: '淨化精神', level: 3, type: 'buff', mp: 10, duration: 1200, classes: ['elf'], stat: { wis: 3 } },
     elf_fire_weapon: { id: 'elf_fire_weapon', name: '火焰武器', level: 3, type: 'buff', mp: 12, duration: 1200, classes: ['elf'] },
-    elf_wind_shot: { id: 'elf_wind_shot', name: '風之神射', level: 3, type: 'buff', mp: 12, duration: 1200, classes: ['elf'] },
-    elf_earth_skin: { id: 'elf_earth_skin', name: '大地防護', level: 3, type: 'buff', mp: 12, duration: 1200, classes: ['elf'] },
-    elf_storm_shot: { id: 'elf_storm_shot', name: '暴風神射', level: 4, type: 'buff', mp: 16, duration: 1200, classes: ['elf'] },
-    elf_iron_skin: { id: 'elf_iron_skin', name: '鋼鐵防護', level: 4, type: 'buff', mp: 20, duration: 1200, classes: ['elf'] },
+    elf_wind_shot: { id: 'elf_wind_shot', name: '風之神射', level: 3, type: 'buff', mp: 12, duration: 1200, classes: ['elf'], stat: { rangedHit: 5 } },
+    elf_earth_skin: { id: 'elf_earth_skin', name: '大地防護', level: 3, type: 'buff', mp: 12, duration: 1200, classes: ['elf'], stat: { ac: 4 } },
+    elf_storm_shot: { id: 'elf_storm_shot', name: '暴風神射', level: 4, type: 'buff', mp: 16, duration: 1200, classes: ['elf'], stat: { rangedDmg: 2, rangedHit: 2 } },
+    elf_iron_skin: { id: 'elf_iron_skin', name: '鋼鐵防護', level: 4, type: 'buff', mp: 20, duration: 1200, classes: ['elf'], stat: { ac: 7 } },
     elf_elemental_fire: { id: 'elf_elemental_fire', name: '烈焰之魂', level: 5, type: 'buff', mp: 25, duration: 1200, classes: ['elf'] },
     de_enchant_venom: { id: 'de_enchant_venom', name: '附加劇毒', level: 1, type: 'buff', mp: 8, duration: 1200, classes: ['dark_elf'] },
     de_shadow_armor: { id: 'de_shadow_armor', name: '暗影防護', level: 1, type: 'buff', mp: 10, duration: 1200, classes: ['dark_elf'] },
@@ -1234,28 +1289,28 @@ Object.assign(MAPS, {
     underwater_tunnel: { name: '地底湖與海底隧道', monsters: [
         { id: 'shellman', name: '貝殼人', level: 50, hp: 1200, ac: -40, exp: 2450, atkSpeed: 1900, dice: '5d12+12', hitBonus: 15, weight: 70, adena: [280,460], drops: [{id:'eva_shield', rate: 0.08}, {id:'gem_sapphire', rate: 3}] },
         { id: 'mermaid', name: '人魚', level: 54, hp: 1300, ac: -42, mr: 45, exp: 2850, atkSpeed: 1600, dice: '5d12+16', hitBonus: 17, weight: 64, adena: [320,520], drops: [{id:'crystal_dark_shadow_armor', rate: 0.18}, {id:'cloak_elven', rate: 0.12}, {id:'gem_quality_sapphire', rate: 0.8}] },
-        { id: 'deep_sea_horror', name: '深海恐怖', level: 70, hp: 11000, ac: -70, mr: 75, exp: 6400, atkSpeed: 1500, dice: '8d12+24', hitBonus: 28, isBoss: true, weight: 10, adena: [1000,2100], drops: [{id:'earring_freedom', rate: 0.12}, {id:'water_dragon_scale', rate: 2}, {id:'gem_high_sapphire', rate: 1}] }
+        { id: 'deep_sea_horror', name: '深海恐怖', level: 70, hp: 11000, ac: -70, mr: 75, exp: 6400, atkSpeed: 1500, dice: '8d12+24', hitBonus: 28, isBoss: true, weight: 10, adena: [1000,2100], drops: [{id:'earring_freedom', rate: 0.12}, {id:'water_dragon_scale', rate: 2}, {id:'gem_high_sapphire', rate: 1}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.07}, {id:'book_knight_counter_barrier', rate: 1}] }
     ]},
     elven_grave: { name: '精靈墓穴', monsters: [
         { id: 'spirit_guardian', name: '精靈守護者', level: 55, hp: 1600, ac: -46, mr: 65, exp: 3100, atkSpeed: 1700, dice: '6d10+16', hitBonus: 19, weight: 55, adena: [360,650], drops: [{id:'bow_elven', rate: 0.25}, {id:'shield_elven', rate: 0.2}, {id:'crystal_elf_fire_weapon', rate: 0.18}] },
-        { id: 'ancient_elf', name: '古代精靈', level: 62, hp: 2600, ac: -54, mr: 80, exp: 4000, atkSpeed: 1700, dice: '7d10+18', hitBonus: 22, weight: 45, adena: [480,850], drops: [{id:'armor_elven_chain', rate: 0.2}, {id:'crystal_elf_iron_skin', rate: 0.18}, {id:'crystal_elf_elemental_fire', rate: 0.08}] },
-        { id: 'spirit_elder', name: '精靈長老', level: 74, hp: 13000, ac: -74, mr: 90, exp: 7000, atkSpeed: 1600, dice: '8d12+26', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'crystal_elf_storm_shot', rate: 0.5}, {id:'crystal_elf_iron_skin', rate: 0.5}, {id:'bow_sayha', rate: 0.1}, {id:'bow_moon', rate: 0.12}, {id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'gem_high_emerald', rate: 1}] }
+        { id: 'ancient_elf', name: '古代精靈', level: 62, hp: 2600, ac: -54, mr: 80, exp: 4000, atkSpeed: 1700, dice: '7d10+18', hitBonus: 22, weight: 45, adena: [480,850], drops: [{id:'armor_elven_chain', rate: 0.2}, {id:'crystal_elf_iron_skin', rate: 0.18}, {id:'crystal_elf_elemental_fire', rate: 0.08}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'spirit_elder', name: '精靈長老', level: 74, hp: 13000, ac: -74, mr: 90, exp: 7000, atkSpeed: 1600, dice: '8d12+26', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'crystal_elf_storm_shot', rate: 0.5}, {id:'crystal_elf_iron_skin', rate: 0.5}, {id:'bow_sayha', rate: 0.1}, {id:'bow_moon', rate: 0.12}, {id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'gem_high_emerald', rate: 1}, {id:'ring_morph_short', rate: 0.04}, {id:'ring_teleport_short', rate: 0.05}] }
     ]},
     shadow_temple: { name: '暗影神殿', monsters: [
         { id: 'shadow_beast', name: '影子魔獸', level: 58, hp: 1800, ac: -50, mr: 70, exp: 3600, atkSpeed: 1500, dice: '7d10+18', hitBonus: 22, weight: 48, adena: [420,760], drops: [{id:'cloak_shadow', rate: 0.18}, {id:'crystal_dark_shadow_armor', rate: 0.18}, {id:'gem_quality_diamond', rate: 0.8}] },
-        { id: 'cursed_dark_elf_fighter', name: '受詛咒的黑暗妖精鬥士', level: 62, hp: 2400, ac: -56, mr: 75, exp: 4300, atkSpeed: 1300, dice: '7d12+20', hitBonus: 26, weight: 42, adena: [500,900], drops: [{id:'claw_bloody', rate: 0.12}, {id:'crystal_dark_burning_spirit', rate: 0.25}, {id:'crystal_dark_shadow_fang', rate: 0.02}] },
-        { id: 'succubus_queen', name: '思克巴女皇', level: 70, hp: 12000, ac: -72, mr: 90, exp: 6600, atkSpeed: 1500, dice: '8d10+26', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'crystal_dark_uncanny_dodge', rate: 0.5}, {id:'ring_abyss', rate: 0.12}, {id:'gem_high_diamond', rate: 1}] }
+        { id: 'cursed_dark_elf_fighter', name: '受詛咒的黑暗妖精鬥士', level: 62, hp: 2400, ac: -56, mr: 75, exp: 4300, atkSpeed: 1300, dice: '7d12+20', hitBonus: 26, weight: 42, adena: [500,900], drops: [{id:'claw_bloody', rate: 0.12}, {id:'crystal_dark_burning_spirit', rate: 0.25}, {id:'crystal_dark_shadow_fang', rate: 0.02}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'succubus_queen', name: '思克巴女皇', level: 70, hp: 12000, ac: -72, mr: 90, exp: 6600, atkSpeed: 1500, dice: '8d10+26', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'crystal_dark_uncanny_dodge', rate: 0.5}, {id:'ring_abyss', rate: 0.12}, {id:'gem_high_diamond', rate: 1}, {id:'ring_morph_short', rate: 0.05}, {id:'ring_teleport_short', rate: 0.05}] }
     ]},
     lastavard: { name: '拉斯塔巴德地下洞穴', monsters: [
-        { id: 'dark_black_knight', name: '暗黑黑騎士', level: 64, hp: 2800, ac: -58, mr: 65, exp: 4600, atkSpeed: 1500, dice: '7d12+22', hitBonus: 25, weight: 38, adena: [560,980], drops: [{id:'claw_balanka', rate: 0.03}, {id:'book_knight_reduction_armor', rate: 0.25}, {id:'book_knight_solid_carriage', rate: 0.03}, {id:'sword_red_knight', rate: 0.15}] },
-        { id: 'dark_elf_mage', name: '黑暗妖精法師', level: 66, hp: 2400, ac: -56, mr: 90, exp: 4800, atkSpeed: 1800, dice: '7d10+24', hitBonus: 24, weight: 36, adena: [600,1050], drops: [{id:'staff_sorcery', rate: 0.15}, {id:'robe_mage', rate: 0.15}, {id:'crystal_dark_dress_mighty', rate: 0.18}] },
-        { id: 'elite_black_knight', name: '菁英黑騎士', level: 72, hp: 7000, ac: -72, mr: 75, exp: 6800, atkSpeed: 1400, dice: '8d12+28', hitBonus: 31, isBoss: true, weight: 12, adena: [1100,2200], drops: [{id:'crossbow_lastabad_heavy', rate: 0.1}, {id:'book_knight_shock_stun', rate: 0.5}, {id:'crystal_dark_double_break', rate: 0.5}, {id:'dual_blade_bloody', rate: 0.12}] },
-        { id: 'lord_of_lastavard', name: '拉斯塔巴德將軍', level: 82, hp: 26000, ac: -86, mr: 95, exp: 8000, atkSpeed: 1500, dice: '9d12+32', hitBonus: 34, isBoss: true, weight: 4, adena: [1700,3400], drops: [{id:'dual_red_shadow', rate: 0.1}, {id:'book_knight_counter_barrier', rate: 0.5}, {id:'blade_ronde', rate: 0.08}, {id:'crystal_dark_double_break', rate: 0.5}, {id:'scroll_weapon_blessed', rate: 0.5}] }
+        { id: 'dark_black_knight', name: '暗黑黑騎士', level: 64, hp: 2800, ac: -58, mr: 65, exp: 4600, atkSpeed: 1500, dice: '7d12+22', hitBonus: 25, weight: 38, adena: [560,980], drops: [{id:'claw_balanka', rate: 0.03}, {id:'book_knight_reduction_armor', rate: 0.25}, {id:'book_knight_solid_carriage', rate: 0.03}, {id:'sword_red_knight', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'dark_elf_mage', name: '黑暗妖精法師', level: 66, hp: 2400, ac: -56, mr: 90, exp: 4800, atkSpeed: 1800, dice: '7d10+24', hitBonus: 24, weight: 36, adena: [600,1050], drops: [{id:'staff_sorcery', rate: 0.15}, {id:'robe_mage', rate: 0.15}, {id:'crystal_dark_dress_mighty', rate: 0.18}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'elite_black_knight', name: '菁英黑騎士', level: 72, hp: 7000, ac: -72, mr: 75, exp: 6800, atkSpeed: 1400, dice: '8d12+28', hitBonus: 31, isBoss: true, weight: 12, adena: [1100,2200], drops: [{id:'crossbow_lastabad_heavy', rate: 0.1}, {id:'book_knight_shock_stun', rate: 0.5}, {id:'crystal_dark_double_break', rate: 0.5}, {id:'dual_blade_bloody', rate: 0.12}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'lord_of_lastavard', name: '拉斯塔巴德將軍', level: 82, hp: 26000, ac: -86, mr: 95, exp: 8000, atkSpeed: 1500, dice: '9d12+32', hitBonus: 34, isBoss: true, weight: 4, adena: [1700,3400], drops: [{id:'dual_red_shadow', rate: 0.1}, {id:'book_knight_counter_barrier', rate: 0.5}, {id:'blade_ronde', rate: 0.08}, {id:'crystal_dark_double_break', rate: 0.5}, {id:'scroll_weapon_blessed', rate: 0.5}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}, {id:'book_knight_counter_barrier', rate: 1}] }
     ]},
     demon_temple: { name: '魔族神殿', monsters: [
-        { id: 'chaos_guardian', name: '混沌守護者', level: 68, hp: 4200, ac: -66, mr: 85, exp: 5600, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, weight: 25, adena: [760,1400], drops: [{id:'sword_mail_breaker', rate: 0.1}, {id:'crystal_elf_storm_shot', rate: 0.15}, {id:'crystal_dark_shadow_fang', rate: 0.15}] },
-        { id: 'death_sword_unlucky', name: '不幸的死亡之劍', level: 70, hp: 6000, ac: -70, mr: 80, exp: 6200, atkSpeed: 1300, dice: '8d12+26', hitBonus: 30, weight: 18, adena: [900,1700], drops: [{id:'sword_silence', rate: 0.1}, {id:'crystal_dark_burning_spirit', rate: 0.3}, {id:'book_knight_shock_stun', rate: 0.15}] },
-        { id: 'mammoth', name: '猛瑪象', level: 76, hp: 14000, ac: -76, mr: 65, exp: 7200, atkSpeed: 2000, dice: '9d12+30', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'claw_purgatory', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.5}, {id:'crystal_elf_iron_skin', rate: 0.5}, {id:'gem_high_diamond', rate: 1}] }
+        { id: 'chaos_guardian', name: '混沌守護者', level: 68, hp: 4200, ac: -66, mr: 85, exp: 5600, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, weight: 25, adena: [760,1400], drops: [{id:'sword_mail_breaker', rate: 0.1}, {id:'crystal_elf_storm_shot', rate: 0.15}, {id:'crystal_dark_shadow_fang', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'death_sword_unlucky', name: '不幸的死亡之劍', level: 70, hp: 6000, ac: -70, mr: 80, exp: 6200, atkSpeed: 1300, dice: '8d12+26', hitBonus: 30, weight: 18, adena: [900,1700], drops: [{id:'sword_silence', rate: 0.1}, {id:'crystal_dark_burning_spirit', rate: 0.3}, {id:'book_knight_shock_stun', rate: 0.15}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}] },
+        { id: 'mammoth', name: '猛瑪象', level: 76, hp: 14000, ac: -76, mr: 65, exp: 7200, atkSpeed: 2000, dice: '9d12+30', hitBonus: 30, isBoss: true, weight: 8, adena: [1200,2400], drops: [{id:'claw_purgatory', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.5}, {id:'crystal_elf_iron_skin', rate: 0.5}, {id:'gem_high_diamond', rate: 1}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.08}] }
     ]},
     giant_ant_cave_2f: { name: '巨蟻洞穴2樓', monsters: [
         { id: 'ant_soldier_2f', name: '巨蟻士兵', level: 26, hp: 240, ac: -12, exp: 600, atkSpeed: 1800, dice: '3d8+5', hitBonus: 5, weight: 40, adena: [90,170], drops: [{id:'book_weapon_break', rate: 0.3}, {id:'book_earth', rate: 0.2}, {id:'gem_diamond', rate: 1}, {id:'armor_rattan', rate: 2}] },
@@ -1319,6 +1374,7 @@ sealed_forgotten_crossbow: { name: '受封印 被遺忘的弩槍', type: 'quest'
     sealed_forgotten_metal_armor: { name: '受封印 被遺忘的金屬盔甲', type: 'quest', dropRate: 0.2 },
     ancient_sword: { name: '古老的劍', type: 'weapon', hands: 1, speed: 980, safe: 0, dice: '1d25', hit: 5, dropRate: 0.01, legendary: true, classes: ['knight','elf','dark_elf'] },
     ancient_great_sword: { ...ITEMS.ancient_great_sword, name: '古老的巨劍', dice: '1d35', hit: 7, safe: 0, classes: ['knight'], legendary: true },
+    magic_ancient_great_sword: { ...ITEMS.ancient_great_sword, name: '古巨劍', dice: '1d45', hit: 10, safe: 0, classes: ['knight'], legendary: true, desc: '攻擊時有7%機率消耗20點魔力5點生命發動奧義+自身力量*3。' },
     ancient_crossbow: { name: '古老的弩槍', type: 'weapon', weaponClass: 'bow', hands: 1, speed: 900, safe: 6, dice: '1d8', hit: 5, dmg: 2, dropRate: 0.01, legendary: true, classes: ['elf','dark_elf'], desc: '全遊戲唯一單手弓。' },
     ancient_dual_blade: { name: '古老的雙刀', type: 'weapon', weaponClass: 'dual_blade', hands: 1, speed: 720, safe: 0, dice: '1d17', hit: 3, dropRate: 0.01, legendary: true, classes: ['dark_elf'] },
     ancient_staff: { name: '古老的魔杖', type: 'weapon', hands: 1, speed: 1000, safe: 0, dice: '1d13', hit: 4, mDmg: 2, dropRate: 0.01, legendary: true, classes: ['wizard'] },
@@ -1479,6 +1535,7 @@ Object.assign(ITEMS, {
     book_full_heal: { ...ITEMS.book_full_heal, diamondSellPrice: 1 },
     book_heal_all: { ...ITEMS.book_heal_all, diamondSellPrice: 1 },
     book_blizzard: { ...ITEMS.book_blizzard, diamondSellPrice: 2 },
+    book_knight_counter_barrier: { ...ITEMS.book_knight_counter_barrier, diamondSellPrice: 8 },
     book_resurrect: { ...ITEMS.book_resurrect, diamondSellPrice: 2 },
     book_quake: { ...ITEMS.book_quake, diamondSellPrice: 2 },
     book_sleep_mist: { ...ITEMS.book_sleep_mist, diamondSellPrice: 3 },
@@ -1500,6 +1557,230 @@ Object.assign(SPELLS, {
     meteor: { id: 'meteor', name: '流星雨', level: 10, type: 'attack', mp: 60, dice: '3d10', baseDmg: 10 },
     meditation: { id: 'meditation', name: '冥想術', level: 4, type: 'buff', mp: 15, duration: 600 }
 });
+
+// ================================================================
+// DESIGN MERGE PATCH v2.0 — Source 獨有技能移植
+// 規則：reqM→wizard level, reqK→knight level, reqE→elf level
+//        tier 僅作 UI 分類，不進核心判斷
+// ================================================================
+Object.assign(SPELLS, {
+    // ── 法師魔法 (tier1) ──
+    icearrow:      { id: 'icearrow',      name: '冰箭',       level: 1, type: 'attack',  mp: 3,  dice: '1d4',  ele: 'water', tier: 1, classes: ['wizard','elf','knight'] },
+    windblade:     { id: 'windblade',     name: '風刃',       level: 1, type: 'attack',  mp: 3,  dice: '1d4',  ele: 'wind',  tier: 1, classes: ['wizard','elf'] },
+    // ── 法師魔法 (tier2) ──
+    antidote:      { id: 'antidote',      name: '解毒術',     level: 2, type: 'heal',    mp: 8,  healBase: 0, curePoison: true, tier: 2, classes: ['wizard','elf'] },
+    cold_shiver:   { id: 'cold_shiver',   name: '寒冷戰慄',   level: 2, type: 'attack',  mp: 9,  dice: '1d8',  baseDmg: 4, lifesteal: true, tier: 2, classes: ['wizard'] },
+    poison_curse:  { id: 'poison_curse',  name: '毒咒',       level: 2, type: 'attack',  mp: 10, duration: 15, dot: { dmg: 4, tick: 3 }, tier: 2, classes: ['wizard'] },
+    firearrow:     { id: 'firearrow',     name: '火箭',       level: 2, type: 'attack',  mp: 3,  dice: '1d4',  ele: 'fire',  tier: 2, classes: ['wizard','elf'] },
+    hell_fang:     { id: 'hell_fang',     name: '地獄之牙',   level: 2, type: 'attack',  mp: 3,  dice: '1d4',  ele: 'earth', tier: 2, classes: ['wizard'] },
+    // ── 法師魔法 (tier3) ──
+    aurora:        { id: 'aurora',        name: '極光雷電',   level: 3, type: 'attack',  mp: 13, dice: '2d14', ele: 'wind',  aoe: true, tier: 3, classes: ['wizard'] },
+    undead_bane:   { id: 'undead_bane',   name: '起死回生術', level: 3, type: 'attack',  mp: 15, instakill: 'undead', tier: 3, classes: ['wizard'] },
+    chill:         { id: 'chill',         name: '寒冰氣息',   level: 3, type: 'attack',  mp: 9,  dice: '3d6',  ele: 'water', aoe: true, tier: 3, classes: ['wizard'] },
+    energy_sense:  { id: 'energy_sense',  name: '能量感測',   level: 3, type: 'passive',  mp: 8,  tier: 3, classes: ['wizard','elf'] },
+    // ── 法師魔法 (tier4) ──
+    magic_ward:    { id: 'magic_ward',    name: '魔法屏障',   level: 4, type: 'buff',    mp: 16, duration: 16, tier: 4, classes: ['wizard'] },
+    // ── 法師魔法 (tier5) ──
+    mummy_curse:   { id: 'mummy_curse',   name: '木乃伊的詛咒', level: 5, type: 'attack', mp: 35, duration: 6, stoneChance: 100, tier: 5, classes: ['wizard'] },
+    holy_light:    { id: 'holy_light',    name: '聖潔之光',   level: 5, type: 'heal',    mp: 10, curseRemove: true, healBase: 5, tier: 5, classes: ['wizard','elf','knight'] },
+    ice_spike:     { id: 'ice_spike',     name: '冰錐',       level: 5, type: 'attack',  mp: 21, dice: '6d6',  ele: 'earth', tier: 5, classes: ['wizard'] },
+    mana_drain:    { id: 'mana_drain',    name: '魔力奪取',   level: 5, type: 'attack',  mp: 0,  hpCost: 50, manaDrain: true, tier: 5, classes: ['wizard'] },
+    weaken:        { id: 'weaken',        name: '弱化術',     level: 6, type: 'attack',  mp: 25, duration: 30, weakenDebuff: true, tier: 6, classes: ['wizard'] },
+    bless_weapon:  { id: 'bless_weapon',  name: '祝福魔法武器', level: 6, type: 'buff',  mp: 20, duration: 1200, stat: { extraDmg: 2, extraHit: 2 }, tier: 6, classes: ['wizard'] },
+    // ── 法師魔法 (tier7) ──
+    regen:         { id: 'regen',         name: '體力回復術', level: 7, type: 'heal',    mp: 35, hot: { interval: 30, ticks: 5, healPerTick: 20 }, tier: 7, classes: ['wizard'] },
+    ice_lance:     { id: 'ice_lance',     name: '冰矛圍籬',   level: 7, type: 'attack',  mp: 30, dice: '5d10', ele: 'water', freeze: 200, tier: 7, classes: ['wizard'] },
+    holy_dash:     { id: 'holy_dash',     name: '神聖疾走',   level: 7, type: 'buff',    mp: 20, duration: 64, stat: { er: 15 }, tier: 7, classes: ['wizard','knight'] },
+    // ── 法師魔法 (tier8) ──
+    magic_seal:    { id: 'magic_seal',    name: '魔法封印',   level: 8, type: 'attack',  mp: 30, duration: 16, silenceChance: 100, tier: 8, classes: ['wizard'] },
+    // ── 法師魔法 (tier10) ──
+    soul_ascend:   { id: 'soul_ascend',   name: '靈魂昇華',   level: 10, type: 'buff',   mp: 20, duration: 1200, fullHpHeal: true, tier: 10, classes: ['wizard'] },
+    // ── 騎士技術 ──
+    spike_armor:   { id: 'spike_armor',   name: '尖刺盔甲',   level: 3, type: 'buff',    mp: 10, duration: 1200, stat: { meleeHit: 5 }, tier: 1, classes: ['knight'] },
+    // ── 妖精魔法 (tier1) ──
+    elf_worldtree: { id: 'elf_worldtree', name: '世界樹的呼喚', level: 1, type: 'passive', tier: 1, classes: ['elf'] },
+    // ── 妖精魔法 (tier2) ──
+    elf_eleres:    { id: 'elf_eleres',    name: '屬性防禦',   level: 2, type: 'buff',    mp: 10, duration: 1200, stat: { resFire: 10, resWater: 10, resEarth: 10, resWind: 10 }, tier: 2, classes: ['elf'] },
+    elf_release:   { id: 'elf_release',   name: '釋放元素',   level: 2, type: 'attack',  mp: 30, instakill: 'element', tier: 2, classes: ['elf'] },
+    // ── 妖精魔法 (tier3) ──
+    elf_singleres: { id: 'elf_singleres', name: '單屬性防禦', level: 3, type: 'buff',    mp: 10, duration: 1200, reqEleAny: true, tier: 3, classes: ['elf'] },
+    elf_winddash:  { id: 'elf_winddash',  name: '風之疾走',   level: 3, type: 'buff',    mp: 20, duration: 1200, reqEle: 'wind', stat: { er: 10 }, tier: 3, classes: ['elf'] },
+    elf_groundtrap:{ id: 'elf_groundtrap',name: '地面障礙',   level: 3, type: 'attack',  mp: 20, duration: 30, reqEle: 'earth', slowChance: 150, tier: 3, classes: ['elf'] },
+    // ── 妖精魔法 (tier4) ──
+    elf_dancefire: { id: 'elf_dancefire', name: '舞躍之火',   level: 4, type: 'buff',    mp: 30, duration: 1200, reqEle: 'fire',  stat: { meleeDmg: 5 }, tier: 4, classes: ['elf'] },
+    elf_stormeye:  { id: 'elf_stormeye',  name: '暴風之眼',   level: 4, type: 'buff',    mp: 40, duration: 1200, reqEle: 'wind',  stat: { rangedDmg: 2, rangedHit: 2 }, tier: 4, classes: ['elf'] },
+    elf_earthshld: { id: 'elf_earthshld', name: '大地屏障',   level: 4, type: 'buff',    mp: 50, duration: 8,    reqEle: 'earth', tier: 4, classes: ['elf'] },
+    elf_lifespring:{ id: 'elf_lifespring',name: '生命之泉',   level: 4, type: 'heal',    mp: 50, dice: '4d35', baseDmg: 0, reqEle: 'water', tier: 4, classes: ['elf'] },
+    elf_earthbless:{ id: 'elf_earthbless',name: '大地的祝福', level: 4, type: 'buff',    mp: 35, duration: 1200, reqEle: 'earth', stat: { ac: 5 }, tier: 4, classes: ['elf'] },
+    elf_magicerase:{ id: 'elf_magicerase',name: '魔法消除',   level: 4, type: 'attack',  mp: 30, duration: 16, mrHalfDebuff: true, tier: 4, classes: ['elf'] },
+    elf_summon2:   { id: 'elf_summon2',   name: '召喚強力屬性精靈', level: 5, type: 'buff', mp: 50, duration: 3600, reqEleAny: true, summonTier: 2, tier: 5, classes: ['elf'] },
+    elf_lifebless: { id: 'elf_lifebless', name: '生命的祝福', level: 5, type: 'heal',    mp: 30, hot: { interval: 30, ticks: 6, healPerTick: 15 }, reqEle: 'water', tier: 5, classes: ['elf'] },
+    elf_seal:      { id: 'elf_seal',      name: '封印禁地',   level: 5, type: 'attack',  mp: 40, duration: 8, reqEleAny: true, magicSeal: true, tier: 5, classes: ['elf'] },
+    elf_blazewpn:  { id: 'elf_blazewpn',  name: '烈炎武器',   level: 5, type: 'buff',    mp: 30, duration: 1200, reqEle: 'fire',  stat: { meleeDmg: 5, meleeHit: 5 }, tier: 5, classes: ['elf'] },
+    elf_stormshot: { id: 'elf_stormshot', name: '暴風神射',   level: 5, type: 'buff',    mp: 30, duration: 1200, reqEle: 'wind',  stat: { rangedDmg: 4, rangedHit: 2 }, tier: 5, classes: ['elf'] },
+    elf_steelguard:{ id: 'elf_steelguard',name: '鋼鐵防護+', level: 5, type: 'buff',    mp: 30, duration: 1200, reqEle: 'earth', stat: { ac: 7 }, tier: 5, classes: ['elf'] }
+});
+// ── END DESIGN MERGE PATCH v2.0 ──
+
+// ================================================================
+// LINEAGE_MERGE_GAP_FIX_PATCH_v1.0
+// ================================================================
+
+// ── PRIORITY 1 CRITICAL ──
+
+// PATCH-GAP-001: holy_barrier (wizard buff) — 新增
+Object.assign(SPELLS, {
+    holy_barrier: {
+        id: 'holy_barrier',
+        name: '聖光屏障',
+        level: 8,
+        type: 'buff',
+        mp: 40,
+        duration: 32,
+        damageReduction: 0.20,
+        magicReduction: 0.15,
+        tier: 8,
+        classes: ['wizard']
+    }
+});
+
+// PATCH-GAP-002: assassination (dark_elf) — 新增
+Object.assign(SPELLS, {
+    assassination: {
+        id: 'assassination',
+        name: '暗殺',
+        level: 5,
+        type: 'buff',
+        mp: 35,
+        duration: 16,
+        critMultiplier: 2.5,
+        backstabBonus: 0.30,
+        cooldown: 60,
+        tier: 5,
+        classes: ['dark_elf']
+    }
+});
+
+// PATCH-GAP-003: elf_firewpn → alias to elf_fire_weapon
+SPELLS.elf_firewpn = SPELLS.elf_fire_weapon;
+
+// ── PRIORITY 2 HIGH ──
+
+// PATCH-GAP-004: elf_earthguard → alias to elf_earth_skin + physicalReduction
+SPELLS.elf_earthguard = Object.assign({}, SPELLS.elf_earth_skin, {
+    id: 'elf_earthguard',
+    physicalReduction: 0.10
+});
+
+// PATCH-GAP-005: elf_mr — 新增
+Object.assign(SPELLS, {
+    elf_mr: {
+        id: 'elf_mr',
+        name: '魔法抵抗',
+        level: 4,
+        type: 'buff',
+        mp: 20,
+        duration: 1200,
+        magicResistBuff: 15,
+        tier: 4,
+        classes: ['elf']
+    }
+});
+
+// PATCH-GAP-006: elf_soul — alias to elf_soul_to_mind + mpRegen/manaEfficiency
+SPELLS.elf_soul = Object.assign({}, SPELLS.elf_soul_to_mind, {
+    id: 'elf_soul',
+    mpRegen: 8,
+    manaEfficiency: 0.10
+});
+
+// ── PRIORITY 3 MEDIUM ──
+
+// PATCH-GAP-007: heal2 → alias to high_heal（禁止重複）
+SPELLS.heal2 = SPELLS.high_heal;
+
+// PATCH-GAP-008: mummy_curse — 補 paralyze 效果（原 stoneChance 保留）
+if (SPELLS.mummy_curse) {
+    SPELLS.mummy_curse.paralyzeChance = 100;
+    // duration 已存在 (6)，stone→paralyze 共用
+}
+
+// PATCH-GAP-009: seal → alias to magic_seal（禁止第二套封印系統）
+SPELLS.seal = SPELLS.magic_seal;
+
+// ── PRIORITY 4 LOW ──
+
+// PATCH-GAP-010: resurrection — 補 passive 一次性觸發標記
+if (SPELLS.resurrection) {
+    SPELLS.resurrection.type = 'passive';
+    SPELLS.resurrection.onDeathRevive = true;   // 死亡後復活
+    SPELLS.resurrection.reviveHpPct = 0.30;     // 復活後 30% HP
+    SPELLS.resurrection.singleUse = true;        // 每戰鬥一次
+    SPELLS.resurrection.noStack = true;
+}
+
+// PATCH-GAP-011: elf_summon — 若已有 elf_summon2，轉為 petBuff alias
+if (SPELLS.elf_summon2) {
+    SPELLS.elf_summon = Object.assign({}, SPELLS.elf_summon2, {
+        id: 'elf_summon',
+        petBuff: true   // 轉換成寵物強化，不建立第二套召喚系統
+    });
+}
+
+// ── DATA NORMALIZATION ──
+// reqM/reqE/reqK → requiredLevel + classes[]（UI用，不進戰鬥計算）
+(function _normalizeSpellReqs() {
+    var classMap = { reqM: 'wizard', reqK: 'knight', reqE: 'elf' };
+    Object.values(SPELLS).forEach(function(sp) {
+        if (!sp || typeof sp !== 'object') return;
+        ['reqM','reqE','reqK'].forEach(function(key) {
+            if (sp[key] !== undefined) {
+                if (!sp.requiredLevel) sp.requiredLevel = sp[key];
+                if (!sp.classes) sp.classes = [];
+                var cls = classMap[key];
+                if (cls && sp.classes.indexOf(cls) === -1) sp.classes.push(cls);
+                delete sp[key];
+            }
+        });
+    });
+})();
+
+// ── CONFLICT RESOLUTION — AI施法池唯一化 ──
+// heal2 → high_heal, seal → magic_seal, elf_firewpn → elf_fire_weapon
+// (Alias 已建立於上方，此處僅保護：若重複 key 指向不同物件則強制對齊)
+(function _dedupeSpellAliases() {
+    var aliases = [
+        ['heal2',       'high_heal'],
+        ['seal',        'magic_seal'],
+        ['elf_firewpn', 'elf_fire_weapon'],
+        ['elf_earthguard', 'elf_earth_skin']
+    ];
+    aliases.forEach(function(pair) {
+        var alias = pair[0], base = pair[1];
+        if (SPELLS[base] && SPELLS[alias] && SPELLS[alias] !== SPELLS[base]) {
+            // 若兩者效果相同 class / type，保留 base，alias 指向 base
+            if (SPELLS[alias].type === SPELLS[base].type) {
+                SPELLS[alias] = SPELLS[base];
+            }
+        }
+    });
+})();
+
+console.log('%c[GAP FIX PATCH v1.0] ✅ 完成', 'color:#4ade80;font-weight:bold;font-size:13px');
+console.log('  ✓ PATCH-GAP-001 holy_barrier 新增 (wizard buff, damageReduction+magicReduction)');
+console.log('  ✓ PATCH-GAP-002 assassination 新增 (dark_elf, critMultiplier+backstabBonus)');
+console.log('  ✓ PATCH-GAP-003 elf_firewpn → elf_fire_weapon alias');
+console.log('  ✓ PATCH-GAP-004 elf_earthguard → elf_earth_skin + physicalReduction');
+console.log('  ✓ PATCH-GAP-005 elf_mr 新增 (magicResistBuff)');
+console.log('  ✓ PATCH-GAP-006 elf_soul → elf_soul_to_mind + mpRegen/manaEfficiency');
+console.log('  ✓ PATCH-GAP-007 heal2 → high_heal alias');
+console.log('  ✓ PATCH-GAP-008 mummy_curse paralyzeChance 補齊');
+console.log('  ✓ PATCH-GAP-009 seal → magic_seal alias（禁止第二套封印）');
+console.log('  ✓ PATCH-GAP-010 resurrection passive/onDeathRevive/singleUse 標記');
+console.log('  ✓ PATCH-GAP-011 elf_summon → elf_summon2 petBuff alias（禁止第二套召喚）');
+console.log('  ✓ DATA NORM reqM/reqE/reqK → requiredLevel+classes[]');
+console.log('  ✓ CONFLICT RESOLUTION alias 唯一化完成');
+// ── END LINEAGE_MERGE_GAP_FIX_PATCH_v1.0 ──
 
 GEM_EXCHANGES.kalip_rare.rewards.push(
     { id: 'book_ultimate_light', count: 1, weight: 1.2 },
@@ -1526,7 +1807,7 @@ Object.keys(MAPS).forEach(mapId => MAPS[mapId].monsters.forEach(m => {
     if (m.id === 'troll_king' && !m.drops.some(d => d.id === 'book_armor_guard')) m.drops.push({id:'book_armor_guard', rate:0.8});
 }));
 
-const CLOSED_MAP_IDS = ['pirate_island','shadow_temple','demon_temple','antaras_lair','speaking_island_port','adventure_cave_2f','windawood_dungeon_2f'];
+const CLOSED_MAP_IDS = ['pirate_island','shadow_temple','demon_temple','antaras_lair','fafurion_lair','valakas_lair','speaking_island_port','adventure_cave_2f','windawood_dungeon_2f'];
 const BOSS_RESPAWN_MS = 20 * 60 * 1000;
 const DRAG_AOE_COUNTS = [3,4,5,6,12];
 const AOE_SPELL_IDS = ['fireball','lightning_storm','blizzard','fire_storm','tornado','earth_prison','quake','ultimate_light','meteor'];
@@ -1605,8 +1886,8 @@ MAPS.oren_area = {
     monsters: [
         { id: 'ice_man', name: '冰人', level: 58, hp: 1400, ac: -45, exp: 3300, atkSpeed: 2000, dice: '6d10+14', hitBonus: 17, weight: 70, adena: [330,580], drops: [{id:'gem_sapphire', rate: 2}, {id:'gem_quality_sapphire', rate: 0.8}, {id:'potion_blue', rate: 2}] },
         { id: 'snow_tiger', name: '冰原老虎', level: 60, hp: 1500, ac: -48, exp: 3500, atkSpeed: 1400, dice: '6d12+14', hitBonus: 22, weight: 68, adena: [350,600], drops: [{id:'potion_haste', rate: 4}, {id:'gem_sapphire', rate: 2}, {id:'gem_quality_sapphire', rate: 0.6}] },
-        { id: 'iron_golem', name: '鋼鐵高崙', level: 65, hp: 3600, ac: -60, exp: 4300, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 44, adena: [450,820], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'sword_damascus_two_handed', rate: 0.02}, {id:'armor_metal', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}] },
-        { id: 'living_armor', name: '活鎧甲', level: 62, hp: 2200, ac: -54, exp: 3800, atkSpeed: 1800, dice: '7d10+18', hitBonus: 20, weight: 58, adena: [390,720], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'armor_metal', rate: 1}, {id:'scroll_armor', rate: 0.5}, {id:'gem_quality_diamond', rate: 0.6}] },
+        { id: 'iron_golem', name: '鋼鐵高崙', level: 65, hp: 3600, ac: -60, exp: 4300, atkSpeed: 2200, dice: '7d12+22', hitBonus: 22, weight: 44, adena: [450,820], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'sword_damascus_two_handed', rate: 0.02}, {id:'armor_metal', rate: 1}, {id:'steel_helmet', rate: 1}, {id:'gem_quality_diamond', rate: 1}, {id:'gem_high_diamond', rate: 0.15}, {id:'book_knight_counter_barrier', rate: 0.1}] },
+        { id: 'living_armor', name: '活鎧甲', level: 62, hp: 2200, ac: -54, exp: 3800, atkSpeed: 1800, dice: '7d10+18', hitBonus: 20, weight: 58, adena: [390,720], drops: [{id:'book_blizzard', rate: 0.05}, {id:'book_disease', rate: 0.05}, {id:'book_earth', rate: 0.05}, {id:'book_fire_arrow', rate: 0.05}, {id:'book_fire_storm', rate: 0.05}, {id:'book_full_heal', rate: 0.05}, {id:'book_immune', rate: 0.05}, {id:'book_knight_counter_barrier', rate: 0.05}, {id:'book_knight_shock_stun', rate: 0.05}, {id:'book_lightning_storm', rate: 0.05}, {id:'book_resurrect', rate: 0.05}, {id:'book_slow', rate: 0.05}, {id:'book_str_buff', rate: 0.05}, {id:'book_summon', rate: 0.05}, {id:'book_tame', rate: 0.05}, {id:'book_tornado', rate: 0.05}, {id:'book_vampire', rate: 0.05}, {id:'book_weapon_break', rate: 0.05}, {id:'crystal_dark_double_break', rate: 0.05}, {id:'crystal_dark_uncanny_dodge', rate: 0.05}, {id:'crystal_elf_elemental_fire', rate: 0.05}, {id:'crystal_elf_iron_skin', rate: 0.05}, {id:'crystal_elf_storm_shot', rate: 0.05}, {id:'armor_metal', rate: 1}, {id:'scroll_armor', rate: 0.5}, {id:'gem_quality_diamond', rate: 0.6}, {id:'book_knight_counter_barrier', rate: 0.1}] },
         { id: 'ivory_wizard', name: '象牙塔魔法師', level: 66, hp: 2400, ac: -55, mr: 75, exp: 4500, atkSpeed: 2000, dice: '7d10+20', hitBonus: 22, weight: 48, adena: [500,900], drops: [{id:'crystal_dark_armor_break', rate: 0.01}, {id:'bow_ivory_long', rate: 0.03}, {id:'book_blizzard', rate: 0.3}, {id:'book_tornado', rate: 0.3}, {id:'mana_cloak', rate: 0.08}, {id:'gem_quality_sapphire', rate: 0.8}] },
         
         // BOSS：冰之女王、惡魔
@@ -1614,7 +1895,57 @@ MAPS.oren_area = {
         { id: 'demon', name: '惡魔', level: 85, hp: 26000, ac: -84, mr: 95, exp: 8000, atkSpeed: 1500, dice: '8d12+30', hitBonus: 32, isBoss: true, weight: 4, adena: [1500,3000], drops: [{id:'book_knight_counter_barrier', rate: 0.5}, {id:'claw_hades', rate: 0.05}, {id:'demon_blood', rate: 2}, {id:'book_immune', rate: 0.5}, {id:'scroll_weapon_blessed', rate: 0.3}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}] }
     ]
 };
-MAPS.speaking_island_port = { name: '說話之島港口', monsters: [] };
+MAPS.speaking_island_port = { name: '說話之島', monsters: [] };
+MAPS.speaking_island = MAPS.speaking_island_port; // PATCH-002-1 相容別名
+
+// ─── PATCH-002-2：法利昂巢穴 ───────────────────────────────
+MAPS.fafurion_lair = {
+    name: '法利昂巢穴',
+    monsters: [
+        { id: 'fafurion', name: '法利昂', level: 93, hp: 120000, ac: -80, mr: 150, exp: 94000, atkSpeed: 2000, dice: '8d10+24', hitBonus: 95, isBoss: true, weight: 1, adena: [18236,185248], drops: [
+            {id:'katana', rate: 3}, {id:'armor_crystal', rate: 3}, {id:'eva_shield', rate: 1},
+            {id:'water_dragon_scale', rate: 5}, {id:'water_dragon_scale_armor', rate: 0.05},
+            {id:'gem_high_sapphire', rate: 2}, {id:'gem_high_diamond', rate: 1},
+            {id:'scroll_weapon_blessed', rate: 0.5}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}
+        ] }
+    ]
+};
+
+// ─── PATCH-002-3：巴拉卡斯巢穴 ───────────────────────────────
+MAPS.valakas_lair = {
+    name: '巴拉卡斯巢穴',
+    monsters: [
+        { id: 'valakas', name: '巴拉卡斯', level: 95, hp: 150000, ac: -99, mr: 200, exp: 100000, atkSpeed: 2000, dice: '8d10+24', hitBonus: 99, isBoss: true, weight: 1, adena: [20236,365248], drops: [
+            {id:'crystal_elf_elemental_fire', rate: 0.5}, {id:'book_fire_storm', rate: 0.5},
+            {id:'fire_dragon_scale', rate: 5}, {id:'fire_dragon_scale_armor', rate: 0.05},
+            {id:'valakas_heart', rate: 0.05}, {id:'katana', rate: 3},
+            {id:'scroll_weapon_blessed', rate: 0.5}, {id:'gem_high_ruby', rate: 2}, {id:'gem_high_diamond', rate: 1},
+            {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}
+        ] }
+    ]
+};
+
+// ─── PATCH-004：艾爾摩激戰地 ─────────────────────────────────
+MAPS.elmore_battlefield = {
+    name: '艾爾摩激戰地',
+    monsters: [
+        { id: 'elmore_soldier', name: '艾爾摩士兵', level: 65, hp: 2800, ac: -55, mr: 55, exp: 4500, atkSpeed: 1600, dice: '7d10+18', hitBonus: 22, weight: 50, adena: [480,820], drops: [
+            {id:'scroll_weapon', rate: 0.5}, {id:'armor_metal', rate: 0.5}, {id:'gem_quality_diamond', rate: 0.5}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}
+        ] },
+        { id: 'elmore_mage', name: '艾爾摩法師', level: 67, hp: 2400, ac: -53, mr: 80, exp: 4700, atkSpeed: 2000, dice: '7d10+20', hitBonus: 22, weight: 45, adena: [500,850], drops: [
+            {id:'mana_cloak', rate: 0.1}, {id:'gem_quality_sapphire', rate: 0.8}, {id:'potion_blue', rate: 3}, {id:'ring_morph_short', rate: 0.03}, {id:'ring_teleport_short', rate: 0.03}
+        ] },
+        { id: 'elmore_general', name: '艾爾摩將軍', level: 72, hp: 8500, ac: -65, mr: 70, exp: 6200, atkSpeed: 1800, dice: '8d10+24', hitBonus: 26, isBoss: true, weight: 12, adena: [850,1600], drops: [
+            {id:'katana', rate: 1}, {id:'scroll_weapon_blessed', rate: 0.2}, {id:'gem_high_diamond', rate: 0.5}, {id:'ring_morph_short', rate: 0.07}, {id:'ring_teleport_short', rate: 0.07}
+        ] },
+        { id: 'ghoul', name: '食屍鬼', level: 62, hp: 1900, ac: -50, mr: 40, exp: 3800, atkSpeed: 1800, dice: '6d10+16', hitBonus: 20, weight: 58, adena: [380,680], drops: [
+            {id:'scroll_armor', rate: 0.4}, {id:'gem_quality_diamond', rate: 0.5}, {id:'ring_morph_short', rate: 0.02}, {id:'ring_teleport_short', rate: 0.02}
+        ] },
+        { id: 'zombie', name: '人形殭屍', level: 60, hp: 1700, ac: -48, mr: 30, exp: 3500, atkSpeed: 2200, dice: '6d10+14', hitBonus: 18, weight: 62, adena: [350,620], drops: [
+            {id:'scroll_armor', rate: 0.3}, {id:'gem_quality_diamond', rate: 0.4}, {id:'ring_morph_short', rate: 0.02}, {id:'ring_teleport_short', rate: 0.02}
+        ] }
+    ]
+};
 MAPS.adventure_cave_2f = { name: '冒險洞穴2樓', monsters: [] };
 MAPS.windawood_dungeon_2f = { name: '風木地監2F', monsters: [] };
 
@@ -1690,22 +2021,22 @@ MAPS.forgotten_island.monsters = [
     makeForgottenMonster('fi_minotaur_chain','鏈鎚牛人',53,680,-36,32,19,1200,4400,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.12}]),7),
     makeForgottenMonster('fi_giant_crocodile','巨大鱷魚',53,700,-38,32,19,1250,4450,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.12}]),7),
     makeForgottenMonster('fi_doppleganger','變形怪',53,600,-35,31,19,1100,4450,fiDrops([]),7),
-    makeForgottenMonster('fi_casto_king','卡司特王',54,640,-37,33,20,1150,4700,fiDrops([{id:'sealed_forgotten_leather_armor', rate:0.12}]),6),
-    makeForgottenMonster('fi_doro','多羅',54,620,-39,32,20,1150,4700,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.10},{id:'sealed_forgotten_scale_armor', rate:0.10}]),6),
-    makeForgottenMonster('fi_troll_king','食人妖精王',55,760,-40,35,21,1200,5000,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.12},{id:'sealed_forgotten_scale_armor', rate:0.12}]),5),
-    makeForgottenMonster('fi_aruba','亞魯巴',55,820,-41,36,22,1050,5100,fiDrops([{id:'sealed_forgotten_great_sword', rate:0.1},{id:'sealed_forgotten_metal_armor', rate:0.10}]),5),
-    makeForgottenMonster('fi_arian','亞力安',56,850,-42,37,22,1050,5350,fiDrops([{id:'sealed_forgotten_sword', rate:0.1}]),5),
-    makeForgottenMonster('fi_evil_lizard','邪惡蜥蜴',56,900,-42,38,23,1100,5450,fiDrops([{id:'sealed_forgotten_sword', rate:0.1}]),4),
-    makeForgottenMonster('fi_cyclops','獨眼巨人',57,980,-43,40,23,1250,5700,fiDrops([{id:'sealed_forgotten_great_sword', rate:0.1},{id:'sealed_forgotten_metal_armor', rate:0.10}]),4),
-    makeForgottenMonster('fi_wyrm','飛龍',58,1050,-45,42,24,1000,6200,fiDrops([{id:'sealed_forgotten_crossbow', rate:0.1},{id:'sealed_forgotten_sword', rate:0.1},{id:'sealed_forgotten_leather_armor', rate:0.10}]),3),
+    makeForgottenMonster('fi_casto_king','卡司特王',54,640,-37,33,20,1150,4700,fiDrops([{id:'sealed_forgotten_leather_armor', rate:0.12},{id:'sealed_forgotten_great_sword', rate:0.2}]),6),
+    makeForgottenMonster('fi_doro','多羅',54,620,-39,32,20,1150,4700,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.10},{id:'sealed_forgotten_scale_armor', rate:0.10},{id:'sealed_forgotten_great_sword', rate:0.2}]),6),
+    makeForgottenMonster('fi_troll_king','食人妖精王',55,760,-40,35,21,1200,5000,fiDrops([{id:'sealed_forgotten_metal_armor', rate:0.12},{id:'sealed_forgotten_scale_armor', rate:0.12},{id:'sealed_forgotten_great_sword', rate:0.2}]),5),
+    makeForgottenMonster('fi_aruba','亞魯巴',55,820,-41,36,22,1050,5100,fiDrops([{id:'sealed_forgotten_great_sword', rate:0.1},{id:'sealed_forgotten_metal_armor', rate:0.10},{id:'sealed_forgotten_great_sword', rate:0.2}]),5),
+    makeForgottenMonster('fi_arian','亞力安',56,850,-42,37,22,1050,5350,fiDrops([{id:'sealed_forgotten_sword', rate:0.1},{id:'sealed_forgotten_great_sword', rate:0.2}]),5),
+    makeForgottenMonster('fi_evil_lizard','邪惡蜥蜴',56,900,-42,38,23,1100,5450,fiDrops([{id:'sealed_forgotten_sword', rate:0.1},{id:'sealed_forgotten_great_sword', rate:0.2}]),4),
+    makeForgottenMonster('fi_cyclops','獨眼巨人',57,980,-43,40,23,1250,5700,fiDrops([{id:'sealed_forgotten_great_sword', rate:0.1},{id:'sealed_forgotten_metal_armor', rate:0.10},{id:'sealed_forgotten_great_sword', rate:0.2}]),4),
+    makeForgottenMonster('fi_wyrm','飛龍',58,1050,-45,42,24,1000,6200,fiDrops([{id:'sealed_forgotten_crossbow', rate:0.1},{id:'sealed_forgotten_sword', rate:0.1},{id:'sealed_forgotten_leather_armor', rate:0.10},{id:'sealed_forgotten_great_sword', rate:0.2}]),3),
     
     // ─── 以下是手動塞進去的遺忘之島真正的 BOSS ───
-    { id: 'harpy_queen', name: '哈維女皇', level: 72, hp: 8000, ac: -68, mr: 60, exp: 6000, atkSpeed: 1300, dice: '7d12+22', hitBonus: 28, isBoss: true, weight: 14, adena: [800,1600], drops: [{id:'ring_harpy', rate: 0.2}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_emerald', rate: 0.6}, {id:'gem_high_sapphire', rate: 0.4}] },
-    { id: 'arian_king', name: '亞力安王', level: 74, hp: 9000, ac: -70, mr: 65, exp: 6300, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, isBoss: true, weight: 13, adena: [850,1700], drops: [{id:'ancient_scroll', rate: 0.5}, {id:'scroll_weapon', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'gem_high_emerald', rate: 0.5}] },
-    { id: 'wyrm_king', name: '飛龍王', level: 78, hp: 13000, ac: -76, mr: 80, exp: 7200, atkSpeed: 1600, dice: '8d12+26', hitBonus: 31, isBoss: true, weight: 10, adena: [1000,2000], drops: [{id:'claw_beast_king', rate: 0.05}, {id:'wyrm_claw', rate: 1}, {id:'ancient_scroll', rate: 0.6}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_sapphire', rate: 1}] },
-    { id: 'ogre_king_fi', name: '歐吉王', level: 76, hp: 12000, ac: -74, mr: 55, exp: 6800, atkSpeed: 2000, dice: '8d12+28', hitBonus: 28, isBoss: true, weight: 12, adena: [900,1800], drops: [{id:'belt_ogre', rate: 0.3}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_diamond', rate: 0.7}, {id:'gem_high_emerald', rate: 0.4}] },
-    { id: 'great_minotaur', name: '巨大牛人', level: 80, hp: 16000, ac: -80, mr: 70, exp: 7600, atkSpeed: 1800, dice: '8d12+30', hitBonus: 31, isBoss: true, weight: 8, adena: [1100,2200], drops: [{id:'ancient_scroll', rate: 0.8}, {id:'ancient_great_sword', rate: 0.1}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}] },
-    { id: 'ancient_guardian', name: '古代守護者', level: 88, hp: 42000, ac: -90, mr: 95, exp: 8101, atkSpeed: 1700, dice: '9d12+34', hitBonus: 34, isBoss: true, weight: 3, adena: [1800,3600], drops: [{id:'ancient_sword', rate: 0.01}, {id:'ancient_crossbow', rate: 0.01}, {id:'ancient_dual_blade', rate: 0.01}, {id:'ancient_staff', rate: 0.01}, {id:'ancient_robe_armor', rate: 0.01}, {id:'ancient_metal_armor', rate: 0.01}, {id:'ancient_scroll', rate: 2}, {id:'ancient_great_sword', rate: 0.01}, {id:'ancient_leather_armor', rate: 0.01}, {id:'gem_high_diamond', rate: 1.5}, {id:'gem_high_sapphire', rate: 1}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_emerald', rate: 1}] }
+    { id: 'harpy_queen', name: '哈維女皇', level: 72, hp: 8000, ac: -68, mr: 60, exp: 6000, atkSpeed: 1300, dice: '7d12+22', hitBonus: 28, isBoss: true, weight: 14, adena: [800,1600], drops: [{id:'ring_harpy', rate: 0.2}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_emerald', rate: 0.6}, {id:'gem_high_sapphire', rate: 0.4}, {id:'ring_morph_short', rate: 0.08}, {id:'ring_teleport_short', rate: 0.08}] },
+    { id: 'arian_king', name: '亞力安王', level: 74, hp: 9000, ac: -70, mr: 65, exp: 6300, atkSpeed: 1600, dice: '8d10+24', hitBonus: 28, isBoss: true, weight: 13, adena: [850,1700], drops: [{id:'ancient_scroll', rate: 0.5}, {id:'scroll_weapon', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'gem_high_emerald', rate: 0.5}, {id:'ring_morph_short', rate: 0.08}, {id:'ring_teleport_short', rate: 0.08}] },
+    { id: 'wyrm_king', name: '飛龍王', level: 78, hp: 13000, ac: -76, mr: 80, exp: 7200, atkSpeed: 1600, dice: '8d12+26', hitBonus: 31, isBoss: true, weight: 10, adena: [1000,2000], drops: [{id:'claw_beast_king', rate: 0.05}, {id:'wyrm_claw', rate: 1}, {id:'ancient_scroll', rate: 0.6}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_sapphire', rate: 1}, {id:'ring_morph_short', rate: 0.09}, {id:'ring_teleport_short', rate: 0.09}] },
+    { id: 'ogre_king_fi', name: '歐吉王', level: 76, hp: 12000, ac: -74, mr: 55, exp: 6800, atkSpeed: 2000, dice: '8d12+28', hitBonus: 28, isBoss: true, weight: 12, adena: [900,1800], drops: [{id:'belt_ogre', rate: 0.3}, {id:'ancient_scroll', rate: 0.5}, {id:'gem_high_diamond', rate: 0.7}, {id:'gem_high_emerald', rate: 0.4}, {id:'ring_morph_short', rate: 0.09}, {id:'ring_teleport_short', rate: 0.09}] },
+    { id: 'great_minotaur', name: '巨大牛人', level: 80, hp: 16000, ac: -80, mr: 70, exp: 7600, atkSpeed: 1800, dice: '8d12+30', hitBonus: 31, isBoss: true, weight: 8, adena: [1100,2200], drops: [{id:'ancient_scroll', rate: 0.8}, {id:'ancient_great_sword', rate: 0.1}, {id:'gem_high_diamond', rate: 1}, {id:'gem_high_ruby', rate: 0.5}, {id:'ring_morph_short', rate: 0.09}, {id:'ring_teleport_short', rate: 0.09}] },
+    { id: 'ancient_guardian', name: '古代守護者', level: 88, hp: 42000, ac: -90, mr: 95, exp: 8101, atkSpeed: 1700, dice: '9d12+34', hitBonus: 34, isBoss: true, weight: 3, adena: [1800,3600], drops: [{id:'ancient_sword', rate: 0.01}, {id:'ancient_crossbow', rate: 0.01}, {id:'ancient_dual_blade', rate: 0.01}, {id:'ancient_staff', rate: 0.01}, {id:'ancient_robe_armor', rate: 0.01}, {id:'ancient_metal_armor', rate: 0.01}, {id:'ancient_scroll', rate: 2}, {id:'ancient_great_sword', rate: 0.01}, {id:'ancient_leather_armor', rate: 0.01}, {id:'gem_high_diamond', rate: 1.5}, {id:'gem_high_sapphire', rate: 1}, {id:'gem_high_ruby', rate: 1}, {id:'gem_high_emerald', rate: 1}, {id:'ring_morph_short', rate: 0.1}, {id:'ring_teleport_short', rate: 0.1}] }
 ];
 var game = window.game = {
     state: {
@@ -1727,11 +2058,16 @@ var game = window.game = {
 
     renderMapSelect: function() {
         const select = document.getElementById('map-select');
-        let keys = Object.keys(MAPS).filter(k => k !== 'antaras_lair' && !CLOSED_MAP_IDS.includes(k));
+        // 排除三龍巢穴（另行附加）及所有 CLOSED 地圖
+        const bossLairs = ['antaras_lair','fafurion_lair','valakas_lair'];
+        let keys = Object.keys(MAPS).filter(k => !bossLairs.includes(k) && !CLOSED_MAP_IDS.includes(k));
         keys.sort((a, b) => MAPS[a].name.localeCompare(MAPS[b].name, 'zh-TW'));
         select.innerHTML = '';
         keys.forEach(k => { select.innerHTML += `<option value="${k}">${MAPS[k].name}</option>`; });
-        select.innerHTML += `<option value="antaras_lair" class="text-yellow-500 font-bold">${MAPS['antaras_lair'].name}</option>`;
+        // 三龍巢穴 — 依指定顏色附加於清單末尾
+        select.innerHTML += `<option value="antaras_lair" style="color:#f59e0b;font-weight:bold">${MAPS['antaras_lair'].name}</option>`;
+        if (MAPS['fafurion_lair']) select.innerHTML += `<option value="fafurion_lair" style="color:#60a5fa;font-weight:bold">${MAPS['fafurion_lair'].name}</option>`;
+        if (MAPS['valakas_lair'])  select.innerHTML += `<option value="valakas_lair"  style="color:#f87171;font-weight:bold">${MAPS['valakas_lair'].name}</option>`;
         select.value = this.state.currentMap;
     this.updateMapUI();
     },
@@ -3887,7 +4223,7 @@ getAvailableSpells: function() {
         const totalPrice = (Number(def.price) || 0) * quantity;
         if(this.state.adena >= totalPrice) {
             let isEquip = ['weapon','helmet','tshirt','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring','quiver'].includes(def.type);
-            let isBlessed = isEquip && Math.random() < 0.05;
+            let isBlessed = isEquip && Math.random() < (m && m.isBoss ? 0.03 : 0.01);
             let key = this.addInventory(itemId, quantity, 0, isBlessed);
             if (!key) {
                 this.logSystem(`${def.name} 無法加入背包。`, 'danger');
@@ -4386,8 +4722,9 @@ getAvailableSpells: function() {
     },
 
     changeMap: function(mapId) {
-        // 安塔瑞斯棲息地：雖在 CLOSED_MAP_IDS 但已在選單顯示，允許進入（由 spawnMonster 控制重生計時）
-        if (mapId !== 'antaras_lair' && this.isMapClosed(mapId)) {
+        // 三龍巢穴：雖在 CLOSED_MAP_IDS 但已在選單顯示，允許進入
+        const _bossLairIds = ['antaras_lair','fafurion_lair','valakas_lair'];
+        if (!_bossLairIds.includes(mapId) && this.isMapClosed(mapId)) {
             this.logSystem(`${MAPS[mapId]?.name || '此地圖'} 暫時關閉，無法前往。`, 'warn');
             this.renderMapSelect();
             return;
@@ -4477,11 +4814,23 @@ getAvailableSpells: function() {
         let displayName = selected.name;
         let groupCount = this.getRewardKillCount(selected);
         if (!selected.isBoss && groupCount > 1) displayName = `${selected.name}群 x${groupCount}`;
-        this.state.targetMonster = { ...selected, name: displayName, baseName: selected.name, maxHp: selected.hp, debuffs: {} };
+        let aiProfile = getMonsterAiProfile(selected);
+        this.state.targetMonster = {
+            ...selected,
+            name: displayName,
+            baseName: selected.name,
+            maxHp: selected.hp,
+            debuffs: {},
+            aiProfile: aiProfile
+        };
+        if (this.state.targetMonster.atkSpeed) {
+            this.state.targetMonster.atkSpeed = Math.max(400, Math.floor(this.state.targetMonster.atkSpeed * (aiProfile.atkSpeedMult || 1)));
+        }
+        this.state.targetMonster.hitBonus = Number(this.state.targetMonster.hitBonus || 0) + Number(aiProfile.hitBonusAdd || 0);
         this.state.zombieTick = 0;
         this.state.summonTick = 0;
         this.state.monsterSpecialTick = 0;
-        
+        this.state.resurrectUsedThisBattle = false; // PATCH-GAP-010: reset per-battle
         let availSpells = this.getAvailableSpells();
         if (selected.name === '史巴托' && availSpells.includes('detection') && this.canUseSpellNow('detection')) {
             this.state.targetMonster.debuffs.sleep = 5;
@@ -4545,7 +4894,26 @@ getAvailableSpells: function() {
             .map(k => `<span class="c-err mr-2">[${names[k]} ${this.formatSeconds(m.debuffs[k])}]</span>`);
         el.innerHTML = rows.length ? `<span class="c-sys mr-1">目標狀態:</span>${rows.join('')}` : '';
     },
+// 在 playerAttack 函數定義之前插入這段
+    checkCounterBarrier: function(damageAmount, monster, sourceName = '魔法') {
+        let cbWKey = this.state.equipment.weapon;
+        let cbWDef = cbWKey && this.state.inventory[cbWKey] ? ITEMS[this.state.inventory[cbWKey].itemId] : null;
+        
+        // 檢查：有buff、拿雙手武器、機率判定
+        if (this.state.buffs.knight_counter_barrier && cbWDef && cbWDef.hands === 2 && Math.random() <= 1.0) {
+            let counterDmg = Math.max(1, Math.floor(damageAmount * 1.5) + Math.abs(this.getAC()));
+            monster.hp -= counterDmg;
+            this.logCombat(`[魔法反擊] 反擊屏障成功反彈 ${sourceName}，造成 ${counterDmg} 點傷害！`, 'success');
+            
+            if (this.updateMonsterHpBar) this.updateMonsterHpBar();
+            if (monster.hp <= 0 && this.monsterDied) this.monsterDied();
+            return true;
+        }
+        return false;
+    },
+
     playerAttack: function() {
+        // ... 原本的 playerAttack 代碼 ...
         if(!this.state.targetMonster || this.state.hp <= 0 || (this.state.buffs.petrified > 0) || (this.state.buffs.stun > 0)) return;
         
         let dmg = 0, isHit = false, isGraze = false;
@@ -4642,7 +5010,34 @@ getAvailableSpells: function() {
                 this.logCombat(`${ITEMS[wpn.itemId].name}吸收了 ${mpDrain} 點魔力。`);
                 this.updateUI();
             }
-            
+
+// ====== 將以下代碼加在雷神之槌或死亡騎士烈炎之劍的判定附近 ======
+
+        if (wpn && wpn.itemId === 'magic_ancient_great_sword' && Math.random() < 0.07) {
+    // 檢查魔力是否大於等於 20 且 生命大於 5 (設定 > 5 是為了避免扣血把自己給秒殺了)
+    if (this.state.mp >= 20 && this.state.hp > 5) {
+        this.state.mp -= 20; // 扣除 20 魔力
+        this.state.hp -= 5;  // 扣除 5 生命
+        this.updateUI();     // 刷新畫面的血條與魔力條
+        
+        let sp = SPELLS['tornado'];
+        
+        // 攻擊算法：原本的 1d20 加上 (自身力量 * 3)
+        let rawDmg = (this.getEffStat('str') * 3);
+        
+        // 使用系統自帶的魔法傷害計算公式（包含智力、魔攻加成與怪物抗魔）
+        let finalDmg = this.calcMagicDmgToMonster(this.getAttackSpellDamageBeforeResist(rawDmg));
+        finalDmg = this.applyMagicCrit(finalDmg, sp.name);
+        
+        // 印出戰鬥文字並扣除怪物血量
+        this.logCombat(`古巨劍 發動了 奧義，造成 ${finalDmg} 點魔法傷害！`, 'magic');
+        this.state.targetMonster.hp -= finalDmg;
+    } else {
+        // (選擇性) 如果魔力不足，也可以在此印出提示
+        // this.logCombat(`古巨劍 嘗試發動奧義，但魔力不足！`, 'warn');
+    }
+}
+
             if (wpn && wpn.itemId === 'hammer_thor' && Math.random() * 100 < (5 + Number(wpn.enchant))) {
                 let sp = SPELLS['call_lightning'];
                 let finalDmg = this.calcMagicDmgToMonster(this.getAttackSpellDamageBeforeResist(rollDice(sp.dice) + (sp.baseDmg||0)));
@@ -4897,9 +5292,18 @@ getAvailableSpells: function() {
         if(isHit) {
             let rawMonsterDmg = rollMonsterPhysicalDamage(this.state.targetMonster, isCrit);
             if (dbf.weapon_break > 0) rawMonsterDmg -= 10;
-            
+
+            let aiProfile = this.state.targetMonster.aiProfile || getMonsterAiProfile(this.state.targetMonster);
+            let damageMult = Number(aiProfile.damageMult || 1);
+            let trueDamageRate = Number(aiProfile.trueDamageRate || 0);
+
             let dr = this.getDamageReduction();
-            let dmg = Math.max(1, rawMonsterDmg - dr); 
+            let dmg = Math.max(1, rawMonsterDmg - dr);
+            dmg = Math.max(1, Math.floor(dmg * damageMult));
+            if (trueDamageRate > 0) {
+                let trueDamage = Math.max(1, Math.floor(dmg * trueDamageRate));
+                dmg += trueDamage;
+            }
             if (dbf.earth_suppress > 0) dmg = Math.max(1, Math.floor(dmg * 0.8));
             if (this.state.buffs.immune_to_harm) dmg = Math.max(1, Math.floor(dmg * 0.5));
             if (this.state.buffs.knight_reduction_armor && this.state.classId === 'knight' && this.state.hp <= this.state.maxHp * 0.35) dmg = Math.max(1, Math.floor(dmg * 0.6));
@@ -4907,12 +5311,12 @@ getAvailableSpells: function() {
                 let groupCount = this.isDragAttackMode() ? Math.min(8, this.getDragCount()) : this.getPhysicalGroupCount();
                 if (groupCount > 1) dmg = Math.max(1, Math.floor(dmg * groupCount));
             }
-            
+
             this.state.hp -= dmg;
             this.logCombat(`${this.state.targetMonster.name} 命中了你，造成 ${dmg} 點傷害。`, 'danger');
             let cbWKey = this.state.equipment.weapon;
             let cbWDef = cbWKey && this.state.inventory[cbWKey] ? ITEMS[this.state.inventory[cbWKey].itemId] : null;
-            if (this.state.buffs.knight_counter_barrier && cbWDef && cbWDef.hands === 2 && Math.random() < 0.4) {
+            if (this.state.buffs.knight_counter_barrier && cbWDef && cbWDef.hands === 2 && Math.random() <= 1.0) {
                 let counterDmg = Math.max(1, Math.floor(dmg * 1.5) + Math.abs(this.getAC()));
                 this.state.targetMonster.hp -= counterDmg;
                 this.logCombat(`反擊屏障反彈了 ${counterDmg} 點傷害。`, 'success');
@@ -5041,16 +5445,16 @@ getAvailableSpells: function() {
         if (isBlessed) name = '受祝福的 ' + name;
         rewardCounts[name] = (rewardCounts[name] || 0) + 1;
     },
-    monsterDied: function() {
+monsterDied: function() {
+        let dropMulti = 1;
         let m = this.state.targetMonster;
         let killCount = this.getRewardKillCount(m);
         this.state.exp += m.exp * killCount;
-        let dropMulti = (m.isBoss ? 10 : 1) * (this.state.buffs.lucky_charm ? 5 : 1);
         let totalAdena = 0;
         let rewardCounts = {};
         for (let i = 0; i < killCount; i++) {
             if (m.adenaAlways || Math.random() < 0.70) totalAdena += m.adena[0] + Math.floor(Math.random()*(m.adena[1]-m.adena[0]+1));
-            this.grantMonsterLoot(m, dropMulti, rewardCounts);
+            this.grantMonsterLoot(m, 1, rewardCounts);
         }
 // === 【修改點 1】：無視等級處罰，強制將金幣乘以 5 倍 ===
         // 如果想要 2 倍或 3 倍，請把底下的 5 改成 2 或 3
@@ -5092,11 +5496,17 @@ getAvailableSpells: function() {
     },
     checkPlayerDeath: function() {
         if(this.state.hp <= 0) {
+            // PATCH-GAP-010: resurrection passive — 一次性觸發，不可疊加
             let availSpells = this.getAvailableSpells();
-            if (availSpells.includes('resurrection') && this.state.mp >= 50) {
-                this.state.mp -= 50;
-                this.state.hp = 1;
-                this.logCombat(`【返生術】發動！消耗 50 MP，免於一死。`, 'magic');
+            let resDef = SPELLS.resurrection;
+            let hasRes = availSpells.includes('resurrection') && resDef && resDef.onDeathRevive;
+            let alreadyUsed = this.state.resurrectUsedThisBattle;
+            if (hasRes && !alreadyUsed) {
+                let maxHp = this.getMaxHp ? this.getMaxHp() : this.state.maxHp;
+                let reviveHp = Math.max(1, Math.floor(maxHp * (resDef.reviveHpPct || 0.30)));
+                this.state.hp = reviveHp;
+                if (resDef.singleUse) this.state.resurrectUsedThisBattle = true;
+                this.logCombat('\u3010\u8fd4\u751f\u8853\u3011\u88ab\u52d5\u89f8\u767c\uff01\u6b7b\u4ea1\u5f8c\u5fa9\u6d3b\uff0cHP \u6062\u5fa9\u81f3 ' + reviveHp + '\u3002', 'magic');
                 this.updateUI();
                 return;
             }
@@ -7173,7 +7583,7 @@ Bug-fix log:
     const RATE_XP            = 2;      // 經驗倍率
     const RATE_EQUIP_DROP    = 2;      // 武防掉落倍率（僅裝備類）
     const RATE_BLESSED_DROP  = 2.0;    // 祝福掉落率倍率
-    const ENCHANT_SUCCESS    = 0.87;   // 強化成功率
+    const ENCHANT_SUCCESS    = 0.50;   // 強化成功率
     const EQUIP_TYPES = new Set(['weapon','helmet','tshirt','armor','shield','cloak',
                                  'boots','leggings','gloves','amulet','earring','belt','ring','quiver']);
 
@@ -7699,7 +8109,14 @@ setTimeout(autoScaleGame,1500);
         'ant_captain_2f':   [ { type:'poison',  skn:'隊長毒刺',       dur:8, d:30, tick:4, pbase:60, cd:20 } ],
     };
 
-    window.MONSTER_SKILL_TABLE = MONSTER_SKILL_TABLE;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // LINEAGE_MAP_MONSTER_FIX_PATCH_v1.0 — PATCH-001
+    // 關閉所有怪物 / BOSS 魔法技能
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const DISABLE_MONSTER_MAGIC = true;
+    window.DISABLE_MONSTER_MAGIC = DISABLE_MONSTER_MAGIC;
+    // 技能表結構保留，但強制清空內容
+    window.MONSTER_SKILL_TABLE = {};
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // PATCH-004: 玩家狀態系統
@@ -7736,6 +8153,7 @@ setTimeout(autoScaleGame,1500);
     // 傷害計算 / 屬性傷害 / 異常狀態 / 吸血 / 特效派發
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     game.applyMonsterMagicSkill = function(monster) {
+        if (window.DISABLE_MONSTER_MAGIC) return; // PATCH-001: 魔法技能全關閉
         if (!monster || this.state.hp <= 0) return;
 
         // PATCH-014 欄位映射：level / isBoss / dice 已在 File1 使用正確欄位
@@ -7841,14 +8259,24 @@ setTimeout(autoScaleGame,1500);
             }
             return;
         }
-        // ─── 直接魔法傷害（含吸血 PATCH-011）─────────────────
+// ─── 直接魔法傷害（含吸血 PATCH-011）─────────────────
         if (sk.type === 'dmg' || sk.dmg) {
             var roll  = sk.dmg ? (sk.dmg[0] + Math.floor(Math.random() * sk.dmg[1])) : 0;
             var total = roll + (sk.db || 0);
-            // 使用 File1 既有的 takeMagicDmg（含 MR 與 DR 計算）
             total = this.takeMagicDmg ? this.takeMagicDmg(total) : Math.max(1, total);
+            
             this.state.hp -= total;
             this.logCombat(monster.name + ' 施放' + (sk.skn||'魔法') + '，對你造成 ' + total + ' 點魔法傷害！', 'danger');
+
+            // ✅ 精簡後的魔法反擊呼叫
+            let didCounter = this.checkCounterBarrier(total, monster, '魔法攻擊');
+
+            // 如果反擊把怪物打死了，就不需要吸血了 (防Bug)
+            if (didCounter && monster.hp <= 0) {
+                 // 這裡可以選擇是否要繼續執行吸血，通常打死就不用吸了
+                 // 你的 checkCounterBarrier 裡面已經處理過 monsterDied 了
+                 return; 
+            }
             // PATCH-011: 吸血
             if (sk.vamp) {
                 var healAmt = Math.floor(total * 0.5);
@@ -7892,7 +8320,8 @@ setTimeout(autoScaleGame,1500);
         }
 
         // PATCH-003: 若怪物有魔法技能，先派發魔法
-        var hasMagicSkill = !!(MONSTER_SKILL_TABLE[monster.id] || MONSTER_SKILL_TABLE[monster.baseName]);
+        // PATCH-001: DISABLE_MONSTER_MAGIC 全關閉時跳過
+        var hasMagicSkill = !window.DISABLE_MONSTER_MAGIC && !!(MONSTER_SKILL_TABLE[monster.id] || MONSTER_SKILL_TABLE[monster.baseName]);
         if (hasMagicSkill) {
             this.applyMonsterMagicSkill(monster);
             if (this.state.hp <= 0) return; // 魔法已擊殺玩家
@@ -8467,6 +8896,10 @@ if (typeof game.castSkill === 'function') {
 var _bossSkillTimerId = null;
 
 function startBossSkillScheduler() {
+  if (window.DISABLE_MONSTER_MAGIC) { // PATCH-001: Boss排程器全關閉
+    if (_bossSkillTimerId) { clearInterval(_bossSkillTimerId); _bossSkillTimerId = null; }
+    return;
+  }
   if (_bossSkillTimerId) clearInterval(_bossSkillTimerId);
 
   _bossSkillTimerId = setInterval(function() {
@@ -8671,6 +9104,7 @@ waitReady(function() {
     // ══════════════════════════════════════════════════════════════
     var _origV7 = game.applyMonsterMagicSkill;
     game.applyMonsterMagicSkill = function(monster) {
+        if (window.DISABLE_MONSTER_MAGIC) return; // PATCH-001
         if (!monster || !this.state || this.state.hp <= 0) return;
 
         var lookupId   = monster.id || '';
@@ -8723,71 +9157,93 @@ waitReady(function() {
 
         // ── 判斷函式 ──────────────────────────────────────────
         function chance(pbase, def) {
-            return Math.random() * 100 < Math.max(5, ((pbase !== undefined ? pbase : def) - mr) / 2);
+            return Math.random() * 100 < Math.max(3, ((pbase !== undefined ? pbase : def) - mr) / 10);
         }
 
         switch (sk.type) {
             case 'stone':
                 if (chance(sk.pbase, 100)) {
-                    game.state.buffs.petrified = 60;
+                    game.state.buffs.petrified = 5;
                     game.logCombat && game.logCombat('[石化] ⛰ 你被石化了！', 'danger');
                 }
                 break;
 
             case 'stun':
                 if (chance(sk.pbase, 150)) {
-                    game.state.buffs.stun = 60;
+                    game.state.buffs.stun = 3;
                     game.logCombat && game.logCombat('[暈眩] 💫 你被暈眩了！', 'danger');
                 }
                 break;
 
             case 'freeze':
                 if (chance(sk.pbase, 200)) {
-                    game.state.buffs.freeze = 60;
+                    game.state.buffs.freeze = 5;
                     game.logCombat && game.logCombat('[Freeze] ❄ 你被冰凍！攻擊與施法全部封鎖！', 'danger');
                 }
                 break;
 
             case 'silence':
                 if (chance(sk.pbase, 60)) {
-                    game.state.buffs.silence = 60;
+                    game.state.buffs.silence = 5;
                     game.logCombat && game.logCombat('[Silence] 🔇 你被沉默！施法全部封鎖！', 'danger');
                 }
                 break;
 
             case 'magicseal':
                 if (chance(sk.pbase, 100)) {
-                    game.state.buffs.magicseal = 60;
+                    game.state.buffs.magicseal = 5;
                     game.logCombat && game.logCombat('[MagicSeal] 🔒 你的魔法被封印！', 'danger');
                 }
                 break;
 
             case 'poison':
+
                 if (chance(sk.pbase, 100)) {
+
                     dot.poison.remaining    = (sk.dur  || 10) * 10;
+
                     dot.poison.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.01));
+
                     dot.poison.tickInterval = (sk.tick || 3) * 10;
+
                     dot.poison.counter      = 0;
+
                     game.logCombat && game.logCombat('[Poison] ☠ 你中毒了！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.poison.dmg + ' 點傷害。', 'danger');
+
                 }
+
                 break;
 
             case 'burn':
+
                 dot.burn.remaining    = (sk.dur  || 8) * 10;
+
                 dot.burn.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.015));
+
                 dot.burn.tickInterval = (sk.tick || 2) * 10;
+
                 dot.burn.counter      = 0;
+
                 game.logCombat && game.logCombat('[Burn] 🔥 你陷入灼燒！每 ' + (sk.tick||2) + ' 秒受到 ' + dot.burn.dmg + ' 點傷害。', 'danger');
+
                 break;
 
             case 'scald':
+
                 if (chance(sk.pbase, 200)) {
+
                     dot.scald.remaining    = (sk.dur  || 12) * 10;
+
                     dot.scald.dmg          = sk.d || Math.max(1, Math.floor(maxHp * 0.02));
+
                     dot.scald.tickInterval = (sk.tick || 3) * 10;
+
                     dot.scald.counter      = 0;
+
                     game.logCombat && game.logCombat('[Scald] 💧 你受到燙傷！每 ' + (sk.tick||3) + ' 秒受到 ' + dot.scald.dmg + ' 點傷害。', 'danger');
+
                 }
+
                 break;
 
             case 'dmg':
@@ -8849,9 +9305,9 @@ waitReady(function() {
             this.state.buffs.stun      > 0
         );
 
-        var hasSkills = !!(TABLE[m.id] || TABLE[m.baseName]);
+        var hasSkills = !window.DISABLE_MONSTER_MAGIC && !!(TABLE[m.id] || TABLE[m.baseName]);
         if (hasSkills && !frozen) {
-            var triggerRate = m.isBoss ? 1.0 : 0.20;   // Boss=每次觸發, 一般怪=20%
+            var triggerRate = m.isBoss ? 0.40 : 0.20;   // Boss=40%, 一般怪=20%
             if (Math.random() < triggerRate) {
                 this.applyMonsterMagicSkill(m);
                 if (this.state.hp <= 0) return;
@@ -8869,6 +9325,8 @@ waitReady(function() {
     if (typeof _origIsMapClosed === 'function') {
         game.isMapClosed = function(mapId) {
             if (mapId === 'antaras_lair') return false; // 已在 renderMapSelect 中開放
+            if (mapId === 'fafurion_lair') return false; // PATCH-002-2
+            if (mapId === 'valakas_lair')  return false; // PATCH-002-3
             return _origIsMapClosed.call(this, mapId);
         };
     }
@@ -8881,6 +9339,59 @@ waitReady(function() {
     console.log('  ✓ MONSTER_SKILL_TABLE v7：' + Object.keys(TABLE).length + ' 隻怪物已覆蓋');
 });
 
+})();
+</script>
+<script>
+(function() {
+    game.craftMagicGreatSword = function() {
+        let costId = 'ancient_great_sword';          // 確認為這組 ID
+        let targetId = 'magic_ancient_great_sword';  // 確認為這組 ID
+        let costCount = 2; 
+
+        // ... (以下代碼保持不變) ...
+        let currentCount = 0;
+        if (typeof this.getItemCount === 'function') {
+            currentCount = this.getItemCount(costId);
+        } else if (this.state && this.state.inventory) {
+            currentCount = this.state.inventory.filter(item => item.id === costId).length;
+        }
+
+        if (currentCount < costCount) {
+            if (typeof this.logSystem === 'function') {
+                this.logSystem(`升級失敗：需要 古老的巨劍 x${costCount}（目前只有 ${currentCount} 把）。`, 'danger');
+            } else {
+                alert(`需要 古老的巨劍 x${costCount} 才能進行升級。`);
+            }
+            return;
+        }
+
+        if (typeof this.removeItemById === 'function') {
+            this.removeItemById(costId, costCount);
+        } else if (this.state && this.state.inventory) {
+            let removed = 0;
+            for (let i = this.state.inventory.length - 1; i >= 0; i--) {
+                if (this.state.inventory[i].id === costId) {
+                    this.state.inventory.splice(i, 1);
+                    removed++;
+                    if (removed >= costCount) break;
+                }
+            }
+        }
+
+        if (typeof this.addInventory === 'function') {
+            this.addInventory(targetId, 1, 0, false);
+        } else if (typeof this.gainItem === 'function') {
+            this.gainItem(targetId, 1);
+        }
+
+        if (typeof this.logSystem === 'function') {
+            this.logSystem(`升級成功：消耗 古老的巨劍 x${costCount}，獲得 【古巨劍】 x1！`, 'reward');
+        }
+        
+        if (typeof this.renderInventory === 'function') this.renderInventory();
+        if (typeof this.updateUI === 'function') this.updateUI();
+        if (typeof this.saveGame === 'function') this.saveGame(); 
+    };
 })();
 </script>
 <!-- ══════════════════════════════════════════════════════════════
