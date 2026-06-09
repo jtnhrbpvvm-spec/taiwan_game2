@@ -257,7 +257,7 @@
         <div class="w-[340px] flex flex-col gap-4">
             <!-- 新增了 id="status-panel"，並加入去底色與加深背景的樣式確保文字可讀 -->
             <div id="status-panel" class="panel bg-cover bg-top bg-no-repeat" style="background-blend-mode: multiply; background-color: rgba(30, 41, 59, 0.85);">
-                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span id="st-classname">職業</span><span id="st-class" class="text-white text-base font-normal cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
+                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span id="st-classname">職業</span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.4rem;line-height:1;align-items:center;gap:0.15rem;" title="攻城獲勝期間：全商店8折、開放肯特城"><span style="font-size:1.05em;line-height:1;position:relative;top:-0.08em;">👑</span><span style="line-height:1;">攻城獲勝</span></span><span id="st-class" class="text-white text-base font-normal cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
                 <div class="p-4 space-y-3 text-base">
                     <div class="flex justify-between text-slate-400 border-b border-slate-700 pb-2"><span>等級</span> <span class="text-white font-bold text-xl" id="st-lv">1</span></div>
                     <div class="flex justify-between text-slate-400"><span>防禦 (AC)</span> <span class="text-white font-bold" id="st-ac">10</span></div>
@@ -318,7 +318,7 @@
         <div class="flex-1 flex flex-col gap-4">
             <div class="panel">
                 <div class="panel-header flex justify-between items-center">
-    <span class="text-xl flex items-center gap-4">冒險地圖 <span id="status-alerts" class="text-sm font-normal"></span></span>
+    <span class="text-xl flex items-center gap-4">冒險地圖 <span id="status-alerts" class="text-sm font-normal"></span> <span id="siege-timer" class="hidden text-base font-bold text-red-300 anim-flash"></span></span>
     
     <!-- 👇 新增一個 flex 容器把按鈕跟地圖選單包起來 -->
     <div class="flex items-center gap-3">
@@ -460,12 +460,12 @@
 /** 遊戲核心資料庫 */
 const EXP_T = [0, 125, 175, 200, 250, 546, 1105, 1695, 2465, 3439, 4641, 6095, 7825, 9855, 12209, 14911, 17985, 21455, 25345, 29679, 34481, 40033, 45585, 51935, 58849, 66351, 74465, 83215, 92625, 102719, 113521, 125055, 137345, 150415, 164289, 178991, 194545, 210975, 228305, 246559, 265761, 285935, 307105, 329817, 352529, 729360, 1508416, 3495263, 9912189, 36065092];
 function getExpReq(lv) { return lv >= 100 ? Infinity : (lv >= 49 ? 36065092 : EXP_T[lv]); }
-// 高等級打怪經驗衰減：50~69 ×1/2、70~79 ×1/4、80~89 ×1/6、90~99 ×1/8、100滿等不獲得
+// 高等級打怪經驗衰減：50~69 ×1/2、70~79 ×1/3、80~89 ×1/4、90~99 ×1/5、100滿等不獲得
 function getExpGainMult(lv) {
     if (lv >= 100) return 0;
-    if (lv >= 90)  return 1/8;
-    if (lv >= 80)  return 1/6;
-    if (lv >= 70)  return 1/4;
+    if (lv >= 90)  return 1/5;
+    if (lv >= 80)  return 1/4;
+    if (lv >= 70)  return 1/3;
     if (lv >= 50)  return 1/2;
     return 1;
 }
@@ -692,7 +692,7 @@ const DB = {
         "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-amber-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "item_nightvision": { n: "夜之視野", p: 1, c: "text-indigo-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "candle": { n: "回憶蠟燭", type: "misc", req: "all", p: 100000, c: "text-red-500", d: "退還所有能力點數，重新分配", eff: "reset", gachaWeight: 0 },
-        "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "使用可永久提升力量+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", gachaWeight: 0 },
+        "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升力量+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
         "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升敏捷+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
         "panacea_con": { n: "萬能藥(CON)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升體質+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "con", plv: 50, gachaWeight: 0 },
         "panacea_int": { n: "萬能藥(INT)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "50等才能使用，可永久提升智力+1，直到使用回憶蠟燭為止（最多10瓶，不可突破屬性上限60）", eff: "panacea", pstat: "int", plv: 50, gachaWeight: 0 },
@@ -947,8 +947,23 @@ const DB = {
         "aton_enemy": { n: "阿頓", img: "assets/icons/monsters/阿頓.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男騎士", seeInsight: true, hp: 18, ac: -10, mr: 0, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.6, dmg: [1, 14], db: 0, hit: 0, regenHp: 15, scale: { hpC: 18, acBase: -10, acDiv: 3, mrBase: 0, mrDiv: 5, dmgSides: 14, dbDiv: 2, hitBase: 0, hitDiv: 3, atkSpd: 0.6 }, mag: { skn: "衝擊之暈", cd: 50, chance: 0.2, type: "extra_attack", stunChance: 10 } },
         "julian_enemy": { n: "朱利安", img: "assets/icons/monsters/朱利安.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男妖精", hp: 12, ac: -15, mr: 25, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 9], db: 0, hit: 5, regenHp: 15, scale: { hpC: 12, acBase: -15, acDiv: 4, mrBase: 25, mrDiv: 2, dmgSides: 9, dbDiv: 3, hitBase: 5, hitDiv: 3, atkSpd: 0.67 }, mag: { skn: "三重矢", cd: 50, chance: 0.2, type: "multi_attack", times: 3 } },
         "ovi_enemy": { n: "歐薇", img: "assets/icons/monsters/歐薇.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女妖精", hp: 10, ac: -18, mr: 25, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 8], db: 0, hit: 5, regenHp: 15, scale: { hpC: 10, acBase: -10, acDiv: 5, mrBase: 25, mrDiv: 2, dmgSides: 8, dbDiv: 4, hitBase: 5, hitDiv: 3, atkSpd: 0.67 }, mag: { skn: "生命的祝福", cd: 50, chance: 0.2, type: "pledge_bless", healDice: [1, 20], dur: 18, interval: 3 } },
-        "joe_enemy": { n: "喬", img: "assets/icons/monsters/喬.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男法師", hp: 10, ac: -10, mr: 15, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 5, regenHp: 15, scale: { hpC: 10, acBase: -10, acDiv: 6, mrBase: 15, mrDiv: 3, dmgSides: 4, dbDiv: 6, hitBase: 5, hitDiv: 5, atkSpd: 0.67 }, mag: { skn: "光箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "none" }, mag2: { skn: "地裂術", cd: 50, chance: 0.2, dmg: [8, 6], dbLv: 1, dbLvMult: 2, ele: "earth", alwaysHit: true } },
-        "senis_enemy": { n: "賽尼斯", img: "assets/icons/monsters/賽尼斯.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女法師", hp: 8, ac: -11, mr: 18, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 0, regenHp: 15, scale: { hpC: 8, acBase: -11, acDiv: 6, mrBase: 18, mrDiv: 3, dmgSides: 4, dbDiv: 6, hitBase: 0, hitDiv: 5, atkSpd: 0.67 }, mag: { skn: "冰箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "water" }, mag2: { skn: "冰矛圍籬", cd: 50, chance: 0.2, dmg: [5, 10], dbLv: 1, dbLvMult: 2, ele: "water", alwaysHit: true, sec: { type: "freeze", pbase: 150 } } },
+        "joe_enemy": { n: "喬", img: "assets/icons/monsters/喬.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "男法師", hp: 10, ac: -10, mr: 15, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 5, regenHp: 15, scale: { hpC: 10, acBase: -10, acDiv: 6, mrBase: 15, mrDiv: 3, dmgSides: 4, dbDiv: 6, hitBase: 5, hitDiv: 5, atkSpd: 0.67, dbHalf: true }, mag: { skn: "光箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "none" }, mag2: { skn: "地裂術", cd: 50, chance: 0.2, dmg: [8, 6], dbLv: 1, dbLvMult: 2, ele: "earth", alwaysHit: true } },
+        "senis_enemy": { n: "賽尼斯", img: "assets/icons/monsters/賽尼斯.png", lv: 1, s: "S", beh: "主動", race: "血盟", wild: true, e: "none", pledgeEnemy: true, excludeAvatar: "女法師", hp: 8, ac: -11, mr: 18, exp: 100, goldMin: 1136, goldMax: 1136, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 0, regenHp: 15, scale: { hpC: 8, acBase: -11, acDiv: 6, mrBase: 18, mrDiv: 3, dmgSides: 4, dbDiv: 6, hitBase: 0, hitDiv: 5, atkSpd: 0.67, dbHalf: true }, mag: { skn: "冰箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "water" }, mag2: { skn: "冰矛圍籬", cd: 50, chance: 0.2, dmg: [5, 10], dbLv: 1, dbLvMult: 2, ele: "water", alwaysHit: true, sec: { type: "freeze", pbase: 150 } } },
+        // ===== 攻城戰（攻城）怪物：等級隨玩家(由 applySiegeEnemyScaling 縮放)，由攻城系統生成 =====
+        // 攻城塔/城門：固定HP、不會攻擊；HP 跨地圖保留(siegePersistHp)需攻城系統支援
+        "siege_tower": { n: "肯特守護塔", img: "assets/icons/monsters/肯特守護塔.png", lv: 1, s: "L", beh: "被動", race: "建築", siegeEnemy: true, siegePersistHp: true, noAttack: true, e: "none", boss: true, hp: 15000, ac: 10, mr: 0, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 2, dmg: [0, 0], db: 0, hit: 0, siege: { fixed: true, hp: 15000, ac: 10, mr: 0 } },
+        "siege_gate": { n: "肯特城門", img: "assets/icons/monsters/肯特城門.png", lv: 1, s: "L", beh: "被動", race: "建築", siegeEnemy: true, siegePersistHp: true, noAttack: true, e: "none", boss: true, hp: 10000, ac: 10, mr: 0, dr: 20, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 2, dmg: [0, 0], db: 0, hit: 0, siege: { fixed: true, hp: 10000, ac: 10, mr: 0, dr: 20 } },
+        // 特羅斯王子 / 依詩蒂公主：技能「呼喚盟友」(場上敵人<3 立即追加一次普攻，10%暈眩) — 已實作(call_ally)
+        "siege_tros": { n: "特羅斯王子", img: "assets/icons/monsters/特羅斯王子.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 14, ac: -10, mr: 0, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.67, dmg: [1, 16], db: 0, hit: 2, siege: { hpC: 14, acBase: -10, acDiv: 4, mrBase: 0, mrDiv: 5, dmgSides: 16, hitBase: 2, atkSpd: 0.67 }, mag: { skn: "呼喚盟友", type: "call_ally", cd: 10, stunChance: 10 } },
+        "siege_esti": { n: "依詩蒂公主", img: "assets/icons/monsters/依詩蒂公主.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 15, ac: -10, mr: 0, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.67, dmg: [1, 12], db: 0, hit: 2, siege: { hpC: 15, acBase: -10, acDiv: 4, mrBase: 0, mrDiv: 5, dmgSides: 12, hitBase: 2, atkSpd: 0.67 }, mag: { skn: "呼喚盟友", type: "call_ally", cd: 10, stunChance: 10 } },
+        // 鋼鐵阿頓：衝擊之暈、堅固防護(self_buff/guard)、看破被動(siegeInsight) — 已實作
+        "siege_aton": { n: "鋼鐵阿頓", img: "assets/icons/monsters/鋼鐵阿頓.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, siegeInsight: true, e: "none", hp: 18, ac: -15, mr: 0, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.35, dmg: [1, 28], db: 0, hit: 0, siege: { hpC: 18, acBase: -15, acDiv: 3, mrBase: 0, mrDiv: 5, dmgSides: 28, hitBase: 0, atkSpd: 0.35 }, mag: { skn: "衝擊之暈", cd: 50, chance: 0.2, type: "extra_attack", stunChance: 10 }, mag2: { skn: "堅固防護", type: "self_buff", buffKind: "guard", cd: 180 } },
+        "siege_julian": { n: "月光朱利安", img: "assets/icons/monsters/月光朱利安.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 12, ac: -15, mr: 25, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.56, dmg: [1, 18], db: 0, hit: 5, siege: { hpC: 12, acBase: -15, acDiv: 4, mrBase: 25, mrDiv: 2, dmgSides: 18, hitBase: 5, atkSpd: 0.56 }, mag: { skn: "三重矢", cd: 50, chance: 0.2, type: "multi_attack", times: 3 }, mag2: { skn: "暴風神射", type: "self_buff", buffKind: "volley", cd: 150 } },
+        "siege_ovi": { n: "月之精靈歐薇", img: "assets/icons/monsters/月之精靈歐薇.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 10, ac: -10, mr: 25, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.67, dmg: [1, 8], db: 0, hit: 5, siege: { hpC: 10, acBase: -10, acDiv: 5, mrBase: 25, mrDiv: 2, dmgSides: 8, hitBase: 5, atkSpd: 0.67 }, mag: { skn: "三重矢", cd: 50, chance: 0.1, type: "multi_attack", times: 3 }, mag2: { skn: "生命的祝福", cd: 50, chance: 0.2, type: "pledge_bless", healDice: [1, 20], dur: 18, interval: 3 } },
+        "siege_joe": { n: "魔法師喬", img: "assets/icons/monsters/魔法師喬.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 10, ac: -10, mr: 15, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 5, siege: { hpC: 10, acBase: -10, acDiv: 6, mrBase: 15, mrDiv: 3, dmgSides: 4, dbHalf: true, hitBase: 5, atkSpd: 0.67 }, mag: { skn: "光箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "none", alwaysHit: true }, mag2: { skn: "地裂術", cd: 50, chance: 0.2, dmg: [8, 6], dbLv: 1, ele: "earth", alwaysHit: true }, mag3: { skn: "震裂術", cd: 130, chance: 0.1, dmg: [4, 15], dbLv: 1, ele: "earth", alwaysHit: true } },
+        "siege_senis": { n: "魔女賽尼斯", img: "assets/icons/monsters/魔女賽尼斯.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, e: "none", hp: 8, ac: -11, mr: 18, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.67, dmg: [1, 4], db: 0, hit: 0, siege: { hpC: 8, acBase: -11, acDiv: 6, mrBase: 18, mrDiv: 3, dmgSides: 4, dbHalf: true, hitBase: 0, atkSpd: 0.67 }, mag: { skn: "冰箭", cd: 20, dmg: [1, 6], dbLv: 1, ele: "water", alwaysHit: true }, mag2: { skn: "冰矛圍籬", cd: 50, chance: 0.2, dmg: [5, 10], dbLv: 1, ele: "water", alwaysHit: true, sec: { type: "freeze", pbase: 150 } }, mag3: { skn: "冰雪暴", cd: 130, chance: 0.1, dmg: [8, 8], dbLv: 1, ele: "water", alwaysHit: true, sec: { type: "freeze", pbase: 200 } } },
+        // 闇影格立特：ER+12、雙重破壞被動(doubleDestroy)、破壞盔甲(armor_break) — 已實作
+        "siege_grit": { n: "闇影格立特", img: "assets/icons/monsters/闇影格立特.png", lv: 1, s: "S", beh: "主動", race: "血盟", siegeEnemy: true, doubleDestroy: true, e: "none", hp: 10, ac: -13, mr: 20, er: 12, exp: 0, goldMin: 0, goldMax: 0, atkSpd: 0.5, dmg: [1, 50], db: 0, hit: 5, siege: { hpC: 10, acBase: -13, acDiv: 5, mrBase: 20, mrDiv: 2, dmgSides: 50, dbHalf: true, hitBase: 5, atkSpd: 0.5, er: 12 }, mag: { skn: "破壞盔甲", type: "armor_break", cd: 50, chance: 0.1 } },
         "orc_archer": { n: "妖魔弓箭手", lv: 3, s: "S", beh: "被動", race: "妖魔", e: "fire", hp: 12, ac: 10, mr: 2, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
         "gremlin": { n: "地靈", lv: 3, s: "S", beh: "被動", race: "地靈", e: "earth", hp: 7, ac: 10, mr: 2, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
         "nm_001": { n: "污染的地精靈", lv: 3, s: "S", beh: "被動", race: "元素", elem: true, e: "earth", hp: 10, ac: 10, mr: 10, exp: 10, goldMin: 11, goldMax: 32, atkSpd: 2, dmg: [1, 3], db: 0, hit: 0 },
@@ -1106,6 +1121,16 @@ const DB = {
 				{ id: "npc_finn", n: "芬", title: "製作", type: "craft", d: "提供物品製作服務。" },
                 { id: "npc_joel", n: "喬爾", title: "製作", type: "craft", d: "提供物品製作服務。" },
                 { id: "npc_ricky", n: "瑞奇", title: "試煉", type: "quest", d: "騎士的試煉：收集特定物品可換取專屬頭部裝備。" }
+            ]
+        },
+        "town_kent_castle": {
+            n: "肯特城",
+            npcs: [
+                { id: "npc_nikki", n: "尼奇", title: "雜貨商人", type: "shop", d: "攻城獲勝後開放的肯特城雜貨商。" },
+                { id: "npc_ismael", n: "伊賽馬利", title: "交換物品", type: "exchange", d: "以卷軸或金幣交換稀有的祝福卷軸與飾品卷軸。" },
+                { id: "npc_pandora", n: "潘朵拉", title: "黑市", type: "exchange", d: "可能隨機抽到任何物品。" },
+                { id: "npc_esti", n: "依詩蒂", title: "血盟", type: "pledge", d: "尋找以血為盟的夥伴。" },
+                { id: "npc_tros", n: "特羅斯", title: "血盟", type: "pledge", d: "尋找以血為盟的夥伴。" }
             ]
         },
         "town_talking": {
@@ -1340,6 +1365,8 @@ const DB = {
     maps: {
         "training": ["orc", "goblin", "orc_archer", "gremlin"],
         "dream_island": ["nm_038", "nm_039", "nm_040", "nm_036", "nm_041", "nm_042", "nm_043", "nm_044", "nm_023", "nm_024", "nm_045", "nm_028", "nm_029", "nm_030", "nm_031", "nm_032", "nm_037"],
+        "kent_outer": ["siege_aton", "siege_julian", "siege_ovi", "siege_joe", "siege_senis", "siege_tros", "siege_esti", "siege_grit", "siege_gate"],
+        "kent_inner": ["siege_aton", "siege_julian", "siege_ovi", "siege_joe", "siege_senis", "siege_tros", "siege_esti", "siege_grit", "siege_tower"],
         "silver_knight": ["orc", "goblin", "orc_archer", "gremlin", "侏儒", "nm_003", "zombie", "fighter", "ice_wolf", "wolf", "gnome_warrior", "skeleton", "orc_mage", "stone_golem", "hobgoblin", "b_knight", "ghoul", "sparto", "lycan", "dragon_turtle"],
         "talking_island": ["orc", "goblin", "orc_archer", "gremlin", "侏儒", "nm_035", "nm_003", "doberman", "zombie", "floating_eye", "fighter", "wolf", "skeleton", "stone_golem", "spider"],
         "zone_01": ["orc", "orc_archer", "nm_002", "nm_003", "侏儒", "fighter", "zombie", "wolf", "gandi_orc", "orc_mage", "rova_orc", "stone_golem", "atuba_orc", "duda_orc", "neruga_orc", "nm_007", "nm_009"],
@@ -1620,11 +1647,11 @@ function flushAwaySummary() {
 
 let player = {
     cls: null, name: null, lv: 1, exp: 0, gold: 1000, hp: 0, mhp: 0, mp: 0, mmp: 0, blessings: {},
-    base: { str:0, dex:0, con:0, int:0, wis:0, cha:8 }, bonus: 0, alloc: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panacea: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panaceaUsed: 0, junkPrefs: {}, bloodPledge: null, magicShieldCd: 0,
+    base: { str:0, dex:0, con:0, int:0, wis:0, cha:8 }, bonus: 0, alloc: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panacea: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panaceaUsed: 0, junkPrefs: {}, bloodPledge: null, magicShieldCd: 0, siege: { active:false, gateKilled:false, towerKilled:false, endTime:0, kills:0, result:null, cooldownUntil:0, rewardPending:false, victoryUntil:0, accCdUntil:0 },
     inv: [], eq: { wpn: null, arrow: null, helm: null, armor: null, shield: null, cloak: null, tshirt: null, gloves: null, boots: null, ring1: null, ring2: null, amulet: null, belt: null },
     skills: [], buffs: { haste: 0, brave: 0, blue: 0, cautious: 0, elfcookie: 0, poly: 0, shield: 0, sk_magic_shield: 0 }, poly: null,
     summon: null, manualCd: {}, elfEle: null, hot: null,
-    cds: { pot: 0, atkSk: 0, healSk: 0 }, dead: false, statuses: { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0, magicseal: 0 },
+    cds: { pot: 0, atkSk: 0, healSk: 0 }, dead: false, statuses: { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0, magicseal: 0, armorBreak: 0 },
     d: { str:0, dex:0, con:0, int:0, wis:0, cha:8,
          meleeDmg: 0, meleeHit: 0, meleeCrit: 0,           // 近距離（力量）
          rangedDmg: 0, rangedHit: 0, rangedCrit: 0,         // 遠距離（敏捷）
@@ -1816,6 +1843,19 @@ function getWisMpRegen(wis) {
         [9,1],[14,2],[19,3],[24,4],[29,6],[34,7],[39,9],[44,10],[49,14],[54,15],[59,17]
     ], 20); // 60 = 20
 }
+function getWisMpOnKill(wis) {
+    // 精神(WIS)：擊殺敵人時立即額外恢復的 MP 量
+    if (wis >= 60) return 10;
+    if (wis >= 53) return 9;   // 53~59
+    if (wis >= 45) return 8;   // 45~52
+    if (wis >= 38) return 7;   // 38~44
+    if (wis >= 30) return 6;   // 30~37
+    if (wis >= 25) return 5;   // 25~29
+    if (wis >= 20) return 3;   // 20~24
+    if (wis >= 15) return 2;   // 15~19
+    if (wis >= 11) return 1;   // 11~14
+    return 0;                  // 7~10（含以下）
+}
 function getWisMR(wis) {
     // 精神7~10 = 0；11 = +4；之後每精神+1 MR+4
     if (wis <= 10) return 0;
@@ -1843,6 +1883,7 @@ function logCombat(msg, type="player") {
     else if (type === "magic") { colorClass = "text-cyan-300"; } // 魔法技能 (青色)
     else if (type === "heal") { colorClass = "text-green-300"; } // 恢復效果 (綠色)
     else if (type === "miss" || type === "dodge") { colorClass = "text-slate-500"; } // 未命中/閃避 (灰色)
+    else if (type === "evade") { colorClass = "text-teal-300"; } // ER獨立迴避 (淡青綠色)
     
     el.innerHTML += `<div class="log-entry ${colorClass}">${msg}</div>`;
     if(el.children.length > 50) el.removeChild(el.firstChild);
@@ -2267,9 +2308,11 @@ function hasTeleportRing() {
 }
 // 傳送：清空當前怪物並重置生怪排程；forceBoss=true 時讓下一次生怪必定為 BOSS
 function doTeleport(forceBoss) {
+    saveSiegeBossHp();   // 傳送前保存攻城塔/門血量
     mapState.mobs = [null, null, null];
     mapState.spawnAt = [null, null, null];
     if(forceBoss) mapState.forceBoss = true;
+    mapState.suppressSiegeBoss = !forceBoss;   // 無戒指傳送：必不出現城門/守護塔；持戒指：forceBoss 必定出現
     renderMobs();
 }
 
@@ -2433,6 +2476,7 @@ function tick() {
     if (state.ticks % 160 === 0) {
         regenTick();
     }
+    if (state.ticks % 10 === 0) siegeTick();   // 攻城戰：每秒檢查時限
     
     if(player.statuses.poison > 0 && state.ticks % player.statuses.poisonTick === 0) {
         player.hp -= player.statuses.poisonDmg;
@@ -2521,8 +2565,8 @@ function tick() {
 
         // --- 異常狀態處理（倒數、中毒 DoT），死亡則跳過 ---
         if (processMobStatusTick(m, i)) continue;
-        // 常駐被動：HP 未滿 100% 時每秒回復（依等級 15 / 40），不受異常狀態影響
-        if (m.regenHp && state.ticks % 10 === 0 && m.curHp > 0 && m.curHp < m.hp) {
+        // 常駐被動：HP 未滿 100% 時回復（依等級 15 / 40），不受異常狀態影響；間隔由 regenEvery 決定(預設10 ticks=每1秒)
+        if (m.regenHp && state.ticks % (m.regenEvery || 10) === 0 && m.curHp > 0 && m.curHp < m.hp) {
             m.curHp = Math.min(m.hp, m.curHp + m.regenHp);
             if (!state.ff) renderMobs();
         }
@@ -2723,6 +2767,33 @@ function regenTick() {
 const PURE_BOSS_MAPS = ['antaras_lair', 'fafurion_lair', 'valakas_lair'];
 
 // 血盟敵人：等級與能力隨玩家等級縮放，於生成當下依各自的 scale 參數計算
+function applySiegeEnemyScaling(mob) {
+    let L = Math.max(1, player.lv);
+    let s = mob.siege || {};
+    if (s.fixed) {                                  // 攻城塔/城門：固定HP、不隨等級成長
+        mob.lv = 1;
+        mob.hp = s.hp; mob.curHp = mob.hp;
+        mob.ac = s.ac; mob.mr = s.mr;
+        mob.exp = 0; mob.goldMin = 0; mob.goldMax = 0;
+        if (s.dr) mob.dr = s.dr;
+        return;
+    }
+    mob.lv = L;
+    mob.hp = (s.hpC || 10) * L; mob.curHp = mob.hp;
+    mob.ac = (s.acBase !== undefined ? s.acBase : -10) - Math.floor(L / (s.acDiv || 4));
+    mob.mr = (s.mrBase || 0) + Math.floor(L / (s.mrDiv || 5));
+    mob.exp = 30 * L;                               // 攻城怪經驗：30×玩家等級
+    mob.goldMin = 0; mob.goldMax = 0;               // 攻城怪不掉金幣
+    mob.dmg = [1, s.dmgSides || 10];
+    mob.db = s.dbHalf ? Math.floor(L / 2) : L;      // 傷害加成：+(玩家等級)；dbHalf 為 +(玩家等級/2)
+    mob.hit = (s.hitBase || 0) + Math.floor(L / 2); // 額外命中：基底 +(玩家等級/2)
+    mob.atkSpd = s.atkSpd || 0.67;
+    // 常駐被動回復(每2秒)：1~49 → 40HP；50~100 → 60HP
+    mob.regenHp = (L >= 50) ? 60 : 40;
+    mob.regenEvery = 20;
+    if (s.er) mob.er = s.er;
+}
+
 function applyPledgeEnemyScaling(mob) {
     let L = Math.max(1, player.lv);
     let s = mob.scale || {};
@@ -2735,10 +2806,11 @@ function applyPledgeEnemyScaling(mob) {
     mob.goldMin = 1136;
     mob.goldMax = Math.max(1136, 100 * L);   // 低等時 100×等級<1136，夾住以免區間為負
     mob.dmg = [1, s.dmgSides || 10];
-    mob.db = L;                          // 一般攻擊傷害加成：+(玩家等級)（原為 +玩家等級/dbDiv）
-    mob.hit = (s.hitBase || 0) + L;      // 額外命中：基底 +(玩家等級)（原為 +玩家等級/hitDiv）
+    mob.db = s.dbHalf ? Math.floor(L / 2) : L;   // 一般攻擊傷害加成：+(玩家等級)；喬/賽尼斯(dbHalf) 為 +(玩家等級/2)
+    mob.hit = (s.hitBase || 0) + Math.floor(L / 2);      // 額外命中：基底 +(玩家等級/2)
     mob.atkSpd = s.atkSpd || 0.67;
-    mob.regenHp = (L >= 50) ? 40 : 15;   // 常駐被動：HP 未滿時每秒回復量
+    mob.regenHp = (L >= 50) ? 40 : 15;            // 常駐被動：HP 未滿時的回復量
+    mob.regenEvery = (L >= 50) ? 20 : 10;        // 50~100：每2秒回40；50以下：每1秒回15
 }
 
 // 生命的祝福：每 tick 推進；達到間隔時為場上所有血盟怪物（HP 未滿）回復，持續期滿自動結束
@@ -2767,19 +2839,30 @@ function spawnMob(idx) {
     let bossInBattle = mapState.mobs.some(m => m && m.boss);
     let bossPool = pool.filter(id => DB.mobs[id] && DB.mobs[id].boss);
     let normalPool = pool.filter(id => DB.mobs[id] && !DB.mobs[id].boss);
+    // 攻城區：玩家不會遭遇自己陣營的盟主（特羅斯陣營不遇特羅斯王子；依詩蒂陣營不遇依詩蒂公主）
+    if (isSiegeArea(mapState.current)) {
+        if (player.bloodPledge === 'tros') normalPool = normalPool.filter(id => id !== 'siege_tros');
+        else if (player.bloodPledge === 'esti') normalPool = normalPool.filter(id => id !== 'siege_esti');
+    }
     
     let mobId;
-    let wantBoss = !bossInBattle && bossPool.length > 0 && (mapState.forceBoss || Math.random() < 0.03);
+    let siegeArea = isSiegeArea(mapState.current);
+    let wantBoss = !bossInBattle && bossPool.length > 0 && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (Math.random() < 0.03)));
     if(mapState.forceBoss) mapState.forceBoss = false;   // 強制旗標只作用於下一次生怪
     if(wantBoss) {
         mobId = bossPool[Math.floor(Math.random() * bossPool.length)];
     } else {
         let safePool = normalPool.length > 0 ? normalPool : pool;
+        if (siegeArea) {   // 攻城區：避免場上同時出現兩名以上同名敵人
+            let onFieldNames = mapState.mobs.filter(m => m).map(m => m.n);
+            let uniquePool = safePool.filter(id => DB.mobs[id] && !onFieldNames.includes(DB.mobs[id].n));
+            if (uniquePool.length > 0) safePool = uniquePool;
+        }
         mobId = safePool[Math.floor(Math.random() * safePool.length)];
         // 血盟特殊敵人：已加入任一血盟陣營者，於非BOSS房狩獵地區有 1% 機率遇到敵對血盟。
         // 兩陣營遇到的敵人相同；排除「與自己性別職業對應」的血盟敵人；依詩蒂陣營玩家不論職業都不會遇到依詩蒂本人。
         // 從符合條件者中平均抽一隻；場上可同時有多隻不同名的血盟敵人，但不會有同名兩隻。
-        if(player.bloodPledge && !PURE_BOSS_MAPS.includes(mapState.current) && Math.random() < 0.01) {
+        if(player.bloodPledge && !PURE_BOSS_MAPS.includes(mapState.current) && !isSiegeArea(mapState.current) && Math.random() < 0.01) {
             let onField = mapState.mobs.filter(m => m).map(m => m.n);
             let candidates = Object.keys(DB.mobs).filter(id => {
                 let d = DB.mobs[id];
@@ -2796,6 +2879,9 @@ function spawnMob(idx) {
     if(!base) return;
     mapState.mobs[idx] = { ...base, curHp: base.hp, uid: uid(), _magCd: {}, justHit: false, st: newMobStatus() };
     if(base.pledgeEnemy) applyPledgeEnemyScaling(mapState.mobs[idx]);   // 血盟敵人：依玩家等級縮放
+    if(base.siegeEnemy) applySiegeEnemyScaling(mapState.mobs[idx]);   // 攻城敵人：依玩家等級縮放
+    if(base.n === '肯特城門' && player.siege && player.siege.gateHp > 0) mapState.mobs[idx].curHp = Math.min(mapState.mobs[idx].hp, player.siege.gateHp);   // 城門HP保留
+    if(base.n === '肯特守護塔' && player.siege && player.siege.towerHp > 0) mapState.mobs[idx].curHp = Math.min(mapState.mobs[idx].hp, player.siege.towerHp);   // 守護塔HP保留
     renderMobs();
 }
 
@@ -2850,13 +2936,15 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData) {
     let hitValue = Math.max(1, Math.min(20, rawHitValue));
 
     let rollHit = roll(1, 20);
-    let hit = false, heavy = false;
+    let hit = false, heavy = false, graze = false;
     if (rollHit === 20) { hit = true; heavy = true; }
     else if (rollHit !== 1 && hitValue >= rollHit) hit = true;
-    if(!hit) return { dmg: 0, hit: false, heavy: false, crit: false, ranged: isRanged };
+    else if (rollHit === 19) { hit = true; graze = true; }   // 擲到19依公式本應未命中時 → 擦傷：仍命中，但最終傷害剩50%
+    if(!hit) return { dmg: 0, hit: false, heavy: false, crit: false, graze: false, ranged: isRanged };
 
     // 爆擊判定（依遠/近距離爆擊率）
     let isCrit = Math.random() * 100 < critRate;
+    if (graze) isCrit = false;   // 擦傷不會爆擊
     let critMult = isCrit ? (1 + critDmg / 100) : 1;  // 爆擊係數 = 1 + 爆擊傷害%
 
     // 武器傷害（重擊必定取最大值）
@@ -2864,7 +2952,7 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData) {
 
     // [（遠/近距離傷害 x 爆擊係數） + 額外傷害 - 敵人傷害減免]，計算過程最低為1
     let nearFar = weaponRoll + dmgBonus;
-    let inner = Math.floor(nearFar * critMult) + player.d.extraDmg - (target.dr || 0);
+    let inner = Math.floor(nearFar * critMult) + player.d.extraDmg - ((target.dr || 0) + ((target._siegeDrEnd > state.ticks) ? (target._siegeDrVal || 0) : 0));   // 堅固防護：怪物傷害減免
     inner = Math.max(1, inner);
 
     // 固定傷害（屬性/特效，於最低1之後加上）
@@ -2894,7 +2982,9 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData) {
         fixed += roll(1, 20);
     }
 
-    return { dmg: inner + fixed, hit: true, heavy: heavy, crit: isCrit, ranged: isRanged };
+    let _outDmg = inner + fixed;
+    if (graze) _outDmg = Math.max(1, Math.floor(_outDmg * 0.5));   // 擦傷：最終傷害剩 50%
+    return { dmg: _outDmg, hit: true, heavy: heavy, crit: isCrit, graze: graze, ranged: isRanged };
 }
 
 function consumeArrow() {
@@ -2941,7 +3031,7 @@ function playerAttack() {
     if(!target) return;
 
     if (target.er && roll(1, 100) <= target.er) {
-        logCombat(`對 <span class="${getMobColor(target.lv)}">${target.n}</span> 的攻擊被閃避了。`, 'miss');
+        logCombat(`<span class="${getMobColor(target.lv)}">${target.n}</span> 成功迴避攻擊。`, 'evade');
         return;
     }
 
@@ -3027,6 +3117,7 @@ function playerAttack() {
         if(result.heavy && result.crit) { tag = 'player-crit'; ext = ' (會心一擊!)'; }
         else if(result.crit) { tag = 'player-crit'; ext = ' (爆擊!)'; }
         else if(result.heavy) { tag = 'player-heavy'; ext = ' (重擊!)'; }
+        else if(result.graze) { ext = ' (擦傷!)'; }
 
         // 簡化戰鬥資訊，不顯示遠/近距離[cite: 8]
         logCombat(`${killPrefix}命中 <span class="${getMobColor(target.lv)}">${target.n}</span>，造成 ${result.dmg} 點傷害。${ext}`, tag);
@@ -3056,12 +3147,12 @@ function enemyPhysicalAttack(mob, idx, stunChance = 0) {
     if(player.dead) return;
 
     if (roll(1, 100) <= player.d.er) {
-        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 的攻擊被你閃避了。`, 'dodge');
+        logCombat(`${player.name || '你'} 成功迴避攻擊。`, 'evade');
         return;
     }
 
     let st = mob.st || newMobStatus();
-    let mobHitBonus = (mob.hit || 0) - (st.blindVal || 0) - (st.weaken > 0 ? 2 : 0) - (st.disease > 0 ? 4 : 0);
+    let mobHitBonus = (mob.hit || 0) - (st.blindVal || 0) - (st.weaken > 0 ? 2 : 0) - (st.disease > 0 ? 4 : 0) + ((mob._siegeHitEnd > state.ticks) ? 2 : 0);   // 暴風神射：額外命中+2
     let rawHitValue = mob.lv + mobHitBonus - player.lv + player.d.ac;
     let hitValue = Math.max(1, Math.min(20, rawHitValue));
     
@@ -3080,7 +3171,7 @@ function enemyPhysicalAttack(mob, idx, stunChance = 0) {
         let diceCount = mob.dmg[0] || 1;
         let diceSides = mob.dmg[1] || 1;
         let baseWeaponDmg = heavy ? (diceCount * diceSides) : roll(diceCount, diceSides);
-        let dmgBonus = (mob.db || 0) - (st.weaken > 0 ? 4 : 0) - (st.broken > 0 ? 2 : 0);
+        let dmgBonus = (mob.db || 0) - (st.weaken > 0 ? 4 : 0) - (st.broken > 0 ? 2 : 0) + ((mob._siegeDmgEnd > state.ticks) ? 4 : 0);   // 暴風神射：額外傷害+4
         let totalDmg = baseWeaponDmg + dmgBonus;
 
         let resFactor = 1.0;
@@ -3106,14 +3197,23 @@ function enemyPhysicalAttack(mob, idx, stunChance = 0) {
 
         if(player.buffs.sk_holy_barrier > 0) totalDmg = Math.floor(totalDmg * 0.7);
         if(player.statuses.freeze > 0) totalDmg += 400;
+        if(player.statuses.armorBreak > 0) totalDmg = Math.floor(totalDmg * 1.5);   // 破壞盔甲：一般攻擊受傷 +50%
 
         // 常駐被動：看破（敵人版）— 命中時依機率造成兩倍傷害（5 + 等級/10 %）
         let mobInsightPrefix = '';
-        if(mob.seeInsight) {
+        if(mob.seeInsight || mob.siegeInsight) {
             let insightRate = Math.min(15, 5 + Math.floor((mob.lv || 1) / 10));
             if(Math.random() * 100 < insightRate) {
                 totalDmg *= 2;
                 mobInsightPrefix = `<span class="text-fuchsia-300 font-bold">【看破】${mob.n}看穿了你的破綻！</span> `;
+            }
+        }
+        // 常駐被動：雙重破壞（闇影格立特）— 命中時依機率造成兩倍最終傷害（5%，50級6%，之後每5級+1%）
+        if(mob.doubleDestroy) {
+            let ddRate = (mob.lv >= 50) ? (6 + Math.floor((mob.lv - 50) / 5)) : 5;
+            if(Math.random() * 100 < ddRate) {
+                totalDmg *= 2;
+                mobInsightPrefix += `<span class="text-fuchsia-400 font-bold">【雙重破壞】${mob.n}撕裂了你的防禦！</span> `;
             }
         }
 
@@ -3145,9 +3245,11 @@ function killPlayer() {
     player.skills.forEach(s => { if(DB.skills[s] && DB.skills[s].summon) player.buffs[s] = 0; });
     player.blessings = {};   // 死亡清空所有盟主祝福
     let msg = "你的角色已經死亡。";
-    if (player.lv >= 5) {
-        player.exp = Math.max(0, player.exp - Math.floor(getExpReq(player.lv) * 0.1));
-        msg += " 失去 10% 經驗值。";
+    if (isSiegeArea(mapState.current)) {
+        msg += " （攻城區域死亡，不損失經驗值。）";
+    } else if (player.lv >= 5) {
+        player.exp = Math.max(0, player.exp - Math.floor(getExpReq(player.lv) * 0.01));
+        msg += " 失去 1% 經驗值。";
     } else {
         msg += " 4級以下死亡無懲罰。";
     }
@@ -3180,6 +3282,34 @@ function applyMobMagic(mob, sk) {
         logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '三重矢'}，連續攻擊！`, 'enemy');
         let times = sk.times || 3;
         for(let t = 0; t < times; t++) { if(player.dead) break; enemyPhysicalAttack(mob, idx, 0); }
+        return;
+    }
+    // 呼喚盟友：場上敵人未滿 3 人時，立即追加一次一般攻擊（命中依機率附加暈眩）
+    if(sk.type === 'call_ally') {
+        if(player.dead) return;
+        if(mapState.mobs.filter(x => x).length >= 3) return;
+        let idx = mapState.mobs.indexOf(mob);
+        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '呼喚盟友'}，追加一次攻擊！`, 'enemy');
+        enemyPhysicalAttack(mob, idx, sk.stunChance || 0);
+        return;
+    }
+    // 自我增益：堅固防護(傷害減免) / 暴風神射(額外傷害+命中)
+    if(sk.type === 'self_buff') {
+        if(sk.buffKind === 'guard') {
+            mob._siegeDrVal = (mob.lv >= 50) ? (2 + Math.floor((mob.lv - 50) / 10)) : 1;
+            mob._siegeDrEnd = state.ticks + 150;
+            logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '堅固防護'}，傷害減免提升了！`, 'enemy');
+        } else if(sk.buffKind === 'volley') {
+            mob._siegeDmgEnd = state.ticks + 120; mob._siegeHitEnd = state.ticks + 120;
+            logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '暴風神射'}，攻勢更猛了！`, 'enemy');
+        }
+        return;
+    }
+    // 破壞盔甲：使玩家陷入「破壞盔甲」，之後受到的一般攻擊傷害 +50%，持續 8 秒
+    if(sk.type === 'armor_break') {
+        if(player.dead) return;
+        player.statuses.armorBreak = 80;
+        logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 使出 ${sk.skn || '破壞盔甲'}，破壞了你的防禦！（一般攻擊受傷 +50%，持續 8 秒）`, 'enemy');
         return;
     }
     // 生命的祝福：場上所有血盟怪物（含自己）每 interval 秒回復 healDice + 等級/3 HP，持續 dur 秒
@@ -3384,6 +3514,8 @@ function killMob(idx) {
     logCombat(`擊敗了 <span class="${getMobColor(mob.lv)}">${mob.n}</span>！`, 'player-heavy');  // 👈 新增
     player.exp += Math.floor(mob.exp * getExpGainMult(player.lv));
     checkLvUp();
+    // 精神(WIS)：擊殺敵人時立即額外恢復 MP
+    { let mpKill = getWisMpOnKill(player.d.wis); if (mpKill > 0 && player.mp < player.mmp) player.mp = Math.min(player.mmp, player.mp + mpKill); }
     
     if (Math.random() < 0.8) {
         let gMin = mob.goldMin || (mob.lv * 5);
@@ -3408,13 +3540,13 @@ function killMob(idx) {
     }
     
     // === 血盟敵人：擊敗必定掉落「王族搜索狀」（100%）===
-    if (mob.race === '血盟') {
+    if (mob.race === '血盟' && !isSiegeArea(mapState.current)) {   // 攻城區不掉王族搜索狀
         gainItem('new_item_241', 1);
         logSys(`<span class="text-amber-300 font-bold">擊敗血盟敵人，取得了 王族搜索狀！</span>`);
     }
 
     // === 野外＋血盟敵人：1% 機率額外掉落一件「攜帶物」（抽法同潘朵拉，裝備可能已強化）===
-    if (mob.wild && mob.race === '血盟') pledgeBonusDrop(mob);
+    if ((mob.wild && mob.race === '血盟') || mob.siegeEnemy) pledgeBonusDrop(mob);   // 野外血盟 或 攻城敵人：擊殺特殊掉寶
 
     // === 怪物專屬掉落（依「怪物掉落資料.md」）：每樣物品各自獨立判定一次 ===
     let dropList = MOB_DROPS[mob.n] || [];
@@ -3477,6 +3609,8 @@ function killMob(idx) {
 
     renderMobs();
     updateUI();
+    if(isSiegeArea(mapState.current)) mapState.suppressSiegeBoss = false;   // 攻城區擊殺後，重生開始可出現城門/守護塔(10%)
+    handleSiegeKill(mob);   // 攻城戰：擊殺計數 + 城門/守護塔判定
 }
 
 function checkLvUp() {
@@ -3870,9 +4004,15 @@ function castSkill(skId) {
         }
         // 淨化類（解毒術/聖潔之光/魔法相消術）：無治癒骰，改為解除負面狀態、不回復HP
         if(!sk.valDice) {
+            // 僅在「有對應可解除的負面狀態」時才施放：解毒術→中毒；聖潔之光→石化/麻痺；魔法相消術→暈眩/冰凍/石化/中毒/麻痺
+            let _purifyOk = (skId === 'sk_antidote') ? (player.statuses.poison > 0)
+                : (skId === 'sk_holy_light') ? (player.statuses.stone > 0 || player.statuses.paralyze > 0)
+                : (skId === 'sk_cancel') ? (player.statuses.freeze > 0 || player.statuses.stone > 0 || player.statuses.poison > 0 || player.statuses.paralyze > 0 || player.statuses.burn > 0 || player.statuses.scald > 0)
+                : true;
+            if(!_purifyOk) return false;   // 無對應負面狀態：不施放、不耗 MP
             player.mp -= cost;
             if(skId === 'sk_cancel') {
-                player.statuses.stun = 0; player.statuses.freeze = 0; player.statuses.stone = 0; player.statuses.poison = 0; player.statuses.paralyze = 0;
+                player.statuses.freeze = 0; player.statuses.stone = 0; player.statuses.poison = 0; player.statuses.paralyze = 0; player.statuses.burn = 0; player.statuses.scald = 0;
             } else if(skId === 'sk_antidote') {
                 player.statuses.poison = 0;
             } else if(skId === 'sk_holy_light') {
@@ -4054,8 +4194,15 @@ function castSkill(skId) {
         if(sk.reqWpn === 'w2h' && (!player.eq.wpn || !DB.items[player.eq.wpn.id].w2h)) return false;
         if(sk.reqShield && !player.eq.shield) return false;
         if(sk.summon) { setupSummon(skId, sk); player.mp -= cost; calcStats(); return true; }
+        // 淨化類：無對應可解除的負面狀態則不施放
+        if(skId === 'sk_antidote' || skId === 'sk_holy_light' || skId === 'sk_cancel') {
+            let _purifyOk = (skId === 'sk_antidote') ? (player.statuses.poison > 0)
+                : (skId === 'sk_holy_light') ? (player.statuses.stone > 0 || player.statuses.paralyze > 0)
+                : (player.statuses.freeze > 0 || player.statuses.stone > 0 || player.statuses.poison > 0 || player.statuses.paralyze > 0 || player.statuses.burn > 0 || player.statuses.scald > 0);
+            if(!_purifyOk) return false;
+        }
         if(skId === 'sk_cancel') {
-            player.statuses.stun = 0; player.statuses.freeze = 0; player.statuses.stone = 0; player.statuses.poison = 0; player.statuses.paralyze = 0;
+            player.statuses.freeze = 0; player.statuses.stone = 0; player.statuses.poison = 0; player.statuses.paralyze = 0; player.statuses.burn = 0; player.statuses.scald = 0;
         } else if(skId === 'sk_antidote') {
             player.statuses.poison = 0;
         } else if(skId === 'sk_holy_light') {
@@ -4154,6 +4301,12 @@ function autoActions() {
             // 體力回復術 / 生命的祝福：以增益勾選框維持；castSkill 內部的 healSk 冷卻與 HoT 持續守衛會防止重複施放
             let chk = document.getElementById(`auto-sk-${sid}`);
             if(chk && chk.checked) castSkill(sid);
+        } else if(sid === 'sk_antidote' || sid === 'sk_holy_light' || sid === 'sk_cancel') {
+            // 淨化類：勾選即自動施放；castSkill 內 _purifyOk 守衛確保僅在有對應負面狀態時才施放、否則不耗 MP/CD
+            let chk = document.getElementById(`auto-sk-${sid}`);
+            if(!chk || !chk.checked) return;
+            if((sid === 'sk_antidote' || sid === 'sk_holy_light') && document.getElementById('auto-sk-sk_cancel')?.checked) return;   // 相消已涵蓋解毒/聖潔之光，跳過
+            castSkill(sid);
         }
     });
 
@@ -4436,7 +4589,7 @@ function useItem(u, silent = false) {
             let st = d.pstat, cap = (st === 'cha') ? 30 : 60;
             if (d.plv && player.lv < d.plv) { if(!silent) logSys(`等級不足，需要等級 ${d.plv} 才能使用 ${d.n}。`); return; }
             if ((player.panaceaUsed || 0) >= 10) { if(!silent) logSys(`萬能藥最多只能使用 10 瓶，使用回憶蠟燭後可重新使用。`); return; }
-            if ((player.d[st] || 0) >= cap) { if(!silent) logSys(`${STAT_CN[st]}已達上限（${cap}），無法再使用 ${d.n}。`); return; }
+            if (naturalStat(st) >= cap) { if(!silent) logSys(`${STAT_CN[st]}已達上限（${cap}），無法再使用 ${d.n}。`); return; }
             if (!player.panacea) player.panacea = { str:0, dex:0, con:0, int:0, wis:0, cha:0 };
             player.panacea[st] = (player.panacea[st] || 0) + 1;
             player.panaceaUsed = (player.panaceaUsed || 0) + 1;
@@ -4610,7 +4763,7 @@ function buyItem(id, qty) {
                : (id === 'new_item_143') ? { unit: 100, amount: 1000, n: '肉',   suffix: '個' }
                : null;
     if (bundle) {
-        let cost = bundle.unit * qty;
+        let cost = shopPrice(bundle.unit) * qty;
         if (player.gold < cost) { logSys(`金幣不足。`); return; }
         player.gold -= cost;
         gainItem(id, bundle.amount * qty, true, true);
@@ -4620,7 +4773,7 @@ function buyItem(id, qty) {
     }
 
     // 一般物品：單價 p × 數量
-    let p = DB.items[id].p || 0;
+    let p = shopPrice(DB.items[id].p || 0);
     let cost = p * qty;
     if (player.gold < cost) { logSys(`金幣不足。`); return; }
     player.gold -= cost;
@@ -4836,6 +4989,8 @@ function renderStatusEffects() {
 function updateUI() {
     if(state.ff) return; // 補跑期間不刷新畫面
     document.getElementById('st-lv').innerText = player.lv;
+    { let rb = document.getElementById('btn-return-town'); if (rb) rb.textContent = siegeVictoryActive() ? '回城' : '回村'; }
+    { let vb = document.getElementById('victory-badge'); if (vb) vb.style.display = siegeVictoryActive() ? 'inline-flex' : 'none'; }   // 攻城獲勝淡金黃標記（inline-flex 讓👑與文字水平置中）
     
     // 處理顯示文字：只顯示 騎士、法師、妖精
     let clsDisplayName = '';
@@ -5198,11 +5353,18 @@ function renderSkillSelects() {
         let dis = isAvail ? '' : 'disabled class="text-slate-500"';
         
         if(sk.type === 'atk') aHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
-        if(sk.type === 'heal' && !sk.autoBuff) hHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
-        if(sk.type === 'buff' || (sk.type === 'heal' && sk.autoBuff)) {
+        if(sk.type === 'heal' && !sk.autoBuff && !['sk_antidote','sk_holy_light','sk_cancel'].includes(sid)) hHtml += `<option value="${sid}" ${dis}>${sk.n}</option>`;
+        let __isPurify = (sid === 'sk_antidote' || sid === 'sk_holy_light' || sid === 'sk_cancel');
+        if(sk.type === 'buff' || (sk.type === 'heal' && sk.autoBuff) || __isPurify) {
             let checked = document.getElementById(`auto-sk-${sid}`)?.checked ? 'checked' : '';
             let sumAttr = sk.summon ? ` onchange="onSummonToggle('${sid}')" data-summon="1" data-unavail="${isAvail?'0':'1'}"` : '';
-            buffHtml += `<label class="cursor-pointer flex items-center gap-2 ${isAvail?'':'opacity-50'}"><input type="checkbox" id="auto-sk-${sid}" ${checked} ${isAvail?'':'disabled'}${sumAttr}> <span class="text-purple-300">${sk.n}</span></label>`;
+            // 魔法相消術涵蓋解毒術與聖潔之光：勾選相消時鎖定這兩者
+            let __cancelOn = player.skills.includes('sk_cancel') && document.getElementById('auto-sk-sk_cancel')?.checked;
+            let __locked = (sid === 'sk_antidote' || sid === 'sk_holy_light') && __cancelOn;
+            let __dis = (!isAvail || __locked) ? 'disabled' : '';
+            let __purAttr = (sid === 'sk_cancel') ? ` onchange="renderSkillSelects()"` : '';
+            let __span = __isPurify ? 'text-teal-300' : 'text-purple-300';
+            buffHtml += `<label class="cursor-pointer flex items-center gap-2 ${(isAvail && !__locked)?'':'opacity-50'}"${__locked?' title="魔法相消術已涵蓋此效果"':''}><input type="checkbox" id="auto-sk-${sid}" ${checked} ${__dis}${sumAttr}${__purAttr}> <span class="${__span}">${sk.n}</span></label>`;
         }
         if(sk.type === 'convert') {
             let checked = document.getElementById(`auto-sk-${sid}`)?.checked ? 'checked' : '';
@@ -5763,30 +5925,49 @@ const MAP_CATEGORIES = {
     ]
 };
 function mapCategoryOf(v) {
+    if (v === 'kent_outer' || v === 'kent_inner') return 'siege';
+    if (v === 'town_kent_castle') return 'castle';
     for (let cat in MAP_CATEGORIES) { if (MAP_CATEGORIES[cat].some(m => m.v === v)) return cat; }
     return 'wild';
+}
+function isSiegeArea(v) { return v === 'kent_outer' || v === 'kent_inner'; }
+function getSiegeAreas() {
+    let s = player.siege || {};
+    if (s.gateKilled) return [{v:'kent_inner', t:'肯特內城'}];   // 攻破城門後：外門區隱藏，只剩內城
+    return [{v:'kent_outer', t:'肯特外門區'}, {v:'kent_inner', t:'肯特內城（需先攻破城門）', disabled:true, c:'#64748b'}];
+}
+function rebuildMapCategoryOptions() {
+    let catSel = document.getElementById('map-category'); if (!catSel) return;
+    let opts = [['village','村莊'],['wild','野外'],['dungeon','地監'],['special','特殊']];
+    if (player.siege && player.siege.active) opts.push(['siege','攻城']);
+    if (siegeVictoryActive()) opts.push(['castle','城堡']);
+    catSel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
 }
 function populateMapSelect(cat) {
     let sel = document.getElementById('map-select'); if (!sel) return;
     sel.innerHTML = '';
-    (MAP_CATEGORIES[cat] || []).forEach(m => {
+    let list = (cat === 'siege') ? getSiegeAreas() : (cat === 'castle') ? [{v:'town_kent_castle', t:'肯特城'}] : (MAP_CATEGORIES[cat] || []);
+    list.forEach(m => {
         let o = document.createElement('option');
         o.value = m.v; o.textContent = m.t; if (m.c) o.style.color = m.c;
+        if (m.disabled) o.disabled = true;
         sel.appendChild(o);
     });
 }
 function onMapCategoryChange() {
-    // 切換分類時，重建右側清單並讓人物一併移動到該分類的第一張地圖
+    // 切換分類時，重建右側清單並讓人物一併移動到該分類的第一個可選地圖
     let cat = document.getElementById('map-category').value;
     populateMapSelect(cat);
-    let first = (MAP_CATEGORIES[cat] && MAP_CATEGORIES[cat][0]) ? MAP_CATEGORIES[cat][0].v : null;
-    if (first) {
-        document.getElementById('map-select').value = first;
+    let list = (cat === 'siege') ? getSiegeAreas() : (cat === 'castle') ? [{v:'town_kent_castle', t:'肯特城'}] : (MAP_CATEGORIES[cat] || []);
+    let firstOk = list.find(m => !m.disabled);
+    if (firstOk) {
+        document.getElementById('map-select').value = firstOk.v;
         changeMap();   // 實際移動（受控狀態時 changeMap 會擋下並還原兩個選單）
     }
 }
 function setMapSelectors(mapKey) {
     // 將「分類選單 + 地圖選單」同步到指定地圖
+    rebuildMapCategoryOptions();
     let cat = mapCategoryOf(mapKey);
     let catSel = document.getElementById('map-category'); if (catSel) catSel.value = cat;
     populateMapSelect(cat);
@@ -5807,8 +5988,138 @@ function returnToTown() {
         logSys('你目前無法行動（石化／麻痺／冰凍／暈眩），無法回村。');
         return;
     }
-    setMapSelectors(getHomeTown());
+    setMapSelectors(siegeVictoryActive() ? 'town_kent_castle' : getHomeTown());   // 攻城獲勝 24h：回城＝肯特城
     changeMap();   // 走既有切換流程（進入村莊：補滿 HP/MP、清狀態、渲染 NPC）
+}
+
+// ===== 攻城戰（第一階段：核心循環）=====
+function siegeWarrants() { return pledgeCountItem('new_item_241'); }   // 王族搜索狀數量
+function startSiege(faction) {
+    let s = player.siege || (player.siege = { active:false, gateKilled:false, towerKilled:false, endTime:0, kills:0, result:null, cooldownUntil:0, rewardPending:false });
+    if (!player.bloodPledge) { alert('你尚未加入任何血盟，無法宣布攻城戰。'); return; }
+    if (s.active) { alert('攻城戰正在進行中！'); return; }
+    if (s.rewardPending) { alert('你還有尚未領取的攻城戰獎勵，請先點「領賞」。'); return; }
+    let cd = (s.cooldownUntil || 0) - Date.now();
+    if (cd > 0) { let h = Math.floor(cd/3600000), m = Math.floor((cd%3600000)/60000); alert(`攻城戰冷卻中，尚需 ${h} 小時 ${m} 分才能再次宣布。`); return; }
+    if (player.lv < 40) { alert('需要等級 40 以上才能宣布攻城戰。'); return; }
+    if (siegeWarrants() < 10) { alert(`需持有 10 張以上王族搜索狀才能宣布攻城戰（目前 ${siegeWarrants()} 張）。`); return; }
+    if (!confirm(`宣布攻城戰將消耗 10 張王族搜索狀（目前持有 ${siegeWarrants()} 張），限時 30 分鐘。確定要開戰嗎？`)) return;
+    // 消耗 10 張王族搜索狀
+    let _need = 10;
+    for (let it of player.inv) { if (it.id === 'new_item_241' && _need > 0) { let take = Math.min(it.cnt, _need); it.cnt -= take; _need -= take; } }
+    player.inv = player.inv.filter(it => it.cnt > 0);
+    renderTabs();
+    player.siege = { active:true, gateKilled:false, towerKilled:false, endTime: Date.now() + 30*60*1000, kills:0, result:null, cooldownUntil:0, rewardPending:false, victoryUntil:0, accCdUntil:0 };
+    logSys('⚔ <span class="text-red-300 font-bold">攻城戰開始！</span>消耗了 10 張王族搜索狀，限時 30 分鐘。攻破【肯特城門】後進攻【肯特內城】，於時限內擊殺【肯特守護塔】即可獲勝！');
+    setMapSelectors('kent_outer');
+    changeMap(true);
+    updateUI();
+}
+function endSiege(result) {
+    let s = player.siege; if (!s || !s.active) return;
+    s.active = false; s.result = result; s.rewardPending = true;
+    s.endTime = Date.now();   // 擊敗守護塔（獲勝）或時間到：攻城時間立即結束
+    s.cooldownUntil = Date.now() + 24*3600*1000;   // 不論勝負，24 小時後才能再次宣布
+    if (result === 'win') { s.victoryUntil = Date.now() + 24*3600*1000; logSys('🏆🏰 <span class="text-yellow-300 font-bold">攻城獲勝！</span>擊破了肯特守護塔！24 小時內全商店與潘朵拉抽獎 8 折、開放「城堡」前往肯特城，回村按鈕變為回城。前往盟主處點「領賞」領取金幣獎勵。'); }
+    else logSys('🏰 <span class="text-slate-300 font-bold">攻城失敗…</span>時間到，未能攻下肯特守護塔。仍可前往盟主處點「領賞」領取獎勵。');
+    { let timer = document.getElementById('siege-timer'); if (timer) timer.classList.add('hidden'); }   // 結束隱藏倒數
+    setMapSelectors(getHomeTown());
+    changeMap(true);
+    updateUI();
+    saveGame();   // 攻城戰結束時自動存檔
+}
+function siegeTick() {
+    let s = player.siege;
+    let timer = document.getElementById('siege-timer');
+    if (!s || !s.active) { if (timer) timer.classList.add('hidden'); return; }
+    if (timer) {
+        let rem = Math.max(0, (s.endTime || 0) - Date.now());
+        let mm = Math.floor(rem / 60000), ss = Math.floor((rem % 60000) / 1000);
+        timer.textContent = `⚔ 攻城剩餘 ${mm}:${String(ss).padStart(2, '0')}`;
+        timer.classList.remove('hidden');
+    }
+    if (!s.towerKilled && Date.now() >= (s.endTime || 0)) endSiege('lose');
+}
+function saveSiegeBossHp() {
+    if (!player.siege) return;
+    (mapState.mobs || []).forEach(m => {
+        if (!m) return;
+        if (m.n === '肯特城門') player.siege.gateHp = m.curHp;
+        if (m.n === '肯特守護塔') player.siege.towerHp = m.curHp;
+    });
+}
+function handleSiegeKill(mob) {
+    let s = player.siege;
+    if (!s || !s.active || !mob || !mob.siegeEnemy) return;
+    s.kills = (s.kills || 0) + 1;
+    if (mob.n === '肯特城門' && !s.gateKilled) {
+        s.gateKilled = true;
+        logSys('🏰 <span class="text-yellow-300 font-bold">肯特城門已被攻破！</span>肯特內城已開啟，肯特外門區關閉。');
+        setMapSelectors('kent_inner');
+        changeMap(true);
+    } else if (mob.n === '肯特守護塔' && !s.towerKilled) {
+        s.towerKilled = true;
+        endSiege('win');
+    }
+}
+function siegeVictoryActive() { return !!(player.siege && Date.now() < (player.siege.victoryUntil || 0)); }
+function shopPrice(base) { return siegeVictoryActive() ? Math.floor((base || 0) * 0.8) : (base || 0); }   // 攻城獲勝 24h：商店 8 折
+function ismaelAccCdLeft() { return Math.max(0, ((player.siege && player.siege.accCdUntil) || 0) - Date.now()); }
+function renderIsmaelExchange(el) {
+    let sw = pledgeCountItem('scroll_weapon'), sa = pledgeCountItem('scroll_armor');
+    let cd = ismaelAccCdLeft();
+    let cdTxt = cd > 0 ? `（冷卻中：剩 ${Math.floor(cd/3600000)} 時 ${Math.floor((cd%3600000)/60000)} 分）` : '';
+    el.innerHTML = `
+        <div class="flex flex-col gap-3 p-1">
+            <div class="text-slate-300 text-sm leading-relaxed">伊賽馬利：需要稀有的卷軸嗎？我這裡能交換。</div>
+            <div class="flex items-center justify-between gap-2 bg-slate-800/60 border border-slate-600 rounded p-3">
+                <div class="text-sm text-slate-200 leading-relaxed">50 張 <span class="text-sky-300">對武器施法的卷軸</span> → 1 張 <span class="text-amber-300 font-bold">祝福的 對武器施法的卷軸</span><br><span class="text-xs text-slate-400">持有：${sw} 張（無次數限制）</span></div>
+                <button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-4 font-bold shrink-0" onclick="ismaelExchange('weapon')">兌換</button>
+            </div>
+            <div class="flex items-center justify-between gap-2 bg-slate-800/60 border border-slate-600 rounded p-3">
+                <div class="text-sm text-slate-200 leading-relaxed">50 張 <span class="text-sky-300">對盔甲施法的卷軸</span> → 1 張 <span class="text-amber-300 font-bold">祝福的 對盔甲施法的卷軸</span><br><span class="text-xs text-slate-400">持有：${sa} 張（無次數限制）</span></div>
+                <button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-4 font-bold shrink-0" onclick="ismaelExchange('armor')">兌換</button>
+            </div>
+            <div class="flex items-center justify-between gap-2 bg-slate-800/60 border border-slate-600 rounded p-3">
+                <div class="text-sm text-slate-200 leading-relaxed">1,000,000 金幣 → 1 張 <span class="text-sky-300 font-bold">對飾品施法的卷軸</span><br><span class="text-xs text-slate-400">每次購買後冷卻 24 小時 ${cdTxt}</span></div>
+                <button class="btn ${cd > 0 ? 'bg-slate-600 border-slate-500 opacity-60 cursor-not-allowed' : 'bg-yellow-700 hover:bg-yellow-600 border-yellow-500'} py-2 px-4 font-bold shrink-0" ${cd > 0 ? 'disabled' : ''} onclick="ismaelBuyAcc()">購買</button>
+            </div>
+        </div>`;
+}
+function ismaelExchange(kind) {
+    let id = kind === 'weapon' ? 'scroll_weapon' : 'scroll_armor';
+    let outId = kind === 'weapon' ? 'scroll_weapon_b' : 'scroll_armor_b';
+    let nm = kind === 'weapon' ? '對武器施法的卷軸' : '對盔甲施法的卷軸';
+    if (pledgeCountItem(id) < 50) { alert(`${nm} 不足 50 張（目前 ${pledgeCountItem(id)} 張）。`); return; }
+    let left = 50;
+    for (let it of player.inv) { if (it.id === id && left > 0) { let take = Math.min(it.cnt, left); it.cnt -= take; left -= take; } }
+    player.inv = player.inv.filter(it => it.cnt > 0);
+    gainItem(outId, 1, true, true);
+    renderTabs();
+    logSys(`以 50 張 ${nm} 兌換了 1 張 <span class="text-amber-300 font-bold">祝福的 ${nm}</span>。`);
+    updateUI();
+    let el = document.getElementById('interaction-content'); if (el) renderIsmaelExchange(el);
+}
+function ismaelBuyAcc() {
+    if (ismaelAccCdLeft() > 0) { alert('對飾品施法的卷軸購買冷卻中，請稍後再來。'); return; }
+    if (player.gold < 1000000) { alert(`金幣不足（需 1,000,000，目前 ${player.gold.toLocaleString()}）。`); return; }
+    player.gold -= 1000000;
+    gainItem('scroll_acc', 1, true, true);
+    if (!player.siege) player.siege = {};
+    player.siege.accCdUntil = Date.now() + 24*3600*1000;
+    logSys('花費 1,000,000 金幣購買了 1 張 <span class="text-sky-300 font-bold">對飾品施法的卷軸</span>。（24 小時後可再次購買）');
+    updateUI();
+    let el = document.getElementById('interaction-content'); if (el) renderIsmaelExchange(el);
+}
+function claimSiegeReward(faction) {
+    let s = player.siege;
+    if (!s || !s.rewardPending) { alert('目前沒有可領取的攻城戰獎勵。'); return; }
+    let per = (s.result === 'win') ? 5000 : 2000;
+    let gold = per * (s.kills || 0);
+    player.gold += gold;
+    s.rewardPending = false;
+    logSys(`🏆 攻城${s.result === 'win' ? '獲勝' : '失敗'}領賞：本次擊殺血盟／攻城敵人 ${s.kills || 0} 名，獲得 <span class="text-yellow-400 font-bold">${gold}</span> 金幣！`);
+    updateUI();
 }
 
 function changeMap(force) {
@@ -5819,6 +6130,7 @@ function changeMap(force) {
         logSys('你目前無法行動（石化／麻痺／冰凍／暈眩），無法切換地圖。');
         return;
     }
+    saveSiegeBossHp();   // 切換地圖前，保存攻城塔/門的剩餘血量
     mapState.current = document.getElementById('map-select').value;
     mapState.mobs = [null, null, null];
     
@@ -5863,6 +6175,7 @@ function changeMap(force) {
         // 進入新區域：依邏輯 tick 排程出怪（中央 50t=5秒、左側 70t=7秒、右側 90t=9秒）
         let t0 = state.ticks;
         mapState.spawnAt = [t0 + 70, t0 + 50, t0 + 90]; // [左0, 中1, 右2]
+        mapState.suppressSiegeBoss = true;   // 初次進場：必定不出現肯特城門/守護塔
         logSys(`--- 你走向了新的區域 ---`);
         renderMobs();
     }
@@ -5877,6 +6190,11 @@ function renderTownNPCs(townId) {
     if (!townData || !townData.npcs) return;
 
     townData.npcs.forEach(npc => {
+        // 肯特城血盟NPC：只顯示玩家所屬陣營（依詩蒂陣營→依詩蒂；特羅斯陣營→特羅斯）
+        if (townId === 'town_kent_castle') {
+            if (npc.id === 'npc_esti' && player.bloodPledge !== 'esti') return;
+            if (npc.id === 'npc_tros' && player.bloodPledge !== 'tros') return;
+        }
         let el = document.createElement('div');
         el.className = 'bg-slate-800 border border-slate-600 rounded-lg p-3 hover:bg-slate-700 transition-colors cursor-pointer flex flex-col justify-between';
         
@@ -5953,6 +6271,8 @@ function interactNPC(npcId, townId) {
         renderPledgeNPC(contentDiv, 'esti');
     } else if (npc.id === 'npc_tros') {
         renderPledgeNPC(contentDiv, 'tros');
+    } else if (npc.id === 'npc_ismael') {
+        renderIsmaelExchange(contentDiv);
     } else {
         // 未來要擴充的 製作 / 交換 / 任務 預留版面
         contentDiv.innerHTML = `
@@ -6016,8 +6336,8 @@ function renderPledgeNPC(div, faction) {
             <div class="flex-1 min-w-0 flex flex-col gap-2.5">
                 <div class="text-slate-200 text-base leading-relaxed">${cfg.name}：讓我們一起為血盟努力，並肩作戰吧！</div>
                 <div class="flex gap-2">
-                    <button class="btn bg-red-800 hover:bg-red-700 border-red-500 text-red-100 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="siegeComingSoon('攻城戰')"><span class="text-base">⚔ 攻城戰</span><span class="text-[10px] text-red-300 font-normal">(未開放)</span></button>
-                    <button class="btn bg-amber-700 hover:bg-amber-600 border-amber-400 text-amber-50 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="siegeComingSoon('領賞')"><span class="text-base">🏆 領賞</span><span class="text-[10px] text-amber-200 font-normal">(未開放)</span></button>
+                    <button class="btn bg-red-800 hover:bg-red-700 border-red-500 text-red-100 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="startSiege('${faction}')"><span class="text-base">⚔ 攻城戰</span><span class="text-[10px] text-red-300 font-normal">消耗10張搜索狀·限時30分</span></button>
+                    <button class="btn bg-amber-700 hover:bg-amber-600 border-amber-400 text-amber-50 py-3 px-3 font-bold flex-1 leading-tight flex flex-col items-center justify-center gap-0.5" onclick="claimSiegeReward('${faction}')"><span class="text-base">🏆 領賞</span><span class="text-[10px] text-amber-200 font-normal">攻城後領取</span></button>
                 </div>
                 <div class="text-center text-amber-300 font-bold text-base">交出王族搜索狀，獲取盟主的祝福</div>
                 <div class="text-center text-slate-400 text-xs">持有王族搜索狀：<span class="text-green-400 font-bold">${warrant}</span> 張（每項消耗 1 張；已生效可再選以刷新）</div>
@@ -6574,7 +6894,7 @@ const ELF_SWITCH_COST = 500000;
 function applyElfBorder() {
     if(!document.body) return;
     let e = (player.cls === 'elf' && player.elfEle) ? ELF_ELE[player.elfEle] : null;
-    document.body.style.boxShadow = e ? `inset 0 0 0 6px ${e.border}` : 'none';
+    document.body.style.boxShadow = e ? `inset 0 0 0 6px ${e.border}` : 'none';   // 攻城獲勝標記改用頭像旁徽章顯示，避免與妖精地屬性黃色邊框衝突
 }
 
 function renderElionUI(div) {
@@ -6735,7 +7055,7 @@ function renderShopItems() {
         
         // 箭矢與肉的顯示判斷
         let nameDisp = id === 'wpn_5' ? '箭 (1000根)' : (id === 'wpn_22' ? '銀箭 (1000根)' : (id === 'new_item_143' ? '肉 (1000個)' : d.n));
-        let priceDisp = id === 'wpn_5' ? '100' : (id === 'wpn_22' ? '200' : (id === 'new_item_143' ? '100' : (d.p || 0).toLocaleString()));
+        let priceDisp = id === 'wpn_5' ? shopPrice(100).toLocaleString() : (id === 'wpn_22' ? shopPrice(200).toLocaleString() : (id === 'new_item_143' ? shopPrice(100).toLocaleString() : shopPrice(d.p || 0).toLocaleString()));
 
         el.innerHTML = `
             <div class="flex items-center gap-4 min-w-0 flex-1 ${learned ? 'opacity-50' : ''}">
@@ -7009,6 +7329,7 @@ function loadGame() {
         if(player.base && player.base.cha === undefined) player.base.cha = (createBase[player.cls] ? createBase[player.cls].cha : 8);
         if(player.alloc && player.alloc.cha === undefined) player.alloc.cha = 0;
         if(!player.panacea) player.panacea = { str:0, dex:0, con:0, int:0, wis:0, cha:0 };
+        if(!player.siege) player.siege = { active:false, gateKilled:false, towerKilled:false, endTime:0, kills:0, result:null, cooldownUntil:0, rewardPending:false, victoryUntil:0, accCdUntil:0 };
         if(player.panaceaUsed === undefined) player.panaceaUsed = 0;
         // 相容舊存檔：單一 partner → partners 陣列
         if(player.partners === undefined) player.partners = (player.partner ? [player.partner] : []);
@@ -7111,9 +7432,11 @@ function loadGame() {
     }
 }
 
+// 配點/萬能藥的「自然屬性值」：基礎+配點+萬能藥（不含裝備與 buff）；屬性上限只套用在此值上，裝備/buff 可再往上疊加
+function naturalStat(s) { return (player.base[s] || 0) + (player.alloc[s] || 0) + ((player.panacea && player.panacea[s]) || 0); }
 function adjBonusStat(s) {
-    let capN = (s === 'cha') ? (player.lv >= 50 ? 30 : 18) : (player.lv >= 50 ? 60 : 20);   // 50級前一律受創角上限(其他屬性20/魅力18)，50級起靠升級點數解除(其他60/魅力30)
-    if (player.bonus > 0 && player.d[s] < capN) {
+    let capN = (s === 'cha') ? (player.lv >= 50 ? 30 : 18) : (player.lv >= 50 ? 60 : 20);   // 50級前一律受創角上限(其他屬性20/魅力18)，50級起靠升級點數解除(其他60/魅力30)；上限只看配點+萬能藥，裝備/buff 不計入、可再往上疊加
+    if (player.bonus > 0 && naturalStat(s) < capN) {
         player.alloc[s]++; player.bonus--;
         calcStats();
     }
@@ -7672,14 +7995,14 @@ function renderPandoraGacha(div) {
                 <div id="gacha-name" class="absolute bottom-0 w-full text-center text-sm font-bold text-white bg-black/80 px-2 py-1.5 hidden"></div>
             </div>
             <button id="btn-gacha" class="btn bg-purple-700 hover:bg-purple-600 border-purple-500 py-3 px-8 text-lg font-bold rounded-full shadow-[0_0_15px_rgba(126,34,206,0.5)] transition-all transform hover:scale-105" onclick="doPandoraGacha()">
-                🎰 抽獎（${ticketCount>0?'1 張抽獎卷':'30,000 金幣'}）
+                🎰 抽獎（${ticketCount>0?'1 張抽獎卷':(shopPrice(30000).toLocaleString()+' 金幣')}）
             </button>
         </div>
 
         <div id="gacha-ten" class="${mode==='ten'?'':'hidden'} flex flex-col items-center w-full">
             <div class="grid grid-cols-5 gap-1.5 w-full max-w-sm mb-3">${cells}</div>
             <button id="btn-gacha10" class="btn bg-purple-700 hover:bg-purple-600 border-purple-500 py-3 px-8 text-lg font-bold rounded-full shadow-[0_0_15px_rgba(126,34,206,0.5)] transition-all transform hover:scale-105" onclick="doPandoraGacha10()">
-                🎰 10 連抽（${ticketCount>=10?'10 張抽獎卷':'300,000 金幣'}）
+                🎰 10 連抽（${ticketCount>=10?'10 張抽獎卷':(shopPrice(300000).toLocaleString()+' 金幣')}）
             </button>
             <div id="gacha10-results" class="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-3 text-sm"></div>
         </div>
@@ -7711,9 +8034,9 @@ function refreshGachaTicketCount() {
     let el = document.getElementById('gacha-ticket-count');
     if (el) el.innerText = cnt;
     let b1 = document.getElementById('btn-gacha');
-    if (b1) b1.innerHTML = `🎰 抽獎（${cnt > 0 ? '1 張抽獎卷' : '30,000 金幣'}）`;
+    if (b1) b1.innerHTML = `🎰 抽獎（${cnt > 0 ? '1 張抽獎卷' : (shopPrice(30000).toLocaleString()+' 金幣')}）`;
     let b10 = document.getElementById('btn-gacha10');
-    if (b10) b10.innerHTML = `🎰 10 連抽（${cnt >= 10 ? '10 張抽獎卷' : '300,000 金幣'}）`;
+    if (b10) b10.innerHTML = `🎰 10 連抽（${cnt >= 10 ? '10 張抽獎卷' : (shopPrice(300000).toLocaleString()+' 金幣')}）`;
 }
 
 
@@ -7816,7 +8139,7 @@ function getWeightedGachaResult() {
 function doPandoraGacha() {
     if (gachaRolling) return;
     
-    let cost = 30000; // 設定金幣消耗量為 30000
+    let cost = shopPrice(30000); // 金幣消耗（攻城獲勝期間 8 折）
     let ticketId = "new_item_239"; // 潘朵拉抽獎卷的 ID
     let usedTicket = false;
     
@@ -7940,7 +8263,7 @@ function doPandoraGacha() {
 function doPandoraGacha10() {
     if (gachaRolling) return;
     let ticketId = "new_item_239";
-    let cost = 300000;
+    let cost = shopPrice(300000);
     let usedTicket = false;
     let ticketIndex = player.inv.findIndex(i => i.id === ticketId);
     let ticketCnt = (ticketIndex !== -1) ? player.inv[ticketIndex].cnt : 0;
