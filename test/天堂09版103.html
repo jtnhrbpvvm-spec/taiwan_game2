@@ -8964,26 +8964,22 @@ window.onload = () => {
 </script>
 
 <style>
-#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:2147483647;user-select:none;-webkit-user-select:none;}
-#saveToolsMenu{display:none;background:#1a1a1a;color:#fff;border:1px solid #444;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.6);border-radius:8px;width:280px;position:absolute;top:70px;left:0;}
+#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:999999;touch-action:none;user-select:none;}
+#saveToolsMenu{display:none;background:#1a1a1a;color:#fff;border:1px solid #444;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.5);border-radius:8px;width:280px;}
 .saveToolBtn{
 background:#333;color:#fff;border:1px solid #555;border-radius:4px;
 padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);
 }
-.saveToolBtn:active{background:#555}
+.saveToolBtn:hover{background:#444}
 #saveToolsToggle{
     font-size:36px;
     width:60px;
     height:60px;
     border-radius:50%;
-    cursor:move;
+    cursor:pointer;
     background:#333;
     color:#fff;
     border:2px solid #555;
-    touch-action:none;
-    box-shadow:0 2px 8px rgba(0,0,0,.4);
-    display:block;
-    position:relative;
 }
 #saveTextArea{
 width:100%;height:120px;margin-top:8px;display:block;
@@ -9020,112 +9016,26 @@ const toggle=document.getElementById('saveToolsToggle');
 const menu=document.getElementById('saveToolsMenu');
 const textArea=document.getElementById('saveTextArea');
 
-function clampPosition(){
-  const rect=wrap.getBoundingClientRect();
-  const vw=window.innerWidth;
-  const vh=window.innerHeight;
-  let left=rect.left;
-  let top=rect.top;
-  if(left<5) left=5;
-  if(top<5) top=5;
-  if(left+rect.width>vw-5) left=vw-rect.width-5;
-  if(top+rect.height>vh-5) top=vh-rect.height-5;
-  wrap.style.left=left+'px';
-  wrap.style.top=top+'px';
-  localStorage.setItem('saveToolsWrapPos',JSON.stringify({left:wrap.style.left,top:wrap.style.top}));
-}
-
 try{
  const savedPos=JSON.parse(localStorage.getItem('saveToolsWrapPos'));
- if(savedPos){
-   wrap.style.left=savedPos.left;
-   wrap.style.top=savedPos.top;
-   setTimeout(clampPosition,100);
- }
+ if(savedPos){wrap.style.left=savedPos.left;wrap.style.top=savedPos.top;}
 }catch(e){}
 
-let isDragging=false;
-let dragStarted=false;
-let startX=0,startY=0,origX=0,origY=0;
+toggle.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
 
-// 只監聽 💾 按鈕，不監聽整個 wrap
-function handleStart(clientX,clientY,target){
-  // 確保點的是按鈕本身
-  if(target!==toggle) return false;
-  isDragging=true;
-  dragStarted=false;
-  startX=clientX;
-  startY=clientY;
-  const rect=wrap.getBoundingClientRect();
-  origX=rect.left;
-  origY=rect.top;
-  return true;
-}
-
-function handleMove(clientX,clientY){
-  if(!isDragging) return;
-  const dx=clientX-startX;
-  const dy=clientY-startY;
-
-  // 移動超過5px才算拖曳，避免點擊誤判
-  if(!dragStarted && (Math.abs(dx)>5 || Math.abs(dy)>5)){
-    dragStarted=true;
-    wrap.style.transition='none';
-    menu.style.display='none'; // 拖曳時關閉選單
-  }
-
-  if(!dragStarted) return;
-
-  let newX=origX+dx;
-  let newY=origY+dy;
-  const rect=wrap.getBoundingClientRect();
-  const vw=window.innerWidth;
-  const vh=window.innerHeight;
-  newX=Math.max(5,Math.min(newX,vw-rect.width-5));
-  newY=Math.max(5,Math.min(newY,vh-rect.height-5));
-  wrap.style.left=newX+'px';
-  wrap.style.top=newY+'px';
-}
-
-function handleEnd(){
-  if(isDragging){
-    wrap.style.transition='';
-    if(dragStarted){
-      localStorage.setItem('saveToolsWrapPos',JSON.stringify({left:wrap.style.left,top:wrap.style.top}));
-    }else{
-      // 沒拖曳就是點擊，切換選單
-      menu.style.display=menu.style.display==='block'?'none':'block';
-    }
-    isDragging=false;
-    dragStarted=false;
-  }
-}
-
-// 滑鼠事件 - 只綁在 toggle 上
-toggle.onmousedown=e=>{
-  if(handleStart(e.clientX,e.clientY,e.target)){
-    e.preventDefault();
-  }
+let isDown=false,offset=[0,0];
+wrap.onmousedown=e=>{
+  if(e.target!==toggle)return;
+  isDown=true;
+  offset=[wrap.offsetLeft-e.clientX,wrap.offsetTop-e.clientY];
 };
-document.onmousemove=e=>handleMove(e.clientX,e.clientY);
-document.onmouseup=handleEnd;
-
-// 觸控事件 - 只綁在 toggle 上
-toggle.ontouchstart=e=>{
-  const touch=e.touches[0];
-  if(handleStart(touch.clientX,touch.clientY,e.target)){
-    e.preventDefault();
-  }
+document.onmouseup=()=>isDown=false;
+document.onmousemove=e=>{
+  if(!isDown)return;
+  wrap.style.left=e.clientX+offset[0]+'px';
+  wrap.style.top=e.clientY+offset[1]+'px';
+  localStorage.setItem('saveToolsWrapPos',JSON.stringify({left:wrap.style.left,top:wrap.style.top}));
 };
-document.ontouchmove=e=>{
-  const touch=e.touches[0];
-  handleMove(touch.clientX,touch.clientY);
-  if(dragStarted) e.preventDefault();
-};
-document.ontouchend=handleEnd;
-
-window.addEventListener('resize',clampPosition);
-window.addEventListener('orientationchange',()=>setTimeout(clampPosition,300));
 
 const getAllData=()=>{
   const data={};
@@ -9139,6 +9049,7 @@ const getAllData=()=>{
 const setAllData=(data)=>{
   KEYS.forEach(k=>localStorage.removeItem(k));
   Object.keys(data).forEach(k=>localStorage.setItem(k,data[k]));
+  // 修復跳槽問題：把slot1同步到舊版key
   if(data['lineage_idle_save_1']){
     localStorage.setItem('lineageIdleSave',data['lineage_idle_save_1']);
     localStorage.setItem('lineage_idle_save',data['lineage_idle_save_1']);
@@ -9155,6 +9066,7 @@ const download=(name,data)=>{
 
 document.getElementById('exportAllBtn').onclick=()=>{
   download('lineage_三格備份',JSON.stringify(getAllData()));
+  alert('已下載全部存檔');
 };
 
 document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
@@ -9175,6 +9087,7 @@ document.getElementById('importSaveFile').onchange=e=>{
 document.getElementById('exportTextBtn').onclick=()=>{
   textArea.value=JSON.stringify(getAllData());
   textArea.select();
+  alert('已匯出到文字框，Ctrl+C複製');
 };
 
 document.getElementById('importTextBtn').onclick=()=>{
