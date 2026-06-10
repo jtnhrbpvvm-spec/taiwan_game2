@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>網頁遊戲存檔功能注入器0.9</title>
+<title>網頁遊戲存檔功能注入器1.5 - 最終定位版</title>
 <style>
-body{font-family:Arial,sans-serif;max-width:1000px;margin:auto;padding:20px}
-button{padding:10px 16px;margin:5px}
-#log{border:1px solid #ccc;padding:10px;height:250px;overflow:auto;white-space:pre-wrap}
+body{font-family:Arial,sans-serif;max-width:1000px;margin:auto;padding:20px;background:#f5f5f5}
+button{padding:10px 16px;margin:5px;cursor:pointer;border-radius:4px;border:1px solid #999}
+button:hover{background:#e0e0e0}
+#log{border:1px solid #ccc;padding:10px;height:250px;overflow:auto;white-space:pre-wrap;background:#fff;margin-top:10px}
+h1{color:#333}
 </style>
 </head>
 <body>
-<h1>網頁遊戲存檔功能注入器0.9</h1>
+<h1>網頁遊戲存檔功能注入器1.5 - 最終定位版</h1>
+<p>修復：選單定位精準，不擋其他按鈕，點擊不消失</p>
 
 <input type="file" id="fileInput" accept=".html">
 <button onclick="inject()">開始修改</button>
@@ -30,216 +33,303 @@ function log(msg){
 function buildInjection(){
 return `
 <style>
-#saveToolsWrap{position:fixed;top:50px;right:50px;z-index:999999;touch-action:none;user-select:none;}
-#saveToolsMenu{display:none;background:#fff;border:1px solid #ccc;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
-.saveToolBtn{
-background:#fff;color:#000;border:2px solid #444;border-radius:6px;
-padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;
-}
-#saveToolsToggle{
-    font-size:42px;
-    width:72px;
-    height:72px;
+#saveToolsBtn{
+    position:fixed;
+    top:50px;
+    right:50px;
+    z-index:2147483647;
+    font-size:36px;
+    width:60px;
+    height:60px;
     border-radius:50%;
-    cursor:pointer;
+    cursor:move;
+    background:#333;
+    color:#fff;
+    border:2px solid #555;
+    touch-action:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
 }
+#saveToolsMenu{
+    display:none;
+    position:fixed;
+    background:#1a1a1a;
+    color:#fff;
+    border:1px solid #444;
+    padding:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.6);
+    border-radius:8px;
+    width:280px;
+    z-index:2147483646;
+}
+.saveToolBtn{
+background:#333;color:#fff;border:1px solid #555;border-radius:4px;
+padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);
+}
+.saveToolBtn:active{background:#555}
 #saveTextArea{
-width:320px;height:120px;margin-top:8px;display:block;
-white-space:pre-wrap;
+width:100%;height:120px;margin-top:8px;display:block;
+white-space:pre-wrap;background:#000;color:#fff;border:1px solid #555;
+font-family:monospace;font-size:12px;padding:6px;box-sizing:border-box;
 }
+#saveToolsTitle{font-size:14px;margin-bottom:8px;text-align:center}
 </style>
 
-<div id="saveToolsWrap">
-<button id="saveToolsToggle">💾</button>
+<button id="saveToolsBtn">💾</button>
 <div id="saveToolsMenu">
-<button id="exportSaveBtn" class="saveToolBtn">匯出存檔</button>
-<button id="importSaveBtn" class="saveToolBtn">匯入存檔</button>
-<button id="exportTextBtn" class="saveToolBtn">以純文字匯出</button>
-<button id="importTextBtn" class="saveToolBtn">以純文字匯入</button>
+<div id="saveToolsTitle"><b>三格存檔工具</b></div>
+<button id="exportAllBtn" class="saveToolBtn">全部匯出</button>
+<button id="importAllBtn" class="saveToolBtn">全部匯入</button>
+<button id="exportTextBtn" class="saveToolBtn">純文字匯出</button>
+<button id="importTextBtn" class="saveToolBtn">純文字匯入</button>
 <input type="file" id="importSaveFile" accept=".json" style="display:none">
-<textarea id="saveTextArea" placeholder="可在此貼上或複製存檔文字"></textarea>
-</div>
+<textarea id="saveTextArea" placeholder="存檔內容會顯示在這&#10;可直接複製或貼上"></textarea>
 </div>
 
 <script>
 (function(){
-const SAVE_KEY='lineage_idle_save';
+const KEYS=[
+  'lineage_idle_save_1','lineage_idle_save_2','lineage_idle_save_3',
+  'lineageIdleSave','lineage_idle_save',
+  'mp','hp','maxHp','maxMp','level','exp','spells','inventory',
+  'equipment','adena','baseStats','currentMap','bonusPoints','antarasDeadUntil','settings'
+];
 
+const btn=document.getElementById('saveToolsBtn');
+const menu=document.getElementById('saveToolsMenu');
+const textArea=document.getElementById('saveTextArea');
 
-const wrap=document.getElementById('saveToolsWrap');
+// 選單跟隨按鈕定位
+function updateMenuPos(){
+  const rect=btn.getBoundingClientRect();
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
 
+  let left=rect.left;
+  let top=rect.bottom+10;
+
+  // 如果右邊不夠，往左展開
+  if(left+280>vw-5) left=vw-285;
+  if(left<5) left=5;
+
+  // 如果下面不夠，往上展開
+  if(top+300>vh-5) top=rect.top-310;
+  if(top<5) top=5;
+
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+}
+
+function clampBtnPos(){
+  const rect=btn.getBoundingClientRect();
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  let left=rect.left;
+  let top=rect.top;
+  if(left<5) left=5;
+  if(top<5) top=5;
+  if(left+60>vw-5) left=vw-65;
+  if(top+60>vh-5) top=vh-65;
+  btn.style.left=left+'px';
+  btn.style.top=top+'px';
+  btn.style.right='auto';
+  localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
+}
+
+// 恢復位置
 try{
- const savedPos=JSON.parse(localStorage.getItem('saveToolsWrapPos')||'null');
+ const savedPos=JSON.parse(localStorage.getItem('saveBtnPos'));
  if(savedPos){
-   wrap.style.left=savedPos.left+'px';
-   wrap.style.top=savedPos.top+'px';
-   wrap.style.right='auto';
+   btn.style.left=savedPos.left;
+   btn.style.top=savedPos.top;
+   btn.style.right='auto';
+   setTimeout(clampBtnPos,100);
  }
 }catch(e){}
 
-let dragging=false,startX=0,startY=0;
+let pointerDown=false;
+let isDragging=false;
+let startX=0,startY=0,origX=0,origY=0;
 
-function dragStart(e){
- const p=e.touches?e.touches[0]:e;
- dragging=true;
- startX=p.clientX-wrap.offsetLeft;
- startY=p.clientY-wrap.offsetTop;
-}
-
-function dragMove(e){
- if(!dragging) return;
- const p=e.touches?e.touches[0]:e;
- wrap.style.left=(p.clientX-startX)+'px';
- wrap.style.top=(p.clientY-startY)+'px';
- wrap.style.right='auto';
-}
-
-function dragEnd(){
- if(!dragging) return;
- dragging=false;
- localStorage.setItem('saveToolsWrapPos',JSON.stringify({
-   left:wrap.offsetLeft,
-   top:wrap.offsetTop
- }));
-}
-
-wrap.addEventListener('mousedown',dragStart);
-document.addEventListener('mousemove',dragMove);
-document.addEventListener('mouseup',dragEnd);
-
-wrap.addEventListener('touchstart',dragStart,{passive:true});
-document.addEventListener('touchmove',dragMove,{passive:true});
-document.addEventListener('touchend',dragEnd);
-
-
-document.getElementById('saveToolsToggle').addEventListener('click',()=>{
- const menu=document.getElementById('saveToolsMenu');
- menu.style.display=menu.style.display==='block'?'none':'block';
-});
-
-function exportSave(){
- if(!confirm('請先至「自動化設定儲存遊戲進度」後再匯出')) return;
-
- const raw=localStorage.getItem(SAVE_KEY);
- if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
-
- const data={saveKey:SAVE_KEY,saveData:JSON.parse(raw)};
-
- const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='lineage_idle_save.json';
- a.click();
-}
-
-function importSave(data){
- if(!data.saveData){ alert('存檔格式錯誤'); return; }
-
- localStorage.setItem(SAVE_KEY,JSON.stringify(data.saveData));
-
- if(confirm('匯入檔案完成！\\n\\n按下確定後將重新整理網頁。')){
-   setTimeout(()=>location.reload(),300);
- }
-}
-
-document.getElementById('exportSaveBtn').addEventListener('click',exportSave);
-
-document.getElementById('importSaveBtn').addEventListener('click',()=>{
- document.getElementById('importSaveFile').click();
-});
-
-document.getElementById('exportTextBtn').addEventListener('click',async ()=>{
- if(!confirm('請先至商店與設置內存檔後再匯出')) return;
-
- const raw=localStorage.getItem(SAVE_KEY);
- if(!raw){ alert('找不到 '+SAVE_KEY+' 存檔'); return; }
-
- const textArea=document.getElementById('saveTextArea');
-
- textArea.value=raw;
- textArea.focus();
- textArea.select();
- textArea.setSelectionRange(0,textArea.value.length);
-
- try{
-    await navigator.clipboard.writeText(raw);
-    alert('存檔文字已顯示於文字框\\n\\n已自動全選並複製到剪貼簿。');
- }catch(e){
-
-    try{
-       document.execCommand('copy');
-       alert('存檔文字已顯示於文字框\\n\\n已自動全選並複製到剪貼簿。');
-    }catch(err){
-       alert('存檔文字已顯示於文字框\\n\\n請按 Ctrl+C 複製。');
+btn.addEventListener('click',function(e){
+  if(!isDragging){
+    if(menu.style.display==='block'){
+      menu.style.display='none';
+    }else{
+      updateMenuPos();
+      menu.style.display='block';
     }
-
- }
+  }
+  e.stopPropagation();
 });
 
-document.getElementById('importTextBtn').addEventListener('click',()=>{
- const txt=document.getElementById('saveTextArea').value.trim();
+function pointerStart(e,clientX,clientY){
+  pointerDown=true;
+  isDragging=false;
+  startX=clientX;
+  startY=clientY;
+  const rect=btn.getBoundingClientRect();
+  origX=rect.left;
+  origY=rect.top;
+  e.preventDefault();
+}
 
- if(!txt){ alert('請先貼上存檔文字'); return; }
+function pointerMove(clientX,clientY){
+  if(!pointerDown) return;
+  const dx=clientX-startX;
+  const dy=clientY-startY;
 
- try{
-   const parsed=JSON.parse(txt);
-   localStorage.setItem(SAVE_KEY,JSON.stringify(parsed));
+  if(!isDragging && (Math.abs(dx)>5 || Math.abs(dy)>5)){
+    isDragging=true;
+    menu.style.display='none';
+  }
 
-   if(confirm('匯入檔案完成！\\n\\n按下確定後將重新整理網頁。')){
-      setTimeout(()=>location.reload(),300);
-   }
- }catch(err){
-   alert('存檔文字格式錯誤');
- }
+  if(!isDragging) return;
+
+  let newX=origX+dx;
+  let newY=origY+dy;
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  newX=Math.max(5,Math.min(newX,vw-65));
+  newY=Math.max(5,Math.min(newY,vh-65));
+  btn.style.left=newX+'px';
+  btn.style.top=newY+'px';
+  btn.style.right='auto';
+}
+
+function pointerEnd(){
+  if(pointerDown){
+    if(isDragging){
+      localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
+    }
+    pointerDown=false;
+    isDragging=false;
+  }
+}
+
+btn.addEventListener('mousedown',e=>pointerStart(e,e.clientX,e.clientY));
+document.addEventListener('mousemove',e=>pointerMove(e.clientX,e.clientY));
+document.addEventListener('mouseup',pointerEnd);
+
+btn.addEventListener('touchstart',e=>{
+  const t=e.touches[0];
+  pointerStart(e,t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+  const t=e.touches[0];
+  pointerMove(t.clientX,t.clientY);
+  if(isDragging) e.preventDefault();
+},{passive:false});
+document.addEventListener('touchend',pointerEnd);
+
+// 點選單外面關閉
+document.addEventListener('click',e=>{
+  if(menu.style.display==='block' &&!menu.contains(e.target) && e.target!==btn){
+    menu.style.display='none';
+  }
 });
 
-document.getElementById('importSaveFile').addEventListener('change',(e)=>{
- const file=e.target.files[0];
- if(!file) return;
-
- const reader=new FileReader();
- reader.onload=()=>{
-   try{
-      importSave(JSON.parse(reader.result));
-   }catch(err){
-      alert('JSON格式錯誤');
-   }
- };
- reader.readAsText(file);
+window.addEventListener('resize',()=>{
+  clampBtnPos();
+  if(menu.style.display==='block') updateMenuPos();
 });
+window.addEventListener('orientationchange',()=>setTimeout(()=>{
+  clampBtnPos();
+  if(menu.style.display==='block') updateMenuPos();
+},300));
 
+const getAllData=()=>{
+  const data={};
+  KEYS.forEach(k=>{
+    const v=localStorage.getItem(k);
+    if(v!==null)data[k]=v;
+  });
+  return data;
+};
+
+const setAllData=(data)=>{
+  KEYS.forEach(k=>localStorage.removeItem(k));
+  Object.keys(data).forEach(k=>localStorage.setItem(k,data[k]));
+  if(data['lineage_idle_save_1']){
+    localStorage.setItem('lineageIdleSave',data['lineage_idle_save_1']);
+    localStorage.setItem('lineage_idle_save',data['lineage_idle_save_1']);
+  }
+};
+
+const download=(name,data)=>{
+  const a=document.createElement('a');
+  const time=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download=name+'_'+time+'.json';
+  a.click();
+};
+
+document.getElementById('exportAllBtn').onclick=()=>{
+  download('lineage_三格備份',JSON.stringify(getAllData()));
+  menu.style.display='none';
+};
+
+document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
+document.getElementById('importSaveFile').onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      setAllData(JSON.parse(reader.result));
+      alert('匯入成功！重整後生效');
+      location.reload();
+    }catch(err){alert('檔案錯誤:'+err);}
+  };
+  reader.readAsText(file);
+};
+
+document.getElementById('exportTextBtn').onclick=()=>{
+  textArea.value=JSON.stringify(getAllData());
+  textArea.select();
+};
+
+document.getElementById('importTextBtn').onclick=()=>{
+  const txt=textArea.value.trim();
+  if(!txt)return alert('文字框是空的');
+  try{
+    setAllData(JSON.parse(txt));
+    alert('匯入成功！重整後生效');
+    location.reload();
+  }catch(err){alert('格式錯誤:'+err);}
+};
 })();
 <\/script>
 `;
 }
 
-async function inject(){
+function inject(){
  const file=document.getElementById('fileInput').files[0];
- if(!file){alert('請選擇HTML');return;}
-
+ if(!file){alert('先選遊戲html檔');return;}
  originalName=file.name;
- let html=await file.text();
-
- const code=buildInjection();
-
- if(html.includes('</body>')){
-   html=html.replace('</body>', code + '\n</body>');
- }else{
-   html+=code;
- }
-
- modifiedHtml=html;
- document.getElementById('downloadBtn').disabled=false;
- log('注入完成');
+ const reader=new FileReader();
+ reader.onload=e=>{
+   const html=e.target.result;
+   if(!html.includes('</body>')){
+     log('錯誤：找不到 </body> 標籤，無法注入');
+     return;
+   }
+   modifiedHtml=html.replace('</body>',buildInjection()+'</body>');
+   document.getElementById('downloadBtn').disabled=false;
+   log('修改完成！點擊下載修改版');
+ };
+ reader.readAsText(file);
 }
 
-document.getElementById('downloadBtn').addEventListener('click',()=>{
+document.getElementById('downloadBtn').onclick=()=>{
  const blob=new Blob([modifiedHtml],{type:'text/html'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
- a.download=originalName.replace('.html','_存檔版V3.1.html');
+ a.download=originalName.replace('.html','_最終版.html');
  a.click();
-});
+ log('已下載: ' + a.download);
+};
 </script>
 </body>
 </html>
