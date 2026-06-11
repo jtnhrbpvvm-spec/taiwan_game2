@@ -9511,22 +9511,47 @@ window.onload = () => {
 
 <style>
 #saveToolsBtn{
-    position:fixed;top:50px;right:50px;z-index:2147483647;
-    font-size:36px;width:60px;height:60px;border-radius:50%;cursor:pointer;
-    background:#333;color:#fff;border:2px solid #555;touch-action:none;
-    box-shadow:0 2px 8px rgba(0,0,0,.4);-webkit-tap-highlight-color:transparent;
-    user-select:none;padding:0;line-height:60px;
+    position:fixed;
+    top:50px;
+    right:50px;
+    z-index:2147483647;
+    font-size:36px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    cursor:pointer;
+    background:#333;
+    color:#fff;
+    border:2px solid #555;
+    touch-action:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    padding:0;
+    line-height:60px;
 }
 #saveToolsMenu{
-    display:none;position:fixed;background:#1a1a1a;color:#fff;
-    border:1px solid #444;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.6);
-    border-radius:8px;width:280px;z-index:2147483646;
+    display:none;
+    position:fixed;
+    background:#1a1a1a;
+    color:#fff;
+    border:1px solid #444;
+    padding:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.6);
+    border-radius:8px;
+    width:280px;
+    z-index:2147483646;
 }
-.saveToolBtn{background:#333;color:#fff;border:1px solid #555;border-radius:4px;
-padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);}
+.saveToolBtn{
+background:#333;color:#fff;border:1px solid #555;border-radius:4px;
+padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);
+}
 .saveToolBtn:active{background:#555}
-#saveTextArea{width:100%;height:120px;margin-top:8px;display:block;white-space:pre-wrap;
-background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size:12px;padding:6px;box-sizing:border-box;}
+#saveTextArea{
+width:100%;height:120px;margin-top:8px;display:block;
+white-space:pre-wrap;background:#000;color:#fff;border:1px solid #555;
+font-family:monospace;font-size:12px;padding:6px;box-sizing:border-box;
+}
 #saveToolsTitle{font-size:14px;margin-bottom:8px;text-align:center}
 </style>
 
@@ -9546,7 +9571,6 @@ background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size
 const KEYS=[
   'lineage_idle_save_1','lineage_idle_save_2','lineage_idle_save_3',
   'lineageIdleSave','lineage_idle_save',
-  'lineage_idle_warehouse',
   'mp','hp','maxHp','maxMp','level','exp','spells','inventory',
   'equipment','adena','baseStats','currentMap','bonusPoints','antarasDeadUntil','settings'
 ];
@@ -9557,8 +9581,10 @@ const textArea=document.getElementById('saveTextArea');
 
 function updateMenuPos(){
   const rect=btn.getBoundingClientRect();
-  const vw=window.innerWidth,vh=window.innerHeight;
-  let left=rect.left,top=rect.bottom+10;
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  let left=rect.left;
+  let top=rect.bottom+10;
   if(left+280>vw-5) left=vw-285;
   if(left<5) left=5;
   if(top+300>vh-5) top=rect.top-310;
@@ -9569,8 +9595,10 @@ function updateMenuPos(){
 
 function clampBtnPos(){
   const rect=btn.getBoundingClientRect();
-  const vw=window.innerWidth,vh=window.innerHeight;
-  let left=rect.left,top=rect.top;
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  let left=rect.left;
+  let top=rect.top;
   if(left<5) left=5;
   if(top<5) top=5;
   if(left+60>vw-5) left=vw-65;
@@ -9591,35 +9619,52 @@ try{
  }
 }catch(e){}
 
-let downX=0,downY=0,isDragging=false,origX=0,origY=0;
+// 比照舊版：用 downX/downY 記錄起點
+let downX=0,downY=0;
+let isDragging=false;
+let origX=0,origY=0;
 
 function handleDown(e,clientX,clientY){
-  downX=clientX;downY=clientY;isDragging=false;
+  downX=clientX;
+  downY=clientY;
+  isDragging=false;
   const rect=btn.getBoundingClientRect();
-  origX=rect.left;origY=rect.top;
+  origX=rect.left;
+  origY=rect.top;
   e.preventDefault();
 }
 
 function handleMove(e,clientX,clientY){
-  if(downX===0&&downY===0) return;
+  if(downX===0 && downY===0) return;
+
   const moveDistance=Math.sqrt(Math.pow(clientX-downX,2)+Math.pow(clientY-downY,2));
+
   if(moveDistance>5){
-    if(!isDragging){isDragging=true;menu.style.display='none';}
+    if(!isDragging){
+      isDragging=true;
+      menu.style.display='none';
+    }
+
     let newX=origX+(clientX-downX);
     let newY=origY+(clientY-downY);
-    const vw=window.innerWidth,vh=window.innerHeight;
+    const vw=window.innerWidth;
+    const vh=window.innerHeight;
     newX=Math.max(5,Math.min(newX,vw-65));
     newY=Math.max(5,Math.min(newY,vh-65));
     btn.style.left=newX+'px';
     btn.style.top=newY+'px';
     btn.style.right='auto';
+
     if(e.cancelable) e.preventDefault();
   }
 }
 
 function handleUp(e,clientX,clientY){
-  if(downX===0&&downY===0) return;
+  if(downX===0 && downY===0) return;
+
   const moveDistance=Math.sqrt(Math.pow(clientX-downX,2)+Math.pow(clientY-downY,2));
+
+  // 比照舊版：移動<5px 才算點擊
   if(moveDistance<5){
     if(menu.style.display==='block'){
       menu.style.display='none';
@@ -9630,18 +9675,39 @@ function handleUp(e,clientX,clientY){
   }else if(isDragging){
     localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
   }
-  downX=0;downY=0;isDragging=false;
+
+  downX=0;
+  downY=0;
+  isDragging=false;
 }
 
+// 滑鼠
 btn.addEventListener('mousedown',e=>handleDown(e,e.clientX,e.clientY));
 document.addEventListener('mousemove',e=>handleMove(e,e.clientX,e.clientY));
 document.addEventListener('mouseup',e=>handleUp(e,e.clientX,e.clientY));
-btn.addEventListener('touchstart',e=>{const t=e.touches[0];handleDown(e,t.clientX,t.clientY);},{passive:false});
-document.addEventListener('touchmove',e=>{const t=e.touches[0];handleMove(e,t.clientX,t.clientY);},{passive:false});
-document.addEventListener('touchend',e=>{const t=e.changedTouches[0];handleUp(e,t.clientX,t.clientY);});
 
+// 觸控
+btn.addEventListener('touchstart',e=>{
+  const t=e.touches[0];
+  handleDown(e,t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+  const t=e.touches[0];
+  handleMove(e,t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  const t=e.changedTouches[0];
+  handleUp(e,t.clientX,t.clientY);
+});
+
+// 點外面關選單
 document.addEventListener('mousedown',e=>{
-  if(menu.style.display==='block'&&!menu.contains(e.target)&&e.target!==btn){
+  if(menu.style.display==='block' &&!menu.contains(e.target) && e.target!==btn){
+    menu.style.display='none';
+  }
+});
+document.addEventListener('touchstart',e=>{
+  if(menu.style.display==='block' &&!menu.contains(e.target) && e.target!==btn){
     menu.style.display='none';
   }
 });
@@ -9650,6 +9716,10 @@ window.addEventListener('resize',()=>{
   clampBtnPos();
   if(menu.style.display==='block') updateMenuPos();
 });
+window.addEventListener('orientationchange',()=>setTimeout(()=>{
+  clampBtnPos();
+  if(menu.style.display==='block') updateMenuPos();
+},300));
 
 const getAllData=()=>{
   const data={};
@@ -9681,6 +9751,7 @@ document.getElementById('exportAllBtn').onclick=()=>{
   download('lineage_三格備份',JSON.stringify(getAllData()));
   menu.style.display='none';
 };
+
 document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
 document.getElementById('importSaveFile').onchange=e=>{
   const file=e.target.files[0];
@@ -9695,10 +9766,12 @@ document.getElementById('importSaveFile').onchange=e=>{
   };
   reader.readAsText(file);
 };
+
 document.getElementById('exportTextBtn').onclick=()=>{
   textArea.value=JSON.stringify(getAllData());
   textArea.select();
 };
+
 document.getElementById('importTextBtn').onclick=()=>{
   const txt=textArea.value.trim();
   if(!txt)return alert('文字框是空的');
