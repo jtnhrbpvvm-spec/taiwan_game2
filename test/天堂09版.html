@@ -3155,7 +3155,7 @@ function procLightArrow(t) {
     t.justHit = 'magic';
     if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;
     mobWake(t);
-    player.mp = Math.min(player.mmp, player.mp + 1);   // 共鳴觸發：恢復 1 MP
+    player.mp = Math.min(player.mmp, player.mp + Math.max(1, Math.floor(d / 10)));   // 共鳴觸發：恢復 光箭實際傷害/10（捨去；未滿10仍回 1）
     updateUI();
     logCombat(`<span class="text-cyan-300 font-bold">【共鳴】</span>光箭對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 <span class="${isCrit ? 'text-yellow-500 font-bold' : 'text-cyan-300'}">${d}</span> 點傷害。${isCrit ? ' (爆擊!)' : ''}`, 'magic');
     if (t.curHp <= 0) {
