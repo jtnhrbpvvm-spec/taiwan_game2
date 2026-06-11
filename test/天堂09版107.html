@@ -563,7 +563,7 @@ const DB = {
         "wpn_39": { n: "潘的角", type: "wpn", dmgS: 3, dmgL: 4, hit: 0, spd: 1.2, req: "all", safe: 6, p: 10, gachaWeight: 100 },
         "wpn_40": { n: "覆上米索莉的角", type: "wpn", dmgS: 4, dmgL: 4, hit: 0, spd: 1.2, req: "all", safe: 6, p: 178, unBonus: true, gachaWeight: 100 },
         "wpn_41": { n: "覆上奧里哈魯根的角", type: "wpn", dmgS: 7, dmgL: 8, hit: 0, spd: 1.2, req: "all", safe: 6, p: 1430, unBonus: true, gachaWeight: 100 },
-        "wpn_giantaxe": { n: "巨斧", type: "wpn", w2h: true, dmgS: 10, dmgL: 16, hit: 0, spd: 1.0, req: "knight", safe: 6, p: 18200, gachaWeight: 50, eff: "crush" },
+        "wpn_giantaxe": { n: "巨斧", type: "wpn", w2h: true, dmgS: 8, dmgL: 14, hit: 0, spd: 1.0, req: "knight", safe: 6, p: 18200, gachaWeight: 50, eff: "crush" },
         "wpn_berserker": { n: "狂戰士斧", type: "wpn", w2h: true, dmgS: 9, dmgL: 9, hit: 0, spd: 0.8, req: "knight", safe: 6, p: 13520, gachaWeight: 10, eff: "crush" },
 		"wpn_silveraxe": { n: "銀斧", type: "wpn", w2h: true, dmgS: 8, dmgL: 14, hit: 0, spd: 1.0, req: "knight", safe: 6, p: 11200, unBonus: true, gachaWeight: 20, eff: "crush" },
         "hlm_elf": { n: "精靈皮盔", type: "arm", slot: "helm", ac: 1, req: "elf,mage", safe: 6, p: 120, gachaWeight: 100 },
@@ -722,7 +722,7 @@ const DB = {
         "panacea_int": { n: "萬能藥(INT)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升智力+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "int", plv: 50, gachaWeight: 0 },
         "panacea_wis": { n: "萬能藥(WIS)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升精神+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "wis", plv: 50, gachaWeight: 0 },
         "panacea_white": { n: "純白的萬能藥", type: "misc", req: "all", p: 5000, c: "text-slate-100", d: "純白無瑕的萬能藥原料。使用回憶蠟燭重置配點時，依已使用過的萬能藥瓶數獲得。可在象牙塔的塔斯處，以 3 個製作成任一屬性的萬能藥。", gachaWeight: 10 },
-        "panacea_cha": { n: "萬能藥(CHA)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升魅力+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "cha", plv: 50, gachaWeight: 0 },
+        "panacea_cha": { n: "萬能藥(CHA)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升魅力+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限30）", eff: "panacea", pstat: "cha", plv: 50, gachaWeight: 0 },
         
         "new_item_142": { n: "哨子", type: "pot", req: "all", p: 165, d: "可用於呼叫或解散寵物", eff: "whistle", gachaWeight: 0 },
         "new_item_collar_husky": { n: "項圈 (哈士奇)", p: 10, gachaWeight: 0 },
@@ -1549,7 +1549,7 @@ const DB = {
         '巴拉卡斯': [['wpn_katana',10], ['wpn_siruge',5], ['amr_plate',10], ['arm_88',1], ['glv_glove',10], ['arm_82',0.1], ['acc_116',0.2], ['acc_117',0.2], ['amu_str',0.2], ['amu_int',0.2], ['acc_127',6], ['acc_128',6], ['acc_129',6], ['blt_body',1], ['acc_130',1], ['acc_131',1], ['potion_haste',1], ['scroll_weapon',100], ['scroll_armor',100], ['scroll_acc',50], ['new_item_150',1], ['new_item_151',100], ['new_item_152',10], ['new_item_153',2], ['new_item_157',100], ['new_item_158',10], ['new_item_159',2], ['bk_fireball',20], ['bk_slow',15], ['bk_charm',15], ['bk_str_up',10], ['bk_haste_spell',10], ['bk_summon',3], ['bk_invisible',1], ['bk_resurrection',1], ['new_item_192',100], ['potion_blue',1]],
         '巴風特': [['wpn_katana',2], ['wpn_2hsword',5], ['amr_plate',5], ['arm_88',0.1], ['glv_glove',10], ['acc_116',0.01], ['acc_127',0.5], ['acc_129',0.5], ['blt_body',0.1], ['acc_131',0.1], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_charm',1], ['bk_earthquake',2], ['bk_summon',0.2], ['bk_rock_prison',5], ['bk_quake',1], ['new_item_195',1], ['bk_elf_dancefire',1], ['bk_magic_shield',1], ['bk_weaken',1], ['bk_bless_wpn',0.1]],
         '希爾黛斯': [['new_item_160',0.5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_slow',0.5], ['bk_ice_lance',0.001], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_lifespring',0.1], ['bk_elf_lifebless',0.01],['new_item_213',1]],
-        '強盜': [['wpn_20', 0.5], ['arm_69', 0.5], ['hlm_mr', 0.5], ['wpn_shortbow',1], ['wpn_32',0.01], ['arm_42',2], ['arm_66',3], ['arm_98',0.1], ['arm_49',1], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_225',0.1]],
+        '強盜': [['arm_69', 0.5], ['hlm_mr', 0.5], ['wpn_shortbow',1], ['wpn_32',0.01], ['arm_42',2], ['arm_66',3], ['arm_98',0.1], ['arm_49',1], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_225',0.1]],
         '強盜頭目': [['hlm_mr', 5], ['wpn_katana',1], ['wpn_silversword',3], ['arm_62',5], ['arm_87',5], ['scroll_acc',0.1], ['arm_42',10], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['item_nightvision',10]],
         '影魔': [['acc_129',0.005], ['acc_131',0.001], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_magic_shield',0.01], ['bk_dark_shadow',0.1]],
         '思克巴': [['acc_117',0.001], ['bk_ice_lance',0.01], ['bk_summon',0.02], ['bk_blizzard',0.005], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_elf_release',0.1], ['bk_elf_lifespring',0.1], ['bk_elf_triple',0.05], ['new_item_226',0.01]],
@@ -1955,7 +1955,7 @@ function calcStats() {
     // ===== Phase 0：基礎屬性 + 衍生欄位歸零（依基本設定，起始值0；AC起始10）=====
     let pn = player.panacea || {};
     d.str = b.str + a.str + (pn.str||0); d.dex = b.dex + a.dex + (pn.dex||0); d.con = b.con + a.con + (pn.con||0); d.int = b.int + a.int + (pn.int||0); d.wis = b.wis + a.wis + (pn.wis||0);
-    d.cha = Math.min(60, (b.cha || 0) + (a.cha || 0) + (pn.cha||0));   // 魅力：第六屬性，最高 60
+    d.cha = Math.min(30, (b.cha || 0) + (a.cha || 0) + (pn.cha||0));   // 魅力：第六屬性，最高 30
 
     d.ac = 10; d.er = 0; d.dr = 0;
     d.meleeDmg = 0; d.meleeHit = 0; d.meleeCrit = 0;
@@ -5199,7 +5199,7 @@ function useItem(u, silent = false) {
             // 落到下方 consume(item)，消耗一張卷軸
         } else if (d.eff === 'panacea') {
             const STAT_CN = { str:'力量', dex:'敏捷', con:'體質', int:'智力', wis:'精神', cha:'魅力' };
-            let st = d.pstat, cap = 60;
+            let st = d.pstat, cap = (st === 'cha') ? 30 : 60;
             // 萬能藥已取消等級限制（不再檢查 plv）
             if ((player.panaceaUsed || 0) >= 20) { if(!silent) logSys(`萬能藥最多只能使用 20 瓶，使用回憶蠟燭後可重新使用。`); return; }
             if (naturalStat(st) >= cap) { if(!silent) logSys(`${STAT_CN[st]}已達上限（${cap}），無法再使用 ${d.n}。`); return; }
@@ -7086,38 +7086,12 @@ function loadWarehouse(){
 }
 function saveWarehouse(w){ localStorage.setItem(WH_KEY, JSON.stringify({ items: w.items, gold: w.gold })); }
 function _whStackFind(arr, it){ return ((it.en||0)===0 && !it.lock) ? arr.find(x => x.id===it.id && (x.en||0)===0 && !x.lock && (x.bless||false)===(it.bless||false) && (x.anc||false)===(it.anc||false) && (x.attr||null)===(it.attr||null)) : null; }
-// 物品完整簽章：名字(id)+強化值(en)+詞綴(祝福/遠古/屬性)；一鍵存入用來比對「完全相同」
-function whSig(it){ return it.id + '|' + (it.en||0) + '|' + (it.bless?1:0) + '|' + (it.anc?1:0) + '|' + (it.attr||''); }
-// 一鍵存入：背包中「與倉庫現有物品 詞綴+名字+強化值 完全相同」者自動存入（鎖定物品保護、不可存物品略過）
-function whOneClickDeposit(){
-    let w = loadWarehouse();
-    let whSigs = new Set(w.items.map(whSig));   // 倉庫現有物品簽章集合
-    let deposited = 0, full = false;
-    for(let it of player.inv.slice()){          // 用副本走訪，過程會改動 player.inv
-        if(WH_NO_STORE.includes(it.id)) continue;   // 不可存入
-        if(it.lock) continue;                        // 鎖定物品保護，不自動存入
-        if(!whSigs.has(whSig(it))) continue;         // 倉庫沒有完全相同的 → 跳過
-        let idx = player.inv.findIndex(i => i.uid === it.uid);
-        if(idx < 0) continue;
-        let cur = player.inv[idx];
-        let stack = _whStackFind(w.items, cur);
-        if(!stack && w.items.length >= WH_MAX){ full = true; break; }
-        player.inv.splice(idx, 1);
-        if(stack){ stack.cnt += cur.cnt; } else { w.items.push(cur); whSigs.add(whSig(cur)); }
-        deposited++;
-    }
-    saveWarehouse(w); saveGame(); renderTabs(true); updateUI();
-    renderWarehouseNPC(document.getElementById('interaction-content'));
-    if(deposited > 0) logSys(`<span class="text-cyan-300 font-bold">一鍵存入：已存入 ${deposited} 項與倉庫現有物品相同的物品${full ? '（倉庫已滿，部分未存入）' : ''}。</span>`);
-    else logSys(full ? `<span class="text-red-400">倉庫已滿，無法存入。</span>` : `背包中沒有與倉庫現有物品完全相同的可存入物品。`);
-}
 function whDeposit(uidv){
     let w = loadWarehouse();
     let idx = player.inv.findIndex(i => i.uid === uidv);
     if(idx < 0) return;
     let it = player.inv[idx];
     if(WH_NO_STORE.includes(it.id)){ logSys(`<span class="text-red-400">此物品無法存入倉庫。</span>`); return; }
-    if(it.lock){ logSys(`<span class="text-red-400">鎖定物品需先解鎖才能存入倉庫。</span>`); return; }
     // 可堆疊(en0未鎖)合併進既有倉庫堆疊不佔新格；否則需有空格
     let stack = _whStackFind(w.items, it);
     if(!stack && w.items.length >= WH_MAX){ logSys(`<span class="text-red-400">倉庫已滿（上限 ${WH_MAX} 格）。</span>`); return; }
@@ -7161,20 +7135,20 @@ function renderWarehouseNPC(div){
     let mkBtn = (it, act) => `<button onclick="${act}('${it.uid}')" class="btn w-full text-left py-1.5 px-2 text-sm bg-slate-800 hover:bg-slate-700 border-slate-600">${getItemFullName(it)}</button>`;
     let _invItems = player.inv.filter(it => whCategory(it.id) === _whFilter);
     let _whItems  = w.items.filter(it => whCategory(it.id) === _whFilter);
-    let invHtml = _invItems.length ? _invItems.map(it => (WH_NO_STORE.includes(it.id) || it.lock)
-        ? `<div class="w-full text-left py-1.5 px-2 text-sm bg-slate-900/60 border border-slate-700 rounded opacity-50 cursor-not-allowed">${getItemFullName(it)} <span class="text-xs text-red-400">（${(it.lock && !WH_NO_STORE.includes(it.id)) ? '鎖定，需解鎖' : '不可存'}）</span></div>`
+    let invHtml = _invItems.length ? _invItems.map(it => WH_NO_STORE.includes(it.id)
+        ? `<div class="w-full text-left py-1.5 px-2 text-sm bg-slate-900/60 border border-slate-700 rounded opacity-50 cursor-not-allowed">${getItemFullName(it)} <span class="text-xs text-red-400">（不可存）</span></div>`
         : mkBtn(it, 'whDeposit')).join('') : '<div class="text-slate-500 text-sm text-center py-4">此分類背包沒有物品</div>';
     let whHtml  = _whItems.length ? _whItems.map(it => mkBtn(it, 'whWithdraw')).join('') : '<div class="text-slate-500 text-sm text-center py-4">此分類倉庫是空的</div>';
     let _oi = document.getElementById('wh-inv-list'), _os = document.getElementById('wh-store-list');
     let _whInvScroll = _oi ? _oi.scrollTop : 0, _whStoreScroll = _os ? _os.scrollTop : 0, _divScroll = div.scrollTop;
     div.innerHTML = `
     <div class="flex flex-col gap-3 p-1">
-        <div class="text-slate-300 text-sm leading-relaxed">將物品或金幣存入倉庫，<b class="text-amber-300">三個存檔角色共用</b>。點背包物品＝存入；點倉庫物品＝取出。已裝備或鎖定中的物品無法存入（需先解鎖）。</div>
+        <div class="text-slate-300 text-sm leading-relaxed">將物品或金幣存入倉庫，<b class="text-amber-300">三個存檔角色共用</b>。點背包物品＝存入；點倉庫物品＝取出。已裝備的物品無法存入（鎖定中的裝備可以存）。</div>
         <div class="flex items-center gap-2 bg-slate-800/60 border border-slate-600 rounded p-3 text-sm flex-wrap">
             <span>金幣　背包：<span class="text-yellow-400 font-bold">${player.gold}</span>　倉庫：<span class="text-yellow-400 font-bold">${w.gold||0}</span></span>
-            <input id="wh-gold-amt" type="number" min="1" value="1000" class="w-24 bg-slate-900 border border-slate-600 text-center text-white rounded h-8 ms-auto">
-            <button onclick="whGold('in')" class="btn px-4 text-sm font-bold h-8 inline-flex items-center justify-center" style="background: linear-gradient(135deg, #0c4a5e 0%, #0e7490 28%, #0a3d4d 52%, #11657e 76%, #093440 100%); color: #a5f3fc; border-color: #0891b2;">存入 ▶</button>
-            <button onclick="whGold('out')" class="btn px-4 text-sm font-bold h-8 inline-flex items-center justify-center" style="background: linear-gradient(135deg, #6b2a10 0%, #b3490e 28%, #5a230e 52%, #9a3e0c 76%, #4a1d0c 100%); color: #fed7aa; border-color: #c2410c;">◀ 取出</button>
+            <input id="wh-gold-amt" type="number" min="1" value="1000" class="w-24 bg-slate-900 border border-slate-600 text-center text-white rounded py-1 ms-auto">
+            <button onclick="whGold('in')" class="btn py-1 px-3 text-sm bg-cyan-900 border-cyan-700 text-cyan-200 font-bold">存入 ▶</button>
+            <button onclick="whGold('out')" class="btn py-1 px-3 text-sm bg-orange-900 border-orange-700 text-orange-200 font-bold">◀ 取出</button>
         </div>
         <div class="flex items-center gap-2 text-sm">
             <span class="text-slate-300 font-bold">物品分類：</span>
@@ -7184,7 +7158,6 @@ function renderWarehouseNPC(div){
                 <option value="item" ${_whFilter==='item'?'selected':''}>道具</option>
             </select>
             <span class="text-slate-500 text-xs">（存入／取出共用此分類）</span>
-            <button onclick="whOneClickDeposit()" class="btn px-4 text-sm font-bold h-8 inline-flex items-center justify-center ms-auto" style="background: linear-gradient(135deg, #0c4a5e 0%, #0e7490 28%, #0a3d4d 52%, #11657e 76%, #093440 100%); color: #a5f3fc; border-color: #0891b2;" title="把背包中與倉庫現有物品（詞綴+名字+強化值完全相同）的物品自動存入；鎖定物品不動">一鍵存入</button>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col min-h-0">
@@ -7485,8 +7458,8 @@ function renderTarasQuest(div) {
     // 水晶試煉：不死族的鑰匙 + 不死族的骨頭 → 水晶魔杖
     let crystalReq = ['new_item_214', 'new_item_212'];
     let hasCrystal = crystalReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
-    // 瑪那試煉：變形怪的血 → 瑪那魔杖 或 瑪那斗篷
-    let manaReq = ['new_item_240'];
+    // 瑪那試煉：變形怪的血 + 魔法書(魔法相消術) → 瑪那魔杖 或 瑪那斗篷
+    let manaReq = ['new_item_240', 'bk_cancel'];
     let hasMana = manaReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
 
     let html = `<div class="p-4 text-slate-300">塔拉斯：年輕的法師啊，你想挑戰哪一項試煉？</div>`;
@@ -7504,7 +7477,7 @@ function renderTarasQuest(div) {
     // ===== 瑪那試煉 =====
     html += `<div class="p-4 border-t border-slate-700">
         <div class="text-purple-300 font-bold text-lg mb-2">瑪那試煉</div>
-        <div class="text-slate-300 text-sm mb-3">帶來<b>變形怪的血</b>一個，選擇換取瑪那魔杖或瑪那斗篷。<br>
+        <div class="text-slate-300 text-sm mb-3">帶來<b>變形怪的血</b>與<b>魔法書(魔法相消術)</b>各一個，選擇換取瑪那魔杖或瑪那斗篷。<br>
         目前收集：${hasMana ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
     if (hasMana) {
         html += `<div class="grid grid-cols-1 gap-3">
@@ -7637,8 +7610,8 @@ function doTarasExchange(rewardId) {
 }
 
 function doTarasManaExchange(rewardId) {
-    // 瑪那試煉：變形怪的血 → 瑪那魔杖 或 瑪那斗篷
-    let reqIds = ['new_item_240'];
+    // 瑪那試煉：變形怪的血 + 魔法書(魔法相消術) → 瑪那魔杖 或 瑪那斗篷
+    let reqIds = ['new_item_240', 'bk_cancel'];
     if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
 
     // 扣除材料
@@ -8127,7 +8100,7 @@ function adjStat(s, v) {
     let b = createBase[curCreate.cls];
     let spent = curCreate.str + curCreate.dex + curCreate.con + curCreate.int + curCreate.wis + curCreate.cha;
     let left = b.pts - spent;
-    let capN = 20;   // 創角階段各屬性最高點到 20（含魅力，與其他屬性一致；之後靠升級點數突破至上限 60）
+    let capN = (s === 'cha') ? 18 : 20;   // 魅力：創角階段最高只能點到 18（50級後靠升級點數才能突破）
     if (v > 0 && left > 0 && (b[s] + curCreate[s]) < capN) curCreate[s]++;
     else if (v < 0 && curCreate[s] > 0) curCreate[s]--;
     updateCreateUI();
@@ -8433,7 +8406,7 @@ function loadGame() {
 // 配點/萬能藥的「自然屬性值」：基礎+配點+萬能藥（不含裝備與 buff）；屬性上限只套用在此值上，裝備/buff 可再往上疊加
 function naturalStat(s) { return (player.base[s] || 0) + (player.alloc[s] || 0) + ((player.panacea && player.panacea[s]) || 0); }
 function adjBonusStat(s) {
-    let capN = 60;   // 屬性配點上限：一律 60，不分等級；上限只看 naturalStat(base+配點+萬能藥)，裝備/buff 一律不計入、可再往上疊加
+    let capN = (s === 'cha') ? 30 : 60;   // 屬性配點上限：一律 其他60 / 魅力30，不分等級；上限只看 naturalStat(base+配點+萬能藥)，裝備/buff 一律不計入、可再往上疊加
     if (player.bonus > 0 && naturalStat(s) < capN) {
         player.alloc[s]++; player.bonus--;
         calcStats();
@@ -9702,28 +9675,12 @@ const download=(name,data)=>{
   a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
   a.download=name+'_'+time+'.json';
   a.click();
-  URL.revokeObjectURL(a.href);
 };
 
-// 全部匯出 - 會下載檔案
 document.getElementById('exportAllBtn').onclick=()=>{
   download('lineage_三格備份',JSON.stringify(getAllData()));
   menu.style.display='none';
 };
-
-// 純文字匯出 - 只填文字框，不下載
-document.getElementById('exportTextBtn').onclick=()=>{
-  textArea.value=JSON.stringify(getAllData(),null,2);
-  textArea.select();
-  textArea.focus();
-  // 提示已複製
-  const oldTitle=document.getElementById('saveToolsTitle').innerHTML;
-  document.getElementById('saveToolsTitle').innerHTML='<b style="color:#4f4">已匯出到文字框</b>';
-  setTimeout(()=>{
-    document.getElementById('saveToolsTitle').innerHTML=oldTitle;
-  },1500);
-};
-
 document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
 document.getElementById('importSaveFile').onchange=e=>{
   const file=e.target.files[0];
@@ -9738,7 +9695,10 @@ document.getElementById('importSaveFile').onchange=e=>{
   };
   reader.readAsText(file);
 };
-
+document.getElementById('exportTextBtn').onclick=()=>{
+  textArea.value=JSON.stringify(getAllData());
+  textArea.select();
+};
 document.getElementById('importTextBtn').onclick=()=>{
   const txt=textArea.value.trim();
   if(!txt)return alert('文字框是空的');
