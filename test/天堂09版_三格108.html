@@ -22,7 +22,7 @@
         .panel { background: #1e293b padding-box, linear-gradient(135deg, #4a3613 0%, #b89243 20%, #6e5220 42%, #e6c474 60%, #5c4318 80%, #c9a14a 100%) border-box; border: 2px solid transparent; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; }
         .panel-header { background: linear-gradient(135deg, #7e6630 0%, #a07f3c 18%, #6e5828 40%, #927535 58%, #5f4d22 78%, #876d31 100%); border-bottom: 1px solid #334155; padding: 0.75rem 1.25rem; font-size: 1.125rem; font-weight: bold; color: #e2e8f0; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; }
         #status-panel > .panel-header { background: transparent; color: #fbbf24; text-shadow: none; }  /* 人物左上資訊框標題：還原原本顏色 */
-        .tab-bar .btn { background: linear-gradient(135deg, #594720 0%, #786030 26%, #4a3c1a 48%, #6b5628 72%, #413518 100%); border-color: #6e5824; color: #f1f5f9; text-shadow: 0.5px 0.5px 0 #000, -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000; }  /* 分頁鈕：最暗金褐不規則漸層 */
+        .tab-bar .btn { background: linear-gradient(135deg, #594720 0%, #786030 26%, #4a3c1a 48%, #6b5628 72%, #413518 100%); border-color: #6e5824; color: #f1f5f9; }  /* 分頁鈕：最暗金褐不規則漸層 */
         .tab-bar .btn:hover:not(:disabled) { background: linear-gradient(135deg, #6e5828 0%, #927535 26%, #5f4d22 48%, #836a30 72%, #564621 100%); }
         .tab-bar .btn.active { background: linear-gradient(135deg, #9a7c38 0%, #c19a4a 50%, #856a30 100%); border-color: #d4b35e; }
         #btn-start { background: linear-gradient(135deg, #594720 0%, #786030 26%, #4a3c1a 48%, #6b5628 72%, #413518 100%); border-color: #6e5824; }  /* 開始冒險：金褐(同分頁鈕) */
@@ -280,7 +280,7 @@
         <div class="w-[340px] flex flex-col gap-4">
             <!-- 新增了 id="status-panel"，並加入去底色與加深背景的樣式確保文字可讀 -->
             <div id="status-panel" class="panel bg-cover bg-top bg-no-repeat" style="background-blend-mode: multiply; background-color: rgba(30, 41, 59, 0.85);">
-                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span id="st-classname">職業</span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.4rem;line-height:1;align-items:center;gap:0.15rem;" title="攻城獲勝期間：全商店8折、開放肯特城"><span style="font-size:1.05em;line-height:1;position:relative;top:-0.08em;">👑</span><span style="line-height:1;">攻城獲勝</span></span><span id="st-class" class="text-white text-lg font-bold cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
+                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span id="st-classname">職業</span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.4rem;line-height:1;align-items:center;gap:0.15rem;" title="攻城獲勝期間：全商店8折、開放肯特城"><span style="font-size:1.05em;line-height:1;position:relative;top:-0.08em;">👑</span><span style="line-height:1;">攻城獲勝</span></span><span id="st-class" class="text-white text-base font-normal cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
                 <div class="p-4 space-y-3 text-base">
                     <div class="flex justify-between text-slate-400 border-b border-slate-700 pb-2"><span>等級</span> <span class="text-white font-bold text-xl" id="st-lv">1</span></div>
                     <div class="flex justify-between text-slate-400"><span>防禦 (AC)</span> <span class="text-white font-bold" id="st-ac">10</span></div>
@@ -398,16 +398,15 @@
 
         <!-- 右側：清單面板 -->
         <div class="w-[380px] flex flex-col gap-3">
-            <div class="panel p-2 grid grid-cols-3 gap-2 bg-slate-800 tab-bar">
+            <div class="panel p-2 grid grid-cols-2 gap-2 bg-slate-800 tab-bar">
                 <button class="btn active text-base py-2 font-bold px-0" onclick="switchTab('stats', this)">能力</button>
-                <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('equip', this)">裝備</button>
                 <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('skill', this)">技能</button>
+                <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('equip', this)">裝備</button>
+                <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('items', this)">道具</button>
                 <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('weapons', this)">武器</button>
                 <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('armors', this)">防具</button>
-                <button class="btn text-base py-2 font-bold px-0" onclick="switchTab('items', this)">道具</button>
-                <button class="btn text-base py-2 font-bold px-0" style="background: linear-gradient(135deg, #565d68 0%, #6b7280 26%, #3f4651 48%, #5a6270 72%, #313740 100%); color: #f1f5f9; border-color: #6b7280;" onclick="switchTab('audit', this)">統計</button>
                 <button id="btn-sort-inv" class="btn text-base py-2 font-bold px-0" style="background: linear-gradient(135deg, #0c4a5e 0%, #0e7490 28%, #0a3d4d 52%, #11657e 76%, #093440 100%); color: #a5f3fc; border-color: #0891b2;" onclick="sortInventory()">一鍵排列</button>
-                <button id="btn-sell-junk" class="btn text-base py-2 font-bold px-0" style="background: linear-gradient(135deg, #6b2a10 0%, #b3490e 28%, #5a230e 52%, #9a3e0c 76%, #4a1d0c 100%); color: #fed7aa; border-color: #c2410c;" onclick="sellAllJunk()">賣出廢品</button>
+                <button id="btn-sell-junk" class="btn text-base py-2 font-bold px-0" style="background: linear-gradient(135deg, #6b2a10 0%, #b3490e 28%, #5a230e 52%, #9a3e0c 76%, #4a1d0c 100%); color: #fed7aa; border-color: #c2410c;" onclick="sellAllJunk()">一鍵賣出廢品</button>
             </div>
 
             <div class="panel flex-1 flex flex-col overflow-hidden relative">
@@ -466,7 +465,6 @@
                 <div id="tab-items" class="p-3 overflow-y-auto h-full hidden flex-col gap-2"></div>
                 <div id="tab-weapons" class="p-3 overflow-y-auto h-full hidden flex-col gap-2"></div>
                 <div id="tab-armors" class="p-3 overflow-y-auto h-full hidden flex-col gap-2"></div>
-                <div id="tab-audit" class="p-3 overflow-y-auto h-full hidden flex-col gap-2"></div>
             </div>
         </div>
     </div>
@@ -3829,90 +3827,8 @@ function pledgeBonusDrop(mob) {
     logSys(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 攜帶的 <span class="${colorClass} font-bold">${fullName}</span> 掉落了！`);
 }
 
-// ===== 內建效率/掉落統計（接在 killMob/gainItem，換地圖重置；不靠函數劫持）=====
-let _audit = { start: Date.now(), gold0: 0, exp: 0, kills: 0, scrollWpn: 0, scrollArm: 0, watch: [], watchCnt: {} };
-function auditReset() {
-    _audit.start = Date.now();
-    _audit.gold0 = (typeof player !== 'undefined' && player) ? (player.gold || 0) : 0;
-    _audit.exp = 0; _audit.kills = 0; _audit.scrollWpn = 0; _audit.scrollArm = 0;
-    _audit.watch.forEach(t => _audit.watchCnt[t] = 0);
-    renderAuditTab();
-}
-function auditTrackKill(mob) {
-    if (!mob || typeof getExpGainMult !== 'function') return;
-    let g = Math.floor((mob.exp || 0) * getExpGainMult(player.lv));
-    if (g > 0) _audit.exp += g;
-    _audit.kills++;
-}
-function auditTrackGain(res) {
-    if (!res || !res.id || typeof DB === 'undefined' || !DB.items[res.id]) return;
-    let nm = DB.items[res.id].n || '';
-    let amt = Number(res.cnt) || 1;
-    if (nm.includes('祝福') && nm.includes('武器施法的卷軸')) _audit.scrollWpn += amt;
-    else if (nm.includes('祝福') && nm.includes('盔甲施法的卷軸')) _audit.scrollArm += amt;
-    let lo = nm.toLowerCase();
-    _audit.watch.forEach(t => { if (lo.includes(t.toLowerCase())) _audit.watchCnt[t] = (_audit.watchCnt[t] || 0) + amt; });
-}
-function auditAddTarget(name) {
-    name = (name || '').trim(); if (!name) return;
-    if (!_audit.watch.includes(name)) { _audit.watch.push(name); if (_audit.watchCnt[name] === undefined) _audit.watchCnt[name] = 0; }
-    renderAuditTab();
-}
-function auditRemoveIdx(i) {
-    let t = _audit.watch[i];
-    if (t !== undefined) { _audit.watch.splice(i, 1); delete _audit.watchCnt[t]; }
-    renderAuditTab();
-}
-function auditAddFromInput() {
-    let inp = document.getElementById('audit-add-input');
-    if (inp && inp.value.trim()) auditAddTarget(inp.value.trim());
-}
-function renderAuditTab() {
-    let el = document.getElementById('tab-audit');
-    if (!el || el.classList.contains('hidden')) return;
-    let inp = document.getElementById('audit-add-input');
-    if (inp && document.activeElement === inp) return;   // 使用者正在輸入 → 跳過此次重繪
-    let _val = inp ? inp.value : '';
-    let mins = (Date.now() - _audit.start) / 60000;
-    let gold = (typeof player !== 'undefined' && player) ? ((player.gold || 0) - _audit.gold0) : 0;
-    let sf = 10 / (mins || 0.001);
-    let exp10 = Math.floor(_audit.exp * sf), gold10 = Math.floor(gold * sf);
-    let watchHtml = _audit.watch.length ? _audit.watch.map((t, i) => {
-        let c = _audit.watchCnt[t] || 0;
-        return `<div class="flex justify-between items-center bg-slate-800/60 rounded px-2 py-1"><span>🎯 ${t}：<b class="${c>0?'text-green-400':'text-slate-300'}">${c}</b> 個</span><button onclick="auditRemoveIdx(${i})" class="btn px-2 py-0.5 text-xs bg-red-900 border-red-700 text-red-200">移除</button></div>`;
-    }).join('') : '<div class="text-slate-500 text-sm">尚無追蹤目標，於下方輸入物品名稱（模糊比對）新增。</div>';
-    el.innerHTML = `
-    <div class="flex flex-col gap-3 text-sm">
-        <div class="flex items-center justify-between">
-            <span class="text-purple-300 font-bold text-base">本圖效率統計</span>
-            <button onclick="auditReset()" class="btn px-3 py-1 text-xs bg-slate-700 border-slate-500 text-slate-200">重置</button>
-        </div>
-        <div class="text-slate-400 text-xs">已觀測 ${mins.toFixed(2)} 分鐘・擊殺 ${_audit.kills.toLocaleString()}（換地圖會自動重置）</div>
-        <div class="grid grid-cols-2 gap-2">
-            <div class="bg-slate-800/60 rounded p-2"><div class="text-slate-400 text-xs">累積經驗</div><div class="text-yellow-300 font-bold text-base">${_audit.exp.toLocaleString()}</div></div>
-            <div class="bg-slate-800/60 rounded p-2"><div class="text-slate-400 text-xs">純金幣淨增</div><div class="text-yellow-400 font-bold text-base">${gold.toLocaleString()}</div></div>
-            <div class="bg-slate-800/60 rounded p-2"><div class="text-slate-400 text-xs">經驗 / 10分</div><div class="text-amber-300 font-bold text-base">${exp10.toLocaleString()}</div></div>
-            <div class="bg-slate-800/60 rounded p-2"><div class="text-slate-400 text-xs">金幣 / 10分</div><div class="text-green-300 font-bold text-base">${gold10.toLocaleString()}</div></div>
-        </div>
-        <div class="border-t border-slate-700 pt-2">
-            <div class="text-amber-300 font-bold mb-1">祝福卷軸掉落</div>
-            <div class="flex justify-between"><span>⚔️ 對武器施法的卷軸（祝福）</span><b class="text-rose-300">${_audit.scrollWpn}</b></div>
-            <div class="flex justify-between"><span>🛡️ 對盔甲施法的卷軸（祝福）</span><b class="text-blue-300">${_audit.scrollArm}</b></div>
-        </div>
-        <div class="border-t border-slate-700 pt-2">
-            <div class="text-cyan-300 font-bold mb-1">自訂掉落追蹤</div>
-            <div class="flex flex-col gap-1 mb-2">${watchHtml}</div>
-            <div class="flex items-center gap-2">
-                <input id="audit-add-input" type="text" placeholder="輸入物品名稱（如：相消）" class="flex-1 bg-slate-900 border border-slate-600 text-white rounded px-2 py-1 text-sm" value="${_val.replace(/"/g,'&quot;')}">
-                <button onclick="auditAddFromInput()" class="btn px-3 py-1 text-sm bg-cyan-900 border-cyan-700 text-cyan-200 font-bold">新增</button>
-            </div>
-        </div>
-    </div>`;
-}
-setInterval(() => { try { renderAuditTab(); } catch(e) {} }, 2000);   // 開著統計分頁時每 2 秒刷新即時數字
 function killMob(idx) {
     let mob = mapState.mobs[idx];
-    if(typeof auditTrackKill === 'function') auditTrackKill(mob);   // 統計：累計經驗/擊殺
     logCombat(`擊敗了 <span class="${getMobColor(mob.lv)}">${mob.n}</span>！`, 'player-heavy');  // 👈 新增
     player.exp += Math.floor(mob.exp * getExpGainMult(player.lv));
     checkLvUp();
@@ -5092,7 +5008,6 @@ function gainItem(id, cnt=1, silent=false, forceNormal=false) {
     renderTabs();
     if(DB.items[id] && DB.items[id].grantSkills) { calcStats(); renderSkillSelects(); }   // 取得授予技能的頭盔：立即生效
     
-    if(typeof auditTrackGain === 'function') auditTrackGain(itemInfo);   // 統計：掉落計數
     return itemInfo; // 👈 讓拉霸機可以讀取最終產生的物品
 }
 
@@ -6629,9 +6544,8 @@ function switchTab(t, btn) {
     Array.from(btn.parentElement.children).forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     // 👇 更新陣列名單
-    ['stats', 'equip', 'weapons', 'skill', 'armors', 'items', 'audit'].forEach(id => { let _e = document.getElementById(`tab-${id}`); if(_e) _e.classList.add('hidden'); });
+    ['stats', 'equip', 'weapons', 'skill', 'armors', 'items'].forEach(id => document.getElementById(`tab-${id}`).classList.add('hidden'));
     document.getElementById(`tab-${t}`).classList.remove('hidden');
-    if(t === 'audit' && typeof renderAuditTab === 'function') renderAuditTab();
 }
 
 // ===== 地圖分類選單（村莊／野外／地監／特殊） =====
@@ -6985,7 +6899,6 @@ function changeMap(force) {
     mapState.current = document.getElementById('map-select').value;
     { let _c = mapCategoryOf(mapState.current); if(_c) { if(!player.lastMapByCat) player.lastMapByCat = {}; player.lastMapByCat[_c] = mapState.current; } }   // 記住各分類最後到過的地圖
     mapState.mobs = [null, null, null];
-    if(typeof auditReset === 'function') auditReset();   // 換地圖：效率統計重置
     
     // 👇 取得包覆地圖與村莊的父層 Panel
     let mapPanel = document.getElementById('town-view').parentElement;
@@ -9634,36 +9547,64 @@ window.onload = () => {
 #saveToolsMenu{
     display:none;position:fixed;background:#1a1a1a;color:#fff;
     border:1px solid #444;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.6);
-    border-radius:8px;width:280px;z-index:2147483646;
+    border-radius:8px;width:300px;z-index:2147483646;
 }
 .saveToolBtn{background:#333;color:#fff;border:1px solid #555;border-radius:4px;
-padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);}
+padding:6px 10px;font-weight:bold;cursor:pointer;margin:2px;width:calc(50% - 4px);font-size:13px;}
 .saveToolBtn:active{background:#555}
-#saveTextArea{width:100%;height:120px;margin-top:8px;display:block;white-space:pre-wrap;
-background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size:12px;padding:6px;box-sizing:border-box;}
+.saveToolBtn.export{background:#2a4d2a;border-color:#3a6d3a;}
+.saveToolBtn.import{background:#4d2a2a;border-color:#6d3a3a;}
+#saveTextArea{width:100%;height:80px;margin-top:8px;display:block;white-space:pre-wrap;
+background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size:11px;padding:6px;box-sizing:border-box;}
 #saveToolsTitle{font-size:14px;margin-bottom:8px;text-align:center}
+.slotLabel{color:#888;font-size:12px;margin:6px 0 2px 0;text-align:left;}
+.divider{border-top:1px solid #444;margin:8px 0;}
 </style>
 
 <button id="saveToolsBtn">💾</button>
 <div id="saveToolsMenu">
 <div id="saveToolsTitle"><b>三格存檔工具</b></div>
-<button id="exportAllBtn" class="saveToolBtn">全部匯出</button>
-<button id="importAllBtn" class="saveToolBtn">全部匯入</button>
+
+<div class="slotLabel">存檔1 (不含倉庫)</div>
+<button id="exportSlot1Btn" class="saveToolBtn export">存檔1匯出</button>
+<button id="importSlot1Btn" class="saveToolBtn import">存檔1匯入</button>
+
+<div class="slotLabel">存檔2 (不含倉庫)</div>
+<button id="exportSlot2Btn" class="saveToolBtn export">存檔2匯出</button>
+<button id="importSlot2Btn" class="saveToolBtn import">存檔2匯入</button>
+
+<div class="slotLabel">存檔3 (不含倉庫)</div>
+<button id="exportSlot3Btn" class="saveToolBtn export">存檔3匯出</button>
+<button id="importSlot3Btn" class="saveToolBtn import">存檔3匯入</button>
+
+<div class="divider"></div>
+<button id="exportAllBtn" class="saveToolBtn export">全部匯出</button>
+<button id="importAllBtn" class="saveToolBtn import">全部匯入</button>
 <button id="exportTextBtn" class="saveToolBtn">純文字匯出</button>
 <button id="importTextBtn" class="saveToolBtn">純文字匯入</button>
 <input type="file" id="importSaveFile" accept=".json" style="display:none">
-<textarea id="saveTextArea" placeholder="存檔內容會顯示在這&#10;可直接複製或貼上"></textarea>
+<textarea id="saveTextArea" placeholder="存檔內容會顯示在這&#10;可直接複製或貼上&#10;&#10;註：1/2/3格不含倉庫&#10;全部匯出才含倉庫"></textarea>
 </div>
 
 <script>
 (function(){
-const KEYS=[
+// 分槽存檔KEY - 不含倉庫
+const SLOT_KEYS=[
   'lineage_idle_save_1','lineage_idle_save_2','lineage_idle_save_3',
   'lineageIdleSave','lineage_idle_save',
-  'lineage_idle_warehouse',
   'mp','hp','maxHp','maxMp','level','exp','spells','inventory',
   'equipment','adena','baseStats','currentMap','bonusPoints','antarasDeadUntil','settings'
 ];
+
+// 全部存檔KEY - 含倉庫
+const ALL_KEYS=[...SLOT_KEYS,'lineage_idle_warehouse'];
+
+// 三格對應的KEY
+const SLOT_KEY_MAP={
+  1:['lineage_idle_save_1','lineageIdleSave','lineage_idle_save'],
+  2:['lineage_idle_save_2'],
+  3:['lineage_idle_save_3']
+};
 
 const btn=document.getElementById('saveToolsBtn');
 const menu=document.getElementById('saveToolsMenu');
@@ -9673,9 +9614,9 @@ function updateMenuPos(){
   const rect=btn.getBoundingClientRect();
   const vw=window.innerWidth,vh=window.innerHeight;
   let left=rect.left,top=rect.bottom+10;
-  if(left+280>vw-5) left=vw-285;
+  if(left+300>vw-5) left=vw-305;
   if(left<5) left=5;
-  if(top+300>vh-5) top=rect.top-310;
+  if(top+450>vh-5) top=rect.top-460;
   if(top<5) top=5;
   menu.style.left=left+'px';
   menu.style.top=top+'px';
@@ -9765,19 +9706,35 @@ window.addEventListener('resize',()=>{
   if(menu.style.display==='block') updateMenuPos();
 });
 
-const getAllData=()=>{
+const getData=(keys)=>{
   const data={};
-  KEYS.forEach(k=>{
+  keys.forEach(k=>{
     const v=localStorage.getItem(k);
     if(v!==null)data[k]=v;
   });
   return data;
 };
 
-const setAllData=(data)=>{
-  KEYS.forEach(k=>localStorage.removeItem(k));
-  Object.keys(data).forEach(k=>localStorage.setItem(k,data[k]));
-  if(data['lineage_idle_save_1']){
+const getSlotData=(slot)=>{
+  const keys=SLOT_KEY_MAP[slot]||[];
+  return getData(keys);
+};
+
+const setData=(data,keys)=>{
+  keys.forEach(k=>localStorage.removeItem(k));
+  Object.keys(data).forEach(k=>{
+    if(keys.includes(k))localStorage.setItem(k,data[k]);
+  });
+};
+
+const setSlotData=(slot,data)=>{
+  const keys=SLOT_KEY_MAP[slot]||[];
+  keys.forEach(k=>localStorage.removeItem(k));
+  Object.keys(data).forEach(k=>{
+    if(keys.includes(k))localStorage.setItem(k,data[k]);
+  });
+  // 存檔1要同步主存檔
+  if(slot===1 && data['lineage_idle_save_1']){
     localStorage.setItem('lineageIdleSave',data['lineage_idle_save_1']);
     localStorage.setItem('lineage_idle_save',data['lineage_idle_save_1']);
   }
@@ -9792,45 +9749,85 @@ const download=(name,data)=>{
   URL.revokeObjectURL(a.href);
 };
 
-// 全部匯出 - 會下載檔案
-document.getElementById('exportAllBtn').onclick=()=>{
-  download('lineage_三格備份',JSON.stringify(getAllData()));
-  menu.style.display='none';
-};
+// 單格匯出 - 不含倉庫
+[1,2,3].forEach(slot=>{
+  document.getElementById('exportSlot'+slot+'Btn').onclick=()=>{
+    const data=getSlotData(slot);
+    if(Object.keys(data).length===0){
+      alert('存檔'+slot+' 是空的');
+      return;
+    }
+    download('lineage_存檔'+slot+'_不含倉庫',JSON.stringify(data));
+    menu.style.display='none';
+  };
+});
 
-// 純文字匯出 - 只填文字框，不下載
-document.getElementById('exportTextBtn').onclick=()=>{
-  textArea.value=JSON.stringify(getAllData(),null,2);
-  textArea.select();
-  textArea.focus();
-  // 提示已複製
-  const oldTitle=document.getElementById('saveToolsTitle').innerHTML;
-  document.getElementById('saveToolsTitle').innerHTML='<b style="color:#4f4">已匯出到文字框</b>';
-  setTimeout(()=>{
-    document.getElementById('saveToolsTitle').innerHTML=oldTitle;
-  },1500);
-};
+// 單格匯入 - 不含倉庫 + 二次確認
+let pendingSlotImport=0;
+[1,2,3].forEach(slot=>{
+  document.getElementById('importSlot'+slot+'Btn').onclick=()=>{
+    pendingSlotImport=slot;
+    document.getElementById('importSaveFile').click();
+  };
+});
 
-document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
 document.getElementById('importSaveFile').onchange=e=>{
   const file=e.target.files[0];
   if(!file)return;
   const reader=new FileReader();
   reader.onload=()=>{
     try{
-      setAllData(JSON.parse(reader.result));
-      alert('匯入成功！重整後生效');
-      location.reload();
+      const data=JSON.parse(reader.result);
+      if(pendingSlotImport>0){
+        const slot=pendingSlotImport;
+        pendingSlotImport=0;
+        const confirmMsg='確定要匯入到 存檔'+slot+' 嗎？\n\n警告：會覆蓋該格目前的資料！\n註：不影響倉庫';
+        if(!confirm(confirmMsg))return;
+        setSlotData(slot,data);
+        alert('存檔'+slot+' 匯入成功！重整後生效');
+        location.reload();
+      }else{
+        // 全部匯入
+        if(!confirm('確定要匯入全部存檔嗎？\n\n警告：會覆蓋所有目前資料，包含倉庫！'))return;
+        setData(data,ALL_KEYS);
+        alert('全部匯入成功！重整後生效');
+        location.reload();
+      }
     }catch(err){alert('檔案錯誤:'+err);}
   };
   reader.readAsText(file);
 };
 
+// 全部匯出 - 含倉庫
+document.getElementById('exportAllBtn').onclick=()=>{
+  download('lineage_全備份_含倉庫',JSON.stringify(getData(ALL_KEYS)));
+  menu.style.display='none';
+};
+
+// 全部匯入 - 含倉庫
+document.getElementById('importAllBtn').onclick=()=>{
+  pendingSlotImport=0;
+  document.getElementById('importSaveFile').click();
+};
+
+// 純文字匯出 - 含倉庫
+document.getElementById('exportTextBtn').onclick=()=>{
+  textArea.value=JSON.stringify(getData(ALL_KEYS),null,2);
+  textArea.select();
+  textArea.focus();
+  document.getElementById('saveToolsTitle').innerHTML='<b style="color:#4f4">已匯出含倉庫</b>';
+  setTimeout(()=>{
+    document.getElementById('saveToolsTitle').innerHTML='<b>三格存檔工具</b>';
+  },1500);
+};
+
+// 純文字匯入 - 含倉庫
 document.getElementById('importTextBtn').onclick=()=>{
   const txt=textArea.value.trim();
   if(!txt)return alert('文字框是空的');
   try{
-    setAllData(JSON.parse(txt));
+    if(!confirm('確定要從文字框匯入全部存檔嗎？\n\n警告：會覆蓋所有目前資料，包含倉庫！'))return;
+    setData(JSON.parse(txt),ALL_KEYS);
     alert('匯入成功！重整後生效');
     location.reload();
   }catch(err){alert('格式錯誤:'+err);}
