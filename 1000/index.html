@@ -348,6 +348,20 @@
                     </div>
                     
                     <button onclick="saveGame()" class="mt-auto btn w-full py-3 bg-slate-700 text-lg">儲存遊戲進度</button>
+                    <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 mt-2">
+                        <div class="text-sm text-purple-400 font-bold mb-2 border-b border-slate-700 pb-1 text-center">存檔匯出 / 匯入</div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <button onclick="exportSaveJSON()" class="btn py-2 text-sm bg-slate-900 border border-blue-700 hover:bg-slate-700">匯出 JSON 檔</button>
+                            <button onclick="importSaveJSON()" class="btn py-2 text-sm bg-slate-900 border border-blue-700 hover:bg-slate-700">匯入 JSON 檔</button>
+                        </div>
+                        <textarea id="save-io-text" class="w-full h-28 bg-black border border-slate-700 text-slate-300 text-xs p-2 rounded resize-y" placeholder="可在此匯出純文字存檔，或貼上純文字/JSON 存檔後匯入。"></textarea>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button onclick="exportSaveText()" class="btn py-2 text-sm bg-slate-900 border border-green-700 hover:bg-slate-700">匯出純文字</button>
+                            <button onclick="importSaveText()" class="btn py-2 text-sm bg-slate-900 border border-orange-700 hover:bg-slate-700">匯入純文字</button>
+                        </div>
+                        <div class="text-xs text-yellow-400 mt-2 text-center">提醒：匯入存檔後請重新整理頁面，再按讀取存檔。</div>
+                        <input type="file" id="save-file-input" accept=".json,application/json" class="hidden" onchange="handleSaveFileImport(event)">
+                    </div>
                 </div>
             </div>
         </div>
@@ -495,8 +509,18 @@
 
 <script>
 /** 遊戲核心資料庫 */
-const EXP_T = [0, 125, 175, 200, 250, 546, 1105, 1695, 2465, 3439, 4641, 6095, 7825, 9855, 12209, 14911, 17985, 21455, 25345, 29679, 34481, 40033, 45585, 51935, 58849, 66351, 74465, 83215, 92625, 102719, 113521, 125055, 137345, 150415, 164289, 178991, 194545, 210975, 228305, 246559, 265761, 285935, 307105, 329817, 352529, 729360, 1508416, 3495263, 9912189, 36065092];
-function getExpReq(lv) { return lv >= 100 ? Infinity : (lv >= 49 ? 36065092 : EXP_T[lv]); }
+CONFIG = {
+    RateDropAdena: 2.0,
+    RateDropItems: 2.0,
+    Blessed: 1.5
+};
+
+function clampRate(rate){
+    return Math.min(rate,1);
+}
+// 經驗需求表：天堂放置版原始需求 × 1/2，奇數採無條件進位，避免出現小數經驗需求。
+const EXP_T = [0, 63, 88, 100, 125, 273, 553, 848, 1233, 1720, 2321, 3048, 3913, 4928, 6105, 7456, 8993, 10728, 12673, 14840, 17241, 20017, 22793, 25968, 29425, 33176, 37233, 41608, 46313, 51360, 56761, 62528, 68673, 75208, 82145, 89496, 97273, 105488, 114153, 123280, 132881, 142968, 153553, 164909, 176265, 364680, 754208, 1747632, 4956095, 18032546];
+function getExpReq(lv) { return lv >= 100 ? Infinity : (lv >= 49 ? 18032546 : EXP_T[lv]); }
 // 高等級打怪經驗衰減：50~69 ×1/2、70~79 ×1/3、80~89 ×1/4、90~99 ×1/5、100滿等不獲得
 function getExpGainMult(lv) {
     if (lv >= 100) return 0;
@@ -588,7 +612,7 @@ const DB = {
         "arm_44": { n: "艾爾穆的祝福", type: "arm", slot: "helm", ac: 2, req: "elf", safe: 6, p: 8900, dex: 1, gachaWeight: 10 },
         "arm_45": { n: "治癒魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 21000, grantSkills: ["sk_helm_heal1", "sk_helm_heal2"], gachaWeight: 10 },
         "arm_46": { n: "敏捷魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 30800, grantSkills: ["sk_helm_dex1", "sk_helm_dex2"], gachaWeight: 10 },
-        "arm_47": { n: "力量魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 25200, grantSkills: ["sk_helm_str1", "sk_helm_str2", "sk_helm_str3"], gachaWeight: 10 },
+        "arm_47": { n: "力量魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 100000, grantSkills: ["sk_helm_str1", "sk_helm_str2", "sk_helm_str3"], gachaWeight: 10 },
         "arm_48": { n: "皮帽子", type: "arm", slot: "helm", ac: 0, req: "all", safe: 4, p: 20, gachaWeight: 100 },
         "hlm_silver": { n: "銀釘皮帽", type: "arm", slot: "helm", ac: 2, req: "all", safe: 4, p: 320, gachaWeight: 100 },
         "arm_49": { n: "皮頭盔", type: "arm", slot: "helm", ac: 1, req: "all", safe: 4, p: 60, gachaWeight: 100 },
@@ -923,7 +947,7 @@ const DB = {
         "bk_sleep_mist": { type: "skillbk", n: "魔法書(沉睡之霧)", p: 120000, sk: "sk_sleep_mist", gachaWeight: 30 },
         "bk_thunder_storm": { type: "skillbk", n: "魔法書(雷霆風暴)", p: 120000, sk: "sk_thunder_storm", gachaWeight: 10 },
         "bk_fire_storm": { type: "skillbk", n: "魔法書(火風暴)", p: 120000, sk: "sk_fire_storm", gachaWeight: 1 },
-        "bk_blaze": { type: "skillbk", n: "魔法書(烈炎術)", p: 6400, sk: "sk_blaze", gachaWeight: 0 },
+        "bk_blaze": { type: "skillbk", n: "魔法書(烈炎術)", p: 100000, sk: "sk_blaze", gachaWeight: 0 },
 
         "bk_meteor": { type: "skillbk", n: "魔法書(流星雨)", p: 250000, sk: "sk_meteor", gachaWeight: 1 },
         "bk_soul_up": { type: "skillbk", n: "魔法書(靈魂昇華)", p: 250000, sk: "sk_soul_up", gachaWeight: 1 },
@@ -949,7 +973,7 @@ const DB = {
         "bk_elf_singleres": { type: "skillbk", n: "精靈水晶(單屬性防禦)", p: 15000, sk: "sk_elf_singleres", gachaWeight: 10 },
         "bk_elf_firewpn": { type: "skillbk", n: "精靈水晶(火焰武器)", p: 15000, sk: "sk_elf_firewpn", gachaWeight: 20 },
         "bk_elf_windshot": { type: "skillbk", n: "精靈水晶(風之神射)", p: 15000, sk: "sk_elf_windshot", gachaWeight: 20 },
-        "bk_elf_winddash": { type: "skillbk", n: "精靈水晶(風之疾走)", p: 15000, sk: "sk_elf_winddash", gachaWeight: 20 },
+        "bk_elf_winddash": { type: "skillbk", n: "精靈水晶(風之疾走)", p: 20000, sk: "sk_elf_winddash", gachaWeight: 20 },
         "bk_elf_earthguard": { type: "skillbk", n: "精靈水晶(大地防護)", p: 15000, sk: "sk_elf_earthguard", gachaWeight: 20 },
         "bk_elf_groundtrap": { type: "skillbk", n: "精靈水晶(地面障礙)", p: 15000, sk: "sk_elf_groundtrap", gachaWeight: 60 },
 
@@ -4014,6 +4038,7 @@ function killMob(idx) {
         let gMin = mob.goldMin || (mob.lv * 5);
         let gMax = mob.goldMax || (mob.lv * 10);
         let g = gMin + Math.floor(Math.random() * (gMax - gMin + 1));
+        g = Math.floor(g * CONFIG.RateDropAdena);
         player.gold += g;
         logSys(`獲得 <span class="text-yellow-400 font-bold">${g} 金幣</span>。`);
     }
@@ -4047,14 +4072,14 @@ function killMob(idx) {
         let itemId = entry[0];
         let ratePct = entry[1];               // 機率(%)
         if(!DB.items[itemId]) return;          // 該物品不存在於資料庫則略過
-        if(Math.random() < ratePct / 100) gainItem(itemId, 1);
+        if(Math.random() < clampRate((ratePct / 100) * CONFIG.RateDropItems)) gainItem(itemId, 1);
     });
 
     // === 40等以上 BOSS（夢幻之島 + 攻城區/siegeEnemy 除外）：賦予祝福卷軸稀有掉落，各自獨立判定 ===
     if (mob.boss && mob.lv >= 40 && mapState.current !== 'dream_island' && !isSiegeArea(mapState.current) && !mob.siegeEnemy) {
-        if (Math.random() < 0.001)  gainItem('new_item_bless_wpn', 1);   // 0.1%  賦予武器祝福卷軸
-        if (Math.random() < 0.001)  gainItem('new_item_bless_arm', 1);   // 0.1%  賦予盔甲祝福卷軸
-        if (Math.random() < 0.0001) gainItem('new_item_bless_acc', 1);   // 0.01% 賦予飾品祝福卷軸
+        if (Math.random() < clampRate(0.001 * CONFIG.Blessed))  gainItem('new_item_bless_wpn', 1);   // 0.1%  賦予武器祝福卷軸
+        if (Math.random() < clampRate(0.001 * CONFIG.Blessed))  gainItem('new_item_bless_arm', 1);   // 0.1%  賦予盔甲祝福卷軸
+        if (Math.random() < clampRate(0.0001 * CONFIG.Blessed)) gainItem('new_item_bless_acc', 1);   // 0.01% 賦予飾品祝福卷軸
     }
 
     // === 區域額外掉落：眠龍洞穴1~3樓(zone_15/16/17) / 妖精森林周邊(zone_01) 所有怪物 ===
@@ -8452,12 +8477,12 @@ function getShopItemsForNpc(npcId) {
         list = [
             'bk_elf_mr', 'bk_elf_mind', 'bk_elf_worldtree', // 一階
             'bk_elf_purify',                                // 二階
-            'bk_elf_firewpn', 'bk_elf_windshot', 'bk_elf_earthguard', // 屬性
+            'bk_elf_firewpn', 'bk_elf_windshot', 'bk_elf_winddash', 'bk_elf_earthguard', // 屬性
             'bk_elf_eleres', 'bk_elf_singleres'                       // 屬性防禦 / 單屬性防禦
         ];
     } else if (npcId === 'npc_bayes') {
         // 巴耶斯 - 高階魔法書
-        list = ['bk_fireball', 'bk_vampire', 'bk_rock_prison', 'bk_thunder', 'bk_ice_spike', 'bk_bless_wpn'];
+        list = ['bk_fireball', 'bk_vampire', 'bk_rock_prison', 'bk_thunder', 'bk_ice_spike', 'bk_bless_wpn', 'bk_blaze'];
     } else if (npcId === 'npc_gilen') {
         // 吉倫 - 一般魔法大全
         list = [
@@ -8480,7 +8505,7 @@ function getShopItemsForNpc(npcId) {
             // 盾牌類
             'arm_103', 'arm_105', 'arm_108', 
             // 頭盔類
-            'arm_42', 'arm_43', 'hlm_mr', 
+            'arm_42', 'arm_43', 'hlm_mr', 'arm_47', 
             // 盔甲/長袍類
             'arm_68', 'arm_66', 'arm_67', 
             'amr_robe', 'arm_65', 'arm_63', 
@@ -8720,7 +8745,7 @@ function startGame() {
     // =====================================
     // 配發共通起始道具
     // =====================================
-    gainItem('new_item_239', 10, true, true); // 潘朵拉抽獎卷 x 11
+    gainItem('new_item_239', 1000, true, true); // 潘朵拉抽獎卷 x 1000
 
     // 依據不同職業配發專屬起始道具
     if (player.cls === 'elf') {
@@ -8820,6 +8845,71 @@ function saveGame() {
 
     localStorage.setItem('lineage_idle_save_' + currentSlot, JSON.stringify({ v: SAVE_VERSION, p: player, ms: mapState, ticks: state.ticks }));   // 🔧 架構#6：寫入存檔版本   // 🔧 一併保存 tick 計數：召喚物/迷魅的 endTick 為絕對 tick，不存會在重載後失準（迷魅重新計時 1 小時）
     logSys(`遊戲進度已儲存。`);
+}
+
+// ===== 存檔匯出 / 匯入 (JSON 檔 與 純文字) =====
+function getCurrentSaveString() {
+    saveGame();
+    return localStorage.getItem('lineage_idle_save_' + currentSlot);
+}
+
+function applyImportedSave(str) {
+    let data;
+    try {
+        data = JSON.parse(str);
+    } catch (e) {
+        alert('匯入失敗：內容不是有效的 JSON 存檔。');
+        return;
+    }
+    if (!data || !data.p || !data.ms) {
+        alert('匯入失敗：存檔格式不正確。');
+        return;
+    }
+    localStorage.setItem('lineage_idle_save_' + currentSlot, JSON.stringify(data));
+    alert('匯入成功！請重新整理頁面，再按讀取存檔。');
+}
+
+function exportSaveJSON() {
+    let str = getCurrentSaveString();
+    if (!str) { alert('目前沒有可匯出的存檔。'); return; }
+    let blob = new Blob([str], { type: 'application/json' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'lineage_idle_save_' + currentSlot + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    logSys('已匯出 JSON 存檔。');
+}
+
+function importSaveJSON() {
+    document.getElementById('save-file-input').click();
+}
+
+function handleSaveFileImport(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        applyImportedSave(e.target.result);
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function exportSaveText() {
+    let str = getCurrentSaveString();
+    if (!str) { alert('目前沒有可匯出的存檔。'); return; }
+    document.getElementById('save-io-text').value = str;
+    logSys('已匯出純文字存檔，請複製文字框內容保存。');
+}
+
+function importSaveText() {
+    let str = document.getElementById('save-io-text').value.trim();
+    if (!str) { alert('請先在文字框中貼上存檔內容。'); return; }
+    applyImportedSave(str);
 }
 
 // 合併同一性物品堆疊（相容舊存檔：修復前被拆分的相同卷軸/物品會重新合併）。
