@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>網頁遊戲存檔功能注入器1.5 - 最終定位版</title>
+<title>網頁遊戲存檔功能注入器1.7 - 比照舊版點擊</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:1000px;margin:auto;padding:20px;background:#f5f5f5}
 button{padding:10px 16px;margin:5px;cursor:pointer;border-radius:4px;border:1px solid #999}
@@ -13,8 +13,8 @@ h1{color:#333}
 </style>
 </head>
 <body>
-<h1>網頁遊戲存檔功能注入器1.5 - 最終定位版</h1>
-<p>修復：選單定位精準，不擋其他按鈕，點擊不消失</p>
+<h1>網頁遊戲存檔功能注入器1.7 - 比照舊版點擊</h1>
+<p>點擊判斷：移動距離 < 5px 才算點擊，跟你舊版一樣</p>
 
 <input type="file" id="fileInput" accept=".html">
 <button onclick="inject()">開始修改</button>
@@ -42,7 +42,7 @@ return `
     width:60px;
     height:60px;
     border-radius:50%;
-    cursor:move;
+    cursor:pointer;
     background:#333;
     color:#fff;
     border:2px solid #555;
@@ -50,6 +50,8 @@ return `
     box-shadow:0 2px 8px rgba(0,0,0,.4);
     -webkit-tap-highlight-color:transparent;
     user-select:none;
+    padding:0;
+    line-height:60px;
 }
 #saveToolsMenu{
     display:none;
@@ -100,23 +102,16 @@ const btn=document.getElementById('saveToolsBtn');
 const menu=document.getElementById('saveToolsMenu');
 const textArea=document.getElementById('saveTextArea');
 
-// 選單跟隨按鈕定位
 function updateMenuPos(){
   const rect=btn.getBoundingClientRect();
   const vw=window.innerWidth;
   const vh=window.innerHeight;
-
   let left=rect.left;
   let top=rect.bottom+10;
-
-  // 如果右邊不夠，往左展開
   if(left+280>vw-5) left=vw-285;
   if(left<5) left=5;
-
-  // 如果下面不夠，往上展開
   if(top+300>vh-5) top=rect.top-310;
   if(top<5) top=5;
-
   menu.style.left=left+'px';
   menu.style.top=top+'px';
 }
@@ -137,7 +132,6 @@ function clampBtnPos(){
   localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
 }
 
-// 恢復位置
 try{
  const savedPos=JSON.parse(localStorage.getItem('saveBtnPos'));
  if(savedPos){
@@ -148,83 +142,94 @@ try{
  }
 }catch(e){}
 
-let pointerDown=false;
+// 比照舊版：用 downX/downY 記錄起點
+let downX=0,downY=0;
 let isDragging=false;
-let startX=0,startY=0,origX=0,origY=0;
+let origX=0,origY=0;
 
-btn.addEventListener('click',function(e){
-  if(!isDragging){
-    if(menu.style.display==='block'){
-      menu.style.display='none';
-    }else{
-      updateMenuPos();
-      menu.style.display='block';
-    }
-  }
-  e.stopPropagation();
-});
-
-function pointerStart(e,clientX,clientY){
-  pointerDown=true;
+function handleDown(e,clientX,clientY){
+  downX=clientX;
+  downY=clientY;
   isDragging=false;
-  startX=clientX;
-  startY=clientY;
   const rect=btn.getBoundingClientRect();
   origX=rect.left;
   origY=rect.top;
   e.preventDefault();
 }
 
-function pointerMove(clientX,clientY){
-  if(!pointerDown) return;
-  const dx=clientX-startX;
-  const dy=clientY-startY;
+function handleMove(e,clientX,clientY){
+  if(downX===0 && downY===0) return;
 
-  if(!isDragging && (Math.abs(dx)>5 || Math.abs(dy)>5)){
-    isDragging=true;
-    menu.style.display='none';
-  }
+  const moveDistance=Math.sqrt(Math.pow(clientX-downX,2)+Math.pow(clientY-downY,2));
 
-  if(!isDragging) return;
-
-  let newX=origX+dx;
-  let newY=origY+dy;
-  const vw=window.innerWidth;
-  const vh=window.innerHeight;
-  newX=Math.max(5,Math.min(newX,vw-65));
-  newY=Math.max(5,Math.min(newY,vh-65));
-  btn.style.left=newX+'px';
-  btn.style.top=newY+'px';
-  btn.style.right='auto';
-}
-
-function pointerEnd(){
-  if(pointerDown){
-    if(isDragging){
-      localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
+  if(moveDistance>5){
+    if(!isDragging){
+      isDragging=true;
+      menu.style.display='none';
     }
-    pointerDown=false;
-    isDragging=false;
+
+    let newX=origX+(clientX-downX);
+    let newY=origY+(clientY-downY);
+    const vw=window.innerWidth;
+    const vh=window.innerHeight;
+    newX=Math.max(5,Math.min(newX,vw-65));
+    newY=Math.max(5,Math.min(newY,vh-65));
+    btn.style.left=newX+'px';
+    btn.style.top=newY+'px';
+    btn.style.right='auto';
+
+    if(e.cancelable) e.preventDefault();
   }
 }
 
-btn.addEventListener('mousedown',e=>pointerStart(e,e.clientX,e.clientY));
-document.addEventListener('mousemove',e=>pointerMove(e.clientX,e.clientY));
-document.addEventListener('mouseup',pointerEnd);
+function handleUp(e,clientX,clientY){
+  if(downX===0 && downY===0) return;
 
+  const moveDistance=Math.sqrt(Math.pow(clientX-downX,2)+Math.pow(clientY-downY,2));
+
+  // 比照舊版：移動<5px 才算點擊
+  if(moveDistance<5){
+    if(menu.style.display==='block'){
+      menu.style.display='none';
+    }else{
+      updateMenuPos();
+      menu.style.display='block';
+    }
+  }else if(isDragging){
+    localStorage.setItem('saveBtnPos',JSON.stringify({left:btn.style.left,top:btn.style.top}));
+  }
+
+  downX=0;
+  downY=0;
+  isDragging=false;
+}
+
+// 滑鼠
+btn.addEventListener('mousedown',e=>handleDown(e,e.clientX,e.clientY));
+document.addEventListener('mousemove',e=>handleMove(e,e.clientX,e.clientY));
+document.addEventListener('mouseup',e=>handleUp(e,e.clientX,e.clientY));
+
+// 觸控
 btn.addEventListener('touchstart',e=>{
   const t=e.touches[0];
-  pointerStart(e,t.clientX,t.clientY);
+  handleDown(e,t.clientX,t.clientY);
 },{passive:false});
 document.addEventListener('touchmove',e=>{
   const t=e.touches[0];
-  pointerMove(t.clientX,t.clientY);
-  if(isDragging) e.preventDefault();
+  handleMove(e,t.clientX,t.clientY);
 },{passive:false});
-document.addEventListener('touchend',pointerEnd);
+document.addEventListener('touchend',e=>{
+  const t=e.changedTouches[0];
+  handleUp(e,t.clientX,t.clientY);
+});
 
-// 點選單外面關閉
-document.addEventListener('click',e=>{
+// 點外面關選單
+document.addEventListener('mousedown',e=>{
+  if(menu.style.display==='block' &&!menu.contains(e.target) && e.target!==btn){
+    menu.style.display='none';
+  }
+});
+document.addEventListener('touchstart',e=>{
   if(menu.style.display==='block' &&!menu.contains(e.target) && e.target!==btn){
     menu.style.display='none';
   }
@@ -326,7 +331,7 @@ document.getElementById('downloadBtn').onclick=()=>{
  const blob=new Blob([modifiedHtml],{type:'text/html'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
- a.download=originalName.replace('.html','_最終版.html');
+ a.download=originalName.replace('.html','_舊版點擊版.html');
  a.click();
  log('已下載: ' + a.download);
 };
