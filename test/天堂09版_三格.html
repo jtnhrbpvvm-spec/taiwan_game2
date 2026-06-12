@@ -707,6 +707,7 @@ const DB = {
         "arm_115": { n: "魔法能量之書", type: "arm", slot: "shield", ac: 2, req: "mage", safe: 4, p: 9800, int: 1, gachaWeight: 20, block: 10 },
         "acc_116": { n: "傳送控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：手動施放傳送術/使用瞬移卷軸時必定遭遇 BOSS。" },
         "acc_117": { n: "變形控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：使用變形卷軸時可指定變身型態。" },
+        "sherine_crystal": { n: "席琳結晶", type: "etc", p: 0, noUse: true, c: "c-sherine", gachaWeight: 0, d: "蘊含席琳力量的珍貴結晶，無法直接使用。進行「席琳製作」時加入材料，可使成品必定附帶一種席琳套裝效果。（席琳的世界掉落限定）" },   // 🔮 潘朵拉抽不到(gachaWeight:0)、無法使用(noUse)、名稱同套裝綠光(c-sherine)
         "rng_mr": { n: "抗魔戒指", type: "acc", slot: "ring", ac: 0, mr: 5, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_118": { n: "守護戒指", type: "acc", slot: "ring", ac: 1, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_119": { n: "長者戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 10000, mmp: 10, mpR: 1, gachaWeight: 1 },
@@ -1753,10 +1754,11 @@ function applySaveDefaults(p) {
 // ============================================================================
 function sherineWorldActive() { return !!(player && player.sherineWorld); }
 function applySherineTheme() { document.body.classList.toggle('sherine-world', sherineWorldActive()); }
-let _sherineLootCtx = null;   // 擊殺掉落上下文：killMob 期間設定（{boss}），供 gainItem 判定詞綴×3 與套裝效果
+let _sherineLootCtx = null;   // 擊殺掉落上下文：killMob 期間設定（{boss,grace}），供 gainItem 判定詞綴×3 與套裝效果
+let _forceSherineSet = false;   // 🔮 席琳製作：成品必定附帶隨機套裝效果（doCraft 產出期間設定）
 
 // ===== 🔮 席琳套裝效果（40 種，8 組 × 5 件；組名＝前兩字）=====
-// 掉落判定：席琳的世界中，武器/頭盔/盔甲/手套/長靴/斗篷/項鍊 掉落時，
+// 掉落判定：席琳的世界中，武器/頭盔/盔甲/手套/長靴/斗篷/腰帶 掉落時，
 // 一般怪 0.1%、頭目 5% 獨立機率獲得一個效果（再從 40 種均勻抽一 → 單一效果 0.1%/40）。
 // 效果寫在裝備資訊欄（不冠在名稱前）；名稱以鮮綠色＋淡綠光暈顯示（凌駕詞綴顏色）。
 const SHERINE_EFFECTS = [
@@ -4299,6 +4301,21 @@ function killMob(idx) {
             if(DB.items[itemId] && Math.random() < Math.min(1, bonusRate)) gainItem(itemId, 1);
         });
     }
+
+    // === 🔮 席琳結晶：席琳的世界限定掉落（固定機率，不吃掉落倍率）===
+    // 血盟與 Lv20 以下不掉（血盟本就無 _sherine）；21~40 非BOSS 0.001%、41+ 非BOSS 0.003%、
+    // 夢幻之島BOSS 0.01%、三大龍（安塔瑞斯/法利昂/巴拉卡斯）10%、其餘BOSS 0.1%
+    if (mob._sherine) {
+        let _cr = 0;
+        if (['安塔瑞斯', '法利昂', '巴拉卡斯'].includes(mob.n)) _cr = 0.10;
+        else if (mob.boss) _cr = (mapState.current === 'dream_island') ? 0.0001 : 0.001;
+        else if ((mob.lv || 1) >= 41) _cr = 0.00003;
+        else if ((mob.lv || 1) >= 21) _cr = 0.00001;
+        if (_cr > 0 && Math.random() < _cr) {
+            gainItem('sherine_crystal', 1);
+            logSys(`<span class="c-sherine font-bold">✦✦ 席琳結晶 從 ${mob.n} 的殘骸中浮現！✦✦</span>`);
+        }
+    }
     
     _sherineLootCtx = null;   // 🔮 掉落判定結束，清除上下文
     // 🔧 架構#2：不在此處位移輸送帶（呼叫點可能正在迭代怪物陣列）。
@@ -5645,15 +5662,21 @@ function gainItem(id, cnt=1, silent=false, forceNormal=false, affixOld=false) {
         attr = _af.attr; bless = _af.bless; anc = _af.anc;
     }
 
-    // 🔮 席琳的世界擊殺掉落：武器/頭盔/盔甲/手套/長靴/斗篷/項鍊 → 一般怪0.1%、頭目5% 附加套裝效果（40 種均勻抽一）
+    // 🔮 席琳套裝效果：指定部位（武器/頭盔/盔甲/手套/長靴/斗篷/腰帶）※項鍊已改為腰帶
+    //  - 席琳的世界擊殺掉落：一般怪0.1%、恩賜怪0.5%、頭目5%（40 種均勻抽一）
+    //  - 席琳製作（_forceSherineSet）：必定附帶隨機一種
     let seteff = false;
-    if (_sherineLootCtx && d) {
+    if (d) {
         let _slotOk = (d.type === 'wpn' && !d.isArrow)
             || (d.type === 'arm' && ['helm','armor','gloves','boots','cloak'].includes(d.slot))
-            || ((d.type === 'acc' || d.type === 'arm') && d.slot === 'amulet');
-        if (_slotOk && Math.random() < (_sherineLootCtx.boss ? 0.05 : (_sherineLootCtx.grace ? 0.005 : 0.001))) {   // 🔮 恩賜怪：套裝機率 ×5 = 0.5%
+            || ((d.type === 'acc' || d.type === 'arm') && d.slot === 'belt');
+        if (_slotOk && _sherineLootCtx && Math.random() < (_sherineLootCtx.boss ? 0.05 : (_sherineLootCtx.grace ? 0.005 : 0.001))) {
             seteff = SHERINE_EFFECTS[Math.floor(Math.random() * SHERINE_EFFECTS.length)];
             logSys(`<span class="c-sherine font-bold">✦ 掉落的裝備蘊含著席琳的祝福：【${seteff}】！</span>`);
+        }
+        if (_slotOk && !seteff && _forceSherineSet) {
+            seteff = SHERINE_EFFECTS[Math.floor(Math.random() * SHERINE_EFFECTS.length)];
+            logSys(`<span class="c-sherine font-bold">✦ 席琳結晶引導出套裝效果：【${seteff}】！</span>`);
         }
     }
 
@@ -5721,12 +5744,11 @@ function getItemColor(item) {
     let d = DB.items[item.id];
     // 🔮 席琳套裝效果：鮮綠＋呼吸綠光，優先於所有詞綴顏色
     if (item.seteff) return 'c-sherine';
-    // 名字顏色 = 套裝 > 祝福(金) > 遠古(紫) > 基底色
-    // 🔧 屬性詞綴不再影響裝備名稱顏色（詞綴字本身「火之/爆炎…」仍保留專屬色，見 getItemFullName）
+    // 名字顏色 = 套裝 > 祝福(金)/詛咒(紅) > 基底色
+    // 🔧 屬性詞綴與遠古系詞綴（遠古/永恆/不朽/太初）不再影響裝備名稱顏色，
+    //    詞綴字本身仍保留各自專屬色（見 getItemFullName）
     if (item.bless) return blessColorClass(item.bless);
     if (d && d.isB) return 'c-blessed';
-    if (item.anc) return ancColorClass(item.anc);
-    if (d && d.isAnc) return 'c-ancient';
     return d.c || 'text-white';
 }
 
@@ -9213,6 +9235,14 @@ function loadGame() {
         let _normAttr = (i) => { if (i && !getAttrAffix(i.attr)) i.attr = false; };
         player.inv.forEach(_normAttr);
         for (let k in player.eq) _normAttr(player.eq[k]);
+        // 🔮 席琳套裝效果改置腰帶：一次性清除既有「項鍊」上的套裝效果（背包/裝備/傭兵快照/共用倉庫）
+        {
+            let _fixSet = (it) => { if (it && it.seteff) { let dd = DB.items[it.id]; if (dd && dd.slot === 'amulet') it.seteff = false; } };
+            player.inv.forEach(_fixSet);
+            for (let k in player.eq) _fixSet(player.eq[k]);
+            (player.allies || []).forEach(a => { if (a && a.eq) { for (let k in a.eq) _fixSet(a.eq[k]); } if (a && a.inv) a.inv.forEach(_fixSet); });
+            try { let _w = loadWarehouse(); let _chg = false; _w.items.forEach(it => { if (it && it.seteff) { let dd = DB.items[it.id]; if (dd && dd.slot === 'amulet') { it.seteff = false; _chg = true; } } }); if (_chg) saveWarehouse(_w); } catch (e) {}
+        }
         consolidateInventory();   // 相容舊存檔：合併修復前被拆分的相同卷軸/物品堆疊
         if(!player.statuses) player.statuses = { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0 };
         if (player.eq.arrow === undefined) player.eq.arrow = null; // 相容舊存檔
@@ -9548,9 +9578,18 @@ const CRAFT_RECIPES = {
 
 // 製作數量選擇器 + 製作按鈕（預設數量 1）
 function craftActionHtml(npcId, idx) {
+    // 🔮 席琳製作：成品為 武器/頭盔/盔甲/手套/長靴/斗篷/腰帶 時，於「製作」旁多一顆按鈕
+    //（消耗相同材料＋每件 1 個席琳結晶，成品必定附帶隨機席琳套裝效果；其餘詞綴機率照舊）
+    let _r = CRAFT_RECIPES[npcId] && CRAFT_RECIPES[npcId][idx];
+    let _rd = _r && DB.items[_r.result];
+    let _shOk = _rd && ((_rd.type === 'wpn' && !_rd.isArrow)
+        || (_rd.type === 'arm' && ['helm','armor','gloves','boots','cloak'].includes(_rd.slot))
+        || ((_rd.type === 'acc' || _rd.type === 'arm') && _rd.slot === 'belt'));   // 🔮 項鍊已改為腰帶
+    let _shBtn = _shOk ? `<button class="btn bg-green-900 hover:bg-green-800 border-green-600 py-2 px-3 font-bold shadow" onclick="doCraft('${npcId}', ${idx}, true)" title="消耗相同材料＋每件 1 個席琳結晶：成品必定附帶一種席琳套裝效果"><span class="c-sherine">席琳製作</span></button>` : '';
     return `<div class="flex items-center gap-2 shrink-0">
         <input type="number" min="1" value="1" id="craft-qty-${npcId}-${idx}" onclick="event.stopPropagation()" class="w-14 px-1 py-2 bg-slate-900 border border-slate-600 rounded text-center text-white font-bold">
         <button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-6 font-bold shadow" onclick="doCraft('${npcId}', ${idx})">製作</button>
+        ${_shBtn}
     </div>`;
 }
 
@@ -9817,7 +9856,7 @@ function craftShortfall(recipe, count) {
     for (let q of recipe.req) take(q.id, q.cnt * count);
     return lack;
 }
-function doCraft(npcId, recipeIdx) {
+function doCraft(npcId, recipeIdx, sherine) {   // 🔮 sherine=true：席琳製作（材料＋每件 1 個席琳結晶，成品必帶套裝效果）
     let recipe = CRAFT_RECIPES[npcId][recipeIdx];
     if (!recipe) return;
 
@@ -9834,6 +9873,10 @@ function doCraft(npcId, recipeIdx) {
         let lack = craftShortfall(recipe, 1);
         let parts = Object.keys(lack).map(id => id === 'gold'
             ? `金幣 ${lack[id]}` : `${(DB.items[id] && DB.items[id].n) || id} ${lack[id]}`);
+        // 🔮 席琳製作：身上沒有席琳結晶時，一併列入缺少清單
+        if (sherine && player.inv.filter(i => i.id === 'sherine_crystal').reduce((s, i) => s + i.cnt, 0) < 1) {
+            parts.push('席琳結晶 1');
+        }
         let detail = parts.length ? `（尚缺：${parts.join('、')}）` : '';
         logSys(`<span class="text-red-400 font-bold">材料不足，無法製作。</span><span class="text-red-300">${detail}</span>`);
         return;
@@ -9841,6 +9884,13 @@ function doCraft(npcId, recipeIdx) {
 
     // 選擇數量超過可製作數時，自動做出可製作的最大量
     let makeCount = Math.min(qty, maxCraftable);
+
+    // 🔮 席琳製作：每件成品消耗 1 個席琳結晶；結晶不足時以結晶數為上限
+    if (sherine) {
+        let _cc = player.inv.filter(i => i.id === 'sherine_crystal').reduce((s, i) => s + i.cnt, 0);
+        if (_cc < 1) { logSys('<span class="text-red-400 font-bold">材料不足，無法製作。</span><span class="text-red-300">（尚缺：席琳結晶 1）</span>'); return; }
+        if (makeCount > _cc) makeCount = _cc;
+    }
 
     // 前置：自動補製不足的中間物品（maxMakeRecipe 已確認整體可行）
     for (let r of recipe.req) ensureMaterial(r.id, r.cnt * makeCount, 0);
@@ -9868,12 +9918,24 @@ function doCraft(npcId, recipeIdx) {
         }
     }
 
+    // 🔮 席琳製作：扣除結晶（每件 1 個，跨堆疊）
+    if (sherine) {
+        let _needC = makeCount;
+        for (let st of player.inv.filter(i => i.id === 'sherine_crystal')) {
+            if (_needC <= 0) break;
+            let dd = Math.min(st.cnt, _needC); st.cnt -= dd; _needC -= dd;
+        }
+        player.inv = player.inv.filter(i => i.cnt > 0);
+    }
+
     // 產出（逐個產生，使每件各自有 1% 機率取得隨機詞綴；靜音後統一記錄一次）
     for (let k = 0; k < makeCount; k++) {
+        _forceSherineSet = !!sherine;   // 🔮 席琳製作：每件成品必定附帶隨機一種席琳套裝效果（其餘詞綴機率照舊）
         gainItem(recipe.result, recipe.yield || 1, true, false);
+        _forceSherineSet = false;
     }
     let totalOut = (recipe.yield || 1) * makeCount;
-    logSys(`製作完成：<span class="${DB.items[recipe.result].c || 'text-white'} font-bold">${DB.items[recipe.result].n}</span> ×${totalOut}`);
+    logSys(`${sherine ? '<span class="c-sherine font-bold">席琳製作</span>' : '製作'}完成：<span class="${DB.items[recipe.result].c || 'text-white'} font-bold">${DB.items[recipe.result].n}</span> ×${totalOut}${sherine ? `（消耗 席琳結晶 ×${makeCount}）` : ''}`);
 
     // 重新渲染介面與左側狀態列
     updateUI();
