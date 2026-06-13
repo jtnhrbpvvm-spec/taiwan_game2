@@ -38,7 +38,7 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .list-item { padding: 0.75rem; border-bottom: 1px solid #334155; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; width: 100%;}
         .list-item:hover { background: #334155; }
-        .set-active { background: #064e3b !important; border: 1px solid #047857 !important; }
+        .set-active { background: #451a03 !important; border: 1px solid #b45309 !important; }   /* 🔧 舊套裝改琥珀金（綠色讓給席琳套裝） */
         .mob-target { padding: 0.75rem; border: 2px solid #334155; border-radius: 0.5rem; background: #0f172a; cursor: pointer; flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; transition: all 0.2s; height: 224px; overflow: hidden;}
         .mob-target.active { border-color: #ef4444; background: #450a0a; }
         .mob-target:hover:not(.active) { background: #1e293b; }
@@ -63,6 +63,12 @@
             50%      { filter: drop-shadow(0 0 6px rgba(74,222,128,0.95)) drop-shadow(0 0 14px rgba(74,222,128,0.5)); }
         }
         .grace-badge { color: #4ade80; text-shadow: 0 0 4px #ef4444, 0 0 8px rgba(74,222,128,0.8); }
+        /* 🔮 席琳結晶圖示：與套裝文字同步的呼吸式綠色光芒 */
+        .sherine-glow-icon { animation: sherineIcon 2.2s ease-in-out infinite; }
+        @keyframes sherineIcon {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(74,222,128,0.5)); }
+            50%      { filter: drop-shadow(0 0 8px rgba(74,222,128,0.95)) drop-shadow(0 0 16px rgba(34,197,94,0.5)); }
+        }
         /* 區域背景：背景圖由 JS 依地圖/分類設為 inline 樣式（特殊地圖逐張不同）；卡片較不透明，使背景不過於顯眼 */
         #battle-view.has-bg { background-size: cover; background-position: center; border-radius: 0.5rem; }
         #battle-view.has-bg .mob-target { background: rgba(15,23,42,0.66); border-color: rgba(148,163,184,0.5); }
@@ -530,15 +536,18 @@
 
 <script>
 /** 遊戲核心資料庫 */
+// 掉落倍率設定：集中控制金幣、物品、祝福掉落倍率。
 const CONFIG = {
     RateDropAdena: 2.0,
     RateDropItems: 2.0,
     Blessed: 1.5
 };
-function clampRate(rate){
-    return Math.min(rate,1);
+
+function clampRate(rate) {
+    return Math.min(rate, 1);
 }
-// 經驗需求表：天堂放置版原始需求 × 1/2，奇數採無條件進位，避免出現小數經驗需求。
+
+// 經驗需求表：天堂放置版原始需求 x 1/2，奇數採無條件進位，避免出現小數經驗需求。
 const EXP_T = [0, 63, 88, 100, 125, 273, 553, 848, 1233, 1720, 2321, 3048, 3913, 4928, 6105, 7456, 8993, 10728, 12673, 14840, 17241, 20017, 22793, 25968, 29425, 33176, 37233, 41608, 46313, 51360, 56761, 62528, 68673, 75208, 82145, 89496, 97273, 105488, 114153, 123280, 132881, 142968, 153553, 164909, 176265, 364680, 754208, 1747632, 4956095, 18032546];
 function getExpReq(lv) { return lv >= 100 ? Infinity : (lv >= 49 ? 18032546 : EXP_T[lv]); }
 // 高等級打怪經驗衰減：50~69 ×1/2、70~79 ×1/3、80~89 ×1/4、90~99 ×1/5、100滿等不獲得
@@ -558,6 +567,7 @@ const DB = {
         "wpn_longsword": { n: "長劍", type: "wpn", dmgS: 8, dmgL: 12, hit: 0, spd: 1.1, req: "knight,elf", safe: 6, p: 4200, gachaWeight: 50 },
         "wpn_1": { n: "斧", type: "wpn", dmgS: 3, dmgL: 5, hit: 0, spd: 1.2, req: "all", safe: 6, p: 28, gachaWeight: 100 },
         "wpn_2hsword": { n: "雙手劍", type: "wpn", w2h: true,dmgS: 14, dmgL: 16, hit: 0, spd: 0.9, req: "knight", safe: 6, p: 25200, eff: "cleave", gachaWeight: 10 },
+        "wpn_dragonslayer": { n: "屠龍劍", type: "wpn", w2h: true, dmgS: 18, dmgL: 25, hit: 2, dmgBonus: 9, spd: 0.9, req: "knight", safe: 6, p: 100000, eff: "cleave", dragonStrike: 12, gachaWeight: 0, d: "傳說中為屠龍而鍛造的雙手巨劍，劍身中沉眠著龍魂。<br>龍的一擊：發動一般攻擊時（不論命中與否）12% 機率，對場上所有敵人造成必定命中 1D(力量)+25 的無屬性物理固定傷害。" },   // 🔧 卡瑞 100% 掉落；潘朵拉抽不到
         "wpn_2": { n: "釘錘", type: "wpn", dmgS: 6, dmgL: 8, hit: 0, spd: 1.3, req: "all", safe: 6, p: 133, gachaWeight: 100 },
         "wpn_3": { n: "弓", type: "wpn", isBow: true, ranged: true, rapidfire: 20, dmgS: 2, dmgL: 2, hit: 0, spd: 1.0, req: "all", safe: 6, p: 70, gachaWeight: 100 },
         "wpn_4": { n: "矛", type: "wpn", dmgS: 6, dmgL: 8, hit: 0, spd: 1.2, req: "all", safe: 6, p: 120, gachaWeight: 100 },
@@ -632,7 +642,7 @@ const DB = {
         "arm_44": { n: "艾爾穆的祝福", type: "arm", slot: "helm", ac: 2, req: "elf", safe: 6, p: 8900, dex: 1, gachaWeight: 10 },
         "arm_45": { n: "治癒魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 21000, grantSkills: ["sk_helm_heal1", "sk_helm_heal2"], gachaWeight: 10 },
         "arm_46": { n: "敏捷魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 30800, grantSkills: ["sk_helm_dex1", "sk_helm_dex2"], gachaWeight: 10 },
-        "arm_47": { n: "力量魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 100000, grantSkills: ["sk_helm_str1", "sk_helm_str2", "sk_helm_str3"], gachaWeight: 10 },
+        "arm_47": { n: "力量魔法頭盔", type: "arm", slot: "helm", ac: 1, req: "knight", safe: 4, p: 25200, grantSkills: ["sk_helm_str1", "sk_helm_str2", "sk_helm_str3"], gachaWeight: 10 },
         "arm_48": { n: "皮帽子", type: "arm", slot: "helm", ac: 0, req: "all", safe: 4, p: 20, gachaWeight: 100 },
         "hlm_silver": { n: "銀釘皮帽", type: "arm", slot: "helm", ac: 2, req: "all", safe: 4, p: 320, gachaWeight: 100 },
         "arm_49": { n: "皮頭盔", type: "arm", slot: "helm", ac: 1, req: "all", safe: 4, p: 60, gachaWeight: 100 },
@@ -730,6 +740,11 @@ const DB = {
         "arm_115": { n: "魔法能量之書", type: "arm", slot: "shield", ac: 2, req: "mage", safe: 4, p: 9800, int: 1, gachaWeight: 20, block: 10 },
         "acc_116": { n: "傳送控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：手動施放傳送術/使用瞬移卷軸時必定遭遇 BOSS。" },
         "acc_117": { n: "變形控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：使用變形卷軸時可指定變身型態。" },
+        "sherine_crystal": { n: "席琳結晶", type: "etc", p: 0, noUse: true, c: "c-sherine", gachaWeight: 0, d: "蘊含席琳力量的珍貴結晶，無法直接使用。進行「席琳製作」時加入材料，可使成品必定附帶一種席琳套裝效果。（席琳的世界掉落限定）" },   // 🔮 潘朵拉抽不到(gachaWeight:0)、無法使用(noUse)、名稱同套裝綠光(c-sherine)
+        "item_dragon_claw": { n: "飛龍的爪子", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "鋒利如刃的巨爪，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：飛龍 1% 掉落
+        "item_lizard_horn": { n: "蜥蜴的角", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "邪惡蜥蜴額上的尖角，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：邪惡蜥蜴 0.01% 掉落
+        "item_crystal_ball": { n: "水晶球", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "巫師用以窺探命運的水晶球，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：巫師 0.01% 掉落
+        "item_orc_amulet": { n: "妖魔戰士護身符", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "妖魔戰士隨身佩戴的護身符，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：五種妖魔各 0.01% 掉落
         "rng_mr": { n: "抗魔戒指", type: "acc", slot: "ring", ac: 0, mr: 5, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_118": { n: "守護戒指", type: "acc", slot: "ring", ac: 1, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_119": { n: "長者戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 10000, mmp: 10, mpR: 1, gachaWeight: 1 },
@@ -769,9 +784,9 @@ const DB = {
         "scroll_magicbarrier": { n: "魔法卷軸(魔法屏障)", type: "scroll", req: "all", p: 1500, c: "text-cyan-300", d: "使用後獲得「魔法屏障」狀態，持續16秒；成功抵擋一次技能傷害後3秒內無法再次施放（自然到期或取消則無冷卻）", eff: "magicbarrier", gachaWeight: 0 },
         "scroll_teleport": { n: "瞬間移動卷軸", type: "scroll", req: "all", p: 82, c: "text-sky-300", d: "使用後發動傳送術", eff: "teleport_scroll", gachaWeight: 0 },
         "scroll_revive": { n: "復活卷軸", type: "scroll", req: "all", p: 1000, c: "text-yellow-300", d: "持有死亡後可選擇原地復活，冷卻15秒", gachaWeight: 0 },
-        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-sky-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-amber-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_nightvision": { n: "夜之視野", p: 1, c: "text-indigo-300", d: "試煉所需的材料。", gachaWeight: 0 },
+        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-white", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 名字改白色（避免與藍色系材料混淆）
+        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
+        "item_nightvision": { n: "夜之視野", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "candle": { n: "回憶蠟燭", type: "misc", req: "all", p: 100000, c: "text-red-500", d: "退還所有能力點數，重新分配", eff: "reset", gachaWeight: 0 },
         "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升力量+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
         "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升敏捷+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
@@ -794,7 +809,7 @@ const DB = {
         "new_item_bless_acc": { n: "賦予飾品祝福卷軸", type: "misc", p: 0, c: "text-purple-300", d: "於象牙塔『碧恩』處用來祝福飾品（無法直接使用）。", isAnc: true, noUse: true, gachaWeight: 1 },
         "new_item_uncurse": { n: "解除詛咒的卷軸", type: "misc", p: 0, c: "text-cyan-200", d: "於象牙塔『碧恩』處用來移除裝備的詛咒（無法直接使用）。", noUse: true, gachaWeight: 10 },
         "new_item_143": { n: "肉", type: "pot", req: "all", p: 1, d: "食用後獲得『誘捕』狀態300秒", eff: "meat", gachaWeight: 0 },
-        "new_item_144": { n: "夏洛伯之爪", p: 1, gachaWeight: 0 },
+        "new_item_144": { n: "夏洛伯之爪", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_145": { n: "阿吐巴圖騰", p: 600, gachaWeight: 0 },
         "new_item_146": { n: "那魯加圖騰", p: 300, gachaWeight: 0 },
         "new_item_147": { n: "都達瑪拉圖騰", p: 30, gachaWeight: 0 },
@@ -846,25 +861,25 @@ const DB = {
         "new_item_193": { n: "風龍鱗", p: 5000, gachaWeight: 10 },
         "new_item_194": { n: "阿西塔基奧的灰燼", p: 1000, gachaWeight: 10 },
         "new_item_195": { n: "精靈玉", p: 100, gachaWeight: 100 },
-        "new_item_196": { n: "古老的交易文件", p: 1, gachaWeight: 0 },
+        "new_item_196": { n: "古老的交易文件", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_197": { n: "搜索狀", p: 1, gachaWeight: 0 },
-        "new_item_198": { n: "黑騎士的誓約", p: 1, gachaWeight: 0 },
-        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_201": { n: "甘地妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_203": { n: "骷髏頭", p: 1, gachaWeight: 0 },
-        "new_item_204": { n: "食屍鬼的指甲", p: 1, gachaWeight: 0 },
-        "new_item_205": { n: "食屍鬼的牙齒", p: 1, gachaWeight: 0 },
-        "new_item_206": { n: "龍龜甲", p: 1, gachaWeight: 0 },
+        "new_item_198": { n: "黑騎士的誓約", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色（198~206、208、212~214、240 同）
+        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_201": { n: "甘地妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_203": { n: "骷髏頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_204": { n: "食屍鬼的指甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_205": { n: "食屍鬼的牙齒", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_206": { n: "龍龜甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_207": { n: "生命的卷軸", p: 1, gachaWeight: 0 },
-        "new_item_208": { n: "蛇女之鱗", p: 1, gachaWeight: 0 },
+        "new_item_208": { n: "蛇女之鱗", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_209": { n: "返生藥水", p: 1, gachaWeight: 0 },
         "new_item_210": { n: "感謝信", p: 1, gachaWeight: 0 },
         "new_item_211": { n: "村民的遺物", p: 1, gachaWeight: 0 },
-        "new_item_212": { n: "不死族的骨頭", p: 1, gachaWeight: 0 },
-        "new_item_213": { n: "受詛咒的精靈書", p: 1, gachaWeight: 0 },
-        "new_item_214": { n: "不死族的鑰匙", p: 1, gachaWeight: 0 },
+        "new_item_212": { n: "不死族的骨頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_213": { n: "受詛咒的精靈書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_214": { n: "不死族的鑰匙", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_215": { n: "殭屍鑰匙", p: 1, gachaWeight: 0 },
         "new_item_216": { n: "骷髏鑰匙", p: 1, gachaWeight: 0 },
         "new_item_217": { n: "密室鑰匙", p: 1, gachaWeight: 0 },
@@ -891,7 +906,7 @@ const DB = {
 		"new_item_elfwing": { n: "精靈羽翼", p: 10, gachaWeight: 100 },
 		"new_item_mermaid_scale": { n: "人魚之鱗", p: 10, gachaWeight: 10 },
 		"new_item_239": { n: "潘朵拉抽獎卷", p: 0, gachaWeight: 0 },
-		"new_item_240": { n: "變形怪的血", p: 1, gachaWeight: 0 },
+		"new_item_240": { n: "變形怪的血", p: 1, c: "text-blue-300", gachaWeight: 0 },
 		"new_item_241": { n: "王族搜索狀", p: 1000, gachaWeight: 0, d: "擊敗血盟敵人必定取得。可向血盟盟主交出，換取盟主的祝福。" },
 		
 		        // ===== 法師魔法書 =====
@@ -967,7 +982,7 @@ const DB = {
         "bk_sleep_mist": { type: "skillbk", n: "魔法書(沉睡之霧)", p: 120000, sk: "sk_sleep_mist", gachaWeight: 30 },
         "bk_thunder_storm": { type: "skillbk", n: "魔法書(雷霆風暴)", p: 120000, sk: "sk_thunder_storm", gachaWeight: 10 },
         "bk_fire_storm": { type: "skillbk", n: "魔法書(火風暴)", p: 120000, sk: "sk_fire_storm", gachaWeight: 1 },
-        "bk_blaze": { type: "skillbk", n: "魔法書(烈炎術)", p: 100000, sk: "sk_blaze", gachaWeight: 0 },
+        "bk_blaze": { type: "skillbk", n: "魔法書(烈炎術)", p: 6400, sk: "sk_blaze", gachaWeight: 0 },
 
         "bk_meteor": { type: "skillbk", n: "魔法書(流星雨)", p: 250000, sk: "sk_meteor", gachaWeight: 1 },
         "bk_soul_up": { type: "skillbk", n: "魔法書(靈魂昇華)", p: 250000, sk: "sk_soul_up", gachaWeight: 1 },
@@ -993,7 +1008,7 @@ const DB = {
         "bk_elf_singleres": { type: "skillbk", n: "精靈水晶(單屬性防禦)", p: 15000, sk: "sk_elf_singleres", gachaWeight: 10 },
         "bk_elf_firewpn": { type: "skillbk", n: "精靈水晶(火焰武器)", p: 15000, sk: "sk_elf_firewpn", gachaWeight: 20 },
         "bk_elf_windshot": { type: "skillbk", n: "精靈水晶(風之神射)", p: 15000, sk: "sk_elf_windshot", gachaWeight: 20 },
-        "bk_elf_winddash": { type: "skillbk", n: "精靈水晶(風之疾走)", p: 20000, sk: "sk_elf_winddash", gachaWeight: 20 },
+        "bk_elf_winddash": { type: "skillbk", n: "精靈水晶(風之疾走)", p: 15000, sk: "sk_elf_winddash", gachaWeight: 20 },
         "bk_elf_earthguard": { type: "skillbk", n: "精靈水晶(大地防護)", p: 15000, sk: "sk_elf_earthguard", gachaWeight: 20 },
         "bk_elf_groundtrap": { type: "skillbk", n: "精靈水晶(地面障礙)", p: 15000, sk: "sk_elf_groundtrap", gachaWeight: 60 },
 
@@ -1145,6 +1160,10 @@ const DB = {
         "nm_022": { n: "鋼鐵高崙", lv: 35, s: "L", beh: "主動", race: "高崙", e: "earth", hp: 650, ac: -18, mr: 50, exp: 1226, goldMin: 125, goldMax: 302, atkSpd: 3, dmg: [2, 30], db: 53, hit: 25 },
         "bandit_boss": { n: "強盜頭目", lv: 35, s: "S", beh: "主動", race: "強盜", boss: true, e: "none", hp: 5000, ac: -25, mr: 50, exp: 12260, goldMin: 2050, goldMax: 3360, atkSpd: 1.5, dmg: [1, 100], db: 63, hit: 43 },
         "evil_lizard": { n: "邪惡蜥蜴", lv: 36, s: "L", beh: "主動", race: "邪惡蜥蜴", e: "water", hp: 800, ac: -20, mr: 30, exp: 1297, goldMin: 165, goldMax: 365, atkSpd: 2, dmg: [1, 64], db: 36, hit: 27, mag: { skn: "石化噴吐", cd: 110, type: "stone", pbase: 100 } },
+        // 🔧 卡瑞：攜帶四樣任務道具時於龍之谷地監6樓 1% 機率出現（spawnMob 特殊判定）；擊殺 100% 掉屠龍劍並消耗四道具各一
+        "kari": { n: "卡瑞", lv: 52, s: "S", beh: "主動", race: "不死", un: true, e: "earth", boss: true, noAutoTeleport: true, hp: 10000, ac: -45, mr: 100, exp: 30000, goldMin: 10000, goldMax: 20000, atkSpd: 0.9, dmg: [1, 100], db: 50, hit: 50,   // 🔧 BOSS（但不觸發瞬移卷軸自動使用）
+            mag:  { skn: "地面震裂", cd: 50, chance: 0.2, dmg: [4, 100], db: 99, ele: "earth" },                 // 每 5 秒判定，20% 機率施放：必中 4D100+99 地屬性魔法傷害
+            mag2: { skn: "龍的一擊", cd: 70, dmg: [1, 100], db: 25, ele: "none", fixedDmg: true } },             // 每 7 秒：必中 1D100+25 無屬性固定傷害（不受屬抗/抗魔/減免影響）
         "fire_archer": { n: "火焰弓箭手", lv: 36, s: "S", beh: "主動", race: "亞人", e: "fire", hp: 320, ac: -5, mr: 20, exp: 1297, goldMin: 165, goldMax: 365, atkSpd: 0.8, dmg: [1, 40], db: 26, hit: 30 },
         "succubus": { n: "思克巴", lv: 37, s: "S", beh: "主動", race: "思克巴", e: "earth", hp: 400, ac: -25, mr: 50, exp: 1370, goldMin: 153, goldMax: 244, atkSpd: 1.8, dmg: [2, 30], db: 37, hit: 26, mag: { skn: "吸血鬼之吻", cd: 80, dmg: [2, 10], db: 37, ele: "none", vamp: [1, 37] } },
         "salamander": { n: "火蜥蜴", lv: 38, s: "S", beh: "主動", race: "元素", elem: true, e: "fire", hp: 383, ac: -23, mr: 11, exp: 1450, goldMin: 165, goldMax: 284, atkSpd: 1.5, dmg: [4, 10], db: 44, hit: 28 },
@@ -1613,7 +1632,7 @@ const DB = {
         '巨大鱷魚': [['scroll_armor',10], ['scroll_acc',1], ['new_item_154',1], ['bk_thunder',1], ['potion_brave',1]],
         '巨蟻': [['arm_45',0.01], ['potion_haste',1], ['new_item_154',5], ['potion_brave',1]],
         '巨蟻女皇': [['arm_69', 10], ['wpn_katana',3], ['amr_plate',5], ['arm_63',5], ['arm_47',1], ['acc_121',0.1], ['acc_127',1], ['blt_body',0.5], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['bk_heal2',1], ['bk_charm',1], ['bk_earthquake',1], ['bk_regen',0.5], ['potion_blue',1], ['bk_rock_prison',5], ['bk_greater_haste',1], ['new_item_195',1], ['bk_elf_magicerase',1], ['bk_dark_shadow',1]],
-        '巫師': [['arm_87',0.5], ['arm_90',1], ['amu_str',0.001], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',0.1], ['bk_haste_spell',0.1], ['potion_blue',1], ['bk_greater_haste',0.05], ['bk_elf_stormeye',0.05], ['bk_weaken',0.1]],
+        '巫師': [['arm_87',0.5], ['arm_90',1], ['amu_str',0.001], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',0.1], ['bk_haste_spell',0.1], ['potion_blue',1], ['bk_greater_haste',0.05], ['bk_elf_stormeye',0.05], ['bk_weaken',0.1], ['item_crystal_ball',0.01]],
         '巴土瑟': [['arm_87',5], ['arm_90',10], ['arm_54',1], ['acc_117',0.01], ['amu_int',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['bk_cancel',0.1], ['potion_blue',1], ['bk_quake',0.1], ['bk_elf_groundtrap',5], ['bk_elf_earthbless',1]],
         '巴拉卡斯': [['wpn_katana',10], ['wpn_siruge',5], ['amr_plate',10], ['arm_88',1], ['glv_glove',10], ['arm_82',0.1], ['acc_116',0.2], ['acc_117',0.2], ['amu_str',0.2], ['amu_int',0.2], ['acc_127',6], ['acc_128',6], ['acc_129',6], ['blt_body',1], ['acc_130',1], ['acc_131',1], ['potion_haste',1], ['scroll_weapon',100], ['scroll_armor',100], ['scroll_acc',50], ['new_item_150',1], ['new_item_151',100], ['new_item_152',10], ['new_item_153',2], ['new_item_157',100], ['new_item_158',10], ['new_item_159',2], ['bk_fireball',20], ['bk_slow',15], ['bk_charm',15], ['bk_str_up',10], ['bk_haste_spell',10], ['bk_summon',3], ['bk_invisible',1], ['bk_resurrection',1], ['new_item_192',100], ['potion_blue',1]],
         '巴風特': [['wpn_katana',2], ['wpn_2hsword',5], ['amr_plate',5], ['arm_88',0.1], ['glv_glove',10], ['acc_116',0.01], ['acc_127',0.5], ['acc_129',0.5], ['blt_body',0.1], ['acc_131',0.1], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_charm',1], ['bk_earthquake',2], ['bk_summon',0.2], ['bk_rock_prison',5], ['bk_quake',1], ['new_item_195',1], ['bk_elf_dancefire',1], ['bk_magic_shield',1], ['bk_weaken',1], ['bk_bless_wpn',0.1]],
@@ -1655,12 +1674,13 @@ const DB = {
         '狼人': [['arm_69', 0.1], ['wpn_longsword',0.1], ['wpn_2',1], ['wpn_10',3], ['wpn_13',2], ['arm_66',0.5], ['arm_103',1], ['bot_short',0.5], ['bk_dex_up',0.01], ['bk_vampire',0.05]],
         '獨眼巨人': [['arm_62',1], ['arm_47',0.01], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_str_up',0.05], ['bk_summon',0.002], ['bk_rock_prison',0.5], ['bk_quake',0.003], ['bk_elf_groundtrap',0.1], ['bk_elf_earthbless',0.01], ['bk_weaken',0.1], ['bk_seal',0.05], ['new_item_227',0.01]],
         '獨角獸': [['wpn_18',3], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_poly',1], ['panacea_cha',1]],
-        '甘地妖魔': [['potion_heal',1], ['new_item_148',1], ['new_item_150',1], ['new_item_201',1]],
+        '甘地妖魔': [['potion_heal',1], ['new_item_148',1], ['new_item_150',1], ['new_item_201',1], ['item_orc_amulet',0.01]],
+        '卡瑞': [['wpn_dragonslayer',100]],
         '石頭高崙': [['wpn_alien',3], ['wpn_1',5], ['wpn_10',5], ['wpn_13',1], ['new_item_150',1], ['new_item_159',0.05], ['new_item_164',1], ['potion_blue',1], ['bk_rock_prison',0.5], ['new_item_207',0.1]],
         '穴居人': [['wpn_battleaxe',1], ['wpn_giantaxe',0.1], ['arm_61',0.5], ['scroll_acc',0.001]],
         '紅鬼魂': [['amr_robe',3], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_elf_seal',0.05], ['bk_dark_shadow',0.1]],
         '紙人': [['scroll_poly',1], ['scroll_acc',0.01]],
-        '羅孚妖魔': [['arm_69', 0.2], ['arm_63',3], ['potion_haste',1], ['new_item_149',1], ['new_item_157',5]],
+        '羅孚妖魔': [['arm_69', 0.2], ['arm_63',3], ['potion_haste',1], ['new_item_149',1], ['new_item_157',5], ['item_orc_amulet',0.01]],
         '艾爾摩士兵': [['wpn_4',1], ['wpn_halberd',0.5], ['wpn_14',1], ['arm_66',3], ['arm_68',2], ['bot_short',2], ['glv_glove',0.5], ['scroll_armor',2], ['scroll_acc',0.01], ['potion_brave',1]],
         '艾爾摩將軍': [['wpn_2hsword',0.5], ['arm_60',1], ['arm_65',1], ['arm_90',1], ['glv_glove',0.5], ['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_shock_stun',0.05], ['bk_reduction_armor',0.01], ['bk_spike_armor',0.001]],
         '艾爾摩法師': [['wpn_witchwand',1], ['scroll_weapon',1], ['bk_full_heal',0.01], ['potion_blue',1], ['bk_ice_spike',0.5], ['bk_bless_wpn',0.005]],
@@ -1674,20 +1694,20 @@ const DB = {
         '西瑪': [['arm_87',5], ['arm_90',10], ['arm_57',1], ['amu_str',0.1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_dex_up',2], ['bk_haste_spell',1], ['potion_blue',1], ['bk_greater_haste',1], ['bk_elf_stormeye',1], ['bk_weaken',1]],
         '變形怪': [['scroll_poly',1], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_240',1]],
         '變形怪首領': [['wpn_2hsword',5], ['wpn_38',10], ['wpn_strwand',1], ['arm_60',10], ['clk_mr',10], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['bk_fireball',3], ['bk_str_up',1], ['bk_haste_spell',1], ['bk_summon',0.5], ['scroll_poly',1], ['potion_blue',1], ['bk_elf_magicerase',1], ['bk_shock_stun',1], ['bk_reduction_armor',0.5], ['bk_spike_armor',0.5], ['bk_solid_shield',0.5], ['new_item_240',10]],
-        '那魯加妖魔': [['wpn_2hsword',0.1], ['wpn_invader',0.5], ['wpn_damascus',0.2], ['arm_64',5], ['arm_104',3], ['acc_123',0.01], ['potion_haste',1], ['new_item_146',1], ['new_item_157',5], ['new_item_200',1]],
-        '邪惡蜥蜴': [['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_slow',0.5], ['bk_heal2',0.2], ['bk_holy_light',0.1], ['bk_cancel',0.02], ['bk_earthquake',0.02], ['bk_rock_prison',0.5], ['bk_quake',0.005], ['bk_elf_release',0.05], ['new_item_232',0.01]],
-        '都達瑪拉妖魔': [['hlm_mr', 0.5], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['potion_haste',1], ['new_item_147',1], ['new_item_150',1], ['new_item_158',0.5], ['new_item_199',1], ['scroll_acc',0.001]],
+        '那魯加妖魔': [['wpn_2hsword',0.1], ['wpn_invader',0.5], ['wpn_damascus',0.2], ['arm_64',5], ['arm_104',3], ['acc_123',0.01], ['potion_haste',1], ['new_item_146',1], ['new_item_157',5], ['new_item_200',1], ['item_orc_amulet',0.01]],
+        '邪惡蜥蜴': [['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['bk_slow',0.5], ['bk_heal2',0.2], ['bk_holy_light',0.1], ['bk_cancel',0.02], ['bk_earthquake',0.02], ['bk_rock_prison',0.5], ['bk_quake',0.005], ['bk_elf_release',0.05], ['new_item_232',0.01], ['item_lizard_horn',0.01]],
+        '都達瑪拉妖魔': [['hlm_mr', 0.5], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['potion_haste',1], ['new_item_147',1], ['new_item_150',1], ['new_item_158',0.5], ['new_item_199',1], ['scroll_acc',0.001], ['item_orc_amulet',0.01]],
         '鋼鐵高崙': [['scroll_weapon',1], ['scroll_armor',2], ['bk_str_up',0.05], ['new_item_164',1], ['new_item_180',100], ['potion_blue',1], ['bk_elf_soul',0.001], ['bk_elf_steelguard',0.001], ['bk_weaken',0.1], ['item_ancientkey',1]],
         '夢幻之島鎧甲守衛': [['arm_60',1], ['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['bk_spike_armor',0.05]],
         '長老': [['arm_87',0.5], ['new_item_150',1], ['bk_thunder',0.1], ['bk_heal2',0.5], ['scroll_acc',0.01], ['potion_blue',1], ['new_item_234',0.1]],
         '夢幻之島閃電球': [['arm_45',0.1], ['scroll_weapon',1], ['scroll_armor',2], ['bk_thunder_storm',0.05]],
-        '阿吐巴妖魔': [['hlm_mr', 0.5], ['wpn_damascus',0.1], ['arm_60',0.5], ['arm_64',3], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['new_item_145',1], ['new_item_157',5], ['new_item_202',1]],
+        '阿吐巴妖魔': [['hlm_mr', 0.5], ['wpn_damascus',0.1], ['arm_60',0.5], ['arm_64',3], ['arm_104',3], ['arm_42',5], ['acc_123',0.01], ['new_item_145',1], ['new_item_157',5], ['new_item_202',1], ['item_orc_amulet',0.01]],
         '阿西塔基奧': [['potion_haste',1], ['scroll_weapon',1], ['scroll_armor',2], ['scroll_acc',0.01], ['bk_fireball',0.5], ['bk_dex_up',0.1], ['bk_str_up',0.05], ['bk_haste_spell',0.1], ['bk_earthquake',0.1], ['new_item_192',0.01], ['new_item_194',1]],
         '阿魯巴': [['wpn_18',2], ['bk_str_up',0.05], ['bk_haste_spell',0.5], ['bk_earthquake',0.1], ['bk_rock_prison',0.5], ['bk_greater_haste',0.1], ['bk_quake',0.005]],
         '雪人': [['bk_elf_release',0.1], ['scroll_acc',0.01]],
         '雪怪': [['wpn_18',1], ['scroll_acc',0.01], ['new_item_195',1]],
         '風精靈王': [['arm_69', 1], ['arm_63',5], ['potion_haste',1], ['scroll_weapon',5], ['scroll_armor',10], ['scroll_revive',1], ['potion_blue',1], ['panacea_dex',1]],
-        '飛龍': [['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5], ['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_160',5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_holy_dash',1], ['potion_blue',1], ['bk_quake',1], ['bk_elf_magicerase',1], ['bk_elf_stormeye',1], ['bk_elf_triple',1]],
+        '飛龍': [['item_dragon_claw',1], ['potion_haste',1], ['scroll_weapon',10], ['scroll_armor',20], ['scroll_acc',1], ['new_item_150',1], ['new_item_151',5], ['new_item_152',0.5], ['new_item_153',0.1], ['new_item_154',5],['new_item_155',0.5], ['new_item_156',0.1], ['new_item_157',5], ['new_item_158',0.5], ['new_item_159',0.1], ['new_item_160',5], ['new_item_161',0.5], ['new_item_162',0.1], ['bk_holy_dash',1], ['potion_blue',1], ['bk_quake',1], ['bk_elf_magicerase',1], ['bk_elf_stormeye',1], ['bk_elf_triple',1]],
         '食人妖精': [['wpn_battleaxe',3], ['wpn_giantaxe',1], ['arm_61',0.6], ['scroll_weapon',0.2], ['scroll_armor',0.5], ['bk_fireball',0.1], ['bk_break',0.5], ['bk_elf_release',0.05], ['new_item_217',0.1], ['bk_blaze',0.01]],
         '食人妖精王': [['wpn_battleaxe',3], ['wpn_10',2], ['wpn_giantaxe',0.5], ['wpn_berserker',0.02], ['arm_61',0.5], ['arm_47',0.05], ['scroll_weapon',1], ['scroll_armor',1.5], ['new_item_158',0.5], ['bk_fireball',0.5], ['bk_break',0.5], ['bk_holy_light',0.1], ['potion_blue',1], ['bk_disease',0.1], ['bk_shock_stun',0.01]],
         '食屍鬼': [['scroll_weapon',0.1], ['bk_berserk',0.01], ['new_item_204',1], ['new_item_205',1]],
@@ -1776,10 +1796,11 @@ function applySaveDefaults(p) {
 // ============================================================================
 function sherineWorldActive() { return !!(player && player.sherineWorld); }
 function applySherineTheme() { document.body.classList.toggle('sherine-world', sherineWorldActive()); }
-let _sherineLootCtx = null;   // 擊殺掉落上下文：killMob 期間設定（{boss}），供 gainItem 判定詞綴×3 與套裝效果
+let _sherineLootCtx = null;   // 擊殺掉落上下文：killMob 期間設定（{boss,grace}），供 gainItem 判定詞綴×3 與套裝效果
+let _forceSherineSet = false;   // 🔮 席琳製作：成品必定附帶隨機套裝效果（doCraft 產出期間設定）
 
 // ===== 🔮 席琳套裝效果（40 種，8 組 × 5 件；組名＝前兩字）=====
-// 掉落判定：席琳的世界中，武器/頭盔/盔甲/手套/長靴/斗篷/項鍊 掉落時，
+// 掉落判定：席琳的世界中，武器/頭盔/盔甲/手套/長靴/斗篷/腰帶 掉落時，
 // 一般怪 0.1%、頭目 5% 獨立機率獲得一個效果（再從 40 種均勻抽一 → 單一效果 0.1%/40）。
 // 效果寫在裝備資訊欄（不冠在名稱前）；名稱以鮮綠色＋淡綠光暈顯示（凌駕詞綴顏色）。
 const SHERINE_EFFECTS = [
@@ -2339,6 +2360,8 @@ d.mr += (baseMr + bonusMr);
         if (e && e.seteff) { let g = e.seteff.slice(0, 2); (_shSets[g] = _shSets[g] || new Set()).add(e.seteff); }
     }
     let _shN = (g) => (_shSets[g] ? _shSets[g].size : 0);
+    p._sherineSetCnt = {};   // 🔮 各組「不重複效果」數：供狀態面板（n/5 徽章）與裝備欄底色判定使用
+    for (let g in _shSets) p._sherineSetCnt[g] = _shSets[g].size;
     if (_shN('紅獅') >= 2) { d.extraDmg += 5; d.extraMp += 3; }
     if (_shN('紅獅') >= 3) { d.dr += 10; }
     p._setRedLion5 = _shN('紅獅') >= 5;          // 攻擊技能最終傷害 +20%（castSkill 套用）
@@ -3138,6 +3161,15 @@ function spawnMob(idx) {
        && DB.mobs[player.tracking.mob] && !DB.mobs[player.tracking.mob].boss && Math.random() < 0.5) {
         mobId = player.tracking.mob;
     }
+    // 🔧 卡瑞（BOSS）：身上「同時」攜帶 飛龍的爪子/蜥蜴的角/水晶球/妖魔戰士護身符 時，
+    //    於龍之谷地監6樓 1% 機率出現（場上無其他 BOSS 時才出現，且同時最多一隻）
+    if (mapState.current === 'zone_31'
+        && !bossInBattle
+        && !mapState.mobs.some(m => m && m.n === '卡瑞')
+        && ['item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'].every(q => player.inv.some(i => i.id === q && i.cnt > 0))
+        && Math.random() < 0.01) {
+        mobId = 'kari';
+    }
     let base = DB.mobs[mobId];
     if(!base) return;
     mapState.mobs[idx] = { ...base, curHp: base.hp, uid: uid(), _magCd: {}, justHit: false, st: newMobStatus() };
@@ -3735,6 +3767,31 @@ function playerAttack() {
 
     // 魔擊：一般攻擊(命中或未命中皆然)依機率追加一次必定命中重擊
     magicStrikeProc(target);
+
+    // 龍的一擊（屠龍劍）：一般攻擊(命中或未命中皆然) 12% 機率
+    dragonStrikeProc();
+}
+
+// ===== 🔧 龍的一擊（屠龍劍 dragonStrike）：發動一般攻擊時（不論命中）依武器機率(12%)觸發，
+// 對場上所有敵人造成必定命中 1D(力量)+25 的無屬性物理固定傷害（不受魔抗/防禦/減免影響）=====
+function dragonStrikeProc() {
+    let wpn = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
+    if (!wpn || !wpn.dragonStrike) return;
+    if (Math.random() * 100 >= wpn.dragonStrike) return;
+    let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+    if (!targets.length) return;
+    logCombat(`<span class="font-bold" style="color:#fca5a5;text-shadow:0 0 6px #dc2626;">【龍的一擊】</span>劍中的龍魂咆哮，衝擊貫穿了所有敵人！`, 'player-crit');
+    targets.forEach(m => {
+        if (!m || m.curHp <= 0 || m._dead) return;
+        let dmg = roll(1, Math.max(1, Math.floor(player.d.str || 1))) + 25;
+        dmg = Math.max(1, Math.floor(dmg * fragileMult(m)));   // 🔮 脆弱（白鳥5）仍適用
+        m.curHp -= dmg;
+        m.justHit = true;
+        mobWake(m);
+        logCombat(`龍之衝擊命中 <span class="${getMobColor(m.lv)}">${m.n}</span>，造成 ${dmg} 點固定傷害。`, 'player');
+        if (m.curHp <= 0) { let ri = mapState.mobs.findIndex(x => x && x.uid === m.uid); if (ri !== -1) killMob(ri); }
+    });
+    renderMobs();
 }
 
 function enemyPhysicalAttack(mob, idx, stunChance = 0) {
@@ -4068,7 +4125,12 @@ function applyMobMagic(mob, sk) {
         
         // 屬性抗性與魔防一律生效：有屬性者受該屬性抗性折減、所有魔法傷害受抗魔(MR)折減（alwaysHit 不再無視防禦）
         // 怪物技能傷害公式: (怪物技能傷害 × 屬抗係數) × 抗魔係數 - 傷害減免
-        let dmg = Math.floor(Math.floor((baseMagicDmg + extraMagicDmg) * resFactor) * mrFactor) - player.d.dr;
+        let dmg;
+        if (sk.fixedDmg) {
+            dmg = baseMagicDmg + extraMagicDmg;   // 🔧 固定傷害（如 卡瑞·龍的一擊）：不受屬性抗性/抗魔/傷害減免影響
+        } else {
+            dmg = Math.floor(Math.floor((baseMagicDmg + extraMagicDmg) * resFactor) * mrFactor) - player.d.dr;
+        }
         if(sk.ext_freeze && player.statuses.freeze > 0) dmg += sk.ext_freeze;
 
         if(player.buffs.sk_holy_barrier > 0) dmg = Math.floor(dmg * 0.7);
@@ -4289,6 +4351,16 @@ function killMob(idx) {
         }
     }
     
+    // === 🔧 卡瑞：擊殺後扣除四樣任務道具各一個 ===
+    if (mob.n === '卡瑞') {
+        ['item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'].forEach(q => {
+            let st = player.inv.find(i => i.id === q && i.cnt > 0);
+            if (st) st.cnt--;
+        });
+        player.inv = player.inv.filter(i => i.cnt > 0);
+        logSys('<span class="text-amber-300 font-bold">封印之物失去了力量：</span><span class="text-amber-200">飛龍的爪子、蜥蜴的角、水晶球、妖魔戰士護身符 各消耗了 1 個。</span>');
+    }
+
     // === 血盟敵人：擊敗必定掉落「王族搜索狀」（100%）===
     if (mob.race === '血盟' && !isSiegeArea(mapState.current)) {   // 攻城區不掉王族搜索狀
         gainItem('new_item_241', 1);
@@ -4310,9 +4382,9 @@ function killMob(idx) {
 
     // === 40等以上 BOSS（夢幻之島 + 攻城區/siegeEnemy 除外）：賦予祝福卷軸稀有掉落，各自獨立判定 ===
     if (mob.boss && mob.lv >= 40 && mapState.current !== 'dream_island' && !isSiegeArea(mapState.current) && !mob.siegeEnemy) {
-        if (Math.random() < clampRate(0.001 * _dropMult * CONFIG.RateDropItems))  gainItem('new_item_bless_wpn', 1);   // 0.1%  賦予武器祝福卷軸（🔮席琳×3）
-        if (Math.random() < clampRate(0.001 * _dropMult * CONFIG.RateDropItems))  gainItem('new_item_bless_arm', 1);   // 0.1%  賦予盔甲祝福卷軸
-        if (Math.random() < clampRate(0.0001 * _dropMult * CONFIG.RateDropItems)) gainItem('new_item_bless_acc', 1);   // 0.01% 賦予飾品祝福卷軸
+        if (Math.random() < clampRate(0.001 * _dropMult * CONFIG.Blessed))  gainItem('new_item_bless_wpn', 1);   // 0.1%  賦予武器祝福卷軸（🔮席琳×3）
+        if (Math.random() < clampRate(0.001 * _dropMult * CONFIG.Blessed))  gainItem('new_item_bless_arm', 1);   // 0.1%  賦予盔甲祝福卷軸
+        if (Math.random() < clampRate(0.0001 * _dropMult * CONFIG.Blessed)) gainItem('new_item_bless_acc', 1);   // 0.01% 賦予飾品祝福卷軸
     }
 
     // === 區域額外掉落：眠龍洞穴1~3樓(zone_15/16/17) / 妖精森林周邊(zone_01) 所有怪物 ===
@@ -4320,8 +4392,24 @@ function killMob(idx) {
     if (AREA_BONUS_MAPS.includes(mapState.current)) {
         let bonusRate = (player.skills.includes('sk_elf_worldtree') ? 0.30 : 0.20) * _dropMult;   // 🔮 席琳的世界×3
         AREA_BONUS_ITEMS.forEach(itemId => {
-            if(DB.items[itemId] && Math.random() < clampRate(bonusRate * CONFIG.RateDropItems)) gainItem(itemId, 1);
+            if(DB.items[itemId] && Math.random() < Math.min(1, bonusRate)) gainItem(itemId, 1);
         });
+    }
+
+    // === 🔮 席琳結晶：席琳的世界限定掉落（固定機率，不吃掉落倍率）===
+    // 血盟與 Lv20 以下不掉（血盟本就無 _sherine）；21~30 非BOSS 0.001%、31~40 非BOSS 0.002%、
+    // 41+ 非BOSS 0.003%、夢幻之島BOSS 0.01%、三大龍（安塔瑞斯/法利昂/巴拉卡斯）10%、其餘BOSS 0.1%
+    if (mob._sherine) {
+        let _cr = 0;
+        if (['安塔瑞斯', '法利昂', '巴拉卡斯'].includes(mob.n)) _cr = 0.10;
+        else if (mob.boss) _cr = (mapState.current === 'dream_island') ? 0.0001 : 0.001;
+        else if ((mob.lv || 1) >= 41) _cr = 0.00003;
+        else if ((mob.lv || 1) >= 31) _cr = 0.00002;
+        else if ((mob.lv || 1) >= 21) _cr = 0.00001;
+        if (_cr > 0 && Math.random() < _cr) {
+            gainItem('sherine_crystal', 1);
+            logSys(`<span class="c-sherine font-bold">✦✦ 席琳結晶 從 ${mob.n} 的殘骸中浮現！✦✦</span>`);
+        }
     }
     
     _sherineLootCtx = null;   // 🔮 掉落判定結束，清除上下文
@@ -4587,7 +4675,7 @@ function summonTierByLevel(lv) {
     if(lv >= 72) return { n:'召喚：黑豹', dmgDice:[2,14], dmgDiv:6, dmgLvDiv:10, interval:10, kind:'melee', hitLvOff:20, proc:{ p:0.20, cd:50, dmgDice:[6,10], ele:'none', name:'撕咬' } };
     if(lv >= 64) return { n:'召喚：地獄束縛犬', dmgDice:[3,15], dmgDiv:4, dmgLvDiv:15, interval:20, kind:'melee', hitLvOff:15, proc:{ p:0.15, cd:50, dmgDice:[4,12], ele:'fire', name:'噴火' } };
     if(lv >= 60) return { n:'召喚：地獄奴隸', dmgDice:[3,12], dmgDiv:4, dmgLvDiv:20, interval:20, kind:'melee', hitLvOff:12, proc:{ p:0.10, cd:50, dmgDice:[1,32], ele:'earth', name:'地獄之牙' } };
-    if(lv >= 52) return { n:'召喚：魔狼', dmgDice:[1,15], dmgDiv:8, dmgLvDiv:25, interval:10, kind:'melee', hitLvOff:10 };
+    if(lv >= 52) return { n:'召喚：魔狼', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:25, interval:10, kind:'melee', hitLvOff:10 };   // 🔧 攻速低於2秒的召喚物：固定加成貼近前階（dmgDiv 8→5，Lv52/魅30 加成 11→18，對照食人妖精 20）
     if(lv >= 40) return { n:'召喚：食人妖精', dmgDice:[2,11], dmgDiv:4, dmgLvDiv:30, interval:20, kind:'melee', hitLvOff:7 };
     if(lv >= 32) return { n:'召喚：甘地妖魔', dmgDice:[2,8], dmgDiv:5, dmgLvDiv:35, interval:20, kind:'melee', hitLvOff:3 };
     return { n:'召喚：哈柏哥布林', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:40, interval:20, kind:'melee', hitLvOff:0 };
@@ -4904,6 +4992,18 @@ function allyWeaponProcs(ally, target, hitInfo) {
     }
     if (wpn.eff === 'moonburst' && Math.random() < 0.08) {
         let t = _allyProcTarget(target); if (t) allyProcMoonburst(ally, t);
+    }
+    if (wpn.dragonStrike && Math.random() * 100 < wpn.dragonStrike) {   // 🔧 龍的一擊（傭兵版）：用傭兵力量
+        let _ts = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+        if (_ts.length) {
+            logCombat(`<span class="font-bold" style="color:#fca5a5;text-shadow:0 0 6px #dc2626;">【協力·${ally._allyName}·龍的一擊】</span>劍中的龍魂咆哮！`, 'player-crit');
+            _ts.forEach(m => {
+                if (!m || m.curHp <= 0 || m._dead) return;
+                let dmg = roll(1, Math.max(1, Math.floor(d.str || 1))) + 25;
+                logCombat(`龍之衝擊命中 <span class="${getMobColor(m.lv)}">${m.n}</span>，造成 ${dmg} 點固定傷害。`, 'player');
+                _allyDamageMob(ally, m, dmg, true);
+            });
+        }
     }
 }
 // 命中後物理特效：穿透 / 骰子匕首即死 / 匕首·矛出血 / 單手鈍器鈍擊 / 雙手劍切割
@@ -5537,7 +5637,7 @@ function autoActions() {
     // 瞬間移動卷軸：戰鬥中出現 BOSS 時自動使用（自動使用必定為未裝備傳送控制戒指的傳送術效果）
     {
         let tChk = document.getElementById('set-teleport');
-        if (tChk && tChk.checked && mapState.mobs.some(m => m && m.boss) && !isSiegeArea(mapState.current) && !PURE_BOSS_MAPS.includes(mapState.current)) {   // 攻城區與純BOSS房(安塔瑞斯/法利昂/巴拉卡斯)：BOSS為目標，不自動瞬移
+        if (tChk && tChk.checked && mapState.mobs.some(m => m && m.boss && !m.noAutoTeleport) && !isSiegeArea(mapState.current) && !PURE_BOSS_MAPS.includes(mapState.current)) {   // 攻城區與純BOSS房(安塔瑞斯/法利昂/巴拉卡斯)：BOSS為目標，不自動瞬移；🔧 卡瑞(noAutoTeleport)不觸發自動瞬移
             let item = player.inv.find(i => i.id === 'scroll_teleport');
             if (!item) {
                 let buyChk = document.getElementById('set-auto-buy-teleport');
@@ -5624,13 +5724,13 @@ function rollAffixesNew() {
     let m = _sherineLootCtx ? 3 : 1;
     let r = Math.random();
     let attr = false, bless = false, anc = false;
-    if (r < clampRate(0.0001 * m * CONFIG.Blessed)) { attr = rollAttrAffix(); bless = true; anc = true; }            // 0.01% 三詞綴
-    else if (r < clampRate(0.0011 * m)) {                                                            // 0.1% 雙詞綴（屬性+遠古 / 遠古+祝福 / 屬性+祝福 等機率）
+    if (r < 0.0001 * m) { attr = rollAttrAffix(); bless = true; anc = true; }            // 0.01% 三詞綴
+    else if (r < 0.0011 * m) {                                                            // 0.1% 雙詞綴（屬性+遠古 / 遠古+祝福 / 屬性+祝福 等機率）
         let c = Math.floor(Math.random() * 3);
         if (c === 0) { attr = rollAttrAffix(); anc = true; }
         else if (c === 1) { anc = true; bless = true; }
         else { attr = rollAttrAffix(); bless = true; }
-    } else if (r < clampRate(0.030503 * m)) {                                                        // 2.9403% 單詞綴（比照舊制 3×1%×0.99²；屬性 / 遠古 / 祝福 等機率）
+    } else if (r < 0.030503 * m) {                                                        // 2.9403% 單詞綴（比照舊制 3×1%×0.99²；屬性 / 遠古 / 祝福 等機率）
         let p = Math.floor(Math.random() * 3);
         if (p === 0) attr = rollAttrAffix();
         else if (p === 1) anc = true;
@@ -5641,12 +5741,12 @@ function rollAffixesNew() {
 // 詞綴抽取（舊制）：屬性 / 祝福 / 遠古 各自獨立 1%（潘朵拉、血盟掉落沿用）；🔮 席琳擊殺掉落 ×3
 function rollAffixesOld() {
     let m = _sherineLootCtx ? 3 : 1;
-    return { attr: (Math.random() < clampRate(0.01 * m)) ? rollAttrAffix() : false, bless: (Math.random() < clampRate(0.01 * m * CONFIG.Blessed)), anc: (Math.random() < clampRate(0.01 * m)) };
+    return { attr: (Math.random() < 0.01 * m) ? rollAttrAffix() : false, bless: (Math.random() < 0.01 * m), anc: (Math.random() < 0.01 * m) };
 }
 function gainItem(id, cnt=1, silent=false, forceNormal=false, affixOld=false) {
     // 卷軸變祝福機率
     if (!forceNormal && (id === 'scroll_weapon' || id === 'scroll_armor')) {
-        if (Math.random() < clampRate(0.01 * CONFIG.Blessed)) {
+        if (Math.random() < 0.01) {
             id = id + '_b'; // 將卷軸變成祝福的
         }
     }
@@ -5669,22 +5769,28 @@ function gainItem(id, cnt=1, silent=false, forceNormal=false, affixOld=false) {
         attr = _af.attr; bless = _af.bless; anc = _af.anc;
     }
 
-    // 🔮 席琳的世界擊殺掉落：武器/頭盔/盔甲/手套/長靴/斗篷/項鍊 → 一般怪0.1%、頭目5% 附加套裝效果（40 種均勻抽一）
+    // 🔮 席琳套裝效果：指定部位（武器/頭盔/盔甲/手套/長靴/斗篷/腰帶）※項鍊已改為腰帶
+    //  - 席琳的世界擊殺掉落：一般怪0.1%、恩賜怪0.5%、頭目5%（40 種均勻抽一）
+    //  - 席琳製作（_forceSherineSet）：必定附帶隨機一種
     let seteff = false;
-    if (_sherineLootCtx && d) {
+    if (d) {
         let _slotOk = (d.type === 'wpn' && !d.isArrow)
             || (d.type === 'arm' && ['helm','armor','gloves','boots','cloak'].includes(d.slot))
-            || ((d.type === 'acc' || d.type === 'arm') && d.slot === 'amulet');
-        if (_slotOk && Math.random() < (_sherineLootCtx.boss ? 0.05 : (_sherineLootCtx.grace ? 0.005 : 0.001))) {   // 🔮 恩賜怪：套裝機率 ×5 = 0.5%
+            || ((d.type === 'acc' || d.type === 'arm') && d.slot === 'belt');
+        if (_slotOk && _sherineLootCtx && Math.random() < (_sherineLootCtx.boss ? 0.05 : (_sherineLootCtx.grace ? 0.005 : 0.001))) {
             seteff = SHERINE_EFFECTS[Math.floor(Math.random() * SHERINE_EFFECTS.length)];
             logSys(`<span class="c-sherine font-bold">✦ 掉落的裝備蘊含著席琳的祝福：【${seteff}】！</span>`);
+        }
+        if (_slotOk && !seteff && _forceSherineSet) {
+            seteff = SHERINE_EFFECTS[Math.floor(Math.random() * SHERINE_EFFECTS.length)];
+            logSys(`<span class="c-sherine font-bold">✦ 席琳結晶引導出套裝效果：【${seteff}】！</span>`);
         }
     }
 
     let _probe = { id: id, en: 0, bless: bless, anc: anc, attr: attr, seteff: seteff };
     let ex = player.inv.find(i => (i.en || 0) === 0 && sameItemSig(i, _probe));   // 🔧 架構#3：統一簽章比對（並容忍舊存檔 en 為 undefined）
     if(ex) ex.cnt += cnt;   // 不論是否鎖定都疊加；僅加數量、不更動既有堆疊的鎖定/廢品狀態
-    else player.inv.push({ id: id, uid: uid(), cnt: cnt, en: 0, bless: bless, anc: anc, attr: attr, seteff: seteff, lock: false, junk: !attr && !bless && !anc && !seteff && !!(player.junkPrefs && player.junkPrefs[id]) });
+    else player.inv.push({ id: id, uid: uid(), cnt: cnt, en: 0, bless: bless, anc: anc, attr: attr, seteff: seteff, lock: false, junk: !!(player.junkPrefs && player.junkPrefs[itemSig(_probe)]) });   // 🔧 廢品記憶改以完整簽章比對：詞綴物品也可自動標記，但僅限「完全相同詞綴」者
 
     // 紀錄這次產生的物品屬性
     let itemInfo = { id: id, cnt: cnt, en: 0, bless: bless, anc: anc, attr: attr, seteff: seteff };
@@ -5745,12 +5851,11 @@ function getItemColor(item) {
     let d = DB.items[item.id];
     // 🔮 席琳套裝效果：鮮綠＋呼吸綠光，優先於所有詞綴顏色
     if (item.seteff) return 'c-sherine';
-    // 名字顏色 = 套裝 > 祝福(金) > 遠古(紫) > 基底色
-    // 🔧 屬性詞綴不再影響裝備名稱顏色（詞綴字本身「火之/爆炎…」仍保留專屬色，見 getItemFullName）
+    // 名字顏色 = 套裝 > 祝福(金)/詛咒(紅) > 基底色
+    // 🔧 屬性詞綴與遠古系詞綴（遠古/永恆/不朽/太初）不再影響裝備名稱顏色，
+    //    詞綴字本身仍保留各自專屬色（見 getItemFullName）
     if (item.bless) return blessColorClass(item.bless);
     if (d && d.isB) return 'c-blessed';
-    if (item.anc) return ancColorClass(item.anc);
-    if (d && d.isAnc) return 'c-ancient';
     return d.c || 'text-white';
 }
 
@@ -5758,6 +5863,8 @@ function getItemColor(item) {
 //   單祝福→金光、單遠古→紫光（原樣）；屬性+遠古→紫光(加強)、屬性+祝福→金光(加強)，顯眼度比照雙詞綴；
 //   遠古+祝福→紫金交替(顯眼)；三詞綴→變色循環，顯眼度最高。
 function getGlowClass(item, d) {
+    // 🔮 席琳結晶：圖示帶與套裝文字同款的呼吸綠光
+    if ((item && item.id === 'sherine_crystal') || (d && d.n === '席琳結晶')) return 'sherine-glow-icon';
     let bless = (item && item.bless) || (d && d.isB);
     let cursed = !!(item && item.bless === 'cursed');
     let anc = (item && item.anc) || (d && d.isAnc);
@@ -6286,6 +6393,14 @@ function renderStatusEffects() {
     }
     if(player.buffs.taming > 0) buffs.push(`<span class="text-pink-300 font-bold">誘捕</span>`);
 
+    // 🔮 席琳套裝：達 2 件以上（觸發套裝能力）的組別顯示於資訊面板（n/5）
+    if (player._sherineSetCnt) {
+        for (let _g in player._sherineSetCnt) {
+            let _n = Math.min(5, player._sherineSetCnt[_g]);
+            if (_n >= 2) buffs.push(`<span class="c-sherine font-bold">${_g} ${_n}/5</span>`);
+        }
+    }
+
     // 魔法技能增益：凡是 player.buffs 中對應到 DB.skills 的鍵且 >0，皆顯示（僅中文名稱，依類別上色）
     for(let k in player.buffs) {
         if(player.buffs[k] > 0 && DB.skills[k]) {
@@ -6520,9 +6635,14 @@ function renderTabs(force) {
         let eq = player.eq[s.k];
         let isSetActive = false;
         if(eq && DB.items[eq.id].set && activeSets.includes(DB.items[eq.id].set)) isSetActive = true;
-        
-        let el = document.createElement('div'); 
-        el.className = `list-item text-base rounded mb-1 ${isSetActive ? 'bg-emerald-800 border border-emerald-400 ring-1 ring-emerald-400/60 shadow-[0_0_10px_rgba(16,185,129,0.55)]' : 'bg-slate-800'}`;
+        // 🔮 席琳套裝：該裝備的套裝效果組別達 2 件以上（觸發套裝能力）→ 欄位底色變綠
+        let isSherineActive = !!(eq && eq.seteff && player._sherineSetCnt && (player._sherineSetCnt[eq.seteff.slice(0, 2)] || 0) >= 2);
+
+        let el = document.createElement('div');
+        // 🔧 底色優先序：席琳套裝(綠) > 舊套裝(琥珀金，原綠色讓給席琳) > 一般
+        el.className = `list-item text-base rounded mb-1 ${isSherineActive
+            ? 'bg-green-900 border border-green-400 ring-1 ring-green-400/60 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+            : (isSetActive ? 'bg-amber-900 border border-amber-400 ring-1 ring-amber-400/60 shadow-[0_0_10px_rgba(245,158,11,0.55)]' : 'bg-slate-800')}`;
         if(eq) {
             let d = DB.items[eq.id];
             let imgUrl = getIconUrl(d);
@@ -6752,7 +6872,8 @@ const WEAPON_TAGS = {
     wpn_invader: ['單手劍'], wpn_damascus: ['單手劍'], wpn_34: ['單手劍'], wpn_35: ['單手劍'],
     wpn_36: ['單手劍'], wpn_rapier: ['單手劍'], wpn_mailbreaker: ['單手劍'], wpn_silversword: ['單手劍'], wpn_37: ['單手劍'],
     wpn_21: ['矛'], wpn_24: ['矛'], wpn_25: ['矛'], wpn_28: ['矛'], wpn_39: ['矛'], wpn_40: ['矛'], wpn_41: ['矛'], wpn_17: ['矛'], wpn_4: ['矛'],
-    wpn_20: ['單手鈍器'], wpn_10: ['單手鈍器'], wpn_13: ['單手鈍器'], wpn_alien: ['單手鈍器'], wpn_1: ['單手鈍器'], wpn_2: ['單手鈍器']
+    wpn_20: ['單手鈍器'], wpn_10: ['單手鈍器'], wpn_13: ['單手鈍器'], wpn_alien: ['單手鈍器'], wpn_1: ['單手鈍器'], wpn_2: ['單手鈍器'],
+    wpn_2hsword: ['雙手劍'], wpn_dragonslayer: ['雙手劍']   // 🔧 雙手劍類型標註
 };
 function getWeaponTags(id){ return WEAPON_TAGS[id] || []; }
 function weaponHasBleed(id){ let t = getWeaponTags(id); return t.includes('匕首') || t.includes('矛'); }   // 匕首與矛皆帶出血特效
@@ -7160,9 +7281,9 @@ function toggleJunk(uid) {
     if (!player.junkPrefs) player.junkPrefs = {};
     if (item.lock) { item.junk = false; openModal(item, false); return; }
     item.junk = !item.junk;
-    // 記憶廢品勾選（依物品種類 id）：售出後重新獲得同種物品時自動標記，直到玩家取消勾選為止
-    if (item.junk) player.junkPrefs[item.id] = true;
-    else delete player.junkPrefs[item.id];
+    // 🔧 記憶廢品勾選（依完整簽章 id＋詞綴）：之後獲得「完全相同詞綴」的同種物品自動標記，直到玩家取消勾選為止
+    if (item.junk) player.junkPrefs[itemSig(item)] = true;
+    else delete player.junkPrefs[itemSig(item)];
     openModal(item, false);
     renderTabs();
 }
@@ -7990,7 +8111,7 @@ function closeNpcInteraction() {
 }
 // ===== 共用倉庫（三個存檔角色共用，獨立於存檔位的 localStorage 鍵）=====
 const WH_KEY = 'lineage_idle_warehouse';
-const WH_MAX = 100;   // 倉庫格數上限
+const WH_MAX = 200;   // 倉庫格數上限（🔧 100 → 200）
 const WH_NO_STORE = ['new_item_239','new_item_241','new_item_collar_husky','new_item_238','new_item_184','new_item_185'];   // 禁止存入倉庫：潘朵拉抽獎卷、王族搜索狀、四種項圈
 // 倉庫分類過濾（武器 / 防具 / 道具）：存入、取出共用同一個下拉清單
 let _whFilter = 'weapon';
@@ -8287,6 +8408,35 @@ function leavePledge(faction) {
     renderPledgeNPC(document.getElementById('interaction-content'), faction);
 }
 
+// ===== 🔮 試煉「席琳兌換」共用 =====
+// 原需求道具外，額外消耗 1 個席琳結晶；兌換出的裝備必定附帶隨機一種席琳套裝效果。
+// 按鈕版面：原本的全寬兌換鈕改為左右各半（左＝一般兌換、右＝席琳兌換）。
+// 僅提供給「成品部位可附加套裝效果」的兌換（武器/頭盔/盔甲/手套/長靴/斗篷/腰帶）。
+function sherineExBtns(label, normalCall, sherineCall) {
+    return `<div class="flex gap-2 w-full">
+        <button class="btn flex-1 bg-blue-800 py-3 text-base font-bold" onclick="${normalCall}">兌換：${label}</button>
+        <button class="btn flex-1 bg-green-900 hover:bg-green-800 border-green-600 py-3 text-base font-bold" onclick="${sherineCall}" title="額外消耗 1 個席琳結晶：成品必定附帶一種席琳套裝效果"><span class="c-sherine">席琳兌換</span>：${label}</button>
+    </div>`;
+}
+// 席琳兌換前置檢查（於原材料檢查通過後、扣除材料前呼叫）：沒有結晶 → 提示並中止
+function sherineExCheck(sherine) {
+    if (!sherine) return true;
+    if (questCountId('sherine_crystal') < 1) {   // 🔧 含倉庫
+        logSys('<span class="text-red-400 font-bold">材料不足，無法兌換。</span><span class="text-red-300">（尚缺：席琳結晶 1）</span>');
+        return false;
+    }
+    return true;
+}
+// 席琳兌換發放獎勵：扣 1 個結晶並使成品必定附帶套裝效果（取代各兌換函式中的 gainItem）
+function sherineExGain(rewardId, sherine) {
+    if (sherine) {
+        questConsumeId('sherine_crystal', 1);   // 🔧 背包優先，不足扣倉庫
+        _forceSherineSet = true;
+    }
+    gainItem(rewardId, 1, false, false);   // forceNormal=false：詞綴機率與一般兌換相同
+    _forceSherineSet = false;
+}
+
 function renderRickyQuest(div) {
     if (player.cls !== 'knight') {
         div.innerHTML = `<div class="p-6 text-red-400">瑞奇：這是專屬於騎士的榮耀試煉，請回吧。</div>`;
@@ -8295,7 +8445,7 @@ function renderRickyQuest(div) {
 
     // 👇 若你的資料庫 ID 不同，請修改這裡的字串
     let reqIds = ['new_item_196', 'new_item_198', 'new_item_206']; 
-    let hasAll = reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let hasAll = reqIds.every(id => questCountId(id) >= 1);
 
     let html = `<div class="p-4 text-slate-300">
         瑞奇：證明你的騎士精神！帶來<b>黑騎士的誓約</b>、<b>古老的交易文件</b>與<b>龍龜甲</b>各一個，我便將這頂紅騎士頭巾賜予你。<br><br>
@@ -8305,7 +8455,7 @@ function renderRickyQuest(div) {
     if (hasAll) {
         // 👇 這裡的 'arm_redknight_hood' 請改成你資料庫中「紅騎士頭巾」的真實 ID
         html += `<div class="p-4">
-            <button class="btn w-full bg-blue-800 py-3 text-lg font-bold" onclick="doRickyExchange('arm_53')">兌換：紅騎士頭巾</button>
+            ${sherineExBtns('紅騎士頭巾', "doRickyExchange('arm_53')", "doRickyExchange('arm_53', true)")}
         </div>`;
     }
     div.innerHTML = html;
@@ -8319,7 +8469,7 @@ function renderJamesQuest(div) {
 
     // 檢查背包是否有這三樣指定道具
     let reqIds = ['new_item_204', 'new_item_205', 'new_item_203']; 
-    let hasAll = reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let hasAll = reqIds.every(id => questCountId(id) >= 1);
 
     let html = `<div class="p-4 text-slate-300">
         詹姆：年輕的法師啊，若你能帶來<b>食屍鬼的指甲</b>、<b>食屍鬼的牙齒</b>與<b>骷髏頭</b>各一個，我便將這本魔法能量之書交給你。<br><br>
@@ -8338,14 +8488,10 @@ function renderJamesQuest(div) {
 function doJamesExchange(rewardId) {
     let reqIds = ['new_item_204', 'new_item_205', 'new_item_203'];
     // 再次確認材料，避免玩家開著視窗把材料丟掉卻還能按
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
     // 發放獎勵：魔法能量之書
     gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
@@ -8357,20 +8503,17 @@ function doJamesExchange(rewardId) {
     renderTabs();
 }
 
-function doRickyExchange(rewardId) {
+function doRickyExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     // 👇 一樣，這裡請對應上面設定的材料 ID
     let reqIds = ['new_item_196', 'new_item_198', 'new_item_206'];
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
     // 發放獎勵裝備
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`瑞奇：真正的騎士！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
@@ -8383,7 +8526,7 @@ function renderOsQuest(div) {
     }
 
     let reqIds = ['new_item_199', 'new_item_200', 'new_item_201', 'new_item_202'];
-    let hasAll = reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let hasAll = reqIds.every(id => questCountId(id) >= 1);
 
     let html = `<div class="p-4 text-slate-300">
         歐斯：收集四大妖魔魔法書（都達瑪拉、那魯加、甘地、阿吐巴）各一本，即可換取精靈專屬頭盔。<br><br>
@@ -8392,8 +8535,8 @@ function renderOsQuest(div) {
 
     if (hasAll) {
         html += `<div class="grid grid-cols-1 gap-3 p-4">
-            <button class="btn bg-blue-800 py-3" onclick="doOsExchange('arm_50')">兌換：精靈敏捷頭盔</button>
-            <button class="btn bg-blue-800 py-3" onclick="doOsExchange('arm_51')">兌換：精靈體質頭盔</button>
+            ${sherineExBtns('精靈敏捷頭盔', "doOsExchange('arm_50')", "doOsExchange('arm_50', true)")}
+            ${sherineExBtns('精靈體質頭盔', "doOsExchange('arm_51')", "doOsExchange('arm_51', true)")}
         </div>`;
     }
     div.innerHTML = html;
@@ -8406,10 +8549,10 @@ function renderTarasQuest(div) {
 
     // 水晶試煉：不死族的鑰匙 + 不死族的骨頭 → 水晶魔杖
     let crystalReq = ['new_item_214', 'new_item_212'];
-    let hasCrystal = crystalReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let hasCrystal = crystalReq.every(id => questCountId(id) >= 1);   // 🔧 含倉庫
     // 瑪那試煉：變形怪的血 → 瑪那魔杖 或 瑪那斗篷
     let manaReq = ['new_item_240'];
-    let hasMana = manaReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let hasMana = manaReq.every(id => questCountId(id) >= 1);   // 🔧 含倉庫
 
     let html = `<div class="p-4 text-slate-300">塔拉斯：年輕的法師啊，你想挑戰哪一項試煉？</div>`;
 
@@ -8419,7 +8562,7 @@ function renderTarasQuest(div) {
         <div class="text-slate-300 text-sm mb-3">帶來<b>不死族的鑰匙</b>與<b>不死族的骨頭</b>各一個，換取蘊含魔力的水晶魔杖。<br>
         目前收集：${hasCrystal ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
     if (hasCrystal) {
-        html += `<button class="btn w-full bg-blue-800 py-3 text-lg font-bold" onclick="doTarasExchange('wpn_crystalwand')">兌換：水晶魔杖</button>`;
+        html += sherineExBtns('水晶魔杖', "doTarasExchange('wpn_crystalwand')", "doTarasExchange('wpn_crystalwand', true)");
     }
     html += `</div>`;
 
@@ -8430,8 +8573,8 @@ function renderTarasQuest(div) {
         目前收集：${hasMana ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
     if (hasMana) {
         html += `<div class="grid grid-cols-1 gap-3">
-            <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doTarasManaExchange('wpn_manawand')">兌換：瑪那魔杖</button>
-            <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doTarasManaExchange('arm_89')">兌換：瑪那斗篷</button>
+            ${sherineExBtns('瑪那魔杖', "doTarasManaExchange('wpn_manawand')", "doTarasManaExchange('wpn_manawand', true)")}
+            ${sherineExBtns('瑪那斗篷', "doTarasManaExchange('arm_89')", "doTarasManaExchange('arm_89', true)")}
         </div>`;
     }
     html += `</div>`;
@@ -8448,8 +8591,8 @@ function renderGunterQuest(div) {
     let clawId = 'new_item_144';   // 夏洛伯之爪 ID
     let scaleId = 'new_item_208';  // 蛇女之鱗 ID
     
-    let hasClaw = player.inv.find(i => i.id === clawId && i.cnt >= 1);
-    let hasScale = player.inv.find(i => i.id === scaleId && i.cnt >= 1);
+    let hasClaw = questCountId(clawId) >= 1;    // 🔧 含倉庫
+    let hasScale = questCountId(scaleId) >= 1;  // 🔧 含倉庫
 
     let html = `<div class="p-4 text-slate-300">
         甘特：騎士的榮耀需要用實力來證明。帶來<b>夏洛伯之爪</b>，我將賜予你紅騎士之劍；帶來<b>蛇女之鱗</b>，你將獲得紅騎士盾牌。<br><br>
@@ -8462,7 +8605,7 @@ function renderGunterQuest(div) {
     
     // 👇 兌換紅騎士之劍 ('wpn_red_knight')
     if (hasClaw) {
-        actions += `<button class="btn w-full bg-blue-800 py-3 text-lg font-bold mb-3" onclick="doGunterExchange('${clawId}', 'wpn_redknight')">兌換：紅騎士之劍</button>`;
+        actions += `<div class="mb-3">${sherineExBtns('紅騎士之劍', `doGunterExchange('${clawId}', 'wpn_redknight')`, `doGunterExchange('${clawId}', 'wpn_redknight', true)`)}</div>`;
     }
     
     // 👇 兌換紅騎士盾牌 ('shd_red_knight')
@@ -8484,7 +8627,7 @@ function renderMotherQuest(div) {
     // 👇 若你的資料庫 ID 不同，請修改這裡的字串
     let bookId = 'new_item_213';   // 受詛咒的精靈書 ID
     
-    let hasBook = player.inv.find(i => i.id === bookId && i.cnt >= 1);
+    let hasBook = questCountId(bookId) >= 1;   // 🔧 含倉庫
 
     let html = `<div class="p-4 text-slate-300">
         迷幻森林之母：年輕的妖精啊，若你能帶來<b>受詛咒的精靈書</b>，我將為你淨化它，並賜予你精靈的力量或防護。<br><br>
@@ -8521,56 +8664,47 @@ function doMotherExchange(reqId, rewardId) {
     renderTabs();
 }
 
-function doGunterExchange(reqId, rewardId) {
-    let item = player.inv.find(i => i.id === reqId);
-    if (!item || item.cnt < 1) return;
+function doGunterExchange(reqId, rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
+    if (questCountId(reqId) < 1) return;   // 🔧 背包＋倉庫合併計數
+    if (!sherineExCheck(sherine)) return;
 
-    // 扣除材料 (1個)
-    item.cnt--;
-    if (item.cnt <= 0) {
-        player.inv = player.inv.filter(i => i.uid !== item.uid);
-    }
+    // 扣除材料 (1個)：🔧 背包優先，不足自動扣共用倉庫
+    questConsumeId(reqId, 1);
 
     // 發放獎勵裝備
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`甘特：你證明了你的實力！獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
     renderTabs();
 }
 
-function doTarasExchange(rewardId) {
+function doTarasExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     // 👇 一樣，這裡請對應上面設定的材料 ID
     let reqIds = ['new_item_214', 'new_item_212'];
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`塔拉斯：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
     renderTabs();
 }
 
-function doTarasManaExchange(rewardId) {
+function doTarasManaExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     // 瑪那試煉：變形怪的血 → 瑪那魔杖 或 瑪那斗篷
     let reqIds = ['new_item_240'];
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`塔拉斯：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
@@ -8587,14 +8721,14 @@ function renderMashaQuest(div) {
     // 騎士的試煉：夜之視野 + 古代鑰匙 → 勇敢皮帶
     if (player.cls === 'knight') {
         let kReq = ['item_nightvision', 'item_ancientkey'];
-        let kHas = kReq.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+        let kHas = kReq.every(id => questCountId(id) >= 1);   // 🔧 含倉庫
         let kHtml = `<div class="p-4 text-slate-300">馬沙：勇敢的騎士啊，帶來<b>夜之視野</b>與<b>古代鑰匙</b>各一個，我便將勇敢皮帶交予你。</div>`;
         kHtml += `<div class="p-4 border-t border-slate-700">
             <div class="text-orange-300 font-bold text-lg mb-2">騎士的試煉</div>
             <div class="text-slate-300 text-sm mb-3">所需材料：<b>夜之視野</b> ×1、<b>古代鑰匙</b> ×1<br>
             目前收集：${kHas ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
         if (kHas) {
-            kHtml += `<button class="btn w-full bg-blue-800 py-3 text-lg font-bold" onclick="doMashaKnightExchange('acc_134')">兌換：勇敢皮帶</button>`;
+            kHtml += sherineExBtns('勇敢皮帶', "doMashaKnightExchange('acc_134')", "doMashaKnightExchange('acc_134', true)");
         }
         kHtml += `</div>`;
         div.innerHTML = kHtml;
@@ -8602,7 +8736,7 @@ function renderMashaQuest(div) {
     }
     // 以下為妖精的試煉
     let reqIds = ['item_blueflute', 'item_ancientkey'];
-    let has = reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1));
+    let has = reqIds.every(id => questCountId(id) >= 1);
 
     let html = `<div class="p-4 text-slate-300">馬沙：帶來<b>藍色長笛</b>與<b>古代鑰匙</b>各一個，我可以為你交換以下其中一項。</div>`;
     html += `<div class="p-4 border-t border-slate-700">
@@ -8611,7 +8745,7 @@ function renderMashaQuest(div) {
         目前收集：${has ? '<span class="text-green-400 font-bold">已收集完成！</span>' : '<span class="text-red-400">材料不足</span>'}</div>`;
     if (has) {
         html += `<div class="grid grid-cols-1 gap-3">
-            <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doMashaExchange('arm_102')">兌換：保護者手套</button>
+            ${sherineExBtns('保護者手套', "doMashaExchange('arm_102')", "doMashaExchange('arm_102', true)")}
             <button class="btn bg-blue-800 py-3 text-lg font-bold" onclick="doMashaExchange('bk_elf_summon2')">兌換：精靈水晶(召喚強力屬性精靈)</button>
         </div>`;
     }
@@ -8619,57 +8753,48 @@ function renderMashaQuest(div) {
     div.innerHTML = html;
 }
 
-function doMashaExchange(rewardId) {
+function doMashaExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     if (player.cls !== 'elf') return;
     let reqIds = ['item_blueflute', 'item_ancientkey'];
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`馬沙：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
     renderTabs();
 }
 
-function doMashaKnightExchange(rewardId) {
+function doMashaKnightExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     if (player.cls !== 'knight') return;
     let reqIds = ['item_nightvision', 'item_ancientkey'];
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`馬沙：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
     renderTabs();
 }
 
-function doOsExchange(rewardId) {
+function doOsExchange(rewardId, sherine) {   // 🔮 sherine=true：席琳兌換（+1 席琳結晶，必帶套裝效果）
     let reqIds = ['new_item_199', 'new_item_200', 'new_item_201', 'new_item_202'];
     // 再次確認
-    if (!reqIds.every(id => player.inv.find(i => i.id === id && i.cnt >= 1))) return;
+    if (!reqIds.every(id => questCountId(id) >= 1)) return;
+    if (!sherineExCheck(sherine)) return;
 
     // 扣除材料
-    reqIds.forEach(id => {
-        let item = player.inv.find(i => i.id === id);
-        item.cnt--;
-        if (item.cnt <= 0) player.inv = player.inv.filter(i => i.uid !== item.uid);
-    });
+    reqIds.forEach(id => questConsumeId(id, 1));   // 🔧 背包優先扣除，不足自動扣共用倉庫
 
-    gainItem(rewardId, 1, false, false);   // forceNormal=false：武器/防具/飾品同樣有 1/100 屬性/祝福/遠古機率
+    sherineExGain(rewardId, sherine);
     saveGame();   // 兌換取得物品後立即存檔
     logSys(`歐斯：試煉通過！你獲得了 ${DB.items[rewardId].n}。`);
     closeNpcInteraction();
@@ -8786,12 +8911,12 @@ function getShopItemsForNpc(npcId) {
         list = [
             'bk_elf_mr', 'bk_elf_mind', 'bk_elf_worldtree', // 一階
             'bk_elf_purify',                                // 二階
-            'bk_elf_firewpn', 'bk_elf_windshot', 'bk_elf_winddash', 'bk_elf_earthguard', // 屬性
+            'bk_elf_firewpn', 'bk_elf_windshot', 'bk_elf_earthguard', // 屬性
             'bk_elf_eleres', 'bk_elf_singleres'                       // 屬性防禦 / 單屬性防禦
         ];
     } else if (npcId === 'npc_bayes') {
         // 巴耶斯 - 高階魔法書
-        list = ['bk_fireball', 'bk_vampire', 'bk_rock_prison', 'bk_thunder', 'bk_ice_spike', 'bk_bless_wpn', 'bk_blaze'];
+        list = ['bk_fireball', 'bk_vampire', 'bk_rock_prison', 'bk_thunder', 'bk_ice_spike', 'bk_bless_wpn'];
     } else if (npcId === 'npc_gilen') {
         // 吉倫 - 一般魔法大全
         list = [
@@ -8814,7 +8939,7 @@ function getShopItemsForNpc(npcId) {
             // 盾牌類
             'arm_103', 'arm_105', 'arm_108', 
             // 頭盔類
-            'arm_42', 'arm_43', 'hlm_mr', 'arm_47', 
+            'arm_42', 'arm_43', 'hlm_mr', 
             // 盔甲/長袍類
             'arm_68', 'arm_66', 'arm_67', 
             'amr_robe', 'arm_65', 'arm_63', 
@@ -9265,10 +9390,16 @@ function loadGame() {
         player.inv.forEach(i => { if(i.junk === undefined) i.junk = false; });
         // 修復重複 uid：強化裝備曾因共用 uid 互相覆蓋/消失，載入時確保 inv+eq 所有物品 uid 唯一
         { let _seen = new Set(); let _fix = (it) => { if(!it) return; if(it.uid === undefined || _seen.has(it.uid)) it.uid = uid(); _seen.add(it.uid); }; player.inv.forEach(_fix); if(player.eq) Object.values(player.eq).forEach(_fix); }
-        // 廢品記憶（依物品種類）：舊存檔初始化，並把目前已標記為廢品的物品轉成記憶
+        // 廢品記憶（依完整簽章）：舊存檔初始化，並把目前已標記為廢品的物品轉成記憶
         if(!player.junkPrefs) {
             player.junkPrefs = {};
-            player.inv.forEach(i => { if(i.junk) player.junkPrefs[i.id] = true; });
+            player.inv.forEach(i => { if(i.junk) player.junkPrefs[itemSig(i)] = true; });
+        }
+        // 🔧 廢品記憶改以「完整簽章」為鍵（同 id＋完全相同詞綴才自動標記）；舊存檔的純 id 鍵轉為無詞綴簽章
+        {
+            let _np = {};
+            for (let k in player.junkPrefs) { if (player.junkPrefs[k]) _np[k.includes('|') ? k : (k + '|0|0|0||')] = true; }
+            player.junkPrefs = _np;
         }
         // 相容舊存檔：新增第六屬性 魅力(cha)，起始 8
         if(player.base && player.base.cha === undefined) player.base.cha = (createBase[player.cls] ? createBase[player.cls].cha : 8);
@@ -9302,6 +9433,14 @@ function loadGame() {
         let _normAttr = (i) => { if (i && !getAttrAffix(i.attr)) i.attr = false; };
         player.inv.forEach(_normAttr);
         for (let k in player.eq) _normAttr(player.eq[k]);
+        // 🔮 席琳套裝效果改置腰帶：一次性清除既有「項鍊」上的套裝效果（背包/裝備/傭兵快照/共用倉庫）
+        {
+            let _fixSet = (it) => { if (it && it.seteff) { let dd = DB.items[it.id]; if (dd && dd.slot === 'amulet') it.seteff = false; } };
+            player.inv.forEach(_fixSet);
+            for (let k in player.eq) _fixSet(player.eq[k]);
+            (player.allies || []).forEach(a => { if (a && a.eq) { for (let k in a.eq) _fixSet(a.eq[k]); } if (a && a.inv) a.inv.forEach(_fixSet); });
+            try { let _w = loadWarehouse(); let _chg = false; _w.items.forEach(it => { if (it && it.seteff) { let dd = DB.items[it.id]; if (dd && dd.slot === 'amulet') { it.seteff = false; _chg = true; } } }); if (_chg) saveWarehouse(_w); } catch (e) {}
+        }
         consolidateInventory();   // 相容舊存檔：合併修復前被拆分的相同卷軸/物品堆疊
         if(!player.statuses) player.statuses = { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, silence: 0, paralyze: 0 };
         if (player.eq.arrow === undefined) player.eq.arrow = null; // 相容舊存檔
@@ -9637,9 +9776,18 @@ const CRAFT_RECIPES = {
 
 // 製作數量選擇器 + 製作按鈕（預設數量 1）
 function craftActionHtml(npcId, idx) {
+    // 🔮 席琳製作：成品為 武器/頭盔/盔甲/手套/長靴/斗篷/腰帶 時，於「製作」旁多一顆按鈕
+    //（消耗相同材料＋每件 1 個席琳結晶，成品必定附帶隨機席琳套裝效果；其餘詞綴機率照舊）
+    let _r = CRAFT_RECIPES[npcId] && CRAFT_RECIPES[npcId][idx];
+    let _rd = _r && DB.items[_r.result];
+    let _shOk = _rd && ((_rd.type === 'wpn' && !_rd.isArrow)
+        || (_rd.type === 'arm' && ['helm','armor','gloves','boots','cloak'].includes(_rd.slot))
+        || ((_rd.type === 'acc' || _rd.type === 'arm') && _rd.slot === 'belt'));   // 🔮 項鍊已改為腰帶
+    let _shBtn = _shOk ? `<button class="btn bg-green-900 hover:bg-green-800 border-green-600 py-2 px-3 font-bold shadow" onclick="doCraft('${npcId}', ${idx}, true)" title="消耗相同材料＋每件 1 個席琳結晶：成品必定附帶一種席琳套裝效果"><span class="c-sherine">席琳製作</span></button>` : '';
     return `<div class="flex items-center gap-2 shrink-0">
         <input type="number" min="1" value="1" id="craft-qty-${npcId}-${idx}" onclick="event.stopPropagation()" class="w-14 px-1 py-2 bg-slate-900 border border-slate-600 rounded text-center text-white font-bold">
         <button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-6 font-bold shadow" onclick="doCraft('${npcId}', ${idx})">製作</button>
+        ${_shBtn}
     </div>`;
 }
 
@@ -9803,6 +9951,21 @@ function renderJoelCraft(div, npcId) {
     div.innerHTML = html;
 }
 // 3. 執行製作扣除材料與發放物品
+// ===== 🔧 製作材料配色：所有「非裝備」的製作需求材料，名字統一薄荷綠 =====
+// 掃描全部配方的需求清單，物品類型不是 武器/防具/飾品 者套用 text-emerald-300；
+// 席琳結晶除外（保留專屬呼吸綠光 c-sherine）。
+(function initCraftMaterialColors() {
+    let seen = new Set();
+    for (let npc in CRAFT_RECIPES) {
+        (CRAFT_RECIPES[npc] || []).forEach(r => (r.req || []).forEach(q => {
+            if (q.id === 'gold' || q.id === 'sherine_crystal' || seen.has(q.id)) return;
+            seen.add(q.id);
+            let d = DB.items[q.id];
+            if (d && d.type !== 'wpn' && d.type !== 'arm' && d.type !== 'acc') d.c = 'text-emerald-300';
+        }));
+    }
+})();
+
 // ===== 遞迴製作：前置材料足夠即可直接製作（自動補製中間物品，消耗最底層材料）=====
 let RECIPE_BY_RESULT = null;
 function buildRecipeIndex() {
@@ -9811,13 +9974,40 @@ function buildRecipeIndex() {
         if (!RECIPE_BY_RESULT[r.result]) RECIPE_BY_RESULT[r.result] = r;
     }
 }
+// ===== 🔧 倉庫材料支援：製作與試煉兌換可動用共用倉庫的材料（背包優先、不足再扣倉庫；金幣僅算身上）=====
+function whCountId(id) {
+    if (id === 'gold') return 0;   // 倉庫金幣不列入材料計算
+    try { let w = loadWarehouse(); return w.items.filter(i => i.id === id).reduce((s, i) => s + i.cnt, 0); } catch (e) { return 0; }
+}
+function whConsumeId(id, n) {   // 自倉庫扣除最多 n 個（白板/低強化優先），回傳實際扣除數
+    if (n <= 0) return 0;
+    try {
+        let w = loadWarehouse();
+        let need = n, stacks = w.items.filter(i => i.id === id);
+        stacks.sort((a, b) => (((a.en||0)*100)+(a.anc?10:0)+(a.bless?10:0)+(a.attr?10:0)+(a.seteff?50:0)) - (((b.en||0)*100)+(b.anc?10:0)+(b.bless?10:0)+(b.attr?10:0)+(b.seteff?50:0)));
+        for (let st of stacks) { if (need <= 0) break; let d = Math.min(st.cnt, need); st.cnt -= d; need -= d; }
+        w.items = w.items.filter(i => i.cnt > 0);
+        saveWarehouse(w);
+        return n - need;
+    } catch (e) { return 0; }
+}
+// 試煉兌換用：背包＋倉庫合併計數 / 扣除
+function questCountId(id) { return player.inv.filter(i => i.id === id).reduce((s, i) => s + i.cnt, 0) + whCountId(id); }
+function questConsumeId(id, n) {
+    let need = n;
+    for (let it of player.inv.filter(i => i.id === id)) { if (need <= 0) break; let d = Math.min(it.cnt, need); it.cnt -= d; need -= d; }
+    player.inv = player.inv.filter(i => i.cnt > 0);
+    if (need > 0) whConsumeId(id, need);
+}
+
 function invCountId(id) {
     if (id === 'gold') return player.gold;
-    return player.inv.filter(i => i.id === id).reduce((s, i) => s + i.cnt, 0);
+    return player.inv.filter(i => i.id === id).reduce((s, i) => s + i.cnt, 0) + whCountId(id);   // 🔧 含倉庫存量
 }
 function buildPool() {
     let pool = { gold: player.gold };
     for (let it of player.inv) pool[it.id] = (pool[it.id] || 0) + it.cnt;
+    try { for (let it of loadWarehouse().items) pool[it.id] = (pool[it.id] || 0) + it.cnt; } catch (e) {}   // 🔧 倉庫材料一併列入模擬池
     return pool;
 }
 function simulateMake(id, count, pool, depth) {
@@ -9858,6 +10048,7 @@ function consumeMaterialById(id, n) {
     stacks.sort((a, b) => ((a.en*100)+(a.anc?10:0)+(a.bless?10:0)+(a.attr?10:0)) - ((b.en*100)+(b.anc?10:0)+(b.bless?10:0)+(b.attr?10:0)));
     for (let st of stacks) { if (need <= 0) break; let d = Math.min(st.cnt, need); st.cnt -= d; need -= d; }
     player.inv = player.inv.filter(i => i.cnt > 0);
+    if (need > 0) whConsumeId(id, need);   // 🔧 背包不足：自倉庫扣除
 }
 function ensureMaterial(id, count, depth) {
     if (id === 'gold' || depth > 24) return;
@@ -9880,7 +10071,7 @@ function craftReqHtml(reqArr) {
             return `<span class="text-sm font-bold leading-none"><span class="${color}">${hasCnt}</span>/${req.cnt} 金幣</span>`;
         }
         let reqItem = DB.items[req.id];
-        let hasCnt = player.inv.filter(i => i.id === req.id).reduce((sum, i) => sum + i.cnt, 0);
+        let hasCnt = invCountId(req.id);   // 🔧 含倉庫存量
         let color, extra = '';
         if (hasCnt >= req.cnt) color = 'text-green-400';
         else if (materialObtainable(req.id, req.cnt)) { color = 'text-amber-400'; extra = '<span class="text-amber-400 text-xs ml-0.5">(可合成)</span>'; }
@@ -9906,7 +10097,7 @@ function craftShortfall(recipe, count) {
     for (let q of recipe.req) take(q.id, q.cnt * count);
     return lack;
 }
-function doCraft(npcId, recipeIdx) {
+function doCraft(npcId, recipeIdx, sherine) {   // 🔮 sherine=true：席琳製作（材料＋每件 1 個席琳結晶，成品必帶套裝效果）
     let recipe = CRAFT_RECIPES[npcId][recipeIdx];
     if (!recipe) return;
 
@@ -9923,6 +10114,10 @@ function doCraft(npcId, recipeIdx) {
         let lack = craftShortfall(recipe, 1);
         let parts = Object.keys(lack).map(id => id === 'gold'
             ? `金幣 ${lack[id]}` : `${(DB.items[id] && DB.items[id].n) || id} ${lack[id]}`);
+        // 🔮 席琳製作：身上與倉庫都沒有席琳結晶時，一併列入缺少清單
+        if (sherine && invCountId('sherine_crystal') < 1) {
+            parts.push('席琳結晶 1');
+        }
         let detail = parts.length ? `（尚缺：${parts.join('、')}）` : '';
         logSys(`<span class="text-red-400 font-bold">材料不足，無法製作。</span><span class="text-red-300">${detail}</span>`);
         return;
@@ -9931,38 +10126,30 @@ function doCraft(npcId, recipeIdx) {
     // 選擇數量超過可製作數時，自動做出可製作的最大量
     let makeCount = Math.min(qty, maxCraftable);
 
+    // 🔮 席琳製作：每件成品消耗 1 個席琳結晶；結晶不足時以結晶數為上限（🔧 含倉庫存量）
+    if (sherine) {
+        let _cc = invCountId('sherine_crystal');
+        if (_cc < 1) { logSys('<span class="text-red-400 font-bold">材料不足，無法製作。</span><span class="text-red-300">（尚缺：席琳結晶 1）</span>'); return; }
+        if (makeCount > _cc) makeCount = _cc;
+    }
+
     // 前置：自動補製不足的中間物品（maxMakeRecipe 已確認整體可行）
     for (let r of recipe.req) ensureMaterial(r.id, r.cnt * makeCount, 0);
 
-    // 扣除材料 × makeCount (支援跨堆疊扣除，優先扣除白板/低強化裝備)
-    for (let r of recipe.req) {
-        let totalNeeded = r.cnt * makeCount;
-        if (r.id === 'gold') {
-            player.gold -= totalNeeded;
-        } else {
-            let needed = totalNeeded;
-            let stacks = player.inv.filter(i => i.id === r.id);
-            stacks.sort((a, b) => {
-                let scoreA = (a.en * 100) + (a.anc ? 10 : 0) + (a.bless ? 10 : 0) + (a.attr ? 10 : 0);
-                let scoreB = (b.en * 100) + (b.anc ? 10 : 0) + (b.bless ? 10 : 0) + (b.attr ? 10 : 0);
-                return scoreA - scoreB;
-            });
-            for (let stack of stacks) {
-                if (needed <= 0) break;
-                let deduct = Math.min(stack.cnt, needed);
-                stack.cnt -= deduct;
-                needed -= deduct;
-            }
-            player.inv = player.inv.filter(i => i.cnt > 0);
-        }
-    }
+    // 扣除材料 × makeCount（跨堆疊、白板/低強化優先；🔧 背包不足時自動扣共用倉庫，統一走 consumeMaterialById）
+    for (let r of recipe.req) consumeMaterialById(r.id, r.cnt * makeCount);
+
+    // 🔮 席琳製作：扣除結晶（每件 1 個；🔧 背包優先、不足扣倉庫）
+    if (sherine) consumeMaterialById('sherine_crystal', makeCount);
 
     // 產出（逐個產生，使每件各自有 1% 機率取得隨機詞綴；靜音後統一記錄一次）
     for (let k = 0; k < makeCount; k++) {
+        _forceSherineSet = !!sherine;   // 🔮 席琳製作：每件成品必定附帶隨機一種席琳套裝效果（其餘詞綴機率照舊）
         gainItem(recipe.result, recipe.yield || 1, true, false);
+        _forceSherineSet = false;
     }
     let totalOut = (recipe.yield || 1) * makeCount;
-    logSys(`製作完成：<span class="${DB.items[recipe.result].c || 'text-white'} font-bold">${DB.items[recipe.result].n}</span> ×${totalOut}`);
+    logSys(`${sherine ? '<span class="c-sherine font-bold">席琳製作</span>' : '製作'}完成：<span class="${DB.items[recipe.result].c || 'text-white'} font-bold">${DB.items[recipe.result].n}</span> ×${totalOut}${sherine ? `（消耗 席琳結晶 ×${makeCount}）` : ''}`);
 
     // 重新渲染介面與左側狀態列
     updateUI();
@@ -10517,4 +10704,4 @@ setTimeout(autoScaleGame,1500);
 </script>
 
 </body>
-</html>                                                                       
+</html>
