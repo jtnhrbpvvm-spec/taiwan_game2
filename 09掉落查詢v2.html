@@ -272,162 +272,6 @@
         .area-bonus strong {
             color: var(--primary);
         }
-
-        /* 席琳世界切換按鈕 */
-        .world-toggle {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px 18px;
-        }
-
-        .world-toggle-label {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        .toggle-btn-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .toggle-btn {
-            padding: 7px 18px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .toggle-btn:hover {
-            border-color: var(--primary);
-            color: var(--text-main);
-        }
-
-        .toggle-btn.active-normal {
-            background: rgba(56, 189, 248, 0.15);
-            border-color: var(--primary);
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        .toggle-btn.active-sherine {
-            background: rgba(74, 222, 128, 0.12);
-            border-color: #4ade80;
-            color: #4ade80;
-            font-weight: bold;
-            animation: sherineBtn 2.5s ease-in-out infinite;
-        }
-
-        @keyframes sherineBtn {
-            0%, 100% { box-shadow: 0 0 6px rgba(74,222,128,0.3); }
-            50% { box-shadow: 0 0 14px rgba(74,222,128,0.7); }
-        }
-
-        /* 席琳世界：怪物卡片樣式 */
-        body.sherine-mode .monster-card {
-            border-color: rgba(127, 29, 29, 0.5);
-            background: linear-gradient(135deg, #1a0508 0%, #1e293b 100%);
-        }
-
-        body.sherine-mode .monster-card:hover {
-            border-color: #4ade80;
-        }
-
-        body.sherine-mode header h1 {
-            color: #4ade80;
-            text-shadow: 0 0 10px rgba(74,222,128,0.5);
-        }
-
-        body.sherine-mode {
-            background-color: #1a0508;
-        }
-
-        /* 席琳強化數值 badge */
-        .sherine-stat {
-            color: #4ade80 !important;
-            font-weight: bold;
-        }
-
-        .sherine-stat-up::after {
-            content: '↑';
-            font-size: 0.7em;
-            margin-left: 2px;
-            color: #4ade80;
-        }
-
-        /* 席琳世界說明框 */
-        .sherine-info-box {
-            border: 1px solid rgba(74, 222, 128, 0.4);
-            background: rgba(74, 222, 128, 0.05);
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            display: none;
-        }
-
-        .sherine-info-box.visible {
-            display: block;
-        }
-
-        .sherine-info-box strong {
-            color: #4ade80;
-        }
-
-        .sherine-grace-box {
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.04);
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            display: none;
-        }
-
-        .sherine-grace-box.visible {
-            display: block;
-        }
-
-        .sherine-grace-box strong {
-            color: #f87171;
-        }
-
-        .sherine-drop-box {
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            background: rgba(56, 189, 248, 0.04);
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            display: none;
-        }
-
-        .sherine-drop-box.visible {
-            display: block;
-        }
-
-        .sherine-drop-box strong {
-            color: #38bdf8;
-        }
-
-        .drop-rate-multiplier {
-            font-size: 0.78rem;
-            color: #4ade80;
-            margin-left: 6px;
-        }
     </style>
 </head>
 <body>
@@ -436,41 +280,6 @@
 <h1>🐉 放置天堂掉落查詢系統</h1>
 <p style="color: var(--text-muted);">支援多功能進階搜尋（如：地靈、流星雨、古魯丁地區、火屬性、主動）</p>
 </header>
-<div class="world-toggle">
-    <span class="world-toggle-label">🌍 世界模式：</span>
-    <div class="toggle-btn-group">
-        <button class="toggle-btn active-normal" id="btnNormal" onclick="setWorldMode('normal')">⚔️ 普通世界</button>
-        <button class="toggle-btn" id="btnSherine" onclick="setWorldMode('sherine')">🔮 席琳世界</button>
-    </div>
-    <span id="worldModeDesc" style="font-size:0.85rem; color: var(--text-muted); margin-left:4px;">顯示原始怪物數值與掉落機率</span>
-</div>
-
-<div class="sherine-info-box" id="sherineInfoBox">
-    <strong>🔮 席琳世界 — 強化效果（Lv40以上祈禱開啟）</strong><br>
-    攻城區及血盟敵人<strong>不受影響</strong>。非BOSS怪物數值變化：
-    <span style="color:#4ade80">HP ×3、AC ×1.5、MR ×1.5、命中 ×1.5、傷害減免 +等級/3、一般攻擊 ×2、技能傷害 ×2</span>、
-    <span style="color:#fbbf24">經驗 ×5、金錢 ×5、掉落機率 ×3</span>。
-    套裝效果掉落機率：<span style="color:#4ade80">一般怪 0.1%、BOSS 5%</span>。搜索時間縮短10秒。
-</div>
-
-<div class="sherine-grace-box" id="sherineGraceBox">
-    <strong>✨ 席琳的恩賜（額外疊加）</strong> — 每次刷怪 <strong>1%</strong> 觸發，冷卻3分鐘：場上隨機一隻一般怪獲得
-    <span style="color:#f87171">HP ×10（完全恢復）、AC ×1.5、MR ×1.5、命中 ×1.5、一般攻擊 ×1.5、技能傷害 ×2</span>、
-    <span style="color:#fbbf24">經驗 ×10、金錢 ×10、掉落機率 ×10</span>。
-    套裝機率提升至 <span style="color:#4ade80">0.5%</span>。
-</div>
-
-<div class="sherine-drop-box" id="sherineDropBox">
-    <strong>💎 席琳結晶 — 限定掉落（固定機率，不吃掉落倍率）</strong><br>
-    血盟與 Lv20 以下不掉落。非 BOSS 怪物：
-    <span style="color:#4ade80">Lv21~40：0.001%</span>、
-    <span style="color:#fbbf24">Lv41+：0.003%</span>。<br>
-    BOSS 怪物：
-    <span style="color:#4ade80">夢幻之島 BOSS：0.01%</span>、
-    <span style="color:#fbbf24">三大龍：10%</span>、
-    <span style="color:#fbbf24">其餘 BOSS：0.1%</span>。
-</div>
-
 <div class="search-container">
 <input id="searchInput" onkeyup="filterData()" placeholder="🔍 請輸入想搜尋的 怪物、物品、地圖名稱、種族 或 屬性..." type="text"/>
 </div>
@@ -1428,39 +1237,6 @@
         // 建立 怪物中文名稱 -> 怪物詳細屬性與ID 的映射表
         let monsterInfoMap = {};
         let monsterNameToIdMap = {};
-
-        // ===== 席琳的世界：怪物數值套用 =====
-        let currentWorldMode = 'normal'; // 'normal' | 'sherine'
-
-        function setWorldMode(mode) {
-            currentWorldMode = mode;
-            document.getElementById('btnNormal').className = 'toggle-btn' + (mode === 'normal' ? ' active-normal' : '');
-            document.getElementById('btnSherine').className = 'toggle-btn' + (mode === 'sherine' ? ' active-sherine' : '');
-            document.getElementById('worldModeDesc').textContent = mode === 'sherine'
-                ? '顯示席琳的世界強化後數值（攻城/血盟除外）'
-                : '顯示原始怪物數值與掉落機率';
-            document.getElementById('sherineInfoBox').className = 'sherine-info-box' + (mode === 'sherine' ? ' visible' : '');
-            document.getElementById('sherineGraceBox').className = 'sherine-grace-box' + (mode === 'sherine' ? ' visible' : '');
-            document.getElementById('sherineDropBox').className = 'sherine-drop-box' + (mode === 'sherine' ? ' visible' : '');
-            document.body.className = mode === 'sherine' ? 'sherine-mode' : '';
-            filterData();
-        }
-
-        function applySherineStats(mobInfo) {
-            if (!mobInfo) return mobInfo;
-            const lv = mobInfo.lv || 1;
-            return {
-                ...mobInfo,
-                hp:  Math.floor((mobInfo.hp  || 0) * 3),
-                ac:  Math.floor((mobInfo.ac  || 0) * 1.5),
-                mr:  Math.floor((mobInfo.mr  || 0) * 1.5),
-                _sherine: true
-            };
-        }
-
-        function applyShineDropRate(rate) {
-            return Math.min(100, parseFloat((rate * 3).toFixed(4)));
-        }
         Object.entries(dMobs).forEach(([mobId, mobData]) => {
             if (mobData && mobData.n) {
                 monsterInfoMap[mobData.n] = mobData;
@@ -1536,29 +1312,15 @@
                     const eleText = elementMapping[mobInfo.e] || mobInfo.e || '無屬性';
                     const behClass = mobInfo.beh === '主動' ? 'active-behavior' : 'passive-behavior';
 
-                    const isSherine = currentWorldMode === 'sherine';
-                    const sm = isSherine ? applySherineStats(mobInfo) : mobInfo;
-                    const lv = mobInfo.lv || 1;
-                    const drBonus = isSherine ? Math.floor(lv / 3) : 0;
-
-                    const hpHtml   = isSherine ? `<span class="sherine-stat sherine-stat-up">HP:${sm.hp}</span>` : `HP:${mobInfo.hp || '?'}`;
-                    const acHtml   = isSherine ? `<span class="sherine-stat sherine-stat-up">AC:${sm.ac}</span>` : `AC:${mobInfo.ac ?? '?'}`;
-                    const mrHtml   = isSherine ? `<span class="sherine-stat sherine-stat-up">MR:${sm.mr}%</span>` : `MR:${mobInfo.mr || '0'}%`;
-                    const drHtml   = isSherine && drBonus > 0 ? `<span class="meta-badge sherine-stat sherine-stat-up">傷免+${drBonus}</span>` : '';
-                    const atkHtml  = isSherine ? `<span class="meta-badge sherine-stat">攻擊×2</span>` : '';
-                    const expHtml  = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">經驗×5</span>` : '';
-                    const goldHtml = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">金錢×5</span>` : '';
-
                     metaHtml = `
                 <div class="monster-meta">
                     <span class="meta-badge" style="color:#38bdf8; font-weight:bold;">Lv.${mobInfo.lv || '?'}</span>
                     <span class="meta-badge ${behClass}">${mobInfo.beh || '被動'}</span>
                     <span class="meta-badge">種族: ${mobInfo.race || '未註明'}</span>
                     <span class="meta-badge">${eleText}</span>
-                    <span class="meta-badge">${hpHtml}</span>
-                    <span class="meta-badge">${acHtml}</span>
-                    <span class="meta-badge">${mrHtml}</span>
-                    ${drHtml}${atkHtml}${expHtml}${goldHtml}
+                    <span class="meta-badge">HP:${mobInfo.hp || '?'}</span>
+                    <span class="meta-badge">AC:${mobInfo.ac ?? '?'}</span>
+                    <span class="meta-badge">MR:${mobInfo.mr || '0'}%</span>
                 </div>`;
                 }
 
@@ -1580,9 +1342,7 @@
                     drops.forEach(drop => {
                         const itemCode = drop[0];
                         const itemName = translate(itemCode);
-                        const baseRate = drop[1];
-                        const isSherine = currentWorldMode === 'sherine';
-                        const rate = isSherine ? applyShineDropRate(baseRate) : baseRate;
+                        const rate = drop[1];
                         const rateClass = getRateClass(rate);
                         const itemInfo = window.ITEMS_DB ? window.ITEMS_DB[itemCode] : null;
                         let tooltipText = "";
@@ -1607,14 +1367,10 @@
                             tooltipText = "無詳細資料";
                         }
 
-                        const multiplierTag = isSherine
-                            ? `<span class="drop-rate-multiplier" title="席琳的世界：掉落率×3">×3</span>`
-                            : '';
-
                         html += `
                     <li class="drop-item tooltip" data-tooltip="${tooltipText}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: rgba(15, 23, 42, 0.3); border-radius: 6px; margin-bottom: 6px; font-size: 0.9rem; position: relative; cursor: help;">
                         <span class="item-name">${itemName}</span>
-                        <span>${multiplierTag}<span class="item-rate ${rateClass}">${rate}%</span></span>
+                        <span class="item-rate ${rateClass}">${rate}%</span>
                     </li>`;
                     });
                 }
