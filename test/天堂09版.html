@@ -250,7 +250,7 @@
     <!-- 👇 修改 1：將寬度放大為 max-w-5xl 以容納三欄排版 -->
     <div id="creation-screen" class="w-[1000px] panel p-8 flex flex-col gap-6 z-50 absolute shadow-2xl" style="background: rgba(42, 44, 46, 0.78); backdrop-filter: blur(6px);">
         <div class="text-center border-b border-slate-700 pb-4">
-            <h1 class="text-4xl font-bold text-yellow-400 mb-2">放置天堂-冰之女王</h1>
+            <h1 class="text-4xl font-bold text-yellow-400 mb-2">放置天堂-席琳的世界</h1>
             <p class="text-base text-slate-400">創造您的角色並開始冒險</p>
         </div>
         
@@ -715,10 +715,11 @@ const DB = {
         "acc_116": { n: "傳送控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：手動施放傳送術/使用瞬移卷軸時必定遭遇 BOSS。" },
         "acc_117": { n: "變形控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：使用變形卷軸時可指定變身型態。" },
         "sherine_crystal": { n: "席琳結晶", type: "etc", p: 0, noUse: true, c: "c-sherine", gachaWeight: 0, d: "蘊含席琳力量的珍貴結晶，無法直接使用。進行「席琳製作」時加入材料，可使成品必定附帶一種席琳套裝效果。（席琳的世界掉落限定）" },   // 🔮 潘朵拉抽不到(gachaWeight:0)、無法使用(noUse)、名稱同套裝綠光(c-sherine)
-        "item_dragon_claw": { n: "飛龍的爪子", p: 1, noUse: true, gachaWeight: 0, d: "鋒利如刃的巨爪，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：飛龍 1% 掉落
-        "item_lizard_horn": { n: "蜥蜴的角", p: 1, noUse: true, gachaWeight: 0, d: "邪惡蜥蜴額上的尖角，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：邪惡蜥蜴 0.01% 掉落
-        "item_crystal_ball": { n: "水晶球", p: 1, noUse: true, gachaWeight: 0, d: "巫師用以窺探命運的水晶球，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：巫師 0.01% 掉落
-        "item_orc_amulet": { n: "妖魔戰士護身符", p: 1, noUse: true, gachaWeight: 0, d: "妖魔戰士隨身佩戴的護身符，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：五種妖魔各 0.01% 掉落
+        "item_dragon_claw": { n: "飛龍的爪子", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "鋒利如刃的巨爪，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：飛龍 1% 掉落
+        "item_lizard_horn": { n: "蜥蜴的角", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "邪惡蜥蜴額上的尖角，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：邪惡蜥蜴 0.01% 掉落
+        "item_crystal_ball": { n: "水晶球", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "巫師用以窺探命運的水晶球，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：巫師 0.01% 掉落
+        "item_orc_amulet": { n: "妖魔戰士護身符", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "妖魔戰士隨身佩戴的護身符，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：五種妖魔各 0.01% 掉落
+        "item_mastery_proof": { n: "精通之證", p: 0, c: "text-blue-300", noUse: true, noSell: true, gachaWeight: 0, d: "證明你已超越自身極限的徽記。帶回威頓村交給「漢」，開啟職業精通之路。（唯一・無法存入倉庫・無法販售）" },   // 🏅 精通任務道具
         "rng_mr": { n: "抗魔戒指", type: "acc", slot: "ring", ac: 0, mr: 5, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_118": { n: "守護戒指", type: "acc", slot: "ring", ac: 1, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_119": { n: "長者戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 10000, mmp: 10, mpR: 1, gachaWeight: 1 },
@@ -758,9 +759,9 @@ const DB = {
         "scroll_magicbarrier": { n: "魔法卷軸(魔法屏障)", type: "scroll", req: "all", p: 1500, c: "text-cyan-300", d: "使用後獲得「魔法屏障」狀態，持續16秒；成功抵擋一次技能傷害後3秒內無法再次施放（自然到期或取消則無冷卻）", eff: "magicbarrier", gachaWeight: 0 },
         "scroll_teleport": { n: "瞬間移動卷軸", type: "scroll", req: "all", p: 82, c: "text-sky-300", d: "使用後發動傳送術", eff: "teleport_scroll", gachaWeight: 0 },
         "scroll_revive": { n: "復活卷軸", type: "scroll", req: "all", p: 1000, c: "text-yellow-300", d: "持有死亡後可選擇原地復活，冷卻15秒", gachaWeight: 0 },
-        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-sky-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-amber-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_nightvision": { n: "夜之視野", p: 1, c: "text-indigo-300", d: "試煉所需的材料。", gachaWeight: 0 },
+        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
+        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
+        "item_nightvision": { n: "夜之視野", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "candle": { n: "回憶蠟燭", type: "misc", req: "all", p: 100000, c: "text-red-500", d: "退還所有能力點數，重新分配", eff: "reset", gachaWeight: 0 },
         "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升力量+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
         "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升敏捷+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
@@ -783,7 +784,7 @@ const DB = {
         "new_item_bless_acc": { n: "賦予飾品祝福卷軸", type: "misc", p: 0, c: "text-purple-300", d: "於象牙塔『碧恩』處用來祝福飾品（無法直接使用）。", isAnc: true, noUse: true, gachaWeight: 1 },
         "new_item_uncurse": { n: "解除詛咒的卷軸", type: "misc", p: 0, c: "text-cyan-200", d: "於象牙塔『碧恩』處用來移除裝備的詛咒（無法直接使用）。", noUse: true, gachaWeight: 10 },
         "new_item_143": { n: "肉", type: "pot", req: "all", p: 1, d: "食用後獲得『誘捕』狀態300秒", eff: "meat", gachaWeight: 0 },
-        "new_item_144": { n: "夏洛伯之爪", p: 1, gachaWeight: 0 },
+        "new_item_144": { n: "夏洛伯之爪", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_145": { n: "阿吐巴圖騰", p: 600, gachaWeight: 0 },
         "new_item_146": { n: "那魯加圖騰", p: 300, gachaWeight: 0 },
         "new_item_147": { n: "都達瑪拉圖騰", p: 30, gachaWeight: 0 },
@@ -835,25 +836,25 @@ const DB = {
         "new_item_193": { n: "風龍鱗", p: 5000, gachaWeight: 10 },
         "new_item_194": { n: "阿西塔基奧的灰燼", p: 1000, gachaWeight: 10 },
         "new_item_195": { n: "精靈玉", p: 100, gachaWeight: 100 },
-        "new_item_196": { n: "古老的交易文件", p: 1, gachaWeight: 0 },
+        "new_item_196": { n: "古老的交易文件", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_197": { n: "搜索狀", p: 1, gachaWeight: 0 },
-        "new_item_198": { n: "黑騎士的誓約", p: 1, gachaWeight: 0 },
-        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_201": { n: "甘地妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_203": { n: "骷髏頭", p: 1, gachaWeight: 0 },
-        "new_item_204": { n: "食屍鬼的指甲", p: 1, gachaWeight: 0 },
-        "new_item_205": { n: "食屍鬼的牙齒", p: 1, gachaWeight: 0 },
-        "new_item_206": { n: "龍龜甲", p: 1, gachaWeight: 0 },
+        "new_item_198": { n: "黑騎士的誓約", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色（198~206、208、212~214、240 同）
+        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_201": { n: "甘地妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_203": { n: "骷髏頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_204": { n: "食屍鬼的指甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_205": { n: "食屍鬼的牙齒", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_206": { n: "龍龜甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_207": { n: "生命的卷軸", p: 1, gachaWeight: 0 },
-        "new_item_208": { n: "蛇女之鱗", p: 1, gachaWeight: 0 },
+        "new_item_208": { n: "蛇女之鱗", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_209": { n: "返生藥水", p: 1, gachaWeight: 0 },
         "new_item_210": { n: "感謝信", p: 1, gachaWeight: 0 },
         "new_item_211": { n: "村民的遺物", p: 1, gachaWeight: 0 },
-        "new_item_212": { n: "不死族的骨頭", p: 1, gachaWeight: 0 },
-        "new_item_213": { n: "受詛咒的精靈書", p: 1, gachaWeight: 0 },
-        "new_item_214": { n: "不死族的鑰匙", p: 1, gachaWeight: 0 },
+        "new_item_212": { n: "不死族的骨頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_213": { n: "受詛咒的精靈書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_214": { n: "不死族的鑰匙", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_215": { n: "殭屍鑰匙", p: 1, gachaWeight: 0 },
         "new_item_216": { n: "骷髏鑰匙", p: 1, gachaWeight: 0 },
         "new_item_217": { n: "密室鑰匙", p: 1, gachaWeight: 0 },
@@ -880,7 +881,7 @@ const DB = {
 		"new_item_elfwing": { n: "精靈羽翼", p: 10, gachaWeight: 100 },
 		"new_item_mermaid_scale": { n: "人魚之鱗", p: 10, gachaWeight: 10 },
 		"new_item_239": { n: "潘朵拉抽獎卷", p: 0, gachaWeight: 0 },
-		"new_item_240": { n: "變形怪的血", p: 1, gachaWeight: 0 },
+		"new_item_240": { n: "變形怪的血", p: 1, c: "text-blue-300", gachaWeight: 0 },
 		"new_item_241": { n: "王族搜索狀", p: 1000, gachaWeight: 0, d: "擊敗血盟敵人必定取得。可向血盟盟主交出，換取盟主的祝福。" },
 		
 		        // ===== 法師魔法書 =====
@@ -1302,7 +1303,8 @@ const DB = {
         "town_witon": {
             n: "威頓村",
             npcs: [
-                { id: "npc_masha", n: "馬沙", title: "試煉", type: "quest", d: "妖精與騎士的試煉" }
+                { id: "npc_masha", n: "馬沙", title: "試煉", type: "quest", d: "妖精與騎士的試煉" },
+                { id: "npc_han", n: "漢", title: "精通", type: "mastery", d: "等級 50 以上的強者，可在此接受超越自我的精通任務。" }   // 🏅
             ]
         },
         "town_sherine": {   // 🔮 新安全區：席琳神殿
@@ -1738,6 +1740,7 @@ const SAVE_VERSION = 2;   // v1 = 未標版本的舊存檔
 const SAVE_DEFAULTS = {
     name: null, bonus: 0, panaceaUsed: 0, bloodPledge: null,
     magicShieldCd: 0, reviveScrollCd: 0, lastMapByCat: {}, tracking: null, ismaelAccUsed: false, sherineWorld: false,
+    masteryQuest: null, mastery: null, masteryChangeCnt: 0,
     elfEle: null, poly: null, summon: null, charmed: null, hot: null,
     manualCd: {}, blessings: {},
     alloc:   { str:0, dex:0, con:0, int:0, wis:0, cha:0 },
@@ -1801,6 +1804,49 @@ const SHERINE_SET_TEXT = {
 // 脆弱（白鳥5）：受所有主要傷害來源 +20%
 function fragileMult(t) { return (t && t.st && t.st.fragile > 0) ? 1.2 : 1; }
 
+// ============================================================================
+// 🏅 職業精通系統（威頓村 NPC 漢，Lv50+）
+//  流程：接取任務 → 擊敗職業對應頭目必得「精通之證」（身上已有則不再掉）→ 回威頓村交付 →
+//        開啟精通選擇。初次選擇免費，之後每次更換費用遞增 300 萬金幣＋50 張王族搜索狀。
+//  狀態：player.masteryQuest = null|'active'|'done'；player.mastery = 精通id|null；player.masteryChangeCnt = 已付費更換次數
+// ============================================================================
+const MASTERY_DATA = {
+    knight: { logo: 'assets/logo/騎士logo.png', boss: '克特', list: {
+        k_counter: { n: '反擊精通', pos: 'top',    msg: '反擊與居合100%發動並且傷害提升',       d: '使用有反擊與居合武器時，反擊與居合觸發機率變成100%，反擊與居合傷害提升' },
+        k_cleave:  { n: '切割精通', pos: 'left',   msg: '切割持續時間更長且速度更快',           d: '使用有切割的武器時，切割持續時間變成4秒，增加攻擊速度變成33%' },
+        k_pierce:  { n: '穿透精通', pos: 'right',  msg: '穿透變成全體攻擊',                     d: '使用有穿透的武器時，穿透效果變成全體攻擊' },
+        k_survive: { n: '生存精通', pos: 'bottom', msg: '藥水治癒量增加，魔抗增加',             d: '治癒藥水恢復量增加25%，MR+15' }
+    } },
+    mage: { logo: 'assets/logo/法師logo.png', boss: '黑長者', list: {
+        m_resonance: { n: '共鳴精通', pos: 'top',    msg: '共鳴傷害提升並恢復更多MP',           d: '共鳴的光箭傷害提升，恢復MP變更為光箭傷害/5' },
+        m_strike:    { n: '魔擊精通', pos: 'left',   msg: '魔擊有機率額外觸發全體魔擊',         d: '觸發魔擊時，有機率額外觸發擴散魔擊，對所有敵人各自造成等同1次魔擊的傷害' },
+        m_echo:      { n: '迴響精通', pos: 'right',  msg: '傷害法術有機率變成連發',             d: '施放傷害攻擊法術時，有機率不消耗MP立刻觸發相同法術' },
+        m_summon:    { n: '召喚精通', pos: 'bottom', msg: '對比自己低等怪迷魅必定成功，魅力額外增加召喚物傷害與命中', d: '迷魅術對等級比自己低的非BOSS怪物必定成功，造屍術與召喚術的傷害與命中魅力影響提升' }
+    } },
+    elf: { logo: 'assets/logo/妖精logo.png', boss: '變形怪首領', list: {
+        e_rapid:  { n: '連射精通', pos: 'top',    msg: '提升連射傷害與數量',                   d: '連射傷害由30%提升為50%，額外箭數由1~3變成1~4' },
+        e_spirit: { n: '精靈精通', pos: 'left',   msg: '可同時召喚多隻屬性精靈',               d: '召喚屬性精靈與召喚強力屬性精靈數量變成1+魅力/20，可同時擁有4隻屬性精靈或強力屬性精靈' },
+        e_sword:  { n: '劍術精通', pos: 'right',  msg: '可使用騎士單手武器並發動看破',         d: '可裝備騎士限定的單手武器，且近距離攻擊有機率發動看破' },
+        e_magic:  { n: '魔導精通', pos: 'bottom', msg: '同屬性傷害魔法增幅並可學高階法術',     d: '施放與自身同屬性的傷害魔法威力提升，可學習冰雪暴、龍捲風、震裂術、火風暴' }
+    } }
+};
+const MASTERY_POS_STYLE = {   // 四向按鈕四色（上紅/左藍/右紫/下綠）
+    top:    'bg-red-950/80 border-red-500 hover:bg-red-900',
+    left:   'bg-blue-950/80 border-blue-500 hover:bg-blue-900',
+    right:  'bg-purple-950/80 border-purple-500 hover:bg-purple-900',
+    bottom: 'bg-emerald-950/80 border-emerald-500 hover:bg-emerald-900'
+};
+const MAGIC_MASTERY_SKILLS = ['sk_blizzard', 'sk_tornado', 'sk_quake', 'sk_fire_storm'];   // 魔導精通可學的法師法術
+function hasMastery(id) { return !!(player && player.mastery === id); }
+function masteryChangeCost() { let n = (player.masteryChangeCnt || 0) + 1; return { gold: 3000000 * n, warrants: 50 * n }; }   // 更換費用遞增
+// 技能職業需求等級（單一事實來源）：🏅 魔導精通的妖精可學四項法師法術（需求等級沿用法師）
+function skillReqLv(sk, skId) {
+    let lv = player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE);
+    if (lv === undefined && player.cls === 'elf' && player.mastery === 'e_magic' && skId && MAGIC_MASTERY_SKILLS.includes(skId)) lv = sk.reqM;
+    return lv;
+}
+let _echoFree = false;        // 🏅 迴響精通：免費連發旗標（連發那次不耗MP、不再連鎖）
+
 let state = { running: false, ticks: 0, pDmgTick: 0, ff: false, inTick: false };
 // 主迴圈計時（依真實經過時間補跑 tick）
 const TICK_MS = 100;                 // 一個邏輯 tick 代表的真實時間
@@ -1846,7 +1892,7 @@ function flushAwaySummary() {
 
 let player = {
     cls: null, name: null, lv: 1, exp: 0, gold: 1000, hp: 0, mhp: 0, mp: 0, mmp: 0, blessings: {},
-    base: { str:0, dex:0, con:0, int:0, wis:0, cha:8 }, bonus: 0, alloc: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panacea: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panaceaUsed: 0, junkPrefs: {}, bloodPledge: null, magicShieldCd: 0, lastMapByCat: {}, tracking: null, ismaelAccUsed: false, sherineWorld: false, siege: { active:false, gateKilled:false, towerKilled:false, endTime:0, kills:0, result:null, cooldownUntil:0, rewardPending:false, victoryUntil:0, accCdUntil:0 },
+    base: { str:0, dex:0, con:0, int:0, wis:0, cha:8 }, bonus: 0, alloc: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panacea: { str:0, dex:0, con:0, int:0, wis:0, cha:0 }, panaceaUsed: 0, junkPrefs: {}, bloodPledge: null, magicShieldCd: 0, lastMapByCat: {}, tracking: null, ismaelAccUsed: false, sherineWorld: false, masteryQuest: null, mastery: null, masteryChangeCnt: 0, siege: { active:false, gateKilled:false, towerKilled:false, endTime:0, kills:0, result:null, cooldownUntil:0, rewardPending:false, victoryUntil:0, accCdUntil:0 },
     inv: [], eq: { wpn: null, arrow: null, helm: null, armor: null, shield: null, cloak: null, tshirt: null, gloves: null, boots: null, ring1: null, ring2: null, amulet: null, belt: null },
     skills: [], buffs: { haste: 0, brave: 0, blue: 0, cautious: 0, elfcookie: 0, poly: 0, shield: 0, sk_magic_shield: 0 }, poly: null, allies: [],
     summon: null, charmed: null, manualCd: {}, elfEle: null, hot: null,
@@ -2361,12 +2407,15 @@ d.mr += (baseMr + bonusMr);
     if (_shN('魔女') >= 3) { d.resWater += 10; d.extraMp += 5; }
     p._setWitch5 = _shN('魔女') >= 5;            // 每 5 次共鳴 → 免費冰矛圍籬
     if (!p._setWitch5) p._witchResCnt = 0;       // 卸下套裝即重置共鳴計數
+
+    // 🏅 生存精通：MR+15（藥水恢復 +25% 於 useItem 套用）
+    if (p.mastery === 'k_survive') d.mr += 15;
     
     let spdMult = 1.0;
     if(p.buffs.haste > 0 || p._equipHaste) spdMult *= 0.67;   // 自我加速 / 加速 / 裝備常駐加速 +33%
     if(p.buffs.brave > 0) spdMult *= 0.67;   // 勇敢藥水 +33%
     if(p.buffs.elfcookie > 0) spdMult *= 0.85; // 精靈餅乾 +15%
-    if(p.statuses && p.statuses.cleave > 0) spdMult *= 0.80;   // 切割（雙手劍重擊觸發）：攻速+20%，與其他加速相乘疊加
+    if(p.statuses && p.statuses.cleave > 0) spdMult *= (p.mastery === 'k_cleave' ? 0.67 : 0.80);   // 切割：攻速+20%（🏅 切割精通：+33%），與其他加速相乘疊加
     if(p.buffs.blue > 0) d.mpR += getWisBlueBonus(d.wis);          // 藍色藥水：依精神提升MP恢復
     if(p.buffs.cautious > 0) { d.magicDmg += 2; d.mpR += 2; }      // 慎重藥水
     if(p.buffs.sk_reduction_armor > 0) d.dr += Math.floor(p.lv/10);   // 增幅防禦：等同傷害減免 floor(等級/10)，併入 DR 顯示與計算
@@ -3399,11 +3448,12 @@ function procLightArrow(t) {
     d = Math.max(1, d);   // 光箭無屬性，無剋制固定加值
     d = Math.floor(d * mageDmgMult);
     d = Math.max(1, Math.floor(d * fragileMult(t)));   // 🔮 脆弱（白鳥5）
+    if (hasMastery('m_resonance')) d += 5;             // 🏅 共鳴精通：光箭 +5 固定傷害
     t.curHp -= d;
     t.justHit = 'magic';
     if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;
     mobWake(t);
-    player.mp = Math.min(player.mmp, player.mp + Math.max(1, Math.floor(d / 10)));   // 共鳴觸發：恢復 光箭實際傷害/10（捨去；未滿10仍回 1）
+    player.mp = Math.min(player.mmp, player.mp + Math.max(1, Math.floor(d / (hasMastery('m_resonance') ? 5 : 10))));   // 共鳴：恢復 傷害/10（🏅 共鳴精通：傷害/5）
     updateUI();
     logCombat(`<span class="text-cyan-300 font-bold">【共鳴】</span>光箭對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 <span class="${isCrit ? 'text-yellow-500 font-bold' : 'text-cyan-300'}">${d}</span> 點傷害。${isCrit ? ' (爆擊!)' : ''}`, 'magic');
     if (t.curHp <= 0) {
@@ -3450,7 +3500,8 @@ function moonburstProc(target) {
     procMoonburst(t);
 }
 // ===== 魔擊（力量魔法杖）：對指定目標打一次「必定命中且必定重擊」的物理攻擊，沿用一般攻擊完整傷害計算 =====
-function procMagicStrike(t) {
+// 🏅 魔擊精通：觸發魔擊時 30% 機率額外觸發「擴散魔擊」——對所有敵人各自造成等同 1 次魔擊的傷害（擴散不再連鎖）
+function procMagicStrike(t, isSpread) {
     if (!t || t.curHp <= 0) return;
     let wpn = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
     let dice = wpn ? (t.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
@@ -3459,12 +3510,19 @@ function procMagicStrike(t) {
     t.justHit = getWpnEle(player.eq.wpn, wpn);
     mobWake(t);
     let mark = res.crit ? '會心一擊' : '重擊';
-    logCombat(`<span class="font-bold" style="color:#d8b4fe;text-shadow:0 0 6px #a855f7;">【魔擊】</span>對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 ${res.dmg} 點傷害（${mark}!）。`, 'player-crit');
+    logCombat(`<span class="font-bold" style="color:#d8b4fe;text-shadow:0 0 6px #a855f7;">【${isSpread ? '擴散魔擊' : '魔擊'}】</span>對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 ${res.dmg} 點傷害（${mark}!）。`, 'player-crit');
     if (t.curHp <= 0) {
         let realIdx = mapState.mobs.findIndex(m => m && m.uid === t.uid);
         if (realIdx !== -1) killMob(realIdx);
     } else {
         renderMobs();
+    }
+    if (!isSpread && hasMastery('m_strike') && Math.random() < 0.30) {
+        let _all = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+        if (_all.length) {
+            logCombat(`<span class="font-bold" style="color:#e9d5ff;text-shadow:0 0 8px #a855f7;">【魔擊精通】</span>魔力向四方擴散！`, 'player-crit');
+            _all.forEach(m => procMagicStrike(m, true));
+        }
     }
 }
 // 魔擊 proc 判定：裝備力量魔法杖時，每次攻擊(命中與否) 力量/60 機率；主目標已死則轉移到場上隨機存活怪
@@ -3485,7 +3543,7 @@ function rapidfireProc(arrowData) {
     let wpn = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
     if (!wpn || !wpn.rapidfire) return;
     if (roll(1, 100) > wpn.rapidfire) return;
-    let _rfN = roll(1, 3);
+    let _rfN = roll(1, hasMastery('e_rapid') ? 4 : 3);   // 🏅 連射精通：額外箭數 1~3 → 1~4
     for (let _r = 0; _r < _rfN; _r++) {
         let _alive = [];
         mapState.mobs.forEach((m, i) => { if (m && m.curHp > 0) _alive.push(i); });
@@ -3500,7 +3558,8 @@ function rapidfireProc(arrowData) {
             logCombat(`【連射】箭矢射向 <span class="${getMobColor(_t.lv)}">${_t.n}</span> 但未命中。`, 'miss');
             continue;
         }
-        let _rfDmg = Math.max(1, Math.floor(_res.dmg * (player._setGale5 ? 0.80 : 0.30)));   // 連射箭矢：該箭結算傷害的 30%（🔮 疾風 5/5：80%）
+        let _rfMult = player._setGale5 ? (hasMastery('e_rapid') ? 1.00 : 0.80) : (hasMastery('e_rapid') ? 0.50 : 0.30);   // 30%；🏅連射精通50%；🔮疾風5/5 80%；兩者兼具100%
+        let _rfDmg = Math.max(1, Math.floor(_res.dmg * _rfMult));
         _t.curHp -= _rfDmg;
         _t.justHit = getWpnEle(player.eq.wpn, wpn);
         mobWake(_t);
@@ -3517,7 +3576,7 @@ function procCounter(t) {
     let wpn = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
     let dice = wpn ? (t.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
     let res = getPhysicalDmg(dice, t, wpn, null, false, true);   // forceHeavy=false, forceHit=true
-    let dmg = Math.max(1, Math.floor(res.dmg * 0.50));           // 傷害只有原本 50%
+    let dmg = Math.max(1, Math.floor(res.dmg * (hasMastery('k_counter') ? 0.65 : 0.50)));   // 傷害 50%（🏅 反擊精通：+30% → 65%）
     t.curHp -= dmg;
     t.justHit = getWpnEle(player.eq.wpn, wpn);
     mobWake(t);
@@ -3534,6 +3593,7 @@ function procIai(t) {
     let wpn = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
     let dice = wpn ? (t.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
     let res = getPhysicalDmg(dice, t, wpn, null, false, false, true);   // forceLand=true：必定命中、可重擊/爆擊
+    if (hasMastery('k_counter')) res.dmg = Math.max(1, Math.floor(res.dmg * 1.3));   // 🏅 反擊精通：居合傷害 +30%
     t.curHp -= res.dmg;
     t.justHit = getWpnEle(player.eq.wpn, wpn);
     mobWake(t);
@@ -3670,6 +3730,14 @@ function playerAttack() {
                 killPrefix = '<span class="text-orange-400 font-bold">【殺戮】你戰鬥到渾然忘我！</span> ';
             }
         }
+        // 🏅 劍術精通（妖精）：近距離攻擊 5+等級/10% 機率發動看破 ×2
+        if (player.cls === 'elf' && hasMastery('e_sword') && !result.ranged) {
+            let _ir = Math.min(15, 5 + Math.floor(player.lv / 10));
+            if (Math.random() * 100 < _ir) {
+                result.dmg *= 2;
+                killPrefix = '<span class="text-cyan-300 font-bold">【看破】你看穿敵人的破綻！</span> ';
+            }
+        }
         target.curHp -= result.dmg;
         target.justHit = getWpnEle(player.eq.wpn, wpn);
         if (player._setBeauty5 && result.heavy) player._beautyNextSure = true;   // 🔮 麗人 5/5：觸發重擊 → 下一次一般攻擊必中
@@ -3680,15 +3748,19 @@ function playerAttack() {
         if (wpn && wpn.eff === 'pierce') {
             let _pc = (wpn.pierceChance !== undefined) ? wpn.pierceChance : 100;   // 穿透發動機率(%)，未設定視為100%
             let otherIdx = [];
-            mapState.mobs.forEach((m, i) => { if (m && m.curHp > 0 && m !== target) otherIdx.push(i); });
+            mapState.mobs.forEach((m, i) => { if (m && m.curHp > 0 && !m._dead && m !== target) otherIdx.push(i); });
             if (otherIdx.length > 0 && roll(1, 100) <= _pc) {
-                let exIdx = otherIdx[Math.floor(Math.random() * otherIdx.length)];
-                let exT = mapState.mobs[exIdx];
-                exT.curHp -= result.dmg;
-                exT.justHit = getWpnEle(player.eq.wpn, wpn);
-                mobWake(exT);
-                logCombat(`【穿透】順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${result.dmg} 點傷害。`, 'player');
-                if (exT.curHp <= 0) killMob(exIdx);
+                // 🏅 穿透精通：穿透變成全體攻擊（命中主目標以外的「所有」敵人）；否則隨機一名
+                let _pTargets = hasMastery('k_pierce') ? otherIdx : [otherIdx[Math.floor(Math.random() * otherIdx.length)]];
+                _pTargets.forEach(exIdx => {
+                    let exT = mapState.mobs[exIdx];
+                    if (!exT || exT.curHp <= 0 || exT._dead) return;
+                    exT.curHp -= result.dmg;
+                    exT.justHit = getWpnEle(player.eq.wpn, wpn);
+                    mobWake(exT);
+                    logCombat(`【穿透】順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${result.dmg} 點傷害。`, 'player');
+                    if (exT.curHp <= 0) killMob(exIdx);
+                });
             }
         }
 		
@@ -3703,7 +3775,7 @@ function playerAttack() {
         let _cleaveProc = false;
         if(result.heavy && wpn && wpn.eff === 'cleave') {
             let _wasCleave = player.statuses.cleave > 0;
-            player.statuses.cleave = 20;   // 2秒 = 20 ticks
+            player.statuses.cleave = hasMastery('k_cleave') ? 40 : 20;   // 2秒（🏅 切割精通：4秒）
             if(!_wasCleave) { calcStats(); _cleaveProc = true; }
         }
 
@@ -3774,8 +3846,8 @@ function enemyPhysicalAttack(mob, idx, stunChance = 0) {
 
     if (roll(1, 100) <= player.d.er) {
         logCombat(`${player.name || '你'} 成功迴避攻擊。`, 'evade');
-        // 武士刀居合：無盾且敵人攻擊被迴避時，30% 對攻擊者打一次必定命中的一般攻擊
-        if (!player.dead && !player.eq.shield && mob.curHp > 0 && player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('武士刀') && Math.random() < 0.50) {
+        // 武士刀居合：無盾且敵人攻擊被迴避時，30% 對攻擊者打一次必定命中的一般攻擊（🏅 反擊精通：100%）
+        if (!player.dead && !player.eq.shield && mob.curHp > 0 && player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('武士刀') && (hasMastery('k_counter') || Math.random() < 0.50)) {
             procIai(mob);
         }
         if (!player.dead) allyReactIai(mob);   // 🔧 傭兵居合：判定主玩家迴避成功
@@ -3878,14 +3950,15 @@ function enemyPhysicalAttack(mob, idx, stunChance = 0) {
         else updateUI();
 
         // 單手劍反擊：受到敵人一般攻擊命中時觸發。一般 50% 機率；若裝備盾牌且本次觸發格檔(blocked)則必定反擊
+        // 🏅 反擊精通：100% 觸發
         if (!player.dead && mob.curHp > 0 && player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('單手劍')) {
-            if (Math.random() < (blocked ? 1 : 0.50)) procCounter(mob);
+            if (blocked || hasMastery('k_counter') || Math.random() < 0.50) procCounter(mob);
         }
         if (!player.dead) allyReactCounter(mob, blocked);   // 🔧 傭兵反擊：判定主玩家受擊（玩家格檔則必定反擊）
     } else {
         logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 的攻擊未命中。`, 'miss');
-        // 武士刀居合：無盾且敵人攻擊未命中時，30% 對攻擊者打一次必定命中的一般攻擊
-        if (!player.dead && !player.eq.shield && mob.curHp > 0 && player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('武士刀') && Math.random() < 0.50) {
+        // 武士刀居合：無盾且敵人攻擊未命中時，30% 對攻擊者打一次必定命中的一般攻擊（🏅 反擊精通：100%）
+        if (!player.dead && !player.eq.shield && mob.curHp > 0 && player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('武士刀') && (hasMastery('k_counter') || Math.random() < 0.50)) {
             procIai(mob);
         }
         allyReactIai(mob);   // 🔧 傭兵居合：判定敵人未命中主玩家
@@ -4332,6 +4405,13 @@ function killMob(idx) {
         });
         player.inv = player.inv.filter(i => i.cnt > 0);
         logSys('<span class="text-amber-300 font-bold">封印之物失去了力量：</span><span class="text-amber-200">飛龍的爪子、蜥蜴的角、水晶球、妖魔戰士護身符 各消耗了 1 個。</span>');
+    }
+
+    // === 🏅 精通任務：接取後擊敗職業對應頭目必得「精通之證」（身上已有一枚則不再掉落）===
+    if (player.masteryQuest === 'active' && MASTERY_DATA[player.cls] && mob.n === MASTERY_DATA[player.cls].boss
+        && !player.inv.some(i => i.id === 'item_mastery_proof')) {
+        gainItem('item_mastery_proof', 1);
+        logSys('<span class="text-amber-300 font-bold">✦ 你從強敵的殘骸中拾起了「精通之證」——回威頓村找漢吧。</span>');
     }
 
     // === 血盟敵人：擊敗必定掉落「王族搜索狀」（100%）===
@@ -5158,12 +5238,16 @@ function summonAttack(sm) {
     }
 
     // === 魅力召喚物：近戰多段(floor(魅力/6)次) / 屬性精靈(單次遠距) ===
-    let hits = (sm.kind === 'melee') ? Math.max(1, Math.floor(cha / 6)) : 1;
+    // 🏅 精靈精通：屬性精靈/強力屬性精靈 數量＝1+魅力/20（60魅力上限4隻，各自完整攻擊一次）
+    let hits = (sm.kind === 'melee') ? Math.max(1, Math.floor(cha / 6))
+        : ((hasMastery('e_spirit') && (sm.skId === 'sk_elf_summon' || sm.skId === 'sk_elf_summon2')) ? Math.min(4, 1 + Math.floor(cha / 20)) : 1);
     let hitLvOff = sm.hitLvOff || 0;
+    // 🏅 召喚精通：造屍術/召喚術的「傷害與命中判定魅力」改為 魅力×1.2（攻擊段數仍依原魅力）
+    let chaEff = (hasMastery('m_summon') && (sm.skId === 'sk_zombie' || sm.skId === 'sk_summon')) ? cha * 1.2 : cha;
     for(let i = 0; i < hits; i++) {
         if(t.curHp <= 0) break;
         // 命中值 = 玩家等級 + 偏移 + 魅力 - 目標等級 + 目標AC（d20）
-        let hv = Math.max(1, Math.min(20, player.lv + hitLvOff + cha - t.lv + mobEffAC(t)));
+        let hv = Math.max(1, Math.min(20, player.lv + hitLvOff + chaEff - t.lv + mobEffAC(t)));
         let r = roll(1, 20);
         if(!((r === 20) || (r !== 1 && hv >= r))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); continue; }
         let dmg;
@@ -5172,7 +5256,7 @@ function summonAttack(sm) {
             dmg = summonElementDamage(sm.dmgDice, sm.ele, t, flat);
             t.justHit = sm.ele !== 'none' ? sm.ele : 'magic';
         } else {
-            let flatBase = cha / (sm.dmgDiv || 5);                          // 近戰固定加成基底 = 魅力/dmgDiv
+            let flatBase = chaEff / (sm.dmgDiv || 5);                          // 近戰固定加成基底 = 魅力/dmgDiv（🏅 召喚精通 ×1.2）
             let flat = sm.dmgLvDiv ? Math.floor(flatBase * (1 + player.lv / sm.dmgLvDiv)) : Math.floor(flatBase);   // 造屍術等具 dmgLvDiv：再乘上 (1+玩家等級/dmgLvDiv)
             dmg = Math.max(1, roll(sm.dmgDice[0], sm.dmgDice[1]) + flat - (t.dr || 0));
             t.justHit = 'normal';
@@ -5218,7 +5302,7 @@ function manualCast(skId) {
         return;
     }
     let __granted = player.grantedSkills && player.grantedSkills.includes(skId);
-    let needLv = player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE);
+    let needLv = skillReqLv(sk, skId);   // 🏅 集中化：含魔導精通特例
     if(!__granted && needLv === undefined) { logSys('你的職業無法使用此技能。'); return; }
     if(!__granted && player.lv < needLv) { logSys('等級不足，無法使用此技能。'); return; }
     if((player.manualCd[skId] || 0) > 0) { logSys('技能冷卻中。'); return; }
@@ -5243,7 +5327,8 @@ function manualCast(skId) {
         if(!t) { logSys('沒有目標。'); return; }
         if(t.boss) { logSys('無法魅惑 BOSS。'); return; }
         player.mp -= cost; cost = 0;
-        if(abnormalMagicHit(t)) {
+        // 🏅 召喚精通：對等級比自己低的非 BOSS 怪物，迷魅必定成功
+        if((hasMastery('m_summon') && !t.boss && (t.lv || 1) < player.lv) || abnormalMagicHit(t)) {
             let idx = mapState.mobs.findIndex(m => m && m.uid === t.uid);
             player.buffs['sk_charm'] = 3600;
             player.charmed = {
@@ -5276,12 +5361,13 @@ function castSkill(skId) {
     }
     
     let __granted = player.grantedSkills && player.grantedSkills.includes(skId);
-    let needLv = player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE);
+    let needLv = skillReqLv(sk, skId);   // 🏅 集中化：含魔導精通特例
     if(!__granted && (needLv === undefined || player.lv < needLv)) return false;
     if(!__granted && sk.reqEle && player.elfEle !== sk.reqEle) return false;      // 屬性不符
     if(!__granted && sk.reqEleAny && !player.elfEle) return false;                 // 尚未選擇屬性
-    
+
     let cost = sk.mp ? player.d.getMpCost(sk.mp, sk.tier) : 0;
+    if (_echoFree) cost = 0;   // 🏅 迴響精通：連發那次不消耗 MP
     if(player.mp < cost) return false;
     if(sk.hpCost && player.hp <= sk.hpCost + 5) return false;  // HP 不足，拒絕施放
     
@@ -5356,7 +5442,7 @@ function castSkill(skId) {
         return true;
     }
     
-    if(sk.type === 'atk' && player.cds.atkSk <= 0) {
+    if(sk.type === 'atk' && (player.cds.atkSk <= 0 || _echoFree)) {   // 🏅 迴響精通：連發不受攻擊冷卻限制
         if(sk.dmgType === 'physical') {
             let t = getTarget();
             if(!t) return false;
@@ -5487,6 +5573,7 @@ function castSkill(skId) {
                     d = Math.max(1, d) + fixed;
                     d = Math.floor(d * mageDmgMult);   // 法師一般攻擊魔法：最終傷害再乘上 (1.5 + 階級/20)
                     if (player._setRedLion5) d = Math.floor(d * 1.2);   // 🔮 紅獅 5/5：攻擊技能最終傷害 +20%
+                    if (player.cls === 'elf' && hasMastery('e_magic') && sk.ele && sk.ele !== 'none' && sk.ele === player.elfEle) d = Math.floor(d * 2);   // 🏅 魔導精通：同屬性傷害魔法 ×2
                     d = Math.max(1, Math.floor(d * fragileMult(t)));    // 🔮 脆弱（白鳥5）
                     totalDmg += d;
                     hitsLog.push(d);
@@ -5520,6 +5607,12 @@ function castSkill(skId) {
                 }
             });
             renderMobs();
+            // 🏅 迴響精通：(11-法術階級)×10% 機率不消耗 MP 立刻再施放一次（連發那次不再觸發迴響）
+            if (hasMastery('m_echo') && !_echoFree && Math.random() < (11 - (sk.tier || 1)) / 10) {
+                logCombat(`<span class="font-bold" style="color:#93c5fd;text-shadow:0 0 6px #3b82f6;">【迴響精通】</span>${sk.n} 的魔力迴盪不息，再次轟出！`, 'magic');
+                _echoFree = true;
+                try { castSkill(skId); } finally { _echoFree = false; }
+            }
             return true;
         }
     }
@@ -5924,6 +6017,7 @@ function useItem(u, silent = false) {
         if (item.id.includes('potion_heal') || item.id === 'potion_strong' || item.id === 'potion_ult') {
             if (player.cds.pot > 0) return;
             let h = Math.floor(d.val * (1 + getConPotionPct(player.d.con) / 100));
+            if (hasMastery('k_survive')) h = Math.floor(h * 1.25);   // 🏅 生存精通：治癒藥水恢復 +25%
             player.hp = Math.min(player.mhp, player.hp + h);
             player.cds.pot = 1; 
             if(!silent) logSys(`飲用 ${d.n}，恢復 ${h} HP。`);
@@ -5932,6 +6026,7 @@ function useItem(u, silent = false) {
             if (silent) return;
             if (player.cds.pot > 0) return;
             let h = 44 + Math.floor(Math.random() * (107 - 44 + 1));
+            if (hasMastery('k_survive')) h = Math.floor(h * 1.25);   // 🏅 生存精通：安特的水果恢復 +25%
             player.hp = Math.min(player.mhp, player.hp + h);
             player.cds.pot = 1;
             logSys(`食用 ${d.n}，恢復 ${h} HP。`);
@@ -6032,7 +6127,7 @@ function useItem(u, silent = false) {
         openEnhanceModal(item);
     } else if (d.type === 'skillbk') {
         let sd = DB.skills[d.sk];
-        let reqLv = (player.cls === 'mage' ? sd.reqM : player.cls === 'knight' ? sd.reqK : sd.reqE);
+        let reqLv = skillReqLv(sd, d.sk);   // 🏅 集中化：含魔導精通特例（妖精可學四項法師法術）
         if(reqLv === undefined) { logSys(`你的職業無法學習「${sd.n}」。`); return; }
         if(player.lv < reqLv) { logSys(`等級不足，需要等級 ${reqLv} 才能學習「${sd.n}」。`); return; }
         
@@ -6084,9 +6179,11 @@ function checkCanEquip(item) {
     let d = DB.items[item.id];
     // 1. 基本職業判定
     let canEquip = !d.req || d.req.includes(player.cls) || d.req.includes('all');
-    
+
     // 2. 負重強化的擴充判定
     if (!canEquip && loadUpAllows(item.id)) canEquip = true;
+    // 3. 🏅 劍術精通：妖精可裝備騎士限定的單手武器（非雙手、非弓）
+    if (!canEquip && hasMastery('e_sword') && d.type === 'wpn' && !d.w2h && !d.isBow && d.req && d.req.includes('knight')) canEquip = true;
     return canEquip;
 }
 
@@ -6100,6 +6197,8 @@ function equipItem(item) {
 
     // 2. 負重強化的專屬擴充裝備判定
     if (!canEquip && loadUpAllows(item.id)) canEquip = true;
+    // 3. 🏅 劍術精通：妖精可裝備騎士限定的單手武器（非雙手、非弓）
+    if (!canEquip && hasMastery('e_sword') && d.type === 'wpn' && !d.w2h && !d.isBow && d.req && d.req.includes('knight')) canEquip = true;
 
     if (!canEquip) {
         logSys(`無法裝備，職業不符。`); 
@@ -6433,7 +6532,7 @@ function updateUI() {
     if (player.cls === 'knight') clsDisplayName = '騎士';
     else if (player.cls === 'mage') clsDisplayName = '法師';
     else if (player.cls === 'elf') clsDisplayName = '妖精';
-    if(document.getElementById('st-classname')) document.getElementById('st-classname').innerText = clsDisplayName;
+    if(document.getElementById('st-classname')) document.getElementById('st-classname').innerText = clsDisplayName;   // 🏅 精通徽記已移除，僅顯示職業名
     if(!window._editingName) document.getElementById('st-class').innerText = (player.name || '');   // 未取名則不顯示任何文字（仍可點擊命名）
     
     // 處理背景圖片：抓取 player.avatar 決定背景圖 (加上 bg-top 防止頭部裁切)
@@ -6646,7 +6745,7 @@ player.inv.forEach(i => {
     if (d.type === 'skillbk') {
         let sk = DB.skills[d.sk];
         // 檢查該技能是否屬於該職業可學習範圍
-        let isClsPossible = (player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE)) !== undefined;
+        let isClsPossible = skillReqLv(sk, d.sk) !== undefined;   // 🏅 集中化：含魔導精通特例
         
         if (player.skills.includes(d.sk)) {
             statusTag = '<span class="text-slate-500 text-[10px] font-bold">[已學習]</span>';
@@ -6709,7 +6808,7 @@ player.inv.forEach(i => {
             let sk = DB.skills[sid];
             let isAvail = true;
             let __granted = player.grantedSkills && player.grantedSkills.includes(sid);
-            let needLv = player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE);
+            let needLv = skillReqLv(sk, sid);   // 🏅 集中化：含魔導精通特例
             if(!__granted && (needLv === undefined || player.lv < needLv)) isAvail = false;
             if(!__granted && sk.reqEle && player.elfEle !== sk.reqEle) isAvail = false;
             if(!__granted && sk.reqEleAny && !player.elfEle) isAvail = false;
@@ -6787,7 +6886,7 @@ function renderSkillSelects() {
         let sk = DB.skills[sid];
         let isAvail = true;
         let __granted = player.grantedSkills && player.grantedSkills.includes(sid);
-        let needLv = player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE);
+        let needLv = skillReqLv(sk, sid);   // 🏅 集中化：含魔導精通特例
         if(!__granted && (needLv === undefined || player.lv < needLv)) isAvail = false;
         if(!__granted && sk.reqEle && player.elfEle !== sk.reqEle) isAvail = false;
         if(!__granted && sk.reqEleAny && !player.elfEle) isAvail = false;
@@ -7262,7 +7361,8 @@ function toggleJunk(uid) {
 }
 
 // 一鍵排列：依規則重新排序背包（武器 / 防具飾品 / 道具 各自分頁內排序）
-function sortInventory() {
+// ===== 🔧 物品排序比較器（背包「一鍵排列」與倉庫「一鍵排列」共用，規則完全相同）=====
+const invSortCmp = (function () {
     // 防具/飾品「特效」判定：基底物品具有 AC 以外的加成欄位即視為有特效
     const MUNDANE = new Set(['n','type','slot','ac','req','safe','p','c','d','img','gachaWeight','unBonus']);
     let hasArmEffect = (d) => { for (let k in d) { if (!MUNDANE.has(k) && d[k]) return true; } return false; };
@@ -7283,7 +7383,7 @@ function sortInventory() {
         if (d.type === 'misc') return !!d.eff;                       // 有效果(回憶蠟燭等)才可使用
         if (d.type === 'skillbk') {
             let sk = DB.skills[d.sk]; if (!sk) return false;
-            let cls = (player.cls === 'mage' ? sk.reqM : (player.cls === 'knight' ? sk.reqK : sk.reqE));
+            let cls = skillReqLv(sk, d.sk);   // 🏅 集中化：含魔導精通特例
             return cls !== undefined && !player.skills.includes(d.sk);   // 可學且未學 → 可點選
         }
         return false;
@@ -7299,7 +7399,7 @@ function sortInventory() {
     let tierOf = (d) => { let sk = DB.skills[d.sk]; return sk ? (sk.tier || 1) : 0; };
     let nameCmp = (da, db) => (da.n || '').localeCompare(db.n || '');
 
-    player.inv.sort((ia, ib) => {
+    return function (ia, ib) {
         let da = DB.items[ia.id], db = DB.items[ib.id];
         if (!da || !db) return 0;
         let ca = catRank(da), cb = catRank(db);
@@ -7333,7 +7433,11 @@ function sortInventory() {
             return nameCmp(da, db);
         }
         return nameCmp(da, db);                            // 不可點選：名稱
-    });
+    };
+})();
+
+function sortInventory() {
+    player.inv.sort(invSortCmp);
 
     renderTabs();
     saveGame();
@@ -7344,7 +7448,7 @@ function sortInventory() {
 function sellAllJunk() {
     let toSell = player.inv.filter(i => {
         let d = DB.items[i.id];
-        return i.junk && !i.lock && d;
+        return i.junk && !i.lock && d && !d.noSell;   // 🏅 不可販售物（精通之證）排除
     });
     if (toSell.length === 0) { logSys('<span class="text-slate-400">沒有勾選為廢品的道具。</span>'); return; }
     let totalGold = 0, totalCount = 0;
@@ -7372,6 +7476,7 @@ function toggleLock(uid) {
 function sellItem(uid, count, unitPrice) {
     let item = player.inv.find(i => i.uid === uid);
     if (!item || item.lock) return;
+    if (DB.items[item.id] && DB.items[item.id].noSell) { logSys('此物品無法販售。'); return; }   // 🏅 精通之證等不可販售
     let _wasGrant = !!(DB.items[item.id] && DB.items[item.id].grantSkills);   // 賣出授予技能頭盔時需重算
     let sellCount = Math.min(count, item.cnt);
     let totalGot = sellCount * unitPrice;
@@ -7958,6 +8063,123 @@ function renderSherinePray(div) {
         </div>`;
 }
 
+// ===== 🏅 威頓村 漢：職業精通任務 =====
+function hanAcceptQuest() {
+    if ((player.lv || 1) < 50) return;
+    player.masteryQuest = 'active';
+    let boss = MASTERY_DATA[player.cls].boss;
+    logSys(`<span class="text-amber-300 font-bold">【精通任務】</span>漢：去吧，擊敗 <span class="text-red-300 font-bold">${boss}</span>，把「精通之證」帶回來給我。`);
+    saveGame();
+    let el = document.getElementById('interaction-content'); if (el) renderHanNPC(el);
+}
+function hanSubmitProof() {
+    if (player.masteryQuest !== 'active') return;
+    if (!player.inv.some(i => i.id === 'item_mastery_proof')) return;
+    questConsumeId('item_mastery_proof', 1);
+    player.masteryQuest = 'done';
+    logSys('<span class="text-amber-300 font-bold">【精通任務】</span>漢：很好……你已證明了自己。現在，選擇你的「道」吧。');
+    saveGame();
+    updateUI();   // 職業名旁顯示精通標誌
+    let el = document.getElementById('interaction-content'); if (el) renderHanNPC(el);
+}
+function chooseMastery(id) {
+    if (player.masteryQuest !== 'done') return;
+    let md = MASTERY_DATA[player.cls];
+    if (!md || !md.list[id] || player.mastery === id) return;
+    // 初次選擇免費；之後更換費用遞增（300萬金幣＋50張王族搜索狀 × 次數）
+    if (player.mastery !== null) {
+        let cost = masteryChangeCost();
+        let w = pledgeCountItem('new_item_241');
+        if (player.gold < cost.gold || w < cost.warrants) {
+            logSys(`<span class="text-red-400 font-bold">更換精通需要 ${cost.gold.toLocaleString()} 金幣與 王族搜索狀 ×${cost.warrants}。</span>`);
+            return;
+        }
+        player.gold -= cost.gold;
+        let _need = cost.warrants;
+        for (let it of player.inv.filter(i => i.id === 'new_item_241')) { if (_need <= 0) break; let dd = Math.min(it.cnt, _need); it.cnt -= dd; _need -= dd; }
+        player.inv = player.inv.filter(i => i.cnt > 0);
+        player.masteryChangeCnt = (player.masteryChangeCnt || 0) + 1;
+    }
+    let prev = player.mastery;
+    player.mastery = id;
+    // 🏅 切換副作用
+    if (prev === 'e_spirit' && player.summon && (player.summon.skId === 'sk_elf_summon' || player.summon.skId === 'sk_elf_summon2')) {
+        player.buffs[player.summon.skId] = 0; player.summon = null;   // 精靈精通解除：收回已召喚屬性精靈
+        logSys('屬性精靈隨著精通的轉移而消散了。');
+    }
+    if (prev === 'e_sword' && player.eq.wpn) {
+        let wd = DB.items[player.eq.wpn.id];
+        let ok = !wd.req || wd.req === 'all' || wd.req.includes(player.cls) || loadUpAllows(player.eq.wpn.id);
+        if (!ok) { returnEquipToInv('wpn'); logSys('失去劍術精通，無法再駕馭手中的騎士武器，已自動卸下。'); }
+    }
+    logSys(`<span class="text-amber-300 font-bold">【精通】</span>你領悟了 <span class="text-yellow-300 font-bold">${md.list[id].n}</span>——${md.list[id].msg}！`);
+    calcStats();
+    renderSkillSelects();   // 魔導精通：四項法術的可用性即時更新
+    renderTabs(true);
+    saveGame();
+    let el = document.getElementById('interaction-content'); if (el) renderHanNPC(el);
+}
+function renderHanNPC(div) {
+    let md = MASTERY_DATA[player.cls];
+    if ((player.lv || 1) < 50) {
+        div.innerHTML = `<div class="p-6 text-slate-400">漢瞇起眼打量著你……<br><span class="text-red-400">「還不夠。等你站上 50 級的高度，再來與我談『精通』二字。」</span></div>`;
+        return;
+    }
+    let q = player.masteryQuest;
+    if (!q) {   // 未接取
+        div.innerHTML = `
+        <div class="flex flex-col gap-4 p-2 items-center text-center">
+            <div class="text-slate-300 leading-relaxed">漢：每個走到極限的${({knight:'騎士',mage:'法師',elf:'妖精'})[player.cls]}，都要回答同一個問題——<br><span class="text-amber-200 font-bold">你的「道」是什麼？</span></div>
+            <div class="bg-slate-800/70 border border-amber-700/60 rounded p-3 text-sm text-slate-300">擊敗 <span class="text-red-300 font-bold">${md.boss}</span>，取回 <span class="text-blue-300 font-bold">精通之證</span>，我便為你開啟精通之路。</div>
+            <button class="btn px-10 py-3 text-lg font-bold bg-amber-800 hover:bg-amber-700 border-amber-500" onclick="hanAcceptQuest()">🏅 接取精通任務</button>
+        </div>`;
+        return;
+    }
+    if (q === 'active') {
+        let hasProof = player.inv.some(i => i.id === 'item_mastery_proof');
+        div.innerHTML = `
+        <div class="flex flex-col gap-4 p-2 items-center text-center">
+            <div class="text-slate-300 leading-relaxed">漢：${hasProof ? '哦……你手中的氣息，是貨真價實的證明。' : `<span class="text-red-300 font-bold">${md.boss}</span> 還在等著你。把「精通之證」帶回來。`}</div>
+            ${hasProof
+                ? `<button class="btn px-10 py-3 text-lg font-bold bg-amber-800 hover:bg-amber-700 border-amber-500" onclick="hanSubmitProof()">🏅 交付 精通之證</button>`
+                : `<div class="text-slate-500 text-sm">（接取任務後擊敗指定頭目必定獲得；身上已有一枚時不會重複掉落）</div>`}
+        </div>`;
+        return;
+    }
+    // q === 'done'：精通選擇（中央職業徽記 + 上下左右四色按鈕）
+    let cur = player.mastery;
+    let cost = masteryChangeCost();
+    let costTxt = (cur === null)
+        ? '<span class="text-emerald-300 font-bold">初次選擇免費</span>'
+        : `更換費用：<span class="text-yellow-300 font-bold">${cost.gold.toLocaleString()} 金幣</span>＋<span class="text-amber-300 font-bold">王族搜索狀 ×${cost.warrants}</span>（每次遞增）`;
+    let btn = (id) => {
+        let m = md.list[id];
+        let active = cur === id;
+        return `<button class="btn w-full h-full py-3 px-2 border-2 ${MASTERY_POS_STYLE[m.pos]} ${active ? 'ring-2 ring-yellow-300 shadow-[0_0_14px_rgba(253,224,71,0.6)]' : ''}" onclick="chooseMastery('${id}')" title="${m.d}">
+            <div class="font-bold text-base ${active ? 'text-yellow-300' : 'text-white'}">${active ? '★ ' : ''}${m.n}</div>
+            <div class="text-[11px] text-slate-300 leading-tight mt-1">${m.msg}</div>
+        </button>`;
+    };
+    let ids = Object.keys(md.list);
+    let byPos = {}; ids.forEach(k => byPos[md.list[k].pos] = k);
+    div.innerHTML = `
+    <div class="flex flex-col gap-3 p-2 items-center">
+        <div class="text-amber-200 font-bold text-lg tracking-widest">—— 精 通 之 道 ——</div>
+        <div class="text-slate-400 text-xs">${costTxt}</div>
+        <div class="grid gap-2 w-full max-w-[560px]" style="grid-template-columns: 1fr 1fr 1fr; grid-template-rows: repeat(3, 96px);">
+            <div></div><div class="h-full">${btn(byPos.top)}</div><div></div>
+            <div class="h-full">${btn(byPos.left)}</div>
+            <div class="flex items-center justify-center bg-slate-900/80 border-2 border-amber-600/70 rounded shadow-[0_0_18px_rgba(245,158,11,0.35)] h-full">
+                <img src="${md.logo}" class="w-3/5 h-3/5 object-contain" onerror="this.outerHTML='<span class=\\'text-4xl\\'>🏅</span>'">
+            </div>
+            <div class="h-full">${btn(byPos.right)}</div>
+            <div></div><div class="h-full">${btn(byPos.bottom)}</div><div></div>
+        </div>
+        ${cur ? `<div class="text-sm text-slate-300">目前精通：<span class="text-yellow-300 font-bold">${md.list[cur].n}</span></div>` : ''}
+        <div class="text-slate-500 text-xs">將滑鼠移至按鈕可查看完整效果說明。</div>
+    </div>`;
+}
+
 function renderTownNPCs(townId) {
     let container = document.getElementById('town-npc-container');
     container.innerHTML = '';
@@ -7984,6 +8206,7 @@ function renderTownNPCs(townId) {
         else if(npc.type === 'ally') typeIcon = "🤝";
         else if(npc.type === 'bless') typeIcon = "✨";
         else if(npc.type === 'pray') typeIcon = "🙏";
+        else if(npc.type === 'mastery') typeIcon = "🏅";
 
         el.innerHTML = `
             <div class="flex items-start justify-between mb-2">
@@ -8061,6 +8284,8 @@ function interactNPC(npcId, townId) {
         renderIsmaelExchange(contentDiv);
     } else if (npc.id === 'npc_sherine') {
         renderSherinePray(contentDiv);
+    } else if (npc.id === 'npc_han') {
+        renderHanNPC(contentDiv);
     } else if (npc.type === 'ally') {
         renderAllyNPC(contentDiv);
     } else if (npc.type === 'warehouse') {
@@ -8085,7 +8310,7 @@ function closeNpcInteraction() {
 // ===== 共用倉庫（三個存檔角色共用，獨立於存檔位的 localStorage 鍵）=====
 const WH_KEY = 'lineage_idle_warehouse';
 const WH_MAX = 200;   // 倉庫格數上限（🔧 100 → 200）
-const WH_NO_STORE = ['new_item_239','new_item_241','new_item_collar_husky','new_item_238','new_item_184','new_item_185'];   // 禁止存入倉庫：潘朵拉抽獎卷、王族搜索狀、四種項圈
+const WH_NO_STORE = ['new_item_239','new_item_241','new_item_collar_husky','new_item_238','new_item_184','new_item_185','item_mastery_proof'];   // 禁止存入倉庫：潘朵拉抽獎卷、王族搜索狀、四種項圈、精通之證
 // 倉庫分類過濾（武器 / 防具 / 道具）：存入、取出共用同一個下拉清單
 let _whFilter = 'weapon';
 function whCategory(id){
@@ -8126,6 +8351,15 @@ function whOneClickDeposit(){
     renderWarehouseNPC(document.getElementById('interaction-content'));
     if(deposited > 0) logSys(`<span class="text-cyan-300 font-bold">一鍵存入：已存入 ${deposited} 項與倉庫現有物品相同的物品${full ? '（倉庫已滿，部分未存入）' : ''}。</span>`);
     else logSys(full ? `<span class="text-red-400">倉庫已滿，無法存入。</span>` : `背包中沒有與倉庫現有物品完全相同的可存入物品。`);
+}
+// 🔧 倉庫一鍵排列：規則與背包「一鍵排列」完全相同（共用 invSortCmp）
+function sortWarehouse(){
+    let w = loadWarehouse();
+    if(!w.items.length){ logSys('<span class="text-slate-400">倉庫沒有物品可排列。</span>'); return; }
+    w.items.sort(invSortCmp);
+    saveWarehouse(w);
+    logSys('<span class="text-cyan-300 font-bold">倉庫已重新排列。</span>');
+    let el = document.getElementById('interaction-content'); if(el) renderWarehouseNPC(el);
 }
 function whDeposit(uidv){
     let w = loadWarehouse();
@@ -8201,6 +8435,7 @@ function renderWarehouseNPC(div){
             </select>
             <span class="text-slate-500 text-xs">（存入／取出共用此分類）</span>
             <button onclick="whOneClickDeposit()" class="btn px-4 text-sm font-bold h-8 inline-flex items-center justify-center ms-auto" style="background: linear-gradient(135deg, #0c4a5e 0%, #0e7490 28%, #0a3d4d 52%, #11657e 76%, #093440 100%); color: #a5f3fc; border-color: #0891b2;" title="把背包中與倉庫現有物品（詞綴+名字+強化值完全相同）的物品自動存入；鎖定物品不動">一鍵存入</button>
+            <button onclick="sortWarehouse()" class="btn px-4 text-sm font-bold h-8 inline-flex items-center justify-center" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 28%, #16294a 52%, #1d4ed8 76%, #101f38 100%); color: #bfdbfe; border-color: #3b82f6;" title="依背包一鍵排列的相同規則整理倉庫物品">一鍵排列</button>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col min-h-0">
@@ -9859,6 +10094,28 @@ function renderJoelCraft(div, npcId) {
     div.innerHTML = html;
 }
 // 3. 執行製作扣除材料與發放物品
+// ===== 🔧 製作材料配色：所有「非裝備」的製作需求材料，名字統一丁香紫 =====
+// 掃描全部配方的需求清單，物品類型不是 武器/防具/飾品 者套用 text-purple-300。
+// 排除：金幣、席琳結晶（保留呼吸綠光 c-sherine）、試煉材料（同為合成材料時以試煉藍色優先）。
+const QUEST_MATERIAL_IDS = [   // 試煉兌換材料＋卡瑞觸發道具（名字固定藍色，不被製作配色覆蓋）
+    'new_item_196', 'new_item_198', 'new_item_199', 'new_item_200', 'new_item_201', 'new_item_202',
+    'new_item_203', 'new_item_204', 'new_item_205', 'new_item_206', 'new_item_208',
+    'new_item_212', 'new_item_213', 'new_item_214', 'new_item_240', 'new_item_144',
+    'item_blueflute', 'item_ancientkey', 'item_nightvision',
+    'item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'
+];
+(function initCraftMaterialColors() {
+    let seen = new Set();
+    for (let npc in CRAFT_RECIPES) {
+        (CRAFT_RECIPES[npc] || []).forEach(r => (r.req || []).forEach(q => {
+            if (q.id === 'gold' || q.id === 'sherine_crystal' || QUEST_MATERIAL_IDS.includes(q.id) || seen.has(q.id)) return;
+            seen.add(q.id);
+            let d = DB.items[q.id];
+            if (d && d.type !== 'wpn' && d.type !== 'arm' && d.type !== 'acc') d.c = 'text-purple-300';
+        }));
+    }
+})();
+
 // ===== 遞迴製作：前置材料足夠即可直接製作（自動補製中間物品，消耗最底層材料）=====
 let RECIPE_BY_RESULT = null;
 function buildRecipeIndex() {
