@@ -557,7 +557,7 @@ const DB = {
         "wpn_longsword": { n: "長劍", type: "wpn", dmgS: 8, dmgL: 12, hit: 0, spd: 1.1, req: "knight,elf", safe: 6, p: 4200, gachaWeight: 50 },
         "wpn_1": { n: "斧", type: "wpn", dmgS: 3, dmgL: 5, hit: 0, spd: 1.2, req: "all", safe: 6, p: 28, gachaWeight: 100 },
         "wpn_2hsword": { n: "雙手劍", type: "wpn", w2h: true,dmgS: 14, dmgL: 16, hit: 0, spd: 0.9, req: "knight", safe: 6, p: 25200, eff: "cleave", gachaWeight: 10 },
-        "wpn_dragonslayer": { n: "屠龍劍", type: "wpn", w2h: true, dmgS: 18, dmgL: 25, hit: 2, dmgBonus: 9, spd: 0.9, req: "knight", safe: 6, p: 100000, eff: "cleave", dragonStrike: 12, legend: true, gachaWeight: 0, d: "傳說中為屠龍而鍛造的雙手巨劍，劍身中沉眠著龍魂。<br>龍的一擊：發動一般攻擊時，固定機率對場上所有敵人造成無視防禦力的無屬性傷害。" },   // 🔧 卡瑞 100% 掉落；潘朵拉抽不到
+        "wpn_dragonslayer": { n: "屠龍劍", type: "wpn", w2h: true, dmgS: 18, dmgL: 25, hit: 2, dmgBonus: 9, spd: 0.9, req: "knight", safe: 6, p: 100000, eff: "cleave", dragonStrike: 12, legend: true, gachaWeight: 0, d: "傳說中為屠龍而鍛造的雙手巨劍，劍身中沉眠著龍魂。<br>龍的一擊：發動一般攻擊時（不論命中與否）12% 機率，對場上所有敵人造成必定命中 1D(力量)+25 的無屬性物理固定傷害。" },   // 🔧 卡瑞 100% 掉落；潘朵拉抽不到
         "wpn_2": { n: "釘錘", type: "wpn", dmgS: 6, dmgL: 8, hit: 0, spd: 1.3, req: "all", safe: 6, p: 133, gachaWeight: 100 },
         "wpn_3": { n: "弓", type: "wpn", isBow: true, ranged: true, rapidfire: 20, dmgS: 2, dmgL: 2, hit: 0, spd: 1.0, req: "all", safe: 6, p: 70, gachaWeight: 100 },
         "wpn_4": { n: "矛", type: "wpn", dmgS: 6, dmgL: 8, hit: 0, spd: 1.2, req: "all", safe: 6, p: 120, gachaWeight: 100 },
@@ -1693,7 +1693,7 @@ const DB = {
         '巴列斯': [['wpn_katana',2], ['wpn_2hsword',5], ['wpn_powerless_baless',1], ['amr_plate',10], ['glv_glove',10], ['bot_baless',1], ['acc_122',1], ['acc_116',0.1], ['rng_mr',1], ['acc_127',0.5], ['acc_128',0.5], ['acc_129',0.5], ['blt_body',0.1], ['acc_130',0.1], ['acc_131',0.1], ['potion_haste',1], ['potion_brave',1], ['new_item_140',1], ['new_item_151',50], ['new_item_157',50], ['new_item_152',5], ['new_item_158',5], ['new_item_153',1], ['new_item_159',1], ['scroll_weapon',10], ['scroll_armor',20], ['bk_magic_shield',3], ['bk_heal2',3], ['bk_zombie',2], ['bk_blaze',1], ['bk_disease',1], ['bk_full_heal',1], ['bk_fire_storm',0.5], ['bk_elf_winddash',3], ['bk_elf_stormeye',2], ['bk_elf_stormshot',1]],
         '石頭高崙': [['wpn_alien',3], ['wpn_1',5], ['wpn_10',5], ['wpn_13',1], ['new_item_150',1], ['new_item_159',0.05], ['new_item_164',1], ['potion_blue',1], ['bk_rock_prison',0.5], ['new_item_207',0.1]],
         '穴居人': [['wpn_battleaxe',1], ['wpn_giantaxe',0.1], ['arm_61',0.5], ['scroll_acc',0.001]],
-        '紅鬼魂': [['amr_robe',3], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_elf_seal',0.05], ['bk_dark_shadow',0.1], ['item_soul_orb',0.01]],
+        '紅鬼魂': [['amr_robe',3], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_ult',1], ['potion_blue',1], ['bk_elf_seal',0.05], ['bk_dark_shadow',0.1, ['item_soul_orb',0.01]]],
         '紙人': [['scroll_poly',1], ['scroll_acc',0.01]],
         '羅孚妖魔': [['arm_69', 0.2], ['arm_63',3], ['potion_haste',1], ['new_item_149',1], ['new_item_157',5], ['item_orc_amulet',0.01]],
         '艾爾摩士兵': [['wpn_4',1], ['wpn_halberd',0.5], ['wpn_14',1], ['arm_66',3], ['arm_68',2], ['bot_short',2], ['glv_glove',0.5], ['scroll_armor',2], ['scroll_acc',0.01], ['potion_brave',1]],
@@ -1734,7 +1734,7 @@ const DB = {
         '骷髏神射手': [['wpn_3',3], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['acc_120',0.001], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_charm',0.1], ['new_item_212',1]],
         '骷髏警衛': [['wpn_14',2], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_charm',0.1], ['new_item_212',0.1]],
         '骷髏鬥士': [['wpn_battleaxe',3], ['arm_42',3], ['clk_mr',1], ['arm_105',2], ['potion_haste',1], ['new_item_150',1], ['bk_dex_up',0.05], ['bk_haste_spell',0.1], ['bk_solid_shield',0.01]],
-        '鬼魂': [['amr_robe',5], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['bk_elf_seal',0.01], ['bk_magic_shield',0.01], ['bk_weaken',0.5], ['item_soul_orb',0.01]],
+        '鬼魂': [['amr_robe',5], ['glv_crystal',0.01], ['potion_heal',1], ['potion_strong',1], ['potion_haste',1], ['potion_ult',1], ['bk_elf_seal',0.01], ['bk_magic_shield',0.01], ['bk_weaken',0.5, ['item_soul_orb',0.01]]],
         '鯊魚': [['acc_129',0.01], ['potion_haste',1], ['new_item_160',5], ['new_item_161',0.1], ['new_item_162',0.1]],
         '鱷魚': [['arm_45',0.01], ['new_item_154',5], ['bk_thunder',0.005], ['potion_brave',1]],
         '黑暗精靈': [['wpn_elfbow',0.5], ['wpn_30',3], ['clk_elf',0.5], ['arm_71',0.3], ['bk_tornado',0.001], ['bk_invisible',0.001], ['potion_blue',1], ['new_item_195',1], ['bk_elf_release',0.1], ['bk_meditation',0.1], ['item_blueflute',1]],
@@ -1877,7 +1877,6 @@ const MASTERY_POS_STYLE = {   // 四向按鈕四色（上紅/左藍/右紫/下�
 };
 const MAGIC_MASTERY_SKILLS = ['sk_blizzard', 'sk_tornado', 'sk_quake', 'sk_fire_storm'];   // 魔導精通可學的法師法術
 function hasMastery(id) { return !!(player && player.mastery === id); }
-function allyHasMastery(ally, id) { return !!(ally && ally.mastery === id); }   // 🔧 傭兵吃「自身存檔」的精通（不吃主玩家精通）
 function masteryChangeCost() { let n = (player.masteryChangeCnt || 0) + 1; return { gold: 3000000 * n, warrants: 50 * n }; }   // 更換費用遞增
 // 技能職業需求等級（單一事實來源）：🏅 魔導精通的妖精可學四項法師法術（需求等級沿用法師）
 function skillReqLv(sk, skId) {
@@ -3771,7 +3770,6 @@ function playerAttack() {
             dice = isLarge ? (wpn.dmgL + arrowData.dmgL) : (wpn.dmgS + arrowData.dmgS);
         }
     
-    let _mainHardSkin = mobHardSkin(target);   // 🏅 穿透精通用：主目標被扣減前的硬皮值
     let result = getPhysicalDmg(dice, target, wpn, arrowData, false, false, _sureHit);   // 🔮 麗人 5/5：必中（可自然重擊/爆擊）
 
     if (result.hit) {
@@ -3836,16 +3834,13 @@ function playerAttack() {
             if (otherIdx.length > 0 && roll(1, 100) <= _pc) {
                 // 🏅 穿透精通：穿透變成全體攻擊（命中主目標以外的「所有」敵人）；否則隨機一名
                 let _pTargets = hasMastery('k_pierce') ? otherIdx : [otherIdx[Math.floor(Math.random() * otherIdx.length)]];
-                // 🏅 穿透精通：發動穿透時 10% 機率該次傷害無視硬皮值（把主目標被硬皮扣減的量加回）
-                let _pierceDmg = result.dmg;
-                if (hasMastery('k_pierce') && _mainHardSkin > 0 && Math.random() < 0.10) _pierceDmg += _mainHardSkin;
                 _pTargets.forEach(exIdx => {
                     let exT = mapState.mobs[exIdx];
                     if (!exT || exT.curHp <= 0 || exT._dead) return;
-                    exT.curHp -= _pierceDmg;
+                    exT.curHp -= result.dmg;
                     exT.justHit = getWpnEle(player.eq.wpn, wpn);
                     mobWake(exT);
-                    logCombat(`【穿透】順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${_pierceDmg} 點傷害。`, 'player');
+                    logCombat(`【穿透】順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${result.dmg} 點傷害。`, 'player');
                     if (exT.curHp <= 0) killMob(exIdx);
                 });
             }
@@ -4760,19 +4755,13 @@ function mobHasTag(m, tag) {
 }
 
 // ===== 🔧 硬皮系統 =====
-// 硬皮值＝額外的「物理」傷害減免（魔法傷害不減）。最大值：一般怪 等級×1.5、頭目 等級×3、三大龍 等級×5、
-// 城門固定100、守護塔固定50；席琳的世界 ×2（攻城區不適用）。
+// 硬皮值＝額外的「物理」傷害減免（魔法傷害不減）。最大值＝等級×(頭目5/一般2)，席琳的世界 ×2。
 // 消磨：單手鈍器鈍擊 -1、單手鈍器重擊 -5、雙手鈍器/屠龍劍重擊 -20、其餘一般攻擊重擊 -2；
-//       傭兵以外的召喚物重擊不消磨。每 10 秒恢復 3% 最大值。
+//       傭兵以外的召喚物重擊不消磨。每 10 秒恢復 10% 最大值。
 function initHardSkin(m) {
     if (!m || !m.hard) return;
-    let mx;
-    if (m.n === '肯特城門' || m.n === '風木城門') mx = 100;          // 🔧 城門：硬皮固定 100
-    else if (m.n === '肯特守護塔' || m.n === '風木守護塔') mx = 50;   // 🔧 守護塔：硬皮固定 50
-    else {
-        let per = ['安塔瑞斯', '法利昂', '巴拉卡斯'].includes(m.n) ? 5 : (m.boss ? 3 : 1.5);   // 三大龍×5、其餘頭目×3、一般怪×1.5
-        mx = Math.floor((m.lv || 1) * per) * (m._sherine ? 2 : 1);   // 席琳的世界 ×2（攻城區不觸發 _sherine，城門/守護塔不受影響）
-    }
+    let per = m.boss ? 5 : 2;
+    let mx = (m.lv || 1) * per * (m._sherine ? 2 : 1);
     m.hardSkinMax = mx;
     m.hardSkin = mx;
 }
@@ -4782,14 +4771,11 @@ function wearHardSkin(target, wpnId, heavy, bluntProc) {
     if (!target || !(target.hardSkin > 0)) return;
     let tags = wpnId ? getWeaponTags(wpnId) : [];
     let dec = 0;
-    let _wd = wpnId ? DB.items[wpnId] : null;
-    let _isCrush = !!(_wd && _wd.eff === 'crush');
     if (heavy) {
-        if (_isCrush || wpnId === 'wpn_dragonslayer') dec += 20;   // 粉碎（雙手鈍器/大馬士革刀）與屠龍劍重擊 -20
+        let _wd = wpnId ? DB.items[wpnId] : null;
+        if ((_wd && _wd.eff === 'crush') || wpnId === 'wpn_dragonslayer') dec += 20;   // 粉碎（雙手鈍器/大馬士革刀）與屠龍劍重擊 -20
         else if (tags.includes('單手鈍器')) dec += 5;
         else dec += 2;
-    } else if (_isCrush) {
-        dec += 1;   // 🔧 粉碎武器：一般攻擊命中(未重擊)也磨 1 硬皮值
     }
     if (bluntProc) dec += 1;   // 單手鈍器鈍擊
     if (dec > 0) target.hardSkin = Math.max(0, target.hardSkin - dec);
@@ -4967,15 +4953,13 @@ function allyAttackOnce(ally) {
         let isCrit = Math.random()*100 < critR;
         let critMult = isCrit ? (1 + critD/100) : 1;
         let wpnRoll = heavy ? dice : roll(1, dice);
-        let _hsT = mobHardSkin(t);   // 🔧 穿透精通用：被硬皮扣減前的量
-        let dmg = Math.max(1, Math.floor((wpnRoll + dmgB) * critMult) + (d.extraDmg||0) - (t.dr||0) - _hsT);   // 🔧 硬皮：額外物理減傷
+        let dmg = Math.max(1, Math.floor((wpnRoll + dmgB) * critMult) + (d.extraDmg||0) - (t.dr||0) - mobHardSkin(t));   // 🔧 硬皮：額外物理減傷
         // 騎士被動（依協力者等級，僅近戰）：看破 Lv1起5%/每10等+1%上限15%→×2；殺戮 Lv20起1%/每20等+1%上限5%→×3；兩者同時=屠殺→×6
         let kp = '';
-        let _meleePassive = (ally.cls === 'knight') || allyHasMastery(ally, 'e_sword');   // 🔧 劍術精通：妖精傭兵近戰也可看破
-        if (_meleePassive && !isRanged) {
+        if (ally.cls === 'knight' && !isRanged) {
             let lv = ally.lv || 1;
             let insightRate = Math.min(15, 5 + Math.floor(lv / 10));
-            let slayRate = (ally.cls === 'knight' && lv >= 20) ? Math.min(5, 1 + Math.floor((lv - 20) / 20)) : 0;   // 殺戮/屠殺僅騎士
+            let slayRate = lv >= 20 ? Math.min(5, 1 + Math.floor((lv - 20) / 20)) : 0;
             let insight = Math.random() * 100 < insightRate;
             let slay = slayRate > 0 && (Math.random() * 100 < slayRate);
             if (insight && slay) { dmg *= 6; kp = '<span class="font-bold" style="color:#f0abfc;text-shadow:0 0 6px #d946ef;">【屠殺】</span>'; }
@@ -4988,7 +4972,7 @@ function allyAttackOnce(ally) {
         logCombat(`${kp}<span class="text-sky-300 font-bold">【協力·${ally._allyName}】</span>攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害${mark?'（'+mark+'!）':''}。`, 'player');
         // 🔧 硬皮消磨：傭兵一般攻擊（與玩家同規則）；單手鈍器鈍擊另由 allyOnHitEffects 觸發
         if (t.curHp > 0) wearHardSkin(t, ally.eq && ally.eq.wpn ? ally.eq.wpn.id : null, heavy, false);
-        allyOnHitEffects(ally, t, { dmg: dmg, heavy: heavy, hardSkin: _hsT });        // 🔧 命中後特效：穿透/即死/出血/鈍擊/切割（hardSkin 供穿透精通無視判定）
+        allyOnHitEffects(ally, t, { dmg: dmg, heavy: heavy });        // 🔧 命中後特效：穿透/即死/出血/鈍擊/切割
         allyWeaponProcs(ally, t, { hit: true, dmg: dmg });            // 🔧 普攻判定特效：瑪那回魔/共鳴/魔擊/月光爆裂
     }
     let ri = mapState.mobs.findIndex(m => m && m.uid === t.uid);
@@ -5024,7 +5008,6 @@ function allyCastMagic(ally, sk) {
             let dd = Math.max(1, Math.floor((core + extra) * mrFactor) - (t.dr||0)) + fixed;
             dd = Math.floor(dd * mageMult);
             if (ally._setRedLion5) dd = Math.floor(dd * 1.2);   // 🔮 紅獅 5/5（傭兵快照）
-            if (allyHasMastery(ally, 'e_magic') && sk.ele && sk.ele !== 'none' && sk.ele === ally.elfEle) dd = Math.floor(dd * 2);   // 🔧 傭兵魔導精通：同屬性傷害魔法 ×2
             dd = Math.max(1, Math.floor(dd * fragileMult(t)));   // 🔮 脆弱（白鳥5）
             totalDmg += dd;
         });
@@ -5037,12 +5020,6 @@ function allyCastMagic(ally, sk) {
     logCombat(`<span class="text-emerald-300 font-bold">【協力·${ally._allyName}】</span>施放 ${sk.n} → ${texts.join('、')}`, 'magic');
     targets.forEach(t => { if (t.curHp <= 0) { let ri = mapState.mobs.findIndex(m => m && m.uid === t.uid); if (ri !== -1) killMob(ri); } });
     renderMobs();
-    // 🔧 傭兵迴響精通：(11-階級)×10% 機率不消耗MP立刻再施放一次（迴響觸發的不再連鎖）
-    if (allyHasMastery(ally, 'm_echo') && !ally._echoing && Math.random() < (11 - (sk.tier || 1)) / 10) {
-        ally._echoing = true;
-        logCombat(`<span class="font-bold" style="color:#93c5fd;text-shadow:0 0 6px #3b82f6;">【協力·${ally._allyName}·迴響】</span>${sk.n} 的魔力迴盪不息，再次轟出！`, 'magic');
-        try { allyCastMagic(ally, sk); } finally { ally._echoing = false; }
-    }
 }
 // 法師協力的一次行動：有選攻擊魔法且 MP 足夠→施放並扣 MP；否則退回免費基礎光箭
 function allyMageAct(ally) {
@@ -5061,16 +5038,14 @@ function allyRapidfire(ally) {
     let wpn = (ally.eq && ally.eq.wpn) ? DB.items[ally.eq.wpn.id] : null;
     let rate = (wpn && wpn.isBow && wpn.rapidfire) ? wpn.rapidfire : (ally._rapidfire || 0);   // 直接讀當前弓的連射機率（相容舊協力快照，確保普攻與三重矢都能連射）
     if (!rate || roll(1, 100) > rate) return;
-    let _allyRapid = allyHasMastery(ally, 'e_rapid');   // 🔧 傭兵連射精通：箭數 1~4、傷害 50%（疊疾風5/5 → 100%）
-    let n = roll(1, _allyRapid ? 4 : 3);
-    let _rfMult = ally._setGale5 ? (_allyRapid ? 1.00 : 0.80) : (_allyRapid ? 0.50 : 0.30);
+    let n = roll(1, 3);
     for (let i = 0; i < n; i++) {
         let alive = []; mapState.mobs.forEach((m, idx) => { if (m && m.curHp > 0) alive.push(idx); });
         if (!alive.length) break;
         let ti = alive[Math.floor(Math.random() * alive.length)];
         let mt = mapState.mobs[ti];
         let dice = wpn ? (mt.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
-        let dmg = Math.max(1, Math.floor((roll(1, dice) + (d.rangedDmg||0) + (d.extraDmg||0) - (mt.dr||0) - mobHardSkin(mt)) * _rfMult * fragileMult(mt)));   // 🔧 硬皮：額外物理減傷；連射倍率（疾風5/5/連射精通）；脆弱
+        let dmg = Math.max(1, Math.floor((roll(1, dice) + (d.rangedDmg||0) + (d.extraDmg||0) - (mt.dr||0) - mobHardSkin(mt)) * (ally._setGale5 ? 0.80 : 0.30) * fragileMult(mt)));   // 🔧 硬皮：額外物理減傷；🔮 疾風 5/5：連射 30%→80%；脆弱
         mt.curHp -= dmg; mt.justHit = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn); mobWake(mt);
         logCombat(`<span class="text-amber-300 font-bold">【協力·${ally._allyName}·連射】</span>箭矢命中 <span class="${getMobColor(mt.lv)}">${mt.n}</span>，造成 ${dmg} 點傷害。`, 'player');
         if (mt.curHp <= 0) killMob(ti);
@@ -5150,10 +5125,8 @@ function allyProcLightArrow(ally, t) {
     let core = roll(sk.dmgDice[0], sk.dmgDice[1]) * spCoef * critMult;
     let dmg = Math.max(1, Math.floor((core + (sk.dmgBase||0) + (d.extraMp||0)) * mrFactor) - (t.dr||0));
     dmg = Math.floor(dmg * mageMult);
-    let _allyReso = allyHasMastery(ally, 'm_resonance');   // 🔧 傭兵共鳴精通：光箭+5、回魔/5
-    if (_allyReso) dmg += 5;
     if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;
-    ally.mp = Math.min(ally.mmp||0, (ally.mp||0) + Math.max(1, Math.floor(dmg/(_allyReso ? 5 : 10))));   // 共鳴回魔 → 傭兵自身
+    ally.mp = Math.min(ally.mmp||0, (ally.mp||0) + Math.max(1, Math.floor(dmg/10)));   // 共鳴回魔 → 傭兵自身
     logCombat(`<span class="text-cyan-300 font-bold">【協力·${ally._allyName}·共鳴】</span>光箭對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 ${dmg} 點傷害。${isCrit?' (爆擊!)':''}`, 'magic');
     _allyDamageMob(ally, t, dmg, 'magic');
 }
@@ -5188,14 +5161,6 @@ function allyWeaponProcs(ally, target, hitInfo) {
             logCombat(`<span class="font-bold" style="color:#d8b4fe;text-shadow:0 0 6px #a855f7;">【協力·${ally._allyName}·魔擊】</span>對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 ${res.dmg} 點傷害（${res.crit?'會心一擊':'重擊'}!）。`, 'player-crit');
             wearHardSkin(t, null, true, false);   // 🔧 硬皮消磨：傭兵魔擊重擊 -2
             _allyDamageMob(ally, t, res.dmg, getWpnEle(wpnInst, wpn));
-            // 🔧 傭兵魔擊精通：30% 額外擴散魔擊（對全體各打一次，不再連鎖）
-            if (allyHasMastery(ally, 'm_strike') && Math.random() < 0.30) {
-                let _all = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
-                if (_all.length) {
-                    logCombat(`<span class="font-bold" style="color:#e9d5ff;text-shadow:0 0 8px #a855f7;">【協力·${ally._allyName}·魔擊精通】</span>魔力向四方擴散！`, 'player-crit');
-                    _all.forEach(m => { let r2 = allyStrikeRoll(ally, m, { forceHeavy: true }); logCombat(`擴散魔擊命中 <span class="${getMobColor(m.lv)}">${m.n}</span>，造成 ${r2.dmg} 點傷害。`, 'player-crit'); _allyDamageMob(ally, m, r2.dmg, getWpnEle(wpnInst, wpn)); });
-                }
-            }
         }
     }
     if (wpn.eff === 'moonburst' && Math.random() < 0.08) {
@@ -5226,17 +5191,9 @@ function allyOnHitEffects(ally, t, res) {
         let others = [];
         mapState.mobs.forEach((m, i) => { if (m && m.curHp > 0 && !m._dead && m.uid !== t.uid) others.push(i); });
         if (others.length > 0 && roll(1, 100) <= pc) {
-            // 🔧 傭兵穿透精通：穿透變全體攻擊；發動時 10% 該傷害無視硬皮值（加回主目標硬皮量）
-            let _allyPierce = allyHasMastery(ally, 'k_pierce');
-            let _pT = _allyPierce ? others : [others[Math.floor(Math.random() * others.length)]];
-            let _pd = res.dmg;
-            if (_allyPierce && (res.hardSkin || 0) > 0 && Math.random() < 0.10) _pd += res.hardSkin;
-            _pT.forEach(_ix => {
-                let exT = mapState.mobs[_ix];
-                if (!exT || exT.curHp <= 0 || exT._dead) return;
-                logCombat(`<span class="text-sky-300 font-bold">【協力·${ally._allyName}·穿透】</span>順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${_pd} 點傷害。`, 'player');
-                _allyDamageMob(ally, exT, _pd, getWpnEle(wpnInst, wpn));
-            });
+            let exT = mapState.mobs[others[Math.floor(Math.random() * others.length)]];
+            logCombat(`<span class="text-sky-300 font-bold">【協力·${ally._allyName}·穿透】</span>順勢命中 <span class="${getMobColor(exT.lv)}">${exT.n}</span>，造成 ${res.dmg} 點傷害。`, 'player');
+            _allyDamageMob(ally, exT, res.dmg, getWpnEle(wpnInst, wpn));
         }
     }
     if (wpn.eff === 'dice_death' && t.curHp > 0 && !t._dead) {   // 骰子匕首：1% 即死（非 BOSS）
@@ -5257,7 +5214,7 @@ function allyOnHitEffects(ally, t, res) {
     }
     if (res.heavy && wpn.eff === 'cleave') {   // 切割：重擊時自身攻速 +20% 持續 2 秒（alliesTick 套用攻擊間隔 ×0.8）
         if (!(ally._cleaveTicks > 0)) logCombat(`<span class="text-teal-300 font-bold">【協力·${ally._allyName}】流暢的手感，攻速提升！</span>`, 'player');
-        ally._cleaveTicks = allyHasMastery(ally, 'k_cleave') ? 40 : 20;   // 🔧 傭兵切割精通：持續4秒
+        ally._cleaveTicks = 20;
     }
     if (ally._setWhiteBird5 && t.curHp > 0 && !t._dead) { if (!t.st) t.st = newMobStatus(); t.st.fragile = 30; }   // 🔮 白鳥 5/5（傭兵快照）：命中附加脆弱
 }
@@ -5269,9 +5226,8 @@ function allyReactCounter(mob, blocked) {
         if (!ally || !ally.eq || !ally.eq.wpn) return;
         if (!mob || mob._dead || mob.curHp <= 0) return;   // 攻擊者已被前一位傭兵反殺則停止
         if (!getWeaponTags(ally.eq.wpn.id).includes('單手劍')) return;
-        let _ctr = allyHasMastery(ally, 'k_counter');   // 🔧 傭兵反擊精通：必定發動、傷害+30%
-        if (!_ctr && Math.random() >= (blocked ? 1 : 0.50)) return;
-        let res = allyStrikeRoll(ally, mob, { forceHit: true, noHeavy: true, mult: _ctr ? 0.65 : 0.50 });
+        if (Math.random() >= (blocked ? 1 : 0.50)) return;
+        let res = allyStrikeRoll(ally, mob, { forceHit: true, noHeavy: true, mult: 0.50 });
         logCombat(`<span class="font-bold" style="color:#fbbf24;text-shadow:0 0 6px #f59e0b;">【協力·${ally._allyName}·反擊】</span>對 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 造成 ${res.dmg} 點傷害${res.crit?'（爆擊!）':''}。`, 'player');
         _allyDamageMob(ally, mob, res.dmg, getWpnEle(ally.eq.wpn, DB.items[ally.eq.wpn.id]));
     });
@@ -5283,10 +5239,8 @@ function allyReactIai(mob) {
         if (!ally || !ally.eq || !ally.eq.wpn || ally.eq.shield) return;
         if (!mob || mob._dead || mob.curHp <= 0) return;
         if (!getWeaponTags(ally.eq.wpn.id).includes('武士刀')) return;
-        let _iai = allyHasMastery(ally, 'k_counter');   // 🔧 傭兵反擊精通：居合必定發動、傷害+30%
-        if (!_iai && Math.random() >= 0.50) return;
+        if (Math.random() >= 0.50) return;
         let res = allyStrikeRoll(ally, mob, { forceHit: true });
-        if (_iai) res.dmg = Math.max(1, Math.floor(res.dmg * 1.3));
         let mark = (res.heavy && res.crit) ? '會心一擊' : (res.crit ? '爆擊' : (res.heavy ? '重擊' : ''));
         logCombat(`<span class="font-bold" style="color:#a5f3fc;text-shadow:0 0 6px #06b6d4;">【協力·${ally._allyName}·居合】</span>對 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 造成 ${res.dmg} 點傷害${mark?'（'+mark+'!）':''}。`, 'player');
         if (res.heavy) wearHardSkin(mob, null, true, false);   // 🔧 硬皮消磨：傭兵居合重擊 -2
@@ -5340,7 +5294,7 @@ function alliesTick() {
             } else {
                 let wpn = (ally.eq && ally.eq.wpn) ? DB.items[ally.eq.wpn.id] : null;
                 let _itv = Math.max(8, Math.round((wpn && wpn.spd ? wpn.spd : 1.0) * 10));
-                if (ally._cleaveTicks > 0) _itv = Math.max(8, Math.round(_itv * (allyHasMastery(ally, 'k_cleave') ? 0.67 : 0.8)));   // 🔧 切割生效中：攻擊間隔 ×0.8（傭兵切割精通 ×0.67）
+                if (ally._cleaveTicks > 0) _itv = Math.max(8, Math.round(_itv * 0.8));   // 🔧 切割生效中：攻擊間隔 ×0.8
                 ally._atkCd = _itv;
                 if (ally.cls === 'elf') allyElfAct(ally); else allyAttackOnce(ally);
             }
@@ -11094,64 +11048,36 @@ window.onload = () => {
 #saveToolsMenu{
     display:none;position:fixed;background:#1a1a1a;color:#fff;
     border:1px solid #444;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.6);
-    border-radius:8px;width:300px;z-index:2147483646;
+    border-radius:8px;width:280px;z-index:2147483646;
 }
 .saveToolBtn{background:#333;color:#fff;border:1px solid #555;border-radius:4px;
-padding:6px 10px;font-weight:bold;cursor:pointer;margin:2px;width:calc(50% - 4px);font-size:13px;}
+padding:8px 12px;font-weight:bold;cursor:pointer;margin:3px;width:calc(50% - 6px);}
 .saveToolBtn:active{background:#555}
-.saveToolBtn.export{background:#2a4d2a;border-color:#3a6d3a;}
-.saveToolBtn.import{background:#4d2a2a;border-color:#6d3a3a;}
-#saveTextArea{width:100%;height:80px;margin-top:8px;display:block;white-space:pre-wrap;
-background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size:11px;padding:6px;box-sizing:border-box;}
+#saveTextArea{width:100%;height:120px;margin-top:8px;display:block;white-space:pre-wrap;
+background:#000;color:#fff;border:1px solid #555;font-family:monospace;font-size:12px;padding:6px;box-sizing:border-box;}
 #saveToolsTitle{font-size:14px;margin-bottom:8px;text-align:center}
-.slotLabel{color:#888;font-size:12px;margin:6px 0 2px 0;text-align:left;}
-.divider{border-top:1px solid #444;margin:8px 0;}
 </style>
 
 <button id="saveToolsBtn">💾</button>
 <div id="saveToolsMenu">
 <div id="saveToolsTitle"><b>三格存檔工具</b></div>
-
-<div class="slotLabel">存檔1 (不含倉庫)</div>
-<button id="exportSlot1Btn" class="saveToolBtn export">存檔1匯出</button>
-<button id="importSlot1Btn" class="saveToolBtn import">存檔1匯入</button>
-
-<div class="slotLabel">存檔2 (不含倉庫)</div>
-<button id="exportSlot2Btn" class="saveToolBtn export">存檔2匯出</button>
-<button id="importSlot2Btn" class="saveToolBtn import">存檔2匯入</button>
-
-<div class="slotLabel">存檔3 (不含倉庫)</div>
-<button id="exportSlot3Btn" class="saveToolBtn export">存檔3匯出</button>
-<button id="importSlot3Btn" class="saveToolBtn import">存檔3匯入</button>
-
-<div class="divider"></div>
-<button id="exportAllBtn" class="saveToolBtn export">全部匯出</button>
-<button id="importAllBtn" class="saveToolBtn import">全部匯入</button>
+<button id="exportAllBtn" class="saveToolBtn">全部匯出</button>
+<button id="importAllBtn" class="saveToolBtn">全部匯入</button>
 <button id="exportTextBtn" class="saveToolBtn">純文字匯出</button>
 <button id="importTextBtn" class="saveToolBtn">純文字匯入</button>
 <input type="file" id="importSaveFile" accept=".json" style="display:none">
-<textarea id="saveTextArea" placeholder="存檔內容會顯示在這&#10;可直接複製或貼上&#10;&#10;註：1/2/3格不含倉庫&#10;全部匯出才含倉庫"></textarea>
+<textarea id="saveTextArea" placeholder="存檔內容會顯示在這&#10;可直接複製或貼上"></textarea>
 </div>
 
 <script>
 (function(){
-// 分槽存檔KEY - 不含倉庫
-const SLOT_KEYS=[
+const KEYS=[
   'lineage_idle_save_1','lineage_idle_save_2','lineage_idle_save_3',
   'lineageIdleSave','lineage_idle_save',
+  'lineage_idle_warehouse',
   'mp','hp','maxHp','maxMp','level','exp','spells','inventory',
   'equipment','adena','baseStats','currentMap','bonusPoints','antarasDeadUntil','settings'
 ];
-
-// 全部存檔KEY - 含倉庫
-const ALL_KEYS=[...SLOT_KEYS,'lineage_idle_warehouse'];
-
-// 三格對應的KEY
-const SLOT_KEY_MAP={
-  1:['lineage_idle_save_1','lineageIdleSave','lineage_idle_save'],
-  2:['lineage_idle_save_2'],
-  3:['lineage_idle_save_3']
-};
 
 const btn=document.getElementById('saveToolsBtn');
 const menu=document.getElementById('saveToolsMenu');
@@ -11161,9 +11087,9 @@ function updateMenuPos(){
   const rect=btn.getBoundingClientRect();
   const vw=window.innerWidth,vh=window.innerHeight;
   let left=rect.left,top=rect.bottom+10;
-  if(left+300>vw-5) left=vw-305;
+  if(left+280>vw-5) left=vw-285;
   if(left<5) left=5;
-  if(top+450>vh-5) top=rect.top-460;
+  if(top+300>vh-5) top=rect.top-310;
   if(top<5) top=5;
   menu.style.left=left+'px';
   menu.style.top=top+'px';
@@ -11253,35 +11179,19 @@ window.addEventListener('resize',()=>{
   if(menu.style.display==='block') updateMenuPos();
 });
 
-const getData=(keys)=>{
+const getAllData=()=>{
   const data={};
-  keys.forEach(k=>{
+  KEYS.forEach(k=>{
     const v=localStorage.getItem(k);
     if(v!==null)data[k]=v;
   });
   return data;
 };
 
-const getSlotData=(slot)=>{
-  const keys=SLOT_KEY_MAP[slot]||[];
-  return getData(keys);
-};
-
-const setData=(data,keys)=>{
-  keys.forEach(k=>localStorage.removeItem(k));
-  Object.keys(data).forEach(k=>{
-    if(keys.includes(k))localStorage.setItem(k,data[k]);
-  });
-};
-
-const setSlotData=(slot,data)=>{
-  const keys=SLOT_KEY_MAP[slot]||[];
-  keys.forEach(k=>localStorage.removeItem(k));
-  Object.keys(data).forEach(k=>{
-    if(keys.includes(k))localStorage.setItem(k,data[k]);
-  });
-  // 存檔1要同步主存檔
-  if(slot===1 && data['lineage_idle_save_1']){
+const setAllData=(data)=>{
+  KEYS.forEach(k=>localStorage.removeItem(k));
+  Object.keys(data).forEach(k=>localStorage.setItem(k,data[k]));
+  if(data['lineage_idle_save_1']){
     localStorage.setItem('lineageIdleSave',data['lineage_idle_save_1']);
     localStorage.setItem('lineage_idle_save',data['lineage_idle_save_1']);
   }
@@ -11296,85 +11206,45 @@ const download=(name,data)=>{
   URL.revokeObjectURL(a.href);
 };
 
-// 單格匯出 - 不含倉庫
-[1,2,3].forEach(slot=>{
-  document.getElementById('exportSlot'+slot+'Btn').onclick=()=>{
-    const data=getSlotData(slot);
-    if(Object.keys(data).length===0){
-      alert('存檔'+slot+' 是空的');
-      return;
-    }
-    download('lineage_存檔'+slot+'_不含倉庫',JSON.stringify(data));
-    menu.style.display='none';
-  };
-});
+// 全部匯出 - 會下載檔案
+document.getElementById('exportAllBtn').onclick=()=>{
+  download('lineage_三格備份',JSON.stringify(getAllData()));
+  menu.style.display='none';
+};
 
-// 單格匯入 - 不含倉庫 + 二次確認
-let pendingSlotImport=0;
-[1,2,3].forEach(slot=>{
-  document.getElementById('importSlot'+slot+'Btn').onclick=()=>{
-    pendingSlotImport=slot;
-    document.getElementById('importSaveFile').click();
-  };
-});
+// 純文字匯出 - 只填文字框，不下載
+document.getElementById('exportTextBtn').onclick=()=>{
+  textArea.value=JSON.stringify(getAllData(),null,2);
+  textArea.select();
+  textArea.focus();
+  // 提示已複製
+  const oldTitle=document.getElementById('saveToolsTitle').innerHTML;
+  document.getElementById('saveToolsTitle').innerHTML='<b style="color:#4f4">已匯出到文字框</b>';
+  setTimeout(()=>{
+    document.getElementById('saveToolsTitle').innerHTML=oldTitle;
+  },1500);
+};
 
+document.getElementById('importAllBtn').onclick=()=>document.getElementById('importSaveFile').click();
 document.getElementById('importSaveFile').onchange=e=>{
   const file=e.target.files[0];
   if(!file)return;
   const reader=new FileReader();
   reader.onload=()=>{
     try{
-      const data=JSON.parse(reader.result);
-      if(pendingSlotImport>0){
-        const slot=pendingSlotImport;
-        pendingSlotImport=0;
-        const confirmMsg='確定要匯入到 存檔'+slot+' 嗎？\n\n警告：會覆蓋該格目前的資料！\n註：不影響倉庫';
-        if(!confirm(confirmMsg))return;
-        setSlotData(slot,data);
-        alert('存檔'+slot+' 匯入成功！重整後生效');
-        location.reload();
-      }else{
-        // 全部匯入
-        if(!confirm('確定要匯入全部存檔嗎？\n\n警告：會覆蓋所有目前資料，包含倉庫！'))return;
-        setData(data,ALL_KEYS);
-        alert('全部匯入成功！重整後生效');
-        location.reload();
-      }
+      setAllData(JSON.parse(reader.result));
+      alert('匯入成功！重整後生效');
+      location.reload();
     }catch(err){alert('檔案錯誤:'+err);}
   };
   reader.readAsText(file);
 };
 
-// 全部匯出 - 含倉庫
-document.getElementById('exportAllBtn').onclick=()=>{
-  download('lineage_全備份_含倉庫',JSON.stringify(getData(ALL_KEYS)));
-  menu.style.display='none';
-};
-
-// 全部匯入 - 含倉庫
-document.getElementById('importAllBtn').onclick=()=>{
-  pendingSlotImport=0;
-  document.getElementById('importSaveFile').click();
-};
-
-// 純文字匯出 - 含倉庫
-document.getElementById('exportTextBtn').onclick=()=>{
-  textArea.value=JSON.stringify(getData(ALL_KEYS),null,2);
-  textArea.select();
-  textArea.focus();
-  document.getElementById('saveToolsTitle').innerHTML='<b style="color:#4f4">已匯出含倉庫</b>';
-  setTimeout(()=>{
-    document.getElementById('saveToolsTitle').innerHTML='<b>三格存檔工具</b>';
-  },1500);
-};
-
-// 純文字匯入 - 含倉庫
 document.getElementById('importTextBtn').onclick=()=>{
   const txt=textArea.value.trim();
   if(!txt)return alert('文字框是空的');
   try{
-    if(!confirm('確定要從文字框匯入全部存檔嗎？\n\n警告：會覆蓋所有目前資料，包含倉庫！'))return;
-    setData(JSON.parse(txt),ALL_KEYS);
+    setAllData(JSON.parse(txt));
     alert('匯入成功！重整後生效');
     location.reload();
   }catch(err){alert('格式錯誤:'+err);}
