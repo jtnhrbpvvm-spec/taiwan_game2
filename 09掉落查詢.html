@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>放置天堂掉落查詢系統 v3.9 - 資料庫同步版</title>
+<title>放置天堂掉落查詢系統 v4.2 - 資料庫同步版</title>
 <style>
         :root {
             --bg-color: #0f172a;
@@ -483,7 +483,7 @@
 <body>
 <div class="container">
 <header>
-<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v3.9</span></h1>
+<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v4.2</span></h1>
 <p style="color: var(--text-muted);">支援多功能進階搜尋（如：地靈、流星雨、古魯丁地區、火屬性、主動）</p>
 </header>
 <div class="main-tabs">
@@ -565,9 +565,29 @@
         // 物品放置區
 
         window.SKILLS_TAB = {"knight":[{"n":"初級治癒術","lv":16,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":16,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":16,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":16,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":16,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"增幅防禦","lv":30,"mp":10,"tier":1,"type":"buff","eff":"","rx":"","bk":"技術書(增幅防禦)"},{"n":"衝擊之暈","lv":30,"mp":12,"tier":1,"type":"atk","eff":"","rx":"需特定武器","bk":"技術書(衝擊之暈)"},{"n":"尖刺盔甲","lv":30,"mp":10,"tier":1,"type":"buff","eff":"近距離命中+5","rx":"","bk":"技術書(尖刺盔甲)"},{"n":"堅固防護","lv":40,"mp":5,"tier":2,"type":"buff","eff":"ER迴避+15","rx":"需裝盾","bk":"技術書(堅固防護)"}],"mage":[{"n":"初級治癒術","lv":4,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":4,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":4,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":4,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":4,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"解毒術","lv":8,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":8,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":8,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":8,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":8,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":8,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"極光雷電","lv":12,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":12,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":12,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":12,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":12,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":12,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":12,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":12,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"通暢氣脈術","lv":16,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":16,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":16,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":16,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":16,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"木乃伊的詛咒","lv":20,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":20,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":20,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":20,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":20,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":20,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":24,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":24,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":24,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":24,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":24,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":24,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"體力回復術","lv":28,"mp":35,"tier":7,"type":"heal","eff":"回復HP 30+(1~30)、自動施放","rx":"","bk":"魔法書(體力回復術)"},{"n":"強力加速術","lv":28,"mp":60,"tier":7,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(強力加速術)"},{"n":"冰矛圍籬","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰矛圍籬)"},{"n":"龍捲風","lv":28,"mp":45,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(龍捲風)"},{"n":"狂暴術","lv":28,"mp":40,"tier":7,"type":"buff","eff":"近距離傷害+5、AC-10","rx":"","bk":"魔法書(狂暴術)"},{"n":"召喚術","lv":28,"mp":50,"tier":7,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(召喚術)"},{"n":"神聖疾走","lv":28,"mp":20,"tier":7,"type":"buff","eff":"ER迴避+15","rx":"","bk":"魔法書(神聖疾走)"},{"n":"疾病術","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊、附加：疾病（30秒）","rx":"","bk":"魔法書(疾病術)"},{"n":"全部治癒術","lv":32,"mp":30,"tier":8,"type":"heal","eff":"回復HP 150+(3~50)","rx":"","bk":"魔法書(全部治癒術)"},{"n":"冰雪暴","lv":32,"mp":60,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰雪暴)"},{"n":"震裂術","lv":32,"mp":40,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(震裂術)"},{"n":"隱身術","lv":32,"mp":45,"tier":8,"type":"buff","eff":"","rx":"","bk":"魔法書(隱身術)"},{"n":"返生術","lv":32,"mp":50,"tier":8,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(返生術)"},{"n":"魔法封印","lv":32,"mp":30,"tier":8,"type":"atk","eff":"魔法攻擊、附加：真空吸引（16秒）","rx":"","bk":"魔法書(魔法封印)"},{"n":"聖結界","lv":36,"mp":30,"tier":9,"type":"buff","eff":"一道神聖的防禦屏障保護著你。","rx":"","bk":"魔法書(聖結界)"},{"n":"沉睡之霧","lv":36,"mp":40,"tier":9,"type":"atk","eff":"魔法攻擊、附加：沉睡（8秒）","rx":"","bk":"魔法書(沉睡之霧)"},{"n":"雷霆風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(雷霆風暴)"},{"n":"火風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火風暴)"},{"n":"流星雨","lv":40,"mp":60,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(流星雨)"},{"n":"靈魂昇華","lv":40,"mp":20,"tier":10,"type":"buff","eff":"你覺得身體充滿了活力。","rx":"","bk":"魔法書(靈魂昇華)"},{"n":"究極光裂術","lv":40,"mp":70,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(究極光裂術)"}],"elf":[{"n":"初級治癒術","lv":8,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":8,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":8,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":8,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":8,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"魔法防禦","lv":10,"mp":10,"tier":1,"type":"buff","eff":"MR+10","rx":"","bk":"精靈水晶(魔法防禦)"},{"n":"心靈轉換","lv":10,"mp":0,"tier":1,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(心靈轉換)"},{"n":"世界樹的呼喚","lv":10,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"精靈水晶(世界樹的呼喚)"},{"n":"三重矢","lv":10,"mp":15,"tier":1,"type":"atk","eff":"遠程","rx":"需特定武器","bk":"精靈水晶(三重矢)"},{"n":"解毒術","lv":16,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":16,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":16,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":16,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":16,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"淨化精神","lv":20,"mp":10,"tier":2,"type":"buff","eff":"精神+3","rx":"","bk":"精靈水晶(淨化精神)"},{"n":"屬性防禦","lv":20,"mp":10,"tier":2,"type":"buff","eff":"火屬性抗性+10、水屬性抗性+10、地屬性抗性+10、風屬性抗性+10","rx":"","bk":"精靈水晶(屬性防禦)"},{"n":"釋放元素","lv":20,"mp":30,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"精靈水晶(釋放元素)"},{"n":"魂體轉換","lv":20,"mp":0,"tier":2,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(魂體轉換)"},{"n":"極光雷電","lv":24,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":24,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":24,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":24,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":24,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":24,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":24,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":24,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"單屬性防禦","lv":30,"mp":10,"tier":3,"type":"buff","eff":"","rx":"需任一屬性","bk":"精靈水晶(單屬性防禦)"},{"n":"火焰武器","lv":30,"mp":20,"tier":3,"type":"buff","eff":"近距離傷害+3","rx":"需火屬性","bk":"精靈水晶(火焰武器)"},{"n":"風之神射","lv":30,"mp":15,"tier":3,"type":"buff","eff":"遠距離命中+5","rx":"需風屬性","bk":"精靈水晶(風之神射)"},{"n":"風之疾走","lv":30,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+10","rx":"需風屬性","bk":"精靈水晶(風之疾走)"},{"n":"大地防護","lv":30,"mp":15,"tier":3,"type":"buff","eff":"AC+4","rx":"需地屬性","bk":"精靈水晶(大地防護)"},{"n":"地面障礙","lv":30,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"需地屬性","bk":"精靈水晶(地面障礙)"},{"n":"通暢氣脈術","lv":32,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":32,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":32,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":32,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":32,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"魔法消除","lv":40,"mp":30,"tier":4,"type":"atk","eff":"魔法攻擊、附加：魔抗減半（16秒）","rx":"","bk":"精靈水晶(魔法消除)"},{"n":"召喚屬性精靈","lv":40,"mp":30,"tier":4,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚屬性精靈)"},{"n":"舞躍之火","lv":40,"mp":30,"tier":4,"type":"buff","eff":"近距離傷害+5","rx":"需火屬性","bk":"精靈水晶(舞躍之火)"},{"n":"暴風之眼","lv":40,"mp":40,"tier":4,"type":"buff","eff":"遠距離傷害+2、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風之眼)"},{"n":"大地屏障","lv":40,"mp":50,"tier":4,"type":"buff","eff":"","rx":"需地屬性","bk":"精靈水晶(大地屏障)"},{"n":"生命之泉","lv":40,"mp":50,"tier":4,"type":"heal","eff":"回復HP 250+(5~50)","rx":"需水屬性","bk":"精靈水晶(生命之泉)"},{"n":"大地的祝福","lv":40,"mp":35,"tier":4,"type":"buff","eff":"AC+5","rx":"需地屬性","bk":"精靈水晶(大地的祝福)"},{"n":"木乃伊的詛咒","lv":40,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":40,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":40,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":40,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":40,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":40,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":48,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":48,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":48,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":48,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":48,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":48,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"召喚強力屬性精靈","lv":50,"mp":50,"tier":5,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚強力屬性精靈)"},{"n":"生命的祝福","lv":50,"mp":30,"tier":5,"type":"heal","eff":"回復HP 28+(1~28)、自動施放","rx":"需水屬性","bk":"精靈水晶(生命的祝福)"},{"n":"封印禁地","lv":50,"mp":40,"tier":5,"type":"atk","eff":"魔法攻擊、附加：魔法封印（8秒）","rx":"需任一屬性","bk":"精靈水晶(封印禁地)"},{"n":"烈炎武器","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離傷害+5、近距離命中+5","rx":"需火屬性","bk":"精靈水晶(烈炎武器)"},{"n":"暴風神射","lv":50,"mp":30,"tier":5,"type":"buff","eff":"遠距離傷害+4、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風神射)"},{"n":"鋼鐵防護","lv":50,"mp":30,"tier":5,"type":"buff","eff":"AC+7","rx":"需地屬性","bk":"精靈水晶(鋼鐵防護)"},{"n":"烈焰之魂","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離一般攻擊武器擲骰必為最大值（持續128秒，效果結束後才能再施放）","rx":"需火屬性","bk":"精靈水晶(烈焰之魂)"}],"dark":[{"n":"力量提升","lv":15,"mp":10,"tier":1,"type":"buff","eff":"力+3","rx":"","bk":"黑暗精靈水晶(力量提升)"},{"n":"影之防護","lv":15,"mp":12,"tier":1,"type":"buff","eff":"MR+5","rx":"","bk":"黑暗精靈水晶(影之防護)"},{"n":"暗隱術","lv":15,"mp":10,"tier":1,"type":"buff","eff":"ER迴避+100、觸發迴避後解除並冷卻5秒（物理版魔法屏障）","rx":"","bk":"黑暗精靈水晶(暗隱術)"},{"n":"附加劇毒","lv":15,"mp":10,"tier":1,"type":"buff","eff":"武器附加劇毒","rx":"","bk":"黑暗精靈水晶(附加劇毒)"},{"n":"提煉魔石","lv":15,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"黑暗精靈水晶(提煉魔石)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"敏捷提升","lv":30,"mp":10,"tier":2,"type":"buff","eff":"敏+3","rx":"","bk":"黑暗精靈水晶(敏捷提升)"},{"n":"毒性抵抗","lv":30,"mp":20,"tier":2,"type":"buff","eff":"毒性抵抗","rx":"","bk":"黑暗精靈水晶(毒性抵抗)"},{"n":"燃燒鬥志","lv":30,"mp":20,"tier":2,"type":"buff","eff":"戰意燃燒（鬥志強化）","rx":"","bk":"黑暗精靈水晶(燃燒鬥志)"},{"n":"行走加速","lv":30,"mp":10,"tier":2,"type":"buff","eff":"行走加速（攻速+15%，可與加速術疊加）","rx":"","bk":"黑暗精靈水晶(行走加速)"},{"n":"暗影之牙","lv":45,"mp":20,"tier":3,"type":"buff","eff":"額外傷害+5","rx":"","bk":"黑暗精靈水晶(暗影之牙)"},{"n":"暗影閃避","lv":45,"mp":20,"tier":3,"type":"buff","eff":"迴避時亦可閃避魔法攻擊","rx":"","bk":"黑暗精靈水晶(暗影閃避)"},{"n":"會心一擊","lv":45,"mp":0,"tier":3,"type":"atk","eff":"爆擊強化","rx":"","bk":"黑暗精靈水晶(會心一擊)"},{"n":"迴避提升","lv":45,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+12","rx":"","bk":"黑暗精靈水晶(迴避提升)"},{"n":"雙重破壞","lv":45,"mp":20,"tier":3,"type":"buff","eff":"雙重攻擊（攻擊可追加一次命中）","rx":"","bk":"黑暗精靈水晶(雙重破壞)"},{"n":"破壞盔甲","lv":45,"mp":32,"tier":3,"type":"atk","eff":"魔法攻擊、附加：破壞盔甲（降低目標防禦，使其受到傷害提高）（8秒）","rx":"","bk":"黑暗精靈水晶(破壞盔甲)"}]};
-window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌","皮背心"],"bonus":"AC+3"},{"n":"歐西斯套裝","items":["歐西斯頭盔","歐西斯環甲","歐西斯斗篷","阿克海盾牌"],"bonus":"AC+3"},{"n":"侏儒套裝","items":["侏儒鐵盔","侏儒斗篷","侏儒圓盾"],"bonus":"AC+1、HP+5"},{"n":"銀釘套裝","items":["銀釘皮帽","銀釘皮涼鞋","銀釘皮盾","銀釘皮背心"],"bonus":"AC+3"},{"n":"骷髏套裝","items":["骷髏頭盔","骷髏盾牌","骷髏盔甲"],"bonus":"AC+2、HP+10"},{"n":"鋼鐵套裝","items":["鋼鐵手套","鋼鐵頭盔","鋼鐵盾牌","鋼鐵長靴","鋼鐵金屬盔甲"],"bonus":"AC+3"},{"n":"法師套裝","items":["法師之帽","法師長袍"],"bonus":"MP+50"},{"n":"死亡騎士套裝","items":["死亡騎士手套","死亡騎士盔甲","死亡騎士長靴","死亡騎士頭盔"],"bonus":"AC+4"},{"n":"克特套裝","items":["克特手套","克特盔甲","克特長靴","克特頭盔"],"bonus":"AC+4"},{"n":"抗魔套裝","items":["抗魔戒指","抗魔項鍊","抗魔皮帶"],"bonus":"MR+5"},{"n":"守護套裝","items":["守護戒指","守護項鍊","守護皮帶"],"bonus":"AC+1"},{"n":"四大軍王套裝","items":["冥法軍王斗篷","法令軍王長袍","暗殺軍王手套","魔獸軍王長靴"],"bonus":"HP+30、MP+30、HP自然恢復+10、MP自然恢復+10、魅力+3"}];
+window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌","皮背心"],"bonus":"AC+3"},{"n":"歐西斯套裝","items":["歐西斯頭盔","歐西斯環甲","歐西斯斗篷","阿克海盾牌"],"bonus":"AC+3"},{"n":"侏儒套裝","items":["侏儒鐵盔","侏儒斗篷","侏儒圓盾"],"bonus":"AC+1、HP+5"},{"n":"銀釘套裝","items":["銀釘皮帽","銀釘皮涼鞋","銀釘皮盾","銀釘皮背心"],"bonus":"AC+3"},{"n":"骷髏套裝","items":["骷髏頭盔","骷髏盾牌","骷髏盔甲"],"bonus":"AC+2、HP+10"},{"n":"鋼鐵套裝","items":["鋼鐵手套","鋼鐵頭盔","鋼鐵盾牌","鋼鐵長靴","鋼鐵金屬盔甲"],"bonus":"AC+3"},{"n":"法師套裝","items":["法師之帽","法師長袍"],"bonus":"MP+50"},{"n":"死亡騎士套裝","items":["死亡騎士手套","死亡騎士盔甲","死亡騎士長靴","死亡騎士頭盔"],"bonus":"AC+4、4件集齊變身「真‧死亡騎士」(額外傷害+6、額外命中+6、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"克特套裝","items":["克特手套","克特盔甲","克特長靴","克特頭盔"],"bonus":"AC+4、4件集齊變身「真‧克特」(額外傷害+4、額外命中+8、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"抗魔套裝","items":["抗魔戒指","抗魔項鍊","抗魔皮帶"],"bonus":"MR+5"},{"n":"守護套裝","items":["守護戒指","守護項鍊","守護皮帶"],"bonus":"AC+1"},{"n":"四大軍王套裝","items":["冥法軍王斗篷","法令軍王長袍","暗殺軍王手套","魔獸軍王長靴"],"bonus":"HP+30、MP+30、HP自然恢復+10、MP自然恢復+10、魅力+3"},{"n":"惡魔套裝","items":["惡魔頭盔","惡魔盔甲","惡魔手套","惡魔長靴"],"bonus":"AC-2、HP自然恢復+5、變身「惡魔」(額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加)"}];
 
         window.ITEMS_DB = {
+            "item_pride_pass_11": {"n":"傲慢之塔傳送符(11F)","type":"misc","p":0,"c":"text-amber-300","noUse":true,"gachaWeight":0,"prideKind":"pass","prideTier":11,"d":"攜帶在身上即可進入傲慢之塔 11~20樓"},
+            "item_pride_dom_11": {"n":"傲慢之塔支配符(11F)","type":"misc","p":0,"c":"text-orange-300","noUse":true,"gachaWeight":0,"prideKind":"dom","prideTier":11,"d":"攜帶在身上即可進入傲慢之塔11~20樓，並可使用傳送術與瞬間移動卷軸"},
+            "item_pride_scroll_11": {"n":"傲慢之塔移動卷軸(11F)","type":"misc","p":0,"c":"text-sky-300","noUse":true,"gachaWeight":0,"prideKind":"scroll","prideTier":11,"d":"進入 傲慢之塔11~20樓 時消耗一張（持有 傳送符 或 支配符 則不消耗）。"},
+            "item_pride_sealed_11": {"n":"封印的傲慢之塔傳送符(11F)","type":"misc","p":0,"c":"text-amber-200","eff":"pride_unseal","prideKind":"sealed","prideTier":11,"gachaWeight":0,"d":"封印著傲慢之塔之力的符咒。使用後解除封印，獲得 傲慢之塔傳送符(11F)。"},
+            "item_pride_pass_21": {"n":"傲慢之塔傳送符(21F)","type":"misc","p":0,"c":"text-amber-300","noUse":true,"gachaWeight":0,"prideKind":"pass","prideTier":21,"d":"攜帶在身上即可進入傲慢之塔 21~30樓"},
+            "item_pride_dom_21": {"n":"傲慢之塔支配符(21F)","type":"misc","p":0,"c":"text-orange-300","noUse":true,"gachaWeight":0,"prideKind":"dom","prideTier":21,"d":"攜帶在身上即可進入傲慢之塔21~30樓，並可使用傳送術與瞬間移動卷軸"},
+            "item_pride_scroll_21": {"n":"傲慢之塔移動卷軸(21F)","type":"misc","p":0,"c":"text-sky-300","noUse":true,"gachaWeight":0,"prideKind":"scroll","prideTier":21,"d":"進入 傲慢之塔21~30樓 時消耗一張（持有 傳送符 或 支配符 則不消耗）。"},
+            "item_pride_sealed_21": {"n":"封印的傲慢之塔傳送符(21F)","type":"misc","p":0,"c":"text-amber-200","eff":"pride_unseal","prideKind":"sealed","prideTier":21,"gachaWeight":0,"d":"封印著傲慢之塔之力的符咒。使用後解除封印，獲得 傲慢之塔傳送符(21F)。"},
+            "item_pride_pass_31": {"n":"傲慢之塔傳送符(31F)","type":"misc","p":0,"c":"text-amber-300","noUse":true,"gachaWeight":0,"prideKind":"pass","prideTier":31,"d":"攜帶在身上即可進入傲慢之塔 31~40樓"},
+            "item_pride_dom_31": {"n":"傲慢之塔支配符(31F)","type":"misc","p":0,"c":"text-orange-300","noUse":true,"gachaWeight":0,"prideKind":"dom","prideTier":31,"d":"攜帶在身上即可進入傲慢之塔31~40樓，並可使用傳送術與瞬間移動卷軸"},
+            "item_pride_scroll_31": {"n":"傲慢之塔移動卷軸(31F)","type":"misc","p":0,"c":"text-sky-300","noUse":true,"gachaWeight":0,"prideKind":"scroll","prideTier":31,"d":"進入 傲慢之塔31~40樓 時消耗一張（持有 傳送符 或 支配符 則不消耗）。"},
+            "item_pride_sealed_31": {"n":"封印的傲慢之塔傳送符(31F)","type":"misc","p":0,"c":"text-amber-200","eff":"pride_unseal","prideKind":"sealed","prideTier":31,"gachaWeight":0,"d":"封印著傲慢之塔之力的符咒。使用後解除封印，獲得 傲慢之塔傳送符(31F)。"},
+            "item_pride_pass_41": {"n":"傲慢之塔傳送符(41F)","type":"misc","p":0,"c":"text-amber-300","noUse":true,"gachaWeight":0,"prideKind":"pass","prideTier":41,"d":"攜帶在身上即可進入傲慢之塔 41~50樓"},
+            "item_pride_dom_41": {"n":"傲慢之塔支配符(41F)","type":"misc","p":0,"c":"text-orange-300","noUse":true,"gachaWeight":0,"prideKind":"dom","prideTier":41,"d":"攜帶在身上即可進入傲慢之塔41~50樓，並可使用傳送術與瞬間移動卷軸"},
+            "item_pride_scroll_41": {"n":"傲慢之塔移動卷軸(41F)","type":"misc","p":0,"c":"text-sky-300","noUse":true,"gachaWeight":0,"prideKind":"scroll","prideTier":41,"d":"進入 傲慢之塔41~50樓 時消耗一張（持有 傳送符 或 支配符 則不消耗）。"},
+            "item_pride_sealed_41": {"n":"封印的傲慢之塔傳送符(41F)","type":"misc","p":0,"c":"text-amber-200","eff":"pride_unseal","prideKind":"sealed","prideTier":41,"gachaWeight":0,"d":"封印著傲慢之塔之力的符咒。使用後解除封印，獲得 傲慢之塔傳送符(41F)。"},
+            "item_pride_pass_51": {"n":"傲慢之塔傳送符(51F)","type":"misc","p":0,"c":"text-amber-300","noUse":true,"gachaWeight":0,"prideKind":"pass","prideTier":51,"d":"攜帶在身上即可進入傲慢之塔 51~60樓"},
+            "item_pride_dom_51": {"n":"傲慢之塔支配符(51F)","type":"misc","p":0,"c":"text-orange-300","noUse":true,"gachaWeight":0,"prideKind":"dom","prideTier":51,"d":"攜帶在身上即可進入傲慢之塔51~60樓，並可使用傳送術與瞬間移動卷軸"},
+            "item_pride_scroll_51": {"n":"傲慢之塔移動卷軸(51F)","type":"misc","p":0,"c":"text-sky-300","noUse":true,"gachaWeight":0,"prideKind":"scroll","prideTier":51,"d":"進入 傲慢之塔51~60樓 時消耗一張（持有 傳送符 或 支配符 則不消耗）。"},
+            "item_pride_sealed_51": {"n":"封印的傲慢之塔傳送符(51F)","type":"misc","p":0,"c":"text-amber-200","eff":"pride_unseal","prideKind":"sealed","prideTier":51,"gachaWeight":0,"d":"封印著傲慢之塔之力的符咒。使用後解除封印，獲得 傲慢之塔傳送符(51F)。"},
             "wpn_alien": {"n":"亞連","type":"wpn","dmgS":4,"dmgL":4,"hit":2,"spd":1.3,"req":"all","safe":6,"p":14,"gachaWeight":100},
             "wpn_katana": {"n":"武士刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":1.1,"req":"knight,elf","safe":6,"p":28200,"gachaWeight":10},
             "wpn_longsword": {"n":"長劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":4200,"gachaWeight":50},
@@ -649,6 +669,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_claw_dark": {"n":"黑暗鋼爪","type":"wpn","w2h":true,"dmgS":14,"dmgL":11,"hit":0,"dmgBonus":2,"spd":0.9,"req":"dark","safe":6,"p":5000,"eff":"combo","gachaWeight":50},
             "wpn_claw_gloom": {"n":"幽暗鋼爪","type":"wpn","w2h":true,"dmgS":17,"dmgL":15,"hit":0,"dmgBonus":3,"spd":0.9,"req":"dark","safe":6,"p":36000,"eff":"combo","gachaWeight":30},
             "wpn_claw_damascus": {"n":"大馬士革鋼爪","type":"wpn","w2h":true,"dmgS":17,"dmgL":13,"hit":0,"spd":0.9,"req":"dark","safe":6,"p":48000,"eff":"combo","hardWear":1,"gachaWeight":50},
+            "wpn_claw_abyss": {"n":"暗黑鋼爪","type":"wpn","w2h":true,"dmgS":22,"dmgL":18,"hit":4,"dmgBonus":5,"spd":0.9,"req":"dark","safe":6,"p":10000,"eff":"combo","gachaWeight":5},
             "wpn_baranka_claw": {"n":"魔獸軍王之爪","type":"wpn","w2h":true,"dmgS":12,"dmgL":12,"hit":0,"dmgBonus":2,"spd":0.8,"req":"dark","safe":6,"p":25000,"eff":"combo","gachaWeight":10},
             "wpn_baranka_steelclaw": {"n":"巴蘭卡鋼爪","type":"wpn","w2h":true,"dmgS":18,"dmgL":18,"hit":0,"dmgBonus":8,"spd":0.7,"req":"dark","safe":6,"p":125000,"eff":"combo","legend":true,"gachaWeight":1},
             "wpn_dk_flameblade": {"n":"死亡騎士的烈炎之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":5,"dmgBonus":2,"spd":1,"req":"knight","safe":6,"p":152000,"legend":true,"gachaWeight":1,"spellProc":{"skn":"烈炎術","dice":[1,60],"ele":"fire"},"d":"1%機率額外施放烈炎術，每+1發動機率增加1%。"},
@@ -676,6 +697,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_dual_dark": {"n":"黑暗雙刀","type":"wpn","w2h":true,"dmgS":12,"dmgL":8,"hit":3,"spd":0.8,"req":"dark","safe":6,"p":8800,"eff":"combo","gachaWeight":50},
             "wpn_dual_shadow": {"n":"暗影雙刀","type":"wpn","w2h":true,"dmgS":11,"dmgL":7,"hit":1,"spd":0.8,"req":"dark","safe":6,"p":3600,"eff":"combo","gachaWeight":100},
             "wpn_dual_damascus": {"n":"大馬士革雙刀","type":"wpn","w2h":true,"dmgS":15,"dmgL":9,"hit":1,"spd":0.8,"req":"dark","safe":6,"p":39600,"eff":"combo","hardWear":1,"gachaWeight":50},
+            "wpn_dual_abyss": {"n":"暗黑雙刀","type":"wpn","w2h":true,"dmgS":18,"dmgL":14,"hit":4,"dmgBonus":3,"spd":0.8,"req":"dark","safe":6,"p":80000,"eff":"combo","gachaWeight":5},
             "wpn_xbow_dark": {"n":"黑暗十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":35,"w2h":true,"dmgS":2,"dmgL":2,"hit":4,"dmgBonus":0,"spd":1,"req":"elf,dark","safe":6,"p":17300,"gachaWeight":70},
             "wpn_xbow_gloom": {"n":"幽暗十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":70,"w2h":true,"dmgS":3,"dmgL":2,"hit":5,"dmgBonus":2,"spd":1,"req":"elf,dark","safe":6,"p":33300,"gachaWeight":50},
             "wpn_manadagger": {"n":"魔力短劍","type":"wpn","dmgS":6,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.8,"req":"all","safe":6,"p":191000,"eff":"mp_drain","unBonus":true,"str":1,"mpR":1,"legend":true,"gachaWeight":1,"d":"蘊含魔力的短劍。一般攻擊命中恢復 MP，並帶出血。"},
@@ -717,7 +739,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "hlm_kurt": {"n":"克特頭盔","type":"arm","slot":"helm","ac":3,"req":"knight","safe":4,"p":32000,"gachaWeight":1},
             "arm_58": {"n":"淨化頭飾","type":"arm","slot":"helm","ac":0,"req":"elf","p":1,"gachaWeight":0},
             "amr_plate": {"n":"金屬盔甲","type":"arm","slot":"armor","ac":7,"req":"knight","safe":4,"p":51800,"gachaWeight":30},
-            "arm_59": {"n":"水晶盔甲","type":"arm","slot":"armor","ac":8,"req":"knight","safe":4,"p":48000,"gachaWeight":0},
+            "arm_59": {"n":"水晶盔甲","type":"arm","slot":"armor","ac":8,"req":"knight","safe":4,"p":48000,"gachaWeight":20},
             "arm_60": {"n":"青銅盔甲","type":"arm","slot":"armor","ac":6,"req":"knight","safe":4,"p":22400,"gachaWeight":50},
             "arm_61": {"n":"藤甲","type":"arm","slot":"armor","ac":6,"req":"knight","safe":4,"p":28000,"gachaWeight":50},
             "arm_62": {"n":"皮甲","type":"arm","slot":"armor","ac":6,"req":"knight","safe":4,"p":32300,"gachaWeight":50},
@@ -809,7 +831,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "arm_115": {"n":"魔法能量之書","type":"arm","slot":"shield","ac":2,"req":"mage","safe":4,"p":9800,"int":1,"gachaWeight":20,"block":10},
             "acc_116": {"n":"傳送控制戒指","type":"acc","slot":"ring","ac":0,"req":"all","safe":0,"p":150000,"gachaWeight":1,"d":"攜帶在背包即可生效（無需裝備）：手動施放傳送術/使用瞬移卷軸時必定遭遇 BOSS。"},
             "acc_117": {"n":"變形控制戒指","type":"acc","slot":"ring","ac":0,"req":"all","safe":0,"p":150000,"gachaWeight":1,"d":"攜帶在背包即可生效（無需裝備）：使用變形卷軸時可指定變身型態。"},
-            "acc_summon_ctrl": {"n":"召喚控制戒指","type":"acc","slot":"ring","ac":0,"req":"all","safe":0,"p":50000,"gachaWeight":1,"d":"裝備後：你（非傭兵）的召喚物——夥伴/迷魅/造屍術/召喚術/召喚屬性精靈/召喚強力屬性精靈——命中擲骰若為 19 且原本未命中，視為命中。"},
+            "acc_summon_ctrl": {"n":"召喚控制戒指","type":"acc","slot":"ring","ac":0,"req":"all","safe":0,"p":50000,"gachaWeight":1,"d":"裝備後，召喚物保底命中率提升。"},
             "rng_earth": {"n":"地靈戒指","type":"acc","slot":"ring","ac":0,"resEarth":10,"req":"all","safe":0,"p":50000,"gachaWeight":1,"d":"蘊含大地之力的戒指，地屬性抗性 +10。"},
             "rng_water": {"n":"水靈戒指","type":"acc","slot":"ring","ac":0,"resWater":10,"req":"all","safe":0,"p":50000,"gachaWeight":1,"d":"蘊含流水之力的戒指，水屬性抗性 +10。"},
             "rng_wind": {"n":"風靈戒指","type":"acc","slot":"ring","ac":0,"resWind":10,"req":"all","safe":0,"p":50000,"gachaWeight":1,"d":"蘊含疾風之力的戒指，風屬性抗性 +10。"},
@@ -824,6 +846,30 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "item_yeti_head": {"n":"雪怪首級","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"自雪怪斬下的巨大首級。可在沉默洞穴交給「布魯迪卡」交換影子長靴。（無法使用）"},
             "item_mastery_proof": {"n":"精通之證","p":0,"c":"text-blue-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"證明你已超越自身極限的徽記。帶回威頓村交給「漢」，開啟職業精通之路。（唯一・無法存入倉庫・無法販售）"},
             "item_soul_orb": {"n":"靈魂之球","type":"misc","p":0,"c":"text-slate-200","eff":"soulorb","gachaWeight":0,"d":"蘊含微弱靈魂之力的水晶球。據說與某把失去魔力的魔杖共鳴時，能喚回沉睡的傳說。"},
+            "mat_chimera_snake": {"n":"奇美拉之皮(蛇)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"奇美拉身上蛇之部位的堅韌皮革。可在傲慢之塔入口交給巴姆特，製作 詛咒的皮革(地)。（製作材料）"},
+            "mat_chimera_dragon": {"n":"奇美拉之皮(龍)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"奇美拉身上龍之部位的堅韌皮革。可在傲慢之塔入口交給巴姆特，製作 詛咒的皮革(水)。（製作材料）"},
+            "mat_chimera_goat": {"n":"奇美拉之皮(山羊)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"奇美拉身上山羊之部位的堅韌皮革。可在傲慢之塔入口交給巴姆特，製作 詛咒的皮革(風)。（製作材料）"},
+            "mat_chimera_lion": {"n":"奇美拉之皮(獅子)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"奇美拉身上獅子之部位的堅韌皮革。可在傲慢之塔入口交給巴姆特，製作 詛咒的皮革(火)。（製作材料）"},
+            "mat_cursed_leather_earth": {"n":"詛咒的皮革(地)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被大地之詛咒浸染的皮革。製作 地屬性斗篷 的材料。（製作材料）"},
+            "mat_cursed_leather_water": {"n":"詛咒的皮革(水)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被流水之詛咒浸染的皮革。製作 水屬性斗篷 的材料。（製作材料）"},
+            "mat_cursed_leather_wind": {"n":"詛咒的皮革(風)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被疾風之詛咒浸染的皮革。製作 風屬性斗篷 的材料。（製作材料）"},
+            "mat_cursed_leather_fire": {"n":"詛咒的皮革(火)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被烈焰之詛咒浸染的皮革。製作 火屬性斗篷 的材料。（製作材料）"},
+            "wpn_crystal_dagger": {"n":"水晶短劍","type":"wpn","dmgS":10,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.9,"req":"all","safe":6,"p":18000,"gachaWeight":10,"d":"以水晶打磨而成的鋒利匕首，攻擊帶有出血。"},
+            "arm_pride_medusa_shield": {"n":"梅杜莎盾牌","type":"arm","slot":"shield","ac":2,"immStone":true,"req":"all","safe":4,"p":9600,"gachaWeight":10,"block":40,"d":"鑲有梅杜莎之眼的盾牌。免疫石化。"},
+            "acc_jenis_ring": {"n":"潔尼斯戒指","type":"acc","slot":"ring","ac":0,"immPoison":true,"req":"all","safe":0,"p":250000,"gachaWeight":1,"d":"潔尼斯女王的戒指。免疫中毒狀態（包括劇毒、猛毒、麻痺）。"},
+            "clk_pride_earth": {"n":"地屬性斗篷","type":"arm","slot":"cloak","ac":3,"resEarth":10,"mpR":2,"req":"all","safe":4,"p":150000,"gachaWeight":1,"d":"地屬性抗性 +10，MP 自然恢復量 +2。"},
+            "clk_pride_water": {"n":"水屬性斗篷","type":"arm","slot":"cloak","ac":3,"resWater":10,"mpR":2,"req":"all","safe":4,"p":150000,"gachaWeight":1,"d":"水屬性抗性 +10，MP 自然恢復量 +2。"},
+            "clk_pride_fire": {"n":"火屬性斗篷","type":"arm","slot":"cloak","ac":3,"resFire":10,"mpR":2,"req":"all","safe":4,"p":150000,"gachaWeight":1,"d":"火屬性抗性 +10，MP 自然恢復量 +2。"},
+            "clk_pride_wind": {"n":"風屬性斗篷","type":"arm","slot":"cloak","ac":3,"resWind":10,"mpR":2,"req":"all","safe":4,"p":150000,"gachaWeight":1,"d":"風屬性抗性 +10，MP 自然恢復量 +2。"},
+            "bot_dark": {"n":"黑暗長靴","type":"arm","slot":"boots","ac":2,"dex":1,"req":"dark","safe":6,"p":37000,"gachaWeight":10,"d":"敏捷 +1。"},
+            "hlm_dark": {"n":"黑暗頭飾","type":"arm","slot":"helm","ac":1,"mpR":3,"req":"dark","safe":4,"p":7000,"gachaWeight":30,"d":"MP 自然恢復量 +3。"},
+            "shd_phantom_eye": {"n":"幻象眼魔的心眼","type":"arm","slot":"shield","ac":0,"int":1,"mmp":100,"mpR":2,"immStone":true,"block":10,"req":"mage","safe":6,"p":127000,"gachaWeight":1,"legend":true,"d":"幻象眼魔的核心之眼。智力 +1、MP +100、MP 自然恢復量 +2，免疫石化。"},
+            "clk_marcus": {"n":"馬昆斯斗篷","type":"arm","slot":"cloak","ac":2,"mhp":60,"hpR":4,"mr":3,"mrPerEn":3,"req":"mage,dark","safe":6,"p":123000,"gachaWeight":1,"d":"HP +60、HP 自然恢復量 +4、MR +3（每強化 +1，MR 額外 +3）。"},
+            "clk_silver_light": {"n":"銀光斗篷","type":"arm","slot":"cloak","ac":2,"mpR":4,"mr":15,"req":"mage,elf,dark","safe":4,"p":63000,"gachaWeight":1,"d":"MP 自然恢復量 +4、MR +15。"},
+            "hlm_demon": {"n":"惡魔頭盔","type":"arm","slot":"helm","ac":2,"req":"all","safe":4,"p":25000,"gachaWeight":1,"d":"惡魔套裝之一。<br>【惡魔套裝】頭盔＋盔甲＋手套＋長靴 集齊：AC-2、HP自然恢復+5、變身「惡魔」（額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加）。"},
+            "amr_demon": {"n":"惡魔盔甲","type":"arm","slot":"armor","ac":6,"req":"all","safe":4,"p":33000,"gachaWeight":1,"d":"惡魔套裝之一。<br>【惡魔套裝】頭盔＋盔甲＋手套＋長靴 集齊：AC-2、HP自然恢復+5、變身「惡魔」（額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加）。"},
+            "glv_demon": {"n":"惡魔手套","type":"arm","slot":"gloves","ac":2,"req":"all","safe":4,"p":18000,"gachaWeight":1,"d":"惡魔套裝之一。<br>【惡魔套裝】頭盔＋盔甲＋手套＋長靴 集齊：AC-2、HP自然恢復+5、變身「惡魔」（額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加）。"},
+            "bot_demon": {"n":"惡魔長靴","type":"arm","slot":"boots","ac":3,"req":"all","safe":4,"p":18000,"gachaWeight":1,"d":"惡魔套裝之一。<br>【惡魔套裝】頭盔＋盔甲＋手套＋長靴 集齊：AC-2、HP自然恢復+5、變身「惡魔」（額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加）。"},
             "rng_mr": {"n":"抗魔戒指","type":"acc","slot":"ring","ac":0,"mr":5,"req":"all","safe":0,"p":10000,"gachaWeight":1},
             "acc_118": {"n":"守護戒指","type":"acc","slot":"ring","ac":1,"req":"all","safe":0,"p":10000,"gachaWeight":1},
             "acc_119": {"n":"長者戒指","type":"acc","slot":"ring","ac":0,"req":"all","safe":0,"p":10000,"mmp":10,"mpR":1,"gachaWeight":1},
@@ -832,6 +878,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "acc_121": {"n":"體質項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":25000,"con":1,"gachaWeight":1},
             "amu_int": {"n":"智力項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":25000,"int":1,"gachaWeight":1},
             "acc_122": {"n":"精神項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":25000,"wis":1,"gachaWeight":1},
+            "amu_cha": {"n":"魅力項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":100000,"cha":1,"gachaWeight":1},
             "acc_123": {"n":"妖魔戰士項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":5000,"mhp":20,"gachaWeight":20},
             "acc_124": {"n":"守護項鍊","type":"acc","slot":"amulet","ac":1,"req":"all","safe":0,"p":15000,"gachaWeight":1},
             "acc_125": {"n":"長老項鍊","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":20000,"mmp":30,"mpR":1,"gachaWeight":1},
@@ -942,10 +989,10 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "new_item_161": {"n":"品質藍寶石","p":650,"gachaWeight":0},
             "new_item_162": {"n":"高品質藍寶石","p":2000,"gachaWeight":0},
             "mat_unicorn_horn": {"n":"神聖獨角獸之角","p":5000,"gachaWeight":0,"d":"獨角獸頭上的神聖之角，蘊含純淨之力。製作熾炎天使弓的核心材料。（獨角獸 0.1% 掉落）"},
-            "mat_wind_breath": {"n":"風之氣息","p":1500,"gachaWeight":0,"d":"凝聚自風精靈王的元素氣息。（風精靈王 1% 掉落）"},
-            "mat_water_breath": {"n":"水之氣息","p":1500,"gachaWeight":0,"d":"凝聚自水精靈王的元素氣息。（水精靈王 1% 掉落）"},
-            "mat_fire_breath": {"n":"火之氣息","p":1500,"gachaWeight":0,"d":"凝聚自火精靈王的元素氣息。（火精靈王 1% 掉落）"},
-            "mat_earth_breath": {"n":"土之氣息","p":1500,"gachaWeight":0,"d":"凝聚自地精靈王的元素氣息。（地精靈王 1% 掉落）"},
+            "mat_wind_breath": {"n":"風之氣息","p":1500,"gachaWeight":0,"d":"凝聚自風精靈的元素氣息。"},
+            "mat_water_breath": {"n":"水之氣息","p":1500,"gachaWeight":0,"d":"凝聚自水精靈的元素氣息。"},
+            "mat_fire_breath": {"n":"火之氣息","p":1500,"gachaWeight":0,"d":"凝聚自火精靈的元素氣息。"},
+            "mat_earth_breath": {"n":"土之氣息","p":1500,"gachaWeight":0,"d":"凝聚自地精靈的元素氣息。"},
             "mat_griffon_feather": {"n":"格利芬羽毛","p":1000,"gachaWeight":0,"d":"格利芬身上輕盈而堅韌的羽毛。（格利芬 1% 掉落）"},
             "new_item_163": {"n":"潘的鬃毛","p":10,"gachaWeight":0},
             "new_item_164": {"n":"粗糙的米索莉塊","p":20,"gachaWeight":0},
@@ -1284,10 +1331,10 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "necromancer": {"hard":true,"n":"巫師","lv":42,"s":"S","beh":"主動","race":"長老","e":"none","hp":800,"ac":-32,"mr":80,"exp":1765,"goldMin":350,"goldMax":500,"atkSpd":2,"dmg":[2,31],"db":42,"hit":35,"mag":{"skn":"極光雷電","cd":80,"dmg":[1,80],"db":82,"ele":"wind"}},
             "lava_golem": {"hard":true,"n":"熔岩高崙","lv":43,"s":"L","beh":"主動","race":"高崙","e":"fire","hp":700,"ac":-18,"mr":50,"exp":1850,"goldMin":350,"goldMax":500,"atkSpd":3,"dmg":[1,21],"db":86,"hit":30,"mag":{"skn":"燃燒的火球","cd":80,"dmg":[1,20],"db":43,"ele":"fire"}},
             "nm_027": {"n":"紅鬼魂","lv":43,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":666,"ac":-33,"mr":5,"exp":1850,"goldMin":150,"goldMax":700,"atkSpd":2,"dmg":[3,33],"db":0,"hit":36},
-            "nm_028": {"n":"火精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"fire","hp":1500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":2,"dmg":[3,41],"db":43,"hit":40,"mag":{"skn":"爆炎的火球","cd":50,"dmg":[1,50],"db":53,"ele":"fire","alwaysHit":true}},
-            "nm_029": {"n":"水精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"water","hp":2500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":2,"dmg":[3,21],"db":33,"hit":40,"mag":{"skn":"水柱","cd":50,"dmg":[3,30],"db":43,"ele":"water","alwaysHit":true}},
-            "nm_030": {"n":"風精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"wind","hp":1500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":1,"dmg":[3,41],"db":10,"hit":43,"mag":{"skn":"龍捲風","cd":50,"dmg":[4,30],"db":30,"ele":"wind","alwaysHit":true}},
-            "nm_031": {"n":"地精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"earth","hp":2000,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":3,"dmg":[2,61],"db":80,"hit":49,"mag":{"skn":"巨石之擊","cd":50,"dmg":[2,60],"db":23,"ele":"earth","alwaysHit":true}},
+            "nm_028": {"n":"夢幻之島火精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"fire","hp":1500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":2,"dmg":[3,41],"db":43,"hit":40,"mag":{"skn":"爆炎的火球","cd":50,"dmg":[1,50],"db":53,"ele":"fire","alwaysHit":true}},
+            "nm_029": {"n":"夢幻之島水精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"water","hp":2500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":2,"dmg":[3,21],"db":33,"hit":40,"mag":{"skn":"水柱","cd":50,"dmg":[3,30],"db":43,"ele":"water","alwaysHit":true}},
+            "nm_030": {"n":"夢幻之島風精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"wind","hp":1500,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":1,"dmg":[3,41],"db":10,"hit":43,"mag":{"skn":"龍捲風","cd":50,"dmg":[4,30],"db":30,"ele":"wind","alwaysHit":true}},
+            "nm_031": {"n":"夢幻之島地精靈王","lv":43,"s":"L","beh":"主動","race":"元素","elem":true,"boss":true,"e":"earth","hp":2000,"ac":-53,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":3,"dmg":[2,61],"db":80,"hit":49,"mag":{"skn":"巨石之擊","cd":50,"dmg":[2,60],"db":23,"ele":"earth","alwaysHit":true}},
             "nm_032": {"n":"獨角獸","lv":43,"s":"L","beh":"主動","race":"獨角獸","boss":true,"e":"earth","hp":3000,"ac":-48,"mr":45,"exp":3601,"goldMin":450,"goldMax":790,"atkSpd":1.5,"dmg":[2,31],"db":60,"hit":43},
             "nm_037": {"n":"夢魘","lv":40,"s":"L","beh":"主動","race":"惡魔","boss":true,"e":"none","hp":1500,"ac":-42,"mr":80,"exp":1601,"goldMin":161,"goldMax":264,"atkSpd":1.5,"dmg":[1,100],"db":20,"hit":40},
             "nm_038": {"n":"夢幻之島蘑菇","lv":30,"s":"S","beh":"主動","race":"蘑菇","e":"earth","hp":250,"ac":-27,"mr":0,"exp":901,"goldMin":165,"goldMax":215,"atkSpd":1,"dmg":[1,47],"db":15,"hit":23,"mag":{"skn":"中毒","cd":100,"type":"poison","pbase":100,"d":30,"tick":5,"dur":20}},
@@ -1363,6 +1410,37 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "de_king_laia": {"n":"法令軍王蕾雅","lv":65,"s":"S","beh":"被動","race":"拉斯塔巴德","e":"earth","boss":true,"hard":true,"hp":15070,"ac":-57,"mr":80,"exp":42260,"goldMin":1250,"goldMax":4000,"atkSpd":2,"dmg":[4,63],"db":103,"hit":58,"mag":{"skn":"冰裂術","cd":50,"chance":0.5,"dmg":[8,30],"db":128,"ele":"water","alwaysHit":true,"ext_freeze":200,"extUnfreeze":true,"sec":{"type":"freeze","pbase":200}},"mag2":{"skn":"高級治癒術","cd":130,"chance":0.7,"type":"heal_allies","healDice":[2,200]}},
             "de_king_heruby": {"n":"冥法軍王海露拜","lv":70,"s":"L","beh":"被動","race":"拉斯塔巴德","e":"earth","boss":true,"hard":true,"hp":22672,"ac":-78,"mr":85,"exp":49010,"goldMin":2250,"goldMax":5000,"atkSpd":2,"dmg":[6,63],"db":103,"hit":62,"mag":{"skn":"流星雨","cd":110,"dmg":[8,50],"db":128,"ele":"fire","alwaysHit":true},"mag2":{"skn":"黑暗流星雨","cd":130,"chance":0.5,"dmg":[10,100],"db":250,"ele":"none","alwaysHit":true}},
             "de_king_slayer": {"n":"暗殺軍王史雷佛","lv":61,"s":"L","beh":"被動","race":"拉斯塔巴德","e":"none","boss":true,"hard":true,"hp":16202,"ac":-71,"mr":75,"exp":37220,"goldMin":1250,"goldMax":4000,"atkSpd":1,"dmg":[4,63],"db":103,"hit":61,"mag":{"skn":"放射斬","cd":50,"chance":0.2,"dmg":[4,100],"db":250,"ele":"none","alwaysHit":true}},
+            "pride_stairs": {"n":"往上層的樓梯","lv":1,"s":"L","beh":"被動","race":"建築","boss":true,"noAutoTeleport":true,"e":"none","hp":1,"ac":10,"mr":0,"exp":0,"goldMin":0,"goldMax":0,"atkSpd":60,"dmg":[1,1],"db":0,"hit":0},
+            "pride_lamia": {"n":"變種蛇女","lv":32,"s":"L","beh":"主動","race":"蛇女","e":"water","hp":330,"ac":-10,"mr":15,"exp":1025,"goldMin":163,"goldMax":265,"atkSpd":2,"dmg":[2,32],"db":32,"hit":16},
+            "pride_ungoliant": {"n":"變種楊果里恩","lv":33,"s":"L","beh":"主動","race":"蜘蛛","e":"earth","hp":370,"ac":-13,"mr":20,"exp":1090,"goldMin":162,"goldMax":266,"atkSpd":1,"dmg":[1,33],"db":20,"hit":20,"mag":{"skn":"烈毒","cd":50,"type":"poison","pbase":150,"d":30,"tick":5,"dur":20}},
+            "pride_medusa": {"n":"梅杜莎","lv":36,"s":"S","beh":"主動","race":"梅杜莎","e":"none","hp":420,"ac":-16,"mr":50,"exp":1297,"goldMin":171,"goldMax":280,"atkSpd":2,"dmg":[2,36],"db":36,"hit":18,"mag":{"skn":"木乃伊的詛咒","cd":70,"type":"stone","pbase":150}},
+            "pride_chimera": {"n":"奇美拉","lv":39,"s":"S","beh":"主動","race":"奇美拉","e":"none","hp":550,"ac":-25,"mr":35,"exp":1522,"goldMin":171,"goldMax":280,"atkSpd":2,"dmg":[2,39],"db":39,"hit":19,"mag":{"skn":"烈毒","cd":50,"type":"poison","pbase":150,"d":30,"tick":5,"dur":20}},
+            "pride_jenis": {"n":"扭曲的潔尼斯女王","lv":60,"s":"L","beh":"主動","race":"惡魔","boss":true,"hard":true,"e":"none","hp":15000,"ac":-50,"mr":70,"exp":3601,"goldMin":5000,"goldMax":10000,"atkSpd":2,"dmg":[2,120],"db":60,"hit":60,"mag":{"skn":"劇毒","cd":50,"type":"poison","pbase":200,"d":50,"tick":3,"dur":18},"mag2":{"skn":"麻痺蜘蛛網","cd":70,"chance":0.3,"type":"paralyze","pbase":150},"mag3":{"skn":"劇毒龍捲風","cd":130,"chance":0.3,"type":"poison","pbase":200,"d":80,"tick":3,"dur":18}},
+            "pride_wolf": {"n":"魔狼","lv":40,"s":"L","beh":"主動","race":"魔狼","e":"fire","hp":600,"ac":-30,"mr":35,"exp":1601,"goldMin":161,"goldMax":264,"atkSpd":1,"dmg":[1,45],"db":22,"hit":21},
+            "pride_mimic": {"n":"邪惡密密","lv":38,"s":"S","beh":"主動","race":"魔法生物","hard":true,"e":"none","hp":500,"ac":-2,"mr":40,"exp":1445,"goldMin":155,"goldMax":253,"atkSpd":1.5,"dmg":[1,80],"db":12,"hit":20},
+            "pride_beholder": {"n":"邪惡多眼怪","lv":39,"s":"L","beh":"主動","race":"眼魔","e":"wind","hp":540,"ac":-20,"mr":55,"exp":1522,"goldMin":158,"goldMax":260,"atkSpd":2,"dmg":[2,39],"db":39,"hit":19,"mag":{"skn":"木乃伊的詛咒","cd":70,"type":"stone","pbase":150}},
+            "pride_deathsword": {"n":"死亡之劍","lv":37,"s":"S","beh":"主動","race":"魔法生物","e":"water","hp":380,"ac":-43,"mr":40,"exp":1370,"goldMin":153,"goldMax":244,"atkSpd":1,"dmg":[1,51],"db":37,"hit":22},
+            "pride_phantom_boss": {"n":"不幸的幻象眼魔","lv":60,"s":"S","beh":"主動","race":"眼魔","boss":true,"hard":true,"e":"none","hp":16000,"ac":-53,"mr":75,"exp":3601,"goldMin":5000,"goldMax":10000,"atkSpd":2,"dmg":[2,120],"db":60,"hit":60,"mag":{"skn":"木乃伊的詛咒","cd":70,"type":"stone","pbase":200},"mag2":{"skn":"幻象光線","cd":50,"chance":0.3,"dmg":[8,40],"db":143,"ele":"none","alwaysHit":true},"mag3":{"skn":"集體相消","cd":130,"chance":0.3,"type":"dispel"}},
+            "pride_fireegg": {"n":"恐怖的火炎蛋","lv":37,"s":"S","beh":"主動","race":"元素","e":"none","hp":500,"ac":-36,"mr":40,"exp":1370,"goldMin":153,"goldMax":244,"atkSpd":2,"dmg":[2,37],"db":19,"hit":19},
+            "pride_nightmare": {"n":"恐怖夢魘","lv":40,"s":"L","beh":"主動","race":"惡魔","e":"none","hp":450,"ac":-42,"mr":80,"exp":1601,"goldMin":161,"goldMax":264,"atkSpd":1.5,"dmg":[1,60],"db":20,"hit":21},
+            "pride_hellhound": {"n":"恐怖的地獄犬","lv":43,"s":"S","beh":"主動","race":"惡魔","e":"none","hp":350,"ac":-35,"mr":25,"exp":1850,"goldMin":168,"goldMax":274,"atkSpd":2,"dmg":[2,43],"db":22,"hit":21,"mag":{"skn":"火焰噴吐","cd":70,"dmg":[4,40],"db":43,"ele":"fire","alwaysHit":true}},
+            "pride_imp": {"n":"小惡魔","lv":44,"s":"S","beh":"主動","race":"惡魔","e":"earth","hp":420,"ac":-38,"mr":80,"exp":1937,"goldMin":168,"goldMax":274,"atkSpd":2,"dmg":[2,83],"db":1,"hit":21,"mag":{"skn":"火焰之陣","cd":70,"dmg":[4,60],"db":13,"ele":"fire","alwaysHit":true}},
+            "pride_ifrit": {"n":"恐怖的伊弗利特","lv":46,"s":"L","beh":"主動","race":"惡魔","e":"fire","hp":1100,"ac":-28,"mr":40,"exp":2117,"goldMin":182,"goldMax":293,"atkSpd":1.5,"dmg":[1,83],"db":23,"hit":26,"mag":{"skn":"火之矛","cd":70,"dmg":[2,46],"db":83,"ele":"fire","alwaysHit":true}},
+            "pride_vampire_boss": {"n":"恐怖的吸血鬼","lv":60,"s":"S","beh":"主動","race":"吸血鬼","boss":true,"hard":true,"e":"earth","hp":15000,"ac":-53,"mr":85,"exp":3601,"goldMin":5000,"goldMax":10000,"atkSpd":2,"dmg":[2,150],"db":50,"hit":61,"mag":{"skn":"吸血鬼之吻","cd":70,"chance":0.4,"dmg":[8,30],"db":60,"ele":"none","alwaysHit":true,"vampFull":true},"mag2":{"skn":"夜魔飛襲","cd":150,"dmg":[1,400],"db":243,"ele":"none","alwaysHit":true},"mag3":{"skn":"血夜月彎刀","cd":130,"chance":0.2,"dmg":[1,100],"db":143,"ele":"none","alwaysHit":true,"sec":{"type":"bleed","d":50,"tick":3,"dur":18,"pbase":200}}},
+            "pride_skel_axe": {"n":"殘暴的骷髏斧兵","lv":39,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":500,"ac":-30,"mr":25,"exp":1522,"goldMin":161,"goldMax":264,"atkSpd":1,"dmg":[1,39],"db":22,"hit":20},
+            "pride_ghoul2": {"n":"殘暴的食屍鬼","lv":42,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":550,"ac":-35,"mr":45,"exp":1764,"goldMin":168,"goldMax":274,"atkSpd":2,"dmg":[2,42],"db":51,"hit":23},
+            "pride_skel_spear": {"n":"殘暴的骷髏槍兵","lv":39,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":450,"ac":-30,"mr":35,"exp":1522,"goldMin":161,"goldMax":264,"atkSpd":1.5,"dmg":[1,55],"db":26,"hit":26},
+            "pride_sparto": {"n":"殘暴的史巴托","lv":42,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":550,"ac":-38,"mr":40,"exp":1764,"goldMin":168,"goldMax":274,"atkSpd":2,"dmg":[2,42],"db":30,"hit":23},
+            "pride_skel_archer": {"n":"殘暴的骷髏神射手","lv":45,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":650,"ac":-38,"mr":45,"exp":2026,"goldMin":182,"goldMax":288,"atkSpd":1,"dmg":[1,60],"db":20,"hit":29},
+            "pride_skel_fighter": {"n":"殘暴的骷髏鬥士","lv":45,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":700,"ac":-40,"mr":45,"exp":2026,"goldMin":182,"goldMax":288,"atkSpd":2,"dmg":[2,60],"db":25,"hit":23},
+            "pride_zombie_king": {"n":"死亡的殭屍王","lv":62,"s":"L","beh":"主動","race":"殭屍","boss":true,"hard":true,"e":"none","hp":18000,"ac":-58,"mr":50,"exp":3845,"goldMin":10000,"goldMax":20000,"atkSpd":3,"dmg":[3,150],"db":50,"hit":58,"mag":{"skn":"邪靈之氣","cd":70,"chance":0.5,"dmg":[6,50],"db":160,"ele":"none","alwaysHit":true},"mag2":{"skn":"腐蝕之血","cd":130,"chance":0.5,"dmg":[1,100],"db":153,"ele":"none","alwaysHit":true,"sec":{"type":"poison","d":50,"tick":3,"dur":18,"pbase":200}}},
+            "pride_drake": {"n":"幼龍","lv":45,"s":"L","beh":"主動","race":"龍","hard":true,"e":"none","hp":800,"ac":-45,"mr":80,"exp":2026,"goldMin":180,"goldMax":305,"atkSpd":2,"dmg":[2,45],"db":32,"hit":25,"mag":{"skn":"火焰噴吐","cd":70,"chance":0.7,"dmg":[4,60],"db":63,"ele":"fire","alwaysHit":true}},
+            "pride_flamesoul_r": {"n":"火焰之靈魂(紅)","lv":45,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":500,"ac":-45,"mr":45,"exp":2026,"goldMin":180,"goldMax":305,"atkSpd":2,"dmg":[2,46],"db":22,"hit":22},
+            "pride_flamesoul_b": {"n":"火焰之靈魂(藍)","lv":46,"s":"S","beh":"主動","race":"不死","un":true,"e":"none","hp":500,"ac":-48,"mr":45,"exp":2117,"goldMin":182,"goldMax":294,"atkSpd":2,"dmg":[2,50],"db":22,"hit":23},
+            "pride_irongolem": {"n":"恐怖的鋼鐵高崙","lv":44,"s":"L","beh":"主動","race":"高崙","hard":true,"e":"none","hp":800,"ac":-37,"mr":35,"exp":1937,"goldMin":152,"goldMax":335,"atkSpd":3,"dmg":[2,100],"db":12,"hit":21},
+            "pride_flamemage": {"n":"火焰之魔法師","lv":44,"s":"S","beh":"主動","race":"長老","e":"fire","hp":450,"ac":-32,"mr":90,"exp":1937,"goldMin":144,"goldMax":285,"atkSpd":2,"dmg":[2,45],"db":32,"hit":25,"mag":{"skn":"燃燒的火球","cd":50,"chance":0.5,"dmg":[3,60],"db":63,"ele":"fire","alwaysHit":true}},
+            "pride_bonedragon": {"n":"骨龍","lv":47,"s":"L","beh":"主動","race":"龍","hard":true,"e":"none","hp":720,"ac":-48,"mr":90,"exp":2210,"goldMin":224,"goldMax":368,"atkSpd":2,"dmg":[2,47],"db":45,"hit":26,"mag":{"skn":"寒冰噴吐","cd":50,"chance":0.7,"dmg":[4,60],"db":73,"ele":"none","alwaysHit":true}},
+            "pride_panther_boss": {"n":"地獄的黑豹","lv":65,"s":"L","beh":"主動","race":"野獸","boss":true,"hard":true,"e":"none","hp":20000,"ac":-65,"mr":75,"exp":4226,"goldMin":10000,"goldMax":20000,"atkSpd":1,"dmg":[1,165],"db":30,"hit":63,"mag":{"skn":"衝擊之暈","cd":70,"chance":0.2,"dmg":[4,50],"db":160,"ele":"none","alwaysHit":true,"sec":{"type":"stun","pbase":250}},"mag2":{"skn":"沉睡打擊","cd":70,"chance":0.2,"dmg":[2,100],"db":153,"ele":"none","alwaysHit":true,"sec":{"type":"sleep","pbase":250}}},
         };
 
         // 地圖出怪區
@@ -1450,6 +1528,60 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "antaras_lair": ["antaras"],
             "fafurion_lair": ["fafurion"],
             "valakas_lair": ["valakas"],
+            "pride_f2": ["pride_lamia","pride_ungoliant","pride_medusa","pride_stairs"],
+            "pride_f3": ["pride_lamia","pride_ungoliant","pride_medusa","pride_chimera","pride_stairs"],
+            "pride_f4": ["pride_lamia","pride_ungoliant","pride_medusa","pride_chimera","pride_stairs"],
+            "pride_f5": ["pride_medusa","pride_chimera","arian","pride_stairs"],
+            "pride_f6": ["pride_medusa","pride_chimera","arian","pride_stairs"],
+            "pride_f7": ["pride_medusa","pride_chimera","arian","pride_stairs"],
+            "pride_f8": ["pride_medusa","pride_chimera","arian","pride_stairs"],
+            "pride_f9": ["pride_medusa","pride_chimera","arian","pride_stairs"],
+            "pride_f10": ["pride_medusa","pride_chimera","arian","pride_jenis"],
+            "pride_2_10": ["pride_medusa","pride_chimera","arian","pride_jenis"],
+            "pride_f11": ["succubus","pride_wolf","pride_stairs"],
+            "pride_f12": ["succubus","pride_wolf","pride_mimic","pride_stairs"],
+            "pride_f13": ["succubus","pride_wolf","pride_mimic","pride_stairs"],
+            "pride_f14": ["succubus","pride_wolf","pride_mimic","pride_stairs"],
+            "pride_f15": ["pride_beholder","pride_wolf","pride_mimic","pride_stairs"],
+            "pride_f16": ["pride_beholder","pride_wolf","pride_mimic","pride_stairs"],
+            "pride_f17": ["pride_beholder","pride_wolf","pride_deathsword","pride_stairs"],
+            "pride_f18": ["pride_beholder","pride_wolf","pride_deathsword","pride_stairs"],
+            "pride_f19": ["pride_beholder","pride_wolf","pride_deathsword","pride_stairs"],
+            "pride_f20": ["pride_beholder","pride_wolf","pride_deathsword","pride_phantom_boss"],
+            "pride_11_20": ["succubus","pride_wolf","pride_mimic","pride_beholder","pride_deathsword","pride_phantom_boss"],
+            "pride_f21": ["pride_fireegg","pride_nightmare","pride_stairs"],
+            "pride_f22": ["pride_fireegg","pride_nightmare","pride_hellhound","pride_stairs"],
+            "pride_f23": ["pride_fireegg","pride_nightmare","pride_hellhound","pride_stairs"],
+            "pride_f24": ["pride_fireegg","pride_nightmare","pride_hellhound","pride_stairs"],
+            "pride_f25": ["pride_nightmare","pride_hellhound","pride_imp","pride_stairs"],
+            "pride_f26": ["pride_nightmare","pride_hellhound","pride_imp","pride_stairs"],
+            "pride_f27": ["pride_ifrit","pride_hellhound","pride_imp","pride_stairs"],
+            "pride_f28": ["pride_ifrit","pride_hellhound","pride_imp","pride_stairs"],
+            "pride_f29": ["pride_ifrit","pride_hellhound","pride_imp","pride_stairs"],
+            "pride_f30": ["pride_ifrit","pride_hellhound","pride_imp","pride_nightmare","pride_vampire_boss"],
+            "pride_21_30": ["pride_ifrit","pride_fireegg","pride_hellhound","pride_imp","pride_nightmare","pride_vampire_boss"],
+            "pride_f31": ["pride_skel_axe","pride_ghoul2","pride_stairs"],
+            "pride_f32": ["pride_skel_axe","pride_skel_spear","pride_ghoul2","pride_stairs"],
+            "pride_f33": ["pride_sparto","pride_skel_spear","pride_ghoul2","pride_stairs"],
+            "pride_f34": ["pride_sparto","pride_skel_spear","pride_ghoul2","pride_stairs"],
+            "pride_f35": ["pride_sparto","pride_skel_archer","pride_ghoul2","pride_stairs"],
+            "pride_f36": ["pride_sparto","pride_skel_archer","pride_ghoul2","pride_stairs"],
+            "pride_f37": ["pride_sparto","pride_skel_archer","pride_skel_fighter","pride_stairs"],
+            "pride_f38": ["pride_sparto","pride_skel_archer","pride_skel_fighter","pride_stairs"],
+            "pride_f39": ["pride_sparto","pride_skel_archer","pride_skel_fighter","pride_stairs"],
+            "pride_f40": ["pride_sparto","pride_skel_archer","pride_skel_fighter","pride_zombie_king"],
+            "pride_31_40": ["pride_skel_axe","pride_skel_spear","pride_ghoul2","pride_sparto","pride_skel_archer","pride_skel_fighter","pride_zombie_king"],
+            "pride_f41": ["pride_drake","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f42": ["pride_irongolem","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f43": ["pride_drake","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f44": ["pride_drake","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f45": ["pride_drake","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f46": ["pride_drake","pride_flamesoul_r","pride_flamesoul_b","pride_stairs"],
+            "pride_f47": ["pride_drake","pride_flamemage","pride_bonedragon","pride_stairs"],
+            "pride_f48": ["pride_drake","pride_flamemage","pride_bonedragon","pride_stairs"],
+            "pride_f49": ["pride_drake","pride_flamemage","pride_bonedragon","pride_stairs"],
+            "pride_f50": ["pride_drake","pride_flamemage","pride_bonedragon","pride_panther_boss"],
+            "pride_41_50": ["pride_drake","pride_flamemage","pride_bonedragon","pride_irongolem","pride_flamesoul_r","pride_flamesoul_b","pride_panther_boss"],
         };
 
         // 魔物物品掉落資料區
@@ -1489,14 +1621,14 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "火元素守護者": [["mat_legion_law",0.05],["mat_fire_breath",0.1]],
         "黑暗妖精法師": [["mat_legion_law",0.05],["wpn_wand_rasta",1],["amr_rasta_robe",0.1],["potion_haste",1],["new_item_140",1],["bk_dark_dex",1],["bk_tornado",0.05],["bk_ice_spike",1]],
         "黑法師": [["wpn_darkmage_wand",0.01],["amr_darkmage_robe",0.05],["acc_darkmage_amulet",0.001],["quest_ring_darkmage",0.01]],
-        "黑暗復仇者": [["wpn_dark_sword",0.01],["amr_official",0.05],["mat_legion_necro",0.1]],
+        "黑暗復仇者": [["wpn_dark_sword",0.01],["amr_official",0.05],["mat_legion_necro",0.1],["arm_59",0.1]],
         "血色術士": [["wpn_red_crystalwand",0.1],["hlm_priest",0.05],["amr_priest",0.05],["amr_dark_cape",1],["bot_priest",0.05],["potion_haste",1],["mat_legion_necro",0.1]],
         "歐姆戰士": [["hlm_priest",0.05],["clk_priest",0.02],["bot_priest",0.05],["glv_priest",0.05],["blt_dark",0.05],["mat_legion_assassin",0.1],["mat_legion_necro",0.1]],
         "闇黑君王": [["wpn_red_crystalwand",0.1],["hlm_priest",0.02],["bot_priest",0.02],["potion_haste",1],["mat_legion_necro",0.1]],
         "血騎士": [["wpn_blood_2hsword",0.1],["hlm_priest",0.05],["potion_haste",1],["mat_legion_necro",0.1]],
         "重裝歐姆戰士": [["hlm_priest",0.05],["clk_priest",0.02],["bot_priest",0.05],["blt_dark",0.05],["mat_legion_assassin",0.1]],
         "冰之女王侍女": [["bk_thunder_storm",0.05],["bk_cancel",0.1]],
-        "冰之女王": [["arm_88",0.1],["arm_63",10],["glv_crystal",5],["acc_116",0.1],["amu_int",1],["acc_122",1],["acc_128",0.5],["acc_129",0.5],["acc_130",0.1],["acc_131",0.1],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_revive",1],["new_item_150",1],["new_item_151",50],["new_item_152",5],["bk_summon",0.5],["bk_invisible",0.05],["new_item_140",1],["potion_blue",1],["bk_fire_storm",0.5],["new_item_195",1],["bk_elf_winddash",1],["bk_elf_lifespring",3],["bk_elf_lifebless",1],["bk_elf_steelguard",1],["bk_magic_shield",2],["bk_dark_shadow",1],["bk_seal",1],["wpn_icequeen_wand",0.1],["wpn_claw_gloom",1],["wpn_dual_gloom",1],["wpn_xbow_gloom",1],["bk_dark_crit",2]],
+        "冰之女王": [["wpn_crystal_dagger",0.5],["wpn_claw_gloom",1],["wpn_dual_gloom",1],["wpn_xbow_gloom",1],["bk_dark_crit",2]],
         "夢幻之島蘑菇": [["potion_haste",1],["scroll_weapon",1],["scroll_armor",2],["potion_blue",1]],
         "夢幻之島鬼火": [["scroll_weapon",1],["scroll_armor",2],["scroll_poly",1]],
         "夢幻之島火蜥蜴": [["wpn_2hsword",1],["wpn_giantaxe",1],["scroll_weapon",1],["scroll_armor",2],["bk_fire_storm",0.01]],
@@ -1528,7 +1660,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "哈維": [["arm_62",0.5],["new_item_150",1],["bk_haste_spell",0.5],["bk_holy_dash",0.05],["potion_blue",1],["bk_greater_haste",0.01],["new_item_195",1],["bk_elf_stormeye",0.001]],
         "哥布林": [["hlm_mr",0.05],["wpn_9",1],["wpn_10",1],["arm_42",5],["bot_short",3],["potion_heal",3]],
         "地獄犬": [["wpn_strwand",0.1],["wpn_witchwand",0.5],["scroll_acc",0.01],["new_item_150",1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["bk_fireball",0.5],["bk_break",0.5],["bk_holy_barrier",0.001],["new_item_195",1],["bk_dark_fang",0.01]],
-        "地精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_con",1],["mat_earth_breath",1]],
+        "夢幻之島地精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_con",1],["mat_earth_breath",1]],
         "地靈": [["wpn_10",3],["bot_short",1],["new_item_179",50]],
         "夏洛伯": [["bk_slow",0.1],["bk_earthquake",0.01],["scroll_acc",0.001],["new_item_144",1]],
         "多眼怪": [["scroll_weapon",1],["new_item_160",5],["new_item_161",0.5],["new_item_162",0.1],["bk_mummy_curse",0.5],["bk_cancel",0.05],["bk_elf_release",0.1],["bk_weaken",0.1],["bk_disease",0.1],["bk_elf_triple",0.01],["bk_dark_erup",0.1]],
@@ -1542,11 +1674,12 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "妖魔鬥士": [["arm_69",0.1],["hlm_oasis",2],["arm_64",2],["amr_oasis",3],["clk_oasis",1],["arm_104",1],["arm_63",1],["wpn_dual_bronze",0.1]],
         "安塔瑞斯": [["wpn_katana",10],["wpn_siruge",5],["amr_plate",10],["arm_88",1],["glv_glove",20],["arm_81",0.1],["acc_116",0.1],["acc_117",0.1],["acc_121",1],["acc_122",1],["acc_127",5],["acc_128",5],["acc_129",5],["blt_body",1],["acc_130",1],["acc_131",1],["potion_haste",1],["scroll_weapon",100],["scroll_armor",100],["scroll_acc",50],["new_item_150",1],["new_item_151",50],["new_item_152",5],["new_item_153",1],["new_item_154",50],["new_item_155",5],["new_item_156",1],["bk_break",10],["bk_slow",10],["bk_charm",10],["bk_str_up",5],["bk_earthquake",5],["bk_regen",5],["bk_summon",2],["bk_resurrection",1],["new_item_191",100],["potion_blue",1],["bk_dark_armorbreak",5]],
         "安普長老": [["new_item_150",1],["new_item_154",5],["new_item_179",50],["new_item_182",1],["potion_blue",1],["bk_rock_prison",0.1]],
-        "密密": [["hlm_mr",1],["arm_42",1],["potion_strong",1],["potion_haste",1],["potion_blue",1],["bk_dark_crit",0.3]],
+        "密密": [["hlm_mr",1],["arm_42",1],["potion_strong",1],["potion_haste",1],["potion_blue",1],["arm_59",0.1],["bot_demon",0.05],["glv_demon",0.05],["bk_dark_crit",0.3]],
+        "飛龍": [["item_dragon_claw",1],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["new_item_160",5],["new_item_161",0.5],["new_item_162",0.1],["bk_holy_dash",1],["potion_blue",1],["bk_quake",1],["bk_elf_magicerase",1],["bk_elf_stormeye",1],["bk_elf_triple",1],["bk_dark_double",1]],
         "巨大兵蟻": [["arm_60",0.3],["arm_47",0.01],["potion_haste",1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["potion_brave",1]],
         "巨大鱷魚": [["scroll_armor",10],["scroll_acc",1],["new_item_154",1],["bk_thunder",1],["potion_brave",1]],
         "巨蟻": [["arm_45",0.01],["potion_haste",1],["new_item_154",5],["potion_brave",1]],
-        "巨蟻女皇": [["arm_69",10],["wpn_katana",3],["amr_plate",5],["arm_63",5],["arm_47",1],["acc_121",0.1],["acc_127",1],["blt_body",0.5],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["bk_heal2",1],["bk_charm",1],["bk_earthquake",1],["bk_regen",0.5],["potion_blue",1],["bk_rock_prison",5],["bk_greater_haste",1],["new_item_195",1],["bk_elf_magicerase",1],["bk_dark_shadow",1],["clk_antqueen_gold",0.1],["clk_antqueen_silver",0.1],["bk_dark_erup",3]],
+        "巨蟻女皇": [["arm_69",10],["wpn_katana",3],["amr_plate",5],["arm_63",5],["arm_47",1],["acc_121",0.1],["acc_127",1],["blt_body",0.5],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["bk_heal2",1],["bk_charm",1],["bk_earthquake",1],["bk_regen",0.5],["potion_blue",1],["bk_rock_prison",5],["bk_greater_haste",1],["new_item_195",1],["bk_elf_magicerase",1],["bk_dark_shadow",1],["clk_antqueen_gold",0.1],["clk_antqueen_silver",0.1],["wpn_claw_abyss",0.05],["bk_dark_erup",3]],
         "巫師": [["arm_87",0.5],["arm_90",1],["amu_str",0.001],["scroll_weapon",1],["scroll_armor",2],["scroll_acc",0.01],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["bk_dex_up",0.1],["bk_haste_spell",0.1],["potion_blue",1],["bk_greater_haste",0.05],["bk_elf_stormeye",0.05],["bk_weaken",0.1],["item_crystal_ball",0.01]],
         "巴土瑟": [["arm_87",5],["arm_90",10],["arm_54",1],["acc_117",0.01],["amu_int",0.1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["bk_cancel",0.1],["potion_blue",1],["bk_quake",0.1],["bk_elf_groundtrap",5],["bk_elf_earthbless",1]],
         "巴拉卡斯": [["wpn_katana",10],["wpn_siruge",5],["amr_plate",10],["arm_88",1],["glv_glove",10],["arm_82",0.1],["acc_116",0.2],["acc_117",0.2],["amu_str",0.2],["amu_int",0.2],["acc_127",6],["acc_128",6],["acc_129",6],["blt_body",1],["acc_130",1],["acc_131",1],["potion_haste",1],["scroll_weapon",100],["scroll_armor",100],["scroll_acc",50],["new_item_150",1],["new_item_151",100],["new_item_152",10],["new_item_153",2],["new_item_157",100],["new_item_158",10],["new_item_159",2],["bk_fireball",20],["bk_slow",15],["bk_charm",15],["bk_str_up",10],["bk_haste_spell",10],["bk_summon",3],["bk_invisible",1],["bk_resurrection",1],["new_item_192",100],["potion_blue",1],["wpn_manadagger",1]],
@@ -1555,10 +1688,10 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "強盜": [["wpn_20",0.5],["arm_69",0.5],["hlm_mr",0.5],["wpn_shortbow",1],["wpn_32",0.01],["arm_42",2],["arm_66",3],["arm_98",0.1],["arm_49",1],["potion_heal",1],["potion_strong",1],["potion_haste",1],["potion_ult",1],["item_death_oath",1]],
         "強盜頭目": [["hlm_mr",5],["wpn_katana",1],["wpn_silversword",3],["arm_62",5],["arm_87",5],["scroll_acc",0.1],["arm_42",10],["potion_heal",1],["potion_strong",1],["potion_haste",1],["potion_ult",1],["new_item_152",0.5],["new_item_153",0.1],["new_item_155",0.5],["new_item_156",0.1],["new_item_158",0.5],["new_item_159",0.1],["new_item_161",0.5],["new_item_162",0.1],["item_nightvision",10]],
         "影魔": [["acc_129",0.005],["acc_131",0.001],["potion_heal",1],["potion_strong",1],["potion_ult",1],["potion_blue",1],["bk_ice_spike",0.5],["bk_magic_shield",0.01],["bk_dark_shadow",0.1],["wpn_claw_shadow",0.5]],
-        "思克巴": [["acc_117",0.001],["bk_ice_lance",0.01],["bk_summon",0.02],["bk_blizzard",0.005],["potion_blue",1],["bk_ice_spike",0.5],["bk_elf_release",0.1],["bk_elf_lifespring",0.1],["bk_elf_triple",0.05],["new_item_226",0.01]],
+        "思克巴": [["acc_117",0.001],["bk_ice_lance",0.01],["bk_summon",0.02],["bk_blizzard",0.005],["potion_blue",1],["bk_ice_spike",0.5],["bk_elf_release",0.1],["bk_elf_lifespring",0.1],["bk_elf_triple",0.05],["new_item_226",0.01],["bot_dark",0.3],["acc_summon_ctrl",0.001],["bk_dark_double",0.1],["bk_dark_fang",0.1]],
         "思克巴女皇": [["acc_116",0.001],["scroll_acc",0.01],["bk_ice_lance",0.01],["bk_summon",0.003],["potion_blue",1],["bk_ice_spike",0.5],["bk_elf_lifespring",0.1],["bk_mana_drain",0.1],["new_item_235",0.01]],
         "怪手": [["glv_glove",0.1],["arm_99",0.001],["new_item_150",1]],
-        "惡魔": [["arm_69",10],["wpn_katana",5],["wpn_2hsword",10],["wpn_siruge",1],["wpn_33",1],["wpn_flaming_angel",0.5],["amr_plate",5],["arm_88",0.1],["arm_63",10],["arm_99",1],["acc_117",0.01],["amu_str",0.1],["amu_int",0.15],["acc_128",1],["acc_129",1],["acc_130",0.5],["acc_131",0.5],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_152",0.5],["new_item_153",0.1],["new_item_159",0.1],["bk_holy_barrier",0.5],["potion_blue",1],["bk_fire_storm",0.1],["bk_elf_blazewpn",0.5],["wpn_demon_scythe",0.1]],
+        "惡魔": [["arm_69",10],["wpn_katana",5],["wpn_2hsword",10],["wpn_siruge",1],["wpn_33",1],["wpn_flaming_angel",0.5],["amr_plate",5],["arm_88",0.1],["arm_63",10],["arm_99",1],["acc_117",0.01],["amu_str",0.1],["amu_int",0.15],["acc_128",1],["acc_129",1],["acc_130",0.5],["acc_131",0.5],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_152",0.5],["new_item_153",0.1],["new_item_159",0.1],["bk_holy_barrier",0.5],["potion_blue",1],["bk_fire_storm",0.1],["bk_elf_blazewpn",0.5],["wpn_demon_scythe",0.1],["arm_59",10],["hlm_demon",1],["amr_demon",1],["glv_demon",1],["bot_demon",1],["wpn_dual_abyss",0.1]],
         "杜賓狗": [["new_item_143",10],["new_item_179",100]],
         "格利芬": [["arm_62",0.5],["potion_haste",1],["new_item_150",1],["new_item_152",0.5],["new_item_155",0.5],["new_item_158",0.5],["new_item_161",0.5],["bk_tornado",0.001],["bk_elf_release",0.1],["bk_elf_winddash",0.05],["bk_elf_stormeye",0.001],["bk_magic_shield",0.01],["mat_griffon_feather",1]],
         "楊果里恩": [["scroll_weapon",0.1],["scroll_armor",0.3],["scroll_acc",0.01],["bk_slow",0.1],["bk_charm",0.05],["bk_rock_prison",0.5]],
@@ -1568,7 +1701,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "死亡騎士": [["wpn_katana",5],["wpn_2hsword",10],["wpn_33",1],["amr_plate",5],["arm_88",0.1],["glv_glove",10],["glv_dk",1],["amr_dk",1],["bot_dk",1],["hlm_dk",1],["acc_117",1],["amu_str",0.1],["acc_128",0.5],["acc_129",0.5],["acc_130",0.1],["acc_131",0.1],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["bk_zombie",3],["bk_tornado",0.5],["bk_resurrection",0.1],["bk_disease",3],["bk_solid_shield",1],["bk_blaze",1],["wpn_dk_flameblade",0.1],["bk_dark_fang",2],["bk_dark_armorbreak",1]],
         "死神": [["wpn_16",1],["wpn_giantaxe",0.1],["wpn_flaming_angel",0.001],["arm_61",0.5],["scroll_weapon",1],["scroll_armor",2],["scroll_acc",0.01],["potion_blue",1],["bk_elf_stormshot",0.01],["bk_disease",0.1],["wpn_dual_dark",0.5],["bk_dark_double",0.1]],
         "毒蠍": [["arm_46",0.01],["potion_haste",1],["bk_thunder",0.01],["bk_cancel",0.01],["bk_rock_prison",0.5],["bk_quake",0.001],["wpn_claw_dark",0.1],["wpn_dual_dark",0.1]],
-        "水精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_int",1],["mat_water_breath",1]],
+        "夢幻之島水精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_int",1],["mat_water_breath",1]],
         "污染的潘": [["new_item_163",100]],
         "污染的安特": [["new_item_141",1],["new_item_237",100]],
         "法利昂": [["wpn_katana",10],["wpn_siruge",5],["amr_plate",10],["arm_88",1],["glv_glove",20],["arm_80",0.1],["acc_116",0.1],["acc_117",0.1],["acc_120",1],["acc_127",5],["acc_128",5],["acc_129",5],["blt_body",1],["acc_130",1],["acc_131",1],["potion_haste",1],["scroll_weapon",100],["scroll_armor",100],["scroll_acc",50],["new_item_150",1],["new_item_151",50],["new_item_152",5],["new_item_153",1],["new_item_160",50],["new_item_161",5],["new_item_162",1],["bk_slow",10],["bk_holy_light",10],["bk_regen",5],["bk_summon",2],["bk_blizzard",1],["bk_resurrection",1],["new_item_190",100],["potion_blue",1],["bk_elf_eleres",1]],
@@ -1578,7 +1711,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "火炎蛋": [["scroll_weapon",1],["scroll_armor",2],["bk_fireball",0.1],["bk_holy_light",0.1],["scroll_poly",1],["new_item_192",0.01],["potion_blue",1]],
         "火焰弓箭手": [["hlm_mr",1],["wpn_32",0.1],["arm_42",2],["arm_67",4],["arm_90",1],["bk_dex_up",0.05],["bk_slow",0.1],["new_item_192",0.01]],
         "火焰戰士": [["hlm_mr",1],["wpn_longsword",1],["arm_42",2],["arm_62",1],["arm_105",3],["potion_haste",1],["new_item_192",0.01]],
-        "火精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_str",1],["mat_fire_breath",1]],
+        "夢幻之島火精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_str",1],["mat_fire_breath",1]],
         "火蜥蜴": [["potion_haste",1],["new_item_155",0.5],["new_item_158",0.5],["new_item_192",0.01],["bk_fire_storm",0.001],["bk_elf_magicerase",0.01],["bk_elf_stormeye",0.01],["bk_shock_stun",0.01],["bk_dark_double",0.01]],
         "烈炎獸": [["scroll_weapon",1],["scroll_armor",2],["bk_holy_barrier",0.002],["scroll_acc",0.01],["new_item_192",0.01],["bk_elf_magicerase",0.1],["bk_shock_stun",0.05]],
         "熔岩高崙": [["wpn_2hsword",0.5],["wpn_18",1],["wpn_giantaxe",0.5],["bk_slow",0.5],["bk_str_up",0.05],["scroll_acc",0.01],["new_item_192",0.01],["bk_elf_triple",0.01]],
@@ -1611,7 +1744,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "變形怪": [["scroll_poly",1],["scroll_acc",0.01],["potion_blue",1],["new_item_240",1],["wpn_dual_shadow",0.5]],
         "變形怪首領": [["wpn_2hsword",5],["wpn_38",10],["wpn_strwand",1],["arm_60",10],["clk_mr",10],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["bk_fireball",3],["bk_str_up",1],["bk_haste_spell",1],["bk_summon",0.5],["scroll_poly",1],["potion_blue",1],["bk_elf_magicerase",1],["bk_shock_stun",1],["bk_reduction_armor",0.5],["bk_spike_armor",0.5],["bk_solid_shield",0.5],["new_item_240",10],["bk_dark_fang",1]],
         "那魯加妖魔": [["wpn_2hsword",0.1],["wpn_invader",0.5],["wpn_damascus",0.2],["arm_64",5],["arm_104",3],["acc_123",0.01],["potion_haste",1],["new_item_146",1],["new_item_157",5],["new_item_200",1],["item_orc_amulet",0.01]],
-        "邪惡蜥蜴": [["scroll_weapon",1],["scroll_armor",2],["scroll_acc",0.01],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["bk_slow",0.5],["bk_heal2",0.2],["bk_holy_light",0.1],["bk_cancel",0.02],["bk_earthquake",0.02],["bk_rock_prison",0.5],["bk_quake",0.005],["bk_elf_release",0.05],["new_item_232",0.01],["item_lizard_horn",0.01],["bk_dark_double",0.2]],
+        "邪惡蜥蜴": [["scroll_weapon",1],["scroll_armor",2],["scroll_acc",0.01],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["bk_slow",0.5],["bk_heal2",0.2],["bk_holy_light",0.1],["bk_cancel",0.02],["bk_earthquake",0.02],["bk_rock_prison",0.5],["bk_quake",0.005],["bk_elf_release",0.05],["new_item_232",0.01],["item_lizard_horn",0.01],["glv_demon",0.01],["bk_dark_double",0.2]],
         "都達瑪拉妖魔": [["hlm_mr",0.5],["arm_104",3],["arm_42",5],["acc_123",0.01],["potion_haste",1],["new_item_147",1],["new_item_150",1],["new_item_158",0.5],["new_item_199",1],["scroll_acc",0.001],["item_orc_amulet",0.01]],
         "鋼鐵高崙": [["scroll_weapon",1],["scroll_armor",2],["bk_str_up",0.05],["new_item_164",1],["new_item_180",100],["potion_blue",1],["bk_elf_soul",0.001],["bk_elf_steelguard",0.001],["bk_weaken",0.1],["item_ancientkey",1],["mat_silverore",100]],
         "夢幻之島鎧甲守衛": [["arm_60",1],["potion_haste",1],["scroll_weapon",1],["scroll_armor",2],["bk_spike_armor",0.05]],
@@ -1622,8 +1755,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "阿魯巴": [["wpn_18",2],["bk_str_up",0.05],["bk_haste_spell",0.5],["bk_earthquake",0.1],["bk_rock_prison",0.5],["bk_greater_haste",0.1],["bk_quake",0.005],["bk_dark_dodge",0.5]],
         "雪人": [["bk_elf_release",0.1],["scroll_acc",0.01]],
         "雪怪": [["wpn_18",1],["scroll_acc",0.01],["new_item_195",1],["item_yeti_head",1]],
-        "風精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_dex",1],["mat_wind_breath",1],["bk_dark_erup",1]],
-        "飛龍": [["item_dragon_claw",1],["potion_haste",1],["scroll_weapon",10],["scroll_armor",20],["scroll_acc",1],["new_item_150",1],["new_item_151",5],["new_item_152",0.5],["new_item_153",0.1],["new_item_154",5],["new_item_155",0.5],["new_item_156",0.1],["new_item_157",5],["new_item_158",0.5],["new_item_159",0.1],["new_item_160",5],["new_item_161",0.5],["new_item_162",0.1],["bk_holy_dash",1],["potion_blue",1],["bk_quake",1],["bk_elf_magicerase",1],["bk_elf_stormeye",1],["bk_elf_triple",1],["bk_dark_double",1]],
+        "夢幻之島風精靈王": [["arm_69",1],["arm_63",5],["potion_haste",1],["scroll_weapon",5],["scroll_armor",10],["scroll_revive",1],["potion_blue",1],["panacea_dex",1],["mat_wind_breath",1],["bk_dark_erup",1]],
         "食人妖精": [["wpn_battleaxe",3],["wpn_giantaxe",1],["arm_61",0.6],["scroll_weapon",0.2],["scroll_armor",0.5],["bk_fireball",0.1],["bk_break",0.5],["bk_elf_release",0.05],["new_item_217",0.1],["bk_blaze",0.01]],
         "食人妖精王": [["wpn_battleaxe",3],["wpn_10",2],["wpn_giantaxe",0.5],["wpn_berserker",0.02],["arm_61",0.5],["arm_47",0.05],["scroll_weapon",1],["scroll_armor",1.5],["new_item_158",0.5],["bk_fireball",0.5],["bk_break",0.5],["bk_holy_light",0.1],["potion_blue",1],["bk_disease",0.1],["bk_shock_stun",0.01]],
         "食屍鬼": [["scroll_weapon",0.1],["bk_berserk",0.01],["new_item_204",1],["new_item_205",1]],
@@ -1645,6 +1777,36 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "鼠人": [["arm_61",0.5],["potion_haste",1],["bk_dex_up",0.05],["bk_haste_spell",0.1],["bk_dark_dodge",0.1]],
         "龍蠅": [["scroll_weapon",1],["scroll_armor",2],["bk_vampire",0.5],["new_item_192",0.01]],
         "龍龜": [["bk_cancel",0.01],["scroll_acc",0.01],["bk_ice_spike",0.5],["new_item_206",1]],
+        "變種蛇女": [["scroll_weapon",1],["item_pride_scroll_11",2]],
+        "變種楊果里恩": [["potion_haste",1],["scroll_weapon",0.5],["scroll_armor",1],["item_pride_scroll_11",2]],
+        "梅杜莎": [["arm_61",3],["arm_pride_medusa_shield",0.5],["arm_106",0.1],["amu_cha",0.01],["scroll_weapon",0.5],["scroll_armor",1],["item_pride_scroll_11",2],["bk_cancel",0.3],["bk_weaken",0.3],["bk_holy_barrier",0.05],["bk_resurrection",0.1],["bk_dark_double",0.1],["new_item_190",0.001]],
+        "奇美拉": [["potion_haste",1],["potion_brave",1],["new_item_140",1],["mat_chimera_snake",10],["mat_chimera_dragon",10],["mat_chimera_goat",10],["mat_chimera_lion",10],["item_pride_scroll_11",2],["new_item_191",0.001]],
+        "扭曲的潔尼斯女王": [["wpn_crystal_dagger",0.5],["wpn_katana",30],["wpn_2hsword",30],["wpn_siruge",1],["arm_88",0.1],["arm_69",30],["arm_59",3],["amr_plate",30],["arm_99",0.1],["acc_jenis_ring",0.01],["acc_128",5],["acc_130",1],["potion_haste",30],["scroll_weapon",30],["scroll_armor",30],["bk_dark_shadow",5],["bk_weaken",5],["bk_slow",5],["bk_dark_fang",5],["item_pride_scroll_11",30],["item_pride_sealed_11",1]],
+        "魔狼": [["new_item_140",1],["item_pride_scroll_21",2],["new_item_192",0.001]],
+        "邪惡密密": [["hlm_mr",0.3],["potion_haste",1],["potion_brave",1],["scroll_armor",1],["item_pride_scroll_21",2],["bk_dex_up",0.5],["bk_str_up",0.2],["bk_dark_fang",0.1],["new_item_190",0.001]],
+        "邪惡多眼怪": [["hlm_dark",0.3],["new_item_140",1],["scroll_weapon",0.5],["item_pride_scroll_21",2],["bk_mummy_curse",0.8],["bk_cancel",0.3],["bk_weaken",0.3],["bk_disease",0.05],["bk_dark_fang",0.1],["bk_dark_erup",1],["new_item_193",0.001]],
+        "死亡之劍": [["wpn_scimitar",5],["arm_67",1],["new_item_140",1],["scroll_weapon",0.5],["item_pride_scroll_21",2],["bk_elf_windshot",0.5],["bk_elf_stormeye",0.5],["bk_dark_double",0.1]],
+        "不幸的幻象眼魔": [["wpn_crystal_dagger",0.5],["wpn_katana",30],["wpn_2hsword",30],["wpn_siruge",1],["arm_88",0.1],["arm_69",30],["arm_59",3],["amr_plate",30],["arm_99",0.1],["amu_int",0.1],["acc_128",5],["acc_130",1],["shd_phantom_eye",0.01],["potion_haste",30],["new_item_140",30],["scroll_weapon",30],["scroll_armor",30],["bk_vampire",5],["bk_mana_drain",5],["bk_dark_shadow",5],["bk_weaken",5],["bk_disease",5],["bk_dark_crit",5],["item_pride_scroll_21",30],["item_pride_sealed_21",1]],
+        "恐怖的火炎蛋": [["item_pride_scroll_31",2],["bk_haste_spell",0.2],["bk_blaze",0.3],["scroll_weapon",0.3],["scroll_armor",0.6]],
+        "恐怖夢魘": [["clk_dark",0.5],["potion_haste",1],["item_pride_scroll_31",2],["bk_vampire",0.3],["bk_dark_shadow",0.3],["bk_weaken",0.3],["bk_disease",0.3],["bk_elf_triple",0.05],["new_item_193",0.001]],
+        "恐怖的地獄犬": [["wpn_witchwand",3],["potion_brave",1],["new_item_158",0.5],["item_pride_scroll_31",2],["bk_holy_barrier",0.1],["bk_dark_crit",0.5],["new_item_192",0.001]],
+        "小惡魔": [["amr_demon",0.01],["amu_str",0.01],["amu_int",0.01],["rng_fire",0.01],["potion_haste",1],["scroll_armor",2],["scroll_weapon",0.5],["item_pride_scroll_31",2],["bk_elf_magicerase",0.01],["bk_dark_crit",0.5],["new_item_192",0.001]],
+        "恐怖的伊弗利特": [["item_pride_scroll_31",2],["bk_fireball",1],["bk_dex_up",1],["bk_str_up",1],["bk_cancel",1],["bk_blaze",1],["bk_fire_storm",0.05],["bk_elf_seal",0.05],["bk_elf_firewpn",1],["bk_elf_dancefire",1],["bk_elf_blazewpn",0.2],["bk_dark_double",0.1]],
+        "恐怖的吸血鬼": [["wpn_crystal_dagger",0.5],["wpn_katana",30],["wpn_siruge",1],["wpn_strwand",2],["arm_87",30],["clk_silver_light",1],["arm_88",0.1],["arm_69",30],["arm_59",3],["amu_int",0.3],["acc_117",0.1],["acc_summon_ctrl",0.1],["rng_water",0.1],["rng_earth",0.5],["rng_wind",0.1],["rng_fire",0.1],["acc_128",5],["acc_130",1],["clk_marcus",0.01],["potion_haste",30],["new_item_140",30],["new_item_151",30],["new_item_160",30],["new_item_152",30],["new_item_161",30],["new_item_153",1],["new_item_162",10],["scroll_weapon",30],["scroll_armor",30],["bk_vampire",5],["bk_magic_shield",5],["bk_mana_drain",5],["bk_dark_shadow",5],["bk_zombie",5],["bk_weaken",5],["bk_summon",1],["bk_disease",5],["bk_resurrection",5],["bk_dark_crit",5],["item_pride_scroll_31",30],["item_pride_sealed_31",1]],
+        "殘暴的骷髏斧兵": [["wpn_berserker",1],["potion_haste",1],["scroll_weapon",1],["scroll_armor",2],["item_pride_scroll_41",2],["bk_str_up",0.3]],
+        "殘暴的食屍鬼": [["potion_haste",1],["potion_brave",1],["new_item_140",1],["scroll_armor",2],["item_pride_scroll_41",2],["bk_berserk",0.3],["bk_dark_fang",0.1],["new_item_191",0.001]],
+        "殘暴的骷髏槍兵": [["potion_haste",1],["potion_brave",1],["new_item_140",1],["scroll_armor",2],["item_pride_scroll_41",2],["bk_dex_up",0.5],["bk_blaze",0.5],["new_item_193",0.001]],
+        "殘暴的史巴托": [["hlm_mr",0.3],["scroll_armor",3],["item_pride_scroll_41",2],["bk_dark_erup",1]],
+        "殘暴的骷髏神射手": [["potion_haste",1],["potion_brave",1],["scroll_weapon",2],["item_pride_scroll_41",2],["bk_dex_up",1],["bk_charm",0.8],["bk_blaze",0.5],["bk_elf_windshot",1],["bk_dark_fang",0.1]],
+        "死亡的殭屍王": [["wpn_2hsword",30],["wpn_siruge",5],["wpn_dual_abyss",0.05],["arm_69",30],["arm_59",3],["amr_plate",30],["acc_summon_ctrl",0.1],["rng_water",0.2],["rng_earth",0.5],["rng_wind",0.2],["rng_fire",0.1],["acc_128",1],["acc_130",1],["potion_haste",30],["potion_brave",30],["new_item_140",30],["scroll_weapon",30],["scroll_armor",30],["bk_dark_shadow",5],["bk_zombie",5],["bk_weaken",5],["bk_disease",5],["bk_resurrection",5],["bk_seal",5],["bk_dark_fang",5],["item_pride_scroll_41",30],["item_pride_sealed_41",1]],
+        "殘暴的骷髏鬥士": [["amr_bone",2],["potion_haste",1],["scroll_weapon",2],["item_pride_scroll_41",2],["bk_dex_up",1],["bk_haste_spell",0.5],["bk_dark_double",0.1],["bk_dark_erup",1]],
+        "幼龍": [["new_item_151",5],["new_item_157",5],["new_item_160",5],["new_item_154",5],["new_item_152",0.5],["new_item_158",0.5],["new_item_161",0.3],["new_item_155",0.5],["new_item_153",0.3],["new_item_159",0.5],["new_item_162",0.5],["new_item_156",0.5],["scroll_armor",1],["item_pride_scroll_51",2.5]],
+        "火焰之靈魂(紅)": [["potion_haste",1],["potion_brave",1],["scroll_armor",0.5],["item_pride_scroll_51",2]],
+        "火焰之靈魂(藍)": [["potion_haste",1],["new_item_140",1],["item_pride_scroll_51",2]],
+        "恐怖的鋼鐵高崙": [["arm_99",0.005],["rng_earth",0.01],["potion_brave",1],["new_item_140",1],["item_pride_scroll_51",2],["bk_dark_fang",0.1],["new_item_180",100],["new_item_164",20]],
+        "火焰之魔法師": [["amu_str",0.01],["acc_119",0.01],["acc_125",0.01],["acc_117",0.01],["acc_summon_ctrl",0.01],["potion_haste",1],["scroll_weapon",0.4],["scroll_armor",1],["item_pride_scroll_51",2],["bk_dark_crit",0.5]],
+        "骨龍": [["acc_summon_ctrl",0.01],["new_item_151",5],["new_item_157",5],["new_item_160",5],["new_item_154",5],["new_item_152",0.8],["new_item_158",1],["new_item_161",0.5],["new_item_155",0.5],["new_item_153",0.5],["new_item_159",0.6],["new_item_162",0.8],["new_item_156",0.8],["item_pride_scroll_51",2.5],["bk_resurrection",0.25],["bk_dark_crit",0.5],["scroll_weapon",0.5],["scroll_armor",1]],
+        "地獄的黑豹": [["wpn_claw_abyss",0.05],["amu_str",3],["acc_128",5],["blt_body",1],["potion_haste",30],["potion_brave",30],["new_item_140",30],["scroll_weapon",30],["scroll_armor",30],["item_pride_scroll_51",30],["item_pride_sealed_51",1]],
         };
     </script>
 <script>
@@ -1656,6 +1818,60 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
 
         // 地圖代碼中文化對照表
         const zoneNames = {
+            "pride_f2": "傲慢之塔 2樓",
+            "pride_f3": "傲慢之塔 3樓",
+            "pride_f4": "傲慢之塔 4樓",
+            "pride_f5": "傲慢之塔 5樓",
+            "pride_f6": "傲慢之塔 6樓",
+            "pride_f7": "傲慢之塔 7樓",
+            "pride_f8": "傲慢之塔 8樓",
+            "pride_f9": "傲慢之塔 9樓",
+            "pride_f10": "傲慢之塔 10樓",
+            "pride_f11": "傲慢之塔 11樓",
+            "pride_f12": "傲慢之塔 12樓",
+            "pride_f13": "傲慢之塔 13樓",
+            "pride_f14": "傲慢之塔 14樓",
+            "pride_f15": "傲慢之塔 15樓",
+            "pride_f16": "傲慢之塔 16樓",
+            "pride_f17": "傲慢之塔 17樓",
+            "pride_f18": "傲慢之塔 18樓",
+            "pride_f19": "傲慢之塔 19樓",
+            "pride_f20": "傲慢之塔 20樓",
+            "pride_f21": "傲慢之塔 21樓",
+            "pride_f22": "傲慢之塔 22樓",
+            "pride_f23": "傲慢之塔 23樓",
+            "pride_f24": "傲慢之塔 24樓",
+            "pride_f25": "傲慢之塔 25樓",
+            "pride_f26": "傲慢之塔 26樓",
+            "pride_f27": "傲慢之塔 27樓",
+            "pride_f28": "傲慢之塔 28樓",
+            "pride_f29": "傲慢之塔 29樓",
+            "pride_f30": "傲慢之塔 30樓",
+            "pride_f31": "傲慢之塔 31樓",
+            "pride_f32": "傲慢之塔 32樓",
+            "pride_f33": "傲慢之塔 33樓",
+            "pride_f34": "傲慢之塔 34樓",
+            "pride_f35": "傲慢之塔 35樓",
+            "pride_f36": "傲慢之塔 36樓",
+            "pride_f37": "傲慢之塔 37樓",
+            "pride_f38": "傲慢之塔 38樓",
+            "pride_f39": "傲慢之塔 39樓",
+            "pride_f40": "傲慢之塔 40樓",
+            "pride_f41": "傲慢之塔 41樓",
+            "pride_f42": "傲慢之塔 42樓",
+            "pride_f43": "傲慢之塔 43樓",
+            "pride_f44": "傲慢之塔 44樓",
+            "pride_f45": "傲慢之塔 45樓",
+            "pride_f46": "傲慢之塔 46樓",
+            "pride_f47": "傲慢之塔 47樓",
+            "pride_f48": "傲慢之塔 48樓",
+            "pride_f49": "傲慢之塔 49樓",
+            "pride_f50": "傲慢之塔 50樓",
+            "pride_2_10": "傲慢之塔 2-10樓",
+            "pride_11_20": "傲慢之塔 11-20樓",
+            "pride_21_30": "傲慢之塔 21-30樓",
+            "pride_31_40": "傲慢之塔 31-40樓",
+            "pride_41_50": "傲慢之塔 41-50樓",
             "silent_outer": "沉默洞穴周邊",
             "kent_outer": "肯特外門區",
             "kent_inner": "肯特內城",
@@ -1810,10 +2026,10 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         }
 
         // 渲染卡片
-        const effMap = {"crush": "粉碎 (無視防禦)", "pierce": "貫穿 (無視防禦)", "moonburst": "月光爆炸", "dice_death": "骰子死亡 (隨機倍率)", "blue": "魔力回復 (藍水)", "brave": "勇氣 (二段加速)", "haste": "加速 (一段加速)", "cleave": "橫掃 (範圍攻擊)", "magicstrike": "魔法打擊", "magicbarrier": "魔法屏障", "mp_drain": "魔力吸取", "poly": "變身", "teleport_scroll": "傳送", "panacea": "萬能藥", "meat": "飽食度增加", "whistle": "哨子 (召喚)", "elfcookie": "精靈餅乾 (三段加速)", "reset": "重置", "cautious": "慎重 (魔攻提升)", "stun": "衝擊之暈", "freeze": "冰凍", "stone": "石化", "sleep": "沉睡", "poison": "中毒", "blind": "目盲", "weaken": "弱化", "disease": "疾病", "broken": "損壞", "slow": "緩速", "mrhalf": "魔抗減半", "magicseal": "魔法封印"};
+        const effMap = {"combo": "連擊 (鋼爪/雙刀)", "magicburst": "魔法爆發", "crush": "粉碎 (無視防禦)", "pierce": "貫穿 (無視防禦)", "moonburst": "月光爆炸", "dice_death": "骰子死亡 (隨機倍率)", "blue": "魔力回復 (藍水)", "brave": "勇氣 (二段加速)", "haste": "加速 (一段加速)", "cleave": "切割 (重擊觸發攻速+20%)", "magicstrike": "魔法打擊", "magicbarrier": "魔法屏障", "mp_drain": "魔力吸取", "poly": "變身", "teleport_scroll": "傳送", "panacea": "萬能藥", "meat": "飽食度增加", "whistle": "哨子 (召喚)", "elfcookie": "精靈餅乾 (三段加速)", "reset": "重置", "cautious": "慎重 (魔攻提升)", "stun": "衝擊之暈", "freeze": "冰凍", "stone": "石化", "sleep": "沉睡", "poison": "中毒", "blind": "目盲", "weaken": "弱化", "disease": "疾病", "broken": "損壞", "slow": "緩速", "mrhalf": "魔抗減半", "magicseal": "魔法封印"};
 
         // ===== 🛡️ 硬皮系統（依遊戲 initHardSkin 公式即時計算；只有 hard:true 的怪有硬皮）=====
-        const HARD_MOBS = new Set(['siege_tower','siege_gate','siege_tower_ww','siege_gate_ww','baless','stone_golem','dragon_turtle','crustacean','nm_016','giant_croc','nm_017','nm_018','nm_022','kari','nm_024','necromancer','lava_golem','ice_queen','batus','casper','marcus','ifrit','wyvern','blackelder','doppel_boss','baphomet','kurt','dk','ant_queen','phoenix','nm_034','antaras','fafurion','valakas','sema','siege_tower_heine','siege_gate_heine','de_king_baranka','de_king_laia','de_king_heruby','de_king_slayer','de_necro_avenger','de_necro_warlock','de_necro_omwarrior','de_necro_darklord','de_necro_omheavy']);
+        const HARD_MOBS = new Set(['siege_tower','siege_gate','siege_tower_ww','siege_gate_ww','baless','stone_golem','dragon_turtle','crustacean','nm_016','giant_croc','nm_017','nm_018','nm_022','kari','nm_024','necromancer','lava_golem','ice_queen','batus','casper','marcus','ifrit','wyvern','blackelder','doppel_boss','baphomet','kurt','dk','ant_queen','phoenix','nm_034','antaras','fafurion','valakas','sema','siege_tower_heine','siege_gate_heine','de_king_baranka','de_king_laia','de_king_heruby','de_king_slayer','de_necro_avenger','de_necro_warlock','de_necro_omwarrior','de_necro_darklord','de_necro_omheavy','pride_jenis','pride_mimic','pride_phantom_boss','pride_vampire_boss','pride_zombie_king','pride_drake','pride_irongolem','pride_bonedragon','pride_panther_boss']);
         function calcHardSkin(m) {
             if (!m) return null;
             if (m.n === '肯特城門' || m.n === '風木城門' || m.n === '海音城門') return { building: true, formula: '玩家等級' };
@@ -1893,7 +2109,8 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
                 ['🍃 疾風','誓言/灑脫/傳說/襲擊/迅捷','2件 遠距離傷害+3、命中+3｜3件 遠距離爆擊率+2%｜5件 連射傷害30%→80%'],
                 ['🌙 月光','誓言/隱情/幽蔽/純潔/消逝','2件 額外傷害+2、命中+2｜3件 ER+5、MR+10｜5件 ER也能迴避魔法'],
                 ['📖 學徒','誓言/好奇/研究/夢想/智慧','2件 MP回復+5、額外魔法+6｜3件 魔法爆擊率+2%｜5件 MP<30%時技能耗MP減半'],
-                ['🔮 魔女','誓言/哀戚/束縛/瘋狂/冷冽','2件 魔法傷害+2｜3件 水抗+10、額外魔法+5｜5件 每5次共鳴免費冰矛圍籬']
+                ['🔮 魔女','誓言/哀戚/束縛/瘋狂/冷冽','2件 魔法傷害+2｜3件 水抗+10、額外魔法+5｜5件 每5次共鳴免費冰矛圍籬'],
+                ['🌑 暗影','誓言/護衛/抉擇/瞥視/忠誠','2件 額外傷害+7｜3件 觸發迴避時恢復20HP｜5件 連擊額外施展的一般攻擊傷害變為原本100%']
             ];
             html += '<div class="ss-tier-head">🔮 席琳套裝效果（同組不同名湊 2/3/5 件；裝備於武器/頭盔/盔甲/手套/長靴/斗篷/腰帶）</div>';
             SH.filter(g => !kw || g[0].includes(kw) || g[1].includes(kw)).forEach(g => {
@@ -2037,7 +2254,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
                             if (itemInfo.dmgBonus) details.push(`加傷: +${itemInfo.dmgBonus}`);
                             if (itemInfo.safe !== undefined) details.push(`安定: ${itemInfo.safe}`);
                             if (itemInfo.req) {
-                                const reqMap = { all: "全職業", elf: "妖精", knight: "騎士", pr: "王族", mage: "法師" };
+                                const reqMap = { all: "全職業", elf: "妖精", knight: "騎士", pr: "王族", mage: "法師", dark: "黑暗妖精" };
                                 const reqs = itemInfo.req.split(',').map(r => reqMap[r] || r).join('/');
                                 details.push(`職業: ${reqs}`);
                             }
@@ -2049,7 +2266,16 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
                             tooltipText = "無詳細資料";
                         }
 
-                        tooltipText = tooltipText.replace(/<br\s*\/?>/gi, '\n');
+                        // 懸浮視窗修正：CSS content:attr(data-tooltip) 無法渲染 HTML，
+                        // 先把 <br> 轉換行，再移除其餘 HTML 標籤（如 <span class='text-amber-300'>），
+                        // 避免原始標籤字樣直接顯示在懸浮視窗中；並轉義雙引號以免破壞 data-tooltip 屬性。
+                        tooltipText = tooltipText
+                            .replace(/<br\s*\/?>/gi, '\n')
+                            .replace(/<\/?[a-zA-Z][^>]*>/g, '')
+                            .replace(/\n{3,}/g, '\n\n')
+                            .replace(/[ \t]+\n/g, '\n')
+                            .trim()
+                            .replace(/"/g, '&quot;');
 
                         const multiplierTag = isSherine
                             ? `<span class="drop-rate-multiplier" title="席琳的世界：掉落率×3">×3</span>`
