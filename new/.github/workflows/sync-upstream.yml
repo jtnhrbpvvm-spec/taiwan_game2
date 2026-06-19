@@ -1,0 +1,92 @@
+name: sync-upstream
+
+# 自動把原作者最新 index.html 合併進來、補新圖、驗證外掛掛點,正常才推。
+# 觸發:每天定時 + 可手動。原作者更新後基本上會自己同步,只有外掛掛點被改壞時才需人工。
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'   # 每 15 分檢查一次原作者更新;用 7/22/37/52 而非整 0/15/30/45,閃過 GitHub 整分排程大軍以降低排隊延遲(公開 repo,Actions 免費無上限;沒更新時約 15~20 秒空跑)
+  workflow_dispatch: {}     # 也可在 Actions 頁手動觸發 / gh workflow run 觸發
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 合併原作者最新 index.html + 補新圖
+        id: merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/sync-upstream.mjs
+
+      - name: 外掛掛點冒煙測試 (Playwright)
+        id: smoke
+        if: steps.merge.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i -D playwright@^1.48.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium
+          node scripts/smoke-hooks.mjs
+
+      - name: 提交並推送 (掛點正常才推)
+        if: steps.merge.outputs.changed == 'true' && steps.smoke.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html assets sw.js last-sync.json
+          MSG="chore(sync): 自動同步原作者最新 index.html(新增 ${{ steps.merge.outputs.assets_added }} 張、更新 ${{ steps.merge.outputs.assets_changed }} 張)"
+          if [ "${{ steps.merge.outputs.bg_changed }}" != "0" ]; then
+            git commit -m "$MSG" -m "⚠ 原作者更新了 ${{ steps.merge.outputs.bg_changed }} 張既有背景圖,已自動重抓並 bump 背景快取至 ${{ steps.merge.outputs.sw_version }}(實際檔名見本次變更)。"
+          else
+            git commit -m "$MSG"
+          fi
+          git push
+
+      - name: 打 tag + 開 Release (供 release 下載原始碼)
+        if: steps.merge.outputs.changed == 'true' && steps.smoke.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v$(TZ='Asia/Taipei' date +%Y%m%d-%H%M)"
+          SHA="$(git rev-parse HEAD)"
+          GAME="${{ steps.merge.outputs.game_title }}"
+          ADDED="${{ steps.merge.outputs.assets_added }}"
+          CHANGED="${{ steps.merge.outputs.assets_changed }}"
+          BG_NOTE=""
+          if [ "${{ steps.merge.outputs.bg_changed }}" != "0" ]; then
+            BG_NOTE="$(printf '\n\n⚠ 本次原作者更新了 %s 張既有背景圖,已自動換新並 bump 背景快取(%s);線上版重整即可看到新圖。' "${{ steps.merge.outputs.bg_changed }}" "${{ steps.merge.outputs.sw_version }}")"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "已有同名 release $TAG,略過(避免重複)。"
+          else
+            printf '《%s》加掛版 — 已自動同步原作者最新版,並套上下列外掛(不改動原遊戲內容):\n\n- 🌙 離線掛機:關閉瀏覽器也自動結算收益(上限 24 小時、撞死即停、存活回原狩獵圖)\n- 📱 手機版面:底部分頁、精簡狀態列、角色資訊/日誌彈窗、創角畫面手機化、登出鈕\n- 📖 怪物/掉落查詢:首頁搜尋怪物/地圖/掉落物,看數值、出沒地圖與掉落機率(可切席琳的世界 ×3)\n- 📚 小百科:首頁入口,三分頁查職業專精/武器特性/職業魔法的詳細說明\n- 🔧 體驗修正:修掉原版在加掛環境下的操作小毛病(例如戰鬥中點開「強化裝備」的選單會一直被關掉)%s\n\n原始碼請由下方 Source code (zip / tar.gz) 下載。\n線上遊玩:https://pp771007.github.io/idle-lineage-class/\n本次同步新增 %s 張、更新 %s 張。\n' "$GAME" "$BG_NOTE" "$ADDED" "$CHANGED" > /tmp/relnotes.md
+            gh release create "$TAG" --target "$SHA" --title "《${GAME}》加掛版 ${TAG}" --notes-file /tmp/relnotes.md
+          fi
+
+      - name: 掛點失效 → 開 issue 通知 (不自動推壞版本)
+        if: steps.merge.outputs.changed == 'true' && steps.smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh issue list --state open --search "外掛掛點失效 in:title" --json number --jq 'length')
+          if [ "$existing" = "0" ]; then
+            gh issue create \
+              --title "⚠️ 原作者更新了,但外掛掛點失效,需手動合併" \
+              --body "自動同步偵測到原作者 index.html 有更新,但 Playwright 冒煙測試發現有外掛沒成功 hook(原作者可能改了 DOM 結構 / id)。已暫停自動推送,避免推出外掛失效的版本。請手動跑「合併原版」並修正失效的外掛掛點,詳見本次 workflow run log。"
+          else
+            echo "已有開啟中的同名 issue,略過建立,避免洗 issue。"
+          fi
