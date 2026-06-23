@@ -233,6 +233,15 @@
 
     var mql = window.matchMedia(MQ);
 
+    // 🔧 偵測手機:作者改版後新增 __mobileScaling,手機時把 viewport 設成固定 1180 等比縮放——這會讓
+    //    純寬度的 matchMedia 判定失效(變成對 1180 比、永遠 >768),故優先用它的 isMobileDevice()
+    //    (看 pointer:coarse / 螢幕短邊 / UA,不受 viewport 影響),再 OR 上 matchMedia(窄視窗也算)。
+    function detectMobile() {
+      var sc = window.__mobileScaling;
+      var devMobile = (sc && typeof sc.isMobileDevice === 'function') ? sc.isMobileDevice() : false;
+      return devMobile || mql.matches;
+    }
+
     function setView(v) {
       document.body.classList.remove('mview-battle', 'mview-config', 'mview-bag');
       document.body.classList.add('mview-' + v);
@@ -254,6 +263,8 @@
 
     function apply(on) {
       if (on) {
+        var sc = window.__mobileScaling;
+        if (sc && typeof sc.apply === 'function') sc.apply(false);   // 🔧 關掉作者「viewport 1180 等比縮放」→ 回 device-width,本外掛自建版面才正確(否則 100vw=1180、版面爆開)
         document.body.classList.add('m-mobile');
         logsIntoSheet();
         if (!/mview-(battle|config|bag)/.test(document.body.className)) setView('battle');
@@ -266,15 +277,17 @@
       }
     }
 
-    apply(mql.matches);
-    if (mql.addEventListener) mql.addEventListener('change', function (e) { apply(e.matches); });
-    else if (mql.addListener) mql.addListener(function (e) { apply(e.matches); });
+    apply(detectMobile());
+    function onMobileChange() { apply(detectMobile()); }
+    if (mql.addEventListener) mql.addEventListener('change', onMobileChange);
+    else if (mql.addListener) mql.addListener(onMobileChange);
+    window.addEventListener('orientationchange', onMobileChange);   // 裝置旋轉也重新判定
 
-    window.__afkm = { version: '1.0.0', apply: apply, setView: setView, setLog: setLog, openLog: openLog, closeLog: closeLog, toggleLog: toggleLog, isMobile: function () { return mql.matches; } };
+    window.__afkm = { version: '1.0.0', apply: apply, setView: setView, setLog: setLog, openLog: openLog, closeLog: closeLog, toggleLog: toggleLog, isMobile: detectMobile };
 
     wrapSlotSelect(mql);   // 手機:把存檔鈕單行文字重排成兩行(編號+職業 / 等級+暱稱)
 
-    console.log('[AFK-mobile] hooks OK — 手機版面已啟用(目前:' + (mql.matches ? '手機' : '桌機') + ')。');
+    console.log('[AFK-mobile] hooks OK — 手機版面已啟用(目前:' + (detectMobile() ? '手機' : '桌機') + ')。');
 
     // --- 精簡一行式狀態列 --------------------------------------------------
     function buildStatusStrip() {
@@ -408,9 +421,19 @@
       window.__afkLoggingOut = true;   // 告知 afk-fixes 的關閉前存檔別重存:本流程已存過,reload 觸發的 beforeunload/pagehide 不必再存(否則手機 toast 會跳兩次)
       try { if (typeof window.saveGame === 'function') window.saveGame(); } catch (e) {}   // 先存當前進度,避免漏掉上次自動存檔後的收益
       try { if (window.__afk && window.__afk.stamp) window.__afk.stamp(); } catch (e) {}   // 存完再蓋錨點 → 存檔時間=離線起算時間,離線結算不會漏算/重算
-      try { location.reload(); } catch (e) {}
+      showLogoutOverlay();   // 立刻蓋全螢幕遮罩:reload 是整頁重開機(手機要幾秒),期間舊頁仍在跑戰鬥,不蓋住會看起來像「還在打怪」
+      // double rAF:確保遮罩先畫出來(rAF 在繪製前觸發,巢狀第二個在首次繪製後),再開始 reload
+      requestAnimationFrame(function () { requestAnimationFrame(function () { try { location.reload(); } catch (e) {} }); });
     });
     return m;
+  }
+  // 登出遮罩:蓋在最上層(z-index 高過登出視窗/toast),純視覺,讓重開機那幾秒看到「回首頁中」而非殘留的戰鬥畫面。
+  function showLogoutOverlay() {
+    if (document.getElementById('m-logout-overlay')) return;
+    var o = document.createElement('div');
+    o.id = 'm-logout-overlay';
+    o.innerHTML = '<div id="m-logout-overlay-spin"></div><div id="m-logout-overlay-txt">已自動存檔，正在回首頁…</div>';
+    document.body.appendChild(o);
   }
 
   // --- 手機戰鬥畫面:怪物下方的「手動喝水列」 -------------------------------
@@ -578,7 +601,8 @@
       'body.m-mobile #game-screen{position:fixed !important;top:0 !important;left:0 !important;flex-direction:column !important;gap:0 !important;max-width:none !important;width:100vw !important;height:100vh !important;height:100dvh !important;height:var(--app-h,100dvh) !important;margin:0 !important;padding:0 !important;}',
 
       /* 精簡一行式狀態列(取代原本佔 1/3 高的大面板;原面板在手機隱藏) */
-      /* 🔮 席琳的世界:整條頂部狀態列染紅當標示(桌機是底圖變紅,手機底圖被面板蓋住改染這條)。
+      /* 🔮 席琳的世界:整條頂部狀態列染紅,當「席琳世界開啟中」的辨識標。
+         桌機靠整片底圖換色標示,手機底圖被面板蓋住看不到,故改染這條;紅色與正常的深藍狀態列對比明顯、好辨識。
          不另加元素 → 不會被金幣位數撐高。只在手機+席琳世界開啟時生效。 */
       'body.m-mobile.sherine-world #m-status{background:linear-gradient(#3a0d12,#1f0508) !important;border-bottom-color:#b91c1c !important;}',
       '#m-status{display:none;}',
@@ -715,6 +739,12 @@
       '#m-logout-cancel:active{background:#334155;}',
       '#m-logout-ok{background:#b45309;color:#fff;border-color:#d97706;}',
       '#m-logout-ok:active{background:#92400e;}',
+
+      /* 登出遮罩:按確定後立刻蓋住,撐過 reload 重開機的幾秒(否則舊頁戰鬥畫面還在跑) */
+      '#m-logout-overlay{position:fixed;inset:0;z-index:100000;background:#020617;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;}',
+      '#m-logout-overlay-spin{width:38px;height:38px;border:3px solid #334155;border-top-color:#f59e0b;border-radius:50%;animation:m-logout-spin 0.8s linear infinite;}',
+      '#m-logout-overlay-txt{color:#e2e8f0;font-size:15px;letter-spacing:0.5px;}',
+      '@keyframes m-logout-spin{to{transform:rotate(360deg);}}',
 
       /* 角色資訊彈窗:點暱稱叫出桌面版 #status-panel(手機平時隱藏);✕/點背景關閉 */
       '#m-stat-modal{display:none;}',

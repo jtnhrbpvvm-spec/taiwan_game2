@@ -143,55 +143,7 @@
     vacuum: '封印', magicseal: '封印', mrhalf: '魔防減半', armorbreak: '盔甲破壞'
   };
   // 少數效果不在數值欄位裡(隱身、解除、傳送、暗系被動等),這裡用白話補上
-  var EFFECT_OVERRIDE = {
-    sk_sunlight: '打完一批怪後，下一批出現得更快（接戰等待從約 5 秒縮短為約 1 秒），加快打怪節奏',
-    sk_reveal: '顯現平時隱形、打不到的怪物（如史巴托），讓你能攻擊牠', sk_helm_str2: '顯現平時隱形、打不到的怪物（如史巴托），讓你能攻擊牠',
-    sk_magic_shield: '完全擋下接下來受到的一次攻擊（用掉後消失，3 秒內無法再施展）',
-    sk_invisible: '隱身——滿血的一般怪物不會主動攻擊你',
-    sk_resurrection: '死亡後可立即原地復活（消耗 MP），復活時回復 1～200 隨機 HP（MP 不恢復）；無冷卻、無次數限制，只要 MP 足夠就能一直用',
-    sk_undead_bane: '只對「不死類」怪物有效（圖鑑會標不死）：施放後有機率讓目標直接死亡，不是造成傷害。成功率看「你的等級＋魔法命中」對上「怪的等級＋魔防」，越壓制成功率越高，但封頂約 60%（再難打也保有最低成功率）；對王級（BOSS）一律無效',
-    sk_holy_barrier: '受到的傷害減少 30%',
-    sk_soul_up: 'HP 與 MP 上限各提升 20%',
-    sk_abs_barrier: '與這個世界完全隔絕，持續 7 秒：期間不受任何傷害，但同時無法攻擊、施法、喝藥水或使用道具，HP／MP 也不會自然恢復；效果結束後要再等 12 秒才能再次施放',
-    sk_counter_barrier: '擺出反擊架式：原本只有單手劍被打中時能反擊，施放後連「雙手武器」被打中時也能反擊；若拿的武器本來就帶反擊（單手劍）或居合（武士刀）特性，反擊／居合那一擊的最終傷害再 ×2',
-    sk_antidote: '解除中毒狀態',
-    sk_holy_light: '驅散身上的詛咒',
-    sk_cancel: '解除自己身上的魔法狀態',
-    sk_teleport: '讓當前的怪物消失、重新出現一批（可用來換掉難纏的怪；帶傳送控制戒指則會引來強敵）',
-    sk_energy_sense: '查看目標怪物的屬性弱點',
-    sk_charm: '魅惑一隻非王級怪物，使牠為你作戰（持續 1 小時；成功率最高約 6 成，有召喚精通時對比你低等的怪必定成功）。迷魅不佔召喚增益名額、可與一隻召喚物並存；被迷魅夥伴的命中與傷害隨「完整魅力」提升（連超過 60 的魅力都算進去）',
-    sk_mana_drain: '消耗 50 HP，對怪物施放並（以異常魔法命中判定）命中後，吸取 1～(怪物等級÷2) 點 MP',
-    sk_load_up: '負重上限 +50（效果結束後才能再次施放）',
-    sk_reduction_armor: '提升傷害減免，數值 ＝ 等級 ÷ 10（無條件捨去，例：Lv50 → +5）',
-    sk_shock_stun: '造成一次武器物理傷害，並使目標暈眩 6 秒（暈眩成功率依等級差判定、非固定百分比；需裝備非弓武器）',
-    sk_elf_worldtree: '讓妖精森林、眠龍洞穴一帶的區域額外掉落率由 20% 提升到 30%（被動）',
-    sk_elf_singleres: '提升所選定屬性的抗性 +50',
-    sk_elf_earthshield: '張開一道大地屏障',
-    sk_elf_flamesoul: '近距離普攻傷害必定打出最高值（效果結束後才能再施放）',
-    sk_elf_mind: '消耗 8 HP 轉換成 2 MP',
-    sk_elf_soul: '消耗 50 HP 轉換成 15 MP',
-    sk_elf_mirror: '受到魔法傷害時，有「精神」%的機率（每 1 點精神 +1%）反射回去——對施法的目標造成與自己這次所受傷害等量、必定命中的固定傷害',
-    sk_elf_summon: '依你選定的屬性召喚屬性精靈為你作戰；預設 1 隻，學了「精靈精通」後隻數＝1＋魅力÷20（無條件捨去，魅力 60 時最多 4 隻）。造屍術／召喚術／屬性精靈這類召喚增益同時只能開一個，迷魅術可另外並存',
-    sk_elf_summon2: '召喚比一般屬性精靈更強的上級屬性精靈作戰；隻數規則同屬性精靈——預設 1 隻，學了「精靈精通」後＝1＋魅力÷20（無條件捨去，最多 4 隻）。造屍術／召喚術／屬性精靈這類召喚增益同時只能開一個，迷魅術可另外並存',
-    sk_summon: '召喚一隻生物為你作戰，等級越高召喚到的生物越強。始終只有 1 隻——魅力提升的是「這隻每輪攻擊幾段」、不是召喚更多隻：每輪攻擊段數＝魅力÷6（無條件捨去，即每 6 點魅力多打一段，魅力 60 時最多 10 段），命中與傷害也隨魅力提升，有「召喚精通」時命中傷害判定改用魅力×1.2。造屍術／召喚術／屬性精靈這類召喚增益同時只能開一個，迷魅術可另外並存',
-    sk_zombie: '造出一隻人形殭屍隨從替你作戰。始終只有 1 隻——魅力提升的是「這隻每輪攻擊幾段」、不是召喚更多隻：每輪攻擊段數＝魅力÷6（無條件捨去，即每 6 點魅力多打一段，魅力 60 時最多 10 段），命中與傷害也隨魅力提升，有「召喚精通」時命中傷害判定改用魅力×1.2。造屍術／召喚術／屬性精靈這類召喚增益同時只能開一個，迷魅術可另外並存',
-    sk_dark_stealth: '暗影隱身：閃過接下來受到的一次攻擊（用掉後進入冷卻）',
-    sk_dark_poison: '攻擊時 50% 機率使目標中毒（每秒造成該次傷害的 30%、持續 5 秒；有劇毒精通則必定中毒）',
-    sk_dark_poisonres: '你自己受到的中毒傷害減半',
-    sk_dark_burn: '攻擊時 10% 機率打出 1.5 倍傷害',
-    sk_dark_walkhaste: '攻擊速度提升 15%（可與加速術疊加）',
-    sk_dark_dodge: '有 50% 機率閃過原本「必中」的魔法攻擊（用掉後進入冷卻）',
-    sk_dark_crit: '消耗一半當前 HP 與全部 MP，打出一記必中、必重擊的攻擊；剩下的 MP 越多傷害越高（滿 MP 約 10 倍，對血盟敵人再 ×2）',
-    sk_dark_double: '使用雙刀或鋼爪時，有機率打出 2 倍傷害（45 級起 5%，每 5 級 +1%）',
-    sk_dark_refine: '被動：提高「黑魔石」（黑暗妖精製作素材）取得。沉默洞穴外圍二級黑魔石掉率 20%→30%、三級 10%→15%；其他野外／地監原本完全不掉，學會後才會掉（二級 1%、三級 0.5%、四級 0.1%；攻城區不掉）',
-    sk_elf_triple: '需裝備弓。對單體連續射出 3 箭物理攻擊，每箭各自判定命中與重擊',
-    sk_fire_prison: '火屬性範圍持續傷害：每 2 秒對全體敵人造成 1～15 點火魔法傷害（會隨智力與魔法傷害放大、受魔防減免）；效果結束才能再施放',
-    sk_blizzard_storm: '水屬性範圍持續傷害：每 4 秒對全體敵人造成 1～10 點水魔法傷害並嘗試冰凍（會隨智力與魔法傷害放大、受魔防減免）；效果結束才能再施放',
-    sk_elf_watervital: '期間你下次受到「治癒術」（自身的瞬間治癒，不含持續回復 HoT）時，恢復量加倍；觸發後 7 秒冷卻才能再次加倍。效果結束才能再施放',
-    sk_elf_energyboost: '負重超標（進入懲罰階）時，HP／MP 仍能自然恢復（平常背太重會停掉自然恢復）；效果結束才能再施放',
-    sk_elf_physboost: '負重超標（進入懲罰階）時，HP／MP 仍能自然恢復（平常背太重會停掉自然恢復）；效果結束才能再施放',
-    sk_elf_attrfire: '一般攻擊有 30% 機率造成 1.5 倍傷害；近戰和拿弓都吃得到，但弓的連射追加箭不適用。效果結束才能再施放'
-  };
+  // 法術白話補充已搬到 afk-extradata.js 的 AFK_EXTRA.skillNote(掉落查詢/小百科共用);skillEffect 於呼叫時即時讀,不依賴載入順序
   function statDeltaTxt(d) {
     var out = [];
     for (var k in d) {
@@ -220,6 +172,7 @@
     return pairs.join('、');
   }
   function skillEffect(id, sk) {
+    var EFFECT_OVERRIDE = (window.AFK_EXTRA && AFK_EXTRA.skillNote) || {};
     if (EFFECT_OVERRIDE[id]) {
       var ov = EFFECT_OVERRIDE[id];
       if (sk.type === 'buff' && sk.dur) ov += durTxt(sk.dur);   // 持續型增益自動補上實際時間
@@ -235,6 +188,7 @@
       var seg = '對' + tgt + '造成 ' + (ELE[sk.ele] || '') + '魔法傷害' + powerTxt(sk);
       if (sk.lifesteal) seg += '，並回復等同造成傷害的 HP';
       if (sk.status) seg += '，使其' + (STATUS_LABEL[sk.status.kind] || sk.status.kind) + durTxt(sk.status.dur);
+      if (sk.freeze) seg += '，命中後有機率（依異常魔法命中判定）使目標冰凍 6 秒（冰凍中無法行動、對王級無效）';
       return seg;
     }
     if (sk.type === 'heal') return healTxt(sk);
@@ -298,11 +252,12 @@
     { n: '出血（匕首 / 矛）', d: '普攻命中時有「力量 ÷ 60」的機率讓目標流血：每層每秒造成「該擊傷害的 20%」、持續 8 秒，最多疊 5 層（疊滿後新層取代最舊層）。黑暗妖精「出血精通」會讓匕首／矛／雙刀都能疊到 10 層、且每層傷害再 +10%（滿 10 層 ＝ +100%），並讓「雙刀」也比照匕首觸發出血（同樣力量 ÷ 60）。代表武器：各種匕首、矛、雙刀（雙刀需出血精通）。' },
     { n: '常駐加速', d: '裝著就持續提升攻擊速度 <b>+33%</b>（效果同「加速術」／自我加速藥水，三者<b>無法疊加</b>）。代表武器：惡魔之劍（同時帶反擊）、惡魔雙刀／鋼爪／十字弓。' },
     { n: '毒咒（死亡之指）', d: '攻擊時 <b>2%</b> 機率對目標下毒：每 3 秒造成 1～8 點傷害、持續 15 秒。只有「死亡之指」有（它同時是連擊武器）。' },
-    { n: '反擊（單手劍）', d: '被敵人打中時 50% 機率立刻反擊（若裝盾且這次擋下攻擊，則必定反擊）。代表武器：長劍、彎刀、克特之劍等單手劍。' },
-    { n: '居合（武士刀）', d: '不拿盾、裝武士刀時，敵人的攻擊被你「閃過」或「揮空」時，30% 機率反手砍一刀。代表武器：武士刀、瑟魯基之劍。' },
+    { n: '反擊（單手劍）', d: '被敵人打中時 50% 機率立刻反擊（若裝「真盾牌」且這次擋下攻擊，則必定反擊）。注意：臂甲雖然裝在盾牌欄，但不算盾，戴臂甲＝沒拿盾。代表武器：長劍、彎刀、克特之劍等單手劍。' },
+    { n: '居合（武士刀）', d: '不拿盾、裝武士刀時，敵人的攻擊被你「閃過」或「揮空」時，30% 機率反手砍一刀（「不拿盾」也包含戴臂甲的情況——臂甲不算盾）。若一把武器同時帶反擊與居合：拿真盾牌時走反擊、空手或戴臂甲時走居合。代表武器：武士刀、瑟魯基之劍。' },
     { n: '不死 / 狼人剋星（銀・精靈）', d: '攻擊「不死類」或「狼人」時額外多加 1~20 傷害。打這兩類怪特別有效。代表武器：銀斧、精靈短劍、銀長劍，以及銀箭、米索莉箭。' },
     { n: '鈍擊（單手鈍器）', d: '命中時讓目標的下一次攻擊延遲 1 秒，拖慢敵人出手。代表武器：流星錘、釘錘、木棒。' },
-    { n: '魔爆（神官魔杖）', d: '施放傷害魔法時依智力觸發引發爆炸（單體魔法：智力 ÷ 100 的機率；全體魔法：智力 ÷ 60 的機率），對全場敵人各追加「本次魔法傷害的三成」。代表武器：神官魔杖。' }
+    { n: '魔爆（神官魔杖）', d: '施放傷害魔法時依智力觸發引發爆炸（單體魔法：智力 ÷ 100 的機率；全體魔法：智力 ÷ 60 的機率），對全場敵人各追加「本次魔法傷害的三成」。代表武器：神官魔杖。' },
+    { n: '疾病（惡魔王武器）', d: '攻擊時 10% 機率對目標施放「疾病術」，讓牠陷入疾病狀態 30 秒：防禦變差（你更容易打中牠）、命中也下降（牠更容易揮空、你更不容易被打中）。代表武器：惡魔王系列（矛、雙刀、雙手劍、魔杖、弓）。' }
   ];
   var WEAPON_BASICS = [
     ['小型 / 大型傷害', '武器對「小型怪」與「大型怪」各自的傷害高低；重擊時一律打出最高值。'],
@@ -357,6 +312,13 @@
       '<b>HP 恢復</b>：每次回「<b>1 ～ 體質決定的上限</b>」之間的隨機量，再加上裝備的「HP 恢復量」。<b>體質要 11 才開始有恢復</b>；上限隨體質提高（體質 11 約 1~5、21 約 1~10、40 上下約 1~22、70 以上 1~40）。',
       '<b>MP 恢復</b>：每次回「<b>精神決定的固定值</b>」加裝備的「MP 恢復量」（不是隨機）。精神 9＝1、19＝3、29＝6、44＝10、70 以上＝23。此外，精神還讓你<b>每擊殺一隻怪就立刻回一些 MP</b>。',
       '<b>背太重會直接「停掉」自然恢復</b>：負重進入懲罰階時，HP 與 MP 都不會自然回（很多人「血／魔不回」其實是背太重，詳見「負重」分頁）。另外<b>狂暴狀態下不回 HP</b>。'
+    ]},
+    { t: '臂甲：能和雙手武器並用的副手裝備', lines: [
+      '<b>臂甲</b>是裝在「<b>副手（盾牌欄）</b>」的防具，但和盾牌不同：<b>可以和雙手武器同時使用</b>——拿雙手劍／矛／弓也能再戴一隻臂甲。它和盾牌共用同一格，所以臂甲與盾牌仍是二選一。',
+      '<b>強化規則和一般防具不一樣</b>：臂甲<b>強化不加防禦(AC)，改成每強化 +1 給 HP +10</b>；強化上限 +15（同盾牌），一樣能帶祝福／詞綴。',
+      '<b>門檻特效</b>：每件臂甲有一個主效果，強化到 <b>+5／+7／+9</b> 時主效果各跳一階加強（<b>取達到的最高階、不累加</b>）。',
+      '<b>三件基礎臂甲</b>——找說話之島的 <b>尤麗婭</b>，用「歐林的日記本」兌換、三選一（每件 1 本）：守護者臂甲（額外減傷 +1，+5／+7／+9 改為 +2／+3／+4）、法師臂甲（智力 +2，+5／+7／+9 給魔法傷害 +1／+2／+3）、體力臂甲（HP +50，+5／+7／+9 再加 HP +25／+50／+75）。',
+      '<b>兩件古代臂甲</b>——找威頓村的 <b>客盧亞</b> 製作，材料含「遺忘之島」掉落的「被遺忘的裝備」（配方見「製作」分頁）：古代神射臂甲（HP +80、遠距離傷害 +1，+5／+7／+9 改為 +2／+3／+4）、古代鬥士臂甲（火水風地抗性各 +5、近距離傷害 +1，+5／+7／+9 改為 +2／+3／+4）。'
     ]}
   ];
 
@@ -374,7 +336,7 @@
       ]
     },
     mage: {
-      icon: '🪄', name: '法師', masteryBoss: '黑長者（龍之谷／古魯丁地監6樓）',
+      icon: '🪄', name: '法師', masteryBoss: '黑長者（龍之谷）',
       trials: [
         { n: '魔法能量之書', npc: '詹姆 ＠說話之島', req: '食屍鬼的指甲 ×1、食屍鬼的牙齒 ×1、骷髏頭 ×1', from: '指甲／牙齒：食屍鬼 各 1%；骷髏頭：骷髏 1%（皆廣布野外/地監）', rw: '魔法能量之書' },
         { n: '水晶魔杖（水晶試煉）', npc: '塔拉斯 ＠象牙塔', req: '不死族的鑰匙 ×1、不死族的骨頭 ×1', from: '鑰匙：骷髏 1%；骨頭：骷髏神射手 1%／骷髏警衛 0.1%（龍之谷地監1-5樓、龍之谷）', rw: '水晶魔杖' },
@@ -394,7 +356,7 @@
       attr: { n: '選定屬性魔法', npc: '艾利溫 ＠妖精森林', req: '四種屬性（火／水／風／地）四選一', from: '—', rw: '開啟所選屬性的魔法路線。注意：只能選一種、選了就固定' }
     },
     dark: {
-      icon: '🗡', name: '黑暗妖精', masteryBoss: '巴風特（奇岩地監1樓）',
+      icon: '🗡', name: '黑暗妖精', masteryBoss: '巴風特（說話之島地監2樓）',
       trials: [
         { n: '影子手套', npc: '倫得 ＠沉默洞穴', req: '死亡誓約 ×1', from: '強盜 1%（奇岩）', rw: '影子手套' },
         { n: '影子面具', npc: '康 ＠沉默洞穴', req: '妖魔長老首級 ×1', from: '妖魔法師 1%（低階區廣布）', rw: '影子面具' },
@@ -434,7 +396,8 @@
     { n: '抗魔套裝', pcs: 3, items: '抗魔戒指、抗魔項鍊、抗魔皮帶', eff: '魔防 +5（注意：裝備欄底色 2 件就亮，但要 3 件全齊才真的吃到 MR+5）' },
     { n: '守護套裝', pcs: 3, items: '守護戒指、守護項鍊、守護皮帶', eff: '防禦(AC) -1' },
     { n: '四大軍王套裝', pcs: 4, items: '冥法軍王斗篷、法令軍王長袍、暗殺軍王手套、魔獸軍王長靴', eff: 'HP上限 +30、MP上限 +30、HP自然恢復 +10、MP自然恢復 +10、魅力 +3' },
-    { n: '惡魔套裝', pcs: 4, items: '惡魔頭盔、惡魔盔甲、惡魔手套、惡魔長靴', eff: '防禦(AC) -2、HP自然恢復 +5，並可變身「惡魔」（變身提供：額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速／勇敢／餅乾疊加）' }
+    { n: '惡魔套裝', pcs: 4, items: '惡魔頭盔、惡魔盔甲、惡魔手套、惡魔長靴', eff: '防禦(AC) -2、HP自然恢復 +5，並可變身「惡魔」（變身提供：額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速／勇敢／餅乾疊加）' },
+    { n: '黑暗妖精套裝', pcs: 3, items: '黑暗妖精頭箍、黑暗妖精鱗甲、黑暗妖精涼鞋', eff: '防禦(AC) -3' }
   ];
 
   // ===== 強化機制(本檔維護) ================================================
@@ -504,6 +467,62 @@
       '這是<b>另一種傳送</b>，不是進塔用——而是<b>戰鬥中把當前這批怪換掉、重抽一批</b>（「傳送術」是技能、「瞬間移動卷軸」是道具，效果一樣）。',
       '在塔裡的限制：<b>排名挑戰一律不能用</b>；在「11 樓以上的樓層區間」要帶該段<b>支配符</b>才能用（2~10 樓不限）。',
       '<b>傳送控制戒指</b>：帶在背包就生效（不必裝備）——手動施放傳送術／用瞬間移動卷軸時<b>必定引出 BOSS</b>。想打 BOSS 時好用，平常掛機刷怪反而會被它害，注意取捨。'
+    ]}
+  ];
+
+  // ===== 遺忘之島(本檔維護) ================================================
+  var OBLIVION_SECTIONS = [
+    { t: '怎麼去遺忘之島', lines: [
+      '到<b>海音</b>，找港口的 NPC <b>依斯巴</b>，搭他的船出發，船費 <b>10 萬金幣</b>。',
+      '出航後不會直接到島上，會先進入一段「<b>遺忘之島途中</b>」的海域（見下一段），打過去才登島。'
+    ]},
+    { t: '途中：打掉「傳送門」才能登島', lines: [
+      '搭船後先到「遺忘之島途中」，這裡會出現一座名為「<b>遺忘之島</b>」的<b>傳送門</b>。它是建築、<b>不會攻擊你</b>、血量極低，把它打掉、迷霧散開後就正式登上<b>遺忘之島</b>本島。',
+      '途中也會遇到一般海怪（蛇女、人魚、哈維、格利芬等），可以邊清邊找那座傳送門。'
+    ]},
+    { t: '島上不能用「傳送」（瞬移）', lines: [
+      '整趟旅程——不管在「途中」還是登島後——<b>都不能用傳送術，也不能用瞬間移動卷軸</b>，硬施放會跳出「遺忘之島的迷霧壓制了傳送」。',
+      '所以平常靠「傳送引出 BOSS」「換掉當前怪重抽一批」那套，在這裡<b>完全用不了</b>；遇到 BOSS 也<b>不會自動瞬移逃跑</b>，只能正面打。',
+      '航程與島上也<b>不能從地圖選單切到別的狩獵圖</b>。'
+    ]},
+    { t: '離開就等於結束旅程', lines: [
+      '只要<b>回村</b>，或<b>主動切換到別的地圖</b>，這趟遺忘之島旅程就<b>結束</b>了；在島上<b>死亡</b>也會被送回村並結束旅程。',
+      '想再去得<b>回海音找依斯巴重新搭船、再付一次 10 萬金幣</b>。'
+    ]},
+    { t: '島上的怪與掉落', lines: [
+      '島上怪物等級約 <b>20～53</b>，最強的頭目是「<b>遺忘之島巨大牛人</b>」（HP 1.5 萬，會放震裂術＋暈眩，建議練起來再來）。',
+      '島上專屬掉落「<b>被遺忘的裝備</b>」（被遺忘的鱗甲／皮盔甲／長袍／金屬盔甲，以及受封印的劍／巨劍／弩槍）。',
+      '這些是製作<b>古代臂甲</b>等古代裝備的材料——拿到威頓村找 <b>客盧亞</b> 製作（配方見「製作」分頁）。'
+    ]}
+  ];
+
+  // ===== 軍王之室(本檔維護) ================================================
+  var KINGROOM_SECTIONS = [
+    { t: '軍王之室是什麼、有哪幾間', lines: [
+      '四間獨立的「純 BOSS 房」，每間中央是一隻<b>軍王</b>、兩側各一隻固定小怪，進去就是專心打那隻軍王。',
+      '四間與對應軍王（等級／血量）：<b>暗殺軍王史雷佛</b>（Lv61、HP 約 1.6 萬）、<b>魔獸軍王巴蘭卡</b>（Lv63、HP 約 1.7 萬）、<b>法令軍王蕾雅</b>（Lv65、HP 約 1.5 萬，會放冰裂術冰凍你、還會幫小怪補血）、<b>冥法軍王海露拜</b>（Lv70、HP 約 2.3 萬，最硬，會放流星雨）。',
+      '軍王本身是<b>被動怪</b>（你不打牠、牠不會主動出手），但兩側小怪是主動的。'
+    ]},
+    { t: '怎麼進去（需要「軍王的鑰匙」）', lines: [
+      '在地圖選單選該軍王之室，<b>進場時消耗 1 把「軍王的鑰匙」</b>；身上沒鑰匙就進不去。',
+      '四間共用同一種「軍王的鑰匙」，不分房。'
+    ]},
+    { t: '軍王的鑰匙哪裡來', lines: [
+      '打「<b>拉斯塔巴德守門人</b>」有 <b>1%</b> 機率掉落 1 把（掉率不高，要多刷幾隻累積）。牠是 Lv40 的黑暗妖精，散布在拉斯塔巴德訓練區一帶——確切出沒地圖用「<b>掉落查詢</b>」搜「拉斯塔巴德守門人」。',
+      '流程：先去刷守門人累積鑰匙 → 再進軍王之室刷軍王。'
+    ]},
+    { t: '打贏之後：每輪再燒 1 把鑰匙續打', lines: [
+      '擊敗軍王後室內怪物全部消散，<b>15 秒後自動消耗 1 把「軍王的鑰匙」讓軍王重生</b>，接著打下一輪。',
+      '<b>身上沒鑰匙時，打贏就直接被傳送回村。</b>所以「掛在裡面連續打」＝<b>每一輪燒 1 把鑰匙</b>，帶幾把大約打幾輪。'
+    ]},
+    { t: '掉落：只有軍王會掉，傳說裝很稀有', lines: [
+      '<b>只有中央的軍王會掉東西，兩側小怪完全不掉。</b>',
+      '每次擊敗軍王<b>必掉材料</b>：對應的<b>軍團印記（100%）</b>＋<b>軍王徽印（10%）</b>（威頓村倫提斯製作用）；另約 <b>3%</b> 機率掉普通牧師／武官裝。',
+      '<b>軍王專屬的傳說裝（軍王武器、四大軍王套裝件、軍王飾品）掉率非常低，約 0.02%～0.1%</b>，要打很多輪才可能掉一件——必掉的只有上面那些材料（套裝加成見「套裝」分頁）。'
+    ]},
+    { t: '房內限制與離線掛機', lines: [
+      '室內<b>不能用傳送術、瞬間移動卷軸</b>（會被封印之力壓制），<b>日光術也無效</b>。',
+      '軍王之室<b>可以離線掛機</b>：離線時照樣「打贏→15 秒燒 1 鑰匙→重生」一輪輪跑，<b>鑰匙用完就自動傳回村莊</b>；回到遊戲的離線結算會告訴你這次打了幾輪、消耗幾把鑰匙。'
     ]}
   ];
 
@@ -604,8 +623,8 @@
       '用途：做「席琳製作」或「席琳兌換」時，各額外消耗 1 個，讓成品必帶一種套裝效果。'
     ]},
     { t: '席琳套裝（綠光，獨立於一般套裝）', groups: true, lines: [
-      '裝備可帶一個「席琳套裝效果」，同一組湊到 2／3／5 件解鎖遞增加成。可裝部位：武器／頭盔／盔甲／手套／長靴／斗篷／腰帶。',
-      '湊 5/5 要同組「5 種不同效果」各一件——同名效果疊不上去。',
+      '裝備可帶一個「席琳套裝效果」，同一組湊到 2／3／5 件解鎖遞增加成。可裝部位：武器／頭盔／盔甲／手套／長靴／斗篷／腰帶。帶效果的裝備會在名稱前冠上套裝名（如「紅獅環甲」），方便辨識同組。',
+      '計件方式：同一組套裝名（如「紅獅」）戴在「不同部位」的件數——同名即累計，戴在幾個部位就算幾件，湊到 2／3／5 件各解鎖一階加成。',
       '取得帶套裝效果的裝備：席琳世界擊殺掉落（一般怪 0.1%、恩賜怪 0.5%、BOSS 5%）、席琳製作（必帶）、席琳兌換（必帶）。各組完整加成如下：'
     ]},
     { t: '席琳恩賜（精英怪）', lines: [
@@ -735,7 +754,9 @@
     { k: 'load', n: '負重' },
     { k: 'sherine', n: '席琳' },
     { k: 'pledge', n: '血盟' },
-    { k: 'tower', n: '傲慢之塔' }
+    { k: 'tower', n: '傲慢之塔' },
+    { k: 'oblivion', n: '遺忘之島' },
+    { k: 'kingroom', n: '軍王之室' }
   ];
   var state = { tab: 'mastery', cls: 'knight', q: '', magicCls: 'all' };
 
@@ -839,6 +860,8 @@
     if (key === 'craft') return renderCraft();
     if (key === 'sherine') return renderSherine();
     if (key === 'tower') return renderTower();
+    if (key === 'oblivion') return renderOblivion();
+    if (key === 'kingroom') return renderKingroom();
     if (key === 'load') return renderLoad();
     if (key === 'pledge') return renderPledge();
     return '';
@@ -878,7 +901,9 @@
     { key: 'load', cls: false, label: '負重' },
     { key: 'sherine', cls: false, label: '席琳' },
     { key: 'pledge', cls: false, label: '血盟' },
-    { key: 'tower', cls: false, label: '傲慢之塔' }
+    { key: 'tower', cls: false, label: '傲慢之塔' },
+    { key: 'oblivion', cls: false, label: '遺忘之島' },
+    { key: 'kingroom', cls: false, label: '軍王之室' }
   ];
   // 統一搜尋:跨「所有分頁 + 所有職業」收集符合的小區塊,依來源分組列出。
   //   搜尋時不再切換/隱藏分頁(避免切職業整頁消失的怪現象),一次看到全部命中的結果。
@@ -974,7 +999,7 @@
     var q = QUEST_BY_CLASS[cls];
     if (!q) return '<div class="m-wiki-hint">查無此職業的任務資料。</div>';
     var html = '<div class="m-wiki-note">這裡是「' + esc(q.name) + '」自己的試煉／任務。試煉只有本職業能接，材料多半要打特定怪掉落，「去哪打」欄已列出主要怪與機率。不分職業的共通任務請切上面的「全職業」。</div>';
-    html += '<div class="m-wiki-sub">' + q.icon + ' ' + esc(q.name) + '試煉</div>' + q.trials.map(questCard).join('');
+    html += '<div class="m-wiki-sub">' + q.icon + ' ' + esc(q.name) + '試煉（無等級限制）</div>' + q.trials.map(questCard).join('');
     if (TRIAL_50[cls]) html += '<div class="m-wiki-sub">🔥 50 級試煉（需等級 50）</div>' + questCard(TRIAL_50[cls]);
     if (q.attr) html += '<div class="m-wiki-sub">🌿 妖精屬性學習</div>' + questCard(q.attr);
     html += '<div class="m-wiki-sub">🏅 精通任務（50 級開放）</div>' + questCard({
@@ -1007,6 +1032,25 @@
         '傷害 ＝ 1 ～（玩家等級＋該犬傷害偏移）之間，再 ＋魅力 －怪的傷害減免，並帶該犬的屬性（吃屬性相剋）。',
         '命中與傷害都吃<b>完整魅力</b>（連超過 60 的都算）；只有「能帶幾隻」才以魅力 60 封頂。'
       ]},
+      { t: '④ 進化：把基礎犬變更強', lines: [
+        '玩家<b>等級 30 以上</b>、且持有對應基礎項圈時，用「進化果實」可把 <b>1 個基礎項圈 ＋ 1 顆果實</b>進化成更強的進化夥伴：',
+        '哈士奇 ＋ 進化果實：暴走兔 → <b>暴走兔</b>；杜賓狗 ＋ 狐狸 → <b>狐狸</b>；牧羊犬 ＋ 小獵犬 → <b>小獵犬</b>；狼 ＋ 聖伯納 → <b>聖伯納</b>。',
+        '<b>進化果實哪來</b>：打死「對應屬性」的怪有機率掉，機率 ＝ <b>0.0001% × 怪物等級</b>（怪越高機率越大）。水屬性怪掉「暴走兔」、火屬性掉「狐狸」、地屬性掉「小獵犬」、風屬性掉「聖伯納」。',
+        '<b>進化夥伴比基礎犬強</b>：傷害骰更大、命中更高，傷害還<b>額外加「魅力 × 1.2～1.3」</b>；而且<b>每次攻擊有 10% 機率追加一發法術</b>（暴走兔冰錐／狐狸火箭／小獵犬地獄之牙／聖伯納風刃，傷害用你自己的施法數值、必定命中、吃魔防）。'
+      ]},
+      { t: '⑤ 寵物裝備（之牙）：再幫夥伴加傷害／命中', lines: [
+        '裝在<b>「寵物裝備」欄</b>的飾品，叫「之牙」。<b>只加成你帶的項圈夥伴、不影響你自己</b>，而且不分種類數量、所有夥伴一起吃。',
+        '四種數值：<b>獵犬之牙</b>＝命中 +2；<b>鋼鐵之牙</b>＝傷害 +2；<b>破滅之牙</b>＝傷害 +2、命中 +3；<b>勝利之牙</b>＝傷害 +3、命中 +1。',
+        '可用<b>「對飾品施法的卷軸」</b>強化，<b>每 +1 → 傷害與命中各 +1，最高 +5</b>（安定值 0，每次強化都有失敗風險）。',
+        '在 <b>諾斯（亞丁）</b>製作；數值見「掉落查詢」搜之牙的名字。'
+      ]},
+      { t: '⑥ 項圈保管（找亞丁的包武）', lines: [
+        '<b>亞丁的包武</b>可幫你保管「項圈」，最多 <b>8 個</b>。暫時用不到、或超過攜帶上限的項圈寄放在這，背包就不會被塞滿。存／取都不花錢。',
+        '<b>每個角色（存檔位）各自獨立、不共通</b>——和「倉庫」（四個角色共用）不同，存在包武這裡的項圈只有該角色本人拿得到。',
+        '<b>用「回憶蠟燭」重置能力值時不會清掉包武保管的項圈</b>（只清背包裡的項圈）。怕洗能力值把項圈也洗掉，就先寄放到包武這。',
+        '<b>存入不限魅力，提領才看魅力</b>：取回時一樣受「能帶幾隻」限制（魅力 ÷ 7）——已帶滿就提不出來，要先提升魅力或放走部分夥伴。',
+        '鎖定與未鎖定的同種項圈會分開保管、各自存取，提領後維持原本的鎖定狀態。'
+      ]},
       { t: '肉、哨子、犬在哪', lines: [
         '肉、哨子都是消耗道具，很便宜（肉 1 金幣）。',
         '犬類怪散布在各地圖，想知道哪裡有，用「掉落查詢」搜 杜賓狗／狼／哈士奇／牧羊犬 看出沒地圖。'
@@ -1017,19 +1061,40 @@
       return '<div class="m-wiki-card"><div class="m-wiki-name">' + esc(s.t) + '</div>' + lines + '</div>';
     }).join('');
     var dogTable = '';
-    if (typeof PET_DEF !== 'undefined' && PET_DEF) {   // 讀遊戲的犬定義,作者新增犬種會自動出現
-      var rows = Object.keys(PET_DEF).map(function (nm) {
-        var p = PET_DEF[nm];
+    if (typeof PET_DEF !== 'undefined' && PET_DEF) {   // 讀遊戲的犬定義,作者新增犬種/進化夥伴會自動出現
+      // 基礎犬 → 進化後寵物 對照(讀進化果實 eff:evolve 的 evolveFrom→evolveTo,再用 PET_DEF.collar 反查名稱;為權威來源、非靠屬性猜)
+      var evolveTo = {}, petByCollar = {};
+      if (typeof DB !== 'undefined' && DB.items) Object.keys(DB.items).forEach(function (id) { var it = DB.items[id]; if (it && it.eff === 'evolve' && it.evolveFrom && it.evolveTo) evolveTo[it.evolveFrom] = it.evolveTo; });
+      Object.keys(PET_DEF).forEach(function (nm) { if (PET_DEF[nm].collar) petByCollar[PET_DEF[nm].collar] = nm; });
+      var evoOf = function (nm) { var c = PET_DEF[nm].collar, ec = c && evolveTo[c]; return ec ? (petByCollar[ec] || '') : ''; };
+      var td = 'style="padding:3px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0;"';
+      var rowOf = function (nm) {
+        var p = PET_DEF[nm], extra;
+        if (p.proc) {   // 進化夥伴 → 顯示每擊追加的法術
+          var proc = (typeof DB !== 'undefined' && DB.skills && DB.skills[p.proc]) ? DB.skills[p.proc].n : p.proc;
+          extra = '<td ' + td + '>追加 ' + esc(proc) + '</td>';
+        } else {        // 基礎犬 → 顯示可進化成的夥伴
+          var ev = evoOf(nm);
+          extra = '<td ' + td + '>' + (ev ? '可進化為 ' + esc(ev) : '—') + '</td>';
+        }
         return '<tr>' +
-          '<td style="padding:3px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0;"><b>' + esc(nm) + '</b></td>' +
-          '<td style="padding:3px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0;">' + esc(p.eleName) + '屬性</td>' +
-          '<td style="padding:3px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0;">傷害偏移 +' + p.diceOff + '</td>' +
-          '<td style="padding:3px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0;">命中偏移 +' + p.hitOff + '</td>' +
+          '<td ' + td + '><b>' + esc(nm) + '</b></td>' +
+          '<td ' + td + '>' + esc(p.eleName) + '屬性</td>' +
+          '<td ' + td + '>傷害偏移 +' + p.diceOff + '</td>' +
+          '<td ' + td + '>命中偏移 +' + p.hitOff + '</td>' +
+          extra +
           '</tr>';
-      }).join('');
-      dogTable = '<div class="m-wiki-card"><div class="m-wiki-name">四種犬的特性</div>' +
-        '<div class="m-wiki-desc" style="color:#94a3b8;margin:2px 0 6px;">傷害偏移越高，傷害上限越高；命中偏移越高，越容易打中。屬性決定相剋。</div>' +
-        '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><tbody>' + rows + '</tbody></table></div>';
+      };
+      var baseN = [], evoN = [];
+      Object.keys(PET_DEF).forEach(function (nm) { (PET_DEF[nm].proc ? evoN : baseN).push(nm); });
+      var tbl = function (title, hint, names) {
+        if (!names.length) return '';
+        return '<div class="m-wiki-card"><div class="m-wiki-name">' + title + '</div>' +
+          '<div class="m-wiki-desc" style="color:#94a3b8;margin:2px 0 6px;">' + hint + '</div>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><tbody>' + names.map(rowOf).join('') + '</tbody></table></div>';
+      };
+      dogTable = tbl('基礎犬的特性', '傷害偏移越高，傷害上限越高；命中偏移越高，越容易打中。屬性決定相剋。最右欄是用對應進化果實能進化成的夥伴。', baseN) +
+        tbl('進化夥伴的特性', '由基礎犬進化而來（見上面「④ 進化」）；傷害另加魅力×倍率，每次攻擊還有 10% 追加對應法術。', evoN);
     }
     return note + cards + dogTable;
   }
@@ -1052,14 +1117,13 @@
   var LEGEND_SLOT_CN = { helm: '頭盔', armor: '盔甲', boots: '長靴', gloves: '手套', shield: '盾牌', cloak: '斗篷', belt: '腰帶', ring: '戒指', amulet: '項鍊' };
   var LEGEND_RES_CN = { resFire: '火', resWater: '水', resWind: '風', resEarth: '地' };
   function legendReqCN(r) { return String(r == null ? '' : r).split(',').map(function (x) { return LEGEND_REQ_CN[x] || x; }).join('／'); }
-  function legendEff(d) {
-    // 獨特效果:取 d 風味/機制描述
-    var special = d.d ? friendly(String(d.d).replace(/<br\s*\/?>/gi, '　')) : '';
-    // 完整數值:把這件裝備實際提供的能力全列出來(只列防禦會誤導,漏掉的屬性也要寫)
+  function isLegendSetPiece(d) { return !!(d.d && d.d.indexOf('套裝') >= 0); }   // 成套傳說(死亡騎士/克特/惡魔/四大軍王…):套裝加成另見「套裝」分頁
+  // 完整數值:把這件裝備實際提供的能力全列出來(只列防禦會誤導,漏掉的屬性也要寫)
+  function legendStats(d) {
     var sgn = function (v) { return (v > 0 ? '+' : '') + v; };
     var st = [];
     if (d.type === 'wpn') {
-      if (d.dmgS != null) st.push(d.dmgS === d.dmgL ? ('攻擊力 ' + d.dmgS) : ('攻擊力 對小型 ' + d.dmgS + '／對大型 ' + d.dmgL));
+      if (d.dmgS != null) st.push('攻擊力 對小型 ' + d.dmgS + '／對大型 ' + d.dmgL);
       if (d.dmgBonus) st.push('額外傷害 ' + sgn(d.dmgBonus));
       if (d.hit) st.push('命中 ' + sgn(d.hit));
       if (d.mdmg) st.push('魔法傷害 ' + sgn(d.mdmg));
@@ -1077,31 +1141,92 @@
     if (d.mrPerEn) st.push('每強化 +1 魔防 +' + d.mrPerEn);
     if (d.immStone) st.push('免疫石化');
     if (d.immPoison) st.push('免疫中毒');
-    var statLine = st.join('、');
-    if (special && statLine) return special + '　｜　數值：' + statLine;
-    return special || statLine || '數值見「掉落查詢」';
+    return st.join('、');
+  }
+  // 獨特效果:成套件 → 指向「套裝」分頁(套裝加成不在此重列);其餘 → 取 d 的機制描述
+  function legendSpecial(d) {
+    if (isLegendSetPiece(d)) return '套裝效果見「套裝」分頁。';
+    return d.d ? friendly(String(d.d).replace(/<br\s*\/?>/gi, '　')) : '';
+  }
+  // 傳回該傳說裝的「取得方式」HTML(無特殊取得鏈則回空字串,交給頁尾通則+掉落查詢);id 用來對共用清單與配方
+  function legendAcquire(d, id) {
+    // 手動補充的喚回鏈走共用清單 afk-extradata.js(掉落查詢也讀同一份);只放「能動態算」以外的
+    var exa = (window.AFK_EXTRA && AFK_EXTRA.itemAcquire) ? AFK_EXTRA.itemAcquire[id] : null;
+    if (exa && exa.chain) return exa.chain;
+    // 惡魔王武器:讀遊戲 DEMONKING_RECIPES 動態組出炎魔之影客製製作鏈(作者改配方會自動跟著變)
+    if (typeof DEMONKING_RECIPES !== 'undefined' && DEMONKING_RECIPES) {
+      var r = null;
+      for (var i = 0; i < DEMONKING_RECIPES.length; i++) {
+        if (DEMONKING_RECIPES[i].result === id) { r = DEMONKING_RECIPES[i]; break; }
+      }
+      if (r) {
+        var matStr = (typeof DEMONKING_MATS !== 'undefined' && DEMONKING_MATS)
+          ? DEMONKING_MATS.map(function (m) { return esc(((DB.items[m.id] && DB.items[m.id].n) || m.id) + '×' + m.cnt); }).join('、') : '';
+        return '在「炎魔之影（炎魔謁見所）」客製製作：消耗 +11 以上的「' + esc(r.srcName) + '」×1'
+          + (matStr ? '＋' + matStr : '') + '，會繼承來源武器的強化值／詞綴／席琳套裝（材料詳見「製作」分頁）。';
+      }
+    }
+    // 一般製作的傳說武器(如古代神之槍):讀 CRAFT_RECIPES 找製作 NPC,作者新增配方會自動跟著變
+    if (typeof CRAFT_RECIPES !== 'undefined' && CRAFT_RECIPES) {
+      for (var npcId in CRAFT_RECIPES) {
+        var recs = CRAFT_RECIPES[npcId]; if (!recs) continue;
+        for (var j = 0; j < recs.length; j++) {
+          if (recs[j].result === id) {
+            var info = craftNpcInfo(npcId);
+            return '由「' + esc(info.name) + (info.town ? '（' + esc(info.town) + '）' : '') + '」製作（材料詳見「製作」分頁）。';
+          }
+        }
+      }
+    }
+    return '';
+  }
+  // NPC id → { name, town }(查 DB.towns;查不到回 id)
+  function craftNpcInfo(npcId) {
+    if (typeof DB !== 'undefined' && DB.towns) {
+      for (var tid in DB.towns) {
+        var t = DB.towns[tid]; if (!t || !t.npcs) continue;
+        for (var i = 0; i < t.npcs.length; i++) if (t.npcs[i] && t.npcs[i].id === npcId) return { name: t.npcs[i].n, town: t.n };
+      }
+    }
+    return { name: npcId, town: '' };
+  }
+  // 傳說武器的「武器特性」:種類內建特性(居合/反擊/出血…)+ eff 特性,讀共用清單;proc 特殊攻擊已在描述呈現故不重列
+  function legendWeaponTraits(d, id) {
+    if (!d || d.type !== 'wpn') return '';
+    var EFF = (window.AFK_EXTRA && AFK_EXTRA.weaponTraitEff) || {};
+    var TAG = (window.AFK_EXTRA && AFK_EXTRA.weaponTagTrait) || {};
+    var wt = [];
+    if (d.eff && EFF[d.eff]) wt.push(EFF[d.eff]);
+    var tags = (typeof getWeaponTags === 'function') ? (getWeaponTags(id) || []) : [];
+    tags.forEach(function (tg) { if (TAG[tg]) wt.push(TAG[tg]); });
+    if (d.rapidfire) wt.push('連射');
+    if (d.unBonus) wt.push('對不死／狼人額外傷害');
+    return wt.filter(function (v, i) { return wt.indexOf(v) === i; }).join('、');
   }
   function renderLegend() {
-    var groups = { wpn: [], arm: [], acc: [] }, setCount = 0;
+    var groups = { wpn: [], arm: [], acc: [] };
     Object.keys(DB.items).forEach(function (id) {
       var d = DB.items[id];
       if (!d || !d.legend || !groups[d.type]) return;
-      if (d.d && d.d.indexOf('套裝') >= 0) { setCount++; return; }   // 成套防具 → 交給「套裝」分頁
-      groups[d.type].push(d);
+      groups[d.type].push({ d: d, id: id });   // 帶 id(取得方式要對共用清單/配方);成套件也列進來,套裝加成連去套裝頁
     });
-    function card(d) {
+    function card(e) {
+      var d = e.d;
       var meta = legendReqCN(d.req) + (LEGEND_SLOT_CN[d.slot] ? '　|　' + LEGEND_SLOT_CN[d.slot] : (d.type === 'wpn' ? '　|　武器' : ''));
+      var special = legendSpecial(d), stats = legendStats(d), acq = legendAcquire(d, e.id), wtraits = legendWeaponTraits(d, e.id);
       return '<div class="m-wiki-card">' +
         '<div class="m-wiki-name"><span class="c-legend">' + esc(d.n) + '</span></div>' +
         '<div class="m-wiki-desc" style="color:#94a3b8;font-size:12px;">' + esc(meta) + '</div>' +
-        '<div class="m-wiki-desc" style="margin-top:3px;">' + esc(legendEff(d)) + '</div>' +
+        (special ? '<div class="m-wiki-desc" style="margin-top:3px;">' + esc(special) + '</div>' : '') +
+        (wtraits ? '<div class="m-wiki-desc" style="margin-top:3px;color:#fbbf24;">武器特性：' + esc(wtraits) + '</div>' : '') +
+        (stats ? '<div class="m-wiki-desc" style="margin-top:3px;color:#cbd5e1;">數值：' + esc(stats) + '</div>' : '') +
+        (acq ? '<div class="m-wiki-desc" style="margin-top:3px;color:#a5b4fc;">🔑 取得：' + acq + '</div>' : '') +
       '</div>';
     }
-    var note = '<div class="m-wiki-note">「傳說」是最高稀有度（名字呈<span class="c-legend">琥珀金</span>），單件本身就帶獨特效果。這裡整理它們的<b>特色與獨特效果</b>。<b>想看詳細數值（攻擊力／防禦／加成等）：到「掉落查詢」搜該裝備名，點出現的裝備名稱就能看</b>——連製作／兌換／任務取得、沒有怪會掉的（如 50 級試煉獎勵）也查得到。武器的特殊攻擊（橫掃／連擊／吸 MP…）詳見「武器特性」分頁。</div>';
-    var setNote = setCount ? '<div class="m-wiki-note" style="margin-top:8px;">死亡騎士、克特、惡魔、四大軍王等<b>成套</b>的傳說防具，價值在湊滿件數的變身／組合加成，不在此重列，請見「套裝」分頁。</div>' : '';
-    var html = note + setNote;
+    var note = '<div class="m-wiki-note">「傳說」是最高稀有度（名字呈<span class="c-legend">琥珀金</span>）。每件列出獨特效果與完整數值；<b>成套的傳說裝（死亡騎士／克特／惡魔／四大軍王等）也列在這，套裝加成請點「套裝」分頁看</b>。掉落來源到「掉落查詢」搜裝備名；武器特殊攻擊詳見「武器特性」分頁。</div>';
+    var html = note;
     if (groups.wpn.length) html += '<div class="m-wiki-sub">⚔️ 傳說武器</div>' + groups.wpn.map(card).join('');
-    if (groups.arm.length) html += '<div class="m-wiki-sub">🛡 傳說防具（非成套）</div>' + groups.arm.map(card).join('');
+    if (groups.arm.length) html += '<div class="m-wiki-sub">🛡 傳說防具</div>' + groups.arm.map(card).join('');
     if (groups.acc.length) html += '<div class="m-wiki-sub">💍 傳說飾品</div>' + groups.acc.map(card).join('');
     return html;
   }
@@ -1125,7 +1250,8 @@
         t.npcs.forEach(function (n) { if (n && n.id && !npcInfo[n.id]) npcInfo[n.id] = { name: n.n, town: t.n }; });
       }
     }
-    var itemName = function (id) { return (DB.items[id] && DB.items[id].n) || id; };
+    // 'gold' 是貨幣(存在 player.gold,不在 DB.items),配方材料用到時要自己給中文名
+    var itemName = function (id) { return id === 'gold' ? '金幣' : ((DB.items[id] && DB.items[id].n) || id); };
     var note = '<div class="m-wiki-note">各製作 NPC 能做的裝備／道具與所需材料。想知道某件東西在哪做，直接用上面搜尋打它的名字。</div>';
     var html = note;
     for (var npcId in CRAFT_RECIPES) {
@@ -1138,6 +1264,17 @@
         var mats = (r.req || []).map(function (m) { return itemName(m.id) + '×' + m.cnt; }).join('、') || '—';
         // 每筆都附「在哪做」:搜尋會只抓到這一列(抓不到上面的 NPC 標題),所以 NPC 要寫進每列才查得到在哪做
         return '<div class="m-wiki-kv"><b>' + esc(nm) + '</b>在 ' + where + ' 製作　材料：' + esc(mats) + '</div>';
+      }).join('');
+    }
+    // 👑 惡魔王武器:炎魔之影客製製作(消耗 +11 以上指定惡魔武器 + 素材,不在 CRAFT_RECIPES 裡)
+    if (typeof DEMONKING_RECIPES !== 'undefined' && DEMONKING_RECIPES) {
+      var dkInfo = npcInfo['npc_flame_shadow'] || { name: '炎魔之影', town: '炎魔謁見所' };
+      var dkWhere = esc(dkInfo.name) + (dkInfo.town ? '（' + esc(dkInfo.town) + '）' : '');
+      var dkMats = (typeof DEMONKING_MATS !== 'undefined' && DEMONKING_MATS) ? DEMONKING_MATS : [];
+      html += '<div class="m-wiki-sub">👑 ' + dkWhere + '（惡魔王武器・客製）</div>';
+      html += DEMONKING_RECIPES.map(function (r) {
+        var mats = itemName(r.src) + '（須 +11 以上）×1' + (dkMats.length ? '、' + dkMats.map(function (m) { return itemName(m.id) + '×' + m.cnt; }).join('、') : '');
+        return '<div class="m-wiki-kv"><b>' + esc(itemName(r.result)) + '</b>在 ' + dkWhere + ' 製作　材料：' + esc(mats) + '（會繼承來源武器的強化值／詞綴／席琳套裝）</div>';
       }).join('');
     }
     return html;
@@ -1187,6 +1324,24 @@
   function renderTower() {
     var note = '<div class="m-wiki-note">「傲慢之塔」是往上爬的塔：可以一層層「攀登」，也可以選一段「樓層區間」固定刷。下面說明玩法，以及進塔／換怪會用到的各種符與卷軸。</div>';
     var secs = TOWER_SECTIONS.map(function (s) {
+      var lines = s.lines.map(function (l) { return '<div class="m-wiki-desc" style="margin-top:4px;">・' + l + '</div>'; }).join('');
+      return '<div class="m-wiki-card"><div class="m-wiki-name">' + esc(s.t) + '</div>' + lines + '</div>';
+    }).join('');
+    return note + secs;
+  }
+
+  function renderOblivion() {
+    var note = '<div class="m-wiki-note">「遺忘之島」是搭船前往的特殊離島：先到「途中」打掉傳送門才能登島，<b>島上不能用任何傳送（瞬移）</b>，離開就得回海音重新搭船。</div>';
+    var secs = OBLIVION_SECTIONS.map(function (s) {
+      var lines = s.lines.map(function (l) { return '<div class="m-wiki-desc" style="margin-top:4px;">・' + l + '</div>'; }).join('');
+      return '<div class="m-wiki-card"><div class="m-wiki-name">' + esc(s.t) + '</div>' + lines + '</div>';
+    }).join('');
+    return note + secs;
+  }
+
+  function renderKingroom() {
+    var note = '<div class="m-wiki-note">「軍王之室」是四間獨立的純 BOSS 房，<b>進場與重生都要消耗「軍王的鑰匙」</b>。下面說明四間軍王、鑰匙怎麼拿、續打與掉落規則。</div>';
+    var secs = KINGROOM_SECTIONS.map(function (s) {
       var lines = s.lines.map(function (l) { return '<div class="m-wiki-desc" style="margin-top:4px;">・' + l + '</div>'; }).join('');
       return '<div class="m-wiki-card"><div class="m-wiki-name">' + esc(s.t) + '</div>' + lines + '</div>';
     }).join('');
@@ -1286,7 +1441,7 @@
   function injectCSS() {
     if (document.getElementById('m-wiki-style')) return;
     var css = [
-      '#main-menu .m-wiki-entry-row{display:flex;gap:8px;align-items:stretch;justify-content:center;width:100%;max-width:21rem;margin:0 auto;}',
+      '#main-menu .m-wiki-entry-row{display:flex;gap:8px;align-items:stretch;justify-content:center;width:100%;max-width:18rem;margin:0 auto;}',   /* 整列總寬對齊原生首頁按鈕 w-72(18rem);主按鈕 flex 撐滿、扣掉 ↗ 鈕 */
       '#main-menu .m-wiki-entry-row > button{width:auto !important;max-width:none !important;}',
       '#main-menu .m-wiki-entry-main{flex:1 1 auto;}',
       '#main-menu .m-wiki-entry-newtab{flex:0 0 auto;font-size:1.4rem;line-height:1;padding-left:16px;padding-right:16px;}',

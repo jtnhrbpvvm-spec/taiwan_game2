@@ -20,9 +20,28 @@
   var CAP_MS           = CAP_HOURS * 3600 * 1000;
   var HEARTBEAT_MS     = 5 * 1000;              // 活著時多久蓋一次時間戳
   var OVERLAY_MIN_TICK = 3000;                  // 補跑超過這麼多 tick 才顯示進度遮罩(約 5 分鐘)
-  var SLICE_MS         = 250;                   // 每段最多跑這麼久才讓出一次(await raf)。讓出有固定開銷(等一個影格),
-                                                //   開銷比例≈影格時間÷(SLICE_MS+影格時間),故 SLICE_MS 越大→讓出次數越少→結算越快。
-                                                //   28→250 把「等影格」開銷從約 4~5 成降到約 1 成;250ms 遠低於「頁面無回應」門檻、進度條每次讓出仍會重繪。
+  // 「每段最多跑這麼久就 await raf 讓出一次」＝畫面更新間隔(進度遮罩只在讓出時重繪、期間頁面凍結)。
+  //   值小→讓出多、畫面順但等影格開銷大、結算慢;值大→相反。故依「要補跑的時間長短」動態取值:
+  //   短離線(本來就快)用小值求順,長離線(才需要快)用大值求速度,中間線性漸變 → 兼顧順暢與速度。
+  var SLICE_MIN_MS     = 28;                    // 短離線:接近一個影格(~16ms),畫面順
+  var SLICE_MAX_MS     = 250;                   // 長離線:讓出少、結算快
+  var SLICE_SHORT_TICK = 3000;                  // ≤5 分鐘(=遮罩門檻)以下一律用最小值(順)
+  var SLICE_LONG_TICK  = 36000;                 // ≥1 小時一律用最大值(快);兩者之間線性內插
+  function sliceFor(totalTicks) {
+    if (totalTicks <= SLICE_SHORT_TICK) return SLICE_MIN_MS;
+    if (totalTicks >= SLICE_LONG_TICK) return SLICE_MAX_MS;
+    var f = (totalTicks - SLICE_SHORT_TICK) / (SLICE_LONG_TICK - SLICE_SHORT_TICK);
+    return Math.round(SLICE_MIN_MS + f * (SLICE_MAX_MS - SLICE_MIN_MS));
+  }
+  // tick 數 → 友善時間字串(進度遮罩顯示「已結算 X / 共 Y」用)
+  function fmtCatchupTime(ticks) {
+    var s = Math.round(ticks * TICK_MS / 1000);
+    if (s < 60) return s + ' 秒';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' 分' + (s % 60 ? ' ' + (s % 60) + ' 秒' : '');
+    var h = Math.floor(m / 60);
+    return h + ' 小時' + (m % 60 ? ' ' + (m % 60) + ' 分' : '');
+  }
   var TS_PREFIX        = 'afk_ts_';
 
   // ----- 自我檢查:核心掛點都在才啟用,否則安靜退出(遊戲照常運作) ----------
@@ -45,11 +64,15 @@
   function tsKey()      { return TS_PREFIX + currentSlot; }
   function mapKey()     { return 'afk_map_' + currentSlot; }
   function prideKey()   { return 'afk_pride_' + currentSlot; }
+  function oblKey()     { return 'afk_obl_' + currentSlot; }
   function readTs()     { try { return +localStorage.getItem(tsKey()) || 0; } catch (e) { return 0; } }
   function readMap()    { try { return localStorage.getItem(mapKey()) || ''; } catch (e) { return ''; } }
   // 攀登狀態:原作 saveGame 不存 state.prideClimb/...(且 loadGame 一律回村),所以由外掛自己記一份,
   //   登入後才能還原並回到那層續爬。樓層區間(pride_x_y)是選單地圖,走 afk_map 即可,不靠這份。
   function readPride()  { try { var s = localStorage.getItem(prideKey()); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  // 遺忘之島旅程:原作 saveGame 不存 state.oblivion(且 loadGame 一律回村),同攀登由外掛自己記一份,
+  //   登入後還原並接回島上續掛。島/途中地圖(oblivion_island/oblivion_travel)非選單地圖,走 enterOblivionMap 進場(不能用 gotoMap)。
+  function readObl()    { try { var s = localStorage.getItem(oblKey()); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   // 蓋時間戳,順手記下「即時所在地圖」(changeMap 不會存檔,光看存檔 blob 會誤判還在村莊)
   function stamp() {
     try {
@@ -66,6 +89,12 @@
         localStorage.setItem(prideKey(), JSON.stringify({ climb: true, ranked: !!state.prideRanked, floor: state.prideFloor || 2, startMs: state.prideStartMs || 0 }));
       } else {
         localStorage.removeItem(prideKey());
+      }
+      // 🏝️ 遺忘之島旅程中才記旅程狀態(島/途中);非旅程就清掉,避免下次登入誤判
+      if (typeof state !== 'undefined' && state && state.oblivion) {
+        localStorage.setItem(oblKey(), JSON.stringify({ phase: state.oblivion }));
+      } else {
+        localStorage.removeItem(oblKey());
       }
     } catch (e) {}
   }
@@ -109,7 +138,7 @@
     if (!overlayBar) return;
     var pct = Math.min(100, Math.round(frac * 100));
     overlayBar.style.width = pct + '%';
-    overlayTxt.textContent = pct + '%  (' + done + ' / ' + total + ' tick)';
+    overlayTxt.textContent = pct + '%　已結算 ' + fmtCatchupTime(done) + ' / 共 ' + fmtCatchupTime(total);
   }
   function removeOverlay() {
     if (overlayEl && overlayEl.parentNode) overlayEl.parentNode.removeChild(overlayEl);
@@ -123,11 +152,18 @@
     return { gold: player.gold || 0, exp: player.exp || 0, lv: player.lv || 0, inv: inv };
   }
   function fmt(n) { try { return (n || 0).toLocaleString(); } catch (e) { return '' + n; } }
+  // 軍王之室:背包現有「軍王的鑰匙」總數(供離線摘要算消耗了幾把)
+  function countKingKeys() {
+    try { return (player.inv || []).reduce(function (s, i) { return s + ((i && i.id === 'item_king_key') ? (i.cnt || 1) : 0); }, 0); }
+    catch (e) { return 0; }
+  }
   // 地圖 id → 顯示名稱(查原作者的 MAP_CATEGORIES);查不到就回 id 本身
   function mapName(id) {
     try {
       var pm = (typeof id === 'string') ? id.match(/^pride_f(\d+)$/) : null;   // 攀登樓層不在 MAP_CATEGORIES,自己組名
       if (pm) return '傲慢之塔 ' + pm[1] + ' 樓';
+      if (id === 'oblivion_island') return '遺忘之島';   // 遺忘之島地圖不在 MAP_CATEGORIES,自己組名
+      if (id === 'oblivion_travel') return '遺忘之島途中';
       if (id && typeof MAP_CATEGORIES !== 'undefined') {
         for (var c in MAP_CATEGORIES) {
           for (var i = 0; i < MAP_CATEGORIES[c].length; i++) if (MAP_CATEGORIES[c][i].v === id) return MAP_CATEGORIES[c][i].t;
@@ -177,7 +213,7 @@
     if (!shown) { try { logSys('（本次攀登無明顯收益）'); } catch (e) {} }
     if (died) { try { logSys('<span class="text-red-500 font-bold">離線攀登中陣亡，已結算至死亡前並送回村莊。</span>'); } catch (e) {} }
   }
-  function summarize(before, after, doneTicks, died, huntMap) {
+  function summarize(before, after, doneTicks, died, huntMap, kingInfo) {
     var mins = Math.round(doneTicks * TICK_MS / 60000);
     var dGold = (after.gold || 0) - (before.gold || 0);
     var dExp  = expTotal(after.lv, after.exp) - expTotal(before.lv, before.exp);
@@ -210,6 +246,16 @@
     line += parts.length ? parts.join('、') : '（無明顯收益）';
     line += '。';
     try { logSys(line); } catch (e) { console.log('[AFK]', line.replace(/<[^>]+>/g, '')); }
+    // ⚔ 軍王之室:附帶「擊敗輪數 / 消耗鑰匙」;若因鑰匙用完被傳回村,多一行提示
+    if (kingInfo && kingInfo.kills > 0) {
+      var kl = `<span class="text-amber-300">⚔ 軍王之室：本次擊敗軍王 <b>${kingInfo.kills}</b> 輪`
+        + (kingInfo.keysUsed > 0 ? `，消耗 <b>${kingInfo.keysUsed}</b> 把軍王的鑰匙` : ``) + `。</span>`;
+      try { logSys(kl); } catch (e) { console.log('[AFK]', kl.replace(/<[^>]+>/g, '')); }
+    }
+    if (kingInfo && kingInfo.depleted) {
+      try { logSys('<span class="text-amber-300 font-bold">🔑 軍王的鑰匙已用完，已自動傳回村莊。</span>'); }
+      catch (e) { console.log('[AFK] 軍王的鑰匙已用完，已自動傳回村莊。'); }
+    }
     // 平均效率(對齊遊戲「本圖效率統計」的 經驗/10分、金幣/10分):用實際補跑時間換算
     var preciseMin = doneTicks * TICK_MS / 60000;
     if (preciseMin > 0 && (dExp > 0 || dGold > 0)) {
@@ -239,11 +285,17 @@
 
   // ----- 離線補跑(時間切片) ----------------------------------------------
   var catchingUp = false;
-  async function runCatchup(totalTicks, withOverlay, huntMap, prePride) {
+  async function runCatchup(totalTicks, withOverlay, huntMap, prePride, preObl) {
     if (catchingUp) return;
     catchingUp = true;
 
+    var sliceMs = sliceFor(totalTicks);   // 依補跑長短決定畫面更新間隔:短→順、長→快
     var isClimb = !!(prePride && prePride.climb && !prePride.ranked && typeof enterPrideFloor === 'function');   // 排名挑戰不自動續
+    var isObl = !isClimb && !!(preObl && preObl.phase && typeof enterOblivionMap === 'function');   // 🏝️ 遺忘之島旅程:同攀登,還原 state.oblivion 後用 enterOblivionMap 進場(島地圖非選單地圖)
+    // ⚔ 軍王之室:選單地圖,走通用 gotoMap 即可重進;補跑時數「擊敗輪數/消耗鑰匙/是否因鑰匙用完被傳回村」供摘要顯示
+    var isKing = !isClimb && !isObl && (typeof KING_ROOMS !== 'undefined') && !!KING_ROOMS[huntMap];
+    var kingKeysBefore = isKing ? countKingKeys() : 0;
+    var kingLeftRoom = false;   // 補跑期間因鑰匙用完被原作傳回村(離開了軍王之室)
 
     // 暫停 live loop,避免結算期間與主迴圈交錯;結算後再以全新計時重啟
     try { if (typeof _gameLoopId !== 'undefined' && _gameLoopId !== null) { clearInterval(_gameLoopId); _gameLoopId = null; } } catch (e) {}
@@ -257,6 +309,12 @@
       state.prideFloor = prePride.floor || 2;
       if (prePride.startMs) state.prideStartMs = prePride.startMs;
       enterPrideFloor(state.prideFloor);
+    } else if (isObl) {
+      // 遺忘之島:還原原作不存檔的旅程旗標,用 enterOblivionMap 進場(ff=true 故不碰 DOM)。
+      // 補跑期間「途中擊敗傳送門→進本島」由原作 settleDeadMobs 內的 state._oblivionAdvance 流程自動處理。
+      state.oblivion = preObl.phase;
+      state._oblivionAdvance = false;
+      enterOblivionMap(huntMap);
     } else {
       gotoMap(huntMap);
     }
@@ -275,10 +333,11 @@
         if (player.dead || !state.running) { died = !!player.dead; break; }
         var t0 = performance.now();
         while (done < totalTicks && !player.dead && state.running &&
-               (performance.now() - t0) < SLICE_MS) {
+               (performance.now() - t0) < sliceMs) {
           tick();
           settleDeadMobs();
           done++;
+          if (isKing && !kingLeftRoom && mapState && mapState.current !== huntMap) kingLeftRoom = true;   // 鑰匙用完→原作已把人傳出軍王之室
           if (climbSegs) {
             var nf = state.prideFloor || 0;
             if (nf !== segFloor) {   // 樓層變了(爬上去或攀登結束)→ 結算剛剛那一層
@@ -298,6 +357,7 @@
     }
 
     var after = snapshot();
+    var oblEndMap = isObl ? (mapState && mapState.current) : null;   // 落點前先記下旅程實際結束地圖(死亡會被改成村莊,先存起來給摘要用)
     // 攀登:封最後一段(還停在某層 → 用該層;已結束則 segFloor 已是 0,改記在最後到過的真實樓層)
     if (climbSegs && segFloor > 0) climbSegs.push(climbSegDelta(segFloor, segStart, after));
 
@@ -319,9 +379,27 @@
         // 攀登於補跑期間自然結束(爬到頂被原作結算)→ 落到村莊
         gotoMap(homeTown());
       }
+    } else if (isObl) {
+      if (died) {
+        // 撞死即停:比照原作 revive() 的「旅程中死亡回村並結束旅程」
+        state.oblivion = null; state._oblivionAdvance = false;
+        gotoMap(homeTown());
+      } else {
+        // 存活 → 補滿 HP/MP,留在島上(補跑期間可能已從途中進到本島)續掛;state.oblivion 維持不動,saveGame 後由 stamp 續記旅程
+        try { if (player.mhp) player.hp = player.mhp; if (player.mmp) player.mp = player.mmp; } catch (e) {}
+        state.ff = prevFf0; state.inTick = prevInTick0;   // 先還原 ff,enterOblivionMap 才會渲染戰鬥畫面
+        enterOblivionMap(mapState.current);
+      }
     } else if (!died && huntMap) {
-      try { if (player.mhp) player.hp = player.mhp; if (player.mmp) player.mp = player.mmp; } catch (e) {}
-      gotoMap(huntMap);
+      // 🔧 軍王之室:只有「補跑期間真的因鑰匙用完被原作傳回村(kingLeftRoom)」才把落點放村莊。
+      //   不要只看「背包 0 鑰匙」——用最後一把鑰匙進場(進場即扣→0 鑰匙)、軍王還沒打死就短暫離線回來的人,
+      //   應留在房內續打,不能因「0 鑰匙」被誤傳回村。
+      if (isKing && kingLeftRoom) {
+        gotoMap(homeTown());
+      } else {
+        try { if (player.mhp) player.hp = player.mhp; if (player.mmp) player.mp = player.mmp; } catch (e) {}
+        gotoMap(huntMap);
+      }
     } else {
       gotoMap(homeTown());
     }
@@ -333,8 +411,13 @@
     // 持久化離線收益(否則玩家在下次自動存檔前重載會丟失);saveGame 同時會蓋上新時間戳
     try { if (typeof saveGame === 'function') saveGame(); } catch (e) {}
 
+    var kingInfo = null;
+    if (isKing) {
+      var kingKeysUsed = Math.max(0, kingKeysBefore - countKingKeys());
+      kingInfo = { keysUsed: kingKeysUsed, kills: kingKeysUsed + (kingLeftRoom ? 1 : 0), depleted: kingLeftRoom };
+    }
     if (climbSegs && climbSegs.length) summarizeClimb(climbSegs, done, died);   // 攀登:逐層摘要
-    else summarize(before, after, done, died, huntMap);
+    else summarize(before, after, done, died, (isObl && oblEndMap) ? oblEndMap : huntMap, kingInfo);   // 遺忘之島:用實際結束地圖顯示地圖名;軍王之室:附帶擊敗輪數/鑰匙消耗摘要
     try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
     try { if (typeof renderTabs === 'function') renderTabs(true); } catch (e) {}
     removeOverlay();
@@ -352,7 +435,7 @@
   // 載入後決定要不要結算離線。preMap/preTs 由 loadGame wrapper 在「原 loadGame 執行前」擷取——
   // 因為原 loadGame 會在村莊甦醒(內部呼叫 changeMap),而 changeMap 已被攔截會 stamp(),會把
   // afk_map/afk_ts 覆寫成現在(村莊),晚讀就拿不到真正的離線狀態。
-  function maybeCatchup(preMap, preTs, prePride) {
+  function maybeCatchup(preMap, preTs, prePride, preObl) {
     if (!validSlot() || !state || !state.running) return;
     var last = preTs;
     var savedMap = preMap;
@@ -360,6 +443,8 @@
       try { var raw = JSON.parse(localStorage.getItem('lineage_idle_save_' + currentSlot)); savedMap = (raw && raw.ms && raw.ms.current) || ''; } catch (e) {}
     }
     var isClimb = !!(prePride && prePride.climb && !prePride.ranked);   // 排名挑戰不自動續(防重載刷分/閃死),只續一般攀登
+    var isObl = !!(preObl && preObl.phase && typeof enterOblivionMap === 'function');   // 🏝️ 上次在遺忘之島旅程中(島/途中):同攀登,還原旅程並接回島上續掛
+    if (isObl && !savedMap) savedMap = (preObl.phase === 'island') ? 'oblivion_island' : 'oblivion_travel';   // afk_map 缺值時用旅程階段推地圖
     var now = Date.now();
     stamp(); // 不論如何先更新自己的心跳/錨點(宣告此分頁佔用此 slot)
     if (prePride && prePride.climb && prePride.ranked) {
@@ -368,14 +453,14 @@
       return;
     }
     if (!last) {
-      // 沒有舊時間戳(外掛剛裝 / 全新角色)→ 不結算離線收益;但若上次在攀登,仍要把人帶回那層(零補跑)
-      if (isClimb) runCatchup(0, false, savedMap, prePride);
+      // 沒有舊時間戳(外掛剛裝 / 全新角色)→ 不結算離線收益;但若上次在攀登/遺忘之島,仍要把人帶回原地(零補跑)
+      if (isClimb || isObl) runCatchup(0, false, savedMap, prePride, preObl);
       return;
     }
     var gap = now - last;
     // 不設「近期活躍就略過」的鎖:重新整理也照常結算那一小段 → 配合存活回原狩獵圖,刷新不會被丟回村莊。
-    // 攀登不受「村莊/攻城」這兩道略過閘:它本來就不是村莊/攻城圖,且即使 gap≈0(立即重整)也要把人放回那層續爬。
-    if (!isClimb) {
+    // 攀登/遺忘之島不受「村莊/攻城」這兩道略過閘:它本來就不是村莊/攻城圖,且即使 gap≈0(立即重整)也要把人放回原地續掛。
+    if (!isClimb && !isObl) {
       if (!savedMap || savedMap.indexOf('town_') === 0) {
         console.info('[AFK] 關閉時位於村莊/無有效地圖，無離線戰鬥收益。');
         return;
@@ -388,8 +473,8 @@
 
     var ms = Math.min(gap, CAP_MS);
     var ticks = Math.floor(ms / TICK_MS);
-    if (ticks <= 0 && !isClimb) return;        // 一般圖 gap≈0 直接 no-op;攀登 gap≈0 仍要回到那層(ticks=0 補跑空轉,落點會 enterPrideFloor)
-    runCatchup(Math.max(0, ticks), ticks > OVERLAY_MIN_TICK, savedMap, prePride);
+    if (ticks <= 0 && !isClimb && !isObl) return;   // 一般圖 gap≈0 直接 no-op;攀登/遺忘之島 gap≈0 仍要回到原地(ticks=0 補跑空轉,落點會 enterPrideFloor/enterOblivionMap)
+    runCatchup(Math.max(0, ticks), ticks > OVERLAY_MIN_TICK, savedMap, prePride, preObl);
   }
 
   // ----- 包裹 saveGame / loadGame -----------------------------------------
@@ -406,8 +491,9 @@
     var preMap = readMap();
     var preTs = readTs();
     var prePride = readPride();
+    var preObl = readObl();
     var r = _load.apply(this, arguments);
-    try { maybeCatchup(preMap, preTs, prePride); } catch (e) { console.warn('[AFK] maybeCatchup error:', e); }
+    try { maybeCatchup(preMap, preTs, prePride, preObl); } catch (e) { console.warn('[AFK] maybeCatchup error:', e); }
     return r;
   };
 
