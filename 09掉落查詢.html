@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>放置天堂掉落查詢系統 v5.9 - 資料庫同步版</title>
+<title>放置天堂掉落查詢系統 v6.2 - 資料庫同步版</title>
 <style>
         :root {
             --bg-color: #0f172a;
@@ -512,12 +512,13 @@
 <body>
 <div class="container">
 <header>
-<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v5.9</span></h1>
+<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v6.2</span></h1>
 <p style="color: var(--text-muted);">支援多功能進階搜尋（如：地靈、流星雨、古魯丁地區、火屬性、主動）</p>
 </header>
 <div class="main-tabs">
     <button class="main-tab active" id="mtab-drop" onclick="switchMainTab('drop')">🗡️ 掉落查詢</button>
     <button class="main-tab" id="mtab-skill" onclick="switchMainTab('skill')">📖 技能・套裝・寵物</button>
+    <button class="main-tab" id="mtab-items" onclick="switchMainTab('items')">📦 裝備・道具圖鑑</button>
 </div>
 <div id="tabDrop">
 <div class="world-toggle">
@@ -619,11 +620,82 @@
 <div id="ssContent"></div>
 </div>
 </div>
+<div id="tabItems" style="display:none;">
+<style>
+  .ic-layout { display:flex; gap:16px; }
+  .ic-sidebar { width:210px; flex-shrink:0; }
+  .ic-sidebar-sticky { position:sticky; top:16px; }
+  .ic-group { margin-bottom:6px; }
+  .ic-group-header { display:flex; align-items:center; gap:6px; padding:7px 11px; background:rgba(30,41,59,0.7); border:1px solid #334155; border-radius:8px; cursor:pointer; font-weight:bold; color:#94a3b8; font-size:0.88rem; user-select:none; transition:all .15s; }
+  .ic-group-header:hover,.ic-group-header.open { border-color:#3b82f6; color:#e2e8f0; }
+  .ic-group-header .arrow { margin-left:auto; transition:transform .2s; font-size:0.7rem; }
+  .ic-group-header.open .arrow { transform:rotate(90deg); }
+  .ic-sublist { display:none; padding:3px 0 3px 8px; }
+  .ic-group.open .ic-sublist { display:block; }
+  .ic-sub-btn { display:block; width:100%; text-align:left; padding:5px 11px; background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:0.82rem; border-radius:6px; transition:all .1s; }
+  .ic-sub-btn:hover { background:rgba(59,130,246,0.1); color:#e2e8f0; }
+  .ic-sub-btn.active { background:rgba(59,130,246,0.2); color:#93c5fd; font-weight:bold; }
+  .ic-main { flex:1; min-width:0; }
+  .ic-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .ic-search { flex:1; min-width:180px; padding:9px 13px; font-size:0.9rem; background:#1e293b; border:1px solid #334155; border-radius:8px; color:#f8fafc; outline:none; }
+  .ic-search:focus { border-color:#3b82f6; }
+  .ic-breadcrumb { font-size:0.78rem; color:#64748b; margin-bottom:8px; padding:2px 6px; }
+  .ic-count { font-size:0.78rem; color:#64748b; margin-bottom:8px; }
+  .ic-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:9px; }
+  .ic-card { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:10px 11px; cursor:pointer; transition:all .15s; display:flex; flex-direction:column; gap:3px; }
+  .ic-card:hover { border-color:#3b82f6; transform:translateY(-2px); box-shadow:0 4px 10px rgba(59,130,246,.15); }
+  .ic-card.legend-card { border-color:rgba(239,68,68,0.35); }
+  .ic-card.legend-card:hover { border-color:#ef4444; }
+  .ic-card-name { font-size:0.85rem; font-weight:bold; color:#e2e8f0; line-height:1.3; }
+  .ic-card-name.ltext { color:#fca5a5; }
+  .ic-card-tag { display:inline-block; font-size:0.68rem; padding:1px 5px; border-radius:4px; background:rgba(59,130,246,0.15); color:#93c5fd; margin-top:1px; }
+  .ic-card-sub { font-size:0.72rem; color:#64748b; margin-top:auto; padding-top:3px; }
+  /* 詳情 Modal */
+  .ic-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:2000; align-items:center; justify-content:center; }
+  .ic-overlay.open { display:flex; }
+  .ic-modal { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:22px 24px 20px; max-width:560px; width:92%; max-height:82vh; overflow-y:auto; position:relative; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+  .ic-modal-close { position:absolute; top:12px; right:14px; background:none; border:none; color:#64748b; font-size:1.1rem; cursor:pointer; }
+  .ic-modal-close:hover { color:#e2e8f0; }
+  .ic-modal h2 { font-size:1.1rem; font-weight:bold; margin:0 0 2px; }
+  .ic-modal-sub { font-size:0.78rem; color:#64748b; margin-bottom:14px; }
+  .ic-section-title { font-size:0.74rem; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin:12px 0 6px; border-bottom:1px solid #1e3a5a44; padding-bottom:3px; }
+  .ic-stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:3px 14px; }
+  .ic-stat-row { display:flex; justify-content:space-between; font-size:0.83rem; padding:2px 0; }
+  .ic-stat-l { color:#94a3b8; }
+  .ic-stat-v { color:#e2e8f0; text-align:right; }
+  .ic-desc { font-size:0.82rem; color:#cbd5e1; line-height:1.65; }
+  .ic-src-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:3px; }
+  .ic-src-item { display:flex; justify-content:space-between; align-items:center; padding:4px 9px; background:rgba(15,23,42,0.5); border-radius:5px; font-size:0.82rem; }
+  .ic-src-mob { color:#cbd5e1; }
+  .r-common { color:#4ade80; }
+  .r-uncommon { color:#fbbf24; }
+  .r-rare { color:#f97316; }
+  .r-legend { color:#ef4444; }
+  .ic-no-src { font-size:0.82rem; color:#475569; font-style:italic; }
+</style>
+<div class="ic-layout">
+  <div class="ic-sidebar"><div class="ic-sidebar-sticky" id="icSidebar"></div></div>
+  <div class="ic-main">
+    <div class="ic-toolbar">
+      <input class="ic-search" id="icSearch" placeholder="🔍 搜尋道具名稱..." oninput="icFilter()">
+    </div>
+    <div class="ic-breadcrumb" id="icBreadcrumb">📦 選擇左側分類</div>
+    <div class="ic-count" id="icCount"></div>
+    <div class="ic-grid" id="icGrid"></div>
+  </div>
+</div>
+<div class="ic-overlay" id="icOverlay" onclick="if(event.target===this)closeIcModal()">
+  <div class="ic-modal" id="icModalBox">
+    <button class="ic-modal-close" onclick="closeIcModal()">✕</button>
+    <div id="icModalContent"></div>
+  </div>
+</div>
+</div><!-- /tabItems -->
 <script>
 
         // 物品放置區
 
-        window.SKILLS_TAB = {"knight":[{"n":"初級治癒術","lv":16,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":16,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":16,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":16,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":16,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"增幅防禦","lv":30,"mp":10,"tier":1,"type":"buff","eff":"","rx":"","bk":"技術書(增幅防禦)"},{"n":"衝擊之暈","lv":30,"mp":12,"tier":1,"type":"atk","eff":"","rx":"需特定武器","bk":"技術書(衝擊之暈)"},{"n":"尖刺盔甲","lv":30,"mp":10,"tier":1,"type":"buff","eff":"近距離命中+5","rx":"","bk":"技術書(尖刺盔甲)"},{"n":"堅固防護","lv":40,"mp":5,"tier":2,"type":"buff","eff":"ER迴避+15","rx":"需裝盾","bk":"技術書(堅固防護)"},{"n":"反擊屏障","lv":30,"mp":10,"tier":1,"type":"buff","eff":"進入反擊架式（持續64秒），受擊時反擊","rx":"","bk":"技術書(反擊屏障)"}],"mage":[{"n":"初級治癒術","lv":4,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":4,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":4,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":4,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":4,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"解毒術","lv":8,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":8,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":8,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":8,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":8,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":8,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"極光雷電","lv":12,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":12,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":12,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":12,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":12,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":12,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":12,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":12,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"通暢氣脈術","lv":16,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":16,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":16,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":16,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":16,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"木乃伊的詛咒","lv":20,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":20,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":20,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":20,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":20,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":20,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":24,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":24,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":24,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":24,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":24,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":24,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"體力回復術","lv":28,"mp":35,"tier":7,"type":"heal","eff":"回復HP 30+(1~30)、自動施放","rx":"","bk":"魔法書(體力回復術)"},{"n":"強力加速術","lv":28,"mp":60,"tier":7,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(強力加速術)"},{"n":"冰矛圍籬","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰矛圍籬)"},{"n":"龍捲風","lv":28,"mp":45,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(龍捲風)"},{"n":"狂暴術","lv":28,"mp":40,"tier":7,"type":"buff","eff":"近距離傷害+5、AC-10","rx":"","bk":"魔法書(狂暴術)"},{"n":"召喚術","lv":28,"mp":50,"tier":7,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(召喚術)"},{"n":"神聖疾走","lv":28,"mp":20,"tier":7,"type":"buff","eff":"ER迴避+15","rx":"","bk":"魔法書(神聖疾走)"},{"n":"疾病術","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊、附加：疾病（30秒）","rx":"","bk":"魔法書(疾病術)"},{"n":"全部治癒術","lv":32,"mp":30,"tier":8,"type":"heal","eff":"回復HP 150+(3~50)","rx":"","bk":"魔法書(全部治癒術)"},{"n":"冰雪暴","lv":32,"mp":60,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰雪暴)"},{"n":"震裂術","lv":32,"mp":40,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(震裂術)"},{"n":"隱身術","lv":32,"mp":45,"tier":8,"type":"buff","eff":"","rx":"","bk":"魔法書(隱身術)"},{"n":"返生術","lv":32,"mp":50,"tier":8,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(返生術)"},{"n":"魔法封印","lv":32,"mp":30,"tier":8,"type":"atk","eff":"魔法攻擊、附加：真空吸引（16秒）","rx":"","bk":"魔法書(魔法封印)"},{"n":"聖結界","lv":36,"mp":30,"tier":9,"type":"buff","eff":"一道神聖的防禦屏障保護著你。","rx":"","bk":"魔法書(聖結界)"},{"n":"沉睡之霧","lv":36,"mp":40,"tier":9,"type":"atk","eff":"魔法攻擊、附加：沉睡（8秒）","rx":"","bk":"魔法書(沉睡之霧)"},{"n":"雷霆風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(雷霆風暴)"},{"n":"火風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火風暴)"},{"n":"流星雨","lv":40,"mp":60,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(流星雨)"},{"n":"靈魂昇華","lv":40,"mp":20,"tier":10,"type":"buff","eff":"你覺得身體充滿了活力。","rx":"","bk":"魔法書(靈魂昇華)"},{"n":"究極光裂術","lv":40,"mp":70,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(究極光裂術)"},{"n":"絕對屏障","lv":40,"mp":30,"tier":10,"type":"manual","eff":"短時間完全隔絕傷害（持續7秒）","rx":"","bk":"魔法書(絕對屏障)"},{"n":"火牢","lv":32,"mp":60,"tier":8,"type":"buff","eff":"勾選維持：10秒內每2秒對全體火屬性魔法傷害(共5跳，範圍持續傷害)","rx":"","bk":"魔法書(火牢)"},{"n":"冰雪颶風","lv":40,"mp":60,"tier":10,"type":"buff","eff":"勾選維持：32秒內每4秒對全體水屬性魔法傷害(共8跳)，依(魔命-3)機率冰凍","rx":"","bk":"魔法書(冰雪颶風)"}],"elf":[{"n":"初級治癒術","lv":8,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":8,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":8,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":8,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":8,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"魔法防禦","lv":10,"mp":10,"tier":1,"type":"buff","eff":"MR+10","rx":"","bk":"精靈水晶(魔法防禦)"},{"n":"心靈轉換","lv":10,"mp":0,"tier":1,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(心靈轉換)"},{"n":"世界樹的呼喚","lv":10,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"精靈水晶(世界樹的呼喚)"},{"n":"三重矢","lv":10,"mp":15,"tier":1,"type":"atk","eff":"遠程","rx":"需特定武器","bk":"精靈水晶(三重矢)"},{"n":"解毒術","lv":16,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":16,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":16,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":16,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":16,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"淨化精神","lv":20,"mp":10,"tier":2,"type":"buff","eff":"精神+3","rx":"","bk":"精靈水晶(淨化精神)"},{"n":"屬性防禦","lv":20,"mp":10,"tier":2,"type":"buff","eff":"火屬性抗性+10、水屬性抗性+10、地屬性抗性+10、風屬性抗性+10","rx":"","bk":"精靈水晶(屬性防禦)"},{"n":"釋放元素","lv":20,"mp":30,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"精靈水晶(釋放元素)"},{"n":"魂體轉換","lv":20,"mp":0,"tier":2,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(魂體轉換)"},{"n":"極光雷電","lv":24,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":24,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":24,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":24,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":24,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":24,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":24,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":24,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"單屬性防禦","lv":30,"mp":10,"tier":3,"type":"buff","eff":"","rx":"需任一屬性","bk":"精靈水晶(單屬性防禦)"},{"n":"火焰武器","lv":30,"mp":20,"tier":3,"type":"buff","eff":"近距離傷害+3","rx":"需火屬性","bk":"精靈水晶(火焰武器)"},{"n":"風之神射","lv":30,"mp":15,"tier":3,"type":"buff","eff":"遠距離命中+5","rx":"需風屬性","bk":"精靈水晶(風之神射)"},{"n":"風之疾走","lv":30,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+10","rx":"需風屬性","bk":"精靈水晶(風之疾走)"},{"n":"大地防護","lv":30,"mp":15,"tier":3,"type":"buff","eff":"AC+4","rx":"需地屬性","bk":"精靈水晶(大地防護)"},{"n":"地面障礙","lv":30,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"需地屬性","bk":"精靈水晶(地面障礙)"},{"n":"通暢氣脈術","lv":32,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":32,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":32,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":32,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":32,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"魔法消除","lv":40,"mp":30,"tier":4,"type":"atk","eff":"魔法攻擊、附加：魔抗減半（16秒）","rx":"","bk":"精靈水晶(魔法消除)"},{"n":"召喚屬性精靈","lv":40,"mp":30,"tier":4,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚屬性精靈)"},{"n":"舞躍之火","lv":40,"mp":30,"tier":4,"type":"buff","eff":"近距離傷害+5","rx":"需火屬性","bk":"精靈水晶(舞躍之火)"},{"n":"暴風之眼","lv":40,"mp":40,"tier":4,"type":"buff","eff":"遠距離傷害+2、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風之眼)"},{"n":"大地屏障","lv":40,"mp":50,"tier":4,"type":"buff","eff":"","rx":"需地屬性","bk":"精靈水晶(大地屏障)"},{"n":"生命之泉","lv":40,"mp":50,"tier":4,"type":"heal","eff":"回復HP 250+(5~50)","rx":"需水屬性","bk":"精靈水晶(生命之泉)"},{"n":"大地的祝福","lv":40,"mp":35,"tier":4,"type":"buff","eff":"AC+5","rx":"需地屬性","bk":"精靈水晶(大地的祝福)"},{"n":"木乃伊的詛咒","lv":40,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":40,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":40,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":40,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":40,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":40,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":48,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":48,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":48,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":48,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":48,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":48,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"召喚強力屬性精靈","lv":50,"mp":50,"tier":5,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚強力屬性精靈)"},{"n":"生命的祝福","lv":50,"mp":30,"tier":5,"type":"heal","eff":"回復HP 28+(1~28)、自動施放","rx":"需水屬性","bk":"精靈水晶(生命的祝福)"},{"n":"封印禁地","lv":50,"mp":40,"tier":5,"type":"atk","eff":"魔法攻擊、附加：魔法封印（8秒）","rx":"需任一屬性","bk":"精靈水晶(封印禁地)"},{"n":"烈炎武器","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離傷害+5、近距離命中+5","rx":"需火屬性","bk":"精靈水晶(烈炎武器)"},{"n":"暴風神射","lv":50,"mp":30,"tier":5,"type":"buff","eff":"遠距離傷害+4、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風神射)"},{"n":"鋼鐵防護","lv":50,"mp":30,"tier":5,"type":"buff","eff":"AC+7","rx":"需地屬性","bk":"精靈水晶(鋼鐵防護)"},{"n":"烈焰之魂","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離一般攻擊武器擲骰必為最大值（持續128秒，效果結束後才能再施放）","rx":"需火屬性","bk":"精靈水晶(烈焰之魂)"},{"n":"鏡反射","lv":50,"mp":10,"tier":5,"type":"buff","eff":"周身浮現鏡面，反彈攻擊（持續16秒）","rx":"需風屬性","bk":"精靈水晶(鏡反射)"},{"n":"屬性之火","lv":50,"mp":20,"tier":5,"type":"buff","eff":"持續320秒，一般攻擊30%機率造成1.5倍傷害","rx":"需火屬性","bk":"精靈水晶(屬性之火)"},{"n":"能量激發","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續960秒，負重狀態下仍可自然恢復HP/MP","rx":"需火屬性","bk":"精靈水晶(能量激發)"},{"n":"體能激發","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續960秒，負重狀態下仍可自然恢復HP/MP","rx":"需地屬性","bk":"精靈水晶(體能激發)"},{"n":"水之元氣","lv":30,"mp":1,"tier":3,"type":"buff","eff":"持續64秒的水屬性增益","rx":"需水屬性","bk":"精靈水晶(水之元氣)"},{"n":"暴風神射","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續1200秒：遠距離傷害+6、遠距離命中+3","rx":"需風屬性","bk":"精靈水晶(暴風神射)"},{"n":"暴風之眼","lv":40,"mp":40,"tier":4,"type":"buff","eff":"持續1200秒：遠距離傷害+2、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風之眼)"}],"dark":[{"n":"力量提升","lv":15,"mp":10,"tier":1,"type":"buff","eff":"力+3","rx":"","bk":"黑暗精靈水晶(力量提升)"},{"n":"影之防護","lv":15,"mp":12,"tier":1,"type":"buff","eff":"MR+5","rx":"","bk":"黑暗精靈水晶(影之防護)"},{"n":"暗隱術","lv":15,"mp":10,"tier":1,"type":"buff","eff":"ER迴避+100、觸發迴避後解除並冷卻5秒（物理版魔法屏障）","rx":"","bk":"黑暗精靈水晶(暗隱術)"},{"n":"附加劇毒","lv":15,"mp":10,"tier":1,"type":"buff","eff":"武器附加劇毒","rx":"","bk":"黑暗精靈水晶(附加劇毒)"},{"n":"提煉魔石","lv":15,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"黑暗精靈水晶(提煉魔石)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"敏捷提升","lv":30,"mp":10,"tier":2,"type":"buff","eff":"敏+3","rx":"","bk":"黑暗精靈水晶(敏捷提升)"},{"n":"毒性抵抗","lv":30,"mp":20,"tier":2,"type":"buff","eff":"毒性抵抗","rx":"","bk":"黑暗精靈水晶(毒性抵抗)"},{"n":"燃燒鬥志","lv":30,"mp":20,"tier":2,"type":"buff","eff":"戰意燃燒（鬥志強化）","rx":"","bk":"黑暗精靈水晶(燃燒鬥志)"},{"n":"行走加速","lv":30,"mp":10,"tier":2,"type":"buff","eff":"行走加速（攻速+15%，可與加速術疊加）","rx":"","bk":"黑暗精靈水晶(行走加速)"},{"n":"暗影之牙","lv":45,"mp":20,"tier":3,"type":"buff","eff":"額外傷害+5","rx":"","bk":"黑暗精靈水晶(暗影之牙)"},{"n":"暗影閃避","lv":45,"mp":20,"tier":3,"type":"buff","eff":"迴避時亦可閃避魔法攻擊","rx":"","bk":"黑暗精靈水晶(暗影閃避)"},{"n":"會心一擊","lv":45,"mp":0,"tier":3,"type":"atk","eff":"爆擊強化","rx":"","bk":"黑暗精靈水晶(會心一擊)"},{"n":"迴避提升","lv":45,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+12","rx":"","bk":"黑暗精靈水晶(迴避提升)"},{"n":"雙重破壞","lv":45,"mp":20,"tier":3,"type":"buff","eff":"雙重攻擊（攻擊可追加一次命中）","rx":"","bk":"黑暗精靈水晶(雙重破壞)"},{"n":"破壞盔甲","lv":45,"mp":32,"tier":3,"type":"atk","eff":"魔法攻擊、附加：破壞盔甲（降低目標防禦，使其受到傷害提高）（8秒）","rx":"","bk":"黑暗精靈水晶(破壞盔甲)"}],"illusion":[{"n":"幻覺：歐吉","lv":10,"mp":20,"tier":1,"type":"buff","eff":"額外傷害+4、額外命中+4、召喚幻象(歐吉)","rx":"","bk":"記憶水晶(幻覺：歐吉)"},{"n":"混亂","lv":10,"mp":15,"tier":1,"type":"atk","eff":"魔法攻擊、附加：混亂(8秒)","rx":"耗HP10","bk":"記憶水晶(混亂)"},{"n":"立方：燃燒","lv":10,"mp":30,"tier":1,"type":"buff","eff":"火屬性抗性+30","rx":"","bk":"記憶水晶(立方：燃燒)"},{"n":"粉碎能量","lv":10,"mp":5,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"記憶水晶(粉碎能量)"},{"n":"鏡像","lv":10,"mp":10,"tier":1,"type":"buff","eff":"ER迴避+25","rx":"","bk":"記憶水晶(鏡像)"},{"n":"專注","lv":20,"mp":30,"tier":2,"type":"buff","eff":"MP自然恢復+4","rx":"","bk":"記憶水晶(專注)"},{"n":"幻覺：巫妖","lv":20,"mp":20,"tier":2,"type":"buff","eff":"魔法傷害+2、召喚幻象(巫妖)","rx":"","bk":"記憶水晶(幻覺：巫妖)"},{"n":"心靈破壞","lv":20,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"記憶水晶(心靈破壞)"},{"n":"立方：地裂","lv":20,"mp":35,"tier":2,"type":"buff","eff":"地屬性抗性+30","rx":"","bk":"記憶水晶(立方：地裂)"},{"n":"骷髏毀壞","lv":20,"mp":30,"tier":2,"type":"atk","eff":"魔法攻擊、附加：暈眩(6秒)","rx":"","bk":"記憶水晶(骷髏毀壞)"},{"n":"幻想","lv":30,"mp":30,"tier":3,"type":"atk","eff":"魔法攻擊、附加：沉睡(8秒)","rx":"耗HP25","bk":"記憶水晶(幻想)"},{"n":"幻覺：鑽石高崙","lv":30,"mp":30,"tier":3,"type":"buff","eff":"AC+10、召喚幻象(鑽石高崙)","rx":"耗HP25","bk":"記憶水晶(幻覺：鑽石高崙)"},{"n":"立方：衝擊","lv":30,"mp":55,"tier":3,"type":"buff","eff":"風屬性抗性+30","rx":"","bk":"記憶水晶(立方：衝擊)"},{"n":"耐力","lv":30,"mp":25,"tier":3,"type":"buff","eff":"傷害減免+2","rx":"","bk":"記憶水晶(耐力)"},{"n":"幻覺：化身","lv":40,"mp":50,"tier":4,"type":"buff","eff":"額外傷害+10","rx":"","bk":"記憶水晶(幻覺：化身)"},{"n":"恐慌","lv":40,"mp":30,"tier":4,"type":"atk","eff":"魔法攻擊、附加：恐慌(64秒)","rx":"耗HP30","bk":"記憶水晶(恐慌)"},{"n":"洞察","lv":40,"mp":60,"tier":4,"type":"buff","eff":"力量+1、敏捷+1、體質+1、智力+1、精神+1","rx":"","bk":"記憶水晶(洞察)"},{"n":"立方：和諧","lv":40,"mp":0,"tier":4,"type":"buff","eff":"（增益）","rx":"耗HP25","bk":"記憶水晶(立方：和諧)"},{"n":"疼痛的歡愉","lv":40,"mp":0,"tier":4,"type":"buff","eff":"（增益）","rx":"耗HP40","bk":"記憶水晶(疼痛的歡愉)"}],"dragon":[{"n":"龍之護鎧","lv":15,"mp":0,"tier":1,"type":"buff","eff":"傷害減免+5","rx":"耗HP12、不可刷新","bk":"龍騎士書板(龍之護鎧)"},{"n":"燃燒擊砍","lv":15,"mp":0,"tier":1,"type":"buff","eff":"下一擊燃燒","rx":"需近戰武器、耗HP6、不可刷新","bk":"龍騎士書板(燃燒擊砍)"},{"n":"護衛毀滅","lv":15,"mp":0,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"耗HP20","bk":"龍騎士書板(護衛毀滅)"},{"n":"岩漿噴吐","lv":15,"mp":0,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"耗HP10","bk":"龍騎士書板(岩漿噴吐)"},{"n":"覺醒：安塔瑞斯","lv":15,"mp":20,"tier":1,"type":"buff","eff":"AC+8、覺醒","rx":"耗HP10、不可刷新","bk":"龍騎士書板(覺醒：安塔瑞斯)"},{"n":"血之渴望","lv":30,"mp":0,"tier":2,"type":"buff","eff":"嗜血加速","rx":"耗HP30、不可刷新","bk":"龍騎士書板(血之渴望)"},{"n":"屠宰者","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP16","bk":"龍騎士書板(屠宰者)"},{"n":"恐懼無助","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP12","bk":"龍騎士書板(恐懼無助)"},{"n":"岩漿之箭","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP16","bk":"龍騎士書板(岩漿之箭)"},{"n":"覺醒：法利昂","lv":30,"mp":30,"tier":2,"type":"buff","eff":"火屬性抗性+15、水屬性抗性+15、地屬性抗性+15、風屬性抗性+15、覺醒","rx":"耗HP20、不可刷新","bk":"龍騎士書板(覺醒：法利昂)"},{"n":"致命身軀","lv":45,"mp":0,"tier":3,"type":"buff","eff":"反擊化刃","rx":"耗HP50、不可刷新","bk":"龍騎士書板(致命身軀)"},{"n":"奪命之雷","lv":45,"mp":0,"tier":3,"type":"atk","eff":"魔法攻擊、附加：暈眩(6秒)","rx":"耗HP35","bk":"龍騎士書板(奪命之雷)"},{"n":"驚悚死神","lv":45,"mp":0,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"耗HP20","bk":"龍騎士書板(驚悚死神)"},{"n":"覺醒：巴拉卡斯","lv":45,"mp":50,"tier":3,"type":"buff","eff":"力量+3、體質+3、敏捷+3、智力+3、精神+3、額外命中+5、覺醒","rx":"耗HP30、不可刷新","bk":"龍騎士書板(覺醒：巴拉卡斯)"}],"warrior":[{"n":"迅猛雙斧","lv":15,"mp":0,"tier":1,"type":"passive","eff":"裝備單手鈍器時副手也可裝單手鈍器，一般攻擊同時判定兩個攻擊來源。","grp":"熱血","bk":"戰士的印記(迅猛雙斧)"},{"n":"戰斧投擲","lv":15,"mp":5,"tier":1,"type":"atk","eff":"須裝備單手鈍器或雙手鈍器；下一次一般攻擊附加出血。持續6秒。","grp":"憤怒","bk":"戰士的印記(戰斧投擲)"},{"n":"咆哮","lv":30,"mp":5,"tier":2,"type":"atk","eff":"對所有敵人造成 50+(等級-30) 的固定傷害。","grp":"憤怒","bk":"戰士的印記(咆哮)"},{"n":"粉碎","lv":30,"mp":0,"tier":2,"type":"passive","eff":"近距離傷害+2，玩家等級45時額外+1，之後每升一級+1。","grp":"熱血","bk":"戰士的印記(粉碎)"},{"n":"護甲身軀","lv":45,"mp":0,"tier":3,"type":"passive","eff":"傷害減免 +[(10-AC)/10]。","grp":"熱血","bk":"戰士的印記(護甲身軀)"},{"n":"狂暴","lv":50,"mp":0,"tier":4,"type":"passive","eff":"一般攻擊5%機率傷害x2。","grp":"熱血","bk":"戰士的印記(狂暴)"},{"n":"泰坦：岩石","lv":50,"mp":0,"tier":4,"type":"passive","eff":"HP低於40%時，受到一般攻擊對攻擊目標造成相同傷害。","grp":"忍耐","bk":"戰士的印記(泰坦：岩石)"},{"n":"泰坦：魔法","lv":50,"mp":0,"tier":4,"type":"passive","eff":"HP低於40%時，受到技能攻擊對攻擊目標造成相同傷害。","grp":"忍耐","bk":"戰士的印記(泰坦：魔法)"},{"n":"體能強化","lv":50,"mp":10,"tier":4,"type":"buff","eff":"HP上限增加+(等級/2)%。持續300秒。","grp":"憤怒","bk":"戰士的印記(體能強化)"},{"n":"泰坦：子彈","lv":60,"mp":0,"tier":5,"type":"passive","eff":"HP低於40%時，ER+50。","grp":"忍耐","bk":"戰士的印記(泰坦：子彈)"},{"n":"亡命之徒","lv":60,"mp":10,"tier":5,"type":"atk","eff":"一般攻擊最低命中率變成50%。持續6秒。","grp":"憤怒","bk":"戰士的印記(亡命之徒)"}],"royal":[{"n":"精準目標","lv":15,"mp":2,"tier":1,"type":"buff","eff":"場上所有敵人受到的傷害增加 [1+(玩家等級/15)]%，持續 16 秒（結束才再施放）。","grp":"一階王族魔法","bk":"魔法書(精準目標)"},{"n":"呼喚盟友","lv":30,"mp":30,"tier":2,"type":"atk","eff":"所有傭兵立即發動一次額外攻擊。","grp":"二階王族魔法","bk":"魔法書(呼喚盟友)"},{"n":"灼熱武器","lv":40,"mp":25,"tier":3,"type":"buff","eff":"額外傷害+5、額外命中+5，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(灼熱武器)"},{"n":"勇猛意志","lv":50,"mp":25,"tier":4,"type":"atk","eff":"10%機率一般攻擊傷害 ×1.5，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(勇猛意志)"},{"n":"閃亮之盾","lv":50,"mp":25,"tier":4,"type":"buff","eff":"AC-8，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(閃亮之盾)"},{"n":"王者加護","lv":50,"mp":0,"tier":4,"type":"passive","eff":"MR+10、20%機率抵抗暈眩。","grp":"特殊級王族魔法","bk":"魔法書(王者加護)"}]};
+        window.SKILLS_TAB = {"knight":[{"n":"初級治癒術","lv":16,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":16,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":16,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":16,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":16,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":16,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"增幅防禦","lv":30,"mp":10,"tier":1,"type":"buff","eff":"","rx":"","bk":"技術書(增幅防禦)"},{"n":"衝擊之暈","lv":30,"mp":12,"tier":1,"type":"atk","eff":"","rx":"需特定武器","bk":"技術書(衝擊之暈)"},{"n":"尖刺盔甲","lv":30,"mp":10,"tier":1,"type":"buff","eff":"近距離命中+5","rx":"","bk":"技術書(尖刺盔甲)"},{"n":"堅固防護","lv":40,"mp":5,"tier":2,"type":"buff","eff":"ER迴避+15","rx":"需裝盾","bk":"技術書(堅固防護)"},{"n":"反擊屏障","lv":30,"mp":10,"tier":1,"type":"buff","eff":"進入反擊架式（持續64秒），受擊時反擊","rx":"","bk":"技術書(反擊屏障)"}],"mage":[{"n":"初級治癒術","lv":4,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":4,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":4,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":4,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":4,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":4,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"解毒術","lv":8,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":8,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":8,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":8,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":8,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":8,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":8,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"極光雷電","lv":12,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":12,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":12,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":12,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":12,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":12,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":12,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":12,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"通暢氣脈術","lv":16,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":16,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":16,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":16,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":16,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":16,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"木乃伊的詛咒","lv":20,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":20,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":20,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":20,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":20,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":20,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":20,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":24,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":24,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":24,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":24,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":24,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":24,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":24,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"體力回復術","lv":28,"mp":35,"tier":7,"type":"heal","eff":"回復HP 30+(1~30)、自動施放","rx":"","bk":"魔法書(體力回復術)"},{"n":"強力加速術","lv":28,"mp":60,"tier":7,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(強力加速術)"},{"n":"冰矛圍籬","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰矛圍籬)"},{"n":"龍捲風","lv":28,"mp":45,"tier":7,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(龍捲風)"},{"n":"狂暴術","lv":28,"mp":40,"tier":7,"type":"buff","eff":"近距離傷害+5、AC-10","rx":"","bk":"魔法書(狂暴術)"},{"n":"召喚術","lv":28,"mp":50,"tier":7,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(召喚術)"},{"n":"神聖疾走","lv":28,"mp":20,"tier":7,"type":"buff","eff":"ER迴避+15","rx":"","bk":"魔法書(神聖疾走)"},{"n":"疾病術","lv":28,"mp":30,"tier":7,"type":"atk","eff":"魔法攻擊、附加：疾病（30秒）","rx":"","bk":"魔法書(疾病術)"},{"n":"全部治癒術","lv":32,"mp":30,"tier":8,"type":"heal","eff":"回復HP 150+(3~50)","rx":"","bk":"魔法書(全部治癒術)"},{"n":"冰雪暴","lv":32,"mp":60,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰雪暴)"},{"n":"震裂術","lv":32,"mp":40,"tier":8,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(震裂術)"},{"n":"隱身術","lv":32,"mp":45,"tier":8,"type":"buff","eff":"","rx":"","bk":"魔法書(隱身術)"},{"n":"返生術","lv":32,"mp":50,"tier":8,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(返生術)"},{"n":"魔法封印","lv":32,"mp":30,"tier":8,"type":"atk","eff":"魔法攻擊、附加：真空吸引（16秒）","rx":"","bk":"魔法書(魔法封印)"},{"n":"聖結界","lv":36,"mp":30,"tier":9,"type":"buff","eff":"一道神聖的防禦屏障保護著你。","rx":"","bk":"魔法書(聖結界)"},{"n":"沉睡之霧","lv":36,"mp":40,"tier":9,"type":"atk","eff":"魔法攻擊、附加：沉睡（8秒）","rx":"","bk":"魔法書(沉睡之霧)"},{"n":"雷霆風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(雷霆風暴)"},{"n":"火風暴","lv":36,"mp":48,"tier":9,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火風暴)"},{"n":"流星雨","lv":40,"mp":60,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(流星雨)"},{"n":"靈魂昇華","lv":40,"mp":20,"tier":10,"type":"buff","eff":"你覺得身體充滿了活力。","rx":"","bk":"魔法書(靈魂昇華)"},{"n":"究極光裂術","lv":40,"mp":70,"tier":10,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(究極光裂術)"},{"n":"絕對屏障","lv":40,"mp":30,"tier":10,"type":"manual","eff":"短時間完全隔絕傷害（持續7秒）","rx":"","bk":"魔法書(絕對屏障)"},{"n":"火牢","lv":32,"mp":60,"tier":8,"type":"buff","eff":"勾選維持：10秒內每2秒對全體火屬性魔法傷害(共5跳，範圍持續傷害)","rx":"","bk":"魔法書(火牢)"},{"n":"冰雪颶風","lv":40,"mp":60,"tier":10,"type":"buff","eff":"勾選維持：32秒內每4秒對全體水屬性魔法傷害(共8跳)，依(魔命-3)機率冰凍","rx":"","bk":"魔法書(冰雪颶風)"}],"elf":[{"n":"初級治癒術","lv":8,"mp":4,"tier":1,"type":"heal","eff":"回復HP 20+(1~20)","rx":"","bk":"魔法書(初級治癒術)"},{"n":"日光術","lv":8,"mp":4,"tier":1,"type":"buff","eff":"你更容易被怪物發現了。","rx":"","bk":"魔法書(日光術)"},{"n":"保護罩","lv":8,"mp":2,"tier":1,"type":"buff","eff":"AC+2","rx":"","bk":"魔法書(保護罩)"},{"n":"光箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(光箭)"},{"n":"傳送術","lv":8,"mp":5,"tier":1,"type":"manual","eff":"","rx":"","bk":"魔法書(指定傳送)"},{"n":"冰箭","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰箭)"},{"n":"風刃","lv":8,"mp":3,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(風刃)"},{"n":"神聖武器","lv":8,"mp":10,"tier":1,"type":"buff","eff":"額外傷害+1、額外命中+1","rx":"","bk":"魔法書(神聖武器)"},{"n":"魔法防禦","lv":10,"mp":10,"tier":1,"type":"buff","eff":"MR+10","rx":"","bk":"精靈水晶(魔法防禦)"},{"n":"心靈轉換","lv":10,"mp":0,"tier":1,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(心靈轉換)"},{"n":"世界樹的呼喚","lv":10,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"精靈水晶(世界樹的呼喚)"},{"n":"三重矢","lv":10,"mp":15,"tier":1,"type":"atk","eff":"遠程","rx":"需特定武器","bk":"精靈水晶(三重矢)"},{"n":"解毒術","lv":16,"mp":8,"tier":2,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(解毒術)"},{"n":"寒冷戰慄","lv":16,"mp":9,"tier":2,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(寒冷戰慄)"},{"n":"毒咒","lv":16,"mp":10,"tier":2,"type":"atk","eff":"魔法攻擊、附加：中毒（15秒）","rx":"","bk":"魔法書(毒咒)"},{"n":"擬似魔法武器","lv":16,"mp":20,"tier":2,"type":"buff","eff":"額外傷害+2","rx":"","bk":"魔法書(擬似魔法武器)"},{"n":"無所遁形術","lv":16,"mp":8,"tier":2,"type":"buff","eff":"","rx":"","bk":"魔法書(無所遁形術)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"火箭","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(火箭)"},{"n":"地獄之牙","lv":16,"mp":3,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地獄之牙)"},{"n":"淨化精神","lv":20,"mp":10,"tier":2,"type":"buff","eff":"精神+3","rx":"","bk":"精靈水晶(淨化精神)"},{"n":"屬性防禦","lv":20,"mp":10,"tier":2,"type":"buff","eff":"火屬性抗性+10、水屬性抗性+10、地屬性抗性+10、風屬性抗性+10","rx":"","bk":"精靈水晶(屬性防禦)"},{"n":"釋放元素","lv":20,"mp":30,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"精靈水晶(釋放元素)"},{"n":"魂體轉換","lv":20,"mp":0,"tier":2,"type":"convert","eff":"轉換","rx":"","bk":"精靈水晶(魂體轉換)"},{"n":"極光雷電","lv":24,"mp":13,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極光雷電)"},{"n":"起死回生術","lv":24,"mp":15,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(起死回生術)"},{"n":"中級治癒術","lv":24,"mp":11,"tier":3,"type":"heal","eff":"回復HP 50+(1~50)","rx":"","bk":"魔法書(中級治癒術)"},{"n":"闇盲咒術","lv":24,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：致盲（10秒）","rx":"","bk":"魔法書(闇盲咒術)"},{"n":"鎧甲護持","lv":24,"mp":20,"tier":3,"type":"buff","eff":"AC+3","rx":"","bk":"魔法書(鎧甲護持)"},{"n":"寒冰氣息","lv":24,"mp":9,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(寒冰氣息)"},{"n":"能量感測","lv":24,"mp":8,"tier":3,"type":"manual","eff":"","rx":"","bk":"魔法書(能量感測)"},{"n":"燃燒的火球","lv":24,"mp":16,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(燃燒的火球)"},{"n":"單屬性防禦","lv":30,"mp":10,"tier":3,"type":"buff","eff":"","rx":"需任一屬性","bk":"精靈水晶(單屬性防禦)"},{"n":"火焰武器","lv":30,"mp":20,"tier":3,"type":"buff","eff":"近距離傷害+3","rx":"需火屬性","bk":"精靈水晶(火焰武器)"},{"n":"風之神射","lv":30,"mp":15,"tier":3,"type":"buff","eff":"遠距離命中+5","rx":"需風屬性","bk":"精靈水晶(風之神射)"},{"n":"風之疾走","lv":30,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+10","rx":"需風屬性","bk":"精靈水晶(風之疾走)"},{"n":"大地防護","lv":30,"mp":15,"tier":3,"type":"buff","eff":"AC+4","rx":"需地屬性","bk":"精靈水晶(大地防護)"},{"n":"地面障礙","lv":30,"mp":20,"tier":3,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"需地屬性","bk":"精靈水晶(地面障礙)"},{"n":"通暢氣脈術","lv":32,"mp":45,"tier":4,"type":"buff","eff":"敏+5","rx":"","bk":"魔法書(通暢氣脈術)"},{"n":"壞物術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：破壞（25秒）","rx":"","bk":"魔法書(壞物術)"},{"n":"吸血鬼之吻","lv":32,"mp":13,"tier":4,"type":"atk","eff":"魔法攻擊、吸血（造成傷害時回復HP）","rx":"","bk":"魔法書(吸血鬼之吻)"},{"n":"緩速術","lv":32,"mp":20,"tier":4,"type":"atk","eff":"魔法攻擊、附加：緩速（30秒）","rx":"","bk":"魔法書(緩速術)"},{"n":"岩牢","lv":32,"mp":11,"tier":4,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(岩牢)"},{"n":"魔法屏障","lv":32,"mp":16,"tier":4,"type":"buff","eff":"","rx":"","bk":"魔法書(魔法屏障)"},{"n":"冥想術","lv":32,"mp":10,"tier":4,"type":"buff","eff":"MP回復+5","rx":"","bk":"魔法書(冥想術)"},{"n":"魔法消除","lv":40,"mp":30,"tier":4,"type":"atk","eff":"魔法攻擊、附加：魔抗減半（16秒）","rx":"","bk":"精靈水晶(魔法消除)"},{"n":"召喚屬性精靈","lv":40,"mp":30,"tier":4,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚屬性精靈)"},{"n":"舞躍之火","lv":40,"mp":30,"tier":4,"type":"buff","eff":"近距離傷害+5","rx":"需火屬性","bk":"精靈水晶(舞躍之火)"},{"n":"大地屏障","lv":40,"mp":50,"tier":4,"type":"buff","eff":"","rx":"需地屬性","bk":"精靈水晶(大地屏障)"},{"n":"生命之泉","lv":40,"mp":50,"tier":4,"type":"heal","eff":"回復HP 250+(5~50)","rx":"需水屬性","bk":"精靈水晶(生命之泉)"},{"n":"大地的祝福","lv":40,"mp":35,"tier":4,"type":"buff","eff":"AC+5","rx":"需地屬性","bk":"精靈水晶(大地的祝福)"},{"n":"木乃伊的詛咒","lv":40,"mp":35,"tier":5,"type":"atk","eff":"魔法攻擊、附加：石化（6秒）","rx":"","bk":"魔法書(木乃伊的詛咒)"},{"n":"迷魅術","lv":40,"mp":30,"tier":5,"type":"manual","eff":"","rx":"","bk":"魔法書(迷魅術)"},{"n":"極道落雷","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(極道落雷)"},{"n":"高級治癒術","lv":40,"mp":20,"tier":5,"type":"heal","eff":"回復HP 100+(1~100)","rx":"","bk":"魔法書(高級治癒術)"},{"n":"聖潔之光","lv":40,"mp":10,"tier":5,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(聖潔之光)"},{"n":"冰錐","lv":40,"mp":21,"tier":5,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(冰錐)"},{"n":"魔力奪取","lv":40,"mp":0,"tier":5,"type":"convert","eff":"吸取魔力、轉換","rx":"","bk":"魔法書(魔力奪取)"},{"n":"黑闇之影","lv":40,"mp":25,"tier":5,"type":"atk","eff":"魔法攻擊、附加：致盲（20秒）","rx":"","bk":"魔法書(黑闇之影)"},{"n":"造屍術","lv":48,"mp":35,"tier":6,"type":"buff","eff":"召喚生物","rx":"","bk":"魔法書(造屍術)"},{"n":"加速術","lv":48,"mp":40,"tier":6,"type":"buff","eff":"攻速加成","rx":"","bk":"魔法書(加速術)"},{"n":"魔法相消術","lv":48,"mp":40,"tier":6,"type":"heal","eff":"回復HP 0","rx":"","bk":"魔法書(魔法相消術)"},{"n":"地裂術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(地裂術)"},{"n":"烈炎術","lv":48,"mp":30,"tier":6,"type":"atk","eff":"魔法攻擊","rx":"","bk":"魔法書(烈炎術)"},{"n":"體魄強健術","lv":48,"mp":50,"tier":6,"type":"buff","eff":"力+5","rx":"","bk":"魔法書(體魄強健術)"},{"n":"祝福魔法武器","lv":48,"mp":20,"tier":6,"type":"buff","eff":"額外傷害+2、額外命中+2","rx":"","bk":"魔法書(祝福魔法武器)"},{"n":"弱化術","lv":48,"mp":25,"tier":6,"type":"atk","eff":"魔法攻擊、附加：虛弱（30秒）","rx":"","bk":"魔法書(弱化術)"},{"n":"召喚強力屬性精靈","lv":50,"mp":50,"tier":5,"type":"buff","eff":"召喚生物","rx":"需任一屬性","bk":"精靈水晶(召喚強力屬性精靈)"},{"n":"生命的祝福","lv":50,"mp":30,"tier":5,"type":"heal","eff":"回復HP 28+(1~28)、自動施放","rx":"需水屬性","bk":"精靈水晶(生命的祝福)"},{"n":"封印禁地","lv":50,"mp":40,"tier":5,"type":"atk","eff":"魔法攻擊、附加：魔法封印（8秒）","rx":"需任一屬性","bk":"精靈水晶(封印禁地)"},{"n":"烈炎武器","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離傷害+5、近距離命中+5","rx":"需火屬性","bk":"精靈水晶(烈炎武器)"},{"n":"鋼鐵防護","lv":50,"mp":30,"tier":5,"type":"buff","eff":"AC+7","rx":"需地屬性","bk":"精靈水晶(鋼鐵防護)"},{"n":"烈焰之魂","lv":50,"mp":30,"tier":5,"type":"buff","eff":"近距離一般攻擊武器擲骰必為最大值（持續128秒，效果結束後才能再施放）","rx":"需火屬性","bk":"精靈水晶(烈焰之魂)"},{"n":"鏡反射","lv":50,"mp":10,"tier":5,"type":"buff","eff":"周身浮現鏡面，反彈攻擊（持續16秒）","rx":"需風屬性","bk":"精靈水晶(鏡反射)"},{"n":"屬性之火","lv":50,"mp":20,"tier":5,"type":"buff","eff":"持續320秒，一般攻擊30%機率造成1.5倍傷害","rx":"需火屬性","bk":"精靈水晶(屬性之火)"},{"n":"能量激發","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續960秒，負重狀態下仍可自然恢復HP/MP","rx":"需火屬性","bk":"精靈水晶(能量激發)"},{"n":"體能激發","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續960秒，負重狀態下仍可自然恢復HP/MP","rx":"需地屬性","bk":"精靈水晶(體能激發)"},{"n":"水之元氣","lv":30,"mp":1,"tier":3,"type":"buff","eff":"持續64秒的水屬性增益","rx":"需水屬性","bk":"精靈水晶(水之元氣)"},{"n":"暴風神射","lv":50,"mp":30,"tier":5,"type":"buff","eff":"持續1200秒：遠距離傷害+6、遠距離命中+3","rx":"需風屬性","bk":"精靈水晶(暴風神射)"},{"n":"暴風之眼","lv":40,"mp":40,"tier":4,"type":"buff","eff":"持續1200秒：遠距離傷害+2、遠距離命中+2","rx":"需風屬性","bk":"精靈水晶(暴風之眼)"},{"n":"精準射擊","lv":50,"mp":15,"tier":5,"type":"buff","eff":"持續64秒：一般攻擊最高命中率提升至100%（結束才再施放）","rx":"需風屬性","bk":"精靈水晶(精準射擊)"}],"dark":[{"n":"力量提升","lv":15,"mp":10,"tier":1,"type":"buff","eff":"力+3","rx":"","bk":"黑暗精靈水晶(力量提升)"},{"n":"影之防護","lv":15,"mp":12,"tier":1,"type":"buff","eff":"MR+5","rx":"","bk":"黑暗精靈水晶(影之防護)"},{"n":"暗隱術","lv":15,"mp":10,"tier":1,"type":"buff","eff":"ER迴避+100、觸發迴避後解除並冷卻5秒（物理版魔法屏障）","rx":"","bk":"黑暗精靈水晶(暗隱術)"},{"n":"附加劇毒","lv":15,"mp":10,"tier":1,"type":"buff","eff":"武器附加劇毒","rx":"","bk":"黑暗精靈水晶(附加劇毒)"},{"n":"提煉魔石","lv":15,"mp":0,"tier":1,"type":"passive","eff":"被動效果","rx":"","bk":"黑暗精靈水晶(提煉魔石)"},{"n":"負重強化","lv":16,"mp":0,"tier":2,"type":"passive","eff":"被動效果","rx":"","bk":"魔法書(負重強化)"},{"n":"敏捷提升","lv":30,"mp":10,"tier":2,"type":"buff","eff":"敏+3","rx":"","bk":"黑暗精靈水晶(敏捷提升)"},{"n":"毒性抵抗","lv":30,"mp":20,"tier":2,"type":"buff","eff":"毒性抵抗","rx":"","bk":"黑暗精靈水晶(毒性抵抗)"},{"n":"燃燒鬥志","lv":30,"mp":20,"tier":2,"type":"buff","eff":"戰意燃燒（鬥志強化）","rx":"","bk":"黑暗精靈水晶(燃燒鬥志)"},{"n":"行走加速","lv":30,"mp":10,"tier":2,"type":"buff","eff":"行走加速（攻速+15%，可與加速術疊加）","rx":"","bk":"黑暗精靈水晶(行走加速)"},{"n":"暗影之牙","lv":45,"mp":20,"tier":3,"type":"buff","eff":"額外傷害+5","rx":"","bk":"黑暗精靈水晶(暗影之牙)"},{"n":"暗影閃避","lv":45,"mp":20,"tier":3,"type":"buff","eff":"迴避時亦可閃避魔法攻擊","rx":"","bk":"黑暗精靈水晶(暗影閃避)"},{"n":"會心一擊","lv":45,"mp":0,"tier":3,"type":"atk","eff":"爆擊強化","rx":"","bk":"黑暗精靈水晶(會心一擊)"},{"n":"迴避提升","lv":45,"mp":20,"tier":3,"type":"buff","eff":"ER迴避+12","rx":"","bk":"黑暗精靈水晶(迴避提升)"},{"n":"雙重破壞","lv":45,"mp":20,"tier":3,"type":"buff","eff":"雙重攻擊（攻擊可追加一次命中）","rx":"","bk":"黑暗精靈水晶(雙重破壞)"},{"n":"破壞盔甲","lv":45,"mp":32,"tier":3,"type":"atk","eff":"魔法攻擊、附加：破壞盔甲（降低目標防禦，使其受到傷害提高）（8秒）","rx":"","bk":"黑暗精靈水晶(破壞盔甲)"}],"illusion":[{"n":"幻覺：歐吉","lv":10,"mp":20,"tier":1,"type":"buff","eff":"額外傷害+4、額外命中+4、召喚幻象(歐吉)","rx":"","bk":"記憶水晶(幻覺：歐吉)"},{"n":"混亂","lv":10,"mp":15,"tier":1,"type":"atk","eff":"魔法攻擊、附加：混亂(8秒)","rx":"耗HP10","bk":"記憶水晶(混亂)"},{"n":"立方：燃燒","lv":10,"mp":30,"tier":1,"type":"buff","eff":"火屬性抗性+30","rx":"","bk":"記憶水晶(立方：燃燒)"},{"n":"粉碎能量","lv":10,"mp":5,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"","bk":"記憶水晶(粉碎能量)"},{"n":"鏡像","lv":10,"mp":10,"tier":1,"type":"buff","eff":"ER迴避+25","rx":"","bk":"記憶水晶(鏡像)"},{"n":"專注","lv":20,"mp":30,"tier":2,"type":"buff","eff":"MP自然恢復+4","rx":"","bk":"記憶水晶(專注)"},{"n":"幻覺：巫妖","lv":20,"mp":20,"tier":2,"type":"buff","eff":"魔法傷害+2、召喚幻象(巫妖)","rx":"","bk":"記憶水晶(幻覺：巫妖)"},{"n":"心靈破壞","lv":20,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"","bk":"記憶水晶(心靈破壞)"},{"n":"立方：地裂","lv":20,"mp":35,"tier":2,"type":"buff","eff":"地屬性抗性+30","rx":"","bk":"記憶水晶(立方：地裂)"},{"n":"骷髏毀壞","lv":20,"mp":30,"tier":2,"type":"atk","eff":"魔法攻擊、附加：暈眩(6秒)","rx":"","bk":"記憶水晶(骷髏毀壞)"},{"n":"幻想","lv":30,"mp":30,"tier":3,"type":"atk","eff":"魔法攻擊、附加：沉睡(8秒)","rx":"耗HP25","bk":"記憶水晶(幻想)"},{"n":"幻覺：鑽石高崙","lv":30,"mp":30,"tier":3,"type":"buff","eff":"AC+10、召喚幻象(鑽石高崙)","rx":"耗HP25","bk":"記憶水晶(幻覺：鑽石高崙)"},{"n":"立方：衝擊","lv":30,"mp":55,"tier":3,"type":"buff","eff":"風屬性抗性+30","rx":"","bk":"記憶水晶(立方：衝擊)"},{"n":"耐力","lv":30,"mp":25,"tier":3,"type":"buff","eff":"傷害減免+2","rx":"","bk":"記憶水晶(耐力)"},{"n":"幻覺：化身","lv":40,"mp":50,"tier":4,"type":"buff","eff":"額外傷害+10","rx":"","bk":"記憶水晶(幻覺：化身)"},{"n":"恐慌","lv":40,"mp":30,"tier":4,"type":"atk","eff":"魔法攻擊、附加：恐慌(64秒)","rx":"耗HP30","bk":"記憶水晶(恐慌)"},{"n":"洞察","lv":40,"mp":60,"tier":4,"type":"buff","eff":"力量+1、敏捷+1、體質+1、智力+1、精神+1","rx":"","bk":"記憶水晶(洞察)"},{"n":"立方：和諧","lv":40,"mp":0,"tier":4,"type":"buff","eff":"（增益）","rx":"耗HP25","bk":"記憶水晶(立方：和諧)"},{"n":"疼痛的歡愉","lv":40,"mp":0,"tier":4,"type":"buff","eff":"（增益）","rx":"耗HP40","bk":"記憶水晶(疼痛的歡愉)"}],"dragon":[{"n":"龍之護鎧","lv":15,"mp":0,"tier":1,"type":"buff","eff":"傷害減免+5","rx":"耗HP12、不可刷新","bk":"龍騎士書板(龍之護鎧)"},{"n":"燃燒擊砍","lv":15,"mp":0,"tier":1,"type":"buff","eff":"下一擊燃燒","rx":"需近戰武器、耗HP6、不可刷新","bk":"龍騎士書板(燃燒擊砍)"},{"n":"護衛毀滅","lv":15,"mp":0,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"耗HP20","bk":"龍騎士書板(護衛毀滅)"},{"n":"岩漿噴吐","lv":15,"mp":0,"tier":1,"type":"atk","eff":"魔法攻擊","rx":"耗HP10","bk":"龍騎士書板(岩漿噴吐)"},{"n":"覺醒：安塔瑞斯","lv":15,"mp":20,"tier":1,"type":"buff","eff":"AC+8、覺醒","rx":"耗HP10、不可刷新","bk":"龍騎士書板(覺醒：安塔瑞斯)"},{"n":"血之渴望","lv":30,"mp":0,"tier":2,"type":"buff","eff":"嗜血加速","rx":"耗HP30、不可刷新","bk":"龍騎士書板(血之渴望)"},{"n":"屠宰者","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP16","bk":"龍騎士書板(屠宰者)"},{"n":"恐懼無助","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP12","bk":"龍騎士書板(恐懼無助)"},{"n":"岩漿之箭","lv":30,"mp":0,"tier":2,"type":"atk","eff":"魔法攻擊","rx":"耗HP16","bk":"龍騎士書板(岩漿之箭)"},{"n":"覺醒：法利昂","lv":30,"mp":30,"tier":2,"type":"buff","eff":"火屬性抗性+15、水屬性抗性+15、地屬性抗性+15、風屬性抗性+15、覺醒","rx":"耗HP20、不可刷新","bk":"龍騎士書板(覺醒：法利昂)"},{"n":"致命身軀","lv":45,"mp":0,"tier":3,"type":"buff","eff":"反擊化刃","rx":"耗HP50、不可刷新","bk":"龍騎士書板(致命身軀)"},{"n":"奪命之雷","lv":45,"mp":0,"tier":3,"type":"atk","eff":"魔法攻擊、附加：暈眩(6秒)","rx":"耗HP35","bk":"龍騎士書板(奪命之雷)"},{"n":"驚悚死神","lv":45,"mp":0,"tier":3,"type":"atk","eff":"魔法攻擊","rx":"耗HP20","bk":"龍騎士書板(驚悚死神)"},{"n":"覺醒：巴拉卡斯","lv":45,"mp":50,"tier":3,"type":"buff","eff":"力量+3、體質+3、敏捷+3、智力+3、精神+3、額外命中+5、覺醒","rx":"耗HP30、不可刷新","bk":"龍騎士書板(覺醒：巴拉卡斯)"}],"warrior":[{"n":"迅猛雙斧","lv":15,"mp":0,"tier":1,"type":"passive","eff":"裝備單手鈍器時副手也可裝單手鈍器，一般攻擊同時判定兩個攻擊來源。","grp":"熱血","bk":"戰士的印記(迅猛雙斧)"},{"n":"戰斧投擲","lv":15,"mp":5,"tier":1,"type":"atk","eff":"須裝備單手鈍器或雙手鈍器；下一次一般攻擊附加出血。持續6秒。","grp":"憤怒","bk":"戰士的印記(戰斧投擲)"},{"n":"咆哮","lv":30,"mp":5,"tier":2,"type":"atk","eff":"對所有敵人造成 50+(等級-30) 的固定傷害。","grp":"憤怒","bk":"戰士的印記(咆哮)"},{"n":"粉碎","lv":30,"mp":0,"tier":2,"type":"passive","eff":"近距離傷害+2，玩家等級45時額外+1，之後每升一級+1。","grp":"熱血","bk":"戰士的印記(粉碎)"},{"n":"護甲身軀","lv":45,"mp":0,"tier":3,"type":"passive","eff":"傷害減免 +[(10-AC)/10]。","grp":"熱血","bk":"戰士的印記(護甲身軀)"},{"n":"狂暴","lv":50,"mp":0,"tier":4,"type":"passive","eff":"一般攻擊5%機率傷害x2。","grp":"熱血","bk":"戰士的印記(狂暴)"},{"n":"泰坦：岩石","lv":50,"mp":0,"tier":4,"type":"passive","eff":"HP低於40%時，受到一般攻擊對攻擊目標造成相同傷害。","grp":"忍耐","bk":"戰士的印記(泰坦：岩石)"},{"n":"泰坦：魔法","lv":50,"mp":0,"tier":4,"type":"passive","eff":"HP低於40%時，受到技能攻擊對攻擊目標造成相同傷害。","grp":"忍耐","bk":"戰士的印記(泰坦：魔法)"},{"n":"體能強化","lv":50,"mp":10,"tier":4,"type":"buff","eff":"HP上限增加+(等級/2)%。持續300秒。","grp":"憤怒","bk":"戰士的印記(體能強化)"},{"n":"泰坦：子彈","lv":60,"mp":0,"tier":5,"type":"passive","eff":"HP低於40%時，ER+50。","grp":"忍耐","bk":"戰士的印記(泰坦：子彈)"},{"n":"亡命之徒","lv":60,"mp":10,"tier":5,"type":"atk","eff":"一般攻擊最低命中率變成50%。持續6秒。","grp":"憤怒","bk":"戰士的印記(亡命之徒)"}],"royal":[{"n":"精準目標","lv":15,"mp":2,"tier":1,"type":"buff","eff":"場上所有敵人受到的傷害增加 [1+(玩家等級/15)]%，持續 16 秒（結束才再施放）。","grp":"一階王族魔法","bk":"魔法書(精準目標)"},{"n":"呼喚盟友","lv":30,"mp":30,"tier":2,"type":"atk","eff":"所有傭兵立即發動一次額外攻擊。","grp":"二階王族魔法","bk":"魔法書(呼喚盟友)"},{"n":"灼熱武器","lv":40,"mp":25,"tier":3,"type":"buff","eff":"額外傷害+5、額外命中+5，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(灼熱武器)"},{"n":"勇猛意志","lv":50,"mp":25,"tier":4,"type":"atk","eff":"10%機率一般攻擊傷害 ×1.5，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(勇猛意志)"},{"n":"閃亮之盾","lv":50,"mp":25,"tier":4,"type":"buff","eff":"AC-8，持續 640 秒（結束才再施放）。","grp":"特殊級王族魔法","bk":"魔法書(閃亮之盾)"},{"n":"王者加護","lv":50,"mp":0,"tier":4,"type":"passive","eff":"MR+10、20%機率抵抗暈眩。","grp":"特殊級王族魔法","bk":"魔法書(王者加護)"}]};
 window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌","皮背心"],"bonus":"AC+3"},{"n":"歐西斯套裝","items":["歐西斯頭盔","歐西斯環甲","歐西斯斗篷","阿克海盾牌"],"bonus":"AC+3"},{"n":"侏儒套裝","items":["侏儒鐵盔","侏儒斗篷","侏儒圓盾"],"bonus":"AC+1、HP+5"},{"n":"銀釘套裝","items":["銀釘皮帽","銀釘皮涼鞋","銀釘皮盾","銀釘皮背心"],"bonus":"AC+3"},{"n":"骷髏套裝","items":["骷髏頭盔","骷髏盾牌","骷髏盔甲"],"bonus":"AC+2、HP+10"},{"n":"鋼鐵套裝","items":["鋼鐵手套","鋼鐵頭盔","鋼鐵盾牌","鋼鐵長靴","鋼鐵金屬盔甲"],"bonus":"AC+3"},{"n":"法師套裝","items":["法師之帽","法師長袍"],"bonus":"MP+50"},{"n":"死亡騎士套裝","items":["死亡騎士手套","死亡騎士盔甲","死亡騎士長靴","死亡騎士頭盔"],"bonus":"AC+4、4件集齊變身「真‧死亡騎士」(額外傷害+6、額外命中+6、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"克特套裝","items":["克特手套","克特盔甲","克特長靴","克特頭盔"],"bonus":"AC+4、4件集齊變身「真‧克特」(額外傷害+4、額外命中+8、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"抗魔套裝","items":["抗魔戒指","抗魔項鍊","抗魔皮帶"],"bonus":"MR+5"},{"n":"守護套裝","items":["守護戒指","守護項鍊","守護皮帶"],"bonus":"AC+1"},{"n":"四大軍王套裝","items":["冥法軍王斗篷","法令軍王長袍","暗殺軍王手套","魔獸軍王長靴"],"bonus":"HP+30、MP+30、HP自然恢復+10、MP自然恢復+10、魅力+3"},{"n":"惡魔套裝","items":["惡魔頭盔","惡魔盔甲","惡魔手套","惡魔長靴"],"bonus":"AC-2、HP自然恢復+5、變身「惡魔」(額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加)"},{"n":"黑暗妖精套裝","items":["黑暗妖精頭箍","黑暗妖精鱗甲","黑暗妖精涼鞋"],"bonus":"3件集齊：AC-3、HP自然恢復-2、MP自然恢復-7、力量-2、敏捷+2，變身「高等黑暗精靈」(遠距離傷害+5、遠距離命中+5、攻速+30%，可與加速/勇水/妖精餅乾疊加)"},{"n":"歐林套裝","items":["歐林的項鍊","西瑪戒指"],"bonus":"AC-5、HP+50、力量/敏捷/體質/智力/精神/魅力 各+1"},{"n":"冰之女王魅力套裝","items":["冰之女王魅力頭飾","冰之女王魅力禮服","冰之女王魅力涼鞋"],"bonus":"（公主限定）AC-5、力量+2、魅力+2、HP+100、MP自然恢復+4、水屬性抗性+20"},{"n":"寒冰套裝","items":["寒冰頭盔","寒冰盔甲","寒冰長靴"],"bonus":"AC-5、體質+3、HP+100、HP自然恢復+8、MP自然恢復+4、MR+15、水屬性抗性+20"}];
 
         window.ITEMS_DB = {
@@ -1535,7 +1607,73 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "item_ant_bark": {"n":"污濁安特的樹皮","p":0,"c":"text-emerald-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"剝自腐化安特軀幹的樹皮，紋路間爬滿了黑斑。希蓮恩的試煉道具。（無法販售）"},
             "item_elmore_heart": {"n":"艾爾摩將軍之心","p":0,"c":"text-rose-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"自將軍艾爾摩胸中取出、仍微微跳動的心臟，餘威猶在。希蓮恩的試煉道具。（無法販售）"},
             "item_time_orb": {"n":"完成的時間水晶球","p":0,"c":"text-sky-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"匯聚流逝歲月而成的水晶球，凝視其中彷彿能窺見時光倒流。希蓮恩的試煉道具。（無法販售）"},
-            "item_wyvern_blood": {"n":"翼龍之血","p":0,"c":"text-red-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"自翼龍體內汲取的滾燙血液，蘊藏著飛龍一族的兇暴生命力。希蓮恩 50 級試煉道具。（無法販售）"}
+            "item_wyvern_blood": {"n":"翼龍之血","p":0,"c":"text-red-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"自翼龍體內汲取的滾燙血液，蘊藏著飛龍一族的兇暴生命力。希蓮恩 50 級試煉道具。（無法販售）"},
+            "item_hatin_diary": {"n":"黑暗哈汀的日記本","type":"misc","p":5000,"c":"text-purple-300","noUse":true,"gachaWeight":0,"d":"黑暗法師哈汀殘存的日記本，扉頁間滿是癲狂的黑魔法筆記與禁咒草圖。可交給說話之島的尤麗婭兌換 隱藏的魔族武器（六選一）。"},
+            "wpn_ancient_darkelf_sword": {"n":"古代黑暗妖精之劍","type":"wpn","dmgS":12,"dmgL":12,"hit":3,"dmgBonus":1,"spd":1.1,"req":"elf","safe":6,"p":68000,"gachaWeight":1,"unBonus":true,"dex":1,"mhp":50,"d":"古代黑暗妖精所執的單手劍，劍身流轉著暗夜的寒光。反擊、對不死 / 狼人加成；近距離傷害+1、近距離命中+3、敏捷+1、HP+50。"},
+            "wpn_ancient_elf_xbow": {"n":"古代妖精弩槍","type":"wpn","isBow":true,"ranged":true,"oneHand":true,"rapidfire":55,"dmgS":3,"dmgL":3,"hit":1,"dmgBonus":2,"spd":1,"req":"elf","safe":6,"p":68000,"gachaWeight":1,"dex":1,"d":"古代妖精打造的單手弩槍，輕巧迅捷、箭如疾風。連射55%、敏捷+1；遠距離傷害+2、遠距離命中+1；可同時裝備盾牌或臂甲。"},
+            "wpn_demon_sword_hidden": {"n":"隱藏的魔族之劍","type":"wpn","dmgS":23,"dmgL":25,"hit":3,"dmgBonus":0,"spd":1.1,"req":"royal,knight,elf,dragon","safe":0,"p":28000,"gachaWeight":1,"mhp":30,"ignHardSkin":true,"redSpecter":true,"d":"潛藏魔族之力的單手劍，劍身浮現赤紅惡靈的低語。反擊、貫穿、HP+30；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲：水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
+            "wpn_demon_bow_hidden": {"n":"隱藏的魔族弓箭","type":"wpn","isBow":true,"ranged":true,"oneHand":true,"rapidfire":70,"dmgS":2,"dmgL":2,"hit":3,"dmgBonus":6,"spd":1,"req":"royal,mage,elf,illusion","safe":0,"p":28000,"gachaWeight":1,"blueSpecter":true,"d":"潛藏魔族之力的單手弓，弦上纏繞著湛藍惡靈的氣息。連射70%；遠距離傷害+6、遠距離命中+3；可同時裝備盾牌或臂甲。攻擊時 4%（每強化 +1%）機率發動 藍惡靈奪魔：恢復 MP。"},
+            "wpn_demon_wand_hidden": {"n":"隱藏的魔族魔杖","type":"wpn","dmgS":15,"dmgL":16,"hit":3,"dmgBonus":0,"spd":1,"mdmg":1,"mpR":3,"req":"mage,illusion","safe":0,"p":28000,"gachaWeight":1,"blueSpecter":true,"d":"潛藏魔族之力的魔杖，杖頭湛藍惡靈共鳴不息。共鳴、貫穿、魔法傷害+1、MP自然恢復量+3；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 藍惡靈奪魔：恢復 MP。"},
+            "wpn_demon_claw_hidden": {"n":"隱藏的魔族鋼爪","type":"wpn","w2h":true,"dmgS":24,"dmgL":26,"hit":3,"dmgBonus":0,"spd":0.9,"eff":"combo","comboRate":33,"req":"dark","safe":0,"p":28000,"gachaWeight":1,"redSpecter":true,"d":"潛藏魔族之力的雙手鋼爪，爪尖撕扯間迸出赤紅惡靈之火。雙擊33%、貫穿；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲：水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
+            "wpn_demon_chain_hidden": {"n":"隱藏的魔族鎖鏈劍","type":"wpn","w2h":true,"chainsword":true,"weakExpose":true,"dmgS":25,"dmgL":26,"hit":3,"dmgBonus":0,"spd":0.9,"req":"dragon","safe":0,"p":28000,"gachaWeight":1,"redSpecter":true,"d":"潛藏魔族之力的雙手鎖鏈劍，鏈節間糾纏著赤紅惡靈的怨念。弱點曝光、貫穿；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲：水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
+            "wpn_demon_qigu_hidden": {"n":"隱藏的魔族奇古獸","type":"wpn","qigu":true,"dmgS":28,"dmgL":28,"hit":3,"dmgBonus":0,"spd":1,"mdmg":1,"mpR":1,"req":"illusion","safe":0,"p":28000,"gachaWeight":1,"blueSpecter":true,"d":"潛藏魔族之力的奇古獸，獸身散發湛藍惡靈的魔力。奇古獸（魔法傷害）、魔法傷害+1、MP自然恢復量+1；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 藍惡靈奪魔：恢復 MP。"},
+            "bk_elf_preciseshot": {"type":"skillbk","n":"精靈水晶(精準射擊)","p":16000,"sk":"sk_elf_preciseshot","gachaWeight":1,"d":"習得「精準射擊」（五階精靈魔法・風屬性・輔助・增益）。持續 64 秒內，一般攻擊的最高命中率可提升至 100%；效果結束後才能再次施放。消耗 MP 15。"},
+            "wpn_pirate_dagger": {"n":"血紅慾望短劍","type":"wpn","dmgS":10,"dmgL":8,"hit":0,"spd":0.8,"req":"elf,dark","safe":6,"p":12000,"gachaWeight":60,"unBonus":true,"hpR":-3,"d":"沁著血色慾望的短刃，渴飲不死與狼人之血。<br>對不死／狼人加成；出血；HP自然恢復量 -3。"},
+            "wpn_glory_sword": {"n":"榮耀之劍","type":"wpn","dmgS":9,"dmgL":12,"hit":0,"dmgBonus":2,"spd":1,"req":"knight,dragon","safe":6,"p":6000,"gachaWeight":80,"d":"象徵騎士榮耀的單手劍，反擊來犯之敵。<br>反擊。"},
+            "wpn_pirate_shortblade": {"n":"短刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":1.1,"req":"royal,knight,elf,dark,dragon","safe":6,"p":5000,"gachaWeight":100,"d":"輕巧易於揮舞的短刀，適合多數職業使用。<br>反擊。"},
+            "wpn_pirate_cutlass": {"n":"海賊彎刀","type":"wpn","dmgS":11,"dmgL":6,"hit":1,"spd":1.1,"req":"knight,elf,dark,dragon","safe":6,"p":8000,"gachaWeight":90,"unBonus":true,"d":"海賊愛用的彎刀，刃口浸染過無數亡者之血。<br>對不死／狼人加成；反擊。"},
+            "wpn_abyss_dualblade": {"n":"深淵雙刀","type":"wpn","w2h":true,"dmgS":14,"dmgL":10,"hit":0,"spd":0.8,"req":"dark","safe":6,"p":10000,"gachaWeight":50,"eff":"combo","comboRate":25,"ignHardSkin":true,"d":"自深淵汲取力量的雙刀，撕裂一切堅硬的防護。<br>雙擊 25%；貫穿（無視硬皮額外減傷）。"},
+            "wpn_dark_crystalball": {"n":"漆黑水晶球","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"spd":1,"req":"mage,illusion","safe":6,"p":20000,"gachaWeight":1,"mdmg":1,"cha":2,"ignHardSkin":true,"d":"凝聚漆黑魔力的水晶球，魔力共鳴而出。<br>共鳴；貫穿（無視硬皮額外減傷）；魔法傷害 +1；魅力 +2。"},
+            "wpn_silent_crossbow": {"n":"寂靜十字弓","type":"wpn","ranged":true,"isBow":true,"oneHand":true,"dmgS":3,"dmgL":2,"hit":1,"dmgBonus":1,"spd":1,"req":"elf,illusion","safe":6,"p":15000,"gachaWeight":30,"rapidfire":50,"d":"無聲扣動的十字弓，連發如疾雨。<br>連射 50%。（單手弓，可與盾牌／臂甲並用，需裝備箭矢）"},
+            "arm_faith_shield": {"n":"信念之盾","type":"arm","slot":"shield","ac":3,"dr":2,"cha":2,"req":"royal","safe":6,"p":15000,"gachaWeight":1,"d":"承載著堅定信念的盾牌，守護持有者的意志。<br>傷害減免 +2；魅力 +2。"},
+            "arm_bluepirate_boots": {"n":"藍海賊長靴","type":"arm","slot":"boots","ac":2,"req":"all","safe":4,"p":6000,"gachaWeight":40,"set":"bluepirate","d":"藍海賊團的航海長靴。<br><span class='text-amber-300'>【藍海賊套裝】頭巾＋皮盔甲＋手套＋長靴 四件齊：AC-1、HP+10、智力+1。</span>"},
+            "arm_bluepirate_helm": {"n":"藍海賊頭巾","type":"arm","slot":"helm","ac":2,"req":"all","safe":4,"p":6000,"gachaWeight":40,"set":"bluepirate","d":"藍海賊團的標誌頭巾。<br><span class='text-amber-300'>【藍海賊套裝】頭巾＋皮盔甲＋手套＋長靴 四件齊：AC-1、HP+10、智力+1。</span>"},
+            "arm_bluepirate_armor": {"n":"藍海賊皮盔甲","type":"arm","slot":"armor","ac":5,"req":"all","safe":4,"p":8000,"gachaWeight":40,"set":"bluepirate","d":"藍海賊團的皮製盔甲。<br><span class='text-amber-300'>【藍海賊套裝】頭巾＋皮盔甲＋手套＋長靴 四件齊：AC-1、HP+10、智力+1。</span>"},
+            "arm_bluepirate_gloves": {"n":"藍海賊手套","type":"arm","slot":"gloves","ac":1,"req":"all","safe":4,"p":7000,"gachaWeight":40,"set":"bluepirate","d":"藍海賊團的皮手套。<br><span class='text-amber-300'>【藍海賊套裝】頭巾＋皮盔甲＋手套＋長靴 四件齊：AC-1、HP+10、智力+1。</span>"},
+            "arm_bluepirate_cloak": {"n":"藍海賊斗篷","type":"arm","slot":"cloak","ac":2,"cha":1,"req":"all","safe":4,"p":9000,"gachaWeight":20,"d":"藍海賊團的航海斗篷，隨海風飄揚。<br>魅力 +1。"},
+            "acc_curse_red": {"n":"詛咒的紅色耳環","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":10000,"gachaWeight":50,"d":"纏附紅色詛咒的耳環，雖名為耳環，實際裝於項鍊欄。<br><span class='text-amber-300'>與 淨化之耳環 同時裝備：力量 +2、體質 -2。</span>"},
+            "acc_curse_blue": {"n":"詛咒的藍色耳環","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":10000,"gachaWeight":50,"d":"纏附藍色詛咒的耳環，雖名為耳環，實際裝於項鍊欄。<br><span class='text-amber-300'>與 淨化之耳環 同時裝備：智力 +2、精神 -2。</span>"},
+            "acc_curse_green": {"n":"詛咒的綠色耳環","type":"acc","slot":"amulet","ac":0,"req":"all","safe":0,"p":10000,"gachaWeight":50,"d":"纏附綠色詛咒的耳環，雖名為耳環，實際裝於項鍊欄。<br><span class='text-amber-300'>與 淨化之耳環 同時裝備：敏捷 +2、魅力 -2。</span>"},
+            "acc_purify_earring": {"n":"淨化之耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":10000,"gachaWeight":30,"d":"蘊含淨化之力的耳環，可與任一色詛咒耳環共鳴。<br><span class='text-amber-300'>與 詛咒的紅／藍／綠色耳環 同時裝備可獲得對應加成。</span>（裝於耳環欄）"},
+            "acc_icequeen_ear_0": {"n":"冰之女王的耳環 Lv0","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":1,"d":"冰之女王所佩戴耳環的雛形，蘊藏成長的可能。可在歐瑞村 大衛 處以 冰之結晶 逐級精煉。（裝於耳環欄）"},
+            "acc_icequeen_ear_1": {"n":"冰之女王的耳環 Lv1","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":10,"d":"經一次精煉的冰之女王耳環。<br>HP +10。（裝於耳環欄）"},
+            "acc_icequeen_ear_2": {"n":"冰之女王的耳環 Lv2","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":10,"mmp":5,"d":"經二次精煉的冰之女王耳環。<br>HP +10、MP +5。（裝於耳環欄）"},
+            "acc_icequeen_ear_3": {"n":"冰之女王的耳環 Lv3","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":15,"mmp":5,"d":"經三次精煉的冰之女王耳環。<br>HP +15、MP +5。（裝於耳環欄）"},
+            "acc_icequeen_ear_4": {"n":"冰之女王的耳環 Lv4","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":15,"mmp":5,"hpR":1,"d":"經四次精煉的冰之女王耳環。<br>HP +15、MP +5、HP自然恢復 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_5": {"n":"冰之女王的耳環 Lv5","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":15,"mmp":10,"hpR":1,"d":"經五次精煉的冰之女王耳環。<br>HP +15、MP +10、HP自然恢復 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_6": {"n":"冰之女王的耳環 Lv6","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":15,"mmp":10,"hpR":1,"mpR":1,"d":"經六次精煉的冰之女王耳環。<br>HP +15、MP +10、HP自然恢復 +1、MP自然恢復 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_7": {"n":"冰之女王的耳環 Lv7","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"noEnhance":true,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"d":"經七次精煉的冰之女王耳環。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_str": {"n":"冰之女王的耳環 Lv8 力量","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"str":1,"d":"冰之女王耳環的至高型態（力量）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、力量 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_dex": {"n":"冰之女王的耳環 Lv8 敏捷","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"dex":1,"d":"冰之女王耳環的至高型態（敏捷）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、敏捷 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_int": {"n":"冰之女王的耳環 Lv8 智力","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"int":1,"d":"冰之女王耳環的至高型態（智力）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、智力 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_con": {"n":"冰之女王的耳環 Lv8 體質","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"con":1,"d":"冰之女王耳環的至高型態（體質）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、體質 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_wis": {"n":"冰之女王的耳環 Lv8 精神","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"wis":1,"d":"冰之女王耳環的至高型態（精神）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、精神 +1。（裝於耳環欄）"},
+            "acc_icequeen_ear_8_cha": {"n":"冰之女王的耳環 Lv8 魅力","type":"acc","slot":"ear","legend":true,"ac":0,"req":"all","safe":0,"p":100000,"gachaWeight":0,"mhp":20,"mmp":10,"hpR":2,"mpR":1,"cha":1,"d":"冰之女王耳環的至高型態（魅力）。<br>HP +20、MP +10、HP自然恢復 +2、MP自然恢復 +1、魅力 +1。（裝於耳環欄）"},
+            "acc_curse_diamond_ring": {"n":"受詛咒的鑽石戒指","type":"acc","slot":"ring","ac":0,"mr":10,"con":-1,"wis":-1,"req":"all","safe":0,"p":10000,"gachaWeight":70,"d":"受詛咒的鑽石戒指，魔力護身卻折損心神。<br>MR +10、體質 -1、精神 -1。"},
+            "acc_curse_ruby_ring": {"n":"受詛咒的紅寶石戒指","type":"acc","slot":"ring","ac":-2,"hpR":1,"mpR":1,"req":"all","safe":0,"p":10000,"gachaWeight":80,"d":"受詛咒的紅寶石戒指，加速恢復卻削弱防護。<br>AC +2、HP自然恢復 +1、MP自然恢復 +1。"},
+            "acc_curse_sapphire_ring": {"n":"受詛咒的藍寶石戒指","type":"acc","slot":"ring","ac":0,"immStone":true,"resFire":-10,"resWater":-10,"resEarth":-10,"resWind":-10,"req":"all","safe":0,"p":10000,"gachaWeight":50,"d":"受詛咒的藍寶石戒指，免於石化卻喪失屬性抗性。<br>免疫石化；全屬性抗性 -10。"},
+            "acc_curse_emerald_ring": {"n":"受詛咒的綠寶石戒指","type":"acc","slot":"ring","ac":0,"mhp":25,"mr":-10,"req":"all","safe":0,"p":10000,"gachaWeight":90,"d":"受詛咒的綠寶石戒指，增益體魄卻削弱魔防。<br>HP +25、MR -10。"},
+            "mat_ice_crystal": {"n":"冰之結晶","type":"etc","p":1,"c":"text-cyan-200","noUse":true,"gachaWeight":0,"d":"冰之女王凝聚而成的寒冰結晶。可在歐瑞村 大衛 處精煉 冰之女王的耳環。（製作材料）"},
+            "item_son_letter": {"n":"兒子的信","type":"etc","p":10,"c":"text-amber-200","noUse":true,"gachaWeight":0,"d":"一封未能送達的家書，字跡因海水暈染。可交給海賊島村莊的 希米哲。（任務兌換道具）"},
+            "item_son_remains": {"n":"兒子的遺骸","type":"etc","p":10,"c":"text-amber-200","noUse":true,"gachaWeight":0,"d":"葬身海賊島的某人遺骸。可交給海賊島村莊的 希米哲。（任務兌換道具）"},
+            "item_son_portrait": {"n":"兒子的肖像畫","type":"etc","p":10,"c":"text-amber-200","noUse":true,"gachaWeight":0,"d":"一幅褪色的肖像畫，描繪著年輕的面容。可交給海賊島村莊的 希米哲。（任務兌換道具）"},
+            "acc_ear_wisdom": {"n":"智慧耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mmp":10,"d":"凝聚智慧的耳環。<br>MP +10。（裝於耳環欄）"},
+            "acc_ear_truth": {"n":"真實耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mmp":20,"mpR":1,"d":"映照真實的耳環。<br>MP +20、MP自然恢復 +1。（裝於耳環欄）"},
+            "acc_ear_dominate": {"n":"支配耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"mmp":30,"mpR":2,"d":"蘊含支配之力的耳環。<br>MP +30、MP自然恢復 +2。（裝於耳環欄）"},
+            "acc_ear_rage": {"n":"憤怒耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":10,"mmp":5,"d":"燃燒憤怒的耳環。<br>HP +10、MP +5。（裝於耳環欄）"},
+            "acc_ear_brave": {"n":"勇猛耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":20,"mmp":5,"d":"象徵勇猛的耳環。<br>HP +20、MP +5。（裝於耳環欄）"},
+            "acc_ear_undead": {"n":"不死耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"mhp":20,"mmp":10,"d":"蘊含不死之力的耳環。<br>HP +20、MP +10。（裝於耳環欄）"},
+            "acc_ear_passion": {"n":"熱情耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":20,"d":"燃起熱情的耳環。<br>HP +20。（裝於耳環欄）"},
+            "acc_ear_honor": {"n":"名譽耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":30,"d":"承載名譽的耳環。<br>HP +30。（裝於耳環欄）"},
+            "acc_ear_tolerance": {"n":"寬容耳環","type":"acc","slot":"ear","ac":0,"req":"all","safe":0,"p":0,"gachaWeight":0,"mhp":40,"hpR":3,"d":"充滿寬容的耳環。<br>HP +40、HP自然恢復 +3。（裝於耳環欄）"},
+            "acc_ear_dance": {"n":"舞動耳環","type":"acc","slot":"ear","ac":1,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"d":"隨炎舞動的耳環。<br>AC -1。（裝於耳環欄）"},
+            "acc_ear_twin": {"n":"雙子耳環","type":"acc","slot":"ear","ac":2,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"d":"成對相映的雙子耳環。<br>AC -2。（裝於耳環欄）"},
+            "acc_ear_festival": {"n":"慶典耳環","type":"acc","slot":"ear","ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"d":"炎獄慶典的耳環。<br>AC -3。（裝於耳環欄）"},
+            "acc_ear_peak": {"n":"絕頂耳環","type":"acc","slot":"ear","ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":25,"mmp":10,"d":"登峰絕頂的耳環。<br>AC -3、HP +25、MP +10。（裝於耳環欄）"},
+            "acc_ear_rampage": {"n":"暴走耳環","type":"acc","slot":"ear","ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":50,"mmp":20,"d":"失控暴走的耳環。<br>AC -3、HP +50、MP +20。（裝於耳環欄）"},
+            "acc_ear_phantom": {"n":"幻魔耳環","type":"acc","slot":"ear","ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":50,"mmp":20,"weightCap":40,"d":"幻魔之力的耳環。<br>AC -3、HP +50、MP +20、負重上限 +40。（裝於耳環欄）"},
+            "acc_ear_clan": {"n":"族群耳環","type":"acc","slot":"ear","ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"mhp":50,"mmp":20,"weightCap":100,"d":"凝聚族群的耳環。<br>AC -3、HP +50、MP +20、負重上限 +100。（裝於耳環欄）"},
+            "acc_ear_slave": {"n":"奴隸耳環","type":"acc","slot":"ear","legend":true,"ac":3,"req":"all","safe":0,"p":0,"gachaWeight":0,"mhp":50,"mmp":20,"weightCap":200,"d":"禁忌的奴隸耳環。<br>AC -3、HP +50、MP +20、負重上限 +200。（裝於耳環欄）"}
         };
 
         // 魔物資料區
@@ -1913,7 +2051,53 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "chaos_priest_beast": {"n":"混沌的司祭(野獸)","lv":55,"s":"L","beh":"主動","race":"不死","un":true,"e":"none","hp":1000,"ac":-70,"mr":100,"exp":3026,"goldMin":300,"goldMax":486,"atkSpd":1,"dmg":[1,91],"db":31,"hit":27,"mag":{"skn":"衝擊之暈","cd":70,"chance":0.3,"dmg":[1,91],"db":31,"ele":"none","alwaysHit":true,"sec":{"type":"stun","pbase":200}}},
             "flameshadow_guard_baphomet": {"n":"火焰之影親衛隊(巴風特)","lv":65,"s":"L","beh":"主動","race":"不死","un":true,"e":"fire","hp":2000,"ac":-70,"mr":100,"exp":4226,"goldMin":300,"goldMax":486,"atkSpd":2,"dmg":[2,79],"db":71,"hit":31,"mag":{"skn":"地裂術","cd":70,"dmg":[4,100],"db":52,"ele":"earth","alwaysHit":true}},
             "chaos_boss": {"n":"混沌","lv":70,"s":"L","beh":"主動","boss":true,"hard":true,"race":"不死","un":true,"e":"none","hp":15000,"ac":-60,"mr":100,"exp":3601,"goldMin":3000,"goldMax":4860,"atkSpd":2,"dmg":[4,61],"db":161,"hit":61,"mag":{"skn":"鐮刀波動","cd":90,"dmg":[4,170],"db":75,"ele":"none","alwaysHit":true},"mag2":{"skn":"毒霧","cd":100,"type":"poison","pbase":200,"d":100,"tick":5,"dur":20}},
-            "death_boss": {"n":"死亡","lv":70,"s":"L","beh":"主動","boss":true,"hard":true,"race":"不死","un":true,"e":"none","hp":20000,"ac":-65,"mr":100,"exp":4901,"goldMin":3000,"goldMax":4860,"atkSpd":1,"dmg":[1,151],"db":71,"hit":69,"atkDoubleChance":0.1,"mag":{"skn":"闇黑波動","cd":90,"dmg":[4,170],"db":95,"ele":"none","alwaysHit":true},"mag2":{"skn":"衝擊之暈","cd":70,"chance":0.2,"dmg":[1,151],"db":71,"ele":"none","alwaysHit":true,"sec":{"type":"stun","pbase":200}}}
+            "death_boss": {"n":"死亡","lv":70,"s":"L","beh":"主動","boss":true,"hard":true,"race":"不死","un":true,"e":"none","hp":20000,"ac":-65,"mr":100,"exp":4901,"goldMin":3000,"goldMax":4860,"atkSpd":1,"dmg":[1,151],"db":71,"hit":69,"atkDoubleChance":0.1,"mag":{"skn":"闇黑波動","cd":90,"dmg":[4,170],"db":95,"ele":"none","alwaysHit":true},"mag2":{"skn":"衝擊之暈","cd":70,"chance":0.2,"dmg":[1,151],"db":71,"ele":"none","alwaysHit":true,"sec":{"type":"stun","pbase":200}}},
+            "iv_paper": {"n":"象牙塔紙人","lv":50,"s":"S","beh":"被動","race":"魔法生物","e":"wind","hp":1250,"ac":-30,"mr":5,"exp":2501,"goldMin":200,"goldMax":400,"atkSpd":2,"dmg":[1,100],"db":70,"hit":25},
+            "iv_stone_golem": {"hard":true,"n":"象牙塔石頭高崙","lv":50,"s":"L","beh":"被動","race":"高崙","e":"wind","hp":875,"ac":-50,"mr":45,"exp":2501,"goldMin":300,"goldMax":600,"atkSpd":3,"dmg":[1,150],"db":110,"hit":25},
+            "iv_iron_golem": {"hard":true,"n":"象牙塔鋼鐵高崙","lv":51,"s":"L","beh":"被動","race":"高崙","e":"wind","hp":910,"ac":-51,"mr":20,"exp":2602,"goldMin":400,"goldMax":800,"atkSpd":3,"dmg":[1,153],"db":112,"hit":26},
+            "iv_jelly": {"n":"象牙塔果凍怪","lv":52,"s":"L","beh":"被動","race":"史萊姆","e":"wind","hp":946,"ac":-47,"mr":0,"exp":2705,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,52],"db":75,"hit":27,"mag":{"skn":"烈毒","cd":50,"type":"poison","pbase":200,"d":30,"tick":3,"dur":15}},
+            "iv_armor": {"hard":true,"n":"象牙塔活鎧甲","lv":53,"s":"S","beh":"被動","race":"魔法生物","e":"wind","hp":1021,"ac":-44,"mr":50,"exp":2917,"goldMin":300,"goldMax":600,"atkSpd":1,"dmg":[1,55],"db":35,"hit":29},
+            "iv_deathsword": {"n":"象牙塔死亡之劍","lv":55,"s":"S","beh":"被動","race":"魔法生物","e":"wind","hp":1059,"ac":-50,"mr":40,"exp":3026,"goldMin":300,"goldMax":600,"atkSpd":0.5,"dmg":[1,27],"db":18,"hit":31},
+            "iv_lightball": {"n":"象牙塔閃電球","lv":55,"s":"S","beh":"被動","race":"元素","e":"wind","hp":1059,"ac":-50,"mr":45,"exp":3026,"goldMin":300,"goldMax":600,"atkSpd":1,"dmg":[1,56],"db":36,"hit":30},
+            "iv_mimi": {"hard":true,"n":"象牙塔密密","lv":50,"s":"S","beh":"被動","race":"魔法生物","e":"wind","hp":1250,"ac":-50,"mr":20,"exp":2501,"goldMin":0,"goldMax":0,"atkSpd":2,"dmg":[2,52],"db":60,"hit":26},
+            "iv_elder": {"n":"象牙塔長者","lv":55,"s":"S","beh":"主動","race":"長者","e":"wind","hp":1059,"ac":-35,"mr":30,"exp":3026,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,55],"db":75,"hit":28,"mag":{"skn":"極道落雷","cd":50,"dmg":[1,150],"db":55,"ele":"wind","alwaysHit":true}},
+            "iv_blackelder": {"n":"象牙塔黑長者","lv":57,"s":"S","beh":"主動","race":"長者","e":"wind","hp":1137,"ac":-37,"mr":90,"exp":3250,"goldMin":500,"goldMax":1200,"atkSpd":2,"dmg":[2,60],"db":80,"hit":29,"mag":{"skn":"靈光箭","cd":30,"dmg":[1,100],"db":50,"ele":"none","alwaysHit":true}},
+            "iv_chimera": {"n":"象牙塔奇美拉","lv":55,"s":"S","beh":"主動","race":"奇美拉","e":"wind","hp":1059,"ac":-35,"mr":35,"exp":3026,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,56],"db":65,"hit":27,"mag":{"skn":"烈毒","cd":50,"type":"poison","pbase":200,"d":30,"tick":3,"dur":15}},
+            "iv_lamia": {"n":"象牙塔蛇女","lv":56,"s":"L","beh":"主動","race":"蛇女","e":"wind","hp":1098,"ac":-36,"mr":10,"exp":3137,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,60],"db":75,"hit":30,"mag":{"skn":"烈毒","cd":50,"type":"poison","pbase":200,"d":30,"tick":3,"dur":15}},
+            "iv_blackmage": {"n":"象牙塔黑魔法師","lv":58,"s":"S","beh":"主動","race":"法師","e":"wind","hp":1177,"ac":-38,"mr":80,"exp":3365,"goldMin":500,"goldMax":1200,"atkSpd":2,"dmg":[2,65],"db":81,"hit":31,"mag":{"skn":"火球","cd":30,"dmg":[1,150],"db":40,"ele":"fire","alwaysHit":true}},
+            "iv_reaper": {"n":"象牙塔死神","lv":58,"s":"S","beh":"主動","race":"不死","un":true,"e":"wind","hp":1177,"ac":-53,"mr":9,"exp":3365,"goldMin":500,"goldMax":1000,"atkSpd":1,"dmg":[1,65],"db":41,"hit":31,"mag":{"skn":"風之枷鎖","cd":80,"type":"slowatk","pbase":200,"dur":8}},
+            "iv_shadow": {"n":"象牙塔影魔","lv":58,"s":"S","beh":"主動","race":"不死","un":true,"e":"wind","hp":1177,"ac":-53,"mr":30,"exp":3365,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,65],"db":65,"hit":29},
+            "iv_spirit": {"n":"象牙塔惡靈","lv":59,"s":"S","beh":"主動","race":"不死","un":true,"e":"wind","hp":1218,"ac":-54,"mr":45,"exp":3482,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,70],"db":65,"hit":30},
+            "iv_baless": {"hard":true,"n":"象牙塔巴列斯之影","lv":60,"s":"S","beh":"主動","race":"惡魔","e":"wind","hp":1260,"ac":-55,"mr":80,"exp":3601,"goldMin":300,"goldMax":600,"atkSpd":2,"dmg":[2,70],"db":65,"hit":30,"mag":{"skn":"火球","cd":30,"dmg":[1,200],"db":10,"ele":"fire","alwaysHit":true}},
+            "iv_karuta": {"hard":true,"n":"卡魯塔","lv":51,"s":"L","beh":"主動","boss":true,"race":"靈魂","e":"wind","hp":12200,"ac":-51,"mr":50,"exp":2601,"goldMin":3000,"goldMax":6000,"atkSpd":2,"dmg":[4,70],"db":125,"hit":50,"mag":{"skn":"龍捲風","cd":100,"dmg":[3,200],"db":100,"ele":"wind","alwaysHit":true},"mag2":{"skn":"魅魔之吻","cd":50,"chance":0.2,"dmg":[1,1],"db":0,"ele":"none","alwaysHit":true,"sec":{"type":"sleep","pbase":200}}},
+            "iv_hatin": {"n":"哈汀之影","lv":60,"s":"S","beh":"主動","noCharm":true,"race":"法師","e":"wind","hp":5000,"ac":-50,"mr":99,"exp":3601,"goldMin":2000,"goldMax":4000,"atkSpd":2,"dmg":[2,75],"db":90,"hit":32,"mag":{"skn":"黑魔法力場","cd":80,"dmg":[2,200],"db":70,"ele":"none","alwaysHit":true}},
+            "iv_flameslave": {"n":"象牙塔炎魔的奴隸","lv":59,"s":"L","beh":"主動","race":"惡魔","e":"wind","hp":1218,"ac":-54,"mr":75,"exp":3482,"goldMin":400,"goldMax":1000,"atkSpd":2,"dmg":[2,64],"db":77,"hit":30,"mag":{"skn":"落石術","cd":70,"dmg":[2,150],"db":20,"ele":"earth","alwaysHit":true}},
+            "iv_imp": {"n":"象牙塔小惡魔","lv":60,"s":"S","beh":"主動","race":"惡魔","e":"wind","hp":1260,"ac":-55,"mr":80,"exp":3601,"goldMin":500,"goldMax":1000,"atkSpd":2,"dmg":[2,65],"db":85,"hit":31,"mag":{"skn":"火焰之陣","cd":70,"chance":0.5,"dmg":[3,150],"db":10,"ele":"fire","alwaysHit":true}},
+            "iv_baphomet": {"hard":true,"n":"象牙塔巴風特之影","lv":62,"s":"S","beh":"主動","race":"惡魔","e":"wind","hp":1345,"ac":-57,"mr":80,"exp":3845,"goldMin":500,"goldMax":1100,"atkSpd":2,"dmg":[2,75],"db":66,"hit":32,"mag":{"skn":"地裂術","cd":30,"dmg":[1,200],"db":30,"ele":"earth","alwaysHit":true}},
+            "iv_wing": {"n":"象牙塔翼魔","lv":61,"s":"L","beh":"主動","race":"惡魔","e":"wind","hp":1302,"ac":-56,"mr":50,"exp":3722,"goldMin":400,"goldMax":1000,"atkSpd":2,"dmg":[2,73],"db":65,"hit":33},
+            "iv_flameshadow": {"n":"象牙塔炎魔之影","lv":63,"s":"L","beh":"主動","race":"惡魔","e":"wind","hp":1389,"ac":-58,"mr":70,"exp":3970,"goldMin":600,"goldMax":1200,"atkSpd":2,"dmg":[2,76],"db":66,"hit":33,"mag":{"skn":"地獄火","cd":130,"dmg":[1,500],"db":50,"ele":"fire","alwaysHit":true}},
+            "iv_demonshadow": {"n":"象牙塔惡魔之影","lv":63,"s":"L","beh":"主動","race":"惡魔","e":"wind","hp":1389,"ac":-58,"mr":60,"exp":3970,"goldMin":600,"goldMax":1200,"atkSpd":2,"dmg":[2,76],"db":66,"hit":33,"mag":{"skn":"火焰之舞","cd":70,"chance":0.5,"dmg":[1,500],"db":50,"ele":"fire","alwaysHit":true}},
+            "ant_white": {"n":"白螞蟻群","lv":25,"s":"S","beh":"主動","race":"昆蟲","e":"fire","hp":300,"ac":-12,"mr":60,"exp":626,"goldMin":50,"goldMax":80,"atkSpd":2,"dmg":[2,25],"db":12,"hit":12},
+            "ant_giant_white": {"n":"巨大白螞蟻","lv":28,"s":"L","beh":"主動","race":"昆蟲","e":"water","hp":380,"ac":-15,"mr":60,"exp":785,"goldMin":50,"goldMax":80,"atkSpd":2,"dmg":[2,28],"db":14,"hit":14},
+            "ant_enh": {"n":"強化巨蟻","lv":31,"s":"S","beh":"主動","race":"昆蟲","e":"wind","hp":440,"ac":-15,"mr":60,"exp":962,"goldMin":60,"goldMax":90,"atkSpd":2,"dmg":[2,31],"db":15,"hit":14},
+            "ant_enh_white": {"n":"強化白螞蟻群","lv":34,"s":"S","beh":"主動","race":"昆蟲","e":"fire","hp":580,"ac":-16,"mr":60,"exp":1157,"goldMin":65,"goldMax":100,"atkSpd":1,"dmg":[1,34],"db":8,"hit":15},
+            "ant_assault": {"n":"巨大突擊螞蟻","lv":37,"s":"S","beh":"主動","race":"昆蟲","e":"wind","hp":640,"ac":-20,"mr":60,"exp":1370,"goldMin":75,"goldMax":110,"atkSpd":2,"dmg":[2,37],"db":19,"hit":18},
+            "ant_giant_enh_white": {"n":"巨大強化白螞蟻","lv":40,"s":"L","beh":"主動","race":"昆蟲","e":"fire","hp":740,"ac":-24,"mr":60,"exp":1601,"goldMin":85,"goldMax":115,"atkSpd":2,"dmg":[2,40],"db":20,"hit":20},
+            "ant_guard": {"n":"巨大守護螞蟻","lv":44,"s":"L","beh":"主動","race":"昆蟲","e":"none","hp":4400,"ac":-48,"mr":60,"exp":1937,"goldMin":100,"goldMax":135,"atkSpd":2,"dmg":[2,44],"db":22,"hit":22,"mag":{"skn":"觸角攻擊","cd":50,"dmg":[1,60],"db":20,"ele":"none","alwaysHit":true}},
+            "pirate_wildpoison": {"n":"狂野之毒","lv":18,"s":"S","beh":"主動","race":"動物","e":"wind","hp":180,"ac":0,"mr":5,"exp":325,"goldMin":41,"goldMax":78,"atkSpd":2,"dmg":[2,18],"db":1,"hit":6,"mag":{"skn":"中毒","cd":50,"type":"poison","pbase":100,"d":10,"tick":5,"dur":20}},
+            "pirate_lizardrage": {"n":"狂暴蜥蜴人","lv":20,"s":"S","beh":"主動","race":"蜥蜴人","e":"wind","hp":200,"ac":-4,"mr":10,"exp":485,"goldMin":50,"goldMax":93,"atkSpd":2,"dmg":[2,20],"db":1,"hit":7},
+            "pirate_wildfang": {"n":"狂野毒牙","lv":18,"s":"S","beh":"主動","race":"動物","e":"earth","hp":180,"ac":-6,"mr":10,"exp":325,"goldMin":61,"goldMax":110,"atkSpd":1,"dmg":[1,18],"db":1,"hit":5},
+            "pirate_wilddemon": {"n":"狂野之魔","lv":20,"s":"S","beh":"主動","race":"動物","e":"wind","hp":200,"ac":-10,"mr":10,"exp":401,"goldMin":73,"goldMax":129,"atkSpd":1,"dmg":[1,20],"db":1,"hit":6,"mag":{"skn":"初級治癒術","cd":70,"type":"self_heal","heal":[1,30]}},
+            "pirate_lizardhigh": {"n":"高等蜥蜴人","lv":25,"s":"S","beh":"主動","race":"蜥蜴人","e":"water","hp":160,"ac":-10,"mr":15,"exp":626,"goldMin":80,"goldMax":140,"atkSpd":2,"dmg":[2,22],"db":3,"hit":7,"mag":{"skn":"初級治癒術","cd":70,"type":"self_heal","heal":[1,30]},"mag2":{"skn":"投射水泡","cd":50,"dmg":[2,25],"db":10,"ele":"water","alwaysHit":true}},
+            "pirate_bluetail": {"n":"藍尾蜥蜴","lv":24,"s":"S","beh":"主動","race":"動物","e":"water","hp":240,"ac":-15,"mr":10,"exp":577,"goldMin":102,"goldMax":173,"atkSpd":2,"dmg":[2,24],"db":3,"hit":7},
+            "pirate_parrot": {"n":"奇異鸚鵡","lv":25,"s":"S","beh":"主動","race":"動物","e":"wind","hp":300,"ac":-20,"mr":10,"exp":626,"goldMin":109,"goldMax":186,"atkSpd":2,"dmg":[2,25],"db":4,"hit":7},
+            "pirate_chest": {"n":"藏寶箱","lv":1,"s":"S","beh":"被動","race":"寶箱","noAttack":true,"e":"none","hp":1,"ac":0,"mr":0,"exp":0,"goldMin":0,"goldMax":0,"atkSpd":2,"dmg":[0,0],"db":0,"hit":0},
+            "pirate_skeleton": {"n":"海賊骷髏","lv":25,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":220,"ac":-18,"mr":40,"exp":626,"goldMin":109,"goldMax":186,"atkSpd":2,"dmg":[2,25],"db":10,"hit":9},
+            "pirate_lizardheavy": {"n":"重裝蜥蜴人","lv":24,"s":"S","beh":"主動","race":"蜥蜴人","e":"wind","hp":250,"ac":-15,"mr":15,"exp":577,"goldMin":102,"goldMax":173,"atkSpd":2,"dmg":[2,24],"db":9,"hit":9},
+            "pirate_skelsoldier": {"n":"海賊骷髏士兵","lv":28,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":260,"ac":-16,"mr":25,"exp":785,"goldMin":135,"goldMax":225,"atkSpd":2,"dmg":[2,28],"db":12,"hit":11},
+            "pirate_skelblade": {"n":"海賊骷髏刀手","lv":32,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":500,"ac":-25,"mr":60,"exp":1025,"goldMin":173,"goldMax":285,"atkSpd":3,"dmg":[3,28],"db":19,"hit":11},
+            "pirate_skelchief": {"n":"海賊骷髏首領","lv":32,"s":"S","beh":"主動","race":"不死","un":true,"e":"earth","hp":350,"ac":-23,"mr":50,"exp":1025,"goldMin":173,"goldMax":285,"atkSpd":2,"dmg":[2,28],"db":12,"hit":11},
+            "pirate_drake": {"n":"德雷克","lv":42,"s":"S","beh":"主動","boss":true,"hard":true,"race":"不死","un":true,"e":"earth","hp":11200,"ac":-35,"mr":50,"exp":1765,"goldMin":292,"goldMax":470,"atkSpd":2,"dmg":[2,84],"db":66,"hit":37,"mag":{"skn":"迴旋斬","cd":100,"dmg":[5,42],"db":42,"ele":"none","alwaysHit":true}}
         };
 
         // 地圖出怪區
@@ -2118,6 +2302,17 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "pride_91_100": ["pride_iris_mob","pride_mummy_king_mob","pride_earth_king","pride_water_king","pride_wind_king","pride_fire_king","pride_vander_mob","pride_reaper_boss"],
             "oblivion_travel": ["lamia","mermaid","harpy","griffon","sildeis","obli_portal"],
             "oblivion_island": ["obli_croc","obli_werewolf","obli_sharlob","obli_arian","obli_darkelf","obli_bear","obli_lizardman","obli_kasta","obli_lamia","obli_lycan","obli_axetaurus","obli_troll","obli_ungoliant","obli_griffon","obli_hammertaurus","obli_harpy","obli_shapeshifter","obli_bigcroc","obli_kastaking","obli_doro","obli_aruba","obli_trollking","obli_evillizard","obli_cyclops","obli_wyvern","obli_bigtaurus"],
+            "pirate_wild": ["nm_035","nm_003","doberman","pirate_wildpoison","pirate_lizardrage","pirate_wildfang","pirate_wilddemon","pirate_lizardhigh","pirate_bluetail","pirate_parrot","pirate_chest","mambo_rabbit"],
+            "pirate_dungeon": ["pirate_lizardrage","pirate_lizardhigh","pirate_skeleton","pirate_lizardheavy","pirate_skelsoldier","pirate_skelblade","pirate_skelchief","pirate_drake"],
+            "hidden_lab_nolife": ["iv_paper","iv_stone_golem","iv_iron_golem","iv_jelly","iv_armor","iv_deathsword","iv_lightball","iv_mimi"],
+            "hidden_lab_darkmagic": ["iv_elder","iv_blackelder","iv_chimera","iv_lamia","iv_blackmage"],
+            "hidden_seal_spirit": ["iv_blackmage","iv_reaper","iv_shadow","iv_spirit","iv_baless","iv_karuta","iv_hatin"],
+            "hidden_seal_monster": ["iv_shadow","iv_spirit","iv_baless","iv_flameslave","iv_imp","iv_baphomet","iv_hatin"],
+            "hidden_seal_demon": ["iv_baless","iv_flameslave","iv_imp","iv_baphomet","iv_wing","iv_flameshadow","iv_demonshadow","nm_034"],
+            "hidden_antqueen": ["ant_assault","ant_giant_enh_white","ant_guard","ant_queen"],
+            "thebes_desert": ["thebes_mandra_w","thebes_mandra","thebes_scarab","thebes_scarab_b","thebes_kebis_b","thebes_kebis_r","thebes_obelisk","thebes_obelisk_b","thebes_sphinx","thebes_sphinx_b"],
+            "thebes_pyramid": ["thebes_nehos","thebes_nehos_b","thebes_bas","thebes_bas_r","thebes_anus","thebes_anus_b"],
+            "thebes_temple": ["thebes_horus","thebes_anubis"]
         };
 
         // 魔物物品掉落資料區
@@ -2471,8 +2666,49 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         "遺忘之島邪惡蜥蜴": [["item_forgotten_sword",0.1],["item_forgotten_robe",1],["glv_demon",0.1],["acc_demonbane",0.1],["item_ancient_scroll",0.01]],
         "遺忘之島獨眼巨人": [["item_forgotten_greatsword",0.1],["item_forgotten_plate",1],["acc_demonbane",0.1]],
         "遺忘之島飛龍": [["item_forgotten_xbow",0.1],["hlm_wind",0.5],["item_forgotten_leather",1],["glv_demon",0.1],["glv_dk",0.3],["acc_demonbane",0.2],["rng_mr",1],["new_item_192",0.001],["item_ancient_scroll",0.02],["item_wyvern_blood",5],["mem_pain",0.5]],
-        "遺忘之島巨大牛人": [["wpn_katana",30],["wpn_greatsword",1],["item_unknown_spear",0.1],["wpn_taurus_axe",0.5],["amr_plate",30],["glv_glove",30],["amu_str",2],["acc_127",5],["blt_body",1],["new_item_157",30],["new_item_158",30],["new_item_159",10],["scroll_weapon",30],["scroll_armor",30],["item_ancient_scroll",0.5],["bk_bless_wpn",5],["bk_berserk",5],["bk_full_heal",5],["bk_elf_blazewpn",5],["bk_elf_stormshot",1],["mem_cube_quake",0.8],["mem_pain",0.8]]
-        };
+        "遺忘之島巨大牛人": [["wpn_katana",30],["wpn_greatsword",1],["item_unknown_spear",0.1],["wpn_taurus_axe",0.5],["amr_plate",30],["glv_glove",30],["amu_str",2],["acc_127",5],["blt_body",1],["new_item_157",30],["new_item_158",30],["new_item_159",10],["scroll_weapon",30],["scroll_armor",30],["item_ancient_scroll",0.5],["bk_bless_wpn",5],["bk_berserk",5],["bk_full_heal",5],["bk_elf_blazewpn",5],["bk_elf_stormshot",1],["mem_cube_quake",0.8],["mem_pain",0.8]],
+        "狂野之毒": [["arm_bluepirate_boots",0.5],["acc_curse_green",0.1],["new_item_157",1],["new_item_179",100]],
+        "狂暴蜥蜴人": [["wpn_pirate_shortblade",1],["arm_bluepirate_cloak",0.8],["acc_curse_red",0.1],["new_item_154",1],["bk_dragon_awaken_falion",0.3],["acc_curse_diamond_ring",0.1],["acc_curse_emerald_ring",0.1]],
+        "狂野毒牙": [["arm_bluepirate_boots",0.5],["acc_curse_green",0.1],["new_item_154",1],["new_item_179",100]],
+        "狂野之魔": [["arm_bluepirate_boots",0.5],["acc_curse_green",0.1],["new_item_151",1],["new_item_179",100]],
+        "高等蜥蜴人": [["arm_bluepirate_cloak",0.8],["acc_curse_red",0.1],["new_item_160",1],["bk_elf_mirror",0.1],["item_son_remains",3],["acc_curse_diamond_ring",0.1],["acc_curse_sapphire_ring",0.1]],
+        "藍尾蜥蜴": [["arm_bluepirate_gloves",0.5],["acc_curse_green",0.1],["new_item_160",1],["item_son_letter",3]],
+        "奇異鸚鵡": [["arm_bluepirate_gloves",0.5],["acc_curse_green",0.1],["new_item_154",1]],
+        "藏寶箱": [["arm_bluepirate_armor",1]],
+        "海賊骷髏": [["wpn_pirate_cutlass",1],["arm_46",0.01],["acc_curse_red",0.1],["acc_curse_blue",0.1],["new_item_154",1],["new_item_155",0.2],["acc_curse_diamond_ring",0.1],["acc_curse_emerald_ring",0.1]],
+        "重裝蜥蜴人": [["wpn_pirate_shortblade",1],["arm_bluepirate_cloak",0.8],["acc_curse_red",0.1],["new_item_151",1],["acc_curse_diamond_ring",0.1],["acc_curse_ruby_ring",0.1],["acc_curse_sapphire_ring",0.1]],
+        "海賊骷髏士兵": [["wpn_pirate_cutlass",1],["acc_curse_blue",0.1],["new_item_160",1],["new_item_161",0.1],["acc_curse_diamond_ring",0.1],["acc_curse_emerald_ring",0.1]],
+        "海賊骷髏刀手": [["wpn_pirate_dagger",1],["acc_curse_blue",0.1],["scroll_weapon",0.25]],
+        "海賊骷髏首領": [["wpn_pirate_cutlass",1],["acc_curse_blue",0.1],["new_item_151",1],["new_item_152",0.1],["acc_curse_diamond_ring",0.1],["acc_curse_ruby_ring",0.1],["item_son_portrait",2]],
+        "德雷克": [["wpn_glory_sword",0.1],["wpn_pirate_shortblade",5],["wpn_pirate_cutlass",3],["wpn_abyss_dualblade",0.05],["wpn_dark_crystalball",0.05],["wpn_silent_crossbow",0.1],["arm_faith_shield",0.1],["new_item_151",5],["new_item_157",5],["new_item_154",5],["new_item_160",5],["new_item_152",1],["new_item_158",2],["new_item_161",1],["new_item_155",1],["new_item_153",1],["new_item_159",2],["new_item_162",1],["new_item_156",1],["bk_magic_shield",1],["bk_holy_barrier",0.1],["bk_soul_up",1],["bk_elf_attrfire",1],["bk_dragon_reaper",1],["acc_curse_diamond_ring",1],["acc_curse_ruby_ring",0.1],["acc_curse_sapphire_ring",1],["acc_curse_emerald_ring",1]],
+        "象牙塔石頭高崙": [["mat_golem_heart",0.1],["wpn_berserker",0.5],["new_item_151",1],["mem_golem",0.2]],
+        "象牙塔鋼鐵高崙": [["new_item_191",0.001],["new_item_180",100],["new_item_151",1],["mem_golem",0.2]],
+        "象牙塔活鎧甲": [["new_item_154",1],["bk_holy_barrier",0.03],["new_item_193",0.001]],
+        "象牙塔密密": [["wpn_33",1],["wpn_katana",0.3],["wpn_2hsword",1],["wpn_demon_sword",0.001],["wpn_greatsword",1],["wpn_demon_dual",0.01],["wpn_demon_claw",0.01],["wpn_demon_xbow",0.01],["arm_62",1],["arm_69",0.3],["arm_61",5],["arm_59",0.1],["amr_plate",2],["glv_demon",0.1],["bot_demon",0.1],["scroll_weapon",2],["scroll_armor",2],["bk_mummy_curse",3],["bk_holy_dash",1],["bk_invisible",0.1],["bk_meteor",0.01],["bk_abs_barrier",0.1],["bk_soul_up",0.1],["bk_elf_soul",1],["bk_elf_preciseshot",0.01]],
+        "象牙塔長者": [["wpn_38",3],["acc_117",0.005],["acc_125",0.01],["acc_119",0.01]],
+        "象牙塔黑長者": [["wpn_witchwand",10],["acc_117",0.005],["acc_125",0.01],["acc_119",0.01],["arm_84",0.001],["arm_96",0.001]],
+        "象牙塔奇美拉": [["bk_dark_poison",2],["mat_chimera_dragon",10],["mat_chimera_goat",10],["mat_chimera_lion",10],["mat_chimera_snake",10]],
+        "象牙塔蛇女": [["acc_131",0.1],["scroll_weapon",0.5],["bk_weaken",0.5],["new_item_221",3]],
+        "象牙塔黑魔法師": [["acc_demonbane",0.05],["scroll_weapon",0.5]],
+        "象牙塔死神": [["glv_reaper",0.01],["scroll_armor",0.5],["scroll_weapon",0.5],["new_item_193",0.0001]],
+        "象牙塔影魔": [["bk_dark_shadow",0.5]],
+        "象牙塔巴列斯之影": [["mat_black_mithril",1],["wpn_powerless_baless",0.0001],["bot_baless",0.0001]],
+        "卡魯塔": [["acc_129",1],["acc_131",1],["new_item_151",10],["new_item_157",10],["new_item_160",10],["new_item_154",10],["new_item_152",5],["new_item_158",5],["new_item_161",5],["new_item_155",5],["new_item_153",0.5],["new_item_159",1],["new_item_162",1],["new_item_156",1],["scroll_armor",10],["scroll_weapon",10],["bk_thunder",5],["bk_tornado",1],["bk_greater_haste",2],["bk_blizzard",1],["bk_elf_windshot",10]],
+        "哈汀之影": [["wpn_33",1],["wpn_katana",0.3],["new_item_151",10],["wpn_2hsword",0.5],["wpn_siruge",0.1],["wpn_demon_sword",0.02],["wpn_greatsword",1],["wpn_demon_dual",0.01],["wpn_demon_claw",0.01],["wpn_demon_xbow",0.01],["arm_62",0.3],["arm_69",1],["arm_61",1],["arm_59",0.3],["amr_plate",1],["item_hatin_diary",1],["scroll_armor",3],["scroll_weapon",3]],
+        "象牙塔炎魔的奴隸": [["mat_black_mithril",1]],
+        "象牙塔小惡魔": [["wpn_demon_axe",0.01],["mat_black_mithril",1]],
+        "象牙塔巴風特之影": [["mat_black_mithril",1],["wpn_powerless_baphomet",0.0001],["amr_baphomet",0.0001]],
+        "象牙塔翼魔": [["mat_black_mithril",1]],
+        "象牙塔炎魔之影": [["mat_black_mithril",1]],
+        "象牙塔惡魔之影": [["mat_black_mithril",1],["wpn_demon_axe",0.1],["wpn_demon_scythe",0.0001],["wpn_demon_dual",0.01],["wpn_demon_claw",0.01],["wpn_demon_xbow",0.01]],
+        "白螞蟻群": [["wpn_giantaxe",0.1],["arm_46",0.03],["arm_108",0.3],["new_item_154",5],["bk_elf_groundtrap",0.2],["bk_elf_earthbless",0.1]],
+        "巨大白螞蟻": [["wpn_giantaxe",0.1],["arm_61",0.1],["arm_108",0.5],["new_item_158",0.2],["bk_elf_groundtrap",0.2]],
+        "強化巨蟻": [["arm_47",0.03],["arm_60",0.1],["new_item_154",5],["new_item_158",0.2]],
+        "強化白螞蟻群": [["arm_46",0.03],["arm_60",0.2],["arm_108",0.5],["new_item_155",0.3],["bk_elf_groundtrap",0.2],["bk_elf_steelguard",0.05]],
+        "巨大突擊螞蟻": [["wpn_greatsword",0.1],["arm_46",0.03],["arm_61",0.5],["new_item_155",0.6],["bk_elf_earthbless",0.2],["bk_elf_steelguard",0.1]],
+        "巨大強化白螞蟻": [["wpn_2hsword",0.05],["wpn_greatsword",0.1],["arm_46",0.05],["arm_61",0.5],["arm_60",0.3],["arm_108",0.6],["new_item_158",0.3],["new_item_155",0.6],["bk_elf_earthbless",0.2],["bk_elf_groundtrap",0.2]],
+        "巨大守護螞蟻": [["wpn_ancient_darkelf_sword",0.001],["wpn_ancient_elf_xbow",0.001],["arm_108",0.6],["bk_elf_groundtrap",0.3]]
+    };
     </script>
 <script>
         // 安全獨立變數初始化
@@ -2482,7 +2718,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         const dZones = window.MOB_ZONES || {};
 
         // 地圖代碼中文化對照表
-        window.ITEM_SRC = {"mat_crack_core":"c","item_osiris_box_basic":"c","item_osiris_box_high":"c","wpn_qigu_obsidian":"c","item_pride_dom_11":"c","item_pride_dom_21":"c","item_pride_dom_31":"c","item_pride_dom_41":"c","item_pride_dom_51":"c","item_pride_dom_61":"c","item_pride_dom_71":"c","item_pride_dom_81":"c","item_pride_dom_91":"c","pet_fang_hound":"c","pet_fang_steel":"c","pet_fang_ruin":"c","pet_fang_victory":"c","clk_flame_blood":"c","wpn_demon_sword":"c","wpn_demon_claw":"c","wpn_demon_dual":"c","wpn_demon_xbow":"c","mat_silver_plate":"c","mat_blackmithril_plate":"c","item_shadow_temple_key":"c","mat_cursed_leather_earth":"c","mat_cursed_leather_water":"c","mat_cursed_leather_wind":"c","mat_cursed_leather_fire":"c","clk_pride_earth":"c","clk_pride_water":"c","clk_pride_wind":"c","clk_pride_fire":"c","panacea_str":"c","panacea_dex":"c","panacea_int":"c","panacea_con":"c","panacea_wis":"c","panacea_cha":"c","arm_48":"c","arm_111":"c","arm_91":"c","arm_75":"c","arm_49":"c","arm_78":"c","new_item_181":"c","arm_76":"c","arm_93":"c","new_item_182":"c","wpn_40":"c","wpn_41":"c","wpn_34":"c","wpn_35":"c","wpn_36":"c","hlm_silver":"c","arm_112":"c","arm_92":"c","arm_77":"c","shd_bone":"c","amr_bone":"c","hlm_bone":"c","new_item_176":"c","new_item_168":"c","new_item_174":"c","new_item_171":"c","new_item_175":"c","wpn_15":"cs","arm_70":"c","arm_74":"c","arm_109":"c","wpn_rapier":"c","wpn_mailbreaker":"c","wpn_10":"cs","wpn_30":"c","arm_90":"c","arm_44":"c","hlm_elf":"c","wpn_elfsword":"c","wpn_dagger2":"c","clk_elf":"c","shd_elf":"c","arm_73":"c","wpn_24":"c","arm_72":"c","wpn_elfbow":"c","arm_71":"c","wpn_29":"c","wpn_battleaxe":"cs","bot_short":"c","wpn_31":"c","arm_99":"c","wpn_halberd":"cs","wpn_5":"cs","wpn_3":"cs","arm_98":"c","new_item_173":"c","wpn_shaha_bow":"c","new_item_169":"c","new_item_170":"c","new_item_elfwing":"c","new_item_172":"c","new_item_177":"c","new_item_178":"c","wpn_39":"c","wpn_flaming_angel":"c","mat_silver":"c","wpn_claw_dark":"c","wpn_claw_silver":"c","wpn_claw_gloom":"c","wpn_dual_dark":"c","wpn_dual_silver":"c","wpn_dual_gloom":"c","wpn_xbow_dark":"c","wpn_xbow_gloom":"c","hlm_mage":"c","amr_magerobe":"c","hlm_steel":"c","arm_113":"c","arm_94":"c","arm_100":"c","arm_79":"c","hlm_frost":"c","amr_frost":"c","bot_frost":"c","clk_mr":"c","arm_87":"c","tsh_tshirt":"c","acc_135":"c","acc_137":"c","acc_136":"c","arm_95":"c","blt_body":"c","acc_131":"c","acc_130":"c","arm_107":"c","wpn_siruge":"c","arm_80":"c","arm_82":"c","arm_81":"c","arm_83":"c","rng_earth":"c","rng_water":"c","rng_wind":"c","rng_fire":"c","wpn_demon_axehead":"c","bk_royal_burnweapon":"c","bk_royal_bravewill":"c","bk_royal_shield":"c","bk_royal_kingguard":"c","wpn_ancient_spear":"c","wpn_ancient_axe":"c","wpn_chain_destroyer":"c","armguard_archer":"c","armguard_fighter":"c","wpn_old_sword":"c","wpn_old_greatsword":"c","wpn_old_xbow":"c","amr_old_scale":"c","amr_old_leather":"c","amr_old_robe":"c","amr_old_plate":"c","bk_elf_mr":"s","bk_elf_mind":"s","bk_elf_worldtree":"s","bk_elf_purify":"s","bk_elf_firewpn":"s","bk_elf_windshot":"s","bk_elf_earthguard":"s","bk_elf_eleres":"s","bk_elf_singleres":"s","bk_fireball":"s","bk_vampire":"s","bk_rock_prison":"s","bk_thunder":"s","bk_ice_spike":"s","bk_bless_wpn":"s","bk_heal1":"s","bk_sunlight":"s","bk_shield":"s","bk_lightarrow":"s","bk_teleport":"s","bk_icearrow":"s","bk_windblade":"s","bk_holy_wpn":"s","bk_antidote":"s","bk_cold_shiver":"s","bk_poison_curse":"s","bk_ench_wpn":"s","bk_reveal":"s","bk_load_up":"s","bk_firearrow":"s","bk_hell_fang":"s","bk_heal_mid":"s","bk_shield2":"s","bk_energy_sense":"s","bk_chill":"s","bk_aurora":"s","bk_dark_blind":"s","bk_undead_bane":"s","arm_103":"s","arm_105":"s","arm_108":"s","arm_42":"s","arm_43":"s","hlm_mr":"s","arm_68":"s","arm_66":"s","arm_67":"s","amr_robe":"s","arm_65":"s","arm_63":"s","arm_69":"s","arm_60":"s","arm_61":"s","arm_62":"s","amr_plate":"s","new_item_189":"s","new_item_188":"s","new_item_187":"s","wpn_shortsword":"s","wpn_9":"s","wpn_scimitar":"s","wpn_37":"s","wpn_invader":"s","wpn_longsword":"s","wpn_damascus":"s","wpn_silversword":"s","wpn_2hsword":"s","wpn_katana":"s","wpn_13":"s","wpn_1":"s","wpn_19":"s","wpn_38":"s","wpn_20":"s","wpn_silveraxe":"s","wpn_witchwand":"s","wpn_18":"s","wpn_giantaxe":"s","wpn_28":"s","wpn_14":"s","wpn_6":"s","wpn_17":"s","wpn_7":"s","wpn_21":"s","wpn_16":"s","wpn_12":"s","potion_heal":"s","potion_strong":"s","potion_ult":"s","potion_blue":"s","potion_haste":"s","scroll_poly":"s","scroll_magicbarrier":"s","scroll_teleport":"s","scroll_revive":"s","wpn_22":"s","candle":"s","new_item_143":"s","wpn_claw_bronze":"s","wpn_claw_steel":"s","wpn_claw_shadow":"s","wpn_claw_damascus":"s","wpn_dual_bronze":"s","wpn_dual_steel":"s","wpn_dual_shadow":"s","wpn_dual_damascus":"s","bk_dark_str":"s","bk_dark_mrup":"s","bk_dark_stealth":"s","bk_dark_poison":"s","bk_dark_refine":"s","bk_dark_dex":"s","bk_dark_poisonres":"s","bk_dark_burn":"s","bk_dark_walkhaste":"s","mem_confuse":"s","mem_mirror":"s","mem_crush":"s","mem_ogre":"s","mem_focus":"s","mem_skullbreak":"s","mem_lich":"s","mem_endure":"s","bk_dragon_guardbreak":"s","bk_dragon_slaughter":"s","bk_dragon_flameslash":"s","bk_dragon_terror":"s","potion_brave":"s","new_item_140":"s","new_item_139":"s","new_item_142":"s","wpn_illu_wand":"e","mem_cube_burn":"e","shd_illu_book":"e","mem_cube_shock":"e","clk_illu":"e","wpn_qigu_sapphire":"e","wpn_warrior_trial_axe":"e","bk_warrior_dualaxe":"e","clk_warrior_corps":"e","bk_warrior_roar":"e","hlm_warrior_corps":"e","wpn_master_axe":"e","wpn_dragon_2h":"e","bk_dragon_armor":"e","armguard_dragonscale":"e","bk_dragon_bloodlust":"e","clk_dragon":"e","wpn_chain_annihilator":"e","item_cyclops_blood":"e","item_demon_search":"e","item_demon_spy":"e","item_yeti_heart":"e","item_soulfire_ash":"e","arm_shadowglove":"e","arm_shadowmask":"e","arm_shadowboots":"e"};
+        window.ITEM_SRC = {"mat_crack_core":"c","item_osiris_box_basic":"c","item_osiris_box_high":"c","wpn_qigu_obsidian":"c","item_pride_dom_11":"c","item_pride_dom_21":"c","item_pride_dom_31":"c","item_pride_dom_41":"c","item_pride_dom_51":"c","item_pride_dom_61":"c","item_pride_dom_71":"c","item_pride_dom_81":"c","item_pride_dom_91":"c","pet_fang_hound":"c","pet_fang_steel":"c","pet_fang_ruin":"c","pet_fang_victory":"c","clk_flame_blood":"c","wpn_demon_sword":"c","wpn_demon_claw":"c","wpn_demon_dual":"c","wpn_demon_xbow":"c","mat_silver_plate":"c","mat_blackmithril_plate":"c","item_shadow_temple_key":"c","mat_cursed_leather_earth":"c","mat_cursed_leather_water":"c","mat_cursed_leather_wind":"c","mat_cursed_leather_fire":"c","clk_pride_earth":"c","clk_pride_water":"c","clk_pride_wind":"c","clk_pride_fire":"c","panacea_str":"c","panacea_dex":"c","panacea_int":"c","panacea_con":"c","panacea_wis":"c","panacea_cha":"c","arm_48":"c","arm_111":"c","arm_91":"c","arm_75":"c","arm_49":"c","arm_78":"c","new_item_181":"c","arm_76":"c","arm_93":"c","new_item_182":"c","wpn_40":"c","wpn_41":"c","wpn_34":"c","wpn_35":"c","wpn_36":"c","hlm_silver":"c","arm_112":"c","arm_92":"c","arm_77":"c","shd_bone":"c","amr_bone":"c","hlm_bone":"c","new_item_176":"c","new_item_168":"c","new_item_174":"c","new_item_171":"c","new_item_175":"c","wpn_15":"cs","arm_70":"c","arm_74":"c","arm_109":"c","wpn_rapier":"c","wpn_mailbreaker":"c","wpn_10":"cs","wpn_30":"c","arm_90":"c","arm_44":"c","hlm_elf":"c","wpn_elfsword":"c","wpn_dagger2":"c","clk_elf":"c","shd_elf":"c","arm_73":"c","wpn_24":"c","arm_72":"c","wpn_elfbow":"c","arm_71":"c","wpn_29":"c","wpn_battleaxe":"cs","bot_short":"c","wpn_31":"c","arm_99":"c","wpn_halberd":"cs","wpn_5":"cs","wpn_3":"cs","arm_98":"c","new_item_173":"c","wpn_shaha_bow":"c","new_item_169":"c","new_item_170":"c","new_item_elfwing":"c","new_item_172":"c","new_item_177":"c","new_item_178":"c","wpn_39":"c","wpn_flaming_angel":"c","mat_silver":"c","wpn_claw_dark":"c","wpn_claw_silver":"c","wpn_claw_gloom":"c","wpn_dual_dark":"c","wpn_dual_silver":"c","wpn_dual_gloom":"c","wpn_xbow_dark":"c","wpn_xbow_gloom":"c","hlm_mage":"c","amr_magerobe":"c","hlm_steel":"c","arm_113":"c","arm_94":"c","arm_100":"c","arm_79":"c","hlm_frost":"c","amr_frost":"c","bot_frost":"c","clk_mr":"c","arm_87":"c","tsh_tshirt":"c","acc_135":"c","acc_137":"c","acc_136":"c","arm_95":"c","blt_body":"c","acc_131":"c","acc_130":"c","arm_107":"c","wpn_siruge":"c","arm_80":"c","arm_82":"c","arm_81":"c","arm_83":"c","rng_earth":"c","rng_water":"c","rng_wind":"c","rng_fire":"c","wpn_demon_axehead":"c","bk_royal_burnweapon":"c","bk_royal_bravewill":"c","bk_royal_shield":"c","bk_royal_kingguard":"c","wpn_ancient_spear":"c","wpn_ancient_axe":"c","wpn_chain_destroyer":"c","armguard_archer":"c","armguard_fighter":"c","wpn_old_sword":"c","wpn_old_greatsword":"c","wpn_old_xbow":"c","amr_old_scale":"c","amr_old_leather":"c","amr_old_robe":"c","amr_old_plate":"c","bk_elf_mr":"s","bk_elf_mind":"s","bk_elf_worldtree":"s","bk_elf_purify":"s","bk_elf_firewpn":"s","bk_elf_windshot":"s","bk_elf_earthguard":"s","bk_elf_eleres":"s","bk_elf_singleres":"s","bk_fireball":"s","bk_vampire":"s","bk_rock_prison":"s","bk_thunder":"s","bk_ice_spike":"s","bk_bless_wpn":"s","bk_heal1":"s","bk_sunlight":"s","bk_shield":"s","bk_lightarrow":"s","bk_teleport":"s","bk_icearrow":"s","bk_windblade":"s","bk_holy_wpn":"s","bk_antidote":"s","bk_cold_shiver":"s","bk_poison_curse":"s","bk_ench_wpn":"s","bk_reveal":"s","bk_load_up":"s","bk_firearrow":"s","bk_hell_fang":"s","bk_heal_mid":"s","bk_shield2":"s","bk_energy_sense":"s","bk_chill":"s","bk_aurora":"s","bk_dark_blind":"s","bk_undead_bane":"s","arm_103":"s","arm_105":"s","arm_108":"s","arm_42":"s","arm_43":"s","hlm_mr":"s","arm_68":"s","arm_66":"s","arm_67":"s","amr_robe":"s","arm_65":"s","arm_63":"s","arm_69":"s","arm_60":"s","arm_61":"s","arm_62":"s","amr_plate":"s","new_item_189":"s","new_item_188":"s","new_item_187":"s","wpn_shortsword":"s","wpn_9":"s","wpn_scimitar":"s","wpn_37":"s","wpn_invader":"s","wpn_longsword":"s","wpn_damascus":"s","wpn_silversword":"s","wpn_2hsword":"s","wpn_katana":"s","wpn_13":"s","wpn_1":"s","wpn_19":"s","wpn_38":"s","wpn_20":"s","wpn_silveraxe":"s","wpn_witchwand":"s","wpn_18":"s","wpn_giantaxe":"s","wpn_28":"s","wpn_14":"s","wpn_6":"s","wpn_17":"s","wpn_7":"s","wpn_21":"s","wpn_16":"s","wpn_12":"s","potion_heal":"s","potion_strong":"s","potion_ult":"s","potion_blue":"s","potion_haste":"s","scroll_poly":"s","scroll_magicbarrier":"s","scroll_teleport":"s","scroll_revive":"s","wpn_22":"s","candle":"s","new_item_143":"s","wpn_claw_bronze":"s","wpn_claw_steel":"s","wpn_claw_shadow":"s","wpn_claw_damascus":"s","wpn_dual_bronze":"s","wpn_dual_steel":"s","wpn_dual_shadow":"s","wpn_dual_damascus":"s","bk_dark_str":"s","bk_dark_mrup":"s","bk_dark_stealth":"s","bk_dark_poison":"s","bk_dark_refine":"s","bk_dark_dex":"s","bk_dark_poisonres":"s","bk_dark_burn":"s","bk_dark_walkhaste":"s","mem_confuse":"s","mem_mirror":"s","mem_crush":"s","mem_ogre":"s","mem_focus":"s","mem_skullbreak":"s","mem_lich":"s","mem_endure":"s","bk_dragon_guardbreak":"s","bk_dragon_slaughter":"s","bk_dragon_flameslash":"s","bk_dragon_terror":"s","potion_brave":"s","new_item_140":"s","new_item_139":"s","new_item_142":"s","wpn_illu_wand":"e","mem_cube_burn":"e","shd_illu_book":"e","mem_cube_shock":"e","clk_illu":"e","wpn_qigu_sapphire":"e","wpn_warrior_trial_axe":"e","bk_warrior_dualaxe":"e","clk_warrior_corps":"e","bk_warrior_roar":"e","hlm_warrior_corps":"e","wpn_master_axe":"e","wpn_dragon_2h":"e","bk_dragon_armor":"e","armguard_dragonscale":"e","bk_dragon_bloodlust":"e","clk_dragon":"e","wpn_chain_annihilator":"e","item_cyclops_blood":"e","item_demon_search":"e","item_demon_spy":"e","item_yeti_heart":"e","item_soulfire_ash":"e","arm_shadowglove":"e","arm_shadowmask":"e","arm_shadowboots":"e","wpn_demon_sword_hidden":"e","wpn_demon_bow_hidden":"e","wpn_demon_wand_hidden":"e","wpn_demon_claw_hidden":"e","wpn_demon_chain_hidden":"e","wpn_demon_qigu_hidden":"e","arm_bluepirate_boots":"e","arm_bluepirate_helm":"e","arm_bluepirate_armor":"e","arm_bluepirate_gloves":"e","arm_bluepirate_cloak":"e","acc_icequeen_ear_1":"c","acc_icequeen_ear_2":"c","acc_icequeen_ear_3":"c","acc_icequeen_ear_4":"c","acc_icequeen_ear_5":"c","acc_icequeen_ear_6":"c","acc_icequeen_ear_7":"c","acc_icequeen_ear_8_str":"c","acc_icequeen_ear_8_dex":"c","acc_icequeen_ear_8_int":"c","acc_icequeen_ear_8_con":"c","acc_icequeen_ear_8_wis":"c","acc_icequeen_ear_8_cha":"c","acc_ear_wisdom":"c","acc_ear_truth":"c","acc_ear_dominate":"c","acc_ear_rage":"c","acc_ear_brave":"c","acc_ear_undead":"c","acc_ear_passion":"c","acc_ear_honor":"c","acc_ear_tolerance":"c","acc_ear_dance":"c","acc_ear_twin":"c","acc_ear_festival":"c","acc_ear_peak":"c","acc_ear_rampage":"c","acc_ear_phantom":"c","acc_ear_clan":"c","acc_ear_slave":"c"};
         const zoneNames = {
             "twilight_mt": "黃昏山脈",
             "oblivion_island": "遺忘之島",
@@ -2685,7 +2921,15 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "dream_island": "夢幻之島",
             "thebes_desert": "底比斯 沙漠",
             "thebes_pyramid": "底比斯 金字塔內部",
-            "thebes_temple": "底比斯 歐西里斯祭壇"
+            "thebes_temple": "底比斯 歐西里斯祭壇",
+            "pirate_wild": "海賊島",
+            "pirate_dungeon": "海賊島地監",
+            "hidden_lab_nolife": "無生物研究室",
+            "hidden_lab_darkmagic": "黑魔法研究室",
+            "hidden_seal_spirit": "惡靈封印室",
+            "hidden_seal_monster": "魔物封印室",
+            "hidden_seal_demon": "惡魔封印室",
+            "hidden_antqueen": "巨蟻女皇棲息地"
         };
 
         // 建立 怪物中文名稱 -> 怪物詳細屬性與ID 的映射表
@@ -2793,17 +3037,342 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         function switchMainTab(which) {
             const drop = document.getElementById('tabDrop');
             const ss = document.getElementById('tabSkillset');
+            const it = document.getElementById('tabItems');
             const mtd = document.getElementById('mtab-drop');
             const mts = document.getElementById('mtab-skill');
+            const mti = document.getElementById('mtab-items');
+            [drop,ss,it].forEach(el=>{if(el)el.style.display='none';});
+            [mtd,mts,mti].forEach(el=>{if(el)el.classList.remove('active');});
             if (which === 'skill') {
-                drop.style.display = 'none'; ss.style.display = 'block';
-                mtd.classList.remove('active'); mts.classList.add('active');
+                ss.style.display='block'; mts.classList.add('active');
                 renderSkillset(_ssCls);
+            } else if (which === 'items') {
+                it.style.display='block'; mti.classList.add('active');
+                if (!window._icInited) { initItemCatalog(); window._icInited=true; }
             } else {
-                drop.style.display = 'block'; ss.style.display = 'none';
-                mts.classList.remove('active'); mtd.classList.add('active');
+                drop.style.display='block'; mtd.classList.add('active');
             }
         }
+
+        // ===== 📦 道具圖鑑 =====
+        const _IC_EFFMAP = {"soulorb":"靈魂之球","evolve":"進化","pride_unseal":"解除封印","combo":"連擊","magicburst":"魔爆","crush":"粉碎(無視防禦)","pierce":"貫穿(無視防禦)","moonburst":"月光爆炸","dice_death":"骰子死亡","blue":"魔力回復","brave":"勇氣(二段加速)","haste":"加速","cleave":"切割(重擊觸發攻速+20%)","magicstrike":"魔法打擊","magicbarrier":"魔法屏障","mp_drain":"魔力吸取","poly":"變身","teleport_scroll":"傳送","panacea":"萬能藥","meat":"飽食度增加","whistle":"哨子(召喚)","reset":"重置","cautious":"慎重(魔攻提升)","stun":"衝擊之暈","freeze":"冰凍","stone":"石化","sleep":"沉睡","poison":"中毒","blind":"目盲","weaken":"弱化","disease":"疾病","broken":"損壞","slow":"緩速","mrhalf":"魔抗減半","magicseal":"魔法封印","osiris_box":"開啟歐西里斯寶箱"};
+        // 技能書 → 可學職業 對照表（從 SKILLS_TAB 反向建構，零硬編碼）
+        // 一本書可被多個職業使用，故每本書對應一組職業 Set
+        let _bookToClasses=null;
+        function buildBookClassMap() {
+            const map={};
+            const tab=window.SKILLS_TAB;
+            if(!tab) return map;
+            for(const cls of Object.keys(tab)){
+                const list=tab[cls];
+                if(!Array.isArray(list))continue;
+                for(const sk of list){
+                    const bk=sk&&sk.bk;
+                    if(!bk)continue;
+                    if(!map[bk])map[bk]=new Set();
+                    map[bk].add(cls);
+                }
+            }
+            return map;
+        }
+        function bookHasClass(itemName,cls){
+            if(!_bookToClasses)_bookToClasses=buildBookClassMap();
+            const set=_bookToClasses[itemName];
+            return !!(set&&set.has(cls));
+        }
+
+        const IC_CATS = [
+          {id:'wpn',label:'⚔️ 武器',subs:[
+            {id:'wpn_1h',label:'單手武器'},
+            {id:'wpn_2h',label:'雙手武器'},
+            {id:'wpn_bow',label:'弓・弩'},
+            {id:'wpn_arrow',label:'箭矢'},
+            {id:'wpn_qigu',label:'奇古獸'},
+          ]},
+          {id:'arm',label:'🛡️ 防具',subs:[
+            {id:'arm_armor',label:'盔甲・長袍'},
+            {id:'arm_helm',label:'頭盔・面具'},
+            {id:'arm_shield',label:'盾牌・副手'},
+            {id:'arm_gloves',label:'手套・腕甲'},
+            {id:'arm_boots',label:'長靴・涼鞋'},
+            {id:'arm_cloak',label:'斗篷'},
+            {id:'arm_tshirt',label:'貼身衣'},
+          ]},
+          {id:'acc',label:'💍 飾品',subs:[
+            {id:'acc_ring',label:'戒指'},
+            {id:'acc_amulet',label:'項鍊'},
+            {id:'acc_belt',label:'腰帶・皮帶'},
+            {id:'acc_pet',label:'寵物飾品'},
+          ]},
+          {id:'skillbk',label:'📚 技能書',subs:[
+            {id:'bk_knight',label:'騎士'},
+            {id:'bk_mage',label:'法師'},
+            {id:'bk_elf',label:'妖精'},
+            {id:'bk_dark',label:'黑暗妖精'},
+            {id:'bk_illusion',label:'幻術士'},
+            {id:'bk_dragon',label:'龍騎士'},
+            {id:'bk_warrior',label:'戰士'},
+            {id:'bk_royal',label:'王族'},
+          ]},
+          {id:'consume',label:'🧪 消耗品',subs:[
+            {id:'con_pot',label:'藥水'},
+            {id:'con_scroll',label:'卷軸'},
+            {id:'con_misc',label:'其他消耗'},
+          ]},
+          {id:'mat',label:'🗿 材料・任務・其他',subs:[
+            {id:'mat_gem',label:'💎 寶石'},
+            {id:'mat_enhscroll',label:'📜 強化卷軸'},
+            {id:'mat_craft',label:'🔨 製作素材'},
+            {id:'mat_key',label:'🔑 鑰匙'},
+            {id:'mat_collar',label:'🐕 項圈'},
+            {id:'mat_quest',label:'📋 任務・特殊'},
+          ]},
+        ];
+        let _icCat=null,_icOpenG={};
+
+        function icCatFilter(id,item,itemId) {
+            const t=item.type||'',s=item.slot||'',n=item.n||'',iid=itemId||'';
+            const hasBow=item.isBow||item.ranged,isArrow=item.isArrow,w2h=item.w2h,isQigu=item.qigu;
+            // === 材料・任務・其他 子分類偵測（與 type 無關，全靠 ID/名稱） ===
+            // 寶石：new_item_150 ~ new_item_162（魔法寶石、鑽石/紅/藍/綠寶石 各 3 階）
+            const isGem=/^new_item_(15[0-9]|16[0-2])$/.test(iid);
+            // 強化卷軸：對武器/盔甲/飾品施法的卷軸（+祝福_b/詛咒_c），以及「賦予祝福」「解除詛咒」系列
+            const isEnhScroll=/^scroll_(weapon|armor|acc)(_[bc])?$/.test(iid)
+                || /^new_item_bless_/.test(iid)
+                || iid==='new_item_uncurse';
+            // 鑰匙：名稱結尾「鑰匙」或 id 含 _key
+            const isKey=/鑰匙$/.test(n)||/_key(_|$)/.test(iid);
+            // 項圈：名稱開頭「項圈」
+            const isCollar=/^項圈/.test(n);
+            // 製作素材：type='etc'，或 id 開頭 mat_，或（無 type 時）名稱符合素材命名規律
+            const matPat=/(^米索莉|^奧里哈魯根|金屬|皮革|^線$|布料$|皮帶$|鱗$|鱗片$|龍鱗|血$|氣息$|羽毛$|羽翼$|碎片$|樹皮$|樹枝$|安特|蛻皮$|蜕皮$|芮克妮|鬃毛$|粉末$|灰燼$|骨頭|骷髏頭$|塊$|礦石$|^銀$|黑魔石$|元素石$|蘑菇汁$|^糖果$|食人巨魔|獨眼巨人|翼龍|變形怪|飛龍|蜥蜴的角|妖魔長老|雪怪首級|爪$|角$|牙齒$|指甲$|龜甲$|腳鐐$|魔法笛子|^精靈玉$|水果$|^網$|死亡誓約)/;
+            const isMat=!isGem&&!isEnhScroll&&!isKey&&!isCollar
+                &&(t==='etc'||/^mat_/.test(iid)||(!t&&matPat.test(n)));
+            // 其餘無 type 物品（任務・特殊）
+            const isQuestEtc=!t&&!isGem&&!isEnhScroll&&!isKey&&!isCollar&&!isMat;
+            switch(id) {
+                // 武器：完全用遊戲旗標分類，不再靠中文名正則
+                case 'wpn': return t==='wpn';
+                case 'wpn_bow': return t==='wpn'&&hasBow&&!isArrow;
+                case 'wpn_arrow': return t==='wpn'&&isArrow;
+                case 'wpn_qigu': return t==='wpn'&&isQigu;
+                case 'wpn_2h': return t==='wpn'&&w2h&&!hasBow&&!isQigu&&!isArrow;
+                case 'wpn_1h': return t==='wpn'&&!w2h&&!hasBow&&!isQigu&&!isArrow;
+                // 防具：依 slot
+                case 'arm': return t==='arm';
+                case 'arm_armor': return t==='arm'&&s==='armor';
+                case 'arm_helm': return t==='arm'&&s==='helm';
+                case 'arm_shield': return t==='arm'&&s==='shield';
+                case 'arm_gloves': return t==='arm'&&s==='gloves';
+                case 'arm_boots': return t==='arm'&&s==='boots';
+                case 'arm_cloak': return t==='arm'&&s==='cloak';
+                case 'arm_tshirt': return t==='arm'&&(s==='tshirt'||s==='undershirt');
+                // 飾品：依 slot
+                case 'acc': return t==='acc';
+                case 'acc_ring': return t==='acc'&&s==='ring';
+                case 'acc_amulet': return t==='acc'&&s==='amulet';
+                case 'acc_belt': return t==='acc'&&(s==='belt'||s==='waist');
+                case 'acc_pet': return t==='acc'&&s==='pet';
+                // 技能書：依「可學職業」分類（multi-bucket，一本書可出現在多個職業底下）
+                case 'skillbk': return t==='skillbk';
+                case 'bk_knight': return t==='skillbk'&&bookHasClass(n,'knight');
+                case 'bk_mage': return t==='skillbk'&&bookHasClass(n,'mage');
+                case 'bk_elf': return t==='skillbk'&&bookHasClass(n,'elf');
+                case 'bk_dark': return t==='skillbk'&&bookHasClass(n,'dark');
+                case 'bk_illusion': return t==='skillbk'&&bookHasClass(n,'illusion');
+                case 'bk_dragon': return t==='skillbk'&&bookHasClass(n,'dragon');
+                case 'bk_warrior': return t==='skillbk'&&bookHasClass(n,'warrior');
+                case 'bk_royal': return t==='skillbk'&&bookHasClass(n,'royal');
+                // 消耗品（強化卷軸已排除，會落到 mat_enhscroll）
+                case 'consume': return ['pot','heal','scroll','misc'].includes(t)&&!isEnhScroll;
+                case 'con_pot': return t==='pot'||t==='heal';
+                case 'con_scroll': return t==='scroll';
+                case 'con_misc': return t==='misc'&&!isEnhScroll;
+                // 材料・任務・其他
+                case 'mat': return t==='etc'||!t;
+                case 'mat_gem': return isGem;
+                case 'mat_enhscroll': return isEnhScroll;
+                case 'mat_craft': return isMat;
+                case 'mat_key': return isKey;
+                case 'mat_collar': return isCollar;
+                case 'mat_quest': return isQuestEtc;
+                default: return false;
+            }
+        }
+
+        function buildIcSidebar() {
+            const sb=document.getElementById('icSidebar');
+            if(!sb)return;
+            let h='';
+            IC_CATS.forEach(g=>{
+                const hasSubs=g.subs&&g.subs.length>0;
+                const isOpen=_icOpenG[g.id];
+                h+=`<div class="ic-group${isOpen?' open':''}" id="icg-${g.id}">
+<div class="ic-group-header${isOpen?' open':''}" onclick="icToggleGroup('${g.id}',${!hasSubs},'${g.id}','${g.label.replace(/'/g,"\\'")}')">
+  <span>${g.label}</span>${hasSubs?'<span class="arrow">▶</span>':''}
+</div>
+${hasSubs?'<div class="ic-sublist">'+g.subs.map(s=>`<button class="ic-sub-btn${_icCat===s.id?' active':''}" onclick="icShowCat('${s.id}','${g.id}','${(g.label+' › '+s.label).replace(/'/g,"\\'")}')">${s.label}</button>`).join('')+'</div>':''}
+</div>`;
+            });
+            sb.innerHTML=h;
+        }
+
+        function icToggleGroup(gid,isLeaf,catId,catLabel) {
+            if(isLeaf){icShowCat(catId,catId,catLabel);return;}
+            _icOpenG[gid]=!_icOpenG[gid];
+            buildIcSidebar();
+        }
+
+        function icShowCat(catId,groupId,label) {
+            _icCat=catId;
+            IC_CATS.forEach(g=>{if(g.id===groupId)_icOpenG[g.id]=true;});
+            buildIcSidebar();
+            document.getElementById('icBreadcrumb').textContent='📦 '+label;
+            document.getElementById('icSearch').value='';
+            renderIcGrid(catId,'');
+        }
+
+        function icFilter() {
+            const q=document.getElementById('icSearch').value;
+            // 只要有輸入關鍵字就跨全圖鑑搜尋（忽略目前選中的子分類）
+            if(q.trim()){ renderIcGrid(null,q); return; }
+            // 關鍵字清空：恢復目前分類；若未選任何分類則清空
+            if(_icCat) renderIcGrid(_icCat,'');
+            else document.getElementById('icGrid').innerHTML='';
+        }
+
+        function renderIcGrid(catId,query) {
+            const db=window.ITEMS_DB;
+            if(!db){document.getElementById('icGrid').innerHTML='<div style="color:#475569;padding:20px;">資料尚未載入</div>';return;}
+            const q=(query||'').toLowerCase().trim();
+            const reqMap={all:'全職',elf:'妖精',knight:'騎士',mage:'法師',dark:'黑暗妖精',illusion:'幻術士',dragon:'龍騎士',warrior:'戰士',royal:'王族',pr:'王族'};
+            let items=[];
+            for(const [id,item] of Object.entries(db)){
+                if(!item||!item.n)continue;
+                if(catId&&!icCatFilter(catId,item,id))continue;
+                if(q&&!item.n.toLowerCase().includes(q))continue;
+                items.push([id,item]);
+            }
+            items.sort((a,b)=>{
+                if(a[1].legend&&!b[1].legend)return -1;
+                if(!a[1].legend&&b[1].legend)return 1;
+                return (a[1].n||'').localeCompare(b[1].n||'','zh-TW');
+            });
+            document.getElementById('icCount').textContent=`共 ${items.length} 件`;
+            if(!items.length){document.getElementById('icGrid').innerHTML='<div style="color:#475569;padding:20px;">沒有符合道具</div>';return;}
+            const slotN={armor:'盔甲',helm:'頭盔',shield:'盾牌',gloves:'手套',boots:'長靴',cloak:'斗篷',tshirt:'貼身衣',belt:'腰帶',ring:'戒指',amulet:'項鍊',pet:'寵物飾品'};
+            document.getElementById('icGrid').innerHTML=items.map(([id,item])=>{
+                const isL=!!item.legend;
+                let tag='';
+                if(item.type==='wpn'){
+                    if(item.isArrow)tag='箭矢';
+                    else if(item.isBow)tag='弓';
+                    else if(item.qigu)tag='奇古獸';
+                    else if(item.w2h)tag='雙手';
+                    else tag='單手';
+                }else if(item.type==='arm'){tag=slotN[item.slot]||'';}
+                else if(item.type==='acc'){tag=slotN[item.slot]||'';}
+                else if(item.type==='skillbk'){tag='技能書';}
+                const reqT=item.req?item.req.split(',').map(r=>reqMap[r]||r).join('/'):'';
+                const sub=[reqT&&reqT!=='全職'?reqT:'',item.safe!=null?'安定'+item.safe:''].filter(Boolean).join(' · ');
+                return `<div class="ic-card${isL?' legend-card':''}" onclick="openIcModal('${id}')">
+  <div class="ic-card-name${isL?' ltext':''}">${isL?'🏅 ':''}${item.n}</div>
+  ${tag?'<span class="ic-card-tag">'+tag+'</span>':''}
+  ${sub?'<div class="ic-card-sub">'+sub+'</div>':''}
+</div>`;
+            }).join('');
+        }
+
+        function openIcModal(itemId) {
+            const db=window.ITEMS_DB,item=db&&db[itemId];
+            if(!item)return;
+            const reqMap={all:'全職業',elf:'妖精',knight:'騎士',pr:'王族',mage:'法師',dark:'黑暗妖精',illusion:'幻術士',dragon:'龍騎士',warrior:'戰士',royal:'王族'};
+            const statN={str:'力量',dex:'敏捷',con:'體質',int:'智力',wis:'精神',cha:'魅力'};
+            const resN={resFire:'火抗',resWater:'水抗',resEarth:'地抗',resWind:'風抗'};
+            const isL=!!item.legend;
+            const titleColor=isL?'#fca5a5':'#e2e8f0';
+            // 類型標籤
+            const slotLabel={armor:'防具 · 盔甲',helm:'防具 · 頭盔',shield:'防具 · 盾牌',gloves:'防具 · 手套',boots:'防具 · 長靴',cloak:'防具 · 斗篷',tshirt:'防具 · 貼身衣',ring:'飾品 · 戒指',amulet:'飾品 · 項鍊',belt:'飾品 · 腰帶',pet:'飾品 · 寵物'};
+            let typeLabel='';
+            if(item.type==='wpn'){typeLabel=item.isArrow?'箭矢':item.isBow?'武器 · 弓':item.qigu?'武器 · 奇古獸':item.w2h?'武器 · 雙手':'武器 · 單手';}
+            else if(item.type==='arm'){typeLabel=slotLabel[item.slot]||'防具';}
+            else if(item.type==='acc'){typeLabel=slotLabel[item.slot]||'飾品';}
+            else if(item.type==='skillbk')typeLabel='技能書';
+            else if(['pot','heal'].includes(item.type))typeLabel='消耗品 · 藥水';
+            else if(item.type==='scroll')typeLabel='消耗品 · 卷軸';
+            else if(['craft','etc','quest'].includes(item.type))typeLabel='材料 / 任務';
+            else typeLabel=item.type||'';
+            // 屬性
+            const stats=[];
+            if(item.dmgS||item.dmgL)stats.push(['攻擊(小/大)',`${item.dmgS||0} / ${item.dmgL||0}`]);
+            if(item.dmgBonus)stats.push(['額外傷害',`+${item.dmgBonus}`]);
+            if(item.magicDmg)stats.push(['魔法傷害',`+${item.magicDmg}`]);
+            if(item.hit)stats.push(['命中',`+${item.hit}`]);
+            if(item.rangedHit)stats.push(['遠距命中',`+${item.rangedHit}`]);
+            if(item.rangedDmg)stats.push(['遠距傷害',`+${item.rangedDmg}`]);
+            if(item.spd&&item.spd!==1)stats.push(['攻速倍率',item.spd]);
+            if(item.rapidfire)stats.push(['連射',`${item.rapidfire}%`]);
+            if(item.pierceChance)stats.push(['穿透機率',`${item.pierceChance}%`]);
+            if(item.ac)stats.push(['AC',item.ac]);
+            if(item.mr)stats.push(['MR',item.mr]);
+            if(item.block)stats.push(['格擋率',`${item.block}%`]);
+            if(item.mhp)stats.push(['HP上限',`+${item.mhp}`]);
+            if(item.mmp)stats.push(['MP上限',`+${item.mmp}`]);
+            if(item.hpR)stats.push(['HP自然恢復',`+${item.hpR}`]);
+            if(item.mpR)stats.push(['MP自然恢復',`+${item.mpR}`]);
+            ['str','dex','con','int','wis','cha'].forEach(s=>{if(item[s])stats.push([statN[s],`${item[s]>0?'+':''}${item[s]}`]);});
+            ['resFire','resWater','resEarth','resWind'].forEach(r=>{if(item[r])stats.push([resN[r],`+${item[r]}`]);});
+            if(item.magicDrNonEle)stats.push(['無屬性魔法減傷',item.magicDrNonEle]);
+            if(item.stunResist)stats.push(['暈眩抵抗',`${item.stunResist}%`]);
+            if(item.immStone)stats.push(['免疫石化','✔']);
+            if(item.unBonus)stats.push(['對不死/狼人','加成']);
+            if(item.dragonStrike)stats.push(['龍的一擊',item.dragonStrike]);
+            if(item.mrPerEn)stats.push(['每強化 MR',`+${item.mrPerEn}`]);
+            if(item.safe!=null)stats.push(['安定值',item.safe]);
+            if(item.req)stats.push(['適用職業',item.req.split(',').map(r=>reqMap[r]||r).join('/')]);
+            if(item.eff)stats.push(['特效',_IC_EFFMAP[item.eff]||item.eff]);
+            if(item.p)stats.push(['賣出價格',`${item.p.toLocaleString()} 幣`]);
+            // 掉落來源
+            let srcHtml='<div class="ic-no-src">此道具暫無已知怪物掉落來源</div>';
+            if(typeof dDrops!=='undefined'&&dDrops){
+                const srcs=[];
+                for(const [mob,drops] of Object.entries(dDrops)){
+                    if(mob==='items'||!Array.isArray(drops))continue;
+                    const f=drops.find(d=>d[0]===itemId);
+                    if(f){
+                        const mi=(typeof monsterInfoMap!=='undefined')?monsterInfoMap[mob]:null;
+                        srcs.push(`<li class="ic-src-item"><span class="ic-src-mob">${mob}${mi&&mi.boss?' ⚠ BOSS':''}</span></li>`);
+                    }
+                }
+                if(srcs.length) srcHtml=`<ul class="ic-src-list">${srcs.join('')}</ul>`;
+            }
+            // 說明
+            let descHtml='';
+            if(item.d){
+                const clean=item.d.replace(/<br\s*\/?>\s*/gi,'\n').replace(/<[^>]+>/g,'').trim();
+                descHtml=`<div class="ic-section-title">📖 說明</div><div class="ic-desc">${clean.replace(/\n/g,'<br>')}</div>`;
+            }
+            document.getElementById('icModalContent').innerHTML=`
+<h2 style="color:${titleColor}">${isL?'🏅 ':''}${item.n}</h2>
+<div class="ic-modal-sub">${typeLabel}</div>
+${stats.length?'<div class="ic-section-title">📊 屬性</div><div class="ic-stat-grid">'+stats.map(([l,v])=>`<div class="ic-stat-row"><span class="ic-stat-l">${l}</span><span class="ic-stat-v">${v}</span></div>`).join('')+'</div>':''}
+${descHtml}
+<div class="ic-section-title">🎯 掉落來源</div>
+${srcHtml}`;
+            document.getElementById('icOverlay').classList.add('open');
+        }
+
+        function closeIcModal() {
+            document.getElementById('icOverlay').classList.remove('open');
+        }
+
+        function initItemCatalog() {
+            buildIcSidebar();
+            // 預設展開第一組並顯示全武器
+            _icOpenG['wpn']=true;
+            icShowCat('wpn','wpn','⚔️ 武器');
+        }
+
         const _TYPE_LABEL = { heal:'治癒', buff:'增益', atk:'攻擊', manual:'主動', passive:'被動', convert:'轉換' };
         function renderSkillset(cls) {
             if (cls) {
