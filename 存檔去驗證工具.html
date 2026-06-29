@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Fable5 存檔去驗證工具</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    padding:40px;
+}
+#dropZone{
+    width:500px;
+    max-width:90%;
+    margin:auto;
+    padding:50px;
+    border:3px dashed #888;
+    border-radius:15px;
+    cursor:pointer;
+}
+#dropZone.drag{
+    background:#eef;
+}
+</style>
+</head>
+<body>
+
+<h2>Fable5 存檔去驗證工具</h2>
+<p>拖曳存檔進來或點擊選擇檔案</p>
+
+<div id="dropZone">
+    點我一下或將 .json 檔拖曳到這裡
+</div>
+
+<input type="file" id="fileInput" multiple hidden>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+
+dropZone.onclick = () => fileInput.click();
+
+fileInput.addEventListener("change", e => {
+    processFiles(e.target.files);
+});
+
+dropZone.addEventListener("dragover", e => {
+    e.preventDefault();
+    dropZone.classList.add("drag");
+});
+
+dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("drag");
+});
+
+dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropZone.classList.remove("drag");
+    processFiles(e.dataTransfer.files);
+});
+
+function processFiles(files){
+    for(const file of files){
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            let text = e.target.result;
+
+            const index = text.indexOf("{");
+
+            if(index === -1){
+                alert(file.name + " 不是有效的存檔！");
+                return;
+            }
+
+            const newText = text.substring(index);
+
+            const blob = new Blob([newText], {
+                type:"application/json"
+            });
+
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+
+            let name = file.name;
+            const dot = name.lastIndexOf(".");
+            if(dot !== -1){
+                name =
+                    name.substring(0, dot) +
+                    "_改" +
+                    name.substring(dot);
+            }else{
+                name += "_改";
+            }
+
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+            }, 1000);
+        };
+
+        reader.readAsText(file);
+    }
+}
+</script>
+
+</body>
+</html>
