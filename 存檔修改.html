@@ -1495,7 +1495,11 @@ function onEqAncChk(slotId){
 function saveEqToG(){
   if(!G.p.eq) G.p.eq = {};
   EQ_SLOTS.forEach(sl => {
-    const idVal = (document.getElementById(`eq_${sl.id}_id`)?.value || '').trim();
+    const inputEl = document.getElementById(`eq_${sl.id}_id`);
+    // 如果裝備面板還沒被渲染出 DOM 元素，就直接跳過，保留 G.p.eq 內的原始資料
+    if(!inputEl) return; 
+
+    const idVal = (inputEl.value || '').trim();
     if(!idVal){ G.p.eq[sl.id] = null; return; }
     onEqFieldChange(sl.id);
   });
