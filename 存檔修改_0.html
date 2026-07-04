@@ -296,7 +296,7 @@ select option{ background:var(--bg3); }
           <option value="男騎士">男騎士</option><option value="女騎士">女騎士</option>
           <option value="男妖精">男妖精</option><option value="女妖精">女妖精</option>
           <option value="男黑暗妖精">男黑暗妖精</option><option value="女黑暗妖精">女黑暗妖精</option>
-          <option value="王子">王子</option><option value="公主">公主</option>
+          <option value="男王族">男王族</option><option value="女王族">女王族</option>
           <option value="男龍騎士">男龍騎士</option><option value="女龍騎士">女龍騎士</option>
           <option value="男幻術士">男幻術士</option><option value="女幻術士">女幻術士</option>
           <option value="男戰士">男戰士</option><option value="女戰士">女戰士</option>
@@ -396,58 +396,6 @@ select option{ background:var(--bg3); }
     <!-- ══ 裝備 ══ -->
     <div class="panel" id="panel-eq">
       <div class="panel-title">🛡️ 裝備</div>
-  <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana" 
-             style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;">
-      <button class="btn btn-sm" onclick="document.getElementById('equipSearchInput').value=''; renderEquipSearch();">清空</button>
-    </div>
-    <div id="equipSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;"></div>
-  </div>
-<script>
-function renderEquipSearch(){
-  const kw = (document.getElementById('equipSearchInput')?.value || '').trim().toLowerCase();
-  const wrap = document.getElementById('equipSearchResults');
-  if(!wrap) return;
-  
-  if(!kw){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備</div>';
-    return;
-  }
-  
-  const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
-    if(!v.type || !['wpn','arm','acc','helm','shield','glove','boot','belt','cloak'].includes(v.type)) return false;
-    return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
-  });
-  
-  if(matched.length === 0){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">找不到符合的裝備</div>';
-    return;
-  }
-  
-  wrap.innerHTML = matched.map(([id, v]) => `
-    <div style="background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; font-size:13px;">
-      <div style="font-weight:600; color:var(--text); margin-bottom:4px;">${v.n || id}</div>
-      <div style="color:var(--text2); font-size:11px; margin-bottom:6px;">ID: <code style="background:var(--bg3); padding:1px 5px; border-radius:3px; user-select:all;">${id}</code></div>
-      <div style="color:var(--text2); line-height:1.5;">
-        ${v.dmgS ? `傷害 ${v.dmgS}~${v.dmgL || v.dmgS} ` : ''}
-        ${v.hit !== undefined ? `命中${v.hit>0?'+':''}${v.hit} ` : ''}
-        ${v.spd ? `速度${v.spd} ` : ''}
-        ${v.req ? `<br>需求: ${v.req}` : ''}
-        ${v.p ? `<br>價格: ${v.p}` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-setTimeout(() => {
-  const input = document.getElementById('equipSearchInput');
-  if(input){
-    input.addEventListener('input', renderEquipSearch);
-    renderEquipSearch();
-  }
-}, 100);
-</script>
       <div class="eq-grid" id="eqGrid"></div>
     </div>
 
@@ -3172,4932 +3120,1398 @@ function setFlagAll(val){
 //  來源：00-data.js v2.4.15（完整對照版）
 // ════════════════════════════════════════════════
 const ITEM_DB = {
-  "wpn_alien": {
-    "n": "亞連",
-    "type": "wpn"
-  },
-  "wpn_katana": {
-    "n": "武士刀",
-    "type": "wpn"
-  },
-  "wpn_longsword": {
-    "n": "長劍",
-    "type": "wpn"
-  },
-  "wpn_1": {
-    "n": "斧",
-    "type": "wpn"
-  },
-  "wpn_2hsword": {
-    "n": "雙手劍",
-    "type": "wpn"
-  },
-  "wpn_official_2h": {
-    "n": "武官雙手劍",
-    "type": "wpn"
-  },
-  "wpn_dragonslayer": {
-    "n": "屠龍劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_vander_sword": {
-    "n": "騎士范德之劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_2": {
-    "n": "釘錘",
-    "type": "wpn"
-  },
-  "wpn_3": {
-    "n": "弓",
-    "type": "wpn"
-  },
-  "wpn_4": {
-    "n": "矛",
-    "type": "wpn"
-  },
-  "wpn_battleaxe": {
-    "n": "戰斧",
-    "type": "wpn"
-  },
-  "wpn_5": {
-    "n": "箭",
-    "type": "wpn"
-  },
-  "wpn_6": {
-    "n": "巴迪須",
-    "type": "wpn"
-  },
-  "wpn_7": {
-    "n": "柴刀",
-    "type": "wpn"
-  },
-  "wpn_elfbow": {
-    "n": "精靈弓",
-    "type": "wpn"
-  },
-  "wpn_8": {
-    "n": "歐西斯弓",
-    "type": "wpn"
-  },
-  "wpn_9": {
-    "n": "闊劍",
-    "type": "wpn"
-  },
-  "wpn_10": {
-    "n": "木棒",
-    "type": "wpn"
-  },
-  "wpn_dagger2": {
-    "n": "精靈匕首",
-    "type": "wpn"
-  },
-  "wpn_dagger1": {
-    "n": "歐西斯匕首",
-    "type": "wpn"
-  },
-  "wpn_11": {
-    "n": "匕首",
-    "type": "wpn"
-  },
-  "wpn_12": {
-    "n": "貝卡合金",
-    "type": "wpn"
-  },
-  "wpn_halberd": {
-    "n": "法丘",
-    "type": "wpn"
-  },
-  "wpn_13": {
-    "n": "弗萊爾",
-    "type": "wpn"
-  },
-  "wpn_14": {
-    "n": "闊矛",
-    "type": "wpn"
-  },
-  "wpn_15": {
-    "n": "吉薩",
-    "type": "wpn"
-  },
-  "wpn_16": {
-    "n": "戟",
-    "type": "wpn"
-  },
-  "wpn_17": {
-    "n": "槍",
-    "type": "wpn"
-  },
-  "wpn_18": {
-    "n": "露西錘",
-    "type": "wpn"
-  },
-  "wpn_19": {
-    "n": "戰錘",
-    "type": "wpn"
-  },
-  "wpn_20": {
-    "n": "流星錘",
-    "type": "wpn"
-  },
-  "wpn_21": {
-    "n": "帕提森",
-    "type": "wpn"
-  },
-  "wpn_scimitar": {
-    "n": "彎刀",
-    "type": "wpn"
-  },
-  "wpn_22": {
-    "n": "銀箭",
-    "type": "wpn"
-  },
-  "wpn_23": {
-    "n": "侏儒鐵斧",
-    "type": "wpn"
-  },
-  "wpn_24": {
-    "n": "精靈之矛",
-    "type": "wpn"
-  },
-  "wpn_25": {
-    "n": "歐西斯之矛",
-    "type": "wpn"
-  },
-  "wpn_26": {
-    "n": "小侏儒短劍",
-    "type": "wpn"
-  },
-  "wpn_elfsword": {
-    "n": "精靈短劍",
-    "type": "wpn"
-  },
-  "wpn_27": {
-    "n": "歐西斯短劍",
-    "type": "wpn"
-  },
-  "wpn_shortsword": {
-    "n": "短劍",
-    "type": "wpn"
-  },
-  "wpn_28": {
-    "n": "三叉戟",
-    "type": "wpn"
-  },
-  "wpn_siruge": {
-    "n": "瑟魯基之劍",
-    "type": "wpn"
-  },
-  "wpn_29": {
-    "n": "尤米弓",
-    "type": "wpn"
-  },
-  "wpn_shortbow": {
-    "n": "短弓",
-    "type": "wpn"
-  },
-  "wpn_30": {
-    "n": "米索莉箭",
-    "type": "wpn"
-  },
-  "wpn_31": {
-    "n": "十字弓",
-    "type": "wpn"
-  },
-  "wpn_32": {
-    "n": "獵人之弓",
-    "type": "wpn"
-  },
-  "wpn_flaming_angel": {
-    "n": "熾炎天使弓",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_redknight": {
-    "n": "紅騎士之劍",
-    "type": "wpn"
-  },
-  "wpn_invader": {
-    "n": "侵略者之劍",
-    "type": "wpn"
-  },
-  "wpn_33": {
-    "n": "骰子匕首",
-    "type": "wpn"
-  },
-  "wpn_damascus": {
-    "n": "大馬士革刀",
-    "type": "wpn"
-  },
-  "wpn_34": {
-    "n": "短劍的劍身",
-    "type": "wpn"
-  },
-  "wpn_35": {
-    "n": "長劍的劍身",
-    "type": "wpn"
-  },
-  "wpn_36": {
-    "n": "奧里哈魯根的劍身",
-    "type": "wpn"
-  },
-  "wpn_rapier": {
-    "n": "細劍",
-    "type": "wpn"
-  },
-  "wpn_mailbreaker": {
-    "n": "鎖子甲破壞者",
-    "type": "wpn"
-  },
-  "wpn_silversword": {
-    "n": "銀長劍",
-    "type": "wpn"
-  },
-  "wpn_37": {
-    "n": "銀劍",
-    "type": "wpn"
-  },
-  "wpn_oakwand": {
-    "n": "橡木魔法杖",
-    "type": "wpn"
-  },
-  "wpn_38": {
-    "n": "美基魔法杖",
-    "type": "wpn"
-  },
-  "wpn_witchwand": {
-    "n": "巫術魔法杖",
-    "type": "wpn"
-  },
-  "wpn_strwand": {
-    "n": "力量魔法杖",
-    "type": "wpn"
-  },
-  "wpn_manawand": {
-    "n": "瑪那魔杖",
-    "type": "wpn"
-  },
-  "wpn_crystalwand": {
-    "n": "水晶魔杖",
-    "type": "wpn"
-  },
-  "wpn_powerless_baless": {
-    "n": "失去魔力的巴列斯魔杖",
-    "type": "wpn"
-  },
-  "wpn_baless": {
-    "n": "巴列斯魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_39": {
-    "n": "潘的角",
-    "type": "wpn"
-  },
-  "wpn_40": {
-    "n": "覆上米索莉的角",
-    "type": "wpn"
-  },
-  "wpn_41": {
-    "n": "覆上奧里哈魯根的角",
-    "type": "wpn"
-  },
-  "wpn_giantaxe": {
-    "n": "巨斧",
-    "type": "wpn"
-  },
-  "wpn_berserker": {
-    "n": "狂戰士斧",
-    "type": "wpn"
-  },
-  "wpn_silveraxe": {
-    "n": "銀斧",
-    "type": "wpn"
-  },
-  "wpn_claw_bronze": {
-    "n": "青銅鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_steel": {
-    "n": "鋼鐵鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_shadow": {
-    "n": "暗影鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_silver": {
-    "n": "銀光鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_dark": {
-    "n": "黑暗鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_gloom": {
-    "n": "幽暗鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_damascus": {
-    "n": "大馬士革鋼爪",
-    "type": "wpn"
-  },
-  "wpn_claw_abyss": {
-    "n": "暗黑鋼爪",
-    "type": "wpn"
-  },
-  "wpn_dual_bronze": {
-    "n": "青銅雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_steel": {
-    "n": "鋼鐵雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_silver": {
-    "n": "銀光雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_gloom": {
-    "n": "幽暗雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_dark": {
-    "n": "黑暗雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_shadow": {
-    "n": "暗影雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_damascus": {
-    "n": "大馬士革雙刀",
-    "type": "wpn"
-  },
-  "wpn_dual_abyss": {
-    "n": "暗黑雙刀",
-    "type": "wpn"
-  },
-  "wpn_xbow_dark": {
-    "n": "黑暗十字弓",
-    "type": "wpn"
-  },
-  "wpn_xbow_gloom": {
-    "n": "幽暗十字弓",
-    "type": "wpn"
-  },
-  "wpn_xbow_abyss": {
-    "n": "暗黑十字弓",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_baranka_claw": {
-    "n": "魔獸軍王之爪",
-    "type": "wpn"
-  },
-  "wpn_baranka_steelclaw": {
-    "n": "巴蘭卡鋼爪",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_dk_flameblade": {
-    "n": "死亡騎士的烈炎之劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_kurt_sword": {
-    "n": "克特之劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_manadagger": {
-    "n": "魔力短劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_assassin_mark": {
-    "n": "暗殺軍王之痕",
-    "type": "wpn"
-  },
-  "wpn_priest_wand": {
-    "n": "神官魔杖",
-    "type": "wpn"
-  },
-  "wpn_laia_wand": {
-    "n": "蕾雅魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_blood_2hsword": {
-    "n": "血色巨劍",
-    "type": "wpn"
-  },
-  "wpn_dark_sword": {
-    "n": "黑暗之劍",
-    "type": "wpn"
-  },
-  "wpn_red_crystalwand": {
-    "n": "紅水晶魔杖",
-    "type": "wpn"
-  },
-  "wpn_thebes_bow": {
-    "n": "底比斯歐西里斯弓",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_thebes_dual": {
-    "n": "底比斯歐西里斯雙刀",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_thebes_2hsword": {
-    "n": "底比斯歐西里斯雙手劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_thebes_wand": {
-    "n": "底比斯歐西里斯魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_xbow_rasta": {
-    "n": "拉斯塔巴德十字弓",
-    "type": "wpn"
-  },
-  "wpn_bow_rasta": {
-    "n": "拉斯塔巴德弓",
-    "type": "wpn"
-  },
-  "wpn_small_katana": {
-    "n": "小武士刀",
-    "type": "wpn"
-  },
-  "wpn_sword_rasta": {
-    "n": "拉斯塔巴德長劍",
-    "type": "wpn"
-  },
-  "wpn_dagger_rasta": {
-    "n": "拉斯塔巴德短劍",
-    "type": "wpn"
-  },
-  "wpn_wand_rasta": {
-    "n": "拉斯塔巴德魔杖",
-    "type": "wpn"
-  },
-  "wpn_darkmage_wand": {
-    "n": "黑法師之杖",
-    "type": "wpn"
-  },
-  "wpn_dual_rasta": {
-    "n": "拉斯塔巴德雙刀",
-    "type": "wpn"
-  },
-  "wpn_xbow_heavy_rasta": {
-    "n": "拉斯塔巴德重十字弓",
-    "type": "wpn"
-  },
-  "wpn_spear_rasta": {
-    "n": "拉斯塔巴德矛",
-    "type": "wpn"
-  },
-  "wpn_dual_spike": {
-    "n": "尖刺雙刀",
-    "type": "wpn"
-  },
-  "wpn_official_blade": {
-    "n": "武官之刃",
-    "type": "wpn"
-  },
-  "wpn_emperor_blade": {
-    "n": "真．冥皇執行劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_windblade_dagger": {
-    "n": "風刃短劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_redshadow_dual": {
-    "n": "紅影雙刀",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_beastking_claw": {
-    "n": "獸王鋼爪",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_holycrystal_wand": {
-    "n": "聖晶魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_icequeen_wand": {
-    "n": "冰之女王魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demon_scythe": {
-    "n": "惡魔鐮刀",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_crystal_dagger": {
-    "n": "水晶短劍",
-    "type": "wpn"
-  },
-  "wpn_mithril_dagger": {
-    "n": "米索莉短劍",
-    "type": "wpn"
-  },
-  "wpn_ori_dagger": {
-    "n": "奧里哈魯根短劍",
-    "type": "wpn"
-  },
-  "wpn_crimson_spear": {
-    "n": "深紅長矛",
-    "type": "wpn"
-  },
-  "wpn_demon_axe": {
-    "n": "惡魔斧頭",
-    "type": "wpn"
-  },
-  "wpn_vengeance": {
-    "n": "復仇之劍",
-    "type": "wpn"
-  },
-  "wpn_hate_claw": {
-    "n": "恨之鋼爪",
-    "type": "wpn"
-  },
-  "wpn_demon_sword": {
-    "n": "惡魔之劍",
-    "type": "wpn"
-  },
-  "wpn_demon_dual": {
-    "n": "惡魔雙刀",
-    "type": "wpn"
-  },
-  "wpn_demon_claw": {
-    "n": "惡魔鋼爪",
-    "type": "wpn"
-  },
-  "wpn_dual_destroy": {
-    "n": "破壞雙刀",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_claw_destroy": {
-    "n": "破壞鋼爪",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demon_xbow": {
-    "n": "惡魔十字弓",
-    "type": "wpn"
-  },
-  "wpn_powerless_baphomet": {
-    "n": "失去魔力的巴風特魔杖",
-    "type": "wpn"
-  },
-  "wpn_baphomet_wand": {
-    "n": "巴風特魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_qigu_obsidian": {
-    "n": "黑曜石奇古獸",
-    "type": "wpn"
-  },
-  "wpn_qigu_meditate": {
-    "n": "冥想奇古獸",
-    "type": "wpn"
-  },
-  "wpn_qigu_resonance": {
-    "n": "共鳴奇古獸",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_qigu_frost": {
-    "n": "寒冰奇古獸",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_qigu_sapphire": {
-    "n": "藍寶石奇古獸",
-    "type": "wpn"
-  },
-  "wpn_illu_wand": {
-    "n": "幻術士魔杖",
-    "type": "wpn"
-  },
-  "wpn_dragon_2h": {
-    "n": "龍騎士雙手劍",
-    "type": "wpn"
-  },
-  "wpn_chain_annihilator": {
-    "n": "消滅者鎖鏈劍",
-    "type": "wpn"
-  },
-  "wpn_chain_destroyer": {
-    "n": "破滅者鎖鏈劍",
-    "type": "wpn"
-  },
-  "wpn_chain_bloodthirst": {
-    "n": "嗜血者鎖鏈劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_chain_resonance": {
-    "n": "共鳴鎖鏈劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_chain_frost": {
-    "n": "寒冰鎖鏈劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_golden_scepter": {
-    "n": "黃金權杖",
-    "type": "wpn"
-  },
-  "wpn_warrior_trial_axe": {
-    "n": "試煉斧頭",
-    "type": "wpn"
-  },
-  "wpn_master_axe": {
-    "n": "大匠的斧頭",
-    "type": "wpn"
-  },
-  "wpn_demon_axehead": {
-    "n": "魔物的斧頭",
-    "type": "wpn"
-  },
-  "wpn_iron_axehead": {
-    "n": "鐵斧頭",
-    "type": "wpn"
-  },
-  "wpn_giant_axehead": {
-    "n": "巨人的斧頭",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demonking_spear": {
-    "n": "惡魔王矛",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demonking_dual": {
-    "n": "惡魔王雙刀",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demonking_2hsword": {
-    "n": "惡魔王雙手劍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demonking_wand": {
-    "n": "惡魔王魔杖",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_demonking_bow": {
-    "n": "惡魔王弓",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_greatsword": {
-    "n": "巨劍",
-    "type": "wpn"
-  },
-  "wpn_taurus_axe": {
-    "n": "牛人斧頭",
-    "type": "wpn"
-  },
-  "wpn_shaha_bow": {
-    "n": "沙哈之弓",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_shaha_arrow": {
-    "n": "沙哈之箭",
-    "type": "wpn"
-  },
-  "wpn_old_sword": {
-    "n": "古老的劍",
-    "type": "wpn"
-  },
-  "wpn_old_greatsword": {
-    "n": "古老的巨劍",
-    "type": "wpn"
-  },
-  "wpn_old_xbow": {
-    "n": "古老的弩槍",
-    "type": "wpn"
-  },
-  "wpn_ancient_spear": {
-    "n": "古代神之槍",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_ancient_axe": {
-    "n": "古代神之斧",
-    "type": "wpn",
-    "legend": true
-  },
-  "wpn_ancient_darkelf_sword": {
-    "n": "古代黑暗妖精之劍",
-    "type": "wpn"
-  },
-  "wpn_ancient_elf_xbow": {
-    "n": "古代妖精弩槍",
-    "type": "wpn"
-  },
-  "wpn_demon_sword_hidden": {
-    "n": "隱藏的魔族之劍",
-    "type": "wpn"
-  },
-  "wpn_demon_bow_hidden": {
-    "n": "隱藏的魔族弓箭",
-    "type": "wpn"
-  },
-  "wpn_demon_wand_hidden": {
-    "n": "隱藏的魔族魔杖",
-    "type": "wpn"
-  },
-  "wpn_demon_claw_hidden": {
-    "n": "隱藏的魔族鋼爪",
-    "type": "wpn"
-  },
-  "wpn_demon_chain_hidden": {
-    "n": "隱藏的魔族鎖鏈劍",
-    "type": "wpn"
-  },
-  "wpn_demon_qigu_hidden": {
-    "n": "隱藏的魔族奇古獸",
-    "type": "wpn"
-  },
-  "wpn_chaos_thorn": {
-    "n": "混沌之刺",
-    "type": "wpn"
-  },
-  "wpn_blackflame_sword": {
-    "n": "黑焰之劍",
-    "type": "wpn"
-  },
-  "wpn_redflame_bow": {
-    "n": "赤焰之弓",
-    "type": "wpn"
-  },
-  "wpn_redflame_sword": {
-    "n": "赤焰之劍",
-    "type": "wpn"
-  },
-  "wpn_death_finger": {
-    "n": "死亡之指",
-    "type": "wpn"
-  },
-  "wpn_pirate_dagger": {
-    "n": "血紅慾望短劍",
-    "type": "wpn"
-  },
-  "wpn_glory_sword": {
-    "n": "榮耀之劍",
-    "type": "wpn"
-  },
-  "wpn_pirate_shortblade": {
-    "n": "短刀",
-    "type": "wpn"
-  },
-  "wpn_pirate_cutlass": {
-    "n": "海賊彎刀",
-    "type": "wpn"
-  },
-  "wpn_abyss_dualblade": {
-    "n": "深淵雙刀",
-    "type": "wpn"
-  },
-  "wpn_dark_crystalball": {
-    "n": "漆黑水晶球",
-    "type": "wpn"
-  },
-  "wpn_silent_crossbow": {
-    "n": "寂靜十字弓",
-    "type": "wpn"
-  },
-  "wpn_mana_orb": {
-    "n": "瑪那水晶球",
-    "type": "arm"
-  },
-  "hlm_elf": {
-    "n": "精靈皮盔",
-    "type": "arm"
-  },
-  "hlm_oasis": {
-    "n": "歐西斯頭盔",
-    "type": "arm"
-  },
-  "hlm_gnome": {
-    "n": "侏儒鐵盔",
-    "type": "arm"
-  },
-  "arm_42": {
-    "n": "頭盔",
-    "type": "arm"
-  },
-  "arm_43": {
-    "n": "騎士面甲",
-    "type": "arm"
-  },
-  "hlm_mr": {
-    "n": "抗魔法頭盔",
-    "type": "arm"
-  },
-  "arm_44": {
-    "n": "艾爾穆的祝福",
-    "type": "arm"
-  },
-  "arm_45": {
-    "n": "治癒魔法頭盔",
-    "type": "arm"
-  },
-  "arm_46": {
-    "n": "敏捷魔法頭盔",
-    "type": "arm"
-  },
-  "arm_47": {
-    "n": "力量魔法頭盔",
-    "type": "arm"
-  },
-  "arm_48": {
-    "n": "皮帽子",
-    "type": "arm"
-  },
-  "hlm_silver": {
-    "n": "銀釘皮帽",
-    "type": "arm"
-  },
-  "arm_49": {
-    "n": "皮頭盔",
-    "type": "arm"
-  },
-  "hlm_bone": {
-    "n": "骷髏頭盔",
-    "type": "arm"
-  },
-  "hlm_steel": {
-    "n": "鋼鐵頭盔",
-    "type": "arm"
-  },
-  "hlm_mage": {
-    "n": "法師之帽",
-    "type": "arm"
-  },
-  "hlm_dk": {
-    "n": "死亡騎士頭盔",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_50": {
-    "n": "精靈敏捷頭盔",
-    "type": "arm"
-  },
-  "arm_51": {
-    "n": "精靈體質頭盔",
-    "type": "arm"
-  },
-  "arm_52": {
-    "n": "騎士頭巾",
-    "type": "arm"
-  },
-  "arm_53": {
-    "n": "紅騎士頭巾",
-    "type": "arm"
-  },
-  "arm_54": {
-    "n": "巴土瑟之帽",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_55": {
-    "n": "卡士柏之帽",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_56": {
-    "n": "馬庫爾之帽",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_57": {
-    "n": "西瑪之帽",
-    "type": "arm",
-    "legend": true
-  },
-  "hlm_kurt": {
-    "n": "克特頭盔",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_58": {
-    "n": "淨化頭飾",
-    "type": "arm"
-  },
-  "arm_shadowmask": {
-    "n": "影子面具",
-    "type": "arm"
-  },
-  "hlm_official": {
-    "n": "武官頭盔",
-    "type": "arm"
-  },
-  "hlm_baranka": {
-    "n": "巴蘭卡頭盔",
-    "type": "arm"
-  },
-  "hlm_priest": {
-    "n": "神官頭飾",
-    "type": "arm"
-  },
-  "hlm_demon": {
-    "n": "惡魔頭盔",
-    "type": "arm",
-    "legend": true
-  },
-  "hlm_mummy_crown": {
-    "n": "木乃伊王的王冠",
-    "type": "arm",
-    "legend": true
-  },
-  "hlm_mambo": {
-    "n": "曼波帽子",
-    "type": "arm"
-  },
-  "hlm_dark": {
-    "n": "黑暗頭飾",
-    "type": "arm"
-  },
-  "hlm_chaos": {
-    "n": "混沌頭盔",
-    "type": "arm"
-  },
-  "hlm_warrior_corps": {
-    "n": "戰士團頭盔",
-    "type": "arm"
-  },
-  "hlm_holy_corps": {
-    "n": "神聖執行團的頭盔",
-    "type": "arm"
-  },
-  "hlm_wind": {
-    "n": "風之頭盔",
-    "type": "arm"
-  },
-  "hlm_darkelf": {
-    "n": "黑暗妖精頭箍",
-    "type": "arm"
-  },
-  "hlm_icequeen_charm": {
-    "n": "冰之女王魅力頭飾",
-    "type": "arm",
-    "legend": true
-  },
-  "hlm_frost": {
-    "n": "寒冰頭盔",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_bluepirate_helm": {
-    "n": "藍海賊頭巾",
-    "type": "arm"
-  },
-  "amr_plate": {
-    "n": "金屬盔甲",
-    "type": "arm"
-  },
-  "arm_59": {
-    "n": "水晶盔甲",
-    "type": "arm"
-  },
-  "arm_60": {
-    "n": "青銅盔甲",
-    "type": "arm"
-  },
-  "arm_61": {
-    "n": "藤甲",
-    "type": "arm"
-  },
-  "arm_62": {
-    "n": "皮甲",
-    "type": "arm"
-  },
-  "arm_63": {
-    "n": "鏈甲",
-    "type": "arm"
-  },
-  "arm_64": {
-    "n": "歐西斯鏈甲",
-    "type": "arm"
-  },
-  "arm_65": {
-    "n": "鱗甲",
-    "type": "arm"
-  },
-  "arm_66": {
-    "n": "銀釘皮甲",
-    "type": "arm"
-  },
-  "arm_67": {
-    "n": "環甲",
-    "type": "arm"
-  },
-  "amr_oasis": {
-    "n": "歐西斯環甲",
-    "type": "arm"
-  },
-  "arm_68": {
-    "n": "小藤甲",
-    "type": "arm"
-  },
-  "amr_jacket": {
-    "n": "皮夾克",
-    "type": "arm"
-  },
-  "arm_69": {
-    "n": "抗魔法鏈甲",
-    "type": "arm"
-  },
-  "amr_robe": {
-    "n": "綿質長袍",
-    "type": "arm"
-  },
-  "arm_70": {
-    "n": "木甲",
-    "type": "arm"
-  },
-  "arm_71": {
-    "n": "精靈護胸金屬板",
-    "type": "arm"
-  },
-  "arm_72": {
-    "n": "精靈金屬盔甲",
-    "type": "arm"
-  },
-  "arm_73": {
-    "n": "精靈鏈甲",
-    "type": "arm"
-  },
-  "arm_74": {
-    "n": "木製的夾克",
-    "type": "arm"
-  },
-  "arm_75": {
-    "n": "皮背心",
-    "type": "arm"
-  },
-  "arm_76": {
-    "n": "皮盔甲",
-    "type": "arm"
-  },
-  "arm_77": {
-    "n": "銀釘皮背心",
-    "type": "arm"
-  },
-  "arm_78": {
-    "n": "硬皮背心",
-    "type": "arm"
-  },
-  "amr_bone": {
-    "n": "骷髏盔甲",
-    "type": "arm"
-  },
-  "arm_79": {
-    "n": "鋼鐵金屬盔甲",
-    "type": "arm"
-  },
-  "amr_magerobe": {
-    "n": "法師長袍",
-    "type": "arm"
-  },
-  "arm_80": {
-    "n": "水龍鱗盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_81": {
-    "n": "地龍鱗盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_82": {
-    "n": "火龍鱗盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_83": {
-    "n": "風龍鱗盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_dk": {
-    "n": "死亡騎士盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_84": {
-    "n": "黑長者長袍",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_kurt": {
-    "n": "克特盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_official": {
-    "n": "武官護鎧",
-    "type": "arm"
-  },
-  "amr_baranka": {
-    "n": "巴蘭卡盔甲",
-    "type": "arm"
-  },
-  "amr_priest": {
-    "n": "神官法袍",
-    "type": "arm"
-  },
-  "amr_dark_cape": {
-    "n": "黑暗披肩",
-    "type": "arm"
-  },
-  "amr_demon": {
-    "n": "惡魔盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_kinglaw": {
-    "n": "法令軍王長袍",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_mambo": {
-    "n": "曼波外套",
-    "type": "arm"
-  },
-  "amr_centipede": {
-    "n": "金屬蜈蚣皮盔甲",
-    "type": "arm"
-  },
-  "amr_darkdweller": {
-    "n": "黑暗棲林者盔甲",
-    "type": "arm"
-  },
-  "amr_chaos": {
-    "n": "混沌法袍",
-    "type": "arm"
-  },
-  "amr_death": {
-    "n": "死亡盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_fallen": {
-    "n": "墮落長袍",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_baphomet": {
-    "n": "巴風特盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_lich": {
-    "n": "巫妖斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_laia_robe": {
-    "n": "蕾雅長袍",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_rasta_robe": {
-    "n": "拉斯塔巴德長袍",
-    "type": "arm"
-  },
-  "amr_darkmage_robe": {
-    "n": "黑法師長袍",
-    "type": "arm"
-  },
-  "amr_summoner_robe": {
-    "n": "喚獸師長袍",
-    "type": "arm"
-  },
-  "arm_rasta_leather": {
-    "n": "拉斯塔巴德皮盔甲",
-    "type": "arm"
-  },
-  "amr_icequeen_charm": {
-    "n": "冰之女王魅力禮服",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_frost": {
-    "n": "寒冰盔甲",
-    "type": "arm",
-    "legend": true
-  },
-  "amr_old_plate": {
-    "n": "古老的金屬盔甲",
-    "type": "arm"
-  },
-  "amr_old_scale": {
-    "n": "古老的鱗甲",
-    "type": "arm"
-  },
-  "amr_old_leather": {
-    "n": "古老的皮盔甲",
-    "type": "arm"
-  },
-  "amr_old_robe": {
-    "n": "古老的長袍",
-    "type": "arm"
-  },
-  "amr_darkelf": {
-    "n": "黑暗妖精鱗甲",
-    "type": "arm"
-  },
-  "arm_bluepirate_armor": {
-    "n": "藍海賊皮盔甲",
-    "type": "arm"
-  },
-  "arm_103": {
-    "n": "小盾牌",
-    "type": "arm"
-  },
-  "shd_elf": {
-    "n": "精靈盾牌",
-    "type": "arm"
-  },
-  "arm_104": {
-    "n": "阿克海盾牌",
-    "type": "arm"
-  },
-  "arm_105": {
-    "n": "大盾牌",
-    "type": "arm"
-  },
-  "shd_gnome": {
-    "n": "侏儒圓盾",
-    "type": "arm"
-  },
-  "arm_106": {
-    "n": "反射之盾",
-    "type": "arm"
-  },
-  "arm_107": {
-    "n": "伊娃之盾",
-    "type": "arm"
-  },
-  "arm_108": {
-    "n": "塔盾",
-    "type": "arm"
-  },
-  "arm_109": {
-    "n": "木盾",
-    "type": "arm"
-  },
-  "arm_110": {
-    "n": "銀騎士之盾",
-    "type": "arm"
-  },
-  "arm_111": {
-    "n": "皮盾牌",
-    "type": "arm"
-  },
-  "arm_112": {
-    "n": "銀釘皮盾",
-    "type": "arm"
-  },
-  "shd_bone": {
-    "n": "骷髏盾牌",
-    "type": "arm"
-  },
-  "shd_redknight": {
-    "n": "紅騎士盾牌",
-    "type": "arm"
-  },
-  "arm_113": {
-    "n": "鋼鐵盾牌",
-    "type": "arm"
-  },
-  "arm_114": {
-    "n": "受詛咒的魔法書",
-    "type": "arm"
-  },
-  "arm_115": {
-    "n": "魔法能量之書",
-    "type": "arm"
-  },
-  "shd_rasta": {
-    "n": "拉斯塔巴德圓盾",
-    "type": "arm"
-  },
-  "shd_priest_book": {
-    "n": "神官魔法書",
-    "type": "arm"
-  },
-  "shd_phantom_eye": {
-    "n": "幻象眼魔的心眼",
-    "type": "arm",
-    "legend": true
-  },
-  "shd_death": {
-    "n": "死亡之盾",
-    "type": "arm",
-    "legend": true
-  },
-  "shd_illu_book": {
-    "n": "幻術士法書",
-    "type": "arm"
-  },
-  "arm_pride_medusa_shield": {
-    "n": "梅杜莎盾牌",
-    "type": "arm"
-  },
-  "arm_faith_shield": {
-    "n": "信念之盾",
-    "type": "arm"
-  },
-  "armguard_dragonscale": {
-    "n": "龍鱗臂甲",
-    "type": "arm"
-  },
-  "armguard_guardian": {
-    "n": "守護者臂甲",
-    "type": "arm"
-  },
-  "armguard_mage": {
-    "n": "法師臂甲",
-    "type": "arm"
-  },
-  "armguard_con": {
-    "n": "體力臂甲",
-    "type": "arm"
-  },
-  "armguard_archer": {
-    "n": "古代神射臂甲",
-    "type": "arm"
-  },
-  "armguard_fighter": {
-    "n": "古代鬥士臂甲",
-    "type": "arm"
-  },
-  "clk_elf": {
-    "n": "精靈斗篷",
-    "type": "arm"
-  },
-  "clk_oasis": {
-    "n": "歐西斯斗篷",
-    "type": "arm"
-  },
-  "arm_86": {
-    "n": "侏儒斗篷",
-    "type": "arm"
-  },
-  "arm_87": {
-    "n": "保護者斗篷",
-    "type": "arm"
-  },
-  "arm_88": {
-    "n": "隱身斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_mr": {
-    "n": "抗魔法斗篷",
-    "type": "arm"
-  },
-  "arm_89": {
-    "n": "瑪那斗篷",
-    "type": "arm"
-  },
-  "clk_dark": {
-    "n": "黑暗斗篷",
-    "type": "arm"
-  },
-  "arm_official_cloak": {
-    "n": "武官斗篷",
-    "type": "arm"
-  },
-  "clk_kingnecro": {
-    "n": "冥法軍王斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_priest": {
-    "n": "神官斗篷",
-    "type": "arm"
-  },
-  "clk_antqueen_gold": {
-    "n": "巨蟻女皇的金翅膀",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_antqueen_silver": {
-    "n": "巨蟻女皇的銀翅膀",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_marcus": {
-    "n": "馬昆斯斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_silver_light": {
-    "n": "銀光斗篷",
-    "type": "arm"
-  },
-  "clk_blacktiger": {
-    "n": "黑虎皮斗篷",
-    "type": "arm"
-  },
-  "clk_wolf": {
-    "n": "狼皮斗篷",
-    "type": "arm"
-  },
-  "clk_pride_earth": {
-    "n": "地屬性斗篷",
-    "type": "arm"
-  },
-  "clk_pride_water": {
-    "n": "水屬性斗篷",
-    "type": "arm"
-  },
-  "clk_pride_fire": {
-    "n": "火屬性斗篷",
-    "type": "arm"
-  },
-  "clk_pride_wind": {
-    "n": "風屬性斗篷",
-    "type": "arm"
-  },
-  "clk_chaos": {
-    "n": "混沌斗篷",
-    "type": "arm"
-  },
-  "clk_death": {
-    "n": "死亡斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_fallen": {
-    "n": "墮落斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_flame_blood": {
-    "n": "炎魔的血光斗篷",
-    "type": "arm",
-    "legend": true
-  },
-  "clk_warrior_corps": {
-    "n": "戰士團斗篷",
-    "type": "arm"
-  },
-  "clk_holy_corps": {
-    "n": "神聖執行團的斗篷",
-    "type": "arm"
-  },
-  "clk_dragon": {
-    "n": "龍騎士斗篷",
-    "type": "arm"
-  },
-  "clk_royal_red": {
-    "n": "紅色斗篷",
-    "type": "arm"
-  },
-  "clk_royal_majesty": {
-    "n": "君主的威嚴",
-    "type": "arm"
-  },
-  "clk_illu": {
-    "n": "幻術士斗篷",
-    "type": "arm"
-  },
-  "arm_bluepirate_cloak": {
-    "n": "藍海賊斗篷",
-    "type": "arm"
-  },
-  "tsh_tshirt": {
-    "n": "T恤",
-    "type": "arm"
-  },
-  "arm_85": {
-    "n": "精靈T恤",
-    "type": "arm"
-  },
-  "glv_glove": {
-    "n": "手套",
-    "type": "arm"
-  },
-  "glv_official": {
-    "n": "武官手套",
-    "type": "arm"
-  },
-  "glv_crystal": {
-    "n": "水晶手套",
-    "type": "arm"
-  },
-  "arm_98": {
-    "n": "腕甲",
-    "type": "arm"
-  },
-  "arm_99": {
-    "n": "力量手套",
-    "type": "arm"
-  },
-  "glv_reaper": {
-    "n": "死神之手",
-    "type": "arm"
-  },
-  "arm_100": {
-    "n": "鋼鐵手套",
-    "type": "arm"
-  },
-  "glv_dk": {
-    "n": "死亡騎士手套",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_shadowglove": {
-    "n": "影子手套",
-    "type": "arm"
-  },
-  "arm_101": {
-    "n": "克特手套",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_102": {
-    "n": "保護者手套",
-    "type": "arm"
-  },
-  "glv_baranka": {
-    "n": "巴蘭卡手套",
-    "type": "arm"
-  },
-  "glv_priest": {
-    "n": "神官手套",
-    "type": "arm"
-  },
-  "glv_demon": {
-    "n": "惡魔手套",
-    "type": "arm",
-    "legend": true
-  },
-  "glv_kingassassin": {
-    "n": "暗殺軍王手套",
-    "type": "arm",
-    "legend": true
-  },
-  "glv_dark": {
-    "n": "黑暗手套",
-    "type": "arm"
-  },
-  "glv_chaos": {
-    "n": "混沌手套",
-    "type": "arm"
-  },
-  "glv_death": {
-    "n": "死亡手套",
-    "type": "arm",
-    "legend": true
-  },
-  "glv_fallen": {
-    "n": "墮落手套",
-    "type": "arm",
-    "legend": true
-  },
-  "glv_earth_spirit": {
-    "n": "地靈手套",
-    "type": "arm"
-  },
-  "glv_wind_spirit": {
-    "n": "風靈手套",
-    "type": "arm"
-  },
-  "glv_water_spirit": {
-    "n": "水靈手套",
-    "type": "arm"
-  },
-  "glv_fire_spirit": {
-    "n": "火靈手套",
-    "type": "arm"
-  },
-  "arm_bluepirate_gloves": {
-    "n": "藍海賊手套",
-    "type": "arm"
-  },
-  "bot_short": {
-    "n": "短統靴",
-    "type": "arm"
-  },
-  "arm_90": {
-    "n": "長靴",
-    "type": "arm"
-  },
-  "bot_baless": {
-    "n": "巴列斯長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_91": {
-    "n": "皮涼鞋",
-    "type": "arm"
-  },
-  "arm_92": {
-    "n": "銀釘皮涼鞋",
-    "type": "arm"
-  },
-  "arm_93": {
-    "n": "皮長靴",
-    "type": "arm"
-  },
-  "arm_94": {
-    "n": "鋼鐵長靴",
-    "type": "arm"
-  },
-  "arm_95": {
-    "n": "深水長靴",
-    "type": "arm"
-  },
-  "bot_dk": {
-    "n": "死亡騎士長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_96": {
-    "n": "黑長者涼鞋",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_97": {
-    "n": "克特長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_shadowboots": {
-    "n": "影子長靴",
-    "type": "arm"
-  },
-  "bot_official": {
-    "n": "武官長靴",
-    "type": "arm"
-  },
-  "bot_baranka": {
-    "n": "巴蘭卡長靴",
-    "type": "arm"
-  },
-  "bot_priest": {
-    "n": "神官長靴",
-    "type": "arm"
-  },
-  "bot_demon": {
-    "n": "惡魔長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "bot_kingbeast": {
-    "n": "魔獸軍王長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "bot_rasta": {
-    "n": "拉斯塔巴德長靴",
-    "type": "arm"
-  },
-  "bot_darkdweller": {
-    "n": "黑暗棲林者長靴",
-    "type": "arm"
-  },
-  "bot_dark": {
-    "n": "黑暗長靴",
-    "type": "arm"
-  },
-  "bot_fallen": {
-    "n": "墮落長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "bot_divine_will": {
-    "n": "神意長靴",
-    "type": "arm"
-  },
-  "bot_courage": {
-    "n": "勇氣長靴",
-    "type": "arm"
-  },
-  "bot_sephia": {
-    "n": "賽菲亞長靴",
-    "type": "arm"
-  },
-  "bot_mana": {
-    "n": "瑪那長靴",
-    "type": "arm"
-  },
-  "bot_darkelf": {
-    "n": "黑暗妖精涼鞋",
-    "type": "arm"
-  },
-  "bot_icequeen_charm": {
-    "n": "冰之女王魅力涼鞋",
-    "type": "arm",
-    "legend": true
-  },
-  "bot_frost": {
-    "n": "寒冰長靴",
-    "type": "arm",
-    "legend": true
-  },
-  "arm_bluepirate_boots": {
-    "n": "藍海賊長靴",
-    "type": "arm"
-  },
-  "acc_116": {
-    "n": "傳送控制戒指",
-    "type": "acc"
-  },
-  "acc_117": {
-    "n": "變形控制戒指",
-    "type": "acc"
-  },
-  "acc_summon_ctrl": {
-    "n": "召喚控制戒指",
-    "type": "acc"
-  },
-  "rng_earth": {
-    "n": "地靈戒指",
-    "type": "acc"
-  },
-  "rng_water": {
-    "n": "水靈戒指",
-    "type": "acc"
-  },
-  "rng_wind": {
-    "n": "風靈戒指",
-    "type": "acc"
-  },
-  "rng_fire": {
-    "n": "火靈戒指",
-    "type": "acc"
-  },
-  "rng_mr": {
-    "n": "抗魔戒指",
-    "type": "acc"
-  },
-  "acc_demonbane": {
-    "n": "滅魔戒指",
-    "type": "acc"
-  },
-  "acc_doro": {
-    "n": "多羅戒指",
-    "type": "acc"
-  },
-  "acc_118": {
-    "n": "守護戒指",
-    "type": "acc"
-  },
-  "acc_119": {
-    "n": "長者戒指",
-    "type": "acc"
-  },
-  "acc_laia_ring": {
-    "n": "蕾雅戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_sima_ring": {
-    "n": "西瑪戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_jenis_ring": {
-    "n": "潔尼斯戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_thebes_horus": {
-    "n": "底比斯賀洛斯戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_thebes_anubis": {
-    "n": "底比斯阿努比斯戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_bear_ring": {
-    "n": "熊戒指",
-    "type": "acc"
-  },
-  "acc_abyss_ring": {
-    "n": "深淵戒指",
-    "type": "acc"
-  },
-  "acc_ring_magic": {
-    "n": "魔力戒指",
-    "type": "acc"
-  },
-  "acc_ring_str": {
-    "n": "力量戒指",
-    "type": "acc"
-  },
-  "acc_ring_dex": {
-    "n": "敏捷戒指",
-    "type": "acc"
-  },
-  "acc_ring_int": {
-    "n": "知識戒指",
-    "type": "acc"
-  },
-  "acc_royal_guard": {
-    "n": "守護者的戒指",
-    "type": "acc"
-  },
-  "acc_curse_diamond_ring": {
-    "n": "受詛咒的鑽石戒指",
-    "type": "acc"
-  },
-  "acc_curse_ruby_ring": {
-    "n": "受詛咒的紅寶石戒指",
-    "type": "acc"
-  },
-  "acc_curse_sapphire_ring": {
-    "n": "受詛咒的藍寶石戒指",
-    "type": "acc"
-  },
-  "acc_curse_emerald_ring": {
-    "n": "受詛咒的綠寶石戒指",
-    "type": "acc"
-  },
-  "rng_harpy": {
-    "n": "哈維戒指",
-    "type": "acc"
-  },
-  "amu_str": {
-    "n": "力量項鍊",
-    "type": "acc"
-  },
-  "acc_120": {
-    "n": "敏捷項鍊",
-    "type": "acc"
-  },
-  "acc_121": {
-    "n": "體質項鍊",
-    "type": "acc"
-  },
-  "amu_int": {
-    "n": "智力項鍊",
-    "type": "acc"
-  },
-  "acc_122": {
-    "n": "精神項鍊",
-    "type": "acc"
-  },
-  "amu_cha": {
-    "n": "魅力項鍊",
-    "type": "acc"
-  },
-  "amu_iris": {
-    "n": "艾莉絲項鍊",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_123": {
-    "n": "妖魔戰士項鍊",
-    "type": "acc"
-  },
-  "acc_124": {
-    "n": "守護項鍊",
-    "type": "acc"
-  },
-  "acc_125": {
-    "n": "長老項鍊",
-    "type": "acc"
-  },
-  "acc_126": {
-    "n": "抗魔項鍊",
-    "type": "acc"
-  },
-  "acc_orin_amulet": {
-    "n": "歐林的項鍊",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_laia_amulet": {
-    "n": "蕾雅項鍊",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_darkmage_amulet": {
-    "n": "黑法師項鍊",
-    "type": "acc"
-  },
-  "acc_summoner_amulet": {
-    "n": "喚獸師項鍊",
-    "type": "acc"
-  },
-  "acc_law_king_chain": {
-    "n": "法令軍王之鍊",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_necro_king_ring": {
-    "n": "冥法軍王之戒",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_curse_red": {
-    "n": "詛咒的紅色耳環",
-    "type": "acc"
-  },
-  "acc_curse_blue": {
-    "n": "詛咒的藍色耳環",
-    "type": "acc"
-  },
-  "acc_curse_green": {
-    "n": "詛咒的綠色耳環",
-    "type": "acc"
-  },
-  "acc_purify_earring": {
-    "n": "淨化之耳環",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_0": {
-    "n": "冰之女王的耳環 Lv0",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_1": {
-    "n": "冰之女王的耳環 Lv1",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_2": {
-    "n": "冰之女王的耳環 Lv2",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_3": {
-    "n": "冰之女王的耳環 Lv3",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_4": {
-    "n": "冰之女王的耳環 Lv4",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_5": {
-    "n": "冰之女王的耳環 Lv5",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_6": {
-    "n": "冰之女王的耳環 Lv6",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_7": {
-    "n": "冰之女王的耳環 Lv7",
-    "type": "acc"
-  },
-  "acc_icequeen_ear_8_str": {
-    "n": "冰之女王的耳環 Lv8 力量",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_icequeen_ear_8_dex": {
-    "n": "冰之女王的耳環 Lv8 敏捷",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_icequeen_ear_8_int": {
-    "n": "冰之女王的耳環 Lv8 智力",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_icequeen_ear_8_con": {
-    "n": "冰之女王的耳環 Lv8 體質",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_icequeen_ear_8_wis": {
-    "n": "冰之女王的耳環 Lv8 精神",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_icequeen_ear_8_cha": {
-    "n": "冰之女王的耳環 Lv8 魅力",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_ear_wisdom": {
-    "n": "智慧耳環",
-    "type": "acc"
-  },
-  "acc_ear_truth": {
-    "n": "真實耳環",
-    "type": "acc"
-  },
-  "acc_ear_dominate": {
-    "n": "支配耳環",
-    "type": "acc"
-  },
-  "acc_ear_rage": {
-    "n": "憤怒耳環",
-    "type": "acc"
-  },
-  "acc_ear_brave": {
-    "n": "勇猛耳環",
-    "type": "acc"
-  },
-  "acc_ear_undead": {
-    "n": "不死耳環",
-    "type": "acc"
-  },
-  "acc_ear_passion": {
-    "n": "熱情耳環",
-    "type": "acc"
-  },
-  "acc_ear_honor": {
-    "n": "名譽耳環",
-    "type": "acc"
-  },
-  "acc_ear_tolerance": {
-    "n": "寬容耳環",
-    "type": "acc"
-  },
-  "acc_ear_dance": {
-    "n": "舞動耳環",
-    "type": "acc"
-  },
-  "acc_ear_twin": {
-    "n": "雙子耳環",
-    "type": "acc"
-  },
-  "acc_ear_festival": {
-    "n": "慶典耳環",
-    "type": "acc"
-  },
-  "acc_ear_peak": {
-    "n": "絕頂耳環",
-    "type": "acc"
-  },
-  "acc_ear_rampage": {
-    "n": "暴走耳環",
-    "type": "acc"
-  },
-  "acc_ear_phantom": {
-    "n": "幻魔耳環",
-    "type": "acc"
-  },
-  "acc_ear_clan": {
-    "n": "族群耳環",
-    "type": "acc"
-  },
-  "acc_ear_slave": {
-    "n": "奴隸耳環",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_127": {
-    "n": "老舊的身體腰帶",
-    "type": "acc"
-  },
-  "acc_128": {
-    "n": "老舊的精神腰帶",
-    "type": "acc"
-  },
-  "acc_129": {
-    "n": "老舊的靈魂腰帶",
-    "type": "acc"
-  },
-  "blt_body": {
-    "n": "身體腰帶",
-    "type": "acc"
-  },
-  "blt_dark": {
-    "n": "黑暗腰帶",
-    "type": "acc"
-  },
-  "acc_130": {
-    "n": "精神腰帶",
-    "type": "acc"
-  },
-  "acc_131": {
-    "n": "靈魂腰帶",
-    "type": "acc"
-  },
-  "acc_132": {
-    "n": "多羅皮帶",
-    "type": "acc"
-  },
-  "acc_133": {
-    "n": "歐吉皮帶",
-    "type": "acc"
-  },
-  "acc_134": {
-    "n": "勇敢皮帶",
-    "type": "acc"
-  },
-  "acc_135": {
-    "n": "光明身體腰帶",
-    "type": "acc"
-  },
-  "acc_136": {
-    "n": "光明精神腰帶",
-    "type": "acc"
-  },
-  "acc_137": {
-    "n": "光明靈魂腰帶",
-    "type": "acc"
-  },
-  "acc_138": {
-    "n": "守護皮帶",
-    "type": "acc"
-  },
-  "blt_mr": {
-    "n": "抗魔皮帶",
-    "type": "acc"
-  },
-  "blt_titan": {
-    "n": "泰坦皮帶",
-    "type": "acc"
-  },
-  "blt_giant_ring": {
-    "n": "古代巨人戒指",
-    "type": "acc",
-    "legend": true
-  },
-  "blt_thebes_osiris": {
-    "n": "底比斯歐西里斯腰帶",
-    "type": "acc",
-    "legend": true
-  },
-  "acc_belt_fire": {
-    "n": "火精靈的皮帶",
-    "type": "acc"
-  },
-  "acc_belt_water": {
-    "n": "水精靈的皮帶",
-    "type": "acc"
-  },
-  "acc_belt_earth": {
-    "n": "地精靈的皮帶",
-    "type": "acc"
-  },
-  "acc_belt_wind": {
-    "n": "風精靈的皮帶",
-    "type": "acc"
-  },
-  "pet_fang_hound": {
-    "n": "獵犬之牙",
-    "type": "acc"
-  },
-  "pet_fang_steel": {
-    "n": "鋼鐵之牙",
-    "type": "acc"
-  },
-  "pet_fang_ruin": {
-    "n": "破滅之牙",
-    "type": "acc"
-  },
-  "pet_fang_victory": {
-    "n": "勝利之牙",
-    "type": "acc"
-  },
-  "doll_野狼寶寶": {
-    "n": "魔法娃娃：野狼寶寶",
-    "type": "acc"
-  },
-  "doll_史巴托": {
-    "n": "魔法娃娃：史巴托",
-    "type": "acc"
-  },
-  "doll_奎斯坦修": {
-    "n": "魔法娃娃：奎斯坦修",
-    "type": "acc"
-  },
-  "doll_稻草人": {
-    "n": "魔法娃娃：稻草人",
-    "type": "acc"
-  },
-  "doll_蛇女": {
-    "n": "魔法娃娃：蛇女",
-    "type": "acc"
-  },
-  "doll_肥肥": {
-    "n": "魔法娃娃：肥肥",
-    "type": "acc"
-  },
-  "doll_希爾黛斯": {
-    "n": "魔法娃娃：希爾黛斯",
-    "type": "acc"
-  },
-  "doll_石頭高崙": {
-    "n": "魔法娃娃：石頭高崙",
-    "type": "acc"
-  },
-  "doll_長老": {
-    "n": "魔法娃娃：長老",
-    "type": "acc"
-  },
-  "doll_雪怪": {
-    "n": "魔法娃娃：雪怪",
-    "type": "acc"
-  },
-  "doll_亞力安": {
-    "n": "魔法娃娃：亞力安",
-    "type": "acc"
-  },
-  "doll_美人魚": {
-    "n": "魔法娃娃：美人魚",
-    "type": "acc"
-  },
-  "doll_小思克巴": {
-    "n": "魔法娃娃：小思克巴",
-    "type": "acc"
-  },
-  "doll_巨人": {
-    "n": "魔法娃娃：巨人",
-    "type": "acc"
-  },
-  "doll_王子": {
-    "n": "魔法娃娃：王子",
-    "type": "acc"
-  },
-  "doll_公主": {
-    "n": "魔法娃娃：公主",
-    "type": "acc"
-  },
-  "doll_男騎士": {
-    "n": "魔法娃娃：男騎士",
-    "type": "acc"
-  },
-  "doll_女騎士": {
-    "n": "魔法娃娃：女騎士",
-    "type": "acc"
-  },
-  "doll_男妖精": {
-    "n": "魔法娃娃：男妖精",
-    "type": "acc"
-  },
-  "doll_女妖精": {
-    "n": "魔法娃娃：女妖精",
-    "type": "acc"
-  },
-  "doll_男法師": {
-    "n": "魔法娃娃：男法師",
-    "type": "acc"
-  },
-  "doll_女法師": {
-    "n": "魔法娃娃：女法師",
-    "type": "acc"
-  },
-  "doll_男黑暗妖精": {
-    "n": "魔法娃娃：男黑暗妖精",
-    "type": "acc"
-  },
-  "doll_女黑暗妖精": {
-    "n": "魔法娃娃：女黑暗妖精",
-    "type": "acc"
-  },
-  "doll_男龍騎士": {
-    "n": "魔法娃娃：男龍騎士",
-    "type": "acc"
-  },
-  "doll_女龍騎士": {
-    "n": "魔法娃娃：女龍騎士",
-    "type": "acc"
-  },
-  "doll_男幻術士": {
-    "n": "魔法娃娃：男幻術士",
-    "type": "acc"
-  },
-  "doll_女幻術士": {
-    "n": "魔法娃娃：女幻術士",
-    "type": "acc"
-  },
-  "doll_思克巴女皇": {
-    "n": "魔法娃娃：思克巴女皇",
-    "type": "acc"
-  },
-  "doll_阿魯巴": {
-    "n": "魔法娃娃：阿魯巴",
-    "type": "acc"
-  },
-  "doll_墮落": {
-    "n": "魔法娃娃：墮落",
-    "type": "acc"
-  },
-  "doll_變形怪": {
-    "n": "魔法娃娃：變形怪",
-    "type": "acc"
-  },
-  "doll_飛龍": {
-    "n": "魔法娃娃：飛龍",
-    "type": "acc"
-  },
-  "doll_莫提斯": {
-    "n": "魔法娃娃：莫提斯",
-    "type": "acc"
-  },
-  "doll_黑長者": {
-    "n": "魔法娃娃：黑長者",
-    "type": "acc"
-  },
-  "doll_獨眼巨人": {
-    "n": "魔法娃娃：獨眼巨人",
-    "type": "acc"
-  },
-  "doll_艾莉絲": {
-    "n": "魔法娃娃：艾莉絲",
-    "type": "acc"
-  },
-  "doll_木乃伊王": {
-    "n": "魔法娃娃：木乃伊王",
-    "type": "acc"
-  },
-  "doll_死亡騎士": {
-    "n": "魔法娃娃：死亡騎士",
-    "type": "acc"
-  },
-  "doll_巴風特": {
-    "n": "魔法娃娃：巴風特",
-    "type": "acc"
-  },
-  "doll_吸血鬼": {
-    "n": "魔法娃娃：吸血鬼",
-    "type": "acc"
-  },
-  "doll_克特": {
-    "n": "魔法娃娃：克特",
-    "type": "acc"
-  },
-  "doll_冰之女王": {
-    "n": "魔法娃娃：冰之女王",
-    "type": "acc"
-  },
-  "doll_巴蘭卡": {
-    "n": "魔法娃娃：巴蘭卡",
-    "type": "acc"
-  },
-  "doll_巫妖": {
-    "n": "魔法娃娃：巫妖",
-    "type": "acc"
-  },
-  "doll_安塔瑞斯": {
-    "n": "魔法娃娃：安塔瑞斯",
-    "type": "acc",
-    "legend": true
-  },
-  "doll_法利昂": {
-    "n": "魔法娃娃：法利昂",
-    "type": "acc",
-    "legend": true
-  },
-  "doll_林德拜爾": {
-    "n": "魔法娃娃：林德拜爾",
-    "type": "acc",
-    "legend": true
-  },
-  "doll_巴拉卡斯": {
-    "n": "魔法娃娃：巴拉卡斯",
-    "type": "acc",
-    "legend": true
-  },
-  "doll_bag": {
-    "n": "魔法娃娃的袋子",
-    "type": "misc"
-  },
-  "doll_box_high": {
-    "n": "高級魔法娃娃的盒子",
-    "type": "misc"
-  },
-  "potion_heal": {
-    "n": "紅色藥水",
-    "type": "use"
-  },
-  "potion_strong": {
-    "n": "橙色藥水",
-    "type": "use"
-  },
-  "potion_ult": {
-    "n": "白色藥水",
-    "type": "use"
-  },
-  "potion_haste": {
-    "n": "自我加速藥水",
-    "type": "use"
-  },
-  "potion_blue": {
-    "n": "藍色藥水",
-    "type": "use"
-  },
-  "potion_brave": {
-    "n": "勇敢藥水",
-    "type": "use"
-  },
-  "new_item_139": {
-    "n": "精靈餅乾",
-    "type": "use"
-  },
-  "new_item_140": {
-    "n": "慎重藥水",
-    "type": "use"
-  },
-  "new_item_141": {
-    "n": "安特的水果",
-    "type": "use"
-  },
-  "new_item_142": {
-    "n": "哨子",
-    "type": "use"
-  },
-  "new_item_143": {
-    "n": "肉",
-    "type": "use"
-  },
-  "scroll_poly": {
-    "n": "變形卷軸",
-    "type": "use"
-  },
-  "scroll_magicbarrier": {
-    "n": "魔法卷軸(魔法屏障)",
-    "type": "use"
-  },
-  "scroll_teleport": {
-    "n": "瞬間移動卷軸",
-    "type": "use"
-  },
-  "scroll_revive": {
-    "n": "復活卷軸",
-    "type": "use"
-  },
-  "scroll_weapon": {
-    "n": "對武器施法的卷軸",
-    "type": "use"
-  },
-  "scroll_armor": {
-    "n": "對盔甲施法的卷軸",
-    "type": "use"
-  },
-  "scroll_weapon_b": {
-    "n": "祝福的 對武器施法的卷軸",
-    "type": "use"
-  },
-  "scroll_armor_b": {
-    "n": "祝福的 對盔甲施法的卷軸",
-    "type": "use"
-  },
-  "scroll_weapon_c": {
-    "n": "詛咒的 對武器施法的卷軸",
-    "type": "use"
-  },
-  "scroll_armor_c": {
-    "n": "詛咒的 對盔甲施法的卷軸",
-    "type": "use"
-  },
-  "scroll_acc": {
-    "n": "對飾品施法的卷軸",
-    "type": "use"
-  },
-  "candle": {
-    "n": "回憶蠟燭",
-    "type": "use"
-  },
-  "panacea_str": {
-    "n": "萬能藥(STR)",
-    "type": "use"
-  },
-  "panacea_dex": {
-    "n": "萬能藥(DEX)",
-    "type": "use"
-  },
-  "panacea_con": {
-    "n": "萬能藥(CON)",
-    "type": "use"
-  },
-  "panacea_int": {
-    "n": "萬能藥(INT)",
-    "type": "use"
-  },
-  "panacea_wis": {
-    "n": "萬能藥(WIS)",
-    "type": "use"
-  },
-  "panacea_cha": {
-    "n": "萬能藥(CHA)",
-    "type": "use"
-  },
-  "panacea_white": {
-    "n": "純白的萬能藥",
-    "type": "use"
-  },
-  "new_item_bless_wpn": {
-    "n": "賦予武器祝福卷軸",
-    "type": "misc"
-  },
-  "new_item_bless_arm": {
-    "n": "賦予盔甲祝福卷軸",
-    "type": "misc"
-  },
-  "new_item_bless_acc": {
-    "n": "賦予飾品祝福卷軸",
-    "type": "misc"
-  },
-  "new_item_uncurse": {
-    "n": "解除詛咒的卷軸",
-    "type": "misc"
-  },
-  "new_item_collar_husky": {
-    "n": "項圈 (哈士奇)",
-    "type": "misc"
-  },
-  "new_item_238": {
-    "n": "項圈 (牧羊犬)",
-    "type": "misc"
-  },
-  "new_item_184": {
-    "n": "項圈 (杜賓狗)",
-    "type": "misc"
-  },
-  "new_item_185": {
-    "n": "項圈 (狼)",
-    "type": "misc"
-  },
-  "new_collar_rabbit": {
-    "n": "項圈 (暴走兔)",
-    "type": "misc"
-  },
-  "new_collar_fox": {
-    "n": "項圈 (狐狸)",
-    "type": "misc"
-  },
-  "new_collar_beagle": {
-    "n": "項圈 (小獵犬)",
-    "type": "misc"
-  },
-  "new_collar_stbernard": {
-    "n": "項圈 (聖伯納)",
-    "type": "misc"
-  },
-  "new_fruit_rabbit": {
-    "n": "進化果實：暴走兔",
-    "type": "use"
-  },
-  "new_fruit_fox": {
-    "n": "進化果實：狐狸",
-    "type": "use"
-  },
-  "new_fruit_beagle": {
-    "n": "進化果實：小獵犬",
-    "type": "use"
-  },
-  "new_fruit_stbernard": {
-    "n": "進化果實：聖伯納",
-    "type": "use"
-  },
-  "item_soul_orb": {
-    "n": "靈魂之球",
-    "type": "misc"
-  },
-  "new_phoenix_heart": {
-    "n": "不死鳥之心",
-    "type": "mat"
-  },
-  "item_dk_insignia": {
-    "n": "死亡騎士之印記",
-    "type": "misc"
-  },
-  "item_dragon_egg": {
-    "n": "幼龍蛋",
-    "type": "misc"
-  },
-  "item_hatin_diary": {
-    "n": "黑暗哈汀的日記本",
-    "type": "misc"
-  },
-  "item_olin_diary": {
-    "n": "歐林的日記本",
-    "type": "misc"
-  },
-  "sherine_crystal": {
-    "n": "席琳結晶",
-    "type": "misc"
-  },
-  "item_blueflute": {
-    "n": "藍色長笛",
-    "type": "mat"
-  },
-  "item_ancientkey": {
-    "n": "古代鑰匙",
-    "type": "mat"
-  },
-  "item_nightvision": {
-    "n": "夜之視野",
-    "type": "mat"
-  },
-  "item_dragon_claw": {
-    "n": "飛龍的爪子",
-    "type": "mat"
-  },
-  "item_lizard_horn": {
-    "n": "蜥蜴的角",
-    "type": "mat"
-  },
-  "item_crystal_ball": {
-    "n": "水晶球",
-    "type": "mat"
-  },
-  "item_orc_amulet": {
-    "n": "妖魔戰士護身符",
-    "type": "mat"
-  },
-  "item_death_oath": {
-    "n": "死亡誓約",
-    "type": "mat"
-  },
-  "item_orc_elder_head": {
-    "n": "妖魔長老首級",
-    "type": "mat"
-  },
-  "item_yeti_head": {
-    "n": "雪怪首級",
-    "type": "mat"
-  },
-  "item_mastery_proof": {
-    "n": "精通之證",
-    "type": "mat"
-  },
-  "new_item_144": {
-    "n": "夏洛伯之爪",
-    "type": "mat"
-  },
-  "new_item_196": {
-    "n": "古老的交易文件",
-    "type": "mat"
-  },
-  "new_item_198": {
-    "n": "黑騎士的誓約",
-    "type": "mat"
-  },
-  "new_item_145": {
-    "n": "阿吐巴圖騰",
-    "type": "mat"
-  },
-  "new_item_146": {
-    "n": "那魯加圖騰",
-    "type": "mat"
-  },
-  "new_item_147": {
-    "n": "都達瑪拉圖騰",
-    "type": "mat"
-  },
-  "new_item_148": {
-    "n": "甘地圖騰",
-    "type": "mat"
-  },
-  "new_item_149": {
-    "n": "羅孚圖騰",
-    "type": "mat"
-  },
-  "new_item_150": {
-    "n": "魔法寶石",
-    "type": "mat"
-  },
-  "new_item_151": {
-    "n": "鑽石",
-    "type": "mat"
-  },
-  "new_item_152": {
-    "n": "品質鑽石",
-    "type": "mat"
-  },
-  "new_item_153": {
-    "n": "高品質鑽石",
-    "type": "mat"
-  },
-  "new_item_154": {
-    "n": "綠寶石",
-    "type": "mat"
-  },
-  "new_item_155": {
-    "n": "品質綠寶石",
-    "type": "mat"
-  },
-  "new_item_156": {
-    "n": "高品質綠寶石",
-    "type": "mat"
-  },
-  "new_item_157": {
-    "n": "紅寶石",
-    "type": "mat"
-  },
-  "new_item_158": {
-    "n": "品質紅寶石",
-    "type": "mat"
-  },
-  "new_item_159": {
-    "n": "高品質紅寶石",
-    "type": "mat"
-  },
-  "new_item_160": {
-    "n": "藍寶石",
-    "type": "mat"
-  },
-  "new_item_161": {
-    "n": "品質藍寶石",
-    "type": "mat"
-  },
-  "new_item_162": {
-    "n": "高品質藍寶石",
-    "type": "mat"
-  },
-  "new_item_163": {
-    "n": "潘的鬃毛",
-    "type": "mat"
-  },
-  "new_item_164": {
-    "n": "粗糙的米索莉塊",
-    "type": "mat"
-  },
-  "new_item_165": {
-    "n": "元素石",
-    "type": "mat"
-  },
-  "new_item_166": {
-    "n": "蘑菇汁",
-    "type": "mat"
-  },
-  "new_item_167": {
-    "n": "食人巨魔的血",
-    "type": "mat"
-  },
-  "new_item_168": {
-    "n": "線",
-    "type": "mat"
-  },
-  "new_item_169": {
-    "n": "純粹的米索莉塊",
-    "type": "mat"
-  },
-  "new_item_170": {
-    "n": "精靈粉末",
-    "type": "mat"
-  },
-  "new_item_171": {
-    "n": "芮克妮的網",
-    "type": "mat"
-  },
-  "new_item_172": {
-    "n": "安特的樹皮",
-    "type": "mat"
-  },
-  "new_item_173": {
-    "n": "奧里哈魯根",
-    "type": "mat"
-  },
-  "new_item_174": {
-    "n": "米索莉線",
-    "type": "mat"
-  },
-  "new_item_175": {
-    "n": "芮克妮的蛻皮",
-    "type": "mat"
-  },
-  "new_item_176": {
-    "n": "魔法笛子",
-    "type": "mat"
-  },
-  "new_item_177": {
-    "n": "米索莉金屬板",
-    "type": "mat"
-  },
-  "new_item_178": {
-    "n": "奧里哈魯根金屬板",
-    "type": "mat"
-  },
-  "new_item_179": {
-    "n": "皮革",
-    "type": "mat"
-  },
-  "new_item_180": {
-    "n": "金屬塊",
-    "type": "mat"
-  },
-  "new_item_181": {
-    "n": "皮帶",
-    "type": "mat"
-  },
-  "new_item_182": {
-    "n": "高級皮革",
-    "type": "mat"
-  },
-  "new_item_183": {
-    "n": "骨頭碎片",
-    "type": "mat"
-  },
-  "new_item_186": {
-    "n": "糖果",
-    "type": "mat"
-  },
-  "new_item_187": {
-    "n": "藍色布料",
-    "type": "mat"
-  },
-  "new_item_188": {
-    "n": "紅色布料",
-    "type": "mat"
-  },
-  "new_item_189": {
-    "n": "白色布料",
-    "type": "mat"
-  },
-  "new_item_190": {
-    "n": "水龍鱗",
-    "type": "mat"
-  },
-  "new_item_191": {
-    "n": "地龍鱗",
-    "type": "mat"
-  },
-  "new_item_192": {
-    "n": "火龍鱗",
-    "type": "mat"
-  },
-  "new_item_193": {
-    "n": "風龍鱗",
-    "type": "mat"
-  },
-  "new_item_194": {
-    "n": "阿西塔基奧的灰燼",
-    "type": "mat"
-  },
-  "new_item_195": {
-    "n": "精靈玉",
-    "type": "mat"
-  },
-  "new_item_197": {
-    "n": "搜索狀",
-    "type": "mat"
-  },
-  "new_item_199": {
-    "n": "都達瑪拉妖魔魔法書",
-    "type": "mat"
-  },
-  "new_item_200": {
-    "n": "那魯加妖魔魔法書",
-    "type": "mat"
-  },
-  "new_item_201": {
-    "n": "甘地妖魔魔法書",
-    "type": "mat"
-  },
-  "new_item_202": {
-    "n": "阿吐巴妖魔魔法書",
-    "type": "mat"
-  },
-  "new_item_203": {
-    "n": "骷髏頭",
-    "type": "mat"
-  },
-  "new_item_204": {
-    "n": "食屍鬼的指甲",
-    "type": "mat"
-  },
-  "new_item_205": {
-    "n": "食屍鬼的牙齒",
-    "type": "mat"
-  },
-  "new_item_206": {
-    "n": "龍龜甲",
-    "type": "mat"
-  },
-  "new_item_207": {
-    "n": "生命的卷軸",
-    "type": "mat"
-  },
-  "new_item_208": {
-    "n": "蛇女之鱗",
-    "type": "mat"
-  },
-  "new_item_209": {
-    "n": "返生藥水",
-    "type": "mat"
-  },
-  "new_item_210": {
-    "n": "感謝信",
-    "type": "mat"
-  },
-  "new_item_211": {
-    "n": "村民的遺物",
-    "type": "mat"
-  },
-  "new_item_212": {
-    "n": "不死族的骨頭",
-    "type": "mat"
-  },
-  "new_item_213": {
-    "n": "受詛咒的精靈書",
-    "type": "mat"
-  },
-  "new_item_214": {
-    "n": "不死族的鑰匙",
-    "type": "mat"
-  },
-  "new_item_215": {
-    "n": "殭屍鑰匙",
-    "type": "mat"
-  },
-  "new_item_216": {
-    "n": "骷髏鑰匙",
-    "type": "mat"
-  },
-  "new_item_217": {
-    "n": "密室鑰匙",
-    "type": "mat"
-  },
-  "new_item_218": {
-    "n": "神秘水晶球",
-    "type": "mat"
-  },
-  "new_item_219": {
-    "n": "神秘魔杖",
-    "type": "mat"
-  },
-  "new_item_220": {
-    "n": "蛇女房間鑰匙",
-    "type": "mat"
-  },
-  "new_item_221": {
-    "n": "光明的鱗片",
-    "type": "mat"
-  },
-  "new_item_222": {
-    "n": "畢克斯的羽毛",
-    "type": "mat"
-  },
-  "new_item_223": {
-    "n": "畢克斯的沙漏",
-    "type": "mat"
-  },
-  "new_item_224": {
-    "n": "贖罪聖書",
-    "type": "mat"
-  },
-  "new_item_225": {
-    "n": "被偷的項鍊",
-    "type": "mat"
-  },
-  "new_item_226": {
-    "n": "被偷的戒指",
-    "type": "mat"
-  },
-  "new_item_228": {
-    "n": "污染的精靈水晶(水)",
-    "type": "mat"
-  },
-  "new_item_229": {
-    "n": "污染的精靈水晶(火)",
-    "type": "mat"
-  },
-  "new_item_230": {
-    "n": "污染的精靈水晶(地)",
-    "type": "mat"
-  },
-  "new_item_231": {
-    "n": "污染的精靈水晶(風)",
-    "type": "mat"
-  },
-  "new_item_232": {
-    "n": "邪惡蜥蜴之鱗",
-    "type": "mat"
-  },
-  "new_item_233": {
-    "n": "神秘魔力恢復藥水",
-    "type": "mat"
-  },
-  "new_item_234": {
-    "n": "神秘慎重藥水",
-    "type": "mat"
-  },
-  "new_item_235": {
-    "n": "思克巴女皇的神祕魔杖",
-    "type": "mat"
-  },
-  "new_item_236": {
-    "n": "說話之島的回憶",
-    "type": "mat"
-  },
-  "new_item_237": {
-    "n": "安特的樹枝",
-    "type": "mat"
-  },
-  "new_item_elfwing": {
-    "n": "精靈羽翼",
-    "type": "mat"
-  },
-  "new_item_mermaid_scale": {
-    "n": "人魚之鱗",
-    "type": "mat"
-  },
-  "new_item_239": {
-    "n": "潘朵拉抽獎卷",
-    "type": "misc"
-  },
-  "new_item_240": {
-    "n": "變形怪的血",
-    "type": "mat"
-  },
-  "new_item_241": {
-    "n": "王族搜索狀",
-    "type": "misc"
-  },
-  "mat_blackstone2": {
-    "n": "二級黑魔石",
-    "type": "mat"
-  },
-  "mat_blackstone3": {
-    "n": "三級黑魔石",
-    "type": "mat"
-  },
-  "mat_blackstone4": {
-    "n": "四級黑魔石",
-    "type": "mat"
-  },
-  "mat_silverore": {
-    "n": "銀礦石",
-    "type": "mat"
-  },
-  "mat_silver": {
-    "n": "銀",
-    "type": "mat"
-  },
-  "mat_unicorn_horn": {
-    "n": "神聖獨角獸之角",
-    "type": "mat"
-  },
-  "mat_wind_breath": {
-    "n": "風之氣息",
-    "type": "mat"
-  },
-  "mat_water_breath": {
-    "n": "水之氣息",
-    "type": "mat"
-  },
-  "mat_fire_breath": {
-    "n": "火之氣息",
-    "type": "mat"
-  },
-  "mat_earth_breath": {
-    "n": "土之氣息",
-    "type": "mat"
-  },
-  "mat_griffon_feather": {
-    "n": "格利芬羽毛",
-    "type": "mat"
-  },
-  "mat_moonlight_breath": {
-    "n": "月光之氣息",
-    "type": "mat"
-  },
-  "mat_holy_relic": {
-    "n": "聖地遺物",
-    "type": "mat"
-  },
-  "mat_black_blood": {
-    "n": "黑色血痕",
-    "type": "mat"
-  },
-  "mat_black_powder": {
-    "n": "黑魔法粉",
-    "type": "mat"
-  },
-  "mat_history_1": {
-    "n": "封印的歷史書第1頁",
-    "type": "mat"
-  },
-  "mat_history_2": {
-    "n": "封印的歷史書第2頁",
-    "type": "mat"
-  },
-  "mat_history_3": {
-    "n": "封印的歷史書第3頁",
-    "type": "mat"
-  },
-  "mat_history_4": {
-    "n": "封印的歷史書第4頁",
-    "type": "mat"
-  },
-  "mat_history_5": {
-    "n": "封印的歷史書第5頁",
-    "type": "mat"
-  },
-  "mat_history_6": {
-    "n": "封印的歷史書第6頁",
-    "type": "mat"
-  },
-  "mat_history_7": {
-    "n": "封印的歷史書第7頁",
-    "type": "mat"
-  },
-  "mat_history_8": {
-    "n": "封印的歷史書第8頁",
-    "type": "mat"
-  },
-  "mat_rasta_codex": {
-    "n": "拉斯塔巴德製作武器秘笈",
-    "type": "mat"
-  },
-  "mat_chimera_snake": {
-    "n": "奇美拉之皮(蛇)",
-    "type": "mat"
-  },
-  "mat_chimera_dragon": {
-    "n": "奇美拉之皮(龍)",
-    "type": "mat"
-  },
-  "mat_chimera_goat": {
-    "n": "奇美拉之皮(山羊)",
-    "type": "mat"
-  },
-  "mat_chimera_lion": {
-    "n": "奇美拉之皮(獅子)",
-    "type": "mat"
-  },
-  "mat_cursed_leather_earth": {
-    "n": "詛咒的皮革(地)",
-    "type": "mat"
-  },
-  "mat_cursed_leather_water": {
-    "n": "詛咒的皮革(水)",
-    "type": "mat"
-  },
-  "mat_cursed_leather_wind": {
-    "n": "詛咒的皮革(風)",
-    "type": "mat"
-  },
-  "mat_cursed_leather_fire": {
-    "n": "詛咒的皮革(火)",
-    "type": "mat"
-  },
-  "mat_demon_anklet_white": {
-    "n": "惡魔的白色腳鐐",
-    "type": "mat"
-  },
-  "mat_demon_anklet_black": {
-    "n": "惡魔的黑色腳鐐",
-    "type": "mat"
-  },
-  "mat_demon_anklet_red": {
-    "n": "惡魔的紅色腳鐐",
-    "type": "mat"
-  },
-  "mat_demon_anklet_blue": {
-    "n": "惡魔的藍色腳鐐",
-    "type": "mat"
-  },
-  "mat_black_mithril": {
-    "n": "黑色米索莉",
-    "type": "mat"
-  },
-  "mat_fallen_poison": {
-    "n": "墮落之毒",
-    "type": "mat"
-  },
-  "mat_fallen_hand": {
-    "n": "墮落之手",
-    "type": "mat"
-  },
-  "mat_fallen_fang": {
-    "n": "墮落之牙",
-    "type": "mat"
-  },
-  "mat_fallen_tongue": {
-    "n": "墮落之舌",
-    "type": "mat"
-  },
-  "mat_fallen_scythe": {
-    "n": "墮落鐮刀",
-    "type": "mat"
-  },
-  "mat_fallen_head": {
-    "n": "墮落首級",
-    "type": "mat"
-  },
-  "mat_soulstone_shard": {
-    "n": "靈魂石碎片",
-    "type": "mat"
-  },
-  "mat_silver_plate": {
-    "n": "銀金屬板",
-    "type": "mat"
-  },
-  "mat_blackmithril_plate": {
-    "n": "黑色米索莉金屬板",
-    "type": "mat"
-  },
-  "mat_flame_sword": {
-    "n": "炎魔之劍",
-    "type": "mat"
-  },
-  "mat_flame_claw": {
-    "n": "炎魔之爪",
-    "type": "mat"
-  },
-  "mat_flame_heart": {
-    "n": "炎魔之心",
-    "type": "mat"
-  },
-  "mat_flame_eye": {
-    "n": "炎魔之眼",
-    "type": "mat"
-  },
-  "mat_dragon_heart": {
-    "n": "飛龍之心",
-    "type": "mat"
-  },
-  "mat_golem_heart": {
-    "n": "高崙之心",
-    "type": "mat"
-  },
-  "mat_icequeen_heart": {
-    "n": "冰之女王之心",
-    "type": "mat"
-  },
-  "mat_legion_necro": {
-    "n": "冥法軍團印記",
-    "type": "mat"
-  },
-  "mat_legion_law": {
-    "n": "法令軍團印記",
-    "type": "mat"
-  },
-  "mat_legion_beast": {
-    "n": "魔獸軍團印記",
-    "type": "mat"
-  },
-  "mat_legion_assassin": {
-    "n": "暗殺軍團印記",
-    "type": "mat"
-  },
-  "mat_crest_beast": {
-    "n": "魔獸軍王徽印",
-    "type": "mat"
-  },
-  "mat_crest_law": {
-    "n": "法令軍王徽印",
-    "type": "mat"
-  },
-  "mat_crest_assassin": {
-    "n": "暗殺軍王徽印",
-    "type": "mat"
-  },
-  "mat_crest_necro": {
-    "n": "冥法軍王徽印",
-    "type": "mat"
-  },
-  "mat_rough_stone": {
-    "n": "原石碎片",
-    "type": "mat"
-  },
-  "mat_crack_core": {
-    "n": "龜裂之核",
-    "type": "mat"
-  },
-  "mat_rift_shard": {
-    "n": "時空裂痕碎片",
-    "type": "mat"
-  },
-  "mat_osiris_basic_up": {
-    "n": "歐西里斯初級寶箱碎片(上)",
-    "type": "mat"
-  },
-  "mat_osiris_basic_down": {
-    "n": "歐西里斯初級寶箱碎片(下)",
-    "type": "mat"
-  },
-  "mat_osiris_high_up": {
-    "n": "歐西里斯高級寶箱碎片(上)",
-    "type": "mat"
-  },
-  "mat_osiris_high_down": {
-    "n": "歐西里斯高級寶箱碎片(下)",
-    "type": "mat"
-  },
-  "mat_ice_crystal": {
-    "n": "冰之結晶",
-    "type": "mat"
-  },
-  "mat_chaos_head": {
-    "n": "混沌首級",
-    "type": "mat"
-  },
-  "mat_death_head": {
-    "n": "死亡首級",
-    "type": "mat"
-  },
-  "item_ancient_scroll": {
-    "n": "古代的卷軸",
-    "type": "mat"
-  },
-  "item_wind_tear": {
-    "n": "風之淚",
-    "type": "mat"
-  },
-  "item_unknown_spear": {
-    "n": "不為人知的矛",
-    "type": "mat"
-  },
-  "mat_unknown_axe": {
-    "n": "不為人知的斧",
-    "type": "mat"
-  },
-  "item_forgotten_sword": {
-    "n": "受封印 被遺忘的劍",
-    "type": "mat"
-  },
-  "item_forgotten_greatsword": {
-    "n": "受封印 被遺忘的巨劍",
-    "type": "mat"
-  },
-  "item_forgotten_xbow": {
-    "n": "受封印 被遺忘的弩槍",
-    "type": "mat"
-  },
-  "item_forgotten_scale": {
-    "n": "被遺忘的鱗甲",
-    "type": "mat"
-  },
-  "item_forgotten_leather": {
-    "n": "被遺忘的皮盔甲",
-    "type": "mat"
-  },
-  "item_forgotten_robe": {
-    "n": "被遺忘的長袍",
-    "type": "mat"
-  },
-  "item_forgotten_plate": {
-    "n": "被遺忘的金屬盔甲",
-    "type": "mat"
-  },
-  "item_king_key": {
-    "n": "軍王的鑰匙",
-    "type": "misc"
-  },
-  "item_shadow_temple_key": {
-    "n": "暗影神殿鑰匙",
-    "type": "misc"
-  },
-  "item_fallen_key": {
-    "n": "墮落鑰匙",
-    "type": "misc"
-  },
-  "item_thebes_altar_key": {
-    "n": "底比斯歐西里斯祭壇鑰匙",
-    "type": "misc"
-  },
-  "item_osiris_box_basic": {
-    "n": "上鎖的歐西里斯初級寶箱",
-    "type": "misc"
-  },
-  "item_osiris_box_high": {
-    "n": "上鎖的歐西里斯高級寶箱",
-    "type": "misc"
-  },
-  "item_dantes_letter": {
-    "n": "丹特斯的召書",
-    "type": "misc"
-  },
-  "item_elf_whisper": {
-    "n": "精靈的私語",
-    "type": "misc"
-  },
-  "item_ancient_book": {
-    "n": "古代黑妖之秘笈",
-    "type": "misc"
-  },
-  "item_sealed_intel": {
-    "n": "密封的情報書",
-    "type": "misc"
-  },
-  "item_spy_report": {
-    "n": "間諜報告書",
-    "type": "misc"
-  },
-  "item_chaos_key": {
-    "n": "混沌鑰匙",
-    "type": "misc"
-  },
-  "item_royal_order": {
-    "n": "調職命令書",
-    "type": "misc"
-  },
-  "item_lost_soul": {
-    "n": "失去光明的靈魂",
-    "type": "misc"
-  },
-  "item_demon_search": {
-    "n": "妖魔搜索文件",
-    "type": "misc"
-  },
-  "item_demon_spy": {
-    "n": "妖魔密使首領間諜書",
-    "type": "misc"
-  },
-  "item_yeti_heart": {
-    "n": "雪怪之心",
-    "type": "misc"
-  },
-  "item_soulfire_ash": {
-    "n": "靈魂之火灰燼",
-    "type": "misc"
-  },
-  "quest_ring_darkdweller": {
-    "n": "黑暗棲林者戒指",
-    "type": "misc"
-  },
-  "quest_ring_beasttamer": {
-    "n": "馴獸師戒指",
-    "type": "misc"
-  },
-  "quest_ring_elfcaller": {
-    "n": "精靈使戒指",
-    "type": "misc"
-  },
-  "quest_ring_summoner": {
-    "n": "喚獸師戒指",
-    "type": "misc"
-  },
-  "quest_ring_darkmage": {
-    "n": "黑法師戒指",
-    "type": "misc"
-  },
-  "item_ant_fruit": {
-    "n": "污濁安特的水果",
-    "type": "misc"
-  },
-  "item_ant_branch": {
-    "n": "污濁安特的樹枝",
-    "type": "misc"
-  },
-  "item_ant_bark": {
-    "n": "污濁安特的樹皮",
-    "type": "misc"
-  },
-  "item_elmore_heart": {
-    "n": "艾爾摩將軍之心",
-    "type": "misc"
-  },
-  "item_time_orb": {
-    "n": "完成的時間水晶球",
-    "type": "misc"
-  },
-  "item_wyvern_blood": {
-    "n": "翼龍之血",
-    "type": "misc"
-  },
-  "item_son_letter": {
-    "n": "兒子的信",
-    "type": "misc"
-  },
-  "item_son_remains": {
-    "n": "兒子的遺骸",
-    "type": "misc"
-  },
-  "item_son_portrait": {
-    "n": "兒子的肖像畫",
-    "type": "misc"
-  },
-  "item_cyclops_blood": {
-    "n": "獨眼巨人的血",
-    "type": "misc"
-  },
-  "bk_heal1": {
-    "n": "魔法書(初級治癒術)",
-    "type": "book"
-  },
-  "bk_sunlight": {
-    "n": "魔法書(日光術)",
-    "type": "book"
-  },
-  "bk_shield": {
-    "n": "魔法書(保護罩)",
-    "type": "book"
-  },
-  "bk_lightarrow": {
-    "n": "魔法書(光箭)",
-    "type": "book"
-  },
-  "bk_teleport": {
-    "n": "魔法書(指定傳送)",
-    "type": "book"
-  },
-  "bk_icearrow": {
-    "n": "魔法書(冰箭)",
-    "type": "book"
-  },
-  "bk_windblade": {
-    "n": "魔法書(風刃)",
-    "type": "book"
-  },
-  "bk_holy_wpn": {
-    "n": "魔法書(神聖武器)",
-    "type": "book"
-  },
-  "bk_antidote": {
-    "n": "魔法書(解毒術)",
-    "type": "book"
-  },
-  "bk_cold_shiver": {
-    "n": "魔法書(寒冷戰慄)",
-    "type": "book"
-  },
-  "bk_poison_curse": {
-    "n": "魔法書(毒咒)",
-    "type": "book"
-  },
-  "bk_ench_wpn": {
-    "n": "魔法書(擬似魔法武器)",
-    "type": "book"
-  },
-  "bk_reveal": {
-    "n": "魔法書(無所遁形術)",
-    "type": "book"
-  },
-  "bk_load_up": {
-    "n": "魔法書(負重強化)",
-    "type": "book"
-  },
-  "bk_firearrow": {
-    "n": "魔法書(火箭)",
-    "type": "book"
-  },
-  "bk_hell_fang": {
-    "n": "魔法書(地獄之牙)",
-    "type": "book"
-  },
-  "bk_aurora": {
-    "n": "魔法書(極光雷電)",
-    "type": "book"
-  },
-  "bk_undead_bane": {
-    "n": "魔法書(起死回生術)",
-    "type": "book"
-  },
-  "bk_heal_mid": {
-    "n": "魔法書(中級治癒術)",
-    "type": "book"
-  },
-  "bk_dark_blind": {
-    "n": "魔法書(闇盲咒術)",
-    "type": "book"
-  },
-  "bk_shield2": {
-    "n": "魔法書(鎧甲護持)",
-    "type": "book"
-  },
-  "bk_chill": {
-    "n": "魔法書(寒冰氣息)",
-    "type": "book"
-  },
-  "bk_energy_sense": {
-    "n": "魔法書(能量感測)",
-    "type": "book"
-  },
-  "bk_fireball": {
-    "n": "魔法書(燃燒的火球)",
-    "type": "book"
-  },
-  "bk_dex_up": {
-    "n": "魔法書(通暢氣脈術)",
-    "type": "book"
-  },
-  "bk_break": {
-    "n": "魔法書(壞物術)",
-    "type": "book"
-  },
-  "bk_vampire": {
-    "n": "魔法書(吸血鬼之吻)",
-    "type": "book"
-  },
-  "bk_slow": {
-    "n": "魔法書(緩速術)",
-    "type": "book"
-  },
-  "bk_rock_prison": {
-    "n": "魔法書(岩牢)",
-    "type": "book"
-  },
-  "bk_magic_shield": {
-    "n": "魔法書(魔法屏障)",
-    "type": "book"
-  },
-  "bk_meditation": {
-    "n": "魔法書(冥想術)",
-    "type": "book"
-  },
-  "bk_mummy_curse": {
-    "n": "魔法書(木乃伊的詛咒)",
-    "type": "book"
-  },
-  "bk_charm": {
-    "n": "魔法書(迷魅術)",
-    "type": "book"
-  },
-  "bk_thunder": {
-    "n": "魔法書(極道落雷)",
-    "type": "book"
-  },
-  "bk_heal2": {
-    "n": "魔法書(高級治癒術)",
-    "type": "book"
-  },
-  "bk_holy_light": {
-    "n": "魔法書(聖潔之光)",
-    "type": "book"
-  },
-  "bk_ice_spike": {
-    "n": "魔法書(冰錐)",
-    "type": "book"
-  },
-  "bk_mana_drain": {
-    "n": "魔法書(魔力奪取)",
-    "type": "book"
-  },
-  "bk_dark_shadow": {
-    "n": "魔法書(黑闇之影)",
-    "type": "book"
-  },
-  "bk_zombie": {
-    "n": "魔法書(造屍術)",
-    "type": "book"
-  },
-  "bk_haste_spell": {
-    "n": "魔法書(加速術)",
-    "type": "book"
-  },
-  "bk_cancel": {
-    "n": "魔法書(魔法相消術)",
-    "type": "book"
-  },
-  "bk_earthquake": {
-    "n": "魔法書(地裂術)",
-    "type": "book"
-  },
-  "bk_str_up": {
-    "n": "魔法書(體魄強健術)",
-    "type": "book"
-  },
-  "bk_bless_wpn": {
-    "n": "魔法書(祝福魔法武器)",
-    "type": "book"
-  },
-  "bk_weaken": {
-    "n": "魔法書(弱化術)",
-    "type": "book"
-  },
-  "bk_regen": {
-    "n": "魔法書(體力回復術)",
-    "type": "book"
-  },
-  "bk_greater_haste": {
-    "n": "魔法書(強力加速術)",
-    "type": "book"
-  },
-  "bk_ice_lance": {
-    "n": "魔法書(冰矛圍籬)",
-    "type": "book"
-  },
-  "bk_tornado": {
-    "n": "魔法書(龍捲風)",
-    "type": "book"
-  },
-  "bk_berserk": {
-    "n": "魔法書(狂暴術)",
-    "type": "book"
-  },
-  "bk_summon": {
-    "n": "魔法書(召喚術)",
-    "type": "book"
-  },
-  "bk_holy_dash": {
-    "n": "魔法書(神聖疾走)",
-    "type": "book"
-  },
-  "bk_disease": {
-    "n": "魔法書(疾病術)",
-    "type": "book"
-  },
-  "bk_full_heal": {
-    "n": "魔法書(全部治癒術)",
-    "type": "book"
-  },
-  "bk_blizzard": {
-    "n": "魔法書(冰雪暴)",
-    "type": "book"
-  },
-  "bk_blizzard_storm": {
-    "n": "魔法書(冰雪颶風)",
-    "type": "book"
-  },
-  "bk_fire_prison": {
-    "n": "魔法書(火牢)",
-    "type": "book"
-  },
-  "bk_quake": {
-    "n": "魔法書(震裂術)",
-    "type": "book"
-  },
-  "bk_invisible": {
-    "n": "魔法書(隱身術)",
-    "type": "book"
-  },
-  "bk_resurrection": {
-    "n": "魔法書(返生術)",
-    "type": "book"
-  },
-  "bk_seal": {
-    "n": "魔法書(魔法封印)",
-    "type": "book"
-  },
-  "bk_holy_barrier": {
-    "n": "魔法書(聖結界)",
-    "type": "book"
-  },
-  "bk_sleep_mist": {
-    "n": "魔法書(沉睡之霧)",
-    "type": "book"
-  },
-  "bk_thunder_storm": {
-    "n": "魔法書(雷霆風暴)",
-    "type": "book"
-  },
-  "bk_fire_storm": {
-    "n": "魔法書(火風暴)",
-    "type": "book"
-  },
-  "bk_blaze": {
-    "n": "魔法書(烈炎術)",
-    "type": "book"
-  },
-  "bk_meteor": {
-    "n": "魔法書(流星雨)",
-    "type": "book"
-  },
-  "bk_soul_up": {
-    "n": "魔法書(靈魂昇華)",
-    "type": "book"
-  },
-  "bk_abs_barrier": {
-    "n": "魔法書(絕對屏障)",
-    "type": "book"
-  },
-  "bk_disintegrate": {
-    "n": "魔法書(究極光裂術)",
-    "type": "book"
-  },
-  "bk_solid_shield": {
-    "n": "技術書(堅固防護)",
-    "type": "book"
-  },
-  "bk_reduction_armor": {
-    "n": "技術書(增幅防禦)",
-    "type": "book"
-  },
-  "bk_shock_stun": {
-    "n": "技術書(衝擊之暈)",
-    "type": "book"
-  },
-  "bk_spike_armor": {
-    "n": "技術書(尖刺盔甲)",
-    "type": "book"
-  },
-  "bk_counter_barrier": {
-    "n": "技術書(反擊屏障)",
-    "type": "book"
-  },
-  "bk_elf_mr": {
-    "n": "精靈水晶(魔法防禦)",
-    "type": "book"
-  },
-  "bk_elf_mind": {
-    "n": "精靈水晶(心靈轉換)",
-    "type": "book"
-  },
-  "bk_elf_worldtree": {
-    "n": "精靈水晶(世界樹的呼喚)",
-    "type": "book"
-  },
-  "bk_elf_triple": {
-    "n": "精靈水晶(三重矢)",
-    "type": "book"
-  },
-  "bk_elf_purify": {
-    "n": "精靈水晶(淨化精神)",
-    "type": "book"
-  },
-  "bk_elf_eleres": {
-    "n": "精靈水晶(屬性防禦)",
-    "type": "book"
-  },
-  "bk_elf_release": {
-    "n": "精靈水晶(釋放元素)",
-    "type": "book"
-  },
-  "bk_elf_soul": {
-    "n": "精靈水晶(魂體轉換)",
-    "type": "book"
-  },
-  "bk_elf_singleres": {
-    "n": "精靈水晶(單屬性防禦)",
-    "type": "book"
-  },
-  "bk_elf_firewpn": {
-    "n": "精靈水晶(火焰武器)",
-    "type": "book"
-  },
-  "bk_elf_windshot": {
-    "n": "精靈水晶(風之神射)",
-    "type": "book"
-  },
-  "bk_elf_winddash": {
-    "n": "精靈水晶(風之疾走)",
-    "type": "book"
-  },
-  "bk_elf_earthguard": {
-    "n": "精靈水晶(大地防護)",
-    "type": "book"
-  },
-  "bk_elf_groundtrap": {
-    "n": "精靈水晶(地面障礙)",
-    "type": "book"
-  },
-  "bk_elf_magicerase": {
-    "n": "精靈水晶(魔法消除)",
-    "type": "book"
-  },
-  "bk_elf_summon": {
-    "n": "精靈水晶(召喚屬性精靈)",
-    "type": "book"
-  },
-  "bk_elf_dancefire": {
-    "n": "精靈水晶(舞躍之火)",
-    "type": "book"
-  },
-  "bk_elf_stormeye": {
-    "n": "精靈水晶(暴風之眼)",
-    "type": "book"
-  },
-  "bk_elf_mirror": {
-    "n": "精靈水晶(鏡反射)",
-    "type": "book"
-  },
-  "bk_elf_earthshield": {
-    "n": "精靈水晶(大地屏障)",
-    "type": "book"
-  },
-  "bk_elf_lifespring": {
-    "n": "精靈水晶(生命之泉)",
-    "type": "book"
-  },
-  "bk_elf_earthbless": {
-    "n": "精靈水晶(大地的祝福)",
-    "type": "book"
-  },
-  "bk_elf_summon2": {
-    "n": "精靈水晶(召喚強力屬性精靈)",
-    "type": "book"
-  },
-  "bk_elf_lifebless": {
-    "n": "精靈水晶(生命的祝福)",
-    "type": "book"
-  },
-  "bk_elf_seal": {
-    "n": "精靈水晶(封印禁地)",
-    "type": "book"
-  },
-  "bk_elf_blazewpn": {
-    "n": "精靈水晶(烈炎武器)",
-    "type": "book"
-  },
-  "bk_elf_flamesoul": {
-    "n": "精靈水晶(烈焰之魂)",
-    "type": "book"
-  },
-  "bk_elf_physboost": {
-    "n": "精靈水晶(體能激發)",
-    "type": "book"
-  },
-  "bk_elf_energyboost": {
-    "n": "精靈水晶(能量激發)",
-    "type": "book"
-  },
-  "bk_elf_attrfire": {
-    "n": "精靈水晶(屬性之火)",
-    "type": "book"
-  },
-  "bk_elf_preciseshot": {
-    "n": "精靈水晶(精準射擊)",
-    "type": "book"
-  },
-  "bk_elf_stormshot": {
-    "n": "精靈水晶(暴風神射)",
-    "type": "book"
-  },
-  "bk_elf_steelguard": {
-    "n": "精靈水晶(鋼鐵防護)",
-    "type": "book"
-  },
-  "bk_elf_watervital": {
-    "n": "精靈水晶(水之元氣)",
-    "type": "book"
-  },
-  "bk_dark_str": {
-    "n": "黑暗精靈水晶(力量提升)",
-    "type": "book"
-  },
-  "bk_dark_mrup": {
-    "n": "黑暗精靈水晶(影之防護)",
-    "type": "book"
-  },
-  "bk_dark_stealth": {
-    "n": "黑暗精靈水晶(暗隱術)",
-    "type": "book"
-  },
-  "bk_dark_poison": {
-    "n": "黑暗精靈水晶(附加劇毒)",
-    "type": "book"
-  },
-  "bk_dark_refine": {
-    "n": "黑暗精靈水晶(提煉魔石)",
-    "type": "book"
-  },
-  "bk_dark_dex": {
-    "n": "黑暗精靈水晶(敏捷提升)",
-    "type": "book"
-  },
-  "bk_dark_poisonres": {
-    "n": "黑暗精靈水晶(毒性抵抗)",
-    "type": "book"
-  },
-  "bk_dark_burn": {
-    "n": "黑暗精靈水晶(燃燒鬥志)",
-    "type": "book"
-  },
-  "bk_dark_walkhaste": {
-    "n": "黑暗精靈水晶(行走加速)",
-    "type": "book"
-  },
-  "bk_dark_fang": {
-    "n": "黑暗精靈水晶(暗影之牙)",
-    "type": "book"
-  },
-  "bk_dark_dodge": {
-    "n": "黑暗精靈水晶(暗影閃避)",
-    "type": "book"
-  },
-  "bk_dark_crit": {
-    "n": "黑暗精靈水晶(會心一擊)",
-    "type": "book"
-  },
-  "bk_dark_erup": {
-    "n": "黑暗精靈水晶(迴避提升)",
-    "type": "book"
-  },
-  "bk_dark_double": {
-    "n": "黑暗精靈水晶(雙重破壞)",
-    "type": "book"
-  },
-  "bk_dark_armorbreak": {
-    "n": "黑暗精靈水晶(破壞盔甲)",
-    "type": "book"
-  },
-  "mem_ogre": {
-    "n": "記憶水晶(幻覺：歐吉)",
-    "type": "book"
-  },
-  "mem_confuse": {
-    "n": "記憶水晶(混亂)",
-    "type": "book"
-  },
-  "mem_cube_burn": {
-    "n": "記憶水晶(立方：燃燒)",
-    "type": "book"
-  },
-  "mem_crush": {
-    "n": "記憶水晶(粉碎能量)",
-    "type": "book"
-  },
-  "mem_mirror": {
-    "n": "記憶水晶(鏡像)",
-    "type": "book"
-  },
-  "mem_focus": {
-    "n": "記憶水晶(專注)",
-    "type": "book"
-  },
-  "mem_lich": {
-    "n": "記憶水晶(幻覺：巫妖)",
-    "type": "book"
-  },
-  "mem_mindbreak": {
-    "n": "記憶水晶(心靈破壞)",
-    "type": "book"
-  },
-  "mem_cube_quake": {
-    "n": "記憶水晶(立方：地裂)",
-    "type": "book"
-  },
-  "mem_skullbreak": {
-    "n": "記憶水晶(骷髏毀壞)",
-    "type": "book"
-  },
-  "mem_fantasy": {
-    "n": "記憶水晶(幻想)",
-    "type": "book"
-  },
-  "mem_golem": {
-    "n": "記憶水晶(幻覺：鑽石高崙)",
-    "type": "book"
-  },
-  "mem_cube_shock": {
-    "n": "記憶水晶(立方：衝擊)",
-    "type": "book"
-  },
-  "mem_endure": {
-    "n": "記憶水晶(耐力)",
-    "type": "book"
-  },
-  "mem_avatar": {
-    "n": "記憶水晶(幻覺：化身)",
-    "type": "book"
-  },
-  "mem_panic": {
-    "n": "記憶水晶(恐慌)",
-    "type": "book"
-  },
-  "mem_insight": {
-    "n": "記憶水晶(洞察)",
-    "type": "book"
-  },
-  "mem_cube_harmony": {
-    "n": "記憶水晶(立方：和諧)",
-    "type": "book"
-  },
-  "mem_pain": {
-    "n": "記憶水晶(疼痛的歡愉)",
-    "type": "book"
-  },
-  "bk_dragon_armor": {
-    "n": "龍騎士書板(龍之護鎧)",
-    "type": "book"
-  },
-  "bk_dragon_flameslash": {
-    "n": "龍騎士書板(燃燒擊砍)",
-    "type": "book"
-  },
-  "bk_dragon_guardbreak": {
-    "n": "龍騎士書板(護衛毀滅)",
-    "type": "book"
-  },
-  "bk_dragon_lavaspit": {
-    "n": "龍騎士書板(岩漿噴吐)",
-    "type": "book"
-  },
-  "bk_dragon_awaken_antares": {
-    "n": "龍騎士書板(覺醒：安塔瑞斯)",
-    "type": "book"
-  },
-  "bk_dragon_bloodlust": {
-    "n": "龍騎士書板(血之渴望)",
-    "type": "book"
-  },
-  "bk_dragon_slaughter": {
-    "n": "龍騎士書板(屠宰者)",
-    "type": "book"
-  },
-  "bk_dragon_terror": {
-    "n": "龍騎士書板(恐懼無助)",
-    "type": "book"
-  },
-  "bk_dragon_lavabolt": {
-    "n": "龍騎士書板(岩漿之箭)",
-    "type": "book"
-  },
-  "bk_dragon_awaken_falion": {
-    "n": "龍騎士書板(覺醒：法利昂)",
-    "type": "book"
-  },
-  "bk_dragon_deadlybody": {
-    "n": "龍騎士書板(致命身軀)",
-    "type": "book"
-  },
-  "bk_dragon_deathlightning": {
-    "n": "龍騎士書板(奪命之雷)",
-    "type": "book"
-  },
-  "bk_dragon_reaper": {
-    "n": "龍騎士書板(驚悚死神)",
-    "type": "book"
-  },
-  "bk_dragon_awaken_baraka": {
-    "n": "龍騎士書板(覺醒：巴拉卡斯)",
-    "type": "book"
-  },
-  "bk_warrior_dualaxe": {
-    "n": "戰士的印記(迅猛雙斧)",
-    "type": "book"
-  },
-  "bk_warrior_roar": {
-    "n": "戰士的印記(咆哮)",
-    "type": "book"
-  },
-  "bk_warrior_crush": {
-    "n": "戰士的印記(粉碎)",
-    "type": "book"
-  },
-  "bk_warrior_armorbody": {
-    "n": "戰士的印記(護甲身軀)",
-    "type": "book"
-  },
-  "bk_warrior_berserk": {
-    "n": "戰士的印記(狂暴)",
-    "type": "book"
-  },
-  "bk_warrior_titan_rock": {
-    "n": "戰士的印記(泰坦：岩石)",
-    "type": "book"
-  },
-  "bk_warrior_titan_magic": {
-    "n": "戰士的印記(泰坦：魔法)",
-    "type": "book"
-  },
-  "bk_warrior_titan_bullet": {
-    "n": "戰士的印記(泰坦：子彈)",
-    "type": "book"
-  },
-  "bk_warrior_throwaxe": {
-    "n": "戰士的印記(戰斧投擲)",
-    "type": "book"
-  },
-  "bk_warrior_endurance": {
-    "n": "戰士的印記(體能強化)",
-    "type": "book"
-  },
-  "bk_warrior_outlaw": {
-    "n": "戰士的印記(亡命之徒)",
-    "type": "book"
-  },
-  "bk_royal_precise": {
-    "n": "魔法書(精準目標)",
-    "type": "book"
-  },
-  "bk_royal_callally": {
-    "n": "魔法書(呼喚盟友)",
-    "type": "book"
-  },
-  "bk_royal_burnweapon": {
-    "n": "魔法書(灼熱武器)",
-    "type": "book"
-  },
-  "bk_royal_bravewill": {
-    "n": "魔法書(勇猛意志)",
-    "type": "book"
-  },
-  "bk_royal_shield": {
-    "n": "魔法書(閃亮之盾)",
-    "type": "book"
-  },
-  "bk_royal_kingguard": {
-    "n": "魔法書(王者加護)",
-    "type": "book"
-  },
-  "item_pride_scroll_11": {
-    "n": "傲慢之塔卷軸 F11",
-    "type": "misc"
-  },
-  "item_pride_scroll_21": {
-    "n": "傲慢之塔卷軸 F21",
-    "type": "misc"
-  },
-  "item_pride_scroll_31": {
-    "n": "傲慢之塔卷軸 F31",
-    "type": "misc"
-  },
-  "item_pride_scroll_41": {
-    "n": "傲慢之塔卷軸 F41",
-    "type": "misc"
-  },
-  "item_pride_scroll_51": {
-    "n": "傲慢之塔卷軸 F51",
-    "type": "misc"
-  },
-  "item_pride_scroll_61": {
-    "n": "傲慢之塔卷軸 F61",
-    "type": "misc"
-  },
-  "item_pride_scroll_71": {
-    "n": "傲慢之塔卷軸 F71",
-    "type": "misc"
-  },
-  "item_pride_scroll_81": {
-    "n": "傲慢之塔卷軸 F81",
-    "type": "misc"
-  },
-  "item_pride_scroll_91": {
-    "n": "傲慢之塔卷軸 F91",
-    "type": "misc"
-  },
-  "item_pride_pass_11": {
-    "n": "傲慢之塔通行證 F11",
-    "type": "misc"
-  },
-  "item_pride_pass_21": {
-    "n": "傲慢之塔通行證 F21",
-    "type": "misc"
-  },
-  "item_pride_pass_31": {
-    "n": "傲慢之塔通行證 F31",
-    "type": "misc"
-  },
-  "item_pride_pass_41": {
-    "n": "傲慢之塔通行證 F41",
-    "type": "misc"
-  },
-  "item_pride_pass_51": {
-    "n": "傲慢之塔通行證 F51",
-    "type": "misc"
-  },
-  "item_pride_pass_61": {
-    "n": "傲慢之塔通行證 F61",
-    "type": "misc"
-  },
-  "item_pride_pass_71": {
-    "n": "傲慢之塔通行證 F71",
-    "type": "misc"
-  },
-  "item_pride_pass_81": {
-    "n": "傲慢之塔通行證 F81",
-    "type": "misc"
-  },
-  "item_pride_pass_91": {
-    "n": "傲慢之塔通行證 F91",
-    "type": "misc"
-  },
-  "pride_seal_f1": {
-    "n": "支配封印 F1",
-    "type": "misc"
-  },
-  "pride_seal_f11": {
-    "n": "支配封印 F11",
-    "type": "misc"
-  },
-  "pride_seal_f21": {
-    "n": "支配封印 F21",
-    "type": "misc"
-  },
-  "pride_seal_f31": {
-    "n": "支配封印 F31",
-    "type": "misc"
-  },
-  "pride_seal_f41": {
-    "n": "支配封印 F41",
-    "type": "misc"
-  },
-  "pride_seal_f51": {
-    "n": "支配封印 F51",
-    "type": "misc"
-  },
-  "pride_seal_f61": {
-    "n": "支配封印 F61",
-    "type": "misc"
-  },
-  "pride_seal_f71": {
-    "n": "支配封印 F71",
-    "type": "misc"
-  },
-  "pride_seal_f81": {
-    "n": "支配封印 F81",
-    "type": "misc"
-  },
-  "pride_seal_f91": {
-    "n": "支配封印 F91",
-    "type": "misc"
-  },
-  "item_pride_sealed_f1": {
-    "n": "封印傳送符 F1",
-    "type": "misc"
-  },
-  "item_pride_sealed_f2": {
-    "n": "封印傳送符 F2",
-    "type": "misc"
-  },
-  "item_pride_sealed_f3": {
-    "n": "封印傳送符 F3",
-    "type": "misc"
-  },
-  "item_pride_sealed_f4": {
-    "n": "封印傳送符 F4",
-    "type": "misc"
-  },
-  "item_pride_sealed_f5": {
-    "n": "封印傳送符 F5",
-    "type": "misc"
-  },
-  "item_pride_sealed_f6": {
-    "n": "封印傳送符 F6",
-    "type": "misc"
-  },
-  "item_pride_sealed_f7": {
-    "n": "封印傳送符 F7",
-    "type": "misc"
-  },
-  "item_pride_sealed_f8": {
-    "n": "封印傳送符 F8",
-    "type": "misc"
-  },
-  "item_pride_sealed_f9": {
-    "n": "封印傳送符 F9",
-    "type": "misc"
-  },
-  "item_pride_sealed_f10": {
-    "n": "封印傳送符 F10",
-    "type": "misc"
-  },
-  "item_pride_sealed_f11": {
-    "n": "封印傳送符 F11",
-    "type": "misc"
-  },
-  "item_pride_sealed_f12": {
-    "n": "封印傳送符 F12",
-    "type": "misc"
-  },
-  "item_pride_sealed_f13": {
-    "n": "封印傳送符 F13",
-    "type": "misc"
-  },
-  "item_pride_sealed_f14": {
-    "n": "封印傳送符 F14",
-    "type": "misc"
-  },
-  "item_pride_sealed_f15": {
-    "n": "封印傳送符 F15",
-    "type": "misc"
-  },
-  "item_pride_sealed_f16": {
-    "n": "封印傳送符 F16",
-    "type": "misc"
-  },
-  "item_pride_sealed_f17": {
-    "n": "封印傳送符 F17",
-    "type": "misc"
-  },
-  "item_pride_sealed_f18": {
-    "n": "封印傳送符 F18",
-    "type": "misc"
-  },
-  "item_pride_sealed_f19": {
-    "n": "封印傳送符 F19",
-    "type": "misc"
-  },
-  "item_pride_sealed_f20": {
-    "n": "封印傳送符 F20",
-    "type": "misc"
-  },
-  "item_pride_sealed_f21": {
-    "n": "封印傳送符 F21",
-    "type": "misc"
-  },
-  "item_pride_sealed_f22": {
-    "n": "封印傳送符 F22",
-    "type": "misc"
-  },
-  "item_pride_sealed_f23": {
-    "n": "封印傳送符 F23",
-    "type": "misc"
-  },
-  "item_pride_sealed_f24": {
-    "n": "封印傳送符 F24",
-    "type": "misc"
-  },
-  "item_pride_sealed_f25": {
-    "n": "封印傳送符 F25",
-    "type": "misc"
-  },
-  "item_pride_sealed_f26": {
-    "n": "封印傳送符 F26",
-    "type": "misc"
-  },
-  "item_pride_sealed_f27": {
-    "n": "封印傳送符 F27",
-    "type": "misc"
-  },
-  "item_pride_sealed_f28": {
-    "n": "封印傳送符 F28",
-    "type": "misc"
-  },
-  "item_pride_sealed_f29": {
-    "n": "封印傳送符 F29",
-    "type": "misc"
-  },
-  "item_pride_sealed_f30": {
-    "n": "封印傳送符 F30",
-    "type": "misc"
-  },
-  "item_pride_sealed_f31": {
-    "n": "封印傳送符 F31",
-    "type": "misc"
-  },
-  "item_pride_sealed_f32": {
-    "n": "封印傳送符 F32",
-    "type": "misc"
-  },
-  "item_pride_sealed_f33": {
-    "n": "封印傳送符 F33",
-    "type": "misc"
-  },
-  "item_pride_sealed_f34": {
-    "n": "封印傳送符 F34",
-    "type": "misc"
-  },
-  "item_pride_sealed_f35": {
-    "n": "封印傳送符 F35",
-    "type": "misc"
-  },
-  "item_pride_sealed_f36": {
-    "n": "封印傳送符 F36",
-    "type": "misc"
-  },
-  "item_pride_sealed_f37": {
-    "n": "封印傳送符 F37",
-    "type": "misc"
-  },
-  "item_pride_sealed_f38": {
-    "n": "封印傳送符 F38",
-    "type": "misc"
-  },
-  "item_pride_sealed_f39": {
-    "n": "封印傳送符 F39",
-    "type": "misc"
-  },
-  "item_pride_sealed_f40": {
-    "n": "封印傳送符 F40",
-    "type": "misc"
-  },
-  "item_pride_sealed_f41": {
-    "n": "封印傳送符 F41",
-    "type": "misc"
-  },
-  "item_pride_sealed_f42": {
-    "n": "封印傳送符 F42",
-    "type": "misc"
-  },
-  "item_pride_sealed_f43": {
-    "n": "封印傳送符 F43",
-    "type": "misc"
-  },
-  "item_pride_sealed_f44": {
-    "n": "封印傳送符 F44",
-    "type": "misc"
-  },
-  "item_pride_sealed_f45": {
-    "n": "封印傳送符 F45",
-    "type": "misc"
-  },
-  "item_pride_sealed_f46": {
-    "n": "封印傳送符 F46",
-    "type": "misc"
-  },
-  "item_pride_sealed_f47": {
-    "n": "封印傳送符 F47",
-    "type": "misc"
-  },
-  "item_pride_sealed_f48": {
-    "n": "封印傳送符 F48",
-    "type": "misc"
-  },
-  "item_pride_sealed_f49": {
-    "n": "封印傳送符 F49",
-    "type": "misc"
-  },
-  "item_pride_sealed_f50": {
-    "n": "封印傳送符 F50",
-    "type": "misc"
-  },
-  "item_pride_sealed_f51": {
-    "n": "封印傳送符 F51",
-    "type": "misc"
-  },
-  "item_pride_sealed_f52": {
-    "n": "封印傳送符 F52",
-    "type": "misc"
-  },
-  "item_pride_sealed_f53": {
-    "n": "封印傳送符 F53",
-    "type": "misc"
-  },
-  "item_pride_sealed_f54": {
-    "n": "封印傳送符 F54",
-    "type": "misc"
-  },
-  "item_pride_sealed_f55": {
-    "n": "封印傳送符 F55",
-    "type": "misc"
-  },
-  "item_pride_sealed_f56": {
-    "n": "封印傳送符 F56",
-    "type": "misc"
-  },
-  "item_pride_sealed_f57": {
-    "n": "封印傳送符 F57",
-    "type": "misc"
-  },
-  "item_pride_sealed_f58": {
-    "n": "封印傳送符 F58",
-    "type": "misc"
-  },
-  "item_pride_sealed_f59": {
-    "n": "封印傳送符 F59",
-    "type": "misc"
-  },
-  "item_pride_sealed_f60": {
-    "n": "封印傳送符 F60",
-    "type": "misc"
-  },
-  "item_pride_sealed_f61": {
-    "n": "封印傳送符 F61",
-    "type": "misc"
-  },
-  "item_pride_sealed_f62": {
-    "n": "封印傳送符 F62",
-    "type": "misc"
-  },
-  "item_pride_sealed_f63": {
-    "n": "封印傳送符 F63",
-    "type": "misc"
-  },
-  "item_pride_sealed_f64": {
-    "n": "封印傳送符 F64",
-    "type": "misc"
-  },
-  "item_pride_sealed_f65": {
-    "n": "封印傳送符 F65",
-    "type": "misc"
-  },
-  "item_pride_sealed_f66": {
-    "n": "封印傳送符 F66",
-    "type": "misc"
-  },
-  "item_pride_sealed_f67": {
-    "n": "封印傳送符 F67",
-    "type": "misc"
-  },
-  "item_pride_sealed_f68": {
-    "n": "封印傳送符 F68",
-    "type": "misc"
-  },
-  "item_pride_sealed_f69": {
-    "n": "封印傳送符 F69",
-    "type": "misc"
-  },
-  "item_pride_sealed_f70": {
-    "n": "封印傳送符 F70",
-    "type": "misc"
-  },
-  "item_pride_sealed_f71": {
-    "n": "封印傳送符 F71",
-    "type": "misc"
-  },
-  "item_pride_sealed_f72": {
-    "n": "封印傳送符 F72",
-    "type": "misc"
-  },
-  "item_pride_sealed_f73": {
-    "n": "封印傳送符 F73",
-    "type": "misc"
-  },
-  "item_pride_sealed_f74": {
-    "n": "封印傳送符 F74",
-    "type": "misc"
-  },
-  "item_pride_sealed_f75": {
-    "n": "封印傳送符 F75",
-    "type": "misc"
-  },
-  "item_pride_sealed_f76": {
-    "n": "封印傳送符 F76",
-    "type": "misc"
-  },
-  "item_pride_sealed_f77": {
-    "n": "封印傳送符 F77",
-    "type": "misc"
-  },
-  "item_pride_sealed_f78": {
-    "n": "封印傳送符 F78",
-    "type": "misc"
-  },
-  "item_pride_sealed_f79": {
-    "n": "封印傳送符 F79",
-    "type": "misc"
-  },
-  "item_pride_sealed_f80": {
-    "n": "封印傳送符 F80",
-    "type": "misc"
-  },
-  "item_pride_sealed_f81": {
-    "n": "封印傳送符 F81",
-    "type": "misc"
-  },
-  "item_pride_sealed_f82": {
-    "n": "封印傳送符 F82",
-    "type": "misc"
-  },
-  "item_pride_sealed_f83": {
-    "n": "封印傳送符 F83",
-    "type": "misc"
-  },
-  "item_pride_sealed_f84": {
-    "n": "封印傳送符 F84",
-    "type": "misc"
-  },
-  "item_pride_sealed_f85": {
-    "n": "封印傳送符 F85",
-    "type": "misc"
-  },
-  "item_pride_sealed_f86": {
-    "n": "封印傳送符 F86",
-    "type": "misc"
-  },
-  "item_pride_sealed_f87": {
-    "n": "封印傳送符 F87",
-    "type": "misc"
-  },
-  "item_pride_sealed_f88": {
-    "n": "封印傳送符 F88",
-    "type": "misc"
-  },
-  "item_pride_sealed_f89": {
-    "n": "封印傳送符 F89",
-    "type": "misc"
-  },
-  "item_pride_sealed_f90": {
-    "n": "封印傳送符 F90",
-    "type": "misc"
-  },
-  "item_pride_sealed_f91": {
-    "n": "封印傳送符 F91",
-    "type": "misc"
-  },
-  "item_pride_sealed_f92": {
-    "n": "封印傳送符 F92",
-    "type": "misc"
-  },
-  "item_pride_sealed_f93": {
-    "n": "封印傳送符 F93",
-    "type": "misc"
-  },
-  "item_pride_sealed_f94": {
-    "n": "封印傳送符 F94",
-    "type": "misc"
-  },
-  "item_pride_sealed_f95": {
-    "n": "封印傳送符 F95",
-    "type": "misc"
-  },
-  "item_pride_sealed_f96": {
-    "n": "封印傳送符 F96",
-    "type": "misc"
-  },
-  "item_pride_sealed_f97": {
-    "n": "封印傳送符 F97",
-    "type": "misc"
-  },
-  "item_pride_sealed_f98": {
-    "n": "封印傳送符 F98",
-    "type": "misc"
-  },
-  "item_pride_sealed_f99": {
-    "n": "封印傳送符 F99",
-    "type": "misc"
-  },
-  "item_pride_sealed_f100": {
-    "n": "封印傳送符 F100",
-    "type": "misc"
-  },
-  "item_pride_sealed_11": {
-    "n": "封印傳送符 F11",
-    "type": "misc"
-  },
-  "item_pride_sealed_21": {
-    "n": "封印傳送符 F21",
-    "type": "misc"
-  },
-  "item_pride_sealed_31": {
-    "n": "封印傳送符 F31",
-    "type": "misc"
-  },
-  "item_pride_sealed_41": {
-    "n": "封印傳送符 F41",
-    "type": "misc"
-  },
-  "item_pride_sealed_51": {
-    "n": "封印傳送符 F51",
-    "type": "misc"
-  },
-  "item_pride_sealed_61": {
-    "n": "封印傳送符 F61",
-    "type": "misc"
-  },
-  "item_pride_sealed_71": {
-    "n": "封印傳送符 F71",
-    "type": "misc"
-  },
-  "item_pride_sealed_81": {
-    "n": "封印傳送符 F81",
-    "type": "misc"
-  },
-  "item_pride_sealed_91": {
-    "n": "封印傳送符 F91",
-    "type": "misc"
-  },
-  "wpn_thor_hammer": {
-    "n": "雷神之鎚",
-    "type": "wpn",
-    "dmgS": 7,
-    "dmgL": 12,
-    "hit": 3,
-    "dmgBonus": 0,
-    "spd": 0.9,
-    "req": "royal,knight,elf,mage,warrior",
-    "safe": 6,
-    "p": 46000,
-    "legend": true,
-    "gachaWeight": 1,
-    "ignHardSkin": true,
-    "spellProc": {
-      "skn": "電光衝擊",
-      "dice": [
-        5,
-        5
-      ],
-      "flat": 5,
-      "ele": "wind",
-      "status": {
-        "kind": "stun",
-        "pct": 5,
-        "dur": 3
-      }
-    },
-    "procRateBase": 1,
-    "procRatePerEn": 1,
-    "d": "雷神遺落的戰鎚，鎚頭間纏繞著未平息的雷霆。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動電光衝擊：造成基礎 5D5+5 的風屬性單體魔法傷害，並有 5% 固定機率使目標暈眩。"
-  },
-  "wpn_pagrio_wrath": {
-    "n": "帕格里奧之怒",
-    "type": "wpn",
-    "dmgS": 13,
-    "dmgL": 9,
-    "hit": 2,
-    "dmgBonus": 2,
-    "spd": 0.8,
-    "req": "royal,knight,elf",
-    "safe": 6,
-    "p": 56000,
-    "legend": true,
-    "gachaWeight": 1,
-    "ignHardSkin": true,
-    "spellProc": {
-      "skn": "火焰之陣",
-      "dice": [
-        6,
-        6
-      ],
-      "flat": 6,
-      "ele": "fire",
-      "aoe": true
-    },
-    "procRateBase": 1,
-    "procRatePerEn": 1,
-    "d": "帕格里奧之怒，劍身灼燒著永不熄滅的怒火。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+2、近距離命中+2。<br>攻擊時 1%（每強化 +1%）機率發動火焰之陣：對敵方全體造成基礎 6D6+6 的火屬性魔法傷害。"
-  },
-  "wpn_mapler_punish": {
-    "n": "馬普勒的懲罰",
-    "type": "wpn",
-    "w2h": true,
-    "dmgS": 14,
-    "dmgL": 15,
-    "hit": 0,
-    "dmgBonus": 11,
-    "spd": 1,
-    "req": "royal,knight,elf,warrior",
-    "safe": 6,
-    "p": 46000,
-    "legend": true,
-    "gachaWeight": 1,
-    "eff": "crush",
-    "ignHardSkin": true,
-    "spellProc": {
-      "skn": "震裂術",
-      "dice": [
-        4,
-        11
-      ],
-      "ele": "earth",
-      "aoe": true
-    },
-    "procRateBase": 1,
-    "procRatePerEn": 1,
-    "d": "馬普勒降下的懲戒之鎚，每一擊都撼動大地。<br>重擊；貫穿（無視硬皮額外減傷）；近距離傷害+11。<br>攻擊時 1%（每強化 +1%）機率發動震裂術：對敵方全體造成等同法師震裂術的土屬性魔法傷害。"
-  },
-  "wpn_osis_hammer": {
-    "n": "歐西斯衝撞錘",
-    "type": "wpn",
-    "dmgS": 8,
-    "dmgL": 9,
-    "hit": 3,
-    "dmgBonus": 0,
-    "spd": 0.9,
-    "req": "royal,knight,warrior",
-    "safe": 6,
-    "p": 66000,
-    "legend": true,
-    "gachaWeight": 1,
-    "ignHardSkin": true,
-    "spellProc": {
-      "skn": "流星雨",
-      "dice": [
-        6,
-        10
-      ],
-      "ele": "fire",
-      "aoe": true
-    },
-    "procRateBase": 1,
-    "procRatePerEn": 1,
-    "d": "歐西斯鍛造的衝撞之錘，揮動之間天降流火。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動流星雨：對敵方全體造成等同法師流星雨的火屬性魔法傷害。"
-  },
-  "wpn_eva_scold": {
-    "n": "伊娃的責罵",
-    "type": "wpn",
-    "dmgS": 9,
-    "dmgL": 9,
-    "hit": 1,
-    "dmgBonus": 1,
-    "spd": 0.8,
-    "req": "royal,knight,elf,mage,dark,dragon,illusion",
-    "safe": 6,
-    "p": 56400,
-    "legend": true,
-    "gachaWeight": 1,
-    "ignHardSkin": true,
-    "spellProc": {
-      "skn": "水之矛",
-      "dice": [
-        5,
-        5
-      ],
-      "flat": 5,
-      "ele": "water",
-      "status": {
-        "kind": "freeze",
-        "pct": 5,
-        "dur": 4
-      }
-    },
-    "procRateBase": 1,
-    "procRatePerEn": 1,
-    "d": "伊娃的責罵，劍鋒凝著沁骨的寒泉。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+1、近距離命中+1。<br>攻擊時 1%（每強化 +1%）機率發動水之矛：造成基礎 5D5+5 的水屬性單體魔法傷害，並有 5% 固定機率使目標冰凍。"
-  },
-  "doll_雪人": {
-    "n": "魔法娃娃：雪人",
-    "type": "acc",
-    "slot": "doll",
-    "req": "all",
-    "safe": 0,
-    "p": 0,
-    "doll": true,
-    "dollTier": 4,
-    "noEnhance": true,
-    "gachaWeight": 0,
-    "c": "text-purple-300",
-    "potionBonus": 10,
-    "mhp": 50,
-    "mmp": 30,
-    "d": "四階魔法娃娃。藥水恢復量+10%、HP+50、MP+30。裝於魔法娃娃欄，游標變其模樣。"
-  }
-};; // ← ITEM_DB 結束
+
+// ══════════════════════════════════════
+//  武器
+// ══════════════════════════════════════
+"wpn_alien":             { n:"亞連",                     type:"wpn" },
+"wpn_katana":            { n:"武士刀",                   type:"wpn" },
+"wpn_longsword":         { n:"長劍",                     type:"wpn" },
+"wpn_1":                 { n:"斧",                       type:"wpn" },
+"wpn_2hsword":           { n:"雙手劍",                   type:"wpn" },
+"wpn_official_2h":       { n:"武官雙手劍",               type:"wpn" },
+"wpn_dragonslayer":      { n:"屠龍劍",                   type:"wpn", legend:true },
+"wpn_vander_sword":      { n:"騎士范德之劍",             type:"wpn", legend:true },
+"wpn_2":                 { n:"釘錘",                     type:"wpn" },
+"wpn_3":                 { n:"弓",                       type:"wpn" },
+"wpn_4":                 { n:"矛",                       type:"wpn" },
+"wpn_battleaxe":         { n:"戰斧",                     type:"wpn" },
+"wpn_5":                 { n:"箭",                       type:"wpn" },
+"wpn_6":                 { n:"巴迪須",                   type:"wpn" },
+"wpn_7":                 { n:"柴刀",                     type:"wpn" },
+"wpn_elfbow":            { n:"精靈弓",                   type:"wpn" },
+"wpn_8":                 { n:"歐西斯弓",                 type:"wpn" },
+"wpn_9":                 { n:"闊劍",                     type:"wpn" },
+"wpn_10":                { n:"木棒",                     type:"wpn" },
+"wpn_dagger2":           { n:"精靈匕首",                 type:"wpn" },
+"wpn_dagger1":           { n:"歐西斯匕首",               type:"wpn" },
+"wpn_11":                { n:"匕首",                     type:"wpn" },
+"wpn_12":                { n:"貝卡合金",                 type:"wpn" },
+"wpn_halberd":           { n:"法丘",                     type:"wpn" },
+"wpn_13":                { n:"弗萊爾",                   type:"wpn" },
+"wpn_14":                { n:"闊矛",                     type:"wpn" },
+"wpn_15":                { n:"吉薩",                     type:"wpn" },
+"wpn_16":                { n:"戟",                       type:"wpn" },
+"wpn_17":                { n:"槍",                       type:"wpn" },
+"wpn_18":                { n:"露西錘",                   type:"wpn" },
+"wpn_19":                { n:"戰錘",                     type:"wpn" },
+"wpn_20":                { n:"流星錘",                   type:"wpn" },
+"wpn_21":                { n:"帕提森",                   type:"wpn" },
+"wpn_scimitar":          { n:"彎刀",                     type:"wpn" },
+"wpn_22":                { n:"銀箭",                     type:"wpn" },
+"wpn_23":                { n:"侏儒鐵斧",                 type:"wpn" },
+"wpn_24":                { n:"精靈之矛",                 type:"wpn" },
+"wpn_25":                { n:"歐西斯之矛",               type:"wpn" },
+"wpn_26":                { n:"小侏儒短劍",               type:"wpn" },
+"wpn_elfsword":          { n:"精靈短劍",                 type:"wpn" },
+"wpn_27":                { n:"歐西斯短劍",               type:"wpn" },
+"wpn_shortsword":        { n:"短劍",                     type:"wpn" },
+"wpn_28":                { n:"三叉戟",                   type:"wpn" },
+"wpn_siruge":            { n:"瑟魯基之劍",               type:"wpn" },
+"wpn_29":                { n:"尤米弓",                   type:"wpn" },
+"wpn_shortbow":          { n:"短弓",                     type:"wpn" },
+"wpn_30":                { n:"米索莉箭",                 type:"wpn" },
+"wpn_31":                { n:"十字弓",                   type:"wpn" },
+"wpn_32":                { n:"獵人之弓",                 type:"wpn" },
+"wpn_flaming_angel":     { n:"熾炎天使弓",               type:"wpn", legend:true },
+"wpn_redknight":         { n:"紅騎士之劍",               type:"wpn" },
+"wpn_invader":           { n:"侵略者之劍",               type:"wpn" },
+"wpn_33":                { n:"骰子匕首",                 type:"wpn" },
+"wpn_damascus":          { n:"大馬士革刀",               type:"wpn" },
+"wpn_34":                { n:"短劍的劍身",               type:"wpn" },
+"wpn_35":                { n:"長劍的劍身",               type:"wpn" },
+"wpn_36":                { n:"奧里哈魯根的劍身",         type:"wpn" },
+"wpn_rapier":            { n:"細劍",                     type:"wpn" },
+"wpn_mailbreaker":       { n:"鎖子甲破壞者",             type:"wpn" },
+"wpn_silversword":       { n:"銀長劍",                   type:"wpn" },
+"wpn_37":                { n:"銀劍",                     type:"wpn" },
+"wpn_oakwand":           { n:"橡木魔法杖",               type:"wpn" },
+"wpn_38":                { n:"美基魔法杖",               type:"wpn" },
+"wpn_witchwand":         { n:"巫術魔法杖",               type:"wpn" },
+"wpn_strwand":           { n:"力量魔法杖",               type:"wpn" },
+"wpn_manawand":          { n:"瑪那魔杖",                 type:"wpn" },
+"wpn_crystalwand":       { n:"水晶魔杖",                 type:"wpn" },
+"wpn_powerless_baless":  { n:"失去魔力的巴列斯魔杖",     type:"wpn" },
+"wpn_baless":            { n:"巴列斯魔杖",               type:"wpn", legend:true },
+"wpn_39":                { n:"潘的角",                   type:"wpn" },
+"wpn_40":                { n:"覆上米索莉的角",           type:"wpn" },
+"wpn_41":                { n:"覆上奧里哈魯根的角",       type:"wpn" },
+"wpn_giantaxe":          { n:"巨斧",                     type:"wpn" },
+"wpn_berserker":         { n:"狂戰士斧",                 type:"wpn" },
+"wpn_silveraxe":         { n:"銀斧",                     type:"wpn" },
+
+// ── 黑暗妖精：鋼爪
+"wpn_claw_bronze":       { n:"青銅鋼爪",                 type:"wpn" },
+"wpn_claw_steel":        { n:"鋼鐵鋼爪",                 type:"wpn" },
+"wpn_claw_shadow":       { n:"暗影鋼爪",                 type:"wpn" },
+"wpn_claw_silver":       { n:"銀光鋼爪",                 type:"wpn" },
+"wpn_claw_dark":         { n:"黑暗鋼爪",                 type:"wpn" },
+"wpn_claw_gloom":        { n:"幽暗鋼爪",                 type:"wpn" },
+"wpn_claw_damascus":     { n:"大馬士革鋼爪",             type:"wpn" },
+"wpn_claw_abyss":        { n:"暗黑鋼爪",                 type:"wpn" },
+
+// ── 黑暗妖精：雙刀
+"wpn_dual_bronze":       { n:"青銅雙刀",                 type:"wpn" },
+"wpn_dual_steel":        { n:"鋼鐵雙刀",                 type:"wpn" },
+"wpn_dual_silver":       { n:"銀光雙刀",                 type:"wpn" },
+"wpn_dual_gloom":        { n:"幽暗雙刀",                 type:"wpn" },
+"wpn_dual_dark":         { n:"黑暗雙刀",                 type:"wpn" },
+"wpn_dual_shadow":       { n:"暗影雙刀",                 type:"wpn" },
+"wpn_dual_damascus":     { n:"大馬士革雙刀",             type:"wpn" },
+"wpn_dual_abyss":        { n:"暗黑雙刀",                 type:"wpn" },
+
+// ── 黑暗妖精：十字弓
+"wpn_xbow_dark":         { n:"黑暗十字弓",               type:"wpn" },
+"wpn_xbow_gloom":        { n:"幽暗十字弓",               type:"wpn" },
+"wpn_xbow_abyss":        { n:"暗黑十字弓",               type:"wpn", legend:true },
+
+// ── 巴蘭卡
+"wpn_baranka_claw":      { n:"魔獸軍王之爪",             type:"wpn" },
+"wpn_baranka_steelclaw": { n:"巴蘭卡鋼爪",               type:"wpn", legend:true },
+
+// ── 傳說單手劍
+"wpn_dk_flameblade":     { n:"死亡騎士的烈炎之劍",       type:"wpn", legend:true },
+"wpn_kurt_sword":        { n:"克特之劍",                 type:"wpn", legend:true },
+"wpn_manadagger":        { n:"魔力短劍",                 type:"wpn", legend:true },
+
+// ── 軍王之室
+"wpn_assassin_mark":     { n:"暗殺軍王之痕",             type:"wpn" },
+"wpn_priest_wand":       { n:"神官魔杖",                 type:"wpn" },
+"wpn_laia_wand":         { n:"蕾雅魔杖",                 type:"wpn", legend:true },
+
+// ── 冥法軍訓練場
+"wpn_blood_2hsword":     { n:"血色巨劍",                 type:"wpn" },
+"wpn_dark_sword":        { n:"黑暗之劍",                 type:"wpn" },
+"wpn_red_crystalwand":   { n:"紅水晶魔杖",               type:"wpn" },
+
+// ── 底比斯·歐西里斯
+"wpn_thebes_bow":        { n:"底比斯歐西里斯弓",         type:"wpn", legend:true },
+"wpn_thebes_dual":       { n:"底比斯歐西里斯雙刀",       type:"wpn", legend:true },
+"wpn_thebes_2hsword":    { n:"底比斯歐西里斯雙手劍",     type:"wpn", legend:true },
+"wpn_thebes_wand":       { n:"底比斯歐西里斯魔杖",       type:"wpn", legend:true },
+
+// ── 拉斯塔巴德
+"wpn_xbow_rasta":        { n:"拉斯塔巴德十字弓",         type:"wpn" },
+"wpn_bow_rasta":         { n:"拉斯塔巴德弓",             type:"wpn" },
+"wpn_small_katana":      { n:"小武士刀",                 type:"wpn" },
+"wpn_sword_rasta":       { n:"拉斯塔巴德長劍",           type:"wpn" },
+"wpn_dagger_rasta":      { n:"拉斯塔巴德短劍",           type:"wpn" },
+"wpn_wand_rasta":        { n:"拉斯塔巴德魔杖",           type:"wpn" },
+"wpn_darkmage_wand":     { n:"黑法師之杖",               type:"wpn" },
+"wpn_dual_rasta":        { n:"拉斯塔巴德雙刀",           type:"wpn" },
+"wpn_xbow_heavy_rasta":  { n:"拉斯塔巴德重十字弓",       type:"wpn" },
+"wpn_spear_rasta":       { n:"拉斯塔巴德矛",             type:"wpn" },
+
+// ── 格蘭肯神殿
+"wpn_dual_spike":        { n:"尖刺雙刀",                 type:"wpn" },
+"wpn_official_blade":    { n:"武官之刃",                 type:"wpn" },
+
+// ── 長老之室傳說製作武器
+"wpn_emperor_blade":     { n:"真．冥皇執行劍",           type:"wpn", legend:true },
+"wpn_windblade_dagger":  { n:"風刃短劍",                 type:"wpn", legend:true },
+"wpn_redshadow_dual":    { n:"紅影雙刀",                 type:"wpn", legend:true },
+"wpn_beastking_claw":    { n:"獸王鋼爪",                 type:"wpn", legend:true },
+"wpn_holycrystal_wand":  { n:"聖晶魔杖",                 type:"wpn", legend:true },
+
+// ── 冰之女王 / 惡魔鐮刀
+"wpn_icequeen_wand":     { n:"冰之女王魔杖",             type:"wpn", legend:true },
+"wpn_demon_scythe":      { n:"惡魔鐮刀",                 type:"wpn", legend:true },
+
+// ── 水晶短劍
+"wpn_crystal_dagger":    { n:"水晶短劍",                 type:"wpn" },
+
+// ── 50級試煉武器
+"wpn_mithril_dagger":    { n:"米索莉短劍",               type:"wpn" },
+"wpn_ori_dagger":        { n:"奧里哈魯根短劍",           type:"wpn" },
+"wpn_crimson_spear":     { n:"深紅長矛",                 type:"wpn" },
+"wpn_demon_axe":         { n:"惡魔斧頭",                 type:"wpn" },
+"wpn_vengeance":         { n:"復仇之劍",                 type:"wpn" },
+"wpn_hate_claw":         { n:"恨之鋼爪",                 type:"wpn" },
+"wpn_demon_sword":       { n:"惡魔之劍",                 type:"wpn" },
+"wpn_demon_dual":        { n:"惡魔雙刀",                 type:"wpn" },
+"wpn_demon_claw":        { n:"惡魔鋼爪",                 type:"wpn" },
+"wpn_dual_destroy":      { n:"破壞雙刀",                 type:"wpn", legend:true },
+"wpn_claw_destroy":      { n:"破壞鋼爪",                 type:"wpn", legend:true },
+"wpn_demon_xbow":        { n:"惡魔十字弓",               type:"wpn" },
+"wpn_powerless_baphomet":{ n:"失去魔力的巴風特魔杖",     type:"wpn" },
+"wpn_baphomet_wand":     { n:"巴風特魔杖",               type:"wpn", legend:true },
+
+// ── 幻術士奇古獸
+"wpn_qigu_obsidian":     { n:"黑曜石奇古獸",             type:"wpn" },
+"wpn_qigu_meditate":     { n:"冥想奇古獸",               type:"wpn" },
+"wpn_qigu_resonance":    { n:"共鳴奇古獸",               type:"wpn", legend:true },
+"wpn_qigu_frost":        { n:"寒冰奇古獸",               type:"wpn", legend:true },
+"wpn_qigu_sapphire":     { n:"藍寶石奇古獸",             type:"wpn" },
+"wpn_illu_wand":         { n:"幻術士魔杖",               type:"wpn" },
+
+// ── 龍騎士武器
+"wpn_dragon_2h":             { n:"龍騎士雙手劍",         type:"wpn" },
+"wpn_chain_annihilator":     { n:"消滅者鎖鏈劍",         type:"wpn" },
+"wpn_chain_destroyer":       { n:"破滅者鎖鏈劍",         type:"wpn" },
+"wpn_chain_bloodthirst":     { n:"嗜血者鎖鏈劍",         type:"wpn", legend:true },
+"wpn_chain_resonance":       { n:"共鳴鎖鏈劍",           type:"wpn", legend:true },
+"wpn_chain_frost":           { n:"寒冰鎖鏈劍",           type:"wpn", legend:true },
+
+// ── 王族武器
+"wpn_golden_scepter":    { n:"黃金權杖",                 type:"wpn" },
+
+// ── 戰士武器
+"wpn_warrior_trial_axe": { n:"試煉斧頭",                 type:"wpn" },
+"wpn_master_axe":        { n:"大匠的斧頭",               type:"wpn" },
+"wpn_demon_axehead":     { n:"魔物的斧頭",               type:"wpn" },
+"wpn_iron_axehead":      { n:"鐵斧頭",                   type:"wpn" },
+"wpn_giant_axehead":     { n:"巨人的斧頭",               type:"wpn", legend:true },
+
+// ── 惡魔王武器
+"wpn_demonking_spear":   { n:"惡魔王矛",                 type:"wpn", legend:true },
+"wpn_demonking_dual":    { n:"惡魔王雙刀",               type:"wpn", legend:true },
+"wpn_demonking_2hsword": { n:"惡魔王雙手劍",             type:"wpn", legend:true },
+"wpn_demonking_wand":    { n:"惡魔王魔杖",               type:"wpn", legend:true },
+"wpn_demonking_bow":     { n:"惡魔王弓",                 type:"wpn", legend:true },
+
+// ── 遺忘之島武器
+"wpn_greatsword":        { n:"巨劍",                     type:"wpn" },
+"wpn_taurus_axe":        { n:"牛人斧頭",                 type:"wpn" },
+"wpn_shaha_bow":         { n:"沙哈之弓",                 type:"wpn", legend:true },
+"wpn_shaha_arrow":       { n:"沙哈之箭",                 type:"wpn" },
+
+// ── 古代 / 古老武器
+"wpn_old_sword":             { n:"古老的劍",             type:"wpn" },
+"wpn_old_greatsword":        { n:"古老的巨劍",           type:"wpn" },
+"wpn_old_xbow":              { n:"古老的弩槍",           type:"wpn" },
+"wpn_ancient_spear":         { n:"古代神之槍",           type:"wpn", legend:true },
+"wpn_ancient_axe":           { n:"古代神之斧",           type:"wpn", legend:true },
+"wpn_ancient_darkelf_sword": { n:"古代黑暗妖精之劍",     type:"wpn" },
+"wpn_ancient_elf_xbow":      { n:"古代妖精弩槍",         type:"wpn" },
+
+// ── 隱藏魔族武器
+"wpn_demon_sword_hidden":  { n:"隱藏的魔族之劍",         type:"wpn" },
+"wpn_demon_bow_hidden":    { n:"隱藏的魔族弓箭",         type:"wpn" },
+"wpn_demon_wand_hidden":   { n:"隱藏的魔族魔杖",         type:"wpn" },
+"wpn_demon_claw_hidden":   { n:"隱藏的魔族鋼爪",         type:"wpn" },
+"wpn_demon_chain_hidden":  { n:"隱藏的魔族鎖鏈劍",       type:"wpn" },
+"wpn_demon_qigu_hidden":   { n:"隱藏的魔族奇古獸",       type:"wpn" },
+
+// ── 暗影神殿
+"wpn_chaos_thorn":       { n:"混沌之刺",                 type:"wpn" },
+
+// ── 炎魔 / 50試煉
+"wpn_blackflame_sword":  { n:"黑焰之劍",                 type:"wpn" },
+"wpn_redflame_bow":      { n:"赤焰之弓",                 type:"wpn" },
+"wpn_redflame_sword":    { n:"赤焰之劍",                 type:"wpn" },
+"wpn_death_finger":      { n:"死亡之指",                 type:"wpn" },
+
+// ── 海賊島武器
+"wpn_pirate_dagger":     { n:"血紅慾望短劍",             type:"wpn" },
+"wpn_glory_sword":       { n:"榮耀之劍",                 type:"wpn" },
+"wpn_pirate_shortblade": { n:"短刀",                     type:"wpn" },
+"wpn_pirate_cutlass":    { n:"海賊彎刀",                 type:"wpn" },
+"wpn_abyss_dualblade":   { n:"深淵雙刀",                 type:"wpn" },
+"wpn_dark_crystalball":  { n:"漆黑水晶球",               type:"wpn" },
+"wpn_silent_crossbow":   { n:"寂靜十字弓",               type:"wpn" },
+
+// ── 副手
+"wpn_mana_orb":          { n:"瑪那水晶球",               type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 頭盔
+// ══════════════════════════════════════
+"hlm_elf":           { n:"精靈皮盔",                     type:"arm" },
+"hlm_oasis":         { n:"歐西斯頭盔",                   type:"arm" },
+"hlm_gnome":         { n:"侏儒鐵盔",                     type:"arm" },
+"arm_42":            { n:"頭盔",                         type:"arm" },
+"arm_43":            { n:"騎士面甲",                     type:"arm" },
+"hlm_mr":            { n:"抗魔法頭盔",                   type:"arm" },
+"arm_44":            { n:"艾爾穆的祝福",                 type:"arm" },
+"arm_45":            { n:"治癒魔法頭盔",                 type:"arm" },
+"arm_46":            { n:"敏捷魔法頭盔",                 type:"arm" },
+"arm_47":            { n:"力量魔法頭盔",                 type:"arm" },
+"arm_48":            { n:"皮帽子",                       type:"arm" },
+"hlm_silver":        { n:"銀釘皮帽",                     type:"arm" },
+"arm_49":            { n:"皮頭盔",                       type:"arm" },
+"hlm_bone":          { n:"骷髏頭盔",                     type:"arm" },
+"hlm_steel":         { n:"鋼鐵頭盔",                     type:"arm" },
+"hlm_mage":          { n:"法師之帽",                     type:"arm" },
+"hlm_dk":            { n:"死亡騎士頭盔",                 type:"arm", legend:true },
+"arm_50":            { n:"精靈敏捷頭盔",                 type:"arm" },
+"arm_51":            { n:"精靈體質頭盔",                 type:"arm" },
+"arm_52":            { n:"騎士頭巾",                     type:"arm" },
+"arm_53":            { n:"紅騎士頭巾",                   type:"arm" },
+"arm_54":            { n:"巴土瑟之帽",                   type:"arm", legend:true },
+"arm_55":            { n:"卡士柏之帽",                   type:"arm", legend:true },
+"arm_56":            { n:"馬庫爾之帽",                   type:"arm", legend:true },
+"arm_57":            { n:"西瑪之帽",                     type:"arm", legend:true },
+"hlm_kurt":          { n:"克特頭盔",                     type:"arm", legend:true },
+"arm_58":            { n:"淨化頭飾",                     type:"arm" },
+"arm_shadowmask":    { n:"影子面具",                     type:"arm" },
+"hlm_official":      { n:"武官頭盔",                     type:"arm" },
+"hlm_baranka":       { n:"巴蘭卡頭盔",                   type:"arm" },
+"hlm_priest":        { n:"神官頭飾",                     type:"arm" },
+"hlm_demon":         { n:"惡魔頭盔",                     type:"arm", legend:true },
+"hlm_mummy_crown":   { n:"木乃伊王的王冠",               type:"arm", legend:true },
+"hlm_mambo":         { n:"曼波帽子",                     type:"arm" },
+"hlm_dark":          { n:"黑暗頭飾",                     type:"arm" },
+"hlm_chaos":         { n:"混沌頭盔",                     type:"arm" },
+"hlm_warrior_corps": { n:"戰士團頭盔",                   type:"arm" },
+"hlm_holy_corps":    { n:"神聖執行團的頭盔",             type:"arm" },
+"hlm_wind":          { n:"風之頭盔",                     type:"arm" },
+"hlm_darkelf":       { n:"黑暗妖精頭箍",                 type:"arm" },
+"hlm_icequeen_charm":{ n:"冰之女王魅力頭飾",             type:"arm", legend:true },
+"hlm_frost":         { n:"寒冰頭盔",                     type:"arm", legend:true },
+"arm_bluepirate_helm":{ n:"藍海賊頭巾",                  type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 盔甲
+// ══════════════════════════════════════
+"amr_plate":         { n:"金屬盔甲",                     type:"arm" },
+"arm_59":            { n:"水晶盔甲",                     type:"arm" },
+"arm_60":            { n:"青銅盔甲",                     type:"arm" },
+"arm_61":            { n:"藤甲",                         type:"arm" },
+"arm_62":            { n:"皮甲",                         type:"arm" },
+"arm_63":            { n:"鏈甲",                         type:"arm" },
+"arm_64":            { n:"歐西斯鏈甲",                   type:"arm" },
+"arm_65":            { n:"鱗甲",                         type:"arm" },
+"arm_66":            { n:"銀釘皮甲",                     type:"arm" },
+"arm_67":            { n:"環甲",                         type:"arm" },
+"amr_oasis":         { n:"歐西斯環甲",                   type:"arm" },
+"arm_68":            { n:"小藤甲",                       type:"arm" },
+"amr_jacket":        { n:"皮夾克",                       type:"arm" },
+"arm_69":            { n:"抗魔法鏈甲",                   type:"arm" },
+"amr_robe":          { n:"綿質長袍",                     type:"arm" },
+"arm_70":            { n:"木甲",                         type:"arm" },
+"arm_71":            { n:"精靈護胸金屬板",               type:"arm" },
+"arm_72":            { n:"精靈金屬盔甲",                 type:"arm" },
+"arm_73":            { n:"精靈鏈甲",                     type:"arm" },
+"arm_74":            { n:"木製的夾克",                   type:"arm" },
+"arm_75":            { n:"皮背心",                       type:"arm" },
+"arm_76":            { n:"皮盔甲",                       type:"arm" },
+"arm_77":            { n:"銀釘皮背心",                   type:"arm" },
+"arm_78":            { n:"硬皮背心",                     type:"arm" },
+"amr_bone":          { n:"骷髏盔甲",                     type:"arm" },
+"arm_79":            { n:"鋼鐵金屬盔甲",                 type:"arm" },
+"amr_magerobe":      { n:"法師長袍",                     type:"arm" },
+"arm_80":            { n:"水龍鱗盔甲",                   type:"arm", legend:true },
+"arm_81":            { n:"地龍鱗盔甲",                   type:"arm", legend:true },
+"arm_82":            { n:"火龍鱗盔甲",                   type:"arm", legend:true },
+"arm_83":            { n:"風龍鱗盔甲",                   type:"arm", legend:true },
+"amr_dk":            { n:"死亡騎士盔甲",                 type:"arm", legend:true },
+"arm_84":            { n:"黑長者長袍",                   type:"arm", legend:true },
+"amr_kurt":          { n:"克特盔甲",                     type:"arm", legend:true },
+"amr_official":      { n:"武官護鎧",                     type:"arm" },
+"amr_baranka":       { n:"巴蘭卡盔甲",                   type:"arm" },
+"amr_priest":        { n:"神官法袍",                     type:"arm" },
+"amr_dark_cape":     { n:"黑暗披肩",                     type:"arm" },
+"amr_demon":         { n:"惡魔盔甲",                     type:"arm", legend:true },
+"amr_kinglaw":       { n:"法令軍王長袍",                 type:"arm", legend:true },
+"amr_mambo":         { n:"曼波外套",                     type:"arm" },
+"amr_centipede":     { n:"金屬蜈蚣皮盔甲",               type:"arm" },
+"amr_darkdweller":   { n:"黑暗棲林者盔甲",               type:"arm" },
+"amr_chaos":         { n:"混沌法袍",                     type:"arm" },
+"amr_death":         { n:"死亡盔甲",                     type:"arm", legend:true },
+"amr_fallen":        { n:"墮落長袍",                     type:"arm", legend:true },
+"amr_baphomet":      { n:"巴風特盔甲",                   type:"arm", legend:true },
+"clk_lich":          { n:"巫妖斗篷",                     type:"arm", legend:true },
+"amr_laia_robe":     { n:"蕾雅長袍",                     type:"arm", legend:true },
+"amr_rasta_robe":    { n:"拉斯塔巴德長袍",               type:"arm" },
+"amr_darkmage_robe": { n:"黑法師長袍",                   type:"arm" },
+"amr_summoner_robe": { n:"喚獸師長袍",                   type:"arm" },
+"arm_rasta_leather": { n:"拉斯塔巴德皮盔甲",             type:"arm" },
+"amr_icequeen_charm":{ n:"冰之女王魅力禮服",             type:"arm", legend:true },
+"amr_frost":         { n:"寒冰盔甲",                     type:"arm", legend:true },
+"amr_old_plate":     { n:"古老的金屬盔甲",               type:"arm" },
+"amr_old_scale":     { n:"古老的鱗甲",                   type:"arm" },
+"amr_old_leather":   { n:"古老的皮盔甲",                 type:"arm" },
+"amr_old_robe":      { n:"古老的長袍",                   type:"arm" },
+"amr_darkelf":       { n:"黑暗妖精鱗甲",                 type:"arm" },
+"arm_bluepirate_armor":{ n:"藍海賊皮盔甲",               type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 盾牌 / 臂甲
+// ══════════════════════════════════════
+"arm_103":           { n:"小盾牌",                       type:"arm" },
+"shd_elf":           { n:"精靈盾牌",                     type:"arm" },
+"arm_104":           { n:"阿克海盾牌",                   type:"arm" },
+"arm_105":           { n:"大盾牌",                       type:"arm" },
+"shd_gnome":         { n:"侏儒圓盾",                     type:"arm" },
+"arm_106":           { n:"反射之盾",                     type:"arm" },
+"arm_107":           { n:"伊娃之盾",                     type:"arm" },
+"arm_108":           { n:"塔盾",                         type:"arm" },
+"arm_109":           { n:"木盾",                         type:"arm" },
+"arm_110":           { n:"銀騎士之盾",                   type:"arm" },
+"arm_111":           { n:"皮盾牌",                       type:"arm" },
+"arm_112":           { n:"銀釘皮盾",                     type:"arm" },
+"shd_bone":          { n:"骷髏盾牌",                     type:"arm" },
+"shd_redknight":     { n:"紅騎士盾牌",                   type:"arm" },
+"arm_113":           { n:"鋼鐵盾牌",                     type:"arm" },
+"arm_114":           { n:"受詛咒的魔法書",               type:"arm" },
+"arm_115":           { n:"魔法能量之書",                 type:"arm" },
+"shd_rasta":         { n:"拉斯塔巴德圓盾",               type:"arm" },
+"shd_priest_book":   { n:"神官魔法書",                   type:"arm" },
+"shd_phantom_eye":   { n:"幻象眼魔的心眼",               type:"arm", legend:true },
+"shd_death":         { n:"死亡之盾",                     type:"arm", legend:true },
+"shd_illu_book":     { n:"幻術士法書",                   type:"arm" },
+"arm_pride_medusa_shield":{ n:"梅杜莎盾牌",              type:"arm" },
+"arm_faith_shield":  { n:"信念之盾",                     type:"arm" },
+"armguard_dragonscale":{ n:"龍鱗臂甲",                   type:"arm" },
+"armguard_guardian": { n:"守護者臂甲",                   type:"arm" },
+"armguard_mage":     { n:"法師臂甲",                     type:"arm" },
+"armguard_con":      { n:"體力臂甲",                     type:"arm" },
+"armguard_archer":   { n:"古代神射臂甲",                 type:"arm" },
+"armguard_fighter":  { n:"古代鬥士臂甲",                 type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 斗篷
+// ══════════════════════════════════════
+"clk_elf":           { n:"精靈斗篷",                     type:"arm" },
+"clk_oasis":         { n:"歐西斯斗篷",                   type:"arm" },
+"arm_86":            { n:"侏儒斗篷",                     type:"arm" },
+"arm_87":            { n:"保護者斗篷",                   type:"arm" },
+"arm_88":            { n:"隱身斗篷",                     type:"arm", legend:true },
+"clk_mr":            { n:"抗魔法斗篷",                   type:"arm" },
+"arm_89":            { n:"瑪那斗篷",                     type:"arm" },
+"clk_dark":          { n:"黑暗斗篷",                     type:"arm" },
+"arm_official_cloak":{ n:"武官斗篷",                     type:"arm" },
+"clk_kingnecro":     { n:"冥法軍王斗篷",                 type:"arm", legend:true },
+"clk_priest":        { n:"神官斗篷",                     type:"arm" },
+"clk_antqueen_gold": { n:"巨蟻女皇的金翅膀",             type:"arm", legend:true },
+"clk_antqueen_silver":{ n:"巨蟻女皇的銀翅膀",            type:"arm", legend:true },
+"clk_marcus":        { n:"馬昆斯斗篷",                   type:"arm", legend:true },
+"clk_silver_light":  { n:"銀光斗篷",                     type:"arm" },
+"clk_blacktiger":    { n:"黑虎皮斗篷",                   type:"arm" },
+"clk_wolf":          { n:"狼皮斗篷",                     type:"arm" },
+"clk_pride_earth":   { n:"地屬性斗篷",                   type:"arm" },
+"clk_pride_water":   { n:"水屬性斗篷",                   type:"arm" },
+"clk_pride_fire":    { n:"火屬性斗篷",                   type:"arm" },
+"clk_pride_wind":    { n:"風屬性斗篷",                   type:"arm" },
+"clk_chaos":         { n:"混沌斗篷",                     type:"arm" },
+"clk_death":         { n:"死亡斗篷",                     type:"arm", legend:true },
+"clk_fallen":        { n:"墮落斗篷",                     type:"arm", legend:true },
+"clk_flame_blood":   { n:"炎魔的血光斗篷",               type:"arm", legend:true },
+"clk_warrior_corps": { n:"戰士團斗篷",                   type:"arm" },
+"clk_holy_corps":    { n:"神聖執行團的斗篷",             type:"arm" },
+"clk_dragon":        { n:"龍騎士斗篷",                   type:"arm" },
+"clk_royal_red":     { n:"紅色斗篷",                     type:"arm" },
+"clk_royal_majesty": { n:"君主的威嚴",                   type:"arm" },
+"clk_illu":          { n:"幻術士斗篷",                   type:"arm" },
+"arm_bluepirate_cloak":{ n:"藍海賊斗篷",                 type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — T恤
+// ══════════════════════════════════════
+"tsh_tshirt":        { n:"T恤",                          type:"arm" },
+"arm_85":            { n:"精靈T恤",                      type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 手套
+// ══════════════════════════════════════
+"glv_glove":         { n:"手套",                         type:"arm" },
+"glv_official":      { n:"武官手套",                     type:"arm" },
+"glv_crystal":       { n:"水晶手套",                     type:"arm" },
+"arm_98":            { n:"腕甲",                         type:"arm" },
+"arm_99":            { n:"力量手套",                     type:"arm" },
+"glv_reaper":        { n:"死神之手",                     type:"arm" },
+"arm_100":           { n:"鋼鐵手套",                     type:"arm" },
+"glv_dk":            { n:"死亡騎士手套",                 type:"arm", legend:true },
+"arm_shadowglove":   { n:"影子手套",                     type:"arm" },
+"arm_101":           { n:"克特手套",                     type:"arm", legend:true },
+"arm_102":           { n:"保護者手套",                   type:"arm" },
+"glv_baranka":       { n:"巴蘭卡手套",                   type:"arm" },
+"glv_priest":        { n:"神官手套",                     type:"arm" },
+"glv_demon":         { n:"惡魔手套",                     type:"arm", legend:true },
+"glv_kingassassin":  { n:"暗殺軍王手套",                 type:"arm", legend:true },
+"glv_dark":          { n:"黑暗手套",                     type:"arm" },
+"glv_chaos":         { n:"混沌手套",                     type:"arm" },
+"glv_death":         { n:"死亡手套",                     type:"arm", legend:true },
+"glv_fallen":        { n:"墮落手套",                     type:"arm", legend:true },
+"glv_earth_spirit":  { n:"地靈手套",                     type:"arm" },
+"glv_wind_spirit":   { n:"風靈手套",                     type:"arm" },
+"glv_water_spirit":  { n:"水靈手套",                     type:"arm" },
+"glv_fire_spirit":   { n:"火靈手套",                     type:"arm" },
+"arm_bluepirate_gloves":{ n:"藍海賊手套",                type:"arm" },
+
+// ══════════════════════════════════════
+//  防具 — 靴子
+// ══════════════════════════════════════
+"bot_short":         { n:"短統靴",                       type:"arm" },
+"arm_90":            { n:"長靴",                         type:"arm" },
+"bot_baless":        { n:"巴列斯長靴",                   type:"arm", legend:true },
+"arm_91":            { n:"皮涼鞋",                       type:"arm" },
+"arm_92":            { n:"銀釘皮涼鞋",                   type:"arm" },
+"arm_93":            { n:"皮長靴",                       type:"arm" },
+"arm_94":            { n:"鋼鐵長靴",                     type:"arm" },
+"arm_95":            { n:"深水長靴",                     type:"arm" },
+"bot_dk":            { n:"死亡騎士長靴",                 type:"arm", legend:true },
+"arm_96":            { n:"黑長者涼鞋",                   type:"arm", legend:true },
+"arm_97":            { n:"克特長靴",                     type:"arm", legend:true },
+"arm_shadowboots":   { n:"影子長靴",                     type:"arm" },
+"bot_official":      { n:"武官長靴",                     type:"arm" },
+"bot_baranka":       { n:"巴蘭卡長靴",                   type:"arm" },
+"bot_priest":        { n:"神官長靴",                     type:"arm" },
+"bot_demon":         { n:"惡魔長靴",                     type:"arm", legend:true },
+"bot_kingbeast":     { n:"魔獸軍王長靴",                 type:"arm", legend:true },
+"bot_rasta":         { n:"拉斯塔巴德長靴",               type:"arm" },
+"bot_darkdweller":   { n:"黑暗棲林者長靴",               type:"arm" },
+"bot_dark":          { n:"黑暗長靴",                     type:"arm" },
+"bot_fallen":        { n:"墮落長靴",                     type:"arm", legend:true },
+"bot_divine_will":   { n:"神意長靴",                     type:"arm" },
+"bot_courage":       { n:"勇氣長靴",                     type:"arm" },
+"bot_sephia":        { n:"賽菲亞長靴",                   type:"arm" },
+"bot_mana":          { n:"瑪那長靴",                     type:"arm" },
+"bot_darkelf":       { n:"黑暗妖精涼鞋",                 type:"arm" },
+"bot_icequeen_charm":{ n:"冰之女王魅力涼鞋",             type:"arm", legend:true },
+"bot_frost":         { n:"寒冰長靴",                     type:"arm", legend:true },
+"arm_bluepirate_boots":{ n:"藍海賊長靴",                 type:"arm" },
+
+// ══════════════════════════════════════
+//  飾品 — 戒指
+// ══════════════════════════════════════
+"acc_116":           { n:"傳送控制戒指",                 type:"acc" },
+"acc_117":           { n:"變形控制戒指",                 type:"acc" },
+"acc_summon_ctrl":   { n:"召喚控制戒指",                 type:"acc" },
+"rng_earth":         { n:"地靈戒指",                     type:"acc" },
+"rng_water":         { n:"水靈戒指",                     type:"acc" },
+"rng_wind":          { n:"風靈戒指",                     type:"acc" },
+"rng_fire":          { n:"火靈戒指",                     type:"acc" },
+"rng_mr":            { n:"抗魔戒指",                     type:"acc" },
+"acc_demonbane":     { n:"滅魔戒指",                     type:"acc" },
+"acc_doro":          { n:"多羅戒指",                     type:"acc" },
+"acc_118":           { n:"守護戒指",                     type:"acc" },
+"acc_119":           { n:"長者戒指",                     type:"acc" },
+"acc_laia_ring":     { n:"蕾雅戒指",                     type:"acc", legend:true },
+"acc_sima_ring":     { n:"西瑪戒指",                     type:"acc", legend:true },
+"acc_jenis_ring":    { n:"潔尼斯戒指",                   type:"acc", legend:true },
+"acc_thebes_horus":  { n:"底比斯賀洛斯戒指",             type:"acc", legend:true },
+"acc_thebes_anubis": { n:"底比斯阿努比斯戒指",           type:"acc", legend:true },
+"acc_bear_ring":     { n:"熊戒指",                       type:"acc" },
+"acc_abyss_ring":    { n:"深淵戒指",                     type:"acc" },
+"acc_ring_magic":    { n:"魔力戒指",                     type:"acc" },
+"acc_ring_str":      { n:"力量戒指",                     type:"acc" },
+"acc_ring_dex":      { n:"敏捷戒指",                     type:"acc" },
+"acc_ring_int":      { n:"知識戒指",                     type:"acc" },
+"acc_royal_guard":   { n:"守護者的戒指",                 type:"acc" },
+"acc_curse_diamond_ring":  { n:"受詛咒的鑽石戒指",       type:"acc" },
+"acc_curse_ruby_ring":     { n:"受詛咒的紅寶石戒指",     type:"acc" },
+"acc_curse_sapphire_ring": { n:"受詛咒的藍寶石戒指",     type:"acc" },
+"acc_curse_emerald_ring":  { n:"受詛咒的綠寶石戒指",     type:"acc" },
+"rng_harpy":         { n:"哈維戒指",                     type:"acc" },
+
+// ══════════════════════════════════════
+//  飾品 — 項鍊
+// ══════════════════════════════════════
+"amu_str":           { n:"力量項鍊",                     type:"acc" },
+"acc_120":           { n:"敏捷項鍊",                     type:"acc" },
+"acc_121":           { n:"體質項鍊",                     type:"acc" },
+"amu_int":           { n:"智力項鍊",                     type:"acc" },
+"acc_122":           { n:"精神項鍊",                     type:"acc" },
+"amu_cha":           { n:"魅力項鍊",                     type:"acc" },
+"amu_iris":          { n:"艾莉絲項鍊",                   type:"acc", legend:true },
+"acc_123":           { n:"妖魔戰士項鍊",                 type:"acc" },
+"acc_124":           { n:"守護項鍊",                     type:"acc" },
+"acc_125":           { n:"長老項鍊",                     type:"acc" },
+"acc_126":           { n:"抗魔項鍊",                     type:"acc" },
+"acc_orin_amulet":   { n:"歐林的項鍊",                   type:"acc", legend:true },
+"acc_laia_amulet":   { n:"蕾雅項鍊",                     type:"acc", legend:true },
+"acc_darkmage_amulet":{ n:"黑法師項鍊",                  type:"acc" },
+"acc_summoner_amulet":{ n:"喚獸師項鍊",                  type:"acc" },
+"acc_law_king_chain":{ n:"法令軍王之鍊",                 type:"acc", legend:true },
+"acc_necro_king_ring":{ n:"冥法軍王之戒",                type:"acc", legend:true },
+"acc_curse_red":     { n:"詛咒的紅色耳環",               type:"acc" },
+"acc_curse_blue":    { n:"詛咒的藍色耳環",               type:"acc" },
+"acc_curse_green":   { n:"詛咒的綠色耳環",               type:"acc" },
+
+// ══════════════════════════════════════
+//  飾品 — 耳環
+// ══════════════════════════════════════
+"acc_purify_earring":     { n:"淨化之耳環",              type:"acc" },
+"acc_icequeen_ear_0":     { n:"冰之女王的耳環 Lv0",      type:"acc" },
+"acc_icequeen_ear_1":     { n:"冰之女王的耳環 Lv1",      type:"acc" },
+"acc_icequeen_ear_2":     { n:"冰之女王的耳環 Lv2",      type:"acc" },
+"acc_icequeen_ear_3":     { n:"冰之女王的耳環 Lv3",      type:"acc" },
+"acc_icequeen_ear_4":     { n:"冰之女王的耳環 Lv4",      type:"acc" },
+"acc_icequeen_ear_5":     { n:"冰之女王的耳環 Lv5",      type:"acc" },
+"acc_icequeen_ear_6":     { n:"冰之女王的耳環 Lv6",      type:"acc" },
+"acc_icequeen_ear_7":     { n:"冰之女王的耳環 Lv7",      type:"acc" },
+"acc_icequeen_ear_8_str": { n:"冰之女王的耳環 Lv8 力量", type:"acc", legend:true },
+"acc_icequeen_ear_8_dex": { n:"冰之女王的耳環 Lv8 敏捷", type:"acc", legend:true },
+"acc_icequeen_ear_8_int": { n:"冰之女王的耳環 Lv8 智力", type:"acc", legend:true },
+"acc_icequeen_ear_8_con": { n:"冰之女王的耳環 Lv8 體質", type:"acc", legend:true },
+"acc_icequeen_ear_8_wis": { n:"冰之女王的耳環 Lv8 精神", type:"acc", legend:true },
+"acc_icequeen_ear_8_cha": { n:"冰之女王的耳環 Lv8 魅力", type:"acc", legend:true },
+"acc_ear_wisdom":    { n:"智慧耳環",                     type:"acc" },
+"acc_ear_truth":     { n:"真實耳環",                     type:"acc" },
+"acc_ear_dominate":  { n:"支配耳環",                     type:"acc" },
+"acc_ear_rage":      { n:"憤怒耳環",                     type:"acc" },
+"acc_ear_brave":     { n:"勇猛耳環",                     type:"acc" },
+"acc_ear_undead":    { n:"不死耳環",                     type:"acc" },
+"acc_ear_passion":   { n:"熱情耳環",                     type:"acc" },
+"acc_ear_honor":     { n:"名譽耳環",                     type:"acc" },
+"acc_ear_tolerance": { n:"寬容耳環",                     type:"acc" },
+"acc_ear_dance":     { n:"舞動耳環",                     type:"acc" },
+"acc_ear_twin":      { n:"雙子耳環",                     type:"acc" },
+"acc_ear_festival":  { n:"慶典耳環",                     type:"acc" },
+"acc_ear_peak":      { n:"絕頂耳環",                     type:"acc" },
+"acc_ear_rampage":   { n:"暴走耳環",                     type:"acc" },
+"acc_ear_phantom":   { n:"幻魔耳環",                     type:"acc" },
+"acc_ear_clan":      { n:"族群耳環",                     type:"acc" },
+"acc_ear_slave":     { n:"奴隸耳環",                     type:"acc", legend:true },
+
+// ══════════════════════════════════════
+//  飾品 — 腰帶
+// ══════════════════════════════════════
+"acc_127":           { n:"老舊的身體腰帶",               type:"acc" },
+"acc_128":           { n:"老舊的精神腰帶",               type:"acc" },
+"acc_129":           { n:"老舊的靈魂腰帶",               type:"acc" },
+"blt_body":          { n:"身體腰帶",                     type:"acc" },
+"blt_dark":          { n:"黑暗腰帶",                     type:"acc" },
+"acc_130":           { n:"精神腰帶",                     type:"acc" },
+"acc_131":           { n:"靈魂腰帶",                     type:"acc" },
+"acc_132":           { n:"多羅皮帶",                     type:"acc" },
+"acc_133":           { n:"歐吉皮帶",                     type:"acc" },
+"acc_134":           { n:"勇敢皮帶",                     type:"acc" },
+"acc_135":           { n:"光明身體腰帶",                 type:"acc" },
+"acc_136":           { n:"光明精神腰帶",                 type:"acc" },
+"acc_137":           { n:"光明靈魂腰帶",                 type:"acc" },
+"acc_138":           { n:"守護皮帶",                     type:"acc" },
+"blt_mr":            { n:"抗魔皮帶",                     type:"acc" },
+"blt_titan":         { n:"泰坦皮帶",                     type:"acc" },
+"blt_giant_ring":    { n:"古代巨人戒指",                 type:"acc", legend:true },
+"blt_thebes_osiris": { n:"底比斯歐西里斯腰帶",           type:"acc", legend:true },
+"acc_belt_fire":     { n:"火精靈的皮帶",                 type:"acc" },
+"acc_belt_water":    { n:"水精靈的皮帶",                 type:"acc" },
+"acc_belt_earth":    { n:"地精靈的皮帶",                 type:"acc" },
+"acc_belt_wind":     { n:"風精靈的皮帶",                 type:"acc" },
+
+// ══════════════════════════════════════
+//  飾品 — 寵物裝備
+// ══════════════════════════════════════
+"pet_fang_hound":    { n:"獵犬之牙",                     type:"acc" },
+"pet_fang_steel":    { n:"鋼鐵之牙",                     type:"acc" },
+"pet_fang_ruin":     { n:"破滅之牙",                     type:"acc" },
+"pet_fang_victory":  { n:"勝利之牙",                     type:"acc" },
+
+// ══════════════════════════════════════
+//  飾品 — 魔法娃娃
+// ══════════════════════════════════════
+"doll_野狼寶寶":     { n:"魔法娃娃：野狼寶寶",           type:"acc" },
+"doll_史巴托":       { n:"魔法娃娃：史巴托",             type:"acc" },
+"doll_奎斯坦修":     { n:"魔法娃娃：奎斯坦修",           type:"acc" },
+"doll_稻草人":       { n:"魔法娃娃：稻草人",             type:"acc" },
+"doll_蛇女":         { n:"魔法娃娃：蛇女",               type:"acc" },
+"doll_肥肥":         { n:"魔法娃娃：肥肥",               type:"acc" },
+"doll_希爾黛斯":     { n:"魔法娃娃：希爾黛斯",           type:"acc" },
+"doll_石頭高崙":     { n:"魔法娃娃：石頭高崙",           type:"acc" },
+"doll_長老":         { n:"魔法娃娃：長老",               type:"acc" },
+"doll_雪怪":         { n:"魔法娃娃：雪怪",               type:"acc" },
+"doll_亞力安":       { n:"魔法娃娃：亞力安",             type:"acc" },
+"doll_美人魚":       { n:"魔法娃娃：美人魚",             type:"acc" },
+"doll_小思克巴":     { n:"魔法娃娃：小思克巴",           type:"acc" },
+"doll_巨人":         { n:"魔法娃娃：巨人",               type:"acc" },
+"doll_王子":         { n:"魔法娃娃：王子",               type:"acc" },
+"doll_公主":         { n:"魔法娃娃：公主",               type:"acc" },
+"doll_男騎士":       { n:"魔法娃娃：男騎士",             type:"acc" },
+"doll_女騎士":       { n:"魔法娃娃：女騎士",             type:"acc" },
+"doll_男妖精":       { n:"魔法娃娃：男妖精",             type:"acc" },
+"doll_女妖精":       { n:"魔法娃娃：女妖精",             type:"acc" },
+"doll_男法師":       { n:"魔法娃娃：男法師",             type:"acc" },
+"doll_女法師":       { n:"魔法娃娃：女法師",             type:"acc" },
+"doll_男黑暗妖精":   { n:"魔法娃娃：男黑暗妖精",         type:"acc" },
+"doll_女黑暗妖精":   { n:"魔法娃娃：女黑暗妖精",         type:"acc" },
+"doll_男龍騎士":     { n:"魔法娃娃：男龍騎士",           type:"acc" },
+"doll_女龍騎士":     { n:"魔法娃娃：女龍騎士",           type:"acc" },
+"doll_男幻術士":     { n:"魔法娃娃：男幻術士",           type:"acc" },
+"doll_女幻術士":     { n:"魔法娃娃：女幻術士",           type:"acc" },
+"doll_思克巴女皇":   { n:"魔法娃娃：思克巴女皇",         type:"acc" },
+"doll_阿魯巴":       { n:"魔法娃娃：阿魯巴",             type:"acc" },
+"doll_墮落":         { n:"魔法娃娃：墮落",               type:"acc" },
+"doll_變形怪":       { n:"魔法娃娃：變形怪",             type:"acc" },
+"doll_飛龍":         { n:"魔法娃娃：飛龍",               type:"acc" },
+"doll_莫提斯":       { n:"魔法娃娃：莫提斯",             type:"acc" },
+"doll_黑長者":       { n:"魔法娃娃：黑長者",             type:"acc" },
+"doll_獨眼巨人":     { n:"魔法娃娃：獨眼巨人",           type:"acc" },
+"doll_艾莉絲":       { n:"魔法娃娃：艾莉絲",             type:"acc" },
+"doll_木乃伊王":     { n:"魔法娃娃：木乃伊王",           type:"acc" },
+"doll_死亡騎士":     { n:"魔法娃娃：死亡騎士",           type:"acc" },
+"doll_巴風特":       { n:"魔法娃娃：巴風特",             type:"acc" },
+"doll_吸血鬼":       { n:"魔法娃娃：吸血鬼",             type:"acc" },
+"doll_克特":         { n:"魔法娃娃：克特",               type:"acc" },
+"doll_冰之女王":     { n:"魔法娃娃：冰之女王",           type:"acc" },
+"doll_巴蘭卡":       { n:"魔法娃娃：巴蘭卡",             type:"acc" },
+"doll_巫妖":         { n:"魔法娃娃：巫妖",               type:"acc" },
+"doll_安塔瑞斯":     { n:"魔法娃娃：安塔瑞斯",           type:"acc", legend:true },
+"doll_法利昂":       { n:"魔法娃娃：法利昂",             type:"acc", legend:true },
+"doll_林德拜爾":     { n:"魔法娃娃：林德拜爾",           type:"acc", legend:true },
+"doll_巴拉卡斯":     { n:"魔法娃娃：巴拉卡斯",           type:"acc", legend:true },
+"doll_bag":          { n:"魔法娃娃的袋子",               type:"misc" },
+"doll_box_high":     { n:"高級魔法娃娃的盒子",           type:"misc" },
+
+// ══════════════════════════════════════
+//  消耗品 — 藥水
+// ══════════════════════════════════════
+"potion_heal":       { n:"紅色藥水",                     type:"use" },
+"potion_strong":     { n:"橙色藥水",                     type:"use" },
+"potion_ult":        { n:"白色藥水",                     type:"use" },
+"potion_haste":      { n:"自我加速藥水",                 type:"use" },
+"potion_blue":       { n:"藍色藥水",                     type:"use" },
+"potion_brave":      { n:"勇敢藥水",                     type:"use" },
+"new_item_139":      { n:"精靈餅乾",                     type:"use" },
+"new_item_140":      { n:"慎重藥水",                     type:"use" },
+"new_item_141":      { n:"安特的水果",                   type:"use" },
+"new_item_142":      { n:"哨子",                         type:"use" },
+"new_item_143":      { n:"肉",                           type:"use" },
+
+// ── 卷軸
+"scroll_poly":           { n:"變形卷軸",                 type:"use" },
+"scroll_magicbarrier":   { n:"魔法卷軸(魔法屏障)",       type:"use" },
+"scroll_teleport":       { n:"瞬間移動卷軸",             type:"use" },
+"scroll_revive":         { n:"復活卷軸",                 type:"use" },
+"scroll_weapon":         { n:"對武器施法的卷軸",         type:"use" },
+"scroll_armor":          { n:"對盔甲施法的卷軸",         type:"use" },
+"scroll_weapon_b":       { n:"祝福的 對武器施法的卷軸",  type:"use" },
+"scroll_armor_b":        { n:"祝福的 對盔甲施法的卷軸",  type:"use" },
+"scroll_weapon_c":       { n:"詛咒的 對武器施法的卷軸",  type:"use" },
+"scroll_armor_c":        { n:"詛咒的 對盔甲施法的卷軸",  type:"use" },
+"scroll_acc":            { n:"對飾品施法的卷軸",         type:"use" },
+
+// ── 萬能藥 / 特殊消耗品
+"candle":            { n:"回憶蠟燭",                     type:"use" },
+"panacea_str":       { n:"萬能藥(STR)",                  type:"use" },
+"panacea_dex":       { n:"萬能藥(DEX)",                  type:"use" },
+"panacea_con":       { n:"萬能藥(CON)",                  type:"use" },
+"panacea_int":       { n:"萬能藥(INT)",                  type:"use" },
+"panacea_wis":       { n:"萬能藥(WIS)",                  type:"use" },
+"panacea_cha":       { n:"萬能藥(CHA)",                  type:"use" },
+"panacea_white":     { n:"純白的萬能藥",                 type:"use" },
+
+// ── 祝福 / 解咒卷軸
+"new_item_bless_wpn":    { n:"賦予武器祝福卷軸",         type:"misc" },
+"new_item_bless_arm":    { n:"賦予盔甲祝福卷軸",         type:"misc" },
+"new_item_bless_acc":    { n:"賦予飾品祝福卷軸",         type:"misc" },
+"new_item_uncurse":      { n:"解除詛咒的卷軸",           type:"misc" },
+
+// ── 寵物項圈
+"new_item_collar_husky": { n:"項圈 (哈士奇)",            type:"misc" },
+"new_item_238":          { n:"項圈 (牧羊犬)",            type:"misc" },
+"new_item_184":          { n:"項圈 (杜賓狗)",            type:"misc" },
+"new_item_185":          { n:"項圈 (狼)",                type:"misc" },
+"new_collar_rabbit":     { n:"項圈 (暴走兔)",            type:"misc" },
+"new_collar_fox":        { n:"項圈 (狐狸)",              type:"misc" },
+"new_collar_beagle":     { n:"項圈 (小獵犬)",            type:"misc" },
+"new_collar_stbernard":  { n:"項圈 (聖伯納)",            type:"misc" },
+
+// ── 進化果實
+"new_fruit_rabbit":      { n:"進化果實：暴走兔",         type:"use" },
+"new_fruit_fox":         { n:"進化果實：狐狸",           type:"use" },
+"new_fruit_beagle":      { n:"進化果實：小獵犬",         type:"use" },
+"new_fruit_stbernard":   { n:"進化果實：聖伯納",         type:"use" },
+
+// ── 特殊道具
+"item_soul_orb":         { n:"靈魂之球",                 type:"misc" },
+"new_phoenix_heart":     { n:"不死鳥之心",               type:"mat" },
+"item_dk_insignia":      { n:"死亡騎士之印記",           type:"misc" },
+"item_dragon_egg":       { n:"幼龍蛋",                   type:"misc" },
+"item_hatin_diary":      { n:"黑暗哈汀的日記本",         type:"misc" },
+"item_olin_diary":       { n:"歐林的日記本",             type:"misc" },
+"sherine_crystal":       { n:"席琳結晶",                 type:"misc" },
+
+// ── 試煉材料（藍色道具）
+"item_blueflute":        { n:"藍色長笛",                 type:"mat" },
+"item_ancientkey":       { n:"古代鑰匙",                 type:"mat" },
+"item_nightvision":      { n:"夜之視野",                 type:"mat" },
+"item_dragon_claw":      { n:"飛龍的爪子",               type:"mat" },
+"item_lizard_horn":      { n:"蜥蜴的角",                 type:"mat" },
+"item_crystal_ball":     { n:"水晶球",                   type:"mat" },
+"item_orc_amulet":       { n:"妖魔戰士護身符",           type:"mat" },
+"item_death_oath":       { n:"死亡誓約",                 type:"mat" },
+"item_orc_elder_head":   { n:"妖魔長老首級",             type:"mat" },
+"item_yeti_head":        { n:"雪怪首級",                 type:"mat" },
+"item_mastery_proof":    { n:"精通之證",                 type:"mat" },
+"new_item_144":          { n:"夏洛伯之爪",               type:"mat" },
+"new_item_196":          { n:"古老的交易文件",           type:"mat" },
+"new_item_198":          { n:"黑騎士的誓約",             type:"mat" },
+
+// ══════════════════════════════════════
+//  素材 / 製作材料
+// ══════════════════════════════════════
+"new_item_145":      { n:"阿吐巴圖騰",                   type:"mat" },
+"new_item_146":      { n:"那魯加圖騰",                   type:"mat" },
+"new_item_147":      { n:"都達瑪拉圖騰",                 type:"mat" },
+"new_item_148":      { n:"甘地圖騰",                     type:"mat" },
+"new_item_149":      { n:"羅孚圖騰",                     type:"mat" },
+"new_item_150":      { n:"魔法寶石",                     type:"mat" },
+"new_item_151":      { n:"鑽石",                         type:"mat" },
+"new_item_152":      { n:"品質鑽石",                     type:"mat" },
+"new_item_153":      { n:"高品質鑽石",                   type:"mat" },
+"new_item_154":      { n:"綠寶石",                       type:"mat" },
+"new_item_155":      { n:"品質綠寶石",                   type:"mat" },
+"new_item_156":      { n:"高品質綠寶石",                 type:"mat" },
+"new_item_157":      { n:"紅寶石",                       type:"mat" },
+"new_item_158":      { n:"品質紅寶石",                   type:"mat" },
+"new_item_159":      { n:"高品質紅寶石",                 type:"mat" },
+"new_item_160":      { n:"藍寶石",                       type:"mat" },
+"new_item_161":      { n:"品質藍寶石",                   type:"mat" },
+"new_item_162":      { n:"高品質藍寶石",                 type:"mat" },
+"new_item_163":      { n:"潘的鬃毛",                     type:"mat" },
+"new_item_164":      { n:"粗糙的米索莉塊",               type:"mat" },
+"new_item_165":      { n:"元素石",                       type:"mat" },
+"new_item_166":      { n:"蘑菇汁",                       type:"mat" },
+"new_item_167":      { n:"食人巨魔的血",                 type:"mat" },
+"new_item_168":      { n:"線",                           type:"mat" },
+"new_item_169":      { n:"純粹的米索莉塊",               type:"mat" },
+"new_item_170":      { n:"精靈粉末",                     type:"mat" },
+"new_item_171":      { n:"芮克妮的網",                   type:"mat" },
+"new_item_172":      { n:"安特的樹皮",                   type:"mat" },
+"new_item_173":      { n:"奧里哈魯根",                   type:"mat" },
+"new_item_174":      { n:"米索莉線",                     type:"mat" },
+"new_item_175":      { n:"芮克妮的蛻皮",                 type:"mat" },
+"new_item_176":      { n:"魔法笛子",                     type:"mat" },
+"new_item_177":      { n:"米索莉金屬板",                 type:"mat" },
+"new_item_178":      { n:"奧里哈魯根金屬板",             type:"mat" },
+"new_item_179":      { n:"皮革",                         type:"mat" },
+"new_item_180":      { n:"金屬塊",                       type:"mat" },
+"new_item_181":      { n:"皮帶",                         type:"mat" },
+"new_item_182":      { n:"高級皮革",                     type:"mat" },
+"new_item_183":      { n:"骨頭碎片",                     type:"mat" },
+"new_item_186":      { n:"糖果",                         type:"mat" },
+"new_item_187":      { n:"藍色布料",                     type:"mat" },
+"new_item_188":      { n:"紅色布料",                     type:"mat" },
+"new_item_189":      { n:"白色布料",                     type:"mat" },
+"new_item_190":      { n:"水龍鱗",                       type:"mat" },
+"new_item_191":      { n:"地龍鱗",                       type:"mat" },
+"new_item_192":      { n:"火龍鱗",                       type:"mat" },
+"new_item_193":      { n:"風龍鱗",                       type:"mat" },
+"new_item_194":      { n:"阿西塔基奧的灰燼",             type:"mat" },
+"new_item_195":      { n:"精靈玉",                       type:"mat" },
+"new_item_197":      { n:"搜索狀",                       type:"mat" },
+"new_item_199":      { n:"都達瑪拉妖魔魔法書",           type:"mat" },
+"new_item_200":      { n:"那魯加妖魔魔法書",             type:"mat" },
+"new_item_201":      { n:"甘地妖魔魔法書",               type:"mat" },
+"new_item_202":      { n:"阿吐巴妖魔魔法書",             type:"mat" },
+"new_item_203":      { n:"骷髏頭",                       type:"mat" },
+"new_item_204":      { n:"食屍鬼的指甲",                 type:"mat" },
+"new_item_205":      { n:"食屍鬼的牙齒",                 type:"mat" },
+"new_item_206":      { n:"龍龜甲",                       type:"mat" },
+"new_item_207":      { n:"生命的卷軸",                   type:"mat" },
+"new_item_208":      { n:"蛇女之鱗",                     type:"mat" },
+"new_item_209":      { n:"返生藥水",                     type:"mat" },
+"new_item_210":      { n:"感謝信",                       type:"mat" },
+"new_item_211":      { n:"村民的遺物",                   type:"mat" },
+"new_item_212":      { n:"不死族的骨頭",                 type:"mat" },
+"new_item_213":      { n:"受詛咒的精靈書",               type:"mat" },
+"new_item_214":      { n:"不死族的鑰匙",                 type:"mat" },
+"new_item_215":      { n:"殭屍鑰匙",                     type:"mat" },
+"new_item_216":      { n:"骷髏鑰匙",                     type:"mat" },
+"new_item_217":      { n:"密室鑰匙",                     type:"mat" },
+"new_item_218":      { n:"神秘水晶球",                   type:"mat" },
+"new_item_219":      { n:"神秘魔杖",                     type:"mat" },
+"new_item_220":      { n:"蛇女房間鑰匙",                 type:"mat" },
+"new_item_221":      { n:"光明的鱗片",                   type:"mat" },
+"new_item_222":      { n:"畢克斯的羽毛",                 type:"mat" },
+"new_item_223":      { n:"畢克斯的沙漏",                 type:"mat" },
+"new_item_224":      { n:"贖罪聖書",                     type:"mat" },
+"new_item_225":      { n:"被偷的項鍊",                   type:"mat" },
+"new_item_226":      { n:"被偷的戒指",                   type:"mat" },
+"new_item_228":      { n:"污染的精靈水晶(水)",           type:"mat" },
+"new_item_229":      { n:"污染的精靈水晶(火)",           type:"mat" },
+"new_item_230":      { n:"污染的精靈水晶(地)",           type:"mat" },
+"new_item_231":      { n:"污染的精靈水晶(風)",           type:"mat" },
+"new_item_232":      { n:"邪惡蜥蜴之鱗",                 type:"mat" },
+"new_item_233":      { n:"神秘魔力恢復藥水",             type:"mat" },
+"new_item_234":      { n:"神秘慎重藥水",                 type:"mat" },
+"new_item_235":      { n:"思克巴女皇的神祕魔杖",         type:"mat" },
+"new_item_236":      { n:"說話之島的回憶",               type:"mat" },
+"new_item_237":      { n:"安特的樹枝",                   type:"mat" },
+"new_item_elfwing":  { n:"精靈羽翼",                     type:"mat" },
+"new_item_mermaid_scale":{ n:"人魚之鱗",                 type:"mat" },
+"new_item_239":      { n:"潘朵拉抽獎卷",                 type:"misc" },
+"new_item_240":      { n:"變形怪的血",                   type:"mat" },
+"new_item_241":      { n:"王族搜索狀",                   type:"misc" },
+
+// ── 黑魔石 / 銀礦
+"mat_blackstone2":   { n:"二級黑魔石",                   type:"mat" },
+"mat_blackstone3":   { n:"三級黑魔石",                   type:"mat" },
+"mat_blackstone4":   { n:"四級黑魔石",                   type:"mat" },
+"mat_silverore":     { n:"銀礦石",                       type:"mat" },
+"mat_silver":        { n:"銀",                           type:"mat" },
+
+// ── 精靈 / 元素氣息
+"mat_unicorn_horn":  { n:"神聖獨角獸之角",               type:"mat" },
+"mat_wind_breath":   { n:"風之氣息",                     type:"mat" },
+"mat_water_breath":  { n:"水之氣息",                     type:"mat" },
+"mat_fire_breath":   { n:"火之氣息",                     type:"mat" },
+"mat_earth_breath":  { n:"土之氣息",                     type:"mat" },
+"mat_griffon_feather":{ n:"格利芬羽毛",                  type:"mat" },
+"mat_moonlight_breath":{ n:"月光之氣息",                 type:"mat" },
+
+// ── 格蘭肯神殿製作材料
+"mat_holy_relic":    { n:"聖地遺物",                     type:"mat" },
+"mat_black_blood":   { n:"黑色血痕",                     type:"mat" },
+"mat_black_powder":  { n:"黑魔法粉",                     type:"mat" },
+"mat_history_1":     { n:"封印的歷史書第1頁",             type:"mat" },
+"mat_history_2":     { n:"封印的歷史書第2頁",             type:"mat" },
+"mat_history_3":     { n:"封印的歷史書第3頁",             type:"mat" },
+"mat_history_4":     { n:"封印的歷史書第4頁",             type:"mat" },
+"mat_history_5":     { n:"封印的歷史書第5頁",             type:"mat" },
+"mat_history_6":     { n:"封印的歷史書第6頁",             type:"mat" },
+"mat_history_7":     { n:"封印的歷史書第7頁",             type:"mat" },
+"mat_history_8":     { n:"封印的歷史書第8頁",             type:"mat" },
+"mat_rasta_codex":   { n:"拉斯塔巴德製作武器秘笈",       type:"mat" },
+
+// ── 傲慢之塔材料
+"mat_chimera_snake":  { n:"奇美拉之皮(蛇)",              type:"mat" },
+"mat_chimera_dragon": { n:"奇美拉之皮(龍)",              type:"mat" },
+"mat_chimera_goat":   { n:"奇美拉之皮(山羊)",            type:"mat" },
+"mat_chimera_lion":   { n:"奇美拉之皮(獅子)",            type:"mat" },
+"mat_cursed_leather_earth":{ n:"詛咒的皮革(地)",         type:"mat" },
+"mat_cursed_leather_water":{ n:"詛咒的皮革(水)",         type:"mat" },
+"mat_cursed_leather_wind": { n:"詛咒的皮革(風)",         type:"mat" },
+"mat_cursed_leather_fire": { n:"詛咒的皮革(火)",         type:"mat" },
+
+// ── 50級試煉製作材料
+"mat_demon_anklet_white":  { n:"惡魔的白色腳鐐",         type:"mat" },
+"mat_demon_anklet_black":  { n:"惡魔的黑色腳鐐",         type:"mat" },
+"mat_demon_anklet_red":    { n:"惡魔的紅色腳鐐",         type:"mat" },
+"mat_demon_anklet_blue":   { n:"惡魔的藍色腳鐐",         type:"mat" },
+"mat_black_mithril":       { n:"黑色米索莉",             type:"mat" },
+"mat_fallen_poison":       { n:"墮落之毒",               type:"mat" },
+"mat_fallen_hand":         { n:"墮落之手",               type:"mat" },
+"mat_fallen_fang":         { n:"墮落之牙",               type:"mat" },
+"mat_fallen_tongue":       { n:"墮落之舌",               type:"mat" },
+"mat_fallen_scythe":       { n:"墮落鐮刀",               type:"mat" },
+"mat_fallen_head":         { n:"墮落首級",               type:"mat" },
+"mat_soulstone_shard":     { n:"靈魂石碎片",             type:"mat" },
+"mat_silver_plate":        { n:"銀金屬板",               type:"mat" },
+"mat_blackmithril_plate":  { n:"黑色米索莉金屬板",       type:"mat" },
+"mat_flame_sword":         { n:"炎魔之劍",               type:"mat" },
+"mat_flame_claw":          { n:"炎魔之爪",               type:"mat" },
+"mat_flame_heart":         { n:"炎魔之心",               type:"mat" },
+"mat_flame_eye":           { n:"炎魔之眼",               type:"mat" },
+"mat_dragon_heart":        { n:"飛龍之心",               type:"mat" },
+"mat_golem_heart":         { n:"高崙之心",               type:"mat" },
+"mat_icequeen_heart":      { n:"冰之女王之心",           type:"mat" },
+
+// ── 倫提斯製作材料
+"mat_legion_necro":    { n:"冥法軍團印記",               type:"mat" },
+"mat_legion_law":      { n:"法令軍團印記",               type:"mat" },
+"mat_legion_beast":    { n:"魔獸軍團印記",               type:"mat" },
+"mat_legion_assassin": { n:"暗殺軍團印記",               type:"mat" },
+"mat_crest_beast":     { n:"魔獸軍王徽印",               type:"mat" },
+"mat_crest_law":       { n:"法令軍王徽印",               type:"mat" },
+"mat_crest_assassin":  { n:"暗殺軍王徽印",               type:"mat" },
+"mat_crest_necro":     { n:"冥法軍王徽印",               type:"mat" },
+
+// ── 幻術士 / 底比斯材料
+"mat_rough_stone":     { n:"原石碎片",                   type:"mat" },
+"mat_crack_core":      { n:"龜裂之核",                   type:"mat" },
+"mat_rift_shard":      { n:"時空裂痕碎片",               type:"mat" },
+"mat_osiris_basic_up": { n:"歐西里斯初級寶箱碎片(上)",   type:"mat" },
+"mat_osiris_basic_down":{ n:"歐西里斯初級寶箱碎片(下)",  type:"mat" },
+"mat_osiris_high_up":  { n:"歐西里斯高級寶箱碎片(上)",   type:"mat" },
+"mat_osiris_high_down":{ n:"歐西里斯高級寶箱碎片(下)",   type:"mat" },
+
+// ── 海賊島材料
+"mat_ice_crystal":     { n:"冰之結晶",                   type:"mat" },
+"mat_chaos_head":      { n:"混沌首級",                   type:"mat" },
+"mat_death_head":      { n:"死亡首級",                   type:"mat" },
+
+// ── 遺忘之島材料
+"item_ancient_scroll":      { n:"古代的卷軸",            type:"mat" },
+"item_wind_tear":            { n:"風之淚",               type:"mat" },
+"item_unknown_spear":        { n:"不為人知的矛",         type:"mat" },
+"mat_unknown_axe":           { n:"不為人知的斧",         type:"mat" },
+"item_forgotten_sword":      { n:"受封印 被遺忘的劍",    type:"mat" },
+"item_forgotten_greatsword": { n:"受封印 被遺忘的巨劍",  type:"mat" },
+"item_forgotten_xbow":       { n:"受封印 被遺忘的弩槍",  type:"mat" },
+"item_forgotten_scale":      { n:"被遺忘的鱗甲",         type:"mat" },
+"item_forgotten_leather":    { n:"被遺忘的皮盔甲",       type:"mat" },
+"item_forgotten_robe":       { n:"被遺忘的長袍",         type:"mat" },
+"item_forgotten_plate":      { n:"被遺忘的金屬盔甲",     type:"mat" },
+
+// ══════════════════════════════════════
+//  任務道具 / 鑰匙
+// ══════════════════════════════════════
+"item_king_key":         { n:"軍王的鑰匙",               type:"misc" },
+"item_shadow_temple_key":{ n:"暗影神殿鑰匙",             type:"misc" },
+"item_fallen_key":       { n:"墮落鑰匙",                 type:"misc" },
+"item_thebes_altar_key": { n:"底比斯歐西里斯祭壇鑰匙",   type:"misc" },
+"item_osiris_box_basic": { n:"上鎖的歐西里斯初級寶箱",   type:"misc" },
+"item_osiris_box_high":  { n:"上鎖的歐西里斯高級寶箱",   type:"misc" },
+
+// ── 50級試煉任務道具
+"item_dantes_letter":    { n:"丹特斯的召書",             type:"misc" },
+"item_elf_whisper":      { n:"精靈的私語",               type:"misc" },
+"item_ancient_book":     { n:"古代黑妖之秘笈",           type:"misc" },
+"item_sealed_intel":     { n:"密封的情報書",             type:"misc" },
+"item_spy_report":       { n:"間諜報告書",               type:"misc" },
+"item_chaos_key":        { n:"混沌鑰匙",                 type:"misc" },
+"item_royal_order":      { n:"調職命令書",               type:"misc" },
+"item_lost_soul":        { n:"失去光明的靈魂",           type:"misc" },
+
+// ── 龍騎士任務道具
+"item_demon_search":     { n:"妖魔搜索文件",             type:"misc" },
+"item_demon_spy":        { n:"妖魔密使首領間諜書",       type:"misc" },
+"item_yeti_heart":       { n:"雪怪之心",                 type:"misc" },
+"item_soulfire_ash":     { n:"靈魂之火灰燼",             type:"misc" },
+
+// ── 雷德的復仇任務道具
+"quest_ring_darkdweller":{ n:"黑暗棲林者戒指",           type:"misc" },
+"quest_ring_beasttamer": { n:"馴獸師戒指",               type:"misc" },
+"quest_ring_elfcaller":  { n:"精靈使戒指",               type:"misc" },
+"quest_ring_summoner":   { n:"喚獸師戒指",               type:"misc" },
+"quest_ring_darkmage":   { n:"黑法師戒指",               type:"misc" },
+
+// ── 幻術士試煉道具
+"item_ant_fruit":        { n:"污濁安特的水果",           type:"misc" },
+"item_ant_branch":       { n:"污濁安特的樹枝",           type:"misc" },
+"item_ant_bark":         { n:"污濁安特的樹皮",           type:"misc" },
+"item_elmore_heart":     { n:"艾爾摩將軍之心",           type:"misc" },
+"item_time_orb":         { n:"完成的時間水晶球",         type:"misc" },
+"item_wyvern_blood":     { n:"翼龍之血",                 type:"misc" },
+
+// ── 海賊島任務道具
+"item_son_letter":       { n:"兒子的信",                 type:"misc" },
+"item_son_remains":      { n:"兒子的遺骸",               type:"misc" },
+"item_son_portrait":     { n:"兒子的肖像畫",             type:"misc" },
+
+// ── 戰士任務道具
+"item_cyclops_blood":    { n:"獨眼巨人的血",             type:"misc" },
+
+// ══════════════════════════════════════
+//  法師魔法書（一階～十階）
+// ══════════════════════════════════════
+// ── 一階
+"bk_heal1":          { n:"魔法書(初級治癒術)",           type:"book" },
+"bk_sunlight":       { n:"魔法書(日光術)",               type:"book" },
+"bk_shield":         { n:"魔法書(保護罩)",               type:"book" },
+"bk_lightarrow":     { n:"魔法書(光箭)",                 type:"book" },
+"bk_teleport":       { n:"魔法書(指定傳送)",             type:"book" },
+"bk_icearrow":       { n:"魔法書(冰箭)",                 type:"book" },
+"bk_windblade":      { n:"魔法書(風刃)",                 type:"book" },
+"bk_holy_wpn":       { n:"魔法書(神聖武器)",             type:"book" },
+
+// ── 二階
+"bk_antidote":       { n:"魔法書(解毒術)",               type:"book" },
+"bk_cold_shiver":    { n:"魔法書(寒冷戰慄)",             type:"book" },
+"bk_poison_curse":   { n:"魔法書(毒咒)",                 type:"book" },
+"bk_ench_wpn":       { n:"魔法書(擬似魔法武器)",         type:"book" },
+"bk_reveal":         { n:"魔法書(無所遁形術)",           type:"book" },
+"bk_load_up":        { n:"魔法書(負重強化)",             type:"book" },
+"bk_firearrow":      { n:"魔法書(火箭)",                 type:"book" },
+"bk_hell_fang":      { n:"魔法書(地獄之牙)",             type:"book" },
+
+// ── 三階
+"bk_aurora":         { n:"魔法書(極光雷電)",             type:"book" },
+"bk_undead_bane":    { n:"魔法書(起死回生術)",           type:"book" },
+"bk_heal_mid":       { n:"魔法書(中級治癒術)",           type:"book" },
+"bk_dark_blind":     { n:"魔法書(闇盲咒術)",             type:"book" },
+"bk_shield2":        { n:"魔法書(鎧甲護持)",             type:"book" },
+"bk_chill":          { n:"魔法書(寒冰氣息)",             type:"book" },
+"bk_energy_sense":   { n:"魔法書(能量感測)",             type:"book" },
+"bk_fireball":       { n:"魔法書(燃燒的火球)",           type:"book" },
+
+// ── 四階
+"bk_dex_up":         { n:"魔法書(通暢氣脈術)",           type:"book" },
+"bk_break":          { n:"魔法書(壞物術)",               type:"book" },
+"bk_vampire":        { n:"魔法書(吸血鬼之吻)",           type:"book" },
+"bk_slow":           { n:"魔法書(緩速術)",               type:"book" },
+"bk_rock_prison":    { n:"魔法書(岩牢)",                 type:"book" },
+"bk_magic_shield":   { n:"魔法書(魔法屏障)",             type:"book" },
+"bk_meditation":     { n:"魔法書(冥想術)",               type:"book" },
+
+// ── 五階
+"bk_mummy_curse":    { n:"魔法書(木乃伊的詛咒)",         type:"book" },
+"bk_charm":          { n:"魔法書(迷魅術)",               type:"book" },
+"bk_thunder":        { n:"魔法書(極道落雷)",             type:"book" },
+"bk_heal2":          { n:"魔法書(高級治癒術)",           type:"book" },
+"bk_holy_light":     { n:"魔法書(聖潔之光)",             type:"book" },
+"bk_ice_spike":      { n:"魔法書(冰錐)",                 type:"book" },
+"bk_mana_drain":     { n:"魔法書(魔力奪取)",             type:"book" },
+"bk_dark_shadow":    { n:"魔法書(黑闇之影)",             type:"book" },
+
+// ── 六階
+"bk_zombie":         { n:"魔法書(造屍術)",               type:"book" },
+"bk_haste_spell":    { n:"魔法書(加速術)",               type:"book" },
+"bk_cancel":         { n:"魔法書(魔法相消術)",           type:"book" },
+"bk_earthquake":     { n:"魔法書(地裂術)",               type:"book" },
+"bk_str_up":         { n:"魔法書(體魄強健術)",           type:"book" },
+"bk_bless_wpn":      { n:"魔法書(祝福魔法武器)",         type:"book" },
+"bk_weaken":         { n:"魔法書(弱化術)",               type:"book" },
+
+// ── 七階
+"bk_regen":          { n:"魔法書(體力回復術)",           type:"book" },
+"bk_greater_haste":  { n:"魔法書(強力加速術)",           type:"book" },
+"bk_ice_lance":      { n:"魔法書(冰矛圍籬)",             type:"book" },
+"bk_tornado":        { n:"魔法書(龍捲風)",               type:"book" },
+"bk_berserk":        { n:"魔法書(狂暴術)",               type:"book" },
+"bk_summon":         { n:"魔法書(召喚術)",               type:"book" },
+"bk_holy_dash":      { n:"魔法書(神聖疾走)",             type:"book" },
+"bk_disease":        { n:"魔法書(疾病術)",               type:"book" },
+
+// ── 八階
+"bk_full_heal":      { n:"魔法書(全部治癒術)",           type:"book" },
+"bk_blizzard":       { n:"魔法書(冰雪暴)",               type:"book" },
+"bk_blizzard_storm": { n:"魔法書(冰雪颶風)",             type:"book" },
+"bk_fire_prison":    { n:"魔法書(火牢)",                 type:"book" },
+"bk_quake":          { n:"魔法書(震裂術)",               type:"book" },
+"bk_invisible":      { n:"魔法書(隱身術)",               type:"book" },
+"bk_resurrection":   { n:"魔法書(返生術)",               type:"book" },
+"bk_seal":           { n:"魔法書(魔法封印)",             type:"book" },
+
+// ── 九階
+"bk_holy_barrier":   { n:"魔法書(聖結界)",               type:"book" },
+"bk_sleep_mist":     { n:"魔法書(沉睡之霧)",             type:"book" },
+"bk_thunder_storm":  { n:"魔法書(雷霆風暴)",             type:"book" },
+"bk_fire_storm":     { n:"魔法書(火風暴)",               type:"book" },
+"bk_blaze":          { n:"魔法書(烈炎術)",               type:"book" },
+
+// ── 十階
+"bk_meteor":         { n:"魔法書(流星雨)",               type:"book" },
+"bk_soul_up":        { n:"魔法書(靈魂昇華)",             type:"book" },
+"bk_abs_barrier":    { n:"魔法書(絕對屏障)",             type:"book" },
+"bk_disintegrate":   { n:"魔法書(究極光裂術)",           type:"book" },
+
+// ══════════════════════════════════════
+//  騎士技術書
+// ══════════════════════════════════════
+"bk_solid_shield":     { n:"技術書(堅固防護)",           type:"book" },
+"bk_reduction_armor":  { n:"技術書(增幅防禦)",           type:"book" },
+"bk_shock_stun":       { n:"技術書(衝擊之暈)",           type:"book" },
+"bk_spike_armor":      { n:"技術書(尖刺盔甲)",           type:"book" },
+"bk_counter_barrier":  { n:"技術書(反擊屏障)",           type:"book" },
+
+// ══════════════════════════════════════
+//  妖精精靈水晶
+// ══════════════════════════════════════
+"bk_elf_mr":           { n:"精靈水晶(魔法防禦)",         type:"book" },
+"bk_elf_mind":         { n:"精靈水晶(心靈轉換)",         type:"book" },
+"bk_elf_worldtree":    { n:"精靈水晶(世界樹的呼喚)",     type:"book" },
+"bk_elf_triple":       { n:"精靈水晶(三重矢)",           type:"book" },
+"bk_elf_purify":       { n:"精靈水晶(淨化精神)",         type:"book" },
+"bk_elf_eleres":       { n:"精靈水晶(屬性防禦)",         type:"book" },
+"bk_elf_release":      { n:"精靈水晶(釋放元素)",         type:"book" },
+"bk_elf_soul":         { n:"精靈水晶(魂體轉換)",         type:"book" },
+"bk_elf_singleres":    { n:"精靈水晶(單屬性防禦)",       type:"book" },
+"bk_elf_firewpn":      { n:"精靈水晶(火焰武器)",         type:"book" },
+"bk_elf_windshot":     { n:"精靈水晶(風之神射)",         type:"book" },
+"bk_elf_winddash":     { n:"精靈水晶(風之疾走)",         type:"book" },
+"bk_elf_earthguard":   { n:"精靈水晶(大地防護)",         type:"book" },
+"bk_elf_groundtrap":   { n:"精靈水晶(地面障礙)",         type:"book" },
+"bk_elf_magicerase":   { n:"精靈水晶(魔法消除)",         type:"book" },
+"bk_elf_summon":       { n:"精靈水晶(召喚屬性精靈)",     type:"book" },
+"bk_elf_dancefire":    { n:"精靈水晶(舞躍之火)",         type:"book" },
+"bk_elf_stormeye":     { n:"精靈水晶(暴風之眼)",         type:"book" },
+"bk_elf_mirror":       { n:"精靈水晶(鏡反射)",           type:"book" },
+"bk_elf_earthshield":  { n:"精靈水晶(大地屏障)",         type:"book" },
+"bk_elf_lifespring":   { n:"精靈水晶(生命之泉)",         type:"book" },
+"bk_elf_earthbless":   { n:"精靈水晶(大地的祝福)",       type:"book" },
+"bk_elf_summon2":      { n:"精靈水晶(召喚強力屬性精靈)", type:"book" },
+"bk_elf_lifebless":    { n:"精靈水晶(生命的祝福)",       type:"book" },
+"bk_elf_seal":         { n:"精靈水晶(封印禁地)",         type:"book" },
+"bk_elf_blazewpn":     { n:"精靈水晶(烈炎武器)",         type:"book" },
+"bk_elf_flamesoul":    { n:"精靈水晶(烈焰之魂)",         type:"book" },
+"bk_elf_physboost":    { n:"精靈水晶(體能激發)",         type:"book" },
+"bk_elf_energyboost":  { n:"精靈水晶(能量激發)",         type:"book" },
+"bk_elf_attrfire":     { n:"精靈水晶(屬性之火)",         type:"book" },
+"bk_elf_preciseshot":  { n:"精靈水晶(精準射擊)",         type:"book" },
+"bk_elf_stormshot":    { n:"精靈水晶(暴風神射)",         type:"book" },
+"bk_elf_steelguard":   { n:"精靈水晶(鋼鐵防護)",         type:"book" },
+"bk_elf_watervital":   { n:"精靈水晶(水之元氣)",         type:"book" },
+
+// ══════════════════════════════════════
+//  黑暗精靈水晶
+// ══════════════════════════════════════
+"bk_dark_str":         { n:"黑暗精靈水晶(力量提升)",     type:"book" },
+"bk_dark_mrup":        { n:"黑暗精靈水晶(影之防護)",     type:"book" },
+"bk_dark_stealth":     { n:"黑暗精靈水晶(暗隱術)",       type:"book" },
+"bk_dark_poison":      { n:"黑暗精靈水晶(附加劇毒)",     type:"book" },
+"bk_dark_refine":      { n:"黑暗精靈水晶(提煉魔石)",     type:"book" },
+"bk_dark_dex":         { n:"黑暗精靈水晶(敏捷提升)",     type:"book" },
+"bk_dark_poisonres":   { n:"黑暗精靈水晶(毒性抵抗)",     type:"book" },
+"bk_dark_burn":        { n:"黑暗精靈水晶(燃燒鬥志)",     type:"book" },
+"bk_dark_walkhaste":   { n:"黑暗精靈水晶(行走加速)",     type:"book" },
+"bk_dark_fang":        { n:"黑暗精靈水晶(暗影之牙)",     type:"book" },
+"bk_dark_dodge":       { n:"黑暗精靈水晶(暗影閃避)",     type:"book" },
+"bk_dark_crit":        { n:"黑暗精靈水晶(會心一擊)",     type:"book" },
+"bk_dark_erup":        { n:"黑暗精靈水晶(迴避提升)",     type:"book" },
+"bk_dark_double":      { n:"黑暗精靈水晶(雙重破壞)",     type:"book" },
+"bk_dark_armorbreak":  { n:"黑暗精靈水晶(破壞盔甲)",     type:"book" },
+
+// ══════════════════════════════════════
+//  記憶水晶（幻術士）
+// ══════════════════════════════════════
+"mem_ogre":            { n:"記憶水晶(幻覺：歐吉)",       type:"book" },
+"mem_confuse":         { n:"記憶水晶(混亂)",             type:"book" },
+"mem_cube_burn":       { n:"記憶水晶(立方：燃燒)",       type:"book" },
+"mem_crush":           { n:"記憶水晶(粉碎能量)",         type:"book" },
+"mem_mirror":          { n:"記憶水晶(鏡像)",             type:"book" },
+"mem_focus":           { n:"記憶水晶(專注)",             type:"book" },
+"mem_lich":            { n:"記憶水晶(幻覺：巫妖)",       type:"book" },
+"mem_mindbreak":       { n:"記憶水晶(心靈破壞)",         type:"book" },
+"mem_cube_quake":      { n:"記憶水晶(立方：地裂)",       type:"book" },
+"mem_skullbreak":      { n:"記憶水晶(骷髏毀壞)",         type:"book" },
+"mem_fantasy":         { n:"記憶水晶(幻想)",             type:"book" },
+"mem_golem":           { n:"記憶水晶(幻覺：鑽石高崙)",   type:"book" },
+"mem_cube_shock":      { n:"記憶水晶(立方：衝擊)",       type:"book" },
+"mem_endure":          { n:"記憶水晶(耐力)",             type:"book" },
+"mem_avatar":          { n:"記憶水晶(幻覺：化身)",       type:"book" },
+"mem_panic":           { n:"記憶水晶(恐慌)",             type:"book" },
+"mem_insight":         { n:"記憶水晶(洞察)",             type:"book" },
+"mem_cube_harmony":    { n:"記憶水晶(立方：和諧)",       type:"book" },
+"mem_pain":            { n:"記憶水晶(疼痛的歡愉)",       type:"book" },
+
+// ══════════════════════════════════════
+//  龍騎士書板
+// ══════════════════════════════════════
+"bk_dragon_armor":           { n:"龍騎士書板(龍之護鎧)",       type:"book" },
+"bk_dragon_flameslash":      { n:"龍騎士書板(燃燒擊砍)",       type:"book" },
+"bk_dragon_guardbreak":      { n:"龍騎士書板(護衛毀滅)",       type:"book" },
+"bk_dragon_lavaspit":        { n:"龍騎士書板(岩漿噴吐)",       type:"book" },
+"bk_dragon_awaken_antares":  { n:"龍騎士書板(覺醒：安塔瑞斯)", type:"book" },
+"bk_dragon_bloodlust":       { n:"龍騎士書板(血之渴望)",       type:"book" },
+"bk_dragon_slaughter":       { n:"龍騎士書板(屠宰者)",         type:"book" },
+"bk_dragon_terror":          { n:"龍騎士書板(恐懼無助)",       type:"book" },
+"bk_dragon_lavabolt":        { n:"龍騎士書板(岩漿之箭)",       type:"book" },
+"bk_dragon_awaken_falion":   { n:"龍騎士書板(覺醒：法利昂)",   type:"book" },
+"bk_dragon_deadlybody":      { n:"龍騎士書板(致命身軀)",       type:"book" },
+"bk_dragon_deathlightning":  { n:"龍騎士書板(奪命之雷)",       type:"book" },
+"bk_dragon_reaper":          { n:"龍騎士書板(驚悚死神)",       type:"book" },
+"bk_dragon_awaken_baraka":   { n:"龍騎士書板(覺醒：巴拉卡斯)", type:"book" },
+
+// ══════════════════════════════════════
+//  戰士印記
+// ══════════════════════════════════════
+"bk_warrior_dualaxe":      { n:"戰士的印記(迅猛雙斧)",         type:"book" },
+"bk_warrior_roar":         { n:"戰士的印記(咆哮)",             type:"book" },
+"bk_warrior_crush":        { n:"戰士的印記(粉碎)",             type:"book" },
+"bk_warrior_armorbody":    { n:"戰士的印記(護甲身軀)",         type:"book" },
+"bk_warrior_berserk":      { n:"戰士的印記(狂暴)",             type:"book" },
+"bk_warrior_titan_rock":   { n:"戰士的印記(泰坦：岩石)",       type:"book" },
+"bk_warrior_titan_magic":  { n:"戰士的印記(泰坦：魔法)",       type:"book" },
+"bk_warrior_titan_bullet": { n:"戰士的印記(泰坦：子彈)",       type:"book" },
+"bk_warrior_throwaxe":     { n:"戰士的印記(戰斧投擲)",         type:"book" },
+"bk_warrior_endurance":    { n:"戰士的印記(體能強化)",         type:"book" },
+"bk_warrior_outlaw":       { n:"戰士的印記(亡命之徒)",         type:"book" },
+
+// ══════════════════════════════════════
+//  王族魔法書
+// ══════════════════════════════════════
+"bk_royal_precise":    { n:"魔法書(精準目標)",               type:"book" },
+"bk_royal_callally":   { n:"魔法書(呼喚盟友)",               type:"book" },
+"bk_royal_burnweapon": { n:"魔法書(灼熱武器)",               type:"book" },
+"bk_royal_bravewill":  { n:"魔法書(勇猛意志)",               type:"book" },
+"bk_royal_shield":     { n:"魔法書(閃亮之盾)",               type:"book" },
+"bk_royal_kingguard":  { n:"魔法書(王者加護)",               type:"book" },
+
+// ══════════════════════════════════════
+//  傲慢之塔通行證 / 卷軸 / 支配封印
+//  F1–F100 通行證（pass）與卷軸（scroll）
+//  由程式 initPrideTalismans 動態產生，
+//  此處補齊供編輯器識別名稱用
+// ══════════════════════════════════════
+// 傲慢之塔卷軸（實際存檔格式）
+"item_pride_scroll_11": { n:"傲慢之塔卷軸 F11",  type:"misc" },
+"item_pride_scroll_21": { n:"傲慢之塔卷軸 F21",  type:"misc" },
+"item_pride_scroll_31": { n:"傲慢之塔卷軸 F31",  type:"misc" },
+"item_pride_scroll_41": { n:"傲慢之塔卷軸 F41",  type:"misc" },
+"item_pride_scroll_51": { n:"傲慢之塔卷軸 F51",  type:"misc" },
+"item_pride_scroll_61": { n:"傲慢之塔卷軸 F61",  type:"misc" },
+"item_pride_scroll_71": { n:"傲慢之塔卷軸 F71",  type:"misc" },
+"item_pride_scroll_81": { n:"傲慢之塔卷軸 F81",  type:"misc" },
+"item_pride_scroll_91": { n:"傲慢之塔卷軸 F91",  type:"misc" },
+// 傲慢之塔通行證（實際存檔格式）
+"item_pride_pass_11":   { n:"傲慢之塔通行證 F11", type:"misc" },
+"item_pride_pass_21":   { n:"傲慢之塔通行證 F21", type:"misc" },
+"item_pride_pass_31":   { n:"傲慢之塔通行證 F31", type:"misc" },
+"item_pride_pass_41":   { n:"傲慢之塔通行證 F41", type:"misc" },
+"item_pride_pass_51":   { n:"傲慢之塔通行證 F51", type:"misc" },
+"item_pride_pass_61":   { n:"傲慢之塔通行證 F61", type:"misc" },
+"item_pride_pass_71":   { n:"傲慢之塔通行證 F71", type:"misc" },
+"item_pride_pass_81":   { n:"傲慢之塔通行證 F81", type:"misc" },
+"item_pride_pass_91":   { n:"傲慢之塔通行證 F91", type:"misc" },
+"pride_seal_f1":    { n:"支配封印 F1",           type:"misc" },
+"pride_seal_f11":   { n:"支配封印 F11",          type:"misc" },
+"pride_seal_f21":   { n:"支配封印 F21",          type:"misc" },
+"pride_seal_f31":   { n:"支配封印 F31",          type:"misc" },
+"pride_seal_f41":   { n:"支配封印 F41",          type:"misc" },
+"pride_seal_f51":   { n:"支配封印 F51",          type:"misc" },
+"pride_seal_f61":   { n:"支配封印 F61",          type:"misc" },
+"pride_seal_f71":   { n:"支配封印 F71",          type:"misc" },
+"pride_seal_f81":   { n:"支配封印 F81",          type:"misc" },
+"pride_seal_f91":   { n:"支配封印 F91",          type:"misc" },
+
+// ── 傲慢之塔封印傳送符（item_pride_sealed_*，F1~F100）
+"item_pride_sealed_f1":   { n:"封印傳送符 F1",   type:"misc" },
+"item_pride_sealed_f2":   { n:"封印傳送符 F2",   type:"misc" },
+"item_pride_sealed_f3":   { n:"封印傳送符 F3",   type:"misc" },
+"item_pride_sealed_f4":   { n:"封印傳送符 F4",   type:"misc" },
+"item_pride_sealed_f5":   { n:"封印傳送符 F5",   type:"misc" },
+"item_pride_sealed_f6":   { n:"封印傳送符 F6",   type:"misc" },
+"item_pride_sealed_f7":   { n:"封印傳送符 F7",   type:"misc" },
+"item_pride_sealed_f8":   { n:"封印傳送符 F8",   type:"misc" },
+"item_pride_sealed_f9":   { n:"封印傳送符 F9",   type:"misc" },
+"item_pride_sealed_f10":  { n:"封印傳送符 F10",  type:"misc" },
+"item_pride_sealed_f11":  { n:"封印傳送符 F11",  type:"misc" },
+"item_pride_sealed_f12":  { n:"封印傳送符 F12",  type:"misc" },
+"item_pride_sealed_f13":  { n:"封印傳送符 F13",  type:"misc" },
+"item_pride_sealed_f14":  { n:"封印傳送符 F14",  type:"misc" },
+"item_pride_sealed_f15":  { n:"封印傳送符 F15",  type:"misc" },
+"item_pride_sealed_f16":  { n:"封印傳送符 F16",  type:"misc" },
+"item_pride_sealed_f17":  { n:"封印傳送符 F17",  type:"misc" },
+"item_pride_sealed_f18":  { n:"封印傳送符 F18",  type:"misc" },
+"item_pride_sealed_f19":  { n:"封印傳送符 F19",  type:"misc" },
+"item_pride_sealed_f20":  { n:"封印傳送符 F20",  type:"misc" },
+"item_pride_sealed_f21":  { n:"封印傳送符 F21",  type:"misc" },
+"item_pride_sealed_f22":  { n:"封印傳送符 F22",  type:"misc" },
+"item_pride_sealed_f23":  { n:"封印傳送符 F23",  type:"misc" },
+"item_pride_sealed_f24":  { n:"封印傳送符 F24",  type:"misc" },
+"item_pride_sealed_f25":  { n:"封印傳送符 F25",  type:"misc" },
+"item_pride_sealed_f26":  { n:"封印傳送符 F26",  type:"misc" },
+"item_pride_sealed_f27":  { n:"封印傳送符 F27",  type:"misc" },
+"item_pride_sealed_f28":  { n:"封印傳送符 F28",  type:"misc" },
+"item_pride_sealed_f29":  { n:"封印傳送符 F29",  type:"misc" },
+"item_pride_sealed_f30":  { n:"封印傳送符 F30",  type:"misc" },
+"item_pride_sealed_f31":  { n:"封印傳送符 F31",  type:"misc" },
+"item_pride_sealed_f32":  { n:"封印傳送符 F32",  type:"misc" },
+"item_pride_sealed_f33":  { n:"封印傳送符 F33",  type:"misc" },
+"item_pride_sealed_f34":  { n:"封印傳送符 F34",  type:"misc" },
+"item_pride_sealed_f35":  { n:"封印傳送符 F35",  type:"misc" },
+"item_pride_sealed_f36":  { n:"封印傳送符 F36",  type:"misc" },
+"item_pride_sealed_f37":  { n:"封印傳送符 F37",  type:"misc" },
+"item_pride_sealed_f38":  { n:"封印傳送符 F38",  type:"misc" },
+"item_pride_sealed_f39":  { n:"封印傳送符 F39",  type:"misc" },
+"item_pride_sealed_f40":  { n:"封印傳送符 F40",  type:"misc" },
+"item_pride_sealed_f41":  { n:"封印傳送符 F41",  type:"misc" },
+"item_pride_sealed_f42":  { n:"封印傳送符 F42",  type:"misc" },
+"item_pride_sealed_f43":  { n:"封印傳送符 F43",  type:"misc" },
+"item_pride_sealed_f44":  { n:"封印傳送符 F44",  type:"misc" },
+"item_pride_sealed_f45":  { n:"封印傳送符 F45",  type:"misc" },
+"item_pride_sealed_f46":  { n:"封印傳送符 F46",  type:"misc" },
+"item_pride_sealed_f47":  { n:"封印傳送符 F47",  type:"misc" },
+"item_pride_sealed_f48":  { n:"封印傳送符 F48",  type:"misc" },
+"item_pride_sealed_f49":  { n:"封印傳送符 F49",  type:"misc" },
+"item_pride_sealed_f50":  { n:"封印傳送符 F50",  type:"misc" },
+"item_pride_sealed_f51":  { n:"封印傳送符 F51",  type:"misc" },
+"item_pride_sealed_f52":  { n:"封印傳送符 F52",  type:"misc" },
+"item_pride_sealed_f53":  { n:"封印傳送符 F53",  type:"misc" },
+"item_pride_sealed_f54":  { n:"封印傳送符 F54",  type:"misc" },
+"item_pride_sealed_f55":  { n:"封印傳送符 F55",  type:"misc" },
+"item_pride_sealed_f56":  { n:"封印傳送符 F56",  type:"misc" },
+"item_pride_sealed_f57":  { n:"封印傳送符 F57",  type:"misc" },
+"item_pride_sealed_f58":  { n:"封印傳送符 F58",  type:"misc" },
+"item_pride_sealed_f59":  { n:"封印傳送符 F59",  type:"misc" },
+"item_pride_sealed_f60":  { n:"封印傳送符 F60",  type:"misc" },
+"item_pride_sealed_f61":  { n:"封印傳送符 F61",  type:"misc" },
+"item_pride_sealed_f62":  { n:"封印傳送符 F62",  type:"misc" },
+"item_pride_sealed_f63":  { n:"封印傳送符 F63",  type:"misc" },
+"item_pride_sealed_f64":  { n:"封印傳送符 F64",  type:"misc" },
+"item_pride_sealed_f65":  { n:"封印傳送符 F65",  type:"misc" },
+"item_pride_sealed_f66":  { n:"封印傳送符 F66",  type:"misc" },
+"item_pride_sealed_f67":  { n:"封印傳送符 F67",  type:"misc" },
+"item_pride_sealed_f68":  { n:"封印傳送符 F68",  type:"misc" },
+"item_pride_sealed_f69":  { n:"封印傳送符 F69",  type:"misc" },
+"item_pride_sealed_f70":  { n:"封印傳送符 F70",  type:"misc" },
+"item_pride_sealed_f71":  { n:"封印傳送符 F71",  type:"misc" },
+"item_pride_sealed_f72":  { n:"封印傳送符 F72",  type:"misc" },
+"item_pride_sealed_f73":  { n:"封印傳送符 F73",  type:"misc" },
+"item_pride_sealed_f74":  { n:"封印傳送符 F74",  type:"misc" },
+"item_pride_sealed_f75":  { n:"封印傳送符 F75",  type:"misc" },
+"item_pride_sealed_f76":  { n:"封印傳送符 F76",  type:"misc" },
+"item_pride_sealed_f77":  { n:"封印傳送符 F77",  type:"misc" },
+"item_pride_sealed_f78":  { n:"封印傳送符 F78",  type:"misc" },
+"item_pride_sealed_f79":  { n:"封印傳送符 F79",  type:"misc" },
+"item_pride_sealed_f80":  { n:"封印傳送符 F80",  type:"misc" },
+"item_pride_sealed_f81":  { n:"封印傳送符 F81",  type:"misc" },
+"item_pride_sealed_f82":  { n:"封印傳送符 F82",  type:"misc" },
+"item_pride_sealed_f83":  { n:"封印傳送符 F83",  type:"misc" },
+"item_pride_sealed_f84":  { n:"封印傳送符 F84",  type:"misc" },
+"item_pride_sealed_f85":  { n:"封印傳送符 F85",  type:"misc" },
+"item_pride_sealed_f86":  { n:"封印傳送符 F86",  type:"misc" },
+"item_pride_sealed_f87":  { n:"封印傳送符 F87",  type:"misc" },
+"item_pride_sealed_f88":  { n:"封印傳送符 F88",  type:"misc" },
+"item_pride_sealed_f89":  { n:"封印傳送符 F89",  type:"misc" },
+"item_pride_sealed_f90":  { n:"封印傳送符 F90",  type:"misc" },
+"item_pride_sealed_f91":  { n:"封印傳送符 F91",  type:"misc" },
+"item_pride_sealed_f92":  { n:"封印傳送符 F92",  type:"misc" },
+"item_pride_sealed_f93":  { n:"封印傳送符 F93",  type:"misc" },
+"item_pride_sealed_f94":  { n:"封印傳送符 F94",  type:"misc" },
+"item_pride_sealed_f95":  { n:"封印傳送符 F95",  type:"misc" },
+"item_pride_sealed_f96":  { n:"封印傳送符 F96",  type:"misc" },
+"item_pride_sealed_f97":  { n:"封印傳送符 F97",  type:"misc" },
+"item_pride_sealed_f98":  { n:"封印傳送符 F98",  type:"misc" },
+"item_pride_sealed_f99":  { n:"封印傳送符 F99",  type:"misc" },
+"item_pride_sealed_f100": { n:"封印傳送符 F100", type:"misc" },
+// 封印傳送符（實際存檔格式，與 item_pride_sealed_f* 不同）
+"item_pride_sealed_11":  { n:"封印傳送符 F11",   type:"misc" },
+"item_pride_sealed_21":  { n:"封印傳送符 F21",   type:"misc" },
+"item_pride_sealed_31":  { n:"封印傳送符 F31",   type:"misc" },
+"item_pride_sealed_41":  { n:"封印傳送符 F41",   type:"misc" },
+"item_pride_sealed_51":  { n:"封印傳送符 F51",   type:"misc" },
+"item_pride_sealed_61":  { n:"封印傳送符 F61",   type:"misc" },
+"item_pride_sealed_71":  { n:"封印傳送符 F71",   type:"misc" },
+"item_pride_sealed_81":  { n:"封印傳送符 F81",   type:"misc" },
+"item_pride_sealed_91":  { n:"封印傳送符 F91",   type:"misc" },
+
+
+}; // ← ITEM_DB 結束
 
 // ════════════════════════════════════════════════
 //  type 中文對照（供 UI 顯示用）
