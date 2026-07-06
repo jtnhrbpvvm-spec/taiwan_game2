@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>放置天堂掉落查詢系統 v6.4 - 資料庫同步版</title>
+<title>放置天堂掉落查詢系統 v6.5 - 資料庫同步版</title>
 <style>
         :root {
             --bg-color: #0f172a;
@@ -373,6 +373,26 @@
             50% { box-shadow: 0 0 14px rgba(74,222,128,0.7); }
         }
 
+        .toggle-btn.active-mad {
+            background: rgba(248, 113, 113, 0.12);
+            border-color: #f87171;
+            color: #f87171;
+            font-weight: bold;
+            animation: madBtn 2s ease-in-out infinite;
+        }
+
+        @keyframes madBtn {
+            0%, 100% { box-shadow: 0 0 6px rgba(248,113,113,0.35); }
+            50% { box-shadow: 0 0 16px rgba(248,113,113,0.8); }
+        }
+
+        body.sherine-mad .monster-card {
+            border-color: rgba(248, 113, 113, 0.45);
+        }
+        body.sherine-mad header h1 {
+            text-shadow: 0 0 12px rgba(248, 113, 113, 0.6);
+        }
+
         /* 席琳世界：怪物卡片樣式 */
         body.sherine-mode .monster-card {
             border-color: rgba(127, 29, 29, 0.5);
@@ -508,7 +528,7 @@
 <body>
 <div class="container">
 <header>
-<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v6.4</span></h1>
+<h1>🐉 放置天堂掉落查詢系統 <span style="font-size:0.5em; color:#94a3b8; font-weight:normal; vertical-align:middle;">v6.5</span></h1>
 <p style="color: var(--text-muted);">支援多功能進階搜尋（如：地靈、流星雨、古魯丁地區、火屬性、主動）</p>
 </header>
 <div class="main-tabs">
@@ -522,24 +542,27 @@
     <div class="toggle-btn-group">
         <button class="toggle-btn active-normal" id="btnNormal" onclick="setWorldMode('normal')">⚔️ 普通世界</button>
         <button class="toggle-btn" id="btnSherine" onclick="setWorldMode('sherine')">🔮 席琳世界</button>
+        <button class="toggle-btn" id="btnMad" onclick="setWorldMode('mad')">🔥 瘋狂的席琳</button>
         <button class="toggle-btn" id="btnClassic" onclick="setWorldMode('classic')">⚔️ 經典模式</button>
     </div>
     <span id="worldModeDesc" style="font-size:0.85rem; color: var(--text-muted); margin-left:4px;">顯示原始怪物數值與掉落機率</span>
 </div>
 
 <div class="sherine-info-box" id="sherineInfoBox">
-    <strong>🔮 席琳世界 — 強化效果（Lv40以上祈禱開啟）</strong><br>
-    攻城區及血盟敵人<strong>不受影響</strong>。非BOSS怪物數值變化：
-    <span style="color:#4ade80">HP ×3、AC ×1.5、MR ×1.5、命中 ×1.5、傷害減免 +等級/3、一般攻擊 ×2、技能傷害 ×2</span>、
-    <span style="color:#fbbf24">經驗 ×5、金錢 ×5、掉落機率 ×3</span>。
-    套裝效果掉落機率：<span style="color:#4ade80">一般怪 0.1%、BOSS 5%</span>。搜索時間縮短10秒。
+    <strong>🔮 席琳世界 — 強化效果（Lv40以上祈禱開啟）〔數值＝一般／<span style="color:#f87171">🔥瘋狂</span>〕</strong><br>
+    攻城區及血盟敵人<strong>不受影響</strong>。兩種席琳互斥，怪物數值變化：
+    <span style="color:#4ade80">HP ×3／<b style="color:#f87171">×5</b>、AC −10（BOSS −20，兩者同）、MR ×1.5／<b style="color:#f87171">×3</b>、命中 ×1.5／<b style="color:#f87171">×2</b>、傷害減免 +等級/3、一般攻擊 ×2／<b style="color:#f87171">×3</b>、技能傷害 ×2／<b style="color:#f87171">×3</b></span>、
+    <span style="color:#fbbf24">經驗 ×5／<b style="color:#f87171">×10</b>、金錢 ×5／<b style="color:#f87171">×10</b>、掉落機率 ×3／<b style="color:#f87171">×5</b></span>。
+    套裝效果掉落機率：<span style="color:#4ade80">一般怪 0.1%、BOSS 5%</span>（<span style="color:#f87171">🔥瘋狂再 ×3</span>）。搜索時間縮短10秒。
 </div>
 
 <div class="sherine-grace-box" id="sherineGraceBox">
-    <strong>✨ 席琳的恩賜（額外疊加）</strong> — 每次刷怪 <strong>1%</strong> 觸發，冷卻3分鐘：場上隨機一隻一般怪獲得
-    <span style="color:#f87171">HP ×10（完全恢復）、AC ×1.5、MR ×1.5、命中 ×1.5、一般攻擊 ×1.5、技能傷害 ×2</span>、
+    <strong>✨ 席琳的恩賜（額外疊加）</strong> — 每次刷怪 <strong>1%</strong> 觸發：場上隨機一隻怪獲得
+    <span style="color:#f87171">HP ×10（完全恢復）</span>、
     <span style="color:#fbbf24">經驗 ×10、金錢 ×10、掉落機率 ×10</span>。
-    套裝機率提升至 <span style="color:#4ade80">0.5%</span>。
+    套裝機率提升至 <span style="color:#4ade80">0.5%</span>。<br>
+    <span style="color:#4ade80">一般席琳</span>：冷卻3分鐘、場上同時僅一隻、BOSS 不受恩賜；
+    <span style="color:#f87171">🔥瘋狂席琳：無冷卻、無隻數限制、BOSS 也可獲得恩賜</span>。
 </div>
 
 <div class="sherine-drop-box" id="sherineDropBox">
@@ -550,7 +573,8 @@
     BOSS 怪物：
     <span style="color:#4ade80">夢幻之島 BOSS：0.01%</span>、
     <span style="color:#fbbf24">三大龍：10%</span>、
-    <span style="color:#fbbf24">其餘 BOSS：0.1%</span>。
+    <span style="color:#fbbf24">其餘 BOSS：0.1%</span>。<br>
+    <span style="color:#f87171">🔥 瘋狂的席琳世界：結晶掉率 ×3（一般怪／BOSS 皆然）；席琳套裝效果（席琳詞綴）出現率亦 ×3</span>。
 </div>
 
 <div class="classic-info-box" id="classicInfoBox">
@@ -695,67 +719,67 @@
 window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌","皮背心"],"bonus":"AC+3"},{"n":"歐西斯套裝","items":["歐西斯頭盔","歐西斯環甲","歐西斯斗篷","阿克海盾牌"],"bonus":"AC+3"},{"n":"侏儒套裝","items":["侏儒鐵盔","侏儒斗篷","侏儒圓盾"],"bonus":"AC+1、HP+5"},{"n":"銀釘套裝","items":["銀釘皮帽","銀釘皮涼鞋","銀釘皮盾","銀釘皮背心"],"bonus":"AC+3"},{"n":"骷髏套裝","items":["骷髏頭盔","骷髏盾牌","骷髏盔甲"],"bonus":"AC+2、HP+10"},{"n":"鋼鐵套裝","items":["鋼鐵手套","鋼鐵頭盔","鋼鐵盾牌","鋼鐵長靴","鋼鐵金屬盔甲"],"bonus":"AC+3"},{"n":"法師套裝","items":["法師之帽","法師長袍"],"bonus":"MP+50"},{"n":"死亡騎士套裝","items":["死亡騎士手套","死亡騎士盔甲","死亡騎士長靴","死亡騎士頭盔"],"bonus":"AC+4、4件集齊變身「真‧死亡騎士」(額外傷害+6、額外命中+6、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"克特套裝","items":["克特手套","克特盔甲","克特長靴","克特頭盔"],"bonus":"AC+4、4件集齊變身「真‧克特」(額外傷害+4、額外命中+8、攻速+35%，可與加速/勇敢/餅乾疊加)"},{"n":"抗魔套裝","items":["抗魔戒指","抗魔項鍊","抗魔皮帶"],"bonus":"MR+5"},{"n":"守護套裝","items":["守護戒指","守護項鍊","守護皮帶"],"bonus":"AC+1"},{"n":"四大軍王套裝","items":["冥法軍王斗篷","法令軍王長袍","暗殺軍王手套","魔獸軍王長靴"],"bonus":"HP+30、MP+30、HP自然恢復+10、MP自然恢復+10、魅力+3"},{"n":"惡魔套裝","items":["惡魔頭盔","惡魔盔甲","惡魔手套","惡魔長靴"],"bonus":"AC-2、HP自然恢復+5、變身「惡魔」(額外傷害+4、額外命中+4、魔法傷害+3、額外MP+3、MP自然恢復+3、攻速+33%，可與加速/勇敢/餅乾疊加)"},{"n":"黑暗妖精套裝","items":["黑暗妖精頭箍","黑暗妖精鱗甲","黑暗妖精涼鞋"],"bonus":"3件集齊：AC-3、HP自然恢復-2、MP自然恢復-7、力量-2、敏捷+2，變身「高等黑暗精靈」(遠距離傷害+5、遠距離命中+5、攻速+30%，可與加速/勇水/妖精餅乾疊加)"},{"n":"歐林套裝","items":["歐林的項鍊","西瑪戒指"],"bonus":"AC-5、HP+50、力量/敏捷/體質/智力/精神/魅力 各+1"},{"n":"冰之女王魅力套裝","items":["冰之女王魅力頭飾","冰之女王魅力禮服","冰之女王魅力涼鞋"],"bonus":"（公主限定）AC-5、力量+2、魅力+2、HP+100、MP自然恢復+4、水屬性抗性+20"},{"n":"寒冰套裝","items":["寒冰頭盔","寒冰盔甲","寒冰長靴"],"bonus":"AC-5、體質+3、HP+100、HP自然恢復+8、MP自然恢復+4、MR+15、水屬性抗性+20"}];
 
         window.ITEMS_DB = {
-            "wpn_alien": {"n":"亞連","type":"wpn","dmgS":4,"dmgL":4,"hit":2,"spd":1.3,"req":"all","safe":6,"p":14,"gachaWeight":100},
-            "wpn_katana": {"n":"武士刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":1.1,"req":"knight,elf","safe":6,"p":28200,"gachaWeight":10},
-            "wpn_longsword": {"n":"長劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":4200,"gachaWeight":50},
-            "wpn_1": {"n":"斧","type":"wpn","dmgS":3,"dmgL":5,"hit":0,"spd":1.2,"req":"all","safe":6,"p":28,"gachaWeight":100},
-            "wpn_2hsword": {"n":"雙手劍","type":"wpn","w2h":true,"dmgS":14,"dmgL":16,"hit":0,"spd":0.9,"req":"knight","safe":6,"p":25200,"eff":"cleave","gachaWeight":10},
-            "wpn_official_2h": {"n":"武官雙手劍","type":"wpn","w2h":true,"dmgS":19,"dmgL":23,"hit":1,"dmgBonus":2,"spd":0.9,"req":"knight","safe":6,"p":95940,"eff":"cleave","gachaWeight":10},
-            "wpn_dragonslayer": {"n":"屠龍劍","type":"wpn","w2h":true,"dmgS":28,"dmgL":35,"hit":2,"dmgBonus":9,"spd":0.9,"req":"knight","safe":6,"p":300000,"eff":"cleave","dragonStrike":12,"legend":true,"gachaWeight":1,"d":"傳說中為屠龍而鍛造的雙手巨劍，劍身中沉眠著龍魂，一旦甦醒便嗜血咆哮。<br>龍的一擊：發動一般攻擊時，固定機率對場上所有敵人造成無視防禦力的無屬性傷害。"},
-            "wpn_vander_sword": {"n":"騎士范德之劍","type":"wpn","w2h":true,"dmgS":22,"dmgL":34,"hit":5,"dmgBonus":6,"spd":0.9,"req":"knight","safe":6,"p":210000,"eff":"cleave","str":1,"vanderStunHit":true,"legend":true,"gachaWeight":1,"d":"闇黑騎士范德生前佩持的雙手巨劍，劍上仍纏著未散的殺意。<br>施展 衝擊之暈 時，近距離命中 +1。"},
-            "wpn_2": {"n":"釘錘","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":1.3,"req":"all","safe":6,"p":133,"gachaWeight":100},
+            "wpn_alien": {"n":"亞連","type":"wpn","dmgS":4,"dmgL":4,"hit":2,"spd":1.1,"req":"all","safe":6,"p":14,"gachaWeight":100},
+            "wpn_katana": {"n":"武士刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":0.9,"req":"knight,elf","safe":6,"p":28200,"gachaWeight":10},
+            "wpn_longsword": {"n":"長劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":0.9,"req":"knight,elf","safe":6,"p":4200,"gachaWeight":50},
+            "wpn_1": {"n":"斧","type":"wpn","dmgS":3,"dmgL":5,"hit":0,"spd":1,"req":"all","safe":6,"p":28,"gachaWeight":100},
+            "wpn_2hsword": {"n":"雙手劍","type":"wpn","w2h":true,"dmgS":14,"dmgL":16,"hit":0,"spd":1,"req":"knight","safe":6,"p":25200,"eff":"cleave","gachaWeight":10},
+            "wpn_official_2h": {"n":"武官雙手劍","type":"wpn","w2h":true,"dmgS":19,"dmgL":23,"hit":1,"dmgBonus":2,"spd":1,"req":"knight","safe":6,"p":95940,"eff":"cleave","gachaWeight":10},
+            "wpn_dragonslayer": {"n":"屠龍劍","type":"wpn","w2h":true,"dmgS":28,"dmgL":35,"hit":2,"dmgBonus":9,"spd":1,"req":"knight","safe":6,"p":300000,"eff":"cleave","dragonStrike":12,"legend":true,"gachaWeight":1,"d":"傳說中為屠龍而鍛造的雙手巨劍，劍身中沉眠著龍魂，一旦甦醒便嗜血咆哮。<br>龍的一擊：發動一般攻擊時，固定機率對場上所有敵人造成無視防禦力的無屬性傷害。"},
+            "wpn_vander_sword": {"n":"騎士范德之劍","type":"wpn","w2h":true,"dmgS":22,"dmgL":34,"hit":5,"dmgBonus":6,"spd":1,"req":"knight","safe":6,"p":210000,"eff":"cleave","str":1,"vanderStunHit":true,"legend":true,"gachaWeight":1,"d":"闇黑騎士范德生前佩持的雙手巨劍，劍上仍纏著未散的殺意。<br>施展 衝擊之暈 時，近距離命中 +1。"},
+            "wpn_2": {"n":"釘錘","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":1.1,"req":"all","safe":6,"p":133,"gachaWeight":100},
             "wpn_3": {"n":"弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":20,"dmgS":2,"dmgL":2,"hit":0,"spd":1,"req":"all","safe":6,"p":70,"gachaWeight":100},
-            "wpn_4": {"n":"矛","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":1.2,"req":"all","safe":6,"p":120,"gachaWeight":100},
-            "wpn_battleaxe": {"n":"戰斧","type":"wpn","w2h":true,"dmgS":18,"dmgL":18,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":980,"gachaWeight":100,"eff":"crush"},
+            "wpn_4": {"n":"矛","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":120,"gachaWeight":100},
+            "wpn_battleaxe": {"n":"戰斧","type":"wpn","w2h":true,"dmgS":18,"dmgL":18,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":980,"gachaWeight":100,"eff":"crush"},
             "wpn_5": {"n":"箭","type":"wpn","isArrow":true,"dmgS":6,"dmgL":5,"hit":0,"p":0,"gachaWeight":0},
-            "wpn_6": {"n":"巴迪須","type":"wpn","w2h":true,"dmgS":4,"dmgL":6,"hit":0,"spd":1,"req":"knight","safe":6,"p":56,"gachaWeight":100,"eff":"pierce","pierceChance":35},
-            "wpn_7": {"n":"柴刀","type":"wpn","w2h":true,"dmgS":4,"dmgL":11,"hit":0,"spd":1,"req":"knight","safe":6,"p":252,"gachaWeight":100,"eff":"pierce","pierceChance":35},
+            "wpn_6": {"n":"巴迪須","type":"wpn","w2h":true,"dmgS":4,"dmgL":6,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":56,"gachaWeight":100,"eff":"pierce","pierceChance":35},
+            "wpn_7": {"n":"柴刀","type":"wpn","w2h":true,"dmgS":4,"dmgL":11,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":252,"gachaWeight":100,"eff":"pierce","pierceChance":35},
             "wpn_elfbow": {"n":"精靈弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":45,"dmgS":2,"dmgL":2,"hit":0,"dmgBonus":1,"spd":1,"req":"all","safe":6,"p":620,"gachaWeight":100},
             "wpn_8": {"n":"歐西斯弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":10,"dmgS":2,"dmgL":2,"hit":0,"dmgBonus":-1,"spd":1,"req":"all","safe":6,"p":30,"gachaWeight":100},
-            "wpn_9": {"n":"闊劍","type":"wpn","dmgS":4,"dmgL":6,"hit":0,"spd":1.1,"req":"all","safe":6,"p":490,"gachaWeight":100},
-            "wpn_10": {"n":"木棒","type":"wpn","dmgS":6,"dmgL":3,"hit":0,"spd":1.3,"req":"all","safe":6,"p":42,"gachaWeight":100},
-            "wpn_dagger2": {"n":"精靈匕首","type":"wpn","dmgS":4,"dmgL":3,"hit":2,"spd":0.8,"req":"all","safe":6,"p":42,"unBonus":true,"gachaWeight":100},
-            "wpn_dagger1": {"n":"歐西斯匕首","type":"wpn","dmgS":2,"dmgL":3,"hit":2,"spd":0.8,"req":"all","safe":6,"p":10,"gachaWeight":100},
-            "wpn_11": {"n":"匕首","type":"wpn","dmgS":4,"dmgL":2,"hit":2,"spd":0.8,"req":"all","safe":6,"p":10,"gachaWeight":100},
-            "wpn_12": {"n":"貝卡合金","type":"wpn","w2h":true,"dmgS":11,"dmgL":11,"hit":0,"spd":1,"req":"knight","safe":6,"p":22400,"eff":"pierce","pierceChance":100,"twohanded":true,"gachaWeight":10},
-            "wpn_halberd": {"n":"法丘","type":"wpn","dmgS":10,"dmgL":10,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":11200,"unBonus":true,"gachaWeight":50,"eff":"pierce","pierceChance":40},
-            "wpn_13": {"n":"弗萊爾","type":"wpn","dmgS":6,"dmgL":4,"hit":0,"spd":1.3,"req":"all","safe":6,"p":56,"gachaWeight":100},
-            "wpn_14": {"n":"闊矛","type":"wpn","w2h":true,"dmgS":6,"dmgL":10,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":42,"gachaWeight":100,"eff":"pierce","pierceChance":60},
-            "wpn_15": {"n":"吉薩","type":"wpn","w2h":true,"dmgS":6,"dmgL":8,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":280,"gachaWeight":100,"eff":"pierce","pierceChance":70},
-            "wpn_16": {"n":"戟","type":"wpn","w2h":true,"dmgS":10,"dmgL":6,"hit":0,"spd":1,"req":"knight","safe":6,"p":2800,"gachaWeight":50,"eff":"pierce","pierceChance":60},
-            "wpn_17": {"n":"槍","type":"wpn","w2h":true,"dmgS":6,"dmgL":8,"hit":0,"spd":1,"req":"knight","safe":6,"p":84,"gachaWeight":100},
-            "wpn_18": {"n":"露西錘","type":"wpn","w2h":true,"dmgS":9,"dmgL":11,"hit":0,"spd":1,"req":"knight","safe":6,"p":14000,"gachaWeight":30,"eff":"pierce","pierceChance":50},
-            "wpn_19": {"n":"戰錘","type":"wpn","w2h":true,"dmgS":17,"dmgL":19,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":1400,"gachaWeight":100,"eff":"crush"},
-            "wpn_20": {"n":"流星錘","type":"wpn","dmgS":9,"dmgL":10,"hit":0,"spd":1.3,"req":"knight,elf","safe":6,"p":4900,"gachaWeight":50},
-            "wpn_21": {"n":"帕提森","type":"wpn","dmgS":6,"dmgL":6,"hit":0,"spd":1.2,"req":"knight,elf","safe":6,"p":700,"gachaWeight":100},
-            "wpn_scimitar": {"n":"彎刀","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":1.1,"req":"all","safe":6,"p":1400,"gachaWeight":100},
+            "wpn_9": {"n":"闊劍","type":"wpn","dmgS":4,"dmgL":6,"hit":0,"spd":0.9,"req":"all","safe":6,"p":490,"gachaWeight":100},
+            "wpn_10": {"n":"木棒","type":"wpn","dmgS":6,"dmgL":3,"hit":0,"spd":1.1,"req":"all","safe":6,"p":42,"gachaWeight":100},
+            "wpn_dagger2": {"n":"精靈匕首","type":"wpn","dmgS":4,"dmgL":3,"hit":2,"spd":0.6,"req":"all","safe":6,"p":42,"unBonus":true,"gachaWeight":100},
+            "wpn_dagger1": {"n":"歐西斯匕首","type":"wpn","dmgS":2,"dmgL":3,"hit":2,"spd":0.6,"req":"all","safe":6,"p":10,"gachaWeight":100},
+            "wpn_11": {"n":"匕首","type":"wpn","dmgS":4,"dmgL":2,"hit":2,"spd":0.6,"req":"all","safe":6,"p":10,"gachaWeight":100},
+            "wpn_12": {"n":"貝卡合金","type":"wpn","w2h":true,"dmgS":11,"dmgL":11,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":22400,"eff":"pierce","pierceChance":100,"twohanded":true,"gachaWeight":10},
+            "wpn_halberd": {"n":"法丘","type":"wpn","dmgS":10,"dmgL":10,"hit":0,"spd":0.8,"req":"knight,elf","safe":6,"p":11200,"unBonus":true,"gachaWeight":50,"eff":"pierce","pierceChance":40},
+            "wpn_13": {"n":"弗萊爾","type":"wpn","dmgS":6,"dmgL":4,"hit":0,"spd":1.1,"req":"all","safe":6,"p":56,"gachaWeight":100},
+            "wpn_14": {"n":"闊矛","type":"wpn","w2h":true,"dmgS":6,"dmgL":10,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":42,"gachaWeight":100,"eff":"pierce","pierceChance":60},
+            "wpn_15": {"n":"吉薩","type":"wpn","w2h":true,"dmgS":6,"dmgL":8,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":280,"gachaWeight":100,"eff":"pierce","pierceChance":70},
+            "wpn_16": {"n":"戟","type":"wpn","w2h":true,"dmgS":10,"dmgL":6,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":2800,"gachaWeight":50,"eff":"pierce","pierceChance":60},
+            "wpn_17": {"n":"槍","type":"wpn","w2h":true,"dmgS":6,"dmgL":8,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":84,"gachaWeight":100},
+            "wpn_18": {"n":"露西錘","type":"wpn","w2h":true,"dmgS":9,"dmgL":11,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":14000,"gachaWeight":30,"eff":"pierce","pierceChance":50},
+            "wpn_19": {"n":"戰錘","type":"wpn","w2h":true,"dmgS":17,"dmgL":19,"hit":0,"spd":1.2,"req":"knight,elf","safe":6,"p":1400,"gachaWeight":100,"eff":"crush"},
+            "wpn_20": {"n":"流星錘","type":"wpn","dmgS":9,"dmgL":10,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":4900,"gachaWeight":50},
+            "wpn_21": {"n":"帕提森","type":"wpn","dmgS":6,"dmgL":6,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":700,"gachaWeight":100},
+            "wpn_scimitar": {"n":"彎刀","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":0.9,"req":"all","safe":6,"p":1400,"gachaWeight":100},
             "wpn_22": {"n":"銀箭","type":"wpn","isArrow":true,"dmgS":7,"dmgL":6,"hit":0,"p":0,"unBonus":true,"gachaWeight":0},
-            "wpn_23": {"n":"侏儒鐵斧","type":"wpn","w2h":true,"dmgS":18,"dmgL":24,"hit":0,"spd":1,"req":"knight","safe":6,"p":1376,"gachaWeight":100,"eff":"crush"},
-            "wpn_24": {"n":"精靈之矛","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":1.2,"req":"all","safe":6,"p":1180,"unBonus":true,"gachaWeight":100},
-            "wpn_25": {"n":"歐西斯之矛","type":"wpn","dmgS":4,"dmgL":6,"hit":0,"spd":1.2,"req":"all","safe":6,"p":16,"gachaWeight":100},
-            "wpn_26": {"n":"小侏儒短劍","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":58,"gachaWeight":100},
-            "wpn_elfsword": {"n":"精靈短劍","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":3680,"unBonus":true,"gachaWeight":100},
-            "wpn_27": {"n":"歐西斯短劍","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":1,"req":"all","safe":6,"p":10,"gachaWeight":100},
-            "wpn_shortsword": {"n":"短劍","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":140,"gachaWeight":100},
-            "wpn_28": {"n":"三叉戟","type":"wpn","dmgS":5,"dmgL":4,"hit":0,"spd":1.2,"req":"knight,elf","safe":6,"p":35,"gachaWeight":100},
-            "wpn_siruge": {"n":"瑟魯基之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":2,"spd":1.1,"req":"knight","safe":6,"p":41196,"gachaWeight":10},
+            "wpn_23": {"n":"侏儒鐵斧","type":"wpn","w2h":true,"dmgS":18,"dmgL":24,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":1376,"gachaWeight":100,"eff":"crush"},
+            "wpn_24": {"n":"精靈之矛","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":1180,"unBonus":true,"gachaWeight":100},
+            "wpn_25": {"n":"歐西斯之矛","type":"wpn","dmgS":4,"dmgL":6,"hit":0,"spd":1,"req":"all","safe":6,"p":16,"gachaWeight":100},
+            "wpn_26": {"n":"小侏儒短劍","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":0.8,"req":"all","safe":6,"p":58,"gachaWeight":100},
+            "wpn_elfsword": {"n":"精靈短劍","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":0.8,"req":"all","safe":6,"p":3680,"unBonus":true,"gachaWeight":100},
+            "wpn_27": {"n":"歐西斯短劍","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":0.8,"req":"all","safe":6,"p":10,"gachaWeight":100},
+            "wpn_shortsword": {"n":"短劍","type":"wpn","dmgS":6,"dmgL":8,"hit":0,"spd":0.8,"req":"all","safe":6,"p":140,"gachaWeight":100},
+            "wpn_28": {"n":"三叉戟","type":"wpn","dmgS":5,"dmgL":4,"hit":0,"spd":1,"req":"knight,elf","safe":6,"p":35,"gachaWeight":100},
+            "wpn_siruge": {"n":"瑟魯基之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":2,"spd":0.9,"req":"knight","safe":6,"p":41196,"gachaWeight":10},
             "wpn_29": {"n":"尤米弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":55,"dmgS":3,"dmgL":3,"hit":0,"dmgBonus":3,"spd":1,"req":"elf","safe":6,"p":32680,"gachaWeight":10},
             "wpn_shortbow": {"n":"短弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":10,"dmgS":2,"dmgL":2,"hit":0,"dmgBonus":-1,"spd":1,"req":"all","safe":6,"p":10,"gachaWeight":100},
             "wpn_30": {"n":"米索莉箭","type":"wpn","isArrow":true,"dmgS":10,"dmgL":9,"hit":0,"p":1,"unBonus":true,"gachaWeight":0},
             "wpn_31": {"n":"十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":50,"dmgS":3,"dmgL":2,"hit":3,"dmgBonus":2,"spd":1,"req":"knight,elf","safe":6,"p":59400,"gachaWeight":10},
             "wpn_32": {"n":"獵人之弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":30,"dmgS":2,"dmgL":2,"hit":5,"dmgBonus":1,"spd":1,"req":"all","safe":6,"p":11000,"gachaWeight":20},
             "wpn_flaming_angel": {"n":"熾炎天使弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":40,"dmgS":3,"dmgL":3,"hit":3,"dmgBonus":4,"spd":1,"req":"elf","safe":6,"p":137300,"w2h":true,"eff":"moonburst","legend":true,"gachaWeight":1},
-            "wpn_redknight": {"n":"紅騎士之劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":1.1,"req":"all","safe":6,"p":2400,"str":1,"gachaWeight":20},
-            "wpn_invader": {"n":"侵略者之劍","type":"wpn","dmgS":9,"dmgL":11,"hit":0,"spd":1.1,"req":"all","safe":6,"p":3500,"gachaWeight":100},
-            "wpn_33": {"n":"骰子匕首","type":"wpn","dmgS":3,"dmgL":3,"hit":0,"spd":0.9,"eff":"dice_death","req":"all","safe":6,"p":444,"gachaWeight":10},
-            "wpn_damascus": {"n":"大馬士革刀","type":"wpn","dmgS":10,"dmgL":11,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":22000,"eff":"crush","gachaWeight":20},
-            "wpn_34": {"n":"短劍的劍身","type":"wpn","dmgS":2,"dmgL":2,"hit":0,"spd":1,"req":"all","safe":6,"p":320,"unBonus":true,"gachaWeight":100},
-            "wpn_35": {"n":"長劍的劍身","type":"wpn","dmgS":3,"dmgL":3,"hit":0,"spd":1.1,"req":"all","safe":6,"p":360,"unBonus":true,"gachaWeight":100},
-            "wpn_36": {"n":"奧里哈魯根的劍身","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":1.1,"req":"all","safe":6,"p":960,"unBonus":true,"gachaWeight":100},
-            "wpn_rapier": {"n":"細劍","type":"wpn","dmgS":11,"dmgL":6,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":5230,"unBonus":true,"gachaWeight":20},
-            "wpn_mailbreaker": {"n":"鎖子甲破壞者","type":"wpn","dmgS":4,"dmgL":5,"hit":10,"spd":1.1,"req":"all","safe":6,"p":12000,"unBonus":true,"gachaWeight":10},
-            "wpn_silversword": {"n":"銀長劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":1.1,"req":"all","safe":6,"p":18200,"unBonus":true,"gachaWeight":50},
-            "wpn_37": {"n":"銀劍","type":"wpn","dmgS":7,"dmgL":7,"hit":0,"spd":1.1,"req":"all","safe":6,"p":2520,"unBonus":true,"gachaWeight":70},
+            "wpn_redknight": {"n":"紅騎士之劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":0.9,"req":"all","safe":6,"p":2400,"str":1,"gachaWeight":20},
+            "wpn_invader": {"n":"侵略者之劍","type":"wpn","dmgS":9,"dmgL":11,"hit":0,"spd":0.9,"req":"all","safe":6,"p":3500,"gachaWeight":100},
+            "wpn_33": {"n":"骰子匕首","type":"wpn","dmgS":3,"dmgL":3,"hit":0,"spd":0.7,"eff":"dice_death","req":"all","safe":6,"p":444,"gachaWeight":10},
+            "wpn_damascus": {"n":"大馬士革刀","type":"wpn","dmgS":10,"dmgL":11,"hit":0,"spd":0.9,"req":"knight,elf","safe":6,"p":22000,"eff":"crush","gachaWeight":20},
+            "wpn_34": {"n":"短劍的劍身","type":"wpn","dmgS":2,"dmgL":2,"hit":0,"spd":0.8,"req":"all","safe":6,"p":320,"unBonus":true,"gachaWeight":100},
+            "wpn_35": {"n":"長劍的劍身","type":"wpn","dmgS":3,"dmgL":3,"hit":0,"spd":0.9,"req":"all","safe":6,"p":360,"unBonus":true,"gachaWeight":100},
+            "wpn_36": {"n":"奧里哈魯根的劍身","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":0.9,"req":"all","safe":6,"p":960,"unBonus":true,"gachaWeight":100},
+            "wpn_rapier": {"n":"細劍","type":"wpn","dmgS":11,"dmgL":6,"hit":0,"spd":0.9,"req":"knight,elf","safe":6,"p":5230,"unBonus":true,"gachaWeight":20},
+            "wpn_mailbreaker": {"n":"鎖子甲破壞者","type":"wpn","dmgS":4,"dmgL":5,"hit":10,"spd":0.9,"req":"all","safe":6,"p":12000,"unBonus":true,"gachaWeight":10},
+            "wpn_silversword": {"n":"銀長劍","type":"wpn","dmgS":8,"dmgL":12,"hit":0,"spd":0.9,"req":"all","safe":6,"p":18200,"unBonus":true,"gachaWeight":50},
+            "wpn_37": {"n":"銀劍","type":"wpn","dmgS":7,"dmgL":7,"hit":0,"spd":0.9,"req":"all","safe":6,"p":2520,"unBonus":true,"gachaWeight":70},
             "wpn_oakwand": {"n":"橡木魔法杖","type":"wpn","dmgS":3,"dmgL":4,"hit":0,"spd":1,"req":"all","safe":6,"p":330,"gachaWeight":100,"extraMpPerEn":1},
             "wpn_38": {"n":"美基魔法杖","type":"wpn","dmgS":4,"dmgL":5,"hit":0,"spd":1,"req":"mage","safe":6,"p":3500,"gachaWeight":100,"extraMpPerEn":1},
             "wpn_witchwand": {"n":"巫術魔法杖","type":"wpn","dmgS":2,"dmgL":3,"hit":0,"mdmg":1,"spd":1,"req":"mage","safe":6,"p":12600,"gachaWeight":50,"extraMpPerEn":1},
@@ -764,12 +788,12 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_crystalwand": {"n":"水晶魔杖","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"spd":1,"req":"mage","safe":6,"p":10000,"mpR":10,"mpROverSafe":2,"gachaWeight":20},
             "wpn_powerless_baless": {"n":"失去魔力的巴列斯魔杖","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"dmgBonus":0,"spd":1,"req":"all","safe":0,"p":0,"gachaWeight":0,"noEnhance":true,"d":"魔力早已枯竭的古老魔杖，杖芯卻仍隱隱悸動。攜帶它並使用『靈魂之球』，或許能喚回沉睡的力量……（封印狀態無法強化；傳統模式下解封印才附加隨機強化值。可販售，售價 0）"},
             "wpn_baless": {"n":"巴列斯魔杖","type":"wpn","dmgS":2,"dmgL":3,"hit":0,"dmgBonus":0,"mdmg":2,"spd":1,"req":"mage","safe":0,"p":250000,"mpR":10,"mpROverSafe":2,"legend":true,"gachaWeight":1,"d":"重獲魔力的傳說魔杖，杖身蘊含撼動萬物的共鳴之力。"},
-            "wpn_39": {"n":"潘的角","type":"wpn","dmgS":3,"dmgL":4,"hit":0,"spd":1.2,"req":"all","safe":6,"p":10,"gachaWeight":100},
-            "wpn_40": {"n":"覆上米索莉的角","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":1.2,"req":"all","safe":6,"p":178,"unBonus":true,"gachaWeight":100},
-            "wpn_41": {"n":"覆上奧里哈魯根的角","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":1.2,"req":"all","safe":6,"p":1430,"unBonus":true,"gachaWeight":100},
-            "wpn_giantaxe": {"n":"巨斧","type":"wpn","w2h":true,"dmgS":20,"dmgL":26,"hit":0,"spd":1,"req":"knight","safe":6,"p":18200,"gachaWeight":50,"eff":"crush"},
-            "wpn_berserker": {"n":"狂戰士斧","type":"wpn","w2h":true,"dmgS":19,"dmgL":19,"hit":0,"spd":0.8,"req":"knight","safe":6,"p":13520,"gachaWeight":10,"eff":"crush"},
-            "wpn_silveraxe": {"n":"銀斧","type":"wpn","w2h":true,"dmgS":17,"dmgL":24,"hit":0,"spd":1,"req":"knight","safe":6,"p":11200,"unBonus":true,"gachaWeight":20,"eff":"crush"},
+            "wpn_39": {"n":"潘的角","type":"wpn","dmgS":3,"dmgL":4,"hit":0,"spd":1,"req":"all","safe":6,"p":10,"gachaWeight":100},
+            "wpn_40": {"n":"覆上米索莉的角","type":"wpn","dmgS":4,"dmgL":4,"hit":0,"spd":1,"req":"all","safe":6,"p":178,"unBonus":true,"gachaWeight":100},
+            "wpn_41": {"n":"覆上奧里哈魯根的角","type":"wpn","dmgS":7,"dmgL":8,"hit":0,"spd":1,"req":"all","safe":6,"p":1430,"unBonus":true,"gachaWeight":100},
+            "wpn_giantaxe": {"n":"巨斧","type":"wpn","w2h":true,"dmgS":20,"dmgL":26,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":18200,"gachaWeight":50,"eff":"crush"},
+            "wpn_berserker": {"n":"狂戰士斧","type":"wpn","w2h":true,"dmgS":19,"dmgL":19,"hit":0,"spd":0.9,"req":"knight","safe":6,"p":13520,"gachaWeight":10,"eff":"crush"},
+            "wpn_silveraxe": {"n":"銀斧","type":"wpn","w2h":true,"dmgS":17,"dmgL":24,"hit":0,"spd":1.1,"req":"knight","safe":6,"p":11200,"unBonus":true,"gachaWeight":20,"eff":"crush"},
             "wpn_claw_bronze": {"n":"青銅鋼爪","type":"wpn","w2h":true,"dmgS":8,"dmgL":7,"hit":2,"spd":0.9,"req":"dark","safe":6,"p":250,"eff":"combo","gachaWeight":100},
             "wpn_claw_steel": {"n":"鋼鐵鋼爪","type":"wpn","w2h":true,"dmgS":10,"dmgL":8,"hit":1,"spd":0.9,"req":"dark","safe":6,"p":500,"eff":"combo","gachaWeight":100},
             "wpn_claw_shadow": {"n":"暗影鋼爪","type":"wpn","w2h":true,"dmgS":12,"dmgL":10,"hit":1,"spd":0.9,"req":"dark","safe":6,"p":35000,"eff":"combo","gachaWeight":50},
@@ -780,16 +804,16 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_claw_abyss": {"n":"暗黑鋼爪","type":"wpn","w2h":true,"dmgS":22,"dmgL":18,"hit":4,"dmgBonus":5,"spd":0.9,"req":"dark","safe":6,"p":10000,"eff":"combo","gachaWeight":5},
             "wpn_baranka_claw": {"n":"魔獸軍王之爪","type":"wpn","w2h":true,"dmgS":12,"dmgL":12,"hit":0,"dmgBonus":2,"spd":0.8,"req":"dark","safe":6,"p":25000,"eff":"combo","gachaWeight":10},
             "wpn_baranka_steelclaw": {"n":"巴蘭卡鋼爪","type":"wpn","w2h":true,"dmgS":18,"dmgL":18,"hit":0,"dmgBonus":8,"spd":0.7,"req":"dark","safe":6,"p":125000,"eff":"combo","legend":true,"gachaWeight":1},
-            "wpn_dk_flameblade": {"n":"死亡騎士的烈炎之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":5,"dmgBonus":2,"spd":1,"req":"knight","safe":6,"p":152000,"legend":true,"gachaWeight":1,"spellProc":{"skn":"地獄火","dice":[1,60],"ele":"fire","aoe":true},"procRateBase":3,"procRatePerEn":1,"d":"死亡騎士緊握至死的劍，劍刃終年燃著不滅的地獄業火。<br>3%機率額外施放地獄火，每+1發動機率增加1%。地獄火：對敵方全體造成相當於裂炎術的火屬性魔法傷害。"},
-            "wpn_kurt_sword": {"n":"克特之劍","type":"wpn","dmgS":15,"dmgL":11,"hit":9,"dmgBonus":5,"spd":1,"req":"knight,elf","safe":6,"p":152000,"legend":true,"gachaWeight":1,"spellProc":{"skn":"極道落雷","dice":[6,8],"ele":"wind"},"procRateBase":15,"procRatePerEn":1,"d":"克特之劍，劍鋒間遊走著被馴服的雷霆。<br>15%機率額外施放極道落雷，每+1發動機率增加1%。"},
-            "wpn_thor_hammer": {"n":"雷神之鎚","type":"wpn","dmgS":7,"dmgL":12,"hit":3,"dmgBonus":0,"spd":1.1,"req":"royal,knight,elf,mage,warrior","safe":6,"p":46000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"電光衝擊","dice":[5,5],"flat":5,"ele":"wind","status":{"kind":"stun","pct":5,"dur":3}},"procRateBase":1,"procRatePerEn":1,"d":"雷神遺落的戰鎚，鎚頭間纏繞著未平息的雷霆。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動電光衝擊：造成基礎 +5 的風屬性單體魔法傷害，並有 5% 固定機率使目標暈眩。"},
-            "wpn_pagrio_wrath": {"n":"帕格里奧之怒","type":"wpn","dmgS":13,"dmgL":9,"hit":2,"dmgBonus":2,"spd":1,"req":"royal,knight,elf","safe":6,"p":56000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"火焰之陣","dice":[6,6],"flat":6,"ele":"fire","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"帕格里奧之怒，劍身灼燒著永不熄滅的怒火。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+2、近距離命中+2。<br>攻擊時 1%（每強化 +1%）機率發動火焰之陣：對敵方全體造成基礎 +6 的火屬性魔法傷害。"},
-            "wpn_mapler_punish": {"n":"馬普勒的懲罰","type":"wpn","w2h":true,"dmgS":14,"dmgL":15,"hit":0,"dmgBonus":11,"spd":0.9,"req":"royal,knight,elf,warrior","safe":6,"p":46000,"legend":true,"gachaWeight":1,"eff":"crush","ignHardSkin":true,"spellProc":{"skn":"震裂術","dice":[4,11],"ele":"earth","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"馬普勒降下的懲戒之鎚，每一擊都撼動大地。<br>重擊；貫穿（無視硬皮額外減傷）；近距離傷害+11。<br>攻擊時 1%（每強化 +1%）機率發動震裂術：對敵方全體造成等同法師震裂術的土屬性魔法傷害（不吃法師階級加成）。"},
-            "wpn_osis_hammer": {"n":"歐西斯衝撞錘","type":"wpn","dmgS":8,"dmgL":9,"hit":3,"dmgBonus":0,"spd":1.1,"req":"royal,knight,warrior","safe":6,"p":66000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"流星雨","dice":[6,10],"ele":"fire","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"歐西斯鍛造的衝撞之錘，揮動之間天降流火。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動流星雨：對敵方全體造成等同法師流星雨的火屬性魔法傷害（不吃法師階級加成）。"},
-            "wpn_eva_scold": {"n":"伊娃的責罵","type":"wpn","dmgS":9,"dmgL":9,"hit":1,"dmgBonus":1,"spd":1,"req":"royal,knight,elf,mage,dark,dragon,illusion","safe":6,"p":56400,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"水之矛","dice":[5,5],"flat":5,"ele":"water","status":{"kind":"freeze","pct":5,"dur":4}},"procRateBase":1,"procRatePerEn":1,"d":"伊娃的責罵，劍鋒凝著沁骨的寒泉。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+1、近距離命中+1。<br>攻擊時 1%（每強化 +1%）機率發動水之矛：造成基礎 +5 的水屬性單體魔法傷害，並有 5% 固定機率使目標冰凍。"},
+            "wpn_dk_flameblade": {"n":"死亡騎士的烈炎之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":5,"dmgBonus":2,"spd":0.8,"req":"knight","safe":6,"p":152000,"legend":true,"gachaWeight":1,"spellProc":{"skn":"地獄火","dice":[1,60],"ele":"fire","aoe":true},"procRateBase":3,"procRatePerEn":1,"d":"死亡騎士緊握至死的劍，劍刃終年燃著不滅的地獄業火。<br>3%機率額外施放地獄火，每+1發動機率增加1%。地獄火：對敵方全體造成相當於裂炎術的火屬性魔法傷害。"},
+            "wpn_kurt_sword": {"n":"克特之劍","type":"wpn","dmgS":15,"dmgL":11,"hit":9,"dmgBonus":5,"spd":0.8,"req":"knight,elf","safe":6,"p":152000,"legend":true,"gachaWeight":1,"spellProc":{"skn":"極道落雷","dice":[6,8],"ele":"wind"},"procRateBase":15,"procRatePerEn":1,"d":"克特之劍，劍鋒間遊走著被馴服的雷霆。<br>15%機率額外施放極道落雷，每+1發動機率增加1%。"},
+            "wpn_thor_hammer": {"n":"雷神之鎚","type":"wpn","dmgS":7,"dmgL":12,"hit":3,"dmgBonus":0,"spd":0.9,"req":"royal,knight,elf,mage,warrior","safe":6,"p":46000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"電光衝擊","dice":[5,5],"flat":5,"ele":"wind","status":{"kind":"stun","pct":5,"dur":3}},"procRateBase":1,"procRatePerEn":1,"d":"雷神遺落的戰鎚，鎚頭間纏繞著未平息的雷霆。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動電光衝擊：造成基礎 +5 的風屬性單體魔法傷害，並有 5% 固定機率使目標暈眩。"},
+            "wpn_pagrio_wrath": {"n":"帕格里奧之怒","type":"wpn","dmgS":13,"dmgL":9,"hit":2,"dmgBonus":2,"spd":0.8,"req":"royal,knight,elf","safe":6,"p":56000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"火焰之陣","dice":[6,6],"flat":6,"ele":"fire","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"帕格里奧之怒，劍身灼燒著永不熄滅的怒火。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+2、近距離命中+2。<br>攻擊時 1%（每強化 +1%）機率發動火焰之陣：對敵方全體造成基礎 +6 的火屬性魔法傷害。"},
+            "wpn_mapler_punish": {"n":"馬普勒的懲罰","type":"wpn","w2h":true,"dmgS":14,"dmgL":15,"hit":0,"dmgBonus":11,"spd":1,"req":"royal,knight,elf,warrior","safe":6,"p":46000,"legend":true,"gachaWeight":1,"eff":"crush","ignHardSkin":true,"spellProc":{"skn":"震裂術","dice":[4,11],"ele":"earth","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"馬普勒降下的懲戒之鎚，每一擊都撼動大地。<br>重擊；貫穿（無視硬皮額外減傷）；近距離傷害+11。<br>攻擊時 1%（每強化 +1%）機率發動震裂術：對敵方全體造成等同法師震裂術的土屬性魔法傷害。"},
+            "wpn_osis_hammer": {"n":"歐西斯衝撞錘","type":"wpn","dmgS":8,"dmgL":9,"hit":3,"dmgBonus":0,"spd":0.9,"req":"royal,knight,warrior","safe":6,"p":66000,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"流星雨","dice":[6,10],"ele":"fire","aoe":true},"procRateBase":1,"procRatePerEn":1,"d":"歐西斯鍛造的衝撞之錘，揮動之間天降流火。<br>鈍擊；貫穿（無視硬皮額外減傷）；近距離命中+3。<br>攻擊時 1%（每強化 +1%）機率發動流星雨：對敵方全體造成等同法師流星雨的火屬性魔法傷害。"},
+            "wpn_eva_scold": {"n":"伊娃的責罵","type":"wpn","dmgS":9,"dmgL":9,"hit":1,"dmgBonus":1,"spd":0.8,"req":"royal,knight,elf,mage,dark,dragon,illusion","safe":6,"p":56400,"legend":true,"gachaWeight":1,"ignHardSkin":true,"spellProc":{"skn":"水之矛","dice":[5,5],"flat":5,"ele":"water","status":{"kind":"freeze","pct":5,"dur":4}},"procRateBase":1,"procRatePerEn":1,"d":"伊娃的責罵，劍鋒凝著沁骨的寒泉。<br>反擊；貫穿（無視硬皮額外減傷）；近距離傷害+1、近距離命中+1。<br>攻擊時 1%（每強化 +1%）機率發動水之矛：造成基礎 +5 的水屬性單體魔法傷害，並有 5% 固定機率使目標冰凍。"},
             "wpn_assassin_mark": {"n":"暗殺軍王之痕","type":"wpn","w2h":true,"dmgS":13,"dmgL":13,"hit":0,"dmgBonus":2,"spd":0.7,"req":"dark","safe":6,"p":25000,"eff":"combo","gachaWeight":10},
-            "wpn_priest_wand": {"n":"神官魔杖","type":"wpn","w2h":true,"dmgS":9,"dmgL":9,"hit":0,"spd":1,"req":"mage","safe":6,"p":13340,"unBonus":true,"eff":"magicburst","gachaWeight":10,"d":"神官祈禱經年的法杖，能將信仰化為爆裂的魔力。<br>魔爆：施放單體傷害魔法時 智力/100、全體傷害魔法時 智力/60 機率引發魔法能力爆炸，對所有敵人額外造成該次魔法傷害 30% 的無屬性傷害。"},
-            "wpn_laia_wand": {"n":"蕾雅魔杖","type":"wpn","dmgS":1,"dmgL":1,"hit":-3,"dmgBonus":0,"mdmg":-2,"spd":1,"req":"mage","safe":6,"p":23340,"legend":true,"gachaWeight":10,"meleeHitSpell":{"skn":"冰裂術","dice":[6,10],"ele":"water","freezePbase":200,"shatter":100},"d":"冰之女王蕾雅愛用的魔杖，杖尖凝結著永不消融的寒霜。<br>一般攻擊命中時觸發冰裂術：以法師8階法術公式造成 ×(1+強化/10) 水屬性魔法傷害（受魔法傷害與法術階級係數影響），有機率冰凍目標；對冰凍目標額外造成 100 水屬性傷害並解除其冰凍。"},
+            "wpn_priest_wand": {"n":"神官魔杖","type":"wpn","w2h":true,"dmgS":9,"dmgL":9,"hit":0,"spd":1,"req":"mage","safe":6,"p":13340,"unBonus":true,"eff":"magicburst","gachaWeight":10,"d":"神官祈禱經年的法杖，能將信仰化為爆裂的魔力。<br>魔爆：施放單體傷害魔法時 智力/100、全體傷害魔法時 智力/60 機率引發魔法能力爆炸，將該次魔法傷害 30% 的無屬性傷害均分給場上所有敵人。"},
+            "wpn_laia_wand": {"n":"蕾雅魔杖","type":"wpn","dmgS":1,"dmgL":1,"hit":-3,"dmgBonus":0,"mdmg":-2,"spd":1,"req":"mage","safe":6,"p":23340,"legend":true,"gachaWeight":10,"meleeHitSpell":{"skn":"冰裂術","dice":[6,10],"ele":"water","freezePbase":200,"shatter":100},"d":"冰之女王蕾雅愛用的魔杖，杖尖凝結著永不消融的寒霜。<br>一般攻擊命中時觸發冰裂術：造成  水屬性魔法傷害（受魔法傷害影響·吃武器強化最終傷害倍率），有機率冰凍目標；對冰凍目標額外造成 100 水屬性傷害並解除其冰凍。"},
             "shd_priest_book": {"n":"神官魔法書","type":"arm","slot":"shield","ac":3,"mmp":50,"mpR":3,"req":"mage","safe":6,"p":93000,"gachaWeight":5},
             "amr_laia_robe": {"n":"蕾雅長袍","type":"arm","slot":"armor","ac":2,"mmp":100,"req":"mage","safe":4,"p":58000,"gachaWeight":1},
             "acc_necro_king_ring": {"n":"冥法軍王之戒","legend":true,"type":"acc","slot":"amulet","ac":0,"cha":3,"req":"mage,elf","safe":0,"p":193000,"gachaWeight":1},
@@ -808,8 +832,8 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "bot_frost": {"n":"寒冰長靴","legend":true,"type":"arm","slot":"boots","ac":4,"req":"royal,dragon","safe":4,"p":125000,"gachaWeight":0,"set":"frost","d":"千年寒霜凝鑄的長靴，踏處留下不化的冰痕。寒冰套裝之一。<br><span class='text-amber-300'>【寒冰套裝】頭盔＋盔甲＋長靴 同時裝備：AC-5、體質+3、HP+100、HP自然恢復+8、MP自然恢復+4、MR+15、水屬性抗性+20。</span>"},
             "wpn_icequeen_wand": {"n":"冰之女王魔杖","type":"wpn","dmgS":3,"dmgL":4,"hit":5,"dmgBonus":1,"spd":1,"req":"mage","safe":6,"p":143340,"legend":true,"gachaWeight":1,"procSkill":"sk_ice_spike","procRateBase":8,"procRatePerEn":2,"d":"冰之女王御用的魔杖，杖尖凝著永不消融的霜華。攻擊時 8% 機率額外施放冰錐（每強化 +1 機率 +2%，不需學習、不耗MP，效果同法師冰錐）。"},
             "wpn_demon_scythe": {"n":"惡魔鐮刀","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"dmgBonus":0,"mdmg":5,"spd":1,"req":"mage","safe":6,"p":173340,"legend":true,"gachaWeight":1,"isWand":true},
-            "wpn_blood_2hsword": {"n":"血色巨劍","type":"wpn","w2h":true,"dmgS":13,"dmgL":15,"hit":0,"dmgBonus":0,"spd":0.9,"req":"knight","safe":6,"p":11140,"eff":"cleave","gachaWeight":30},
-            "wpn_dark_sword": {"n":"黑暗之劍","type":"wpn","dmgS":15,"dmgL":12,"hit":0,"dmgBonus":1,"spd":0.9,"req":"knight,dark","safe":6,"p":12000,"gachaWeight":10},
+            "wpn_blood_2hsword": {"n":"血色巨劍","type":"wpn","w2h":true,"dmgS":13,"dmgL":15,"hit":0,"dmgBonus":0,"spd":1,"req":"knight","safe":6,"p":11140,"eff":"cleave","gachaWeight":30},
+            "wpn_dark_sword": {"n":"黑暗之劍","type":"wpn","dmgS":15,"dmgL":12,"hit":0,"dmgBonus":1,"spd":0.7,"req":"knight,dark","safe":6,"p":12000,"gachaWeight":10},
             "wpn_red_crystalwand": {"n":"紅水晶魔杖","type":"wpn","w2h":true,"dmgS":8,"dmgL":8,"hit":0,"spd":1,"req":"mage","safe":6,"p":13340,"mpR":5,"int":1,"wis":1,"gachaWeight":10},
             "wpn_dual_bronze": {"n":"青銅雙刀","type":"wpn","w2h":true,"dmgS":8,"dmgL":6,"hit":3,"spd":0.8,"req":"dark","safe":6,"p":960,"eff":"combo","gachaWeight":100},
             "wpn_dual_steel": {"n":"鋼鐵雙刀","type":"wpn","w2h":true,"dmgS":10,"dmgL":7,"hit":1,"spd":0.8,"req":"dark","safe":6,"p":1800,"eff":"combo","gachaWeight":100},
@@ -821,7 +845,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_dual_abyss": {"n":"暗黑雙刀","type":"wpn","w2h":true,"dmgS":18,"dmgL":14,"hit":4,"dmgBonus":3,"spd":0.8,"req":"dark","safe":6,"p":80000,"eff":"combo","gachaWeight":5},
             "wpn_thebes_bow": {"n":"底比斯歐西里斯弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":80,"dmgS":3,"dmgL":3,"hit":0,"dmgBonus":1,"int":2,"wis":1,"spd":0.9,"req":"elf,illusion","safe":6,"p":235000,"gachaWeight":1,"procSkill":"sk_demon_kiss","procRateBase":4,"procRatePerEn":0,"d":"底比斯亡靈守護者持用的長弓，弓弦低語著歐西里斯的審判。連射 80%。智力+2、精神+1。攻擊時 4% 機率發動惡魔之吻（ 地屬性魔法傷害，受魔法傷害公式影響）。"},
             "wpn_thebes_dual": {"n":"底比斯歐西里斯雙刀","type":"wpn","w2h":true,"dmgS":16,"dmgL":11,"hit":0,"dmgBonus":1,"dex":2,"wis":1,"spd":0.7,"req":"dark","safe":6,"p":215000,"eff":"combo","comboRate":30,"gachaWeight":1,"procSkill":"sk_demon_kiss","procRateBase":4,"procRatePerEn":0,"d":"自底比斯神殿出土的雙刃，刀身刻滿守墓的咒文。雙擊。敏捷+2、精神+1。攻擊時 4% 機率發動惡魔之吻（ 地屬性魔法傷害，受魔法傷害公式影響）。"},
-            "wpn_thebes_2hsword": {"n":"底比斯歐西里斯雙手劍","type":"wpn","w2h":true,"dmgS":21,"dmgL":26,"hit":5,"dmgBonus":0,"str":1,"con":2,"spd":0.8,"req":"knight,dragon","safe":6,"p":255000,"eff":"cleave","gachaWeight":1,"procSkill":"sk_demon_kiss","procRateBase":4,"procRatePerEn":0,"d":"沉睡於歐西里斯祭壇的巨劍，承載著冥府之主的威壓。切割。力量+1、體質+2。攻擊時 4% 機率發動惡魔之吻（ 地屬性魔法傷害，受魔法傷害公式影響）。"},
+            "wpn_thebes_2hsword": {"n":"底比斯歐西里斯雙手劍","type":"wpn","w2h":true,"dmgS":21,"dmgL":26,"hit":5,"dmgBonus":0,"str":1,"con":2,"spd":0.9,"req":"knight,dragon","safe":6,"p":255000,"eff":"cleave","gachaWeight":1,"procSkill":"sk_demon_kiss","procRateBase":4,"procRatePerEn":0,"d":"沉睡於歐西里斯祭壇的巨劍，承載著冥府之主的威壓。切割。力量+1、體質+2。攻擊時 4% 機率發動惡魔之吻（ 地屬性魔法傷害，受魔法傷害公式影響）。"},
             "wpn_thebes_wand": {"n":"底比斯歐西里斯魔杖","type":"wpn","w2h":true,"dmgS":20,"dmgL":18,"hit":2,"dmgBonus":3,"str":2,"mdmg":2,"mpR":7,"spd":0.9,"req":"mage,illusion","safe":6,"p":185000,"eff":"magicstrike","gachaWeight":1,"procSkill":"sk_demon_kiss","procRateBase":4,"procRatePerEn":0,"d":"底比斯祭司執掌的魔杖，引動黃沙與亡魂之力。魔擊。力量+2、魔攻+2、MP自然恢復+7。攻擊時 4% 機率發動惡魔之吻（ 地屬性魔法傷害，受魔法傷害公式影響）。"},
             "blt_thebes_osiris": {"n":"底比斯歐西里斯腰帶","type":"acc","slot":"belt","ac":0,"mmp":10,"mpR":2,"weightCap":250,"req":"all","safe":0,"p":326000,"gachaWeight":1,"d":"以歐西里斯之名祝聖的腰帶，繫上者得享冥界的豐沃。MP+10、MP自然恢復+2、負重上限+250。"},
             "acc_thebes_horus": {"n":"底比斯賀洛斯戒指","legend":true,"type":"acc","slot":"ring","ac":0,"int":1,"mpR":1,"mdmg":2,"req":"all","safe":0,"p":600000,"gachaWeight":1,"d":"鑲著鷹神賀洛斯之眼的戒指，洞悉魔力的流轉。智力+1、MP自然恢復+1、魔法傷害+2。"},
@@ -829,19 +853,19 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_xbow_dark": {"n":"黑暗十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":35,"w2h":true,"dmgS":2,"dmgL":2,"hit":4,"dmgBonus":0,"spd":1,"req":"elf,dark","safe":6,"p":17300,"gachaWeight":70},
             "wpn_xbow_gloom": {"n":"幽暗十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":70,"w2h":true,"dmgS":3,"dmgL":2,"hit":5,"dmgBonus":2,"spd":1,"req":"elf,dark","safe":6,"p":33300,"gachaWeight":50},
             "wpn_xbow_abyss": {"n":"暗黑十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":70,"w2h":true,"dmgS":5,"dmgL":5,"hit":4,"dmgBonus":6,"spd":1,"req":"elf,dark","safe":6,"p":180000,"gachaWeight":1,"ignHardSkin":true,"d":"以深淵暗黑之力凝成的十字弓，箭矢能穿透一切血肉與甲冑。連射 70%；貫穿——攻擊（含連射）無視目標硬皮的額外物理減傷。"},
-            "wpn_manadagger": {"n":"魔力短劍","type":"wpn","dmgS":6,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.8,"req":"all","safe":6,"p":191000,"eff":"mp_drain","unBonus":true,"str":1,"mpR":1,"legend":true,"gachaWeight":1,"d":"刃中封藏著流動魔力的短劍，飲血之餘亦能回吐法力。一般攻擊命中恢復 MP，並帶出血。"},
+            "wpn_manadagger": {"n":"魔力短劍","type":"wpn","dmgS":6,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.6,"req":"all","safe":6,"p":191000,"eff":"mp_drain","unBonus":true,"str":1,"mpR":1,"legend":true,"gachaWeight":1,"d":"刃中封藏著流動魔力的短劍，飲血之餘亦能回吐法力。一般攻擊命中恢復 MP，並帶出血。"},
             "wpn_xbow_rasta": {"n":"拉斯塔巴德十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":45,"w2h":true,"dmgS":3,"dmgL":3,"hit":2,"dmgBonus":2,"spd":0.9,"req":"elf,dark","safe":6,"p":2300,"gachaWeight":80},
             "wpn_bow_rasta": {"n":"拉斯塔巴德弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":55,"w2h":true,"dmgS":2,"dmgL":2,"hit":2,"dmgBonus":2,"spd":0.9,"req":"knight,elf","safe":6,"p":1800,"gachaWeight":80},
-            "wpn_small_katana": {"n":"小武士刀","type":"wpn","dmgS":8,"dmgL":8,"hit":1,"spd":0.9,"req":"all","safe":6,"p":11000,"gachaWeight":30},
-            "wpn_sword_rasta": {"n":"拉斯塔巴德長劍","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":1.1,"req":"knight,elf,dark","safe":6,"p":990,"gachaWeight":50},
-            "wpn_dagger_rasta": {"n":"拉斯塔巴德短劍","type":"wpn","dmgS":4,"dmgL":3,"hit":2,"spd":0.8,"req":"all","safe":6,"p":1000,"gachaWeight":80},
+            "wpn_small_katana": {"n":"小武士刀","type":"wpn","dmgS":8,"dmgL":8,"hit":1,"spd":0.7,"req":"all","safe":6,"p":11000,"gachaWeight":30},
+            "wpn_sword_rasta": {"n":"拉斯塔巴德長劍","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":0.9,"req":"knight,elf,dark","safe":6,"p":990,"gachaWeight":50},
+            "wpn_dagger_rasta": {"n":"拉斯塔巴德短劍","type":"wpn","dmgS":4,"dmgL":3,"hit":2,"spd":0.6,"req":"all","safe":6,"p":1000,"gachaWeight":80},
             "wpn_wand_rasta": {"n":"拉斯塔巴德魔杖","type":"wpn","dmgS":2,"dmgL":3,"hit":0,"mdmg":1,"spd":1,"req":"mage","safe":6,"p":10000,"gachaWeight":80},
             "wpn_darkmage_wand": {"n":"黑法師之杖","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"dmgBonus":0,"mdmg":2,"mpR":5,"spd":1,"req":"mage","safe":6,"p":94510,"gachaWeight":5},
             "wpn_dual_rasta": {"n":"拉斯塔巴德雙刀","type":"wpn","w2h":true,"dmgS":15,"dmgL":10,"hit":0,"spd":0.8,"req":"dark","safe":6,"p":10000,"eff":"combo","gachaWeight":50},
             "wpn_xbow_heavy_rasta": {"n":"拉斯塔巴德重十字弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":45,"w2h":true,"dmgS":3,"dmgL":3,"hit":2,"dmgBonus":3,"spd":0.9,"req":"elf","safe":6,"p":5300,"gachaWeight":80},
-            "wpn_spear_rasta": {"n":"拉斯塔巴德矛","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":1.1,"req":"knight,elf","safe":6,"p":1800,"gachaWeight":100},
+            "wpn_spear_rasta": {"n":"拉斯塔巴德矛","type":"wpn","dmgS":8,"dmgL":8,"hit":0,"spd":0.9,"req":"knight,elf","safe":6,"p":1800,"gachaWeight":100},
             "wpn_dual_spike": {"n":"尖刺雙刀","type":"wpn","w2h":true,"dmgS":8,"dmgL":8,"hit":0,"dmgBonus":3,"spd":0.8,"req":"dark","safe":6,"p":2000,"gachaWeight":100,"eff":"combo","comboRate":25,"ignHardSkin":true,"d":"佈滿尖刺的雙刀，連環撕咬穿透敵人的防護。<br>雙擊 25%；貫穿（無視硬皮額外減傷）。"},
-            "wpn_official_blade": {"n":"武官之刃","type":"wpn","dmgS":13,"dmgL":10,"hit":1,"dmgBonus":2,"spd":1.1,"req":"knight,elf,royal,dragon","safe":6,"p":58000,"gachaWeight":10,"d":"拉斯塔巴德武官佩帶的單手劍，以靜制動、伺機反擊。<br>反擊（單手劍）。"},
+            "wpn_official_blade": {"n":"武官之刃","type":"wpn","dmgS":13,"dmgL":10,"hit":1,"dmgBonus":2,"spd":0.9,"req":"knight,elf,royal,dragon","safe":6,"p":58000,"gachaWeight":10,"d":"拉斯塔巴德武官佩帶的單手劍，以靜制動、伺機反擊。<br>反擊（單手劍）。"},
             "arm_official_cloak": {"n":"武官斗篷","type":"arm","slot":"cloak","ac":2,"mhp":20,"hpR":3,"req":"knight,dark,royal,dragon","safe":4,"p":13000,"gachaWeight":20,"d":"拉斯塔巴德武官的斗篷，內襯堅韌、護住要害。<br>HP+20、HP自然恢復+3。"},
             "glv_dark": {"n":"黑暗手套","type":"arm","slot":"gloves","ac":1,"rangedHit":2,"req":"dark","safe":4,"p":4000,"gachaWeight":90,"d":"黑暗妖精的手套，握持間更顯穩準。<br>遠距離命中+2。"},
             "item_dk_insignia": {"n":"死亡騎士之印記","type":"etc","p":50000,"maxHold":1,"noUse":true,"gachaWeight":0,"c":"text-red-400","d":"死亡騎士的印記（唯一）。持有時於拉斯塔巴德區域擊敗怪物，有機率獲得聖地遺物。可賣出。"},
@@ -856,11 +880,11 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "mat_history_6": {"n":"封印的歷史書第6頁","type":"etc","p":100,"noUse":true,"gachaWeight":0,"c":"text-amber-200","d":"封印的歷史書殘頁。集齊 8 頁可製作『拉斯塔巴德製作武器秘笈』。"},
             "mat_history_7": {"n":"封印的歷史書第7頁","type":"etc","p":100,"noUse":true,"gachaWeight":0,"c":"text-amber-200","d":"封印的歷史書殘頁。集齊 8 頁可製作『拉斯塔巴德製作武器秘笈』。"},
             "mat_history_8": {"n":"封印的歷史書第8頁","type":"etc","p":100,"noUse":true,"gachaWeight":0,"c":"text-amber-200","d":"封印的歷史書殘頁。集齊 8 頁可製作『拉斯塔巴德製作武器秘笈』。"},
-            "wpn_emperor_blade": {"n":"真．冥皇執行劍","type":"wpn","w2h":true,"legend":true,"dmgS":28,"dmgL":33,"hit":5,"dmgBonus":20,"spd":0.9,"req":"knight,dragon","safe":0,"p":500000,"gachaWeight":0,"eff":"cleave","ignHardSkin":true,"str":2,"dex":1,"stunHitBonus":20,"d":"冥皇執行劍的真實之姿，劍勢凝著鎮魂的威壓。<br>切割；貫穿（無視硬皮額外減傷）；力量+2、敏捷+1；施展衝擊之暈時暈眩命中率 +20%。"},
-            "wpn_windblade_dagger": {"n":"風刃短劍","type":"wpn","legend":true,"dmgS":23,"dmgL":16,"hit":10,"dmgBonus":10,"spd":0.8,"req":"knight,elf,mage,royal,dark","safe":0,"p":500000,"gachaWeight":0,"ignHardSkin":true,"mhp":100,"dex":2,"vampPct":0.1,"d":"風之精靈寄宿的短劍，揮斬之間清風奪命。<br>出血（匕首）；貫穿（無視硬皮額外減傷）；HP+100、敏捷+2；恢復一般攻擊造成傷害的 10% HP。"},
+            "wpn_emperor_blade": {"n":"真．冥皇執行劍","type":"wpn","w2h":true,"legend":true,"dmgS":28,"dmgL":33,"hit":5,"dmgBonus":20,"spd":1,"req":"knight,dragon","safe":0,"p":500000,"gachaWeight":0,"eff":"cleave","ignHardSkin":true,"str":2,"dex":1,"stunHitBonus":20,"d":"冥皇執行劍的真實之姿，劍勢凝著鎮魂的威壓。<br>切割；貫穿（無視硬皮額外減傷）；力量+2、敏捷+1；施展衝擊之暈時暈眩命中率 +20%。"},
+            "wpn_windblade_dagger": {"n":"風刃短劍","type":"wpn","legend":true,"dmgS":23,"dmgL":16,"hit":10,"dmgBonus":10,"spd":0.6,"req":"knight,elf,mage,royal,dark","safe":0,"p":500000,"gachaWeight":0,"ignHardSkin":true,"mhp":100,"dex":2,"vampPct":0.1,"d":"風之精靈寄宿的短劍，揮斬之間清風奪命。<br>出血（匕首）；貫穿（無視硬皮額外減傷）；HP+100、敏捷+2；恢復一般攻擊造成傷害的 10% HP。"},
             "wpn_redshadow_dual": {"n":"紅影雙刀","type":"wpn","w2h":true,"legend":true,"dmgS":27,"dmgL":18,"hit":10,"dmgBonus":18,"spd":0.8,"req":"dark","safe":0,"p":500000,"gachaWeight":0,"eff":"combo","comboRate":35,"ignHardSkin":true,"dex":2,"wis":2,"procStatusSkill":{"skId":"sk_slow","rate":10},"d":"殷紅殘影交織的雙刀，刃過之處敵人遲滯難動。<br>雙擊 35%；貫穿（無視硬皮額外減傷）；敏捷+2、精神+2；攻擊時 10% 機率使目標緩速。"},
             "wpn_beastking_claw": {"n":"獸王鋼爪","type":"wpn","w2h":true,"legend":true,"dmgS":25,"dmgL":20,"hit":15,"dmgBonus":10,"spd":0.9,"req":"dark","safe":0,"p":500000,"gachaWeight":0,"eff":"combo","comboRate":33,"ignHardSkin":true,"str":2,"dex":2,"d":"獸王之力灌注的鋼爪，撕咬如百獸之王臨陣。<br>雙擊 33%；貫穿（無視硬皮額外減傷）；力量+2、敏捷+2。"},
-            "wpn_holycrystal_wand": {"n":"聖晶魔杖","type":"wpn","w2h":true,"legend":true,"dmgS":13,"dmgL":15,"hit":8,"dmgBonus":0,"spd":1,"req":"mage,illusion","safe":0,"p":500000,"gachaWeight":0,"eff":"magicburst","ignHardSkin":true,"int":2,"mdmg":8,"mmp":50,"procSkill":"sk_holy_lightning","procRateBase":10,"procRatePerEn":1,"d":"聖潔水晶鑲嵌的魔杖，杖端雷光蓄勢待發。<br>魔爆；貫穿（無視硬皮額外減傷）；智力+2、魔法傷害+8、MP+50；攻擊時 10% 機率發動致命落雷（每強化 +1 機率 +1%， 風屬性·套法師6階加成）。"},
+            "wpn_holycrystal_wand": {"n":"聖晶魔杖","type":"wpn","w2h":true,"legend":true,"dmgS":13,"dmgL":15,"hit":8,"dmgBonus":0,"spd":1,"req":"mage,illusion","safe":0,"p":500000,"gachaWeight":0,"eff":"magicburst","ignHardSkin":true,"int":2,"mdmg":8,"mmp":50,"procSkill":"sk_holy_lightning","procRateBase":10,"procRatePerEn":1,"d":"聖潔水晶鑲嵌的魔杖，杖端雷光蓄勢待發。<br>魔爆；貫穿（無視硬皮額外減傷）；智力+2、魔法傷害+8、MP+50；攻擊時 10% 機率發動致命落雷（每強化 +1 機率 +1%， 風屬性·吃武器強化最終傷害倍率）。"},
             "mat_rasta_codex": {"n":"拉斯塔巴德製作武器秘笈","type":"etc","p":100,"noUse":true,"gachaWeight":0,"c":"text-amber-300","d":"集封印的歷史書八頁殘篇而成的武器鍛造秘笈。可羅蘭斯製作五件傳說武器的核心材料。"},
             "hlm_elf": {"n":"精靈皮盔","type":"arm","slot":"helm","ac":1,"req":"elf,mage","safe":6,"p":120,"gachaWeight":100},
             "hlm_oasis": {"n":"歐西斯頭盔","type":"arm","slot":"helm","ac":1,"req":"all","safe":4,"p":10,"gachaWeight":100},
@@ -1004,7 +1028,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "mat_cursed_leather_water": {"n":"詛咒的皮革(水)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被流水之詛咒浸染的皮革。製作 水屬性斗篷 的材料。（製作材料）"},
             "mat_cursed_leather_wind": {"n":"詛咒的皮革(風)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被疾風之詛咒浸染的皮革。製作 風屬性斗篷 的材料。（製作材料）"},
             "mat_cursed_leather_fire": {"n":"詛咒的皮革(火)","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"被烈焰之詛咒浸染的皮革。製作 火屬性斗篷 的材料。（製作材料）"},
-            "wpn_crystal_dagger": {"n":"水晶短劍","type":"wpn","dmgS":10,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.8,"req":"all","safe":6,"p":18000,"gachaWeight":10,"d":"以整塊水晶細細打磨而成的鋒利匕首，刃緣割裂血肉，攻擊帶有出血。"},
+            "wpn_crystal_dagger": {"n":"水晶短劍","type":"wpn","dmgS":10,"dmgL":4,"hit":0,"dmgBonus":1,"spd":0.6,"req":"all","safe":6,"p":18000,"gachaWeight":10,"d":"以整塊水晶細細打磨而成的鋒利匕首，刃緣割裂血肉，攻擊帶有出血。"},
             "arm_pride_medusa_shield": {"n":"梅杜莎盾牌","type":"arm","slot":"shield","ac":2,"immStone":true,"req":"all","safe":4,"p":9600,"gachaWeight":10,"block":40,"d":"盾面鑲嵌著梅杜莎之眼的圓盾，那凝視至今仍令觸者心生寒意。"},
             "acc_jenis_ring": {"n":"潔尼斯戒指","legend":true,"type":"acc","slot":"ring","ac":0,"immPoison":true,"req":"all","safe":0,"p":250000,"gachaWeight":1,"d":"潔尼斯女王曾佩於指間的戒指，王者氣度不減。也免疫麻痺。"},
             "clk_pride_earth": {"n":"地屬性斗篷","type":"arm","slot":"cloak","ac":3,"resEarth":10,"mpR":2,"req":"all","safe":4,"p":150000,"gachaWeight":0},
@@ -1085,7 +1109,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "scroll_poly": {"n":"變形卷軸","type":"scroll","req":"all","p":1300,"c":"text-gray-300","d":"根據玩家等級改變外觀與能力，持續1800秒","eff":"poly","dur":1800,"gachaWeight":0},
             "scroll_magicbarrier": {"n":"魔法卷軸(魔法屏障)","type":"scroll","req":"all","p":1500,"c":"text-cyan-300","d":"使用後獲得「魔法屏障」狀態，持續16秒；成功抵擋一次技能傷害後3秒內無法再次施放（自然到期或取消則無冷卻）","eff":"magicbarrier","gachaWeight":0},
             "scroll_teleport": {"n":"瞬間移動卷軸","type":"scroll","req":"all","p":82,"c":"text-sky-300","d":"使用後發動傳送術","eff":"teleport_scroll","gachaWeight":0},
-            "scroll_revive": {"n":"復活卷軸","type":"scroll","req":"all","p":1000,"c":"text-yellow-300","d":"持有死亡後可選擇原地復活，冷卻15秒","gachaWeight":0},
+            "scroll_revive": {"n":"復活卷軸","type":"scroll","req":"all","p":1000,"c":"text-yellow-300","d":"持有死亡後可選擇原地復活，冷卻15秒；倒地傭兵於死亡 15 秒後也會自動消耗此卷軸原地復活。","gachaWeight":0},
             "item_blueflute": {"n":"藍色長笛","p":1,"c":"text-blue-300","d":"試煉所需的材料。","gachaWeight":0},
             "item_ancientkey": {"n":"古代鑰匙","p":1,"c":"text-blue-300","d":"試煉所需的材料。","gachaWeight":0},
             "item_nightvision": {"n":"夜之視野","p":1,"c":"text-blue-300","d":"凝視黑暗也不失方向的祕術之眼，試煉所需的材料。","gachaWeight":0},
@@ -1345,13 +1369,13 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "clk_wolf": {"n":"狼皮斗篷","type":"arm","slot":"cloak","ac":3,"req":"all","safe":4,"p":4000,"gachaWeight":50},
             "acc_bear_ring": {"n":"熊戒指","type":"acc","slot":"ring","ac":0,"hpR":3,"resEarth":10,"req":"all","safe":0,"p":100000,"gachaWeight":1,"d":"鑲著熊牙的厚實戒指，蘊含猛獸般堅韌的生命力。"},
             "acc_abyss_ring": {"n":"深淵戒指","type":"acc","slot":"ring","ac":0,"mpR":1,"sleepResist":10,"freezeResist":10,"req":"all","safe":0,"p":100000,"gachaWeight":10,"d":"凝望深淵時，深淵也凝望著你；戴上它，神智便不再為寒冷與睡意所惑。額外 10% 機率抵抗沉睡、冰凍。"},
-            "wpn_mithril_dagger": {"n":"米索莉短劍","type":"wpn","dmgS":6,"dmgL":5,"hit":0,"dmgBonus":0,"spd":0.8,"req":"all","safe":6,"p":70000,"gachaWeight":20,"unBonus":true,"mpR":3,"mdmg":1,"d":"以稀有米索莉鍛成的鋒銳匕首，寒光所及邪物退避。帶出血、對不死 / 狼人加成。"},
-            "wpn_ori_dagger": {"n":"奧里哈魯根短劍","type":"wpn","dmgS":7,"dmgL":7,"hit":0,"dmgBonus":2,"spd":0.8,"req":"all","safe":6,"p":80000,"gachaWeight":10,"unBonus":true,"d":"以傳說金屬奧里哈魯根鍛成的匕首，刃身流轉著聖潔的微光。帶出血、對不死 / 狼人加成。"},
-            "wpn_crimson_spear": {"n":"深紅長矛","type":"wpn","w2h":true,"dmgS":21,"dmgL":21,"hit":1,"dmgBonus":0,"spd":1,"req":"knight","safe":6,"p":89000,"gachaWeight":1,"eff":"pierce","pierceChance":80,"unBonus":true,"mhp":50,"d":"矛身被無數鮮血浸透成暗紅，貫穿之勢如奔流不可阻擋。穿透 80%、對不死 / 狼人加成、HP+50。"},
-            "wpn_demon_axe": {"n":"惡魔斧頭","type":"wpn","w2h":true,"dmgS":30,"dmgL":30,"hit":-2,"dmgBonus":0,"spd":1,"req":"knight","safe":0,"p":9000,"gachaWeight":30,"eff":"crush","d":"惡魔揮舞過的猙獰巨斧，每一擊都帶著地獄的沉重。重擊。"},
-            "wpn_vengeance": {"n":"復仇之劍","type":"wpn","w2h":true,"dmgS":4,"dmgL":36,"hit":3,"dmgBonus":0,"spd":1.1,"req":"knight","safe":0,"p":10000,"gachaWeight":20,"eff":"cleave","d":"凝結著不散怨念的雙手劍，劍鋒所向皆為宿仇而斬。切割。"},
+            "wpn_mithril_dagger": {"n":"米索莉短劍","type":"wpn","dmgS":6,"dmgL":5,"hit":0,"dmgBonus":0,"spd":0.6,"req":"all","safe":6,"p":70000,"gachaWeight":20,"unBonus":true,"mpR":3,"mdmg":1,"d":"以稀有米索莉鍛成的鋒銳匕首，寒光所及邪物退避。帶出血、對不死 / 狼人加成。"},
+            "wpn_ori_dagger": {"n":"奧里哈魯根短劍","type":"wpn","dmgS":7,"dmgL":7,"hit":0,"dmgBonus":2,"spd":0.6,"req":"all","safe":6,"p":80000,"gachaWeight":10,"unBonus":true,"d":"以傳說金屬奧里哈魯根鍛成的匕首，刃身流轉著聖潔的微光。帶出血、對不死 / 狼人加成。"},
+            "wpn_crimson_spear": {"n":"深紅長矛","type":"wpn","w2h":true,"dmgS":21,"dmgL":21,"hit":1,"dmgBonus":0,"spd":1.1,"req":"knight","safe":6,"p":89000,"gachaWeight":1,"eff":"pierce","pierceChance":80,"unBonus":true,"mhp":50,"d":"矛身被無數鮮血浸透成暗紅，貫穿之勢如奔流不可阻擋。穿透 80%、對不死 / 狼人加成、HP+50。"},
+            "wpn_demon_axe": {"n":"惡魔斧頭","type":"wpn","w2h":true,"dmgS":30,"dmgL":30,"hit":-2,"dmgBonus":0,"spd":1.1,"req":"knight","safe":0,"p":9000,"gachaWeight":30,"eff":"crush","d":"惡魔揮舞過的猙獰巨斧，每一擊都帶著地獄的沉重。重擊。"},
+            "wpn_vengeance": {"n":"復仇之劍","type":"wpn","w2h":true,"dmgS":4,"dmgL":36,"hit":3,"dmgBonus":0,"spd":1.2,"req":"knight","safe":0,"p":10000,"gachaWeight":20,"eff":"cleave","d":"凝結著不散怨念的雙手劍，劍鋒所向皆為宿仇而斬。切割。"},
             "wpn_hate_claw": {"n":"恨之鋼爪","type":"wpn","w2h":true,"dmgS":26,"dmgL":15,"hit":2,"dmgBonus":5,"spd":0.9,"req":"dark","safe":0,"p":10000,"gachaWeight":20,"eff":"combo","comboRate":50,"d":"由純粹恨意鍛成的鋼爪，撕裂時彷彿能聽見亡者的嘶吼。雙擊。"},
-            "wpn_demon_sword": {"n":"惡魔之劍","type":"wpn","dmgS":17,"dmgL":9,"hit":4,"dmgBonus":0,"spd":1.1,"req":"knight,elf","safe":6,"p":50000,"gachaWeight":1,"eff":"haste","d":"惡魔親手淬煉的單手劍，揮舞間迅疾如魔影掠過。反擊、加速（與自我加速藥水/加速術無法重疊）。"},
+            "wpn_demon_sword": {"n":"惡魔之劍","type":"wpn","dmgS":17,"dmgL":9,"hit":4,"dmgBonus":0,"spd":0.9,"req":"knight,elf","safe":6,"p":50000,"gachaWeight":1,"eff":"haste","d":"惡魔親手淬煉的單手劍，揮舞間迅疾如魔影掠過。反擊、加速（與自我加速藥水/加速術無法重疊）。"},
             "wpn_demon_dual": {"n":"惡魔雙刀","type":"wpn","w2h":true,"dmgS":18,"dmgL":13,"hit":4,"dmgBonus":3,"spd":0.8,"req":"dark","safe":6,"p":50000,"gachaWeight":1,"eff":"combo","equipHaste":true,"d":"自惡魔利爪幻化而成的一對雙刀，揮舞間殺意如影隨形。雙擊、加速（與自我加速藥水/加速術無法重疊）。"},
             "wpn_demon_claw": {"n":"惡魔鋼爪","type":"wpn","w2h":true,"dmgS":20,"dmgL":18,"hit":0,"dmgBonus":3,"spd":0.9,"req":"dark","safe":6,"p":50000,"gachaWeight":1,"eff":"combo","equipHaste":true,"d":"惡魔指骨淬煉的鋼爪，撕裂血肉只在彈指之間。雙擊、加速（與自我加速藥水/加速術無法重疊）。"},
             "wpn_dual_destroy": {"n":"破壞雙刀","type":"wpn","w2h":true,"dmgS":16,"dmgL":10,"hit":6,"dmgBonus":1,"str":1,"wis":2,"spd":0.8,"req":"dark","safe":6,"p":150000,"legend":true,"gachaWeight":1,"eff":"combo","comboRate":30,"procBurstPoison":{"rateBase":1,"ratePerEn":1},"d":"蘊含猛爆毒性的漆黑雙刃，揮舞間散逸出腐蝕一切的劇毒。黑暗妖精專屬・雙刀（雙手・近距離）。雙擊 30%；力量+1、精神+2；近距離傷害+1、近距離命中+6。攻擊時 1%（每強化+1%）機率發動猛爆劇毒（每秒 100 固定傷害，持續 5 秒，最多 1 層）。"},
@@ -1367,7 +1391,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_illu_wand": {"n":"幻術士魔杖","type":"wpn","dmgS":10,"dmgL":10,"hit":3,"dmgBonus":0,"spd":1,"mpR":5,"req":"illusion","safe":6,"p":6000,"gachaWeight":30,"d":"幻術士入門的法杖，杖頭水晶迴盪著淡淡共鳴之音。幻術士專屬魔杖。蘊含共鳴之力、MP自然恢復量+5、近距離命中+3。"},
             "shd_illu_book": {"n":"幻術士法書","type":"arm","slot":"shield","ac":2,"block":10,"mhp":20,"mmp":20,"wis":1,"mpR":1,"req":"illusion","safe":6,"p":6000,"gachaWeight":10,"d":"記載幻術奧義的副手法書，翻動間護住持書者周身。幻術士專屬副手法書。格檔10%、HP+20、MP+20、精神+1、MP自然恢復量+1。"},
             "clk_illu": {"n":"幻術士斗篷","type":"arm","slot":"cloak","ac":1,"mmp":20,"mpR":4,"req":"illusion","safe":6,"p":6000,"gachaWeight":10,"d":"織入幻術絲線的斗篷，披上便覺魔力綿綿不絕。幻術士專屬斗篷。MP+20、MP自然恢復量+4。"},
-            "wpn_dragon_2h": {"n":"龍騎士雙手劍","type":"wpn","w2h":true,"dmgS":19,"dmgL":17,"hit":4,"dmgBonus":2,"spd":0.9,"eff":"cleave","req":"dragon","safe":6,"p":10000,"gachaWeight":20,"d":"龍騎士所執的雙手巨劍，劍鋒可斬碎龍鱗。龍騎士的雙手巨劍。切割；近距離傷害+2、近距離命中+4。"},
+            "wpn_dragon_2h": {"n":"龍騎士雙手劍","type":"wpn","w2h":true,"dmgS":19,"dmgL":17,"hit":4,"dmgBonus":2,"spd":1,"eff":"cleave","req":"dragon","safe":6,"p":10000,"gachaWeight":20,"d":"龍騎士所執的雙手巨劍，劍鋒可斬碎龍鱗。龍騎士的雙手巨劍。切割；近距離傷害+2、近距離命中+4。"},
             "wpn_chain_annihilator": {"n":"消滅者鎖鏈劍","type":"wpn","w2h":true,"chainsword":true,"weakExpose":true,"unBonus":true,"dmgS":17,"dmgL":13,"hit":5,"dmgBonus":3,"spd":0.9,"req":"dragon","safe":6,"p":10000,"gachaWeight":20,"d":"龍騎士的鎖鏈巨劍，劍刃如蛇竄出、撕開敵人的破綻。龍騎士專屬·鎖鏈劍（雙手・近距離）。對不死 / 狼人加成；弱點曝光（一般攻擊命中 12% 附加，最多 3 層，配合屠宰者爆發）。近距離傷害+3、近距離命中+5。"},
             "wpn_chain_destroyer": {"n":"破滅者鎖鏈劍","type":"wpn","w2h":true,"chainsword":true,"weakExpose":true,"str":1,"dmgS":21,"dmgL":17,"hit":5,"dmgBonus":3,"spd":0.9,"req":"dragon","safe":6,"p":88000,"gachaWeight":30,"d":"以毀滅為名的鎖鏈劍，每一擊都逼出敵人的致命弱點。龍騎士專屬·鎖鏈劍（雙手・近距離）。力量+1；弱點曝光。近距離傷害+3、近距離命中+5。"},
             "wpn_chain_bloodthirst": {"n":"嗜血者鎖鏈劍","type":"wpn","w2h":true,"chainsword":true,"weakExpose":true,"vampPct":0.05,"dmgS":21,"dmgL":20,"hit":5,"dmgBonus":3,"spd":0.9,"req":"dragon","safe":6,"p":138000,"gachaWeight":1,"d":"渴飲鮮血的鎖鏈劍，斬擊之餘將敵人的生命據為己有。龍騎士專屬·鎖鏈劍（雙手・近距離）。吸取HP（恢復一般攻擊造成傷害的 5% HP）；弱點曝光。近距離傷害+3、近距離命中+5。"},
@@ -1375,15 +1399,15 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "wpn_chain_frost": {"n":"寒冰鎖鏈劍","type":"wpn","w2h":true,"chainsword":true,"weakExpose":true,"dmgS":24,"dmgL":20,"hit":4,"dmgBonus":3,"spd":0.9,"req":"dragon","safe":6,"p":324000,"gachaWeight":1,"spellProc":{"skn":"冰之地裂術","dice":[8,4],"ele":"water","heal":0.2},"procRateBase":1,"procRatePerEn":1,"d":"凍結寒氣纏繞的鎖鏈劍，破地之餘為持劍者奪回生機。龍騎士專屬·鎖鏈劍（雙手・近距離）。弱點曝光；1% 機率施放冰之地裂術（每強化+1機率+1%），造成  單體水屬性魔法傷害並恢復造成傷害 20% 的 HP（受魔法傷害影響）。近距離傷害+3、近距離命中+4。"},
             "armguard_dragonscale": {"n":"龍鱗臂甲","type":"arm","slot":"shield","ac":0,"armguard":{"stat":"none","base":0,"th":[0,0,0]},"extraDmg":1,"extraHit":2,"req":"dragon","safe":0,"p":8000,"gachaWeight":30,"d":"以龍鱗鍛成的臂甲，越是淬鍊越堅不可摧。龍騎士的臂甲（裝於副手，可與雙手武器並用）。額外傷害+1、額外命中+2；每強化+1，HP+10。"},
             "clk_dragon": {"n":"龍騎士斗篷","type":"arm","slot":"cloak","ac":1,"mhp":30,"hpR":1,"req":"dragon","safe":6,"p":9000,"gachaWeight":20,"d":"繡有龍紋的斗篷，披於肩上生機隱隱回流。龍騎士的斗篷。HP+30、HP自然恢復量+1。"},
-            "wpn_golden_scepter": {"n":"黃金權杖","type":"wpn","dmgS":14,"dmgL":20,"hit":0,"dmgBonus":5,"spd":1.1,"req":"royal","safe":6,"p":10000,"gachaWeight":20,"d":"👑 王族世代相傳的黃金權杖，象徵君臨天下的威儀。單手劍（反擊／居合）、近距離傷害+5。"},
+            "wpn_golden_scepter": {"n":"黃金權杖","type":"wpn","dmgS":14,"dmgL":20,"hit":0,"dmgBonus":5,"spd":0.9,"req":"royal","safe":6,"p":10000,"gachaWeight":20,"d":"👑 王族世代相傳的黃金權杖，象徵君臨天下的威儀。單手劍（反擊／居合）、近距離傷害+5。"},
             "clk_royal_red": {"n":"紅色斗篷","type":"arm","slot":"cloak","ac":2,"cha":1,"req":"royal","safe":4,"p":3000,"gachaWeight":100,"d":"👑 王族披掛的緋紅斗篷，襯出與生俱來的高貴氣度。魅力+1。"},
             "clk_royal_majesty": {"n":"君主的威嚴","type":"arm","slot":"cloak","ac":2,"str":1,"dex":1,"con":1,"int":1,"wis":1,"cha":1,"req":"royal","safe":4,"p":6000,"gachaWeight":50,"d":"👑 凝聚一身君主威嚴的華服，舉手投足皆是王者風範。力量／敏捷／體質／智力／精神／魅力 各+1。"},
             "acc_royal_guard": {"n":"守護者的戒指","type":"acc","slot":"ring","ac":0,"mhp":30,"mmp":20,"req":"royal","safe":0,"p":5000,"gachaWeight":70,"d":"👑 賜予近身守護者的戒指，注入守護王室的堅毅之力。HP+30、MP+20。"},
-            "wpn_warrior_trial_axe": {"n":"試煉斧頭","type":"wpn","dmgS":13,"dmgL":13,"hit":0,"dmgBonus":0,"spd":1.1,"req":"warrior","safe":6,"p":5000,"gachaWeight":100,"d":"戰士試煉所授的斧頭，沉甸甸地考驗著揮斧者的臂力。單手鈍器（鈍擊）。"},
-            "wpn_master_axe": {"n":"大匠的斧頭","type":"wpn","dmgS":13,"dmgL":13,"hit":0,"dmgBonus":1,"spd":1.1,"req":"warrior","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"出自大匠之手的斧頭，刃口閃著銀輝專剋暗夜之物。單手鈍器（鈍擊）、對不死／狼人加成。近距離傷害+1。"},
-            "wpn_demon_axehead": {"n":"魔物的斧頭","type":"wpn","dmgS":18,"dmgL":18,"hit":-1,"dmgBonus":0,"spd":1.1,"req":"warrior","safe":0,"p":55000,"gachaWeight":10,"d":"由魔物殘骸之力凝鑄的斧頭，揮砍間透著一股戾氣。單手鈍器（鈍擊）。近距離命中-1。"},
-            "wpn_iron_axehead": {"n":"鐵斧頭","type":"wpn","dmgS":19,"dmgL":23,"hit":1,"dmgBonus":1,"spd":1.1,"req":"warrior","safe":6,"p":155000,"gachaWeight":1,"d":"精鐵反覆鍛打而成的斧頭，紮實順手、無懈可擊。單手鈍器（鈍擊）。近距離傷害+1、近距離命中+1。"},
-            "wpn_giant_axehead": {"n":"巨人的斧頭","type":"wpn","legend":true,"dmgS":28,"dmgL":36,"hit":2,"dmgBonus":5,"spd":1.1,"req":"warrior","safe":6,"p":355000,"gachaWeight":1,"d":"昔日巨人揮舞的巨大斧頭，一斧落下足以撼動大地。單手鈍器（鈍擊）。近距離傷害+5、近距離命中+2。"},
+            "wpn_warrior_trial_axe": {"n":"試煉斧頭","type":"wpn","dmgS":13,"dmgL":13,"hit":0,"dmgBonus":0,"spd":0.9,"req":"warrior","safe":6,"p":5000,"gachaWeight":100,"d":"戰士試煉所授的斧頭，沉甸甸地考驗著揮斧者的臂力。單手鈍器（鈍擊）。"},
+            "wpn_master_axe": {"n":"大匠的斧頭","type":"wpn","dmgS":13,"dmgL":13,"hit":0,"dmgBonus":1,"spd":0.9,"req":"warrior","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"出自大匠之手的斧頭，刃口閃著銀輝專剋暗夜之物。單手鈍器（鈍擊）、對不死／狼人加成。近距離傷害+1。"},
+            "wpn_demon_axehead": {"n":"魔物的斧頭","type":"wpn","dmgS":18,"dmgL":18,"hit":-1,"dmgBonus":0,"spd":0.9,"req":"warrior","safe":0,"p":55000,"gachaWeight":10,"d":"由魔物殘骸之力凝鑄的斧頭，揮砍間透著一股戾氣。單手鈍器（鈍擊）。近距離命中-1。"},
+            "wpn_iron_axehead": {"n":"鐵斧頭","type":"wpn","dmgS":19,"dmgL":23,"hit":1,"dmgBonus":1,"spd":0.9,"req":"warrior","safe":6,"p":155000,"gachaWeight":1,"d":"精鐵反覆鍛打而成的斧頭，紮實順手、無懈可擊。單手鈍器（鈍擊）。近距離傷害+1、近距離命中+1。"},
+            "wpn_giant_axehead": {"n":"巨人的斧頭","type":"wpn","legend":true,"dmgS":28,"dmgL":36,"hit":2,"dmgBonus":5,"spd":0.9,"req":"warrior","safe":6,"p":355000,"gachaWeight":1,"d":"昔日巨人揮舞的巨大斧頭，一斧落下足以撼動大地。單手鈍器（鈍擊）。近距離傷害+5、近距離命中+2。"},
             "hlm_warrior_corps": {"n":"戰士團頭盔","type":"arm","slot":"helm","ac":2,"mhp":20,"mrPerEn":1,"req":"warrior","safe":4,"p":3000,"gachaWeight":50,"d":"戰士團精銳所配發的鋼盔，內襯著無數場惡戰的痕跡。HP+20、每強化+1 MR+1。"},
             "clk_warrior_corps": {"n":"戰士團斗篷","type":"arm","slot":"cloak","ac":2,"mhp":20,"req":"warrior","safe":4,"p":3000,"gachaWeight":50,"d":"披在戰士團肩上的厚實斗篷，曾為衝鋒者擋下風霜與箭雨。HP+20。"},
             "hlm_holy_corps": {"n":"神聖執行團的頭盔","type":"arm","slot":"helm","ac":3,"mhp":20,"hpR":4,"mr":11,"req":"warrior","safe":4,"p":7000,"gachaWeight":20,"d":"神聖執行團的聖盔，鍍金的紋章映照著討伐邪惡的誓言。HP+20、HP自然恢復量+4、MR+11。"},
@@ -1410,15 +1434,15 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "item_demon_spy": {"n":"妖魔密使首領間諜書","type":"etc","p":1,"c":"text-amber-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"龍騎士任務道具。可向普洛凱爾兌換龍鱗臂甲或血之渴望書板（1 個）。"},
             "item_yeti_heart": {"n":"雪怪之心","type":"etc","p":1,"c":"text-cyan-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"龍騎士任務道具。可向普洛凱爾兌換龍騎士斗篷（10 個）。"},
             "item_soulfire_ash": {"n":"靈魂之火灰燼","type":"etc","p":1,"c":"text-orange-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"龍騎士任務道具。50 級試煉第二階段，可向普洛凱爾兌換消滅者鎖鏈劍（1 個）。"},
-            "amr_baphomet": {"n":"巴風特盔甲","type":"arm","slot":"armor","ac":8,"immPoison":true,"dr":2,"mrPerEn":1,"req":"knight","safe":4,"p":225300,"legend":true,"gachaWeight":1,"d":"自惡魔巴風特身上剝下的傳說重甲，魔氣使穿戴者百毒不侵。免疫中毒、傷害減免 +2；每強化 +1 MR +1。"},
+            "amr_baphomet": {"n":"巴風特盔甲","type":"arm","slot":"armor","ac":8,"immPoison":true,"dr":2,"mrPerEn":1,"req":"knight,dragon","safe":4,"p":225300,"legend":true,"gachaWeight":1,"d":"自惡魔巴風特身上剝下的傳說重甲，魔氣使穿戴者百毒不侵。免疫中毒、傷害減免 +2；每強化 +1 MR +1。"},
             "clk_flame_blood": {"n":"炎魔的血光斗篷","type":"arm","slot":"cloak","ac":5,"stealth":true,"req":"all","safe":4,"p":150000,"legend":true,"gachaWeight":0,"d":"以炎魔鮮血浸染而成的斗篷，纏身時身影隱沒於灼熱的暗影裡。穿戴時等同維持隱身（卸下即失效）。"},
             "clk_fallen": {"n":"墮落斗篷","type":"arm","slot":"cloak","ac":2,"mhp":100,"con":1,"req":"dark","safe":4,"p":150000,"legend":true,"gachaWeight":1,"d":"墮落者遺落的傳說斗篷，腐朽中仍透出不滅的生命力。HP+100、體質+1。"},
             "amr_fallen": {"n":"墮落長袍","type":"arm","slot":"armor","ac":13,"mmp":100,"mpR":5,"req":"mage","safe":0,"p":150000,"legend":true,"gachaWeight":1,"d":"墮落者的傳說長袍，衣襟間流淌著源源不絕的魔力暗潮。MP+100、MP自然恢復+5。"},
             "glv_fallen": {"n":"墮落手套","type":"arm","slot":"gloves","ac":2,"mhp":100,"con":1,"req":"knight","safe":4,"p":150000,"legend":true,"gachaWeight":1,"d":"墮落者的傳說手套，握緊時彷彿能感受到墮落前殘存的氣力。HP+100、體質+1。"},
             "bot_fallen": {"n":"墮落長靴","type":"arm","slot":"boots","ac":2,"mhp":100,"req":"elf","safe":4,"p":150000,"legend":true,"gachaWeight":1,"d":"墮落者的傳說長靴，踏過深淵也不曾停下的步伐凝結其上。HP+100。"},
-            "wpn_blackflame_sword": {"n":"黑焰之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":2,"dmgBonus":0,"spd":1.1,"req":"knight","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"以炎魔之力鍛成的漆黑長劍，劍刃燃著看不見的黑色火焰。反擊、居合、對不死 / 狼人加成。"},
+            "wpn_blackflame_sword": {"n":"黑焰之劍","type":"wpn","dmgS":16,"dmgL":10,"hit":2,"dmgBonus":0,"spd":0.9,"req":"knight","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"以炎魔之力鍛成的漆黑長劍，劍刃燃著看不見的黑色火焰。反擊、居合、對不死 / 狼人加成。"},
             "wpn_redflame_bow": {"n":"赤焰之弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":70,"w2h":true,"dmgS":3,"dmgL":3,"hit":2,"dmgBonus":4,"spd":1,"req":"elf","safe":6,"p":10000,"gachaWeight":20,"d":"灌注炎魔之力的長弓，拉滿弦時箭尖泛起赤紅的熱浪。連射 70%。"},
-            "wpn_redflame_sword": {"n":"赤焰之劍","type":"wpn","dmgS":14,"dmgL":6,"hit":4,"dmgBonus":0,"spd":1.1,"req":"elf","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"灌注炎魔之力的烈焰之劍，揮砍時帶起灼人的赤光。反擊、居合、對不死 / 狼人加成。"},
+            "wpn_redflame_sword": {"n":"赤焰之劍","type":"wpn","dmgS":14,"dmgL":6,"hit":4,"dmgBonus":0,"spd":0.9,"req":"elf","safe":6,"p":10000,"gachaWeight":20,"unBonus":true,"d":"灌注炎魔之力的烈焰之劍，揮砍時帶起灼人的赤光。反擊、居合、對不死 / 狼人加成。"},
             "wpn_mana_orb": {"n":"瑪那水晶球","type":"arm","slot":"shield","ac":2,"block":10,"mmp":100,"int":1,"req":"mage","safe":4,"p":10000,"gachaWeight":20,"d":"凝聚瑪那之力的水晶球盾，澄澈的核心中緩緩流轉著無盡魔力。格檔 10%、MP+100、智力+1。"},
             "bot_divine_will": {"n":"神意長靴","type":"arm","slot":"boots","ac":3,"cha":1,"req":"royal","safe":4,"p":12000,"gachaWeight":10,"d":"👑 承載王族神聖意志的長靴，每一步都散發君臨天下的威儀。AC-3、魅力+1。"},
             "bot_courage": {"n":"勇氣長靴","type":"arm","slot":"boots","ac":3,"meleeHit":1,"req":"knight","safe":4,"p":12000,"gachaWeight":10,"d":"鼓舞騎士勇往直前的長靴，踏出無畏的步伐。AC-3、近距離命中+1。"},
@@ -1428,7 +1452,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "mat_chaos_head": {"n":"混沌首級","type":"etc","p":1,"c":"text-purple-300","noUse":true,"gachaWeight":0,"d":"製作材料。"},
             "mat_death_head": {"n":"死亡首級","type":"etc","p":1,"c":"text-purple-300","noUse":true,"gachaWeight":0,"d":"製作材料。"},
             "item_shadow_temple_key": {"n":"暗影神殿鑰匙","type":"etc","p":1,"c":"text-amber-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"進入暗影神殿所需的鑰匙。持有即可進入（不會被消耗），另需炎魔友好度達標。"},
-            "wpn_chaos_thorn": {"n":"混沌之刺","type":"wpn","dmgS":18,"dmgL":2,"hit":0,"dmgBonus":2,"spd":0.8,"req":"all","safe":0,"p":21000,"gachaWeight":10,"d":"自混沌中誕生的匕首，刃身扭曲難辨、所傷必裂血不止。攻擊帶有出血。"},
+            "wpn_chaos_thorn": {"n":"混沌之刺","type":"wpn","dmgS":18,"dmgL":2,"hit":0,"dmgBonus":2,"spd":0.6,"req":"all","safe":0,"p":21000,"gachaWeight":10,"d":"自混沌中誕生的匕首，刃身扭曲難辨、所傷必裂血不止。攻擊帶有出血。"},
             "hlm_chaos": {"n":"混沌頭盔","type":"arm","slot":"helm","ac":1,"stunResist":100,"req":"all","safe":0,"p":15000,"gachaWeight":10,"d":"由混沌之力塑成的頭盔，戴上後心神再不為昏聵所動。免疫暈眩。"},
             "clk_chaos": {"n":"混沌斗篷","type":"arm","slot":"cloak","ac":3,"mr":10,"mrPerEn":3,"req":"all","safe":0,"p":15000,"gachaWeight":10,"d":"以混沌織就的斗篷，愈是強化，抵禦魔力的力場便愈深沉。MR+10，每強化額外 MR+3。"},
             "amr_chaos": {"n":"混沌法袍","type":"arm","slot":"armor","ac":6,"mpR":12,"req":"mage","safe":0,"p":25000,"gachaWeight":10,"d":"混沌之力編成的法袍，吸納四散的魔力源源回灌。MP自然恢復+12。"},
@@ -1441,13 +1465,13 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "armguard_mage": {"n":"法師臂甲","type":"arm","slot":"shield","ac":2,"int":2,"req":"mage","safe":0,"p":52000,"gachaWeight":10,"armguard":{"stat":"magicDmg","base":0,"th":[1,2,3]},"d":"刻滿符文的法師臂甲（裝於副手，可與雙手武器並用），引導魔力流轉於指尖。智力+2；強化達 +5/+7/+9 時魔法傷害 +1/+2/+3（取最高階、非累加）。每強化+1，HP+10。"},
             "armguard_con": {"n":"體力臂甲","type":"arm","slot":"shield","ac":0,"req":"knight,elf,dark","safe":0,"p":52000,"gachaWeight":10,"armguard":{"stat":"mhp","base":50,"th":[25,50,75]},"d":"厚重結實的體力臂甲（裝於副手，可與雙手武器並用），承載著千錘百鍊的強韌體魄。HP+50；強化達 +5/+7/+9 時HP再 +25/+50/+75（取最高階、非累加）。每強化+1，HP+10。"},
             "item_olin_diary": {"n":"歐林的日記本","type":"etc","p":0,"c":"text-amber-300","gachaWeight":0,"d":"歐林留下的日記本。可交給說話之島的尤麗婭，換取一件臂甲（三選一）。"},
-            "wpn_demonking_spear": {"n":"惡魔王矛","type":"wpn","w2h":true,"dmgS":25,"dmgL":25,"hit":2,"dmgBonus":3,"spd":1,"req":"knight","safe":6,"p":380000,"legend":true,"gachaWeight":1,"eff":"pierce","pierceChance":90,"procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王執掌的雙手長矛，矛尖所向皆化作瘟疫橫行之地。穿透90%；攻擊時10%機率施放疾病術。"},
+            "wpn_demonking_spear": {"n":"惡魔王矛","type":"wpn","w2h":true,"dmgS":25,"dmgL":25,"hit":2,"dmgBonus":3,"spd":1.1,"req":"knight","safe":6,"p":380000,"legend":true,"gachaWeight":1,"eff":"pierce","pierceChance":90,"procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王執掌的雙手長矛，矛尖所向皆化作瘟疫橫行之地。穿透90%；攻擊時10%機率施放疾病術。"},
             "wpn_demonking_dual": {"n":"惡魔王雙刀","type":"wpn","w2h":true,"dmgS":18,"dmgL":16,"hit":5,"dmgBonus":3,"spd":0.8,"req":"dark","safe":6,"p":420000,"legend":true,"gachaWeight":1,"eff":"combo","procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王手中的雙刀，交錯的刃光帶來病厄與死亡。雙擊；攻擊時10%機率施放疾病術。"},
-            "wpn_demonking_2hsword": {"n":"惡魔王雙手劍","type":"wpn","w2h":true,"dmgS":23,"dmgL":24,"hit":1,"dmgBonus":5,"spd":0.8,"req":"knight","safe":6,"p":354510,"legend":true,"gachaWeight":1,"eff":"cleave","procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王曾以此巨劍劈開無數生靈，劍鋒至今仍滲著腐敗的氣息。切割；攻擊時10%機率施放疾病術。"},
+            "wpn_demonking_2hsword": {"n":"惡魔王雙手劍","type":"wpn","w2h":true,"dmgS":23,"dmgL":24,"hit":1,"dmgBonus":5,"spd":0.9,"req":"knight","safe":6,"p":354510,"legend":true,"gachaWeight":1,"eff":"cleave","procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王曾以此巨劍劈開無數生靈，劍鋒至今仍滲著腐敗的氣息。切割；攻擊時10%機率施放疾病術。"},
             "wpn_demonking_wand": {"n":"惡魔王魔杖","type":"wpn","w2h":true,"dmgS":12,"dmgL":12,"hit":6,"dmgBonus":2,"spd":1,"req":"mage","safe":6,"p":494510,"legend":true,"gachaWeight":1,"eff":"magicburst","mdmg":2,"mpR":10,"mpOnHit":true,"procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王施法用的魔杖，杖端凝著不散的瘴癘之力。魔爆；魔法傷害+2、MP自然恢復+10；一般攻擊命中恢復MP（+7起每強化額外+1）；攻擊時10%機率施放疾病術。"},
             "wpn_demonking_bow": {"n":"惡魔王弓","type":"wpn","isBow":true,"ranged":true,"rapidfire":90,"w2h":true,"dmgS":5,"dmgL":5,"hit":4,"dmgBonus":6,"spd":1,"req":"elf","safe":6,"p":547300,"legend":true,"gachaWeight":1,"procStatusSkill":{"skId":"sk_disease","rate":10},"d":"惡魔王的長弓，射出的每一箭都帶著瘟疫的詛咒。連射90%；攻擊時10%機率施放疾病術。"},
-            "wpn_greatsword": {"n":"巨劍","type":"wpn","w2h":true,"dmgS":20,"dmgL":14,"hit":0,"dmgBonus":0,"spd":0.9,"req":"knight","safe":6,"p":15000,"gachaWeight":80,"eff":"cleave","d":"沉重而厚實的雙手巨劍，一揮便能將成排敵人一同斬開。切割。"},
-            "wpn_taurus_axe": {"n":"牛人斧頭","type":"wpn","w2h":true,"dmgS":22,"dmgL":24,"hit":0,"dmgBonus":0,"spd":1.1,"req":"knight","safe":6,"p":15000,"gachaWeight":30,"eff":"crush","d":"牛人族戰士慣用的雙手鈍器，蠻力一砸足以震碎骨骼。重擊。"},
+            "wpn_greatsword": {"n":"巨劍","type":"wpn","w2h":true,"dmgS":20,"dmgL":14,"hit":0,"dmgBonus":0,"spd":1,"req":"knight","safe":6,"p":15000,"gachaWeight":80,"eff":"cleave","d":"沉重而厚實的雙手巨劍，一揮便能將成排敵人一同斬開。切割。"},
+            "wpn_taurus_axe": {"n":"牛人斧頭","type":"wpn","w2h":true,"dmgS":22,"dmgL":24,"hit":0,"dmgBonus":0,"spd":1.2,"req":"knight","safe":6,"p":15000,"gachaWeight":30,"eff":"crush","d":"牛人族戰士慣用的雙手鈍器，蠻力一砸足以震碎骨骼。重擊。"},
             "wpn_shaha_bow": {"n":"沙哈之弓","type":"wpn","isBow":true,"ranged":true,"w2h":true,"legend":true,"rapidfire":70,"dmgS":4,"dmgL":4,"hit":2,"dmgBonus":5,"spd":1,"req":"elf","safe":6,"p":230000,"gachaWeight":0,"shahaBow":true,"d":"傳說中神射手沙哈所遺的名弓，拉滿弦時便有清風自箭袋憑空生出。連射 70%；裝備時箭矢欄位自動變為彈藥無限的沙哈之箭（小型、大型），卸下沙哈之弓即消失。"},
             "wpn_shaha_arrow": {"n":"沙哈之箭","type":"wpn","isArrow":true,"dmgS":15,"dmgL":12,"hit":0,"p":0,"gachaWeight":0,"shahaArrow":true,"noSell":true,"d":"沙哈之弓憑風凝成的箭矢，取之不竭（卸下沙哈之弓即消失）。"},
             "hlm_wind": {"n":"風之頭盔","type":"arm","slot":"helm","ac":2,"req":"mage","safe":4,"p":26000,"gachaWeight":10,"windHelm":true,"d":"以疾風祝福鍛成的頭盔，戴上時身形彷彿被風托起。施放加速術、強力加速術不消耗 MP（裝備或放在背包都有效）。"},
@@ -1468,14 +1492,14 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "item_forgotten_plate": {"n":"被遺忘的金屬盔甲","type":"etc","p":1,"c":"text-blue-300","noUse":true,"gachaWeight":0,"d":"製作材料。"},
             "armguard_archer": {"n":"古代神射臂甲","type":"arm","slot":"shield","ac":0,"mhp":80,"req":"all","safe":0,"p":100000,"gachaWeight":0,"armguard":{"stat":"rangedDmg","base":1,"th":[1,2,3]},"d":"古代神射手綁縛拉弦之臂的護甲，仍留有他百步穿楊的氣度（裝於副手，可與雙手武器並用）。HP+80、遠距離傷害+1；強化達 +5/+7/+9 時遠距離傷害改為 +2/+3/+4（取最高階、非累加）。每強化+1，HP+10。"},
             "armguard_fighter": {"n":"古代鬥士臂甲","type":"arm","slot":"shield","ac":0,"resFire":5,"resWater":5,"resEarth":5,"resWind":5,"req":"all","safe":0,"p":100000,"gachaWeight":0,"armguard":{"stat":"meleeDmg","base":1,"th":[1,2,3]},"d":"古代競技場鬥士磨礪近身搏殺的臂甲，刻滿了無數場生死搏鬥的痕跡（裝於副手，可與雙手武器並用）。全屬性抗性+5、近距離傷害+1；強化達 +5/+7/+9 時近距離傷害改為 +2/+3/+4（取最高階、非累加）。每強化+1，HP+10。"},
-            "wpn_old_sword": {"n":"古老的劍","type":"wpn","dmgS":35,"dmgL":20,"hit":5,"dmgBonus":0,"spd":1,"req":"knight,elf,dark","safe":0,"p":15000,"gachaWeight":0,"noEnhance":true,"finalMult":1.5,"d":"塵封已久的古代單手劍，劍身雖舊，鋒芒卻不減當年。反擊、居合、最終傷害×1.5；無法強化。"},
-            "wpn_old_greatsword": {"n":"古老的巨劍","type":"wpn","w2h":true,"dmgS":27,"dmgL":45,"hit":3,"dmgBonus":3,"spd":0.8,"req":"knight","safe":0,"p":15000,"gachaWeight":0,"eff":"cleave","noEnhance":true,"finalMult":1.5,"d":"古老戰場上遺落的雙手巨劍，沉甸甸的劍身仍能一掃千軍。切割、最終傷害×1.5；無法強化。"},
+            "wpn_old_sword": {"n":"古老的劍","type":"wpn","dmgS":35,"dmgL":20,"hit":5,"dmgBonus":0,"spd":0.8,"req":"knight,elf,dark","safe":0,"p":15000,"gachaWeight":0,"noEnhance":true,"finalMult":2,"d":"塵封已久的古代單手劍，劍身雖舊，鋒芒卻不減當年。反擊、居合、最終傷害×2；無法強化。"},
+            "wpn_old_greatsword": {"n":"古老的巨劍","type":"wpn","w2h":true,"dmgS":27,"dmgL":45,"hit":3,"dmgBonus":3,"spd":0.9,"req":"knight","safe":0,"p":15000,"gachaWeight":0,"eff":"cleave","noEnhance":true,"finalMult":2,"d":"古老戰場上遺落的雙手巨劍，沉甸甸的劍身仍能一掃千軍。切割、最終傷害×2；無法強化。"},
             "wpn_old_xbow": {"n":"古老的弩槍","type":"wpn","isBow":true,"ranged":true,"oneHand":true,"rapidfire":90,"dmgS":3,"dmgL":3,"hit":5,"dmgBonus":2,"spd":0.9,"req":"elf,dark","safe":6,"p":15000,"gachaWeight":0,"d":"古代工匠巧製的單手弩槍，是有史以來第一把可單手持握的弓。連射90%；可同時裝備盾牌或臂甲。"},
-            "wpn_ancient_spear": {"n":"古代神之槍","type":"wpn","w2h":true,"legend":true,"dmgS":27,"dmgL":30,"hit":3,"dmgBonus":5,"spd":1,"req":"knight","safe":6,"p":465000,"gachaWeight":0,"eff":"pierce","pierceChance":90,"d":"傳說由古代神祇親手持握的雙手神槍，槍尖所向無可阻擋。穿透90%。"},
-            "wpn_ancient_axe": {"n":"古代神之斧","type":"wpn","legend":true,"dmgS":25,"dmgL":28,"hit":3,"dmgBonus":8,"spd":1.2,"req":"warrior","safe":6,"p":465000,"gachaWeight":0,"d":"古代神祇腰間配掛的單手神斧，劈下時連神明也為之低首。鈍擊。"},
-            "wpn_ancient_darkelf_sword": {"n":"古代黑暗妖精之劍","type":"wpn","dmgS":12,"dmgL":12,"hit":3,"dmgBonus":1,"spd":1.1,"req":"elf","safe":6,"p":68000,"gachaWeight":1,"unBonus":true,"dex":1,"mhp":50,"d":"古代黑暗妖精所執的單手劍，劍身流轉著暗夜的寒光。反擊、對不死 / 狼人加成；近距離傷害+1、近距離命中+3、敏捷+1、HP+50。"},
+            "wpn_ancient_spear": {"n":"古代神之槍","type":"wpn","w2h":true,"legend":true,"dmgS":27,"dmgL":30,"hit":3,"dmgBonus":5,"spd":1.1,"req":"knight","safe":6,"p":465000,"gachaWeight":0,"eff":"pierce","pierceChance":90,"d":"傳說由古代神祇親手持握的雙手神槍，槍尖所向無可阻擋。穿透90%。"},
+            "wpn_ancient_axe": {"n":"古代神之斧","type":"wpn","legend":true,"dmgS":25,"dmgL":28,"hit":3,"dmgBonus":8,"spd":1,"req":"warrior","safe":6,"p":465000,"gachaWeight":0,"d":"古代神祇腰間配掛的單手神斧，劈下時連神明也為之低首。鈍擊。"},
+            "wpn_ancient_darkelf_sword": {"n":"古代黑暗妖精之劍","type":"wpn","dmgS":12,"dmgL":12,"hit":3,"dmgBonus":1,"spd":0.9,"req":"elf","safe":6,"p":68000,"gachaWeight":1,"unBonus":true,"dex":1,"mhp":50,"d":"古代黑暗妖精所執的單手劍，劍身流轉著暗夜的寒光。反擊、對不死 / 狼人加成；近距離傷害+1、近距離命中+3、敏捷+1、HP+50。"},
             "wpn_ancient_elf_xbow": {"n":"古代妖精弩槍","type":"wpn","isBow":true,"ranged":true,"oneHand":true,"rapidfire":55,"dmgS":3,"dmgL":3,"hit":1,"dmgBonus":2,"spd":1,"req":"elf","safe":6,"p":68000,"gachaWeight":1,"dex":1,"d":"古代妖精打造的單手弩槍，輕巧迅捷、箭如疾風。連射55%、敏捷+1；遠距離傷害+2、遠距離命中+1；可同時裝備盾牌或臂甲。"},
-            "wpn_demon_sword_hidden": {"n":"隱藏的魔族之劍","type":"wpn","dmgS":23,"dmgL":25,"hit":3,"dmgBonus":0,"spd":1.1,"req":"royal,knight,elf,dragon","safe":0,"p":28000,"gachaWeight":1,"mhp":30,"ignHardSkin":true,"redSpecter":true,"d":"潛藏魔族之力的單手劍，劍身浮現赤紅惡靈的低語。反擊、貫穿、HP+30；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲： 水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
+            "wpn_demon_sword_hidden": {"n":"隱藏的魔族之劍","type":"wpn","dmgS":23,"dmgL":25,"hit":3,"dmgBonus":0,"spd":0.9,"req":"royal,knight,elf,dragon","safe":0,"p":28000,"gachaWeight":1,"mhp":30,"ignHardSkin":true,"redSpecter":true,"d":"潛藏魔族之力的單手劍，劍身浮現赤紅惡靈的低語。反擊、貫穿、HP+30；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲： 水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
             "wpn_demon_bow_hidden": {"n":"隱藏的魔族弓箭","type":"wpn","isBow":true,"ranged":true,"oneHand":true,"rapidfire":70,"dmgS":2,"dmgL":2,"hit":3,"dmgBonus":6,"spd":1,"req":"royal,mage,elf,illusion","safe":0,"p":28000,"gachaWeight":1,"blueSpecter":true,"d":"潛藏魔族之力的單手弓，弦上纏繞著湛藍惡靈的氣息。連射70%；遠距離傷害+6、遠距離命中+3；可同時裝備盾牌或臂甲。攻擊時 4%（每強化 +1%）機率發動 藍惡靈奪魔：恢復  MP。"},
             "wpn_demon_wand_hidden": {"n":"隱藏的魔族魔杖","type":"wpn","dmgS":15,"dmgL":16,"hit":3,"dmgBonus":0,"spd":1,"mdmg":1,"mpR":3,"req":"mage,illusion","safe":0,"p":28000,"gachaWeight":1,"blueSpecter":true,"d":"潛藏魔族之力的魔杖，杖頭湛藍惡靈共鳴不息。共鳴、貫穿、魔法傷害+1、MP自然恢復量+3；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 藍惡靈奪魔：恢復  MP。"},
             "wpn_demon_claw_hidden": {"n":"隱藏的魔族鋼爪","type":"wpn","w2h":true,"dmgS":24,"dmgL":26,"hit":3,"dmgBonus":0,"spd":0.9,"eff":"combo","comboRate":33,"req":"dark","safe":0,"p":28000,"gachaWeight":1,"redSpecter":true,"d":"潛藏魔族之力的雙手鋼爪，爪尖撕扯間迸出赤紅惡靈之火。雙擊33%、貫穿；近距離命中+3。攻擊時 4%（每強化 +1%）機率發動 紅惡靈逆襲： 水屬性魔法傷害（受魔法傷害公式影響），並恢復造成傷害 10% 的 HP。"},
@@ -1582,7 +1606,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "bk_elf_mirror": {"type":"skillbk","n":"精靈水晶(鏡反射)","p":16000,"sk":"sk_elf_mirror","gachaWeight":1,"d":"習得「鏡反射」（輔助・增益・持續16秒）：受到魔法傷害時，有（精神）% 機率（每 1 點精神 +1%）對施法目標造成與自身所受傷害等量的必中固定傷害。"},
             "bk_elf_earthshield": {"type":"skillbk","n":"精靈水晶(大地屏障)","p":30000,"sk":"sk_elf_earthshield","gachaWeight":10},
             "bk_elf_lifespring": {"type":"skillbk","n":"精靈水晶(生命之泉)","p":30000,"sk":"sk_elf_lifespring","gachaWeight":10},
-            "bk_elf_earthbless": {"type":"skillbk","n":"精靈水晶(大地的祝福)","p":30000,"sk":"sk_elf_earthbless","gachaWeight":10},
+            "bk_elf_earthbless": {"type":"skillbk","n":"精靈水晶(大地的祝福)","p":30000,"sk":"sk_elf_earthbless","gachaWeight":10,"d":"習得「大地的祝福」（增益・大地屬性）。施放後全隊（玩家＋所有傭兵）防禦(AC)-7，持續 1200 秒。可學等級 40。消耗 MP 35。"},
             "bk_elf_summon2": {"type":"skillbk","n":"精靈水晶(召喚強力屬性精靈)","p":60000,"sk":"sk_elf_summon2","gachaWeight":1},
             "bk_elf_lifebless": {"type":"skillbk","n":"精靈水晶(生命的祝福)","p":60000,"sk":"sk_elf_lifebless","gachaWeight":5},
             "bk_elf_seal": {"type":"skillbk","n":"精靈水晶(封印禁地)","p":60000,"sk":"sk_elf_seal","gachaWeight":10},
@@ -1593,8 +1617,8 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "bk_elf_attrfire": {"type":"skillbk","n":"精靈水晶(屬性之火)","p":16000,"sk":"sk_elf_attrfire","gachaWeight":1,"d":"習得「屬性之火」（五階精靈魔法・火屬性・增益）。持續 320 秒內，一般攻擊有 30% 機率造成 1.5 倍傷害；效果結束後才能再次施放。"},
             "bk_elf_preciseshot": {"type":"skillbk","n":"精靈水晶(精準射擊)","p":16000,"sk":"sk_elf_preciseshot","gachaWeight":1,"d":"習得「精準射擊」（五階精靈魔法・風屬性・輔助・增益）。持續 64 秒內，一般攻擊的最高命中率可提升至 100%；效果結束後才能再次施放。消耗 MP 15。"},
             "bk_elf_stormshot": {"type":"skillbk","n":"精靈水晶(暴風神射)","p":60000,"sk":"sk_elf_stormshot","gachaWeight":1},
-            "bk_elf_steelguard": {"type":"skillbk","n":"精靈水晶(鋼鐵防護)","p":60000,"sk":"sk_elf_steelguard","gachaWeight":1},
-            "bk_elf_watervital": {"type":"skillbk","n":"精靈水晶(水之元氣)","p":4000,"sk":"sk_elf_watervital","gachaWeight":10,"d":"習得「水之元氣」（三階精靈魔法・水屬性・增益）。持續 64 秒內，下次受到治癒術治癒時恢復量加倍（持續回復 HoT 不計），觸發後 7 秒冷卻；效果結束後才能再次施放。"},
+            "bk_elf_steelguard": {"type":"skillbk","n":"精靈水晶(鋼鐵防護)","p":60000,"sk":"sk_elf_steelguard","gachaWeight":1,"d":"習得「鋼鐵防護」（增益・大地屬性）。施放後全隊（玩家＋所有傭兵）受到的傷害減少 5%，持續 1200 秒。可學等級 50。消耗 MP 30。"},
+            "bk_elf_watervital": {"type":"skillbk","n":"精靈水晶(水之元氣)","p":4000,"sk":"sk_elf_watervital","gachaWeight":10,"d":"習得「水之元氣」（三階精靈魔法・水屬性・增益）。持續 64 秒內，全隊（玩家＋所有傭兵）下次受到治癒術治癒時恢復量加倍（持續回復 HoT 不計・全隊共用一次），觸發後 7 秒冷卻；效果結束後才能再次施放。"},
             "bk_dark_str": {"type":"skillbk","n":"黑暗精靈水晶(力量提升)","p":500,"sk":"sk_dark_str","gachaWeight":0},
             "bk_dark_mrup": {"type":"skillbk","n":"黑暗精靈水晶(影之防護)","p":500,"sk":"sk_dark_mrup","gachaWeight":0},
             "bk_dark_stealth": {"type":"skillbk","n":"黑暗精靈水晶(暗隱術)","p":500,"sk":"sk_dark_stealth","gachaWeight":0},
@@ -1610,21 +1634,21 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "bk_dark_erup": {"type":"skillbk","n":"黑暗精靈水晶(迴避提升)","p":12500,"sk":"sk_dark_erup","gachaWeight":10},
             "bk_dark_double": {"type":"skillbk","n":"黑暗精靈水晶(雙重破壞)","p":12500,"sk":"sk_dark_double","gachaWeight":10},
             "bk_dark_armorbreak": {"type":"skillbk","n":"黑暗精靈水晶(破壞盔甲)","p":12500,"sk":"sk_dark_armorbreak","gachaWeight":1},
-            "mem_ogre": {"type":"skillbk","n":"記憶水晶(幻覺：歐吉)","p":1800,"sk":"sk_illu_ogre","gachaWeight":0},
+            "mem_ogre": {"type":"skillbk","n":"記憶水晶(幻覺：歐吉)","p":1800,"sk":"sk_illu_ogre","gachaWeight":0,"d":"習得「幻覺：歐吉」（增益）。施放後全隊（玩家＋所有傭兵）額外傷害+4、額外命中+4，持續 64 秒。可學等級 10。消耗 MP 20。"},
             "mem_confuse": {"type":"skillbk","n":"記憶水晶(混亂)","p":1800,"sk":"sk_illu_confuse","gachaWeight":0},
             "mem_cube_burn": {"type":"skillbk","n":"記憶水晶(立方：燃燒)","p":1800,"sk":"sk_illu_cube_burn","gachaWeight":0},
             "mem_crush": {"type":"skillbk","n":"記憶水晶(粉碎能量)","p":1800,"sk":"sk_illu_crush","gachaWeight":0},
             "mem_mirror": {"type":"skillbk","n":"記憶水晶(鏡像)","p":1800,"sk":"sk_illu_mirror","gachaWeight":0},
             "mem_focus": {"type":"skillbk","n":"記憶水晶(專注)","p":4800,"sk":"sk_illu_focus","gachaWeight":0},
-            "mem_lich": {"type":"skillbk","n":"記憶水晶(幻覺：巫妖)","p":4800,"sk":"sk_illu_lich","gachaWeight":0},
+            "mem_lich": {"type":"skillbk","n":"記憶水晶(幻覺：巫妖)","p":4800,"sk":"sk_illu_lich","gachaWeight":0,"d":"習得「幻覺：巫妖」（增益）。施放後全隊（玩家＋所有傭兵）魔法傷害+2，持續 64 秒。可學等級 20。消耗 MP 20。"},
             "mem_mindbreak": {"type":"skillbk","n":"記憶水晶(心靈破壞)","p":4800,"sk":"sk_illu_mindbreak","gachaWeight":20},
             "mem_cube_quake": {"type":"skillbk","n":"記憶水晶(立方：地裂)","p":4800,"sk":"sk_illu_cube_quake","gachaWeight":20},
             "mem_skullbreak": {"type":"skillbk","n":"記憶水晶(骷髏毀壞)","p":4800,"sk":"sk_illu_skullbreak","gachaWeight":0},
             "mem_fantasy": {"type":"skillbk","n":"記憶水晶(幻想)","p":10800,"sk":"sk_illu_fantasy","gachaWeight":10},
-            "mem_golem": {"type":"skillbk","n":"記憶水晶(幻覺：鑽石高崙)","p":10800,"sk":"sk_illu_golem","gachaWeight":1},
+            "mem_golem": {"type":"skillbk","n":"記憶水晶(幻覺：鑽石高崙)","p":10800,"sk":"sk_illu_golem","gachaWeight":1,"d":"習得「幻覺：鑽石高崙」（增益）。施放後全隊（玩家＋所有傭兵）防禦(AC)-10，持續 64 秒。可學等級 30。消耗 MP 30、HP 25。"},
             "mem_cube_shock": {"type":"skillbk","n":"記憶水晶(立方：衝擊)","p":10800,"sk":"sk_illu_cube_shock","gachaWeight":0},
             "mem_endure": {"type":"skillbk","n":"記憶水晶(耐力)","p":10800,"sk":"sk_illu_endure","gachaWeight":0},
-            "mem_avatar": {"type":"skillbk","n":"記憶水晶(幻覺：化身)","p":43200,"sk":"sk_illu_avatar","gachaWeight":1},
+            "mem_avatar": {"type":"skillbk","n":"記憶水晶(幻覺：化身)","p":43200,"sk":"sk_illu_avatar","gachaWeight":1,"d":"習得「幻覺：化身」（增益）。施放後全隊（玩家＋所有傭兵）額外傷害+10、受到所有傷害減少 3%，持續 64 秒。可學等級 40。消耗 MP 50。"},
             "mem_panic": {"type":"skillbk","n":"記憶水晶(恐慌)","p":43200,"sk":"sk_illu_panic","gachaWeight":10},
             "mem_insight": {"type":"skillbk","n":"記憶水晶(洞察)","p":43200,"sk":"sk_illu_insight","gachaWeight":10},
             "mem_cube_harmony": {"type":"skillbk","n":"記憶水晶(立方：和諧)","p":43200,"sk":"sk_illu_cube_harmony","gachaWeight":1},
@@ -1659,10 +1683,10 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "item_elmore_heart": {"n":"艾爾摩將軍之心","p":0,"c":"text-rose-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"自將軍艾爾摩胸中取出、仍微微跳動的心臟，餘威猶在。希蓮恩的試煉道具。（無法販售）"},
             "item_time_orb": {"n":"完成的時間水晶球","p":0,"c":"text-sky-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"匯聚流逝歲月而成的水晶球，凝視其中彷彿能窺見時光倒流。希蓮恩的試煉道具。（無法販售）"},
             "item_wyvern_blood": {"n":"翼龍之血","p":0,"c":"text-red-300","noUse":true,"noSell":true,"gachaWeight":0,"d":"自翼龍體內汲取的滾燙血液，蘊藏著飛龍一族的兇暴生命力。希蓮恩 50 級試煉道具。（無法販售）"},
-            "wpn_pirate_dagger": {"n":"血紅慾望短劍","type":"wpn","dmgS":10,"dmgL":8,"hit":0,"spd":0.8,"req":"elf,dark","safe":6,"p":12000,"gachaWeight":60,"unBonus":true,"hpR":-3,"d":"沁著血色慾望的短刃，渴飲不死與狼人之血。<br>對不死／狼人加成；出血；HP自然恢復量 -3。"},
-            "wpn_glory_sword": {"n":"榮耀之劍","type":"wpn","dmgS":9,"dmgL":12,"hit":0,"dmgBonus":2,"spd":1,"req":"knight,dragon","safe":6,"p":6000,"gachaWeight":80,"d":"象徵騎士榮耀的單手劍，反擊來犯之敵。<br>反擊。"},
-            "wpn_pirate_shortblade": {"n":"短刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":1.1,"req":"royal,knight,elf,dark,dragon","safe":6,"p":5000,"gachaWeight":100,"d":"輕巧易於揮舞的短刀，適合多數職業使用。<br>反擊。"},
-            "wpn_pirate_cutlass": {"n":"海賊彎刀","type":"wpn","dmgS":11,"dmgL":6,"hit":1,"spd":1.1,"req":"knight,elf,dark,dragon","safe":6,"p":8000,"gachaWeight":90,"unBonus":true,"d":"海賊愛用的彎刀，刃口浸染過無數亡者之血。<br>對不死／狼人加成；反擊。"},
+            "wpn_pirate_dagger": {"n":"血紅慾望短劍","type":"wpn","dmgS":10,"dmgL":8,"hit":0,"spd":0.6,"req":"elf,dark","safe":6,"p":12000,"gachaWeight":60,"unBonus":true,"hpR":-3,"d":"沁著血色慾望的短刃，渴飲不死與狼人之血。<br>對不死／狼人加成；出血；HP自然恢復量 -3。"},
+            "wpn_glory_sword": {"n":"榮耀之劍","type":"wpn","dmgS":9,"dmgL":12,"hit":0,"dmgBonus":2,"spd":0.8,"req":"knight,dragon","safe":6,"p":6000,"gachaWeight":80,"d":"象徵騎士榮耀的單手劍，反擊來犯之敵。<br>反擊。"},
+            "wpn_pirate_shortblade": {"n":"短刀","type":"wpn","dmgS":10,"dmgL":12,"hit":1,"spd":0.9,"req":"royal,knight,elf,dark,dragon","safe":6,"p":5000,"gachaWeight":100,"d":"輕巧易於揮舞的短刀，適合多數職業使用。<br>反擊。"},
+            "wpn_pirate_cutlass": {"n":"海賊彎刀","type":"wpn","dmgS":11,"dmgL":6,"hit":1,"spd":0.9,"req":"knight,elf,dark,dragon","safe":6,"p":8000,"gachaWeight":90,"unBonus":true,"d":"海賊愛用的彎刀，刃口浸染過無數亡者之血。<br>對不死／狼人加成；反擊。"},
             "wpn_abyss_dualblade": {"n":"深淵雙刀","type":"wpn","w2h":true,"dmgS":14,"dmgL":10,"hit":0,"spd":0.8,"req":"dark","safe":6,"p":10000,"gachaWeight":50,"eff":"combo","comboRate":25,"ignHardSkin":true,"d":"自深淵汲取力量的雙刀，撕裂一切堅硬的防護。<br>雙擊 25%；貫穿（無視硬皮額外減傷）。"},
             "wpn_dark_crystalball": {"n":"漆黑水晶球","type":"wpn","dmgS":1,"dmgL":1,"hit":0,"spd":1,"req":"mage,illusion","safe":6,"p":20000,"gachaWeight":1,"mdmg":1,"cha":2,"ignHardSkin":true,"d":"凝聚漆黑魔力的水晶球，魔力共鳴而出。<br>共鳴；貫穿（無視硬皮額外減傷）；魔法傷害 +1；魅力 +2。"},
             "wpn_silent_crossbow": {"n":"寂靜十字弓","type":"wpn","ranged":true,"isBow":true,"oneHand":true,"dmgS":3,"dmgL":2,"hit":1,"dmgBonus":1,"spd":1,"req":"elf,illusion","safe":6,"p":15000,"gachaWeight":30,"rapidfire":50,"d":"無聲扣動的十字弓，連發如疾雨。<br>連射 50%。（單手弓，可與盾牌／臂甲並用，需裝備箭矢）"},
@@ -2832,6 +2856,7 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         // 地圖代碼中文化對照表
         window.ITEM_SRC = {"mat_crack_core":"c","item_osiris_box_basic":"c","item_osiris_box_high":"c","wpn_qigu_obsidian":"c","item_pride_dom_11":"c","item_pride_dom_21":"c","item_pride_dom_31":"c","item_pride_dom_41":"c","item_pride_dom_51":"c","item_pride_dom_61":"c","item_pride_dom_71":"c","item_pride_dom_81":"c","item_pride_dom_91":"c","pet_fang_hound":"c","pet_fang_steel":"c","pet_fang_ruin":"c","pet_fang_victory":"c","clk_flame_blood":"c","wpn_demon_sword":"c","wpn_demon_claw":"c","wpn_demon_dual":"c","wpn_demon_xbow":"c","mat_silver_plate":"c","mat_blackmithril_plate":"c","item_shadow_temple_key":"c","mat_cursed_leather_earth":"c","mat_cursed_leather_water":"c","mat_cursed_leather_wind":"c","mat_cursed_leather_fire":"c","clk_pride_earth":"c","clk_pride_water":"c","clk_pride_wind":"c","clk_pride_fire":"c","panacea_str":"c","panacea_dex":"c","panacea_int":"c","panacea_con":"c","panacea_wis":"c","panacea_cha":"c","arm_48":"c","arm_111":"c","arm_91":"c","arm_75":"c","arm_49":"c","arm_78":"c","new_item_181":"c","arm_76":"c","arm_93":"c","new_item_182":"c","wpn_40":"c","wpn_41":"c","wpn_34":"c","wpn_35":"c","wpn_36":"c","hlm_silver":"c","arm_112":"c","arm_92":"c","arm_77":"c","shd_bone":"c","amr_bone":"c","hlm_bone":"c","new_item_176":"c","new_item_168":"c","new_item_174":"c","new_item_171":"c","new_item_175":"c","wpn_15":"cs","arm_70":"c","arm_74":"c","arm_109":"c","wpn_rapier":"c","wpn_mailbreaker":"c","wpn_10":"cs","wpn_30":"c","arm_90":"c","arm_44":"c","hlm_elf":"c","wpn_elfsword":"c","wpn_dagger2":"c","clk_elf":"c","shd_elf":"c","arm_73":"c","wpn_24":"c","arm_72":"c","wpn_elfbow":"c","arm_71":"c","wpn_29":"c","wpn_battleaxe":"cs","bot_short":"c","wpn_31":"c","arm_99":"c","wpn_halberd":"cs","wpn_5":"cs","wpn_3":"cs","arm_98":"c","new_item_173":"c","wpn_shaha_bow":"c","new_item_169":"c","new_item_170":"c","new_item_elfwing":"c","new_item_172":"c","new_item_177":"c","new_item_178":"c","wpn_39":"c","wpn_flaming_angel":"c","mat_silver":"c","wpn_claw_dark":"c","wpn_claw_silver":"c","wpn_claw_gloom":"c","wpn_dual_dark":"c","wpn_dual_silver":"c","wpn_dual_gloom":"c","wpn_xbow_dark":"c","wpn_xbow_gloom":"c","hlm_mage":"c","amr_magerobe":"c","hlm_steel":"c","arm_113":"c","arm_94":"c","arm_100":"c","arm_79":"c","hlm_frost":"c","amr_frost":"c","bot_frost":"c","clk_mr":"c","arm_87":"c","tsh_tshirt":"c","acc_135":"c","acc_137":"c","acc_136":"c","arm_95":"c","blt_body":"c","acc_131":"c","acc_130":"c","arm_107":"c","wpn_siruge":"c","arm_80":"c","arm_82":"c","arm_81":"c","arm_83":"c","rng_earth":"c","rng_water":"c","rng_wind":"c","rng_fire":"c","wpn_demon_axehead":"c","bk_royal_burnweapon":"c","bk_royal_bravewill":"c","bk_royal_shield":"c","bk_royal_kingguard":"c","wpn_ancient_spear":"c","wpn_ancient_axe":"c","wpn_chain_destroyer":"c","armguard_archer":"c","armguard_fighter":"c","wpn_old_sword":"c","wpn_old_greatsword":"c","wpn_old_xbow":"c","amr_old_scale":"c","amr_old_leather":"c","amr_old_robe":"c","amr_old_plate":"c","bk_elf_mr":"s","bk_elf_mind":"s","bk_elf_worldtree":"s","bk_elf_purify":"s","bk_elf_firewpn":"s","bk_elf_windshot":"s","bk_elf_earthguard":"s","bk_elf_eleres":"s","bk_elf_singleres":"s","bk_fireball":"s","bk_vampire":"s","bk_rock_prison":"s","bk_thunder":"s","bk_ice_spike":"s","bk_bless_wpn":"s","bk_heal1":"s","bk_sunlight":"s","bk_shield":"s","bk_lightarrow":"s","bk_teleport":"s","bk_icearrow":"s","bk_windblade":"s","bk_holy_wpn":"s","bk_antidote":"s","bk_cold_shiver":"s","bk_poison_curse":"s","bk_ench_wpn":"s","bk_reveal":"s","bk_load_up":"s","bk_firearrow":"s","bk_hell_fang":"s","bk_heal_mid":"s","bk_shield2":"s","bk_energy_sense":"s","bk_chill":"s","bk_aurora":"s","bk_dark_blind":"s","bk_undead_bane":"s","arm_103":"s","arm_105":"s","arm_108":"s","arm_42":"s","arm_43":"s","hlm_mr":"s","arm_68":"s","arm_66":"s","arm_67":"s","amr_robe":"s","arm_65":"s","arm_63":"s","arm_69":"s","arm_60":"s","arm_61":"s","arm_62":"s","amr_plate":"s","new_item_189":"s","new_item_188":"s","new_item_187":"s","wpn_shortsword":"s","wpn_9":"s","wpn_scimitar":"s","wpn_37":"s","wpn_invader":"s","wpn_longsword":"s","wpn_damascus":"s","wpn_silversword":"s","wpn_2hsword":"s","wpn_katana":"s","wpn_13":"s","wpn_1":"s","wpn_19":"s","wpn_38":"s","wpn_20":"s","wpn_silveraxe":"s","wpn_witchwand":"s","wpn_18":"s","wpn_giantaxe":"s","wpn_28":"s","wpn_14":"s","wpn_6":"s","wpn_17":"s","wpn_7":"s","wpn_21":"s","wpn_16":"s","wpn_12":"s","potion_heal":"s","potion_strong":"s","potion_ult":"s","potion_blue":"s","potion_haste":"s","scroll_poly":"s","scroll_magicbarrier":"s","scroll_teleport":"s","scroll_revive":"s","wpn_22":"s","candle":"s","new_item_143":"s","wpn_claw_bronze":"s","wpn_claw_steel":"s","wpn_claw_shadow":"s","wpn_claw_damascus":"s","wpn_dual_bronze":"s","wpn_dual_steel":"s","wpn_dual_shadow":"s","wpn_dual_damascus":"s","bk_dark_str":"s","bk_dark_mrup":"s","bk_dark_stealth":"s","bk_dark_poison":"s","bk_dark_refine":"s","bk_dark_dex":"s","bk_dark_poisonres":"s","bk_dark_burn":"s","bk_dark_walkhaste":"s","mem_confuse":"s","mem_mirror":"s","mem_crush":"s","mem_ogre":"s","mem_focus":"s","mem_skullbreak":"s","mem_lich":"s","mem_endure":"s","bk_dragon_guardbreak":"s","bk_dragon_slaughter":"s","bk_dragon_flameslash":"s","bk_dragon_terror":"s","potion_brave":"s","new_item_140":"s","new_item_139":"s","new_item_142":"s","wpn_illu_wand":"e","mem_cube_burn":"e","shd_illu_book":"e","mem_cube_shock":"e","clk_illu":"e","wpn_qigu_sapphire":"e","wpn_warrior_trial_axe":"e","bk_warrior_dualaxe":"e","clk_warrior_corps":"e","bk_warrior_roar":"e","hlm_warrior_corps":"e","wpn_master_axe":"e","wpn_dragon_2h":"e","bk_dragon_armor":"e","armguard_dragonscale":"e","bk_dragon_bloodlust":"e","clk_dragon":"e","wpn_chain_annihilator":"e","item_cyclops_blood":"e","item_demon_search":"e","item_demon_spy":"e","item_yeti_heart":"e","item_soulfire_ash":"e","arm_shadowglove":"e","arm_shadowmask":"e","arm_shadowboots":"e","wpn_demon_sword_hidden":"e","wpn_demon_bow_hidden":"e","wpn_demon_wand_hidden":"e","wpn_demon_claw_hidden":"e","wpn_demon_chain_hidden":"e","wpn_demon_qigu_hidden":"e","arm_bluepirate_boots":"e","arm_bluepirate_helm":"e","arm_bluepirate_armor":"e","arm_bluepirate_gloves":"e","arm_bluepirate_cloak":"e","acc_icequeen_ear_1":"c","acc_icequeen_ear_2":"c","acc_icequeen_ear_3":"c","acc_icequeen_ear_4":"c","acc_icequeen_ear_5":"c","acc_icequeen_ear_6":"c","acc_icequeen_ear_7":"c","acc_icequeen_ear_8_str":"c","acc_icequeen_ear_8_dex":"c","acc_icequeen_ear_8_int":"c","acc_icequeen_ear_8_con":"c","acc_icequeen_ear_8_wis":"c","acc_icequeen_ear_8_cha":"c","acc_ear_wisdom":"c","acc_ear_truth":"c","acc_ear_dominate":"c","acc_ear_rage":"c","acc_ear_brave":"c","acc_ear_undead":"c","acc_ear_passion":"c","acc_ear_honor":"c","acc_ear_tolerance":"c","acc_ear_dance":"c","acc_ear_twin":"c","acc_ear_festival":"c","acc_ear_peak":"c","acc_ear_rampage":"c","acc_ear_phantom":"c","acc_ear_clan":"c","acc_ear_slave":"c"};
         const zoneNames = {
+            "elder_room": "格蘭肯神殿．長老之室",
             "twilight_mt": "黃昏山脈",
             "oblivion_island": "遺忘之島",
             "oblivion_travel": "遺忘之島途中",
@@ -2962,7 +2987,6 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
             "assassin_king_room": "暗殺軍王之室",
             "dark_magic_lab": "黑魔法研究室",
             "necro_training": "冥法軍訓練場",
-            "elder_room": "格蘭肯神殿·長老之室",
             "rastabad_cave1": "拉斯塔巴德地下洞穴1樓",
             "rastabad_cave2": "拉斯塔巴德地下洞穴2樓",
             "rastabad_cave3": "拉斯塔巴德地下洞穴3樓",
@@ -3050,39 +3074,41 @@ window.SETS_TAB = [{"n":"皮套裝","items":["皮帽子","皮涼鞋","皮盾牌"
         let monsterNameToIdMap = {};
 
         // ===== 席琳的世界：怪物數值套用 =====
-        let currentWorldMode = 'normal'; // 'normal' | 'sherine'
+        let currentWorldMode = 'normal'; // 'normal' | 'sherine' | 'mad' | 'classic'
 
         function setWorldMode(mode) {
             currentWorldMode = mode;
             document.getElementById('btnNormal').className = 'toggle-btn' + (mode === 'normal' ? ' active-normal' : '');
             document.getElementById('btnSherine').className = 'toggle-btn' + (mode === 'sherine' ? ' active-sherine' : '');
+            document.getElementById('btnMad').className = 'toggle-btn' + (mode === 'mad' ? ' active-mad' : '');
             document.getElementById('btnClassic').className = 'toggle-btn' + (mode === 'classic' ? ' active-classic' : '');
             document.getElementById('worldModeDesc').textContent =
                 mode === 'sherine' ? '顯示席琳的世界強化後數值（攻城/血盟除外）'
+                : mode === 'mad' ? '顯示瘋狂的席琳世界數值（攻城/血盟除外）：怪更強、報酬更高'
                 : mode === 'classic' ? '顯示經典模式（硬核）：掉落率×1/10，經驗½、金幣10%'
                 : '顯示原始怪物數值與掉落機率';
-            document.getElementById('sherineInfoBox').className = 'sherine-info-box' + (mode === 'sherine' ? ' visible' : '');
-            document.getElementById('sherineGraceBox').className = 'sherine-grace-box' + (mode === 'sherine' ? ' visible' : '');
-            document.getElementById('sherineDropBox').className = 'sherine-drop-box' + (mode === 'sherine' ? ' visible' : '');
+            const _sherLike = (mode === 'sherine' || mode === 'mad');
+            document.getElementById('sherineInfoBox').className = 'sherine-info-box' + (_sherLike ? ' visible' : '');
+            document.getElementById('sherineGraceBox').className = 'sherine-grace-box' + (_sherLike ? ' visible' : '');
+            document.getElementById('sherineDropBox').className = 'sherine-drop-box' + (_sherLike ? ' visible' : '');
             document.getElementById('classicInfoBox').className = 'classic-info-box' + (mode === 'classic' ? ' visible' : '');
-            document.body.className = mode === 'sherine' ? 'sherine-mode' : (mode === 'classic' ? 'classic-mode' : '');
+            document.body.className = mode === 'sherine' ? 'sherine-mode' : (mode === 'mad' ? 'sherine-mode sherine-mad' : (mode === 'classic' ? 'classic-mode' : ''));
             filterData();
         }
 
-        function applySherineStats(mobInfo) {
+        function applySherineStats(mobInfo, mad) {
             if (!mobInfo) return mobInfo;
-            const lv = mobInfo.lv || 1;
             return {
                 ...mobInfo,
-                hp:  Math.floor((mobInfo.hp  || 0) * 3),
-                ac:  Math.floor((mobInfo.ac  || 0) * 1.5),
-                mr:  Math.floor((mobInfo.mr  || 0) * 1.5),
+                hp:  Math.floor((mobInfo.hp  || 0) * (mad ? 5 : 3)),
+                ac:  (mobInfo.ac ?? 0) - (mobInfo.boss ? 20 : 10),
+                mr:  Math.floor((mobInfo.mr  || 0) * (mad ? 3 : 1.5)),
                 _sherine: true
             };
         }
 
-        function applyShineDropRate(rate) {
-            return Math.min(100, parseFloat((rate * 3).toFixed(4)));
+        function applyShineDropRate(rate, mad) {
+            return Math.min(100, parseFloat((rate * (mad ? 5 : 3)).toFixed(4)));
         }
         function applyClassicDropRate(rate) {
             return Math.max(0.0001, parseFloat((rate * 0.1).toFixed(4)));
@@ -3615,7 +3641,7 @@ ${srcHtml}`;
                 ["🍃 疾風","2件 遠距離傷害+3、遠距離命中+3｜3件 遠距離爆擊率+3%｜5件 連射傷害由30%提升為80%"],
                 ["🌙 月光","2件 額外傷害+2、額外命中+3｜3件 ER+5、MR+10｜5件 ER 也能迴避魔法攻擊（怪物必中技能改為先判定 ER）"],
                 ["📖 學徒","2件 MP自然恢復+5、額外魔法點數+6｜3件 魔法爆擊率+3%｜5件 MP 低於最大值30%時，所有技能 MP 消耗減半（MP回升超過30%即恢復）"],
-                ["🔮 魔女","2件 魔法傷害+3｜3件 水屬性抗性+10、額外魔法點數+5｜5件 每觸發 5 次共鳴，免費發動一次冰雪暴（無需學會、不受法師階級加成）"],
+                ["🔮 魔女","2件 魔法傷害+3｜3件 水屬性抗性+10、額外魔法點數+5｜5件 每觸發 5 次共鳴，免費發動一次冰雪暴（無需學會）"],
                 ["🌑 暗影","2件 額外傷害+7｜3件 觸發迴避時恢復 2% HP｜5件 雙擊觸發的額外一般攻擊傷害加倍"],
                 ["🌀 幻覺","2件 魔法傷害命中時，恢復「等級/10」的MP｜3件 輔助技能消耗MP減少50%｜5件 敵人受到非自動攻擊技能的魔法傷害時，再次受到額外相同傷害（此額外傷害不再觸發套裝效果）"],
                 ["🐲 龍血","2件 造成物理傷害時恢復1%該傷害的HP（自身HP低於50%時改為5%）｜3件 施放消耗HP的技能可獲得「龍裔」10秒，受到傷害減少15%｜5件 消耗HP技能造成傷害提高20%"],
@@ -3671,9 +3697,10 @@ ${srcHtml}`;
                     const eleText = elementMapping[mobInfo.e] || mobInfo.e || '無屬性';
                     const behClass = mobInfo.beh === '主動' ? 'active-behavior' : 'passive-behavior';
 
-                    const isSherine = currentWorldMode === 'sherine';
+                    const isMad = currentWorldMode === 'mad';
+                    const isSherine = currentWorldMode === 'sherine' || isMad;
                     const isClassicM = currentWorldMode === 'classic';
-                    const sm = isSherine ? applySherineStats(mobInfo) : mobInfo;
+                    const sm = isSherine ? applySherineStats(mobInfo, isMad) : mobInfo;
                     const lv = mobInfo.lv || 1;
                     const drBonus = isSherine ? Math.floor(lv / 3) : 0;
 
@@ -3681,9 +3708,9 @@ ${srcHtml}`;
                     const acHtml   = isSherine ? `<span class="sherine-stat sherine-stat-up">AC:${sm.ac}</span>` : `AC:${mobInfo.ac ?? '?'}`;
                     const mrHtml   = isSherine ? `<span class="sherine-stat sherine-stat-up">MR:${sm.mr}%</span>` : `MR:${mobInfo.mr || '0'}%`;
                     const drHtml   = isSherine && drBonus > 0 ? `<span class="meta-badge sherine-stat sherine-stat-up">傷免+${drBonus}</span>` : '';
-                    const atkHtml  = isSherine ? `<span class="meta-badge sherine-stat">攻擊×2</span>` : '';
-                    const expHtml  = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">經驗×5</span>` : (isClassicM ? `<span class="meta-badge" style="color:#fbbf24;">經驗×½</span>` : '');
-                    const goldHtml = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">金錢×5</span>` : (isClassicM ? `<span class="meta-badge" style="color:#fbbf24;">金錢×10%</span>` : '');
+                    const atkHtml  = isSherine ? `<span class="meta-badge sherine-stat">攻擊×${isMad ? 3 : 2}</span>` : '';
+                    const expHtml  = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">經驗×${isMad ? 10 : 5}</span>` : (isClassicM ? `<span class="meta-badge" style="color:#fbbf24;">經驗×½</span>` : '');
+                    const goldHtml = isSherine ? `<span class="meta-badge" style="color:#fbbf24;">金錢×${isMad ? 10 : 5}</span>` : (isClassicM ? `<span class="meta-badge" style="color:#fbbf24;">金錢×10%</span>` : '');
 
                     // 🛡️ 硬皮徽章（物理減傷；新版已降低且席琳世界不再加成。城門=玩家等級、守護塔=玩家等級÷2）
                     const _hs = HARD_MOBS.has(mobId) ? calcHardSkin(mobInfo) : null;
@@ -3749,9 +3776,10 @@ ${srcHtml}`;
                         const itemCode = drop[0];
                         const itemName = translate(itemCode);
                         const baseRate = drop[1];
-                        const isSherine = currentWorldMode === 'sherine';
+                        const isMadD = currentWorldMode === 'mad';
+                        const isSherine = currentWorldMode === 'sherine' || isMadD;
                         const isClassic = currentWorldMode === 'classic';
-                        const rate = isSherine ? applyShineDropRate(baseRate) : (isClassic ? applyClassicDropRate(baseRate) : baseRate);
+                        const rate = isSherine ? applyShineDropRate(baseRate, isMadD) : (isClassic ? applyClassicDropRate(baseRate) : baseRate);
                         const rateClass = getRateClass(rate);
                         const itemInfo = window.ITEMS_DB ? window.ITEMS_DB[itemCode] : null;
                         let tooltipText = "";
@@ -3833,7 +3861,9 @@ ${srcHtml}`;
                             .replace(/"/g, '&quot;');
 
                         const multiplierTag = isSherine
-                            ? `<span class="drop-rate-multiplier" title="席琳的世界：掉落率×3">×3</span>`
+                            ? (isMadD
+                                ? `<span class="drop-rate-multiplier" title="瘋狂的席琳世界：掉落率×5" style="color:#f87171;border-color:#f87171;">×5</span>`
+                                : `<span class="drop-rate-multiplier" title="席琳的世界：掉落率×3">×3</span>`)
                             : (isClassic ? `<span class="drop-rate-multiplier" title="經典模式：掉落率×1/10" style="color:#fbbf24;border-color:#fbbf24;">×1/10</span>` : '');
 
                         html += `
