@@ -296,7 +296,7 @@ select option{ background:var(--bg3); }
     <div class="nav-item" onclick="showPanel('inv',this)">🎒 背包</div>
     <div class="nav-item" onclick="showPanel('wh',this)">🏦 倉庫</div>
     <div class="nav-section">進階</div>
-    <div class="nav-item" onclick="showPanel('partners',this)">👥 同伴</div>
+    <div class="nav-item" onclick="showPanel('partners',this)">⚔️ 傭兵</div>
     <div class="nav-item" onclick="showPanel('dex',this)">📖 圖鑑</div>
     <div class="nav-item" onclick="showPanel('config',this)">⚙️ 設定</div>
     <div class="nav-item" onclick="showPanel('advanced',this)">🔧 進階</div>
@@ -687,8 +687,8 @@ function renderItemRefSearch(inputId, resultId){
     <div class="panel" id="panel-partners">
       <div class="panel-title">👥 同伴管理</div>
       <div class="form-row">
-        <button class="btn btn-accent" onclick="addPartner()">➕ 新增同伴</button>
-        <button class="btn btn-danger" onclick="clearPartners()">🗑 清空全部同伴</button>
+        <button class="btn btn-accent" onclick="addPartner()">➕ 新增傭兵</button>
+        <button class="btn btn-danger" onclick="clearPartners()">🗑 清空全部傭兵</button>
         <span style="font-size:12px;color:var(--text3);margin-left:8px">同伴數量上限依遊戲版本而定</span>
       </div>
       <div id="partnerList"></div>
@@ -2430,22 +2430,22 @@ function newPartnerTemplate(){
 const _partnerTab = {};
 
 function addPartner(){
-  if(!G.p.partners) G.p.partners = [];
-  G.p.partners.push(newPartnerTemplate());
+  if(!G.p.allies) G.p.allies = [];
+  G.p.allies.push(newPartnerTemplate());
   renderPartnerList();
   toast('已新增同伴', 'ok');
 }
 
 function removePartner(idx){
   if(!confirm(`確定刪除同伴 ${idx+1}？`)) return;
-  G.p.partners.splice(idx, 1);
+  G.p.allies.splice(idx, 1);
   renderPartnerList();
   toast('已刪除同伴', 'info');
 }
 
 function clearPartners(){
   if(!confirm('確定清空全部同伴？')) return;
-  G.p.partners = [];
+  G.p.allies = [];
   renderPartnerList();
   toast('已清空同伴', 'info');
 }
@@ -2465,7 +2465,7 @@ function switchPartnerTab(idx, tab, el){
 function renderPartnerList(){
   const container = document.getElementById('partnerList');
   if(!container) return;
-  const list = G.p.partners || [];
+  const list = G.p.allies || [];
 
   if(!list.length){
     container.innerHTML = `
@@ -2870,33 +2870,33 @@ function renderPartnerConfig(p, i){
 
 // ── 同伴欄位即時變更
 function pFieldChange(idx, field, val){
-  if(!G.p.partners[idx]) return;
-  G.p.partners[idx][field] = val;
+  if(!G.p.allies[idx]) return;
+  G.p.allies[idx][field] = val;
 }
 function pStatChange(idx, tier, key, val){
-  if(!G.p.partners[idx]) return;
-  if(!G.p.partners[idx][tier]) G.p.partners[idx][tier] = {};
-  G.p.partners[idx][tier][key] = val;
+  if(!G.p.allies[idx]) return;
+  if(!G.p.allies[idx][tier]) G.p.allies[idx][tier] = {};
+  G.p.allies[idx][tier][key] = val;
 }
 function pMaxStats(idx, tier, max){
-  if(!G.p.partners[idx]) return;
-  if(!G.p.partners[idx][tier]) G.p.partners[idx][tier] = {};
+  if(!G.p.allies[idx]) return;
+  if(!G.p.allies[idx][tier]) G.p.allies[idx][tier] = {};
   STAT_KEYS.forEach(k => {
-    G.p.partners[idx][tier][k] = max;
+    G.p.allies[idx][tier][k] = max;
     const el = document.getElementById(`pp_${idx}_${tier}_${k}`);
     if(el) el.value = max;
   });
 }
 function pEqChange(idx, slotId){
-  if(!G.p.partners[idx]) return;
+  if(!G.p.allies[idx]) return;
   const idVal   = (document.getElementById(`pp_${idx}_eq_${slotId}_id`)?.value||'').trim();
-  const orig    = G.p.partners[idx].eq?.[slotId] || {};
-  if(!idVal){ G.p.partners[idx].eq[slotId] = null; return; }
+  const orig    = G.p.allies[idx].eq?.[slotId] || {};
+  if(!idVal){ G.p.allies[idx].eq[slotId] = null; return; }
   const ancRaw  = document.getElementById(`pp_${idx}_eq_${slotId}_anc`)?.value  || '';
   const blessRaw= document.getElementById(`pp_${idx}_eq_${slotId}_bless`)?.value|| '';
   const attrRaw = document.getElementById(`pp_${idx}_eq_${slotId}_attr`)?.value || '';
   const seteff  = (document.getElementById(`pp_${idx}_eq_${slotId}_seteff`)?.value||'').trim();
-  G.p.partners[idx].eq[slotId] = Object.assign({}, orig, {
+  G.p.allies[idx].eq[slotId] = Object.assign({}, orig, {
     id:    idVal,
     en:    parseInt(document.getElementById(`pp_${idx}_eq_${slotId}_en`)?.value)||0,
     cnt:   orig.cnt||1,
@@ -2910,9 +2910,9 @@ function pEqChange(idx, slotId){
   });
 }
 function pToggleSkill(idx, el, id){
-  if(!G.p.partners[idx]) return;
-  if(!G.p.partners[idx].skills) G.p.partners[idx].skills = [];
-  const arr = G.p.partners[idx].skills;
+  if(!G.p.allies[idx]) return;
+  if(!G.p.allies[idx].skills) G.p.allies[idx].skills = [];
+  const arr = G.p.allies[idx].skills;
   const pos = arr.indexOf(id);
   if(pos===-1){
     arr.push(id);
@@ -2927,12 +2927,12 @@ function pToggleSkill(idx, el, id){
   }
 }
 function pSkillAll(idx){
-  if(!G.p.partners[idx]) return;
+  if(!G.p.allies[idx]) return;
   const allIds = [...new Set([
     ...SKILL_MAGE,...SKILL_KNIGHT,...SKILL_ELF,...SKILL_DARK,
     ...SKILL_ROYAL,...SKILL_DRAGON,...SKILL_ILLUSION,...SKILL_WARRIOR
   ].map(s=>s.id))];
-  G.p.partners[idx].skills = allIds;
+  G.p.allies[idx].skills = allIds;
   // 刷新卡片狀態
   const sec = document.getElementById(`psec_${idx}_skills`);
   if(sec){
@@ -2945,8 +2945,8 @@ function pSkillAll(idx){
   toast(`同伴 ${idx+1} 已全選技能`, 'ok');
 }
 function pSkillClear(idx){
-  if(!G.p.partners[idx]) return;
-  G.p.partners[idx].skills = [];
+  if(!G.p.allies[idx]) return;
+  G.p.allies[idx].skills = [];
   const sec = document.getElementById(`psec_${idx}_skills`);
   if(sec){
     sec.querySelectorAll('.skill-card').forEach(card=>{
@@ -2961,34 +2961,34 @@ function pAddItem(idx){
   const id  = document.getElementById(`pInvSel_${idx}`)?.value;
   const cnt = parseInt(document.getElementById(`pInvCnt_${idx}`)?.value)||1;
   if(!id){ toast('請先選擇物品','err'); return; }
-  if(!G.p.partners[idx].inv) G.p.partners[idx].inv=[];
-  G.p.partners[idx].inv.push({id,uid:genUID(),cnt,en:0,bless:false,lock:false,junk:false,attr:false,anc:false,seteff:false});
+  if(!G.p.allies[idx].inv) G.p.allies[idx].inv=[];
+  G.p.allies[idx].inv.push({id,uid:genUID(),cnt,en:0,bless:false,lock:false,junk:false,attr:false,anc:false,seteff:false});
   savePartnerToG(idx);
   renderPartnerList();
   toast('已新增：'+getItemName(id),'ok');
 }
 function pDelItem(idx,j){
-  G.p.partners[idx].inv.splice(j,1);
+  G.p.allies[idx].inv.splice(j,1);
   savePartnerToG(idx);
   renderPartnerList();
 }
 function pClearInv(idx){
   if(!confirm('確定清空同伴背包？')) return;
-  G.p.partners[idx].inv=[];
+  G.p.allies[idx].inv=[];
   savePartnerToG(idx);
   renderPartnerList();
 }
 function pItemField(idx,j,field,val){
-  if(!G.p.partners[idx]?.inv[j]) return;
-  G.p.partners[idx].inv[j][field]=val;
+  if(!G.p.allies[idx]?.inv[j]) return;
+  G.p.allies[idx].inv[j][field]=val;
 }
 function pConfigChange(idx,field,val){
-  if(!G.p.partners[idx]) return;
-  if(!G.p.partners[idx].config) G.p.partners[idx].config={};
-  G.p.partners[idx].config[field]=val;
+  if(!G.p.allies[idx]) return;
+  if(!G.p.allies[idx].config) G.p.allies[idx].config={};
+  G.p.allies[idx].config[field]=val;
 }
 function pMaxAll(idx){
-  if(!G.p.partners[idx]) return;
+  if(!G.p.allies[idx]) return;
   pFieldChange(idx,'lv',9999);
   pFieldChange(idx,'gold',999999999);
   const el_lv=document.getElementById(`pp_${idx}_lv`);
@@ -2998,9 +2998,9 @@ function pMaxAll(idx){
   toast(`同伴 ${idx+1} 已最大化`,'ok');
 }
 function pFullRestore(idx){
-  if(!G.p.partners[idx]) return;
-  const mhp=G.p.partners[idx].mhp||100;
-  const mmp=G.p.partners[idx].mmp||50;
+  if(!G.p.allies[idx]) return;
+  const mhp=G.p.allies[idx].mhp||100;
+  const mmp=G.p.allies[idx].mmp||50;
   pFieldChange(idx,'hp',mhp);
   pFieldChange(idx,'mp',mmp);
   const eh=document.getElementById(`pp_${idx}_hp`);
@@ -3013,7 +3013,7 @@ function pFullRestore(idx){
 // 儲存同伴資料到 G（切換 tab 前呼叫）
 function savePartnerToG(idx){
   // 即時變更已透過 onchange 同步，此處為保險再讀一次基本欄位
-  const p = G.p.partners[idx];
+  const p = G.p.allies[idx];
   if(!p) return;
   const flds = ['name','cls','lv','exp','hp','mhp','mp','mmp','gold','mastery'];
   flds.forEach(f=>{
