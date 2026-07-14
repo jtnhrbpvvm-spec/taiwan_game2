@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-6</title>
+<title>放置天堂 Save Editor v7-7</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -283,7 +283,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-6</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-7</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -893,6 +893,12 @@ function renderItemRefSearch(inputId, resultId){
           <span style="font-size:12px;color:var(--text3);margin-left:8px">清空後遊戲將不自動丟棄任何物品</span>
         </div>
         <div id="junkPrefsSummary" style="font-size:12px;color:var(--text3);margin-top:6px;"></div>
+        <div class="form-row" style="margin-top:10px">
+          <input type="text" id="junkPrefsSearch" placeholder="搜尋垃圾清單（名稱或ID）..."
+                 style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px"
+                 oninput="renderJunkPrefsList()">
+        </div>
+        <div id="junkPrefsList" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;margin-top:8px"></div>
       </div>
     </div>
 
@@ -1452,7 +1458,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-6 已就緒', 'info');
+  toast('⚔️ Save Editor v7-7 已就緒', 'info');
 });
 </script>
 
@@ -3661,6 +3667,18 @@ function saveAdvancedToG(){
 // ════════════════════════════════════════════════
 //  垃圾偏好（junkPrefs）
 // ════════════════════════════════════════════════
+// junkPrefs 的 key 是 itemSig：id|en|bless|anc|attr|seteff（不是純物品 id）
+function _parseItemSig(sig){
+  const parts = String(sig).split('|');
+  return {
+    id:     parts[0] || '',
+    en:     parseInt(parts[1]) || 0,
+    bless:  parts[2] || '0',
+    anc:    parts[3] || '0',
+    attr:   parts[4] || '',
+    seteff: parts[5] || '',
+  };
+}
 function renderJunkPrefsSummary(){
   const el = document.getElementById('junkPrefsSummary');
   if(!el) return;
@@ -3668,18 +3686,78 @@ function renderJunkPrefsSummary(){
   const keys  = Object.keys(prefs);
   if(!keys.length){
     el.textContent = '目前無垃圾設定（所有物品都會保留）';
+  } else {
+    el.innerHTML = `<span style="color:var(--yellow)">共 ${keys.length} 筆垃圾設定</span>`;
+  }
+  renderJunkPrefsList();
+}
+
+function renderJunkPrefsList(){
+  const el = document.getElementById('junkPrefsList');
+  if(!el) return;
+  const prefs = G.p.junkPrefs || {};
+  const keys  = Object.keys(prefs);
+  if(!keys.length){
+    el.innerHTML = '<div style="color:var(--text3);padding:12px;text-align:center;font-size:12px">目前無垃圾設定</div>';
     return;
   }
-  // 顯示前 10 筆
-  const preview = keys.slice(0, 10).map(k => {
-    const db = ITEM_DB[k];
-    return db ? db.n : k;
-  });
-  el.innerHTML = `
-    <span style="color:var(--yellow)">共 ${keys.length} 筆垃圾設定</span>
-    <span style="margin-left:8px">
-      ${preview.join('、')}${keys.length > 10 ? `… 等` : ''}
-    </span>`;
+
+  const q = (document.getElementById('junkPrefsSearch')?.value || '').toLowerCase().trim();
+  const TYPE_LABEL = {
+    wpn:'武器', arm:'防具', acc:'飾品', helm:'頭盔', shield:'盾', glove:'手套',
+    boot:'鞋', belt:'腰帶', cloak:'披風', pot:'藥水', scroll:'卷軸', misc:'雜物',
+    card:'卡片', relic:'遺物', etc:'其他'
+  };
+
+  const rows = keys.map(sig => {
+    const p  = _parseItemSig(sig);
+    const db = ITEM_DB[p.id] || {};
+    return { sig, p, db, name: db.n || p.id };
+  }).filter(r => !q || r.name.toLowerCase().includes(q) || r.p.id.toLowerCase().includes(q));
+
+  if(!rows.length){
+    el.innerHTML = '<div style="color:var(--text3);padding:12px;text-align:center;font-size:12px">找不到符合的物品</div>';
+    return;
+  }
+
+  el.innerHTML = rows.map(r => {
+    const { p, db, name } = r;
+    const badges = [];
+    if(p.en > 0) badges.push(`+${p.en}`);
+    if(p.bless === 'B') badges.push('祝福');
+    else if(p.bless === 'C') badges.push('詛咒');
+    if(p.anc === 'A') badges.push('遠古');
+    else if(p.anc && p.anc !== '0') badges.push(`遠古:${p.anc}`);
+    if(p.attr) badges.push(`屬性:${p.attr}`);
+    if(p.seteff) badges.push(`套裝:${p.seteff}`);
+
+    const info = [];
+    if(db.dmgS !== undefined) info.push(`傷害 ${db.dmgS}~${db.dmgL || db.dmgS}`);
+    if(db.hit  !== undefined) info.push(`命中${db.hit > 0 ? '+' : ''}${db.hit}`);
+    if(db.ac   !== undefined) info.push(`防禦${db.ac > 0 ? '+' : ''}${db.ac}`);
+    if(db.spd) info.push(`速度 ${db.spd}`);
+    if(db.p !== undefined) info.push(`價格 ${db.p}`);
+    if(db.d && typeof db.d === 'string') info.push(db.d);
+
+    return `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:var(--text)">
+          ${name}${db.type ? ` <span style="color:var(--text3);font-weight:400;font-size:11px">[${TYPE_LABEL[db.type] || db.type}]</span>` : ''}
+          ${badges.length ? `<span style="color:var(--yellow);font-weight:400;font-size:11px;margin-left:4px">${badges.join('、')}</span>` : ''}
+        </div>
+        <div style="color:var(--text3);font-size:10px;margin:2px 0">ID: ${p.id}</div>
+        ${info.length ? `<div style="color:var(--text2);line-height:1.5">${info.join('　')}</div>` : ''}
+      </div>
+      <button class="btn btn-sm btn-danger" style="flex-shrink:0" onclick="removeJunkPref(this.dataset.sig)" data-sig="${r.sig.replace(/"/g,'&quot;')}">移除</button>
+    </div>`;
+  }).join('');
+}
+
+function removeJunkPref(sig){
+  if(!G.p.junkPrefs) return;
+  delete G.p.junkPrefs[sig];
+  renderJunkPrefsSummary();
 }
 
 function clearJunkPrefs(){
