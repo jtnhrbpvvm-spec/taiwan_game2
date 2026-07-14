@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-7</title>
+<title>放置天堂 Save Editor v7-8</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -283,7 +283,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-7</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-8</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -376,7 +376,142 @@ select option{ background:var(--bg3); }
       </div>
       <div class="form-row">
         <span class="form-label">最後地圖</span>
-        <input type="text" id="f_lastmap" style="width:200px">
+        <select id="f_lastmap" style="width:220px">
+        <option value="">── 無 ──</option>
+        <optgroup label="村莊">
+          <option value="town_silver_knight">銀騎士村</option>
+          <option value="town_elf">妖精森林</option>
+          <option value="town_talking">說話之島</option>
+          <option value="town_gludio">燃柳村</option>
+          <option value="town_giran">奇岩</option>
+          <option value="town_heine">海音</option>
+          <option value="town_oren">歐瑞村莊</option>
+          <option value="town_aden">亞丁</option>
+          <option value="town_ivory_tower">象牙塔</option>
+          <option value="town_witon">威頓村</option>
+          <option value="town_sherine">席琳神殿</option>
+          <option value="town_silent">沉默洞穴</option>
+          <option value="town_hyperia">希培利亞村莊</option>
+          <option value="town_behemoth">貝希摩斯</option>
+          <option value="town_flame_audience">炎魔謁見所</option>
+          <option value="town_elder_council">長老會議廳</option>
+        </optgroup>
+        <optgroup label="野外">
+          <option value="silver_knight">銀騎士地區</option>
+          <option value="talking_island">說話之島周邊</option>
+          <option value="zone_01">妖精森林周邊</option>
+          <option value="talking_island_port">說話之島港口</option>
+          <option value="elf_forest">妖魔森林</option>
+          <option value="gludio">古魯丁</option>
+          <option value="windwood">風木</option>
+          <option value="desert">沙漠</option>
+          <option value="kent">肯特</option>
+          <option value="dragon_valley">龍之谷</option>
+          <option value="fire_dragon">火龍窟</option>
+          <option value="giran">奇岩</option>
+          <option value="heine">海音</option>
+          <option value="twilight_mt">黃昏山脈</option>
+          <option value="mirror_forest">鏡子森林</option>
+          <option value="zone_02">歐瑞</option>
+          <option value="zone_03">歐瑞雪原</option>
+          <option value="zone_04">艾爾摩激戰地</option>
+          <option value="zone_05">國境要塞</option>
+          <option value="silent_outer">沉默洞穴周邊</option>
+          <option value="elf_grave">精靈墓穴</option>
+          <option value="hidden_cave">大洞穴隱遁者村莊地區</option>
+          <option value="giant_tomb">古代巨人之墓</option>
+        </optgroup>
+        <optgroup label="地監">
+          <option value="zone_06">古魯丁地監1樓</option>
+          <option value="zone_07">古魯丁地監2樓</option>
+          <option value="zone_08">古魯丁地監3樓</option>
+          <option value="zone_09">古魯丁地監4樓</option>
+          <option value="zone_10">古魯丁地監5樓</option>
+          <option value="zone_11">古魯丁地監6樓</option>
+          <option value="zone_12">古魯丁地監7樓</option>
+          <option value="zone_13">說話之島地監1樓</option>
+          <option value="zone_14">說話之島地監2樓</option>
+          <option value="zone_15">眠龍洞穴1樓</option>
+          <option value="zone_16">眠龍洞穴2樓</option>
+          <option value="zone_17">眠龍洞穴3樓</option>
+          <option value="crystal_cave1">水晶洞穴1樓</option>
+          <option value="crystal_cave2">水晶洞穴2樓</option>
+          <option value="crystal_cave3">水晶洞穴3樓</option>
+          <option value="zone_18">奇岩地監1樓</option>
+          <option value="zone_19">奇岩地監2樓</option>
+          <option value="zone_20">奇岩地監3樓</option>
+          <option value="zone_21">奇岩地監4樓</option>
+          <option value="zone_22">沙漠地監1樓</option>
+          <option value="zone_23">沙漠地監2樓</option>
+          <option value="zone_24">沙漠地監3樓</option>
+          <option value="zone_25">沙漠地監4樓</option>
+          <option value="zone_26">龍之谷地監1樓</option>
+          <option value="zone_27">龍之谷地監2樓</option>
+          <option value="zone_28">龍之谷地監3樓</option>
+          <option value="zone_29">龍之谷地監4樓</option>
+          <option value="zone_30">龍之谷地監5樓</option>
+          <option value="zone_31">龍之谷地監6樓</option>
+          <option value="zone_32">螞蟻洞窟1樓</option>
+          <option value="zone_33">螞蟻洞窟2樓</option>
+          <option value="zone_34">地下通道1樓</option>
+          <option value="zone_35">地下通道2樓</option>
+          <option value="zone_36">地下通道3樓</option>
+          <option value="eva_kingdom">伊娃王國</option>
+          <option value="zone_37">象牙塔4樓</option>
+          <option value="zone_38">象牙塔5樓</option>
+          <option value="zone_39">象牙塔6樓</option>
+          <option value="zone_40">象牙塔7樓</option>
+          <option value="zone_41">象牙塔8樓</option>
+          <option value="rastabad_cave1">拉斯塔巴德地下洞穴1樓</option>
+          <option value="rastabad_cave2">拉斯塔巴德地下洞穴2樓</option>
+          <option value="rastabad_cave3">拉斯塔巴德地下洞穴3樓</option>
+          <option value="rastabad_gate">拉斯塔巴德正門</option>
+          <option value="rastabad_beast">魔獸訓練場</option>
+          <option value="dark_magic_lab">黑魔法研究室</option>
+          <option value="necro_training">冥法軍訓練場</option>
+          <option value="elder_room">格蘭肯神殿．長老之室</option>
+          <option value="demon_temple">魔族神殿</option>
+          <option value="shadow_temple">暗影神殿</option>
+        </optgroup>
+        <optgroup label="特殊">
+          <option value="training">新兵修練場</option>
+          <option value="dream_island">夢幻之島</option>
+          <option value="king_baranka_room">魔獸軍王之室</option>
+          <option value="law_king_room">法令軍王之室</option>
+          <option value="necro_king_room">冥法軍王之室</option>
+          <option value="assassin_king_room">暗殺軍王之室</option>
+          <option value="antaras_lair">安塔瑞斯棲息地</option>
+          <option value="fafurion_lair">法利昂洞穴</option>
+          <option value="valakas_lair">巴拉卡斯巢穴</option>
+        </optgroup>
+        <optgroup label="傲慢之塔">
+          <option value="town_pride">傲慢之塔1樓</option>
+          <option value="pride_2_10">傲慢之塔2~10樓</option>
+          <option value="pride_11_20">傲慢之塔11~20樓</option>
+          <option value="pride_21_30">傲慢之塔21~30樓</option>
+          <option value="pride_31_40">傲慢之塔31~40樓</option>
+          <option value="pride_41_50">傲慢之塔41~50樓</option>
+          <option value="pride_51_60">傲慢之塔51~60樓</option>
+          <option value="pride_61_70">傲慢之塔61~70樓</option>
+          <option value="pride_71_80">傲慢之塔71~80樓</option>
+          <option value="pride_81_90">傲慢之塔81~90樓</option>
+          <option value="pride_91_100">傲慢之塔91~100樓</option>
+        </optgroup>
+        <optgroup label="時空裂痕">
+          <option value="town_rift">時空裂痕入口</option>
+          <option value="thebes_desert">底比斯 沙漠</option>
+          <option value="thebes_pyramid">底比斯 金字塔內部</option>
+          <option value="thebes_temple">底比斯 歐西里斯祭壇</option>
+          <option value="tikal_area">提卡爾神廟地區</option>
+          <option value="tikal_deep">提卡爾神廟地區深處</option>
+          <option value="tikal_altar">提卡爾 庫庫爾坎祭壇</option>
+        </optgroup>
+        <optgroup label="海賊島">
+          <option value="town_pirate_village">海賊島村莊</option>
+          <option value="pirate_wild">海賊島</option>
+          <option value="pirate_dungeon">海賊島地監</option>
+        </optgroup>
+        </select>
       </div>
       <div class="section-title">精通系統</div>
       <div class="form-row">
@@ -460,13 +595,13 @@ select option{ background:var(--bg3); }
       <div class="panel-title">📊 屬性</div>
       <div class="section-title">基礎屬性</div>
       <div class="stat-grid" id="stat-base"></div>
-      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('base',999)">全部 999</button></div>
+      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('base',100)">全部 100</button></div>
       <div class="section-title">仙丹屬性</div>
       <div class="stat-grid" id="stat-panacea"></div>
-      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('panacea',999)">全部 999</button></div>
+      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('panacea',100)">全部 100</button></div>
       <div class="section-title">分配屬性</div>
       <div class="stat-grid" id="stat-alloc"></div>
-      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('alloc',9999)">全部 9999</button></div>
+      <div class="form-row"><button class="btn btn-sm" onclick="maxStats('alloc',100)">全部 100</button></div>
     </div>
 
     <!-- ══ 裝備 ══ -->
@@ -818,9 +953,18 @@ function renderItemRefSearch(inputId, resultId){
         <div class="adv-card-title">⚔️ 攻城系統</div>
         <div class="form-row">
           <span class="form-label">當前城市</span>
-          <input type="text" id="adv_siegeCity" style="width:120px" placeholder="city id">
+          <select id="adv_siegeCity" style="width:120px">
+            <option value="kent">肯特城</option>
+            <option value="windwood">風木城</option>
+            <option value="heine">海音城</option>
+          </select>
           <span class="form-label" style="width:70px">勝利城市</span>
-          <input type="text" id="adv_victoryCity" style="width:120px" placeholder="city id">
+          <select id="adv_victoryCity" style="width:120px">
+            <option value="">無</option>
+            <option value="kent">肯特城</option>
+            <option value="windwood">風木城</option>
+            <option value="heine">海音城</option>
+          </select>
         </div>
         <div class="form-row">
           <span class="form-label">擊殺數</span>
@@ -1458,7 +1602,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-7 已就緒', 'info');
+  toast('⚔️ Save Editor v7-8 已就緒', 'info');
 });
 </script>
 
@@ -2576,6 +2720,22 @@ function clearPartners(){
   toast('已清空同伴', 'info');
 }
 
+function pCopyFrom(idx, fromIdxStr){
+  const fromIdx = parseInt(fromIdxStr);
+  if(fromIdxStr === '' || isNaN(fromIdx) || !G.p.allies || !G.p.allies[fromIdx] || !G.p.allies[idx]) {
+    toast('請先在下拉選單選擇要複製的同伴', 'warn');
+    return;
+  }
+  if(fromIdx === idx){
+    toast('不能複製自己', 'warn');
+    return;
+  }
+  G.p.allies[idx] = JSON.parse(JSON.stringify(G.p.allies[fromIdx]));
+  _partnerTab[idx] = 'basic';
+  renderPartnerList();
+  toast(`已複製 #${fromIdx+1} 的資料到 #${idx+1}`, 'ok');
+}
+
 function switchPartnerTab(idx, tab, el){
   _partnerTab[idx] = tab;
   const card = document.getElementById(`pcard_${idx}`);
@@ -2614,6 +2774,18 @@ function renderPartnerList(){
         </span>
         <button class="btn btn-danger btn-sm" style="margin-left:auto"
                 onclick="savePartnerToG(${i});removePartner(${i})">🗑 刪除</button>
+      </div>
+
+      <div class="form-row" style="margin:4px 0 8px">
+        <span class="form-label" style="width:20px">自</span>
+        <select id="pp_${i}_copyFrom" style="width:160px">
+          <option value="">── 選擇同伴 ──</option>
+          ${list.map((op, j) => j===i ? '' :
+            `<option value="${j}">#${j+1} ${_clsLabel(op.cls)} Lv.${op.lv||1}</option>`
+          ).join('')}
+        </select>
+        <button class="btn btn-sm"
+                onclick="pCopyFrom(${i}, document.getElementById('pp_${i}_copyFrom').value)">複製</button>
       </div>
 
       <div class="partner-tabs">
@@ -2788,9 +2960,9 @@ function renderPartnerBasic(p, i){
 // ── 同伴屬性 HTML
 function renderPartnerStats(p, i){
   const tiers = [
-    {key:'base',   label:'基礎屬性', max:999},
-    {key:'panacea',label:'仙丹屬性', max:999},
-    {key:'alloc',  label:'分配屬性', max:9999},
+    {key:'base',   label:'基礎屬性', max:100},
+    {key:'panacea',label:'仙丹屬性', max:100},
+    {key:'alloc',  label:'分配屬性', max:100},
   ];
   return tiers.map(t => `
     <div class="section-title">${t.label}
