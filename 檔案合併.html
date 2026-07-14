@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB 合併工具 - 支援嵌套路徑</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; background: #0f1115; color: #e6e6e6; }
+.card { background: #1a1d24; border: 1px solid #2a2e38; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  h2 { margin: 0 0 12px; font-size: 18px; color: #fff; }
+  label { display: block; font-size: 13px; color: #9ca3af; margin-bottom: 6px; }
+  input[type="file"], input[type="text"] { background: #0f1115; border: 1px solid #2a2e38; border-radius: 8px; padding: 8px; width: 100%; color: #e6e6e6; box-sizing: border-box; }
+  button { background: #3b82f6; border: none; border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; cursor: pointer; }
+  button:disabled { background: #444; cursor: not-allowed; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.log { background: #0f1115; border: 1px solid #2a2e38; border-radius: 8px; padding: 12px; height: 240px; overflow-y: auto; font-family: monospace; font-size: 13px; white-space: pre-wrap; }
+.ok { color: #22c55e; }
+.warn { color: #f59e0b; }
+.err { color: #ef4444; }
+.hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h2>DB 合併工具 - 支援嵌套路徑</h2>
+<div class="card">
+ <p>支援 <code>DB.items</code> 這種嵌套結構。檔案A和B的路徑可以不一樣。</p>
+</div>
+
+<div class="grid">
+ <div class="card">
+    <h2>1. 檔案A 設定</h2>
+    <label>變數路徑</label>
+    <input type="text" id="varA" value="ITEM_DB" placeholder="例如: ITEM_DB 或 DATA.items">
+    <div class="hint">如果是 ITEM_DB 就填 ITEM_DB</div>
+    <input type="file" id="fileA" accept=".js,.html,.txt" style="margin-top:8px;">
+    <div id="statusA" style="margin-top:8px; font-size:13px;"></div>
+  </div>
+ <div class="card">
+    <h2>2. 檔案B 設定</h2>
+    <label>變數路徑</label>
+    <input type="text" id="varB" value="DB.items" placeholder="例如: DB 或 DB.items">
+    <div class="hint">你這個就是 DB.items</div>
+    <input type="file" id="fileB" accept=".js,.html,.txt" style="margin-top:8px;">
+    <div id="statusB" style="margin-top:8px; font-size:13px;"></div>
+  </div>
+</div>
+
+<div class="card">
+ <h2>3. 合併與下載</h2>
+ <p style="font-size:13px; color:#9ca3af;">合併後會用檔案A的路徑輸出。B有的項目會加到A，A已有的不覆蓋。</p>
+ <button id="mergeBtn" disabled>合併並下載檔案A</button>
+ <div id="log" class="log" style="margin-top:12px;"></div>
+</div>
+
+<script>
+let itemA = null, itemB = null, originalAContent = "", originalAFileName = "檔案A.js";
+let itemARange = null, rootObjA = null;
+
+function log(msg, type="") {
+  const el = document.getElementById('log');
+  const prefix = type === 'ok'? '[OK] ' : type === 'warn'? '[WARN] ' : type === 'err'? '[ERR] ' : '[INFO] ';
+  el.textContent += prefix + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+// 根據路徑取值，例如 obj, "a.b.c" -> obj.a.b.c
+function getByPath(obj, path) {
+  return path.split('.').reduce((o, k) => o?.[k], obj);
+}
+
+// 根據路徑設值
+function setByPath(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((o, k) => o[k]??= {}, obj);
+  target[lastKey] = value;
+}
+
+function extractDB(content, varPath) {
+  const rootVar = varPath.split('.')[0]; // DB.items -> DB
+  const declRegex = new RegExp(`(const|let|var)\\s+${rootVar}\\s*=`);
+  const declMatch = content.match(declRegex);
+  if (!declMatch) throw new Error(`找不到 ${rootVar} = 定義`);
+
+  const startIdx = declMatch.index + declMatch[0].length;
+  let i = startIdx;
+  while (i < content.length && /\s/.test(content[i])) i++;
+
+  const openChar = content[i];
+  if (openChar!== '{' && openChar!== '[') {
+    throw new Error(`${rootVar} 後面不是物件或陣列`);
+  }
+  const closeChar = openChar === '{'? '}' : ']';
+
+  let depth = 1, inString = false, stringChar = '', escapeNext = false;
+  i++;
+
+  while (i < content.length && depth > 0) {
+    const char = content[i];
+    if (escapeNext) escapeNext = false;
+    else if (char === '\\') escapeNext = true;
+    else if (inString) {
+      if (char === stringChar) inString = false;
+    } else {
+      if (char === '"' || char === "'" || char === '`') {
+        inString = true; stringChar = char;
+      } else if (char === openChar) depth++;
+      else if (char === closeChar) depth--;
+    }
+    i++;
+  }
+
+  if (depth!== 0) throw new Error(`${rootVar} 的括號沒閉合`);
+
+  const objectStr = content.slice(startIdx, i).trim();
+  const fullMatchStart = declMatch.index;
+  const fullMatchEnd = i;
+
+  try {
+    const cleanStr = objectStr.replace(/,(\s*[}\]])/g, '$1');
+    const rootObj = new Function(`return ${cleanStr}`)();
+
+    // 拿到完整物件後，再根據路徑取裡面的子物件
+    const targetObj = varPath === rootVar? rootObj : getByPath(rootObj, varPath.substring(rootVar.length + 1));
+    if (targetObj === undefined) throw new Error(`路徑 ${varPath} 不存在`);
+
+    return {
+      targetObj, // 實際要合併的物件，例如 DB.items
+      rootObj, // 根物件，例如整個 DB
+      contentBefore: content.slice(0, fullMatchStart),
+      contentAfter: content.slice(fullMatchEnd),
+      declaration: declMatch[1],
+      rootVar
+    };
+  } catch (e) {
+    throw new Error(`${varPath} 解析失敗: ${e.message}`);
+  }
+}
+
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+async function loadFileA() {
+  const file = document.getElementById('fileA').files[0];
+  const varPath = document.getElementById('varA').value.trim();
+  if (!file ||!varPath) return;
+
+  originalAFileName = file.name;
+  try {
+    originalAContent = await readFile(file);
+    const res = extractDB(originalAContent, varPath);
+    itemA = res.targetObj;
+    rootObjA = res.rootObj;
+    itemARange = {...res }; // 存起來合併時用
+    const count = Array.isArray(itemA)? itemA.length : Object.keys(itemA).length;
+    document.getElementById('statusA').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
+    log(`檔案A ${varPath} 解析成功: ${count} 個項目`, 'ok');
+    checkReady();
+  } catch (e) {
+    document.getElementById('statusA').innerHTML = `<span class="err">${e.message}</span>`;
+    log(`檔案A錯誤: ${e.message}`, 'err');
+    itemA = null;
+    checkReady();
+  }
+}
+
+async function loadFileB() {
+  const file = document.getElementById('fileB').files[0];
+  const varPath = document.getElementById('varB').value.trim();
+  if (!file ||!varPath) return;
+
+  try {
+    const content = await readFile(file);
+    const { targetObj } = extractDB(content, varPath);
+    itemB = targetObj;
+    const count = Array.isArray(itemB)? itemB.length : Object.keys(itemB).length;
+    document.getElementById('statusB').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
+    log(`檔案B ${varPath} 解析成功: ${count} 個項目`, 'ok');
+    checkReady();
+  } catch (e) {
+    document.getElementById('statusB').innerHTML = `<span class="err">${e.message}</span>`;
+    log(`檔案B錯誤: ${e.message}`, 'err');
+    itemB = null;
+    checkReady();
+  }
+}
+
+document.getElementById('fileA').addEventListener('change', loadFileA);
+document.getElementById('varA').addEventListener('change', loadFileA);
+document.getElementById('fileB').addEventListener('change', loadFileB);
+document.getElementById('varB').addEventListener('change', loadFileB);
+
+function checkReady() {
+  document.getElementById('mergeBtn').disabled =!(itemA && itemB);
+}
+
+document.getElementById('mergeBtn').addEventListener('click', () => {
+  document.getElementById('log').textContent = "";
+  let addedCount = 0, skippedCount = 0;
+  const varPathA = document.getElementById('varA').value.trim();
+  const pathParts = varPathA.split('.');
+  const subPath = pathParts.slice(1).join('.'); // ITEM_DB -> "", DB.items -> items
+
+  const isArrayA = Array.isArray(itemA);
+  const isArrayB = Array.isArray(itemB);
+
+  if (isArrayA && isArrayB) {
+    const setA = new Set(itemA.map(x => JSON.stringify(x)));
+    for (const value of itemB) {
+      const str = JSON.stringify(value);
+      if (!setA.has(str)) {
+        itemA.push(value);
+        addedCount++;
+        log(`新增: ${str.slice(0, 60)}...`, "ok");
+      } else skippedCount++;
+    }
+  } else if (!isArrayA &&!isArrayB) {
+    for (const [key, value] of Object.entries(itemB)) {
+      if (!(key in itemA)) {
+        itemA[key] = value;
+        addedCount++;
+        log(`新增: ${key}`, "ok");
+      } else skippedCount++;
+    }
+  } else {
+    log("錯誤：A和B的資料型態不同，無法合併", 'err');
+    return;
+  }
+
+  if (addedCount === 0) {
+    log("檔案B的項目已全部存在於檔案A，無需新增", "warn");
+  } else {
+    log(`共新增 ${addedCount} 個項目，跳過 ${skippedCount} 個重複`, "ok");
+  }
+
+  // 把修改後的 itemA 寫回 rootObjA
+  if (subPath) {
+    setByPath(rootObjA, subPath, itemA);
+  } else {
+    rootObjA = itemA; // 如果A就是根物件
+  }
+
+  const { contentBefore, contentAfter, declaration, rootVar } = itemARange;
+  const newItemDBString = `${declaration} ${rootVar} = ${JSON.stringify(rootObjA, null, 2)};`;
+  const newFileContent = contentBefore + newItemDBString + contentAfter;
+
+  const blob = new Blob([newFileContent], { type: 'text/javascript;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = originalAFileName.replace(/(\.[^.]+)?$/, '_merged$1');
+  a.click();
+  URL.revokeObjectURL(url);
+  log(`已產生新檔案: ${a.download}`, "ok");
+});
+</script>
+
+</body>
+</html>
