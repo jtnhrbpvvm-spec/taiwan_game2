@@ -280,7 +280,6 @@ select option{ background:var(--bg3); }
   <button class="btn" onclick="exportJson()">💾 匯出 JSON</button>
   <button class="btn" onclick="openPasteModal()">📋 貼上存檔</button>
   <button class="btn" onclick="copySIG1()">🔐 複製 SIG1</button>
-  <button class="btn btn-accent" onclick="applyAll()">✅ 套用全部</button>
   <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
 </div>
 
@@ -834,8 +833,8 @@ function renderItemRefSearch(inputId, resultId){
 
       </div>
 
-      <!-- Pandora 市場 -->
-      <div class="adv-card">
+      <!-- Pandora 市場（已隱藏） -->
+      <div class="adv-card" style="display:none">
         <div class="adv-card-title">🎰 Pandora 市場</div>
         <div class="form-row">
           <span class="form-label">商品 ID</span>
@@ -849,44 +848,29 @@ function renderItemRefSearch(inputId, resultId){
         </div>
       </div>
 
-      <!-- 套裝效果旗標 -->
+      <!-- 套裝效果旗標（唯讀顯示已無法修改，依存檔目前偵測到的套裝狀態） -->
       <div class="adv-card">
-        <div class="adv-card-title">🎴 套裝效果旗標</div>
+        <div class="adv-card-title">🎴 套裝效果旗標（唯讀，依目前存檔狀態顯示）</div>
         <div class="form-row" style="gap:14px;flex-wrap:wrap">
-          <label class="eq-flag"><input type="checkbox" id="adv_setRedLion5"> 紅獅×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setWhiteBird5"> 白鳥×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setIron3"> 鐵甲×3</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setIron5"> 鐵甲×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setBeauty5"> 美麗×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setGale5"> 疾風×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setMoon5"> 月光×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setApprentice5"> 學徒×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setWitch5"> 巫師×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setShadow3"> 暗影×3</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setShadow5"> 暗影×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion2"> 幻術×2</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion3"> 幻術×3</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion5"> 幻術×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood2"> 龍血×2</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood3"> 龍血×3</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood5"> 龍血×5</label>
-          <label class="eq-flag"><input type="checkbox" id="adv_setFury5"> 狂怒×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setRedLion5" disabled> 紅獅×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setWhiteBird5" disabled> 白鳥×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setIron3" disabled> 鐵甲×3</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setIron5" disabled> 鐵甲×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setBeauty5" disabled> 美麗×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setGale5" disabled> 疾風×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setMoon5" disabled> 月光×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setApprentice5" disabled> 學徒×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setWitch5" disabled> 巫師×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setShadow3" disabled> 暗影×3</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setShadow5" disabled> 暗影×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion2" disabled> 幻術×2</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion3" disabled> 幻術×3</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setIllusion5" disabled> 幻術×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood2" disabled> 龍血×2</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood3" disabled> 龍血×3</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setDragonblood5" disabled> 龍血×5</label>
+          <label class="eq-flag"><input type="checkbox" id="adv_setFury5" disabled> 狂怒×5</label>
         </div>
-        <div class="form-row" style="margin-top:8px">
-          <button class="btn btn-sm btn-accent" onclick="setFlagAll(true)">✅ 全部開啟</button>
-          <button class="btn btn-sm btn-danger" onclick="setFlagAll(false)">❌ 全部關閉</button>
-        </div>
-
-      </div>
-
-      <!-- 寵物倉庫 -->
-      <div class="adv-card">
-        <div class="adv-card-title">🐾 寵物倉庫（petStorage）</div>
-        <div class="form-row">
-          <button class="btn btn-sm btn-accent" onclick="addPetStorage()">新增寵物裝備</button>
-          <button class="btn btn-sm btn-danger" onclick="clearPetStorage()">清空</button>
-        </div>
-        <div id="petStorageList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
       </div>
 
       <!-- 垃圾偏好 -->
@@ -1055,6 +1039,7 @@ function deepMerge(target, source){
 //  分頁切換
 // ════════════════════════════════════════════════
 function showPanel(id, el){
+  applyAll(true);   // 🔒 切換分頁前先把目前分頁的輸入內容存回 G，避免跨分頁編輯遺失
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
@@ -1373,7 +1358,6 @@ function loadAllUI(){
   renderDexEquip();
   renderDexCard();
   renderJunkPrefsSummary();
-  renderPetStorageList();
   setVal('f_whgold', G.wh?.gold || 0);
   if(document.getElementById('panel-skills').classList.contains('active'))
     renderSkillPanel();
@@ -3469,9 +3453,6 @@ function loadAdvancedUI(){
     setBool(`adv_set${f}`, p[`_set${f}`] || false);
   });
 
-  // ── 寵物倉庫
-  renderPetStorageList();
-
   // ── 垃圾偏好摘要
   renderJunkPrefsSummary();
 }
@@ -3500,160 +3481,7 @@ function saveAdvancedToG(){
   p.pandoraMarket.price  = getNum('adv_pandoraPrice');
   p.pandoraMarket.weight = getNum('adv_pandoraWeight');
 
-  // ── 套裝旗標
-  const FLAGS = [
-    'RedLion5','WhiteBird5','Iron3','Iron5','Beauty5',
-    'Gale5','Moon5','Apprentice5','Witch5',
-    'Shadow3','Shadow5',
-    'Illusion2','Illusion3','Illusion5',
-    'Dragonblood2','Dragonblood3','Dragonblood5',
-    'Fury5',
-  ];
-  FLAGS.forEach(f => {
-    p[`_set${f}`] = getBool(`adv_set${f}`);
-  });
-}
-
-// ════════════════════════════════════════════════
-//  寵物倉庫
-// ════════════════════════════════════════════════
-
-// 新增一個空的寵物裝備欄位
-function addPetStorage(){
-  if(!G.p.petStorage) G.p.petStorage = [];
-  G.p.petStorage.push({
-    id:'', uid:genUID(),
-    cnt:1, en:0,
-    bless:false, lock:false, junk:false,
-    attr:false, anc:false, seteff:false,
-  });
-  renderPetStorageList();
-}
-
-function removePetStorage(idx){
-  G.p.petStorage.splice(idx, 1);
-  renderPetStorageList();
-}
-
-function clearPetStorage(){
-  if(!confirm('確定清空寵物倉庫？')) return;
-  G.p.petStorage = [];
-  renderPetStorageList();
-  toast('已清空寵物倉庫', 'info');
-}
-
-function renderPetStorageList(){
-  const container = document.getElementById('petStorageList');
-  if(!container) return;
-  const list = G.p.petStorage || [];
-
-  if(!list.length){
-    container.innerHTML = `
-      <div style="color:var(--text3);font-size:12px;
-                  padding:10px;border:1px dashed var(--border);
-                  border-radius:6px;width:100%">
-        寵物倉庫為空
-      </div>`;
-    return;
-  }
-
-  container.innerHTML = list.map((it, i) => {
-    const db      = ITEM_DB[it.id] || {};
-    const nameTxt = db.n || (it.id ? it.id : '未選擇');
-    const ancRaw  = it.anc === true ? 'true' : (it.anc || '');
-
-    return `
-    <div style="background:var(--bg4);border:1px solid var(--border);
-                border-radius:6px;padding:10px;min-width:220px;max-width:260px">
-      <div style="display:flex;justify-content:space-between;align-items:center;
-                  margin-bottom:6px">
-        <span style="font-size:12px;color:var(--partner);font-weight:bold">
-          寵物 #${i+1}
-        </span>
-        <button class="btn btn-danger btn-sm"
-                onclick="removePetStorage(${i})">✕</button>
-      </div>
-
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">
-        ${db.legend
-          ? `<span class="c-legend">${nameTxt}</span>`
-          : nameTxt}
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:11px;color:var(--text3);width:40px">ID</span>
-          <input type="text" value="${it.id||''}"
-                 style="flex:1;font-size:11px"
-                 placeholder="物品 ID"
-                 onchange="petStorageField(${i},'id',this.value)">
-        </div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:11px;color:var(--text3);width:40px">+強化</span>
-          <input type="number" value="${it.en||0}" min="0" max="99"
-                 style="width:55px;font-size:11px"
-                 onchange="petStorageField(${i},'en',+this.value)">
-          <span style="font-size:11px;color:var(--text3);margin-left:4px">數量</span>
-          <input type="number" value="${it.cnt||1}" min="1"
-                 style="width:55px;font-size:11px"
-                 onchange="petStorageField(${i},'cnt',+this.value)">
-        </div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:11px;color:var(--text3);width:40px">遠古</span>
-          <select style="flex:1;font-size:11px;background:var(--bg3);
-                         border:1px solid var(--border);color:var(--text);
-                         border-radius:3px;padding:2px 3px"
-                  onchange="petStorageAncField(${i},this.value)">
-            <option value="" ${ancRaw===''?'selected':''}>無</option>
-            ${ANC_OPTIONS.map(o=>`
-              <option value="${String(o.v)}"
-                      ${ancRaw===String(o.v)?'selected':''}>
-                ${o.n}
-              </option>`).join('')}
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:11px;color:var(--text3);width:40px">屬性</span>
-          <input type="text" value="${it.attr||''}"
-                 style="flex:1;font-size:11px"
-                 placeholder="如 fire5"
-                 onchange="petStorageField(${i},'attr',this.value||false)">
-        </div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:11px;color:var(--text3);width:40px">套裝</span>
-          <input type="text" value="${it.seteff||''}"
-                 style="flex:1;font-size:11px"
-                 placeholder="套裝名"
-                 onchange="petStorageField(${i},'seteff',this.value||false)">
-        </div>
-        <div style="display:flex;gap:10px;margin-top:2px">
-          <label class="eq-flag" style="font-size:11px">
-            <input type="checkbox" ${it.bless?'checked':''}
-                   onchange="petStorageField(${i},'bless',this.checked)">
-            祝福
-          </label>
-          <label class="eq-flag" style="font-size:11px">
-            <input type="checkbox" ${it.lock?'checked':''}
-                   onchange="petStorageField(${i},'lock',this.checked)">
-            鎖定
-          </label>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function petStorageField(idx, field, val){
-  if(!G.p.petStorage?.[idx]) return;
-  G.p.petStorage[idx][field] = val;
-  // ID 變更時刷新名稱顯示
-  if(field === 'id') renderPetStorageList();
-}
-
-function petStorageAncField(idx, val){
-  if(!G.p.petStorage?.[idx]) return;
-  G.p.petStorage[idx].anc =
-    val === '' ? false : (val === 'true' ? true : val);
+  // ── 套裝旗標：唯讀顯示，不再從畫面寫回（由裝備自動判定，不可手動覆蓋）
 }
 
 // ════════════════════════════════════════════════
@@ -3715,18 +3543,6 @@ function siegeSetReset(){
 // ════════════════════════════════════════════════
 //  套裝旗標 — 一鍵全開 / 全關
 // ════════════════════════════════════════════════
-function setFlagAll(val){
-  const FLAGS = [
-    'RedLion5','WhiteBird5','Iron3','Iron5','Beauty5',
-    'Gale5','Moon5','Apprentice5','Witch5',
-    'Shadow3','Shadow5',
-    'Illusion2','Illusion3','Illusion5',
-    'Dragonblood2','Dragonblood3','Dragonblood5',
-    'Fury5',
-  ];
-  FLAGS.forEach(f => setBool(`adv_set${f}`, val));
-  toast(val ? '套裝旗標全部開啟' : '套裝旗標全部關閉', val ? 'ok' : 'info');
-}
 </script>
 
 <script>
