@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-9</title>
+<title>放置天堂 Save Editor v7-8</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -112,16 +112,27 @@ select option{ background:var(--bg3); }
   color:var(--text); border-radius:3px; padding:2px 4px;
 }
 .affix-select:focus{ outline:none; border-color:var(--accent); }
-/* 屬性詞綴顏色 */
-.attr-fire1,.attr-water1,.attr-wind1,.attr-earth1{ color:#a3e635; }
-.attr-fire3{ color:#fb923c; }
-.attr-water3{ color:#38bdf8; }
-.attr-wind3{ color:#a78bfa; }
-.attr-earth3{ color:#d97706; }
-.attr-fire5{ color:#ef4444; font-weight:bold; }
-.attr-water5{ color:#06b6d4; font-weight:bold; }
-.attr-wind5{ color:#8b5cf6; font-weight:bold; }
-.attr-earth5{ color:#92400e; font-weight:bold; }
+/* 屬性詞綴顏色（4屬性 x 5階，對齊 08-items-equip.js 新版系統） */
+.attr-fr1{ color:#fca5a5; }
+.attr-fr2{ color:#f97316; }
+.attr-fr3{ color:#ea580c; }
+.attr-fr4{ color:#dc2626; }
+.attr-fr5{ color:#b91c1c; font-weight:bold; text-shadow:0 0 4px rgba(185,28,28,.6); }
+.attr-wa1{ color:#a5f3fc; }
+.attr-wa2{ color:#67e8f9; }
+.attr-wa3{ color:#22d3ee; }
+.attr-wa4{ color:#06b6d4; }
+.attr-wa5{ color:#0891b2; font-weight:bold; text-shadow:0 0 4px rgba(8,145,178,.6); }
+.attr-wi1{ color:#ddd6fe; }
+.attr-wi2{ color:#c4b5fd; }
+.attr-wi3{ color:#a78bfa; }
+.attr-wi4{ color:#8b5cf6; }
+.attr-wi5{ color:#7c3aed; font-weight:bold; text-shadow:0 0 4px rgba(124,58,237,.6); }
+.attr-ea1{ color:#fde68a; }
+.attr-ea2{ color:#fbbf24; }
+.attr-ea3{ color:#d97706; }
+.attr-ea4{ color:#b45309; }
+.attr-ea5{ color:#92400e; font-weight:bold; text-shadow:0 0 4px rgba(146,64,14,.6); }
 .c-ancient{ color:#a855f7; }
 .c-eternal{ color:#ef4444; }
 .c-immortal{ color:#22c55e; }
@@ -296,7 +307,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-9</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-8</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -1465,6 +1476,7 @@ function importJsonFile(evt){
       G.p    = parsed.p    || G.p;
       G.wh   = parsed.wh   || G.wh;
       G.pets = parsed.pets || G.pets;
+      canonicalizeAttrCodes();
       loadAllUI();
       toast('✅ 存檔已匯入', 'ok');
     }catch(err){
@@ -1522,6 +1534,7 @@ function loadFromPaste(){
     G.p    = parsed.p    || G.p;
     G.wh   = parsed.wh   || G.wh;
     G.pets = parsed.pets || G.pets;
+    canonicalizeAttrCodes();
     loadAllUI();
     closePasteModal();
     document.getElementById('pasteInput').value = '';
@@ -1679,7 +1692,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-9 已就緒', 'info');
+  toast('⚔️ Save Editor v7-8 已就緒', 'info');
 });
 </script>
 
@@ -1694,20 +1707,57 @@ document.addEventListener('DOMContentLoaded', () => {
 // ════════════════════════════════════════════════
 //  詞綴定義
 // ════════════════════════════════════════════════
+// 屬性詞綴定義（v3.0.77 屬性強化系統：4 屬性 × 5 階，只能存在於武器；對齊 08-items-equip.js）
 const ATTR_AFFIX = {
-  fire1:  { n:'火之',  ele:'fire',  fix:1 },
-  water1: { n:'水之',  ele:'water', fix:1 },
-  wind1:  { n:'風之',  ele:'wind',  fix:1 },
-  earth1: { n:'地之',  ele:'earth', fix:1 },
-  fire3:  { n:'爆炎',  ele:'fire',  fix:3 },
-  water3: { n:'海嘯',  ele:'water', fix:3 },
-  wind3:  { n:'暴風',  ele:'wind',  fix:3 },
-  earth3: { n:'崩裂',  ele:'earth', fix:3 },
-  fire5:  { n:'火靈',  ele:'fire',  fix:5 },
-  water5: { n:'水靈',  ele:'water', fix:5 },
-  wind5:  { n:'風靈',  ele:'wind',  fix:5 },
-  earth5: { n:'地靈',  ele:'earth', fix:5 },
+  fr1: { n:'火之',     ele:'fire',  tier:1 },
+  fr2: { n:'爆炎',     ele:'fire',  tier:2 },
+  fr3: { n:'火靈',     ele:'fire',  tier:3 },
+  fr4: { n:'赤炎',     ele:'fire',  tier:4 },
+  fr5: { n:'帕格里奧', ele:'fire',  tier:5 },
+  wa1: { n:'水之',     ele:'water', tier:1 },
+  wa2: { n:'海嘯',     ele:'water', tier:2 },
+  wa3: { n:'水靈',     ele:'water', tier:3 },
+  wa4: { n:'霜凍',     ele:'water', tier:4 },
+  wa5: { n:'伊娃',     ele:'water', tier:5 },
+  wi1: { n:'風之',     ele:'wind',  tier:1 },
+  wi2: { n:'暴風',     ele:'wind',  tier:2 },
+  wi3: { n:'風靈',     ele:'wind',  tier:3 },
+  wi4: { n:'蒼蘭',     ele:'wind',  tier:4 },
+  wi5: { n:'沙哈',     ele:'wind',  tier:5 },
+  ea1: { n:'地之',     ele:'earth', tier:1 },
+  ea2: { n:'崩裂',     ele:'earth', tier:2 },
+  ea3: { n:'地靈',     ele:'earth', tier:3 },
+  ea4: { n:'輝岩',     ele:'earth', tier:4 },
+  ea5: { n:'馬普勒',   ele:'earth', tier:5 },
 };
+// 舊12代碼 → 新代碼（舊存檔相容用；名稱身分不變：火之→fr1、爆炎→fr2、火靈→fr3…第4/5階為新增，無舊碼對應）
+const ATTR_LEGACY = {
+  fire1:'fr1', fire3:'fr2', fire5:'fr3', water1:'wa1', water3:'wa2', water5:'wa3',
+  wind1:'wi1', wind3:'wi2', wind5:'wi3', earth1:'ea1', earth3:'ea2', earth5:'ea3',
+};
+// 正規化屬性代碼（舊碼→新碼；非法值→null）
+function attrCanon(attr){
+  if(typeof attr !== 'string') return null;
+  const c = ATTR_LEGACY[attr] || attr;
+  return ATTR_AFFIX[c] ? c : null;
+}
+// 將存檔中殘留的舊12代碼一次性改寫為新20代碼（讀檔後呼叫，零副作用地相容舊存檔）
+function canonicalizeAttrCodes(){
+  function fix(obj){
+    if(obj && typeof obj === 'object' && obj.attr){
+      const c = attrCanon(obj.attr);
+      obj.attr = c || false;
+    }
+  }
+  function walkEq(eqObj){ if(eqObj) Object.values(eqObj).forEach(fix); }
+  function walkList(list){ if(Array.isArray(list)) list.forEach(fix); }
+  if(G.p){
+    walkEq(G.p.eq);
+    walkList(G.p.inv);
+    if(Array.isArray(G.p.allies)) G.p.allies.forEach(a => { if(a){ walkEq(a.eq); walkList(a.inv); } });
+  }
+  if(G.wh) walkList(G.wh.items);
+}
 
 const ANC_OPTIONS = [
   { v:true,          n:'遠古'  },
@@ -1825,17 +1875,27 @@ function renderEqPanel(){
   const attrOptHTML = `
     <option value="">── 無 ──</option>
     <optgroup label="一階（之）">
-      ${['fire1','water1','wind1','earth1'].map(k=>
+      ${['fr1','wa1','wi1','ea1'].map(k=>
         `<option value="${k}">${ATTR_AFFIX[k].n}（${k}）</option>`
       ).join('')}
     </optgroup>
-    <optgroup label="二階（中階）">
-      ${['fire3','water3','wind3','earth3'].map(k=>
+    <optgroup label="二階">
+      ${['fr2','wa2','wi2','ea2'].map(k=>
         `<option value="${k}">${ATTR_AFFIX[k].n}（${k}）</option>`
       ).join('')}
     </optgroup>
     <optgroup label="三階（靈）">
-      ${['fire5','water5','wind5','earth5'].map(k=>
+      ${['fr3','wa3','wi3','ea3'].map(k=>
+        `<option value="${k}">${ATTR_AFFIX[k].n}（${k}）</option>`
+      ).join('')}
+    </optgroup>
+    <optgroup label="四階">
+      ${['fr4','wa4','wi4','ea4'].map(k=>
+        `<option value="${k}">${ATTR_AFFIX[k].n}（${k}）</option>`
+      ).join('')}
+    </optgroup>
+    <optgroup label="五階（最高階）">
+      ${['fr5','wa5','wi5','ea5'].map(k=>
         `<option value="${k}">${ATTR_AFFIX[k].n}（${k}）</option>`
       ).join('')}
     </optgroup>`;
@@ -3124,7 +3184,7 @@ function renderPartnerEq(p, i){
           <input type="text" placeholder="屬性詞綴"
                  value="${d.attr||''}" style="width:52px;font-size:11px"
                  id="pp_${i}_eq_${sl.id}_attr"
-                 title="如 fire5 / water3"
+                 title="如 fr5 / wa2（4屬性x5階，見裝備面板下拉選單）"
                  onchange="pEqChange(${i},'${sl.id}')">
         </div>
       </div>`;
@@ -3536,8 +3596,7 @@ function renderPetList(){
     container.innerHTML = `
       <div style="color:var(--text3);padding:24px;text-align:center;
                   border:1px dashed var(--border);border-radius:8px">
-        尚無寵物，點擊「新增寵物」開始<br>
-	此功能僅秋玥版能用，加掛版請到背包處新增想要的寵物項圈。
+        尚無寵物，點擊「新增寵物」開始
       </div>`;
     return;
   }
