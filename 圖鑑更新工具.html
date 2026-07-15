@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圖鑑資料更新工具</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; background: #0f1115; color: #e6e6e6; max-width: 1100px; margin: 0 auto; }
+  .card { background: #1a1d24; border: 1px solid #2a2e38; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  h2 { margin: 0 0 12px; font-size: 18px; color: #fff; }
+  h3 { margin: 0 0 10px; font-size: 15px; color: #cbd5e1; }
+  label { display: block; font-size: 13px; color: #9ca3af; margin-bottom: 6px; }
+  input[type="file"], input[type="text"] { background: #0f1115; border: 1px solid #2a2e38; border-radius: 8px; padding: 8px; width: 100%; color: #e6e6e6; box-sizing: border-box; }
+  button { background: #3b82f6; border: none; border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; cursor: pointer; }
+  button.secondary { background: #374151; }
+  button:disabled { background: #444; cursor: not-allowed; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .log { background: #0f1115; border: 1px solid #2a2e38; border-radius: 8px; padding: 12px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; white-space: pre-wrap; }
+  .ok { color: #22c55e; }
+  .warn { color: #f59e0b; }
+  .err { color: #ef4444; }
+  .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .tabbar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabbar button { background: #1a1d24; border: 1px solid #2a2e38; color: #9ca3af; font-weight: 400; }
+  .tabbar button.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .tabpage { display: none; }
+  .tabpage.active { display: block; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .preset-row button { background: #263041; color: #9ca3af; font-weight: 400; font-size: 12px; padding: 4px 10px; }
+  .preset-row button:hover { background: #334155; color: #e6e6e6; }
+  .flow-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+  .flow-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #3b82f6; color: #fff;
+              font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<h2>🗂️ 圖鑑資料更新工具</h2>
+<div class="card">
+  <p style="font-size:13px; color:#9ca3af; margin:0;">
+    當「00-data.js」「15-cards.js」等遊戲資料檔更新後，用這支工具把新內容同步進「存檔修改.html」，不用每次都重新整支手動比對。<br>
+    分兩種情況：<b>直接對照合併</b>（ITEM_DB、WEAPON_TAGS、EQUIP_CATEGORIES 這種兩邊路徑內容一致的表）用下方「① 通用合併」；
+    <b>需要重新計算</b>（卡片圖鑑怪物清單、輔助狀態技能清單，這些是從好幾個來源掃描/篩選出來的衍生資料）用「② 卡片圖鑑清單產生器」或「③ 輔助狀態技能清單產生器」，
+    產生後一樣丟回①合併進存檔修改.html。
+  </p>
+</div>
+
+<div class="tabbar">
+  <button class="active" onclick="showTab('merge', this)">① 通用合併</button>
+  <button onclick="showTab('card', this)">② 卡片圖鑑清單產生器</button>
+  <button onclick="showTab('buff', this)">③ 輔助狀態技能清單產生器</button>
+</div>
+
+<!-- ══════════════════════ ① 通用合併（沿用你原本的合併工具邏輯，未更動核心行為） ══════════════════════ -->
+<div id="tab-merge" class="tabpage active">
+  <div class="card">
+    <p style="font-size:13px; color:#9ca3af;">支援 <code>DB.items</code> 這種嵌套結構。檔案A和B的路徑可以不一樣。合併規則：B有A沒有的就加進A，A已有的不覆蓋（不會動到你已經調整過的內容）。</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1. 檔案A（要被更新的檔案，通常是存檔修改.html）</h2>
+      <label>變數路徑</label>
+      <input type="text" id="varA" value="ITEM_DB" placeholder="例如: ITEM_DB 或 DB.items">
+      <div class="preset-row">
+        <button onclick="setPresetA('ITEM_DB')">ITEM_DB</button>
+        <button onclick="setPresetA('WEAPON_TAGS')">WEAPON_TAGS</button>
+        <button onclick="setPresetA('EQUIP_CATEGORIES')">EQUIP_CATEGORIES</button>
+        <button onclick="setPresetA('BUFF_SKILL_DB')">BUFF_SKILL_DB</button>
+        <button onclick="setPresetA('CARD_DEX_LIST')">CARD_DEX_LIST</button>
+      </div>
+      <div class="hint">存檔修改.html 裡常用的幾個表已經幫你放快速按鈕，點一下自動帶入。</div>
+      <input type="file" id="fileA" accept=".js,.html,.txt" style="margin-top:8px;">
+      <div id="statusA" style="margin-top:8px; font-size:13px;"></div>
+    </div>
+    <div class="card">
+      <h2>2. 檔案B（新的資料來源，或②產生的片段）</h2>
+      <div class="tabbar" style="margin-bottom:12px;">
+        <button class="active" id="modeBtnUpload" onclick="setFileBMode('upload')">📁 上傳檔案</button>
+        <button id="modeBtnGithub" onclick="setFileBMode('github')">🌐 從 GitHub 讀取</button>
+      </div>
+
+      <div id="fileBUploadMode">
+        <label>變數路徑</label>
+        <input type="text" id="varB" value="DB.items" placeholder="例如: DB 或 DB.items">
+        <div class="preset-row">
+          <button onclick="setPresetB('DB.items')">DB.items（00-data.js）</button>
+          <button onclick="setPresetB('WEAPON_TAGS')">WEAPON_TAGS（10-ui-tabs.js）</button>
+          <button onclick="setPresetB('EQUIP_CATEGORIES')">EQUIP_CATEGORIES（16-equip-book.js）</button>
+          <button onclick="setPresetB('BUFF_SKILL_DB')">BUFF_SKILL_DB（③產生的檔案）</button>
+          <button onclick="setPresetB('CARD_DEX_LIST')">CARD_DEX_LIST（②產生的檔案）</button>
+        </div>
+        <input type="file" id="fileB" accept=".js,.html,.txt" style="margin-top:8px;">
+      </div>
+
+      <div id="fileBGithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="ghRepo" value="shines871/idle-lineage-class" placeholder="例如: shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1">
+            <label>分支</label>
+            <input type="text" id="ghBranch" value="main">
+          </div>
+          <div style="flex:1">
+            <label>資料夾路徑</label>
+            <input type="text" id="ghFolder" value="js">
+          </div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFiles()">列出檔案</button>
+        <div id="ghListStatus" class="hint"></div>
+
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="ghFileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelect()">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+        </div>
+        <div style="margin-top:10px;">
+          <label>變數路徑</label>
+          <input type="text" id="varBGh" value="" placeholder="選好檔案後會自動帶入常見路徑，仍可手動修改">
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFile()">讀取此檔案</button>
+        <div class="hint">若瀏覽器擋下跨網域請求（很少見，通常只有嚴格的公司網路或特殊瀏覽器設定才會），改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+
+      <div id="statusB" style="margin-top:8px; font-size:13px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. 合併與下載</h2>
+    <p style="font-size:13px; color:#9ca3af;">
+      先按「合併」把檔案B併入檔案A（存在記憶體中，尚未下載）。合併後可以繼續在上方換一個新的檔案B、再按一次「合併」，
+      重複疊加多個檔案B的內容進同一份檔案A；全部合併完成後，再按「下載檔案A」一次輸出最終結果（檔名自動加上 _merged）。
+    </p>
+    <div style="display:flex; gap:8px;">
+      <button id="mergeBtn" disabled>合併（先不下載）</button>
+      <button id="downloadBtn" class="secondary" disabled>下載檔案A</button>
+    </div>
+    <div id="log" class="log" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ ② 卡片圖鑑清單產生器 ══════════════════════ -->
+<div id="tab-card" class="tabpage">
+  <div class="card">
+    <h3>卡片圖鑑（怪物收集冊）清單重新計算</h3>
+    <p style="font-size:13px; color:#9ca3af; margin:0 0 12px;">
+      重現 <code>15-cards.js</code> 的 <code>buildCardIndex()</code> 邏輯：掃描 <code>CARD_REGIONS</code> 對應的每張地圖池
+      （<code>DB.maps</code>），查出每隻怪物（<code>DB.mobs</code>），排除「血盟／建築」種族，取得完整可收集怪物清單。
+    </p>
+    <div class="flow-step"><div class="flow-num">1</div><div style="flex:1">
+      <label>00-data.js（提供 DB.mobs、DB.maps）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="card1ModeBtnUpload" onclick="setSourceMode('card1','upload')">📁 上傳檔案</button>
+        <button id="card1ModeBtnGithub" onclick="setSourceMode('card1','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="card1UploadMode">
+        <input type="file" id="cardFile1" accept=".js,.txt">
+      </div>
+      <div id="card1GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="card1Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="card1Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="card1Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('card1')">列出檔案</button>
+        <div id="card1ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="card1FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('card1', parseCardFile1)">讀取此檔案</button>
+        <div id="card1GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="cardStatus1" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div style="flex:1">
+      <label>15-cards.js（提供 CARD_REGIONS）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="card2ModeBtnUpload" onclick="setSourceMode('card2','upload')">📁 上傳檔案</button>
+        <button id="card2ModeBtnGithub" onclick="setSourceMode('card2','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="card2UploadMode">
+        <input type="file" id="cardFile2" accept=".js,.txt">
+      </div>
+      <div id="card2GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="card2Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="card2Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="card2Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('card2')">列出檔案</button>
+        <div id="card2ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="card2FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('card2', parseCardFile2)">讀取此檔案</button>
+        <div id="card2GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="cardStatus2" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div>
+      <button id="cardBuildBtn" disabled onclick="buildCardDexList()">重新計算並下載 CARD_DEX_LIST.js</button>
+      <div class="hint">下載後，回到「① 通用合併」，檔案A 選存檔修改.html（路徑 CARD_DEX_LIST）、檔案B 選這個下載的檔案（路徑 CARD_DEX_LIST），合併即可。</div>
+    </div></div>
+    <div id="cardLog" class="log" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ ② 輔助狀態技能清單產生器 ══════════════════════ -->
+<div id="tab-buff" class="tabpage">
+  <div class="card">
+    <h3>輔助狀態（buff）清單重新計算</h3>
+    <p style="font-size:13px; color:#9ca3af; margin:0 0 12px;">
+      從 <code>00-data.js</code> 掃描兩種來源：<code>DB.skills</code> 裡 <code>type:"buff"</code> 的技能，
+      以及 <code>DB.items</code> 裡 <code>type:"pot"</code> 且有 <code>eff</code> 欄位的藥水／卷軸（用 eff 代碼當 key，
+      因為存檔內 player.buffs 是用這個代碼記錄，不是物品 id）。
+    </p>
+    <div class="flow-step"><div class="flow-num">1</div><div style="flex:1">
+      <label>00-data.js（提供 DB.skills、DB.items）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="buff1ModeBtnUpload" onclick="setSourceMode('buff1','upload')">📁 上傳檔案</button>
+        <button id="buff1ModeBtnGithub" onclick="setSourceMode('buff1','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="buff1UploadMode">
+        <input type="file" id="buffFile1" accept=".js,.txt">
+      </div>
+      <div id="buff1GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="buff1Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="buff1Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="buff1Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('buff1')">列出檔案</button>
+        <div id="buff1ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="buff1FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('buff1', parseBuffFile1)">讀取此檔案</button>
+        <div id="buff1GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="buffStatus1" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div>
+      <button id="buffBuildBtn" disabled onclick="buildBuffSkillDB()">重新計算並下載 BUFF_SKILL_DB.js</button>
+      <div class="hint">下載後，回到「① 通用合併」，檔案A 選存檔修改.html（路徑 BUFF_SKILL_DB）、檔案B 選這個下載的檔案（路徑 BUFF_SKILL_DB），合併即可。</div>
+    </div></div>
+    <div id="buffLog" class="log" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  共用：讀檔 + 依變數路徑抓取巢狀物件/陣列（括號配對，能處理任意深度）
+// ════════════════════════════════════════════════
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function getByPath(obj, path) {
+  if (!path) return obj;
+  return path.split('.').reduce((o, k) => o?.[k], obj);
+}
+function setByPath(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((o, k) => o[k] ??= {}, obj);
+  target[lastKey] = value;
+}
+
+// 從原始碼字串中，找出 `varPath` 的值（支援 const/let/var 宣告，也支援任意深度括號）
+function extractDB(content, varPath) {
+  const rootVar = varPath.split('.')[0];
+  const declRegex = new RegExp(`(const|let|var)\\s+${rootVar}\\s*=`);
+  const declMatch = content.match(declRegex);
+  if (!declMatch) throw new Error(`找不到 ${rootVar} = 定義`);
+
+  const startIdx = declMatch.index + declMatch[0].length;
+  let i = startIdx;
+  while (i < content.length && /\s/.test(content[i])) i++;
+
+  const openChar = content[i];
+  if (openChar !== '{' && openChar !== '[') {
+    throw new Error(`${rootVar} 後面不是物件或陣列`);
+  }
+  const closeChar = openChar === '{' ? '}' : ']';
+
+  let depth = 1, inString = false, stringChar = '', escapeNext = false;
+  i++;
+  while (i < content.length && depth > 0) {
+    const char = content[i];
+    if (escapeNext) escapeNext = false;
+    else if (char === '\\') escapeNext = true;
+    else if (inString) {
+      if (char === stringChar) inString = false;
+    } else {
+      if (char === '"' || char === "'" || char === '`') { inString = true; stringChar = char; }
+      else if (char === openChar) depth++;
+      else if (char === closeChar) depth--;
+    }
+    i++;
+  }
+  if (depth !== 0) throw new Error(`${rootVar} 的括號沒閉合`);
+
+  const objectStr = content.slice(startIdx, i).trim();
+  const fullMatchStart = declMatch.index;
+  const fullMatchEnd = i;
+
+  try {
+    const cleanStr = objectStr.replace(/,(\s*[}\]])/g, '$1');
+    const rootObj = new Function(`return ${cleanStr}`)();
+    const targetObj = varPath === rootVar ? rootObj : getByPath(rootObj, varPath.substring(rootVar.length + 1));
+    if (targetObj === undefined) throw new Error(`路徑 ${varPath} 不存在`);
+    return {
+      targetObj, rootObj,
+      contentBefore: content.slice(0, fullMatchStart),
+      contentAfter: content.slice(fullMatchEnd),
+      declaration: declMatch[1], rootVar
+    };
+  } catch (e) {
+    throw new Error(`${varPath} 解析失敗: ${e.message}`);
+  }
+}
+
+function downloadText(text, filename, mime='text/javascript;charset=utf-8') {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════
+//  共用：任一輸入欄位的「上傳檔案 / 從GitHub讀取」切換與讀取邏輯
+//  （②③的每個檔案欄位都用這組，prefix 對應該欄位的 id 前綴，例如 card1、card2、buff1）
+// ════════════════════════════════════════════════
+function setSourceMode(prefix, mode){
+  document.getElementById(prefix+'ModeBtnUpload').classList.toggle('active', mode==='upload');
+  document.getElementById(prefix+'ModeBtnGithub').classList.toggle('active', mode==='github');
+  document.getElementById(prefix+'UploadMode').style.display = mode==='upload' ? '' : 'none';
+  document.getElementById(prefix+'GithubMode').style.display = mode==='github' ? '' : 'none';
+}
+
+async function ghListFilesFor(prefix){
+  const repo   = document.getElementById(prefix+'Repo').value.trim();
+  const branch = document.getElementById(prefix+'Branch').value.trim() || 'main';
+  const folder = document.getElementById(prefix+'Folder').value.trim();
+  const statusEl = document.getElementById(prefix+'ListStatus');
+  statusEl.innerHTML = '讀取中…';
+  try {
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/${folder}?ref=${branch}`;
+    const res = await fetch(apiUrl);
+    if(!res.ok) throw new Error(`GitHub API 回應 ${res.status}（可能是路徑錯誤，或短時間內請求太多次被限流）`);
+    const data = await res.json();
+    if(!Array.isArray(data)) throw new Error('這個路徑不是資料夾');
+    const files = data.filter(f => f.type === 'file' && /\.(js|html|txt)$/i.test(f.name));
+    const sel = document.getElementById(prefix+'FileSel');
+    sel.innerHTML = files.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+    statusEl.innerHTML = `<span class="ok">找到 ${files.length} 個檔案</span>`;
+  } catch(e){
+    statusEl.innerHTML = `<span class="err">${e.message}</span>`;
+  }
+}
+
+// 讀取選好的GitHub檔案內容，成功後把內容字串丟給 onLoaded(content, filename) 去解析
+async function ghLoadFileFor(prefix, onLoaded){
+  const repo   = document.getElementById(prefix+'Repo').value.trim();
+  const branch = document.getElementById(prefix+'Branch').value.trim() || 'main';
+  const folder = document.getElementById(prefix+'Folder').value.trim();
+  const name   = document.getElementById(prefix+'FileSel').value;
+  const statusEl = document.getElementById(prefix+'GhStatus');
+  if(!name){
+    statusEl.innerHTML = `<span class="err">請先點「列出檔案」並選擇檔案</span>`;
+    return;
+  }
+  statusEl.innerHTML = '讀取中…';
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/${repo}/${branch}/${folder}/${name}`;
+    const res = await fetch(rawUrl);
+    if(!res.ok) throw new Error(`下載失敗（HTTP ${res.status}）`);
+    const content = await res.text();
+    statusEl.innerHTML = `<span class="ok">已從 GitHub 讀取 ${name}</span>`;
+    onLoaded(content, name);
+  } catch(e){
+    statusEl.innerHTML = `<span class="err">${e.message}（若是網路請求被瀏覽器擋下，請改用「📁 上傳檔案」手動上傳同一份檔案）</span>`;
+  }
+}
+
+// ════════════════════════════════════════════════
+//  分頁切換
+// ════════════════════════════════════════════════
+function showTab(id, el){
+  document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function setPresetA(v){ document.getElementById('varA').value = v; loadFileA(); }
+function setPresetB(v){ document.getElementById('varB').value = v; loadFileB(); }
+
+// ════════════════════════════════════════════════
+//  ① 通用合併（邏輯與你原本上傳的工具一致）
+// ════════════════════════════════════════════════
+let itemA = null, itemB = null, originalAContent = "", originalAFileName = "檔案A.js";
+let itemARange = null, rootObjA = null;
+
+function log(msg, type="") {
+  const el = document.getElementById('log');
+  const prefix = type === 'ok' ? '[OK] ' : type === 'warn' ? '[WARN] ' : type === 'err' ? '[ERR] ' : '[INFO] ';
+  el.textContent += prefix + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadFileA() {
+  const file = document.getElementById('fileA').files[0];
+  const varPath = document.getElementById('varA').value.trim();
+  if (!file || !varPath) return;
+  originalAFileName = file.name;
+  try {
+    originalAContent = await readFile(file);
+    const res = extractDB(originalAContent, varPath);
+    itemA = res.targetObj;
+    rootObjA = res.rootObj;
+    itemARange = {...res};
+    const count = Array.isArray(itemA) ? itemA.length : Object.keys(itemA).length;
+    document.getElementById('statusA').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
+    log(`檔案A ${varPath} 解析成功: ${count} 個項目`, 'ok');
+    mergedFileContent = null;
+    mergedFileName = null;
+    checkDownloadReady();
+    checkReady();
+  } catch (e) {
+    document.getElementById('statusA').innerHTML = `<span class="err">${e.message}</span>`;
+    log(`檔案A錯誤: ${e.message}`, 'err');
+    itemA = null;
+    checkReady();
+  }
+}
+
+async function loadFileB() {
+  const file = document.getElementById('fileB').files[0];
+  const varPath = document.getElementById('varB').value.trim();
+  if (!file || !varPath) return;
+  try {
+    const content = await readFile(file);
+    const { targetObj } = extractDB(content, varPath);
+    itemB = targetObj;
+    const count = Array.isArray(itemB) ? itemB.length : Object.keys(itemB).length;
+    document.getElementById('statusB').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
+    log(`檔案B ${varPath} 解析成功: ${count} 個項目`, 'ok');
+    checkReady();
+  } catch (e) {
+    document.getElementById('statusB').innerHTML = `<span class="err">${e.message}</span>`;
+    log(`檔案B錯誤: ${e.message}`, 'err');
+    itemB = null;
+    checkReady();
+  }
+}
+
+document.getElementById('fileA').addEventListener('change', loadFileA);
+document.getElementById('varA').addEventListener('change', loadFileA);
+document.getElementById('fileB').addEventListener('change', loadFileB);
+document.getElementById('varB').addEventListener('change', loadFileB);
+
+// ── 檔案B：上傳 / GitHub 兩種模式切換
+function setFileBMode(mode){
+  document.getElementById('modeBtnUpload').classList.toggle('active', mode==='upload');
+  document.getElementById('modeBtnGithub').classList.toggle('active', mode==='github');
+  document.getElementById('fileBUploadMode').style.display = mode==='upload' ? '' : 'none';
+  document.getElementById('fileBGithubMode').style.display = mode==='github' ? '' : 'none';
+}
+
+// 依檔名猜測常見的變數路徑（可手動覆蓋）
+const GH_FILE_VARPATH_HINTS = {
+  '00-data.js': 'DB.items',
+  '01-drops-config.js': 'DROPS_CONFIG',
+  '10-ui-tabs.js': 'WEAPON_TAGS',
+  '15-cards.js': 'CARD_REGIONS',
+  '16-equip-book.js': 'EQUIP_CATEGORIES',
+  '18-misc-book.js': 'MISC_CATEGORIES',
+  '21-relic-book.js': 'RELIC_CAT_ITEMS',
+  '22-pets.js': 'PET_BOOK',
+};
+
+let ghFilesCache = [];
+
+async function ghListFiles(){
+  const repo   = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const folder = document.getElementById('ghFolder').value.trim();
+  const statusEl = document.getElementById('ghListStatus');
+  statusEl.innerHTML = '讀取中…';
+  try {
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/${folder}?ref=${branch}`;
+    const res = await fetch(apiUrl);
+    if(!res.ok) throw new Error(`GitHub API 回應 ${res.status}（可能是路徑錯誤，或短時間內請求太多次被限流）`);
+    const data = await res.json();
+    if(!Array.isArray(data)) throw new Error('這個路徑不是資料夾');
+    ghFilesCache = data.filter(f => f.type === 'file' && /\.(js|html|txt)$/i.test(f.name));
+    const sel = document.getElementById('ghFileSel');
+    sel.innerHTML = ghFilesCache.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+    statusEl.innerHTML = `<span class="ok">找到 ${ghFilesCache.length} 個檔案</span>`;
+    if(ghFilesCache.length) onGhFileSelect();
+  } catch(e){
+    statusEl.innerHTML = `<span class="err">${e.message}</span>`;
+    ghFilesCache = [];
+  }
+}
+
+function onGhFileSelect(){
+  const name = document.getElementById('ghFileSel').value;
+  const hint = GH_FILE_VARPATH_HINTS[name];
+  if(hint) document.getElementById('varBGh').value = hint;
+}
+
+async function ghLoadFile(){
+  const repo   = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const folder = document.getElementById('ghFolder').value.trim();
+  const name   = document.getElementById('ghFileSel').value;
+  const varPath= document.getElementById('varBGh').value.trim();
+  if(!name || !varPath){
+    document.getElementById('statusB').innerHTML = `<span class="err">請先選檔案並填變數路徑</span>`;
+    return;
+  }
+  document.getElementById('statusB').innerHTML = '讀取中…';
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/${repo}/${branch}/${folder}/${name}`;
+    const res = await fetch(rawUrl);
+    if(!res.ok) throw new Error(`下載失敗（HTTP ${res.status}）`);
+    const content = await res.text();
+    const { targetObj } = extractDB(content, varPath);
+    itemB = targetObj;
+    const count = Array.isArray(itemB) ? itemB.length : Object.keys(itemB).length;
+    document.getElementById('statusB').innerHTML =
+      `<span class="ok">已從 GitHub 載入 ${name} 的 ${varPath}: ${count} 個項目</span>`;
+    log(`檔案B（GitHub: ${name}）${varPath} 解析成功: ${count} 個項目`, 'ok');
+    checkReady();
+  } catch(e){
+    document.getElementById('statusB').innerHTML = `<span class="err">${e.message}（若是網路請求被瀏覽器擋下，請改用「📁 上傳檔案」手動上傳同一份檔案）</span>`;
+    log(`檔案B（GitHub）錯誤: ${e.message}`, 'err');
+    itemB = null;
+    checkReady();
+  }
+}
+
+function checkReady() {
+  document.getElementById('mergeBtn').disabled = !(itemA && itemB);
+}
+
+let mergedFileContent = null, mergedFileName = null;
+
+function checkDownloadReady() {
+  document.getElementById('downloadBtn').disabled = !mergedFileContent;
+}
+
+document.getElementById('mergeBtn').addEventListener('click', () => {
+  let addedCount = 0, skippedCount = 0;
+  const varPathA = document.getElementById('varA').value.trim();
+  const pathParts = varPathA.split('.');
+  const subPath = pathParts.slice(1).join('.');
+
+  const isArrayA = Array.isArray(itemA);
+  const isArrayB = Array.isArray(itemB);
+
+  if (isArrayA && isArrayB) {
+    const setA = new Set(itemA.map(x => JSON.stringify(x)));
+    for (const value of itemB) {
+      const str = JSON.stringify(value);
+      if (!setA.has(str)) { itemA.push(value); addedCount++; log(`新增: ${str.slice(0, 60)}...`, "ok"); }
+      else skippedCount++;
+    }
+  } else if (!isArrayA && !isArrayB) {
+    for (const [key, value] of Object.entries(itemB)) {
+      if (!(key in itemA)) { itemA[key] = value; addedCount++; log(`新增: ${key}`, "ok"); }
+      else skippedCount++;
+    }
+  } else {
+    log("錯誤：A和B的資料型態不同，無法合併", 'err');
+    return;
+  }
+
+  if (addedCount === 0) log("檔案B的項目已全部存在於檔案A，無需新增", "warn");
+  else log(`共新增 ${addedCount} 個項目，跳過 ${skippedCount} 個重複`, "ok");
+
+  if (subPath) setByPath(rootObjA, subPath, itemA);
+  else rootObjA = itemA;
+
+  const { contentBefore, contentAfter, declaration, rootVar } = itemARange;
+  const newItemDBString = `${declaration} ${rootVar} = ${JSON.stringify(rootObjA, null, 2)};`;
+  mergedFileContent = contentBefore + newItemDBString + contentAfter;
+  mergedFileName = originalAFileName.replace(/(\.[^.]+)?$/, '_merged$1');
+
+  log(`本次合併完成，結果已可下載（尚未下載）。若要接續合併其他檔案，請在上方換一個新的檔案B並再次點「合併」。`, "ok");
+  checkDownloadReady();
+
+  // 重置檔案B，避免同一份B被重複合併兩次；讓使用者接著載入下一個檔案B
+  itemB = null;
+  document.getElementById('fileB').value = '';
+  document.getElementById('statusB').innerHTML = '';
+  document.getElementById('varBGh').value = '';
+  document.getElementById('ghFileSel').innerHTML = '<option value="">請先點「列出檔案」</option>';
+  checkReady();
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!mergedFileContent) return;
+  downloadText(mergedFileContent, mergedFileName, 'text/html;charset=utf-8');
+  log(`已下載檔案: ${mergedFileName}`, "ok");
+});
+
+// ════════════════════════════════════════════════
+//  ② 卡片圖鑑清單產生器（重現 15-cards.js buildCardIndex()）
+// ════════════════════════════════════════════════
+let cardData = { mobs: null, maps: null, regions: null };
+function cardLog(msg, type=""){
+  const el = document.getElementById('cardLog');
+  const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : '[INFO] ';
+  el.textContent += prefix + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function cardCheckReady(){
+  document.getElementById('cardBuildBtn').disabled = !(cardData.mobs && cardData.maps && cardData.regions);
+}
+
+function parseCardFile1(content){
+  try {
+    cardData.mobs = extractDB(content, 'DB.mobs').targetObj;
+    cardData.maps = extractDB(content, 'DB.maps').targetObj;
+    document.getElementById('cardStatus1').innerHTML =
+      `<span class="ok">已載入 DB.mobs（${Object.keys(cardData.mobs).length} 隻）、DB.maps（${Object.keys(cardData.maps).length} 張）</span>`;
+    cardLog(`00-data.js 解析成功`, 'ok');
+  } catch(err) {
+    document.getElementById('cardStatus1').innerHTML = `<span class="err">${err.message}</span>`;
+    cardLog(`00-data.js 錯誤: ${err.message}`, 'err');
+    cardData.mobs = cardData.maps = null;
+  }
+  cardCheckReady();
+}
+
+function parseCardFile2(content){
+  try {
+    cardData.regions = extractDB(content, 'CARD_REGIONS').targetObj;
+    document.getElementById('cardStatus2').innerHTML =
+      `<span class="ok">已載入 CARD_REGIONS（${cardData.regions.length} 個地區）</span>`;
+    cardLog(`15-cards.js 解析成功`, 'ok');
+  } catch(err) {
+    document.getElementById('cardStatus2').innerHTML = `<span class="err">${err.message}</span>`;
+    cardLog(`15-cards.js 錯誤: ${err.message}`, 'err');
+    cardData.regions = null;
+  }
+  cardCheckReady();
+}
+
+document.getElementById('cardFile1').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const content = await readFile(file);
+  parseCardFile1(content);
+});
+
+document.getElementById('cardFile2').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const content = await readFile(file);
+  parseCardFile2(content);
+});
+
+function buildCardDexList(){
+  document.getElementById('cardLog').textContent = '';
+  const { mobs, maps, regions } = cardData;
+  const CARD_MOB_INFO = {};
+  const prideMaps = Object.keys(maps).filter(k => /^pride_/.test(k));
+
+  regions.forEach(reg => {
+    const regMaps = (reg.maps === '__pride__') ? prideMaps : reg.maps;
+    (regMaps || []).forEach(mk => {
+      const pool = maps[mk]; if (!pool) return;
+      pool.forEach(mid => {
+        const mob = mobs[mid]; if (!mob || !mob.n) return;
+        if (mob.race === '血盟' || mob.race === '建築') return;
+        if (!CARD_MOB_INFO[mob.n]) CARD_MOB_INFO[mob.n] = { lv: mob.lv || 0 };
+      });
+    });
+  });
+
+  const list = Object.keys(CARD_MOB_INFO).map(n => ({ n, lv: CARD_MOB_INFO[n].lv }));
+  list.sort((a,b) => a.lv - b.lv || a.n.localeCompare(b.n, 'zh-Hant'));
+
+  cardLog(`共掃描出 ${list.length} 隻可收集怪物`, 'ok');
+
+  const lines = list.map(m => `  {n:${JSON.stringify(m.n)},lv:${m.lv}}`);
+  const fileContent =
+`// 由「圖鑑資料更新工具」自動產生：重現 15-cards.js buildCardIndex() 的怪物清單（共 ${list.length} 隻）
+const CARD_DEX_LIST = [
+${lines.join(',\n')}
+];
+`;
+  downloadText(fileContent, 'CARD_DEX_LIST_new.js');
+  cardLog('已下載 CARD_DEX_LIST_new.js，請到「① 通用合併」用 CARD_DEX_LIST 路徑合併進存檔修改.html', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  ② 輔助狀態技能清單產生器（DB.skills type:"buff" ＋ DB.items type:"pot" 有 eff 欄位）
+// ════════════════════════════════════════════════
+let buffData = { skills: null, items: null };
+function buffLog(msg, type=""){
+  const el = document.getElementById('buffLog');
+  const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : '[INFO] ';
+  el.textContent += prefix + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+function parseBuffFile1(content){
+  try {
+    buffData.skills = extractDB(content, 'DB.skills').targetObj;
+    buffData.items  = extractDB(content, 'DB.items').targetObj;
+    document.getElementById('buffStatus1').innerHTML =
+      `<span class="ok">已載入 DB.skills（${Object.keys(buffData.skills).length} 個技能）、DB.items（${Object.keys(buffData.items).length} 項物品）</span>`;
+    buffLog('00-data.js 解析成功', 'ok');
+    document.getElementById('buffBuildBtn').disabled = false;
+  } catch(err) {
+    document.getElementById('buffStatus1').innerHTML = `<span class="err">${err.message}</span>`;
+    buffLog(`00-data.js 錯誤: ${err.message}`, 'err');
+    buffData.skills = buffData.items = null;
+    document.getElementById('buffBuildBtn').disabled = true;
+  }
+}
+
+document.getElementById('buffFile1').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const content = await readFile(file);
+  parseBuffFile1(content);
+});
+
+function buildBuffSkillDB(){
+  document.getElementById('buffLog').textContent = '';
+  const { skills, items } = buffData;
+  const out = {};
+
+  // 來源1：DB.skills 裡 type==="buff" 的技能
+  const KEEP_KEYS = ['n','dur','mp','d','haste','ele','msg'];
+  let skillCnt = 0;
+  Object.keys(skills).forEach(id => {
+    const v = skills[id];
+    if (v.type !== 'buff') return;
+    const entry = {};
+    KEEP_KEYS.forEach(k => { if (v[k] !== undefined) entry[k] = v[k]; });
+    if (v.summon) entry.summon = true;
+    out[id] = entry;
+    skillCnt++;
+  });
+
+  // 來源2：DB.items 裡 type==="pot" 且有 eff 欄位的藥水/卷軸（用 eff 代碼當 key）
+  let potCnt = 0;
+  Object.keys(items).forEach(id => {
+    const v = items[id];
+    if (v.type !== 'pot' || !v.eff) return;
+    if (out[v.eff]) return; // 已有同代碼（例如技能跟藥水共用效果代碼）就不覆蓋
+    const entry = { n: v.n };
+    if (v.dur !== undefined) entry.dur = v.dur;
+    if (v.d && typeof v.d === 'string') entry.msg = v.d;
+    out[v.eff] = entry;
+    potCnt++;
+  });
+
+  buffLog(`技能類 buff: ${skillCnt} 個，藥水/卷軸類 buff: ${potCnt} 個，共 ${skillCnt+potCnt} 個`, 'ok');
+
+  const lines = Object.keys(out).map(k => `  ${JSON.stringify(k)}:${JSON.stringify(out[k])}`);
+  const fileContent =
+`// 由「圖鑑資料更新工具」自動產生：DB.skills(type:"buff") ＋ DB.items(type:"pot" 有 eff) 共 ${Object.keys(out).length} 筆
+const BUFF_SKILL_DB = {
+${lines.join(',\n')}
+};
+`;
+  downloadText(fileContent, 'BUFF_SKILL_DB_new.js');
+  buffLog('已下載 BUFF_SKILL_DB_new.js，請到「① 通用合併」用 BUFF_SKILL_DB 路徑合併進存檔修改.html', 'ok');
+}
+</script>
+
+</body>
+</html>
