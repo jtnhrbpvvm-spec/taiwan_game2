@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>去公告書籤安裝教學</title>
+
+<style>
+body{
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:#0f172a;
+  color:#fff;
+  padding:20px;
+}
+.container{max-width:520px;margin:auto;}
+h1{text-align:center;}
+.section{margin-bottom:40px;}
+.step{background:#1e293b;padding:16px;border-radius:12px;margin-top:15px;}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:#22c55e;color:#000;font-weight:bold;}
+textarea{width:100%;height:120px;border-radius:10px;padding:10px;margin-top:10px;background:#020617;color:#0f0;}
+img{width:100%;margin-top:10px;border-radius:10px;}
+.drag-btn{display:block;background:#38bdf8;color:#000;text-align:center;padding:12px;border-radius:10px;margin-top:10px;font-weight:bold;cursor:grab;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>📦 去公告書籤安裝教學</h1>
+
+<!-- 手機 -->
+<div class="section">
+<h2>📱 手機版（iOS / Android）</h2>
+
+<div class="step">
+<h3>① 複製書籤</h3>
+<button onclick="copyCode()">📋 一鍵複製</button>
+<div id="copyStatus"></div>
+</div>
+
+<div class="step">
+<h3>② 加入書籤並編輯</h3>
+<img src="ios1.jpg">
+<img src="android1.jpg">
+</div>
+
+<div class="step">
+<h3>③ 貼上內容</h3>
+<p>如果複製失敗，請手動複製：</p>
+<textarea id="codeBox" onclick="this.select()" readonly></textarea>
+</div>
+</div>
+
+<!-- 電腦 -->
+<div class="section">
+<h2>💻 電腦版（Chrome / Edge）</h2>
+
+<div class="step">
+<h3>① 拖曳到書籤列</h3>
+
+<a class="drag-btn"
+href="javascript:(function(){
+location.href='https://shines871.github.io/idle-lineage-class/';
+setTimeout(()=>{
+document.querySelectorAll('[class*=\"announce\"],[id*=\"announce\"],.modal,.popup,.overlay').forEach(el=>el.remove());
+},1000);
+})();">
+👉 拖曳我到書籤列
+</a>
+
+<img src="desktop-drag.gif">
+</div>
+
+<div class="step">
+<h3>② 點擊書籤即可使用</h3>
+</div>
+
+</div>
+
+</div>
+
+<script>
+const code = `javascript:(function(){
+location.href='https://shines871.github.io/idle-lineage-class/';
+setTimeout(()=>{
+document.querySelectorAll('[class*="announce"],[id*="announce"],.modal,.popup,.overlay').forEach(el=>el.remove());
+},1000);
+})();`;
+
+document.getElementById("codeBox").value = code;
+
+function copyCode(){
+navigator.clipboard.writeText(code).then(()=>{
+document.getElementById("copyStatus").innerText="✅ 已複製";
+}).catch(()=>{
+document.getElementById("copyStatus").innerText="⚠️ 請手動複製";
+});
+}
+</script>
+
+</body>
+</html>
