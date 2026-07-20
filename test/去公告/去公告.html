@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>去公告 完整安裝教學</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft JhengHei",sans-serif;text-align:center;padding:15px;background:#0f172a;color:#fff;margin:0}
+  h1{margin-bottom:20px;color:#38bdf8;font-size:20px}
+ .section{background:#1e293b;border-radius:16px;padding:15px;margin-bottom:20px;border:1px solid #334155}
+  h2{color:#22c55e;margin:0 0 8px;font-size:16px}
+
+  /* 按鈕統一大小 */
+ .btn,.copy-btn{display:inline-block;padding:14px 24px;background:#22c55e;color:#000;text-decoration:none;border-radius:12px;font-weight:bold;font-size:16px;margin:10px 0;border:none;cursor:pointer;width:auto}
+ .btn:hover,.copy-btn:hover{background:#4ade80}
+ .copy-btn{background:#38bdf8}
+ .copy-btn:hover{background:#0ea5e9}
+ .copy-ok{color:#4ade80;font-size:13px;margin-top:5px;height:18px}
+
+  /* 電腦示意 */
+ .demo{margin:15px auto;padding:15px;background:#0f172a;border-radius:12px;max-width:300px}
+ .bookmark-bar{height:35px;background:#334155;border-radius:8px;display:flex;align-items:center;padding:0 8px;gap:6px;margin-bottom:10px;border:2px dashed #475569}
+ .bookmark{width:60px;height:18px;background:#475569;border-radius:5px}
+ .arrow{font-size:24px;color:#38bdf8;animation:bounce 1.5s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  /* iOS輪播圖 */
+ .slideshow{position:relative;width:100%;max-width:280px;margin:10px auto;border-radius:20px;border:3px solid #334155;overflow:hidden}
+ .slideshow img{width:100%;display:none}
+ .slideshow img.active{display:block}
+ .step-text{color:#38bdf8;font-size:14px;margin-top:8px;font-weight:bold;height:20px}
+
+  textarea{width:100%;height:70px;border-radius:8px;padding:8px;margin-top:8px;background:#020617;color:#0f0;border:1px solid #334155;font-size:10px;resize:none}
+</style>
+</head>
+<body>
+<h1>📦 去公告書籤 3平台安裝教學</h1>
+
+<!-- 1. 電腦版 -->
+<div class="section">
+  <h2>💻 電腦版 Chrome / Edge</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:5px 0">直接拖曳安裝</p>
+  <a class="btn" href="javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();">拖我到書籤列或直接點我一下</a>
+  <div class="demo"><div class="bookmark-bar"><div class="bookmark"></div><div class="bookmark"></div></div><div class="arrow">⬆</div><div style="font-size:13px;color:#38bdf8">按住按鈕往上拖</div></div>
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <p style="font-size:15px;color:#94a3b8;margin:5px 0">如按鍵沒有複製成功<br>請點下方文字框<br>會自動反白再複製即可</p>
+
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<!-- 2. iOS 輪播 -->
+<div class="section">
+  <h2>📱 iPhone Safari / Chrome</h2>
+
+  <div class="slideshow">
+    <img src="ios1.jpg" class="active" alt="步驟1">
+    <img src="ios2.jpg" alt="步驟2">
+    <img src="ios3.jpg" alt="步驟3">
+    <img src="ios4.jpg" alt="步驟4">
+  </div>
+  <div class="step-text" id="stepText">步驟1: 點下方分享按鈕</div>
+
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <p style="font-size:15px;color:#94a3b8;margin:5px 0">如按鍵沒有複製成功<br>請點下方文字框<br>會自動反白再複製即可</p>
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<!-- 3. Android -->
+<div class="section">
+  <h2>📱 Android Chrome</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:5px 0">點3點 → 加入書籤 → 編輯</p>
+  <div style="width:200px;height:360px;background:#000;border-radius:30px;margin:10px auto;padding:10px;border:5px solid #334155"><div style="width:100%;height:100%;background:#fff;border-radius:22px;color:#000;font-size:12px;padding:12px">打開此教學頁</div></div>
+  <div style="font-size:13px;color:#38bdf8;margin:8px 0">1. 點右上角 ⋮ 2. 加入書籤 3. 編輯貼上</div>
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <p style="font-size:15px;color:#94a3b8;margin:5px 0">如按鍵沒有複製成功<br>請點下方文字框<br>會自動反白再複製即可</p>
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<script>
+// iOS輪播邏輯 改成2秒
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slideshow img');
+const stepText = document.getElementById('stepText');
+const steps = [
+  "步驟1: 點下方分享按鈕",
+  "步驟2: 點 加入書籤",
+  "步驟3: 點 編輯",
+  "步驟4: 貼上程式碼並儲存"
+];
+
+setInterval(()=>{
+  slides[currentSlide].classList.remove('active');
+  currentSlide = (currentSlide + 1) % slides.length;
+  slides[currentSlide].classList.add('active');
+  stepText.innerText = steps[currentSlide];
+}, 2000); // 2000毫秒 = 2秒
+
+// 複製功能
+function copyCode(btn){
+  const textarea = btn.nextElementSibling.nextElementSibling;
+  textarea.select();
+  navigator.clipboard.writeText(textarea.value).then(()=>{
+    btn.nextElementSibling.innerText = "✅ 已複製！";
+    setTimeout(()=>{btn.nextElementSibling.innerText = ""}, 2000);
+  });
+}
+</script>
+</body>
+</html>
