@@ -2,31 +2,81 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>去公告 書籤</title>
+<title>去公告 手機版教學</title>
 <style>
-  body{font-family:"Microsoft JhengHei",sans-serif;text-align:center;padding:50px;background:#0f172a;color:#fff}
-  .btn{display:inline-block;padding:16px 32px;background:#22c55e;color:#000;text-decoration:none;border-radius:12px;font-weight:bold;font-size:18px;cursor:grab}
-  .btn:hover{background:#4ade80}
-  .demo{margin-top:30px;padding:20px;background:#1e293b;border-radius:12px;max-width:400px;margin:auto}
-  .bookmark-bar{height:40px;background:#334155;border-radius:8px;display:flex;align-items:center;padding:0 10px;gap:8px;margin-bottom:15px}
-  .bookmark{width:80px;height:24px;background:#475569;border-radius:6px}
-  .hand{font-size:40px;display:inline-block;animation:drag 2s infinite}
-  @keyframes drag{0%{transform:translate(0,0)}40%{transform:translate(0,-20px)}60%{transform:translate(120px,-20px)}100%{transform:translate(120px,0)}}
-  .arrow{color:#38bdf8;font-size:14px;margin-top:8px}
+  body{font-family:"Microsoft JhengHei",sans-serif;text-align:center;padding:20px;background:#0f172a;color:#fff}
+  h1{margin-bottom:30px}
+  .section{background:#1e293b;border-radius:16px;padding:20px;margin-bottom:30px}
+  h2{color:#22c55e}
+  .phone{width:240px;height:480px;background:#000;border-radius:40px;margin:20px auto;padding:15px;position:relative;border:8px solid #334155}
+  .screen{width:100%;height:100%;background:#fff;border-radius:30px;overflow:hidden;position:relative}
+  .bar{height:50px;background:#f1f5f9;display:flex;align-items:center;justify-content:space-around}
+  .icon{font-size:20px}
+  .finger{font-size:35px;position:absolute;animation:tap 3s infinite}
+  
+  /* iOS動畫：點分享 -> 加入書籤 */
+  .ios .finger{left:180px;top:410px;animation-name:tapIOS}
+  @keyframes tapIOS{
+    0%,100%{left:180px;top:410px;opacity:0} /* 等待 */
+    10%{opacity:1} /* 出現 */
+    20%{top:405px} /* 點一下 */
+    30%{top:410px}
+    40%{left:120px;top:200px} /* 移到中間點加入書籤 */
+    50%{top:195px}
+    60%{top:200px}
+    70%{left:120px;top:350px} /* 移到網址列編輯 */
+    80%{top:345px}
+    90%{top:350px}
+  }
+
+  /* Android動畫：點3點 -> 加入書籤 */
+  .android .finger{left:200px;top:30px;animation-name:tapAndroid}
+  @keyframes tapAndroid{
+    0%,100%{left:200px;top:30px;opacity:0}
+    10%{opacity:1}
+    20%{top:25px} /* 點3點 */
+    30%{top:30px}
+    40%{left:120px;top:150px} /* 點加入書籤 */
+    50%{top:145px}
+    60%{top:150px}
+    70%{left:120px;top:300px} /* 編輯網址 */
+    80%{top:295px}
+    90%{top:300px}
+  }
+  .tip{color:#38bdf8;margin-top:10px;font-size:14px}
+  .code-box{background:#020617;color:#0f0;padding:10px;border-radius:8px;margin-top:10px;font-size:12px;word-break:break-all}
 </style>
 </head>
 <body>
-<h1>去公告 書籤</h1>
-<p>把下面綠色按鈕直接拖到書籤列即可</p>
+<h1>📱 手機版 去公告書籤</h1>
 
-<a class="btn" href="javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();">拖我到書籤列</a>
-
-<div class="demo">
-  <div class="bookmark-bar"><div class="bookmark"></div><div class="bookmark"></div></div>
-  <div class="hand">👆</div>
-  <div class="arrow">⬇ 往上拖到書籤列 ⬇</div>
+<!-- iOS -->
+<div class="section ios">
+  <h2>iPhone Safari / Chrome</h2>
+  <div class="phone">
+    <div class="screen">
+      <div class="bar"><div class="icon">⬅</div><div>去公告</div><div class="icon">⤴</div></div>
+      <div style="padding:20px;color:#000">打開教學頁</div>
+      <div class="finger">👆</div>
+    </div>
+  </div>
+  <div class="tip">1. 點下方分享 ⤴ → 2. 加入書籤 → 3. 編輯並貼上程式碼</div>
+  <div class="code-box">javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</div>
 </div>
 
-<p style="margin-top:20px;font-size:14px;color:#94a3b8">拖過去後，點一下書籤就會自動跳轉並移除公告</p>
+<!-- Android -->
+<div class="section android">
+  <h2>Android Chrome</h2>
+  <div class="phone">
+    <div class="screen">
+      <div class="bar"><div class="icon">⬅</div><div>去公告</div><div class="icon">⋮</div></div>
+      <div style="padding:20px;color:#000">打開教學頁</div>
+      <div class="finger">👆</div>
+    </div>
+  </div>
+  <div class="tip">1. 點右上角 ⋮ → 2. 加入書籤 → 3. 編輯並貼上程式碼</div>
+  <div class="code-box">javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</div>
+</div>
+
 </body>
 </html>
