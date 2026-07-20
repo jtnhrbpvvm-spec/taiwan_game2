@@ -2,50 +2,90 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>去公告 完整安裝教學</title>
 <style>
-  body{font-family:"Microsoft JhengHei",sans-serif;text-align:center;padding:20px;background:#0f172a;color:#fff}
-  h1{margin-bottom:30px;color:#38bdf8}
-  .wrap{display:flex;flex-wrap:wrap;justify-content:center;gap:20px}
-  .section{background:#1e293b;border-radius:16px;padding:20px;width:320px;flex-shrink:0}
-  h2{color:#22c55e;margin-top:0;font-size:18px}
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft JhengHei",sans-serif;text-align:center;padding:15px;background:#0f172a;color:#fff;margin:0}
+  h1{margin-bottom:20px;color:#38bdf8;font-size:20px}
+  .section{background:#1e293b;border-radius:16px;padding:15px;margin-bottom:20px;border:1px solid #334155}
+  h2{color:#22c55e;margin:0 0 8px;font-size:16px}
   
   /* 按鈕 */
-  .btn{display:inline-block;padding:14px 24px;background:#22c55e;color:#000;text-decoration:none;border-radius:12px;font-weight:bold;font-size:15px;margin:10px 0}
-  .btn:hover{background:#4ade80}
-  .copy-btn{padding:8px 16px;background:#38bdf8;color:#000;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;width:100%}
-  .copy-btn:hover{background:#0ea5e9}
+  .btn{display:inline-block;padding:14px 24px;background:#22c55e;color:#000;text-decoration:none;border-radius:12px;font-weight:bold;font-size:16px;margin:10px 0}
+  .btn:active{background:#4ade80}
+  .copy-btn{padding:10px 16px;background:#38bdf8;color:#000;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;width:100%;font-size:14px}
   .copy-ok{color:#4ade80;font-size:13px;margin-top:5px;height:18px}
 
-  /* 電腦動畫 */
-  .demo{margin-top:15px;padding:15px;background:#0f172a;border-radius:12px;position:relative;height:160px;overflow:hidden}
-  .bookmark-bar{height:35px;background:#334155;border-radius:8px;display:flex;align-items:center;padding:0 8px;gap:6px;margin-bottom:12px;border:2px dashed #475569}
+  /* 電腦示意圖 改成靜態圖，手機才不會消失 */
+  .demo{margin:15px auto;padding:15px;background:#0f172a;border-radius:12px;max-width:300px}
+  .bookmark-bar{height:35px;background:#334155;border-radius:8px;display:flex;align-items:center;padding:0 8px;gap:6px;margin-bottom:10px;border:2px dashed #475569}
   .bookmark{width:60px;height:18px;background:#475569;border-radius:5px}
-  .hand{font-size:35px;position:absolute;left:50%;bottom:35px;transform:translateX(-50%);animation:dragUp 2.5s infinite}
-  @keyframes dragUp{0%{bottom:35px;opacity:0}20%{bottom:35px;opacity:1}60%{bottom:100px;opacity:1}80%{bottom:100px}100%{bottom:35px;opacity:0}}
-  .tip{color:#38bdf8;font-size:13px;margin-top:8px}
+  .arrow{font-size:24px;color:#38bdf8;animation:bounce 1.5s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
   /* 手機 */
-  .phone{width:200px;height:380px;background:#000;border-radius:30px;margin:10px auto;padding:10px;border:5px solid #334155}
-  .screen{width:100%;height:100%;background:#fff;border-radius:22px;overflow:hidden;position:relative;color:#000;font-size:12px}
+  .phone{width:200px;height:360px;background:#000;border-radius:30px;margin:10px auto;padding:10px;border:5px solid #334155}
+  .screen{width:100%;height:100%;background:#fff;border-radius:22px;overflow:hidden;color:#000;font-size:12px}
   .bar{height:40px;background:#f1f5f9;display:flex;align-items:center;justify-content:space-around}
-  .finger{font-size:28px;position:absolute;animation:tap 3s infinite}
-  .ios .finger{left:145px;top:330px;animation-name:tapIOS}
-  @keyframes tapIOS{0%,100%{opacity:0}10%{opacity:1}20%{top:325px}30%{top:330px}40%{left:100px;top:160px}50%{top:155px}60%{top:160px}70%{left:100px;top:270px}80%{top:265px}90%{top:270px}}
-  .android .finger{left:165px;top:20px;animation-name:tapAndroid}
-  @keyframes tapAndroid{0%,100%{opacity:0}10%{opacity:1}20%{top:15px}30%{top:20px}40%{left:100px;top:115px}50%{top:110px}60%{top:115px}70%{left:100px;top:235px}80%{top:230px}90%{top:235px}}
   
   /* 程式碼框 */
-  textarea{width:92%;height:70px;border-radius:8px;padding:6px;margin-top:8px;background:#020617;color:#0f0;border:1px solid #334155;font-size:10px;resize:none;word-break:break-all}
+  textarea{width:100%;height:70px;border-radius:8px;padding:8px;margin-top:8px;background:#020617;color:#0f0;border:1px solid #334155;font-size:10px;resize:none}
 </style>
 </head>
 <body>
 <h1>📦 去公告書籤 3平台安裝教學</h1>
 
-<div class="wrap">
-
 <!-- 1. 電腦版 -->
 <div class="section">
   <h2>💻 電腦版 Chrome / Edge</h2>
-  <p style="font-size:12px;color:#94a3b8">直接拖曳安裝</p>
-  <a class="btn" href="javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').for
+  <p style="font-size:12px;color:#94a3b8;margin:5px 0">直接拖曳安裝</p>
+  <a class="btn" href="javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();">拖我到書籤列</a>
+  
+  <div class="demo">
+    <div class="bookmark-bar"><div class="bookmark"></div><div class="bookmark"></div></div>
+    <div class="arrow">⬆</div>
+    <div style="font-size:13px;color:#38bdf8">按住按鈕往上拖</div>
+  </div>
+
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<!-- 2. iOS -->
+<div class="section">
+  <h2>📱 iPhone Safari / Chrome</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:5px 0">點分享→加入書籤→編輯</p>
+  <div class="phone"><div class="screen"><div class="bar"><div>⬅</div><div>去公告</div><div>⤴</div></div><div style="padding:12px">打開此教學頁</div></div></div>
+  <div style="font-size:13px;color:#38bdf8;margin:8px 0">1. 點下方分享 ⤴ 2. 加入書籤 3. 編輯貼上</div>
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<!-- 3. Android -->
+<div class="section">
+  <h2>📱 Android Chrome</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:5px 0">點3點→加入書籤→編輯</p>
+  <div class="phone"><div class="screen"><div class="bar"><div>⬅</div><div>去公告</div><div>⋮</div></div><div style="padding:12px">打開此教學頁</div></div></div>
+  <div style="font-size:13px;color:#38bdf8;margin:8px 0">1. 點右上角 ⋮ 2. 加入書籤 3. 編輯貼上</div>
+  <button class="copy-btn" onclick="copyCode(this)">📋 一鍵複製程式碼</button>
+  <div class="copy-ok"></div>
+  <textarea onclick="this.select()" readonly>javascript:(function(){ location.href='https://shines871.github.io/idle-lineage-class/'; setTimeout(()=>{ document.querySelectorAll('[class*=announce],[id*=announce],.modal,.popup,.overlay').forEach(el=>el.remove()); },1000); })();</textarea>
+</div>
+
+<script>
+function copyCode(btn){
+  const textarea = btn.nextElementSibling.nextElementSibling;
+  textarea.select();
+  navigator.clipboard.writeText(textarea.value).then(()=>{
+    btn.nextElementSibling.innerText = "✅ 已複製！";
+    setTimeout(()=>{btn.nextElementSibling.innerText = ""}, 2000);
+  }).catch(()=>{
+    btn.nextElementSibling.innerText = "⚠️ 請長按文字框複製";
+  });
+}
+</script>
+</body>
+</html>
