@@ -37,19 +37,74 @@
 
 <h2>🗂️ 圖鑑資料更新工具</h2>
 <div class="card">
-  <p style="font-size:13px; color:#9ca3af; margin:0;">
-    當「00-data.js」「15-cards.js」等遊戲資料檔更新後，用這支工具把新內容同步進「存檔修改.html」，不用每次都重新整支手動比對。<br>
-    分兩種情況：<b>直接對照合併</b>（ITEM_DB、WEAPON_TAGS、EQUIP_CATEGORIES 這種兩邊路徑內容一致的表）用下方「① 通用合併」；
-    <b>需要重新計算</b>（卡片圖鑑怪物清單、輔助狀態技能清單，這些是從好幾個來源掃描/篩選出來的衍生資料）用「② 卡片圖鑑清單產生器」或「③ 輔助狀態技能清單產生器」，
-    產生後一樣丟回①合併進存檔修改.html。
+  <p style="font-size:13px; color:#9ca3af; margin:0 0 10px;">
+    當「00-data.js」等遊戲資料檔更新後，用這支工具把新內容同步進「存檔修改.html」。<br>
+    <b>直接對照合併</b>用「① 通用合併」；<b>需要重新計算/轉換的衍生資料</b>（卡片圖鑑清單、輔助狀態技能清單、寵物圖鑑清單）用「② 產生器」一次載入檔案、一次下載，產生後一樣丟回①合併。
   </p>
+  <table style="width:100%; border-collapse:collapse; font-size:12.5px; color:#cbd5e1;">
+    <thead><tr style="color:#94a3b8; text-align:left;">
+      <th style="padding:4px 8px 4px 0;">收藏面板項目</th>
+      <th style="padding:4px 8px;">存檔修改.html 變數</th>
+      <th style="padding:4px 8px;">需要哪些原始碼檔案</th>
+      <th style="padding:4px 0;">怎麼更新</th>
+    </tr></thead>
+    <tbody>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">🎴 怪物（卡片圖鑑）</td>
+        <td style="padding:5px 8px;"><code>CARD_DEX_LIST</code></td>
+        <td style="padding:5px 8px;">00-data.js（DB.mobs、DB.maps）＋ 15-cards.js（CARD_REGIONS）</td>
+        <td style="padding:5px 0;">要掃全部地圖/怪物，用「② 產生器」重新計算</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">🗡️ 裝備收集冊</td>
+        <td style="padding:5px 8px;"><code>ITEM_DB</code>＋<code>EQUIP_CATEGORIES</code></td>
+        <td style="padding:5px 8px;">00-data.js（DB.items）＋ 16-equip-book.js（EQUIP_CATEGORIES）</td>
+        <td style="padding:5px 0;">「① 通用合併」直接合併這兩個就好</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">🧰 道具收集冊</td>
+        <td style="padding:5px 8px;"><code>ITEM_DB</code>＋<code>MISC_CATEGORIES</code></td>
+        <td style="padding:5px 8px;">00-data.js（DB.items）＋ 18-misc-book.js（MISC_CATEGORIES）</td>
+        <td style="padding:5px 0;">「① 通用合併」直接合併這兩個就好</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">🏺 遺物收集冊</td>
+        <td style="padding:5px 8px;"><code>ITEM_DB</code>＋<code>EQUIP_CATEGORIES</code>（沿用裝備收集冊的分類）</td>
+        <td style="padding:5px 8px;">跟裝備收集冊同一組檔案；只要 ITEM_DB 裡遺物道具有標記 relic 相關欄位就會自動被抓進遺物收集冊</td>
+        <td style="padding:5px 0;">不用另外處理，更新上面兩項就會一起生效</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">（其他 UI）輔助狀態技能</td>
+        <td style="padding:5px 8px;"><code>BUFF_SKILL_DB</code></td>
+        <td style="padding:5px 8px;">00-data.js（DB.skills、DB.items）</td>
+        <td style="padding:5px 0;">用「② 產生器」重新計算</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">武器分類標籤</td>
+        <td style="padding:5px 8px;"><code>WEAPON_TAGS</code></td>
+        <td style="padding:5px 8px;">10-ui-tabs.js</td>
+        <td style="padding:5px 0;">「① 通用合併」直接合併</td>
+      </tr>
+      <tr style="border-top:1px solid #2a2e38;">
+        <td style="padding:5px 8px 5px 0;">寵物圖鑑</td>
+        <td style="padding:5px 8px;"><code>PET_FORM_LIST</code></td>
+        <td style="padding:5px 8px;">22-pets.js（PET_BOOK，變數名不同）</td>
+        <td style="padding:5px 0;">資料結構跟遊戲裡的 PET_BOOK 不同，用「② 產生器」轉換</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="hint" style="margin-top:8px;">
+    🔎 裝備／道具／遺物三本收集冊「分類索引」（EQUIP_CAT_ITEMS／MISC_CAT_ITEMS／RELIC_CAT_ITEMS）不用合併——存檔修改.html自己內建
+    <code>_ensureEquipIndex()</code>／<code>_ensureMiscIndex()</code>／<code>_ensureRelicIndex()</code>，每次開啟都會用當下的 ITEM_DB＋EQUIP_CATEGORIES／MISC_CATEGORIES 自動重算一次分類。
+  </div>
 </div>
+
 
 <div class="tabbar">
   <button class="active" onclick="showTab('merge', this)">① 通用合併</button>
-  <button onclick="showTab('card', this)">② 卡片圖鑑清單產生器</button>
-  <button onclick="showTab('buff', this)">③ 輔助狀態技能清單產生器</button>
+  <button onclick="showTab('gen', this)">② 產生器（一次讀取全部來源檔）</button>
 </div>
+
 
 <!-- ══════════════════════ ① 通用合併（沿用你原本的合併工具邏輯，未更動核心行為） ══════════════════════ -->
 <div id="tab-merge" class="tabpage active">
@@ -66,10 +121,12 @@
         <button onclick="setPresetA('ITEM_DB')">ITEM_DB</button>
         <button onclick="setPresetA('WEAPON_TAGS')">WEAPON_TAGS</button>
         <button onclick="setPresetA('EQUIP_CATEGORIES')">EQUIP_CATEGORIES</button>
+        <button onclick="setPresetA('MISC_CATEGORIES')">MISC_CATEGORIES</button>
         <button onclick="setPresetA('BUFF_SKILL_DB')">BUFF_SKILL_DB</button>
         <button onclick="setPresetA('CARD_DEX_LIST')">CARD_DEX_LIST</button>
+        <button onclick="setPresetA('PET_FORM_LIST')">PET_FORM_LIST</button>
       </div>
-      <div class="hint">存檔修改.html 裡常用的幾個表已經幫你放快速按鈕，點一下自動帶入。</div>
+      <div class="hint">已對照實際的存檔修改.html重新整理過：掉落表/商店清單那幾個按鈕這份檔案根本沒用到，已移除；EQUIP_CAT_ITEMS／MISC_CAT_ITEMS／RELIC_CAT_ITEMS 這三組「分類索引」也拿掉了——存檔修改.html裡有自帶的 <code>_ensureEquipIndex()</code>／<code>_ensureMiscIndex()</code>／<code>_ensureRelicIndex()</code>，每次打開都會自動用 ITEM_DB＋EQUIP_CATEGORIES／MISC_CATEGORIES 重新算一次，不需要、也不應該手動合併進去。真正需要同步的只有：ITEM_DB（新道具/裝備/遺物）、EQUIP_CATEGORIES／MISC_CATEGORIES（新分類，很少變動）。</div>
       <input type="file" id="fileA" accept=".js,.html,.txt" style="margin-top:8px;">
       <div id="statusA" style="margin-top:8px; font-size:13px;"></div>
     </div>
@@ -84,11 +141,14 @@
         <label>變數路徑</label>
         <input type="text" id="varB" value="DB.items" placeholder="例如: DB 或 DB.items">
         <div class="preset-row">
-          <button onclick="setPresetB('DB.items')">DB.items（00-data.js）</button>
-          <button onclick="setPresetB('WEAPON_TAGS')">WEAPON_TAGS（10-ui-tabs.js）</button>
-          <button onclick="setPresetB('EQUIP_CATEGORIES')">EQUIP_CATEGORIES（16-equip-book.js）</button>
-          <button onclick="setPresetB('BUFF_SKILL_DB')">BUFF_SKILL_DB（③產生的檔案）</button>
+          <button onclick="setPresetB('ITEM_DB')">ITEM_DB（②產生的檔案）</button>
+          <button onclick="setPresetB('DB.items')">DB.items（直接讀 00-data.js 原始檔）</button>
+          <button onclick="setPresetB('WEAPON_TAGS')">WEAPON_TAGS（10-ui-tabs.js／②產生的檔案）</button>
+          <button onclick="setPresetB('EQUIP_CATEGORIES')">EQUIP_CATEGORIES（16-equip-book.js／②產生的檔案）</button>
+          <button onclick="setPresetB('MISC_CATEGORIES')">MISC_CATEGORIES（18-misc-book.js／②產生的檔案）</button>
+          <button onclick="setPresetB('BUFF_SKILL_DB')">BUFF_SKILL_DB（②產生的檔案）</button>
           <button onclick="setPresetB('CARD_DEX_LIST')">CARD_DEX_LIST（②產生的檔案）</button>
+          <button onclick="setPresetB('PET_FORM_LIST')">PET_FORM_LIST（②產生的檔案）</button>
         </div>
         <input type="file" id="fileB" accept=".js,.html,.txt" style="margin-top:8px;">
       </div>
@@ -107,6 +167,7 @@
           </div>
         </div>
         <button class="secondary" style="margin-top:8px;" onclick="ghListFiles()">列出檔案</button>
+        <span id="ghVarAHint" class="hint" style="display:inline-block; margin-left:6px;"></span>
         <div id="ghListStatus" class="hint"></div>
 
         <div style="margin-top:10px;">
@@ -114,6 +175,7 @@
           <select id="ghFileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelect()">
             <option value="">請先點「列出檔案」</option>
           </select>
+          <div id="ghFileDate" class="hint"></div>
         </div>
         <div style="margin-top:10px;">
           <label>變數路徑</label>
@@ -130,8 +192,9 @@
   <div class="card">
     <h2>3. 合併與下載</h2>
     <p style="font-size:13px; color:#9ca3af;">
-      先按「合併」把檔案B併入檔案A（存在記憶體中，尚未下載）。合併後可以繼續在上方換一個新的檔案B、再按一次「合併」，
-      重複疊加多個檔案B的內容進同一份檔案A；全部合併完成後，再按「下載檔案A」一次輸出最終結果（檔名自動加上 _merged）。
+      先按「合併」把檔案B併入檔案A（存在記憶體中，尚未下載）。合併後想接著合併別的變數，把上方「檔案A路徑」「檔案B路徑」
+      改成下一個變數名稱再按一次「合併」就好——兩邊都不用重新選檔案（檔案B若要換成別的來源檔才需要重新選）；
+      全部合併完成後，再按「下載檔案A」一次輸出最終結果（檔名自動加上 _merged）。
     </p>
     <div style="display:flex; gap:8px;">
       <button id="mergeBtn" disabled>合併（先不下載）</button>
@@ -141,126 +204,217 @@
   </div>
 </div>
 
-<!-- ══════════════════════ ② 卡片圖鑑清單產生器 ══════════════════════ -->
-<div id="tab-card" class="tabpage">
-  <div class="card">
-    <h3>卡片圖鑑（怪物收集冊）清單重新計算</h3>
-    <p style="font-size:13px; color:#9ca3af; margin:0 0 12px;">
-      重現 <code>15-cards.js</code> 的 <code>buildCardIndex()</code> 邏輯：掃描 <code>CARD_REGIONS</code> 對應的每張地圖池
-      （<code>DB.maps</code>），查出每隻怪物（<code>DB.mobs</code>），排除「血盟／建築」種族，取得完整可收集怪物清單。
-    </p>
-    <div class="flow-step"><div class="flow-num">1</div><div style="flex:1">
-      <label>00-data.js（提供 DB.mobs、DB.maps）</label>
-      <div class="tabbar" style="margin-bottom:10px;">
-        <button class="active" id="card1ModeBtnUpload" onclick="setSourceMode('card1','upload')">📁 上傳檔案</button>
-        <button id="card1ModeBtnGithub" onclick="setSourceMode('card1','github')">🌐 從 GitHub 讀取</button>
-      </div>
-      <div id="card1UploadMode">
-        <input type="file" id="cardFile1" accept=".js,.txt">
-      </div>
-      <div id="card1GithubMode" style="display:none">
-        <label>GitHub 專案（使用者/專案）</label>
-        <input type="text" id="card1Repo" value="shines871/idle-lineage-class">
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <div style="flex:1"><label>分支</label><input type="text" id="card1Branch" value="main"></div>
-          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="card1Folder" value="js"></div>
-        </div>
-        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('card1')">列出檔案</button>
-        <div id="card1ListStatus" class="hint"></div>
-        <div style="margin-top:10px;">
-          <label>選擇檔案</label>
-          <select id="card1FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
-            <option value="">請先點「列出檔案」</option>
-          </select>
-        </div>
-        <button style="margin-top:8px;" onclick="ghLoadFileFor('card1', parseCardFile1)">讀取此檔案</button>
-        <div id="card1GhStatus" class="hint"></div>
-        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
-      </div>
-      <div id="cardStatus1" class="hint"></div>
-    </div></div>
-    <div class="flow-step"><div class="flow-num">2</div><div style="flex:1">
-      <label>15-cards.js（提供 CARD_REGIONS）</label>
-      <div class="tabbar" style="margin-bottom:10px;">
-        <button class="active" id="card2ModeBtnUpload" onclick="setSourceMode('card2','upload')">📁 上傳檔案</button>
-        <button id="card2ModeBtnGithub" onclick="setSourceMode('card2','github')">🌐 從 GitHub 讀取</button>
-      </div>
-      <div id="card2UploadMode">
-        <input type="file" id="cardFile2" accept=".js,.txt">
-      </div>
-      <div id="card2GithubMode" style="display:none">
-        <label>GitHub 專案（使用者/專案）</label>
-        <input type="text" id="card2Repo" value="shines871/idle-lineage-class">
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <div style="flex:1"><label>分支</label><input type="text" id="card2Branch" value="main"></div>
-          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="card2Folder" value="js"></div>
-        </div>
-        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('card2')">列出檔案</button>
-        <div id="card2ListStatus" class="hint"></div>
-        <div style="margin-top:10px;">
-          <label>選擇檔案</label>
-          <select id="card2FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
-            <option value="">請先點「列出檔案」</option>
-          </select>
-        </div>
-        <button style="margin-top:8px;" onclick="ghLoadFileFor('card2', parseCardFile2)">讀取此檔案</button>
-        <div id="card2GhStatus" class="hint"></div>
-        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
-      </div>
-      <div id="cardStatus2" class="hint"></div>
-    </div></div>
-    <div class="flow-step"><div class="flow-num">3</div><div>
-      <button id="cardBuildBtn" disabled onclick="buildCardDexList()">重新計算並下載 CARD_DEX_LIST.js</button>
-      <div class="hint">下載後，回到「① 通用合併」，檔案A 選存檔修改.html（路徑 CARD_DEX_LIST）、檔案B 選這個下載的檔案（路徑 CARD_DEX_LIST），合併即可。</div>
-    </div></div>
-    <div id="cardLog" class="log" style="margin-top:8px;"></div>
+<!-- ══════════════════════ ② 產生器（一次讀取所有來源檔，一次下載全部要合併的內容） ══════════════════════ -->
+<div id="tab-gen" class="tabpage">
+  <div class="card" style="font-size:13px; color:#9ca3af;">
+    下面 A~F 六個檔案欄位都是<b>可選的</b>，要更新哪些就載入對應的檔案，缺的會跳過、不影響其他項目。
+    A~C（<code>CARD_DEX_LIST</code>／<code>BUFF_SKILL_DB</code>／<code>PET_FORM_LIST</code>）需要重新計算或轉換格式；
+    D~F（<code>WEAPON_TAGS</code>／<code>EQUIP_CATEGORIES</code>／<code>MISC_CATEGORIES</code>）跟 A 的 <code>ITEM_DB</code> 一樣，
+    來源檔裡本來就是完整資料，只是原封不動包進下載檔案，方便一次帶去①合併，不用分開存七個檔案。
+    裝備／道具／遺物三本收集冊本身不需要另外產生索引：存檔修改.html 內建 <code>_ensureEquipIndex()</code>／<code>_ensureMiscIndex()</code>／<code>_ensureRelicIndex()</code>，
+    每次開啟都會自己用 <b>ITEM_DB</b> ＋ <b>EQUIP_CATEGORIES</b>／<b>MISC_CATEGORIES</b> 重新算分類，只要這三項是最新的就好。
   </div>
-</div>
 
-<!-- ══════════════════════ ② 輔助狀態技能清單產生器 ══════════════════════ -->
-<div id="tab-buff" class="tabpage">
   <div class="card">
-    <h3>輔助狀態（buff）清單重新計算</h3>
-    <p style="font-size:13px; color:#9ca3af; margin:0 0 12px;">
-      從 <code>00-data.js</code> 掃描兩種來源：<code>DB.skills</code> 裡 <code>type:"buff"</code> 的技能，
-      以及 <code>DB.items</code> 裡 <code>type:"pot"</code> 且有 <code>eff</code> 欄位的藥水／卷軸（用 eff 代碼當 key，
-      因為存檔內 player.buffs 是用這個代碼記錄，不是物品 id）。
-    </p>
-    <div class="flow-step"><div class="flow-num">1</div><div style="flex:1">
-      <label>00-data.js（提供 DB.skills、DB.items）</label>
+    <h3>📂 步驟1：載入原始碼檔案（依需要選填）</h3>
+    <div class="flow-step"><div class="flow-num">A</div><div style="flex:1">
+      <label>00-data.js（提供 DB.mobs／DB.maps／DB.skills／DB.items —— 卡片圖鑑、輔助狀態都要用到，DB.items 同時直接當作 ITEM_DB 一起包進下載檔案）</label>
       <div class="tabbar" style="margin-bottom:10px;">
-        <button class="active" id="buff1ModeBtnUpload" onclick="setSourceMode('buff1','upload')">📁 上傳檔案</button>
-        <button id="buff1ModeBtnGithub" onclick="setSourceMode('buff1','github')">🌐 從 GitHub 讀取</button>
+        <button class="active" id="gen1ModeBtnUpload" onclick="setSourceMode('gen1','upload')">📁 上傳檔案</button>
+        <button id="gen1ModeBtnGithub" onclick="setSourceMode('gen1','github')">🌐 從 GitHub 讀取</button>
       </div>
-      <div id="buff1UploadMode">
-        <input type="file" id="buffFile1" accept=".js,.txt">
+      <div id="gen1UploadMode">
+        <input type="file" id="genFile1" accept=".js,.txt">
       </div>
-      <div id="buff1GithubMode" style="display:none">
+      <div id="gen1GithubMode" style="display:none">
         <label>GitHub 專案（使用者/專案）</label>
-        <input type="text" id="buff1Repo" value="shines871/idle-lineage-class">
+        <input type="text" id="gen1Repo" value="shines871/idle-lineage-class">
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <div style="flex:1"><label>分支</label><input type="text" id="buff1Branch" value="main"></div>
-          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="buff1Folder" value="js"></div>
+          <div style="flex:1"><label>分支</label><input type="text" id="gen1Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen1Folder" value="js"></div>
         </div>
-        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('buff1')">列出檔案</button>
-        <div id="buff1ListStatus" class="hint"></div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen1')">列出檔案</button>
+        <div id="gen1ListStatus" class="hint"></div>
         <div style="margin-top:10px;">
           <label>選擇檔案</label>
-          <select id="buff1FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;">
+          <select id="gen1FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen1')">
             <option value="">請先點「列出檔案」</option>
           </select>
+          <div id="gen1FileDate" class="hint"></div>
         </div>
-        <button style="margin-top:8px;" onclick="ghLoadFileFor('buff1', parseBuffFile1)">讀取此檔案</button>
-        <div id="buff1GhStatus" class="hint"></div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen1', parseGenFile1)">讀取此檔案</button>
+        <div id="gen1GhStatus" class="hint"></div>
         <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
       </div>
-      <div id="buffStatus1" class="hint"></div>
+      <div id="genStatus1" class="hint"></div>
     </div></div>
-    <div class="flow-step"><div class="flow-num">2</div><div>
-      <button id="buffBuildBtn" disabled onclick="buildBuffSkillDB()">重新計算並下載 BUFF_SKILL_DB.js</button>
-      <div class="hint">下載後，回到「① 通用合併」，檔案A 選存檔修改.html（路徑 BUFF_SKILL_DB）、檔案B 選這個下載的檔案（路徑 BUFF_SKILL_DB），合併即可。</div>
+    <div class="flow-step"><div class="flow-num">B</div><div style="flex:1">
+      <label>15-cards.js（提供 CARD_REGIONS —— 卡片圖鑑要用到）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="gen2ModeBtnUpload" onclick="setSourceMode('gen2','upload')">📁 上傳檔案</button>
+        <button id="gen2ModeBtnGithub" onclick="setSourceMode('gen2','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="gen2UploadMode">
+        <input type="file" id="genFile2" accept=".js,.txt">
+      </div>
+      <div id="gen2GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="gen2Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="gen2Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen2Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen2')">列出檔案</button>
+        <div id="gen2ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="gen2FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen2')">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+          <div id="gen2FileDate" class="hint"></div>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen2', parseGenFile2)">讀取此檔案</button>
+        <div id="gen2GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="genStatus2" class="hint"></div>
     </div></div>
-    <div id="buffLog" class="log" style="margin-top:8px;"></div>
+    <div class="flow-step"><div class="flow-num">C</div><div style="flex:1">
+      <label>22-pets.js（提供 PET_BOOK —— 寵物圖鑑要用到；⚠️ 檔案裡的變數叫 PET_BOOK，跟存檔修改.html 用的 PET_FORM_LIST 結構不同，下面會自動轉換）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="gen3ModeBtnUpload" onclick="setSourceMode('gen3','upload')">📁 上傳檔案</button>
+        <button id="gen3ModeBtnGithub" onclick="setSourceMode('gen3','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="gen3UploadMode">
+        <input type="file" id="genFile3" accept=".js,.txt">
+      </div>
+      <div id="gen3GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="gen3Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="gen3Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen3Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen3')">列出檔案</button>
+        <div id="gen3ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="gen3FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen3')">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+          <div id="gen3FileDate" class="hint"></div>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen3', parseGenFile3)">讀取此檔案</button>
+        <div id="gen3GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="genStatus3" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">D</div><div style="flex:1">
+      <label>（可選）10-ui-tabs.js（提供 WEAPON_TAGS —— 直接是完整資料，不用另外計算，載了就順便包進下載檔案）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="gen4ModeBtnUpload" onclick="setSourceMode('gen4','upload')">📁 上傳檔案</button>
+        <button id="gen4ModeBtnGithub" onclick="setSourceMode('gen4','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="gen4UploadMode">
+        <input type="file" id="genFile4" accept=".js,.txt">
+      </div>
+      <div id="gen4GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="gen4Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="gen4Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen4Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen4')">列出檔案</button>
+        <div id="gen4ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="gen4FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen4')">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+          <div id="gen4FileDate" class="hint"></div>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen4', parseGenFile4)">讀取此檔案</button>
+        <div id="gen4GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="genStatus4" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">E</div><div style="flex:1">
+      <label>（可選）16-equip-book.js（提供 EQUIP_CATEGORIES —— 直接是完整資料，不用另外計算，載了就順便包進下載檔案）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="gen5ModeBtnUpload" onclick="setSourceMode('gen5','upload')">📁 上傳檔案</button>
+        <button id="gen5ModeBtnGithub" onclick="setSourceMode('gen5','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="gen5UploadMode">
+        <input type="file" id="genFile5" accept=".js,.txt">
+      </div>
+      <div id="gen5GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="gen5Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="gen5Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen5Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen5')">列出檔案</button>
+        <div id="gen5ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="gen5FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen5')">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+          <div id="gen5FileDate" class="hint"></div>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen5', parseGenFile5)">讀取此檔案</button>
+        <div id="gen5GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="genStatus5" class="hint"></div>
+    </div></div>
+    <div class="flow-step"><div class="flow-num">F</div><div style="flex:1">
+      <label>（可選）18-misc-book.js（提供 MISC_CATEGORIES —— 直接是完整資料，不用另外計算，載了就順便包進下載檔案）</label>
+      <div class="tabbar" style="margin-bottom:10px;">
+        <button class="active" id="gen6ModeBtnUpload" onclick="setSourceMode('gen6','upload')">📁 上傳檔案</button>
+        <button id="gen6ModeBtnGithub" onclick="setSourceMode('gen6','github')">🌐 從 GitHub 讀取</button>
+      </div>
+      <div id="gen6UploadMode">
+        <input type="file" id="genFile6" accept=".js,.txt">
+      </div>
+      <div id="gen6GithubMode" style="display:none">
+        <label>GitHub 專案（使用者/專案）</label>
+        <input type="text" id="gen6Repo" value="shines871/idle-lineage-class">
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="flex:1"><label>分支</label><input type="text" id="gen6Branch" value="main"></div>
+          <div style="flex:1"><label>資料夾路徑</label><input type="text" id="gen6Folder" value="js"></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;" onclick="ghListFilesFor('gen6')">列出檔案</button>
+        <div id="gen6ListStatus" class="hint"></div>
+        <div style="margin-top:10px;">
+          <label>選擇檔案</label>
+          <select id="gen6FileSel" style="background:#0f1115; border:1px solid #2a2e38; border-radius:8px; padding:8px; width:100%; color:#e6e6e6;" onchange="onGhFileSelectFor('gen6')">
+            <option value="">請先點「列出檔案」</option>
+          </select>
+          <div id="gen6FileDate" class="hint"></div>
+        </div>
+        <button style="margin-top:8px;" onclick="ghLoadFileFor('gen6', parseGenFile6)">讀取此檔案</button>
+        <div id="gen6GhStatus" class="hint"></div>
+        <div class="hint">若瀏覽器擋下跨網域請求，改用「📁 上傳檔案」把同一份檔案手動上傳即可，效果完全一樣。</div>
+      </div>
+      <div id="genStatus6" class="hint"></div>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <h3>🚀 步驟2：一次產生＋下載</h3>
+    <p style="font-size:13px; color:#9ca3af; margin:0 0 12px;">
+      只會計算「已經載入檔案、資料足夠」的項目，缺的會跳過並在log說明。全部載齊的話，下載檔案會一次包含
+      <code>ITEM_DB</code>／<code>WEAPON_TAGS</code>／<code>EQUIP_CATEGORIES</code>／<code>MISC_CATEGORIES</code>／<code>CARD_DEX_LIST</code>／<code>BUFF_SKILL_DB</code>／<code>PET_FORM_LIST</code> 七個 const，
+      到「① 通用合併」時只要選這一個檔案當檔案B，改變路徑文字就能依序合併完全部，中間不用重選檔案。
+    </p>
+    <button id="genBuildBtn" disabled onclick="buildAllDexLists()">重新計算並下載全部</button>
+    <div class="hint">下載後，回到「① 通用合併」，載入檔案A（存檔修改.html）一次、檔案B選這個下載的檔案一次，接著只要改變上方「檔案A路徑」與「檔案B路徑」文字（例如都改成 WEAPON_TAGS）再點「合併」，兩邊都不用重新選檔案，依序合併完 ITEM_DB／WEAPON_TAGS／EQUIP_CATEGORIES／MISC_CATEGORIES／CARD_DEX_LIST／BUFF_SKILL_DB／PET_FORM_LIST 之後再下載一次就好。</div>
+    <div id="genLog" class="log" style="margin-top:8px;"></div>
   </div>
 </div>
 
@@ -293,7 +447,15 @@ function extractDB(content, varPath) {
   const rootVar = varPath.split('.')[0];
   const declRegex = new RegExp(`(const|let|var)\\s+${rootVar}\\s*=`);
   const declMatch = content.match(declRegex);
-  if (!declMatch) throw new Error(`找不到 ${rootVar} = 定義`);
+  if (!declMatch) {
+    const allDecls = [...content.matchAll(/(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=/g)]
+      .map(m => m[1]);
+    const uniqueDecls = [...new Set(allDecls)];
+    const suggestion = uniqueDecls.length
+      ? `這個檔案裡實際宣告的變數有：${uniqueDecls.join('、')}`
+      : '這個檔案裡沒有找到任何 const/let/var 宣告';
+    throw new Error(`找不到 ${rootVar} = 定義。${suggestion}`);
+  }
 
   const startIdx = declMatch.index + declMatch[0].length;
   let i = startIdx;
@@ -327,8 +489,16 @@ function extractDB(content, varPath) {
   const fullMatchEnd = i;
 
   try {
-    const cleanStr = objectStr.replace(/,(\s*[}\]])/g, '$1');
-    const rootObj = new Function(`return ${cleanStr}`)();
+    let rootObj;
+    if (rootVar === 'DB') {
+      // ⚠️ DB 這個根變數（00-data.js）除了開頭的字面量宣告，檔案後段還有像 initPrideTalismans()
+      // 這種 IIFE 會用迴圈程式化把新項目塞進 DB.items（例如傲慢之塔傳送符/支配符/移動卷軸系列），
+      // 只解析開頭字面量會完全看不到這些——所以改成「完整執行整個檔案」，抓執行後最終的 DB 內容。
+      rootObj = runFullFileForDB(content);
+    } else {
+      const cleanStr = objectStr.replace(/,(\s*[}\]])/g, '$1');
+      rootObj = new Function(`return ${cleanStr}`)();
+    }
     const targetObj = varPath === rootVar ? rootObj : getByPath(rootObj, varPath.substring(rootVar.length + 1));
     if (targetObj === undefined) throw new Error(`路徑 ${varPath} 不存在`);
     return {
@@ -340,6 +510,21 @@ function extractDB(content, varPath) {
   } catch (e) {
     throw new Error(`${varPath} 解析失敗: ${e.message}`);
   }
+}
+
+// 完整執行 00-data.js（不只解析開頭的 const DB = {...} 字面量），讓 initSetTags()／initPrideTalismans()
+// 這類「檔案載入時就立即執行、會迴圈寫入 DB.items 的 IIFE」也一併跑過，回傳執行後最終的 DB。
+// 檔案裡有些頂層程式碼會摸 document/window/localStorage，但都包在 try/catch 或 typeof 判斷裡，
+// 給安全的假物件就不會噴錯（噴錯也會被檔案自己的 try/catch 吃掉，不影響 DB 的內容）。
+function runFullFileForDB(content) {
+  const stubDoc = {
+    body: null, documentElement: null, readyState: 'complete',
+    getElementById: () => null, createElement: () => ({ style:{}, classList:{add(){},remove(){},toggle(){}}, appendChild(){} }),
+    addEventListener: () => {}, querySelectorAll: () => []
+  };
+  const stubStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {}, length: 0, key: () => null };
+  const fn = new Function('document', 'window', 'localStorage', content + '\n;return DB;');
+  return fn(stubDoc, {}, stubStorage);
 }
 
 function downloadText(text, filename, mime='text/javascript;charset=utf-8') {
@@ -361,6 +546,45 @@ function setSourceMode(prefix, mode){
   document.getElementById(prefix+'GithubMode').style.display = mode==='github' ? '' : 'none';
 }
 
+// ── GitHub 檔案「最後更新日期」查詢（用 commits API 查該路徑最近一次 commit 的時間）──
+// 只在使用者實際選到某個檔案時才查（一次一個檔案），不會對整個資料夾列表逐一查，避免瞬間打爆 GitHub API 的請求額度。
+// 同一個(repo,branch,path)查過一次就快取起來，重複選同一個檔案不會再打第二次 API。
+const ghDateCache = {};
+async function ghFetchFileDate(repo, branch, path){
+  const key = `${repo}|${branch}|${path}`;
+  if (key in ghDateCache) return ghDateCache[key];
+  try {
+    const apiUrl = `https://api.github.com/repos/${repo}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(branch)}&per_page=1`;
+    const res = await fetch(apiUrl);
+    if (!res.ok) { ghDateCache[key] = null; return null; }
+    const data = await res.json();
+    const iso = (Array.isArray(data) && data[0]) ? (data[0].commit?.committer?.date || data[0].commit?.author?.date) : null;
+    ghDateCache[key] = iso || null;
+    return ghDateCache[key];
+  } catch(e) {
+    ghDateCache[key] = null;
+    return null;
+  }
+}
+function formatGhDate(iso){
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+// 查詢並顯示「目前選到的檔案」最後更新日期，dateElId 是要寫入結果的那個 div 的 id
+async function ghShowFileDate(repo, branch, folder, name, dateElId){
+  const el = document.getElementById(dateElId);
+  if (!el) return;
+  if (!name) { el.textContent = ''; return; }
+  el.innerHTML = '查詢最後更新日期中…';
+  const path = folder ? `${folder}/${name}` : name;
+  const iso = await ghFetchFileDate(repo, branch, path);
+  const formatted = formatGhDate(iso);
+  el.innerHTML = formatted ? `🕒 GitHub 上最後更新：${formatted}` : '（查不到最後更新日期）';
+}
+
 async function ghListFilesFor(prefix){
   const repo   = document.getElementById(prefix+'Repo').value.trim();
   const branch = document.getElementById(prefix+'Branch').value.trim() || 'main';
@@ -377,9 +601,19 @@ async function ghListFilesFor(prefix){
     const sel = document.getElementById(prefix+'FileSel');
     sel.innerHTML = files.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
     statusEl.innerHTML = `<span class="ok">找到 ${files.length} 個檔案</span>`;
+    if (files.length) onGhFileSelectFor(prefix);
   } catch(e){
     statusEl.innerHTML = `<span class="err">${e.message}</span>`;
   }
+}
+
+// 下拉選單切換到不同檔案時（或剛列完清單自動選到第一個時）呼叫，查詢並顯示該檔案的最後更新日期
+function onGhFileSelectFor(prefix){
+  const repo   = document.getElementById(prefix+'Repo').value.trim();
+  const branch = document.getElementById(prefix+'Branch').value.trim() || 'main';
+  const folder = document.getElementById(prefix+'Folder').value.trim();
+  const name   = document.getElementById(prefix+'FileSel').value;
+  ghShowFileDate(repo, branch, folder, name, prefix+'FileDate');
 }
 
 // 讀取選好的GitHub檔案內容，成功後把內容字串丟給 onLoaded(content, filename) 去解析
@@ -415,13 +649,39 @@ function showTab(id, el){
   document.getElementById('tab-'+id).classList.add('active');
   el.classList.add('active');
 }
-function setPresetA(v){ document.getElementById('varA').value = v; loadFileA(); }
+function setPresetA(v){ document.getElementById('varA').value = v; extractA(); updateGhVarAHint(); }
 function setPresetB(v){ document.getElementById('varB').value = v; loadFileB(); }
+
+// varA 選了什麼路徑，就在 GitHub 模式提示對應的來源檔案與路徑
+const VARA_TO_GH_HINT = {
+  'ITEM_DB':            { path: 'DB.items',           file: '00-data.js' },
+  'WEAPON_TAGS':        { path: 'WEAPON_TAGS',         file: '10-ui-tabs.js' },
+  'EQUIP_CATEGORIES':   { path: 'EQUIP_CATEGORIES',    file: '16-equip-book.js' },
+  'MISC_CATEGORIES':    { path: 'MISC_CATEGORIES',     file: '18-misc-book.js' },
+};
+// 這些變數是「執行原始碼算出來的結果」或「跟來源檔資料結構不同、需要轉換」，raw fetch 單一檔案拿到的不能直接用，
+// 一定要用「② 產生器」跑過對應邏輯才能拿到正確格式的版本。
+// （裝備/道具/遺物的分類索引 EQUIP_CAT_ITEMS 等不在這裡——存檔修改.html自己在runtime算，不需要合併）
+const GENERATOR_ONLY_VARS = ['BUFF_SKILL_DB', 'CARD_DEX_LIST', 'PET_FORM_LIST'];
+function updateGhVarAHint(){
+  const varA = document.getElementById('varA').value.trim();
+  const hintEl = document.getElementById('ghVarAHint');
+  if(!hintEl) return;
+  const hint = VARA_TO_GH_HINT[varA];
+  if(hint){
+    hintEl.innerHTML = `→ 檔案A選的是 <b style="color:#e6e6e6">${varA}</b>，請選 <b style="color:#22c55e">${hint.file}</b>，路徑填 <b style="color:#22c55e">${hint.path}</b>`;
+  } else if(GENERATOR_ONLY_VARS.includes(varA)){
+    hintEl.innerHTML = `→ ${varA} 不是直接來自 GitHub 上的檔案，請用「② 產生器」產生後改用「📁 上傳檔案」`;
+  } else {
+    hintEl.innerHTML = '';
+  }
+}
+document.getElementById('varA').addEventListener('input', updateGhVarAHint);
 
 // ════════════════════════════════════════════════
 //  ① 通用合併（邏輯與你原本上傳的工具一致）
 // ════════════════════════════════════════════════
-let itemA = null, itemB = null, originalAContent = "", originalAFileName = "檔案A.js";
+let itemA = null, itemB = null, currentAContent = "", originalAFileName = "檔案A.js";
 let itemARange = null, rootObjA = null;
 
 function log(msg, type="") {
@@ -431,22 +691,57 @@ function log(msg, type="") {
   el.scrollTop = el.scrollHeight;
 }
 
-async function loadFileA() {
+// 當載入的是 ITEM_DB／DB.items 時，額外算出遺物／傲慢之塔道具數量附註在狀態列——
+// 讓人不用另外寫程式檢查，畫面上就能直接確認這次載入到的內容裡有沒有抓到遺物。
+// PET_FORM_LIST 則是「分類名稱→[寵物,...]」的結構，主要的項目數字（Object.keys長度）算出來的其實是
+// 分類數（例如3＝基礎/高等/黃金龍），不是寵物數，容易被誤會成只抓到3隻寵物，所以額外把寵物總數也標出來。
+function itemDbBreakdown(varPath, obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return '';
+  if (varPath === 'ITEM_DB' || varPath === 'DB.items') {
+    const ids = Object.keys(obj);
+    const relicCount = ids.filter(id => obj[id] && obj[id].relic === true).length;
+    const prideCount = ids.filter(id => id.startsWith('item_pride_')).length;
+    return `（遺物 ${relicCount} 個、傲慢之塔道具 ${prideCount} 個）`;
+  }
+  if (varPath === 'PET_FORM_LIST') {
+    const cats = Object.keys(obj);
+    const petTotal = cats.reduce((sum, c) => sum + (Array.isArray(obj[c]) ? obj[c].length : 0), 0);
+    return `（${cats.length} 個分類，共 ${petTotal} 隻寵物——上面「項目」數是分類數，不是寵物數）`;
+  }
+  return '';
+}
+
+// 真的選了一個新檔案（跟原本切換varA不同）：從頭讀檔，currentAContent 重置成這個新檔案的原始內容。
+async function onFileAChange() {
   const file = document.getElementById('fileA').files[0];
-  const varPath = document.getElementById('varA').value.trim();
-  if (!file || !varPath) return;
+  if (!file) return;
   originalAFileName = file.name;
+  currentAContent = await readFile(file);
+  mergedFileContent = null;
+  mergedFileName = null;
+  extractA();
+}
+
+// varA的路徑變更：★不重新讀檔★，改用目前累積的 currentAContent 重新解析——
+// 這樣就算前面已經對另一個變數（例如 ITEM_DB）合併過，這裡切去合併第二個變數（例如 WEAPON_TAGS）
+// 也不會把前一次合併的結果沖掉，兩次合併的結果會一起累積在同一份內容裡，最後下載一次就好。
+function onVarAChange() {
+  if (!currentAContent) return;
+  extractA();
+}
+
+function extractA() {
+  const varPath = document.getElementById('varA').value.trim();
+  if (!currentAContent || !varPath) return;
   try {
-    originalAContent = await readFile(file);
-    const res = extractDB(originalAContent, varPath);
+    const res = extractDB(currentAContent, varPath);
     itemA = res.targetObj;
     rootObjA = res.rootObj;
     itemARange = {...res};
     const count = Array.isArray(itemA) ? itemA.length : Object.keys(itemA).length;
-    document.getElementById('statusA').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
-    log(`檔案A ${varPath} 解析成功: ${count} 個項目`, 'ok');
-    mergedFileContent = null;
-    mergedFileName = null;
+    const extra = itemDbBreakdown(varPath, itemA);
+    document.getElementById('statusA').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目${extra}</span>`;
+    log(`檔案A ${varPath} 解析成功: ${count} 個項目${extra}`, 'ok');
     checkDownloadReady();
     checkReady();
   } catch (e) {
@@ -466,8 +761,9 @@ async function loadFileB() {
     const { targetObj } = extractDB(content, varPath);
     itemB = targetObj;
     const count = Array.isArray(itemB) ? itemB.length : Object.keys(itemB).length;
-    document.getElementById('statusB').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目</span>`;
-    log(`檔案B ${varPath} 解析成功: ${count} 個項目`, 'ok');
+    const extra = itemDbBreakdown(varPath, itemB);
+    document.getElementById('statusB').innerHTML = `<span class="ok">已載入 ${varPath}: ${count} 個項目${extra}</span>`;
+    log(`檔案B ${varPath} 解析成功: ${count} 個項目${extra}`, 'ok');
     checkReady();
   } catch (e) {
     document.getElementById('statusB').innerHTML = `<span class="err">${e.message}</span>`;
@@ -477,8 +773,8 @@ async function loadFileB() {
   }
 }
 
-document.getElementById('fileA').addEventListener('change', loadFileA);
-document.getElementById('varA').addEventListener('change', loadFileA);
+document.getElementById('fileA').addEventListener('change', onFileAChange);
+document.getElementById('varA').addEventListener('change', onVarAChange);
 document.getElementById('fileB').addEventListener('change', loadFileB);
 document.getElementById('varB').addEventListener('change', loadFileB);
 
@@ -488,18 +784,19 @@ function setFileBMode(mode){
   document.getElementById('modeBtnGithub').classList.toggle('active', mode==='github');
   document.getElementById('fileBUploadMode').style.display = mode==='upload' ? '' : 'none';
   document.getElementById('fileBGithubMode').style.display = mode==='github' ? '' : 'none';
+  if(mode==='github') updateGhVarAHint();
 }
 
-// 依檔名猜測常見的變數路徑（可手動覆蓋）
+// 依檔名猜測常見的變數路徑（可手動覆蓋）——只列「raw fetch 單一檔案就能直接拿到完整內容」的項目；
+// EQUIP_CAT_ITEMS/MISC_CAT_ITEMS/RELIC_CAT_ITEMS 這類分類索引，存檔修改.html自己在runtime從ITEM_DB+CATEGORIES重算，故意不列在這裡。
 const GH_FILE_VARPATH_HINTS = {
   '00-data.js': 'DB.items',
-  '01-drops-config.js': 'DROPS_CONFIG',
   '10-ui-tabs.js': 'WEAPON_TAGS',
   '15-cards.js': 'CARD_REGIONS',
   '16-equip-book.js': 'EQUIP_CATEGORIES',
   '18-misc-book.js': 'MISC_CATEGORIES',
-  '21-relic-book.js': 'RELIC_CAT_ITEMS',
-  '22-pets.js': 'PET_BOOK',
+  // 22-pets.js 裡的變數是 PET_BOOK，跟存檔修改.html 用的 PET_FORM_LIST 資料結構不同（見④產生器），
+  // 直接 raw fetch 沒有意義，故意不放在這裡，避免有人真的拿 PET_BOOK 去合併把 PET_FORM_LIST 弄壞。
 };
 
 let ghFilesCache = [];
@@ -531,6 +828,10 @@ function onGhFileSelect(){
   const name = document.getElementById('ghFileSel').value;
   const hint = GH_FILE_VARPATH_HINTS[name];
   if(hint) document.getElementById('varBGh').value = hint;
+  const repo   = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const folder = document.getElementById('ghFolder').value.trim();
+  ghShowFileDate(repo, branch, folder, name, 'ghFileDate');
 }
 
 async function ghLoadFile(){
@@ -552,9 +853,10 @@ async function ghLoadFile(){
     const { targetObj } = extractDB(content, varPath);
     itemB = targetObj;
     const count = Array.isArray(itemB) ? itemB.length : Object.keys(itemB).length;
+    const extra = itemDbBreakdown(varPath, itemB);
     document.getElementById('statusB').innerHTML =
-      `<span class="ok">已從 GitHub 載入 ${name} 的 ${varPath}: ${count} 個項目</span>`;
-    log(`檔案B（GitHub: ${name}）${varPath} 解析成功: ${count} 個項目`, 'ok');
+      `<span class="ok">已從 GitHub 載入 ${name} 的 ${varPath}: ${count} 個項目${extra}</span>`;
+    log(`檔案B（GitHub: ${name}）${varPath} 解析成功: ${count} 個項目${extra}`, 'ok');
     checkReady();
   } catch(e){
     document.getElementById('statusB').innerHTML = `<span class="err">${e.message}（若是網路請求被瀏覽器擋下，請改用「📁 上傳檔案」手動上傳同一份檔案）</span>`;
@@ -592,8 +894,22 @@ document.getElementById('mergeBtn').addEventListener('click', () => {
     }
   } else if (!isArrayA && !isArrayB) {
     for (const [key, value] of Object.entries(itemB)) {
-      if (!(key in itemA)) { itemA[key] = value; addedCount++; log(`新增: ${key}`, "ok"); }
-      else skippedCount++;
+      if (!(key in itemA)) {
+        itemA[key] = value; addedCount++; log(`新增: ${key}`, "ok");
+      } else if (Array.isArray(itemA[key]) && Array.isArray(value)) {
+        // 深度合併：分類索引物件（如 EQUIP_CAT_ITEMS／MISC_CAT_ITEMS／RELIC_CAT_ITEMS）——
+        // 分類鍵通常兩邊都已存在，這裡改成合併「陣列內容」，新項目才不會因為分類鍵已存在就被整個跳過
+        const setSub = new Set(itemA[key].map(x => JSON.stringify(x)));
+        let subAdded = 0;
+        value.forEach(v => {
+          const s = JSON.stringify(v);
+          if (!setSub.has(s)) { itemA[key].push(v); setSub.add(s); subAdded++; }
+        });
+        if (subAdded > 0) { addedCount += subAdded; log(`「${key}」新增 ${subAdded} 個項目`, "ok"); }
+        else skippedCount++;
+      } else {
+        skippedCount++;
+      }
     }
   } else {
     log("錯誤：A和B的資料型態不同，無法合併", 'err');
@@ -610,16 +926,22 @@ document.getElementById('mergeBtn').addEventListener('click', () => {
   const newItemDBString = `${declaration} ${rootVar} = ${JSON.stringify(rootObjA, null, 2)};`;
   mergedFileContent = contentBefore + newItemDBString + contentAfter;
   mergedFileName = originalAFileName.replace(/(\.[^.]+)?$/, '_merged$1');
+  // ★關鍵：把這次合併結果同步成「目前的工作內容」，下一次不管是換檔案B重合併同一個變數，
+  // 還是改varA去合併另一個變數，都是接著這個結果繼續疊加，不會把這次的成果沖掉。
+  currentAContent = mergedFileContent;
+  // 剛剛才從 currentAContent 重新解析過一次 itemARange（對應目前這個 varA），所以這裡也同步更新，
+  // 讓 itemARange 的 contentBefore/contentAfter 是以「合併後」的內容為準，之後再合併同一個變數才不會用到舊的範圍。
+  itemARange = extractDB(currentAContent, document.getElementById('varA').value.trim());
+  rootObjA = itemARange.rootObj;
 
-  log(`本次合併完成，結果已可下載（尚未下載）。若要接續合併其他檔案，請在上方換一個新的檔案B並再次點「合併」。`, "ok");
+  log(`本次合併完成，結果已可下載。若要接續合併其他變數（例如再合併 WEAPON_TAGS），直接在上方改「檔案A路徑」跟「檔案B路徑」文字再點一次「合併」即可——檔案A、檔案B都不用重新選檔案，這次的結果會繼續累積在同一份內容裡，最後下載一次就好。`, "ok");
   checkDownloadReady();
 
-  // 重置檔案B，避免同一份B被重複合併兩次；讓使用者接著載入下一個檔案B
+  // 檔案B保留目前選取的檔案（不清空 fileB 的選取），但先把 itemB 重置——
+  // 避免使用者只改了「檔案A路徑」卻忘記改「檔案B路徑」時，拿舊變數的資料誤合併進新變數。
+  // 只要接著改動「檔案B路徑」文字，change 事件就會自動用同一份保留住的檔案重新解析出正確內容。
   itemB = null;
-  document.getElementById('fileB').value = '';
-  document.getElementById('statusB').innerHTML = '';
-  document.getElementById('varBGh').value = '';
-  document.getElementById('ghFileSel').innerHTML = '<option value="">請先點「列出檔案」</option>';
+  document.getElementById('statusB').innerHTML = '<span class="hint">檔案還在，改一下上面的「檔案B路徑」就會用同一份檔案重新讀取</span>';
   checkReady();
 });
 
@@ -630,169 +952,239 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 // ════════════════════════════════════════════════
-//  ② 卡片圖鑑清單產生器（重現 15-cards.js buildCardIndex()）
+//  ② 產生器（整合卡片圖鑑／輔助狀態技能／寵物圖鑑三種計算，共用同一批已載入的檔案）
+//  - 00-data.js → DB.mobs/DB.maps（卡片用）＋ DB.skills/DB.items（輔助狀態用）
+//  - 15-cards.js → CARD_REGIONS（卡片用）
+//  - 22-pets.js → PET_BOOK（寵物用，注意來源變數名稱跟目標 PET_FORM_LIST 不同、結構也不同，需轉換）
+//  三個檔案不用全部載齊：載了哪些就算哪些，缺的項目在下載時會跳過並在log說明。
 // ════════════════════════════════════════════════
-let cardData = { mobs: null, maps: null, regions: null };
-function cardLog(msg, type=""){
-  const el = document.getElementById('cardLog');
-  const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : '[INFO] ';
+let genData = { data: null, cards: null, pets: null, weaponTags: null, equipCat: null, miscCat: null };
+function genLog(msg, type=""){
+  const el = document.getElementById('genLog');
+  const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : type === 'warn' ? '[!] ' : '[INFO] ';
   el.textContent += prefix + msg + '\n';
   el.scrollTop = el.scrollHeight;
 }
-function cardCheckReady(){
-  document.getElementById('cardBuildBtn').disabled = !(cardData.mobs && cardData.maps && cardData.regions);
+function genCheckReady(){
+  const g = genData;
+  document.getElementById('genBuildBtn').disabled = !(g.data || g.cards || g.pets || g.weaponTags || g.equipCat || g.miscCat);
 }
-
-function parseCardFile1(content){
+function parseGenFile1(content){
   try {
-    cardData.mobs = extractDB(content, 'DB.mobs').targetObj;
-    cardData.maps = extractDB(content, 'DB.maps').targetObj;
-    document.getElementById('cardStatus1').innerHTML =
-      `<span class="ok">已載入 DB.mobs（${Object.keys(cardData.mobs).length} 隻）、DB.maps（${Object.keys(cardData.maps).length} 張）</span>`;
-    cardLog(`00-data.js 解析成功`, 'ok');
+    const mobs = extractDB(content, 'DB.mobs').targetObj;
+    const maps = extractDB(content, 'DB.maps').targetObj;
+    const skills = extractDB(content, 'DB.skills').targetObj;
+    const items = extractDB(content, 'DB.items').targetObj;
+    genData.data = { mobs, maps, skills, items };
+    const extra = itemDbBreakdown('ITEM_DB', items);
+    document.getElementById('genStatus1').innerHTML =
+      `<span class="ok">已載入 DB.mobs(${Object.keys(mobs).length})、DB.maps(${Object.keys(maps).length})、DB.skills(${Object.keys(skills).length})、DB.items(${Object.keys(items).length})${extra}</span>`;
+    genLog('00-data.js 解析成功', 'ok');
   } catch(err) {
-    document.getElementById('cardStatus1').innerHTML = `<span class="err">${err.message}</span>`;
-    cardLog(`00-data.js 錯誤: ${err.message}`, 'err');
-    cardData.mobs = cardData.maps = null;
+    document.getElementById('genStatus1').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`00-data.js 錯誤: ${err.message}`, 'err');
+    genData.data = null;
   }
-  cardCheckReady();
+  genCheckReady();
 }
-
-function parseCardFile2(content){
+function parseGenFile2(content){
   try {
-    cardData.regions = extractDB(content, 'CARD_REGIONS').targetObj;
-    document.getElementById('cardStatus2').innerHTML =
-      `<span class="ok">已載入 CARD_REGIONS（${cardData.regions.length} 個地區）</span>`;
-    cardLog(`15-cards.js 解析成功`, 'ok');
+    genData.cards = extractDB(content, 'CARD_REGIONS').targetObj;
+    document.getElementById('genStatus2').innerHTML =
+      `<span class="ok">已載入 CARD_REGIONS（${genData.cards.length} 個地區）</span>`;
+    genLog('15-cards.js 解析成功', 'ok');
   } catch(err) {
-    document.getElementById('cardStatus2').innerHTML = `<span class="err">${err.message}</span>`;
-    cardLog(`15-cards.js 錯誤: ${err.message}`, 'err');
-    cardData.regions = null;
+    document.getElementById('genStatus2').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`15-cards.js 錯誤: ${err.message}`, 'err');
+    genData.cards = null;
   }
-  cardCheckReady();
+  genCheckReady();
 }
+function parseGenFile3(content){
+  try {
+    genData.pets = extractDB(content, 'PET_BOOK').targetObj;
+    document.getElementById('genStatus3').innerHTML =
+      `<span class="ok">已載入 PET_BOOK（${Object.keys(genData.pets).length} 隻寵物）</span>`;
+    genLog('22-pets.js 解析成功', 'ok');
+  } catch(err) {
+    document.getElementById('genStatus3').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`22-pets.js 錯誤: ${err.message}`, 'err');
+    genData.pets = null;
+  }
+  genCheckReady();
+}
+function parseGenFile4(content){
+  try {
+    genData.weaponTags = extractDB(content, 'WEAPON_TAGS').targetObj;
+    document.getElementById('genStatus4').innerHTML =
+      `<span class="ok">已載入 WEAPON_TAGS（${Object.keys(genData.weaponTags).length} 項）</span>`;
+    genLog('10-ui-tabs.js 解析成功', 'ok');
+  } catch(err) {
+    document.getElementById('genStatus4').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`10-ui-tabs.js 錯誤: ${err.message}`, 'err');
+    genData.weaponTags = null;
+  }
+  genCheckReady();
+}
+function parseGenFile5(content){
+  try {
+    genData.equipCat = extractDB(content, 'EQUIP_CATEGORIES').targetObj;
+    document.getElementById('genStatus5').innerHTML =
+      `<span class="ok">已載入 EQUIP_CATEGORIES（${genData.equipCat.length} 個分類）</span>`;
+    genLog('16-equip-book.js 解析成功', 'ok');
+  } catch(err) {
+    document.getElementById('genStatus5').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`16-equip-book.js 錯誤: ${err.message}`, 'err');
+    genData.equipCat = null;
+  }
+  genCheckReady();
+}
+function parseGenFile6(content){
+  try {
+    genData.miscCat = extractDB(content, 'MISC_CATEGORIES').targetObj;
+    document.getElementById('genStatus6').innerHTML =
+      `<span class="ok">已載入 MISC_CATEGORIES（${genData.miscCat.length} 個分類）</span>`;
+    genLog('18-misc-book.js 解析成功', 'ok');
+  } catch(err) {
+    document.getElementById('genStatus6').innerHTML = `<span class="err">${err.message}</span>`;
+    genLog(`18-misc-book.js 錯誤: ${err.message}`, 'err');
+    genData.miscCat = null;
+  }
+  genCheckReady();
+}
+document.getElementById('genFile1').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile1(await readFile(f)); });
+document.getElementById('genFile2').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile2(await readFile(f)); });
+document.getElementById('genFile3').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile3(await readFile(f)); });
+document.getElementById('genFile4').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile4(await readFile(f)); });
+document.getElementById('genFile5').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile5(await readFile(f)); });
+document.getElementById('genFile6').addEventListener('change', async (e) => { const f=e.target.files[0]; if(!f) return; parseGenFile6(await readFile(f)); });
 
-document.getElementById('cardFile1').addEventListener('change', async (e) => {
-  const file = e.target.files[0]; if(!file) return;
-  const content = await readFile(file);
-  parseCardFile1(content);
-});
+const PET_TIER_LABELS = ['基礎', '高等', '黃金龍'];   // tier 0/1/2 對應的分類名稱；以後若加了 tier 3 會自動退化成「tier3」並在log提醒
 
-document.getElementById('cardFile2').addEventListener('change', async (e) => {
-  const file = e.target.files[0]; if(!file) return;
-  const content = await readFile(file);
-  parseCardFile2(content);
-});
+function buildAllDexLists(){
+  document.getElementById('genLog').textContent = '';
+  const parts = [];   // 每個算好的區塊文字，最後一起接成同一個下載檔案
 
-function buildCardDexList(){
-  document.getElementById('cardLog').textContent = '';
-  const { mobs, maps, regions } = cardData;
-  const CARD_MOB_INFO = {};
-  const prideMaps = Object.keys(maps).filter(k => /^pride_/.test(k));
+  // ── ITEM_DB：跟 00-data.js 的 DB.items 是同一份資料，gen1 已經解析過了，直接拿來用 ──
+  if (genData.data) {
+    const items = genData.data.items;
+    const extra = itemDbBreakdown('ITEM_DB', items);
+    genLog(`ITEM_DB：${Object.keys(items).length} 個項目${extra}`, 'ok');
+    parts.push(`// 與 00-data.js 的 DB.items 相同（共 ${Object.keys(items).length} 筆）\nconst ITEM_DB = ${JSON.stringify(items, null, 2)};`);
+  } else {
+    genLog('ITEM_DB：跳過（需要載入 00-data.js）');
+  }
 
-  regions.forEach(reg => {
-    const regMaps = (reg.maps === '__pride__') ? prideMaps : reg.maps;
-    (regMaps || []).forEach(mk => {
-      const pool = maps[mk]; if (!pool) return;
-      pool.forEach(mid => {
-        const mob = mobs[mid]; if (!mob || !mob.n) return;
-        if (mob.race === '血盟' || mob.race === '建築') return;
-        if (!CARD_MOB_INFO[mob.n]) CARD_MOB_INFO[mob.n] = { lv: mob.lv || 0 };
+  // ── WEAPON_TAGS：10-ui-tabs.js 直接宣告好的資料，原封不動帶過來 ──
+  if (genData.weaponTags) {
+    genLog(`WEAPON_TAGS：${Object.keys(genData.weaponTags).length} 項`, 'ok');
+    parts.push(`// 與 10-ui-tabs.js 的 WEAPON_TAGS 相同\nconst WEAPON_TAGS = ${JSON.stringify(genData.weaponTags, null, 2)};`);
+  } else {
+    genLog('WEAPON_TAGS：跳過（需要載入 10-ui-tabs.js）');
+  }
+
+  // ── EQUIP_CATEGORIES：16-equip-book.js 直接宣告好的資料，原封不動帶過來 ──
+  if (genData.equipCat) {
+    genLog(`EQUIP_CATEGORIES：${genData.equipCat.length} 個分類`, 'ok');
+    parts.push(`// 與 16-equip-book.js 的 EQUIP_CATEGORIES 相同\nconst EQUIP_CATEGORIES = ${JSON.stringify(genData.equipCat, null, 2)};`);
+  } else {
+    genLog('EQUIP_CATEGORIES：跳過（需要載入 16-equip-book.js）');
+  }
+
+  // ── MISC_CATEGORIES：18-misc-book.js 直接宣告好的資料，原封不動帶過來 ──
+  if (genData.miscCat) {
+    genLog(`MISC_CATEGORIES：${genData.miscCat.length} 個分類`, 'ok');
+    parts.push(`// 與 18-misc-book.js 的 MISC_CATEGORIES 相同\nconst MISC_CATEGORIES = ${JSON.stringify(genData.miscCat, null, 2)};`);
+  } else {
+    genLog('MISC_CATEGORIES：跳過（需要載入 18-misc-book.js）');
+  }
+
+  // ── 卡片圖鑑：需要 00-data.js（DB.mobs/DB.maps）＋ 15-cards.js（CARD_REGIONS） ──
+  if (genData.data && genData.cards) {
+    const { mobs, maps } = genData.data;
+    const regions = genData.cards;
+    const CARD_MOB_INFO = {};
+    const prideMaps = Object.keys(maps).filter(k => /^pride_/.test(k));
+    regions.forEach(reg => {
+      const regMaps = (reg.maps === '__pride__') ? prideMaps : reg.maps;
+      (regMaps || []).forEach(mk => {
+        const pool = maps[mk]; if (!pool) return;
+        pool.forEach(mid => {
+          const mob = mobs[mid]; if (!mob || !mob.n) return;
+          if (mob.race === '血盟' || mob.race === '建築') return;
+          if (!CARD_MOB_INFO[mob.n]) CARD_MOB_INFO[mob.n] = { lv: mob.lv || 0 };
+        });
       });
     });
-  });
-
-  const list = Object.keys(CARD_MOB_INFO).map(n => ({ n, lv: CARD_MOB_INFO[n].lv }));
-  list.sort((a,b) => a.lv - b.lv || a.n.localeCompare(b.n, 'zh-Hant'));
-
-  cardLog(`共掃描出 ${list.length} 隻可收集怪物`, 'ok');
-
-  const lines = list.map(m => `  {n:${JSON.stringify(m.n)},lv:${m.lv}}`);
-  const fileContent =
-`// 由「圖鑑資料更新工具」自動產生：重現 15-cards.js buildCardIndex() 的怪物清單（共 ${list.length} 隻）
-const CARD_DEX_LIST = [
-${lines.join(',\n')}
-];
-`;
-  downloadText(fileContent, 'CARD_DEX_LIST_new.js');
-  cardLog('已下載 CARD_DEX_LIST_new.js，請到「① 通用合併」用 CARD_DEX_LIST 路徑合併進存檔修改.html', 'ok');
-}
-
-// ════════════════════════════════════════════════
-//  ② 輔助狀態技能清單產生器（DB.skills type:"buff" ＋ DB.items type:"pot" 有 eff 欄位）
-// ════════════════════════════════════════════════
-let buffData = { skills: null, items: null };
-function buffLog(msg, type=""){
-  const el = document.getElementById('buffLog');
-  const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : '[INFO] ';
-  el.textContent += prefix + msg + '\n';
-  el.scrollTop = el.scrollHeight;
-}
-
-function parseBuffFile1(content){
-  try {
-    buffData.skills = extractDB(content, 'DB.skills').targetObj;
-    buffData.items  = extractDB(content, 'DB.items').targetObj;
-    document.getElementById('buffStatus1').innerHTML =
-      `<span class="ok">已載入 DB.skills（${Object.keys(buffData.skills).length} 個技能）、DB.items（${Object.keys(buffData.items).length} 項物品）</span>`;
-    buffLog('00-data.js 解析成功', 'ok');
-    document.getElementById('buffBuildBtn').disabled = false;
-  } catch(err) {
-    document.getElementById('buffStatus1').innerHTML = `<span class="err">${err.message}</span>`;
-    buffLog(`00-data.js 錯誤: ${err.message}`, 'err');
-    buffData.skills = buffData.items = null;
-    document.getElementById('buffBuildBtn').disabled = true;
+    const list = Object.keys(CARD_MOB_INFO).map(n => ({ n, lv: CARD_MOB_INFO[n].lv }));
+    list.sort((a,b) => a.lv - b.lv || a.n.localeCompare(b.n, 'zh-Hant'));
+    genLog(`卡片圖鑑：共掃描出 ${list.length} 隻可收集怪物`, 'ok');
+    const lines = list.map(m => `  {n:${JSON.stringify(m.n)},lv:${m.lv}}`);
+    parts.push(`// 重現 15-cards.js buildCardIndex() 的怪物清單（共 ${list.length} 隻）\nconst CARD_DEX_LIST = [\n${lines.join(',\n')}\n];`);
+  } else {
+    genLog('卡片圖鑑：跳過（需要同時載入 00-data.js 和 15-cards.js）', genData.data || genData.cards ? 'warn' : '');
   }
-}
 
-document.getElementById('buffFile1').addEventListener('change', async (e) => {
-  const file = e.target.files[0]; if(!file) return;
-  const content = await readFile(file);
-  parseBuffFile1(content);
-});
+  // ── 輔助狀態技能：只需要 00-data.js（DB.skills + DB.items） ──
+  if (genData.data) {
+    const { skills, items } = genData.data;
+    const out = {};
+    const KEEP_KEYS = ['n','dur','mp','d','haste','ele','msg'];
+    let skillCnt = 0;
+    Object.keys(skills).forEach(id => {
+      const v = skills[id];
+      if (v.type !== 'buff') return;
+      const entry = {};
+      KEEP_KEYS.forEach(k => { if (v[k] !== undefined) entry[k] = v[k]; });
+      if (v.summon) entry.summon = true;
+      out[id] = entry;
+      skillCnt++;
+    });
+    let potCnt = 0;
+    Object.keys(items).forEach(id => {
+      const v = items[id];
+      if (v.type !== 'pot' || !v.eff) return;
+      if (out[v.eff]) return;
+      const entry = { n: v.n };
+      if (v.dur !== undefined) entry.dur = v.dur;
+      if (v.d && typeof v.d === 'string') entry.msg = v.d;
+      out[v.eff] = entry;
+      potCnt++;
+    });
+    genLog(`輔助狀態技能：技能類 ${skillCnt} 個，藥水/卷軸類 ${potCnt} 個，共 ${skillCnt+potCnt} 個`, 'ok');
+    const lines = Object.keys(out).map(k => `  ${JSON.stringify(k)}:${JSON.stringify(out[k])}`);
+    parts.push(`// DB.skills(type:"buff") ＋ DB.items(type:"pot" 有 eff) 共 ${Object.keys(out).length} 筆\nconst BUFF_SKILL_DB = {\n${lines.join(',\n')}\n};`);
+  } else {
+    genLog('輔助狀態技能：跳過（需要載入 00-data.js）');
+  }
 
-function buildBuffSkillDB(){
-  document.getElementById('buffLog').textContent = '';
-  const { skills, items } = buffData;
-  const out = {};
+  // ── 寵物圖鑑：只需要 22-pets.js（PET_BOOK），依 tier 分組轉成 PET_FORM_LIST 格式 ──
+  if (genData.pets) {
+    const book = genData.pets;
+    const out = {};
+    let unknownTier = false;
+    Object.keys(book).forEach(name => {
+      const tier = book[name].tier || 0;
+      const label = PET_TIER_LABELS[tier] || (unknownTier = true, `tier${tier}`);
+      if (!out[label]) out[label] = [];
+      out[label].push(name);
+    });
+    if (unknownTier) genLog('寵物圖鑑：發現超出 PET_TIER_LABELS 範圍的 tier，已用 "tierN" 暫代分類名稱，請自行確認正確中文分類名', 'warn');
+    Object.keys(out).forEach(label => genLog(`寵物圖鑑：${label}：${out[label].length} 隻`));
+    const lines = Object.keys(out).map(label => `  '${label}': [${out[label].map(n=>`'${n}'`).join(',')}],`);
+    parts.push(`// 依 22-pets.js PET_BOOK 的 tier 欄位分組\nconst PET_FORM_LIST = {\n${lines.join('\n')}\n};`);
+  } else {
+    genLog('寵物圖鑑：跳過（需要載入 22-pets.js）');
+  }
 
-  // 來源1：DB.skills 裡 type==="buff" 的技能
-  const KEEP_KEYS = ['n','dur','mp','d','haste','ele','msg'];
-  let skillCnt = 0;
-  Object.keys(skills).forEach(id => {
-    const v = skills[id];
-    if (v.type !== 'buff') return;
-    const entry = {};
-    KEEP_KEYS.forEach(k => { if (v[k] !== undefined) entry[k] = v[k]; });
-    if (v.summon) entry.summon = true;
-    out[id] = entry;
-    skillCnt++;
-  });
+  if (!parts.length) {
+    genLog('沒有任何一項的檔案齊全，沒有東西可以下載。', 'err');
+    return;
+  }
 
-  // 來源2：DB.items 裡 type==="pot" 且有 eff 欄位的藥水/卷軸（用 eff 代碼當 key）
-  let potCnt = 0;
-  Object.keys(items).forEach(id => {
-    const v = items[id];
-    if (v.type !== 'pot' || !v.eff) return;
-    if (out[v.eff]) return; // 已有同代碼（例如技能跟藥水共用效果代碼）就不覆蓋
-    const entry = { n: v.n };
-    if (v.dur !== undefined) entry.dur = v.dur;
-    if (v.d && typeof v.d === 'string') entry.msg = v.d;
-    out[v.eff] = entry;
-    potCnt++;
-  });
-
-  buffLog(`技能類 buff: ${skillCnt} 個，藥水/卷軸類 buff: ${potCnt} 個，共 ${skillCnt+potCnt} 個`, 'ok');
-
-  const lines = Object.keys(out).map(k => `  ${JSON.stringify(k)}:${JSON.stringify(out[k])}`);
-  const fileContent =
-`// 由「圖鑑資料更新工具」自動產生：DB.skills(type:"buff") ＋ DB.items(type:"pot" 有 eff) 共 ${Object.keys(out).length} 筆
-const BUFF_SKILL_DB = {
-${lines.join(',\n')}
-};
-`;
-  downloadText(fileContent, 'BUFF_SKILL_DB_new.js');
-  buffLog('已下載 BUFF_SKILL_DB_new.js，請到「① 通用合併」用 BUFF_SKILL_DB 路徑合併進存檔修改.html', 'ok');
+  const fileContent = `// 由「圖鑑資料更新工具」自動產生\n\n` + parts.join('\n\n') + '\n';
+  downloadText(fileContent, 'dex_lists_new.js');
+  genLog(`已下載 dex_lists_new.js，這次包含 ${parts.length} 個變數。回到「① 通用合併」，檔案B選這個檔案一次，之後只要換「檔案A路徑」「檔案B路徑」文字（同名即可）依序合併，不用重選檔案。`, 'ok');
 }
 </script>
 
