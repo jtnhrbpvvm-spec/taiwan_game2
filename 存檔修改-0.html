@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-13</title>
+<title>放置天堂 Save Editor v7-22</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -307,7 +307,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-13</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-22</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -1692,7 +1692,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-13 已就緒', 'info');
+  toast('⚔️ Save Editor v7-22 已就緒', 'info');
 });
 </script>
 
@@ -2113,107 +2113,764 @@ function saveEqToG(){
 // 輔助狀態（buff）技能資料庫 —— 來源：00-data.js DB.skills，篩選 type:"buff"（共 95 筆）
 // n=名稱 dur=預設持續秒數 mp=MP消耗 d=屬性加成 haste=是否加速類 ele=屬性 msg=施放提示文字
 const BUFF_SKILL_DB = {
-  "blue":{n:"藍色藥水",dur:600,msg:"精神越堅定，越能從中汲取充沛魔力。"},
-  "brave":{n:"勇敢藥水",dur:300,msg:"激起戰士血性的秘藥，使近身作戰者以更勇猛的步調迎敵。"},
-  "elfcookie":{n:"精靈餅乾",dur:300,msg:"受精靈祝福的餅乾，妖精食用後能與風的律動同步。"},
-  "cautious":{n:"慎重藥水",dur:300,msg:"使思緒沉靜澄明的秘藥，能增進施法者的魔力運行與恢復。"},
-  "haste":{n:"自我加速藥水",dur:300,haste:true,msg:"飲下後身體變得輕盈，戰鬥動作也隨之加快。"},
-  "sk_berserk":{n:"狂暴術",dur:1200,mp:40,d:{meleeDmg:5,ac:-10},msg:"你的野性逐漸支配理智。"},
-  "sk_bless_wpn":{n:"祝福魔法武器",dur:1200,mp:20,d:{extraDmg:2,extraHit:2},msg:"你的武器暫時被注入了魔法力量。"},
-  "sk_blizzard_storm":{n:"冰雪颶風",dur:32,mp:60,ele:"water",msg:"冰雪颶風在你周身成形。"},
-  "sk_counter_barrier":{n:"反擊屏障",dur:64,mp:10,msg:"你擺出了反擊的架式。"},
-  "sk_dark_burn":{n:"燃燒鬥志",dur:300,mp:20,msg:"鬥志在你體內燃燒。"},
-  "sk_dark_dex":{n:"敏捷提升",dur:960,mp:10,d:{dex:3},msg:"你的身手更敏捷了。"},
-  "sk_dark_dodge":{n:"暗影閃避",dur:32,mp:20,msg:"你能看穿魔法的軌跡。"},
-  "sk_dark_double":{n:"雙重破壞",dur:192,mp:20,msg:"你的攻擊蘊含雙重之力。"},
-  "sk_dark_erup":{n:"迴避提升",dur:192,mp:20,d:{er:12},msg:"你的迴避能力提升了。"},
-  "sk_dark_fang":{n:"暗影之牙",dur:192,mp:20,d:{extraDmg:5},msg:"暗影凝聚成獠牙。"},
-  "sk_dark_mrup":{n:"影之防護",dur:960,mp:12,d:{mr:5},msg:"暗影包覆了你。"},
-  "sk_dark_poison":{n:"附加劇毒",dur:320,mp:10,msg:"你的武器淬上了劇毒。"},
-  "sk_dark_poisonres":{n:"毒性抵抗",dur:320,mp:20,msg:"你對毒素產生了抵抗。"},
-  "sk_dark_stealth":{n:"暗隱術",dur:32,mp:10,msg:"你隱沒於暗影之中。"},
-  "sk_dark_str":{n:"力量提升",dur:960,mp:10,d:{str:3},msg:"你感到力量湧現。"},
-  "sk_dark_walkhaste":{n:"行走加速",dur:960,mp:10,msg:"你的步伐如影般輕快。"},
-  "sk_dex_up":{n:"通暢氣脈術",dur:1200,mp:45,d:{dex:5},msg:"你覺得身手變得更靈活。"},
-  "sk_dragon_armor":{n:"龍之護鎧",dur:1800,mp:0,d:{dr:5},msg:"龍鱗般的護鎧覆上你的身軀。"},
-  "sk_dragon_awaken_antares":{n:"覺醒：安塔瑞斯",dur:600,mp:20,d:{ac:8},msg:"你引動安塔瑞斯之力，龍血沸騰、毒麻不侵。"},
-  "sk_dragon_awaken_baraka":{n:"覺醒：巴拉卡斯",dur:600,mp:50,d:{str:3,con:3,dex:3,int:3,wis:3,extraHit:5},msg:"你引動巴拉卡斯之力，全身充滿磅礡之力。"},
-  "sk_dragon_awaken_falion":{n:"覺醒：法利昂",dur:600,mp:30,d:{resFire:15,resWater:15,resEarth:15,resWind:15},msg:"你引動法利昂之力，魔抗與全屬性抗性大增。"},
-  "sk_dragon_bloodlust":{n:"血之渴望",dur:300,mp:0,msg:"嗜血的渴望湧現，攻勢更為迅猛。"},
-  "sk_dragon_deadlybody":{n:"致命身軀",dur:300,mp:0,msg:"你的身軀化為致命的反擊之刃。"},
-  "sk_dragon_flameslash":{n:"燃燒擊砍",dur:60,mp:0,msg:"你的下一擊燃起烈焰。"},
-  "sk_elf_attrfire":{n:"屬性之火",dur:320,mp:20,msg:"屬性之火在你的攻擊中燃燒。"},
-  "sk_elf_blazewpn":{n:"烈炎武器",dur:1200,mp:30,d:{meleeDmg:5,meleeHit:5}},
-  "sk_elf_dancefire":{n:"舞躍之火",dur:1200,mp:30,d:{meleeDmg:5}},
-  "sk_elf_earthbless":{n:"大地的祝福",dur:1200,mp:35,d:{ac:7}},
-  "sk_elf_earthguard":{n:"大地防護",dur:1200,mp:15,d:{ac:4}},
-  "sk_elf_earthshield":{n:"大地屏障",dur:8,mp:50},
-  "sk_elf_eleres":{n:"屬性防禦",dur:1200,mp:10,d:{resFire:10,resWater:10,resEarth:10,resWind:10}},
-  "sk_elf_energyboost":{n:"能量激發",dur:960,mp:30,msg:"能量激發，負重之下仍能調息。"},
-  "sk_elf_firewpn":{n:"火焰武器",dur:1200,mp:20,d:{meleeDmg:3}},
-  "sk_elf_flamesoul":{n:"烈焰之魂",dur:1280,mp:30},
-  "sk_elf_mirror":{n:"鏡反射",dur:16,mp:10,msg:"你的周身浮現一面鏡子。"},
-  "sk_elf_mr":{n:"魔法防禦",dur:1200,mp:10,d:{mr:10}},
-  "sk_elf_physboost":{n:"體能激發",dur:960,mp:30,msg:"體能激發，負重之下仍能調息。"},
-  "sk_elf_preciseshot":{n:"精準射擊",dur:64,mp:15,msg:"你的目光變得無比銳利，攻擊精準無比。"},
-  "sk_elf_purify":{n:"淨化精神",dur:1200,mp:10,d:{wis:3}},
-  "sk_elf_singleres":{n:"單屬性防禦",dur:64,mp:10},
-  "sk_elf_steelguard":{n:"鋼鐵防護",dur:1200,mp:30},
-  "sk_elf_stormeye":{n:"暴風之眼",dur:1200,mp:40,d:{rangedDmg:2,rangedHit:2}},
-  "sk_elf_stormshot":{n:"暴風神射",dur:1200,mp:30,d:{rangedDmg:6,rangedHit:3}},
-  "sk_elf_summon":{n:"召喚屬性精靈",dur:3600,mp:30,summon:true},
-  "sk_elf_summon2":{n:"召喚強力屬性精靈",dur:3600,mp:50,summon:true},
-  "sk_elf_watervital":{n:"水之元氣",dur:64,mp:1,msg:"水之元氣環繞著你。"},
-  "sk_elf_winddash":{n:"風之疾走",dur:1200,mp:20,d:{er:10}},
-  "sk_elf_windshot":{n:"風之神射",dur:1200,mp:15,d:{rangedHit:5}},
-  "sk_ench_wpn":{n:"擬似魔法武器",dur:1800,mp:20,d:{extraDmg:2},msg:"你的武器暫時被注入了魔法力量。"},
-  "sk_fire_prison":{n:"火牢",dur:10,mp:60,ele:"fire",msg:"熊熊火牢在你周身燃起。"},
-  "sk_greater_haste":{n:"強力加速術",dur:2400,mp:60,haste:true,msg:"你感到身體變得非常輕盈。"},
-  "sk_haste_spell":{n:"加速術",dur:1200,mp:40,haste:true,msg:"你感到身體變得非常輕盈。"},
-  "sk_helm_dex1":{n:"敏盔：通暢氣脈術",dur:1200,mp:25,d:{dex:5},msg:"你覺得身手變得更靈活。"},
-  "sk_helm_dex2":{n:"敏盔：加速術",dur:1200,mp:20,haste:true,msg:"你感到身體變得非常輕盈。"},
-  "sk_helm_str1":{n:"力盔：擬似魔法武器",dur:1800,mp:10,d:{extraDmg:2},msg:"你的武器暫時被注入了魔法力量。"},
-  "sk_helm_str2":{n:"力盔：無所遁形術",dur:180,mp:8},
-  "sk_helm_str3":{n:"力盔：體魄強健術",dur:1200,mp:25,d:{str:5},msg:"你覺得身體充滿了力量。"},
-  "sk_holy_barrier":{n:"聖結界",dur:32,mp:30,msg:"一道神聖的防禦屏障保護著你。"},
-  "sk_holy_dash":{n:"神聖疾走",dur:64,mp:20,d:{er:15},msg:"你覺得身體變輕了。"},
-  "sk_holy_wpn":{n:"神聖武器",dur:1200,mp:10,d:{extraDmg:1,extraHit:1},msg:"你的武器暫時被注入了神聖力量。"},
-  "sk_illu_avatar":{n:"幻覺：化身",dur:64,mp:50,d:{extraDmg:10},msg:"你化身為幻象的存在。"},
-  "sk_illu_cube_burn":{n:"立方：燃燒",dur:20,mp:30,d:{resFire:30},msg:"燃燒立方在你周身旋轉。"},
-  "sk_illu_cube_harmony":{n:"立方：和諧",dur:20,mp:0,msg:"和諧立方在你周身旋轉，引動魔力。"},
-  "sk_illu_cube_quake":{n:"立方：地裂",dur:20,mp:35,d:{resEarth:30},msg:"地裂立方在你周身旋轉。"},
-  "sk_illu_cube_shock":{n:"立方：衝擊",dur:20,mp:55,d:{resWind:30},msg:"衝擊立方在你周身旋轉。"},
-  "sk_illu_endure":{n:"耐力",dur:600,mp:25,d:{dr:2},msg:"你的意志化為堅韌的耐力。"},
-  "sk_illu_focus":{n:"專注",dur:600,mp:30,d:{mpR:4},msg:"你進入高度專注。"},
-  "sk_illu_golem":{n:"幻覺：鑽石高崙",dur:64,mp:30,d:{ac:10},msg:"你以幻覺塑造出鑽石高崙的形象。"},
-  "sk_illu_insight":{n:"洞察",dur:640,mp:60,d:{str:1,dex:1,con:1,int:1,wis:1},msg:"你的感官變得無比敏銳。"},
-  "sk_illu_lich":{n:"幻覺：巫妖",dur:64,mp:20,d:{magicDmg:2},msg:"你以幻覺塑造出巫妖的形象。"},
-  "sk_illu_mirror":{n:"鏡像",dur:1200,mp:10,d:{er:25},msg:"你分裂出無數鏡像。"},
-  "sk_illu_ogre":{n:"幻覺：歐吉",dur:64,mp:20,d:{extraDmg:4,extraHit:4},msg:"你以幻覺塑造出歐吉的形象。"},
-  "sk_illu_pain":{n:"疼痛的歡愉",dur:64,mp:0,msg:"你迎向疼痛，化痛楚為反擊之力。"},
-  "sk_invisible":{n:"隱身術",dur:64,mp:45},
-  "sk_load_up":{n:"負重強化",dur:1800,mp:10,msg:"感覺到身體變輕了。"},
-  "sk_magic_shield":{n:"魔法屏障",dur:16,mp:16},
-  "sk_meditation":{n:"冥想術",dur:600,mp:10,d:{mpR:5}},
-  "sk_reduction_armor":{n:"增幅防禦",dur:1200,mp:10},
-  "sk_reveal":{n:"無所遁形術",dur:180,mp:8},
-  "sk_royal_bravewill":{n:"勇猛意志",dur:640,mp:25,msg:"勇猛的意志充盈你的全身。"},
-  "sk_royal_burnweapon":{n:"灼熱武器",dur:640,mp:25,d:{extraDmg:5,extraHit:5},msg:"你的武器燃起灼熱之炎。"},
-  "sk_royal_precise":{n:"精準目標",dur:16,mp:2,msg:"你鎖定全場敵人，使其露出破綻。"},
-  "sk_royal_shield":{n:"閃亮之盾",dur:640,mp:25,d:{ac:8},msg:"閃亮的護盾環繞著你。"},
-  "sk_shield":{n:"保護罩",dur:1200,mp:2,d:{ac:2}},
-  "sk_shield2":{n:"鎧甲護持",dur:1800,mp:20,d:{ac:3},msg:"你的盔甲暫時被注入了魔法力量。"},
-  "sk_solid_shield":{n:"堅固防護",dur:180,mp:5,d:{er:15}},
-  "sk_soul_up":{n:"靈魂昇華",dur:1200,mp:20,msg:"你覺得身體充滿了活力。"},
-  "sk_spike_armor":{n:"尖刺盔甲",dur:1200,mp:10,d:{meleeHit:5}},
-  "sk_str_up":{n:"體魄強健術",dur:1200,mp:50,d:{str:5},msg:"你覺得身體充滿了力量。"},
-  "sk_summon":{n:"召喚術",dur:3600,mp:50,summon:true},
-  "sk_sunlight":{n:"日光術",dur:7200,mp:4,msg:"你更容易被怪物發現了。"},
-  "sk_warrior_endurance":{n:"體能強化",dur:3000,mp:10,msg:"你的體魄變得更加強韌。"},
-  "sk_warrior_outlaw":{n:"亡命之徒",dur:60,mp:10,msg:"你豁出性命，攻勢勢在必中。"},
-  "sk_warrior_throwaxe":{n:"戰斧投擲",dur:64,mp:5,msg:"你蓄勢待發，斧刃將撕裂一切阻擋。"},
-  "sk_zombie":{n:"造屍術",dur:3600,mp:35,summon:true}
-};
+  "blue": {
+    "n": "藍色藥水",
+    "dur": 600,
+    "msg": "精神越堅定，越能從中汲取充沛魔力。"
+  },
+  "brave": {
+    "n": "勇敢藥水",
+    "dur": 300,
+    "msg": "激起戰士血性的秘藥，使近身作戰者以更勇猛的步調迎敵。"
+  },
+  "elfcookie": {
+    "n": "精靈餅乾",
+    "dur": 300,
+    "msg": "受精靈祝福的餅乾，妖精食用後能與風的律動同步。"
+  },
+  "cautious": {
+    "n": "慎重藥水",
+    "dur": 300,
+    "msg": "使思緒沉靜澄明的秘藥，能增進施法者的魔力運行與恢復。"
+  },
+  "haste": {
+    "n": "自我加速藥水",
+    "dur": 300,
+    "haste": true,
+    "msg": "飲下後身體變得輕盈，戰鬥動作也隨之加快。"
+  },
+  "sk_berserk": {
+    "n": "狂暴術",
+    "dur": 1200,
+    "mp": 40,
+    "d": {
+      "meleeDmg": 5,
+      "ac": -10
+    },
+    "msg": "你的野性逐漸支配理智。"
+  },
+  "sk_bless_wpn": {
+    "n": "祝福魔法武器",
+    "dur": 1200,
+    "mp": 20,
+    "d": {
+      "extraDmg": 2,
+      "extraHit": 2
+    },
+    "msg": "你的武器暫時被注入了魔法力量。"
+  },
+  "sk_blizzard_storm": {
+    "n": "冰雪颶風",
+    "dur": 32,
+    "mp": 60,
+    "ele": "water",
+    "msg": "冰雪颶風在你周身成形。"
+  },
+  "sk_counter_barrier": {
+    "n": "反擊屏障",
+    "dur": 64,
+    "mp": 10,
+    "msg": "你擺出了反擊的架式。"
+  },
+  "sk_dark_burn": {
+    "n": "燃燒鬥志",
+    "dur": 300,
+    "mp": 20,
+    "msg": "鬥志在你體內燃燒。"
+  },
+  "sk_dark_dex": {
+    "n": "敏捷提升",
+    "dur": 960,
+    "mp": 10,
+    "d": {
+      "dex": 3
+    },
+    "msg": "你的身手更敏捷了。"
+  },
+  "sk_dark_dodge": {
+    "n": "暗影閃避",
+    "dur": 32,
+    "mp": 20,
+    "msg": "你能看穿魔法的軌跡。"
+  },
+  "sk_dark_double": {
+    "n": "雙重破壞",
+    "dur": 192,
+    "mp": 20,
+    "msg": "你的攻擊蘊含雙重之力。"
+  },
+  "sk_dark_erup": {
+    "n": "迴避提升",
+    "dur": 192,
+    "mp": 20,
+    "d": {
+      "er": 12
+    },
+    "msg": "你的迴避能力提升了。"
+  },
+  "sk_dark_fang": {
+    "n": "暗影之牙",
+    "dur": 192,
+    "mp": 20,
+    "d": {
+      "extraDmg": 5
+    },
+    "msg": "暗影凝聚成獠牙。"
+  },
+  "sk_dark_mrup": {
+    "n": "影之防護",
+    "dur": 960,
+    "mp": 12,
+    "d": {
+      "mr": 5
+    },
+    "msg": "暗影包覆了你。"
+  },
+  "sk_dark_poison": {
+    "n": "附加劇毒",
+    "dur": 320,
+    "mp": 10,
+    "msg": "你的武器淬上了劇毒。"
+  },
+  "sk_dark_poisonres": {
+    "n": "毒性抵抗",
+    "dur": 320,
+    "mp": 20,
+    "msg": "你對毒素產生了抵抗。"
+  },
+  "sk_dark_stealth": {
+    "n": "暗隱術",
+    "dur": 32,
+    "mp": 10,
+    "msg": "你隱沒於暗影之中。"
+  },
+  "sk_dark_str": {
+    "n": "力量提升",
+    "dur": 960,
+    "mp": 10,
+    "d": {
+      "str": 3
+    },
+    "msg": "你感到力量湧現。"
+  },
+  "sk_dark_walkhaste": {
+    "n": "行走加速",
+    "dur": 960,
+    "mp": 10,
+    "msg": "你的步伐如影般輕快。"
+  },
+  "sk_dex_up": {
+    "n": "通暢氣脈術",
+    "dur": 1200,
+    "mp": 45,
+    "d": {
+      "dex": 5
+    },
+    "msg": "你覺得身手變得更靈活。"
+  },
+  "sk_dragon_armor": {
+    "n": "龍之護鎧",
+    "dur": 1800,
+    "mp": 0,
+    "d": {
+      "dr": 5
+    },
+    "msg": "龍鱗般的護鎧覆上你的身軀。"
+  },
+  "sk_dragon_awaken_antares": {
+    "n": "覺醒：安塔瑞斯",
+    "dur": 600,
+    "mp": 20,
+    "d": {
+      "ac": 8
+    },
+    "msg": "你引動安塔瑞斯之力，龍血沸騰、毒麻不侵。"
+  },
+  "sk_dragon_awaken_baraka": {
+    "n": "覺醒：巴拉卡斯",
+    "dur": 600,
+    "mp": 50,
+    "d": {
+      "str": 3,
+      "con": 3,
+      "dex": 3,
+      "int": 3,
+      "wis": 3,
+      "extraHit": 5
+    },
+    "msg": "你引動巴拉卡斯之力，全身充滿磅礡之力。"
+  },
+  "sk_dragon_awaken_falion": {
+    "n": "覺醒：法利昂",
+    "dur": 600,
+    "mp": 30,
+    "d": {
+      "resFire": 15,
+      "resWater": 15,
+      "resEarth": 15,
+      "resWind": 15
+    },
+    "msg": "你引動法利昂之力，魔抗與全屬性抗性大增。"
+  },
+  "sk_dragon_bloodlust": {
+    "n": "血之渴望",
+    "dur": 300,
+    "mp": 0,
+    "msg": "嗜血的渴望湧現，攻勢更為迅猛。"
+  },
+  "sk_dragon_deadlybody": {
+    "n": "致命身軀",
+    "dur": 300,
+    "mp": 0,
+    "msg": "你的身軀化為致命的反擊之刃。"
+  },
+  "sk_dragon_flameslash": {
+    "n": "燃燒擊砍",
+    "dur": 60,
+    "mp": 0,
+    "msg": "你的下一擊燃起烈焰。"
+  },
+  "sk_elf_attrfire": {
+    "n": "屬性之火",
+    "dur": 320,
+    "mp": 20,
+    "msg": "屬性之火在你的攻擊中燃燒。"
+  },
+  "sk_elf_blazewpn": {
+    "n": "烈炎武器",
+    "dur": 1200,
+    "mp": 30,
+    "d": {
+      "meleeDmg": 5,
+      "meleeHit": 5
+    }
+  },
+  "sk_elf_dancefire": {
+    "n": "舞躍之火",
+    "dur": 1200,
+    "mp": 30,
+    "d": {
+      "meleeDmg": 5
+    }
+  },
+  "sk_elf_earthbless": {
+    "n": "大地的祝福",
+    "dur": 1200,
+    "mp": 35,
+    "d": {
+      "ac": 7
+    }
+  },
+  "sk_elf_earthguard": {
+    "n": "大地防護",
+    "dur": 1200,
+    "mp": 15,
+    "d": {
+      "ac": 4
+    }
+  },
+  "sk_elf_earthshield": {
+    "n": "大地屏障",
+    "dur": 8,
+    "mp": 50
+  },
+  "sk_elf_eleres": {
+    "n": "屬性防禦",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "resFire": 10,
+      "resWater": 10,
+      "resEarth": 10,
+      "resWind": 10
+    }
+  },
+  "sk_elf_energyboost": {
+    "n": "能量激發",
+    "dur": 960,
+    "mp": 30,
+    "msg": "能量激發，負重之下仍能調息。"
+  },
+  "sk_elf_firewpn": {
+    "n": "火焰武器",
+    "dur": 1200,
+    "mp": 20,
+    "d": {
+      "meleeDmg": 3
+    }
+  },
+  "sk_elf_flamesoul": {
+    "n": "烈焰之魂",
+    "dur": 1280,
+    "mp": 30
+  },
+  "sk_elf_mirror": {
+    "n": "鏡反射",
+    "dur": 16,
+    "mp": 10,
+    "msg": "你的周身浮現一面鏡子。"
+  },
+  "sk_elf_mr": {
+    "n": "魔法防禦",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "mr": 10
+    }
+  },
+  "sk_elf_physboost": {
+    "n": "體能激發",
+    "dur": 960,
+    "mp": 30,
+    "msg": "體能激發，負重之下仍能調息。"
+  },
+  "sk_elf_preciseshot": {
+    "n": "精準射擊",
+    "dur": 64,
+    "mp": 15,
+    "msg": "你的目光變得無比銳利，攻擊精準無比。"
+  },
+  "sk_elf_purify": {
+    "n": "淨化精神",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "wis": 3
+    }
+  },
+  "sk_elf_singleres": {
+    "n": "單屬性防禦",
+    "dur": 64,
+    "mp": 10
+  },
+  "sk_elf_steelguard": {
+    "n": "鋼鐵防護",
+    "dur": 1200,
+    "mp": 30
+  },
+  "sk_elf_stormeye": {
+    "n": "暴風之眼",
+    "dur": 1200,
+    "mp": 40,
+    "d": {
+      "rangedDmg": 2,
+      "rangedHit": 2
+    }
+  },
+  "sk_elf_stormshot": {
+    "n": "暴風神射",
+    "dur": 1200,
+    "mp": 30,
+    "d": {
+      "rangedDmg": 6,
+      "rangedHit": 3
+    }
+  },
+  "sk_elf_summon": {
+    "n": "召喚屬性精靈",
+    "dur": 3600,
+    "mp": 30,
+    "summon": true
+  },
+  "sk_elf_summon2": {
+    "n": "召喚強力屬性精靈",
+    "dur": 3600,
+    "mp": 50,
+    "summon": true
+  },
+  "sk_elf_watervital": {
+    "n": "水之元氣",
+    "dur": 64,
+    "mp": 1,
+    "msg": "水之元氣環繞著你。"
+  },
+  "sk_elf_winddash": {
+    "n": "風之疾走",
+    "dur": 1200,
+    "mp": 20,
+    "d": {
+      "er": 10
+    }
+  },
+  "sk_elf_windshot": {
+    "n": "風之神射",
+    "dur": 1200,
+    "mp": 15,
+    "d": {
+      "rangedHit": 5
+    }
+  },
+  "sk_ench_wpn": {
+    "n": "擬似魔法武器",
+    "dur": 1800,
+    "mp": 20,
+    "d": {
+      "extraDmg": 2
+    },
+    "msg": "你的武器暫時被注入了魔法力量。"
+  },
+  "sk_fire_prison": {
+    "n": "火牢",
+    "dur": 10,
+    "mp": 60,
+    "ele": "fire",
+    "msg": "熊熊火牢在你周身燃起。"
+  },
+  "sk_greater_haste": {
+    "n": "強力加速術",
+    "dur": 2400,
+    "mp": 60,
+    "haste": true,
+    "msg": "你感到身體變得非常輕盈。"
+  },
+  "sk_haste_spell": {
+    "n": "加速術",
+    "dur": 1200,
+    "mp": 40,
+    "haste": true,
+    "msg": "你感到身體變得非常輕盈。"
+  },
+  "sk_helm_dex1": {
+    "n": "敏盔：通暢氣脈術",
+    "dur": 1200,
+    "mp": 25,
+    "d": {
+      "dex": 5
+    },
+    "msg": "你覺得身手變得更靈活。"
+  },
+  "sk_helm_dex2": {
+    "n": "敏盔：加速術",
+    "dur": 1200,
+    "mp": 20,
+    "haste": true,
+    "msg": "你感到身體變得非常輕盈。"
+  },
+  "sk_helm_str1": {
+    "n": "力盔：擬似魔法武器",
+    "dur": 1800,
+    "mp": 10,
+    "d": {
+      "extraDmg": 2
+    },
+    "msg": "你的武器暫時被注入了魔法力量。"
+  },
+  "sk_helm_str2": {
+    "n": "力盔：無所遁形術",
+    "dur": 180,
+    "mp": 8
+  },
+  "sk_helm_str3": {
+    "n": "力盔：體魄強健術",
+    "dur": 1200,
+    "mp": 25,
+    "d": {
+      "str": 5
+    },
+    "msg": "你覺得身體充滿了力量。"
+  },
+  "sk_holy_barrier": {
+    "n": "聖結界",
+    "dur": 32,
+    "mp": 30,
+    "msg": "一道神聖的防禦屏障保護著你。"
+  },
+  "sk_holy_dash": {
+    "n": "神聖疾走",
+    "dur": 64,
+    "mp": 20,
+    "d": {
+      "er": 15
+    },
+    "msg": "你覺得身體變輕了。"
+  },
+  "sk_holy_wpn": {
+    "n": "神聖武器",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "extraDmg": 1,
+      "extraHit": 1
+    },
+    "msg": "你的武器暫時被注入了神聖力量。"
+  },
+  "sk_illu_avatar": {
+    "n": "幻覺：化身",
+    "dur": 64,
+    "mp": 50,
+    "d": {
+      "extraDmg": 10
+    },
+    "msg": "你化身為幻象的存在。"
+  },
+  "sk_illu_cube_burn": {
+    "n": "立方：燃燒",
+    "dur": 20,
+    "mp": 30,
+    "d": {
+      "resFire": 30
+    },
+    "msg": "燃燒立方在你周身旋轉。"
+  },
+  "sk_illu_cube_harmony": {
+    "n": "立方：和諧",
+    "dur": 20,
+    "mp": 0,
+    "msg": "和諧立方在你周身旋轉，引動魔力。"
+  },
+  "sk_illu_cube_quake": {
+    "n": "立方：地裂",
+    "dur": 20,
+    "mp": 35,
+    "d": {
+      "resEarth": 30
+    },
+    "msg": "地裂立方在你周身旋轉。"
+  },
+  "sk_illu_cube_shock": {
+    "n": "立方：衝擊",
+    "dur": 20,
+    "mp": 55,
+    "d": {
+      "resWind": 30
+    },
+    "msg": "衝擊立方在你周身旋轉。"
+  },
+  "sk_illu_endure": {
+    "n": "耐力",
+    "dur": 600,
+    "mp": 25,
+    "d": {
+      "dr": 2
+    },
+    "msg": "你的意志化為堅韌的耐力。"
+  },
+  "sk_illu_focus": {
+    "n": "專注",
+    "dur": 600,
+    "mp": 30,
+    "d": {
+      "mpR": 4
+    },
+    "msg": "你進入高度專注。"
+  },
+  "sk_illu_golem": {
+    "n": "幻覺：鑽石高崙",
+    "dur": 64,
+    "mp": 30,
+    "d": {
+      "ac": 10
+    },
+    "msg": "你以幻覺塑造出鑽石高崙的形象。"
+  },
+  "sk_illu_insight": {
+    "n": "洞察",
+    "dur": 640,
+    "mp": 60,
+    "d": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": 1,
+      "wis": 1
+    },
+    "msg": "你的感官變得無比敏銳。"
+  },
+  "sk_illu_lich": {
+    "n": "幻覺：巫妖",
+    "dur": 64,
+    "mp": 20,
+    "d": {
+      "magicDmg": 2
+    },
+    "msg": "你以幻覺塑造出巫妖的形象。"
+  },
+  "sk_illu_mirror": {
+    "n": "鏡像",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "er": 25
+    },
+    "msg": "你分裂出無數鏡像。"
+  },
+  "sk_illu_ogre": {
+    "n": "幻覺：歐吉",
+    "dur": 64,
+    "mp": 20,
+    "d": {
+      "extraDmg": 4,
+      "extraHit": 4
+    },
+    "msg": "你以幻覺塑造出歐吉的形象。"
+  },
+  "sk_illu_pain": {
+    "n": "疼痛的歡愉",
+    "dur": 64,
+    "mp": 0,
+    "msg": "你迎向疼痛，化痛楚為反擊之力。"
+  },
+  "sk_invisible": {
+    "n": "隱身術",
+    "dur": 64,
+    "mp": 45
+  },
+  "sk_load_up": {
+    "n": "負重強化",
+    "dur": 1800,
+    "mp": 10,
+    "msg": "感覺到身體變輕了。"
+  },
+  "sk_magic_shield": {
+    "n": "魔法屏障",
+    "dur": 16,
+    "mp": 16
+  },
+  "sk_meditation": {
+    "n": "冥想術",
+    "dur": 600,
+    "mp": 10,
+    "d": {
+      "mpR": 5
+    }
+  },
+  "sk_reduction_armor": {
+    "n": "增幅防禦",
+    "dur": 1200,
+    "mp": 10
+  },
+  "sk_reveal": {
+    "n": "無所遁形術",
+    "dur": 180,
+    "mp": 8
+  },
+  "sk_royal_bravewill": {
+    "n": "勇猛意志",
+    "dur": 640,
+    "mp": 25,
+    "msg": "勇猛的意志充盈你的全身。"
+  },
+  "sk_royal_burnweapon": {
+    "n": "灼熱武器",
+    "dur": 640,
+    "mp": 25,
+    "d": {
+      "extraDmg": 5,
+      "extraHit": 5
+    },
+    "msg": "你的武器燃起灼熱之炎。"
+  },
+  "sk_royal_precise": {
+    "n": "精準目標",
+    "dur": 16,
+    "mp": 2,
+    "msg": "你鎖定全場敵人，使其露出破綻。"
+  },
+  "sk_royal_shield": {
+    "n": "閃亮之盾",
+    "dur": 640,
+    "mp": 25,
+    "d": {
+      "ac": 8
+    },
+    "msg": "閃亮的護盾環繞著你。"
+  },
+  "sk_shield": {
+    "n": "保護罩",
+    "dur": 1200,
+    "mp": 2,
+    "d": {
+      "ac": 2
+    }
+  },
+  "sk_shield2": {
+    "n": "鎧甲護持",
+    "dur": 1800,
+    "mp": 20,
+    "d": {
+      "ac": 3
+    },
+    "msg": "你的盔甲暫時被注入了魔法力量。"
+  },
+  "sk_solid_shield": {
+    "n": "堅固防護",
+    "dur": 180,
+    "mp": 5,
+    "d": {
+      "er": 15
+    }
+  },
+  "sk_soul_up": {
+    "n": "靈魂昇華",
+    "dur": 1200,
+    "mp": 20,
+    "msg": "你覺得身體充滿了活力。"
+  },
+  "sk_spike_armor": {
+    "n": "尖刺盔甲",
+    "dur": 1200,
+    "mp": 10,
+    "d": {
+      "meleeHit": 5
+    }
+  },
+  "sk_str_up": {
+    "n": "體魄強健術",
+    "dur": 1200,
+    "mp": 50,
+    "d": {
+      "str": 5
+    },
+    "msg": "你覺得身體充滿了力量。"
+  },
+  "sk_summon": {
+    "n": "召喚術",
+    "dur": 3600,
+    "mp": 50,
+    "summon": true
+  },
+  "sk_sunlight": {
+    "n": "日光術",
+    "dur": 7200,
+    "mp": 4,
+    "msg": "你更容易被怪物發現了。"
+  },
+  "sk_warrior_endurance": {
+    "n": "體能強化",
+    "dur": 3000,
+    "mp": 10,
+    "msg": "你的體魄變得更加強韌。"
+  },
+  "sk_warrior_outlaw": {
+    "n": "亡命之徒",
+    "dur": 60,
+    "mp": 10,
+    "msg": "你豁出性命，攻勢勢在必中。"
+  },
+  "sk_warrior_throwaxe": {
+    "n": "戰斧投擲",
+    "dur": 64,
+    "mp": 5,
+    "msg": "你蓄勢待發，斧刃將撕裂一切阻擋。"
+  },
+  "sk_zombie": {
+    "n": "造屍術",
+    "dur": 3600,
+    "mp": 35,
+    "summon": true
+  },
+  "sk_heal_energy_storm": {
+    "n": "治癒能量風暴",
+    "dur": 320,
+    "mp": 20,
+    "msg": "治癒的能量風暴環繞著你，生命力快速匯聚。"
+  },
+  "petlure": {
+    "n": "漂浮之眼肉",
+    "dur": 600,
+    "msg": "漂浮之眼身上切下的奇特肉塊，散發野獸無法抗拒的氣味。使用後獲得「一般誘捕」600秒：期間擊殺 狼／牧羊犬／杜賓狗／哈士奇／熊／貓／浣熊／聖伯納犬／狐狸／小獵犬／柯利 時，寵物保管將獲得基本等級的該寵物並失去此狀態。"
+  }
+};;
 const SKILL_MAGE = [
   {id:'sk_sunlight',n:'日光術',lv:4},{id:'sk_lightarrow',n:'光箭',lv:4},
   {id:'sk_icearrow',n:'冰箭',lv:4},{id:'sk_heal1',n:'初級治癒術',lv:4},
@@ -3530,10 +4187,52 @@ function savePartnerToG(idx){
 // ════════════════════════════════════════════════
 // 寵物圖鑑（型態下拉選單用；uid/lv/exp/hp/mp 等對應存檔 pets[] 結構）
 const PET_FORM_LIST = {
-  '基礎': ['牧羊犬','貓','熊','杜賓狗','狼','浣熊','小獵犬','聖伯納犬','狐狸','暴走兔','哈士奇','柯利','虎男','高麗幼犬','袋鼠','熊貓','猴子','頑皮龍','淘氣龍'],
-  '高等': ['高等牧羊犬','高等貓','高等熊','高等杜賓狗','高等狼','高等浣熊','高等小獵犬','高等聖伯納犬','高等狐狸','高等暴走兔','高等哈士奇','高等柯利','真‧虎男','高麗犬','高等袋鼠','高等熊貓','超級猴子','高等頑皮龍','高等淘氣龍'],
-  '黃金龍': ['黃金龍'],
-};
+  "基礎": [
+    "牧羊犬",
+    "貓",
+    "熊",
+    "杜賓狗",
+    "狼",
+    "浣熊",
+    "小獵犬",
+    "聖伯納犬",
+    "狐狸",
+    "暴走兔",
+    "哈士奇",
+    "柯利",
+    "虎男",
+    "高麗幼犬",
+    "袋鼠",
+    "熊貓",
+    "猴子",
+    "頑皮龍",
+    "淘氣龍"
+  ],
+  "高等": [
+    "高等牧羊犬",
+    "高等貓",
+    "高等熊",
+    "高等杜賓狗",
+    "高等狼",
+    "高等浣熊",
+    "高等小獵犬",
+    "高等聖伯納犬",
+    "高等狐狸",
+    "高等暴走兔",
+    "高等哈士奇",
+    "高等柯利",
+    "真‧虎男",
+    "高麗犬",
+    "高等袋鼠",
+    "高等熊貓",
+    "超級猴子",
+    "高等頑皮龍",
+    "高等淘氣龍"
+  ],
+  "黃金龍": [
+    "黃金龍"
+  ]
+};;
 
 function _genPetUid(){
   return Math.random().toString(36).slice(2, 11);
@@ -3708,111 +4407,849 @@ function switchDexTab(tab, el){
 // ── 裝備/遺物分類系統（來源：10-ui-tabs.js WEAPON_TAGS + 16-equip-book.js EQUIP_CATEGORIES/equipCatKey）
 function isWandWeapon(d){ return !!(d && d.isWand); }
 const WEAPON_TAGS = {
-    wpn_katana: ['單手劍','武士刀'], wpn_siruge: ['單手劍','武士刀'], wpn_golden_scepter: ['單手劍','武士刀'],   // 👑 黃金權杖：反擊＋居合（雙標籤·裝真盾→反擊、無盾→居合）
-    wpn_dagger2: ['匕首'], wpn_dagger1: ['匕首'], wpn_11: ['匕首'], wpn_33: ['匕首'],
-    wpn_longsword: ['單手劍'], wpn_9: ['單手劍'], wpn_scimitar: ['單手劍'], wpn_26: ['單手劍'],
-    wpn_elfsword: ['單手劍'], wpn_27: ['單手劍'], wpn_shortsword: ['單手劍'], wpn_redknight: ['單手劍'],
-    wpn_invader: ['單手劍'], wpn_34: ['單手劍'], wpn_35: ['單手劍'],
-    wpn_36: ['單手劍'], wpn_rapier: ['單手劍'], wpn_mailbreaker: ['單手劍'], wpn_silversword: ['單手劍'], wpn_37: ['單手劍'],
-    wpn_21: ['矛'], wpn_24: ['矛'], wpn_25: ['矛'], wpn_28: ['矛'], wpn_39: ['矛'], wpn_40: ['矛'], wpn_41: ['矛'], wpn_17: ['矛'], wpn_4: ['矛'], wpn_halberd: ['矛'],   // 🔱 法丘：雙手矛（w2h＋穿透80%）
-    wpn_20: ['單手鈍器'], wpn_10: ['單手鈍器'], wpn_13: ['單手鈍器'], wpn_alien: ['單手鈍器'], wpn_1: ['單手鈍器'], wpn_2: ['單手鈍器'], wpn_ancient_axe: ['單手鈍器'], wpn_warrior_trial_axe: ['單手鈍器'], wpn_master_axe: ['單手鈍器'], wpn_demon_axehead: ['單手鈍器'], wpn_iron_axehead: ['單手鈍器'], wpn_giant_axehead: ['單手鈍器'],   // 🔧 古代神之斧／試煉斧頭／大匠的斧頭／魔物的斧頭／鐵斧頭／巨人的斧頭：單手鈍器（鈍擊）
-    wpn_2hsword: ['雙手劍'], wpn_dragonslayer: ['雙手劍'], wpn_official_2h: ['雙手劍'],   // 🔧 雙手劍類型標註
-    // 🔧 重擊特效武器標註為「雙手鈍器」
-    wpn_battleaxe: ['雙手鈍器'], wpn_19: ['雙手鈍器'], wpn_23: ['雙手鈍器'], wpn_giantaxe: ['雙手鈍器'], wpn_berserker: ['雙手鈍器'], wpn_silveraxe: ['雙手鈍器'], wpn_taurus_axe: ['雙手鈍器'],   // 🔧 牛人斧頭：補上漏標的雙手鈍器 tag（eff:crush 但原無 tag）
-    // 🔧 黑暗妖精武器：鋼爪 / 雙刀 / 匕首
-    wpn_claw_bronze:['鋼爪'], wpn_claw_steel:['鋼爪'], wpn_claw_shadow:['鋼爪'], wpn_claw_silver:['鋼爪'], wpn_claw_dark:['鋼爪'], wpn_claw_gloom:['鋼爪'], wpn_claw_damascus:['鋼爪'], wpn_claw_abyss:['鋼爪'],
-    wpn_baranka_claw:['鋼爪'], wpn_baranka_steelclaw:['鋼爪'],   // 🔧 魔獸軍王雙爪（鋼爪類）
-    wpn_blood_2hsword:['雙手劍'], wpn_dark_sword:['單手劍'],   // 🔧 冥法軍訓練場：血色巨劍(切割)／黑暗之劍(反擊)
-    wpn_dk_flameblade:['單手劍'], wpn_kurt_sword:['單手劍'],   // 🔧 傳說單手劍（反擊）：死亡騎士的烈炎之劍／克特之劍
-    wpn_assassin_mark:['雙刀'],   // 🔧 暗殺軍王之痕（雙刀・連擊）
-    wpn_dual_bronze:['雙刀'], wpn_dual_steel:['雙刀'], wpn_dual_silver:['雙刀'], wpn_dual_gloom:['雙刀'], wpn_dual_dark:['雙刀'], wpn_dual_shadow:['雙刀'], wpn_dual_damascus:['雙刀'], wpn_dual_abyss:['雙刀'], wpn_thebes_dual:['雙刀'],
-    wpn_manadagger:['匕首'], wpn_crystal_dagger:['匕首'],
-    wpn_chaos_thorn:['匕首'], wpn_demonking_dual:['雙刀'], wpn_demonking_2hsword:['雙手劍'],   // 🌑 暗影神殿：混沌之刺(匕首/出血)、惡魔王雙刀(雙刀/連擊)、惡魔王雙手劍(雙手劍/切割)
-    // 🔧 拉斯塔巴德掉落武器：匕首(出血)/單手劍(反擊)/雙刀(連擊)
-    wpn_small_katana:['匕首'], wpn_dagger_rasta:['匕首'], wpn_sword_rasta:['單手劍'], wpn_dual_rasta:['雙刀'], wpn_spear_rasta:['矛'],
-    wpn_dual_spike:['雙刀'], wpn_official_blade:['單手劍'],   // 🏛️ 長老之室：尖刺雙刀(連擊)／武官之刃(反擊)
-    wpn_emperor_blade:['雙手劍'], wpn_windblade_dagger:['匕首'], wpn_redshadow_dual:['雙刀'], wpn_beastking_claw:['鋼爪'],   // 🏛️ 長老之室傳說：真.冥皇執行劍(切割)／風刃短劍(出血)／紅影雙刀(連擊)／獸王鋼爪(連擊)；聖晶魔杖=魔杖(免tag)
-    // 🔥 50級試煉擴充武器標註
-    wpn_mithril_dagger:['匕首'], wpn_ori_dagger:['匕首'], wpn_crimson_spear:['矛'], wpn_demon_axe:['雙手鈍器'],
-    wpn_frost_spear:['矛'], wpn_thunder_sword:['單手劍'],   // 🧊 酷寒之矛（矛→出血）／⚡ 雷雨之劍（單手劍→反擊）
-    wpn_vengeance:['雙手劍'], wpn_blackflame_sword:['單手劍','武士刀'], wpn_hate_claw:['鋼爪'], wpn_demon_claw:['鋼爪'], wpn_death_finger:['鋼爪'],
-    wpn_demon_sword:['單手劍'], wpn_redflame_sword:['單手劍','武士刀'], wpn_demon_dual:['雙刀'],
-    wpn_dual_destroy:['雙刀'], wpn_claw_destroy:['鋼爪'],   // 💥 破壞雙刀／破壞鋼爪（猛爆劇毒）
-    wpn_old_sword:['單手劍','武士刀'],   // 🏛️ 古老的劍：反擊(單手劍)＋居合(武士刀)
-    wpn_ancient_darkelf_sword:['單手劍'],   // 🏛️ 古代黑暗妖精之劍：反擊(單手劍)
-    wpn_demon_sword_hidden:['單手劍'],   // 👹 隱藏的魔族之劍：反擊(單手劍)
-    wpn_demon_claw_hidden:['鋼爪'],   // 👹 隱藏的魔族鋼爪：鋼爪標籤(雙擊33預設＋貫穿＋黑暗妖精可裝)
-    // 🏴‍☠️ 海賊島武器：血紅慾望短劍(匕首/出血)、榮耀之劍/短刀/海賊彎刀(單手劍/反擊)、深淵雙刀(雙刀/雙擊)
-    wpn_pirate_dagger:['匕首'], wpn_glory_sword:['單手劍'], wpn_pirate_shortblade:['單手劍'], wpn_pirate_cutlass:['單手劍'], wpn_abyss_dualblade:['雙刀'],
-    // ⚡ 元素施放傳說武器：雷神之鎚／歐西斯衝撞錘(單手鈍器·鈍擊)・馬普勒的懲罰(雙手鈍器·重擊)・帕格里奧之怒／伊娃的責罵(單手劍·反擊)
-    wpn_thor_hammer:['單手鈍器'], wpn_osis_hammer:['單手鈍器'], wpn_mapler_punish:['雙手鈍器'], wpn_pagrio_wrath:['單手劍'], wpn_eva_scold:['單手劍'],
-    // 🏺 遺物武器：石刃(單手劍)／木棍・骨棒(單手鈍器)／犬齒(匕首)（弓・魔杖遺物免 tag：isBow／isWand 自判）
-    relic_goblin_blade:['單手劍'], relic_gremlin_club:['單手鈍器'], relic_husky_bone:['單手鈍器'], relic_doberman_fang:['匕首'],
-    relic_gladiator_scimitar:['單手劍'], relic_icefield_pick:['單手鈍器'], relic_werewolf_mace:['單手鈍器'], relic_orc_nail:['匕首'], relic_pan_staff:['矛'], relic_elastic_rib:['雙刀'],
-    relic_golem_fist:['雙手鈍器'], relic_orc_cleaver:['單手劍'], relic_strong_femur:['單手鈍器'], relic_forgotten_spear:['矛'], relic_spider_claw:['鋼爪'], relic_hobgoblin_grinder:['單手劍'], relic_orc_butcher:['單手劍'], relic_orc_pole:['矛'], relic_sparta_grudge:['雙刀'], relic_shark_teeth:['匕首'],
-    // 🏺 遺物 第二批（v3.1.1）：單手矛/雙手矛(看 w2h)＝矛、鋼爪、雙手劍；鎖鏈劍(chainsword)/奇古獸(qigu)/弓(isBow)/魔杖(isWand) 靠旗標自判免 tag
-    relic_guard_spear:['矛'], relic_crab_claw:['鋼爪'], relic_venom_fang:['雙手劍'], relic_ratman_skewer:['矛'], relic_lizardman_cleaver:['矛'],
-    // 🏺 遺物 第三批（v3.1.2）：弓/十字弓(isBow)、單手魔杖(isWand) 靠旗標自判免 tag
-    relic_ohm_maul:['雙手鈍器'], relic_parrot_beak:['雙手劍'], relic_pirate_scimitar:['單手劍'], relic_scorpion_sting:['匕首'], relic_harvey_claw:['單手劍'], relic_guard_pike:['矛'], relic_ogi_greataxe:['雙手鈍器'],
-    // 🏺 遺物 第四批（v3.1.4）：鎖鏈劍(暗精靈鎖鏈劍)靠 chainsword 旗標自判免 tag
-    relic_darkthief_claw:['鋼爪'], relic_fighter_axe:['雙手鈍器'],
-    // 🏺 遺物 第五批（v3.1.6）：研磨利刃＝單手劍＋武士刀(反擊＋居合)；奇古獸(qigu·夢幻的蘑菇靈魂)靠旗標自判免 tag
-    relic_darkelf_grindblade:['單手劍','武士刀'],
-    // 🏺 遺物 第六批（v3.1.13）：幽光=單手劍+武士刀(反擊+居合)、喚獸鞭=單手鈍器(鈍擊)、獅鷲爪=鋼爪(雙擊)、鱷魚牙=雙手劍(切割靠 eff)、冰石鎚=雙手鈍器(重擊)；殘冰死亡氣息(魔杖·isWand)靠旗標自判免 tag
-    relic_wisp_remnant:['單手劍','武士刀'], relic_summoner_whip:['單手鈍器'], relic_griffin_claw:['鋼爪'], relic_croc_fang:['雙手劍'], relic_icestone_maul:['雙手鈍器'],
-    // 🏺 遺物 第七批（v3.1.18）：蛇女鱗片/刺針=匕首(出血)、牙籤/重型劍=雙手劍(切割靠 eff)、拋投石=雙手鈍器(重擊)、備用刀=雙刀(雙擊)；眼魔凝視(魔杖·isWand)＋雞蛇凝視(鎖鏈劍·chainsword)靠旗標自判免 tag
-    relic_mutant_lamia_scale:['匕首'], relic_thorn_needle:['匕首'], relic_giant_toothpick:['雙手劍'], relic_veteran_greatsword:['雙手劍'], relic_giant_throwstone:['雙手鈍器'], relic_armor_spareblade:['雙刀'],
-    relic_aruba_haste:['單手鈍器'], relic_ashwarrior_flamesword:['單手劍'], relic_deadgeneral_greatsword:['雙手劍'], relic_darkscorpion_pincers:['雙刀'],
-    relic_medusa_stinger:['單手鈍器'], relic_silent_venom:['矛'],
-    // 🏺 遺物 第十一批（v3.1.33）：牛頭怪的殘暴巨斧＝雙手鈍器（eff:crush 重擊＋tag 自動貫穿）
-    relic_axetaurus_brutalaxe:['雙手鈍器'],
-    // 🏺 遺物 第五批新增（v3.1.52）：灼熱蜥蜴長舌/殺人蜂尾刺(出血)、上古蜘蛛之爪=單手劍+武士刀(反擊+居合)、鎧甲守衛巨劍=雙手劍(切割靠 eff)；無所畏懼的突擊(chainsword)/幻夢火炎靈魂(qigu)/光束強化魔杖(isWand)/改造便利箭筒(isArrow) 靠旗標自判免 tag
-    relic_lizard_tongue:['矛'], relic_killerbee_sting:['匕首'], relic_ancient_spider_claw:['單手劍','武士刀'], relic_guardian_greatsword:['雙手劍'],
-    // 🐍 提卡爾：庫庫爾坎之矛/鞭笞藤/倒勾獠牙=矛(雙手矛·出血)、毒牙=匕首(出血)、易碎泥偶=雙手鈍器(重擊靠 eff+tag 自動貫穿)、玩具鎚=單手鈍器(鈍擊+自動貫穿)；鐵手甲/吹箭(isBow)/枯竭魔杖(名稱含杖)/獻祭亡靈(qigu) 靠旗標/名稱自判免 tag
-    wpn_kukulkan_spear:['矛'], relic_eto_whip:['矛'], relic_serpent_fang:['矛'], relic_kaira_fang:['匕首'], relic_mud_idol:['雙手鈍器'], relic_teo_hammer:['單手鈍器'],
-    // 🏺 遺物 第十三批（v3.1.80）：護身斧/恢復魔棒/流星鎚=單手鈍器(鈍擊＋自動貫穿)、串刺刑具=矛(出血·雙手)、方尖碑=雙手鈍器(重擊靠 eff＋自動貫穿)、刺劍=匕首(出血)、雙刃劍=雙刀(雙擊靠 eff)；
-    //    彈弓(isBow)/雙尾鞭(chainsword)/熱情魔杖(名稱含魔杖→自動貫穿)/黑暗魔導書(isWand·名稱無杖字→def 顯式 ignHardSkin) 靠旗標/名稱自判免 tag
-    relic_executor_axe:['單手鈍器'], relic_healer_wand:['單手鈍器'], relic_minotaur_flail:['單手鈍器'],
-    relic_executor_skewer:['矛'], relic_weathered_obelisk:['雙手鈍器'], relic_shadow_stinger:['匕首'], relic_soulreaper_dual:['雙刀'],
-    // 🏺 遺物 第十四批（v3.3.0）：兇殘惡鬼的毒牙/殘暴骸骨的破片=單手劍(反擊)、傳說海賊的迷幻雙刀=雙刀(雙擊)、熔岩灼燒的雙拳=單手鈍器(鈍擊＋自動貫穿)；屍毒之針(isBow)/不定形的變幻劍(chainsword) 靠旗標自判免 tag
-    relic_ghoul_fang:['單手劍'], relic_sparto_shard:['單手劍'], relic_pirate_dual:['雙刀'], relic_lava_fists:['單手鈍器']
-};
+  "wpn_katana": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_siruge": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_golden_scepter": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_dagger2": [
+    "匕首"
+  ],
+  "wpn_dagger1": [
+    "匕首"
+  ],
+  "wpn_11": [
+    "匕首"
+  ],
+  "wpn_33": [
+    "匕首"
+  ],
+  "wpn_longsword": [
+    "單手劍"
+  ],
+  "wpn_9": [
+    "單手劍"
+  ],
+  "wpn_scimitar": [
+    "單手劍"
+  ],
+  "wpn_26": [
+    "單手劍"
+  ],
+  "wpn_elfsword": [
+    "單手劍"
+  ],
+  "wpn_27": [
+    "單手劍"
+  ],
+  "wpn_shortsword": [
+    "單手劍"
+  ],
+  "wpn_redknight": [
+    "單手劍"
+  ],
+  "wpn_invader": [
+    "單手劍"
+  ],
+  "wpn_34": [
+    "單手劍"
+  ],
+  "wpn_35": [
+    "單手劍"
+  ],
+  "wpn_36": [
+    "單手劍"
+  ],
+  "wpn_rapier": [
+    "單手劍"
+  ],
+  "wpn_mailbreaker": [
+    "單手劍"
+  ],
+  "wpn_silversword": [
+    "單手劍"
+  ],
+  "wpn_37": [
+    "單手劍"
+  ],
+  "wpn_21": [
+    "矛"
+  ],
+  "wpn_24": [
+    "矛"
+  ],
+  "wpn_25": [
+    "矛"
+  ],
+  "wpn_28": [
+    "矛"
+  ],
+  "wpn_39": [
+    "矛"
+  ],
+  "wpn_40": [
+    "矛"
+  ],
+  "wpn_41": [
+    "矛"
+  ],
+  "wpn_17": [
+    "矛"
+  ],
+  "wpn_4": [
+    "矛"
+  ],
+  "wpn_halberd": [
+    "矛"
+  ],
+  "wpn_20": [
+    "單手鈍器"
+  ],
+  "wpn_10": [
+    "單手鈍器"
+  ],
+  "wpn_13": [
+    "單手鈍器"
+  ],
+  "wpn_alien": [
+    "單手鈍器"
+  ],
+  "wpn_1": [
+    "單手鈍器"
+  ],
+  "wpn_2": [
+    "單手鈍器"
+  ],
+  "wpn_ancient_axe": [
+    "單手鈍器"
+  ],
+  "wpn_warrior_trial_axe": [
+    "單手鈍器"
+  ],
+  "wpn_master_axe": [
+    "單手鈍器"
+  ],
+  "wpn_demon_axehead": [
+    "單手鈍器"
+  ],
+  "wpn_iron_axehead": [
+    "單手鈍器"
+  ],
+  "wpn_giant_axehead": [
+    "單手鈍器"
+  ],
+  "wpn_2hsword": [
+    "雙手劍"
+  ],
+  "wpn_dragonslayer": [
+    "雙手劍"
+  ],
+  "wpn_official_2h": [
+    "雙手劍"
+  ],
+  "wpn_battleaxe": [
+    "雙手鈍器"
+  ],
+  "wpn_19": [
+    "雙手鈍器"
+  ],
+  "wpn_23": [
+    "雙手鈍器"
+  ],
+  "wpn_giantaxe": [
+    "雙手鈍器"
+  ],
+  "wpn_berserker": [
+    "雙手鈍器"
+  ],
+  "wpn_silveraxe": [
+    "雙手鈍器"
+  ],
+  "wpn_taurus_axe": [
+    "雙手鈍器"
+  ],
+  "wpn_claw_bronze": [
+    "鋼爪"
+  ],
+  "wpn_claw_steel": [
+    "鋼爪"
+  ],
+  "wpn_claw_shadow": [
+    "鋼爪"
+  ],
+  "wpn_claw_silver": [
+    "鋼爪"
+  ],
+  "wpn_claw_dark": [
+    "鋼爪"
+  ],
+  "wpn_claw_gloom": [
+    "鋼爪"
+  ],
+  "wpn_claw_damascus": [
+    "鋼爪"
+  ],
+  "wpn_claw_abyss": [
+    "鋼爪"
+  ],
+  "wpn_baranka_claw": [
+    "鋼爪"
+  ],
+  "wpn_baranka_steelclaw": [
+    "鋼爪"
+  ],
+  "wpn_blood_2hsword": [
+    "雙手劍"
+  ],
+  "wpn_dark_sword": [
+    "單手劍"
+  ],
+  "wpn_dk_flameblade": [
+    "單手劍"
+  ],
+  "wpn_kurt_sword": [
+    "單手劍"
+  ],
+  "wpn_assassin_mark": [
+    "雙刀"
+  ],
+  "wpn_dual_bronze": [
+    "雙刀"
+  ],
+  "wpn_dual_steel": [
+    "雙刀"
+  ],
+  "wpn_dual_silver": [
+    "雙刀"
+  ],
+  "wpn_dual_gloom": [
+    "雙刀"
+  ],
+  "wpn_dual_dark": [
+    "雙刀"
+  ],
+  "wpn_dual_shadow": [
+    "雙刀"
+  ],
+  "wpn_dual_damascus": [
+    "雙刀"
+  ],
+  "wpn_dual_abyss": [
+    "雙刀"
+  ],
+  "wpn_thebes_dual": [
+    "雙刀"
+  ],
+  "wpn_manadagger": [
+    "匕首"
+  ],
+  "wpn_crystal_dagger": [
+    "匕首"
+  ],
+  "wpn_chaos_thorn": [
+    "匕首"
+  ],
+  "wpn_demonking_dual": [
+    "雙刀"
+  ],
+  "wpn_demonking_2hsword": [
+    "雙手劍"
+  ],
+  "wpn_small_katana": [
+    "匕首"
+  ],
+  "wpn_dagger_rasta": [
+    "匕首"
+  ],
+  "wpn_sword_rasta": [
+    "單手劍"
+  ],
+  "wpn_dual_rasta": [
+    "雙刀"
+  ],
+  "wpn_spear_rasta": [
+    "矛"
+  ],
+  "wpn_dual_spike": [
+    "雙刀"
+  ],
+  "wpn_official_blade": [
+    "單手劍"
+  ],
+  "wpn_emperor_blade": [
+    "雙手劍"
+  ],
+  "wpn_windblade_dagger": [
+    "匕首"
+  ],
+  "wpn_redshadow_dual": [
+    "雙刀"
+  ],
+  "wpn_beastking_claw": [
+    "鋼爪"
+  ],
+  "wpn_mithril_dagger": [
+    "匕首"
+  ],
+  "wpn_ori_dagger": [
+    "匕首"
+  ],
+  "wpn_crimson_spear": [
+    "矛"
+  ],
+  "wpn_demon_axe": [
+    "雙手鈍器"
+  ],
+  "wpn_frost_spear": [
+    "矛"
+  ],
+  "wpn_thunder_sword": [
+    "單手劍"
+  ],
+  "wpn_vengeance": [
+    "雙手劍"
+  ],
+  "wpn_blackflame_sword": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_hate_claw": [
+    "鋼爪"
+  ],
+  "wpn_demon_claw": [
+    "鋼爪"
+  ],
+  "wpn_death_finger": [
+    "鋼爪"
+  ],
+  "wpn_demon_sword": [
+    "單手劍"
+  ],
+  "wpn_redflame_sword": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_demon_dual": [
+    "雙刀"
+  ],
+  "wpn_dual_destroy": [
+    "雙刀"
+  ],
+  "wpn_claw_destroy": [
+    "鋼爪"
+  ],
+  "wpn_old_sword": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_ancient_darkelf_sword": [
+    "單手劍"
+  ],
+  "wpn_demon_sword_hidden": [
+    "單手劍"
+  ],
+  "wpn_demon_claw_hidden": [
+    "鋼爪"
+  ],
+  "wpn_pirate_dagger": [
+    "匕首"
+  ],
+  "wpn_glory_sword": [
+    "單手劍"
+  ],
+  "wpn_pirate_shortblade": [
+    "單手劍"
+  ],
+  "wpn_pirate_cutlass": [
+    "單手劍"
+  ],
+  "wpn_abyss_dualblade": [
+    "雙刀"
+  ],
+  "wpn_thor_hammer": [
+    "單手鈍器"
+  ],
+  "wpn_osis_hammer": [
+    "單手鈍器"
+  ],
+  "wpn_mapler_punish": [
+    "雙手鈍器"
+  ],
+  "wpn_pagrio_wrath": [
+    "單手劍"
+  ],
+  "wpn_eva_scold": [
+    "單手劍"
+  ],
+  "relic_goblin_blade": [
+    "單手劍"
+  ],
+  "relic_gremlin_club": [
+    "單手鈍器"
+  ],
+  "relic_husky_bone": [
+    "單手鈍器"
+  ],
+  "relic_doberman_fang": [
+    "匕首"
+  ],
+  "relic_gladiator_scimitar": [
+    "單手劍"
+  ],
+  "relic_icefield_pick": [
+    "單手鈍器"
+  ],
+  "relic_werewolf_mace": [
+    "單手鈍器"
+  ],
+  "relic_orc_nail": [
+    "匕首"
+  ],
+  "relic_pan_staff": [
+    "矛"
+  ],
+  "relic_elastic_rib": [
+    "雙刀"
+  ],
+  "relic_golem_fist": [
+    "雙手鈍器"
+  ],
+  "relic_orc_cleaver": [
+    "單手劍"
+  ],
+  "relic_strong_femur": [
+    "單手鈍器"
+  ],
+  "relic_forgotten_spear": [
+    "矛"
+  ],
+  "relic_spider_claw": [
+    "鋼爪"
+  ],
+  "relic_hobgoblin_grinder": [
+    "單手劍"
+  ],
+  "relic_orc_butcher": [
+    "單手劍"
+  ],
+  "relic_orc_pole": [
+    "矛"
+  ],
+  "relic_sparta_grudge": [
+    "雙刀"
+  ],
+  "relic_shark_teeth": [
+    "匕首"
+  ],
+  "relic_guard_spear": [
+    "矛"
+  ],
+  "relic_crab_claw": [
+    "鋼爪"
+  ],
+  "relic_venom_fang": [
+    "雙手劍"
+  ],
+  "relic_ratman_skewer": [
+    "矛"
+  ],
+  "relic_lizardman_cleaver": [
+    "矛"
+  ],
+  "relic_ohm_maul": [
+    "雙手鈍器"
+  ],
+  "relic_parrot_beak": [
+    "雙手劍"
+  ],
+  "relic_pirate_scimitar": [
+    "單手劍"
+  ],
+  "relic_scorpion_sting": [
+    "匕首"
+  ],
+  "relic_harvey_claw": [
+    "單手劍"
+  ],
+  "relic_guard_pike": [
+    "矛"
+  ],
+  "relic_ogi_greataxe": [
+    "雙手鈍器"
+  ],
+  "relic_darkthief_claw": [
+    "鋼爪"
+  ],
+  "relic_fighter_axe": [
+    "雙手鈍器"
+  ],
+  "relic_darkelf_grindblade": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_wisp_remnant": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_summoner_whip": [
+    "單手鈍器"
+  ],
+  "relic_griffin_claw": [
+    "鋼爪"
+  ],
+  "relic_croc_fang": [
+    "雙手劍"
+  ],
+  "relic_icestone_maul": [
+    "雙手鈍器"
+  ],
+  "relic_mutant_lamia_scale": [
+    "匕首"
+  ],
+  "relic_thorn_needle": [
+    "匕首"
+  ],
+  "relic_giant_toothpick": [
+    "雙手劍"
+  ],
+  "relic_veteran_greatsword": [
+    "雙手劍"
+  ],
+  "relic_giant_throwstone": [
+    "雙手鈍器"
+  ],
+  "relic_armor_spareblade": [
+    "雙刀"
+  ],
+  "relic_aruba_haste": [
+    "單手鈍器"
+  ],
+  "relic_ashwarrior_flamesword": [
+    "單手劍"
+  ],
+  "relic_deadgeneral_greatsword": [
+    "雙手劍"
+  ],
+  "relic_darkscorpion_pincers": [
+    "雙刀"
+  ],
+  "relic_medusa_stinger": [
+    "單手鈍器"
+  ],
+  "relic_silent_venom": [
+    "矛"
+  ],
+  "relic_axetaurus_brutalaxe": [
+    "雙手鈍器"
+  ],
+  "relic_lizard_tongue": [
+    "矛"
+  ],
+  "relic_killerbee_sting": [
+    "匕首"
+  ],
+  "relic_ancient_spider_claw": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_guardian_greatsword": [
+    "雙手劍"
+  ],
+  "wpn_kukulkan_spear": [
+    "矛"
+  ],
+  "relic_eto_whip": [
+    "矛"
+  ],
+  "relic_serpent_fang": [
+    "矛"
+  ],
+  "relic_kaira_fang": [
+    "匕首"
+  ],
+  "relic_mud_idol": [
+    "雙手鈍器"
+  ],
+  "relic_teo_hammer": [
+    "單手鈍器"
+  ],
+  "relic_executor_axe": [
+    "單手鈍器"
+  ],
+  "relic_healer_wand": [
+    "單手鈍器"
+  ],
+  "relic_minotaur_flail": [
+    "單手鈍器"
+  ],
+  "relic_executor_skewer": [
+    "矛"
+  ],
+  "relic_weathered_obelisk": [
+    "雙手鈍器"
+  ],
+  "relic_shadow_stinger": [
+    "匕首"
+  ],
+  "relic_soulreaper_dual": [
+    "雙刀"
+  ],
+  "relic_ghoul_fang": [
+    "單手劍"
+  ],
+  "relic_sparto_shard": [
+    "單手劍"
+  ],
+  "relic_pirate_dual": [
+    "雙刀"
+  ],
+  "relic_lava_fists": [
+    "單手鈍器"
+  ],
+  "wpn_damascus": [
+    "單手劍"
+  ],
+  "wpn_6": [
+    "矛"
+  ],
+  "wpn_7": [
+    "矛"
+  ],
+  "wpn_12": [
+    "矛"
+  ],
+  "wpn_15": [
+    "矛"
+  ],
+  "wpn_18": [
+    "矛"
+  ],
+  "wpn_14": [
+    "矛"
+  ],
+  "wpn_16": [
+    "矛"
+  ],
+  "wpn_demonking_spear": [
+    "矛"
+  ],
+  "wpn_ancient_spear": [
+    "矛"
+  ],
+  "relic_bk_lance": [
+    "矛"
+  ],
+  "wpn_rond_dual": [
+    "雙刀"
+  ],
+  "wpn_cursed_emperor_blade": [
+    "單手劍",
+    "武士刀"
+  ],
+  "wpn_uncursed_emperor_blade": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_fireking_blast": [
+    "雙手劍"
+  ],
+  "relic_waterking_caress": [
+    "鋼爪"
+  ],
+  "relic_cerberus_pin": [
+    "鋼爪"
+  ],
+  "relic_dark_metal_club": [
+    "單手鈍器"
+  ],
+  "relic_ash_fist": [
+    "單手鈍器"
+  ],
+  "relic_ant_pincer": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_reaper_scythe": [
+    "雙手劍"
+  ],
+  "relic_mage_dagger": [
+    "匕首"
+  ],
+  "relic_sr_kettle_maul": [
+    "雙手鈍器"
+  ],
+  "relic_sr_kama_blade": [
+    "單手劍",
+    "武士刀"
+  ],
+  "relic_sr_ushioni_horn": [
+    "矛"
+  ]
+};;
 const EQUIP_CATEGORIES = [
-    // 武器
-    { key: 'dagger',     name: '匕首',     group: '武器' },
-    { key: 'sword1',     name: '單手劍',   group: '武器' },
-    { key: 'sword2',     name: '雙手劍',   group: '武器' },
-    { key: 'katana',     name: '武士刀',   group: '武器' },
-    { key: 'blunt1',     name: '單手鈍器', group: '武器' },
-    { key: 'blunt2',     name: '雙手鈍器', group: '武器' },
-    { key: 'spear',      name: '矛',       group: '武器' },
-    { key: 'claw',       name: '鋼爪',     group: '武器' },
-    { key: 'dual',       name: '雙刀',     group: '武器' },
-    { key: 'chainsword', name: '鎖鏈劍',   group: '武器' },
-    { key: 'bow',        name: '弓',       group: '武器' },
-    { key: 'xbow',       name: '十字弓',   group: '武器' },
-    { key: 'quiver',     name: '箭筒',     group: '武器' },   // 🏺 v3.2.0 遺物箭筒（isArrow+relic·改造便利箭筒/艾庫尤卡的永續箭筒）：一般箭矢仍不收錄；本分類只在「遺物收集冊」出現（裝備收集冊 buildEquipIndex 跳過遺物→陣列空→分頁自動隱藏·EQUIP_CAT_BONUS 無此鍵→無全收集加成）
-    { key: 'wand',       name: '魔杖',     group: '武器' },
-    { key: 'qigu',       name: '奇古獸',   group: '武器' },
-    { key: 'wpn_other',  name: '其他武器', group: '武器' },
-    // 防具
-    { key: 'helm',     name: '頭盔',   group: '防具' },
-    { key: 'armor',    name: '盔甲',   group: '防具' },
-    { key: 'shin',     name: '脛甲',   group: '防具' },
-    { key: 'tshirt',   name: '內衣',   group: '防具' },
-    { key: 'cloak',    name: '斗篷',   group: '防具' },
-    { key: 'boots',    name: '長靴',   group: '防具' },
-    { key: 'gloves',   name: '手套',   group: '防具' },
-    { key: 'shield',   name: '盾牌',   group: '防具' },
-    { key: 'armguard', name: '臂甲',   group: '防具' },
-    // 飾品
-    { key: 'amulet', name: '項鍊',     group: '飾品' },
-    { key: 'ring',   name: '戒指',     group: '飾品' },
-    { key: 'belt',   name: '腰帶',     group: '飾品' },
-    { key: 'ear',    name: '耳環',     group: '飾品' },
-    { key: 'pet',    name: '寵物裝備', group: '飾品' },
-    { key: 'doll',   name: '魔法娃娃', group: '飾品' }
-];
+  {
+    "key": "dagger",
+    "name": "匕首",
+    "group": "武器"
+  },
+  {
+    "key": "sword1",
+    "name": "單手劍",
+    "group": "武器"
+  },
+  {
+    "key": "sword2",
+    "name": "雙手劍",
+    "group": "武器"
+  },
+  {
+    "key": "katana",
+    "name": "武士刀",
+    "group": "武器"
+  },
+  {
+    "key": "blunt1",
+    "name": "單手鈍器",
+    "group": "武器"
+  },
+  {
+    "key": "blunt2",
+    "name": "雙手鈍器",
+    "group": "武器"
+  },
+  {
+    "key": "spear",
+    "name": "矛",
+    "group": "武器"
+  },
+  {
+    "key": "claw",
+    "name": "鋼爪",
+    "group": "武器"
+  },
+  {
+    "key": "dual",
+    "name": "雙刀",
+    "group": "武器"
+  },
+  {
+    "key": "chainsword",
+    "name": "鎖鏈劍",
+    "group": "武器"
+  },
+  {
+    "key": "bow",
+    "name": "弓",
+    "group": "武器"
+  },
+  {
+    "key": "xbow",
+    "name": "十字弓",
+    "group": "武器"
+  },
+  {
+    "key": "quiver",
+    "name": "箭筒",
+    "group": "武器"
+  },
+  {
+    "key": "wand",
+    "name": "魔杖",
+    "group": "武器"
+  },
+  {
+    "key": "qigu",
+    "name": "奇古獸",
+    "group": "武器"
+  },
+  {
+    "key": "wpn_other",
+    "name": "其他武器",
+    "group": "武器"
+  },
+  {
+    "key": "helm",
+    "name": "頭盔",
+    "group": "防具"
+  },
+  {
+    "key": "armor",
+    "name": "盔甲",
+    "group": "防具"
+  },
+  {
+    "key": "shin",
+    "name": "脛甲",
+    "group": "防具"
+  },
+  {
+    "key": "tshirt",
+    "name": "內衣",
+    "group": "防具"
+  },
+  {
+    "key": "cloak",
+    "name": "斗篷",
+    "group": "防具"
+  },
+  {
+    "key": "boots",
+    "name": "長靴",
+    "group": "防具"
+  },
+  {
+    "key": "gloves",
+    "name": "手套",
+    "group": "防具"
+  },
+  {
+    "key": "shield",
+    "name": "盾牌",
+    "group": "防具"
+  },
+  {
+    "key": "armguard",
+    "name": "臂甲",
+    "group": "防具"
+  },
+  {
+    "key": "amulet",
+    "name": "項鍊",
+    "group": "飾品"
+  },
+  {
+    "key": "ring",
+    "name": "戒指",
+    "group": "飾品"
+  },
+  {
+    "key": "belt",
+    "name": "腰帶",
+    "group": "飾品"
+  },
+  {
+    "key": "ear",
+    "name": "耳環",
+    "group": "飾品"
+  },
+  {
+    "key": "pet",
+    "name": "寵物裝備",
+    "group": "飾品"
+  },
+  {
+    "key": "doll",
+    "name": "魔法娃娃",
+    "group": "飾品"
+  }
+];;
 function equipCatKey(id, d) {
     if (!d) return null;
     if (d.type === 'wpn') {
@@ -4007,416 +5444,1847 @@ function dexClearAll(type){
 // 完整重建自 15-cards.js 的 buildCardIndex() 邏輯（掃描 CARD_REGIONS 對應地圖池 × DB.mobs，
 // 排除 血盟／建築 標籤），共 409 隻卡片收集對象，非原本手動節錄的 73 隻。
 const CARD_DEX_LIST = [
-  {n:"藏寶箱",lv:1},
-  {n:"妖魔",lv:2},
-  {n:"哥布林",lv:2},
-  {n:"地靈",lv:3},
-  {n:"污染的地精靈",lv:3},
-  {n:"妖魔弓箭手",lv:3},
-  {n:"狼",lv:4},
-  {n:"蘑菇",lv:4},
-  {n:"小獵犬",lv:5},
-  {n:"老虎",lv:5},
-  {n:"侏儒",lv:5},
-  {n:"牧羊犬",lv:5},
-  {n:"狐狸",lv:5},
-  {n:"哈士奇",lv:5},
-  {n:"柯利",lv:5},
-  {n:"浣熊",lv:5},
-  {n:"高麗幼犬",lv:5},
-  {n:"袋鼠",lv:5},
-  {n:"猴子",lv:5},
-  {n:"聖伯納犬",lv:5},
-  {n:"熊",lv:5},
-  {n:"熊貓",lv:5},
-  {n:"暴走兔",lv:5},
-  {n:"貓",lv:5},
-  {n:"人形殭屍",lv:6},
-  {n:"安普長老",lv:6},
-  {n:"污染的安特",lv:6},
-  {n:"杜賓狗",lv:6},
-  {n:"漂浮之眼",lv:7},
-  {n:"冰原狼人",lv:8},
-  {n:"妖魔鬥士",lv:8},
-  {n:"怪手",lv:8},
-  {n:"侏儒戰士",lv:9},
-  {n:"狼人",lv:9},
-  {n:"甘地妖魔",lv:10},
-  {n:"冰之女王侍女",lv:10},
-  {n:"污染的潘",lv:10},
-  {n:"妖魔殭屍",lv:10},
-  {n:"骷髏",lv:10},
-  {n:"鱷魚",lv:10},
-  {n:"巨蟻",lv:12},
-  {n:"妖魔法師",lv:12},
-  {n:"骷髏弓箭手",lv:12},
-  {n:"蟑螂人",lv:12},
-  {n:"石頭高崙",lv:13},
-  {n:"骷髏斧手",lv:13},
-  {n:"骷髏槍兵",lv:13},
-  {n:"羅孚妖魔",lv:13},
-  {n:"妖魔巡守",lv:14},
-  {n:"哈柏哥布林",lv:14},
-  {n:"夏洛伯",lv:14},
-  {n:"穴居人",lv:15},
-  {n:"阿吐巴妖魔",lv:15},
-  {n:"都達瑪拉妖魔",lv:15},
-  {n:"蜥蜴人",lv:15},
-  {n:"歐熊",lv:15},
-  {n:"人魚",lv:16},
-  {n:"史巴托",lv:16},
-  {n:"食屍鬼",lv:16},
-  {n:"黑騎士",lv:16},
-  {n:"黑騎士搜索隊",lv:16},
-  {n:"鯊魚",lv:16},
-  {n:"那魯加妖魔",lv:17},
-  {n:"萊肯",lv:17},
-  {n:"狂野之毒",lv:18},
-  {n:"狂野毒牙",lv:18},
-  {n:"楊果里恩",lv:18},
-  {n:"蟹人",lv:18},
-  {n:"歐姆",lv:19},
-  {n:"巨大兵蟻",lv:20},
-  {n:"狂野之魔",lv:20},
-  {n:"狂暴蜥蜴人",lv:20},
-  {n:"海星",lv:20},
-  {n:"鼠人",lv:20},
-  {n:"卡司特",lv:21},
-  {n:"狂暴的歐姆",lv:21},
-  {n:"長老",lv:21},
-  {n:"食人妖精",lv:22},
-  {n:"蛇女",lv:22},
-  {n:"魔蝙蝠",lv:22},
-  {n:"底比斯 曼陀羅草(白)",lv:23},
-  {n:"提卡爾艾庫阿茲特",lv:23},
-  {n:"歐姆裝甲兵",lv:23},
-  {n:"地獄犬",lv:24},
-  {n:"希爾黛斯",lv:24},
-  {n:"重裝蜥蜴人",lv:24},
-  {n:"龍龜",lv:24},
-  {n:"藍尾蜥蜴",lv:24},
-  {n:"犰狳",lv:25},
-  {n:"白螞蟻群",lv:25},
-  {n:"狂暴的歐姆裝甲兵",lv:25},
-  {n:"奇異鸚鵡",lv:25},
-  {n:"海賊骷髏",lv:25},
-  {n:"高等蜥蜴人",lv:25},
-  {n:"闇之精靈",lv:25},
-  {n:"底比斯 曼陀羅草",lv:26},
-  {n:"哈維",lv:26},
-  {n:"毒蠍",lv:26},
-  {n:"提卡爾艾庫阿茲特(黃)",lv:26},
-  {n:"黑暗妖精魔法學徒",lv:26},
-  {n:"歐姆民兵",lv:26},
-  {n:"魔熊",lv:26},
-  {n:"黑暗妖精殘兵(弓)",lv:27},
-  {n:"黑暗精靈",lv:27},
-  {n:"骷髏神射手",lv:27},
-  {n:"骷髏警衛",lv:27},
-  {n:"巨大白螞蟻",lv:28},
-  {n:"伊萊克頓",lv:28},
-  {n:"多羅",lv:28},
-  {n:"海賊骷髏士兵",lv:28},
-  {n:"紙人",lv:28},
-  {n:"強盜",lv:28},
-  {n:"雪人",lv:28},
-  {n:"黑暗妖精盜賊",lv:28},
-  {n:"歐吉",lv:28},
-  {n:"闇精靈王",lv:28},
-  {n:"底比斯 聖甲蟲",lv:29},
-  {n:"奎斯坦修",lv:29},
-  {n:"提卡爾艾庫尤卡(藍)",lv:29},
-  {n:"黑暗妖精殘兵(十字弓)",lv:29},
-  {n:"黑暗妖精殘兵(劍)",lv:29},
-  {n:"骷髏鬥士",lv:29},
-  {n:"爆彈花",lv:29},
-  {n:"巨人",lv:30},
-  {n:"冰人",lv:30},
-  {n:"艾爾摩士兵",lv:30},
-  {n:"金屬蜈蚣",lv:30},
-  {n:"食人妖精王",lv:30},
-  {n:"莫妮亞",lv:30},
-  {n:"喚獸師",lv:30},
-  {n:"黑暗妖精殘兵(法師)",lv:30},
-  {n:"夢幻之島鬼火",lv:30},
-  {n:"夢幻之島蘑菇",lv:30},
-  {n:"艾爾摩法師",lv:31},
-  {n:"格利芬",lv:31},
-  {n:"密密",lv:31},
-  {n:"強化巨蟻",lv:31},
-  {n:"巨大鱷魚",lv:32},
-  {n:"冰石高崙",lv:32},
-  {n:"底比斯 聖甲蟲(藍)",lv:32},
-  {n:"海賊骷髏刀手",lv:32},
-  {n:"海賊骷髏首領",lv:32},
-  {n:"提卡爾艾庫尤卡(白)",lv:32},
-  {n:"黑法師",lv:32},
-  {n:"變種蛇女",lv:32},
-  {n:"卡司特王",lv:33},
-  {n:"巨人長老",lv:33},
-  {n:"巨人戰士",lv:33},
-  {n:"冰原老虎",lv:33},
-  {n:"多眼怪",lv:33},
-  {n:"活鎧甲",lv:33},
-  {n:"雪怪",lv:33},
-  {n:"黑暗妖精殘兵(雙手劍)",lv:33},
-  {n:"黑暗棲林者",lv:33},
-  {n:"龍蠅",lv:33},
-  {n:"變形怪",lv:33},
-  {n:"變種楊果里恩",lv:33},
-  {n:"亞力安",lv:34},
-  {n:"強化白螞蟻群",lv:34},
-  {n:"火焰戰士",lv:35},
-  {n:"艾爾摩將軍",lv:35},
-  {n:"底比斯 凱比斯(黑)",lv:35},
-  {n:"阿魯巴",lv:35},
-  {n:"強盜頭目",lv:35},
-  {n:"提卡爾艾庫卡伊拉(藍)",lv:35},
-  {n:"鋼鐵高崙",lv:35},
-  {n:"火焰弓箭手",lv:36},
-  {n:"邪惡蜥蜴",lv:36},
-  {n:"梅杜莎",lv:36},
-  {n:"黑暗妖精警衛(十字弓)",lv:36},
-  {n:"巨大突擊螞蟻",lv:37},
-  {n:"死亡之劍",lv:37},
-  {n:"炎魔的思克巴",lv:37},
-  {n:"思克巴",lv:37},
-  {n:"恐怖的火炎蛋",lv:37},
-  {n:"火蜥蜴",lv:38},
-  {n:"邪惡密密",lv:38},
-  {n:"黑暗妖精士兵",lv:38},
-  {n:"黑暗妖精巡守",lv:38},
-  {n:"夢幻之島火蜥蜴",lv:38},
-  {n:"夢幻之島冰人",lv:38},
-  {n:"夢幻之島殺人蜂",lv:38},
-  {n:"夢幻之島暴走兔",lv:38},
-  {n:"火炎蛋",lv:39},
-  {n:"邪惡多眼怪",lv:39},
-  {n:"奇美拉",lv:39},
-  {n:"底比斯 凱比斯(紅)",lv:39},
-  {n:"提卡爾艾庫卡伊拉(黃)",lv:39},
-  {n:"殘暴的骷髏斧兵",lv:39},
-  {n:"殘暴的骷髏槍兵",lv:39},
-  {n:"夢幻之島火炎蛋",lv:39},
-  {n:"夢幻之島冰石高崙",lv:39},
-  {n:"夢幻之島閃電球",lv:39},
-  {n:"夢幻之島鎧甲守衛",lv:39},
-  {n:"水之牙",lv:40},
-  {n:"火之牙",lv:40},
-  {n:"巨大強化白螞蟻",lv:40},
-  {n:"地之牙",lv:40},
-  {n:"地獄束縛犬",lv:40},
-  {n:"拉斯塔巴德守門人",lv:40},
-  {n:"風之牙",lv:40},
-  {n:"恐怖夢魘",lv:40},
-  {n:"黑虎",lv:40},
-  {n:"黑暗妖精法師",lv:40},
-  {n:"黑暗妖精警衛(矛)",lv:40},
-  {n:"馴獸師",lv:40},
-  {n:"夢幻之島大鬼火",lv:40},
-  {n:"夢魘",lv:40},
-  {n:"獨眼巨人",lv:40},
-  {n:"魔狼",lv:40},
-  {n:"底比斯 尖碑石奴",lv:41},
-  {n:"炎魔的思克巴女皇",lv:41},
-  {n:"思克巴女皇",lv:41},
-  {n:"提卡爾艾庫巴拉",lv:41},
-  {n:"魂騎士",lv:41},
-  {n:"影魔",lv:41},
-  {n:"水元素守護者",lv:42},
-  {n:"火元素守護者",lv:42},
-  {n:"地元素守護者",lv:42},
-  {n:"西瑪",lv:42},
-  {n:"巫師",lv:42},
-  {n:"受詛咒的妖魔殭屍",lv:42},
-  {n:"拉斯塔巴德馴獸師",lv:42},
-  {n:"風元素守護者",lv:42},
-  {n:"鬼魂",lv:42},
-  {n:"殘暴的史巴托",lv:42},
-  {n:"殘暴的食屍鬼",lv:42},
-  {n:"德雷克",lv:42},
-  {n:"巴土瑟",lv:43},
-  {n:"地獄奴隸",lv:43},
-  {n:"受詛咒的馴獸師",lv:43},
-  {n:"紅鬼魂",lv:43},
-  {n:"恐怖的地獄犬",lv:43},
-  {n:"黑暗妖精將軍",lv:43},
-  {n:"夢幻之島水精靈王",lv:43},
-  {n:"夢幻之島火精靈王",lv:43},
-  {n:"夢幻之島地精靈王",lv:43},
-  {n:"夢幻之島風精靈王",lv:43},
-  {n:"熔岩高崙",lv:43},
-  {n:"獨角獸",lv:43},
-  {n:"小惡魔",lv:44},
-  {n:"火焰之魔法師",lv:44},
-  {n:"卡士柏",lv:44},
-  {n:"巨大守護螞蟻",lv:44},
-  {n:"底比斯 尖碑石奴(黑)",lv:44},
-  {n:"炎魔的小惡魔",lv:44},
-  {n:"恐怖的鋼鐵高崙",lv:44},
-  {n:"提卡爾艾庫巴拉(紅)",lv:44},
-  {n:"暗黑萊肯",lv:44},
-  {n:"水靈之主",lv:45},
-  {n:"火焰之靈魂(紅)",lv:45},
-  {n:"火靈之主",lv:45},
-  {n:"幼龍",lv:45},
-  {n:"伊弗利特",lv:45},
-  {n:"地靈之主",lv:45},
-  {n:"死神",lv:45},
-  {n:"受詛咒的艾爾摩法師",lv:45},
-  {n:"阿西塔基奧",lv:45},
-  {n:"風靈之主",lv:45},
-  {n:"馬庫爾",lv:45},
-  {n:"深淵弓箭手",lv:45},
-  {n:"深淵食屍鬼",lv:45},
-  {n:"殘暴的骷髏神射手",lv:45},
-  {n:"殘暴的骷髏鬥士",lv:45},
-  {n:"黑暗復仇者",lv:45},
-  {n:"黑暗精靈使",lv:45},
-  {n:"暗黑黑騎士",lv:45},
-  {n:"墳墓守護者",lv:45},
-  {n:"歐姆戰士",lv:45},
-  {n:"火焰之靈魂(藍)",lv:46},
-  {n:"火焰烈炎獸",lv:46},
-  {n:"血色術士",lv:46},
-  {n:"恐怖的伊弗利特",lv:46},
-  {n:"血騎士",lv:47},
-  {n:"受詛咒的艾爾摩士兵",lv:47},
-  {n:"底比斯 斯芬克斯",lv:47},
-  {n:"骨龍",lv:47},
-  {n:"提卡爾艾庫艾托",lv:47},
-  {n:"闇黑君王",lv:47},
-  {n:"冷酷冰原老虎",lv:48},
-  {n:"拉斯塔巴德近衛隊",lv:48},
-  {n:"重裝歐姆戰士",lv:48},
-  {n:"飛龍",lv:48},
-  {n:"烈炎獸",lv:48},
-  {n:"暗黑火焰弓箭手",lv:48},
-  {n:"墳墓守護者法師",lv:48},
-  {n:"西斯",lv:50},
-  {n:"受詛咒的艾爾摩將軍",lv:50},
-  {n:"底比斯 尼荷斯",lv:50},
-  {n:"底比斯 斯芬克斯(黑)",lv:50},
-  {n:"曼波兔",lv:50},
-  {n:"提卡爾艾庫艾托(枯竭)",lv:50},
-  {n:"提卡爾薩德泥偶",lv:50},
-  {n:"象牙塔石頭高崙",lv:50},
-  {n:"象牙塔紙人",lv:50},
-  {n:"象牙塔密密",lv:50},
-  {n:"黑長者",lv:50},
-  {n:"暗黑火焰戰士",lv:50},
-  {n:"墳墓守護者騎士",lv:50},
-  {n:"火焰阿西塔基奧",lv:51},
-  {n:"卡魯塔",lv:51},
-  {n:"炎魔的巴風特",lv:51},
-  {n:"長老隨從",lv:51},
-  {n:"象牙塔鋼鐵高崙",lv:51},
-  {n:"墮落的司祭(一階)",lv:51},
-  {n:"墮落的司祭(二階)",lv:51},
-  {n:"死亡的司祭(思克巴)",lv:52},
-  {n:"底比斯 尼荷斯(藍)",lv:52},
-  {n:"混沌的司祭(飛翼)",lv:52},
-  {n:"提卡爾薩德泥偶(黑)",lv:52},
-  {n:"象牙塔果凍怪",lv:52},
-  {n:"炎魔的巴列斯",lv:53},
-  {n:"象牙塔活鎧甲",lv:53},
-  {n:"傲慢的潔尼斯女王",lv:53},
-  {n:"暗黑思克巴女皇",lv:53},
-  {n:"墮落的司祭(三階)",lv:53},
-  {n:"小幻象眼魔",lv:54},
-  {n:"底比斯 阿努斯",lv:54},
-  {n:"拉斯塔巴德近衛隊隊長",lv:54},
-  {n:"提卡爾薩德司卡(紫)",lv:54},
-  {n:"墮落的司祭(四階)",lv:54},
-  {n:"死亡的司祭(巴風特)",lv:55},
-  {n:"艾莉絲",lv:55},
-  {n:"恐怖的殭屍王",lv:55},
-  {n:"深淵水靈",lv:55},
-  {n:"深淵火靈",lv:55},
-  {n:"深淵地靈",lv:55},
-  {n:"深淵風靈",lv:55},
-  {n:"混沌的司祭(野獸)",lv:55},
-  {n:"象牙塔死亡之劍",lv:55},
-  {n:"象牙塔奇美拉",lv:55},
-  {n:"象牙塔長者",lv:55},
-  {n:"象牙塔閃電球",lv:55},
-  {n:"巨大墳墓守護者",lv:56},
-  {n:"底比斯 阿努斯(黑)",lv:56},
-  {n:"馬昆斯吸血鬼",lv:56},
-  {n:"提卡爾薩德司卡(紅)",lv:56},
-  {n:"象牙塔蛇女",lv:56},
-  {n:"墮落的司祭(五階)",lv:56},
-  {n:"炎魔的分身",lv:57},
-  {n:"象牙塔黑長者",lv:57},
-  {n:"木乃伊王",lv:58},
-  {n:"底比斯 巴斯",lv:58},
-  {n:"提卡爾薩德提歐(藍)",lv:58},
-  {n:"象牙塔死神",lv:58},
-  {n:"象牙塔黑魔法師",lv:58},
-  {n:"象牙塔影魔",lv:58},
-  {n:"象牙塔炎魔的奴隸",lv:59},
-  {n:"象牙塔惡靈",lv:59},
-  {n:"土精靈王",lv:60},
-  {n:"不幸的幻象眼魔",lv:60},
-  {n:"水精靈王",lv:60},
-  {n:"火精靈王",lv:60},
-  {n:"扭曲的潔尼斯女王",lv:60},
-  {n:"底比斯 巴斯(紅)",lv:60},
-  {n:"哈汀之影",lv:60},
-  {n:"風精靈王",lv:60},
-  {n:"恐怖的吸血鬼",lv:60},
-  {n:"提卡爾薩德提歐(黃)",lv:60},
-  {n:"象牙塔小惡魔",lv:60},
-  {n:"象牙塔巴列斯之影",lv:60},
-  {n:"騎士范德",lv:60},
-  {n:"巴風特",lv:61},
-  {n:"炎魔的惡魔",lv:61},
-  {n:"象牙塔翼魔",lv:61},
-  {n:"暗殺軍王史雷佛",lv:61},
-  {n:"死亡的殭屍王",lv:62},
-  {n:"象牙塔巴風特之影",lv:62},
-  {n:"象牙塔炎魔之影",lv:63},
-  {n:"象牙塔惡魔之影",lv:63},
-  {n:"魔獸軍王巴蘭卡",lv:63},
-  {n:"不死的木乃伊王",lv:65},
-  {n:"火焰之影親衛隊(巴風特)",lv:65},
-  {n:"地獄的黑豹",lv:65},
-  {n:"克特",lv:65},
-  {n:"冷酷的艾莉絲",lv:65},
-  {n:"法令軍王蕾雅",lv:65},
-  {n:"深淵之主",lv:65},
-  {n:"變形怪首領",lv:65},
-  {n:"墮落",lv:68},
-  {n:"不死鳥",lv:69},
-  {n:"巴列斯",lv:70},
-  {n:"古代巨人",lv:70},
-  {n:"巨蟻女皇",lv:70},
-  {n:"冰魔",lv:70},
-  {n:"死亡",lv:70},
-  {n:"底比斯 阿努比斯",lv:70},
-  {n:"底比斯 賀洛斯",lv:70},
-  {n:"冥法軍王海露拜",lv:70},
-  {n:"混沌",lv:70},
-  {n:"惡魔",lv:70},
-  {n:"提卡爾杰弗雷庫(雄)",lv:70},
-  {n:"提卡爾杰弗雷庫(雌)",lv:70},
-  {n:"冰之女王",lv:75},
-  {n:"死亡騎士",lv:75},
-  {n:"闇黑的騎士范德",lv:75},
-  {n:"長老．琪娜",lv:78},
-  {n:"不滅的巫妖",lv:80},
-  {n:"邪惡的鐮刀死神",lv:80},
-  {n:"長老．艾迪爾",lv:80},
-  {n:"長老．巴塔斯",lv:85},
-  {n:"長老．巴洛斯",lv:88},
-  {n:"長老．泰瑪斯",lv:90},
-  {n:"長老．安迪斯",lv:91},
-  {n:"安塔瑞斯",lv:93},
-  {n:"法利昂",lv:93},
-  {n:"長老．拉曼斯",lv:93},
-  {n:"巴拉卡斯",lv:95},
-  {n:"長老．巴陸德",lv:96}
-];
+  {
+    "n": "藏寶箱",
+    "lv": 1
+  },
+  {
+    "n": "妖魔",
+    "lv": 2
+  },
+  {
+    "n": "哥布林",
+    "lv": 2
+  },
+  {
+    "n": "地靈",
+    "lv": 3
+  },
+  {
+    "n": "污染的地精靈",
+    "lv": 3
+  },
+  {
+    "n": "妖魔弓箭手",
+    "lv": 3
+  },
+  {
+    "n": "狼",
+    "lv": 4
+  },
+  {
+    "n": "蘑菇",
+    "lv": 4
+  },
+  {
+    "n": "小獵犬",
+    "lv": 5
+  },
+  {
+    "n": "老虎",
+    "lv": 5
+  },
+  {
+    "n": "侏儒",
+    "lv": 5
+  },
+  {
+    "n": "牧羊犬",
+    "lv": 5
+  },
+  {
+    "n": "狐狸",
+    "lv": 5
+  },
+  {
+    "n": "哈士奇",
+    "lv": 5
+  },
+  {
+    "n": "柯利",
+    "lv": 5
+  },
+  {
+    "n": "浣熊",
+    "lv": 5
+  },
+  {
+    "n": "高麗幼犬",
+    "lv": 5
+  },
+  {
+    "n": "袋鼠",
+    "lv": 5
+  },
+  {
+    "n": "猴子",
+    "lv": 5
+  },
+  {
+    "n": "聖伯納犬",
+    "lv": 5
+  },
+  {
+    "n": "熊",
+    "lv": 5
+  },
+  {
+    "n": "熊貓",
+    "lv": 5
+  },
+  {
+    "n": "暴走兔",
+    "lv": 5
+  },
+  {
+    "n": "貓",
+    "lv": 5
+  },
+  {
+    "n": "人形殭屍",
+    "lv": 6
+  },
+  {
+    "n": "安普長老",
+    "lv": 6
+  },
+  {
+    "n": "污染的安特",
+    "lv": 6
+  },
+  {
+    "n": "杜賓狗",
+    "lv": 6
+  },
+  {
+    "n": "漂浮之眼",
+    "lv": 7
+  },
+  {
+    "n": "冰原狼人",
+    "lv": 8
+  },
+  {
+    "n": "妖魔鬥士",
+    "lv": 8
+  },
+  {
+    "n": "怪手",
+    "lv": 8
+  },
+  {
+    "n": "侏儒戰士",
+    "lv": 9
+  },
+  {
+    "n": "狼人",
+    "lv": 9
+  },
+  {
+    "n": "甘地妖魔",
+    "lv": 10
+  },
+  {
+    "n": "冰之女王侍女",
+    "lv": 10
+  },
+  {
+    "n": "污染的潘",
+    "lv": 10
+  },
+  {
+    "n": "妖魔殭屍",
+    "lv": 10
+  },
+  {
+    "n": "骷髏",
+    "lv": 10
+  },
+  {
+    "n": "鱷魚",
+    "lv": 10
+  },
+  {
+    "n": "巨蟻",
+    "lv": 12
+  },
+  {
+    "n": "妖魔法師",
+    "lv": 12
+  },
+  {
+    "n": "骷髏弓箭手",
+    "lv": 12
+  },
+  {
+    "n": "蟑螂人",
+    "lv": 12
+  },
+  {
+    "n": "石頭高崙",
+    "lv": 13
+  },
+  {
+    "n": "骷髏斧手",
+    "lv": 13
+  },
+  {
+    "n": "骷髏槍兵",
+    "lv": 13
+  },
+  {
+    "n": "羅孚妖魔",
+    "lv": 13
+  },
+  {
+    "n": "妖魔巡守",
+    "lv": 14
+  },
+  {
+    "n": "哈柏哥布林",
+    "lv": 14
+  },
+  {
+    "n": "夏洛伯",
+    "lv": 14
+  },
+  {
+    "n": "穴居人",
+    "lv": 15
+  },
+  {
+    "n": "阿吐巴妖魔",
+    "lv": 15
+  },
+  {
+    "n": "都達瑪拉妖魔",
+    "lv": 15
+  },
+  {
+    "n": "蜥蜴人",
+    "lv": 15
+  },
+  {
+    "n": "歐熊",
+    "lv": 15
+  },
+  {
+    "n": "人魚",
+    "lv": 16
+  },
+  {
+    "n": "史巴托",
+    "lv": 16
+  },
+  {
+    "n": "食屍鬼",
+    "lv": 16
+  },
+  {
+    "n": "黑騎士",
+    "lv": 16
+  },
+  {
+    "n": "黑騎士搜索隊",
+    "lv": 16
+  },
+  {
+    "n": "鯊魚",
+    "lv": 16
+  },
+  {
+    "n": "那魯加妖魔",
+    "lv": 17
+  },
+  {
+    "n": "萊肯",
+    "lv": 17
+  },
+  {
+    "n": "狂野之毒",
+    "lv": 18
+  },
+  {
+    "n": "狂野毒牙",
+    "lv": 18
+  },
+  {
+    "n": "楊果里恩",
+    "lv": 18
+  },
+  {
+    "n": "蟹人",
+    "lv": 18
+  },
+  {
+    "n": "歐姆",
+    "lv": 19
+  },
+  {
+    "n": "巨大兵蟻",
+    "lv": 20
+  },
+  {
+    "n": "狂野之魔",
+    "lv": 20
+  },
+  {
+    "n": "狂暴蜥蜴人",
+    "lv": 20
+  },
+  {
+    "n": "海星",
+    "lv": 20
+  },
+  {
+    "n": "鼠人",
+    "lv": 20
+  },
+  {
+    "n": "卡司特",
+    "lv": 21
+  },
+  {
+    "n": "狂暴的歐姆",
+    "lv": 21
+  },
+  {
+    "n": "長老",
+    "lv": 21
+  },
+  {
+    "n": "食人妖精",
+    "lv": 22
+  },
+  {
+    "n": "蛇女",
+    "lv": 22
+  },
+  {
+    "n": "魔蝙蝠",
+    "lv": 22
+  },
+  {
+    "n": "底比斯 曼陀羅草(白)",
+    "lv": 23
+  },
+  {
+    "n": "提卡爾艾庫阿茲特",
+    "lv": 23
+  },
+  {
+    "n": "歐姆裝甲兵",
+    "lv": 23
+  },
+  {
+    "n": "地獄犬",
+    "lv": 24
+  },
+  {
+    "n": "希爾黛斯",
+    "lv": 24
+  },
+  {
+    "n": "重裝蜥蜴人",
+    "lv": 24
+  },
+  {
+    "n": "龍龜",
+    "lv": 24
+  },
+  {
+    "n": "藍尾蜥蜴",
+    "lv": 24
+  },
+  {
+    "n": "犰狳",
+    "lv": 25
+  },
+  {
+    "n": "白螞蟻群",
+    "lv": 25
+  },
+  {
+    "n": "狂暴的歐姆裝甲兵",
+    "lv": 25
+  },
+  {
+    "n": "奇異鸚鵡",
+    "lv": 25
+  },
+  {
+    "n": "海賊骷髏",
+    "lv": 25
+  },
+  {
+    "n": "高等蜥蜴人",
+    "lv": 25
+  },
+  {
+    "n": "闇之精靈",
+    "lv": 25
+  },
+  {
+    "n": "底比斯 曼陀羅草",
+    "lv": 26
+  },
+  {
+    "n": "哈維",
+    "lv": 26
+  },
+  {
+    "n": "毒蠍",
+    "lv": 26
+  },
+  {
+    "n": "提卡爾艾庫阿茲特(黃)",
+    "lv": 26
+  },
+  {
+    "n": "黑暗妖精魔法學徒",
+    "lv": 26
+  },
+  {
+    "n": "歐姆民兵",
+    "lv": 26
+  },
+  {
+    "n": "魔熊",
+    "lv": 26
+  },
+  {
+    "n": "黑暗妖精殘兵(弓)",
+    "lv": 27
+  },
+  {
+    "n": "黑暗精靈",
+    "lv": 27
+  },
+  {
+    "n": "骷髏神射手",
+    "lv": 27
+  },
+  {
+    "n": "骷髏警衛",
+    "lv": 27
+  },
+  {
+    "n": "巨大白螞蟻",
+    "lv": 28
+  },
+  {
+    "n": "伊萊克頓",
+    "lv": 28
+  },
+  {
+    "n": "多羅",
+    "lv": 28
+  },
+  {
+    "n": "海賊骷髏士兵",
+    "lv": 28
+  },
+  {
+    "n": "紙人",
+    "lv": 28
+  },
+  {
+    "n": "強盜",
+    "lv": 28
+  },
+  {
+    "n": "雪人",
+    "lv": 28
+  },
+  {
+    "n": "黑暗妖精盜賊",
+    "lv": 28
+  },
+  {
+    "n": "歐吉",
+    "lv": 28
+  },
+  {
+    "n": "闇精靈王",
+    "lv": 28
+  },
+  {
+    "n": "底比斯 聖甲蟲",
+    "lv": 29
+  },
+  {
+    "n": "奎斯坦修",
+    "lv": 29
+  },
+  {
+    "n": "提卡爾艾庫尤卡(藍)",
+    "lv": 29
+  },
+  {
+    "n": "黑暗妖精殘兵(十字弓)",
+    "lv": 29
+  },
+  {
+    "n": "黑暗妖精殘兵(劍)",
+    "lv": 29
+  },
+  {
+    "n": "骷髏鬥士",
+    "lv": 29
+  },
+  {
+    "n": "爆彈花",
+    "lv": 29
+  },
+  {
+    "n": "巨人",
+    "lv": 30
+  },
+  {
+    "n": "冰人",
+    "lv": 30
+  },
+  {
+    "n": "艾爾摩士兵",
+    "lv": 30
+  },
+  {
+    "n": "金屬蜈蚣",
+    "lv": 30
+  },
+  {
+    "n": "食人妖精王",
+    "lv": 30
+  },
+  {
+    "n": "莫妮亞",
+    "lv": 30
+  },
+  {
+    "n": "喚獸師",
+    "lv": 30
+  },
+  {
+    "n": "黑暗妖精殘兵(法師)",
+    "lv": 30
+  },
+  {
+    "n": "夢幻之島鬼火",
+    "lv": 30
+  },
+  {
+    "n": "夢幻之島蘑菇",
+    "lv": 30
+  },
+  {
+    "n": "艾爾摩法師",
+    "lv": 31
+  },
+  {
+    "n": "格利芬",
+    "lv": 31
+  },
+  {
+    "n": "密密",
+    "lv": 31
+  },
+  {
+    "n": "強化巨蟻",
+    "lv": 31
+  },
+  {
+    "n": "巨大鱷魚",
+    "lv": 32
+  },
+  {
+    "n": "冰石高崙",
+    "lv": 32
+  },
+  {
+    "n": "底比斯 聖甲蟲(藍)",
+    "lv": 32
+  },
+  {
+    "n": "海賊骷髏刀手",
+    "lv": 32
+  },
+  {
+    "n": "海賊骷髏首領",
+    "lv": 32
+  },
+  {
+    "n": "提卡爾艾庫尤卡(白)",
+    "lv": 32
+  },
+  {
+    "n": "黑法師",
+    "lv": 32
+  },
+  {
+    "n": "變種蛇女",
+    "lv": 32
+  },
+  {
+    "n": "卡司特王",
+    "lv": 33
+  },
+  {
+    "n": "巨人長老",
+    "lv": 33
+  },
+  {
+    "n": "巨人戰士",
+    "lv": 33
+  },
+  {
+    "n": "冰原老虎",
+    "lv": 33
+  },
+  {
+    "n": "多眼怪",
+    "lv": 33
+  },
+  {
+    "n": "活鎧甲",
+    "lv": 33
+  },
+  {
+    "n": "雪怪",
+    "lv": 33
+  },
+  {
+    "n": "黑暗妖精殘兵(雙手劍)",
+    "lv": 33
+  },
+  {
+    "n": "黑暗棲林者",
+    "lv": 33
+  },
+  {
+    "n": "龍蠅",
+    "lv": 33
+  },
+  {
+    "n": "變形怪",
+    "lv": 33
+  },
+  {
+    "n": "變種楊果里恩",
+    "lv": 33
+  },
+  {
+    "n": "亞力安",
+    "lv": 34
+  },
+  {
+    "n": "強化白螞蟻群",
+    "lv": 34
+  },
+  {
+    "n": "火焰戰士",
+    "lv": 35
+  },
+  {
+    "n": "艾爾摩將軍",
+    "lv": 35
+  },
+  {
+    "n": "底比斯 凱比斯(黑)",
+    "lv": 35
+  },
+  {
+    "n": "阿魯巴",
+    "lv": 35
+  },
+  {
+    "n": "強盜頭目",
+    "lv": 35
+  },
+  {
+    "n": "提卡爾艾庫卡伊拉(藍)",
+    "lv": 35
+  },
+  {
+    "n": "鋼鐵高崙",
+    "lv": 35
+  },
+  {
+    "n": "火焰弓箭手",
+    "lv": 36
+  },
+  {
+    "n": "邪惡蜥蜴",
+    "lv": 36
+  },
+  {
+    "n": "梅杜莎",
+    "lv": 36
+  },
+  {
+    "n": "黑暗妖精警衛(十字弓)",
+    "lv": 36
+  },
+  {
+    "n": "巨大突擊螞蟻",
+    "lv": 37
+  },
+  {
+    "n": "死亡之劍",
+    "lv": 37
+  },
+  {
+    "n": "炎魔的思克巴",
+    "lv": 37
+  },
+  {
+    "n": "思克巴",
+    "lv": 37
+  },
+  {
+    "n": "恐怖的火炎蛋",
+    "lv": 37
+  },
+  {
+    "n": "火蜥蜴",
+    "lv": 38
+  },
+  {
+    "n": "邪惡密密",
+    "lv": 38
+  },
+  {
+    "n": "黑暗妖精士兵",
+    "lv": 38
+  },
+  {
+    "n": "黑暗妖精巡守",
+    "lv": 38
+  },
+  {
+    "n": "夢幻之島火蜥蜴",
+    "lv": 38
+  },
+  {
+    "n": "夢幻之島冰人",
+    "lv": 38
+  },
+  {
+    "n": "夢幻之島殺人蜂",
+    "lv": 38
+  },
+  {
+    "n": "夢幻之島暴走兔",
+    "lv": 38
+  },
+  {
+    "n": "火炎蛋",
+    "lv": 39
+  },
+  {
+    "n": "邪惡多眼怪",
+    "lv": 39
+  },
+  {
+    "n": "奇美拉",
+    "lv": 39
+  },
+  {
+    "n": "底比斯 凱比斯(紅)",
+    "lv": 39
+  },
+  {
+    "n": "提卡爾艾庫卡伊拉(黃)",
+    "lv": 39
+  },
+  {
+    "n": "殘暴的骷髏斧兵",
+    "lv": 39
+  },
+  {
+    "n": "殘暴的骷髏槍兵",
+    "lv": 39
+  },
+  {
+    "n": "夢幻之島火炎蛋",
+    "lv": 39
+  },
+  {
+    "n": "夢幻之島冰石高崙",
+    "lv": 39
+  },
+  {
+    "n": "夢幻之島閃電球",
+    "lv": 39
+  },
+  {
+    "n": "夢幻之島鎧甲守衛",
+    "lv": 39
+  },
+  {
+    "n": "水之牙",
+    "lv": 40
+  },
+  {
+    "n": "火之牙",
+    "lv": 40
+  },
+  {
+    "n": "巨大強化白螞蟻",
+    "lv": 40
+  },
+  {
+    "n": "地之牙",
+    "lv": 40
+  },
+  {
+    "n": "地獄束縛犬",
+    "lv": 40
+  },
+  {
+    "n": "拉斯塔巴德守門人",
+    "lv": 40
+  },
+  {
+    "n": "風之牙",
+    "lv": 40
+  },
+  {
+    "n": "恐怖夢魘",
+    "lv": 40
+  },
+  {
+    "n": "黑虎",
+    "lv": 40
+  },
+  {
+    "n": "黑暗妖精法師",
+    "lv": 40
+  },
+  {
+    "n": "黑暗妖精警衛(矛)",
+    "lv": 40
+  },
+  {
+    "n": "馴獸師",
+    "lv": 40
+  },
+  {
+    "n": "夢幻之島大鬼火",
+    "lv": 40
+  },
+  {
+    "n": "夢魘",
+    "lv": 40
+  },
+  {
+    "n": "獨眼巨人",
+    "lv": 40
+  },
+  {
+    "n": "魔狼",
+    "lv": 40
+  },
+  {
+    "n": "底比斯 尖碑石奴",
+    "lv": 41
+  },
+  {
+    "n": "炎魔的思克巴女皇",
+    "lv": 41
+  },
+  {
+    "n": "思克巴女皇",
+    "lv": 41
+  },
+  {
+    "n": "提卡爾艾庫巴拉",
+    "lv": 41
+  },
+  {
+    "n": "魂騎士",
+    "lv": 41
+  },
+  {
+    "n": "影魔",
+    "lv": 41
+  },
+  {
+    "n": "水元素守護者",
+    "lv": 42
+  },
+  {
+    "n": "火元素守護者",
+    "lv": 42
+  },
+  {
+    "n": "地元素守護者",
+    "lv": 42
+  },
+  {
+    "n": "西瑪",
+    "lv": 42
+  },
+  {
+    "n": "巫師",
+    "lv": 42
+  },
+  {
+    "n": "受詛咒的妖魔殭屍",
+    "lv": 42
+  },
+  {
+    "n": "拉斯塔巴德馴獸師",
+    "lv": 42
+  },
+  {
+    "n": "風元素守護者",
+    "lv": 42
+  },
+  {
+    "n": "鬼魂",
+    "lv": 42
+  },
+  {
+    "n": "殘暴的史巴托",
+    "lv": 42
+  },
+  {
+    "n": "殘暴的食屍鬼",
+    "lv": 42
+  },
+  {
+    "n": "德雷克",
+    "lv": 42
+  },
+  {
+    "n": "巴土瑟",
+    "lv": 43
+  },
+  {
+    "n": "地獄奴隸",
+    "lv": 43
+  },
+  {
+    "n": "受詛咒的馴獸師",
+    "lv": 43
+  },
+  {
+    "n": "紅鬼魂",
+    "lv": 43
+  },
+  {
+    "n": "恐怖的地獄犬",
+    "lv": 43
+  },
+  {
+    "n": "黑暗妖精將軍",
+    "lv": 43
+  },
+  {
+    "n": "夢幻之島水精靈王",
+    "lv": 43
+  },
+  {
+    "n": "夢幻之島火精靈王",
+    "lv": 43
+  },
+  {
+    "n": "夢幻之島地精靈王",
+    "lv": 43
+  },
+  {
+    "n": "夢幻之島風精靈王",
+    "lv": 43
+  },
+  {
+    "n": "熔岩高崙",
+    "lv": 43
+  },
+  {
+    "n": "獨角獸",
+    "lv": 43
+  },
+  {
+    "n": "小惡魔",
+    "lv": 44
+  },
+  {
+    "n": "火焰之魔法師",
+    "lv": 44
+  },
+  {
+    "n": "卡士柏",
+    "lv": 44
+  },
+  {
+    "n": "巨大守護螞蟻",
+    "lv": 44
+  },
+  {
+    "n": "底比斯 尖碑石奴(黑)",
+    "lv": 44
+  },
+  {
+    "n": "炎魔的小惡魔",
+    "lv": 44
+  },
+  {
+    "n": "恐怖的鋼鐵高崙",
+    "lv": 44
+  },
+  {
+    "n": "提卡爾艾庫巴拉(紅)",
+    "lv": 44
+  },
+  {
+    "n": "暗黑萊肯",
+    "lv": 44
+  },
+  {
+    "n": "水靈之主",
+    "lv": 45
+  },
+  {
+    "n": "火焰之靈魂(紅)",
+    "lv": 45
+  },
+  {
+    "n": "火靈之主",
+    "lv": 45
+  },
+  {
+    "n": "幼龍",
+    "lv": 45
+  },
+  {
+    "n": "伊弗利特",
+    "lv": 45
+  },
+  {
+    "n": "地靈之主",
+    "lv": 45
+  },
+  {
+    "n": "死神",
+    "lv": 45
+  },
+  {
+    "n": "受詛咒的艾爾摩法師",
+    "lv": 45
+  },
+  {
+    "n": "阿西塔基奧",
+    "lv": 45
+  },
+  {
+    "n": "風靈之主",
+    "lv": 45
+  },
+  {
+    "n": "馬庫爾",
+    "lv": 45
+  },
+  {
+    "n": "深淵弓箭手",
+    "lv": 45
+  },
+  {
+    "n": "深淵食屍鬼",
+    "lv": 45
+  },
+  {
+    "n": "殘暴的骷髏神射手",
+    "lv": 45
+  },
+  {
+    "n": "殘暴的骷髏鬥士",
+    "lv": 45
+  },
+  {
+    "n": "黑暗復仇者",
+    "lv": 45
+  },
+  {
+    "n": "黑暗精靈使",
+    "lv": 45
+  },
+  {
+    "n": "暗黑黑騎士",
+    "lv": 45
+  },
+  {
+    "n": "墳墓守護者",
+    "lv": 45
+  },
+  {
+    "n": "歐姆戰士",
+    "lv": 45
+  },
+  {
+    "n": "火焰之靈魂(藍)",
+    "lv": 46
+  },
+  {
+    "n": "火焰烈炎獸",
+    "lv": 46
+  },
+  {
+    "n": "血色術士",
+    "lv": 46
+  },
+  {
+    "n": "恐怖的伊弗利特",
+    "lv": 46
+  },
+  {
+    "n": "血騎士",
+    "lv": 47
+  },
+  {
+    "n": "受詛咒的艾爾摩士兵",
+    "lv": 47
+  },
+  {
+    "n": "底比斯 斯芬克斯",
+    "lv": 47
+  },
+  {
+    "n": "骨龍",
+    "lv": 47
+  },
+  {
+    "n": "提卡爾艾庫艾托",
+    "lv": 47
+  },
+  {
+    "n": "闇黑君王",
+    "lv": 47
+  },
+  {
+    "n": "冷酷冰原老虎",
+    "lv": 48
+  },
+  {
+    "n": "拉斯塔巴德近衛隊",
+    "lv": 48
+  },
+  {
+    "n": "重裝歐姆戰士",
+    "lv": 48
+  },
+  {
+    "n": "飛龍",
+    "lv": 48
+  },
+  {
+    "n": "烈炎獸",
+    "lv": 48
+  },
+  {
+    "n": "暗黑火焰弓箭手",
+    "lv": 48
+  },
+  {
+    "n": "墳墓守護者法師",
+    "lv": 48
+  },
+  {
+    "n": "西斯",
+    "lv": 50
+  },
+  {
+    "n": "受詛咒的艾爾摩將軍",
+    "lv": 50
+  },
+  {
+    "n": "底比斯 尼荷斯",
+    "lv": 50
+  },
+  {
+    "n": "底比斯 斯芬克斯(黑)",
+    "lv": 50
+  },
+  {
+    "n": "曼波兔",
+    "lv": 50
+  },
+  {
+    "n": "提卡爾艾庫艾托(枯竭)",
+    "lv": 50
+  },
+  {
+    "n": "提卡爾薩德泥偶",
+    "lv": 50
+  },
+  {
+    "n": "象牙塔石頭高崙",
+    "lv": 50
+  },
+  {
+    "n": "象牙塔紙人",
+    "lv": 50
+  },
+  {
+    "n": "象牙塔密密",
+    "lv": 50
+  },
+  {
+    "n": "黑長者",
+    "lv": 50
+  },
+  {
+    "n": "暗黑火焰戰士",
+    "lv": 50
+  },
+  {
+    "n": "墳墓守護者騎士",
+    "lv": 50
+  },
+  {
+    "n": "火焰阿西塔基奧",
+    "lv": 51
+  },
+  {
+    "n": "卡魯塔",
+    "lv": 51
+  },
+  {
+    "n": "炎魔的巴風特",
+    "lv": 51
+  },
+  {
+    "n": "長老隨從",
+    "lv": 51
+  },
+  {
+    "n": "象牙塔鋼鐵高崙",
+    "lv": 51
+  },
+  {
+    "n": "墮落的司祭(一階)",
+    "lv": 51
+  },
+  {
+    "n": "墮落的司祭(二階)",
+    "lv": 51
+  },
+  {
+    "n": "死亡的司祭(思克巴)",
+    "lv": 52
+  },
+  {
+    "n": "底比斯 尼荷斯(藍)",
+    "lv": 52
+  },
+  {
+    "n": "混沌的司祭(飛翼)",
+    "lv": 52
+  },
+  {
+    "n": "提卡爾薩德泥偶(黑)",
+    "lv": 52
+  },
+  {
+    "n": "象牙塔果凍怪",
+    "lv": 52
+  },
+  {
+    "n": "炎魔的巴列斯",
+    "lv": 53
+  },
+  {
+    "n": "象牙塔活鎧甲",
+    "lv": 53
+  },
+  {
+    "n": "傲慢的潔尼斯女王",
+    "lv": 53
+  },
+  {
+    "n": "暗黑思克巴女皇",
+    "lv": 53
+  },
+  {
+    "n": "墮落的司祭(三階)",
+    "lv": 53
+  },
+  {
+    "n": "小幻象眼魔",
+    "lv": 54
+  },
+  {
+    "n": "底比斯 阿努斯",
+    "lv": 54
+  },
+  {
+    "n": "拉斯塔巴德近衛隊隊長",
+    "lv": 54
+  },
+  {
+    "n": "提卡爾薩德司卡(紫)",
+    "lv": 54
+  },
+  {
+    "n": "墮落的司祭(四階)",
+    "lv": 54
+  },
+  {
+    "n": "死亡的司祭(巴風特)",
+    "lv": 55
+  },
+  {
+    "n": "艾莉絲",
+    "lv": 55
+  },
+  {
+    "n": "恐怖的殭屍王",
+    "lv": 55
+  },
+  {
+    "n": "深淵水靈",
+    "lv": 55
+  },
+  {
+    "n": "深淵火靈",
+    "lv": 55
+  },
+  {
+    "n": "深淵地靈",
+    "lv": 55
+  },
+  {
+    "n": "深淵風靈",
+    "lv": 55
+  },
+  {
+    "n": "混沌的司祭(野獸)",
+    "lv": 55
+  },
+  {
+    "n": "象牙塔死亡之劍",
+    "lv": 55
+  },
+  {
+    "n": "象牙塔奇美拉",
+    "lv": 55
+  },
+  {
+    "n": "象牙塔長者",
+    "lv": 55
+  },
+  {
+    "n": "象牙塔閃電球",
+    "lv": 55
+  },
+  {
+    "n": "巨大墳墓守護者",
+    "lv": 56
+  },
+  {
+    "n": "底比斯 阿努斯(黑)",
+    "lv": 56
+  },
+  {
+    "n": "馬昆斯吸血鬼",
+    "lv": 56
+  },
+  {
+    "n": "提卡爾薩德司卡(紅)",
+    "lv": 56
+  },
+  {
+    "n": "象牙塔蛇女",
+    "lv": 56
+  },
+  {
+    "n": "墮落的司祭(五階)",
+    "lv": 56
+  },
+  {
+    "n": "炎魔的分身",
+    "lv": 57
+  },
+  {
+    "n": "象牙塔黑長者",
+    "lv": 57
+  },
+  {
+    "n": "木乃伊王",
+    "lv": 58
+  },
+  {
+    "n": "底比斯 巴斯",
+    "lv": 58
+  },
+  {
+    "n": "提卡爾薩德提歐(藍)",
+    "lv": 58
+  },
+  {
+    "n": "象牙塔死神",
+    "lv": 58
+  },
+  {
+    "n": "象牙塔黑魔法師",
+    "lv": 58
+  },
+  {
+    "n": "象牙塔影魔",
+    "lv": 58
+  },
+  {
+    "n": "象牙塔炎魔的奴隸",
+    "lv": 59
+  },
+  {
+    "n": "象牙塔惡靈",
+    "lv": 59
+  },
+  {
+    "n": "土精靈王",
+    "lv": 60
+  },
+  {
+    "n": "不幸的幻象眼魔",
+    "lv": 60
+  },
+  {
+    "n": "水精靈王",
+    "lv": 60
+  },
+  {
+    "n": "火精靈王",
+    "lv": 60
+  },
+  {
+    "n": "扭曲的潔尼斯女王",
+    "lv": 60
+  },
+  {
+    "n": "底比斯 巴斯(紅)",
+    "lv": 60
+  },
+  {
+    "n": "哈汀之影",
+    "lv": 60
+  },
+  {
+    "n": "風精靈王",
+    "lv": 60
+  },
+  {
+    "n": "恐怖的吸血鬼",
+    "lv": 60
+  },
+  {
+    "n": "提卡爾薩德提歐(黃)",
+    "lv": 60
+  },
+  {
+    "n": "象牙塔小惡魔",
+    "lv": 60
+  },
+  {
+    "n": "象牙塔巴列斯之影",
+    "lv": 60
+  },
+  {
+    "n": "騎士范德",
+    "lv": 60
+  },
+  {
+    "n": "巴風特",
+    "lv": 61
+  },
+  {
+    "n": "炎魔的惡魔",
+    "lv": 61
+  },
+  {
+    "n": "象牙塔翼魔",
+    "lv": 61
+  },
+  {
+    "n": "暗殺軍王史雷佛",
+    "lv": 61
+  },
+  {
+    "n": "死亡的殭屍王",
+    "lv": 62
+  },
+  {
+    "n": "象牙塔巴風特之影",
+    "lv": 62
+  },
+  {
+    "n": "象牙塔炎魔之影",
+    "lv": 63
+  },
+  {
+    "n": "象牙塔惡魔之影",
+    "lv": 63
+  },
+  {
+    "n": "魔獸軍王巴蘭卡",
+    "lv": 63
+  },
+  {
+    "n": "不死的木乃伊王",
+    "lv": 65
+  },
+  {
+    "n": "火焰之影親衛隊(巴風特)",
+    "lv": 65
+  },
+  {
+    "n": "地獄的黑豹",
+    "lv": 65
+  },
+  {
+    "n": "克特",
+    "lv": 65
+  },
+  {
+    "n": "冷酷的艾莉絲",
+    "lv": 65
+  },
+  {
+    "n": "法令軍王蕾雅",
+    "lv": 65
+  },
+  {
+    "n": "深淵之主",
+    "lv": 65
+  },
+  {
+    "n": "變形怪首領",
+    "lv": 65
+  },
+  {
+    "n": "墮落",
+    "lv": 68
+  },
+  {
+    "n": "不死鳥",
+    "lv": 69
+  },
+  {
+    "n": "巴列斯",
+    "lv": 70
+  },
+  {
+    "n": "古代巨人",
+    "lv": 70
+  },
+  {
+    "n": "巨蟻女皇",
+    "lv": 70
+  },
+  {
+    "n": "冰魔",
+    "lv": 70
+  },
+  {
+    "n": "死亡",
+    "lv": 70
+  },
+  {
+    "n": "底比斯 阿努比斯",
+    "lv": 70
+  },
+  {
+    "n": "底比斯 賀洛斯",
+    "lv": 70
+  },
+  {
+    "n": "冥法軍王海露拜",
+    "lv": 70
+  },
+  {
+    "n": "混沌",
+    "lv": 70
+  },
+  {
+    "n": "惡魔",
+    "lv": 70
+  },
+  {
+    "n": "提卡爾杰弗雷庫(雄)",
+    "lv": 70
+  },
+  {
+    "n": "提卡爾杰弗雷庫(雌)",
+    "lv": 70
+  },
+  {
+    "n": "冰之女王",
+    "lv": 75
+  },
+  {
+    "n": "死亡騎士",
+    "lv": 75
+  },
+  {
+    "n": "闇黑的騎士范德",
+    "lv": 75
+  },
+  {
+    "n": "長老．琪娜",
+    "lv": 78
+  },
+  {
+    "n": "不滅的巫妖",
+    "lv": 80
+  },
+  {
+    "n": "邪惡的鐮刀死神",
+    "lv": 80
+  },
+  {
+    "n": "長老．艾迪爾",
+    "lv": 80
+  },
+  {
+    "n": "長老．巴塔斯",
+    "lv": 85
+  },
+  {
+    "n": "長老．巴洛斯",
+    "lv": 88
+  },
+  {
+    "n": "長老．泰瑪斯",
+    "lv": 90
+  },
+  {
+    "n": "長老．安迪斯",
+    "lv": 91
+  },
+  {
+    "n": "安塔瑞斯",
+    "lv": 93
+  },
+  {
+    "n": "法利昂",
+    "lv": 93
+  },
+  {
+    "n": "長老．拉曼斯",
+    "lv": 93
+  },
+  {
+    "n": "巴拉卡斯",
+    "lv": 95
+  },
+  {
+    "n": "長老．巴陸德",
+    "lv": 96
+  },
+  {
+    "n": "遺忘之島蜥蜴人",
+    "lv": 20
+  },
+  {
+    "n": "遺忘之島鱷魚",
+    "lv": 20
+  },
+  {
+    "n": "遺忘之島夏洛伯",
+    "lv": 34
+  },
+  {
+    "n": "遺忘之島狼人",
+    "lv": 34
+  },
+  {
+    "n": "遺忘之島黑暗精靈",
+    "lv": 35
+  },
+  {
+    "n": "遺忘之島歐熊",
+    "lv": 35
+  },
+  {
+    "n": "遺忘之島卡司特",
+    "lv": 36
+  },
+  {
+    "n": "遺忘之島巨斧牛人",
+    "lv": 37
+  },
+  {
+    "n": "遺忘之島食人妖精",
+    "lv": 37
+  },
+  {
+    "n": "遺忘之島蛇女",
+    "lv": 37
+  },
+  {
+    "n": "遺忘之島萊肯",
+    "lv": 37
+  },
+  {
+    "n": "遺忘之島楊果里恩",
+    "lv": 38
+  },
+  {
+    "n": "遺忘之島哈維",
+    "lv": 41
+  },
+  {
+    "n": "遺忘之島格利芬",
+    "lv": 41
+  },
+  {
+    "n": "遺忘之島鏈鎚牛人",
+    "lv": 41
+  },
+  {
+    "n": "遺忘之島卡司特王",
+    "lv": 42
+  },
+  {
+    "n": "遺忘之島巨大鱷魚",
+    "lv": 42
+  },
+  {
+    "n": "遺忘之島變形怪",
+    "lv": 42
+  },
+  {
+    "n": "遺忘之島多羅",
+    "lv": 43
+  },
+  {
+    "n": "遺忘之島阿魯巴",
+    "lv": 45
+  },
+  {
+    "n": "遺忘之島食人妖精王",
+    "lv": 45
+  },
+  {
+    "n": "受詛咒的黑暗妖精鬥士",
+    "lv": 46
+  },
+  {
+    "n": "遺忘之島亞力安",
+    "lv": 47
+  },
+  {
+    "n": "地獄奴隸",
+    "lv": 48
+  },
+  {
+    "n": "受詛咒的黑暗妖精法師",
+    "lv": 48
+  },
+  {
+    "n": "遺忘之島邪惡蜥蜴",
+    "lv": 48
+  },
+  {
+    "n": "牛鬼之子",
+    "lv": 50
+  },
+  {
+    "n": "受詛咒的黑暗妖精騎士",
+    "lv": 50
+  },
+  {
+    "n": "食腐獸",
+    "lv": 50
+  },
+  {
+    "n": "遺忘之島獨眼巨人",
+    "lv": 50
+  },
+  {
+    "n": "特提斯",
+    "lv": 52
+  },
+  {
+    "n": "遺忘之島巨大牛人",
+    "lv": 53
+  },
+  {
+    "n": "遺忘之島飛龍",
+    "lv": 53
+  },
+  {
+    "n": "翼龍",
+    "lv": 54
+  },
+  {
+    "n": "嗚釜",
+    "lv": 65
+  },
+  {
+    "n": "鎌鼬",
+    "lv": 65
+  },
+  {
+    "n": "唐傘小僧",
+    "lv": 68
+  },
+  {
+    "n": "轆轤首",
+    "lv": 68
+  },
+  {
+    "n": "赤鬼",
+    "lv": 70
+  },
+  {
+    "n": "河童",
+    "lv": 70
+  },
+  {
+    "n": "青鬼",
+    "lv": 70
+  },
+  {
+    "n": "憤怒的嗚釜",
+    "lv": 70
+  },
+  {
+    "n": "鎌鼬長兄",
+    "lv": 70
+  },
+  {
+    "n": "天狗",
+    "lv": 72
+  },
+  {
+    "n": "阿修羅像",
+    "lv": 72
+  },
+  {
+    "n": "鵺",
+    "lv": 72
+  },
+  {
+    "n": "白面金毛九尾狐・玉藻",
+    "lv": 75
+  },
+  {
+    "n": "牛鬼",
+    "lv": 90
+  },
+  {
+    "n": "巨大骷髏",
+    "lv": 99
+  },
+  {
+    "n": "吉爾塔斯",
+    "lv": 99
+  },
+  {
+    "n": "真‧死亡騎士 冥皇丹特斯",
+    "lv": 99
+  }
+];;
 
 function _cardTierInfo(score){
   score = score || 0;
@@ -4478,12 +7346,27 @@ function setDexCardScore(name, val){
 
 // ── 道具圖鑑（miscDex）── 分類邏輯比照 18-misc-book.js 的 miscCatKey()
 const MISC_CATEGORIES = [
-  {key:'pot',     name:'藥水'},
-  {key:'scroll',  name:'卷軸'},
-  {key:'skillbk', name:'技能書'},
-  {key:'mat',     name:'材料'},
-  {key:'special', name:'其他'},
-];
+  {
+    "key": "pot",
+    "name": "藥水"
+  },
+  {
+    "key": "scroll",
+    "name": "卷軸"
+  },
+  {
+    "key": "skillbk",
+    "name": "技能書"
+  },
+  {
+    "key": "mat",
+    "name": "材料"
+  },
+  {
+    "key": "special",
+    "name": "其他"
+  }
+];;
 const MISC_BOOK_EXCLUDED = {
   new_item_bless_wpn: true, new_item_bless_arm: true, new_item_bless_acc: true,
 };
@@ -22630,8 +25513,737 @@ const ITEM_DB = {
     "p": 10000,
     "gachaWeight": 0,
     "d": "【遺物】黑暗復仇者的十字弩弓，一般模式可發動連射 75%、攻擊貫穿硬皮；連射必定觸發最大箭數（需裝備箭矢）。"
+  },
+  "relic_heavy_belt": {
+    "n": "重戰士的鏈鎖腰帶",
+    "type": "acc",
+    "slot": "belt",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 4,
+    "con": 1,
+    "relicRole": "泛用型體質與防禦腰帶",
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】每一節鎖鏈都曾承受戰士的重量，扣緊腰帶時，身軀也會如鐵壁般穩固。"
+  },
+  "relic_bone_bow": {
+    "n": "殘暴的骸骨意志之弓",
+    "type": "wpn",
+    "isBow": true,
+    "ranged": true,
+    "w2h": true,
+    "rapidfire": 80,
+    "relic": true,
+    "noEnhance": true,
+    "bonespike": true,
+    "dmgS": 3,
+    "dmgL": 3,
+    "hit": 16,
+    "dmgBonus": 13,
+    "relicRole": "以連射累積骨刺，再由一般攻擊一次引爆",
+    "req": "elf,illusion",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】殘暴骸骨的不甘被扭成弓身，射出的每一箭都像碎骨般鑽入獵物體內。"
+  },
+  "relic_fighter_armor": {
+    "n": "鬥士的決戰服裝",
+    "type": "arm",
+    "slot": "armor",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 8,
+    "er": 5,
+    "mcrit": 3,
+    "critDmgLowHp": {
+      "hp": 1000,
+      "add": 20
+    },
+    "relicRole": "低血量時強化近距離爆擊的決戰型防具",
+    "req": "royal,knight,elf,dark,dragon,warrior",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】這套戰裝只為無路可退的決戰而披，染血越深，穿戴者的殺意便越發銳利。"
+  },
+  "relic_drake_pawprint": {
+    "n": "幼龍的爪印",
+    "type": "arm",
+    "slot": "boots",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 9,
+    "extraDmg": 3,
+    "extraMp": 3,
+    "mr": 5,
+    "relicRole": "同時強化物理與魔法輸出的泛用長靴",
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】幼龍尚未展翼時留下的爪印化作長靴，步伐間蘊藏著逐漸甦醒的龍之力量。"
+  },
+  "relic_red_wraith": {
+    "n": "滲透紅光的背後靈",
+    "type": "arm",
+    "slot": "cloak",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "mr": 40,
+    "er": 10,
+    "relicRole": "以高額MR與ER兼顧魔法防禦及迴避",
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】亡靈貼伏在穿戴者背後，幽紅微光會吞去逼近的魔力，並在危急時牽引身形閃避。"
+  },
+  "relic_mage_dagger": {
+    "n": "法師的護身短刀",
+    "type": "wpn",
+    "relic": true,
+    "noEnhance": true,
+    "dmgS": 2,
+    "dmgL": 3,
+    "hit": 8,
+    "dmgBonus": 6,
+    "castOnHurt": {
+      "rate": 20
+    },
+    "relicRole": "法師專用受擊反擊武器，20%免費施放設定的自動攻擊傷害法術",
+    "req": "mage",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】短刀並非為決鬥而造；當持有者受創，刃上的護身術式便會自行喚醒反擊魔法。"
+  },
+  "wpn_uncursed_emperor_blade": {
+    "n": "解除詛咒的真死亡騎士．冥皇執行劍",
+    "type": "wpn",
+    "relic": true,
+    "noEnhance": true,
+    "dmgS": 19,
+    "dmgL": 22,
+    "hit": 19,
+    "dmgBonus": 15,
+    "ignHardSkin": true,
+    "procSkill": "sk_earth_collapse",
+    "procRateBase": 15,
+    "procRatePerEn": 0,
+    "counterEles": [
+      "earth",
+      "wind"
+    ],
+    "relicRole": "解咒的冥皇執行劍：反擊居合貫穿俱全，化身真死亡騎士並喚起大地崩裂",
+    "req": "royal,knight,elf,mage,dark,dragon",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】詛咒褪去後，劍身浮現冥皇丹特斯的真銘。反擊（一般限定）、居合（一般限定）、貫穿；裝備時變身為 真死亡騎士 冥皇丹特斯；攻擊時15%機率觸發大地崩裂；一般攻擊對地、風屬性敵人傷害×1.4。"
+  },
+  "mat_youkai_soul": {
+    "n": "封印的妖怪之魂",
+    "type": "etc",
+    "p": 1,
+    "noUse": true,
+    "gachaWeight": 0,
+    "c": "text-purple-300",
+    "d": "被陰陽師封印於符中的妖怪之魂，蘊含日出之國的妖異之力。希培利亞的巴特爾能以 100 個凝鍊出巨大骷髏的妖魂。"
+  },
+  "mat_gasha_soul": {
+    "n": "巨大骷髏的妖魂",
+    "type": "etc",
+    "eff": "expsoul",
+    "expGain": 1000000,
+    "batchUse": true,
+    "p": 1,
+    "gachaWeight": 0,
+    "c": "text-sky-300",
+    "d": "巨大骷髏的怨念凝鍊而成的妖魂結晶。使用後獲得 100 萬點經驗值（可批量使用）。"
+  },
+  "wpn_onmyoji_fan": {
+    "n": "陰陽師的扇子",
+    "type": "wpn",
+    "legend": true,
+    "isWand": true,
+    "dmgS": 2,
+    "dmgL": 2,
+    "hit": 4,
+    "dmgBonus": 4,
+    "ignHardSkin": true,
+    "mdmg": 4,
+    "mpR": 4,
+    "req": "mage,illusion",
+    "safe": 6,
+    "p": 385000,
+    "gachaWeight": 1,
+    "d": "陰陽師驅使式神的摺扇，輕搖之間便有妖力共鳴迴盪。"
+  },
+  "blt_gasha_ring": {
+    "n": "巨型骷髏之指環",
+    "type": "acc",
+    "slot": "belt",
+    "legend": true,
+    "ac": 0,
+    "mmp": 30,
+    "wis": 1,
+    "mr": 8,
+    "weightCap": 150,
+    "req": "all",
+    "safe": 0,
+    "p": 286000,
+    "gachaWeight": 1,
+    "d": "以巨大骷髏的指骨環繞而成的腰帶，冥界的重量對佩戴者輕若無物。"
+  },
+  "acc_ring_con": {
+    "n": "體力戒指",
+    "type": "acc",
+    "slot": "ring",
+    "ac": 0,
+    "mhp": 50,
+    "con": 1,
+    "req": "all",
+    "safe": 0,
+    "p": 76000,
+    "gachaWeight": 10,
+    "d": "灌注體力的戒指。"
+  },
+  "relic_sr_kettle_lid": {
+    "n": "沸騰蒸氣的鍋蓋",
+    "type": "arm",
+    "slot": "helm",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 10,
+    "resWater": 10,
+    "resFire": 10,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】嗚釜沸騰不止的鍋蓋，蒸氣的熱與釜水的潤同時護持頭頂。"
+  },
+  "relic_sr_kama_pot": {
+    "n": "鐮鼬的藥壺",
+    "type": "acc",
+    "slot": "ring",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "potionBonus": 10,
+    "hpR": 3,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】鎌鼬三兄弟中么弟隨身的藥壺，塗上傷口便能止痛癒合。"
+  },
+  "relic_sr_neck_scarf": {
+    "n": "長首妖怪的圍巾",
+    "type": "acc",
+    "slot": "amulet",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 1,
+    "er": 10,
+    "dex": 1,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】轆轤首纏繞長頸的圍巾，柔滑得讓攻擊都滑開了。"
+  },
+  "relic_sr_old_umbrella": {
+    "n": "老舊的百年唐傘",
+    "type": "arm",
+    "slot": "cloak",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 8,
+    "resWater": 30,
+    "resFire": -10,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】經百年而成妖的老唐傘，撐開便滴水不沾，卻也擋不住火星。"
+  },
+  "relic_sr_kettle_maul": {
+    "n": "沸騰蒸氣的巨釜",
+    "type": "wpn",
+    "w2h": true,
+    "relic": true,
+    "noEnhance": true,
+    "eff": "crush",
+    "ignHardSkin": true,
+    "counterEles": [
+      "earth",
+      "fire"
+    ],
+    "dmgS": 22,
+    "dmgL": 24,
+    "hit": 14,
+    "dmgBonus": 14,
+    "req": "royal,knight,dragon,illusion,warrior",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】整座嗚釜妖釜倒提為鎚，沸騰的蒸氣隨揮擊噴散。"
+  },
+  "relic_sr_kama_blade": {
+    "n": "鐮鼬的尾刃",
+    "type": "wpn",
+    "relic": true,
+    "noEnhance": true,
+    "iaiCrit": true,
+    "mcritDmg": 10,
+    "dmgS": 16,
+    "dmgL": 10,
+    "hit": 18,
+    "dmgBonus": 18,
+    "req": "knight,dragon",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】鎌鼬長兄尾端的鐮刃，出鞘的瞬間便已割裂要害。"
+  },
+  "relic_sr_kappa_plate": {
+    "n": "河童的尻子玉",
+    "type": "arm",
+    "slot": "shin",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 3,
+    "resFire": 3,
+    "resWater": 3,
+    "resEarth": 3,
+    "resWind": 3,
+    "wis": -1,
+    "cha": 1,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】河童珍藏的尻子玉，妖力溫潤護體，只是讓人有點心神渙散。"
+  },
+  "relic_sr_akaoni_pants": {
+    "n": "赤鬼的內褲",
+    "type": "arm",
+    "slot": "shin",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 2,
+    "str": 2,
+    "con": 1,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】赤鬼的虎紋兜襠布，穿上便湧現蠻勇之力。"
+  },
+  "relic_sr_aooni_shirt": {
+    "n": "青鬼的虎皮衫",
+    "type": "arm",
+    "slot": "armor",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 12,
+    "str": 1,
+    "con": 2,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】青鬼披掛的虎皮衫，粗獷厚實如鬼族的筋骨。"
+  },
+  "relic_sr_nue_tail": {
+    "n": "毒鵺的黑尾",
+    "type": "wpn",
+    "chainsword": true,
+    "relic": true,
+    "noEnhance": true,
+    "weakExpose": true,
+    "ignHardSkin": true,
+    "procPoisonPct": {
+      "pct": 50,
+      "dur": 6
+    },
+    "atkSpdPct": 20,
+    "dmgS": 26,
+    "dmgL": 26,
+    "hit": 16,
+    "dmgBonus": 18,
+    "req": "dragon",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】鵺的蛇頭黑尾製成的鎖鏈劍，噬咬之毒滲入每一道傷口。"
+  },
+  "relic_sr_tengu_fan": {
+    "n": "天狗的羽扇",
+    "type": "wpn",
+    "isBow": true,
+    "ranged": true,
+    "relic": true,
+    "noEnhance": true,
+    "rapidfire": 80,
+    "ignHardSkin": true,
+    "ele": "wind",
+    "onHitCastSkill": {
+      "skId": "sk_windblade",
+      "cdSec": 5
+    },
+    "mdmg": 2,
+    "dmgS": 2,
+    "dmgL": 2,
+    "hit": 17,
+    "dmgBonus": 13,
+    "req": "elf,illusion",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】天狗搧起狂風的羽團扇，每一擊都挾帶撕裂的風刃。"
+  },
+  "relic_sr_asura_arm": {
+    "n": "阿修羅的武神技",
+    "type": "arm",
+    "slot": "shield",
+    "armguard": {
+      "stat": "none",
+      "base": 0,
+      "th": [
+        0,
+        0,
+        0
+      ]
+    },
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "atkSpdPct": 20,
+    "extraDmg": 2,
+    "extraHit": 2,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】阿修羅像六臂的戰技凝為臂甲，出手快如修羅。臂甲（裝於副手，可與雙手武器並用）。"
+  },
+  "relic_sr_kyuubi_wand": {
+    "n": "九尾妖狐的怒火",
+    "type": "wpn",
+    "isWand": true,
+    "relic": true,
+    "noEnhance": true,
+    "ignHardSkin": true,
+    "ele": "fire",
+    "procSkill": "sk_fireball",
+    "procRateBase": 15,
+    "procRatePerEn": 0,
+    "procSkill2": {
+      "skId": "sk_fire_storm",
+      "rate": 5
+    },
+    "mdmg": 4,
+    "mpR": 6,
+    "dmgS": 2,
+    "dmgL": 2,
+    "hit": 16,
+    "dmgBonus": 16,
+    "req": "mage,illusion",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】九尾妖狐的怒火凝成的妖杖，狐火隨揮舞飛散燎原。"
+  },
+  "relic_sr_ushioni_horn": {
+    "n": "牛鬼的斷角",
+    "type": "wpn",
+    "w2h": true,
+    "noBleed": true,
+    "relic": true,
+    "noEnhance": true,
+    "eff": "pierce",
+    "pierceChance": 100,
+    "ignHardSkin": true,
+    "procStatusSkill": {
+      "skId": "sk_disease",
+      "rate": 15
+    },
+    "heavyBonusDmg": 20,
+    "dmgS": 25,
+    "dmgL": 25,
+    "hit": 17,
+    "dmgBonus": 18,
+    "req": "royal,knight",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】牛鬼折斷的巨角削成的長矛，帶著瘴癘之氣貫穿一切。"
+  },
+  "relic_sr_child_ring": {
+    "n": "牛鬼之子的黑戒",
+    "type": "acc",
+    "slot": "ring",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "statusHealHp": 50,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】牛鬼之子甲殼磨成的黑戒，受到異常狀態侵襲時反而激發生機，恢復 50 點 HP。"
+  },
+  "relic_sr_gasha_skull": {
+    "n": "巨大骷髏的頭骨",
+    "type": "arm",
+    "slot": "armor",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 20,
+    "mr": 10,
+    "resNone": 10,
+    "req": "royal,knight,dragon,warrior",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】巨大骷髏的頭骨鑿成的胸鎧，怨念的殘響替穿戴者擋下詛咒。"
+  },
+  "relic_bk_lance": {
+    "n": "黑騎士的精銳長槍",
+    "type": "wpn",
+    "relic": true,
+    "noEnhance": true,
+    "dmgS": 8,
+    "dmgL": 10,
+    "hit": 15,
+    "dmgBonus": 15,
+    "req": "royal,knight,warrior",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】暗黑黑騎士精銳部隊的長槍，槍鋒撕裂之處鮮血難止。與鎧衛隊的漆黑塔盾同時裝備時：格檔機率提升至 100%（經典模式亦可觸發格檔），並額外獲得近距離傷害 +15。"
+  },
+  "relic_water_orb": {
+    "n": "水靈的魔力珠",
+    "type": "wpn",
+    "isWand": true,
+    "relic": true,
+    "noEnhance": true,
+    "frozenBonusDmg": 50,
+    "waterFreezeProc": {
+      "pct": 3,
+      "dur": 4
+    },
+    "dmgS": 2,
+    "dmgL": 2,
+    "hit": 13,
+    "dmgBonus": 13,
+    "req": "mage",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】水靈之主的魔力凝成的珠球，寒流隨法術奔湧（共鳴）。施放原本不具冰凍效果的水屬性傷害魔法時，3% 機率附加冰凍 4 秒；一般攻擊命中冰凍中的敵人時，追加 50 點固定傷害。"
+  },
+  "relic_broken_halfhelm": {
+    "n": "被敲爛的半邊頭盔",
+    "type": "arm",
+    "slot": "helm",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 3,
+    "immSilence": true,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】被敲爛只剩半邊的頭盔，罩不住頭顱卻護住了心神——免疫沉默。"
+  },
+  "relic_fire_hide": {
+    "n": "黝黑的烈火皮囊",
+    "type": "arm",
+    "slot": "armor",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 6,
+    "firePrisonMult": 2,
+    "req": "mage",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】被烈焰燻得黝黑的皮囊護甲，餘燼與咒火共鳴，使「火牢」造成的傷害加倍。"
+  },
+  "relic_ghoul_visage": {
+    "n": "食屍鬼的啃食面容",
+    "type": "arm",
+    "slot": "helm",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 10,
+    "mhp": 30,
+    "killHealHp": 30,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】深淵食屍鬼猙獰面容鑄成的頭盔，HP +30；擊殺敵人時吞噬其殘存的生氣，恢復 30 點 HP。"
+  },
+  "amr_slayer_plate": {
+    "n": "滅魔的 金屬盔甲",
+    "type": "arm",
+    "slot": "armor",
+    "ac": 15,
+    "mhp": 20,
+    "hpR": 1,
+    "mr": 7,
+    "mrPerEn": 1,
+    "req": "knight,warrior",
+    "safe": 0,
+    "p": 500000,
+    "gachaWeight": 0,
+    "d": "熔岩爐火重鑄的滅魔戰甲，甲面銀紋流轉，令邪法無從近身。"
+  },
+  "amr_slayer_shawl": {
+    "n": "滅魔的 披肩",
+    "type": "arm",
+    "slot": "armor",
+    "ac": 11,
+    "mhp": 20,
+    "mpR": 12,
+    "mr": 7,
+    "mrPerEn": 1,
+    "req": "mage,illusion",
+    "safe": 0,
+    "p": 500000,
+    "gachaWeight": 0,
+    "d": "織入滅魔銀線的術士披肩，輕若無物，卻能撥開襲來的咒殺。"
+  },
+  "amr_slayer_scale": {
+    "n": "滅魔的 鱗甲",
+    "type": "arm",
+    "slot": "armor",
+    "ac": 14,
+    "mhp": 20,
+    "hpR": 8,
+    "mpR": 4,
+    "mr": 7,
+    "mrPerEn": 1,
+    "req": "royal,dragon",
+    "safe": 0,
+    "p": 500000,
+    "gachaWeight": 0,
+    "d": "以滅魔之力淬鍊的層鱗鎧甲，每一片鱗都映著驅魔的冷光。"
+  },
+  "amr_slayer_vine": {
+    "n": "滅魔的 小藤甲",
+    "type": "arm",
+    "slot": "armor",
+    "ac": 13,
+    "mhp": 20,
+    "hpR": 4,
+    "mpR": 8,
+    "mr": 7,
+    "mrPerEn": 1,
+    "req": "elf,dark,dragon,illusion",
+    "safe": 0,
+    "p": 500000,
+    "gachaWeight": 0,
+    "d": "滅魔藤蔓編成的輕甲，柔韌貼身，妖邪之氣無法滲入。"
+  },
+  "bk_heal_energy_storm": {
+    "type": "skillbk",
+    "n": "魔法書(治癒能量風暴)",
+    "p": 25600,
+    "sk": "sk_heal_energy_storm",
+    "gachaWeight": 1,
+    "d": "記載著「治癒能量風暴」術式的古老魔法書，研讀後可將咒文銘刻於記憶。"
+  },
+  "bk_elf_muddywater": {
+    "type": "skillbk",
+    "n": "精靈水晶(污濁之水)",
+    "p": 16000,
+    "sk": "sk_elf_muddywater",
+    "gachaWeight": 1,
+    "d": "封存著「污濁之水」精靈之力的水晶，與之共鳴便能領悟其中奧祕。"
+  },
+  "item_pride_dom_11": {
+    "n": "傲慢之塔支配符(11F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 11,
+    "d": "攜帶在身上即可進入傲慢之塔11~20樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔11~20樓的魔物。"
+  },
+  "item_pride_dom_21": {
+    "n": "傲慢之塔支配符(21F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 21,
+    "d": "攜帶在身上即可進入傲慢之塔21~30樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔21~30樓的魔物。"
+  },
+  "item_pride_dom_31": {
+    "n": "傲慢之塔支配符(31F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 31,
+    "d": "攜帶在身上即可進入傲慢之塔31~40樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔31~40樓的魔物。"
+  },
+  "item_pride_dom_41": {
+    "n": "傲慢之塔支配符(41F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 41,
+    "d": "攜帶在身上即可進入傲慢之塔41~50樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔41~50樓的魔物。"
+  },
+  "item_pride_dom_51": {
+    "n": "傲慢之塔支配符(51F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 51,
+    "d": "攜帶在身上即可進入傲慢之塔51~60樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔51~60樓的魔物。"
+  },
+  "item_pride_dom_61": {
+    "n": "傲慢之塔支配符(61F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 61,
+    "d": "攜帶在身上即可進入傲慢之塔61~70樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔61~70樓的魔物。"
+  },
+  "item_pride_dom_71": {
+    "n": "傲慢之塔支配符(71F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 71,
+    "d": "攜帶在身上即可進入傲慢之塔71~80樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔71~80樓的魔物。"
+  },
+  "item_pride_dom_81": {
+    "n": "傲慢之塔支配符(81F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 81,
+    "d": "攜帶在身上即可進入傲慢之塔81~90樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔81~90樓的魔物。"
+  },
+  "item_pride_dom_91": {
+    "n": "傲慢之塔支配符(91F)",
+    "type": "misc",
+    "p": 0,
+    "c": "text-orange-300",
+    "noUse": true,
+    "gachaWeight": 0,
+    "prideKind": "dom",
+    "prideTier": 91,
+    "d": "攜帶在身上即可進入傲慢之塔91~100樓，並可使用傳送術與瞬間移動卷軸。城堡的魔物追蹤可指定傲慢之塔91~100樓的魔物。"
   }
-};;;
+};;;;
 
 // ════════════════════════════════════════════════
 //  type 中文對照（供 UI 顯示用）
