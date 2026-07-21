@@ -168,10 +168,10 @@
   const code1 = "javascript:(function(){var u='https://pp771007.github.io/idle-lineage-class/';function h(){var e=document.getElementById('_orig_pbar');if(e){e.style.display='none';return true;}return false;}if(location.href.indexOf(u)!==0){location.href=u;return;}if(!h()){var o=new MutationObserver(function(){if(h())o.disconnect();});o.observe(document.body,{childList:true,subtree:true});setTimeout(function(){o.disconnect();},15000);}})();";
 
   // 按鈕2：加快離線載入速度
-  const code2 = "javascript:document.body.appendChild(document.createElement(\"script\")).src=\"https://kid0924.github.io/idle-lineage-class/klh_mobile-perf.js?v=\"+Date.now();";
+  const code2 = "javascript:void(document.body.appendChild(document.createElement(\"script\")).src=\"https://kid0924.github.io/idle-lineage-class/klh_mobile-perf.js?v=\"+Date.now());";
 
   // 按鈕3：按鈕1 + 按鈕2 總和
-  const code3 = "javascript:(function(){var u='https://pp771007.github.io/idle-lineage-class/';function h(){var e=document.getElementById('_orig_pbar');if(e){e.style.display='none';return true;}return false;}function s(){document.body.appendChild(document.createElement('script')).src='https://kid0924.github.io/idle-lineage-class/klh_mobile-perf.js?v='+Date.now();}if(location.href.indexOf(u)!==0){location.href=u;return;}s();if(!h()){var o=new MutationObserver(function(){if(h())o.disconnect();});o.observe(document.body,{childList:true,subtree:true});setTimeout(function(){o.disconnect();},15000);}})();";
+  const code3 = "javascript:(function(){var u='https://pp771007.github.io/idle-lineage-class/';function h(){var e=document.getElementById('_orig_pbar');if(e){e.style.display='none';return true;}return false;}function s(){void(document.body.appendChild(document.createElement('script')).src='https://kid0924.github.io/idle-lineage-class/klh_mobile-perf.js?v='+Date.now());}if(location.href.indexOf(u)!==0){location.href=u;return;}s();if(!h()){var o=new MutationObserver(function(){if(h())o.disconnect();});o.observe(document.body,{childList:true,subtree:true});setTimeout(function(){o.disconnect();},15000);}})();";
 
   const codes = { 1: code1, 2: code2, 3: code3 };
   const names = { 1: '關閉公告', 2: '加快離線載入速度', 3: '關閉公告＋加快載入' };
