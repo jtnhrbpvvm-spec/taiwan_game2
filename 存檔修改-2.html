@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-28</title>
+<title>放置天堂 Save Editor v7-22</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -307,14 +307,15 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-28</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-22</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
     <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)">
   </label>
-  <button class="btn" onclick="exportJson()">💾 匯出存檔</button>
+  <button class="btn" onclick="exportJson()">💾 匯出 JSON</button>
   <button class="btn" onclick="openPasteModal()">📋 貼上存檔</button>
+  <button class="btn" onclick="copySIG1()">🔐 複製 SIG1</button>
   <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
 </div>
 
@@ -367,16 +368,6 @@ select option{ background:var(--bg3); }
           <option value="royal">王族</option><option value="dragon">龍騎士</option>
           <option value="illusion">幻術師</option><option value="warrior">戰士</option>
         </select>
-      </div>
-      <div class="form-row">
-        <span class="form-label">角色種子</span>
-        <input type="text" id="f_enseed" style="width:22ch;font-family:monospace" readonly title="遊戲用來判斷「是否為同一角色」以及強化機率的識別碼（enSeed）。若要把這份存檔匯入到不同的存檔格，且不想被判定成跟原角色重複，請按右側按鈕換一組新的。">
-        <button class="btn btn-sm" onclick="reissueEnSeed()">設為新角色</button>
-      </div>
-      <div class="form-row">
-        <span class="form-label">身分證</span>
-        <input type="text" id="f_sig1" style="width:22ch;font-family:monospace" readonly title="依目前資料即時算出的身分證（SIG1），唯讀，僅供檢視">
-        <button class="btn btn-sm" onclick="reissueSig1()">換發身分證</button>
       </div>
       <div class="form-row">
         <span class="form-label">等級</span>
@@ -631,11 +622,6 @@ select option{ background:var(--bg3); }
       <div class="form-row" style="margin-top:4px">
         <span style="color:#ff4d4f; font-weight:bold; font-size:15px; text-shadow:0 0 6px rgba(255,77,79,0.5);">
           【注意！秋玥版僅有一般跟經典，注意你是玩哪個版本的別選錯！！】
-        </span>
-      </div>
-      <div class="form-row" style="margin-top:4px">
-        <span style="color:#ff4d4f; font-weight:bold; font-size:15px; text-shadow:0 0 6px rgba(255,77,79,0.5); line-height:1.6; display:inline-block;">
-          【注意！「設為新角色」按下後會產生一組全新、跟任何現有角色都不會撞號的種子；改完存檔資料後，先按「設為新角色」換一組種子，再按「匯出存檔」，這樣匯入到別的存檔格時就不會再被判定成重複角色。小提醒：enSeed 同時也是強化機率的決定論種子，換了新種子之後，未來的強化成敗結果也會跟著改變！】
         </span>
       </div>
       <div class="form-row" style="margin-top:12px">
@@ -1149,7 +1135,7 @@ function renderItemRefSearch(inputId, resultId){
         <button class="btn" onclick="syncJsonEditor()">🔄 重新同步</button>
       </div>
       <textarea id="jsonEditor" style="width:100%;height:calc(100vh - 200px);font-family:monospace;font-size:12px;resize:none;"></textarea>
-      <div class="section-title">身分證（SIG1）預覽</div>
+      <div class="section-title">SIG1 預覽</div>
       <input type="text" id="sig1Preview" style="width:100%" readonly>
     </div>
 
@@ -1160,7 +1146,7 @@ function renderItemRefSearch(inputId, resultId){
 <div id="pasteModal" class="modal-overlay">
   <div class="modal-box">
     <div style="font-weight:bold;margin-bottom:12px;color:var(--text2)">📋 貼上存檔字串</div>
-    <textarea id="pasteInput" style="width:100%;height:160px;font-family:monospace;font-size:12px;resize:none;" placeholder="貼上 JSON 或身分證（SIG1:…）字串"></textarea>
+    <textarea id="pasteInput" style="width:100%;height:160px;font-family:monospace;font-size:12px;resize:none;" placeholder="貼上 JSON 或 SIG1:… 字串"></textarea>
     <div class="form-row" style="margin-top:12px">
       <button class="btn btn-accent" onclick="loadFromPaste()">載入</button>
       <button class="btn" onclick="closePasteModal()">取消</button>
@@ -1340,8 +1326,6 @@ function loadBasicUI(){
   setVal('f_trial',   p.trialStage     ?? p.trial   ?? 0);
   setVal('f_flame',   p.flameAffinity  ?? p.flame   ?? 0);
   setVal('f_diamonds', G.diamonds ?? 0);
-  setVal('f_enseed', p.enSeed || '(尚未產生，舊存檔會由名稱+職業推算)');
-  refreshSig1Display();
   setVal('f_lastmap', p.lastBattleMap  || p.lastmap || '');
   // 精通
   setVal('f_mastery',          p.mastery          || '');
@@ -1468,64 +1452,10 @@ function buildSIG1(payloadStr){
   return 'SIG1:' + _signSave(payloadStr) + ':' + payloadStr;
 }
 
-// 🧬 角色種子（enSeed）：遊戲用它判斷「匯入的存檔是不是跟其他存檔格是同一個角色」
-// （13-shop-save.js 的 importSave：enSeed 相同 → 視為重複角色，拒絕匯入），
-// 也是強化成敗的決定論種子。格式比照遊戲 startGame() 建立新角色時的寫法：'es' + 隨機碼 + 隨機碼。
-function _genEnSeed(){
-  const rnd = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  return 'es' + rnd() + rnd();
-}
-function reissueEnSeed(){
-  const msg = '右側「設為新角色」按鈕：按下後會產生一組全新、跟任何現有角色都不會撞號的種子。\n\n' +
-              '改完存檔資料後，先按「設為新角色」換一組種子，再按「匯出存檔」，這樣匯入到別的存檔格時就不會再被判定成重複角色。\n\n' +
-              '小提醒：enSeed 同時也是強化機率的決定論種子，換了新種子之後，未來的強化成敗結果也會跟著改變。\n\n' +
-              '確定要現在換發新的角色種子嗎？';
-  if(!confirm(msg)) return;
-  if(!G.p) G.p = {};
-  G.p.enSeed = _genEnSeed();
-  setVal('f_enseed', G.p.enSeed);
-  refreshSig1Display();
-  toast('🧬 已產生新的角色種子，匯出後可視為新角色匯入不同存檔格', 'ok', 4000);
-}
+// 🎲 每次匯出用的亂數欄位：只用來讓 payload 內容不同，藉此讓 SIG1 雜湊跟著改變。
 // 簽章演算法（_seedHash / _signSave / _SAVE_SALT）完全沒有更動，遊戲端驗證邏輯不受影響。
-// 🎲 每次「換發」用的亂數欄位：只用來讓 payload 內容不同，藉此讓 SIG1 雜湊跟著改變。
 function _genExportNonce(){
-  const padLen = 1 + Math.floor(Math.random() * 16); // 隨機 1~16 字元，讓整份 payload 長度每次不同
-  let pad = '';
-  for(let i = 0; i < padLen; i++) pad += Math.floor(Math.random() * 36).toString(36);
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + '-' + pad;
-}
-
-// 🪪 目前的身分證亂數：資料編輯、一般匯出都不會改變它；
-// 只有「換發身分證」（或匯入檔案本身帶有不同亂數）才會更新。
-let _sig1Nonce = _genExportNonce();
-
-// 依「目前面板資料 + 目前身分證亂數」即時算出身分證，供顯示與匯出共用。
-function _computeCurrentSig1(){
-  const base = _rawSave
-    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
-    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
-  const withNonce = Object.assign({}, base, { _exportNonce: _sig1Nonce });
-  return buildSIG1(JSON.stringify(withNonce));
-}
-// 只取簽章本身（不含 SIG1: 前綴、也不含後面的 JSON payload）——顯示用，僅供辨識，不影響實際簽章與匯出內容
-function _sig1DisplayOnly(signed){
-  const first  = signed.indexOf(':');
-  if(first < 0) return signed;
-  const second = signed.indexOf(':', first + 1);
-  return second < 0 ? signed.slice(first + 1) : signed.slice(first + 1, second);
-}
-function refreshSig1Display(){
-  const el = document.getElementById('f_sig1');
-  if(el) el.value = _sig1DisplayOnly(_computeCurrentSig1());
-}
-
-// 🆔 換發身分證：依規則（新亂數）產生一組新的身分證，資料本身不受影響；
-// 之後按「匯出存檔」就會帶著這組新身分證匯出。
-function reissueSig1(){
-  _sig1Nonce = _genExportNonce();
-  refreshSig1Display();
-  toast('🆔 已換發新身分證', 'ok');
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
 function parseSIG1(raw){
@@ -1560,7 +1490,6 @@ function importJsonFile(evt){
       G.wh   = parsed.wh   || G.wh;
       G.pets = parsed.pets || G.pets;
       G.diamonds = parsed.pandoraDiamonds ?? parsed.diamonds ?? parsed.sharedDiamonds ?? G.diamonds ?? 0;
-      _sig1Nonce = parsed._exportNonce || _genExportNonce();
       canonicalizeAttrCodes();
       loadAllUI();
       toast('✅ 存檔已匯入', 'ok');
@@ -1574,16 +1503,11 @@ function importJsonFile(evt){
 
 function exportJson(){
   applyAll(true);
-  const base = _rawSave
-    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
-    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
-  const out     = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const out     = _rawSave
+    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds, _exportNonce: _genExportNonce() })
+    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds, _exportNonce: _genExportNonce() };
   const payload = JSON.stringify(out);
   const signed  = buildSIG1(payload);
-  const prev    = document.getElementById('sig1Preview');
-  if(prev) prev.value = signed.slice(0, 300) + '…';
-  const fSig1   = document.getElementById('f_sig1');
-  if(fSig1) fSig1.value = _sig1DisplayOnly(signed);
   const blob    = new Blob([signed], { type:'application/json' });
   const url     = URL.createObjectURL(blob);
   const a       = document.createElement('a');
@@ -1591,7 +1515,21 @@ function exportJson(){
   a.download    = 'save_' + Date.now() + '.json';
   a.click();
   URL.revokeObjectURL(url);
-  toast('💾 存檔已匯出', 'ok');
+  toast('💾 SIG1 存檔已匯出', 'ok');
+}
+
+function copySIG1(){
+  applyAll(true);
+  const out     = _rawSave
+    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds, _exportNonce: _genExportNonce() })
+    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds, _exportNonce: _genExportNonce() };
+  const payload = JSON.stringify(out);
+  const sig     = buildSIG1(payload);
+  const prev    = document.getElementById('sig1Preview');
+  if(prev) prev.value = sig.slice(0, 300) + '…';
+  navigator.clipboard.writeText(sig)
+    .then(()  => toast('🔐 SIG1 已複製到剪貼簿', 'ok'))
+    .catch(()  => toast('❌ 複製失敗，請手動複製', 'err'));
 }
 
 function openPasteModal(){
@@ -1611,7 +1549,6 @@ function loadFromPaste(){
     G.wh   = parsed.wh   || G.wh;
     G.pets = parsed.pets || G.pets;
     G.diamonds = parsed.pandoraDiamonds ?? parsed.diamonds ?? parsed.sharedDiamonds ?? G.diamonds ?? 0;
-    _sig1Nonce = parsed._exportNonce || _genExportNonce();
     canonicalizeAttrCodes();
     loadAllUI();
     closePasteModal();
@@ -1642,7 +1579,6 @@ function applyJsonEditor(){
     G.wh   = parsed.wh   || G.wh;
     G.pets = parsed.pets || G.pets;
     G.diamonds = parsed.pandoraDiamonds ?? parsed.diamonds ?? parsed.sharedDiamonds ?? G.diamonds ?? 0;
-    _sig1Nonce = parsed._exportNonce || _genExportNonce();
     loadAllUI();
     toast('✅ JSON 已套用', 'ok');
   }catch(e){
@@ -1764,7 +1700,6 @@ function clearAll(){
     pets:[],
     diamonds:0
   };
-  _sig1Nonce = _genExportNonce();
   loadAllUI();
   toast('已清除', 'info');
 }
@@ -1774,7 +1709,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-28 已就緒', 'info');
+  toast('⚔️ Save Editor v7-22 已就緒', 'info');
 });
 </script>
 
