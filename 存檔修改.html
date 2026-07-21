@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-28</title>
+<title>放置天堂 Save Editor v7-29</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -307,7 +307,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-28</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-29</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -635,7 +635,7 @@ select option{ background:var(--bg3); }
       </div>
       <div class="form-row" style="margin-top:4px">
         <span style="color:#ff4d4f; font-weight:bold; font-size:15px; text-shadow:0 0 6px rgba(255,77,79,0.5); line-height:1.6; display:inline-block;">
-          【注意！「設為新角色」按下後會產生一組全新、跟任何現有角色都不會撞號的種子；改完存檔資料後，先按「設為新角色」換一組種子，再按「匯出存檔」，這樣匯入到別的存檔格時就不會再被判定成重複角色。小提醒：enSeed 同時也是強化機率的決定論種子，換了新種子之後，未來的強化成敗結果也會跟著改變！】
+          <br>【注意！「設為新角色」按下後會產生一組全新、跟任何現有角色都不會撞號的種子】<br><br>【改完存檔資料後，先按「設為新角色」換一組種子，再按「匯出存檔」】<br><br>【這樣匯入到別的存檔格時就不會再被判定成重複角色。】<br><br>【小提醒：enSeed 同時也是強化機率的決定論種子，換了新種子之後，未來的強化成敗結果也會跟著改變！】
         </span>
       </div>
       <div class="form-row" style="margin-top:12px">
@@ -1774,7 +1774,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-28 已就緒', 'info');
+  toast('⚔️ Save Editor v7-29 已就緒', 'info');
 });
 </script>
 
