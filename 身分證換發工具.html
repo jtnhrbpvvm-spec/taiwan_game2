@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>存檔身分證換發工具</title>
+<style>
+  :root{
+    --bg1:#14161c; --bg2:#1b1e27; --bg3:#242833;
+    --border:#333a4a; --text:#e8eaf0; --text3:#8890a0;
+    --accent:#4d8dff; --danger:#ff4d4f; --ok:#3ecf6e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:var(--bg1); color:var(--text);
+    font-family:"Microsoft JhengHei","PingFang TC",-apple-system,BlinkMacSystemFont,sans-serif;
+    display:flex; justify-content:center; padding:32px 16px;
+  }
+  .wrap{ width:100%; max-width:640px; }
+  h1{ font-size:20px; margin:0 0 4px; }
+  .sub{ color:var(--text3); font-size:13px; margin:0 0 24px; }
+
+  #dropZone{
+    border:2px dashed var(--border); border-radius:14px; padding:36px 20px;
+    text-align:center; cursor:pointer; background:var(--bg2);
+    transition:border-color .15s, background .15s;
+  }
+  #dropZone.drag{ border-color:var(--accent); background:#1d2436; }
+  #dropZone .icon{ font-size:34px; margin-bottom:8px; }
+  #dropZone .main{ font-size:15px; }
+  #dropZone .hint{ color:var(--text3); font-size:12px; margin-top:6px; }
+  #fileInput{ display:none; }
+
+  .notice{
+    margin-top:14px; padding:12px 14px; border-radius:10px;
+    background:rgba(255,77,79,0.08); border:1px solid rgba(255,77,79,0.35);
+    color:var(--danger); font-weight:bold; font-size:14px; line-height:1.7;
+    text-shadow:0 0 6px rgba(255,77,79,0.35);
+  }
+
+  #log{ margin-top:20px; display:flex; flex-direction:column; gap:8px; }
+  .line{ padding:10px 12px; border-radius:8px; font-size:13px; line-height:1.6; background:var(--bg2); border:1px solid var(--border); }
+  .line.ok{ border-color:rgba(62,207,110,0.4); color:var(--ok); }
+  .line.err{ border-color:rgba(255,77,79,0.4); color:var(--danger); }
+  .line.info{ color:var(--text); }
+  .mono{ font-family:monospace; }
+
+  .file-tag{
+    display:inline-block; margin-top:12px; padding:6px 10px; border-radius:8px;
+    background:var(--bg3); border:1px solid var(--border); font-size:12px; color:var(--text3);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪪 存檔身分證換發工具</h1>
+  <p class="sub">把存檔拖進下面的框內，或點擊選取檔案——會直接幫你換發一組新的身分證，再讓你選擇要存到哪裡。</p>
+
+  <div id="dropZone">
+    <div class="icon">📂</div>
+    <div class="main">將存檔拖曳到這裡，或點擊選取檔案</div>
+    <div class="hint">支援 .json / 純文字存檔（含 SIG1: 前綴亦可）</div>
+    <input type="file" id="fileInput" accept=".json,.txt,application/json,text/plain">
+  </div>
+
+  <div class="notice">
+    【注意！選擇或拖曳存檔後，系統會直接為這份存檔換發一組全新、跟任何現有角色都不會撞號的身分證；換發完成、另存新檔後，把新檔案匯入到別的存檔格，就不會再被判定成重複角色。小提醒：身分證同時也是強化機率的決定論種子，換了新的之後，未來的強化成敗結果也會跟著改變！】
+  </div>
+
+  <div id="log"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  簽章演算法（跟存檔編輯工具 / 遊戲原始碼完全一致，未做任何更動）
+// ════════════════════════════════════════════════
+function _seedHash(str){
+  str = String(str);
+  let h = 1779033703 ^ str.length;
+  for(let i = 0; i < str.length; i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+const _SAVE_SALT = 'fb5#9c3a7e1d-save-integrity-salt-do-not-edit#a1b2c3';
+function _signSave(s){
+  let a = _seedHash(_SAVE_SALT + '::' + s);
+  let b = _seedHash(s + '::' + _SAVE_SALT + '::' + a);
+  return (a >>> 0).toString(36) + '.' + (b >>> 0).toString(36) + '.' + (s.length).toString(36);
+}
+function buildSIG1(payloadStr){
+  return 'SIG1:' + _signSave(payloadStr) + ':' + payloadStr;
+}
+function parseSIG1(raw){
+  if(raw == null) throw new Error('內容為空');
+  const str = String(raw).trim();
+  if(str.slice(0, 5) === 'SIG1:'){
+    const rest = str.slice(5);
+    const i    = rest.indexOf(':');
+    if(i < 0) throw new Error('SIG1 格式毀損（缺少分隔符）');
+    const sig     = rest.slice(0, i);
+    const payload = rest.slice(i + 1);
+    if(_signSave(payload) !== sig){
+      addLog('⚠️ 簽章不符，這份存檔可能已被修改過，仍嘗試繼續讀取', 'err');
+    }
+    return JSON.parse(payload);
+  }
+  return JSON.parse(str);
+}
+
+// 🧬 角色種子（身分證 / enSeed）產生規則，跟存檔編輯工具、遊戲 startGame() 一致
+function _genEnSeed(){
+  const rnd = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  return 'es' + rnd() + rnd();
+}
+
+// ════════════════════════════════════════════════
+//  畫面互動
+// ════════════════════════════════════════════════
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const logEl     = document.getElementById('log');
+
+function addLog(msg, cls){
+  const div = document.createElement('div');
+  div.className = 'line ' + (cls || 'info');
+  div.innerHTML = msg;
+  logEl.prepend(div);
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if(e.target.files[0]) handleFile(e.target.files[0]);
+  fileInput.value = '';
+});
+['dragenter','dragover'].forEach(ev => {
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag'); });
+});
+['dragleave','drop'].forEach(ev => {
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag'); });
+});
+dropZone.addEventListener('drop', e => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+
+function splitFileName(name){
+  const dot = name.lastIndexOf('.');
+  if(dot <= 0) return { base: name, ext: '' };
+  return { base: name.slice(0, dot), ext: name.slice(dot) };
+}
+
+async function handleFile(file){
+  addLog(`📄 已載入檔案：<span class="mono">${file.name}</span>`, 'info');
+
+  let text;
+  try{
+    text = await file.text();
+  }catch(err){
+    addLog('❌ 讀取檔案失敗：' + err.message, 'err');
+    return;
+  }
+
+  let parsed;
+  try{
+    parsed = parseSIG1(text);
+  }catch(err){
+    addLog('❌ 存檔格式無法解析：' + err.message, 'err');
+    return;
+  }
+
+  const p = parsed && parsed.p;
+  if(!p || typeof p !== 'object'){
+    addLog('❌ 這份檔案裡沒有找到角色資料（p 欄位），不是合法的存檔', 'err');
+    return;
+  }
+
+  const charInfo = p.name ? `角色「${p.name}」${p.cls ? '（' + p.cls + '）' : ''}` : '這份存檔';
+  const oldSeed = p.enSeed || '(尚未產生，將視為全新角色配發)';
+
+  const msg = `右側流程：選擇存檔後會直接產生一組全新、跟任何現有角色都不會撞號的身分證。\n\n` +
+              `完成後會讓你另存一份新檔案，把新檔案匯入到別的存檔格，就不會再被判定成重複角色。\n\n` +
+              `小提醒：身分證同時也是強化機率的決定論種子，換了新的之後，未來的強化成敗結果也會跟著改變。\n\n` +
+              `目前身分證：${oldSeed}\n\n` +
+              `確定要為${charInfo}換發新的身分證嗎？`;
+  if(!confirm(msg)){
+    addLog('已取消，沒有做任何變更', 'info');
+    return;
+  }
+
+  const newSeed = _genEnSeed();
+  p.enSeed = newSeed;
+  const out     = Object.assign({}, parsed, { p });
+  const payload = JSON.stringify(out);
+  const signed  = buildSIG1(payload);
+
+  addLog(`🧬 身分證已換發：<span class="mono">${oldSeed}</span> → <span class="mono">${newSeed}</span>`, 'ok');
+
+  const { base, ext } = splitFileName(file.name);
+  const newName = `${base}_修改後${ext || '.json'}`;
+
+  await saveResult(signed, newName);
+}
+
+async function saveResult(content, suggestedName){
+  if(window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: 'JSON 存檔', accept: { 'application/json': ['.json'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      addLog(`💾 已另存新檔：<span class="mono">${handle.name}</span>`, 'ok');
+      return;
+    }catch(err){
+      if(err && err.name === 'AbortError'){
+        addLog('已取消儲存位置選擇，檔案未儲存', 'info');
+        return;
+      }
+      addLog('⚠️ 無法開啟另存視窗，改用瀏覽器預設下載方式', 'err');
+      // 繼續往下走瀏覽器下載 fallback
+    }
+  }
+  // fallback：瀏覽器不支援選擇存檔位置（如 Firefox / Safari），改用一般下載
+  const blob = new Blob([content], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = suggestedName; a.click();
+  URL.revokeObjectURL(url);
+  addLog(`💾 已下載新檔：<span class="mono">${suggestedName}</span>（此瀏覽器不支援選擇資料夾，已存到預設下載位置）`, 'ok');
+}
+</script>
+</body>
+</html>
