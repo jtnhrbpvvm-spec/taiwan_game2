@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-35</title>
+<title>放置天堂 Save Editor v7-38</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -310,7 +310,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-35</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-38</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -1857,7 +1857,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-35 已就緒', 'info');
+  toast('⚔️ Save Editor v7-38 已就緒', 'info');
 });
 </script>
 
@@ -2718,18 +2718,6 @@ const BUFF_SKILL_DB = {
       "rangedHit": 3
     }
   },
-  "sk_elf_summon": {
-    "n": "召喚屬性精靈",
-    "dur": 3600,
-    "mp": 30,
-    "summon": true
-  },
-  "sk_elf_summon2": {
-    "n": "召喚強力屬性精靈",
-    "dur": 3600,
-    "mp": 50,
-    "summon": true
-  },
   "sk_elf_watervital": {
     "n": "水之元氣",
     "dur": 64,
@@ -3075,12 +3063,6 @@ const BUFF_SKILL_DB = {
     },
     "msg": "你覺得身體充滿了力量。"
   },
-  "sk_summon": {
-    "n": "召喚術",
-    "dur": 3600,
-    "mp": 50,
-    "summon": true
-  },
   "sk_sunlight": {
     "n": "日光術",
     "dur": 7200,
@@ -3105,23 +3087,12 @@ const BUFF_SKILL_DB = {
     "mp": 5,
     "msg": "你蓄勢待發，斧刃將撕裂一切阻擋。"
   },
-  "sk_zombie": {
-    "n": "造屍術",
-    "dur": 3600,
-    "mp": 35,
-    "summon": true
-  },
   "sk_heal_energy_storm": {
     "n": "治癒能量風暴",
     "dur": 320,
     "mp": 20,
     "msg": "治癒的能量風暴環繞著你，生命力快速匯聚。"
   },
-  "petlure": {
-    "n": "漂浮之眼肉",
-    "dur": 600,
-    "msg": "漂浮之眼身上切下的奇特肉塊，散發野獸無法抗拒的氣味。使用後獲得「一般誘捕」600秒：期間擊殺 狼／牧羊犬／杜賓狗／哈士奇／熊／貓／浣熊／聖伯納犬／狐狸／小獵犬／柯利 時，寵物保管將獲得基本等級的該寵物並失去此狀態。"
-  }
 };;
 const SKILL_MAGE = [
   {id:'sk_sunlight',n:'日光術',lv:4},{id:'sk_lightarrow',n:'光箭',lv:4},
