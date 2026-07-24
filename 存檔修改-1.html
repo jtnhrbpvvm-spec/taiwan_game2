@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-35</title>
+<title>放置天堂 Save Editor v7-38</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -43,9 +43,12 @@ body{
   font-size:10px; color:var(--text3); text-transform:uppercase;
   letter-spacing:1px; padding:10px 6px 4px; margin-top:4px;
 }
-#content{ flex:1; padding:20px; overflow-y:auto; }
+#content{ flex:1; padding:20px; overflow-y:auto; position:relative; }
 .panel{ display:none; }
 .panel.active{ display:block; }
+/* 物品查詢面板：填滿整個右側內容區 */
+#panel-itemlookup.active{ display:block; position:absolute; inset:0; }
+#panel-itemlookup iframe{ width:100%; height:100%; border:none; display:block; background:#fff; }
 .panel-title{
   font-size:15px; font-weight:bold; color:var(--text2);
   margin-bottom:16px; padding-bottom:8px;
@@ -307,7 +310,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-35</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-38</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -334,6 +337,7 @@ select option{ background:var(--bg3); }
     <div class="nav-item" onclick="showPanel('pets',this)">🐾 寵物</div>
     <div class="nav-item" onclick="showPanel('dex',this)">📖 圖鑑</div>
     <div class="nav-item" onclick="showPanel('config',this)">⚙️ 設定</div>
+    <div class="nav-item" onclick="showPanel('itemlookup',this)">🔍 物品查詢</div>
     <div class="nav-item" onclick="showPanel('advanced',this)">🔧 進階</div>
     <div class="nav-section">工具</div>
     <div class="nav-item" onclick="showPanel('jsonpanel',this)">{ } JSON</div>
@@ -343,7 +347,11 @@ select option{ background:var(--bg3); }
 
     <!-- ══ 基本資料 ══ -->
     <div class="panel active" id="panel-basic">
-      <div class="panel-title">👤 基本資料</div>
+      <div class="panel-title">👤 基本資料
+        <span style="color:var(--red); font-size:16px; font-weight:bold; margin-left:10px;">
+          請勿使用LINE直接修改!將網址複製到其他瀏覽器在使用!
+        </span>
+      </div>
       <div class="form-row">
         <span class="form-label">角色名稱</span>
         <input type="text" id="f_name" style="width:160px">
@@ -655,6 +663,9 @@ select option{ background:var(--bg3); }
     <!-- ══ 裝備 ══ -->
     <div class="panel" id="panel-eq">
       <div class="panel-title">🛡️ 裝備</div>
+      <div style="color:var(--red); font-size:13px; font-weight:bold; margin-bottom:12px;">
+        ⚠️ 備註：屬性魔法在防具欄位可能不會發揮作用！
+      </div>
   <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
       <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana" 
@@ -1092,6 +1103,11 @@ function renderItemRefSearch(inputId, resultId){
       <div id="autoBuffSkillList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
     </div>
 
+    <!-- ══ 物品查詢 ══ -->
+    <div class="panel" id="panel-itemlookup">
+      <iframe id="itemLookupFrame" title="掉落物查詢系統"></iframe>
+    </div>
+
     <!-- ══ 進階 ══ -->
     <div class="panel" id="panel-advanced">
       <div class="panel-title">🔧 進階設定</div>
@@ -1375,6 +1391,10 @@ function showPanel(id, el){
   if(id === 'dex')        { renderDexEquip(); renderDexCard(); }
   if(id === 'advanced')   loadAdvancedUI();
   if(id === 'config')     loadConfigUI();
+  if(id === 'itemlookup'){
+    const frame = document.getElementById('itemLookupFrame');
+    if(!frame.src){ frame.src = '掉落物查詢系統.html'; } // 第一次切換到此分頁才載入，避免影響開檔速度
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1837,7 +1857,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-35 已就緒', 'info');
+  toast('⚔️ Save Editor v7-38 已就緒', 'info');
 });
 </script>
 
@@ -1903,10 +1923,11 @@ const ATTR_MAGIC_BY_SKILL = (() => {
   });
   return out;
 })();
-// 判斷是否為「第5階屬性武器」：必須是武器類型物品(type=wpn)，且屬性詞綴的階級=5
+// 判斷是否為「第5階屬性裝備」：必須是可裝備物品(type=wpn/arm/acc)，且屬性詞綴的階級=5
+// （函式名稱沿用舊名以相容既有呼叫處，實際已放寬至所有裝備類型，不再僅限武器）
 function isTier5AttrWeapon(itemId, attr){
   const db  = (typeof ITEM_DB !== 'undefined' && ITEM_DB[itemId]) || {};
-  if(db.type !== 'wpn') return false;
+  if(!['wpn','arm','acc'].includes(db.type)) return false;
   const aff = ATTR_AFFIX[attrCanon(attr)];
   return !!(aff && aff.tier === 5);
 }
@@ -2163,15 +2184,14 @@ function renderEqPanel(){
         <select class="affix-select" id="eq_${sl.id}_attr"
                 onchange="onEqFieldChange('${sl.id}')">${attrOptHTML}</select>
       </div>
-      ${(sl.id === 'wpn' || sl.id === 'offwpn') ? `
       <div class="affix-row">
         <span class="affix-label">屬性魔法</span>
         <select class="affix-select" id="eq_${sl.id}_attrmagic"
-                onchange="onEqFieldChange('${sl.id}')" title="只有五階屬性武器才能附加，且技能元素須與屬性詞綴相同">${attrMagicSelectHTML}</select>
+                onchange="onEqFieldChange('${sl.id}')" title="只有五階屬性裝備才能附加，且技能元素須與屬性詞綴相同">${attrMagicSelectHTML}</select>
         <select id="eq_${sl.id}_attrmagicstar" style="width:56px;margin-left:4px"
                 title="星級（1~3，同技能升星使觸發率×星數）"
                 onchange="onEqFieldChange('${sl.id}')">${starOptHTML(d.attrMagicStar||1)}</select>
-      </div>` : ''}
+      </div>
       <div class="affix-row">
         <span class="affix-label">遠古詞綴</span>
         <select class="affix-select" id="eq_${sl.id}_anc"
@@ -2206,9 +2226,8 @@ function renderEqPanel(){
       return;
     }
     _setSelectVal(`eq_${sl.id}_attr`,  d.attr  || '');
-    if(sl.id === 'wpn' || sl.id === 'offwpn'){
-      _setSelectVal(`eq_${sl.id}_attrmagic`, d.attrMagic || '');
-    }
+    _setSelectVal(`eq_${sl.id}_attrmagic`, d.attrMagic || '');
+    _setSelectVal(`eq_${sl.id}_attrmagicstar`, String(d.attrMagicStar || 1));
     _setSelectVal(`eq_${sl.id}_anc`,
       d.anc === true ? 'true' : (d.anc || ''));
     _setSelectVal(`eq_${sl.id}_bless`,
@@ -2263,16 +2282,16 @@ function onEqFieldChange(slotId){
   const ancRaw   = document.getElementById(`eq_${slotId}_anc`)?.value   || '';
   const blessRaw = document.getElementById(`eq_${slotId}_bless`)?.value || '';
 
-  // 🔮 屬性魔法：僅武器/副武器欄位適用，且必須「第5階屬性武器」+「技能與屬性詞綴同元素」才合法
+  // 🔮 屬性魔法：所有裝備欄位（席琳遺骸除外）皆適用，且必須「第5階屬性裝備」+「技能與屬性詞綴同元素」才合法
   let attrMagic = false, attrMagicStar = 1;
-  if(slotId === 'wpn' || slotId === 'offwpn'){
+  {
     const magicRaw = document.getElementById(`eq_${slotId}_attrmagic`)?.value || '';
     const starRaw  = parseInt(document.getElementById(`eq_${slotId}_attrmagicstar`)?.value) || 1;
     if(magicRaw){
       if(!isTier5AttrWeapon(idVal, attrRaw)){
-        toast('⚠️ 只有「五階屬性武器」才能附加屬性魔法，已忽略此設定', 'err', 4000);
+        toast('⚠️ 只有「五階屬性裝備」才能附加屬性魔法，已忽略此設定', 'err', 4000);
       } else if(ATTR_MAGIC_BY_SKILL[magicRaw] !== (ATTR_AFFIX[attrCanon(attrRaw)]||{}).ele){
-        toast('⚠️ 屬性魔法必須跟武器的屬性詞綴同元素，已忽略此設定', 'err', 4000);
+        toast('⚠️ 屬性魔法必須跟裝備的屬性詞綴同元素，已忽略此設定', 'err', 4000);
       } else {
         attrMagic     = magicRaw;
         attrMagicStar = Math.max(1, Math.min(3, starRaw));
@@ -2699,18 +2718,6 @@ const BUFF_SKILL_DB = {
       "rangedHit": 3
     }
   },
-  "sk_elf_summon": {
-    "n": "召喚屬性精靈",
-    "dur": 3600,
-    "mp": 30,
-    "summon": true
-  },
-  "sk_elf_summon2": {
-    "n": "召喚強力屬性精靈",
-    "dur": 3600,
-    "mp": 50,
-    "summon": true
-  },
   "sk_elf_watervital": {
     "n": "水之元氣",
     "dur": 64,
@@ -3056,12 +3063,6 @@ const BUFF_SKILL_DB = {
     },
     "msg": "你覺得身體充滿了力量。"
   },
-  "sk_summon": {
-    "n": "召喚術",
-    "dur": 3600,
-    "mp": 50,
-    "summon": true
-  },
   "sk_sunlight": {
     "n": "日光術",
     "dur": 7200,
@@ -3086,23 +3087,12 @@ const BUFF_SKILL_DB = {
     "mp": 5,
     "msg": "你蓄勢待發，斧刃將撕裂一切阻擋。"
   },
-  "sk_zombie": {
-    "n": "造屍術",
-    "dur": 3600,
-    "mp": 35,
-    "summon": true
-  },
   "sk_heal_energy_storm": {
     "n": "治癒能量風暴",
     "dur": 320,
     "mp": 20,
     "msg": "治癒的能量風暴環繞著你，生命力快速匯聚。"
   },
-  "petlure": {
-    "n": "漂浮之眼肉",
-    "dur": 600,
-    "msg": "漂浮之眼身上切下的奇特肉塊，散發野獸無法抗拒的氣味。使用後獲得「一般誘捕」600秒：期間擊殺 狼／牧羊犬／杜賓狗／哈士奇／熊／貓／浣熊／聖伯納犬／狐狸／小獵犬／柯利 時，寵物保管將獲得基本等級的該寵物並失去此狀態。"
-  }
 };;
 const SKILL_MAGE = [
   {id:'sk_sunlight',n:'日光術',lv:4},{id:'sk_lightarrow',n:'光箭',lv:4},
@@ -3651,7 +3641,7 @@ function renderItemTable(type){
       <td class="inv-attr-cell">
         <select style="font-size:12px;background:var(--bg3);border:1px solid var(--border);
                        color:var(--text);border-radius:3px;padding:2px 3px;width:88px"
-                ${eligible?'':'disabled'} title="${eligible?'選擇屬性魔法':'只有五階屬性武器才能附加屬性魔法'}"
+                ${eligible?'':'disabled'} title="${eligible?'選擇屬性魔法':'只有五階屬性裝備才能附加屬性魔法'}"
                 onchange="updateItemField('${type}',${i},'attrMagic',this.value||false)">
           ${attrMagicOptHTML(it.attrMagic||'')}
         </select>
@@ -3705,9 +3695,9 @@ function updateItemField(type, idx, field, val){
       it.attrMagic = false;
       it.attrMagicStar = 1;
     } else if(!isTier5AttrWeapon(it.id, it.attr)){
-      toast('⚠️ 只有「五階屬性武器」才能附加屬性魔法', 'err', 4000);
+      toast('⚠️ 只有「五階屬性裝備」才能附加屬性魔法', 'err', 4000);
     } else if(ATTR_MAGIC_BY_SKILL[val] !== (ATTR_AFFIX[attrCanon(it.attr)]||{}).ele){
-      toast('⚠️ 屬性魔法必須跟武器的屬性詞綴同元素', 'err', 4000);
+      toast('⚠️ 屬性魔法必須跟裝備的屬性詞綴同元素', 'err', 4000);
     } else {
       it.attrMagic = val;
       if(!it.attrMagicStar) it.attrMagicStar = 1;

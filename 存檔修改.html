@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-38</title>
+<title>放置天堂 Save Editor v7-41</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -291,6 +291,7 @@ select option{ background:var(--bg3); }
 .toast.ok{ border-color:var(--green); color:var(--green); }
 .toast.err{ border-color:var(--red); color:var(--red); }
 .toast.warn{ border-color:var(--yellow); color:var(--yellow); }
+input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a); }
 /* Modal */
 .modal-overlay{
   display:none; position:fixed; inset:0;
@@ -310,7 +311,7 @@ select option{ background:var(--bg3); }
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-38</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-41</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -383,22 +384,26 @@ select option{ background:var(--bg3); }
       </div>
       <div class="form-row">
         <span class="form-label">等級</span>
-        <input type="number" id="f_lv" style="width:80px" min="1" max="9999">
+        <input type="number" id="f_lv" style="width:80px" min="1" max="9999" readonly>
         <span class="form-label" style="width:60px">經驗值</span>
-        <input type="number" id="f_exp" style="width:120px" min="0">
+        <input type="number" id="f_exp" style="width:120px" min="0" readonly>
+        <button class="btn btn-sm" onclick="openLvExpModal()">🔧 修改等級/經驗值</button>
       </div>
       <div class="form-row">
         <span class="form-label">HP</span>
-        <input type="number" id="f_hp" style="width:100px">
+        <input type="number" id="f_hp" style="width:100px" readonly>
         <span class="form-label" style="width:60px">最大HP</span>
-        <input type="number" id="f_mhp" style="width:100px">
+        <input type="number" id="f_mhp" style="width:100px" readonly>
       </div>
       <div class="form-row">
         <span class="form-label">MP</span>
-        <input type="number" id="f_mp" style="width:100px">
+        <input type="number" id="f_mp" style="width:100px" readonly>
         <span class="form-label" style="width:60px">最大MP</span>
-        <input type="number" id="f_mmp" style="width:100px">
+        <input type="number" id="f_mmp" style="width:100px" readonly>
         <button class="btn btn-sm" onclick="fullRestore()">補滿</button>
+      </div>
+      <div class="form-row" style="font-size:12px;color:var(--text3);">
+        生命／魔力／等級／經驗值已改為唯讀，請用「修改等級/經驗值」依職業成長公式自動換算，避免手動輸入與實際等級不一致。
       </div>
       <div class="form-row">
         <span class="form-label">金幣</span>
@@ -641,7 +646,7 @@ select option{ background:var(--bg3); }
           【注意！「換發身分證」按下後會產生一組全新、跟任何現有角色都不會撞號的身分證；改完存檔資料後，先按「換發身分證」換一組新的，再按「匯出存檔」，這樣匯入到別的存檔格時就不會再被判定成重複角色。小提醒：身分證同時也是強化機率的決定論種子，換了新的之後，未來的強化成敗結果也會跟著改變！】
         </span>
       </div>
-      <div class="form-row" style="margin-top:12px">
+      <div class="form-row" style="margin-top:12px; display:none">
         <button class="btn btn-accent" onclick="maxAll()">🚀 一鍵最大化</button>
       </div>
     </div>
@@ -658,6 +663,8 @@ select option{ background:var(--bg3); }
       <div class="section-title">分配屬性</div>
       <div class="stat-grid" id="stat-alloc"></div>
       <div class="form-row"><button class="btn btn-sm" onclick="maxStats('alloc',100)">全部 100</button></div>
+      <div class="section-title">總和（基礎+仙丹+分配，唯讀，單項上限100）</div>
+      <div class="stat-grid" id="stat-total"></div>
     </div>
 
     <!-- ══ 裝備 ══ -->
@@ -1249,6 +1256,25 @@ function renderItemRefSearch(inputId, resultId){
   </div>
 </div>
 
+<div id="lvExpModal" class="modal-overlay" onclick="if(event.target===this) closeLvExpModal();">
+  <div class="modal-box" style="width:440px">
+    <div style="font-weight:bold;margin-bottom:4px;color:var(--text2)">🔧 修改等級 / 經驗值</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+      套用後會依職業的HP/MP成長公式自動換算「最大HP／最大MP」，並依目前存檔反推的體質／精神加成比例延伸到新等級，HP/MP會一併補滿。
+    </div>
+    <div class="form-row">
+      <span class="form-label" style="width:70px">目標數值</span>
+      <input type="number" id="lvExpInput" style="width:180px" min="0">
+    </div>
+    <div id="lvExpPreview" style="font-size:12px;color:var(--text3);margin:8px 0 4px;min-height:16px;"></div>
+    <div class="form-row" style="margin-top:10px;gap:8px">
+      <button class="btn btn-accent" onclick="applyLvExpChange('lv')">套用為等級</button>
+      <button class="btn btn-accent" onclick="applyLvExpChange('exp')">套用為經驗值</button>
+      <button class="btn" onclick="closeLvExpModal()">取消</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═════════════════════════════════════════════════
 // ═════════════════════════════════════════════════
@@ -1481,10 +1507,146 @@ function fullRestore(){
   toast('已補滿 HP / MP', 'ok');
 }
 
+// ════════════════════════════════════════════════
+//  等級 / 經驗值 / HP / MP 換算公式
+//  （與遊戲 00-data.js 的經驗表、02-stats-recompute.js 的職業HP/MP成長表對齊）
+// ════════════════════════════════════════════════
+
+// 經驗需求表：index = 等級。Lv1-69 沿用天堂經典版數值；Lv70-99 以 Lv69 錨點依「等級²+1」比例換算。
+const EXP_REQ_CLASSIC_V2 = [0,
+    3, 16, 50, 113, 245, 485, 898, 1584, 2685, 4407,
+    7043, 11005, 16865, 25408, 37702, 55190, 79799, 114083, 161403, 226142,
+    313974, 432193, 590100, 799479, 1075145, 1435599, 1903780, 2507936, 3282607, 4269738,
+    5519907, 7093682, 9063076, 11513098, 14543375, 18269802, 22826176, 28365775, 35062787, 35413415,
+    35774602, 36244146, 36854552, 37648081, 38679668, 40020732, 41764114, 44030511, 46976827, 50807038,
+    55786313, 62259370, 70674343, 81613809, 95835115, 114322812, 138356819, 169601028, 210218499, 263021211,
+    331664738, 420901322, 443914114, 558686964, 705596211, 893640048, 1134336160, 1442427182, 1836783691,
+    2341899206, 2988263387, 3816012345, 4876863777, 6237508771, 7984011227, 10227518382, 13111678566, 16822283600, 21599812142,
+    27755758602, 35693905562, 45938056458, 59168216718, 76267831350, 98385502442, 127015683653, 164104263280, 212186812421, 274569735273,
+    355567807179, 460815878104, 597678193901, 775786295683, 1007746398092, 1310070317520, 1703091412776, 2214018836609, 2878224487592, 3741691833870
+];
+const EXP_REQ_LV69_KILLS = Math.ceil(EXP_REQ_CLASSIC_V2[69] / (69 * 69 + 1));
+const EXP_REQ_CLASSIC = EXP_REQ_CLASSIC_V2.map((req, lv) =>
+    (lv >= 70 && lv < 100) ? (lv * lv + 1) * EXP_REQ_LV69_KILLS : req);
+// 取得「到達該等級」所需的最低經驗值（即該等級的起始經驗，也就是升上該等級當下的經驗值）
+function getExpReq(lv){
+  if(lv >= 100) return Infinity;
+  return EXP_REQ_CLASSIC[lv] || Infinity;
+}
+// 依經驗值反推應落在哪一等級
+function levelFromExp(exp){
+  let lv = 1;
+  for(let l = 1; l < 100; l++){
+    if(exp >= getExpReq(l)) lv = l + 1; else break;
+  }
+  return Math.min(lv, 9999);
+}
+
+// 職業 Lv1 基礎值與每級固定成長量（不含體質/精神加成部分）
+const CLASS_HPMP_TABLE = {
+  knight:   { hpBase:16, hpInc:8.5,  mpBase:1, mpInc:1    },
+  elf:      { hpBase:15, hpInc:7.3,  mpBase:5, mpInc:2.83 },
+  dark:     { hpBase:12, hpInc:10.5, mpBase:3, mpInc:3    },
+  illusion: { hpBase:14, hpInc:7.5,  mpBase:5, mpInc:3.2  },
+  dragon:   { hpBase:16, hpInc:4.5,  mpBase:2, mpInc:0.7  },
+  warrior:  { hpBase:16, hpInc:9,    mpBase:1, mpInc:0.5  },
+  royal:    { hpBase:14, hpInc:10,   mpBase:2, mpInc:1.5  },
+  mage:     { hpBase:12, hpInc:4.3,  mpBase:6, mpInc:4.5  }, // 其餘未列職業（法師等）沿用預設值
+};
+function classHpMpTable(cls){
+  return CLASS_HPMP_TABLE[cls] || CLASS_HPMP_TABLE.mage;
+}
+
+// 體質(CON)/精神(WIS)對HP/MP每級成長的實際加成公式，未在提供的js檔中找到（getConGrowth/getWisGrowth
+// 未出現在 00-data.js / 02-stats-recompute.js），因此改用「匯入存檔當下」的等級與最大HP/MP、
+// 搭配當時的CON/WIS總和，反推出「每1點CON/WIS對應多少每級HP/MP成長」的校準比例（假設線性關係）。
+// 之後不論是修改等級/經驗值，或是調整屬性欄位，都用這個校準比例＋當下的CON/WIS重新計算，
+// 這樣才能讓「更改CON/WIS」確實反映在HP/MP上。Lv1存檔因分母為0無法校準，此時比例視為0
+// （只用職業固定成長，直到之後有更高等級的資料可校準為止）。
+function calibrateGrowth(){
+  const cls = G.p?.cls || 'mage';
+  const t   = classHpMpTable(cls);
+  const lv  = G.p?.lv || 1;
+  const mhp = G.p?.mhp ?? t.hpBase;
+  const mmp = G.p?.mmp ?? t.mpBase;
+  const con = statTotalFromP('con');
+  const wis = statTotalFromP('wis');
+  let conPerPoint = 0, wisPerPoint = 0;
+  if(lv > 1){
+    const totalHpGrowth = (mhp - t.hpBase) / (lv - 1);
+    const totalMpGrowth = (mmp - t.mpBase) / (lv - 1);
+    conPerPoint = con > 0 ? (totalHpGrowth - t.hpInc) / con : 0;
+    wisPerPoint = wis > 0 ? (totalMpGrowth - t.mpInc) / wis : 0;
+  }
+  G._growthCalib = { hpBase:t.hpBase, mpBase:t.mpBase, hpClsInc:t.hpInc, mpClsInc:t.mpInc, conPerPoint, wisPerPoint };
+}
+// 讀取 G.p 裡三層屬性（base+panacea+alloc）的總和，供匯入當下校準使用（此時DOM欄位可能尚未渲染）
+function statTotalFromP(k){
+  return ((G.p?.base||{})[k]||0) + ((G.p?.panacea||{})[k]||0) + ((G.p?.alloc||{})[k]||0);
+}
+// 讀取畫面上目前三層屬性輸入框的總和（第四排「總和」的來源）
+function statTotalFromUI(k){
+  return ['base','panacea','alloc'].reduce((sum,tier)=>{
+    const el = document.getElementById(`stat_${tier}_${k}`);
+    return sum + (el ? (parseInt(el.value)||0) : 0);
+  }, 0);
+}
+
+// 依目前校準比例＋畫面上的CON/WIS總和，計算指定等級的最大HP/MP
+function computeHpMpForLevel(lv){
+  if(!G._growthCalib) calibrateGrowth();
+  const cal = G._growthCalib;
+  const con = statTotalFromUI('con');
+  const wis = statTotalFromUI('wis');
+  const hpGrowth = cal.hpClsInc + cal.conPerPoint * con;
+  const mpGrowth = cal.mpClsInc + cal.wisPerPoint * wis;
+  const mhp = Math.max(1, Math.floor(cal.hpBase + (lv - 1) * hpGrowth));
+  const mmp = Math.max(0, Math.floor(cal.mpBase + (lv - 1) * mpGrowth));
+  return { mhp, mmp };
+}
+
+function openLvExpModal(){
+  setVal('lvExpInput', getNum('f_lv', 1));
+  document.getElementById('lvExpPreview').textContent = '';
+  document.getElementById('lvExpModal').classList.add('show');
+}
+function closeLvExpModal(){
+  document.getElementById('lvExpModal').classList.remove('show');
+}
+
+function applyLvExpChange(mode){
+  const input = getNum('lvExpInput', 0);
+
+  let newLv, newExp;
+  if(mode === 'lv'){
+    newLv  = Math.max(1, Math.min(9999, input));
+    // 填入「到達該等級所需的最低經驗值 +10」，避免剛好卡在門檻上被判定未正確升級
+    newExp = (newLv >= 100 ? getExpReq(99) : getExpReq(newLv)) + 10;
+  } else {
+    newExp = Math.max(0, input);
+    newLv  = levelFromExp(newExp);
+  }
+
+  const { mhp, mmp } = computeHpMpForLevel(newLv);
+
+  setVal('f_lv',  newLv);
+  setVal('f_exp', newExp);
+  setVal('f_mhp', mhp);
+  setVal('f_mmp', mmp);
+  setVal('f_hp',  mhp); // 一併補滿目前HP/MP
+  setVal('f_mp',  mmp);
+
+  closeLvExpModal();
+  toast(`已套用 Lv.${newLv}（經驗值 ${newExp}），最大HP=${mhp}／最大MP=${mmp}`, 'ok', 4000);
+}
+
 function maxAll(){
+  const { mhp, mmp } = computeHpMpForLevel(9999);
   setVal('f_gold', 999999999);
   setVal('f_lv',   9999);
-  setVal('f_exp',  0);
+  setVal('f_exp',  getExpReq(99) + 10);
+  setVal('f_mhp',  mhp);
+  setVal('f_mmp',  mmp);
   fullRestore();
   toast('已最大化', 'ok');
 }
@@ -1499,13 +1661,70 @@ function renderStatsPanel(){
   ['base','panacea','alloc'].forEach(tier => {
     const grid = document.getElementById('stat-' + tier);
     if(!grid) return;
-    grid.innerHTML = STAT_KEYS.map(k => `
+    grid.innerHTML = STAT_KEYS.map(k => {
+      const v = (G.p[tier] || {})[k] || 0;
+      return `
       <div class="stat-cell">
         <label>${STAT_LABELS[k]}</label>
-        <input type="number" id="stat_${tier}_${k}"
-               value="${(G.p[tier] || {})[k] || 0}" min="0" max="99999">
-      </div>`).join('');
+        <input type="number" id="stat_${tier}_${k}" data-prev="${v}"
+               value="${v}" min="0" max="100"
+               onchange="onStatInputChange('${tier}','${k}')">
+      </div>`;
+    }).join('');
   });
+  const totalGrid = document.getElementById('stat-total');
+  if(totalGrid){
+    totalGrid.innerHTML = STAT_KEYS.map(k => `
+      <div class="stat-cell">
+        <label>${STAT_LABELS[k]}</label>
+        <input type="number" id="stat_total_${k}" value="0" readonly>
+      </div>`).join('');
+  }
+  updateStatTotalRow();
+}
+
+// 更新第四排「總和」顯示（唯讀，= 基礎+仙丹+分配）
+function updateStatTotalRow(){
+  STAT_KEYS.forEach(k => {
+    const el = document.getElementById('stat_total_' + k);
+    if(el) el.value = statTotalFromUI(k);
+  });
+}
+
+// 基礎/仙丹/分配三排任一數值變動時：檢查該屬性總和是否超過100，超過就跳回原始數值並跳窗提示；
+// 未超過則更新總和列，若改到的是體質(CON)/精神(WIS)則同時重算HP/MP上限。
+function onStatInputChange(tier, k){
+  const el = document.getElementById(`stat_${tier}_${k}`);
+  if(!el) return;
+  let v = parseInt(el.value);
+  if(isNaN(v) || v < 0) v = 0;
+  el.value = v;
+
+  const sum = statTotalFromUI(k);
+  if(sum > 100){
+    const prev = parseInt(el.dataset.prev || '0');
+    el.value = prev;
+    updateStatTotalRow();
+    alert(`${STAT_LABELS[k]}（${tier === 'base' ? '基礎' : tier === 'panacea' ? '仙丹' : '分配'}）總和不能超過100，已還原成修改前的數值。`);
+    return;
+  }
+
+  el.dataset.prev = v;
+  updateStatTotalRow();
+
+  if(k === 'con' || k === 'wis'){
+    recalcHpMpFromStats();
+  }
+}
+
+// 依目前等級與畫面上的CON/WIS總和重算HP/MP上限，若目前HP/MP超過新上限則一併夾住
+function recalcHpMpFromStats(){
+  const lv = getNum('f_lv', 1);
+  const { mhp, mmp } = computeHpMpForLevel(lv);
+  setVal('f_mhp', mhp);
+  setVal('f_mmp', mmp);
+  if(getNum('f_hp', 0) > mhp) setVal('f_hp', mhp);
+  if(getNum('f_mp', 0) > mmp) setVal('f_mp', mmp);
 }
 
 function saveStatsToG(){
@@ -1521,8 +1740,14 @@ function saveStatsToG(){
 function maxStats(tier, max){
   STAT_KEYS.forEach(k => {
     const el = document.getElementById(`stat_${tier}_${k}`);
-    if(el) el.value = max;
+    if(!el) return;
+    const others = statTotalFromUI(k) - (parseInt(el.value) || 0); // 其餘兩排目前總和
+    const capped = Math.max(0, Math.min(max, 100 - others));       // 不能讓總和超過100
+    el.value = capped;
+    el.dataset.prev = capped;
   });
+  updateStatTotalRow();
+  recalcHpMpFromStats(); // con/wis 可能也在裡面被改到，一併重算
 }
 
 // ════════════════════════════════════════════════
@@ -1760,6 +1985,7 @@ function applyAll(silent=false){
 //  載入全部 UI
 // ════════════════════════════════════════════════
 function loadAllUI(){
+  calibrateGrowth();
   loadBasicUI();
   loadConfigUI();
   loadAdvancedUI();
