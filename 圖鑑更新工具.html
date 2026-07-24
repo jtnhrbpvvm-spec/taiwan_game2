@@ -201,8 +201,18 @@
       改成下一個變數名稱再按一次「合併」就好——兩邊都不用重新選檔案（檔案B若要換成別的來源檔才需要重新選）；
       全部合併完成後，再按「下載檔案A」一次輸出最終結果（檔名自動加上 _merged）。
     </p>
-    <div style="display:flex; gap:8px;">
+    <p style="font-size:13px; color:#9ca3af;">
+      🔍 每次合併完成後，只要檔案A是存檔修改.html（含 <code>equipCatKey</code>／<code>EQUIP_CATEGORIES</code> 分類邏輯），
+      會<b>自動</b>檢查目前 ITEM_DB 裡的武器／防具／飾品是否每一件都能歸類到某個部位——
+      這是直接執行檔案A裡當下真正在用的 <code>equipCatKey</code> 程式碼去逐件檢驗，不是另外寫一份可能跟著過時的複製邏輯，
+      所以無論以後 <code>equipCatKey</code> 怎麼改、新增了什麼判斷條件，這裡都會照最新的規則去檢查，
+      連「函式打錯名字」這種會讓某個判斷分支整條失效的錯誤也抓得到（就是這次腰帶跟箭筒漏掉的那種問題）。
+      任何一件被判定歸類失敗的物品都會列出來：標「遺物」的代表會從遺物圖鑑消失，一般裝備則是裝備收集冊。
+      也可以不合併、單獨按「🔍 檢查分類完整性」，直接對目前檔案A的內容做一次檢查。
+    </p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button id="mergeBtn" disabled>合併（先不下載）</button>
+      <button id="auditBtn" class="secondary" disabled>🔍 檢查分類完整性</button>
       <button id="downloadBtn" class="secondary" disabled>下載檔案A</button>
     </div>
     <div id="log" class="log" style="margin-top:12px;"></div>
@@ -254,7 +264,7 @@
       <div id="genStatus1" class="hint"></div>
     </div></div>
     <div class="flow-step"><div class="flow-num">B</div><div style="flex:1">
-      <label>15-cards.js（提供 CARD_REGIONS —— 卡片圖鑑要用到）</label>
+      <label>15-cards.js（提供 CARD_REGIONS ＋ CARD_SPECIAL_MOBS —— 卡片圖鑑要用到；CARD_SPECIAL_MOBS 是不在出怪池的特殊刷出怪，沒有的話這些怪不會被計入）</label>
       <div class="tabbar" style="margin-bottom:10px;">
         <button class="active" id="gen2ModeBtnUpload" onclick="setSourceMode('gen2','upload')">📁 上傳檔案</button>
         <button id="gen2ModeBtnGithub" onclick="setSourceMode('gen2','github')">🌐 從 GitHub 讀取</button>
@@ -838,6 +848,7 @@ function extractA() {
     log(`檔案A ${varPath} 解析成功: ${count} 個項目${extra}`, 'ok');
     checkDownloadReady();
     checkReady();
+    checkAuditReady();
   } catch (e) {
     document.getElementById('statusA').innerHTML = `<span class="err">${e.message}</span>`;
     log(`檔案A錯誤: ${e.message}`, 'err');
@@ -963,12 +974,126 @@ async function ghLoadFile(){
 function checkReady() {
   document.getElementById('mergeBtn').disabled = !(itemA && itemB);
 }
+function checkAuditReady() {
+  const btn = document.getElementById('auditBtn');
+  if (btn) btn.disabled = !currentAContent;
+}
 
 let mergedFileContent = null, mergedFileName = null;
 
 function checkDownloadReady() {
   document.getElementById('downloadBtn').disabled = !mergedFileContent;
 }
+
+// ════════════════════════════════════════════════
+//  🔍 裝備／遺物分類完整性稽核
+//  背景：v-fix 曾發生 equipCatKey() 內部呼叫了一個從未定義的函式名（isRelic，實際定義的是 isRelicItem），
+//  導致所有遺物箭筒永遠被判為 null 分類、從遺物圖鑑消失；另一起是物品的 "type" 打錯（"arm" 打成該用的 "acc"），
+//  同樣讓 equipCatKey() 判不到分類。這兩種問題的共同點是：都不會噴錯、不會被發現，只會讓物品「安靜消失」。
+//  這裡不是重寫一份判斷邏輯（那樣以後 equipCatKey 改了規則，這裡會跟著過時、驗證不準)，
+//  而是直接從「檔案A現在的內容」把 equipCatKey／isRelicItem／isWandWeapon／EQUIP_CATEGORIES 這些原始碼片段抓出來，
+//  用 new Function 實際執行一遍——等於是在跑「這份檔案打開後真正會發生的判斷」，永遠跟檔案A本身同步。
+// ════════════════════════════════════════════════
+function _auditGrabFn(content, name, fallbackSrc) {
+  const m = content.match(new RegExp('function\\s+' + name + '\\s*\\([^)]*\\)\\s*\\{'));
+  if (!m) return fallbackSrc;
+  // 括號比對時跳過字串／註解裡的內容——中文註解常常含有全形/半形括號，naive 計數會把函式邊界抓錯，
+  // 抓錯的話下面 new Function 執行時多半會直接語法錯誤（會被 catch 到並回報，不會誤判成分類正常），
+  // 但還是把邊界抓準一點比較保險。
+  let i = m.index + m[0].length, depth = 1, inStr = false, strCh = '', esc = false, inLineComment = false, inBlockComment = false;
+  while (i < content.length && depth > 0) {
+    const c = content[i], c2 = content[i + 1];
+    if (inLineComment) { if (c === '\n') inLineComment = false; }
+    else if (inBlockComment) { if (c === '*' && c2 === '/') { inBlockComment = false; i++; } }
+    else if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === strCh) inStr = false; }
+    else if (c === '/' && c2 === '/') inLineComment = true;
+    else if (c === '/' && c2 === '*') inBlockComment = true;
+    else if (c === '"' || c === "'" || c === '`') { inStr = true; strCh = c; }
+    else if (c === '{') depth++;
+    else if (c === '}') depth--;
+    i++;
+  }
+  return content.slice(m.index, i);
+}
+
+function runRelicEquipAudit(silentIfNotApplicable) {
+  const content = currentAContent;
+  if (!content || !/function\s+equipCatKey\s*\(/.test(content) || !/const\s+EQUIP_CATEGORIES\s*=/.test(content)) {
+    if (!silentIfNotApplicable) log('分類完整性檢查：檔案A裡沒有找到 equipCatKey／EQUIP_CATEGORIES（通常代表檔案A不是存檔修改.html，或還沒把這兩者合併進來），略過檢查。', 'warn');
+    return;
+  }
+  if (!/const\s+ITEM_DB\s*=/.test(content)) {
+    if (!silentIfNotApplicable) log('分類完整性檢查：檔案A裡還沒有 ITEM_DB，略過檢查（先合併 ITEM_DB 再檢查）。', 'warn');
+    return;
+  }
+  try {
+    const itemDB = extractDB(content, 'ITEM_DB').targetObj;
+    const categories = extractDB(content, 'EQUIP_CATEGORIES').targetObj;
+    let weaponTags = {};
+    if (/const\s+WEAPON_TAGS\s*=/.test(content)) {
+      try { weaponTags = extractDB(content, 'WEAPON_TAGS').targetObj; } catch (e) { /* 抓不到就用空物件，不影響其他分類判斷 */ }
+    }
+    const equipCatKeyCode = _auditGrabFn(content, 'equipCatKey', null);
+    if (!equipCatKeyCode) { log('分類完整性檢查：equipCatKey 函式抓取失敗，略過檢查。', 'warn'); return; }
+    const isRelicItemCode  = _auditGrabFn(content, 'isRelicItem',  'function isRelicItem(d){ return !!(d && d.relic); }');
+    const isWandWeaponCode = _auditGrabFn(content, 'isWandWeapon', 'function isWandWeapon(d){ return false; }');
+
+    const sandboxSrc = `
+      "use strict";
+      ${isRelicItemCode}
+      ${isWandWeaponCode}
+      function getWeaponTags(id){ return WEAPON_TAGS[id] || []; }
+      ${equipCatKeyCode}
+      return { equipCatKey: equipCatKey, isRelicItem: isRelicItem };
+    `;
+    let sandbox;
+    try {
+      sandbox = new Function('WEAPON_TAGS', sandboxSrc)(weaponTags);
+    } catch (e) {
+      // equipCatKey 本身在「宣告」時就出錯（語法錯誤等）——這種情況直接整段回報，不用逐件跑
+      log(`🚨 分類完整性檢查：equipCatKey 相關程式碼載入失敗（${e.message}），這代表存檔修改.html 目前的分類邏輯本身有錯，請優先修正這個問題。`, 'err');
+      return;
+    }
+
+    const catKeys = new Set(categories.map(c => c.key));
+    const relicMissing = [], equipMissing = [], runtimeErrors = [];
+    Object.keys(itemDB).forEach(id => {
+      const d = itemDB[id];
+      if (!d || (d.type !== 'wpn' && d.type !== 'arm' && d.type !== 'acc')) return;
+      let ck, isRelic;
+      try {
+        ck = sandbox.equipCatKey(id, d);
+        isRelic = sandbox.isRelicItem(d);
+      } catch (e) {
+        // equipCatKey「執行時」才出錯（例如呼叫了一個沒定義的函式名）——這正是這次遺物箭筒踩到的那種錯，
+        // 一旦出現，代表對應的判斷分支整條失效，會波及所有走到那個分支的物品，優先級最高、單獨列出來。
+        runtimeErrors.push(`${id}（${d.n || '未命名'}）— equipCatKey 執行時噴錯：${e.message}`);
+        return;
+      }
+      if (ck && catKeys.has(ck)) return; // 正常歸類成功
+      const label = `${id}（${d.n || '未命名'}）`;
+      if (isRelic) relicMissing.push(label); else equipMissing.push(label);
+    });
+
+    if (runtimeErrors.length) {
+      const uniqueMsgs = [...new Set(runtimeErrors.map(s => s.split('— equipCatKey 執行時噴錯：')[1])) ];
+      log(`🚨 分類完整性檢查：equipCatKey 對 ${runtimeErrors.length} 件物品執行時直接噴錯（很可能是程式碼裡呼叫了一個沒定義的函式名，跟這次遺物箭筒是同一種問題）——\n  錯誤訊息：${uniqueMsgs.join('；')}\n  受影響物品：\n  ${runtimeErrors.slice(0, 20).map(s => '  ' + s.split(' — ')[0]).join('\n')}${runtimeErrors.length > 20 ? `\n  ...(還有 ${runtimeErrors.length - 20} 件)` : ''}`, 'err');
+    }
+    if (relicMissing.length) {
+      log(`🚨 分類完整性檢查：發現 ${relicMissing.length} 件「遺物」道具無法歸類到任何部位，會從遺物圖鑑消失（就是這次箭筒/腰帶那種問題）——\n  ${relicMissing.slice(0, 30).join('\n  ')}${relicMissing.length > 30 ? `\n  ...(還有 ${relicMissing.length - 30} 件)` : ''}`, 'err');
+    }
+    if (equipMissing.length) {
+      log(`⚠️ 分類完整性檢查：發現 ${equipMissing.length} 件一般裝備（非遺物）無法歸類到任何部位，會從裝備收集冊消失——\n  ${equipMissing.slice(0, 30).join('\n  ')}${equipMissing.length > 30 ? `\n  ...(還有 ${equipMissing.length - 30} 件)` : ''}`, 'warn');
+    }
+    if (!runtimeErrors.length && !relicMissing.length && !equipMissing.length) {
+      log('✅ 分類完整性檢查通過：目前 ITEM_DB 裡所有武器／防具／飾品都能正確歸類到某個部位，遺物圖鑑與裝備收集冊都不會漏掉任何一件。', 'ok');
+    }
+  } catch (e) {
+    log(`分類完整性檢查執行失敗（${e.message}），不影響合併/下載結果，但代表這次沒能自動驗證，建議手動確認新增的裝備/遺物有沒有正常出現在圖鑑裡。`, 'warn');
+  }
+}
+
+document.getElementById('auditBtn').addEventListener('click', () => runRelicEquipAudit(false));
 
 document.getElementById('mergeBtn').addEventListener('click', () => {
   let addedCount = 0, skippedCount = 0;
@@ -1030,6 +1155,8 @@ document.getElementById('mergeBtn').addEventListener('click', () => {
 
   log(`本次合併完成，結果已可下載。若要接續合併其他變數（例如再合併 WEAPON_TAGS），直接在上方改「檔案A路徑」跟「檔案B路徑」文字再點一次「合併」即可——檔案A、檔案B都不用重新選檔案，這次的結果會繼續累積在同一份內容裡，最後下載一次就好。`, "ok");
   checkDownloadReady();
+  checkAuditReady();
+  runRelicEquipAudit(true);   // 🔍 每次合併完自動跑一次分類完整性檢查（檔案A不是存檔修改.html或還沒合併ITEM_DB時靜默略過，不干擾其他變數的合併log）
 
   // 檔案B保留目前選取的檔案（不清空 fileB 的選取），但先把 itemB 重置——
   // 避免使用者只改了「檔案A路徑」卻忘記改「檔案B路徑」時，拿舊變數的資料誤合併進新變數。
@@ -1052,7 +1179,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 //  - 22-pets.js → PET_BOOK（寵物用，注意來源變數名稱跟目標 PET_FORM_LIST 不同、結構也不同，需轉換）
 //  三個檔案不用全部載齊：載了哪些就算哪些，缺的項目在下載時會跳過並在log說明。
 // ════════════════════════════════════════════════
-let genData = { data: null, cards: null, pets: null, weaponTags: null, equipCat: null, miscCat: null };
+let genData = { data: null, cards: null, cardSpecial: null, pets: null, weaponTags: null, equipCat: null, miscCat: null };
 function genLog(msg, type=""){
   const el = document.getElementById('genLog');
   const prefix = type === 'ok' ? '[OK] ' : type === 'err' ? '[ERR] ' : type === 'warn' ? '[!] ' : '[INFO] ';
@@ -1084,13 +1211,22 @@ function parseGenFile1(content){
 function parseGenFile2(content){
   try {
     genData.cards = extractDB(content, 'CARD_REGIONS').targetObj;
+    let specialInfo = '';
+    try {
+      genData.cardSpecial = extractDB(content, 'CARD_SPECIAL_MOBS').targetObj;
+      specialInfo = `、CARD_SPECIAL_MOBS（${Object.keys(genData.cardSpecial).length} 隻特殊刷出怪）`;
+    } catch (e2) {
+      genData.cardSpecial = null;
+      genLog('找不到 CARD_SPECIAL_MOBS（此檔案版本可能較舊，會跳過特殊刷出怪，不影響一般怪物）', 'warn');
+    }
     document.getElementById('genStatus2').innerHTML =
-      `<span class="ok">已載入 CARD_REGIONS（${genData.cards.length} 個地區）</span>`;
+      `<span class="ok">已載入 CARD_REGIONS（${genData.cards.length} 個地區）${specialInfo}</span>`;
     genLog('15-cards.js 解析成功', 'ok');
   } catch(err) {
     document.getElementById('genStatus2').innerHTML = `<span class="err">${err.message}</span>`;
     genLog(`15-cards.js 錯誤: ${err.message}`, 'err');
     genData.cards = null;
+    genData.cardSpecial = null;
   }
   genCheckReady();
 }
@@ -1193,26 +1329,47 @@ function buildAllDexLists(){
     genLog('MISC_CATEGORIES：跳過（需要載入 18-misc-book.js）');
   }
 
-  // ── 卡片圖鑑：需要 00-data.js（DB.mobs/DB.maps）＋ 15-cards.js（CARD_REGIONS） ──
+  // ── 卡片圖鑑：需要 00-data.js（DB.mobs/DB.maps）＋ 15-cards.js（CARD_REGIONS，選配 CARD_SPECIAL_MOBS） ──
   if (genData.data && genData.cards) {
     const { mobs, maps } = genData.data;
     const regions = genData.cards;
+    const specialMobs = genData.cardSpecial || {};
     const CARD_MOB_INFO = {};
     const prideMaps = Object.keys(maps).filter(k => /^pride_/.test(k));
+    let transformCount = 0, specialCount = 0;
     regions.forEach(reg => {
       const regMaps = (reg.maps === '__pride__') ? prideMaps : reg.maps;
+      function regMob(mid, mob) {
+        if (!CARD_MOB_INFO[mob.n]) CARD_MOB_INFO[mob.n] = { lv: mob.lv || 0 };
+      }
       (regMaps || []).forEach(mk => {
         const pool = maps[mk]; if (!pool) return;
         pool.forEach(mid => {
           const mob = mobs[mid]; if (!mob || !mob.n) return;
           if (mob.race === '血盟' || mob.race === '建築') return;
-          if (!CARD_MOB_INFO[mob.n]) CARD_MOB_INFO[mob.n] = { lv: mob.lv || 0 };
+          regMob(mid, mob);
+          // 🦊 重現 buildCardIndex() 的變身鏈追加：transformTo 目標（不在出怪池，例：九尾/殺生石）跟隨鏈根一起入圖鑑
+          const seen = {}; seen[mid] = 1; let t = mob.transformTo;
+          while (t && mobs[t] && mobs[t].n && !seen[t]) {
+            seen[t] = 1;
+            regMob(t, mobs[t]);
+            transformCount++;
+            t = mobs[t].transformTo;
+          }
         });
       });
+      // 🐉 重現 buildCardIndex() 的特殊刷出怪登錄：不在任何 DB.maps 出怪池的怪（例：風龍林德拜爾、安塔瑞斯巢穴頭目）
+      for (const sid in specialMobs) {
+        if (specialMobs[sid].region === reg.key && mobs[sid] && mobs[sid].n) {
+          regMob(sid, mobs[sid]);
+          specialCount++;
+        }
+      }
     });
     const list = Object.keys(CARD_MOB_INFO).map(n => ({ n, lv: CARD_MOB_INFO[n].lv }));
     list.sort((a,b) => a.lv - b.lv || a.n.localeCompare(b.n, 'zh-Hant'));
-    genLog(`卡片圖鑑：共掃描出 ${list.length} 隻可收集怪物`, 'ok');
+    genLog(`卡片圖鑑：共掃描出 ${list.length} 隻可收集怪物（含變身鏈追加 ${transformCount} 隻、特殊刷出怪 ${specialCount} 隻）`, 'ok');
+    if (!genData.cardSpecial) genLog('卡片圖鑑：⚠️ 未載入 CARD_SPECIAL_MOBS，風龍林德拜爾／安塔瑞斯巢穴頭目等特殊刷出怪不會出現在清單中', 'warn');
     const lines = list.map(m => `  {n:${JSON.stringify(m.n)},lv:${m.lv}}`);
     parts.push(`// 重現 15-cards.js buildCardIndex() 的怪物清單（共 ${list.length} 隻）\nconst CARD_DEX_LIST = [\n${lines.join(',\n')}\n];`);
   } else {

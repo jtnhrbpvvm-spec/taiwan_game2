@@ -5859,7 +5859,7 @@ const EQUIP_CATEGORIES = [
 function equipCatKey(id, d) {
     if (!d) return null;
     if (d.type === 'wpn') {
-        if (d.isArrow) return (typeof isRelic === 'function' && isRelic(d)) ? 'quiver' : null;   // 🏺 v3.2.0 遺物箭筒歸「箭筒」分類（供遺物收集冊）；一般箭矢＝彈藥，不收錄
+        if (d.isArrow) return (typeof isRelicItem === 'function' && isRelicItem(d)) ? 'quiver' : null;   // 🏺 v3.2.0 遺物箭筒歸「箭筒」分類（供遺物收集冊）；一般箭矢＝彈藥，不收錄
         if (d.isBow) return /十字弓|弩/.test(d.n || '') ? 'xbow' : 'bow';
         if (d.qigu) return 'qigu';
         if (d.chainsword) return 'chainsword';
@@ -7901,8 +7901,36 @@ const CARD_DEX_LIST = [
   {
     "n": "大地荒龍",
     "lv": 62
+  },
+  {
+    "n": "喀瑪南王",
+    "lv": 62
+  },
+  {
+    "n": "喀瑪焰王",
+    "lv": 62
+  },
+  {
+    "n": "喀瑪王",
+    "lv": 70
+  },
+  {
+    "n": "白面金毛九尾狐・九尾",
+    "lv": 75
+  },
+  {
+    "n": "白面金毛九尾狐・殺生石",
+    "lv": 80
+  },
+  {
+    "n": "被侵蝕的安塔瑞斯",
+    "lv": 85
+  },
+  {
+    "n": "林德拜爾",
+    "lv": 90
   }
-];;;;
+];;;;;
 
 function _cardTierInfo(score){
   score = score || 0;
@@ -27596,7 +27624,7 @@ const ITEM_DB = {
   },
   "relic_ashbeast_chain": {
     "n": "灰燼巨獸的束鏈",
-    "type": "arm",
+    "type": "acc",
     "slot": "belt",
     "relic": true,
     "noEnhance": true,
@@ -28049,7 +28077,7 @@ const ITEM_DB = {
     "gachaWeight": 20,
     "d": "天使羽翼化成的單手魔杖，杖端流轉著淨化亡者的聖光。"
   }
-};;;;;;;;
+};;;;;;;;;
 
 // ════════════════════════════════════════════════
 //  type 中文對照（供 UI 顯示用）

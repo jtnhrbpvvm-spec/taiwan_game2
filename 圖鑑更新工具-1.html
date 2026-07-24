@@ -753,6 +753,10 @@ const VARA_TO_GH_HINT = {
 // 一定要用「② 產生器」跑過對應邏輯才能拿到正確格式的版本。
 // （裝備/道具/遺物的分類索引 EQUIP_CAT_ITEMS 等不在這裡——存檔修改.html自己在runtime算，不需要合併）
 const GENERATOR_ONLY_VARS = ['BUFF_SKILL_DB', 'CARD_DEX_LIST', 'PET_FORM_LIST'];
+// 輔助狀態（BUFF_SKILL_DB）黑名單：這些 id 不需要出現在存檔修改.html 的輔助狀態面板，
+// 產生 BUFF_SKILL_DB 時直接跳過，不會匯入。
+// sk_summon=召喚術, sk_elf_summon2=召喚強力屬性精靈, sk_zombie=造屍術, petlure=漂浮之眼肉, sk_elf_summon=召喚屬性精靈
+const BUFF_BLACKLIST = ['sk_summon', 'sk_elf_summon2', 'sk_zombie', 'petlure', 'sk_elf_summon'];
 function updateGhVarAHint(){
   const varA = document.getElementById('varA').value.trim();
   const hintEl = document.getElementById('ghVarAHint');
@@ -1224,6 +1228,7 @@ function buildAllDexLists(){
     Object.keys(skills).forEach(id => {
       const v = skills[id];
       if (v.type !== 'buff') return;
+      if (BUFF_BLACKLIST.includes(id)) return;
       const entry = {};
       KEEP_KEYS.forEach(k => { if (v[k] !== undefined) entry[k] = v[k]; });
       if (v.summon) entry.summon = true;
@@ -1235,13 +1240,14 @@ function buildAllDexLists(){
       const v = items[id];
       if (v.type !== 'pot' || !v.eff) return;
       if (out[v.eff]) return;
+      if (BUFF_BLACKLIST.includes(v.eff)) return;
       const entry = { n: v.n };
       if (v.dur !== undefined) entry.dur = v.dur;
       if (v.d && typeof v.d === 'string') entry.msg = v.d;
       out[v.eff] = entry;
       potCnt++;
     });
-    genLog(`輔助狀態技能：技能類 ${skillCnt} 個，藥水/卷軸類 ${potCnt} 個，共 ${skillCnt+potCnt} 個`, 'ok');
+    genLog(`輔助狀態技能：技能類 ${skillCnt} 個，藥水/卷軸類 ${potCnt} 個，共 ${skillCnt+potCnt} 個（黑名單已跳過 ${BUFF_BLACKLIST.length} 個：${BUFF_BLACKLIST.join('、')}）`, 'ok');
     const lines = Object.keys(out).map(k => `  ${JSON.stringify(k)}:${JSON.stringify(out[k])}`);
     parts.push(`// DB.skills(type:"buff") ＋ DB.items(type:"pot" 有 eff) 共 ${Object.keys(out).length} 筆\nconst BUFF_SKILL_DB = {\n${lines.join(',\n')}\n};`);
   } else {
