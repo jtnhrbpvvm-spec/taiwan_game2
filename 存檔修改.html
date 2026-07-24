@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-41</title>
+<title>放置天堂 Save Editor v7-43</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -311,7 +311,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-41</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-43</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入 JSON
@@ -384,10 +384,14 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
       </div>
       <div class="form-row">
         <span class="form-label">等級</span>
-        <input type="number" id="f_lv" style="width:80px" min="1" max="9999" readonly>
+        <input type="number" id="f_lv" style="width:80px" min="1" max="100" readonly>
         <span class="form-label" style="width:60px">經驗值</span>
         <input type="number" id="f_exp" style="width:120px" min="0" readonly>
         <button class="btn btn-sm" onclick="openLvExpModal()">🔧 修改等級/經驗值</button>
+      </div>
+      <div class="form-row">
+        <span class="form-label">正義值</span>
+        <input type="number" id="f_align" style="width:100px" min="-32768" max="32767" title="正義值系統，範圍 -32768 ~ 32767（16位元整數範圍）。數值越負代表越傾向惡名/紅名，越正代表越正義/藍名。" onchange="onAlignFieldChange()">
       </div>
       <div class="form-row">
         <span class="form-label">HP</span>
@@ -712,7 +716,7 @@ function renderEquipSearch(){
         ${v.dmgS ? `傷害 ${v.dmgS}~${v.dmgL || v.dmgS} ` : ''}
         ${v.hit !== undefined ? `命中${v.hit>0?'+':''}${v.hit} ` : ''}
         ${v.spd ? `速度${v.spd} ` : ''}
-        ${v.req ? `<br>需求: ${v.req}` : ''}
+        ${v.req ? `<br>需求: ${reqLabel(v.req)}` : ''}
         ${v.p ? `<br>價格: ${v.p}` : ''}
       </div>
       ${relicInfoHTML(v)}
@@ -824,7 +828,7 @@ function renderItemRefSearch(inputId, resultId){
         ${v.hit !== undefined ? `命中${v.hit>0?'+':''}${v.hit} ` : ''}
         ${v.ac !== undefined ? `防禦${v.ac>0?'+':''}${v.ac} ` : ''}
         ${v.spd ? `速度${v.spd} ` : ''}
-        ${v.req ? `<br>需求: ${v.req}` : ''}
+        ${v.req ? `<br>需求: ${reqLabel(v.req)}` : ''}
         ${v.p !== undefined ? `<br>價格: ${v.p}` : ''}
       </div>
       ${relicInfoHTML(v)}
@@ -1447,6 +1451,7 @@ function loadBasicUI(){
   setVal('f_avatar',  p.avatar         || '女法師');
   setVal('f_lv',      p.lv             || 1);
   setVal('f_exp',     p.exp            || 0);
+  setVal('f_align',   p.alignmentValue ?? 0);
   setVal('f_hp',      p.hp             || 0);
   setVal('f_mhp',     p.mhp            || 0);
   setVal('f_mp',      p.mp             || 0);
@@ -1475,6 +1480,7 @@ function saveBasicToG(){
   p.avatar           = getStr('f_avatar');
   p.lv               = getNum('f_lv', 1);
   p.exp              = getNum('f_exp');
+  p.alignmentValue   = Math.max(-32768, Math.min(32767, getNum('f_align', 0)));
   p.hp               = getNum('f_hp');
   p.mhp              = getNum('f_mhp');
   p.mp               = getNum('f_mp');
@@ -1511,6 +1517,18 @@ function fullRestore(){
   toast('已補滿 HP / MP', 'ok');
 }
 
+// 正義值即時驗證：範圍固定 -32768 ~ +32767（16位元整數範圍），超過就自動修正到邊界值並提示
+function onAlignFieldChange(){
+  const raw = getNum('f_align', 0);
+  if(raw > 32767){
+    setVal('f_align', 32767);
+    toast('⚠️ 正義值可輸入範圍為 -32768 ~ +32767，已自動修正為 32767', 'warn', 4000);
+  } else if(raw < -32768){
+    setVal('f_align', -32768);
+    toast('⚠️ 正義值可輸入範圍為 -32768 ~ +32767，已自動修正為 -32768', 'warn', 4000);
+  }
+}
+
 // ════════════════════════════════════════════════
 //  等級 / 經驗值 / HP / MP 換算公式
 //  （與遊戲 00-data.js 的經驗表、02-stats-recompute.js 的職業HP/MP成長表對齊）
@@ -1534,16 +1552,16 @@ const EXP_REQ_CLASSIC = EXP_REQ_CLASSIC_V2.map((req, lv) =>
     (lv >= 70 && lv < 100) ? (lv * lv + 1) * EXP_REQ_LV69_KILLS : req);
 // 取得「到達該等級」所需的最低經驗值（即該等級的起始經驗，也就是升上該等級當下的經驗值）
 function getExpReq(lv){
-  if(lv >= 100) return Infinity;
+  if(lv >= 100) return Infinity;   // 遊戲本身等級上限就是100級，不存在101級的門檻經驗值
   return EXP_REQ_CLASSIC[lv] || Infinity;
 }
-// 依經驗值反推應落在哪一等級
+// 依經驗值反推應落在哪一等級（最高100級）
 function levelFromExp(exp){
   let lv = 1;
   for(let l = 1; l < 100; l++){
     if(exp >= getExpReq(l)) lv = l + 1; else break;
   }
-  return Math.min(lv, 9999);
+  return Math.min(lv, 100);
 }
 
 // 職業 Lv1 基礎值與每級固定成長量（不含體質/精神加成部分）
@@ -1621,10 +1639,12 @@ function closeLvExpModal(){
 function applyLvExpChange(mode){
   const input = getNum('lvExpInput', 0);
 
-  let newLv, newExp;
+  let newLv, newExp, wasCapped = false;
   if(mode === 'lv'){
-    newLv  = Math.max(1, Math.min(9999, input));
-    // 填入「到達該等級所需的最低經驗值 +10」，避免剛好卡在門檻上被判定未正確升級
+    wasCapped = input > 100;
+    newLv  = Math.max(1, Math.min(100, input));   // 遊戲等級上限就是100級
+    // 填入「到達該等級所需的最低經驗值 +10」，避免剛好卡在門檻上被判定未正確升級；
+    // 100級沒有「升上101級」的門檻經驗值，改用99級門檻代表已經滿級
     newExp = (newLv >= 100 ? getExpReq(99) : getExpReq(newLv)) + 10;
   } else {
     newExp = Math.max(0, input);
@@ -1641,13 +1661,16 @@ function applyLvExpChange(mode){
   setVal('f_mp',  mmp);
 
   closeLvExpModal();
-  toast(`已套用 Lv.${newLv}（經驗值 ${newExp}），最大HP=${mhp}／最大MP=${mmp}`, 'ok', 4000);
+  const msg = wasCapped
+    ? `⚠️ 超過等級上限，遊戲最高等級為100級，系統已自行修正至100級。以套用 Lv.${newLv}（經驗值 ${newExp}），最大HP=${mhp}／最大MP=${mmp}`
+    : `已套用 Lv.${newLv}（經驗值 ${newExp}），最大HP=${mhp}／最大MP=${mmp}`;
+  toast(msg, wasCapped ? 'warn' : 'ok', 4000);
 }
 
 function maxAll(){
-  const { mhp, mmp } = computeHpMpForLevel(9999);
+  const { mhp, mmp } = computeHpMpForLevel(100);
   setVal('f_gold', 999999999);
-  setVal('f_lv',   9999);
+  setVal('f_lv',   100);
   setVal('f_exp',  getExpReq(99) + 10);
   setVal('f_mhp',  mhp);
   setVal('f_mmp',  mmp);
@@ -4156,6 +4179,13 @@ function _clsLabel(cls){
   const m = {mage:'法師',knight:'騎士',elf:'妖精',dark:'黑暗妖精',
              royal:'王族',dragon:'龍騎士',illusion:'幻術師',warrior:'戰士'};
   return m[cls] || cls;
+}
+
+// 把物品的 req 欄位（逗號分隔的職業代碼，或 'all'）轉成中文顯示，例如 'knight,elf' → '騎士、妖精'
+function reqLabel(req){
+  if(!req) return '';
+  if(req === 'all') return '全職業';
+  return String(req).split(',').map(c => _clsLabel(c.trim())).join('、');
 }
 
 // ── 同伴基本資料 HTML
@@ -7859,8 +7889,20 @@ const CARD_DEX_LIST = [
   {
     "n": "真‧死亡騎士 冥皇丹特斯",
     "lv": 99
+  },
+  {
+    "n": "喀瑪南",
+    "lv": 53
+  },
+  {
+    "n": "喀瑪焰",
+    "lv": 53
+  },
+  {
+    "n": "大地荒龍",
+    "lv": 62
   }
-];;;
+];;;;
 
 function _cardTierInfo(score){
   score = score || 0;
@@ -27987,8 +28029,27 @@ const ITEM_DB = {
     "p": 150000,
     "gachaWeight": 0,
     "d": "染上龍血的深紅十字弓，弦音如龍吟低鳴。"
+  },
+  "wpn_angel_wand": {
+    "n": "天使魔杖",
+    "type": "wpn",
+    "dmgS": 12,
+    "dmgL": 12,
+    "hit": 0,
+    "dmgBonus": 0,
+    "req": "mage,illusion",
+    "safe": 6,
+    "p": 36000,
+    "unBonus": true,
+    "int": 1,
+    "mpR": 4,
+    "procSkill": "sk_undead_bane",
+    "procRateBase": 1,
+    "procRatePerEn": 1,
+    "gachaWeight": 20,
+    "d": "天使羽翼化成的單手魔杖，杖端流轉著淨化亡者的聖光。"
   }
-};;;;;;;
+};;;;;;;;
 
 // ════════════════════════════════════════════════
 //  type 中文對照（供 UI 顯示用）
