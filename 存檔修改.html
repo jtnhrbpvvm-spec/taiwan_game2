@@ -685,6 +685,16 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
     </div>
     <div id="equipSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;"></div>
   </div>
+
+  <div id="genieWishWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--yellow); border-radius:8px;">
+    <div style="font-weight:600; color:var(--yellow); margin-bottom:6px;">🧞 巨靈的三個願望 專用產生器</div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:10px; line-height:1.6;">
+      此戒指（<code style="background:var(--bg3); padding:1px 5px; border-radius:3px;">relic_genie_wishes</code>）需要額外的「願望」屬性資料，透過上方一般搜尋新增只會得到<b>沒有效果的空白戒指</b>，所以已經在搜尋結果中禁止直接點選。<br>
+      請用下方按鈕，先從遊戲內建的17項能力中親自勾選3項（不可重複，須選滿3項才能確定），再選擇要裝備到哪個欄位。
+    </div>
+    <button class="btn btn-sm" onclick="openGenieWishEquipPicker()">🧞 選擇願望並裝備「巨靈的三個願望」</button>
+  </div>
+
 <script>
 function renderEquipSearch(){
   const kw = (document.getElementById('equipSearchInput')?.value || '').trim().toLowerCase();
@@ -707,9 +717,12 @@ function renderEquipSearch(){
     return;
   }
   
-  wrap.innerHTML = matched.map(([id, v]) => `
-    <div class="equip-search-card" style="background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; font-size:13px; cursor:pointer;"
-         onclick="openEquipSlotPicker('${id.replace(/'/g,"\\'")}')" title="點擊選擇要裝備到哪個欄位">
+  wrap.innerHTML = matched.map(([id, v]) => {
+    const isGenieWish = id === GENIE_WISH_ID;
+    return `
+    <div class="equip-search-card" style="background:var(--bg); border:1px solid ${isGenieWish?'var(--yellow)':'var(--border)'}; border-radius:6px; padding:10px; font-size:13px; ${isGenieWish?'cursor:not-allowed; opacity:0.85;':'cursor:pointer;'}"
+         ${isGenieWish ? '' : `onclick="openEquipSlotPicker('${id.replace(/'/g,"\\'")}')"`}
+         title="${isGenieWish ? '此戒指禁止直接搜尋新增，請改用「裝備」分頁下方的專用產生器' : '點擊選擇要裝備到哪個欄位'}">
       <div style="font-weight:600; color:var(--text); margin-bottom:4px;">${v.n || id}</div>
       <div style="color:var(--text2); font-size:11px; margin-bottom:6px;">ID: <code style="background:var(--bg3); padding:1px 5px; border-radius:3px; user-select:all;">${id}</code></div>
       <div style="color:var(--text2); line-height:1.5;">
@@ -719,13 +732,94 @@ function renderEquipSearch(){
         ${v.req ? `<br>需求: ${reqLabel(v.req)}` : ''}
         ${v.p ? `<br>價格: ${v.p}` : ''}
       </div>
-      ${relicInfoHTML(v)}
+      ${isGenieWish ? `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--yellow); color:var(--yellow); font-size:12px;">🧞 此戒指禁止在此直接新增（會產生無效果的空白戒指）。請改用下方「巨靈的三個願望」專用產生器。</div>` : relicInfoHTML(v)}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // ── 點擊搜尋結果 → 彈出欄位選單，可無視原始裝備部位限制，任意裝備到指定欄位
 let _pendingEquipItemId = null;
+// ════════════════════════════════════════════════
+//  🧞 巨靈的三個願望（relic_genie_wishes）專用產生器
+//  這只戒指需要額外的 gw 陣列（3項不重複的隨機能力），一般搜尋新增只會給空白戒指（無效果）。
+// ════════════════════════════════════════════════
+const GENIE_WISH_ID   = 'relic_genie_wishes';
+const GENIE_WISH_POOL = ['hp60','mp30','md3','rd3','mdmg2','sp6','hpr10','mpr5','dr3','ac3','mr6','str1','dex1','int1','wis1','con1','cha1'];
+// 能力代碼 → 中文顯示（依常見命名慣例推測，僅供勾選介面顯示用）
+const GENIE_WISH_LABELS = {
+  hp60:'生命上限 +60', mp30:'魔力上限 +30', md3:'近戰傷害 +3', mdmg2:'魔法傷害 +2',
+  rd3:'遠程傷害 +3', sp6:'攻速/移速 +6', hpr10:'生命回復 +10', mpr5:'魔力回復 +5',
+  dr3:'減傷 +3', ac3:'護甲 +3', mr6:'魔防 +6', str1:'力量 +1', dex1:'敏捷 +1',
+  int1:'智力 +1', wis1:'精神 +1', con1:'體質 +1', cha1:'魅力 +1',
+};
+function _genGenieWishes(){   // 保留：找不到手動選擇結果時的備援隨機抽法
+  const pool = GENIE_WISH_POOL.slice();
+  const picked = [];
+  for(let i = 0; i < 3; i++){
+    const idx = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
+let _pendingGenieWish = false;
+let _pendingGenieWishManual = null;
+let _genieWishSelected = [];
+
+// 點「產生並裝備」→ 先跳出勾選3項願望能力的視窗（不可重複，須剛好選滿3項才能確定）
+function openGenieWishEquipPicker(){
+  _genieWishSelected = [];
+  renderGenieWishPickGrid();
+  updateGenieWishPickCount();
+  const modal = document.getElementById('genieWishPickModal');
+  if(modal) modal.classList.add('show');
+}
+function closeGenieWishPickModal(){
+  const modal = document.getElementById('genieWishPickModal');
+  if(modal) modal.classList.remove('show');
+}
+function renderGenieWishPickGrid(){
+  const grid = document.getElementById('genieWishPickGrid');
+  if(!grid) return;
+  grid.innerHTML = GENIE_WISH_POOL.map(code => {
+    const checked = _genieWishSelected.includes(code);
+    return `<label style="display:flex; align-items:center; gap:6px; padding:7px 9px; background:${checked?'var(--bg4)':'var(--bg)'}; border:1px solid ${checked?'var(--accent)':'var(--border)'}; border-radius:6px; cursor:pointer; font-size:13px;">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleGenieWishPick('${code}')" style="accent-color:var(--accent); cursor:pointer;">
+      ${GENIE_WISH_LABELS[code] || code}
+    </label>`;
+  }).join('');
+}
+function toggleGenieWishPick(code){
+  const i = _genieWishSelected.indexOf(code);
+  if(i >= 0){
+    _genieWishSelected.splice(i, 1);
+  } else {
+    if(_genieWishSelected.length >= 3){
+      if(typeof toast === 'function') toast('⚠️ 最多只能選3項，請先取消勾選其他項目', 'warn', 2500);
+      renderGenieWishPickGrid();
+      return;
+    }
+    _genieWishSelected.push(code);
+  }
+  renderGenieWishPickGrid();
+  updateGenieWishPickCount();
+}
+function updateGenieWishPickCount(){
+  const el = document.getElementById('genieWishPickCount');
+  if(el) el.textContent = _genieWishSelected.length;
+  const btn = document.getElementById('genieWishConfirmBtn');
+  if(btn) btn.disabled = _genieWishSelected.length !== 3;
+}
+// 確定選好3項 → 關閉勾選視窗，接著跳出「選擇要裝備到哪個欄位」的介面
+function confirmGenieWishPick(){
+  if(_genieWishSelected.length !== 3) return;
+  _pendingGenieWish = true;
+  _pendingGenieWishManual = _genieWishSelected.slice();
+  closeGenieWishPickModal();
+  openEquipSlotPicker(GENIE_WISH_ID);
+}
+
 function openEquipSlotPicker(itemId){
   _pendingEquipItemId = itemId;
   const db = (typeof ITEM_DB !== 'undefined' && ITEM_DB[itemId]) || {};
@@ -745,6 +839,8 @@ function openEquipSlotPicker(itemId){
 }
 function closeEquipSlotPicker(){
   _pendingEquipItemId = null;
+  _pendingGenieWish = false;
+  _pendingGenieWishManual = null;
   const modal = document.getElementById('equipSlotPickerModal');
   if(modal) modal.classList.remove('show');
 }
@@ -767,9 +863,18 @@ function assignEquipToSlot(slotId){
   idInput.value = itemId;
   if(typeof onEqFieldChange === 'function') onEqFieldChange(slotId);
 
+  let wishNote = '';
+  if(_pendingGenieWish && itemId === GENIE_WISH_ID){
+    const wishes = (_pendingGenieWishManual && _pendingGenieWishManual.length === 3) ? _pendingGenieWishManual : _genGenieWishes();
+    if(G.p.eq[slotId]) G.p.eq[slotId].gw = wishes;
+    wishNote = `　🧞 願望：${wishes.map(w => GENIE_WISH_LABELS[w] || w).join('、')}`;
+  }
+  _pendingGenieWish = false;
+  _pendingGenieWishManual = null;
+
   const slotLabel = (typeof EQ_SLOTS !== 'undefined' && EQ_SLOTS.find(sl => sl.id === slotId)?.label) || slotId;
   const db = (typeof ITEM_DB !== 'undefined' && ITEM_DB[itemId]) || {};
-  if(typeof toast === 'function') toast(`✅ 已將「${db.n || itemId}」裝備到「${slotLabel}」`, 'ok');
+  if(typeof toast === 'function') toast(`✅ 已將「${db.n || itemId}」裝備到「${slotLabel}」${wishNote}`, 'ok', wishNote ? 5000 : 2500);
 
   closeEquipSlotPicker();
 
@@ -1260,6 +1365,19 @@ function renderItemRefSearch(inputId, resultId){
     <div id="equipSlotPickerGrid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;max-height:400px;overflow-y:auto;"></div>
     <div class="form-row" style="margin-top:14px">
       <button class="btn" onclick="closeEquipSlotPicker()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="genieWishPickModal" class="modal-overlay" onclick="if(event.target===this) closeGenieWishPickModal();">
+  <div class="modal-box" style="width:460px">
+    <div style="font-weight:bold;margin-bottom:4px;color:var(--text2)">🧞 選擇3項願望能力（不可重複）</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">從下方17項能力中勾選剛好3項，選滿3項才能按「確定」。</div>
+    <div id="genieWishPickGrid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;max-height:360px;overflow-y:auto;"></div>
+    <div style="margin-top:10px;font-size:13px;color:var(--text2)">已選 <span id="genieWishPickCount">0</span> / 3</div>
+    <div class="form-row" style="margin-top:12px">
+      <button class="btn" onclick="closeGenieWishPickModal()">取消</button>
+      <button class="btn btn-accent" id="genieWishConfirmBtn" disabled onclick="confirmGenieWishPick()">確定</button>
     </div>
   </div>
 </div>
