@@ -9,7 +9,7 @@
   --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
   --text:#e8eaf6; --text2:#9fa8da; --text3:#555a7a;
   --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
-  --legend:#f59e0b; --partner:#22d3ee; --relic:#5ec8ff;
+  --legend:#f59e0b; --partner:#22d3ee;
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
 body{
@@ -675,7 +675,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
       </div>
   <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana / 遺物" 
+      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana" 
              style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;">
       <button class="btn btn-sm" onclick="document.getElementById('equipSearchInput').value=''; renderEquipSearch();">清空</button>
     </div>
@@ -688,13 +688,12 @@ function renderEquipSearch(){
   if(!wrap) return;
   
   if(!kw){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物）</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備</div>';
     return;
   }
   
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
     if(!v.type || !['wpn','arm','acc','helm','shield','glove','boot','belt','cloak'].includes(v.type)) return false;
-    if(isRelicKeyword(kw)) return !!v.relic;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
   
@@ -715,7 +714,6 @@ function renderEquipSearch(){
         ${v.req ? `<br>需求: ${v.req}` : ''}
         ${v.p ? `<br>價格: ${v.p}` : ''}
       </div>
-      ${relicInfoHTML(v)}
     </div>
   `).join('');
 }
@@ -793,7 +791,7 @@ function renderItemRefSearch(inputId, resultId){
   if(!wrap) return;
 
   if(!kw){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫</div>';
     return;
   }
 
@@ -803,7 +801,6 @@ function renderItemRefSearch(inputId, resultId){
   };
 
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
-    if(isRelicKeyword(kw)) return !!v.relic;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
 
@@ -827,7 +824,6 @@ function renderItemRefSearch(inputId, resultId){
         ${v.req ? `<br>需求: ${v.req}` : ''}
         ${v.p !== undefined ? `<br>價格: ${v.p}` : ''}
       </div>
-      ${relicInfoHTML(v)}
     </div>
   `).join('') + (matched.length > LIMIT ? `<div style="color:var(--text3); grid-column:1/-1; padding:8px; text-align:center; font-size:12px;">僅顯示前 ${LIMIT} 筆，共符合 ${matched.length} 筆，請輸入更精確的關鍵字</div>` : '');
 }
@@ -884,13 +880,13 @@ function renderItemRefSearch(inputId, resultId){
       <div class="panel-title">🎒 背包</div>
       <div id="invRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-          <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
+          <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('invRefSearchInput','invRefSearchResults')">
           <button class="btn btn-sm" onclick="document.getElementById('invRefSearchInput').value=''; renderItemRefSearch('invRefSearchInput','invRefSearchResults');">清空</button>
         </div>
         <div id="invRefSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;">
-          <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>
+          <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫</div>
         </div>
       </div>
       <div class="form-row">
@@ -924,13 +920,13 @@ function renderItemRefSearch(inputId, resultId){
       <div class="panel-title">🏦 倉庫</div>
       <div id="whRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-          <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
+          <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('whRefSearchInput','whRefSearchResults')">
           <button class="btn btn-sm" onclick="document.getElementById('whRefSearchInput').value=''; renderItemRefSearch('whRefSearchInput','whRefSearchResults');">清空</button>
         </div>
         <div id="whRefSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;">
-          <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>
+          <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫</div>
         </div>
       </div>
       <div class="form-row">
@@ -2257,35 +2253,6 @@ const EQ_SLOTS = [
 const REM_SET_NAMES = [
   '紅獅','白鳥','鐵衛','麗人','疾風','月光','學徒','魔女','暗影','幻覺','龍血','狂怒'
 ];
-
-// ════════════════════════════════════════════════
-//  遺物搜尋輔助：正確裝備位置標註＋遊戲內建說明文字（僅供提醒，不鎖定裝備欄位）
-// ════════════════════════════════════════════════
-// 對照物品的 slot 欄位 → 人看得懂的部位名稱。注意：這只是「告訴使用者這件遺物原本設計要戴哪」，
-// 搜尋結果點下去還是可以選任何欄位裝備（openEquipSlotPicker 本來就沒有限制），純資訊提示。
-const RELIC_SLOT_LABEL = {
-  helm:'頭盔', armor:'盔甲', shield:'盾牌/臂甲', cloak:'披風', tshirt:'T恤',
-  gloves:'手套', boots:'靴子', shin:'護脛（腳脛部位）', ring:'戒指', amulet:'項鍊',
-  ear:'耳環', belt:'腰帶', arrow:'箭矢', petwpn:'寵物武器', petarm:'寵物防具',
-  doll:'魔法娃娃', eye:'魔眼飾品',
-  rem_claw:'席琳之爪', rem_eye:'席琳之眼', rem_blood:'席琳之血', rem_flesh:'席琳之肉',
-  rem_heart:'席琳之心', rem_bone:'席琳之骨', rem_fang:'席琳之牙', rem_scale:'席琳之鱗',
-};
-function relicSlotLabel(v){
-  if (v.type === 'wpn') return '武器';
-  return RELIC_SLOT_LABEL[v.slot] || (v.slot ? v.slot : '未知部位');
-}
-// 產生遺物專屬的資訊區塊 HTML：正確裝備位置 ＋ 遊戲內建的模糊說明（d 欄位）。非遺物回傳空字串。
-function relicInfoHTML(v){
-  if(!v.relic) return '';
-  let html = `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); color:var(--relic);">`;
-  html += `🏺 遺物・正確裝備位置：<b>${relicSlotLabel(v)}</b>`;
-  if(v.d) html += `<div style="color:var(--text3); font-style:italic; margin-top:4px; line-height:1.5;">${v.d}</div>`;
-  html += `</div>`;
-  return html;
-}
-// 判斷關鍵字是否為「遺物」查詢模式（輸入包含「遺物」兩字，就列出所有遺物，不管名稱有沒有真的含這兩字）
-function isRelicKeyword(kw){ return kw.includes('遺物'); }
 
 // ════════════════════════════════════════════════
 //  裝備面板輔助
