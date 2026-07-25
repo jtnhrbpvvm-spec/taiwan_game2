@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>存檔格式轉換器（SIG1 ⇄ SIG2）</title>
+<style>
+  :root{
+    --bg1:#14161c; --bg2:#1b1e27; --bg3:#242833;
+    --border:#333a4a; --text:#e8eaf0; --text3:#8890a0;
+    --accent:#4d8dff; --danger:#ff4d4f; --ok:#3ecf6e; --warn:#ffc107;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:var(--bg1); color:var(--text);
+    font-family:"Microsoft JhengHei","PingFang TC",-apple-system,BlinkMacSystemFont,sans-serif;
+    display:flex; justify-content:center; padding:32px 16px;
+  }
+  .wrap{ width:100%; max-width:680px; }
+  h1{ font-size:20px; margin:0 0 4px; }
+  .sub{ color:var(--text3); font-size:13px; margin:0 0 24px; line-height:1.6; }
+
+  #dropZone{
+    border:2px dashed var(--border); border-radius:14px; padding:32px 20px;
+    text-align:center; cursor:pointer; background:var(--bg2);
+    transition:border-color .15s, background .15s;
+  }
+  #dropZone.drag{ border-color:var(--accent); background:#1d2436; }
+  #dropZone .icon{ font-size:32px; margin-bottom:8px; }
+  #dropZone .main{ font-size:15px; }
+  #dropZone .hint{ color:var(--text3); font-size:12px; margin-top:6px; }
+  #fileInput{ display:none; }
+
+  .info{
+    margin-top:16px; padding:14px 16px; border-radius:10px;
+    background:var(--bg2); border:1px solid var(--border); font-size:13px; line-height:1.8;
+  }
+  .info .row{ display:flex; justify-content:space-between; }
+  .info .row span:first-child{ color:var(--text3); }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:bold; }
+  .badge.sig1{ background:rgba(77,141,255,0.15); color:var(--accent); }
+  .badge.sig2{ background:rgba(62,207,110,0.15); color:var(--ok); }
+
+  .notice{
+    margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.7;
+  }
+  .notice.ok{ background:rgba(62,207,110,0.08); border:1px solid rgba(62,207,110,0.35); color:var(--ok); }
+  .notice.warn{ background:rgba(255,193,7,0.08); border:1px solid rgba(255,193,7,0.4); color:var(--warn); font-weight:bold; }
+
+  .btn{
+    margin-top:16px; width:100%; padding:12px; border-radius:10px; border:none;
+    background:var(--accent); color:#fff; font-size:15px; font-weight:bold; cursor:pointer;
+  }
+  .btn:hover{ filter:brightness(1.1); }
+  .btn:disabled{ background:var(--bg3); color:var(--text3); cursor:not-allowed; }
+
+  #log{ margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+  .line{ padding:9px 12px; border-radius:8px; font-size:12px; line-height:1.6; background:var(--bg2); border:1px solid var(--border); }
+  .line.ok{ border-color:rgba(62,207,110,0.4); color:var(--ok); }
+  .line.err{ border-color:rgba(255,77,79,0.4); color:var(--danger); }
+  .mono{ font-family:monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔄 存檔格式轉換器</h1>
+  <p class="sub">
+    在「SIG1（網頁／手機版）」跟「SIG2（桌面版）」兩種存檔格式之間互轉。把存檔拖進框內或點擊選取，會自動判斷格式並顯示對應的轉換按鈕。
+  </p>
+
+  <div id="dropZone">
+    <div class="icon">📂</div>
+    <div class="main">將存檔拖曳到這裡，或點擊選取檔案</div>
+    <div class="hint">支援 SIG1: 開頭（網頁/手機版）與 SIG2: 開頭（桌面版）存檔</div>
+    <input type="file" id="fileInput" accept=".json,.txt,application/json,text/plain">
+  </div>
+
+  <div id="infoArea"></div>
+  <div id="actionArea"></div>
+  <div id="log"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  SIG1 簽章演算法（跟存檔編輯工具／遊戲網頁版原始碼完全一致）
+// ════════════════════════════════════════════════
+function _seedHash(str){
+  str = String(str);
+  let h = 1779033703 ^ str.length;
+  for(let i = 0; i < str.length; i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+const _SAVE_SALT = 'fb5#9c3a7e1d-save-integrity-salt-do-not-edit#a1b2c3';
+function _signSaveV1(s){
+  let a = _seedHash(_SAVE_SALT + '::' + s);
+  let b = _seedHash(s + '::' + _SAVE_SALT + '::' + a);
+  return (a >>> 0).toString(36) + '.' + (b >>> 0).toString(36) + '.' + (s.length).toString(36);
+}
+function buildSIG1(payloadStr){
+  return 'SIG1:' + _signSaveV1(payloadStr) + ':' + payloadStr;
+}
+function parseSIG1(raw){
+  const str = String(raw).trim();
+  if(str.slice(0,5) !== 'SIG1:') throw new Error('不是 SIG1 格式');
+  const rest = str.slice(5);
+  const i = rest.indexOf(':');
+  if(i < 0) throw new Error('SIG1 格式毀損');
+  const sig = rest.slice(0, i);
+  const payload = rest.slice(i + 1);
+  const ok = _signSaveV1(payload) === sig;
+  return { payload: JSON.parse(payload), verified: ok };
+}
+
+// ════════════════════════════════════════════════
+//  SIG2（桌面版）：只能解析，無法產生真正合法簽章
+//  結構：SIG2:<43字元base64url雜湊>.<payload長度base36>:<JSON payload>
+//  雜湊長度符合 SHA-256（32 bytes），推測是桌面版用金鑰加密簽的，金鑰不在任何已知檔案中，故無法逆向重算。
+// ════════════════════════════════════════════════
+function parseSIG2(raw){
+  const str = String(raw).trim();
+  if(str.slice(0,5) !== 'SIG2:') throw new Error('不是 SIG2 格式');
+  const rest = str.slice(5);
+  const i = rest.indexOf(':');
+  if(i < 0) throw new Error('SIG2 格式毀損');
+  const sigPart = rest.slice(0, i);
+  const payload = rest.slice(i + 1);
+  const dot = sigPart.lastIndexOf('.');
+  const hash = sigPart.slice(0, dot);
+  const lenSuffix = sigPart.slice(dot + 1);
+  const lenOk = parseInt(lenSuffix, 36) === payload.length;
+  return { payload: JSON.parse(payload), lengthCheckOk: lenOk, hash };
+}
+// 產生「格式正確、但簽章非真正桌面版金鑰所簽」的 SIG2 字串 —— 僅供保留格式，桌面版是否接受未知
+function buildFakeSIG2(payloadStr){
+  // 用 SIG1 的雜湊機制墊出一個 43 字元、外觀類似 base64url 的字串，明確不是真正的桌面版簽章
+  const a = _seedHash(_SAVE_SALT + '::sig2fake::' + payloadStr);
+  const b = _seedHash(payloadStr + '::sig2fake2::' + a);
+  const c = _seedHash(payloadStr + '::sig2fake3::' + b);
+  const d = _seedHash(payloadStr + '::sig2fake4::' + c);
+  let raw = (a>>>0).toString(36) + (b>>>0).toString(36) + (c>>>0).toString(36) + (d>>>0).toString(36);
+  while(raw.length < 43) raw += (_seedHash(raw)>>>0).toString(36);
+  raw = raw.slice(0, 43);
+  return 'SIG2:' + raw + '.' + payloadStr.length.toString(36) + ':' + payloadStr;
+}
+
+// ════════════════════════════════════════════════
+//  UI
+// ════════════════════════════════════════════════
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+const infoArea   = document.getElementById('infoArea');
+const actionArea = document.getElementById('actionArea');
+const logEl      = document.getElementById('log');
+
+let _loaded = null; // { format:'SIG1'|'SIG2', save:{...}, envelope:{...}|null, origName }
+
+function addLog(msg, cls){
+  const div = document.createElement('div');
+  div.className = 'line ' + (cls || '');
+  div.innerHTML = msg;
+  logEl.prepend(div);
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); fileInput.value=''; });
+['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag'); }));
+dropZone.addEventListener('drop', e => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) handleFile(f); });
+
+async function handleFile(file){
+  infoArea.innerHTML = ''; actionArea.innerHTML = '';
+  let text;
+  try{ text = await file.text(); }
+  catch(err){ addLog('❌ 讀取檔案失敗：' + err.message, 'err'); return; }
+
+  const trimmed = text.trim();
+  try{
+    if(trimmed.slice(0,5) === 'SIG1:'){
+      const { payload, verified } = parseSIG1(trimmed);
+      _loaded = { format:'SIG1', save: payload, envelope: null, origName: file.name };
+      renderInfo(payload, 'SIG1', verified, null);
+      addLog(`📄 已載入 <span class="mono">${file.name}</span>（SIG1 格式，簽章${verified?'驗證通過':'不符但仍載入'}）`, verified?'ok':'');
+    } else if(trimmed.slice(0,5) === 'SIG2:'){
+      const { payload, lengthCheckOk } = parseSIG2(trimmed);
+      _loaded = { format:'SIG2', save: payload.save, envelope: payload, origName: file.name };
+      renderInfo(payload.save, 'SIG2', null, payload);
+      addLog(`📄 已載入 <span class="mono">${file.name}</span>（SIG2 格式，長度校驗${lengthCheckOk?'通過':'不符'}；簽章本身無法驗證，金鑰未知）`, '');
+    } else {
+      addLog('❌ 無法辨識的格式，開頭必須是 SIG1: 或 SIG2:', 'err');
+      return;
+    }
+  }catch(err){
+    addLog('❌ 解析失敗：' + err.message, 'err');
+    return;
+  }
+  renderActions();
+}
+
+function renderInfo(save, fmt, verified, envelope){
+  const p = save.p || {};
+  const badge = fmt === 'SIG1' ? '<span class="badge sig1">SIG1 網頁/手機版</span>' : '<span class="badge sig2">SIG2 桌面版</span>';
+  let html = `<div class="info">
+    <div class="row"><span>格式</span><span>${badge}</span></div>
+    <div class="row"><span>角色名稱</span><span>${p.name || '(未命名)'}</span></div>
+    <div class="row"><span>職業</span><span>${p.cls || '-'}</span></div>
+    <div class="row"><span>等級</span><span>${p.lv ?? '-'}</span></div>
+    <div class="row"><span>身分證(enSeed)</span><span class="mono">${p.enSeed || '-'}</span></div>`;
+  if(envelope){
+    html += `<div class="row"><span>桌面版版本</span><span>${envelope.version || '-'}</span></div>
+    <div class="row"><span>匯出時間</span><span>${envelope.exportedAt || '-'}</span></div>`;
+  }
+  html += `</div>`;
+  infoArea.innerHTML = html;
+}
+
+function renderActions(){
+  if(!_loaded) return;
+  if(_loaded.format === 'SIG1'){
+    actionArea.innerHTML = `
+      <div class="notice ok">✅ 轉換方向：SIG1 → SIG2（網頁/手機版 → 桌面版）。內層存檔骨架完全相容，會直接包上桌面版的信封格式。</div>
+      <div class="notice warn">⚠️ 但桌面版的簽章演算法（推測為加金鑰的 SHA-256）金鑰未知、無法重算，這裡只能產生「格式正確但簽章非真正桌面版金鑰所簽」的檔案。桌面版是否會拒絕，取決於它驗證簽章的嚴格程度，請自行測試（勿覆蓋唯一存檔）。</div>
+      <button class="btn" onclick="doConvert('toSIG2')">轉換為 SIG2（桌面版格式）</button>
+    `;
+  } else {
+    actionArea.innerHTML = `
+      <div class="notice ok">✅ 轉換方向：SIG2 → SIG1（桌面版 → 網頁/手機版）。會拆掉桌面版信封，用網頁版真正的簽章演算法重新簽名，產生的檔案可以正常通過網頁/手機版的簽章驗證。</div>
+      <button class="btn" onclick="doConvert('toSIG1')">轉換為 SIG1（網頁/手機版格式）</button>
+    `;
+  }
+}
+
+function splitFileName(name){
+  const dot = name.lastIndexOf('.');
+  if(dot <= 0) return { base:name, ext:'' };
+  return { base:name.slice(0,dot), ext:name.slice(dot) };
+}
+
+function doConvert(direction){
+  if(!_loaded) return;
+  const { base, ext } = splitFileName(_loaded.origName);
+  const outExt = ext || '.json';
+
+  if(direction === 'toSIG1'){
+    const payload = JSON.stringify(_loaded.save);
+    const signed = buildSIG1(payload);
+    downloadText(signed, `${base}_轉為SIG1${outExt}`);
+    addLog(`✅ 已轉換並下載：<span class="mono">${base}_轉為SIG1${outExt}</span>（真正合法的 SIG1 簽章，可正常匯入網頁/手機版）`, 'ok');
+  } else {
+    const envelope = {
+      format: 'idle-lineage-desktop-save',
+      schema: 1,
+      version: (_loaded.envelope && _loaded.envelope.version) || 'unknown',
+      exportedAt: new Date().toISOString(),
+      save: _loaded.save,
+    };
+    const payload = JSON.stringify(envelope);
+    const signed = buildFakeSIG2(payload);
+    downloadText(signed, `${base}_轉為SIG2${outExt}`);
+    addLog(`⚠️ 已轉換並下載：<span class="mono">${base}_轉為SIG2${outExt}</span>（格式正確，但簽章非桌面版真正金鑰所簽，能不能匯入請自行測試）`, '');
+  }
+}
+
+function downloadText(content, filename){
+  const blob = new Blob([content], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
