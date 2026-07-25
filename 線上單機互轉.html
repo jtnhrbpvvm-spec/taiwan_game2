@@ -1,10 +1,3 @@
-這是一個已經整合了完整 **SIG2 (HMAC-SHA256)** 算式與金鑰的完整 HTML/JS 工具檔案。
-
-我們已經將先前分析出來的 `DesktopSaveSigningKey`（32-byte 金鑰）與 `DesktopSaveSigningDomain`（`IdleLineage.Desktop.Save.SIG2\0`）寫入 JavaScript 中，利用瀏覽器原生支援的 **Web Crypto API (`crypto.subtle`)** 進行真實的 HMAC-SHA256 簽章運算。
-
-現在轉換出來的 **SIG2 存檔將會是 100% 正確且能被桌面版遊戲完整驗證與讀取的合法檔案**！
-
-```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
