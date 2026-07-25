@@ -314,11 +314,16 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
   <span class="bar-title">⚔️ 放置天堂 Save Editor v7-43</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
-    📂 匯入 JSON
+    📂 匯入網頁版存檔
     <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)">
   </label>
-  <button class="btn" onclick="exportJson()">💾 匯出存檔</button>
-  <button class="btn" onclick="openPasteModal()">📋 貼上存檔</button>
+  <button class="btn" onclick="exportJson()">💾 匯出網頁版存檔</button>
+  <label class="btn" style="cursor:pointer">
+    💻 匯入單機版存檔
+    <input type="file" accept=".json" style="display:none" onchange="importSIG2File(event)">
+  </label>
+  <button class="btn" onclick="exportSIG2()">🖥️ 匯出單機版存檔</button>
+  <button class="btn" onclick="showSig1SourceModal()">📋 貼上存檔</button>
   <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
 </div>
 
@@ -1380,14 +1385,14 @@ function renderItemRefSearch(inputId, resultId){
   </div><!-- #content -->
 </div><!-- #main -->
 
-<!-- Paste Modal -->
+<!-- SIG1 Source Modal -->
 <div id="pasteModal" class="modal-overlay">
   <div class="modal-box">
-    <div style="font-weight:bold;margin-bottom:12px;color:var(--text2)">📋 貼上存檔字串</div>
-    <textarea id="pasteInput" style="width:100%;height:160px;font-family:monospace;font-size:12px;resize:none;" placeholder="貼上 JSON 或身分證（SIG1:…）字串"></textarea>
+    <div style="font-weight:bold;margin-bottom:12px;color:var(--text2)">📋 目前存檔的 SIG1（網頁/手機版）原始碼</div>
+    <textarea id="sig1SourceOutput" style="width:100%;height:200px;font-family:monospace;font-size:12px;resize:none;" readonly onclick="this.select()"></textarea>
     <div class="form-row" style="margin-top:12px">
-      <button class="btn btn-accent" onclick="loadFromPaste()">載入</button>
-      <button class="btn" onclick="closePasteModal()">取消</button>
+      <button class="btn btn-accent" onclick="copySig1Source()">📋 複製到剪貼簿</button>
+      <button class="btn" onclick="closePasteModal()">關閉</button>
     </div>
   </div>
 </div>
@@ -1451,6 +1456,7 @@ function renderItemRefSearch(inputId, resultId){
 //  全域狀態
 // ════════════════════════════════════════════════
 let _rawSave = null;
+let _sig2Envelope = null; // 記錄從 SIG2（單機版）匯入時的信封資訊（version 等），供匯出 SIG2 時沿用
 
 let G = {
   p: {
@@ -1960,6 +1966,75 @@ function buildSIG1(payloadStr){
   return 'SIG1:' + _signSave(payloadStr) + ':' + payloadStr;
 }
 
+// ════════════════════════════════════════════════
+//  SIG2 簽章系統（單機版，HMAC-SHA256，與線上單機互轉工具同編碼模式）
+// ════════════════════════════════════════════════
+const SIG2_KEY_BYTES = new Uint8Array([
+  157, 103, 50, 228, 15, 138, 177, 89, 198, 36,
+  119, 211, 65, 174, 149, 11, 94, 248, 19, 108,
+  162, 57, 221, 112, 24, 203, 79, 134, 241, 45,
+  168, 83
+]);
+
+// "IdleLineage.Desktop.Save.SIG2\0" 的 ASCII Bytes（含結尾 \0）
+const SIG2_DOMAIN_BYTES = new Uint8Array([
+  73, 100, 108, 101, 76, 105, 110, 101, 97, 103, 101, 46,
+  68, 101, 115, 107, 116, 111, 112, 46,
+  83, 97, 118, 101, 46,
+  83, 73, 71, 50, 0
+]);
+
+function _toBase36(num) {
+  return Number(num).toString(36);
+}
+
+async function signDesktopSave(payloadStr){
+  const encoder = new TextEncoder();
+  const payloadBytes = encoder.encode(payloadStr);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    SIG2_KEY_BYTES,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const combinedBytes = new Uint8Array(SIG2_DOMAIN_BYTES.length + payloadBytes.length);
+  combinedBytes.set(SIG2_DOMAIN_BYTES, 0);
+  combinedBytes.set(payloadBytes, SIG2_DOMAIN_BYTES.length);
+
+  const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, combinedBytes);
+  const signatureBytes = new Uint8Array(signatureBuffer);
+
+  let binaryString = '';
+  for(let i = 0; i < signatureBytes.length; i++){
+    binaryString += String.fromCharCode(signatureBytes[i]);
+  }
+  const base64 = btoa(binaryString);
+  const base64Url = base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  return 'SIG2:' + base64Url + '.' + _toBase36(payloadStr.length) + ':' + payloadStr;
+}
+
+async function verifySIG2(raw){
+  if(raw == null) throw new Error('內容為空');
+  const str = String(raw).trim();
+  if(str.slice(0, 5) !== 'SIG2:') throw new Error('不是 SIG2（單機版）格式');
+  const rest = str.slice(5);
+  const i = rest.indexOf(':');
+  if(i < 0) throw new Error('SIG2 格式毀損（缺少分隔符）');
+
+  const sigPart = rest.slice(0, i);
+  const payloadStr = rest.slice(i + 1);
+
+  const expectedSIG2 = await signDesktopSave(payloadStr);
+  const expectedSigPart = expectedSIG2.slice(5, expectedSIG2.indexOf(':'));
+  const verified = (sigPart === expectedSigPart);
+
+  return { payload: JSON.parse(payloadStr), verified };
+}
+
 // 🧬 角色種子（enSeed）：遊戲用它判斷「匯入的存檔是不是跟其他存檔格是同一個角色」
 // （13-shop-save.js 的 importSave：enSeed 相同 → 視為重複角色，拒絕匯入），
 // 也是強化成敗的決定論種子。格式比照遊戲 startGame() 建立新角色時的寫法：'es' + 隨機碼 + 隨機碼。
@@ -2085,6 +2160,94 @@ function exportJson(){
   toast('💾 存檔已匯出', 'ok');
 }
 
+// ════════════════════════════════════════════════
+//  匯入 / 匯出 單機版存檔（SIG2）
+// ════════════════════════════════════════════════
+async function importSIG2File(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const { payload, verified } = await verifySIG2(text.trim());
+    if(!verified){
+      toast('⚠️ SIG2 簽章不符，資料可能已被修改，仍嘗試載入', 'warn', 4000);
+    }
+    const save = (payload && payload.save) ? payload.save : payload;
+    _rawSave = save;
+    _sig2Envelope = { version: payload && payload.version, format: payload && payload.format, schema: payload && payload.schema };
+    G.p    = save.p    || G.p;
+    G.wh   = save.wh   || G.wh;
+    G.pets = save.pets || G.pets;
+    G.diamonds = save.pandoraDiamonds ?? save.diamonds ?? save.sharedDiamonds ?? G.diamonds ?? 0;
+    _sig1Nonce = save._exportNonce || _genExportNonce();
+    canonicalizeAttrCodes();
+    loadAllUI();
+    toast('✅ 單機版存檔已匯入', 'ok');
+  }catch(err){
+    toast('❌ 解析失敗：' + err.message, 'err', 4000);
+  }
+  evt.target.value = '';
+}
+
+async function exportSIG2(){
+  applyAll(true);
+  const base = _rawSave
+    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
+    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
+  const saveOut = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const envelope = {
+    format: (_sig2Envelope && _sig2Envelope.format) || 'idle-lineage-desktop-save',
+    schema: (_sig2Envelope && _sig2Envelope.schema) || 1,
+    version: (_sig2Envelope && _sig2Envelope.version) || '3.8.19',
+    exportedAt: new Date().toISOString(),
+    save: saveOut,
+  };
+  const payload = JSON.stringify(envelope);
+  const signed  = await signDesktopSave(payload);
+  const blob    = new Blob([signed], { type:'application/json' });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement('a');
+  a.href        = url;
+  a.download    = 'save_desktop_' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 單機版存檔已匯出', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  顯示目前存檔的 SIG1 原始碼（供手動複製使用）
+// ════════════════════════════════════════════════
+function showSig1SourceModal(){
+  applyAll(true);
+  const base = _rawSave
+    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
+    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
+  const out     = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const payload = JSON.stringify(out);
+  const signed  = buildSIG1(payload);
+  const fSig1   = document.getElementById('f_sig1');
+  if(fSig1) fSig1.value = _sig1DisplayOnly(signed);
+  const el = document.getElementById('sig1SourceOutput');
+  if(el) el.value = signed;
+  document.getElementById('pasteModal').classList.add('show');
+}
+
+function copySig1Source(){
+  const el = document.getElementById('sig1SourceOutput');
+  if(!el || !el.value){ toast('內容為空', 'err'); return; }
+  el.focus();
+  el.select();
+  el.setSelectionRange(0, 99999);
+  const done = () => toast('📋 已複製到剪貼簿', 'ok');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(el.value).then(done).catch(() => {
+      try{ document.execCommand('copy'); done(); }catch(e){ toast('❌ 複製失敗，請手動選取複製', 'err'); }
+    });
+  } else {
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('❌ 複製失敗，請手動選取複製', 'err'); }
+  }
+}
+
 function openPasteModal(){
   document.getElementById('pasteModal').classList.add('show');
 }
@@ -2197,6 +2360,7 @@ function loadAllUI(){
 function clearAll(){
   if(!confirm('確定清除所有資料？')) return;
   _rawSave = null;
+  _sig2Envelope = null;
   G = {
     p:{
       name:'', cls:'mage', lv:1, exp:0,
