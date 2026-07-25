@@ -6,107 +6,67 @@
 <title>存檔格式轉換器（SIG1 ⇄ SIG2）</title>
 <style>
   :root{
-    --bg1:#0f1117; --bg2:#181b24; --bg3:#222634;
-    --border:#2f3648; --text:#f1f3f9; --text3:#949fb5;
-    --accent:#4d8dff; --accent-hover:#3b7ceb; --danger:#ff4d4f; --ok:#3ecf6e; --warn:#ffc107;
-    --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --bg1:#14161c; --bg2:#1b1e27; --bg3:#242833;
+    --border:#333a4a; --text:#e8eaf0; --text3:#8890a0;
+    --accent:#4d8dff; --danger:#ff4d4f; --ok:#3ecf6e; --warn:#ffc107;
   }
   *{box-sizing:border-box}
   body{
     margin:0; min-height:100vh; background:var(--bg1); color:var(--text);
     font-family:"Microsoft JhengHei","PingFang TC",-apple-system,BlinkMacSystemFont,sans-serif;
-    display:flex; justify-content:center; align-items:flex-start; padding:48px 16px;
+    display:flex; justify-content:center; padding:32px 16px;
   }
-  .wrap{ width:100%; max-width:720px; background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:32px; box-shadow:var(--shadow); }
-  
-  /* 標題與說明 */
-  .header-container { text-align: center; margin-bottom: 28px; }
-  h1{ font-size:24px; margin:0 0 8px; font-weight: 700; letter-spacing: 0.5px; }
-  .sub{ color:var(--text3); font-size:14px; margin:0 0 16px; line-height:1.6; }
-  
-  /* 說明區塊（前兩排白色、最後一排紅字，字體大小皆與標題同為 24px） */
-  .custom-notice {
-    text-align: center;
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1.5;
-    background: rgba(255, 77, 79, 0.08);
-    border: 1px dashed rgba(255, 77, 79, 0.3);
-    padding: 16px;
-    border-radius: 12px;
-    margin-top: 16px;
-    color: #ffffff; /* 前兩排預設白色 */
-  }
-  /* 將最後一句提醒獨立出來指定為紅字 */
-  .custom-notice .danger-text {
-    color: var(--danger);
-  }
+  .wrap{ width:100%; max-width:680px; }
+  h1{ font-size:20px; margin:0 0 4px; }
+  .sub{ color:var(--text3); font-size:13px; margin:0 0 24px; line-height:1.6; }
 
-  /* 拖曳上傳區 */
   #dropZone{
-    border:2px dashed var(--border); border-radius:14px; padding:40px 20px;
-    text-align:center; cursor:pointer; background:var(--bg3);
-    transition:all .2s ease;
+    border:2px dashed var(--border); border-radius:14px; padding:32px 20px;
+    text-align:center; cursor:pointer; background:var(--bg2);
+    transition:border-color .15s, background .15s;
   }
-  #dropZone:hover { border-color: var(--accent); background: #1f2535; }
-  #dropZone.drag{ border-color:var(--accent); background:#232d45; transform: scale(1.01); }
-  #dropZone .icon{ font-size:40px; margin-bottom:12px; transition: transform 0.2s; }
-  #dropZone:hover .icon { transform: translateY(-3px); }
-  #dropZone .main{ font-size:16px; font-weight: 600; }
-  #dropZone .hint{ color:var(--text3); font-size:12px; margin-top:8px; }
+  #dropZone.drag{ border-color:var(--accent); background:#1d2436; }
+  #dropZone .icon{ font-size:32px; margin-bottom:8px; }
+  #dropZone .main{ font-size:15px; }
+  #dropZone .hint{ color:var(--text3); font-size:12px; margin-top:6px; }
   #fileInput{ display:none; }
 
-  /* 資訊欄 */
   .info{
-    margin-top:20px; padding:16px 20px; border-radius:12px;
-    background:var(--bg3); border:1px solid var(--border); font-size:14px; line-height:2.0;
+    margin-top:16px; padding:14px 16px; border-radius:10px;
+    background:var(--bg2); border:1px solid var(--border); font-size:13px; line-height:1.8;
   }
-  .info .row{ display:flex; justify-content:space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 4px 0; }
-  .info .row:last-child { border-bottom: none; }
+  .info .row{ display:flex; justify-content:space-between; }
   .info .row span:first-child{ color:var(--text3); }
-  .badge{ display:inline-block; padding:2px 10px; border-radius:6px; font-size:12px; font-weight:bold; }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:bold; }
   .badge.sig1{ background:rgba(77,141,255,0.15); color:var(--accent); }
   .badge.sig2{ background:rgba(62,207,110,0.15); color:var(--ok); }
 
-  /* 提示與按鈕 */
   .notice{
-    margin-top:16px; padding:14px 16px; border-radius:12px; font-size:13px; line-height:1.7;
+    margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.7;
   }
   .notice.ok{ background:rgba(62,207,110,0.08); border:1px solid rgba(62,207,110,0.35); color:var(--ok); }
   .notice.warn{ background:rgba(255,193,7,0.08); border:1px solid rgba(255,193,7,0.4); color:var(--warn); font-weight:bold; }
 
   .btn{
-    margin-top:16px; width:100%; padding:14px; border-radius:12px; border:none;
-    background:var(--accent); color:#fff; font-size:16px; font-weight:bold; cursor:pointer;
-    box-shadow: 0 4px 12px rgba(77, 141, 255, 0.3);
-    transition: background 0.2s, transform 0.1s, filter 0.2s;
+    margin-top:16px; width:100%; padding:12px; border-radius:10px; border:none;
+    background:var(--accent); color:#fff; font-size:15px; font-weight:bold; cursor:pointer;
   }
-  .btn:hover{ background: var(--accent-hover); filter:brightness(1.05); transform: translateY(-1px); }
-  .btn:active { transform: translateY(0); }
-  .btn:disabled{ background:var(--bg3); color:var(--text3); cursor:not-allowed; box-shadow: none; }
+  .btn:hover{ filter:brightness(1.1); }
+  .btn:disabled{ background:var(--bg3); color:var(--text3); cursor:not-allowed; }
 
-  /* 記錄日誌 */
-  #log{ margin-top:20px; display:flex; flex-direction:column; gap:8px; }
-  .line{ padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.6; background:var(--bg3); border:1px solid var(--border); }
+  #log{ margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+  .line{ padding:9px 12px; border-radius:8px; font-size:12px; line-height:1.6; background:var(--bg2); border:1px solid var(--border); }
   .line.ok{ border-color:rgba(62,207,110,0.4); color:var(--ok); }
   .line.err{ border-color:rgba(255,77,79,0.4); color:var(--danger); }
-  .mono{ font-family:monospace; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; }
+  .mono{ font-family:monospace; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="header-container">
-    <h1>🔄 存檔格式轉換器</h1>
-    <p class="sub">
-      在「SIG1（網頁／手機版）」跟「SIG2（桌面版）」兩種存檔格式之間雙向無縫轉換。
-    </p>
-    <!-- 前兩排白色、最後一排紅字，字體皆為 24px -->
-    <div class="custom-notice">
-      幫你把網頁版存檔跟安裝版存檔互相轉換<br><br>
-      只要把檔案拖到框內或是點一下就可以上傳檔案修改<br><br>
-      <span class="danger-text">請勿使用賴直接開啟 將網址複製到其他瀏覽器在使用</span>
-    </div>
-  </div>
+  <h1>🔄 存檔格式轉換器</h1>
+  <p class="sub">
+    在「SIG1（網頁／手機版）」跟「SIG2（桌面版）」兩種存檔格式之間雙向無縫轉換。把存檔拖進框內或點擊選取，會自動判斷格式並計算合法簽章。
+  </p>
 
   <div id="dropZone">
     <div class="icon">📂</div>
@@ -173,6 +133,7 @@ const SIG2_KEY_BYTES = new Uint8Array([
   168, 83
 ]);
 
+// "IdleLineage.Desktop.Save.SIG2\0" 的 ASCII Bytes (含結尾 \0)
 const SIG2_DOMAIN_BYTES = new Uint8Array([
   73, 100, 108, 101, 76, 105, 110, 101, 97, 103, 101, 46,
   68, 101, 115, 107, 116, 111, 112, 46,
@@ -184,6 +145,7 @@ async function signDesktopSave(payloadStr) {
   const encoder = new TextEncoder();
   const payloadBytes = encoder.encode(payloadStr);
 
+  // 1. 匯入加密金鑰
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     SIG2_KEY_BYTES,
@@ -192,13 +154,16 @@ async function signDesktopSave(payloadStr) {
     ['sign']
   );
 
+  // 2. 拼接 Domain + Payload 資料
   const combinedBytes = new Uint8Array(SIG2_DOMAIN_BYTES.length + payloadBytes.length);
   combinedBytes.set(SIG2_DOMAIN_BYTES, 0);
   combinedBytes.set(payloadBytes, SIG2_DOMAIN_BYTES.length);
 
+  // 3. 計算 HMAC-SHA256
   const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, combinedBytes);
   const signatureBytes = new Uint8Array(signatureBuffer);
 
+  // 4. 轉成 Base64URL 格式
   let binaryString = '';
   for (let i = 0; i < signatureBytes.length; i++) {
     binaryString += String.fromCharCode(signatureBytes[i]);
@@ -206,6 +171,7 @@ async function signDesktopSave(payloadStr) {
   const base64 = btoa(binaryString);
   const base64Url = base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
+  // 5. 組合：SIG2:[Base64URL].[LengthBase36]:[Payload]
   return 'SIG2:' + base64Url + '.' + toBase36(payloadStr.length) + ':' + payloadStr;
 }
 
@@ -219,6 +185,7 @@ async function verifySIG2(raw) {
   const sigPart = rest.slice(0, i);
   const payloadStr = rest.slice(i + 1);
 
+  // 計算標準簽章進行比對
   const expectedSIG2 = await signDesktopSave(payloadStr);
   const expectedSigPart = expectedSIG2.slice(5, expectedSIG2.indexOf(':'));
 
@@ -245,7 +212,7 @@ const infoArea   = document.getElementById('infoArea');
 const actionArea = document.getElementById('actionArea');
 const logEl      = document.getElementById('log');
 
-let _loaded = null;
+let _loaded = null; // { format:'SIG1'|'SIG2', save:{...}, envelope:{...}|null, origName }
 
 function addLog(msg, cls){
   const div = document.createElement('div');
@@ -362,3 +329,5 @@ function downloadText(content, filename){
 </script>
 </body>
 </html>
+
+```
