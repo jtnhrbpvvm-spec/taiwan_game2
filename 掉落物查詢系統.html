@@ -734,6 +734,10 @@ const MOB_DROPS = {
     [
       "item_thebes_altar_key",
       2
+    ],
+    [
+      "relic_sky_god_avatar",
+      0.0001
     ]
   ],
   "底比斯 阿努斯": [
@@ -3304,6 +3308,10 @@ const MOB_DROPS = {
     [
       "mat_soulstone_shard",
       5
+    ],
+    [
+      "relic_necro_book",
+      0.0001
     ]
   ],
   "死亡的司祭(巴風特)": [
@@ -3324,6 +3332,10 @@ const MOB_DROPS = {
     [
       "mat_soulstone_shard",
       5
+    ],
+    [
+      "relic_wing_chaos_blades",
+      0.0001
     ]
   ],
   "混沌的司祭(野獸)": [
@@ -9980,6 +9992,10 @@ const MOB_DROPS = {
     [
       "scroll_attr_earth",
       1.8
+    ],
+    [
+      "relic_goat_demon_feet",
+      0.0001
     ]
   ],
   "石頭高崙": [
@@ -10280,6 +10296,10 @@ const MOB_DROPS = {
     [
       "bk_mana_drain",
       0.1
+    ],
+    [
+      "wpn_angel_wand",
+      0.01
     ],
     [
       "relic_wither_amulet",
@@ -14150,6 +14170,10 @@ const MOB_DROPS = {
     [
       "bk_elf_physboost",
       0.5
+    ],
+    [
+      "relic_succubus_queen_kiss",
+      0.0001
     ]
   ],
   "闇黑的騎士范德": [
@@ -14222,6 +14246,10 @@ const MOB_DROPS = {
     [
       "scroll_armor",
       2
+    ],
+    [
+      "relic_spider_queen_footprints",
+      0.0001
     ]
   ],
   "小幻象眼魔": [
@@ -17372,6 +17400,12 @@ const MOB_DROPS = {
       0.0001
     ]
   ],
+  "象牙塔果凍怪": [
+    [
+      "relic_corrosive_jelly_skin",
+      0.0001
+    ]
+  ],
   "喀瑪南": [
     [
       "new_item_191",
@@ -19310,6 +19344,25 @@ const ITEM_DB = {
     "legend": true,
     "gachaWeight": 1,
     "isWand": true
+  },
+  "wpn_angel_wand": {
+    "n": "天使魔杖",
+    "type": "wpn",
+    "dmgS": 12,
+    "dmgL": 12,
+    "hit": 0,
+    "dmgBonus": 0,
+    "req": "mage,illusion",
+    "safe": 6,
+    "p": 36000,
+    "unBonus": true,
+    "int": 1,
+    "mpR": 4,
+    "procSkill": "sk_undead_bane",
+    "procRateBase": 1,
+    "procRatePerEn": 1,
+    "gachaWeight": 20,
+    "d": "天使羽翼化成的單手魔杖，杖端流轉著淨化亡者的聖光。"
   },
   "wpn_blood_2hsword": {
     "n": "血色巨劍",
@@ -26929,7 +26982,7 @@ const ITEM_DB = {
   },
   "relic_ashbeast_chain": {
     "n": "灰燼巨獸的束鏈",
-    "type": "arm",
+    "type": "acc",
     "slot": "belt",
     "relic": true,
     "noEnhance": true,
@@ -27118,6 +27171,132 @@ const ITEM_DB = {
     "gachaWeight": 0,
     "d": "【遺物】烈焰死亡騎士的佩劍，劍身裹著永不熄滅的地獄之火。反擊（一般限定）；居合（一般限定）；貫穿；裝備時變身 烈焰的死亡騎士；一般攻擊變成火屬性；攻擊時 25% 機率觸發煉獄火（火屬性全體魔法傷害，受魔法傷害影響，並有機率使目標陷入灼燒）；一般攻擊命中時，有機率使目標陷入灼燒（每秒 30 點火屬性傷害，持續 6 秒）。"
   },
+  "relic_sky_god_avatar": {
+    "n": "天空之神的化身",
+    "type": "arm",
+    "slot": "armor",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 11,
+    "wearerEle": "wind",
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】天空之神遺留在人間的羽衣，披上後身軀便與長風融為一體。"
+  },
+  "relic_necro_book": {
+    "n": "死靈之書",
+    "type": "arm",
+    "slot": "shield",
+    "armguard": {
+      "stat": "none",
+      "base": 0,
+      "th": [
+        0,
+        0,
+        0
+      ]
+    },
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "necroBook": true,
+    "killTeamHealPct": 1,
+    "req": "mage",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】以亡者皮骨裝訂的禁書，書頁會在敵人倒下時自行翻動，喚回仍不願安息的骸骨。"
+  },
+  "relic_wing_chaos_blades": {
+    "n": "飛翼的混沌雙刀",
+    "type": "wpn",
+    "w2h": true,
+    "relic": true,
+    "noEnhance": true,
+    "eff": "combo",
+    "comboRate": 30,
+    "ignHardSkin": true,
+    "str": 2,
+    "dex": 1,
+    "dmgS": 16,
+    "dmgL": 11,
+    "hit": 15,
+    "dmgBonus": 16,
+    "darkCritMorph": "flywing_double",
+    "req": "dark",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】混沌司祭折翼後留下的雙刀，斬擊如殘翼同時掠過。雙擊 30；貫穿；力量 +2、敏捷 +1；裝備時會心一擊變為飛翼雙連：消耗 MP 12，立即進行兩次一般攻擊，兩次皆必定觸發雙擊。"
+  },
+  "relic_corrosive_jelly_skin": {
+    "n": "腐蝕的果凍外皮",
+    "type": "arm",
+    "slot": "gloves",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 4,
+    "dr": 5,
+    "corrosiveJellySkin": true,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】象牙塔果凍怪的腐蝕外皮仍在緩緩蠕動。傷害減免 +5；受到一般攻擊時，使攻擊者的一般攻擊力永久 -3，最多疊加 5 層，直到該目標死亡。"
+  },
+  "relic_goat_demon_feet": {
+    "n": "山羊惡魔的雙足",
+    "type": "arm",
+    "slot": "boots",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 11,
+    "str": 3,
+    "int": 3,
+    "moveSpeedPct": 33,
+    "mpR": 3,
+    "bossEncounterPct": 3,
+    "req": "knight,elf,dark,dragon",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】巴列斯踏碎地獄岩層的雙足，仍帶著炙熱蹄印。力量 +3、智力 +3、移動速度 +33%、MP 自然恢復量 +3；頭目遭遇機率變更為 3%。"
+  },
+  "relic_succubus_queen_kiss": {
+    "n": "斯克巴女皇的魅惑之吻",
+    "type": "arm",
+    "slot": "shield",
+    "armguard": {
+      "stat": "none",
+      "base": 0,
+      "th": [
+        0,
+        0,
+        0
+      ]
+    },
+    "relic": true,
+    "noEnhance": true,
+    "ac": 0,
+    "cha": 1,
+    "charmOnHit": true,
+    "req": "elf,mage",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】斯克巴女皇留下的吻痕，會在武器命中時低語。魅力 +1；迷魅術變為魅惑術：自身沒有迷魅怪物時，一般攻擊命中會自動嘗試迷魅目標；對頭目無效。"
+  },
+  "relic_spider_queen_footprints": {
+    "n": "蜘蛛女王的足跡",
+    "type": "arm",
+    "slot": "boots",
+    "relic": true,
+    "noEnhance": true,
+    "ac": 8,
+    "immSlow": true,
+    "dr": 4,
+    "extraHit": 1,
+    "req": "all",
+    "p": 10000,
+    "gachaWeight": 0,
+    "d": "【遺物】傲慢的潔尼斯女王踏過的地面留下冰冷足跡。免疫緩速；傷害減免 +4；額外命中 +1。"
+  },
   "clk_elf": {
     "n": "精靈斗篷",
     "type": "arm",
@@ -27166,7 +27345,8 @@ const ITEM_DB = {
     "slot": "cloak",
     "ac": 1,
     "legend": true,
-    "d": "織入隱匿術法的斗篷，披上便彷彿融入暗影。穿戴時等同維持隱身術：非BOSS敵人在滿血時不會主動攻擊，受創後才會反擊（卸下即失效）。",
+    "aggroMin": true,
+    "d": "織入隱匿術法的斗篷，披上便彷彿融入暗影。穿戴時等同維持隱身術：非BOSS敵人在滿血時不會主動攻擊，受創後才會反擊；被攻擊權重必定為 1（最低），敵人選擇攻擊對象時最不容易挑中你（卸下即失效）。",
     "req": "all",
     "safe": 4,
     "p": 100000,
@@ -28105,13 +28285,15 @@ const ITEM_DB = {
     "resEarth": 50,
     "immPoison": true,
     "hpR": 28,
+    "dr": 3,
+    "drEnFrom7Max3": true,
     "str": 1,
     "con": 1,
     "req": "knight,warrior",
     "safe": 4,
     "p": 1000000,
     "gachaWeight": 0,
-    "d": "凝聚安塔瑞斯之力鍛成的盔甲，穿上便湧起大地般沉穩的力量。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +28；力量 +1；體質 +1。"
+    "d": "凝聚安塔瑞斯之力鍛成的盔甲，穿上便湧起大地般沉穩的力量。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +28；力量 +1；體質 +1；傷害減免 +3（強化 +7 起每 +1 再增加 1，最高 +6）。"
   },
   "arm_antharas_charm": {
     "n": "安塔瑞斯的魅惑",
@@ -28123,13 +28305,15 @@ const ITEM_DB = {
     "immPoison": true,
     "hpR": 6,
     "mpR": 15,
+    "dr": 3,
+    "drEnFrom7Max3": true,
     "int": 1,
     "wis": 1,
     "req": "mage,illusion",
     "safe": 4,
     "p": 1000000,
     "gachaWeight": 0,
-    "d": "凝聚安塔瑞斯魔性的長袍，龍魔力如低語般環繞穿戴者。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +6；MP 自然恢復量 +15；智力 +1；精神 +1。"
+    "d": "凝聚安塔瑞斯魔性的長袍，龍魔力如低語般環繞穿戴者。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +6；MP 自然恢復量 +15；智力 +1；精神 +1；傷害減免 +3（強化 +7 起每 +1 再增加 1，最高 +6）。"
   },
   "arm_antharas_spring": {
     "n": "安塔瑞斯的泉源",
@@ -28141,13 +28325,15 @@ const ITEM_DB = {
     "immPoison": true,
     "hpR": 12,
     "mpR": 8,
+    "dr": 3,
+    "drEnFrom7Max3": true,
     "str": 1,
     "dex": 1,
-    "req": "elf,dark,Dknight",
+    "req": "elf,dark,dragon",
     "safe": 4,
     "p": 1000000,
     "gachaWeight": 0,
-    "d": "凝聚安塔瑞斯生命力的皮甲，如泉水般源源不絕地滋養穿戴者。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +12；MP 自然恢復量 +8；力量 +1；敏捷 +1。"
+    "d": "凝聚安塔瑞斯生命力的皮甲，如泉水般源源不絕地滋養穿戴者。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +12；MP 自然恢復量 +8；力量 +1；敏捷 +1；傷害減免 +3（強化 +7 起每 +1 再增加 1，最高 +6）。"
   },
   "arm_antharas_majesty": {
     "n": "安塔瑞斯的霸氣",
@@ -28159,29 +28345,36 @@ const ITEM_DB = {
     "immPoison": true,
     "hpR": 20,
     "mpR": 4,
+    "dr": 3,
+    "drEnFrom7Max3": true,
     "cha": 1,
     "con": 1,
-    "req": "royal,Dknight",
+    "req": "royal,dragon",
     "safe": 4,
     "p": 1000000,
     "gachaWeight": 0,
-    "d": "凝聚安塔瑞斯威嚴的戰甲，舉手投足間散發王者般的霸氣。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +20；MP 自然恢復量 +4；魅力 +1；體質 +1。"
+    "d": "凝聚安塔瑞斯威嚴的戰甲，舉手投足間散發王者般的霸氣。地屬性抗性 +50；免疫中毒；HP 自然恢復量 +20；MP 自然恢復量 +4；魅力 +1；體質 +1；傷害減免 +3（強化 +7 起每 +1 再增加 1，最高 +6）。"
   },
   "wpn_crimson_xbow": {
     "n": "深紅之弩",
     "type": "wpn",
     "isBow": true,
     "ranged": true,
-    "rapidfire": 70,
+    "rapidfire": 80,
     "w2h": true,
-    "dmgS": 5,
-    "dmgL": 4,
-    "hit": 5,
-    "dmgBonus": 5,
-    "req": "elf,dark",
+    "dmgS": 3,
+    "dmgL": 3,
+    "hit": 1,
+    "dmgBonus": 0,
+    "req": "elf",
     "safe": 6,
-    "p": 150000,
+    "p": 56000,
     "gachaWeight": 0,
+    "procStatus": {
+      "kind": "bind",
+      "rate": 2,
+      "dur": 6
+    },
     "d": "染上龍血的深紅十字弓，弦音如龍吟低鳴。"
   },
   "mat_chimera_snake": {
