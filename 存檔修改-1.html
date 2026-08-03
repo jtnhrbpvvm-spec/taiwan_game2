@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-43</title>
+<title>放置天堂 Save Editor v7-61</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -311,14 +311,19 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-43</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-61</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
-    📂 匯入 JSON
+    📂 匯入網頁版存檔
     <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)">
   </label>
-  <button class="btn" onclick="exportJson()">💾 匯出存檔</button>
-  <button class="btn" onclick="openPasteModal()">📋 貼上存檔</button>
+  <button class="btn" onclick="exportJson()">💾 匯出網頁版存檔</button>
+  <label class="btn" style="cursor:pointer">
+    💻 匯入單機版存檔
+    <input type="file" accept=".json" style="display:none" onchange="importSIG2File(event)">
+  </label>
+  <button class="btn" onclick="exportSIG2()">🖥️ 匯出單機版存檔</button>
+  <button class="btn" onclick="showSig1SourceModal()">📋 貼上存檔</button>
   <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
 </div>
 
@@ -334,7 +339,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
     <div class="nav-item" onclick="showPanel('inv',this)">🎒 背包</div>
     <div class="nav-item" onclick="showPanel('wh',this)">🏦 倉庫</div>
     <div class="nav-section">進階</div>
-    <div class="nav-item" onclick="showPanel('partners',this)">⚔️ 傭兵</div>
+    <div class="nav-item" onclick="showPanel('partners',this)" style="display:none">⚔️ 傭兵</div><!-- 🔒 傭兵系統已被遊戲移除，依使用者指示隱藏，之後不要再處理這裡（含 panel-partners / newPartnerTemplate / addPartner 等相關程式碼一律略過） -->
     <div class="nav-item" onclick="showPanel('pets',this)">🐾 寵物</div>
     <div class="nav-item" onclick="showPanel('dex',this)">📖 圖鑑</div>
     <div class="nav-item" onclick="showPanel('config',this)">⚙️ 設定</div>
@@ -370,7 +375,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
       </div>
       <div class="form-row">
         <span class="form-label">職業</span>
-        <select id="f_cls" style="width:120px">
+        <select id="f_cls" style="width:120px" onchange="onClassChange()">
           <option value="mage">法師</option><option value="knight">騎士</option>
           <option value="elf">妖精</option><option value="dark">黑暗妖精</option>
           <option value="royal">王族</option><option value="dragon">龍騎士</option>
@@ -732,7 +737,7 @@ function renderEquipSearch(){
         ${v.req ? `<br>需求: ${reqLabel(v.req)}` : ''}
         ${v.p ? `<br>價格: ${v.p}` : ''}
       </div>
-      ${isGenieWish ? `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--yellow); color:var(--yellow); font-size:12px;">🧞 此戒指禁止在此直接新增（會產生無效果的空白戒指）。請改用下方「巨靈的三個願望」專用產生器。</div>` : relicInfoHTML(v)}
+      ${isGenieWish ? `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--yellow); color:var(--yellow); font-size:12px;">🧞 此戒指禁止在此直接新增（會產生無效果的空白戒指）。請改用下方「巨靈的三個願望」專用產生器。</div>` : relicInfoHTML(v, id)}
     </div>
   `;
   }).join('');
@@ -970,7 +975,7 @@ function renderItemRefSearch(inputId, resultId){
         ${v.req ? `<br>需求: ${reqLabel(v.req)}` : ''}
         ${v.p !== undefined ? `<br>價格: ${v.p}` : ''}
       </div>
-      ${relicInfoHTML(v)}
+      ${relicInfoHTML(v, id)}
     </div>
   `).join('') + (matched.length > LIMIT ? `<div style="color:var(--text3); grid-column:1/-1; padding:8px; text-align:center; font-size:12px;">僅顯示前 ${LIMIT} 筆，共符合 ${matched.length} 筆，請輸入更精確的關鍵字</div>` : '');
 }
@@ -1380,14 +1385,14 @@ function renderItemRefSearch(inputId, resultId){
   </div><!-- #content -->
 </div><!-- #main -->
 
-<!-- Paste Modal -->
+<!-- SIG1 Source Modal -->
 <div id="pasteModal" class="modal-overlay">
   <div class="modal-box">
-    <div style="font-weight:bold;margin-bottom:12px;color:var(--text2)">📋 貼上存檔字串</div>
-    <textarea id="pasteInput" style="width:100%;height:160px;font-family:monospace;font-size:12px;resize:none;" placeholder="貼上 JSON 或身分證（SIG1:…）字串"></textarea>
+    <div style="font-weight:bold;margin-bottom:12px;color:var(--text2)">📋 目前存檔的 SIG1（網頁/手機版）原始碼</div>
+    <textarea id="sig1SourceOutput" style="width:100%;height:200px;font-family:monospace;font-size:12px;resize:none;" readonly onclick="this.select()"></textarea>
     <div class="form-row" style="margin-top:12px">
-      <button class="btn btn-accent" onclick="loadFromPaste()">載入</button>
-      <button class="btn" onclick="closePasteModal()">取消</button>
+      <button class="btn btn-accent" onclick="copySig1Source()">📋 複製到剪貼簿</button>
+      <button class="btn" onclick="closePasteModal()">關閉</button>
     </div>
   </div>
 </div>
@@ -1451,20 +1456,20 @@ function renderItemRefSearch(inputId, resultId){
 //  全域狀態
 // ════════════════════════════════════════════════
 let _rawSave = null;
+let _sig2Envelope = null; // 記錄從 SIG2（單機版）匯入時的信封資訊（version 等），供匯出 SIG2 時沿用
 
 let G = {
   p: {
     name:'', cls:'mage', lv:1, exp:0,
-    hp:100, mhp:100, mp:50, mmp:50,
-    gold:0, avatar:'女法師',
-    trialStage:0, flameAffinity:0,
-    traditionalMode:false, sherineWorld:false,
-    prideBeatJenis:false, demonTempleOpen:false,
-    lastBattleMap:'',
-    mastery:null, masteryQuest:null, masteryChangeCnt:0, buffs:{},
+    hp:12, mhp:12, mp:6, mmp:6,   // mage Lv1：對齊 CLASS_HPMP_TABLE.mage 的 hpBase/mpBase（切職業時 onClassChange() 會重算）
+    gold:1000, avatar:'女法師',
+    classicMode:false,
+    mastery:null, masteryQuest:null, masteryChangeCnt:0,
+    buffs:{ haste:0, brave:0, blue:0, cautious:0, elfcookie:0, poly:0, shield:0 },
     base:    { str:25, dex:25, con:25, int:25, wis:25, cha:25 },
     panacea: { str:0,  dex:0,  con:0,  int:0,  wis:0,  cha:0  },
     alloc:   { str:0,  dex:0,  con:0,  int:0,  wis:0,  cha:0  },
+    bonus:0, panaceaUsed:0,
     skills:[], grantedSkills:[], inv:[],
     equipDex:{}, cardDex:{}, miscDex:{}, relicDex:{}, junkPrefs:{},
     eq:{
@@ -1472,7 +1477,8 @@ let G = {
       cloak: null, tshirt:null, gloves:null, boots: null,
       ring1: null, ring2: null, ring3: null, ring4: null,
       amulet:null, ear1:  null, ear2:  null, belt:  null,
-      arrow: null, pet:   null, doll:  null,
+      rem_claw:null, rem_eye:null, rem_blood:null, rem_flesh:null,
+      rem_heart:null, rem_bone:null, rem_fang:null, rem_scale:null,
     },
     config:{
       setPot:'potion_heal', setHpPot:70, setAutoBuyPot:false,
@@ -1495,8 +1501,41 @@ let G = {
       rewardPending:false, victoryUntil:0, accCdUntil:0,
       city:'kent', victoryCity:null,
     },
-    pandoraMarket:{ id:'', price:0, weight:0, setTick:0 },
-    partners:[], petStorage:[],
+    dead:false,
+    bloodPledge:null, magicShieldCd:0,
+    lastMapByCat:{}, tracking:null, poly:null, allies:[], summon:null, charmed:null,
+    manualCd:{}, elfEle:null,
+    hots:{},
+    cds:{ pot:0, atkSk:0, healSk:0, purifySk:0, convertSk:0 },
+    statuses:{
+      stun:0, freeze:0, stone:0, poison:0, poisonDmg:0, poisonTick:0,
+      burn:0, burnDmg:0, burnTick:0, scald:0, scaldDmg:0, scaldTick:0,
+      bleed:0, bleedDmg:0, bleedTick:0, sleep:0, silence:0, paralyze:0,
+      magicseal:0, armorBreak:0, slowAtk:0, cleave:0, evilAura:0,
+    },
+    d:{
+      str:0,dex:0,con:0,int:0,wis:0,cha:0,
+      meleeDmg:0,meleeHit:0,meleeCrit:0,rangedDmg:0,rangedHit:0,rangedCrit:0,
+      extraDmg:0,extraHit:0,magicDmg:0,magicHit:0,magicCrit:0,
+      extraMp:0,mpReduce:0,meleeCritDmg:50,rangedCritDmg:50,magicCritDmg:50,
+      ac:0,mr:0,er:0,dr:0,resFire:0,resWater:0,resEarth:0,resWind:0,
+      hpRegenMax:0,hpR:0,mpR:0,aspd:0,crushDr:0,meleeHaste:0,atkSpdPct:0,
+      hpRegenFaster:0,noEvade:false,critDmgLowHp:null,thornsDmg:0,instakillFull:0,
+      onDmgHeal:null,onDmgHealCd:0,onDmgHealName:'',hurtExplode:0,fireNullify:false,
+      wearerEle:'',physDrGated:0,lowMpRegenBonus:0,moveSpeedPct:0,bossEncounterPct:0,
+      corrosiveJellySkin:false,charmOnHit:false,poisonHealMult:0,dotCrit:false,
+      dmgReflect:0,fullHpMpHalf:false,eleWpnMult:null,equipExtraAtk:0,
+      immStone:false,immPoison:false,immSilence:false,resNone:0,
+      hitstun:5,hitstunReduce:0,castLock:10,supportCastLock:10,
+      _cardWeightBonus:0,_equipWeightBonus:0,_miscWeightBonus:0,
+      intSp:0,itemSp:0,weightPct:0,loadTier:0,aspdOff:0,
+    },
+    pvpOn:false, pvpRevengeList:[], socialNpcContacts:[],
+    _roleEpoch:null, clanName:null, expMigV:3,
+    _equipHaste:false, _setPoly:null, _sherineSetCnt:{}, _equipPetHit:0,
+    _miscPotionBonus:0, _antHelperDr:0, _allLures:false,
+    lastTownVisited:'', autoSellGlobal:false, guardsV2:[],
+    pvpAlignLock:{}, pvpKillWhispers:[], antharasClearDay:0,
     // 套裝旗標
     _setRedLion5:false, _setWhiteBird5:false,
     _setIron3:false,    _setIron5:false,
@@ -1506,11 +1545,19 @@ let G = {
     _setShadow3:false,  _setShadow5:false,
     _setIllusion2:false,_setIllusion3:false, _setIllusion5:false,
     _setDragonblood2:false,_setDragonblood3:false,_setDragonblood5:false,
-    _setFury5:false,    _beautyMissStack:0,
+    _setFury5:false,
   },
   wh:{ gold:0, items:[] },
   pets:[],
-  diamonds:0   // 🔶 龍之鑽石：帳號共用資料，獨立於角色 p 之外
+  diamonds:0,   // 🔶 龍之鑽石：帳號共用資料，獨立於角色 p 之外
+  // 🔶 頂層戰鬥/世界狀態：新角色沒有這些會導致遊戲讀檔異常（v3.8.19 v2 schema必要欄位）
+  ms:{ current:'town_talking', mobs:[null,null,null,null,null], targetIdx:0, forceBoss:false, spawnAt:[0,0,0,0,0] },
+  ticks:0,
+  // 🔶 血盟資料：13-shop-save.js匯入驗證要求 clanState.modes / clanState.members 必須是真值，
+  // null 會被判定「血盟資料格式不正確」而直接匯入失敗。這裡的結構對照 25-clan-system.js 的
+  // _clanDefaultState()——是遊戲自己定義的「尚無血盟」空狀態，不是編造的假資料。
+  // npcWorlds 維持 null：NPC血盟世界由遊戲首次tick時lazy生成，不需要在此預先造假資料。
+  clanState:{ v:2, xp:0, modes:{ normal:null, classic:null }, members:{}, npcWorlds:{ normal:null, classic:null }, updatedAt:Date.now() }
 };
 
 // ════════════════════════════════════════════════
@@ -1783,6 +1830,22 @@ function computeHpMpForLevel(lv){
   return { mhp, mmp };
 }
 
+// 切換職業下拉選單時：職業會決定HP/MP的基礎值與每級成長（CLASS_HPMP_TABLE），
+// 但HP/MP欄位是唯讀、只在「修改等級/經驗值」或調整CON/WIS時才會重算，
+// 若切換職業時不觸發重算，畫面會停留在舊職業的HP/MP數值，跟新職業對不上。
+function onClassChange(){
+  if(!G.p) return;
+  G.p.cls = getStr('f_cls');           // 先寫回G，calibrateGrowth()才能抓到新職業
+  calibrateGrowth();
+  const lv = getNum('f_lv', 1);
+  const { mhp, mmp } = computeHpMpForLevel(lv);
+  setVal('f_mhp', mhp);
+  setVal('f_mmp', mmp);
+  setVal('f_hp',  mhp);                // 換職業視同重新計算，順便補滿目前HP/MP
+  setVal('f_mp',  mmp);
+  toast(`已依新職業重算：最大HP=${mhp}／最大MP=${mmp}`, 'ok', 3000);
+}
+
 function openLvExpModal(){
   setVal('lvExpInput', getNum('f_lv', 1));
   document.getElementById('lvExpPreview').textContent = '';
@@ -1960,6 +2023,75 @@ function buildSIG1(payloadStr){
   return 'SIG1:' + _signSave(payloadStr) + ':' + payloadStr;
 }
 
+// ════════════════════════════════════════════════
+//  SIG2 簽章系統（單機版，HMAC-SHA256，與線上單機互轉工具同編碼模式）
+// ════════════════════════════════════════════════
+const SIG2_KEY_BYTES = new Uint8Array([
+  157, 103, 50, 228, 15, 138, 177, 89, 198, 36,
+  119, 211, 65, 174, 149, 11, 94, 248, 19, 108,
+  162, 57, 221, 112, 24, 203, 79, 134, 241, 45,
+  168, 83
+]);
+
+// "IdleLineage.Desktop.Save.SIG2\0" 的 ASCII Bytes（含結尾 \0）
+const SIG2_DOMAIN_BYTES = new Uint8Array([
+  73, 100, 108, 101, 76, 105, 110, 101, 97, 103, 101, 46,
+  68, 101, 115, 107, 116, 111, 112, 46,
+  83, 97, 118, 101, 46,
+  83, 73, 71, 50, 0
+]);
+
+function _toBase36(num) {
+  return Number(num).toString(36);
+}
+
+async function signDesktopSave(payloadStr){
+  const encoder = new TextEncoder();
+  const payloadBytes = encoder.encode(payloadStr);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    SIG2_KEY_BYTES,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const combinedBytes = new Uint8Array(SIG2_DOMAIN_BYTES.length + payloadBytes.length);
+  combinedBytes.set(SIG2_DOMAIN_BYTES, 0);
+  combinedBytes.set(payloadBytes, SIG2_DOMAIN_BYTES.length);
+
+  const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, combinedBytes);
+  const signatureBytes = new Uint8Array(signatureBuffer);
+
+  let binaryString = '';
+  for(let i = 0; i < signatureBytes.length; i++){
+    binaryString += String.fromCharCode(signatureBytes[i]);
+  }
+  const base64 = btoa(binaryString);
+  const base64Url = base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+  return 'SIG2:' + base64Url + '.' + _toBase36(payloadStr.length) + ':' + payloadStr;
+}
+
+async function verifySIG2(raw){
+  if(raw == null) throw new Error('內容為空');
+  const str = String(raw).trim();
+  if(str.slice(0, 5) !== 'SIG2:') throw new Error('不是 SIG2（單機版）格式');
+  const rest = str.slice(5);
+  const i = rest.indexOf(':');
+  if(i < 0) throw new Error('SIG2 格式毀損（缺少分隔符）');
+
+  const sigPart = rest.slice(0, i);
+  const payloadStr = rest.slice(i + 1);
+
+  const expectedSIG2 = await signDesktopSave(payloadStr);
+  const expectedSigPart = expectedSIG2.slice(5, expectedSIG2.indexOf(':'));
+  const verified = (sigPart === expectedSigPart);
+
+  return { payload: JSON.parse(payloadStr), verified };
+}
+
 // 🧬 角色種子（enSeed）：遊戲用它判斷「匯入的存檔是不是跟其他存檔格是同一個角色」
 // （13-shop-save.js 的 importSave：enSeed 相同 → 視為重複角色，拒絕匯入），
 // 也是強化成敗的決定論種子。格式比照遊戲 startGame() 建立新角色時的寫法：'es' + 隨機碼 + 隨機碼。
@@ -1991,11 +2123,20 @@ function _genExportNonce(){
 // 只有「換發身分證」（或匯入檔案本身帶有不同亂數）才會更新。
 let _sig1Nonce = _genExportNonce();
 
+// 🔶 組出目前存檔的完整基底物件（p/wh/pets/pandoraDiamonds + 頂層 v/ms/ticks/clanState）。
+// 有 _rawSave（讀檔進來的既有存檔）時，v/ms/ticks/clanState 直接沿用 _rawSave 本身的值（來自玩家真實存檔，不能亂改）；
+// 沒有 _rawSave（全新角色/clearAll 之後）時，才補上 G.ms/G.ticks/G.clanState 這些新角色預設值。
+// ⚠️ 這是本檔案唯一一處組裝存檔基底的地方，_computeCurrentSig1/exportJson/exportSIG2/showSig1SourceModal/syncJsonEditor
+// 全部呼叫這裡，不要各自複製一份，否則又會重演「_rawSave===null分支漏改」的舊坑（見PROJECT_HANDOFF §6.5）。
+function _buildSaveBase(){
+  return _rawSave
+    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
+    : { v:2, p: G.p, ms: G.ms, ticks: G.ticks, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds, clanState: G.clanState };
+}
+
 // 依「目前面板資料 + 目前身分證亂數」即時算出身分證，供顯示與匯出共用。
 function _computeCurrentSig1(){
-  const base = _rawSave
-    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
-    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
+  const base = _buildSaveBase();
   const withNonce = Object.assign({}, base, { _exportNonce: _sig1Nonce });
   return buildSIG1(JSON.stringify(withNonce));
 }
@@ -2065,9 +2206,7 @@ function importJsonFile(evt){
 
 function exportJson(){
   applyAll(true);
-  const base = _rawSave
-    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
-    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
+  const base   = _buildSaveBase();
   const out     = Object.assign({}, base, { _exportNonce: _sig1Nonce });
   const payload = JSON.stringify(out);
   const signed  = buildSIG1(payload);
@@ -2083,6 +2222,90 @@ function exportJson(){
   a.click();
   URL.revokeObjectURL(url);
   toast('💾 存檔已匯出', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  匯入 / 匯出 單機版存檔（SIG2）
+// ════════════════════════════════════════════════
+async function importSIG2File(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const { payload, verified } = await verifySIG2(text.trim());
+    if(!verified){
+      toast('⚠️ SIG2 簽章不符，資料可能已被修改，仍嘗試載入', 'warn', 4000);
+    }
+    const save = (payload && payload.save) ? payload.save : payload;
+    _rawSave = save;
+    _sig2Envelope = { version: payload && payload.version, format: payload && payload.format, schema: payload && payload.schema };
+    G.p    = save.p    || G.p;
+    G.wh   = save.wh   || G.wh;
+    G.pets = save.pets || G.pets;
+    G.diamonds = save.pandoraDiamonds ?? save.diamonds ?? save.sharedDiamonds ?? G.diamonds ?? 0;
+    _sig1Nonce = save._exportNonce || _genExportNonce();
+    canonicalizeAttrCodes();
+    loadAllUI();
+    toast('✅ 單機版存檔已匯入', 'ok');
+  }catch(err){
+    toast('❌ 解析失敗：' + err.message, 'err', 4000);
+  }
+  evt.target.value = '';
+}
+
+async function exportSIG2(){
+  applyAll(true);
+  const base = _buildSaveBase();
+  const saveOut = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const envelope = {
+    format: (_sig2Envelope && _sig2Envelope.format) || 'idle-lineage-desktop-save',
+    schema: (_sig2Envelope && _sig2Envelope.schema) || 1,
+    version: (_sig2Envelope && _sig2Envelope.version) || '3.8.19',
+    exportedAt: new Date().toISOString(),
+    save: saveOut,
+  };
+  const payload = JSON.stringify(envelope);
+  const signed  = await signDesktopSave(payload);
+  const blob    = new Blob([signed], { type:'application/json' });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement('a');
+  a.href        = url;
+  a.download    = 'save_desktop_' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 單機版存檔已匯出', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  顯示目前存檔的 SIG1 原始碼（供手動複製使用）
+// ════════════════════════════════════════════════
+function showSig1SourceModal(){
+  applyAll(true);
+  const base   = _buildSaveBase();
+  const out     = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const payload = JSON.stringify(out);
+  const signed  = buildSIG1(payload);
+  const fSig1   = document.getElementById('f_sig1');
+  if(fSig1) fSig1.value = _sig1DisplayOnly(signed);
+  const el = document.getElementById('sig1SourceOutput');
+  if(el) el.value = signed;
+  document.getElementById('pasteModal').classList.add('show');
+}
+
+function copySig1Source(){
+  const el = document.getElementById('sig1SourceOutput');
+  if(!el || !el.value){ toast('內容為空', 'err'); return; }
+  el.focus();
+  el.select();
+  el.setSelectionRange(0, 99999);
+  const done = () => toast('📋 已複製到剪貼簿', 'ok');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(el.value).then(done).catch(() => {
+      try{ document.execCommand('copy'); done(); }catch(e){ toast('❌ 複製失敗，請手動選取複製', 'err'); }
+    });
+  } else {
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('❌ 複製失敗，請手動選取複製', 'err'); }
+  }
 }
 
 function openPasteModal(){
@@ -2118,9 +2341,7 @@ function loadFromPaste(){
 // ════════════════════════════════════════════════
 function syncJsonEditor(){
   applyAll(true);
-  const out = _rawSave
-    ? Object.assign({}, _rawSave, { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds })
-    : { p: G.p, wh: G.wh, pets: G.pets, pandoraDiamonds: G.diamonds };
+  const out = _buildSaveBase();
   const el = document.getElementById('jsonEditor');
   if(el) el.value = JSON.stringify(out, null, 2);
 }
@@ -2197,19 +2418,19 @@ function loadAllUI(){
 function clearAll(){
   if(!confirm('確定清除所有資料？')) return;
   _rawSave = null;
+  _sig2Envelope = null;
   G = {
     p:{
       name:'', cls:'mage', lv:1, exp:0,
-      hp:100, mhp:100, mp:50, mmp:50,
-      gold:0, avatar:'女法師',
-      trialStage:0, flameAffinity:0,
-      traditionalMode:false, sherineWorld:false,
-      prideBeatJenis:false, demonTempleOpen:false,
-      lastBattleMap:'',
-      mastery:null, masteryQuest:null, masteryChangeCnt:0, buffs:{},
+      hp:12, mhp:12, mp:6, mmp:6,   // mage Lv1：對齊 CLASS_HPMP_TABLE.mage
+      gold:1000, avatar:'女法師',
+      classicMode:false,
+      mastery:null, masteryQuest:null, masteryChangeCnt:0,
+      buffs:{ haste:0, brave:0, blue:0, cautious:0, elfcookie:0, poly:0, shield:0 },
       base:{str:25,dex:25,con:25,int:25,wis:25,cha:25},
       panacea:{str:0,dex:0,con:0,int:0,wis:0,cha:0},
       alloc:{str:0,dex:0,con:0,int:0,wis:0,cha:0},
+      bonus:0, panaceaUsed:0,
       skills:[], grantedSkills:[], inv:[],
       equipDex:{}, cardDex:{}, miscDex:{}, relicDex:{}, junkPrefs:{},
       eq:{
@@ -2217,7 +2438,8 @@ function clearAll(){
         cloak:null,tshirt:null,gloves:null,boots:null,
         ring1:null,ring2:null,ring3:null,ring4:null,
         amulet:null,ear1:null,ear2:null,belt:null,
-        arrow:null,pet:null,doll:null,
+        rem_claw:null,rem_eye:null,rem_blood:null,rem_flesh:null,
+        rem_heart:null,rem_bone:null,rem_fang:null,rem_scale:null,
       },
       config:{
         setPot:'potion_heal', setHpPot:70, setAutoBuyPot:false,
@@ -2240,8 +2462,41 @@ function clearAll(){
         rewardPending:false,victoryUntil:0,accCdUntil:0,
         city:'kent',victoryCity:null,
       },
-      pandoraMarket:{ id:'', price:0, weight:0, setTick:0 },
-      partners:[], petStorage:[],
+      dead:false,
+      bloodPledge:null, magicShieldCd:0,
+      lastMapByCat:{}, tracking:null, poly:null, allies:[], summon:null, charmed:null,
+      manualCd:{}, elfEle:null,
+      hots:{},
+      cds:{ pot:0, atkSk:0, healSk:0, purifySk:0, convertSk:0 },
+      statuses:{
+        stun:0, freeze:0, stone:0, poison:0, poisonDmg:0, poisonTick:0,
+        burn:0, burnDmg:0, burnTick:0, scald:0, scaldDmg:0, scaldTick:0,
+        bleed:0, bleedDmg:0, bleedTick:0, sleep:0, silence:0, paralyze:0,
+        magicseal:0, armorBreak:0, slowAtk:0, cleave:0, evilAura:0,
+      },
+      d:{
+        str:0,dex:0,con:0,int:0,wis:0,cha:0,
+        meleeDmg:0,meleeHit:0,meleeCrit:0,rangedDmg:0,rangedHit:0,rangedCrit:0,
+        extraDmg:0,extraHit:0,magicDmg:0,magicHit:0,magicCrit:0,
+        extraMp:0,mpReduce:0,meleeCritDmg:50,rangedCritDmg:50,magicCritDmg:50,
+        ac:0,mr:0,er:0,dr:0,resFire:0,resWater:0,resEarth:0,resWind:0,
+        hpRegenMax:0,hpR:0,mpR:0,aspd:0,crushDr:0,meleeHaste:0,atkSpdPct:0,
+        hpRegenFaster:0,noEvade:false,critDmgLowHp:null,thornsDmg:0,instakillFull:0,
+        onDmgHeal:null,onDmgHealCd:0,onDmgHealName:'',hurtExplode:0,fireNullify:false,
+        wearerEle:'',physDrGated:0,lowMpRegenBonus:0,moveSpeedPct:0,bossEncounterPct:0,
+        corrosiveJellySkin:false,charmOnHit:false,poisonHealMult:0,dotCrit:false,
+        dmgReflect:0,fullHpMpHalf:false,eleWpnMult:null,equipExtraAtk:0,
+        immStone:false,immPoison:false,immSilence:false,resNone:0,
+        hitstun:5,hitstunReduce:0,castLock:10,supportCastLock:10,
+        _cardWeightBonus:0,_equipWeightBonus:0,_miscWeightBonus:0,
+        intSp:0,itemSp:0,weightPct:0,loadTier:0,aspdOff:0,
+      },
+      pvpOn:false, pvpRevengeList:[], socialNpcContacts:[],
+      _roleEpoch:null, clanName:null, expMigV:3,
+      _equipHaste:false, _setPoly:null, _sherineSetCnt:{}, _equipPetHit:0,
+      _miscPotionBonus:0, _antHelperDr:0, _allLures:false,
+      lastTownVisited:'', autoSellGlobal:false, guardsV2:[],
+      pvpAlignLock:{}, pvpKillWhispers:[], antharasClearDay:0,
       _setRedLion5:false,_setWhiteBird5:false,
       _setIron3:false,_setIron5:false,
       _setBeauty5:false,_setGale5:false,
@@ -2250,11 +2505,15 @@ function clearAll(){
       _setShadow3:false,_setShadow5:false,
       _setIllusion2:false,_setIllusion3:false,_setIllusion5:false,
       _setDragonblood2:false,_setDragonblood3:false,_setDragonblood5:false,
-      _setFury5:false,_beautyMissStack:0,
+      _setFury5:false,
     },
     wh:{ gold:0, items:[] },
     pets:[],
-    diamonds:0
+    diamonds:0,
+    ms:{ current:'town_talking', mobs:[null,null,null,null,null], targetIdx:0, forceBoss:false, spawnAt:[0,0,0,0,0] },
+    ticks:0,
+    // 血盟：對照 25-clan-system.js 的 _clanDefaultState()，null 會被 shop-save.js 判定格式錯誤
+    clanState:{ v:2, xp:0, modes:{ normal:null, classic:null }, members:{}, npcWorlds:{ normal:null, classic:null }, updatedAt:Date.now() }
   };
   _sig1Nonce = _genExportNonce();
   loadAllUI();
@@ -2455,11 +2714,184 @@ function relicSlotLabel(v){
   return RELIC_SLOT_LABEL[v.slot] || (v.slot ? v.slot : '未知部位');
 }
 // 產生遺物專屬的資訊區塊 HTML：正確裝備位置 ＋ 遊戲內建的模糊說明（d 欄位）。非遺物回傳空字串。
-function relicInfoHTML(v){
+// 🏺 遺物「精確效果」產生器：把資料欄位轉換成接近遊戲內顯示的機制敘述，
+// 資料來源：02-stats-recompute.js（屬性彙總邏輯）／03-combat-core.js（戰鬥判定邏輯），
+// 每一行都對應到原始碼裡實際讀取該欄位的地方，比 d 欄位的模糊劇情文字精確。
+const ATTR_LABEL_ZH = { str:'力量', dex:'敏捷', con:'體質', int:'智力', wis:'精神', cha:'魅力' };
+const ELE_LABEL_ZH = { fire:'火', water:'水', earth:'地', wind:'風', none:'無' };
+const EFF_LABEL_ZH = { cleave:'橫掃(cleave)', crush:'重擊(crush)', pierce:'穿刺(pierce)', combo:'連段(combo)', magicstrike:'魔擊(magicstrike)', magicburst:'魔爆(magicburst)', haste:'裝備時常駐加速' };
+// 🪄 法杖共鳴：這不是物品本身的資料欄位，是遊戲戰鬥程式碼(03-combat-core.js)裡硬編碼的武器ID清單，
+// 裝備清單內的武器一般攻擊會額外有 智力/60 機率免費施放光箭（魔擊精通改吃力量/60）。
+const WAND_RESONANCE_IDS = ['wpn_oakwand','wpn_38','wpn_witchwand','wpn_manawand','wpn_crystalwand','wpn_baless','wpn_wand_rasta','wpn_red_crystalwand','wpn_laia_wand','wpn_icequeen_wand','wpn_demon_scythe','wpn_darkmage_wand','wpn_baphomet_wand','wpn_illu_wand','wpn_demon_wand_hidden','wpn_dark_crystalball','wpn_steel_manawand_blue','relic_amp_staff','relic_elder_thunder','relic_cerberus_wand','relic_evillizard_eye','relic_lightbeam_wand','relic_warlock_grimoire','relic_windking_roar','relic_rockmage_secret','wpn_onmyoji_fan','relic_sr_kyuubi_wand','relic_water_orb','relic_unsealed_baphomet_wand','wpn_angel_wand'];
+function relicMechanicLines(v, id){
+  const lines = [];
+  const num = (n) => (n > 0 ? '+' : '') + n;
+  const pct = (n) => (n > 0 ? '+' : '') + n + '%';
+
+  if(v.ac) lines.push(`防禦(AC): ${-v.ac}`);   // 遊戲UI把ac取負號顯示（越負防禦越好，經典Lineage系慣例）
+  if(v.dmgS !== undefined || v.dmgL !== undefined) lines.push(`小型傷害: ${v.dmgS ?? 0} / 大型傷害: ${v.dmgL ?? 0}`);
+  if(v.hit) lines.push(`近距離命中: ${num(v.hit)}`);
+  if(v.meleeHit) lines.push(`近戰命中${num(v.meleeHit)}`);
+  if(v.meleeDmg) lines.push(`近戰傷害${num(v.meleeDmg)}`);
+  if(v.rangedHit) lines.push(`遠程命中${num(v.rangedHit)}`);
+  if(v.rangedDmg) lines.push(`遠程傷害${num(v.rangedDmg)}`);
+  if(v.extraDmg) lines.push(`額外傷害${num(v.extraDmg)}（固定值，近戰遠程皆生效）`);
+  if(v.extraHit) lines.push(`額外命中${num(v.extraHit)}（近戰遠程皆生效）`);
+  if(v.moveSpeedPct) lines.push(`移動速度${pct(v.moveSpeedPct)}${v.moveSpeedPct < 0 ? '（負值代表變慢，影響怪物重生延遲）' : ''}`);
+  if(v.comboRate) lines.push(`連段觸發機率 ${v.comboRate}%`);
+  if(v.pierceChance) lines.push(`貫穿觸發機率 ${v.pierceChance}%`);
+  if(v.procInstakill) lines.push(`特效：一般攻擊命中時機率觸發即死判定${v.procInstakill.maxLv ? `（僅對Lv${v.procInstakill.maxLv}以下生效）` : ''}${v.procInstakill.healPct ? '，成功即死可回復HP' : ''}`);
+  if(v.armguard) lines.push(`（此防具強化不吃AC加成，強化改為提升HP）`);
+  if(v.eff && EFF_LABEL_ZH[v.eff]) lines.push(`武器特殊攻擊型態：${EFF_LABEL_ZH[v.eff]}`);
+  if(v.qigu) lines.push(`（武器分類：奇古獸，搭配「奇古獸精通」攻速+30%、觸發特效無視魔抗）`);
+  if(v.chainsword) lines.push(`（武器分類：鎖鏈劍）`);
+  if(v.oneHand) lines.push(`（雖屬弓/雙手武器分類，但視為單手武器，可搭配盾牌/臂甲）`);
+  if(v.block) lines.push(`格擋觸發機率 ${v.block}%（重擊攻擊時全額觸發，一般攻擊只有30%機率）`);
+  if(v.wearerEle) lines.push(`特效：裝備者化為「${ELE_LABEL_ZH[v.wearerEle] || v.wearerEle}」屬性（受剋制此屬性的傷害增加、剋制其他屬性的傷害減少）`);
+  if(v.onHitEleDmg && typeof v.onHitEleDmg === 'object'){
+    const oh = v.onHitEleDmg;
+    lines.push(`一般攻擊命中${oh.rate ? `${oh.rate}%機率` : '必定'}附加 ${oh.dmg} 點${ELE_LABEL_ZH[oh.ele] || oh.ele}屬性固定傷害`);
+  }
+  if(v.mpOnHit && !v.mpOnHitAmt) lines.push(`特效：一般攻擊命中回復魔力（固定量）`);
+  if(v.set) lines.push(`套裝：${v.set}`);
+  if(v.fireNullify) lines.push(`特效：完全免疫火屬性傷害（每10秒最多生效1次）`);
+  if(v.dmgReflect) lines.push(`特效：受一般攻擊時 ${v.dmgReflect}% 機率反射相同傷害給攻擊者，且自身免疫該次傷害`);
+  if(v.resNone) lines.push(`無屬性魔法抗性${num(v.resNone)}（比照屬性抗性公式折減，只對無屬性魔法生效）`);
+  if(v.magicDrNonEle) lines.push(`無屬性魔法傷害減免${num(v.magicDrNonEle)}%（⚠️效果可能已移除，已被 v3.3.29 版本的「無屬性抗性」機制取代，此欄位目前無實際作用）`);
+  if(v.stoneInstakill) lines.push(`特效：一般攻擊命中「石化」狀態敵人必定即死（頭目免疫）`);
+  if(v.hardSkinMult) lines.push(`特效：目標有硬皮值時，一般攻擊傷害 ×${v.hardSkinMult}`);
+  if(v.fullHpMult) lines.push(`特效：對滿血敵人，一般攻擊傷害 ×${v.fullHpMult}`);
+  if(v.silencedBonusDmg) lines.push(`對「沉默」狀態敵人額外固定傷害${num(v.silencedBonusDmg)}`);
+  if(v.poisonedBonusDmg) lines.push(`對「中毒」狀態敵人額外固定傷害${num(v.poisonedBonusDmg)}`);
+  if(v.slowedBonusDmg) lines.push(`對「緩速」狀態敵人額外固定傷害${num(v.slowedBonusDmg)}`);
+  if(v.swordStr) lines.push(`特效：持單手劍/雙手劍時，力量${num(v.swordStr)}`);
+  if(v.mrPerWis) lines.push(`特效：每1點最終精神(WIS)轉換為魔防 ×${v.mrPerWis}`);
+  if(v.lvDmgDiv) lines.push(`特效：近戰/遠程傷害額外 +floor(等級 ÷ ${v.lvDmgDiv})（隨等級成長）`);
+  if(v.lvHitDiv) lines.push(`特效：近戰/遠程命中額外 +floor(等級 ÷ ${v.lvHitDiv})（隨等級成長）`);
+  if(v.allLures) lines.push(`特效：裝備時視為持有全部誘捕狀態（寵物捕捉用，卸下即失效，不會消耗）`);
+  if(v.trackBoost) lines.push(`特效：追蹤（探測）成功率提升至70%`);
+  if(v.counterAllEle) lines.push(`特效：一般攻擊強制剋制地/水/火/風所有屬性敵人（傷害至少 ×1.4）`);
+  if(v.hurtRapidfire) lines.push(`特效：受到傷害時強制觸發連射（需搭配弓類武器）`);
+  if(v.procFireSkillRate) lines.push(`攻擊時 ${v.procFireSkillRate}% 機率施放火焰系技能`);
+  if(v.hpRegenFaster) lines.push(`特效：生命自然恢復間隔縮短 ${v.hpRegenFaster} 秒（每1秒=10tick，下限3秒）`);
+  if(v.noEvade) lines.push(`⚠️ 特效：自身無法迴避攻擊（暗隱術等100%迴避效果不受此限）`);
+  if(v.critDmgLowHp && typeof v.critDmgLowHp === 'object') lines.push(`特效：HP低於 ${v.critDmgLowHp.hp} 時，近距離爆擊傷害額外 +${v.critDmgLowHp.add}%`);
+  if(v.heavyBonusDmg) lines.push(`特效：觸發重擊時額外固定傷害${num(v.heavyBonusDmg)}（倍率計算後加算）`);
+  if(v.rapidMax) lines.push(`特效：連射必定觸發最大箭數`);
+  if(v.bonespike) lines.push(`特效：連射額外箭矢命中時累積「骨刺」層數（上限10層，一般攻擊引爆）`);
+  if(v.procPoisonPct && typeof v.procPoisonPct === 'object') lines.push(`特效：命中附加中毒（每秒造成本次傷害 ${v.procPoisonPct.pct || 50}%，持續 ${v.procPoisonPct.dur || 6} 秒）`);
+  if(v.statusHealHp) lines.push(`特效：受到異常狀態影響時，回復 ${v.statusHealHp} 點HP（一次中招只觸發一次，刷新既有狀態不觸發）`);
+  if(v.playerHardSkin) lines.push(`特效：裝備時獲得「硬皮值」30點（減傷用消耗池，卸下即清除）`);
+  if(v.mpOnComboHit) lines.push(`特效：雙擊追擊命中時，回復魔力${num(v.mpOnComboHit)}`);
+  if(v.hpOnHit) lines.push(`一般攻擊命中回復生命${num(v.hpOnHit)}（固定值）`);
+  if(v.slowScaleDmg) lines.push(`特效：攻速越慢，近戰傷害越高（以攻擊間隔0.10秒為基準，每慢0.05秒近戰傷害+1）`);
+  if(v.pierceMainMult) lines.push(`特效：一般攻擊對主目標傷害 ×${v.pierceMainMult}`);
+  if(v.pierceSubMult) lines.push(`特效：一般攻擊波及到的次要目標傷害 ×${v.pierceSubMult}（以主目標加成前的傷害為基準）`);
+  if(v.firePrisonMult) lines.push(`特效：搭配「火牢」技能時，火牢傷害 ×${v.firePrisonMult}`);
+  if(v.liningChain) lines.push(`特效：搭配「防禦6以下」的輕型盔甲時，額外 AC-10、魔防+10（僅限T恤欄位生效）`);
+  if(v.grazeDmgPct !== undefined) lines.push(`擦傷（挫傷）傷害覆寫為 ${v.grazeDmgPct}%（一般預設是50%）`);
+  if(v.stoneEssence) lines.push(`特效：觸發「石化精髓」buff期間，魔防與減傷各額外+50（僅限頭盔欄位生效）`);
+  if(v.polyAllStats) lines.push(`特效：變身狀態下，全六圍屬性各額外+${v.polyAllStats}（僅限手套欄位生效）`);
+  if(v.grantSkills && Array.isArray(v.grantSkills)) lines.push(`特效：${v.grantSkillsEquipOnly ? '裝備時' : '曾裝備過即永久'}授予技能：${v.grantSkills.map(s=>s.n||s.id||s).join('、')}${v.grantSkillsEquipOnly ? '（卸下即失去）' : ''}`);
+  if(v.drPerEr) lines.push(`特效：減傷額外 +floor(完整精破ER ÷ ${v.drPerEr})`);
+  if(v.golemMarkDebuff) lines.push(`⚠️ 特效：受到重擊後3秒內，魔防-100（負面副作用，僅限頭盔欄位生效）`);
+  if(v.dblStrikeRate) lines.push(`一般攻擊 ${v.dblStrikeRate}% 機率造成2倍傷害`);
+  if(v.auraSkill && typeof v.auraSkill === 'object') lines.push(`特效：每 ${v.auraSkill.interval || 100} tick 自動免費施放技能「${v.auraSkill.skId}」`);
+  if(v.traumaProc && typeof v.traumaProc === 'object') lines.push(`一般攻擊命中 ${v.traumaProc.pct || 5}% 機率使目標陷入「創傷」（受所有物理傷害+5/層，持續6秒，最多2層）`);
+  if(v.procDualSkill && typeof v.procDualSkill === 'object') lines.push(`攻擊時 ${v.procDualSkill.rate || 25}% 機率施放雙屬性法術（地+火各自結算傷害，必定命中）`);
+  if(v.undeadImmune && typeof v.undeadImmune === 'object') lines.push(`特效：對不死族的魔法/狀態技完全免疫（冷卻${v.undeadImmune.cdSec || 5}秒）`);
+  if(v.crushTornado) lines.push(`特效：觸發重擊時，對敵方全體免費施放龍捲風`);
+  if(v.relicRole) lines.push(`遺物定位：${v.relicRole}`);
+  if(v.unBonus) lines.push(`對狼人及不死造成額外傷害（⚠️效果可能已移除，程式碼註解顯示 v3.5.87 版本已刪除對應運算元）`);
+  if(v.vampPct) lines.push(`特效：一般攻擊傷害轉換 ${Math.round(v.vampPct*100)}% 為HP吸血`);
+  if(v.onDmgHeal) lines.push(`特效：受擊時觸發自癒技能（冷卻${v.onDmgHealCd || 5}秒）`);
+  if(v.eleBonusDmg && typeof v.eleBonusDmg === 'object') lines.push(`對「${ELE_LABEL_ZH[v.eleBonusDmg.ele] || v.eleBonusDmg.ele}」屬性敵人額外固定傷害${num(v.eleBonusDmg.add || 0)}`);
+  if(v.procBurn && typeof v.procBurn === 'object') lines.push(`特效：一般攻擊命中${v.procBurn.rate ? `${v.procBurn.rate}%機率` : '必定'}附加灼燒（每秒${v.procBurn.dmg||10}點火傷，持續${v.procBurn.dur||6}秒）`);
+  if(v.onHitCastSkill && typeof v.onHitCastSkill === 'object') lines.push(`特效：命中時觸發免費施放技能（冷卻${v.onHitCastSkill.cdSec || 5}秒）`);
+  if(v.skillDmgMult && typeof v.skillDmgMult === 'object') lines.push(`特效：特定技能傷害倍率加成（${Object.entries(v.skillDmgMult).map(([k,m])=>`${k} ×${m}`).join('、')}）`);
+  if(v.aggroWeight) lines.push(`仇恨值權重${num(v.aggroWeight)}（提高被攻擊機率）`);
+  if(v.missGrazeRate) lines.push(`特效：一般攻擊未命中時，${v.missGrazeRate}%機率改判為擦傷（50%傷害、不會爆擊）`);
+  if(v.dr) lines.push(`傷害減免${num(v.dr)}`);
+  if(v.mr) lines.push(`魔防${num(v.mr)}`);
+  if(v.er) lines.push(`精破${num(v.er)}`);
+  if(v.resFire) lines.push(`火屬性抵抗${num(v.resFire)}`);
+  if(v.resWater) lines.push(`水屬性抵抗${num(v.resWater)}`);
+  if(v.resEarth) lines.push(`地屬性抵抗${num(v.resEarth)}`);
+  if(v.resWind) lines.push(`風屬性抵抗${num(v.resWind)}`);
+  Object.keys(ATTR_LABEL_ZH).forEach(k => { if(v[k]) lines.push(`${ATTR_LABEL_ZH[k]}${num(v[k])}`); });
+  if(v.mhp) lines.push(`生命上限${num(v.mhp)}`);
+  if(v.mmp) lines.push(`魔力上限${num(v.mmp)}`);
+  if(v.hpR) lines.push(`生命自然恢復${num(v.hpR)}`);
+  if(v.mpR) lines.push(`魔力自然恢復${num(v.mpR)}`);
+  if(v.dmgBonus) lines.push(`近戰/遠程傷害${num(v.dmgBonus)}（依裝備武器類型自動判定）`);
+  if(v.mdmg) lines.push(`魔法傷害${num(v.mdmg)}`);
+  if(v.extraMp) lines.push(`額外魔法點數${num(v.extraMp)}`);
+  if(v.ele) lines.push(`一般攻擊化為${ELE_LABEL_ZH[v.ele] || v.ele}屬性`);
+  if(v.atkSpdPct) lines.push(`攻速${pct(v.atkSpdPct)}${v.atkSpdPct < 0 ? '（負值代表變慢）' : ''}`);
+  if(v.meleeHaste) lines.push(`裝備近戰武器時攻速${pct(v.meleeHaste)}`);
+  if(v.polyAtkSpdPct) lines.push(`變身狀態下攻速${pct(v.polyAtkSpdPct)}`);
+  if(v.mcrit) lines.push(`近戰爆擊率${pct(v.mcrit)}`);
+  if(v.mcritDmg) lines.push(`近戰爆擊傷害${pct(v.mcritDmg)}`);
+  if(v.rcrit) lines.push(`遠程爆擊率${pct(v.rcrit)}`);
+  if(v.rapidfire) lines.push(`連射觸發機率 ${v.rapidfire}%`);
+  if(v.ignHardSkin) lines.push(`特效：貫穿（攻擊無視目標硬皮減傷）`);
+  if(v.spellProc){
+    const rateBase = v.procRateBase != null ? v.procRateBase : 1;
+    const ratePerEn = v.procRatePerEn != null ? v.procRatePerEn : 1;
+    const rateNote = ratePerEn ? `${rateBase}%（每強化+${ratePerEn}%）` : `${rateBase}%`;
+    const sp = v.spellProc;
+    lines.push(`攻擊施法 ${rateNote}（觸發${sp.skn || '未知法術'}${sp.dice ? `，${sp.dice[0]}D${sp.dice[1]}` : ''}${sp.ele ? `，${ELE_LABEL_ZH[sp.ele] || sp.ele}屬性` : ''}${sp.aoe ? '，範圍傷害' : ''}）`);
+  }
+  if(id && WAND_RESONANCE_IDS.includes(id)) lines.push(`特效：共鳴（一般攻擊時依智力/60機率免費施放光箭，不耗魔力；魔擊精通改吃力量/60）`);
+  if(v.petSkillDmgMult) lines.push(`寵物技能傷害 ×${v.petSkillDmgMult}`);
+  if(v.petMdmgAll) lines.push(`寵物魔法傷害${num(v.petMdmgAll)}`);
+  if(v.petDmgAll) lines.push(`所有寵物額外傷害${num(v.petDmgAll)}（掃描玩家+傭兵全裝備欄加總）`);
+  if(v.petHitAll) lines.push(`所有寵物額外命中${num(v.petHitAll)}（掃描玩家+傭兵全裝備欄加總）`);
+  if(v.summonDmg) lines.push(`召喚物傷害${num(v.summonDmg)}`);
+  if(v.summonHit) lines.push(`召喚物命中${num(v.summonHit)}`);
+  if(v.relicDropX2) lines.push(`特效：裝備時遺物掉落機率 ×2`);
+  if(v.stunResist) lines.push(`暈眩抵抗 ${v.stunResist}%（機率抵抗，跟其他來源取最高、不疊加）`);
+  if(v.immStun) lines.push(`特效：完全免疫暈眩`);
+  if(v.immFreeze) lines.push(`特效：完全免疫冰凍`);
+  if(v.immBurn) lines.push(`特效：完全免疫燃燒`);
+  if(v.immParalyze) lines.push(`特效：完全免疫麻痺`);
+  if(v.immPoison) lines.push(`特效：完全免疫中毒`);
+  if(v.immStone) lines.push(`特效：完全免疫石化`);
+  if(v.immSlow) lines.push(`特效：完全免疫減速`);
+  if(v.immSilence) lines.push(`特效：完全免疫沉默`);
+  if(v.immBlind) lines.push(`特效：完全免疫致盲`);
+  if(v.immParalyzeBonusDmg) lines.push(`特效：對免疫麻痺目標（頭目/免疫者）額外固定傷害${num(v.immParalyzeBonusDmg)}`);
+  if(v.lowMpRegenBonus) lines.push(`特效：MP低於15%時，魔力自然恢復額外${num(v.lowMpRegenBonus)}`);
+  if(v.poisonHealMult) lines.push(`特效：受到中毒持續傷害時，轉換 ×${v.poisonHealMult} 的量回復HP`);
+  if(v.dotCrit) lines.push(`特效：我方持續傷害（中毒/出血等）可以爆擊`);
+  if(v.eleWpnMult && typeof v.eleWpnMult === 'object') lines.push(`特效：裝備對應屬性（${v.eleWpnMult.ele}）武器時，一般攻擊傷害 ×${v.eleWpnMult.mult}`);
+  if(v.highestAttrPlus) lines.push(`特效：目前數值最高的六圍屬性額外+1（並列最高皆加）`);
+  if(v.hitstunReduce) lines.push(`特效：受擊硬直減免 ${v.hitstunReduce} tick`);
+  if(v.thorns) lines.push(`受擊反傷${num(v.thorns)}（固定值）`);
+  if(v.weightCap) lines.push(`負重上限${num(v.weightCap)}`);
+  if(v.heavyRatePct) lines.push(`特效：重擊觸發機率提升（每5% = 骰值多算1面）`);
+  if(v.heavyMult) lines.push(`特效：觸發重擊時傷害 ×${v.heavyMult}`);
+  if(v.giantBonus) lines.push(`特效：對「巨人」種族額外造成 1d20 傷害`);
+  if(v.counterEles && v.counterEles.length) lines.push(`特效：一般攻擊對「${v.counterEles.join('、')}」屬性敵人傷害 ×1.4`);
+  if(v.auraDmg) lines.push(`特效：光環傷害，每 ${v.auraDmg.interval || 20} tick 對周圍造成 ${v.auraDmg.dmg || 0} 傷害`);
+  if(v.counterBarrierX2) lines.push(`特效：搭配反擊屏障技能時，反擊傷害 ×2`);
+  if(v.noConsume) lines.push(`特效：視同箭矢裝備，但不會被消耗`);
+  if(v.weakExpose) lines.push(`特效：一般攻擊命中時，機率對目標附加「弱點曝光」層數（最多3層，鎖刃精通5層）`);
+  if(v.mpOnHitAmt) lines.push(`一般攻擊命中回復魔力${num(v.mpOnHitAmt)}（固定值）`);
+  if(v.wishRing) lines.push(`特效：裝備瞬間從17項能力中隨機（不重複）抽取3項祝福，之後固定不變`);
+  if(v.req) lines.push(`適用職業：${reqLabel(v.req)}`);
+  if(v.noEnhance) lines.push(`無法強化`);
+  return lines;
+}
+function relicInfoHTML(v, id){
   if(!v.relic) return '';
   let html = `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); color:var(--relic);">`;
   html += `🏺 遺物・正確裝備位置：<b>${relicSlotLabel(v)}</b>`;
   if(v.d) html += `<div style="color:var(--text3); font-style:italic; margin-top:4px; line-height:1.5;">${v.d}</div>`;
+  const mech = relicMechanicLines(v, id);
+  if(mech.length){
+    html += `<div style="margin-top:6px; color:var(--text2); line-height:1.7;">${mech.join('<br>')}</div>`;
+  }
   html += `</div>`;
   return html;
 }

@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-61</title>
+<title>放置天堂 Save Editor v7-64</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -311,7 +311,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-61</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-64</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入網頁版存檔
@@ -2881,6 +2881,79 @@ function relicMechanicLines(v, id){
   if(v.wishRing) lines.push(`特效：裝備瞬間從17項能力中隨機（不重複）抽取3項祝福，之後固定不變`);
   if(v.req) lines.push(`適用職業：${reqLabel(v.req)}`);
   if(v.noEnhance) lines.push(`無法強化`);
+  // 🆕 §3.4 新補完欄位（已查到邏輯，2026 session新增）
+  if(v.bossEncounterPct !== undefined) lines.push(`頭目遭遇機率覆寫為 ${v.bossEncounterPct}%（一般地圖生效；同時裝備多件時取最高值，不疊加）`);
+  if(v.flameDkMorph) lines.push(`特效：裝備此武器時直接變身「烈焰的死亡騎士」（若同時觸發套裝變身，套裝變身優先）`);
+  if(v.critFuryHaste && typeof v.critFuryHaste === 'object') lines.push(`特效：攻擊爆擊時，攻擊速度額外 +${v.critFuryHaste.pct}%，持續 ${v.critFuryHaste.sec || 5} 秒`);
+  if(v.spellbladeBuff) lines.push(`特效：消耗MP施放傷害法術後10秒內，依法術階級提升近距離傷害與命中（1階+1～10階+25），且一般攻擊變成最後施放法術的屬性`);
+  if(v.comboForceCrit) lines.push(`特效：雙擊的追加攻擊必定爆擊`);
+  // 🆕 §3.4 補完（原本查無來源，改從04-combat-attack.js/03-combat-core.js/10-ui-tabs.js實際判定邏輯確認）
+  if(v.corrosiveJellySkin) lines.push(`特效：受到一般攻擊時，使攻擊者的一般攻擊力永久 -3，最多疊加5層（上限-15），直到該怪物死亡`);
+  if(v.charmOnHit) lines.push(`特效：迷魅術變為魅惑術——自身沒有迷魅怪物時，一般攻擊命中會自動嘗試迷魅目標；對頭目無效`);
+  if(v.dotMpRefund) lines.push(`受到持續傷害（中毒/燃燒/灼傷/出血）損失HP時，回復損失HP的 ${v.dotMpRefund}% 作為MP（同時裝備多件取最高值，不疊加）`);
+  if(v.noBleed) lines.push(`特效：此武器明確不會觸發出血狀態（即使武器分類符合矛類出血規則）`);
+  if(v.hardWear) lines.push(`一般攻擊命中時，額外削減目標 ${v.hardWear} 點硬皮值`);
+
+  // 🆕 整批搬移：10-ui-tabs.js 官方 relicPurposeLabels()/weaponPurposeLabels()
+  // （遊戲自己的「遺物用途摘要」系統，程式碼原註解：補足舊遺物只有背景敘述、玩家看不出實際用途的問題）
+  // 尚未搬進來的欄位，全部逐字對照官方寫法翻譯，不自行改寫用詞，確保跟遊戲內顯示一致。
+  if(v.reqAvatar) lines.push(`裝備限制（僅限${v.reqAvatar}；其他角色無法裝備）`);
+  if(v.petDmgReduce) lines.push(`寵物護甲（裝備的寵物受到傷害 -${Math.round(v.petDmgReduce*100)}%）`);
+  if(v.petBleed) lines.push(`寵物出血（一般攻擊命中疊加8秒出血；每層每秒造成該次傷害20%，最多5層）`);
+  if(v.armguard) lines.push(`臂甲（裝於副手，可與雙手武器並用）`);   // ⚠️ armguard是雙重機制：上面已有「強化不吃AC改吃HP」，這裡補上另一半「可與雙手武器並用」
+  if(v.abnormalResist) lines.push(`異常狀態抵抗+${v.abnormalResist}%`);
+  if(v.fireballBurst) lines.push(`爆裂火球（將已學會的「燃燒的火球」升級為威力更強的「爆裂的火球」）`);
+  if(v.summonCtrl) lines.push(`召喚控制（可指定召喚物；28～48級召喚上限由5隻提高至6隻）`);
+  if(v.autoReviveScroll) lines.push(`巨靈守護（傭兵或寵物死亡時立即消耗1張復活卷軸使其復活）`);
+  if(v.aggroHide) lines.push(`隱匿仇恨（較不容易成為敵人目標）`);
+  if(v.aggroMin) lines.push(`被攻擊權重必定為 1（最低，無視職業與其他仇恨裝備）`);
+  if(v.necroBook) lines.push(`骷髏復生（造屍術改為不消耗MP；敵人被擊敗時自動召喚1隻骷髏，全隊場上最多6隻；已達上限時完全恢復HP最低的骷髏）`);
+  if(v.killTeamHealPct) lines.push(`亡者餽贈（擊殺敵人時，全體玩家、傭兵、召喚物、寵物與護衛恢復${v.killTeamHealPct}%最大HP）`);
+  if(v.stealth) lines.push(`常駐隱身（不主動吸引一般怪物）`);
+  if(v.fullHpMultTriple) lines.push(`滿血三重矢（首箭傷害 ×${v.fullHpMultTriple}）`);
+  if(v.fullHpMpHalf) lines.push(`滿血施法（自身滿血時魔力消耗減半）`);
+  if(v.lowHpPotionX2) lines.push(`瀕危急救（低HP時藥水恢復量 ×2）`);
+  if(v.groupHealMult) lines.push(`團體治癒強化（體力回復術、生命的祝福恢復量 ×${v.groupHealMult}）`);
+  if(v.poisonMult) lines.push(`劇毒增幅（附加劇毒傷害 ×${v.poisonMult}）`);
+  if(v.softMult) lines.push(`柔軟專攻（攻擊無硬皮的敵人傷害 ×${v.softMult}）`);
+  if(v.iaiCrit) lines.push(`居合必定爆擊`);
+  if(v.potionBonus && !v.doll) lines.push(`治癒藥水恢復量${num(v.potionBonus)}%`);
+  if(v.hitEchoMagic && typeof v.hitEchoMagic === 'object') lines.push(`元素爆破 ${v.hitEchoMagic.rate}%（命中後追加等同本次一般攻擊傷害的${ELE_LABEL_ZH[v.hitEchoMagic.ele] || v.hitEchoMagic.ele}屬性魔法傷害）`);
+  if(v.onHitWet) lines.push(`潮濕（命中後持續10秒；下一次風屬性傷害 ×2 並解除）`);
+  if(v.onHitEleVuln) lines.push(`元素弱點（命中使目標受到的${ELE_LABEL_ZH[v.onHitEleVuln] || v.onHitEleVuln}屬性傷害提高）`);
+  if(v.windSpellProcRate) lines.push(`風魔法共振 ${v.windSpellProcRate}%（主動施放風屬性傷害魔法時追加龍捲風）`);
+  if(v.hasteStrike) lines.push(`加速突擊（加速時命中與傷害+30；命中後失去加速）`);
+  if(v.selfBreakProc && typeof v.selfBreakProc === 'object') lines.push(`易碎爆發（3%造成1.5倍傷害，但自身傷害降低${v.selfBreakProc.dur || 5}秒）`);
+  if(v.procHealFlat && typeof v.procHealFlat === 'object') lines.push(`命中治癒 ${v.procHealFlat.rate}%（恢復${v.procHealFlat.hp}點HP）`);
+  if(v.castOnHurt && typeof v.castOnHurt === 'object') lines.push(`護身反擊 ${v.castOnHurt.rate}%（受到物理或魔法傷害時，免費施放目前設定的自動攻擊傷害法術）`);
+  if(v.raceFlat && typeof v.raceFlat === 'object') lines.push(`${v.raceFlat.race}剋星（對${v.raceFlat.race}額外傷害${num(v.raceFlat.add)}）`);
+  if(v.raceBonus && typeof v.raceBonus === 'object') lines.push(`${v.raceBonus.race}剋星（對${v.raceBonus.race}傷害 ×${v.raceBonus.mult}）`);
+  if(v.weakHitBonus) lines.push(`弱點洞察（屬性剋制時額外傷害${num(v.weakHitBonus)}）`);
+  if(v.partnerHit && typeof v.partnerHit === 'object'){
+    const _partnerNames = Object.keys(v.partnerHit).map(n => `${n}命中${num(v.partnerHit[n])}`);
+    if(_partnerNames.length) lines.push(`夥伴強化（${_partnerNames.join('、')}）`);
+  }
+  if(v.showMobEle) lines.push(`元素洞察（顯示敵人的屬性）`);
+  if(v.hurtExplode) lines.push(`受擊爆裂（自己與全體敵人受到${v.hurtExplode}點火焰魔法傷害）`);
+  if(v.crushDr) lines.push(`重擊防護（受到重擊傷害 -${v.crushDr}%）`);
+  if(v.physDrGated) lines.push(`物理防護（一般攻擊傷害 -${v.physDrGated}%，每3秒一次）`);
+  // ↓weaponPurposeLabels()搬移
+  if(v.dragonStrike) lines.push(`龍的一擊 ${v.dragonStrike}%（每次一般攻擊皆判定且不論命中；對全體造成3D力量+30固定物理傷害）`);
+  if(v.equipHaste) lines.push(`裝備加速（常駐加速，與加速術／自我加速藥水不重疊）`);
+  if(v.mdmgEnFrom7Max3) lines.push(`魔法傷害成長（+7起魔法傷害+1，之後每強化+1，最高+3）`);
+  if(v.mpRPerEn) lines.push(`MP自然恢復每強化${num(v.mpRPerEn)}`);
+  if(v.procBurstPoison && typeof v.procBurstPoison === 'object'){
+    const _pb = v.procBurstPoison;
+    lines.push(`猛爆劇毒 ${_pb.rateBase == null ? 1 : _pb.rateBase}%＋每強化${_pb.ratePerEn == null ? 1 : _pb.ratePerEn}%（每秒100點真實傷害，持續5秒，最多1層）`);
+  }
+  if(v.qiguProc === 'phantom') lines.push(`幻影衝擊 1%＋每強化1%（造成基礎80～160的無屬性魔法傷害，不受MR減免）`);
+  if(v.qiguProc === 'mindbreak') lines.push(`心靈破壞 1%＋每強化1%（以自身最大MP 5%為基礎魔法傷害，不消耗MP；奇古獸精通時無視MR）`);
+  if(v.strawCurse && typeof v.strawCurse === 'object') lines.push(`稻草詛咒 ${v.strawCurse.rate}%（命中時附加${v.strawCurse.stacks || 3}層；後續每次受攻擊消耗1層並追加80點水屬性固定魔法傷害）`);
+  if(v.stunHitBonus) lines.push(`衝擊之暈強化（暈眩命中率${num(v.stunHitBonus)}%）`);
+  if(v.vanderStunHit) lines.push(`范德劍術（施放衝擊之暈時，本次近距離命中+1）`);
+  if(v.shahaBow) lines.push(`沙哈之箭（裝備時自動提供不會消耗的專用箭矢，卸下弓時消失）`);
+  if(v.shahaArrow) lines.push(`無限箭矢（不會消耗；卸下沙哈之弓時消失）`);
+
   return lines;
 }
 function relicInfoHTML(v, id){
