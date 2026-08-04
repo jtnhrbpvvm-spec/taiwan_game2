@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-64</title>
+<title>放置天堂 Save Editor v7-66</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -311,7 +311,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-64</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-66</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入網頁版存檔
@@ -2525,7 +2525,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-38 已就緒', 'info');
+  toast('⚔️ Save Editor v7-66 已就緒', 'info');
 });
 </script>
 
@@ -2917,7 +2917,7 @@ function relicMechanicLines(v, id){
   if(v.poisonMult) lines.push(`劇毒增幅（附加劇毒傷害 ×${v.poisonMult}）`);
   if(v.softMult) lines.push(`柔軟專攻（攻擊無硬皮的敵人傷害 ×${v.softMult}）`);
   if(v.iaiCrit) lines.push(`居合必定爆擊`);
-  if(v.potionBonus && !v.doll) lines.push(`治癒藥水恢復量${num(v.potionBonus)}%`);
+  if(v.potionBonus) lines.push(`治癒藥水恢復量${num(v.potionBonus)}%`);   // ⚠️ 原本有`&& !v.doll`排除魔法娃娃：那是照搬官方relicPurposeLabels()的邏輯（官方另有一份statsArr會無條件補顯示），但本函式身兼兩者角色，排除後魔法娃娃反而完全不會顯示此行，故移除排除條件
   if(v.hitEchoMagic && typeof v.hitEchoMagic === 'object') lines.push(`元素爆破 ${v.hitEchoMagic.rate}%（命中後追加等同本次一般攻擊傷害的${ELE_LABEL_ZH[v.hitEchoMagic.ele] || v.hitEchoMagic.ele}屬性魔法傷害）`);
   if(v.onHitWet) lines.push(`潮濕（命中後持續10秒；下一次風屬性傷害 ×2 並解除）`);
   if(v.onHitEleVuln) lines.push(`元素弱點（命中使目標受到的${ELE_LABEL_ZH[v.onHitEleVuln] || v.onHitEleVuln}屬性傷害提高）`);
@@ -2954,12 +2954,33 @@ function relicMechanicLines(v, id){
   if(v.shahaBow) lines.push(`沙哈之箭（裝備時自動提供不會消耗的專用箭矢，卸下弓時消失）`);
   if(v.shahaArrow) lines.push(`無限箭矢（不會消耗；卸下沙哈之弓時消失）`);
 
+  // 🪆 §補完：魔法娃娃(doll)常用欄位，先前完全沒被本函式處理（官方對照見10-ui-tabs.js relicPurposeLabels()/統一能力區塊）
+  if(v.procPoisonRate) lines.push(`一般攻擊命中 ${v.procPoisonRate}% 機率使目標中毒`);
+  if(v.procBonusDmg && typeof v.procBonusDmg === 'object') lines.push(`攻擊時 ${v.procBonusDmg.rate}% 機率追加固定傷害 ${v.procBonusDmg.dmg}`);
+  if(v.procDmgReduce && typeof v.procDmgReduce === 'object') lines.push(`受到攻擊時 ${v.procDmgReduce.rate}% 機率減少 ${v.procDmgReduce.amount} 點傷害`);
+  if(v.procSkill){
+    const _procName = (typeof SKILL_MAP !== 'undefined' && SKILL_MAP[v.procSkill]) || v.procSkill;
+    const _procRate = (v.procRateBase != null ? v.procRateBase : 1) + (v.procRatePerEn || 0);
+    lines.push(`${v.procOnHit ? '命中施法' : '攻擊施法'} ${_procRate}%（觸發「${_procName}」）`);
+  }
+  if(v.magicHit) lines.push(`魔法命中${num(v.magicHit)}`);
+  if(v.expBonus) lines.push(`經驗值獲得量${pct(v.expBonus)}`);
+  if(v.goldBonus) lines.push(`金幣獲得量${pct(v.goldBonus)}`);
+  if(v.freezeResist) lines.push(v.freezeResist >= 100 ? `完全免疫冰凍` : `冰凍抵抗${pct(v.freezeResist)}`);
+
   return lines;
 }
 function relicInfoHTML(v, id){
-  if(!v.relic) return '';
+  // 🪆 魔法娃娃(doll:true)本身不是relic，但同樣需要顯示能力說明；
+  // 之前只判斷v.relic，導致所有魔法娃娃在搜尋結果裡完全沒有效果文字。
+  const isDoll = !!(v.doll || v.slot === 'doll');
+  if(!v.relic && !isDoll) return '';
   let html = `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); color:var(--relic);">`;
-  html += `🏺 遺物・正確裝備位置：<b>${relicSlotLabel(v)}</b>`;
+  if(isDoll){
+    html += `🪆 魔法娃娃・裝備欄位：<b>${relicSlotLabel(v)}</b>${v.dollTier ? `（${v.dollTier}階）` : ''}`;
+  } else {
+    html += `🏺 遺物・正確裝備位置：<b>${relicSlotLabel(v)}</b>`;
+  }
   if(v.d) html += `<div style="color:var(--text3); font-style:italic; margin-top:4px; line-height:1.5;">${v.d}</div>`;
   const mech = relicMechanicLines(v, id);
   if(mech.length){
@@ -9008,6 +9029,21 @@ function _parseItemSig(sig){
     seteff: parts[5] || '',
   };
 }
+// 🔽 垃圾偏好清單排序：依使用者指定的優先順位分類，數字越小排越前面。
+// 若同一件裝備符合多個分類（例如：又是遺物、又強化過），一律取「順位最高（數字最小）」的那個分類，
+// 不會重複計算或疊加，也就是每件裝備最終只落在一個分類裡。
+// 1.遺物  2.附加屬性(依階級排列)  3.祝福及遠古等屬性  4.強化過的  5.boss裝備(紅字裝備)  6.一般雜物
+const JUNK_PREF_RANK_LABEL = {
+  1: '🏺 遺物', 2: '✨ 附加屬性', 3: '🙏 祝福/遠古', 4: '⚒️ 強化裝備', 5: '👹 Boss裝備', 6: '🗑️ 一般雜物',
+};
+function _junkPrefRank(p, db){
+  if(db.relic) return 1;                                                   // 1. 遺物
+  if(p.attr && ATTR_AFFIX[attrCanon(p.attr)]) return 2;                    // 2. 附加屬性（下面依tier再排一次階級高低）
+  if((p.bless && p.bless !== '0') || (p.anc && p.anc !== '0')) return 3;   // 3. 祝福/詛咒 或 遠古/永恆/不朽/太初
+  if(p.en > 0) return 4;                                                   // 4. 強化過的（+1以上）
+  if(db.legend) return 5;                                                  // 5. boss裝備（紅字/傳說裝備，db.legend）
+  return 6;                                                                // 6. 一般雜物（其餘都不符合）
+}
 function renderJunkPrefsSummary(){
   const el = document.getElementById('junkPrefsSummary');
   if(!el) return;
@@ -9041,16 +9077,28 @@ function renderJunkPrefsList(){
   const rows = keys.map(sig => {
     const p  = _parseItemSig(sig);
     const db = ITEM_DB[p.id] || {};
-    return { sig, p, db, name: db.n || p.id };
+    const rank = _junkPrefRank(p, db);
+    const attrTier = (ATTR_AFFIX[attrCanon(p.attr)] || {}).tier || 0;
+    return { sig, p, db, name: db.n || p.id, rank, attrTier };
   }).filter(r => !q || r.name.toLowerCase().includes(q) || r.p.id.toLowerCase().includes(q));
+
+  // 依優先順位排序：1遺物→2附加屬性(階級高到低)→3祝福/遠古→4強化→5boss裝備→6一般雜物
+  rows.sort((a, b) => {
+    if(a.rank !== b.rank) return a.rank - b.rank;
+    if(a.rank === 2 && a.attrTier !== b.attrTier) return b.attrTier - a.attrTier;   // 附加屬性同順位時，階級(tier)高的排前面
+    return 0;   // 其餘同順位維持原本清單順序（穩定排序）
+  });
 
   if(!rows.length){
     el.innerHTML = '<div style="color:var(--text3);padding:12px;text-align:center;font-size:12px">找不到符合的物品</div>';
     return;
   }
 
-  el.innerHTML = rows.map(r => {
-    const { p, db, name } = r;
+  el.innerHTML = rows.map((r, idx) => {
+    const { p, db, name, rank } = r;
+    const groupHeader = (idx === 0 || rows[idx - 1].rank !== rank)
+      ? `<div style="font-size:11px;font-weight:700;color:var(--accent2);margin:${idx===0?'0':'10px'} 0 2px 2px;">${JUNK_PREF_RANK_LABEL[rank] || ''}</div>`
+      : '';
     const badges = [];
     if(p.en > 0) badges.push(`+${p.en}`);
     if(p.bless === 'B') badges.push('祝福');
@@ -9068,7 +9116,7 @@ function renderJunkPrefsList(){
     if(db.p !== undefined) info.push(`價格 ${db.p}`);
     if(db.d && typeof db.d === 'string') info.push(db.d);
 
-    return `
+    return groupHeader + `
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;color:var(--text)">
