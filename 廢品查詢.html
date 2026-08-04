@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>垃圾偏好編輯器（外接版）</title>
+<style>
+:root {
+  --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
+  --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
+  --text:#e8eaf6; --text2:#9fa8da; --text3:#555a7a;
+  --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
+  --legend:#f59e0b; --partner:#22d3ee; --relic:#5ec8ff;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  font-size:14px;
+}
+#topbar{
+  background:var(--bg2); padding:8px 12px;
+  display:flex; gap:6px; align-items:center;
+  border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.bar-title{ font-weight:bold; color:var(--accent2); margin-right:4px; font-size:15px; }
+.bar-sep{ color:var(--border); padding:0 2px; }
+#content{ max-width:720px; margin:0 auto; padding:20px; }
+.btn{
+  padding:6px 12px; cursor:pointer;
+  background:var(--bg3); color:var(--text);
+  border:1px solid var(--border); border-radius:4px;
+  font-size:13px; transition:all 0.15s; white-space:nowrap;
+}
+.btn:hover{ border-color:var(--accent); color:#fff; }
+.btn.btn-accent{ background:var(--accent); border-color:var(--accent); }
+.btn.btn-accent:hover{ background:var(--accent2); }
+.btn.btn-danger{ border-color:var(--red); color:var(--red); }
+.btn.btn-danger:hover{ background:var(--red); color:#fff; }
+.btn.btn-sm{ padding:3px 8px; font-size:12px; }
+.btn:disabled{ opacity:.4; cursor:not-allowed; }
+.btn:disabled:hover{ border-color:var(--border); color:var(--text); }
+input[type=text]{
+  background:var(--bg3); color:var(--text);
+  border:1px solid var(--border); border-radius:4px;
+  padding:5px 8px; font-size:13px;
+}
+input:focus{ outline:none; border-color:var(--accent); }
+input[readonly]{ opacity:.65; cursor:not-allowed; }
+.form-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.form-label{ width:110px; color:var(--text2); font-size:13px; flex-shrink:0; }
+.adv-card{
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:6px; padding:12px; margin-bottom:12px;
+}
+.adv-card-title{
+  font-size:12px; font-weight:bold; color:var(--accent2);
+  margin-bottom:10px; padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+.status-box{
+  border-radius:6px; padding:10px 12px; font-size:12px; line-height:1.6;
+  margin-bottom:14px; border:1px solid var(--border); background:var(--bg2);
+}
+.status-box.ok{ border-color:var(--green); color:var(--green); }
+.status-box.warn{ border-color:var(--yellow); color:var(--yellow); }
+.status-box.err{ border-color:var(--red); color:var(--red); }
+.toast{
+  padding:8px 14px; border-radius:5px; font-size:13px;
+  background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  animation:fadeIn .2s ease;
+}
+.toast.ok{ border-color:var(--green); color:var(--green); }
+.toast.err{ border-color:var(--red); color:var(--red); }
+.toast.warn{ border-color:var(--yellow); color:var(--yellow); }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+
+<div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
+
+<div id="topbar">
+  <span class="bar-title">🗑️ 垃圾偏好編輯器（外接版）</span>
+  <span class="bar-sep">|</span>
+  <label class="btn" style="cursor:pointer">
+    📂 匯入網頁版存檔
+    <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)" disabled>
+  </label>
+  <button class="btn" onclick="exportJson()" disabled>💾 匯出網頁版存檔</button>
+  <label class="btn" style="cursor:pointer">
+    💻 匯入單機版存檔
+    <input type="file" accept=".json" style="display:none" onchange="importSIG2File(event)" disabled>
+  </label>
+  <button class="btn" onclick="exportSIG2()" disabled>🖥️ 匯出單機版存檔</button>
+</div>
+
+<div id="content">
+
+  <div id="sourceStatus" class="status-box">⏳ 正在嘗試從同資料夾讀取「存檔修改.html」…</div>
+
+  <div id="noSaveHint" style="color:var(--text3);text-align:center;padding:30px 0;">尚未匯入存檔</div>
+
+  <div id="mainCards" style="display:none;">
+
+    <div class="adv-card">
+      <div class="adv-card-title">🪪 身分證</div>
+      <div class="form-row">
+        <span class="form-label">身分證(enSeed)</span>
+        <input type="text" id="f_enseed" style="width:26ch;font-family:monospace" readonly
+               title="遊戲用來判斷「是否為同一角色」以及強化機率的識別碼。若要把這份存檔匯入到不同的存檔格，且不想被判定成跟原角色重複，請按右側按鈕換一組新的。">
+        <button class="btn btn-sm" onclick="reissueEnSeed()">換發身分證</button>
+      </div>
+    </div>
+
+    <div class="adv-card">
+      <div class="adv-card-title">🗑️ 垃圾偏好（junkPrefs）</div>
+      <div class="form-row">
+        <button class="btn btn-sm btn-danger" onclick="clearJunkPrefs()">清空全部垃圾設定</button>
+        <span style="font-size:12px;color:var(--text3);margin-left:8px">清空後遊戲將不自動丟棄任何物品</span>
+      </div>
+      <div id="junkPrefsSummary" style="font-size:12px;color:var(--text3);margin-top:6px;"></div>
+      <div class="form-row" style="margin-top:10px">
+        <input type="text" id="junkPrefsSearch" placeholder="搜尋垃圾清單（名稱或ID）..."
+               style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px"
+               oninput="renderJunkPrefsList()">
+      </div>
+      <div id="junkPrefsList" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;margin-top:8px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  外接抽取工具
+//  這個網頁本身不內建 ITEM_DB、不內建 SIG1/SIG2 簽章演算法，
+//  而是在載入時去讀同資料夾的「存檔修改.html」，把需要的常數/函式原封不動抽出來注入。
+//  好處：主編輯器更新遊戲資料或修簽章邏輯時，這個工具永遠自動跟著同步，不會有兩份資料long-term對不齊的問題。
+// ════════════════════════════════════════════════
+function _extractFn(src, marker){
+  const idx = src.indexOf(marker);
+  if(idx < 0) throw new Error('來源檔案缺少函式：' + marker);
+  let i = idx;
+  while(src[i] !== '{') i++;
+  let depth = 0, j = i;
+  for(; j < src.length; j++){
+    if(src[j] === '{') depth++;
+    else if(src[j] === '}'){ depth--; if(depth === 0) break; }
+  }
+  return src.slice(idx, j + 1);
+}
+function _skipString(s, i){
+  const q = s[i]; i++;
+  while(i < s.length){
+    if(s[i] === '\\'){ i += 2; continue; }
+    if(s[i] === q) return i + 1;
+    i++;
+  }
+  return i;
+}
+function _extractConst(src, marker){
+  const idx = src.indexOf(marker);
+  if(idx < 0) throw new Error('來源檔案缺少常數：' + marker);
+  let depth = 0, i = idx;
+  for(; i < src.length; i++){
+    const c = src[i];
+    if(c === '"' || c === "'" || c === '`'){ i = _skipString(src, i) - 1; continue; }
+    else if(c === '{' || c === '(' || c === '[') depth++;
+    else if(c === '}' || c === ')' || c === ']') depth--;
+    else if(c === ';' && depth === 0) break;
+  }
+  return src.slice(idx, i + 1);
+}
+
+// 只抽這個小工具實際用得到的部分：遊戲物品資料庫、屬性詞綴表、垃圾偏好排序邏輯、SIG1/SIG2簽章系統、身分證換發。
+// 不抽裝備/技能/公會等其他跟垃圾偏好無關的巨量邏輯，維持這個工具的精簡（這正是製作它的目的）。
+const _CONST_MARKERS = [
+  'const ITEM_DB', 'const ATTR_AFFIX', 'const ATTR_LEGACY',
+  'const JUNK_PREF_RANK_LABEL', 'const _SAVE_SALT',
+  'const SIG2_KEY_BYTES', 'const SIG2_DOMAIN_BYTES',
+];
+const _FN_MARKERS = [
+  'function attrCanon', 'function _parseItemSig', 'function _junkPrefRank',
+  'function _seedHash', 'function _signSave', 'function buildSIG1', 'function parseSIG1',
+  'function _genExportNonce', 'function _genEnSeed', 'function reissueEnSeed',
+  'function _toBase36', 'async function signDesktopSave', 'async function verifySIG2',
+  'function renderJunkPrefsSummary', 'function renderJunkPrefsList',
+  'function removeJunkPref', 'function clearJunkPrefs',
+];
+
+function _injectSourceCode(html){
+  const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  const src = scripts.join('\n');
+  if(!src.includes('const ITEM_DB')){
+    throw new Error('這個檔案看起來不是有效的「存檔修改.html」（找不到 ITEM_DB 資料庫）');
+  }
+  const parts = [];
+  _CONST_MARKERS.forEach(m => parts.push(_extractConst(src, m)));
+  _FN_MARKERS.forEach(m => parts.push(_extractFn(src, m)));
+  const scriptEl = document.createElement('script');
+  scriptEl.textContent = parts.join('\n\n');
+  document.head.appendChild(scriptEl);
+}
+
+// 線上備援來源：本機同資料夾讀取失敗時（多數瀏覽器對本機檔案的fetch有安全限制，
+// 尤其是直接雙擊開啟html的情況），改從這個公開的線上版本抓取同一套資料。
+// 玩家手上通常沒有「存檔修改.html」這個檔案，所以失敗時不會要求手動選檔，而是自動切換到這個網址。
+const _REMOTE_SOURCE_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E5%AD%98%E6%AA%94%E4%BF%AE%E6%94%B9.html';
+
+function _setSourceStatus(msg, cls){
+  const el = document.getElementById('sourceStatus');
+  el.className = 'status-box' + (cls ? ' ' + cls : '');
+  el.textContent = msg;
+}
+
+function _enableImportButtons(){
+  document.querySelectorAll('#topbar input[type=file], #topbar button').forEach(el => el.disabled = false);
+}
+
+async function _tryLoadFrom(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const html = await res.text();
+  _injectSourceCode(html);
+}
+
+async function _loadSourceData(){
+  // 1) 先試同資料夾本機檔案（如果玩家把這個工具跟存檔修改.html放在一起，直接自動讀取最新版本）
+  try{
+    await _tryLoadFrom('./存檔修改.html');
+    _setSourceStatus('✅ 已自動從同資料夾讀取「存檔修改.html」的最新資料（物品資料庫／簽章邏輯），可以開始匯入存檔了。', 'ok');
+    _enableImportButtons();
+    return;
+  }catch(err){
+    // 本機讀取失敗很常見（本機檔案的fetch常被瀏覽器安全機制擋下），不當成錯誤，直接往下改抓線上版本
+  }
+
+  // 2) 本機讀取失敗，改從線上公開版本抓取同一套資料
+  _setSourceStatus('⏳ 同資料夾沒有找到「存檔修改.html」，改嘗試從線上版本讀取資料…', 'warn');
+  try{
+    await _tryLoadFrom(_REMOTE_SOURCE_URL);
+    _setSourceStatus('✅ 已從線上版本讀取最新資料，可以開始匯入存檔了。', 'ok');
+    _enableImportButtons();
+  }catch(err){
+    _setSourceStatus('❌ 資料讀取失敗（本機與線上版本皆無法讀取）：' + err.message + '　請檢查網路連線後重新整理這個頁面再試一次。', 'err');
+  }
+}
+
+// ════════════════════════════════════════════════
+//  這個工具自己的最小工具函式（跟遊戲資料無關，不需要外接，直接寫在這裡）
+// ════════════════════════════════════════════════
+function toast(msg, type='info', dur=2500){
+  const area = document.getElementById('toastArea');
+  const el   = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(()=>el.remove(), dur);
+}
+function setVal(id, v){
+  const e = document.getElementById(id);
+  if(e) e.value = (v === null || v === undefined) ? '' : v;
+}
+
+// ════════════════════════════════════════════════
+//  全域狀態（比照存檔修改.html的G.p結構，但只保留這個工具真正需要動到的最小狀態）
+// ════════════════════════════════════════════════
+let G = { p: null };
+let _rawSave = null;       // 完整讀進來的存檔物件；除了p.junkPrefs／p.enSeed，其餘欄位原封不動保留，匯出時原樣寫回
+let _sig2Envelope = null;  // 只有從SIG2（單機版）匯入時才有值，記住原始信封資訊(format/schema/version)
+let _sig1Nonce = null;
+
+// 跟存檔修改.html的_buildSaveBase()同樣的精神：整份工具只有這一處組裝匯出用的存檔基底。
+function _buildSaveBase(){
+  return Object.assign({}, _rawSave, { p: G.p });
+}
+
+function refreshUI(){
+  document.getElementById('noSaveHint').style.display = 'none';
+  document.getElementById('mainCards').style.display = 'block';
+  setVal('f_enseed', G.p.enSeed || '（無）');
+  renderJunkPrefsSummary();
+}
+
+// ════════════════════════════════════════════════
+//  匯入 / 匯出：網頁版存檔（SIG1）
+// ════════════════════════════════════════════════
+function importJsonFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const parsed = parseSIG1(e.target.result.trim());
+      if(!parsed.p) throw new Error('存檔內容缺少角色資料(p)');
+      _rawSave = parsed;
+      _sig2Envelope = null;
+      G.p = parsed.p;
+      _sig1Nonce = parsed._exportNonce || _genExportNonce();
+      refreshUI();
+      toast('✅ 網頁版存檔已匯入', 'ok');
+    }catch(err){
+      toast('❌ 解析失敗：' + err.message, 'err', 4000);
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+function exportJson(){
+  if(!_rawSave){ toast('⚠️ 尚未匯入存檔', 'warn'); return; }
+  const base    = _buildSaveBase();
+  const out     = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const payload = JSON.stringify(out);
+  const signed  = buildSIG1(payload);
+  const blob    = new Blob([signed], { type:'application/json' });
+  const url     = URL.createObjectURL(blob);
+  const a       = document.createElement('a');
+  a.href        = url;
+  a.download    = 'save_' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 網頁版存檔已匯出', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  匯入 / 匯出：單機版存檔（SIG2）
+// ════════════════════════════════════════════════
+async function importSIG2File(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const { payload, verified } = await verifySIG2(text.trim());
+    if(!verified) toast('⚠️ SIG2 簽章不符，資料可能已被修改，仍嘗試載入', 'warn', 4000);
+    const save = (payload && payload.save) ? payload.save : payload;
+    if(!save || !save.p) throw new Error('存檔內容缺少角色資料(p)');
+    _rawSave = save;
+    _sig2Envelope = { version: payload && payload.version, format: payload && payload.format, schema: payload && payload.schema };
+    G.p = save.p;
+    _sig1Nonce = save._exportNonce || _genExportNonce();
+    refreshUI();
+    toast('✅ 單機版存檔已匯入', 'ok');
+  }catch(err){
+    toast('❌ 解析失敗：' + err.message, 'err', 4000);
+  }
+  evt.target.value = '';
+}
+
+async function exportSIG2(){
+  if(!_rawSave){ toast('⚠️ 尚未匯入存檔', 'warn'); return; }
+  const base     = _buildSaveBase();
+  const saveOut  = Object.assign({}, base, { _exportNonce: _sig1Nonce });
+  const envelope = {
+    format: (_sig2Envelope && _sig2Envelope.format) || 'idle-lineage-desktop-save',
+    schema: (_sig2Envelope && _sig2Envelope.schema) || 1,
+    version: (_sig2Envelope && _sig2Envelope.version) || '3.8.19',
+    exportedAt: new Date().toISOString(),
+    save: saveOut,
+  };
+  const payload = JSON.stringify(envelope);
+  const signed  = await signDesktopSave(payload);
+  const blob     = new Blob([signed], { type:'application/json' });
+  const url      = URL.createObjectURL(blob);
+  const a        = document.createElement('a');
+  a.href         = url;
+  a.download     = 'save_desktop_' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 單機版存檔已匯出', 'ok');
+}
+
+// ── 啟動：先嘗試外接讀取資料，成功（或手動選檔成功）後才能匯入存檔 ──
+_loadSourceData();
+</script>
+</body>
+</html>
