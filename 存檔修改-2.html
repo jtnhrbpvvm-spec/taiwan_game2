@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-66</title>
+<title>放置天堂 Save Editor v7-64</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -11,6 +11,7 @@
   --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
   --legend:#f59e0b; --partner:#22d3ee; --relic:#5ec8ff;
 }
+html{ background:#0f1117; }
 *{ box-sizing:border-box; margin:0; padding:0; }
 body{
   background:var(--bg); color:var(--text);
@@ -25,7 +26,7 @@ body{
 }
 .bar-title{ font-weight:bold; color:var(--accent2); margin-right:4px; font-size:15px; }
 .bar-sep{ color:var(--border); padding:0 2px; }
-#main{ display:flex; flex:1; overflow:hidden; }
+#main{ display:flex; flex:1; overflow:hidden; background:var(--bg); }
 #sidebar{
   width:152px; background:var(--bg2);
   border-right:1px solid var(--border);
@@ -43,7 +44,7 @@ body{
   font-size:10px; color:var(--text3); text-transform:uppercase;
   letter-spacing:1px; padding:10px 6px 4px; margin-top:4px;
 }
-#content{ flex:1; padding:20px; overflow-y:auto; position:relative; }
+#content{ flex:1; padding:20px; overflow-y:auto; position:relative; background:var(--bg); }
 .panel{ display:none; }
 .panel.active{ display:block; }
 /* 物品查詢面板：填滿整個右側內容區 */
@@ -92,6 +93,7 @@ select option{ background:var(--bg3); }
 .eq-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
 .eq-slot{ background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:10px; }
 .eq-slot-rem{ border-color:var(--accent2); }
+.eq-slot-simple{ border-color:var(--legend); }
 .rem-set-summary{
   display:flex; flex-direction:column; justify-content:center; gap:4px;
   height:100%; min-height:60px; padding:6px 4px;
@@ -267,6 +269,17 @@ select option{ background:var(--bg3); }
   margin-bottom:10px; padding-bottom:6px;
   border-bottom:1px solid var(--border);
 }
+/* 垃圾偏好清單：排序分類篩選按鈕（勾選=顯示該分類，全部取消視同全選） */
+.junk-rank-btn{
+  padding:3px 9px; font-size:11px; cursor:pointer;
+  background:var(--bg2); color:var(--text3);
+  border:1px solid var(--border); border-radius:12px;
+  transition:all 0.15s;
+}
+.junk-rank-btn:hover{ border-color:var(--accent); }
+.junk-rank-btn.active{
+  background:var(--accent); color:#fff; border-color:var(--accent);
+}
 /* 背包/倉庫 */
 .item-dropdown{
   position:absolute; top:100%; left:0; z-index:500;
@@ -311,7 +324,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-66</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-64</span>
   <span class="bar-sep">|</span>
   <label class="btn" style="cursor:pointer">
     📂 匯入網頁版存檔
@@ -683,9 +696,12 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
         ⚠️ 備註：屬性魔法在防具欄位可能不會發揮作用！
       </div>
   <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
       <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana / 遺物" 
              style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;">
+      <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
+      <select id="equipSearchSlotFilter" onchange="renderEquipSearch()"
+              style="padding:8px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px"></select>
       <button class="btn btn-sm" onclick="document.getElementById('equipSearchInput').value=''; renderEquipSearch();">清空</button>
     </div>
     <div id="equipSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;"></div>
@@ -703,16 +719,25 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <script>
 function renderEquipSearch(){
   const kw = (document.getElementById('equipSearchInput')?.value || '').trim().toLowerCase();
+  const slotFilter = document.getElementById('equipSearchSlotFilter')?.value || '';
   const wrap = document.getElementById('equipSearchResults');
   if(!wrap) return;
-  
-  if(!kw){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物）</div>';
+
+  // 🪄 魔眼欄位全遊戲只有「地龍之魔眼」這一件固定物品，不透過搜尋新增，避免跟裝備面板底部的專用勾選格產生兩套裝備方式。
+  if(slotFilter === 'eye'){
+    wrap.innerHTML = '<div style="color:var(--yellow); grid-column:1/-1; padding:20px; text-align:center; line-height:1.7;">🪄 魔眼欄位全遊戲只有「地龍之魔眼」這一件固定物品，不開放搜尋新增。<br>請到上方「裝備」分頁最底端的「魔眼（地龍之魔眼）」小格，勾選「已裝備」即可。</div>';
+    return;
+  }
+
+  if(!kw && !slotFilter){
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
   
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
     if(!v.type || !['wpn','arm','acc','helm','shield','glove','boot','belt','cloak'].includes(v.type)) return false;
+    if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
+    if(!kw) return true;
     if(isRelicKeyword(kw)) return !!v.relic;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
@@ -926,7 +951,24 @@ function sendPendingEquipTo(type){
   closeEquipSlotPicker();
 }
 
+// 動態產生「裝備／背包／倉庫」搜尋欄位旁的部位下拉選單選項，統一從 JUNK_PREF_SLOT_LABEL 取得標籤文字，避免多處維護不同步。
+// 裝備搜尋只涉及可裝備的 wpn/arm/acc 類型物品，所以不列出技能書/一般道具這兩個選項（列了也永遠是空清單）；
+// 背包/倉庫搜尋涵蓋整個 ITEM_DB，所以列出全部20種分類。
+function _initSlotFilterDropdowns(){
+  const equipOrder = ['', 'wpn', 'helm', 'armor', 'shield', 'cloak', 'tshirt', 'gloves', 'boots', 'shin',
+                       'ring', 'amulet', 'ear', 'belt', 'eye', 'doll', 'petarm', 'petwpn', 'rem'];
+  const fullOrder  = equipOrder.concat(['skillbk', 'general']);
+  const buildOptions = order => order.map(k => `<option value="${k}">${JUNK_PREF_SLOT_LABEL[k] || k}</option>`).join('');
+  const eqEl = document.getElementById('equipSearchSlotFilter');
+  if(eqEl) eqEl.innerHTML = buildOptions(equipOrder);
+  ['invRefSlotFilter', 'whRefSlotFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = buildOptions(fullOrder);
+  });
+}
+
 setTimeout(() => {
+  _initSlotFilterDropdowns();
   const input = document.getElementById('equipSearchInput');
   if(input){
     input.addEventListener('input', renderEquipSearch);
@@ -935,13 +977,14 @@ setTimeout(() => {
 }, 100);
 
 // 通用物品資料庫搜尋（背包/倉庫共用；不限裝備類型，搜尋全部 ITEM_DB）
-function renderItemRefSearch(inputId, resultId){
+function renderItemRefSearch(inputId, resultId, slotFilterId){
   const kw = (document.getElementById(inputId)?.value || '').trim().toLowerCase();
+  const slotFilter = (slotFilterId && document.getElementById(slotFilterId)?.value) || '';
   const wrap = document.getElementById(resultId);
   if(!wrap) return;
 
-  if(!kw){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>';
+  if(!kw && !slotFilter){
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
 
@@ -951,6 +994,8 @@ function renderItemRefSearch(inputId, resultId){
   };
 
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
+    if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
+    if(!kw) return true;
     if(isRelicKeyword(kw)) return !!v.relic;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
@@ -1031,11 +1076,14 @@ function renderItemRefSearch(inputId, resultId){
     <div class="panel" id="panel-inv">
       <div class="panel-title">🎒 背包</div>
       <div id="invRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
           <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
-                 oninput="renderItemRefSearch('invRefSearchInput','invRefSearchResults')">
-          <button class="btn btn-sm" onclick="document.getElementById('invRefSearchInput').value=''; renderItemRefSearch('invRefSearchInput','invRefSearchResults');">清空</button>
+                 oninput="renderItemRefSearch('invRefSearchInput','invRefSearchResults','invRefSlotFilter')">
+          <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
+          <select id="invRefSlotFilter" onchange="renderItemRefSearch('invRefSearchInput','invRefSearchResults','invRefSlotFilter')"
+                  style="padding:8px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px"></select>
+          <button class="btn btn-sm" onclick="document.getElementById('invRefSearchInput').value=''; renderItemRefSearch('invRefSearchInput','invRefSearchResults','invRefSlotFilter');">清空</button>
         </div>
         <div id="invRefSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;">
           <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>
@@ -1071,11 +1119,14 @@ function renderItemRefSearch(inputId, resultId){
     <div class="panel" id="panel-wh">
       <div class="panel-title">🏦 倉庫</div>
       <div id="whRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
           <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
-                 oninput="renderItemRefSearch('whRefSearchInput','whRefSearchResults')">
-          <button class="btn btn-sm" onclick="document.getElementById('whRefSearchInput').value=''; renderItemRefSearch('whRefSearchInput','whRefSearchResults');">清空</button>
+                 oninput="renderItemRefSearch('whRefSearchInput','whRefSearchResults','whRefSlotFilter')">
+          <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
+          <select id="whRefSlotFilter" onchange="renderItemRefSearch('whRefSearchInput','whRefSearchResults','whRefSlotFilter')"
+                  style="padding:8px 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px"></select>
+          <button class="btn btn-sm" onclick="document.getElementById('whRefSearchInput').value=''; renderItemRefSearch('whRefSearchInput','whRefSearchResults','whRefSlotFilter');">清空</button>
         </div>
         <div id="whRefSearchResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; max-height:400px; overflow-y:auto;">
           <div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物）</div>
@@ -1364,7 +1415,34 @@ function renderItemRefSearch(inputId, resultId){
           <input type="text" id="junkPrefsSearch" placeholder="搜尋垃圾清單（名稱或ID）..."
                  style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px"
                  oninput="renderJunkPrefsList()">
+          <!-- 選項對應JS裡的 JUNK_PREF_SLOT_LABEL，兩邊要一起維護 -->
+          <select id="junkPrefsSlotFilter" onchange="renderJunkPrefsList()"
+                  style="padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+            <option value="">全部部位</option>
+            <option value="wpn">⚔️ 武器</option>
+            <option value="helm">⛑️ 頭盔</option>
+            <option value="armor">🥋 盔甲</option>
+            <option value="shield">🛡️ 盾牌/臂甲</option>
+            <option value="cloak">🧥 披風</option>
+            <option value="tshirt">👕 T恤</option>
+            <option value="gloves">🧤 手套</option>
+            <option value="boots">👢 靴子</option>
+            <option value="shin">🦵 脛甲</option>
+            <option value="ring">💍 戒指</option>
+            <option value="amulet">📿 項鍊</option>
+            <option value="ear">👂 耳環</option>
+            <option value="belt">🎗️ 腰帶</option>
+            <option value="eye">👁️ 魔眼</option>
+            <option value="doll">🪆 魔法娃娃</option>
+            <option value="petarm">🐾 寵物防具</option>
+            <option value="petwpn">🐾 寵物武器</option>
+            <option value="rem">🦴 席琳遺骸</option>
+            <option value="skillbk">📖 技能書</option>
+            <option value="general">📦 一般道具</option>
+          </select>
         </div>
+        <!-- 按鈕由 _renderJunkPrefRankFilterButtons() 動態產生，對應 JUNK_PREF_RANK_LABEL；預設全選=不過濾 -->
+        <div id="junkPrefsRankFilter" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"></div>
         <div id="junkPrefsList" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;margin-top:8px"></div>
       </div>
     </div>
@@ -1479,6 +1557,7 @@ let G = {
       amulet:null, ear1:  null, ear2:  null, belt:  null,
       rem_claw:null, rem_eye:null, rem_blood:null, rem_flesh:null,
       rem_heart:null, rem_bone:null, rem_fang:null, rem_scale:null,
+      eye:null,
     },
     config:{
       setPot:'potion_heal', setHpPot:70, setAutoBuyPot:false,
@@ -2086,7 +2165,10 @@ async function verifySIG2(raw){
   const payloadStr = rest.slice(i + 1);
 
   const expectedSIG2 = await signDesktopSave(payloadStr);
-  const expectedSigPart = expectedSIG2.slice(5, expectedSIG2.indexOf(':'));
+  // ⚠️ bug修正：原本寫 expectedSIG2.indexOf(':') 沒有指定起始位置，
+  // 會抓到字串開頭「SIG2:」前綴自己的冒號(第4個字元)，導致slice(5,4)永遠回傳空字串，
+  // 使得 verified 永遠是 false（即使存檔完全沒被竄改）。改成從index 5開始找，跳過前綴的冒號。
+  const expectedSigPart = expectedSIG2.slice(5, expectedSIG2.indexOf(':', 5));
   const verified = (sigPart === expectedSigPart);
 
   return { payload: JSON.parse(payloadStr), verified };
@@ -2440,6 +2522,7 @@ function clearAll(){
         amulet:null,ear1:null,ear2:null,belt:null,
         rem_claw:null,rem_eye:null,rem_blood:null,rem_flesh:null,
         rem_heart:null,rem_bone:null,rem_fang:null,rem_scale:null,
+        eye:null,
       },
       config:{
         setPot:'potion_heal', setHpPot:70, setAutoBuyPot:false,
@@ -2525,7 +2608,7 @@ function clearAll(){
 // ════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   loadAllUI();
-  toast('⚔️ Save Editor v7-66 已就緒', 'info');
+  toast('⚔️ Save Editor v7-38 已就緒', 'info');
 });
 </script>
 
@@ -2689,6 +2772,9 @@ const EQ_SLOTS = [
   {id:'rem_bone',  label:'席琳之骨', isRemains:true },
   {id:'rem_fang',  label:'席琳之牙', isRemains:true },
   {id:'rem_scale', label:'席琳之鱗', isRemains:true },
+  // 🔽 魔眼欄位：全遊戲目前只有「地龍之魔眼」這一件對應物品，不需要完整的ID/強化/屬性詞綴等欄位，
+  // 只用一個checkbox切換「是否裝備」即可。刻意放在遺骸清單最後面，避免插在遺骸群組中間打亂那邊的顯示版位。
+  {id:'eye', label:'魔眼（地龍之魔眼）', isSimpleToggle:true, fixedItemId:'acc_earth_dragon_eye' },
 ];
 
 // 席琳遺骸套裝效果清單
@@ -3101,6 +3187,20 @@ function renderEqPanel(){
 
     const d  = (G.p.eq && G.p.eq[sl.id]) || {};
 
+    if(sl.isSimpleToggle){
+      return `
+      <div class="eq-slot eq-slot-simple">
+        <div class="eq-slot-title">${sl.label}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+          ID: <code>${sl.fixedItemId}</code>（固定，全遊戲僅此一件對應物品）
+        </div>
+        <label class="eq-flag">
+          <input type="checkbox" id="eq_${sl.id}_equipped"
+                 onchange="onSimpleToggleFieldChange('${sl.id}')" ${d.id?'checked':''}> 已裝備
+        </label>
+      </div>`;
+    }
+
     if(sl.isRemains){
       return `
       <div class="eq-slot eq-slot-rem">
@@ -3185,6 +3285,7 @@ function renderEqPanel(){
   EQ_SLOTS.forEach(sl => {
     if(sl.hidden || sl.spacer) return;
     const d = (G.p.eq && G.p.eq[sl.id]) || {};
+    if(sl.isSimpleToggle) return;   // 只有checkbox，沒有下拉選單需要同步selected狀態
     if(sl.isRemains){
       _setSelectVal(`eq_${sl.id}_seteff`, d.seteff || '');
       return;
@@ -3229,6 +3330,31 @@ function onRemFieldChange(slotId){
 function _refreshRemSummary(){
   const el = document.getElementById('remSetSummary');
   if(el) el.innerHTML = remSetSummaryHTML(G.p.eq);
+}
+
+// ── 簡易切換欄位（目前只有魔眼欄位在用）：固定物品ID，只有「已裝備」一個開關，其餘屬性一律清空
+function onSimpleToggleFieldChange(slotId){
+  if(!G.p.eq) G.p.eq = {};
+  const sl = EQ_SLOTS.find(s => s.id === slotId);
+  if(!sl || !sl.fixedItemId) return;
+  const equipped = !!document.getElementById(`eq_${slotId}_equipped`)?.checked;
+  if(!equipped){
+    G.p.eq[slotId] = null;
+    return;
+  }
+  const orig = G.p.eq[slotId] || {};
+  G.p.eq[slotId] = Object.assign({}, orig, {
+    id: sl.fixedItemId,
+    uid: orig.uid || genUID(),
+    cnt: 1,
+    en: 0,
+    bless: false,
+    anc: false,
+    attr: false,
+    lock: false,
+    junk: false,
+    _ruleJunk: false,
+  });
 }
 
 // ── 欄位變更即時同步
@@ -9044,6 +9170,61 @@ function _junkPrefRank(p, db){
   if(db.legend) return 5;                                                  // 5. boss裝備（紅字/傳說裝備，db.legend）
   return 6;                                                                // 6. 一般雜物（其餘都不符合）
 }
+
+// 🔽 垃圾偏好清單「裝備部位」下拉篩選：把 ITEM_DB 的 type/slot 組合，歸類成使用者看得懂的部位選項。
+// wpn 沒有slot欄位(武器本身自成一類)；skillbk(魔法書/技術書/精靈水晶等)獨立一類；
+// misc/etc/pot/use/scroll，以及完全沒有type欄位的材料/任務道具/卷軸，全部歸入「一般道具」。
+const JUNK_PREF_SLOT_LABEL = {
+  '':         '全部部位',
+  wpn:        '⚔️ 武器',
+  helm:       '⛑️ 頭盔',
+  armor:      '🥋 盔甲',
+  shield:     '🛡️ 盾牌/臂甲',
+  cloak:      '🧥 披風',
+  tshirt:     '👕 T恤',
+  gloves:     '🧤 手套',
+  boots:      '👢 靴子',
+  shin:       '🦵 脛甲',
+  ring:       '💍 戒指',
+  amulet:     '📿 項鍊',
+  ear:        '👂 耳環',
+  belt:       '🎗️ 腰帶',
+  eye:        '👁️ 魔眼',
+  doll:       '🪆 魔法娃娃',
+  petarm:     '🐾 寵物防具',
+  petwpn:     '🐾 寵物武器',
+  rem:        '🦴 席琳遺骸',
+  skillbk:    '📖 技能書',
+  general:    '📦 一般道具',
+};
+function _itemSlotCategory(db){
+  if(!db) return 'general';
+  if(db.type === 'skillbk') return 'skillbk';
+  if(db.type === 'wpn') return 'wpn';
+  if(db.slot && String(db.slot).startsWith('rem_')) return 'rem';
+  if(db.slot && JUNK_PREF_SLOT_LABEL[db.slot] !== undefined) return db.slot;
+  return 'general';   // misc/etc/pot/use/scroll，以及完全沒有type/slot欄位的材料類道具
+}
+
+// 🔽 垃圾偏好清單「排序分類」篩選按鈕：勾選時只顯示該分類，預設全選（等同不過濾）。
+let _junkPrefRankFilter = new Set([1, 2, 3, 4, 5, 6]);
+function _renderJunkPrefRankFilterButtons(){
+  const el = document.getElementById('junkPrefsRankFilter');
+  if(!el) return;
+  el.innerHTML = Object.keys(JUNK_PREF_RANK_LABEL).map(rankStr => {
+    const rank = Number(rankStr);
+    const active = _junkPrefRankFilter.has(rank);
+    return `<button type="button" class="junk-rank-btn${active ? ' active' : ''}" onclick="_toggleJunkPrefRankFilter(${rank})">${JUNK_PREF_RANK_LABEL[rank]}</button>`;
+  }).join('');
+}
+function _toggleJunkPrefRankFilter(rank){
+  if(_junkPrefRankFilter.has(rank)) _junkPrefRankFilter.delete(rank);
+  else _junkPrefRankFilter.add(rank);
+  // 全部取消勾選等同沒有意義的篩選（清單會整個消失），直接視為「回到全選」比較符合直覺
+  if(_junkPrefRankFilter.size === 0) _junkPrefRankFilter = new Set([1, 2, 3, 4, 5, 6]);
+  _renderJunkPrefRankFilterButtons();
+  renderJunkPrefsList();
+}
 function renderJunkPrefsSummary(){
   const el = document.getElementById('junkPrefsSummary');
   if(!el) return;
@@ -9060,6 +9241,7 @@ function renderJunkPrefsSummary(){
 function renderJunkPrefsList(){
   const el = document.getElementById('junkPrefsList');
   if(!el) return;
+  _renderJunkPrefRankFilterButtons();   // 每次渲染清單時同步刷新篩選按鈕的勾選外觀
   const prefs = G.p.junkPrefs || {};
   const keys  = Object.keys(prefs);
   if(!keys.length){
@@ -9068,6 +9250,7 @@ function renderJunkPrefsList(){
   }
 
   const q = (document.getElementById('junkPrefsSearch')?.value || '').toLowerCase().trim();
+  const slotFilter = document.getElementById('junkPrefsSlotFilter')?.value || '';
   const TYPE_LABEL = {
     wpn:'武器', arm:'防具', acc:'飾品', helm:'頭盔', shield:'盾', glove:'手套',
     boot:'鞋', belt:'腰帶', cloak:'披風', pot:'藥水', scroll:'卷軸', misc:'雜物',
@@ -9080,7 +9263,10 @@ function renderJunkPrefsList(){
     const rank = _junkPrefRank(p, db);
     const attrTier = (ATTR_AFFIX[attrCanon(p.attr)] || {}).tier || 0;
     return { sig, p, db, name: db.n || p.id, rank, attrTier };
-  }).filter(r => !q || r.name.toLowerCase().includes(q) || r.p.id.toLowerCase().includes(q));
+  })
+    .filter(r => !q || r.name.toLowerCase().includes(q) || r.p.id.toLowerCase().includes(q))
+    .filter(r => _junkPrefRankFilter.has(r.rank))
+    .filter(r => !slotFilter || _itemSlotCategory(r.db) === slotFilter);
 
   // 依優先順位排序：1遺物→2附加屬性(階級高到低)→3祝福/遠古→4強化→5boss裝備→6一般雜物
   rows.sort((a, b) => {
@@ -9090,7 +9276,7 @@ function renderJunkPrefsList(){
   });
 
   if(!rows.length){
-    el.innerHTML = '<div style="color:var(--text3);padding:12px;text-align:center;font-size:12px">找不到符合的物品</div>';
+    el.innerHTML = '<div style="color:var(--text3);padding:12px;text-align:center;font-size:12px">沒有符合目前搜尋/篩選條件的物品</div>';
     return;
   }
 

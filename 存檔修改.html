@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-64</title>
+<title>放置天堂 Save Editor v7-67</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -305,6 +305,27 @@ select option{ background:var(--bg3); }
 .toast.err{ border-color:var(--red); color:var(--red); }
 .toast.warn{ border-color:var(--yellow); color:var(--yellow); }
 input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a); }
+.jj-slot-select{
+  background:var(--bg3); color:var(--text); border:1px solid var(--border);
+  border-radius:5px; padding:6px 10px; font-size:13px; cursor:pointer;
+}
+.jj-status-label{ font-size:12px; color:var(--text3); margin-left:4px; }
+/* 上方版本選單（點按鈕才展開對應匯入/匯出）*/
+.menu-wrap{ position:relative; display:inline-block; }
+.menu-pop{
+  display:none; position:absolute; top:calc(100% + 5px); left:0; z-index:1200;
+  background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.55); padding:6px; min-width:230px;
+  flex-direction:column; gap:3px;
+}
+.menu-pop.show{ display:flex; }
+.menu-item{
+  display:block; width:100%; box-sizing:border-box; text-align:left; background:transparent;
+  color:var(--text); border:1px solid transparent; border-radius:6px; padding:8px 10px;
+  font-size:13px; cursor:pointer; font-family:inherit; white-space:nowrap;
+}
+.menu-item:hover{ background:var(--bg3); border-color:var(--border); }
+.menu-div{ height:1px; background:var(--border); margin:4px 2px; }
 /* Modal */
 .modal-overlay{
   display:none; position:fixed; inset:0;
@@ -324,20 +345,54 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-64</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-67</span>
   <span class="bar-sep">|</span>
-  <label class="btn" style="cursor:pointer">
-    📂 匯入網頁版存檔
-    <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)">
-  </label>
-  <button class="btn" onclick="exportJson()">💾 匯出網頁版存檔</button>
-  <label class="btn" style="cursor:pointer">
-    💻 匯入單機版存檔
-    <input type="file" accept=".json" style="display:none" onchange="importSIG2File(event)">
-  </label>
-  <button class="btn" onclick="exportSIG2()">🖥️ 匯出單機版存檔</button>
-  <button class="btn" onclick="showSig1SourceModal()">📋 貼上存檔</button>
-  <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
+
+  <!-- 網頁版（SIG1） -->
+  <div class="menu-wrap">
+    <button class="btn" onclick="toggleTopMenu('web', this)">🌐 網頁版 ▾</button>
+    <div id="menu-web" class="menu-pop">
+      <label class="menu-item">📂 匯入網頁版存檔
+        <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event); closeTopMenus();">
+      </label>
+      <button class="menu-item" onclick="closeTopMenus(); exportJson();">💾 匯出網頁版存檔</button>
+      <button class="menu-item" onclick="closeTopMenus(); showSig1SourceModal();">📋 檢視／複製存檔原始碼</button>
+    </div>
+  </div>
+
+  <!-- 單機(電腦安裝)版（SIG2） -->
+  <div class="menu-wrap">
+    <button class="btn" onclick="toggleTopMenu('desktop', this)">💻 單機(電腦安裝)版 ▾</button>
+    <div id="menu-desktop" class="menu-pop">
+      <label class="menu-item">💻 匯入單機版存檔
+        <input type="file" accept=".json" style="display:none" onchange="importSIG2File(event); closeTopMenus();">
+      </label>
+      <button class="menu-item" onclick="closeTopMenus(); exportSIG2();">🖥️ 匯出單機版存檔</button>
+    </div>
+  </div>
+
+  <!-- 加掛版（一次 16 隻角色的完整資料；轉移碼也屬於加掛版） -->
+  <div class="menu-wrap">
+    <button class="btn" onclick="toggleTopMenu('jj', this)">🧩 加掛版 ▾</button>
+    <div id="menu-jj" class="menu-pop">
+      <label class="menu-item">🧩 匯入完整存檔（16 隻角色）
+        <input type="file" accept=".json" style="display:none" onchange="importJJFile(event); closeTopMenus();">
+      </label>
+      <button class="menu-item" onclick="closeTopMenus(); exportJJFile();">🧩 匯出完整存檔</button>
+      <div class="menu-div"></div>
+      <button class="menu-item" onclick="closeTopMenus(); openJJCodeImport();">📥 輸入轉移碼</button>
+      <button class="menu-item" onclick="closeTopMenus(); openJJCodeGenerate();">🔑 產生轉移碼</button>
+    </div>
+  </div>
+
+  <span class="bar-sep">|</span>
+  <!-- 角色下拉選單維持在原本位置（不併入按鈕）；匯入加掛版後才顯示 -->
+  <select id="jjSlotSelect" class="jj-slot-select" style="display:none" onchange="onJJSlotChange(this)">
+    <option value="">— 選擇角色 —</option>
+  </select>
+  <span id="jjStatusLabel" class="jj-status-label"></span>
+
+  <button class="btn btn-danger" style="margin-left:auto" onclick="clearAll()">🗑 清除</button>
 </div>
 
 <div id="main">
@@ -697,7 +752,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
       </div>
   <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱或ID... 例如: 武士刀 / wpn_katana / 遺物" 
+      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱/ID/職業... 例如: 武士刀 / wpn_katana / 遺物 / 騎士" 
              style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;">
       <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
       <select id="equipSearchSlotFilter" onchange="renderEquipSearch()"
@@ -717,6 +772,24 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
   </div>
 
 <script>
+// 職業搜尋：把關鍵字（中文職業名或英文代碼）對應到職業代碼，讓「搜尋騎士」列出 req 含 knight 的裝備。
+const _CLASS_KW_MAP = {
+  '法師':'mage','mage':'mage',
+  '騎士':'knight','knight':'knight',
+  '妖精':'elf','elf':'elf',
+  '黑暗妖精':'dark','黑暗':'dark','dark':'dark',
+  '王族':'royal','royal':'royal',
+  '龍騎士':'dragon','龍騎':'dragon','dragon':'dragon',
+  '幻術師':'illusion','幻術':'illusion','illusion':'illusion',
+  '戰士':'warrior','warrior':'warrior',
+};
+function _classCodeFromKeyword(kw){ return kw ? (_CLASS_KW_MAP[kw] || '') : ''; }
+// req（逗號分隔職業代碼，或 'all'）是否「明確包含」指定職業。'all' 不視為特定職業（否則 494 件通用裝備會全被灌進來）。
+function _reqIncludesClass(req, clsCode){
+  if(!req || !clsCode) return false;
+  return String(req).toLowerCase().split(',').map(function(x){return x.trim();}).includes(clsCode);
+}
+
 function renderEquipSearch(){
   const kw = (document.getElementById('equipSearchInput')?.value || '').trim().toLowerCase();
   const slotFilter = document.getElementById('equipSearchSlotFilter')?.value || '';
@@ -730,15 +803,17 @@ function renderEquipSearch(){
   }
 
   if(!kw && !slotFilter){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物），或用右側下拉選單直接列出指定部位</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物；輸入職業如「騎士」可列出該職業可用的裝備），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
   
+  const clsCode = _classCodeFromKeyword(kw);   // 職業搜尋：關鍵字若為職業名/代碼，改比對 req
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
     if(!v.type || !['wpn','arm','acc','helm','shield','glove','boot','belt','cloak'].includes(v.type)) return false;
     if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
     if(!kw) return true;
     if(isRelicKeyword(kw)) return !!v.relic;
+    if(clsCode && _reqIncludesClass(v.req, clsCode)) return true;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
   
@@ -984,7 +1059,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
   if(!wrap) return;
 
   if(!kw && !slotFilter){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物），或用右側下拉選單直接列出指定部位</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物；輸入職業如「騎士」可列出該職業可用的裝備），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
 
@@ -993,10 +1068,12 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
     boot:'鞋', belt:'腰帶', cloak:'披風', misc:'雜物', card:'卡片', relic:'遺物'
   };
 
+  const clsCode = _classCodeFromKeyword(kw);   // 職業搜尋：關鍵字若為職業名/代碼，改比對 req
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
     if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
     if(!kw) return true;
     if(isRelicKeyword(kw)) return !!v.relic;
+    if(clsCode && _reqIncludesClass(v.req, clsCode)) return true;
     return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
 
@@ -1077,7 +1154,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
       <div class="panel-title">🎒 背包</div>
       <div id="invRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-          <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
+          <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱/ID/職業... 例如: 藥水 / item_potion / 遺物 / 騎士" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('invRefSearchInput','invRefSearchResults','invRefSlotFilter')">
           <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
@@ -1120,7 +1197,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
       <div class="panel-title">🏦 倉庫</div>
       <div id="whRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-          <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱或ID... 例如: 藥水 / item_potion / 遺物" 
+          <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱/ID/職業... 例如: 藥水 / item_potion / 遺物 / 騎士" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('whRefSearchInput','whRefSearchResults','whRefSlotFilter')">
           <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
@@ -1475,6 +1552,43 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
   </div>
 </div>
 
+<!-- 加掛版轉移碼 Modal（與遊戲 afk-fullsave.js 的轉移碼共用同一套 Litterbox 管道與 idle-lineage-full 封包格式）-->
+<div id="jjCodeModal" class="modal-overlay" onclick="if(event.target===this) closeJJCodeModal();">
+  <div class="modal-box" style="width:480px">
+    <div style="font-weight:bold;margin-bottom:4px;color:var(--text2)">🔁 加掛版轉移碼</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">
+      轉移碼＝把整包加掛版存檔（16 隻角色＋共用資料）暫存到網路上，換一組六碼帶著走；資料 24 小時後自動刪除。<br>
+      編輯完成後按「產生轉移碼」，到遊戲的「完整資料備份與還原 → 用轉移碼搬家」輸入六碼即可帶回。
+    </div>
+
+    <!-- 產生 -->
+    <div style="padding-bottom:12px;border-bottom:1px dashed var(--border);margin-bottom:12px">
+      <button class="btn btn-accent" id="jjGenBtn" onclick="doJJGenerate()">🔑 產生轉移碼</button>
+      <div id="jjCodeBox" style="display:none;align-items:center;gap:10px;margin-top:12px;padding:12px;background:var(--bg1,#12141c);border:1px solid var(--border);border-radius:8px">
+        <span id="jjCodeText" style="font-family:monospace;font-size:26px;font-weight:bold;letter-spacing:.18em;color:var(--accent2);user-select:all"></span>
+        <button class="btn btn-sm" onclick="copyJJCode()">📋 複製</button>
+      </div>
+    </div>
+
+    <!-- 輸入 -->
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">輸入別台/遊戲產生的六碼，把整包資料抓回編輯器：</div>
+      <div class="form-row" style="gap:8px">
+        <input type="text" id="jjCodeInput" maxlength="64" autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false" placeholder="輸入六碼（英數小寫）"
+               style="flex:1;font-family:monospace;font-size:16px;letter-spacing:.12em;text-align:center"
+               onkeydown="if(event.key==='Enter') doJJUseCode();">
+        <button class="btn" id="jjUseBtn" onclick="doJJUseCode()">📥 讀取並載入</button>
+      </div>
+    </div>
+
+    <div id="jjCodeNote" style="margin-top:12px;font-size:12.5px;min-height:1em;color:var(--text3)"></div>
+    <div class="form-row" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn" onclick="closeJJCodeModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
 <div id="equipSlotPickerModal" class="modal-overlay" onclick="if(event.target===this) closeEquipSlotPicker();">
   <div class="modal-box" style="width:420px">
     <div style="font-weight:bold;margin-bottom:4px;color:var(--text2)">選擇要裝備的欄位</div>
@@ -1535,6 +1649,103 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
 // ════════════════════════════════════════════════
 let _rawSave = null;
 let _sig2Envelope = null; // 記錄從 SIG2（單機版）匯入時的信封資訊（version 等），供匯出 SIG2 時沿用
+
+// ════════════════════════════════════════════════
+//  💾 存檔壓縮（LZString compressToUTF16/decompressFromUTF16·MIT, Pieroxy）
+//  與遊戲 00-data.js 完全相同的一份，供「加掛版完整存檔」解壓/重新壓縮 localStorage 內容用。
+//  加掛版一次備份多個 localStorage key（包含各角色存檔位 lineage_idle_save_N），
+//  每個角色存檔位的內容格式為：'LZ1:' + LZString.compressToUTF16(SIG1字串)，
+//  解壓後即為與網頁版匯入/匯出完全相同的 SIG1:簽章:JSON payload 格式，可直接沿用 parseSIG1/buildSIG1。
+// ════════════════════════════════════════════════
+var LZString = (function () {
+  var f = String.fromCharCode;
+  var LZString = {
+    compressToUTF16: function (input) { if (input == null) return ""; return LZString._compress(input, 15, function (a) { return f(a + 32); }) + " "; },
+    decompressFromUTF16: function (compressed) { if (compressed == null) return ""; if (compressed == "") return null; return LZString._decompress(compressed.length, 16384, function (index) { return compressed.charCodeAt(index) - 32; }); },
+    _compress: function (uncompressed, bitsPerChar, getCharFromInt) {
+      if (uncompressed == null) return "";
+      var i, value, context_dictionary = {}, context_dictionaryToCreate = {}, context_c = "", context_wc = "", context_w = "", context_enlargeIn = 2, context_dictSize = 3, context_numBits = 2, context_data = [], context_data_val = 0, context_data_position = 0, ii;
+      for (ii = 0; ii < uncompressed.length; ii += 1) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) { context_dictionary[context_c] = context_dictSize++; context_dictionaryToCreate[context_c] = true; }
+        context_wc = context_w + context_c;
+        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) { context_w = context_wc; } else {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+            if (context_w.charCodeAt(0) < 256) {
+              for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 8; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+            } else {
+              value = 1;
+              for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | value; if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = 0; }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 16; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+            }
+            context_enlargeIn--; if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          }
+          context_enlargeIn--; if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+          context_dictionary[context_wc] = context_dictSize++; context_w = String(context_c);
+        }
+      }
+      if (context_w !== "") {
+        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+          if (context_w.charCodeAt(0) < 256) {
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 8; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          } else {
+            value = 1;
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | value; if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = 0; }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 16; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          }
+          context_enlargeIn--; if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+          delete context_dictionaryToCreate[context_w];
+        } else {
+          value = context_dictionary[context_w];
+          for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+        }
+        context_enlargeIn--; if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+      }
+      value = 2;
+      for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+      while (true) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data.push(getCharFromInt(context_data_val)); break; } else context_data_position++; }
+      return context_data.join('');
+    },
+    _decompress: function (length, resetValue, getNextValue) {
+      var dictionary = [], next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], i, w, bits, resb, maxpower, power, c, data = { val: getNextValue(0), position: resetValue, index: 1 };
+      for (i = 0; i < 3; i += 1) { dictionary[i] = i; }
+      bits = 0; maxpower = Math.pow(2, 2); power = 1;
+      while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; }
+      switch (next = bits) {
+        case 0: bits = 0; maxpower = Math.pow(2, 8); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } c = f(bits); break;
+        case 1: bits = 0; maxpower = Math.pow(2, 16); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } c = f(bits); break;
+        case 2: return "";
+      }
+      dictionary[3] = c; w = c; result.push(c);
+      while (true) {
+        if (data.index > length) { return ""; }
+        bits = 0; maxpower = Math.pow(2, numBits); power = 1;
+        while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; }
+        switch (c = bits) {
+          case 0: bits = 0; maxpower = Math.pow(2, 8); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } dictionary[dictSize++] = f(bits); c = dictSize - 1; enlargeIn--; break;
+          case 1: bits = 0; maxpower = Math.pow(2, 16); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } dictionary[dictSize++] = f(bits); c = dictSize - 1; enlargeIn--; break;
+          case 2: return result.join('');
+        }
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+        if (dictionary[c]) { entry = dictionary[c]; } else { if (c === dictSize) { entry = w + w.charAt(0); } else { return null; } }
+        result.push(entry);
+        dictionary[dictSize++] = w + entry.charAt(0); enlargeIn--; w = entry;
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+      }
+    }
+  };
+  return LZString;
+})();
 
 let G = {
   p: {
@@ -2356,6 +2567,405 @@ async function exportSIG2(){
   a.click();
   URL.revokeObjectURL(url);
   toast('💾 單機版存檔已匯出', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  🔽 上方版本選單（網頁版 / 單機版 / 加掛版）：點按鈕才展開對應的匯入/匯出項目
+// ════════════════════════════════════════════════
+function closeTopMenus(){
+  document.querySelectorAll('.menu-pop.show').forEach(el => el.classList.remove('show'));
+}
+function toggleTopMenu(id, btn){
+  const pop = document.getElementById('menu-' + id);
+  if(!pop) return;
+  const willShow = !pop.classList.contains('show');
+  closeTopMenus();
+  if(willShow) pop.classList.add('show');
+}
+// 點選單以外的地方就收起
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.menu-wrap')) closeTopMenus();
+});
+
+// ════════════════════════════════════════════════
+//  🧩 加掛版完整存檔（一次備份多個 localStorage key，含最多 16 個角色存檔位）
+//  檔案格式：{ format:'idle-lineage-full', schema, exportedAt, keyCount, keys:{ localStorageKey: 原始值, ... } }
+//  其中角色存檔位 key 樣式為 lineage_idle_save_<N>，值為 'LZ1:'+壓縮(SIG1字串)（或舊明文 SIG1）。
+//  解壓後即為與網頁版完全相同的 SIG1 存檔，可直接沿用 parseSIG1/buildSIG1/_buildSaveBase。
+//  其餘非角色 key（寵物、圖鑑、血盟、傭兵…）原封不動保留，匯出時一併寫回。
+// ════════════════════════════════════════════════
+let _jjBackup = null;      // 匯入的完整加掛版物件（含 keys）
+let _jjCurrentSlot = null; // 目前正在編輯的角色存檔位 key，例如 'lineage_idle_save_3'
+
+const _JJ_SAVE_KEY_RE = /^lineage_idle_save_(\d+)$/;
+
+function _jjEsc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// 從存檔位 key 取角色編號（用於下拉選單顯示 #N）
+function _jjSlotNumber(key){
+  const m = _JJ_SAVE_KEY_RE.exec(key);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// 解壓某存檔位的原始 localStorage 值 → SIG1 字串（相容舊明文，無 'LZ1:' 前綴→原樣回傳）
+function _jjDecodeSlotRaw(raw){
+  if(raw == null) return null;
+  const s = String(raw);
+  if(s.slice(0, 4) === 'LZ1:'){
+    return LZString.decompressFromUTF16(s.slice(4));
+  }
+  return s;
+}
+
+// 把 SIG1 字串壓回加掛版存檔位需要的 localStorage 值（'LZ1:'+UTF16；壓縮失敗退回明文）
+function _jjEncodeSlotRaw(sig1Str){
+  try { return 'LZ1:' + LZString.compressToUTF16(sig1Str); }
+  catch(e){ return sig1Str; }
+}
+
+// 靜默解析 SIG1 payload（僅供下拉選單預覽，不驗簽、不跳 toast）
+function _jjParseSlotSilent(sig1Str){
+  if(sig1Str == null) return null;
+  const str = String(sig1Str).trim();
+  if(str.slice(0, 5) === 'SIG1:'){
+    const rest = str.slice(5);
+    const i = rest.indexOf(':');
+    if(i < 0) return null;
+    return JSON.parse(rest.slice(i + 1));
+  }
+  return JSON.parse(str);
+}
+
+// 列出加掛版內所有角色存檔位（含暱稱/職業/等級），依編號排序
+function _jjListSaveSlots(){
+  if(!_jjBackup || !_jjBackup.keys) return [];
+  const out = [];
+  for(const key of Object.keys(_jjBackup.keys)){
+    const num = _jjSlotNumber(key);
+    if(num == null) continue;
+    const info = { key, num, name:'', cls:'', lv:1, valid:false };
+    try{
+      const parsed = _jjParseSlotSilent(_jjDecodeSlotRaw(_jjBackup.keys[key]));
+      const p = parsed && parsed.p;
+      if(p){
+        info.name  = p.name || '';
+        info.cls   = p.cls  || '';
+        info.lv    = p.lv   || 1;
+        info.valid = true;
+      }
+    }catch(e){ /* 空存檔位或毀損，仍列出讓使用者知道 */ }
+    out.push(info);
+  }
+  out.sort((a, b) => a.num - b.num);
+  return out;
+}
+
+// 重建下拉選單：#編號 暱稱｜職業 Lv.等級
+function _rebuildJJSlotSelect(){
+  const sel = document.getElementById('jjSlotSelect');
+  if(!sel) return;
+  const slots = _jjListSaveSlots();
+  if(!_jjBackup || slots.length === 0){
+    sel.style.display = 'none';
+    sel.innerHTML = '<option value="">— 選擇角色 —</option>';
+    _jjSetStatus('');
+    return;
+  }
+  sel.style.display = '';
+  const opts = ['<option value="">— 選擇角色 —</option>'];
+  for(const s of slots){
+    const nick     = s.name ? s.name : '（未命名）';
+    const clsLabel = s.valid ? (s.cls ? _clsLabel(s.cls) : '（無職業）') : '（空存檔位）';
+    const lvLabel  = s.valid ? ('Lv.' + s.lv) : '';
+    const label    = `#${s.num} ${nick}｜${clsLabel} ${lvLabel}`.trim();
+    const selAttr  = (s.key === _jjCurrentSlot) ? ' selected' : '';
+    opts.push(`<option value="${_jjEsc(s.key)}"${selAttr}>${_jjEsc(label)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+}
+
+function _jjSetStatus(msg){
+  const el = document.getElementById('jjStatusLabel');
+  if(!el) return;
+  if(typeof msg === 'string'){ el.textContent = msg; return; }
+  if(_jjCurrentSlot){
+    const num   = _jjSlotNumber(_jjCurrentSlot);
+    const total = _jjListSaveSlots().length;
+    el.textContent = `目前編輯：加掛版 #${num}（共 ${total} 角）`;
+  } else {
+    el.textContent = _jjBackup ? '請從下拉選單選擇要編輯的角色' : '';
+  }
+}
+
+// 匯入加掛版完整存檔
+function importJJFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const obj = JSON.parse(e.target.result);
+      if(!obj || typeof obj !== 'object' || !obj.keys || typeof obj.keys !== 'object'){
+        throw new Error('不是加掛版完整存檔格式（缺少 keys 欄位）');
+      }
+      _jjBackup = obj;
+      _jjCurrentSlot = null;
+      _sig2Envelope = null;
+      _rebuildJJSlotSelect();
+      const slots = _jjListSaveSlots();
+      const firstValid = slots.find(s => s.valid) || slots[0];
+      if(firstValid){
+        _jjLoadSlot(firstValid.key);
+      }else{
+        toast('⚠️ 加掛版存檔內找不到任何角色存檔位（lineage_idle_save_N）', 'warn', 4500);
+      }
+      const n = slots.filter(s => s.valid).length;
+      toast(`✅ 加掛版完整存檔已匯入（${n} 個角色，${Object.keys(_jjBackup.keys).length} 個資料項）`, 'ok', 3500);
+    }catch(err){
+      toast('❌ 加掛版解析失敗：' + err.message, 'err', 4500);
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+// 下拉選單切換角色
+function onJJSlotChange(sel){
+  const key = sel.value;
+  if(!key){ return; }
+  if(_jjCurrentSlot && _jjCurrentSlot !== key){
+    _jjSaveCurrentSlot();   // 切換前先把目前編輯內容寫回記憶體（尚未落地成檔）
+  }
+  _jjLoadSlot(key);
+}
+
+// 載入某存檔位到編輯器（與 importJsonFile 相同流程）
+function _jjLoadSlot(key){
+  if(!_jjBackup || !_jjBackup.keys || !(key in _jjBackup.keys)){
+    toast('❌ 找不到該存檔位', 'err'); return;
+  }
+  let parsed;
+  try{
+    parsed = parseSIG1(_jjDecodeSlotRaw(_jjBackup.keys[key]));
+  }catch(err){
+    toast('❌ 該存檔位無法載入（可能是空位或毀損）：' + err.message, 'err', 4500);
+    return;
+  }
+  _rawSave   = parsed;
+  G.p        = parsed.p    || G.p;
+  G.wh       = parsed.wh   || G.wh;
+  G.pets     = parsed.pets || G.pets;
+  G.diamonds = parsed.pandoraDiamonds ?? parsed.diamonds ?? parsed.sharedDiamonds ?? G.diamonds ?? 0;
+  _sig1Nonce = parsed._exportNonce || _genExportNonce();
+  canonicalizeAttrCodes();
+  loadAllUI();
+  _jjCurrentSlot = key;
+  const sel = document.getElementById('jjSlotSelect');
+  if(sel) sel.value = key;
+  _rebuildJJSlotSelect();   // 讓剛寫回的舊角色標籤（暱稱/等級）即時更新
+  _jjSetStatus();
+  const num = _jjSlotNumber(key);
+  toast(`✅ 已載入加掛版 #${num} 角色，編輯後切換角色或按「匯出」即會寫回`, 'ok', 3000);
+}
+
+// 把目前編輯內容重新簽章 + 壓縮，寫回 _jjBackup 記憶體中的存檔位（不落地成檔）
+// ⚠️ 加掛版的角色存檔位「只有」 {v,p,ms,ticks}；倉庫(wh)/寵物(pets)/潘朵拉鑽石/血盟(clanState)
+//    都是 16 隻角色「共用」的獨立 localStorage key（fb5_pet_roster / fb5_clan_state_v1 …），
+//    不會出現在單一角色存檔位裡。因此這裡「不能」用 _buildSaveBase()（那會把 wh/pets/… 注入單角存檔位、
+//    污染共用倉庫格式），只以該存檔位原本的結構為底、僅覆寫玩家資料 p，其餘 v/ms/ticks 原樣保留。
+function _jjBuildSlotPayload(){
+  const src = (_rawSave && typeof _rawSave === 'object') ? _rawSave : { v:2, ms:G.ms, ticks:G.ticks };
+  const out = Object.assign({}, src);            // 完整沿用原存檔位的鍵與鍵位順序
+  out.p = G.p;                                    // 玩家資料一定更新
+  if('wh'              in src) out.wh = G.wh;     // 只有「原本就存在」的欄位才從編輯器同步回去，
+  if('pets'            in src) out.pets = G.pets; //   絕不新增加掛版單角存檔位原本沒有的共用欄位。
+  if('pandoraDiamonds' in src) out.pandoraDiamonds = G.diamonds;
+  return out;
+}
+
+function _jjSaveCurrentSlot(){
+  if(!_jjBackup || !_jjCurrentSlot) return false;
+  applyAll(true);
+  const payload = JSON.stringify(_jjBuildSlotPayload());
+  const signed  = buildSIG1(payload);
+  _jjBackup.keys[_jjCurrentSlot] = _jjEncodeSlotRaw(signed);
+  return true;
+}
+
+// 匯出加掛版完整存檔（把所有 key 一併寫回，含目前編輯中的角色）
+function exportJJFile(){
+  if(!_jjBackup){
+    toast('❌ 尚未匯入加掛版完整存檔，請先按「加掛版完整存檔匯入」', 'err', 4500);
+    return;
+  }
+  const text = _jjBuildPackText();
+  const blob = new Blob([text], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  const stamp = new Date().toISOString().replace(/[:T]/g, '').replace(/\..+$/, '').slice(0, 14);
+  a.download = 'idle-lineage-backup-' + stamp + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  _rebuildJJSlotSelect();
+  toast('🧩 加掛版完整存檔已匯出', 'ok');
+}
+
+// 組出目前完整加掛版封包的 JSON 字串（先把正在編輯的角色寫回；供「檔案匯出」與「轉移碼上傳」共用）。
+function _jjBuildPackText(){
+  if(_jjCurrentSlot){ _jjSaveCurrentSlot(); }
+  const out = Object.assign({}, _jjBackup, {
+    format:     _jjBackup.format || 'idle-lineage-full',
+    schema:     _jjBackup.schema || 1,
+    exportedAt: new Date().toISOString(),
+    keyCount:   Object.keys(_jjBackup.keys).length,
+  });
+  return JSON.stringify(out);
+}
+
+// ════════════════════════════════════════════════
+//  🔁 加掛版轉移碼（與遊戲 afk-fullsave.js 同一套 Litterbox 管道 + idle-lineage-full 封包）
+//  產生：把整包（含編輯後內容）上傳 Litterbox → 取回六碼；玩家到遊戲輸入六碼即可帶回。
+//  輸入：以六碼從 Litterbox 抓回整包 → 驗證 → 載入編輯器（等同匯入加掛版檔案）。
+//  ⚠️ 六碼大小寫敏感；輸入端自動轉小寫、去空白、可容整串網址；絕不自動把 o↔0 / l↔1 互換重試
+//     （那可能抓到別人的存檔）。
+// ════════════════════════════════════════════════
+const _JJ_LB_UPLOAD = 'https://litterbox.catbox.moe/resources/internals/api.php';
+const _JJ_LB_FILE   = 'https://litter.catbox.moe/';
+const _JJ_LB_EXPIRY = '24h';
+const _JJ_CODE_RE   = /^[a-z0-9]{6}$/;
+
+// 回傳網址形如 https://litter.catbox.moe/4wz0fn.json → 取中間六碼
+function _jjCodeFromUrl(url){
+  const m = String(url || '').trim().match(/([a-z0-9]{6})\.json\s*$/i);
+  return m ? m[1].toLowerCase() : '';
+}
+// 玩家可能打大寫/帶空白/整串網址貼進來 → 一律正規化成純六碼字串
+function _jjNormalizeCode(s){
+  let t = String(s || '').trim().toLowerCase();
+  if(t.indexOf('/') >= 0) t = t.slice(t.lastIndexOf('/') + 1);
+  return t.replace(/\.json$/, '').trim();
+}
+function _jjCodeNote(msg, bad){
+  const el = document.getElementById('jjCodeNote');
+  if(!el) return;
+  el.style.color = bad ? 'var(--red)' : 'var(--green)';
+  el.textContent = msg || '';
+}
+function _jjNetErrMsg(e){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return '沒有網路連線。';
+  if(e instanceof TypeError) return '連不上轉移服務，你的 DNS 或廣告封鎖可能把它擋掉了。';
+  return null;
+}
+
+function openJJCodeModal(){
+  document.getElementById('jjCodeModal').classList.add('show');
+  _jjCodeNote('');
+}
+function closeJJCodeModal(){
+  document.getElementById('jjCodeModal').classList.remove('show');
+}
+// 「📥 輸入轉移碼」：開窗並聚焦輸入框
+function openJJCodeImport(){
+  openJJCodeModal();
+  const box = document.getElementById('jjCodeBox');
+  if(box) box.style.display = 'none';
+  setTimeout(() => { const i = document.getElementById('jjCodeInput'); if(i) i.focus(); }, 50);
+}
+// 「🔑 產生轉移碼」：開窗並直接上傳
+function openJJCodeGenerate(){
+  if(!_jjBackup){
+    toast('❌ 尚未匯入加掛版完整存檔，無法產生轉移碼', 'err', 4500);
+    return;
+  }
+  openJJCodeModal();
+  doJJGenerate();
+}
+
+// 上傳整包 → 取回六碼
+function _jjUploadPack(){
+  let text;
+  try { text = _jjBuildPackText(); }
+  catch(e){ return Promise.reject(new Error('打包失敗：' + (e && e.message || e))); }
+  const fd = new FormData();
+  fd.append('reqtype', 'fileupload');
+  fd.append('time', _JJ_LB_EXPIRY);
+  fd.append('fileToUpload', new Blob([text], { type:'application/json' }), 'save.json');
+  return fetch(_JJ_LB_UPLOAD, { method:'POST', body: fd })
+    .then(r => { if(!r.ok) throw new Error('上傳失敗（' + r.status + '）'); return r.text(); })
+    .then(url => { const code = _jjCodeFromUrl(url); if(!code) throw new Error('上傳結果看不懂'); return code; });
+}
+// 以六碼抓回整包
+function _jjDownloadByCode(code){
+  return fetch(_JJ_LB_FILE + code + '.json', { cache:'no-store' })
+    .then(r => { if(r.status === 404) throw new Error('NOTFOUND'); if(!r.ok) throw new Error('讀取失敗（' + r.status + '）'); return r.text(); });
+}
+
+function doJJGenerate(){
+  if(!_jjBackup){ _jjCodeNote('尚未匯入加掛版完整存檔。', true); return; }
+  const btn = document.getElementById('jjGenBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '上傳中…'; }
+  _jjCodeNote('上傳中…請不要關掉頁面。');
+  _jjUploadPack().then(code => {
+    const box = document.getElementById('jjCodeBox');
+    const el  = document.getElementById('jjCodeText');
+    if(el)  el.textContent = code;
+    if(box) box.style.display = 'flex';
+    _jjCodeNote('✅ 到遊戲的「完整資料備份與還原 → 用轉移碼搬家」輸入這六碼即可帶回（24 小時內有效）。');
+    _rebuildJJSlotSelect();
+  }).catch(e => {
+    _jjCodeNote('❌ ' + (_jjNetErrMsg(e) || ((e && e.message || '產生轉移碼失敗') + '。')) + ' 可改用「加掛版完整存檔匯出」存成檔案。', true);
+  }).then(() => {
+    if(btn){ btn.disabled = false; btn.textContent = '🔑 產生轉移碼'; }
+  });
+}
+
+function doJJUseCode(){
+  const input = document.getElementById('jjCodeInput');
+  const code  = _jjNormalizeCode(input && input.value);
+  if(!_JJ_CODE_RE.test(code)){ _jjCodeNote('請輸入六碼（英文小寫或數字）。', true); return; }
+  const btn = document.getElementById('jjUseBtn');
+  if(btn) btn.disabled = true;
+  _jjCodeNote('讀取中…');
+  _jjDownloadByCode(code).then(text => {
+    let obj;
+    try { obj = JSON.parse(text); } catch(e){ obj = null; }
+    if(!obj || typeof obj !== 'object' || !obj.keys || typeof obj.keys !== 'object'){
+      _jjCodeNote('抓回來的內容不是加掛版完整存檔。', true); return;
+    }
+    _jjBackup = obj;
+    _jjCurrentSlot = null;
+    _sig2Envelope = null;
+    _rebuildJJSlotSelect();
+    const slots = _jjListSaveSlots();
+    const firstValid = slots.find(s => s.valid) || slots[0];
+    if(firstValid){ _jjLoadSlot(firstValid.key); }
+    const n = slots.filter(s => s.valid).length;
+    _jjCodeNote('✅ 已載入（' + n + ' 個角色）。可編輯後再產生新的轉移碼帶回遊戲。');
+    toast('✅ 轉移碼已載入加掛版存檔（' + n + ' 個角色）', 'ok', 3500);
+  }).catch(e => {
+    if(e && e.message === 'NOTFOUND') _jjCodeNote('❌ 找不到這組轉移碼。可能打錯了（注意 0 和 o、1 和 l），或已超過 24 小時。', true);
+    else _jjCodeNote('❌ ' + (_jjNetErrMsg(e) || ((e && e.message || '讀取失敗') + '。')), true);
+  }).then(() => { if(btn) btn.disabled = false; });
+}
+
+function copyJJCode(){
+  const t = (document.getElementById('jjCodeText') || {}).textContent || '';
+  if(!t){ return; }
+  const done = () => _jjCodeNote('✅ 已複製轉移碼 ' + t + '。');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(() => {
+      const el = document.getElementById('jjCodeText');
+      if(el){ try{ const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); _jjCodeNote('請長按或按 Ctrl+C 複製選取的六碼。'); }catch(e){ _jjCodeNote('請手動抄下六碼。', true); } }
+    });
+  } else {
+    const el = document.getElementById('jjCodeText');
+    if(el){ try{ const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); _jjCodeNote('請長按或按 Ctrl+C 複製選取的六碼。'); }catch(e){ _jjCodeNote('請手動抄下六碼。', true); } }
+  }
 }
 
 // ════════════════════════════════════════════════
