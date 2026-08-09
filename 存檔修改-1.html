@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>放置天堂 Save Editor v7-68</title>
+<title>放置天堂 Save Editor v7-67</title>
 <style>
 :root {
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
@@ -345,7 +345,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="toastArea" style="position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;"></div>
 
 <div id="topbar">
-  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-68</span>
+  <span class="bar-title">⚔️ 放置天堂 Save Editor v7-67</span>
   <span class="bar-sep">|</span>
 
   <!-- 網頁版（SIG1） -->
@@ -752,7 +752,7 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
       </div>
   <div id="equipSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-      <input type="text" id="equipSearchInput" placeholder="可空白分隔多重條件 例如: 騎士 遺物 / 武士刀 / 龍騎士 雙手" 
+      <input type="text" id="equipSearchInput" placeholder="搜尋裝備名稱/ID/職業... 例如: 武士刀 / wpn_katana / 遺物 / 騎士" 
              style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;">
       <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
       <select id="equipSearchSlotFilter" onchange="renderEquipSearch()"
@@ -789,43 +789,6 @@ function _reqIncludesClass(req, clsCode){
   if(!req || !clsCode) return false;
   return String(req).toLowerCase().split(',').map(function(x){return x.trim();}).includes(clsCode);
 }
-// 「該職業是否可裝備」：req 為 'all'（全職業）或 req 明確含該職業都算。用於「騎士可裝備的○○」這種職業搜尋。
-// 沒有 req 欄位者（多半是藥水/材料/卡片等非裝備）不算，避免職業 token 把消耗品也一起撈進來。
-function _classCanEquip(req, clsCode){
-  if(!clsCode || !req) return false;
-  if(String(req).toLowerCase() === 'all') return true;
-  return _reqIncludesClass(req, clsCode);
-}
-
-// 武器細分：遊戲沒有「單手劍/雙手劍」這種欄位，改用機制旗標推導 —— 弓/遠程(isBow/ranged)、雙手(w2h)、其餘為單手。
-function _weaponSub(v){
-  if(v.isBow || v.ranged) return 'bow';
-  if(v.w2h) return '2h';
-  return '1h';
-}
-// 下拉篩選比對：一般部位用 _itemSlotCategory；'wpn:1h/2h/bow' 為武器細分（先確認是武器，再比對細分）。
-function _matchSlotFilter(v, filter){
-  if(!filter) return true;
-  if(filter.indexOf('wpn:') === 0){
-    return _itemSlotCategory(v) === 'wpn' && _weaponSub(v) === filter.slice(4);
-  }
-  return _itemSlotCategory(v) === filter;
-}
-// 多重關鍵字（以空白切成多個 token，需「同時」全部命中＝AND）。
-// 單一 token 命中條件（任一）：① 職業名/代碼 → req 含該職業；② 「遺物」→ v.relic；③ 名稱或 ID 含該字串。
-// 例：「騎士 遺物」→ 需同時「req 含 knight」且「是遺物」→ 列出騎士可裝備的遺物類裝備。
-function _itemMatchesTokens(v, id, kwRaw){
-  const tokens = String(kwRaw || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if(tokens.length === 0) return true;
-  const nameLc = (v.n || '').toLowerCase();
-  const idLc   = id.toLowerCase();
-  return tokens.every(tok => {
-    const cls = _classCodeFromKeyword(tok);
-    if(cls) return _classCanEquip(v.req, cls);             // 職業 token：該職業可裝備（req 含該職業 或 req=all）
-    if(isRelicKeyword(tok)) return !!v.relic;               // 遺物 token
-    return nameLc.includes(tok) || idLc.includes(tok);      // 名稱／ID token
-  });
-}
 
 function renderEquipSearch(){
   const kw = (document.getElementById('equipSearchInput')?.value || '').trim().toLowerCase();
@@ -840,15 +803,18 @@ function renderEquipSearch(){
   }
 
   if(!kw && !slotFilter){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備。可用空白分隔多個條件（需同時符合），例如「騎士 遺物」＝騎士可裝備的遺物；「龍騎士 雙手」＝龍騎士的雙手武器。也可只用右側下拉選單依部位／武器細分列出</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋裝備（輸入「遺物」兩字可列出所有遺物；輸入職業如「騎士」可列出該職業可用的裝備），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
   
+  const clsCode = _classCodeFromKeyword(kw);   // 職業搜尋：關鍵字若為職業名/代碼，改比對 req
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
     if(!v.type || !['wpn','arm','acc','helm','shield','glove','boot','belt','cloak'].includes(v.type)) return false;
-    if(slotFilter && !_matchSlotFilter(v, slotFilter)) return false;
+    if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
     if(!kw) return true;
-    return _itemMatchesTokens(v, id, kw);   // 多重關鍵字 AND（職業／遺物／名稱可混搭）
+    if(isRelicKeyword(kw)) return !!v.relic;
+    if(clsCode && _reqIncludesClass(v.req, clsCode)) return true;
+    return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
   
   if(matched.length === 0){
@@ -1067,17 +1033,7 @@ function _initSlotFilterDropdowns(){
   const equipOrder = ['', 'wpn', 'helm', 'armor', 'shield', 'cloak', 'tshirt', 'gloves', 'boots', 'shin',
                        'ring', 'amulet', 'ear', 'belt', 'eye', 'doll', 'petarm', 'petwpn', 'rem'];
   const fullOrder  = equipOrder.concat(['skillbk', 'general']);
-  // 武器細分子選項（縮排顯示；值為 wpn:1h / wpn:2h / wpn:bow，由 _matchSlotFilter 處理）
-  const WPN_SUB = [
-    ['wpn',     JUNK_PREF_SLOT_LABEL['wpn'] || '武器'],
-    ['wpn:1h',  '　├ 單手武器'],
-    ['wpn:2h',  '　├ 雙手武器'],
-    ['wpn:bow', '　└ 弓／遠程'],
-  ];
-  const buildOptions = order => order.map(k => {
-    if(k === 'wpn') return WPN_SUB.map(([val, lbl]) => `<option value="${val}">${lbl}</option>`).join('');
-    return `<option value="${k}">${JUNK_PREF_SLOT_LABEL[k] || k}</option>`;
-  }).join('');
+  const buildOptions = order => order.map(k => `<option value="${k}">${JUNK_PREF_SLOT_LABEL[k] || k}</option>`).join('');
   const eqEl = document.getElementById('equipSearchSlotFilter');
   if(eqEl) eqEl.innerHTML = buildOptions(equipOrder);
   ['invRefSlotFilter', 'whRefSlotFilter'].forEach(id => {
@@ -1103,7 +1059,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
   if(!wrap) return;
 
   if(!kw && !slotFilter){
-    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫。可用空白分隔多個條件（需同時符合），例如「騎士 遺物」＝騎士可裝備的遺物。也可用右側下拉選單依部位／武器細分列出</div>';
+    wrap.innerHTML = '<div style="color:var(--text3); grid-column:1/-1; padding:20px; text-align:center;">輸入關鍵字搜尋物品資料庫（輸入「遺物」兩字可列出所有遺物；輸入職業如「騎士」可列出該職業可用的裝備），或用右側下拉選單直接列出指定部位</div>';
     return;
   }
 
@@ -1112,10 +1068,13 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
     boot:'鞋', belt:'腰帶', cloak:'披風', misc:'雜物', card:'卡片', relic:'遺物'
   };
 
+  const clsCode = _classCodeFromKeyword(kw);   // 職業搜尋：關鍵字若為職業名/代碼，改比對 req
   const matched = Object.entries(ITEM_DB).filter(([id, v]) => {
-    if(slotFilter && !_matchSlotFilter(v, slotFilter)) return false;
+    if(slotFilter && _itemSlotCategory(v) !== slotFilter) return false;
     if(!kw) return true;
-    return _itemMatchesTokens(v, id, kw);   // 多重關鍵字 AND（職業／遺物／名稱可混搭）
+    if(isRelicKeyword(kw)) return !!v.relic;
+    if(clsCode && _reqIncludesClass(v.req, clsCode)) return true;
+    return v.n?.toLowerCase().includes(kw) || id.toLowerCase().includes(kw);
   });
 
   if(matched.length === 0){
@@ -1195,7 +1154,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
       <div class="panel-title">🎒 背包</div>
       <div id="invRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-          <input type="text" id="invRefSearchInput" placeholder="可空白分隔多重條件 例如: 騎士 遺物 / 藥水 / 法師 遺物" 
+          <input type="text" id="invRefSearchInput" placeholder="搜尋物品名稱/ID/職業... 例如: 藥水 / item_potion / 遺物 / 騎士" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('invRefSearchInput','invRefSearchResults','invRefSlotFilter')">
           <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
@@ -1238,7 +1197,7 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
       <div class="panel-title">🏦 倉庫</div>
       <div id="whRefSearchWrap" style="margin:16px 0; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:8px;">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-          <input type="text" id="whRefSearchInput" placeholder="可空白分隔多重條件 例如: 騎士 遺物 / 藥水 / 法師 遺物" 
+          <input type="text" id="whRefSearchInput" placeholder="搜尋物品名稱/ID/職業... 例如: 藥水 / item_potion / 遺物 / 騎士" 
                  style="flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
                  oninput="renderItemRefSearch('whRefSearchInput','whRefSearchResults','whRefSlotFilter')">
           <!-- 選項在頁面載入時由 _initSlotFilterDropdowns() 動態產生，對應 JUNK_PREF_SLOT_LABEL -->
