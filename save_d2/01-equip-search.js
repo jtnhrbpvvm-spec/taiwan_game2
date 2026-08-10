@@ -293,8 +293,12 @@ function renderItemRefSearch(inputId, resultId, slotFilterId){
   if(typeof GROWTH_RUNE_DEFS !== 'undefined' && (!slotFilter || slotFilter === 'rune')){
     const isRuneKw = !kw || kw.includes('符文') || kw.includes('rune');
     matchedRunes = Object.entries(GROWTH_RUNE_DEFS)
-      .filter(([id, d]) => isRuneKw || d.n.toLowerCase().includes(kw) || id.toLowerCase().includes(kw))
-      .map(([id, d]) => [id, { n: d.n, type: 'rune', d: d.d }]);
+      .filter(([id, d]) => {
+        if(isRuneKw) return true;
+        const tw = (typeof RUNE_TW_NAMES !== 'undefined' && RUNE_TW_NAMES[id]) || '';
+        return d.n.toLowerCase().includes(kw) || id.toLowerCase().includes(kw) || tw.includes(kw);
+      })
+      .map(([id, d]) => [id, { n: typeof growthRuneName==='function' ? growthRuneName(id) : d.n, type: 'rune', d: d.d }]);
   }
 
   // 寶石
