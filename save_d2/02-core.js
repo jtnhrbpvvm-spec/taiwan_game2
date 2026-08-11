@@ -168,6 +168,9 @@ function deepMerge(target, source){
 // ════════════════════════════════════════════════
 function showPanel(id, el){
   applyAll(true);   // 🔒 切換分頁前先把目前分頁的輸入內容存回 G，避免跨分頁編輯遺失
+  // 離開背包/倉庫時隱藏浮動刪除鈕
+  if(id !== 'inv') { const b = document.getElementById('floatDelBtn_inv'); if(b) b.style.display='none'; }
+  if(id !== 'wh')  { const b = document.getElementById('floatDelBtn_wh');  if(b) b.style.display='none'; }
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');

@@ -2050,9 +2050,75 @@ function addItem(type){
   toast('已新增：' + getItemName(id), 'ok');
 }
 
+// ─── 批次刪除：勾選狀態存在 Set，不寫進資料物件 ───
+const _sel = { inv: new Set(), wh: new Set() };
+
+function _ensureFloatBtn(type){
+  const id = 'floatDelBtn_' + type;
+  if(document.getElementById(id)) return;
+  const el = document.createElement('div');
+  el.id = id;
+  el.style.cssText = [
+    'display:none', 'position:fixed', 'bottom:28px', 'right:28px',
+    'z-index:9999', 'display:flex', 'gap:8px', 'align-items:center',
+    'background:var(--bg2)', 'border:2px solid var(--red)',
+    'border-radius:10px', 'padding:8px 14px', 'box-shadow:0 4px 16px rgba(0,0,0,.4)',
+    'pointer-events:auto'
+  ].join(';');
+  el.innerHTML =
+    `<span id="floatDelCount_${type}" style="color:var(--text);font-size:13px"></span>` +
+    `<button class="btn btn-danger btn-sm" onclick="_delSelectedItems('${type}')">🗑 刪除勾選</button>` +
+    `<button class="btn btn-sm" onclick="_clearSel('${type}')">✕ 取消</button>`;
+  el.style.display = 'none'; // start hidden
+  document.body.appendChild(el);
+}
+
+function _updateFloatBtn(type){
+  _ensureFloatBtn(type);
+  const el    = document.getElementById('floatDelBtn_' + type);
+  const count = document.getElementById('floatDelCount_' + type);
+  const n     = _sel[type].size;
+  if(!el) return;
+  el.style.display = n > 0 ? 'flex' : 'none';
+  if(count) count.textContent = `已勾選 ${n} 件`;
+}
+
+function _onItemCheck(type, idx, checked){
+  if(checked) _sel[type].add(idx);
+  else        _sel[type].delete(idx);
+  _updateFloatBtn(type);
+}
+
+function _clearSel(type){
+  _sel[type].clear();
+  // 取消畫面上所有勾選
+  const tbody = document.getElementById(type === 'inv' ? 'invBody' : 'whBody');
+  if(tbody) tbody.querySelectorAll('.item-row-chk').forEach(c=>{ c.checked = false; });
+  _updateFloatBtn(type);
+}
+
+function _delSelectedItems(type){
+  const idxs = Array.from(_sel[type]).sort((a,b)=>b-a); // 由大到小
+  if(!idxs.length) return;
+  const list = type === 'inv' ? G.p.inv : G.wh.items;
+  const names = idxs.map(i=> list[i] ? getItemName(list[i].id) : '').filter(Boolean);
+  const preview = names.length > 5
+    ? names.slice(0,5).join('、') + `…等 ${names.length} 件`
+    : names.join('、');
+  if(!confirm(`確定要刪除以下 ${idxs.length} 件物品？\n\n${preview}`)) return;
+  idxs.forEach(i => list.splice(i, 1)); // 從大到小 splice，不影響較小的 index
+  _sel[type].clear();
+  renderItemTable(type);
+}
+
 function delItem(type, idx){
   if(type === 'inv') G.p.inv.splice(idx, 1);
   else               G.wh.items.splice(idx, 1);
+  _sel[type].delete(idx);
+  // 被刪除後，比它大的 index 都要下移一位
+  const next = new Set();
+  _sel[type].forEach(i => next.add(i > idx ? i-1 : i));
+  _sel[type] = next;
   renderItemTable(type);
 }
 
@@ -2094,23 +2160,49 @@ function renderItemTable(type){
 
   tbody.innerHTML = list.map((it, i) => {
     const db      = ITEM_DB[it.id] || {};
-    const nameCls = db.legend ? 'style="color:var(--legend)"' : '';
     const eligible = isTier5AttrWeapon(it.id, it.attr);
-    let d2Prefix = '', d2Suffix = '';
-    if(Array.isArray(it.d2) && it.d2.length && typeof d2rNameAffixes === 'function'){
+
+    // 名稱顏色與 D2R 詞綴前後綴
+    const hasD2 = Array.isArray(it.d2) && it.d2.length > 0;
+    let nameStyle = db.legend ? 'color:var(--legend)' : '';
+    if(hasD2) nameStyle = 'color:#6ab0f5'; // 有暗黑詞綴 → 藍色
+    const nameStyleAttr = nameStyle ? `style="${nameStyle}"` : '';
+
+    let d2Prefix = '', d2Suffix = '', d2Tooltip = '';
+    if(hasD2 && typeof d2rNameAffixes === 'function'){
       const names = d2rNameAffixes(it);
       if(names.prefix) d2Prefix = `<span style="color:var(--accent2)">${names.prefix}</span>`;
       if(names.suffix) d2Suffix = `<span style="color:var(--accent2)">${names.suffix}</span>`;
     }
+    if(hasD2 && typeof d2rAffixText === 'function'){
+      d2Tooltip = it.d2
+        .map(r => d2rAffixText(r))
+        .filter(Boolean)
+        .join('\n');
+    }
+    const tooltipAttr = d2Tooltip ? `title="${d2Tooltip.replace(/"/g,'&quot;')}"` : '';
+
+    // 孔數：短格式「目前/最大」
+    function socketShort(item){
+      if(typeof socketCurrentCount!=='function') return '—';
+      const def = ITEM_DB[item.id];
+      if(typeof equipSocketLimit!=='function') return '—';
+      const cap = equipSocketLimit(def);
+      if(!cap) return '—';
+      const cur = socketCurrentCount(item);
+      const max = typeof socketMaxSetting==='function' ? socketMaxSetting(item) : cap;
+      return `${cur}/${max}`;
+    }
+
     return `
     <tr>
-      <td ${nameCls}>${d2Prefix}${getItemName(it.id)}${d2Suffix}</td>
+      <td ${nameStyleAttr} ${tooltipAttr}>${d2Prefix}${getItemName(it.id)}${d2Suffix}</td>
       <td style="color:var(--text3);font-size:11px">${it.id}</td>
       <td><input type="number" value="${it.cnt||1}" min="1" style="width:60px"
                  onchange="updateItemField('${type}',${i},'cnt',this.value)"></td>
       <td><input type="number" value="${it.en||0}" min="0" max="99" style="width:48px"
                  onchange="updateItemField('${type}',${i},'en',this.value)"></td>
-      <td style="text-align:center;color:var(--text3);font-size:12px">${typeof socketCountText==='function'?socketCountText(it):'—'}</td>
+      <td style="text-align:center;color:var(--text3);font-size:12px">${socketShort(it)}</td>
       <td class="inv-attr-cell">
         <select style="font-size:12px;background:var(--bg3);border:1px solid var(--border);
                        color:var(--text);border-radius:3px;padding:2px 3px;width:72px"
@@ -2142,10 +2234,28 @@ function renderItemTable(type){
                  onchange="updateItemField('${type}',${i},'bless',this.checked)"></td>
       <td><input type="checkbox" ${it.lock?'checked':''}
                  onchange="updateItemField('${type}',${i},'lock',this.checked)"></td>
-      <td><button class="btn btn-danger btn-sm"
-                  onclick="delItem('${type}',${i})">刪除</button></td>
+      <td style="text-align:center;padding:2px 6px">
+        <input type="checkbox" class="item-row-chk" data-idx="${i}"
+               ${_sel[type].has(i)?'checked':''}
+               onchange="_onItemCheck('${type}',${i},this.checked)">
+      </td>
     </tr>`;
   }).join('');
+
+  // 把最後一欄標題改名為「刪除」，並移除舊的注入 checkbox th
+  const thead = tbody.closest('table') && tbody.closest('table').querySelector('thead tr');
+  if(thead){
+    // 移除之前注入的 checkbox th（如果有）
+    const old = thead.querySelector('.chk-th');
+    if(old) old.remove();
+    // 最後一欄改名為「刪除」
+    const ths = thead.querySelectorAll('th');
+    const lastTh = ths[ths.length - 1];
+    if(lastTh && lastTh.textContent.trim() !== '刪除') lastTh.textContent = '刪除';
+  }
+
+  _ensureFloatBtn(type);
+  _updateFloatBtn(type);
 }
 
 function updateItemAncField(type, idx, val){

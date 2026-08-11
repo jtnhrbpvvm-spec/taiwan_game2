@@ -76,6 +76,7 @@ function clearList(type){
   if(!confirm('確定清空？')) return;
   if(type === 'inv') G.p.inv   = [];
   else               G.wh.items = [];
+  _delSel[type].clear();
   renderItemTable(type);
 }
 
@@ -151,10 +152,12 @@ function renderItemTable(type){
                  onchange="updateItemField('${type}',${i},'bless',this.checked)"></td>
       <td><input type="checkbox" ${it.lock?'checked':''}
                  onchange="updateItemField('${type}',${i},'lock',this.checked)"></td>
-      <td><button class="btn btn-danger btn-sm"
-                  onclick="delItem('${type}',${i})">刪除</button></td>
+      <td style="text-align:center"><input type="checkbox" class="del-check"
+             ${_delSel[type].has(i)?'checked':''}
+             onchange="toggleDelSel('${type}',${i},this.checked)" title="勾選以刪除此物品"></td>
     </tr>`;
   }).join('');
+  _updateDelFab();
 }
 
 function updateItemAncField(type, idx, val){
@@ -198,3 +201,74 @@ function updateItemField(type, idx, field, val){
     it[field] = val;
   }
 }
+
+
+// ════════════════════════════════════════════════
+//  🗑️ 背包/倉庫：勾選刪除（每列勾選框 + 右下浮動刪除鈕 + 刪除前確認）
+//  · 每列「操作」欄改成勾選框，勾選要刪的物品（可複選）。
+//  · 右下角浮動鈕（position:fixed，捲動頁面時固定跟隨）顯示已勾選數量；
+//    只有在背包/倉庫分頁且有勾選時才出現。按下會先跳確認再刪除。
+//  · 勾選狀態以「列索引」記錄在 _delSel（不寫進物品資料，不會被匯出）。
+//    編輯欄位觸發的重繪會保留勾選；清空/刪除後自動清除勾選。
+// ════════════════════════════════════════════════
+const _delSel = { inv: new Set(), wh: new Set() };
+
+// 目前作用中的物品分頁（用 .panel.active 判斷，不寫死 panel id）
+function _activeItemType(){
+  const ib = document.getElementById('invBody');
+  const wb = document.getElementById('whBody');
+  const invPanel = ib && ib.closest('.panel');
+  const whPanel  = wb && wb.closest('.panel');
+  if(invPanel && invPanel.classList.contains('active')) return 'inv';
+  if(whPanel  && whPanel.classList.contains('active'))  return 'wh';
+  return null;
+}
+
+function toggleDelSel(type, idx, checked){
+  if(checked) _delSel[type].add(idx);
+  else        _delSel[type].delete(idx);
+  _updateDelFab();
+}
+
+function deleteSelected(type){
+  const sel = _delSel[type];
+  if(!sel || sel.size === 0){ toast('尚未勾選任何物品', 'warn'); return; }
+  const n = sel.size;
+  if(!confirm(`確定刪除勾選的 ${n} 項物品？此動作無法復原。`)) return;
+  const list = type === 'inv' ? G.p.inv : G.wh.items;
+  // 由大到小 splice，避免索引位移
+  Array.from(sel).sort((a, b) => b - a).forEach(i => list.splice(i, 1));
+  sel.clear();
+  renderItemTable(type);
+  toast(`已刪除 ${n} 項物品`, 'ok');
+}
+
+function _ensureDelFab(){
+  let fab = document.getElementById('itemDelFab');
+  if(fab) return fab;
+  fab = document.createElement('button');
+  fab.id = 'itemDelFab';
+  fab.className = 'btn btn-danger';
+  fab.style.cssText = 'position:fixed;right:28px;bottom:28px;z-index:3000;display:none;'
+    + 'box-shadow:0 6px 20px rgba(0,0,0,.5);font-size:14px;padding:12px 18px;border-radius:10px;';
+  fab.onclick = () => { const t = _activeItemType(); if(t) deleteSelected(t); };
+  document.body.appendChild(fab);
+  return fab;
+}
+
+function _updateDelFab(){
+  const fab = _ensureDelFab();
+  const t = _activeItemType();
+  const n = t ? _delSel[t].size : 0;
+  if(t && n > 0){
+    fab.textContent = `🗑 刪除勾選（${n}）`;
+    fab.style.display = 'block';
+  } else {
+    fab.style.display = 'none';
+  }
+}
+
+// 切分頁後更新浮動鈕（nav 點擊會呼叫 showPanel；用 setTimeout 讓它先跑完再判斷作用分頁）
+document.addEventListener('click', e => {
+  if(e.target && e.target.closest && e.target.closest('.nav-item')) setTimeout(_updateDelFab, 0);
+});
