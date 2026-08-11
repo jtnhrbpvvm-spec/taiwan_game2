@@ -116,6 +116,22 @@ let G = {
 // ════════════════════════════════════════════════
 //  Toast
 // ════════════════════════════════════════════════
+// ── 頂部下拉選單開關 ──
+function toggleBarDD(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const wasOpen = el.classList.contains('open');
+  closeBarDDs();
+  if(!wasOpen) el.classList.add('open');
+}
+function closeBarDDs(){
+  document.querySelectorAll('.bar-dropdown.open').forEach(el => el.classList.remove('open'));
+}
+// 點選選單以外的地方關閉
+document.addEventListener('click', e => {
+  if(!e.target.closest('.bar-dropdown')) closeBarDDs();
+});
+
 function toast(msg, type='info', dur=2500){
   const area = document.getElementById('toastArea');
   const el   = document.createElement('div');

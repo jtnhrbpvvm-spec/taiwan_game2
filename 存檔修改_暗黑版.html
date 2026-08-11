@@ -26,6 +26,22 @@ body{
 }
 .bar-title{ font-weight:bold; color:var(--accent2); margin-right:4px; font-size:15px; }
 .bar-sep{ color:var(--border); padding:0 2px; }
+.bar-dropdown{ position:relative; display:inline-block; }
+.bar-dropdown-menu{
+  display:none; position:absolute; top:100%; left:0; z-index:500;
+  background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4); min-width:160px; padding:4px 0;
+}
+.bar-dropdown.open .bar-dropdown-menu{ display:block; }
+.bar-dropdown-menu label,
+.bar-dropdown-menu button{
+  display:block; width:100%; text-align:left; padding:7px 14px;
+  background:none; border:none; color:var(--text); font-size:13px;
+  cursor:pointer; white-space:nowrap;
+}
+.bar-dropdown-menu label:hover,
+.bar-dropdown-menu button:hover{ background:var(--bg3); }
+.bar-dropdown-menu hr{ margin:4px 8px; border-color:var(--border); }
 #main{ display:flex; flex:1; overflow:hidden; background:var(--bg); }
 #sidebar{
   width:152px; background:var(--bg2);
@@ -327,28 +343,43 @@ input[readonly]{ opacity:.65; cursor:not-allowed; background:var(--bg1, #1a1a1a)
 <div id="topbar">
   <span class="bar-title">⚔️ 放置天堂 暗黑版存檔修改器 V2</span>
   <span class="bar-sep">|</span>
-  <label class="btn" style="cursor:pointer">
-    📂 匯入網頁版存檔
-    <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event)">
-  </label>
-  <button class="btn" onclick="exportJson()">💾 匯出網頁版存檔</button>
-  <span class="bar-sep">|</span>
-  <label class="btn" style="cursor:pointer">
-    🧩 匯入首頁完整存檔
-    <input type="file" accept=".json" style="display:none" onchange="importJJFile(event)">
-  </label>
-  <button class="btn" onclick="exportJJFile()">🧩 匯出首頁完整存檔</button>
+
+  <!-- 網頁版存檔 下拉 -->
+  <div class="bar-dropdown" id="ddWeb">
+    <button class="btn" onclick="toggleBarDD('ddWeb')">📁 網頁版存檔 ▾</button>
+    <div class="bar-dropdown-menu">
+      <label>
+        📂 匯入
+        <input type="file" accept=".json" style="display:none" onchange="importJsonFile(event);closeBarDDs()">
+      </label>
+      <button onclick="exportJson();closeBarDDs()">💾 匯出</button>
+      <hr>
+      <button onclick="showSig1SourceModal();closeBarDDs()">📋 貼上存檔</button>
+    </div>
+  </div>
+
+  <!-- 首頁完整存檔 下拉 -->
+  <div class="bar-dropdown" id="ddJJ">
+    <button class="btn" onclick="toggleBarDD('ddJJ')">🧩 首頁完整存檔 ▾</button>
+    <div class="bar-dropdown-menu">
+      <label>
+        📂 匯入
+        <input type="file" accept=".json" style="display:none" onchange="importJJFile(event);closeBarDDs()">
+      </label>
+      <button onclick="exportJJFile();closeBarDDs()">💾 匯出</button>
+    </div>
+  </div>
+
   <select id="jjSlotSelect" style="display:none;min-width:180px;margin-left:6px" onchange="onJJSlotChange(this)">
     <option value="">— 選擇角色 —</option>
   </select>
   <span id="jjStatusLabel" style="color:var(--text3);font-size:12px;margin-left:6px"></span>
-  <!-- 轉移碼按鈕：暫時隱藏，功能已完整實作於 save_d2/12-transfer-code.js，日後取消 display:none 即可啟用 -->
+  <!-- 轉移碼按鈕：暫時隱藏 -->
   <span style="display:none">
     <button class="btn" onclick="openJJCodeImport()">📥 輸入轉移碼</button>
     <button class="btn" onclick="openJJCodeGenerate()">🔑 產生轉移碼</button>
   </span>
   <span class="bar-sep">|</span>
-  <button class="btn" onclick="showSig1SourceModal()">📋 貼上存檔</button>
   <button class="btn btn-danger" onclick="clearAll()">🗑 清除</button>
 </div>
 
