@@ -134,7 +134,7 @@ function growthRenderRuneOptions(){
   sel.innerHTML = Object.keys(GROWTH_RUNE_DEFS).map(id=>{
     const d = GROWTH_RUNE_DEFS[id];
     const have = growthInvCount(id);
-    return `<option value="${id}">${ggEsc(growthRuneName(id))}（持有 ${have}）</option>`;
+    return `<option value="${id}">${ggEsc(d.n)}（持有 ${have}）</option>`;
   }).join('');
   if(prev && GROWTH_RUNE_DEFS[prev]) sel.value = prev;
   growthRuneSelectChange();
