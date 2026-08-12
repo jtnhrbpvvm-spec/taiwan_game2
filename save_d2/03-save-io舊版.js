@@ -148,7 +148,6 @@ const EQ_SLOTS = [
   {id:'arrow',  label:'箭矢'     },
   {id:'pet',    label:'寵物裝備', hidden:true },
   {id:'doll',   label:'魔法娃娃' },
-  {id:'charm',  label:'大型護符（地獄火炬）' },
   {id:'_spacer_rem', label:'', spacer:true },
   {id:'rem_claw',  label:'席琳之爪', isRemains:true },
   {id:'rem_eye',   label:'席琳之眼', isRemains:true },

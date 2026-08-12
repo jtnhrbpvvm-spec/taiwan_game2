@@ -20,45 +20,16 @@ const EQ_SLOT_LABEL = Object.fromEntries(EQ_SLOTS.filter(s=>!s.spacer).map(s=>[s
 let _gaSlot = '';
 let _gaQuality = 'magic';
 let _gaRows = [];
-let _gaPendingItem = ''; // 空部位時選擇的待裝備物品 ID
-
-// 各部位可附魔的物品篩選器
-// 條件：正確部位類型 + 排除遺物/特殊/不可強化類 + gachaWeight !== 0（排除 Boss 專屬掉落與遺物）
-const _BASE_EXCL = ([id,d]) => !d.relic && !d.isArrow && !d.remains && !d.doll && !d.noEnhance && d.gachaWeight !== 0;
-const _AFFIX_SLOT_FILTER = {
-  wpn:     ([id,d]) => d.type==='wpn' && _BASE_EXCL([id,d]),
-  offwpn:  ([id,d]) => d.type==='wpn' && _BASE_EXCL([id,d]),
-  helm:    ([id,d]) => d.slot==='helm'    && _BASE_EXCL([id,d]),
-  armor:   ([id,d]) => d.slot==='armor'   && _BASE_EXCL([id,d]),
-  shield:  ([id,d]) => d.slot==='shield'  && _BASE_EXCL([id,d]),
-  cloak:   ([id,d]) => d.slot==='cloak'   && _BASE_EXCL([id,d]),
-  tshirt:  ([id,d]) => d.slot==='tshirt'  && _BASE_EXCL([id,d]),
-  gloves:  ([id,d]) => d.slot==='gloves'  && _BASE_EXCL([id,d]),
-  boots:   ([id,d]) => d.slot==='boots'   && _BASE_EXCL([id,d]),
-  belt:    ([id,d]) => d.slot==='belt'    && _BASE_EXCL([id,d]),
-  ring1:   ([id,d]) => d.slot==='ring'    && _BASE_EXCL([id,d]),
-  ring2:   ([id,d]) => d.slot==='ring'    && _BASE_EXCL([id,d]),
-  amulet:  ([id,d]) => d.slot==='amulet'  && _BASE_EXCL([id,d]),
-  earring: ([id,d]) => d.slot==='earring' && _BASE_EXCL([id,d]),
-};
-
-// 部位確實沒有裝備（id 為空）
-function growthAffixIsEmpty(slotKey){
-  if(!G.p.eq) return true;
-  const it = G.p.eq[slotKey];
-  return !it || !it.id;
-}
-
-// 部位有裝備但不可附魔（遺物、Boss 裝備、席琳遺骸、魔法娃娃、奇古獸等）
-function growthAffixIsNonAffixable(slotKey){
-  if(growthAffixIsEmpty(slotKey)) return false;
-  const it = G.p.eq[slotKey];
-  const d  = ITEM_DB[it.id];
-  return !d || !!(d.relic || d.isArrow || d.remains || d.doll || d.noEnhance);
-}
 
 function growthAffixEligibleSlots(){
-  return Object.keys(_AFFIX_SLOT_FILTER);
+  if(!G.p.eq) return [];
+  return Object.keys(G.p.eq).filter(k=>{
+    const it = G.p.eq[k];
+    if(!it || !it.id) return false;
+    const d = ITEM_DB[it.id];
+    if(!d || d.relic || d.isArrow || d.remains || d.doll || d.noEnhance) return false;
+    return d.type === 'wpn' || d.type === 'arm' || d.type === 'acc';
+  });
 }
 
 function renderGrowthAffixPanel(){
@@ -66,83 +37,30 @@ function renderGrowthAffixPanel(){
   if(!sel) return;
   const prev = sel.value || _gaSlot;
   const slots = growthAffixEligibleSlots();
+  if(!slots.length){
+    sel.innerHTML = '<option value="">（身上目前沒有可加詞綴的裝備）</option>';
+    _gaSlot = '';
+    _gaRows = [];
+    growthAffixRenderRows();
+    growthAffixRenderPreview();
+    return;
+  }
   sel.innerHTML = slots.map(k=>{
-    const label = EQ_SLOT_LABEL[k] || k;
-    if(growthAffixIsEmpty(k))
-      return `<option value="${k}">${gaEsc(label)}・（無裝備）</option>`;
-    if(growthAffixIsNonAffixable(k))
-      return `<option value="${k}" disabled style="color:var(--text3)">${gaEsc(label)}・${gaEsc(getItemName(G.p.eq[k].id))}（不可附魔）</option>`;
-    return `<option value="${k}">${gaEsc(label)}・${gaEsc(getItemName(G.p.eq[k].id))}</option>`;
+    const it = G.p.eq[k];
+    return `<option value="${k}">${gaEsc(EQ_SLOT_LABEL[k]||k)}・${gaEsc(getItemName(it.id))}</option>`;
   }).join('');
-  // 優先還原上一個選取；若它是 disabled（不可附魔）則跳到第一個可選的
-  const validPrev = prev && slots.includes(prev) && !growthAffixIsNonAffixable(prev);
-  sel.value = validPrev ? prev : (slots.find(k=>!growthAffixIsNonAffixable(k)) || slots[0] || '');
+  if(prev && slots.includes(prev)) sel.value = prev;
+  else sel.value = slots[0];
   growthAffixSlotChange();
-}
-
-// 延遲注入「選擇裝備」下拉列（緊接在部位選單上方）
-function _gaEnsureItemPicker(){
-  if(document.getElementById('growthAffixItemPickerRow')) return;
-  const qSel = document.getElementById('growthAffixQualitySelect');
-  if(!qSel) return;
-  const qRow = qSel.closest('.form-row');
-  if(!qRow) return;
-  const row = document.createElement('div');
-  row.className = 'form-row';
-  row.id = 'growthAffixItemPickerRow';
-  row.style.display = 'none';
-  row.innerHTML =
-    `<span class="form-label">選擇裝備</span>` +
-    `<select id="growthAffixItemPicker" style="min-width:260px" onchange="growthAffixItemPickerChange()">` +
-      `<option value="">— 請選擇要附魔的裝備 —</option>` +
-    `</select>` +
-    `<span id="growthAffixPickerNote" style="color:var(--text3);font-size:12px;margin-left:6px"></span>`;
-  qRow.parentNode.insertBefore(row, qRow);
-}
-
-function _gaPopulateItemPicker(slotKey){
-  const pick = document.getElementById('growthAffixItemPicker');
-  if(!pick || !_AFFIX_SLOT_FILTER[slotKey]) return;
-  const items = Object.entries(ITEM_DB).filter(_AFFIX_SLOT_FILTER[slotKey]);
-  pick.innerHTML =
-    `<option value="">— 請選擇要附魔的裝備 —</option>` +
-    items.map(([id,d])=>`<option value="${id}">${gaEsc(d.n)}</option>`).join('');
-  pick.value = '';
-  const note = document.getElementById('growthAffixPickerNote');
-  if(note) note.textContent = '';
-  _gaPendingItem = '';
-}
-
-function growthAffixItemPickerChange(){
-  const pick = document.getElementById('growthAffixItemPicker');
-  _gaPendingItem = pick ? pick.value : '';
-  const note = document.getElementById('growthAffixPickerNote');
-  if(note) note.textContent = _gaPendingItem ? `已選：${getItemName(_gaPendingItem)}` : '';
-  growthAffixRenderPreview();
 }
 
 function growthAffixSlotChange(){
   const sel = document.getElementById('growthAffixSlotSelect');
   _gaSlot = sel ? sel.value : '';
-  _gaPendingItem = '';
-
-  const empty    = growthAffixIsEmpty(_gaSlot);
-  const nonAffix = !empty && growthAffixIsNonAffixable(_gaSlot);
-
-  // 顯示 / 隱藏物品選擇器（只有真正空部位才顯示）
-  _gaEnsureItemPicker();
-  const pickerRow = document.getElementById('growthAffixItemPickerRow');
-  if(pickerRow){
-    if(empty && _gaSlot){ pickerRow.style.display = ''; _gaPopulateItemPicker(_gaSlot); }
-    else                 { pickerRow.style.display = 'none'; }
-  }
-
-  // 有裝備且可附魔才載入詞綴
-  const it = (!empty && !nonAffix && _gaSlot) ? G.p.eq[_gaSlot] : null;
+  const it = _gaSlot ? G.p.eq[_gaSlot] : null;
   _gaQuality = (it && D2R_QUALITY[it.d2q]) ? it.d2q : 'magic';
   _gaRows = it && Array.isArray(it.d2)
-    ? it.d2.filter(r=>Array.isArray(r) && D2R_AFFIX_LABEL[r[0]])
-           .map(r=>[r[0], Math.max(0,Math.floor(Number(r[1])||0)), Math.max(1,Math.min(5,Math.floor(Number(r[2]))||5))])
+    ? it.d2.filter(r=>Array.isArray(r) && D2R_AFFIX_LABEL[r[0]]).map(r=>[r[0], Math.max(0,Math.floor(Number(r[1])||0)), Math.max(1,Math.min(5,Math.floor(Number(r[2]))||5))])
     : [];
   const qSel = document.getElementById('growthAffixQualitySelect');
   if(qSel){
@@ -220,9 +138,6 @@ function growthAffixRemoveRow(idx){
 
 function growthAffixAddRow(){
   if(!_gaSlot){ toast('請先選擇要編輯的裝備', 'err'); return; }
-  if(growthAffixIsEmpty(_gaSlot) && !_gaPendingItem){
-    toast('請先在「選擇裝備」下拉選單選擇要附魔的裝備', 'err'); return;
-  }
   const qdef = D2R_QUALITY[_gaQuality] || D2R_QUALITY.magic;
   if(_gaRows.length >= qdef.max){
     toast(`「${qdef.n}」品質最多只能有 ${qdef.max} 條詞綴`, 'err');
@@ -240,13 +155,12 @@ function growthAffixRenderPreview(){
   const box = document.getElementById('growthAffixPreview');
   if(!box) return;
   if(!_gaSlot){ box.innerHTML = '<span style="color:var(--text3)">尚未選擇裝備。</span>'; return; }
-  const empty = growthAffixIsEmpty(_gaSlot);
-  const baseId = empty ? _gaPendingItem : (G.p.eq[_gaSlot] && G.p.eq[_gaSlot].id);
-  const baseName = baseId ? getItemName(baseId) : (empty ? '（請先選擇裝備）' : '');
+  const it = G.p.eq[_gaSlot];
+  const baseName = it ? getItemName(it.id) : '';
   const qdef = D2R_QUALITY[_gaQuality] || D2R_QUALITY.magic;
   const rows = _gaRows.filter(r=>D2R_AFFIX_LABEL[r[0]] && r[1] > 0);
   const lines = rows.map(r=>'・' + gaEsc(d2rAffixText(r))).join('<br>') || '<span style="color:var(--text3)">尚未設定任何詞綴</span>';
-  const names = rows.length ? d2rNameAffixes({ d2: rows }) : { prefix:'', suffix:'' };
+  const names = d2rNameAffixes({ d2: rows });
   const fullName = `${gaEsc(names.prefix||'')}${gaEsc(baseName)}${gaEsc(names.suffix||'')}`;
   box.innerHTML = `<b style="color:var(--accent2)">預覽全名：</b>${fullName}<br>
     <b style="color:var(--accent2)">品質：</b>${gaEsc(qdef.n)}（最多 ${qdef.max} 條詞綴，其中最多 ${qdef.t1max} 條可為 1 階）<br>
@@ -255,35 +169,13 @@ function growthAffixRenderPreview(){
 
 function growthAffixApply(){
   if(!_gaSlot){ toast('請先選擇要編輯的裝備', 'err'); return; }
+  const it = G.p.eq[_gaSlot];
+  if(!it){ toast('該部位目前沒有裝備', 'err'); return; }
   const rows = _gaRows.filter(r=>D2R_AFFIX_LABEL[r[0]] && r[1] > 0);
-  const empty = growthAffixIsEmpty(_gaSlot);
-
-  if(empty){
-    // 空部位：需先選擇物品，確認後裝備並寫入詞綴
-    if(!_gaPendingItem){ toast('請先在「選擇裝備」下拉選單選擇要附魔的裝備', 'err'); return; }
-    if(!rows.length){ toast('請至少設定一條詞綴', 'err'); return; }
-    const slotLabel = EQ_SLOT_LABEL[_gaSlot] || _gaSlot;
-    const itemName  = getItemName(_gaPendingItem);
-    if(!confirm(`確定要將「${itemName}」附魔後裝備到「${slotLabel}」嗎？`)) return;
-    if(!G.p.eq) G.p.eq = {};
-    G.p.eq[_gaSlot] = {
-      id: _gaPendingItem,
-      uid: typeof genUID==='function' ? genUID() : Math.random().toString(36).slice(2,11),
-      cnt:1, en:0, bless:false, lock:false, junk:false,
-      attr:false, anc:false, seteff:false,
-      d2:  rows.map(r=>[r[0], Math.floor(r[1]), Math.max(1,Math.min(5,Math.floor(r[2])))]),
-      d2q: _gaQuality,
-    };
-    toast(`已將「${itemName}」附魔並裝備到「${slotLabel}」`, 'ok');
-  } else {
-    // 已有裝備：直接覆寫詞綴
-    const it = G.p.eq[_gaSlot];
-    if(!rows.length){ toast('請至少設定一條詞綴，或使用「清除詞綴」', 'err'); return; }
-    it.d2  = rows.map(r=>[r[0], Math.floor(r[1]), Math.max(1,Math.min(5,Math.floor(r[2])))]);
-    it.d2q = _gaQuality;
-    toast(`已套用詞綴到「${getItemName(it.id)}」`, 'ok');
-  }
-
+  if(!rows.length){ toast('請至少設定一條詞綴，或使用「清除詞綴」', 'err'); return; }
+  it.d2 = rows.map(r=>[r[0], Math.floor(r[1]), Math.max(1,Math.min(5,Math.floor(r[2])))]);
+  it.d2q = _gaQuality;
+  toast(`已套用詞綴到「${getItemName(it.id)}」`, 'ok');
   renderGrowthAffixPanel();
   const eqPanel = document.getElementById('panel-eq');
   if(eqPanel && eqPanel.classList.contains('active') && typeof renderEqPanel === 'function') renderEqPanel();
@@ -291,7 +183,6 @@ function growthAffixApply(){
 
 function growthAffixClear(){
   if(!_gaSlot) return;
-  if(growthAffixIsEmpty(_gaSlot)){ _gaRows = []; growthAffixRenderRows(); growthAffixRenderPreview(); return; }
   const it = G.p.eq[_gaSlot];
   if(!it) return;
   if(!confirm('確定要清除這件裝備的所有詞綴嗎？')) return;
