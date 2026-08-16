@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -75,7 +75,8 @@
     { panel: "potions", icon: "🧪", title: "藥水設定", desc: "自動回血 / 回 AP 的閾值與藥水種類。" },
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
     { panel: "spot", icon: "📍", title: "目前位置", desc: "所在地圖、座標、正在打的怪物或採集點。" },
-    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "技能、任務進度、個性化等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
+    { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
+    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "任務進度、賣出保留清單等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
     { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" },
     { panel: "transfer", icon: "🔁", title: "轉移碼", desc: "產生/讀取遊戲內建那種六碼轉移碼，透過 Litterbox 暫存交換存檔。" }
   ];
@@ -335,6 +336,7 @@
     renderPotions(c);
     renderTagLists(c);
     renderSpot(c);
+    renderIndividuality(c);
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
@@ -983,11 +985,112 @@
     wrap.appendChild(fieldNumber("座標 Y", function () { return c.spot.y; }, function (v) { c.spot.y = v; }));
   }
 
+  // ---------- 個性化 ----------
+  var INDIVIDUALITY_STAGES = window.INDIVIDUALITY_STAGES || [];
+  var INDIVIDUALITY_TYPES = window.INDIVIDUALITY_TYPES || [];
+
+  function indivTypeLabel(kind) {
+    var t = INDIVIDUALITY_TYPES.find(function (x) { return x.kind === kind; });
+    if (!t) return "種類#" + kind;
+    return t.name.replace(/%d%%/g, "%").replace(/%d/g, "").trim();
+  }
+
+  function renderIndividuality(c) {
+    if (!c.individuality) c.individuality = { stage: 0, fails: 0, attrs: [], minor: { str: 0, agi: 0, int: 0, sta: 0, wis: 0, luck: 0 } };
+    var ind = c.individuality;
+
+    var stageInput = document.getElementById("indivStage");
+    stageInput.value = ind.stage || 0;
+    stageInput.oninput = function () { ind.stage = stageInput.valueAsNumber || 0; };
+    stageInput.onchange = function () { renderIndividuality(c); };
+
+    var failsInput = document.getElementById("indivFails");
+    failsInput.value = ind.fails || 0;
+    failsInput.oninput = function () { ind.fails = failsInput.valueAsNumber || 0; };
+
+    var stageDef = INDIVIDUALITY_STAGES[ind.stage] || null;
+    var nextStageDef = INDIVIDUALITY_STAGES[ind.stage + 1] || null;
+    var infoBox = document.getElementById("indivStageInfo");
+    if (stageDef) {
+      var infoLines = ["目前階段展現上限：" + stageDef.slots + " 條"];
+      if (nextStageDef) {
+        infoLines.push("升到 +" + (ind.stage + 1) + "：需要等級 " + nextStageDef.upgradeLevel + "，成功率約 " + (stageDef.upgradeRate / 1000) + "%");
+      } else {
+        infoLines.push("已達最高階段");
+      }
+      infoBox.textContent = infoLines.join("　|　");
+    } else {
+      infoBox.textContent = "找不到這個階段的參考資料（stage 超出範圍 0~10）";
+    }
+
+    var typeOptions = INDIVIDUALITY_TYPES.map(function (t) { return { value: t.kind, label: indivTypeLabel(t.kind) }; });
+
+    var listWrap = document.getElementById("indivAttrsList");
+    listWrap.innerHTML = "";
+    ind.attrs.forEach(function (attr, idx) {
+      var active = !!(stageDef && idx < stageDef.slots);
+      var row = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);flex-wrap:wrap;" });
+
+      var kindSelect = el("select", { style: "flex:1;min-width:140px;" });
+      typeOptions.forEach(function (o) {
+        var opt = el("option", { value: o.value, text: o.label });
+        if (attr.kind === o.value) opt.selected = true;
+        kindSelect.appendChild(opt);
+      });
+      kindSelect.addEventListener("change", function () { attr.kind = Number(kindSelect.value); });
+      row.appendChild(kindSelect);
+
+      var gradeSelect = el("select", { style: "width:70px;" });
+      ["S", "A", "B"].forEach(function (g) {
+        var opt = el("option", { value: g, text: g });
+        if (attr.grade === g) opt.selected = true;
+        gradeSelect.appendChild(opt);
+      });
+      gradeSelect.addEventListener("change", function () { attr.grade = gradeSelect.value; });
+      row.appendChild(gradeSelect);
+
+      var baseInput = el("input", { type: "number", value: attr.base, style: "width:90px;" });
+      baseInput.addEventListener("input", function () { attr.base = baseInput.valueAsNumber || 0; });
+      row.appendChild(baseInput);
+
+      var lockLabel = el("label", { style: "display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);white-space:nowrap;" });
+      var lockCb = el("input", { type: "checkbox" });
+      lockCb.checked = !!attr.locked;
+      lockCb.addEventListener("change", function () { attr.locked = lockCb.checked; });
+      lockLabel.appendChild(lockCb);
+      lockLabel.appendChild(document.createTextNode("鎖定"));
+      row.appendChild(lockLabel);
+
+      row.appendChild(el("span", {
+        style: "font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap;" +
+          (active ? "color:var(--green);border:1px solid var(--green);" : "color:var(--text3);border:1px solid var(--border);"),
+        text: active ? "生效中" : "尚未生效"
+      }));
+
+      var delBtn = el("button", { class: "icon-btn", text: "✕" });
+      delBtn.addEventListener("click", function () { ind.attrs.splice(idx, 1); renderIndividuality(c); });
+      row.appendChild(delBtn);
+
+      listWrap.appendChild(row);
+    });
+
+    document.getElementById("indivAddAttrBtn").onclick = function () {
+      ind.attrs.push({ kind: INDIVIDUALITY_TYPES[0].kind, grade: "B", base: 1, locked: false });
+      renderIndividuality(c);
+    };
+
+    var minorWrap = document.getElementById("indivMinorFields");
+    minorWrap.innerHTML = "";
+    var minorLabels = { str: "力量", agi: "敏捷", int: "智力", sta: "體力", wis: "精神", luck: "幸運" };
+    Object.keys(minorLabels).forEach(function (k) {
+      minorWrap.appendChild(fieldNumber(minorLabels[k], function () { return ind.minor[k]; }, function (v) { ind.minor[k] = v; }));
+    });
+  }
+
   // ---------- 進階（推測格式）欄位：原始 JSON ----------
   var RAW_FIELDS = [
     { key: "activeQuests", label: "進行中的任務 activeQuests", confidence: "mid", note: "任務 ID 的陣列，例如 [367]（已由真實存檔驗證，但任務名稱對照尚未做進編輯器）。" },
     { key: "sellKeep", label: "賣出時保留清單 sellKeep", confidence: "mid", note: "格式為 [[物品ID, 保留數量], ...]（已由真實存檔驗證）。保留數量的確切意義尚待進一步確認。" },
-    { key: "individuality", label: "個性化 individuality", confidence: "mid", note: "已由真實存檔驗證：stage/fails/minor 可信；attrs 內每項為 {kind, grade, base, locked}。" },
     { key: "offlineHistory", label: "離線紀錄 offlineHistory", confidence: "mid", note: "只是歷史紀錄，通常不需要編輯，格式已由真實存檔驗證。" },
     { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" }
   ];
