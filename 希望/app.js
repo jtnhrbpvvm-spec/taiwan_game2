@@ -619,6 +619,16 @@
     c.pets.forEach(function (pet, idx) {
       var tr = document.createElement("tr");
 
+      var tdActive = document.createElement("td");
+      var activeRadio = el("input", { type: "radio", name: "activePet", style: "cursor:pointer;width:18px;height:18px;" });
+      activeRadio.checked = c.activePetUid === pet.uid;
+      activeRadio.addEventListener("change", function () {
+        c.activePetUid = pet.uid;
+        renderPets(c);
+      });
+      tdActive.appendChild(activeRadio);
+      tr.appendChild(tdActive);
+
       var tdPet = document.createElement("td");
       tdPet.appendChild(makePetSelect(pet.id, function (newId) { pet.id = newId; }));
       tr.appendChild(tdPet);
@@ -633,7 +643,12 @@
 
       var tdAct = document.createElement("td");
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
-      delBtn.addEventListener("click", function () { c.pets.splice(idx, 1); renderPets(c); });
+      delBtn.addEventListener("click", function () {
+        var wasActive = c.activePetUid === pet.uid;
+        c.pets.splice(idx, 1);
+        if (wasActive) c.activePetUid = c.pets.length ? c.pets[0].uid : null;
+        renderPets(c);
+      });
       tdAct.appendChild(delBtn);
       tr.appendChild(tdAct);
 
@@ -644,6 +659,8 @@
       var uid = c.nextPetUid++;
       // 新增的寵物先留空，讓玩家自己從下拉選單挑選
       c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0 });
+      // 如果角色原本沒有任何出戰寵物，新增的這隻自動設為出戰
+      if (!c.activePetUid) c.activePetUid = uid;
       renderPets(c);
     };
   }

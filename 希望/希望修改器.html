@@ -304,8 +304,14 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 寵物 ══ -->
     <div class="panel" id="panel-pets">
       <div class="panel-title">🐾 寵物</div>
-      <div class="panel-desc">格式已從遊戲程式碼確認：uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。</div>
-      <table class="etable" id="petsTable"><thead><tr><th style="width:32%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th></th></tr></thead><tbody></tbody></table>
+      <div style="color:var(--red);font-weight:700;font-size:13.5px;margin-bottom:10px;">
+        ⚠️ 遊戲同時間只能有 1 隻寵物「出戰中」，其他都只是閒置庫存，不會提供任何加成！
+      </div>
+      <div class="panel-desc">
+        寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
+        uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
+      </div>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:30%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
     </div>
 
