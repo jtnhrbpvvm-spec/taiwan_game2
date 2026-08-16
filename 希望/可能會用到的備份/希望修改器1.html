@@ -121,16 +121,6 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 .cap-card .desc{font-size:12.5px;color:var(--text2);line-height:1.65;}
 .cap-card .conf-badge{margin-left:auto;}
 
-.equip-filter{
-  margin-bottom:16px; padding:12px 14px; background:var(--bg2); border:1px solid var(--border);
-  border-radius:6px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
-}
-.equip-filter .ef-field{display:flex; flex-direction:column; gap:5px;}
-.equip-filter label{font-size:10.5px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em;}
-.equip-filter .ef-short select{width:140px;}
-.equip-filter .ef-long{flex:1; min-width:200px;}
-.equip-filter .ef-long select{width:100%;}
-
 .dropzone{
   border:2px dashed var(--border);border-radius:8px;padding:40px 20px;text-align:center;cursor:pointer;
   transition:border-color .15s,background .15s;margin-bottom:24px;
@@ -139,16 +129,6 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 .dropzone .big{font-size:32px;opacity:.5;margin-bottom:10px;}
 .dropzone p{margin:4px 0;color:var(--text2);font-size:13.5px;}
 .dropzone input{display:none;}
-
-.modal-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
-  align-items:center;justify-content:center;
-}
-.modal-overlay.show{display:flex;}
-.modal-box{
-  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
-  padding:24px 26px;width:440px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.5);
-}
 
 .skill-job-group{margin-bottom:18px;}
 .skill-job-title{
@@ -181,7 +161,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V6</span>
+  <span class="bar-title">🧭 希望存檔修改器</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -273,13 +253,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。</div>
-      <div class="equip-filter">
-        <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
-        <div class="ef-field ef-short"><label>裝備位置</label><select id="invFilterSlot"><option value="">無</option></select></div>
-        <div class="ef-field ef-long"><label>符合的裝備</label><select id="invFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
-      </div>
-      <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。</div>
+      <table class="etable" id="stacksTable"><thead><tr><th style="width:46%">物品</th><th style="width:20%">數量</th><th style="width:16%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addStackBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
@@ -290,12 +265,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" style="margin-bottom:14px;">
         <div class="field"><label>倉庫金錢</label><input type="number" id="whGold"></div>
       </div>
-      <div class="equip-filter">
-        <div class="ef-field ef-short"><label>職業</label><select id="whFilterJob"><option value="">無</option></select></div>
-        <div class="ef-field ef-short"><label>裝備位置</label><select id="whFilterSlot"><option value="">無</option></select></div>
-        <div class="ef-field ef-long"><label>符合的裝備</label><select id="whFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
-      </div>
-      <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="warehouseTable"><thead><tr><th style="width:46%">物品</th><th style="width:20%">數量</th><th style="width:16%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addWhBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
@@ -341,11 +311,10 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="panel-desc">
         寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
         uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
-        <b>寵物出戰有兩道門檻</b>：角色等級要達到「所需等級」、名聲要達到「所需名聲」（都是唯讀欄位，來自寵物基礎資料），
-        兩個都不夠的話遊戲裡就不會顯示出戰按鈕。<b>grow 最低要是 1</b>：屬性加成表只有 9 格（對應 grow 1~9），
-        grow:0 查不到資料會顯示「無任何能力」，所以新增寵物預設 grow 是 1。
+        <b>寵物綁定名聲系統</b>：角色名聲必須達到「所需名聲」（唯讀欄位，來自寵物基礎資料）才能讓該寵物出戰，
+        不夠的話遊戲裡就不會顯示出戰按鈕。新增寵物的 grow/exp/hunger 預設值是照玩家提供的正常存檔對照設定的。
       </div>
-      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:22%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:26%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
     </div>
 

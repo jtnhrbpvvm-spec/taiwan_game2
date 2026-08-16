@@ -131,7 +131,6 @@
         }
         saveData = data;
         currentCharIndex = 0;
-        petsTouched = false;
         document.getElementById("loadStatus").textContent = "已載入：" + file.name + "（" + data.characters.length + " 位角色）";
         document.getElementById("exportBtn").disabled = false;
         document.getElementById("charSelect").disabled = false;
@@ -377,14 +376,9 @@
     $tbody.innerHTML = "";
     stacks.forEach(function (stack, idx) {
       var tr = document.createElement("tr");
-      var itemDef = ITEMS[String(stack.itemId)];
-      var isEquip = !!(itemDef && itemDef.slot);
 
       var tdItem = document.createElement("td");
-      tdItem.appendChild(makeItemPicker(stack.itemId, function (newId) {
-        stack.itemId = newId;
-        renderStackTable($tbody, stacks); // 換成裝備/非裝備時，精煉欄位要跟著顯示/隱藏
-      }));
+      tdItem.appendChild(makeItemPicker(stack.itemId, function (newId) { stack.itemId = newId; }));
       tr.appendChild(tdItem);
 
       var tdCount = document.createElement("td");
@@ -392,23 +386,6 @@
       countInput.addEventListener("input", function () { stack.count = countInput.valueAsNumber || 0; });
       tdCount.appendChild(countInput);
       tr.appendChild(tdCount);
-
-      var tdRefine = document.createElement("td");
-      if (isEquip) {
-        var refineSelect = el("select", { style: "width:70px;" });
-        for (var rv = 0; rv <= 12; rv++) {
-          var opt = el("option", { value: String(rv), text: "+" + rv });
-          if ((stack.refine || 0) === rv) opt.selected = true;
-          refineSelect.appendChild(opt);
-        }
-        refineSelect.addEventListener("change", function () {
-          stack.refine = Number(refineSelect.value);
-        });
-        tdRefine.appendChild(refineSelect);
-      } else {
-        tdRefine.appendChild(el("span", { text: "-", style: "color:var(--text3);" }));
-      }
-      tr.appendChild(tdRefine);
 
       var tdId = document.createElement("td");
       var idInput = el("input", { type: "number", value: stack.id });
@@ -429,99 +406,6 @@
     });
   }
 
-  // ---------- 職業 / 裝備位置 篩選（背包、倉庫共用）----------
-  function setupEquipFilter(prefix, onPick) {
-    var $job = document.getElementById(prefix + "FilterJob");
-    var $slot = document.getElementById(prefix + "FilterSlot");
-    var $result = document.getElementById(prefix + "FilterResult");
-    if (!$job || $job.dataset.wired) {
-      // 選單已經建立過選項，只需要重新綁定 onPick（因為每次 render 都會重建，但選項不用重建）
-    } else {
-      $job.dataset.wired = "1";
-      JOBS.forEach(function (j) {
-        var opt = el("option", { value: j.id, text: j.name });
-        $job.appendChild(opt);
-      });
-      Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
-        var opt = el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] });
-        $slot.appendChild(opt);
-      });
-    }
-
-    function update() {
-      var jobId = $job.value;
-      var slotKey = $slot.value;
-      if (!jobId && !slotKey) {
-        $result.disabled = true;
-        $result.innerHTML = '<option value="">請先選擇職業或裝備位置...</option>';
-        return;
-      }
-      var job = JOBS.find(function (j) { return j.id === jobId; });
-      var matches = [];
-      Object.keys(ITEMS).forEach(function (id) {
-        var it = ITEMS[id];
-        if (!it.slot) return;
-        if (slotKey && it.slot !== slotKey) return;
-        if (job && !(it.jobs & (1 << job.equipBit))) return;
-        matches.push({ id: id, name: it.name });
-      });
-      matches.sort(function (a, b) { return a.name.localeCompare(b.name, "zh-Hant"); });
-      $result.disabled = matches.length === 0;
-      if (!matches.length) {
-        $result.innerHTML = '<option value="">（沒有符合條件的裝備）</option>';
-        return;
-      }
-      $result.innerHTML = '<option value="">共 ' + matches.length + ' 件，請選擇...</option>' +
-        matches.map(function (m) { return '<option value="' + m.id + '">' + m.name + '</option>'; }).join("");
-    }
-
-    $job.onchange = update;
-    $slot.onchange = update;
-    $result.onchange = function () {
-      if (!$result.value) return;
-      var itemId = Number($result.value);
-      $result.value = "";
-      onPick(itemId);
-    };
-  }
-
-  function showAddToStackModal(itemId) {
-    var old = document.getElementById("centerModalOverlay");
-    if (old) old.remove();
-    var name = itemName(itemId);
-    var overlay = el("div", { id: "centerModalOverlay", class: "modal-overlay show" });
-    var box = el("div", { class: "modal-box" });
-    box.appendChild(el("div", { style: "font-weight:700;font-size:16px;color:var(--text);margin-bottom:10px;", text: "加入「" + name + "」" }));
-    box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:16px;", text: "要把這件裝備加進哪裡？" }));
-    var row = el("div", { style: "display:flex;gap:10px;" });
-    var invBtn = el("button", { class: "btn btn-accent", text: "🎒 加入背包" });
-    invBtn.addEventListener("click", function () {
-      var c = saveData.characters[currentCharIndex];
-      var newId = c.nextStackId++;
-      c.stacks.push({ id: newId, itemId: itemId, count: 1 });
-      renderStacks(c);
-      overlay.remove();
-      toast("已加入背包：" + name, "ok");
-    });
-    var whBtn = el("button", { class: "btn btn-accent", text: "🏦 加入倉庫" });
-    whBtn.addEventListener("click", function () {
-      var newId = saveData.warehouse.nextStackId++;
-      saveData.warehouse.stacks.push({ id: newId, itemId: itemId, count: 1 });
-      renderWarehouse();
-      overlay.remove();
-      toast("已加入倉庫：" + name, "ok");
-    });
-    var cancelBtn = el("button", { class: "btn", text: "取消" });
-    cancelBtn.addEventListener("click", function () { overlay.remove(); });
-    row.appendChild(invBtn);
-    row.appendChild(whBtn);
-    row.appendChild(cancelBtn);
-    box.appendChild(row);
-    overlay.appendChild(box);
-    overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-  }
-
   function renderStacks(c) {
     var $tbody = document.querySelector("#stacksTable tbody");
     renderStackTable($tbody, c.stacks);
@@ -530,7 +414,6 @@
       c.stacks.push({ id: newId, itemId: 1, count: 1 });
       renderStackTable($tbody, c.stacks);
     };
-    setupEquipFilter("inv", function (itemId) { showAddToStackModal(itemId); });
   }
 
   function renderWarehouse() {
@@ -543,7 +426,6 @@
       saveData.warehouse.stacks.push({ id: newId, itemId: 1, count: 1 });
       renderStackTable($tbody, saveData.warehouse.stacks);
     };
-    setupEquipFilter("wh", function (itemId) { showAddToStackModal(itemId); });
   }
 
   function renderLoadout(c) {
@@ -731,62 +613,18 @@
     draw();
   }
 
-  // ---------- 寵物需求檢查（等級/名聲）與提醒視窗 ----------
-  var petsTouched = false; // 只有玩家真的動過寵物，才會做這些檢查/跳窗
-
-  function checkPetRequirement(pet, c) {
-    var def = PETS[String(pet.id)];
-    if (!def) return { lvOk: true, fameOk: true };
-    var lvOk = (c.level || 0) >= (def.lv || 0);
-    var fameOk = ((c.fame && c.fame.current) || 0) >= (def.fame || 0);
-    return { lvOk: lvOk, fameOk: fameOk, def: def };
-  }
-
-  function showCenterModal(title, message) {
-    var old = document.getElementById("centerModalOverlay");
-    if (old) old.remove();
-    var overlay = el("div", { id: "centerModalOverlay", class: "modal-overlay show" });
-    var box = el("div", { class: "modal-box" });
-    box.appendChild(el("div", { style: "font-weight:700;font-size:16px;color:var(--red);margin-bottom:10px;", text: title }));
-    var msgEl = el("div", { style: "font-size:13.5px;color:var(--text2);line-height:1.8;white-space:pre-line;" });
-    msgEl.textContent = message;
-    box.appendChild(msgEl);
-    var closeBtn = el("button", { class: "btn btn-accent", style: "margin-top:16px;", text: "我知道了" });
-    closeBtn.addEventListener("click", function () { overlay.remove(); });
-    box.appendChild(closeBtn);
-    overlay.appendChild(box);
-    overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-  }
-
-  function warnIfPetInvalid(pet, c) {
-    var r = checkPetRequirement(pet, c);
-    if (r.lvOk && r.fameOk) return;
-    var lines = [];
-    lines.push("寵物「" + petName(pet.id) + "」尚未達到出戰條件：");
-    if (!r.lvOk) lines.push("・角色等級不足：目前 " + (c.level || 0) + "，需要 " + r.def.lv);
-    if (!r.fameOk) lines.push("・角色名聲不足：目前 " + ((c.fame && c.fame.current) || 0) + "，需要 " + r.def.fame);
-    lines.push("\n請調整後再匯出存檔，否則這隻寵物在遊戲裡不會顯示出戰按鈕。");
-    showCenterModal("⚠️ 寵物需求未達標", lines.join("\n"));
-  }
-
   function renderPets(c) {
     var $tbody = document.querySelector("#petsTable tbody");
     $tbody.innerHTML = "";
     c.pets.forEach(function (pet, idx) {
       var tr = document.createElement("tr");
-      var reqCheck = checkPetRequirement(pet, c);
-      var invalid = petsTouched && (!reqCheck.lvOk || !reqCheck.fameOk);
-      if (invalid) tr.style.background = "rgba(239,83,80,.12)";
 
       var tdActive = document.createElement("td");
       var activeRadio = el("input", { type: "radio", name: "activePet", style: "cursor:pointer;width:18px;height:18px;" });
       activeRadio.checked = c.activePetUid === pet.uid;
       activeRadio.addEventListener("change", function () {
         c.activePetUid = pet.uid;
-        petsTouched = true;
         renderPets(c);
-        warnIfPetInvalid(pet, c);
       });
       tdActive.appendChild(activeRadio);
       tr.appendChild(tdActive);
@@ -794,16 +632,13 @@
       var tdPet = document.createElement("td");
       tdPet.appendChild(makePetSelect(pet.id, function (newId) {
         pet.id = newId;
-        // grow 的屬性加成陣列（growth.atk/mag/def）只有 9 格，索引方式是 grow-1，
-        // 所以 grow:0 查不到任何一格資料，遊戲會顯示「無任何能力」。最低要設 1 才有基礎加成。
-        pet.grow = 1;
-        pet.exp = 0;
-        pet.hunger = 0;
-        petsTouched = true;
+        // 成長階段預設給滿（9）。實測發現 grow:0 的寵物（剛新增、未成熟）在遊戲裡無法出戰，
+        // 對照玩家提供的正常存檔，能出戰的寵物 grow 全部都是 9，所以改用這個當預設值比較安全。
+        pet.grow = 9;
+        pet.exp = 270;
+        pet.hunger = 270;
         renderPets(c);
-        warnIfPetInvalid(pet, c);
       }));
-      if (invalid) tdPet.style.color = "var(--red)";
       tr.appendChild(tdPet);
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
@@ -814,17 +649,6 @@
         tr.appendChild(td);
       });
 
-      var tdLv = document.createElement("td");
-      var lvDef = PETS[String(pet.id)];
-      var lvInp = el("input", {
-        type: "number", readonly: "readonly",
-        value: lvDef ? lvDef.lv : 0,
-        title: "人物等級需要達到這個數值，才能讓這隻寵物出戰（唯讀，來自寵物基礎資料，不能編輯）"
-      });
-      if (invalid && !reqCheck.lvOk) lvInp.style.color = "var(--red)";
-      tdLv.appendChild(lvInp);
-      tr.appendChild(tdLv);
-
       var tdFame = document.createElement("td");
       var fameDef = PETS[String(pet.id)];
       var fameInp = el("input", {
@@ -832,7 +656,6 @@
         value: fameDef ? fameDef.fame : 0,
         title: "人物名聲需要達到這個數值，才能讓這隻寵物出戰（唯讀，來自寵物基礎資料，不能編輯）"
       });
-      if (invalid && !reqCheck.fameOk) fameInp.style.color = "var(--red)";
       tdFame.appendChild(fameInp);
       tr.appendChild(tdFame);
 
@@ -856,7 +679,6 @@
       c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0 });
       // 如果角色原本沒有任何出戰寵物，新增的這隻自動設為出戰
       if (!c.activePetUid) c.activePetUid = uid;
-      petsTouched = true;
       renderPets(c);
     };
   }
@@ -1053,23 +875,8 @@
   });
 
   // ---------- 匯出 ----------
-  function findInvalidPetsAcrossAllCharacters() {
-    var problems = [];
-    saveData.characters.forEach(function (c) {
-      (c.pets || []).forEach(function (pet) {
-        var r = checkPetRequirement(pet, c);
-        if (!r.lvOk || !r.fameOk) {
-          var parts = [];
-          if (!r.lvOk) parts.push("等級不足（目前 " + (c.level || 0) + " / 需要 " + r.def.lv + "）");
-          if (!r.fameOk) parts.push("名聲不足（目前 " + ((c.fame && c.fame.current) || 0) + " / 需要 " + r.def.fame + "）");
-          problems.push("・角色「" + c.name + "」的「" + petName(pet.id) + "」：" + parts.join("、"));
-        }
-      });
-    });
-    return problems;
-  }
-
-  function doExport() {
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    if (!saveData) return;
     saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
     var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
     var url = URL.createObjectURL(blob);
@@ -1082,38 +889,6 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast("已匯出存檔檔案", "ok");
-  }
-
-  document.getElementById("exportBtn").addEventListener("click", function () {
-    if (!saveData) return;
-
-    if (petsTouched) {
-      var problems = findInvalidPetsAcrossAllCharacters();
-      if (problems.length) {
-        var old = document.getElementById("centerModalOverlay");
-        if (old) old.remove();
-        var overlay = el("div", { id: "centerModalOverlay", class: "modal-overlay show" });
-        var box = el("div", { class: "modal-box" });
-        box.appendChild(el("div", { style: "font-weight:700;font-size:16px;color:var(--red);margin-bottom:10px;", text: "⚠️ 存檔內有寵物未達出戰條件" }));
-        var msgEl = el("div", { style: "font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-line;max-height:260px;overflow-y:auto;" });
-        msgEl.textContent = problems.join("\n") + "\n\n這些寵物在遊戲裡不會顯示出戰按鈕。建議先修改後再匯出，或確認可以接受再繼續。";
-        box.appendChild(msgEl);
-        var row = el("div", { style: "display:flex;gap:10px;margin-top:16px;" });
-        var backBtn = el("button", { class: "btn", text: "返回修改" });
-        backBtn.addEventListener("click", function () { overlay.remove(); });
-        var goBtn = el("button", { class: "btn btn-accent", text: "仍要匯出" });
-        goBtn.addEventListener("click", function () { overlay.remove(); doExport(); });
-        row.appendChild(backBtn);
-        row.appendChild(goBtn);
-        box.appendChild(row);
-        overlay.appendChild(box);
-        overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.remove(); });
-        document.body.appendChild(overlay);
-        return;
-      }
-    }
-
-    doExport();
   });
 
   // ---------- 轉移碼（Litterbox）----------
@@ -1202,7 +977,6 @@
           if (!data || !Array.isArray(data.characters)) throw new Error("格式不符");
           saveData = data;
           currentCharIndex = 0;
-          petsTouched = false;
           originalFileName = "idle-seal-transfer-" + code + ".json";
           renderAll();
           document.getElementById("exportBtn").disabled = false;
