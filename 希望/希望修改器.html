@@ -75,6 +75,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:6px;}
 .field{display:flex;flex-direction:column;gap:5px;}
 .field label{font-size:11.5px;color:var(--text3);}
+.field.wide{grid-column:1/-1;}
 
 table.etable{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
 table.etable th{text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--border);}
@@ -128,6 +129,21 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 .dropzone p{margin:4px 0;color:var(--text2);font-size:13.5px;}
 .dropzone input{display:none;}
 
+.skill-job-group{margin-bottom:18px;}
+.skill-job-title{
+  font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px;padding:5px 10px;
+  background:var(--bg3);border-radius:4px;border-left:3px solid var(--accent);
+}
+.skill-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.skill-card{
+  display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:5px;padding:6px 9px;font-size:13px;
+}
+.skill-card.checked{border-color:var(--accent);background:var(--bg4);}
+.skill-card input[type=checkbox]{accent-color:var(--accent);}
+.skill-card .lv-input{width:48px;padding:3px 5px;font-size:12px;}
+.skill-card .dur{font-size:11px;color:var(--text3);}
+
 .char-select-wrap{display:flex;align-items:center;gap:6px;}
 #charSelect{min-width:150px;}
 
@@ -171,6 +187,10 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-section">物品</div>
     <div class="nav-item" data-panel="inventory">🎒 背包</div>
     <div class="nav-item" data-panel="warehouse">🏦 倉庫</div>
+
+    <div class="nav-section">技能</div>
+    <div class="nav-item" data-panel="skills">✨ 已學技能</div>
+    <div class="nav-item" data-panel="buffs">🌟 輔助狀態</div>
 
     <div class="nav-section">角色狀態</div>
     <div class="nav-item" data-panel="pets">🐾 寵物</div>
@@ -244,6 +264,39 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       </div>
       <table class="etable" id="warehouseTable"><thead><tr><th style="width:46%">物品</th><th style="width:20%">數量</th><th style="width:16%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addWhBtn" style="margin-top:10px;">➕ 新增物品</button>
+    </div>
+
+    <!-- ══ 已學技能 ══ -->
+    <div class="panel" id="panel-skills">
+      <div class="panel-title">✨ 已學技能</div>
+      <div class="panel-desc">
+        點選要新增/移除的技能，右邊數字是技能等級（存檔真實格式已驗證為 [[技能ID, 等級], ...]）。
+      </div>
+      <div class="form-row">
+        <input type="text" id="skillSearch" placeholder="搜尋技能名稱..." style="flex:1;min-width:200px;">
+        <button class="btn btn-accent btn-sm" id="skillSelectAllBtn">✅ 全選（滿等）</button>
+        <button class="btn btn-danger btn-sm" id="skillClearAllBtn">🗑 全部清空</button>
+      </div>
+      <div id="skillList"></div>
+    </div>
+
+    <!-- ══ 輔助狀態 ══ -->
+    <div class="panel" id="panel-buffs">
+      <div class="panel-title">🌟 輔助狀態</div>
+      <div class="panel-desc">
+        buffSkillIds 存的是「目前啟用」的輔助技能 ID 清單。實際持續時間 (durMs) 是技能本身的資料，
+        跟著該技能在「✨ 已學技能」裡的等級變化——所以下面「套用等級」是讓你一次調整所有輔助技能的等級，
+        藉此改變它們的持續時間；存檔本身沒有另外獨立的「持續時間」欄位可以直接設定。
+      </div>
+      <div class="form-row">
+        <button class="btn btn-accent btn-sm" id="buffSelectAllBtn">✅ 全選</button>
+        <button class="btn btn-danger btn-sm" id="buffClearAllBtn">🗑 全部清空</button>
+        <span style="width:1px;height:20px;background:var(--border);"></span>
+        <span class="form-label" style="width:auto;">等級</span>
+        <input type="number" id="buffLevelInput" min="1" value="1" style="width:70px;">
+        <button class="btn btn-sm" id="buffApplyLevelBtn">套用等級到全部</button>
+      </div>
+      <div id="buffList"></div>
     </div>
 
     <!-- ══ 寵物 ══ -->

@@ -7,9 +7,13 @@
   var SECOND_JOBS = window.SECOND_JOBS || [];
   var MAPS = window.MAPS || {};
   var PETS = window.PETS || {};
+  var SKILLS = window.SKILLS || {};
+
+  var JOB_NAME = {};
+  JOBS.forEach(function (j) { JOB_NAME[j.id] = j.name; });
 
   var itemArr = Object.keys(ITEMS).map(function (id) { return { id: id, name: ITEMS[id].name }; });
-  var petArr = Object.keys(PETS).map(function (id) { return { id: id, name: PETS[id].name }; });
+  var petArr = Object.keys(PETS).map(function (id) { return { id: id, name: PETS[id].name, tier: PETS[id].tier }; });
 
   var saveData = null;
   var currentCharIndex = 0;
@@ -30,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "pets", "potions", "records", "spot", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -61,6 +65,8 @@
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
+    { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
+    { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
     { panel: "pets", icon: "🐾", title: "寵物", desc: "新增寵物、調整成長階段、經驗、飽食度。" },
     { panel: "potions", icon: "🧪", title: "藥水設定", desc: "自動回血 / 回 AP 的閾值與藥水種類。" },
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
@@ -195,6 +201,40 @@
   function itemName(id) { return (ITEMS[String(id)] || {}).name || ("物品#" + id); }
   function petName(id) { return (PETS[String(id)] || {}).name || ("寵物#" + id); }
 
+  // 依「階級」分組排序好的寵物清單，供下拉選單使用
+  var petsByTier = {};
+  petArr.forEach(function (p) {
+    var t = p.tier || 0;
+    if (!petsByTier[t]) petsByTier[t] = [];
+    petsByTier[t].push(p);
+  });
+  var petTierKeys = Object.keys(petsByTier).map(Number).sort(function (a, b) { return a - b; });
+  petTierKeys.forEach(function (t) {
+    petsByTier[t].sort(function (a, b) { return a.name.localeCompare(b.name, "zh-Hant"); });
+  });
+
+  function makePetSelect(currentId, onPick) {
+    var select = el("select");
+    var hasCurrent = !!currentId && !!PETS[String(currentId)];
+    if (!hasCurrent) {
+      select.appendChild(el("option", { value: "", text: "請選擇寵物..." }));
+    }
+    petTierKeys.forEach(function (t) {
+      var group = document.createElement("optgroup");
+      group.label = "階級 " + t;
+      petsByTier[t].forEach(function (p) {
+        var opt = el("option", { value: p.id, text: p.name });
+        if (hasCurrent && String(currentId) === p.id) opt.selected = true;
+        group.appendChild(opt);
+      });
+      select.appendChild(group);
+    });
+    select.addEventListener("change", function () {
+      if (select.value) onPick(Number(select.value));
+    });
+    return select;
+  }
+
   function makeItemPicker(currentId, onPick) {
     var wrap = el("div", { class: "item-picker" });
     var input = el("input", { type: "text", placeholder: "搜尋物品...", value: currentId ? itemName(currentId) : "" });
@@ -283,6 +323,8 @@
     renderAttrs(c);
     renderStacks(c);
     renderLoadout(c);
+    renderSkillsPanel(c);
+    renderBuffsPanel(c);
     renderPets(c);
     renderPotions(c);
     renderTagLists(c);
@@ -394,6 +436,178 @@
     });
   }
 
+  // ---------- 已學技能 ----------
+  function fmtDur(ms) {
+    if (!ms) return "無持續時間";
+    var totalSec = Math.round(ms / 1000);
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.floor((totalSec % 3600) / 60);
+    var s = totalSec % 60;
+    var parts = [];
+    if (h) parts.push(h + "時");
+    if (m) parts.push(m + "分");
+    if (!h && s) parts.push(s + "秒");
+    return parts.join("") || "0秒";
+  }
+
+  function findCharSkill(c, skillId) {
+    for (var i = 0; i < c.skills.length; i++) {
+      if (c.skills[i][0] === skillId) return c.skills[i];
+    }
+    return null;
+  }
+  function setCharSkillLevel(c, skillId, level, maxLv) {
+    level = Math.max(1, Math.min(level, maxLv));
+    var existing = findCharSkill(c, skillId);
+    if (existing) existing[1] = level;
+    else c.skills.push([skillId, level]);
+  }
+  function removeCharSkill(c, skillId) {
+    c.skills = c.skills.filter(function (pair) { return pair[0] !== skillId; });
+  }
+
+  function renderSkillsPanel(c) {
+    var wrap = document.getElementById("skillList");
+    var $search = document.getElementById("skillSearch");
+
+    function draw() {
+      var q = ($search.value || "").trim();
+      wrap.innerHTML = "";
+      Object.keys(SKILLS).forEach(function (jobId) {
+        var list = SKILLS[jobId].filter(function (s) { return !q || s.name.indexOf(q) !== -1; });
+        if (!list.length) return;
+
+        var group = el("div", { class: "skill-job-group" });
+        group.appendChild(el("div", { class: "skill-job-title", text: (JOB_NAME[jobId] || jobId) }));
+        var grid = el("div", { class: "skill-grid" });
+
+        list.forEach(function (s) {
+          var existing = findCharSkill(c, s.id);
+          var card = el("label", { class: "skill-card" + (existing ? " checked" : "") });
+          var cb = el("input", { type: "checkbox" });
+          cb.checked = !!existing;
+          var lvInput = el("input", { type: "number", class: "lv-input", min: "1", max: String(s.maxLv) });
+          lvInput.value = existing ? existing[1] : s.maxLv;
+          lvInput.disabled = !existing;
+
+          cb.addEventListener("change", function () {
+            if (cb.checked) {
+              setCharSkillLevel(c, s.id, Number(lvInput.value) || s.maxLv, s.maxLv);
+              lvInput.disabled = false;
+              card.classList.add("checked");
+            } else {
+              removeCharSkill(c, s.id);
+              lvInput.disabled = true;
+              card.classList.remove("checked");
+            }
+          });
+          lvInput.addEventListener("input", function () {
+            if (cb.checked) setCharSkillLevel(c, s.id, lvInput.valueAsNumber || 1, s.maxLv);
+          });
+
+          card.appendChild(cb);
+          card.appendChild(el("span", { text: s.name }));
+          card.appendChild(lvInput);
+          card.appendChild(el("span", { class: "dur", text: "/" + s.maxLv }));
+          grid.appendChild(card);
+        });
+
+        group.appendChild(grid);
+        wrap.appendChild(group);
+      });
+    }
+
+    $search.oninput = draw;
+    document.getElementById("skillSelectAllBtn").onclick = function () {
+      Object.keys(SKILLS).forEach(function (jobId) {
+        SKILLS[jobId].forEach(function (s) { setCharSkillLevel(c, s.id, s.maxLv, s.maxLv); });
+      });
+      draw();
+    };
+    document.getElementById("skillClearAllBtn").onclick = function () {
+      if (!confirm("確定要清空全部已學技能嗎？")) return;
+      c.skills = [];
+      draw();
+    };
+    draw();
+  }
+
+  // ---------- 輔助狀態 ----------
+  function allBuffSkills() {
+    var out = [];
+    Object.keys(SKILLS).forEach(function (jobId) {
+      SKILLS[jobId].forEach(function (s) { if (s.buff) out.push({ jobId: jobId, skill: s }); });
+    });
+    return out;
+  }
+
+  function renderBuffsPanel(c) {
+    var wrap = document.getElementById("buffList");
+    if (!Array.isArray(c.buffSkillIds)) c.buffSkillIds = [];
+
+    function currentDurText(s) {
+      var learned = findCharSkill(c, s.id);
+      var lv = learned ? learned[1] : 1;
+      var ms = (s.durMs && s.durMs[lv - 1]) || 0;
+      return "Lv." + lv + " → " + fmtDur(ms);
+    }
+
+    function draw() {
+      wrap.innerHTML = "";
+      var byJob = {};
+      allBuffSkills().forEach(function (entry) {
+        if (!byJob[entry.jobId]) byJob[entry.jobId] = [];
+        byJob[entry.jobId].push(entry.skill);
+      });
+
+      Object.keys(byJob).forEach(function (jobId) {
+        var group = el("div", { class: "skill-job-group" });
+        group.appendChild(el("div", { class: "skill-job-title", text: (JOB_NAME[jobId] || jobId) }));
+        var grid = el("div", { class: "skill-grid" });
+
+        byJob[jobId].forEach(function (s) {
+          var active = c.buffSkillIds.indexOf(s.id) !== -1;
+          var card = el("label", { class: "skill-card" + (active ? " checked" : "") });
+          var cb = el("input", { type: "checkbox" });
+          cb.checked = active;
+          cb.addEventListener("change", function () {
+            var idx = c.buffSkillIds.indexOf(s.id);
+            if (cb.checked && idx === -1) c.buffSkillIds.push(s.id);
+            else if (!cb.checked && idx !== -1) c.buffSkillIds.splice(idx, 1);
+            card.classList.toggle("checked", cb.checked);
+          });
+          card.appendChild(cb);
+          card.appendChild(el("span", { text: s.name }));
+          card.appendChild(el("span", { class: "dur", text: currentDurText(s) }));
+          grid.appendChild(card);
+        });
+
+        group.appendChild(grid);
+        wrap.appendChild(group);
+      });
+    }
+
+    document.getElementById("buffSelectAllBtn").onclick = function () {
+      allBuffSkills().forEach(function (entry) {
+        if (c.buffSkillIds.indexOf(entry.skill.id) === -1) c.buffSkillIds.push(entry.skill.id);
+      });
+      draw();
+    };
+    document.getElementById("buffClearAllBtn").onclick = function () {
+      c.buffSkillIds = [];
+      draw();
+    };
+    document.getElementById("buffApplyLevelBtn").onclick = function () {
+      var lv = document.getElementById("buffLevelInput").valueAsNumber || 1;
+      allBuffSkills().forEach(function (entry) {
+        setCharSkillLevel(c, entry.skill.id, lv, entry.skill.maxLv);
+      });
+      draw();
+      renderSkillsPanel(c); // 等級連動，已學技能面板也要同步更新
+    };
+    draw();
+  }
+
   function renderPets(c) {
     var $tbody = document.querySelector("#petsTable tbody");
     $tbody.innerHTML = "";
@@ -401,25 +615,7 @@
       var tr = document.createElement("tr");
 
       var tdPet = document.createElement("td");
-      var wrap = el("div", { class: "item-picker" });
-      var input = el("input", { type: "text", value: petName(pet.id) });
-      var suggest = el("div", { class: "suggest" });
-      input.addEventListener("input", function () {
-        var q = input.value.trim();
-        suggest.innerHTML = "";
-        var matches = petArr.filter(function (p) { return p.name.indexOf(q) !== -1; }).slice(0, 30);
-        matches.forEach(function (p) {
-          var row = el("div", { text: p.name + " #" + p.id });
-          row.addEventListener("click", function () {
-            input.value = p.name; suggest.classList.remove("show"); pet.id = Number(p.id);
-          });
-          suggest.appendChild(row);
-        });
-        suggest.classList.toggle("show", matches.length > 0);
-      });
-      input.addEventListener("blur", function () { setTimeout(function () { suggest.classList.remove("show"); }, 150); });
-      wrap.appendChild(input); wrap.appendChild(suggest);
-      tdPet.appendChild(wrap);
+      tdPet.appendChild(makePetSelect(pet.id, function (newId) { pet.id = newId; }));
       tr.appendChild(tdPet);
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
@@ -441,51 +637,69 @@
 
     document.getElementById("addPetBtn").onclick = function () {
       var uid = c.nextPetUid++;
-      var firstPet = petArr[0];
-      c.pets.push({ uid: uid, id: Number(firstPet.id), grow: 0, exp: 0, hunger: PETS[firstPet.id].feedFull });
+      // 新增的寵物先留空，讓玩家自己從下拉選單挑選
+      c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0 });
       renderPets(c);
     };
+  }
+
+  function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem) {
+    var wrap = el("div", { class: "field wide" });
+    wrap.appendChild(el("label", { text: label }));
+    var row = el("div", { style: "display:flex;align-items:center;gap:8px;flex-wrap:wrap;" });
+    row.appendChild(el("span", { text: "生命剩餘" }));
+    var input = el("input", { type: "number", step: "1", min: "0", max: "100", style: "width:64px;" });
+    input.value = Math.round((getPct() || 0) * 100);
+    input.addEventListener("input", function () {
+      var pct = input.valueAsNumber;
+      if (isNaN(pct)) pct = 0;
+      setPct(pct / 100);
+    });
+    row.appendChild(input);
+    row.appendChild(el("span", { text: "% 時使用" }));
+    var picker = makeItemPicker(currentItemId, onPickItem);
+    picker.style.flex = "1";
+    picker.style.minWidth = "180px";
+    row.appendChild(picker);
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function potionItemOnlyRow(label, currentItemId, onPickItem) {
+    var wrap = el("div", { class: "field wide" });
+    wrap.appendChild(el("label", { text: label }));
+    var row = el("div", { style: "display:flex;align-items:center;gap:8px;" });
+    var picker = makeItemPicker(currentItemId, onPickItem);
+    picker.style.flex = "1";
+    picker.style.minWidth = "180px";
+    row.appendChild(picker);
+    wrap.appendChild(row);
+    return wrap;
   }
 
   function renderPotions(c) {
     var wrap = document.getElementById("potionFields");
     wrap.innerHTML = "";
-    wrap.appendChild(fieldNumber("回血閾值 healThreshold (0~1)", function () { return c.healThreshold; }, function (v) { c.healThreshold = v; }));
 
     if (Array.isArray(c.potionSlots)) {
-      // 新版存檔（多藥水槽）
+      // 新版存檔（多藥水槽）：生命值剩餘多少 % 以下時，使用對應的藥水
       c.potionSlots.forEach(function (slot, idx) {
-        var box = el("div", { class: "field" });
-        box.appendChild(el("label", { text: "藥水槽 #" + (idx + 1) + " 閾值(0~1)" }));
-        var thInput = el("input", { type: "number", step: "0.05", value: slot.threshold });
-        thInput.addEventListener("input", function () { slot.threshold = thInput.valueAsNumber || 0; });
-        box.appendChild(thInput);
-        wrap.appendChild(box);
-
-        var box2 = el("div", { class: "field" });
-        box2.appendChild(el("label", { text: "藥水槽 #" + (idx + 1) + " 物品" }));
-        box2.appendChild(makeItemPicker(slot.itemId, function (id) { slot.itemId = id; }));
-        wrap.appendChild(box2);
+        wrap.appendChild(potionPercentRow("藥水" + (idx + 1),
+          function () { return slot.threshold; },
+          function (v) { slot.threshold = v; },
+          slot.itemId,
+          function (id) { slot.itemId = id; }));
       });
     } else if ("potionId" in c) {
-      // 舊版存檔（單一藥水 + 閾值）
-      var box3 = el("div", { class: "field" });
-      box3.appendChild(el("label", { text: "自動喝藥閾值 potionThreshold (0~1)" }));
-      var thInput2 = el("input", { type: "number", step: "0.01", value: c.potionThreshold });
-      thInput2.addEventListener("input", function () { c.potionThreshold = thInput2.valueAsNumber || 0; });
-      box3.appendChild(thInput2);
-      wrap.appendChild(box3);
-
-      var box4 = el("div", { class: "field" });
-      box4.appendChild(el("label", { text: "自動使用藥水 potionId" }));
-      box4.appendChild(makeItemPicker(c.potionId, function (id) { c.potionId = id; }));
-      wrap.appendChild(box4);
+      // 舊版存檔（單一藥水 + 閾值）：生命值剩餘多少 % 以下時，自動使用藥水
+      wrap.appendChild(potionPercentRow("藥水",
+        function () { return c.potionThreshold; },
+        function (v) { c.potionThreshold = v; },
+        c.potionId,
+        function (id) { c.potionId = id; }));
     }
 
-    var apBox = el("div", { class: "field" });
-    apBox.appendChild(el("label", { text: "AP 藥水 apPotionId" }));
-    apBox.appendChild(makeItemPicker(c.apPotionId, function (id) { c.apPotionId = id; }));
-    wrap.appendChild(apBox);
+    wrap.appendChild(potionItemOnlyRow("AP藥水", c.apPotionId, function (id) { c.apPotionId = id; }));
 
     if ("attackSkillId" in c) {
       wrap.appendChild(fieldNumber("自動攻擊技能 attackSkillId", function () { return c.attackSkillId; }, function (v) { c.attackSkillId = v; }));
@@ -553,8 +767,6 @@
 
   // ---------- 進階（推測格式）欄位：原始 JSON ----------
   var RAW_FIELDS = [
-    { key: "skills", label: "已學技能 skills", confidence: "mid", note: "格式為 [[技能ID, 等級], ...] 的陣列（已由真實滿等存檔驗證）。要新增技能，加一組 [id, 等級] 即可。" },
-    { key: "buffSkillIds", label: "啟用中的輔助技能 buffSkillIds", confidence: "mid", note: "技能 ID 的陣列，例如 [49]（已由真實存檔驗證）。" },
     { key: "activeQuests", label: "進行中的任務 activeQuests", confidence: "mid", note: "任務 ID 的陣列，例如 [367]（已由真實存檔驗證，但任務名稱對照尚未做進編輯器）。" },
     { key: "sellKeep", label: "賣出時保留清單 sellKeep", confidence: "mid", note: "格式為 [[物品ID, 保留數量], ...]（已由真實存檔驗證）。保留數量的確切意義尚待進一步確認。" },
     { key: "individuality", label: "個性化 individuality", confidence: "mid", note: "已由真實存檔驗證：stage/fails/minor 可信；attrs 內每項為 {kind, grade, base, locked}。" },
