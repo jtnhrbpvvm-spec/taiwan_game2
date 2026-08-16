@@ -58,6 +58,10 @@
     });
   });
 
+  document.getElementById("transferShortcutBtn").addEventListener("click", function () {
+    showPanel("transfer");
+  });
+
   // ---------- 功能總覽卡片 ----------
   var CAPABILITIES = [
     { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業、轉職進度、名聲、遊玩時間。" },
@@ -72,7 +76,8 @@
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
     { panel: "spot", icon: "📍", title: "目前位置", desc: "所在地圖、座標、正在打的怪物或採集點。" },
     { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "技能、任務進度、個性化等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
-    { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" }
+    { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" },
+    { panel: "transfer", icon: "🔁", title: "轉移碼", desc: "產生/讀取遊戲內建那種六碼轉移碼，透過 Litterbox 暫存交換存檔。" }
   ];
 
   function renderCapGrid() {
@@ -849,5 +854,108 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast("已匯出存檔檔案", "ok");
+  });
+
+  // ---------- 轉移碼（Litterbox）----------
+  var LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php";
+  var LITTERBOX_HOST = "https://litter.catbox.moe/"; // 注意：檔案下載主機是 litter.catbox.moe，跟上傳 API 的 litterbox.catbox.moe 不同
+  var TRANSFER_EXT_CANDIDATES = ["json", "txt", "sav", ""]; // 讀取時依序嘗試的副檔名
+
+  function fetchWithTimeout(url, options, timeoutMs) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    options = options || {};
+    options.signal = controller.signal;
+    return fetch(url, options).finally(function () { clearTimeout(timer); });
+  }
+
+  document.getElementById("genTransferBtn").addEventListener("click", function () {
+    if (!saveData) { toast("請先載入存檔", "warn"); return; }
+    var btn = document.getElementById("genTransferBtn");
+    var msg = document.getElementById("transferMsg");
+    btn.disabled = true;
+    msg.textContent = "上傳中...";
+    msg.style.color = "";
+
+    saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
+    var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
+    var file = new File([blob], "save.json", { type: "application/json" });
+    var fd = new FormData();
+    fd.append("reqtype", "fileupload");
+    fd.append("time", "72h");
+    fd.append("fileToUpload", file);
+
+    fetchWithTimeout(LITTERBOX_API, { method: "POST", body: fd }, 20000)
+      .then(function (res) { return res.text(); })
+      .then(function (text) {
+        text = text.trim();
+        if (!/^https?:\/\//.test(text)) throw new Error(text || "伺服器回應異常");
+        var m = text.match(/\/([a-zA-Z0-9]+)\.[a-zA-Z0-9]+$/);
+        var code = m ? m[1] : text;
+        document.getElementById("transferCodeText").textContent = code;
+        document.getElementById("transferCodeBox").style.display = "flex";
+        msg.textContent = "已上傳，72 小時內都可以用這組碼讀回來。";
+        toast("轉移碼已產生：" + code, "ok");
+      })
+      .catch(function (err) {
+        msg.textContent = "產生轉移碼失敗：" + err.message + "（可能是網路問題或 Litterbox 服務異常，可以直接用「匯出存檔」改成手動傳檔案）";
+        msg.style.color = "var(--red)";
+        toast("產生轉移碼失敗", "err");
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  document.getElementById("copyTransferBtn").addEventListener("click", function () {
+    var code = document.getElementById("transferCodeText").textContent;
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(function () {
+      toast("已複製轉移碼", "ok");
+    }).catch(function () {
+      toast("複製失敗，請手動選取複製", "err");
+    });
+  });
+
+  document.getElementById("useTransferBtn").addEventListener("click", function () {
+    var code = document.getElementById("transferCodeInput").value.trim();
+    var msg = document.getElementById("transferMsg");
+    if (!code) { toast("請輸入轉移碼", "warn"); return; }
+    var btn = document.getElementById("useTransferBtn");
+    btn.disabled = true;
+
+    function tryExt(i) {
+      if (i >= TRANSFER_EXT_CANDIDATES.length) {
+        msg.textContent = "讀取失敗：找不到這組轉移碼對應的存檔（試過 .json/.txt/.sav/無副檔名 都失敗），請確認代碼是否正確、是否已超過 72 小時過期，或改用「匯出存檔」的檔案手動匯入。";
+        msg.style.color = "var(--red)";
+        toast("讀取轉移碼失敗", "err");
+        btn.disabled = false;
+        return;
+      }
+      var ext = TRANSFER_EXT_CANDIDATES[i];
+      var url = LITTERBOX_HOST + code + (ext ? "." + ext : "");
+      msg.textContent = "讀取中...（嘗試 " + (i + 1) + "/" + TRANSFER_EXT_CANDIDATES.length + "：" + (ext || "無副檔名") + "，最多等 8 秒）";
+      msg.style.color = "";
+
+      fetchWithTimeout(url, {}, 8000)
+        .then(function (res) { if (!res.ok) throw new Error("not found"); return res.text(); })
+        .then(function (text) {
+          var data = JSON.parse(text);
+          if (!data || !Array.isArray(data.characters)) throw new Error("格式不符");
+          saveData = data;
+          currentCharIndex = 0;
+          originalFileName = "idle-seal-transfer-" + code + ".json";
+          renderAll();
+          document.getElementById("exportBtn").disabled = false;
+          document.getElementById("charSelect").disabled = false;
+          document.getElementById("dupCharBtn").disabled = false;
+          document.getElementById("delCharBtn").disabled = false;
+          document.getElementById("defaultCharBtn").disabled = false;
+          msg.textContent = "已成功載入轉移碼存檔。";
+          toast("已載入轉移碼存檔", "ok");
+          showPanel("basic");
+          btn.disabled = false;
+        })
+        .catch(function () { tryExt(i + 1); });
+    }
+    tryExt(0);
   });
 })();

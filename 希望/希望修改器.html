@@ -164,6 +164,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
+  <button class="btn" id="transferShortcutBtn">🔁 轉移碼</button>
   <span class="bar-sep">|</span>
   <div class="char-select-wrap">
     <select id="charSelect" disabled><option>（尚未載入存檔）</option></select>
@@ -202,6 +203,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
 
     <div class="nav-section">工具</div>
+    <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
     <div class="nav-item" data-panel="json">{ } JSON 編輯器</div>
   </div>
 
@@ -345,6 +347,31 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         暫時還是用原始 JSON 呈現，還沒做成表單。修改前建議先備份存檔。
       </div>
       <div id="rawFields"></div>
+    </div>
+
+    <!-- ══ 轉移碼 ══ -->
+    <div class="panel" id="panel-transfer">
+      <div class="panel-title">🔁 轉移碼</div>
+      <div class="panel-desc">
+        跟遊戲內建的轉移碼是同一套機制：把存檔暫存到 Litterbox（catbox.moe 的臨時檔案服務），
+        換一組短碼帶著走。<b>72 小時後檔案會自動刪除</b>，短碼本身不會過期以外的時間保存資料。
+      </div>
+
+      <div class="section-title">產生轉移碼</div>
+      <div class="form-row">
+        <button class="btn btn-accent" id="genTransferBtn">🔑 產生轉移碼</button>
+      </div>
+      <div id="transferCodeBox" style="display:none;align-items:center;gap:10px;margin-top:10px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;">
+        <span id="transferCodeText" style="font-family:monospace;font-size:22px;font-weight:700;letter-spacing:.15em;color:var(--accent2);"></span>
+        <button class="btn btn-sm" id="copyTransferBtn">📋 複製</button>
+      </div>
+
+      <div class="section-title" style="margin-top:26px;">輸入轉移碼</div>
+      <div class="form-row">
+        <input type="text" id="transferCodeInput" placeholder="輸入六碼轉移碼..." style="font-family:monospace;letter-spacing:.1em;width:200px;">
+        <button class="btn btn-accent" id="useTransferBtn">📥 讀取並載入</button>
+      </div>
+      <div id="transferMsg" class="panel-desc" style="margin-top:8px;"></div>
     </div>
 
     <!-- ══ JSON 編輯器 ══ -->
