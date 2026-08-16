@@ -630,7 +630,15 @@
       tr.appendChild(tdActive);
 
       var tdPet = document.createElement("td");
-      tdPet.appendChild(makePetSelect(pet.id, function (newId) { pet.id = newId; }));
+      tdPet.appendChild(makePetSelect(pet.id, function (newId) {
+        pet.id = newId;
+        // 成長階段預設給滿（9）。實測發現 grow:0 的寵物（剛新增、未成熟）在遊戲裡無法出戰，
+        // 對照玩家提供的正常存檔，能出戰的寵物 grow 全部都是 9，所以改用這個當預設值比較安全。
+        pet.grow = 9;
+        pet.exp = 270;
+        pet.hunger = 270;
+        renderPets(c);
+      }));
       tr.appendChild(tdPet);
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
@@ -640,6 +648,16 @@
         td.appendChild(inp);
         tr.appendChild(td);
       });
+
+      var tdFame = document.createElement("td");
+      var fameDef = PETS[String(pet.id)];
+      var fameInp = el("input", {
+        type: "number", readonly: "readonly",
+        value: fameDef ? fameDef.fame : 0,
+        title: "人物名聲需要達到這個數值，才能讓這隻寵物出戰（唯讀，來自寵物基礎資料，不能編輯）"
+      });
+      tdFame.appendChild(fameInp);
+      tr.appendChild(tdFame);
 
       var tdAct = document.createElement("td");
       var delBtn = el("button", { class: "icon-btn", text: "✕" });

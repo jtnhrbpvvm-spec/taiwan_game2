@@ -65,6 +65,7 @@ input[type=text],input[type=number],select,textarea{
   padding:8px 10px;font-size:13.5px;font-family:inherit;
 }
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+input[readonly]{opacity:.6;cursor:not-allowed;background:var(--bg2);}
 
 .form-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .form-label{width:120px;color:var(--text2);font-size:13px;flex-shrink:0;}
@@ -310,8 +311,10 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="panel-desc">
         寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
         uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
+        <b>寵物綁定名聲系統</b>：角色名聲必須達到「所需名聲」（唯讀欄位，來自寵物基礎資料）才能讓該寵物出戰，
+        不夠的話遊戲裡就不會顯示出戰按鈕。新增寵物的 grow/exp/hunger 預設值是照玩家提供的正常存檔對照設定的。
       </div>
-      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:30%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:26%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
     </div>
 
