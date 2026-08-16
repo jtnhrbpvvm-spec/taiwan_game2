@@ -376,14 +376,9 @@
     $tbody.innerHTML = "";
     stacks.forEach(function (stack, idx) {
       var tr = document.createElement("tr");
-      var itemDef = ITEMS[String(stack.itemId)];
-      var isEquip = !!(itemDef && itemDef.slot);
 
       var tdItem = document.createElement("td");
-      tdItem.appendChild(makeItemPicker(stack.itemId, function (newId) {
-        stack.itemId = newId;
-        renderStackTable($tbody, stacks); // 換成裝備/非裝備時，精煉欄位要跟著顯示/隱藏
-      }));
+      tdItem.appendChild(makeItemPicker(stack.itemId, function (newId) { stack.itemId = newId; }));
       tr.appendChild(tdItem);
 
       var tdCount = document.createElement("td");
@@ -391,23 +386,6 @@
       countInput.addEventListener("input", function () { stack.count = countInput.valueAsNumber || 0; });
       tdCount.appendChild(countInput);
       tr.appendChild(tdCount);
-
-      var tdRefine = document.createElement("td");
-      if (isEquip) {
-        var refineSelect = el("select", { style: "width:70px;" });
-        for (var rv = 0; rv <= 12; rv++) {
-          var opt = el("option", { value: String(rv), text: "+" + rv });
-          if ((stack.refine || 0) === rv) opt.selected = true;
-          refineSelect.appendChild(opt);
-        }
-        refineSelect.addEventListener("change", function () {
-          stack.refine = Number(refineSelect.value);
-        });
-        tdRefine.appendChild(refineSelect);
-      } else {
-        tdRefine.appendChild(el("span", { text: "-", style: "color:var(--text3);" }));
-      }
-      tr.appendChild(tdRefine);
 
       var tdId = document.createElement("td");
       var idInput = el("input", { type: "number", value: stack.id });
@@ -654,8 +632,8 @@
       var tdPet = document.createElement("td");
       tdPet.appendChild(makePetSelect(pet.id, function (newId) {
         pet.id = newId;
-        // 成長階段預設給滿（9）。實測確認 grow:0 的寵物（剛新增、未成熟）在遊戲裡無法出戰，
-        // 對照玩家提供的正常存檔，能出戰的寵物 grow 全部都是 9，所以用這個當預設值。
+        // 成長階段預設給滿（9）。實測發現 grow:0 的寵物（剛新增、未成熟）在遊戲裡無法出戰，
+        // 對照玩家提供的正常存檔，能出戰的寵物 grow 全部都是 9，所以改用這個當預設值比較安全。
         pet.grow = 9;
         pet.exp = 270;
         pet.hunger = 270;

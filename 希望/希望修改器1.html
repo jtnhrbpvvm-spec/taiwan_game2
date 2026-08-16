@@ -253,8 +253,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。</div>
-      <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。</div>
+      <table class="etable" id="stacksTable"><thead><tr><th style="width:46%">物品</th><th style="width:20%">數量</th><th style="width:16%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addStackBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
@@ -265,7 +265,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" style="margin-bottom:14px;">
         <div class="field"><label>倉庫金錢</label><input type="number" id="whGold"></div>
       </div>
-      <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="warehouseTable"><thead><tr><th style="width:46%">物品</th><th style="width:20%">數量</th><th style="width:16%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addWhBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
@@ -312,7 +312,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
         uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
         <b>寵物綁定名聲系統</b>：角色名聲必須達到「所需名聲」（唯讀欄位，來自寵物基礎資料）才能讓該寵物出戰，
-        不夠的話遊戲裡就不會顯示出戰按鈕。新增寵物的 grow/exp/hunger 預設值是照玩家提供的正常存檔對照設定的（grow:9）。
+        不夠的話遊戲裡就不會顯示出戰按鈕。新增寵物的 grow/exp/hunger 預設值是照玩家提供的正常存檔對照設定的。
       </div>
       <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:26%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
