@@ -464,7 +464,7 @@
         if (!it.slot) return;
         if (slotKey && it.slot !== slotKey) return;
         if (job && !(it.jobs & (1 << job.equipBit))) return;
-        matches.push({ id: id, name: it.name });
+        matches.push({ id: id, name: it.name, minLv: it.minLv || 0 });
       });
       matches.sort(function (a, b) { return a.name.localeCompare(b.name, "zh-Hant"); });
       $result.disabled = matches.length === 0;
@@ -473,7 +473,9 @@
         return;
       }
       $result.innerHTML = '<option value="">共 ' + matches.length + ' 件，請選擇...</option>' +
-        matches.map(function (m) { return '<option value="' + m.id + '">' + m.name + '</option>'; }).join("");
+        matches.map(function (m) {
+          return '<option value="' + m.id + '">' + m.name + '（需求 Lv' + m.minLv + '）</option>';
+        }).join("");
     }
 
     $job.onchange = update;
@@ -1037,7 +1039,15 @@
         if (attr.kind === o.value) opt.selected = true;
         kindSelect.appendChild(opt);
       });
-      kindSelect.addEventListener("change", function () { attr.kind = Number(kindSelect.value); });
+
+      function applyRollValue() {
+        var roll = INDIVIDUALITY_ROLLS.find(function (r) {
+          return r[0] === ind.stage && r[1] === attr.kind && r[2] === attr.grade;
+        });
+        if (roll) attr.base = roll[6]; // maxVal
+      }
+
+      kindSelect.addEventListener("change", function () { attr.kind = Number(kindSelect.value); applyRollValue(); });
       row.appendChild(kindSelect);
 
       var gradeSelect = el("select", { style: "width:70px;" });
@@ -1046,22 +1056,8 @@
         if (attr.grade === g) opt.selected = true;
         gradeSelect.appendChild(opt);
       });
-      gradeSelect.addEventListener("change", function () {
-        attr.grade = gradeSelect.value;
-        // 選了等級後，自動把數值跳到「角色目前階段」下該等級能到達的最大值
-        var roll = INDIVIDUALITY_ROLLS.find(function (r) {
-          return r[0] === ind.stage && r[1] === attr.kind && r[2] === attr.grade;
-        });
-        if (roll) {
-          attr.base = roll[6]; // maxVal
-          baseInput.value = attr.base;
-        }
-      });
+      gradeSelect.addEventListener("change", function () { attr.grade = gradeSelect.value; applyRollValue(); });
       row.appendChild(gradeSelect);
-
-      var baseInput = el("input", { type: "number", value: attr.base, style: "width:90px;" });
-      baseInput.addEventListener("input", function () { attr.base = baseInput.valueAsNumber || 0; });
-      row.appendChild(baseInput);
 
       var lockLabel = el("label", { style: "display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);white-space:nowrap;" });
       var lockCb = el("input", { type: "checkbox" });
@@ -1085,7 +1081,12 @@
     });
 
     document.getElementById("indivAddAttrBtn").onclick = function () {
-      ind.attrs.push({ kind: INDIVIDUALITY_TYPES[0].kind, grade: "B", base: 1, locked: false });
+      var newAttr = { kind: INDIVIDUALITY_TYPES[0].kind, grade: "B", base: 1, locked: false };
+      var roll = INDIVIDUALITY_ROLLS.find(function (r) {
+        return r[0] === ind.stage && r[1] === newAttr.kind && r[2] === newAttr.grade;
+      });
+      if (roll) newAttr.base = roll[6];
+      ind.attrs.push(newAttr);
       renderIndividuality(c);
     };
 

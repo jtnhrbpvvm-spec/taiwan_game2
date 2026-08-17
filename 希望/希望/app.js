@@ -456,7 +456,7 @@
       if (!it.equip) return;
       if (slotKey && it.equip.slot !== slotKey) return;
       if (job && !(it.equip.jobs & (1 << job.equipBit))) return;
-      matches.push({ id: id, name: it.name });
+      matches.push({ id: id, name: it.name, minLv: it.equip.minLv || 0 });
     });
     matches.sort(function (a, b) { return a.name.localeCompare(b.name, "zh-Hant"); });
 
@@ -466,7 +466,9 @@
       return;
     }
     $filterResult.innerHTML = '<option value="">共 ' + matches.length + ' 件，請選擇...</option>' +
-      matches.map(function (m) { return '<option value="' + m.id + '">' + escapeHtml(m.name) + '</option>'; }).join("");
+      matches.map(function (m) {
+        return '<option value="' + m.id + '">' + escapeHtml(m.name) + '（需求 Lv' + m.minLv + '）</option>';
+      }).join("");
   }
 
   $filterJob.addEventListener("change", updateFilterResults);

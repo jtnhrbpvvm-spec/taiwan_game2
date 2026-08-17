@@ -181,7 +181,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V8</span>
+  <span class="bar-title">🧭 希望存檔修改器V10</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -386,6 +386,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="panel-desc">
         對照真實存檔驗證：stage（階段）決定同時「展現」幾條屬性（超過上限的會顯示「尚未生效」，跟遊戲畫面一致）。
         升到下一階需要角色等級達到門檻，這裡僅顯示參考資訊，不會幫你檢查。
+        屬性的實際數值由遊戲另外計算（跟這裡看到的原始數字不同，例如選 S 我們填 1600，遊戲實際顯示 1598），
+        所以數值欄位不開放編輯，只給你選 B / A / S 等級，數值交給選單自動帶入。
       </div>
       <div class="grid" style="margin-bottom:10px;">
         <div class="field"><label>階段 stage</label><input type="number" id="indivStage" min="0" max="10"></div>
