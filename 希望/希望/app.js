@@ -147,7 +147,14 @@
     $resultCount.textContent = total ? "(" + total + ")" : "";
 
     if (total === 0) {
-      $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物。</li>';
+      var qLower = q.trim().toLowerCase();
+      var isEgg = SEARCH_TRIGGERS.indexOf(qLower) !== -1;
+      if (isEgg) {
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「<a href="' + EDITOR_URL +
+          '" style="color:var(--gold-hi);text-decoration:underline;">希望修改器</a>」的物品或怪物。</li>';
+      } else {
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物。</li>';
+      }
       return;
     }
 
@@ -408,7 +415,9 @@
     }
   });
 
-  // 搜尋欄輸入特定字串（手機鍵盤有些沒有明確的確認/送出鍵，改成即時比對，一打完就跳轉，不用再按 Enter）
+  // 搜尋欄符合彩蛋詞時：直接跳轉（手機鍵盤有些沒有明確的確認/送出鍵，改成即時比對，一打完就跳轉，
+  // 不用再按 Enter）。同時下面 renderResultList 也會把「找不到符合...」的訊息換成連結，
+  // 當作備援——萬一自動跳轉那段因為某些瀏覽器限制沒有觸發，使用者還是能點連結手動跳過去。
   var SEARCH_TRIGGERS = ["how do you turn this on", "希望修改器"];
   $input.addEventListener("input", function () {
     var v = $input.value.trim().toLowerCase();
