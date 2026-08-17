@@ -408,10 +408,9 @@
     }
   });
 
-  // 搜尋欄輸入特定字串 + 按下 Enter
+  // 搜尋欄輸入特定字串（手機鍵盤有些沒有明確的確認/送出鍵，改成即時比對，一打完就跳轉，不用再按 Enter）
   var SEARCH_TRIGGERS = ["how do you turn this on", "希望修改器"];
-  $input.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter") return;
+  $input.addEventListener("input", function () {
     var v = $input.value.trim().toLowerCase();
     if (SEARCH_TRIGGERS.indexOf(v) !== -1) {
       window.location.href = EDITOR_URL;
