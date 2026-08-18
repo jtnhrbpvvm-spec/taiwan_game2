@@ -147,7 +147,14 @@
     $resultCount.textContent = total ? "(" + total + ")" : "";
 
     if (total === 0) {
-      $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物。</li>';
+      var qLower = q.trim().toLowerCase();
+      var isEgg = SEARCH_TRIGGERS.indexOf(qLower) !== -1;
+      if (isEgg) {
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「<a href="' + EDITOR_URL +
+          '" style="color:var(--gold-hi);text-decoration:underline;">希望修改器</a>」的物品或怪物。</li>';
+      } else {
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物。</li>';
+      }
       return;
     }
 
@@ -408,10 +415,11 @@
     }
   });
 
-  // 搜尋欄輸入特定字串 + 按下 Enter
+  // 搜尋欄符合彩蛋詞時：直接跳轉（手機鍵盤有些沒有明確的確認/送出鍵，改成即時比對，一打完就跳轉，
+  // 不用再按 Enter）。同時下面 renderResultList 也會把「找不到符合...」的訊息換成連結，
+  // 當作備援——萬一自動跳轉那段因為某些瀏覽器限制沒有觸發，使用者還是能點連結手動跳過去。
   var SEARCH_TRIGGERS = ["how do you turn this on", "希望修改器"];
-  $input.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter") return;
+  $input.addEventListener("input", function () {
     var v = $input.value.trim().toLowerCase();
     if (SEARCH_TRIGGERS.indexOf(v) !== -1) {
       window.location.href = EDITOR_URL;
@@ -456,7 +464,7 @@
       if (!it.equip) return;
       if (slotKey && it.equip.slot !== slotKey) return;
       if (job && !(it.equip.jobs & (1 << job.equipBit))) return;
-      matches.push({ id: id, name: it.name });
+      matches.push({ id: id, name: it.name, minLv: it.equip.minLv || 0 });
     });
     matches.sort(function (a, b) { return a.name.localeCompare(b.name, "zh-Hant"); });
 
@@ -466,7 +474,9 @@
       return;
     }
     $filterResult.innerHTML = '<option value="">共 ' + matches.length + ' 件，請選擇...</option>' +
-      matches.map(function (m) { return '<option value="' + m.id + '">' + escapeHtml(m.name) + '</option>'; }).join("");
+      matches.map(function (m) {
+        return '<option value="' + m.id + '">' + escapeHtml(m.name) + '（需求 Lv' + m.minLv + '）</option>';
+      }).join("");
   }
 
   $filterJob.addEventListener("change", updateFilterResults);
