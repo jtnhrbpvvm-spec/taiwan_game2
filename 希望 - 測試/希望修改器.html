@@ -181,7 +181,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V7</span>
+  <span class="bar-title">🧭 希望存檔修改器V12</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -265,10 +265,11 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="panel" id="panel-equip">
       <div class="panel-title">🛡️ 裝備欄位</div>
       <div class="panel-desc">
-        裝備欄位存的是「背包物品的 Stack ID」，不是物品 ID。要讓某個欄位生效，請先到「🎒 背包」加入該裝備物品，
-        再把它在背包表格裡的 Stack ID 填到對應欄位。
+        每個欄位左邊的下拉選單，會自動列出背包裡「符合這個欄位、角色目前職業與等級能裝備」的物品，
+        點選後自動填入右邊的 Stack ID。如果背包沒有符合的裝備，下拉選單會顯示沒有可選項目，
+        這時可以先到「🎒 背包」加入該裝備物品，或直接在右邊手動輸入 Stack ID。
       </div>
-      <div class="grid" id="loadoutFields"></div>
+      <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
     </div>
 
     <!-- ══ 背包 ══ -->
@@ -386,6 +387,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="panel-desc">
         對照真實存檔驗證：stage（階段）決定同時「展現」幾條屬性（超過上限的會顯示「尚未生效」，跟遊戲畫面一致）。
         升到下一階需要角色等級達到門檻，這裡僅顯示參考資訊，不會幫你檢查。
+        屬性的實際數值由遊戲另外計算（跟這裡看到的原始數字不同，例如選 S 我們填 1600，遊戲實際顯示 1598），
+        所以數值欄位不開放編輯，只給你選 B / A / S 等級，數值交給選單自動帶入。
       </div>
       <div class="grid" style="margin-bottom:10px;">
         <div class="field"><label>階段 stage</label><input type="number" id="indivStage" min="0" max="10"></div>
@@ -398,6 +401,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <button class="btn btn-accent btn-sm" id="indivAddAttrBtn">➕ 新增屬性</button>
 
       <div class="section-title" style="margin-top:22px;">副屬性 minor</div>
+      <div id="indivMinorCap" style="font-size:12.5px;margin-bottom:8px;"></div>
       <div class="grid" id="indivMinorFields"></div>
     </div>
 
@@ -459,6 +463,6 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/skills.js"></script>
 <script src="data/pets.js"></script>
 <script src="data/individuality.js"></script>
-<script src="app.js"></script>
+<script src="data/app.js"></script>
 </body>
 </html>

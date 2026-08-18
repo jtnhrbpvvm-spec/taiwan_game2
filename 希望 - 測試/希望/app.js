@@ -434,12 +434,29 @@
   var $filterSlot = document.getElementById("filterSlot");
   var $filterResult = document.getElementById("filterResult");
 
-  JOBS.forEach(function (j) {
+  var primaryJobs = JOBS.filter(function (j) { return j.tier !== 2; });
+  var secondJobsList = JOBS.filter(function (j) { return j.tier === 2; });
+
+  var primaryGroup = document.createElement("optgroup");
+  primaryGroup.label = "一轉";
+  primaryJobs.forEach(function (j) {
     var opt = document.createElement("option");
     opt.value = j.id;
     opt.textContent = j.name;
-    $filterJob.appendChild(opt);
+    primaryGroup.appendChild(opt);
   });
+  $filterJob.appendChild(primaryGroup);
+
+  var secondGroup = document.createElement("optgroup");
+  secondGroup.label = "二轉";
+  secondJobsList.forEach(function (j) {
+    var opt = document.createElement("option");
+    opt.value = j.id;
+    opt.textContent = j.name;
+    secondGroup.appendChild(opt);
+  });
+  $filterJob.appendChild(secondGroup);
+
   Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
     var opt = document.createElement("option");
     opt.value = slotKey;

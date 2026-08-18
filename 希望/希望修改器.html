@@ -181,7 +181,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V10</span>
+  <span class="bar-title">🧭 希望存檔修改器V13</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -265,10 +265,11 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="panel" id="panel-equip">
       <div class="panel-title">🛡️ 裝備欄位</div>
       <div class="panel-desc">
-        裝備欄位存的是「背包物品的 Stack ID」，不是物品 ID。要讓某個欄位生效，請先到「🎒 背包」加入該裝備物品，
-        再把它在背包表格裡的 Stack ID 填到對應欄位。
+        每個欄位左邊的下拉選單，會自動列出背包裡「符合這個欄位、角色目前職業與等級能裝備」的物品，
+        點選後自動填入右邊的 Stack ID。如果背包沒有符合的裝備，下拉選單會顯示沒有可選項目，
+        這時可以先到「🎒 背包」加入該裝備物品，或直接在右邊手動輸入 Stack ID。
       </div>
-      <div class="grid" id="loadoutFields"></div>
+      <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
     </div>
 
     <!-- ══ 背包 ══ -->
@@ -462,6 +463,6 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/skills.js"></script>
 <script src="data/pets.js"></script>
 <script src="data/individuality.js"></script>
-<script src="app.js"></script>
+<script src="data/app.js"></script>
 </body>
 </html>

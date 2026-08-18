@@ -44,6 +44,9 @@
     if (panel) panel.classList.add("active");
     if (nav) nav.classList.add("active");
     if (name === "json" && saveData) syncJsonEditor();
+    // 裝備欄位的下拉選單是根據「目前背包」現算的，每次點進這個面板都重新整理一次，
+    // 這樣剛在背包新增的裝備才會立刻出現在選單裡，不用重新載入整個存檔。
+    if (name === "equip" && saveData) renderLoadout(saveData.characters[currentCharIndex]);
   }
 
   document.querySelectorAll(".nav-item").forEach(function (nav) {
@@ -351,7 +354,7 @@
     wrap.appendChild(fieldNumber("金錢 Gold", function () { return c.gold; }, function (v) { c.gold = v; }));
     wrap.appendChild(fieldNumber("HP", function () { return c.hp; }, function (v) { c.hp = v; }));
 
-    var jobOptions = JOBS.map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; })
+    var jobOptions = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; })
       .concat(SECOND_JOBS.map(function (j) { return { value: j.id, label: j.name + " ・二轉 (" + j.id + ")" }; }));
     wrap.appendChild(fieldSelect("職業 Job", jobOptions, function () { return c.job; }, function (v) { c.job = v; }));
 
@@ -439,10 +442,20 @@
       // 選單已經建立過選項，只需要重新綁定 onPick（因為每次 render 都會重建，但選項不用重建）
     } else {
       $job.dataset.wired = "1";
-      JOBS.forEach(function (j) {
-        var opt = el("option", { value: j.id, text: j.name });
-        $job.appendChild(opt);
+      var primaryGroup = el("optgroup", {});
+      primaryGroup.label = "一轉";
+      JOBS.filter(function (j) { return j.tier !== 2; }).forEach(function (j) {
+        primaryGroup.appendChild(el("option", { value: j.id, text: j.name }));
       });
+      $job.appendChild(primaryGroup);
+
+      var secondGroup = el("optgroup", {});
+      secondGroup.label = "二轉";
+      JOBS.filter(function (j) { return j.tier === 2; }).forEach(function (j) {
+        secondGroup.appendChild(el("option", { value: j.id, text: j.name }));
+      });
+      $job.appendChild(secondGroup);
+
       Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
         var opt = el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] });
         $slot.appendChild(opt);
@@ -549,16 +562,53 @@
     setupEquipFilter("wh", function (itemId) { showAddToStackModal(itemId); });
   }
 
+  function getEquipBitForJob(jobId) {
+    var job = JOBS.find(function (j) { return j.id === jobId; });
+    return job ? job.equipBit : null;
+  }
+
   function renderLoadout(c) {
     var wrap = document.getElementById("loadoutFields");
     wrap.innerHTML = "";
+    var equipBit = getEquipBitForJob(c.job);
+
     Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
-      wrap.appendChild(fieldNumber(EQUIP_SLOTS[slotKey] + " (" + slotKey + ")",
-        function () { return c.loadout[slotKey] || ""; },
-        function (v) {
-          if (!v) delete c.loadout[slotKey];
-          else c.loadout[slotKey] = v;
-        }));
+      var box = el("div", { class: "field" });
+      box.appendChild(el("label", { text: EQUIP_SLOTS[slotKey] + " (" + slotKey + ")" }));
+
+      var row = el("div", { style: "display:flex;gap:6px;" });
+
+      var picker = el("select", { style: "flex:1;" });
+      var eligible = c.stacks.filter(function (stack) {
+        var it = ITEMS[String(stack.itemId)];
+        if (!it || !it.slot || it.slot !== slotKey) return false;
+        if ((it.minLv || 0) > (c.level || 0)) return false;
+        if (equipBit !== null && it.jobs && !(it.jobs & (1 << equipBit))) return false;
+        return true;
+      });
+      picker.appendChild(el("option", { value: "", text: eligible.length ? "從背包選擇（" + eligible.length + " 件符合）..." : "背包內沒有符合的裝備" }));
+      eligible.forEach(function (stack) {
+        var it = ITEMS[String(stack.itemId)];
+        picker.appendChild(el("option", { value: stack.id, text: it.name + "（Stack " + stack.id + "）" }));
+      });
+      picker.disabled = eligible.length === 0;
+      picker.addEventListener("change", function () {
+        if (!picker.value) return;
+        c.loadout[slotKey] = Number(picker.value);
+        renderLoadout(c);
+      });
+      row.appendChild(picker);
+
+      var idInput = el("input", { type: "number", value: c.loadout[slotKey] || "", placeholder: "Stack ID", style: "width:90px;" });
+      idInput.addEventListener("input", function () {
+        var v = idInput.valueAsNumber;
+        if (!v) delete c.loadout[slotKey];
+        else c.loadout[slotKey] = v;
+      });
+      row.appendChild(idInput);
+
+      box.appendChild(row);
+      wrap.appendChild(box);
     });
   }
 
