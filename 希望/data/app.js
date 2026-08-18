@@ -385,10 +385,7 @@
       var isEquip = !!(itemDef && itemDef.slot);
 
       var tdItem = document.createElement("td");
-      tdItem.appendChild(makeItemPicker(stack.itemId, function (newId) {
-        stack.itemId = newId;
-        renderStackTable($tbody, stacks); // 換成裝備/非裝備時，精煉欄位要跟著顯示/隱藏
-      }));
+      tdItem.appendChild(el("span", { text: itemDef ? itemDef.name : ("未知物品 #" + stack.itemId) }));
       tr.appendChild(tdItem);
 
       var tdCount = document.createElement("td");
@@ -508,7 +505,7 @@
     var overlay = el("div", { id: "centerModalOverlay", class: "modal-overlay show" });
     var box = el("div", { class: "modal-box" });
     box.appendChild(el("div", { style: "font-weight:700;font-size:16px;color:var(--text);margin-bottom:10px;", text: "加入「" + name + "」" }));
-    box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:16px;", text: "要把這件裝備加進哪裡？" }));
+    box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:16px;", text: "要把這件物品加進哪裡？" }));
     var row = el("div", { style: "display:flex;gap:10px;" });
     var invBtn = el("button", { class: "btn btn-accent", text: "🎒 加入背包" });
     invBtn.addEventListener("click", function () {
@@ -538,15 +535,50 @@
     document.body.appendChild(overlay);
   }
 
+  function setupItemAddSearch(prefix) {
+    var $input = document.getElementById(prefix + "NewItemInput");
+    var $suggest = document.getElementById(prefix + "NewItemSuggest");
+    var $btn = document.getElementById(prefix + "NewItemConfirmBtn");
+    var matchedId = null;
+
+    $input.oninput = function () {
+      var q = $input.value.trim();
+      var exact = itemArr.find(function (it) { return it.name === q; });
+      matchedId = exact ? Number(exact.id) : null;
+      $btn.disabled = !matchedId;
+
+      $suggest.innerHTML = "";
+      if (!q) { $suggest.classList.remove("show"); return; }
+      var matches = itemArr.filter(function (it) { return it.name.indexOf(q) !== -1; }).slice(0, 30);
+      if (!matches.length) { $suggest.classList.remove("show"); return; }
+      matches.forEach(function (it) {
+        var row = el("div", { text: it.name + "  #" + it.id });
+        row.addEventListener("click", function () {
+          $input.value = it.name;
+          matchedId = Number(it.id);
+          $btn.disabled = false;
+          $suggest.classList.remove("show");
+        });
+        $suggest.appendChild(row);
+      });
+      $suggest.classList.add("show");
+    };
+    $input.onblur = function () { setTimeout(function () { $suggest.classList.remove("show"); }, 150); };
+
+    $btn.onclick = function () {
+      if (!matchedId) return;
+      showAddToStackModal(matchedId);
+      $input.value = "";
+      matchedId = null;
+      $btn.disabled = true;
+    };
+  }
+
   function renderStacks(c) {
     var $tbody = document.querySelector("#stacksTable tbody");
     renderStackTable($tbody, c.stacks);
-    document.getElementById("addStackBtn").onclick = function () {
-      var newId = c.nextStackId++;
-      c.stacks.push({ id: newId, itemId: 1, count: 1 });
-      renderStackTable($tbody, c.stacks);
-    };
     setupEquipFilter("inv", function (itemId) { showAddToStackModal(itemId); });
+    setupItemAddSearch("inv");
   }
 
   function renderWarehouse() {
@@ -554,12 +586,8 @@
     document.getElementById("whGold").oninput = function (e) { saveData.warehouse.gold = e.target.valueAsNumber || 0; };
     var $tbody = document.querySelector("#warehouseTable tbody");
     renderStackTable($tbody, saveData.warehouse.stacks);
-    document.getElementById("addWhBtn").onclick = function () {
-      var newId = saveData.warehouse.nextStackId++;
-      saveData.warehouse.stacks.push({ id: newId, itemId: 1, count: 1 });
-      renderStackTable($tbody, saveData.warehouse.stacks);
-    };
     setupEquipFilter("wh", function (itemId) { showAddToStackModal(itemId); });
+    setupItemAddSearch("wh");
   }
 
   function getEquipBitForJob(jobId) {
