@@ -46,7 +46,9 @@
   if ($genTime && window.GENERATED_AT) {
     try {
       var d = new Date(window.GENERATED_AT);
-      $genTime.textContent = d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      $genTime.textContent = d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() +
+        " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
     } catch (e) { $genTime.textContent = window.GENERATED_AT; }
   }
 
