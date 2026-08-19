@@ -677,6 +677,7 @@
           text: "目前裝備：" + currentItem.name + "（Stack " + currentStack.id + "）",
           selected: "selected"
         }));
+        picker.appendChild(el("option", { value: "__unequip__", text: "－ 卸下這個欄位" }));
       } else {
         picker.appendChild(el("option", {
           value: "",
@@ -690,6 +691,11 @@
       picker.disabled = !currentStack && eligible.length === 0;
       picker.addEventListener("change", function () {
         if (!picker.value) return;
+        if (picker.value === "__unequip__") {
+          delete c.loadout[slotKey];
+          renderLoadout(c);
+          return;
+        }
         c.loadout[slotKey] = Number(picker.value);
         var stack = c.stacks.find(function (s) { return s.id === Number(picker.value); });
         if (stack) renderItemPreview("equipItemPreview", stack.itemId);
@@ -710,19 +716,6 @@
         });
         row.appendChild(refineSelect);
       }
-
-      var idInput = el("input", { type: "number", value: c.loadout[slotKey] || "", placeholder: "Stack ID", style: "width:80px;" });
-      idInput.addEventListener("input", function () {
-        var v = idInput.valueAsNumber;
-        if (!v) delete c.loadout[slotKey];
-        else c.loadout[slotKey] = v;
-      });
-      idInput.addEventListener("change", function () {
-        var stack = c.stacks.find(function (s) { return s.id === idInput.valueAsNumber; });
-        if (stack) renderItemPreview("equipItemPreview", stack.itemId);
-        renderLoadout(c);
-      });
-      row.appendChild(idInput);
 
       box.appendChild(row);
       wrap.appendChild(box);
