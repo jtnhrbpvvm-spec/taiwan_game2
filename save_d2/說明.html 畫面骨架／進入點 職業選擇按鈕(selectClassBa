@@ -1,0 +1,10 @@
+index.html	畫面骨架／進入點	職業選擇按鈕(selectClassBase)、開始遊戲按鈕(startGame)、「♾️ 成長」按鈕(openGrowthCenter)、各 js 檔案的載入順序（本身不含邏輯，純UI＋script引入）
+00-data.js（舊版3585行／新版3610行）	物品資料庫主體	武器、防具、飾品、道具、技能等一般物品定義；216把武器完整清單（新舊版比對出屠龍劍、巴列斯魔杖新增了裝備被動技能）
+01-drops-config.js（舊版2292行／新版3455行，內容完整多了1163行）	掉落配置＋核心強化系統資料源	MOB_DROPS怪物掉落表；體質/精神成長公式（getConGrowth/getWisGrowth，HP/MP真正公式的CON/WIS加成部分）；createBase（各職業基礎六圍+加點上限表）；freshPlayerState()/freshMapState()（新角色初始快照）；GEM_IDS/gemDef()寶石定義；RUNE_IDS/RUNE_DEFS/runeDef()符文完整定義（23種，Tier1~7）；rollRuneDropForMob()符文掉落機率邏輯
+02-stats-recompute.js	戰鬥屬性即時運算	HP/MP計算主公式（hpBase+(lv-1)×(hpClsInc+conInc)等）、命中/傷害/AC/MR/抗性等三十多項戰鬥數值的完整重算邏輯；呼叫 01-drops-config.js 裡的 getConGrowth/getWisGrowth
+13-shop-save.js	創角流程＋商店/存檔邏輯	selectClass()/startGame()角色建立流程；讀取 createBase[cls] 決定初始六圍；各職業起始武器/防具/道具清單
+34-growth-center.js	「成長」分頁UI＋操作邏輯	萬能藥快捷、三套裝備預設、三隊傭兵遠征、無限轉生；裝備開孔(growthOpenSocket)、寶石鑲嵌/合成(gemPanel)、符文鑲嵌(runePanel)三個子面板
+52-rune-alchemy.js	飾品專用符文鍊金子系統	符文（或已融合核心）兩兩合成成「鍊金核心」，限定項鍊/戒指/皮帶使用，全身2顆生效上限、戒指1顆上限、混搭懲罰機制
+55-orb-system.js	獨立的「寶珠」進度系統	核心/共鳴/守護3固定格，35顆寶珠(Lv1~5)，打怪掉落，效果與裝備強化系統(寶石/符文)完全獨立
+53-world-lore.js	「圖鑑收藏→世界殘響」劇情收集玩法	物品/地區/怪物/NPC共5類共約140個劇情碎片，純敘事向、無數值加成
+10-ui-tabs.js（2943行）	物品提示框(tooltip)渲染	顯示已鑲嵌寶石/符文效果、符文之語狀態、鍊金符文名稱等——只負責「顯示」，不含任何遊戲邏輯本體
