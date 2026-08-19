@@ -89,19 +89,6 @@
   }
 
   // 一些常見搜尋建議（挑幾個知名度高的字）
-  var HINTS = ["鐵", "咕咕", "木頭", "蘿蔔", "小惡魔翅膀"];
-  HINTS.forEach(function (h) {
-    var chip = document.createElement("span");
-    chip.className = "hint-chip";
-    chip.textContent = h;
-    chip.addEventListener("click", function () {
-      $input.value = h;
-      runSearch(h);
-      $input.focus();
-    });
-    $hintRow.appendChild(chip);
-  });
-
   var enchantChip = document.createElement("span");
   enchantChip.className = "hint-chip";
   enchantChip.style.borderColor = "var(--gold)";
