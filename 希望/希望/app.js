@@ -21,6 +21,10 @@
   var ITEMS = window.ITEMS || {};
   var MONSTERS = window.MONSTERS || {};
   var MAPS = window.MAPS || {};
+  var QUESTS = window.QUESTS || {};
+  var QUEST_PAGES = window.QUEST_PAGES || {};
+  var MISSIONS = window.MISSIONS || {};
+  var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
   var TOWNS = window.TOWNS || {};
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
@@ -178,9 +182,12 @@
       currentMatches.items.forEach(function (it) {
         var count = (DROP_INDEX[it.id] || []).length;
         var shopCount = (SHOP_INDEX[it.id] || []).length;
+        var questRefs = buildQuestReferences(it.id);
         var metaParts = [];
         if (count) metaParts.push(count + " 隻怪物掉落");
         if (shopCount) metaParts.push("商店有賣");
+        if (questRefs.quests.length) metaParts.push("任務道具");
+        if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
           '<span class="rname">' + escapeHtml(it.name) + '</span>' +
           '<span class="rmeta">' + (metaParts.length ? metaParts.join("・") : "無掉落／販售紀錄") + '</span></li>';
@@ -205,6 +212,59 @@
   });
 
   // ---------- 詳細頁：物品 ----------
+  // ---------- 任務／討伐任務關聯 ----------
+  function buildQuestReferences(itemId) {
+    var idNum = Number(itemId);
+    var quests = [];
+    Object.keys(QUESTS).forEach(function (qid) {
+      var q = QUESTS[qid];
+      if (q.itemId === idNum) quests.push({ id: qid, q: q });
+    });
+
+    var missions = [];
+    Object.keys(MISSIONS).forEach(function (mid) {
+      var m = MISSIONS[mid];
+      var role = null;
+      if (m.reward === idNum) role = "reward";
+      else if (MISSION_TOKEN_ITEM_ID != null && idNum === MISSION_TOKEN_ITEM_ID && m.token) role = "token";
+      if (role) missions.push({ id: mid, m: m, role: role });
+    });
+
+    return { quests: quests, missions: missions };
+  }
+
+  function renderQuestRefCard(r) {
+    var q = r.q;
+    var page = QUEST_PAGES[String(q.pageId)] || {};
+    var monN = MONSTERS[String(q.monsterId)] ? MONSTERS[String(q.monsterId)].name : ("怪物#" + q.monsterId);
+    var lvRange = "Lv" + q.reqLevel + (q.reqLevelMax != null ? " ~ Lv" + q.reqLevelMax : " 以上");
+    var fameRange = (q.reqFameMin || 0) + " ~ " + (q.reqFameMax != null ? q.reqFameMax : "無上限");
+    var towns = (page.towns && page.towns.length) ? page.towns.join("、") : "未知";
+    return '<div class="equip-box">' +
+      '<div class="row1"><span class="slot">📜 任務 #' + r.id + '　' + escapeHtml(page.title || "") + '</span></div>' +
+      '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '內容：擊殺「' + escapeHtml(monN) + '」，繳交此物品 x' + q.count + '<br>' +
+      '接取地點：<b style="color:var(--gold-hi);">' + escapeHtml(towns) + '</b><br>' +
+      '需求：' + lvRange + '　・　名聲 ' + fameRange + '<br>' +
+      '獎勵：名聲 +' + fmtNum(q.fame) + '　經驗 +' + fmtNum(q.exp) + '　金錢 +' + fmtNum(q.gold) +
+      '</div></div>';
+  }
+
+  function renderMissionRefCard(r) {
+    var m = r.m;
+    var monN = MONSTERS[String(m.monsterId)] ? MONSTERS[String(m.monsterId)].name : ("怪物#" + m.monsterId);
+    var roleText = r.role === "reward" ? "討伐獎勵物品" : "討伐任務代幣";
+    return '<div class="equip-box">' +
+      '<div class="row1"><span class="slot">🎯 討伐任務 #' + r.id + '　' + escapeHtml(roleText) + '</span></div>' +
+      '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '內容：擊殺「' + escapeHtml(monN) + '」x' + m.need + '<br>' +
+      '接取方式：<b style="color:var(--gold-hi);">不用找 NPC</b>，角色等級到達 Lv' + m.unlockLevel + ' 後打到指定怪物會自動開始計算進度<br>' +
+      '獎勵：經驗 +' + fmtNum(m.exp) + '　金錢 +' + fmtNum(m.gold) +
+      (m.token ? '　代幣 x' + m.token : '') +
+      (m.reward ? '　額外物品 x' + (m.rewardCount || 1) : '') +
+      '</div></div>';
+  }
+
   function showItem(id) {
     id = String(id);
     var item = ITEMS[id];
@@ -251,6 +311,19 @@
           '</tr>';
       });
       html += '</tbody></table>';
+    }
+
+    var questRefs = buildQuestReferences(id);
+    html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length) + ')</span></div>';
+    if (!questRefs.quests.length && !questRefs.missions.length) {
+      html += '<div class="empty-note">這個物品跟任務／討伐任務系統沒有關聯。</div>';
+    } else {
+      questRefs.quests.forEach(function (r) {
+        html += renderQuestRefCard(r);
+      });
+      questRefs.missions.forEach(function (r) {
+        html += renderMissionRefCard(r);
+      });
     }
 
     html += '<div class="section-title">會掉落此物品的怪物 <span class="count">(' + drops.length + ')</span></div>';
