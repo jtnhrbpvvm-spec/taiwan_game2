@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -79,7 +79,9 @@
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
     { panel: "spot", icon: "📍", title: "目前位置", desc: "所在地圖、座標、正在打的怪物或採集點。" },
     { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
-    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "任務進度、賣出保留清單等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
+    { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
+    { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
+    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "賣出保留清單等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
     { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" },
     { panel: "transfer", icon: "🔁", title: "轉移碼", desc: "產生/讀取遊戲內建那種六碼轉移碼，透過 Litterbox 暫存交換存檔。" }
   ];
@@ -340,6 +342,8 @@
     renderTagLists(c);
     renderSpot(c);
     renderIndividuality(c);
+    renderQuests(c);
+    renderMissions(c);
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
@@ -998,9 +1002,28 @@
         function (id) { c.potionId = id; }));
     }
 
-    wrap.appendChild(potionItemOnlyRow("AP藥水", c.apPotionId, function (id) { c.apPotionId = id; }));
+    if (Array.isArray(c.apPotionSlots)) {
+      // 新版存檔：AP 藥水也是多槽（跟血量藥水同一套結構，已由真實存檔驗證）
+      c.apPotionSlots.forEach(function (slot, idx) {
+        wrap.appendChild(potionPercentRow("AP藥水" + (idx + 1),
+          function () { return slot.threshold; },
+          function (v) { slot.threshold = v; },
+          slot.itemId,
+          function (id) { slot.itemId = id; }));
+      });
+    } else if ("apPotionId" in c) {
+      // 舊版存檔：AP 藥水只有單一物品，沒有閾值設定
+      wrap.appendChild(potionItemOnlyRow("AP藥水", c.apPotionId, function (id) { c.apPotionId = id; }));
+    }
 
-    if ("attackSkillId" in c) {
+    if (Array.isArray(c.attackSlots)) {
+      // 新版存檔：自動攻擊改成陣列，每一格是 {kind:"skill"等, id:技能或攻擊ID}
+      c.attackSlots.forEach(function (slot, idx) {
+        wrap.appendChild(fieldNumber("攻擊技能" + (idx + 1) + "（" + (slot.kind || "?") + "）",
+          function () { return slot.id; },
+          function (v) { slot.id = v; }));
+      });
+    } else if ("attackSkillId" in c) {
       wrap.appendChild(fieldNumber("自動攻擊技能 attackSkillId", function () { return c.attackSkillId; }, function (v) { c.attackSkillId = v; }));
     }
     if ("comboSeq" in c) {
@@ -1200,12 +1223,235 @@
     refreshMinorCap();
   }
 
+  // ---------- 任務 ----------
+  var QUESTS = window.QUESTS || {};
+  var QUEST_PAGES = window.QUEST_PAGES || {};
+  var MONSTER_NAMES = window.MONSTER_NAMES || {};
+
+  function monsterName(id) { return MONSTER_NAMES[String(id)] || ("怪物#" + id); }
+  function questDesc(q) {
+    return "擊殺「" + monsterName(q.monsterId) + "」，繳交「" + itemName(q.itemId) + "」x" + q.count;
+  }
+
+  function renderQuests(c) {
+    if (!Array.isArray(c.activeQuests)) c.activeQuests = [];
+
+    var $town = document.getElementById("questFilterTown");
+    var $page = document.getElementById("questFilterPage");
+    var $quest = document.getElementById("questFilterQuest");
+    var $detail = document.getElementById("questDetailBox");
+
+    if (!$town.dataset.wired) {
+      $town.dataset.wired = "1";
+      var townSet = {};
+      Object.keys(QUEST_PAGES).forEach(function (pid) {
+        QUEST_PAGES[pid].towns.forEach(function (t) { townSet[t] = true; });
+      });
+      Object.keys(townSet).sort().forEach(function (t) {
+        $town.appendChild(el("option", { value: t, text: t }));
+      });
+      Object.keys(QUEST_PAGES).forEach(function (pid) {
+        $page.appendChild(el("option", { value: pid, text: QUEST_PAGES[pid].title }));
+      });
+    }
+
+    function updatePageOptions() {
+      var townVal = $town.value;
+      Array.prototype.forEach.call($page.options, function (opt) {
+        if (!opt.value) return;
+        var page = QUEST_PAGES[opt.value];
+        opt.hidden = !!(townVal && page.towns.indexOf(townVal) === -1);
+      });
+      if ($page.value && $page.options[$page.selectedIndex].hidden) $page.value = "";
+    }
+
+    function updateQuestOptions() {
+      var townVal = $town.value;
+      var pageVal = $page.value;
+      var matchIds = Object.keys(QUESTS).filter(function (qid) {
+        var q = QUESTS[qid];
+        if (pageVal && String(q.pageId) !== pageVal) return false;
+        if (townVal && !pageVal) {
+          var page = QUEST_PAGES[String(q.pageId)];
+          if (!page || page.towns.indexOf(townVal) === -1) return false;
+        }
+        return true;
+      });
+      matchIds.sort(function (a, b) { return Number(a) - Number(b); });
+
+      $quest.innerHTML = "";
+      $quest.appendChild(el("option", { value: "", text: "共 " + matchIds.length + " 筆，請選擇..." }));
+      matchIds.forEach(function (qid) {
+        var q = QUESTS[qid];
+        $quest.appendChild(el("option", { value: qid, text: "#" + qid + "　" + questDesc(q) }));
+      });
+    }
+
+    function renderDetail() {
+      var qid = $quest.value;
+      $detail.innerHTML = "";
+      if (!qid) {
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一筆任務查看詳細內容。" }));
+        return;
+      }
+      var q = QUESTS[qid];
+      var page = QUEST_PAGES[String(q.pageId)] || {};
+      var checked = c.activeQuests.indexOf(Number(qid)) !== -1;
+
+      var lvRange = "Lv" + q.reqLevel + (q.reqLevelMax != null ? " ~ Lv" + q.reqLevelMax : " 以上");
+      var fameRange = (q.reqFameMin || 0) + " ~ " + (q.reqFameMax != null ? q.reqFameMax : "無上限");
+      var ceilingMap = { block: "封頂後鎖住整個分類", no_fame: "封頂後不再提供名聲獎勵" };
+      var ceilingText = ceilingMap[page.ceilingEffect] || page.ceilingEffect || "無";
+
+      var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
+      box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: "#" + qid + "　" + (page.title || "") }));
+      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:12px;", text: "任務內容：" + questDesc(q) }));
+
+      var grid = el("div", { class: "grid" });
+      [
+        ["需求等級", lvRange], ["需求名聲區間", fameRange],
+        ["名聲獎勵", String(q.fame)], ["經驗獎勵", String(q.exp)], ["金錢獎勵", String(q.gold)],
+        ["分類名聲上限", page.fameCeiling != null ? String(page.fameCeiling) : "無"],
+        ["上限效果", ceilingText],
+        ["可接地點", (page.towns && page.towns.length) ? page.towns.join("、") : "未知"]
+      ].forEach(function (pair) {
+        var f = el("div", { class: "field" });
+        f.appendChild(el("label", { text: pair[0] }));
+        f.appendChild(el("div", { style: "font-size:14px;color:var(--text);", text: pair[1] }));
+        grid.appendChild(f);
+      });
+      box.appendChild(grid);
+
+      var checkLabel = el("label", { style: "display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;cursor:pointer;" });
+      var cb = el("input", { type: "checkbox" });
+      cb.checked = checked;
+      cb.addEventListener("change", function () {
+        var qNum = Number(qid);
+        var idx = c.activeQuests.indexOf(qNum);
+        if (cb.checked && idx === -1) c.activeQuests.push(qNum);
+        else if (!cb.checked && idx !== -1) c.activeQuests.splice(idx, 1);
+      });
+      checkLabel.appendChild(cb);
+      checkLabel.appendChild(document.createTextNode("此任務目前算在「進行中」清單裡"));
+      box.appendChild(checkLabel);
+
+      $detail.appendChild(box);
+    }
+
+    $town.onchange = function () { updatePageOptions(); updateQuestOptions(); renderDetail(); };
+    $page.onchange = function () { updateQuestOptions(); renderDetail(); };
+    $quest.onchange = renderDetail;
+
+    updatePageOptions();
+    updateQuestOptions();
+    renderDetail();
+  }
+
+  // ---------- 討伐任務（唯讀查詢，missions.json）----------
+  var MISSIONS = window.MISSIONS || {};
+  var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
+
+  function renderMissions(c) {
+    if (!Array.isArray(c.missionsDone)) c.missionsDone = [];
+
+    var $level = document.getElementById("missionFilterLevel");
+    var $monster = document.getElementById("missionFilterMonster");
+    var $detail = document.getElementById("missionDetailBox");
+
+    if (!$level.dataset.wired) {
+      $level.dataset.wired = "1";
+      var levelSet = {};
+      Object.keys(MISSIONS).forEach(function (mid) { levelSet[MISSIONS[mid].unlockLevel] = true; });
+      Object.keys(levelSet).map(Number).sort(function (a, b) { return a - b; }).forEach(function (lv) {
+        $level.appendChild(el("option", { value: String(lv), text: "Lv" + lv }));
+      });
+    }
+
+    function updateMonsterOptions() {
+      var lvVal = $level.value;
+      var matchIds = Object.keys(MISSIONS).filter(function (mid) {
+        if (lvVal && String(MISSIONS[mid].unlockLevel) !== lvVal) return false;
+        return true;
+      });
+      matchIds.sort(function (a, b) { return Number(a) - Number(b); });
+
+      $monster.innerHTML = "";
+      $monster.appendChild(el("option", { value: "", text: "共 " + matchIds.length + " 筆，請選擇..." }));
+      matchIds.forEach(function (mid) {
+        var m = MISSIONS[mid];
+        var done = c.missionsDone.indexOf(Number(mid)) !== -1;
+        $monster.appendChild(el("option", {
+          value: mid, text: (done ? "✅ " : "") + "#" + mid + "　Lv" + m.unlockLevel + "　擊殺「" + monsterName(m.monsterId) + "」x" + m.need
+        }));
+      });
+    }
+
+    function renderDetail() {
+      var mid = $monster.value;
+      $detail.innerHTML = "";
+      if (!mid) {
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一筆討伐任務查看詳細內容。" }));
+        return;
+      }
+      var m = MISSIONS[mid];
+      var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
+      box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: "#" + mid }));
+      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:12px;", text: "任務內容：擊殺「" + monsterName(m.monsterId) + "」x" + m.need }));
+
+      var rows = [
+        ["解鎖等級", "Lv" + m.unlockLevel],
+        ["需要擊殺數", String(m.need)],
+        ["經驗獎勵", String(m.exp)],
+        ["金錢獎勵", String(m.gold)],
+      ];
+      if (m.token) {
+        rows.push(["代幣獎勵", (MISSION_TOKEN_ITEM_ID ? itemName(MISSION_TOKEN_ITEM_ID) : "代幣") + " x" + m.token]);
+      }
+      if (m.reward) {
+        rows.push(["額外獎勵物品", itemName(m.reward) + " x" + (m.rewardCount || 1)]);
+      }
+
+      var grid = el("div", { class: "grid" });
+      rows.forEach(function (pair) {
+        var f = el("div", { class: "field" });
+        f.appendChild(el("label", { text: pair[0] }));
+        f.appendChild(el("div", { style: "font-size:14px;color:var(--text);", text: pair[1] }));
+        grid.appendChild(f);
+      });
+      box.appendChild(grid);
+
+      var checkLabel = el("label", { style: "display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;cursor:pointer;" });
+      var cb = el("input", { type: "checkbox" });
+      cb.checked = c.missionsDone.indexOf(Number(mid)) !== -1;
+      cb.addEventListener("change", function () {
+        var mNum = Number(mid);
+        var idx = c.missionsDone.indexOf(mNum);
+        if (cb.checked && idx === -1) c.missionsDone.push(mNum);
+        else if (!cb.checked && idx !== -1) c.missionsDone.splice(idx, 1);
+        updateMonsterOptions();
+        $monster.value = mid; // 重建選單後把目前選的這筆留住
+      });
+      checkLabel.appendChild(cb);
+      checkLabel.appendChild(document.createTextNode("此討伐任務算已完成（missionsDone，已由真實存檔驗證是任務 ID 陣列）"));
+      box.appendChild(checkLabel);
+
+      $detail.appendChild(box);
+    }
+
+    $level.onchange = function () { updateMonsterOptions(); renderDetail(); };
+    $monster.onchange = renderDetail;
+
+    updateMonsterOptions();
+    renderDetail();
+  }
+
   // ---------- 進階（推測格式）欄位：原始 JSON ----------
   var RAW_FIELDS = [
-    { key: "activeQuests", label: "進行中的任務 activeQuests", confidence: "mid", note: "任務 ID 的陣列，例如 [367]（已由真實存檔驗證，但任務名稱對照尚未做進編輯器）。" },
     { key: "sellKeep", label: "賣出時保留清單 sellKeep", confidence: "mid", note: "格式為 [[物品ID, 保留數量], ...]（已由真實存檔驗證）。保留數量的確切意義尚待進一步確認。" },
     { key: "offlineHistory", label: "離線紀錄 offlineHistory", confidence: "mid", note: "只是歷史紀錄，通常不需要編輯，格式已由真實存檔驗證。" },
-    { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" }
+    { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" },
+    { key: "party", label: "隊伍 party", confidence: "low", note: "新版存檔才有這個欄位，目前看過的存檔裡都是空陣列，格式完全未知，請小心編輯或留空。" },
+    { key: "missionKills", label: "討伐任務擊殺進度 missionKills", confidence: "low", note: "應該是記錄「討伐任務」目前打了幾隻的進度，但目前看過的存檔都是空陣列，格式未知。完成狀態請到「🎯 討伐任務」面板編輯，那邊已確認格式。" }
   ];
 
   function renderRawFields(c) {
@@ -1220,7 +1466,7 @@
       box.appendChild(el("div", { class: "note", text: f.note }));
 
       var ta = el("textarea", { class: "raw" });
-      ta.value = JSON.stringify(c[f.key], null, 2);
+      ta.value = JSON.stringify(c[f.key] !== undefined ? c[f.key] : null, null, 2);
       ta.addEventListener("change", function () {
         try {
           c[f.key] = JSON.parse(ta.value);

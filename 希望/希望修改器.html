@@ -181,7 +181,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V14</span>
+  <span class="bar-title">🧭 希望存檔修改器V17</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -220,6 +220,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-item" data-panel="records">📖 物品紀錄</div>
     <div class="nav-item" data-panel="spot">📍 目前位置</div>
     <div class="nav-item" data-panel="individuality">🌠 個性化</div>
+    <div class="nav-item" data-panel="quests">📜 任務</div>
+    <div class="nav-item" data-panel="missions">🎯 討伐任務</div>
 
     <div class="nav-section">進階</div>
     <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
@@ -417,6 +419,37 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" id="indivMinorFields"></div>
     </div>
 
+    <!-- ══ 任務 ══ -->
+    <div class="panel" id="panel-quests">
+      <div class="panel-title">📜 任務</div>
+      <div class="panel-desc">
+        任務本身沒有文字標題（遊戲資料只有數值），下面用「地點 → 委託名稱 → 任務內容」三層下拉選單幫你縮小範圍找到要的任務。
+        任一層留空（選「無」）就視為那一層全選、不篩選。找到任務後，用下面的核取方塊決定它現在算不算在
+        <code>activeQuests</code> 清單裡（對照真實存檔驗證過，格式是任務 ID 陣列）。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>地點</label><select id="questFilterTown"><option value="">無</option></select></div>
+        <div class="ef-field ef-short"><label>委託名稱</label><select id="questFilterPage"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>任務內容</label><select id="questFilterQuest"><option value="">請選擇...</option></select></div>
+      </div>
+      <div id="questDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 討伐任務 ══ -->
+    <div class="panel" id="panel-missions">
+      <div class="panel-title">🎯 討伐任務</div>
+      <div class="panel-desc">
+        跟上面的「任務」是完全不同的另一套系統（討伐指定怪物 N 隻換獎勵）。
+        完成狀態欄位 <code>missionsDone</code> 已由真實存檔驗證，是任務 ID 的陣列，用下方的核取方塊決定是否算完成。
+        清單裡打勾 ✅ 的代表已完成。（進度追蹤欄位 <code>missionKills</code> 格式尚未確認，暫不提供編輯。）
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>解鎖等級</label><select id="missionFilterLevel"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>目標怪物</label><select id="missionFilterMonster"><option value="">請選擇...</option></select></div>
+      </div>
+      <div id="missionDetailBox" style="margin-top:16px;"></div>
+    </div>
+
     <!-- ══ 進階 ══ -->
     <div class="panel" id="panel-advanced">
       <div class="panel-title">🔧 進階欄位 <span class="conf">格式為推測值</span></div>
@@ -475,6 +508,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/skills.js"></script>
 <script src="data/pets.js"></script>
 <script src="data/individuality.js"></script>
+<script src="data/quests.js"></script>
+<script src="data/missions.js"></script>
 <script src="data/app.js"></script>
 </body>
 </html>

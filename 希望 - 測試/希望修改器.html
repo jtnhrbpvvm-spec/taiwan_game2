@@ -181,7 +181,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V12</span>
+  <span class="bar-title">🧭 希望存檔修改器V16</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -220,6 +220,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-item" data-panel="records">📖 物品紀錄</div>
     <div class="nav-item" data-panel="spot">📍 目前位置</div>
     <div class="nav-item" data-panel="individuality">🌠 個性化</div>
+    <div class="nav-item" data-panel="quests">📜 任務</div>
+    <div class="nav-item" data-panel="missions">🎯 討伐任務<span class="badge">唯讀</span></div>
 
     <div class="nav-section">進階</div>
     <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
@@ -275,20 +277,26 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。</div>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。</div>
       <div class="equip-filter">
         <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
         <div class="ef-field ef-short"><label>裝備位置</label><select id="invFilterSlot"><option value="">無</option></select></div>
         <div class="ef-field ef-long"><label>符合的裝備</label><select id="invFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
       </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-long">
+          <label>新增物品</label>
+          <div class="item-picker"><input type="text" id="invNewItemInput" placeholder="輸入物品名稱（要跟遊戲裡完全一樣）..."><div class="suggest" id="invNewItemSuggest"></div></div>
+        </div>
+        <button class="btn btn-accent" id="invNewItemConfirmBtn" disabled>✅ 確定新增</button>
+      </div>
       <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
-      <button class="btn btn-accent btn-sm" id="addStackBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
     <!-- ══ 倉庫 ══ -->
     <div class="panel" id="panel-warehouse">
       <div class="panel-title">🏦 倉庫</div>
-      <div class="panel-desc">倉庫是所有角色共用的儲物空間，跟角色背包分開存放。</div>
+      <div class="panel-desc">倉庫是所有角色共用的儲物空間，跟角色背包分開存放。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。</div>
       <div class="grid" style="margin-bottom:14px;">
         <div class="field"><label>倉庫金錢</label><input type="number" id="whGold"></div>
       </div>
@@ -297,8 +305,14 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         <div class="ef-field ef-short"><label>裝備位置</label><select id="whFilterSlot"><option value="">無</option></select></div>
         <div class="ef-field ef-long"><label>符合的裝備</label><select id="whFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
       </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-long">
+          <label>新增物品</label>
+          <div class="item-picker"><input type="text" id="whNewItemInput" placeholder="輸入物品名稱（要跟遊戲裡完全一樣）..."><div class="suggest" id="whNewItemSuggest"></div></div>
+        </div>
+        <button class="btn btn-accent" id="whNewItemConfirmBtn" disabled>✅ 確定新增</button>
+      </div>
       <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
-      <button class="btn btn-accent btn-sm" id="addWhBtn" style="margin-top:10px;">➕ 新增物品</button>
     </div>
 
     <!-- ══ 已學技能 ══ -->
@@ -405,6 +419,38 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" id="indivMinorFields"></div>
     </div>
 
+    <!-- ══ 任務 ══ -->
+    <div class="panel" id="panel-quests">
+      <div class="panel-title">📜 任務</div>
+      <div class="panel-desc">
+        任務本身沒有文字標題（遊戲資料只有數值），下面用「地點 → 委託名稱 → 任務內容」三層下拉選單幫你縮小範圍找到要的任務。
+        任一層留空（選「無」）就視為那一層全選、不篩選。找到任務後，用下面的核取方塊決定它現在算不算在
+        <code>activeQuests</code> 清單裡（對照真實存檔驗證過，格式是任務 ID 陣列）。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>地點</label><select id="questFilterTown"><option value="">無</option></select></div>
+        <div class="ef-field ef-short"><label>委託名稱</label><select id="questFilterPage"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>任務內容</label><select id="questFilterQuest"><option value="">請選擇...</option></select></div>
+      </div>
+      <div id="questDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 討伐任務 ══ -->
+    <div class="panel" id="panel-missions">
+      <div class="panel-title">🎯 討伐任務 <span class="conf">目前唯讀，僅供查詢</span></div>
+      <div class="panel-desc">
+        跟上面的「任務」是完全不同的另一套系統（討伐指定怪物 N 隻換獎勵）。
+        <b>目前還不知道存檔裡追蹤完成狀態的欄位名稱</b>，所以這裡只能查詢資料，還沒辦法勾選完成/未完成——
+        如果你能幫忙找到那個欄位（例如比對完成任務前後的存檔差異），我就能把這個也做成可以編輯的。
+        部分獎勵物品目前資料庫裡還查不到名稱，會先顯示物品編號，等資料補齊後這裡會自動變成中文名稱。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>解鎖等級</label><select id="missionFilterLevel"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>目標怪物</label><select id="missionFilterMonster"><option value="">請選擇...</option></select></div>
+      </div>
+      <div id="missionDetailBox" style="margin-top:16px;"></div>
+    </div>
+
     <!-- ══ 進階 ══ -->
     <div class="panel" id="panel-advanced">
       <div class="panel-title">🔧 進階欄位 <span class="conf">格式為推測值</span></div>
@@ -463,6 +509,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/skills.js"></script>
 <script src="data/pets.js"></script>
 <script src="data/individuality.js"></script>
+<script src="data/quests.js"></script>
+<script src="data/missions.js"></script>
 <script src="data/app.js"></script>
 </body>
 </html>
