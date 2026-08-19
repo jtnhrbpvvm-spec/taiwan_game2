@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -81,6 +81,7 @@
     { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
     { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
     { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
+    { panel: "party", icon: "👥", title: "隊伍", desc: "把另一個角色加入隊伍（複製對方目前的戰鬥快照）。" },
     { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "賣出保留清單等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
     { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" },
     { panel: "transfer", icon: "🔁", title: "轉移碼", desc: "產生/讀取遊戲內建那種六碼轉移碼，透過 Litterbox 暫存交換存檔。" }
@@ -344,6 +345,7 @@
     renderIndividuality(c);
     renderQuests(c);
     renderMissions(c);
+    renderParty(c);
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
@@ -1305,7 +1307,14 @@
 
       var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: "#" + qid + "　" + (page.title || "") }));
-      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:12px;", text: "任務內容：" + questDesc(q) }));
+      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:6px;", text: "任務內容：" + questDesc(q) }));
+
+      var haveCount = (c.stacks || []).reduce(function (sum, s) { return s.itemId === q.itemId ? sum + s.count : sum; }, 0);
+      var progressDone = haveCount >= q.count;
+      box.appendChild(el("div", {
+        style: "font-size:13.5px;margin-bottom:12px;color:" + (progressDone ? "var(--green)" : "var(--text)") + ";",
+        text: "目前進度（依背包裡「" + itemName(q.itemId) + "」的數量即時計算）：" + haveCount + " / " + q.count + (progressDone ? "　✅ 已備齊" : "")
+      }));
 
       var grid = el("div", { class: "grid" });
       [
@@ -1330,12 +1339,41 @@
         var idx = c.activeQuests.indexOf(qNum);
         if (cb.checked && idx === -1) c.activeQuests.push(qNum);
         else if (!cb.checked && idx !== -1) c.activeQuests.splice(idx, 1);
+        renderActiveList();
       });
       checkLabel.appendChild(cb);
       checkLabel.appendChild(document.createTextNode("此任務目前算在「進行中」清單裡"));
       box.appendChild(checkLabel);
 
       $detail.appendChild(box);
+    }
+
+    function renderActiveList() {
+      var $list = document.getElementById("questActiveList");
+      $list.innerHTML = "";
+      if (!c.activeQuests.length) {
+        $list.appendChild(el("div", { class: "panel-desc", text: "目前沒有進行中的任務。" }));
+        return;
+      }
+      c.activeQuests.forEach(function (qNum) {
+        var q = QUESTS[String(qNum)];
+        var page = q ? QUEST_PAGES[String(q.pageId)] : null;
+        var chip = el("div", {
+          style: "display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--accent);" +
+            "border-radius:20px;padding:6px 12px;margin:0 8px 8px 0;font-size:12.5px;cursor:pointer;"
+        });
+        chip.textContent = q ? ("#" + qNum + "　" + (page ? page.title : "") + "　" + questDesc(q)) : ("#" + qNum + "（找不到資料）");
+        chip.addEventListener("click", function () {
+          if (!q) return;
+          $town.value = "";
+          updatePageOptions();
+          $page.value = String(q.pageId);
+          updateQuestOptions();
+          $quest.value = String(qNum);
+          renderDetail();
+        });
+        $list.appendChild(chip);
+      });
     }
 
     $town.onchange = function () { updatePageOptions(); updateQuestOptions(); renderDetail(); };
@@ -1345,6 +1383,7 @@
     updatePageOptions();
     updateQuestOptions();
     renderDetail();
+    renderActiveList();
   }
 
   // ---------- 討伐任務（唯讀查詢，missions.json）----------
@@ -1353,6 +1392,22 @@
 
   function renderMissions(c) {
     if (!Array.isArray(c.missionsDone)) c.missionsDone = [];
+    if (!Array.isArray(c.missionKills)) c.missionKills = [];
+
+    function getKillCount(mid) {
+      var entry = c.missionKills.find(function (row) { return row[0] === Number(mid); });
+      return entry ? entry[1] : 0;
+    }
+    function setKillCount(mid, val) {
+      var mNum = Number(mid);
+      var entry = c.missionKills.find(function (row) { return row[0] === mNum; });
+      if (val <= 0) {
+        if (entry) c.missionKills.splice(c.missionKills.indexOf(entry), 1);
+        return;
+      }
+      if (entry) entry[1] = val;
+      else c.missionKills.push([mNum, val]);
+    }
 
     var $level = document.getElementById("missionFilterLevel");
     var $monster = document.getElementById("missionFilterMonster");
@@ -1396,7 +1451,20 @@
       var m = MISSIONS[mid];
       var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: "#" + mid }));
-      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:12px;", text: "任務內容：擊殺「" + monsterName(m.monsterId) + "」x" + m.need }));
+      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:6px;", text: "任務內容：擊殺「" + monsterName(m.monsterId) + "」x" + m.need }));
+
+      var killRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13.5px;" });
+      killRow.appendChild(el("span", { text: "目前擊殺進度（已由真實存檔驗證，格式為 [[任務ID, 擊殺數], ...]）：" }));
+      var killInput = el("input", { type: "number", min: "0", max: String(m.need), style: "width:70px;" });
+      killInput.value = getKillCount(mid);
+      killInput.addEventListener("input", function () {
+        var v = killInput.valueAsNumber;
+        if (isNaN(v) || v < 0) v = 0;
+        setKillCount(mid, v);
+      });
+      killRow.appendChild(killInput);
+      killRow.appendChild(el("span", { style: "color:var(--text3);", text: " / " + m.need }));
+      box.appendChild(killRow);
 
       var rows = [
         ["解鎖等級", "Lv" + m.unlockLevel],
@@ -1430,6 +1498,7 @@
         else if (!cb.checked && idx !== -1) c.missionsDone.splice(idx, 1);
         updateMonsterOptions();
         $monster.value = mid; // 重建選單後把目前選的這筆留住
+        renderDoneList();
       });
       checkLabel.appendChild(cb);
       checkLabel.appendChild(document.createTextNode("此討伐任務算已完成（missionsDone，已由真實存檔驗證是任務 ID 陣列）"));
@@ -1438,20 +1507,110 @@
       $detail.appendChild(box);
     }
 
+    function renderDoneList() {
+      var $list = document.getElementById("missionDoneList");
+      $list.innerHTML = "";
+      if (!c.missionsDone.length) {
+        $list.appendChild(el("div", { class: "panel-desc", text: "目前沒有已完成的討伐任務。" }));
+        return;
+      }
+      c.missionsDone.slice().sort(function (a, b) { return a - b; }).forEach(function (mNum) {
+        var m = MISSIONS[String(mNum)];
+        var chip = el("div", {
+          style: "display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--accent);" +
+            "border-radius:20px;padding:6px 12px;margin:0 8px 8px 0;font-size:12.5px;cursor:pointer;"
+        });
+        chip.textContent = m ? ("#" + mNum + "　Lv" + m.unlockLevel + "　擊殺「" + monsterName(m.monsterId) + "」x" + m.need) : ("#" + mNum + "（找不到資料）");
+        chip.addEventListener("click", function () {
+          if (!m) return;
+          $level.value = "";
+          updateMonsterOptions();
+          $monster.value = String(mNum);
+          renderDetail();
+        });
+        $list.appendChild(chip);
+      });
+    }
+
     $level.onchange = function () { updateMonsterOptions(); renderDetail(); };
     $monster.onchange = renderDetail;
 
     updateMonsterOptions();
     renderDetail();
+    renderDoneList();
+  }
+
+  // ---------- 隊伍 ----------
+  function renderParty(c) {
+    if (!Array.isArray(c.party)) c.party = [];
+
+    var $list = document.getElementById("partyMemberList");
+    var $select = document.getElementById("partyAddSelect");
+    var $btn = document.getElementById("partyAddBtn");
+
+    $list.innerHTML = "";
+    if (!c.party.length) {
+      $list.appendChild(el("div", { class: "panel-desc", text: "目前隊伍是空的。" }));
+    } else {
+      c.party.forEach(function (member, idx) {
+        var row = el("div", {
+          style: "display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);" +
+            "border-radius:6px;padding:10px 14px;margin-bottom:8px;"
+        });
+        var jobLabel = (JOB_NAME && JOB_NAME[member.jobId]) || member.jobId || "";
+        row.appendChild(el("div", {
+          style: "flex:1;font-size:13.5px;",
+          text: member.name + "　Lv" + member.level + "　" + jobLabel +
+            (member.stats ? "　ATK " + member.stats.atk + " / DEF " + member.stats.def : "")
+        }));
+        var delBtn = el("button", { class: "icon-btn", text: "✕" });
+        delBtn.addEventListener("click", function () {
+          c.party.splice(idx, 1);
+          renderParty(c);
+        });
+        row.appendChild(delBtn);
+        $list.appendChild(row);
+      });
+    }
+
+    $select.innerHTML = "";
+    var others = saveData.characters.filter(function (other) { return other.id !== c.id; });
+    if (!others.length) {
+      $select.appendChild(el("option", { value: "", text: "（存檔裡沒有其他角色）" }));
+      $btn.disabled = true;
+    } else {
+      $select.appendChild(el("option", { value: "", text: "選擇要加入的角色..." }));
+      others.forEach(function (other) {
+        var jobLabel = (JOB_NAME && JOB_NAME[other.job]) || other.job || "";
+        $select.appendChild(el("option", { value: other.id, text: other.name + "　Lv" + other.level + "　" + jobLabel }));
+      });
+      $btn.disabled = false;
+    }
+
+    $btn.onclick = function () {
+      var targetId = $select.value;
+      if (!targetId) { toast("請先選擇要加入隊伍的角色", "warn"); return; }
+      var target = saveData.characters.find(function (ch) { return ch.id === targetId; });
+      if (!target || !target.snapshot) { toast("找不到該角色的快照資料，可能還沒存過檔", "err"); return; }
+
+      var snapshotCopy = JSON.parse(JSON.stringify(target.snapshot));
+      var existingIdx = c.party.findIndex(function (m) { return m.sourceId === targetId; });
+      if (existingIdx !== -1) {
+        c.party[existingIdx] = snapshotCopy;
+        toast("已更新「" + target.name + "」在隊伍裡的快照", "ok");
+      } else {
+        c.party.push(snapshotCopy);
+        toast("已將「" + target.name + "」加入隊伍", "ok");
+      }
+      renderParty(c);
+    };
   }
 
   // ---------- 進階（推測格式）欄位：原始 JSON ----------
   var RAW_FIELDS = [
     { key: "sellKeep", label: "賣出時保留清單 sellKeep", confidence: "mid", note: "格式為 [[物品ID, 保留數量], ...]（已由真實存檔驗證）。保留數量的確切意義尚待進一步確認。" },
     { key: "offlineHistory", label: "離線紀錄 offlineHistory", confidence: "mid", note: "只是歷史紀錄，通常不需要編輯，格式已由真實存檔驗證。" },
-    { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" },
-    { key: "party", label: "隊伍 party", confidence: "low", note: "新版存檔才有這個欄位，目前看過的存檔裡都是空陣列，格式完全未知，請小心編輯或留空。" },
-    { key: "missionKills", label: "討伐任務擊殺進度 missionKills", confidence: "low", note: "應該是記錄「討伐任務」目前打了幾隻的進度，但目前看過的存檔都是空陣列，格式未知。完成狀態請到「🎯 討伐任務」面板編輯，那邊已確認格式。" }
+    { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" }
   ];
 
   function renderRawFields(c) {
