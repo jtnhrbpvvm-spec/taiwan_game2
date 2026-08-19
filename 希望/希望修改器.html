@@ -121,6 +121,16 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 .cap-card .desc{font-size:12.5px;color:var(--text2);line-height:1.65;}
 .cap-card .conf-badge{margin-left:auto;}
 
+.item-preview-box{
+  margin-bottom:14px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;font-size:13px;color:var(--text2);min-height:20px;
+}
+.item-preview-box .ip-name{font-weight:700;color:var(--text);font-size:14px;margin-bottom:6px;}
+.item-preview-box .ip-price{color:var(--text3);font-size:12px;margin-bottom:8px;}
+.item-preview-box .ip-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;}
+.item-preview-box .ip-stats div{background:var(--bg3);border-radius:4px;padding:5px 8px;font-size:12px;}
+.item-preview-box .ip-stats b{color:var(--gold-hi,var(--accent2));}
+
 .equip-filter{
   margin-bottom:16px; padding:12px 14px; background:var(--bg2); border:1px solid var(--border);
   border-radius:6px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
@@ -181,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V21</span>
+  <span class="bar-title">🧭 希望存檔修改器V23</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -268,17 +278,19 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="panel" id="panel-equip">
       <div class="panel-title">🛡️ 裝備欄位</div>
       <div class="panel-desc">
-        每個欄位左邊的下拉選單，會自動列出背包裡「符合這個欄位、角色目前職業與等級能裝備」的物品，
-        點選後自動填入右邊的 Stack ID。如果背包沒有符合的裝備，下拉選單會顯示沒有可選項目，
-        這時可以先到「🎒 背包」加入該裝備物品，或直接在右邊手動輸入 Stack ID。
+        下拉選單會顯示「目前裝備」的物品；如果這個欄位還沒裝備東西，才會改顯示「從背包選擇」讓你挑背包裡符合條件的裝備。
+        中間的 +0~+12 是精煉值，會直接改到裝備所在那疊物品的 refine（跟背包表格是同一份資料，改這裡背包也會一起更新）。
+        右邊是 Stack ID，可以手動輸入。
       </div>
+      <div id="equipItemPreview" class="item-preview-box">點選某個裝備欄位的下拉選單，這裡會顯示該裝備的詳細能力。</div>
       <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
     </div>
 
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。</div>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div id="invItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
       <div class="equip-filter">
         <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
         <div class="ef-field ef-short"><label>裝備位置</label><select id="invFilterSlot"><option value="">無</option></select></div>
@@ -297,7 +309,8 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 倉庫 ══ -->
     <div class="panel" id="panel-warehouse">
       <div class="panel-title">🏦 倉庫</div>
-      <div class="panel-desc">倉庫是所有角色共用的儲物空間，跟角色背包分開存放。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。</div>
+      <div class="panel-desc">倉庫是所有角色共用的儲物空間，跟角色背包分開存放。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div id="whItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
       <div class="grid" style="margin-bottom:14px;">
         <div class="field"><label>倉庫金錢</label><input type="number" id="whGold"></div>
       </div>

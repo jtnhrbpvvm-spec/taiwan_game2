@@ -212,6 +212,41 @@
   }
 
   function itemName(id) { return (ITEMS[String(id)] || {}).name || ("物品#" + id); }
+
+  // ---------- 物品能力預覽方塊（背包/倉庫/裝備欄位共用）----------
+  var STAT_LABELS = { atk: "攻擊", def: "防禦", magic: "魔法", atkSpeed: "攻速", crit: "必殺", eva: "迴避", moveSpeed: "移速" };
+  var ATTR_LABELS = { str: "力量", agi: "敏捷", int: "智力", sta: "體力", wis: "精神", luck: "幸運" };
+
+  function renderItemPreview(boxId, itemId) {
+    var box = document.getElementById(boxId);
+    if (!box) return;
+    var it = ITEMS[String(itemId)];
+    if (!it) { box.innerHTML = "找不到這個物品的資料（#" + itemId + "）。"; return; }
+
+    var html = '<div class="ip-name">' + it.name + '　<span style="color:var(--text3);font-weight:400;font-size:12px;">#' + itemId + '</span></div>';
+    html += '<div class="ip-price">販售價 ' + fmtNum2(it.sell) + '　購買價 ' + fmtNum2(it.buy) + '</div>';
+
+    if (it.slot) {
+      var slotLabel = EQUIP_SLOTS[it.slot] || it.slot;
+      html += '<div style="margin-bottom:8px;font-size:12.5px;color:var(--text2);">裝備部位：<b style="color:var(--text);">' + slotLabel + '</b>　需求等級：<b style="color:var(--text);">Lv' + (it.minLv || 0) + '</b></div>';
+      html += '<div class="ip-stats">';
+      Object.keys(STAT_LABELS).forEach(function (k) {
+        if (it[k]) html += '<div>' + STAT_LABELS[k] + ' <b>' + (it[k] > 0 ? "+" : "") + it[k] + '</b></div>';
+      });
+      if (it.attrs) {
+        Object.keys(ATTR_LABELS).forEach(function (k) {
+          if (it.attrs[k]) html += '<div>' + ATTR_LABELS[k] + ' <b>+' + it.attrs[k] + '</b></div>';
+        });
+      }
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:12.5px;color:var(--text3);">一般物品，沒有裝備能力。</div>';
+    }
+    box.innerHTML = html;
+  }
+
+  function fmtNum2(n) { return Number(n || 0).toLocaleString("zh-Hant"); }
+
   function petName(id) { return (PETS[String(id)] || {}).name || ("寵物#" + id); }
 
   // 依「階級」分組排序好的寵物清單，供下拉選單使用
@@ -383,7 +418,7 @@
   }
 
   // ---------- 物品清單表格（背包 / 倉庫共用）----------
-  function renderStackTable($tbody, stacks) {
+  function renderStackTable($tbody, stacks, previewBoxId) {
     $tbody.innerHTML = "";
     stacks.forEach(function (stack, idx) {
       var tr = document.createElement("tr");
@@ -391,7 +426,14 @@
       var isEquip = !!(itemDef && itemDef.slot);
 
       var tdItem = document.createElement("td");
-      tdItem.appendChild(el("span", { text: itemDef ? itemDef.name : ("未知物品 #" + stack.itemId) }));
+      var nameSpan = el("span", {
+        text: itemDef ? itemDef.name : ("未知物品 #" + stack.itemId),
+        style: "cursor:pointer;text-decoration:underline dotted;"
+      });
+      nameSpan.addEventListener("click", function () {
+        if (previewBoxId) renderItemPreview(previewBoxId, stack.itemId);
+      });
+      tdItem.appendChild(nameSpan);
       tr.appendChild(tdItem);
 
       var tdCount = document.createElement("td");
@@ -427,7 +469,7 @@
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () {
         stacks.splice(idx, 1);
-        renderStackTable($tbody, stacks);
+        renderStackTable($tbody, stacks, previewBoxId);
       });
       tdAct.appendChild(delBtn);
       tr.appendChild(tdAct);
@@ -545,6 +587,7 @@
     var $input = document.getElementById(prefix + "NewItemInput");
     var $suggest = document.getElementById(prefix + "NewItemSuggest");
     var $btn = document.getElementById(prefix + "NewItemConfirmBtn");
+    var previewBoxId = prefix + "ItemPreview";
     var matchedId = null;
 
     $input.oninput = function () {
@@ -552,6 +595,7 @@
       var exact = itemArr.find(function (it) { return it.name === q; });
       matchedId = exact ? Number(exact.id) : null;
       $btn.disabled = !matchedId;
+      if (matchedId) renderItemPreview(previewBoxId, matchedId);
 
       $suggest.innerHTML = "";
       if (!q) { $suggest.classList.remove("show"); return; }
@@ -564,6 +608,7 @@
           matchedId = Number(it.id);
           $btn.disabled = false;
           $suggest.classList.remove("show");
+          renderItemPreview(previewBoxId, matchedId);
         });
         $suggest.appendChild(row);
       });
@@ -582,8 +627,8 @@
 
   function renderStacks(c) {
     var $tbody = document.querySelector("#stacksTable tbody");
-    renderStackTable($tbody, c.stacks);
-    setupEquipFilter("inv", function (itemId) { showAddToStackModal(itemId); });
+    renderStackTable($tbody, c.stacks, "invItemPreview");
+    setupEquipFilter("inv", function (itemId) { renderItemPreview("invItemPreview", itemId); showAddToStackModal(itemId); });
     setupItemAddSearch("inv");
   }
 
@@ -591,8 +636,8 @@
     document.getElementById("whGold").value = saveData.warehouse.gold;
     document.getElementById("whGold").oninput = function (e) { saveData.warehouse.gold = e.target.valueAsNumber || 0; };
     var $tbody = document.querySelector("#warehouseTable tbody");
-    renderStackTable($tbody, saveData.warehouse.stacks);
-    setupEquipFilter("wh", function (itemId) { showAddToStackModal(itemId); });
+    renderStackTable($tbody, saveData.warehouse.stacks, "whItemPreview");
+    setupEquipFilter("wh", function (itemId) { renderItemPreview("whItemPreview", itemId); showAddToStackModal(itemId); });
     setupItemAddSearch("wh");
   }
 
@@ -610,34 +655,72 @@
       var box = el("div", { class: "field" });
       box.appendChild(el("label", { text: EQUIP_SLOTS[slotKey] + " (" + slotKey + ")" }));
 
-      var row = el("div", { style: "display:flex;gap:6px;" });
+      var row = el("div", { style: "display:flex;gap:6px;flex-wrap:wrap;" });
 
-      var picker = el("select", { style: "flex:1;" });
+      var currentStackId = c.loadout[slotKey];
+      var currentStack = currentStackId ? c.stacks.find(function (s) { return s.id === currentStackId; }) : null;
+      var currentItem = currentStack ? ITEMS[String(currentStack.itemId)] : null;
+
       var eligible = c.stacks.filter(function (stack) {
+        if (currentStack && stack.id === currentStack.id) return false; // 目前裝備的另外顯示，不重複列出
         var it = ITEMS[String(stack.itemId)];
         if (!it || !it.slot || it.slot !== slotKey) return false;
         if ((it.minLv || 0) > (c.level || 0)) return false;
         if (equipBit !== null && it.jobs && !(it.jobs & (1 << equipBit))) return false;
         return true;
       });
-      picker.appendChild(el("option", { value: "", text: eligible.length ? "從背包選擇（" + eligible.length + " 件符合）..." : "背包內沒有符合的裝備" }));
+
+      var picker = el("select", { style: "flex:1;min-width:160px;" });
+      if (currentStack && currentItem) {
+        picker.appendChild(el("option", {
+          value: String(currentStack.id),
+          text: "目前裝備：" + currentItem.name + "（Stack " + currentStack.id + "）",
+          selected: "selected"
+        }));
+      } else {
+        picker.appendChild(el("option", {
+          value: "",
+          text: eligible.length ? "從背包選擇（" + eligible.length + " 件符合）..." : "背包內沒有符合的裝備"
+        }));
+      }
       eligible.forEach(function (stack) {
         var it = ITEMS[String(stack.itemId)];
         picker.appendChild(el("option", { value: stack.id, text: it.name + "（Stack " + stack.id + "）" }));
       });
-      picker.disabled = eligible.length === 0;
+      picker.disabled = !currentStack && eligible.length === 0;
       picker.addEventListener("change", function () {
         if (!picker.value) return;
         c.loadout[slotKey] = Number(picker.value);
+        var stack = c.stacks.find(function (s) { return s.id === Number(picker.value); });
+        if (stack) renderItemPreview("equipItemPreview", stack.itemId);
         renderLoadout(c);
       });
       row.appendChild(picker);
 
-      var idInput = el("input", { type: "number", value: c.loadout[slotKey] || "", placeholder: "Stack ID", style: "width:90px;" });
+      // 精煉值：只有目前這格真的裝備著東西時才顯示
+      if (currentStack) {
+        var refineSelect = el("select", { style: "width:64px;" });
+        for (var rv = 0; rv <= 12; rv++) {
+          var opt = el("option", { value: String(rv), text: "+" + rv });
+          if ((currentStack.refine || 0) === rv) opt.selected = true;
+          refineSelect.appendChild(opt);
+        }
+        refineSelect.addEventListener("change", function () {
+          currentStack.refine = Number(refineSelect.value);
+        });
+        row.appendChild(refineSelect);
+      }
+
+      var idInput = el("input", { type: "number", value: c.loadout[slotKey] || "", placeholder: "Stack ID", style: "width:80px;" });
       idInput.addEventListener("input", function () {
         var v = idInput.valueAsNumber;
         if (!v) delete c.loadout[slotKey];
         else c.loadout[slotKey] = v;
+      });
+      idInput.addEventListener("change", function () {
+        var stack = c.stacks.find(function (s) { return s.id === idInput.valueAsNumber; });
+        if (stack) renderItemPreview("equipItemPreview", stack.itemId);
+        renderLoadout(c);
       });
       row.appendChild(idInput);
 
