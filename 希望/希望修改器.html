@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>希望存檔修改器</title>
+<style>
+:root{
+  --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
+  --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
+  --text:#e8eaf6; --text2:#9fa8da; --text3:#5a6088;
+  --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
+}
+html{background:var(--bg);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Noto Sans TC","Microsoft JhengHei",'Segoe UI',sans-serif;
+  height:100vh; display:flex; flex-direction:column; overflow:hidden; font-size:14px;
+}
+#topbar{
+  background:var(--bg2); padding:10px 14px; display:flex; gap:8px; align-items:center;
+  border-bottom:1px solid var(--border); flex-wrap:wrap; flex-shrink:0;
+}
+.bar-title{font-weight:700;color:var(--accent2);margin-right:6px;font-size:15px;white-space:nowrap;}
+.bar-sep{color:var(--border);padding:0 2px;}
+#main{display:flex;flex:1;overflow:hidden;background:var(--bg);}
+#sidebar{width:172px;background:var(--bg2);border-right:1px solid var(--border);padding:10px;flex-shrink:0;overflow-y:auto;}
+.nav-section{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 5px;}
+.nav-section:first-child{padding-top:2px;}
+.nav-item{
+  padding:9px 10px;cursor:pointer;color:var(--text2);border-radius:5px;margin-bottom:2px;font-size:13.5px;
+  display:flex;align-items:center;gap:7px;border-left:3px solid transparent;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--bg3);color:#fff;border-left-color:var(--accent);}
+.nav-item .badge{margin-left:auto;font-size:10px;background:var(--bg4);color:var(--text3);padding:1px 6px;border-radius:9px;}
+
+#content{flex:1;padding:22px 26px;overflow-y:auto;position:relative;background:var(--bg);}
+.panel{display:none;}
+.panel.active{display:block;max-width:880px;}
+
+.panel-title{
+  font-size:16px;font-weight:700;color:var(--text2);margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.panel-title .conf{font-size:11px;font-weight:400;padding:2px 8px;border-radius:10px;border:1px solid var(--yellow);color:var(--yellow);}
+.panel-desc{font-size:12.5px;color:var(--text3);margin:-8px 0 16px;line-height:1.7;}
+
+.btn{
+  padding:8px 14px;cursor:pointer;background:var(--bg3);color:var(--text);
+  border:1px solid var(--border);border-radius:5px;font-size:13px;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);color:#fff;}
+.btn.btn-accent{background:var(--accent);border-color:var(--accent);}
+.btn.btn-accent:hover{background:var(--accent2);}
+.btn.btn-danger{border-color:var(--red);color:var(--red);}
+.btn.btn-danger:hover{background:var(--red);color:#fff;}
+.btn.btn-sm{padding:4px 10px;font-size:12px;}
+.btn[disabled]{opacity:.4;cursor:not-allowed;}
+label.btn input[type=file]{display:none;}
+
+input[type=text],input[type=number],select,textarea{
+  background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;
+  padding:8px 10px;font-size:13.5px;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+input[readonly]{opacity:.6;cursor:not-allowed;background:var(--bg2);}
+
+.form-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.form-label{width:120px;color:var(--text2);font-size:13px;flex-shrink:0;}
+.section-title{
+  font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;
+  margin:20px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--border);
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:6px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11.5px;color:var(--text3);}
+.field.wide{grid-column:1/-1;}
+
+table.etable{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+table.etable th{text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--border);}
+table.etable td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);}
+table.etable input,table.etable select{width:100%;}
+
+.icon-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;
+  width:30px;height:30px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{border-color:var(--red);color:var(--red);}
+
+.item-picker{position:relative;}
+.item-picker input{width:100%;}
+.item-picker .suggest{
+  position:absolute;z-index:50;top:100%;left:0;right:0;background:var(--bg2);
+  border:1px solid var(--border);border-radius:4px;max-height:220px;overflow-y:auto;display:none;
+}
+.item-picker .suggest div{padding:8px 10px;cursor:pointer;font-size:13px;}
+.item-picker .suggest div:hover{background:var(--bg3);}
+.item-picker .suggest.show{display:block;}
+
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 10px 5px 12px;font-size:12.5px;display:flex;align-items:center;gap:6px;}
+.tag button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;}
+.tag button:hover{color:var(--red);}
+
+textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;resize:vertical;}
+.raw-field{margin-bottom:20px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;}
+.raw-field .fname{font-size:13px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;font-weight:600;}
+.conf-badge{font-size:10px;padding:1px 7px;border-radius:10px;border:1px solid;text-transform:uppercase;letter-spacing:.03em;font-weight:400;}
+.conf-badge.low{color:var(--red);border-color:var(--red);}
+.conf-badge.mid{color:var(--yellow);border-color:var(--yellow);}
+.raw-field .note{font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6;}
+
+/* 功能總覽 */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:6px;}
+.cap-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;cursor:pointer;
+  transition:border-color .15s,transform .1s;
+}
+.cap-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.cap-card .title{font-weight:700;font-size:14.5px;margin-bottom:6px;color:var(--text);display:flex;align-items:center;gap:8px;}
+.cap-card .desc{font-size:12.5px;color:var(--text2);line-height:1.65;}
+.cap-card .conf-badge{margin-left:auto;}
+
+.item-preview-box{
+  margin-bottom:14px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;font-size:13px;color:var(--text2);min-height:20px;
+}
+.item-preview-box .ip-name{font-weight:700;color:var(--text);font-size:14px;margin-bottom:6px;}
+.item-preview-box .ip-price{color:var(--text3);font-size:12px;margin-bottom:8px;}
+.item-preview-box .ip-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;}
+.item-preview-box .ip-stats div{background:var(--bg3);border-radius:4px;padding:5px 8px;font-size:12px;}
+.item-preview-box .ip-stats b{color:var(--gold-hi,var(--accent2));}
+
+.equip-filter{
+  margin-bottom:16px; padding:12px 14px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:6px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+}
+.equip-filter .ef-field{display:flex; flex-direction:column; gap:5px;}
+.equip-filter label{font-size:10.5px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em;}
+.equip-filter .ef-short select{width:140px;}
+.equip-filter .ef-long{flex:1; min-width:200px;}
+.equip-filter .ef-long select{width:100%;}
+
+.dropzone{
+  border:2px dashed var(--border);border-radius:8px;padding:40px 20px;text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s;margin-bottom:24px;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:rgba(92,107,192,.06);}
+.dropzone .big{font-size:32px;opacity:.5;margin-bottom:10px;}
+.dropzone p{margin:4px 0;color:var(--text2);font-size:13.5px;}
+.dropzone input{display:none;}
+
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:24px 26px;width:440px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+
+.skill-job-group{margin-bottom:18px;}
+.skill-job-title{
+  font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px;padding:5px 10px;
+  background:var(--bg3);border-radius:4px;border-left:3px solid var(--accent);
+}
+.skill-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.skill-card{
+  display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:5px;padding:6px 9px;font-size:13px;
+}
+.skill-card.checked{border-color:var(--accent);background:var(--bg4);}
+.skill-card input[type=checkbox]{accent-color:var(--accent);}
+.skill-card .lv-input{width:48px;padding:3px 5px;font-size:12px;}
+.skill-card .dur{font-size:11px;color:var(--text3);}
+
+.char-select-wrap{display:flex;align-items:center;gap:6px;}
+#charSelect{min-width:150px;}
+
+#toastArea{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.toast{padding:10px 16px;border-radius:5px;font-size:13px;background:var(--bg3);border:1px solid var(--border);color:var(--text);animation:fadeIn .2s ease;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.toast.ok{border-color:var(--green);color:var(--green);}
+.toast.err{border-color:var(--red);color:var(--red);}
+.toast.warn{border-color:var(--yellow);color:var(--yellow);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+
+<div id="toastArea"></div>
+
+<div id="topbar">
+  <span class="bar-title">🧭 希望存檔修改器V23</span>
+  <span class="bar-sep">|</span>
+  <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
+  <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
+  <button class="btn" id="transferShortcutBtn">🔁 轉移碼</button>
+  <span class="bar-sep">|</span>
+  <div class="char-select-wrap">
+    <select id="charSelect" disabled><option>（尚未載入存檔）</option></select>
+    <button class="btn btn-sm" id="dupCharBtn" disabled title="複製目前角色">➕ 複製</button>
+    <button class="btn btn-sm btn-danger" id="delCharBtn" disabled title="刪除目前角色">🗑</button>
+    <button class="btn btn-sm" id="defaultCharBtn" disabled title="設為預設載入角色">★</button>
+  </div>
+  <span id="loadStatus" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div class="nav-section">總覽</div>
+    <div class="nav-item active" data-panel="overview">🏠 功能總覽</div>
+
+    <div class="nav-section">基本</div>
+    <div class="nav-item" data-panel="basic">👤 基本資料</div>
+    <div class="nav-item" data-panel="attrs">📊 屬性點數</div>
+    <div class="nav-item" data-panel="equip">🛡️ 裝備欄位</div>
+
+    <div class="nav-section">物品</div>
+    <div class="nav-item" data-panel="inventory">🎒 背包</div>
+    <div class="nav-item" data-panel="warehouse">🏦 倉庫</div>
+
+    <div class="nav-section">技能</div>
+    <div class="nav-item" data-panel="skills">✨ 已學技能</div>
+    <div class="nav-item" data-panel="buffs">🌟 輔助狀態</div>
+
+    <div class="nav-section">角色狀態</div>
+    <div class="nav-item" data-panel="pets">🐾 寵物</div>
+    <div class="nav-item" data-panel="potions">🧪 藥水設定</div>
+    <div class="nav-item" data-panel="records">📖 物品紀錄</div>
+    <div class="nav-item" data-panel="spot">📍 目前位置</div>
+    <div class="nav-item" data-panel="individuality">🌠 個性化</div>
+    <div class="nav-item" data-panel="quests">📜 任務</div>
+    <div class="nav-item" data-panel="missions">🎯 討伐任務</div>
+    <div class="nav-item" data-panel="party">👥 隊伍</div>
+
+    <div class="nav-section">進階</div>
+    <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
+
+    <div class="nav-section">工具</div>
+    <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
+    <div class="nav-item" data-panel="json">{ } JSON 編輯器</div>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ 功能總覽 ══ -->
+    <div class="panel active" id="panel-overview">
+      <div class="panel-title">🏠 功能總覽</div>
+      <div class="panel-desc">上傳你的 idle-seal 存檔檔案，接著從左側選單挑選要編輯的項目。所有處理都在瀏覽器本機進行，不會上傳到任何伺服器。</div>
+
+      <div class="dropzone" id="dropzone">
+        <div class="big">⇪</div>
+        <p><b>點擊選擇檔案</b>，或把存檔拖曳到這裡</p>
+        <p style="font-size:12px;">支援 idle-seal-save-*.json</p>
+        <input type="file" id="fileInput2" accept=".json">
+      </div>
+
+      <div class="section-title">這個修改器能做到的事</div>
+      <div class="cap-grid" id="capGrid"></div>
+    </div>
+
+    <!-- ══ 基本資料 ══ -->
+    <div class="panel" id="panel-basic">
+      <div class="panel-title">👤 基本資料</div>
+      <div class="panel-desc">名稱、等級、經驗值、金錢、HP、職業、轉職進度、名聲、遊玩時間。這些欄位直接對照你上傳的存檔格式，可以放心編輯。</div>
+      <div class="grid" id="basicFields"></div>
+    </div>
+
+    <!-- ══ 屬性 ══ -->
+    <div class="panel" id="panel-attrs">
+      <div class="panel-title">📊 屬性點數</div>
+      <div class="panel-desc">力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運，六圍基礎值。</div>
+      <div class="grid" id="attrFields"></div>
+    </div>
+
+    <!-- ══ 裝備欄位 ══ -->
+    <div class="panel" id="panel-equip">
+      <div class="panel-title">🛡️ 裝備欄位</div>
+      <div class="panel-desc">
+        下拉選單會顯示「目前裝備」的物品；如果這個欄位還沒裝備東西，才會改顯示「從背包選擇」讓你挑背包裡符合條件的裝備。
+        中間的 +0~+12 是精煉值，會直接改到裝備所在那疊物品的 refine（跟背包表格是同一份資料，改這裡背包也會一起更新）。
+        右邊是 Stack ID，可以手動輸入。
+      </div>
+      <div id="equipItemPreview" class="item-preview-box">點選某個裝備欄位的下拉選單，這裡會顯示該裝備的詳細能力。</div>
+      <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
+    </div>
+
+    <!-- ══ 背包 ══ -->
+    <div class="panel" id="panel-inventory">
+      <div class="panel-title">🎒 背包</div>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div id="invItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
+        <div class="ef-field ef-short"><label>裝備位置</label><select id="invFilterSlot"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>符合的裝備</label><select id="invFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-long">
+          <label>新增物品</label>
+          <div class="item-picker"><input type="text" id="invNewItemInput" placeholder="輸入物品名稱（要跟遊戲裡完全一樣）..."><div class="suggest" id="invNewItemSuggest"></div></div>
+        </div>
+        <button class="btn btn-accent" id="invNewItemConfirmBtn" disabled>✅ 確定新增</button>
+      </div>
+      <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <!-- ══ 倉庫 ══ -->
+    <div class="panel" id="panel-warehouse">
+      <div class="panel-title">🏦 倉庫</div>
+      <div class="panel-desc">倉庫是所有角色共用的儲物空間，跟角色背包分開存放。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div id="whItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
+      <div class="grid" style="margin-bottom:14px;">
+        <div class="field"><label>倉庫金錢</label><input type="number" id="whGold"></div>
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>職業</label><select id="whFilterJob"><option value="">無</option></select></div>
+        <div class="ef-field ef-short"><label>裝備位置</label><select id="whFilterSlot"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>符合的裝備</label><select id="whFilterResult" disabled><option value="">請先選擇職業或裝備位置...</option></select></div>
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-long">
+          <label>新增物品</label>
+          <div class="item-picker"><input type="text" id="whNewItemInput" placeholder="輸入物品名稱（要跟遊戲裡完全一樣）..."><div class="suggest" id="whNewItemSuggest"></div></div>
+        </div>
+        <button class="btn btn-accent" id="whNewItemConfirmBtn" disabled>✅ 確定新增</button>
+      </div>
+      <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <!-- ══ 已學技能 ══ -->
+    <div class="panel" id="panel-skills">
+      <div class="panel-title">✨ 已學技能</div>
+      <div class="panel-desc">
+        點選要新增/移除的技能，右邊數字是技能等級（存檔真實格式已驗證為 [[技能ID, 等級], ...]）。
+      </div>
+      <div class="form-row">
+        <input type="text" id="skillSearch" placeholder="搜尋技能名稱..." style="flex:1;min-width:200px;">
+        <button class="btn btn-accent btn-sm" id="skillSelectAllBtn">✅ 全選（滿等）</button>
+        <button class="btn btn-danger btn-sm" id="skillClearAllBtn">🗑 全部清空</button>
+      </div>
+      <div id="skillList"></div>
+    </div>
+
+    <!-- ══ 輔助狀態 ══ -->
+    <div class="panel" id="panel-buffs">
+      <div class="panel-title">🌟 輔助狀態</div>
+      <div class="panel-desc">
+        buffSkillIds 存的是「目前啟用」的輔助技能 ID 清單。實際持續時間 (durMs) 是技能本身的資料，
+        跟著該技能在「✨ 已學技能」裡的等級變化——所以下面「套用等級」是讓你一次調整所有輔助技能的等級，
+        藉此改變它們的持續時間；存檔本身沒有另外獨立的「持續時間」欄位可以直接設定。
+      </div>
+      <div class="form-row">
+        <button class="btn btn-accent btn-sm" id="buffSelectAllBtn">✅ 全選</button>
+        <button class="btn btn-danger btn-sm" id="buffClearAllBtn">🗑 全部清空</button>
+        <span style="width:1px;height:20px;background:var(--border);"></span>
+        <span class="form-label" style="width:auto;">等級</span>
+        <input type="number" id="buffLevelInput" min="1" value="1" style="width:70px;">
+        <button class="btn btn-sm" id="buffApplyLevelBtn">套用等級到全部</button>
+      </div>
+      <div id="buffList"></div>
+    </div>
+
+    <!-- ══ 寵物 ══ -->
+    <div class="panel" id="panel-pets">
+      <div class="panel-title">🐾 寵物</div>
+      <div style="color:var(--red);font-weight:700;font-size:13.5px;margin-bottom:10px;">
+        ⚠️ 遊戲同時間只能有 1 隻寵物「出戰中」，其他都只是閒置庫存，不會提供任何加成！
+      </div>
+      <div class="panel-desc">
+        寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
+        uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
+        <b>寵物出戰有兩道門檻</b>：角色等級要達到「所需等級」、名聲要達到「所需名聲」（都是唯讀欄位，來自寵物基礎資料），
+        兩個都不夠的話遊戲裡就不會顯示出戰按鈕。<b>grow 最低要是 1</b>：屬性加成表只有 9 格（對應 grow 1~9），
+        grow:0 查不到資料會顯示「無任何能力」，所以新增寵物預設 grow 是 1。
+      </div>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:22%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
+    </div>
+
+    <!-- ══ 藥水設定 ══ -->
+    <div class="panel" id="panel-potions">
+      <div class="panel-title">🧪 藥水自動使用設定</div>
+      <div class="panel-desc">離線 / 掛機時自動喝藥的閾值與藥水種類。</div>
+      <div class="grid" id="potionFields"></div>
+    </div>
+
+    <!-- ══ 物品紀錄 ══ -->
+    <div class="panel" id="panel-records">
+      <div class="panel-title">📖 物品紀錄</div>
+      <div class="panel-desc">已見過的物品（圖鑑用）與正在追蹤掉落數量的物品。</div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>已見過物品 seenItems</label>
+        <div class="item-picker"><input type="text" id="seenItemInput" placeholder="搜尋物品加入清單..."><div class="suggest" id="seenItemSuggest"></div></div>
+        <div class="tag-list" id="seenItemTags"></div>
+      </div>
+      <div class="field">
+        <label>追蹤中的掉落物 trackedItems</label>
+        <div class="item-picker"><input type="text" id="trackedItemInput" placeholder="搜尋物品加入清單..."><div class="suggest" id="trackedItemSuggest"></div></div>
+        <div class="tag-list" id="trackedItemTags"></div>
+      </div>
+    </div>
+
+    <!-- ══ 目前位置 ══ -->
+    <div class="panel" id="panel-spot">
+      <div class="panel-title">📍 目前位置</div>
+      <div class="panel-desc">角色目前所在地圖與座標、正在打的怪物 / 採集點 ID。</div>
+      <div class="grid" id="spotFields"></div>
+    </div>
+
+    <!-- ══ 個性化 ══ -->
+    <div class="panel" id="panel-individuality">
+      <div class="panel-title">🌠 個性化</div>
+      <div class="panel-desc">
+        對照真實存檔驗證：stage（階段）決定同時「展現」幾條屬性（超過上限的會顯示「尚未生效」，跟遊戲畫面一致）。
+        升到下一階需要角色等級達到門檻，這裡僅顯示參考資訊，不會幫你檢查。
+        屬性的實際數值由遊戲另外計算（跟這裡看到的原始數字不同，例如選 S 我們填 1600，遊戲實際顯示 1598），
+        所以數值欄位不開放編輯，只給你選 B / A / S 等級，數值交給選單自動帶入。
+      </div>
+      <div class="grid" style="margin-bottom:10px;">
+        <div class="field"><label>階段 stage</label><input type="number" id="indivStage" min="0" max="10"></div>
+        <div class="field"><label>失敗次數 fails</label><input type="number" id="indivFails"></div>
+      </div>
+      <div id="indivStageInfo" style="font-size:12.5px;color:var(--text3);margin-bottom:16px;padding:10px 12px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);"></div>
+
+      <div class="section-title">已展現屬性 attrs</div>
+      <div id="indivAttrsList" style="margin-bottom:10px;"></div>
+      <button class="btn btn-accent btn-sm" id="indivAddAttrBtn">➕ 新增屬性</button>
+
+      <div class="section-title" style="margin-top:22px;">副屬性 minor</div>
+      <div id="indivMinorCap" style="font-size:12.5px;margin-bottom:8px;"></div>
+      <div class="grid" id="indivMinorFields"></div>
+    </div>
+
+    <!-- ══ 任務 ══ -->
+    <div class="panel" id="panel-quests">
+      <div class="panel-title">📜 任務</div>
+      <div class="panel-desc">
+        任務本身沒有文字標題（遊戲資料只有數值），下面用「地點 → 委託名稱 → 任務內容」三層下拉選單幫你縮小範圍找到要的任務。
+        任一層留空（選「無」）就視為那一層全選、不篩選。找到任務後，用下面的核取方塊決定它現在算不算在
+        <code>activeQuests</code> 清單裡（對照真實存檔驗證過，格式是任務 ID 陣列）。
+        「目前進度」是拿角色背包裡實際持有的繳交物品數量，即時跟需求數量比對算出來的（不是存檔裡另外存的欄位）。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>地點</label><select id="questFilterTown"><option value="">無</option></select></div>
+        <div class="ef-field ef-short"><label>委託名稱</label><select id="questFilterPage"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>任務內容</label><select id="questFilterQuest"><option value="">請選擇...</option></select></div>
+      </div>
+      <div class="section-title">目前進行中的任務</div>
+      <div id="questActiveList" style="margin-bottom:10px;"></div>
+      <div id="questDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 討伐任務 ══ -->
+    <div class="panel" id="panel-missions">
+      <div class="panel-title">🎯 討伐任務</div>
+      <div class="panel-desc">
+        跟上面的「任務」是完全不同的另一套系統（討伐指定怪物 N 隻換獎勵）。<b>不用找 NPC 接取</b>——
+        實測確認是角色等級到達解鎖等級、又打了指定怪物，就會自動開始計算進度。
+        完成狀態欄位 <code>missionsDone</code>、進度欄位 <code>missionKills</code> 都已由真實存檔驗證：
+        前者是任務 ID 陣列，後者是 <code>[[任務ID, 目前擊殺數], ...]</code>，兩個都可以直接編輯。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>解鎖等級</label><select id="missionFilterLevel"><option value="">無</option></select></div>
+        <div class="ef-field ef-long"><label>目標怪物</label><select id="missionFilterMonster"><option value="">請選擇...</option></select></div>
+      </div>
+      <div class="section-title">目前已完成的討伐任務</div>
+      <div id="missionDoneList" style="margin-bottom:10px;"></div>
+      <div id="missionDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 隊伍 ══ -->
+    <div class="panel" id="panel-party">
+      <div class="panel-title">👥 隊伍</div>
+      <div class="panel-desc">
+        對照真實存檔驗證：<code>party</code> 存的是隊友「快照」的副本（跟角色自己的 <code>snapshot</code> 欄位結構一樣），
+        用 <code>sourceId</code> 對應到另一個角色的 <code>id</code>。組隊在存檔層面，就是把對方角色自己當下的
+        <code>snapshot</code> 整包複製一份塞進這裡。加入隊伍後，如果對方之後升級/改裝備，這裡的副本<b>不會自動更新</b>，
+        要重新「加入隊伍」一次覆蓋成最新的才會同步。
+      </div>
+      <div id="partyMemberList" style="margin-bottom:14px;"></div>
+      <div class="equip-filter">
+        <div class="ef-field ef-long"><label>加入隊伍</label><select id="partyAddSelect"><option value="">選擇要加入的角色...</option></select></div>
+        <button class="btn btn-accent" id="partyAddBtn">➕ 加入隊伍（複製目前快照）</button>
+      </div>
+    </div>
+
+    <!-- ══ 進階 ══ -->
+    <div class="panel" id="panel-advanced">
+      <div class="panel-title">🔧 進階欄位 <span class="conf">格式為推測值</span></div>
+      <div class="panel-desc">
+        以下欄位的格式已透過一份真實的滿等存檔驗證過（不再是憑空猜測），但因為內部結構比較複雜（陣列包陣列、物件包物件），
+        暫時還是用原始 JSON 呈現，還沒做成表單。修改前建議先備份存檔。
+      </div>
+      <div id="rawFields"></div>
+    </div>
+
+    <!-- ══ 轉移碼 ══ -->
+    <div class="panel" id="panel-transfer">
+      <div class="panel-title">🔁 轉移碼</div>
+      <div class="panel-desc">
+        跟遊戲內建的轉移碼是同一套機制：把存檔暫存到 Litterbox（catbox.moe 的臨時檔案服務），
+        換一組短碼帶著走。<b>72 小時後檔案會自動刪除</b>，短碼本身不會過期以外的時間保存資料。
+      </div>
+
+      <div class="section-title">產生轉移碼</div>
+      <div class="form-row">
+        <button class="btn btn-accent" id="genTransferBtn">🔑 產生轉移碼</button>
+      </div>
+      <div id="transferCodeBox" style="display:none;align-items:center;gap:10px;margin-top:10px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;">
+        <span id="transferCodeText" style="font-family:monospace;font-size:22px;font-weight:700;letter-spacing:.15em;color:var(--accent2);"></span>
+        <button class="btn btn-sm" id="copyTransferBtn">📋 複製</button>
+      </div>
+
+      <div class="section-title" style="margin-top:26px;">輸入轉移碼</div>
+      <div class="form-row">
+        <input type="text" id="transferCodeInput" placeholder="輸入六碼轉移碼..." style="font-family:monospace;letter-spacing:.1em;width:200px;">
+        <button class="btn btn-accent" id="useTransferBtn">📥 讀取並載入</button>
+      </div>
+      <div id="transferMsg" class="panel-desc" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- ══ JSON 編輯器 ══ -->
+    <div class="panel" id="panel-json">
+      <div class="panel-title">{ } JSON 編輯器</div>
+      <div class="panel-desc">整份存檔的原始 JSON，任何欄位都可以在這裡直接修改，是最終的萬用編輯手段。</div>
+      <div class="form-row">
+        <button class="btn btn-accent" id="applyJsonBtn">✅ 套用 JSON</button>
+        <button class="btn" id="formatJsonBtn">格式化</button>
+        <button class="btn" id="syncJsonBtn">🔄 從目前資料重新同步</button>
+      </div>
+      <textarea id="jsonEditor" class="raw" style="width:100%;height:calc(100vh - 260px);"></textarea>
+    </div>
+
+  </div>
+</div>
+
+<script src="data/items.js"></script>
+<script src="data/equipSlots.js"></script>
+<script src="data/jobs.js"></script>
+<script src="data/jobs2.js"></script>
+<script src="data/maps.js"></script>
+<script src="data/skills.js"></script>
+<script src="data/pets.js"></script>
+<script src="data/individuality.js"></script>
+<script src="data/quests.js"></script>
+<script src="data/missions.js"></script>
+<script src="data/app.js"></script>
+</body>
+</html>
