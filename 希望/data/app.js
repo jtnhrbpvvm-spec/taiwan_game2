@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -71,6 +71,7 @@
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
+    { panel: "enchant", icon: "🔮", title: "附魔", desc: "編輯裝備的附魔屬性，數值旁邊附機率表算出的範圍參考。" },
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
@@ -381,6 +382,7 @@
     renderQuests(c);
     renderMissions(c);
     renderParty(c);
+    renderEnchant(c);
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
@@ -1680,6 +1682,149 @@
       }
       renderParty(c);
     };
+  }
+
+  // ---------- 附魔 ----------
+  var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
+  var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
+  var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
+
+  function renderEnchant(c) {
+    var $slot = document.getElementById("enchantFilterSlot");
+    var $item = document.getElementById("enchantFilterItem");
+    var $detail = document.getElementById("enchantDetailBox");
+
+    if (!$slot.dataset.wired) {
+      $slot.dataset.wired = "1";
+      Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
+        $slot.appendChild(el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] }));
+      });
+    }
+
+    function updateItemOptions() {
+      var slotVal = $slot.value;
+      $item.innerHTML = "";
+      if (!slotVal) {
+        $item.disabled = true;
+        $item.appendChild(el("option", { value: "", text: "請先選擇部位..." }));
+        return;
+      }
+      var matches = c.stacks.filter(function (stack) {
+        var it = ITEMS[String(stack.itemId)];
+        return it && it.slot === slotVal;
+      });
+      $item.disabled = matches.length === 0;
+      if (!matches.length) {
+        $item.appendChild(el("option", { value: "", text: "背包裡沒有這個部位的裝備" }));
+        return;
+      }
+      $item.appendChild(el("option", { value: "", text: "共 " + matches.length + " 件，請選擇..." }));
+      matches.forEach(function (stack) {
+        var it = ITEMS[String(stack.itemId)];
+        $item.appendChild(el("option", { value: stack.id, text: it.name + "（Stack " + stack.id + "）" }));
+      });
+    }
+
+    function buildOptionRow(opt, idx, optsObj, gradeValStr) {
+      var row = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;" });
+
+      var kindSelect = el("select", { style: "flex:1;min-width:140px;" });
+      ENCHANT_KINDS.forEach(function (k) {
+        var o = el("option", { value: k.kind, text: k.name });
+        if (opt.kind === k.kind) o.selected = true;
+        kindSelect.appendChild(o);
+      });
+      kindSelect.addEventListener("change", function () {
+        opt.kind = Number(kindSelect.value);
+        var range = ENCHANT_VALUE_RANGES[gradeValStr + "-" + opt.kind];
+        if (range) opt.unit = range.unit;
+        renderDetail();
+      });
+      row.appendChild(kindSelect);
+
+      var valueInput = el("input", { type: "number", value: opt.value, style: "width:90px;" });
+      valueInput.addEventListener("input", function () { opt.value = valueInput.valueAsNumber || 0; });
+      row.appendChild(valueInput);
+
+      var range = ENCHANT_VALUE_RANGES[gradeValStr + "-" + opt.kind];
+      row.appendChild(el("span", {
+        style: "font-size:12px;color:var(--text3);",
+        text: range ? ("可能範圍：" + range.min + " ~ " + range.max + "　（僅供參考，不會限制輸入）") : "此等級查無這個屬性的範圍資料"
+      }));
+
+      var delBtn = el("button", { class: "icon-btn", text: "✕" });
+      delBtn.addEventListener("click", function () {
+        optsObj.options.splice(idx, 1);
+        renderDetail();
+      });
+      row.appendChild(delBtn);
+
+      return row;
+    }
+
+    function renderDetail() {
+      var stackId = $item.value;
+      $detail.innerHTML = "";
+      if (!stackId) {
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯附魔。" }));
+        return;
+      }
+      var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
+      if (!stack) return;
+      if (!stack.options) stack.options = { grade: 1, options: [] };
+      var opts = stack.options;
+      if (!Array.isArray(opts.options)) opts.options = [];
+
+      var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
+      box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
+
+      var gradeRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;" });
+      gradeRow.appendChild(el("span", { text: "附魔等級：" }));
+      var gradeSelect = el("select", {});
+      // 已由真實存檔驗證：options.grade 是從 1 開始數（1=N, 2=G, 3=DG, 4=XG, 5=SG），
+      // 跟 ENCHANT_GRADES 陣列的索引（0開始）差了 1，這裡選單的 value 直接用「已存檔的那個數字」，
+      // 不要再額外做 +1/-1 轉換，避免又搞混。
+      ENCHANT_GRADES.forEach(function (g, gidx) {
+        var gradeNum = gidx + 1;
+        var o = el("option", { value: String(gradeNum), text: g });
+        if ((opts.grade || 1) === gradeNum) o.selected = true;
+        gradeSelect.appendChild(o);
+      });
+      gradeSelect.addEventListener("change", function () {
+        opts.grade = Number(gradeSelect.value);
+        renderDetail();
+      });
+      gradeRow.appendChild(gradeSelect);
+      box.appendChild(gradeRow);
+
+      var listWrap = el("div", {});
+      opts.options.forEach(function (opt, idx) {
+        listWrap.appendChild(buildOptionRow(opt, idx, opts, gradeSelect.value));
+      });
+      box.appendChild(listWrap);
+
+      if (opts.options.length < 3) {
+        var addBtn = el("button", { class: "btn btn-accent btn-sm", text: "➕ 新增一條屬性", style: "margin-top:10px;" });
+        addBtn.addEventListener("click", function () {
+          var defKind = ENCHANT_KINDS[0].kind;
+          var range = ENCHANT_VALUE_RANGES[gradeSelect.value + "-" + defKind];
+          opts.options.push({ kind: defKind, value: 0, unit: range ? range.unit : 0 });
+          renderDetail();
+        });
+        box.appendChild(addBtn);
+      } else {
+        box.appendChild(el("div", { style: "font-size:12px;color:var(--text3);margin-top:6px;", text: "最多 3 條屬性（已由真實存檔驗證）。" }));
+      }
+
+      $detail.appendChild(box);
+    }
+
+    $slot.onchange = function () { updateItemOptions(); renderDetail(); };
+    $item.onchange = renderDetail;
+
+
+    updateItemOptions();
+    renderDetail();
   }
 
   // ---------- 進階（推測格式）欄位：原始 JSON ----------

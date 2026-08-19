@@ -25,6 +25,11 @@
   var QUEST_PAGES = window.QUEST_PAGES || {};
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
+  var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
+  var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
+  var ENCHANT_APPEARANCE = window.ENCHANT_APPEARANCE || {};
+  var ENCHANT_VALUES = window.ENCHANT_VALUES || {};
+  var ENCHANT_WINDERS = window.ENCHANT_WINDERS || [];
   var TOWNS = window.TOWNS || {};
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
@@ -96,6 +101,19 @@
     });
     $hintRow.appendChild(chip);
   });
+
+  var enchantChip = document.createElement("span");
+  enchantChip.className = "hint-chip";
+  enchantChip.style.borderColor = "var(--gold)";
+  enchantChip.style.color = "var(--gold-hi)";
+  enchantChip.textContent = "🔮 物品附魔表";
+  enchantChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showEnchantTable();
+  });
+  $hintRow.appendChild(enchantChip);
 
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
@@ -263,6 +281,79 @@
       (m.token ? '　代幣 x' + m.token : '') +
       (m.reward ? '　額外物品 x' + (m.rewardCount || 1) : '') +
       '</div></div>';
+  }
+
+  function showEnchantTable(gradeIdx, winderOpen) {
+    gradeIdx = gradeIdx || 0;
+    var gradeNum = gradeIdx + 1; // ENCHANT_APPEARANCE / ENCHANT_VALUES 的 key 是 1-indexed (N=1)
+
+    var html = '<h2 style="margin-top:0;">🔮 物品附魔表</h2>';
+    html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">';
+    ENCHANT_GRADES.forEach(function (g, idx) {
+      var active = idx === gradeIdx;
+      html += '<button class="grade-tab-btn" data-grade="' + idx + '" style="padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;' +
+        'border:1px solid ' + (active ? "var(--gold)" : "var(--line)") + ';' +
+        'background:' + (active ? "var(--gold)" : "var(--panel)") + ';' +
+        'color:' + (active ? "var(--ink)" : "var(--text)") + ';">' + g + '</button>';
+    });
+    html += '<button id="winderToggleBtn" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12.5px;' +
+      'border:1px solid var(--line-hi);background:var(--ink-2);color:var(--text-dim);margin-left:6px;">' +
+      '🔧 發條升級機率／花費 ' + (winderOpen ? "▲" : "▼") + '</button>';
+    html += '</div>';
+
+    if (winderOpen) {
+      html += '<div class="section-title">發條升級機率／花費</div>';
+      var realWinders = ENCHANT_WINDERS.filter(function (w) {
+        return w.name.indexOf("不可交易") === -1 && w.name.indexOf("無法交易") === -1;
+      });
+      realWinders.forEach(function (w) {
+        html += '<div class="equip-box"><div class="row1"><span class="slot">' + escapeHtml(w.name) + '</span></div>';
+        html += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.9;">';
+        w.grades.forEach(function (row) {
+          var from = ENCHANT_GRADES[row[0]] != null ? ENCHANT_GRADES[row[0]] : ("更高階#" + row[0]);
+          var to = ENCHANT_GRADES[row[1]] != null ? ENCHANT_GRADES[row[1]] : ("更高階#" + row[1]);
+          var rate = (row[2] / 1000).toFixed(1) + "%";
+          html += escapeHtml(from) + " → " + escapeHtml(to) + "：" + rate + "<br>";
+        });
+        html += "</div></div>";
+      });
+    }
+
+    html += '<div class="section-title">' + escapeHtml(ENCHANT_GRADES[gradeIdx] || "") + ' 等級可能開出的屬性</div>';
+    var appear = ENCHANT_APPEARANCE[String(gradeNum)] || [];
+    var totalWeight = appear.reduce(function (s, a) { return s + a.weight; }, 0);
+    if (!appear.length) {
+      html += '<div class="empty-note">這個等級沒有資料。</div>';
+    } else {
+      appear.slice().sort(function (a, b) { return b.weight - a.weight; }).forEach(function (a) {
+        var kindDef = ENCHANT_KINDS.find(function (k) { return k.kind === a.kind; });
+        var kindName = kindDef ? kindDef.name : ("種類#" + a.kind);
+        var pct = totalWeight ? (a.weight / totalWeight * 100).toFixed(2) + "%" : "?";
+        var ranges = ENCHANT_VALUES[gradeNum + "-" + a.kind] || [];
+        var rangeWeightTotal = ranges.reduce(function (s, r) { return s + r.weight; }, 0);
+        var rangeText = ranges.length
+          ? ranges.map(function (r) {
+              var label = r.min === r.max ? String(r.min) : (r.min + " ~ " + r.max);
+              var subPct = rangeWeightTotal ? "（" + (r.weight / rangeWeightTotal * 100).toFixed(1) + "%）" : "";
+              return label + subPct;
+            }).join("、")
+          : "無範圍資料";
+        var isDiscrete = ranges.length > 1 && ranges.every(function (r) { return r.min === r.max; });
+        html += '<div class="equip-box"><div class="row1"><span class="slot">' + escapeHtml(kindName) +
+          '</span><span style="color:var(--text-dim);font-size:12px;">出現機率 ' + pct + '</span></div>' +
+          '<div style="font-size:12.5px;color:var(--text-dim);">' +
+          (isDiscrete ? "可能開出的固定數值：" : "可能數值：") + escapeHtml(rangeText) + '</div></div>';
+      });
+    }
+
+    $detail.innerHTML = html;
+    document.querySelectorAll(".grade-tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { showEnchantTable(Number(btn.getAttribute("data-grade")), winderOpen); });
+    });
+    var toggleBtn = document.getElementById("winderToggleBtn");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", function () { showEnchantTable(gradeIdx, !winderOpen); });
+    }
   }
 
   function showItem(id) {

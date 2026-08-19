@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V23</span>
+  <span class="bar-title">🧭 希望存檔修改器V26</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -219,6 +219,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-section">物品</div>
     <div class="nav-item" data-panel="inventory">🎒 背包</div>
     <div class="nav-item" data-panel="warehouse">🏦 倉庫</div>
+    <div class="nav-item" data-panel="enchant">🔮 附魔</div>
 
     <div class="nav-section">技能</div>
     <div class="nav-item" data-panel="skills">✨ 已學技能</div>
@@ -279,11 +280,27 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="panel-title">🛡️ 裝備欄位</div>
       <div class="panel-desc">
         下拉選單會顯示「目前裝備」的物品；如果這個欄位還沒裝備東西，才會改顯示「從背包選擇」讓你挑背包裡符合條件的裝備。
-        中間的 +0~+12 是精煉值，會直接改到裝備所在那疊物品的 refine（跟背包表格是同一份資料，改這裡背包也會一起更新）。
-        右邊是 Stack ID，可以手動輸入。
+        選「－ 卸下這個欄位」可以清空目前的裝備。中間的 +0~+12 是精煉值，會直接改到裝備所在那疊物品的 refine（跟背包表格是同一份資料，改這裡背包也會一起更新）。
       </div>
       <div id="equipItemPreview" class="item-preview-box">點選某個裝備欄位的下拉選單，這裡會顯示該裝備的詳細能力。</div>
       <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
+    </div>
+
+    <!-- ══ 附魔 ══ -->
+    <div class="panel" id="panel-enchant">
+      <div class="panel-title">🔮 附魔</div>
+      <div class="panel-desc">
+        對照真實存檔驗證：裝備的附魔存在該物品所在那疊 stack 的 <code>options</code> 欄位，格式是
+        <code>{grade, options:[{kind,value,unit},...]}</code>，最多 3 條屬性。
+        先選部位、再選背包裡符合這個部位的裝備（不限職業/等級，方便你先附魔好再穿），下面就能編輯它的附魔內容。
+        數值欄位旁邊的範圍是<b>該等級這個屬性實際可能開出的數值區間</b>（依真實機率表算出來的），
+        僅供參考，不會幫你卡住輸入範圍，超過多少都能填。
+      </div>
+      <div class="equip-filter">
+        <div class="ef-field ef-short"><label>部位</label><select id="enchantFilterSlot"><option value="">選擇部位...</option></select></div>
+        <div class="ef-field ef-long"><label>選擇裝備</label><select id="enchantFilterItem" disabled><option value="">請先選擇部位...</option></select></div>
+      </div>
+      <div id="enchantDetailBox" style="margin-top:16px;"></div>
     </div>
 
     <!-- ══ 背包 ══ -->
@@ -546,6 +563,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/individuality.js"></script>
 <script src="data/quests.js"></script>
 <script src="data/missions.js"></script>
+<script src="data/enchant.js"></script>
 <script src="data/app.js"></script>
 </body>
 </html>
