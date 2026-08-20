@@ -436,7 +436,7 @@
     apprTrialActive = true;
     var state = {
       itemId: null, level: 250, refine: 12, tier: "basic", extra: "none",
-      stats: {}, history: [], rollCounter: 0, page: 0
+      stats: {}, history: [], rollCounter: 0, page: 0, rulesOpen: false
     };
     apprTrialOnPick = function (id) {
       state.itemId = Number(id);
@@ -454,6 +454,41 @@
         '這是鐵匠職業「鑑定」技能的試算工具，公式反推自遊戲原始程式碼。不用登入、不會影響任何真實存檔，純粹讓你試手氣看看。' +
         '請直接用上面的「職業／裝備位置／符合的裝備」下拉選單選擇要測試的裝備。' +
         '</div>';
+
+      html += '<button id="apprRulesToggleBtn" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12.5px;' +
+        'border:1px solid var(--line-hi);background:var(--ink-2);color:var(--text-dim);margin-bottom:14px;">' +
+        '📖 鑑定規則 ' + (state.rulesOpen ? "▲" : "▼") + '</button>';
+
+      if (state.rulesOpen) {
+        html += '<div class="equip-box" style="margin-bottom:14px;line-height:1.9;font-size:12.5px;color:var(--text-dim);">' +
+          '<div style="color:var(--gold-hi);font-weight:700;margin-bottom:8px;">以下規則反推自遊戲原始程式碼，並經玩家實測驗證</div>' +
+
+          '<b style="color:var(--text);">① 裝備依部位分成 5 個分類，各自有固定候選屬性與權重：</b><br>' +
+          '武器：攻擊力25、攻速10、命中10、必殺10、HP%5<br>' +
+          '魔法武器：攻擊力25、魔法力25、攻速10、命中10、必殺10、HP%5<br>' +
+          '防具（頭/身/腳/盾）：防禦力25、攻速10、迴避5、HP%5、AP%5<br>' +
+          '鞋子：防禦力25、攻速10、迴避5、移速15、HP%5、AP%5<br>' +
+          '飾品：攻擊/魔法/防禦/攻速/命中/迴避/必殺/移速/HP%/AP% 各5<br><br>' +
+
+          '<b style="color:var(--text);">② 每個候選屬性各自獨立判定「這次有沒有出現」：</b><br>' +
+          '出現機率 = min(50%, 10% + 裝備需求等級 × 0.08% + 精煉值 × 2%)<br>' +
+          '（需求等級、精煉值越高，屬性越容易出現，上限 50%；如果有追加鑑定被動，會用同樣機率再多判定一輪，讓更多屬性有機會出現）<br><br>' +
+
+          '<b style="color:var(--text);">③ 每條出現的屬性，再骰一次「強度等級」（-2~+5，共8階）：</b><br>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;">' +
+          '<tr style="color:var(--text);"><td>鑑定技能</td><td>-2</td><td>-1</td><td>0（不生效）</td><td>+1</td><td>+2</td><td>+3</td><td>+4</td><td>+5</td></tr>' +
+          '<tr><td>鑑定道具（基礎）</td><td>11%</td><td>15%</td><td>20%</td><td>25%</td><td>23%</td><td>3%</td><td>2%</td><td>1%</td></tr>' +
+          '<tr><td>高級鑑定</td><td>8.5%</td><td>12.5%</td><td>18%</td><td>25%</td><td>28%</td><td>4.1%</td><td>2.6%</td><td>1.3%</td></tr>' +
+          '<tr><td>高級道具鑑定</td><td>6%</td><td>10%</td><td>16%</td><td>25%</td><td>32%</td><td>5.9%</td><td>3.4%</td><td>1.7%</td></tr>' +
+          '</table><br>' +
+
+          '<b style="color:var(--text);">④ 最終數值 = 強度等級 × 屬性權重 ÷ 5</b><br>' +
+          '例如武器攻擊力（權重25）強度+3 = 3×25÷5 = <b style="color:#6fa85a;">+15</b>；防具迴避（權重5）強度-2 = -2×5÷5 = <b style="color:#e0663f;">-2</b>。<br><br>' +
+
+          '<b style="color:var(--text);">⑤ 追加鑑定被動：</b>「縝密鑑定」30% 機率、「超縝密鑑定」70% 機率，會讓②的判定多跑一輪，增加更多屬性同時出現的機會，' +
+          '不是保底多少條——理論上沒有條數上限，只是機率上很少見到超過 3 條。' +
+          '</div>';
+      }
 
       html += '<div class="section-title">角色設定</div>';
       html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;">';
@@ -503,6 +538,10 @@
     }
 
     function wireEvents() {
+      document.getElementById("apprRulesToggleBtn").addEventListener("click", function () {
+        state.rulesOpen = !state.rulesOpen;
+        render();
+      });
       document.getElementById("apprTrialLevel").addEventListener("change", function (e) {
         state.level = Math.max(1, e.target.valueAsNumber || 1);
         if (state.level < APPR_SKILL_REQ.advanced && state.tier === "advanced") state.tier = "basic";
