@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -71,7 +71,8 @@
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
-    { panel: "enchant", icon: "🔮", title: "鑑定", desc: "編輯裝備的鑑定屬性，數值旁邊附機率表算出的範圍參考。" },
+    { panel: "enchant", icon: "🔮", title: "齒輪強化", desc: "編輯裝備的齒輪強化屬性，數值旁邊附機率表算出的範圍參考。" },
+    // { panel: "appraisal", icon: "🔨", title: "鐵匠鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" }, // 先隱藏，之後正式開放再打開這行
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
@@ -383,6 +384,7 @@
     renderMissions(c);
     renderParty(c);
     renderEnchant(c);
+    renderAppraisal(c);
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
@@ -1684,7 +1686,7 @@
     };
   }
 
-  // ---------- 鑑定 ----------
+  // ---------- 齒輪強化 ----------
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
@@ -1793,7 +1795,7 @@
       var stackId = $item.value;
       $detail.innerHTML = "";
       if (!stackId) {
-        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯鑑定。" }));
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯齒輪強化。" }));
         return;
       }
       var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
@@ -1806,7 +1808,7 @@
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
 
       var gradeRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;" });
-      gradeRow.appendChild(el("span", { text: "鑑定等級：" }));
+      gradeRow.appendChild(el("span", { text: "齒輪強化等級：" }));
       var gradeSelect = el("select", {});
       // 已由真實存檔驗證：options.grade 是從 1 開始數（1=N, 2=G, 3=DG, 4=XG, 5=SG），
       // 跟 ENCHANT_GRADES 陣列的索引（0開始）差了 1，這裡選單的 value 直接用「已存檔的那個數字」，
@@ -1857,6 +1859,333 @@
 
     updateItemOptions();
     renderDetail();
+  }
+
+  // ---------- 鐵匠鑑定（跟齒輪強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
+  var APPR_FF = {
+    weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
+    armor: [[3, 25], [4, 10], [7, 5], [11, 5], [12, 5]],
+    shoes: [[3, 25], [4, 10], [7, 5], [8, 15], [11, 5], [12, 5]],
+    accessory: [[1, 5], [2, 5], [3, 5], [4, 5], [6, 5], [7, 5], [5, 5], [8, 5], [11, 5], [12, 5]]
+  };
+  var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
+  var APPR_MF = {
+    basic: [110000, 150000, 200000, 250000, 230000, 30000, 20000, 10000],
+    advanced: [85000, 125000, 180000, 250000, 280000, 41000, 26000, 13000],
+    superior: [60000, 100000, 160000, 250000, 320000, 59000, 34000, 17000],
+    reroll: [130000, 240000, 0, 310000, 270000, 20000, 20000, 10000]
+  };
+  var APPR_SKILL_IDS = { basic: 101, advanced: 323, superior: 324, meticulous: 352, superMeticulous: 354 };
+  var APPR_EXTRA_CHANCE = { meticulous: 0.3, superMeticulous: 0.7 };
+  var APPR_THRESH = { base: 0.1, perLv: 0.0008, perRefine: 0.02, cap: 0.5 };
+
+  function apprKindName(kind) { return APPR_KIND_NAMES[kind] || ("種類#" + kind); }
+
+  function apprCategory(item) {
+    var slot = item.slot;
+    // 遊戲原始碼用的是裝備自己的 magicJob 旗標判斷是不是魔法武器，我們資料裡沒有這個欄位，
+    // 用「這件武器本身有沒有魔法力數值」當替代判斷依據（絕大多數情況會一致）。
+    var isMagicWeapon = (item.magic || 0) > 0;
+    if (slot === "weapon") return isMagicWeapon ? "magicWeapon" : "weapon";
+    if (slot === "feet") return "shoes";
+    if (slot === "head" || slot === "body" || slot === "legs" || slot === "shield") return "armor";
+    return "accessory";
+  }
+
+  function apprThreshold(minLv, refine) {
+    var n = APPR_THRESH.base + (minLv || 0) * APPR_THRESH.perLv + (refine || 0) * APPR_THRESH.perRefine;
+    return Math.min(APPR_THRESH.cap, n);
+  }
+
+  function apprSkillLevel(c, skillId) {
+    var found = (c.skills || []).find(function (p) { return p[0] === skillId; });
+    return found ? found[1] : 0;
+  }
+  function apprRollTierName(c) {
+    if (apprSkillLevel(c, APPR_SKILL_IDS.superior) > 0) return "superior";
+    if (apprSkillLevel(c, APPR_SKILL_IDS.advanced) > 0) return "advanced";
+    return "basic";
+  }
+  function apprExtraChance(c) {
+    if (apprSkillLevel(c, APPR_SKILL_IDS.superMeticulous) > 0) return APPR_EXTRA_CHANCE.superMeticulous;
+    if (apprSkillLevel(c, APPR_SKILL_IDS.meticulous) > 0) return APPR_EXTRA_CHANCE.meticulous;
+    return 0;
+  }
+  function apprRollTierValue(tierName) {
+    var weights = APPR_MF[tierName];
+    var r = Math.random() * 1000000;
+    for (var i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r < 0) return APPR_PF[i];
+    }
+    return APPR_PF[APPR_PF.length - 1];
+  }
+  function apprValueRange(weight) { return { min: -2 * weight / 5, max: 5 * weight / 5 }; }
+
+  function performAppraisal(c, item, stack) {
+    var category = apprCategory(item);
+    var candidates = APPR_FF[category] || [];
+    var n = apprThreshold(item.minLv, stack.refine);
+    var tierName = apprRollTierName(c);
+    var extraChance = apprExtraChance(c);
+    var passes = 1 + (extraChance > 0 && Math.random() < extraChance ? 1 : 0);
+    var selected = {};
+    for (var p = 0; p < passes; p++) {
+      candidates.forEach(function (pair) { if (Math.random() < n) selected[pair[0]] = true; });
+    }
+    var result = [];
+    candidates.forEach(function (pair) {
+      var kind = pair[0], weight = pair[1];
+      if (!selected[kind]) return;
+      var tier = apprRollTierValue(tierName);
+      if (tier !== 0) result.push({ kind: kind, value: tier * weight / 5, unit: 0 });
+    });
+    return result;
+  }
+
+  function renderAppraisal(c) {
+    var $box = document.getElementById("apprModeBox");
+    var $gachaBtn = document.getElementById("apprModeGachaBtn");
+    var $manualBtn = document.getElementById("apprModeManualBtn");
+
+    function equipStacks() {
+      return c.stacks.filter(function (s) { var it = ITEMS[String(s.itemId)]; return it && it.slot; });
+    }
+
+    function applyResult(stack, result) {
+      stack.appraisal = result.length > 0 ? result : undefined;
+      stack.unidentified = undefined;
+      stack.apprTries = (stack.apprTries || 0) + 1;
+    }
+
+    function renderGachaMode() {
+      $box.innerHTML = "";
+      var pickRow = el("div", { class: "equip-filter" });
+      var itemField = el("div", { class: "ef-field ef-long" });
+      itemField.appendChild(el("label", { text: "選擇要鑑定的裝備" }));
+      var itemSelect = el("select", {});
+      itemSelect.appendChild(el("option", { value: "", text: "請選擇..." }));
+      equipStacks().forEach(function (s) {
+        itemSelect.appendChild(el("option", { value: s.id, text: itemName(s.itemId) + "（Stack " + s.id + "）" }));
+      });
+      itemField.appendChild(itemSelect);
+      pickRow.appendChild(itemField);
+      $box.appendChild(pickRow);
+
+      var resultBox = el("div", { style: "margin-top:14px;" });
+      $box.appendChild(resultBox);
+
+      var lastResult = null;
+
+      function renderResult(stack, item) {
+        resultBox.innerHTML = "";
+        var tierName = apprRollTierName(c);
+        var extraChance = apprExtraChance(c);
+        var tierLabelMap = { basic: "鑑定道具（基礎）", advanced: "高級鑑定", superior: "高級道具鑑定（最佳）" };
+        resultBox.appendChild(el("div", {
+          style: "font-size:12.5px;color:var(--text3);margin-bottom:10px;",
+          text: "目前使用的鑑定等級：" + (tierLabelMap[tierName] || tierName) +
+            "　追加鑑定機率：" + (extraChance * 100).toFixed(0) + "%" +
+            "　（依角色目前的鑑定技能等級自動判斷）"
+        }));
+
+        var rollBtn = el("button", { class: "btn btn-accent", text: "🎲 抽一次（不限次數）" });
+        var applyBtn = el("button", { class: "btn", text: "✅ 套用這個結果", style: "margin-left:8px;" });
+        applyBtn.disabled = true;
+        rollBtn.addEventListener("click", function () {
+          lastResult = performAppraisal(c, item, stack);
+          applyBtn.disabled = false;
+          renderPreview();
+        });
+        applyBtn.addEventListener("click", function () {
+          if (!lastResult) return;
+          applyResult(stack, lastResult);
+          toast("已套用鑑定結果到「" + itemName(stack.itemId) + "」", "ok");
+          lastResult = null;
+          applyBtn.disabled = true;
+          renderPreview();
+        });
+
+        var btnRow = el("div", { style: "margin-bottom:12px;" });
+        btnRow.appendChild(rollBtn);
+        btnRow.appendChild(applyBtn);
+        resultBox.appendChild(btnRow);
+
+        var previewBox = el("div", { id: "apprGachaPreview" });
+        resultBox.appendChild(previewBox);
+
+        function renderPreview() {
+          previewBox.innerHTML = "";
+          if (!lastResult) {
+            previewBox.appendChild(el("div", { class: "panel-desc", text: "按上面的按鈕抽一次看看結果。" }));
+            return;
+          }
+          if (!lastResult.length) {
+            previewBox.appendChild(el("div", { style: "color:var(--text3);font-size:13px;", text: "這次沒有鑑定出任何附加屬性。" }));
+            return;
+          }
+          lastResult.forEach(function (r) {
+            previewBox.appendChild(el("div", {
+              style: "background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13.5px;",
+              text: apprKindName(r.kind) + "　" + (r.value > 0 ? "+" : "") + r.value
+            }));
+          });
+        }
+        renderPreview();
+      }
+
+      itemSelect.addEventListener("change", function () {
+        resultBox.innerHTML = "";
+        lastResult = null;
+        var stackId = itemSelect.value;
+        if (!stackId) return;
+        var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
+        var item = ITEMS[String(stack.itemId)];
+        renderResult(stack, item);
+      });
+    }
+
+    function renderManualMode() {
+      $box.innerHTML = "";
+      var pickRow = el("div", { class: "equip-filter" });
+      var itemField = el("div", { class: "ef-field ef-long" });
+      itemField.appendChild(el("label", { text: "選擇要鑑定的裝備" }));
+      var itemSelect = el("select", {});
+      itemSelect.appendChild(el("option", { value: "", text: "請選擇..." }));
+      equipStacks().forEach(function (s) {
+        itemSelect.appendChild(el("option", { value: s.id, text: itemName(s.itemId) + "（Stack " + s.id + "）" }));
+      });
+      itemField.appendChild(itemSelect);
+      pickRow.appendChild(itemField);
+      $box.appendChild(pickRow);
+
+      var editBox = el("div", { style: "margin-top:14px;" });
+      $box.appendChild(editBox);
+
+      itemSelect.addEventListener("change", function () {
+        editBox.innerHTML = "";
+        var stackId = itemSelect.value;
+        if (!stackId) return;
+        var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
+        var item = ITEMS[String(stack.itemId)];
+        var category = apprCategory(item);
+        var candidates = APPR_FF[category] || [];
+
+        // 同一種類不可能在真正的鑑定結果裡重複出現（遊戲用集合去選種類），這裡也用同樣的邏輯擋掉重複選項
+        function usedKinds(excludeIdx) {
+          var set = {};
+          lines.forEach(function (l, i) { if (i !== excludeIdx) set[l.kind] = true; });
+          return set;
+        }
+        function nextUnusedKind(excludeIdx) {
+          var used = usedKinds(excludeIdx);
+          var found = candidates.find(function (pair) { return !used[pair[0]]; });
+          return found ? found[0] : candidates[0][0];
+        }
+
+        var lines = (stack.appraisal || []).map(function (r) { return { kind: r.kind, value: r.value }; });
+        // 去重：如果既有資料本身就有重複（例如之前的 bug 產生的），載入時先清掉多餘的重複條目
+        (function dedupeInitial() {
+          var seen = {};
+          for (var i = lines.length - 1; i >= 0; i--) {
+            if (seen[lines[i].kind]) lines.splice(i, 1);
+            else seen[lines[i].kind] = true;
+          }
+        })();
+        if (!lines.length) lines.push({ kind: candidates[0][0], value: 0 });
+
+        var countRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;" });
+        countRow.appendChild(el("span", { text: "屬性條數：" }));
+        var countInput = el("input", { type: "number", min: "0", max: String(candidates.length), value: String(lines.length), style: "width:60px;" });
+        countRow.appendChild(countInput);
+        countRow.appendChild(el("span", { style: "color:var(--text3);", text: "（這件裝備所屬分類最多有 " + candidates.length + " 種可能屬性，同一種類不能重複選）" }));
+        editBox.appendChild(countRow);
+
+        var linesWrap = el("div", {});
+        editBox.appendChild(linesWrap);
+
+        function renderLines() {
+          linesWrap.innerHTML = "";
+          lines.forEach(function (line, idx) {
+            var row = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;" });
+            var used = usedKinds(idx); // 排除自己這一列，得到「其他列已經用掉」的種類
+            var kindSelect = el("select", { style: "flex:1;min-width:120px;" });
+            candidates.forEach(function (pair) {
+              var isTaken = !!used[pair[0]] && pair[0] !== line.kind;
+              var o = el("option", { value: pair[0], text: apprKindName(pair[0]) + (isTaken ? "（已被其他條使用）" : "") });
+              if (line.kind === pair[0]) o.selected = true;
+              if (isTaken) o.disabled = true;
+              kindSelect.appendChild(o);
+            });
+            kindSelect.addEventListener("change", function () {
+              line.kind = Number(kindSelect.value);
+              renderLines();
+            });
+            row.appendChild(kindSelect);
+
+            var curPair = candidates.find(function (p) { return p[0] === line.kind; }) || candidates[0];
+            var range = apprValueRange(curPair[1]);
+            var valInput = el("input", {
+              type: "number", value: line.value, style: "width:80px;",
+              min: String(range.min), max: String(range.max)
+            });
+            valInput.addEventListener("input", function () { line.value = valInput.valueAsNumber || 0; });
+            valInput.addEventListener("change", function () {
+              var v = valInput.valueAsNumber;
+              if (isNaN(v)) v = 0;
+              v = Math.max(range.min, Math.min(range.max, v));
+              line.value = v;
+              valInput.value = v;
+            });
+            row.appendChild(valInput);
+            row.appendChild(el("span", { style: "font-size:12px;color:var(--text3);", text: "許可範圍：" + range.min + " ~ " + range.max }));
+            var delBtn = el("button", { class: "icon-btn", text: "✕" });
+            delBtn.addEventListener("click", function () {
+              lines.splice(idx, 1);
+              countInput.value = lines.length;
+              renderLines();
+            });
+            row.appendChild(delBtn);
+            linesWrap.appendChild(row);
+          });
+        }
+        renderLines();
+
+        countInput.addEventListener("change", function () {
+          var target = Math.max(0, Math.min(candidates.length, countInput.valueAsNumber || 0));
+          while (lines.length < target) lines.push({ kind: nextUnusedKind(-1), value: 0 });
+          while (lines.length > target) lines.pop();
+          countInput.value = target;
+          renderLines();
+        });
+
+        var applyBtn = el("button", { class: "btn btn-accent", text: "✅ 套用到這件裝備", style: "margin-top:10px;" });
+        applyBtn.addEventListener("click", function () {
+          // 送出前再檢查一次有沒有重複種類（正常情況下拉選單已經擋掉了，這裡是最後一道保險）
+          var seen = {};
+          for (var i = 0; i < lines.length; i++) {
+            if (seen[lines[i].kind]) { toast("有重複的屬性種類，請先修正", "err"); return; }
+            seen[lines[i].kind] = true;
+          }
+          var result = lines.map(function (l) { return { kind: l.kind, value: l.value, unit: 0 }; });
+          applyResult(stack, result);
+          toast("已套用手動鑑定結果到「" + itemName(stack.itemId) + "」", "ok");
+        });
+        editBox.appendChild(applyBtn);
+      });
+    }
+
+    $gachaBtn.onclick = function () {
+      $gachaBtn.classList.add("btn-accent"); $manualBtn.classList.remove("btn-accent");
+      renderGachaMode();
+    };
+    $manualBtn.onclick = function () {
+      $manualBtn.classList.add("btn-accent"); $gachaBtn.classList.remove("btn-accent");
+      renderManualMode();
+    };
+    $box.innerHTML = '<div class="panel-desc">選擇上面其中一個模式開始。</div>';
   }
 
   // ---------- 進階（推測格式）欄位：原始 JSON ----------

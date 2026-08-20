@@ -100,7 +100,7 @@
   enchantChip.className = "hint-chip";
   enchantChip.style.borderColor = "var(--gold)";
   enchantChip.style.color = "var(--gold-hi)";
-  enchantChip.textContent = "🔮 物品附魔表";
+  enchantChip.textContent = "🔮 發條強化屬性表";
   enchantChip.addEventListener("click", function () {
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
@@ -281,7 +281,7 @@
     gradeIdx = gradeIdx || 0;
     var gradeNum = gradeIdx + 1; // ENCHANT_APPEARANCE / ENCHANT_VALUES 的 key 是 1-indexed (N=1)
 
-    var html = '<h2 style="margin-top:0;">🔮 物品附魔表</h2>';
+    var html = '<h2 style="margin-top:0;">🔮 發條強化屬性表</h2>';
     html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">';
     ENCHANT_GRADES.forEach(function (g, idx) {
       var active = idx === gradeIdx;

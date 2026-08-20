@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V28</span>
+  <span class="bar-title">🧭 希望存檔修改器V32</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -219,7 +219,10 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-section">物品</div>
     <div class="nav-item" data-panel="inventory">🎒 背包</div>
     <div class="nav-item" data-panel="warehouse">🏦 倉庫</div>
-    <div class="nav-item" data-panel="enchant">🔮 鑑定</div>
+    <div class="nav-item" data-panel="enchant">🔮 齒輪強化</div>
+    <!-- 鐵匠鑑定：先隱藏，之後正式開放再打開這行
+    <div class="nav-item" data-panel="appraisal">🔨 鐵匠鑑定</div>
+    -->
 
     <div class="nav-section">技能</div>
     <div class="nav-item" data-panel="skills">✨ 已學技能</div>
@@ -286,13 +289,13 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
     </div>
 
-    <!-- ══ 鑑定 ══ -->
+    <!-- ══ 齒輪強化 ══ -->
     <div class="panel" id="panel-enchant">
-      <div class="panel-title">🔮 鑑定</div>
+      <div class="panel-title">🔮 齒輪強化</div>
       <div class="panel-desc">
-        對照真實存檔驗證：裝備的鑑定存在該物品所在那疊 stack 的 <code>options</code> 欄位，格式是
+        對照真實存檔驗證：裝備的齒輪強化存在該物品所在那疊 stack 的 <code>options</code> 欄位，格式是
         <code>{grade, options:[{kind,value,unit},...]}</code>，最多 3 條屬性。
-        先選部位、再選背包裡符合這個部位的裝備（不限職業/等級，方便你先鑑定好再穿），下面就能編輯它的鑑定內容。
+        先選部位、再選背包裡符合這個部位的裝備（不限職業/等級，方便你先做好齒輪強化再穿），下面就能編輯它的齒輪強化內容。
         數值欄位旁邊的範圍是<b>該等級這個屬性實際可能開出的數值區間</b>（依真實機率表算出來的），
         <b>已強制鎖定為許可範圍</b>：輸入超過上限或低於下限，離開輸入框時會自動修正回邊界值，避免手滑打出離譜的數值。
       </div>
@@ -301,6 +304,22 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         <div class="ef-field ef-long"><label>選擇裝備</label><select id="enchantFilterItem" disabled><option value="">請先選擇部位...</option></select></div>
       </div>
       <div id="enchantDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 鐵匠鑑定 ══ -->
+    <div class="panel" id="panel-appraisal">
+      <div class="panel-title">🔨 鐵匠鑑定</div>
+      <div class="panel-desc">
+        跟「齒輪強化」是完全不同的另一套系統，對應鐵匠職業的鑑定技能樹。已由遊戲原始程式碼反推出完整公式：
+        物品依部位分成 5 個分類，每個分類有固定候選屬性與權重；每件裝備依「需求等級 + 精煉值」決定每條屬性各自獨立出現的機率；
+        出現後再依角色的鑑定技能等級（基礎/高級鑑定/高級道具鑑定）骰一個 -2~+5 的強度等級，
+        最終數值 = 強度等級 × 屬性權重 ÷ 5。
+      </div>
+      <div class="equip-filter" style="gap:14px;">
+        <button class="btn btn-accent" id="apprModeGachaBtn" style="padding:14px 22px;font-size:14px;">🎰 無限抽抽樂</button>
+        <button class="btn btn-accent" id="apprModeManualBtn" style="padding:14px 22px;font-size:14px;">✍️ 我自己來</button>
+      </div>
+      <div id="apprModeBox" style="margin-top:16px;"></div>
     </div>
 
     <!-- ══ 背包 ══ -->
