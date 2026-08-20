@@ -304,9 +304,10 @@
         html += '<div class="equip-box"><div class="row1"><span class="slot">' + escapeHtml(w.name) + '</span></div>';
         html += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.9;">';
         w.grades.forEach(function (row) {
-          var from = ENCHANT_GRADES[row[0]] != null ? ENCHANT_GRADES[row[0]] : ("更高階#" + row[0]);
-          var to = ENCHANT_GRADES[row[1]] != null ? ENCHANT_GRADES[row[1]] : ("更高階#" + row[1]);
-          var rate = (row[2] / 1000).toFixed(1) + "%";
+          // 已由玩家實測驗證修正：表格裡的原始數字 0 代表「還沒強化過」，1~5 才對應 N~SG（要 -1 才是陣列索引）
+          var from = row[0] === 0 ? "尚未強化過" : (ENCHANT_GRADES[row[0] - 1] || ("更高階#" + row[0]));
+          var to = ENCHANT_GRADES[row[1] - 1] || ("更高階#" + row[1]);
+          var rate = (row[2] / 1000).toFixed(2) + "%";
           html += escapeHtml(from) + " → " + escapeHtml(to) + "：" + rate + "<br>";
         });
         html += "</div></div>";
