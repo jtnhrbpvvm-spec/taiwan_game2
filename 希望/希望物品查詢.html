@@ -231,6 +231,16 @@ table.dtable tr.clickable{cursor:pointer;}
 .name-link:hover{color:var(--gold-hi); text-decoration:underline;}
 .lv-tag{color:var(--text-faint); font-size:12px; margin-right:6px;}
 
+.item-picker{position:relative;}
+.item-picker input{width:100%;padding:9px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:4px;color:var(--text);font-size:13px;}
+.item-picker .suggest{
+  position:absolute;z-index:50;top:100%;left:0;right:0;background:var(--panel-hi);
+  border:1px solid var(--line-hi);border-radius:4px;max-height:220px;overflow-y:auto;display:none;
+}
+.item-picker .suggest div{padding:8px 10px;cursor:pointer;font-size:13px;}
+.item-picker .suggest div:hover{background:var(--ink-2);}
+.item-picker .suggest.show{display:block;}
+
 .equip-box{
   background:var(--ink-2); border:1px solid var(--line); border-radius:4px;
   padding:14px 16px; margin-bottom:18px;

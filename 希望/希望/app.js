@@ -37,6 +37,70 @@
   var ENCHANT_APPEARANCE = window.ENCHANT_APPEARANCE || {};
   var ENCHANT_VALUES = window.ENCHANT_VALUES || {};
   var ENCHANT_WINDERS = window.ENCHANT_WINDERS || [];
+
+  // ---------- 鐵匠鑑定（跟齒輪強化是不同系統，公式反推自遊戲原始程式碼）----------
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
+  var APPR_FF = {
+    weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
+    armor: [[3, 25], [4, 10], [7, 5], [11, 5], [12, 5]],
+    shoes: [[3, 25], [4, 10], [7, 5], [8, 15], [11, 5], [12, 5]],
+    accessory: [[1, 5], [2, 5], [3, 5], [4, 5], [6, 5], [7, 5], [5, 5], [8, 5], [11, 5], [12, 5]]
+  };
+  var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
+  var APPR_MF = {
+    basic: [110000, 150000, 200000, 250000, 230000, 30000, 20000, 10000],
+    advanced: [85000, 125000, 180000, 250000, 280000, 41000, 26000, 13000],
+    superior: [60000, 100000, 160000, 250000, 320000, 59000, 34000, 17000]
+  };
+  var APPR_SKILL_REQ = { basic: 20, advanced: 215, superior: 190 };
+  var APPR_EXTRA_REQ = { meticulous: 257, superMeticulous: 257 };
+  var APPR_EXTRA_CHANCE = { meticulous: 0.3, superMeticulous: 0.7 };
+  var APPR_THRESH = { base: 0.1, perLv: 0.0008, perRefine: 0.02, cap: 0.5 };
+
+  function apprKindName(kind) { return APPR_KIND_NAMES[kind] || ("種類#" + kind); }
+  function apprCategory(item) {
+    var slot = item.equip ? item.equip.slot : null;
+    var magic = item.equip ? (item.equip.magic || 0) : 0;
+    var isMagicWeapon = magic > 0;
+    if (slot === "weapon") return isMagicWeapon ? "magicWeapon" : "weapon";
+    if (slot === "feet") return "shoes";
+    if (slot === "head" || slot === "body" || slot === "legs" || slot === "shield") return "armor";
+    return "accessory";
+  }
+  function apprThreshold(minLv, refine) {
+    var n = APPR_THRESH.base + (minLv || 0) * APPR_THRESH.perLv + (refine || 0) * APPR_THRESH.perRefine;
+    return Math.min(APPR_THRESH.cap, n);
+  }
+  function apprRollTierValue(tierName) {
+    var weights = APPR_MF[tierName];
+    var r = Math.random() * 1000000;
+    for (var i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r < 0) return APPR_PF[i];
+    }
+    return APPR_PF[APPR_PF.length - 1];
+  }
+  function apprValueRange(weight) { return { min: -2 * weight / 5, max: 5 * weight / 5 }; }
+  function performAppraisalTrial(item, minLv, refine, tierName, extraChance) {
+    var category = apprCategory(item);
+    var candidates = APPR_FF[category] || [];
+    var n = apprThreshold(minLv, refine);
+    var passes = 1 + (extraChance > 0 && Math.random() < extraChance ? 1 : 0);
+    var selected = {};
+    for (var p = 0; p < passes; p++) {
+      candidates.forEach(function (pair) { if (Math.random() < n) selected[pair[0]] = true; });
+    }
+    var result = [];
+    candidates.forEach(function (pair) {
+      var kind = pair[0], weight = pair[1];
+      if (!selected[kind]) return;
+      var tier = apprRollTierValue(tierName);
+      if (tier !== 0) result.push({ kind: kind, value: tier * weight / 5 });
+    });
+    return { category: category, threshold: n, result: result };
+  }
+
   var TOWNS = window.TOWNS || {};
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
@@ -109,10 +173,24 @@
   });
   $hintRow.appendChild(enchantChip);
 
+  var apprChip = document.createElement("span");
+  apprChip.className = "hint-chip";
+  apprChip.style.borderColor = "var(--gold)";
+  apprChip.style.color = "var(--gold-hi)";
+  apprChip.textContent = "🔨 鐵匠鑑定試玩";
+  apprChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showAppraisalTrial();
+  });
+  $hintRow.appendChild(apprChip);
+
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
 
   function runSearch(qRaw) {
+    apprTrialActive = false;
     var q = (qRaw || "").trim();
     currentMatches.items = [];
     currentMatches.monsters = [];
@@ -278,6 +356,7 @@
   }
 
   function showEnchantTable(gradeIdx, winderOpen) {
+    apprTrialActive = false;
     gradeIdx = gradeIdx || 0;
     var gradeNum = gradeIdx + 1; // ENCHANT_APPEARANCE / ENCHANT_VALUES 的 key 是 1-indexed (N=1)
 
@@ -351,6 +430,234 @@
     if (toggleBtn) {
       toggleBtn.addEventListener("click", function () { showEnchantTable(gradeIdx, !winderOpen); });
     }
+  }
+
+  function showAppraisalTrial() {
+    apprTrialActive = true;
+    var state = {
+      itemId: null, level: 250, refine: 12, tier: "basic", extra: "none",
+      stats: {}, history: [], rollCounter: 0, page: 0
+    };
+    apprTrialOnPick = function (id) {
+      state.itemId = Number(id);
+      renderItemInfo();
+      renderAction();
+    };
+
+    function render() {
+      var canAdvanced = state.level >= APPR_SKILL_REQ.advanced;
+      var canSuperior = state.level >= APPR_SKILL_REQ.superior;
+      var canMeticulous = state.level >= APPR_EXTRA_REQ.meticulous;
+
+      var html = '<h2 style="margin-top:0;">🔨 鐵匠鑑定試玩</h2>';
+      html += '<div class="panel-desc" style="margin-bottom:14px;">' +
+        '這是鐵匠職業「鑑定」技能的試算工具，公式反推自遊戲原始程式碼。不用登入、不會影響任何真實存檔，純粹讓你試手氣看看。' +
+        '請直接用上面的「職業／裝備位置／符合的裝備」下拉選單選擇要測試的裝備。' +
+        '</div>';
+
+      html += '<div class="section-title">角色設定</div>';
+      html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;">';
+      html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">角色等級</label>' +
+        '<input type="number" id="apprTrialLevel" value="' + state.level + '" min="1" max="999" style="width:90px;padding:8px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);"></div>';
+      html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">裝備精煉值</label>' +
+        '<select id="apprTrialRefine" style="padding:9px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">';
+      for (var rv = 0; rv <= 12; rv++) {
+        html += '<option value="' + rv + '"' + (rv === state.refine ? " selected" : "") + '>+' + rv + '</option>';
+      }
+      html += '</select></div></div>';
+
+      html += '<div class="section-title">鑑定技能（等級不夠會鎖住）</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;">';
+      html += radioRow("apprTrialTier", "basic", state.tier, "鑑定道具（基礎，Lv" + APPR_SKILL_REQ.basic + "）", true);
+      html += radioRow("apprTrialTier", "advanced", state.tier, "高級鑑定（Lv" + APPR_SKILL_REQ.advanced + "）", canAdvanced);
+      html += radioRow("apprTrialTier", "superior", state.tier, "高級道具鑑定（最佳，Lv" + APPR_SKILL_REQ.superior + "）", canSuperior);
+      html += '</div>';
+
+      html += '<div class="section-title">追加鑑定被動（等級不夠會鎖住）</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;">';
+      html += radioRow("apprTrialExtra", "none", state.extra, "無", true);
+      html += radioRow("apprTrialExtra", "meticulous", state.extra, "縝密鑑定（30%，Lv" + APPR_EXTRA_REQ.meticulous + "）", canMeticulous);
+      html += radioRow("apprTrialExtra", "superMeticulous", state.extra, "超縝密鑑定（70%，Lv" + APPR_EXTRA_REQ.superMeticulous + "）", canMeticulous);
+      html += '</div>';
+
+      html += '<div class="section-title">要測試鑑定的裝備</div>';
+      html += '<div id="apprTrialItemInfo" style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">尚未選擇裝備，請用上面的篩選器挑一件。</div>';
+
+      html += '<div id="apprTrialActionBox"></div>';
+      html += '<div id="apprTrialStatsBox" style="margin-top:16px;"></div>';
+      html += '<div id="apprTrialHistoryBox" style="margin-top:16px;"></div>';
+
+      $detail.innerHTML = html;
+      wireEvents();
+      renderItemInfo();
+      renderAction();
+      renderStats();
+      renderHistory();
+    }
+
+    function radioRow(name, value, current, label, enabled) {
+      var checked = current === value;
+      return '<label style="display:flex;align-items:center;gap:8px;' + (enabled ? "cursor:pointer;" : "opacity:.4;cursor:not-allowed;") + '">' +
+        '<input type="radio" name="' + name + '" value="' + value + '"' + (checked ? " checked" : "") + (enabled ? "" : " disabled") + '>' +
+        escapeHtml(label) + '</label>';
+    }
+
+    function wireEvents() {
+      document.getElementById("apprTrialLevel").addEventListener("change", function (e) {
+        state.level = Math.max(1, e.target.valueAsNumber || 1);
+        if (state.level < APPR_SKILL_REQ.advanced && state.tier === "advanced") state.tier = "basic";
+        if (state.level < APPR_SKILL_REQ.superior && state.tier === "superior") state.tier = "basic";
+        if (state.level < APPR_EXTRA_REQ.meticulous && state.extra !== "none") state.extra = "none";
+        render();
+      });
+      document.getElementById("apprTrialRefine").addEventListener("change", function (e) { state.refine = Number(e.target.value); });
+      document.querySelectorAll('input[name="apprTrialTier"]').forEach(function (r) {
+        r.addEventListener("change", function () { state.tier = r.value; });
+      });
+      document.querySelectorAll('input[name="apprTrialExtra"]').forEach(function (r) {
+        r.addEventListener("change", function () { state.extra = r.value; });
+      });
+    }
+
+    function renderItemInfo() {
+      var $info = document.getElementById("apprTrialItemInfo");
+      if (!$info) return;
+      var it = ITEMS[String(state.itemId)];
+      if (!it || !it.equip) { $info.textContent = "尚未選擇裝備，請用上面的篩選器挑一件。"; return; }
+      var category = apprCategory(it);
+      var categoryNames = { weapon: "武器", magicWeapon: "魔法武器", armor: "防具", shoes: "鞋子", accessory: "飾品" };
+      $info.textContent = "已選擇：" + it.name + "　部位：" + it.equip.slotName + "　需求等級：Lv" + it.equip.minLv + "　鑑定分類：" + (categoryNames[category] || category);
+    }
+
+    function renderAction() {
+      var $box = document.getElementById("apprTrialActionBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:10px;align-items:center;flex-wrap:wrap;";
+
+      var rollBtn = makeEl("button", {}, "🎲 鑑定");
+      rollBtn.style.cssText = "padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;border:1px solid var(--gold);background:var(--gold);color:var(--ink);";
+      rollBtn.disabled = !state.itemId;
+      if (!state.itemId) { rollBtn.style.opacity = ".4"; rollBtn.style.cursor = "not-allowed"; }
+      rollBtn.addEventListener("click", function () {
+        if (!state.itemId) return;
+        var it = ITEMS[String(state.itemId)];
+        var extraChance = state.extra === "none" ? 0 : APPR_EXTRA_CHANCE[state.extra];
+        var r = performAppraisalTrial(it.equip, it.equip.minLv, state.refine, state.tier, extraChance);
+        r.result.forEach(function (line) {
+          var key = line.kind + ":" + line.value;
+          state.stats[key] = (state.stats[key] || 0) + 1;
+        });
+        state.rollCounter += 1;
+        state.history.unshift({ n: state.rollCounter, lines: r.result, category: r.category, threshold: r.threshold });
+        if (state.history.length > 100) state.history.length = 100;
+        state.page = 0;
+        renderStats();
+        renderHistory();
+      });
+      row.appendChild(rollBtn);
+
+      var clearBtn = makeEl("button", {}, "🗑️ 清除目前統計");
+      clearBtn.style.cssText = "padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12.5px;border:1px solid var(--line-hi);background:var(--panel);color:var(--text-dim);";
+      clearBtn.addEventListener("click", function () {
+        state.stats = {};
+        state.history = [];
+        state.rollCounter = 0;
+        state.page = 0;
+        renderStats();
+        renderHistory();
+      });
+      row.appendChild(clearBtn);
+
+      $box.appendChild(row);
+      if (!state.itemId) {
+        $box.appendChild(makeEl("div", { style: "color:var(--text-faint);font-size:12.5px;margin-top:8px;" }, "請先用上面的職業／裝備位置篩選器選擇一件裝備。"));
+      }
+    }
+
+    function renderStats() {
+      var $box = document.getElementById("apprTrialStatsBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      var totalRolls = state.history.length > 0 ? state.rollCounter : 0;
+      $box.appendChild(makeEl("div", { class: "section-title" }, "統計（累計鑑定 " + totalRolls + " 次）"));
+      var keys = Object.keys(state.stats);
+      if (!keys.length) {
+        $box.appendChild(makeEl("div", { class: "empty-note" }, "還沒有任何鑑定紀錄，按上面的「鑑定」試試看。"));
+        return;
+      }
+      var rows = keys.map(function (k) {
+        var parts = k.split(":");
+        return { kind: Number(parts[0]), value: Number(parts[1]), count: state.stats[k] };
+      });
+      rows.sort(function (a, b) { return a.kind - b.kind || a.value - b.value; });
+      var grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;";
+      rows.forEach(function (r) {
+        var box = document.createElement("div");
+        box.className = "equip-box";
+        box.style.padding = "10px 12px";
+        box.innerHTML = '<div style="font-size:13px;">' + escapeHtml(apprKindName(r.kind)) + ' ' +
+          (r.value > 0 ? "+" : "") + r.value + '</div>' +
+          '<div style="font-size:12px;color:var(--text-dim);margin-top:2px;">出現 ' + r.count + ' 次</div>';
+        grid.appendChild(box);
+      });
+      $box.appendChild(grid);
+    }
+
+    function renderHistory() {
+      var $box = document.getElementById("apprTrialHistoryBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      if (!state.history.length) return;
+      var perPage = 10;
+      var totalPages = Math.ceil(state.history.length / perPage);
+      if (state.page >= totalPages) state.page = totalPages - 1;
+      if (state.page < 0) state.page = 0;
+      var start = state.page * perPage;
+      var pageItems = state.history.slice(start, start + perPage);
+
+      $box.appendChild(makeEl("div", { class: "section-title" },
+        "歷史紀錄（第 " + (state.page + 1) + " / " + totalPages + " 頁，最多保留 100 筆）"));
+
+      pageItems.forEach(function (item) {
+        var box = document.createElement("div");
+        box.className = "equip-box";
+        var linesText = item.lines.length
+          ? item.lines.map(function (l) { return apprKindName(l.kind) + " " + (l.value > 0 ? "+" : "") + l.value; }).join("、")
+          : "沒有鑑定出任何屬性";
+        box.innerHTML = '<div class="row1"><span class="slot">第 ' + item.n + ' 次</span></div>' +
+          '<div style="font-size:12.5px;color:var(--text-dim);">' + escapeHtml(linesText) + '</div>';
+        $box.appendChild(box);
+      });
+
+      var pager = document.createElement("div");
+      pager.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;";
+      var prevBtn = makeEl("button", {}, "◀ 上一頁（較新）");
+      prevBtn.style.cssText = "padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12.5px;border:1px solid var(--line-hi);background:var(--panel);color:var(--text);";
+      prevBtn.disabled = state.page <= 0;
+      if (prevBtn.disabled) prevBtn.style.opacity = ".4";
+      prevBtn.addEventListener("click", function () { state.page--; renderHistory(); });
+      var nextBtn = makeEl("button", {}, "下一頁（較舊）▶");
+      nextBtn.style.cssText = prevBtn.style.cssText;
+      nextBtn.disabled = state.page >= totalPages - 1;
+      if (nextBtn.disabled) nextBtn.style.opacity = ".4";
+      nextBtn.addEventListener("click", function () { state.page++; renderHistory(); });
+      pager.appendChild(prevBtn);
+      pager.appendChild(makeEl("span", { style: "font-size:12.5px;color:var(--text-dim);" }, (state.page + 1) + " / " + totalPages));
+      pager.appendChild(nextBtn);
+      $box.appendChild(pager);
+    }
+
+    function makeEl(tag, attrs, text) {
+      var e = document.createElement(tag);
+      Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    render();
   }
 
   function showItem(id) {
@@ -659,11 +966,15 @@
       }).join("");
   }
 
+  var apprTrialActive = false;
+  var apprTrialOnPick = null;
+
   $filterJob.addEventListener("change", updateFilterResults);
   $filterSlot.addEventListener("change", updateFilterResults);
   $filterResult.addEventListener("change", function () {
     if (!$filterResult.value) return;
     var id = $filterResult.value;
+    if (apprTrialActive && apprTrialOnPick) { apprTrialOnPick(id); return; }
     var name = ITEMS[id] ? ITEMS[id].name : "";
     $input.value = name;
     currentMatches.items = [{ id: id, name: name }];
