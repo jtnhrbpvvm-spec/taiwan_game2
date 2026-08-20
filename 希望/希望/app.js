@@ -26,6 +26,13 @@
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
+  // 已由玩家實測確認：這 6 種「每級XX」屬性，數字代表「每N級才加1點」，所以數字越小越強（不是每級直接加這麼多點）
+  var REVERSED_PER_LEVEL_KINDS = [15, 16, 17, 18, 19, 20];
+  function enchantKindLabel(kind, name) {
+    return REVERSED_PER_LEVEL_KINDS.indexOf(kind) !== -1
+      ? name + "（數字越小越強：每 N 級 +1 點）"
+      : name;
+  }
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_APPEARANCE = window.ENCHANT_APPEARANCE || {};
   var ENCHANT_VALUES = window.ENCHANT_VALUES || {};
@@ -314,9 +321,11 @@
     } else {
       appear.slice().sort(function (a, b) { return b.weight - a.weight; }).forEach(function (a) {
         var kindDef = ENCHANT_KINDS.find(function (k) { return k.kind === a.kind; });
-        var kindName = kindDef ? kindDef.name : ("種類#" + a.kind);
+        var kindName = kindDef ? enchantKindLabel(a.kind, kindDef.name) : ("種類#" + a.kind);
         var pct = totalWeight ? (a.weight / totalWeight * 100).toFixed(2) + "%" : "?";
-        var ranges = ENCHANT_VALUES[gradeNum + "-" + a.kind] || [];
+        var ranges = (ENCHANT_VALUES[gradeNum + "-" + a.kind] || []).slice();
+        var isReversedKind = REVERSED_PER_LEVEL_KINDS.indexOf(a.kind) !== -1;
+        ranges.sort(function (x, y) { return isReversedKind ? x.min - y.min : y.min - x.min; });
         var rangeWeightTotal = ranges.reduce(function (s, r) { return s + r.weight; }, 0);
         var rangeText = ranges.length
           ? ranges.map(function (r) {

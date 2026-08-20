@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V26</span>
+  <span class="bar-title">🧭 希望存檔修改器V28</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -219,7 +219,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-section">物品</div>
     <div class="nav-item" data-panel="inventory">🎒 背包</div>
     <div class="nav-item" data-panel="warehouse">🏦 倉庫</div>
-    <div class="nav-item" data-panel="enchant">🔮 附魔</div>
+    <div class="nav-item" data-panel="enchant">🔮 鑑定</div>
 
     <div class="nav-section">技能</div>
     <div class="nav-item" data-panel="skills">✨ 已學技能</div>
@@ -286,15 +286,15 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="grid" id="loadoutFields" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));"></div>
     </div>
 
-    <!-- ══ 附魔 ══ -->
+    <!-- ══ 鑑定 ══ -->
     <div class="panel" id="panel-enchant">
-      <div class="panel-title">🔮 附魔</div>
+      <div class="panel-title">🔮 鑑定</div>
       <div class="panel-desc">
-        對照真實存檔驗證：裝備的附魔存在該物品所在那疊 stack 的 <code>options</code> 欄位，格式是
+        對照真實存檔驗證：裝備的鑑定存在該物品所在那疊 stack 的 <code>options</code> 欄位，格式是
         <code>{grade, options:[{kind,value,unit},...]}</code>，最多 3 條屬性。
-        先選部位、再選背包裡符合這個部位的裝備（不限職業/等級，方便你先附魔好再穿），下面就能編輯它的附魔內容。
+        先選部位、再選背包裡符合這個部位的裝備（不限職業/等級，方便你先鑑定好再穿），下面就能編輯它的鑑定內容。
         數值欄位旁邊的範圍是<b>該等級這個屬性實際可能開出的數值區間</b>（依真實機率表算出來的），
-        僅供參考，不會幫你卡住輸入範圍，超過多少都能填。
+        <b>已強制鎖定為許可範圍</b>：輸入超過上限或低於下限，離開輸入框時會自動修正回邊界值，避免手滑打出離譜的數值。
       </div>
       <div class="equip-filter">
         <div class="ef-field ef-short"><label>部位</label><select id="enchantFilterSlot"><option value="">選擇部位...</option></select></div>

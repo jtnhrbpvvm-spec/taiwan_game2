@@ -71,7 +71,7 @@
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
-    { panel: "enchant", icon: "🔮", title: "附魔", desc: "編輯裝備的附魔屬性，數值旁邊附機率表算出的範圍參考。" },
+    { panel: "enchant", icon: "🔮", title: "鑑定", desc: "編輯裝備的鑑定屬性，數值旁邊附機率表算出的範圍參考。" },
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
@@ -1684,10 +1684,15 @@
     };
   }
 
-  // ---------- 附魔 ----------
+  // ---------- 鑑定 ----------
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
+  // 已由玩家實測確認：這 6 種「每級XX」屬性，數字代表「每N級才加1點」，所以數字越小越強
+  var REVERSED_PER_LEVEL_KINDS = [15, 16, 17, 18, 19, 20];
+  function enchantKindLabel(kind, name) {
+    return REVERSED_PER_LEVEL_KINDS.indexOf(kind) !== -1 ? name + "（數字越小越強）" : name;
+  }
 
   function renderEnchant(c) {
     var $slot = document.getElementById("enchantFilterSlot");
@@ -1730,26 +1735,48 @@
 
       var kindSelect = el("select", { style: "flex:1;min-width:140px;" });
       ENCHANT_KINDS.forEach(function (k) {
-        var o = el("option", { value: k.kind, text: k.name });
+        var o = el("option", { value: k.kind, text: enchantKindLabel(k.kind, k.name) });
         if (opt.kind === k.kind) o.selected = true;
         kindSelect.appendChild(o);
       });
       kindSelect.addEventListener("change", function () {
         opt.kind = Number(kindSelect.value);
         var range = ENCHANT_VALUE_RANGES[gradeValStr + "-" + opt.kind];
-        if (range) opt.unit = range.unit;
+        if (range) {
+          opt.unit = range.unit;
+          // 換種類後，原本的數值可能超出新種類的合法範圍，直接夾住
+          opt.value = Math.max(range.min, Math.min(range.max, opt.value));
+        }
         renderDetail();
       });
       row.appendChild(kindSelect);
 
-      var valueInput = el("input", { type: "number", value: opt.value, style: "width:90px;" });
-      valueInput.addEventListener("input", function () { opt.value = valueInput.valueAsNumber || 0; });
+      var range = ENCHANT_VALUE_RANGES[gradeValStr + "-" + opt.kind];
+      var valueInput = el("input", {
+        type: "number", value: opt.value, style: "width:90px;",
+        min: range ? String(range.min) : "", max: range ? String(range.max) : ""
+      });
+      valueInput.addEventListener("input", function () {
+        opt.value = valueInput.valueAsNumber || 0; // 打字過程先不強制夾住，避免打到一半被打斷
+      });
+      valueInput.addEventListener("change", function () {
+        // 打完離開輸入框時，強制夾在合法範圍內（已由玩家實測回報過打出「每200級+1力量」這種離譜數值，現在直接鎖死）
+        if (range) {
+          var v = valueInput.valueAsNumber;
+          if (isNaN(v)) v = range.min;
+          v = Math.max(range.min, Math.min(range.max, v));
+          opt.value = v;
+          valueInput.value = v;
+        }
+      });
       row.appendChild(valueInput);
 
-      var range = ENCHANT_VALUE_RANGES[gradeValStr + "-" + opt.kind];
+      var isReversed = REVERSED_PER_LEVEL_KINDS.indexOf(opt.kind) !== -1;
       row.appendChild(el("span", {
         style: "font-size:12px;color:var(--text3);",
-        text: range ? ("可能範圍：" + range.min + " ~ " + range.max + "　（僅供參考，不會限制輸入）") : "此等級查無這個屬性的範圍資料"
+        text: range
+          ? ("許可範圍：" + range.min + " ~ " + range.max + (isReversed ? "（數字越小越強，代表每N級+1點）" : "") + "　（超過會自動修正回邊界值）")
+          : "此等級查無這個屬性的範圍資料，暫不限制輸入"
       }));
 
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
@@ -1766,7 +1793,7 @@
       var stackId = $item.value;
       $detail.innerHTML = "";
       if (!stackId) {
-        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯附魔。" }));
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯鑑定。" }));
         return;
       }
       var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
@@ -1779,7 +1806,7 @@
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
 
       var gradeRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;" });
-      gradeRow.appendChild(el("span", { text: "附魔等級：" }));
+      gradeRow.appendChild(el("span", { text: "鑑定等級：" }));
       var gradeSelect = el("select", {});
       // 已由真實存檔驗證：options.grade 是從 1 開始數（1=N, 2=G, 3=DG, 4=XG, 5=SG），
       // 跟 ENCHANT_GRADES 陣列的索引（0開始）差了 1，這裡選單的 value 直接用「已存檔的那個數字」，
@@ -1792,6 +1819,11 @@
       });
       gradeSelect.addEventListener("change", function () {
         opts.grade = Number(gradeSelect.value);
+        // 換等級後，每條屬性的合法範圍會跟著變，既有數值要重新夾一次
+        opts.options.forEach(function (opt) {
+          var r = ENCHANT_VALUE_RANGES[gradeSelect.value + "-" + opt.kind];
+          if (r) opt.value = Math.max(r.min, Math.min(r.max, opt.value));
+        });
         renderDetail();
       });
       gradeRow.appendChild(gradeSelect);
@@ -1808,7 +1840,7 @@
         addBtn.addEventListener("click", function () {
           var defKind = ENCHANT_KINDS[0].kind;
           var range = ENCHANT_VALUE_RANGES[gradeSelect.value + "-" + defKind];
-          opts.options.push({ kind: defKind, value: 0, unit: range ? range.unit : 0 });
+          opts.options.push({ kind: defKind, value: range ? range.min : 0, unit: range ? range.unit : 0 });
           renderDetail();
         });
         box.appendChild(addBtn);
