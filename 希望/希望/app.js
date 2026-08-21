@@ -83,12 +83,6 @@
       rerenderCurrentDetail();
     });
   }
-  function dropCalcNote() {
-    if (!dropCalcState.blacksmith) return "";
-    return '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' +
-      '「鐵匠的眼光」技能目前在遊戲原始碼裡被標記為尚未啟用（沒有實際數值效果），所以勾選這項不會改變下面的計算結果，等遊戲正式做出來後會再更新。' +
-      '</div>';
-  }
 
 
   // ---------- 鐵匠鑑定（跟齒輪強化是不同系統，公式反推自遊戲原始程式碼）----------
@@ -830,7 +824,9 @@
         var maps = mon.maps.map(mapName).join("、");
         var adjCell = "";
         if (showAdj) {
-          var levelMult = dropCalcState.level != null ? dropLevelMultiplier(dropCalcState.level, mon.lv) : 1;
+          var levelMult = dropCalcState.level != null
+            ? (dropCalcState.blacksmith ? 1 : dropLevelMultiplier(dropCalcState.level, mon.lv))
+            : 1;
           var whiffMult = dropWhiffMultiplier(mon.atk);
           var mult = levelMult * whiffMult;
           var adjRate = d.r * mult;
@@ -845,7 +841,6 @@
           '</tr>';
       });
       html += '</tbody></table>';
-      html += dropCalcNote();
     }
 
     $detail.innerHTML = html;
@@ -908,7 +903,9 @@
       html += dropCalcBar();
       var hasWhiff = mon.atk === 0;
       var showAdj = dropCalcState.level != null || hasWhiff;
-      var levelMult = dropCalcState.level != null ? dropLevelMultiplier(dropCalcState.level, mon.lv) : 1;
+      var levelMult = dropCalcState.level != null
+        ? (dropCalcState.blacksmith ? 1 : dropLevelMultiplier(dropCalcState.level, mon.lv))
+        : 1;
       var whiffMult = dropWhiffMultiplier(mon.atk);
       var mult = levelMult * whiffMult;
       html += '<table class="dtable"><thead><tr><th>物品</th><th>原始機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
@@ -930,7 +927,9 @@
       if (showAdj) {
         var noteParts = [];
         if (dropCalcState.level != null) {
-          noteParts.push('等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (levelMult * 100).toFixed(0) + '%');
+          noteParts.push(dropCalcState.blacksmith
+            ? '身為鐵匠職業，不受等級差衰減影響 → ×100%'
+            : '等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (levelMult * 100).toFixed(0) + '%');
         }
         if (hasWhiff) {
           noteParts.push('這隻怪物攻擊力為 0，每次擊殺有 ' + (DROP_WHIFF_CHANCE * 100).toFixed(1) + '% 機率整批掉落全部落空，換算成有效倍率 ×' + (whiffMult * 100).toFixed(1) + '%');
@@ -939,7 +938,6 @@
           html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + noteParts.join('；') + '。合計換算倍率 ×' + (mult * 100).toFixed(2) + '%。</div>';
         }
       }
-      html += dropCalcNote();
     }
 
     $detail.innerHTML = html;
