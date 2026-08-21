@@ -34,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -84,7 +84,8 @@
     { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
     { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
     { panel: "party", icon: "👥", title: "隊伍", desc: "把另一個角色加入隊伍（複製對方目前的戰鬥快照）。" },
-    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "賣出保留清單等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
+    { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "離線紀錄、亂數種子等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
+    { panel: "sellkeep", icon: "🛒", title: "自動販賣保留清單", desc: "用物品搜尋新增/刪除保留項目，設定保留數量，0 代表全數自動賣出。" },
     { panel: "json", icon: "{ }", title: "JSON 編輯器", desc: "直接編輯整份存檔的原始 JSON，萬用備援手段。" },
     { panel: "transfer", icon: "🔁", title: "轉移碼", desc: "產生/讀取遊戲內建那種六碼轉移碼，透過 Litterbox 暫存交換存檔。" }
   ];
@@ -2188,14 +2189,92 @@
     $box.innerHTML = '<div class="panel-desc">選擇上面其中一個模式開始。</div>';
   }
 
-  // ---------- 進階（推測格式）欄位：原始 JSON ----------
+  // ---------- 進階（推測格式）欄位 ----------
   var RAW_FIELDS = [
-    { key: "sellKeep", label: "賣出時保留清單 sellKeep", confidence: "mid", note: "格式為 [[物品ID, 保留數量], ...]（已由真實存檔驗證）。保留數量的確切意義尚待進一步確認。" },
     { key: "offlineHistory", label: "離線紀錄 offlineHistory", confidence: "mid", note: "只是歷史紀錄，通常不需要編輯，格式已由真實存檔驗證。" },
     { key: "rngState", label: "亂數種子 rngState", confidence: "mid", note: "單一整數，用於決定連線後的隨機結果，建議不要隨意更動。" }
   ];
 
+  // 自動販賣保留清單 sellKeep：陣列，每一項是 [物品ID, 保留數量]。
+  // 保留數量代表「背包裡最多留這麼多個，超過的部分會自動賣掉」，輸入 0 就是這個物品全數自動賣出。
+  // 不在這份清單裡的物品，代表永遠不會被自動賣掉。
+  function renderSellKeepField(c) {
+    var wrap = document.getElementById("sellKeepField");
+    wrap.innerHTML = "";
+
+    var box = el("div", { class: "raw-field" });
+    var title = el("div", { class: "fname" });
+    title.appendChild(document.createTextNode("自動販賣保留清單 sellKeep　"));
+    title.appendChild(el("span", { class: "conf-badge mid", text: "格式推測" }));
+    box.appendChild(title);
+    box.appendChild(el("div", {
+      class: "note",
+      text: "清單裡的物品，背包數量超過「保留數量」的部分會被自動賣掉；輸入 0 代表這個物品全數自動賣出。不在清單裡的物品則永遠不會被自動賣掉。"
+    }));
+
+    if (!Array.isArray(c.sellKeep)) c.sellKeep = [];
+
+    var searchInput = el("input", {
+      type: "text", placeholder: "輸入關鍵字搜尋物品名稱...",
+      style: "width:100%;max-width:280px;margin-bottom:12px;"
+    });
+    box.appendChild(searchInput);
+
+    var list = el("div", { style: "display:flex;flex-direction:column;gap:8px;" });
+    box.appendChild(list);
+
+    function renderList() {
+      var q = searchInput.value.trim();
+      list.innerHTML = "";
+      if (c.sellKeep.length === 0) {
+        list.appendChild(el("div", { class: "note", text: "目前清單是空的（所有物品都不會被自動賣掉）。" }));
+        return;
+      }
+      var filtered = q ? c.sellKeep.filter(function (entry) { return itemName(entry[0]).indexOf(q) !== -1; }) : c.sellKeep;
+      if (filtered.length === 0) {
+        list.appendChild(el("div", { class: "note", text: "沒有符合「" + q + "」的物品。" }));
+        return;
+      }
+      filtered.forEach(function (entry) {
+        var row = el("div", {
+          style: "display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;"
+        });
+
+        var nameSpan = el("span", { style: "flex:1;min-width:140px;font-size:13px;" });
+        nameSpan.textContent = itemName(entry[0]) + "　#" + entry[0];
+        row.appendChild(nameSpan);
+
+        row.appendChild(el("span", { class: "note", text: "保留數量", style: "margin:0;" }));
+        var qtyInput = el("input", {
+          type: "number", min: "0", step: "1", style: "width:90px;",
+          title: "輸入 0 代表這個物品全數自動賣出", placeholder: "0 = 全數自動賣出"
+        });
+        qtyInput.value = entry[1] < 0 ? 0 : entry[1];
+        qtyInput.addEventListener("input", function () {
+          var v = qtyInput.valueAsNumber;
+          entry[1] = isNaN(v) || v < 0 ? 0 : Math.floor(v);
+        });
+        row.appendChild(qtyInput);
+
+        var delBtn = el("button", { class: "icon-btn", text: "✕", title: "從清單移除" });
+        delBtn.addEventListener("click", function () {
+          c.sellKeep.splice(c.sellKeep.indexOf(entry), 1);
+          renderList();
+        });
+        row.appendChild(delBtn);
+
+        list.appendChild(row);
+      });
+    }
+
+    searchInput.addEventListener("input", renderList);
+    renderList();
+
+    wrap.appendChild(box);
+  }
+
   function renderRawFields(c) {
+    renderSellKeepField(c);
     var wrap = document.getElementById("rawFields");
     wrap.innerHTML = "";
     RAW_FIELDS.forEach(function (f) {

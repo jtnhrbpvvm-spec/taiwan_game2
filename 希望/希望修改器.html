@@ -240,6 +240,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 
     <div class="nav-section">進階</div>
     <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
+    <div class="nav-item" data-panel="sellkeep">🛒 自動販賣保留清單</div>
 
     <div class="nav-section">工具</div>
     <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
@@ -526,10 +527,18 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="panel" id="panel-advanced">
       <div class="panel-title">🔧 進階欄位 <span class="conf">格式為推測值</span></div>
       <div class="panel-desc">
-        以下欄位的格式已透過一份真實的滿等存檔驗證過（不再是憑空猜測），但因為內部結構比較複雜（陣列包陣列、物件包物件），
-        暫時還是用原始 JSON 呈現，還沒做成表單。修改前建議先備份存檔。
+        內部結構比較複雜（陣列包陣列、物件包物件），暫時還是用原始 JSON 呈現，還沒做成表單。修改前建議先備份存檔。
       </div>
       <div id="rawFields"></div>
+    </div>
+
+    <!-- ══ 自動販賣保留清單 ══ -->
+    <div class="panel" id="panel-sellkeep">
+      <div class="panel-title">🛒 自動販賣保留清單</div>
+      <div class="panel-desc">
+        已經做成表單，可以直接用物品搜尋新增／刪除，不用手動編輯 JSON。
+      </div>
+      <div id="sellKeepField"></div>
     </div>
 
     <!-- ══ 轉移碼 ══ -->
