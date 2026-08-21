@@ -38,6 +38,51 @@
   var ENCHANT_VALUES = window.ENCHANT_VALUES || {};
   var ENCHANT_WINDERS = window.ENCHANT_WINDERS || [];
 
+  // ---------- 等級差掉落率衰減（反推自遊戲原始程式碼，已確認生效）----------
+  var DROP_DECAY_TABLE = [[55, .05], [50, .35], [45, .65], [40, .75], [35, .85], [30, .95]];
+  function dropLevelMultiplier(playerLv, monsterLv) {
+    var diff = playerLv - monsterLv;
+    for (var i = 0; i < DROP_DECAY_TABLE.length; i++) {
+      if (diff >= DROP_DECAY_TABLE[i][0]) return DROP_DECAY_TABLE[i][1];
+    }
+    return 1;
+  }
+  var DROP_WHIFF_CHANCE = 0.145; // 已由原始程式碼確認：攻擊力=0的怪物每次擊殺有14.5%機率整批掉落全部落空
+  function dropWhiffMultiplier(monsterAtk) {
+    return monsterAtk === 0 ? (1 - DROP_WHIFF_CHANCE) : 1;
+  }
+  var dropCalcState = { level: null, blacksmith: false };
+
+  function dropCalcBar() {
+    var html = '<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
+    html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">你目前的等級（用來換算實際掉落率）</label>' +
+      '<input type="number" id="dropCalcLevel" min="1" max="999" value="' + (dropCalcState.level != null ? dropCalcState.level : "") + '" placeholder="輸入等級..." ' +
+      'style="width:110px;padding:8px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);"></div>';
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;padding-bottom:9px;">' +
+      '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠職業</label>';
+    html += '</div>';
+    return html;
+  }
+  function wireDropCalcBar(onChange) {
+    var $lv = document.getElementById("dropCalcLevel");
+    var $bs = document.getElementById("dropCalcBlacksmith");
+    if ($lv) $lv.addEventListener("change", function () {
+      dropCalcState.level = $lv.value ? Number($lv.value) : null;
+      onChange();
+    });
+    if ($bs) $bs.addEventListener("change", function () {
+      dropCalcState.blacksmith = $bs.checked;
+      onChange();
+    });
+  }
+  function dropCalcNote() {
+    if (!dropCalcState.blacksmith) return "";
+    return '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' +
+      '「鐵匠的眼光」技能目前在遊戲原始碼裡被標記為尚未啟用（沒有實際數值效果），所以勾選這項不會改變下面的計算結果，等遊戲正式做出來後會再更新。' +
+      '</div>';
+  }
+
+
   // ---------- 鐵匠鑑定（跟齒輪強化是不同系統，公式反推自遊戲原始程式碼）----------
   var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
   var APPR_FF = {
@@ -765,23 +810,38 @@
     if (!drops.length) {
       html += '<div class="empty-note">目前資料中沒有任何怪物掉落這個物品（可能來自商店、任務、製作或活動）。</div>';
     } else {
+      html += dropCalcBar();
+      var hasAnyWhiff = drops.some(function (d) { var m = MONSTERS[String(d.m)]; return m && m.atk === 0; });
+      var showAdj = dropCalcState.level != null || hasAnyWhiff;
       html += '<table class="dtable"><thead><tr>' +
-        '<th>怪物</th><th>出現地圖</th><th>掉落機率</th></tr></thead><tbody>';
+        '<th>怪物</th><th>出現地圖</th><th>原始機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
       drops.forEach(function (d) {
         var mon = MONSTERS[String(d.m)];
         if (!mon) return;
         var maps = mon.maps.map(mapName).join("、");
+        var adjCell = "";
+        if (showAdj) {
+          var levelMult = dropCalcState.level != null ? dropLevelMultiplier(dropCalcState.level, mon.lv) : 1;
+          var whiffMult = dropWhiffMultiplier(mon.atk);
+          var mult = levelMult * whiffMult;
+          var adjRate = d.r * mult;
+          adjCell = '<td><span class="' + rateClass(adjRate) + '">' + pct(adjRate) + '</span>' +
+            (mult < 1 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (mult * 100).toFixed(1) + '%)</span>' : '') + '</td>';
+        }
         html += '<tr class="clickable" data-goto-monster="' + d.m + '">' +
-          '<td><span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + '</span></td>' +
+          '<td><span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + (mon.atk === 0 ? ' <span style="color:var(--text-faint);font-size:11px;">（攻0）</span>' : '') + '</span></td>' +
           '<td>' + escapeHtml(maps || "-") + '</td>' +
           '<td><span class="' + rateClass(d.r) + '">' + pct(d.r) + '</span><span class="group-tag">組' + d.g + '</span></td>' +
+          adjCell +
           '</tr>';
       });
       html += '</tbody></table>';
+      html += dropCalcNote();
     }
 
     $detail.innerHTML = html;
     bindDetailClicks();
+    wireDropCalcBar(function () { showItem(id); });
   }
 
   function eqStat(label, v) {
@@ -835,20 +895,46 @@
     if (!drops.length) {
       html += '<div class="empty-note">這隻怪物目前沒有紀錄任何掉落物。</div>';
     } else {
-      html += '<table class="dtable"><thead><tr><th>物品</th><th>掉落機率</th></tr></thead><tbody>';
+      html += dropCalcBar();
+      var hasWhiff = mon.atk === 0;
+      var showAdj = dropCalcState.level != null || hasWhiff;
+      var levelMult = dropCalcState.level != null ? dropLevelMultiplier(dropCalcState.level, mon.lv) : 1;
+      var whiffMult = dropWhiffMultiplier(mon.atk);
+      var mult = levelMult * whiffMult;
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>原始機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
       drops.forEach(function (d) {
         var it = ITEMS[String(d.i)];
         var name = it ? it.name : ("物品#" + d.i);
+        var adjCell = "";
+        if (showAdj) {
+          var adjRate = d.r * mult;
+          adjCell = '<td><span class="' + rateClass(adjRate) + '">' + pct(adjRate) + '</span></td>';
+        }
         html += '<tr class="clickable" data-goto-item="' + d.i + '">' +
           '<td><span class="name-link">' + escapeHtml(name) + '</span></td>' +
           '<td><span class="' + rateClass(d.r) + '">' + pct(d.r) + '</span><span class="group-tag">組' + d.g + '</span></td>' +
+          adjCell +
           '</tr>';
       });
       html += '</tbody></table>';
+      if (showAdj) {
+        var noteParts = [];
+        if (dropCalcState.level != null) {
+          noteParts.push('等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (levelMult * 100).toFixed(0) + '%');
+        }
+        if (hasWhiff) {
+          noteParts.push('這隻怪物攻擊力為 0，每次擊殺有 ' + (DROP_WHIFF_CHANCE * 100).toFixed(1) + '% 機率整批掉落全部落空，換算成有效倍率 ×' + (whiffMult * 100).toFixed(1) + '%');
+        }
+        if (noteParts.length) {
+          html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + noteParts.join('；') + '。合計換算倍率 ×' + (mult * 100).toFixed(2) + '%。</div>';
+        }
+      }
+      html += dropCalcNote();
     }
 
     $detail.innerHTML = html;
     bindDetailClicks();
+    wireDropCalcBar(function () { showMonster(id); });
   }
 
   function statTile(label, val) {
