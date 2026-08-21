@@ -80,9 +80,24 @@ body{
 }
 
 /* ---------- Search ---------- */
+.search-row{
+  display:flex; gap:14px; align-items:flex-end; margin-top:22px; flex-wrap:wrap;
+}
+.search-row .search-box{margin-top:0; flex:1; min-width:220px;}
+.level-field{display:flex; flex-direction:column; gap:5px;}
+.level-field label{
+  font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap;
+}
+.level-field input{
+  background:var(--ink-2); color:var(--text); border:1px solid var(--line-hi); border-radius:3px;
+  padding:9px 10px; font-size:13.5px; font-family:inherit; width:130px; outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.level-field input:focus{
+  border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,162,75,0.16);
+}
 .search-box{
   position:relative;
-  margin-top:22px;
 }
 .search-box input{
   width:100%;
@@ -274,9 +289,15 @@ footer{
     <h1>希望圖鑑・<span>掉落查詢</span></h1>
     <p>輸入物品名稱，查出所有會掉落它的怪物、出現地圖與機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。</p>
 
-    <div class="search-box">
-      <span class="icon">⌕</span>
-      <input id="searchInput" type="text" placeholder="搜尋物品或怪物名稱，例如：鐵、咕咕..." autocomplete="off" spellcheck="false">
+    <div class="search-row">
+      <div class="search-box">
+        <span class="icon">⌕</span>
+        <input id="searchInput" type="text" placeholder="搜尋物品或怪物名稱，例如：鐵、咕咕..." autocomplete="off" spellcheck="false">
+      </div>
+      <div class="level-field">
+        <label>你目前的等級（用來換算實際掉落率）</label>
+        <input type="number" id="globalDropLevel" min="1" max="999" placeholder="輸入等級...">
+      </div>
     </div>
     <div class="hint-row" id="hintRow"></div>
 

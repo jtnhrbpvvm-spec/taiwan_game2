@@ -55,24 +55,32 @@
 
   function dropCalcBar() {
     var html = '<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
-    html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">你目前的等級（用來換算實際掉落率）</label>' +
-      '<input type="number" id="dropCalcLevel" min="1" max="999" value="' + (dropCalcState.level != null ? dropCalcState.level : "") + '" placeholder="輸入等級..." ' +
-      'style="width:110px;padding:8px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);"></div>';
-    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;padding-bottom:9px;">' +
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">' +
       '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠職業</label>';
     html += '</div>';
     return html;
   }
   function wireDropCalcBar(onChange) {
-    var $lv = document.getElementById("dropCalcLevel");
     var $bs = document.getElementById("dropCalcBlacksmith");
-    if ($lv) $lv.addEventListener("change", function () {
-      dropCalcState.level = $lv.value ? Number($lv.value) : null;
-      onChange();
-    });
     if ($bs) $bs.addEventListener("change", function () {
       dropCalcState.blacksmith = $bs.checked;
       onChange();
+    });
+  }
+  // 目前正在顯示的詳細頁（讓上方全域等級欄位變更時可以重新渲染）
+  var currentDetail = null;
+  function rerenderCurrentDetail() {
+    if (!currentDetail) return;
+    if (currentDetail.type === "monster") showMonster(currentDetail.id);
+    else showItem(currentDetail.id);
+  }
+  function wireGlobalLevelField() {
+    var $gl = document.getElementById("globalDropLevel");
+    if (!$gl) return;
+    if (dropCalcState.level != null) $gl.value = dropCalcState.level;
+    $gl.addEventListener("change", function () {
+      dropCalcState.level = $gl.value ? Number($gl.value) : null;
+      rerenderCurrentDetail();
     });
   }
   function dropCalcNote() {
@@ -749,6 +757,7 @@
     var item = ITEMS[id];
     if (!item) return;
     markActive("item", id);
+    currentDetail = { type: "item", id: id };
 
     var drops = (DROP_INDEX[id] || []).slice().sort(function (a, b) { return b.r - a.r; });
 
@@ -863,6 +872,7 @@
     var mon = MONSTERS[id];
     if (!mon) return;
     markActive("monster", id);
+    currentDetail = { type: "monster", id: id };
 
     var elLabel = ELEMENT_LABEL[mon.element] || mon.element;
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
@@ -1108,4 +1118,6 @@
     showItem(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
+
+  wireGlobalLevelField();
 })();
