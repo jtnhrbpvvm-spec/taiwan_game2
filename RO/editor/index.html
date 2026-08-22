@@ -193,7 +193,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V2</span>
+      <h1>存檔修改器</h1><span class="ver">V3</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -425,7 +425,9 @@
   // getCandidates：回傳目前允許選的道具 ID 陣列的函式（每次開合都重新呼叫一次，
   // 這樣裝備分頁切換部位時，候選清單會自動跟著換，不用額外重建）。
   // onPick：選到一個道具之後的額外處理（例如刷新精鍊值鎖定狀態）。
-  function attachItemAutocomplete(input, getCandidates, onPick) {
+  function attachItemAutocomplete(input, getCandidates, onPick, opts) {
+    opts = opts || {};
+    var maxResults = opts.maxResults || 40;
     var wrap = document.createElement('div');
     wrap.className = 'ac-wrap';
     input.parentNode.insertBefore(wrap, input);
@@ -440,7 +442,7 @@
       if (!matches.length) {
         list.innerHTML = '<div class="ac-empty">找不到符合的道具</div>';
       } else {
-        matches.slice(0, 40).forEach(function (id) {
+        matches.slice(0, maxResults).forEach(function (id) {
           var meta = state.init.itemMeta[id];
           var row = document.createElement('div');
           row.className = 'ac-item';
@@ -461,8 +463,13 @@
     }
     function filterNow() {
       var q = input.value.trim().toLowerCase();
-      if (!q) { close(); return; }
       var candidates = getCandidates();
+      if (!q) {
+        // 裝備分頁：搜尋框一聚焦就先列出這個部位全部能裝的道具，不用先打字（跟以前 datalist 的行為一致）。
+        // 背包／倉庫的搜尋範圍是全部道具（數千筆），沒打字就不列，避免一次塞爆清單。
+        if (opts.showAllOnFocus) { renderMatches(candidates); } else { close(); }
+        return;
+      }
       var matches = candidates.filter(function (id) {
         var meta = state.init.itemMeta[id];
         if (!meta) return false;
@@ -471,7 +478,9 @@
       renderMatches(matches);
     }
     input.addEventListener('input', filterNow);
-    input.addEventListener('focus', function () { if (input.value.trim()) filterNow(); });
+    input.addEventListener('focus', function () {
+      if (input.value.trim() || opts.showAllOnFocus) filterNow();
+    });
     document.addEventListener('click', function (e) {
       if (!wrap.contains(e.target)) close();
     });
@@ -489,7 +498,7 @@
     }, null);
     attachItemAutocomplete($('equip-add-id'), function () {
       return itemIdsForSlot($('equip-add-slot').value);
-    }, function () { refreshEquipRefineLock(); });
+    }, function () { refreshEquipRefineLock(); }, { showAllOnFocus: true, maxResults: 200 });
   }
 
   // ---------------- 欄位選擇畫面 ----------------
@@ -808,12 +817,21 @@
       opt.textContent = pair[1];
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', function () { clearEquipAddSearch(); refreshEquipRefineLock(); });
+    sel.addEventListener('change', onEquipSlotPicked);
   }
   // 切換部位時，把搜尋框清空——候選清單是即時算的（見 setupItemAutocompletes 裡
   // 傳給 attachItemAutocomplete 的 getCandidates），不用重建，只需要把舊的搜尋字清掉。
   function clearEquipAddSearch() {
     $('equip-add-id').value = '';
+  }
+  // 部位下拉選單真的被玩家手動切換時才這樣做：清空搜尋字＋重新 focus，
+  // 讓新部位的道具清單立刻彈出來。跟 openSlotEditor() 那次初始清空分開，
+  // 不然一打開角色編輯畫面就跳出手機鍵盤會很煩。
+  function onEquipSlotPicked() {
+    var inp = $('equip-add-id');
+    inp.value = '';
+    inp.focus();
+    refreshEquipRefineLock();
   }
   // 彈藥沒有精鍊這回事，選到彈藥欄位就直接鎖住精鍊值輸入框。
   function refreshEquipRefineLock() {
