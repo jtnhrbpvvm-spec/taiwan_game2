@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自動販賣保留清單</title>
+<style>
+:root{
+  --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
+  --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
+  --text:#e8eaf6; --text2:#9fa8da; --text3:#5a6088;
+  --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
+}
+html{background:var(--bg);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Noto Sans TC","Microsoft JhengHei",'Segoe UI',sans-serif;
+  height:100vh; display:flex; flex-direction:column; overflow:hidden; font-size:14px;
+}
+#topbar{
+  background:var(--bg2); padding:10px 14px; display:flex; gap:8px; align-items:center;
+  border-bottom:1px solid var(--border); flex-wrap:wrap; flex-shrink:0;
+}
+.bar-title{font-weight:700;color:var(--accent2);margin-right:6px;font-size:15px;white-space:nowrap;}
+.bar-sep{color:var(--border);padding:0 2px;}
+#main{display:flex;flex:1;overflow:hidden;background:var(--bg);}
+#sidebar{width:172px;background:var(--bg2);border-right:1px solid var(--border);padding:10px;flex-shrink:0;overflow-y:auto;}
+.nav-section{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 5px;}
+.nav-section:first-child{padding-top:2px;}
+.nav-item{
+  padding:9px 10px;cursor:pointer;color:var(--text2);border-radius:5px;margin-bottom:2px;font-size:13.5px;
+  display:flex;align-items:center;gap:7px;border-left:3px solid transparent;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--bg3);color:#fff;border-left-color:var(--accent);}
+
+#content{flex:1;padding:22px 26px;overflow-y:auto;position:relative;background:var(--bg);}
+.panel{display:none;}
+.panel.active{display:block;max-width:880px;}
+
+.panel-title{
+  font-size:16px;font-weight:700;color:var(--text2);margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.panel-title .conf{font-size:11px;font-weight:400;padding:2px 8px;border-radius:10px;border:1px solid var(--yellow);color:var(--yellow);}
+.panel-desc{font-size:12.5px;color:var(--text3);margin:-8px 0 16px;line-height:1.7;}
+
+.btn{
+  padding:8px 14px;cursor:pointer;background:var(--bg3);color:var(--text);
+  border:1px solid var(--border);border-radius:5px;font-size:13px;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);color:#fff;}
+.btn.btn-accent{background:var(--accent);border-color:var(--accent);}
+.btn.btn-accent:hover{background:var(--accent2);}
+.btn.btn-sm{padding:4px 10px;font-size:12px;}
+.btn[disabled]{opacity:.4;cursor:not-allowed;}
+label.btn input[type=file]{display:none;}
+
+input[type=text],input[type=number],select,textarea{
+  background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;
+  padding:8px 10px;font-size:13.5px;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+
+.form-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.section-title{
+  font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;
+  margin:20px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--border);
+}
+
+.icon-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;
+  width:30px;height:30px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{border-color:var(--red);color:var(--red);}
+
+.item-picker{position:relative;}
+.item-picker input{width:100%;}
+.item-picker .suggest{
+  position:absolute;z-index:50;top:100%;left:0;right:0;background:var(--bg2);
+  border:1px solid var(--border);border-radius:4px;max-height:220px;overflow-y:auto;display:none;
+}
+.item-picker .suggest div{padding:8px 10px;cursor:pointer;font-size:13px;}
+.item-picker .suggest div:hover{background:var(--bg3);}
+.item-picker .suggest.show{display:block;}
+
+.raw-field{margin-bottom:20px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;}
+.raw-field .fname{font-size:13px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;font-weight:600;}
+.conf-badge{font-size:10px;padding:1px 7px;border-radius:10px;border:1px solid;text-transform:uppercase;letter-spacing:.03em;font-weight:400;}
+.conf-badge.mid{color:var(--yellow);border-color:var(--yellow);}
+.raw-field .note{font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6;}
+
+.dropzone{
+  border:2px dashed var(--border);border-radius:8px;padding:40px 20px;text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s;margin-bottom:24px;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:rgba(92,107,192,.06);}
+.dropzone .big{font-size:32px;opacity:.5;margin-bottom:10px;}
+.dropzone p{margin:4px 0;color:var(--text2);font-size:13.5px;}
+.dropzone input{display:none;}
+
+.char-select-wrap{display:flex;align-items:center;gap:6px;}
+#charSelect{min-width:150px;}
+
+#toastArea{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.toast{padding:10px 16px;border-radius:5px;font-size:13px;background:var(--bg3);border:1px solid var(--border);color:var(--text);animation:fadeIn .2s ease;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.toast.ok{border-color:var(--green);color:var(--green);}
+.toast.err{border-color:var(--red);color:var(--red);}
+.toast.warn{border-color:var(--yellow);color:var(--yellow);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+
+<div id="toastArea"></div>
+
+<div id="topbar">
+  <span class="bar-title">🛒 自動販賣保留清單</span>
+  <span class="bar-sep">|</span>
+  <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
+  <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
+  <span class="bar-sep">|</span>
+  <div class="char-select-wrap">
+    <select id="charSelect" disabled><option>（尚未載入存檔）</option></select>
+  </div>
+  <span id="loadStatus" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div class="nav-section">存檔</div>
+    <div class="nav-item active" data-panel="overview">📂 匯入匯出存檔</div>
+    <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
+    <div class="nav-item" data-panel="sellkeep">🛒 自動販賣保留清單</div>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ 匯入匯出存檔 ══ -->
+    <div class="panel active" id="panel-overview">
+      <div class="panel-title">📂 匯入匯出存檔</div>
+      <div class="panel-desc">
+        上傳你的 idle-seal 存檔檔案後，就可以編輯自動販賣保留清單，或用轉移碼在裝置間交換存檔。
+        所有處理都在瀏覽器本機進行，不會上傳到任何伺服器（轉移碼功能除外，見「轉移碼」頁說明）。
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <div class="big">⇪</div>
+        <p><b>點擊選擇檔案</b>，或把存檔拖曳到這裡</p>
+        <p style="font-size:12px;">支援 idle-seal-save-*.json</p>
+        <input type="file" id="fileInput2" accept=".json">
+      </div>
+
+      <div class="section-title">匯出存檔</div>
+      <div class="panel-desc" style="margin-top:0;">編輯完自動販賣保留清單後，記得回到最上面按「💾 匯出存檔」下載修改後的檔案。</div>
+    </div>
+
+    <!-- ══ 轉移碼 ══ -->
+    <div class="panel" id="panel-transfer">
+      <div class="panel-title">🔁 轉移碼</div>
+      <div class="panel-desc">
+        跟遊戲內建的轉移碼是同一套機制：把存檔暫存到 Litterbox（catbox.moe 的臨時檔案服務），
+        換一組短碼帶著走。<b>72 小時後檔案會自動刪除</b>，短碼本身不會過期以外的時間保存資料。
+      </div>
+
+      <div class="section-title">產生轉移碼</div>
+      <div class="form-row">
+        <button class="btn btn-accent" id="genTransferBtn">🔑 產生轉移碼</button>
+      </div>
+      <div id="transferCodeBox" style="display:none;align-items:center;gap:10px;margin-top:10px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;">
+        <span id="transferCodeText" style="font-family:monospace;font-size:22px;font-weight:700;letter-spacing:.15em;color:var(--accent2);"></span>
+        <button class="btn btn-sm" id="copyTransferBtn">📋 複製</button>
+      </div>
+
+      <div class="section-title" style="margin-top:26px;">輸入轉移碼</div>
+      <div class="form-row">
+        <input type="text" id="transferCodeInput" placeholder="輸入六碼轉移碼..." style="font-family:monospace;letter-spacing:.1em;width:200px;">
+        <button class="btn btn-accent" id="useTransferBtn">📥 讀取並載入</button>
+      </div>
+      <div id="transferMsg" class="panel-desc" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- ══ 自動販賣保留清單 ══ -->
+    <div class="panel" id="panel-sellkeep">
+      <div class="panel-title">🛒 自動販賣保留清單 <span class="conf">格式為推測值</span></div>
+      <div class="panel-desc">先在「📂 匯入匯出存檔」載入存檔，並在上方選好要編輯的角色。</div>
+      <div id="sellKeepField"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Toast ----------
+  function toast(msg, kind) {
+    var area = document.getElementById("toastArea");
+    var t = document.createElement("div");
+    t.className = "toast" + (kind ? " " + kind : "");
+    t.textContent = msg;
+    area.appendChild(t);
+    setTimeout(function () {
+      t.style.opacity = "0";
+      t.style.transition = "opacity .3s";
+      setTimeout(function () { t.remove(); }, 300);
+    }, 2600);
+  }
+
+  // ---------- 小工具 ----------
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "text") e.textContent = attrs[k];
+      else if (k === "html") e.innerHTML = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+
+  // ---------- 物品資料 ----------
+  // 跟修改器一樣，用 <script src> 載入 data/items.js（而不是用 fetch 讀 data/items.json）。
+  // 直接用瀏覽器開啟本機 html 檔案（file://）時，fetch 讀取本機檔案常會被瀏覽器的安全限制擋掉，
+  // 造成物品名稱讀不到、全部顯示成「物品#id」；改用 <script src> 跟修改器讀取同一份資料就不會有這個問題。
+  var ITEM_BY_ID = {};
+  var itemArr = [];
+  var itemsLoaded = false;
+
+  function itemName(id) {
+    var it = ITEM_BY_ID[String(id)];
+    return it ? it.name : ("物品#" + id);
+  }
+
+  (function loadItemData() {
+    var script = document.createElement("script");
+    script.src = "data/items.js";
+    script.onload = function () {
+      var ITEMS = window.ITEMS || {};
+      Object.keys(ITEMS).forEach(function (id) { ITEM_BY_ID[String(id)] = ITEMS[id]; });
+      itemArr = Object.keys(ITEMS).map(function (id) { return { id: id, name: ITEMS[id].name }; });
+      itemsLoaded = true;
+      if (saveData) renderSellKeepField(currentChar());
+    };
+    script.onerror = function () {
+      toast("物品資料載入失敗（data/items.js），請確認這個檔案跟修改器放在同一個資料夾", "err");
+    };
+    document.head.appendChild(script);
+  })();
+
+  // ---------- 側邊欄面板切換 ----------
+  function showPanel(name) {
+    document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
+    document.querySelectorAll(".nav-item").forEach(function (n) { n.classList.remove("active"); });
+    var panel = document.getElementById("panel-" + name);
+    var nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
+    if (panel) panel.classList.add("active");
+    if (nav) nav.classList.add("active");
+  }
+  document.querySelectorAll(".nav-item").forEach(function (nav) {
+    nav.addEventListener("click", function () {
+      var name = nav.getAttribute("data-panel");
+      if (name === "sellkeep" && !saveData) {
+        toast("請先在「匯入匯出存檔」載入存檔檔案", "warn");
+        showPanel("overview");
+        return;
+      }
+      showPanel(name);
+    });
+  });
+
+  // ---------- 存檔狀態 ----------
+  var saveData = null;
+  var currentCharIndex = 0;
+  var originalFileName = "idle-seal-save.json";
+
+  function currentChar() {
+    return saveData ? saveData.characters[currentCharIndex] : null;
+  }
+
+  var $charSelect = document.getElementById("charSelect");
+  $charSelect.addEventListener("change", function () {
+    currentCharIndex = Number($charSelect.value);
+    renderSellKeepField(currentChar());
+  });
+
+  function renderCharSelect() {
+    $charSelect.innerHTML = "";
+    saveData.characters.forEach(function (c, idx) {
+      var isDefault = c.id === saveData.lastPlayedId;
+      $charSelect.appendChild(el("option", {
+        value: idx, text: c.name + (isDefault ? " ★" : "") + "  Lv." + c.level
+      }));
+    });
+    $charSelect.value = currentCharIndex;
+    $charSelect.disabled = false;
+  }
+
+  // ---------- 檔案載入 ----------
+  function bindDropzone(inputId, zoneId) {
+    var $zone = document.getElementById(zoneId);
+    var $input = document.getElementById(inputId);
+    if (!$zone) return;
+    $zone.addEventListener("click", function () { $input.click(); });
+    $zone.addEventListener("dragover", function (e) { e.preventDefault(); $zone.classList.add("drag"); });
+    $zone.addEventListener("dragleave", function () { $zone.classList.remove("drag"); });
+    $zone.addEventListener("drop", function (e) {
+      e.preventDefault(); $zone.classList.remove("drag");
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    $input.addEventListener("change", function () {
+      if ($input.files.length) handleFile($input.files[0]);
+    });
+  }
+  bindDropzone("fileInput2", "dropzone");
+  document.getElementById("fileInput").addEventListener("change", function (e) {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function afterLoad() {
+    document.getElementById("exportBtn").disabled = false;
+    renderCharSelect();
+    renderSellKeepField(currentChar());
+  }
+
+  function handleFile(file) {
+    originalFileName = file.name || originalFileName;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (!data || !Array.isArray(data.characters)) {
+          throw new Error("找不到 characters 陣列，這可能不是 idle-seal 的存檔檔案。");
+        }
+        saveData = data;
+        currentCharIndex = 0;
+        document.getElementById("loadStatus").textContent = "已載入：" + file.name + "（" + data.characters.length + " 位角色）";
+        toast("存檔載入成功", "ok");
+        afterLoad();
+        showPanel("sellkeep");
+      } catch (err) {
+        toast("讀取失敗：" + err.message, "err");
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  // ---------- 匯出 ----------
+  function doExport() {
+    saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
+    var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var base = originalFileName.replace(/\.json$/i, "");
+    a.href = url;
+    a.download = base + "-modified.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("已匯出存檔檔案", "ok");
+  }
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    if (!saveData) return;
+    doExport();
+  });
+
+  // ---------- 自動販賣保留清單 sellKeep ----------
+  // 格式：陣列，每一項是 [物品ID, 保留數量]。
+  // 保留數量代表「背包裡最多留這麼多個，超過的部分會自動賣掉」，輸入 0 就是這個物品全數自動賣出。
+  // 不在這份清單裡的物品，代表永遠不會被自動賣掉。
+  function renderSellKeepField(c) {
+    var wrap = document.getElementById("sellKeepField");
+    wrap.innerHTML = "";
+    if (!c) {
+      wrap.appendChild(el("div", { class: "note", text: "尚未載入存檔。" }));
+      return;
+    }
+
+    var box = el("div", { class: "raw-field" });
+    var title = el("div", { class: "fname" });
+    title.appendChild(document.createTextNode("自動販賣保留清單 sellKeep　"));
+    title.appendChild(el("span", { class: "conf-badge mid", text: "格式推測" }));
+    box.appendChild(title);
+    box.appendChild(el("div", {
+      class: "note",
+      text: "清單裡的物品，背包數量超過「保留數量」的部分會被自動賣掉；輸入 0 代表這個物品全數自動賣出。不在清單裡的物品則永遠不會被自動賣掉。目前角色：" + c.name
+    }));
+
+    if (!Array.isArray(c.sellKeep)) c.sellKeep = [];
+
+    var searchInput = el("input", {
+      type: "text", placeholder: "輸入關鍵字搜尋物品名稱...",
+      style: "width:100%;max-width:280px;margin-bottom:12px;"
+    });
+    box.appendChild(searchInput);
+
+    var list = el("div", { style: "display:flex;flex-direction:column;gap:8px;" });
+    box.appendChild(list);
+
+    function renderList() {
+      var q = searchInput.value.trim();
+      list.innerHTML = "";
+      if (c.sellKeep.length === 0) {
+        list.appendChild(el("div", { class: "note", text: "目前清單是空的（所有物品都不會被自動賣掉）。" }));
+        return;
+      }
+      var filtered = q ? c.sellKeep.filter(function (entry) { return itemName(entry[0]).indexOf(q) !== -1; }) : c.sellKeep;
+      if (filtered.length === 0) {
+        list.appendChild(el("div", { class: "note", text: "沒有符合「" + q + "」的物品。" }));
+        return;
+      }
+      filtered.forEach(function (entry) {
+        var row = el("div", {
+          style: "display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;"
+        });
+
+        var nameSpan = el("span", { style: "flex:1;min-width:140px;font-size:13px;" });
+        nameSpan.textContent = itemName(entry[0]) + "　#" + entry[0];
+        row.appendChild(nameSpan);
+
+        row.appendChild(el("span", { class: "note", text: "保留數量", style: "margin:0;" }));
+        var qtyInput = el("input", {
+          type: "number", min: "0", step: "1", style: "width:90px;",
+          title: "輸入 0 代表這個物品全數自動賣出", placeholder: "0 = 全數自動賣出"
+        });
+        qtyInput.value = entry[1] < 0 ? 0 : entry[1];
+        qtyInput.addEventListener("input", function () {
+          var v = qtyInput.valueAsNumber;
+          entry[1] = isNaN(v) || v < 0 ? 0 : Math.floor(v);
+        });
+        row.appendChild(qtyInput);
+
+        var delBtn = el("button", { class: "icon-btn", text: "✕", title: "從清單移除" });
+        delBtn.addEventListener("click", function () {
+          c.sellKeep.splice(c.sellKeep.indexOf(entry), 1);
+          renderList();
+        });
+        row.appendChild(delBtn);
+
+        list.appendChild(row);
+      });
+    }
+
+    searchInput.addEventListener("input", renderList);
+    renderList();
+
+    wrap.appendChild(box);
+  }
+
+  // ---------- 轉移碼（Litterbox）----------
+  var LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php";
+  var LITTERBOX_HOST = "https://litter.catbox.moe/"; // 注意：檔案下載主機是 litter.catbox.moe，跟上傳 API 的 litterbox.catbox.moe 不同
+  var TRANSFER_EXT_CANDIDATES = ["json", "txt", "sav", ""]; // 讀取時依序嘗試的副檔名
+
+  function fetchWithTimeout(url, options, timeoutMs) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    options = options || {};
+    options.signal = controller.signal;
+    return fetch(url, options).finally(function () { clearTimeout(timer); });
+  }
+
+  document.getElementById("genTransferBtn").addEventListener("click", function () {
+    if (!saveData) { toast("請先載入存檔", "warn"); return; }
+    var btn = document.getElementById("genTransferBtn");
+    var msg = document.getElementById("transferMsg");
+    btn.disabled = true;
+    msg.textContent = "上傳中...";
+    msg.style.color = "";
+
+    saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
+    var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
+    var file = new File([blob], "save.json", { type: "application/json" });
+    var fd = new FormData();
+    fd.append("reqtype", "fileupload");
+    fd.append("time", "72h");
+    fd.append("fileToUpload", file);
+
+    fetchWithTimeout(LITTERBOX_API, { method: "POST", body: fd }, 20000)
+      .then(function (res) { return res.text(); })
+      .then(function (text) {
+        text = text.trim();
+        if (!/^https?:\/\//.test(text)) throw new Error(text || "伺服器回應異常");
+        var m = text.match(/\/([a-zA-Z0-9]+)\.[a-zA-Z0-9]+$/);
+        var code = m ? m[1] : text;
+        document.getElementById("transferCodeText").textContent = code;
+        document.getElementById("transferCodeBox").style.display = "flex";
+        msg.textContent = "已上傳，72 小時內都可以用這組碼讀回來。";
+        toast("轉移碼已產生：" + code, "ok");
+      })
+      .catch(function (err) {
+        msg.textContent = "產生轉移碼失敗：" + err.message + "（可能是網路問題或 Litterbox 服務異常，可以直接用「匯出存檔」改成手動傳檔案）";
+        msg.style.color = "var(--red)";
+        toast("產生轉移碼失敗", "err");
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  document.getElementById("copyTransferBtn").addEventListener("click", function () {
+    var code = document.getElementById("transferCodeText").textContent;
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(function () {
+      toast("已複製轉移碼", "ok");
+    }).catch(function () {
+      toast("複製失敗，請手動選取複製", "err");
+    });
+  });
+
+  document.getElementById("useTransferBtn").addEventListener("click", function () {
+    var code = document.getElementById("transferCodeInput").value.trim();
+    var msg = document.getElementById("transferMsg");
+    if (!code) { toast("請輸入轉移碼", "warn"); return; }
+    var btn = document.getElementById("useTransferBtn");
+    btn.disabled = true;
+
+    function tryExt(i) {
+      if (i >= TRANSFER_EXT_CANDIDATES.length) {
+        msg.textContent = "讀取失敗：找不到這組轉移碼對應的存檔（試過 .json/.txt/.sav/無副檔名 都失敗），請確認代碼是否正確、是否已超過 72 小時過期，或改用「匯出存檔」的檔案手動匯入。";
+        msg.style.color = "var(--red)";
+        toast("讀取轉移碼失敗", "err");
+        btn.disabled = false;
+        return;
+      }
+      var ext = TRANSFER_EXT_CANDIDATES[i];
+      var url = LITTERBOX_HOST + code + (ext ? "." + ext : "");
+      msg.textContent = "讀取中...（嘗試 " + (i + 1) + "/" + TRANSFER_EXT_CANDIDATES.length + "：" + (ext || "無副檔名") + "，最多等 8 秒）";
+      msg.style.color = "";
+
+      fetchWithTimeout(url, {}, 8000)
+        .then(function (res) { if (!res.ok) throw new Error("not found"); return res.text(); })
+        .then(function (text) {
+          var data = JSON.parse(text);
+          if (!data || !Array.isArray(data.characters)) throw new Error("格式不符");
+          saveData = data;
+          currentCharIndex = 0;
+          originalFileName = "idle-seal-transfer-" + code + ".json";
+          document.getElementById("loadStatus").textContent = "已載入轉移碼存檔（" + data.characters.length + " 位角色）";
+          afterLoad();
+          msg.textContent = "已成功載入轉移碼存檔。";
+          toast("已載入轉移碼存檔", "ok");
+          showPanel("sellkeep");
+          btn.disabled = false;
+        })
+        .catch(function () { tryExt(i + 1); });
+    }
+    tryExt(0);
+  });
+
+})();
+</script>
+</body>
+</html>
