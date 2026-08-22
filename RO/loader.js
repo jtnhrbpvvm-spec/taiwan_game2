@@ -81,7 +81,32 @@ const CSS = `
     border-right: none; border-bottom: none; font-size: 12px; padding: 10px 14px;
   }
   .tab-btn.active { box-shadow: inset 0 2px 0 var(--gold); }
-  .tab-content { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0)); }
+
+  /* 分頁內容改成獨立彈出的滿版視窗，不再跟地圖黏在同一個長頁面裡滑——
+     點下方分頁鈕（地圖／自動戰鬥／角色／…／裝備）之後，這裡會整片蓋住畫面，
+     內容自己捲動，跟戰鬥畫面完全分開，武器/防具清單也不會被擠到更下層。
+     預設收在畫面下方（translateY(100%)），body.ro-tabcontent-open 時才滑上來。 */
+  .tab-content {
+    position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 70;
+    background: var(--bg-panel-2);
+    padding: 54px 14px calc(78px + env(safe-area-inset-bottom, 0)) 14px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    transform: translateY(100%);
+    transition: transform .22s ease;
+    pointer-events: none;
+  }
+  body.ro-tabcontent-open .tab-content {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #ro-tabcontent-close {
+    position: fixed; top: 10px; right: 10px; z-index: 75;
+    display: none; align-items: center; justify-content: center;
+    min-height: 44px; padding: 8px 16px; border-radius: 8px;
+    background: var(--bg-panel-2); border: 1px solid var(--gold);
+    color: var(--gold-soft); font-size: 14px; cursor: pointer;
+  }
+  body.ro-tabcontent-open #ro-tabcontent-close { display: inline-flex; }
 
   /* 觸控熱區加大 */
   .btn-small, .btn-tiny, .yield-reset-btn, .map-item, .region-item,
@@ -589,6 +614,49 @@ function bindIdleReportOutsideClose() {
 if (isTouch) {
   bindAboutModalOutsideClose();
   bindIdleReportOutsideClose();
+  bindTabContentOverlay();
+}
+
+/* ============================================================
+   分頁內容改成獨立彈出視窗（見上面 CSS 的 .tab-content 覆寫）
+   做法：包一層 switchTab()，讓「切分頁」這件事額外觸發「彈出視窗」；
+   不改動遊戲本體任何切分頁的邏輯，該做的事還是全部交給原本的 switchTab 做。
+   ============================================================ */
+function ensureTabCloseBtn() {
+  if (document.getElementById('ro-tabcontent-close')) return;
+  const sidePanel = document.querySelector('.side-panel');
+  if (!sidePanel) return;
+  const btn = document.createElement('button');
+  btn.id = 'ro-tabcontent-close';
+  btn.type = 'button';
+  btn.textContent = '✕ 關閉';
+  btn.addEventListener('click', closeTabOverlay);
+  sidePanel.appendChild(btn);
+}
+function openTabOverlay() {
+  ensureTabCloseBtn();
+  document.body.classList.add('ro-tabcontent-open');
+}
+function closeTabOverlay() {
+  document.body.classList.remove('ro-tabcontent-open');
+}
+let _roLastTabClicked = null;
+function bindTabContentOverlay() {
+  if (window.__roTabOverlayBound) return;
+  if (typeof window.switchTab !== 'function') return; // ui.js 還沒載入完成就先不處理，不影響原本功能
+  window.__roTabOverlayBound = true;
+  const originalSwitchTab = window.switchTab;
+  window.switchTab = function (name) {
+    const wasOpen = document.body.classList.contains('ro-tabcontent-open');
+    const isRepeatTap = wasOpen && _roLastTabClicked === name;
+    originalSwitchTab.apply(this, arguments);
+    _roLastTabClicked = name;
+    if (isRepeatTap) {
+      closeTabOverlay(); // 同一顆分頁鈕再點一次＝關閉，跟大部分手機 App 的底部導覽習慣一致
+    } else {
+      openTabOverlay();
+    }
+  };
 }
 
 function handleEditorMessage(ev) {
