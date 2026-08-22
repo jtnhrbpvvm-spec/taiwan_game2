@@ -138,8 +138,8 @@
   }
   .add-col{ display:flex; flex-direction:column; gap:3px; }
   .add-col-label{ font-size:9.5px; color:var(--ink-dim); text-align:center; white-space:nowrap; }
-  .add-row input[list]{
-    flex:1; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+  .add-row .ac-wrap input, .add-row select{
+    background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
     color:var(--ink); padding:8px 9px; font-size:13px; min-width:0;
   }
   .add-row input[type=number]{
@@ -170,6 +170,18 @@
 
   ::-webkit-scrollbar{ width:8px; height:8px; }
   ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+
+  .ac-wrap{ position:relative; flex:1; min-width:100px; }
+  .ac-wrap input{ width:100%; }
+  .ac-list{
+    position:absolute; left:0; right:0; top:100%; margin-top:4px;
+    max-height:240px; overflow-y:auto; background:var(--bg-panel-2); border:1px solid var(--gold);
+    border-radius:8px; z-index:200; box-shadow:0 10px 24px rgba(0,0,0,.45);
+  }
+  .ac-item{ display:flex; align-items:center; gap:8px; padding:9px 11px; font-size:13px; cursor:pointer; }
+  .ac-item:active, .ac-item:hover{ background:var(--bg-panel); }
+  .ac-item small{ margin-left:auto; color:var(--ink-dim); font-size:10.5px; white-space:nowrap; }
+  .ac-empty{ padding:9px 11px; font-size:12px; color:var(--ink-dim); }
 
   .hidden{ display:none !important; }
 </style>
@@ -253,7 +265,7 @@
     <div id="tab-inv" class="tab-pane hidden" style="margin-top:14px;">
       <div id="inv-list"></div>
       <div class="add-row">
-        <input list="item-options" id="inv-add-id" placeholder="輸入道具 ID 或中文名稱搜尋">
+        <input id="inv-add-id" placeholder="輸入道具 ID 或中文名稱搜尋" autocomplete="off">
         <div class="add-col">
           <label class="add-col-label" for="inv-add-qty">數量</label>
           <input type="number" id="inv-add-qty" value="1" min="1">
@@ -270,14 +282,13 @@
       <div id="equip-list"></div>
       <div class="add-row" style="flex-wrap:wrap;">
         <select id="equip-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
-        <input list="equip-add-options" id="equip-add-id" placeholder="搜尋這個部位能裝的道具" style="flex:1;min-width:120px;">
+        <input id="equip-add-id" placeholder="搜尋這個部位能裝的道具" autocomplete="off" style="min-width:120px;">
         <div class="add-col">
           <label class="add-col-label" for="equip-add-refine">精鍊值</label>
           <input type="number" id="equip-add-refine" min="0" max="20" value="0" style="width:52px;" disabled>
         </div>
         <button class="btn sm" id="equip-add-btn">裝備</button>
       </div>
-      <datalist id="equip-add-options"></datalist>
       <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。</div>
     </div>
 
@@ -297,7 +308,7 @@
     </div>
     <div id="wh-list" style="margin-top:10px;"></div>
     <div class="add-row">
-      <input list="item-options" id="wh-add-id" placeholder="輸入道具 ID 或中文名稱搜尋">
+      <input id="wh-add-id" placeholder="輸入道具 ID 或中文名稱搜尋" autocomplete="off">
       <input type="number" id="wh-add-qty" value="1" min="1">
       <button class="btn sm" id="wh-add-btn">加入</button>
     </div>
@@ -307,8 +318,6 @@
       <button class="btn primary" id="btn-apply-wh" disabled>套用修改</button>
     </div>
   </div>
-
-  <datalist id="item-options"></datalist>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -404,29 +413,86 @@
     }, 4000);
   }
 
-  // ---------------- 道具對照表／datalist ----------------
+  // ---------------- 道具搜尋建議（自製下拉，取代 <datalist>） ----------------
+  // 手機瀏覽器（尤其 iOS Safari）幾乎不支援原生 <datalist> 彈出建議清單，
+  // 所以自己刻一個能點/能觸控的下拉選單，桌機、手機通用。
   function itemLabel(id) {
     var meta = state.init && state.init.itemMeta && state.init.itemMeta[id];
     if (!meta) return id;
     return (meta.icon || '') + ' ' + meta.name;
   }
-  function populateItemDatalist() {
-    var dl = $('item-options');
-    dl.innerHTML = '';
-    var meta = (state.init && state.init.itemMeta) || {};
-    var frag = document.createDocumentFragment();
-    for (var id in meta) {
-      var opt = document.createElement('option');
-      opt.value = id;
-      opt.label = (meta[id].icon || '') + ' ' + meta[id].name + '（' + id + '）';
-      frag.appendChild(opt);
+  // getCandidates：回傳目前允許選的道具 ID 陣列的函式（每次開合都重新呼叫一次，
+  // 這樣裝備分頁切換部位時，候選清單會自動跟著換，不用額外重建）。
+  // onPick：選到一個道具之後的額外處理（例如刷新精鍊值鎖定狀態）。
+  function attachItemAutocomplete(input, getCandidates, onPick) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ac-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    var list = document.createElement('div');
+    list.className = 'ac-list hidden';
+    wrap.appendChild(list);
+
+    function close() { list.classList.add('hidden'); list.innerHTML = ''; }
+    function renderMatches(matches) {
+      list.innerHTML = '';
+      if (!matches.length) {
+        list.innerHTML = '<div class="ac-empty">找不到符合的道具</div>';
+      } else {
+        matches.slice(0, 40).forEach(function (id) {
+          var meta = state.init.itemMeta[id];
+          var row = document.createElement('div');
+          row.className = 'ac-item';
+          row.innerHTML = '<span>' + (meta.icon || '📦') + '</span><span>' + escapeHtml(meta.name) + '</span><small>' + id + '</small>';
+          // mousedown 先擋掉，不然 input 的 blur 會搶在 click 前面把清單關掉
+          row.addEventListener('mousedown', function (e) { e.preventDefault(); });
+          row.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+          row.addEventListener('click', function () {
+            input.value = id;
+            close();
+            if (onPick) onPick(id);
+          });
+          list.appendChild(row);
+        });
+      }
+      list.classList.remove('hidden');
     }
-    dl.appendChild(frag);
+    function filterNow() {
+      var q = input.value.trim().toLowerCase();
+      if (!q) { close(); return; }
+      var candidates = getCandidates();
+      var matches = candidates.filter(function (id) {
+        var meta = state.init.itemMeta[id];
+        if (!meta) return false;
+        return id.toLowerCase().indexOf(q) !== -1 || (meta.name || '').toLowerCase().indexOf(q) !== -1;
+      });
+      renderMatches(matches);
+    }
+    input.addEventListener('input', filterNow);
+    input.addEventListener('focus', function () { if (input.value.trim()) filterNow(); });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) close();
+    });
+  }
+
+  var _acAttached = false;
+  function setupItemAutocompletes() {
+    if (_acAttached) return;
+    _acAttached = true;
+    attachItemAutocomplete($('inv-add-id'), function () {
+      return Object.keys(state.init.itemMeta || {});
+    }, function () { refreshInvRefineLock(); });
+    attachItemAutocomplete($('wh-add-id'), function () {
+      return Object.keys(state.init.itemMeta || {});
+    }, null);
+    attachItemAutocomplete($('equip-add-id'), function () {
+      return itemIdsForSlot($('equip-add-slot').value);
+    }, function () { refreshEquipRefineLock(); });
   }
 
   // ---------------- 欄位選擇畫面 ----------------
   function renderSlotList() {
-    populateItemDatalist();
+    setupItemAutocompletes();
     var grid = $('slot-grid');
     grid.innerHTML = '';
     var slots = state.init.slots;
@@ -503,7 +569,8 @@
     fillStatsFields();
     renderInvList();
     populateEquipAddSlotOptions();
-    refreshEquipAddOptions();
+    clearEquipAddSearch();
+    refreshEquipRefineLock();
     renderEquipList();
     updateSlotStatus();
     hide('screen-slots');
@@ -739,21 +806,12 @@
       opt.textContent = pair[1];
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', function () { refreshEquipAddOptions(); refreshEquipRefineLock(); });
+    sel.addEventListener('change', function () { clearEquipAddSearch(); refreshEquipRefineLock(); });
   }
-  function refreshEquipAddOptions() {
-    var slotKey = $('equip-add-slot').value;
-    var dl = $('equip-add-options');
-    dl.innerHTML = '';
-    var frag = document.createDocumentFragment();
-    itemIdsForSlot(slotKey).forEach(function (id) {
-      var meta = state.init.itemMeta[id];
-      var opt = document.createElement('option');
-      opt.value = id;
-      opt.label = (meta.icon || '') + ' ' + meta.name + '（' + id + '）';
-      frag.appendChild(opt);
-    });
-    dl.appendChild(frag);
+  // 切換部位時，把搜尋框清空——候選清單是即時算的（見 setupItemAutocompletes 裡
+  // 傳給 attachItemAutocomplete 的 getCandidates），不用重建，只需要把舊的搜尋字清掉。
+  function clearEquipAddSearch() {
+    $('equip-add-id').value = '';
   }
   // 彈藥沒有精鍊這回事，選到彈藥欄位就直接鎖住精鍊值輸入框。
   function refreshEquipRefineLock() {
