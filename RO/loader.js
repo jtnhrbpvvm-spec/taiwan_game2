@@ -31,7 +31,7 @@ const CSS = `
   .volume-controls { display: none; }
 
   /* 頂部右側一整排功能鈕，改成預設收起，只留一顆展開鈕（#ro-tools-toggle） */
-  .hud-right { gap: 8px; row-gap: 8px; }
+  .hud-right { gap: 8px; row-gap: 8px; flex-wrap: wrap; }
   .hud-right .btn-save,
   .hud-right #btn-idle-report,
   .hud-right .btn-jobchange {
@@ -55,6 +55,9 @@ const CSS = `
     cursor: pointer; line-height: 1;
   }
   body.ro-tools-open #ro-tools-toggle { border-color: var(--gold-soft); background: #2a2f4e; }
+  /* 齒輪展開鈕後面強制換行：鋅幣／儲存／匯出／返回…那一整串不夠寬時本來會被
+     裁到螢幕外，塞一個 flex-basis:100% 的隱形項目，逼它們換到下一行顯示。 */
+  #ro-tools-break { flex-basis: 100%; height: 0; }
 
   /* 分頁列：改成底部固定的圖示條，拇指容易點到 */
   .tab-nav {
@@ -137,6 +140,8 @@ if (existing) {
     if (vp) vp.setAttribute('content', ORIGINAL_VIEWPORT);
     const toggleBtn = document.getElementById('ro-tools-toggle');
     if (toggleBtn) toggleBtn.remove();
+    const brk = document.getElementById('ro-tools-break');
+    if (brk) brk.remove();
     document.body.classList.remove('ro-tools-open');
   }
 
@@ -167,6 +172,14 @@ if (existing) {
         document.body.classList.toggle('ro-tools-open');
       });
       hudRight.insertBefore(toggleBtn, hudRight.firstChild);
+      // 強制在齒輪後面換行，鋅幣／儲存／匯出…那一串固定從下一行開始，
+      // 不會再被裁到螢幕外（見上面 CSS 的 #ro-tools-break）。
+      if (!document.getElementById('ro-tools-break')) {
+        const brk = document.createElement('div');
+        brk.id = 'ro-tools-break';
+        brk.setAttribute('aria-hidden', 'true');
+        toggleBtn.insertAdjacentElement('afterend', brk);
+      }
     }
   }
 
