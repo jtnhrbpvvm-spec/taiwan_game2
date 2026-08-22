@@ -122,6 +122,30 @@
     display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line);
   }
   .list-row:last-child{ border-bottom:none; }
+  .list-row.has-cards{
+    border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
+    padding-left:6px; border-radius:4px; cursor:pointer;
+  }
+  .list-row.has-cards .nm{ position:relative; }
+  .card-badge{
+    display:inline-block; font-size:10px; color:#2a2011; background:var(--gold);
+    border-radius:10px; padding:1px 6px; margin-left:6px; vertical-align:middle;
+  }
+  .card-modal-overlay{
+    position:fixed; inset:0; z-index:500; background:rgba(10,8,20,.75);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .card-modal-box{
+    background:var(--bg-panel); border:1px solid var(--gold); border-radius:12px;
+    padding:18px; max-width:340px; width:100%; max-height:70vh; overflow-y:auto;
+  }
+  .card-modal-box h3{ color:var(--gold-soft); font-size:15px; margin-bottom:10px; }
+  .card-row{ display:flex; gap:8px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line); }
+  .card-row:last-child{ border-bottom:none; }
+  .card-row .ic{ font-size:18px; flex-shrink:0; }
+  .card-row .info{ flex:1; min-width:0; }
+  .card-row .nm{ font-size:13px; font-weight:600; }
+  .card-row .ds{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; line-height:1.5; }
   .list-row .ic{ width:22px; text-align:center; flex-shrink:0; }
   .list-row .nm{ flex:1; min-width:0; font-size:13px; }
   .list-row .nm small{ display:block; color:var(--ink-dim); font-size:10.5px; }
@@ -193,7 +217,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V5</span>
+      <h1>存檔修改器</h1><span class="ver">V6</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -357,6 +381,38 @@
     el.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  // 插卡小視窗：顯示某件個體裝備插了哪些卡片（名稱+效果說明），純顯示、不能編輯。
+  function showCardModal(title, cardIds) {
+    var old = document.getElementById('card-modal-overlay');
+    if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'card-modal-overlay';
+    ov.className = 'card-modal-overlay';
+    var cardMeta = (state.init && state.init.cardMeta) || {};
+    var bodyHtml;
+    if (!cardIds || !cardIds.length) {
+      bodyHtml = '<div class="empty-hint">目前沒有插卡</div>';
+    } else {
+      bodyHtml = cardIds.map(function (cid) {
+        var c = cardMeta[cid];
+        return '<div class="card-row">' +
+          '<div class="ic">' + (c ? c.icon : '🃏') + '</div>' +
+          '<div class="info"><div class="nm">' + escapeHtml(c ? c.name : cid) + '</div>' +
+          '<div class="ds">' + escapeHtml(c ? c.desc : '') + '</div></div>' +
+          '</div>';
+      }).join('');
+    }
+    ov.innerHTML =
+      '<div class="card-modal-box">' +
+        '<h3>🃏 ' + escapeHtml(title) + '</h3>' +
+        '<div>' + bodyHtml + '</div>' +
+        '<button class="btn ghost sm" id="card-modal-close" style="margin-top:12px;width:100%;">關閉</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.getElementById('card-modal-close').addEventListener('click', function () { ov.remove(); });
   }
 
   // ---------------- A 頁通訊 ----------------
@@ -664,12 +720,15 @@
       var meta = (state.init.itemMeta || {})[row.item] || {};
       var isInstance = !!row.instanceId;
       var inst = isInstance ? (state.slotWorking.instances || {})[row.instanceId] : null;
+      var hasCards = !!(inst && inst.cards && inst.cards.length);
       var line = document.createElement('div');
-      line.className = 'list-row';
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
       if (isInstance && inst) {
         line.innerHTML =
           '<div class="ic">' + (meta.icon || '📦') + '</div>' +
-          '<div class="nm">' + escapeHtml(meta.name || row.item) + '<small>個體裝備・卡片不支援編輯</small></div>' +
+          '<div class="nm">' + escapeHtml(meta.name || row.item) +
+            (hasCards ? '<span class="card-badge">🃏×' + inst.cards.length + '</span>' : '') +
+            '<small>個體裝備' + (hasCards ? '・點名稱看插卡' : '') + '</small></div>' +
           '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
           '<input type="number" min="0" max="20" class="inv-refine" value="' + (inst.refine || 0) + '" data-instid="' + row.instanceId + '" style="width:52px;">' +
           '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
@@ -682,6 +741,12 @@
           '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
       }
       wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal(meta.name || row.item, inst.cards);
+        });
+      }
     });
     wrap.querySelectorAll('.inv-qty').forEach(function (inp) {
       inp.addEventListener('input', function () {
@@ -795,7 +860,8 @@
       var meta = itemId ? state.init.itemMeta[itemId] : null;
 
       var line = document.createElement('div');
-      line.className = 'list-row';
+      var hasCards = !!(inst && inst.cards && inst.cards.length);
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
       if (!itemId) {
         line.innerHTML =
           '<div class="ic">—</div>' +
@@ -803,12 +869,20 @@
       } else {
         line.innerHTML =
           '<div class="ic">' + (meta ? (meta.icon || '📦') : '📦') + '</div>' +
-          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) + '<small>' + label + '</small></div>' +
+          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) +
+            (hasCards ? '<span class="card-badge">🃏×' + inst.cards.length + '</span>' : '') +
+            '<small>' + label + (hasCards ? '・點名稱看插卡' : '') + '</small></div>' +
           '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
           '<input type="number" min="0" max="20" class="equip-refine" data-key="' + key + '" value="' + refine + '" style="width:52px;">' +
           '<button class="rm" data-key="' + key + '" title="卸下">✕</button>';
       }
       wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal((meta ? meta.name : itemId) + '（' + label + '）', inst.cards);
+        });
+      }
     });
     wrap.querySelectorAll('.equip-refine').forEach(function (inp) {
       inp.addEventListener('input', function () {
@@ -987,15 +1061,23 @@
     items.forEach(function (row, idx) {
       var meta = (state.init.itemMeta || {})[row.item] || {};
       var isInstance = !!row.instanceId;
+      var hasCards = !!(row.cards && row.cards.length);
       var line = document.createElement('div');
-      line.className = 'list-row';
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
       line.innerHTML =
         '<div class="ic">' + (meta.icon || '📦') + '</div>' +
         '<div class="nm">' + escapeHtml(meta.name || row.item) +
-          (isInstance ? '<small>個體裝備，只能整件移除</small>' : '<small>' + row.item + '</small>') + '</div>' +
+          (hasCards ? '<span class="card-badge">🃏×' + row.cards.length + '</span>' : '') +
+          (isInstance ? '<small>個體裝備，只能整件移除' + (hasCards ? '・點名稱看插卡' : '') + '</small>' : '<small>' + row.item + '</small>') + '</div>' +
         (isInstance ? '' : '<input type="number" min="0" value="' + row.qty + '" data-idx="' + idx + '">') +
         '<button class="rm" data-idx="' + idx + '">✕</button>';
       wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal(meta.name || row.item, row.cards);
+        });
+      }
     });
     wrap.querySelectorAll('input[type=number]').forEach(function (inp) {
       inp.addEventListener('input', function () {
