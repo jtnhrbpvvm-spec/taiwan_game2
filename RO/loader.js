@@ -66,6 +66,15 @@ const CSS = `
     background: linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
     border-top: 2px solid var(--gold);
     padding-bottom: env(safe-area-inset-bottom, 0);
+    /* 手機捏合縮放（pinch-zoom）時，position:fixed 的元素在 iOS Safari 上常會
+       暫時消失，要等縮放手勢結束、畫面縮回去才會重新出現——這是已知的瀏覽器
+       算圖問題。強制把這個元素獨立成一層合成圖層（GPU layer），可以大幅緩解
+       這個問題。不是 100% 保證所有機型都沒事，但這是業界公認的解法。 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
   }
   .tab-btn {
     flex: 0 0 auto; min-width: 76px; min-height: 46px;
@@ -102,10 +111,23 @@ const CSS = `
       width: auto; max-width: none; max-height: calc(100vh - 86px); z-index: 65;
     }
   }
+  /* 掛機收益／隊友這兩個浮動面板的關閉鈕原本太小，加大觸控熱區 */
+  #idle-report-panel .ally-panel-close,
+  #ally-panel .ally-panel-close {
+    min-width: 44px; min-height: 44px; font-size: 20px;
+  }
 
-  /* 彈窗：貼齊螢幕寬度，按鈕加高減少誤觸 */
+  /* 彈窗：貼齊螢幕寬度，按鈕加高減少誤觸；內容過長時視窗本身不超出螢幕，
+     改成視窗內部自己捲動，底部的確認鈕永遠看得到、按得到，不用縮放頁面。 */
   .modal-box { width: 92vw; padding: 20px; }
   .modal-confirm .btn, .consent-row .btn { min-height: 46px; }
+  .modal-box-tall {
+    max-height: 82vh; display: flex; flex-direction: column;
+  }
+  #about-modal-body, #consent-modal-body {
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto; min-height: 0;
+  }
 
   /* 怪物血條文字：小螢幕字級加大 */
   @media (max-width: 480px) {
@@ -536,6 +558,38 @@ function listenForEditorSync() {
   } catch (e) { /* 忽略 */ }
 }
 listenForEditorSync();
+
+/* ============================================================
+   彈窗／浮動面板的「點外面關閉」與「彈窗配合手機螢幕」
+   （只在觸控裝置套用，滑鼠環境維持原樣不受影響）
+   ============================================================ */
+function bindAboutModalOutsideClose() {
+  if (window.__roAboutModalBound) return;
+  window.__roAboutModalBound = true;
+  const modal = document.getElementById('about-modal');
+  if (!modal) return;
+  modal.addEventListener('click', function (e) {
+    // 只有點在遮罩本身（灰色背景，不是白色內容框）才關閉；
+    // 首次同意聲明那個 #consent-modal 是強制閱讀用的，故意不裝這個，不能點外面關掉。
+    if (e.target === modal && typeof closeAboutModal === 'function') closeAboutModal();
+  });
+}
+function bindIdleReportOutsideClose() {
+  if (window.__roIdleReportBound) return;
+  window.__roIdleReportBound = true;
+  document.addEventListener('click', function (e) {
+    const panel = document.getElementById('idle-report-panel');
+    const openBtn = document.getElementById('btn-idle-report');
+    if (!panel || panel.classList.contains('hidden')) return;
+    if (panel.contains(e.target)) return;              // 點在面板裡面，不關
+    if (openBtn && openBtn.contains(e.target)) return;  // 開關鈕本身已經有自己的 toggle，這裡不要重複處理
+    if (typeof toggleIdleReport === 'function') toggleIdleReport();
+  }, true);
+}
+if (isTouch) {
+  bindAboutModalOutsideClose();
+  bindIdleReportOutsideClose();
+}
 
 function handleEditorMessage(ev) {
   if (ev.origin !== EDITOR_ORIGIN) return; // 只信任修改器自己的網域
