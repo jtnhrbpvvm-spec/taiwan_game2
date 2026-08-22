@@ -175,9 +175,9 @@
   .ac-wrap{ position:relative; flex:1; min-width:100px; }
   .ac-wrap input{ width:100%; }
   .ac-list{
-    position:absolute; left:0; right:0; top:100%; margin-top:4px;
+    position:absolute; left:0; right:0; bottom:100%; margin-bottom:4px;
     max-height:240px; overflow-y:auto; background:var(--bg-panel-2); border:1px solid var(--gold);
-    border-radius:8px; z-index:200; box-shadow:0 10px 24px rgba(0,0,0,.45);
+    border-radius:8px; z-index:200; box-shadow:0 -10px 24px rgba(0,0,0,.45);
   }
   .ac-item{ display:flex; align-items:center; gap:8px; padding:9px 11px; font-size:13px; cursor:pointer; }
   .ac-item:active, .ac-item:hover{ background:var(--bg-panel); }
@@ -193,7 +193,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V1</span>
+      <h1>存檔修改器</h1><span class="ver">V2</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -445,9 +445,10 @@
           var row = document.createElement('div');
           row.className = 'ac-item';
           row.innerHTML = '<span>' + (meta.icon || '📦') + '</span><span>' + escapeHtml(meta.name) + '</span><small>' + id + '</small>';
-          // mousedown 先擋掉，不然 input 的 blur 會搶在 click 前面把清單關掉
+          // mousedown 先擋掉，避免點擊瞬間輸入框 blur 把清單關掉搶在 click 前面。
+          // 注意：這裡故意不擋 touchstart——iOS Safari 只要 touchstart 呼叫過
+          // preventDefault()，後面補發的 click 事件就直接消失，手機點了等於沒點。
           row.addEventListener('mousedown', function (e) { e.preventDefault(); });
-          row.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
           row.addEventListener('click', function () {
             input.value = id;
             close();
