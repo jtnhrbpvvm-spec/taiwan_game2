@@ -258,8 +258,15 @@
     </div>
 
     <div id="tab-equip" class="tab-pane hidden" style="margin-top:14px;">
-      <div class="field-grid" id="equip-grid"></div>
-      <div class="empty-hint">道具 ID 後面的數字是精鍊值，設定 1 以上會自動轉成個體裝備（跟遊戲內精鍊出來的東西一樣）；留 0 就是一般未精鍊道具。目前不支援插卡。</div>
+      <div id="equip-list"></div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="equip-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
+        <input list="equip-add-options" id="equip-add-id" placeholder="搜尋這個部位能裝的道具" style="flex:1;min-width:120px;">
+        <input type="number" id="equip-add-refine" min="0" max="20" value="0" title="精鍊值" style="width:52px;">
+        <button class="btn sm" id="equip-add-btn">裝備</button>
+      </div>
+      <datalist id="equip-add-options"></datalist>
+      <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。</div>
     </div>
 
     <div class="apply-bar">
@@ -483,7 +490,9 @@
     fillBasicFields();
     fillStatsFields();
     renderInvList();
-    renderEquipGrid();
+    populateEquipAddSlotOptions();
+    refreshEquipAddOptions();
+    renderEquipList();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -647,9 +656,9 @@
     $('inv-add-refine').value = 0;
   });
 
-  function renderEquipGrid() {
-    var grid = $('equip-grid');
-    grid.innerHTML = '';
+  function renderEquipList() {
+    var wrap = $('equip-list');
+    wrap.innerHTML = '';
     var equip = state.slotWorking.equip || {};
     var instances = state.slotWorking.instances || (state.slotWorking.instances = {});
     EQUIP_SLOTS.forEach(function (pair) {
@@ -658,66 +667,71 @@
       var inst = raw && instances[raw] ? instances[raw] : null;
       var itemId = inst ? inst.item : (raw || '');
       var refine = inst ? (inst.refine || 0) : 0;
+      var meta = itemId ? state.init.itemMeta[itemId] : null;
 
-      var field = document.createElement('div');
-      field.className = 'field';
-      var dlId = 'equip-options-' + key;
-      field.innerHTML =
-        '<label>' + label + '</label>' +
-        '<div style="display:flex;gap:6px;">' +
-          '<input list="' + dlId + '" data-key="' + key + '" class="equip-item-input" value="' + escapeHtml(itemId) + '" placeholder="留空＝卸下" style="flex:1;min-width:0;">' +
-          '<input type="number" min="0" max="20" data-key="' + key + '" class="equip-refine-input" value="' + refine + '" title="精鍊值" style="width:52px;" ' + (itemId ? '' : 'disabled') + '>' +
-        '</div>';
-      grid.appendChild(field);
-      // 每個欄位各自一份 datalist，只列出這個欄位真的能裝的道具（武器欄位不會再跳出藥水）
-      var dl = document.createElement('datalist');
-      dl.id = dlId;
-      var frag = document.createDocumentFragment();
-      itemIdsForSlot(key).forEach(function (id) {
-        var meta = state.init.itemMeta[id];
-        var opt = document.createElement('option');
-        opt.value = id;
-        opt.label = (meta.icon || '') + ' ' + meta.name + '（' + id + '）';
-        frag.appendChild(opt);
-      });
-      dl.appendChild(frag);
-      grid.appendChild(dl);
+      var line = document.createElement('div');
+      line.className = 'list-row';
+      if (!itemId) {
+        line.innerHTML =
+          '<div class="ic">—</div>' +
+          '<div class="nm"><small>' + label + '</small>（空）</div>';
+      } else {
+        line.innerHTML =
+          '<div class="ic">' + (meta ? (meta.icon || '📦') : '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) + '<small>' + label + '</small></div>' +
+          '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
+          '<input type="number" min="0" max="20" class="equip-refine" data-key="' + key + '" value="' + refine + '" style="width:52px;">' +
+          '<button class="rm" data-key="' + key + '" title="卸下">✕</button>';
+      }
+      wrap.appendChild(line);
     });
-
-    grid.querySelectorAll('.equip-item-input').forEach(function (inp) {
-      inp.addEventListener('change', function () {
-        var key = this.dataset.key;
-        var v = this.value.trim();
-        var refineInp = grid.querySelector('.equip-refine-input[data-key="' + key + '"]');
-        if (v && !itemFitsSlot(v, key)) {
-          toast('⚠️ 「' + v + '」不能裝在' + equipLabel(key) + '，已還原', true);
-          var old = equip[key] ? (instances[equip[key]] ? instances[equip[key]].item : equip[key]) : '';
-          this.value = old;
-          return;
-        }
-        applyEquipEdit(key, v, v ? parseInt(refineInp.value, 10) || 0 : 0);
-        refineInp.disabled = !v;
-        if (!v) refineInp.value = 0;
-      });
-    });
-    grid.querySelectorAll('.equip-refine-input').forEach(function (inp) {
+    wrap.querySelectorAll('.equip-refine').forEach(function (inp) {
       inp.addEventListener('input', function () {
         var key = this.dataset.key;
         var v = Math.max(0, Math.min(20, parseInt(this.value, 10) || 0));
-        var itemInp = grid.querySelector('.equip-item-input[data-key="' + key + '"]');
-        var curId = itemInp.value.trim();
-        if (!curId) return;
-        applyEquipEdit(key, curId, v);
+        var equip = state.slotWorking.equip;
+        var raw = equip[key];
+        var cur = raw ? state.slotWorking.instances[raw] : null;
+        var itemId = cur ? cur.item : raw;
+        if (!itemId) return;
+        applyEquipEdit(key, itemId, v);
+      });
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyEquipEdit(this.dataset.key, '', 0);
+        renderEquipList();
       });
     });
   }
 
-  // 這個道具能不能裝在這個欄位（依 armorType/weaponCat/headPos 判斷，跟遊戲本體 resolveEquipSlotFor 同一套規則）
-  function itemFitsSlot(id, slotKey) {
-    var meta = state.init.itemMeta[id];
-    if (!meta) return false;
-    return validSlotsForItem(id).indexOf(slotKey) !== -1;
+  function populateEquipAddSlotOptions() {
+    var sel = $('equip-add-slot');
+    if (sel.options.length) return; // 只需要建一次
+    EQUIP_SLOTS.forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', refreshEquipAddOptions);
   }
+  function refreshEquipAddOptions() {
+    var slotKey = $('equip-add-slot').value;
+    var dl = $('equip-add-options');
+    dl.innerHTML = '';
+    var frag = document.createDocumentFragment();
+    itemIdsForSlot(slotKey).forEach(function (id) {
+      var meta = state.init.itemMeta[id];
+      var opt = document.createElement('option');
+      opt.value = id;
+      opt.label = (meta.icon || '') + ' ' + meta.name + '（' + id + '）';
+      frag.appendChild(opt);
+    });
+    dl.appendChild(frag);
+  }
+
+  // 這個道具能不能裝在這個欄位（依 armorType/weaponCat/headPos 判斷，跟遊戲本體 resolveEquipSlotFor 同一套規則）
   function validSlotsForItem(id) {
     var meta = state.init.itemMeta[id];
     if (!meta) return [];
@@ -747,6 +761,21 @@
     var pair = EQUIP_SLOTS.find(function (p) { return p[0] === key; });
     return pair ? pair[1] : key;
   }
+
+  $('equip-add-btn').addEventListener('click', function () {
+    var slotKey = $('equip-add-slot').value;
+    var id = $('equip-add-id').value.trim();
+    var refine = Math.max(0, Math.min(20, parseInt($('equip-add-refine').value, 10) || 0));
+    if (!id) return;
+    if (validSlotsForItem(id).indexOf(slotKey) === -1) {
+      toast('⚠️ 「' + id + '」不能裝在' + equipLabel(slotKey) + '，請從建議清單選一個', true);
+      return;
+    }
+    applyEquipEdit(slotKey, id, refine);
+    renderEquipList();
+    $('equip-add-id').value = '';
+    $('equip-add-refine').value = 0;
+  });
 
   // 套用某個裝備欄位的編輯：refine<=0 就是純道具；refine>0 一定要是「個體裝備」，
   // 跟遊戲本體 migrateEquipToInstances() 的資料形狀完全一致（instances[id] = {item, refine, cards}）。
