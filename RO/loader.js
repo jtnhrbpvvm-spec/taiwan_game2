@@ -405,6 +405,17 @@ function buildJobMeta() {
   }
   return out;
 }
+// 精簡版卡片對照表，讓修改器能顯示插卡的名稱／效果說明（點開個體裝備時的小視窗要用）。
+function buildCardMeta() {
+  const out = {};
+  if (typeof CARDS === 'object' && CARDS) {
+    for (const id in CARDS) {
+      const c = CARDS[id];
+      out[id] = { name: c.name, icon: c.icon, desc: c.desc || '' };
+    }
+  }
+  return out;
+}
 function buildAllSlotsSummary() {
   const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
   const slots = {};
@@ -453,7 +464,8 @@ function buildInitPayload() {
     warehouse: (typeof loadWarehouse === 'function') ? loadWarehouse() : { items: [], gold: 0 },
     currentSlot: currentSlot,
     itemMeta: buildItemMeta(),
-    jobMeta: buildJobMeta()
+    jobMeta: buildJobMeta(),
+    cardMeta: buildCardMeta()
   };
 }
 
