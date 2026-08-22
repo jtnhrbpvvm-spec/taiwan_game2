@@ -45,6 +45,9 @@ const CSS = `
     min-width: 46px;
     padding: 8px 12px;
   }
+  /* 編輯工具輸入框：縮起存檔等按鈕時一起隱藏，只在展開時跟著出現（僅觸控裝置） */
+  .hud-right #ro-editor-box { display: none; }
+  body.ro-tools-open .hud-right #ro-editor-box { display: flex; }
   #ro-tools-toggle {
     min-height: 46px; min-width: 46px; padding: 8px 12px;
     background: var(--bg-panel-2); border: 1px solid var(--gold);
