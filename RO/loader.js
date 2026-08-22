@@ -402,6 +402,37 @@ function buildAllSlotsSummary() {
   }
   return slots;
 }
+
+// 這個職業（含整條職業鏈）＋這個等級，能裝備哪些道具。直接借用遊戲本體的
+// jobCanUseWeapon()（官方攻速表判斷），不自己重寫一份武器分類邏輯，
+// 確保跟遊戲實際規則永遠一致，不會兩邊兜不起來。
+// 只判斷 reqLevel／reqJob／武器攻速表，不碰 state，所以可以幫任何一個存檔欄位
+// （不只是目前正在玩的那個）算，不用真的把角色切過去。
+function jobChainFor(jobId) {
+  const chain = [];
+  const seen = {};
+  let cur = jobId;
+  while (cur && !seen[cur]) {
+    seen[cur] = true;
+    chain.push(cur);
+    cur = (typeof JOB_TREE === 'object' && JOB_TREE[cur]) ? JOB_TREE[cur].parent : null;
+  }
+  return chain;
+}
+function buildJobCompatSet(jobId, baseLevel) {
+  const out = [];
+  if (typeof ITEMS !== 'object' || !ITEMS) return out;
+  const chain = jobChainFor(jobId);
+  for (const id in ITEMS) {
+    const d = ITEMS[id];
+    if (d.type !== 'weapon' && d.type !== 'armor') continue; // 只有這兩類才有職業/等級限制
+    if (d.reqLevel && (typeof baseLevel !== 'number' || baseLevel < d.reqLevel)) continue;
+    if (d.reqJob && d.reqJob.length && !chain.some(function (j) { return d.reqJob.indexOf(j) !== -1; })) continue;
+    if (d.type === 'weapon' && typeof jobCanUseWeapon === 'function' && !jobCanUseWeapon(jobId, id)) continue;
+    out.push(id);
+  }
+  return out;
+}
 function buildInitPayload() {
   return {
     type: 'ro-editor:init',
@@ -496,5 +527,8 @@ function handleEditorMessage(ev) {
   } else if (data.type === 'ro-editor:apply-warehouse') {
     const ok = applyEditorPatchToWarehouse(data.patch);
     win.postMessage({ type: 'ro-editor:applied-warehouse', ok: ok }, EDITOR_ORIGIN);
+  } else if (data.type === 'ro-editor:job-items') {
+    const ids = buildJobCompatSet(data.jobId, data.baseLevel);
+    win.postMessage({ type: 'ro-editor:job-items', jobId: data.jobId, ids: ids }, EDITOR_ORIGIN);
   }
 }

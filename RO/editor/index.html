@@ -193,7 +193,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V3</span>
+      <h1>存檔修改器</h1><span class="ver">V4</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -281,6 +281,11 @@
 
     <div id="tab-equip" class="tab-pane hidden" style="margin-top:14px;">
       <div id="equip-list"></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);margin:8px 0 4px;">
+        <input type="checkbox" id="equip-job-filter" checked style="width:auto;">
+        只列出這個角色的職業能裝備的道具
+      </label>
+      <div id="equip-job-status" class="empty-hint" style="display:none;padding:4px 0;">篩選中…</div>
       <div class="add-row" style="flex-wrap:wrap;">
         <select id="equip-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
         <input id="equip-add-id" placeholder="搜尋這個部位能裝的道具" autocomplete="off" style="min-width:120px;">
@@ -290,7 +295,7 @@
         </div>
         <button class="btn sm" id="equip-add-btn">裝備</button>
       </div>
-      <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。</div>
+      <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝、這個角色職業/等級也能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。取消上面的勾選可以看到全部道具，不受職業限制。</div>
     </div>
 
     <div class="apply-bar">
@@ -396,6 +401,14 @@
         toast('⚠️ 倉庫套用失敗', true);
       }
       updateWhStatus();
+    } else if (data.type === 'ro-editor:job-items') {
+      // 只接受跟目前正在編輯的職業相符的回應，避免玩家手快切欄位時，
+      // 舊職業的查詢結果晚到、蓋掉新職業的篩選清單。
+      if (state.slotWorking && data.jobId === state.slotWorking.jobId) {
+        state.jobCompatIds = {};
+        (data.ids || []).forEach(function (id) { state.jobCompatIds[id] = true; });
+        $('equip-job-status').style.display = 'none';
+      }
     }
   });
 
@@ -583,10 +596,32 @@
     clearEquipAddSearch();
     refreshEquipRefineLock();
     renderEquipList();
+    requestJobCompatSet();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
   }
+
+  // 跟遊戲要一份「這個角色的職業＋等級能裝備哪些道具」的清單。
+  // 用 jobId+baseLevel 兩個原始值送出去，不是送 slot 編號——這樣 A 頁完全
+  // 不用去管「現在編輯的是不是正在玩的那一欄」，單純算這兩個值對應的結果。
+  function requestJobCompatSet() {
+    state.jobCompatIds = null; // 先清掉舊職業的結果，避免篩選短暫用錯資料
+    $('equip-job-status').style.display = $('equip-job-filter').checked ? 'block' : 'none';
+    sendToGame({
+      type: 'ro-editor:job-items',
+      jobId: state.slotWorking.jobId,
+      baseLevel: state.slotWorking.baseLevel
+    });
+  }
+  $('equip-job-filter').addEventListener('change', function () {
+    $('equip-job-status').style.display = (this.checked && !state.jobCompatIds) ? 'block' : 'none';
+    // 勾選狀態變了，如果搜尋框裡還有字，重新篩一次，不用玩家自己再按一次鍵盤
+    var inp = $('equip-add-id');
+    if (document.activeElement === inp || inp.value.trim()) {
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 
   function fillBasicFields() {
     var w = state.slotWorking;
@@ -865,8 +900,15 @@
   function itemIdsForSlot(slotKey) {
     var out = [];
     var meta = state.init.itemMeta || {};
+    var filterOn = $('equip-job-filter').checked;
+    // 篩選結果還沒回來（例如剛切換職業/欄位那一瞬間）：先不套用職業限制，
+    // 免得清單暫時整片空白，等結果回來後玩家重新打字/聚焦就會自然套用上。
+    var compat = filterOn ? state.jobCompatIds : null;
     for (var id in meta) {
-      if (validSlotsForItem(id).indexOf(slotKey) !== -1) out.push(id);
+      if (validSlotsForItem(id).indexOf(slotKey) === -1) continue;
+      // 彈藥沒有職業限制（buildJobCompatSet 那邊也只算武器/防具），一律放行
+      if (compat && meta[id].type !== 'ammo' && !compat[id]) continue;
+      out.push(id);
     }
     return out;
   }
