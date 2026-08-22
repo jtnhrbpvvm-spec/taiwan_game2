@@ -134,7 +134,10 @@
 
   .add-row{
     display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
+    align-items:flex-end;
   }
+  .add-col{ display:flex; flex-direction:column; gap:3px; }
+  .add-col-label{ font-size:9.5px; color:var(--ink-dim); text-align:center; white-space:nowrap; }
   .add-row input[list]{
     flex:1; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
     color:var(--ink); padding:8px 9px; font-size:13px; min-width:0;
@@ -251,8 +254,14 @@
       <div id="inv-list"></div>
       <div class="add-row">
         <input list="item-options" id="inv-add-id" placeholder="輸入道具 ID 或中文名稱搜尋">
-        <input type="number" id="inv-add-qty" value="1" min="1" title="數量">
-        <input type="number" id="inv-add-refine" value="0" min="0" max="20" title="精鍊值（0＝一般道具）" style="width:52px;">
+        <div class="add-col">
+          <label class="add-col-label" for="inv-add-qty">數量</label>
+          <input type="number" id="inv-add-qty" value="1" min="1">
+        </div>
+        <div class="add-col">
+          <label class="add-col-label" for="inv-add-refine">精鍊值</label>
+          <input type="number" id="inv-add-refine" value="0" min="0" max="20" style="width:52px;" disabled>
+        </div>
         <button class="btn sm" id="inv-add-btn">加入</button>
       </div>
     </div>
@@ -262,7 +271,10 @@
       <div class="add-row" style="flex-wrap:wrap;">
         <select id="equip-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
         <input list="equip-add-options" id="equip-add-id" placeholder="搜尋這個部位能裝的道具" style="flex:1;min-width:120px;">
-        <input type="number" id="equip-add-refine" min="0" max="20" value="0" title="精鍊值" style="width:52px;">
+        <div class="add-col">
+          <label class="add-col-label" for="equip-add-refine">精鍊值</label>
+          <input type="number" id="equip-add-refine" min="0" max="20" value="0" style="width:52px;" disabled>
+        </div>
         <button class="btn sm" id="equip-add-btn">裝備</button>
       </div>
       <datalist id="equip-add-options"></datalist>
@@ -626,6 +638,18 @@
     state.slotPatch.instances = Object.assign({}, state.slotWorking.instances);
     updateSlotStatus();
   }
+  // 只有武器／防具才有精鍊這回事，藥水材料之類的輸入框直接鎖住，
+  // 避免出現「+5 紅色藥水」這種遊戲裡不可能存在的道具。
+  function refreshInvRefineLock() {
+    var id = $('inv-add-id').value.trim();
+    var meta = state.init.itemMeta && state.init.itemMeta[id];
+    var refineInp = $('inv-add-refine');
+    var canRefine = meta && (meta.type === 'weapon' || meta.type === 'armor');
+    refineInp.disabled = !canRefine;
+    if (!canRefine) refineInp.value = 0;
+  }
+  $('inv-add-id').addEventListener('input', refreshInvRefineLock);
+
   $('inv-add-btn').addEventListener('click', function () {
     var id = $('inv-add-id').value.trim();
     var qty = parseInt($('inv-add-qty').value, 10) || 1;
@@ -654,6 +678,7 @@
     $('inv-add-id').value = '';
     $('inv-add-qty').value = 1;
     $('inv-add-refine').value = 0;
+    refreshInvRefineLock();
   });
 
   function renderEquipList() {
@@ -714,7 +739,7 @@
       opt.textContent = pair[1];
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', refreshEquipAddOptions);
+    sel.addEventListener('change', function () { refreshEquipAddOptions(); refreshEquipRefineLock(); });
   }
   function refreshEquipAddOptions() {
     var slotKey = $('equip-add-slot').value;
@@ -730,6 +755,16 @@
     });
     dl.appendChild(frag);
   }
+  // 彈藥沒有精鍊這回事，選到彈藥欄位就直接鎖住精鍊值輸入框。
+  function refreshEquipRefineLock() {
+    var id = $('equip-add-id').value.trim();
+    var meta = state.init.itemMeta && state.init.itemMeta[id];
+    var refineInp = $('equip-add-refine');
+    var canRefine = meta && (meta.type === 'weapon' || meta.type === 'armor');
+    refineInp.disabled = !canRefine;
+    if (!canRefine) refineInp.value = 0;
+  }
+  $('equip-add-id').addEventListener('input', refreshEquipRefineLock);
 
   // 這個道具能不能裝在這個欄位（依 armorType/weaponCat/headPos 判斷，跟遊戲本體 resolveEquipSlotFor 同一套規則）
   function validSlotsForItem(id) {
@@ -775,6 +810,7 @@
     renderEquipList();
     $('equip-add-id').value = '';
     $('equip-add-refine').value = 0;
+    refreshEquipRefineLock();
   });
 
   // 套用某個裝備欄位的編輯：refine<=0 就是純道具；refine>0 一定要是「個體裝備」，
