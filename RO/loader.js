@@ -176,7 +176,7 @@ if (existing) {
     const input = document.createElement('input');
     input.id = 'ro-editor-input';
     input.type = 'text';
-    input.placeholder = '編輯代碼';
+    input.placeholder = '尚未開放';
 
     const openBtn = document.createElement('button');
     openBtn.id = 'ro-editor-open';
