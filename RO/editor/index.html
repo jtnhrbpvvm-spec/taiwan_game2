@@ -251,14 +251,15 @@
       <div id="inv-list"></div>
       <div class="add-row">
         <input list="item-options" id="inv-add-id" placeholder="輸入道具 ID 或中文名稱搜尋">
-        <input type="number" id="inv-add-qty" value="1" min="1">
+        <input type="number" id="inv-add-qty" value="1" min="1" title="數量">
+        <input type="number" id="inv-add-refine" value="0" min="0" max="20" title="精鍊值（0＝一般道具）" style="width:52px;">
         <button class="btn sm" id="inv-add-btn">加入</button>
       </div>
     </div>
 
     <div id="tab-equip" class="tab-pane hidden" style="margin-top:14px;">
       <div class="field-grid" id="equip-grid"></div>
-      <div class="empty-hint">直接指定裝備欄位的道具 ID，留空＝卸下。只支援一般道具 ID，不含精煉值／插卡的個體裝備。</div>
+      <div class="empty-hint">道具 ID 後面的數字是精鍊值，設定 1 以上會自動轉成個體裝備（跟遊戲內精鍊出來的東西一樣）；留 0 就是一般未精鍊道具。目前不支援插卡。</div>
     </div>
 
     <div class="apply-bar">
@@ -472,6 +473,8 @@
     state.selectedSlot = idx;
     state.slotPatch = {};
     state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
+    if (!state.slotWorking.instances) state.slotWorking.instances = {};
+    if (!state.slotWorking.equip) state.slotWorking.equip = {};
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -538,19 +541,28 @@
     if (!inv.length) { wrap.innerHTML = '<div class="empty-hint">背包是空的</div>'; return; }
     inv.forEach(function (row, idx) {
       var meta = (state.init.itemMeta || {})[row.item] || {};
+      var isInstance = !!row.instanceId;
+      var inst = isInstance ? (state.slotWorking.instances || {})[row.instanceId] : null;
       var line = document.createElement('div');
       line.className = 'list-row';
-      var isInstance = !!row.instanceId;
-      line.innerHTML =
-        '<div class="ic">' + (meta.icon || '📦') + '</div>' +
-        '<div class="nm">' + escapeHtml(meta.name || row.item) +
-          (isInstance ? '<small>個體裝備（精煉/插卡），修改器不支援編輯，只能移除整件</small>' : '<small>' + row.item + '</small>') +
-        '</div>' +
-        (isInstance ? '' : '<input type="number" min="0" value="' + row.qty + '" data-idx="' + idx + '">') +
-        '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
+      if (isInstance && inst) {
+        line.innerHTML =
+          '<div class="ic">' + (meta.icon || '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta.name || row.item) + '<small>個體裝備・卡片不支援編輯</small></div>' +
+          '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
+          '<input type="number" min="0" max="20" class="inv-refine" value="' + (inst.refine || 0) + '" data-instid="' + row.instanceId + '" style="width:52px;">' +
+          '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
+      } else {
+        line.innerHTML =
+          '<div class="ic">' + (meta.icon || '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta.name || row.item) + '<small>' + row.item + '</small></div>' +
+          '<input type="number" min="0" value="' + row.qty + '" data-idx="' + idx + '" class="inv-qty">' +
+          '<button class="rm sm-split" data-idx="' + idx + '" title="拆 1 件出來設定精鍊值">🔧</button>' +
+          '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
+      }
       wrap.appendChild(line);
     });
-    wrap.querySelectorAll('input[type=number]').forEach(function (inp) {
+    wrap.querySelectorAll('.inv-qty').forEach(function (inp) {
       inp.addEventListener('input', function () {
         var idx = parseInt(this.dataset.idx, 10);
         var v = parseInt(this.value, 10);
@@ -559,11 +571,40 @@
         touchInventoryPatch();
       });
     });
-    wrap.querySelectorAll('.rm').forEach(function (btn) {
+    wrap.querySelectorAll('.inv-refine').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var instId = this.dataset.instid;
+        var v = Math.max(0, Math.min(20, parseInt(this.value, 10) || 0));
+        var inst = state.slotWorking.instances[instId];
+        if (!inst) return;
+        inst.refine = v;
+        touchInstancesPatch();
+      });
+    });
+    wrap.querySelectorAll('.sm-split').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var idx = parseInt(this.dataset.idx, 10);
+        var row = state.slotWorking.inventory[idx];
+        if (!row || row.qty < 1) return;
+        row.qty -= 1;
+        if (row.qty <= 0) state.slotWorking.inventory.splice(idx, 1);
+        var instId = row.item + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        state.slotWorking.instances[instId] = { item: row.item, refine: 1, cards: [] };
+        state.slotWorking.inventory.push({ item: row.item, qty: 1, instanceId: instId });
+        touchInventoryPatch();
+        touchInstancesPatch();
+        renderInvList();
+      });
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      if (btn.classList.contains('sm-split')) return;
+      btn.addEventListener('click', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        var row = state.slotWorking.inventory[idx];
+        if (row && row.instanceId) delete state.slotWorking.instances[row.instanceId]; // 個體裝備整件移除順便清掉紀錄
         state.slotWorking.inventory.splice(idx, 1);
         touchInventoryPatch();
+        touchInstancesPatch();
         renderInvList();
       });
     });
@@ -572,56 +613,166 @@
     state.slotPatch.inventory = state.slotWorking.inventory.slice();
     updateSlotStatus();
   }
+  function touchInstancesPatch() {
+    state.slotPatch.instances = Object.assign({}, state.slotWorking.instances);
+    updateSlotStatus();
+  }
   $('inv-add-btn').addEventListener('click', function () {
     var id = $('inv-add-id').value.trim();
     var qty = parseInt($('inv-add-qty').value, 10) || 1;
+    var refine = Math.max(0, Math.min(20, parseInt($('inv-add-refine').value, 10) || 0));
     if (!id) return;
     if (state.init.itemMeta && !state.init.itemMeta[id]) {
       toast('⚠️ 找不到這個道具 ID，請從建議清單選一個', true);
       return;
     }
     var inv = state.slotWorking.inventory || (state.slotWorking.inventory = []);
-    var existing = inv.find(function (r) { return r.item === id && !r.instanceId; });
-    if (existing) existing.qty += qty;
-    else inv.push({ item: id, qty: qty });
+    if (refine > 0) {
+      // 有精鍊值的一定各自獨立一件，不跟其他堆疊合併，即使加好幾個也是各自一件
+      for (var i = 0; i < qty; i++) {
+        var instId = id + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000) + '_' + i;
+        state.slotWorking.instances[instId] = { item: id, refine: refine, cards: [] };
+        inv.push({ item: id, qty: 1, instanceId: instId });
+      }
+      touchInstancesPatch();
+    } else {
+      var existing = inv.find(function (r) { return r.item === id && !r.instanceId; });
+      if (existing) existing.qty += qty;
+      else inv.push({ item: id, qty: qty });
+    }
     touchInventoryPatch();
     renderInvList();
     $('inv-add-id').value = '';
     $('inv-add-qty').value = 1;
+    $('inv-add-refine').value = 0;
   });
 
   function renderEquipGrid() {
     var grid = $('equip-grid');
     grid.innerHTML = '';
     var equip = state.slotWorking.equip || {};
+    var instances = state.slotWorking.instances || (state.slotWorking.instances = {});
     EQUIP_SLOTS.forEach(function (pair) {
       var key = pair[0], label = pair[1];
-      var val = equip[key];
+      var raw = equip[key];
+      var inst = raw && instances[raw] ? instances[raw] : null;
+      var itemId = inst ? inst.item : (raw || '');
+      var refine = inst ? (inst.refine || 0) : 0;
+
       var field = document.createElement('div');
       field.className = 'field';
-      var isInstance = val && state.slotWorking.instances && state.slotWorking.instances[val];
+      var dlId = 'equip-options-' + key;
       field.innerHTML =
-        '<label>' + label + (isInstance ? '（個體裝備，唯讀）' : '') + '</label>' +
-        '<input list="item-options" data-key="' + key + '" value="' + (isInstance ? '' : (val || '')) + '"' +
-        (isInstance ? ' disabled placeholder="' + escapeHtml(itemLabel(state.slotWorking.instances[val].item)) + '"' : ' placeholder="留空＝卸下"') + '>';
+        '<label>' + label + '</label>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<input list="' + dlId + '" data-key="' + key + '" class="equip-item-input" value="' + escapeHtml(itemId) + '" placeholder="留空＝卸下" style="flex:1;min-width:0;">' +
+          '<input type="number" min="0" max="20" data-key="' + key + '" class="equip-refine-input" value="' + refine + '" title="精鍊值" style="width:52px;" ' + (itemId ? '' : 'disabled') + '>' +
+        '</div>';
       grid.appendChild(field);
+      // 每個欄位各自一份 datalist，只列出這個欄位真的能裝的道具（武器欄位不會再跳出藥水）
+      var dl = document.createElement('datalist');
+      dl.id = dlId;
+      var frag = document.createDocumentFragment();
+      itemIdsForSlot(key).forEach(function (id) {
+        var meta = state.init.itemMeta[id];
+        var opt = document.createElement('option');
+        opt.value = id;
+        opt.label = (meta.icon || '') + ' ' + meta.name + '（' + id + '）';
+        frag.appendChild(opt);
+      });
+      dl.appendChild(frag);
+      grid.appendChild(dl);
     });
-    grid.querySelectorAll('input[data-key]').forEach(function (inp) {
+
+    grid.querySelectorAll('.equip-item-input').forEach(function (inp) {
       inp.addEventListener('change', function () {
         var key = this.dataset.key;
         var v = this.value.trim();
-        if (v && state.init.itemMeta && !state.init.itemMeta[v]) {
-          toast('⚠️ 找不到這個道具 ID，已還原', true);
-          this.value = (state.slotWorking.equip[key] || '');
+        var refineInp = grid.querySelector('.equip-refine-input[data-key="' + key + '"]');
+        if (v && !itemFitsSlot(v, key)) {
+          toast('⚠️ 「' + v + '」不能裝在' + equipLabel(key) + '，已還原', true);
+          var old = equip[key] ? (instances[equip[key]] ? instances[equip[key]].item : equip[key]) : '';
+          this.value = old;
           return;
         }
-        var eq = state.slotPatch.equip ? state.slotPatch.equip : Object.assign({}, state.slotWorking.equip);
-        eq[key] = v || null;
-        state.slotPatch.equip = eq;
-        state.slotWorking.equip[key] = v || null;
-        updateSlotStatus();
+        applyEquipEdit(key, v, v ? parseInt(refineInp.value, 10) || 0 : 0);
+        refineInp.disabled = !v;
+        if (!v) refineInp.value = 0;
       });
     });
+    grid.querySelectorAll('.equip-refine-input').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var key = this.dataset.key;
+        var v = Math.max(0, Math.min(20, parseInt(this.value, 10) || 0));
+        var itemInp = grid.querySelector('.equip-item-input[data-key="' + key + '"]');
+        var curId = itemInp.value.trim();
+        if (!curId) return;
+        applyEquipEdit(key, curId, v);
+      });
+    });
+  }
+
+  // 這個道具能不能裝在這個欄位（依 armorType/weaponCat/headPos 判斷，跟遊戲本體 resolveEquipSlotFor 同一套規則）
+  function itemFitsSlot(id, slotKey) {
+    var meta = state.init.itemMeta[id];
+    if (!meta) return false;
+    return validSlotsForItem(id).indexOf(slotKey) !== -1;
+  }
+  function validSlotsForItem(id) {
+    var meta = state.init.itemMeta[id];
+    if (!meta) return [];
+    if (meta.type === 'weapon') return ['weapon'];
+    if (meta.type === 'ammo') return ['ammo'];
+    if (meta.type === 'armor') {
+      switch (meta.armorType) {
+        case 'headgear': return meta.headPos && meta.headPos.length ? meta.headPos : ['head_top'];
+        case 'shield': return ['shield'];
+        case 'garment': return ['garment'];
+        case 'footgear': return ['footgear'];
+        case 'accessory': return ['accessory1', 'accessory2'];
+        default: return ['armor'];
+      }
+    }
+    return [];
+  }
+  function itemIdsForSlot(slotKey) {
+    var out = [];
+    var meta = state.init.itemMeta || {};
+    for (var id in meta) {
+      if (validSlotsForItem(id).indexOf(slotKey) !== -1) out.push(id);
+    }
+    return out;
+  }
+  function equipLabel(key) {
+    var pair = EQUIP_SLOTS.find(function (p) { return p[0] === key; });
+    return pair ? pair[1] : key;
+  }
+
+  // 套用某個裝備欄位的編輯：refine<=0 就是純道具；refine>0 一定要是「個體裝備」，
+  // 跟遊戲本體 migrateEquipToInstances() 的資料形狀完全一致（instances[id] = {item, refine, cards}）。
+  function applyEquipEdit(key, itemId, refine) {
+    var equip = state.slotWorking.equip;
+    var instances = state.slotWorking.instances;
+    if (!itemId) {
+      equip[key] = null;
+    } else if (refine <= 0) {
+      equip[key] = itemId;
+    } else {
+      var cur = equip[key];
+      var curInst = cur && instances[cur];
+      var instId;
+      if (curInst && curInst.item === itemId) {
+        instId = cur; // 同一件道具改精鍊值，沿用個體、保留卡片
+      } else {
+        instId = itemId + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        instances[instId] = { item: itemId, refine: 0, cards: [] };
+      }
+      instances[instId].refine = refine;
+      equip[key] = instId;
+    }
+    state.slotPatch.equip = Object.assign({}, equip);
+    state.slotPatch.instances = Object.assign({}, instances);
+    updateSlotStatus();
   }
 
   function updateSlotStatus() {

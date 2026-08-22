@@ -355,12 +355,30 @@ function unfreezeGame() {
 
 // 精簡版道具/職業對照表：只留修改器 UI 需要顯示的欄位，
 // 不把整份 8MB+ 的 ITEMS/JOB_TREE 塞進 postMessage。
+// 額外帶上 armorType/weaponCat/headPos，讓 B 頁能照裝備欄位類型過濾建議清單
+// （不然武器欄位會連紅色藥水都建議出來，跟 head_top/mid/bottom 分不出來）。
+function computeHeadPos(desc) {
+  const d = desc || '';
+  const out = [];
+  if (d.indexOf('頭上') !== -1) out.push('head_top');
+  if (d.indexOf('頭中') !== -1) out.push('head_mid');
+  if (d.indexOf('頭下') !== -1) out.push('head_bottom');
+  if (!out.length) out.push('head_top'); // 沒寫位置的舊資料，保底當頭上
+  return out;
+}
 function buildItemMeta() {
   const out = {};
   if (typeof ITEMS === 'object' && ITEMS) {
     for (const id in ITEMS) {
       const it = ITEMS[id];
-      out[id] = { name: it.name, icon: it.icon, type: it.type };
+      const m = { name: it.name, icon: it.icon, type: it.type };
+      if (it.type === 'armor') {
+        m.armorType = it.armorType || null;
+        if (it.armorType === 'headgear') m.headPos = computeHeadPos(it.desc);
+      } else if (it.type === 'weapon') {
+        m.weaponCat = it.weaponCat || it.weaponType || null;
+      }
+      out[id] = m;
     }
   }
   return out;
