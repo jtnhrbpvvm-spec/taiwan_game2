@@ -11,6 +11,15 @@
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 
 const CSS = `
+/* ---------------- 關閉雙擊縮放手勢（跟 viewport 設定雙重保險） ---------------- */
+html, body { touch-action: manipulation; }
+
+/* ---------------- 戰鬥區：窄螢幕下原本被強制 320px 最小高度，
+   內容填不滿就會留下一截空白，改成貼齊實際內容高度 ---------------- */
+@media (max-width: 860px) {
+  .battle-panel { min-height: auto; }
+}
+
 /* ---------------- 頂部狀態列：固定不動 ---------------- */
 .hud-bar {
   position: sticky;
@@ -24,14 +33,35 @@ const CSS = `
 /* 音量控制在手機上占位又不常用，先收起來 */
 .volume-controls { display: none; }
 
-/* 頂部右側一整排功能鈕（儲存/匯出/返回/關於/掛機收益/轉職提醒），
-   一起加大熱區、統一間距，避免手指誤觸到隔壁按鈕 */
+/* ---------------- 頂部右側一整排功能鈕，改成預設收起，
+   只留一顆展開鈕（#ro-tools-toggle），點了才顯示 ---------------- */
 .hud-right { gap: 8px; row-gap: 8px; }
-.btn-save, #btn-idle-report, .btn-jobchange {
+.hud-right .btn-save,
+.hud-right #btn-idle-report,
+.hud-right .btn-jobchange {
+  display: none;
+}
+body.ro-tools-open .hud-right .btn-save,
+body.ro-tools-open .hud-right #btn-idle-report,
+body.ro-tools-open .hud-right .btn-jobchange {
+  display: inline-flex;
   min-height: 46px;
   min-width: 46px;
   padding: 8px 12px;
 }
+#ro-tools-toggle {
+  min-height: 46px;
+  min-width: 46px;
+  padding: 8px 12px;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  color: var(--gold-soft);
+  font-size: 17px;
+  cursor: pointer;
+  line-height: 1;
+}
+body.ro-tools-open #ro-tools-toggle { border-color: var(--gold-soft); background: #2a2f4e; }
 
 /* ---------------- 分頁列：改成底部固定的圖示條 ----------------
    拇指容易點到，內容捲動也不會被蓋住 */
@@ -116,14 +146,42 @@ const CSS = `
 }
 `;
 
+// 原本 index.html 裡的 viewport 設定，關閉時要還原成這個
+const ORIGINAL_VIEWPORT = 'width=device-width, initial-scale=1.0';
+const MOBILE_VIEWPORT = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+
 const existing = document.getElementById(STYLE_ID);
 if (existing) {
   existing.remove();
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp) vp.setAttribute('content', ORIGINAL_VIEWPORT);
+  const toggleBtn = document.getElementById('ro-tools-toggle');
+  if (toggleBtn) toggleBtn.remove();
+  document.body.classList.remove('ro-tools-open');
   console.log('[RO 手機化] 已關閉');
 } else {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = CSS;
   document.head.appendChild(style);
+
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp) vp.setAttribute('content', MOBILE_VIEWPORT);
+
+  // 頂部展開鈕：點一下顯示/隱藏 儲存・匯出・返回・關於・掛機收益 這些按鈕
+  const TOGGLE_ID = 'ro-tools-toggle';
+  const hudRight = document.querySelector('.hud-right');
+  if (hudRight && !document.getElementById(TOGGLE_ID)) {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = TOGGLE_ID;
+    toggleBtn.type = 'button';
+    toggleBtn.textContent = '⚙';
+    toggleBtn.title = '顯示／隱藏 儲存・匯出等功能';
+    toggleBtn.addEventListener('click', function () {
+      document.body.classList.toggle('ro-tools-open');
+    });
+    hudRight.insertBefore(toggleBtn, hudRight.firstChild);
+  }
+
   console.log('[RO 手機化] 已套用，再點一次書籤可關閉');
 }
