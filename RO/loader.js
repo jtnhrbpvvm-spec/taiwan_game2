@@ -16,6 +16,10 @@ const CSS = `
 @media (pointer: coarse) {
 
   html, body { touch-action: manipulation; } /* 關閉雙擊縮放手勢 */
+  /* 關閉「捲到最頂端再往下拉」時瀏覽器原生的下拉重整手勢。
+     overscroll-behavior 是現代瀏覽器的正規做法，但舊版 iOS Safari 不一定吃，
+     下面 bindPullToRefreshGuard() 另外用 touchmove 擋一層當備案。 */
+  html, body { overscroll-behavior-y: contain; }
 
   /* 戰鬥區：窄螢幕下原本被強制 320px 最小高度，內容填不滿就留一截空白，改成貼齊內容高度 */
   @media (max-width: 860px) {
@@ -82,6 +86,33 @@ const CSS = `
   }
   .tab-btn.active { box-shadow: inset 0 2px 0 var(--gold); }
 
+  /* 底部分頁列只留 4 顆：地圖／自動戰鬥／角色相關／其他。
+     左右滑動生硬主要是按鈕塞太多，原本 9+1 顆縮到 4 顆之後窄螢幕也不用再橫捲。
+     其餘原生分頁鈕從列上隱藏（功能都還在，收進「角色相關」「其他」彈出清單裡，
+     見下面 #ro-group-popup），只是 display:none，原本 switchTab() 邏輯完全沒動。 */
+  .tab-nav [data-tab="character"], .tab-nav [data-tab="skills"], .tab-nav [data-tab="inventory"],
+  .tab-nav [data-tab="equip"], .tab-nav [data-tab="jobtree"], .tab-nav [data-tab="codex"],
+  .tab-nav [data-tab="achievements"], .tab-nav #tab-btn-forge {
+    display: none !important;
+  }
+  .ro-group-btn.active { box-shadow: inset 0 2px 0 var(--gold); }
+  #ro-group-popup {
+    position: fixed; left: 8px; right: 8px; z-index: 95;
+    background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 12px;
+    padding: 8px; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    transform: translateY(12px); opacity: 0;
+    transition: transform .18s ease, opacity .18s ease;
+    pointer-events: none;
+  }
+  #ro-group-popup.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .ro-group-item {
+    display: flex; align-items: center; gap: 10px; padding: 13px 12px;
+    border-radius: 8px; font-size: 14px; min-height: 46px; cursor: pointer;
+  }
+  .ro-group-item:active { background: var(--bg-panel); }
+  .ro-group-item .ic { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+
   /* 分頁內容改成獨立彈出的滿版視窗，不再跟地圖黏在同一個長頁面裡滑——
      點下方分頁鈕（地圖／自動戰鬥／角色／…／裝備）之後，這裡會整片蓋住畫面，
      內容自己捲動，跟戰鬥畫面完全分開，武器/防具清單也不會被擠到更下層。
@@ -92,6 +123,11 @@ const CSS = `
   .tab-content {
     position: fixed !important; left: 0 !important; right: 0 !important;
     top: 0 !important; bottom: 0 !important; z-index: 65 !important;
+    /* 遊戲本體原本的版面是桌機側欄設計，裡面的分頁內容自己可能帶著固定
+       高度／max-height（設計成配合桌機側欄的既有高度）。只設 top/bottom
+       沒用，任何一邊被明確的 height 卡住，畫面就會停在半路留一片黑，
+       所以連 height 系列全部強制 reset 掉。 */
+    height: auto !important; min-height: 0 !important; max-height: none !important;
     background: var(--bg-panel-2) !important;
     padding: 0 14px calc(78px + env(safe-area-inset-bottom, 0)) 14px !important;
     overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
@@ -103,6 +139,7 @@ const CSS = `
     transform: translateY(0) !important;
     pointer-events: auto !important;
   }
+  .tab-panel { height: auto !important; min-height: 0 !important; max-height: none !important; }
   /* 關閉鈕改成貼在彈出視窗「自己內部」捲動範圍最上方（position:sticky），
      不是另外獨立一個 fixed 元素——這樣它一定跟視窗本身同一層堆疊，
      不用再去猜跟其他元素的 z-index 高低關係，一定會顯示、一定按得到。 */
@@ -116,6 +153,32 @@ const CSS = `
     min-height: 40px; padding: 6px 16px; border-radius: 8px;
     background: var(--bg-panel); border: 1px solid var(--gold);
     color: var(--gold-soft); font-size: 14px; cursor: pointer;
+  }
+
+  /* 裝備分頁第二層彈窗：點武器／防具／遺物才跳出，專門用來選要換上的東西，
+     跟上面裝備欄格狀總覽分開，不會再被擠在同一片捲動區域裡看不到。
+     z-index 故意比 .tab-nav（90）還高，選裝備這件事優先於底部導覽。 */
+  #ro-equip-pick-popup {
+    position: fixed !important; inset: 0 !important; z-index: 120 !important;
+    background: var(--bg-panel-2) !important;
+    display: flex !important; flex-direction: column !important;
+  }
+  #ro-equip-pick-popup.hidden { display: none !important; }
+  #ro-equip-pick-popup-bar {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; flex-wrap: wrap;
+    padding: 12px 14px; border-bottom: 1px solid var(--gold); background: var(--bg-panel-2);
+    padding-top: calc(12px + env(safe-area-inset-top, 0));
+  }
+  #ro-equip-pick-popup-title { color: var(--gold-soft); font-size: 15px; font-weight: 700; }
+  #ro-equip-pick-popup-close {
+    min-height: 40px; padding: 6px 14px; border-radius: 8px; white-space: nowrap;
+    background: var(--bg-panel); border: 1px solid var(--gold);
+    color: var(--gold-soft); font-size: 13.5px; cursor: pointer;
+  }
+  #ro-equip-pick-popup-body {
+    flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding: 14px calc(14px) calc(24px + env(safe-area-inset-bottom, 0)) 14px;
   }
 
   /* 觸控熱區加大 */
@@ -200,6 +263,15 @@ if (existing) {
     const brk = document.getElementById('ro-tools-break');
     if (brk) brk.remove();
     document.body.classList.remove('ro-tools-open');
+    // 底部分頁列瘦身用的「角色相關／其他」按鈕跟彈出清單也是動態插入的，
+    // 沒清掉的話關閉工具後會跟遊戲原本的分頁鈕重複顯示、擠成一團。
+    const charBtn = document.getElementById('ro-group-btn-character');
+    if (charBtn) charBtn.remove();
+    const otherBtn = document.getElementById('ro-group-btn-other');
+    if (otherBtn) otherBtn.remove();
+    const groupPopup = document.getElementById('ro-group-popup');
+    if (groupPopup) groupPopup.remove();
+    window.__roBottomNavGroupsBound = false; // 允許下次重新開啟工具時再插回去
   }
 
   const editorBox = document.getElementById('ro-editor-box');
@@ -621,10 +693,110 @@ function bindIdleReportOutsideClose() {
     if (typeof toggleIdleReport === 'function') toggleIdleReport();
   }, true);
 }
-if (isTouch) {
-  bindAboutModalOutsideClose();
-  bindIdleReportOutsideClose();
-  bindTabContentOverlay();
+
+/* ============================================================
+   下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）
+   只在「不是在我們自己的可捲動容器裡」而且「頁面本身已經在最頂端」時
+   才擋掉往下拉的手勢——這樣裝備清單彈窗、分頁彈出視窗、戰鬥紀錄這些
+   自己會捲動的區塊完全不受影響，只有背景／戰鬥地圖那一塊被拉到底時
+   會被攔下來，不會誤觸瀏覽器整頁重新整理把玩家踢出目前畫面。
+   ============================================================ */
+function bindPullToRefreshGuard() {
+  if (window.__roPullGuardBound) return;
+  window.__roPullGuardBound = true;
+  let startY = 0;
+  const scrollableSelector = '.tab-content, #ro-equip-pick-popup-body, #ro-editor-box, ' +
+    '.combat-log, .log-pane-body, .idle-report-panel, #idle-report-body, .ally-panel, #ally-panel-body, ' +
+    'input, textarea, select';
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) return;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (e.touches.length !== 1) return;
+    if (e.target.closest(scrollableSelector)) return; // 自己會捲動的區塊，不插手
+    const y = e.touches[0].clientY;
+    const atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    if (atTop && y > startY) e.preventDefault();
+  }, { passive: false });
+}
+
+/* ============================================================
+   裝備分頁第二層彈窗：點武器／防具／遺物才跳出來選要換的東西
+   （見上面 CSS 的 #ro-equip-pick-popup）
+
+   原本 renderEquipTab() 是把「裝備欄總覽 + 這個分類的清單」全部塞進同一片
+   #tab-equip，清單一長就把裝備欄總覽往下擠，在手機的彈出視窗裡還是會被
+   擋住。做法：包一層 renderEquipTab()，渲染完之後把「裝備欄總覽」之後的
+   內容（也就是清單本體）整段搬到另一個獨立彈窗裡；再包一層
+   setEquipPickCat()（武器／防具／遺物那三顆分頁鈕按下去呼叫的函式），
+   讓「切分類」這個動作額外觸發「打開清單彈窗」。
+   遺物分類走的是完全不同的版面（renderRelicPageHtml()，沒有清單可搬），
+   直接跳過不處理，讓它照原本樣子顯示在 #tab-equip 裡。
+   ============================================================ */
+function ensureEquipPickPopup() {
+  let pop = document.getElementById('ro-equip-pick-popup');
+  if (pop) return pop;
+  pop = document.createElement('div');
+  pop.id = 'ro-equip-pick-popup';
+  pop.className = 'hidden';
+  pop.innerHTML =
+    '<div id="ro-equip-pick-popup-bar">' +
+      '<span id="ro-equip-pick-popup-title">選擇裝備</span>' +
+      '<button type="button" id="ro-equip-pick-popup-close">← 回到裝備欄位</button>' +
+    '</div>' +
+    '<div id="ro-equip-pick-popup-body"></div>';
+  document.body.appendChild(pop);
+  document.getElementById('ro-equip-pick-popup-close').addEventListener('click', function () {
+    pop.classList.add('hidden');
+  });
+  return pop;
+}
+// 把 .equip-sticky（裝備欄總覽＋分類鈕）之後的所有內容搬進彈窗；
+// 回傳 true 代表真的有搬到東西（武器/防具分類），false 代表這次是遺物分類，沒有可搬的清單。
+function relocateEquipPickList() {
+  const tabEquip = document.getElementById('tab-equip');
+  if (!tabEquip) return false;
+  const sticky = tabEquip.querySelector('.equip-sticky');
+  if (!sticky) return false;
+  const popup = ensureEquipPickPopup();
+  const body = document.getElementById('ro-equip-pick-popup-body');
+  body.innerHTML = '';
+  let node = sticky.nextSibling;
+  while (node) {
+    const next = node.nextSibling;
+    body.appendChild(node);
+    node = next;
+  }
+  return true;
+}
+function showEquipPickPopup(cat) {
+  const popup = ensureEquipPickPopup();
+  const titleMap = { weapon: '⚔️ 選擇武器', armor: '🛡️ 選擇防具' };
+  document.getElementById('ro-equip-pick-popup-title').textContent = titleMap[cat] || '選擇裝備';
+  popup.classList.remove('hidden');
+}
+function hideEquipPickPopup() {
+  const popup = document.getElementById('ro-equip-pick-popup');
+  if (popup) popup.classList.add('hidden');
+}
+function bindEquipPickPopup() {
+  if (window.__roEquipPopupBound) return;
+  if (typeof window.renderEquipTab !== 'function' || typeof window.setEquipPickCat !== 'function') return;
+  window.__roEquipPopupBound = true;
+
+  const originalRender = window.renderEquipTab;
+  window.renderEquipTab = function () {
+    originalRender.apply(this, arguments);
+    relocateEquipPickList(); // 每次重繪（含裝備完自動重繪）都重新搬一次，清單內容才會是最新的
+  };
+
+  const originalSetCat = window.setEquipPickCat;
+  window.setEquipPickCat = function (c) {
+    originalSetCat.apply(this, arguments); // 內部本來就會呼叫 renderEquipTab()，清單已經搬進彈窗了
+    if (c === 'relic') hideEquipPickPopup();
+    else showEquipPickPopup(c);
+  };
 }
 
 /* ============================================================
@@ -669,7 +841,125 @@ function bindTabContentOverlay() {
     } else {
       openTabOverlay();
     }
+    updateGroupBtnActiveState(); // 角色相關／其他 這兩顆的金色底線要跟著目前分頁走
   };
+}
+
+/* ============================================================
+   底部分頁列瘦身：只留地圖／自動戰鬥／角色相關／其他 4 顆
+   角色／技能／背包／裝備／轉職樹收進「角色相關」彈出清單；
+   圖鑑／成就收進「其他」彈出清單；鍛造鈕（依職業動態顯示）也塞進角色相關，
+   跟著它原本 .hidden 的顯示狀態走。
+   點清單裡任何一項，一律呼叫原本的 switchTab()／openForge()，
+   不重寫任何分頁渲染邏輯，單純只是換個入口。
+   ============================================================ */
+const GROUP_CHARACTER = [
+  { tab: 'character', icon: '🧍', label: '角色' },
+  { tab: 'skills', icon: '📖', label: '技能' },
+  { tab: 'inventory', icon: '🎒', label: '背包' },
+  { tab: 'equip', icon: '🎽', label: '裝備' },
+  { tab: 'jobtree', icon: '🌳', label: '轉職樹' }
+];
+const GROUP_OTHER = [
+  { tab: 'codex', icon: '📕', label: '圖鑑' },
+  { tab: 'achievements', icon: '🏆', label: '成就' }
+];
+let _roGroupOpenKey = null;
+function ensureGroupPopup() {
+  let pop = document.getElementById('ro-group-popup');
+  if (pop) return pop;
+  pop = document.createElement('div');
+  pop.id = 'ro-group-popup';
+  document.body.appendChild(pop);
+  // 點清單外面關閉；開關鈕自己的點擊已經有獨立的 handler，這裡要排除掉，
+  // 不然按鈕本身那次點擊會「先關掉、又立刻打開」互相打架。
+  document.addEventListener('click', function (e) {
+    if (!_roGroupOpenKey) return;
+    if (pop.contains(e.target)) return;
+    if (e.target.closest('.ro-group-btn')) return;
+    closeGroupPopup();
+  }, true);
+  return pop;
+}
+function closeGroupPopup() {
+  const pop = document.getElementById('ro-group-popup');
+  if (pop) pop.classList.remove('open');
+  _roGroupOpenKey = null;
+  updateGroupBtnActiveState();
+}
+function openGroupPopup(key) {
+  const list = (key === 'character' ? GROUP_CHARACTER : GROUP_OTHER).slice();
+  if (key === 'character') {
+    const forgeBtn = document.getElementById('tab-btn-forge');
+    if (forgeBtn && !forgeBtn.classList.contains('hidden')) {
+      list.push({ tab: null, icon: '🔨', label: '鍛造', action: 'forge' });
+    }
+  }
+  const pop = ensureGroupPopup();
+  pop.innerHTML = list.map(function (it) {
+    return '<div class="ro-group-item" data-tab="' + (it.tab || '') + '" data-action="' + (it.action || '') + '">' +
+      '<span class="ic">' + it.icon + '</span><span>' + it.label + '</span></div>';
+  }).join('');
+  pop.querySelectorAll('.ro-group-item').forEach(function (row) {
+    row.addEventListener('click', function () {
+      closeGroupPopup();
+      if (row.dataset.action === 'forge') {
+        if (typeof openForge === 'function') openForge();
+      } else if (row.dataset.tab && typeof switchTab === 'function') {
+        switchTab(row.dataset.tab);
+      }
+    });
+  });
+  const tabNav = document.querySelector('.tab-nav');
+  const navHeight = tabNav ? tabNav.getBoundingClientRect().height : 60;
+  pop.style.bottom = (navHeight + 8) + 'px';
+  pop.classList.add('open');
+  _roGroupOpenKey = key;
+  updateGroupBtnActiveState();
+}
+function toggleGroupPopup(key) {
+  if (_roGroupOpenKey === key) closeGroupPopup();
+  else openGroupPopup(key);
+}
+function updateGroupBtnActiveState() {
+  const charBtn = document.getElementById('ro-group-btn-character');
+  const otherBtn = document.getElementById('ro-group-btn-other');
+  const active = (typeof activeTab !== 'undefined') ? activeTab : null;
+  const inChar = GROUP_CHARACTER.some(function (i) { return i.tab === active; });
+  const inOther = GROUP_OTHER.some(function (i) { return i.tab === active; });
+  if (charBtn) charBtn.classList.toggle('active', inChar || _roGroupOpenKey === 'character');
+  if (otherBtn) otherBtn.classList.toggle('active', inOther || _roGroupOpenKey === 'other');
+}
+function bindBottomNavGroups() {
+  if (window.__roBottomNavGroupsBound) return;
+  const tabNav = document.querySelector('.tab-nav');
+  if (!tabNav) return;
+  window.__roBottomNavGroupsBound = true;
+
+  const charBtn = document.createElement('button');
+  charBtn.type = 'button';
+  charBtn.id = 'ro-group-btn-character';
+  charBtn.className = 'tab-btn ro-group-btn';
+  charBtn.innerHTML = '🧍 角色相關';
+  charBtn.addEventListener('click', function () { toggleGroupPopup('character'); });
+
+  const otherBtn = document.createElement('button');
+  otherBtn.type = 'button';
+  otherBtn.id = 'ro-group-btn-other';
+  otherBtn.className = 'tab-btn ro-group-btn';
+  otherBtn.innerHTML = '☰ 其他';
+  otherBtn.addEventListener('click', function () { toggleGroupPopup('other'); });
+
+  // 插在「自動戰鬥」後面，維持「地圖／自動戰鬥／角色相關／其他」這個順序
+  const autobattleBtn = tabNav.querySelector('[data-tab="autobattle"]');
+  if (autobattleBtn) {
+    tabNav.insertBefore(charBtn, autobattleBtn.nextSibling);
+    tabNav.insertBefore(otherBtn, charBtn.nextSibling);
+  } else {
+    tabNav.appendChild(charBtn);
+    tabNav.appendChild(otherBtn);
+  }
+  updateGroupBtnActiveState();
 }
 
 function handleEditorMessage(ev) {
@@ -691,4 +981,16 @@ function handleEditorMessage(ev) {
     const ids = buildJobCompatSet(data.jobId, data.baseLevel);
     win.postMessage({ type: 'ro-editor:job-items', jobId: data.jobId, ids: ids }, EDITOR_ORIGIN);
   }
+}
+
+// 所有 isTouch 專屬的行為綁定放在檔案最後才呼叫，確保上面用到的函式／
+// 常數（例如 GROUP_CHARACTER 這種 const 陣列）都已經宣告完成，
+// 不會因為呼叫點在宣告之前而在 TDZ 階段就出錯。
+if (isTouch) {
+  bindAboutModalOutsideClose();
+  bindIdleReportOutsideClose();
+  bindTabContentOverlay();
+  bindEquipPickPopup();
+  bindPullToRefreshGuard();
+  bindBottomNavGroups();
 }
