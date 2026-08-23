@@ -775,7 +775,7 @@ function relocateEquipPickList() {
 }
 function showEquipPickPopup(cat) {
   const popup = ensureEquipPickPopup();
-  const titleMap = { weapon: '⚔️ 選擇武器', armor: '🛡️ 選擇防具' };
+  const titleMap = { weapon: '⚔️ 選擇武器', armor: '🛡️ 選擇防具', relic: '🏺 遺物' };
   document.getElementById('ro-equip-pick-popup-title').textContent = titleMap[cat] || '選擇裝備';
   popup.classList.remove('hidden');
 }
@@ -797,8 +797,7 @@ function bindEquipPickPopup() {
   const originalSetCat = window.setEquipPickCat;
   window.setEquipPickCat = function (c) {
     originalSetCat.apply(this, arguments); // 內部本來就會呼叫 renderEquipTab()，清單已經搬進彈窗了
-    if (c === 'relic') hideEquipPickPopup();
-    else showEquipPickPopup(c);
+    showEquipPickPopup(c); // 武器／防具／遺物三個分類都用同一個 .equip-sticky 結構，統一處理
   };
 }
 
@@ -827,6 +826,7 @@ function openTabOverlay() {
 }
 function closeTabOverlay() {
   document.body.classList.remove('ro-tabcontent-open');
+  hideEquipPickPopup(); // 裝備分頁的第二層選擇彈窗如果還開著，跟著一起收掉，不留在畫面上浮空
 }
 let _roLastTabClicked = null;
 function bindTabContentOverlay() {
