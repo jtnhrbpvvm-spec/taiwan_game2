@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L5';
+const LOADER_VERSION = 'L6';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -707,7 +707,9 @@ function buildJobMeta() {
   const out = {};
   if (typeof JOB_TREE === 'object' && JOB_TREE) {
     for (const id in JOB_TREE) {
-      out[id] = { name: JOB_TREE[id].name };
+      // parent/tier 讓修改器能自己沿著職業鏈往回走，畫出「新手→一轉→二轉…」
+      // 這種依階段分開的技能點輸入框，不用另外問遊戲要一次。
+      out[id] = { name: JOB_TREE[id].name, parent: JOB_TREE[id].parent || null, tier: JOB_TREE[id].tier || 1 };
     }
   }
   return out;
