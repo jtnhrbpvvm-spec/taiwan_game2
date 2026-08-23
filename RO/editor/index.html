@@ -122,6 +122,24 @@
     display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line);
   }
   .list-row:last-child{ border-bottom:none; }
+  .relic-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:4px;
+  }
+  .relic-cell{
+    position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:12px 4px 10px; min-height:76px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    text-align:center;
+  }
+  .relic-cell.filled{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .relic-cell.empty{ cursor:pointer; opacity:.75; }
+  .relic-cell .ic{ font-size:22px; line-height:1; }
+  .relic-cell .slot-name{ font-size:12px; color:var(--ink); font-weight:600; }
+  .relic-cell .set-name{ font-size:10.5px; color:var(--gold-soft); }
+  .relic-cell .rm{
+    position:absolute; top:1px; right:3px; background:none; border:none;
+    color:var(--danger); font-size:14px; cursor:pointer; padding:3px 5px; line-height:1;
+  }
   .list-row.has-cards{
     border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
     padding-left:6px; border-radius:4px; cursor:pointer;
@@ -217,7 +235,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V7</span>
+      <h1>存檔修改器</h1><span class="ver">V8</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -1046,25 +1064,34 @@
     var slots = state.init.relicSlots || [];
     if (!slots.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到遺物欄位資料</div>'; return; }
     var relics = state.slotWorking.relics || {};
+    var setMeta = state.init.relicSetMeta || {};
+    var grid = document.createElement('div');
+    grid.className = 'relic-grid';
     slots.forEach(function (s) {
       var itemId = relics[s.key] || '';
       var meta = itemId ? state.init.itemMeta[itemId] : null;
-      var line = document.createElement('div');
-      line.className = 'list-row';
+      var setInfo = meta && meta.relicSet ? setMeta[meta.relicSet] : null;
+      var cell = document.createElement('div');
+      cell.className = 'relic-cell' + (itemId ? ' filled' : ' empty');
+      cell.innerHTML =
+        (itemId ? '<button class="rm" data-key="' + s.key + '" title="卸下">✕</button>' : '') +
+        '<div class="ic">' + (meta ? (meta.icon || s.icon) : s.icon) + '</div>' +
+        '<div class="slot-name">' + escapeHtml(s.name) + '</div>' +
+        (itemId ? '<div class="set-name">' + escapeHtml(setInfo ? setInfo.name : (meta ? meta.name : itemId)) + '</div>' : '');
       if (!itemId) {
-        line.innerHTML =
-          '<div class="ic">' + s.icon + '</div>' +
-          '<div class="nm"><small>' + escapeHtml(s.name) + '</small>（空）</div>';
-      } else {
-        line.innerHTML =
-          '<div class="ic">' + (meta ? (meta.icon || s.icon) : s.icon) + '</div>' +
-          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) + '<small>' + escapeHtml(s.name) + '</small></div>' +
-          '<button class="rm" data-key="' + s.key + '" title="卸下">✕</button>';
+        // 點空格子＝直接把下面新增區的部位選單切到這一格，省一步選單操作
+        cell.addEventListener('click', function () {
+          $('relic-add-slot').value = s.key;
+          $('relic-add-id').value = '';
+          $('relic-add-id').focus();
+        });
       }
-      wrap.appendChild(line);
+      grid.appendChild(cell);
     });
+    wrap.appendChild(grid);
     wrap.querySelectorAll('.rm').forEach(function (btn) {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
         applyRelicEdit(this.dataset.key, '');
         renderRelicList();
       });
