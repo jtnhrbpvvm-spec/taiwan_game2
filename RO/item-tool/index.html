@@ -1,0 +1,659 @@
+<!--
+  諸神放置錄 — 物品清理工具（第三方輔助工具）
+  跟存檔修改器是分開的獨立工具，只做一件事：批次勾選、刪除背包/倉庫物品。
+  一定要從遊戲內頂部輸入框打「刪除物品」按開啟才能用，不能直接把這個網址
+  貼到新分頁開啟（沒有 window.opener 就沒有存檔資料可以讀）。
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物品清理工具 — 諸神放置錄</title>
+<style>
+  :root{
+    --bg: #171224;
+    --bg-panel: #211a33;
+    --bg-panel-2: #2a2140;
+    --bg-input: #1b1529;
+    --line: #3c2f5c;
+    --gold: #c9a227;
+    --gold-soft: #e0c15a;
+    --ink: #ece6f5;
+    --ink-dim: #a99bc4;
+    --danger: #e0607a;
+    --ok: #6fcf97;
+    --radius: 10px;
+    font-size: 16px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  /* 關閉「捲到最頂端再往下拉」時瀏覽器原生的下拉重整手勢——這是獨立頁面，
+     跟遊戲本體那份防呆是分開的，這裡要自己補一份。overscroll-behavior-y 是
+     現代瀏覽器的正規做法，下面 script 裡另外用 touchmove 擋一層當備案。 */
+  html,body{ overscroll-behavior-y: contain; }
+  body{
+    margin:0; background:radial-gradient(ellipse at top, #241c38 0%, var(--bg) 60%);
+    color:var(--ink); font-family: "PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    min-height:100vh; padding:14px;
+  }
+  h1,h2,h3{ font-weight:700; margin:0 0 8px; }
+  .app{ max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+  .brand{ display:flex; align-items:center; gap:10px; padding:2px 2px 6px; }
+  .brand .mark{ font-size:22px; }
+  .brand h1{ font-size:17px; color:var(--gold-soft); letter-spacing:.5px; display:inline; }
+  .brand .ver{ font-size:11px; color:var(--ink-dim); border:1px solid var(--line); border-radius:20px; padding:1px 8px; margin-left:6px; vertical-align:middle; }
+  .brand .sub{ font-size:11px; color:var(--ink-dim); margin-top:2px; }
+
+  .warn-band{
+    background:#3a2416; border:1px solid #6b4a1f; color:#f0c98a;
+    border-radius:var(--radius); padding:9px 12px; font-size:12.5px; line-height:1.5;
+  }
+  .warn-band.danger{ background:#3a1a1e; border-color:#7a2a35; color:#f2a3ae; }
+
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px;
+  }
+  .center-msg{ text-align:center; padding:40px 10px; color:var(--ink-dim); }
+  .spinner{
+    width:34px; height:34px; margin:0 auto 14px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--gold);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .btn{
+    appearance:none; border:1px solid var(--gold); background:var(--bg-panel-2);
+    color:var(--gold-soft); border-radius:8px; padding:9px 14px; font-size:13.5px;
+    cursor:pointer; font-weight:600; transition:background .15s, transform .05s;
+  }
+  .btn:hover{ background:#352a53; }
+  .btn:active{ transform:scale(.97); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.primary{ background:var(--gold); color:#2a2011; border-color:var(--gold); }
+  .btn.primary:hover{ background:var(--gold-soft); }
+  .btn.ghost{ background:transparent; border-color:var(--line); color:var(--ink-dim); }
+  .btn.danger{ border-color:var(--danger); color:var(--danger); }
+  .btn.block{ width:100%; }
+  .btn.sm{ padding:6px 10px; font-size:12px; }
+
+  .slot-grid{ display:flex; flex-direction:column; gap:8px; max-height:65vh; overflow-y:auto; }
+  .slot-row{
+    display:flex; align-items:center; gap:10px; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px; cursor:pointer;
+    text-align:left;
+  }
+  .slot-row:hover{ border-color:var(--gold); }
+  .slot-row .idx{
+    width:26px; height:26px; border-radius:50%; background:var(--bg-input);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-dim);
+    flex-shrink:0;
+  }
+  .slot-row .info{ flex:1; min-width:0; }
+  .slot-row .name{ font-size:14px; font-weight:600; }
+  .slot-row .meta{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; }
+  .badge-live{
+    font-size:10.5px; background:#2c4a34; color:var(--ok); border:1px solid #3d6a49;
+    padding:2px 7px; border-radius:20px; flex-shrink:0;
+  }
+
+  .backline{ display:flex; align-items:center; gap:6px; }
+  .backline .btn{ padding:6px 10px; font-size:12px; }
+  .editor-head{ margin-top:8px; }
+  .editor-head .who{ font-size:14px; font-weight:700; color:var(--gold-soft); }
+  .editor-head .who small{ display:block; font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:1px; }
+
+  .item-section{ margin-top:16px; }
+  .item-section h3{ font-size:14.5px; color:var(--gold-soft); display:flex; align-items:center; gap:6px; }
+  .item-section .count{ font-size:11.5px; color:var(--ink-dim); font-weight:400; }
+
+  .filter-row{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .filter-row select{
+    flex:1; min-width:110px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:8px 9px; font-size:12.5px;
+  }
+  .filter-row input[type=text]{
+    flex:1; min-width:110px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:8px 9px; font-size:12.5px;
+  }
+  .action-row{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+  .item-list{ margin-top:10px; max-height:280px; overflow-y:auto; }
+  .item-row{
+    display:flex; align-items:center; gap:9px; padding:8px 4px; border-bottom:1px solid var(--line);
+  }
+  .item-row:last-child{ border-bottom:none; }
+  .item-row.checked{ background:rgba(201,162,39,.08); }
+  .item-row input[type=checkbox]{ width:19px; height:19px; flex-shrink:0; accent-color:var(--gold); }
+  .item-row .ic{ font-size:18px; flex-shrink:0; }
+  .item-row .nm{ flex:1; min-width:0; font-size:13px; }
+  .item-row .nm small{ display:block; color:var(--ink-dim); font-size:10.5px; }
+  .item-row .qty{ font-size:12px; color:var(--ink-dim); flex-shrink:0; }
+  .empty-hint{ color:var(--ink-dim); font-size:12.5px; padding:14px 0; text-align:center; }
+
+  .apply-bar{
+    position:sticky; bottom:0; display:flex; gap:8px; align-items:center;
+    background:linear-gradient(180deg, transparent, var(--bg) 30%); padding-top:10px; margin-top:14px;
+  }
+  .apply-bar .status{ font-size:12px; color:var(--ink-dim); flex:1; }
+  .apply-bar .status.dirty{ color:var(--gold-soft); }
+
+  .confirm-overlay{
+    position:fixed; inset:0; z-index:999; background:rgba(10,8,20,.75);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .confirm-box{
+    background:var(--bg-panel); border:1px solid var(--danger); border-radius:12px;
+    padding:20px; max-width:320px; width:100%; text-align:center;
+  }
+  .confirm-box .ic{ font-size:30px; margin-bottom:8px; }
+  .confirm-box h3{ color:#f2a3ae; font-size:15px; }
+  .confirm-box p{ font-size:12.5px; color:var(--ink-dim); line-height:1.6; margin:8px 0 16px; }
+  .confirm-box .btns{ display:flex; gap:8px; }
+  .confirm-box .btns .btn{ flex:1; }
+
+  .toast{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(20px);
+    background:#2a2140; border:1px solid var(--gold); color:var(--ink); padding:9px 16px;
+    border-radius:20px; font-size:13px; opacity:0; pointer-events:none; transition:all .25s;
+    max-width:90vw; text-align:center; z-index:1000;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.err{ border-color:var(--danger); }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="brand">
+    <div class="mark">🧹</div>
+    <div>
+      <h1>物品清理工具</h1><span class="ver">V2</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <div class="sub">諸神放置錄・非官方輔助工具</div>
+    </div>
+  </div>
+
+  <div class="warn-band danger">
+    這是第三方輔助工具，可以批次刪除背包／倉庫裡的物品。<b>刪除無法復原</b>，建議先在遊戲內「匯出」備份一份。
+  </div>
+
+  <!-- 連線中 / 待命畫面 -->
+  <div id="screen-connecting" class="panel">
+    <div id="connecting-loading" class="center-msg">
+      <div class="spinner"></div>
+      <div>正在跟遊戲分頁要資料…</div>
+    </div>
+    <div id="connecting-standalone" class="center-msg hidden">
+      <div style="font-size:34px;margin-bottom:10px;">🔌</div>
+      <div style="color:var(--ink);font-size:14px;margin-bottom:6px;">沒有偵測到遊戲分頁</div>
+      <div style="font-size:12.5px;">請回到遊戲內，在頂部輸入框打「刪除物品」再按「開啟」，<br>不要直接把這個網址貼到新分頁開啟。</div>
+    </div>
+  </div>
+
+  <!-- 選擇存檔欄位（只影響背包，倉庫本來就是跨角色共用） -->
+  <div id="screen-slots" class="panel hidden">
+    <h3>選擇要清理哪個角色的背包</h3>
+    <div id="slot-grid" class="slot-grid"></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--ink-dim);">倉庫是跨角色共用的，選好角色後兩邊會一起顯示。</div>
+  </div>
+
+  <!-- 主工作畫面：背包區、倉庫區各自獨立 -->
+  <div id="screen-workspace" class="panel hidden">
+    <div class="backline"><button class="btn ghost sm" id="btn-back-slots">← 返回欄位列表</button></div>
+    <div class="editor-head">
+      <div class="who" id="workspace-who">—<small id="workspace-who-sub"></small></div>
+    </div>
+
+    <div class="item-section" id="section-inv">
+      <h3>🎒 背包 <span class="count" id="inv-count"></span></h3>
+      <div class="filter-row">
+        <select id="inv-filter"></select>
+        <input type="text" id="inv-search" placeholder="搜尋名稱">
+      </div>
+      <div class="action-row">
+        <button class="btn ghost sm" id="inv-select-all">全選</button>
+        <button class="btn ghost sm" id="inv-invert">反選</button>
+        <button class="btn danger sm" id="inv-delete">🗑️ 刪除已勾選</button>
+      </div>
+      <div id="inv-list" class="item-list"></div>
+    </div>
+
+    <div class="item-section" id="section-wh">
+      <h3>📦 倉庫 <span class="count" id="wh-count"></span></h3>
+      <div class="filter-row">
+        <select id="wh-filter"></select>
+        <input type="text" id="wh-search" placeholder="搜尋名稱">
+      </div>
+      <div class="action-row">
+        <button class="btn ghost sm" id="wh-select-all">全選</button>
+        <button class="btn ghost sm" id="wh-invert">反選</button>
+        <button class="btn danger sm" id="wh-delete">🗑️ 刪除已勾選</button>
+      </div>
+      <div id="wh-list" class="item-list"></div>
+    </div>
+
+    <div class="apply-bar">
+      <div class="status" id="apply-status">尚未變更</div>
+      <button class="btn ghost sm" id="btn-discard">還原</button>
+      <button class="btn primary" id="btn-apply" disabled>套用修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var GAME_ORIGIN = 'https://nba9001-sys.github.io';
+
+  // 下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）。
+  // 只有「頁面本身已經捲到最頂端」+「手指往下拉」+「不是在清單/輸入框/
+  // 按鈕這些自己會處理觸控的區塊上」才攔截，不會影響背包/倉庫清單自己的捲動。
+  (function bindPullToRefreshGuard() {
+    var startY = 0;
+    var scrollableSelector = '.item-list, .slot-grid, input, textarea, select, button, a, .confirm-box';
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 1) return;
+      if (e.target.closest(scrollableSelector)) return;
+      var y = e.touches[0].clientY;
+      var atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+      if (atTop && y > startY) e.preventDefault();
+    }, { passive: false });
+  })();
+
+  // 篩選分類：跟裝備分頁用的是同一套 armorType/weaponCat/headPos 判斷邏輯，
+  // 卡片另外靠 cardMeta 是否存在來判斷（ITEMS 表裡卡片的 type 其實是
+  // "material"，光看 type 分不出卡片，這點跟遊戲本體 isItemLocked 那套
+  // isCard = !!CARDS[id] 的判斷方式一致）。
+  var FILTER_GROUPS = [
+    { label: '武器', options: [
+      { value: 'w_sword', label: '劍類' },
+      { value: 'w_dagger', label: '匕首' },
+      { value: 'w_bow', label: '弓' },
+      { value: 'w_blunt', label: '槌矛' },
+      { value: 'w_fist', label: '拳套拳刃' },
+      { value: 'w_staff', label: '法杖書本' },
+      { value: 'w_music', label: '樂器鞭' },
+      { value: 'w_gun', label: '槍械' }
+    ] },
+    { label: '防具', options: [
+      { value: 'a_head_top', label: '頭上' },
+      { value: 'a_head_mid', label: '頭中' },
+      { value: 'a_head_bottom', label: '頭下' },
+      { value: 'a_body', label: '身體' },
+      { value: 'a_shield', label: '盾牌' },
+      { value: 'a_garment', label: '披風' },
+      { value: 'a_footgear', label: '鞋子' },
+      { value: 'a_accessory', label: '飾品' }
+    ] },
+    { label: '其他', options: [
+      { value: 'ammo', label: '彈藥' },
+      { value: 'relic', label: '遺物' },
+      { value: 'card', label: '卡片' },
+      { value: 'misc', label: '其他雜物' }
+    ] }
+  ];
+  var WEAPON_CAT_MAP = {
+    sword: ['sword', 'tsword'], dagger: ['dagger'], bow: ['bow'], blunt: ['mace', 'spear'],
+    fist: ['knuckle', 'katar'], staff: ['rod', 'book'], music: ['instrument', 'whip'],
+    gun: ['pistol', 'rifle', 'shotgun', 'gatling', 'grenade']
+  };
+
+  function itemMatchesFilter(id, filterValue) {
+    if (filterValue === 'all') return true;
+    var cardMeta = state.init.cardMeta || {};
+    if (filterValue === 'card') return !!cardMeta[id];
+    if (cardMeta[id]) return false; // 卡片只歸「卡片」這一類，不重複算進其他分類
+    var meta = (state.init.itemMeta || {})[id];
+    if (!meta) return filterValue === 'misc';
+    if (filterValue === 'ammo') return meta.type === 'ammo';
+    if (filterValue === 'relic') return meta.type === 'relic';
+    if (filterValue.indexOf('w_') === 0) {
+      if (meta.type !== 'weapon') return false;
+      var wkey = filterValue.slice(2);
+      return (WEAPON_CAT_MAP[wkey] || []).indexOf(meta.weaponCat) !== -1;
+    }
+    if (filterValue.indexOf('a_') === 0) {
+      if (meta.type !== 'armor') return false;
+      var akey = filterValue.slice(2);
+      if (akey === 'head_top' || akey === 'head_mid' || akey === 'head_bottom') {
+        return meta.armorType === 'headgear' && (meta.headPos || []).indexOf(akey) !== -1;
+      }
+      if (akey === 'body') {
+        return ['shield', 'garment', 'footgear', 'accessory', 'headgear'].indexOf(meta.armorType) === -1;
+      }
+      return meta.armorType === akey;
+    }
+    if (filterValue === 'misc') {
+      return ['weapon', 'armor', 'ammo', 'relic'].indexOf(meta.type) === -1;
+    }
+    return false;
+  }
+  function buildFilterOptionsHtml() {
+    var html = '<option value="all">全部分類</option>';
+    FILTER_GROUPS.forEach(function (g) {
+      html += '<optgroup label="' + g.label + '">';
+      g.options.forEach(function (o) {
+        html += '<option value="' + o.value + '">' + o.label + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    return html;
+  }
+
+  var state = {
+    init: null,
+    selectedSlot: null,
+    invWorking: null,   // 工作副本：目前欄位的 inventory 陣列
+    whWorking: null,    // 工作副本：倉庫 items 陣列
+    invChecked: {},     // key = instanceId || item，value = true
+    whChecked: {},
+    invFilter: 'all',
+    invSearch: '',
+    whFilter: 'all',
+    whSearch: '',
+    invDirty: false,
+    whDirty: false
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id) { $(id).classList.remove('hidden'); }
+  function hide(id) { $(id).classList.add('hidden'); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function toast(msg, isErr) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('err', !!isErr);
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+  function rowKey(row) { return row.instanceId || row.item; }
+
+  // ---------------- A 頁通訊 ----------------
+  var opener = window.opener;
+  function sendToGame(msg) {
+    if (!opener) return;
+    try { opener.postMessage(msg, GAME_ORIGIN); } catch (e) { /* 忽略 */ }
+  }
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== GAME_ORIGIN) return;
+    if (!opener || ev.source !== opener) return;
+    var data = ev.data;
+    if (!data || typeof data !== 'object') return;
+
+    if (data.type === 'ro-itemtool:init') {
+      state.init = data;
+      var loaderBadge = $('loader-ver-badge');
+      if (loaderBadge) {
+        loaderBadge.textContent = 'loader ' + (data.loaderVersion || '未知（舊版）');
+        loaderBadge.style.display = 'inline-block';
+      }
+      hide('screen-connecting');
+      renderSlotList();
+      show('screen-slots');
+    } else if (data.type === 'ro-itemtool:applied') {
+      if (data.ok) {
+        toast('✅ 已套用修改');
+        state.invDirty = false; state.whDirty = false;
+        sendToGame({ type: 'ro-itemtool:refresh' });
+      } else {
+        toast('⚠️ 套用失敗，請重新整理再試一次', true);
+      }
+      updateApplyStatus();
+    }
+  });
+
+  if (!opener) {
+    setTimeout(function () {
+      hide('connecting-loading');
+      show('connecting-standalone');
+    }, 300);
+  } else {
+    sendToGame({ type: 'ro-itemtool:ready' });
+    setTimeout(function () {
+      if (!state.init) {
+        hide('connecting-loading');
+        show('connecting-standalone');
+      }
+    }, 4000);
+  }
+
+  // ---------------- 欄位選擇畫面 ----------------
+  function renderSlotList() {
+    var grid = $('slot-grid');
+    grid.innerHTML = '';
+    var slots = state.init.slots;
+    for (var i = 0; i < 15; i++) {
+      var s = slots[i];
+      if (!s) continue; // 空欄位沒有背包可清，不列出來
+      var row = document.createElement('div');
+      row.className = 'slot-row';
+      row.innerHTML =
+        '<div class="idx">' + (i + 1) + '</div>' +
+        '<div class="info">' +
+          '<div class="name">' + escapeHtml(s.name) + '</div>' +
+          '<div class="meta">Lv.' + s.baseLevel + '　背包 ' + (s.inventory ? s.inventory.length : 0) + ' 種</div>' +
+        '</div>' +
+        (i === state.init.currentSlot ? '<div class="badge-live">遊玩中</div>' : '');
+      row.addEventListener('click', function (idx) {
+        return function () { openWorkspace(idx); };
+      }(i));
+      grid.appendChild(row);
+    }
+    if (!grid.children.length) grid.innerHTML = '<div class="empty-hint">沒有任何存檔欄位有角色</div>';
+  }
+  $('btn-back-slots').addEventListener('click', function () { backToSlots(); });
+  function backToSlots() {
+    if ((state.invDirty || state.whDirty) && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
+    state.selectedSlot = null;
+    hide('screen-workspace');
+    show('screen-slots');
+  }
+
+  // ---------------- 工作畫面 ----------------
+  function openWorkspace(idx) {
+    state.selectedSlot = idx;
+    var slot = state.init.slots[idx];
+    state.invWorking = JSON.parse(JSON.stringify(slot.inventory || []));
+    state.whWorking = JSON.parse(JSON.stringify((state.init.warehouse && state.init.warehouse.items) || []));
+    state.invChecked = {};
+    state.whChecked = {};
+    state.invFilter = 'all'; state.invSearch = '';
+    state.whFilter = 'all'; state.whSearch = '';
+    state.invDirty = false; state.whDirty = false;
+
+    $('workspace-who').innerHTML = escapeHtml(slot.name) +
+      '<small>欄位 ' + (idx + 1) + '　Lv.' + slot.baseLevel + (idx === state.init.currentSlot ? '　🟢 遊玩中' : '') + '</small>';
+
+    $('inv-filter').innerHTML = buildFilterOptionsHtml();
+    $('wh-filter').innerHTML = buildFilterOptionsHtml();
+    $('inv-filter').value = 'all';
+    $('wh-filter').value = 'all';
+    $('inv-search').value = '';
+    $('wh-search').value = '';
+
+    renderList('inv');
+    renderList('wh');
+    updateApplyStatus();
+    hide('screen-slots');
+    show('screen-workspace');
+  }
+
+  // side = 'inv' | 'wh'
+  function getWorking(side) { return side === 'inv' ? state.invWorking : state.whWorking; }
+  function getChecked(side) { return side === 'inv' ? state.invChecked : state.whChecked; }
+  function getFilter(side) { return side === 'inv' ? state.invFilter : state.whFilter; }
+  function getSearch(side) { return side === 'inv' ? state.invSearch : state.whSearch; }
+  function itemMeta(id) { return (state.init.itemMeta || {})[id]; }
+  function cardMeta(id) { return (state.init.cardMeta || {})[id]; }
+  function displayName(id) {
+    var c = cardMeta(id);
+    if (c) return c.name;
+    var m = itemMeta(id);
+    return m ? m.name : id;
+  }
+  function displayIcon(id) {
+    var c = cardMeta(id);
+    if (c) return c.icon || '🃏';
+    var m = itemMeta(id);
+    return (m && m.icon) || '📦';
+  }
+
+  function visibleRows(side) {
+    var working = getWorking(side);
+    var filter = getFilter(side);
+    var q = getSearch(side).trim().toLowerCase();
+    return working.filter(function (row) {
+      if (!itemMatchesFilter(row.item, filter)) return false;
+      if (q && displayName(row.item).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+  }
+
+  function renderList(side) {
+    var listEl = $(side + '-list');
+    var working = getWorking(side);
+    var checked = getChecked(side);
+    var rows = visibleRows(side);
+    $(side + '-count').textContent = '共 ' + working.length + ' 種' + (working.length !== rows.length ? '（篩選出 ' + rows.length + '）' : '');
+    listEl.innerHTML = '';
+    if (!rows.length) { listEl.innerHTML = '<div class="empty-hint">沒有符合條件的物品</div>'; return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (row) {
+      var key = rowKey(row);
+      var isChecked = !!checked[key];
+      // 個體裝備的精煉值/卡片：背包那一側要另外查 state.instances，
+      // 倉庫那一側資料是自己帶著的（跟遊戲本體 renderWarehouseInner 判斷一致，
+      // 不能兩邊套同一套查法，倉庫查 state.instances 只會查到 undefined）。
+      var inst = row.instanceId
+        ? (side === 'inv' ? (state.init.slots[state.selectedSlot].instances || {})[row.instanceId] : row)
+        : null;
+      var refineTag = inst && inst.refine > 0 ? ('+' + inst.refine + ' ') : '';
+      var line = document.createElement('div');
+      line.className = 'item-row' + (isChecked ? ' checked' : '');
+      line.innerHTML =
+        '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + '>' +
+        '<div class="ic">' + displayIcon(row.item) + '</div>' +
+        '<div class="nm">' + refineTag + escapeHtml(displayName(row.item)) +
+          (row.instanceId ? '<small>個體裝備</small>' : '<small>' + row.item + '</small>') + '</div>' +
+        '<div class="qty">' + (row.instanceId ? '×1' : ('×' + row.qty)) + '</div>';
+      line.querySelector('input').addEventListener('change', function () {
+        if (this.checked) checked[key] = true; else delete checked[key];
+        line.classList.toggle('checked', this.checked);
+      });
+      frag.appendChild(line);
+    });
+    listEl.appendChild(frag);
+  }
+
+  function bindSection(side) {
+    $(side + '-filter').addEventListener('change', function () {
+      if (side === 'inv') state.invFilter = this.value; else state.whFilter = this.value;
+      renderList(side);
+    });
+    $(side + '-search').addEventListener('input', function () {
+      if (side === 'inv') state.invSearch = this.value; else state.whSearch = this.value;
+      renderList(side);
+    });
+    $(side + '-select-all').addEventListener('click', function () {
+      var checked = getChecked(side);
+      visibleRows(side).forEach(function (row) { checked[rowKey(row)] = true; });
+      renderList(side);
+    });
+    $(side + '-invert').addEventListener('click', function () {
+      // 反選只影響「目前篩選/搜尋後看得到」的項目，被篩選掉、暫時不在畫面上的
+      // 項目維持原狀不受影響——這是先前跟玩家確認過的範圍。
+      var checked = getChecked(side);
+      visibleRows(side).forEach(function (row) {
+        var key = rowKey(row);
+        if (checked[key]) delete checked[key]; else checked[key] = true;
+      });
+      renderList(side);
+    });
+    $(side + '-delete').addEventListener('click', function () {
+      var checked = getChecked(side);
+      var keys = Object.keys(checked);
+      if (!keys.length) { toast('還沒勾選任何物品'); return; }
+      showDeleteConfirm(keys.length, function () {
+        var working = getWorking(side);
+        var kept = working.filter(function (row) { return !checked[rowKey(row)]; });
+        if (side === 'inv') { state.invWorking = kept; state.invDirty = true; state.invChecked = {}; }
+        else { state.whWorking = kept; state.whDirty = true; state.whChecked = {}; }
+        renderList(side);
+        updateApplyStatus();
+        toast('已標記刪除 ' + keys.length + ' 項（記得按下面「套用修改」才會真的存進去）');
+      });
+    });
+  }
+  bindSection('inv');
+  bindSection('wh');
+
+  function showDeleteConfirm(count, onConfirm) {
+    var old = document.getElementById('confirm-overlay');
+    if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'confirm-overlay';
+    ov.className = 'confirm-overlay';
+    ov.innerHTML =
+      '<div class="confirm-box">' +
+        '<div class="ic">⚠️</div>' +
+        '<h3>確定要刪除 ' + count + ' 項物品？</h3>' +
+        '<p>刪除後<b>無法復原</b>，套用修改之後就會直接從存檔消失。<br>建議先確認過再繼續。</p>' +
+        '<div class="btns">' +
+          '<button class="btn ghost" id="confirm-cancel">取消</button>' +
+          '<button class="btn danger" id="confirm-ok">確定刪除</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.getElementById('confirm-cancel').addEventListener('click', function () { ov.remove(); });
+    document.getElementById('confirm-ok').addEventListener('click', function () {
+      ov.remove();
+      onConfirm();
+    });
+  }
+
+  function updateApplyStatus() {
+    var dirty = state.invDirty || state.whDirty;
+    var parts = [];
+    if (state.invDirty) parts.push('背包');
+    if (state.whDirty) parts.push('倉庫');
+    $('apply-status').textContent = dirty ? (parts.join('、') + '有變更尚未套用') : '尚未變更';
+    $('apply-status').classList.toggle('dirty', dirty);
+    $('btn-apply').disabled = !dirty;
+  }
+  $('btn-discard').addEventListener('click', function () {
+    if (!state.invDirty && !state.whDirty) return;
+    if (!confirm('放棄目前所有未套用的修改？')) return;
+    openWorkspace(state.selectedSlot);
+  });
+  $('btn-apply').addEventListener('click', function () {
+    if (!state.invDirty && !state.whDirty) return;
+    var msg = { type: 'ro-itemtool:apply' };
+    if (state.invDirty) { msg.slot = state.selectedSlot; msg.inventory = state.invWorking; }
+    if (state.whDirty) { msg.warehouseItems = state.whWorking; }
+    sendToGame(msg);
+  });
+
+})();
+</script>
+</body>
+</html>

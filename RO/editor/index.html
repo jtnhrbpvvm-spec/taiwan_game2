@@ -27,6 +27,10 @@
   }
   *{ box-sizing:border-box; }
   html,body{ height:100%; }
+  /* 關閉「捲到最頂端再往下拉」時瀏覽器原生的下拉重整手勢——這是獨立頁面，
+     跟遊戲本體那份防呆是分開的，這裡要自己補一份。overscroll-behavior-y 是
+     現代瀏覽器的正規做法，下面 script 裡另外用 touchmove 擋一層當備案。 */
+  html,body{ overscroll-behavior-y: contain; }
   body{
     margin:0; background:radial-gradient(ellipse at top, #241c38 0%, var(--bg) 60%);
     color:var(--ink); font-family: "PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
@@ -293,7 +297,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V17</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V18</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -479,6 +483,26 @@
 
   // 遊戲本體（A 頁）的 origin，postMessage 只信任這個來源送的訊息。
   var GAME_ORIGIN = 'https://nba9001-sys.github.io';
+
+  // 下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）。
+  // 只有「頁面本身已經捲到最頂端」+「手指往下拉」+「不是在自己會捲動的
+  // 區塊／輸入框／按鈕上」才攔截，不會影響欄位清單、搜尋建議這些的正常捲動。
+  (function bindPullToRefreshGuard() {
+    var startY = 0;
+    var scrollableSelector = '.slot-grid, .ac-list, .card-modal-box, #codex-grid, #acv-list, ' +
+      'input, textarea, select, button, a';
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 1) return;
+      if (e.target.closest(scrollableSelector)) return;
+      var y = e.touches[0].clientY;
+      var atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+      if (atTop && y > startY) e.preventDefault();
+    }, { passive: false });
+  })();
 
   var EQUIP_SLOTS = [
     ['head_top','頭上'], ['head_mid','頭中'], ['head_bottom','頭下'],

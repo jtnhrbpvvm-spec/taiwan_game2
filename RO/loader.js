@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L8';
+const LOADER_VERSION = 'L9';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -387,7 +387,10 @@ if (existing) {
 
 // 修改器正式網址：跟書籤工具放在同一個 repo/資料夾下的 editor/ 子目錄。
 const EDITOR_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/editor/';
-// postMessage 只信任這個 origin 送來的訊息（protocol+host，不含路徑）。
+// 物品清理工具：獨立新頁面，跟修改器分開，密語「刪除物品」才會開。
+const ITEM_TOOL_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/item-tool/';
+// postMessage 只信任這個 origin 送來的訊息（protocol+host，不含路徑）——
+// 修改器跟物品清理工具都在同一個 GitHub Pages 網域下，共用同一個 origin 檢查。
 const EDITOR_ORIGIN = 'https://jtnhrbpvvm-spec.github.io';
 // 同分頁廣播用（提醒「其他分頁剛好也開著同一個角色」的情境，見下方 broadcastSlotChanged）。
 const EDITOR_CHANNEL = 'ro-idle-editor-sync';
@@ -398,6 +401,7 @@ const EDITOR_CHANNEL = 'ro-idle-editor-sync';
 function handleEditorInputAction(raw) {
   const v = String(raw).trim();
   if (v === '開啟修改器') { openEditTool(v); return; }
+  if (v === '刪除物品') { openItemTool(); return; }
   const m = v.match(/^(\d+)/); // 純數字，或「2.存檔2 ...」這種下拉選單帶出來的格式，都吃開頭數字
   if (m) { switchToSaveSlot(parseInt(m[1], 10) - 1); return; } // 玩家看到的是 1-based，內部欄位是 0-based
 }
@@ -532,6 +536,28 @@ function openEditTool(code) {
   }, 600);
 }
 
+// 物品清理工具：獨立頁面，密語「刪除物品」開。開關／凍結邏輯跟修改器
+// 幾乎一模一樣（同一套 freezeGame/unfreezeGame），只是視窗參考跟監聽器
+// 各自用自己的旗標，兩個工具的視窗開關不會互相干擾。
+function openItemTool() {
+  if (window.__roItemToolWin && !window.__roItemToolWin.closed) {
+    window.__roItemToolWin.focus();
+    return;
+  }
+  const win = window.open(ITEM_TOOL_URL, 'ro-item-tool', 'width=480,height=760');
+  if (!win) return;
+  window.__roItemToolWin = win;
+  if (!window.__roItemToolMsgBound) {
+    window.addEventListener('message', handleItemToolMessage);
+    window.__roItemToolMsgBound = true;
+  }
+  freezeGame();
+  if (window.__roItemToolWatchTimer) clearInterval(window.__roItemToolWatchTimer);
+  window.__roItemToolWatchTimer = setInterval(function () {
+    if (win.closed) unfreezeGame();
+  }, 600);
+}
+
 /* ============================================================
    凍結／解凍（防止修改器開著的期間，掛機進度跟修改互相覆蓋）
 
@@ -613,6 +639,7 @@ function freezeGame() {
 
 function unfreezeGame() {
   if (window.__roEditorWatchTimer) { clearInterval(window.__roEditorWatchTimer); window.__roEditorWatchTimer = null; }
+  if (window.__roItemToolWatchTimer) { clearInterval(window.__roItemToolWatchTimer); window.__roItemToolWatchTimer = null; }
   if (!window.__roEditorFrozen) { hideFreezeOverlay(); return; } // 已經不是凍結狀態，只確保遮罩沒殘留
   window.__roEditorFrozen = false;
   hideFreezeOverlay();
@@ -1405,6 +1432,42 @@ function handleEditorMessage(ev) {
   } else if (data.type === 'ro-editor:job-items') {
     const ids = buildJobCompatSet(data.jobId, data.baseLevel);
     win.postMessage({ type: 'ro-editor:job-items', jobId: data.jobId, ids: ids }, EDITOR_ORIGIN);
+  }
+}
+
+// 物品清理工具用的初始資料：只需要選欄位＋背包/倉庫篩選要用的東西，
+// 不用職業/遺物/圖鑑/成就那些，payload 故意跟修改器分開、盡量精簡。
+function buildItemToolInitPayload() {
+  return {
+    type: 'ro-itemtool:init',
+    slots: buildAllSlotsSummary(),
+    warehouse: (typeof loadWarehouse === 'function') ? loadWarehouse() : { items: [], gold: 0 },
+    currentSlot: currentSlot,
+    itemMeta: buildItemMeta(),
+    cardMeta: buildCardMeta(),
+    loaderVersion: LOADER_VERSION
+  };
+}
+function handleItemToolMessage(ev) {
+  if (ev.origin !== EDITOR_ORIGIN) return; // 只信任修改器/物品工具共用的網域
+  const win = window.__roItemToolWin;
+  if (!win || ev.source !== win) return;   // 只信任我們自己開的那個視窗
+  const data = ev.data;
+  if (!data || typeof data !== 'object') return;
+
+  if (data.type === 'ro-itemtool:ready' || data.type === 'ro-itemtool:refresh') {
+    win.postMessage(buildItemToolInitPayload(), EDITOR_ORIGIN);
+  } else if (data.type === 'ro-itemtool:apply') {
+    // 背包跟倉庫是兩個獨立目標，這次套用可能只動到其中一個、也可能兩個都動到，
+    // 各自呼叫已經在修改器那邊驗證過的套用函式，不用重寫一份邏輯。
+    let ok = true;
+    if (Array.isArray(data.inventory) && Number.isInteger(data.slot)) {
+      ok = applyEditorPatchToSlot(data.slot, { inventory: data.inventory }) && ok;
+    }
+    if (Array.isArray(data.warehouseItems)) {
+      ok = applyEditorPatchToWarehouse({ items: data.warehouseItems }) && ok;
+    }
+    win.postMessage({ type: 'ro-itemtool:applied', ok: ok }, EDITOR_ORIGIN);
   }
 }
 
