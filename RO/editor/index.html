@@ -293,7 +293,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V16</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V17</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -355,9 +355,12 @@
     <div id="tab-stats" class="tab-pane hidden" style="margin-top:14px;">
       <div class="field-grid">
         <div class="field"><label>剩餘屬性點</label><input type="number" min="0" id="f-statPoints"></div>
-        <div class="field"><label>剩餘技能點</label><input type="number" min="0" id="f-skillPoints"></div>
       </div>
-      <div class="field-grid" style="margin-top:10px;">
+      <div style="margin-top:14px;">
+        <label style="font-size:11.5px;color:var(--ink-dim);display:block;margin-bottom:6px;">剩餘技能點（依新手／一轉／二轉…各職業階段分開，彼此不互通）</label>
+        <div id="skillpoints-list" class="field-grid"></div>
+      </div>
+      <div class="field-grid" style="margin-top:14px;">
         <div class="field"><label>力量 STR</label><input type="number" min="1" id="f-str"></div>
         <div class="field"><label>敏捷 AGI</label><input type="number" min="1" id="f-agi"></div>
         <div class="field"><label>體力 VIT</label><input type="number" min="1" id="f-vit"></div>
@@ -770,6 +773,7 @@
     state.acvFillIds = {};
     state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
     if (!state.slotWorking.instances) state.slotWorking.instances = {};
+    if (!state.slotWorking.jobSkillPoints) state.slotWorking.jobSkillPoints = {};
     if (!state.slotWorking.equip) state.slotWorking.equip = {};
     if (!state.slotWorking.relics) state.slotWorking.relics = {};
     if (!state.slotWorking.codex) state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: {} };
@@ -826,11 +830,64 @@
   function fillStatsFields() {
     var w = state.slotWorking;
     $('f-statPoints').value = w.statPoints || 0;
-    $('f-skillPoints').value = w.skillPoints || 0;
     var st = w.stats || {};
     ['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(function (k) {
       $('f-' + k).value = st[k] || 1;
     });
+    renderSkillPointsFields();
+  }
+  // 沿著職業鏈往回走（現在職業 → 上一階 → … → 新手），畫出跟遊戲本體
+  // jobSkillPoints 一致的「依階段分開」技能點輸入框。tier 數字給玩家對照，
+  // 不強行套「新手/一轉/二轉」這種固定三段講法——有些角色轉生過，
+  // 職業鏈可能超過三層（進階一轉、進階二轉…），照實際鏈長顯示才不會漏掉。
+  function jobChainForSlot() {
+    var jobMeta = state.init.jobMeta || {};
+    var chain = [];
+    var seen = {};
+    var cur = state.slotWorking.jobId;
+    while (cur && !seen[cur]) {
+      seen[cur] = true;
+      chain.unshift(cur); // 新手排最前面
+      cur = jobMeta[cur] && jobMeta[cur].parent;
+    }
+    return chain;
+  }
+  function renderSkillPointsFields() {
+    var wrap = $('skillpoints-list');
+    var jobMeta = state.init.jobMeta || {};
+    var jsp = state.slotWorking.jobSkillPoints || (state.slotWorking.jobSkillPoints = {});
+    var chain = jobChainForSlot();
+    wrap.innerHTML = '';
+    if (!chain.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到職業資料</div>'; return; }
+    chain.forEach(function (jobId) {
+      var meta = jobMeta[jobId] || {};
+      var field = document.createElement('div');
+      field.className = 'field';
+      field.innerHTML =
+        '<label>' + escapeHtml(meta.name || jobId) + '（Tier ' + (meta.tier || 1) + '）</label>' +
+        '<input type="number" min="0" data-job="' + jobId + '" class="f-skillpoints-job" value="' + (jsp[jobId] || 0) + '">';
+      wrap.appendChild(field);
+    });
+    wrap.querySelectorAll('.f-skillpoints-job').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var v = parseInt(this.value, 10);
+        if (isNaN(v) || v < 0) return;
+        var jobId = this.dataset.job;
+        state.slotWorking.jobSkillPoints[jobId] = v;
+        applySkillPointsPatch();
+      });
+    });
+  }
+  function applySkillPointsPatch() {
+    var jsp = state.slotWorking.jobSkillPoints || {};
+    state.slotPatch.jobSkillPoints = Object.assign({}, jsp);
+    // state.skillPoints 是遊戲本體算好的加總欄位（保留相容性用），
+    // 這裡跟著同步更新，不然畫面上「技能點」總數會跟各階段分開輸入的內容對不起來。
+    var sum = 0;
+    Object.keys(jsp).forEach(function (k) { sum += (jsp[k] || 0); });
+    state.slotWorking.skillPoints = sum;
+    state.slotPatch.skillPoints = sum;
+    updateSlotStatus();
   }
 
   function bindNumberField(inputId, patchKey, isNested) {
@@ -855,7 +912,6 @@
   bindNumberField('f-jobLevel', 'jobLevel');
   bindNumberField('f-jobExp', 'jobExp');
   bindNumberField('f-statPoints', 'statPoints');
-  bindNumberField('f-skillPoints', 'skillPoints');
   ['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(function (k) {
     bindNumberField('f-' + k, k, 'stats');
   });
