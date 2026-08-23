@@ -540,6 +540,18 @@ function buildRelicSlotList() {
     };
   });
 }
+// 套裝名稱對照表（短名，跟遊戲本體「騎士的遺物」→「騎士」的縮寫規則一致），
+// 讓修改器能在遺物格子上顯示「這格穿的是哪一套」，不用只看道具全名。
+function buildRelicSetMeta() {
+  const out = {};
+  if (typeof RELIC_SETS === 'object' && RELIC_SETS) {
+    for (const id in RELIC_SETS) {
+      const s = RELIC_SETS[id];
+      out[id] = { name: (s.name || id).replace('的遺物', ''), icon: s.icon || '🏺' };
+    }
+  }
+  return out;
+}
 function buildJobMeta() {
   const out = {};
   if (typeof JOB_TREE === 'object' && JOB_TREE) {
@@ -610,7 +622,8 @@ function buildInitPayload() {
     itemMeta: buildItemMeta(),
     jobMeta: buildJobMeta(),
     cardMeta: buildCardMeta(),
-    relicSlots: buildRelicSlotList()
+    relicSlots: buildRelicSlotList(),
+    relicSetMeta: buildRelicSetMeta()
   };
 }
 
