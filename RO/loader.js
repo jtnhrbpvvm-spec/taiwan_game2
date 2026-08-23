@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L7';
+const LOADER_VERSION = 'L8';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -1078,6 +1078,51 @@ function bindIdleReportOutsideClose() {
    自己會捲動的區塊完全不受影響，只有背景／戰鬥地圖那一塊被拉到底時
    會被攔下來，不會誤觸瀏覽器整頁重新整理把玩家踢出目前畫面。
    ============================================================ */
+/* ============================================================
+   倉庫畫面補畫鎖定圖示
+   遊戲本體 renderWarehouseInner() 裡，鎖頭判斷寫成
+   `locked = side === 'bag' && isItemLocked(...)`——只有背包那一側會檢查
+   鎖定狀態，物品存進倉庫之後那一側完全沒判斷，鎖頭圖示就消失了。
+   不是資料遺失（鎖定狀態本身還在），純粹是畫面漏畫。
+   做法：包一層 renderWarehouseInner()，渲染完之後掃一次倉庫列表的 DOM，
+   從每一列的 onclick 屬性反查道具 ID，真的有鎖定的話手動補畫上去，
+   不改動遊戲本體任何一行程式碼。這是通用的顯示修正，不分觸控/滑鼠環境。
+   ============================================================ */
+function addWarehouseLockIcons() {
+  const body = document.getElementById('warehouse-body');
+  if (!body) return;
+  body.querySelectorAll('.wh-row').forEach(function (row) {
+    const onclick = row.getAttribute('onclick') || '';
+    let itemId = null;
+    let m = onclick.match(/^whWithdrawInstance\('([^']+)'\)$/);
+    if (m) {
+      const inst = (typeof state !== 'undefined' && state && state.instances) ? state.instances[m[1]] : null;
+      itemId = inst ? inst.item : null;
+    } else {
+      m = onclick.match(/^whWithdraw\('([^']+)'/);
+      if (m) itemId = m[1];
+    }
+    if (!itemId) return; // 抓不到 id，或這是「存入」那一側（遊戲本體自己就有畫鎖頭），不用管
+    if (typeof isItemLocked !== 'function' || !isItemLocked(itemId)) return;
+    const nameEl = row.querySelector('.wh-row-name');
+    if (!nameEl || nameEl.querySelector('.ro-wh-lock')) return; // 已經補過了，不要重複疊加
+    const lockSpan = document.createElement('span');
+    lockSpan.className = 'ro-wh-lock';
+    lockSpan.textContent = '🔒 ';
+    nameEl.insertBefore(lockSpan, nameEl.firstChild);
+  });
+}
+function bindWarehouseLockFix() {
+  if (window.__roWhLockBound) return;
+  if (typeof window.renderWarehouseInner !== 'function') return;
+  window.__roWhLockBound = true;
+  const original = window.renderWarehouseInner;
+  window.renderWarehouseInner = function () {
+    original.apply(this, arguments);
+    try { addWarehouseLockIcons(); } catch (e) { /* 這個小補丁出錯也不能拖累倉庫畫面正常顯示 */ }
+  };
+}
+
 function bindPullToRefreshGuard() {
   if (window.__roPullGuardBound) return;
   window.__roPullGuardBound = true;
@@ -1374,3 +1419,5 @@ if (isTouch) {
   bindPullToRefreshGuard();
   bindBottomNavGroups();
 }
+// 倉庫鎖頭圖示是畫面正確性問題，不分觸控/滑鼠環境都要修，不放進上面 isTouch 判斷式裡。
+bindWarehouseLockFix();
