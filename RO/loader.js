@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L3';
+const LOADER_VERSION = 'L4';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -249,13 +249,10 @@ const CSS = `
   background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 6px;
   color: var(--ink); font-size: 12px; padding: 6px 8px; width: 130px;
 }
+#ro-editor-input[readonly] { cursor: pointer; caret-color: transparent; }
 #ro-editor-open {
   background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 6px;
   color: var(--gold-soft); font-size: 12px; padding: 6px 10px; cursor: pointer;
-}
-#ro-editor-pick {
-  background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 6px;
-  color: var(--gold-soft); font-size: 12px; padding: 6px 7px; cursor: pointer; line-height: 1;
 }
 #ro-slot-picker-list {
   position: fixed; z-index: 500; display: none;
@@ -350,15 +347,12 @@ if (existing) {
     input.id = 'ro-editor-input';
     input.type = 'text';
     input.placeholder = '尚未開放';
-
-    const pickBtn = document.createElement('button');
-    pickBtn.id = 'ro-editor-pick';
-    pickBtn.type = 'button';
-    pickBtn.textContent = '▾';
-    pickBtn.title = '選擇存檔欄位';
-    pickBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      toggleSlotPickerList(input, pickBtn);
+    // 預設唯讀：手機上點下去不會跳鍵盤，先跳出下拉選單給玩家選；
+    // 選單裡選「自己輸入」才會拿掉唯讀、真的把游標放進去、跳鍵盤讓玩家打字。
+    input.readOnly = true;
+    input.addEventListener('click', function () {
+      if (!input.readOnly) return; // 已經在自由輸入模式，交給輸入框自己的預設行為，不要搶
+      toggleSlotPickerList(input);
     });
 
     const openBtn = document.createElement('button');
@@ -370,7 +364,6 @@ if (existing) {
     });
 
     box.appendChild(input);
-    box.appendChild(pickBtn);
     box.appendChild(openBtn);
     hudRight.insertBefore(box, hudRight.firstChild);
   }
@@ -446,7 +439,7 @@ function ensureSlotPickerList() {
   document.addEventListener('click', function (e) {
     if (!list.classList.contains('open')) return;
     if (list.contains(e.target)) return;
-    if (e.target.id === 'ro-editor-pick') return; // 開關鈕自己的點擊另外處理，這裡不要搶
+    if (e.target && e.target.id === 'ro-editor-input') return; // 輸入框自己的點擊另外處理，這裡不要搶
     closeSlotPickerList();
   });
   return list;
@@ -455,7 +448,7 @@ function closeSlotPickerList() {
   const list = document.getElementById('ro-slot-picker-list');
   if (list) list.classList.remove('open');
 }
-function toggleSlotPickerList(input, anchorBtn) {
+function toggleSlotPickerList(input) {
   const list = ensureSlotPickerList();
   if (list.classList.contains('open')) { closeSlotPickerList(); return; }
 
@@ -465,6 +458,7 @@ function toggleSlotPickerList(input, anchorBtn) {
   freeform.textContent = '✏️ 自己輸入';
   freeform.addEventListener('click', function () {
     input.value = '';
+    input.readOnly = false; // 拿掉唯讀，才會真的跳鍵盤
     input.focus();
     closeSlotPickerList();
   });
@@ -476,12 +470,13 @@ function toggleSlotPickerList(input, anchorBtn) {
     row.textContent = label;
     row.addEventListener('click', function () {
       input.value = label;
+      input.readOnly = true; // 選單選出來的文字不用手動編輯，維持唯讀，下次點還是先跳選單
       closeSlotPickerList();
     });
     list.appendChild(row);
   });
 
-  const rect = anchorBtn.getBoundingClientRect();
+  const rect = input.getBoundingClientRect();
   list.style.left = rect.left + 'px';
   list.style.top = (rect.bottom + 4) + 'px';
   list.style.minWidth = Math.max(200, rect.width) + 'px';
@@ -1066,7 +1061,7 @@ function bindPullToRefreshGuard() {
   // 提醒：以後只要再新增一個會自己捲動、或蓋在畫面上的彈出視窗／面板，
   // 記得把它的容器（或至少含按鈕的外層）加進這份名單，不然滑動會被
   // 底下的 preventDefault 誤擋，感覺變得很容易誤觸下拉重新整理。
-  const scrollableSelector = '.tab-content, #ro-equip-pick-popup, #ro-group-popup, #ro-editor-box, ' +
+  const scrollableSelector = '.tab-content, #ro-equip-pick-popup, #ro-group-popup, #ro-editor-box, #ro-slot-picker-list, ' +
     '.combat-log, .log-pane-body, .idle-report-panel, #idle-report-body, .ally-panel, #ally-panel-body, ' +
     'input, textarea, select, button, a';
   document.addEventListener('touchstart', function (e) {
