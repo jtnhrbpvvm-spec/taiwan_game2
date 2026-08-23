@@ -572,6 +572,31 @@ function buildCardMeta() {
   }
   return out;
 }
+// 圖鑑目錄（怪物／卡片／道具的完整清單＋圖片）。直接借用遊戲本體的
+// getCodexPool()（已經幫忙算好「哪些怪物/道具真的算進圖鑑」，含快取），
+// 不自己重寫一份判斷邏輯，保證跟遊戲畫面上看到的圖鑑範圍一致。
+// 圖片網址用 new URL(...).href 轉成完整絕對網址——修改器在別的網域，
+// 直接塞相對路徑（images/xxx.png）會抓到修改器自己網域下（不存在的）圖檔。
+function absImgUrl(relPath) {
+  try { return new URL(relPath, document.baseURI).href; } catch (e) { return relPath; }
+}
+function buildCodexPayload() {
+  if (typeof getCodexPool !== 'function') return { mon: [], card: [], item: [] };
+  const pool = getCodexPool();
+  const mon = (pool.monsters || []).map(function (id) {
+    const d = MONSTERS[id];
+    return { id: id, name: d.name, img: absImgUrl(monsterImgSrc(id)) };
+  });
+  const card = (pool.cards || []).map(function (id) {
+    const d = CARDS[id] || ITEMS[id];
+    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)) };
+  });
+  const item = (pool.items || []).map(function (id) {
+    const d = ITEMS[id];
+    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)) };
+  });
+  return { mon: mon, card: card, item: item };
+}
 function buildAllSlotsSummary() {
   const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
   const slots = {};
@@ -623,7 +648,8 @@ function buildInitPayload() {
     jobMeta: buildJobMeta(),
     cardMeta: buildCardMeta(),
     relicSlots: buildRelicSlotList(),
-    relicSetMeta: buildRelicSetMeta()
+    relicSetMeta: buildRelicSetMeta(),
+    codex: buildCodexPayload()
   };
 }
 
