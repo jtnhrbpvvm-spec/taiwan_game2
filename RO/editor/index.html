@@ -178,6 +178,24 @@
     padding:1px 6px; background:var(--bg-input); color:var(--ink-dim); white-space:nowrap;
   }
   .codex-cell.found .badge{ background:var(--gold); color:#2a2011; }
+
+  .acv-row{
+    display:flex; gap:10px; align-items:flex-start; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;
+  }
+  .acv-row.done{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .acv-row .ic{ font-size:22px; flex-shrink:0; line-height:1.3; }
+  .acv-row .body{ flex:1; min-width:0; }
+  .acv-row .nm{ font-size:13px; font-weight:600; color:var(--ink); }
+  .acv-row .ds{ font-size:11px; color:var(--ink-dim); margin-top:2px; line-height:1.4; }
+  .acv-row .rw{ font-size:10.5px; color:var(--gold-soft); margin-top:4px; }
+  .acv-row .btns{ display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+  .acv-row .btns button{
+    font-size:11px; padding:5px 9px; border-radius:6px; white-space:nowrap; cursor:pointer;
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--ink-dim);
+  }
+  .acv-row .btn-unlock{ border-color:var(--gold); color:var(--gold-soft); }
+  .acv-row .btn-clear{ border-color:var(--danger); color:var(--danger); }
   .list-row.has-cards{
     border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
     padding-left:6px; border-radius:4px; cursor:pointer;
@@ -273,7 +291,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V11</span>
+      <h1>存檔修改器</h1><span class="ver">V12</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -318,6 +336,7 @@
       <button class="tab-btn" data-tab="equip">裝備</button>
       <button class="tab-btn" data-tab="relic">遺物</button>
       <button class="tab-btn" data-tab="codex">圖鑑</button>
+      <button class="tab-btn" data-tab="achieve">成就</button>
     </div>
 
     <div id="tab-basic" class="tab-pane" style="margin-top:14px;">
@@ -406,6 +425,16 @@
       </div>
       <div id="codex-cats" class="codex-cats"></div>
       <div id="codex-grid" class="codex-grid"></div>
+    </div>
+
+    <div id="tab-achieve" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="acv-progress"></div>
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button class="btn primary sm" id="acv-unlock-all">🔓 一鍵全部解鎖</button>
+        <button class="btn ghost sm" id="acv-clear-all">清除全部</button>
+      </div>
+      <div id="acv-cats" class="codex-cats"></div>
+      <div id="acv-list" style="margin-top:10px;"></div>
     </div>
 
     <div class="apply-bar">
@@ -716,7 +745,7 @@
       document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
-      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex'].forEach(function (t) {
+      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex', 'achieve'].forEach(function (t) {
         (t === currentTab ? show : hide)('tab-' + t);
       });
     });
@@ -733,6 +762,9 @@
     if (!state.slotWorking.codex.mon) state.slotWorking.codex.mon = {};
     if (!state.slotWorking.codex.seen) state.slotWorking.codex.seen = {};
     if (!state.slotWorking.codex.item) state.slotWorking.codex.item = {};
+    if (!state.slotWorking.achievements) state.slotWorking.achievements = { done: {}, points: 0 };
+    if (!state.slotWorking.achievements.done) state.slotWorking.achievements.done = {};
+    if (typeof state.slotWorking.achievements.points !== 'number') state.slotWorking.achievements.points = 0;
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -749,6 +781,7 @@
     populateRelicAddSlotOptions();
     renderRelicList();
     refreshCodexAll();
+    refreshAcvAll();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -1368,6 +1401,140 @@
     state.slotPatch.codex = JSON.parse(JSON.stringify(state.slotWorking.codex));
     updateSlotStatus();
     refreshCodexAll();
+  });
+
+  // ---------------- 成就分頁 ----------------
+  // 成就在遊戲本體是「累計數值達標就自動解鎖」（checkAchievements()），跟遊戲進度
+  // 綁死，不是獨立開關。修改器這邊直接改 state.achievements.done，效果等同於
+  // 「假裝那個累計值已經達標」，不會回頭去改真正的擊殺數/鋅幣/等級等來源數值。
+  var acvCatFilter = 'all';
+  function achievementsDoneMap() {
+    return (state.slotWorking.achievements && state.slotWorking.achievements.done) || {};
+  }
+  function renderAcvProgress() {
+    var wrap = $('acv-progress');
+    var catalog = state.init.achievements || [];
+    var done = achievementsDoneMap();
+    var doneN = catalog.filter(function (a) { return !!done[a.id]; }).length;
+    var total = catalog.length;
+    var pct = total ? (doneN / total * 100) : 0;
+    var pts = (state.slotWorking.achievements && state.slotWorking.achievements.points) || 0;
+    wrap.innerHTML =
+      '<div class="codex-prog">' +
+        '<div class="codex-prog-head"><span>🏆 成就點數 ' + pts + '</span><b>' + doneN + ' / ' + total + '　' + pct.toFixed(1) + '%</b></div>' +
+        '<div class="codex-prog-track"><div class="codex-prog-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>';
+  }
+  function renderAcvCats() {
+    var wrap = $('acv-cats');
+    var catalog = state.init.achievements || [];
+    var catMeta = state.init.achievementCats || {};
+    var done = achievementsDoneMap();
+    var cats = ['all'].concat(Object.keys(catMeta));
+    wrap.innerHTML = cats.map(function (c) {
+      var label = c === 'all' ? '全部' : ((catMeta[c].icon || '') + ' ' + catMeta[c].name);
+      var list = c === 'all' ? catalog : catalog.filter(function (a) { return a.cat === c; });
+      var n = list.filter(function (a) { return !!done[a.id]; }).length;
+      return '<button class="codex-cat-btn' + (c === acvCatFilter ? ' active' : '') + '" data-cat="' + c + '">' +
+        escapeHtml(label) + ' <span class="codex-cat-n">' + n + '/' + list.length + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.codex-cat-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        acvCatFilter = btn.dataset.cat;
+        renderAcvCats();
+        renderAcvList();
+      });
+    });
+  }
+  function renderAcvList() {
+    var wrap = $('acv-list');
+    var catalog = state.init.achievements || [];
+    var done = achievementsDoneMap();
+    var rows = acvCatFilter === 'all' ? catalog : catalog.filter(function (a) { return a.cat === acvCatFilter; });
+    wrap.innerHTML = '';
+    if (!rows.length) { wrap.innerHTML = '<div class="empty-hint">沒有項目</div>'; return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (a) {
+      var isDone = !!done[a.id];
+      var rewardTxt = (a.reward.gold ? ('💰' + a.reward.gold.toLocaleString() + '　') : '') + '🏆' + a.reward.point;
+      var row = document.createElement('div');
+      row.className = 'acv-row' + (isDone ? ' done' : '');
+      row.innerHTML =
+        '<div class="ic">' + a.icon + '</div>' +
+        '<div class="body">' +
+          '<div class="nm">' + escapeHtml(a.name) + (isDone ? ' ✅' : '') + '</div>' +
+          '<div class="ds">' + escapeHtml(a.desc || '') + '</div>' +
+          '<div class="rw">' + rewardTxt + '</div>' +
+        '</div>' +
+        '<div class="btns">' +
+          '<button class="btn-unlock" data-id="' + a.id + '">解鎖</button>' +
+          '<button class="btn-clear" data-id="' + a.id + '">清除</button>' +
+        '</div>';
+      frag.appendChild(row);
+    });
+    wrap.appendChild(frag);
+    wrap.querySelectorAll('.btn-unlock').forEach(function (btn) {
+      btn.addEventListener('click', function () { unlockAchievement(btn.dataset.id); });
+    });
+    wrap.querySelectorAll('.btn-clear').forEach(function (btn) {
+      btn.addEventListener('click', function () { clearAchievement(btn.dataset.id); });
+    });
+  }
+  function refreshAcvAll() {
+    renderAcvProgress();
+    renderAcvCats();
+    renderAcvList();
+  }
+  function recomputeAcvPoints() {
+    var av = state.slotWorking.achievements;
+    var catalog = state.init.achievements || [];
+    var sum = 0;
+    catalog.forEach(function (a) { if (av.done[a.id]) sum += (a.reward.point || 0); });
+    av.points = sum;
+  }
+  function commitAcvPatch() {
+    state.slotPatch.achievements = JSON.parse(JSON.stringify(state.slotWorking.achievements));
+    state.slotPatch.gold = state.slotWorking.gold; // 解鎖可能連帶發鋅幣，鋅幣欄位也要一起送出
+    fillBasicFields(); // 鋅幣可能變了，基本分頁的顯示要跟著刷新
+    updateSlotStatus();
+    refreshAcvAll();
+  }
+  function unlockAchievement(id) {
+    var av = state.slotWorking.achievements;
+    if (av.done[id]) return;
+    var a = (state.init.achievements || []).find(function (x) { return x.id === id; });
+    av.done[id] = Date.now();
+    if (a && a.reward.gold) state.slotWorking.gold = (state.slotWorking.gold || 0) + a.reward.gold;
+    recomputeAcvPoints();
+    commitAcvPatch();
+  }
+  function clearAchievement(id) {
+    var av = state.slotWorking.achievements;
+    if (!av.done[id]) return;
+    delete av.done[id];
+    recomputeAcvPoints();
+    commitAcvPatch(); // 已發放的鋅幣不會扣回，只是把「達成」這個紀錄清掉
+  }
+  $('acv-unlock-all').addEventListener('click', function () {
+    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放）')) return;
+    var av = state.slotWorking.achievements;
+    var catalog = state.init.achievements || [];
+    var goldGain = 0;
+    catalog.forEach(function (a) {
+      if (!av.done[a.id]) {
+        av.done[a.id] = Date.now();
+        if (a.reward.gold) goldGain += a.reward.gold;
+      }
+    });
+    state.slotWorking.gold = (state.slotWorking.gold || 0) + goldGain;
+    recomputeAcvPoints();
+    commitAcvPatch();
+    toast('✅ 成就已全部解鎖（記得按下面「套用修改」）');
+  });
+  $('acv-clear-all').addEventListener('click', function () {
+    if (!confirm('確定要清除全部成就紀錄嗎？（不會扣回已經發放的鋅幣）')) return;
+    state.slotWorking.achievements = { done: {}, points: 0 };
+    commitAcvPatch();
   });
 
   function updateSlotStatus() {
