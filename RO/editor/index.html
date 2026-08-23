@@ -141,26 +141,43 @@
     color:var(--danger); font-size:14px; cursor:pointer; padding:3px 5px; line-height:1;
   }
 
-  .codex-view-btn, .codex-filter-btn{
+  .codex-view-btn, .codex-filter-btn, .codex-cat-btn{
     background:var(--bg-input); border:1px solid var(--line); color:var(--ink-dim);
     border-radius:7px; padding:7px 11px; font-size:12.5px; cursor:pointer;
   }
-  .codex-view-btn.active, .codex-filter-btn.active{
+  .codex-view-btn.active, .codex-filter-btn.active, .codex-cat-btn.active{
     background:var(--gold); color:#2a2011; border-color:var(--gold); font-weight:700;
   }
+  .codex-cats{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .codex-cat-n{ opacity:.75; font-size:11px; }
+
+  .codex-prog{ margin-bottom:8px; }
+  .codex-prog-head{
+    display:flex; justify-content:space-between; font-size:12px; color:var(--ink-dim);
+    margin-bottom:3px;
+  }
+  .codex-prog-head b{ color:var(--ink); font-weight:600; }
+  .codex-prog-track{
+    height:8px; border-radius:5px; background:var(--bg-input); overflow:hidden;
+  }
+  .codex-prog-fill{ height:100%; background:var(--gold); border-radius:5px; }
+
   .codex-grid{
     display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px;
   }
   .codex-cell{
-    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:8px;
+    position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:8px;
     padding:8px 6px 7px; text-align:center; cursor:pointer;
   }
   .codex-cell.found{ border-color:var(--gold); background:rgba(201,162,39,.10); }
   .codex-cell img{ width:44px; height:44px; object-fit:contain; margin-bottom:4px; }
   .codex-cell .nm{ font-size:11px; color:var(--ink); line-height:1.3; word-break:break-all; }
-  .codex-cell .status{ font-size:10px; margin-top:3px; }
-  .codex-cell.found .status{ color:var(--ok); }
-  .codex-cell:not(.found) .status{ color:var(--ink-dim); }
+  .codex-cell .sub{ font-size:9.5px; color:var(--ink-dim); margin-top:1px; }
+  .codex-cell .badge{
+    position:absolute; top:3px; right:3px; font-size:9px; border-radius:9px;
+    padding:1px 6px; background:var(--bg-input); color:var(--ink-dim); white-space:nowrap;
+  }
+  .codex-cell.found .badge{ background:var(--gold); color:#2a2011; }
   .list-row.has-cards{
     border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
     padding-left:6px; border-radius:4px; cursor:pointer;
@@ -256,7 +273,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V9</span>
+      <h1>存檔修改器</h1><span class="ver">V10</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -369,6 +386,7 @@
     </div>
 
     <div id="tab-codex" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="codex-progress"></div>
       <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
         <button class="btn primary sm" id="codex-unlock-all">🔓 一鍵全部解鎖</button>
         <button class="btn ghost sm" id="codex-reset-all">重置圖鑑</button>
@@ -384,6 +402,7 @@
         <button class="codex-filter-btn" data-filter="found">已發現</button>
         <button class="codex-filter-btn" data-filter="missing">未發現</button>
       </div>
+      <div id="codex-cats" class="codex-cats"></div>
       <div id="codex-grid" class="codex-grid"></div>
     </div>
 
@@ -727,7 +746,7 @@
     requestJobCompatSet();
     populateRelicAddSlotOptions();
     renderRelicList();
-    renderCodexGrid();
+    refreshCodexAll();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -1194,17 +1213,54 @@
   // 跟遊戲本體 renderCodexTab() 判斷 found 的邏輯完全一致。
   var codexView = 'mon';
   var codexFilter = 'all';
+  var codexCat = { mon: 'all', card: 'all', item: 'all' };
   var codexSearch = '';
   function codexFoundMap() {
     var book = state.slotWorking.codex;
     return codexView === 'mon' ? book.seen : book.item;
   }
+  function renderCodexProgress() {
+    var wrap = $('codex-progress');
+    var foundBook = state.slotWorking.codex;
+    var views = [['mon', '👾 怪物', foundBook.seen], ['card', '🃏 卡片', foundBook.item], ['item', '🎒 道具', foundBook.item]];
+    wrap.innerHTML = views.map(function (v) {
+      var catalog = (state.init.codex && state.init.codex[v[0]]) || [];
+      var found = catalog.filter(function (r) { return !!v[2][r.id]; }).length;
+      var total = catalog.length;
+      var pct = total ? (found / total * 100) : 0;
+      return '<div class="codex-prog">' +
+        '<div class="codex-prog-head"><span>' + v[1] + '</span><b>' + found + ' / ' + total + '　' + pct.toFixed(1) + '%</b></div>' +
+        '<div class="codex-prog-track"><div class="codex-prog-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>';
+    }).join('');
+  }
+  function renderCodexCats() {
+    var wrap = $('codex-cats');
+    var catalog = (state.init.codex && state.init.codex[codexView]) || [];
+    var labels = (state.init.codex && state.init.codex.catLabels && state.init.codex.catLabels[codexView]) || [{ k: 'all', label: '全部' }];
+    var cur = codexCat[codexView] || 'all';
+    wrap.innerHTML = labels.map(function (c) {
+      var n = c.k === 'all' ? catalog.length : catalog.filter(function (r) { return r.cat === c.k; }).length;
+      return '<button class="codex-cat-btn' + (c.k === cur ? ' active' : '') + '" data-cat="' + c.k + '">' +
+        escapeHtml(c.label) + ' <span class="codex-cat-n">' + n + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.codex-cat-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        codexCat[codexView] = btn.dataset.cat;
+        renderCodexCats();
+        renderCodexGrid();
+      });
+    });
+  }
   function renderCodexGrid() {
     var grid = $('codex-grid');
     var catalog = (state.init.codex && state.init.codex[codexView]) || [];
     var foundMap = codexFoundMap();
+    var book = state.slotWorking.codex;
     var q = codexSearch.trim().toLowerCase();
+    var cur = codexCat[codexView] || 'all';
     var rows = catalog.filter(function (r) {
+      if (cur !== 'all' && r.cat !== cur) return false;
       if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
       var found = !!foundMap[r.id];
       if (codexFilter === 'found' && !found) return false;
@@ -1218,14 +1274,30 @@
       var found = !!foundMap[r.id];
       var cell = document.createElement('div');
       cell.className = 'codex-cell' + (found ? ' found' : '');
+      var badge, sub;
+      if (codexView === 'mon') {
+        var kills = book.mon[r.id] || 0;
+        badge = found ? ('☠ ' + kills) : '未遇過';
+        sub = 'Lv.' + (r.level || '?') + ' ' + r.elemIcon;
+      } else {
+        var qty = book.item[r.id] || 0;
+        badge = found ? ('×' + qty) : '未取得';
+        sub = '';
+      }
       cell.innerHTML =
+        '<span class="badge">' + badge + '</span>' +
         '<img src="' + r.img + '" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
         '<div class="nm">' + escapeHtml(r.name) + '</div>' +
-        '<div class="status">' + (found ? '✅ 已發現' : '⬜ 未發現') + '</div>';
+        (sub ? '<div class="sub">' + sub + '</div>' : '');
       cell.addEventListener('click', function () { toggleCodexEntry(r.id); });
       frag.appendChild(cell);
     });
     grid.appendChild(frag);
+  }
+  function refreshCodexAll() {
+    renderCodexProgress();
+    renderCodexCats();
+    renderCodexGrid();
   }
   function toggleCodexEntry(id) {
     var book = state.slotWorking.codex;
@@ -1241,6 +1313,7 @@
     }
     state.slotPatch.codex = JSON.parse(JSON.stringify(book));
     updateSlotStatus();
+    renderCodexProgress();
     renderCodexGrid();
   }
   document.querySelectorAll('.codex-view-btn').forEach(function (btn) {
@@ -1248,6 +1321,7 @@
       document.querySelectorAll('.codex-view-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       codexView = btn.dataset.view;
+      renderCodexCats();
       renderCodexGrid();
     });
   });
@@ -1274,7 +1348,7 @@
     (state.init.codex.item || []).forEach(function (r) { book.item[r.id] = book.item[r.id] || 1; });
     state.slotPatch.codex = JSON.parse(JSON.stringify(book));
     updateSlotStatus();
-    renderCodexGrid();
+    refreshCodexAll();
     toast('✅ 圖鑑已全部解鎖（記得按下面「套用修改」才會真的存進去）');
   });
   $('codex-reset-all').addEventListener('click', function () {
@@ -1283,7 +1357,7 @@
     state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: maps };
     state.slotPatch.codex = JSON.parse(JSON.stringify(state.slotWorking.codex));
     updateSlotStatus();
-    renderCodexGrid();
+    refreshCodexAll();
   });
 
   function updateSlotStatus() {
