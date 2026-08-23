@@ -273,7 +273,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V10</span>
+      <h1>存檔修改器</h1><span class="ver">V11</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -387,10 +387,12 @@
 
     <div id="tab-codex" class="tab-pane hidden" style="margin-top:14px;">
       <div id="codex-progress"></div>
-      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
         <button class="btn primary sm" id="codex-unlock-all">🔓 一鍵全部解鎖</button>
+        <input type="number" id="codex-unlock-count" min="1" value="1" title="次數／取得數量" style="width:64px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px; color:var(--ink); padding:6px 8px; font-size:13px;">
         <button class="btn ghost sm" id="codex-reset-all">重置圖鑑</button>
       </div>
+      <div class="empty-hint" style="text-align:left; padding:0 0 8px;">上面的數字是解鎖後怪物顯示的擊殺數／卡片道具顯示的取得數量。已經有紀錄、且數字比你填的還大的項目會自動跳過，不會被往下調。</div>
       <div class="tabs">
         <button class="codex-view-btn active" data-view="mon">👾 怪物</button>
         <button class="codex-view-btn" data-view="card">🃏 卡片</button>
@@ -1338,18 +1340,26 @@
     renderCodexGrid();
   });
   $('codex-unlock-all').addEventListener('click', function () {
-    if (!confirm('確定要把圖鑑全部解鎖嗎？（怪物／卡片／道具全部一起）')) return;
+    var n = Math.max(1, parseInt($('codex-unlock-count').value, 10) || 1);
+    if (!confirm('確定要把圖鑑全部解鎖嗎？（怪物／卡片／道具全部一起，次數／取得數量設為 ' + n + '。已經有更高紀錄的項目會自動跳過，不會被往下調）')) return;
     var book = state.slotWorking.codex;
     (state.init.codex.mon || []).forEach(function (r) {
-      book.seen[r.id] = 1;
-      if (!book.mon[r.id]) book.mon[r.id] = 1;
+      var cur = book.mon[r.id] || 0;
+      if (cur < n) book.mon[r.id] = n; // 比原本小才更新，原本就比較高的直接跳過不動
+      book.seen[r.id] = 1; // 發現與否跟次數分開判斷：不管次數有沒有更新，都要標記成已發現
     });
-    (state.init.codex.card || []).forEach(function (r) { book.item[r.id] = book.item[r.id] || 1; });
-    (state.init.codex.item || []).forEach(function (r) { book.item[r.id] = book.item[r.id] || 1; });
+    (state.init.codex.card || []).forEach(function (r) {
+      var cur = book.item[r.id] || 0;
+      if (cur < n) book.item[r.id] = n;
+    });
+    (state.init.codex.item || []).forEach(function (r) {
+      var cur = book.item[r.id] || 0;
+      if (cur < n) book.item[r.id] = n;
+    });
     state.slotPatch.codex = JSON.parse(JSON.stringify(book));
     updateSlotStatus();
     refreshCodexAll();
-    toast('✅ 圖鑑已全部解鎖（記得按下面「套用修改」才會真的存進去）');
+    toast('✅ 圖鑑已全部解鎖，次數 ' + n + '（記得按下面「套用修改」才會真的存進去）');
   });
   $('codex-reset-all').addEventListener('click', function () {
     if (!confirm('確定要清空圖鑑紀錄嗎？怪物／卡片／道具都會變回未發現。')) return;
