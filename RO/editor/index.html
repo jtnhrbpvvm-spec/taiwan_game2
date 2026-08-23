@@ -293,7 +293,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V15</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V16</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -1515,11 +1515,14 @@
   }
   function unlockAchievement(id) {
     var av = state.slotWorking.achievements;
-    if (av.done[id]) return;
     var a = (state.init.achievements || []).find(function (x) { return x.id === id; });
-    av.done[id] = Date.now();
-    if (a && a.reward.gold) state.slotWorking.gold = (state.slotWorking.gold || 0) + a.reward.gold;
-    state.acvFillIds[id] = true; // 記下來，套用時通知 A 頁順便把進度來源數值也灌到目標值
+    if (!av.done[id]) {
+      av.done[id] = Date.now();
+      if (a && a.reward.gold) state.slotWorking.gold = (state.slotWorking.gold || 0) + a.reward.gold;
+    }
+    // 不管本來就已經解鎖過還是這次才解鎖，都補一次灌值——
+    // 舊版修改器解鎖過的成就（只打勾、沒灌來源數值）現在再按一次也能補救。
+    state.acvFillIds[id] = true;
     recomputeAcvPoints();
     commitAcvPatch();
   }
@@ -1532,7 +1535,7 @@
     commitAcvPatch(); // 已發放的鋅幣不會扣回，只是把「達成」這個紀錄清掉
   }
   $('acv-unlock-all').addEventListener('click', function () {
-    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放，進度條來源數值也會一起灌滿）')) return;
+    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放，全部成就的進度條來源數值都會一起灌滿，含之前已經解鎖過的）')) return;
     var av = state.slotWorking.achievements;
     var catalog = state.init.achievements || [];
     var goldGain = 0;
@@ -1540,8 +1543,9 @@
       if (!av.done[a.id]) {
         av.done[a.id] = Date.now();
         if (a.reward.gold) goldGain += a.reward.gold;
-        state.acvFillIds[a.id] = true;
       }
+      // 全部都補灌值，不管本來有沒有解鎖過——舊版解鎖過的成就這次也一起補救
+      state.acvFillIds[a.id] = true;
     });
     state.slotWorking.gold = (state.slotWorking.gold || 0) + goldGain;
     recomputeAcvPoints();
