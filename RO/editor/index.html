@@ -293,7 +293,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V13</span>
+      <h1>存檔修改器</h1><span class="ver">V15</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -490,7 +490,8 @@
     slotPatch: {},      // 目前編輯欄位的 patch（只含改過的 key）
     slotWorking: null,  // 目前編輯欄位的工作副本（顯示用，= 原始資料 + patch 疊加）
     whPatch: {},
-    whWorking: null
+    whWorking: null,
+    acvFillIds: {}       // 這次編輯期間新解鎖的成就 id（用來通知 A 頁順便灌好進度來源數值）
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -554,6 +555,14 @@
 
     if (data.type === 'ro-editor:init') {
       state.init = data;
+      // 顯示目前連到的 loader.js 版本號，方便跟修改器自己的版本號（上面 V幾號）
+      // 一起比對，確認兩邊是不是都真的更新到最新版——這種「只更新一邊」的狀況
+      // 從畫面上很難看出來，多這個標籤至少能先排除「忘記重新上傳」這個可能。
+      var loaderBadge = $('loader-ver-badge');
+      if (loaderBadge) {
+        loaderBadge.textContent = 'loader ' + (data.loaderVersion || '未知（舊版）');
+        loaderBadge.style.display = 'inline-block';
+      }
       hide('screen-connecting');
       renderSlotList();
       show('screen-slots');
@@ -561,6 +570,7 @@
       if (data.ok) {
         toast('✅ 已套用到欄位 ' + (data.slot + 1));
         state.slotPatch = {};
+        state.acvFillIds = {};
         sendToGame({ type: 'ro-editor:refresh' }); // 拿一份套用後的最新資料
       } else {
         toast('⚠️ 套用失敗，該欄位可能沒有存檔', true);
@@ -730,7 +740,7 @@
     if (Object.keys(state.slotPatch).length && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
     if (Object.keys(state.whPatch).length && !confirm('倉庫的修改還沒套用，離開會遺失，確定嗎？')) return;
     state.selectedSlot = null;
-    state.slotPatch = {}; state.whPatch = {};
+    state.slotPatch = {}; state.whPatch = {}; state.acvFillIds = {};
     hide('screen-editor'); hide('screen-warehouse');
     show('screen-slots');
   }
@@ -757,6 +767,7 @@
   function openSlotEditor(idx) {
     state.selectedSlot = idx;
     state.slotPatch = {};
+    state.acvFillIds = {};
     state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
     if (!state.slotWorking.instances) state.slotWorking.instances = {};
     if (!state.slotWorking.equip) state.slotWorking.equip = {};
@@ -1508,6 +1519,7 @@
     var a = (state.init.achievements || []).find(function (x) { return x.id === id; });
     av.done[id] = Date.now();
     if (a && a.reward.gold) state.slotWorking.gold = (state.slotWorking.gold || 0) + a.reward.gold;
+    state.acvFillIds[id] = true; // 記下來，套用時通知 A 頁順便把進度來源數值也灌到目標值
     recomputeAcvPoints();
     commitAcvPatch();
   }
@@ -1515,11 +1527,12 @@
     var av = state.slotWorking.achievements;
     if (!av.done[id]) return;
     delete av.done[id];
+    delete state.acvFillIds[id]; // 還沒套用就清掉的話，順便取消灌值，不然清除完數值反而還在
     recomputeAcvPoints();
     commitAcvPatch(); // 已發放的鋅幣不會扣回，只是把「達成」這個紀錄清掉
   }
   $('acv-unlock-all').addEventListener('click', function () {
-    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放）')) return;
+    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放，進度條來源數值也會一起灌滿）')) return;
     var av = state.slotWorking.achievements;
     var catalog = state.init.achievements || [];
     var goldGain = 0;
@@ -1527,6 +1540,7 @@
       if (!av.done[a.id]) {
         av.done[a.id] = Date.now();
         if (a.reward.gold) goldGain += a.reward.gold;
+        state.acvFillIds[a.id] = true;
       }
     });
     state.slotWorking.gold = (state.slotWorking.gold || 0) + goldGain;
@@ -1537,6 +1551,7 @@
   $('acv-clear-all').addEventListener('click', function () {
     if (!confirm('確定要清除全部成就紀錄嗎？（不會扣回已經發放的鋅幣）')) return;
     state.slotWorking.achievements = { done: {}, points: 0 };
+    state.acvFillIds = {};
     commitAcvPatch();
   });
 
@@ -1553,7 +1568,10 @@
   });
   $('btn-apply-slot').addEventListener('click', function () {
     if (!Object.keys(state.slotPatch).length) return;
-    sendToGame({ type: 'ro-editor:apply', slot: state.selectedSlot, patch: state.slotPatch });
+    sendToGame({
+      type: 'ro-editor:apply', slot: state.selectedSlot, patch: state.slotPatch,
+      fillAchievementIds: Object.keys(state.acvFillIds)
+    });
   });
 
   // ---------------- 倉庫編輯畫面 ----------------
