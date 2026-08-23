@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L6';
+const LOADER_VERSION = 'L7';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -355,7 +355,7 @@ if (existing) {
     // 選單裡選「自己輸入」才會拿掉唯讀、真的把游標放進去、跳鍵盤讓玩家打字。
     input.readOnly = true;
     input.addEventListener('click', function () {
-      if (!input.readOnly) return; // 已經在自由輸入模式，交給輸入框自己的預設行為，不要搶
+      if (!input.readOnly) { input.focus(); return; } // 已經在自由輸入模式，順便補一次 focus 當保險
       toggleSlotPickerList(input);
     });
 
@@ -472,9 +472,17 @@ function toggleSlotPickerList(input) {
   freeform.textContent = '✏️ 自己輸入';
   freeform.addEventListener('click', function () {
     input.value = '';
-    input.readOnly = false; // 拿掉唯讀，才會真的跳鍵盤
-    input.focus();
+    input.readOnly = false; // 拿掉唯讀，才有機會跳鍵盤
     closeSlotPickerList();
+    // 手機瀏覽器（尤其 iOS）對「點 A 元素、卻要 B 元素跳鍵盤」這種跨元素觸發
+    // 通常不認帳，一定要留一點時間差、而且要是使用者手勢剛結束那個當下才會生效，
+    // 直接同步呼叫 focus() 常常沒反應。用 setTimeout 讓瀏覽器先處理完
+    // readonly 被拿掉這件事，再補一次 focus。
+    setTimeout(function () {
+      input.focus();
+      // 部分機型光 focus() 還是不夠，額外補一次 click() 當保險。
+      if (typeof input.click === 'function') input.click();
+    }, 50);
   });
   list.appendChild(freeform);
 
