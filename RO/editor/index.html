@@ -217,7 +217,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V6</span>
+      <h1>存檔修改器</h1><span class="ver">V7</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -260,6 +260,7 @@
       <button class="tab-btn" data-tab="stats">屬性／技能點</button>
       <button class="tab-btn" data-tab="inv">背包</button>
       <button class="tab-btn" data-tab="equip">裝備</button>
+      <button class="tab-btn" data-tab="relic">遺物</button>
     </div>
 
     <div id="tab-basic" class="tab-pane" style="margin-top:14px;">
@@ -315,6 +316,16 @@
         <button class="btn sm" id="equip-add-btn">裝備</button>
       </div>
       <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝、這個角色職業/等級也能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。</div>
+    </div>
+
+    <div id="tab-relic" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="relic-list"></div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="relic-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
+        <input id="relic-add-id" placeholder="搜尋這個部位的遺物" autocomplete="off" style="min-width:120px;">
+        <button class="btn sm" id="relic-add-btn">裝備</button>
+      </div>
+      <div class="empty-hint">遺物不分職業、不能精鍊也不能插卡。8 個部位可以自由混搭不同套裝的遺物，不用湊同一套——這是遊戲設計本來就允許的。</div>
     </div>
 
     <div class="apply-bar">
@@ -562,6 +573,9 @@
     attachItemAutocomplete($('equip-add-id'), function () {
       return itemIdsForSlot($('equip-add-slot').value);
     }, function () { refreshEquipRefineLock(); }, { showAllOnFocus: true, maxResults: 200 });
+    attachItemAutocomplete($('relic-add-id'), function () {
+      return itemIdsForRelicSlot($('relic-add-slot').value);
+    }, null, { showAllOnFocus: true, maxResults: 200 });
   }
 
   // ---------------- 欄位選擇畫面 ----------------
@@ -622,7 +636,7 @@
       document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
-      ['basic', 'stats', 'inv', 'equip'].forEach(function (t) {
+      ['basic', 'stats', 'inv', 'equip', 'relic'].forEach(function (t) {
         (t === currentTab ? show : hide)('tab-' + t);
       });
     });
@@ -634,6 +648,7 @@
     state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
     if (!state.slotWorking.instances) state.slotWorking.instances = {};
     if (!state.slotWorking.equip) state.slotWorking.equip = {};
+    if (!state.slotWorking.relics) state.slotWorking.relics = {};
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -647,6 +662,8 @@
     refreshEquipRefineLock();
     renderEquipList();
     requestJobCompatSet();
+    populateRelicAddSlotOptions();
+    renderRelicList();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -1019,6 +1036,84 @@
     state.slotPatch.instances = Object.assign({}, instances);
     updateSlotStatus();
   }
+
+  // ---------------- 遺物分頁 ----------------
+  // 遺物是完全獨立的系統：存在 state.relics（不是 state.equip），不分職業，
+  // 不能精鍊也不能插卡，一律是純道具 ID。8 個部位彼此獨立，可以混搭不同套裝。
+  function renderRelicList() {
+    var wrap = $('relic-list');
+    wrap.innerHTML = '';
+    var slots = state.init.relicSlots || [];
+    if (!slots.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到遺物欄位資料</div>'; return; }
+    var relics = state.slotWorking.relics || {};
+    slots.forEach(function (s) {
+      var itemId = relics[s.key] || '';
+      var meta = itemId ? state.init.itemMeta[itemId] : null;
+      var line = document.createElement('div');
+      line.className = 'list-row';
+      if (!itemId) {
+        line.innerHTML =
+          '<div class="ic">' + s.icon + '</div>' +
+          '<div class="nm"><small>' + escapeHtml(s.name) + '</small>（空）</div>';
+      } else {
+        line.innerHTML =
+          '<div class="ic">' + (meta ? (meta.icon || s.icon) : s.icon) + '</div>' +
+          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) + '<small>' + escapeHtml(s.name) + '</small></div>' +
+          '<button class="rm" data-key="' + s.key + '" title="卸下">✕</button>';
+      }
+      wrap.appendChild(line);
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyRelicEdit(this.dataset.key, '');
+        renderRelicList();
+      });
+    });
+  }
+  function populateRelicAddSlotOptions() {
+    var sel = $('relic-add-slot');
+    if (sel.options.length) return; // 只需要建一次
+    (state.init.relicSlots || []).forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s.key;
+      opt.textContent = s.icon + ' ' + s.name;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () {
+      $('relic-add-id').value = '';
+      $('relic-add-id').focus();
+    });
+  }
+  function itemIdsForRelicSlot(slotKey) {
+    var out = [];
+    var meta = state.init.itemMeta || {};
+    for (var id in meta) {
+      if (meta[id].type === 'relic' && meta[id].relicSlot === slotKey) out.push(id);
+    }
+    return out;
+  }
+  function relicSlotLabel(key) {
+    var s = (state.init.relicSlots || []).find(function (r) { return r.key === key; });
+    return s ? s.name : key;
+  }
+  function applyRelicEdit(slotKey, itemId) {
+    var relics = state.slotWorking.relics;
+    relics[slotKey] = itemId || null;
+    state.slotPatch.relics = Object.assign({}, relics);
+    updateSlotStatus();
+  }
+  $('relic-add-btn').addEventListener('click', function () {
+    var slotKey = $('relic-add-slot').value;
+    var id = $('relic-add-id').value.trim();
+    if (!id) return;
+    if (itemIdsForRelicSlot(slotKey).indexOf(id) === -1) {
+      toast('⚠️ 「' + id + '」不是' + relicSlotLabel(slotKey) + '部位的遺物，請從建議清單選一個', true);
+      return;
+    }
+    applyRelicEdit(slotKey, id);
+    renderRelicList();
+    $('relic-add-id').value = '';
+  });
 
   function updateSlotStatus() {
     var n = Object.keys(state.slotPatch).length;
