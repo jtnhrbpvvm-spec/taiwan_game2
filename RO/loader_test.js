@@ -166,14 +166,15 @@ const CSS = `
   #ro-equip-pick-popup.hidden { display: none !important; }
   #ro-equip-pick-popup-bar {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; flex-wrap: wrap;
     padding: 12px 14px; border-bottom: 1px solid var(--gold); background: var(--bg-panel-2);
     padding-top: calc(12px + env(safe-area-inset-top, 0));
   }
   #ro-equip-pick-popup-title { color: var(--gold-soft); font-size: 15px; font-weight: 700; }
   #ro-equip-pick-popup-close {
-    min-height: 40px; padding: 6px 16px; border-radius: 8px;
+    min-height: 40px; padding: 6px 14px; border-radius: 8px; white-space: nowrap;
     background: var(--bg-panel); border: 1px solid var(--gold);
-    color: var(--gold-soft); font-size: 14px; cursor: pointer;
+    color: var(--gold-soft); font-size: 13.5px; cursor: pointer;
   }
   #ro-equip-pick-popup-body {
     flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
@@ -742,7 +743,7 @@ function ensureEquipPickPopup() {
   pop.innerHTML =
     '<div id="ro-equip-pick-popup-bar">' +
       '<span id="ro-equip-pick-popup-title">選擇裝備</span>' +
-      '<button type="button" id="ro-equip-pick-popup-close">✕ 關閉</button>' +
+      '<button type="button" id="ro-equip-pick-popup-close">← 回到裝備欄位</button>' +
     '</div>' +
     '<div id="ro-equip-pick-popup-body"></div>';
   document.body.appendChild(pop);
