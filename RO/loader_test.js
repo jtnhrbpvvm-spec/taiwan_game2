@@ -705,9 +705,12 @@ function bindPullToRefreshGuard() {
   if (window.__roPullGuardBound) return;
   window.__roPullGuardBound = true;
   let startY = 0;
-  const scrollableSelector = '.tab-content, #ro-equip-pick-popup-body, #ro-editor-box, ' +
+  // 提醒：以後只要再新增一個會自己捲動、或蓋在畫面上的彈出視窗／面板，
+  // 記得把它的容器（或至少含按鈕的外層）加進這份名單，不然滑動會被
+  // 底下的 preventDefault 誤擋，感覺變得很容易誤觸下拉重新整理。
+  const scrollableSelector = '.tab-content, #ro-equip-pick-popup, #ro-group-popup, #ro-editor-box, ' +
     '.combat-log, .log-pane-body, .idle-report-panel, #idle-report-body, .ally-panel, #ally-panel-body, ' +
-    'input, textarea, select';
+    'input, textarea, select, button, a';
   document.addEventListener('touchstart', function (e) {
     if (e.touches.length !== 1) return;
     startY = e.touches[0].clientY;
