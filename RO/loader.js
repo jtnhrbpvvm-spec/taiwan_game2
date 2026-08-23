@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L2';
+const LOADER_VERSION = 'L3';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -243,7 +243,7 @@ const CSS = `
 
 /* 編輯工具輸入框：不分裝置一律套用同一套外觀 */
 #ro-editor-box {
-  display: flex; gap: 6px; align-items: center;
+  display: flex; gap: 6px; align-items: center; position: relative;
 }
 #ro-editor-input {
   background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 6px;
@@ -253,6 +253,23 @@ const CSS = `
   background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 6px;
   color: var(--gold-soft); font-size: 12px; padding: 6px 10px; cursor: pointer;
 }
+#ro-editor-pick {
+  background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--gold-soft); font-size: 12px; padding: 6px 7px; cursor: pointer; line-height: 1;
+}
+#ro-slot-picker-list {
+  position: fixed; z-index: 500; display: none;
+  background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 8px;
+  max-height: 60vh; overflow-y: auto; box-shadow: 0 10px 24px rgba(0,0,0,.45);
+}
+#ro-slot-picker-list.open { display: block; }
+.ro-slot-item {
+  padding: 9px 12px; font-size: 12.5px; cursor: pointer; white-space: nowrap;
+  border-bottom: 1px solid var(--line); color: var(--ink);
+}
+.ro-slot-item:last-child { border-bottom: none; }
+.ro-slot-item:hover, .ro-slot-item:active { background: var(--bg-panel); }
+.ro-slot-item.freeform { color: var(--gold-soft); font-weight: 700; }
 `;
 
 // 原本 index.html 裡的 viewport 設定，關閉時要還原成這個
@@ -284,6 +301,8 @@ if (existing) {
 
   const editorBox = document.getElementById('ro-editor-box');
   if (editorBox) editorBox.remove();
+  const slotPicker = document.getElementById('ro-slot-picker-list');
+  if (slotPicker) slotPicker.remove();
 
   console.log('[RO 工具] 已關閉');
 } else {
@@ -321,7 +340,8 @@ if (existing) {
   }
 
   // 編輯工具輸入框：電腦／手機都會出現，放在最前面（跟展開鈕同一個位置）
-  // 目前只是先建好 UI，openEditTool() 之後接存檔修改工具的實際邏輯
+  // 除了原本「打開啟修改器」，現在多一個「選存檔」下拉（見 buildSlotPickerList）
+  // 跟「直接打數字切角色」的捷徑（見 handleEditorInputAction）。
   if (hudRight && !document.getElementById('ro-editor-box')) {
     const box = document.createElement('div');
     box.id = 'ro-editor-box';
@@ -331,15 +351,26 @@ if (existing) {
     input.type = 'text';
     input.placeholder = '尚未開放';
 
+    const pickBtn = document.createElement('button');
+    pickBtn.id = 'ro-editor-pick';
+    pickBtn.type = 'button';
+    pickBtn.textContent = '▾';
+    pickBtn.title = '選擇存檔欄位';
+    pickBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleSlotPickerList(input, pickBtn);
+    });
+
     const openBtn = document.createElement('button');
     openBtn.id = 'ro-editor-open';
     openBtn.type = 'button';
     openBtn.textContent = '開啟';
     openBtn.addEventListener('click', function () {
-      openEditTool(input.value);
+      handleEditorInputAction(input.value);
     });
 
     box.appendChild(input);
+    box.appendChild(pickBtn);
     box.appendChild(openBtn);
     hudRight.insertBefore(box, hudRight.firstChild);
   }
@@ -353,6 +384,109 @@ const EDITOR_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/editor/';
 const EDITOR_ORIGIN = 'https://jtnhrbpvvm-spec.github.io';
 // 同分頁廣播用（提醒「其他分頁剛好也開著同一個角色」的情境，見下方 broadcastSlotChanged）。
 const EDITOR_CHANNEL = 'ro-idle-editor-sync';
+
+// 輸入框按「開啟」時的總入口：判斷這次輸入到底是「開啟修改器」的密語、
+// 純數字（直接切到那個存檔欄位），還是下拉選單帶出來的「N.存檔N...」格式
+// （一樣取開頭數字切欄位）。其餘輸入一律不做事，跟原本的行為一致。
+function handleEditorInputAction(raw) {
+  const v = String(raw).trim();
+  if (v === '開啟修改器') { openEditTool(v); return; }
+  const m = v.match(/^(\d+)/); // 純數字，或「2.存檔2 ...」這種下拉選單帶出來的格式，都吃開頭數字
+  if (m) { switchToSaveSlot(parseInt(m[1], 10) - 1); return; } // 玩家看到的是 1-based，內部欄位是 0-based
+}
+
+// 切換到另一個存檔欄位（跟標題畫面選欄位是同一件事，只是從遊戲中直接做，
+// 不用先回標題）。切之前一定要先存檔，不然目前角色這段時間的進度會不見。
+function switchToSaveSlot(idx) {
+  const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= total) {
+    if (typeof showToast === 'function') showToast('⚠️ 沒有這個存檔欄位');
+    return;
+  }
+  if (typeof state !== 'undefined' && state && idx === currentSlot) {
+    if (typeof showToast === 'function') showToast('已經是目前這個角色了');
+    return;
+  }
+  if (!localStorage.getItem(getSlotKey(idx))) {
+    if (typeof showToast === 'function') showToast('⚠️ 欄位 ' + (idx + 1) + ' 沒有存檔');
+    return;
+  }
+  if (typeof state !== 'undefined' && state) {
+    if (typeof saveGame === 'function') saveGame(); // 先把目前角色這段時間的進度存起來
+    if (typeof stopLoop === 'function') stopLoop();
+  }
+  currentSlot = idx;
+  if (typeof continueGame === 'function') continueGame(); // 讀取＋進場都在這支裡面做完
+}
+
+// 存檔選單：列出「自己輸入」＋所有有存檔的欄位。編號用真正的欄位序號（1-based），
+// 不是清單裡的第幾行——不然欄位 3 是空的時候，後面的編號會對不起來，
+// 玩家直接打數字切欄位就會切錯人。
+function buildSlotPickerRows() {
+  const rows = [];
+  const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
+  for (let i = 0; i < total; i++) {
+    const raw = localStorage.getItem(getSlotKey(i));
+    if (!raw) continue;
+    let s = null;
+    try { s = JSON.parse(raw); } catch (e) { continue; }
+    if (!s) continue;
+    const jd = (typeof JOB_TREE === 'object' && JOB_TREE && JOB_TREE[s.jobId]) || {};
+    const label = (i + 1) + '.存檔' + (i + 1) + ' ' + (s.name || '無名') + ' Lv.' + (s.baseLevel || '?') + ' ' + (jd.name || s.jobId || '');
+    rows.push(label);
+  }
+  return rows;
+}
+function ensureSlotPickerList() {
+  let list = document.getElementById('ro-slot-picker-list');
+  if (list) return list;
+  list = document.createElement('div');
+  list.id = 'ro-slot-picker-list';
+  document.body.appendChild(list);
+  document.addEventListener('click', function (e) {
+    if (!list.classList.contains('open')) return;
+    if (list.contains(e.target)) return;
+    if (e.target.id === 'ro-editor-pick') return; // 開關鈕自己的點擊另外處理，這裡不要搶
+    closeSlotPickerList();
+  });
+  return list;
+}
+function closeSlotPickerList() {
+  const list = document.getElementById('ro-slot-picker-list');
+  if (list) list.classList.remove('open');
+}
+function toggleSlotPickerList(input, anchorBtn) {
+  const list = ensureSlotPickerList();
+  if (list.classList.contains('open')) { closeSlotPickerList(); return; }
+
+  list.innerHTML = '';
+  const freeform = document.createElement('div');
+  freeform.className = 'ro-slot-item freeform';
+  freeform.textContent = '✏️ 自己輸入';
+  freeform.addEventListener('click', function () {
+    input.value = '';
+    input.focus();
+    closeSlotPickerList();
+  });
+  list.appendChild(freeform);
+
+  buildSlotPickerRows().forEach(function (label) {
+    const row = document.createElement('div');
+    row.className = 'ro-slot-item';
+    row.textContent = label;
+    row.addEventListener('click', function () {
+      input.value = label;
+      closeSlotPickerList();
+    });
+    list.appendChild(row);
+  });
+
+  const rect = anchorBtn.getBoundingClientRect();
+  list.style.left = rect.left + 'px';
+  list.style.top = (rect.bottom + 4) + 'px';
+  list.style.minWidth = Math.max(200, rect.width) + 'px';
+  list.classList.add('open');
+}
 
 // 在輸入框打「開啟修改器」再按開啟，才會跳出修改器視窗；其他輸入一律不做事。
 // window.open 是在按鈕點擊事件內同步呼叫的，瀏覽器彈窗攔截不會擋。
