@@ -86,6 +86,33 @@ const CSS = `
   }
   .tab-btn.active { box-shadow: inset 0 2px 0 var(--gold); }
 
+  /* 底部分頁列只留 4 顆：地圖／自動戰鬥／角色相關／其他。
+     左右滑動生硬主要是按鈕塞太多，原本 9+1 顆縮到 4 顆之後窄螢幕也不用再橫捲。
+     其餘原生分頁鈕從列上隱藏（功能都還在，收進「角色相關」「其他」彈出清單裡，
+     見下面 #ro-group-popup），只是 display:none，原本 switchTab() 邏輯完全沒動。 */
+  .tab-nav [data-tab="character"], .tab-nav [data-tab="skills"], .tab-nav [data-tab="inventory"],
+  .tab-nav [data-tab="equip"], .tab-nav [data-tab="jobtree"], .tab-nav [data-tab="codex"],
+  .tab-nav [data-tab="achievements"], .tab-nav #tab-btn-forge {
+    display: none !important;
+  }
+  .ro-group-btn.active { box-shadow: inset 0 2px 0 var(--gold); }
+  #ro-group-popup {
+    position: fixed; left: 8px; right: 8px; z-index: 95;
+    background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 12px;
+    padding: 8px; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    transform: translateY(12px); opacity: 0;
+    transition: transform .18s ease, opacity .18s ease;
+    pointer-events: none;
+  }
+  #ro-group-popup.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .ro-group-item {
+    display: flex; align-items: center; gap: 10px; padding: 13px 12px;
+    border-radius: 8px; font-size: 14px; min-height: 46px; cursor: pointer;
+  }
+  .ro-group-item:active { background: var(--bg-panel); }
+  .ro-group-item .ic { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+
   /* 分頁內容改成獨立彈出的滿版視窗，不再跟地圖黏在同一個長頁面裡滑——
      點下方分頁鈕（地圖／自動戰鬥／角色／…／裝備）之後，這裡會整片蓋住畫面，
      內容自己捲動，跟戰鬥畫面完全分開，武器/防具清單也不會被擠到更下層。
@@ -235,6 +262,15 @@ if (existing) {
     const brk = document.getElementById('ro-tools-break');
     if (brk) brk.remove();
     document.body.classList.remove('ro-tools-open');
+    // 底部分頁列瘦身用的「角色相關／其他」按鈕跟彈出清單也是動態插入的，
+    // 沒清掉的話關閉工具後會跟遊戲原本的分頁鈕重複顯示、擠成一團。
+    const charBtn = document.getElementById('ro-group-btn-character');
+    if (charBtn) charBtn.remove();
+    const otherBtn = document.getElementById('ro-group-btn-other');
+    if (otherBtn) otherBtn.remove();
+    const groupPopup = document.getElementById('ro-group-popup');
+    if (groupPopup) groupPopup.remove();
+    window.__roBottomNavGroupsBound = false; // 允許下次重新開啟工具時再插回去
   }
 
   const editorBox = document.getElementById('ro-editor-box');
@@ -656,13 +692,6 @@ function bindIdleReportOutsideClose() {
     if (typeof toggleIdleReport === 'function') toggleIdleReport();
   }, true);
 }
-if (isTouch) {
-  bindAboutModalOutsideClose();
-  bindIdleReportOutsideClose();
-  bindTabContentOverlay();
-  bindEquipPickPopup();
-  bindPullToRefreshGuard();
-}
 
 /* ============================================================
    下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）
@@ -811,7 +840,125 @@ function bindTabContentOverlay() {
     } else {
       openTabOverlay();
     }
+    updateGroupBtnActiveState(); // 角色相關／其他 這兩顆的金色底線要跟著目前分頁走
   };
+}
+
+/* ============================================================
+   底部分頁列瘦身：只留地圖／自動戰鬥／角色相關／其他 4 顆
+   角色／技能／背包／裝備／轉職樹收進「角色相關」彈出清單；
+   圖鑑／成就收進「其他」彈出清單；鍛造鈕（依職業動態顯示）也塞進角色相關，
+   跟著它原本 .hidden 的顯示狀態走。
+   點清單裡任何一項，一律呼叫原本的 switchTab()／openForge()，
+   不重寫任何分頁渲染邏輯，單純只是換個入口。
+   ============================================================ */
+const GROUP_CHARACTER = [
+  { tab: 'character', icon: '🧍', label: '角色' },
+  { tab: 'skills', icon: '📖', label: '技能' },
+  { tab: 'inventory', icon: '🎒', label: '背包' },
+  { tab: 'equip', icon: '🎽', label: '裝備' },
+  { tab: 'jobtree', icon: '🌳', label: '轉職樹' }
+];
+const GROUP_OTHER = [
+  { tab: 'codex', icon: '📕', label: '圖鑑' },
+  { tab: 'achievements', icon: '🏆', label: '成就' }
+];
+let _roGroupOpenKey = null;
+function ensureGroupPopup() {
+  let pop = document.getElementById('ro-group-popup');
+  if (pop) return pop;
+  pop = document.createElement('div');
+  pop.id = 'ro-group-popup';
+  document.body.appendChild(pop);
+  // 點清單外面關閉；開關鈕自己的點擊已經有獨立的 handler，這裡要排除掉，
+  // 不然按鈕本身那次點擊會「先關掉、又立刻打開」互相打架。
+  document.addEventListener('click', function (e) {
+    if (!_roGroupOpenKey) return;
+    if (pop.contains(e.target)) return;
+    if (e.target.closest('.ro-group-btn')) return;
+    closeGroupPopup();
+  }, true);
+  return pop;
+}
+function closeGroupPopup() {
+  const pop = document.getElementById('ro-group-popup');
+  if (pop) pop.classList.remove('open');
+  _roGroupOpenKey = null;
+  updateGroupBtnActiveState();
+}
+function openGroupPopup(key) {
+  const list = (key === 'character' ? GROUP_CHARACTER : GROUP_OTHER).slice();
+  if (key === 'character') {
+    const forgeBtn = document.getElementById('tab-btn-forge');
+    if (forgeBtn && !forgeBtn.classList.contains('hidden')) {
+      list.push({ tab: null, icon: '🔨', label: '鍛造', action: 'forge' });
+    }
+  }
+  const pop = ensureGroupPopup();
+  pop.innerHTML = list.map(function (it) {
+    return '<div class="ro-group-item" data-tab="' + (it.tab || '') + '" data-action="' + (it.action || '') + '">' +
+      '<span class="ic">' + it.icon + '</span><span>' + it.label + '</span></div>';
+  }).join('');
+  pop.querySelectorAll('.ro-group-item').forEach(function (row) {
+    row.addEventListener('click', function () {
+      closeGroupPopup();
+      if (row.dataset.action === 'forge') {
+        if (typeof openForge === 'function') openForge();
+      } else if (row.dataset.tab && typeof switchTab === 'function') {
+        switchTab(row.dataset.tab);
+      }
+    });
+  });
+  const tabNav = document.querySelector('.tab-nav');
+  const navHeight = tabNav ? tabNav.getBoundingClientRect().height : 60;
+  pop.style.bottom = (navHeight + 8) + 'px';
+  pop.classList.add('open');
+  _roGroupOpenKey = key;
+  updateGroupBtnActiveState();
+}
+function toggleGroupPopup(key) {
+  if (_roGroupOpenKey === key) closeGroupPopup();
+  else openGroupPopup(key);
+}
+function updateGroupBtnActiveState() {
+  const charBtn = document.getElementById('ro-group-btn-character');
+  const otherBtn = document.getElementById('ro-group-btn-other');
+  const active = (typeof activeTab !== 'undefined') ? activeTab : null;
+  const inChar = GROUP_CHARACTER.some(function (i) { return i.tab === active; });
+  const inOther = GROUP_OTHER.some(function (i) { return i.tab === active; });
+  if (charBtn) charBtn.classList.toggle('active', inChar || _roGroupOpenKey === 'character');
+  if (otherBtn) otherBtn.classList.toggle('active', inOther || _roGroupOpenKey === 'other');
+}
+function bindBottomNavGroups() {
+  if (window.__roBottomNavGroupsBound) return;
+  const tabNav = document.querySelector('.tab-nav');
+  if (!tabNav) return;
+  window.__roBottomNavGroupsBound = true;
+
+  const charBtn = document.createElement('button');
+  charBtn.type = 'button';
+  charBtn.id = 'ro-group-btn-character';
+  charBtn.className = 'tab-btn ro-group-btn';
+  charBtn.innerHTML = '🧍 角色相關';
+  charBtn.addEventListener('click', function () { toggleGroupPopup('character'); });
+
+  const otherBtn = document.createElement('button');
+  otherBtn.type = 'button';
+  otherBtn.id = 'ro-group-btn-other';
+  otherBtn.className = 'tab-btn ro-group-btn';
+  otherBtn.innerHTML = '☰ 其他';
+  otherBtn.addEventListener('click', function () { toggleGroupPopup('other'); });
+
+  // 插在「自動戰鬥」後面，維持「地圖／自動戰鬥／角色相關／其他」這個順序
+  const autobattleBtn = tabNav.querySelector('[data-tab="autobattle"]');
+  if (autobattleBtn) {
+    tabNav.insertBefore(charBtn, autobattleBtn.nextSibling);
+    tabNav.insertBefore(otherBtn, charBtn.nextSibling);
+  } else {
+    tabNav.appendChild(charBtn);
+    tabNav.appendChild(otherBtn);
+  }
+  updateGroupBtnActiveState();
 }
 
 function handleEditorMessage(ev) {
@@ -833,4 +980,16 @@ function handleEditorMessage(ev) {
     const ids = buildJobCompatSet(data.jobId, data.baseLevel);
     win.postMessage({ type: 'ro-editor:job-items', jobId: data.jobId, ids: ids }, EDITOR_ORIGIN);
   }
+}
+
+// 所有 isTouch 專屬的行為綁定放在檔案最後才呼叫，確保上面用到的函式／
+// 常數（例如 GROUP_CHARACTER 這種 const 陣列）都已經宣告完成，
+// 不會因為呼叫點在宣告之前而在 TDZ 階段就出錯。
+if (isTouch) {
+  bindAboutModalOutsideClose();
+  bindIdleReportOutsideClose();
+  bindTabContentOverlay();
+  bindEquipPickPopup();
+  bindPullToRefreshGuard();
+  bindBottomNavGroups();
 }
