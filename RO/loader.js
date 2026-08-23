@@ -8,6 +8,14 @@
 // - 頂部的「編輯工具」輸入框不分裝置，一律顯示（之後要接存檔修改工具用）。
 // ============================================================
 
+// 版本號：每次改這支檔案就 +1。修改器頁面（editor/index.html）自己右上角有
+// V幾號可以看，但 loader.js 這邊本來沒地方顯示，兩邊各自更新容易忘記同步——
+// 忘記重新上傳 loader.js、只上傳了修改器，結果修改器要的新欄位（例如某次
+// 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
+// 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
+// 兩邊版本號同時看得到，比對得出來是不是漏傳了。
+const LOADER_VERSION = 'L2';
+
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
@@ -719,7 +727,8 @@ function buildInitPayload() {
     relicSetMeta: buildRelicSetMeta(),
     codex: buildCodexPayload(),
     achievements: buildAchievementsCatalog(),
-    achievementCats: buildAchievementCatMeta()
+    achievementCats: buildAchievementCatMeta(),
+    loaderVersion: LOADER_VERSION
   };
 }
 
@@ -728,10 +737,94 @@ function buildInitPayload() {
 // 如果是別的欄位，重新讀一次 localStorage 最新內容再 merge 寫回，
 // 絕對不去動 currentSlot（不能用現成的 importSaveToSlot()，它會把 currentSlot
 // 永久切走，等於把玩家正在玩的分頁弄壞）。
-function applyEditorPatchToSlot(slot, patch) {
+// 解鎖成就時，「達成紀錄」（state.achievements.done）跟「進度條實際讀的來源數值」
+// 是兩件事——只改前者，畫面會出現「打勾了但進度條沒滿」這種矛盾。這裡照
+// achievements.js 每個成就 progress() 讀哪個欄位，反查回去把來源數值也灌到目標值，
+// 讓進度條看起來跟打勾狀態一致。只保證「至少達標」，不會把已經更高的數值往下調。
+const ACV_RACE_MAP = {
+  race_undead_1000: 'undead', race_demon_1000: 'demon',
+  race_dragon_300: 'dragon', race_angel_100: 'angel'
+};
+function fillAchievementUnderlying(o, id, goal) {
+  if (!o.codex) o.codex = { mon: {}, seen: {}, item: {}, maps: {} };
+  ['mon', 'seen', 'item', 'maps'].forEach(function (k) { if (!o.codex[k]) o.codex[k] = {}; });
+  if (!o.stats) o.stats = {};
+  if (!o.refinement) o.refinement = {};
+  if (!o.equippedCards) o.equippedCards = {};
+  if (!o.jobLevelHistory) o.jobLevelHistory = {};
+
+  function firstMonsterId(filterFn) {
+    if (typeof MONSTERS !== 'object' || !MONSTERS) return null;
+    for (const k in MONSTERS) { if (!filterFn || filterFn(MONSTERS[k])) return k; }
+    return null;
+  }
+  function bumpMon(mid) {
+    if (!mid) return;
+    o.codex.mon[mid] = Math.max(o.codex.mon[mid] || 0, goal);
+  }
+  function fillCount(bucket, sourceTable, extraSkip) {
+    if (typeof sourceTable !== 'object' || !sourceTable) return;
+    let n = 0;
+    for (const k in bucket) if (bucket[k]) n++;
+    for (const k in sourceTable) {
+      if (n >= goal) break;
+      if (extraSkip && extraSkip(k)) continue;
+      if (!bucket[k]) { bucket[k] = 1; n++; }
+    }
+  }
+
+  if (id.indexOf('kill_') === 0 || id.indexOf('grudge_') === 0) {
+    bumpMon(firstMonsterId(null));
+  } else if (id.indexOf('mvp_') === 0) {
+    bumpMon(firstMonsterId(function (m) { return m.isBoss; }));
+  } else if (ACV_RACE_MAP[id]) {
+    bumpMon(firstMonsterId(function (m) { return m.race === ACV_RACE_MAP[id]; }));
+  } else if (id.indexOf('death_') === 0) {
+    o.deaths = Math.max(o.deaths || 0, goal);
+  } else if (id.indexOf('mon_') === 0) {
+    fillCount(o.codex.seen, MONSTERS);
+  } else if (id.indexOf('card_eq_') === 0) {
+    for (let i = 0; i < goal; i++) o.equippedCards['_acv_fill_' + i] = true;
+  } else if (id.indexOf('card_') === 0) {
+    fillCount(o.codex.item, CARDS);
+  } else if (id.indexOf('item_') === 0) {
+    fillCount(o.codex.item, ITEMS, function (k) { return typeof CARDS === 'object' && CARDS && CARDS[k]; });
+  } else if (id.indexOf('blv_') === 0) {
+    o.baseLevel = Math.max(o.baseLevel || 1, goal);
+  } else if (id.indexOf('jlv_') === 0) {
+    o.jobLevel = Math.max(o.jobLevel || 1, goal);
+  } else if (id === 'job_change_1' || id === 'job_change_2') {
+    if (typeof JOB_TREE === 'object' && JOB_TREE) {
+      let n = Object.keys(o.jobLevelHistory).length;
+      for (const k in JOB_TREE) {
+        if (n >= goal) break;
+        if (!o.jobLevelHistory[k]) { o.jobLevelHistory[k] = 1; n++; }
+      }
+    }
+  } else if (id.indexOf('stat_') === 0) {
+    o.stats.str = Math.max(o.stats.str || 1, goal);
+  } else if (id.indexOf('gold_') === 0) {
+    o.gold = Math.max(o.gold || 0, goal);
+  } else if (id.indexOf('map_') === 0) {
+    fillCount(o.codex.maps, (typeof MAPS === 'object' && MAPS) ? MAPS : null);
+  } else if (id.indexOf('refine_') === 0) {
+    o.refinement._acv_fill = Math.max(o.refinement._acv_fill || 0, goal);
+  }
+  // equip_full（裝備滿 10 部位）沒有在這裡處理：要湊出「合理」的裝備得挑選正確道具
+  // 塞進正確欄位，風險比其他項目高很多，這項先只標記達成，欄位本身不會自動幫你穿裝備。
+}
+
+function applyEditorPatchToSlot(slot, patch, fillAchievementIds) {
   if (!Number.isInteger(slot) || !patch || typeof patch !== 'object') return false;
+  const fillIds = Array.isArray(fillAchievementIds) ? fillAchievementIds : [];
   if (slot === currentSlot && typeof state !== 'undefined' && state) {
     Object.assign(state, patch);
+    if (fillIds.length && typeof ACHIEVEMENTS_BY_ID === 'object') {
+      fillIds.forEach(function (id) {
+        const a = ACHIEVEMENTS_BY_ID[id];
+        if (a) fillAchievementUnderlying(state, id, a.goal);
+      });
+    }
     if (typeof saveGame === 'function') saveGame();
     if (typeof renderAll === 'function') { try { renderAll(); } catch (e) { /* 畫面重繪失敗不影響存檔已經寫入 */ } }
     if (typeof showToast === 'function') showToast('🛠️ 修改器已套用到目前角色');
@@ -741,6 +834,12 @@ function applyEditorPatchToSlot(slot, patch) {
     try { obj = raw ? JSON.parse(raw) : null; } catch (e) { obj = null; }
     if (!obj || typeof obj !== 'object') return false; // 目標欄位沒有存檔，不無中生有建立
     Object.assign(obj, patch);
+    if (fillIds.length && typeof ACHIEVEMENTS_BY_ID === 'object') {
+      fillIds.forEach(function (id) {
+        const a = ACHIEVEMENTS_BY_ID[id];
+        if (a) fillAchievementUnderlying(obj, id, a.goal);
+      });
+    }
     localStorage.setItem(getSlotKey(slot), JSON.stringify(obj));
   }
   broadcastSlotChanged(slot);
@@ -1100,7 +1199,7 @@ function handleEditorMessage(ev) {
   if (data.type === 'ro-editor:ready' || data.type === 'ro-editor:refresh') {
     win.postMessage(buildInitPayload(), EDITOR_ORIGIN);
   } else if (data.type === 'ro-editor:apply') {
-    const ok = applyEditorPatchToSlot(data.slot, data.patch);
+    const ok = applyEditorPatchToSlot(data.slot, data.patch, data.fillAchievementIds);
     win.postMessage({ type: 'ro-editor:applied', ok: ok, slot: data.slot }, EDITOR_ORIGIN);
   } else if (data.type === 'ro-editor:apply-warehouse') {
     const ok = applyEditorPatchToWarehouse(data.patch);
