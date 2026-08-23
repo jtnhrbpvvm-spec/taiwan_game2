@@ -61,7 +61,7 @@ const CSS = `
 
   /* 分頁列：改成底部固定的圖示條，拇指容易點到 */
   .tab-nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
     display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
     background: linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
     border-top: 2px solid var(--gold);
@@ -85,28 +85,38 @@ const CSS = `
   /* 分頁內容改成獨立彈出的滿版視窗，不再跟地圖黏在同一個長頁面裡滑——
      點下方分頁鈕（地圖／自動戰鬥／角色／…／裝備）之後，這裡會整片蓋住畫面，
      內容自己捲動，跟戰鬥畫面完全分開，武器/防具清單也不會被擠到更下層。
-     預設收在畫面下方（translateY(100%)），body.ro-tabcontent-open 時才滑上來。 */
+     預設收在畫面下方（translateY(100%)），body.ro-tabcontent-open 時才滑上來。
+     z-index 特意比 .tab-nav（90）低，讓底部分頁列永遠浮在這片視窗上面，
+     隨時點得到、切得到；加 !important 是防止遊戲本體自己的 CSS 選擇器
+     特異度比這裡高，把 position:fixed 蓋掉導致整片內容變回卡在頁面裡。 */
   .tab-content {
-    position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 70;
-    background: var(--bg-panel-2);
-    padding: 54px 14px calc(78px + env(safe-area-inset-bottom, 0)) 14px;
-    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    transform: translateY(100%);
-    transition: transform .22s ease;
-    pointer-events: none;
+    position: fixed !important; left: 0 !important; right: 0 !important;
+    top: 0 !important; bottom: 0 !important; z-index: 65 !important;
+    background: var(--bg-panel-2) !important;
+    padding: 0 14px calc(78px + env(safe-area-inset-bottom, 0)) 14px !important;
+    overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    transform: translateY(100%) !important;
+    transition: transform .22s ease !important;
+    pointer-events: none !important;
   }
   body.ro-tabcontent-open .tab-content {
-    transform: translateY(0);
-    pointer-events: auto;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+  }
+  /* 關閉鈕改成貼在彈出視窗「自己內部」捲動範圍最上方（position:sticky），
+     不是另外獨立一個 fixed 元素——這樣它一定跟視窗本身同一層堆疊，
+     不用再去猜跟其他元素的 z-index 高低關係，一定會顯示、一定按得到。 */
+  #ro-tabcontent-closebar {
+    position: sticky; top: 0; z-index: 5;
+    margin: 0 -14px 10px -14px; padding: 10px 14px;
+    background: var(--bg-panel-2); border-bottom: 1px solid var(--gold);
+    display: flex; justify-content: flex-end;
   }
   #ro-tabcontent-close {
-    position: fixed; top: 10px; right: 10px; z-index: 75;
-    display: none; align-items: center; justify-content: center;
-    min-height: 44px; padding: 8px 16px; border-radius: 8px;
-    background: var(--bg-panel-2); border: 1px solid var(--gold);
+    min-height: 40px; padding: 6px 16px; border-radius: 8px;
+    background: var(--bg-panel); border: 1px solid var(--gold);
     color: var(--gold-soft); font-size: 14px; cursor: pointer;
   }
-  body.ro-tabcontent-open #ro-tabcontent-close { display: inline-flex; }
 
   /* 觸控熱區加大 */
   .btn-small, .btn-tiny, .yield-reset-btn, .map-item, .region-item,
@@ -623,15 +633,18 @@ if (isTouch) {
    不改動遊戲本體任何切分頁的邏輯，該做的事還是全部交給原本的 switchTab 做。
    ============================================================ */
 function ensureTabCloseBtn() {
-  if (document.getElementById('ro-tabcontent-close')) return;
-  const sidePanel = document.querySelector('.side-panel');
-  if (!sidePanel) return;
+  if (document.getElementById('ro-tabcontent-closebar')) return;
+  const tabContent = document.querySelector('.tab-content');
+  if (!tabContent) return;
+  const bar = document.createElement('div');
+  bar.id = 'ro-tabcontent-closebar';
   const btn = document.createElement('button');
   btn.id = 'ro-tabcontent-close';
   btn.type = 'button';
   btn.textContent = '✕ 關閉';
   btn.addEventListener('click', closeTabOverlay);
-  sidePanel.appendChild(btn);
+  bar.appendChild(btn);
+  tabContent.insertBefore(bar, tabContent.firstChild);
 }
 function openTabOverlay() {
   ensureTabCloseBtn();
