@@ -580,22 +580,68 @@ function buildCardMeta() {
 function absImgUrl(relPath) {
   try { return new URL(relPath, document.baseURI).href; } catch (e) { return relPath; }
 }
+// 分類判斷跟遊戲本體 CODEX_CATS 的 test 函式邏輯一致（照抄那幾條規則），
+// 直接在這裡算好存進每筆資料的 cat 欄位，修改器那邊就不用重複一份判斷邏輯、
+// 也不用把整份 ITEMS/CARDS 明細送過去。
+function codexMonCat(id) {
+  // MVP 與迷你王是兩種分開的怪（#147）：MVP 開的是 mvpMode 挑戰、迷你王是 miniMode，
+  // 跟遊戲本體 CODEX_CATS 的判斷順序完全一致——先看 isMvp，其餘有 isBoss 的才算迷你王。
+  const m = MONSTERS[id];
+  if (!m) return 'normal';
+  if (m.isMvp) return 'mvp';
+  if (m.isBoss) return 'mini';
+  return 'normal';
+}
+function codexCardCat(id) {
+  return (CARDS[id] && CARDS[id].slot) || 'other';
+}
+function codexItemCat(id) {
+  const d = ITEMS[id];
+  if (!d) return 'material';
+  const ticketId = (typeof RELIC_TICKET_ID !== 'undefined') ? RELIC_TICKET_ID : '';
+  if (d.type === 'weapon') return 'weapon';
+  if (d.type === 'armor') return d.armorType === 'accessory' ? 'accessory' : 'armor';
+  if (d.type === 'consumable' || d.type === 'ammo') return 'consumable';
+  if (d.type === 'relic' || id === ticketId) return 'relic';
+  return 'material';
+}
+// 分類的中文標籤（跟遊戲本體 CODEX_CATS 的 label 一致），修改器拿這份來畫分類鈕，
+// 不用自己寫死一份，以後遊戲改分類這裡會自動跟著變。
+function buildCodexCatLabels() {
+  return {
+    mon: [{ k: 'all', label: '全部' }, { k: 'normal', label: '普通怪' }, { k: 'mvp', label: 'MVP' }, { k: 'mini', label: '迷你王' }],
+    card: [
+      { k: 'all', label: '全部' }, { k: 'weapon', label: '武器' }, { k: 'armor', label: '鎧甲' },
+      { k: 'shield', label: '盾牌' }, { k: 'headgear', label: '頭飾' }, { k: 'garment', label: '肩披' },
+      { k: 'footgear', label: '鞋子' }, { k: 'accessory', label: '飾品' }
+    ],
+    item: [
+      { k: 'all', label: '全部' }, { k: 'weapon', label: '武器' }, { k: 'armor', label: '防具' },
+      { k: 'accessory', label: '飾品' }, { k: 'consumable', label: '消耗品' },
+      { k: 'relic', label: '遺物' }, { k: 'material', label: '素材' }
+    ]
+  };
+}
 function buildCodexPayload() {
   if (typeof getCodexPool !== 'function') return { mon: [], card: [], item: [] };
   const pool = getCodexPool();
+  const elemIcons = (typeof ELEMENT_ICONS === 'object' && ELEMENT_ICONS) ? ELEMENT_ICONS : {};
   const mon = (pool.monsters || []).map(function (id) {
     const d = MONSTERS[id];
-    return { id: id, name: d.name, img: absImgUrl(monsterImgSrc(id)) };
+    return {
+      id: id, name: d.name, img: absImgUrl(monsterImgSrc(id)), cat: codexMonCat(id),
+      level: d.level || 0, elemIcon: elemIcons[d.element] || '⚪'
+    };
   });
   const card = (pool.cards || []).map(function (id) {
     const d = CARDS[id] || ITEMS[id];
-    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)) };
+    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)), cat: codexCardCat(id) };
   });
   const item = (pool.items || []).map(function (id) {
     const d = ITEMS[id];
-    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)) };
+    return { id: id, name: d.name, img: absImgUrl(itemImgSrc(id)), cat: codexItemCat(id) };
   });
-  return { mon: mon, card: card, item: item };
+  return { mon: mon, card: card, item: item, catLabels: buildCodexCatLabels() };
 }
 function buildAllSlotsSummary() {
   const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
