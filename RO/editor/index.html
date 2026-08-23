@@ -101,6 +101,8 @@
   .editor-head .who small{ display:block; font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:1px; }
 
   .tabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .main-tabs{ flex-wrap:wrap; overflow-x:visible; }
+  .main-tabs .tab-break{ flex-basis:100%; height:0; }
   .tab-btn{
     flex:0 0 auto; background:var(--bg-input); border:1px solid var(--line); color:var(--ink-dim);
     border-radius:7px; padding:7px 11px; font-size:12.5px; cursor:pointer; white-space:nowrap;
@@ -291,7 +293,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V12</span>
+      <h1>存檔修改器</h1><span class="ver">V13</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -329,11 +331,12 @@
     <div class="editor-head" style="margin-top:8px;">
       <div class="who" id="editor-who">—<small id="editor-who-sub"></small></div>
     </div>
-    <div class="tabs" style="margin-top:10px;">
+    <div class="tabs main-tabs" style="margin-top:10px;">
       <button class="tab-btn active" data-tab="basic">基本</button>
       <button class="tab-btn" data-tab="stats">屬性／技能點</button>
       <button class="tab-btn" data-tab="inv">背包</button>
       <button class="tab-btn" data-tab="equip">裝備</button>
+      <div class="tab-break" aria-hidden="true"></div>
       <button class="tab-btn" data-tab="relic">遺物</button>
       <button class="tab-btn" data-tab="codex">圖鑑</button>
       <button class="tab-btn" data-tab="achieve">成就</button>
