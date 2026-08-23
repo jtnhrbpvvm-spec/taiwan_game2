@@ -140,6 +140,27 @@
     position:absolute; top:1px; right:3px; background:none; border:none;
     color:var(--danger); font-size:14px; cursor:pointer; padding:3px 5px; line-height:1;
   }
+
+  .codex-view-btn, .codex-filter-btn{
+    background:var(--bg-input); border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:7px; padding:7px 11px; font-size:12.5px; cursor:pointer;
+  }
+  .codex-view-btn.active, .codex-filter-btn.active{
+    background:var(--gold); color:#2a2011; border-color:var(--gold); font-weight:700;
+  }
+  .codex-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px;
+  }
+  .codex-cell{
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:8px 6px 7px; text-align:center; cursor:pointer;
+  }
+  .codex-cell.found{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .codex-cell img{ width:44px; height:44px; object-fit:contain; margin-bottom:4px; }
+  .codex-cell .nm{ font-size:11px; color:var(--ink); line-height:1.3; word-break:break-all; }
+  .codex-cell .status{ font-size:10px; margin-top:3px; }
+  .codex-cell.found .status{ color:var(--ok); }
+  .codex-cell:not(.found) .status{ color:var(--ink-dim); }
   .list-row.has-cards{
     border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
     padding-left:6px; border-radius:4px; cursor:pointer;
@@ -235,7 +256,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V8</span>
+      <h1>存檔修改器</h1><span class="ver">V9</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -279,6 +300,7 @@
       <button class="tab-btn" data-tab="inv">背包</button>
       <button class="tab-btn" data-tab="equip">裝備</button>
       <button class="tab-btn" data-tab="relic">遺物</button>
+      <button class="tab-btn" data-tab="codex">圖鑑</button>
     </div>
 
     <div id="tab-basic" class="tab-pane" style="margin-top:14px;">
@@ -344,6 +366,25 @@
         <button class="btn sm" id="relic-add-btn">裝備</button>
       </div>
       <div class="empty-hint">遺物不分職業、不能精鍊也不能插卡。8 個部位可以自由混搭不同套裝的遺物，不用湊同一套——這是遊戲設計本來就允許的。</div>
+    </div>
+
+    <div id="tab-codex" class="tab-pane hidden" style="margin-top:14px;">
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button class="btn primary sm" id="codex-unlock-all">🔓 一鍵全部解鎖</button>
+        <button class="btn ghost sm" id="codex-reset-all">重置圖鑑</button>
+      </div>
+      <div class="tabs">
+        <button class="codex-view-btn active" data-view="mon">👾 怪物</button>
+        <button class="codex-view-btn" data-view="card">🃏 卡片</button>
+        <button class="codex-view-btn" data-view="item">🎒 道具</button>
+      </div>
+      <input id="codex-search" placeholder="搜尋名稱" autocomplete="off" style="width:100%; margin-top:10px; box-sizing:border-box; background:var(--bg-input); border:1px solid var(--line); border-radius:6px; color:var(--ink); padding:8px 10px; font-size:13px;">
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="codex-filter-btn active" data-filter="all">全部</button>
+        <button class="codex-filter-btn" data-filter="found">已發現</button>
+        <button class="codex-filter-btn" data-filter="missing">未發現</button>
+      </div>
+      <div id="codex-grid" class="codex-grid"></div>
     </div>
 
     <div class="apply-bar">
@@ -654,7 +695,7 @@
       document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
-      ['basic', 'stats', 'inv', 'equip', 'relic'].forEach(function (t) {
+      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex'].forEach(function (t) {
         (t === currentTab ? show : hide)('tab-' + t);
       });
     });
@@ -667,6 +708,10 @@
     if (!state.slotWorking.instances) state.slotWorking.instances = {};
     if (!state.slotWorking.equip) state.slotWorking.equip = {};
     if (!state.slotWorking.relics) state.slotWorking.relics = {};
+    if (!state.slotWorking.codex) state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: {} };
+    if (!state.slotWorking.codex.mon) state.slotWorking.codex.mon = {};
+    if (!state.slotWorking.codex.seen) state.slotWorking.codex.seen = {};
+    if (!state.slotWorking.codex.item) state.slotWorking.codex.item = {};
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -682,6 +727,7 @@
     requestJobCompatSet();
     populateRelicAddSlotOptions();
     renderRelicList();
+    renderCodexGrid();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -1140,6 +1186,104 @@
     applyRelicEdit(slotKey, id);
     renderRelicList();
     $('relic-add-id').value = '';
+  });
+
+  // ---------------- 圖鑑分頁 ----------------
+  // 怪物的「發現」記在 codex.seen[id]；卡片／道具的「發現」都記在 codex.item[id]
+  // （卡片跟道具共用同一張表，用各自的 id 當 key，兩者不會撞號），
+  // 跟遊戲本體 renderCodexTab() 判斷 found 的邏輯完全一致。
+  var codexView = 'mon';
+  var codexFilter = 'all';
+  var codexSearch = '';
+  function codexFoundMap() {
+    var book = state.slotWorking.codex;
+    return codexView === 'mon' ? book.seen : book.item;
+  }
+  function renderCodexGrid() {
+    var grid = $('codex-grid');
+    var catalog = (state.init.codex && state.init.codex[codexView]) || [];
+    var foundMap = codexFoundMap();
+    var q = codexSearch.trim().toLowerCase();
+    var rows = catalog.filter(function (r) {
+      if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
+      var found = !!foundMap[r.id];
+      if (codexFilter === 'found' && !found) return false;
+      if (codexFilter === 'missing' && found) return false;
+      return true;
+    });
+    grid.innerHTML = '';
+    if (!rows.length) { grid.innerHTML = '<div class="empty-hint">沒有符合條件的項目</div>'; return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (r) {
+      var found = !!foundMap[r.id];
+      var cell = document.createElement('div');
+      cell.className = 'codex-cell' + (found ? ' found' : '');
+      cell.innerHTML =
+        '<img src="' + r.img + '" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
+        '<div class="nm">' + escapeHtml(r.name) + '</div>' +
+        '<div class="status">' + (found ? '✅ 已發現' : '⬜ 未發現') + '</div>';
+      cell.addEventListener('click', function () { toggleCodexEntry(r.id); });
+      frag.appendChild(cell);
+    });
+    grid.appendChild(frag);
+  }
+  function toggleCodexEntry(id) {
+    var book = state.slotWorking.codex;
+    if (codexView === 'mon') {
+      if (book.seen[id]) {
+        book.seen[id] = 0;
+      } else {
+        book.seen[id] = 1;
+        if (!book.mon[id]) book.mon[id] = 1; // 順便給 1 次擊殺紀錄，跟「已發現」的狀態對得上，畫面比較合理
+      }
+    } else {
+      book.item[id] = book.item[id] ? 0 : 1;
+    }
+    state.slotPatch.codex = JSON.parse(JSON.stringify(book));
+    updateSlotStatus();
+    renderCodexGrid();
+  }
+  document.querySelectorAll('.codex-view-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.codex-view-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      codexView = btn.dataset.view;
+      renderCodexGrid();
+    });
+  });
+  document.querySelectorAll('.codex-filter-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.codex-filter-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      codexFilter = btn.dataset.filter;
+      renderCodexGrid();
+    });
+  });
+  $('codex-search').addEventListener('input', function () {
+    codexSearch = this.value;
+    renderCodexGrid();
+  });
+  $('codex-unlock-all').addEventListener('click', function () {
+    if (!confirm('確定要把圖鑑全部解鎖嗎？（怪物／卡片／道具全部一起）')) return;
+    var book = state.slotWorking.codex;
+    (state.init.codex.mon || []).forEach(function (r) {
+      book.seen[r.id] = 1;
+      if (!book.mon[r.id]) book.mon[r.id] = 1;
+    });
+    (state.init.codex.card || []).forEach(function (r) { book.item[r.id] = book.item[r.id] || 1; });
+    (state.init.codex.item || []).forEach(function (r) { book.item[r.id] = book.item[r.id] || 1; });
+    state.slotPatch.codex = JSON.parse(JSON.stringify(book));
+    updateSlotStatus();
+    renderCodexGrid();
+    toast('✅ 圖鑑已全部解鎖（記得按下面「套用修改」才會真的存進去）');
+  });
+  $('codex-reset-all').addEventListener('click', function () {
+    if (!confirm('確定要清空圖鑑紀錄嗎？怪物／卡片／道具都會變回未發現。')) return;
+    var maps = (state.slotWorking.codex && state.slotWorking.codex.maps) || {};
+    state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: maps };
+    state.slotPatch.codex = JSON.parse(JSON.stringify(state.slotWorking.codex));
+    updateSlotStatus();
+    renderCodexGrid();
   });
 
   function updateSlotStatus() {
