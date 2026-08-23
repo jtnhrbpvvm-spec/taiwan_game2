@@ -643,6 +643,28 @@ function buildCodexPayload() {
   });
   return { mon: mon, card: card, item: item, catLabels: buildCodexCatLabels() };
 }
+// 成就目錄：只送顯示需要的欄位（id/分類/圖示/名稱/說明/目標值/階級/獎勵），
+// progress 是函式沒辦法透過 postMessage 送過去，也用不到——修改器不重算「目前進度」，
+// 只負責直接改 state.achievements.done，跟遊戲本體 checkAchievements() 的效果一致。
+function buildAchievementsCatalog() {
+  if (typeof ACHIEVEMENTS === 'undefined') return [];
+  return ACHIEVEMENTS.map(function (a) {
+    return {
+      id: a.id, cat: a.cat, icon: a.icon, name: a.name, desc: a.desc,
+      goal: a.goal, tier: a.tier || 1,
+      reward: { gold: (a.reward && a.reward.gold) || 0, point: (a.reward && a.reward.point) || 0 }
+    };
+  });
+}
+function buildAchievementCatMeta() {
+  const out = {};
+  if (typeof ACHIEVEMENT_CATEGORIES === 'object' && ACHIEVEMENT_CATEGORIES) {
+    for (const k in ACHIEVEMENT_CATEGORIES) {
+      out[k] = { name: ACHIEVEMENT_CATEGORIES[k].name, icon: ACHIEVEMENT_CATEGORIES[k].icon };
+    }
+  }
+  return out;
+}
 function buildAllSlotsSummary() {
   const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
   const slots = {};
@@ -695,7 +717,9 @@ function buildInitPayload() {
     cardMeta: buildCardMeta(),
     relicSlots: buildRelicSlotList(),
     relicSetMeta: buildRelicSetMeta(),
-    codex: buildCodexPayload()
+    codex: buildCodexPayload(),
+    achievements: buildAchievementsCatalog(),
+    achievementCats: buildAchievementCatMeta()
   };
 }
 
