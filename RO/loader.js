@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L4';
+const LOADER_VERSION = 'L5';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -254,6 +254,10 @@ const CSS = `
   background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 6px;
   color: var(--gold-soft); font-size: 12px; padding: 6px 10px; cursor: pointer;
 }
+#ro-editor-hint {
+  background: none; border: none; color: var(--ink-dim, #a99bc4); font-size: 14px;
+  padding: 2px 4px; cursor: pointer; line-height: 1;
+}
 #ro-slot-picker-list {
   position: fixed; z-index: 500; display: none;
   background: var(--bg-panel-2); border: 1px solid var(--gold); border-radius: 8px;
@@ -346,7 +350,7 @@ if (existing) {
     const input = document.createElement('input');
     input.id = 'ro-editor-input';
     input.type = 'text';
-    input.placeholder = '尚未開放';
+    input.placeholder = '讀取存檔';
     // 預設唯讀：手機上點下去不會跳鍵盤，先跳出下拉選單給玩家選；
     // 選單裡選「自己輸入」才會拿掉唯讀、真的把游標放進去、跳鍵盤讓玩家打字。
     input.readOnly = true;
@@ -363,8 +367,18 @@ if (existing) {
       handleEditorInputAction(input.value);
     });
 
+    const hintBtn = document.createElement('button');
+    hintBtn.id = 'ro-editor-hint';
+    hintBtn.type = 'button';
+    hintBtn.textContent = 'ⓘ';
+    hintBtn.title = '可選擇存檔或是自行輸入存檔數字編號開啟存檔';
+    hintBtn.addEventListener('click', function () {
+      if (typeof showToast === 'function') showToast('可選擇存檔或是自行輸入存檔數字編號開啟存檔');
+    });
+
     box.appendChild(input);
     box.appendChild(openBtn);
+    box.appendChild(hintBtn);
     hudRight.insertBefore(box, hudRight.firstChild);
   }
 
