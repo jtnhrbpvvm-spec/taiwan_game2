@@ -16,6 +16,10 @@ const CSS = `
 @media (pointer: coarse) {
 
   html, body { touch-action: manipulation; } /* 關閉雙擊縮放手勢 */
+  /* 關閉「捲到最頂端再往下拉」時瀏覽器原生的下拉重整手勢。
+     overscroll-behavior 是現代瀏覽器的正規做法，但舊版 iOS Safari 不一定吃，
+     下面 bindPullToRefreshGuard() 另外用 touchmove 擋一層當備案。 */
+  html, body { overscroll-behavior-y: contain; }
 
   /* 戰鬥區：窄螢幕下原本被強制 320px 最小高度，內容填不滿就留一截空白，改成貼齊內容高度 */
   @media (max-width: 860px) {
@@ -657,6 +661,34 @@ if (isTouch) {
   bindIdleReportOutsideClose();
   bindTabContentOverlay();
   bindEquipPickPopup();
+  bindPullToRefreshGuard();
+}
+
+/* ============================================================
+   下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）
+   只在「不是在我們自己的可捲動容器裡」而且「頁面本身已經在最頂端」時
+   才擋掉往下拉的手勢——這樣裝備清單彈窗、分頁彈出視窗、戰鬥紀錄這些
+   自己會捲動的區塊完全不受影響，只有背景／戰鬥地圖那一塊被拉到底時
+   會被攔下來，不會誤觸瀏覽器整頁重新整理把玩家踢出目前畫面。
+   ============================================================ */
+function bindPullToRefreshGuard() {
+  if (window.__roPullGuardBound) return;
+  window.__roPullGuardBound = true;
+  let startY = 0;
+  const scrollableSelector = '.tab-content, #ro-equip-pick-popup-body, #ro-editor-box, ' +
+    '.combat-log, .log-pane-body, .idle-report-panel, #idle-report-body, .ally-panel, #ally-panel-body, ' +
+    'input, textarea, select';
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) return;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (e.touches.length !== 1) return;
+    if (e.target.closest(scrollableSelector)) return; // 自己會捲動的區塊，不插手
+    const y = e.touches[0].clientY;
+    const atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    if (atTop && y > startY) e.preventDefault();
+  }, { passive: false });
 }
 
 /* ============================================================
