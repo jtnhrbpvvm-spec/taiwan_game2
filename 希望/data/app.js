@@ -449,9 +449,11 @@
       function () { return c.secondJob || ""; },
       function (v) {
         if (v) {
+          var chosen = SECOND_JOBS.find(function (j) { return j.id === v; });
           c.secondJob = v;
+          if (chosen && chosen.from) c.job = chosen.from; // 二轉職業一定是從特定一轉職業分支出來的，一併同步，避免兩個欄位對不上
           c.advanceStep = 999; // 遊戲只判斷「advanceStep 有沒有到二轉完成的門檻」，數字多少不重要，衝到一個絕對夠大的值即可
-          toast("已設定二轉職業，轉職進度已自動設為完成", "ok");
+          toast("已設定二轉職業" + (chosen && chosen.from ? "，一轉職業已同步改成 " + (JOB_NAME[chosen.from] || chosen.from) : "") + "，轉職進度已自動設為完成", "ok");
         } else {
           delete c.secondJob;
         }
