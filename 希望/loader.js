@@ -35,7 +35,7 @@
       if (!vnode || found) return;
       if (vnode.component) {
         var props = vnode.component.props;
-        if (props && props.session && typeof props.session.enhance === "function") {
+        if (props && props.session && typeof props.session.enhance === "function" && props.snap && props.data) {
           found = props;
           return;
         }
