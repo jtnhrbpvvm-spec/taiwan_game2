@@ -9,6 +9,8 @@
 
   var STYLE_ID = "iw-enhance-style";
   var CLOCKWORK_ID = 26731; // 實習生的發條（強化用材料，寫死在遊戲原始碼裡）
+  // 目前作者只開放到 DG（N=1,G=2,DG=3）。XG/SG 開放後，把這個數字調成 grades.length 就會全部開放。
+  var MAX_SELECTABLE_GRADE_INDEX = 3;
 
   // ---------- 先清掉舊的（讓 bookmarklet 可以重複點擊 / 熱重載）----------
   var oldStyle = document.getElementById(STYLE_ID);
@@ -187,8 +189,9 @@
 
     var freshEntry = findEntryByStackId(item.stackId);
     var curGrade = (freshEntry && freshEntry.options && freshEntry.options.grade) || 0;
-    var defaultTarget = Math.min(curGrade + 1, grades.length);
-    var gradeOptions = grades.map(function (g, idx) {
+    var defaultTarget = Math.min(curGrade + 1, grades.length, MAX_SELECTABLE_GRADE_INDEX);
+    var visibleGrades = grades.slice(0, MAX_SELECTABLE_GRADE_INDEX);
+    var gradeOptions = visibleGrades.map(function (g, idx) {
       return '<option value="' + (idx + 1) + '"' + ((idx + 1) === defaultTarget ? " selected" : "") + '>' + g + '</option>';
     }).join("");
 
@@ -267,7 +270,7 @@
   }
 
   async function startRun(item, targetGrade, budget, autoBuy) {
-    if (!snap().inVillage) {
+    if (!session.inVillage) {
       alert("要在村莊裡才能強化，請先回村莊再試一次。");
       return;
     }
