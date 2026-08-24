@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L9';
+const LOADER_VERSION = 'L10';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -853,6 +853,32 @@ function buildAchievementCatMeta() {
   }
   return out;
 }
+// 技能目錄：整個遊戲全部職業的技能樹一次送過去（不是只送某個角色的），
+// 修改器那邊自己依存檔的職業鏈（跟屬性/技能點分頁同一套 jobChainForSlot()
+// 邏輯）挑要顯示哪些——這樣不用每次選好角色都再跟遊戲要一次資料。
+// 只送顯示/判斷用得到的欄位：progress 是函式沒辦法送，requiresWeapon 只影響
+// 技能能不能「施放」不影響能不能「學」，故意不送，省 payload。
+function buildSkillCatalog() {
+  const jobs = {};
+  if (typeof JOB_TREE === 'object' && JOB_TREE) {
+    for (const jobId in JOB_TREE) {
+      const job = JOB_TREE[jobId];
+      if (!job || !Array.isArray(job.skills)) continue;
+      jobs[jobId] = {
+        name: job.name, icon: job.icon || '', tier: job.tier || 1,
+        borrowedFrom: job.borrowedFrom || {},
+        skills: job.skills.map(function (sk) {
+          return {
+            id: sk.id, name: sk.name, maxLv: sk.maxLv, desc: sk.desc || '',
+            isQuest: !!sk.isQuest, autoGrant: !!sk.autoGrant,
+            requires: sk.requires || null
+          };
+        })
+      };
+    }
+  }
+  return jobs;
+}
 function buildAllSlotsSummary() {
   const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
   const slots = {};
@@ -908,6 +934,7 @@ function buildInitPayload() {
     codex: buildCodexPayload(),
     achievements: buildAchievementsCatalog(),
     achievementCats: buildAchievementCatMeta(),
+    skillCatalog: buildSkillCatalog(),
     loaderVersion: LOADER_VERSION
   };
 }

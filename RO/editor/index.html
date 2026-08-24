@@ -75,6 +75,7 @@
   .btn.primary{ background:var(--gold); color:#2a2011; border-color:var(--gold); }
   .btn.primary:hover{ background:var(--gold-soft); }
   .btn.ghost{ background:transparent; border-color:var(--line); color:var(--ink-dim); }
+  .btn.danger{ border-color:var(--danger); color:var(--danger); }
   .btn.block{ width:100%; }
   .btn.sm{ padding:5px 9px; font-size:12px; }
 
@@ -202,6 +203,32 @@
   }
   .acv-row .btn-unlock{ border-color:var(--gold); color:var(--gold-soft); }
   .acv-row .btn-clear{ border-color:var(--danger); color:var(--danger); }
+
+  .skill-job-block{ margin-bottom:14px; }
+  .skill-job-title{
+    display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--gold-soft);
+    font-weight:700; padding:6px 0; border-bottom:1px solid var(--line); margin-bottom:6px;
+  }
+  .skill-job-title .tier-tag{
+    font-size:10px; color:var(--ink-dim); border:1px solid var(--line); border-radius:10px;
+    padding:1px 7px; font-weight:400;
+  }
+  .skill-row{
+    display:flex; gap:9px; align-items:flex-start; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:9px 10px; margin-bottom:6px;
+  }
+  .skill-row.learned{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .skill-row .body{ flex:1; min-width:0; }
+  .skill-row .nm{ font-size:13px; font-weight:600; color:var(--ink); }
+  .skill-row .nm .lv-tag{ font-size:10.5px; color:var(--ink-dim); font-weight:400; margin-left:4px; }
+  .skill-row .nm .lv-tag.maxed{ color:var(--ok); }
+  .skill-row .ds{ font-size:11px; color:var(--ink-dim); margin-top:2px; line-height:1.4; }
+  .skill-row .btn-learn{
+    flex-shrink:0; min-width:34px; min-height:34px; border-radius:8px;
+    background:var(--bg-panel); border:1px solid var(--gold); color:var(--gold-soft);
+    font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .skill-row .btn-learn:disabled{ opacity:.3; cursor:not-allowed; }
   .list-row.has-cards{
     border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
     padding-left:6px; border-radius:4px; cursor:pointer;
@@ -297,7 +324,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V18</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V19</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -344,6 +371,7 @@
       <button class="tab-btn" data-tab="relic">遺物</button>
       <button class="tab-btn" data-tab="codex">圖鑑</button>
       <button class="tab-btn" data-tab="achieve">成就</button>
+      <button class="tab-btn" data-tab="skill">技能</button>
     </div>
 
     <div id="tab-basic" class="tab-pane" style="margin-top:14px;">
@@ -445,6 +473,17 @@
       </div>
       <div id="acv-cats" class="codex-cats"></div>
       <div id="acv-list" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="tab-skill" class="tab-pane hidden" style="margin-top:14px;">
+      <div style="font-size:12px;color:var(--ink-dim);margin-bottom:10px;">
+        點「+」直接學會下一級，<b style="color:var(--gold-soft);">不扣技能點</b>，但還是要先滿足前置技能需求（沒學前置就點不動）。任務技能（轉職自動送的）不能手動調整。
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <button class="btn primary sm" id="skill-learn-all">🔓 一鍵全學</button>
+        <button class="btn danger sm" id="skill-forget-all">🗑️ 一鍵遺忘</button>
+      </div>
+      <div id="skill-list"></div>
     </div>
 
     <div class="apply-bar">
@@ -785,7 +824,7 @@
       document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
-      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex', 'achieve'].forEach(function (t) {
+      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex', 'achieve', 'skill'].forEach(function (t) {
         (t === currentTab ? show : hide)('tab-' + t);
       });
     });
@@ -807,6 +846,7 @@
     if (!state.slotWorking.achievements) state.slotWorking.achievements = { done: {}, points: 0 };
     if (!state.slotWorking.achievements.done) state.slotWorking.achievements.done = {};
     if (typeof state.slotWorking.achievements.points !== 'number') state.slotWorking.achievements.points = 0;
+    if (!state.slotWorking.learnedSkills) state.slotWorking.learnedSkills = {};
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -824,6 +864,7 @@
     renderRelicList();
     refreshCodexAll();
     refreshAcvAll();
+    renderSkillTab();
     updateSlotStatus();
     hide('screen-slots');
     show('screen-editor');
@@ -1637,6 +1678,137 @@
     state.slotWorking.achievements = { done: {}, points: 0 };
     state.acvFillIds = {};
     commitAcvPatch();
+  });
+
+  // ---------------- 技能分頁 ----------------
+  // 學習規則照抄遊戲本體 levelUpSkill()：只檢查 requires（前置技能等級），
+  // 不檢查、也不扣技能點——這是這個分頁的整個重點（無視點數限制學技能）。
+  // 任務技能（isQuest）維持跟遊戲一樣不能手動調整，一鍵遺忘也會保留它們，
+  // 跟遊戲本體 resetSkills() 的行為一致。
+  function skillById(id) {
+    var jobs = state.init.skillCatalog || {};
+    for (var jobId in jobs) {
+      var found = (jobs[jobId].skills || []).find(function (s) { return s.id === id; });
+      if (found) return found;
+    }
+    return null;
+  }
+  function skillRequiresSatisfied(sk) {
+    if (!sk.requires) return true;
+    var reqList = Array.isArray(sk.requires) ? sk.requires : [sk.requires];
+    var learned = state.slotWorking.learnedSkills || {};
+    return reqList.every(function (req) { return (learned[req.skillId] || 0) >= req.level; });
+  }
+  function renderSkillTab() {
+    var wrap = $('skill-list');
+    var jobs = state.init.skillCatalog || {};
+    var chain = jobChainForSlot();
+    wrap.innerHTML = '';
+    if (!chain.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到職業資料</div>'; return; }
+    var learned = state.slotWorking.learnedSkills || {};
+    var frag = document.createDocumentFragment();
+    chain.forEach(function (jobId) {
+      var job = jobs[jobId];
+      if (!job || !job.skills.length) return;
+      // 借來的技能不在借用者底下再畫一次——跟遊戲本體 renderSkillsTab() 同一條規則，
+      // 只有「來源職業也在這個角色的職業鏈裡」才會被濾掉，不然超級新手那種
+      // 沒實際當過來源職業的情況，技能會整個不見。
+      var shown = job.skills.filter(function (sk) {
+        var src = job.borrowedFrom && job.borrowedFrom[sk.id];
+        return !(src && chain.indexOf(src) !== -1);
+      });
+      if (!shown.length) return;
+
+      var block = document.createElement('div');
+      block.className = 'skill-job-block';
+      var title = document.createElement('div');
+      title.className = 'skill-job-title';
+      title.innerHTML = (job.icon || '') + ' ' + escapeHtml(job.name) + '<span class="tier-tag">Tier ' + job.tier + '</span>';
+      block.appendChild(title);
+
+      shown.forEach(function (sk) {
+        var lv = learned[sk.id] || 0;
+        var isMaxed = lv >= sk.maxLv;
+        var row = document.createElement('div');
+        row.className = 'skill-row' + (lv > 0 ? ' learned' : '');
+        var lvTag = sk.isQuest
+          ? ('任務技能・Lv' + lv + '/' + sk.maxLv)
+          : ('Lv' + lv + '/' + sk.maxLv + (isMaxed ? '・MAX' : ''));
+        row.innerHTML =
+          '<div class="body">' +
+            '<div class="nm">' + escapeHtml(sk.name) + '<span class="lv-tag' + (isMaxed ? ' maxed' : '') + '">' + lvTag + '</span></div>' +
+            '<div class="ds">' + escapeHtml(sk.desc) + '</div>' +
+          '</div>' +
+          (sk.isQuest ? '' : '<button class="btn-learn" data-id="' + sk.id + '">+</button>');
+        if (!sk.isQuest) {
+          var canLearn = !isMaxed && skillRequiresSatisfied(sk);
+          var btn = row.querySelector('.btn-learn');
+          btn.disabled = !canLearn;
+          if (!canLearn && !isMaxed) {
+            var reqList = Array.isArray(sk.requires) ? sk.requires : (sk.requires ? [sk.requires] : []);
+            var missing = reqList.filter(function (req) { return (learned[req.skillId] || 0) < req.level; })
+              .map(function (req) { var rs = skillById(req.skillId); return (rs ? rs.name : req.skillId) + ' Lv' + req.level; });
+            if (missing.length) btn.title = '需要先學會：' + missing.join('、');
+          }
+          btn.addEventListener('click', function () { learnSkillOneLevel(sk.id); });
+        }
+        block.appendChild(row);
+      });
+      frag.appendChild(block);
+    });
+    wrap.appendChild(frag);
+  }
+  function learnSkillOneLevel(id) {
+    var sk = skillById(id);
+    if (!sk || sk.isQuest) return;
+    var learned = state.slotWorking.learnedSkills;
+    var lv = learned[id] || 0;
+    if (lv >= sk.maxLv) return;
+    if (!skillRequiresSatisfied(sk)) { toast('⚠️ 還沒滿足前置技能需求', true); return; }
+    learned[id] = lv + 1;
+    commitSkillPatch();
+  }
+  function commitSkillPatch() {
+    state.slotPatch.learnedSkills = Object.assign({}, state.slotWorking.learnedSkills);
+    updateSlotStatus();
+    renderSkillTab();
+  }
+  $('skill-learn-all').addEventListener('click', function () {
+    if (!confirm('確定要學會全部技能（直接點滿）嗎？任務技能不受影響。')) return;
+    var jobs = state.init.skillCatalog || {};
+    var chain = jobChainForSlot();
+    var learned = state.slotWorking.learnedSkills;
+    var allSkills = [];
+    chain.forEach(function (jobId) {
+      var job = jobs[jobId];
+      if (job) allSkills = allSkills.concat(job.skills.filter(function (sk) { return !sk.isQuest; }));
+    });
+    // 前置需求可能是連鎖的（B 需要 A、C 需要 B），單一輪掃不完，
+    // 重複掃到「這一輪完全沒有任何技能被點滿」才停止。
+    var progressed = true;
+    var guard = 0;
+    while (progressed && guard < 50) {
+      progressed = false;
+      guard++;
+      allSkills.forEach(function (sk) {
+        var lv = learned[sk.id] || 0;
+        if (lv >= sk.maxLv) return;
+        if (!skillRequiresSatisfied(sk)) return;
+        learned[sk.id] = sk.maxLv;
+        progressed = true;
+      });
+    }
+    commitSkillPatch();
+    toast('✅ 已學會全部技能（記得按下面「套用修改」）');
+  });
+  $('skill-forget-all').addEventListener('click', function () {
+    if (!confirm('確定要遺忘全部技能嗎？任務技能會保留，跟遊戲內「重置技能」規則一致。')) return;
+    var learned = state.slotWorking.learnedSkills;
+    Object.keys(learned).forEach(function (id) {
+      var sk = skillById(id);
+      if (!sk || !sk.isQuest) delete learned[id];
+    });
+    commitSkillPatch();
   });
 
   function updateSlotStatus() {
