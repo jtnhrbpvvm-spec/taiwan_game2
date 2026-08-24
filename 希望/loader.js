@@ -270,10 +270,6 @@
   }
 
   async function startRun(item, targetGrade, budget, autoBuy) {
-    if (!session.inVillage) {
-      alert("要在村莊裡才能強化，請先回村莊再試一次。");
-      return;
-    }
     running = true;
     stopFlag = false;
     setFormDisabled(true);
@@ -304,7 +300,17 @@
         var goldBeforeBuy = snap().gold;
         session.buy(CLOCKWORK_ID, 1);
         var buySpent = goldBeforeBuy - snap().gold;
-        if (buySpent <= 0) { reason = "buy-failed"; break; }
+        if (buySpent <= 0) {
+          console.error("[一鍵強化] session.buy() 沒有扣款，診斷資訊：", {
+            "session.inVillage": session.inVillage,
+            "發條商店價格 price": price,
+            "扣款前金幣 goldBefore": goldBeforeBuy,
+            "扣款後金幣 goldAfter": snap().gold,
+            "data.shopPrice.get(26731)": data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)
+          });
+          reason = "buy-failed";
+          break;
+        }
         totalSpent += buySpent;
         totalBought += 1;
         log("購買發條 ×1，花費 " + fmt(buySpent) + " 金幣");
@@ -316,7 +322,17 @@
       var materialBefore = have;
       session.enhance(stackId, CLOCKWORK_ID);
       var spent = goldBefore - snap().gold;
-      if (spent <= 0) { reason = "enhance-rejected"; break; }
+      if (spent <= 0) {
+        console.error("[一鍵強化] session.enhance() 沒有扣款，診斷資訊：", {
+          "session.inVillage": session.inVillage,
+          "stackId": stackId,
+          "扣款前金幣 goldBefore": goldBefore,
+          "扣款後金幣 goldAfter": snap().gold,
+          "usableCounts(26731)": snap().usableCounts && snap().usableCounts.get(CLOCKWORK_ID)
+        });
+        reason = "enhance-rejected";
+        break;
+      }
       attempts++;
       totalSpent += spent;
       totalUsed += Math.max(0, materialBefore - (snap().usableCounts.get(CLOCKWORK_ID) || 0));
@@ -341,8 +357,8 @@
       "no-material": "⏸️ 發條用完了（沒有勾選自動購買），停止。",
       "no-gold-for-material": "⏸️ 金幣不夠買下一個發條，停止。",
       "no-price": "⚠️ 讀不到發條的商店價格，停止。",
-      "buy-failed": "⚠️ 購買發條失敗（可能不在村莊），停止。",
-      "enhance-rejected": "⚠️ 這次強化沒有成功執行（可能金幣不夠付這次的強化費用），停止。",
+      "buy-failed": "⚠️ 購買發條沒有成功扣款，真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
+      "enhance-rejected": "⚠️ 這次強化沒有成功扣款，真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
       "item-gone": "⚠️ 找不到這件裝備了（可能被拆解或移動），停止。",
       "stopped": "⏹️ 已手動停止。",
       "unknown": "發生未知狀況，停止。"
