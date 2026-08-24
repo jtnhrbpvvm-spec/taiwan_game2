@@ -216,33 +216,6 @@
 
   function itemName(id) { return (ITEMS[String(id)] || {}).name || ("物品#" + id); }
 
-  // ---------- 依物品編號讀寫背包總數量（用來讓某些物品像金幣一樣直接編輯數字）----------
-  function getStackTotal(c, itemId) {
-    var total = 0;
-    (c.stacks || []).forEach(function (s) { if (s.itemId === itemId) total += s.count; });
-    return total;
-  }
-  function setStackTotal(c, itemId, target) {
-    target = Math.max(0, Math.floor(target) || 0);
-    if (!Array.isArray(c.stacks)) c.stacks = [];
-    var matching = c.stacks.filter(function (s) { return s.itemId === itemId; });
-    if (target === 0) {
-      c.stacks = c.stacks.filter(function (s) { return s.itemId !== itemId; });
-      return;
-    }
-    if (matching.length === 0) {
-      var newId = c.nextStackId || 1;
-      c.nextStackId = newId + 1;
-      c.stacks.push({ id: newId, itemId: itemId, count: target });
-      return;
-    }
-    matching[0].count = target;
-    for (var i = 1; i < matching.length; i++) {
-      var idx = c.stacks.indexOf(matching[i]);
-      if (idx !== -1) c.stacks.splice(idx, 1);
-    }
-  }
-
   // ---------- 物品能力預覽方塊（背包/倉庫/裝備欄位共用）----------
   var STAT_LABELS = { atk: "攻擊", def: "防禦", magic: "魔法", atkSpeed: "攻速", crit: "必殺", eva: "迴避", moveSpeed: "移速" };
   var ATTR_LABELS = { str: "力量", agi: "敏捷", int: "智力", sta: "體力", wis: "精神", luck: "幸運" };
@@ -426,13 +399,6 @@
     wrap.appendChild(fieldNumber("經驗值 EXP", function () { return c.exp; }, function (v) { c.exp = v; }));
     wrap.appendChild(fieldNumber("金錢 Gold", function () { return c.gold; }, function (v) { c.gold = v; }));
     wrap.appendChild(fieldNumber("HP", function () { return c.hp; }, function (v) { c.hp = v; }));
-    if (MISSION_TOKEN_ITEM_ID) {
-      wrap.appendChild(fieldNumber(
-        (itemName(MISSION_TOKEN_ITEM_ID) || "R代幣") + "（希望路線代幣）",
-        function () { return getStackTotal(c, MISSION_TOKEN_ITEM_ID); },
-        function (v) { setStackTotal(c, MISSION_TOKEN_ITEM_ID, v); renderStacks(c); }
-      ));
-    }
 
     var jobOptions = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; })
       .concat(SECOND_JOBS.map(function (j) { return { value: j.id, label: j.name + " ・二轉 (" + j.id + ")" }; }));

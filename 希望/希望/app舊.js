@@ -151,7 +151,6 @@
   var TOWNS = window.TOWNS || {};
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
-  var RADIX_INDEX = window.RADIX_INDEX || {};
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
@@ -320,12 +319,10 @@
       currentMatches.items.forEach(function (it) {
         var count = (DROP_INDEX[it.id] || []).length;
         var shopCount = (SHOP_INDEX[it.id] || []).length;
-        var radixCount = (RADIX_INDEX[it.id] || []).length;
         var questRefs = buildQuestReferences(it.id);
         var metaParts = [];
         if (count) metaParts.push(count + " 隻怪物掉落");
         if (shopCount) metaParts.push("商店有賣");
-        if (radixCount) metaParts.push("拉迪克斯有賣");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -793,21 +790,6 @@
           '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span></td>' +
           '<td>' + escapeHtml(townName(s.t)) + '</td>' +
           '<td><span class="rate">' + fmtNum(s.price) + '</span></td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-    }
-
-    var radixEntries = (RADIX_INDEX[id] || []).slice();
-    if (radixEntries.length) {
-      var tokenName = MISSION_TOKEN_ITEM_ID != null ? (ITEMS[MISSION_TOKEN_ITEM_ID] ? ITEMS[MISSION_TOKEN_ITEM_ID].name : "R代幣") : "R代幣";
-      html += '<div class="section-title">拉迪克斯（希望路線商店） <span class="count">(' + radixEntries.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>NPC</th><th>地點</th><th>價格</th></tr></thead><tbody>';
-      radixEntries.forEach(function (s) {
-        html += '<tr>' +
-          '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span></td>' +
-          '<td>' + escapeHtml(townName(s.t)) + '</td>' +
-          '<td><span class="rate">' + fmtNum(s.price) + ' ' + escapeHtml(tokenName) + '</span></td>' +
           '</tr>';
       });
       html += '</tbody></table>';
