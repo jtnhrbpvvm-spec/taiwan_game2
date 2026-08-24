@@ -106,6 +106,13 @@
   .editor-head .who small{ display:block; font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:1px; }
 
   .item-section{ margin-top:16px; }
+  .view-switch{ display:flex; gap:8px; margin-top:12px; }
+  .view-switch-btn{
+    flex:1; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:8px; padding:11px; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .view-switch-btn.active{ background:var(--gold); color:#2a2011; border-color:var(--gold); }
+
   .item-section h3{ font-size:14.5px; color:var(--gold-soft); display:flex; align-items:center; gap:6px; }
   .item-section .count{ font-size:11.5px; color:var(--ink-dim); font-weight:400; }
 
@@ -120,7 +127,7 @@
   }
   .action-row{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
 
-  .item-list{ margin-top:10px; max-height:280px; overflow-y:auto; }
+  .item-list{ margin-top:10px; max-height:52vh; overflow-y:auto; }
   .item-row{
     display:flex; align-items:center; gap:9px; padding:8px 4px; border-bottom:1px solid var(--line);
   }
@@ -181,7 +188,7 @@
   <div class="brand">
     <div class="mark">🧹</div>
     <div>
-      <h1>物品清理工具</h1><span class="ver">V3</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>物品清理工具</h1><span class="ver">V4</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -217,6 +224,11 @@
       <div class="who" id="workspace-who">—<small id="workspace-who-sub"></small></div>
     </div>
 
+    <div class="view-switch">
+      <button class="view-switch-btn active" id="view-btn-inv" data-view="inv">🎒 背包</button>
+      <button class="view-switch-btn" id="view-btn-wh" data-view="wh">📦 倉庫</button>
+    </div>
+
     <div class="item-section" id="section-inv">
       <h3>🎒 背包 <span class="count" id="inv-count"></span></h3>
       <div class="filter-row">
@@ -231,7 +243,7 @@
       <div id="inv-list" class="item-list"></div>
     </div>
 
-    <div class="item-section" id="section-wh">
+    <div class="item-section hidden" id="section-wh">
       <h3>📦 倉庫 <span class="count" id="wh-count"></span></h3>
       <div class="filter-row">
         <select id="wh-filter"></select>
@@ -501,10 +513,25 @@
 
     renderList('inv');
     renderList('wh');
+    switchWorkspaceView('inv'); // 每次重新打開都從背包看起，行為一致好預測
     updateApplyStatus();
     hide('screen-slots');
     show('screen-workspace');
   }
+
+  // 背包／倉庫各自整頁顯示，上方切換鈕決定看哪一邊——兩邊各自的全選/反選/
+  // 刪除都還在，只是不用擠在同一個畫面裡，操作空間比較大。套用列維持共用，
+  // 不管切到哪一邊，兩邊沒套用的變更都還是會一起顯示、按一次「套用修改」一起送出。
+  function switchWorkspaceView(view) {
+    document.querySelectorAll('.view-switch-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    (view === 'inv' ? show : hide)('section-inv');
+    (view === 'wh' ? show : hide)('section-wh');
+  }
+  document.querySelectorAll('.view-switch-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { switchWorkspaceView(btn.dataset.view); });
+  });
 
   // side = 'inv' | 'wh'
   function getWorking(side) { return side === 'inv' ? state.invWorking : state.whWorking; }
