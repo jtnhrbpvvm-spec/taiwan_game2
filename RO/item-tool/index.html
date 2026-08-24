@@ -131,6 +131,12 @@
   .item-row .nm{ flex:1; min-width:0; font-size:13px; }
   .item-row .nm small{ display:block; color:var(--ink-dim); font-size:10.5px; }
   .item-row .qty{ font-size:12px; color:var(--ink-dim); flex-shrink:0; }
+  .item-row.locked{ border-left:3px solid var(--gold); background:rgba(201,162,39,.08); padding-left:5px; }
+  .item-row .lock-btn{
+    flex-shrink:0; background:none; border:none; cursor:pointer; font-size:15px; padding:2px 3px;
+    color:var(--ink-dim); line-height:1;
+  }
+  .item-row .lock-btn.on{ color:var(--gold-soft); }
   .empty-hint{ color:var(--ink-dim); font-size:12.5px; padding:14px 0; text-align:center; }
 
   .apply-bar{
@@ -175,7 +181,7 @@
   <div class="brand">
     <div class="mark">🧹</div>
     <div>
-      <h1>物品清理工具</h1><span class="ver">V2</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>物品清理工具</h1><span class="ver">V3</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -359,6 +365,7 @@
     selectedSlot: null,
     invWorking: null,   // 工作副本：目前欄位的 inventory 陣列
     whWorking: null,    // 工作副本：倉庫 items 陣列
+    lockedWorking: null, // 工作副本：目前欄位的 lockedItems（{ 道具id: 1 }，跟遊戲本體同一份資料）
     invChecked: {},     // key = instanceId || item，value = true
     whChecked: {},
     invFilter: 'all',
@@ -366,7 +373,8 @@
     whFilter: 'all',
     whSearch: '',
     invDirty: false,
-    whDirty: false
+    whDirty: false,
+    lockDirty: false
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -412,7 +420,7 @@
     } else if (data.type === 'ro-itemtool:applied') {
       if (data.ok) {
         toast('✅ 已套用修改');
-        state.invDirty = false; state.whDirty = false;
+        state.invDirty = false; state.whDirty = false; state.lockDirty = false;
         sendToGame({ type: 'ro-itemtool:refresh' });
       } else {
         toast('⚠️ 套用失敗，請重新整理再試一次', true);
@@ -462,7 +470,7 @@
   }
   $('btn-back-slots').addEventListener('click', function () { backToSlots(); });
   function backToSlots() {
-    if ((state.invDirty || state.whDirty) && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
+    if ((state.invDirty || state.whDirty || state.lockDirty) && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
     state.selectedSlot = null;
     hide('screen-workspace');
     show('screen-slots');
@@ -474,11 +482,12 @@
     var slot = state.init.slots[idx];
     state.invWorking = JSON.parse(JSON.stringify(slot.inventory || []));
     state.whWorking = JSON.parse(JSON.stringify((state.init.warehouse && state.init.warehouse.items) || []));
+    state.lockedWorking = JSON.parse(JSON.stringify(slot.lockedItems || {}));
     state.invChecked = {};
     state.whChecked = {};
     state.invFilter = 'all'; state.invSearch = '';
     state.whFilter = 'all'; state.whSearch = '';
-    state.invDirty = false; state.whDirty = false;
+    state.invDirty = false; state.whDirty = false; state.lockDirty = false;
 
     $('workspace-who').innerHTML = escapeHtml(slot.name) +
       '<small>欄位 ' + (idx + 1) + '　Lv.' + slot.baseLevel + (idx === state.init.currentSlot ? '　🟢 遊玩中' : '') + '</small>';
@@ -528,6 +537,17 @@
     });
   }
 
+  function isLocked(itemId) { return !!(state.lockedWorking && state.lockedWorking[itemId]); }
+  function toggleLock(itemId) {
+    if (!state.lockedWorking) state.lockedWorking = {};
+    if (state.lockedWorking[itemId]) delete state.lockedWorking[itemId];
+    else state.lockedWorking[itemId] = 1;
+    state.lockDirty = true;
+    // 鎖定是用道具 ID 存的，不分背包/倉庫，兩邊畫面都要一起刷新才會同步。
+    renderList('inv');
+    renderList('wh');
+    updateApplyStatus();
+  }
   function renderList(side) {
     var listEl = $(side + '-list');
     var working = getWorking(side);
@@ -540,6 +560,7 @@
     rows.forEach(function (row) {
       var key = rowKey(row);
       var isChecked = !!checked[key];
+      var locked = isLocked(row.item);
       // 個體裝備的精煉值/卡片：背包那一側要另外查 state.instances，
       // 倉庫那一側資料是自己帶著的（跟遊戲本體 renderWarehouseInner 判斷一致，
       // 不能兩邊套同一套查法，倉庫查 state.instances 只會查到 undefined）。
@@ -548,9 +569,10 @@
         : null;
       var refineTag = inst && inst.refine > 0 ? ('+' + inst.refine + ' ') : '';
       var line = document.createElement('div');
-      line.className = 'item-row' + (isChecked ? ' checked' : '');
+      line.className = 'item-row' + (isChecked ? ' checked' : '') + (locked ? ' locked' : '');
       line.innerHTML =
         '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + '>' +
+        '<button class="lock-btn' + (locked ? ' on' : '') + '" data-item="' + row.item + '" title="鎖定後全選/反選不會自動勾到，遊戲內也會顯示鎖定">' + (locked ? '🔒' : '🔓') + '</button>' +
         '<div class="ic">' + displayIcon(row.item) + '</div>' +
         '<div class="nm">' + refineTag + escapeHtml(displayName(row.item)) +
           (row.instanceId ? '<small>個體裝備</small>' : '<small>' + row.item + '</small>') + '</div>' +
@@ -558,6 +580,9 @@
       line.querySelector('input').addEventListener('change', function () {
         if (this.checked) checked[key] = true; else delete checked[key];
         line.classList.toggle('checked', this.checked);
+      });
+      line.querySelector('.lock-btn').addEventListener('click', function () {
+        toggleLock(this.dataset.item);
       });
       frag.appendChild(line);
     });
@@ -575,14 +600,21 @@
     });
     $(side + '-select-all').addEventListener('click', function () {
       var checked = getChecked(side);
-      visibleRows(side).forEach(function (row) { checked[rowKey(row)] = true; });
+      var skipped = 0;
+      visibleRows(side).forEach(function (row) {
+        if (isLocked(row.item)) { skipped++; return; } // 鎖定的物品不自動勾，避免全選誤刪
+        checked[rowKey(row)] = true;
+      });
       renderList(side);
+      if (skipped) toast('已跳過 ' + skipped + ' 項鎖定中的物品，沒有自動勾選');
     });
     $(side + '-invert').addEventListener('click', function () {
       // 反選只影響「目前篩選/搜尋後看得到」的項目，被篩選掉、暫時不在畫面上的
-      // 項目維持原狀不受影響——這是先前跟玩家確認過的範圍。
+      // 項目維持原狀不受影響——這是先前跟玩家確認過的範圍。鎖定的物品一樣跳過，
+      // 不會被反選勾起來，理由跟全選一樣：避免不小心刪到鎖定物品。
       var checked = getChecked(side);
       visibleRows(side).forEach(function (row) {
+        if (isLocked(row.item)) return;
         var key = rowKey(row);
         if (checked[key]) delete checked[key]; else checked[key] = true;
       });
@@ -592,8 +624,9 @@
       var checked = getChecked(side);
       var keys = Object.keys(checked);
       if (!keys.length) { toast('還沒勾選任何物品'); return; }
-      showDeleteConfirm(keys.length, function () {
-        var working = getWorking(side);
+      var working = getWorking(side);
+      var lockedCount = working.filter(function (row) { return checked[rowKey(row)] && isLocked(row.item); }).length;
+      showDeleteConfirm(keys.length, lockedCount, function () {
         var kept = working.filter(function (row) { return !checked[rowKey(row)]; });
         if (side === 'inv') { state.invWorking = kept; state.invDirty = true; state.invChecked = {}; }
         else { state.whWorking = kept; state.whDirty = true; state.whChecked = {}; }
@@ -606,7 +639,7 @@
   bindSection('inv');
   bindSection('wh');
 
-  function showDeleteConfirm(count, onConfirm) {
+  function showDeleteConfirm(count, lockedCount, onConfirm) {
     var old = document.getElementById('confirm-overlay');
     if (old) old.remove();
     var ov = document.createElement('div');
@@ -616,7 +649,9 @@
       '<div class="confirm-box">' +
         '<div class="ic">⚠️</div>' +
         '<h3>確定要刪除 ' + count + ' 項物品？</h3>' +
-        '<p>刪除後<b>無法復原</b>，套用修改之後就會直接從存檔消失。<br>建議先確認過再繼續。</p>' +
+        '<p>刪除後<b>無法復原</b>，套用修改之後就會直接從存檔消失。<br>建議先確認過再繼續。' +
+          (lockedCount ? '<br><b style="color:var(--gold-soft);">其中有 ' + lockedCount + ' 項是鎖定中的物品，是你自己手動勾選的，確定要一起刪除嗎？</b>' : '') +
+        '</p>' +
         '<div class="btns">' +
           '<button class="btn ghost" id="confirm-cancel">取消</button>' +
           '<button class="btn danger" id="confirm-ok">確定刪除</button>' +
@@ -632,23 +667,26 @@
   }
 
   function updateApplyStatus() {
-    var dirty = state.invDirty || state.whDirty;
+    var dirty = state.invDirty || state.whDirty || state.lockDirty;
     var parts = [];
     if (state.invDirty) parts.push('背包');
     if (state.whDirty) parts.push('倉庫');
+    if (state.lockDirty) parts.push('鎖定狀態');
     $('apply-status').textContent = dirty ? (parts.join('、') + '有變更尚未套用') : '尚未變更';
     $('apply-status').classList.toggle('dirty', dirty);
     $('btn-apply').disabled = !dirty;
   }
   $('btn-discard').addEventListener('click', function () {
-    if (!state.invDirty && !state.whDirty) return;
+    if (!state.invDirty && !state.whDirty && !state.lockDirty) return;
     if (!confirm('放棄目前所有未套用的修改？')) return;
     openWorkspace(state.selectedSlot);
   });
   $('btn-apply').addEventListener('click', function () {
-    if (!state.invDirty && !state.whDirty) return;
+    if (!state.invDirty && !state.whDirty && !state.lockDirty) return;
     var msg = { type: 'ro-itemtool:apply' };
-    if (state.invDirty) { msg.slot = state.selectedSlot; msg.inventory = state.invWorking; }
+    if (state.invDirty || state.lockDirty) { msg.slot = state.selectedSlot; }
+    if (state.invDirty) { msg.inventory = state.invWorking; }
+    if (state.lockDirty) { msg.lockedItems = state.lockedWorking; }
     if (state.whDirty) { msg.warehouseItems = state.whWorking; }
     sendToGame(msg);
   });

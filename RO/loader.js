@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L10';
+const LOADER_VERSION = 'L11';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -1487,9 +1487,15 @@ function handleItemToolMessage(ev) {
   } else if (data.type === 'ro-itemtool:apply') {
     // 背包跟倉庫是兩個獨立目標，這次套用可能只動到其中一個、也可能兩個都動到，
     // 各自呼叫已經在修改器那邊驗證過的套用函式，不用重寫一份邏輯。
+    // lockedItems 是跟 inventory 同一個角色欄位的資料，兩個一起送才不會多打一次 A 頁。
     let ok = true;
-    if (Array.isArray(data.inventory) && Number.isInteger(data.slot)) {
-      ok = applyEditorPatchToSlot(data.slot, { inventory: data.inventory }) && ok;
+    const hasInvChange = Array.isArray(data.inventory);
+    const hasLockChange = data.lockedItems && typeof data.lockedItems === 'object';
+    if ((hasInvChange || hasLockChange) && Number.isInteger(data.slot)) {
+      const slotPatch = {};
+      if (hasInvChange) slotPatch.inventory = data.inventory;
+      if (hasLockChange) slotPatch.lockedItems = data.lockedItems;
+      ok = applyEditorPatchToSlot(data.slot, slotPatch) && ok;
     }
     if (Array.isArray(data.warehouseItems)) {
       ok = applyEditorPatchToWarehouse({ items: data.warehouseItems }) && ok;
