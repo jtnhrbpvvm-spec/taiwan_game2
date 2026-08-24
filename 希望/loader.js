@@ -122,6 +122,12 @@
     return out;
   }
   function findEntryByStackId(stackId) {
+    // 讀 session.player.stacks（跟遊戲內部強化時直接修改的是同一份），
+    // 不透過 snap（快照是定期才重建，會有延遲），確保拿到即時的階級結果。
+    if (session.player && session.player.stacks) {
+      var live = session.player.stacks.get(stackId);
+      if (live) return live;
+    }
     var s = snap();
     var entries = Object.entries(s.loadout || {});
     for (var i = 0; i < entries.length; i++) {
@@ -291,21 +297,21 @@
 
       if (totalSpent >= budget) { reason = "budget"; break; }
 
-      var have = snap().usableCounts.get(CLOCKWORK_ID) || 0;
+      var have = session.usableCount(CLOCKWORK_ID, "bagAndWarehouse") || 0;
       if (have < 1) {
         if (!autoBuy) { reason = "no-material"; break; }
         if (!price) { reason = "no-price"; break; }
-        if (snap().gold < price) { reason = "no-gold-for-material"; break; }
+        if (session.player.gold < price) { reason = "no-gold-for-material"; break; }
         if (totalSpent + price > budget) { reason = "budget"; break; }
-        var goldBeforeBuy = snap().gold;
+        var goldBeforeBuy = session.player.gold;
         session.buy(CLOCKWORK_ID, 1);
-        var buySpent = goldBeforeBuy - snap().gold;
+        var buySpent = goldBeforeBuy - session.player.gold;
         if (buySpent <= 0) {
           console.error("[一鍵強化] session.buy() 沒有扣款，診斷資訊：", {
             "session.inVillage": session.inVillage,
             "發條商店價格 price": price,
             "扣款前金幣 goldBefore": goldBeforeBuy,
-            "扣款後金幣 goldAfter": snap().gold,
+            "扣款後金幣 goldAfter": session.player.gold,
             "data.shopPrice.get(26731)": data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)
           });
           reason = "buy-failed";
@@ -318,24 +324,24 @@
         continue;
       }
 
-      var goldBefore = snap().gold;
+      var goldBefore = session.player.gold;
       var materialBefore = have;
       session.enhance(stackId, CLOCKWORK_ID);
-      var spent = goldBefore - snap().gold;
+      var spent = goldBefore - session.player.gold;
       if (spent <= 0) {
         console.error("[一鍵強化] session.enhance() 沒有扣款，診斷資訊：", {
           "session.inVillage": session.inVillage,
           "stackId": stackId,
           "扣款前金幣 goldBefore": goldBefore,
-          "扣款後金幣 goldAfter": snap().gold,
-          "usableCounts(26731)": snap().usableCounts && snap().usableCounts.get(CLOCKWORK_ID)
+          "扣款後金幣 goldAfter": session.player.gold,
+          "usableCount(26731,bagAndWarehouse)": session.usableCount(CLOCKWORK_ID, "bagAndWarehouse")
         });
         reason = "enhance-rejected";
         break;
       }
       attempts++;
       totalSpent += spent;
-      totalUsed += Math.max(0, materialBefore - (snap().usableCounts.get(CLOCKWORK_ID) || 0));
+      totalUsed += Math.max(0, materialBefore - (session.usableCount(CLOCKWORK_ID, "bagAndWarehouse") || 0));
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
