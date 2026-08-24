@@ -434,35 +434,9 @@
       ));
     }
 
-    var tier1Options = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; });
-    wrap.appendChild(fieldSelect("職業（一轉）Job", tier1Options, function () { return c.job; }, function (v) { c.job = v; renderBasic(c); }));
-
-    var secondJobOptions = [{ value: "", label: "（尚未二轉）" }].concat(
-      SECOND_JOBS.map(function (j) {
-        var fromName = j.from ? (JOB_NAME[j.from] || j.from) : "";
-        return { value: j.id, label: j.name + (fromName ? "・從 " + fromName : "") + " (" + j.id + ")" };
-      })
-    );
-    var secondJobField = fieldSelect(
-      "二轉職業 secondJob",
-      secondJobOptions,
-      function () { return c.secondJob || ""; },
-      function (v) {
-        if (v) {
-          c.secondJob = v;
-          c.advanceStep = 999; // 遊戲只判斷「advanceStep 有沒有到二轉完成的門檻」，數字多少不重要，衝到一個絕對夠大的值即可
-          toast("已設定二轉職業，轉職進度已自動設為完成", "ok");
-        } else {
-          delete c.secondJob;
-        }
-        renderBasic(c);
-      }
-    );
-    secondJobField.appendChild(el("div", {
-      style: "font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;",
-      text: "遊戲判斷目前職業，是看「advanceStep 有沒有到二轉完成」再決定要不要顯示 secondJob，兩個要一起設定才會生效——選這裡會自動幫你把 advanceStep 一起設好，不用再手動繞路。"
-    }));
-    wrap.appendChild(secondJobField);
+    var jobOptions = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; })
+      .concat(SECOND_JOBS.map(function (j) { return { value: j.id, label: j.name + " ・二轉 (" + j.id + ")" }; }));
+    wrap.appendChild(fieldSelect("職業 Job", jobOptions, function () { return c.job; }, function (v) { c.job = v; }));
 
     wrap.appendChild(fieldNumber("轉職進度 advanceStep", function () { return c.advanceStep; }, function (v) { c.advanceStep = v; }));
     wrap.appendChild(fieldCheckbox("在村莊中 inVillage", function () { return c.inVillage; }, function (v) { c.inVillage = v; }));
