@@ -55,7 +55,7 @@
 
   var refs = findGameRefs();
   if (!refs) {
-    alert("找不到遊戲的 session（有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
+    alert("找不到遊戲的 session（請打開鐵匠頁面後再點書籤，也有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
     return;
   }
   var session = refs.session;
