@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>希望書籤工具</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2e; --border:rgba(255,255,255,.08);
+    --accent:#38BDF8; --accent2:#FACC15; --text:#e6edf7; --muted:#93a3b8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:
+      radial-gradient(600px 300px at 50% -10%, rgba(56,189,248,.15), transparent),
+      var(--bg);
+    color:var(--text); font-family:"Microsoft JhengHei","Segoe UI",Arial,sans-serif;
+    padding:32px 16px 60px;
+  }
+ .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 6px;}
+ .sub{color:var(--muted);font-size:14px;margin:0 0 28px;}
+ .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:20px; margin-bottom:18px; box-shadow:0 10px 30px -12px rgba(0,0,0,.5);
+  }
+ .card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+ .tag{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,.15);
+       border:1px solid rgba(56,189,248,.3);color:#7dd3fc;margin-left:auto;}
+ .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    height:46px;border-radius:12px;font-weight:bold;font-size:14px;
+    text-decoration:none;cursor:grab;user-select:none;border:1px solid var(--border);
+  }
+ .btn-drag{background:linear-gradient(180deg,#fff,#e2e8f0);color:#0b1220;}
+ .btn-copy{background:rgba(255,255,255,.06);color:var(--text);}
+ .btn-copy:active{transform:scale(.98);}
+ .hint{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px;}
+  textarea{
+    width:100%; height:80px; resize:none; margin-top:10px;
+    background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:10px;
+    color:var(--muted); font-size:10.5px; padding:10px; font-family:monospace;
+  }
+  ol{margin:8px 0 0; padding-left:20px; font-size:13px; color:var(--muted); line-height:1.9;}
+ .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:#fff; color:#0b1220; padding:10px 18px; border-radius:999px;
+    font-weight:bold; font-size:13px; opacity:0; transition:all.25s; pointer-events:none; z-index:99;
+  }
+ .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+ .carousel-label{
+    text-align:center; font-size:12px; color:var(--muted); margin-top:14px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+ .carousel-label.dot{width:6px; height:6px; border-radius:999px; background:#38BDF8;}
+ .carousel{
+    position:relative; margin:8px auto 0; max-width:260px; aspect-ratio:9/16; max-height:420px;
+    border-radius:16px; overflow:hidden; border:3px solid #334155;
+    background:#0f172a; box-shadow:0 16px 32px -10px rgba(0,0,0,.6);
+    user-select:none;
+  }
+ .carousel img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0; transition:opacity.35s;
+  }
+ .carousel img.active{opacity:1;}
+ .carousel.cap{
+    position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(to top, rgba(0,0,0,.85), transparent);
+    padding:26px 12px 10px; display:flex; align-items:center; gap:8px;
+  }
+ .carousel.step-badge{
+    background:#FACC15; color:#0b1220; font-weight:bold; font-size:11px;
+    padding:2px 8px; border-radius:999px;
+  }
+ .carousel.cap-text{color:#fff; font-size:13px; font-weight:bold;}
+ .carousel.nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:32px; height:32px; border-radius:999px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(0,0,0,.5); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px;
+  }
+ .carousel.nav.prev{left:8px;}.carousel.nav.next{right:8px;}
+ .dots{display:flex; justify-content:center; gap:6px; margin-top:10px;}
+ .dots span{width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.2); cursor:pointer; transition:all.2s;}
+ .dots span.active{width:20px; background:#38BDF8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📌 希望書籤工具</h1>
+  <p class="sub">私人使用：把下面的按鈕拖到書籤列，之後在遊戲頁面點一下書籤即可執行。</p>
+
+  <div class="card">
+    <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
+    <a id="drag-btn" class="btn btn-drag" href="#" draggable="true">👉 拖我到書籤列（希望工具）</a>
+    <div class="hint">找不到書籤列？先按 <b>Ctrl+Shift+B</b>（Mac：⌘+Shift+B）顯示書籤列，再拖曳。</div>
+  </div>
+
+  <div class="card">
+    <h2>📱 手機（iPhone / Android）<span class="tag">貼上安裝</span></h2>
+
+    <div class="carousel-label"><span class="dot"></span>教學畫面（iOS）</div>
+    <div class="carousel" id="carousel">
+      <img src="ios1.jpg" class="active" alt="步驟 1">
+      <img src="ios2.jpg" alt="步驟 2">
+      <img src="ios3.jpg" alt="步驟 3">
+      <img src="ios4.jpg" alt="步驟 4">
+      <div class="nav prev" id="nav-prev">‹</div>
+      <div class="nav next" id="nav-next">›</div>
+      <div class="cap">
+        <span class="step-badge" id="step-badge">STEP 1/4</span>
+        <span class="cap-text" id="cap-text">點下方複製書籤程式碼</span>
+      </div>
+    </div>
+    <div class="dots" id="dots">
+      <span class="active"></span><span></span><span></span><span></span>
+    </div>
+
+    <ol style="margin-top:14px;">
+      <li>先在瀏覽器中任意加入一個書籤（例如把目前頁面加入書籤）</li>
+      <li>編輯這個書籤，把「網址」欄位整個換成下面的程式碼</li>
+      <li>儲存，之後在遊戲頁面點這個書籤即可</li>
+    </ol>
+
+    <div class="hint" style="margin-top:16px;font-weight:bold;color:var(--text);">書籤程式碼</div>
+    <button class="btn btn-copy" id="copy-btn" style="width:100%;margin-top:8px;">📋 複製書籤程式碼</button>
+    <textarea readonly id="code-box"></textarea>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <h2 style="justify-content:center;">🖼️ 成品展示</h2>
+    <div class="hint" style="margin-bottom:12px;">以下為實際執行成果</div>
+    <img src="成品.png" alt="成品展示" style="width:100%;max-width:680px;border-radius:12px;border:1px solid var(--border);">
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const code = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/希望/loader.js?v=%27+Date.now())";
+
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  const dragBtn = document.getElementById('drag-btn');
+  dragBtn.setAttribute('href', code);
+  dragBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    toast('請用「拖曳」的方式拖到書籤列，點擊無法安裝喔');
+  });
+
+  const box = document.getElementById('code-box');
+  box.value = code;
+  box.addEventListener('click', function(){
+    this.select();
+    this.setSelectionRange(0, 99999);
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', function(){
+    box.select();
+    box.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(code).then(()=>toast('已複製，去貼到書籤網址欄吧'))
+     .catch(()=>document.execCommand('copy'));
+  });
+
+  (function(){
+    const captions = ['點下方複製書籤程式碼','點「加入書籤」','點「編輯書籤」','貼上程式碼並儲存'];
+    const imgs = document.querySelectorAll('#carousel img');
+    const dots = document.querySelectorAll('#dots span');
+    const badge = document.getElementById('step-badge');
+    const capText = document.getElementById('cap-text');
+    let idx=0;
+    function render(){
+      imgs.forEach((img,i)=>img.classList.toggle('active', i===idx));
+      dots.forEach((d,i)=>d.classList.toggle('active', i===idx));
+      badge.textContent='STEP '+(idx+1)+'/4';
+      capText.textContent=captions[idx];
+    }
+    function go(delta){ idx=(idx+delta+imgs.length)%imgs.length; render(); }
+    const AUTOPLAY_MS=2000, PAUSE_AFTER_MANUAL_MS=5000;
+    let autoTimer=null, resumeTimer=null, hovering=false;
+    function startAutoplay(){ stopAutoplay(); autoTimer=setInterval(()=>go(1), AUTOPLAY_MS); }
+    function stopAutoplay(){ if(autoTimer){clearInterval(autoTimer); autoTimer=null;} }
+    function pauseThenResume(ms){ stopAutoplay(); if(resumeTimer) clearTimeout(resumeTimer); resumeTimer=setTimeout(()=>{ if(!hovering) startAutoplay(); }, ms); }
+    function manualGo(delta){ go(delta); pauseThenResume(PAUSE_AFTER_MANUAL_MS); }
+    document.getElementById('nav-prev').addEventListener('click', ()=>manualGo(-1));
+    document.getElementById('nav-next').addEventListener('click', ()=>manualGo(1));
+    dots.forEach((d,i)=>d.addEventListener('click', ()=>{ idx=i; render(); pauseThenResume(PAUSE_AFTER_MANUAL_MS); }));
+    let startX=null;
+    const carousel=document.getElementById('carousel');
+    carousel.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; });
+    carousel.addEventListener('touchend', e=>{
+      if(startX===null) return;
+      const dx=e.changedTouches[0].clientX-startX;
+      if(Math.abs(dx)>50) manualGo(dx>0?-1:1);
+      startX=null;
+    });
+    carousel.addEventListener('mouseenter', ()=>{ hovering=true; if(resumeTimer){clearTimeout(resumeTimer); resumeTimer=null;} stopAutoplay(); });
+    carousel.addEventListener('mouseleave', ()=>{ hovering=false; startAutoplay(); });
+    render(); startAutoplay();
+  })();
+</script>
+</body>
+</html>

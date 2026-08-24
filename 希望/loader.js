@@ -205,7 +205,7 @@
       '<button id="iw-enhance-close">✕</button>' +
       '<h2>⚡ 一鍵強化</h2>' +
       '<label>目標裝備</label>' +
-      '<div class="iw-target">' + item.label + '：' + item.name + '（目前 ' + gradeNameOf(curGrade) + ' 階）</div>' +
+      '<div class="iw-target" id="iw-f-target-display">' + item.label + '：' + item.name + '（目前 ' + gradeNameOf(curGrade) + ' 階）</div>' +
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
@@ -346,6 +346,8 @@
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
       log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階");
+      var targetDisplay = document.getElementById("iw-f-target-display");
+      if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階）";
 
       if (totalSpent >= budget && newGrade < targetGrade) { reason = "budget"; break; }
 
