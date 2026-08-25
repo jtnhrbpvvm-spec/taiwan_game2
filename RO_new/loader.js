@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L17';
+const LOADER_VERSION = 'L18';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -513,7 +513,7 @@ function toggleSlotPickerList(input) {
 // window.open 是在按鈕點擊事件內同步呼叫的，瀏覽器彈窗攔截不會擋。
 function openEditTool(code) {
   if (String(code).trim() !== '開啟修改器') return;
-  // 視窗已經開著就只是把它拉到前面，不要重複開、更不要重複凍結。
+  // 視窗已經開著就只是把它拉到前面，不要重複開。
   if (window.__roEditorWin && !window.__roEditorWin.closed) {
     window.__roEditorWin.focus();
     return;
@@ -527,13 +527,11 @@ function openEditTool(code) {
     window.addEventListener('message', handleEditorMessage);
     window.__roEditorMsgBound = true;
   }
-  freezeGame();
-  // 用輪詢偵測修改器視窗被關掉（postMessage 沒有「視窗關閉」事件可以聽），
-  // 關掉的當下自動解凍，玩家不用自己按什麼按鈕。
-  if (window.__roEditorWatchTimer) clearInterval(window.__roEditorWatchTimer);
-  window.__roEditorWatchTimer = setInterval(function () {
-    if (win.closed) unfreezeGame();
-  }, 600);
+  // 這裡故意不呼叫 freezeGame()：改成邊玩邊修改，遊戲畫面不凍結。
+  // 套用時送的是差異 patch（只含你實際改過的欄位，見 applyEditorPatchToCurrentCharacter），
+  // 不是整包覆蓋，所以遊戲同時在跑的話，一般不會被你沒動過的欄位互相蓋掉；
+  // 真的想恢復凍結的話，把下面這行的註解拿掉就好：
+  // freezeGame();
 }
 
 
