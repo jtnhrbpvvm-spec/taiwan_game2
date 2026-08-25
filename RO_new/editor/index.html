@@ -631,7 +631,20 @@
       }
       hide('screen-connecting');
       renderSlotList();
-      show('screen-slots');
+      // 選畫面優先順序：
+      // 1. 已經在編輯某一欄（例如剛套用完，A 頁 refresh 回傳最新資料）→
+      //    留在編輯畫面、直接用最新資料刷新欄位，不要跳回選欄位畫面。
+      // 2. 第一次開啟、且抓得到「目前遊玩中」是哪一欄 → 不用手動選，
+      //    直接進那一欄的編輯畫面，資料已經是即時 state（見 loader.js
+      //    buildAllSlotsSummary 對 currentSlot 的特殊處理，不是讀舊存檔）。
+      // 3. 抓不到目前遊玩中角色（例如還沒建角）→ 才顯示選欄位畫面。
+      if (state.selectedSlot !== null && data.slots[state.selectedSlot]) {
+        openSlotEditor(state.selectedSlot);
+      } else if (Number.isInteger(data.currentSlot) && data.slots[data.currentSlot]) {
+        openSlotEditor(data.currentSlot);
+      } else {
+        show('screen-slots');
+      }
     } else if (data.type === 'ro-editor:applied') {
       if (data.ok) {
         toast('✅ 已套用到欄位 ' + (data.slot + 1));
@@ -773,11 +786,7 @@
     grid.innerHTML = '';
     var slots = state.init.slots;
     var jobMeta = state.init.jobMeta || {};
-    // 欄位數量不寫死：直接照 A 頁實際送過來的筆數顯示，遊戲以後增加欄位數
-    // （MAX_SLOTS 改大）也不用回來改這裡的數字，不然超過寫死上限的欄位
-    // 會直接被忽略、修改器裡完全看不到那個角色。
-    var slotCount = Object.keys(slots).length;
-    for (var i = 0; i < slotCount; i++) {
+    for (var i = 0; i < 15; i++) {
       var s = slots[i];
       var row = document.createElement('div');
       row.className = 'slot-row' + (s ? '' : ' empty');
