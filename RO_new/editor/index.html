@@ -324,7 +324,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V21</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V22</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -520,8 +520,17 @@
 (function () {
   'use strict';
 
-  // 遊戲本體（A 頁）的 origin，postMessage 只信任這個來源送的訊息。
-  var GAME_ORIGIN = 'https://nba9001-sys.github.io';
+  // 遊戲本體（A 頁）可能出現的 origin 清單，postMessage 只信任這裡面的來源。
+  // 玩家可能直接用 GitHub Pages 原始網址，也可能用自訂網域 ro.yygame.tw
+  // （同一份程式碼掛不同網域），兩個都要能連得上，所以用清單而不是單一值。
+  // 之後如果又多一個網域，只要在這個陣列裡加一行就好，其他程式碼都不用動。
+  var GAME_ORIGINS = [
+    'https://nba9001-sys.github.io',
+    'https://ro.yygame.tw'
+  ];
+  // 實際收到訊息後才知道玩家用的是哪一個 origin，記下來之後續傳訊息就固定
+  // 送去這個，不用每次都對整份清單亂槍打鳥。
+  var confirmedGameOrigin = null;
 
   // 下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）。
   // 只有「頁面本身已經捲到最頂端」+「手指往下拉」+「不是在自己會捲動的
@@ -614,12 +623,23 @@
 
   function sendToGame(msg) {
     if (!opener) return;
-    try { opener.postMessage(msg, GAME_ORIGIN); } catch (e) { /* 忽略 */ }
+    if (confirmedGameOrigin) {
+      // 已經知道玩家實際用的是哪個網域，只送這一個就好。
+      try { opener.postMessage(msg, confirmedGameOrigin); } catch (e) { /* 忽略 */ }
+      return;
+    }
+    // 還不知道是哪個網域（例如第一次送 ready）：對允許清單裡每個 origin 都送一次。
+    // postMessage 指定的 origin 跟視窗實際 origin 對不上時，瀏覽器會直接丟掉那則
+    // 訊息，不會送錯地方、也不會外洩，所以這樣做是安全的。
+    GAME_ORIGINS.forEach(function (origin) {
+      try { opener.postMessage(msg, origin); } catch (e) { /* 忽略 */ }
+    });
   }
 
   window.addEventListener('message', function (ev) {
-    if (ev.origin !== GAME_ORIGIN) return;
+    if (GAME_ORIGINS.indexOf(ev.origin) === -1) return;
     if (!opener || ev.source !== opener) return;
+    if (!confirmedGameOrigin) confirmedGameOrigin = ev.origin; // 第一次收到合法訊息，記住是哪個網域
     var data = ev.data;
     if (!data || typeof data !== 'object') return;
 
