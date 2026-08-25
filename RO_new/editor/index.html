@@ -79,28 +79,6 @@
   .btn.block{ width:100%; }
   .btn.sm{ padding:5px 9px; font-size:12px; }
 
-  .slot-grid{ display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow-y:auto; }
-  .slot-row{
-    display:flex; align-items:center; gap:10px; background:var(--bg-panel-2);
-    border:1px solid var(--line); border-radius:8px; padding:10px 12px; cursor:pointer;
-    text-align:left;
-  }
-  .slot-row:hover{ border-color:var(--gold); }
-  .slot-row.empty{ opacity:.45; cursor:default; }
-  .slot-row.empty:hover{ border-color:var(--line); }
-  .slot-row .idx{
-    width:26px; height:26px; border-radius:50%; background:var(--bg-input);
-    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-dim);
-    flex-shrink:0;
-  }
-  .slot-row .info{ flex:1; min-width:0; }
-  .slot-row .name{ font-size:14px; font-weight:600; }
-  .slot-row .meta{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; }
-  .badge-live{
-    font-size:10.5px; background:#2c4a34; color:var(--ok); border:1px solid #3d6a49;
-    padding:2px 7px; border-radius:20px; flex-shrink:0;
-  }
-
   .editor-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .editor-head .who{ font-size:14px; font-weight:700; color:var(--gold-soft); }
   .editor-head .who small{ display:block; font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:1px; }
@@ -324,7 +302,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V22</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V23</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -344,21 +322,17 @@
       <div style="color:var(--ink);font-size:14px;margin-bottom:6px;">沒有偵測到遊戲分頁</div>
       <div style="font-size:12.5px;">請回到遊戲內，在頂部輸入框打「開啟修改器」再按「開啟」，<br>不要直接把這個網址貼到新分頁開啟。</div>
     </div>
-  </div>
-
-  <!-- 選擇存檔欄位 -->
-  <div id="screen-slots" class="panel hidden">
-    <h3>選擇要編輯的存檔欄位</h3>
-    <div id="slot-grid" class="slot-grid"></div>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-      <button class="btn ghost block" id="btn-open-warehouse">🏬 編輯跨角色倉庫</button>
-      <button class="btn ghost sm" id="btn-refresh-slots" title="重新跟遊戲要一次最新資料">🔄</button>
+    <div id="connecting-nochar" class="center-msg hidden">
+      <div style="font-size:34px;margin-bottom:10px;">🙅</div>
+      <div style="color:var(--ink);font-size:14px;margin-bottom:6px;">目前沒有正在遊玩的角色</div>
+      <div style="font-size:12.5px;">修改器只能編輯「目前正在玩的角色」，請先回到遊戲選好角色進場，<br>再重新打開修改器。</div>
+      <button class="btn ghost sm" id="btn-retry-nochar" style="margin-top:12px;">🔄 重新整理</button>
     </div>
   </div>
 
   <!-- 角色編輯畫面 -->
   <div id="screen-editor" class="panel hidden">
-    <div class="backline"><button class="btn ghost sm" id="btn-back-slots">← 返回欄位列表</button></div>
+    <div class="backline"><button class="btn ghost sm" id="btn-refresh-editor" title="重新跟遊戲要一次最新資料">🔄 重新整理</button><button class="btn ghost sm" id="btn-open-warehouse">🏬 跨角色倉庫</button></div>
     <div class="editor-head" style="margin-top:8px;">
       <div class="who" id="editor-who">—<small id="editor-who-sub"></small></div>
     </div>
@@ -495,7 +469,7 @@
 
   <!-- 倉庫編輯畫面 -->
   <div id="screen-warehouse" class="panel hidden">
-    <div class="backline"><button class="btn ghost sm" id="btn-back-slots-2">← 返回欄位列表</button></div>
+    <div class="backline"><button class="btn ghost sm" id="btn-back-slots-2">← 返回角色編輯</button></div>
     <h3 style="margin-top:8px;">跨角色倉庫</h3>
     <div class="field" style="max-width:200px;">
       <label>倉庫鋅幣</label><input type="number" min="0" id="wh-gold">
@@ -537,7 +511,7 @@
   // 區塊／輸入框／按鈕上」才攔截，不會影響欄位清單、搜尋建議這些的正常捲動。
   (function bindPullToRefreshGuard() {
     var startY = 0;
-    var scrollableSelector = '.slot-grid, .ac-list, .card-modal-box, #codex-grid, #acv-list, ' +
+    var scrollableSelector = '.ac-list, .card-modal-box, #codex-grid, #acv-list, ' +
       'input, textarea, select, button, a';
     document.addEventListener('touchstart', function (e) {
       if (e.touches.length !== 1) return;
@@ -654,29 +628,23 @@
         loaderBadge.style.display = 'inline-block';
       }
       hide('screen-connecting');
-      renderSlotList();
-      // 選畫面優先順序：
-      // 1. 已經在編輯某一欄（例如剛套用完，A 頁 refresh 回傳最新資料）→
-      //    留在編輯畫面、直接用最新資料刷新欄位，不要跳回選欄位畫面。
-      // 2. 第一次開啟、且抓得到「目前遊玩中」是哪一欄 → 不用手動選，
-      //    直接進那一欄的編輯畫面，資料已經是即時 state（見 loader.js
-      //    buildAllSlotsSummary 對 currentSlot 的特殊處理，不是讀舊存檔）。
-      // 3. 抓不到目前遊玩中角色（例如還沒建角）→ 才顯示選欄位畫面。
-      if (state.selectedSlot !== null && data.slots[state.selectedSlot]) {
-        openSlotEditor(state.selectedSlot);
-      } else if (Number.isInteger(data.currentSlot) && data.slots[data.currentSlot]) {
-        openSlotEditor(data.currentSlot);
+      if (data.character) {
+        openSlotEditor();
       } else {
-        show('screen-slots');
+        // 修改器只編輯目前正在玩的角色，A 頁沒有回傳角色資料
+        // （例如玩家還停在選角畫面、還沒進場）就沒東西可以編輯。
+        hide('screen-editor'); hide('screen-warehouse');
+        show('screen-connecting'); hide('connecting-loading'); hide('connecting-standalone');
+        show('connecting-nochar');
       }
     } else if (data.type === 'ro-editor:applied') {
       if (data.ok) {
-        toast('✅ 已套用到欄位 ' + (data.slot + 1));
+        toast('✅ 已套用到目前角色');
         state.slotPatch = {};
         state.acvFillIds = {};
         sendToGame({ type: 'ro-editor:refresh' }); // 拿一份套用後的最新資料
       } else {
-        toast('⚠️ 套用失敗，該欄位可能沒有存檔', true);
+        toast('⚠️ 套用失敗，目前沒有正在遊玩的角色', true);
       }
       updateSlotStatus();
     } else if (data.type === 'ro-editor:applied-warehouse') {
@@ -803,49 +771,28 @@
     }, null, { showAllOnFocus: true, maxResults: 200 });
   }
 
-  // ---------------- 欄位選擇畫面 ----------------
-  function renderSlotList() {
-    setupItemAutocompletes();
-    var grid = $('slot-grid');
-    grid.innerHTML = '';
-    var slots = state.init.slots;
-    var jobMeta = state.init.jobMeta || {};
-    for (var i = 0; i < 15; i++) {
-      var s = slots[i];
-      var row = document.createElement('div');
-      row.className = 'slot-row' + (s ? '' : ' empty');
-      var jobName = s ? ((jobMeta[s.jobId] && jobMeta[s.jobId].name) || s.jobId) : '';
-      row.innerHTML =
-        '<div class="idx">' + (i + 1) + '</div>' +
-        '<div class="info">' +
-          '<div class="name">' + (s ? escapeHtml(s.name) : '（空）') + '</div>' +
-          '<div class="meta">' + (s ? ('Lv.' + s.baseLevel + ' ' + escapeHtml(jobName) + '　' + (s.gold || 0) + ' z') : '沒有存檔') + '</div>' +
-        '</div>' +
-        (i === state.init.currentSlot ? '<div class="badge-live">遊玩中</div>' : '');
-      if (s) {
-        row.addEventListener('click', function (idx) {
-          return function () { openSlotEditor(idx); };
-        }(i));
-      }
-      grid.appendChild(row);
-    }
-  }
-
   $('btn-open-warehouse').addEventListener('click', function () { openWarehouseEditor(); });
-  $('btn-refresh-slots').addEventListener('click', function () {
+  $('btn-refresh-editor').addEventListener('click', function () {
+    if (Object.keys(state.slotPatch).length && !confirm('目前的修改還沒套用，重新整理會遺失，確定嗎？')) return;
     toast('重新整理中…');
     sendToGame({ type: 'ro-editor:refresh' });
   });
-  $('btn-back-slots').addEventListener('click', function () { backToSlots(); });
-  $('btn-back-slots-2').addEventListener('click', function () { backToSlots(); });
+  var retryNochar = $('btn-retry-nochar');
+  if (retryNochar) {
+    retryNochar.addEventListener('click', function () {
+      hide('connecting-nochar');
+      show('connecting-loading');
+      sendToGame({ type: 'ro-editor:ready' });
+    });
+  }
+  $('btn-back-slots-2').addEventListener('click', function () { backToEditor(); });
 
-  function backToSlots() {
-    if (Object.keys(state.slotPatch).length && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
+  // 只剩「倉庫畫面 → 回角色編輯畫面」這一種返回情境，不再有欄位列表可以回。
+  function backToEditor() {
     if (Object.keys(state.whPatch).length && !confirm('倉庫的修改還沒套用，離開會遺失，確定嗎？')) return;
-    state.selectedSlot = null;
-    state.slotPatch = {}; state.whPatch = {}; state.acvFillIds = {};
-    hide('screen-editor'); hide('screen-warehouse');
-    show('screen-slots');
+    state.whPatch = {};
+    hide('screen-warehouse');
+    show('screen-editor');
   }
 
   function escapeHtml(s) {
@@ -867,11 +814,15 @@
     });
   });
 
-  function openSlotEditor(idx) {
+  // 修改器只編輯「目前正在玩的角色」，資料來源固定是 state.init.character
+  // （loader.js 端直接快照即時 state，不是讀 localStorage），不用再帶欄位編號進來選。
+  function openSlotEditor() {
+    setupItemAutocompletes();
+    var idx = state.init.currentSlot;
     state.selectedSlot = idx;
     state.slotPatch = {};
     state.acvFillIds = {};
-    state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
+    state.slotWorking = JSON.parse(JSON.stringify(state.init.character));
     if (!state.slotWorking.instances) state.slotWorking.instances = {};
     if (!state.slotWorking.jobSkillPoints) state.slotWorking.jobSkillPoints = {};
     if (!state.slotWorking.equip) state.slotWorking.equip = {};
@@ -887,8 +838,8 @@
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
-      '<small>欄位 ' + (idx + 1) + '　' + escapeHtml(jobName) +
-      (idx === state.init.currentSlot ? '　🟢 遊玩中' : '') + '</small>';
+      '<small>欄位 ' + (Number.isInteger(idx) ? (idx + 1) : '?') + '　' + escapeHtml(jobName) +
+      '　🟢 遊玩中</small>';
     fillBasicFields();
     fillStatsFields();
     renderInvList();
@@ -903,7 +854,7 @@
     refreshAcvAll();
     renderSkillTab();
     updateSlotStatus();
-    hide('screen-slots');
+    hide('screen-warehouse');
     show('screen-editor');
   }
 
@@ -1857,12 +1808,12 @@
   $('btn-discard').addEventListener('click', function () {
     if (!Object.keys(state.slotPatch).length) return;
     if (!confirm('放棄目前所有未套用的修改？')) return;
-    openSlotEditor(state.selectedSlot);
+    openSlotEditor();
   });
   $('btn-apply-slot').addEventListener('click', function () {
     if (!Object.keys(state.slotPatch).length) return;
     sendToGame({
-      type: 'ro-editor:apply', slot: state.selectedSlot, patch: state.slotPatch,
+      type: 'ro-editor:apply', patch: state.slotPatch,
       fillAchievementIds: Object.keys(state.acvFillIds)
     });
   });
@@ -1874,7 +1825,7 @@
     $('wh-gold').value = state.whWorking.gold || 0;
     renderWhList();
     updateWhStatus();
-    hide('screen-slots');
+    hide('screen-editor');
     show('screen-warehouse');
   }
   $('wh-gold').addEventListener('input', function () {

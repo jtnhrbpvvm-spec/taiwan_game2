@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L15';
+const LOADER_VERSION = 'L17';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -388,7 +388,7 @@ if (existing) {
 // 修改器正式網址：跟書籤工具放在同一個 repo/資料夾下的 editor/ 子目錄。
 const EDITOR_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO_new/editor/';
 // 物品清理工具：獨立新頁面，跟修改器分開，密語「刪除物品」才會開。
-const ITEM_TOOL_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO_new/item-tool/';
+const ITEM_TOOL_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/item-tool/';
 // postMessage 只信任這個 origin 送來的訊息（protocol+host，不含路徑）——
 // 修改器跟物品清理工具都在同一個 GitHub Pages 網域下，共用同一個 origin 檢查。
 const EDITOR_ORIGIN = 'https://jtnhrbpvvm-spec.github.io';
@@ -880,23 +880,12 @@ function buildSkillCatalog() {
   }
   return jobs;
 }
-function buildAllSlotsSummary() {
-  const total = (typeof MAX_SLOTS === 'number') ? MAX_SLOTS : 15;
-  const slots = {};
-  for (let i = 0; i < total; i++) {
-    // 目前正在玩的這一欄：不讀 localStorage（saveGame() 有節流，可能落後
-    // 記憶體裡的 state），改用 JSON 序列化快照記憶體中的 state。
-    // JSON 來回一趟順便把 state 上掛的函式/不可序列化欄位剝掉，
-    // 效果跟原本 parse(localStorage 內容) 一樣是「純資料物件」，後面邏輯不用改。
-    if (i === currentSlot && typeof state !== 'undefined' && state) {
-      try { slots[i] = JSON.parse(JSON.stringify(state)); } catch (e) { slots[i] = null; }
-      continue;
-    }
-    const raw = localStorage.getItem(getSlotKey(i));
-    if (!raw) { slots[i] = null; continue; }
-    try { slots[i] = JSON.parse(raw); } catch (e) { slots[i] = null; }
-  }
-  return slots;
+// 修改器只編輯目前正在玩的角色，這裡直接快照記憶體中的 state，完全不碰
+// localStorage（saveGame() 有節流，localStorage 內容可能落後 state）。
+// JSON 來回一趟順便把 state 上掛的函式/不可序列化欄位剝掉。
+function buildCurrentCharacterSnapshot() {
+  if (typeof state === 'undefined' || !state) return null;
+  try { return JSON.parse(JSON.stringify(state)); } catch (e) { return null; }
 }
 
 // 這個職業（含整條職業鏈）＋這個等級，能裝備哪些道具。直接借用遊戲本體的
@@ -932,7 +921,7 @@ function buildJobCompatSet(jobId, baseLevel) {
 function buildInitPayload() {
   return {
     type: 'ro-editor:init',
-    slots: buildAllSlotsSummary(),
+    character: buildCurrentCharacterSnapshot(),
     warehouse: (typeof loadWarehouse === 'function') ? loadWarehouse() : { items: [], gold: 0 },
     currentSlot: currentSlot,
     itemMeta: buildItemMeta(),
@@ -1030,35 +1019,25 @@ function fillAchievementUnderlying(o, id, goal) {
   // 塞進正確欄位，風險比其他項目高很多，這項先只標記達成，欄位本身不會自動幫你穿裝備。
 }
 
-function applyEditorPatchToSlot(slot, patch, fillAchievementIds) {
-  if (!Number.isInteger(slot) || !patch || typeof patch !== 'object') return false;
+// 修改器只支援編輯「目前正在玩的角色」，不再支援挑其他存檔欄位改。
+// 不比對 slot 是否等於 currentSlot 這種容易兜不起來的邏輯——直接認定
+// 呼叫這支函式就是要改目前角色，沒有目前角色（state 不存在）就直接失敗，
+// 絕對不會誤寫到別的存檔欄位的 localStorage。
+function applyEditorPatchToCurrentCharacter(patch, fillAchievementIds) {
+  if (!patch || typeof patch !== 'object') return false;
+  if (typeof state === 'undefined' || !state) return false; // 沒有正在遊玩的角色
   const fillIds = Array.isArray(fillAchievementIds) ? fillAchievementIds : [];
-  if (slot === currentSlot && typeof state !== 'undefined' && state) {
-    Object.assign(state, patch);
-    if (fillIds.length && typeof ACHIEVEMENTS_BY_ID === 'object') {
-      fillIds.forEach(function (id) {
-        const a = ACHIEVEMENTS_BY_ID[id];
-        if (a) fillAchievementUnderlying(state, id, a.goal);
-      });
-    }
-    if (typeof saveGame === 'function') saveGame();
-    if (typeof renderAll === 'function') { try { renderAll(); } catch (e) { /* 畫面重繪失敗不影響存檔已經寫入 */ } }
-    if (typeof showToast === 'function') showToast('🛠️ 修改器已套用到目前角色');
-  } else {
-    const raw = localStorage.getItem(getSlotKey(slot));
-    let obj = null;
-    try { obj = raw ? JSON.parse(raw) : null; } catch (e) { obj = null; }
-    if (!obj || typeof obj !== 'object') return false; // 目標欄位沒有存檔，不無中生有建立
-    Object.assign(obj, patch);
-    if (fillIds.length && typeof ACHIEVEMENTS_BY_ID === 'object') {
-      fillIds.forEach(function (id) {
-        const a = ACHIEVEMENTS_BY_ID[id];
-        if (a) fillAchievementUnderlying(obj, id, a.goal);
-      });
-    }
-    localStorage.setItem(getSlotKey(slot), JSON.stringify(obj));
+  Object.assign(state, patch);
+  if (fillIds.length && typeof ACHIEVEMENTS_BY_ID === 'object') {
+    fillIds.forEach(function (id) {
+      const a = ACHIEVEMENTS_BY_ID[id];
+      if (a) fillAchievementUnderlying(state, id, a.goal);
+    });
   }
-  broadcastSlotChanged(slot);
+  if (typeof saveGame === 'function') saveGame();
+  if (typeof renderAll === 'function') { try { renderAll(); } catch (e) { /* 畫面重繪失敗不影響存檔已經寫入 */ } }
+  if (typeof showToast === 'function') showToast('🛠️ 修改器已套用到目前角色');
+  broadcastSlotChanged(currentSlot);
   return true;
 }
 
@@ -1460,8 +1439,8 @@ function handleEditorMessage(ev) {
   if (data.type === 'ro-editor:ready' || data.type === 'ro-editor:refresh') {
     win.postMessage(buildInitPayload(), EDITOR_ORIGIN);
   } else if (data.type === 'ro-editor:apply') {
-    const ok = applyEditorPatchToSlot(data.slot, data.patch, data.fillAchievementIds);
-    win.postMessage({ type: 'ro-editor:applied', ok: ok, slot: data.slot }, EDITOR_ORIGIN);
+    const ok = applyEditorPatchToCurrentCharacter(data.patch, data.fillAchievementIds);
+    win.postMessage({ type: 'ro-editor:applied', ok: ok }, EDITOR_ORIGIN);
   } else if (data.type === 'ro-editor:apply-warehouse') {
     const ok = applyEditorPatchToWarehouse(data.patch);
     win.postMessage({ type: 'ro-editor:applied-warehouse', ok: ok }, EDITOR_ORIGIN);
@@ -1476,7 +1455,7 @@ function handleEditorMessage(ev) {
 function buildItemToolInitPayload() {
   return {
     type: 'ro-itemtool:init',
-    slots: buildAllSlotsSummary(),
+    character: buildCurrentCharacterSnapshot(),
     warehouse: (typeof loadWarehouse === 'function') ? loadWarehouse() : { items: [], gold: 0 },
     currentSlot: currentSlot,
     itemMeta: buildItemMeta(),
@@ -1497,14 +1476,15 @@ function handleItemToolMessage(ev) {
     // 背包跟倉庫是兩個獨立目標，這次套用可能只動到其中一個、也可能兩個都動到，
     // 各自呼叫已經在修改器那邊驗證過的套用函式，不用重寫一份邏輯。
     // lockedItems 是跟 inventory 同一個角色欄位的資料，兩個一起送才不會多打一次 A 頁。
+    // 只支援目前角色，不再靠 data.slot 判斷要不要動別的存檔欄位。
     let ok = true;
     const hasInvChange = Array.isArray(data.inventory);
     const hasLockChange = data.lockedItems && typeof data.lockedItems === 'object';
-    if ((hasInvChange || hasLockChange) && Number.isInteger(data.slot)) {
-      const slotPatch = {};
-      if (hasInvChange) slotPatch.inventory = data.inventory;
-      if (hasLockChange) slotPatch.lockedItems = data.lockedItems;
-      ok = applyEditorPatchToSlot(data.slot, slotPatch) && ok;
+    if (hasInvChange || hasLockChange) {
+      const patch = {};
+      if (hasInvChange) patch.inventory = data.inventory;
+      if (hasLockChange) patch.lockedItems = data.lockedItems;
+      ok = applyEditorPatchToCurrentCharacter(patch) && ok;
     }
     if (Array.isArray(data.warehouseItems)) {
       ok = applyEditorPatchToWarehouse({ items: data.warehouseItems }) && ok;
