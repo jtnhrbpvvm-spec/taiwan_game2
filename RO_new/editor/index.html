@@ -1,0 +1,1938 @@
+<!--
+  諸神放置錄 — 存檔修改器（第三方輔助工具）
+  跟遊戲本體、書籤工具是分開的專案，透過 postMessage 跟遊戲分頁溝通。
+  不會、也不能單獨運作——一定要從遊戲內「開啟修改器」按鈕開啟。
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>存檔修改器 — 諸神放置錄</title>
+<style>
+  :root{
+    --bg: #171224;
+    --bg-panel: #211a33;
+    --bg-panel-2: #2a2140;
+    --bg-input: #1b1529;
+    --line: #3c2f5c;
+    --gold: #c9a227;
+    --gold-soft: #e0c15a;
+    --ink: #ece6f5;
+    --ink-dim: #a99bc4;
+    --danger: #e0607a;
+    --ok: #6fcf97;
+    --radius: 10px;
+    font-size: 16px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  /* 關閉「捲到最頂端再往下拉」時瀏覽器原生的下拉重整手勢——這是獨立頁面，
+     跟遊戲本體那份防呆是分開的，這裡要自己補一份。overscroll-behavior-y 是
+     現代瀏覽器的正規做法，下面 script 裡另外用 touchmove 擋一層當備案。 */
+  html,body{ overscroll-behavior-y: contain; }
+  body{
+    margin:0; background:radial-gradient(ellipse at top, #241c38 0%, var(--bg) 60%);
+    color:var(--ink); font-family: "PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    min-height:100vh; padding:14px;
+  }
+  h1,h2,h3{ font-weight:700; margin:0 0 8px; }
+  .app{ max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+  .brand{ display:flex; align-items:center; gap:10px; padding:2px 2px 6px; }
+  .brand .mark{ font-size:22px; }
+  .brand h1{ font-size:17px; color:var(--gold-soft); letter-spacing:.5px; display:inline; }
+  .brand .ver{ font-size:11px; color:var(--ink-dim); border:1px solid var(--line); border-radius:20px; padding:1px 8px; margin-left:6px; vertical-align:middle; }
+  .brand .sub{ font-size:11px; color:var(--ink-dim); margin-top:2px; }
+
+  .warn-band{
+    background:#3a2416; border:1px solid #6b4a1f; color:#f0c98a;
+    border-radius:var(--radius); padding:9px 12px; font-size:12.5px; line-height:1.5;
+  }
+
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px;
+  }
+  .panel + .panel{ margin-top:0; }
+
+  .center-msg{ text-align:center; padding:40px 10px; color:var(--ink-dim); }
+  .spinner{
+    width:34px; height:34px; margin:0 auto 14px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--gold);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .btn{
+    appearance:none; border:1px solid var(--gold); background:var(--bg-panel-2);
+    color:var(--gold-soft); border-radius:8px; padding:9px 14px; font-size:13.5px;
+    cursor:pointer; font-weight:600; transition:background .15s, transform .05s;
+  }
+  .btn:hover{ background:#352a53; }
+  .btn:active{ transform:scale(.97); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.primary{ background:var(--gold); color:#2a2011; border-color:var(--gold); }
+  .btn.primary:hover{ background:var(--gold-soft); }
+  .btn.ghost{ background:transparent; border-color:var(--line); color:var(--ink-dim); }
+  .btn.danger{ border-color:var(--danger); color:var(--danger); }
+  .btn.block{ width:100%; }
+  .btn.sm{ padding:5px 9px; font-size:12px; }
+
+  .slot-grid{ display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow-y:auto; }
+  .slot-row{
+    display:flex; align-items:center; gap:10px; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px; cursor:pointer;
+    text-align:left;
+  }
+  .slot-row:hover{ border-color:var(--gold); }
+  .slot-row.empty{ opacity:.45; cursor:default; }
+  .slot-row.empty:hover{ border-color:var(--line); }
+  .slot-row .idx{
+    width:26px; height:26px; border-radius:50%; background:var(--bg-input);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-dim);
+    flex-shrink:0;
+  }
+  .slot-row .info{ flex:1; min-width:0; }
+  .slot-row .name{ font-size:14px; font-weight:600; }
+  .slot-row .meta{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; }
+  .badge-live{
+    font-size:10.5px; background:#2c4a34; color:var(--ok); border:1px solid #3d6a49;
+    padding:2px 7px; border-radius:20px; flex-shrink:0;
+  }
+
+  .editor-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .editor-head .who{ font-size:14px; font-weight:700; color:var(--gold-soft); }
+  .editor-head .who small{ display:block; font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:1px; }
+
+  .tabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .main-tabs{ flex-wrap:wrap; overflow-x:visible; }
+  .main-tabs .tab-break{ flex-basis:100%; height:0; }
+  .tab-btn{
+    flex:0 0 auto; background:var(--bg-input); border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:7px; padding:7px 11px; font-size:12.5px; cursor:pointer; white-space:nowrap;
+  }
+  .tab-btn.active{ background:var(--gold); color:#2a2011; border-color:var(--gold); font-weight:700; }
+
+  .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field.full{ grid-column:1 / -1; }
+  .field label{ font-size:11.5px; color:var(--ink-dim); }
+  .field input, .field select{
+    background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:8px 9px; font-size:13.5px; width:100%;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); }
+  .field.dirty input{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset; }
+
+  .list-row{
+    display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line);
+  }
+  .list-row:last-child{ border-bottom:none; }
+  .relic-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:4px;
+  }
+  .relic-cell{
+    position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:12px 4px 10px; min-height:76px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    text-align:center;
+  }
+  .relic-cell.filled{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .relic-cell.empty{ cursor:pointer; opacity:.75; }
+  .relic-cell .ic{ font-size:22px; line-height:1; }
+  .relic-cell .slot-name{ font-size:12px; color:var(--ink); font-weight:600; }
+  .relic-cell .set-name{ font-size:10.5px; color:var(--gold-soft); }
+  .relic-cell .rm{
+    position:absolute; top:1px; right:3px; background:none; border:none;
+    color:var(--danger); font-size:14px; cursor:pointer; padding:3px 5px; line-height:1;
+  }
+
+  .codex-view-btn, .codex-filter-btn, .codex-cat-btn{
+    background:var(--bg-input); border:1px solid var(--line); color:var(--ink-dim);
+    border-radius:7px; padding:7px 11px; font-size:12.5px; cursor:pointer;
+  }
+  .codex-view-btn.active, .codex-filter-btn.active, .codex-cat-btn.active{
+    background:var(--gold); color:#2a2011; border-color:var(--gold); font-weight:700;
+  }
+  .codex-cats{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .codex-cat-n{ opacity:.75; font-size:11px; }
+
+  .codex-prog{ margin-bottom:8px; }
+  .codex-prog-head{
+    display:flex; justify-content:space-between; font-size:12px; color:var(--ink-dim);
+    margin-bottom:3px;
+  }
+  .codex-prog-head b{ color:var(--ink); font-weight:600; }
+  .codex-prog-track{
+    height:8px; border-radius:5px; background:var(--bg-input); overflow:hidden;
+  }
+  .codex-prog-fill{ height:100%; background:var(--gold); border-radius:5px; }
+
+  .codex-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px;
+  }
+  .codex-cell{
+    position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:8px 6px 7px; text-align:center; cursor:pointer;
+  }
+  .codex-cell.found{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .codex-cell img{ width:44px; height:44px; object-fit:contain; margin-bottom:4px; }
+  .codex-cell .nm{ font-size:11px; color:var(--ink); line-height:1.3; word-break:break-all; }
+  .codex-cell .sub{ font-size:9.5px; color:var(--ink-dim); margin-top:1px; }
+  .codex-cell .badge{
+    position:absolute; top:3px; right:3px; font-size:9px; border-radius:9px;
+    padding:1px 6px; background:var(--bg-input); color:var(--ink-dim); white-space:nowrap;
+  }
+  .codex-cell.found .badge{ background:var(--gold); color:#2a2011; }
+
+  .acv-row{
+    display:flex; gap:10px; align-items:flex-start; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;
+  }
+  .acv-row.done{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .acv-row .ic{ font-size:22px; flex-shrink:0; line-height:1.3; }
+  .acv-row .body{ flex:1; min-width:0; }
+  .acv-row .nm{ font-size:13px; font-weight:600; color:var(--ink); }
+  .acv-row .ds{ font-size:11px; color:var(--ink-dim); margin-top:2px; line-height:1.4; }
+  .acv-row .rw{ font-size:10.5px; color:var(--gold-soft); margin-top:4px; }
+  .acv-row .btns{ display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+  .acv-row .btns button{
+    font-size:11px; padding:5px 9px; border-radius:6px; white-space:nowrap; cursor:pointer;
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--ink-dim);
+  }
+  .acv-row .btn-unlock{ border-color:var(--gold); color:var(--gold-soft); }
+  .acv-row .btn-clear{ border-color:var(--danger); color:var(--danger); }
+
+  .skill-job-block{ margin-bottom:14px; }
+  .skill-job-title{
+    display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--gold-soft);
+    font-weight:700; padding:6px 0; border-bottom:1px solid var(--line); margin-bottom:6px;
+  }
+  .skill-job-title .tier-tag{
+    font-size:10px; color:var(--ink-dim); border:1px solid var(--line); border-radius:10px;
+    padding:1px 7px; font-weight:400;
+  }
+  .skill-row{
+    display:flex; gap:9px; align-items:flex-start; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; padding:9px 10px; margin-bottom:6px;
+  }
+  .skill-row.learned{ border-color:var(--gold); background:rgba(201,162,39,.10); }
+  .skill-row .body{ flex:1; min-width:0; }
+  .skill-row .nm{ font-size:13px; font-weight:600; color:var(--ink); }
+  .skill-row .nm .lv-tag{ font-size:10.5px; color:var(--ink-dim); font-weight:400; margin-left:4px; }
+  .skill-row .nm .lv-tag.maxed{ color:var(--ok); }
+  .skill-row .ds{ font-size:11px; color:var(--ink-dim); margin-top:2px; line-height:1.4; }
+  .skill-row .btn-learn{
+    flex-shrink:0; min-width:34px; min-height:34px; border-radius:8px;
+    background:var(--bg-panel); border:1px solid var(--gold); color:var(--gold-soft);
+    font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .skill-row .btn-learn:disabled{ opacity:.3; cursor:not-allowed; }
+  .list-row.has-cards{
+    border-left:3px solid var(--gold); background:rgba(201,162,39,.10);
+    padding-left:6px; border-radius:4px; cursor:pointer;
+  }
+  .list-row.has-cards .nm{ position:relative; }
+  .card-badge{
+    display:inline-block; font-size:10px; color:#2a2011; background:var(--gold);
+    border-radius:10px; padding:1px 6px; margin-left:6px; vertical-align:middle;
+  }
+  .card-modal-overlay{
+    position:fixed; inset:0; z-index:500; background:rgba(10,8,20,.75);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .card-modal-box{
+    background:var(--bg-panel); border:1px solid var(--gold); border-radius:12px;
+    padding:18px; max-width:340px; width:100%; max-height:70vh; overflow-y:auto;
+  }
+  .card-modal-box h3{ color:var(--gold-soft); font-size:15px; margin-bottom:10px; }
+  .card-row{ display:flex; gap:8px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line); }
+  .card-row:last-child{ border-bottom:none; }
+  .card-row .ic{ font-size:18px; flex-shrink:0; }
+  .card-row .info{ flex:1; min-width:0; }
+  .card-row .nm{ font-size:13px; font-weight:600; }
+  .card-row .ds{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; line-height:1.5; }
+  .list-row .ic{ width:22px; text-align:center; flex-shrink:0; }
+  .list-row .nm{ flex:1; min-width:0; font-size:13px; }
+  .list-row .nm small{ display:block; color:var(--ink-dim); font-size:10.5px; }
+  .list-row input[type=number]{
+    width:64px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:5px 6px; font-size:13px; text-align:right;
+  }
+  .list-row .rm{
+    background:none; border:none; color:var(--danger); font-size:16px; cursor:pointer; padding:2px 4px;
+  }
+
+  .add-row{
+    display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);
+    align-items:flex-end;
+  }
+  .add-col{ display:flex; flex-direction:column; gap:3px; }
+  .add-col-label{ font-size:9.5px; color:var(--ink-dim); text-align:center; white-space:nowrap; }
+  .add-row .ac-wrap input, .add-row select{
+    background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:8px 9px; font-size:13px; min-width:0;
+  }
+  .add-row input[type=number]{
+    width:60px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px;
+    color:var(--ink); padding:8px 6px; font-size:13px; text-align:right;
+  }
+
+  .empty-hint{ color:var(--ink-dim); font-size:12.5px; padding:10px 0; text-align:center; }
+
+  .apply-bar{
+    position:sticky; bottom:0; display:flex; gap:8px; align-items:center;
+    background:linear-gradient(180deg, transparent, var(--bg) 30%); padding-top:10px; margin-top:4px;
+  }
+  .apply-bar .status{ font-size:12px; color:var(--ink-dim); flex:1; }
+  .apply-bar .status.dirty{ color:var(--gold-soft); }
+
+  .toast{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(20px);
+    background:#2a2140; border:1px solid var(--gold); color:var(--ink); padding:9px 16px;
+    border-radius:20px; font-size:13px; opacity:0; pointer-events:none; transition:all .25s;
+    max-width:90vw; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.err{ border-color:var(--danger); }
+
+  .backline{ display:flex; align-items:center; gap:6px; }
+  .backline .btn{ padding:6px 10px; font-size:12px; }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+
+  .ac-wrap{ position:relative; flex:1; min-width:100px; }
+  .ac-wrap input{ width:100%; }
+  .ac-list{
+    position:absolute; left:0; right:0; bottom:100%; margin-bottom:4px;
+    max-height:240px; overflow-y:auto; background:var(--bg-panel-2); border:1px solid var(--gold);
+    border-radius:8px; z-index:200; box-shadow:0 -10px 24px rgba(0,0,0,.45);
+  }
+  .ac-item{ display:flex; align-items:center; gap:8px; padding:9px 11px; font-size:13px; cursor:pointer; }
+  .ac-item:active, .ac-item:hover{ background:var(--bg-panel); }
+  .ac-item small{ margin-left:auto; color:var(--ink-dim); font-size:10.5px; white-space:nowrap; }
+  .ac-empty{ padding:9px 11px; font-size:12px; color:var(--ink-dim); }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="brand">
+    <div class="mark">🛠️</div>
+    <div>
+      <h1>存檔修改器</h1><span class="ver">V20</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <div class="sub">諸神放置錄・非官方輔助工具</div>
+    </div>
+  </div>
+
+  <div class="warn-band">
+    這是第三方輔助工具，直接改寫瀏覽器內的存檔資料。建議先在遊戲內「匯出」備份一份，改壞了才有得救。
+  </div>
+
+  <!-- 連線中 / 待命畫面 -->
+  <div id="screen-connecting" class="panel">
+    <div id="connecting-loading" class="center-msg">
+      <div class="spinner"></div>
+      <div>正在跟遊戲分頁要資料…</div>
+    </div>
+    <div id="connecting-standalone" class="center-msg hidden">
+      <div style="font-size:34px;margin-bottom:10px;">🔌</div>
+      <div style="color:var(--ink);font-size:14px;margin-bottom:6px;">沒有偵測到遊戲分頁</div>
+      <div style="font-size:12.5px;">請回到遊戲內，在頂部輸入框打「開啟修改器」再按「開啟」，<br>不要直接把這個網址貼到新分頁開啟。</div>
+    </div>
+  </div>
+
+  <!-- 選擇存檔欄位 -->
+  <div id="screen-slots" class="panel hidden">
+    <h3>選擇要編輯的存檔欄位</h3>
+    <div id="slot-grid" class="slot-grid"></div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn ghost block" id="btn-open-warehouse">🏬 編輯跨角色倉庫</button>
+      <button class="btn ghost sm" id="btn-refresh-slots" title="重新跟遊戲要一次最新資料">🔄</button>
+    </div>
+  </div>
+
+  <!-- 角色編輯畫面 -->
+  <div id="screen-editor" class="panel hidden">
+    <div class="backline"><button class="btn ghost sm" id="btn-back-slots">← 返回欄位列表</button></div>
+    <div class="editor-head" style="margin-top:8px;">
+      <div class="who" id="editor-who">—<small id="editor-who-sub"></small></div>
+    </div>
+    <div class="tabs main-tabs" style="margin-top:10px;">
+      <button class="tab-btn active" data-tab="basic">基本</button>
+      <button class="tab-btn" data-tab="stats">屬性／技能點</button>
+      <button class="tab-btn" data-tab="inv">背包</button>
+      <button class="tab-btn" data-tab="equip">裝備</button>
+      <div class="tab-break" aria-hidden="true"></div>
+      <button class="tab-btn" data-tab="relic">遺物</button>
+      <button class="tab-btn" data-tab="codex">圖鑑</button>
+      <button class="tab-btn" data-tab="achieve">成就</button>
+      <button class="tab-btn" data-tab="skill">技能</button>
+    </div>
+
+    <div id="tab-basic" class="tab-pane" style="margin-top:14px;">
+      <div class="field-grid">
+        <div class="field"><label>鋅幣</label><input type="number" min="0" id="f-gold"></div>
+        <div class="field"><label>基礎等級</label><input type="number" min="1" id="f-baseLevel"></div>
+        <div class="field"><label>基礎經驗值</label><input type="number" min="0" id="f-baseExp"></div>
+        <div class="field"><label>職業等級</label><input type="number" min="1" id="f-jobLevel"></div>
+        <div class="field"><label>職業經驗值</label><input type="number" min="0" id="f-jobExp"></div>
+      </div>
+    </div>
+
+    <div id="tab-stats" class="tab-pane hidden" style="margin-top:14px;">
+      <div class="field-grid">
+        <div class="field"><label>剩餘屬性點</label><input type="number" min="0" id="f-statPoints"></div>
+      </div>
+      <div style="margin-top:14px;">
+        <label style="font-size:11.5px;color:var(--ink-dim);display:block;margin-bottom:6px;">剩餘技能點（依新手／一轉／二轉…各職業階段分開，彼此不互通）</label>
+        <div id="skillpoints-list" class="field-grid"></div>
+      </div>
+      <div class="field-grid" style="margin-top:14px;">
+        <div class="field"><label>力量 STR</label><input type="number" min="1" id="f-str"></div>
+        <div class="field"><label>敏捷 AGI</label><input type="number" min="1" id="f-agi"></div>
+        <div class="field"><label>體力 VIT</label><input type="number" min="1" id="f-vit"></div>
+        <div class="field"><label>智力 INT</label><input type="number" min="1" id="f-int"></div>
+        <div class="field"><label>靈巧 DEX</label><input type="number" min="1" id="f-dex"></div>
+        <div class="field"><label>幸運 LUK</label><input type="number" min="1" id="f-luk"></div>
+      </div>
+    </div>
+
+    <div id="tab-inv" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="inv-list"></div>
+      <div class="add-row">
+        <input id="inv-add-id" placeholder="輸入道具 ID 或中文名稱搜尋" autocomplete="off">
+        <div class="add-col">
+          <label class="add-col-label" for="inv-add-qty">數量</label>
+          <input type="number" id="inv-add-qty" value="1" min="1">
+        </div>
+        <div class="add-col">
+          <label class="add-col-label" for="inv-add-refine">精鍊值</label>
+          <input type="number" id="inv-add-refine" value="0" min="0" max="20" style="width:52px;" disabled>
+        </div>
+        <button class="btn sm" id="inv-add-btn">加入</button>
+      </div>
+    </div>
+
+    <div id="tab-equip" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="equip-list"></div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="equip-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
+        <input id="equip-add-id" placeholder="搜尋這個部位能裝的道具" autocomplete="off" style="min-width:120px;">
+        <div class="add-col">
+          <label class="add-col-label" for="equip-add-refine">精鍊值</label>
+          <input type="number" id="equip-add-refine" min="0" max="20" value="0" style="width:52px;" disabled>
+        </div>
+        <button class="btn sm" id="equip-add-btn">裝備</button>
+      </div>
+      <div class="empty-hint">先選部位，下面的搜尋只會列出這個部位能裝、這個角色職業/等級也能裝的道具，選好按「裝備」就直接套用到那個欄位（會取代原本裝備的東西）。</div>
+    </div>
+
+    <div id="tab-relic" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="relic-list"></div>
+      <div class="add-row" style="flex-wrap:wrap;">
+        <select id="relic-add-slot" style="background:var(--bg-input);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px 9px;font-size:13px;"></select>
+        <input id="relic-add-id" placeholder="搜尋這個部位的遺物" autocomplete="off" style="min-width:120px;">
+        <button class="btn sm" id="relic-add-btn">裝備</button>
+      </div>
+      <div class="empty-hint">遺物不分職業、不能精鍊也不能插卡。8 個部位可以自由混搭不同套裝的遺物，不用湊同一套——這是遊戲設計本來就允許的。</div>
+    </div>
+
+    <div id="tab-codex" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="codex-progress"></div>
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn primary sm" id="codex-unlock-all">🔓 一鍵全部解鎖</button>
+        <input type="number" id="codex-unlock-count" min="1" value="1" title="次數／取得數量" style="width:64px; background:var(--bg-input); border:1px solid var(--line); border-radius:6px; color:var(--ink); padding:6px 8px; font-size:13px;">
+        <button class="btn ghost sm" id="codex-reset-all">重置圖鑑</button>
+      </div>
+      <div class="empty-hint" style="text-align:left; padding:0 0 8px;">上面的數字是解鎖後怪物顯示的擊殺數／卡片道具顯示的取得數量。已經有紀錄、且數字比你填的還大的項目會自動跳過，不會被往下調。</div>
+      <div class="tabs">
+        <button class="codex-view-btn active" data-view="mon">👾 怪物</button>
+        <button class="codex-view-btn" data-view="card">🃏 卡片</button>
+        <button class="codex-view-btn" data-view="item">🎒 道具</button>
+      </div>
+      <input id="codex-search" placeholder="搜尋名稱" autocomplete="off" style="width:100%; margin-top:10px; box-sizing:border-box; background:var(--bg-input); border:1px solid var(--line); border-radius:6px; color:var(--ink); padding:8px 10px; font-size:13px;">
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="codex-filter-btn active" data-filter="all">全部</button>
+        <button class="codex-filter-btn" data-filter="found">已發現</button>
+        <button class="codex-filter-btn" data-filter="missing">未發現</button>
+      </div>
+      <div id="codex-cats" class="codex-cats"></div>
+      <div id="codex-grid" class="codex-grid"></div>
+    </div>
+
+    <div id="tab-achieve" class="tab-pane hidden" style="margin-top:14px;">
+      <div id="acv-progress"></div>
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button class="btn primary sm" id="acv-unlock-all">🔓 一鍵全部解鎖</button>
+        <button class="btn ghost sm" id="acv-clear-all">清除全部</button>
+      </div>
+      <div id="acv-cats" class="codex-cats"></div>
+      <div id="acv-list" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="tab-skill" class="tab-pane hidden" style="margin-top:14px;">
+      <div style="font-size:12px;color:var(--ink-dim);margin-bottom:10px;">
+        點「+」直接學會下一級，<b style="color:var(--gold-soft);">不扣技能點</b>，但還是要先滿足前置技能需求（沒學前置就點不動）。任務技能（轉職自動送的）不能手動調整。
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <button class="btn primary sm" id="skill-learn-all">🔓 一鍵全學</button>
+        <button class="btn danger sm" id="skill-forget-all">🗑️ 一鍵遺忘</button>
+      </div>
+      <div id="skill-list"></div>
+    </div>
+
+    <div class="apply-bar">
+      <div class="status" id="slot-status">尚未變更</div>
+      <button class="btn ghost sm" id="btn-discard">還原</button>
+      <button class="btn primary" id="btn-apply-slot" disabled>套用修改</button>
+    </div>
+  </div>
+
+  <!-- 倉庫編輯畫面 -->
+  <div id="screen-warehouse" class="panel hidden">
+    <div class="backline"><button class="btn ghost sm" id="btn-back-slots-2">← 返回欄位列表</button></div>
+    <h3 style="margin-top:8px;">跨角色倉庫</h3>
+    <div class="field" style="max-width:200px;">
+      <label>倉庫鋅幣</label><input type="number" min="0" id="wh-gold">
+    </div>
+    <div id="wh-list" style="margin-top:10px;"></div>
+    <div class="add-row">
+      <input id="wh-add-id" placeholder="輸入道具 ID 或中文名稱搜尋" autocomplete="off">
+      <input type="number" id="wh-add-qty" value="1" min="1">
+      <button class="btn sm" id="wh-add-btn">加入</button>
+    </div>
+    <div class="apply-bar">
+      <div class="status" id="wh-status">尚未變更</div>
+      <button class="btn ghost sm" id="wh-discard">還原</button>
+      <button class="btn primary" id="btn-apply-wh" disabled>套用修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // 遊戲本體（A 頁）的 origin，postMessage 只信任這個來源送的訊息。
+  var GAME_ORIGIN = 'https://nba9001-sys.github.io';
+
+  // 下拉重整手勢防呆（CSS 的 overscroll-behavior-y 是主力，這裡是備案）。
+  // 只有「頁面本身已經捲到最頂端」+「手指往下拉」+「不是在自己會捲動的
+  // 區塊／輸入框／按鈕上」才攔截，不會影響欄位清單、搜尋建議這些的正常捲動。
+  (function bindPullToRefreshGuard() {
+    var startY = 0;
+    var scrollableSelector = '.slot-grid, .ac-list, .card-modal-box, #codex-grid, #acv-list, ' +
+      'input, textarea, select, button, a';
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 1) return;
+      if (e.target.closest(scrollableSelector)) return;
+      var y = e.touches[0].clientY;
+      var atTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+      if (atTop && y > startY) e.preventDefault();
+    }, { passive: false });
+  })();
+
+  var EQUIP_SLOTS = [
+    ['head_top','頭上'], ['head_mid','頭中'], ['head_bottom','頭下'],
+    ['weapon','武器'], ['armor','身體'], ['shield','盾牌'],
+    ['garment','披風'], ['footgear','鞋子'],
+    ['accessory1','飾品1'], ['accessory2','飾品2'], ['ammo','彈藥']
+  ];
+
+  var state = {
+    init: null,        // A 頁傳來的 {slots, warehouse, currentSlot, itemMeta, jobMeta}
+    selectedSlot: null,
+    slotPatch: {},      // 目前編輯欄位的 patch（只含改過的 key）
+    slotWorking: null,  // 目前編輯欄位的工作副本（顯示用，= 原始資料 + patch 疊加）
+    whPatch: {},
+    whWorking: null,
+    acvFillIds: {}       // 這次編輯期間新解鎖的成就 id（用來通知 A 頁順便灌好進度來源數值）
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id) { $(id).classList.remove('hidden'); }
+  function hide(id) { $(id).classList.add('hidden'); }
+
+  function toast(msg, isErr) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.toggle('err', !!isErr);
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  // 插卡小視窗：顯示某件個體裝備插了哪些卡片（名稱+效果說明），純顯示、不能編輯。
+  function showCardModal(title, cardIds) {
+    var old = document.getElementById('card-modal-overlay');
+    if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'card-modal-overlay';
+    ov.className = 'card-modal-overlay';
+    var cardMeta = (state.init && state.init.cardMeta) || {};
+    var bodyHtml;
+    if (!cardIds || !cardIds.length) {
+      bodyHtml = '<div class="empty-hint">目前沒有插卡</div>';
+    } else {
+      bodyHtml = cardIds.map(function (cid) {
+        var c = cardMeta[cid];
+        return '<div class="card-row">' +
+          '<div class="ic">' + (c ? c.icon : '🃏') + '</div>' +
+          '<div class="info"><div class="nm">' + escapeHtml(c ? c.name : cid) + '</div>' +
+          '<div class="ds">' + escapeHtml(c ? c.desc : '') + '</div></div>' +
+          '</div>';
+      }).join('');
+    }
+    ov.innerHTML =
+      '<div class="card-modal-box">' +
+        '<h3>🃏 ' + escapeHtml(title) + '</h3>' +
+        '<div>' + bodyHtml + '</div>' +
+        '<button class="btn ghost sm" id="card-modal-close" style="margin-top:12px;width:100%;">關閉</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    document.getElementById('card-modal-close').addEventListener('click', function () { ov.remove(); });
+  }
+
+  // ---------------- A 頁通訊 ----------------
+  var opener = window.opener;
+
+  function sendToGame(msg) {
+    if (!opener) return;
+    try { opener.postMessage(msg, GAME_ORIGIN); } catch (e) { /* 忽略 */ }
+  }
+
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== GAME_ORIGIN) return;
+    if (!opener || ev.source !== opener) return;
+    var data = ev.data;
+    if (!data || typeof data !== 'object') return;
+
+    if (data.type === 'ro-editor:init') {
+      state.init = data;
+      // 顯示目前連到的 loader.js 版本號，方便跟修改器自己的版本號（上面 V幾號）
+      // 一起比對，確認兩邊是不是都真的更新到最新版——這種「只更新一邊」的狀況
+      // 從畫面上很難看出來，多這個標籤至少能先排除「忘記重新上傳」這個可能。
+      var loaderBadge = $('loader-ver-badge');
+      if (loaderBadge) {
+        loaderBadge.textContent = 'loader ' + (data.loaderVersion || '未知（舊版）');
+        loaderBadge.style.display = 'inline-block';
+      }
+      hide('screen-connecting');
+      renderSlotList();
+      show('screen-slots');
+    } else if (data.type === 'ro-editor:applied') {
+      if (data.ok) {
+        toast('✅ 已套用到欄位 ' + (data.slot + 1));
+        state.slotPatch = {};
+        state.acvFillIds = {};
+        sendToGame({ type: 'ro-editor:refresh' }); // 拿一份套用後的最新資料
+      } else {
+        toast('⚠️ 套用失敗，該欄位可能沒有存檔', true);
+      }
+      updateSlotStatus();
+    } else if (data.type === 'ro-editor:applied-warehouse') {
+      if (data.ok) {
+        toast('✅ 倉庫已更新');
+        state.whPatch = {};
+        sendToGame({ type: 'ro-editor:refresh' });
+      } else {
+        toast('⚠️ 倉庫套用失敗', true);
+      }
+      updateWhStatus();
+    } else if (data.type === 'ro-editor:job-items') {
+      // 只接受跟目前正在編輯的職業相符的回應，避免玩家手快切欄位時，
+      // 舊職業的查詢結果晚到、蓋掉新職業的篩選清單。
+      if (state.slotWorking && data.jobId === state.slotWorking.jobId) {
+        state.jobCompatIds = {};
+        (data.ids || []).forEach(function (id) { state.jobCompatIds[id] = true; });
+      }
+    }
+  });
+
+  if (!opener) {
+    setTimeout(function () {
+      hide('connecting-loading');
+      show('connecting-standalone');
+    }, 300);
+  } else {
+    sendToGame({ type: 'ro-editor:ready' });
+    setTimeout(function () {
+      if (!state.init) {
+        hide('connecting-loading');
+        show('connecting-standalone');
+      }
+    }, 4000);
+  }
+
+  // ---------------- 道具搜尋建議（自製下拉，取代 <datalist>） ----------------
+  // 手機瀏覽器（尤其 iOS Safari）幾乎不支援原生 <datalist> 彈出建議清單，
+  // 所以自己刻一個能點/能觸控的下拉選單，桌機、手機通用。
+  function itemLabel(id) {
+    var meta = state.init && state.init.itemMeta && state.init.itemMeta[id];
+    if (!meta) return id;
+    return (meta.icon || '') + ' ' + meta.name;
+  }
+  // getCandidates：回傳目前允許選的道具 ID 陣列的函式（每次開合都重新呼叫一次，
+  // 這樣裝備分頁切換部位時，候選清單會自動跟著換，不用額外重建）。
+  // onPick：選到一個道具之後的額外處理（例如刷新精鍊值鎖定狀態）。
+  function attachItemAutocomplete(input, getCandidates, onPick, opts) {
+    opts = opts || {};
+    var maxResults = opts.maxResults || 40;
+    var wrap = document.createElement('div');
+    wrap.className = 'ac-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    var list = document.createElement('div');
+    list.className = 'ac-list hidden';
+    wrap.appendChild(list);
+
+    function close() { list.classList.add('hidden'); list.innerHTML = ''; }
+    function renderMatches(matches) {
+      list.innerHTML = '';
+      if (!matches.length) {
+        list.innerHTML = '<div class="ac-empty">找不到符合的道具</div>';
+      } else {
+        matches.slice(0, maxResults).forEach(function (id) {
+          var meta = state.init.itemMeta[id];
+          var row = document.createElement('div');
+          row.className = 'ac-item';
+          row.innerHTML = '<span>' + (meta.icon || '📦') + '</span><span>' + escapeHtml(meta.name) + '</span><small>' + id + '</small>';
+          // mousedown 先擋掉，避免點擊瞬間輸入框 blur 把清單關掉搶在 click 前面。
+          // 注意：這裡故意不擋 touchstart——iOS Safari 只要 touchstart 呼叫過
+          // preventDefault()，後面補發的 click 事件就直接消失，手機點了等於沒點。
+          row.addEventListener('mousedown', function (e) { e.preventDefault(); });
+          row.addEventListener('click', function () {
+            input.value = id;
+            close();
+            if (onPick) onPick(id);
+          });
+          list.appendChild(row);
+        });
+      }
+      list.classList.remove('hidden');
+    }
+    function filterNow() {
+      var q = input.value.trim().toLowerCase();
+      var candidates = getCandidates();
+      if (!q) {
+        // 裝備分頁：搜尋框一聚焦就先列出這個部位全部能裝的道具，不用先打字（跟以前 datalist 的行為一致）。
+        // 背包／倉庫的搜尋範圍是全部道具（數千筆），沒打字就不列，避免一次塞爆清單。
+        if (opts.showAllOnFocus) { renderMatches(candidates); } else { close(); }
+        return;
+      }
+      var matches = candidates.filter(function (id) {
+        var meta = state.init.itemMeta[id];
+        if (!meta) return false;
+        return id.toLowerCase().indexOf(q) !== -1 || (meta.name || '').toLowerCase().indexOf(q) !== -1;
+      });
+      renderMatches(matches);
+    }
+    input.addEventListener('input', filterNow);
+    input.addEventListener('focus', function () {
+      if (input.value.trim() || opts.showAllOnFocus) filterNow();
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) close();
+    });
+  }
+
+  var _acAttached = false;
+  function setupItemAutocompletes() {
+    if (_acAttached) return;
+    _acAttached = true;
+    attachItemAutocomplete($('inv-add-id'), function () {
+      return Object.keys(state.init.itemMeta || {});
+    }, function () { refreshInvRefineLock(); });
+    attachItemAutocomplete($('wh-add-id'), function () {
+      return Object.keys(state.init.itemMeta || {});
+    }, null);
+    attachItemAutocomplete($('equip-add-id'), function () {
+      return itemIdsForSlot($('equip-add-slot').value);
+    }, function () { refreshEquipRefineLock(); }, { showAllOnFocus: true, maxResults: 200 });
+    attachItemAutocomplete($('relic-add-id'), function () {
+      return itemIdsForRelicSlot($('relic-add-slot').value);
+    }, null, { showAllOnFocus: true, maxResults: 200 });
+  }
+
+  // ---------------- 欄位選擇畫面 ----------------
+  function renderSlotList() {
+    setupItemAutocompletes();
+    var grid = $('slot-grid');
+    grid.innerHTML = '';
+    var slots = state.init.slots;
+    var jobMeta = state.init.jobMeta || {};
+    // 欄位數量不寫死：直接照 A 頁實際送過來的筆數顯示，遊戲以後增加欄位數
+    // （MAX_SLOTS 改大）也不用回來改這裡的數字，不然超過寫死上限的欄位
+    // 會直接被忽略、修改器裡完全看不到那個角色。
+    var slotCount = Object.keys(slots).length;
+    for (var i = 0; i < slotCount; i++) {
+      var s = slots[i];
+      var row = document.createElement('div');
+      row.className = 'slot-row' + (s ? '' : ' empty');
+      var jobName = s ? ((jobMeta[s.jobId] && jobMeta[s.jobId].name) || s.jobId) : '';
+      row.innerHTML =
+        '<div class="idx">' + (i + 1) + '</div>' +
+        '<div class="info">' +
+          '<div class="name">' + (s ? escapeHtml(s.name) : '（空）') + '</div>' +
+          '<div class="meta">' + (s ? ('Lv.' + s.baseLevel + ' ' + escapeHtml(jobName) + '　' + (s.gold || 0) + ' z') : '沒有存檔') + '</div>' +
+        '</div>' +
+        (i === state.init.currentSlot ? '<div class="badge-live">遊玩中</div>' : '');
+      if (s) {
+        row.addEventListener('click', function (idx) {
+          return function () { openSlotEditor(idx); };
+        }(i));
+      }
+      grid.appendChild(row);
+    }
+  }
+
+  $('btn-open-warehouse').addEventListener('click', function () { openWarehouseEditor(); });
+  $('btn-refresh-slots').addEventListener('click', function () {
+    toast('重新整理中…');
+    sendToGame({ type: 'ro-editor:refresh' });
+  });
+  $('btn-back-slots').addEventListener('click', function () { backToSlots(); });
+  $('btn-back-slots-2').addEventListener('click', function () { backToSlots(); });
+
+  function backToSlots() {
+    if (Object.keys(state.slotPatch).length && !confirm('目前的修改還沒套用，離開會遺失，確定嗎？')) return;
+    if (Object.keys(state.whPatch).length && !confirm('倉庫的修改還沒套用，離開會遺失，確定嗎？')) return;
+    state.selectedSlot = null;
+    state.slotPatch = {}; state.whPatch = {}; state.acvFillIds = {};
+    hide('screen-editor'); hide('screen-warehouse');
+    show('screen-slots');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ---------------- 角色編輯畫面 ----------------
+  var currentTab = 'basic';
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      ['basic', 'stats', 'inv', 'equip', 'relic', 'codex', 'achieve', 'skill'].forEach(function (t) {
+        (t === currentTab ? show : hide)('tab-' + t);
+      });
+    });
+  });
+
+  function openSlotEditor(idx) {
+    state.selectedSlot = idx;
+    state.slotPatch = {};
+    state.acvFillIds = {};
+    state.slotWorking = JSON.parse(JSON.stringify(state.init.slots[idx]));
+    if (!state.slotWorking.instances) state.slotWorking.instances = {};
+    if (!state.slotWorking.jobSkillPoints) state.slotWorking.jobSkillPoints = {};
+    if (!state.slotWorking.equip) state.slotWorking.equip = {};
+    if (!state.slotWorking.relics) state.slotWorking.relics = {};
+    if (!state.slotWorking.codex) state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: {} };
+    if (!state.slotWorking.codex.mon) state.slotWorking.codex.mon = {};
+    if (!state.slotWorking.codex.seen) state.slotWorking.codex.seen = {};
+    if (!state.slotWorking.codex.item) state.slotWorking.codex.item = {};
+    if (!state.slotWorking.achievements) state.slotWorking.achievements = { done: {}, points: 0 };
+    if (!state.slotWorking.achievements.done) state.slotWorking.achievements.done = {};
+    if (typeof state.slotWorking.achievements.points !== 'number') state.slotWorking.achievements.points = 0;
+    if (!state.slotWorking.learnedSkills) state.slotWorking.learnedSkills = {};
+    var jobMeta = state.init.jobMeta || {};
+    var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
+    $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
+      '<small>欄位 ' + (idx + 1) + '　' + escapeHtml(jobName) +
+      (idx === state.init.currentSlot ? '　🟢 遊玩中' : '') + '</small>';
+    fillBasicFields();
+    fillStatsFields();
+    renderInvList();
+    populateEquipAddSlotOptions();
+    clearEquipAddSearch();
+    refreshEquipRefineLock();
+    renderEquipList();
+    requestJobCompatSet();
+    populateRelicAddSlotOptions();
+    renderRelicList();
+    refreshCodexAll();
+    refreshAcvAll();
+    renderSkillTab();
+    updateSlotStatus();
+    hide('screen-slots');
+    show('screen-editor');
+  }
+
+  // 跟遊戲要一份「這個角色的職業＋等級能裝備哪些道具」的清單。
+  // 用 jobId+baseLevel 兩個原始值送出去，不是送 slot 編號——這樣 A 頁完全
+  // 不用去管「現在編輯的是不是正在玩的那一欄」，單純算這兩個值對應的結果。
+  // 結果回來之前，搜尋清單先不套用職業限制（見 itemIdsForSlot），
+  // 通常一瞬間就到了，玩家開始打字之前多半已經到位。
+  function requestJobCompatSet() {
+    state.jobCompatIds = null; // 先清掉舊職業的結果，避免篩選短暫用錯資料
+    sendToGame({
+      type: 'ro-editor:job-items',
+      jobId: state.slotWorking.jobId,
+      baseLevel: state.slotWorking.baseLevel
+    });
+  }
+
+  function fillBasicFields() {
+    var w = state.slotWorking;
+    $('f-gold').value = w.gold || 0;
+    $('f-baseLevel').value = w.baseLevel || 1;
+    $('f-baseExp').value = w.baseExp || 0;
+    $('f-jobLevel').value = w.jobLevel || 1;
+    $('f-jobExp').value = w.jobExp || 0;
+  }
+  function fillStatsFields() {
+    var w = state.slotWorking;
+    $('f-statPoints').value = w.statPoints || 0;
+    var st = w.stats || {};
+    ['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(function (k) {
+      $('f-' + k).value = st[k] || 1;
+    });
+    renderSkillPointsFields();
+  }
+  // 沿著職業鏈往回走（現在職業 → 上一階 → … → 新手），畫出跟遊戲本體
+  // jobSkillPoints 一致的「依階段分開」技能點輸入框。tier 數字給玩家對照，
+  // 不強行套「新手/一轉/二轉」這種固定三段講法——有些角色轉生過，
+  // 職業鏈可能超過三層（進階一轉、進階二轉…），照實際鏈長顯示才不會漏掉。
+  function jobChainForSlot() {
+    var jobMeta = state.init.jobMeta || {};
+    var chain = [];
+    var seen = {};
+    var cur = state.slotWorking.jobId;
+    while (cur && !seen[cur]) {
+      seen[cur] = true;
+      chain.unshift(cur); // 新手排最前面
+      cur = jobMeta[cur] && jobMeta[cur].parent;
+    }
+    return chain;
+  }
+  function renderSkillPointsFields() {
+    var wrap = $('skillpoints-list');
+    var jobMeta = state.init.jobMeta || {};
+    var jsp = state.slotWorking.jobSkillPoints || (state.slotWorking.jobSkillPoints = {});
+    var chain = jobChainForSlot();
+    wrap.innerHTML = '';
+    if (!chain.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到職業資料</div>'; return; }
+    chain.forEach(function (jobId) {
+      var meta = jobMeta[jobId] || {};
+      var field = document.createElement('div');
+      field.className = 'field';
+      field.innerHTML =
+        '<label>' + escapeHtml(meta.name || jobId) + '（Tier ' + (meta.tier || 1) + '）</label>' +
+        '<input type="number" min="0" data-job="' + jobId + '" class="f-skillpoints-job" value="' + (jsp[jobId] || 0) + '">';
+      wrap.appendChild(field);
+    });
+    wrap.querySelectorAll('.f-skillpoints-job').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var v = parseInt(this.value, 10);
+        if (isNaN(v) || v < 0) return;
+        var jobId = this.dataset.job;
+        state.slotWorking.jobSkillPoints[jobId] = v;
+        applySkillPointsPatch();
+      });
+    });
+  }
+  function applySkillPointsPatch() {
+    var jsp = state.slotWorking.jobSkillPoints || {};
+    state.slotPatch.jobSkillPoints = Object.assign({}, jsp);
+    // state.skillPoints 是遊戲本體算好的加總欄位（保留相容性用），
+    // 這裡跟著同步更新，不然畫面上「技能點」總數會跟各階段分開輸入的內容對不起來。
+    var sum = 0;
+    Object.keys(jsp).forEach(function (k) { sum += (jsp[k] || 0); });
+    state.slotWorking.skillPoints = sum;
+    state.slotPatch.skillPoints = sum;
+    updateSlotStatus();
+  }
+
+  function bindNumberField(inputId, patchKey, isNested) {
+    $(inputId).addEventListener('input', function () {
+      var v = parseInt(this.value, 10);
+      if (isNaN(v)) return;
+      if (isNested) {
+        var obj = state.slotPatch[isNested] ? state.slotPatch[isNested] : Object.assign({}, state.slotWorking[isNested]);
+        obj[patchKey] = v;
+        state.slotPatch[isNested] = obj;
+        state.slotWorking[isNested][patchKey] = v;
+      } else {
+        state.slotPatch[patchKey] = v;
+        state.slotWorking[patchKey] = v;
+      }
+      updateSlotStatus();
+    });
+  }
+  bindNumberField('f-gold', 'gold');
+  bindNumberField('f-baseLevel', 'baseLevel');
+  bindNumberField('f-baseExp', 'baseExp');
+  bindNumberField('f-jobLevel', 'jobLevel');
+  bindNumberField('f-jobExp', 'jobExp');
+  bindNumberField('f-statPoints', 'statPoints');
+  ['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(function (k) {
+    bindNumberField('f-' + k, k, 'stats');
+  });
+
+  function renderInvList() {
+    var wrap = $('inv-list');
+    wrap.innerHTML = '';
+    var inv = state.slotWorking.inventory || [];
+    if (!inv.length) { wrap.innerHTML = '<div class="empty-hint">背包是空的</div>'; return; }
+    inv.forEach(function (row, idx) {
+      var meta = (state.init.itemMeta || {})[row.item] || {};
+      var isInstance = !!row.instanceId;
+      var inst = isInstance ? (state.slotWorking.instances || {})[row.instanceId] : null;
+      var hasCards = !!(inst && inst.cards && inst.cards.length);
+      var line = document.createElement('div');
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
+      if (isInstance && inst) {
+        line.innerHTML =
+          '<div class="ic">' + (meta.icon || '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta.name || row.item) +
+            (hasCards ? '<span class="card-badge">🃏×' + inst.cards.length + '</span>' : '') +
+            '<small>個體裝備' + (hasCards ? '・點名稱看插卡' : '') + '</small></div>' +
+          '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
+          '<input type="number" min="0" max="20" class="inv-refine" value="' + (inst.refine || 0) + '" data-instid="' + row.instanceId + '" style="width:52px;">' +
+          '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
+      } else {
+        line.innerHTML =
+          '<div class="ic">' + (meta.icon || '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta.name || row.item) + '<small>' + row.item + '</small></div>' +
+          '<input type="number" min="0" value="' + row.qty + '" data-idx="' + idx + '" class="inv-qty">' +
+          '<button class="rm sm-split" data-idx="' + idx + '" title="拆 1 件出來設定精鍊值">🔧</button>' +
+          '<button class="rm" data-idx="' + idx + '" title="移除">✕</button>';
+      }
+      wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal(meta.name || row.item, inst.cards);
+        });
+      }
+    });
+    wrap.querySelectorAll('.inv-qty').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        var v = parseInt(this.value, 10);
+        if (isNaN(v) || v < 0) return;
+        state.slotWorking.inventory[idx].qty = v;
+        touchInventoryPatch();
+      });
+    });
+    wrap.querySelectorAll('.inv-refine').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var instId = this.dataset.instid;
+        var v = Math.max(0, Math.min(20, parseInt(this.value, 10) || 0));
+        var inst = state.slotWorking.instances[instId];
+        if (!inst) return;
+        inst.refine = v;
+        touchInstancesPatch();
+      });
+    });
+    wrap.querySelectorAll('.sm-split').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        var row = state.slotWorking.inventory[idx];
+        if (!row || row.qty < 1) return;
+        row.qty -= 1;
+        if (row.qty <= 0) state.slotWorking.inventory.splice(idx, 1);
+        var instId = row.item + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        state.slotWorking.instances[instId] = { item: row.item, refine: 1, cards: [] };
+        state.slotWorking.inventory.push({ item: row.item, qty: 1, instanceId: instId });
+        touchInventoryPatch();
+        touchInstancesPatch();
+        renderInvList();
+      });
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      if (btn.classList.contains('sm-split')) return;
+      btn.addEventListener('click', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        var row = state.slotWorking.inventory[idx];
+        if (row && row.instanceId) delete state.slotWorking.instances[row.instanceId]; // 個體裝備整件移除順便清掉紀錄
+        state.slotWorking.inventory.splice(idx, 1);
+        touchInventoryPatch();
+        touchInstancesPatch();
+        renderInvList();
+      });
+    });
+  }
+  function touchInventoryPatch() {
+    state.slotPatch.inventory = state.slotWorking.inventory.slice();
+    updateSlotStatus();
+  }
+  function touchInstancesPatch() {
+    state.slotPatch.instances = Object.assign({}, state.slotWorking.instances);
+    updateSlotStatus();
+  }
+  // 只有武器／防具才有精鍊這回事，藥水材料之類的輸入框直接鎖住，
+  // 避免出現「+5 紅色藥水」這種遊戲裡不可能存在的道具。
+  function refreshInvRefineLock() {
+    var id = $('inv-add-id').value.trim();
+    var meta = state.init.itemMeta && state.init.itemMeta[id];
+    var refineInp = $('inv-add-refine');
+    var canRefine = meta && (meta.type === 'weapon' || meta.type === 'armor');
+    refineInp.disabled = !canRefine;
+    if (!canRefine) refineInp.value = 0;
+  }
+  $('inv-add-id').addEventListener('input', refreshInvRefineLock);
+
+  $('inv-add-btn').addEventListener('click', function () {
+    var id = $('inv-add-id').value.trim();
+    var qty = parseInt($('inv-add-qty').value, 10) || 1;
+    var refine = Math.max(0, Math.min(20, parseInt($('inv-add-refine').value, 10) || 0));
+    if (!id) return;
+    if (state.init.itemMeta && !state.init.itemMeta[id]) {
+      toast('⚠️ 找不到這個道具 ID，請從建議清單選一個', true);
+      return;
+    }
+    var inv = state.slotWorking.inventory || (state.slotWorking.inventory = []);
+    if (refine > 0) {
+      // 有精鍊值的一定各自獨立一件，不跟其他堆疊合併，即使加好幾個也是各自一件
+      for (var i = 0; i < qty; i++) {
+        var instId = id + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000) + '_' + i;
+        state.slotWorking.instances[instId] = { item: id, refine: refine, cards: [] };
+        inv.push({ item: id, qty: 1, instanceId: instId });
+      }
+      touchInstancesPatch();
+    } else {
+      var existing = inv.find(function (r) { return r.item === id && !r.instanceId; });
+      if (existing) existing.qty += qty;
+      else inv.push({ item: id, qty: qty });
+    }
+    touchInventoryPatch();
+    renderInvList();
+    $('inv-add-id').value = '';
+    $('inv-add-qty').value = 1;
+    $('inv-add-refine').value = 0;
+    refreshInvRefineLock();
+  });
+
+  function renderEquipList() {
+    var wrap = $('equip-list');
+    wrap.innerHTML = '';
+    var equip = state.slotWorking.equip || {};
+    var instances = state.slotWorking.instances || (state.slotWorking.instances = {});
+    EQUIP_SLOTS.forEach(function (pair) {
+      var key = pair[0], label = pair[1];
+      var raw = equip[key];
+      var inst = raw && instances[raw] ? instances[raw] : null;
+      var itemId = inst ? inst.item : (raw || '');
+      var refine = inst ? (inst.refine || 0) : 0;
+      var meta = itemId ? state.init.itemMeta[itemId] : null;
+
+      var line = document.createElement('div');
+      var hasCards = !!(inst && inst.cards && inst.cards.length);
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
+      if (!itemId) {
+        line.innerHTML =
+          '<div class="ic">—</div>' +
+          '<div class="nm"><small>' + label + '</small>（空）</div>';
+      } else {
+        line.innerHTML =
+          '<div class="ic">' + (meta ? (meta.icon || '📦') : '📦') + '</div>' +
+          '<div class="nm">' + escapeHtml(meta ? meta.name : itemId) +
+            (hasCards ? '<span class="card-badge">🃏×' + inst.cards.length + '</span>' : '') +
+            '<small>' + label + (hasCards ? '・點名稱看插卡' : '') + '</small></div>' +
+          '<span style="font-size:11px;color:var(--ink-dim);">精鍊</span>' +
+          '<input type="number" min="0" max="20" class="equip-refine" data-key="' + key + '" value="' + refine + '" style="width:52px;">' +
+          '<button class="rm" data-key="' + key + '" title="卸下">✕</button>';
+      }
+      wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal((meta ? meta.name : itemId) + '（' + label + '）', inst.cards);
+        });
+      }
+    });
+    wrap.querySelectorAll('.equip-refine').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var key = this.dataset.key;
+        var v = Math.max(0, Math.min(20, parseInt(this.value, 10) || 0));
+        var equip = state.slotWorking.equip;
+        var raw = equip[key];
+        var cur = raw ? state.slotWorking.instances[raw] : null;
+        var itemId = cur ? cur.item : raw;
+        if (!itemId) return;
+        applyEquipEdit(key, itemId, v);
+      });
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyEquipEdit(this.dataset.key, '', 0);
+        renderEquipList();
+      });
+    });
+  }
+
+  function populateEquipAddSlotOptions() {
+    var sel = $('equip-add-slot');
+    if (sel.options.length) return; // 只需要建一次
+    EQUIP_SLOTS.forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', onEquipSlotPicked);
+  }
+  // 切換部位時，把搜尋框清空——候選清單是即時算的（見 setupItemAutocompletes 裡
+  // 傳給 attachItemAutocomplete 的 getCandidates），不用重建，只需要把舊的搜尋字清掉。
+  function clearEquipAddSearch() {
+    $('equip-add-id').value = '';
+  }
+  // 部位下拉選單真的被玩家手動切換時才這樣做：清空搜尋字＋重新 focus，
+  // 讓新部位的道具清單立刻彈出來。跟 openSlotEditor() 那次初始清空分開，
+  // 不然一打開角色編輯畫面就跳出手機鍵盤會很煩。
+  function onEquipSlotPicked() {
+    var inp = $('equip-add-id');
+    inp.value = '';
+    inp.focus();
+    refreshEquipRefineLock();
+  }
+  // 彈藥沒有精鍊這回事，選到彈藥欄位就直接鎖住精鍊值輸入框。
+  function refreshEquipRefineLock() {
+    var id = $('equip-add-id').value.trim();
+    var meta = state.init.itemMeta && state.init.itemMeta[id];
+    var refineInp = $('equip-add-refine');
+    var canRefine = meta && (meta.type === 'weapon' || meta.type === 'armor');
+    refineInp.disabled = !canRefine;
+    if (!canRefine) refineInp.value = 0;
+  }
+  $('equip-add-id').addEventListener('input', refreshEquipRefineLock);
+
+  // 這個道具能不能裝在這個欄位（依 armorType/weaponCat/headPos 判斷，跟遊戲本體 resolveEquipSlotFor 同一套規則）
+  function validSlotsForItem(id) {
+    var meta = state.init.itemMeta[id];
+    if (!meta) return [];
+    if (meta.type === 'weapon') return ['weapon'];
+    if (meta.type === 'ammo') return ['ammo'];
+    if (meta.type === 'armor') {
+      switch (meta.armorType) {
+        case 'headgear': return meta.headPos && meta.headPos.length ? meta.headPos : ['head_top'];
+        case 'shield': return ['shield'];
+        case 'garment': return ['garment'];
+        case 'footgear': return ['footgear'];
+        case 'accessory': return ['accessory1', 'accessory2'];
+        default: return ['armor'];
+      }
+    }
+    return [];
+  }
+  function itemIdsForSlot(slotKey) {
+    var out = [];
+    var meta = state.init.itemMeta || {};
+    // 篩選結果還沒回來（例如剛切換欄位那一瞬間）：先不套用職業限制，
+    // 免得清單暫時整片空白，等結果一到，下次打字/聚焦就會自然套用上。
+    var compat = state.jobCompatIds;
+    for (var id in meta) {
+      if (validSlotsForItem(id).indexOf(slotKey) === -1) continue;
+      // 彈藥沒有職業限制（buildJobCompatSet 那邊也只算武器/防具），一律放行
+      if (compat && meta[id].type !== 'ammo' && !compat[id]) continue;
+      out.push(id);
+    }
+    return out;
+  }
+  function equipLabel(key) {
+    var pair = EQUIP_SLOTS.find(function (p) { return p[0] === key; });
+    return pair ? pair[1] : key;
+  }
+
+  $('equip-add-btn').addEventListener('click', function () {
+    var slotKey = $('equip-add-slot').value;
+    var id = $('equip-add-id').value.trim();
+    var refine = Math.max(0, Math.min(20, parseInt($('equip-add-refine').value, 10) || 0));
+    if (!id) return;
+    if (validSlotsForItem(id).indexOf(slotKey) === -1) {
+      toast('⚠️ 「' + id + '」不能裝在' + equipLabel(slotKey) + '，請從建議清單選一個', true);
+      return;
+    }
+    applyEquipEdit(slotKey, id, refine);
+    renderEquipList();
+    $('equip-add-id').value = '';
+    $('equip-add-refine').value = 0;
+    refreshEquipRefineLock();
+  });
+
+  // 套用某個裝備欄位的編輯：refine<=0 就是純道具；refine>0 一定要是「個體裝備」，
+  // 跟遊戲本體 migrateEquipToInstances() 的資料形狀完全一致（instances[id] = {item, refine, cards}）。
+  function applyEquipEdit(key, itemId, refine) {
+    var equip = state.slotWorking.equip;
+    var instances = state.slotWorking.instances;
+    if (!itemId) {
+      equip[key] = null;
+    } else if (refine <= 0) {
+      equip[key] = itemId;
+    } else {
+      var cur = equip[key];
+      var curInst = cur && instances[cur];
+      var instId;
+      if (curInst && curInst.item === itemId) {
+        instId = cur; // 同一件道具改精鍊值，沿用個體、保留卡片
+      } else {
+        instId = itemId + '_ed' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        instances[instId] = { item: itemId, refine: 0, cards: [] };
+      }
+      instances[instId].refine = refine;
+      equip[key] = instId;
+    }
+    state.slotPatch.equip = Object.assign({}, equip);
+    state.slotPatch.instances = Object.assign({}, instances);
+    updateSlotStatus();
+  }
+
+  // ---------------- 遺物分頁 ----------------
+  // 遺物是完全獨立的系統：存在 state.relics（不是 state.equip），不分職業，
+  // 不能精鍊也不能插卡，一律是純道具 ID。8 個部位彼此獨立，可以混搭不同套裝。
+  function renderRelicList() {
+    var wrap = $('relic-list');
+    wrap.innerHTML = '';
+    var slots = state.init.relicSlots || [];
+    if (!slots.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到遺物欄位資料</div>'; return; }
+    var relics = state.slotWorking.relics || {};
+    var setMeta = state.init.relicSetMeta || {};
+    var grid = document.createElement('div');
+    grid.className = 'relic-grid';
+    slots.forEach(function (s) {
+      var itemId = relics[s.key] || '';
+      var meta = itemId ? state.init.itemMeta[itemId] : null;
+      var setInfo = meta && meta.relicSet ? setMeta[meta.relicSet] : null;
+      var cell = document.createElement('div');
+      cell.className = 'relic-cell' + (itemId ? ' filled' : ' empty');
+      cell.innerHTML =
+        (itemId ? '<button class="rm" data-key="' + s.key + '" title="卸下">✕</button>' : '') +
+        '<div class="ic">' + (meta ? (meta.icon || s.icon) : s.icon) + '</div>' +
+        '<div class="slot-name">' + escapeHtml(s.name) + '</div>' +
+        (itemId ? '<div class="set-name">' + escapeHtml(setInfo ? setInfo.name : (meta ? meta.name : itemId)) + '</div>' : '');
+      if (!itemId) {
+        // 點空格子＝直接把下面新增區的部位選單切到這一格，省一步選單操作
+        cell.addEventListener('click', function () {
+          $('relic-add-slot').value = s.key;
+          $('relic-add-id').value = '';
+          $('relic-add-id').focus();
+        });
+      }
+      grid.appendChild(cell);
+    });
+    wrap.appendChild(grid);
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        applyRelicEdit(this.dataset.key, '');
+        renderRelicList();
+      });
+    });
+  }
+  function populateRelicAddSlotOptions() {
+    var sel = $('relic-add-slot');
+    if (sel.options.length) return; // 只需要建一次
+    (state.init.relicSlots || []).forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s.key;
+      opt.textContent = s.icon + ' ' + s.name;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () {
+      $('relic-add-id').value = '';
+      $('relic-add-id').focus();
+    });
+  }
+  function itemIdsForRelicSlot(slotKey) {
+    var out = [];
+    var meta = state.init.itemMeta || {};
+    for (var id in meta) {
+      if (meta[id].type === 'relic' && meta[id].relicSlot === slotKey) out.push(id);
+    }
+    return out;
+  }
+  function relicSlotLabel(key) {
+    var s = (state.init.relicSlots || []).find(function (r) { return r.key === key; });
+    return s ? s.name : key;
+  }
+  function applyRelicEdit(slotKey, itemId) {
+    var relics = state.slotWorking.relics;
+    relics[slotKey] = itemId || null;
+    state.slotPatch.relics = Object.assign({}, relics);
+    updateSlotStatus();
+  }
+  $('relic-add-btn').addEventListener('click', function () {
+    var slotKey = $('relic-add-slot').value;
+    var id = $('relic-add-id').value.trim();
+    if (!id) return;
+    if (itemIdsForRelicSlot(slotKey).indexOf(id) === -1) {
+      toast('⚠️ 「' + id + '」不是' + relicSlotLabel(slotKey) + '部位的遺物，請從建議清單選一個', true);
+      return;
+    }
+    applyRelicEdit(slotKey, id);
+    renderRelicList();
+    $('relic-add-id').value = '';
+  });
+
+  // ---------------- 圖鑑分頁 ----------------
+  // 怪物的「發現」記在 codex.seen[id]；卡片／道具的「發現」都記在 codex.item[id]
+  // （卡片跟道具共用同一張表，用各自的 id 當 key，兩者不會撞號），
+  // 跟遊戲本體 renderCodexTab() 判斷 found 的邏輯完全一致。
+  var codexView = 'mon';
+  var codexFilter = 'all';
+  var codexCat = { mon: 'all', card: 'all', item: 'all' };
+  var codexSearch = '';
+  function codexFoundMap() {
+    var book = state.slotWorking.codex;
+    return codexView === 'mon' ? book.seen : book.item;
+  }
+  function renderCodexProgress() {
+    var wrap = $('codex-progress');
+    var foundBook = state.slotWorking.codex;
+    var views = [['mon', '👾 怪物', foundBook.seen], ['card', '🃏 卡片', foundBook.item], ['item', '🎒 道具', foundBook.item]];
+    wrap.innerHTML = views.map(function (v) {
+      var catalog = (state.init.codex && state.init.codex[v[0]]) || [];
+      var found = catalog.filter(function (r) { return !!v[2][r.id]; }).length;
+      var total = catalog.length;
+      var pct = total ? (found / total * 100) : 0;
+      return '<div class="codex-prog">' +
+        '<div class="codex-prog-head"><span>' + v[1] + '</span><b>' + found + ' / ' + total + '　' + pct.toFixed(1) + '%</b></div>' +
+        '<div class="codex-prog-track"><div class="codex-prog-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>';
+    }).join('');
+  }
+  function renderCodexCats() {
+    var wrap = $('codex-cats');
+    var catalog = (state.init.codex && state.init.codex[codexView]) || [];
+    var labels = (state.init.codex && state.init.codex.catLabels && state.init.codex.catLabels[codexView]) || [{ k: 'all', label: '全部' }];
+    var cur = codexCat[codexView] || 'all';
+    wrap.innerHTML = labels.map(function (c) {
+      var n = c.k === 'all' ? catalog.length : catalog.filter(function (r) { return r.cat === c.k; }).length;
+      return '<button class="codex-cat-btn' + (c.k === cur ? ' active' : '') + '" data-cat="' + c.k + '">' +
+        escapeHtml(c.label) + ' <span class="codex-cat-n">' + n + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.codex-cat-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        codexCat[codexView] = btn.dataset.cat;
+        renderCodexCats();
+        renderCodexGrid();
+      });
+    });
+  }
+  function renderCodexGrid() {
+    var grid = $('codex-grid');
+    var catalog = (state.init.codex && state.init.codex[codexView]) || [];
+    var foundMap = codexFoundMap();
+    var book = state.slotWorking.codex;
+    var q = codexSearch.trim().toLowerCase();
+    var cur = codexCat[codexView] || 'all';
+    var rows = catalog.filter(function (r) {
+      if (cur !== 'all' && r.cat !== cur) return false;
+      if (q && r.name.toLowerCase().indexOf(q) === -1) return false;
+      var found = !!foundMap[r.id];
+      if (codexFilter === 'found' && !found) return false;
+      if (codexFilter === 'missing' && found) return false;
+      return true;
+    });
+    grid.innerHTML = '';
+    if (!rows.length) { grid.innerHTML = '<div class="empty-hint">沒有符合條件的項目</div>'; return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (r) {
+      var found = !!foundMap[r.id];
+      var cell = document.createElement('div');
+      cell.className = 'codex-cell' + (found ? ' found' : '');
+      var badge, sub;
+      if (codexView === 'mon') {
+        var kills = book.mon[r.id] || 0;
+        badge = found ? ('☠ ' + kills) : '未遇過';
+        sub = 'Lv.' + (r.level || '?') + ' ' + r.elemIcon;
+      } else {
+        var qty = book.item[r.id] || 0;
+        badge = found ? ('×' + qty) : '未取得';
+        sub = '';
+      }
+      cell.innerHTML =
+        '<span class="badge">' + badge + '</span>' +
+        '<img src="' + r.img + '" loading="lazy" onerror="this.style.visibility=\'hidden\'">' +
+        '<div class="nm">' + escapeHtml(r.name) + '</div>' +
+        (sub ? '<div class="sub">' + sub + '</div>' : '');
+      cell.addEventListener('click', function () { toggleCodexEntry(r.id); });
+      frag.appendChild(cell);
+    });
+    grid.appendChild(frag);
+  }
+  function refreshCodexAll() {
+    renderCodexProgress();
+    renderCodexCats();
+    renderCodexGrid();
+  }
+  function toggleCodexEntry(id) {
+    var book = state.slotWorking.codex;
+    if (codexView === 'mon') {
+      if (book.seen[id]) {
+        book.seen[id] = 0;
+      } else {
+        book.seen[id] = 1;
+        if (!book.mon[id]) book.mon[id] = 1; // 順便給 1 次擊殺紀錄，跟「已發現」的狀態對得上，畫面比較合理
+      }
+    } else {
+      book.item[id] = book.item[id] ? 0 : 1;
+    }
+    state.slotPatch.codex = JSON.parse(JSON.stringify(book));
+    updateSlotStatus();
+    renderCodexProgress();
+    renderCodexGrid();
+  }
+  document.querySelectorAll('.codex-view-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.codex-view-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      codexView = btn.dataset.view;
+      renderCodexCats();
+      renderCodexGrid();
+    });
+  });
+  document.querySelectorAll('.codex-filter-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.codex-filter-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      codexFilter = btn.dataset.filter;
+      renderCodexGrid();
+    });
+  });
+  $('codex-search').addEventListener('input', function () {
+    codexSearch = this.value;
+    renderCodexGrid();
+  });
+  $('codex-unlock-all').addEventListener('click', function () {
+    var n = Math.max(1, parseInt($('codex-unlock-count').value, 10) || 1);
+    if (!confirm('確定要把圖鑑全部解鎖嗎？（怪物／卡片／道具全部一起，次數／取得數量設為 ' + n + '。已經有更高紀錄的項目會自動跳過，不會被往下調）')) return;
+    var book = state.slotWorking.codex;
+    (state.init.codex.mon || []).forEach(function (r) {
+      var cur = book.mon[r.id] || 0;
+      if (cur < n) book.mon[r.id] = n; // 比原本小才更新，原本就比較高的直接跳過不動
+      book.seen[r.id] = 1; // 發現與否跟次數分開判斷：不管次數有沒有更新，都要標記成已發現
+    });
+    (state.init.codex.card || []).forEach(function (r) {
+      var cur = book.item[r.id] || 0;
+      if (cur < n) book.item[r.id] = n;
+    });
+    (state.init.codex.item || []).forEach(function (r) {
+      var cur = book.item[r.id] || 0;
+      if (cur < n) book.item[r.id] = n;
+    });
+    state.slotPatch.codex = JSON.parse(JSON.stringify(book));
+    updateSlotStatus();
+    refreshCodexAll();
+    toast('✅ 圖鑑已全部解鎖，次數 ' + n + '（記得按下面「套用修改」才會真的存進去）');
+  });
+  $('codex-reset-all').addEventListener('click', function () {
+    if (!confirm('確定要清空圖鑑紀錄嗎？怪物／卡片／道具都會變回未發現。')) return;
+    var maps = (state.slotWorking.codex && state.slotWorking.codex.maps) || {};
+    state.slotWorking.codex = { mon: {}, seen: {}, item: {}, maps: maps };
+    state.slotPatch.codex = JSON.parse(JSON.stringify(state.slotWorking.codex));
+    updateSlotStatus();
+    refreshCodexAll();
+  });
+
+  // ---------------- 成就分頁 ----------------
+  // 成就在遊戲本體是「累計數值達標就自動解鎖」（checkAchievements()），跟遊戲進度
+  // 綁死，不是獨立開關。修改器這邊直接改 state.achievements.done，效果等同於
+  // 「假裝那個累計值已經達標」，不會回頭去改真正的擊殺數/鋅幣/等級等來源數值。
+  var acvCatFilter = 'all';
+  function achievementsDoneMap() {
+    return (state.slotWorking.achievements && state.slotWorking.achievements.done) || {};
+  }
+  function renderAcvProgress() {
+    var wrap = $('acv-progress');
+    var catalog = state.init.achievements || [];
+    var done = achievementsDoneMap();
+    var doneN = catalog.filter(function (a) { return !!done[a.id]; }).length;
+    var total = catalog.length;
+    var pct = total ? (doneN / total * 100) : 0;
+    var pts = (state.slotWorking.achievements && state.slotWorking.achievements.points) || 0;
+    wrap.innerHTML =
+      '<div class="codex-prog">' +
+        '<div class="codex-prog-head"><span>🏆 成就點數 ' + pts + '</span><b>' + doneN + ' / ' + total + '　' + pct.toFixed(1) + '%</b></div>' +
+        '<div class="codex-prog-track"><div class="codex-prog-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>';
+  }
+  function renderAcvCats() {
+    var wrap = $('acv-cats');
+    var catalog = state.init.achievements || [];
+    var catMeta = state.init.achievementCats || {};
+    var done = achievementsDoneMap();
+    var cats = ['all'].concat(Object.keys(catMeta));
+    wrap.innerHTML = cats.map(function (c) {
+      var label = c === 'all' ? '全部' : ((catMeta[c].icon || '') + ' ' + catMeta[c].name);
+      var list = c === 'all' ? catalog : catalog.filter(function (a) { return a.cat === c; });
+      var n = list.filter(function (a) { return !!done[a.id]; }).length;
+      return '<button class="codex-cat-btn' + (c === acvCatFilter ? ' active' : '') + '" data-cat="' + c + '">' +
+        escapeHtml(label) + ' <span class="codex-cat-n">' + n + '/' + list.length + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.codex-cat-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        acvCatFilter = btn.dataset.cat;
+        renderAcvCats();
+        renderAcvList();
+      });
+    });
+  }
+  function renderAcvList() {
+    var wrap = $('acv-list');
+    var catalog = state.init.achievements || [];
+    var done = achievementsDoneMap();
+    var rows = acvCatFilter === 'all' ? catalog : catalog.filter(function (a) { return a.cat === acvCatFilter; });
+    wrap.innerHTML = '';
+    if (!rows.length) { wrap.innerHTML = '<div class="empty-hint">沒有項目</div>'; return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (a) {
+      var isDone = !!done[a.id];
+      var rewardTxt = (a.reward.gold ? ('💰' + a.reward.gold.toLocaleString() + '　') : '') + '🏆' + a.reward.point;
+      var row = document.createElement('div');
+      row.className = 'acv-row' + (isDone ? ' done' : '');
+      row.innerHTML =
+        '<div class="ic">' + a.icon + '</div>' +
+        '<div class="body">' +
+          '<div class="nm">' + escapeHtml(a.name) + (isDone ? ' ✅' : '') + '</div>' +
+          '<div class="ds">' + escapeHtml(a.desc || '') + '</div>' +
+          '<div class="rw">' + rewardTxt + '</div>' +
+        '</div>' +
+        '<div class="btns">' +
+          '<button class="btn-unlock" data-id="' + a.id + '">解鎖</button>' +
+          '<button class="btn-clear" data-id="' + a.id + '">清除</button>' +
+        '</div>';
+      frag.appendChild(row);
+    });
+    wrap.appendChild(frag);
+    wrap.querySelectorAll('.btn-unlock').forEach(function (btn) {
+      btn.addEventListener('click', function () { unlockAchievement(btn.dataset.id); });
+    });
+    wrap.querySelectorAll('.btn-clear').forEach(function (btn) {
+      btn.addEventListener('click', function () { clearAchievement(btn.dataset.id); });
+    });
+  }
+  function refreshAcvAll() {
+    renderAcvProgress();
+    renderAcvCats();
+    renderAcvList();
+  }
+  function recomputeAcvPoints() {
+    var av = state.slotWorking.achievements;
+    var catalog = state.init.achievements || [];
+    var sum = 0;
+    catalog.forEach(function (a) { if (av.done[a.id]) sum += (a.reward.point || 0); });
+    av.points = sum;
+  }
+  function commitAcvPatch() {
+    state.slotPatch.achievements = JSON.parse(JSON.stringify(state.slotWorking.achievements));
+    state.slotPatch.gold = state.slotWorking.gold; // 解鎖可能連帶發鋅幣，鋅幣欄位也要一起送出
+    fillBasicFields(); // 鋅幣可能變了，基本分頁的顯示要跟著刷新
+    updateSlotStatus();
+    refreshAcvAll();
+  }
+  function unlockAchievement(id) {
+    var av = state.slotWorking.achievements;
+    var a = (state.init.achievements || []).find(function (x) { return x.id === id; });
+    if (!av.done[id]) {
+      av.done[id] = Date.now();
+      if (a && a.reward.gold) state.slotWorking.gold = (state.slotWorking.gold || 0) + a.reward.gold;
+    }
+    // 不管本來就已經解鎖過還是這次才解鎖，都補一次灌值——
+    // 舊版修改器解鎖過的成就（只打勾、沒灌來源數值）現在再按一次也能補救。
+    state.acvFillIds[id] = true;
+    recomputeAcvPoints();
+    commitAcvPatch();
+  }
+  function clearAchievement(id) {
+    var av = state.slotWorking.achievements;
+    if (!av.done[id]) return;
+    delete av.done[id];
+    delete state.acvFillIds[id]; // 還沒套用就清掉的話，順便取消灌值，不然清除完數值反而還在
+    recomputeAcvPoints();
+    commitAcvPatch(); // 已發放的鋅幣不會扣回，只是把「達成」這個紀錄清掉
+  }
+  $('acv-unlock-all').addEventListener('click', function () {
+    if (!confirm('確定要解鎖全部成就嗎？（尚未解鎖的鋅幣獎勵會一起發放，全部成就的進度條來源數值都會一起灌滿，含之前已經解鎖過的）')) return;
+    var av = state.slotWorking.achievements;
+    var catalog = state.init.achievements || [];
+    var goldGain = 0;
+    catalog.forEach(function (a) {
+      if (!av.done[a.id]) {
+        av.done[a.id] = Date.now();
+        if (a.reward.gold) goldGain += a.reward.gold;
+      }
+      // 全部都補灌值，不管本來有沒有解鎖過——舊版解鎖過的成就這次也一起補救
+      state.acvFillIds[a.id] = true;
+    });
+    state.slotWorking.gold = (state.slotWorking.gold || 0) + goldGain;
+    recomputeAcvPoints();
+    commitAcvPatch();
+    toast('✅ 成就已全部解鎖（記得按下面「套用修改」）');
+  });
+  $('acv-clear-all').addEventListener('click', function () {
+    if (!confirm('確定要清除全部成就紀錄嗎？（不會扣回已經發放的鋅幣）')) return;
+    state.slotWorking.achievements = { done: {}, points: 0 };
+    state.acvFillIds = {};
+    commitAcvPatch();
+  });
+
+  // ---------------- 技能分頁 ----------------
+  // 學習規則照抄遊戲本體 levelUpSkill()：只檢查 requires（前置技能等級），
+  // 不檢查、也不扣技能點——這是這個分頁的整個重點（無視點數限制學技能）。
+  // 任務技能（isQuest）維持跟遊戲一樣不能手動調整，一鍵遺忘也會保留它們，
+  // 跟遊戲本體 resetSkills() 的行為一致。
+  function skillById(id) {
+    var jobs = state.init.skillCatalog || {};
+    for (var jobId in jobs) {
+      var found = (jobs[jobId].skills || []).find(function (s) { return s.id === id; });
+      if (found) return found;
+    }
+    return null;
+  }
+  function skillRequiresSatisfied(sk) {
+    if (!sk.requires) return true;
+    var reqList = Array.isArray(sk.requires) ? sk.requires : [sk.requires];
+    var learned = state.slotWorking.learnedSkills || {};
+    return reqList.every(function (req) { return (learned[req.skillId] || 0) >= req.level; });
+  }
+  function renderSkillTab() {
+    var wrap = $('skill-list');
+    var jobs = state.init.skillCatalog || {};
+    var chain = jobChainForSlot();
+    wrap.innerHTML = '';
+    if (!chain.length) { wrap.innerHTML = '<div class="empty-hint">沒有讀到職業資料</div>'; return; }
+    var learned = state.slotWorking.learnedSkills || {};
+    var frag = document.createDocumentFragment();
+    chain.forEach(function (jobId) {
+      var job = jobs[jobId];
+      if (!job || !job.skills.length) return;
+      // 借來的技能不在借用者底下再畫一次——跟遊戲本體 renderSkillsTab() 同一條規則，
+      // 只有「來源職業也在這個角色的職業鏈裡」才會被濾掉，不然超級新手那種
+      // 沒實際當過來源職業的情況，技能會整個不見。
+      var shown = job.skills.filter(function (sk) {
+        var src = job.borrowedFrom && job.borrowedFrom[sk.id];
+        return !(src && chain.indexOf(src) !== -1);
+      });
+      if (!shown.length) return;
+
+      var block = document.createElement('div');
+      block.className = 'skill-job-block';
+      var title = document.createElement('div');
+      title.className = 'skill-job-title';
+      title.innerHTML = (job.icon || '') + ' ' + escapeHtml(job.name) + '<span class="tier-tag">Tier ' + job.tier + '</span>';
+      block.appendChild(title);
+
+      shown.forEach(function (sk) {
+        var lv = learned[sk.id] || 0;
+        var isMaxed = lv >= sk.maxLv;
+        var row = document.createElement('div');
+        row.className = 'skill-row' + (lv > 0 ? ' learned' : '');
+        var lvTag = sk.isQuest
+          ? ('任務技能・Lv' + lv + '/' + sk.maxLv)
+          : ('Lv' + lv + '/' + sk.maxLv + (isMaxed ? '・MAX' : ''));
+        row.innerHTML =
+          '<div class="body">' +
+            '<div class="nm">' + escapeHtml(sk.name) + '<span class="lv-tag' + (isMaxed ? ' maxed' : '') + '">' + lvTag + '</span></div>' +
+            '<div class="ds">' + escapeHtml(sk.desc) + '</div>' +
+          '</div>' +
+          (sk.isQuest ? '' : '<button class="btn-learn" data-id="' + sk.id + '">+</button>');
+        if (!sk.isQuest) {
+          var canLearn = !isMaxed && skillRequiresSatisfied(sk);
+          var btn = row.querySelector('.btn-learn');
+          btn.disabled = !canLearn;
+          if (!canLearn && !isMaxed) {
+            var reqList = Array.isArray(sk.requires) ? sk.requires : (sk.requires ? [sk.requires] : []);
+            var missing = reqList.filter(function (req) { return (learned[req.skillId] || 0) < req.level; })
+              .map(function (req) { var rs = skillById(req.skillId); return (rs ? rs.name : req.skillId) + ' Lv' + req.level; });
+            if (missing.length) btn.title = '需要先學會：' + missing.join('、');
+          }
+          btn.addEventListener('click', function () { learnSkillOneLevel(sk.id); });
+        }
+        block.appendChild(row);
+      });
+      frag.appendChild(block);
+    });
+    wrap.appendChild(frag);
+  }
+  function learnSkillOneLevel(id) {
+    var sk = skillById(id);
+    if (!sk || sk.isQuest) return;
+    var learned = state.slotWorking.learnedSkills;
+    var lv = learned[id] || 0;
+    if (lv >= sk.maxLv) return;
+    if (!skillRequiresSatisfied(sk)) { toast('⚠️ 還沒滿足前置技能需求', true); return; }
+    learned[id] = lv + 1;
+    commitSkillPatch();
+  }
+  function commitSkillPatch() {
+    state.slotPatch.learnedSkills = Object.assign({}, state.slotWorking.learnedSkills);
+    updateSlotStatus();
+    renderSkillTab();
+  }
+  $('skill-learn-all').addEventListener('click', function () {
+    if (!confirm('確定要學會全部技能（直接點滿）嗎？任務技能不受影響。')) return;
+    var jobs = state.init.skillCatalog || {};
+    var chain = jobChainForSlot();
+    var learned = state.slotWorking.learnedSkills;
+    var allSkills = [];
+    chain.forEach(function (jobId) {
+      var job = jobs[jobId];
+      if (job) allSkills = allSkills.concat(job.skills.filter(function (sk) { return !sk.isQuest; }));
+    });
+    // 前置需求可能是連鎖的（B 需要 A、C 需要 B），單一輪掃不完，
+    // 重複掃到「這一輪完全沒有任何技能被點滿」才停止。
+    var progressed = true;
+    var guard = 0;
+    while (progressed && guard < 50) {
+      progressed = false;
+      guard++;
+      allSkills.forEach(function (sk) {
+        var lv = learned[sk.id] || 0;
+        if (lv >= sk.maxLv) return;
+        if (!skillRequiresSatisfied(sk)) return;
+        learned[sk.id] = sk.maxLv;
+        progressed = true;
+      });
+    }
+    commitSkillPatch();
+    toast('✅ 已學會全部技能（記得按下面「套用修改」）');
+  });
+  $('skill-forget-all').addEventListener('click', function () {
+    if (!confirm('確定要遺忘全部技能嗎？任務技能會保留，跟遊戲內「重置技能」規則一致。')) return;
+    var learned = state.slotWorking.learnedSkills;
+    Object.keys(learned).forEach(function (id) {
+      var sk = skillById(id);
+      if (!sk || !sk.isQuest) delete learned[id];
+    });
+    commitSkillPatch();
+  });
+
+  function updateSlotStatus() {
+    var n = Object.keys(state.slotPatch).length;
+    $('slot-status').textContent = n ? ('有 ' + n + ' 項變更尚未套用') : '尚未變更';
+    $('slot-status').classList.toggle('dirty', !!n);
+    $('btn-apply-slot').disabled = !n;
+  }
+  $('btn-discard').addEventListener('click', function () {
+    if (!Object.keys(state.slotPatch).length) return;
+    if (!confirm('放棄目前所有未套用的修改？')) return;
+    openSlotEditor(state.selectedSlot);
+  });
+  $('btn-apply-slot').addEventListener('click', function () {
+    if (!Object.keys(state.slotPatch).length) return;
+    sendToGame({
+      type: 'ro-editor:apply', slot: state.selectedSlot, patch: state.slotPatch,
+      fillAchievementIds: Object.keys(state.acvFillIds)
+    });
+  });
+
+  // ---------------- 倉庫編輯畫面 ----------------
+  function openWarehouseEditor() {
+    state.whPatch = {};
+    state.whWorking = JSON.parse(JSON.stringify(state.init.warehouse || { items: [], gold: 0 }));
+    $('wh-gold').value = state.whWorking.gold || 0;
+    renderWhList();
+    updateWhStatus();
+    hide('screen-slots');
+    show('screen-warehouse');
+  }
+  $('wh-gold').addEventListener('input', function () {
+    var v = parseInt(this.value, 10);
+    if (isNaN(v)) return;
+    state.whPatch.gold = v;
+    state.whWorking.gold = v;
+    updateWhStatus();
+  });
+  function renderWhList() {
+    var wrap = $('wh-list');
+    wrap.innerHTML = '';
+    var items = state.whWorking.items || [];
+    if (!items.length) { wrap.innerHTML = '<div class="empty-hint">倉庫是空的</div>'; return; }
+    items.forEach(function (row, idx) {
+      var meta = (state.init.itemMeta || {})[row.item] || {};
+      var isInstance = !!row.instanceId;
+      var hasCards = !!(row.cards && row.cards.length);
+      var line = document.createElement('div');
+      line.className = 'list-row' + (hasCards ? ' has-cards' : '');
+      line.innerHTML =
+        '<div class="ic">' + (meta.icon || '📦') + '</div>' +
+        '<div class="nm">' + escapeHtml(meta.name || row.item) +
+          (hasCards ? '<span class="card-badge">🃏×' + row.cards.length + '</span>' : '') +
+          (isInstance ? '<small>個體裝備，只能整件移除' + (hasCards ? '・點名稱看插卡' : '') + '</small>' : '<small>' + row.item + '</small>') + '</div>' +
+        (isInstance ? '' : '<input type="number" min="0" value="' + row.qty + '" data-idx="' + idx + '">') +
+        '<button class="rm" data-idx="' + idx + '">✕</button>';
+      wrap.appendChild(line);
+      if (hasCards) {
+        line.addEventListener('click', function (e) {
+          if (e.target.closest('input') || e.target.closest('button')) return;
+          showCardModal(meta.name || row.item, row.cards);
+        });
+      }
+    });
+    wrap.querySelectorAll('input[type=number]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        var v = parseInt(this.value, 10);
+        if (isNaN(v) || v < 0) return;
+        state.whWorking.items[idx].qty = v;
+        touchWhPatch();
+      });
+    });
+    wrap.querySelectorAll('.rm').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(this.dataset.idx, 10);
+        state.whWorking.items.splice(idx, 1);
+        touchWhPatch();
+        renderWhList();
+      });
+    });
+  }
+  function touchWhPatch() {
+    state.whPatch.items = state.whWorking.items.slice();
+    updateWhStatus();
+  }
+  $('wh-add-btn').addEventListener('click', function () {
+    var id = $('wh-add-id').value.trim();
+    var qty = parseInt($('wh-add-qty').value, 10) || 1;
+    if (!id) return;
+    if (state.init.itemMeta && !state.init.itemMeta[id]) {
+      toast('⚠️ 找不到這個道具 ID', true);
+      return;
+    }
+    var items = state.whWorking.items || (state.whWorking.items = []);
+    var existing = items.find(function (r) { return r.item === id && !r.instanceId; });
+    if (existing) existing.qty += qty;
+    else items.push({ item: id, qty: qty });
+    touchWhPatch();
+    renderWhList();
+    $('wh-add-id').value = '';
+    $('wh-add-qty').value = 1;
+  });
+  function updateWhStatus() {
+    var n = Object.keys(state.whPatch).length;
+    $('wh-status').textContent = n ? ('有 ' + n + ' 項變更尚未套用') : '尚未變更';
+    $('wh-status').classList.toggle('dirty', !!n);
+    $('btn-apply-wh').disabled = !n;
+  }
+  $('wh-discard').addEventListener('click', function () {
+    if (!Object.keys(state.whPatch).length) return;
+    if (!confirm('放棄目前所有未套用的修改？')) return;
+    openWarehouseEditor();
+  });
+  $('btn-apply-wh').addEventListener('click', function () {
+    if (!Object.keys(state.whPatch).length) return;
+    sendToGame({ type: 'ro-editor:apply-warehouse', patch: state.whPatch });
+  });
+
+})();
+</script>
+</body>
+</html>
