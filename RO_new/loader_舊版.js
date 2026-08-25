@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L15';
+const LOADER_VERSION = 'L13';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -386,9 +386,9 @@ if (existing) {
 }
 
 // 修改器正式網址：跟書籤工具放在同一個 repo/資料夾下的 editor/ 子目錄。
-const EDITOR_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO_new/editor/';
+const EDITOR_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/editor/';
 // 物品清理工具：獨立新頁面，跟修改器分開，密語「刪除物品」才會開。
-const ITEM_TOOL_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO_new/item-tool/';
+const ITEM_TOOL_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO/item-tool/';
 // postMessage 只信任這個 origin 送來的訊息（protocol+host，不含路徑）——
 // 修改器跟物品清理工具都在同一個 GitHub Pages 網域下，共用同一個 origin 檢查。
 const EDITOR_ORIGIN = 'https://jtnhrbpvvm-spec.github.io';
@@ -509,18 +509,136 @@ function toggleSlotPickerList(input) {
   list.classList.add('open');
 }
 
-// 在輸入框打「開啟修改器」再按開啟，才會跳出修改器視窗；其他輸入一律不做事。
-// window.open 是在按鈕點擊事件內同步呼叫的，瀏覽器彈窗攔截不會擋。
+// ---------------- 修改器：遊戲頁內浮動面板（不開新分頁） ----------------
+// 原本是 window.open() 開一個獨立分頁，改成直接把修改器用 <iframe> 嵌進
+// 遊戲頁面本身，做成可拖曳、可縮小成小圖示的浮動視窗。跨網域的
+// postMessage 溝通機制完全不用改：iframe.contentWindow 跟 window.open()
+// 回傳的視窗參照，對 postMessage/ev.source 來說是等價的東西，
+// handleEditorMessage() 沿用 window.__roEditorWin 這個共用變數就好。
+const EDITOR_FLOAT_ID = 'ro-editor-float';
+const EDITOR_FAB_ID = 'ro-editor-fab';
+
+function ensureEditorFloatStyle() {
+  if (document.getElementById('ro-editor-float-style')) return;
+  const s = document.createElement('style');
+  s.id = 'ro-editor-float-style';
+  s.textContent =
+    '#' + EDITOR_FLOAT_ID + '{position:fixed;top:6vh;left:50%;transform:translateX(-50%);' +
+    'width:min(480px,94vw);height:min(760px,82vh);background:#1b1b22;border:1px solid #3a3a46;' +
+    'border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:999999;' +
+    'display:flex;flex-direction:column;overflow:hidden;}' +
+    '#' + EDITOR_FLOAT_ID + '.ro-hidden{display:none;}' +
+    '#ro-editor-float-header{flex:0 0 auto;display:flex;align-items:center;gap:8px;' +
+    'padding:8px 10px;background:#26262f;color:#fff;font-size:14px;touch-action:none;' +
+    'cursor:move;user-select:none;}' +
+    '#ro-editor-float-header .ro-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
+    '#ro-editor-float-header button{flex:0 0 auto;min-width:40px;min-height:34px;border:none;' +
+    'border-radius:8px;background:#3a3a46;color:#fff;font-size:16px;cursor:pointer;}' +
+    '#ro-editor-float-iframe{flex:1 1 auto;border:0;width:100%;background:#fff;}' +
+    '#' + EDITOR_FAB_ID + '{position:fixed;right:16px;bottom:90px;width:52px;height:52px;' +
+    'border-radius:50%;background:#3a3a46;color:#fff;font-size:22px;border:1px solid #55556a;' +
+    'box-shadow:0 4px 14px rgba(0,0,0,.5);z-index:999999;display:none;align-items:center;' +
+    'justify-content:center;cursor:pointer;touch-action:none;}' +
+    '#' + EDITOR_FAB_ID + '.ro-show{display:flex;}';
+  document.head.appendChild(s);
+}
+
+// 用滑鼠或觸控拖曳 handleEl 來移動 targetEl。第一次按下時把定位方式從
+// 「置中用的 transform」切成「絕對 left/top」，不然拖到一半位置會因為
+// transform 還在而突然跳掉。邊界只做簡單 clamp，避免拖到完全看不到面板。
+function makeDraggable(handleEl, targetEl) {
+  let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  function xy(ev) {
+    if (ev.touches && ev.touches.length) return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+    return { x: ev.clientX, y: ev.clientY };
+  }
+  function onDown(ev) {
+    dragging = true;
+    const p = xy(ev);
+    startX = p.x; startY = p.y;
+    const rect = targetEl.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    targetEl.style.transform = 'none';
+    targetEl.style.left = startLeft + 'px';
+    targetEl.style.top = startTop + 'px';
+    ev.preventDefault();
+  }
+  function onMove(ev) {
+    if (!dragging) return;
+    const p = xy(ev);
+    let nl = startLeft + (p.x - startX);
+    let nt = startTop + (p.y - startY);
+    nl = Math.max(-(targetEl.offsetWidth - 60), Math.min(nl, window.innerWidth - 60));
+    nt = Math.max(0, Math.min(nt, window.innerHeight - 40));
+    targetEl.style.left = nl + 'px';
+    targetEl.style.top = nt + 'px';
+    ev.preventDefault();
+  }
+  function onUp() { dragging = false; }
+  handleEl.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  handleEl.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+}
+
+// 在輸入框打「開啟修改器」再按開啟，才會生成浮動面板；其他輸入一律不做事。
 function openEditTool(code) {
   if (String(code).trim() !== '開啟修改器') return;
-  // 視窗已經開著就只是把它拉到前面，不要重複開、更不要重複凍結。
-  if (window.__roEditorWin && !window.__roEditorWin.closed) {
-    window.__roEditorWin.focus();
+  ensureEditorFloatStyle();
+  let panel = document.getElementById(EDITOR_FLOAT_ID);
+  const fabExisting = document.getElementById(EDITOR_FAB_ID);
+  if (panel) {
+    // 已經開著（不管是展開還是縮小成小圖示）：直接切回展開狀態，
+    // iframe 不重建，修改器裡還沒套用的編輯內容不會不見。
+    panel.classList.remove('ro-hidden');
+    if (fabExisting) fabExisting.classList.remove('ro-show');
     return;
   }
-  const win = window.open(EDITOR_URL, 'ro-save-editor', 'width=480,height=760');
-  if (!win) return;
-  window.__roEditorWin = win;
+  panel = document.createElement('div');
+  panel.id = EDITOR_FLOAT_ID;
+  panel.innerHTML =
+    '<div id="ro-editor-float-header">' +
+      '<span class="ro-title">🛠️ 存檔修改器</span>' +
+      '<button type="button" id="ro-editor-min-btn" title="縮小">➖</button>' +
+      '<button type="button" id="ro-editor-close-btn" title="關閉">✕</button>' +
+    '</div>' +
+    '<iframe id="ro-editor-float-iframe"></iframe>';
+  document.body.appendChild(panel);
+
+  let fab = document.getElementById(EDITOR_FAB_ID);
+  if (!fab) {
+    fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = EDITOR_FAB_ID;
+    fab.title = '展開修改器';
+    fab.textContent = '🛠️';
+    document.body.appendChild(fab);
+  }
+
+  const iframe = document.getElementById('ro-editor-float-iframe');
+  iframe.src = EDITOR_URL;
+  window.__roEditorWin = iframe.contentWindow;
+
+  makeDraggable(document.getElementById('ro-editor-float-header'), panel);
+
+  document.getElementById('ro-editor-min-btn').addEventListener('click', function () {
+    panel.classList.add('ro-hidden');
+    fab.classList.add('ro-show');
+  });
+  fab.addEventListener('click', function () {
+    panel.classList.remove('ro-hidden');
+    fab.classList.remove('ro-show');
+  });
+  document.getElementById('ro-editor-close-btn').addEventListener('click', function () {
+    if (!confirm('確定要關閉修改器嗎？畫面上還沒套用的修改會遺失。')) return;
+    panel.remove();
+    fab.classList.remove('ro-show');
+    window.__roEditorWin = null;
+    unfreezeGame();
+  });
+
   // 訊息監聽只綁一次：書籤是用 import() 每次重新載入整支 loader.js，
   // 用 window.__roEditorMsgBound 這個旗標避免每次開關書籤都疊加一份監聽器。
   if (!window.__roEditorMsgBound) {
@@ -528,14 +646,7 @@ function openEditTool(code) {
     window.__roEditorMsgBound = true;
   }
   freezeGame();
-  // 用輪詢偵測修改器視窗被關掉（postMessage 沒有「視窗關閉」事件可以聽），
-  // 關掉的當下自動解凍，玩家不用自己按什麼按鈕。
-  if (window.__roEditorWatchTimer) clearInterval(window.__roEditorWatchTimer);
-  window.__roEditorWatchTimer = setInterval(function () {
-    if (win.closed) unfreezeGame();
-  }, 600);
 }
-
 
 // 物品清理工具：獨立頁面，密語「刪除物品」開。開關／凍結邏輯跟修改器
 // 幾乎一模一樣（同一套 freezeGame/unfreezeGame），只是視窗參考跟監聽器
@@ -612,7 +723,7 @@ function showFreezeOverlay() {
     '<div class="ro-freeze-box">' +
       '<div class="ro-freeze-icon">🧊</div>' +
       '<div class="ro-freeze-title">遊戲已暫停</div>' +
-      '<div class="ro-freeze-desc">修改器視窗開啟中，為了避免掛機進度跟修改互相覆蓋，這個分頁暫時凍結。<br>改完直接關掉修改器的視窗，就會自動恢復。</div>' +
+      '<div class="ro-freeze-desc">修改器開啟中，為了避免掛機進度跟修改互相覆蓋，遊戲暫時凍結（縮小成小圖示期間也算開啟中，不會恢復）。<br>改完按修改器面板右上角「✕」關閉，就會自動恢復。</div>' +
       '<button class="ro-freeze-force" type="button" id="ro-editor-force-unfreeze">修改器視窗不見了？點這裡強制恢復</button>' +
     '</div>';
   document.body.appendChild(ov);
@@ -639,7 +750,8 @@ function freezeGame() {
 }
 
 function unfreezeGame() {
-  if (window.__roEditorWatchTimer) { clearInterval(window.__roEditorWatchTimer); window.__roEditorWatchTimer = null; }
+  // 修改器改成浮動面板後不再需要輪詢視窗是否關閉（改用「✕ 關閉」按鈕直接觸發），
+  // 這裡只留物品清理工具的輪詢清理（它還是走 window.open 分頁）。
   if (window.__roItemToolWatchTimer) { clearInterval(window.__roItemToolWatchTimer); window.__roItemToolWatchTimer = null; }
   if (!window.__roEditorFrozen) { hideFreezeOverlay(); return; } // 已經不是凍結狀態，只確保遮罩沒殘留
   window.__roEditorFrozen = false;
