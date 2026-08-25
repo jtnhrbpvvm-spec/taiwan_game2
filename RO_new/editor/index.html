@@ -324,7 +324,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V20</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V21</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -606,7 +606,11 @@
   }
 
   // ---------------- A 頁通訊 ----------------
-  var opener = window.opener;
+  // window.opener 只有在用 window.open() 開新分頁時才會有值；現在修改器是被
+  // <iframe> 嵌進遊戲頁面，要跟外層（A 頁）溝通用的是 window.parent。
+  // 這裡兩種都相容：window.opener 優先（保留舊版「開新分頁」測試方式也能用），
+  // 沒有的話再看是不是在 iframe 裡（window.parent !== window），是的話就用 window.parent。
+  var opener = window.opener || (window.parent !== window ? window.parent : null);
 
   function sendToGame(msg) {
     if (!opener) return;
