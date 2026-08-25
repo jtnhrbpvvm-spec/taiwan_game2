@@ -121,6 +121,11 @@
   </section>
 
   <section>
+    <h2>能力值</h2>
+    <div class="grid" id="statFields"></div>
+  </section>
+
+  <section>
     <h2>背包物品 (inventoryStacks)</h2>
     <table>
       <thead>
@@ -171,6 +176,7 @@ const saveBtn = document.getElementById('saveBtn');
 const statusEl = document.getElementById('status');
 const editorArea = document.getElementById('editorArea');
 const basicFields = document.getElementById('basicFields');
+const statFields = document.getElementById('statFields');
 const inventoryBody = document.getElementById('inventoryBody');
 const warehouseBody = document.getElementById('warehouseBody');
 
@@ -203,6 +209,7 @@ fileInput.addEventListener('change', (e) => {
       warehouseObj = null;
     }
     renderBasicFields();
+    renderStatFields();
     renderInventoryTable();
     renderWarehouseTable();
     editorArea.classList.remove('hidden');
@@ -235,15 +242,63 @@ function renderBasicFields() {
 
   makeField(basicFields, '角色名稱', () => rootData.CharacterName ?? '', v => { rootData.CharacterName = v; }, 'text');
   makeField(basicFields, '金幣 (Player.gold)', () => playerObj.gold ?? 0, v => { playerObj.gold = v; }, 'number');
-  makeField(basicFields, 'HP', () => playerObj.hp ?? 0, v => { playerObj.hp = v; if ('Hp' in rootData) rootData.Hp = v; }, 'number');
-  makeField(basicFields, 'MP', () => playerObj.mp ?? 0, v => { playerObj.mp = v; if ('Mp' in rootData) rootData.Mp = v; }, 'number');
-  makeField(basicFields, '最大HP (MaxHp)', () => rootData.MaxHp ?? 0, v => { rootData.MaxHp = v; }, 'number');
-  makeField(basicFields, '最大MP (MaxMp)', () => rootData.MaxMp ?? 0, v => { rootData.MaxMp = v; }, 'number');
   makeField(basicFields, '飽食度 (satiety)', () => playerObj.satiety ?? 0, v => { playerObj.satiety = v; }, 'number');
   makeField(basicFields, '等級 (level)', () => playerObj.level ?? 0, v => { playerObj.level = v; if ('Level' in rootData) rootData.Level = v; }, 'number');
   makeField(basicFields, '經驗值 (experience)', () => playerObj.experience ?? 0, v => { playerObj.experience = v; }, 'number');
   makeField(basicFields, '陣營值 (alignment)', () => playerObj.alignment ?? 0, v => { playerObj.alignment = v; if ('Alignment' in rootData) rootData.Alignment = v; }, 'number');
   makeField(basicFields, '倉庫容量上限', () => (warehouseObj ? warehouseObj.capacity ?? 0 : 0), v => { if (warehouseObj) warehouseObj.capacity = v; }, 'number');
+}
+
+function statField(container, label, allocKey, topKey) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  wrap.appendChild(lab);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '6px';
+
+  const inAlloc = document.createElement('input');
+  inAlloc.type = 'number';
+  inAlloc.title = '基礎配點 (Player.allocations.' + allocKey + ')';
+  inAlloc.value = (playerObj.allocations && playerObj.allocations[allocKey]) ?? 0;
+  inAlloc.addEventListener('input', () => {
+    if (!playerObj.allocations) playerObj.allocations = {};
+    playerObj.allocations[allocKey] = inAlloc.value === '' ? 0 : Number(inAlloc.value);
+  });
+
+  const inTop = document.createElement('input');
+  inTop.type = 'number';
+  inTop.title = '顯示數值 (最外層 ' + topKey + ')';
+  inTop.value = rootData[topKey] ?? 0;
+  inTop.addEventListener('input', () => {
+    rootData[topKey] = inTop.value === '' ? 0 : Number(inTop.value);
+  });
+
+  row.appendChild(inAlloc);
+  row.appendChild(inTop);
+  wrap.appendChild(row);
+
+  const hint = document.createElement('div');
+  hint.style.fontSize = '10px';
+  hint.style.color = 'var(--muted)';
+  hint.style.marginTop = '4px';
+  hint.textContent = '左:基礎配點　右:顯示數值';
+  wrap.appendChild(hint);
+
+  container.appendChild(wrap);
+}
+
+function renderStatFields() {
+  statFields.innerHTML = '';
+  statField(statFields, '力量 STR', 'str', 'Str');
+  statField(statFields, '體質 CON', 'con', 'Con');
+  statField(statFields, '敏捷 DEX', 'dex', 'Dex');
+  statField(statFields, '智力 INT', 'int', 'Int');
+  statField(statFields, '感知 WIS', 'wis', 'Wis');
+  statField(statFields, '魅力 CHA', 'cha', 'Cha');
 }
 
 function blankItem() {
