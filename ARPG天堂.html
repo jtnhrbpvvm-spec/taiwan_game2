@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>存檔編輯器</title>
+<style>
+  :root {
+    --bg: #1a1d24;
+    --panel: #23272f;
+    --panel2: #2b303a;
+    --border: #3a3f4b;
+    --text: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #4a9eff;
+    --danger: #ff5d5d;
+    --ok: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 20px;
+  }
+  input[type=file] { color: var(--text); }
+  button {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #06121f; font-weight: 600; }
+  button.danger { color: var(--danger); }
+  .status { font-size: 13px; color: var(--muted); margin-left: auto; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--danger); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .field {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .field input {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+
+  section { margin-bottom: 28px; }
+  section h2 {
+    font-size: 15px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+    margin-bottom: 10px;
+  }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; text-align: left; }
+  th { background: var(--panel2); color: var(--muted); font-weight: 500; }
+  td input {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 5px 7px;
+    font-size: 13px;
+  }
+  td.narrow { width: 70px; }
+  td.checkbox { width: 40px; text-align: center; }
+  .row-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .empty-hint { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<h1>存檔編輯器</h1>
+<div class="sub">載入存檔檔案後可直接編輯數值,完成後匯出成新的存檔檔案。僅在本機瀏覽器中運作,不會上傳任何資料。</div>
+
+<div class="bar">
+  <input type="file" id="fileInput" accept=".json,.save,.dat,.txt,*">
+  <button class="primary" id="saveBtn" disabled>匯出修改後的存檔</button>
+  <span class="status" id="status">尚未載入檔案</span>
+</div>
+
+<div id="editorArea" class="hidden">
+
+  <section>
+    <h2>角色基本數值</h2>
+    <div class="grid" id="basicFields"></div>
+  </section>
+
+  <section>
+    <h2>背包物品 (inventoryStacks)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>itemKey</th>
+          <th class="narrow">數量</th>
+          <th class="narrow">強化值</th>
+          <th class="checkbox">鎖定</th>
+          <th class="narrow">刪除</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryBody"></tbody>
+    </table>
+    <div class="row-actions">
+      <button id="addInventoryRow">+ 新增物品</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>倉庫物品 (Warehouse.items)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>itemKey</th>
+          <th class="narrow">數量</th>
+          <th class="narrow">強化值</th>
+          <th class="checkbox">鎖定</th>
+          <th class="narrow">刪除</th>
+        </tr>
+      </thead>
+      <tbody id="warehouseBody"></tbody>
+    </table>
+    <div class="row-actions">
+      <button id="addWarehouseRow">+ 新增物品</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+let rootData = null;      // 最外層 parse 出來的物件
+let playerObj = null;     // Player 欄位再 parse 一次
+let warehouseObj = null;  // Warehouse 欄位再 parse 一次
+let originalFileName = "save";
+
+const fileInput = document.getElementById('fileInput');
+const saveBtn = document.getElementById('saveBtn');
+const statusEl = document.getElementById('status');
+const editorArea = document.getElementById('editorArea');
+const basicFields = document.getElementById('basicFields');
+const inventoryBody = document.getElementById('inventoryBody');
+const warehouseBody = document.getElementById('warehouseBody');
+
+function setStatus(msg, cls) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  originalFileName = file.name.replace(/\.[^.]+$/, '');
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      rootData = JSON.parse(ev.target.result);
+    } catch (err) {
+      setStatus('無法解析檔案,不是有效的 JSON: ' + err.message, 'err');
+      return;
+    }
+    try {
+      playerObj = typeof rootData.Player === 'string' ? JSON.parse(rootData.Player) : rootData.Player;
+    } catch (err) {
+      setStatus('Player 欄位解析失敗: ' + err.message, 'err');
+      return;
+    }
+    try {
+      warehouseObj = typeof rootData.Warehouse === 'string' ? JSON.parse(rootData.Warehouse) : rootData.Warehouse;
+    } catch (err) {
+      warehouseObj = null;
+    }
+    renderBasicFields();
+    renderInventoryTable();
+    renderWarehouseTable();
+    editorArea.classList.remove('hidden');
+    saveBtn.disabled = false;
+    setStatus('已載入: ' + file.name, 'ok');
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function makeField(container, label, getter, setter, type) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  const input = document.createElement('input');
+  input.type = type || 'text';
+  input.value = getter();
+  input.addEventListener('input', () => {
+    let v = input.value;
+    if (type === 'number') v = v === '' ? 0 : Number(v);
+    setter(v);
+  });
+  wrap.appendChild(lab);
+  wrap.appendChild(input);
+  container.appendChild(wrap);
+}
+
+function renderBasicFields() {
+  basicFields.innerHTML = '';
+
+  makeField(basicFields, '角色名稱', () => rootData.CharacterName ?? '', v => { rootData.CharacterName = v; }, 'text');
+  makeField(basicFields, '金幣 (Player.gold)', () => playerObj.gold ?? 0, v => { playerObj.gold = v; }, 'number');
+  makeField(basicFields, 'HP', () => playerObj.hp ?? 0, v => { playerObj.hp = v; if ('Hp' in rootData) rootData.Hp = v; }, 'number');
+  makeField(basicFields, 'MP', () => playerObj.mp ?? 0, v => { playerObj.mp = v; if ('Mp' in rootData) rootData.Mp = v; }, 'number');
+  makeField(basicFields, '最大HP (MaxHp)', () => rootData.MaxHp ?? 0, v => { rootData.MaxHp = v; }, 'number');
+  makeField(basicFields, '最大MP (MaxMp)', () => rootData.MaxMp ?? 0, v => { rootData.MaxMp = v; }, 'number');
+  makeField(basicFields, '飽食度 (satiety)', () => playerObj.satiety ?? 0, v => { playerObj.satiety = v; }, 'number');
+  makeField(basicFields, '等級 (level)', () => playerObj.level ?? 0, v => { playerObj.level = v; if ('Level' in rootData) rootData.Level = v; }, 'number');
+  makeField(basicFields, '經驗值 (experience)', () => playerObj.experience ?? 0, v => { playerObj.experience = v; }, 'number');
+  makeField(basicFields, '陣營值 (alignment)', () => playerObj.alignment ?? 0, v => { playerObj.alignment = v; if ('Alignment' in rootData) rootData.Alignment = v; }, 'number');
+  makeField(basicFields, '倉庫容量上限', () => (warehouseObj ? warehouseObj.capacity ?? 0 : 0), v => { if (warehouseObj) warehouseObj.capacity = v; }, 'number');
+}
+
+function blankItem() {
+  return {
+    uid: 'edit:item:' + Date.now() + Math.floor(Math.random() * 1000),
+    itemKey: '',
+    quantity: 1,
+    enhancement: 0,
+    blessing: 0,
+    brokenBladeStacks: 0,
+    chargeCount: 0,
+    locked: false,
+    isIdentified: true,
+    itemLevel: 0,
+    affixes: [],
+    petUid: '',
+    monsterCardLevel: 0,
+    monsterCardExperience: 0,
+    monsterCardReadyAtUnixMilliseconds: 0,
+    itemDelayReadyAtUnixMilliseconds: 0,
+    attrEnchantKind: 0,
+    attrEnchantLevel: 0,
+    sealed: false
+  };
+}
+
+function renderItemTable(tbody, list) {
+  tbody.innerHTML = '';
+  if (!list || list.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.className = 'empty-hint';
+    td.textContent = '（沒有物品）';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+  list.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+
+    const tdKey = document.createElement('td');
+    const inKey = document.createElement('input');
+    inKey.value = item.itemKey ?? '';
+    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
+    tdKey.appendChild(inKey);
+
+    const tdQty = document.createElement('td');
+    tdQty.className = 'narrow';
+    const inQty = document.createElement('input');
+    inQty.type = 'number';
+    inQty.value = item.quantity ?? 0;
+    inQty.addEventListener('input', () => { item.quantity = inQty.value === '' ? 0 : Number(inQty.value); });
+    tdQty.appendChild(inQty);
+
+    const tdEnh = document.createElement('td');
+    tdEnh.className = 'narrow';
+    const inEnh = document.createElement('input');
+    inEnh.type = 'number';
+    inEnh.value = item.enhancement ?? 0;
+    inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
+    tdEnh.appendChild(inEnh);
+
+    const tdLock = document.createElement('td');
+    tdLock.className = 'checkbox';
+    const inLock = document.createElement('input');
+    inLock.type = 'checkbox';
+    inLock.checked = !!item.locked;
+    inLock.addEventListener('change', () => { item.locked = inLock.checked; });
+    tdLock.appendChild(inLock);
+
+    const tdDel = document.createElement('td');
+    tdDel.className = 'narrow';
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '刪除';
+    btnDel.className = 'danger';
+    btnDel.addEventListener('click', () => {
+      list.splice(idx, 1);
+      renderItemTable(tbody, list);
+    });
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(tdKey);
+    tr.appendChild(tdQty);
+    tr.appendChild(tdEnh);
+    tr.appendChild(tdLock);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  });
+}
+
+function renderInventoryTable() {
+  if (!playerObj.inventoryStacks) playerObj.inventoryStacks = [];
+  renderItemTable(inventoryBody, playerObj.inventoryStacks);
+}
+
+function renderWarehouseTable() {
+  if (!warehouseObj) return;
+  if (!warehouseObj.items) warehouseObj.items = [];
+  renderItemTable(warehouseBody, warehouseObj.items);
+}
+
+document.getElementById('addInventoryRow').addEventListener('click', () => {
+  if (!playerObj) return;
+  playerObj.inventoryStacks.push(blankItem());
+  renderInventoryTable();
+});
+
+document.getElementById('addWarehouseRow').addEventListener('click', () => {
+  if (!warehouseObj) return;
+  warehouseObj.items.push(blankItem());
+  renderWarehouseTable();
+});
+
+saveBtn.addEventListener('click', () => {
+  if (!rootData) return;
+  try {
+    rootData.Player = JSON.stringify(playerObj);
+    if (warehouseObj) rootData.Warehouse = JSON.stringify(warehouseObj);
+    const out = JSON.stringify(rootData);
+    const blob = new Blob([out], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = originalFileName + '_edited.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setStatus('已匯出: ' + originalFileName + '_edited.json', 'ok');
+  } catch (err) {
+    setStatus('匯出失敗: ' + err.message, 'err');
+  }
+});
+</script>
+
+</body>
+</html>
