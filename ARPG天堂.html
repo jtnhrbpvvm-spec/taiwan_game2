@@ -126,7 +126,57 @@
   .add-item-widget .search-input { min-width: 180px; }
   .add-item-widget .qty-input { width: 70px; }
   .empty-hint { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
-  .hidden { display: none; }
+  .hidden { display: none !important; }
+
+  /* ==== 側邊選單版面 ==== */
+  .layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .sidebar {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: sticky;
+    top: 24px;
+  }
+  .sidebar button {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  .sidebar button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #06121f;
+    font-weight: 600;
+  }
+  .content { flex: 1; min-width: 0; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ==== 物品名稱唯讀顯示：中文在上、代號在下，避免手滑改到內容 ==== */
+  .item-name-display {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 7px;
+    cursor: default;
+    user-select: text;
+  }
+  .item-name-display .name-line {
+    font-size: 13px;
+    color: var(--text);
+  }
+  .item-name-display .name-line.missing { color: var(--muted); font-style: italic; }
+  .item-name-display .code-line {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
 </style>
 </head>
 <body>
@@ -145,92 +195,108 @@
   <span class="status" id="status">尚未載入檔案</span>
 </div>
 
-<div id="editorArea" class="hidden">
+<div id="editorArea" class="hidden layout">
 
-  <section>
-    <h2>角色基本數值</h2>
-    <div class="grid" id="basicFields"></div>
-  </section>
+  <div class="sidebar" id="sidebarNav">
+    <button class="nav-btn active" data-tab="tab-basic">基本資料</button>
+    <button class="nav-btn" data-tab="tab-skills">技能</button>
+    <button class="nav-btn" data-tab="tab-items">物品</button>
+    <button class="nav-btn" data-tab="tab-warehouse">倉庫</button>
+  </div>
 
-  <section>
-    <h2>能力值</h2>
-    <div class="grid" id="statFields"></div>
-  </section>
+  <div class="content">
 
-  <section>
-    <h2>裝備欄位 (equippedItems)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th class="narrow">裝備位置</th>
-          <th>itemKey</th>
-          <th class="narrow">強化值</th>
-          <th class="checkbox">鎖定</th>
-          <th class="narrow">刪除</th>
-        </tr>
-      </thead>
-      <tbody id="equipBody"></tbody>
-    </table>
-    <div class="row-actions">
-      <button id="addEquipRow">+ 新增裝備</button>
+    <div class="tab-panel active" id="tab-basic">
+      <section>
+        <h2>角色基本數值</h2>
+        <div class="grid" id="basicFields"></div>
+      </section>
+
+      <section>
+        <h2>能力值</h2>
+        <div class="grid" id="statFields"></div>
+      </section>
+
+      <section>
+        <h2>戰鬥與快捷設定</h2>
+        <div class="grid" id="settingFields"></div>
+      </section>
     </div>
-  </section>
 
-  <section>
-    <h2>已學技能 (learnedSkills)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>技能 ID</th>
-          <th class="narrow">刪除</th>
-        </tr>
-      </thead>
-      <tbody id="skillBody"></tbody>
-    </table>
-    <div class="row-actions">
-      <button id="addSkillRow">+ 新增技能</button>
+    <div class="tab-panel" id="tab-skills">
+      <section>
+        <h2>已學技能 (learnedSkills)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>技能 ID</th>
+              <th class="narrow">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="skillBody"></tbody>
+        </table>
+        <div class="row-actions">
+          <button id="addSkillRow">+ 新增技能</button>
+        </div>
+      </section>
     </div>
-  </section>
 
-  <section>
-    <h2>戰鬥與快捷設定</h2>
-    <div class="grid" id="settingFields"></div>
-  </section>
+    <div class="tab-panel" id="tab-items">
+      <section>
+        <h2>裝備欄位 (equippedItems)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th class="narrow">裝備位置</th>
+              <th>物品</th>
+              <th class="narrow">強化值</th>
+              <th class="checkbox">鎖定</th>
+              <th class="narrow">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="equipBody"></tbody>
+        </table>
+        <div class="add-item-widget" id="equipAddWidget"></div>
+      </section>
 
-  <section>
-    <h2>背包物品 (inventoryStacks)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>itemKey</th>
-          <th class="narrow">數量</th>
-          <th class="narrow">強化值</th>
-          <th class="checkbox">鎖定</th>
-          <th class="narrow">刪除</th>
-        </tr>
-      </thead>
-      <tbody id="inventoryBody"></tbody>
-    </table>
-    <div class="add-item-widget" id="inventoryAddWidget"></div>
-  </section>
+      <section>
+        <h2>背包物品 (inventoryStacks)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>物品</th>
+              <th class="narrow">數量</th>
+              <th class="narrow">強化值</th>
+              <th class="checkbox">鎖定</th>
+              <th class="narrow">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+        <div class="add-item-widget" id="inventoryAddWidget"></div>
+      </section>
+    </div>
 
-  <section>
-    <h2>倉庫物品 (Warehouse.items)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>itemKey</th>
-          <th class="narrow">數量</th>
-          <th class="narrow">強化值</th>
-          <th class="checkbox">鎖定</th>
-          <th class="narrow">刪除</th>
-        </tr>
-      </thead>
-      <tbody id="warehouseBody"></tbody>
-    </table>
-    <div class="add-item-widget" id="warehouseAddWidget"></div>
-  </section>
+    <div class="tab-panel" id="tab-warehouse">
+      <section>
+        <h2>倉庫物品 (Warehouse.items)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>物品</th>
+              <th class="narrow">數量</th>
+              <th class="narrow">強化值</th>
+              <th class="checkbox">鎖定</th>
+              <th class="narrow">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="warehouseBody"></tbody>
+        </table>
+        <div class="add-item-widget" id="warehouseAddWidget"></div>
+      </section>
+    </div>
 
+  </div>
 
 </div>
 
@@ -263,7 +329,9 @@ function extractNamesFromDb(db) {
     // noEnhance: DB.json 裡明確標記「這件物品不能強化」的旗標。
     // 過去版本用「type 是不是武器/防具」來猜測能不能強化，會誤判：
     // 實際上有一部分武器/防具本身也標記不能強化，而部分飾品(戒指/耳環/項鍊等)是可以強化的。
-    items[id] = { n: entry.n || id, type: entry.type || 'misc', noEnhance: !!entry.noEnhance };
+    // stackable: DB.json 標記「這件物品可以疊加數量」的旗標。武器/防具/飾品/技能書完全沒有
+    // 這個標記(視為不可疊加,每件都是獨立個體);藥水/卷軸/部分素材類才有 stackable:true。
+    items[id] = { n: entry.n || id, type: entry.type || 'misc', noEnhance: !!entry.noEnhance, stackable: !!entry.stackable };
   }
   const skills = {};
   for (const [id, entry] of Object.entries(db.skills || {})) {
@@ -343,6 +411,16 @@ function setStatus(msg, cls) {
   statusEl.textContent = msg;
   statusEl.className = 'status' + (cls ? ' ' + cls : '');
 }
+
+// ==== 側邊選單分頁切換 ====
+document.getElementById('sidebarNav').addEventListener('click', (e) => {
+  const btn = e.target.closest('.nav-btn');
+  if (!btn) return;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+});
 
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
@@ -490,10 +568,7 @@ function renderEquipmentTable() {
     tdSlot.appendChild(inSlot);
 
     const tdKey = document.createElement('td');
-    const inKey = document.createElement('input');
-    inKey.value = item.itemKey ?? '';
-    tdKey.appendChild(inKey);
-    attachNameHint(inKey, tdKey, itemNameHint);
+    tdKey.appendChild(buildItemNameDisplay(item.itemKey));
 
     const tdEnh = document.createElement('td');
     tdEnh.className = 'narrow';
@@ -504,14 +579,6 @@ function renderEquipmentTable() {
     inEnh.title = inEnh.disabled ? '這件物品依 DB.json 標記不可強化' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
-
-    inKey.addEventListener('input', () => {
-      item.itemKey = inKey.value;
-      const enhanceable = isEnhanceableItem(inKey.value);
-      inEnh.disabled = !enhanceable;
-      inEnh.title = enhanceable ? '' : '這件物品依 DB.json 標記不可強化';
-      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
-    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
@@ -541,14 +608,8 @@ function renderEquipmentTable() {
   });
 }
 
-document.getElementById('addEquipRow').addEventListener('click', () => {
-  if (!playerObj) return;
-  const slotName = prompt('請輸入裝備位置代號(例如 wpn、armor、helm、shield、boots、gloves、cloak、tshirt、belt、amulet、ring1、ring2、lantern):');
-  if (!slotName) return;
-  if (!playerObj.equippedItems) playerObj.equippedItems = {};
-  playerObj.equippedItems[slotName] = blankItem('player');
-  renderEquipmentTable();
-});
+// 新增/更換裝備已改用下方的「裝備欄位」搜尋選擇小工具(buildEquipAddWidget)，
+// 不再用 prompt() 讓使用者手動輸入裝備位置代號與 itemKey。
 
 let skillLabelToId = {};   // "中文名稱 (id)" -> id 反查表
 let skillDatalistBuilt = false;
@@ -694,10 +755,32 @@ function itemTypeOf(itemKey) {
   return entry ? entry.type : '';
 }
 
-function itemNameHint(itemKey) {
-  if (!itemKey) return '';
+// 唯讀顯示一個物品：中文名稱在上(大)、物品代號在下(小、灰),兩者皆不可編輯，
+// 避免使用者手滑改到內容。要更換物品內容請用下方「搜尋加入」的方式重新選擇。
+function buildItemNameDisplay(itemKey) {
+  const wrap = document.createElement('div');
+  wrap.className = 'item-name-display';
+
+  const nameLine = document.createElement('div');
   const entry = ITEM_NAMES[itemKey];
-  return entry ? entry.n : '（查無此物品,可能是原版天堂道具或已改名）';
+  if (itemKey && entry) {
+    nameLine.className = 'name-line';
+    nameLine.textContent = entry.n;
+  } else if (itemKey) {
+    nameLine.className = 'name-line missing';
+    nameLine.textContent = '（查無此物品,可能是原版天堂道具或已改名）';
+  } else {
+    nameLine.className = 'name-line missing';
+    nameLine.textContent = '（尚未選擇物品）';
+  }
+  wrap.appendChild(nameLine);
+
+  const codeLine = document.createElement('div');
+  codeLine.className = 'code-line';
+  codeLine.textContent = itemKey || '\u2014';
+  wrap.appendChild(codeLine);
+
+  return wrap;
 }
 
 // 物品分類：武器/防具/飾品各自獨立，其餘全部歸類為「雜物」
@@ -736,18 +819,6 @@ function skillNameHint(skillId) {
   return SKILL_NAMES[skillId] || '（查無此技能）';
 }
 
-function attachNameHint(input, td, lookupFn) {
-  const hint = document.createElement('div');
-  hint.style.fontSize = '11px';
-  hint.style.color = 'var(--muted)';
-  hint.style.marginTop = '3px';
-  hint.textContent = lookupFn(input.value);
-  td.appendChild(hint);
-  input.addEventListener('input', () => {
-    hint.textContent = lookupFn(input.value);
-  });
-}
-
 // 依照存檔實際觀察到的規則產生 uid：
 // - 背包/裝備物品：player:item:<序號>，序號來自 Player.itemUidSequence 並遞增
 // - 倉庫物品：standard:item:<序號>，序號來自 Warehouse.itemUidSequence 並遞增
@@ -781,11 +852,15 @@ function blankItem(kind) {
     monsterCardReadyAtUnixMilliseconds: 0,
     itemDelayReadyAtUnixMilliseconds: 0,
     attrEnchantKind: 0,
-    attrEnchantLevel: 0,
-    sealed: false
+    attrEnchantLevel: 0
   };
+  // 比對實際存檔後發現：sealed 與 junk 是互斥的兩個欄位，
+  // 背包/裝備物品(Player)有 sealed、沒有 junk；倉庫物品(Warehouse)有 junk、沒有 sealed。
+  // 舊版曾經誤把 sealed 無條件加進所有物品，導致透過編輯器加進倉庫的物品格式錯誤、遊戲讀檔失敗。
   if (kind === 'warehouse') {
     base.junk = false;
+  } else {
+    base.sealed = false;
   }
   return base;
 }
@@ -806,10 +881,7 @@ function renderItemTable(tbody, list) {
     const tr = document.createElement('tr');
 
     const tdKey = document.createElement('td');
-    const inKey = document.createElement('input');
-    inKey.value = item.itemKey ?? '';
-    tdKey.appendChild(inKey);
-    attachNameHint(inKey, tdKey, itemNameHint);
+    tdKey.appendChild(buildItemNameDisplay(item.itemKey));
 
     const tdQty = document.createElement('td');
     tdQty.className = 'narrow';
@@ -828,14 +900,6 @@ function renderItemTable(tbody, list) {
     inEnh.title = inEnh.disabled ? '這件物品依 DB.json 標記不可強化' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
-
-    inKey.addEventListener('input', () => {
-      item.itemKey = inKey.value;
-      const enhanceable = isEnhanceableItem(inKey.value);
-      inEnh.disabled = !enhanceable;
-      inEnh.title = enhanceable ? '' : '這件物品依 DB.json 標記不可強化';
-      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
-    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
@@ -867,16 +931,29 @@ function renderItemTable(tbody, list) {
 
 function renderInventoryTable() {
   if (!playerObj.inventoryStacks) playerObj.inventoryStacks = [];
+  // 自動修補：背包/裝備物品應該有 sealed、不該有 junk（junk 是倉庫專用欄位）。
+  for (const item of playerObj.inventoryStacks) {
+    if (!('sealed' in item)) item.sealed = false;
+    if ('junk' in item) delete item.junk;
+  }
+  if (playerObj.equippedItems) {
+    for (const item of Object.values(playerObj.equippedItems)) {
+      if (!('sealed' in item)) item.sealed = false;
+      if ('junk' in item) delete item.junk;
+    }
+  }
   renderItemTable(inventoryBody, playerObj.inventoryStacks);
 }
 
 function renderWarehouseTable() {
   if (!warehouseObj) return;
   if (!warehouseObj.items) warehouseObj.items = [];
-  // 自動修補：舊版編輯器產生的倉庫物品可能缺少 junk 欄位、或 uid 前綴不是 standard:item:，
-  // 這類存檔載入遊戲會直接開不了角色。這裡順手補正，不影響原本就正常的物品。
+  // 自動修補：舊版編輯器產生的倉庫物品可能缺少 junk 欄位、誤植了背包專用的 sealed 欄位、
+  // 或 uid 前綴不是 standard:item:，這類存檔載入遊戲會直接開不了角色。這裡順手補正，
+  // 不影響原本就正常的物品。
   for (const item of warehouseObj.items) {
     if (!('junk' in item)) item.junk = false;
+    if ('sealed' in item) delete item.sealed;
     if (!/^standard:item:\d+$/.test(item.uid)) {
       item.uid = nextItemUid('warehouse');
     }
@@ -884,9 +961,9 @@ function renderWarehouseTable() {
   renderItemTable(warehouseBody, warehouseObj.items);
 }
 
-function buildAddItemWidget(container, getList, onAdded, kind) {
-  container.innerHTML = '';
-
+// 共用的「物品類型 + 關鍵字搜尋 + 選擇物品」控制項產生邏輯。
+// 背包/倉庫的加入小工具、裝備欄位的裝備小工具都靠這組控制項來選定 itemKey。
+function createItemPickerControls() {
   const catField = document.createElement('div');
   catField.className = 'field-inline';
   const catLabel = document.createElement('label');
@@ -920,21 +997,6 @@ function buildAddItemWidget(container, getList, onAdded, kind) {
   itemSelect.className = 'item-select';
   itemField.appendChild(itemLabel);
   itemField.appendChild(itemSelect);
-
-  const qtyField = document.createElement('div');
-  qtyField.className = 'field-inline';
-  const qtyLabel = document.createElement('label');
-  qtyLabel.textContent = '數量';
-  const qtyInput = document.createElement('input');
-  qtyInput.type = 'number';
-  qtyInput.className = 'qty-input';
-  qtyInput.value = 1;
-  qtyField.appendChild(qtyLabel);
-  qtyField.appendChild(qtyInput);
-
-  const addBtn = document.createElement('button');
-  addBtn.className = 'primary';
-  addBtn.textContent = '+ 加入清單';
 
   function populateItemSelect() {
     const keyword = searchInput.value.trim();
@@ -972,28 +1034,133 @@ function buildAddItemWidget(container, getList, onAdded, kind) {
   });
   searchInput.addEventListener('input', populateItemSelect);
 
-  addBtn.addEventListener('click', () => {
-    const chosenId = itemSelect.value;
-    if (!chosenId) return;
-    const qty = Number(qtyInput.value) || 1;
-    const item = blankItem(kind);
-    item.itemKey = chosenId;
-    item.quantity = qty;
-    getList().push(item);
-    onAdded();
-  });
-
   if (!itemsByCategory) buildItemsByCategory();
   populateItemSelect();
 
-  container.appendChild(catField);
-  container.appendChild(searchField);
-  container.appendChild(itemField);
+  return { catField, searchField, itemField, catSelect, searchInput, itemSelect, populateItemSelect };
+}
+
+function buildAddItemWidget(container, getList, onAdded, kind) {
+  container.innerHTML = '';
+
+  const picker = createItemPickerControls();
+
+  const qtyField = document.createElement('div');
+  qtyField.className = 'field-inline';
+  const qtyLabel = document.createElement('label');
+  qtyLabel.textContent = '數量';
+  const qtyInput = document.createElement('input');
+  qtyInput.type = 'number';
+  qtyInput.className = 'qty-input';
+  qtyInput.value = 1;
+  qtyField.appendChild(qtyLabel);
+  qtyField.appendChild(qtyInput);
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'primary';
+  addBtn.textContent = '+ 加入清單';
+
+  addBtn.addEventListener('click', () => {
+    const chosenId = picker.itemSelect.value;
+    if (!chosenId) return;
+    const qty = Number(qtyInput.value) || 1;
+    const list = getList();
+    const entry = ITEM_NAMES[chosenId];
+    // 只有 DB.json 標記 stackable 的物品才會合併數量；武器/防具/飾品/技能書等
+    // 完全沒有這個標記，一律視為獨立個體，每次「加入」都會產生新的一列，符合遊戲實際規則。
+    if (entry && entry.stackable) {
+      // 新增出來的物品一律是「未祝福、已鑑定、未鎖定」的預設狀態，
+      // 要合併堆疊也只能找清單裡狀態完全相同的那一疊（跟遊戲一樣：祝福/詛咒/未鑑定不會混在一起）。
+      const existing = list.find(it =>
+        it.itemKey === chosenId &&
+        (it.blessing || 0) === 0 &&
+        it.isIdentified !== false &&
+        !it.locked
+      );
+      if (existing) {
+        existing.quantity = (existing.quantity || 0) + qty;
+        onAdded();
+        return;
+      }
+    }
+    const item = blankItem(kind);
+    item.itemKey = chosenId;
+    item.quantity = qty;
+    list.push(item);
+    onAdded();
+  });
+
+  container.appendChild(picker.catField);
+  container.appendChild(picker.searchField);
+  container.appendChild(picker.itemField);
   container.appendChild(qtyField);
   container.appendChild(addBtn);
 }
 
+// 裝備位置常見代號；「自訂」則顯示自由輸入欄位，供非標準位置使用。
+const EQUIP_SLOT_OPTIONS = ['wpn', 'armor', 'helm', 'shield', 'boots', 'gloves', 'cloak', 'tshirt', 'belt', 'amulet', 'ring1', 'ring2', 'lantern'];
+
+// 裝備欄位專用的小工具：選裝備位置 + 搜尋選擇物品 → 裝備上去(若該位置已有裝備會直接覆蓋)。
+// 取代舊版用 prompt() 手動輸入位置代號、再手動打 itemKey 的做法。
+function buildEquipAddWidget(container) {
+  container.innerHTML = '';
+
+  const slotField = document.createElement('div');
+  slotField.className = 'field-inline';
+  const slotLabel = document.createElement('label');
+  slotLabel.textContent = '裝備位置';
+  const slotSelect = document.createElement('select');
+  for (const slot of EQUIP_SLOT_OPTIONS) {
+    const opt = document.createElement('option');
+    opt.value = slot;
+    opt.textContent = slot;
+    slotSelect.appendChild(opt);
+  }
+  const customOpt = document.createElement('option');
+  customOpt.value = '__custom__';
+  customOpt.textContent = '其他(自訂代號)';
+  slotSelect.appendChild(customOpt);
+  slotField.appendChild(slotLabel);
+  slotField.appendChild(slotSelect);
+
+  const customSlotInput = document.createElement('input');
+  customSlotInput.type = 'text';
+  customSlotInput.placeholder = '輸入自訂裝備位置代號';
+  customSlotInput.style.display = 'none';
+  slotField.appendChild(customSlotInput);
+
+  slotSelect.addEventListener('change', () => {
+    customSlotInput.style.display = slotSelect.value === '__custom__' ? '' : 'none';
+  });
+
+  const picker = createItemPickerControls();
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'primary';
+  addBtn.textContent = '裝備到此欄位';
+  addBtn.title = '若該位置已裝備物品,會直接覆蓋替換';
+
+  addBtn.addEventListener('click', () => {
+    const chosenId = picker.itemSelect.value;
+    if (!chosenId) return;
+    const slotName = slotSelect.value === '__custom__' ? customSlotInput.value.trim() : slotSelect.value;
+    if (!slotName) { alert('請輸入裝備位置代號'); return; }
+    if (!playerObj.equippedItems) playerObj.equippedItems = {};
+    const item = blankItem('player');
+    item.itemKey = chosenId;
+    playerObj.equippedItems[slotName] = item;
+    renderEquipmentTable();
+  });
+
+  container.appendChild(slotField);
+  container.appendChild(picker.catField);
+  container.appendChild(picker.searchField);
+  container.appendChild(picker.itemField);
+  container.appendChild(addBtn);
+}
+
 function setupAddWidgets() {
+  buildEquipAddWidget(document.getElementById('equipAddWidget'));
   buildAddItemWidget(
     document.getElementById('inventoryAddWidget'),
     () => playerObj.inventoryStacks,
