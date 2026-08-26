@@ -411,18 +411,13 @@ function statField(container, label, allocKey, topKey) {
   inAlloc.type = 'number';
   inAlloc.title = '基礎配點 (Player.allocations.' + allocKey + ')';
   inAlloc.value = (playerObj.allocations && playerObj.allocations[allocKey]) ?? 0;
-  inAlloc.addEventListener('input', () => {
-    if (!playerObj.allocations) playerObj.allocations = {};
-    playerObj.allocations[allocKey] = inAlloc.value === '' ? 0 : Number(inAlloc.value);
-  });
+  inAlloc.disabled = true;
 
   const inTop = document.createElement('input');
   inTop.type = 'number';
   inTop.title = '顯示數值 (最外層 ' + topKey + ')';
   inTop.value = rootData[topKey] ?? 0;
-  inTop.addEventListener('input', () => {
-    rootData[topKey] = inTop.value === '' ? 0 : Number(inTop.value);
-  });
+  inTop.disabled = true;
 
   row.appendChild(inAlloc);
   row.appendChild(inTop);
@@ -432,7 +427,7 @@ function statField(container, label, allocKey, topKey) {
   hint.style.fontSize = '10px';
   hint.style.color = 'var(--muted)';
   hint.style.marginTop = '4px';
-  hint.textContent = '左:基礎配點　右:顯示數值';
+  hint.textContent = '左:基礎配點　右:顯示數值　（暫唯讀，待確認與HP/MP等連動關係後開放）';
   wrap.appendChild(hint);
 
   container.appendChild(wrap);
@@ -440,6 +435,13 @@ function statField(container, label, allocKey, topKey) {
 
 function renderStatFields() {
   statFields.innerHTML = '';
+  const notice = document.createElement('div');
+  notice.style.gridColumn = '1 / -1';
+  notice.style.fontSize = '12px';
+  notice.style.color = 'var(--muted)';
+  notice.style.marginBottom = '4px';
+  notice.textContent = '能力值目前僅供查看，尚未確認修改後是否會與HP/MP等即時計算數值衝突，暫不開放編輯。';
+  statFields.appendChild(notice);
   statField(statFields, '力量 STR', 'str', 'Str');
   statField(statFields, '體質 CON', 'con', 'Con');
   statField(statFields, '敏捷 DEX', 'dex', 'Dex');
@@ -522,7 +524,7 @@ document.getElementById('addEquipRow').addEventListener('click', () => {
   const slotName = prompt('請輸入裝備位置代號(例如 wpn、armor、helm、shield、boots、gloves、cloak、tshirt、belt、amulet、ring1、ring2、lantern):');
   if (!slotName) return;
   if (!playerObj.equippedItems) playerObj.equippedItems = {};
-  playerObj.equippedItems[slotName] = blankItem();
+  playerObj.equippedItems[slotName] = blankItem('player');
   renderEquipmentTable();
 });
 
@@ -712,9 +714,23 @@ function attachNameHint(input, td, lookupFn) {
   });
 }
 
-function blankItem() {
-  return {
-    uid: 'edit:item:' + Date.now() + Math.floor(Math.random() * 1000),
+// 依照存檔實際觀察到的規則產生 uid：
+// - 背包/裝備物品：player:item:<序號>，序號來自 Player.itemUidSequence 並遞增
+// - 倉庫物品：standard:item:<序號>，序號來自 Warehouse.itemUidSequence 並遞增
+// 倉庫物品另外多一個背包沒有的 "junk" 欄位，兩者結構並不完全相同。
+function nextItemUid(kind) {
+  if (kind === 'warehouse') {
+    if (!warehouseObj) throw new Error('warehouseObj 不存在');
+    warehouseObj.itemUidSequence = (warehouseObj.itemUidSequence || 0) + 1;
+    return 'standard:item:' + warehouseObj.itemUidSequence;
+  }
+  playerObj.itemUidSequence = (playerObj.itemUidSequence || 0) + 1;
+  return 'player:item:' + playerObj.itemUidSequence;
+}
+
+function blankItem(kind) {
+  const base = {
+    uid: nextItemUid(kind),
     itemKey: '',
     quantity: 1,
     enhancement: 0,
@@ -734,6 +750,10 @@ function blankItem() {
     attrEnchantLevel: 0,
     sealed: false
   };
+  if (kind === 'warehouse') {
+    base.junk = false;
+  }
+  return base;
 }
 
 function renderItemTable(tbody, list) {
@@ -810,10 +830,18 @@ function renderInventoryTable() {
 function renderWarehouseTable() {
   if (!warehouseObj) return;
   if (!warehouseObj.items) warehouseObj.items = [];
+  // 自動修補：舊版編輯器產生的倉庫物品可能缺少 junk 欄位、或 uid 前綴不是 standard:item:，
+  // 這類存檔載入遊戲會直接開不了角色。這裡順手補正，不影響原本就正常的物品。
+  for (const item of warehouseObj.items) {
+    if (!('junk' in item)) item.junk = false;
+    if (!/^standard:item:\d+$/.test(item.uid)) {
+      item.uid = nextItemUid('warehouse');
+    }
+  }
   renderItemTable(warehouseBody, warehouseObj.items);
 }
 
-function buildAddItemWidget(container, getList, onAdded) {
+function buildAddItemWidget(container, getList, onAdded, kind) {
   container.innerHTML = '';
 
   const catField = document.createElement('div');
@@ -905,7 +933,7 @@ function buildAddItemWidget(container, getList, onAdded) {
     const chosenId = itemSelect.value;
     if (!chosenId) return;
     const qty = Number(qtyInput.value) || 1;
-    const item = blankItem();
+    const item = blankItem(kind);
     item.itemKey = chosenId;
     item.quantity = qty;
     getList().push(item);
@@ -926,14 +954,16 @@ function setupAddWidgets() {
   buildAddItemWidget(
     document.getElementById('inventoryAddWidget'),
     () => playerObj.inventoryStacks,
-    () => renderInventoryTable()
+    () => renderInventoryTable(),
+    'player'
   );
   const warehouseWidget = document.getElementById('warehouseAddWidget');
   if (warehouseObj) {
     buildAddItemWidget(
       warehouseWidget,
       () => warehouseObj.items,
-      () => renderWarehouseTable()
+      () => renderWarehouseTable(),
+      'warehouse'
     );
   } else {
     warehouseWidget.innerHTML = '<span class="empty-hint">（此存檔沒有可用的倉庫資料）</span>';
