@@ -12,6 +12,11 @@
   // 目前作者只開放到 DG（N=1,G=2,DG=3）。XG/SG 開放後，把這個數字調成 grades.length 就會全部開放。
   var MAX_SELECTABLE_GRADE_INDEX = 3;
 
+  // 附魔屬性對照表（kind -> 名稱），來自 enchant.js
+  var ENCHANT_KINDS = [{"kind":1,"name":"攻擊力"},{"kind":2,"name":"魔法力"},{"kind":3,"name":"防禦力"},{"kind":4,"name":"攻擊速度"},{"kind":5,"name":"必殺技"},{"kind":6,"name":"命中率"},{"kind":7,"name":"迴避率"},{"kind":8,"name":"移動速度"},{"kind":9,"name":"HP"},{"kind":10,"name":"AP"},{"kind":11,"name":"HP%"},{"kind":12,"name":"AP%"},{"kind":13,"name":"減少道具等級限制"},{"kind":14,"name":"經驗值獲得量"},{"kind":15,"name":"每級力量"},{"kind":16,"name":"每級敏捷"},{"kind":17,"name":"每級智力"},{"kind":18,"name":"每級幸運"},{"kind":19,"name":"每級體力"},{"kind":20,"name":"每級精神"},{"kind":21,"name":"[副本]增加傷害"},{"kind":22,"name":"增加傷害"},{"kind":23,"name":"減少傷害"}];
+  var ENCHANT_KIND_NAME = {};
+  ENCHANT_KINDS.forEach(function (k) { ENCHANT_KIND_NAME[k.kind] = k.name; });
+
   // ---------- 先清掉舊的（讓 bookmarklet 可以重複點擊 / 熱重載）----------
   var oldStyle = document.getElementById(STYLE_ID);
   if (oldStyle) oldStyle.remove();
@@ -55,7 +60,7 @@
 
   var refs = findGameRefs();
   if (!refs) {
-    alert("找不到遊戲的 session（請打開鐵匠頁面後再點書籤，也有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
+    alert("找不到遊戲的 session（有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
     return;
   }
   var session = refs.session;
@@ -104,6 +109,20 @@
     if (!grade) return "N";
     var g = data.options && data.options.grades;
     return (g && g[grade - 1]) || String(grade);
+  }
+  function rolledKindsOf(entry) {
+    var opts = entry && entry.options && entry.options.options;
+    if (!Array.isArray(opts)) return [];
+    return opts.map(function (o) { return o.kind; });
+  }
+  function rolledKindsText(entry) {
+    var kinds = rolledKindsOf(entry);
+    if (!kinds.length) return "無屬性";
+    return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
+  }
+  function hasKind(entry, kind) {
+    if (!kind) return true; // 沒指定就當作永遠符合
+    return rolledKindsOf(entry).indexOf(kind) !== -1;
   }
   function loadoutList() {
     var s = snap();
@@ -201,14 +220,20 @@
       return '<option value="' + (idx + 1) + '"' + ((idx + 1) === defaultTarget ? " selected" : "") + '>' + g + '</option>';
     }).join("");
 
+    var kindOptions = '<option value="">（不指定）</option>' + ENCHANT_KINDS.map(function (k) {
+      return '<option value="' + k.kind + '">' + k.name + '</option>';
+    }).join("");
+
     modal.innerHTML =
       '<button id="iw-enhance-close">✕</button>' +
       '<h2>⚡ 一鍵強化</h2>' +
       '<label>目標裝備</label>' +
-      '<div class="iw-target" id="iw-f-target-display">' + item.label + '：' + item.name + '（目前 ' + gradeNameOf(curGrade) + ' 階）</div>' +
+      '<div class="iw-target" id="iw-f-target-display">' + item.label + '：' + item.name + '（目前 ' + gradeNameOf(curGrade) + ' 階・' + rolledKindsText(freshEntry) + '）</div>' +
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
+      '<label>指定屬性（可選，要洗到這個屬性「而且」階級也達標才會停）</label>' +
+      '<select id="iw-f-kind">' + kindOptions + '</select>' +
       '<label>最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
       '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy">沒有實習生的發條時，自動花金幣購買繼續（每個 ' +
@@ -241,7 +266,8 @@
         var targetGrade = Number(document.getElementById("iw-f-grade").value);
         var budget = Number(document.getElementById("iw-f-budget").value) || 0;
         var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        startRun(item, targetGrade, budget, autoBuy);
+        var desiredKind = Number(document.getElementById("iw-f-kind").value) || 0;
+        startRun(item, targetGrade, budget, autoBuy, desiredKind);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -275,7 +301,7 @@
     if (cancel) cancel.textContent = disabled ? "停止" : "取消";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy) {
+  async function startRun(item, targetGrade, budget, autoBuy, desiredKind) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
@@ -293,7 +319,7 @@
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
-      if (curGrade >= targetGrade) { reason = "success"; break; }
+      if (curGrade >= targetGrade && hasKind(entry, desiredKind)) { reason = "success"; break; }
 
       if (totalSpent >= budget) { reason = "budget"; break; }
 
@@ -345,11 +371,11 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
-      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階");
+      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）");
       var targetDisplay = document.getElementById("iw-f-target-display");
-      if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階）";
+      if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
-      if (totalSpent >= budget && newGrade < targetGrade) { reason = "budget"; break; }
+      if (totalSpent >= budget && !(newGrade >= targetGrade && hasKind(newEntry, desiredKind))) { reason = "budget"; break; }
 
       await sleep(25);
     }
@@ -375,7 +401,7 @@
     document.getElementById("iw-enhance-summary").innerHTML =
       "<div>" + reasonText + "</div>" +
       "<div style='margin-top:8px;'>" +
-      item.label + "：" + item.name + " → <b>" + gradeNameOf(finalGrade) + " 階</b><br>" +
+      item.label + "：" + item.name + " → <b>" + gradeNameOf(finalGrade) + " 階</b>　（" + rolledKindsText(finalEntry) + "）<br>" +
       "強化次數：<b>" + attempts + "</b> 次　購買發條：<b>" + totalBought + "</b> 個<br>" +
       "總花費：<b>" + fmt(totalSpent) + "</b> 金幣" +
       "</div>";
