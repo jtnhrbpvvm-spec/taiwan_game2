@@ -107,6 +107,11 @@
 <h1>存檔編輯器</h1>
 <div class="sub">載入存檔檔案後可直接編輯數值,完成後匯出成新的存檔檔案。僅在本機瀏覽器中運作,不會上傳任何資料。</div>
 
+<div class="bar" id="dataBar">
+  <span id="dataStatus" class="status">正在載入物品/技能名稱資料...</span>
+  <button id="reloadDataBtn">重新載入</button>
+</div>
+
 <div class="bar">
   <input type="file" id="fileInput" accept=".json,.save,.dat,.txt,*">
   <button class="primary" id="saveBtn" disabled>匯出修改後的存檔</button>
@@ -123,6 +128,46 @@
   <section>
     <h2>能力值</h2>
     <div class="grid" id="statFields"></div>
+  </section>
+
+  <section>
+    <h2>裝備欄位 (equippedItems)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="narrow">裝備位置</th>
+          <th>itemKey</th>
+          <th class="narrow">強化值</th>
+          <th class="checkbox">鎖定</th>
+          <th class="narrow">刪除</th>
+        </tr>
+      </thead>
+      <tbody id="equipBody"></tbody>
+    </table>
+    <div class="row-actions">
+      <button id="addEquipRow">+ 新增裝備</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>已學技能 (learnedSkills)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>技能 ID</th>
+          <th class="narrow">刪除</th>
+        </tr>
+      </thead>
+      <tbody id="skillBody"></tbody>
+    </table>
+    <div class="row-actions">
+      <button id="addSkillRow">+ 新增技能</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>戰鬥與快捷設定</h2>
+    <div class="grid" id="settingFields"></div>
   </section>
 
   <section>
@@ -166,6 +211,66 @@
 </div>
 
 <script>
+// ==== 物品/技能 ID → 中文名稱對照表 (來源: 社群共享資料庫) ====
+// 這兩份資料改為外部檔案載入 (save/item_names.json / save/skill_names.json)，
+// 優先讀取本機同層 save 資料夾；若讀取失敗(常見於直接雙擊開啟、或缺少該資料夾)，
+// 會改成從 GitHub 上的專案倉庫抓取最新版本。
+let ITEM_NAMES = {};
+let SKILL_NAMES = {};
+
+// 若之後倉庫路徑或使用者帳號有變動，只需要改這兩個網址
+const GITHUB_ITEM_NAMES_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/save/item_names.json';
+const GITHUB_SKILL_NAMES_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/save/skill_names.json';
+
+const dataStatus = document.getElementById('dataStatus');
+const reloadDataBtn = document.getElementById('reloadDataBtn');
+
+async function fetchJson(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function loadNameData() {
+  dataStatus.textContent = '正在載入物品/技能名稱資料...';
+  dataStatus.className = 'status';
+  reloadDataBtn.disabled = true;
+
+  // 先試本機 save 資料夾
+  try {
+    const [items, skills] = await Promise.all([
+      fetchJson('save/item_names.json'),
+      fetchJson('save/skill_names.json')
+    ]);
+    ITEM_NAMES = items;
+    SKILL_NAMES = skills;
+    dataStatus.textContent = '物品/技能名稱資料已載入(本機) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
+    dataStatus.className = 'status ok';
+    reloadDataBtn.disabled = false;
+    return;
+  } catch (err) {
+    // 本機讀取失敗，改試 GitHub
+  }
+
+  try {
+    const [items, skills] = await Promise.all([
+      fetchJson(GITHUB_ITEM_NAMES_URL),
+      fetchJson(GITHUB_SKILL_NAMES_URL)
+    ]);
+    ITEM_NAMES = items;
+    SKILL_NAMES = skills;
+    dataStatus.textContent = '物品/技能名稱資料已載入(GitHub) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
+    dataStatus.className = 'status ok';
+  } catch (err) {
+    dataStatus.textContent = '本機與 GitHub 皆載入失敗,物品/技能將只顯示 ID,不影響其他編輯功能。點「重新載入」可再試一次。';
+    dataStatus.className = 'status err';
+  }
+  reloadDataBtn.disabled = false;
+}
+
+reloadDataBtn.addEventListener('click', loadNameData);
+loadNameData();
+
 let rootData = null;      // 最外層 parse 出來的物件
 let playerObj = null;     // Player 欄位再 parse 一次
 let warehouseObj = null;  // Warehouse 欄位再 parse 一次
@@ -177,6 +282,9 @@ const statusEl = document.getElementById('status');
 const editorArea = document.getElementById('editorArea');
 const basicFields = document.getElementById('basicFields');
 const statFields = document.getElementById('statFields');
+const equipBody = document.getElementById('equipBody');
+const skillBody = document.getElementById('skillBody');
+const settingFields = document.getElementById('settingFields');
 const inventoryBody = document.getElementById('inventoryBody');
 const warehouseBody = document.getElementById('warehouseBody');
 
@@ -210,6 +318,9 @@ fileInput.addEventListener('change', (e) => {
     }
     renderBasicFields();
     renderStatFields();
+    renderEquipmentTable();
+    renderSkillList();
+    renderSettingFields();
     renderInventoryTable();
     renderWarehouseTable();
     editorArea.classList.remove('hidden');
@@ -243,9 +354,6 @@ function renderBasicFields() {
   makeField(basicFields, '角色名稱', () => rootData.CharacterName ?? '', v => { rootData.CharacterName = v; }, 'text');
   makeField(basicFields, '金幣 (Player.gold)', () => playerObj.gold ?? 0, v => { playerObj.gold = v; }, 'number');
   makeField(basicFields, '飽食度 (satiety)', () => playerObj.satiety ?? 0, v => { playerObj.satiety = v; }, 'number');
-  makeField(basicFields, '等級 (level)', () => playerObj.level ?? 0, v => { playerObj.level = v; if ('Level' in rootData) rootData.Level = v; }, 'number');
-  makeField(basicFields, '經驗值 (experience)', () => playerObj.experience ?? 0, v => { playerObj.experience = v; }, 'number');
-  makeField(basicFields, '陣營值 (alignment)', () => playerObj.alignment ?? 0, v => { playerObj.alignment = v; if ('Alignment' in rootData) rootData.Alignment = v; }, 'number');
   makeField(basicFields, '倉庫容量上限', () => (warehouseObj ? warehouseObj.capacity ?? 0 : 0), v => { if (warehouseObj) warehouseObj.capacity = v; }, 'number');
 }
 
@@ -301,6 +409,187 @@ function renderStatFields() {
   statField(statFields, '魅力 CHA', 'cha', 'Cha');
 }
 
+function renderEquipmentTable() {
+  equipBody.innerHTML = '';
+  if (!playerObj.equippedItems) playerObj.equippedItems = {};
+  const slots = Object.keys(playerObj.equippedItems);
+  if (slots.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.className = 'empty-hint';
+    td.textContent = '（沒有裝備）';
+    tr.appendChild(td);
+    equipBody.appendChild(tr);
+    return;
+  }
+  slots.forEach((slotName) => {
+    const item = playerObj.equippedItems[slotName];
+    const tr = document.createElement('tr');
+
+    const tdSlot = document.createElement('td');
+    tdSlot.className = 'narrow';
+    const inSlot = document.createElement('input');
+    inSlot.value = slotName;
+    inSlot.disabled = true;
+    inSlot.title = '裝備位置(不可修改,如需改位置請刪除後以新位置新增)';
+    tdSlot.appendChild(inSlot);
+
+    const tdKey = document.createElement('td');
+    const inKey = document.createElement('input');
+    inKey.value = item.itemKey ?? '';
+    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
+    tdKey.appendChild(inKey);
+    attachNameHint(inKey, tdKey, itemNameHint);
+
+    const tdEnh = document.createElement('td');
+    tdEnh.className = 'narrow';
+    const inEnh = document.createElement('input');
+    inEnh.type = 'number';
+    inEnh.value = item.enhancement ?? 0;
+    inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
+    tdEnh.appendChild(inEnh);
+
+    const tdLock = document.createElement('td');
+    tdLock.className = 'checkbox';
+    const inLock = document.createElement('input');
+    inLock.type = 'checkbox';
+    inLock.checked = !!item.locked;
+    inLock.addEventListener('change', () => { item.locked = inLock.checked; });
+    tdLock.appendChild(inLock);
+
+    const tdDel = document.createElement('td');
+    tdDel.className = 'narrow';
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '卸下';
+    btnDel.className = 'danger';
+    btnDel.addEventListener('click', () => {
+      delete playerObj.equippedItems[slotName];
+      renderEquipmentTable();
+    });
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(tdSlot);
+    tr.appendChild(tdKey);
+    tr.appendChild(tdEnh);
+    tr.appendChild(tdLock);
+    tr.appendChild(tdDel);
+    equipBody.appendChild(tr);
+  });
+}
+
+document.getElementById('addEquipRow').addEventListener('click', () => {
+  if (!playerObj) return;
+  const slotName = prompt('請輸入裝備位置代號(例如 wpn、armor、helm、shield、boots、gloves、cloak、tshirt、belt、amulet、ring1、ring2、lantern):');
+  if (!slotName) return;
+  if (!playerObj.equippedItems) playerObj.equippedItems = {};
+  playerObj.equippedItems[slotName] = blankItem();
+  renderEquipmentTable();
+});
+
+function renderSkillList() {
+  skillBody.innerHTML = '';
+  if (!playerObj.learnedSkills) playerObj.learnedSkills = [];
+  const list = playerObj.learnedSkills;
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 2;
+    td.className = 'empty-hint';
+    td.textContent = '（沒有已學技能）';
+    tr.appendChild(td);
+    skillBody.appendChild(tr);
+    return;
+  }
+  list.forEach((skillId, idx) => {
+    const tr = document.createElement('tr');
+    const tdKey = document.createElement('td');
+    const inKey = document.createElement('input');
+    inKey.value = skillId;
+    inKey.addEventListener('input', () => { list[idx] = inKey.value; });
+    tdKey.appendChild(inKey);
+    attachNameHint(inKey, tdKey, skillNameHint);
+
+    const tdDel = document.createElement('td');
+    tdDel.className = 'narrow';
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '刪除';
+    btnDel.className = 'danger';
+    btnDel.addEventListener('click', () => {
+      list.splice(idx, 1);
+      renderSkillList();
+    });
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(tdKey);
+    tr.appendChild(tdDel);
+    skillBody.appendChild(tr);
+  });
+}
+
+document.getElementById('addSkillRow').addEventListener('click', () => {
+  if (!playerObj) return;
+  if (!playerObj.learnedSkills) playerObj.learnedSkills = [];
+  playerObj.learnedSkills.push('');
+  renderSkillList();
+});
+
+function settingField(container, label, key, type, isTopLevel) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  const input = document.createElement('input');
+  input.type = type || 'text';
+  input.value = (isTopLevel ? rootData[key] : rootData[key]) ?? '';
+  input.addEventListener('input', () => {
+    let v = input.value;
+    if (type === 'number') v = v === '' ? 0 : Number(v);
+    rootData[key] = v;
+  });
+  wrap.appendChild(lab);
+  wrap.appendChild(input);
+  container.appendChild(wrap);
+}
+
+function renderSettingFields() {
+  settingFields.innerHTML = '';
+  settingField(settingFields, '自動施法 (AutoCast)', 'AutoCast', 'text', true);
+  settingField(settingFields, '快捷物品 (QuickItems)', 'QuickItems', 'text', true);
+  settingField(settingFields, '快捷技能 (QuickSkills)', 'QuickSkills', 'text', true);
+  settingField(settingFields, '快捷分頁 (QuickPage)', 'QuickPage', 'number', true);
+  settingField(settingFields, '自動使用物品 (AutoUseItems)', 'AutoUseItems', 'text', true);
+  settingField(settingFields, '自動補血% (AutoPotionHpPercent)', 'AutoPotionHpPercent', 'number', true);
+  settingField(settingFields, '同伴自動治療% (CompanionAutoHealSkillHpPercent)', 'CompanionAutoHealSkillHpPercent', 'number', true);
+  settingField(settingFields, '同伴自動補血% (CompanionAutoPotionHpPercent)', 'CompanionAutoPotionHpPercent', 'number', true);
+  settingField(settingFields, '自動放技能MP門檻% (AutoSkillMpPercent)', 'AutoSkillMpPercent', 'number', true);
+  settingField(settingFields, '自動放技能HP門檻% (AutoSkillHpPercent)', 'AutoSkillHpPercent', 'number', true);
+  settingField(settingFields, '攻擊優先順序 (AttackPriorities)', 'AttackPriorities', 'text', true);
+  settingField(settingFields, '同伴攻擊優先順序 (CompanionAttackPriorities)', 'CompanionAttackPriorities', 'text', true);
+}
+
+function itemNameHint(itemKey) {
+  if (!itemKey) return '';
+  return ITEM_NAMES[itemKey] || '（查無此物品,可能是原版天堂道具或已改名）';
+}
+
+function skillNameHint(skillId) {
+  if (!skillId) return '';
+  return SKILL_NAMES[skillId] || '（查無此技能）';
+}
+
+function attachNameHint(input, td, lookupFn) {
+  const hint = document.createElement('div');
+  hint.style.fontSize = '11px';
+  hint.style.color = 'var(--muted)';
+  hint.style.marginTop = '3px';
+  hint.textContent = lookupFn(input.value);
+  td.appendChild(hint);
+  input.addEventListener('input', () => {
+    hint.textContent = lookupFn(input.value);
+  });
+}
+
 function blankItem() {
   return {
     uid: 'edit:item:' + Date.now() + Math.floor(Math.random() * 1000),
@@ -345,6 +634,7 @@ function renderItemTable(tbody, list) {
     inKey.value = item.itemKey ?? '';
     inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
     tdKey.appendChild(inKey);
+    attachNameHint(inKey, tdKey, itemNameHint);
 
     const tdQty = document.createElement('td');
     tdQty.className = 'narrow';
