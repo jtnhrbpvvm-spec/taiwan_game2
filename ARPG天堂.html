@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>存檔編輯器</title>
+<title>存檔編輯器 V1</title>
 <style>
   :root {
     --bg: #1a1d24;
@@ -131,7 +131,7 @@
 </head>
 <body>
 
-<h1>存檔編輯器</h1>
+<h1>存檔編輯器 V1</h1>
 <div class="sub">載入存檔檔案後可直接編輯數值,完成後匯出成新的存檔檔案。僅在本機瀏覽器中運作,不會上傳任何資料。</div>
 
 <div class="bar" id="dataBar">
@@ -479,7 +479,6 @@ function renderEquipmentTable() {
     const tdKey = document.createElement('td');
     const inKey = document.createElement('input');
     inKey.value = item.itemKey ?? '';
-    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
     tdKey.appendChild(inKey);
     attachNameHint(inKey, tdKey, itemNameHint);
 
@@ -488,8 +487,18 @@ function renderEquipmentTable() {
     const inEnh = document.createElement('input');
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
+    inEnh.disabled = !isEnhanceableItem(item.itemKey);
+    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
+
+    inKey.addEventListener('input', () => {
+      item.itemKey = inKey.value;
+      const enhanceable = isEnhanceableItem(inKey.value);
+      inEnh.disabled = !enhanceable;
+      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
+    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
@@ -685,6 +694,12 @@ function itemCategoryOf(type) {
   return 'misc';
 }
 
+// 只有武器、防具可以強化，飾品與雜物一律不可強化
+function isEnhanceableItem(itemKey) {
+  const type = itemTypeOf(itemKey);
+  return type === 'wpn' || type === 'arm';
+}
+
 let itemsByCategory = null; // { wpn: [[id,name],...], arm: [...], acc: [...], misc: [...] }
 function buildItemsByCategory() {
   itemsByCategory = { wpn: [], arm: [], acc: [], misc: [] };
@@ -774,7 +789,6 @@ function renderItemTable(tbody, list) {
     const tdKey = document.createElement('td');
     const inKey = document.createElement('input');
     inKey.value = item.itemKey ?? '';
-    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
     tdKey.appendChild(inKey);
     attachNameHint(inKey, tdKey, itemNameHint);
 
@@ -791,8 +805,18 @@ function renderItemTable(tbody, list) {
     const inEnh = document.createElement('input');
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
+    inEnh.disabled = !isEnhanceableItem(item.itemKey);
+    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
+
+    inKey.addEventListener('input', () => {
+      item.itemKey = inKey.value;
+      const enhanceable = isEnhanceableItem(inKey.value);
+      inEnh.disabled = !enhanceable;
+      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
+    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
