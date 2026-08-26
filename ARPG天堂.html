@@ -260,7 +260,10 @@ async function fetchJson(url) {
 function extractNamesFromDb(db) {
   const items = {};
   for (const [id, entry] of Object.entries(db.items || {})) {
-    items[id] = { n: entry.n || id, type: entry.type || 'misc' };
+    // noEnhance: DB.json 裡明確標記「這件物品不能強化」的旗標。
+    // 過去版本用「type 是不是武器/防具」來猜測能不能強化，會誤判：
+    // 實際上有一部分武器/防具本身也標記不能強化，而部分飾品(戒指/耳環/項鍊等)是可以強化的。
+    items[id] = { n: entry.n || id, type: entry.type || 'misc', noEnhance: !!entry.noEnhance };
   }
   const skills = {};
   for (const [id, entry] of Object.entries(db.skills || {})) {
@@ -498,7 +501,7 @@ function renderEquipmentTable() {
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
     inEnh.disabled = !isEnhanceableItem(item.itemKey);
-    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
+    inEnh.title = inEnh.disabled ? '這件物品依 DB.json 標記不可強化' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
 
@@ -506,7 +509,7 @@ function renderEquipmentTable() {
       item.itemKey = inKey.value;
       const enhanceable = isEnhanceableItem(inKey.value);
       inEnh.disabled = !enhanceable;
-      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      inEnh.title = enhanceable ? '' : '這件物品依 DB.json 標記不可強化';
       if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
     });
 
@@ -704,10 +707,16 @@ function itemCategoryOf(type) {
   return 'misc';
 }
 
-// 只有武器、防具可以強化，飾品與雜物一律不可強化
+// 是否可強化：以 DB.json 的 noEnhance 欄位為準（真實遊戲資料），而非用類型硬猜。
+// 只有武器/防具/飾品這三種「裝備類」物品才有強化的意義；
+// 其中，若該物品本身標記 noEnhance = true（例如許多活動戒指、部分特殊武具），
+// 就算是武器/防具/飾品也一樣鎖定不可強化。
+// 查無資料的 itemKey（DB.json 裡沒有這筆）保守起見一律鎖定，避免誤開放。
 function isEnhanceableItem(itemKey) {
-  const type = itemTypeOf(itemKey);
-  return type === 'wpn' || type === 'arm';
+  const entry = ITEM_NAMES[itemKey];
+  if (!entry) return false;
+  if (entry.noEnhance) return false;
+  return entry.type === 'wpn' || entry.type === 'arm' || entry.type === 'acc';
 }
 
 let itemsByCategory = null; // { wpn: [[id,name],...], arm: [...], acc: [...], misc: [...] }
@@ -816,7 +825,7 @@ function renderItemTable(tbody, list) {
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
     inEnh.disabled = !isEnhanceableItem(item.itemKey);
-    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
+    inEnh.title = inEnh.disabled ? '這件物品依 DB.json 標記不可強化' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
 
@@ -824,7 +833,7 @@ function renderItemTable(tbody, list) {
       item.itemKey = inKey.value;
       const enhanceable = isEnhanceableItem(inKey.value);
       inEnh.disabled = !enhanceable;
-      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      inEnh.title = enhanceable ? '' : '這件物品依 DB.json 標記不可強化';
       if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
     });
 
