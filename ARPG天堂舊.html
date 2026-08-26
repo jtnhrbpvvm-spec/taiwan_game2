@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>存檔編輯器</title>
+<title>存檔編輯器 V1</title>
 <style>
   :root {
     --bg: #1a1d24;
@@ -98,13 +98,40 @@
   td.narrow { width: 70px; }
   td.checkbox { width: 40px; text-align: center; }
   .row-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .add-item-widget {
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .add-item-widget .field-inline { display: flex; flex-direction: column; gap: 4px; }
+  .add-item-widget .field-inline label { font-size: 11px; color: var(--muted); }
+  .add-item-widget select,
+  .add-item-widget input[type=text],
+  .add-item-widget input[type=number] {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .add-item-widget select { min-width: 140px; }
+  .add-item-widget .item-select { min-width: 220px; }
+  .add-item-widget .search-input { min-width: 180px; }
+  .add-item-widget .qty-input { width: 70px; }
   .empty-hint { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
   .hidden { display: none; }
 </style>
 </head>
 <body>
 
-<h1>存檔編輯器</h1>
+<h1>存檔編輯器 V1</h1>
 <div class="sub">載入存檔檔案後可直接編輯數值,完成後匯出成新的存檔檔案。僅在本機瀏覽器中運作,不會上傳任何資料。</div>
 
 <div class="bar" id="dataBar">
@@ -184,9 +211,7 @@
       </thead>
       <tbody id="inventoryBody"></tbody>
     </table>
-    <div class="row-actions">
-      <button id="addInventoryRow">+ 新增物品</button>
-    </div>
+    <div class="add-item-widget" id="inventoryAddWidget"></div>
   </section>
 
   <section>
@@ -203,10 +228,9 @@
       </thead>
       <tbody id="warehouseBody"></tbody>
     </table>
-    <div class="row-actions">
-      <button id="addWarehouseRow">+ 新增物品</button>
-    </div>
+    <div class="add-item-widget" id="warehouseAddWidget"></div>
   </section>
+
 
 </div>
 
@@ -247,6 +271,7 @@ async function loadNameData() {
     dataStatus.textContent = '物品/技能名稱資料已載入(本機) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
     dataStatus.className = 'status ok';
     reloadDataBtn.disabled = false;
+    refreshNameDependentUI();
     return;
   } catch (err) {
     // 本機讀取失敗，改試 GitHub
@@ -266,6 +291,19 @@ async function loadNameData() {
     dataStatus.className = 'status err';
   }
   reloadDataBtn.disabled = false;
+  refreshNameDependentUI();
+}
+
+// 資料庫載入完成(或重新載入)後，若已經開啟存檔，重新整理會用到名稱對照的畫面
+function refreshNameDependentUI() {
+  if (!playerObj) return;
+  skillDatalistBuilt = false;
+  itemsByCategory = null;
+  renderSkillList();
+  renderEquipmentTable();
+  renderInventoryTable();
+  renderWarehouseTable();
+  setupAddWidgets();
 }
 
 reloadDataBtn.addEventListener('click', loadNameData);
@@ -323,6 +361,7 @@ fileInput.addEventListener('change', (e) => {
     renderSettingFields();
     renderInventoryTable();
     renderWarehouseTable();
+    setupAddWidgets();
     editorArea.classList.remove('hidden');
     saveBtn.disabled = false;
     setStatus('已載入: ' + file.name, 'ok');
@@ -372,18 +411,13 @@ function statField(container, label, allocKey, topKey) {
   inAlloc.type = 'number';
   inAlloc.title = '基礎配點 (Player.allocations.' + allocKey + ')';
   inAlloc.value = (playerObj.allocations && playerObj.allocations[allocKey]) ?? 0;
-  inAlloc.addEventListener('input', () => {
-    if (!playerObj.allocations) playerObj.allocations = {};
-    playerObj.allocations[allocKey] = inAlloc.value === '' ? 0 : Number(inAlloc.value);
-  });
+  inAlloc.disabled = true;
 
   const inTop = document.createElement('input');
   inTop.type = 'number';
   inTop.title = '顯示數值 (最外層 ' + topKey + ')';
   inTop.value = rootData[topKey] ?? 0;
-  inTop.addEventListener('input', () => {
-    rootData[topKey] = inTop.value === '' ? 0 : Number(inTop.value);
-  });
+  inTop.disabled = true;
 
   row.appendChild(inAlloc);
   row.appendChild(inTop);
@@ -393,7 +427,7 @@ function statField(container, label, allocKey, topKey) {
   hint.style.fontSize = '10px';
   hint.style.color = 'var(--muted)';
   hint.style.marginTop = '4px';
-  hint.textContent = '左:基礎配點　右:顯示數值';
+  hint.textContent = '左:基礎配點　右:顯示數值　（暫唯讀，待確認與HP/MP等連動關係後開放）';
   wrap.appendChild(hint);
 
   container.appendChild(wrap);
@@ -401,6 +435,13 @@ function statField(container, label, allocKey, topKey) {
 
 function renderStatFields() {
   statFields.innerHTML = '';
+  const notice = document.createElement('div');
+  notice.style.gridColumn = '1 / -1';
+  notice.style.fontSize = '12px';
+  notice.style.color = 'var(--muted)';
+  notice.style.marginBottom = '4px';
+  notice.textContent = '能力值目前僅供查看，尚未確認修改後是否會與HP/MP等即時計算數值衝突，暫不開放編輯。';
+  statFields.appendChild(notice);
   statField(statFields, '力量 STR', 'str', 'Str');
   statField(statFields, '體質 CON', 'con', 'Con');
   statField(statFields, '敏捷 DEX', 'dex', 'Dex');
@@ -438,7 +479,6 @@ function renderEquipmentTable() {
     const tdKey = document.createElement('td');
     const inKey = document.createElement('input');
     inKey.value = item.itemKey ?? '';
-    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
     tdKey.appendChild(inKey);
     attachNameHint(inKey, tdKey, itemNameHint);
 
@@ -447,8 +487,18 @@ function renderEquipmentTable() {
     const inEnh = document.createElement('input');
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
+    inEnh.disabled = !isEnhanceableItem(item.itemKey);
+    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
+
+    inKey.addEventListener('input', () => {
+      item.itemKey = inKey.value;
+      const enhanceable = isEnhanceableItem(inKey.value);
+      inEnh.disabled = !enhanceable;
+      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
+    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
@@ -483,11 +533,41 @@ document.getElementById('addEquipRow').addEventListener('click', () => {
   const slotName = prompt('請輸入裝備位置代號(例如 wpn、armor、helm、shield、boots、gloves、cloak、tshirt、belt、amulet、ring1、ring2、lantern):');
   if (!slotName) return;
   if (!playerObj.equippedItems) playerObj.equippedItems = {};
-  playerObj.equippedItems[slotName] = blankItem();
+  playerObj.equippedItems[slotName] = blankItem('player');
   renderEquipmentTable();
 });
 
+let skillLabelToId = {};   // "中文名稱 (id)" -> id 反查表
+let skillDatalistBuilt = false;
+
+function ensureSkillDatalist() {
+  const existing = document.getElementById('skillNameList');
+  if (existing) existing.remove();
+  skillLabelToId = {};
+  const datalist = document.createElement('datalist');
+  datalist.id = 'skillNameList';
+  const entries = Object.entries(SKILL_NAMES).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+  for (const [id, name] of entries) {
+    const label = name + '（' + id + '）';
+    skillLabelToId[label] = id;
+    const opt = document.createElement('option');
+    opt.value = label;
+    datalist.appendChild(opt);
+  }
+  document.body.appendChild(datalist);
+  skillDatalistBuilt = true;
+}
+
+function skillLabelFor(skillId) {
+  if (!skillId) return '';
+  const name = SKILL_NAMES[skillId];
+  return name ? (name + '（' + skillId + '）') : skillId;
+}
+
 function renderSkillList() {
+  if (!skillDatalistBuilt || Object.keys(SKILL_NAMES).length !== Object.keys(skillLabelToId).length) {
+    ensureSkillDatalist();
+  }
   skillBody.innerHTML = '';
   if (!playerObj.learnedSkills) playerObj.learnedSkills = [];
   const list = playerObj.learnedSkills;
@@ -505,10 +585,33 @@ function renderSkillList() {
     const tr = document.createElement('tr');
     const tdKey = document.createElement('td');
     const inKey = document.createElement('input');
-    inKey.value = skillId;
-    inKey.addEventListener('input', () => { list[idx] = inKey.value; });
+    inKey.setAttribute('list', 'skillNameList');
+    inKey.placeholder = '輸入中文技能名稱搜尋,或直接輸入代碼';
+    inKey.value = skillLabelFor(skillId);
     tdKey.appendChild(inKey);
-    attachNameHint(inKey, tdKey, skillNameHint);
+
+    const hint = document.createElement('div');
+    hint.style.fontSize = '11px';
+    hint.style.color = 'var(--muted)';
+    hint.style.marginTop = '3px';
+    tdKey.appendChild(hint);
+
+    function resolveAndStore() {
+      const typed = inKey.value.trim();
+      if (skillLabelToId[typed]) {
+        list[idx] = skillLabelToId[typed];
+        hint.textContent = '已選擇：' + SKILL_NAMES[list[idx]];
+        hint.style.color = 'var(--ok)';
+      } else {
+        // 使用者可能直接輸入代碼本身
+        list[idx] = typed;
+        hint.textContent = skillNameHint(typed);
+        hint.style.color = 'var(--muted)';
+      }
+    }
+    resolveAndStore();
+    inKey.addEventListener('input', resolveAndStore);
+    inKey.addEventListener('change', resolveAndStore);
 
     const tdDel = document.createElement('td');
     tdDel.className = 'narrow';
@@ -568,9 +671,45 @@ function renderSettingFields() {
   settingField(settingFields, '同伴攻擊優先順序 (CompanionAttackPriorities)', 'CompanionAttackPriorities', 'text', true);
 }
 
+function itemNameOf(itemKey) {
+  const entry = ITEM_NAMES[itemKey];
+  return entry ? entry.n : '';
+}
+
+function itemTypeOf(itemKey) {
+  const entry = ITEM_NAMES[itemKey];
+  return entry ? entry.type : '';
+}
+
 function itemNameHint(itemKey) {
   if (!itemKey) return '';
-  return ITEM_NAMES[itemKey] || '（查無此物品,可能是原版天堂道具或已改名）';
+  const entry = ITEM_NAMES[itemKey];
+  return entry ? entry.n : '（查無此物品,可能是原版天堂道具或已改名）';
+}
+
+// 物品分類：武器/防具/飾品各自獨立，其餘全部歸類為「雜物」
+const ITEM_CATEGORY_LABELS = { wpn: '武器', arm: '防具', acc: '飾品', misc: '雜物' };
+function itemCategoryOf(type) {
+  if (type === 'wpn' || type === 'arm' || type === 'acc') return type;
+  return 'misc';
+}
+
+// 只有武器、防具可以強化，飾品與雜物一律不可強化
+function isEnhanceableItem(itemKey) {
+  const type = itemTypeOf(itemKey);
+  return type === 'wpn' || type === 'arm';
+}
+
+let itemsByCategory = null; // { wpn: [[id,name],...], arm: [...], acc: [...], misc: [...] }
+function buildItemsByCategory() {
+  itemsByCategory = { wpn: [], arm: [], acc: [], misc: [] };
+  for (const [id, entry] of Object.entries(ITEM_NAMES)) {
+    const cat = itemCategoryOf(entry.type);
+    itemsByCategory[cat].push([id, entry.n]);
+  }
+  for (const cat of Object.keys(itemsByCategory)) {
+    itemsByCategory[cat].sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+  }
 }
 
 function skillNameHint(skillId) {
@@ -590,9 +729,23 @@ function attachNameHint(input, td, lookupFn) {
   });
 }
 
-function blankItem() {
-  return {
-    uid: 'edit:item:' + Date.now() + Math.floor(Math.random() * 1000),
+// 依照存檔實際觀察到的規則產生 uid：
+// - 背包/裝備物品：player:item:<序號>，序號來自 Player.itemUidSequence 並遞增
+// - 倉庫物品：standard:item:<序號>，序號來自 Warehouse.itemUidSequence 並遞增
+// 倉庫物品另外多一個背包沒有的 "junk" 欄位，兩者結構並不完全相同。
+function nextItemUid(kind) {
+  if (kind === 'warehouse') {
+    if (!warehouseObj) throw new Error('warehouseObj 不存在');
+    warehouseObj.itemUidSequence = (warehouseObj.itemUidSequence || 0) + 1;
+    return 'standard:item:' + warehouseObj.itemUidSequence;
+  }
+  playerObj.itemUidSequence = (playerObj.itemUidSequence || 0) + 1;
+  return 'player:item:' + playerObj.itemUidSequence;
+}
+
+function blankItem(kind) {
+  const base = {
+    uid: nextItemUid(kind),
     itemKey: '',
     quantity: 1,
     enhancement: 0,
@@ -612,6 +765,10 @@ function blankItem() {
     attrEnchantLevel: 0,
     sealed: false
   };
+  if (kind === 'warehouse') {
+    base.junk = false;
+  }
+  return base;
 }
 
 function renderItemTable(tbody, list) {
@@ -632,7 +789,6 @@ function renderItemTable(tbody, list) {
     const tdKey = document.createElement('td');
     const inKey = document.createElement('input');
     inKey.value = item.itemKey ?? '';
-    inKey.addEventListener('input', () => { item.itemKey = inKey.value; });
     tdKey.appendChild(inKey);
     attachNameHint(inKey, tdKey, itemNameHint);
 
@@ -649,8 +805,18 @@ function renderItemTable(tbody, list) {
     const inEnh = document.createElement('input');
     inEnh.type = 'number';
     inEnh.value = item.enhancement ?? 0;
+    inEnh.disabled = !isEnhanceableItem(item.itemKey);
+    inEnh.title = inEnh.disabled ? '只有武器、防具可以設定強化值' : '';
     inEnh.addEventListener('input', () => { item.enhancement = inEnh.value === '' ? 0 : Number(inEnh.value); });
     tdEnh.appendChild(inEnh);
+
+    inKey.addEventListener('input', () => {
+      item.itemKey = inKey.value;
+      const enhanceable = isEnhanceableItem(inKey.value);
+      inEnh.disabled = !enhanceable;
+      inEnh.title = enhanceable ? '' : '只有武器、防具可以設定強化值';
+      if (!enhanceable) { inEnh.value = 0; item.enhancement = 0; }
+    });
 
     const tdLock = document.createElement('td');
     tdLock.className = 'checkbox';
@@ -688,20 +854,145 @@ function renderInventoryTable() {
 function renderWarehouseTable() {
   if (!warehouseObj) return;
   if (!warehouseObj.items) warehouseObj.items = [];
+  // 自動修補：舊版編輯器產生的倉庫物品可能缺少 junk 欄位、或 uid 前綴不是 standard:item:，
+  // 這類存檔載入遊戲會直接開不了角色。這裡順手補正，不影響原本就正常的物品。
+  for (const item of warehouseObj.items) {
+    if (!('junk' in item)) item.junk = false;
+    if (!/^standard:item:\d+$/.test(item.uid)) {
+      item.uid = nextItemUid('warehouse');
+    }
+  }
   renderItemTable(warehouseBody, warehouseObj.items);
 }
 
-document.getElementById('addInventoryRow').addEventListener('click', () => {
-  if (!playerObj) return;
-  playerObj.inventoryStacks.push(blankItem());
-  renderInventoryTable();
-});
+function buildAddItemWidget(container, getList, onAdded, kind) {
+  container.innerHTML = '';
 
-document.getElementById('addWarehouseRow').addEventListener('click', () => {
-  if (!warehouseObj) return;
-  warehouseObj.items.push(blankItem());
-  renderWarehouseTable();
-});
+  const catField = document.createElement('div');
+  catField.className = 'field-inline';
+  const catLabel = document.createElement('label');
+  catLabel.textContent = '物品類型';
+  const catSelect = document.createElement('select');
+  for (const [type, label] of Object.entries(ITEM_CATEGORY_LABELS)) {
+    const opt = document.createElement('option');
+    opt.value = type;
+    opt.textContent = label;
+    catSelect.appendChild(opt);
+  }
+  catField.appendChild(catLabel);
+  catField.appendChild(catSelect);
+
+  const searchField = document.createElement('div');
+  searchField.className = 'field-inline';
+  const searchLabel = document.createElement('label');
+  searchLabel.textContent = '關鍵字搜尋(可跨類型)';
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'search-input';
+  searchInput.placeholder = '輸入物品名稱關鍵字';
+  searchField.appendChild(searchLabel);
+  searchField.appendChild(searchInput);
+
+  const itemField = document.createElement('div');
+  itemField.className = 'field-inline';
+  const itemLabel = document.createElement('label');
+  itemLabel.textContent = '選擇物品';
+  const itemSelect = document.createElement('select');
+  itemSelect.className = 'item-select';
+  itemField.appendChild(itemLabel);
+  itemField.appendChild(itemSelect);
+
+  const qtyField = document.createElement('div');
+  qtyField.className = 'field-inline';
+  const qtyLabel = document.createElement('label');
+  qtyLabel.textContent = '數量';
+  const qtyInput = document.createElement('input');
+  qtyInput.type = 'number';
+  qtyInput.className = 'qty-input';
+  qtyInput.value = 1;
+  qtyField.appendChild(qtyLabel);
+  qtyField.appendChild(qtyInput);
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'primary';
+  addBtn.textContent = '+ 加入清單';
+
+  function populateItemSelect() {
+    const keyword = searchInput.value.trim();
+    itemSelect.innerHTML = '';
+    let candidates;
+    if (keyword) {
+      // 關鍵字搜尋時跨所有類型比對
+      candidates = [];
+      for (const cat of Object.keys(itemsByCategory)) {
+        for (const [id, name] of itemsByCategory[cat]) {
+          if (name.includes(keyword) || id.includes(keyword)) candidates.push([id, name]);
+        }
+      }
+    } else {
+      candidates = itemsByCategory[catSelect.value] || [];
+    }
+    if (candidates.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '（查無符合物品）';
+      itemSelect.appendChild(opt);
+      return;
+    }
+    for (const [id, name] of candidates) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = name + '（' + id + '）';
+      itemSelect.appendChild(opt);
+    }
+  }
+
+  catSelect.addEventListener('change', () => {
+    searchInput.value = '';
+    populateItemSelect();
+  });
+  searchInput.addEventListener('input', populateItemSelect);
+
+  addBtn.addEventListener('click', () => {
+    const chosenId = itemSelect.value;
+    if (!chosenId) return;
+    const qty = Number(qtyInput.value) || 1;
+    const item = blankItem(kind);
+    item.itemKey = chosenId;
+    item.quantity = qty;
+    getList().push(item);
+    onAdded();
+  });
+
+  if (!itemsByCategory) buildItemsByCategory();
+  populateItemSelect();
+
+  container.appendChild(catField);
+  container.appendChild(searchField);
+  container.appendChild(itemField);
+  container.appendChild(qtyField);
+  container.appendChild(addBtn);
+}
+
+function setupAddWidgets() {
+  buildAddItemWidget(
+    document.getElementById('inventoryAddWidget'),
+    () => playerObj.inventoryStacks,
+    () => renderInventoryTable(),
+    'player'
+  );
+  const warehouseWidget = document.getElementById('warehouseAddWidget');
+  if (warehouseObj) {
+    buildAddItemWidget(
+      warehouseWidget,
+      () => warehouseObj.items,
+      () => renderWarehouseTable(),
+      'warehouse'
+    );
+  } else {
+    warehouseWidget.innerHTML = '<span class="empty-hint">（此存檔沒有可用的倉庫資料）</span>';
+  }
+}
 
 saveBtn.addEventListener('click', () => {
   if (!rootData) return;

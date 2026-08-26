@@ -235,16 +235,17 @@
 </div>
 
 <script>
-// ==== 物品/技能 ID → 中文名稱對照表 (來源: 社群共享資料庫) ====
-// 這兩份資料改為外部檔案載入 (save/item_names.json / save/skill_names.json)，
+// ==== 物品/技能 ID → 中文名稱對照表 ====
+// 資料來源改為遊戲本身的完整資料庫 save/DB.json（同一份檔案，遊戲本體與存檔編輯器共用，
+// 不需要再另外維護一份對照表）。DB.json 內含大量戰鬥計算用欄位(傷害、機率、特效等)，
+// 編輯器讀取後只抽取用得到的「名稱」與「分類」，其餘內容不保留，避免佔用多餘記憶體。
 // 優先讀取本機同層 save 資料夾；若讀取失敗(常見於直接雙擊開啟、或缺少該資料夾)，
 // 會改成從 GitHub 上的專案倉庫抓取最新版本。
 let ITEM_NAMES = {};
 let SKILL_NAMES = {};
 
-// 若之後倉庫路徑或使用者帳號有變動，只需要改這兩個網址
-const GITHUB_ITEM_NAMES_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/save/item_names.json';
-const GITHUB_SKILL_NAMES_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/save/skill_names.json';
+// 若之後倉庫路徑或使用者帳號有變動，只需要改這個網址
+const GITHUB_DB_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/save/DB.json';
 
 const dataStatus = document.getElementById('dataStatus');
 const reloadDataBtn = document.getElementById('reloadDataBtn');
@@ -255,6 +256,19 @@ async function fetchJson(url) {
   return res.json();
 }
 
+// 從完整的 DB.json 中只抽取名稱/分類欄位，讓大型物件用完即丟，不長期佔用記憶體
+function extractNamesFromDb(db) {
+  const items = {};
+  for (const [id, entry] of Object.entries(db.items || {})) {
+    items[id] = { n: entry.n || id, type: entry.type || 'misc' };
+  }
+  const skills = {};
+  for (const [id, entry] of Object.entries(db.skills || {})) {
+    skills[id] = entry.n || id;
+  }
+  return { items, skills };
+}
+
 async function loadNameData() {
   dataStatus.textContent = '正在載入物品/技能名稱資料...';
   dataStatus.className = 'status';
@@ -262,13 +276,11 @@ async function loadNameData() {
 
   // 先試本機 save 資料夾
   try {
-    const [items, skills] = await Promise.all([
-      fetchJson('save/item_names.json'),
-      fetchJson('save/skill_names.json')
-    ]);
+    const db = await fetchJson('save/DB.json');
+    const { items, skills } = extractNamesFromDb(db);
     ITEM_NAMES = items;
     SKILL_NAMES = skills;
-    dataStatus.textContent = '物品/技能名稱資料已載入(本機) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
+    dataStatus.textContent = '物品/技能名稱資料已載入(本機 DB.json) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
     dataStatus.className = 'status ok';
     reloadDataBtn.disabled = false;
     refreshNameDependentUI();
@@ -278,13 +290,11 @@ async function loadNameData() {
   }
 
   try {
-    const [items, skills] = await Promise.all([
-      fetchJson(GITHUB_ITEM_NAMES_URL),
-      fetchJson(GITHUB_SKILL_NAMES_URL)
-    ]);
+    const db = await fetchJson(GITHUB_DB_URL);
+    const { items, skills } = extractNamesFromDb(db);
     ITEM_NAMES = items;
     SKILL_NAMES = skills;
-    dataStatus.textContent = '物品/技能名稱資料已載入(GitHub) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
+    dataStatus.textContent = '物品/技能名稱資料已載入(GitHub DB.json) — ' + Object.keys(ITEM_NAMES).length + ' 個物品、' + Object.keys(SKILL_NAMES).length + ' 個技能';
     dataStatus.className = 'status ok';
   } catch (err) {
     dataStatus.textContent = '本機與 GitHub 皆載入失敗,物品/技能將只顯示 ID,不影響其他編輯功能。點「重新載入」可再試一次。';
