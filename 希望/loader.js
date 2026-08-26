@@ -120,9 +120,18 @@
     if (!kinds.length) return "無屬性";
     return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
   }
-  function hasKind(entry, kind) {
-    if (!kind) return true; // 沒指定就當作永遠符合
-    return rolledKindsOf(entry).indexOf(kind) !== -1;
+  function countMatchedKinds(entry, selectedKinds) {
+    if (!selectedKinds || !selectedKinds.length) return 0;
+    var rolled = rolledKindsOf(entry);
+    var set = {};
+    selectedKinds.forEach(function (k) { set[k] = true; });
+    var count = 0;
+    rolled.forEach(function (k) { if (set[k]) count++; });
+    return count;
+  }
+  function meetsKindRequirement(entry, selectedKinds, minMatch) {
+    if (!selectedKinds || !selectedKinds.length || !minMatch) return true; // 沒選屬性或沒設下限，就當作沒有這個限制
+    return countMatchedKinds(entry, selectedKinds) >= minMatch;
   }
   function loadoutList() {
     var s = snap();
@@ -220,8 +229,9 @@
       return '<option value="' + (idx + 1) + '"' + ((idx + 1) === defaultTarget ? " selected" : "") + '>' + g + '</option>';
     }).join("");
 
-    var kindOptions = '<option value="">（不指定）</option>' + ENCHANT_KINDS.map(function (k) {
-      return '<option value="' + k.kind + '">' + k.name + '</option>';
+    var kindChecklist = ENCHANT_KINDS.map(function (k) {
+      return '<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:400;margin:0;padding:3px 0;">' +
+        '<input type="checkbox" class="iw-kind-cb" value="' + k.kind + '" style="width:auto;">' + k.name + '</label>';
     }).join("");
 
     modal.innerHTML =
@@ -232,9 +242,14 @@
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
-      '<label>指定屬性（可選，要洗到這個屬性「而且」階級也達標才會停）</label>' +
-      '<select id="iw-f-kind">' + kindOptions + '</select>' +
-      '<label>最大金幣預算</label>' +
+      '<label>指定屬性（可複選，要洗到「其中幾條」而且階級也達標才會停）</label>' +
+      '<div id="iw-f-kind-list" style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:5px;padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--bg3);">' + kindChecklist + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--text2);">' +
+      '<span>已選 <b id="iw-f-kind-selected-count" style="color:var(--text);">0</b> 條，至少要洗出</span>' +
+      '<input type="number" id="iw-f-kind-min" min="0" value="0" style="width:64px;">' +
+      '<span>條才停（0 = 不限制）</span>' +
+      '</div>' +
+      '<label style="margin-top:16px;">最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
       '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy">沒有實習生的發條時，自動花金幣購買繼續（每個 ' +
       fmt((data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)) || 0) + ' 金幣）</label></div>' +
@@ -257,6 +272,18 @@
     gradeSelect.addEventListener("change", updateWarn);
     updateWarn();
 
+    var kindCheckboxes = Array.prototype.slice.call(modal.querySelectorAll(".iw-kind-cb"));
+    var kindMinInput = document.getElementById("iw-f-kind-min");
+    var kindSelectedCountEl = document.getElementById("iw-f-kind-selected-count");
+    function updateKindSelectedCount() {
+      var n = kindCheckboxes.filter(function (cb) { return cb.checked; }).length;
+      kindSelectedCountEl.textContent = String(n);
+      kindMinInput.max = String(n);
+      if (Number(kindMinInput.value) > n) kindMinInput.value = String(n);
+    }
+    kindCheckboxes.forEach(function (cb) { cb.addEventListener("change", updateKindSelectedCount); });
+    updateKindSelectedCount();
+
     document.getElementById("iw-enhance-close").addEventListener("click", closeModal);
     document.getElementById("iw-f-cancel").addEventListener("click", function () {
       if (running) { stopFlag = true; } else { closeModal(); }
@@ -266,8 +293,9 @@
         var targetGrade = Number(document.getElementById("iw-f-grade").value);
         var budget = Number(document.getElementById("iw-f-budget").value) || 0;
         var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        var desiredKind = Number(document.getElementById("iw-f-kind").value) || 0;
-        startRun(item, targetGrade, budget, autoBuy, desiredKind);
+        var selectedKinds = kindCheckboxes.filter(function (cb) { return cb.checked; }).map(function (cb) { return Number(cb.value); });
+        var minMatch = Number(kindMinInput.value) || 0;
+        startRun(item, targetGrade, budget, autoBuy, selectedKinds, minMatch);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -301,7 +329,7 @@
     if (cancel) cancel.textContent = disabled ? "停止" : "取消";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy, desiredKind) {
+  async function startRun(item, targetGrade, budget, autoBuy, selectedKinds, minMatch) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
@@ -319,7 +347,7 @@
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
-      if (curGrade >= targetGrade && hasKind(entry, desiredKind)) { reason = "success"; break; }
+      if (curGrade >= targetGrade && meetsKindRequirement(entry, selectedKinds, minMatch)) { reason = "success"; break; }
 
       if (totalSpent >= budget) { reason = "budget"; break; }
 
@@ -371,11 +399,12 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
-      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）");
+      var matchInfo = (selectedKinds && selectedKinds.length) ? "，符合 " + countMatchedKinds(newEntry, selectedKinds) + "/" + minMatch + " 條指定屬性" : "";
+      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
-      if (totalSpent >= budget && !(newGrade >= targetGrade && hasKind(newEntry, desiredKind))) { reason = "budget"; break; }
+      if (totalSpent >= budget && !(newGrade >= targetGrade && meetsKindRequirement(newEntry, selectedKinds, minMatch))) { reason = "budget"; break; }
 
       await sleep(25);
     }
