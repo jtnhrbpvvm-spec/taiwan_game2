@@ -16,6 +16,7 @@
   var ENCHANT_KINDS = [{"kind":1,"name":"攻擊力"},{"kind":2,"name":"魔法力"},{"kind":3,"name":"防禦力"},{"kind":4,"name":"攻擊速度"},{"kind":5,"name":"必殺技"},{"kind":6,"name":"命中率"},{"kind":7,"name":"迴避率"},{"kind":8,"name":"移動速度"},{"kind":9,"name":"HP"},{"kind":10,"name":"AP"},{"kind":11,"name":"HP%"},{"kind":12,"name":"AP%"},{"kind":13,"name":"減少道具等級限制"},{"kind":14,"name":"經驗值獲得量"},{"kind":15,"name":"每級力量"},{"kind":16,"name":"每級敏捷"},{"kind":17,"name":"每級智力"},{"kind":18,"name":"每級幸運"},{"kind":19,"name":"每級體力"},{"kind":20,"name":"每級精神"},{"kind":21,"name":"[副本]增加傷害"},{"kind":22,"name":"增加傷害"},{"kind":23,"name":"減少傷害"}];
   var ENCHANT_KIND_NAME = {};
   ENCHANT_KINDS.forEach(function (k) { ENCHANT_KIND_NAME[k.kind] = k.name; });
+  var ENCHANT_VALUES = {"1-1":[{"min":10,"max":25,"weight":100000,"unit":0}],"1-2":[{"min":10,"max":25,"weight":100000,"unit":0}],"1-3":[{"min":1,"max":5,"weight":100000,"unit":0}],"1-4":[{"min":1,"max":5,"weight":100000,"unit":0}],"1-5":[{"min":10,"max":25,"weight":100000,"unit":0}],"1-6":[{"min":1,"max":5,"weight":100000,"unit":0}],"1-7":[{"min":1,"max":5,"weight":100000,"unit":0}],"1-8":[{"min":1,"max":5,"weight":100000,"unit":0}],"1-9":[{"min":10,"max":50,"weight":100000,"unit":0}],"1-10":[{"min":10,"max":50,"weight":100000,"unit":0}],"1-21":[{"min":1,"max":3,"weight":100000,"unit":0}],"2-1":[{"min":25,"max":35,"weight":70000,"unit":0},{"min":35,"max":45,"weight":30000,"unit":0}],"2-2":[{"min":25,"max":35,"weight":70000,"unit":0},{"min":35,"max":45,"weight":30000,"unit":0}],"2-3":[{"min":1,"max":10,"weight":100000,"unit":0}],"2-4":[{"min":1,"max":10,"weight":100000,"unit":0}],"2-5":[{"min":25,"max":35,"weight":70000,"unit":0},{"min":35,"max":45,"weight":30000,"unit":0}],"2-6":[{"min":1,"max":10,"weight":100000,"unit":0}],"2-7":[{"min":1,"max":10,"weight":100000,"unit":0}],"2-8":[{"min":1,"max":10,"weight":100000,"unit":0}],"2-9":[{"min":50,"max":100,"weight":70000,"unit":0},{"min":100,"max":200,"weight":30000,"unit":0}],"2-10":[{"min":50,"max":100,"weight":70000,"unit":0},{"min":100,"max":200,"weight":30000,"unit":0}],"2-11":[{"min":1,"max":1,"weight":100000,"unit":0}],"2-12":[{"min":1,"max":1,"weight":100000,"unit":0}],"2-15":[{"min":10,"max":10,"weight":65000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1}],"2-16":[{"min":10,"max":10,"weight":65000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1}],"2-17":[{"min":10,"max":10,"weight":65000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1}],"2-18":[{"min":10,"max":10,"weight":65000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1}],"2-19":[{"min":50,"max":50,"weight":30000,"unit":1},{"min":48,"max":48,"weight":25000,"unit":1},{"min":46,"max":46,"weight":15000,"unit":1},{"min":44,"max":44,"weight":12500,"unit":1},{"min":42,"max":42,"weight":10000,"unit":1},{"min":40,"max":40,"weight":7500,"unit":1}],"2-20":[{"min":50,"max":50,"weight":30000,"unit":1},{"min":48,"max":48,"weight":25000,"unit":1},{"min":46,"max":46,"weight":15000,"unit":1},{"min":44,"max":44,"weight":12500,"unit":1},{"min":42,"max":42,"weight":10000,"unit":1},{"min":40,"max":40,"weight":7500,"unit":1}],"2-21":[{"min":1,"max":5,"weight":100000,"unit":0}],"2-22":[{"min":1,"max":3,"weight":100000,"unit":0}],"2-23":[{"min":1,"max":1,"weight":100000,"unit":0}],"3-1":[{"min":45,"max":55,"weight":60000,"unit":0},{"min":55,"max":65,"weight":25000,"unit":0},{"min":65,"max":75,"weight":15000,"unit":0}],"3-2":[{"min":45,"max":55,"weight":60000,"unit":0},{"min":55,"max":65,"weight":25000,"unit":0},{"min":65,"max":75,"weight":15000,"unit":0}],"3-3":[{"min":5,"max":15,"weight":100000,"unit":0}],"3-4":[{"min":5,"max":15,"weight":100000,"unit":0}],"3-5":[{"min":45,"max":55,"weight":60000,"unit":0},{"min":55,"max":65,"weight":25000,"unit":0},{"min":65,"max":75,"weight":15000,"unit":0}],"3-6":[{"min":5,"max":15,"weight":100000,"unit":0}],"3-7":[{"min":5,"max":15,"weight":100000,"unit":0}],"3-8":[{"min":5,"max":15,"weight":100000,"unit":0}],"3-9":[{"min":200,"max":300,"weight":60000,"unit":0},{"min":300,"max":400,"weight":25000,"unit":0},{"min":400,"max":500,"weight":15000,"unit":0}],"3-10":[{"min":200,"max":300,"weight":60000,"unit":0},{"min":300,"max":400,"weight":25000,"unit":0},{"min":400,"max":500,"weight":15000,"unit":0}],"3-11":[{"min":1,"max":1,"weight":80000,"unit":0},{"min":2,"max":2,"weight":20000,"unit":0}],"3-12":[{"min":1,"max":1,"weight":80000,"unit":0},{"min":2,"max":2,"weight":20000,"unit":0}],"3-13":[{"min":1,"max":1,"weight":100000,"unit":0}],"3-14":[{"min":1,"max":1,"weight":100000,"unit":0}],"3-15":[{"min":10,"max":10,"weight":55000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1},{"min":4,"max":4,"weight":10000,"unit":1}],"3-16":[{"min":10,"max":10,"weight":55000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1},{"min":4,"max":4,"weight":10000,"unit":1}],"3-17":[{"min":10,"max":10,"weight":55000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1},{"min":4,"max":4,"weight":10000,"unit":1}],"3-18":[{"min":10,"max":10,"weight":55000,"unit":1},{"min":8,"max":8,"weight":22500,"unit":1},{"min":6,"max":6,"weight":12500,"unit":1},{"min":4,"max":4,"weight":10000,"unit":1}],"3-19":[{"min":40,"max":40,"weight":45000,"unit":1},{"min":38,"max":38,"weight":20000,"unit":1},{"min":36,"max":36,"weight":12500,"unit":1},{"min":34,"max":34,"weight":10000,"unit":1},{"min":32,"max":32,"weight":7500,"unit":1},{"min":30,"max":30,"weight":5000,"unit":1}],"3-20":[{"min":40,"max":40,"weight":45000,"unit":1},{"min":38,"max":38,"weight":20000,"unit":1},{"min":36,"max":36,"weight":12500,"unit":1},{"min":34,"max":34,"weight":10000,"unit":1},{"min":32,"max":32,"weight":7500,"unit":1},{"min":30,"max":30,"weight":5000,"unit":1}],"3-21":[{"min":1,"max":10,"weight":100000,"unit":0}],"3-22":[{"min":1,"max":5,"weight":100000,"unit":0}],"3-23":[{"min":1,"max":1,"weight":100000,"unit":0}],"4-1":[{"min":75,"max":90,"weight":55500,"unit":0},{"min":90,"max":105,"weight":32500,"unit":0},{"min":105,"max":120,"weight":8500,"unit":0},{"min":120,"max":135,"weight":3500,"unit":0}],"4-2":[{"min":75,"max":90,"weight":55500,"unit":0},{"min":90,"max":105,"weight":32500,"unit":0},{"min":105,"max":120,"weight":8500,"unit":0},{"min":120,"max":135,"weight":3500,"unit":0}],"4-3":[{"min":10,"max":20,"weight":100000,"unit":0}],"4-4":[{"min":10,"max":20,"weight":100000,"unit":0}],"4-5":[{"min":75,"max":90,"weight":55500,"unit":0},{"min":90,"max":105,"weight":32500,"unit":0},{"min":105,"max":120,"weight":8500,"unit":0},{"min":120,"max":135,"weight":3500,"unit":0}],"4-6":[{"min":10,"max":20,"weight":100000,"unit":0}],"4-7":[{"min":10,"max":20,"weight":100000,"unit":0}],"4-8":[{"min":10,"max":20,"weight":100000,"unit":0}],"4-9":[{"min":500,"max":600,"weight":55500,"unit":0},{"min":600,"max":700,"weight":32500,"unit":0},{"min":800,"max":900,"weight":8500,"unit":0},{"min":900,"max":1000,"weight":3500,"unit":0}],"4-10":[{"min":500,"max":600,"weight":55500,"unit":0},{"min":600,"max":700,"weight":32500,"unit":0},{"min":800,"max":900,"weight":8500,"unit":0},{"min":900,"max":1000,"weight":3500,"unit":0}],"4-11":[{"min":1,"max":1,"weight":72000,"unit":0},{"min":2,"max":2,"weight":18000,"unit":0},{"min":3,"max":3,"weight":10000,"unit":0}],"4-12":[{"min":1,"max":1,"weight":72000,"unit":0},{"min":2,"max":2,"weight":18000,"unit":0},{"min":3,"max":3,"weight":10000,"unit":0}],"4-13":[{"min":1,"max":1,"weight":80000,"unit":0},{"min":2,"max":2,"weight":15000,"unit":0},{"min":3,"max":3,"weight":5000,"unit":0}],"4-14":[{"min":1,"max":1,"weight":80000,"unit":0},{"min":2,"max":2,"weight":15000,"unit":0},{"min":3,"max":3,"weight":5000,"unit":0}],"4-15":[{"min":10,"max":10,"weight":50000,"unit":2},{"min":8,"max":8,"weight":30000,"unit":2},{"min":6,"max":6,"weight":15000,"unit":2},{"min":4,"max":4,"weight":5000,"unit":2}],"4-16":[{"min":10,"max":10,"weight":50000,"unit":2},{"min":8,"max":8,"weight":30000,"unit":2},{"min":6,"max":6,"weight":15000,"unit":2},{"min":4,"max":4,"weight":5000,"unit":2}],"4-17":[{"min":10,"max":10,"weight":50000,"unit":2},{"min":8,"max":8,"weight":30000,"unit":2},{"min":6,"max":6,"weight":15000,"unit":2},{"min":4,"max":4,"weight":5000,"unit":2}],"4-18":[{"min":10,"max":10,"weight":50000,"unit":2},{"min":8,"max":8,"weight":30000,"unit":2},{"min":6,"max":6,"weight":15000,"unit":2},{"min":4,"max":4,"weight":5000,"unit":2}],"4-19":[{"min":30,"max":30,"weight":20000,"unit":1},{"min":28,"max":28,"weight":29000,"unit":1},{"min":26,"max":26,"weight":15000,"unit":1},{"min":24,"max":24,"weight":15000,"unit":1},{"min":22,"max":22,"weight":10000,"unit":1},{"min":20,"max":20,"weight":5000,"unit":1},{"min":18,"max":18,"weight":3750,"unit":1},{"min":15,"max":15,"weight":2250,"unit":1}],"4-20":[{"min":30,"max":30,"weight":20000,"unit":1},{"min":28,"max":28,"weight":29000,"unit":1},{"min":26,"max":26,"weight":15000,"unit":1},{"min":24,"max":24,"weight":15000,"unit":1},{"min":22,"max":22,"weight":10000,"unit":1},{"min":20,"max":20,"weight":5000,"unit":1},{"min":18,"max":18,"weight":3750,"unit":1},{"min":15,"max":15,"weight":2250,"unit":1}],"4-21":[{"min":1,"max":15,"weight":100000,"unit":0}],"4-22":[{"min":1,"max":5,"weight":75000,"unit":0},{"min":5,"max":10,"weight":25000,"unit":0}],"4-23":[{"min":1,"max":1,"weight":70000,"unit":0},{"min":2,"max":2,"weight":25000,"unit":0},{"min":3,"max":3,"weight":5000,"unit":0}],"5-1":[{"min":135,"max":150,"weight":50500,"unit":0},{"min":150,"max":165,"weight":33000,"unit":0},{"min":165,"max":180,"weight":10000,"unit":0},{"min":180,"max":195,"weight":4500,"unit":0},{"min":195,"max":210,"weight":2000,"unit":0}],"5-2":[{"min":135,"max":150,"weight":50500,"unit":0},{"min":150,"max":165,"weight":33000,"unit":0},{"min":165,"max":180,"weight":10000,"unit":0},{"min":180,"max":195,"weight":4500,"unit":0},{"min":195,"max":210,"weight":2000,"unit":0}],"5-3":[{"min":15,"max":25,"weight":100000,"unit":0}],"5-4":[{"min":15,"max":25,"weight":100000,"unit":0}],"5-5":[{"min":135,"max":150,"weight":50500,"unit":0},{"min":150,"max":165,"weight":33000,"unit":0},{"min":165,"max":180,"weight":10000,"unit":0},{"min":180,"max":195,"weight":4500,"unit":0},{"min":195,"max":210,"weight":2000,"unit":0}],"5-6":[{"min":15,"max":25,"weight":100000,"unit":0}],"5-7":[{"min":15,"max":25,"weight":100000,"unit":0}],"5-8":[{"min":15,"max":25,"weight":100000,"unit":0}],"5-9":[{"min":1000,"max":1100,"weight":50500,"unit":0},{"min":1100,"max":1200,"weight":33000,"unit":0},{"min":1200,"max":1300,"weight":10000,"unit":0},{"min":1300,"max":1400,"weight":4500,"unit":0},{"min":1400,"max":1500,"weight":2000,"unit":0}],"5-10":[{"min":1000,"max":1100,"weight":50500,"unit":0},{"min":1100,"max":1200,"weight":33000,"unit":0},{"min":1200,"max":1300,"weight":10000,"unit":0},{"min":1300,"max":1400,"weight":4500,"unit":0},{"min":1400,"max":1500,"weight":2000,"unit":0}],"5-11":[{"min":2,"max":2,"weight":72000,"unit":0},{"min":3,"max":3,"weight":18000,"unit":0},{"min":4,"max":4,"weight":10000,"unit":0}],"5-12":[{"min":2,"max":2,"weight":72000,"unit":0},{"min":3,"max":3,"weight":18000,"unit":0},{"min":4,"max":4,"weight":10000,"unit":0}],"5-13":[{"min":2,"max":2,"weight":80000,"unit":0},{"min":3,"max":3,"weight":15000,"unit":0},{"min":4,"max":4,"weight":5000,"unit":0}],"5-14":[{"min":2,"max":2,"weight":80000,"unit":0},{"min":3,"max":3,"weight":15000,"unit":0},{"min":4,"max":4,"weight":5000,"unit":0}],"5-15":[{"min":8,"max":8,"weight":50000,"unit":2},{"min":6,"max":6,"weight":30000,"unit":2},{"min":4,"max":4,"weight":15000,"unit":2},{"min":3,"max":3,"weight":5000,"unit":2}],"5-16":[{"min":8,"max":8,"weight":50000,"unit":2},{"min":6,"max":6,"weight":30000,"unit":2},{"min":4,"max":4,"weight":15000,"unit":2},{"min":3,"max":3,"weight":5000,"unit":2}],"5-17":[{"min":8,"max":8,"weight":50000,"unit":2},{"min":6,"max":6,"weight":30000,"unit":2},{"min":4,"max":4,"weight":15000,"unit":2},{"min":3,"max":3,"weight":5000,"unit":2}],"5-18":[{"min":8,"max":8,"weight":50000,"unit":2},{"min":6,"max":6,"weight":30000,"unit":2},{"min":4,"max":4,"weight":15000,"unit":2},{"min":3,"max":3,"weight":5000,"unit":2}],"5-19":[{"min":28,"max":28,"weight":20000,"unit":1},{"min":26,"max":26,"weight":29000,"unit":1},{"min":24,"max":24,"weight":15000,"unit":1},{"min":22,"max":22,"weight":15000,"unit":1},{"min":20,"max":20,"weight":10000,"unit":1},{"min":18,"max":18,"weight":5000,"unit":1},{"min":15,"max":15,"weight":3750,"unit":1},{"min":13,"max":13,"weight":2250,"unit":1}],"5-20":[{"min":28,"max":28,"weight":20000,"unit":1},{"min":26,"max":26,"weight":29000,"unit":1},{"min":24,"max":24,"weight":15000,"unit":1},{"min":22,"max":22,"weight":15000,"unit":1},{"min":20,"max":20,"weight":10000,"unit":1},{"min":18,"max":18,"weight":5000,"unit":1},{"min":15,"max":15,"weight":3750,"unit":1},{"min":13,"max":13,"weight":2250,"unit":1}],"5-21":[{"min":1,"max":20,"weight":100000,"unit":0}],"5-22":[{"min":1,"max":5,"weight":70000,"unit":0},{"min":5,"max":10,"weight":25000,"unit":0},{"min":10,"max":15,"weight":5000,"unit":0}],"5-23":[{"min":2,"max":2,"weight":70000,"unit":0},{"min":3,"max":3,"weight":25000,"unit":0},{"min":4,"max":4,"weight":5000,"unit":0}]};
 
   // ---------- 先清掉舊的（讓 bookmarklet 可以重複點擊 / 熱重載）----------
   var oldStyle = document.getElementById(STYLE_ID);
@@ -120,32 +121,35 @@
     if (!kinds.length) return "無屬性";
     return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
   }
-  function requiredCountsOf(requiredKinds) {
-    var counts = {};
-    (requiredKinds || []).forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
-    return counts;
-  }
-  function countOfKind(entry, kind) {
-    var rolled = rolledKindsOf(entry);
-    var n = 0;
-    rolled.forEach(function (k) { if (k === kind) n++; });
-    return n;
-  }
-  function meetsKindRequirement(entry, requiredKinds) {
-    if (!requiredKinds || !requiredKinds.length) return true; // 沒指定就當作沒有這個限制
-    var counts = requiredCountsOf(requiredKinds);
-    for (var kind in counts) {
-      if (countOfKind(entry, Number(kind)) < counts[kind]) return false;
+  // requirements: array of { kind, min, max }；min/max 為 null 代表這個屬性不限數值範圍
+  function meetsKindRequirement(entry, requirements) {
+    if (!requirements || !requirements.length) return true; // 沒指定就當作沒有這個限制
+    var rolled = (entry && entry.options && entry.options.options) || [];
+    var used = new Array(rolled.length).fill(false);
+    function backtrack(i) {
+      if (i >= requirements.length) return true;
+      var req = requirements[i];
+      for (var j = 0; j < rolled.length; j++) {
+        if (used[j]) continue;
+        var r = rolled[j];
+        if (r.kind !== req.kind) continue;
+        if (req.min != null && (r.value < req.min || r.value > req.max)) continue;
+        used[j] = true;
+        if (backtrack(i + 1)) return true;
+        used[j] = false;
+      }
+      return false;
     }
-    return true;
+    return backtrack(0);
   }
-  function kindRequirementText(requiredKinds) {
-    var counts = requiredCountsOf(requiredKinds);
-    var parts = [];
-    for (var kind in counts) {
-      parts.push((ENCHANT_KIND_NAME[kind] || ("kind" + kind)) + " x" + counts[kind]);
-    }
-    return parts.join("、");
+  function kindRequirementText(requirements) {
+    return (requirements || []).map(function (req) {
+      var name = ENCHANT_KIND_NAME[req.kind] || ("kind" + req.kind);
+      return req.min != null ? name + "(" + req.min + "~" + req.max + ")" : name;
+    }).join("、");
+  }
+  function valueTiersFor(grade, kind) {
+    return ENCHANT_VALUES[grade + "-" + kind] || [];
   }
   function loadoutList() {
     var s = snap();
@@ -278,22 +282,60 @@
       var target = Number(gradeSelect.value);
       warnEl.style.display = (target - curGrade >= 2) ? "block" : "none";
     }
-    gradeSelect.addEventListener("change", updateWarn);
-    updateWarn();
 
     var kindCountInput = document.getElementById("iw-f-kind-count");
     var kindSlotsWrap = document.getElementById("iw-f-kind-slots");
+
+    function rangeOptionsHtml(grade, kind) {
+      var tiers = valueTiersFor(grade, kind);
+      var total = tiers.reduce(function (s, t) { return s + t.weight; }, 0) || 1;
+      var html = '<option value="">（不限範圍）</option>';
+      tiers.forEach(function (t) {
+        var pct = (t.weight / total * 100);
+        var pctText = pct >= 10 ? pct.toFixed(0) : pct.toFixed(1);
+        html += '<option value="' + t.min + '|' + t.max + '">' + t.min + '~' + t.max + '（' + pctText + '%）</option>';
+      });
+      return html;
+    }
+    function refreshRangeSelect(rangeSel, kindSel) {
+      var prev = rangeSel.value;
+      rangeSel.innerHTML = rangeOptionsHtml(Number(gradeSelect.value), Number(kindSel.value));
+      if (prev && rangeSel.querySelector('option[value="' + prev + '"]')) rangeSel.value = prev;
+    }
+    function refreshAllRangeSelects() {
+      Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row")).forEach(function (row) {
+        refreshRangeSelect(row.querySelector(".iw-kind-slot-range"), row.querySelector(".iw-kind-slot"));
+      });
+    }
+    gradeSelect.addEventListener("change", function () { updateWarn(); refreshAllRangeSelects(); });
+    updateWarn();
+
     function rebuildKindSlots() {
       var n = Math.max(0, Math.min(6, Number(kindCountInput.value) || 0));
       kindCountInput.value = String(n);
-      var prevValues = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-slot")).map(function (s) { return s.value; });
+      var prevRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
+      var prevKinds = prevRows.map(function (row) { return row.querySelector(".iw-kind-slot").value; });
       kindSlotsWrap.innerHTML = "";
       for (var i = 0; i < n; i++) {
-        var sel = document.createElement("select");
-        sel.className = "iw-kind-slot";
-        sel.innerHTML = kindOptionsHtml;
-        if (prevValues[i]) sel.value = prevValues[i];
-        kindSlotsWrap.appendChild(sel);
+        var row = document.createElement("div");
+        row.className = "iw-kind-row";
+        row.style.cssText = "display:flex;gap:6px;";
+        var kindSel = document.createElement("select");
+        kindSel.className = "iw-kind-slot";
+        kindSel.style.flex = "1";
+        kindSel.innerHTML = kindOptionsHtml;
+        if (prevKinds[i]) kindSel.value = prevKinds[i];
+        var rangeSel = document.createElement("select");
+        rangeSel.className = "iw-kind-slot-range";
+        rangeSel.style.flex = "1";
+        row.appendChild(kindSel);
+        row.appendChild(rangeSel);
+        kindSlotsWrap.appendChild(row);
+        refreshRangeSelect(rangeSel, kindSel);
+        kindSel.addEventListener("change", function () {
+          var r = this.closest(".iw-kind-row");
+          refreshRangeSelect(r.querySelector(".iw-kind-slot-range"), r.querySelector(".iw-kind-slot"));
+        });
       }
     }
     kindCountInput.addEventListener("input", rebuildKindSlots);
@@ -308,8 +350,16 @@
         var targetGrade = Number(document.getElementById("iw-f-grade").value);
         var budget = Number(document.getElementById("iw-f-budget").value) || 0;
         var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        var requiredKinds = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-slot")).map(function (sel) { return Number(sel.value); });
-        startRun(item, targetGrade, budget, autoBuy, requiredKinds);
+        var requirements = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row")).map(function (row) {
+          var kind = Number(row.querySelector(".iw-kind-slot").value);
+          var rangeVal = row.querySelector(".iw-kind-slot-range").value;
+          if (rangeVal) {
+            var parts = rangeVal.split("|");
+            return { kind: kind, min: Number(parts[0]), max: Number(parts[1]) };
+          }
+          return { kind: kind, min: null, max: null };
+        });
+        startRun(item, targetGrade, budget, autoBuy, requirements);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -343,7 +393,7 @@
     if (cancel) cancel.textContent = disabled ? "停止" : "取消";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy, requiredKinds) {
+  async function startRun(item, targetGrade, budget, autoBuy, requirements) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
@@ -361,7 +411,7 @@
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
-      if (curGrade >= targetGrade && meetsKindRequirement(entry, requiredKinds)) { reason = "success"; break; }
+      if (curGrade >= targetGrade && meetsKindRequirement(entry, requirements)) { reason = "success"; break; }
 
       if (totalSpent >= budget) { reason = "budget"; break; }
 
@@ -413,12 +463,12 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
-      var matchInfo = (requiredKinds && requiredKinds.length) ? "，需求：" + kindRequirementText(requiredKinds) + "（目前" + (meetsKindRequirement(newEntry, requiredKinds) ? "已符合" : "未符合") + "）" : "";
+      var matchInfo = (requirements && requirements.length) ? "，需求：" + kindRequirementText(requirements) + "（目前" + (meetsKindRequirement(newEntry, requirements) ? "已符合" : "未符合") + "）" : "";
       log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
-      if (totalSpent >= budget && !(newGrade >= targetGrade && meetsKindRequirement(newEntry, requiredKinds))) { reason = "budget"; break; }
+      if (totalSpent >= budget && !(newGrade >= targetGrade && meetsKindRequirement(newEntry, requirements))) { reason = "budget"; break; }
 
       await sleep(25);
     }
