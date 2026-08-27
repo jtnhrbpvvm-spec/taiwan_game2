@@ -95,6 +95,7 @@
     "color:#e8e0d0;font-size:13.5px;cursor:pointer;}",
     ".iw-btn.primary{background:#c9a24b;color:#241c15;border-color:#c9a24b;font-weight:700;}",
     ".iw-btn.primary:hover{background:#ddb968;}",
+    ".iw-mode-btn.active{background:#7c5cbf;border-color:#7c5cbf;color:#fff;}",
     ".iw-btn:disabled{opacity:.45;cursor:not-allowed;}",
     "#iw-enhance-log{margin-top:14px;background:#141009;border:1px solid #3a2f22;border-radius:6px;",
     "padding:10px;font-size:12.5px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;}",
@@ -121,7 +122,17 @@
     if (!kinds.length) return "無屬性";
     return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
   }
-  // requirements: array of { kind, min, max }；min/max 為 null 代表這個屬性不限數值範圍
+  // requirements: array of { kind, mode, threshold, min, max }
+  //   mode:"number" -> threshold 有值代表「要洗到 >= 這個數字」，null 代表不限數值
+  //   mode:"tier"   -> min/max 有值代表「要落在這個機率區間」，null 代表不限範圍
+  function reqSatisfiesValue(req, value) {
+    if (req.mode === "tier") {
+      if (req.min == null) return true;
+      return value >= req.min && value <= req.max;
+    }
+    if (req.threshold == null) return true;
+    return value >= req.threshold;
+  }
   function meetsKindRequirement(entry, requirements) {
     if (!requirements || !requirements.length) return true; // 沒指定就當作沒有這個限制
     var rolled = (entry && entry.options && entry.options.options) || [];
@@ -133,7 +144,7 @@
         if (used[j]) continue;
         var r = rolled[j];
         if (r.kind !== req.kind) continue;
-        if (req.min != null && (r.value < req.min || r.value > req.max)) continue;
+        if (!reqSatisfiesValue(req, r.value)) continue;
         used[j] = true;
         if (backtrack(i + 1)) return true;
         used[j] = false;
@@ -145,11 +156,23 @@
   function kindRequirementText(requirements) {
     return (requirements || []).map(function (req) {
       var name = ENCHANT_KIND_NAME[req.kind] || ("kind" + req.kind);
-      return req.min != null ? name + "(" + req.min + "~" + req.max + ")" : name;
+      if (req.mode === "tier" && req.min != null) return name + "(" + req.min + "~" + req.max + ")";
+      if (req.mode !== "tier" && req.threshold != null) return name + "(≥" + req.threshold + ")";
+      return name;
     }).join("、");
   }
   function valueTiersFor(grade, kind) {
     return ENCHANT_VALUES[grade + "-" + kind] || [];
+  }
+  function overallBoundsFor(grade, kind) {
+    var tiers = valueTiersFor(grade, kind);
+    if (!tiers.length) return null;
+    var min = tiers[0].min, max = tiers[0].max;
+    tiers.forEach(function (t) {
+      if (t.min < min) min = t.min;
+      if (t.max > max) max = t.max;
+    });
+    return { min: min, max: max };
   }
   function loadoutList() {
     var s = snap();
@@ -260,7 +283,13 @@
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
       '<label>要鎖定幾條屬性？（0 = 不限制，只看階級）</label>' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
       '<input type="number" id="iw-f-kind-count" min="0" max="6" value="0" style="width:64px;">' +
+      '<div style="display:flex;gap:6px;">' +
+      '<button type="button" class="iw-btn iw-mode-btn" id="iw-f-mode-number" style="padding:6px 12px;font-size:12.5px;">依數字</button>' +
+      '<button type="button" class="iw-btn iw-mode-btn" id="iw-f-mode-tier" style="padding:6px 12px;font-size:12.5px;">依階級機率</button>' +
+      '</div>' +
+      '</div>' +
       '<div id="iw-f-kind-slots" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>' +
       '<label style="margin-top:16px;">最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
@@ -286,27 +315,48 @@
     var kindCountInput = document.getElementById("iw-f-kind-count");
     var kindSlotsWrap = document.getElementById("iw-f-kind-slots");
 
-    function rangeOptionsHtml(grade, kind) {
+    var rangeMode = "number"; // "number" 或 "tier"
+    var modeNumberBtn = document.getElementById("iw-f-mode-number");
+    var modeTierBtn = document.getElementById("iw-f-mode-tier");
+    function updateModeButtons() {
+      modeNumberBtn.classList.toggle("active", rangeMode === "number");
+      modeTierBtn.classList.toggle("active", rangeMode === "tier");
+    }
+    updateModeButtons();
+
+    function rangeOptionsHtmlByNumber(grade, kind) {
+      var bounds = overallBoundsFor(grade, kind);
+      var html = '<option value="">（不限數值）</option>';
+      if (!bounds) return html;
+      for (var v = bounds.min; v <= bounds.max; v++) {
+        html += '<option value="' + v + '">≥ ' + v + '</option>';
+      }
+      return html;
+    }
+    function rangeOptionsHtmlByTier(grade, kind) {
       var tiers = valueTiersFor(grade, kind);
       var total = tiers.reduce(function (s, t) { return s + t.weight; }, 0) || 1;
       var html = '<option value="">（不限範圍）</option>';
       tiers.forEach(function (t) {
-        var pct = (t.weight / total * 100);
+        var pct = t.weight / total * 100;
         var pctText = pct >= 10 ? pct.toFixed(0) : pct.toFixed(1);
         html += '<option value="' + t.min + '|' + t.max + '">' + t.min + '~' + t.max + '（' + pctText + '%）</option>';
       });
       return html;
     }
+    function rangeOptionsHtml(grade, kind) {
+      return rangeMode === "tier" ? rangeOptionsHtmlByTier(grade, kind) : rangeOptionsHtmlByNumber(grade, kind);
+    }
     function refreshRangeSelect(rangeSel, kindSel) {
-      var prev = rangeSel.value;
       rangeSel.innerHTML = rangeOptionsHtml(Number(gradeSelect.value), Number(kindSel.value));
-      if (prev && rangeSel.querySelector('option[value="' + prev + '"]')) rangeSel.value = prev;
     }
     function refreshAllRangeSelects() {
       Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row")).forEach(function (row) {
         refreshRangeSelect(row.querySelector(".iw-kind-slot-range"), row.querySelector(".iw-kind-slot"));
       });
     }
+    modeNumberBtn.addEventListener("click", function () { rangeMode = "number"; updateModeButtons(); refreshAllRangeSelects(); });
+    modeTierBtn.addEventListener("click", function () { rangeMode = "tier"; updateModeButtons(); refreshAllRangeSelects(); });
     gradeSelect.addEventListener("change", function () { updateWarn(); refreshAllRangeSelects(); });
     updateWarn();
 
@@ -353,11 +403,12 @@
         var requirements = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row")).map(function (row) {
           var kind = Number(row.querySelector(".iw-kind-slot").value);
           var rangeVal = row.querySelector(".iw-kind-slot-range").value;
-          if (rangeVal) {
+          if (rangeMode === "tier") {
+            if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
             var parts = rangeVal.split("|");
-            return { kind: kind, min: Number(parts[0]), max: Number(parts[1]) };
+            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
           }
-          return { kind: kind, min: null, max: null };
+          return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
         });
         startRun(item, targetGrade, budget, autoBuy, requirements);
       } catch (err) {
