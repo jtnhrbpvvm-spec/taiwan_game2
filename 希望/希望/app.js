@@ -158,6 +158,12 @@
   function forgeSkillName(part) {
     return (FORGE_PART_NAME[part] || "") + "鍛造";
   }
+  var COOK_BY_PRODUCT = window.COOK_BY_PRODUCT || {};
+  var COOK_BY_INGREDIENT = window.COOK_BY_INGREDIENT || {};
+  var COOK_TIER_NAME = { 1: "第1階", 2: "第2階", 3: "第3階" };
+  var ALCHEMY_BY_BOOK = window.ALCHEMY_BY_BOOK || {};
+  var ALCHEMY_BY_PRODUCT = window.ALCHEMY_BY_PRODUCT || {};
+  var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
@@ -211,6 +217,18 @@
   }
   function fmtNum(n) {
     return Number(n).toLocaleString("zh-Hant");
+  }
+  // 物品編號在 ITEMS 裡查不到時（例如遊戲剛更新、資料還沒補齊），一律顯示「無資料」，
+  // 不要把編號秀給玩家看；查不到的也不給點擊連結，因為點了也沒有對應頁面可以看。
+  function itemChip(id, qty) {
+    var it = ITEMS[id];
+    if (!it) return '<span class="map-chip" style="opacity:.5;">無資料' + (qty != null ? ' ×' + qty : '') + '</span>';
+    return '<span class="map-chip" data-goto-item="' + id + '">' + escapeHtml(it.name) + (qty != null ? ' ×' + qty : '') + '</span>';
+  }
+  function itemLinkRow(id, extraCellsHtml) {
+    var it = ITEMS[id];
+    if (!it) return '<tr><td><span class="name-link" style="cursor:default;opacity:.5;">無資料</span></td>' + extraCellsHtml + '</tr>';
+    return '<tr class="clickable" data-goto-item="' + id + '"><td><span class="name-link">' + escapeHtml(it.name) + '</span></td>' + extraCellsHtml + '</tr>';
   }
 
   // 一些常見搜尋建議（挑幾個知名度高的字）
@@ -334,6 +352,10 @@
         if (radixCount) metaParts.push("拉迪克斯有賣");
         if (FORGE_BY_BOOK[it.id]) metaParts.push("鍛造書");
         if (FORGE_BY_PRODUCT[it.id]) metaParts.push("可鍛造取得");
+        if (COOK_BY_PRODUCT[it.id]) metaParts.push("料理成品");
+        if (COOK_BY_INGREDIENT[it.id]) metaParts.push("可用於料理");
+        if (ALCHEMY_BY_BOOK[it.id]) metaParts.push("煉金配方書");
+        if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -835,17 +857,11 @@
         '</div></div>';
       html += '<div class="section-title" style="margin-top:14px;">所需材料</div>';
       html += '<div class="map-chip-row">';
-      forgeBook.mats.forEach(function (m) {
-        var mit = ITEMS[m[0]];
-        html += '<span class="map-chip" data-goto-item="' + m[0] + '">' + escapeHtml(mit ? mit.name : "#" + m[0]) + ' ×' + m[1] + '</span>';
-      });
+      forgeBook.mats.forEach(function (m) { html += itemChip(m[0], m[1]); });
       html += '</div>';
       html += '<div class="section-title" style="margin-top:14px;">可能製作出</div>';
       html += '<div class="map-chip-row">';
-      forgeBook.products.forEach(function (pid) {
-        var pit = ITEMS[pid];
-        html += '<span class="map-chip" data-goto-item="' + pid + '">' + escapeHtml(pit ? pit.name : "#" + pid) + '</span>';
-      });
+      forgeBook.products.forEach(function (pid) { html += itemChip(pid); });
       html += '</div>';
     }
 
@@ -854,12 +870,75 @@
       html += '<div class="section-title">可透過鍛造取得 <span class="count">(' + forgeProducts.length + ')</span></div>';
       html += '<table class="dtable"><thead><tr><th>鍛造書</th><th>成功率</th><th>需求</th></tr></thead><tbody>';
       forgeProducts.forEach(function (p) {
-        var bookItem = ITEMS[p.book];
-        html += '<tr class="clickable" data-goto-item="' + p.book + '">' +
-          '<td><span class="name-link">' + escapeHtml(bookItem ? bookItem.name : "#" + p.book) + '</span></td>' +
-          '<td><span class="rate">' + p.rate + '%</span></td>' +
-          '<td>Lv' + p.charLv + '・力量 ' + p.strMin + '</td>' +
-          '</tr>';
+        html += itemLinkRow(p.book, '<td><span class="rate">' + p.rate + '%</span></td><td>Lv' + p.charLv + '・力量 ' + p.strMin + '</td>');
+      });
+      html += '</tbody></table>';
+    }
+
+    var cookRecipe = COOK_BY_PRODUCT[id];
+    if (cookRecipe) {
+      html += '<div class="section-title">料理配方 <span class="count">' + (COOK_TIER_NAME[cookRecipe.tier] || ("第" + cookRecipe.tier + "階")) + '</span></div>';
+      html += '<div class="equip-box"><div class="equip-stat-grid">' +
+        '<div>需求技能等級<br><b>Lv' + cookRecipe.skillLv + '</b></div>' +
+        '<div>角色等級<br><b>Lv' + cookRecipe.charLv + '</b></div>' +
+        (cookRecipe.heal ? '<div>回復 HP<br><b>' + fmtNum(cookRecipe.heal) + '</b></div>' : '') +
+        (cookRecipe.healAp ? '<div>回復 AP<br><b>' + fmtNum(cookRecipe.healAp) + '</b></div>' : '') +
+        '</div></div>';
+      if (cookRecipe.mats.length) {
+        html += '<div class="section-title" style="margin-top:14px;">固定材料</div><div class="map-chip-row">';
+        cookRecipe.mats.forEach(function (m) { html += itemChip(m[0], m[1]); });
+        html += '</div>';
+      }
+      if (cookRecipe.keys.length) {
+        html += '<div class="section-title" style="margin-top:14px;">任選食材 <span class="count">(任選 ' + cookRecipe.keyCount + ' 種)</span></div><div class="map-chip-row">';
+        cookRecipe.keys.forEach(function (k) { html += itemChip(k[0], k[1]); });
+        html += '</div>';
+      }
+    }
+
+    var cookUses = (COOK_BY_INGREDIENT[id] || []).slice();
+    if (cookUses.length) {
+      html += '<div class="section-title">可用於料理 <span class="count">(' + cookUses.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>料理成品</th><th>用途</th><th>需求數量</th></tr></thead><tbody>';
+      cookUses.forEach(function (u) {
+        html += itemLinkRow(u.product, '<td>' + (u.via === "mat" ? "固定材料" : "任選食材") + '</td><td>×' + u.qty + '</td>');
+      });
+      html += '</tbody></table>';
+    }
+
+    var alchemyBook = ALCHEMY_BY_BOOK[id];
+    if (alchemyBook) {
+      var bomb = ALCHEMY_BOMBS[alchemyBook.product];
+      html += '<div class="section-title">煉金配方</div>';
+      html += '<div class="equip-box"><div class="equip-stat-grid">' +
+        '<div>需求技能等級<br><b>Lv' + alchemyBook.skillLv + '</b></div>' +
+        '<div>成功率<br><b>' + alchemyBook.rate + '%</b></div>' +
+        '<div>金幣<br><b>' + fmtNum(alchemyBook.gold) + '</b></div>' +
+        '<div>經驗<br><b>' + fmtNum(alchemyBook.exp) + '</b></div>' +
+        '<div>製作數量<br><b>' + alchemyBook.count + '</b></div>' +
+        (alchemyBook.cooldownMs ? '<div>冷卻時間<br><b>' + (alchemyBook.cooldownMs / 1000) + ' 秒</b></div>' : '') +
+        '</div></div>';
+      html += '<div class="section-title" style="margin-top:14px;">所需材料</div><div class="map-chip-row">';
+      alchemyBook.mats.forEach(function (m) { html += itemChip(m[0], m[1]); });
+      html += '</div>';
+      html += '<div class="section-title" style="margin-top:14px;">製作出</div><div class="map-chip-row">';
+      html += itemChip(alchemyBook.product);
+      html += '</div>';
+      if (bomb) {
+        html += '<div class="section-title" style="margin-top:14px;">成品數值</div><div class="equip-box"><div class="equip-stat-grid">' +
+          '<div>需求等級<br><b>Lv' + bomb.minLv + '</b></div>' +
+          '<div>傷害<br><b>' + fmtNum(bomb.damage) + '</b></div>' +
+          '<div>單價<br><b>' + fmtNum(bomb.price) + '</b></div>' +
+          '</div></div>';
+      }
+    }
+
+    var alchemyUses = (ALCHEMY_BY_PRODUCT[id] || []).slice();
+    if (alchemyUses.length) {
+      html += '<div class="section-title">可透過煉金取得 <span class="count">(' + alchemyUses.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>配方書</th><th>成功率</th><th>需求</th><th>數量</th></tr></thead><tbody>';
+      alchemyUses.forEach(function (u) {
+        html += itemLinkRow(u.book, '<td><span class="rate">' + u.rate + '%</span></td><td>技能 Lv' + u.skillLv + '</td><td>×' + u.count + '</td>');
       });
       html += '</tbody></table>';
     }
