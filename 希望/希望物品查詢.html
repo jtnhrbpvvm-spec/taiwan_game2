@@ -286,7 +286,10 @@ footer{
 
   <div class="hero">
     <div class="eyebrow">Wish Compendium</div>
-    <h1>希望圖鑑・<span>掉落查詢</span></h1>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+      <h1>希望圖鑑・<span>掉落查詢</span></h1>
+      <button id="changelogBtn" class="hint-chip" style="white-space:nowrap;">📋 更新紀錄</button>
+    </div>
     <p>輸入物品名稱，查出所有會掉落它的怪物、出現地圖與機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。</p>
 
     <div class="search-row">
@@ -334,6 +337,13 @@ footer{
   <footer>資料匯出時間：<span id="genTime"></span>　・　僅供遊戲內容查詢參考</footer>
 </div>
 
+<div id="changelogBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center;padding:20px;">
+  <div id="changelogModal" style="background:var(--panel);border:1px solid var(--line-hi);border-radius:6px;width:100%;max-width:640px;max-height:82vh;overflow-y:auto;padding:22px;position:relative;">
+    <button id="changelogClose" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-faint);font-size:20px;cursor:pointer;">✕</button>
+    <div id="changelogBody"></div>
+  </div>
+</div>
+
 <script src="希望/config.js"></script>
 <script src="希望/maps.js"></script>
 <script src="希望/towns.js"></script>
@@ -347,6 +357,7 @@ footer{
 <script src="希望/forgeIndex.js"></script>
 <script src="希望/cookIndex.js"></script>
 <script src="希望/alchemyIndex.js"></script>
+<script src="希望/changelog.js"></script>
 <script src="希望/quests.js"></script>
 <script src="希望/missions.js"></script>
 <script src="希望/enchant.js"></script>

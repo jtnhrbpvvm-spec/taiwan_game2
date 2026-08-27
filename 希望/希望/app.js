@@ -164,6 +164,7 @@
   var ALCHEMY_BY_BOOK = window.ALCHEMY_BY_BOOK || {};
   var ALCHEMY_BY_PRODUCT = window.ALCHEMY_BY_PRODUCT || {};
   var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
+  var CHANGELOG = window.CHANGELOG || [];
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
@@ -1263,6 +1264,68 @@
     renderResultList(name);
     showItem(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ---------- 更新紀錄 ----------
+  var $changelogBtn = document.getElementById("changelogBtn");
+  var $changelogBackdrop = document.getElementById("changelogBackdrop");
+  var $changelogModal = document.getElementById("changelogModal");
+  var $changelogBody = document.getElementById("changelogBody");
+  var $changelogClose = document.getElementById("changelogClose");
+
+  function closeChangelog() { $changelogBackdrop.style.display = "none"; }
+  function openChangelogList() {
+    if (!CHANGELOG.length) {
+      $changelogBody.innerHTML = '<div class="section-title">更新紀錄</div><div class="empty-note">目前還沒有紀錄到任何更新。</div>';
+    } else {
+      var html = '<div class="section-title">更新紀錄 <span class="count">(' + CHANGELOG.length + ' 筆)</span></div>';
+      html += '<ul class="result-list">';
+      CHANGELOG.forEach(function (entry, idx) {
+        var total = entry.categories.reduce(function (s, c) { return s + c.entries.length; }, 0);
+        var summary = entry.categories.map(function (c) { return c.label.replace(/\s*\(.+?\)/, "") + " " + c.entries.length + " 筆"; }).join("、");
+        html += '<li class="result-item" data-changelog-idx="' + idx + '">' +
+          '<span class="rname">' + escapeHtml(entry.date) + '</span>' +
+          '<span class="rmeta">' + escapeHtml(summary) + '（共 ' + total + ' 筆）</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+      $changelogBody.innerHTML = html;
+    }
+    $changelogBackdrop.style.display = "flex";
+  }
+  function openChangelogDetail(idx) {
+    var entry = CHANGELOG[idx];
+    if (!entry) return;
+    var html = '<div class="section-title"><span class="name-link" id="changelogBackToList" style="cursor:pointer;">← 更新紀錄</span></div>';
+    html += '<div class="detail-sub" style="margin-bottom:14px;">' + escapeHtml(entry.date) + '</div>';
+    entry.categories.forEach(function (cat) {
+      html += '<div class="section-title">' + escapeHtml(cat.label) + ' <span class="count">(' + cat.entries.length + ')</span></div>';
+      html += '<div class="map-chip-row">';
+      cat.entries.forEach(function (e) {
+        if (cat.kind === "item" || cat.kind === "monster") {
+          html += '<span class="map-chip" data-changelog-goto="' + cat.kind + ':' + e.id + '">' + escapeHtml(e.name) + '</span>';
+        } else {
+          html += '<span class="map-chip">' + escapeHtml(e.name) + '</span>';
+        }
+      });
+      html += '</div>';
+    });
+    $changelogBody.innerHTML = html;
+    document.getElementById("changelogBackToList").addEventListener("click", openChangelogList);
+  }
+  $changelogBtn.addEventListener("click", openChangelogList);
+  $changelogClose.addEventListener("click", closeChangelog);
+  $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
+  $changelogBody.addEventListener("click", function (e) {
+    var item = e.target.closest("[data-changelog-idx]");
+    if (item) { openChangelogDetail(Number(item.getAttribute("data-changelog-idx"))); return; }
+    var goto = e.target.closest("[data-changelog-goto]");
+    if (goto) {
+      var parts = goto.getAttribute("data-changelog-goto").split(":");
+      closeChangelog();
+      if (parts[0] === "monster") showMonster(parts[1]); else showItem(parts[1]);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   });
 
   wireGlobalLevelField();
