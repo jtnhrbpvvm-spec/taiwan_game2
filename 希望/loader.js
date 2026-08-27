@@ -287,7 +287,7 @@
       '<input type="number" id="iw-f-kind-count" min="0" max="6" value="0" style="width:64px;">' +
       '<div style="display:flex;gap:6px;">' +
       '<button type="button" class="iw-btn iw-mode-btn" id="iw-f-mode-number" style="padding:6px 12px;font-size:12.5px;">依數字</button>' +
-      '<button type="button" class="iw-btn iw-mode-btn" id="iw-f-mode-tier" style="padding:6px 12px;font-size:12.5px;">依階級機率</button>' +
+      '<button type="button" class="iw-btn iw-mode-btn" id="iw-f-mode-tier" style="padding:6px 12px;font-size:12.5px;">依階級</button>' +
       '</div>' +
       '</div>' +
       '<div id="iw-f-kind-slots" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>' +
