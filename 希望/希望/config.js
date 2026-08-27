@@ -1,2 +1,2 @@
 window.RATE_DIVISOR = 1000000;
-window.GENERATED_AT = "2026-08-24T10:06:07.357Z";
+window.GENERATED_AT = "";

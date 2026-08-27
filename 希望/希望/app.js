@@ -152,6 +152,12 @@
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
   var RADIX_INDEX = window.RADIX_INDEX || {};
+  var FORGE_BY_BOOK = window.FORGE_BY_BOOK || {};
+  var FORGE_BY_PRODUCT = window.FORGE_BY_PRODUCT || {};
+  var FORGE_PART_NAME = { weapon: "武器", armor: "防具", accessory: "配件" };
+  function forgeSkillName(part) {
+    return (FORGE_PART_NAME[part] || "") + "鍛造";
+  }
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
@@ -326,6 +332,8 @@
         if (count) metaParts.push(count + " 隻怪物掉落");
         if (shopCount) metaParts.push("商店有賣");
         if (radixCount) metaParts.push("拉迪克斯有賣");
+        if (FORGE_BY_BOOK[it.id]) metaParts.push("鍛造書");
+        if (FORGE_BY_PRODUCT[it.id]) metaParts.push("可鍛造取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -808,6 +816,49 @@
           '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span></td>' +
           '<td>' + escapeHtml(townName(s.t)) + '</td>' +
           '<td><span class="rate">' + fmtNum(s.price) + ' ' + escapeHtml(tokenName) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    var forgeBook = FORGE_BY_BOOK[id];
+    if (forgeBook) {
+      html += '<div class="section-title">鍛造書 <span class="count">可製作 ' + forgeBook.products.length + ' 種成品</span></div>';
+      html += '<div class="equip-box">';
+      html += '<div class="row1"><span class="slot">' + forgeSkillName(forgeBook.part) + ' Lv' + forgeBook.skillLv + '</span>' +
+        '<span class="rate">成功率 ' + forgeBook.rate + '%</span></div>';
+      html += '<div class="equip-stat-grid">' +
+        '<div>需求等級<br><b>Lv' + forgeBook.charLv + '</b></div>' +
+        '<div>力量需求<br><b>' + forgeBook.strMin + '</b></div>' +
+        '<div>金幣<br><b>' + fmtNum(forgeBook.gold) + '</b></div>' +
+        '<div>經驗<br><b>' + fmtNum(forgeBook.exp) + '</b></div>' +
+        '</div></div>';
+      html += '<div class="section-title" style="margin-top:14px;">所需材料</div>';
+      html += '<div class="map-chip-row">';
+      forgeBook.mats.forEach(function (m) {
+        var mit = ITEMS[m[0]];
+        html += '<span class="map-chip" data-goto-item="' + m[0] + '">' + escapeHtml(mit ? mit.name : "#" + m[0]) + ' ×' + m[1] + '</span>';
+      });
+      html += '</div>';
+      html += '<div class="section-title" style="margin-top:14px;">可能製作出</div>';
+      html += '<div class="map-chip-row">';
+      forgeBook.products.forEach(function (pid) {
+        var pit = ITEMS[pid];
+        html += '<span class="map-chip" data-goto-item="' + pid + '">' + escapeHtml(pit ? pit.name : "#" + pid) + '</span>';
+      });
+      html += '</div>';
+    }
+
+    var forgeProducts = (FORGE_BY_PRODUCT[id] || []).slice();
+    if (forgeProducts.length) {
+      html += '<div class="section-title">可透過鍛造取得 <span class="count">(' + forgeProducts.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>鍛造書</th><th>成功率</th><th>需求</th></tr></thead><tbody>';
+      forgeProducts.forEach(function (p) {
+        var bookItem = ITEMS[p.book];
+        html += '<tr class="clickable" data-goto-item="' + p.book + '">' +
+          '<td><span class="name-link">' + escapeHtml(bookItem ? bookItem.name : "#" + p.book) + '</span></td>' +
+          '<td><span class="rate">' + p.rate + '%</span></td>' +
+          '<td>Lv' + p.charLv + '・力量 ' + p.strMin + '</td>' +
           '</tr>';
       });
       html += '</tbody></table>';
