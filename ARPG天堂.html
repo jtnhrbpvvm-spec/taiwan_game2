@@ -200,6 +200,7 @@
   <div class="sidebar" id="sidebarNav">
     <button class="nav-btn active" data-tab="tab-basic">基本資料</button>
     <button class="nav-btn" data-tab="tab-skills">技能</button>
+    <button class="nav-btn" data-tab="tab-equip">裝備</button>
     <button class="nav-btn" data-tab="tab-items">物品</button>
     <button class="nav-btn" data-tab="tab-warehouse">倉庫</button>
   </div>
@@ -241,7 +242,7 @@
       </section>
     </div>
 
-    <div class="tab-panel" id="tab-items">
+    <div class="tab-panel" id="tab-equip">
       <section>
         <h2>裝備欄位 (equippedItems)</h2>
         <table>
@@ -258,7 +259,9 @@
         </table>
         <div class="add-item-widget" id="equipAddWidget"></div>
       </section>
+    </div>
 
+    <div class="tab-panel" id="tab-items">
       <section>
         <h2>背包物品 (inventoryStacks)</h2>
         <table>
@@ -483,6 +486,30 @@ fileInput.addEventListener('change', (e) => {
   reader.readAsText(file, 'utf-8');
 });
 
+// ==== 依遊戲原始碼 ClassGrowthRules.cs 換算出的職業成長參數 ====
+// 來源：使用者提供的 IdleLineage.Combat.ClassGrowthRules 類別。
+// FreePoints：該職業六維配點的「總點數上限」(allocations 六個值加總不可超過這個數字)。
+// MaxHpCap / MaxMpCap：該職業血量/魔力的存檔上限，對應 LevelUpHp/LevelUpMp 逐級隨機累加後的封頂值
+//   (經比對實際存檔證實這只是自然成長的參考值，裝備/祝福等加成可以超過，不是硬上限)。
+// base：職業的六維基礎值(對應 C# ClassGrowthProfile 建構子的 Str,Dex,Con,Int,Wis,Cha 六個參數)，
+//   用來換算「基礎值 + 配點」是否超過單一能力最終上限。
+// 找不到對應職業代號時(跟原始碼行為一致)一律 fallback 用法師(mage)的參數。
+const MAX_SINGLE_ATTRIBUTE = 35; // 原始碼 Program.MaximumAttribute 常數：單一能力最終數值上限
+const CLASS_GROWTH_PROFILES = {
+  royal:    { freePoints: 8,  maxHpCap: 1400, maxMpCap: 800,  base: { str: 13, dex: 10, con: 10, int: 10, wis: 11, cha: 13 } },
+  knight:   { freePoints: 4,  maxHpCap: 2200, maxMpCap: 600,  base: { str: 16, dex: 12, con: 14, int: 8,  wis: 9,  cha: 12 } },
+  elf:      { freePoints: 7,  maxHpCap: 1600, maxMpCap: 900,  base: { str: 11, dex: 12, con: 12, int: 12, wis: 12, cha: 9  } },
+  mage:     { freePoints: 16, maxHpCap: 1300, maxMpCap: 1300, base: { str: 8,  dex: 7,  con: 12, int: 12, wis: 12, cha: 8  } },
+  dark:     { freePoints: 10, maxHpCap: 1600, maxMpCap: 900,  base: { str: 12, dex: 15, con: 8,  int: 11, wis: 10, cha: 9  } },
+  dragon:   { freePoints: 6,  maxHpCap: 2000, maxMpCap: 600,  base: { str: 13, dex: 11, con: 14, int: 11, wis: 12, cha: 8  } },
+  illusion: { freePoints: 10, maxHpCap: 1200, maxMpCap: 1200, base: { str: 11, dex: 10, con: 12, int: 12, wis: 12, cha: 8  } },
+  warrior:  { freePoints: 4,  maxHpCap: 2310, maxMpCap: 570,  base: { str: 16, dex: 12, con: 14, int: 8,  wis: 9,  cha: 12 } }
+};
+function currentClassProfile() {
+  const classId = rootData && rootData.ClassId;
+  return CLASS_GROWTH_PROFILES[classId] || CLASS_GROWTH_PROFILES.mage;
+}
+
 function makeField(container, label, getter, setter, type) {
   const wrap = document.createElement('div');
   wrap.className = 'field';
@@ -508,9 +535,31 @@ function renderBasicFields() {
   makeField(basicFields, '金幣 (Player.gold)', () => playerObj.gold ?? 0, v => { playerObj.gold = v; }, 'number');
   makeField(basicFields, '飽食度 (satiety)', () => playerObj.satiety ?? 0, v => { playerObj.satiety = v; }, 'number');
   makeField(basicFields, '倉庫容量上限', () => (warehouseObj ? warehouseObj.capacity ?? 0 : 0), v => { if (warehouseObj) warehouseObj.capacity = v; }, 'number');
+
+  // Hp/MaxHp/Mp/MaxMp：依 ClassGrowthRules.cs 的 LevelUpHp/LevelUpMp，這兩個數值是升級時
+  // 擲隨機數逐級累加、直接存起來的結果，遊戲讀檔不會重新計算，所以可以直接編輯。
+  // 注意：MaxHpCap/MaxMpCap 經比對實際存檔(法師 MaxHp=1320、MaxMp=1350)發現會被超過，
+  // 研判這兩個 Cap 只是「自然升級成長」的封頂值，裝備/祝福等額外加成不受此限，
+  // 所以這裡的數字只能當參考，不是絕對不能超過的硬上限。
+  const profile = currentClassProfile();
+  makeField(basicFields, '目前血量 (Hp)　自然成長上限參考:' + profile.maxHpCap, () => rootData.Hp ?? 0, v => { rootData.Hp = v; }, 'number');
+  makeField(basicFields, '最大血量 (MaxHp)　自然成長上限參考:' + profile.maxHpCap, () => rootData.MaxHp ?? 0, v => { rootData.MaxHp = v; }, 'number');
+  makeField(basicFields, '目前魔力 (Mp)　自然成長上限參考:' + profile.maxMpCap, () => rootData.Mp ?? 0, v => { rootData.Mp = v; }, 'number');
+  makeField(basicFields, '最大魔力 (MaxMp)　自然成長上限參考:' + profile.maxMpCap, () => rootData.MaxMp ?? 0, v => { rootData.MaxMp = v; }, 'number');
 }
 
-function statField(container, label, allocKey, topKey) {
+let allocSummaryEl = null;
+
+function updateAllocSummary() {
+  if (!allocSummaryEl) return;
+  const profile = currentClassProfile();
+  const alloc = playerObj.allocations || {};
+  const total = ['str', 'con', 'dex', 'int', 'wis', 'cha'].reduce((sum, k) => sum + (Number(alloc[k]) || 0), 0);
+  allocSummaryEl.textContent = '已分配 ' + total + ' / 職業參考上限 ' + profile.freePoints + ' 點（依 ' + (rootData.ClassId || '未知職業') + ' 的 FreePoints 換算，僅供參考）';
+  allocSummaryEl.style.color = total > profile.freePoints ? 'var(--danger)' : 'var(--ok)';
+}
+
+function statField(container, label, allocKey, topKey, editable) {
   const wrap = document.createElement('div');
   wrap.className = 'field';
   const lab = document.createElement('label');
@@ -521,12 +570,43 @@ function statField(container, label, allocKey, topKey) {
   row.style.display = 'flex';
   row.style.gap = '6px';
 
+  const profile = currentClassProfile();
+  const baseVal = (profile.base && profile.base[allocKey]) ?? 0;
+
   const inAlloc = document.createElement('input');
   inAlloc.type = 'number';
   inAlloc.title = '基礎配點 (Player.allocations.' + allocKey + ')';
   inAlloc.value = (playerObj.allocations && playerObj.allocations[allocKey]) ?? 0;
-  inAlloc.disabled = true;
 
+  const capHint = document.createElement('div');
+  capHint.style.fontSize = '10px';
+  capHint.style.marginTop = '4px';
+
+  if (editable) {
+    // 依作者提供的原始碼：Program.MaximumAttribute = 35，是「單一能力最終數值」的上限。
+    // 這裡用「職業基礎值 + 配點」去逼近最終值(尚未含裝備加成)，超過就自動夾回 35 上限，
+    // 避免存出一個連遊戲對照表都沒列出來的能力值。
+    inAlloc.addEventListener('input', () => {
+      let v = inAlloc.value === '' ? 0 : Number(inAlloc.value);
+      const finalVal = baseVal + v;
+      if (finalVal > MAX_SINGLE_ATTRIBUTE) {
+        v = MAX_SINGLE_ATTRIBUTE - baseVal;
+        inAlloc.value = v;
+      }
+      if (!playerObj.allocations) playerObj.allocations = {};
+      playerObj.allocations[allocKey] = v;
+      updateAllocSummary();
+      capHint.textContent = '基礎值 ' + baseVal + ' + 配點 ' + v + ' = ' + (baseVal + v) + '　（單一能力上限 ' + MAX_SINGLE_ATTRIBUTE + '）';
+      capHint.style.color = (baseVal + v) >= MAX_SINGLE_ATTRIBUTE ? 'var(--danger)' : 'var(--muted)';
+    });
+    capHint.textContent = '基礎值 ' + baseVal + ' + 配點 ' + inAlloc.value + ' = ' + (baseVal + Number(inAlloc.value)) + '　（單一能力上限 ' + MAX_SINGLE_ATTRIBUTE + '）';
+    capHint.style.color = 'var(--muted)';
+  } else {
+    inAlloc.disabled = true;
+  }
+
+  // 最外層顯示用數值：目前還不確定是遊戲即時重算的快取、還是也包含裝備加成的另一個存好的值，
+  // 保守起見先繼續唯讀，避免存出跟遊戲內顯示對不起來的數字。
   const inTop = document.createElement('input');
   inTop.type = 'number';
   inTop.title = '顯示數值 (最外層 ' + topKey + ')';
@@ -541,8 +621,12 @@ function statField(container, label, allocKey, topKey) {
   hint.style.fontSize = '10px';
   hint.style.color = 'var(--muted)';
   hint.style.marginTop = '4px';
-  hint.textContent = '左:基礎配點　右:顯示數值　（暫唯讀，待確認與HP/MP等連動關係後開放）';
+  hint.textContent = editable
+    ? '左:基礎配點(可編輯,測試用)　右:顯示數值(唯讀)'
+    : '左:基礎配點(暫鎖回唯讀)　右:顯示數值(唯讀)';
   wrap.appendChild(hint);
+
+  if (editable) wrap.appendChild(capHint);
 
   container.appendChild(wrap);
 }
@@ -556,12 +640,22 @@ function renderStatFields() {
   notice.style.marginBottom = '4px';
   notice.textContent = '能力值目前僅供查看，尚未確認修改後是否會與HP/MP等即時計算數值衝突，暫不開放編輯。';
   statFields.appendChild(notice);
-  statField(statFields, '力量 STR', 'str', 'Str');
-  statField(statFields, '體質 CON', 'con', 'Con');
-  statField(statFields, '敏捷 DEX', 'dex', 'Dex');
-  statField(statFields, '智力 INT', 'int', 'Int');
-  statField(statFields, '感知 WIS', 'wis', 'Wis');
-  statField(statFields, '魅力 CHA', 'cha', 'Cha');
+
+  allocSummaryEl = document.createElement('div');
+  allocSummaryEl.style.gridColumn = '1 / -1';
+  allocSummaryEl.style.fontSize = '13px';
+  allocSummaryEl.style.fontWeight = '600';
+  allocSummaryEl.style.marginBottom = '8px';
+  statFields.appendChild(allocSummaryEl);
+
+  statField(statFields, '力量 STR', 'str', 'Str', false);
+  statField(statFields, '體質 CON', 'con', 'Con', false);
+  statField(statFields, '敏捷 DEX', 'dex', 'Dex', false);
+  statField(statFields, '智力 INT', 'int', 'Int', false);
+  statField(statFields, '感知 WIS', 'wis', 'Wis', false);
+  statField(statFields, '魅力 CHA', 'cha', 'Cha', false);
+
+  updateAllocSummary();
 }
 
 function renderEquipmentTable() {
