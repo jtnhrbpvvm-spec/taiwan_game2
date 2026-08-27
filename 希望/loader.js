@@ -122,8 +122,10 @@
     if (!kinds.length) return "無屬性";
     return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
   }
+  // 這幾種「依等級增加」屬性，數字越小代表越常加點、越好，比較方向要反過來（要 <= 而不是 >=）
+  var LOWER_IS_BETTER_KINDS = { 15: true, 16: true, 17: true, 18: true, 19: true, 20: true };
   // requirements: array of { kind, mode, threshold, min, max }
-  //   mode:"number" -> threshold 有值代表「要洗到 >= 這個數字」，null 代表不限數值
+  //   mode:"number" -> threshold 有值代表「要洗到符合門檻」（一般屬性是 >=，依等級增加屬性是 <=），null 代表不限數值
   //   mode:"tier"   -> min/max 有值代表「要落在這個機率區間」，null 代表不限範圍
   function reqSatisfiesValue(req, value) {
     if (req.mode === "tier") {
@@ -131,7 +133,7 @@
       return value >= req.min && value <= req.max;
     }
     if (req.threshold == null) return true;
-    return value >= req.threshold;
+    return LOWER_IS_BETTER_KINDS[req.kind] ? value <= req.threshold : value >= req.threshold;
   }
   function meetsKindRequirement(entry, requirements) {
     if (!requirements || !requirements.length) return true; // 沒指定就當作沒有這個限制
@@ -157,7 +159,9 @@
     return (requirements || []).map(function (req) {
       var name = ENCHANT_KIND_NAME[req.kind] || ("kind" + req.kind);
       if (req.mode === "tier" && req.min != null) return name + "(" + req.min + "~" + req.max + ")";
-      if (req.mode !== "tier" && req.threshold != null) return name + "(≥" + req.threshold + ")";
+      if (req.mode !== "tier" && req.threshold != null) {
+        return name + "(" + (LOWER_IS_BETTER_KINDS[req.kind] ? "≤" : "≥") + req.threshold + ")";
+      }
       return name;
     }).join("、");
   }
@@ -328,8 +332,9 @@
       var bounds = overallBoundsFor(grade, kind);
       var html = '<option value="">（不限數值）</option>';
       if (!bounds) return html;
+      var symbol = LOWER_IS_BETTER_KINDS[kind] ? "≤" : "≥";
       for (var v = bounds.min; v <= bounds.max; v++) {
-        html += '<option value="' + v + '">≥ ' + v + '</option>';
+        html += '<option value="' + v + '">' + symbol + ' ' + v + '</option>';
       }
       return html;
     }
