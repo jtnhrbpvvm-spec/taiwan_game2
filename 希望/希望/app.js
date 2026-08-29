@@ -4,14 +4,36 @@
   // ---------- 常數 / 對照表 ----------
   var ELEMENT_LABEL = {
     none: "無屬性", physical: "物理", magical: "魔法",
-    fire: "火", water: "水", earth: "地", tree: "木",
-    dark: "暗", sun: "光", steel: "鋼"
+    fire: "火", water: "水", earth: "土", tree: "木",
+    dark: "闇", sun: "光", steel: "金"
   };
   var ELEMENT_CLASS = {
     none: "el-none", physical: "el-physical", magical: "el-magical",
     fire: "el-fire", water: "el-water", earth: "el-earth", tree: "el-tree",
     dark: "el-dark", sun: "el-sun", steel: "el-steel"
   };
+  // 五行寶石系統（鑲到武器上，只能鑲一次，鑲了不能改）
+  var GEM_ELEMENT = { 435: "fire", 436: "water", 437: "tree", 438: "steel", 439: "earth", 440: "sun", 441: "dark" };
+  var ELEMENT_COUNTER = { steel: "tree", tree: "earth", earth: "water", water: "fire", fire: "steel", sun: "dark", dark: "sun" };
+  var ELEMENT_GENERATE = { steel: "water", water: "tree", tree: "fire", fire: "earth", earth: "steel" };
+  var ELEMENT_RELATION_MULT = {
+    counter: { attack: 1.44, skill: 1.21 },
+    generate: { attack: 1.2, skill: 1.1 },
+    same: { attack: 0.64, skill: 0.81 },
+    none: { attack: 1, skill: 1 }
+  };
+  var ELEMENT_RELATION_LABEL = { counter: "克制", generate: "相生", same: "同屬性", none: "無關係" };
+  function elementRelation(gemEl, targetEl) {
+    if (gemEl === "none" || targetEl === "none" || !gemEl || !targetEl) return "none";
+    if (gemEl === targetEl) return "same";
+    if (ELEMENT_COUNTER[gemEl] === targetEl) return "counter";
+    if (ELEMENT_GENERATE[gemEl] === targetEl) return "generate";
+    return "none";
+  }
+  function elementMultiplier(gemEl, targetEl, kind) {
+    return ELEMENT_RELATION_MULT[elementRelation(gemEl, targetEl)][kind];
+  }
+  var ELEMENT_ORDER = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
   var SLOT_LABEL_FALLBACK = {
     weapon: "武器", shield: "盾", head: "頭部", body: "上衣", legs: "下著",
     feet: "鞋子", accessory: "飾品", earring: "耳環", necklace: "項鍊",
@@ -876,6 +898,24 @@
       html += '</tbody></table>';
     }
 
+    var gemElement = GEM_ELEMENT[id];
+    if (gemElement) {
+      html += '<div class="section-title">五行寶石 <span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemElement] + ')">' + ELEMENT_LABEL[gemElement] + '屬性</span></div>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">可鑲到武器上（只能鑲武器、只能鑲一次，鑲了不能改）。鑲上後，對戰不同屬性的怪物會有不同傷害倍率：</div>';
+      html += '<table class="dtable"><thead><tr><th>怪物屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
+      ELEMENT_ORDER.concat(["none"]).forEach(function (targetEl) {
+        var rel = elementRelation(gemElement, targetEl);
+        var mult = ELEMENT_RELATION_MULT[rel];
+        html += '<tr>' +
+          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[targetEl] + ')">' + ELEMENT_LABEL[targetEl] + '</span></td>' +
+          '<td>' + ELEMENT_RELATION_LABEL[rel] + '</td>' +
+          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
+          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
     var cookRecipe = COOK_BY_PRODUCT[id];
     if (cookRecipe) {
       html += '<div class="section-title">料理配方 <span class="count">' + (COOK_TIER_NAME[cookRecipe.tier] || ("第" + cookRecipe.tier + "階")) + '</span></div>';
@@ -1042,6 +1082,25 @@
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
       return '<span class="map-chip">' + escapeHtml(mapName(mid)) + '</span>';
     }).join("") + '</div>';
+
+    if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
+      html += '<div class="section-title">五行寶石加成建議</div>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">武器鑲上哪個屬性的寶石，對這隻怪物的傷害倍率：</div>';
+      html += '<table class="dtable"><thead><tr><th>寶石屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
+      ELEMENT_ORDER.slice().sort(function (a, b) {
+        return elementMultiplier(b, mon.element, "attack") - elementMultiplier(a, mon.element, "attack");
+      }).forEach(function (gemEl) {
+        var rel = elementRelation(gemEl, mon.element);
+        var mult = ELEMENT_RELATION_MULT[rel];
+        html += '<tr' + (rel === "counter" ? ' style="background:rgba(111,168,90,.06);"' : '') + '>' +
+          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemEl] + ')">' + ELEMENT_LABEL[gemEl] + '</span></td>' +
+          '<td>' + ELEMENT_RELATION_LABEL[rel] + (rel === "counter" ? "（最佳）" : "") + '</td>' +
+          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
+          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
 
     var drops = mon.drops.slice().sort(function (a, b) { return b.r - a.r; });
     html += '<div class="section-title">掉落物品 <span class="count">(' + drops.length + ')</span></div>';
