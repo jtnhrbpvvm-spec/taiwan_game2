@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V32</span>
+  <span class="bar-title">🧭 希望存檔修改器V33</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -326,7 +326,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。是武器的物品會多顯示「屬性」下拉選單（五行寶石鑲入後的屬性，鑲了理論上不能改，但這裡可以直接改）。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
       <div id="invItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
       <div class="equip-filter">
         <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
@@ -340,7 +340,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         </div>
         <button class="btn btn-accent" id="invNewItemConfirmBtn" disabled>✅ 確定新增</button>
       </div>
-      <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="stacksTable"><thead><tr><th style="width:26%">物品</th><th style="width:12%">數量</th><th style="width:12%">精煉</th><th style="width:14%">屬性</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
     </div>
 
     <!-- ══ 倉庫 ══ -->
@@ -363,7 +363,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         </div>
         <button class="btn btn-accent" id="whNewItemConfirmBtn" disabled>✅ 確定新增</button>
       </div>
-      <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="warehouseTable"><thead><tr><th style="width:26%">物品</th><th style="width:12%">數量</th><th style="width:12%">精煉</th><th style="width:14%">屬性</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
     </div>
 
     <!-- ══ 已學技能 ══ -->

@@ -2,6 +2,9 @@
   "use strict";
 
   var ITEMS = window.ITEMS || {};
+  // 五行寶石系統：鑲到武器上的屬性，直接存在該武器 stack 的 element 欄位（跟 refine 平行，不是巢狀在 options 裡）
+  var ELEMENT_LABEL = { fire: "火", water: "水", tree: "木", steel: "金", earth: "土", sun: "光", dark: "闇" };
+  var ELEMENT_LIST = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
   var EQUIP_SLOTS = window.EQUIP_SLOTS || {};
   var JOBS = window.JOBS || [];
   var SECOND_JOBS = window.SECOND_JOBS || [];
@@ -526,6 +529,25 @@
       }
       tr.appendChild(tdRefine);
 
+      var tdElement = document.createElement("td");
+      if (itemDef && itemDef.slot === "weapon") {
+        var elementSelect = el("select", { style: "width:80px;" });
+        elementSelect.appendChild(el("option", { value: "", text: "（未鑲）" }));
+        ELEMENT_LIST.forEach(function (elKey) {
+          var opt = el("option", { value: elKey, text: ELEMENT_LABEL[elKey] });
+          if (stack.element === elKey) opt.selected = true;
+          elementSelect.appendChild(opt);
+        });
+        elementSelect.addEventListener("change", function () {
+          if (elementSelect.value) stack.element = elementSelect.value;
+          else delete stack.element;
+        });
+        tdElement.appendChild(elementSelect);
+      } else {
+        tdElement.appendChild(el("span", { text: "-", style: "color:var(--text3);" }));
+      }
+      tr.appendChild(tdElement);
+
       var tdId = document.createElement("td");
       var idInput = el("input", { type: "number", value: stack.id });
       idInput.addEventListener("input", function () { stack.id = idInput.valueAsNumber || 0; });
@@ -769,6 +791,19 @@
         renderLoadout(c);
       });
       row.appendChild(picker);
+
+      // 「目前裝備」本來就是選單裡預設選中的那格，不會觸發 select 的 change 事件，
+      // 所以另外做一個按鈕，不管有沒有換裝備都能直接看目前這格裝備的能力說明。
+      if (currentStack && currentItem) {
+        var viewBtn = el("button", {
+          class: "btn btn-sm", type: "button", text: "查看能力",
+          style: "white-space:nowrap;"
+        });
+        viewBtn.addEventListener("click", function () {
+          renderItemPreview("equipItemPreview", currentStack.itemId);
+        });
+        row.appendChild(viewBtn);
+      }
 
       // 精煉值：只有目前這格真的裝備著東西時才顯示
       if (currentStack) {
