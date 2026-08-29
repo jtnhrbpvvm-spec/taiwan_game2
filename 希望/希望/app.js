@@ -186,6 +186,11 @@
   var ALCHEMY_BY_BOOK = window.ALCHEMY_BY_BOOK || {};
   var ALCHEMY_BY_PRODUCT = window.ALCHEMY_BY_PRODUCT || {};
   var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
+  var DUNGEON_BY_ID = window.DUNGEON_BY_ID || {};
+  var MONSTER_TO_DUNGEONS = window.MONSTER_TO_DUNGEONS || {};
+  var BOX_BY_ID = window.BOX_BY_ID || {};
+  var ITEM_TO_BOXES = window.ITEM_TO_BOXES || {};
+  var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
   var CHANGELOG = window.CHANGELOG || [];
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
@@ -280,6 +285,32 @@
     showAppraisalTrial();
   });
   $hintRow.appendChild(apprChip);
+
+  var dungeonChip = document.createElement("span");
+  dungeonChip.className = "hint-chip";
+  dungeonChip.style.borderColor = "var(--gold)";
+  dungeonChip.style.color = "var(--gold-hi)";
+  dungeonChip.textContent = "🏛️ 副本";
+  dungeonChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showDungeonBrowser();
+  });
+  $hintRow.appendChild(dungeonChip);
+
+  var boxChip = document.createElement("span");
+  boxChip.className = "hint-chip";
+  boxChip.style.borderColor = "var(--gold)";
+  boxChip.style.color = "var(--gold-hi)";
+  boxChip.textContent = "🎁 寶箱";
+  boxChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showBoxBrowser();
+  });
+  $hintRow.appendChild(boxChip);
 
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
@@ -379,6 +410,8 @@
         if (COOK_BY_INGREDIENT[it.id]) metaParts.push("可用於料理");
         if (ALCHEMY_BY_BOOK[it.id]) metaParts.push("煉金配方書");
         if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
+        if (BOX_BY_ID[it.id]) metaParts.push("寶箱");
+        if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -984,6 +1017,42 @@
       html += '</tbody></table>';
     }
 
+    var box = BOX_BY_ID[id];
+    if (box) {
+      html += '<div class="section-title">寶箱</div>';
+      if (box.dungeonGuess) {
+        html += '<div class="badge-row" style="margin-bottom:10px;">' +
+          '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
+          '</div>';
+      }
+      html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
+      html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
+      box.tiers.forEach(function (tier, tIdx) {
+        html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
+        html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
+        tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
+          html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
+        });
+        html += '</tbody></table>';
+      });
+    }
+
+    var boxesUsingAsKey = Object.keys(BOX_BY_ID).filter(function (bid) { return String(BOX_BY_ID[bid].keyId) === String(id); });
+    if (boxesUsingAsKey.length) {
+      html += '<div class="section-title">鑰匙 <span class="count">可開啟 ' + boxesUsingAsKey.length + ' 種寶箱</span></div>';
+      html += '<div class="map-chip-row">' + boxesUsingAsKey.map(function (bid) { return itemChip(bid); }).join("") + '</div>';
+    }
+
+    var boxSources = (ITEM_TO_BOXES[id] || []).slice();
+    if (boxSources.length) {
+      html += '<div class="section-title">可從開箱取得 <span class="count">(' + boxSources.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>寶箱</th><th>鑰匙</th><th>機率</th></tr></thead><tbody>';
+      boxSources.sort(function (a, b) { return b.pct - a.pct; }).forEach(function (s) {
+        html += itemLinkRow(s.boxId, '<td>' + (ITEMS[s.keyId] ? escapeHtml(ITEMS[s.keyId].name) : "無資料") + '</td><td><span class="rate' + (s.pct < 1 ? " low" : "") + '">' + s.pct + '%</span></td>');
+      });
+      html += '</tbody></table>';
+    }
+
     var questRefs = buildQuestReferences(id);
     html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length) + ')</span></div>';
     if (!questRefs.quests.length && !questRefs.missions.length) {
@@ -1098,6 +1167,18 @@
           '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
           '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
           '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    var dungeonRefs = (MONSTER_TO_DUNGEONS[id] || []).slice();
+    if (dungeonRefs.length) {
+      html += '<div class="section-title">出現副本 <span class="count">(' + dungeonRefs.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>副本</th><th>島嶼</th><th>身分</th></tr></thead><tbody>';
+      dungeonRefs.forEach(function (r) {
+        html += '<tr><td><span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span></td>' +
+          '<td>' + escapeHtml(r.island || "-") + '</td>' +
+          '<td>' + (r.isBoss ? '<span class="badge">首領</span>' : "一般怪物") + '</td></tr>';
       });
       html += '</tbody></table>';
     }
@@ -1372,6 +1453,109 @@
     $changelogBody.innerHTML = html;
     document.getElementById("changelogBackToList").addEventListener("click", openChangelogList);
   }
+  function openBoxDetail(boxId) {
+    var box = BOX_BY_ID[String(boxId)];
+    if (!box) return;
+    var html = '<div class="section-title">寶箱</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(box.name) + '</div>';
+    if (box.dungeonGuess) {
+      html += '<div class="badge-row" style="margin-bottom:10px;">' +
+        '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
+        '</div>';
+    } else {
+      html += '<div class="empty-note" style="padding:0 0 6px;">目前猜不出這個寶箱是哪個副本掉的（名稱對不起來，不影響其他功能）。</div>';
+    }
+    html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
+    html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
+    box.tiers.forEach(function (tier, tIdx) {
+      html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
+      tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
+        html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
+      });
+      html += '</tbody></table>';
+    });
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+
+  function showDungeonBrowser() {
+    apprTrialActive = false;
+    var dungeonIds = Object.keys(DUNGEON_BY_ID);
+    var html = '<h2 style="margin-top:0;">🏛️ 副本 <span class="count">(' + dungeonIds.length + ')</span></h2>';
+    if (!dungeonIds.length) {
+      html += '<div class="empty-note">目前沒有副本資料。</div>';
+    } else {
+      html += '<ul class="result-list">';
+      dungeonIds.forEach(function (did) {
+        var dg = DUNGEON_BY_ID[did];
+        var monsterCount = dg.islands.reduce(function (s, isl) { return s + isl.monsters.length; }, 0);
+        html += '<li class="result-item" data-open-dungeon="' + did + '">' +
+          '<span class="rname">' + escapeHtml(dg.name) + '</span>' +
+          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　' + dg.islands.length + ' 個島嶼・' + monsterCount + ' 種怪物</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  function showBoxBrowser() {
+    apprTrialActive = false;
+    var boxIds = Object.keys(BOX_BY_ID);
+    var html = '<h2 style="margin-top:0;">🎁 寶箱 <span class="count">(' + boxIds.length + ')</span></h2>';
+    if (!boxIds.length) {
+      html += '<div class="empty-note">目前沒有寶箱資料。</div>';
+    } else {
+      html += '<ul class="result-list">';
+      boxIds.forEach(function (bid) {
+        var box = BOX_BY_ID[bid];
+        var itemCount = box.tiers.reduce(function (s, t) { return s + t.length; }, 0);
+        html += '<li class="result-item" data-open-box="' + bid + '">' +
+          '<span class="rname">' + escapeHtml(box.name) + '</span>' +
+          '<span class="rmeta">' + (box.dungeonGuess ? escapeHtml(box.dungeonGuess.dungeonName) + "　" : "") + box.tiers.length + ' 組・共 ' + itemCount + ' 種物品</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  function openDungeonDetail(dungeonId) {
+    var dg = DUNGEON_BY_ID[String(dungeonId)];
+    if (!dg) return;
+    var html = '<div class="section-title">副本</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(dg.name) + '</div>';
+    html += '<div class="badge-row" style="margin-bottom:14px;">' +
+      '<span class="badge">等級 ' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '</span>' +
+      (dg.difficulty ? '<span class="badge">' + escapeHtml(dg.difficulty) + '</span>' : "") +
+      (dg.entries ? '<span class="badge">每日 ' + dg.entries + ' 次進場</span>' : "") +
+      '</div>';
+    var relatedBoxes = DUNGEON_TO_BOXES[String(dungeonId)] || [];
+    if (relatedBoxes.length) {
+      html += '<div class="section-title">可能掉落的寶箱（推測） <span class="count">(' + relatedBoxes.length + ')</span></div>';
+      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + relatedBoxes.map(function (b) {
+        return '<span class="map-chip" data-open-box="' + b.boxId + '">' + escapeHtml(b.boxName) + '</span>';
+      }).join("") + '</div>';
+    }
+    dg.islands.forEach(function (isl) {
+      html += '<div class="section-title" style="margin-top:14px;">' + escapeHtml(isl.name || isl.key) + '</div>';
+      if (isl.boss != null) {
+        html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
+          '<span class="map-chip" data-changelog-goto="monster:' + isl.boss + '">' + escapeHtml(MONSTERS[isl.boss] ? MONSTERS[isl.boss].name : "無資料") + '</span></div>';
+      }
+      var others = isl.monsters.filter(function (mid) { return mid !== isl.boss; });
+      if (others.length) {
+        html += '<div class="empty-note" style="padding:0 0 6px;">怪物（' + others.length + '）：</div><div class="map-chip-row">' +
+          others.map(function (mid) {
+            return '<span class="map-chip" data-changelog-goto="monster:' + mid + '">' + escapeHtml(MONSTERS[mid] ? MONSTERS[mid].name : "無資料") + '</span>';
+          }).join("") + '</div>';
+      }
+    });
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+
   $changelogBtn.addEventListener("click", openChangelogList);
   $changelogClose.addEventListener("click", closeChangelog);
   $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
@@ -1385,6 +1569,13 @@
       if (parts[0] === "monster") showMonster(parts[1]); else showItem(parts[1]);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  });
+
+  document.addEventListener("click", function (e) {
+    var dgLink = e.target.closest("[data-open-dungeon]");
+    if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
+    var boxLink = e.target.closest("[data-open-box]");
+    if (boxLink) openBoxDetail(boxLink.getAttribute("data-open-box"));
   });
 
   wireGlobalLevelField();

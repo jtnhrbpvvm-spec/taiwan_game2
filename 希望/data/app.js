@@ -37,7 +37,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -86,6 +86,7 @@
     { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
     { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
     { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
+    { panel: "dungeon", icon: "🏛️", title: "副本", desc: "查看/重置每日副本進場次數，清空副本紀錄。" },
     { panel: "party", icon: "👥", title: "隊伍", desc: "把另一個角色加入隊伍（複製對方目前的戰鬥快照）。" },
     { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "離線紀錄、亂數種子等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
     { panel: "sellkeep", icon: "🛒", title: "自動販賣保留清單", desc: "用物品搜尋新增/刪除保留項目，設定保留數量，0 代表全數自動賣出。" },
@@ -413,6 +414,7 @@
     renderIndividuality(c);
     renderQuests(c);
     renderMissions(c);
+    renderDungeon(c);
     renderParty(c);
     renderEnchant(c);
     renderAppraisal(c);
@@ -1567,6 +1569,35 @@
   // ---------- 討伐任務（唯讀查詢，missions.json）----------
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
+
+  function renderDungeon(c) {
+    if (!c.dungeon || typeof c.dungeon !== "object") c.dungeon = { day: 0, used: {} };
+    if (!c.dungeon.used || typeof c.dungeon.used !== "object") c.dungeon.used = {};
+    if (!Array.isArray(c.dungeonHistory)) c.dungeonHistory = [];
+
+    var wrap = document.getElementById("dungeonBasicFields");
+    wrap.innerHTML = "";
+    wrap.appendChild(fieldNumber(
+      "day（進場次數計算用的天數編號）",
+      function () { return c.dungeon.day || 0; },
+      function (v) { c.dungeon.day = v; }
+    ));
+
+    document.getElementById("dungeonHistoryCount").textContent = "(" + c.dungeonHistory.length + " 筆)";
+
+    var resetBtn = document.getElementById("dungeonResetUsedBtn");
+    resetBtn.onclick = function () {
+      c.dungeon.used = {};
+      toast("已清空今日已用的副本進場次數", "ok");
+    };
+    var clearBtn = document.getElementById("dungeonClearHistoryBtn");
+    clearBtn.onclick = function () {
+      if (!confirm("確定要清空全部副本紀錄嗎？此動作無法復原。")) return;
+      c.dungeonHistory = [];
+      renderDungeon(c);
+      toast("已清空副本紀錄", "ok");
+    };
+  }
 
   function renderMissions(c) {
     if (!Array.isArray(c.missionsDone)) c.missionsDone = [];
