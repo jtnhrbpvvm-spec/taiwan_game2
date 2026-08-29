@@ -14,7 +14,7 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L18';
+const LOADER_VERSION = 'L19';
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -1021,6 +1021,65 @@ function fillAchievementUnderlying(o, id, goal) {
 // 不比對 slot 是否等於 currentSlot 這種容易兜不起來的邏輯——直接認定
 // 呼叫這支函式就是要改目前角色，沒有目前角色（state 不存在）就直接失敗，
 // 絕對不會誤寫到別的存檔欄位的 localStorage。
+/* ============================================================
+   修改器作弊功能：掉寶率／經驗值倍率／商店免費
+
+   這三個不是 state 裡本來就有的簡單欄位，得改遊戲內部的計算函式才能生效。
+   因為不能去改 ro-idle 這個 repo 本身，改成在 loader.js 這邊直接覆寫遊戲的
+   全域函式（monkey patch）：farmMult() 管掉寶率／經驗值倍率（engine.js 裡
+   擊殺跟離線結算兩條路徑都是呼叫這支函式，包一次兩邊都吃得到），buyItem()
+   管商店購買（ui.js 的購買按鈕也是呼叫這支，沒有另外一條路）。
+
+   遊戲的 <script> 都是傳統寫法（不是 type="module"），函式宣告會變成 window
+   上的全域屬性，loader.js 可以直接覆寫它們，之後遊戲程式碼裡任何呼叫
+   farmMult(...)／buyItem(...) 的地方都會自動吃到包過的版本，不用去改
+   engine.js/ui.js 呼叫端。
+
+   開關/倍率存在 state.__roCheat，是普通的 state 欄位，會跟著 saveGame()
+   一起存進存檔、也會被修改器讀到/寫入（走跟 stats 那些欄位一樣的 patch
+   機制，不用另外做一套存取邏輯）。
+   ============================================================ */
+function installCheatHooks() {
+  if (window.__roCheatHooksInstalled) return; // 書籤重複開關／loader.js 重新載入時不要疊加覆寫
+  window.__roCheatHooksInstalled = true;
+
+  if (typeof farmMult === 'function') {
+    const origFarmMult = farmMult;
+    farmMult = function (key) {
+      let m = origFarmMult(key);
+      const c = (typeof state !== 'undefined' && state) ? state.__roCheat : null;
+      if (c) {
+        // > 0 才生效：0 或沒填當作「不調整」，不要讓 0 變成「掉寶率歸零」這種陷阱。
+        if (key === 'drop' && typeof c.dropMult === 'number' && c.dropMult > 0) m *= c.dropMult;
+        if (key === 'exp' && typeof c.expMult === 'number' && c.expMult > 0) m *= c.expMult;
+      }
+      return m;
+    };
+  }
+
+  if (typeof buyItem === 'function') {
+    const origBuyItem = buyItem;
+    buyItem = function (itemId, qty) {
+      const c = (typeof state !== 'undefined' && state) ? state.__roCheat : null;
+      if (c && c.freeShop) {
+        const def = (typeof ITEMS !== 'undefined') ? ITEMS[itemId] : null;
+        if (!def || !def.buyPrice) return false;
+        const actualQty = Math.max(1, parseInt(qty, 10) || 1);
+        if (typeof addItem === 'function') addItem(itemId, actualQty);
+        if (typeof logMsg === 'function') logMsg('🛒（修改器：免費）取得了 ' + def.name + ' x' + actualQty + '。');
+        if (typeof saveGame === 'function') saveGame();
+        return true;
+      }
+      return origBuyItem(itemId, qty);
+    };
+  }
+}
+
+
+// 修改器只支援編輯「目前正在玩的角色」，不再支援挑其他存檔欄位改。
+// 不比對 slot 是否等於 currentSlot 這種容易兜不起來的邏輯——直接認定
+// 呼叫這支函式就是要改目前角色，沒有目前角色（state 不存在）就直接失敗，
+// 絕對不會誤寫到別的存檔欄位的 localStorage。
 function applyEditorPatchToCurrentCharacter(patch, fillAchievementIds) {
   if (!patch || typeof patch !== 'object') return false;
   if (typeof state === 'undefined' || !state) return false; // 沒有正在遊玩的角色
@@ -1504,3 +1563,5 @@ if (isTouch) {
 }
 // 倉庫鎖頭圖示是畫面正確性問題，不分觸控/滑鼠環境都要修，不放進上面 isTouch 判斷式裡。
 bindWarehouseLockFix();
+// 作弊功能的 monkey patch，不分觸控/滑鼠環境都要裝上去。
+installCheatHooks();
