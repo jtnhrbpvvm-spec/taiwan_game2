@@ -418,7 +418,17 @@
           cb.style.width = "auto";
           cb.checked = !!g[i];
           (function (gArr, idx, checkbox) {
-            checkbox.addEventListener("change", function () { gArr[idx] = checkbox.checked; });
+            checkbox.addEventListener("change", function () {
+              if (checkbox.checked) {
+                var checkedCount = gArr.filter(Boolean).length;
+                if (checkedCount >= 3) {
+                  checkbox.checked = false;
+                  alert("同一個組合最多只能勾 3 個——遊戲每次強化固定只會洗出 3 條屬性，勾超過 3 個那個組合永遠不可能成立。");
+                  return;
+                }
+              }
+              gArr[idx] = checkbox.checked;
+            });
           })(g, i, cb);
           cbLabel.appendChild(cb);
           cbLabel.appendChild(document.createTextNode("①②③④⑤⑥"[i] + (slotLabel(i) ? " " + slotLabel(i) : "")));
@@ -518,6 +528,12 @@
               .filter(Boolean).map(slotToReq);
           })
           .filter(function (g) { return g.length > 0; });
+
+        if (slotRows.length >= 4 && matchGroups.length === 0) {
+          alert("你準備了 " + slotRows.length + " 條屬性選項，但沒有建立任何「停止條件組合」。\n\n遊戲每次強化固定只會洗出 3 條屬性，不可能一次全部出現——請按「➕ 新增組合」，自己勾選其中最多 3 個編號當作停止條件。");
+          return;
+        }
+
         startRun(item, targetGrade, budget, autoBuy, matchGroups);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
