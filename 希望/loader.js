@@ -384,44 +384,6 @@
     gradeSelect.addEventListener("change", function () { updateWarn(); refreshAllRangeSelects(); });
     updateWarn();
 
-    function rebuildKindSlots() {
-      var n = Math.max(0, Math.min(6, Number(kindCountInput.value) || 0));
-      kindCountInput.value = String(n);
-      var prevRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
-      var prevKinds = prevRows.map(function (row) { return row.querySelector(".iw-kind-slot").value; });
-      kindSlotsWrap.innerHTML = "";
-      var numerals = ["①", "②", "③", "④", "⑤", "⑥"];
-      for (var i = 0; i < n; i++) {
-        var row = document.createElement("div");
-        row.className = "iw-kind-row";
-        row.style.cssText = "display:flex;gap:6px;align-items:center;";
-        var numLabel = document.createElement("span");
-        numLabel.textContent = numerals[i] || String(i + 1);
-        numLabel.style.cssText = "flex:none;width:20px;color:var(--gold,#c9a24b);font-weight:700;";
-        var kindSel = document.createElement("select");
-        kindSel.className = "iw-kind-slot";
-        kindSel.style.flex = "1";
-        kindSel.innerHTML = kindOptionsHtml;
-        if (prevKinds[i]) kindSel.value = prevKinds[i];
-        var rangeSel = document.createElement("select");
-        rangeSel.className = "iw-kind-slot-range";
-        rangeSel.style.flex = "1";
-        row.appendChild(numLabel);
-        row.appendChild(kindSel);
-        row.appendChild(rangeSel);
-        kindSlotsWrap.appendChild(row);
-        refreshRangeSelect(rangeSel, kindSel);
-        kindSel.addEventListener("change", function () {
-          var r = this.closest(".iw-kind-row");
-          refreshRangeSelect(r.querySelector(".iw-kind-slot-range"), r.querySelector(".iw-kind-slot"));
-          refreshGroupLabels();
-        });
-      }
-      rebuildGroups(); // 屬性數量變了，組合的勾選格數量也要跟著重建
-    }
-    kindCountInput.addEventListener("input", rebuildKindSlots);
-    rebuildKindSlots();
-
     // ---------- 停止條件組合（多組 AND，組跟組之間是 OR）----------
     var groupsWrap = document.getElementById("iw-f-groups-wrap");
     var groupsList = document.getElementById("iw-f-groups-list");
@@ -490,6 +452,44 @@
       groups.push(new Array(n).fill(false));
       renderGroups();
     });
+
+    function rebuildKindSlots() {
+      var n = Math.max(0, Math.min(6, Number(kindCountInput.value) || 0));
+      kindCountInput.value = String(n);
+      var prevRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
+      var prevKinds = prevRows.map(function (row) { return row.querySelector(".iw-kind-slot").value; });
+      kindSlotsWrap.innerHTML = "";
+      var numerals = ["①", "②", "③", "④", "⑤", "⑥"];
+      for (var i = 0; i < n; i++) {
+        var row = document.createElement("div");
+        row.className = "iw-kind-row";
+        row.style.cssText = "display:flex;gap:6px;align-items:center;";
+        var numLabel = document.createElement("span");
+        numLabel.textContent = numerals[i] || String(i + 1);
+        numLabel.style.cssText = "flex:none;width:20px;color:var(--gold,#c9a24b);font-weight:700;";
+        var kindSel = document.createElement("select");
+        kindSel.className = "iw-kind-slot";
+        kindSel.style.flex = "1";
+        kindSel.innerHTML = kindOptionsHtml;
+        if (prevKinds[i]) kindSel.value = prevKinds[i];
+        var rangeSel = document.createElement("select");
+        rangeSel.className = "iw-kind-slot-range";
+        rangeSel.style.flex = "1";
+        row.appendChild(numLabel);
+        row.appendChild(kindSel);
+        row.appendChild(rangeSel);
+        kindSlotsWrap.appendChild(row);
+        refreshRangeSelect(rangeSel, kindSel);
+        kindSel.addEventListener("change", function () {
+          var r = this.closest(".iw-kind-row");
+          refreshRangeSelect(r.querySelector(".iw-kind-slot-range"), r.querySelector(".iw-kind-slot"));
+          refreshGroupLabels();
+        });
+      }
+      rebuildGroups(); // 屬性數量變了，組合的勾選格數量也要跟著重建
+    }
+    kindCountInput.addEventListener("input", rebuildKindSlots);
+    rebuildKindSlots();
 
     document.getElementById("iw-enhance-close").addEventListener("click", closeModal);
     document.getElementById("iw-f-cancel").addEventListener("click", function () {
