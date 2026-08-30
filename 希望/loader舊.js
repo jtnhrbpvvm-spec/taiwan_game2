@@ -286,7 +286,7 @@
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
-      '<label>準備幾條屬性選項？（0 = 不限制，只看階級；打勾才會列入要求，沒勾的先放著備用）</label>' +
+      '<label>要鎖定幾條屬性？（0 = 不限制，只看階級）</label>' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
       '<input type="number" id="iw-f-kind-count" min="0" max="6" value="0" style="width:64px;">' +
       '<div style="display:flex;gap:6px;">' +
@@ -370,18 +370,11 @@
       kindCountInput.value = String(n);
       var prevRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
       var prevKinds = prevRows.map(function (row) { return row.querySelector(".iw-kind-slot").value; });
-      var prevChecked = prevRows.map(function (row) { return row.querySelector(".iw-kind-enabled").checked; });
       kindSlotsWrap.innerHTML = "";
       for (var i = 0; i < n; i++) {
         var row = document.createElement("div");
         row.className = "iw-kind-row";
-        row.style.cssText = "display:flex;gap:6px;align-items:center;";
-        var enabledCb = document.createElement("input");
-        enabledCb.type = "checkbox";
-        enabledCb.className = "iw-kind-enabled";
-        enabledCb.style.cssText = "width:auto;flex:none;";
-        enabledCb.title = "打勾才會列入「要停止」的判斷條件";
-        enabledCb.checked = prevChecked[i] !== undefined ? prevChecked[i] : true;
+        row.style.cssText = "display:flex;gap:6px;";
         var kindSel = document.createElement("select");
         kindSel.className = "iw-kind-slot";
         kindSel.style.flex = "1";
@@ -390,7 +383,6 @@
         var rangeSel = document.createElement("select");
         rangeSel.className = "iw-kind-slot-range";
         rangeSel.style.flex = "1";
-        row.appendChild(enabledCb);
         row.appendChild(kindSel);
         row.appendChild(rangeSel);
         kindSlotsWrap.appendChild(row);
@@ -413,18 +405,16 @@
         var targetGrade = Number(document.getElementById("iw-f-grade").value);
         var budget = Number(document.getElementById("iw-f-budget").value) || 0;
         var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        var requirements = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"))
-          .filter(function (row) { return row.querySelector(".iw-kind-enabled").checked; })
-          .map(function (row) {
-            var kind = Number(row.querySelector(".iw-kind-slot").value);
-            var rangeVal = row.querySelector(".iw-kind-slot-range").value;
-            if (rangeMode === "tier") {
-              if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
-              var parts = rangeVal.split("|");
-              return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
-            }
-            return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
-          });
+        var requirements = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row")).map(function (row) {
+          var kind = Number(row.querySelector(".iw-kind-slot").value);
+          var rangeVal = row.querySelector(".iw-kind-slot-range").value;
+          if (rangeMode === "tier") {
+            if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
+            var parts = rangeVal.split("|");
+            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
+          }
+          return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
+        });
         startRun(item, targetGrade, budget, autoBuy, requirements);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
