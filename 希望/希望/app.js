@@ -4,14 +4,36 @@
   // ---------- 常數 / 對照表 ----------
   var ELEMENT_LABEL = {
     none: "無屬性", physical: "物理", magical: "魔法",
-    fire: "火", water: "水", earth: "地", tree: "木",
-    dark: "暗", sun: "光", steel: "鋼"
+    fire: "火", water: "水", earth: "土", tree: "木",
+    dark: "闇", sun: "光", steel: "金"
   };
   var ELEMENT_CLASS = {
     none: "el-none", physical: "el-physical", magical: "el-magical",
     fire: "el-fire", water: "el-water", earth: "el-earth", tree: "el-tree",
     dark: "el-dark", sun: "el-sun", steel: "el-steel"
   };
+  // 五行寶石系統（鑲到武器上，只能鑲一次，鑲了不能改）
+  var GEM_ELEMENT = { 435: "fire", 436: "water", 437: "tree", 438: "steel", 439: "earth", 440: "sun", 441: "dark" };
+  var ELEMENT_COUNTER = { steel: "tree", tree: "earth", earth: "water", water: "fire", fire: "steel", sun: "dark", dark: "sun" };
+  var ELEMENT_GENERATE = { steel: "water", water: "tree", tree: "fire", fire: "earth", earth: "steel" };
+  var ELEMENT_RELATION_MULT = {
+    counter: { attack: 1.44, skill: 1.21 },
+    generate: { attack: 1.2, skill: 1.1 },
+    same: { attack: 0.64, skill: 0.81 },
+    none: { attack: 1, skill: 1 }
+  };
+  var ELEMENT_RELATION_LABEL = { counter: "克制", generate: "相生", same: "同屬性", none: "無關係" };
+  function elementRelation(gemEl, targetEl) {
+    if (gemEl === "none" || targetEl === "none" || !gemEl || !targetEl) return "none";
+    if (gemEl === targetEl) return "same";
+    if (ELEMENT_COUNTER[gemEl] === targetEl) return "counter";
+    if (ELEMENT_GENERATE[gemEl] === targetEl) return "generate";
+    return "none";
+  }
+  function elementMultiplier(gemEl, targetEl, kind) {
+    return ELEMENT_RELATION_MULT[elementRelation(gemEl, targetEl)][kind];
+  }
+  var ELEMENT_ORDER = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
   var SLOT_LABEL_FALLBACK = {
     weapon: "武器", shield: "盾", head: "頭部", body: "上衣", legs: "下著",
     feet: "鞋子", accessory: "飾品", earring: "耳環", necklace: "項鍊",
@@ -164,6 +186,11 @@
   var ALCHEMY_BY_BOOK = window.ALCHEMY_BY_BOOK || {};
   var ALCHEMY_BY_PRODUCT = window.ALCHEMY_BY_PRODUCT || {};
   var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
+  var DUNGEON_BY_ID = window.DUNGEON_BY_ID || {};
+  var MONSTER_TO_DUNGEONS = window.MONSTER_TO_DUNGEONS || {};
+  var BOX_BY_ID = window.BOX_BY_ID || {};
+  var ITEM_TO_BOXES = window.ITEM_TO_BOXES || {};
+  var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
   var CHANGELOG = window.CHANGELOG || [];
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
@@ -258,6 +285,32 @@
     showAppraisalTrial();
   });
   $hintRow.appendChild(apprChip);
+
+  var dungeonChip = document.createElement("span");
+  dungeonChip.className = "hint-chip";
+  dungeonChip.style.borderColor = "var(--gold)";
+  dungeonChip.style.color = "var(--gold-hi)";
+  dungeonChip.textContent = "🏛️ 副本";
+  dungeonChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showDungeonBrowser();
+  });
+  $hintRow.appendChild(dungeonChip);
+
+  var boxChip = document.createElement("span");
+  boxChip.className = "hint-chip";
+  boxChip.style.borderColor = "var(--gold)";
+  boxChip.style.color = "var(--gold-hi)";
+  boxChip.textContent = "🎁 寶箱";
+  boxChip.addEventListener("click", function () {
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showBoxBrowser();
+  });
+  $hintRow.appendChild(boxChip);
 
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
@@ -357,6 +410,8 @@
         if (COOK_BY_INGREDIENT[it.id]) metaParts.push("可用於料理");
         if (ALCHEMY_BY_BOOK[it.id]) metaParts.push("煉金配方書");
         if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
+        if (BOX_BY_ID[it.id]) metaParts.push("寶箱");
+        if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -876,6 +931,24 @@
       html += '</tbody></table>';
     }
 
+    var gemElement = GEM_ELEMENT[id];
+    if (gemElement) {
+      html += '<div class="section-title">五行寶石 <span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemElement] + ')">' + ELEMENT_LABEL[gemElement] + '屬性</span></div>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">可鑲到武器上（只能鑲武器、只能鑲一次，鑲了不能改）。鑲上後，對戰不同屬性的怪物會有不同傷害倍率：</div>';
+      html += '<table class="dtable"><thead><tr><th>怪物屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
+      ELEMENT_ORDER.concat(["none"]).forEach(function (targetEl) {
+        var rel = elementRelation(gemElement, targetEl);
+        var mult = ELEMENT_RELATION_MULT[rel];
+        html += '<tr>' +
+          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[targetEl] + ')">' + ELEMENT_LABEL[targetEl] + '</span></td>' +
+          '<td>' + ELEMENT_RELATION_LABEL[rel] + '</td>' +
+          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
+          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
     var cookRecipe = COOK_BY_PRODUCT[id];
     if (cookRecipe) {
       html += '<div class="section-title">料理配方 <span class="count">' + (COOK_TIER_NAME[cookRecipe.tier] || ("第" + cookRecipe.tier + "階")) + '</span></div>';
@@ -940,6 +1013,42 @@
       html += '<table class="dtable"><thead><tr><th>配方書</th><th>成功率</th><th>需求</th><th>數量</th></tr></thead><tbody>';
       alchemyUses.forEach(function (u) {
         html += itemLinkRow(u.book, '<td><span class="rate">' + u.rate + '%</span></td><td>技能 Lv' + u.skillLv + '</td><td>×' + u.count + '</td>');
+      });
+      html += '</tbody></table>';
+    }
+
+    var box = BOX_BY_ID[id];
+    if (box) {
+      html += '<div class="section-title">寶箱</div>';
+      if (box.dungeonGuess) {
+        html += '<div class="badge-row" style="margin-bottom:10px;">' +
+          '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
+          '</div>';
+      }
+      html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
+      html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
+      box.tiers.forEach(function (tier, tIdx) {
+        html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
+        html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
+        tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
+          html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
+        });
+        html += '</tbody></table>';
+      });
+    }
+
+    var boxesUsingAsKey = Object.keys(BOX_BY_ID).filter(function (bid) { return String(BOX_BY_ID[bid].keyId) === String(id); });
+    if (boxesUsingAsKey.length) {
+      html += '<div class="section-title">鑰匙 <span class="count">可開啟 ' + boxesUsingAsKey.length + ' 種寶箱</span></div>';
+      html += '<div class="map-chip-row">' + boxesUsingAsKey.map(function (bid) { return itemChip(bid); }).join("") + '</div>';
+    }
+
+    var boxSources = (ITEM_TO_BOXES[id] || []).slice();
+    if (boxSources.length) {
+      html += '<div class="section-title">可從開箱取得 <span class="count">(' + boxSources.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>寶箱</th><th>鑰匙</th><th>機率</th></tr></thead><tbody>';
+      boxSources.sort(function (a, b) { return b.pct - a.pct; }).forEach(function (s) {
+        html += itemLinkRow(s.boxId, '<td>' + (ITEMS[s.keyId] ? escapeHtml(ITEMS[s.keyId].name) : "無資料") + '</td><td><span class="rate' + (s.pct < 1 ? " low" : "") + '">' + s.pct + '%</span></td>');
       });
       html += '</tbody></table>';
     }
@@ -1042,6 +1151,37 @@
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
       return '<span class="map-chip">' + escapeHtml(mapName(mid)) + '</span>';
     }).join("") + '</div>';
+
+    if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
+      html += '<div class="section-title">五行寶石加成建議</div>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">武器鑲上哪個屬性的寶石，對這隻怪物的傷害倍率：</div>';
+      html += '<table class="dtable"><thead><tr><th>寶石屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
+      ELEMENT_ORDER.slice().sort(function (a, b) {
+        return elementMultiplier(b, mon.element, "attack") - elementMultiplier(a, mon.element, "attack");
+      }).forEach(function (gemEl) {
+        var rel = elementRelation(gemEl, mon.element);
+        var mult = ELEMENT_RELATION_MULT[rel];
+        html += '<tr' + (rel === "counter" ? ' style="background:rgba(111,168,90,.06);"' : '') + '>' +
+          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemEl] + ')">' + ELEMENT_LABEL[gemEl] + '</span></td>' +
+          '<td>' + ELEMENT_RELATION_LABEL[rel] + (rel === "counter" ? "（最佳）" : "") + '</td>' +
+          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
+          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    var dungeonRefs = (MONSTER_TO_DUNGEONS[id] || []).slice();
+    if (dungeonRefs.length) {
+      html += '<div class="section-title">出現副本 <span class="count">(' + dungeonRefs.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>副本</th><th>島嶼</th><th>身分</th></tr></thead><tbody>';
+      dungeonRefs.forEach(function (r) {
+        html += '<tr><td><span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span></td>' +
+          '<td>' + escapeHtml(r.island || "-") + '</td>' +
+          '<td>' + (r.isBoss ? '<span class="badge">首領</span>' : "一般怪物") + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
 
     var drops = mon.drops.slice().sort(function (a, b) { return b.r - a.r; });
     html += '<div class="section-title">掉落物品 <span class="count">(' + drops.length + ')</span></div>';
@@ -1313,6 +1453,109 @@
     $changelogBody.innerHTML = html;
     document.getElementById("changelogBackToList").addEventListener("click", openChangelogList);
   }
+  function openBoxDetail(boxId) {
+    var box = BOX_BY_ID[String(boxId)];
+    if (!box) return;
+    var html = '<div class="section-title">寶箱</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(box.name) + '</div>';
+    if (box.dungeonGuess) {
+      html += '<div class="badge-row" style="margin-bottom:10px;">' +
+        '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
+        '</div>';
+    } else {
+      html += '<div class="empty-note" style="padding:0 0 6px;">目前猜不出這個寶箱是哪個副本掉的（名稱對不起來，不影響其他功能）。</div>';
+    }
+    html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
+    html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
+    box.tiers.forEach(function (tier, tIdx) {
+      html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
+      tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
+        html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
+      });
+      html += '</tbody></table>';
+    });
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+
+  function showDungeonBrowser() {
+    apprTrialActive = false;
+    var dungeonIds = Object.keys(DUNGEON_BY_ID);
+    var html = '<h2 style="margin-top:0;">🏛️ 副本 <span class="count">(' + dungeonIds.length + ')</span></h2>';
+    if (!dungeonIds.length) {
+      html += '<div class="empty-note">目前沒有副本資料。</div>';
+    } else {
+      html += '<ul class="result-list">';
+      dungeonIds.forEach(function (did) {
+        var dg = DUNGEON_BY_ID[did];
+        var monsterCount = dg.islands.reduce(function (s, isl) { return s + isl.monsters.length; }, 0);
+        html += '<li class="result-item" data-open-dungeon="' + did + '">' +
+          '<span class="rname">' + escapeHtml(dg.name) + '</span>' +
+          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　' + dg.islands.length + ' 個島嶼・' + monsterCount + ' 種怪物</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  function showBoxBrowser() {
+    apprTrialActive = false;
+    var boxIds = Object.keys(BOX_BY_ID);
+    var html = '<h2 style="margin-top:0;">🎁 寶箱 <span class="count">(' + boxIds.length + ')</span></h2>';
+    if (!boxIds.length) {
+      html += '<div class="empty-note">目前沒有寶箱資料。</div>';
+    } else {
+      html += '<ul class="result-list">';
+      boxIds.forEach(function (bid) {
+        var box = BOX_BY_ID[bid];
+        var itemCount = box.tiers.reduce(function (s, t) { return s + t.length; }, 0);
+        html += '<li class="result-item" data-open-box="' + bid + '">' +
+          '<span class="rname">' + escapeHtml(box.name) + '</span>' +
+          '<span class="rmeta">' + (box.dungeonGuess ? escapeHtml(box.dungeonGuess.dungeonName) + "　" : "") + box.tiers.length + ' 組・共 ' + itemCount + ' 種物品</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  function openDungeonDetail(dungeonId) {
+    var dg = DUNGEON_BY_ID[String(dungeonId)];
+    if (!dg) return;
+    var html = '<div class="section-title">副本</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(dg.name) + '</div>';
+    html += '<div class="badge-row" style="margin-bottom:14px;">' +
+      '<span class="badge">等級 ' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '</span>' +
+      (dg.difficulty ? '<span class="badge">' + escapeHtml(dg.difficulty) + '</span>' : "") +
+      (dg.entries ? '<span class="badge">每日 ' + dg.entries + ' 次進場</span>' : "") +
+      '</div>';
+    var relatedBoxes = DUNGEON_TO_BOXES[String(dungeonId)] || [];
+    if (relatedBoxes.length) {
+      html += '<div class="section-title">可能掉落的寶箱（推測） <span class="count">(' + relatedBoxes.length + ')</span></div>';
+      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + relatedBoxes.map(function (b) {
+        return '<span class="map-chip" data-open-box="' + b.boxId + '">' + escapeHtml(b.boxName) + '</span>';
+      }).join("") + '</div>';
+    }
+    dg.islands.forEach(function (isl) {
+      html += '<div class="section-title" style="margin-top:14px;">' + escapeHtml(isl.name || isl.key) + '</div>';
+      if (isl.boss != null) {
+        html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
+          '<span class="map-chip" data-changelog-goto="monster:' + isl.boss + '">' + escapeHtml(MONSTERS[isl.boss] ? MONSTERS[isl.boss].name : "無資料") + '</span></div>';
+      }
+      var others = isl.monsters.filter(function (mid) { return mid !== isl.boss; });
+      if (others.length) {
+        html += '<div class="empty-note" style="padding:0 0 6px;">怪物（' + others.length + '）：</div><div class="map-chip-row">' +
+          others.map(function (mid) {
+            return '<span class="map-chip" data-changelog-goto="monster:' + mid + '">' + escapeHtml(MONSTERS[mid] ? MONSTERS[mid].name : "無資料") + '</span>';
+          }).join("") + '</div>';
+      }
+    });
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+
   $changelogBtn.addEventListener("click", openChangelogList);
   $changelogClose.addEventListener("click", closeChangelog);
   $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
@@ -1326,6 +1569,13 @@
       if (parts[0] === "monster") showMonster(parts[1]); else showItem(parts[1]);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  });
+
+  document.addEventListener("click", function (e) {
+    var dgLink = e.target.closest("[data-open-dungeon]");
+    if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
+    var boxLink = e.target.closest("[data-open-box]");
+    if (boxLink) openBoxDetail(boxLink.getAttribute("data-open-box"));
   });
 
   wireGlobalLevelField();

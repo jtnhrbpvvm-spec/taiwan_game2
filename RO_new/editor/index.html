@@ -302,7 +302,7 @@
   <div class="brand">
     <div class="mark">🛠️</div>
     <div>
-      <h1>存檔修改器</h1><span class="ver">V23</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
+      <h1>存檔修改器</h1><span class="ver">V24</span><span class="ver" id="loader-ver-badge" style="display:none;">loader ?</span>
       <div class="sub">諸神放置錄・非官方輔助工具</div>
     </div>
   </div>
@@ -355,6 +355,29 @@
         <div class="field"><label>基礎經驗值</label><input type="number" min="0" id="f-baseExp"></div>
         <div class="field"><label>職業等級</label><input type="number" min="1" id="f-jobLevel"></div>
         <div class="field"><label>職業經驗值</label><input type="number" min="0" id="f-jobExp"></div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <label style="font-size:11.5px;color:var(--ink-dim);display:block;margin-bottom:6px;">🛠️ 修改器功能（存在存檔裡，跟角色一起保存）</label>
+        <div class="field-grid">
+          <div class="field">
+            <label>掉寶率倍率</label>
+            <input type="number" min="0" step="0.1" id="f-cheat-dropmult" placeholder="1 = 原本">
+          </div>
+          <div class="field">
+            <label>經驗值倍率</label>
+            <input type="number" min="0" step="0.1" id="f-cheat-expmult" placeholder="1 = 原本">
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="f-cheat-freeshop" style="width:16px;height:16px;">
+            商店物品免費（用金幣購買時不扣錢，賣出價格不受影響）
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--ink-dim);margin-top:6px;">
+          倍率填 1 或留空＝維持原本；填 0 也視同不調整（避免不小心把掉寶率/經驗值歸零）。
+        </div>
       </div>
     </div>
 
@@ -835,6 +858,7 @@
     if (!state.slotWorking.achievements.done) state.slotWorking.achievements.done = {};
     if (typeof state.slotWorking.achievements.points !== 'number') state.slotWorking.achievements.points = 0;
     if (!state.slotWorking.learnedSkills) state.slotWorking.learnedSkills = {};
+    if (!state.slotWorking.__roCheat) state.slotWorking.__roCheat = { dropMult: 1, expMult: 1, freeShop: false };
     var jobMeta = state.init.jobMeta || {};
     var jobName = (jobMeta[state.slotWorking.jobId] && jobMeta[state.slotWorking.jobId].name) || state.slotWorking.jobId;
     $('editor-who').innerHTML = escapeHtml(state.slotWorking.name) +
@@ -879,6 +903,10 @@
     $('f-baseExp').value = w.baseExp || 0;
     $('f-jobLevel').value = w.jobLevel || 1;
     $('f-jobExp').value = w.jobExp || 0;
+    var cheat = w.__roCheat || {};
+    $('f-cheat-dropmult').value = (typeof cheat.dropMult === 'number') ? cheat.dropMult : 1;
+    $('f-cheat-expmult').value = (typeof cheat.expMult === 'number') ? cheat.expMult : 1;
+    $('f-cheat-freeshop').checked = !!cheat.freeShop;
   }
   function fillStatsFields() {
     var w = state.slotWorking;
@@ -964,6 +992,33 @@
   bindNumberField('f-baseExp', 'baseExp');
   bindNumberField('f-jobLevel', 'jobLevel');
   bindNumberField('f-jobExp', 'jobExp');
+
+  // 掉寶率／經驗值倍率允許小數（例如 2.5 倍），bindNumberField 是 parseInt，
+  // 不夠用，所以這三個獨立寫，邏輯上跟 bindNumberField(isNested) 是同一套：
+  // 從目前的 slotWorking.__roCheat 複製一份出來、疊上這次改的那個 key，
+  // 整包塞回 slotPatch.__roCheat（跟 stats 那些巢狀欄位的套用方式一致）。
+  function commitCheatPatch(patchKey, value) {
+    var obj = state.slotPatch.__roCheat
+      ? state.slotPatch.__roCheat
+      : Object.assign({}, state.slotWorking.__roCheat);
+    obj[patchKey] = value;
+    state.slotPatch.__roCheat = obj;
+    state.slotWorking.__roCheat[patchKey] = value;
+    updateSlotStatus();
+  }
+  $('f-cheat-dropmult').addEventListener('input', function () {
+    var v = parseFloat(this.value);
+    if (isNaN(v) || v < 0) return;
+    commitCheatPatch('dropMult', v);
+  });
+  $('f-cheat-expmult').addEventListener('input', function () {
+    var v = parseFloat(this.value);
+    if (isNaN(v) || v < 0) return;
+    commitCheatPatch('expMult', v);
+  });
+  $('f-cheat-freeshop').addEventListener('change', function () {
+    commitCheatPatch('freeShop', !!this.checked);
+  });
   bindNumberField('f-statPoints', 'statPoints');
   ['str', 'agi', 'vit', 'int', 'dex', 'luk'].forEach(function (k) {
     bindNumberField('f-' + k, k, 'stats');

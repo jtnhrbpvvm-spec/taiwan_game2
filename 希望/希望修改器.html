@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V32</span>
+  <span class="bar-title">🧭 希望存檔修改器V34</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -236,6 +236,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-item" data-panel="individuality">🌠 個性化</div>
     <div class="nav-item" data-panel="quests">📜 任務</div>
     <div class="nav-item" data-panel="missions">🎯 討伐任務</div>
+    <div class="nav-item" data-panel="dungeon">🏛️ 副本</div>
     <div class="nav-item" data-panel="party">👥 隊伍</div>
 
     <div class="nav-section">進階</div>
@@ -326,7 +327,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <!-- ══ 背包 ══ -->
     <div class="panel" id="panel-inventory">
       <div class="panel-title">🎒 背包</div>
-      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
+      <div class="panel-desc">stacks：每一列是一疊物品，包含物品、數量、與獨立的 Stack ID。裝備欄位會透過 Stack ID 指向這裡的某一列。是裝備的物品會多顯示「精煉」下拉選單（+0~+12 固定選項），非裝備物品顯示「-」。是武器的物品會多顯示「屬性」下拉選單（五行寶石鑲入後的屬性，鑲了理論上不能改，但這裡可以直接改）。物品欄不能手動輸入更改，要新增物品請用下面的搜尋框，必須是遊戲裡真的存在的物品才能新增。點選物品名稱可以在下面看到詳細能力／介紹。</div>
       <div id="invItemPreview" class="item-preview-box">點選下方任一件物品的名稱，這裡會顯示詳細能力／介紹。</div>
       <div class="equip-filter">
         <div class="ef-field ef-short"><label>職業</label><select id="invFilterJob"><option value="">無</option></select></div>
@@ -340,7 +341,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         </div>
         <button class="btn btn-accent" id="invNewItemConfirmBtn" disabled>✅ 確定新增</button>
       </div>
-      <table class="etable" id="stacksTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="stacksTable"><thead><tr><th style="width:26%">物品</th><th style="width:12%">數量</th><th style="width:12%">精煉</th><th style="width:14%">屬性</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
     </div>
 
     <!-- ══ 倉庫 ══ -->
@@ -363,7 +364,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         </div>
         <button class="btn btn-accent" id="whNewItemConfirmBtn" disabled>✅ 確定新增</button>
       </div>
-      <table class="etable" id="warehouseTable"><thead><tr><th style="width:38%">物品</th><th style="width:14%">數量</th><th style="width:14%">精煉</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="warehouseTable"><thead><tr><th style="width:26%">物品</th><th style="width:12%">數量</th><th style="width:12%">精煉</th><th style="width:14%">屬性</th><th style="width:14%">Stack ID</th><th></th></tr></thead><tbody></tbody></table>
     </div>
 
     <!-- ══ 已學技能 ══ -->
@@ -505,6 +506,20 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div class="section-title">目前已完成的討伐任務</div>
       <div id="missionDoneList" style="margin-bottom:10px;"></div>
       <div id="missionDetailBox" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ══ 副本 ══ -->
+    <div class="panel" id="panel-dungeon">
+      <div class="panel-title">🏛️ 副本</div>
+      <div class="panel-desc">
+        存檔裡對應 <code>dungeon</code>（<code>day</code> 是目前計算每日進場次數用的天數編號、<code>used</code> 是各副本今天已經用掉的進場次數）
+        跟 <code>dungeonHistory</code>（過去的副本紀錄陣列）。<code>used</code> 的實際 key 格式尚未完全確認，
+        這裡提供「清空」整個歸零，不逐筆編輯，比較不會改錯格式。
+      </div>
+      <div class="grid" id="dungeonBasicFields"></div>
+      <button class="btn" id="dungeonResetUsedBtn" style="margin-top:10px;">🔄 清空今日已用進場次數</button>
+      <div class="section-title" style="margin-top:20px;">副本紀錄 <span id="dungeonHistoryCount" class="conf"></span></div>
+      <button class="btn" id="dungeonClearHistoryBtn">🗑️ 清空副本紀錄</button>
     </div>
 
     <!-- ══ 隊伍 ══ -->

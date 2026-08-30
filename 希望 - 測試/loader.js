@@ -165,20 +165,6 @@
       return name;
     }).join("、");
   }
-  // groups：多組「條件組合」，只要其中任何一組完全符合（組內是 AND）就算數（組跟組之間是 OR）
-  function meetsAnyGroup(entry, groups) {
-    if (!groups || !groups.length) return true; // 完全沒有任何組合 = 不限制，只看階級
-    return groups.some(function (g) { return meetsKindRequirement(entry, g); });
-  }
-  function firstSatisfiedGroupText(entry, groups) {
-    if (!groups || !groups.length) return null;
-    var idx = groups.findIndex(function (g) { return meetsKindRequirement(entry, g); });
-    return idx === -1 ? null : "組合" + (idx + 1);
-  }
-  function groupsText(groups) {
-    if (!groups || !groups.length) return "（無限制）";
-    return groups.map(function (g, idx) { return "組合" + (idx + 1) + "[" + kindRequirementText(g) + "]"; }).join("　或　");
-  }
   function valueTiersFor(grade, kind) {
     return ENCHANT_VALUES[grade + "-" + kind] || [];
   }
@@ -309,11 +295,6 @@
       '</div>' +
       '</div>' +
       '<div id="iw-f-kind-slots" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>' +
-      '<div id="iw-f-groups-wrap" style="display:none;margin-top:14px;">' +
-      '<label>停止條件組合（符合其中任何一組就停；組內要同時全部出現）</label>' +
-      '<div id="iw-f-groups-list" style="display:flex;flex-direction:column;gap:8px;"></div>' +
-      '<button type="button" class="iw-btn" id="iw-f-add-group" style="margin-top:8px;">➕ 新增組合</button>' +
-      '</div>' +
       '<label style="margin-top:16px;">最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
       '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy">沒有實習生的發條時，自動花金幣購買繼續（每個 ' +
@@ -384,99 +365,23 @@
     gradeSelect.addEventListener("change", function () { updateWarn(); refreshAllRangeSelects(); });
     updateWarn();
 
-    // ---------- 停止條件組合（多組 AND，組跟組之間是 OR）----------
-    var groupsWrap = document.getElementById("iw-f-groups-wrap");
-    var groupsList = document.getElementById("iw-f-groups-list");
-    var addGroupBtn = document.getElementById("iw-f-add-group");
-    var groups = []; // 每個元素是長度 = 屬性數量 的布林陣列
-
-    function currentSlotCount() {
-      return kindSlotsWrap.querySelectorAll(".iw-kind-row").length;
-    }
-    function slotLabel(i) {
-      var row = kindSlotsWrap.querySelectorAll(".iw-kind-row")[i];
-      if (!row) return "";
-      var kindVal = Number(row.querySelector(".iw-kind-slot").value);
-      return (ENCHANT_KIND_NAME[kindVal] || "");
-    }
-    function renderGroups() {
-      var n = currentSlotCount();
-      groupsWrap.style.display = n > 0 ? "block" : "none";
-      groupsList.innerHTML = "";
-      groups.forEach(function (g, gIdx) {
-        var row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 8px;background:var(--bg3,#2a231a);border-radius:5px;";
-        var label = document.createElement("span");
-        label.textContent = "組合" + (gIdx + 1) + "：";
-        label.style.cssText = "flex:none;font-size:12.5px;color:var(--text2,#d8cdb8);";
-        row.appendChild(label);
-        for (var i = 0; i < n; i++) {
-          var cbLabel = document.createElement("label");
-          cbLabel.style.cssText = "display:flex;align-items:center;gap:3px;font-size:12.5px;font-weight:400;margin:0;";
-          var cb = document.createElement("input");
-          cb.type = "checkbox";
-          cb.style.width = "auto";
-          cb.checked = !!g[i];
-          (function (gArr, idx, checkbox) {
-            checkbox.addEventListener("change", function () {
-              if (checkbox.checked) {
-                var checkedCount = gArr.filter(Boolean).length;
-                if (checkedCount >= 3) {
-                  checkbox.checked = false;
-                  alert("同一個組合最多只能勾 3 個——遊戲每次強化固定只會洗出 3 條屬性，勾超過 3 個那個組合永遠不可能成立。");
-                  return;
-                }
-              }
-              gArr[idx] = checkbox.checked;
-            });
-          })(g, i, cb);
-          cbLabel.appendChild(cb);
-          cbLabel.appendChild(document.createTextNode("①②③④⑤⑥"[i] + (slotLabel(i) ? " " + slotLabel(i) : "")));
-          row.appendChild(cbLabel);
-        }
-        var delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "iw-btn";
-        delBtn.textContent = "✕";
-        delBtn.style.cssText = "padding:2px 8px;font-size:12px;margin-left:auto;";
-        delBtn.addEventListener("click", function () {
-          groups.splice(gIdx, 1);
-          renderGroups();
-        });
-        row.appendChild(delBtn);
-        groupsList.appendChild(row);
-      });
-    }
-    function refreshGroupLabels() { renderGroups(); }
-    function rebuildGroups() {
-      var n = currentSlotCount();
-      groups.forEach(function (g) {
-        while (g.length < n) g.push(false);
-        g.length = n;
-      });
-      renderGroups();
-    }
-    addGroupBtn.addEventListener("click", function () {
-      var n = currentSlotCount();
-      if (n === 0) { alert("請先設定至少 1 條屬性選項，才能建立組合"); return; }
-      groups.push(new Array(n).fill(false));
-      renderGroups();
-    });
-
     function rebuildKindSlots() {
       var n = Math.max(0, Math.min(6, Number(kindCountInput.value) || 0));
       kindCountInput.value = String(n);
       var prevRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
       var prevKinds = prevRows.map(function (row) { return row.querySelector(".iw-kind-slot").value; });
+      var prevChecked = prevRows.map(function (row) { return row.querySelector(".iw-kind-enabled").checked; });
       kindSlotsWrap.innerHTML = "";
-      var numerals = ["①", "②", "③", "④", "⑤", "⑥"];
       for (var i = 0; i < n; i++) {
         var row = document.createElement("div");
         row.className = "iw-kind-row";
         row.style.cssText = "display:flex;gap:6px;align-items:center;";
-        var numLabel = document.createElement("span");
-        numLabel.textContent = numerals[i] || String(i + 1);
-        numLabel.style.cssText = "flex:none;width:20px;color:var(--gold,#c9a24b);font-weight:700;";
+        var enabledCb = document.createElement("input");
+        enabledCb.type = "checkbox";
+        enabledCb.className = "iw-kind-enabled";
+        enabledCb.style.cssText = "width:auto;flex:none;";
+        enabledCb.title = "打勾才會列入「要停止」的判斷條件";
+        enabledCb.checked = prevChecked[i] !== undefined ? prevChecked[i] : true;
         var kindSel = document.createElement("select");
         kindSel.className = "iw-kind-slot";
         kindSel.style.flex = "1";
@@ -485,7 +390,7 @@
         var rangeSel = document.createElement("select");
         rangeSel.className = "iw-kind-slot-range";
         rangeSel.style.flex = "1";
-        row.appendChild(numLabel);
+        row.appendChild(enabledCb);
         row.appendChild(kindSel);
         row.appendChild(rangeSel);
         kindSlotsWrap.appendChild(row);
@@ -493,10 +398,8 @@
         kindSel.addEventListener("change", function () {
           var r = this.closest(".iw-kind-row");
           refreshRangeSelect(r.querySelector(".iw-kind-slot-range"), r.querySelector(".iw-kind-slot"));
-          refreshGroupLabels();
         });
       }
-      rebuildGroups(); // 屬性數量變了，組合的勾選格數量也要跟著重建
     }
     kindCountInput.addEventListener("input", rebuildKindSlots);
     rebuildKindSlots();
@@ -510,31 +413,19 @@
         var targetGrade = Number(document.getElementById("iw-f-grade").value);
         var budget = Number(document.getElementById("iw-f-budget").value) || 0;
         var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        var slotRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
-        function slotToReq(row) {
-          var kind = Number(row.querySelector(".iw-kind-slot").value);
-          var rangeVal = row.querySelector(".iw-kind-slot-range").value;
-          if (rangeMode === "tier") {
-            if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
-            var parts = rangeVal.split("|");
-            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
-          }
-          return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
-        }
-        // 把每個組合的勾選陣列，轉成「這個組合需要哪幾個屬性條件」，沒有任何勾選的組合直接跳過（不然會變成永遠成立）
-        var matchGroups = groups
-          .map(function (g) {
-            return g.map(function (checked, i) { return checked ? slotRows[i] : null; })
-              .filter(Boolean).map(slotToReq);
-          })
-          .filter(function (g) { return g.length > 0; });
-
-        if (slotRows.length >= 4 && matchGroups.length === 0) {
-          alert("你準備了 " + slotRows.length + " 條屬性選項，但沒有建立任何「停止條件組合」。\n\n遊戲每次強化固定只會洗出 3 條屬性，不可能一次全部出現——請按「➕ 新增組合」，自己勾選其中最多 3 個編號當作停止條件。");
-          return;
-        }
-
-        startRun(item, targetGrade, budget, autoBuy, matchGroups);
+        var requirements = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"))
+          .filter(function (row) { return row.querySelector(".iw-kind-enabled").checked; })
+          .map(function (row) {
+            var kind = Number(row.querySelector(".iw-kind-slot").value);
+            var rangeVal = row.querySelector(".iw-kind-slot-range").value;
+            if (rangeMode === "tier") {
+              if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
+              var parts = rangeVal.split("|");
+              return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
+            }
+            return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
+          });
+        startRun(item, targetGrade, budget, autoBuy, requirements);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -568,7 +459,7 @@
     if (cancel) cancel.textContent = disabled ? "停止" : "取消";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy, matchGroups) {
+  async function startRun(item, targetGrade, budget, autoBuy, requirements) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
@@ -586,7 +477,7 @@
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
-      if (curGrade >= targetGrade && meetsAnyGroup(entry, matchGroups)) { reason = "success"; break; }
+      if (curGrade >= targetGrade && meetsKindRequirement(entry, requirements)) { reason = "success"; break; }
 
       if (totalSpent >= budget) { reason = "budget"; break; }
 
@@ -638,14 +529,12 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
-      var matchInfo = (matchGroups && matchGroups.length)
-        ? "，需求：" + groupsText(matchGroups) + "（目前" + (meetsAnyGroup(newEntry, matchGroups) ? "已符合" : "未符合") + "）"
-        : "";
+      var matchInfo = (requirements && requirements.length) ? "，需求：" + kindRequirementText(requirements) + "（目前" + (meetsKindRequirement(newEntry, requirements) ? "已符合" : "未符合") + "）" : "";
       log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
-      if (totalSpent >= budget && !(newGrade >= targetGrade && meetsAnyGroup(newEntry, matchGroups))) { reason = "budget"; break; }
+      if (totalSpent >= budget && !(newGrade >= targetGrade && meetsKindRequirement(newEntry, requirements))) { reason = "budget"; break; }
 
       await sleep(25);
     }
