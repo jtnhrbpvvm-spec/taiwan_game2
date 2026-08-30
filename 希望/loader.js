@@ -26,8 +26,10 @@
   if (oldBackdrop) oldBackdrop.remove();
   var oldAlchemyBackdrop = document.getElementById("iw-alchemy-backdrop");
   if (oldAlchemyBackdrop) oldAlchemyBackdrop.remove();
-  var oldAlchemyFab = document.getElementById("iw-alchemy-fab");
-  if (oldAlchemyFab) oldAlchemyFab.remove();
+  var oldAlchemyFabWrap = document.getElementById("iw-alchemy-fab-wrap");
+  if (oldAlchemyFabWrap) oldAlchemyFabWrap.remove();
+  var oldAlchemyShowBtn = document.getElementById("iw-alchemy-show-btn");
+  if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
   var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
@@ -703,13 +705,46 @@
   // 跟「一鍵強化」是各自獨立的功能，用同一顆浮動按鈕常駐在畫面上，
   // 因為要能在玩家離開鍊金畫面、跑去別的地方玩的時候，還繼續在背景執行。
   // ==========================================================================
+  var alchemyFabWrap = document.createElement("div");
+  alchemyFabWrap.id = "iw-alchemy-fab-wrap";
+  alchemyFabWrap.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:flex;align-items:center;gap:6px;";
+
   var alchemyFab = document.createElement("button");
   alchemyFab.id = "iw-alchemy-fab";
   alchemyFab.textContent = "🧪 自動煉金";
-  alchemyFab.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;background:#4a90a4;color:#fff;" +
+  alchemyFab.style.cssText = "background:#4a90a4;color:#fff;" +
     "border:none;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;" +
     "box-shadow:0 4px 14px rgba(0,0,0,.4);";
-  document.body.appendChild(alchemyFab);
+
+  var alchemyHideBtn = document.createElement("button");
+  alchemyHideBtn.title = "隱藏這顆按鈕（不會中斷背景執行）";
+  alchemyHideBtn.textContent = "×";
+  alchemyHideBtn.style.cssText = "background:#2a231a;color:#b8ab90;border:none;border-radius:50%;" +
+    "width:22px;height:22px;line-height:22px;padding:0;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);";
+
+  var alchemyShowBtn = document.createElement("button");
+  alchemyShowBtn.id = "iw-alchemy-show-btn";
+  alchemyShowBtn.title = "顯示自動煉金按鈕";
+  alchemyShowBtn.textContent = "🧪";
+  alchemyShowBtn.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:none;" +
+    "background:#4a90a4;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer;" +
+    "box-shadow:0 4px 14px rgba(0,0,0,.4);";
+
+  alchemyFabWrap.appendChild(alchemyFab);
+  alchemyFabWrap.appendChild(alchemyHideBtn);
+  document.body.appendChild(alchemyFabWrap);
+  document.body.appendChild(alchemyShowBtn);
+
+  alchemyHideBtn.addEventListener("click", function () {
+    alchemyFabWrap.style.display = "none";
+    alchemyShowBtn.style.display = "flex";
+    alchemyShowBtn.style.alignItems = "center";
+    alchemyShowBtn.style.justifyContent = "center";
+  });
+  alchemyShowBtn.addEventListener("click", function () {
+    alchemyShowBtn.style.display = "none";
+    alchemyFabWrap.style.display = "flex";
+  });
 
   var alchemyBackdrop = null, alchemyModal = null;
   var alchemyRunning = false, alchemyStopFlag = false, alchemyTimer = null;
