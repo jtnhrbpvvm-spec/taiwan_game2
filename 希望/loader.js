@@ -24,9 +24,20 @@
   document.querySelectorAll("[data-iw-btn]").forEach(function (el) { el.remove(); });
   var oldBackdrop = document.getElementById("iw-enhance-backdrop");
   if (oldBackdrop) oldBackdrop.remove();
+  var oldAlchemyBackdrop = document.getElementById("iw-alchemy-backdrop");
+  if (oldAlchemyBackdrop) oldAlchemyBackdrop.remove();
+  var oldAlchemyFabWrap = document.getElementById("iw-alchemy-fab-wrap");
+  if (oldAlchemyFabWrap) oldAlchemyFabWrap.remove();
+  var oldAlchemyShowBtn = document.getElementById("iw-alchemy-show-btn");
+  if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
+  window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
+  var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
 
   // ---------- 找到 Vue 應用程式，往下爬元件樹找 session/data/snap ----------
+  // session、data、snap 分開找：session 幾乎每個畫面的元件都拿得到，data/snap 通常只有
+  // 「強化」「鍊金」這類面板才會同時拿到——所以不要求三個一定要在同一個元件上，
+  // 這樣書籤才能在任何畫面啟動，不用一定要先開強化頁。
   function findGameRefs() {
     var rootEl = null;
     var all = document.querySelectorAll("*");
@@ -38,54 +49,64 @@
     var rootComp = rootVnode && rootVnode.component;
     if (!rootComp) return null;
 
-    var found = null;
+    var foundSession = null, foundData = null, foundSnap = null;
     function walk(vnode) {
-      if (!vnode || found) return;
+      if (!vnode) return;
       if (vnode.component) {
         var props = vnode.component.props;
-        if (props && props.session && typeof props.session.enhance === "function" && props.snap && props.data) {
-          found = props;
-          return;
+        if (props) {
+          if (!foundSession && props.session && typeof props.session.enhance === "function") foundSession = props.session;
+          if (!foundData && props.data && props.data.itemById && typeof props.data.itemById.get === "function") foundData = props.data;
+          if (!foundSnap && props.snap && typeof props.snap.gold === "number") foundSnap = props.snap;
         }
+        if (foundSession && foundData && foundSnap) return;
         walk(vnode.component.subTree);
       } else if (Array.isArray(vnode.children)) {
         for (var i = 0; i < vnode.children.length; i++) {
           walk(vnode.children[i]);
-          if (found) return;
+          if (foundSession && foundData && foundSnap) return;
         }
       }
     }
     walk(rootComp.subTree);
-    return found; // { snap, data, session }
+    return { session: foundSession, data: foundData, snap: foundSnap };
   }
 
-  var refs = findGameRefs();
-  if (!refs) {
-    alert("找不到遊戲的 session（請先開啟鐵匠頁面後再啟動書籤，也有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
+  var initialRefs = findGameRefs();
+  if (!initialRefs || !initialRefs.session) {
+    alert("找不到遊戲的 session（有可能頁面還沒載入完成，或是遊戲版本改版了，請回報給作者）");
     return;
   }
-  var session = refs.session;
-  var data = refs.data;
-  function snap() { return refs.snap; } // 每次都重新讀，確保拿到最新的即時狀態
+  var session = initialRefs.session;
+  var data = initialRefs.data; // 可能是 null，等玩家開過強化/鍊金頁面才抓得到，之後會自動補上
+  var liveSnap = initialRefs.snap;
+  function snap() { return liveSnap; } // 每次都重新讀，確保拿到最新的即時狀態
+  function tryUpgradeRefs() {
+    if (data && liveSnap) return; // 已經都有了，不用再找
+    var r = findGameRefs();
+    if (!r) return;
+    if (!data && r.data) data = r.data;
+    if (!liveSnap && r.snap) liveSnap = r.snap;
+  }
 
   // ---------- 樣式 ----------
   var style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = [
-    "[id^=iw-enhance] *,.iw-inline-btn{box-sizing:border-box;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;}",
+    "[id^=iw-enhance] *,[id^=iw-alchemy] *,.iw-inline-btn{box-sizing:border-box;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;}",
     ".iw-inline-btn{background:#7c5cbf;color:#fff;border:none;border-radius:6px;padding:6px 10px;",
     "font-size:12.5px;font-weight:700;cursor:pointer;margin-right:8px;white-space:nowrap;}",
     ".iw-inline-btn:hover{background:#9270d6;}",
-    "#iw-enhance-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999998;",
+    "#iw-enhance-backdrop,#iw-alchemy-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999998;",
     "display:flex;align-items:center;justify-content:center;padding:16px;}",
-    "#iw-enhance-modal{background:#1c1712;color:#e8e0d0;border:1px solid #3a2f22;border-radius:10px;",
+    "#iw-enhance-modal,#iw-alchemy-modal{background:#1c1712;color:#e8e0d0;border:1px solid #3a2f22;border-radius:10px;",
     "width:100%;max-width:420px;max-height:88vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.6);position:relative;}",
-    "#iw-enhance-modal h2{margin:0 0 14px;font-size:16px;color:#e0b95c;}",
-    "#iw-enhance-modal label{display:block;font-size:12.5px;color:#b8ab90;margin:12px 0 4px;}",
-    "#iw-enhance-modal select,#iw-enhance-modal input[type=number]{width:100%;padding:8px 9px;",
+    "#iw-enhance-modal h2,#iw-alchemy-modal h2{margin:0 0 14px;font-size:16px;color:#e0b95c;}",
+    "#iw-enhance-modal label,#iw-alchemy-modal label{display:block;font-size:12.5px;color:#b8ab90;margin:12px 0 4px;}",
+    "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number]{width:100%;padding:8px 9px;",
     "background:#2a231a;border:1px solid #4a3d2c;border-radius:5px;color:#e8e0d0;font-size:13.5px;}",
-    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus{outline:none;border-color:#c9a24b;}",
-    "#iw-enhance-modal .iw-target{font-size:14px;color:#e8e0d0;background:#2a231a;border:1px solid #4a3d2c;",
+    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus{outline:none;border-color:#c9a24b;}",
+    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target{font-size:14px;color:#e8e0d0;background:#2a231a;border:1px solid #4a3d2c;",
     "border-radius:6px;padding:9px 10px;}",
     "#iw-enhance-modal .iw-warn{font-size:11.5px;color:#e0b95c;margin-top:6px;line-height:1.6;display:none;}",
     ".iw-checkrow{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#d8cdb8;}",
@@ -97,11 +118,11 @@
     ".iw-btn.primary:hover{background:#ddb968;}",
     ".iw-mode-btn.active{background:#7c5cbf;border-color:#7c5cbf;color:#fff;}",
     ".iw-btn:disabled{opacity:.45;cursor:not-allowed;}",
-    "#iw-enhance-log{margin-top:14px;background:#141009;border:1px solid #3a2f22;border-radius:6px;",
+    "#iw-enhance-log,#iw-alchemy-log{margin-top:14px;background:#141009;border:1px solid #3a2f22;border-radius:6px;",
     "padding:10px;font-size:12.5px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;}",
-    "#iw-enhance-summary{margin-top:12px;font-size:13px;line-height:1.8;}",
-    "#iw-enhance-summary b{color:#e0b95c;}",
-    "#iw-enhance-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#b8ab90;",
+    "#iw-enhance-summary,#iw-alchemy-summary{margin-top:12px;font-size:13px;line-height:1.8;}",
+    "#iw-enhance-summary b,#iw-alchemy-summary b,#iw-alchemy-status-summary b{color:#e0b95c;}",
+    "#iw-enhance-close,#iw-alchemy-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#b8ab90;",
     "font-size:18px;cursor:pointer;}"
   ].join("");
   document.head.appendChild(style);
@@ -229,8 +250,10 @@
   // ---------- 把「⚡強化」按鈕插到每張裝備卡片的強化費用按鈕前面 ----------
   function injectButtons() {
     try {
+      tryUpgradeRefs(); // 如果一開始沒抓到 data/snap，這裡有機會重新補上（現在畫面上如果有 .card 元素，通常代表 data 也拿得到了）
       var goButtons = document.querySelectorAll(".card:not([data-id]) > div:first-child > button.go");
       if (goButtons.length === 0) return;
+      if (!data) { console.warn("[一鍵強化] 找到強化按鈕的畫面了，但還沒抓到 data，稍後畫面變動時會自動重試"); return; }
       var items = loadoutList();
       goButtons.forEach(function (goBtn) {
         var card = goBtn.closest(".card");
@@ -676,6 +699,261 @@
       "總花費：<b>" + fmt(totalSpent) + "</b> 金幣" +
       "</div>";
   }
+
+  // ==========================================================================
+  // 自動煉金（鐵匠的煉金術，例如原子彈那個純技能、免材料、5秒冷卻的配方）
+  // 跟「一鍵強化」是各自獨立的功能，用同一顆浮動按鈕常駐在畫面上，
+  // 因為要能在玩家離開鍊金畫面、跑去別的地方玩的時候，還繼續在背景執行。
+  // ==========================================================================
+  var alchemyFabWrap = document.createElement("div");
+  alchemyFabWrap.id = "iw-alchemy-fab-wrap";
+  alchemyFabWrap.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:flex;align-items:center;gap:6px;";
+
+  var alchemyFab = document.createElement("button");
+  alchemyFab.id = "iw-alchemy-fab";
+  alchemyFab.textContent = "🧪 自動煉金";
+  alchemyFab.style.cssText = "background:#4a90a4;color:#fff;" +
+    "border:none;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;" +
+    "box-shadow:0 4px 14px rgba(0,0,0,.4);";
+
+  var alchemyHideBtn = document.createElement("button");
+  alchemyHideBtn.title = "隱藏這顆按鈕（不會中斷背景執行）";
+  alchemyHideBtn.textContent = "×";
+  alchemyHideBtn.style.cssText = "background:#2a231a;color:#b8ab90;border:none;border-radius:50%;" +
+    "width:22px;height:22px;line-height:22px;padding:0;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);";
+
+  var alchemyShowBtn = document.createElement("button");
+  alchemyShowBtn.id = "iw-alchemy-show-btn";
+  alchemyShowBtn.title = "顯示自動煉金按鈕";
+  alchemyShowBtn.textContent = "🧪";
+  alchemyShowBtn.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:none;" +
+    "background:#4a90a4;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer;" +
+    "box-shadow:0 4px 14px rgba(0,0,0,.4);";
+
+  alchemyFabWrap.appendChild(alchemyFab);
+  alchemyFabWrap.appendChild(alchemyHideBtn);
+  document.body.appendChild(alchemyFabWrap);
+  document.body.appendChild(alchemyShowBtn);
+
+  alchemyHideBtn.addEventListener("click", function () {
+    alchemyFabWrap.style.display = "none";
+    alchemyShowBtn.style.display = "flex";
+    alchemyShowBtn.style.alignItems = "center";
+    alchemyShowBtn.style.justifyContent = "center";
+  });
+  alchemyShowBtn.addEventListener("click", function () {
+    alchemyShowBtn.style.display = "none";
+    alchemyFabWrap.style.display = "flex";
+  });
+
+  var alchemyBackdrop = null, alchemyModal = null;
+  var alchemyRunning = false, alchemyStopFlag = false, alchemyTimer = null;
+  var alchemyStats = { attempts: 0, totalSpent: 0, totalMade: 0, targetCount: 0, budget: 0, recipeId: null, recipeName: "" };
+
+  function fmtMs(ms) {
+    var s = Math.ceil(ms / 1000);
+    return s <= 0 ? "0 秒" : s + " 秒";
+  }
+
+  function alchemyLog(msg) {
+    var el = document.getElementById("iw-alchemy-log");
+    if (!el) return;
+    el.style.display = "block";
+    el.textContent += msg + "\n";
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function closeAlchemyModal() {
+    if (alchemyBackdrop) { alchemyBackdrop.remove(); alchemyBackdrop = null; alchemyModal = null; }
+  }
+
+  function openAlchemyModal() {
+    if (alchemyBackdrop) return;
+    if (alchemyRunning) { openAlchemyStatusModal(); return; }
+    var panel;
+    try { panel = session.buildAlchemyPanel(); } catch (err) { panel = null; }
+    if (!panel || !panel.recipes || !panel.recipes.length) {
+      alert("目前拿不到任何可用的煉金配方（可能不是鐵匠職業，或是身上沒有對應的配方書/材料/技能）。");
+      return;
+    }
+
+    alchemyBackdrop = document.createElement("div");
+    alchemyBackdrop.id = "iw-alchemy-backdrop";
+    alchemyModal = document.createElement("div");
+    alchemyModal.id = "iw-alchemy-modal";
+
+    var recipeOptions = panel.recipes.map(function (r, idx) {
+      var sourceText = r.source.kind === "skill" ? "技能：" + r.source.name : "配方書：" + r.source.name;
+      var costText = r.gold ? "，" + fmt(r.gold) + " 金幣" : "，免費";
+      return '<option value="' + idx + '">' + r.productName + " ×" + r.count + "（" + sourceText + costText + "，成功率 " + r.rate + "%）</option>";
+    }).join("");
+
+    alchemyModal.innerHTML =
+      '<button id="iw-alchemy-close">✕</button>' +
+      '<h2>🧪 自動煉金</h2>' +
+      '<label>選擇配方</label>' +
+      '<select id="iw-a-recipe">' + recipeOptions + '</select>' +
+      '<div id="iw-a-recipe-info" class="iw-target" style="margin-top:8px;"></div>' +
+      '<label>要重複製作幾次？（0 = 不限制，一直做到你按停止或做不下去為止）</label>' +
+      '<input type="number" id="iw-a-count" min="0" step="1" value="0">' +
+      '<label>最大金幣預算（配方免費的話這欄沒作用）</label>' +
+      '<input type="number" id="iw-a-budget" min="0" step="1000" value="' + fmtRaw(session.player.gold) + '">' +
+      '<div class="iw-btnrow">' +
+      '<button class="iw-btn" id="iw-a-cancel">取消</button>' +
+      '<button class="iw-btn primary" id="iw-a-start">開始（背景執行，可離開此畫面）</button>' +
+      '</div>' +
+      '<div id="iw-alchemy-log" style="display:none;"></div>' +
+      '<div id="iw-alchemy-summary"></div>';
+
+    alchemyBackdrop.appendChild(alchemyModal);
+    document.body.appendChild(alchemyBackdrop);
+
+    var recipeSelect = document.getElementById("iw-a-recipe");
+    var infoBox = document.getElementById("iw-a-recipe-info");
+    function updateRecipeInfo() {
+      var r = panel.recipes[Number(recipeSelect.value)];
+      var matsText = r.mats.length ? r.mats.map(function (m) { return m.name + " ×" + m.need + "（庫存 " + m.have + "）"; }).join("、") : "無需材料";
+      var cd = r.readyAtMs > Date.now() ? "，目前冷卻中，還要等 " + fmtMs(r.readyAtMs - Date.now()) : "";
+      infoBox.textContent = "材料：" + matsText + cd + (r.blocked ? "（目前狀態：" + r.blocked + "）" : "");
+    }
+    recipeSelect.addEventListener("change", updateRecipeInfo);
+    updateRecipeInfo();
+
+    document.getElementById("iw-alchemy-close").addEventListener("click", closeAlchemyModal);
+    document.getElementById("iw-a-cancel").addEventListener("click", function () {
+      if (alchemyRunning) { alchemyStopFlag = true; } else { closeAlchemyModal(); }
+    });
+    alchemyBackdrop.addEventListener("click", function (e) { if (e.target === alchemyBackdrop && !alchemyRunning) closeAlchemyModal(); });
+
+    document.getElementById("iw-a-start").addEventListener("click", function () {
+      var chosen = panel.recipes[Number(recipeSelect.value)];
+      var targetCount = Number(document.getElementById("iw-a-count").value) || 0;
+      var budget = Number(document.getElementById("iw-a-budget").value) || 0;
+      startAlchemyRun(chosen.id, targetCount, budget, chosen.productName);
+    });
+  }
+
+  function openAlchemyStatusModal() {
+    alchemyBackdrop = document.createElement("div");
+    alchemyBackdrop.id = "iw-alchemy-backdrop";
+    alchemyModal = document.createElement("div");
+    alchemyModal.id = "iw-alchemy-modal";
+    alchemyModal.innerHTML =
+      '<button id="iw-alchemy-close">✕</button>' +
+      '<h2>🧪 自動煉金（執行中）</h2>' +
+      '<div class="iw-target">目前配方：' + escapeHtmlLite(alchemyStats.recipeName) + '</div>' +
+      '<div id="iw-alchemy-status-summary" style="margin-top:12px;"></div>' +
+      '<div class="iw-btnrow"><button class="iw-btn primary" id="iw-a-stop">⏹️ 停止背景執行</button></div>' +
+      '<div id="iw-alchemy-log"></div>';
+    document.body.appendChild(alchemyBackdrop);
+    alchemyBackdrop.appendChild(alchemyModal);
+    updateAlchemyStatusSummary();
+    document.getElementById("iw-alchemy-close").addEventListener("click", closeAlchemyModal);
+    document.getElementById("iw-a-stop").addEventListener("click", function () { alchemyStopFlag = true; });
+    alchemyBackdrop.addEventListener("click", function (e) { if (e.target === alchemyBackdrop) closeAlchemyModal(); });
+  }
+  function updateAlchemyStatusSummary() {
+    var el = document.getElementById("iw-alchemy-status-summary");
+    if (!el) return;
+    el.innerHTML = "已執行 <b>" + alchemyStats.attempts + "</b> 次　做出約 <b>" + alchemyStats.totalMade + "</b> 個　花費 <b>" + fmt(alchemyStats.totalSpent) + "</b> 金幣";
+  }
+  function escapeHtmlLite(s) {
+    return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+
+  function fmtRaw(n) { return Math.floor(n || 0); }
+
+  function setAlchemyFormDisabled(disabled) {
+    ["iw-a-recipe", "iw-a-count", "iw-a-budget", "iw-a-start"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.disabled = disabled;
+    });
+    var cancel = document.getElementById("iw-a-cancel");
+    if (cancel) cancel.textContent = disabled ? "停止" : "取消";
+  }
+
+  function startAlchemyRun(recipeId, targetCount, budget, recipeName) {
+    alchemyRunning = true;
+    alchemyStopFlag = false;
+    setAlchemyFormDisabled(true);
+    alchemyFab.textContent = "🧪 煉金中...";
+    alchemyStats = { attempts: 0, totalSpent: 0, totalMade: 0, targetCount: targetCount, budget: budget, recipeId: recipeId, recipeName: recipeName };
+    var logEl = document.getElementById("iw-alchemy-log");
+    if (logEl) logEl.textContent = "";
+    var summaryEl = document.getElementById("iw-alchemy-summary");
+    if (summaryEl) summaryEl.innerHTML = "";
+
+    function findRecipe() {
+      var panel = session.buildAlchemyPanel();
+      if (!panel) return null;
+      return panel.recipes.find(function (r) { return r.id === recipeId; }) || null;
+    }
+
+    function finish(reason) {
+      alchemyRunning = false;
+      setAlchemyFormDisabled(false);
+      alchemyFab.textContent = "🧪 自動煉金";
+      var reasonText = {
+        "target": "✅ 已達成設定的重複次數。",
+        "budget": "⏸️ 已達到（或即將超過）預算上限，停止。",
+        "blocked": "⏸️ 這個配方目前做不下去了（材料/金幣/技能不足），停止。",
+        "gone": "⚠️ 找不到這個配方了（可能配方書用完，物品已經不在配方清單裡），停止。",
+        "stopped": "⏹️ 已手動停止。"
+      }[reason] || reason;
+      if (summaryEl) {
+        summaryEl.innerHTML = "<div>" + reasonText + "</div>" +
+          "<div style='margin-top:8px;'>製作次數：<b>" + alchemyStats.attempts + "</b> 次　總共做出：<b>" + alchemyStats.totalMade + "</b> 個<br>" +
+          "總花費：<b>" + fmt(alchemyStats.totalSpent) + "</b> 金幣</div>";
+      }
+      var statusSummaryEl = document.getElementById("iw-alchemy-status-summary");
+      if (statusSummaryEl) { updateAlchemyStatusSummary(); statusSummaryEl.innerHTML += "<div style='margin-top:8px;'>" + reasonText + "</div>"; }
+    }
+
+    function step() {
+      if (window.__iwAlchemyGeneration !== myAlchemyGeneration) return; // 這個 loader 已經被重新載入取代，舊的迴圈自己停下來
+      if (alchemyStopFlag) { finish("stopped"); return; }
+      if (alchemyStats.targetCount > 0 && alchemyStats.attempts >= alchemyStats.targetCount) { finish("target"); return; }
+      if (alchemyStats.budget > 0 && alchemyStats.totalSpent >= alchemyStats.budget) { finish("budget"); return; }
+
+      var recipe = findRecipe();
+      if (!recipe) { finish("gone"); return; }
+
+      var now = Date.now();
+      if (recipe.readyAtMs > now) {
+        alchemyTimer = setTimeout(step, recipe.readyAtMs - now + 50);
+        return;
+      }
+      if (recipe.blocked) { finish("blocked"); return; }
+      if (alchemyStats.budget > 0 && alchemyStats.totalSpent + (recipe.gold || 0) > alchemyStats.budget) { finish("budget"); return; }
+
+      var goldBefore = session.player.gold;
+      var ok = session.craftBomb(recipeId);
+      if (!ok) { finish("blocked"); return; }
+      var spent = Math.max(0, goldBefore - session.player.gold);
+      alchemyStats.attempts++;
+      alchemyStats.totalSpent += spent;
+      alchemyStats.totalMade += recipe.count || 0;
+      alchemyLog("第 " + alchemyStats.attempts + " 次：花費 " + fmt(spent) + " 金幣，預期做出 " + recipe.count + " 個（成功率 " + recipe.rate + "%，失敗會扣材料但拿不到成品）");
+      updateAlchemyStatusSummary();
+
+      var cooldownMs = 1200; // 讀不到新的 readyAtMs 時，先給一個保守的預設間隔，避免無冷卻配方緊繃連打
+      var afterPanel = session.buildAlchemyPanel();
+      var afterRecipe = afterPanel && afterPanel.recipes.find(function (r) { return r.id === recipeId; });
+      if (afterRecipe && afterRecipe.readyAtMs > Date.now()) cooldownMs = afterRecipe.readyAtMs - Date.now() + 50;
+      alchemyTimer = setTimeout(step, cooldownMs);
+    }
+
+    step();
+  }
+
+  alchemyFab.addEventListener("click", function () {
+    if (alchemyRunning) {
+      if (alchemyBackdrop) { closeAlchemyModal(); } // 已經在跑，點按鈕只是切換要不要看視窗，不會中斷背景執行
+      else openAlchemyModal();
+    } else {
+      openAlchemyModal();
+    }
+  });
 
   console.log("[一鍵強化] loader 已就緒，裝備卡片上「25,000」按鈕前面應該會看到「⚡強化」按鈕。");
 })();
