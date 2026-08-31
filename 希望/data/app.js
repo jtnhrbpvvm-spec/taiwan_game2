@@ -74,8 +74,8 @@
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
-    { panel: "enchant", icon: "🔮", title: "齒輪強化", desc: "編輯裝備的齒輪強化屬性，數值旁邊附機率表算出的範圍參考。" },
-    // { panel: "appraisal", icon: "🔨", title: "鐵匠鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" }, // 先隱藏，之後正式開放再打開這行
+    { panel: "enchant", icon: "🔮", title: "發條強化", desc: "編輯裝備的發條強化屬性，數值旁邊附機率表算出的範圍參考。" },
+    { panel: "appraisal", icon: "🔨", title: "鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" },
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
@@ -1815,7 +1815,7 @@
     };
   }
 
-  // ---------- 齒輪強化 ----------
+  // ---------- 發條強化 ----------
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
@@ -1924,7 +1924,7 @@
       var stackId = $item.value;
       $detail.innerHTML = "";
       if (!stackId) {
-        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯齒輪強化。" }));
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯發條強化。" }));
         return;
       }
       var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
@@ -1937,7 +1937,7 @@
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
 
       var gradeRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;" });
-      gradeRow.appendChild(el("span", { text: "齒輪強化等級：" }));
+      gradeRow.appendChild(el("span", { text: "發條強化等級：" }));
       var gradeSelect = el("select", {});
       // 已由真實存檔驗證：options.grade 是從 1 開始數（1=N, 2=G, 3=DG, 4=XG, 5=SG），
       // 跟 ENCHANT_GRADES 陣列的索引（0開始）差了 1，這裡選單的 value 直接用「已存檔的那個數字」，
@@ -1990,7 +1990,7 @@
     renderDetail();
   }
 
-  // ---------- 鐵匠鑑定（跟齒輪強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
+  // ---------- 鑑定（跟發條強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
   var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
   var APPR_FF = {
     weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
