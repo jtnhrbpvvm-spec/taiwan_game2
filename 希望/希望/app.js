@@ -275,6 +275,7 @@
   enchantChip.style.color = "var(--gold-hi)";
   enchantChip.textContent = "🔮 發條強化屬性表";
   enchantChip.addEventListener("click", function () {
+    resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
@@ -288,6 +289,7 @@
   petChip.style.color = "var(--gold-hi)";
   petChip.textContent = "🐾 寵物列表";
   petChip.addEventListener("click", function () {
+    resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
@@ -301,6 +303,7 @@
   dungeonChip.style.color = "var(--gold-hi)";
   dungeonChip.textContent = "🏛️ 副本";
   dungeonChip.addEventListener("click", function () {
+    resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
@@ -314,6 +317,7 @@
   boxChip.style.color = "var(--gold-hi)";
   boxChip.textContent = "🎁 寶箱";
   boxChip.addEventListener("click", function () {
+    resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
@@ -323,6 +327,44 @@
 
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
+
+  // ---------- 瀏覽紀錄（上一頁）----------
+  // 只有「在詳細頁裡點連結跳過去」才會記錄一筆，重新搜尋、或直接點左邊搜尋結果清單，
+  // 都視為全新的瀏覽起點，會清空這份紀錄。
+  var navHistory = [];
+  var currentView = null; // {kind:"item"|"monster"|"pet", id}
+  function resetNavHistory() { navHistory = []; currentView = null; }
+  function navigateTo(kind, id, push) {
+    if (push !== false && currentView) navHistory.push(currentView);
+    currentView = { kind: kind, id: id };
+    if (kind === "item") {
+      var it = ITEMS[id];
+      $input.value = it ? it.name : "";
+      currentMatches.items = [{ id: id, name: it ? it.name : "" }];
+      currentMatches.monsters = [];
+      renderResultList(it ? it.name : "");
+      showItem(id);
+    } else if (kind === "monster") {
+      var mon = MONSTERS[id];
+      $input.value = mon ? mon.name : "";
+      currentMatches.monsters = [{ id: id, name: mon ? mon.name : "", lv: mon ? mon.lv : 0 }];
+      currentMatches.items = [];
+      renderResultList(mon ? mon.name : "");
+      showMonster(id);
+    } else if (kind === "pet") {
+      showPetDetail(id);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function goBackOneView() {
+    if (!navHistory.length) return;
+    var prev = navHistory.pop();
+    navigateTo(prev.kind, prev.id, false);
+  }
+  function backButtonHtml() {
+    if (!navHistory.length) return "";
+    return '<div style="margin-bottom:12px;"><span class="name-link" data-go-back="1" style="cursor:pointer;">← 上一頁</span></div>';
+  }
 
   function runSearch(qRaw) {
     var q = (qRaw || "").trim();
@@ -441,8 +483,9 @@
   $resultList.addEventListener("click", function (e) {
     var item = e.target.closest(".result-item");
     if (!item) return;
-    if (item.dataset.type === "monster") showMonster(item.dataset.id);
-    else showItem(item.dataset.id);
+    resetNavHistory();
+    if (item.dataset.type === "monster") { currentView = { kind: "monster", id: item.dataset.id }; showMonster(item.dataset.id); }
+    else { currentView = { kind: "item", id: item.dataset.id }; showItem(item.dataset.id); }
   });
 
   // ---------- 詳細頁：物品 ----------
@@ -584,7 +627,8 @@
 
     var drops = (DROP_INDEX[id] || []).slice().sort(function (a, b) { return b.r - a.r; });
 
-    var html = '<div class="detail-head"><div>' +
+    var html = backButtonHtml();
+    html += '<div class="detail-head"><div>' +
       '<div class="detail-title">' + escapeHtml(item.name) + '</div>' +
       '<div class="detail-sub">物品編號 #' + id + '</div>' +
       '</div></div>';
@@ -842,7 +886,6 @@
     }
 
     $detail.innerHTML = html;
-    bindDetailClicks();
     wireDropCalcBar(function () { showItem(id); });
   }
 
@@ -870,7 +913,8 @@
     var elLabel = ELEMENT_LABEL[mon.element] || mon.element;
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
 
-    var html = '<div class="detail-head"><div>' +
+    var html = backButtonHtml();
+    html += '<div class="detail-head"><div>' +
       '<div class="detail-title">' + escapeHtml(mon.name) + '</div>' +
       '<div class="detail-sub">怪物編號 #' + id + '　・　等級 ' + mon.lv + '</div>' +
       '<div class="badge-row">' +
@@ -970,39 +1014,11 @@
     }
 
     $detail.innerHTML = html;
-    bindDetailClicks();
     wireDropCalcBar(function () { showMonster(id); });
   }
 
   function statTile(label, val) {
     return '<div class="stat-tile"><div class="v">' + fmtNum(val) + '</div><div class="k">' + label + '</div></div>';
-  }
-
-  function bindDetailClicks() {
-    $detail.querySelectorAll("[data-goto-monster]").forEach(function (row) {
-      row.addEventListener("click", function () {
-        var mid = row.getAttribute("data-goto-monster");
-        var mon = MONSTERS[mid];
-        $input.value = mon ? mon.name : "";
-        currentMatches.monsters = [{ id: mid, name: mon.name, lv: mon.lv }];
-        currentMatches.items = [];
-        renderResultList(mon.name);
-        showMonster(mid);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-    });
-    $detail.querySelectorAll("[data-goto-item]").forEach(function (row) {
-      row.addEventListener("click", function () {
-        var iid = row.getAttribute("data-goto-item");
-        var it = ITEMS[iid];
-        $input.value = it ? it.name : "";
-        currentMatches.items = [{ id: iid, name: it.name }];
-        currentMatches.monsters = [];
-        renderResultList(it.name);
-        showItem(iid);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-    });
   }
 
   function showNoResult(q) {
@@ -1018,6 +1034,7 @@
   // ---------- 事件 ----------
   var debounceTimer = null;
   $input.addEventListener("input", function () {
+    resetNavHistory();
     clearTimeout(debounceTimer);
     var v = $input.value;
     debounceTimer = setTimeout(function () { runSearch(v); }, 90);
@@ -1293,7 +1310,8 @@
   function showPetDetail(petId) {
     var p = PET_INFO[String(petId)];
     if (!p) return;
-    var html = '<div class="section-title"><span class="name-link" id="petBackToList" style="cursor:pointer;">← 寵物列表</span></div>';
+    var html = backButtonHtml();
+    html += '<div class="section-title"><span class="name-link" id="petBackToList" style="cursor:pointer;">← 寵物列表</span></div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(p.name) + '</div>';
     html += '<div class="badge-row" style="margin-bottom:14px;">' +
       '<span class="badge">' + p.tier + ' 階</span>' +
@@ -1395,18 +1413,26 @@
     if (goto) {
       var parts = goto.getAttribute("data-changelog-goto").split(":");
       closeChangelog();
-      if (parts[0] === "monster") showMonster(parts[1]); else showItem(parts[1]);
+      resetNavHistory();
+      if (parts[0] === "monster") { currentView = { kind: "monster", id: parts[1] }; showMonster(parts[1]); }
+      else { currentView = { kind: "item", id: parts[1] }; showItem(parts[1]); }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
 
   document.addEventListener("click", function (e) {
+    var backLink = e.target.closest("[data-go-back]");
+    if (backLink) { goBackOneView(); return; }
+    var gotoItemLink = e.target.closest("[data-goto-item]");
+    if (gotoItemLink) { navigateTo("item", gotoItemLink.getAttribute("data-goto-item"), true); return; }
+    var gotoMonsterLink = e.target.closest("[data-goto-monster]");
+    if (gotoMonsterLink) { navigateTo("monster", gotoMonsterLink.getAttribute("data-goto-monster"), true); return; }
+    var petLink = e.target.closest("[data-open-pet]");
+    if (petLink) { navigateTo("pet", petLink.getAttribute("data-open-pet"), true); return; }
     var dgLink = e.target.closest("[data-open-dungeon]");
     if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
     var boxLink = e.target.closest("[data-open-box]");
-    if (boxLink) { openBoxDetail(boxLink.getAttribute("data-open-box")); return; }
-    var petLink = e.target.closest("[data-open-pet]");
-    if (petLink) showPetDetail(petLink.getAttribute("data-open-pet"));
+    if (boxLink) openBoxDetail(boxLink.getAttribute("data-open-box"));
   });
 
   wireGlobalLevelField();
