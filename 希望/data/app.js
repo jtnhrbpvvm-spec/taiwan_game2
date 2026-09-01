@@ -1009,6 +1009,31 @@
     return { lvOk: lvOk, fameOk: fameOk, def: def };
   }
 
+  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
+  // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關；
+  // 沒有 hunger 就是全部歸零。有的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
+  // 沒有 growth 陣列的屬性，就固定用寵物基礎資料裡的那個數字，不會隨 grow 變動。
+  function petBonusAt(def, grow, hunger) {
+    var out = {};
+    if (!def || !hunger || hunger <= 0) {
+      Object.keys(PET_STAT_LABEL).forEach(function (k) { out[k] = 0; });
+      return out;
+    }
+    Object.keys(PET_STAT_LABEL).forEach(function (k) {
+      var curve = def.growth && def.growth[k];
+      if (curve && grow > 0 && curve[grow - 1] !== undefined) out[k] = curve[grow - 1];
+      else out[k] = (def.stats && def.stats[k]) || 0;
+    });
+    return out;
+  }
+  function petBonusText(bonus) {
+    var parts = [];
+    Object.keys(PET_STAT_LABEL).forEach(function (k) {
+      if (bonus[k]) parts.push(PET_STAT_LABEL[k] + bonus[k]);
+    });
+    return parts.length ? parts.join("　") : "無任何能力";
+  }
+
   function showCenterModal(title, message) {
     var old = document.getElementById("centerModalOverlay");
     if (old) old.remove();
@@ -1065,7 +1090,10 @@
         // 所以 grow:0 查不到任何一格資料，遊戲會顯示「無任何能力」。最低要設 1 才有基礎加成。
         pet.grow = 1;
         pet.exp = 0;
-        pet.hunger = 0;
+        // hunger 一定要 > 0 加成才會生效，預設直接給滿（該寵物的飽食度上限 feedFull），
+        // 不用讓玩家自己還要另外調整才看得到效果。
+        var def = PETS[String(newId)];
+        pet.hunger = def ? def.feedFull : 0;
         petsTouched = true;
         renderPets(c);
         warnIfPetInvalid(pet, c);
@@ -1075,8 +1103,15 @@
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
         var td = document.createElement("td");
-        var inp = el("input", { type: "number", value: pet[field] });
-        inp.addEventListener("input", function () { pet[field] = inp.valueAsNumber || 0; });
+        var inpAttrs = { type: "number", value: pet[field] };
+        if (field === "grow") { inpAttrs.min = "0"; inpAttrs.max = "9"; } // 成長階段最高只到 9，超過遊戲裡的加成表也查不到
+        var inp = el("input", inpAttrs);
+        inp.addEventListener("input", function () {
+          var v = inp.valueAsNumber;
+          if (field === "grow" && !isNaN(v) && v > 9) { v = 9; inp.value = "9"; }
+          pet[field] = isNaN(v) ? 0 : Math.max(0, v);
+          if (field === "grow" || field === "hunger") updateBonusCell();
+        });
         td.appendChild(inp);
         tr.appendChild(td);
       });
@@ -1102,6 +1137,16 @@
       if (invalid && !reqCheck.fameOk) fameInp.style.color = "var(--red)";
       tdFame.appendChild(fameInp);
       tr.appendChild(tdFame);
+
+      var tdBonus = document.createElement("td");
+      tdBonus.style.fontSize = "12px";
+      tr.appendChild(tdBonus);
+      function updateBonusCell() {
+        var def = PETS[String(pet.id)];
+        tdBonus.textContent = petBonusText(petBonusAt(def, pet.grow, pet.hunger));
+        tdBonus.title = "只有出戰中、而且飽食度(hunger) > 0 的寵物，這個加成才會真的套用到角色身上";
+      }
+      updateBonusCell();
 
       var tdAct = document.createElement("td");
       var delBtn = el("button", { class: "icon-btn", text: "✕" });

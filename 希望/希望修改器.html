@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V35</span>
+  <span class="bar-title">🧭 希望存檔修改器V37</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -407,10 +407,11 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
         寵物可以同時擁有很多隻（像倉庫），用最左邊的圓點選擇要出戰的那隻。
         uid（流水號）、id（寵物種類）、grow（成長階段）、exp（經驗）、hunger（飽食度）。
         <b>寵物出戰有兩道門檻</b>：角色等級要達到「所需等級」、名聲要達到「所需名聲」（都是唯讀欄位，來自寵物基礎資料），
-        兩個都不夠的話遊戲裡就不會顯示出戰按鈕。<b>grow 最低要是 1</b>：屬性加成表只有 9 格（對應 grow 1~9），
-        grow:0 查不到資料會顯示「無任何能力」，所以新增寵物預設 grow 是 1。
+        兩個都不夠的話遊戲裡就不會顯示出戰按鈕。<b>還有一個更關鍵的門檻常被忽略：hunger（飽食度）一定要 > 0，等於 0 的話不管成長階段多高，加成一律歸零</b>——已經對照真實遊戲邏輯反推確認過。
+        「目前加成」欄位會即時算出照這隻寵物目前的 grow／hunger，實際會提供多少能力（部分屬性有 9 階段各自不同的成長曲線，沒有曲線的屬性固定不變，只看有沒有 hunger）。
+        <b>grow 最低要是 1</b>：屬性加成表只有 9 格（對應 grow 1~9），grow:0 查不到資料會顯示「無任何能力」，所以新增寵物預設 grow 是 1。
       </div>
-      <table class="etable" id="petsTable"><thead><tr><th style="width:6%">出戰</th><th style="width:22%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:5%">出戰</th><th style="width:18%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th style="width:16%">目前加成</th><th></th></tr></thead><tbody></tbody></table>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
     </div>
 
