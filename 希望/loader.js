@@ -30,6 +30,8 @@
   if (oldAlchemyFabWrap) oldAlchemyFabWrap.remove();
   var oldAlchemyShowBtn = document.getElementById("iw-alchemy-show-btn");
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
+  var oldRespawnFab = document.getElementById("iw-respawn-fab");
+  if (oldRespawnFab) oldRespawnFab.remove();
   window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
   var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
@@ -701,13 +703,14 @@
   }
 
   // ==========================================================================
-  // 自動煉金（鐵匠的煉金術，例如原子彈那個純技能、免材料、5秒冷卻的配方）
-  // 跟「一鍵強化」是各自獨立的功能，用同一顆浮動按鈕常駐在畫面上，
-  // 因為要能在玩家離開鍊金畫面、跑去別的地方玩的時候，還繼續在背景執行。
+  // 自動煉金 + 自動重生：兩個背景執行功能共用同一個浮動區塊，一起收合／展開。
   // ==========================================================================
   var alchemyFabWrap = document.createElement("div");
   alchemyFabWrap.id = "iw-alchemy-fab-wrap";
-  alchemyFabWrap.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:flex;align-items:center;gap:6px;";
+  alchemyFabWrap.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:flex;flex-direction:column;gap:8px;align-items:flex-start;";
+
+  var alchemyRow = document.createElement("div");
+  alchemyRow.style.cssText = "display:flex;align-items:center;gap:6px;";
 
   var alchemyFab = document.createElement("button");
   alchemyFab.id = "iw-alchemy-fab";
@@ -717,33 +720,124 @@
     "box-shadow:0 4px 14px rgba(0,0,0,.4);";
 
   var alchemyHideBtn = document.createElement("button");
-  alchemyHideBtn.title = "隱藏這顆按鈕（不會中斷背景執行）";
+  alchemyHideBtn.title = "隱藏這個區塊（不會中斷背景執行）";
   alchemyHideBtn.textContent = "×";
   alchemyHideBtn.style.cssText = "background:#2a231a;color:#b8ab90;border:none;border-radius:50%;" +
     "width:22px;height:22px;line-height:22px;padding:0;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);";
 
+  alchemyRow.appendChild(alchemyFab);
+  alchemyRow.appendChild(alchemyHideBtn);
+  alchemyFabWrap.appendChild(alchemyRow);
+
+  var respawnFab = document.createElement("button");
+  respawnFab.id = "iw-respawn-fab";
+  respawnFab.textContent = "🔄 自動重生：關閉";
+  respawnFab.style.cssText = "background:#5a6b47;color:#fff;" +
+    "border:none;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;" +
+    "box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:.85;align-self:stretch;";
+  alchemyFabWrap.appendChild(respawnFab);
+
   var alchemyShowBtn = document.createElement("button");
   alchemyShowBtn.id = "iw-alchemy-show-btn";
-  alchemyShowBtn.title = "顯示自動煉金按鈕";
+  alchemyShowBtn.title = "顯示自動煉金／自動重生按鈕";
   alchemyShowBtn.textContent = "🧪";
   alchemyShowBtn.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:none;" +
     "background:#4a90a4;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer;" +
     "box-shadow:0 4px 14px rgba(0,0,0,.4);";
 
-  alchemyFabWrap.appendChild(alchemyFab);
-  alchemyFabWrap.appendChild(alchemyHideBtn);
   document.body.appendChild(alchemyFabWrap);
   document.body.appendChild(alchemyShowBtn);
 
+  // 讓收合後的圓點可以拖到畫面上任何地方（不擋到遊戲介面）。
+  // 滑鼠（電腦）用 mousedown/mousemove/mouseup，觸控（手機）另外用 touchstart/touchmove/touchend，
+  // 兩套事件完全分開處理，不要互相干擾；同時要能分辨「拖曳」跟「單純點一下」，
+  // 不然拖完放開手會被誤判成點擊，把面板展開。
+  function makeDraggable(el) {
+    el.style.touchAction = "none"; // 避免手機上拖曳時，畫面跟著捲動
+    var dragging = false, moved = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+    function beginDrag(clientX, clientY) {
+      dragging = true;
+      moved = false;
+      var rect = el.getBoundingClientRect();
+      origLeft = rect.left;
+      origTop = rect.top;
+      startX = clientX;
+      startY = clientY;
+      // 拖曳期間統一改用 left/top 定位，比較好算邊界
+      el.style.left = origLeft + "px";
+      el.style.top = origTop + "px";
+      el.style.right = "auto";
+      el.style.bottom = "auto";
+    }
+    function moveDrag(clientX, clientY) {
+      if (!dragging) return;
+      var dx = clientX - startX, dy = clientY - startY;
+      if (!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) moved = true;
+      if (!moved) return;
+      var maxLeft = window.innerWidth - el.offsetWidth;
+      var maxTop = window.innerHeight - el.offsetHeight;
+      el.style.left = Math.max(0, Math.min(maxLeft, origLeft + dx)) + "px";
+      el.style.top = Math.max(0, Math.min(maxTop, origTop + dy)) + "px";
+    }
+    function endDrag() {
+      dragging = false;
+    }
+
+    // ---- 滑鼠（電腦）----
+    el.addEventListener("mousedown", function (e) {
+      beginDrag(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    document.addEventListener("mousemove", function (e) {
+      if (dragging) moveDrag(e.clientX, e.clientY);
+    });
+    document.addEventListener("mouseup", function () { endDrag(); });
+
+    // ---- 觸控（手機）----
+    el.addEventListener("touchstart", function (e) {
+      var t = e.touches[0];
+      beginDrag(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener("touchmove", function (e) {
+      if (!dragging) return;
+      var t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+      if (moved) e.preventDefault(); // 真的在拖的時候才擋掉滾動，單純點擊不影響
+    }, { passive: false });
+    document.addEventListener("touchend", function () { endDrag(); });
+
+    return { wasDragged: function () { return moved; } };
+  }
+  var showBtnDrag = makeDraggable(alchemyShowBtn);
+
   alchemyHideBtn.addEventListener("click", function () {
+    var wrapRect = alchemyFabWrap.getBoundingClientRect();
     alchemyFabWrap.style.display = "none";
     alchemyShowBtn.style.display = "flex";
     alchemyShowBtn.style.alignItems = "center";
     alchemyShowBtn.style.justifyContent = "center";
+    // 圓點出現在原本面板的位置，不要跳回畫面角落
+    alchemyShowBtn.style.right = "auto";
+    alchemyShowBtn.style.bottom = "auto";
+    var maxLeft = window.innerWidth - alchemyShowBtn.offsetWidth;
+    var maxTop = window.innerHeight - alchemyShowBtn.offsetHeight;
+    alchemyShowBtn.style.left = Math.max(0, Math.min(maxLeft, wrapRect.left)) + "px";
+    alchemyShowBtn.style.top = Math.max(0, Math.min(maxTop, wrapRect.top)) + "px";
   });
   alchemyShowBtn.addEventListener("click", function () {
+    if (showBtnDrag.wasDragged()) return; // 剛剛是拖曳放開，不是點擊，不要展開面板
+    var btnRect = alchemyShowBtn.getBoundingClientRect();
     alchemyShowBtn.style.display = "none";
     alchemyFabWrap.style.display = "flex";
+    // 面板出現在圓點原本的位置，不要跳回畫面角落
+    alchemyFabWrap.style.right = "auto";
+    alchemyFabWrap.style.bottom = "auto";
+    var wrapW = alchemyFabWrap.offsetWidth, wrapH = alchemyFabWrap.offsetHeight;
+    var maxLeft = window.innerWidth - wrapW;
+    var maxTop = window.innerHeight - wrapH;
+    alchemyFabWrap.style.left = Math.max(0, Math.min(maxLeft, btnRect.left)) + "px";
+    alchemyFabWrap.style.top = Math.max(0, Math.min(maxTop, btnRect.top)) + "px";
   });
 
   var alchemyBackdrop = null, alchemyModal = null;
@@ -953,6 +1047,37 @@
     } else {
       openAlchemyModal();
     }
+  });
+
+  // ==========================================================================
+  // 自動重生：怪物池死光時（左上角那顆重生圈圈亮起的時機）自動幫忙按下去。
+  // 純粹是布林值判斷（session.canRespawnPool），不用開視窗設定，一顆開關按鈕就夠。
+  // 按鈕本體已經在上面跟自動煉金共用同一個浮動區塊建立好了，這裡只接邏輯。
+  // ==========================================================================
+  var respawnEnabled = false, respawnTimer = null;
+  window.__iwRespawnGeneration = (window.__iwRespawnGeneration || 0) + 1;
+  var myRespawnGeneration = window.__iwRespawnGeneration;
+
+  function respawnLoop() {
+    if (window.__iwRespawnGeneration !== myRespawnGeneration) return; // 舊的 loader 實例，自己停下來
+    if (!respawnEnabled) return;
+    try {
+      if (session.canRespawnPool) {
+        session.respawnPool();
+        console.log("[自動重生] 怪物池空了，已自動重生。");
+      }
+    } catch (err) {
+      console.error("[自動重生] 檢查/重生時發生錯誤", err);
+    }
+    respawnTimer = setTimeout(respawnLoop, 1000);
+  }
+
+  respawnFab.addEventListener("click", function () {
+    respawnEnabled = !respawnEnabled;
+    respawnFab.textContent = "🔄 自動重生：" + (respawnEnabled ? "開啟中" : "關閉");
+    respawnFab.style.background = respawnEnabled ? "#7ea45a" : "#5a6b47";
+    if (respawnEnabled) respawnLoop();
+    else if (respawnTimer) clearTimeout(respawnTimer);
   });
 
   console.log("[一鍵強化] loader 已就緒，裝備卡片上「25,000」按鈕前面應該會看到「⚡強化」按鈕。");
