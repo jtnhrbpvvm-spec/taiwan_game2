@@ -190,6 +190,7 @@
   var ITEM_TO_BOXES = window.ITEM_TO_BOXES || {};
   var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
   var PET_INFO = window.PET_INFO || {};
+  var PET_EVOLVE_FROM = window.PET_EVOLVE_FROM || {};
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
   // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
@@ -1301,6 +1302,39 @@
       '<span class="badge">飽食度上限 ' + fmtNum(p.feedFull) + '</span>' +
       '</div>';
     html += '<div class="empty-note" style="padding:0 0 14px;">飽食度(hunger)必須大於 0，下面的加成才會真的套用到角色身上；沒有成長曲線的屬性，不管幾階都固定不變。</div>';
+
+    var evolveFrom = PET_EVOLVE_FROM[String(petId)] || [];
+    if (evolveFrom.length) {
+      html += '<div class="section-title">進化來源 <span class="count">(從這幾隻進化過來)</span></div>';
+      evolveFrom.forEach(function (f) {
+        var fromPet = PET_INFO[String(f.from)];
+        html += '<div class="equip-box" style="margin-bottom:10px;">' +
+          '<div class="row1"><span class="slot"><span class="name-link" data-open-pet="' + f.from + '">' + escapeHtml(fromPet ? fromPet.name : "#" + f.from) + '</span></span>' +
+          '<span class="rate">' + f.rate + '%</span></div>' +
+          '<div class="map-chip-row">' + f.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>' +
+          '</div>';
+      });
+    }
+
+    if (p.evolve && p.evolve.length) {
+      html += '<div class="section-title">可能進化成</div>';
+      p.evolve.forEach(function (ev, idx) {
+        html += '<div class="equip-box" style="margin-bottom:10px;">';
+        if (p.evolve.length > 1) html += '<div class="empty-note" style="padding:0 0 6px;">材料組合 ' + (idx + 1) + '：</div>';
+        html += '<div class="map-chip-row" style="margin-bottom:10px;">' + ev.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>';
+        var totalRate = ev.targets.reduce(function (s, t) { return s + t.rate; }, 0);
+        ev.targets.forEach(function (t) {
+          var toPet = PET_INFO[String(t.to)];
+          html += '<div class="row1" style="margin-bottom:4px;"><span class="slot"><span class="name-link" data-open-pet="' + t.to + '">' + escapeHtml(toPet ? toPet.name : "#" + t.to) + '</span></span>' +
+            '<span class="rate">' + t.rate + '%</span></div>';
+        });
+        if (totalRate < 100) {
+          html += '<div class="row1"><span style="color:var(--text-faint);font-size:13px;">進化失敗（掉成長階段或經驗歸零）</span>' +
+            '<span class="rate low">' + (100 - totalRate) + '%</span></div>';
+        }
+        html += '</div>';
+      });
+    }
 
     var statKeys = Object.keys(PET_STAT_LABEL);
     html += '<table class="dtable"><thead><tr><th>成長階段</th>' + statKeys.map(function (k) { return '<th>' + PET_STAT_LABEL[k] + '</th>'; }).join('') + '</tr></thead><tbody>';
