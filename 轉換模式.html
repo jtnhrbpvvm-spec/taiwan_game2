@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>網頁版存檔轉移工具 V1</title>
+<style>
+  :root {
+    --bg: #1a1d24;
+    --panel: #23272f;
+    --panel2: #2b303a;
+    --border: #3a3f4b;
+    --text: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #4a9eff;
+    --danger: #ff5d5d;
+    --ok: #4ade80;
+    --warn: #f5b942;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    margin: 0;
+    padding: 24px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; border-left: 3px solid var(--accent); padding-left: 10px; margin: 28px 0 12px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 8px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #06121f; font-weight: 600; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  input[type=text], textarea, select {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 9px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  textarea { width: 100%; min-height: 90px; resize: vertical; }
+  select { min-width: 260px; }
+  .status { font-size: 13px; margin-top: 10px; white-space: pre-wrap; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--danger); }
+  .status.warn { color: var(--warn); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .hidden { display: none; }
+  .code-box {
+    font-size: 22px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    background: var(--panel2);
+    border: 1px dashed var(--accent);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--accent);
+    display: inline-block;
+  }
+  .mode-options { display: flex; gap: 14px; flex-wrap: wrap; }
+  .mode-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .mode-options input[type=radio] { accent-color: var(--accent); }
+  .slot-info { font-size: 12px; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>網頁版存檔轉移工具 V1</h1>
+<div class="sub">僅供網頁版遊戲使用。功能：匯入/匯出存檔、產生與輸入轉移碼、調整遊戲模式。所有處理都在你的瀏覽器本機進行，只有「轉移碼」功能會連線到 Litterbox 檔案託管服務。</div>
+
+<h2>① 匯入存檔</h2>
+<div class="panel">
+  <div class="row">
+    <input type="file" id="fileInput" accept=".json,.txt">
+    <button id="togglePasteBtn">改用貼上文字</button>
+    <button id="toggleCodeBtn">改用轉移碼匯入</button>
+  </div>
+
+  <div id="pasteArea" class="hidden" style="margin-top:12px;">
+    <textarea id="pasteInput" placeholder="貼上完整的存檔內容（SIG1:... 開頭的單一存檔，或加掛版完整備份 JSON）"></textarea>
+    <div class="row" style="margin-top:8px;">
+      <button class="primary" id="pasteImportBtn">匯入貼上的內容</button>
+    </div>
+  </div>
+
+  <div id="codeArea" class="hidden" style="margin-top:12px;">
+    <div class="row">
+      <input type="text" id="codeInput" placeholder="輸入六碼轉移碼" style="width:160px;">
+      <button class="primary" id="codeImportBtn">下載並匯入</button>
+    </div>
+    <div class="hint">六碼由「② 匯出存檔」區塊的「產生轉移碼」按鈕取得，24 小時內有效，大小寫不分（自動轉小寫）。</div>
+  </div>
+
+  <div id="importStatus" class="status"></div>
+</div>
+
+<div id="slotSection" class="panel hidden">
+  <div class="row">
+    <label style="font-size:13px; color:var(--muted);">目前編輯角色：</label>
+    <select id="slotSelect"></select>
+  </div>
+  <div class="slot-info" id="slotInfo"></div>
+</div>
+
+<h2>② 調整遊戲模式</h2>
+<div class="panel">
+  <div class="mode-options">
+    <label><input type="radio" name="gameMode" value="normal"> 一般</label>
+    <label><input type="radio" name="gameMode" value="classic"> 經典</label>
+    <label><input type="radio" name="gameMode" value="trad"> 傳統</label>
+    <label><input type="radio" name="gameMode" value="both"> 經典＋傳統</label>
+  </div>
+  <div class="hint">尚未匯入存檔前無法調整；選擇後會立即套用到目前選取的角色（記得存檔還是要按下方「匯出」才會落地成檔案）。</div>
+</div>
+
+<h2>③ 匯出存檔</h2>
+<div class="panel">
+  <div class="row">
+    <button class="primary" id="exportFileBtn" disabled>匯出存檔檔案</button>
+    <button id="generateCodeBtn" disabled>產生轉移碼</button>
+  </div>
+  <div id="codeResultBox" class="hidden" style="margin-top:14px;">
+    <div class="code-box" id="codeResultText"></div>
+    <div class="hint">到遊戲內「完整資料備份與還原 → 用轉移碼搬家」輸入這六碼即可帶回（24 小時內有效）。</div>
+  </div>
+  <div id="exportStatus" class="status"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// LZString（compressToUTF16 / decompressFromUTF16）— MIT License, Pieroxy
+// 與遊戲存檔壓縮格式完全相同，用於解讀/重新壓縮「加掛版完整存檔」內每個角色存檔位
+// ════════════════════════════════════════════════
+var LZString = (function () {
+  var f = String.fromCharCode;
+  var LZString = {
+    compressToUTF16: function (input) { if (input == null) return ""; return LZString._compress(input, 15, function (a) { return f(a + 32); }) + " "; },
+    decompressFromUTF16: function (compressed) { if (compressed == null) return ""; if (compressed == "") return null; return LZString._decompress(compressed.length, 16384, function (index) { return compressed.charCodeAt(index) - 32; }); },
+    _compress: function (uncompressed, bitsPerChar, getCharFromInt) {
+      if (uncompressed == null) return "";
+      var i, value,
+          context_dictionary = {},
+          context_dictionaryToCreate = {},
+          context_c = "",
+          context_wc = "",
+          context_w = "",
+          context_enlargeIn = 2,
+          context_dictSize = 3,
+          context_numBits = 2,
+          context_data = [],
+          context_data_val = 0,
+          context_data_position = 0,
+          ii;
+      for (ii = 0; ii < uncompressed.length; ii += 1) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
+          context_dictionary[context_c] = context_dictSize++;
+          context_dictionaryToCreate[context_c] = true;
+        }
+        context_wc = context_w + context_c;
+        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
+          context_w = context_wc;
+        } else {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+            if (context_w.charCodeAt(0) < 256) {
+              for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 8; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+            } else {
+              value = 1;
+              for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | value; if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = 0; }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 16; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+          context_dictionary[context_wc] = context_dictSize++;
+          context_w = String(context_c);
+        }
+      }
+      if (context_w !== "") {
+        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+          if (context_w.charCodeAt(0) < 256) {
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 8; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          } else {
+            value = 1;
+            for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | value; if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = 0; }
+            value = context_w.charCodeAt(0);
+            for (i = 0; i < 16; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+          delete context_dictionaryToCreate[context_w];
+        } else {
+          value = context_dictionary[context_w];
+          for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+        }
+        context_enlargeIn--;
+        if (context_enlargeIn == 0) { context_enlargeIn = Math.pow(2, context_numBits); context_numBits++; }
+      }
+      value = 2;
+      for (i = 0; i < context_numBits; i++) { context_data_val = (context_data_val << 1) | (value & 1); if (context_data_position == bitsPerChar - 1) { context_data_position = 0; context_data.push(getCharFromInt(context_data_val)); context_data_val = 0; } else { context_data_position++; } value = value >> 1; }
+      while (true) { context_data_val = (context_data_val << 1); if (context_data_position == bitsPerChar - 1) { context_data.push(getCharFromInt(context_data_val)); break; } else context_data_position++; }
+      return context_data.join('');
+    },
+    _decompress: function (length, resetValue, getNextValue) {
+      var dictionary = [], next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], i, w, bits, resb, maxpower, power, c,
+          data = { val: getNextValue(0), position: resetValue, index: 1 };
+      for (i = 0; i < 3; i += 1) { dictionary[i] = i; }
+      bits = 0; maxpower = Math.pow(2, 2); power = 1;
+      while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; }
+      switch (next = bits) {
+        case 0: bits = 0; maxpower = Math.pow(2, 8); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } c = f(bits); break;
+        case 1: bits = 0; maxpower = Math.pow(2, 16); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } c = f(bits); break;
+        case 2: return "";
+      }
+      dictionary[3] = c; w = c; result.push(c);
+      while (true) {
+        if (data.index > length) return "";
+        bits = 0; maxpower = Math.pow(2, numBits); power = 1;
+        while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; }
+        switch (c = bits) {
+          case 0: bits = 0; maxpower = Math.pow(2, 8); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } dictionary[dictSize++] = f(bits); c = dictSize - 1; enlargeIn--; break;
+          case 1: bits = 0; maxpower = Math.pow(2, 16); power = 1; while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); } bits |= (resb > 0 ? 1 : 0) * power; power <<= 1; } dictionary[dictSize++] = f(bits); c = dictSize - 1; enlargeIn--; break;
+          case 2: return result.join('');
+        }
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+        if (dictionary[c]) { entry = dictionary[c]; } else { if (c === dictSize) { entry = w + w.charAt(0); } else { return null; } }
+        result.push(entry);
+        dictionary[dictSize++] = w + entry.charAt(0); enlargeIn--; w = entry;
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+      }
+    }
+  };
+  return LZString;
+})();
+
+// ════════════════════════════════════════════════
+// SIG1 簽章系統（與遊戲原始碼完全對齊，來源 05-crypto-sig.js）
+// 只保留網頁版使用的 SIG1，不含桌面版 SIG2
+// ════════════════════════════════════════════════
+function _seedHash(str){
+  str = String(str);
+  let h = 1779033703 ^ str.length;
+  for(let i = 0; i < str.length; i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+const _SAVE_SALT = 'fb5#9c3a7e1d-save-integrity-salt-do-not-edit#a1b2c3';
+function _signSave(s){
+  let a = _seedHash(_SAVE_SALT + '::' + s);
+  let b = _seedHash(s + '::' + _SAVE_SALT + '::' + a);
+  return (a >>> 0).toString(36) + '.' + (b >>> 0).toString(36) + '.' + (s.length).toString(36);
+}
+function buildSIG1(payloadStr){
+  return 'SIG1:' + _signSave(payloadStr) + ':' + payloadStr;
+}
+function parseSIG1(raw){
+  if(raw == null) throw new Error('內容為空');
+  const str = String(raw).trim();
+  if(str.slice(0, 5) === 'SIG1:'){
+    const rest = str.slice(5);
+    const i = rest.indexOf(':');
+    if(i < 0) throw new Error('SIG1 格式毀損（缺少分隔符）');
+    const sig = rest.slice(0, i);
+    const payload = rest.slice(i + 1);
+    const mismatched = _signSave(payload) !== sig;
+    return { obj: JSON.parse(payload), mismatched };
+  }
+  return { obj: JSON.parse(str), mismatched: false };
+}
+
+// ════════════════════════════════════════════════
+// 遊戲模式（一般 / 經典 / 傳統 / 經典＋傳統），對齊 04-basic-and-stats.js
+// ════════════════════════════════════════════════
+function gameModeToStr(classic, trad){
+  if (classic && trad) return 'both';
+  if (classic)          return 'classic';
+  if (trad)             return 'trad';
+  return 'normal';
+}
+function gameModeFromStr(mode){
+  return { classic: (mode === 'classic' || mode === 'both'), trad: (mode === 'trad' || mode === 'both') };
+}
+
+// ════════════════════════════════════════════════
+// 加掛版存檔位編碼/解碼（對齊 08-addon-fullsave.js）
+// ════════════════════════════════════════════════
+const SLOT_KEY_RE = /^lineage_idle_save_(\d+)$/;
+
+function decodeSlotRaw(raw){
+  if(raw == null) return null;
+  const s = String(raw);
+  if(s.slice(0, 4) === 'LZ1:') return LZString.decompressFromUTF16(s.slice(4));
+  return s;
+}
+function encodeSlotRaw(sig1Str, useCompression){
+  if(!useCompression) return sig1Str;
+  try { return 'LZ1:' + LZString.compressToUTF16(sig1Str); }
+  catch(e){ return sig1Str; }
+}
+
+// ════════════════════════════════════════════════
+// 轉移碼（Litterbox 上傳/下載，對齊 09-transfer-code.js）
+// ════════════════════════════════════════════════
+const LB_UPLOAD_URL = 'https://litterbox.catbox.moe/resources/internals/api.php';
+const LB_FILE_BASE  = 'https://litter.catbox.moe/';
+const LB_EXPIRY     = '24h';
+const CODE_RE        = /^[a-z0-9]{6}$/;
+
+function codeFromUrl(url){
+  const m = String(url || '').trim().match(/([a-z0-9]{6})\.json\s*$/i);
+  return m ? m[1].toLowerCase() : '';
+}
+function normalizeCode(s){
+  let t = String(s || '').trim().toLowerCase();
+  if(t.indexOf('/') >= 0) t = t.slice(t.lastIndexOf('/') + 1);
+  return t.replace(/\.json$/, '').trim();
+}
+function netErrHint(e){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return '沒有網路連線。';
+  if(e instanceof TypeError) return '連不上轉移服務（可能是本機以雙擊開啟網頁時被瀏覽器安全限制擋下、或 DNS/廣告封鎖擋掉了），可改用「匯出存檔檔案」改存成檔案傳輸。';
+  return null;
+}
+function uploadPack(text){
+  const fd = new FormData();
+  fd.append('reqtype', 'fileupload');
+  fd.append('time', LB_EXPIRY);
+  fd.append('fileToUpload', new Blob([text], { type:'application/json' }), 'save.json');
+  return fetch(LB_UPLOAD_URL, { method:'POST', body: fd })
+    .then(r => { if(!r.ok) throw new Error('上傳失敗（' + r.status + '）'); return r.text(); })
+    .then(url => { const code = codeFromUrl(url); if(!code) throw new Error('上傳結果看不懂'); return code; });
+}
+function downloadByCode(code){
+  return fetch(LB_FILE_BASE + code + '.json', { cache:'no-store' })
+    .then(r => { if(r.status === 404) throw new Error('找不到這組轉移碼（可能已過期或打錯）'); if(!r.ok) throw new Error('讀取失敗（' + r.status + '）'); return r.text(); });
+}
+
+// ════════════════════════════════════════════════
+// 主要狀態
+// ════════════════════════════════════════════════
+let pack = null;           // { format, schema, exportedAt, keyCount, keys:{...} }
+let currentSlotKey = null; // 目前選取的 lineage_idle_save_N
+let currentPayload = null; // 該存檔位解出來的 JSON 物件（含 p / wh / pets / ms / ticks ...）
+let currentSlotWasCompressed = false; // 該存檔位原始是否帶 'LZ1:' 前綴，寫回時保持一致
+
+const fileInput = document.getElementById('fileInput');
+const importStatus = document.getElementById('importStatus');
+const exportStatus = document.getElementById('exportStatus');
+const slotSection = document.getElementById('slotSection');
+const slotSelect = document.getElementById('slotSelect');
+const slotInfo = document.getElementById('slotInfo');
+const exportFileBtn = document.getElementById('exportFileBtn');
+const generateCodeBtn = document.getElementById('generateCodeBtn');
+const codeResultBox = document.getElementById('codeResultBox');
+const codeResultText = document.getElementById('codeResultText');
+
+function setStatus(el, msg, cls){
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+// ---- 建立 / 解析 pack ----
+function wrapAsSinglePack(sig1Text){
+  return {
+    format: 'idle-lineage-full',
+    schema: 1,
+    keys: { 'lineage_idle_save_1': sig1Text }
+  };
+}
+
+function tryLoadContent(text){
+  const trimmed = text.trim();
+  // 先試「加掛版完整存檔」格式
+  try {
+    const obj = JSON.parse(trimmed);
+    if (obj && typeof obj === 'object' && obj.keys && typeof obj.keys === 'object') {
+      pack = obj;
+      afterPackLoaded();
+      return;
+    }
+  } catch (e) { /* 不是 JSON，繼續往下試單一存檔 */ }
+  // 再試「單一存檔」（SIG1 字串或裸 JSON）
+  try {
+    parseSIG1(trimmed); // 只是驗證格式，不保留結果
+    pack = wrapAsSinglePack(trimmed);
+    afterPackLoaded();
+    return;
+  } catch (e) {
+    setStatus(importStatus, '匯入失敗：無法辨識的格式（' + (e.message || e) + '）', 'err');
+  }
+}
+
+function afterPackLoaded(){
+  rebuildSlotSelect();
+  const slots = listSlots();
+  const firstValid = slots.find(s => s.valid) || slots[0];
+  if (firstValid) {
+    loadSlot(firstValid.key);
+    setStatus(importStatus, '✅ 已匯入（共 ' + slots.filter(s=>s.valid).length + ' 個角色）', 'ok');
+  } else {
+    setStatus(importStatus, '⚠️ 內容裡找不到任何角色存檔位（lineage_idle_save_N）', 'warn');
+  }
+  exportFileBtn.disabled = false;
+  generateCodeBtn.disabled = false;
+}
+
+function listSlots(){
+  if (!pack || !pack.keys) return [];
+  const out = [];
+  for (const key of Object.keys(pack.keys)) {
+    const m = SLOT_KEY_RE.exec(key);
+    if (!m) continue;
+    const info = { key, num: parseInt(m[1], 10), name: '', cls: '', lv: 1, valid: false };
+    try {
+      const raw = decodeSlotRaw(pack.keys[key]);
+      const { obj } = parseSIG1(raw);
+      const p = obj && obj.p;
+      if (p) {
+        info.name = p.name || '';
+        info.cls = p.cls || '';
+        info.lv = p.lv || 1;
+        info.valid = true;
+      }
+    } catch (e) { /* 空存檔位或毀損，仍列出 */ }
+    out.push(info);
+  }
+  out.sort((a, b) => a.num - b.num);
+  return out;
+}
+
+const CLASS_LABELS = { mage:'法師', knight:'騎士', elf:'妖精', dark:'黑暗妖精', royal:'王族', dragon:'龍騎士', illusion:'幻術師', warrior:'戰士' };
+function clsLabel(cls){ return CLASS_LABELS[cls] || cls || ''; }
+
+function rebuildSlotSelect(){
+  const slots = listSlots();
+  if (!pack || slots.length === 0) {
+    slotSection.classList.add('hidden');
+    return;
+  }
+  slotSection.classList.remove('hidden');
+  const opts = [];
+  for (const s of slots) {
+    const nick = s.name || '（未命名）';
+    const label = s.valid
+      ? ('#' + s.num + ' ' + nick + '｜' + clsLabel(s.cls) + ' Lv.' + s.lv)
+      : ('#' + s.num + '（空存檔位）');
+    opts.push('<option value="' + s.key + '">' + label.replace(/</g,'&lt;') + '</option>');
+  }
+  slotSelect.innerHTML = opts.join('');
+  if (currentSlotKey) slotSelect.value = currentSlotKey;
+}
+
+function loadSlot(key){
+  if (!pack || !pack.keys || !(key in pack.keys)) {
+    setStatus(importStatus, '❌ 找不到該存檔位', 'err');
+    return;
+  }
+  const rawVal = pack.keys[key];
+  currentSlotWasCompressed = String(rawVal).slice(0, 4) === 'LZ1:';
+  let parsed;
+  try {
+    const raw = decodeSlotRaw(rawVal);
+    const result = parseSIG1(raw);
+    parsed = result.obj;
+    if (result.mismatched) {
+      setStatus(importStatus, '⚠️ 此存檔位簽章不符，資料可能已被其他方式修改過，仍嘗試載入', 'warn');
+    }
+  } catch (e) {
+    setStatus(importStatus, '❌ 該存檔位無法載入（可能是空位或毀損）：' + e.message, 'err');
+    return;
+  }
+  currentPayload = parsed;
+  currentSlotKey = key;
+  slotSelect.value = key;
+  const p = parsed.p || {};
+  slotInfo.textContent = '角色：' + (p.name || '（未命名）') + '　職業：' + clsLabel(p.cls) + '　等級：' + (p.lv || 1);
+  syncModeRadiosFromPayload();
+}
+
+function syncModeRadiosFromPayload(){
+  if (!currentPayload) return;
+  const p = currentPayload.p || {};
+  const mode = gameModeToStr(p.classicMode || false, p.traditionalMode || p.trad || false);
+  const radios = document.querySelectorAll('input[name=gameMode]');
+  radios.forEach(r => { r.checked = (r.value === mode); r.disabled = false; });
+}
+
+function writeBackCurrentSlot(){
+  if (!pack || !currentSlotKey || !currentPayload) return;
+  const payloadStr = JSON.stringify(currentPayload);
+  const signed = buildSIG1(payloadStr);
+  pack.keys[currentSlotKey] = encodeSlotRaw(signed, currentSlotWasCompressed);
+}
+
+// ---- 匯入事件 ----
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => tryLoadContent(String(ev.target.result));
+  reader.readAsText(file, 'utf-8');
+  e.target.value = '';
+});
+
+document.getElementById('togglePasteBtn').addEventListener('click', () => {
+  document.getElementById('pasteArea').classList.toggle('hidden');
+  document.getElementById('codeArea').classList.add('hidden');
+});
+document.getElementById('toggleCodeBtn').addEventListener('click', () => {
+  document.getElementById('codeArea').classList.toggle('hidden');
+  document.getElementById('pasteArea').classList.add('hidden');
+});
+document.getElementById('pasteImportBtn').addEventListener('click', () => {
+  const text = document.getElementById('pasteInput').value;
+  if (!text.trim()) { setStatus(importStatus, '請先貼上內容', 'err'); return; }
+  tryLoadContent(text);
+});
+document.getElementById('codeImportBtn').addEventListener('click', () => {
+  const raw = document.getElementById('codeInput').value;
+  const code = normalizeCode(raw);
+  if (!CODE_RE.test(code)) { setStatus(importStatus, '請輸入六碼（英文小寫或數字）', 'err'); return; }
+  setStatus(importStatus, '讀取中…', '');
+  downloadByCode(code).then(text => {
+    tryLoadContent(text);
+  }).catch(e => {
+    setStatus(importStatus, '❌ ' + (netErrHint(e) || (e.message || '下載失敗')), 'err');
+  });
+});
+
+slotSelect.addEventListener('change', () => {
+  if (currentSlotKey && currentSlotKey !== slotSelect.value) {
+    writeBackCurrentSlot(); // 切換前先把目前編輯內容寫回
+  }
+  loadSlot(slotSelect.value);
+});
+
+// ---- 遊戲模式切換 ----
+document.querySelectorAll('input[name=gameMode]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    if (!currentPayload) return;
+    const gm = gameModeFromStr(radio.value);
+    if (!currentPayload.p) currentPayload.p = {};
+    currentPayload.p.classicMode = gm.classic;
+    currentPayload.p.traditionalMode = gm.trad;
+    currentPayload.p.trad = gm.trad; // 向後相容欄位，對齊遊戲原始碼寫法
+    writeBackCurrentSlot();
+    setStatus(exportStatus, '已套用遊戲模式變更（尚未匯出成檔案）', 'ok');
+  });
+});
+
+// ---- 匯出 ----
+exportFileBtn.addEventListener('click', () => {
+  if (!pack) return;
+  writeBackCurrentSlot();
+  const slots = listSlots();
+  const isSyntheticSingle = slots.length === 1 && slots[0].key === 'lineage_idle_save_1' && (pack.format === 'idle-lineage-full') && Object.keys(pack.keys).length === 1 && !pack.exportedAt;
+  let text, filename;
+  if (isSyntheticSingle) {
+    // 原本就是單一存檔匯入，維持單一存檔格式匯出，符合玩家預期
+    text = decodeSlotRaw(pack.keys['lineage_idle_save_1']);
+    filename = 'save_' + Date.now() + '.json';
+  } else {
+    const out = Object.assign({}, pack, {
+      format: pack.format || 'idle-lineage-full',
+      schema: pack.schema || 1,
+      exportedAt: new Date().toISOString(),
+      keyCount: Object.keys(pack.keys).length,
+    });
+    text = JSON.stringify(out);
+    const stamp = new Date().toISOString().replace(/[:T]/g, '').replace(/\..+$/, '').slice(0, 14);
+    filename = 'idle-lineage-backup-' + stamp + '.json';
+  }
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus(exportStatus, '💾 已匯出：' + filename, 'ok');
+});
+
+generateCodeBtn.addEventListener('click', () => {
+  if (!pack) return;
+  writeBackCurrentSlot();
+  const out = Object.assign({}, pack, {
+    format: pack.format || 'idle-lineage-full',
+    schema: pack.schema || 1,
+    exportedAt: new Date().toISOString(),
+    keyCount: Object.keys(pack.keys).length,
+  });
+  const text = JSON.stringify(out);
+  generateCodeBtn.disabled = true;
+  generateCodeBtn.textContent = '上傳中…';
+  setStatus(exportStatus, '上傳中…請不要關閉頁面。', '');
+  uploadPack(text).then(code => {
+    codeResultBox.classList.remove('hidden');
+    codeResultText.textContent = code;
+    setStatus(exportStatus, '✅ 到遊戲內「完整資料備份與還原 → 用轉移碼搬家」輸入這六碼即可帶回（24 小時內有效）。', 'ok');
+  }).catch(e => {
+    setStatus(exportStatus, '❌ ' + (netErrHint(e) || ((e.message || '產生轉移碼失敗') + '。')) + ' 可改用「匯出存檔檔案」。', 'err');
+  }).then(() => {
+    generateCodeBtn.disabled = false;
+    generateCodeBtn.textContent = '產生轉移碼';
+  });
+});
+</script>
+
+</body>
+</html>
