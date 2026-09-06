@@ -194,6 +194,16 @@
   var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
   var ITEM_QUEST_USES = window.ITEM_QUEST_USES || {};
   var ITEM_PET_EVOLVE_USES = window.ITEM_PET_EVOLVE_USES || {};
+  var ITEM_KILL_SOURCE = window.ITEM_KILL_SOURCE || {};
+  function itemKillSourceText(iid) {
+    var src = ITEM_KILL_SOURCE[String(iid)];
+    if (!src) return "";
+    var monsterHtml = src.monsterId
+      ? '<span class="name-link" data-goto-monster="' + src.monsterId + '">' + escapeHtml(src.monsterName) + '</span>'
+      : escapeHtml(src.monsterName || "未知怪物");
+    var needHtml = src.needItemId ? "（需先持有 " + itemChip(src.needItemId) + "）" : "";
+    return "取得方式：擊殺／互動 " + monsterHtml + " 觸發劇情" + needHtml;
+  }
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
   // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
@@ -679,6 +689,10 @@
         html += '<div style="font-size:13px;color:var(--text);">寵物進化材料，用於進化成：' +
           petEvolveUses.map(function (u) { return '<span class="name-link" data-open-pet="' + u.petId + '">' + escapeHtml(u.petName) + '</span>'; }).join('、') +
           '</div>';
+      }
+      var killSourceText = itemKillSourceText(id);
+      if (killSourceText) {
+        html += '<div style="font-size:13px;color:var(--text);margin-top:4px;">' + killSourceText + '</div>';
       }
       html += '</div>';
     }
@@ -1360,17 +1374,56 @@
         '</div>';
       var reqs = part.requirements || [];
       if (reqs.length) {
-        reqs.forEach(function (req, rIdx) {
-          if (reqs.length > 1) html += '<div class="empty-note" style="padding:4px 0 4px;">達成方式 ' + (rIdx + 1) + '：</div>';
+        function renderReqBox(req) {
+          var reqMapNames = (req.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
+          var out = '<div style="border:1px solid var(--line-hi);border-radius:4px;padding:8px 10px;margin-bottom:6px;background:rgba(255,255,255,.02);">';
+          if (req.npcName || reqMapNames) {
+            out += '<div style="font-size:12.5px;color:var(--gold-hi);margin-bottom:4px;">' +
+              (req.npcName ? "NPC：" + escapeHtml(req.npcName) : "") +
+              (reqMapNames ? "　地圖：" + escapeHtml(reqMapNames) : "") +
+              '</div>';
+          }
           var badges = [];
           if (req.lv) badges.push("等級 " + req.lv);
           if (req.fame) badges.push("名聲 " + fmtNum(req.fame));
           if (req.gold) badges.push("金幣 " + fmtNum(req.gold));
-          if (badges.length) html += '<div class="badge-row" style="margin-bottom:6px;">' + badges.map(function (b) { return '<span class="badge">' + b + '</span>'; }).join('') + '</div>';
+          if (badges.length) out += '<div class="badge-row" style="margin-bottom:6px;">' + badges.map(function (b) { return '<span class="badge">' + b + '</span>'; }).join('') + '</div>';
           if (req.items && req.items.length) {
-            html += '<div class="map-chip-row">' + req.items.map(function (it) { return itemChip(it[0], it[1]); }).join('') + '</div>';
+            out += '<div class="map-chip-row">' + req.items.map(function (it) { return itemChip(it[0], it[1]); }).join('') + '</div>';
+            req.items.forEach(function (it) {
+              var ks = itemKillSourceText(it[0]);
+              if (ks) out += '<div class="empty-note" style="padding:2px 0 0;">' + ks + '</div>';
+            });
           }
-        });
+          out += '</div>';
+          return out;
+        }
+
+        if (line.jobRelated) {
+          // 只有職業進度相關的線（轉職、2轉試驗）才需要按職業分組顯示，其他劇情線的道具需求跟職業無關，不套用這套標籤
+          var jobGroups = {}; var jobOrder = [];
+          reqs.forEach(function (req) {
+            var key = req.guessedJob || "__unknown__";
+            if (!jobGroups[key]) { jobGroups[key] = []; jobOrder.push(key); }
+            jobGroups[key].push(req);
+          });
+          jobOrder.forEach(function (key) {
+            var group = jobGroups[key];
+            var isConfirmed = group.some(function (r) { return r.jobConfirmed; });
+            var groupLabel = key === "__unknown__"
+              ? "未知職業（找不到對話文字可以確認是哪個職業）"
+              : "可轉職成：" + key + (isConfirmed ? "（已對照對話確認）" : "（用道具名稱推測，未經對話確認）");
+            html += '<div class="empty-note" style="padding:6px 0 4px;color:' + (isConfirmed ? "var(--text)" : "var(--text-faint)") + ';font-weight:600;">' + groupLabel +
+              (group.length > 1 ? "　（下面每一個方塊都是不同的 NPC／任務，擇一完成即可）" : "") + '</div>';
+            group.forEach(function (req) { html += renderReqBox(req); });
+          });
+        } else {
+          // 一般劇情線：如果同一步驟有多種達成方式，只標「達成方式擇一」，不提職業
+          if (reqs.length > 1) {
+            html += '<div class="empty-note" style="padding:4px 0 4px;">下面幾種方式擇一即可：</div>';
+          }
+          reqs.forEach(function (req) { html += renderReqBox(req); });
+        }
       }
       html += '</div>';
     });
