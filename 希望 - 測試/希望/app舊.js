@@ -4,36 +4,14 @@
   // ---------- 常數 / 對照表 ----------
   var ELEMENT_LABEL = {
     none: "無屬性", physical: "物理", magical: "魔法",
-    fire: "火", water: "水", earth: "土", tree: "木",
-    dark: "闇", sun: "光", steel: "金"
+    fire: "火", water: "水", earth: "地", tree: "木",
+    dark: "暗", sun: "光", steel: "鋼"
   };
   var ELEMENT_CLASS = {
     none: "el-none", physical: "el-physical", magical: "el-magical",
     fire: "el-fire", water: "el-water", earth: "el-earth", tree: "el-tree",
     dark: "el-dark", sun: "el-sun", steel: "el-steel"
   };
-  // 五行寶石系統（鑲到武器上，只能鑲一次，鑲了不能改）
-  var GEM_ELEMENT = { 435: "fire", 436: "water", 437: "tree", 438: "steel", 439: "earth", 440: "sun", 441: "dark" };
-  var ELEMENT_COUNTER = { steel: "tree", tree: "earth", earth: "water", water: "fire", fire: "steel", sun: "dark", dark: "sun" };
-  var ELEMENT_GENERATE = { steel: "water", water: "tree", tree: "fire", fire: "earth", earth: "steel" };
-  var ELEMENT_RELATION_MULT = {
-    counter: { attack: 1.44, skill: 1.21 },
-    generate: { attack: 1.2, skill: 1.1 },
-    same: { attack: 0.64, skill: 0.81 },
-    none: { attack: 1, skill: 1 }
-  };
-  var ELEMENT_RELATION_LABEL = { counter: "克制", generate: "相生", same: "同屬性", none: "無關係" };
-  function elementRelation(gemEl, targetEl) {
-    if (gemEl === "none" || targetEl === "none" || !gemEl || !targetEl) return "none";
-    if (gemEl === targetEl) return "same";
-    if (ELEMENT_COUNTER[gemEl] === targetEl) return "counter";
-    if (ELEMENT_GENERATE[gemEl] === targetEl) return "generate";
-    return "none";
-  }
-  function elementMultiplier(gemEl, targetEl, kind) {
-    return ELEMENT_RELATION_MULT[elementRelation(gemEl, targetEl)][kind];
-  }
-  var ELEMENT_ORDER = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
   var SLOT_LABEL_FALLBACK = {
     weapon: "武器", shield: "盾", head: "頭部", body: "上衣", legs: "下著",
     feet: "鞋子", accessory: "飾品", earring: "耳環", necklace: "項鍊",
@@ -122,6 +100,8 @@
     advanced: [85000, 125000, 180000, 250000, 280000, 41000, 26000, 13000],
     superior: [60000, 100000, 160000, 250000, 320000, 59000, 34000, 17000]
   };
+  var APPR_SKILL_REQ = { basic: 20, advanced: 215, superior: 190 };
+  var APPR_EXTRA_REQ = { meticulous: 257, superMeticulous: 257 };
   var APPR_EXTRA_CHANCE = { meticulous: 0.3, superMeticulous: 0.7 };
   var APPR_THRESH = { base: 0.1, perLv: 0.0008, perRefine: 0.02, cap: 0.5 };
 
@@ -181,26 +161,6 @@
   var COOK_BY_PRODUCT = window.COOK_BY_PRODUCT || {};
   var COOK_BY_INGREDIENT = window.COOK_BY_INGREDIENT || {};
   var COOK_TIER_NAME = { 1: "第1階", 2: "第2階", 3: "第3階" };
-  var ALCHEMY_BY_BOOK = window.ALCHEMY_BY_BOOK || {};
-  var ALCHEMY_BY_PRODUCT = window.ALCHEMY_BY_PRODUCT || {};
-  var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
-  var DUNGEON_BY_ID = window.DUNGEON_BY_ID || {};
-  var MONSTER_TO_DUNGEONS = window.MONSTER_TO_DUNGEONS || {};
-  var BOX_BY_ID = window.BOX_BY_ID || {};
-  var ITEM_TO_BOXES = window.ITEM_TO_BOXES || {};
-  var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
-  var PET_INFO = window.PET_INFO || {};
-  var PET_EVOLVE_FROM = window.PET_EVOLVE_FROM || {};
-  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
-  // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
-  // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
-  // 沒有 growth 陣列的屬性，固定用基礎資料裡的數字，不會隨 grow 變動。
-  function petStatAt(pet, statKey, grow) {
-    var curve = pet.growth && pet.growth[statKey];
-    if (curve && grow > 0 && curve[grow - 1] !== undefined) return curve[grow - 1];
-    return (pet.stats && pet.stats[statKey]) || 0;
-  }
-  var CHANGELOG = window.CHANGELOG || [];
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
@@ -275,7 +235,6 @@
   enchantChip.style.color = "var(--gold-hi)";
   enchantChip.textContent = "🔮 發條強化屬性表";
   enchantChip.addEventListener("click", function () {
-    resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
@@ -283,90 +242,24 @@
   });
   $hintRow.appendChild(enchantChip);
 
-  var petChip = document.createElement("span");
-  petChip.className = "hint-chip";
-  petChip.style.borderColor = "var(--gold)";
-  petChip.style.color = "var(--gold-hi)";
-  petChip.textContent = "🐾 寵物列表";
-  petChip.addEventListener("click", function () {
-    resetNavHistory();
+  var apprChip = document.createElement("span");
+  apprChip.className = "hint-chip";
+  apprChip.style.borderColor = "var(--gold)";
+  apprChip.style.color = "var(--gold-hi)";
+  apprChip.textContent = "🔨 鐵匠鑑定試玩";
+  apprChip.addEventListener("click", function () {
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
-    showPetBrowser();
+    showAppraisalTrial();
   });
-  $hintRow.appendChild(petChip);
-
-  var dungeonChip = document.createElement("span");
-  dungeonChip.className = "hint-chip";
-  dungeonChip.style.borderColor = "var(--gold)";
-  dungeonChip.style.color = "var(--gold-hi)";
-  dungeonChip.textContent = "🏛️ 副本";
-  dungeonChip.addEventListener("click", function () {
-    resetNavHistory();
-    $input.value = "";
-    currentMatches = { items: [], monsters: [] };
-    renderResultList("");
-    showDungeonBrowser();
-  });
-  $hintRow.appendChild(dungeonChip);
-
-  var boxChip = document.createElement("span");
-  boxChip.className = "hint-chip";
-  boxChip.style.borderColor = "var(--gold)";
-  boxChip.style.color = "var(--gold-hi)";
-  boxChip.textContent = "🎁 寶箱";
-  boxChip.addEventListener("click", function () {
-    resetNavHistory();
-    $input.value = "";
-    currentMatches = { items: [], monsters: [] };
-    renderResultList("");
-    showBoxBrowser();
-  });
-  $hintRow.appendChild(boxChip);
+  $hintRow.appendChild(apprChip);
 
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
 
-  // ---------- 瀏覽紀錄（上一頁）----------
-  // 只有「在詳細頁裡點連結跳過去」才會記錄一筆，重新搜尋、或直接點左邊搜尋結果清單，
-  // 都視為全新的瀏覽起點，會清空這份紀錄。
-  var navHistory = [];
-  var currentView = null; // {kind:"item"|"monster"|"pet", id}
-  function resetNavHistory() { navHistory = []; currentView = null; }
-  function navigateTo(kind, id, push) {
-    if (push !== false && currentView) navHistory.push(currentView);
-    currentView = { kind: kind, id: id };
-    if (kind === "item") {
-      var it = ITEMS[id];
-      $input.value = it ? it.name : "";
-      currentMatches.items = [{ id: id, name: it ? it.name : "" }];
-      currentMatches.monsters = [];
-      renderResultList(it ? it.name : "");
-      showItem(id);
-    } else if (kind === "monster") {
-      var mon = MONSTERS[id];
-      $input.value = mon ? mon.name : "";
-      currentMatches.monsters = [{ id: id, name: mon ? mon.name : "", lv: mon ? mon.lv : 0 }];
-      currentMatches.items = [];
-      renderResultList(mon ? mon.name : "");
-      showMonster(id);
-    } else if (kind === "pet") {
-      showPetDetail(id);
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-  function goBackOneView() {
-    if (!navHistory.length) return;
-    var prev = navHistory.pop();
-    navigateTo(prev.kind, prev.id, false);
-  }
-  function backButtonHtml() {
-    if (!navHistory.length) return "";
-    return '<div style="margin-bottom:12px;"><span class="name-link" data-go-back="1" style="cursor:pointer;">← 上一頁</span></div>';
-  }
-
   function runSearch(qRaw) {
+    apprTrialActive = false;
     var q = (qRaw || "").trim();
     currentMatches.items = [];
     currentMatches.monsters = [];
@@ -458,10 +351,6 @@
         if (FORGE_BY_PRODUCT[it.id]) metaParts.push("可鍛造取得");
         if (COOK_BY_PRODUCT[it.id]) metaParts.push("料理成品");
         if (COOK_BY_INGREDIENT[it.id]) metaParts.push("可用於料理");
-        if (ALCHEMY_BY_BOOK[it.id]) metaParts.push("煉金配方書");
-        if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
-        if (BOX_BY_ID[it.id]) metaParts.push("寶箱");
-        if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -483,9 +372,8 @@
   $resultList.addEventListener("click", function (e) {
     var item = e.target.closest(".result-item");
     if (!item) return;
-    resetNavHistory();
-    if (item.dataset.type === "monster") { currentView = { kind: "monster", id: item.dataset.id }; showMonster(item.dataset.id); }
-    else { currentView = { kind: "item", id: item.dataset.id }; showItem(item.dataset.id); }
+    if (item.dataset.type === "monster") showMonster(item.dataset.id);
+    else showItem(item.dataset.id);
   });
 
   // ---------- 詳細頁：物品 ----------
@@ -543,6 +431,7 @@
   }
 
   function showEnchantTable(gradeIdx, winderOpen) {
+    apprTrialActive = false;
     gradeIdx = gradeIdx || 0;
     var gradeNum = gradeIdx + 1; // ENCHANT_APPEARANCE / ENCHANT_VALUES 的 key 是 1-indexed (N=1)
 
@@ -618,6 +507,273 @@
     }
   }
 
+  function showAppraisalTrial() {
+    apprTrialActive = true;
+    var state = {
+      itemId: null, level: 250, refine: 12, tier: "basic", extra: "none",
+      stats: {}, history: [], rollCounter: 0, page: 0, rulesOpen: false
+    };
+    apprTrialOnPick = function (id) {
+      state.itemId = Number(id);
+      renderItemInfo();
+      renderAction();
+    };
+
+    function render() {
+      var canAdvanced = state.level >= APPR_SKILL_REQ.advanced;
+      var canSuperior = state.level >= APPR_SKILL_REQ.superior;
+      var canMeticulous = state.level >= APPR_EXTRA_REQ.meticulous;
+
+      var html = '<h2 style="margin-top:0;">🔨 鐵匠鑑定試玩</h2>';
+      html += '<div class="panel-desc" style="margin-bottom:14px;">' +
+        '這是鐵匠職業「鑑定」技能的試算工具，公式反推自遊戲原始程式碼。不用登入、不會影響任何真實存檔，純粹讓你試手氣看看。' +
+        '請直接用上面的「職業／裝備位置／符合的裝備」下拉選單選擇要測試的裝備。' +
+        '</div>';
+
+      html += '<button id="apprRulesToggleBtn" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12.5px;' +
+        'border:1px solid var(--line-hi);background:var(--ink-2);color:var(--text-dim);margin-bottom:14px;">' +
+        '📖 鑑定規則 ' + (state.rulesOpen ? "▲" : "▼") + '</button>';
+
+      if (state.rulesOpen) {
+        html += '<div class="equip-box" style="margin-bottom:14px;line-height:1.9;font-size:12.5px;color:var(--text-dim);">' +
+          '<div style="color:var(--gold-hi);font-weight:700;margin-bottom:8px;">以下規則反推自遊戲原始程式碼，並經玩家實測驗證</div>' +
+
+          '<b style="color:var(--text);">① 裝備依部位分成 5 個分類，各自有固定候選屬性與權重：</b><br>' +
+          '武器：攻擊力25、攻速10、命中10、必殺10、HP%5<br>' +
+          '魔法武器：攻擊力25、魔法力25、攻速10、命中10、必殺10、HP%5<br>' +
+          '防具（頭/身/腳/盾）：防禦力25、攻速10、迴避5、HP%5、AP%5<br>' +
+          '鞋子：防禦力25、攻速10、迴避5、移速15、HP%5、AP%5<br>' +
+          '飾品：攻擊/魔法/防禦/攻速/命中/迴避/必殺/移速/HP%/AP% 各5<br><br>' +
+
+          '<b style="color:var(--text);">② 每個候選屬性各自獨立判定「這次有沒有出現」：</b><br>' +
+          '出現機率 = min(50%, 10% + 裝備需求等級 × 0.08% + 精煉值 × 2%)<br>' +
+          '（需求等級、精煉值越高，屬性越容易出現，上限 50%；如果有追加鑑定被動，會用同樣機率再多判定一輪，讓更多屬性有機會出現）<br><br>' +
+
+          '<b style="color:var(--text);">③ 每條出現的屬性，再骰一次「強度等級」（-2~+5，共8階）：</b><br>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;">' +
+          '<tr style="color:var(--text);"><td>鑑定技能</td><td>-2</td><td>-1</td><td>0（不生效）</td><td>+1</td><td>+2</td><td>+3</td><td>+4</td><td>+5</td></tr>' +
+          '<tr><td>鑑定道具（基礎）</td><td>11%</td><td>15%</td><td>20%</td><td>25%</td><td>23%</td><td>3%</td><td>2%</td><td>1%</td></tr>' +
+          '<tr><td>高級鑑定</td><td>8.5%</td><td>12.5%</td><td>18%</td><td>25%</td><td>28%</td><td>4.1%</td><td>2.6%</td><td>1.3%</td></tr>' +
+          '<tr><td>高級道具鑑定</td><td>6%</td><td>10%</td><td>16%</td><td>25%</td><td>32%</td><td>5.9%</td><td>3.4%</td><td>1.7%</td></tr>' +
+          '</table><br>' +
+
+          '<b style="color:var(--text);">④ 最終數值 = 強度等級 × 屬性權重 ÷ 5</b><br>' +
+          '例如武器攻擊力（權重25）強度+3 = 3×25÷5 = <b style="color:#6fa85a;">+15</b>；防具迴避（權重5）強度-2 = -2×5÷5 = <b style="color:#e0663f;">-2</b>。<br><br>' +
+
+          '<b style="color:var(--text);">⑤ 追加鑑定被動：</b>「縝密鑑定」30% 機率、「超縝密鑑定」70% 機率，會讓②的判定多跑一輪，增加更多屬性同時出現的機會，' +
+          '不是保底多少條——理論上沒有條數上限，只是機率上很少見到超過 3 條。' +
+          '</div>';
+      }
+
+      html += '<div class="section-title">角色設定</div>';
+      html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;">';
+      html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">角色等級</label>' +
+        '<input type="number" id="apprTrialLevel" value="' + state.level + '" min="1" max="999" style="width:90px;padding:8px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);"></div>';
+      html += '<div><label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">裝備精煉值</label>' +
+        '<select id="apprTrialRefine" style="padding:9px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">';
+      for (var rv = 0; rv <= 12; rv++) {
+        html += '<option value="' + rv + '"' + (rv === state.refine ? " selected" : "") + '>+' + rv + '</option>';
+      }
+      html += '</select></div></div>';
+
+      html += '<div class="section-title">鑑定技能（等級不夠會鎖住）</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;">';
+      html += radioRow("apprTrialTier", "basic", state.tier, "鑑定道具（基礎，Lv" + APPR_SKILL_REQ.basic + "）", true);
+      html += radioRow("apprTrialTier", "advanced", state.tier, "高級鑑定（Lv" + APPR_SKILL_REQ.advanced + "）", canAdvanced);
+      html += radioRow("apprTrialTier", "superior", state.tier, "高級道具鑑定（最佳，Lv" + APPR_SKILL_REQ.superior + "）", canSuperior);
+      html += '</div>';
+
+      html += '<div class="section-title">追加鑑定被動（等級不夠會鎖住）</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;">';
+      html += radioRow("apprTrialExtra", "none", state.extra, "無", true);
+      html += radioRow("apprTrialExtra", "meticulous", state.extra, "縝密鑑定（30%，Lv" + APPR_EXTRA_REQ.meticulous + "）", canMeticulous);
+      html += radioRow("apprTrialExtra", "superMeticulous", state.extra, "超縝密鑑定（70%，Lv" + APPR_EXTRA_REQ.superMeticulous + "）", canMeticulous);
+      html += '</div>';
+
+      html += '<div class="section-title">要測試鑑定的裝備</div>';
+      html += '<div id="apprTrialItemInfo" style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">尚未選擇裝備，請用上面的篩選器挑一件。</div>';
+
+      html += '<div id="apprTrialActionBox"></div>';
+      html += '<div id="apprTrialStatsBox" style="margin-top:16px;"></div>';
+      html += '<div id="apprTrialHistoryBox" style="margin-top:16px;"></div>';
+
+      $detail.innerHTML = html;
+      wireEvents();
+      renderItemInfo();
+      renderAction();
+      renderStats();
+      renderHistory();
+    }
+
+    function radioRow(name, value, current, label, enabled) {
+      var checked = current === value;
+      return '<label style="display:flex;align-items:center;gap:8px;' + (enabled ? "cursor:pointer;" : "opacity:.4;cursor:not-allowed;") + '">' +
+        '<input type="radio" name="' + name + '" value="' + value + '"' + (checked ? " checked" : "") + (enabled ? "" : " disabled") + '>' +
+        escapeHtml(label) + '</label>';
+    }
+
+    function wireEvents() {
+      document.getElementById("apprRulesToggleBtn").addEventListener("click", function () {
+        state.rulesOpen = !state.rulesOpen;
+        render();
+      });
+      document.getElementById("apprTrialLevel").addEventListener("change", function (e) {
+        state.level = Math.max(1, e.target.valueAsNumber || 1);
+        if (state.level < APPR_SKILL_REQ.advanced && state.tier === "advanced") state.tier = "basic";
+        if (state.level < APPR_SKILL_REQ.superior && state.tier === "superior") state.tier = "basic";
+        if (state.level < APPR_EXTRA_REQ.meticulous && state.extra !== "none") state.extra = "none";
+        render();
+      });
+      document.getElementById("apprTrialRefine").addEventListener("change", function (e) { state.refine = Number(e.target.value); });
+      document.querySelectorAll('input[name="apprTrialTier"]').forEach(function (r) {
+        r.addEventListener("change", function () { state.tier = r.value; });
+      });
+      document.querySelectorAll('input[name="apprTrialExtra"]').forEach(function (r) {
+        r.addEventListener("change", function () { state.extra = r.value; });
+      });
+    }
+
+    function renderItemInfo() {
+      var $info = document.getElementById("apprTrialItemInfo");
+      if (!$info) return;
+      var it = ITEMS[String(state.itemId)];
+      if (!it || !it.equip) { $info.textContent = "尚未選擇裝備，請用上面的篩選器挑一件。"; return; }
+      var category = apprCategory(it);
+      var categoryNames = { weapon: "武器", magicWeapon: "魔法武器", armor: "防具", shoes: "鞋子", accessory: "飾品" };
+      $info.textContent = "已選擇：" + it.name + "　部位：" + it.equip.slotName + "　需求等級：Lv" + it.equip.minLv + "　鑑定分類：" + (categoryNames[category] || category);
+    }
+
+    function renderAction() {
+      var $box = document.getElementById("apprTrialActionBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:10px;align-items:center;flex-wrap:wrap;";
+
+      var rollBtn = makeEl("button", {}, "🎲 鑑定");
+      rollBtn.style.cssText = "padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;border:1px solid var(--gold);background:var(--gold);color:var(--ink);";
+      rollBtn.disabled = !state.itemId;
+      if (!state.itemId) { rollBtn.style.opacity = ".4"; rollBtn.style.cursor = "not-allowed"; }
+      rollBtn.addEventListener("click", function () {
+        if (!state.itemId) return;
+        var it = ITEMS[String(state.itemId)];
+        var extraChance = state.extra === "none" ? 0 : APPR_EXTRA_CHANCE[state.extra];
+        var r = performAppraisalTrial(it.equip, it.equip.minLv, state.refine, state.tier, extraChance);
+        r.result.forEach(function (line) {
+          var key = line.kind + ":" + line.value;
+          state.stats[key] = (state.stats[key] || 0) + 1;
+        });
+        state.rollCounter += 1;
+        state.history.unshift({ n: state.rollCounter, lines: r.result, category: r.category, threshold: r.threshold });
+        if (state.history.length > 100) state.history.length = 100;
+        state.page = 0;
+        renderStats();
+        renderHistory();
+      });
+      row.appendChild(rollBtn);
+
+      var clearBtn = makeEl("button", {}, "🗑️ 清除目前統計");
+      clearBtn.style.cssText = "padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12.5px;border:1px solid var(--line-hi);background:var(--panel);color:var(--text-dim);";
+      clearBtn.addEventListener("click", function () {
+        state.stats = {};
+        state.history = [];
+        state.rollCounter = 0;
+        state.page = 0;
+        renderStats();
+        renderHistory();
+      });
+      row.appendChild(clearBtn);
+
+      $box.appendChild(row);
+      if (!state.itemId) {
+        $box.appendChild(makeEl("div", { style: "color:var(--text-faint);font-size:12.5px;margin-top:8px;" }, "請先用上面的職業／裝備位置篩選器選擇一件裝備。"));
+      }
+    }
+
+    function renderStats() {
+      var $box = document.getElementById("apprTrialStatsBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      var totalRolls = state.history.length > 0 ? state.rollCounter : 0;
+      $box.appendChild(makeEl("div", { class: "section-title" }, "統計（累計鑑定 " + totalRolls + " 次）"));
+      var keys = Object.keys(state.stats);
+      if (!keys.length) {
+        $box.appendChild(makeEl("div", { class: "empty-note" }, "還沒有任何鑑定紀錄，按上面的「鑑定」試試看。"));
+        return;
+      }
+      var rows = keys.map(function (k) {
+        var parts = k.split(":");
+        return { kind: Number(parts[0]), value: Number(parts[1]), count: state.stats[k] };
+      });
+      rows.sort(function (a, b) { return a.kind - b.kind || a.value - b.value; });
+      var grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;";
+      rows.forEach(function (r) {
+        var box = document.createElement("div");
+        box.className = "equip-box";
+        box.style.padding = "10px 12px";
+        box.innerHTML = '<div style="font-size:13px;">' + escapeHtml(apprKindName(r.kind)) + ' ' +
+          (r.value > 0 ? "+" : "") + r.value + '</div>' +
+          '<div style="font-size:12px;color:var(--text-dim);margin-top:2px;">出現 ' + r.count + ' 次</div>';
+        grid.appendChild(box);
+      });
+      $box.appendChild(grid);
+    }
+
+    function renderHistory() {
+      var $box = document.getElementById("apprTrialHistoryBox");
+      if (!$box) return;
+      $box.innerHTML = "";
+      if (!state.history.length) return;
+      var perPage = 10;
+      var totalPages = Math.ceil(state.history.length / perPage);
+      if (state.page >= totalPages) state.page = totalPages - 1;
+      if (state.page < 0) state.page = 0;
+      var start = state.page * perPage;
+      var pageItems = state.history.slice(start, start + perPage);
+
+      $box.appendChild(makeEl("div", { class: "section-title" },
+        "歷史紀錄（第 " + (state.page + 1) + " / " + totalPages + " 頁，最多保留 100 筆）"));
+
+      pageItems.forEach(function (item) {
+        var box = document.createElement("div");
+        box.className = "equip-box";
+        var linesText = item.lines.length
+          ? item.lines.map(function (l) { return apprKindName(l.kind) + " " + (l.value > 0 ? "+" : "") + l.value; }).join("、")
+          : "沒有鑑定出任何屬性";
+        box.innerHTML = '<div class="row1"><span class="slot">第 ' + item.n + ' 次</span></div>' +
+          '<div style="font-size:12.5px;color:var(--text-dim);">' + escapeHtml(linesText) + '</div>';
+        $box.appendChild(box);
+      });
+
+      var pager = document.createElement("div");
+      pager.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;";
+      var prevBtn = makeEl("button", {}, "◀ 上一頁（較新）");
+      prevBtn.style.cssText = "padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12.5px;border:1px solid var(--line-hi);background:var(--panel);color:var(--text);";
+      prevBtn.disabled = state.page <= 0;
+      if (prevBtn.disabled) prevBtn.style.opacity = ".4";
+      prevBtn.addEventListener("click", function () { state.page--; renderHistory(); });
+      var nextBtn = makeEl("button", {}, "下一頁（較舊）▶");
+      nextBtn.style.cssText = prevBtn.style.cssText;
+      nextBtn.disabled = state.page >= totalPages - 1;
+      if (nextBtn.disabled) nextBtn.style.opacity = ".4";
+      nextBtn.addEventListener("click", function () { state.page++; renderHistory(); });
+      pager.appendChild(prevBtn);
+      pager.appendChild(makeEl("span", { style: "font-size:12.5px;color:var(--text-dim);" }, (state.page + 1) + " / " + totalPages));
+      pager.appendChild(nextBtn);
+      $box.appendChild(pager);
+    }
+
+    function makeEl(tag, attrs, text) {
+      var e = document.createElement(tag);
+      Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    render();
+  }
+
   function showItem(id) {
     id = String(id);
     var item = ITEMS[id];
@@ -627,8 +783,7 @@
 
     var drops = (DROP_INDEX[id] || []).slice().sort(function (a, b) { return b.r - a.r; });
 
-    var html = backButtonHtml();
-    html += '<div class="detail-head"><div>' +
+    var html = '<div class="detail-head"><div>' +
       '<div class="detail-title">' + escapeHtml(item.name) + '</div>' +
       '<div class="detail-sub">物品編號 #' + id + '</div>' +
       '</div></div>';
@@ -715,24 +870,6 @@
       html += '</tbody></table>';
     }
 
-    var gemElement = GEM_ELEMENT[id];
-    if (gemElement) {
-      html += '<div class="section-title">五行寶石 <span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemElement] + ')">' + ELEMENT_LABEL[gemElement] + '屬性</span></div>';
-      html += '<div class="empty-note" style="padding:0 0 10px;">可鑲到武器上（只能鑲武器、只能鑲一次，鑲了不能改）。鑲上後，對戰不同屬性的怪物會有不同傷害倍率：</div>';
-      html += '<table class="dtable"><thead><tr><th>怪物屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
-      ELEMENT_ORDER.concat(["none"]).forEach(function (targetEl) {
-        var rel = elementRelation(gemElement, targetEl);
-        var mult = ELEMENT_RELATION_MULT[rel];
-        html += '<tr>' +
-          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[targetEl] + ')">' + ELEMENT_LABEL[targetEl] + '</span></td>' +
-          '<td>' + ELEMENT_RELATION_LABEL[rel] + '</td>' +
-          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
-          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-    }
-
     var cookRecipe = COOK_BY_PRODUCT[id];
     if (cookRecipe) {
       html += '<div class="section-title">料理配方 <span class="count">' + (COOK_TIER_NAME[cookRecipe.tier] || ("第" + cookRecipe.tier + "階")) + '</span></div>';
@@ -760,79 +897,6 @@
       html += '<table class="dtable"><thead><tr><th>料理成品</th><th>用途</th><th>需求數量</th></tr></thead><tbody>';
       cookUses.forEach(function (u) {
         html += itemLinkRow(u.product, '<td>' + (u.via === "mat" ? "固定材料" : "任選食材") + '</td><td>×' + u.qty + '</td>');
-      });
-      html += '</tbody></table>';
-    }
-
-    var alchemyBook = ALCHEMY_BY_BOOK[id];
-    if (alchemyBook) {
-      var bomb = ALCHEMY_BOMBS[alchemyBook.product];
-      html += '<div class="section-title">煉金配方</div>';
-      html += '<div class="equip-box"><div class="equip-stat-grid">' +
-        '<div>需求技能等級<br><b>Lv' + alchemyBook.skillLv + '</b></div>' +
-        '<div>成功率<br><b>' + alchemyBook.rate + '%</b></div>' +
-        '<div>金幣<br><b>' + fmtNum(alchemyBook.gold) + '</b></div>' +
-        '<div>經驗<br><b>' + fmtNum(alchemyBook.exp) + '</b></div>' +
-        '<div>製作數量<br><b>' + alchemyBook.count + '</b></div>' +
-        (alchemyBook.cooldownMs ? '<div>冷卻時間<br><b>' + (alchemyBook.cooldownMs / 1000) + ' 秒</b></div>' : '') +
-        '</div></div>';
-      html += '<div class="section-title" style="margin-top:14px;">所需材料</div><div class="map-chip-row">';
-      alchemyBook.mats.forEach(function (m) { html += itemChip(m[0], m[1]); });
-      html += '</div>';
-      html += '<div class="section-title" style="margin-top:14px;">製作出</div><div class="map-chip-row">';
-      html += itemChip(alchemyBook.product);
-      html += '</div>';
-      if (bomb) {
-        html += '<div class="section-title" style="margin-top:14px;">成品數值</div><div class="equip-box"><div class="equip-stat-grid">' +
-          '<div>需求等級<br><b>Lv' + bomb.minLv + '</b></div>' +
-          '<div>傷害<br><b>' + fmtNum(bomb.damage) + '</b></div>' +
-          '<div>單價<br><b>' + fmtNum(bomb.price) + '</b></div>' +
-          '</div></div>';
-      }
-    }
-
-    var alchemyUses = (ALCHEMY_BY_PRODUCT[id] || []).slice();
-    if (alchemyUses.length) {
-      html += '<div class="section-title">可透過煉金取得 <span class="count">(' + alchemyUses.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>配方書</th><th>成功率</th><th>需求</th><th>數量</th></tr></thead><tbody>';
-      alchemyUses.forEach(function (u) {
-        html += itemLinkRow(u.book, '<td><span class="rate">' + u.rate + '%</span></td><td>技能 Lv' + u.skillLv + '</td><td>×' + u.count + '</td>');
-      });
-      html += '</tbody></table>';
-    }
-
-    var box = BOX_BY_ID[id];
-    if (box) {
-      html += '<div class="section-title">寶箱</div>';
-      if (box.dungeonGuess) {
-        html += '<div class="badge-row" style="margin-bottom:10px;">' +
-          '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
-          '</div>';
-      }
-      html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
-      html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
-      box.tiers.forEach(function (tier, tIdx) {
-        html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
-        html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
-        tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
-          html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
-        });
-        html += '</tbody></table>';
-      });
-    }
-
-    var boxesUsingAsKey = Object.keys(BOX_BY_ID).filter(function (bid) { return String(BOX_BY_ID[bid].keyId) === String(id); });
-    if (boxesUsingAsKey.length) {
-      html += '<div class="section-title">鑰匙 <span class="count">可開啟 ' + boxesUsingAsKey.length + ' 種寶箱</span></div>';
-      html += '<div class="map-chip-row">' + boxesUsingAsKey.map(function (bid) { return itemChip(bid); }).join("") + '</div>';
-    }
-
-    var boxSources = (ITEM_TO_BOXES[id] || []).slice();
-    if (boxSources.length) {
-      html += '<div class="section-title">可從開箱取得 <span class="count">(' + boxSources.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>寶箱</th><th>鑰匙</th><th>機率</th></tr></thead><tbody>';
-      boxSources.sort(function (a, b) { return b.pct - a.pct; }).forEach(function (s) {
-        html += itemLinkRow(s.boxId, '<td>' + (ITEMS[s.keyId] ? escapeHtml(ITEMS[s.keyId].name) : "無資料") + '</td><td><span class="rate' + (s.pct < 1 ? " low" : "") + '">' + s.pct + '%</span></td>');
       });
       html += '</tbody></table>';
     }
@@ -886,6 +950,7 @@
     }
 
     $detail.innerHTML = html;
+    bindDetailClicks();
     wireDropCalcBar(function () { showItem(id); });
   }
 
@@ -913,8 +978,7 @@
     var elLabel = ELEMENT_LABEL[mon.element] || mon.element;
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
 
-    var html = backButtonHtml();
-    html += '<div class="detail-head"><div>' +
+    var html = '<div class="detail-head"><div>' +
       '<div class="detail-title">' + escapeHtml(mon.name) + '</div>' +
       '<div class="detail-sub">怪物編號 #' + id + '　・　等級 ' + mon.lv + '</div>' +
       '<div class="badge-row">' +
@@ -935,37 +999,6 @@
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
       return '<span class="map-chip">' + escapeHtml(mapName(mid)) + '</span>';
     }).join("") + '</div>';
-
-    if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
-      html += '<div class="section-title">五行寶石加成建議</div>';
-      html += '<div class="empty-note" style="padding:0 0 10px;">武器鑲上哪個屬性的寶石，對這隻怪物的傷害倍率：</div>';
-      html += '<table class="dtable"><thead><tr><th>寶石屬性</th><th>關係</th><th>普攻倍率</th><th>技能倍率</th></tr></thead><tbody>';
-      ELEMENT_ORDER.slice().sort(function (a, b) {
-        return elementMultiplier(b, mon.element, "attack") - elementMultiplier(a, mon.element, "attack");
-      }).forEach(function (gemEl) {
-        var rel = elementRelation(gemEl, mon.element);
-        var mult = ELEMENT_RELATION_MULT[rel];
-        html += '<tr' + (rel === "counter" ? ' style="background:rgba(111,168,90,.06);"' : '') + '>' +
-          '<td><span class="el-chip" style="color:var(--' + ELEMENT_CLASS[gemEl] + ')">' + ELEMENT_LABEL[gemEl] + '</span></td>' +
-          '<td>' + ELEMENT_RELATION_LABEL[rel] + (rel === "counter" ? "（最佳）" : "") + '</td>' +
-          '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
-          '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-    }
-
-    var dungeonRefs = (MONSTER_TO_DUNGEONS[id] || []).slice();
-    if (dungeonRefs.length) {
-      html += '<div class="section-title">出現副本 <span class="count">(' + dungeonRefs.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>副本</th><th>島嶼</th><th>身分</th></tr></thead><tbody>';
-      dungeonRefs.forEach(function (r) {
-        html += '<tr><td><span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span></td>' +
-          '<td>' + escapeHtml(r.island || "-") + '</td>' +
-          '<td>' + (r.isBoss ? '<span class="badge">首領</span>' : "一般怪物") + '</td></tr>';
-      });
-      html += '</tbody></table>';
-    }
 
     var drops = mon.drops.slice().sort(function (a, b) { return b.r - a.r; });
     html += '<div class="section-title">掉落物品 <span class="count">(' + drops.length + ')</span></div>';
@@ -1014,11 +1047,39 @@
     }
 
     $detail.innerHTML = html;
+    bindDetailClicks();
     wireDropCalcBar(function () { showMonster(id); });
   }
 
   function statTile(label, val) {
     return '<div class="stat-tile"><div class="v">' + fmtNum(val) + '</div><div class="k">' + label + '</div></div>';
+  }
+
+  function bindDetailClicks() {
+    $detail.querySelectorAll("[data-goto-monster]").forEach(function (row) {
+      row.addEventListener("click", function () {
+        var mid = row.getAttribute("data-goto-monster");
+        var mon = MONSTERS[mid];
+        $input.value = mon ? mon.name : "";
+        currentMatches.monsters = [{ id: mid, name: mon.name, lv: mon.lv }];
+        currentMatches.items = [];
+        renderResultList(mon.name);
+        showMonster(mid);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+    $detail.querySelectorAll("[data-goto-item]").forEach(function (row) {
+      row.addEventListener("click", function () {
+        var iid = row.getAttribute("data-goto-item");
+        var it = ITEMS[iid];
+        $input.value = it ? it.name : "";
+        currentMatches.items = [{ id: iid, name: it.name }];
+        currentMatches.monsters = [];
+        renderResultList(it.name);
+        showItem(iid);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
   }
 
   function showNoResult(q) {
@@ -1034,7 +1095,6 @@
   // ---------- 事件 ----------
   var debounceTimer = null;
   $input.addEventListener("input", function () {
-    resetNavHistory();
     clearTimeout(debounceTimer);
     var v = $input.value;
     debounceTimer = setTimeout(function () { runSearch(v); }, 90);
@@ -1145,12 +1205,15 @@
       }).join("");
   }
 
+  var apprTrialActive = false;
+  var apprTrialOnPick = null;
 
   $filterJob.addEventListener("change", updateFilterResults);
   $filterSlot.addEventListener("change", updateFilterResults);
   $filterResult.addEventListener("change", function () {
     if (!$filterResult.value) return;
     var id = $filterResult.value;
+    if (apprTrialActive && apprTrialOnPick) { apprTrialOnPick(id); return; }
     var name = ITEMS[id] ? ITEMS[id].name : "";
     $input.value = name;
     currentMatches.items = [{ id: id, name: name }];
@@ -1158,281 +1221,6 @@
     renderResultList(name);
     showItem(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  // ---------- 更新紀錄 ----------
-  var $changelogBtn = document.getElementById("changelogBtn");
-  var $changelogBackdrop = document.getElementById("changelogBackdrop");
-  var $changelogModal = document.getElementById("changelogModal");
-  var $changelogBody = document.getElementById("changelogBody");
-  var $changelogClose = document.getElementById("changelogClose");
-
-  function closeChangelog() { $changelogBackdrop.style.display = "none"; }
-  function openChangelogList() {
-    if (!CHANGELOG.length) {
-      $changelogBody.innerHTML = '<div class="section-title">更新紀錄</div><div class="empty-note">目前還沒有紀錄到任何更新。</div>';
-    } else {
-      var html = '<div class="section-title">更新紀錄 <span class="count">(' + CHANGELOG.length + ' 筆)</span></div>';
-      html += '<ul class="result-list">';
-      CHANGELOG.forEach(function (entry, idx) {
-        var total = entry.categories.reduce(function (s, c) { return s + c.entries.length; }, 0);
-        var summary = entry.categories.map(function (c) { return c.label.replace(/\s*\(.+?\)/, "") + " " + c.entries.length + " 筆"; }).join("、");
-        html += '<li class="result-item" data-changelog-idx="' + idx + '">' +
-          '<span class="rname">' + escapeHtml(entry.date) + '</span>' +
-          '<span class="rmeta">' + escapeHtml(summary) + '（共 ' + total + ' 筆）</span>' +
-          '</li>';
-      });
-      html += '</ul>';
-      $changelogBody.innerHTML = html;
-    }
-    $changelogBackdrop.style.display = "flex";
-  }
-  function openChangelogDetail(idx) {
-    var entry = CHANGELOG[idx];
-    if (!entry) return;
-    var html = '<div class="section-title"><span class="name-link" id="changelogBackToList" style="cursor:pointer;">← 更新紀錄</span></div>';
-    html += '<div class="detail-sub" style="margin-bottom:14px;">' + escapeHtml(entry.date) + '</div>';
-    entry.categories.forEach(function (cat) {
-      html += '<div class="section-title">' + escapeHtml(cat.label) + ' <span class="count">(' + cat.entries.length + ')</span></div>';
-      html += '<div class="map-chip-row">';
-      cat.entries.forEach(function (e) {
-        if (cat.kind === "item" || cat.kind === "monster") {
-          html += '<span class="map-chip" data-changelog-goto="' + cat.kind + ':' + e.id + '">' + escapeHtml(e.name) + '</span>';
-        } else {
-          html += '<span class="map-chip">' + escapeHtml(e.name) + '</span>';
-        }
-      });
-      html += '</div>';
-    });
-    $changelogBody.innerHTML = html;
-    document.getElementById("changelogBackToList").addEventListener("click", openChangelogList);
-  }
-  function openBoxDetail(boxId) {
-    var box = BOX_BY_ID[String(boxId)];
-    if (!box) return;
-    var html = '<div class="section-title">寶箱</div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(box.name) + '</div>';
-    if (box.dungeonGuess) {
-      html += '<div class="badge-row" style="margin-bottom:10px;">' +
-        '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
-        '</div>';
-    } else {
-      html += '<div class="empty-note" style="padding:0 0 6px;">目前猜不出這個寶箱是哪個副本掉的（名稱對不起來，不影響其他功能）。</div>';
-    }
-    html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
-    html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
-    box.tiers.forEach(function (tier, tIdx) {
-      html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
-      html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
-      tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
-        html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
-      });
-      html += '</tbody></table>';
-    });
-    $changelogBody.innerHTML = html;
-    $changelogBackdrop.style.display = "flex";
-  }
-
-  function showDungeonBrowser() {
-    var dungeonIds = Object.keys(DUNGEON_BY_ID);
-    var html = '<h2 style="margin-top:0;">🏛️ 副本 <span class="count">(' + dungeonIds.length + ')</span></h2>';
-    if (!dungeonIds.length) {
-      html += '<div class="empty-note">目前沒有副本資料。</div>';
-    } else {
-      html += '<ul class="result-list">';
-      dungeonIds.forEach(function (did) {
-        var dg = DUNGEON_BY_ID[did];
-        var monsterCount = dg.islands.reduce(function (s, isl) { return s + isl.monsters.length; }, 0);
-        html += '<li class="result-item" data-open-dungeon="' + did + '">' +
-          '<span class="rname">' + escapeHtml(dg.name) + '</span>' +
-          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　' + dg.islands.length + ' 個島嶼・' + monsterCount + ' 種怪物</span>' +
-          '</li>';
-      });
-      html += '</ul>';
-    }
-    $detail.innerHTML = html;
-  }
-
-  function showBoxBrowser() {
-    var boxIds = Object.keys(BOX_BY_ID);
-    var html = '<h2 style="margin-top:0;">🎁 寶箱 <span class="count">(' + boxIds.length + ')</span></h2>';
-    if (!boxIds.length) {
-      html += '<div class="empty-note">目前沒有寶箱資料。</div>';
-    } else {
-      html += '<ul class="result-list">';
-      boxIds.forEach(function (bid) {
-        var box = BOX_BY_ID[bid];
-        var itemCount = box.tiers.reduce(function (s, t) { return s + t.length; }, 0);
-        html += '<li class="result-item" data-open-box="' + bid + '">' +
-          '<span class="rname">' + escapeHtml(box.name) + '</span>' +
-          '<span class="rmeta">' + (box.dungeonGuess ? escapeHtml(box.dungeonGuess.dungeonName) + "　" : "") + box.tiers.length + ' 組・共 ' + itemCount + ' 種物品</span>' +
-          '</li>';
-      });
-      html += '</ul>';
-    }
-    $detail.innerHTML = html;
-  }
-
-  function showPetBrowser(tierFilter) {
-    var allIds = Object.keys(PET_INFO).sort(function (a, b) {
-      return (PET_INFO[a].tier - PET_INFO[b].tier) || (PET_INFO[a].lv - PET_INFO[b].lv);
-    });
-    var tiers = Array.from(new Set(allIds.map(function (id) { return PET_INFO[id].tier; }))).sort(function (a, b) { return a - b; });
-    var petIds = tierFilter ? allIds.filter(function (id) { return PET_INFO[id].tier === tierFilter; }) : allIds;
-
-    var html = '<h2 style="margin-top:0;">🐾 寵物列表 <span class="count">(' + petIds.length + (tierFilter ? " / 共 " + allIds.length : "") + ')</span></h2>';
-    html += '<div style="margin-bottom:12px;">' +
-      '<label style="font-size:12.5px;color:var(--text-faint);margin-right:8px;">跳到階級</label>' +
-      '<select id="petTierFilter" style="padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">' +
-      '<option value=""' + (!tierFilter ? " selected" : "") + '>全部</option>' +
-      tiers.map(function (t) { return '<option value="' + t + '"' + (tierFilter === t ? " selected" : "") + '>' + t + ' 階</option>'; }).join('') +
-      '</select></div>';
-    html += '<div class="empty-note" style="padding:0 0 10px;">出戰中的寵物才會生效，而且飽食度(hunger)一定要大於 0，不然不管成長階段多高，加成一律歸零。點寵物名稱看牠 9 個成長階段各自提供多少能力。</div>';
-    if (!petIds.length) {
-      html += '<div class="empty-note">這個階級沒有寵物資料。</div>';
-    } else {
-      html += '<ul class="result-list">';
-      petIds.forEach(function (pid) {
-        var p = PET_INFO[pid];
-        html += '<li class="result-item" data-open-pet="' + pid + '">' +
-          '<span class="rname">' + escapeHtml(p.name) + '</span>' +
-          '<span class="rmeta">' + p.tier + '階　Lv' + p.lv + '・名聲 ' + fmtNum(p.fame) + '</span>' +
-          '</li>';
-      });
-      html += '</ul>';
-    }
-    $detail.innerHTML = html;
-    document.getElementById("petTierFilter").addEventListener("change", function (e) {
-      showPetBrowser(e.target.value ? Number(e.target.value) : null);
-    });
-  }
-
-  function showPetDetail(petId) {
-    var p = PET_INFO[String(petId)];
-    if (!p) return;
-    var html = backButtonHtml();
-    html += '<div class="section-title"><span class="name-link" id="petBackToList" style="cursor:pointer;">← 寵物列表</span></div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(p.name) + '</div>';
-    html += '<div class="badge-row" style="margin-bottom:14px;">' +
-      '<span class="badge">' + p.tier + ' 階</span>' +
-      '<span class="badge">出戰需求 Lv' + p.lv + '</span>' +
-      '<span class="badge">出戰需求名聲 ' + fmtNum(p.fame) + '</span>' +
-      '<span class="badge">飽食度上限 ' + fmtNum(p.feedFull) + '</span>' +
-      '</div>';
-    html += '<div class="empty-note" style="padding:0 0 14px;">飽食度(hunger)必須大於 0，下面的加成才會真的套用到角色身上；沒有成長曲線的屬性，不管幾階都固定不變。</div>';
-
-    var evolveFrom = PET_EVOLVE_FROM[String(petId)] || [];
-    if (evolveFrom.length) {
-      html += '<div class="section-title">進化來源 <span class="count">(從這幾隻進化過來)</span></div>';
-      evolveFrom.forEach(function (f) {
-        var fromPet = PET_INFO[String(f.from)];
-        html += '<div class="equip-box" style="margin-bottom:10px;">' +
-          '<div class="row1"><span class="slot"><span class="name-link" data-open-pet="' + f.from + '">' + escapeHtml(fromPet ? fromPet.name : "#" + f.from) + '</span></span>' +
-          '<span class="rate">' + f.rate + '%</span></div>' +
-          '<div class="map-chip-row">' + f.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>' +
-          '</div>';
-      });
-    }
-
-    if (p.evolve && p.evolve.length) {
-      html += '<div class="section-title">可能進化成</div>';
-      p.evolve.forEach(function (ev, idx) {
-        html += '<div class="equip-box" style="margin-bottom:10px;">';
-        if (p.evolve.length > 1) html += '<div class="empty-note" style="padding:0 0 6px;">材料組合 ' + (idx + 1) + '：</div>';
-        html += '<div class="map-chip-row" style="margin-bottom:10px;">' + ev.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>';
-        var totalRate = ev.targets.reduce(function (s, t) { return s + t.rate; }, 0);
-        ev.targets.forEach(function (t) {
-          var toPet = PET_INFO[String(t.to)];
-          html += '<div class="row1" style="margin-bottom:4px;"><span class="slot"><span class="name-link" data-open-pet="' + t.to + '">' + escapeHtml(toPet ? toPet.name : "#" + t.to) + '</span></span>' +
-            '<span class="rate">' + t.rate + '%</span></div>';
-        });
-        if (totalRate < 100) {
-          html += '<div class="row1"><span style="color:var(--text-faint);font-size:13px;">進化失敗（掉成長階段或經驗歸零）</span>' +
-            '<span class="rate low">' + (100 - totalRate) + '%</span></div>';
-        }
-        html += '</div>';
-      });
-    }
-
-    var statKeys = Object.keys(PET_STAT_LABEL);
-    html += '<table class="dtable"><thead><tr><th>成長階段</th>' + statKeys.map(function (k) { return '<th>' + PET_STAT_LABEL[k] + '</th>'; }).join('') + '</tr></thead><tbody>';
-    for (var grow = 1; grow <= 9; grow++) {
-      html += '<tr><td>+' + grow + '</td>' + statKeys.map(function (k) {
-        var v = petStatAt(p, k, grow);
-        return '<td>' + (v ? '<span class="rate">' + v + '</span>' : '<span class="rate low">-</span>') + '</td>';
-      }).join('') + '</tr>';
-    }
-    html += '</tbody></table>';
-
-    $detail.innerHTML = html;
-    document.getElementById("petBackToList").addEventListener("click", showPetBrowser);
-  }
-
-  function openDungeonDetail(dungeonId) {
-    var dg = DUNGEON_BY_ID[String(dungeonId)];
-    if (!dg) return;
-    var html = '<div class="section-title">副本</div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(dg.name) + '</div>';
-    html += '<div class="badge-row" style="margin-bottom:14px;">' +
-      '<span class="badge">等級 ' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '</span>' +
-      (dg.difficulty ? '<span class="badge">' + escapeHtml(dg.difficulty) + '</span>' : "") +
-      (dg.entries ? '<span class="badge">每日 ' + dg.entries + ' 次進場</span>' : "") +
-      '</div>';
-    var relatedBoxes = DUNGEON_TO_BOXES[String(dungeonId)] || [];
-    if (relatedBoxes.length) {
-      html += '<div class="section-title">可能掉落的寶箱（推測） <span class="count">(' + relatedBoxes.length + ')</span></div>';
-      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + relatedBoxes.map(function (b) {
-        return '<span class="map-chip" data-open-box="' + b.boxId + '">' + escapeHtml(b.boxName) + '</span>';
-      }).join("") + '</div>';
-    }
-    dg.islands.forEach(function (isl) {
-      html += '<div class="section-title" style="margin-top:14px;">' + escapeHtml(isl.name || isl.key) + '</div>';
-      if (isl.boss != null) {
-        html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
-          '<span class="map-chip" data-changelog-goto="monster:' + isl.boss + '">' + escapeHtml(MONSTERS[isl.boss] ? MONSTERS[isl.boss].name : "無資料") + '</span></div>';
-      }
-      var others = isl.monsters.filter(function (mid) { return mid !== isl.boss; });
-      if (others.length) {
-        html += '<div class="empty-note" style="padding:0 0 6px;">怪物（' + others.length + '）：</div><div class="map-chip-row">' +
-          others.map(function (mid) {
-            return '<span class="map-chip" data-changelog-goto="monster:' + mid + '">' + escapeHtml(MONSTERS[mid] ? MONSTERS[mid].name : "無資料") + '</span>';
-          }).join("") + '</div>';
-      }
-    });
-    $changelogBody.innerHTML = html;
-    $changelogBackdrop.style.display = "flex";
-  }
-
-  $changelogBtn.addEventListener("click", openChangelogList);
-  $changelogClose.addEventListener("click", closeChangelog);
-  $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
-  $changelogBody.addEventListener("click", function (e) {
-    var item = e.target.closest("[data-changelog-idx]");
-    if (item) { openChangelogDetail(Number(item.getAttribute("data-changelog-idx"))); return; }
-    var goto = e.target.closest("[data-changelog-goto]");
-    if (goto) {
-      var parts = goto.getAttribute("data-changelog-goto").split(":");
-      closeChangelog();
-      resetNavHistory();
-      if (parts[0] === "monster") { currentView = { kind: "monster", id: parts[1] }; showMonster(parts[1]); }
-      else { currentView = { kind: "item", id: parts[1] }; showItem(parts[1]); }
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  });
-
-  document.addEventListener("click", function (e) {
-    var backLink = e.target.closest("[data-go-back]");
-    if (backLink) { goBackOneView(); return; }
-    var gotoItemLink = e.target.closest("[data-goto-item]");
-    if (gotoItemLink) { navigateTo("item", gotoItemLink.getAttribute("data-goto-item"), true); return; }
-    var gotoMonsterLink = e.target.closest("[data-goto-monster]");
-    if (gotoMonsterLink) { navigateTo("monster", gotoMonsterLink.getAttribute("data-goto-monster"), true); return; }
-    var petLink = e.target.closest("[data-open-pet]");
-    if (petLink) { navigateTo("pet", petLink.getAttribute("data-open-pet"), true); return; }
-    var dgLink = e.target.closest("[data-open-dungeon]");
-    if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
-    var boxLink = e.target.closest("[data-open-box]");
-    if (boxLink) openBoxDetail(boxLink.getAttribute("data-open-box"));
   });
 
   wireGlobalLevelField();

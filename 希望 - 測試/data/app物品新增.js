@@ -2,9 +2,6 @@
   "use strict";
 
   var ITEMS = window.ITEMS || {};
-  // 五行寶石系統：鑲到武器上的屬性，直接存在該武器 stack 的 element 欄位（跟 refine 平行，不是巢狀在 options 裡）
-  var ELEMENT_LABEL = { fire: "火", water: "水", tree: "木", steel: "金", earth: "土", sun: "光", dark: "闇" };
-  var ELEMENT_LIST = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
   var EQUIP_SLOTS = window.EQUIP_SLOTS || {};
   var JOBS = window.JOBS || [];
   var SECOND_JOBS = window.SECOND_JOBS || [];
@@ -37,7 +34,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -74,8 +71,8 @@
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
-    { panel: "enchant", icon: "🔮", title: "發條強化", desc: "編輯裝備的發條強化屬性，數值旁邊附機率表算出的範圍參考。" },
-    { panel: "appraisal", icon: "🔨", title: "鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" },
+    { panel: "enchant", icon: "🔮", title: "齒輪強化", desc: "編輯裝備的齒輪強化屬性，數值旁邊附機率表算出的範圍參考。" },
+    // { panel: "appraisal", icon: "🔨", title: "鐵匠鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" }, // 先隱藏，之後正式開放再打開這行
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
@@ -86,7 +83,6 @@
     { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
     { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
     { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
-    { panel: "dungeon", icon: "🏛️", title: "副本", desc: "查看/重置每日副本進場次數，清空副本紀錄。" },
     { panel: "party", icon: "👥", title: "隊伍", desc: "把另一個角色加入隊伍（複製對方目前的戰鬥快照）。" },
     { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "離線紀錄、亂數種子等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
     { panel: "sellkeep", icon: "🛒", title: "自動販賣保留清單", desc: "用物品搜尋新增/刪除保留項目，設定保留數量，0 代表全數自動賣出。" },
@@ -414,7 +410,6 @@
     renderIndividuality(c);
     renderQuests(c);
     renderMissions(c);
-    renderDungeon(c);
     renderParty(c);
     renderEnchant(c);
     renderAppraisal(c);
@@ -439,37 +434,9 @@
       ));
     }
 
-    var tier1Options = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; });
-    wrap.appendChild(fieldSelect("職業（一轉）Job", tier1Options, function () { return c.job; }, function (v) { c.job = v; renderBasic(c); }));
-
-    var secondJobOptions = [{ value: "", label: "（尚未二轉）" }].concat(
-      SECOND_JOBS.map(function (j) {
-        var fromName = j.from ? (JOB_NAME[j.from] || j.from) : "";
-        return { value: j.id, label: j.name + (fromName ? "・從 " + fromName : "") + " (" + j.id + ")" };
-      })
-    );
-    var secondJobField = fieldSelect(
-      "二轉職業 secondJob",
-      secondJobOptions,
-      function () { return c.secondJob || ""; },
-      function (v) {
-        if (v) {
-          var chosen = SECOND_JOBS.find(function (j) { return j.id === v; });
-          c.secondJob = v;
-          if (chosen && chosen.from) c.job = chosen.from; // 二轉職業一定是從特定一轉職業分支出來的，一併同步，避免兩個欄位對不上
-          c.advanceStep = 999; // 遊戲只判斷「advanceStep 有沒有到二轉完成的門檻」，數字多少不重要，衝到一個絕對夠大的值即可
-          toast("已設定二轉職業" + (chosen && chosen.from ? "，一轉職業已同步改成 " + (JOB_NAME[chosen.from] || chosen.from) : "") + "，轉職進度已自動設為完成", "ok");
-        } else {
-          delete c.secondJob;
-        }
-        renderBasic(c);
-      }
-    );
-    secondJobField.appendChild(el("div", {
-      style: "font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;",
-      text: "遊戲判斷目前職業，是看「advanceStep 有沒有到二轉完成」再決定要不要顯示 secondJob，兩個要一起設定才會生效——選這裡會自動幫你把 advanceStep 一起設好，不用再手動繞路。"
-    }));
-    wrap.appendChild(secondJobField);
+    var jobOptions = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; })
+      .concat(SECOND_JOBS.map(function (j) { return { value: j.id, label: j.name + " ・二轉 (" + j.id + ")" }; }));
+    wrap.appendChild(fieldSelect("職業 Job", jobOptions, function () { return c.job; }, function (v) { c.job = v; }));
 
     wrap.appendChild(fieldNumber("轉職進度 advanceStep", function () { return c.advanceStep; }, function (v) { c.advanceStep = v; }));
     wrap.appendChild(fieldCheckbox("在村莊中 inVillage", function () { return c.inVillage; }, function (v) { c.inVillage = v; }));
@@ -530,25 +497,6 @@
         tdRefine.appendChild(el("span", { text: "-", style: "color:var(--text3);" }));
       }
       tr.appendChild(tdRefine);
-
-      var tdElement = document.createElement("td");
-      if (itemDef && itemDef.slot === "weapon") {
-        var elementSelect = el("select", { style: "width:80px;" });
-        elementSelect.appendChild(el("option", { value: "", text: "（未鑲）" }));
-        ELEMENT_LIST.forEach(function (elKey) {
-          var opt = el("option", { value: elKey, text: ELEMENT_LABEL[elKey] });
-          if (stack.element === elKey) opt.selected = true;
-          elementSelect.appendChild(opt);
-        });
-        elementSelect.addEventListener("change", function () {
-          if (elementSelect.value) stack.element = elementSelect.value;
-          else delete stack.element;
-        });
-        tdElement.appendChild(elementSelect);
-      } else {
-        tdElement.appendChild(el("span", { text: "-", style: "color:var(--text3);" }));
-      }
-      tr.appendChild(tdElement);
 
       var tdId = document.createElement("td");
       var idInput = el("input", { type: "number", value: stack.id });
@@ -794,19 +742,6 @@
       });
       row.appendChild(picker);
 
-      // 「目前裝備」本來就是選單裡預設選中的那格，不會觸發 select 的 change 事件，
-      // 所以另外做一個按鈕，不管有沒有換裝備都能直接看目前這格裝備的能力說明。
-      if (currentStack && currentItem) {
-        var viewBtn = el("button", {
-          class: "btn btn-sm", type: "button", text: "查看能力",
-          style: "white-space:nowrap;"
-        });
-        viewBtn.addEventListener("click", function () {
-          renderItemPreview("equipItemPreview", currentStack.itemId);
-        });
-        row.appendChild(viewBtn);
-      }
-
       // 精煉值：只有目前這格真的裝備著東西時才顯示
       if (currentStack) {
         var refineSelect = el("select", { style: "width:64px;" });
@@ -1009,31 +944,6 @@
     return { lvOk: lvOk, fameOk: fameOk, def: def };
   }
 
-  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
-  // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關；
-  // 沒有 hunger 就是全部歸零。有的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
-  // 沒有 growth 陣列的屬性，就固定用寵物基礎資料裡的那個數字，不會隨 grow 變動。
-  function petBonusAt(def, grow, hunger) {
-    var out = {};
-    if (!def || !hunger || hunger <= 0) {
-      Object.keys(PET_STAT_LABEL).forEach(function (k) { out[k] = 0; });
-      return out;
-    }
-    Object.keys(PET_STAT_LABEL).forEach(function (k) {
-      var curve = def.growth && def.growth[k];
-      if (curve && grow > 0 && curve[grow - 1] !== undefined) out[k] = curve[grow - 1];
-      else out[k] = (def.stats && def.stats[k]) || 0;
-    });
-    return out;
-  }
-  function petBonusText(bonus) {
-    var parts = [];
-    Object.keys(PET_STAT_LABEL).forEach(function (k) {
-      if (bonus[k]) parts.push(PET_STAT_LABEL[k] + bonus[k]);
-    });
-    return parts.length ? parts.join("　") : "無任何能力";
-  }
-
   function showCenterModal(title, message) {
     var old = document.getElementById("centerModalOverlay");
     if (old) old.remove();
@@ -1090,10 +1000,7 @@
         // 所以 grow:0 查不到任何一格資料，遊戲會顯示「無任何能力」。最低要設 1 才有基礎加成。
         pet.grow = 1;
         pet.exp = 0;
-        // hunger 一定要 > 0 加成才會生效，預設直接給滿（該寵物的飽食度上限 feedFull），
-        // 不用讓玩家自己還要另外調整才看得到效果。
-        var def = PETS[String(newId)];
-        pet.hunger = def ? def.feedFull : 0;
+        pet.hunger = 0;
         petsTouched = true;
         renderPets(c);
         warnIfPetInvalid(pet, c);
@@ -1103,15 +1010,8 @@
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
         var td = document.createElement("td");
-        var inpAttrs = { type: "number", value: pet[field] };
-        if (field === "grow") { inpAttrs.min = "0"; inpAttrs.max = "9"; } // 成長階段最高只到 9，超過遊戲裡的加成表也查不到
-        var inp = el("input", inpAttrs);
-        inp.addEventListener("input", function () {
-          var v = inp.valueAsNumber;
-          if (field === "grow" && !isNaN(v) && v > 9) { v = 9; inp.value = "9"; }
-          pet[field] = isNaN(v) ? 0 : Math.max(0, v);
-          if (field === "grow" || field === "hunger") updateBonusCell();
-        });
+        var inp = el("input", { type: "number", value: pet[field] });
+        inp.addEventListener("input", function () { pet[field] = inp.valueAsNumber || 0; });
         td.appendChild(inp);
         tr.appendChild(td);
       });
@@ -1137,16 +1037,6 @@
       if (invalid && !reqCheck.fameOk) fameInp.style.color = "var(--red)";
       tdFame.appendChild(fameInp);
       tr.appendChild(tdFame);
-
-      var tdBonus = document.createElement("td");
-      tdBonus.style.fontSize = "12px";
-      tr.appendChild(tdBonus);
-      function updateBonusCell() {
-        var def = PETS[String(pet.id)];
-        tdBonus.textContent = petBonusText(petBonusAt(def, pet.grow, pet.hunger));
-        tdBonus.title = "只有出戰中、而且飽食度(hunger) > 0 的寵物，這個加成才會真的套用到角色身上";
-      }
-      updateBonusCell();
 
       var tdAct = document.createElement("td");
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
@@ -1615,35 +1505,6 @@
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
 
-  function renderDungeon(c) {
-    if (!c.dungeon || typeof c.dungeon !== "object") c.dungeon = { day: 0, used: {} };
-    if (!c.dungeon.used || typeof c.dungeon.used !== "object") c.dungeon.used = {};
-    if (!Array.isArray(c.dungeonHistory)) c.dungeonHistory = [];
-
-    var wrap = document.getElementById("dungeonBasicFields");
-    wrap.innerHTML = "";
-    wrap.appendChild(fieldNumber(
-      "day（進場次數計算用的天數編號）",
-      function () { return c.dungeon.day || 0; },
-      function (v) { c.dungeon.day = v; }
-    ));
-
-    document.getElementById("dungeonHistoryCount").textContent = "(" + c.dungeonHistory.length + " 筆)";
-
-    var resetBtn = document.getElementById("dungeonResetUsedBtn");
-    resetBtn.onclick = function () {
-      c.dungeon.used = {};
-      toast("已清空今日已用的副本進場次數", "ok");
-    };
-    var clearBtn = document.getElementById("dungeonClearHistoryBtn");
-    clearBtn.onclick = function () {
-      if (!confirm("確定要清空全部副本紀錄嗎？此動作無法復原。")) return;
-      c.dungeonHistory = [];
-      renderDungeon(c);
-      toast("已清空副本紀錄", "ok");
-    };
-  }
-
   function renderMissions(c) {
     if (!Array.isArray(c.missionsDone)) c.missionsDone = [];
     if (!Array.isArray(c.missionKills)) c.missionKills = [];
@@ -1860,7 +1721,7 @@
     };
   }
 
-  // ---------- 發條強化 ----------
+  // ---------- 齒輪強化 ----------
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
@@ -1969,7 +1830,7 @@
       var stackId = $item.value;
       $detail.innerHTML = "";
       if (!stackId) {
-        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯發條強化。" }));
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一件裝備來編輯齒輪強化。" }));
         return;
       }
       var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
@@ -1982,7 +1843,7 @@
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
 
       var gradeRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;" });
-      gradeRow.appendChild(el("span", { text: "發條強化等級：" }));
+      gradeRow.appendChild(el("span", { text: "齒輪強化等級：" }));
       var gradeSelect = el("select", {});
       // 已由真實存檔驗證：options.grade 是從 1 開始數（1=N, 2=G, 3=DG, 4=XG, 5=SG），
       // 跟 ENCHANT_GRADES 陣列的索引（0開始）差了 1，這裡選單的 value 直接用「已存檔的那個數字」，
@@ -2035,7 +1896,7 @@
     renderDetail();
   }
 
-  // ---------- 鑑定（跟發條強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
+  // ---------- 鐵匠鑑定（跟齒輪強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
   var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
   var APPR_FF = {
     weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
