@@ -191,6 +191,7 @@
   var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
   var PET_INFO = window.PET_INFO || {};
   var PET_EVOLVE_FROM = window.PET_EVOLVE_FROM || {};
+  var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
   // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
@@ -325,6 +326,20 @@
   });
   $hintRow.appendChild(boxChip);
 
+  var questLineChip = document.createElement("span");
+  questLineChip.className = "hint-chip";
+  questLineChip.style.borderColor = "var(--gold)";
+  questLineChip.style.color = "var(--gold-hi)";
+  questLineChip.textContent = "📖 主線任務";
+  questLineChip.addEventListener("click", function () {
+    resetNavHistory();
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    showQuestLineBrowser();
+  });
+  $hintRow.appendChild(questLineChip);
+
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
 
@@ -353,6 +368,8 @@
       showMonster(id);
     } else if (kind === "pet") {
       showPetDetail(id);
+    } else if (kind === "questline") {
+      showQuestLineDetail(id);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1273,6 +1290,52 @@
     $detail.innerHTML = html;
   }
 
+  function showQuestLineBrowser() {
+    var lineIds = Object.keys(MAIN_QUEST_LINES).sort(function (a, b) {
+      var la = MAIN_QUEST_LINES[a], lb = MAIN_QUEST_LINES[b];
+      return (lb.jobRelated - la.jobRelated) || la.title.localeCompare(lb.title, "zh-Hant");
+    });
+    var html = backButtonHtml();
+    html += '<h2 style="margin-top:0;">📖 主線任務 <span class="count">(' + lineIds.length + ')</span></h2>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">標「職業進度」的是跟轉職有關的劇情線，其他是一般劇情任務。點進去看完整流程：第幾步、要找哪個 NPC、在哪張地圖。</div>';
+    if (!lineIds.length) {
+      html += '<div class="empty-note">目前沒有主線任務資料。</div>';
+    } else {
+      html += '<ul class="result-list">';
+      lineIds.forEach(function (lid) {
+        var line = MAIN_QUEST_LINES[lid];
+        html += '<li class="result-item" data-open-questline="' + lid + '">' +
+          '<span class="rname">' + escapeHtml(line.title) + (line.jobRelated ? ' <span class="badge tag-harvest" style="margin-left:6px;">職業進度</span>' : '') + '</span>' +
+          '<span class="rmeta">共 ' + line.parts.length + ' 個步驟</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  function showQuestLineDetail(lineId) {
+    var line = MAIN_QUEST_LINES[String(lineId)];
+    if (!line) return;
+    var html = backButtonHtml();
+    html += '<div class="section-title"><span class="name-link" id="questLineBackToList" style="cursor:pointer;">← 主線任務</span></div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(line.title) +
+      (line.jobRelated ? ' <span class="badge tag-harvest">職業進度</span>' : '') + '</div>';
+    html += '<table class="dtable"><thead><tr><th>步驟</th><th>內容</th><th>NPC</th><th>地圖</th></tr></thead><tbody>';
+    line.parts.forEach(function (part) {
+      var mapNames = (part.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
+      html += '<tr>' +
+        '<td>' + part.seq + '</td>' +
+        '<td>' + escapeHtml(part.name) + '</td>' +
+        '<td>' + (part.npcName ? escapeHtml(part.npcName) : "-") + '</td>' +
+        '<td>' + (mapNames || "-") + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    $detail.innerHTML = html;
+    document.getElementById("questLineBackToList").addEventListener("click", showQuestLineBrowser);
+  }
+
   function showPetBrowser(tierFilter) {
     var allIds = Object.keys(PET_INFO).sort(function (a, b) {
       return (PET_INFO[a].tier - PET_INFO[b].tier) || (PET_INFO[a].lv - PET_INFO[b].lv);
@@ -1432,7 +1495,9 @@
     var dgLink = e.target.closest("[data-open-dungeon]");
     if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
     var boxLink = e.target.closest("[data-open-box]");
-    if (boxLink) openBoxDetail(boxLink.getAttribute("data-open-box"));
+    if (boxLink) { openBoxDetail(boxLink.getAttribute("data-open-box")); return; }
+    var questLineLink = e.target.closest("[data-open-questline]");
+    if (questLineLink) navigateTo("questline", questLineLink.getAttribute("data-open-questline"), true);
   });
 
   wireGlobalLevelField();
