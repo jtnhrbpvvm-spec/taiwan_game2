@@ -192,6 +192,8 @@
   var PET_INFO = window.PET_INFO || {};
   var PET_EVOLVE_FROM = window.PET_EVOLVE_FROM || {};
   var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
+  var ITEM_QUEST_USES = window.ITEM_QUEST_USES || {};
+  var ITEM_PET_EVOLVE_USES = window.ITEM_PET_EVOLVE_USES || {};
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
   // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
@@ -479,6 +481,8 @@
         if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
         if (BOX_BY_ID[it.id]) metaParts.push("寶箱");
         if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
+        if (ITEM_QUEST_USES[it.id]) metaParts.push("任務道具");
+        if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -654,6 +658,27 @@
       '<span>販售價 <b>' + fmtNum(item.sell) + '</b></span>' +
       '<span>購買價 <b>' + fmtNum(item.buy) + '</b></span>' +
       '</div>';
+
+    var questUses = ITEM_QUEST_USES[id] || [];
+    var petEvolveUses = [];
+    (ITEM_PET_EVOLVE_USES[id] || []).forEach(function (u) {
+      if (!petEvolveUses.some(function (x) { return x.petId === u.petId; })) petEvolveUses.push(u);
+    });
+    if (questUses.length || petEvolveUses.length) {
+      html += '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">';
+      html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
+      if (questUses.length) {
+        html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">任務道具，用於：' +
+          questUses.map(function (u) { return '<span class="name-link" data-open-questline="' + u.lineId + '">' + escapeHtml(u.lineTitle) + '・' + escapeHtml(u.stepName) + '</span>'; }).join('、') +
+          '</div>';
+      }
+      if (petEvolveUses.length) {
+        html += '<div style="font-size:13px;color:var(--text);">寵物進化材料，用於進化成：' +
+          petEvolveUses.map(function (u) { return '<span class="name-link" data-open-pet="' + u.petId + '">' + escapeHtml(u.petName) + '</span>'; }).join('、') +
+          '</div>';
+      }
+      html += '</div>';
+    }
 
     if (item.equip) {
       var eq = item.equip;
