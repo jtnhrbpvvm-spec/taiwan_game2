@@ -1321,17 +1321,32 @@
     html += '<div class="section-title"><span class="name-link" id="questLineBackToList" style="cursor:pointer;">← 主線任務</span></div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(line.title) +
       (line.jobRelated ? ' <span class="badge tag-harvest">職業進度</span>' : '') + '</div>';
-    html += '<table class="dtable"><thead><tr><th>步驟</th><th>內容</th><th>NPC</th><th>地圖</th></tr></thead><tbody>';
+
     line.parts.forEach(function (part) {
       var mapNames = (part.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
-      html += '<tr>' +
-        '<td>' + part.seq + '</td>' +
-        '<td>' + escapeHtml(part.name) + '</td>' +
-        '<td>' + (part.npcName ? escapeHtml(part.npcName) : "-") + '</td>' +
-        '<td>' + (mapNames || "-") + '</td>' +
-        '</tr>';
+      html += '<div class="equip-box" style="margin-bottom:10px;">';
+      html += '<div class="row1"><span class="slot">步驟 ' + part.seq + '：' + escapeHtml(part.name) + '</span></div>';
+      html += '<div class="empty-note" style="padding:0 0 8px;">' +
+        (part.npcName ? "NPC：" + escapeHtml(part.npcName) : "") +
+        (mapNames ? "　地圖：" + escapeHtml(mapNames) : "") +
+        '</div>';
+      var reqs = part.requirements || [];
+      if (reqs.length) {
+        reqs.forEach(function (req, rIdx) {
+          if (reqs.length > 1) html += '<div class="empty-note" style="padding:4px 0 4px;">達成方式 ' + (rIdx + 1) + '：</div>';
+          var badges = [];
+          if (req.lv) badges.push("等級 " + req.lv);
+          if (req.fame) badges.push("名聲 " + fmtNum(req.fame));
+          if (req.gold) badges.push("金幣 " + fmtNum(req.gold));
+          if (badges.length) html += '<div class="badge-row" style="margin-bottom:6px;">' + badges.map(function (b) { return '<span class="badge">' + b + '</span>'; }).join('') + '</div>';
+          if (req.items && req.items.length) {
+            html += '<div class="map-chip-row">' + req.items.map(function (it) { return itemChip(it[0], it[1]); }).join('') + '</div>';
+          }
+        });
+      }
+      html += '</div>';
     });
-    html += '</tbody></table>';
+
     $detail.innerHTML = html;
     document.getElementById("questLineBackToList").addEventListener("click", showQuestLineBrowser);
   }
