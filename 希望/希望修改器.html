@@ -191,7 +191,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V37</span>
+  <span class="bar-title">🧭 希望存檔修改器V38</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -241,6 +241,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <div class="nav-item" data-panel="sellkeep">🛒 自動販賣保留清單</div>
 
     <div class="nav-section">工具</div>
+    <div class="nav-item" data-panel="questlines">🗺️ 主線任務攻略</div>
     <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
     <div class="nav-item" data-panel="json">{ } JSON 編輯器</div>
   </div>
@@ -554,6 +555,16 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
       <div id="sellKeepField"></div>
     </div>
 
+    <!-- ══ 主線任務攻略 ══ -->
+    <div class="panel" id="panel-questlines">
+      <div class="panel-title">🗺️ 主線任務攻略</div>
+      <div class="panel-desc">
+        純參考資料，跟目前載入哪個存檔無關，不用先載入存檔也能看。列出遊戲裡目前抓得到的主線劇情，
+        每一條要走幾步、去哪找 NPC、在哪張地圖、要交什麼道具。標「職業進度」的是跟二轉有關的劇情線。
+      </div>
+      <div id="questLinesList"></div>
+    </div>
+
     <!-- ══ 轉移碼 ══ -->
     <div class="panel" id="panel-transfer">
       <div class="panel-title">🔁 轉移碼</div>
@@ -605,6 +616,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 <script src="data/quests.js"></script>
 <script src="data/missions.js"></script>
 <script src="data/enchant.js"></script>
+<script src="data/questLines.js"></script>
 <script src="data/app.js"></script>
 </body>
 </html>

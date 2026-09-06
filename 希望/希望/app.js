@@ -669,7 +669,10 @@
       html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
       if (questUses.length) {
         html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">任務道具，用於：' +
-          questUses.map(function (u) { return '<span class="name-link" data-open-questline="' + u.lineId + '">' + escapeHtml(u.lineTitle) + '・' + escapeHtml(u.stepName) + '</span>'; }).join('、') +
+          questUses.map(function (u) {
+            var label = escapeHtml(u.lineTitle) + '・' + escapeHtml(u.stepName);
+            return u.lineId != null ? '<span class="name-link" data-open-questline="' + u.lineId + '">' + label + '</span>' : '<span>' + label + '</span>';
+          }).join('、') +
           '</div>';
       }
       if (petEvolveUses.length) {

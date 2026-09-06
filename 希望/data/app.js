@@ -9,6 +9,7 @@
   var JOBS = window.JOBS || [];
   var SECOND_JOBS = window.SECOND_JOBS || [];
   var MAPS = window.MAPS || {};
+  var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
   var PETS = window.PETS || {};
   var SKILLS = window.SKILLS || {};
 
@@ -50,6 +51,10 @@
     // 裝備欄位的下拉選單是根據「目前背包」現算的，每次點進這個面板都重新整理一次，
     // 這樣剛在背包新增的裝備才會立刻出現在選單裡，不用重新載入整個存檔。
     if (name === "equip" && saveData) renderLoadout(saveData.characters[currentCharIndex]);
+    if (name === "questlines" && !document.getElementById("questLinesList").dataset.rendered) {
+      renderQuestLines();
+      document.getElementById("questLinesList").dataset.rendered = "1";
+    }
   }
 
   document.querySelectorAll(".nav-item").forEach(function (nav) {
@@ -1001,6 +1006,51 @@
   // ---------- 寵物需求檢查（等級/名聲）與提醒視窗 ----------
   var petsTouched = false; // 只有玩家真的動過寵物，才會做這些檢查/跳窗
 
+  function renderQuestLines() {
+    var wrap = document.getElementById("questLinesList");
+    var lineIds = Object.keys(MAIN_QUEST_LINES).sort(function (a, b) {
+      var la = MAIN_QUEST_LINES[a], lb = MAIN_QUEST_LINES[b];
+      return (lb.jobRelated - la.jobRelated) || la.title.localeCompare(lb.title, "zh-Hant");
+    });
+    if (!lineIds.length) {
+      wrap.innerHTML = '<div class="panel-desc">目前沒有主線任務資料（data/questLines.js 是空的）。</div>';
+      return;
+    }
+    wrap.innerHTML = "";
+    lineIds.forEach(function (lid) {
+      var line = MAIN_QUEST_LINES[lid];
+      var details = el("details", { style: "margin-bottom:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;" });
+      var summary = el("summary", { style: "cursor:pointer;font-weight:700;color:var(--text);" });
+      summary.textContent = line.title + (line.jobRelated ? "　🔶 職業進度" : "") + "　（共 " + line.parts.length + " 步）";
+      details.appendChild(summary);
+      var stepsWrap = el("div", { style: "margin-top:10px;display:flex;flex-direction:column;gap:8px;" });
+      line.parts.forEach(function (part) {
+        var mapNames = (part.mapIds || []).map(function (mid) { return MAPS[String(mid)] || ("地圖#" + mid); }).join("、");
+        var row = el("div", { style: "padding:8px 10px;background:var(--bg3);border-radius:5px;" });
+        row.appendChild(el("div", { style: "font-weight:600;color:var(--gold,#c9a24b);margin-bottom:3px;", text: "步驟 " + part.seq + "：" + part.name }));
+        row.appendChild(el("div", { class: "note", text: (part.npcName ? "NPC：" + part.npcName : "") + (mapNames ? "　地圖：" + mapNames : "") }));
+        var reqList = part.requirements || [];
+        var multiReq = reqList.length > 1;
+        reqList.forEach(function (req, rIdx) {
+          var reqBits = [];
+          if (req.lv) reqBits.push("等級 " + req.lv);
+          if (req.fame) reqBits.push("名聲 " + req.fame);
+          if (req.gold) reqBits.push("金幣 " + req.gold);
+          (req.items || []).forEach(function (it) { reqBits.push(itemName(it[0]) + " ×" + it[1]); });
+          if (reqBits.length) {
+            row.appendChild(el("div", {
+              class: "note", style: "margin-top:2px;",
+              text: ((multiReq ? "方式" + (rIdx + 1) + "：" : "") + "需求：" + reqBits.join("、"))
+            }));
+          }
+        });
+        stepsWrap.appendChild(row);
+      });
+      details.appendChild(stepsWrap);
+      wrap.appendChild(details);
+    });
+  }
+
   function checkPetRequirement(pet, c) {
     var def = PETS[String(pet.id)];
     if (!def) return { lvOk: true, fameOk: true };
@@ -1103,7 +1153,7 @@
 
       ["uid", "grow", "exp", "hunger"].forEach(function (field) {
         var td = document.createElement("td");
-        var inpAttrs = { type: "number", value: pet[field] };
+        var inpAttrs = { type: "number", value: pet[field], style: "width:100%;min-width:56px;" };
         if (field === "grow") { inpAttrs.min = "0"; inpAttrs.max = "9"; } // 成長階段最高只到 9，超過遊戲裡的加成表也查不到
         var inp = el("input", inpAttrs);
         inp.addEventListener("input", function () {
