@@ -202,24 +202,27 @@
   // 2. ITEM_KILL_SOURCE（舊來源，只涵蓋 kill-trees.json 收錄的部分，但這個資料裡有怪物名稱）。
   // event 類型的優先用 ITEM_KILL_SOURCE 補上怪物名稱，兩邊都查不到就不顯示，不用猜。
   function itemKillSourceText(iid) {
-    var origin = ITEM_ORIGIN[String(iid)];
+    var origins = ITEM_ORIGIN[String(iid)] || [];
     var killSrc = ITEM_KILL_SOURCE[String(iid)];
-    if (origin && origin.kind === "npc" && origin.npcName) {
-      var needHtml = origin.needItemId ? "（需先持有 " + itemChip(origin.needItemId) + "）" : "";
-      return "取得方式：去找 <b>" + escapeHtml(origin.npcName) + "</b> 取得" + needHtml;
+    var npcOrigins = origins.filter(function (o) { return o.kind === "npc" && o.npcName; });
+    var eventOrigins = origins.filter(function (o) { return o.kind === "event"; });
+    var lines = [];
+    if (npcOrigins.length) {
+      lines.push("取得方式：去找 " + npcOrigins.map(function (o) {
+        var needHtml = o.needItemId ? "（需先持有 " + itemChip(o.needItemId) + "）" : "";
+        return "<b>" + escapeHtml(o.npcName) + "</b>" + needHtml;
+      }).join("　或　") + " 取得");
     }
     if (killSrc) {
       var monsterHtml = killSrc.monsterId
         ? '<span class="name-link" data-goto-monster="' + killSrc.monsterId + '">' + escapeHtml(killSrc.monsterName) + '</span>'
         : escapeHtml(killSrc.monsterName || "未知怪物");
       var needHtml2 = killSrc.needItemId ? "（需先持有 " + itemChip(killSrc.needItemId) + "）" : "";
-      return "取得方式：向 " + monsterHtml + " 提出要求取得（狩獵／戰鬥觸發）" + needHtml2;
+      lines.push("取得方式：向 " + monsterHtml + " 提出要求取得（狩獵／戰鬥觸發）" + needHtml2);
+    } else if (eventOrigins.length && !npcOrigins.length) {
+      lines.push("取得方式：戰鬥／狩獵事件觸發（查不到是哪隻怪物）");
     }
-    if (origin && origin.kind === "event") {
-      var needHtml3 = origin.needItemId ? "（需先持有 " + itemChip(origin.needItemId) + "）" : "";
-      return "取得方式：戰鬥／狩獵事件觸發" + needHtml3 + "（查不到是哪隻怪物）";
-    }
-    return "";
+    return lines.join("<br>");
   }
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
@@ -1383,6 +1386,13 @@
     html += '<div class="section-title"><span class="name-link" id="questLineBackToList" style="cursor:pointer;">← 主線任務</span></div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(line.title) +
       (line.jobRelated ? ' <span class="badge tag-harvest">職業進度</span>' : '') + '</div>';
+
+    if (line.communityNote) {
+      html += '<div style="background:rgba(90,140,201,.12);border:1px solid #5a8cc9;border-radius:4px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">' +
+        '<div style="color:#8fb8e8;font-weight:700;margin-bottom:4px;">💡 社群攻略補充（非本站遊戲資料查到的，僅供參考）</div>' +
+        escapeHtml(line.communityNote) +
+        '</div>';
+    }
 
     line.parts.forEach(function (part) {
       var mapNames = (part.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
