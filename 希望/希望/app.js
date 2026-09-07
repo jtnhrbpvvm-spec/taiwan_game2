@@ -195,14 +195,31 @@
   var ITEM_QUEST_USES = window.ITEM_QUEST_USES || {};
   var ITEM_PET_EVOLVE_USES = window.ITEM_PET_EVOLVE_USES || {};
   var ITEM_KILL_SOURCE = window.ITEM_KILL_SOURCE || {};
+  var ITEM_ORIGIN = window.ITEM_ORIGIN || {};
+  // 物品取得方式，兩種來源合併判斷：
+  // 1. ITEM_ORIGIN（掃過每個 NPC 完整對話樹得到的，比較準）：kind=npc 代表對話直接給的，
+  //    kind=event 代表這棵對話樹沒有任何 NPC 認領，多半是戰鬥/狩獵事件觸發。
+  // 2. ITEM_KILL_SOURCE（舊來源，只涵蓋 kill-trees.json 收錄的部分，但這個資料裡有怪物名稱）。
+  // event 類型的優先用 ITEM_KILL_SOURCE 補上怪物名稱，兩邊都查不到就不顯示，不用猜。
   function itemKillSourceText(iid) {
-    var src = ITEM_KILL_SOURCE[String(iid)];
-    if (!src) return "";
-    var monsterHtml = src.monsterId
-      ? '<span class="name-link" data-goto-monster="' + src.monsterId + '">' + escapeHtml(src.monsterName) + '</span>'
-      : escapeHtml(src.monsterName || "未知怪物");
-    var needHtml = src.needItemId ? "（需先持有 " + itemChip(src.needItemId) + "）" : "";
-    return "取得方式：擊殺／互動 " + monsterHtml + " 觸發劇情" + needHtml;
+    var origin = ITEM_ORIGIN[String(iid)];
+    var killSrc = ITEM_KILL_SOURCE[String(iid)];
+    if (origin && origin.kind === "npc" && origin.npcName) {
+      var needHtml = origin.needItemId ? "（需先持有 " + itemChip(origin.needItemId) + "）" : "";
+      return "取得方式：去找 <b>" + escapeHtml(origin.npcName) + "</b> 取得" + needHtml;
+    }
+    if (killSrc) {
+      var monsterHtml = killSrc.monsterId
+        ? '<span class="name-link" data-goto-monster="' + killSrc.monsterId + '">' + escapeHtml(killSrc.monsterName) + '</span>'
+        : escapeHtml(killSrc.monsterName || "未知怪物");
+      var needHtml2 = killSrc.needItemId ? "（需先持有 " + itemChip(killSrc.needItemId) + "）" : "";
+      return "取得方式：向 " + monsterHtml + " 提出要求取得（狩獵／戰鬥觸發）" + needHtml2;
+    }
+    if (origin && origin.kind === "event") {
+      var needHtml3 = origin.needItemId ? "（需先持有 " + itemChip(origin.needItemId) + "）" : "";
+      return "取得方式：戰鬥／狩獵事件觸發" + needHtml3 + "（查不到是哪隻怪物）";
+    }
+    return "";
   }
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
@@ -493,6 +510,7 @@
         if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
         if (ITEM_QUEST_USES[it.id]) metaParts.push("任務道具");
         if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
+        if (ITEM_ORIGIN[it.id] || ITEM_KILL_SOURCE[it.id]) metaParts.push("可從任務取得");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -674,9 +692,12 @@
     (ITEM_PET_EVOLVE_USES[id] || []).forEach(function (u) {
       if (!petEvolveUses.some(function (x) { return x.petId === u.petId; })) petEvolveUses.push(u);
     });
-    if (questUses.length || petEvolveUses.length) {
+    var killSourceText = itemKillSourceText(id);
+    if (questUses.length || petEvolveUses.length || killSourceText) {
       html += '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">';
-      html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
+      if (questUses.length || petEvolveUses.length) {
+        html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
+      }
       if (questUses.length) {
         html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">任務道具，用於：' +
           questUses.map(function (u) {
@@ -690,7 +711,6 @@
           petEvolveUses.map(function (u) { return '<span class="name-link" data-open-pet="' + u.petId + '">' + escapeHtml(u.petName) + '</span>'; }).join('、') +
           '</div>';
       }
-      var killSourceText = itemKillSourceText(id);
       if (killSourceText) {
         html += '<div style="font-size:13px;color:var(--text);margin-top:4px;">' + killSourceText + '</div>';
       }
