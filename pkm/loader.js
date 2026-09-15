@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // 每次改完程式碼記得手動更新這個版本號，
+  // 面板標題會顯示它，方便確認玩家載入到的是不是最新版（沒吃到快取的舊版）。
+  const SCRIPT_VERSION = 'v1.3';
+
   // ====== 0. 防止重複載入造成的疊加問題 ======
   if (window.__pokechillCleanup) {
     try { window.__pokechillCleanup(); } catch (e) { /* 忽略 */ }
@@ -81,7 +85,7 @@
     margin-bottom: 10px;
   `;
   const title = document.createElement('span');
-  title.innerText = '⚙️ Pokechill 助手';
+  title.innerText = `⚙️ Pokechill 助手 ${SCRIPT_VERSION}`;
   title.style.cssText = 'font-size: 13px; font-weight: bold; color: #ddd;';
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerText = '－';
@@ -348,7 +352,7 @@
 
   // ====== 8. 卸載按鈕 ======
   const unloadBtn = document.createElement('button');
-  unloadBtn.innerText = '🗑️ 卸載腳本';
+  unloadBtn.innerText = '🗑️ 關閉';
   unloadBtn.style.cssText = `
     width: 100%;
     padding: 6px 0;
@@ -378,8 +382,8 @@
     const el = document.getElementById('pokechill-helper-ui');
     if (el) el.remove();
     delete window.__pokechillCleanup;
-    console.log('%c🗑️ Pokechill 輔助腳本已卸載，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
+    console.log('%c🗑️ Pokechill 輔助腳本已關閉，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
   };
 
-  console.log('%c✅ Pokechill 支援手機拖曳版本已成功載入！', 'color: #52c41a; font-size: 14px; font-weight: bold;');
+  console.log(`%c✅ Pokechill 輔助腳本已載入！版本 ${SCRIPT_VERSION}`, 'color: #52c41a; font-size: 14px; font-weight: bold;');
 })();
