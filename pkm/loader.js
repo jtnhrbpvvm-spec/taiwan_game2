@@ -2,8 +2,6 @@
   'use strict';
 
   // ====== 0. 防止重複載入造成的疊加問題 ======
-  // 如果之前已經載入過，先呼叫舊版的 cleanup 還原原生函式，
-  // 避免 Date.now / setTimeout 被重複包裝、時間越跑越快的 bug。
   if (window.__pokechillCleanup) {
     try { window.__pokechillCleanup(); } catch (e) { /* 忽略 */ }
   }
@@ -11,13 +9,16 @@
   const oldUI = document.getElementById('pokechill-helper-ui');
   if (oldUI) oldUI.remove();
 
-  // ====== 1. 備份原生函式，供之後還原 ======
+  // ====== 1. 備份原生函式，供之後還原 / 供內部真實計時使用 ======
   const nativeSetInterval = window.setInterval.bind(window);
   const nativeClearInterval = window.clearInterval.bind(window);
   const originalSetTimeout = window.setTimeout.bind(window);
   const originalSetInterval = window.setInterval.bind(window);
   const originalDateNow = Date.now.bind(Date);
   const originalPerfNow = performance.now.bind(performance);
+  // 注意：Date.now / performance.now 底下會被整頁 hook 成假時間，
+  // 所以 UI 內部（例如拖曳/點擊的計時判斷）一律要用 originalPerfNow()，
+  // 不能用被 hook 過的版本，否則開高倍速時點擊判斷會全部跑掉。
 
   // ====== 2. 加速變數與時間掛鉤 ======
   let speedMultiplier = 1;
@@ -48,7 +49,7 @@
     return originalSetInterval(callback, (delay || 0) / speedMultiplier, ...args);
   };
 
-  // ====== 3. UI 面板 ======
+  // ====== 3. UI 容器 ======
   const ui = document.createElement('div');
   ui.id = 'pokechill-helper-ui';
   ui.style.cssText = `
@@ -66,36 +67,120 @@
     user-select: none;
     touch-action: none;
     width: 220px;
+    box-sizing: border-box;
     cursor: move;
+    transition: width 0.15s ease, height 0.15s ease, padding 0.15s ease, border-radius 0.15s ease;
   `;
 
-  // --- 拖曳邏輯（滑鼠 + 觸控），事件掛在 ui 本身而非 document，避免重複載入時監聽器疊加 ---
+  // --- 標題列（含縮小按鈕） ---
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  `;
+  const title = document.createElement('span');
+  title.innerText = '⚙️ Pokechill 助手';
+  title.style.cssText = 'font-size: 13px; font-weight: bold; color: #ddd;';
+  const minimizeBtn = document.createElement('button');
+  minimizeBtn.innerText = '－';
+  minimizeBtn.title = '縮小成圓形';
+  minimizeBtn.style.cssText = `
+    width: 22px;
+    height: 22px;
+    line-height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+  `;
+  header.appendChild(title);
+  header.appendChild(minimizeBtn);
+  ui.appendChild(header);
+
+  // --- 內容區（縮小時整塊隱藏） ---
+  const contentWrapper = document.createElement('div');
+  ui.appendChild(contentWrapper);
+
+  // --- 縮小後顯示的圖示（展開時隱藏） ---
+  const circleIcon = document.createElement('div');
+  circleIcon.innerText = '🎮';
+  circleIcon.style.cssText = `
+    display: none;
+    font-size: 24px;
+    line-height: 1;
+  `;
+  ui.appendChild(circleIcon);
+
+  // ====== 4. 拖曳邏輯（滑鼠 + 觸控通用），並區分「拖曳」與「點一下」 ======
+  // 手機用觸控、電腦用滑鼠，判斷方式不同，但只要統一用座標位移 + 真實耗時
+  // 來分辨「使用者是在拖曳」還是「只是點一下想切換大小」，兩種輸入方式都適用。
   let isDragging = false;
+  let hasMoved = false;
   let offsetX = 0;
   let offsetY = 0;
+  let pressStartX = 0;
+  let pressStartY = 0;
+  let pressStartTime = 0;
+  const DRAG_THRESHOLD_PX = 8;   // 超過這個位移量才算「拖曳」，不算單純點擊
+  const TAP_MAX_DURATION_MS = 400; // 按著超過這個時間也不算單純點擊
 
   function getPointerPos(e) {
     return e.touches ? e.touches[0] : e;
   }
 
+  function clampToViewport() {
+    const rect = ui.getBoundingClientRect();
+    const maxLeft = window.innerWidth - rect.width;
+    const maxTop = window.innerHeight - rect.height;
+    let left = parseFloat(ui.style.left) || 0;
+    let top = parseFloat(ui.style.top) || 0;
+    left = Math.min(Math.max(left, 0), Math.max(maxLeft, 0));
+    top = Math.min(Math.max(top, 0), Math.max(maxTop, 0));
+    ui.style.left = `${left}px`;
+    ui.style.top = `${top}px`;
+  }
+
   function onStart(e) {
-    if (e.target.tagName.toLowerCase() === 'button') return;
+    // 點到真正的 <button>（自動戰鬥／變速／卸載／縮小鈕）時，交給按鈕自己的 onclick 處理，不啟動拖曳
+    if (e.target.closest('button')) return;
     isDragging = true;
+    hasMoved = false;
     const pos = getPointerPos(e);
     offsetX = pos.clientX - ui.offsetLeft;
     offsetY = pos.clientY - ui.offsetTop;
+    pressStartX = pos.clientX;
+    pressStartY = pos.clientY;
+    pressStartTime = originalPerfNow(); // 用真實時間，不受變速影響
   }
 
   function onMove(e) {
     if (!isDragging) return;
     if (e.cancelable) e.preventDefault();
     const pos = getPointerPos(e);
+    const dx = pos.clientX - pressStartX;
+    const dy = pos.clientY - pressStartY;
+    if (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX) {
+      hasMoved = true;
+    }
     ui.style.left = `${pos.clientX - offsetX}px`;
     ui.style.top = `${pos.clientY - offsetY}px`;
   }
 
   function onEnd() {
+    if (!isDragging) return;
     isDragging = false;
+    clampToViewport();
+
+    const elapsed = originalPerfNow() - pressStartTime;
+    // 縮小成圓形時，沒有明顯拖曳位移、按壓時間又短 → 視為「點一下」，展開面板
+    if (minimized && !hasMoved && elapsed < TAP_MAX_DURATION_MS) {
+      toggleMinimize();
+    }
   }
 
   ui.addEventListener('mousedown', onStart);
@@ -105,7 +190,37 @@
   window.addEventListener('touchmove', onMove, { passive: false });
   window.addEventListener('touchend', onEnd);
 
-  // ====== 4. 自動戰鬥區塊 ======
+  // ====== 5. 縮小 / 展開切換 ======
+  let minimized = false;
+
+  function toggleMinimize() {
+    minimized = !minimized;
+    if (minimized) {
+      header.style.display = 'none';
+      contentWrapper.style.display = 'none';
+      circleIcon.style.display = 'flex';
+      ui.style.width = '56px';
+      ui.style.height = '56px';
+      ui.style.padding = '0';
+      ui.style.borderRadius = '50%';
+      ui.style.display = 'flex';
+      ui.style.alignItems = 'center';
+      ui.style.justifyContent = 'center';
+    } else {
+      header.style.display = 'flex';
+      contentWrapper.style.display = 'block';
+      circleIcon.style.display = 'none';
+      ui.style.width = '220px';
+      ui.style.height = 'auto';
+      ui.style.padding = '14px';
+      ui.style.borderRadius = '10px';
+    }
+    clampToViewport();
+  }
+
+  minimizeBtn.onclick = toggleMinimize;
+
+  // ====== 6. 自動戰鬥區塊 ======
   let autoTimer = null;
   const autoBtn = document.createElement('button');
   autoBtn.innerText = '🤖 自動戰鬥：關閉';
@@ -122,7 +237,6 @@
     cursor: pointer;
   `;
 
-  // 優化：只掃描按鈕類元素，而不是整個 DOM 的 '*'，大幅降低每次輪詢的成本
   const REMATCH_TEXTS = new Set(['再次战斗', '再次戰鬥', 'Rematch']);
   function findRematchButton() {
     const candidates = document.querySelectorAll('button, a, div[role="button"], span[role="button"]');
@@ -157,16 +271,16 @@
     }
   };
 
-  ui.appendChild(autoBtn);
+  contentWrapper.appendChild(autoBtn);
 
-  // ====== 5. 加速器區塊 ======
+  // ====== 7. 加速器區塊 ======
   const label = document.createElement('div');
   label.innerText = '⏱️ 遊戲變速器 (目前: 1x)';
   label.style.marginBottom = '8px';
   label.style.fontWeight = 'bold';
   label.style.fontSize = '13px';
   label.style.color = '#ddd';
-  ui.appendChild(label);
+  contentWrapper.appendChild(label);
 
   const speedContainer = document.createElement('div');
   speedContainer.style.display = 'flex';
@@ -203,9 +317,9 @@
     speedContainer.appendChild(btn);
   });
 
-  ui.appendChild(speedContainer);
+  contentWrapper.appendChild(speedContainer);
 
-  // ====== 6. 卸載按鈕：完整還原所有被 hook 的原生函式與監聽器 ======
+  // ====== 8. 卸載按鈕 ======
   const unloadBtn = document.createElement('button');
   unloadBtn.innerText = '🗑️ 卸載腳本';
   unloadBtn.style.cssText = `
@@ -219,11 +333,11 @@
     font-size: 12px;
   `;
   unloadBtn.onclick = () => window.__pokechillCleanup();
-  ui.appendChild(unloadBtn);
+  contentWrapper.appendChild(unloadBtn);
 
   document.body.appendChild(ui);
 
-  // ====== 7. 全域 cleanup，供重新載入或手動卸載時呼叫 ======
+  // ====== 9. 全域 cleanup ======
   window.__pokechillCleanup = function () {
     if (autoTimer) nativeClearInterval(autoTimer);
     Date.now = originalDateNow;
