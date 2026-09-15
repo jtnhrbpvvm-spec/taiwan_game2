@@ -146,7 +146,7 @@
   }
 
   function onStart(e) {
-    // 點到真正的 <button>（自動戰鬥／變速／關閉／縮小鈕）時，交給按鈕自己的 onclick 處理，不啟動拖曳
+    // 點到真正的 <button>（自動戰鬥／變速／卸載／縮小鈕）時，交給按鈕自己的 onclick 處理，不啟動拖曳
     if (e.target.closest('button')) return;
     isDragging = true;
     hasMoved = false;
@@ -244,21 +244,43 @@
 
   const REMATCH_TEXTS = new Set(['再次战斗', '再次戰鬥', 'Rematch']);
   function findRematchButton() {
-    const candidates = document.querySelectorAll('button, a, div[role="button"], span[role="button"]');
-    for (const el of candidates) {
-      const text = (el.innerText || '').trim();
-      if (REMATCH_TEXTS.has(text) && el.offsetWidth > 0) {
+    // 不限定標籤/role，因為遊戲按鈕常常只是普通 <div>/<span> 加上 JS 事件，沒有 role="button"。
+    // 只看「沒有子元素的葉節點」來減少比對次數，同時仍能涵蓋任何標籤類型。
+    const all = document.querySelectorAll('*');
+    for (const el of all) {
+      if (el.children.length > 0) continue;
+      const text = (el.innerText || el.textContent || '').trim();
+      if (REMATCH_TEXTS.has(text) && el.offsetWidth > 0 && el.offsetHeight > 0) {
         return el;
       }
     }
     return null;
   }
 
+  // 有些遊戲介面只監聽 touch/pointer 事件、不理會單純的 .click()，
+  // 這裡把常見的事件都派發一次，盡量提高相容性。
+  function simulateClick(el) {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const opts = { bubbles: true, cancelable: true, clientX: cx, clientY: cy };
+
+    try {
+      el.dispatchEvent(new PointerEvent('pointerdown', opts));
+      el.dispatchEvent(new MouseEvent('mousedown', opts));
+      el.dispatchEvent(new PointerEvent('pointerup', opts));
+      el.dispatchEvent(new MouseEvent('mouseup', opts));
+    } catch (e) {
+      // 部分瀏覽器的 PointerEvent 建構子可能有相容性問題，忽略即可
+    }
+    el.click();
+  }
+
   function startAutoClick() {
     autoTimer = nativeSetInterval(() => {
       const targetBtn = findRematchButton();
       if (targetBtn) {
-        targetBtn.click();
+        simulateClick(targetBtn);
       }
     }, 800);
   }
@@ -324,9 +346,9 @@
 
   contentWrapper.appendChild(speedContainer);
 
-  // ====== 8. 關閉按鈕 ======
+  // ====== 8. 卸載按鈕 ======
   const unloadBtn = document.createElement('button');
-  unloadBtn.innerText = '🗑️ 關閉腳本';
+  unloadBtn.innerText = '🗑️ 卸載腳本';
   unloadBtn.style.cssText = `
     width: 100%;
     padding: 6px 0;
@@ -356,7 +378,7 @@
     const el = document.getElementById('pokechill-helper-ui');
     if (el) el.remove();
     delete window.__pokechillCleanup;
-    console.log('%c🗑️ Pokechill 輔助腳本已關閉，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
+    console.log('%c🗑️ Pokechill 輔助腳本已卸載，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
   };
 
   console.log('%c✅ Pokechill 支援手機拖曳版本已成功載入！', 'color: #52c41a; font-size: 14px; font-weight: bold;');
