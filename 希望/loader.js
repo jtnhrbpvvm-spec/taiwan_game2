@@ -503,6 +503,11 @@
         while (g.length < n) g.push(false);
         g.length = n;
       });
+      // 第一次設定屬性選項時，自動幫玩家建一組「組合1」（預設全部勾選），
+      // 不用玩家自己記得要按「➕新增組合」再勾選，這是最容易漏掉的一步。
+      if (n >= 1 && groups.length === 0) {
+        groups.push(new Array(n).fill(true));
+      }
       renderGroups();
     }
     addGroupBtn.addEventListener("click", function () {
@@ -582,14 +587,16 @@
           alert("你準備了 " + slotRows.length + " 條屬性選項，但沒有建立任何「停止條件組合」。\n\n遊戲每次強化固定只會洗出 3 條屬性，不可能一次全部出現——請按「➕ 新增組合」，自己勾選其中最多 3 個編號當作停止條件。");
           return;
         }
+        if (slotRows.length >= 1 && matchGroups.length === 0) {
+          if (!confirm("你設定了 " + slotRows.length + " 條屬性選項，但沒有按「➕ 新增組合」勾選任何一個編號當作停止條件。\n\n這樣屬性條件不會生效，只要階級到了就會直接停止，不管洗出來的屬性是什麼。\n\n要照這樣繼續嗎？（建議按「取消」，回去新增組合並勾選）")) return;
+        }
 
         // 開始強化前，先看這件裝備「目前現在」是不是已經符合設定的條件了——
         // 有可能玩家之前已經洗出想要的屬性種類，只是數值不是他要的，這種情況直接開始跑，
-        // 一開始就會馬上判定「已符合」而停下來，等於白跑。先跳兩次確認，讓玩家自己決定要不要繼續。
+        // 一開始就會馬上判定「已符合」而停下來，等於白跑。跳一次確認，讓玩家自己決定要不要重洗。
         var currentEntryNow = findEntryByStackId(item.stackId);
         if (matchGroups.length && meetsAnyGroup(currentEntryNow, matchGroups)) {
-          if (!confirm("你已經洗出指定能力了，還要繼續嗎？\n\n（可能是屬性種類對了，但數值不是你要的）")) return;
-          if (!confirm("確定要繼續？")) return;
+          if (!confirm("指定能力已出現，是否重新洗裝備？\n\n（可能是屬性種類對了，但數值不是你要的）")) return;
         }
 
         startRun(item, targetGrade, budget, autoBuy, matchGroups);
@@ -898,7 +905,7 @@
     if (alchemyBackdrop) return;
     if (alchemyRunning) { openAlchemyStatusModal(); return; }
     var panel;
-    try { panel = session.buildAlchemyPanel(); } catch (err) { panel = null; }
+    try { panel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); } catch (err) { panel = null; }
     if (!panel || !panel.recipes || !panel.recipes.length) {
       alert("目前拿不到任何可用的煉金配方（可能不是鐵匠職業，或是身上沒有對應的配方書/材料/技能）。");
       return;
@@ -1011,7 +1018,9 @@
     if (summaryEl) summaryEl.innerHTML = "";
 
     function findRecipe() {
-      var panel = session.buildAlchemyPanel();
+      var panel;
+      try { panel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); }
+      catch (err) { console.error("[自動煉金] buildAlchemyPanel 呼叫失敗，可能是遊戲改版了，請回報作者", err); return null; }
       if (!panel) return null;
       return panel.recipes.find(function (r) { return r.id === recipeId; }) || null;
     }
@@ -1064,7 +1073,8 @@
       updateAlchemyStatusSummary();
 
       var cooldownMs = 1200; // 讀不到新的 readyAtMs 時，先給一個保守的預設間隔，避免無冷卻配方緊繃連打
-      var afterPanel = session.buildAlchemyPanel();
+      var afterPanel = null;
+      try { afterPanel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); } catch (err) { /* 讀不到就用預設間隔，不中斷流程 */ }
       var afterRecipe = afterPanel && afterPanel.recipes.find(function (r) { return r.id === recipeId; });
       if (afterRecipe && afterRecipe.readyAtMs > Date.now()) cooldownMs = afterRecipe.readyAtMs - Date.now() + 50;
       alchemyTimer = setTimeout(step, cooldownMs);
