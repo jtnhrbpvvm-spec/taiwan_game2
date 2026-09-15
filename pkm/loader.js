@@ -214,6 +214,11 @@
       ui.style.height = 'auto';
       ui.style.padding = '14px';
       ui.style.borderRadius = '10px';
+      // 展開時要把縮小模式加上的 flex 置中樣式還原，
+      // 不然 header / contentWrapper 會被當成橫向排列的 flex 項目，版面就亂了
+      ui.style.display = 'block';
+      ui.style.alignItems = '';
+      ui.style.justifyContent = '';
     }
     clampToViewport();
   }
