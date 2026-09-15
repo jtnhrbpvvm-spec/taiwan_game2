@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokechill 二合一助手 - 書籤安裝頁面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #1e293b;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 650px;
+            width: 100%;
+            border: 1px solid #334155;
+        }
+        h1 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        p {
+            line-height: 1.6;
+            color: #94a3b8;
+        }
+        .bookmark-box {
+            background: #0f172a;
+            border: 2px dashed #475569;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 24px 0;
+        }
+        .bookmark-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 16px;
+        }
+        .bookmark-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
+        }
+        .steps {
+            background: #0f172a;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #38bdf8;
+            margin-top: 20px;
+        }
+        .steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 8px;
+            color: #cbd5e1;
+        }
+        code {
+            background: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #f8fafc;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Pokechill 二合一助手</h1>
+        <p>這是一個專為 Pokechill 遊戲設計的網頁助手，整合了<b>自動戰鬥（再次戰鬥）</b>與<b>遊戲變速器（1x ~ 200x）</b>功能。</p>
+        
+        <div class="bookmark-box">
+            <p style="margin-top:0; font-size: 14px; color: #cbd5e1;">請將下方按鈕<b>拖曳到你的瀏覽器書籤列</b>中：</p>
+            <a class="bookmark-btn" href="javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/jtnhrbpvvm-spec/taiwan_game2@main/pkm/loader.js?v='+Math.random();document.body.appendChild(s);})();">⚡ Pokechill 助手</a>
+        </div>
+
+        <div class="steps">
+            <strong>📖 安裝與使用步驟：</strong>
+            <ol>
+                <li>如果瀏覽器沒有顯示書籤列，請按 <code>Ctrl + Shift + B</code> (Windows) 或 <code>Cmd + Shift + B</code> (Mac) 將其顯示。</li>
+                <li>將上方藍色的 <b>「⚡ Pokechill 助手」</b> 按鈕拖曳並放進你的書籤列中。</li>
+                <li>進入 Pokechill 遊戲頁面。</li>
+                <li>點擊瀏覽器書籤列中的 <b>「⚡ Pokechill 助手」</b>，即可在畫面上方看到操作控制面板！</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
