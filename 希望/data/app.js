@@ -1059,7 +1059,7 @@
     return { lvOk: lvOk, fameOk: fameOk, def: def };
   }
 
-  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
+  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速", hit: "命中", dmgDealtPct: "增傷" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關；
   // 沒有 hunger 就是全部歸零。有的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
   // 沒有 growth 陣列的屬性，就固定用寵物基礎資料裡的那個數字，不會隨 grow 變動。

@@ -224,7 +224,7 @@
     }
     return lines.join("<br>");
   }
-  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速" };
+  var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速", hit: "命中", dmgDealtPct: "增傷" };
   // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
   // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
   // 沒有 growth 陣列的屬性，固定用基礎資料裡的數字，不會隨 grow 變動。
@@ -237,12 +237,29 @@
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
+  var ABILITY_FIELD_LABEL = { dmgTakenPct: "減傷", dmgDealtPct: "增傷" };
+  var currentAbilitySearchField = null;
   var itemList = Object.keys(ITEMS).map(function (id) {
     return { id: id, name: ITEMS[id].name };
   });
   var monsterList = Object.keys(MONSTERS).map(function (id) {
     return { id: id, name: MONSTERS[id].name, lv: MONSTERS[id].lv };
   });
+  // 裝備能力搜尋：輸入這些關鍵字，會額外把「有這項能力」的裝備也列進搜尋結果，
+  // 不是名稱比對，是直接看裝備資料裡對應欄位有沒有大於 0。之後如果又發現新能力欄位，
+  // 在這裡加一行對照就好，不用改搜尋邏輯本身。
+  var ABILITY_KEYWORDS = {
+    "減傷": "dmgTakenPct", "減少傷害": "dmgTakenPct",
+    "增傷": "dmgDealtPct", "增加傷害": "dmgDealtPct", "傷害加成": "dmgDealtPct"
+  };
+  function findAbilityField(q) {
+    if (ABILITY_KEYWORDS[q]) return ABILITY_KEYWORDS[q];
+    var found = null;
+    Object.keys(ABILITY_KEYWORDS).forEach(function (alias) {
+      if (!found && (alias.indexOf(q) !== -1 || q.indexOf(alias) !== -1)) found = ABILITY_KEYWORDS[alias];
+    });
+    return found;
+  }
 
   // ---------- DOM ----------
   var $input = document.getElementById("searchInput");
@@ -430,6 +447,18 @@
       return it.name.indexOf(q) !== -1;
     }).slice(0, 200);
 
+    var abilityField = findAbilityField(q);
+    if (abilityField) {
+      var abilityMatches = itemList.filter(function (it) {
+        var eq = ITEMS[it.id].equip;
+        return eq && eq[abilityField] > 0 && it.name.indexOf(q) === -1; // 已經在名稱比對裡的就不重複加
+      }).sort(function (a, b) {
+        return (ITEMS[b.id].equip[abilityField] || 0) - (ITEMS[a.id].equip[abilityField] || 0);
+      });
+      currentMatches.items = currentMatches.items.concat(abilityMatches).slice(0, 200);
+    }
+    currentAbilitySearchField = abilityField;
+
     currentMatches.monsters = monsterList.filter(function (m) {
       return m.name.indexOf(q) !== -1;
     }).slice(0, 200);
@@ -501,6 +530,12 @@
         var questRefs = buildQuestReferences(it.id);
         var metaParts = [];
         if (count) metaParts.push(count + " 隻怪物掉落");
+        if (currentAbilitySearchField) {
+          var eqAb = ITEMS[it.id].equip;
+          if (eqAb && eqAb[currentAbilitySearchField] > 0) {
+            metaParts.unshift(ABILITY_FIELD_LABEL[currentAbilitySearchField] + " " + eqAb[currentAbilitySearchField] + "%");
+          }
+        }
         if (shopCount) metaParts.push("商店有賣");
         if (radixCount) metaParts.push("拉迪克斯有賣");
         if (FORGE_BY_BOOK[it.id]) metaParts.push("鍛造書");
@@ -730,8 +765,12 @@
         eqStat("攻擊", eq.atk) + eqStat("防禦", eq.def) + eqStat("魔法", eq.magic) +
         eqStat("攻速", eq.atkSpeed) + eqStat("必殺", eq.crit) + eqStat("迴避", eq.eva) +
         eqStat("移速", eq.moveSpeed) +
+        eqStatPct("增加傷害", eq.dmgDealtPct) + eqStatPct("減少傷害", eq.dmgTakenPct) +
         (eq.attrs ? attrStats(eq.attrs) : "") +
         '</div></div>';
+      if (eq.noUpgrade) {
+        html += '<div class="empty-note" style="padding:6px 0 0;">⚠️ 這件裝備無法發條強化。</div>';
+      }
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
@@ -974,6 +1013,10 @@
   function eqStat(label, v) {
     if (!v) return "";
     return '<div>' + label + ' <b>' + (v > 0 ? "+" : "") + v + '</b></div>';
+  }
+  function eqStatPct(label, v) {
+    if (!v) return "";
+    return '<div>' + label + ' <b>' + (v > 0 ? "+" : "") + v + '%</b></div>';
   }
   function attrStats(attrs) {
     var labels = { str: "力量", agi: "敏捷", int: "智力", sta: "體力", wis: "精神", luck: "幸運" };
