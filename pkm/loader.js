@@ -146,7 +146,7 @@
   }
 
   function onStart(e) {
-    // 點到真正的 <button>（自動戰鬥／變速／卸載／縮小鈕）時，交給按鈕自己的 onclick 處理，不啟動拖曳
+    // 點到真正的 <button>（自動戰鬥／變速／關閉／縮小鈕）時，交給按鈕自己的 onclick 處理，不啟動拖曳
     if (e.target.closest('button')) return;
     isDragging = true;
     hasMoved = false;
@@ -324,9 +324,9 @@
 
   contentWrapper.appendChild(speedContainer);
 
-  // ====== 8. 卸載按鈕 ======
+  // ====== 8. 關閉按鈕 ======
   const unloadBtn = document.createElement('button');
-  unloadBtn.innerText = '🗑️ 卸載腳本';
+  unloadBtn.innerText = '🗑️ 關閉腳本';
   unloadBtn.style.cssText = `
     width: 100%;
     padding: 6px 0;
@@ -356,7 +356,7 @@
     const el = document.getElementById('pokechill-helper-ui');
     if (el) el.remove();
     delete window.__pokechillCleanup;
-    console.log('%c🗑️ Pokechill 輔助腳本已卸載，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
+    console.log('%c🗑️ Pokechill 輔助腳本已關閉，原生函式已還原。', 'color: #ff4d4f; font-weight: bold;');
   };
 
   console.log('%c✅ Pokechill 支援手機拖曳版本已成功載入！', 'color: #52c41a; font-size: 14px; font-weight: bold;');
