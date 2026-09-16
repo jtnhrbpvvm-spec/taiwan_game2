@@ -11,6 +11,7 @@
   var MAPS = window.MAPS || {};
   var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
   var PETS = window.PETS || {};
+  var BATTLE_PET_INFO = window.BATTLE_PET_INFO || { kinds: [], growthTypes: [], maxLevel: 0, levels: {}, auras: {}, skills: [], upgrades: [], gearSlots: [], gear: [] };
   var SKILLS = window.SKILLS || {};
 
   var JOB_NAME = {};
@@ -38,7 +39,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "potions", "records", "spot", "individuality", "quests", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -68,6 +69,27 @@
       showPanel(name);
     });
   });
+
+  // 「戰寵」功能還沒有真實存檔驗證過，先隱藏起來，避免玩家誤用造成存檔損壞——
+  // 連續點「寵物」五下（1.5 秒內）才會讓它出現，之後就會一直顯示到下次重新整理頁面。
+  (function () {
+    var petsNav = document.getElementById("petsNavItem");
+    var battlePetNav = document.getElementById("battlePetNavItem");
+    if (!petsNav || !battlePetNav) return;
+    var clickCount = 0;
+    var lastClickMs = 0;
+    petsNav.addEventListener("click", function () {
+      var now = Date.now();
+      if (now - lastClickMs > 1500) clickCount = 0;
+      lastClickMs = now;
+      clickCount++;
+      if (clickCount >= 5) {
+        battlePetNav.style.display = "";
+        toast("已解鎖「戰寵」面板（尚未經過存檔驗證，請小心使用）", "ok");
+        clickCount = 0;
+      }
+    });
+  })();
 
   document.getElementById("transferShortcutBtn").addEventListener("click", function () {
     showPanel("transfer");
@@ -413,6 +435,7 @@
     renderSkillsPanel(c);
     renderBuffsPanel(c);
     renderPets(c);
+    renderBattlePet(c);
     renderPotions(c);
     renderTagLists(c);
     renderSpot(c);
@@ -1221,6 +1244,174 @@
       petsTouched = true;
       renderPets(c);
     };
+  }
+
+  // ---------- 戰寵（全新系統，跟上面的寵物完全獨立，欄位是從遊戲原始碼反推的，還沒有存檔可以驗證）----------
+  function bpetKindDef(kind) {
+    return (BATTLE_PET_INFO.kinds || []).find(function (k) { return k.kind === kind; });
+  }
+  function renderBattlePet(c) {
+    if (!c.warehouse) c.warehouse = { gold: 0, nextStackId: 1, stacks: [], pets: [], battlePets: [] };
+    if (!Array.isArray(c.warehouse.battlePets)) c.warehouse.battlePets = [];
+
+    var activeBox = document.getElementById("activeBattlePetBox");
+    if (!activeBox) return; // 面板還沒被打開過，DOM 還沒建立，先跳過
+    activeBox.innerHTML = "";
+
+    var bp = c.battlePet;
+    if (!bp) {
+      activeBox.appendChild(el("div", { class: "note", text: "目前沒有出戰中的戰寵。", style: "margin-bottom:8px;" }));
+      var addBtn = el("button", { class: "btn btn-accent btn-sm", text: "➕ 設定一隻出戰戰寵" });
+      addBtn.addEventListener("click", function () {
+        var firstKind = BATTLE_PET_INFO.kinds[0];
+        if (!firstKind) { alert("目前沒有任何戰寵種類資料，請確認 data/battlePets.js 有沒有正確載入"); return; }
+        c.battlePet = {
+          kind: firstKind.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
+          closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
+          summoned: false, downed: false, autoRevive: false,
+          gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
+        };
+        renderBattlePet(c);
+      });
+      activeBox.appendChild(addBtn);
+      renderWarehouseBattlePets(c);
+      return;
+    }
+
+    var grid = el("div", { class: "grid" });
+
+    var kindField = el("div", { class: "field" });
+    kindField.appendChild(el("label", { text: "種類 (kind)" }));
+    var kindSel = el("select");
+    BATTLE_PET_INFO.kinds.forEach(function (k) {
+      var opt = el("option", { value: k.kind, text: k.name });
+      if (bp.kind === k.kind) opt.selected = true;
+      kindSel.appendChild(opt);
+    });
+    kindSel.addEventListener("change", function () { bp.kind = Number(kindSel.value); renderBattlePet(c); });
+    kindField.appendChild(kindSel);
+    grid.appendChild(kindField);
+
+    function numField(label, key, min) {
+      var field = el("div", { class: "field" });
+      field.appendChild(el("label", { text: label }));
+      var inp = el("input", { type: "number", value: bp[key] });
+      if (min !== undefined) inp.min = String(min);
+      inp.addEventListener("input", function () { bp[key] = inp.valueAsNumber || 0; });
+      field.appendChild(inp);
+      return field;
+    }
+    grid.appendChild(numField("等級 (level)　最高 " + (BATTLE_PET_INFO.maxLevel || "?"), "level", 1));
+    grid.appendChild(numField("經驗 (exp)", "exp", 0));
+
+    var gradeField = el("div", { class: "field" });
+    gradeField.appendChild(el("label", { text: "進化階段 (grade)" }));
+    var gradeSel = el("select");
+    var stages = (bpetKindDef(bp.kind) || {}).stages || [];
+    for (var g = 0; g <= 4; g++) {
+      var gOpt = el("option", { value: g, text: g + (stages[g] ? "：" + stages[g] : "") });
+      if ((bp.grade || 0) === g) gOpt.selected = true;
+      gradeSel.appendChild(gOpt);
+    }
+    gradeSel.addEventListener("change", function () { bp.grade = Number(gradeSel.value); });
+    gradeField.appendChild(gradeSel);
+    grid.appendChild(gradeField);
+
+    grid.appendChild(numField("seed（決定天賦A/AA/AAA/S，進化到第2階段才看得出來）", "seed", 0));
+    grid.appendChild(numField("親密度 (closeness，滿100轉忠誠度)", "closeness", 0));
+    grid.appendChild(numField("親密度計時 (closenessMs)", "closenessMs", 0));
+    grid.appendChild(numField("忠誠度 (loyalty)", "loyalty", 0));
+    grid.appendChild(numField("忠誠度計時 (loyaltyMs)", "loyaltyMs", 0));
+
+    function boolField(label, key) {
+      var field = el("div", { class: "field" });
+      var lbl = el("label", { style: "display:flex;align-items:center;gap:6px;font-weight:400;" });
+      var cb = el("input", { type: "checkbox", style: "width:auto;" });
+      cb.checked = !!bp[key];
+      cb.addEventListener("change", function () { bp[key] = cb.checked; });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(label));
+      field.appendChild(lbl);
+      return field;
+    }
+    grid.appendChild(boolField("summoned（目前是否召喚在場上）", "summoned"));
+    grid.appendChild(boolField("downed（是否已經倒下，等待復活）", "downed"));
+    grid.appendChild(boolField("autoRevive（自動復活）", "autoRevive"));
+
+    activeBox.appendChild(grid);
+
+    if (!Array.isArray(bp.gear)) bp.gear = [];
+    activeBox.appendChild(el("div", { class: "section-title", text: "裝備欄位", style: "margin-top:14px;" }));
+    var gearGrid = el("div", { class: "grid" });
+    (BATTLE_PET_INFO.gearSlots || []).forEach(function (slotName, idx) {
+      var field = el("div", { class: "field wide" });
+      field.appendChild(el("label", { text: slotName }));
+      var picker = makeItemPicker(bp.gear[idx], function (id) { bp.gear[idx] = id; });
+      field.appendChild(picker);
+      var clearBtn = el("button", { class: "btn btn-sm", text: "清空這格", style: "margin-top:4px;" });
+      clearBtn.addEventListener("click", function () { bp.gear[idx] = null; renderBattlePet(c); });
+      field.appendChild(clearBtn);
+      gearGrid.appendChild(field);
+    });
+    activeBox.appendChild(gearGrid);
+
+    var toWarehouseBtn = el("button", { class: "btn btn-sm", text: "📦 收到倉庫（變成沒有出戰中的戰寵）", style: "margin-top:14px;" });
+    toWarehouseBtn.addEventListener("click", function () {
+      c.warehouse.battlePets.push(bp);
+      c.battlePet = undefined;
+      renderBattlePet(c);
+    });
+    activeBox.appendChild(toWarehouseBtn);
+
+    renderWarehouseBattlePets(c);
+  }
+
+  function renderWarehouseBattlePets(c) {
+    var tbody = document.querySelector("#warehouseBattlePetsTable tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    c.warehouse.battlePets.forEach(function (bp, idx) {
+      var tr = document.createElement("tr");
+      var kindDef = bpetKindDef(bp.kind);
+      tr.appendChild(el("td", { text: kindDef ? kindDef.name : ("#" + bp.kind) }));
+      tr.appendChild(el("td", { text: "Lv" + bp.level }));
+      var stages = (kindDef || {}).stages || [];
+      tr.appendChild(el("td", { text: bp.grade + (stages[bp.grade] ? "：" + stages[bp.grade] : "") }));
+      tr.appendChild(el("td", { text: String(bp.exp) }));
+      var tdAct = document.createElement("td");
+      var promoteBtn = el("button", { class: "icon-btn", text: "設為出戰" });
+      promoteBtn.addEventListener("click", function () {
+        if (c.battlePet) c.warehouse.battlePets.push(c.battlePet);
+        c.battlePet = bp;
+        c.warehouse.battlePets.splice(idx, 1);
+        renderBattlePet(c);
+      });
+      var delBtn = el("button", { class: "icon-btn", text: "✕" });
+      delBtn.addEventListener("click", function () {
+        if (!confirm("確定要刪除這隻倉庫裡的戰寵嗎？")) return;
+        c.warehouse.battlePets.splice(idx, 1);
+        renderBattlePet(c);
+      });
+      tdAct.appendChild(promoteBtn);
+      tdAct.appendChild(delBtn);
+      tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+
+    var addBtn = document.getElementById("addWarehouseBattlePetBtn");
+    if (addBtn) {
+      addBtn.onclick = function () {
+        var firstKind = BATTLE_PET_INFO.kinds[0];
+        if (!firstKind) { alert("目前沒有任何戰寵種類資料"); return; }
+        c.warehouse.battlePets.push({
+          kind: firstKind.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
+          closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
+          summoned: false, downed: false, autoRevive: false,
+          gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
+        });
+        renderWarehouseBattlePets(c);
+      };
+    }
   }
 
   function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem) {

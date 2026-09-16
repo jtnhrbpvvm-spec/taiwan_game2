@@ -417,6 +417,8 @@
       showMonster(id);
     } else if (kind === "pet") {
       showPetDetail(id);
+    } else if (kind === "bpet") {
+      showBattlePetDetail(id);
     } else if (kind === "questline") {
       showQuestLineDetail(id);
     }
@@ -1505,6 +1507,10 @@
     document.getElementById("questLineBackToList").addEventListener("click", showQuestLineBrowser);
   }
 
+  var BATTLE_PET_INFO = window.BATTLE_PET_INFO || { kinds: [], growthTypes: [], levels: {}, auras: {}, skills: [], upgrades: [], gearSlots: [], gear: [], crafts: [], stoneCrafts: [] };
+  var BPET_STAT_LABEL = { hp: "HP", ap: "AP", atk: "攻擊", hit: "命中", crit: "爆擊", def: "防禦", eva: "迴避", reviveCost: "復活費用", sp: "SP", exp: "所需經驗" };
+  var BPET_AURA_LABEL = { atk: "攻擊", mag: "魔法", def: "防禦", hit: "命中", eva: "迴避", aspd: "攻速", crit: "爆擊", mspd: "移速", hp: "HP", ap: "AP" };
+
   function showPetBrowser(tierFilter) {
     var allIds = Object.keys(PET_INFO).sort(function (a, b) {
       return (PET_INFO[a].tier - PET_INFO[b].tier) || (PET_INFO[a].lv - PET_INFO[b].lv);
@@ -1512,12 +1518,38 @@
     var tiers = Array.from(new Set(allIds.map(function (id) { return PET_INFO[id].tier; }))).sort(function (a, b) { return a - b; });
     var petIds = tierFilter ? allIds.filter(function (id) { return PET_INFO[id].tier === tierFilter; }) : allIds;
 
+    if (tierFilter === "bpet") {
+      var html2 = '<h2 style="margin-top:0;">🐉 戰寵列表 <span class="count">(' + BATTLE_PET_INFO.kinds.length + ')</span></h2>';
+      html2 += '<div style="margin-bottom:12px;">' +
+        '<label style="font-size:12.5px;color:var(--text-faint);margin-right:8px;">跳到階級</label>' +
+        '<select id="petTierFilter" style="padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">' +
+        '<option value="">全部</option>' +
+        tiers.map(function (t) { return '<option value="' + t + '">' + t + ' 階</option>'; }).join('') +
+        '<option value="bpet" selected>戰寵</option>' +
+        '</select></div>';
+      html2 += '<div class="empty-note" style="padding:0 0 10px;">戰寵是跟一般寵物完全獨立的系統，同一時間只能帶一隻出戰，可以升級、進化、裝備、學技能。點名稱看完整資料。</div>';
+      html2 += '<ul class="result-list">';
+      BATTLE_PET_INFO.kinds.forEach(function (k) {
+        html2 += '<li class="result-item" data-open-bpet="' + k.kind + '">' +
+          '<span class="rname">' + escapeHtml(k.name) + '</span>' +
+          '<span class="rmeta">' + escapeHtml(ELEMENT_LABEL[k.element] || k.element) + '屬性　' + (k.stages || []).length + ' 個進化階段</span>' +
+          '</li>';
+      });
+      html2 += '</ul>';
+      $detail.innerHTML = html2;
+      document.getElementById("petTierFilter").addEventListener("change", function (e) {
+        showPetBrowser(e.target.value ? (e.target.value === "bpet" ? "bpet" : Number(e.target.value)) : null);
+      });
+      return;
+    }
+
     var html = '<h2 style="margin-top:0;">🐾 寵物列表 <span class="count">(' + petIds.length + (tierFilter ? " / 共 " + allIds.length : "") + ')</span></h2>';
     html += '<div style="margin-bottom:12px;">' +
       '<label style="font-size:12.5px;color:var(--text-faint);margin-right:8px;">跳到階級</label>' +
       '<select id="petTierFilter" style="padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">' +
       '<option value=""' + (!tierFilter ? " selected" : "") + '>全部</option>' +
       tiers.map(function (t) { return '<option value="' + t + '"' + (tierFilter === t ? " selected" : "") + '>' + t + ' 階</option>'; }).join('') +
+      '<option value="bpet">戰寵</option>' +
       '</select></div>';
     html += '<div class="empty-note" style="padding:0 0 10px;">出戰中的寵物才會生效，而且飽食度(hunger)一定要大於 0，不然不管成長階段多高，加成一律歸零。點寵物名稱看牠 9 個成長階段各自提供多少能力。</div>';
     if (!petIds.length) {
@@ -1535,7 +1567,111 @@
     }
     $detail.innerHTML = html;
     document.getElementById("petTierFilter").addEventListener("change", function (e) {
-      showPetBrowser(e.target.value ? Number(e.target.value) : null);
+      showPetBrowser(e.target.value ? (e.target.value === "bpet" ? "bpet" : Number(e.target.value)) : null);
+    });
+  }
+
+  function showBattlePetDetail(kind, growthTypeId) {
+    kind = String(kind);
+    var k = BATTLE_PET_INFO.kinds.find(function (kk) { return String(kk.kind) === kind; });
+    if (!k) return;
+    growthTypeId = growthTypeId != null ? String(growthTypeId) : "0";
+
+    var html = backButtonHtml();
+    html += '<div class="section-title"><span class="name-link" id="bpetBackToList" style="cursor:pointer;">← 戰寵列表</span></div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(k.name) + '</div>';
+    html += '<div class="badge-row" style="margin-bottom:14px;">' +
+      '<span class="el-chip" style="color:var(--' + (ELEMENT_CLASS[k.element] || "el-none") + ')">' + escapeHtml(ELEMENT_LABEL[k.element] || k.element) + '屬性</span>' +
+      '<span class="badge">最高等級 ' + BATTLE_PET_INFO.maxLevel + '</span>' +
+      '</div>';
+
+    if (k.stages && k.stages.length) {
+      html += '<div class="section-title">進化階段</div>';
+      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + k.stages.map(function (s, idx) { return '<span class="map-chip">' + (idx + 1) + '. ' + escapeHtml(s) + '</span>'; }).join('') + '</div>';
+    }
+
+    if (BATTLE_PET_INFO.upgrades && BATTLE_PET_INFO.upgrades.length) {
+      html += '<div class="section-title">進化需求（所有戰寵共用）</div>';
+      html += '<table class="dtable" style="margin-bottom:14px;"><thead><tr><th>階段</th><th>等級</th><th>材料</th><th>金幣</th><th>成功率</th></tr></thead><tbody>';
+      BATTLE_PET_INFO.upgrades.forEach(function (u) {
+        html += '<tr><td>' + (k.stages ? escapeHtml(k.stages[u.fromGrade] || u.fromGrade) : u.fromGrade) + ' → ' + (k.stages ? escapeHtml(k.stages[u.toGrade] || u.toGrade) : u.toGrade) + '</td>' +
+          '<td>Lv' + u.level + '</td>' +
+          '<td>' + itemChip(u.itemId, u.itemCount) + '</td>' +
+          '<td>' + fmtNum(u.cost) + '</td>' +
+          '<td><span class="rate' + (u.ratePct < 50 ? " low" : "") + '">' + u.ratePct + '%</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    var growthTypes = BATTLE_PET_INFO.growthTypes || [];
+    if (growthTypes.length) {
+      html += '<div class="section-title">屬性成長（依天賦分級，天賦要進化到第2階段之後才會知道是哪一種）</div>';
+      html += '<div style="margin-bottom:10px;">' + growthTypes.map(function (gt) {
+        var active = String(gt.id) === growthTypeId;
+        return '<span class="hint-chip bpet-gt-tab" data-gt="' + gt.id + '" style="cursor:pointer;margin-right:6px;' + (active ? "border-color:var(--gold);color:var(--gold-hi);" : "") + '">' + escapeHtml(gt.name) + '（機率 ' + (gt.weight / 100).toFixed(1) + '%）</span>';
+      }).join('') + '</div>';
+
+      var levelRows = (BATTLE_PET_INFO.levels[kind] || {})[growthTypeId] || [];
+      var sampleLevels = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(function (lv) { return lv <= levelRows.length; });
+      if (levelRows.length) {
+        var statKeys = ["hp", "ap", "atk", "hit", "crit", "def", "eva", "sp", "reviveCost", "exp"];
+        html += '<div class="empty-note" style="padding:0 0 8px;">下面只抽樣列出幾個等級（1/10/20.../100），不是全部100等都列出來。</div>';
+        html += '<table class="dtable" style="margin-bottom:14px;"><thead><tr><th>等級</th>' + statKeys.map(function (sk) { return '<th>' + BPET_STAT_LABEL[sk] + '</th>'; }).join('') + '</tr></thead><tbody>';
+        sampleLevels.forEach(function (lv) {
+          var row = levelRows[lv - 1];
+          html += '<tr><td>Lv' + lv + '</td>' + statKeys.map(function (sk) { return '<td>' + fmtNum(row[sk]) + '</td>'; }).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+
+      var auraRows = (BATTLE_PET_INFO.auras[kind] || {})[growthTypeId] || [];
+      if (auraRows.length) {
+        var auraKeys = Object.keys(BPET_AURA_LABEL);
+        html += '<div class="section-title">給主人的加成（戰寵出戰時，主人會額外獲得這些加成）</div>';
+        html += '<div class="empty-note" style="padding:0 0 8px;">一樣只抽樣列出幾個等級。</div>';
+        html += '<table class="dtable" style="margin-bottom:14px;"><thead><tr><th>等級</th>' + auraKeys.map(function (ak) { return '<th>' + BPET_AURA_LABEL[ak] + '</th>'; }).join('') + '</tr></thead><tbody>';
+        sampleLevels.forEach(function (lv) {
+          var row = auraRows[lv - 1];
+          if (!row) return;
+          html += '<tr><td>Lv' + lv + '</td>' + auraKeys.map(function (ak) { return '<td>' + fmtNum(row[ak]) + '</td>'; }).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+    }
+
+    var skills = (BATTLE_PET_INFO.skills || []).filter(function (s) { return s.pet === 0 || String(s.pet) === kind; });
+    if (skills.length) {
+      html += '<div class="section-title">技能 <span class="count">(' + skills.length + ')</span></div>';
+      skills.forEach(function (s) {
+        html += '<div class="equip-box" style="margin-bottom:10px;">';
+        html += '<div class="row1"><span class="slot">' + escapeHtml(s.name) + '</span><span class="rate">開放等級 Lv' + s.unlockLevel + '</span></div>';
+        html += '<div class="empty-note" style="padding:0 0 8px;">' + escapeHtml((s.levels && s.levels[0] && s.levels[0].tip) || "") + '</div>';
+        if (s.levels && s.levels.length) {
+          html += '<table class="dtable"><thead><tr><th>技能等級</th><th>SP</th><th>AP</th><th>威力</th><th>冷卻</th></tr></thead><tbody>';
+          s.levels.forEach(function (lvl, idx) {
+            html += '<tr><td>' + (idx + 1) + '</td><td>' + lvl.sp + '</td><td>' + lvl.ap + '</td><td>' + lvl.power + '</td><td>' + (lvl.cooldownMs / 1000) + '秒</td></tr>';
+          });
+          html += '</tbody></table>';
+        }
+        html += '</div>';
+      });
+    }
+
+    var gearForKind = (BATTLE_PET_INFO.gear || []).filter(function (g) { return String(g.pet) === kind; });
+    if (gearForKind.length) {
+      html += '<div class="section-title">專屬裝備 <span class="count">(' + gearForKind.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>裝備</th><th>需求等級</th><th>攻擊</th><th>防禦</th><th>HP</th><th>AP</th></tr></thead><tbody>';
+      gearForKind.sort(function (a, b) { return a.lv - b.lv; }).forEach(function (g) {
+        html += '<tr><td>' + escapeHtml(g.name) + '</td><td>Lv' + g.lv + '</td><td>' + fmtNum(g.atk) + '</td><td>' + fmtNum(g.def) + '</td><td>' + fmtNum(g.hp) + '</td><td>' + fmtNum(g.ap) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    $detail.innerHTML = html;
+    document.getElementById("bpetBackToList").addEventListener("click", function () { showPetBrowser("bpet"); });
+    Array.prototype.slice.call(document.querySelectorAll(".bpet-gt-tab")).forEach(function (tab) {
+      tab.addEventListener("click", function () { showBattlePetDetail(kind, tab.getAttribute("data-gt")); });
     });
   }
 
@@ -1661,6 +1797,8 @@
     if (gotoMonsterLink) { navigateTo("monster", gotoMonsterLink.getAttribute("data-goto-monster"), true); return; }
     var petLink = e.target.closest("[data-open-pet]");
     if (petLink) { navigateTo("pet", petLink.getAttribute("data-open-pet"), true); return; }
+    var bpetLink = e.target.closest("[data-open-bpet]");
+    if (bpetLink) { navigateTo("bpet", bpetLink.getAttribute("data-open-bpet"), true); return; }
     var dgLink = e.target.closest("[data-open-dungeon]");
     if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
     var boxLink = e.target.closest("[data-open-box]");
