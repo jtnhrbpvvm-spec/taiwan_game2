@@ -99,6 +99,11 @@ body{
 .search-box{
   position:relative;
 }
+.search-category{
+  background:var(--ink-2); color:var(--text); border:1px solid var(--line-hi); border-radius:3px;
+  padding:15px 10px; font-size:14px; font-family:inherit; min-width:140px; outline:none; cursor:pointer;
+}
+.search-category:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,162,75,0.16);}
 .ability-only-toggle{
   display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer;
   font-size:13.5px; color:var(--text-dim); padding:14px 12px; border:1px solid var(--line-hi);
@@ -169,6 +174,9 @@ body{
 .cm-mobile{display:none;}
 /* 表格裡的物品標籤窄螢幕換行時不要被拆成兩半互相重疊 */
 td .map-chip{display:inline-block;}
+/* 數值格：展開成完整數字時太長就換行，不要凸出框外；縮寫的數字加虛線底線提示可以點 */
+.equip-stat-grid div, .stat-tile .v{overflow-wrap:anywhere; min-width:0;}
+.num-abbr{cursor:pointer; border-bottom:1px dotted currentColor;}
 @media (max-width:640px){ .cm-desktop{display:none;} .cm-mobile{display:block;} }
 
 .panel{
@@ -308,11 +316,14 @@ footer{
     <div class="eyebrow">Wish Compendium</div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
       <h1>希望圖鑑・<span>掉落查詢</span></h1>
-      <button id="changelogBtn" class="hint-chip" style="white-space:nowrap;">📋 更新紀錄</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="helpBtn" class="hint-chip" style="white-space:nowrap;">❓ 使用說明</button>
+        <button id="changelogBtn" class="hint-chip" style="white-space:nowrap;">📋 更新紀錄</button>
+      </div>
     </div>
-    <p>輸入物品名稱，查出所有會掉落它的怪物、出現地圖與機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表；勾選「僅查詢裝備能力」後，輸入能力名稱（例如「魔法」「攻速」「減傷」，可用空白同時查多項），只會列出有這項能力加成的裝備並依數值排序，不比對物品名稱；能力後面可以加 &gt;（大於等於）、&lt;（小於等於）縮小範圍，例如「魔法力&gt;20 攻速&lt;10」。</p>
 
     <div class="search-row">
+      <select id="searchCategory" class="search-category" aria-label="物品分類篩選"><option value="">全部分類</option></select>
       <div class="search-box">
         <span class="icon">⌕</span>
         <input id="searchInput" type="text" placeholder="搜尋物品或怪物名稱，例如：鐵、咕咕..." autocomplete="off" spellcheck="false">
@@ -344,7 +355,7 @@ footer{
   <div class="cols">
     <div class="panel">
       <h2 id="resultTitle">搜尋結果 <span class="count" id="resultCount"></span></h2>
-      <label class="obtainable-toggle" title="只列出遊戲裡有正確取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品"><input type="checkbox" id="obtainableOnly"> 僅顯示可取得裝備</label>
+      <label class="obtainable-toggle" title="只列出遊戲裡有正確取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品"><input type="checkbox" id="obtainableOnly"> 僅顯示目前可取得裝備</label>
       <ul class="result-list" id="resultList"></ul>
     </div>
 

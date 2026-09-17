@@ -70,8 +70,54 @@
     return 1;
   }
   var DROP_WHIFF_CHANCE = 0.145; // 已由原始程式碼確認：攻擊力=0的怪物每次擊殺有14.5%機率整批掉落全部落空
-  function dropWhiffMultiplier(monsterAtk) {
-    return monsterAtk === 0 ? (1 - DROP_WHIFF_CHANCE) : 1;
+  function dropWhiffChance(mon) {
+    return mon && mon.atk === 0 ? DROP_WHIFF_CHANCE : 0;
+  }
+  // 掉落組別倍率：bundle 的 Cl（組別代號照 xl：1 一般、2 材料、3 裝備、4 首領）
+  var DROP_GROUP_MULT = { 1: 0.44, 2: 0.12, 3: 0.083, 4: 1 };
+  var DROP_GROUP_LABEL = { 1: "一般", 2: "材料", 3: "裝備", 4: "首領" };
+  var DROP_FORMULA_NOTE = "機率已照遊戲的掉落計算換算：一般組 ×44%、材料組 ×12%、裝備組 ×8.3%、首領組 ×100%，同一組每隻怪最多掉一件（組內機率照資料順序累加，超過 100% 的部分不算）；攻擊力 0 的怪物已扣掉 14.5% 整批落空；未含技能、狀態的掉落加成。";
+  // 照遊戲 El()（遊戲自己顯示掉落機率的 dropChances() 就是用它）算這隻怪每件物品的掉落機率（0~1）：
+  // 每組各抽一次、最多掉一件；組內照資料順序累加 rate/1,000,000 × 掉落倍率 × 組別倍率，超過 1 的部分截掉；
+  // 最後乘上 (1 − 整批落空機率)。mult＝遊戲 dropMultiplier 的等級差部分（不含技能／狀態加成）。
+  // 回傳 {物品id: {p: 機率, groups: [組別...], raw: 資料原始 rate 加總}}
+  function monsterDropChances(mon, mult) {
+    var keep = 1 - dropWhiffChance(mon);
+    var byGroup = {}, order = [], out = {};
+    (mon.drops || []).forEach(function (d) {
+      if (!byGroup[d.g]) { byGroup[d.g] = []; order.push(d.g); }
+      byGroup[d.g].push(d);
+    });
+    order.forEach(function (g) {
+      var scale = (mult == null ? 1 : mult) * (DROP_GROUP_MULT[g] != null ? DROP_GROUP_MULT[g] : 1);
+      var cum = 0;
+      byGroup[g].forEach(function (d) {
+        var before = Math.min(1, cum * scale);
+        cum += d.r / RATE_DIVISOR;
+        var p = (Math.min(1, cum * scale) - before) * keep;
+        var e = out[d.i] || (out[d.i] = { p: 0, groups: [], raw: 0 });
+        e.p += p;
+        e.raw += d.r;
+        if (e.groups.indexOf(d.g) === -1) e.groups.push(d.g);
+      });
+    });
+    return out;
+  }
+  function playerDropMultiplier(mon) {
+    if (dropCalcState.level == null || dropCalcState.blacksmith) return 1;
+    return dropLevelMultiplier(dropCalcState.level, mon.lv);
+  }
+  // 機率（0~1）轉成顯示文字／樣式，沿用原本 pct()/rateClass() 的格式
+  function pctP(p) { return pct(p * RATE_DIVISOR); }
+  function rateClassP(p) { return rateClass(p * RATE_DIVISOR); }
+  // DROP_INDEX 裡同一隻怪可能因為在好幾組（或同組重複）出現而有多筆，算「幾隻怪物會掉」要去重複
+  function dropMonsterCount(itemId) {
+    var seen = {};
+    (DROP_INDEX[String(itemId)] || []).forEach(function (d) { seen[d.m] = true; });
+    return Object.keys(seen).length;
+  }
+  function dropGroupTags(groups) {
+    return groups.map(function (g) { return '<span class="group-tag">' + (DROP_GROUP_LABEL[g] || ("組" + g)) + '</span>'; }).join("");
   }
   // blacksmith：遊戲 dropMultiplier() 是 isBlacksmith && secondJob.id !== "bomber" 才免除等級差衰減（一轉鐵匠、二轉匠師適用，爆破士不適用）
   var dropCalcState = { level: null, blacksmith: false };
@@ -301,6 +347,60 @@
   var monsterList = Object.keys(MONSTERS).map(function (id) {
     return { id: id, name: MONSTERS[id].name, lv: MONSTERS[id].lv };
   });
+
+  // 名稱比對：-1＝不符；0＝關鍵字連續出現（原本的做法）；>0＝字依序出現但中間隔了字（例如「木劍」對「木製劍」），數字越小越接近。
+  // 關鍵字裡的空白不算字。
+  function nameMatchGap(name, q) {
+    if (name.indexOf(q) !== -1) return 0;
+    var chars = Array.from(q.replace(/\s+/g, ""));
+    if (chars.length < 2) return -1;
+    var pos = -1, first = -1;
+    for (var i = 0; i < chars.length; i++) {
+      pos = name.indexOf(chars[i], pos + 1);
+      if (pos === -1) return -1;
+      if (i === 0) first = pos;
+    }
+    return (pos - first + 1) - chars.length + 1;
+  }
+  // 從清單挑出符合的：連續的照原順序在前，不連續的依間隔小→大、名稱短→長排在後面，並標上 loose:true
+  function matchByName(list, q, extraFilter) {
+    var exact = [], loose = [];
+    list.forEach(function (entry) {
+      if (extraFilter && !extraFilter(entry)) return;
+      var gap = nameMatchGap(entry.name, q);
+      if (gap === 0) exact.push(entry);
+      else if (gap > 0) loose.push({ entry: entry, gap: gap });
+    });
+    loose.sort(function (a, b) { return a.gap - b.gap || a.entry.name.length - b.entry.name.length; });
+    return exact.concat(loose.map(function (l) {
+      var copy = {};
+      Object.keys(l.entry).forEach(function (k) { copy[k] = l.entry[k]; });
+      copy.loose = true;
+      return copy;
+    }));
+  }
+
+  // 搜尋列前的分類下拉：裝備部位看 equip.slot；物品分類用 items.json 的 c（遊戲背包分頁 GL 表的名稱與順序）
+  var ITEM_CATEGORY_OPTIONS = [["heal", "恢復"], ["use", "消耗"], ["material", "材料"], ["junk", "雜物"], ["box", "寶箱"], ["pet", "寵物"], ["bpet", "戰寵"], ["quest", "任務"]];
+  var HAS_ITEM_CATEGORY_DATA = Object.keys(ITEMS).some(function (id) { return ITEMS[id].c; });
+  var CATEGORY_BROWSE_LIMIT = 500;
+  var currentBrowseTotal = null; // 沒輸入關鍵字、只選分類時：該分類的總件數（清單最多列 CATEGORY_BROWSE_LIMIT 件）
+  function categoryFilterValue() {
+    return $searchCategory ? $searchCategory.value : "";
+  }
+  function passesCategoryFilter(id) {
+    var v = categoryFilterValue();
+    if (!v) return true;
+    var it = ITEMS[id];
+    if (!it) return false;
+    if (v === "equip:*") return !!it.equip || it.c === "equip";
+    if (v.indexOf("equip:") === 0) return !!it.equip && it.equip.slot === v.slice(6);
+    if (v === "cat:general") return !it.equip && it.c !== "equip" && it.c !== "quest";
+    return it.c === v.slice(4);
+  }
+  function categoryFilterLabel() {
+    return $searchCategory && $searchCategory.value ? $searchCategory.options[$searchCategory.selectedIndex].text : "";
+  }
   // 裝備能力搜尋：輸入這些關鍵字，會額外把「有這項能力」的裝備也列進搜尋結果，
   // 不是名稱比對，是直接看裝備資料裡對應欄位有沒有大於 0。之後如果又發現新能力欄位，
   // 在這裡加一行對照就好，不用改搜尋邏輯本身。
@@ -320,6 +420,26 @@
   // ---------- DOM ----------
   var $input = document.getElementById("searchInput");
   var $abilityOnly = document.getElementById("abilityOnly");
+  var EQUIP_SLOTS_FOR_FILTER = window.EQUIP_SLOTS || {}; // 下方職業／部位篩選用的 EQUIP_SLOTS 變數在後面才宣告，這裡先直接讀 window
+  var $searchCategory = document.getElementById("searchCategory");
+  if ($searchCategory) {
+    var catHtml = '<option value="">全部分類</option><optgroup label="裝備部位"><option value="equip:*">全部裝備</option>';
+    var usedSlots = {};
+    Object.keys(ITEMS).forEach(function (id) { if (ITEMS[id].equip) usedSlots[ITEMS[id].equip.slot] = true; });
+    Object.keys(EQUIP_SLOTS_FOR_FILTER).forEach(function (slotKey) {
+      if (usedSlots[slotKey]) catHtml += '<option value="equip:' + slotKey + '">' + escapeHtml(EQUIP_SLOTS_FOR_FILTER[slotKey]) + '</option>';
+    });
+    catHtml += '</optgroup><optgroup label="物品分類"' + (HAS_ITEM_CATEGORY_DATA ? "" : ' disabled') + '>' +
+      '<option value="cat:general">一般物品（裝備、任務以外）</option>' +
+      ITEM_CATEGORY_OPTIONS.map(function (c) { return '<option value="cat:' + c[0] + '">' + c[1] + '</option>'; }).join("") +
+      '</optgroup>';
+    $searchCategory.innerHTML = catHtml;
+    if (!HAS_ITEM_CATEGORY_DATA) $searchCategory.title = "物品分類要重新執行 update_data.py 才能用（裝備部位可以用）";
+    $searchCategory.addEventListener("change", function () {
+      resetNavHistory();
+      runSearch($input.value);
+    });
+  }
   var $obtainableOnly = document.getElementById("obtainableOnly");
   if ($obtainableOnly) {
     if (!window.ITEM_OBTAIN) {
@@ -381,6 +501,39 @@
   }
   function fmtNum(n) {
     return Number(n).toLocaleString("zh-Hant");
+  }
+  // 大數字縮寫（超過 9999）：取最大單位＋下一段的千／百位，有捨去就加「多」。
+  // 例：10000→1萬、250000000→2億5千萬、452000→45萬2千、1034865→103萬4千多、4127547868864→4兆1千多億
+  var NUM_UNITS = [[1e12, "兆"], [1e8, "億"], [1e4, "萬"]];
+  function chineseNumAbbr(value) {
+    var sign = value < 0 ? "-" : "";
+    var n = Math.floor(Math.abs(value));
+    for (var i = 0; i < NUM_UNITS.length; i++) {
+      var unit = NUM_UNITS[i][0];
+      if (n < unit) continue;
+      var major = Math.floor(n / unit), rem = n - major * unit;
+      var lower = i + 1 < NUM_UNITS.length ? NUM_UNITS[i + 1] : [1, ""];
+      var seg = Math.floor(rem / lower[0]);
+      var dropped = rem - seg * lower[0] > 0;
+      var segText = "";
+      if (seg >= 1000) { segText = Math.floor(seg / 1000) + "千"; dropped = dropped || seg % 1000 > 0; }
+      else if (seg >= 100) { segText = Math.floor(seg / 100) + "百"; dropped = dropped || seg % 100 > 0; }
+      else if (seg > 0) { dropped = true; }
+      var text = sign + major + NUM_UNITS[i][1];
+      if (segText) text += segText + (dropped ? "多" : "") + lower[1];
+      else if (dropped) text += "多";
+      return text;
+    }
+    return sign + fmtNum(n);
+  }
+  // 數值格用：≤9999 直接顯示；超過就顯示縮寫，點一下切換完整數字（document 層處理 data-num-toggle）
+  function bigNumHtml(value, prefix) {
+    prefix = prefix || "";
+    var n = Number(value) || 0;
+    if (Math.abs(n) <= 9999) return escapeHtml(prefix + fmtNum(n));
+    var shortText = prefix + chineseNumAbbr(n), fullText = prefix + fmtNum(n);
+    return '<span class="num-abbr" data-num-toggle="short" data-short="' + escapeHtml(shortText) + '" data-full="' + escapeHtml(fullText) +
+      '" title="點一下看完整數字">' + escapeHtml(shortText) + '</span>';
   }
   // 物品編號在 ITEMS 裡查不到時（例如遊戲剛更新、資料還沒補齊），一律顯示「無資料」，
   // 不要把編號秀給玩家看；查不到的也不給點擊連結，因為點了也沒有對應頁面可以看。
@@ -479,6 +632,12 @@
   function navigateTo(kind, id, push, restoreScrollY) {
     if (push !== false && currentView) navHistory.push({ kind: currentView.kind, id: currentView.id, scrollY: window.pageYOffset });
     currentView = { kind: kind, id: id };
+    if (kind === "item" || kind === "monster") {
+      // 左側清單會換成只剩這一筆，把上一次能力搜尋／分類瀏覽的總數清掉，不然標題會顯示舊數字
+      currentAbilityTotal = null;
+      currentBrowseTotal = null;
+      currentAbilityFields = [];
+    }
     if (kind === "item") {
       var it = ITEMS[id];
       $input.value = it ? it.name : "";
@@ -525,7 +684,7 @@
   };
   var ABILITY_OP_TEXT = { ">": "≧", ">=": "≧", "<": "≦", "<=": "≦", "=": "＝" };
 
-  // 「僅顯示可取得裝備」：ITEM_OBTAIN 由 update_data.py 照遊戲所有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚…）算出，
+  // 「僅顯示目前可取得裝備」：ITEM_OBTAIN 由 update_data.py 照遊戲所有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚…）算出，
   // 查不到任何管道的物品就藏起來。舊資料檔沒有 ITEM_OBTAIN 時不過濾。
   var ITEM_OBTAIN = window.ITEM_OBTAIN || null;
   function obtainFilterOn() {
@@ -582,10 +741,10 @@
     currentAbilityConditionText = conds.map(function (c) {
       var label = c.keys.map(function (k) { return EQUIP_ABILITY_BY_KEY[k].label; }).join("或");
       return c.op ? label + " " + ABILITY_OP_TEXT[c.op] + " " + fmtNum(c.num) + (EQUIP_ABILITY_BY_KEY[c.keys[0]].unit || "") : label + " 有加成";
-    }).join("、") + (obtainFilterOn() ? "（只列可取得的裝備）" : "");
+    }).join("、") + (categoryFilterValue() ? "（分類：" + categoryFilterLabel() + "）" : "") + (obtainFilterOn() ? "（只列可取得的裝備）" : "");
     var matches = itemList.filter(function (it) {
       var eq = ITEMS[it.id].equip;
-      return eq && !isTestItemName(it.name) && passesObtainFilter(it.id) && conds.every(function (c) { return passes(eq, c); });
+      return eq && !isTestItemName(it.name) && passesObtainFilter(it.id) && passesCategoryFilter(it.id) && conds.every(function (c) { return passes(eq, c); });
     }).sort(function (a, b) {
       return primaryValue(ITEMS[b.id].equip) - primaryValue(ITEMS[a.id].equip) || a.name.localeCompare(b.name, "zh-Hant");
     });
@@ -603,28 +762,53 @@
     else showNoResult(q);
   }
 
+  // 沒有關鍵字、只選了分類：直接列出該分類的物品（裝備依需求等級、其他依名稱排序）
+  function runCategoryBrowse() {
+    var v = categoryFilterValue();
+    var matches = itemList.filter(function (it) { return passesCategoryFilter(it.id) && passesObtainFilter(it.id); });
+    matches.sort(function (a, b) {
+      var ea = ITEMS[a.id].equip, eb = ITEMS[b.id].equip;
+      if (v.indexOf("equip:") === 0 && ea && eb) return (ea.minLv || 0) - (eb.minLv || 0) || a.name.localeCompare(b.name, "zh-Hant");
+      return a.name.localeCompare(b.name, "zh-Hant");
+    });
+    currentMatches.monsters = [];
+    currentAbilityFields = [];
+    currentBrowseTotal = matches.length;
+    currentMatches.items = matches.slice(0, CATEGORY_BROWSE_LIMIT);
+    if (!matches.length) {
+      $resultCount.textContent = "";
+      $resultList.innerHTML = '<li class="empty-note">「' + escapeHtml(categoryFilterLabel()) + '」沒有物品' +
+        (obtainFilterOn() ? "（已開啟「僅顯示目前可取得裝備」）" : "") + '。</li>';
+      return;
+    }
+    renderResultList("");
+  }
+
   function runSearch(qRaw) {
     var q = (qRaw || "").trim();
     currentMatches.items = [];
     currentMatches.monsters = [];
     currentAbilityTotal = null;
+    currentBrowseTotal = null;
 
     if (q === "") {
+      if (categoryFilterValue() && !($abilityOnly && $abilityOnly.checked)) { runCategoryBrowse(); return; }
       renderEmptyResults();
       showWelcome();
       return;
     }
     if ($abilityOnly && $abilityOnly.checked) { runAbilityOnlySearch(q); return; }
 
-    currentMatches.items = itemList.filter(function (it) {
-      return it.name.indexOf(q) !== -1 && passesObtainFilter(it.id);
-    }).slice(0, 200);
+    var itemFilter = function (it) { return passesObtainFilter(it.id) && passesCategoryFilter(it.id); };
+    currentMatches.items = matchByName(itemList, q, itemFilter).slice(0, 200);
 
     var abilityField = findAbilityField(q);
     if (abilityField) {
+      var already = {};
+      currentMatches.items.forEach(function (it) { already[it.id] = true; });
       var abilityMatches = itemList.filter(function (it) {
         var eq = ITEMS[it.id].equip;
-        return eq && eq[abilityField] > 0 && it.name.indexOf(q) === -1 && passesObtainFilter(it.id); // 已經在名稱比對裡的就不重複加
+        return eq && eq[abilityField] > 0 && !already[it.id] && itemFilter(it); // 已經在名稱比對裡的就不重複加
       }).sort(function (a, b) {
         return (ITEMS[b.id].equip[abilityField] || 0) - (ITEMS[a.id].equip[abilityField] || 0);
       });
@@ -632,9 +816,8 @@
     }
     currentAbilityFields = abilityField ? [abilityField] : [];
 
-    currentMatches.monsters = monsterList.filter(function (m) {
-      return m.name.indexOf(q) !== -1;
-    }).slice(0, 200);
+    // 選了物品分類時只找物品，不列怪物
+    currentMatches.monsters = categoryFilterValue() ? [] : matchByName(monsterList, q).slice(0, 200);
 
     renderResultList(q);
 
@@ -669,7 +852,13 @@
 
   function renderResultList(q) {
     var total = currentMatches.items.length + currentMatches.monsters.length;
-    $resultCount.textContent = total ? "(" + (currentAbilityTotal != null ? currentAbilityTotal : total) + ")" : "";
+    var shownTotal = currentAbilityTotal != null ? currentAbilityTotal : (currentBrowseTotal != null ? currentBrowseTotal : total);
+    $resultCount.textContent = total ? "(" + shownTotal + ")" : "";
+    // 不連續字的結果前面加一行分隔，讓玩家知道下面這些是「字沒有連在一起」比對到的
+    var looseDivider = function (list, idx) {
+      return list[idx].loose && (idx === 0 || !list[idx - 1].loose)
+        ? '<li class="empty-note" style="padding:6px 6px 2px;font-size:11.5px;">↓ 字沒有連在一起、但依序出現的結果</li>' : "";
+    };
 
     if (total === 0) {
       // 從上方功能按鈕（寵物／副本／任務…）進來時沒有關鍵字，不要顯示「找不到符合「」」
@@ -680,8 +869,9 @@
         $resultList.innerHTML = '<li class="empty-note">找不到符合「<a href="' + EDITOR_URL +
           '" style="color:var(--gold-hi);text-decoration:underline;">希望修改器</a>」的物品或怪物。</li>';
       } else {
-        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物' +
-          (obtainFilterOn() ? "（已開啟「僅顯示可取得裝備」，沒有取得管道的物品不會列出）" : "") + '。</li>';
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的' + (categoryFilterValue() ? "物品" : "物品或怪物") +
+          (categoryFilterValue() ? "（分類：" + escapeHtml(categoryFilterLabel()) + "）" : "") +
+          (obtainFilterOn() ? "（已開啟「僅顯示目前可取得裝備」，沒有取得管道的物品不會列出）" : "") + '。</li>';
       }
       return;
     }
@@ -690,9 +880,10 @@
 
     if (currentMatches.monsters.length) {
       html += '<li class="empty-note" style="padding:6px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">怪物 (' + currentMatches.monsters.length + ')</li>';
-      currentMatches.monsters.forEach(function (m) {
+      currentMatches.monsters.forEach(function (m, idx) {
         var mon = MONSTERS[m.id];
         var harvestTag = mon.isHarvest ? " ・採集" : "";
+        html += looseDivider(currentMatches.monsters, idx);
         html += '<li class="result-item" data-type="monster" data-id="' + m.id + '">' +
           '<span class="rname">' + escapeHtml(m.name) + '</span>' +
           '<span class="rmeta">Lv.' + m.lv + harvestTag + '</span></li>';
@@ -701,15 +892,21 @@
 
     if (currentMatches.items.length) {
       html += '<li class="empty-note" style="padding:10px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">' +
-        (currentAbilityTotal != null ? "裝備 (" + currentAbilityTotal + ")" : "物品 (" + currentMatches.items.length + ")") + '</li>';
+        (currentAbilityTotal != null ? "裝備 (" + currentAbilityTotal + ")"
+          : currentBrowseTotal != null ? escapeHtml(categoryFilterLabel()) + " (" + currentBrowseTotal + ")"
+          : "物品 (" + currentMatches.items.length + ")") + '</li>';
+      if (currentBrowseTotal != null && currentBrowseTotal > currentMatches.items.length) {
+        html += '<li class="empty-note" style="padding:2px 6px 6px;font-size:12px;">只列出前 ' + currentMatches.items.length + ' 件，可以輸入關鍵字縮小範圍。</li>';
+      }
       if (currentAbilityTotal != null && currentAbilityConditionText) {
         html += '<li class="empty-note" style="padding:2px 6px 4px;font-size:12px;">條件：' + escapeHtml(currentAbilityConditionText) + '</li>';
       }
       if (currentAbilityTotal != null && currentAbilityTotal > currentMatches.items.length) {
         html += '<li class="empty-note" style="padding:2px 6px 6px;font-size:12px;">只列出數值最高的 ' + currentMatches.items.length + ' 件，可以再多加一項能力縮小範圍。</li>';
       }
-      currentMatches.items.forEach(function (it) {
-        var count = (DROP_INDEX[it.id] || []).length;
+      currentMatches.items.forEach(function (it, idx) {
+        html += looseDivider(currentMatches.items, idx);
+        var count = dropMonsterCount(it.id);
         var shopCount = (SHOP_INDEX[it.id] || []).length;
         var radixCount = (RADIX_INDEX[it.id] || []).length;
         var questRefs = buildQuestReferences(it.id);
@@ -828,10 +1025,10 @@
   }
   function missionRewardGridHtml(m) {
     return '<div class="equip-stat-grid">' +
-      '<div>經驗<br><b>+' + fmtNum(m.exp || 0) + '</b></div>' +
-      '<div>金幣<br><b>' + fmtNum(m.gold || 0) + '</b></div>' +
-      '<div>名聲<br><b>+' + fmtNum(m.fame || 0) + '</b></div>' +
-      '<div>' + escapeHtml(missionTokenName()) + '<br><b>×' + fmtNum(m.token || 0) + '</b></div>' +
+      '<div>經驗<br><b>' + bigNumHtml(m.exp || 0, "+") + '</b></div>' +
+      '<div>金幣<br><b>' + bigNumHtml(m.gold || 0) + '</b></div>' +
+      '<div>名聲<br><b>' + bigNumHtml(m.fame || 0, "+") + '</b></div>' +
+      '<div>' + escapeHtml(missionTokenName()) + '<br><b>' + bigNumHtml(m.token || 0, "×") + '</b></div>' +
       '</div>' +
       (m.reward ? '<div style="margin-top:10px;">獎勵物品：' + itemChip(m.reward, m.rewardCount || 1) + '</div>' : '');
   }
@@ -1051,8 +1248,8 @@
       html += '<div class="equip-stat-grid">' +
         '<div>需求等級<br><b>Lv' + forgeBook.charLv + '</b></div>' +
         '<div>力量需求<br><b>' + forgeBook.strMin + '</b></div>' +
-        '<div>金幣<br><b>' + fmtNum(forgeBook.gold) + '</b></div>' +
-        '<div>經驗<br><b>' + fmtNum(forgeBook.exp) + '</b></div>' +
+        '<div>金幣<br><b>' + bigNumHtml(forgeBook.gold) + '</b></div>' +
+        '<div>經驗<br><b>' + bigNumHtml(forgeBook.exp) + '</b></div>' +
         '</div></div>';
       html += '<div class="section-title" style="margin-top:14px;">所需材料</div>';
       html += '<div class="map-chip-row">';
@@ -1101,8 +1298,8 @@
       html += '<div class="equip-box"><div class="equip-stat-grid">' +
         '<div>需求技能等級<br><b>Lv' + cookRecipe.skillLv + '</b></div>' +
         '<div>角色等級<br><b>Lv' + cookRecipe.charLv + '</b></div>' +
-        (cookRecipe.heal ? '<div>回復 HP<br><b>' + fmtNum(cookRecipe.heal) + '</b></div>' : '') +
-        (cookRecipe.healAp ? '<div>回復 AP<br><b>' + fmtNum(cookRecipe.healAp) + '</b></div>' : '') +
+        (cookRecipe.heal ? '<div>回復 HP<br><b>' + bigNumHtml(cookRecipe.heal) + '</b></div>' : '') +
+        (cookRecipe.healAp ? '<div>回復 AP<br><b>' + bigNumHtml(cookRecipe.healAp) + '</b></div>' : '') +
         '</div></div>';
       if (cookRecipe.mats.length) {
         html += '<div class="section-title" style="margin-top:14px;">固定材料</div><div class="map-chip-row">';
@@ -1133,8 +1330,8 @@
       html += '<div class="equip-box"><div class="equip-stat-grid">' +
         '<div>需求技能等級<br><b>Lv' + alchemyBook.skillLv + '</b></div>' +
         '<div>成功率<br><b>' + alchemyBook.rate + '%</b></div>' +
-        '<div>金幣<br><b>' + fmtNum(alchemyBook.gold) + '</b></div>' +
-        '<div>經驗<br><b>' + fmtNum(alchemyBook.exp) + '</b></div>' +
+        '<div>金幣<br><b>' + bigNumHtml(alchemyBook.gold) + '</b></div>' +
+        '<div>經驗<br><b>' + bigNumHtml(alchemyBook.exp) + '</b></div>' +
         '<div>製作數量<br><b>' + alchemyBook.count + '</b></div>' +
         (alchemyBook.cooldownMs ? '<div>冷卻時間<br><b>' + (alchemyBook.cooldownMs / 1000) + ' 秒</b></div>' : '') +
         '</div></div>';
@@ -1147,8 +1344,8 @@
       if (bomb) {
         html += '<div class="section-title" style="margin-top:14px;">成品數值</div><div class="equip-box"><div class="equip-stat-grid">' +
           '<div>需求等級<br><b>Lv' + bomb.minLv + '</b></div>' +
-          '<div>傷害<br><b>' + fmtNum(bomb.damage) + '</b></div>' +
-          '<div>單價<br><b>' + fmtNum(bomb.price) + '</b></div>' +
+          '<div>傷害<br><b>' + bigNumHtml(bomb.damage) + '</b></div>' +
+          '<div>單價<br><b>' + bigNumHtml(bomb.price) + '</b></div>' +
           '</div></div>';
       }
     }
@@ -1212,39 +1409,46 @@
       });
     }
 
-    html += '<div class="section-title">會掉落此物品的怪物 <span class="count">(' + drops.length + ')</span></div>';
+    html += '<div class="section-title">會掉落此物品的怪物 <span class="count">(' + dropMonsterCount(id) + ')</span></div>';
 
     if (!drops.length) {
       html += '<div class="empty-note">目前資料中沒有任何怪物掉落這個物品（可能來自商店、任務、製作或活動）。</div>';
     } else {
       html += dropCalcBar();
-      var hasAnyWhiff = drops.some(function (d) { var m = MONSTERS[String(d.m)]; return m && m.atk === 0; });
-      var showAdj = dropCalcState.level != null || hasAnyWhiff;
-      html += '<table class="dtable"><thead><tr>' +
-        '<th>怪物</th><th>出現地圖</th><th>原始機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
+      var showAdj = dropCalcState.level != null;
+      // 同一隻怪可能在好幾組都有這件物品，合併成一列（機率相加，遊戲 El() 也是這樣算）
+      var dropRows = [], seenMon = {};
       drops.forEach(function (d) {
         var mon = MONSTERS[String(d.m)];
-        if (!mon) return;
+        if (!mon || seenMon[d.m]) return;
+        seenMon[d.m] = true;
+        var base = monsterDropChances(mon, 1)[id];
+        if (!base) return;
+        var adj = showAdj ? monsterDropChances(mon, playerDropMultiplier(mon))[id] : null;
+        dropRows.push({ m: d.m, mon: mon, base: base, adj: adj });
+      });
+      dropRows.sort(function (a, b) { return b.base.p - a.base.p; });
+      html += '<table class="dtable"><thead><tr>' +
+        '<th>怪物</th><th>出現地圖</th><th>掉落機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
+      dropRows.forEach(function (row) {
+        var mon = row.mon;
         var maps = mon.maps.map(mapName).join("、");
         var adjCell = "";
         if (showAdj) {
-          var levelMult = dropCalcState.level != null
-            ? (dropCalcState.blacksmith ? 1 : dropLevelMultiplier(dropCalcState.level, mon.lv))
-            : 1;
-          var whiffMult = dropWhiffMultiplier(mon.atk);
-          var mult = levelMult * whiffMult;
-          var adjRate = d.r * mult;
-          adjCell = '<td><span class="' + rateClass(adjRate) + '">' + pct(adjRate) + '</span>' +
-            (mult < 1 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (mult * 100).toFixed(1) + '%)</span>' : '') + '</td>';
+          var ratio = row.base.p > 0 ? row.adj.p / row.base.p : 1;
+          adjCell = '<td><span class="' + rateClassP(row.adj.p) + '">' + pctP(row.adj.p) + '</span>' +
+            (ratio < 0.9995 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (ratio * 100).toFixed(1) + '%)</span>' : '') + '</td>';
         }
-        html += '<tr class="clickable" data-goto-monster="' + d.m + '">' +
+        html += '<tr class="clickable" data-goto-monster="' + row.m + '">' +
           '<td><span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + (mon.atk === 0 ? ' <span style="color:var(--text-faint);font-size:11px;">（攻0）</span>' : '') + '</span></td>' +
           '<td>' + escapeHtml(maps || "-") + '</td>' +
-          '<td><span class="' + rateClass(d.r) + '">' + pct(d.r) + '</span><span class="group-tag">組' + d.g + '</span></td>' +
+          '<td><span class="' + rateClassP(row.base.p) + '" title="資料原始值 ' + pct(row.base.raw) + '（未換算）">' + pctP(row.base.p) + '</span>' + dropGroupTags(row.base.groups) + '</td>' +
           adjCell +
           '</tr>';
       });
       html += '</tbody></table>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(DROP_FORMULA_NOTE) +
+        (showAdj ? (dropCalcState.blacksmith ? "換算後機率：鐵匠／匠師不受等級差衰減（二轉爆破士會失去這個效果）。" : "換算後機率：依你輸入的 Lv" + dropCalcState.level + " 套用等級差衰減。") : "") + '</div>';
     }
 
     $detail.innerHTML = html;
@@ -1293,9 +1497,15 @@
       statTile("HP", mon.hp) + statTile("攻擊", mon.atk) + statTile("防禦", mon.def) +
       statTile("命中", mon.hit) + statTile("迴避", mon.eva) + statTile("必殺", mon.crit) +
       statTile("抗爆", mon.critRes) + statTile("經驗值", mon.exp) +
+      (dropCalcState.level != null ? statTile("換算後經驗", monsterExpAt(mon, dropCalcState.level)) : "") +
       statTile("感應範圍", mon.aggroRange) + statTile("移動速度", mon.moveSpeed) +
       statTile("重生秒數", mon.respawnSec) +
       '</div>';
+    if (dropCalcState.level != null) {
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin:-14px 0 18px;">換算後經驗：以你輸入的 Lv' + dropCalcState.level +
+        '，等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (dropLevelMultiplier(dropCalcState.level, mon.lv) * 100).toFixed(0) +
+        '%（跟掉落率同一張衰減表，鐵匠也會衰減）；未含裝備的經驗加成。</div>';
+    }
 
     html += '<div class="section-title">出現地圖 <span class="count">(' + mon.maps.length + ')</span></div>';
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
@@ -1353,58 +1563,55 @@
       html += '</tbody></table>';
     }
 
-    var drops = mon.drops.slice().sort(function (a, b) { return b.r - a.r; });
-    html += '<div class="section-title">掉落物品 <span class="count">(' + drops.length + ')</span></div>';
+    var baseChances = monsterDropChances(mon, 1);
+    var dropIds = Object.keys(baseChances).sort(function (a, b) { return baseChances[b].p - baseChances[a].p; });
+    html += '<div class="section-title">掉落物品 <span class="count">(' + dropIds.length + ')</span></div>';
 
-    if (!drops.length) {
+    if (!dropIds.length) {
       html += '<div class="empty-note">這隻怪物目前沒有紀錄任何掉落物。</div>';
     } else {
       html += dropCalcBar();
-      var hasWhiff = mon.atk === 0;
-      var showAdj = dropCalcState.level != null || hasWhiff;
-      var levelMult = dropCalcState.level != null
-        ? (dropCalcState.blacksmith ? 1 : dropLevelMultiplier(dropCalcState.level, mon.lv))
-        : 1;
-      var whiffMult = dropWhiffMultiplier(mon.atk);
-      var mult = levelMult * whiffMult;
-      html += '<table class="dtable"><thead><tr><th>物品</th><th>原始機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
-      drops.forEach(function (d) {
-        var it = ITEMS[String(d.i)];
-        var name = it ? it.name : ("物品#" + d.i);
+      var showAdj = dropCalcState.level != null;
+      var levelMult = playerDropMultiplier(mon);
+      var adjChances = showAdj ? monsterDropChances(mon, levelMult) : null;
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>掉落機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
+      dropIds.forEach(function (iid) {
+        var it = ITEMS[String(iid)];
+        var name = it ? it.name : ("物品#" + iid);
+        var base = baseChances[iid];
         var adjCell = "";
         if (showAdj) {
-          var adjRate = d.r * mult;
-          adjCell = '<td><span class="' + rateClass(adjRate) + '">' + pct(adjRate) + '</span></td>';
+          adjCell = '<td><span class="' + rateClassP(adjChances[iid].p) + '">' + pctP(adjChances[iid].p) + '</span></td>';
         }
-        html += '<tr class="clickable" data-goto-item="' + d.i + '">' +
+        html += '<tr class="clickable" data-goto-item="' + iid + '">' +
           '<td><span class="name-link">' + escapeHtml(name) + '</span></td>' +
-          '<td><span class="' + rateClass(d.r) + '">' + pct(d.r) + '</span><span class="group-tag">組' + d.g + '</span></td>' +
+          '<td><span class="' + rateClassP(base.p) + '" title="資料原始值 ' + pct(base.raw) + '（未換算）">' + pctP(base.p) + '</span>' + dropGroupTags(base.groups) + '</td>' +
           adjCell +
           '</tr>';
       });
       html += '</tbody></table>';
+      var noteParts = [DROP_FORMULA_NOTE];
+      if (mon.atk === 0) noteParts.push("這隻怪物攻擊力為 0，每次擊殺有 " + (DROP_WHIFF_CHANCE * 100).toFixed(1) + "% 機率整批掉落全部落空（已算進上面的機率）。");
       if (showAdj) {
-        var noteParts = [];
-        if (dropCalcState.level != null) {
-          noteParts.push(dropCalcState.blacksmith
-            ? '鐵匠／匠師不受等級差衰減影響（二轉爆破士會失去這個效果）→ ×100%'
-            : '等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (levelMult * 100).toFixed(0) + '%');
-        }
-        if (hasWhiff) {
-          noteParts.push('這隻怪物攻擊力為 0，每次擊殺有 ' + (DROP_WHIFF_CHANCE * 100).toFixed(1) + '% 機率整批掉落全部落空，換算成有效倍率 ×' + (whiffMult * 100).toFixed(1) + '%');
-        }
-        if (noteParts.length) {
-          html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + noteParts.join('；') + '。合計換算倍率 ×' + (mult * 100).toFixed(2) + '%。</div>';
-        }
+        noteParts.push(dropCalcState.blacksmith
+          ? "換算後機率：鐵匠／匠師不受等級差衰減影響（二轉爆破士會失去這個效果）。"
+          : "換算後機率：等級差 " + (dropCalcState.level - mon.lv) + " 級 → 掉落倍率 ×" + (levelMult * 100).toFixed(0) + "%。");
       }
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(noteParts.join("")) + '</div>';
     }
 
     $detail.innerHTML = html;
     wireDropCalcBar(function () { showMonster(id); });
   }
 
+  // 每隻怪給的經驗：遊戲 expPerKill() = max(1, round(exp × 等級差倍率 × (1 + 裝備經驗加成%)))，
+  // 等級差倍率跟掉落用的是同一張表（x_()），而且鐵匠沒有豁免。這裡不含裝備的經驗加成。
+  function monsterExpAt(mon, playerLv) {
+    return Math.max(1, Math.round(mon.exp * dropLevelMultiplier(playerLv, mon.lv)));
+  }
+
   function statTile(label, val) {
-    return '<div class="stat-tile"><div class="v">' + fmtNum(val) + '</div><div class="k">' + label + '</div></div>';
+    return '<div class="stat-tile"><div class="v">' + bigNumHtml(val) + '</div><div class="k">' + label + '</div></div>';
   }
 
   function showNoResult(q) {
@@ -1539,6 +1746,9 @@
     var id = $filterResult.value;
     var name = ITEMS[id] ? ITEMS[id].name : "";
     $input.value = name;
+    currentAbilityTotal = null;
+    currentBrowseTotal = null;
+    currentAbilityFields = [];
     currentMatches.items = [{ id: id, name: name }];
     currentMatches.monsters = [];
     renderResultList(name);
@@ -1751,8 +1961,7 @@
       (LETTER_SOURCE[letterId] || []).forEach(function (ls) {
         if (!(ls.fame > 0) && !(ls.gold > 0)) return;
         var mon = MONSTERS[String(ls.monsterId)];
-        var drop = (DROP_INDEX[letterId] || []).filter(function (d) { return String(d.m) === String(ls.monsterId); })
-          .sort(function (a, b) { return b.r - a.r; })[0];
+        var drop = mon ? monsterDropChances(mon, 1)[letterId] : null;
         rows.push({ letterId: letterId, ls: ls, monLv: mon ? mon.lv : 9999, drop: drop });
       });
     });
@@ -1769,7 +1978,7 @@
         var ls = r.ls;
         var monHtml = ls.monsterId != null && MONSTERS[String(ls.monsterId)]
           ? '<span class="lv-tag">Lv.' + r.monLv + '</span><span class="name-link" data-goto-monster="' + ls.monsterId + '">' + escapeHtml(MONSTERS[String(ls.monsterId)].name) + '</span>' +
-            (r.drop ? '<br><span class="' + rateClass(r.drop.r) + '">' + pct(r.drop.r) + '</span>' : '')
+            (r.drop ? '<br><span class="' + rateClassP(r.drop.p) + '">' + pctP(r.drop.p) + '</span>' : '')
           : escapeHtml(ls.monsterName || "未知怪物");
         var reward = [];
         if (ls.fame) reward.push("名聲 +" + fmtNum(ls.fame));
@@ -1967,8 +2176,7 @@
     var boards = (page.boards || []).filter(function (b) { return String(b.townId) === String(townId); });
     var npcNames = boards.map(function (b) { return b.npc; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
     var mon = MONSTERS[String(q.monsterId)];
-    var drop = (DROP_INDEX[String(q.itemId)] || []).filter(function (d) { return String(d.m) === String(q.monsterId); })
-      .sort(function (a, b) { return b.r - a.r; })[0];
+    var drop = mon ? monsterDropChances(mon, 1)[q.itemId] : null;
     var otherDroppers = (DROP_INDEX[String(q.itemId)] || []).filter(function (d) { return String(d.m) !== String(q.monsterId); })
       .map(function (d) { return d.m; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
     var noFameNote = commissionNoFameNote(page);
@@ -1982,7 +2190,7 @@
     if (mon) {
       html += '<div style="font-size:13.5px;line-height:1.8;">' +
         '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + q.monsterId + '">' + escapeHtml(mon.name) + '</span>' +
-        (drop ? '　掉落機率 <span class="' + rateClass(drop.r) + '">' + pct(drop.r) + '</span>' : '') + '<br>' +
+        (drop ? '　掉落機率 <span class="' + rateClassP(drop.p) + '">' + pctP(drop.p) + '</span>' : '') + '<br>' +
         '<span style="color:var(--text-dim);font-size:12.5px;">出現地圖：' + escapeHtml((mon.maps || []).map(mapName).join("、") || "－") + '</span>' +
         (otherDroppers ? '<br><span style="color:var(--text-faint);font-size:12px;">另有 ' + otherDroppers + ' 種怪物也會掉這個物品（點物品看全部）</span>' : '') +
         '</div>';
@@ -1994,9 +2202,9 @@
       (noFameNote ? '<br><span style="color:var(--gold-hi);font-size:12.5px;">⚠️ ' + noFameNote + '</span>' : '') + '</div>';
     html += '<div class="section-title">獎勵</div>';
     html += '<div class="equip-stat-grid">' +
-      '<div>名聲<br><b>+' + fmtNum(q.fame) + '</b></div>' +
-      '<div>經驗<br><b>+' + fmtNum(q.exp) + '</b></div>' +
-      '<div>金幣<br><b>' + fmtNum(q.gold) + '</b></div>' +
+      '<div>名聲<br><b>' + bigNumHtml(q.fame, "+") + '</b></div>' +
+      '<div>經驗<br><b>' + bigNumHtml(q.exp, "+") + '</b></div>' +
+      '<div>金幣<br><b>' + bigNumHtml(q.gold) + '</b></div>' +
       '</div>';
     $changelogBody.innerHTML = html;
     $changelogBackdrop.style.display = "flex";
@@ -2080,7 +2288,7 @@
       var ks = itemKillSourceText(iid);
       if (ks) lines.push(ks);
     }
-    var dropN = (DROP_INDEX[String(iid)] || []).length, shopN = (SHOP_INDEX[String(iid)] || []).length;
+    var dropN = dropMonsterCount(iid), shopN = (SHOP_INDEX[String(iid)] || []).length;
     if (dropN || shopN) {
       lines.push("另外：" + [dropN ? dropN + " 種怪物會掉落" : "", shopN ? "商店有賣" : ""].filter(Boolean).join("、") + "（點道具看詳細）");
     }
@@ -2563,6 +2771,28 @@
   }
 
   $changelogBtn.addEventListener("click", openChangelogList);
+
+  // ---------- 使用說明（原本放在標題下方的長說明，改成按鈕點開，沿用更新紀錄的彈窗）----------
+  var HELP_SECTIONS = [
+    ["🔍 搜尋", "輸入物品名稱，查出會掉落它的怪物、出現地圖與掉落機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。名稱的字不用連在一起，例如「木劍」也會找到「木製劍」。"],
+    ["🗂️ 分類下拉選單", "搜尋欄左邊可以選裝備部位（武器、頭部…）或物品分類（恢復、材料、任務…）。選了分類只會列物品；不輸入關鍵字時會直接列出整個分類。"],
+    ["⚔️ 僅查詢裝備能力", "勾選後輸入能力名稱（例如「魔法」「攻速」「減傷」），只列出有這項能力加成的裝備並依數值排序，不比對物品名稱。可用空白同時查多項；能力後面可以加 >（大於等於）、<（小於等於）、=（等於）縮小範圍，例如「魔法力>20 攻速<10」。"],
+    ["✅ 僅顯示目前可取得裝備", "搜尋結果上方的勾選框。勾選後只列出遊戲裡目前有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品。"],
+    ["📈 你目前的等級", "輸入後，掉落表會多一欄「換算後機率」（套用等級差衰減，鐵匠／匠師不衰減），怪物頁也會顯示換算後的每隻經驗。"],
+    ["🧰 職業／裝備位置篩選", "搜尋列下方可以依職業、裝備位置列出所有符合的裝備。"],
+    ["📚 其他功能", "發條強化屬性表、寵物列表、副本、寶箱，以及任務總覽（主線、書信、委託、藍圖任務）。"]
+  ];
+  function openHelp() {
+    var html = '<div class="section-title">使用說明</div>';
+    HELP_SECTIONS.forEach(function (s) {
+      html += '<div style="margin-bottom:14px;"><div style="font-weight:700;color:var(--gold-hi);margin-bottom:4px;">' + escapeHtml(s[0]) + '</div>' +
+        '<div style="font-size:13.5px;color:var(--text-dim);line-height:1.8;">' + escapeHtml(s[1]) + '</div></div>';
+    });
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+  var $helpBtn = document.getElementById("helpBtn");
+  if ($helpBtn) $helpBtn.addEventListener("click", openHelp);
   $changelogClose.addEventListener("click", closeChangelog);
   $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
   $changelogBody.addEventListener("click", function (e) {
@@ -2580,6 +2810,15 @@
   });
 
   document.addEventListener("click", function (e) {
+    // 縮寫的大數字：點一下在「4兆1千多億」和「4,127,547,868,864」之間切換
+    var numToggle = e.target.closest("[data-num-toggle]");
+    if (numToggle) {
+      var showFull = numToggle.getAttribute("data-num-toggle") === "short";
+      numToggle.textContent = numToggle.getAttribute(showFull ? "data-full" : "data-short");
+      numToggle.setAttribute("data-num-toggle", showFull ? "full" : "short");
+      numToggle.title = showFull ? "點一下縮短" : "點一下看完整數字";
+      return;
+    }
     // 在彈出視窗（委託詳細／寶箱）裡點物品、怪物等連結跳頁時，先把視窗關掉，不然新頁面會被蓋住
     if (e.target.closest("#changelogBackdrop") && e.target.closest("[data-goto-item],[data-goto-monster],[data-open-questline],[data-open-pet],[data-open-dungeon]")) {
       closeChangelog();
