@@ -73,12 +73,13 @@
   function dropWhiffMultiplier(monsterAtk) {
     return monsterAtk === 0 ? (1 - DROP_WHIFF_CHANCE) : 1;
   }
+  // blacksmith：遊戲 dropMultiplier() 是 isBlacksmith && secondJob.id !== "bomber" 才免除等級差衰減（一轉鐵匠、二轉匠師適用，爆破士不適用）
   var dropCalcState = { level: null, blacksmith: false };
 
   function dropCalcBar() {
     var html = '<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
     html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">' +
-      '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠職業</label>';
+      '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠／匠師（二轉爆破士不適用）</label>';
     html += '</div>';
     return html;
   }
@@ -93,6 +94,8 @@
   var currentDetail = null;
   function rerenderCurrentDetail() {
     if (!currentDetail) return;
+    // 畫面已經換成寵物／副本／任務等其他頁面時，不要把舊的物品／怪物頁蓋回來
+    if (!$detail.querySelector('[data-detail-of="' + currentDetail.type + ":" + currentDetail.id + '"]')) return;
     if (currentDetail.type === "monster") showMonster(currentDetail.id);
     else showItem(currentDetail.id);
   }
@@ -425,8 +428,9 @@
   var navHistory = [];
   var currentView = null; // {kind:"item"|"monster"|"pet", id}
   function resetNavHistory() { navHistory = []; currentView = null; }
-  function navigateTo(kind, id, push) {
-    if (push !== false && currentView) navHistory.push(currentView);
+  // restoreScrollY：按「上一頁」回來時捲回離開前的位置（例如從委託／書信／藍圖任務列表點進物品再回來）
+  function navigateTo(kind, id, push, restoreScrollY) {
+    if (push !== false && currentView) navHistory.push({ kind: currentView.kind, id: currentView.id, scrollY: window.pageYOffset });
     currentView = { kind: kind, id: id };
     if (kind === "item") {
       var it = ITEMS[id];
@@ -448,13 +452,16 @@
       showBattlePetDetail(id);
     } else if (kind === "questline") {
       showQuestLineDetail(id);
+    } else if (kind === "questtab") {
+      openQuestTab(id);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (restoreScrollY != null) window.scrollTo(0, restoreScrollY);
+    else window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function goBackOneView() {
     if (!navHistory.length) return;
     var prev = navHistory.pop();
-    navigateTo(prev.kind, prev.id, false);
+    navigateTo(prev.kind, prev.id, false, prev.scrollY);
   }
   function backButtonHtml() {
     if (!navHistory.length) return "";
@@ -526,6 +533,8 @@
     $resultCount.textContent = total ? "(" + total + ")" : "";
 
     if (total === 0) {
+      // 從上方功能按鈕（寵物／副本／任務…）進來時沒有關鍵字，不要顯示「找不到符合「」」
+      if (!q.trim()) { renderEmptyResults(); return; }
       var qLower = q.trim().toLowerCase();
       var isEgg = SEARCH_TRIGGERS.indexOf(qLower) !== -1;
       if (isEgg) {
@@ -579,8 +588,8 @@
         if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
         if (ITEM_ORIGIN[it.id] || ITEM_KILL_SOURCE[it.id]) metaParts.push("可從任務取得");
         if (LETTER_SOURCE[it.id]) metaParts.push("書信任務");
-        if (questRefs.quests.length) metaParts.push("任務道具");
-        if (questRefs.missions.length) metaParts.push("討伐獎勵");
+        if (questRefs.quests.length && metaParts.indexOf("任務道具") === -1) metaParts.push("任務道具");
+        if (questRefs.missions.length) metaParts.push("藍圖任務");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
           '<span class="rname">' + escapeHtml(it.name) + '</span>' +
           '<span class="rmeta">' + (metaParts.length ? metaParts.join("・") : "無掉落／販售紀錄") + '</span></li>';
@@ -606,7 +615,7 @@
   });
 
   // ---------- 詳細頁：物品 ----------
-  // ---------- 任務／討伐任務關聯 ----------
+  // ---------- 任務／藍圖任務關聯 ----------
   function buildQuestReferences(itemId) {
     var idNum = Number(itemId);
     var quests = [];
@@ -620,6 +629,9 @@
       var m = MISSIONS[mid];
       var role = null;
       if (m.reward === idNum) role = "reward";
+      else if (m.grants === idNum) role = "grants";
+      else if ((m.gives || []).some(function (g) { return g.id === idNum; })) role = "gives";
+      else if ((m.costs || []).some(function (c) { return c.id === idNum; })) role = "cost";
       else if (MISSION_TOKEN_ITEM_ID != null && idNum === MISSION_TOKEN_ITEM_ID && m.token) role = "token";
       if (role) missions.push({ id: mid, m: m, role: role });
     });
@@ -627,36 +639,84 @@
     return { quests: quests, missions: missions };
   }
 
+  // ---------- 藍圖任務（missions.json，遊戲內叫「希望路線」）共用顯示 ----------
+  // 規則對照 bundle：kill 要角色等級 ≥ unlockLevel 後擊殺才計數（tickMissionKill）；dungeon 進入指定副本（tickMissionDungeon）；
+  // talk／exchange／craft 要到 townId 找 npc；blocked 的不計數也不能領獎（hv()）。非 kill 類的 monsterId 不是真的怪物。
+  var MISSION_KIND_LABEL = { kill: "擊殺", dungeon: "副本", talk: "對話", exchange: "交換", craft: "製作" };
+  function missionTokenName() {
+    return MISSION_TOKEN_ITEM_ID != null && ITEMS[MISSION_TOKEN_ITEM_ID] ? ITEMS[MISSION_TOKEN_ITEM_ID].name : "R代幣";
+  }
+  // 列表用的簡短目標；detail=true 時補上地圖、交換材料等細節
+  function missionTargetHtml(m, detail) {
+    var town = m.townId != null ? townName(m.townId) : "";
+    if (m.kind === "kill") {
+      var mon = MONSTERS[String(m.monsterId)];
+      if (!mon) return "擊殺 ？ ×" + m.need;
+      return '擊殺 <span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + m.monsterId + '">' + escapeHtml(mon.name) + '</span> ×' + m.need +
+        (detail && mon.maps && mon.maps.length ? '<br><span style="color:var(--text-dim);font-size:12.5px;">出現地圖：' + escapeHtml(mon.maps.map(mapName).join("、")) + '</span>' : '');
+    }
+    if (m.kind === "dungeon") {
+      var dg = m.dungeonId != null ? DUNGEON_BY_ID[String(m.dungeonId)] : null;
+      return dg ? '進入副本 <span class="name-link" data-open-dungeon="' + m.dungeonId + '">' + escapeHtml(dg.name) + '</span>' : "進入副本";
+    }
+    if (m.kind === "talk") return "找 <b>" + escapeHtml(m.npc || "NPC") + "</b> 談話" + (town ? "（" + escapeHtml(town) + "）" : "");
+    if (m.kind === "exchange") {
+      return "跟 <b>" + escapeHtml(m.npc || "NPC") + "</b> 交換" + (town ? "（" + escapeHtml(town) + "）" : "") +
+        (detail && (m.costs || []).length ? '<br>交出：' + m.costs.map(function (c) { return itemChip(c.id, c.count); }).join("") +
+          (m.grants != null ? '<br>換到：' + itemChip(m.grants) : '') : '');
+    }
+    if (m.kind === "craft") {
+      return "找 <b>" + escapeHtml(m.npc || "NPC") + "</b> 拿材料並精煉" + (town ? "（" + escapeHtml(town) + "）" : "") +
+        (detail ? ((m.gives || []).length ? '<br>先拿到：' + m.gives.map(function (g) { return itemChip(g.id, g.count); }).join("") : '') +
+          (m.refineItem != null ? '<br>再精煉：' + itemChip(m.refineItem) + '（精煉一次）' : '') : '');
+    }
+    return MISSION_KIND_LABEL[m.kind] || "未知類型";
+  }
+  function missionHowText(m) {
+    if (m.blocked) return "⚠️ 這筆在遊戲裡目前無法完成（不會累積進度、也不能領獎）。";
+    if (m.kind === "kill") return "不用接取：角色等級到達 Lv" + m.unlockLevel + " 之後擊殺指定怪物才會開始計數（等級不到時打的不算）。";
+    if (m.kind === "dungeon") return "角色等級到達 Lv" + m.unlockLevel + " 之後進入指定副本即完成。";
+    return "角色等級到達 Lv" + m.unlockLevel + " 之後，到指定城鎮找 NPC 完成。";
+  }
+  function missionRewardGridHtml(m) {
+    return '<div class="equip-stat-grid">' +
+      '<div>經驗<br><b>+' + fmtNum(m.exp || 0) + '</b></div>' +
+      '<div>金幣<br><b>' + fmtNum(m.gold || 0) + '</b></div>' +
+      '<div>名聲<br><b>+' + fmtNum(m.fame || 0) + '</b></div>' +
+      '<div>' + escapeHtml(missionTokenName()) + '<br><b>×' + fmtNum(m.token || 0) + '</b></div>' +
+      '</div>' +
+      (m.reward ? '<div style="margin-top:10px;">獎勵物品：' + itemChip(m.reward, m.rewardCount || 1) + '</div>' : '');
+  }
+
   function renderQuestRefCard(r) {
     var q = r.q;
     var page = QUEST_PAGES[String(q.pageId)] || {};
     var monN = MONSTERS[String(q.monsterId)] ? MONSTERS[String(q.monsterId)].name : ("怪物#" + q.monsterId);
-    var lvRange = "Lv" + q.reqLevel + (q.reqLevelMax != null ? " ~ Lv" + q.reqLevelMax : " 以上");
-    var fameRange = (q.reqFameMin || 0) + " ~ " + (q.reqFameMax != null ? q.reqFameMax : "無上限");
+    // 名聲上限要把分頁的 fameCeiling（ceilingEffect=block）一起算進去，跟遊戲接委託的判斷一致
+    var noFameNote = commissionNoFameNote(page);
     var towns = (page.towns && page.towns.length) ? page.towns.join("、") : "未知";
     return '<div class="equip-box">' +
       '<div class="row1"><span class="slot">📜 任務 #' + r.id + '　' + escapeHtml(page.title || "") + '</span></div>' +
       '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
       '內容：擊殺「' + escapeHtml(monN) + '」，繳交此物品 x' + q.count + '<br>' +
       '接取地點：<b style="color:var(--gold-hi);">' + escapeHtml(towns) + '</b><br>' +
-      '需求：' + lvRange + '　・　名聲 ' + fameRange + '<br>' +
+      '需求：' + commissionLevelText(q) + '　・　名聲 ' + commissionFameText(q, page) + '<br>' +
+      (noFameNote ? '⚠️ ' + noFameNote + '<br>' : '') +
       '獎勵：名聲 +' + fmtNum(q.fame) + '　經驗 +' + fmtNum(q.exp) + '　金錢 +' + fmtNum(q.gold) +
       '</div></div>';
   }
 
   function renderMissionRefCard(r) {
     var m = r.m;
-    var monN = MONSTERS[String(m.monsterId)] ? MONSTERS[String(m.monsterId)].name : ("怪物#" + m.monsterId);
-    var roleText = r.role === "reward" ? "討伐獎勵物品" : "討伐任務代幣";
+    var roleText = { reward: "獎勵物品", token: "任務代幣", grants: "交換可得", gives: "NPC 給的材料", cost: "交換要交出" }[r.role] || "";
     return '<div class="equip-box">' +
-      '<div class="row1"><span class="slot">🎯 討伐任務 #' + r.id + '　' + escapeHtml(roleText) + '</span></div>' +
+      '<div class="row1"><span class="slot">🗺️ 藍圖任務 Lv' + m.unlockLevel + '　' + escapeHtml(roleText) + '</span></div>' +
       '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
-      '內容：擊殺「' + escapeHtml(monN) + '」x' + m.need + '<br>' +
-      '接取方式：<b style="color:var(--gold-hi);">不用找 NPC</b>，角色等級到達 Lv' + m.unlockLevel + ' 後打到指定怪物會自動開始計算進度<br>' +
-      '獎勵：經驗 +' + fmtNum(m.exp) + '　金錢 +' + fmtNum(m.gold) +
-      (m.token ? '　代幣 x' + m.token : '') +
-      (m.reward ? '　額外物品 x' + (m.rewardCount || 1) : '') +
-      '</div></div>';
+      '目標：' + missionTargetHtml(m, true) + '<br>' +
+      escapeHtml(missionHowText(m)) +
+      '</div>' +
+      '<div style="margin-top:8px;">' + missionRewardGridHtml(m) + '</div>' +
+      '</div>';
   }
 
   function showEnchantTable(gradeIdx, winderOpen) {
@@ -745,7 +805,7 @@
     var drops = (DROP_INDEX[id] || []).slice().sort(function (a, b) { return b.r - a.r; });
 
     var html = backButtonHtml();
-    html += '<div class="detail-head"><div>' +
+    html += '<div class="detail-head" data-detail-of="item:' + id + '"><div>' +
       '<div class="detail-title">' + escapeHtml(item.name) + '</div>' +
       '<div class="detail-sub">物品編號 #' + id + '</div>' +
       '</div></div>';
@@ -994,7 +1054,7 @@
     var questRefs = buildQuestReferences(id);
     html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length) + ')</span></div>';
     if (!questRefs.quests.length && !questRefs.missions.length) {
-      html += '<div class="empty-note">這個物品跟任務／討伐任務系統沒有關聯。</div>';
+      html += '<div class="empty-note">這個物品跟任務／藍圖任務系統沒有關聯。</div>';
     } else {
       questRefs.quests.forEach(function (r) {
         html += renderQuestRefCard(r);
@@ -1072,7 +1132,7 @@
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
 
     var html = backButtonHtml();
-    html += '<div class="detail-head"><div>' +
+    html += '<div class="detail-head" data-detail-of="monster:' + id + '"><div>' +
       '<div class="detail-title">' + escapeHtml(mon.name) + '</div>' +
       '<div class="detail-sub">怪物編號 #' + id + '　・　等級 ' + mon.lv + '</div>' +
       '<div class="badge-row">' +
@@ -1091,7 +1151,7 @@
 
     html += '<div class="section-title">出現地圖 <span class="count">(' + mon.maps.length + ')</span></div>';
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
-      return '<span class="map-chip">' + escapeHtml(mapName(mid)) + '</span>';
+      return '<span class="map-chip" style="cursor:default;">' + escapeHtml(mapName(mid)) + '</span>';
     }).join("") + '</div>';
 
     if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
@@ -1179,7 +1239,7 @@
         var noteParts = [];
         if (dropCalcState.level != null) {
           noteParts.push(dropCalcState.blacksmith
-            ? '身為鐵匠職業，不受等級差衰減影響 → ×100%'
+            ? '鐵匠／匠師不受等級差衰減影響（二轉爆破士會失去這個效果）→ ×100%'
             : '等級差 ' + (dropCalcState.level - mon.lv) + ' 級 → ×' + (levelMult * 100).toFixed(0) + '%');
         }
         if (hasWhiff) {
@@ -1456,7 +1516,10 @@
       var la = MAIN_QUEST_LINES[a], lb = MAIN_QUEST_LINES[b];
       return (lb.jobRelated - la.jobRelated) || la.title.localeCompare(lb.title, "zh-Hant");
     });
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "main" };
     var html = backButtonHtml();
+    html += questTabsHtml("main");
     html += '<h2 style="margin-top:0;">📖 主線任務 <span class="count">(' + lineIds.length + ')</span></h2>';
     html += '<div class="empty-note" style="padding:0 0 10px;">標「職業進度」的是跟轉職有關的劇情線，其他是一般劇情任務。點進去看完整流程：第幾步、要找哪個 NPC、在哪張地圖。</div>';
     if (!lineIds.length) {
@@ -1473,6 +1536,322 @@
       html += '</ul>';
     }
     $detail.innerHTML = html;
+  }
+
+  // ---------- 任務分頁：主線任務／書信任務／委託任務 ----------
+  function questTabsHtml(active) {
+    var tabs = [["main", "📖 主線任務"], ["letter", "✉️ 書信任務"], ["commission", "📜 委託任務"], ["blueprint", "🗺️ 藍圖任務"]];
+    return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
+      var on = t[0] === active;
+      return '<button type="button" data-quest-tab="' + t[0] + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
+        'border:1px solid ' + (on ? "var(--gold)" : "var(--line-hi)") + ';background:' + (on ? "var(--gold)" : "var(--ink-2)") + ';color:' + (on ? "var(--ink)" : "var(--text)") + ';">' + t[1] + '</button>';
+    }).join("") + '</div>';
+  }
+  function openQuestTab(tab) {
+    if (tab === "letter") showLetterQuestBrowser();
+    else if (tab === "commission") showCommissionBrowser();
+    else if (tab === "blueprint") showBlueprintBrowser();
+    else showQuestLineBrowser();
+  }
+
+  // 藍圖任務列表：依等級分段，只列「等級／目標／獎勵物品」，點列開彈窗看完整獎勵（經驗、金幣、名聲、代幣）
+  function showBlueprintBrowser() {
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "blueprint" };
+    var ids = Object.keys(MISSIONS).sort(function (a, b) {
+      return MISSIONS[a].unlockLevel - MISSIONS[b].unlockLevel || Number(a) - Number(b);
+    });
+    var html = backButtonHtml() + questTabsHtml("blueprint");
+    html += '<h2 style="margin-top:0;">🗺️ 藍圖任務 <span class="count">(' + ids.length + ')</span></h2>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">不用接取，角色等級到了就能進行（擊殺類要等級到了之後打的才算）。點任一列看完整獎勵；點怪物或物品名稱可以直接查詢，查完按「← 上一頁」回來。</div>';
+    if (!ids.length) {
+      html += '<div class="empty-note">目前沒有藍圖任務資料。</div>';
+    } else {
+      html += '<table class="dtable"><thead><tr><th style="width:64px;">等級</th><th>需要擊殺的怪物／目標</th><th>裝備／物品獎勵</th></tr></thead><tbody>';
+      ids.forEach(function (id) {
+        var m = MISSIONS[id];
+        html += '<tr class="clickable" data-mission-detail="' + id + '"' + (m.blocked ? ' style="opacity:.55;"' : '') + '>' +
+          '<td style="white-space:nowrap;">Lv' + m.unlockLevel + '</td>' +
+          '<td>' + missionTargetHtml(m, false) + (m.blocked ? '<br><span style="font-size:11.5px;color:var(--text-faint);">遊戲內目前無法完成</span>' : '') + '</td>' +
+          '<td>' + (m.reward ? itemChip(m.reward, m.rewardCount || 1) : '<span style="color:var(--text-faint);">－</span>') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+    $detail.innerHTML = html;
+  }
+  function openMissionDetail(id) {
+    var m = MISSIONS[String(id)];
+    if (!m) return;
+    var html = '<div class="section-title">🗺️ 藍圖任務 <span style="text-transform:none;">Lv' + m.unlockLevel + '</span>　<span class="count">' + escapeHtml(MISSION_KIND_LABEL[m.kind] || "") + '</span></div>';
+    html += '<div class="section-title" style="margin-top:6px;">目標</div>';
+    html += '<div style="font-size:13.5px;line-height:1.9;">' + missionTargetHtml(m, true) + '</div>';
+    html += '<div class="empty-note" style="padding:6px 0 0;">' + escapeHtml(missionHowText(m)) + '</div>';
+    html += '<div class="section-title">完成後可獲得</div>';
+    html += missionRewardGridHtml(m);
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
+  }
+
+  // 書信任務：列出所有交了有獎勵（名聲或金幣）的書信。規則對照遊戲 submitLetter()：
+  // 每交 1 封書信（有額外材料的話同時交 count 個材料）算 1 份，每份給 fame 名聲 + gold 金幣。
+  function showLetterQuestBrowser() {
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "letter" };
+    var rows = [];
+    Object.keys(LETTER_SOURCE).forEach(function (letterId) {
+      (LETTER_SOURCE[letterId] || []).forEach(function (ls) {
+        if (!(ls.fame > 0) && !(ls.gold > 0)) return;
+        var mon = MONSTERS[String(ls.monsterId)];
+        var drop = (DROP_INDEX[letterId] || []).filter(function (d) { return String(d.m) === String(ls.monsterId); })
+          .sort(function (a, b) { return b.r - a.r; })[0];
+        rows.push({ letterId: letterId, ls: ls, monLv: mon ? mon.lv : 9999, drop: drop });
+      });
+    });
+    rows.sort(function (a, b) { return a.monLv - b.monLv || Number(a.letterId) - Number(b.letterId); });
+
+    var html = backButtonHtml() + questTabsHtml("letter");
+    html += '<h2 style="margin-top:0;">✉️ 書信任務 <span class="count">(' + rows.length + ')</span></h2>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">打倒怪物掉落書信，拿去交給指定 NPC 換名聲／金幣；有「額外材料」的，每交 1 封要同時交出對應數量的材料。依掉落怪物的等級排序。</div>';
+    if (!rows.length) {
+      html += '<div class="empty-note">目前沒有書信任務資料。</div>';
+    } else {
+      html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>書信</th><th>掉落怪物</th><th>繳交給</th><th>額外材料</th><th>每份獎勵</th></tr></thead><tbody>';
+      rows.forEach(function (r) {
+        var ls = r.ls;
+        var monHtml = ls.monsterId != null && MONSTERS[String(ls.monsterId)]
+          ? '<span class="lv-tag">Lv.' + r.monLv + '</span><span class="name-link" data-goto-monster="' + ls.monsterId + '">' + escapeHtml(MONSTERS[String(ls.monsterId)].name) + '</span>' +
+            (r.drop ? '<br><span class="' + rateClass(r.drop.r) + '">' + pct(r.drop.r) + '</span>' : '')
+          : escapeHtml(ls.monsterName || "未知怪物");
+        var reward = [];
+        if (ls.fame) reward.push("名聲 +" + fmtNum(ls.fame));
+        if (ls.gold) reward.push(fmtNum(ls.gold) + " 金幣");
+        html += '<tr>' +
+          '<td style="white-space:nowrap;">' + itemChip(r.letterId) + '</td>' +
+          '<td>' + monHtml + '</td>' +
+          '<td>' + escapeHtml(ls.npcName) + (ls.places && ls.places.length ? '<br><span style="color:var(--text-faint);font-size:12px;">' + ls.places.map(escapeHtml).join("／") + '</span>' : '') + '</td>' +
+          '<td style="white-space:nowrap;">' + (ls.itemId ? itemChip(ls.itemId, ls.count) : "－") + '</td>' +
+          '<td>' + reward.join("<br>") + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  // 委託（quests.json）接取條件，照遊戲 Zv()：
+  //   等級 < reqLevel → 太低；reqLevelMax 不是 null 且等級 > reqLevelMax → 太高
+  //   名聲 < reqFameMin → 太低；名聲 > reqFameMax，或分頁 ceilingEffect=block 且名聲 > fameCeiling → 太高
+  //   ceilingEffect=no_fame 的分頁：名聲超過 fameCeiling 還是能接，但完成不給名聲（Yv()/Qv()）
+  function commissionFameMax(q, page) {
+    var max = q.reqFameMax != null ? q.reqFameMax : null;
+    if (page && page.ceilingEffect === "block" && page.fameCeiling != null) {
+      max = max == null ? page.fameCeiling : Math.min(max, page.fameCeiling);
+    }
+    return max;
+  }
+  function commissionLevelText(q) {
+    return "Lv" + q.reqLevel + " ~ " + (q.reqLevelMax != null ? "Lv" + q.reqLevelMax : "無上限");
+  }
+  function commissionFameText(q, page) {
+    var max = commissionFameMax(q, page);
+    return fmtNum(q.reqFameMin || 0) + " ~ " + (max != null ? fmtNum(max) : "無上限");
+  }
+  function commissionNoFameNote(page) {
+    return page && page.ceilingEffect === "no_fame" && page.fameCeiling != null
+      ? "名聲超過 " + fmtNum(page.fameCeiling) + " 後仍可接，但完成不再給名聲" : "";
+  }
+
+  function showCommissionBrowser() {
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "commission" };
+    // 依城鎮分組：同一城鎮有好幾個 NPC 發同一個分頁的委託時（例如獅子城新舊兩個秘書），只列一次
+    var towns = [], townByKey = {};
+    Object.keys(QUEST_PAGES).forEach(function (pid) {
+      var page = QUEST_PAGES[pid];
+      (page.boards || []).forEach(function (b) {
+        var t = townByKey[b.townId];
+        if (!t) { t = townByKey[b.townId] = { townId: b.townId, name: b.townName, order: b.order, pages: [] }; towns.push(t); }
+        var pg = t.pages.filter(function (x) { return x.pageId === pid; })[0];
+        if (!pg) { pg = { pageId: pid, page: page, npcs: [] }; t.pages.push(pg); }
+        if (pg.npcs.indexOf(b.npc) === -1) pg.npcs.push(b.npc);
+      });
+    });
+    towns.sort(function (a, b) { return a.order - b.order || a.townId - b.townId; });
+    var questsByPage = {};
+    Object.keys(QUESTS).forEach(function (qid) {
+      var q = QUESTS[qid];
+      (questsByPage[q.pageId] = questsByPage[q.pageId] || []).push({ id: qid, q: q });
+    });
+    Object.keys(questsByPage).forEach(function (pid) {
+      questsByPage[pid].sort(function (a, b) { return a.q.reqLevel - b.q.reqLevel || (a.q.reqFameMin || 0) - (b.q.reqFameMin || 0) || Number(a.id) - Number(b.id); });
+    });
+    var levels = [], fames = [];
+    Object.keys(QUESTS).forEach(function (qid) {
+      var q = QUESTS[qid];
+      if (levels.indexOf(q.reqLevel) === -1) levels.push(q.reqLevel);
+      if (fames.indexOf(q.reqFameMin || 0) === -1) fames.push(q.reqFameMin || 0);
+    });
+    levels.sort(function (a, b) { return a - b; });
+    fames.sort(function (a, b) { return a - b; });
+
+    var selStyle = 'padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);font-family:inherit;font-size:13px;';
+    var html = backButtonHtml() + questTabsHtml("commission");
+    html += '<h2 style="margin-top:0;">📜 委託任務 <span class="count">(' + Object.keys(QUESTS).length + ')</span></h2>';
+    html += '<div id="commissionBar" style="position:sticky;top:0;z-index:5;background:var(--panel);padding:8px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">' +
+      '<div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:11px;color:var(--text-faint);">跳轉依據</label><select id="commissionJumpBy" style="' + selStyle + '">' +
+      '<option value="town">依城鎮</option><option value="lv">依最低等級</option><option value="fame">依最低名聲</option></select></div>' +
+      '<div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:11px;color:var(--text-faint);">跳到</label><select id="commissionJumpTo" style="' + selStyle + 'min-width:130px;"></select></div>' +
+      '<span id="commissionJumpStatus" style="font-size:12px;color:var(--gold-hi);"></span>' +
+      '</div>';
+    html += '<div class="empty-note" style="padding:0 0 8px;">等級／名聲是「可接取範圍」（最低 ~ 最高），條件照遊戲接委託時的判斷。先選跳轉依據，再從第二個選單選城鎮或數值；依等級／名聲跳轉時，所有最低值相同的委託都會標黃，並跳到第一筆。</div>';
+
+    if (!towns.length) {
+      var staleData = Object.keys(QUESTS).length > 0 && !Object.keys(QUEST_PAGES).some(function (pid) { return QUEST_PAGES[pid].boards; });
+      html += '<div class="empty-note">' + (staleData
+        ? "委託資料是舊版（quests.js 裡沒有各城鎮委託看板欄位），請重新執行一次 update_data.py 產生新的資料檔。"
+        : "目前沒有委託資料（towns.json 裡找不到委託處 NPC，或 quests.json 沒有資料）。") + '</div>';
+    }
+    towns.forEach(function (t) {
+      html += '<div data-commission-town="' + t.townId + '">';
+      html += '<div class="section-title" style="font-size:15px;">🏘️ ' + escapeHtml(t.name) + '</div>';
+      t.pages.forEach(function (pg) {
+        var list = questsByPage[pg.pageId] || [];
+        var note = commissionNoFameNote(pg.page);
+        html += '<div class="equip-box" style="margin-bottom:12px;">';
+        html += '<div class="row1"><span class="slot">' + escapeHtml(pg.page.title) + '</span><span style="color:var(--text-faint);font-size:12px;">' + pg.npcs.map(escapeHtml).join("、") + '・' + list.length + ' 個委託</span></div>';
+        if (note) html += '<div class="empty-note" style="padding:0 0 6px;">⚠️ ' + note + '</div>';
+        var rowAttrs = function (q) {
+          return 'data-commission-row="1" data-town="' + t.townId + '" data-lv="' + q.reqLevel + '" data-fame="' + (q.reqFameMin || 0) + '"';
+        };
+        // 桌機：完整表格
+        html += '<div class="cm-desktop" style="overflow-x:auto;"><table class="dtable" style="min-width:600px;"><thead><tr><th>繳交物品</th><th>相關怪物</th><th>可接等級</th><th>可接名聲</th><th>獎勵</th></tr></thead><tbody>';
+        list.forEach(function (r) {
+          var q = r.q, mon = MONSTERS[String(q.monsterId)];
+          html += '<tr ' + rowAttrs(q) + '>' +
+            '<td style="white-space:nowrap;">' + itemChip(q.itemId, q.count) + '</td>' +
+            '<td>' + (mon ? '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + q.monsterId + '">' + escapeHtml(mon.name) + '</span>' : "－") + '</td>' +
+            '<td style="white-space:nowrap;">' + commissionLevelText(q) + '</td>' +
+            '<td style="white-space:nowrap;">' + commissionFameText(q, pg.page) + '</td>' +
+            '<td style="font-size:12.5px;white-space:nowrap;">名聲 +' + fmtNum(q.fame) + '<br>經驗 +' + fmtNum(q.exp) + '<br>' + fmtNum(q.gold) + ' 金幣</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table></div>';
+        // 手機：只列接取 NPC + 等級／名聲範圍，點一下開視窗看要交的物品、相關怪物、獎勵
+        html += '<div class="cm-mobile">';
+        list.forEach(function (r) {
+          var q = r.q;
+          html += '<div ' + rowAttrs(q) + ' data-commission-detail="' + r.id + '" data-commission-detail-town="' + t.townId + '" role="button" tabindex="0" ' +
+            'style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer;">' +
+            '<span class="name-link" style="font-size:14px;">' + pg.npcs.map(escapeHtml).join("、") + ' ›</span>' +
+            '<span style="text-align:right;font-size:12.5px;line-height:1.6;color:var(--text-dim);white-space:nowrap;">' + commissionLevelText(q) + '<br>名聲 ' + commissionFameText(q, pg.page) + '</span>' +
+            '</div>';
+        });
+        html += '</div></div>';
+      });
+      html += '</div>';
+    });
+    $detail.innerHTML = html;
+
+    var $jumpBy = document.getElementById("commissionJumpBy");
+    var $jumpTo = document.getElementById("commissionJumpTo");
+    var $status = document.getElementById("commissionJumpStatus");
+    var townNameById = {};
+    towns.forEach(function (t) { townNameById[t.townId] = t.name; });
+    // 頂部下拉列是 sticky，手機上會折成兩行（約 145px），固定的 scroll-margin 會讓目標被蓋住；
+    // 改成每次依下拉列實際高度算出捲動位置
+    function scrollBelowBar(el) {
+      var bar = document.getElementById("commissionBar");
+      var top = el.getBoundingClientRect().top + window.pageYOffset - (bar ? bar.offsetHeight : 0) - 8;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+    function highlight(rows) {
+      Array.prototype.forEach.call($detail.querySelectorAll("[data-commission-row]"), function (tr) { tr.style.background = ""; });
+      rows.forEach(function (tr) { tr.style.background = "rgba(201,162,75,.16)"; });
+    }
+    // 第二個選單的選項跟著第一個選單換：城鎮清單／所有委託出現過的最低等級／最低名聲
+    function fillJumpOptions() {
+      var mode = $jumpBy.value, opts;
+      if (mode === "lv") {
+        opts = '<option value="">選擇等級...</option>' + levels.map(function (v) { return '<option value="' + v + '">Lv' + v + '</option>'; }).join("");
+      } else if (mode === "fame") {
+        opts = '<option value="">選擇名聲...</option>' + fames.map(function (v) { return '<option value="' + v + '">' + fmtNum(v) + '</option>'; }).join("");
+      } else {
+        opts = '<option value="">選擇城鎮...</option>' + towns.map(function (t) { return '<option value="' + t.townId + '">' + escapeHtml(t.name) + '</option>'; }).join("");
+      }
+      $jumpTo.innerHTML = opts;
+      highlight([]);
+      $status.textContent = "";
+    }
+    function doJump() {
+      var mode = $jumpBy.value, value = $jumpTo.value;
+      highlight([]);
+      $status.textContent = "";
+      if (value === "") return;
+      if (mode === "town") {
+        var sec = $detail.querySelector('[data-commission-town="' + value + '"]');
+        if (!sec) return;
+        $status.textContent = "📍 " + (townNameById[value] || "");
+        scrollBelowBar(sec);
+        return;
+      }
+      // 桌機表格和手機清單都有同一組列，只找目前畫面上看得到的那一組（display:none 的 offsetParent 是 null）
+      var rows = Array.prototype.slice.call($detail.querySelectorAll("[data-commission-row][data-" + mode + '="' + value + '"]'))
+        .filter(function (el) { return el.offsetParent !== null; });
+      if (!rows.length) { $status.textContent = "沒有對應的委託"; return; }
+      highlight(rows);
+      var townCount = rows.map(function (r) { return r.getAttribute("data-town"); }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
+      // 手機版的列看不到城鎮名稱，所以跳完在下拉列旁邊標出目前所在城鎮
+      $status.textContent = "📍 " + (townNameById[rows[0].getAttribute("data-town")] || "") +
+        (rows.length > 1 ? "（共 " + rows.length + " 筆" + (townCount > 1 ? "，分布在 " + townCount + " 個城鎮" : "") + "）" : "");
+      scrollBelowBar(rows[0]);
+    }
+    $jumpBy.addEventListener("change", fillJumpOptions);
+    $jumpTo.addEventListener("change", doJump);
+    fillJumpOptions();
+  }
+
+  // 委託詳細視窗（手機版點 NPC 開啟），沿用更新紀錄／寶箱共用的那個彈出視窗
+  function openCommissionDetail(qid, townId) {
+    var q = QUESTS[String(qid)];
+    if (!q) return;
+    var page = QUEST_PAGES[String(q.pageId)] || {};
+    var boards = (page.boards || []).filter(function (b) { return String(b.townId) === String(townId); });
+    var npcNames = boards.map(function (b) { return b.npc; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+    var mon = MONSTERS[String(q.monsterId)];
+    var drop = (DROP_INDEX[String(q.itemId)] || []).filter(function (d) { return String(d.m) === String(q.monsterId); })
+      .sort(function (a, b) { return b.r - a.r; })[0];
+    var otherDroppers = (DROP_INDEX[String(q.itemId)] || []).filter(function (d) { return String(d.m) !== String(q.monsterId); })
+      .map(function (d) { return d.m; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
+    var noFameNote = commissionNoFameNote(page);
+
+    var html = '<div class="section-title">📜 ' + escapeHtml(page.title || "委託") + '</div>';
+    html += '<div class="detail-sub" style="margin-bottom:12px;">' + escapeHtml(boards.length ? boards[0].townName : "") +
+      (npcNames.length ? '・' + npcNames.map(escapeHtml).join("、") : "") + '</div>';
+    html += '<div class="section-title" style="margin-top:6px;">要繳交的物品</div>';
+    html += '<div class="map-chip-row">' + itemChip(q.itemId, q.count) + '</div>';
+    html += '<div class="section-title">相關怪物</div>';
+    if (mon) {
+      html += '<div style="font-size:13.5px;line-height:1.8;">' +
+        '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + q.monsterId + '">' + escapeHtml(mon.name) + '</span>' +
+        (drop ? '　掉落機率 <span class="' + rateClass(drop.r) + '">' + pct(drop.r) + '</span>' : '') + '<br>' +
+        '<span style="color:var(--text-dim);font-size:12.5px;">出現地圖：' + escapeHtml((mon.maps || []).map(mapName).join("、") || "－") + '</span>' +
+        (otherDroppers ? '<br><span style="color:var(--text-faint);font-size:12px;">另有 ' + otherDroppers + ' 種怪物也會掉這個物品（點物品看全部）</span>' : '') +
+        '</div>';
+    } else {
+      html += '<div class="empty-note" style="padding:0;">資料裡沒有對應的怪物。</div>';
+    }
+    html += '<div class="section-title">接取條件</div>';
+    html += '<div style="font-size:13.5px;line-height:1.8;">等級：' + commissionLevelText(q) + '<br>名聲：' + commissionFameText(q, page) +
+      (noFameNote ? '<br><span style="color:var(--gold-hi);font-size:12.5px;">⚠️ ' + noFameNote + '</span>' : '') + '</div>';
+    html += '<div class="section-title">獎勵</div>';
+    html += '<div class="equip-stat-grid">' +
+      '<div>名聲<br><b>+' + fmtNum(q.fame) + '</b></div>' +
+      '<div>經驗<br><b>+' + fmtNum(q.exp) + '</b></div>' +
+      '<div>金幣<br><b>' + fmtNum(q.gold) + '</b></div>' +
+      '</div>';
+    $changelogBody.innerHTML = html;
+    $changelogBackdrop.style.display = "flex";
   }
 
   // ---------- 任務攻略：進度記錄（只存在這台瀏覽器，查詢頁沒有存檔可讀，進度要玩家自己勾）----------
@@ -1567,10 +1946,41 @@
       : '以下 ' + n + ' 種方式擇一即可：';
   }
 
+  // 含有「遊戲判定永遠不成立」條件的分支（未婚限制、職業碼 20200）不列出，只回報被略過幾筆
+  function questUsableReqs(part) {
+    var all = part.requirements || [];
+    var list = all.filter(function (req) { return !(req.extra || []).some(function (e) { return e.k === "never"; }); });
+    return { list: list, hidden: all.length - list.length };
+  }
+  function questHiddenNote(n) {
+    return n ? '<div class="empty-note" style="padding:0 0 6px;">另有 ' + n + ' 種分支遊戲判定不會成立，未列出。</div>' : "";
+  }
+  // 對照遊戲 id()：有 flagId 的步驟看 flag 有沒有拿到（這裡＝玩家有沒有勾）；
+  // 沒有 flagId 的步驟，只要排在它後面的某個有 flagId 步驟完成，就算完成。完成數只計算有 flagId 的步驟。
+  function questProgressState(line, checked) {
+    var lastFlagDoneIdx = -1;
+    line.parts.forEach(function (p, idx) {
+      if (p.flagId != null && checked.indexOf(p.seq) !== -1) lastFlagDoneIdx = idx;
+    });
+    var doneAt = line.parts.map(function (p, idx) {
+      return p.flagId != null ? checked.indexOf(p.seq) !== -1 : (idx < lastFlagDoneIdx || checked.indexOf(p.seq) !== -1);
+    });
+    var countable = line.parts.filter(function (p) { return p.flagId != null; });
+    return {
+      doneAt: doneAt,
+      done: countable.filter(function (p) { return checked.indexOf(p.seq) !== -1; }).length,
+      countable: countable.length,
+      next: line.parts.filter(function (p, idx) { return !doneAt[idx]; })[0],
+      autoDone: function (idx) { return line.parts[idx].flagId == null && idx < lastFlagDoneIdx; }
+    };
+  }
+
   function showQuestLineDetail(lineId) {
     var line = MAIN_QUEST_LINES[String(lineId)];
     if (!line) return;
+    currentDetail = null;
     var doneSeqs = loadQuestProgress(String(lineId));
+    var progress = questProgressState(line, doneSeqs);
     var html = backButtonHtml();
     html += '<div class="section-title"><span class="name-link" id="questLineBackToList" style="cursor:pointer;">← 主線任務</span></div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(line.title) +
@@ -1626,11 +2036,11 @@
     }
 
     // ---- 進度 / 如何開始 ----
-    var parts = line.parts;
-    var doneCount = parts.filter(function (p) { return doneSeqs.indexOf(p.seq) !== -1; }).length;
-    var nextPart = parts.filter(function (p) { return doneSeqs.indexOf(p.seq) === -1; })[0];
+    var doneCount = progress.done;
+    var nextPart = progress.next;
     html += '<div style="background:rgba(201,170,90,.10);border:1px solid var(--gold-hi);border-radius:4px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">';
-    html += '<div style="font-weight:700;margin-bottom:4px;">🧭 目前進度：' + doneCount + ' / ' + parts.length + '</div>';
+    html += '<div style="font-weight:700;margin-bottom:4px;">🧭 目前進度：' + progress.done + ' / ' + progress.countable +
+      (progress.countable !== line.parts.length ? '<span style="font-weight:400;color:var(--text-faint);font-size:12px;">（跟遊戲一樣只計算有劇情進度標記的步驟）</span>' : '') + '</div>';
     if (!nextPart) {
       html += '<div>這條線的步驟都勾完了 🎉</div>';
     } else if (line.chains && line.chains.length) {
@@ -1640,10 +2050,12 @@
       html += '<div style="margin-bottom:6px;">' + (doneCount === 0 ? "<b>如何開始：</b>" : "<b>下一步：</b>") +
         "步驟 " + nextPart.seq + "：" + escapeHtml(nextPart.name) +
         (nextPart.npcName ? "　→ " + npcWhereText(nextPart.npcName, nextPart.mapIds) : "") + '</div>';
-      var nextReqs = nextPart.requirements || [];
+      var nextUsable = questUsableReqs(nextPart);
+      var nextReqs = nextUsable.list;
       if (nextReqs.length > 1) html += '<div class="empty-note" style="padding:0 0 4px;">' + questReqsHint(nextPart, nextReqs.length) + '</div>';
       nextReqs.forEach(function (req) { html += renderReqBox(req); });
-      if (!nextReqs.length) html += '<div class="empty-note" style="padding:0;">這一步資料裡沒有額外條件，直接去找 NPC 對話即可。</div>';
+      html += questHiddenNote(nextUsable.hidden);
+      if (!nextReqs.length) html += '<div class="empty-note" style="padding:0;">遊戲資料沒有列出這一步的對話條件，請直接找 NPC 對話看看。</div>';
     }
     html += '<div class="empty-note" style="padding:6px 0 0;">進度是你自己在下方勾選的，只存在這台瀏覽器；本站讀不到遊戲存檔。</div>';
     html += '</div>';
@@ -1655,7 +2067,10 @@
         html += '<div class="equip-box" style="margin-bottom:10px;"><div class="row1"><span class="slot">' + escapeHtml(chain.name) + '</span></div>';
         html += '<ol style="margin:4px 0 0 18px;padding:0;font-size:12.5px;line-height:1.8;">';
         chain.steps.forEach(function (st) {
-          var bits = [st.row != null || st.name ? npcWhereText(st.name, st.mapIds, st.kind !== "npc") : ""];
+          var bits = [st.kind === "kill" && st.monsterId != null && MONSTERS[String(st.monsterId)]
+            ? '打倒／挑戰 <span class="name-link" data-goto-monster="' + st.monsterId + '">' + escapeHtml(st.name) + '</span>' +
+              ((st.mapIds || []).length ? "（" + escapeHtml(st.mapIds.map(townName).join("／")) + "）" : "")
+            : (st.row != null || st.name ? npcWhereText(st.name, st.mapIds, st.kind !== "npc") : "")];
           if (st.lv) bits.push("等級 " + st.lv);
           if (st.need && st.need.length) bits.push(st.need.map(function (f) { return questFlagText(f, lineId); }).join("、"));
           if (st.needs && st.needs.length) bits.push("帶著 " + st.needs.map(function (n) { return itemChip(n[0], n[1]); }).join(""));
@@ -1670,36 +2085,45 @@
     html += '<div class="section-title">完整流程</div>';
     html += '<div class="empty-note" style="padding:0 0 8px;">同一步驟列出多個方塊時，是不同的達成方式（遊戲會依對話分支順序判定），擇一即可。</div>';
 
-    line.parts.forEach(function (part) {
+    line.parts.forEach(function (part, partIdx) {
       var mapNames = (part.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
-      var isDone = doneSeqs.indexOf(part.seq) !== -1;
+      var isDone = progress.doneAt[partIdx];
+      var autoDone = progress.autoDone(partIdx);
       html += '<div class="equip-box" style="margin-bottom:10px;' + (isDone ? "opacity:.55;" : "") + '">';
       html += '<div class="row1"><label style="cursor:pointer;display:flex;align-items:center;gap:6px;">' +
-        '<input type="checkbox" data-quest-done="' + part.seq + '"' + (isDone ? " checked" : "") + '>' +
-        '<span class="slot">步驟 ' + part.seq + '：' + escapeHtml(part.name) + '</span></label></div>';
+        '<input type="checkbox" data-quest-done="' + part.seq + '"' + (isDone ? " checked" : "") + (autoDone ? " disabled" : "") + '>' +
+        '<span class="slot">步驟 ' + part.seq + '：' + escapeHtml(part.name) + '</span></label>' +
+        (autoDone ? '<span style="font-size:11.5px;color:var(--text-faint);">後面的步驟已完成，這步自動算完成</span>' : '') + '</div>';
       html += '<div class="empty-note" style="padding:0 0 8px;">' +
         (part.npcName ? "NPC：" + escapeHtml(part.npcName) : "") +
         (mapNames ? "　地圖：" + escapeHtml(mapNames) : "") +
         '</div>';
-      var reqs = part.requirements || [];
+      var usable = questUsableReqs(part);
+      var reqs = usable.list;
+      html += questHiddenNote(usable.hidden);
       if (reqs.length) {
 
         if (line.jobRelated) {
-          // 只有職業進度相關的線（轉職、2轉試驗）才需要按職業分組顯示，其他劇情線的道具需求跟職業無關，不套用這套標籤
+          // 職業進度相關的線（轉職、2轉試驗）才按職業分組。分組依據只用資料確定的：
+          // 1. 條件裡有限定職業（conds 的 has_job 職業碼）→「限 X」
+          // 2. 對話會轉職的 NPC（update_data.py 的 CONFIRMED_JOB_BY_NPC_ROW，已用對話樹 change_job_id 核對）→「可轉職成 X」
+          // 用道具名稱推測的（jobConfirmed=false）不採用
           var jobGroups = {}; var jobOrder = [];
           reqs.forEach(function (req) {
-            var key = req.guessedJob || "__unknown__";
+            var jobConds = (req.extra || []).filter(function (e) { return e.k === "job"; }).map(function (e) { return e.v; });
+            var key = jobConds.length ? "限職業：" + jobConds.filter(function (v, i, a) { return a.indexOf(v) === i; }).join("、")
+              : (req.guessedJob && req.jobConfirmed ? "可轉職成：" + req.guessedJob : "不分職業");
             if (!jobGroups[key]) { jobGroups[key] = []; jobOrder.push(key); }
             jobGroups[key].push(req);
           });
           jobOrder.forEach(function (key) {
             var group = jobGroups[key];
-            var isConfirmed = group.some(function (r) { return r.jobConfirmed; });
-            var groupLabel = key === "__unknown__"
-              ? "未知職業（找不到對話文字可以確認是哪個職業）"
-              : "可轉職成：" + key + (isConfirmed ? "（已對照對話確認）" : "（用道具名稱推測，未經對話確認）");
-            html += '<div class="empty-note" style="padding:6px 0 4px;color:' + (isConfirmed ? "var(--text)" : "var(--text-faint)") + ';font-weight:600;">' + groupLabel +
-              (group.length > 1 ? "　（下面每一個方塊都是不同的 NPC／任務，擇一完成即可）" : "") + '</div>';
+            if (jobOrder.length > 1 || key !== "不分職業") {
+              html += '<div class="empty-note" style="padding:6px 0 4px;color:var(--text);font-weight:600;">' + escapeHtml(key) +
+                (group.length > 1 ? "　（下面每一個方塊都是不同的達成方式，擇一即可）" : "") + '</div>';
+            } else if (group.length > 1) {
+              html += '<div class="empty-note" style="padding:4px 0 4px;">' + questReqsHint(part, group.length) + '</div>';
+            }
             group.forEach(function (req) { html += renderReqBox(req); });
           });
         } else {
@@ -2008,6 +2432,12 @@
   });
 
   document.addEventListener("click", function (e) {
+    // 在彈出視窗（委託詳細／寶箱）裡點物品、怪物等連結跳頁時，先把視窗關掉，不然新頁面會被蓋住
+    if (e.target.closest("#changelogBackdrop") && e.target.closest("[data-goto-item],[data-goto-monster],[data-open-questline],[data-open-pet],[data-open-dungeon]")) {
+      closeChangelog();
+    }
+    var commissionDetail = e.target.closest("[data-commission-detail]");
+    if (commissionDetail) { openCommissionDetail(commissionDetail.getAttribute("data-commission-detail"), commissionDetail.getAttribute("data-commission-detail-town")); return; }
     var backLink = e.target.closest("[data-go-back]");
     if (backLink) { goBackOneView(); return; }
     var gotoItemLink = e.target.closest("[data-goto-item]");
@@ -2022,6 +2452,11 @@
     if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
     var boxLink = e.target.closest("[data-open-box]");
     if (boxLink) { openBoxDetail(boxLink.getAttribute("data-open-box")); return; }
+    // 藍圖任務列：列裡的怪物／物品／副本連結在上面已經先處理掉了，點到列的其他地方才開詳細彈窗
+    var missionDetail = e.target.closest("[data-mission-detail]");
+    if (missionDetail) { openMissionDetail(missionDetail.getAttribute("data-mission-detail")); return; }
+    var questTab = e.target.closest("[data-quest-tab]");
+    if (questTab) { openQuestTab(questTab.getAttribute("data-quest-tab")); return; }
     var questLineLink = e.target.closest("[data-open-questline]");
     if (questLineLink) navigateTo("questline", questLineLink.getAttribute("data-open-questline"), true);
   });

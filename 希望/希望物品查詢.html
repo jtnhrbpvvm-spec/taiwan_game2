@@ -150,6 +150,13 @@ body{
   align-items:start;
 }
 @media (max-width:820px){ .cols{grid-template-columns:1fr;} }
+/* grid 子項預設 min-width:auto，寬表格會把整欄撐開造成手機整頁左右溢出；設 0 讓表格外層的 overflow-x 自己捲動 */
+.cols > *{min-width:0;}
+/* 委託任務：桌機顯示完整表格，手機只顯示接取 NPC＋等級／名聲，點開看詳細 */
+.cm-mobile{display:none;}
+/* 表格裡的物品標籤窄螢幕換行時不要被拆成兩半互相重疊 */
+td .map-chip{display:inline-block;}
+@media (max-width:640px){ .cm-desktop{display:none;} .cm-mobile{display:block;} }
 
 .panel{
   background:var(--panel);
