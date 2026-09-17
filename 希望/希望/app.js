@@ -192,11 +192,16 @@
   var PET_INFO = window.PET_INFO || {};
   var PET_EVOLVE_FROM = window.PET_EVOLVE_FROM || {};
   var MAIN_QUEST_LINES = window.MAIN_QUEST_LINES || {};
+  var QUEST_FLAG_INFO = window.QUEST_FLAG_INFO || {};
+  var QUEST_ITEM_GIVES = window.QUEST_ITEM_GIVES || {};
+  var MAP_REQS = window.MAP_REQS || {};
   var ITEM_QUEST_USES = window.ITEM_QUEST_USES || {};
   var ITEM_PET_EVOLVE_USES = window.ITEM_PET_EVOLVE_USES || {};
   var ITEM_KILL_SOURCE = window.ITEM_KILL_SOURCE || {};
   var ITEM_ORIGIN = window.ITEM_ORIGIN || {};
   var BPET_CRAFT_SOURCE = window.BPET_CRAFT_SOURCE || {};
+  var LETTER_SOURCE = window.LETTER_SOURCE || {};
+  var LETTER_BY_MONSTER = window.LETTER_BY_MONSTER || {};
   // 物品取得方式，三種來源合併判斷：
   // 1. ITEM_ORIGIN（掃過每個 NPC 完整對話樹得到的，比較準）：kind=npc 代表對話直接給的，
   //    kind=event 代表這棵對話樹沒有任何 NPC 認領，多半是戰鬥/狩獵事件觸發。
@@ -230,6 +235,18 @@
       lines.push("取得方式：用 " + itemChip(craftSrc.bookId) + " 製作，材料：" + matsHtml +
         "，花費 " + fmtNum(craftSrc.gold) + " 金幣，成功率 " + craftSrc.ratePct + "%");
     }
+    (LETTER_SOURCE[String(iid)] || []).forEach(function (ls) {
+      var monsterHtml = ls.monsterId
+        ? '<span class="name-link" data-goto-monster="' + ls.monsterId + '">' + escapeHtml(ls.monsterName || ("怪物#" + ls.monsterId)) + '</span>'
+        : "未知怪物";
+      var needHtml3 = ls.itemId ? "，並繳交 " + itemChip(ls.itemId, ls.count) : "";
+      var placeHtml = ls.places && ls.places.length ? "（" + ls.places.map(escapeHtml).join("／") + "）" : "";
+      var rewardParts = [];
+      if (ls.fame) rewardParts.push("名聲 +" + fmtNum(ls.fame));
+      if (ls.gold) rewardParts.push(fmtNum(ls.gold) + " 金幣");
+      lines.push("取得方式：打倒 " + monsterHtml + " 掉落，交給 <b>" + escapeHtml(ls.npcName) + "</b>" + placeHtml + needHtml3 +
+        (rewardParts.length ? "，可換 " + rewardParts.join("、") : ""));
+    });
     return lines.join("<br>");
   }
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速", hit: "命中", dmgDealtPct: "增傷" };
@@ -243,6 +260,8 @@
   }
   var CHANGELOG = window.CHANGELOG || [];
   var RATE_DIVISOR = window.RATE_DIVISOR || 1000000;
+  // 鍛造時抽到基礎成品後，還有額外 3% 機率換成這裡列出的版本（見 FORGE_BY_PRODUCT 裡的 viaVariant 欄位）。
+  var FORGE_VARIANT_LABEL = { g: "強化版", crit: "必殺增強型", hit: "命中增加型", speed: "攻擊速度型" };
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
   var ABILITY_FIELD_LABEL = { dmgTakenPct: "減傷", dmgDealtPct: "增傷" };
@@ -559,6 +578,7 @@
         if (ITEM_QUEST_USES[it.id]) metaParts.push("任務道具");
         if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
         if (ITEM_ORIGIN[it.id] || ITEM_KILL_SOURCE[it.id]) metaParts.push("可從任務取得");
+        if (LETTER_SOURCE[it.id]) metaParts.push("書信任務");
         if (questRefs.quests.length) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("討伐獎勵");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -841,7 +861,10 @@
       html += '<div class="section-title">可透過鍛造取得 <span class="count">(' + forgeProducts.length + ')</span></div>';
       html += '<table class="dtable"><thead><tr><th>鍛造書</th><th>成功率</th><th>需求</th></tr></thead><tbody>';
       forgeProducts.forEach(function (p) {
-        html += itemLinkRow(p.book, '<td><span class="rate">' + p.rate + '%</span></td><td>Lv' + p.charLv + '・力量 ' + p.strMin + '</td>');
+        var variantNote = p.viaVariant
+          ? '<br><span class="rate low">' + (FORGE_VARIANT_LABEL[p.viaVariant] || "特殊版本") + '（抽到基礎款後再有 3% 機率）</span>'
+          : '';
+        html += itemLinkRow(p.book, '<td><span class="rate">' + p.rate + '%</span></td><td>Lv' + p.charLv + '・力量 ' + p.strMin + variantNote + '</td>');
       });
       html += '</tbody></table>';
     }
@@ -1085,6 +1108,26 @@
           '<td>' + ELEMENT_RELATION_LABEL[rel] + (rel === "counter" ? "（最佳）" : "") + '</td>' +
           '<td><span class="rate' + (mult.attack < 1 ? " low" : "") + '">×' + mult.attack.toFixed(2) + '</span></td>' +
           '<td><span class="rate' + (mult.skill < 1 ? " low" : "") + '">×' + mult.skill.toFixed(2) + '</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    var letterRefs = LETTER_BY_MONSTER[id] || [];
+    if (letterRefs.length) {
+      html += '<div class="section-title">書信任務 <span class="count">(' + letterRefs.length + ')</span></div>';
+      html += '<table class="dtable"><thead><tr><th>書信</th><th>繳交給</th><th>額外材料</th><th>獎勵</th></tr></thead><tbody>';
+      letterRefs.forEach(function (lr) {
+        var matHtml = lr.itemId ? itemChip(lr.itemId, lr.count) : "－";
+        var placeHtml = lr.places && lr.places.length ? "（" + lr.places.map(escapeHtml).join("／") + "）" : "";
+        var rewardParts = [];
+        if (lr.fame) rewardParts.push("名聲+" + fmtNum(lr.fame));
+        if (lr.gold) rewardParts.push(fmtNum(lr.gold) + "金");
+        html += '<tr class="clickable" data-goto-item="' + lr.letterId + '">' +
+          '<td><span class="name-link">' + escapeHtml(lr.letterName) + '</span></td>' +
+          '<td>' + escapeHtml(lr.npcName) + placeHtml + '</td>' +
+          '<td>' + matHtml + '</td>' +
+          '<td>' + escapeHtml(rewardParts.join('、') || '－') + '</td>' +
           '</tr>';
       });
       html += '</tbody></table>';
@@ -1424,7 +1467,7 @@
         var line = MAIN_QUEST_LINES[lid];
         html += '<li class="result-item" data-open-questline="' + lid + '">' +
           '<span class="rname">' + escapeHtml(line.title) + (line.jobRelated ? ' <span class="badge tag-harvest" style="margin-left:6px;">職業進度</span>' : '') + '</span>' +
-          '<span class="rmeta">共 ' + line.parts.length + ' 個步驟</span>' +
+          '<span class="rmeta">共 ' + line.parts.length + ' 個步驟' + (function (n) { return n ? '・已勾 ' + n : ''; })(loadQuestProgress(String(lid)).length) + '</span>' +
           '</li>';
       });
       html += '</ul>';
@@ -1432,9 +1475,102 @@
     $detail.innerHTML = html;
   }
 
+  // ---------- 任務攻略：進度記錄（只存在這台瀏覽器，查詢頁沒有存檔可讀，進度要玩家自己勾）----------
+  var QUEST_PROGRESS_KEY = "hopeQuestProgress";
+  function loadQuestProgress(lineId) {
+    try {
+      var all = JSON.parse(localStorage.getItem(QUEST_PROGRESS_KEY) || "{}");
+      return Array.isArray(all[lineId]) ? all[lineId] : [];
+    } catch (e) { return []; }
+  }
+  function saveQuestProgress(lineId, seqs) {
+    try {
+      var all = JSON.parse(localStorage.getItem(QUEST_PROGRESS_KEY) || "{}");
+      all[lineId] = seqs;
+      localStorage.setItem(QUEST_PROGRESS_KEY, JSON.stringify(all));
+    } catch (e) { /* 無痕模式等存不了就算了，畫面照常顯示 */ }
+  }
+
+  var WEEKDAY_LABEL = ["", "週一", "週二", "週三", "週四", "週五", "週六", "週日"];
+  function npcWhereText(name, mapIds, kill) {
+    var maps = (mapIds || []).map(function (mid) { return townName(mid); }).join("／");
+    return (kill ? "打倒／挑戰 " : "找 ") + "<b>" + escapeHtml(name || "未知 NPC") + "</b>" + (maps ? "（" + escapeHtml(maps) + "）" : "");
+  }
+  // 劇情旗標翻成人看得懂的前置條件
+  function questFlagText(flag, currentLineId) {
+    var info = QUEST_FLAG_INFO[String(flag)];
+    if (!info) return "需要劇情進度 #" + flag + "（資料裡查不到是哪個對話給的）";
+    if (info.lineId != null) {
+      if (String(info.lineId) === String(currentLineId)) return "先完成本線 步驟 " + info.seq + "：" + escapeHtml(info.partName);
+      return '先完成〔<span class="name-link" data-open-questline="' + info.lineId + '">' + escapeHtml(info.lineTitle) + '</span>〕步驟 ' + info.seq + "：" + escapeHtml(info.partName);
+    }
+    var who = (info.npcs || []).map(function (n) { return npcWhereText(n.name, n.mapIds, n.kill); }).join("　或　");
+    var lineLinks = (info.lineIds || []).filter(function (lid) { return String(lid) !== String(currentLineId) && MAIN_QUEST_LINES[String(lid)]; })
+      .map(function (lid) { return '〔<span class="name-link" data-open-questline="' + lid + '">' + escapeHtml(MAIN_QUEST_LINES[String(lid)].title) + '</span>〕'; });
+    return "先" + (who || "完成前置劇情") + " 完成前置對話" + (lineLinks.length ? "（屬於 " + lineLinks.join("、") + "）" : "");
+  }
+  function questExtraText(e) {
+    switch (e.k) {
+      case "levelMax": return "等級不能超過 " + e.v;
+      case "fameMax": return "名聲不能超過 " + fmtNum(e.v);
+      case "hour": return "限 " + e.v + " 點整那一小時";
+      case "weekday": return "限" + (WEEKDAY_LABEL[e.v] || ("星期代碼 " + e.v));
+      case "sex": return e.v === "male" ? "限男性角色" : "限女性角色";
+      case "anyJob": return "要已經轉職";
+      case "noJob": return "要還沒轉職（初心者）";
+      case "job": return "限職業：" + escapeHtml(e.v);
+      case "party": return "隊伍要 " + e.v + " 人";
+      case "never": return "此分支目前遊戲判定不會成立";
+      default: return "";
+    }
+  }
+  function mapReqText(mid, currentLineId) {
+    var r = MAP_REQS[String(mid)];
+    if (!r) return "";
+    var parts = [];
+    if (r.reqLevel) parts.push("Lv" + r.reqLevel);
+    if (r.reqItem) parts.push("身上帶著 " + itemChip(r.reqItem));
+    if (r.reqFlag) parts.push(r.reqNote ? "先" + escapeHtml(r.reqNote) : questFlagText(r.reqFlag, currentLineId));
+    return parts.length ? "進入〔" + escapeHtml(mapName(mid)) + "〕需要：" + parts.join("、") : "";
+  }
+  function questItemSourceText(iid) {
+    var lines = [];
+    var gives = QUEST_ITEM_GIVES[String(iid)] || [];
+    if (gives.length) {
+      // 共用同一棵對話樹的 NPC 合併成一筆，列第一位，其餘寫在括號裡
+      var groups = [], groupByTree = {};
+      gives.forEach(function (g) {
+        var key = g.treeId != null ? "t" + g.treeId : "r" + g.npcRow;
+        if (groupByTree[key]) { groupByTree[key].others.push(g.npcName); return; }
+        groupByTree[key] = { first: g, others: [] };
+        groups.push(groupByTree[key]);
+      });
+      lines.push("取得方式：" + groups.map(function (grp) {
+        return npcWhereText(grp.first.npcName, grp.first.mapIds, grp.first.kill) +
+          (grp.others.length ? '<span style="opacity:.7;">（另有 ' + grp.others.length + " 位共用同一段對話：" + grp.others.map(escapeHtml).join("、") + "）</span>" : "");
+      }).join("　或　") + " 取得");
+    } else {
+      var ks = itemKillSourceText(iid);
+      if (ks) lines.push(ks);
+    }
+    var dropN = (DROP_INDEX[String(iid)] || []).length, shopN = (SHOP_INDEX[String(iid)] || []).length;
+    if (dropN || shopN) {
+      lines.push("另外：" + [dropN ? dropN + " 種怪物會掉落" : "", shopN ? "商店有賣" : ""].filter(Boolean).join("、") + "（點道具看詳細）");
+    }
+    return lines.join("<br>");
+  }
+
+  // 步驟有 flagId：多個方塊是同一個結果的不同達成方式；沒有 flagId：是這位 NPC 在本線的多段對話（遊戲 partNpcOpenFlags() 的規則），不是擇一
+  function questReqsHint(part, n) {
+    return part.flagId == null
+      ? '這位 NPC 在本線有 ' + n + ' 段劇情對話，以下分別列出每一段的條件（順序以前置條件為準）：'
+      : '以下 ' + n + ' 種方式擇一即可：';
+  }
+
   function showQuestLineDetail(lineId) {
     var line = MAIN_QUEST_LINES[String(lineId)];
     if (!line) return;
+    var doneSeqs = loadQuestProgress(String(lineId));
     var html = backButtonHtml();
     html += '<div class="section-title"><span class="name-link" id="questLineBackToList" style="cursor:pointer;">← 主線任務</span></div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(line.title) +
@@ -1447,40 +1583,106 @@
         '</div>';
     }
 
+    function renderReqBox(req) {
+      var reqMapNames = (req.mapIds || []).map(function (mid) { return townName(mid); }).join("、");
+      var out = '<div style="border:1px solid var(--line-hi);border-radius:4px;padding:8px 10px;margin-bottom:6px;background:rgba(255,255,255,.02);">';
+      if (req.npcName || reqMapNames) {
+        out += '<div style="font-size:12.5px;color:var(--gold-hi);margin-bottom:4px;">' +
+          (req.npcName ? (req.kill ? "對象（戰鬥觸發）：" : "NPC：") + escapeHtml(req.npcName) : "") +
+          (reqMapNames ? "　地圖：" + escapeHtml(reqMapNames) : "") +
+          '</div>';
+      }
+      var mapReqs = (req.mapIds || []).map(function (mid) { return mapReqText(mid, lineId); }).filter(Boolean);
+      mapReqs.forEach(function (t) { out += '<div class="empty-note" style="padding:0 0 4px;">🚪 ' + t + '</div>'; });
+      var badges = [];
+      if (req.lv) badges.push("等級 " + req.lv);
+      if (req.fame) badges.push("名聲 " + fmtNum(req.fame));
+      if (req.gold) badges.push("金幣 " + fmtNum(req.gold));
+      if (badges.length) out += '<div class="badge-row" style="margin-bottom:6px;">' + badges.map(function (b) { return '<span class="badge">' + b + '</span>'; }).join('') + '</div>';
+      var conds = (req.need || []).map(function (f) { return questFlagText(f, lineId); })
+        .concat((req.extra || []).map(questExtraText).filter(Boolean));
+      if (conds.length) {
+        out += '<div style="font-size:12.5px;line-height:1.7;margin-bottom:4px;">' + conds.map(function (c) { return "・" + c; }).join("<br>") + '</div>';
+      }
+      if (req.items && req.items.length) {
+        var takes = req.takes || [];
+        out += '<div style="font-size:12.5px;margin:2px 0;">要帶著：</div>';
+        out += '<div class="map-chip-row">' + req.items.map(function (it) {
+          return itemChip(it[0], it[1]) + (takes.indexOf(it[0]) !== -1 ? '<span class="empty-note" style="padding:0 6px 0 0;">（會被收走）</span>' : '');
+        }).join('') + '</div>';
+        req.items.forEach(function (it) {
+          var src = questItemSourceText(it[0]);
+          if (src) out += '<div class="empty-note" style="padding:2px 0 0;">' + itemNamePrefix(it[0]) + src + '</div>';
+        });
+      }
+      if (req.gives && req.gives.length) {
+        out += '<div style="font-size:12.5px;margin:6px 0 2px;">完成後拿到：</div><div class="map-chip-row">' + req.gives.map(function (iid) { return itemChip(iid); }).join('') + '</div>';
+      }
+      out += '</div>';
+      return out;
+    }
+    function itemNamePrefix(iid) {
+      return ITEMS[iid] ? "〔" + escapeHtml(ITEMS[iid].name) + "〕" : "";
+    }
+
+    // ---- 進度 / 如何開始 ----
+    var parts = line.parts;
+    var doneCount = parts.filter(function (p) { return doneSeqs.indexOf(p.seq) !== -1; }).length;
+    var nextPart = parts.filter(function (p) { return doneSeqs.indexOf(p.seq) === -1; })[0];
+    html += '<div style="background:rgba(201,170,90,.10);border:1px solid var(--gold-hi);border-radius:4px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">';
+    html += '<div style="font-weight:700;margin-bottom:4px;">🧭 目前進度：' + doneCount + ' / ' + parts.length + '</div>';
+    if (!nextPart) {
+      html += '<div>這條線的步驟都勾完了 🎉</div>';
+    } else if (line.chains && line.chains.length) {
+      // 遊戲的 questGuide() 也不拿有 chains 的線去規劃，而是直接照各職業的 chains 步驟走，這裡同樣導去看 chains
+      html += '<div>' + (doneCount === 0 ? "<b>如何開始：</b>" : "<b>下一步：</b>") + '先決定要轉哪個職業，照下方「各職業轉職流程」依序完成。</div>';
+    } else {
+      html += '<div style="margin-bottom:6px;">' + (doneCount === 0 ? "<b>如何開始：</b>" : "<b>下一步：</b>") +
+        "步驟 " + nextPart.seq + "：" + escapeHtml(nextPart.name) +
+        (nextPart.npcName ? "　→ " + npcWhereText(nextPart.npcName, nextPart.mapIds) : "") + '</div>';
+      var nextReqs = nextPart.requirements || [];
+      if (nextReqs.length > 1) html += '<div class="empty-note" style="padding:0 0 4px;">' + questReqsHint(nextPart, nextReqs.length) + '</div>';
+      nextReqs.forEach(function (req) { html += renderReqBox(req); });
+      if (!nextReqs.length) html += '<div class="empty-note" style="padding:0;">這一步資料裡沒有額外條件，直接去找 NPC 對話即可。</div>';
+    }
+    html += '<div class="empty-note" style="padding:6px 0 0;">進度是你自己在下方勾選的，只存在這台瀏覽器；本站讀不到遊戲存檔。</div>';
+    html += '</div>';
+
+    // ---- 遊戲內建的轉職流程（chains，只有轉職線有）----
+    if (line.chains && line.chains.length) {
+      html += '<div class="section-title">各職業轉職流程（遊戲資料）</div>';
+      line.chains.forEach(function (chain) {
+        html += '<div class="equip-box" style="margin-bottom:10px;"><div class="row1"><span class="slot">' + escapeHtml(chain.name) + '</span></div>';
+        html += '<ol style="margin:4px 0 0 18px;padding:0;font-size:12.5px;line-height:1.8;">';
+        chain.steps.forEach(function (st) {
+          var bits = [st.row != null || st.name ? npcWhereText(st.name, st.mapIds, st.kind !== "npc") : ""];
+          if (st.lv) bits.push("等級 " + st.lv);
+          if (st.need && st.need.length) bits.push(st.need.map(function (f) { return questFlagText(f, lineId); }).join("、"));
+          if (st.needs && st.needs.length) bits.push("帶著 " + st.needs.map(function (n) { return itemChip(n[0], n[1]); }).join(""));
+          if (st.gives && st.gives.length) bits.push("拿到 " + st.gives.map(function (iid) { return itemChip(iid); }).join(""));
+          if (st.job) bits.push("<b>完成轉職</b>");
+          html += '<li>' + bits.filter(Boolean).join("　") + '</li>';
+        });
+        html += '</ol></div>';
+      });
+    }
+
+    html += '<div class="section-title">完整流程</div>';
+    html += '<div class="empty-note" style="padding:0 0 8px;">同一步驟列出多個方塊時，是不同的達成方式（遊戲會依對話分支順序判定），擇一即可。</div>';
+
     line.parts.forEach(function (part) {
       var mapNames = (part.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
-      html += '<div class="equip-box" style="margin-bottom:10px;">';
-      html += '<div class="row1"><span class="slot">步驟 ' + part.seq + '：' + escapeHtml(part.name) + '</span></div>';
+      var isDone = doneSeqs.indexOf(part.seq) !== -1;
+      html += '<div class="equip-box" style="margin-bottom:10px;' + (isDone ? "opacity:.55;" : "") + '">';
+      html += '<div class="row1"><label style="cursor:pointer;display:flex;align-items:center;gap:6px;">' +
+        '<input type="checkbox" data-quest-done="' + part.seq + '"' + (isDone ? " checked" : "") + '>' +
+        '<span class="slot">步驟 ' + part.seq + '：' + escapeHtml(part.name) + '</span></label></div>';
       html += '<div class="empty-note" style="padding:0 0 8px;">' +
         (part.npcName ? "NPC：" + escapeHtml(part.npcName) : "") +
         (mapNames ? "　地圖：" + escapeHtml(mapNames) : "") +
         '</div>';
       var reqs = part.requirements || [];
       if (reqs.length) {
-        function renderReqBox(req) {
-          var reqMapNames = (req.mapIds || []).map(function (mid) { return mapName(mid); }).join("、");
-          var out = '<div style="border:1px solid var(--line-hi);border-radius:4px;padding:8px 10px;margin-bottom:6px;background:rgba(255,255,255,.02);">';
-          if (req.npcName || reqMapNames) {
-            out += '<div style="font-size:12.5px;color:var(--gold-hi);margin-bottom:4px;">' +
-              (req.npcName ? "NPC：" + escapeHtml(req.npcName) : "") +
-              (reqMapNames ? "　地圖：" + escapeHtml(reqMapNames) : "") +
-              '</div>';
-          }
-          var badges = [];
-          if (req.lv) badges.push("等級 " + req.lv);
-          if (req.fame) badges.push("名聲 " + fmtNum(req.fame));
-          if (req.gold) badges.push("金幣 " + fmtNum(req.gold));
-          if (badges.length) out += '<div class="badge-row" style="margin-bottom:6px;">' + badges.map(function (b) { return '<span class="badge">' + b + '</span>'; }).join('') + '</div>';
-          if (req.items && req.items.length) {
-            out += '<div class="map-chip-row">' + req.items.map(function (it) { return itemChip(it[0], it[1]); }).join('') + '</div>';
-            req.items.forEach(function (it) {
-              var ks = itemKillSourceText(it[0]);
-              if (ks) out += '<div class="empty-note" style="padding:2px 0 0;">' + ks + '</div>';
-            });
-          }
-          out += '</div>';
-          return out;
-        }
 
         if (line.jobRelated) {
           // 只有職業進度相關的線（轉職、2轉試驗）才需要按職業分組顯示，其他劇情線的道具需求跟職業無關，不套用這套標籤
@@ -1503,7 +1705,7 @@
         } else {
           // 一般劇情線：如果同一步驟有多種達成方式，只標「達成方式擇一」，不提職業
           if (reqs.length > 1) {
-            html += '<div class="empty-note" style="padding:4px 0 4px;">下面幾種方式擇一即可：</div>';
+            html += '<div class="empty-note" style="padding:4px 0 4px;">' + questReqsHint(part, reqs.length) + '</div>';
           }
           reqs.forEach(function (req) { html += renderReqBox(req); });
         }
@@ -1513,6 +1715,15 @@
 
     $detail.innerHTML = html;
     document.getElementById("questLineBackToList").addEventListener("click", showQuestLineBrowser);
+    Array.prototype.forEach.call($detail.querySelectorAll("[data-quest-done]"), function (box) {
+      box.addEventListener("change", function () {
+        var seq = Number(box.getAttribute("data-quest-done"));
+        var seqs = loadQuestProgress(String(lineId)).filter(function (s) { return s !== seq; });
+        if (box.checked) seqs.push(seq);
+        saveQuestProgress(String(lineId), seqs);
+        showQuestLineDetail(lineId);
+      });
+    });
   }
 
   var BATTLE_PET_INFO = window.BATTLE_PET_INFO || { kinds: [], growthTypes: [], levels: {}, auras: {}, skills: [], upgrades: [], gearSlots: [], gear: [], crafts: [], stoneCrafts: [] };
