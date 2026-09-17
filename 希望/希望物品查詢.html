@@ -106,6 +106,12 @@ body{
 }
 .ability-only-toggle:has(input:checked){border-color:var(--gold); color:var(--gold-hi);}
 .ability-only-toggle input{width:16px; height:16px; accent-color:var(--gold); margin:0;}
+.obtainable-toggle{
+  display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none;
+  font-size:12.5px; color:var(--text-dim); margin:-4px 0 10px;
+}
+.obtainable-toggle:has(input:checked){color:var(--gold-hi);}
+.obtainable-toggle input{width:15px; height:15px; accent-color:var(--gold); margin:0;}
 .search-box input{
   width:100%;
   font-size:17px;
@@ -304,7 +310,7 @@ footer{
       <h1>希望圖鑑・<span>掉落查詢</span></h1>
       <button id="changelogBtn" class="hint-chip" style="white-space:nowrap;">📋 更新紀錄</button>
     </div>
-    <p>輸入物品名稱，查出所有會掉落它的怪物、出現地圖與機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表；勾選「僅查詢裝備能力」後，輸入能力名稱（例如「魔法」「攻速」「減傷」，可用空白同時查多項），只會列出有這項能力加成的裝備並依數值排序，不比對物品名稱；能力後面可以加大於小於條件縮小範圍，例如「魔法力&gt;20 攻速&lt;=10」。</p>
+    <p>輸入物品名稱，查出所有會掉落它的怪物、出現地圖與機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表；勾選「僅查詢裝備能力」後，輸入能力名稱（例如「魔法」「攻速」「減傷」，可用空白同時查多項），只會列出有這項能力加成的裝備並依數值排序，不比對物品名稱；能力後面可以加 &gt;（大於等於）、&lt;（小於等於）縮小範圍，例如「魔法力&gt;20 攻速&lt;10」。</p>
 
     <div class="search-row">
       <div class="search-box">
@@ -338,6 +344,7 @@ footer{
   <div class="cols">
     <div class="panel">
       <h2 id="resultTitle">搜尋結果 <span class="count" id="resultCount"></span></h2>
+      <label class="obtainable-toggle" title="只列出遊戲裡有正確取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品"><input type="checkbox" id="obtainableOnly"> 僅顯示可取得裝備</label>
       <ul class="result-list" id="resultList"></ul>
     </div>
 

@@ -320,10 +320,22 @@
   // ---------- DOM ----------
   var $input = document.getElementById("searchInput");
   var $abilityOnly = document.getElementById("abilityOnly");
+  var $obtainableOnly = document.getElementById("obtainableOnly");
+  if ($obtainableOnly) {
+    if (!window.ITEM_OBTAIN) {
+      $obtainableOnly.disabled = true;
+      $obtainableOnly.parentNode.title = "資料檔是舊版，請重新執行 update_data.py 才能使用";
+      $obtainableOnly.parentNode.style.opacity = ".5";
+    }
+    $obtainableOnly.addEventListener("change", function () {
+      resetNavHistory();
+      runSearch($input.value);
+    });
+  }
   var SEARCH_PLACEHOLDER_DEFAULT = $input ? $input.placeholder : "";
   if ($abilityOnly) {
     $abilityOnly.addEventListener("change", function () {
-      $input.placeholder = $abilityOnly.checked ? "輸入裝備能力，例如：魔法、魔法力>20 攻速<=10" : SEARCH_PLACEHOLDER_DEFAULT;
+      $input.placeholder = $abilityOnly.checked ? "輸入裝備能力，例如：魔法、魔法力>20 攻速<10" : SEARCH_PLACEHOLDER_DEFAULT;
       resetNavHistory();
       runSearch($input.value);
     });
@@ -505,12 +517,23 @@
 
   // 遊戲資料裡的測試裝備（名稱開頭「[測試用]」，數值動輒上萬），能力搜尋時不列出，免得永遠排第一
   function isTestItemName(name) { return /^\[測試用\]/.test(name || ""); }
+  // 使用者要求：鍵盤不好打 ≥ ≤，所以 > 就當 ≥、< 就當 ≤（>= <= 照樣可以用，結果相同）
   var ABILITY_OPS = {
-    ">": function (v, n) { return v > n; }, ">=": function (v, n) { return v >= n; },
-    "<": function (v, n) { return v < n; }, "<=": function (v, n) { return v <= n; },
+    ">": function (v, n) { return v >= n; }, ">=": function (v, n) { return v >= n; },
+    "<": function (v, n) { return v <= n; }, "<=": function (v, n) { return v <= n; },
     "=": function (v, n) { return v === n; }
   };
-  var ABILITY_OP_TEXT = { ">": "＞", ">=": "≧", "<": "＜", "<=": "≦", "=": "＝" };
+  var ABILITY_OP_TEXT = { ">": "≧", ">=": "≧", "<": "≦", "<=": "≦", "=": "＝" };
+
+  // 「僅顯示可取得裝備」：ITEM_OBTAIN 由 update_data.py 照遊戲所有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚…）算出，
+  // 查不到任何管道的物品就藏起來。舊資料檔沒有 ITEM_OBTAIN 時不過濾。
+  var ITEM_OBTAIN = window.ITEM_OBTAIN || null;
+  function obtainFilterOn() {
+    return !!(ITEM_OBTAIN && $obtainableOnly && $obtainableOnly.checked);
+  }
+  function passesObtainFilter(id) {
+    return !obtainFilterOn() || !!ITEM_OBTAIN[String(id)];
+  }
   // 一個條件：「魔法」「魔法>20」「攻速<=10」。回傳 { keys, op, num } 或 { error }
   function parseAbilityCondition(token) {
     var m = token.match(/^(.*?)(>=|<=|>|<|=)(.*)$/);
@@ -544,7 +567,7 @@
       currentAbilityFields = [];
       $resultCount.textContent = "";
       $resultList.innerHTML = '<li class="empty-note">' + escapeHtml(errors.join("；")) + '。可以查：' +
-        EQUIP_ABILITIES.map(function (a) { return a.label; }).join("、") + '；可用空白同時查多項，能力後面可加 &gt; &gt;= &lt; &lt;= = 條件，例如「魔法力&gt;20」。</li>';
+        EQUIP_ABILITIES.map(function (a) { return a.label; }).join("、") + '；可用空白同時查多項，能力後面可加 &gt;（大於等於）、&lt;（小於等於）、= 條件，例如「魔法力&gt;20」。</li>';
       showNoResult(q);
       return;
     }
@@ -559,10 +582,10 @@
     currentAbilityConditionText = conds.map(function (c) {
       var label = c.keys.map(function (k) { return EQUIP_ABILITY_BY_KEY[k].label; }).join("或");
       return c.op ? label + " " + ABILITY_OP_TEXT[c.op] + " " + fmtNum(c.num) + (EQUIP_ABILITY_BY_KEY[c.keys[0]].unit || "") : label + " 有加成";
-    }).join("、");
+    }).join("、") + (obtainFilterOn() ? "（只列可取得的裝備）" : "");
     var matches = itemList.filter(function (it) {
       var eq = ITEMS[it.id].equip;
-      return eq && !isTestItemName(it.name) && conds.every(function (c) { return passes(eq, c); });
+      return eq && !isTestItemName(it.name) && passesObtainFilter(it.id) && conds.every(function (c) { return passes(eq, c); });
     }).sort(function (a, b) {
       return primaryValue(ITEMS[b.id].equip) - primaryValue(ITEMS[a.id].equip) || a.name.localeCompare(b.name, "zh-Hant");
     });
@@ -594,14 +617,14 @@
     if ($abilityOnly && $abilityOnly.checked) { runAbilityOnlySearch(q); return; }
 
     currentMatches.items = itemList.filter(function (it) {
-      return it.name.indexOf(q) !== -1;
+      return it.name.indexOf(q) !== -1 && passesObtainFilter(it.id);
     }).slice(0, 200);
 
     var abilityField = findAbilityField(q);
     if (abilityField) {
       var abilityMatches = itemList.filter(function (it) {
         var eq = ITEMS[it.id].equip;
-        return eq && eq[abilityField] > 0 && it.name.indexOf(q) === -1; // 已經在名稱比對裡的就不重複加
+        return eq && eq[abilityField] > 0 && it.name.indexOf(q) === -1 && passesObtainFilter(it.id); // 已經在名稱比對裡的就不重複加
       }).sort(function (a, b) {
         return (ITEMS[b.id].equip[abilityField] || 0) - (ITEMS[a.id].equip[abilityField] || 0);
       });
@@ -640,7 +663,7 @@
     $resultTitle.firstChild.textContent = "搜尋結果 ";
     $resultCount.textContent = "";
     $resultList.innerHTML = $abilityOnly && $abilityOnly.checked
-      ? '<li class="empty-note">輸入裝備能力搜尋，例如：魔法、攻速、減傷；可用空白同時查多項，能力後面可加 &gt; &gt;= &lt; &lt;= = 縮小數值範圍，例如「魔法力&gt;20 攻速&lt;=10」。</li>'
+      ? '<li class="empty-note">輸入裝備能力搜尋，例如：魔法、攻速、減傷；可用空白同時查多項，能力後面可加 &gt;（大於等於）、&lt;（小於等於）、=（等於）縮小數值範圍，例如「魔法力&gt;20 攻速&lt;10」。</li>'
       : '<li class="empty-note">開始輸入以搜尋物品或怪物名稱。</li>';
   }
 
@@ -657,7 +680,8 @@
         $resultList.innerHTML = '<li class="empty-note">找不到符合「<a href="' + EDITOR_URL +
           '" style="color:var(--gold-hi);text-decoration:underline;">希望修改器</a>」的物品或怪物。</li>';
       } else {
-        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物。</li>';
+        $resultList.innerHTML = '<li class="empty-note">找不到符合「' + escapeHtml(q) + '」的物品或怪物' +
+          (obtainFilterOn() ? "（已開啟「僅顯示可取得裝備」，沒有取得管道的物品不會列出）" : "") + '。</li>';
       }
       return;
     }
