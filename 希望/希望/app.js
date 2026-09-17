@@ -267,8 +267,34 @@
   var FORGE_VARIANT_LABEL = { g: "強化版", crit: "必殺增強型", hit: "命中增加型", speed: "攻擊速度型" };
 
   // ---------- 索引：先把 id 轉成陣列方便搜尋 ----------
-  var ABILITY_FIELD_LABEL = { dmgTakenPct: "減傷", dmgDealtPct: "增傷" };
-  var currentAbilitySearchField = null;
+  // 裝備能力對照：標籤跟遊戲裝備介面（bundle 的 BN 表：攻/魔/防/爆/命中/迴避/攻速/移速/增傷%/減傷%）一致，
+  // 遊戲是數值 > 0 才顯示「+」，「僅查詢裝備能力」模式也只找 > 0 的。aliases 是玩家常打的其他說法。
+  var EQUIP_ABILITIES = [
+    { key: "atk", label: "攻擊", aliases: ["攻", "攻擊力"] },
+    { key: "magic", label: "魔法", aliases: ["魔", "魔法力"] },
+    { key: "def", label: "防禦", aliases: ["防", "防禦力"] },
+    { key: "crit", label: "必殺", aliases: ["爆", "爆擊", "必殺率"] },
+    { key: "hit", label: "命中", aliases: ["命中率"] },
+    { key: "eva", label: "迴避", aliases: ["迴避率"] },
+    { key: "atkSpeed", label: "攻速", aliases: ["攻擊速度"] },
+    { key: "moveSpeed", label: "移速", aliases: ["移動速度"] },
+    { key: "dmgDealtPct", label: "增傷", unit: "%", aliases: ["增加傷害", "傷害加成"] },
+    { key: "dmgTakenPct", label: "減傷", unit: "%", aliases: ["減少傷害"] }
+  ];
+  var EQUIP_ABILITY_BY_KEY = {};
+  EQUIP_ABILITIES.forEach(function (a) { EQUIP_ABILITY_BY_KEY[a.key] = a; });
+  // 一個關鍵字對到哪些能力：完全相同的名稱優先；沒有才用部分比對（例如「傷害」同時對到增傷、減傷）
+  function resolveAbilityToken(token) {
+    var exact = EQUIP_ABILITIES.filter(function (a) { return a.label === token || a.aliases.indexOf(token) !== -1; });
+    if (exact.length) return exact.map(function (a) { return a.key; });
+    return EQUIP_ABILITIES.filter(function (a) {
+      return [a.label].concat(a.aliases).some(function (name) { return name.indexOf(token) !== -1; });
+    }).map(function (a) { return a.key; });
+  }
+  var currentAbilityFields = [];
+  var currentAbilityTotal = null; // 僅查詢裝備能力模式：符合的總件數（清單只列前 ABILITY_RESULT_LIMIT 件）
+  var currentAbilityConditionText = ""; // 僅查詢裝備能力模式：把解讀後的條件列在清單上方，讓玩家確認有沒有打錯
+  var ABILITY_RESULT_LIMIT = 500;
   var itemList = Object.keys(ITEMS).map(function (id) {
     return { id: id, name: ITEMS[id].name };
   });
@@ -293,6 +319,15 @@
 
   // ---------- DOM ----------
   var $input = document.getElementById("searchInput");
+  var $abilityOnly = document.getElementById("abilityOnly");
+  var SEARCH_PLACEHOLDER_DEFAULT = $input ? $input.placeholder : "";
+  if ($abilityOnly) {
+    $abilityOnly.addEventListener("change", function () {
+      $input.placeholder = $abilityOnly.checked ? "輸入裝備能力，例如：魔法、魔法力>20 攻速<=10" : SEARCH_PLACEHOLDER_DEFAULT;
+      resetNavHistory();
+      runSearch($input.value);
+    });
+  }
   var $resultList = document.getElementById("resultList");
   var $resultTitle = document.getElementById("resultTitle");
   var $resultCount = document.getElementById("resultCount");
@@ -409,7 +444,7 @@
   questLineChip.className = "hint-chip";
   questLineChip.style.borderColor = "var(--gold)";
   questLineChip.style.color = "var(--gold-hi)";
-  questLineChip.textContent = "📖 主線任務";
+  questLineChip.textContent = "📖 任務總覽";
   questLineChip.addEventListener("click", function () {
     resetNavHistory();
     $input.value = "";
@@ -468,16 +503,95 @@
     return '<div style="margin-bottom:12px;"><span class="name-link" data-go-back="1" style="cursor:pointer;">← 上一頁</span></div>';
   }
 
+  // 遊戲資料裡的測試裝備（名稱開頭「[測試用]」，數值動輒上萬），能力搜尋時不列出，免得永遠排第一
+  function isTestItemName(name) { return /^\[測試用\]/.test(name || ""); }
+  var ABILITY_OPS = {
+    ">": function (v, n) { return v > n; }, ">=": function (v, n) { return v >= n; },
+    "<": function (v, n) { return v < n; }, "<=": function (v, n) { return v <= n; },
+    "=": function (v, n) { return v === n; }
+  };
+  var ABILITY_OP_TEXT = { ">": "＞", ">=": "≧", "<": "＜", "<=": "≦", "=": "＝" };
+  // 一個條件：「魔法」「魔法>20」「攻速<=10」。回傳 { keys, op, num } 或 { error }
+  function parseAbilityCondition(token) {
+    var m = token.match(/^(.*?)(>=|<=|>|<|=)(.*)$/);
+    if (!m) {
+      var keys = resolveAbilityToken(token);
+      return keys.length ? { keys: keys } : { error: "「" + token + "」不是裝備能力" };
+    }
+    var name = m[1], num = m[3];
+    var keys2 = name ? resolveAbilityToken(name) : [];
+    if (!keys2.length) return { error: "「" + token + "」" + (name ? "裡的「" + name + "」不是裝備能力" : "少了能力名稱") };
+    if (!/^\d+(\.\d+)?$/.test(num)) return { error: "「" + token + "」少了數字（例如：" + name + m[2] + "20）" };
+    return { keys: keys2, op: m[2], num: Number(num) };
+  }
+
+  // 「僅查詢裝備能力」模式：不比對物品／怪物名稱，只找能力數值 > 0 的裝備。
+  // 可以用空白、逗號、頓號同時查多項（例如「魔法 攻速」＝兩項都要有），依第一項能力數值由高到低排。
+  // 能力後面可以加大小於條件縮小範圍：> >= < <= =（全形＞＜＝≧≦也可以），例如「魔法力>20 攻速<=10」。
+  // 不管有沒有加條件，數值都一定要 > 0（遊戲只把 > 0 的顯示成「+」能力）。
+  function runAbilityOnlySearch(q) {
+    var normalized = q.replace(/[＞]/g, ">").replace(/[＜]/g, "<").replace(/[＝]/g, "=")
+      .replace(/[≧≥]/g, ">=").replace(/[≦≤]/g, "<=")
+      .replace(/\s*(>=|<=|>|<|=)\s*/g, "$1");
+    var tokens = normalized.split(/[\s,，、+＋]+/).filter(Boolean);
+    var conds = tokens.map(parseAbilityCondition);
+    var errors = conds.filter(function (c) { return c.error; }).map(function (c) { return c.error; });
+    currentMatches.monsters = [];
+    currentAbilityTotal = null;
+    currentAbilityConditionText = "";
+    if (errors.length) {
+      currentMatches.items = [];
+      currentAbilityFields = [];
+      $resultCount.textContent = "";
+      $resultList.innerHTML = '<li class="empty-note">' + escapeHtml(errors.join("；")) + '。可以查：' +
+        EQUIP_ABILITIES.map(function (a) { return a.label; }).join("、") + '；可用空白同時查多項，能力後面可加 &gt; &gt;= &lt; &lt;= = 條件，例如「魔法力&gt;20」。</li>';
+      showNoResult(q);
+      return;
+    }
+    var resolved = conds.map(function (c) { return c.keys; });
+    var fields = [];
+    resolved.forEach(function (keys) { keys.forEach(function (k) { if (fields.indexOf(k) === -1) fields.push(k); }); });
+    var primary = resolved[0];
+    var primaryValue = function (eq) { return Math.max.apply(null, primary.map(function (k) { return eq[k] || 0; })); };
+    var passes = function (eq, c) {
+      return c.keys.some(function (k) { return eq[k] > 0 && (!c.op || ABILITY_OPS[c.op](eq[k], c.num)); });
+    };
+    currentAbilityConditionText = conds.map(function (c) {
+      var label = c.keys.map(function (k) { return EQUIP_ABILITY_BY_KEY[k].label; }).join("或");
+      return c.op ? label + " " + ABILITY_OP_TEXT[c.op] + " " + fmtNum(c.num) + (EQUIP_ABILITY_BY_KEY[c.keys[0]].unit || "") : label + " 有加成";
+    }).join("、");
+    var matches = itemList.filter(function (it) {
+      var eq = ITEMS[it.id].equip;
+      return eq && !isTestItemName(it.name) && conds.every(function (c) { return passes(eq, c); });
+    }).sort(function (a, b) {
+      return primaryValue(ITEMS[b.id].equip) - primaryValue(ITEMS[a.id].equip) || a.name.localeCompare(b.name, "zh-Hant");
+    });
+    currentAbilityFields = fields;
+    currentAbilityTotal = matches.length;
+    currentMatches.items = matches.slice(0, ABILITY_RESULT_LIMIT);
+    if (!matches.length) {
+      $resultCount.textContent = "";
+      $resultList.innerHTML = '<li class="empty-note">沒有符合條件的裝備（條件：' + escapeHtml(currentAbilityConditionText) + '）。</li>';
+      showNoResult(q);
+      return;
+    }
+    renderResultList(q);
+    if (currentMatches.items.length) showItem(currentMatches.items[0].id);
+    else showNoResult(q);
+  }
+
   function runSearch(qRaw) {
     var q = (qRaw || "").trim();
     currentMatches.items = [];
     currentMatches.monsters = [];
+    currentAbilityTotal = null;
 
     if (q === "") {
       renderEmptyResults();
       showWelcome();
       return;
     }
+    if ($abilityOnly && $abilityOnly.checked) { runAbilityOnlySearch(q); return; }
 
     currentMatches.items = itemList.filter(function (it) {
       return it.name.indexOf(q) !== -1;
@@ -493,7 +607,7 @@
       });
       currentMatches.items = currentMatches.items.concat(abilityMatches).slice(0, 200);
     }
-    currentAbilitySearchField = abilityField;
+    currentAbilityFields = abilityField ? [abilityField] : [];
 
     currentMatches.monsters = monsterList.filter(function (m) {
       return m.name.indexOf(q) !== -1;
@@ -525,12 +639,14 @@
   function renderEmptyResults() {
     $resultTitle.firstChild.textContent = "搜尋結果 ";
     $resultCount.textContent = "";
-    $resultList.innerHTML = '<li class="empty-note">開始輸入以搜尋物品或怪物名稱。</li>';
+    $resultList.innerHTML = $abilityOnly && $abilityOnly.checked
+      ? '<li class="empty-note">輸入裝備能力搜尋，例如：魔法、攻速、減傷；可用空白同時查多項，能力後面可加 &gt; &gt;= &lt; &lt;= = 縮小數值範圍，例如「魔法力&gt;20 攻速&lt;=10」。</li>'
+      : '<li class="empty-note">開始輸入以搜尋物品或怪物名稱。</li>';
   }
 
   function renderResultList(q) {
     var total = currentMatches.items.length + currentMatches.monsters.length;
-    $resultCount.textContent = total ? "(" + total + ")" : "";
+    $resultCount.textContent = total ? "(" + (currentAbilityTotal != null ? currentAbilityTotal : total) + ")" : "";
 
     if (total === 0) {
       // 從上方功能按鈕（寵物／副本／任務…）進來時沒有關鍵字，不要顯示「找不到符合「」」
@@ -560,7 +676,14 @@
     }
 
     if (currentMatches.items.length) {
-      html += '<li class="empty-note" style="padding:10px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">物品 (' + currentMatches.items.length + ')</li>';
+      html += '<li class="empty-note" style="padding:10px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">' +
+        (currentAbilityTotal != null ? "裝備 (" + currentAbilityTotal + ")" : "物品 (" + currentMatches.items.length + ")") + '</li>';
+      if (currentAbilityTotal != null && currentAbilityConditionText) {
+        html += '<li class="empty-note" style="padding:2px 6px 4px;font-size:12px;">條件：' + escapeHtml(currentAbilityConditionText) + '</li>';
+      }
+      if (currentAbilityTotal != null && currentAbilityTotal > currentMatches.items.length) {
+        html += '<li class="empty-note" style="padding:2px 6px 6px;font-size:12px;">只列出數值最高的 ' + currentMatches.items.length + ' 件，可以再多加一項能力縮小範圍。</li>';
+      }
       currentMatches.items.forEach(function (it) {
         var count = (DROP_INDEX[it.id] || []).length;
         var shopCount = (SHOP_INDEX[it.id] || []).length;
@@ -568,11 +691,12 @@
         var questRefs = buildQuestReferences(it.id);
         var metaParts = [];
         if (count) metaParts.push(count + " 隻怪物掉落");
-        if (currentAbilitySearchField) {
-          var eqAb = ITEMS[it.id].equip;
-          if (eqAb && eqAb[currentAbilitySearchField] > 0) {
-            metaParts.unshift(ABILITY_FIELD_LABEL[currentAbilitySearchField] + " " + eqAb[currentAbilitySearchField] + "%");
-          }
+        var eqAb = ITEMS[it.id].equip;
+        if (eqAb && currentAbilityFields.length) {
+          metaParts = currentAbilityFields.filter(function (k) { return eqAb[k] > 0; }).map(function (k) {
+            var a = EQUIP_ABILITY_BY_KEY[k];
+            return a.label + " +" + eqAb[k] + (a.unit || "");
+          }).concat(metaParts);
         }
         if (shopCount) metaParts.push("商店有賣");
         if (radixCount) metaParts.push("拉迪克斯有賣");
@@ -853,7 +977,7 @@
         '<span class="badge">需求等級 ' + eq.minLv + '</span></div>' +
         '<div class="equip-stat-grid">' +
         eqStat("攻擊", eq.atk) + eqStat("防禦", eq.def) + eqStat("魔法", eq.magic) +
-        eqStat("攻速", eq.atkSpeed) + eqStat("必殺", eq.crit) + eqStat("迴避", eq.eva) +
+        eqStat("攻速", eq.atkSpeed) + eqStat("必殺", eq.crit) + eqStat("命中", eq.hit) + eqStat("迴避", eq.eva) +
         eqStat("移速", eq.moveSpeed) +
         eqStatPct("增加傷害", eq.dmgDealtPct) + eqStatPct("減少傷害", eq.dmgTakenPct) +
         (eq.attrs ? attrStats(eq.attrs) : "") +
