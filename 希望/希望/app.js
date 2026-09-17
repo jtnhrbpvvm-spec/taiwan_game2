@@ -196,14 +196,17 @@
   var ITEM_PET_EVOLVE_USES = window.ITEM_PET_EVOLVE_USES || {};
   var ITEM_KILL_SOURCE = window.ITEM_KILL_SOURCE || {};
   var ITEM_ORIGIN = window.ITEM_ORIGIN || {};
-  // 物品取得方式，兩種來源合併判斷：
+  var BPET_CRAFT_SOURCE = window.BPET_CRAFT_SOURCE || {};
+  // 物品取得方式，三種來源合併判斷：
   // 1. ITEM_ORIGIN（掃過每個 NPC 完整對話樹得到的，比較準）：kind=npc 代表對話直接給的，
   //    kind=event 代表這棵對話樹沒有任何 NPC 認領，多半是戰鬥/狩獵事件觸發。
   // 2. ITEM_KILL_SOURCE（舊來源，只涵蓋 kill-trees.json 收錄的部分，但這個資料裡有怪物名稱）。
+  // 3. BPET_CRAFT_SOURCE（戰寵相關的製作書配方，例如屬性自然石）。
   // event 類型的優先用 ITEM_KILL_SOURCE 補上怪物名稱，兩邊都查不到就不顯示，不用猜。
   function itemKillSourceText(iid) {
     var origins = ITEM_ORIGIN[String(iid)] || [];
     var killSrc = ITEM_KILL_SOURCE[String(iid)];
+    var craftSrc = BPET_CRAFT_SOURCE[String(iid)];
     var npcOrigins = origins.filter(function (o) { return o.kind === "npc" && o.npcName; });
     var eventOrigins = origins.filter(function (o) { return o.kind === "event"; });
     var lines = [];
@@ -221,6 +224,11 @@
       lines.push("取得方式：向 " + monsterHtml + " 提出要求取得（狩獵／戰鬥觸發）" + needHtml2);
     } else if (eventOrigins.length && !npcOrigins.length) {
       lines.push("取得方式：戰鬥／狩獵事件觸發（查不到是哪隻怪物）");
+    }
+    if (craftSrc) {
+      var matsHtml = (craftSrc.mats || []).map(function (m) { return itemChip(m[0], m[1]); }).join("");
+      lines.push("取得方式：用 " + itemChip(craftSrc.bookId) + " 製作，材料：" + matsHtml +
+        "，花費 " + fmtNum(craftSrc.gold) + " 金幣，成功率 " + craftSrc.ratePct + "%");
     }
     return lines.join("<br>");
   }
@@ -1663,7 +1671,7 @@
       html += '<div class="section-title">專屬裝備 <span class="count">(' + gearForKind.length + ')</span></div>';
       html += '<table class="dtable"><thead><tr><th>裝備</th><th>需求等級</th><th>攻擊</th><th>防禦</th><th>HP</th><th>AP</th></tr></thead><tbody>';
       gearForKind.sort(function (a, b) { return a.lv - b.lv; }).forEach(function (g) {
-        html += '<tr><td>' + escapeHtml(g.name) + '</td><td>Lv' + g.lv + '</td><td>' + fmtNum(g.atk) + '</td><td>' + fmtNum(g.def) + '</td><td>' + fmtNum(g.hp) + '</td><td>' + fmtNum(g.ap) + '</td></tr>';
+        html += itemLinkRow(g.id, '<td>Lv' + g.lv + '</td><td>' + fmtNum(g.atk) + '</td><td>' + fmtNum(g.def) + '</td><td>' + fmtNum(g.hp) + '</td><td>' + fmtNum(g.ap) + '</td>');
       });
       html += '</tbody></table>';
     }
