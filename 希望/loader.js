@@ -775,11 +775,14 @@
   respawnFab.style.cssText = "background:#5a6b47;color:#fff;" +
     "border:none;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;" +
     "box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:.85;align-self:stretch;";
+  // 遊戲本身已經在地圖上方加了「定時自動重生」按鈕，這個功能不需要了，先隱藏起來。
+  // 按鈕沒顯示就按不到，respawnEnabled 一直是 false，下面的重生迴圈不會跑；要恢復時把這行拿掉就好。
+  respawnFab.style.display = "none";
   alchemyFabWrap.appendChild(respawnFab);
 
   var alchemyShowBtn = document.createElement("button");
   alchemyShowBtn.id = "iw-alchemy-show-btn";
-  alchemyShowBtn.title = "顯示自動煉金／自動重生按鈕";
+  alchemyShowBtn.title = "顯示自動煉金按鈕";
   alchemyShowBtn.textContent = "🧪";
   alchemyShowBtn.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:none;" +
     "background:#4a90a4;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer;" +

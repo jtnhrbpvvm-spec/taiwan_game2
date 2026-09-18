@@ -227,6 +227,18 @@
   function forgeSkillName(part) {
     return (FORGE_PART_NAME[part] || "") + "鍛造";
   }
+  // 鍛造成功後抽出某個成品的機率（%）。chances 跟 products 一一對應，是 2026-09-18 改版後才有的欄位，
+  // 舊資料沒有就回傳 null，畫面上就不顯示機率。
+  function forgeProductChance(book, itemId) {
+    if (!book || !book.chances) return null;
+    var idx = book.products.indexOf(Number(itemId));
+    return idx < 0 ? null : book.chances[idx];
+  }
+  function forgeChanceHtml(book, itemId) {
+    var c = forgeProductChance(book, itemId);
+    if (c == null) return '';
+    return '<span class="' + rateClassP(c / 100) + '">' + pctP(c / 100) + '</span>';
+  }
   var COOK_BY_PRODUCT = window.COOK_BY_PRODUCT || {};
   var COOK_BY_INGREDIENT = window.COOK_BY_INGREDIENT || {};
   var COOK_TIER_NAME = { 1: "第1階", 2: "第2階", 3: "第3階" };
@@ -537,10 +549,12 @@
   }
   // 物品編號在 ITEMS 裡查不到時（例如遊戲剛更新、資料還沒補齊），一律顯示「無資料」，
   // 不要把編號秀給玩家看；查不到的也不給點擊連結，因為點了也沒有對應頁面可以看。
-  function itemChip(id, qty) {
+  // suffixHtml：接在名稱後面的額外內容（例如鍛造成品的機率），可省略
+  function itemChip(id, qty, suffixHtml) {
     var it = ITEMS[id];
-    if (!it) return '<span class="map-chip" style="opacity:.5;">無資料' + (qty != null ? ' ×' + qty : '') + '</span>';
-    return '<span class="map-chip" data-goto-item="' + id + '">' + escapeHtml(it.name) + (qty != null ? ' ×' + qty : '') + '</span>';
+    var suffix = (qty != null ? ' ×' + qty : '') + (suffixHtml ? ' ' + suffixHtml : '');
+    if (!it) return '<span class="map-chip" style="opacity:.5;">無資料' + suffix + '</span>';
+    return '<span class="map-chip" data-goto-item="' + id + '">' + escapeHtml(it.name) + suffix + '</span>';
   }
   function itemLinkRow(id, extraCellsHtml) {
     var it = ITEMS[id];
@@ -1255,21 +1269,29 @@
       html += '<div class="map-chip-row">';
       forgeBook.mats.forEach(function (m) { html += itemChip(m[0], m[1]); });
       html += '</div>';
-      html += '<div class="section-title" style="margin-top:14px;">可能製作出</div>';
+      html += '<div class="section-title" style="margin-top:14px;">可能製作出' +
+        (forgeBook.chances ? ' <span class="count">（鍛造成功後抽出各成品的機率）</span>' : '') + '</div>';
       html += '<div class="map-chip-row">';
-      forgeBook.products.forEach(function (pid) { html += itemChip(pid); });
+      forgeBook.products.forEach(function (pid) { html += itemChip(pid, null, forgeChanceHtml(forgeBook, pid)); });
       html += '</div>';
     }
 
     var forgeProducts = (FORGE_BY_PRODUCT[id] || []).slice();
     if (forgeProducts.length) {
+      var showForgeChance = forgeProducts.some(function (p) { return forgeProductChance(FORGE_BY_BOOK[p.book], p.baseProduct || id) != null; });
       html += '<div class="section-title">可透過鍛造取得 <span class="count">(' + forgeProducts.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>鍛造書</th><th>成功率</th><th>需求</th></tr></thead><tbody>';
+      html += '<table class="dtable"><thead><tr><th>鍛造書</th><th>成功率</th>' + (showForgeChance ? '<th>成品機率</th>' : '') + '<th>需求</th></tr></thead><tbody>';
       forgeProducts.forEach(function (p) {
         var variantNote = p.viaVariant
           ? '<br><span class="rate low">' + (FORGE_VARIANT_LABEL[p.viaVariant] || "特殊版本") + '（抽到基礎款後再有 3% 機率）</span>'
           : '';
-        html += itemLinkRow(p.book, '<td><span class="rate">' + p.rate + '%</span></td><td>Lv' + p.charLv + '・力量 ' + p.strMin + variantNote + '</td>');
+        // 變異版本顯示的是「抽到基礎款」的機率，實際拿到變異版還要再乘上 3%
+        var chanceCell = '';
+        if (showForgeChance) {
+          var chanceHtml = forgeChanceHtml(FORGE_BY_BOOK[p.book], p.baseProduct || id);
+          chanceCell = '<td>' + (chanceHtml ? (p.viaVariant ? '<span class="rate low">基礎款 </span>' : '') + chanceHtml : '<span class="rate low">-</span>') + '</td>';
+        }
+        html += itemLinkRow(p.book, '<td><span class="rate">' + p.rate + '%</span></td>' + chanceCell + '<td>Lv' + p.charLv + '・力量 ' + p.strMin + variantNote + '</td>');
       });
       html += '</tbody></table>';
     }
