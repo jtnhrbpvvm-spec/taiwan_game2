@@ -1387,11 +1387,7 @@
     var box = BOX_BY_ID[id];
     if (box) {
       html += '<div class="section-title">寶箱</div>';
-      if (box.dungeonGuess) {
-        html += '<div class="badge-row" style="margin-bottom:10px;">' +
-          '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
-          '</div>';
-      }
+      if (box.dungeons || box.dungeonGuess) html += '<div style="margin-bottom:10px;">' + boxSourceBadges(box) + '</div>';
       html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
       html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
       box.tiers.forEach(function (tier, tIdx) {
@@ -1531,6 +1527,27 @@
         '%（跟掉落率同一張衰減表，鐵匠也會衰減）；未含裝備的經驗加成。</div>';
     }
 
+    // 變身／召喚：自己會變成什麼、以及是由誰變身／召喚出來的
+    var fromRefs = [];
+    Object.keys(MONSTERS).forEach(function (oid) {
+      (MONSTERS[oid].reactions || []).forEach(function (r) {
+        if (String(r.to) === id) fromRefs.push({ oid: oid, r: r });
+      });
+    });
+    if (monsterReactions(id).length || fromRefs.length) {
+      html += '<div class="section-title">變身與召喚</div>';
+      if (fromRefs.length) {
+        html += '<ul style="margin:0 0 8px;padding-left:18px;line-height:1.9;font-size:13px;">' + fromRefs.map(function (f) {
+          return '<li>由 <span class="name-link" data-goto-monster="' + f.oid + '">' + escapeHtml(MONSTERS[f.oid].name) + '</span> 在「' +
+            reactionCond(f.r) + '」' + (f.r.act === "morph" ? "變身而來" : "召喚出來") + '</li>';
+        }).join("") + '</ul>';
+      }
+      html += reactionListHtml(id);
+      if (monsterNeverKilled(id)) {
+        html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">這隻怪物血量降低時一定會變身（一擊打到 0 也一樣），不會被擊倒，所以下面的掉落表實際上拿不到，要看變身後的型態。</div>';
+      }
+    }
+
     html += '<div class="section-title">出現地圖 <span class="count">(' + mon.maps.length + ')</span></div>';
     html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
       return '<span class="map-chip" style="cursor:default;">' + escapeHtml(mapName(mid)) + '</span>';
@@ -1582,7 +1599,7 @@
       dungeonRefs.forEach(function (r) {
         html += '<tr><td><span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span></td>' +
           '<td>' + escapeHtml(r.island || "-") + '</td>' +
-          '<td>' + (r.isBoss ? '<span class="badge">首領</span>' : "一般怪物") + '</td></tr>';
+          '<td>' + (r.isBoss ? '<span class="badge">首領</span>' : r.role ? '<span class="badge">' + escapeHtml(r.role) + '</span>' : "一般怪物") + '</td></tr>';
       });
       html += '</tbody></table>';
     }
@@ -1827,15 +1844,28 @@
     $changelogBody.innerHTML = html;
     document.getElementById("changelogBackToList").addEventListener("click", openChangelogList);
   }
+  // box.dungeons：副本怪物（含變身／召喚型態）的掉落表裡真的有這個寶箱；對不到才會有 dungeonGuess（名稱推測）
+  function boxSourceBadges(box) {
+    if (box.dungeons && box.dungeons.length) {
+      return '<div class="badge-row">' + box.dungeons.map(function (d) {
+        return '<span class="badge" data-open-dungeon="' + d.dungeonId + '" style="cursor:pointer;">來源副本：' + escapeHtml(d.dungeonName) + '</span>';
+      }).join("") + '</div>';
+    }
+    return '<div class="badge-row"><span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' +
+      escapeHtml(box.dungeonGuess.dungeonName) + '</span></div>';
+  }
+  function boxSourceText(box) {
+    if (box.dungeons && box.dungeons.length) return box.dungeons.map(function (d) { return d.dungeonName; }).join("、");
+    return box.dungeonGuess ? box.dungeonGuess.dungeonName + "（推測）" : "";
+  }
+
   function openBoxDetail(boxId) {
     var box = BOX_BY_ID[String(boxId)];
     if (!box) return;
     var html = '<div class="section-title">寶箱</div>';
     html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(box.name) + '</div>';
-    if (box.dungeonGuess) {
-      html += '<div class="badge-row" style="margin-bottom:10px;">' +
-        '<span class="badge" data-open-dungeon="' + box.dungeonGuess.dungeonId + '" style="cursor:pointer;">來源副本（推測）：' + escapeHtml(box.dungeonGuess.dungeonName) + '</span>' +
-        '</div>';
+    if (box.dungeons || box.dungeonGuess) {
+      html += '<div style="margin-bottom:10px;">' + boxSourceBadges(box) + '</div>';
     } else {
       html += '<div class="empty-note" style="padding:0 0 6px;">目前猜不出這個寶箱是哪個副本掉的（名稱對不起來，不影響其他功能）。</div>';
     }
@@ -1884,7 +1914,7 @@
         var itemCount = box.tiers.reduce(function (s, t) { return s + t.length; }, 0);
         html += '<li class="result-item" data-open-box="' + bid + '">' +
           '<span class="rname">' + escapeHtml(box.name) + '</span>' +
-          '<span class="rmeta">' + (box.dungeonGuess ? escapeHtml(box.dungeonGuess.dungeonName) + "　" : "") + box.tiers.length + ' 組・共 ' + itemCount + ' 種物品</span>' +
+          '<span class="rmeta">' + (boxSourceText(box) ? escapeHtml(boxSourceText(box)) + "　" : "") + box.tiers.length + ' 組・共 ' + itemCount + ' 種物品</span>' +
           '</li>';
       });
       html += '</ul>';
@@ -2759,24 +2789,121 @@
   }
 
   // ---------- 副本詳細頁 ----------
-  // 副本裡不重複的怪物：[{id, isBoss, rooms:[區域名稱...]}]，首領排前面、同身分依等級排
+  // ---------- 怪物戰鬥反應（變身／召喚）----------
+  // 規則對照遊戲 bundle：tickReactions()/Xg() 判斷 hp、timer 觸發；onEnemyDown() 處理 death；
+  // morphOnLethal()：有「血量變身（沒有機率）」的怪，致命一擊也會改成觸發變身，所以牠永遠不會被擊倒、不會掉落。
+  // death 變身則是先照常擊倒（給經驗、掉落）再變成下一個型態。
+  function monsterReactions(mid) {
+    var mon = MONSTERS[String(mid)];
+    return (mon && mon.reactions) || [];
+  }
+  function monsterNeverKilled(mid) {
+    return monsterReactions(mid).some(function (r) { return r.on === "hp" && r.act === "morph" && r.chance == null; });
+  }
+  function fmtSec(ms) {
+    var s = ms / 1000;
+    return s >= 60 && s % 60 === 0 ? (s / 60) + " 分鐘" : (Math.round(s * 10) / 10) + " 秒";
+  }
+  // 回傳一句觸發條件＋動作的說明（HTML），例如「血量降到 80% 以下時 → 變身成 生氣變大的哈比兔(中)」
+  function reactionHtml(r, withTarget) {
+    var cond = reactionCond(r);
+    var target = MONSTERS[String(r.to)];
+    var targetHtml = !withTarget ? "" : target
+      ? ' <span class="name-link" data-goto-monster="' + r.to + '">' + escapeHtml(target.name) + '</span>'
+      : " 無資料";
+    var act;
+    if (r.act === "morph") act = "變身成" + targetHtml;
+    else {
+      var n = r.n || 1, nMax = r.nMax || n;
+      act = "召喚" + targetHtml + " ×" + (nMax > n ? n + "~" + nMax : n);
+    }
+    var note = "";
+    if (r.act === "morph" && r.on === "hp" && r.chance == null) note = "（這個型態不會被擊倒，不會掉落）";
+    else if (r.act === "morph" && r.on === "death") note = "（會先拿到這個型態的經驗與掉落）";
+    return cond + " → " + act + (note ? '<span style="color:var(--text-faint);">' + note + '</span>' : "");
+  }
+  function reactionCond(r) {
+    var cond;
+    if (r.on === "hp") {
+      cond = "血量降到 " + Math.round((r.at || 0) * 1000) / 10 + "% 以下時";
+      if (r.times > 1) cond += "（最多 " + r.times + " 次" + (r.ms ? "，每次間隔 " + fmtSec(r.ms) : "") + "）";
+      else if (r.times == null && r.act === "summon") cond += "（不限次數" + (r.ms ? "，每次間隔 " + fmtSec(r.ms) : "") + "）";
+    } else if (r.on === "timer") {
+      cond = "上場後每 " + fmtSec(r.ms || 0);
+      cond += r.times != null ? "（最多 " + r.times + " 次）" : "";
+    } else if (r.on === "death") {
+      cond = "被擊倒時";
+    } else if (r.on === "roll") {
+      cond = "戰鬥中隨機觸發";
+    } else {
+      cond = escapeHtml(r.on || "");
+    }
+    if (r.chance != null) cond += "，機率 " + Math.round(r.chance * 1000) / 10 + "%";
+    return cond;
+  }
+  function reactionListHtml(mid) {
+    var rs = monsterReactions(mid);
+    if (!rs.length) return "";
+    return '<ul style="margin:0;padding-left:18px;line-height:1.9;font-size:13px;">' +
+      rs.map(function (r) { return '<li>' + reactionHtml(r, true) + '</li>'; }).join("") + '</ul>';
+  }
+
+  // 副本裡不重複的怪物：[{id, role:"spawn"|"morph"|"summon", isBoss, from, rooms:[區域名稱...]}]
+  // 出生點上的怪（首領排前面、依等級）後面緊接著牠變身／召喚出來的型態
   function dungeonMonsterList(dg) {
-    var byId = {}, order = [];
+    var byId = {}, base = [], children = {};
     (dg.islands || []).forEach(function (isl) {
+      var roomName = isl.name || isl.key;
+      function touch(mid, role, from) {
+        var e = byId[mid];
+        if (!e) {
+          e = byId[mid] = { id: String(mid), role: role, isBoss: false, from: from != null ? String(from) : null, rooms: [] };
+          if (role === "spawn") base.push(e);
+          else (children[e.from] || (children[e.from] = [])).push(e);
+        }
+        if (roomName && e.rooms.indexOf(roomName) === -1) e.rooms.push(roomName);
+        return e;
+      }
       var ids = (isl.monsters || []).slice();
       if (isl.boss != null && ids.indexOf(isl.boss) === -1) ids.push(isl.boss);
       ids.forEach(function (mid) {
-        var e = byId[mid];
-        if (!e) { e = byId[mid] = { id: String(mid), isBoss: false, rooms: [] }; order.push(e); }
+        var e = touch(mid, "spawn");
         if (isl.boss === mid) e.isBoss = true;
-        var roomName = isl.name || isl.key;
-        if (roomName && e.rooms.indexOf(roomName) === -1) e.rooms.push(roomName);
+      });
+      (isl.derived || []).forEach(function (d) {
+        var r = monsterReactions(d.from).filter(function (x) { return x.to === d.id; })[0];
+        touch(d.id, r && r.act === "summon" ? "summon" : "morph", d.from);
       });
     });
-    return order.sort(function (a, b) {
+    base.sort(function (a, b) {
       var ma = MONSTERS[a.id], mb = MONSTERS[b.id];
       return (b.isBoss - a.isBoss) || ((ma ? ma.lv : 0) - (mb ? mb.lv : 0));
     });
+    var out = [], placed = {};
+    function place(e) {
+      if (placed[e.id]) return;
+      placed[e.id] = true;
+      out.push(e);
+      (children[e.id] || []).forEach(place);
+    }
+    base.forEach(place);
+    Object.keys(byId).forEach(function (k) { place(byId[k]); });
+    return out;
+  }
+
+  function dungeonRoleHtml(m) {
+    var html;
+    if (m.role === "morph" || m.role === "summon") {
+      var src = MONSTERS[m.from];
+      html = '<span class="badge" title="由 ' + escapeHtml(src ? src.name : "") + (m.role === "morph" ? ' 變身' : ' 召喚') + '">' +
+        (m.role === "morph" ? "變身" : "召喚") + '</span>';
+    } else if (m.isBoss) {
+      html = '<span class="badge" style="color:var(--gold-hi);border-color:var(--gold);">首領</span>';
+    } else {
+      html = '一般';
+    }
+    if (monsterNeverKilled(m.id)) html += ' <span class="group-tag" style="margin-left:2px;">不掉落</span>';
+    return html;
   }
 
   function monsterNameLink(mid) {
@@ -2822,7 +2949,7 @@
     var boxes = {}, boxOrder = [];
     monsters.forEach(function (m) {
       var mon = MONSTERS[m.id];
-      if (!mon) return;
+      if (!mon || monsterNeverKilled(m.id)) return;
       var chances = monsterDropChances(mon, 1);
       Object.keys(chances).forEach(function (iid) {
         var c = chances[iid];
@@ -2868,7 +2995,7 @@
       html += '<div class="section-title">寶箱 <span class="count">(' + boxOrder.length + ')</span></div>';
       boxOrder.forEach(function (bx) {
         var box = BOX_BY_ID[bx.id];
-        var srcText = bx.guess ? '<span class="group-tag">推測</span>' :
+        var srcText = bx.guess ? '<span class="group-tag" title="遊戲資料裡目前沒有任何怪物會掉這個寶箱，只能照名稱推測屬於這個副本">推測・目前沒有怪物會掉</span>' :
           bx.sources.map(function (s) {
             return escapeHtml(MONSTERS[s.mid].name) + ' <span class="' + rateClassP(s.p) + '">' + pctP(s.p) + '</span>';
           }).join('、');
@@ -2897,7 +3024,7 @@
         }
         html += '<tr class="clickable" data-goto-monster="' + m.id + '">' +
           '<td>' + monsterNameLink(m.id) + '</td>' +
-          '<td>' + (m.isBoss ? '<span class="badge" style="color:var(--gold-hi);border-color:var(--gold);">首領</span>' : '一般') + '</td>' +
+          '<td>' + dungeonRoleHtml(m) + '</td>' +
           '<td><span class="el-chip" style="color:var(--' + (ELEMENT_CLASS[mon.element] || "el-none") + ')">' + (ELEMENT_LABEL[mon.element] || mon.element) + '</span></td>' +
           '<td>' + bigNumHtml(mon.hp) + '</td><td>' + bigNumHtml(mon.atk) + '</td><td>' + bigNumHtml(mon.def) + '</td>' +
           '<td>' + bigNumHtml(mon.hit) + '</td><td>' + bigNumHtml(mon.eva) + '</td><td>' + bigNumHtml(mon.crit) + '</td>' +
@@ -2907,7 +3034,21 @@
           '</tr>';
       });
       html += '</tbody></table></div>';
-      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點怪物可以看完整能力、五行寶石建議，以及依你的等級換算後的掉落率／經驗。</div>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點怪物可以看完整能力、五行寶石建議，以及依你的等級換算後的掉落率／經驗。' +
+        '「變身」「召喚」是戰鬥中才會出現的型態，出生點上看不到。</div>';
+    }
+
+    // 變身與召喚條件
+    var reacting = monsters.filter(function (m) { return monsterReactions(m.id).length; });
+    if (reacting.length) {
+      html += '<div class="section-title">變身與召喚條件 <span class="count">(' + reacting.length + ')</span></div>';
+      reacting.forEach(function (m) {
+        html += '<div class="equip-box" style="padding:10px 14px;margin-bottom:8px;">' +
+          '<div style="margin-bottom:4px;">' + monsterNameLink(m.id) + ' ' + dungeonRoleHtml(m) + '</div>' +
+          reactionListHtml(m.id) + '</div>';
+      });
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">血量變身時會保留當下的血量比例；' +
+        '血量變身的型態就算被一擊打到 0 也會先變身，所以不會掉落，下面的掉落表已經排除這些型態。</div>';
     }
 
     // 區域配置（多房間的副本才列）
