@@ -1039,8 +1039,13 @@
     if (m.kind === "kill") {
       var mon = MONSTERS[String(m.monsterId)];
       if (!mon) return "擊殺 ？ ×" + m.need;
+      // 副本裡的怪（賢者之塔、艾希頓這類）只列地圖看不出是哪個副本；變身型態連地圖都沒有，要說明怎麼出現
+      var dgHtml = detail ? monsterDungeonLinksHtml(m.monsterId) : "";
+      var originHtml = detail ? monsterOriginsHtml(m.monsterId) : "";
       return '擊殺 <span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + m.monsterId + '">' + escapeHtml(mon.name) + '</span> ×' + m.need +
-        (detail && mon.maps && mon.maps.length ? '<br><span style="color:var(--text-dim);font-size:12.5px;">出現地圖：' + escapeHtml(mon.maps.map(mapName).join("、")) + '</span>' : '');
+        (detail && !dgHtml && mon.maps && mon.maps.length ? '<br><span style="color:var(--text-dim);font-size:12.5px;">出現地圖：' + escapeHtml(mon.maps.map(mapName).join("、")) + '</span>' : '') +
+        (dgHtml ? '<br><span style="color:var(--text-dim);font-size:12.5px;">出現副本：' + dgHtml + '</span>' : '') +
+        (originHtml ? '<br><span style="color:var(--text-dim);font-size:12.5px;">' + originHtml + '</span>' : '');
     }
     if (m.kind === "dungeon") {
       var dg = m.dungeonId != null ? DUNGEON_BY_ID[String(m.dungeonId)] : null;
@@ -1058,6 +1063,34 @@
           (m.refineItem != null ? '<br>再精煉：' + itemChip(m.refineItem) + '（精煉一次）' : '') : '');
     }
     return MISSION_KIND_LABEL[m.kind] || "未知類型";
+  }
+  // 怪物出現的副本（不重複），連結可以點開副本；身分是首領／變身／召喚的標在後面
+  function monsterDungeonLinksHtml(mid) {
+    var seen = {}, parts = [];
+    (MONSTER_TO_DUNGEONS[String(mid)] || []).forEach(function (r) {
+      if (seen[r.dungeonId]) return;
+      seen[r.dungeonId] = true;
+      var role = r.isBoss ? "首領" : (r.role || "");
+      parts.push('<span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span>' +
+        (role ? '（' + escapeHtml(role) + '）' : ''));
+    });
+    return parts.join("、");
+  }
+  // 由哪隻怪、在什麼條件下變身／召喚出來：[{oid, r}]
+  function monsterOrigins(mid) {
+    var out = [];
+    Object.keys(MONSTERS).forEach(function (oid) {
+      (MONSTERS[oid].reactions || []).forEach(function (r) {
+        if (String(r.to) === String(mid)) out.push({ oid: oid, r: r });
+      });
+    });
+    return out;
+  }
+  function monsterOriginsHtml(mid) {
+    return monsterOrigins(mid).map(function (f) {
+      return '由 <span class="name-link" data-goto-monster="' + f.oid + '">' + escapeHtml(MONSTERS[f.oid].name) + '</span> 在「' +
+        reactionCond(f.r) + '」' + (f.r.act === "morph" ? "變身而來" : "召喚出來");
+    }).join("<br>");
   }
   function missionHowText(m) {
     if (m.blocked) return "⚠️ 這筆在遊戲裡目前無法完成（不會累積進度、也不能領獎）。";
@@ -1558,20 +1591,10 @@
     }
 
     // 變身／召喚：自己會變成什麼、以及是由誰變身／召喚出來的
-    var fromRefs = [];
-    Object.keys(MONSTERS).forEach(function (oid) {
-      (MONSTERS[oid].reactions || []).forEach(function (r) {
-        if (String(r.to) === id) fromRefs.push({ oid: oid, r: r });
-      });
-    });
-    if (monsterReactions(id).length || fromRefs.length) {
+    var originHtml = monsterOriginsHtml(id);
+    if (monsterReactions(id).length || originHtml) {
       html += '<div class="section-title">變身與召喚</div>';
-      if (fromRefs.length) {
-        html += '<ul style="margin:0 0 8px;padding-left:18px;line-height:1.9;font-size:13px;">' + fromRefs.map(function (f) {
-          return '<li>由 <span class="name-link" data-goto-monster="' + f.oid + '">' + escapeHtml(MONSTERS[f.oid].name) + '</span> 在「' +
-            reactionCond(f.r) + '」' + (f.r.act === "morph" ? "變身而來" : "召喚出來") + '</li>';
-        }).join("") + '</ul>';
-      }
+      if (originHtml) html += '<div style="margin:0 0 8px;line-height:1.9;font-size:13px;">' + originHtml + '</div>';
       html += reactionListHtml(id);
       if (monsterNeverKilled(id)) {
         html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">這隻怪物血量降低時一定會變身（一擊打到 0 也一樣），不會被擊倒，所以下面的掉落表實際上拿不到，要看變身後的型態。</div>';
