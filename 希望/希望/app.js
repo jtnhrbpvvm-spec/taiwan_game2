@@ -130,12 +130,21 @@
     return html;
   }
   function wireDropCalcBar(onChange) {
-    var $bs = document.getElementById("dropCalcBlacksmith");
+    // 快速查看視窗和主畫面可能同時有這個勾選框（同一個 id），要在「這次畫的那一邊」找
+    var inPeek = peekMode;
+    var $bs = detailTarget().querySelector("#dropCalcBlacksmith");
     if ($bs) $bs.addEventListener("change", function () {
       dropCalcState.blacksmith = $bs.checked;
-      onChange();
+      peekMode = inPeek;
+      try { onChange(); } finally { peekMode = false; }
     });
   }
+  // ---------- 快速查看（彈出視窗）----------
+  // 在詳細頁／彈窗裡點物品、怪物、副本連結時，不換掉主畫面，改在彈出視窗裡顯示，關掉就回到原本在看的內容。
+  // peekMode 為 true 時，showItem/showMonster/showDungeonDetail 會畫進彈窗、不動左側清單與瀏覽紀錄。
+  var peekMode = false;
+  var $peekBody = null;
+  function detailTarget() { return peekMode ? $peekBody : $detail; }
   // 目前正在顯示的詳細頁（讓上方全域等級欄位變更時可以重新渲染）
   var currentDetail = null;
   function rerenderCurrentDetail() {
@@ -574,6 +583,7 @@
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
     showEnchantTable();
+    scrollToDetail();
   });
   $hintRow.appendChild(enchantChip);
 
@@ -588,6 +598,7 @@
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
     showPetBrowser();
+    scrollToDetail();
   });
   $hintRow.appendChild(petChip);
 
@@ -602,6 +613,7 @@
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
     showDungeonBrowser();
+    scrollToDetail();
   });
   $hintRow.appendChild(dungeonChip);
 
@@ -616,6 +628,7 @@
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
     showBoxBrowser();
+    scrollToDetail();
   });
   $hintRow.appendChild(boxChip);
 
@@ -630,6 +643,7 @@
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
     showQuestLineBrowser();
+    scrollToDetail();
   });
   $hintRow.appendChild(questLineChip);
 
@@ -678,7 +692,17 @@
       openQuestTab(id);
     }
     if (restoreScrollY != null) window.scrollTo(0, restoreScrollY);
-    else window.scrollTo({ top: 0, behavior: "smooth" });
+    else scrollToDetail();
+  }
+  // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
+  // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
+  var stackedLayoutQuery = window.matchMedia ? window.matchMedia("(max-width:820px)") : null;
+  function scrollToDetail() {
+    var top = 0;
+    if (stackedLayoutQuery && stackedLayoutQuery.matches) {
+      top = Math.max(0, $detail.getBoundingClientRect().top + window.pageYOffset - 8);
+    }
+    window.scrollTo({ top: top, behavior: "smooth" });
   }
   function goBackOneView() {
     if (!navHistory.length) return;
@@ -686,7 +710,7 @@
     navigateTo(prev.kind, prev.id, false, prev.scrollY);
   }
   function backButtonHtml() {
-    if (!navHistory.length) return "";
+    if (peekMode || !navHistory.length) return "";
     return '<div style="margin-bottom:12px;"><span class="name-link" data-go-back="1" style="cursor:pointer;">← 上一頁</span></div>';
   }
 
@@ -973,6 +997,8 @@
     resetNavHistory();
     if (item.dataset.type === "monster") { currentView = { kind: "monster", id: item.dataset.id }; showMonster(item.dataset.id); }
     else { currentView = { kind: "item", id: item.dataset.id }; showItem(item.dataset.id); }
+    // 手機版結果清單在詳細頁上面，點了要捲下去才看得到（桌機不動，清單還在原位可以繼續點）
+    if (stackedLayoutQuery && stackedLayoutQuery.matches) scrollToDetail();
   });
 
   // ---------- 詳細頁：物品 ----------
@@ -1160,8 +1186,10 @@
     id = String(id);
     var item = ITEMS[id];
     if (!item) return;
-    markActive("item", id);
-    currentDetail = { type: "item", id: id };
+    if (!peekMode) {
+      markActive("item", id);
+      currentDetail = { type: "item", id: id };
+    }
 
     var drops = (DROP_INDEX[id] || []).slice().sort(function (a, b) { return b.r - a.r; });
 
@@ -1471,7 +1499,7 @@
         (showAdj ? (dropCalcState.blacksmith ? "換算後機率：鐵匠／匠師不受等級差衰減（二轉爆破士會失去這個效果）。" : "換算後機率：依你輸入的 Lv" + dropCalcState.level + " 套用等級差衰減。") : "") + '</div>';
     }
 
-    $detail.innerHTML = html;
+    detailTarget().innerHTML = html;
     wireDropCalcBar(function () { showItem(id); });
   }
 
@@ -1497,8 +1525,10 @@
     id = String(id);
     var mon = MONSTERS[id];
     if (!mon) return;
-    markActive("monster", id);
-    currentDetail = { type: "monster", id: id };
+    if (!peekMode) {
+      markActive("monster", id);
+      currentDetail = { type: "monster", id: id };
+    }
 
     var elLabel = ELEMENT_LABEL[mon.element] || mon.element;
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
@@ -1641,7 +1671,7 @@
       html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(noteParts.join("")) + '</div>';
     }
 
-    $detail.innerHTML = html;
+    detailTarget().innerHTML = html;
     wireDropCalcBar(function () { showMonster(id); });
   }
 
@@ -1794,7 +1824,7 @@
     currentMatches.monsters = [];
     renderResultList(name);
     showItem(id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToDetail();
   });
 
   // ---------- 更新紀錄 ----------
@@ -1879,8 +1909,8 @@
       });
       html += '</tbody></table>';
     });
-    $changelogBody.innerHTML = html;
-    $changelogBackdrop.style.display = "flex";
+    // 寶箱一律在快速查看視窗裡顯示（renderPeek 會開著 peekMode 呼叫進來）
+    $peekBody.innerHTML = html;
   }
 
   function showDungeonBrowser() {
@@ -2941,7 +2971,7 @@
     dungeonId = String(dungeonId);
     var dg = DUNGEON_BY_ID[dungeonId];
     if (!dg) return;
-    currentDetail = null;
+    if (!peekMode) currentDetail = null;
     var monsters = dungeonMonsterList(dg);
 
     // 掉落彙整：{物品id: {best, sources:[{mid, p, groups}]}}；怪物的掉落裡有寶箱就歸到寶箱區
@@ -2973,7 +3003,7 @@
     boxOrder.forEach(function (bx) { bx.sources = dedupeSourcesByName(bx.sources); });
 
     var html = backButtonHtml();
-    html += '<div class="section-title"><span class="name-link" id="dungeonBackToList" style="cursor:pointer;">← 副本列表</span></div>';
+    if (!peekMode) html += '<div class="section-title"><span class="name-link" id="dungeonBackToList" style="cursor:pointer;">← 副本列表</span></div>';
     html += '<div class="detail-head"><div>' +
       '<div class="detail-title">' + escapeHtml(dg.name) + '</div>' +
       '<div class="detail-sub">副本編號 #' + dungeonId + '</div>' +
@@ -3014,6 +3044,7 @@
       html += '<div class="empty-note">這個副本目前沒有怪物資料。</div>';
     } else {
       var multiRoom = (dg.islands || []).length > 1;
+      html += '<div class="swipe-hint">↔ 表格可以左右滑動，看 HP、攻擊等完整能力</div>';
       html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>怪物</th><th>身分</th><th>屬性</th><th>HP</th><th>攻擊</th><th>防禦</th>' +
         '<th>命中</th><th>迴避</th><th>必殺</th><th>抗爆</th><th>經驗</th><th>主動</th>' + (multiRoom ? '<th>出現區域</th>' : '') + '</tr></thead><tbody>';
       monsters.forEach(function (m) {
@@ -3125,8 +3156,8 @@
         '這裡是未套用等級差衰減的機率，點怪物名稱可以看依你的等級換算後的數字。</div>';
     }
 
-    $detail.innerHTML = html;
-    document.getElementById("dungeonBackToList").addEventListener("click", function () {
+    detailTarget().innerHTML = html;
+    if (!peekMode) document.getElementById("dungeonBackToList").addEventListener("click", function () {
       resetNavHistory();
       showDungeonBrowser();
     });
@@ -3155,6 +3186,66 @@
   }
   var $helpBtn = document.getElementById("helpBtn");
   if ($helpBtn) $helpBtn.addEventListener("click", openHelp);
+  // ---------- 快速查看視窗 ----------
+  // 疊在所有畫面（包括寶箱／委託那個彈窗）上面；視窗裡再點連結會疊一層，可以「← 上一個」退回，
+  // 關掉就回到原本的畫面，主畫面、左側清單、上一頁紀錄都不會被動到。
+  var $peekBackdrop = document.createElement("div");
+  $peekBackdrop.id = "peekBackdrop";
+  $peekBackdrop.style.cssText = "display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;";
+  $peekBackdrop.innerHTML =
+    '<div id="peekModal" style="background:var(--panel);border:1px solid var(--line-hi);border-radius:6px;width:100%;max-width:780px;max-height:86vh;overflow-y:auto;overscroll-behavior:contain;position:relative;">' +
+    '<div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line);">' +
+    '<span class="name-link" id="peekBack" style="cursor:pointer;display:none;">← 上一個</span>' +
+    '<span class="name-link" id="peekOpenFull" style="cursor:pointer;font-size:12.5px;color:var(--text-dim);">在主畫面開啟</span>' +
+    '<span style="flex:1;"></span>' +
+    '<button id="peekClose" style="background:none;border:none;color:var(--text-faint);font-size:20px;cursor:pointer;line-height:1;">✕</button>' +
+    '</div><div id="peekBody" style="padding:18px 22px 22px;"></div></div>';
+  document.body.appendChild($peekBackdrop);
+  $peekBody = document.getElementById("peekBody");
+  var $peekModal = document.getElementById("peekModal");
+  var $peekBack = document.getElementById("peekBack");
+  var peekStack = []; // [{kind, id}]，最後一筆是目前顯示的
+
+  var PEEK_RENDER = { item: showItem, monster: showMonster, dungeon: showDungeonDetail, box: openBoxDetail };
+  function renderPeek() {
+    var cur = peekStack[peekStack.length - 1];
+    peekMode = true;
+    try { PEEK_RENDER[cur.kind](cur.id); } finally { peekMode = false; }
+    $peekBack.style.display = peekStack.length > 1 ? "" : "none";
+    // 寶箱沒有主畫面的頁面可以開
+    document.getElementById("peekOpenFull").style.display = cur.kind === "box" ? "none" : "";
+    $peekModal.scrollTop = 0;
+  }
+  function openPeek(kind, id) {
+    if (!PEEK_RENDER[kind]) return;
+    var cur = peekStack[peekStack.length - 1];
+    if (cur && cur.kind === kind && cur.id === String(id)) return;
+    peekStack.push({ kind: kind, id: String(id) });
+    $peekBackdrop.style.display = "flex";
+    renderPeek();
+  }
+  function closePeek() {
+    peekStack = [];
+    $peekBackdrop.style.display = "none";
+    $peekBody.innerHTML = "";
+  }
+  $peekBack.addEventListener("click", function () {
+    if (peekStack.length > 1) { peekStack.pop(); renderPeek(); }
+  });
+  document.getElementById("peekOpenFull").addEventListener("click", function () {
+    var cur = peekStack[peekStack.length - 1];
+    closePeek();
+    closeChangelog();
+    if (cur) navigateTo(cur.kind, cur.id, true);
+  });
+  document.getElementById("peekClose").addEventListener("click", closePeek);
+  $peekBackdrop.addEventListener("click", function (e) { if (e.target === $peekBackdrop) closePeek(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if ($peekBackdrop.style.display !== "none") closePeek();
+    else if ($changelogBackdrop.style.display !== "none") closeChangelog();
+  });
+
   $changelogClose.addEventListener("click", closeChangelog);
   $changelogBackdrop.addEventListener("click", function (e) { if (e.target === $changelogBackdrop) closeChangelog(); });
   $changelogBody.addEventListener("click", function (e) {
@@ -3162,12 +3253,9 @@
     if (item) { openChangelogDetail(Number(item.getAttribute("data-changelog-idx"))); return; }
     var goto = e.target.closest("[data-changelog-goto]");
     if (goto) {
+      // 更新紀錄裡的物品／怪物：用快速查看疊在上面，關掉還能繼續看更新紀錄
       var parts = goto.getAttribute("data-changelog-goto").split(":");
-      closeChangelog();
-      resetNavHistory();
-      if (parts[0] === "monster") { currentView = { kind: "monster", id: parts[1] }; showMonster(parts[1]); }
-      else { currentView = { kind: "item", id: parts[1] }; showItem(parts[1]); }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      openPeek(parts[0] === "monster" ? "monster" : "item", parts[1]);
     }
   });
 
@@ -3181,14 +3269,23 @@
       numToggle.title = showFull ? "點一下縮短" : "點一下看完整數字";
       return;
     }
-    // 在彈出視窗（委託詳細／寶箱）裡點物品、怪物等連結跳頁時，先把視窗關掉，不然新頁面會被蓋住
-    if (e.target.closest("#changelogBackdrop") && e.target.closest("[data-goto-item],[data-goto-monster],[data-open-questline],[data-open-pet],[data-open-dungeon]")) {
+    // 在彈出視窗（委託詳細／寶箱）裡點寵物、任務線這類還是會換掉主畫面的連結時，先把視窗關掉，不然新頁面會被蓋住
+    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet]")) {
+      closePeek();
       closeChangelog();
     }
     var commissionDetail = e.target.closest("[data-commission-detail]");
     if (commissionDetail) { openCommissionDetail(commissionDetail.getAttribute("data-commission-detail"), commissionDetail.getAttribute("data-commission-detail-town")); return; }
     var backLink = e.target.closest("[data-go-back]");
     if (backLink) { goBackOneView(); return; }
+    // 詳細頁／彈窗裡的物品、怪物、副本連結 → 快速查看視窗；左側清單、各種列表（.result-item）照舊換主畫面
+    var peekLink = e.target.closest("[data-goto-item],[data-goto-monster],[data-open-dungeon]");
+    if (peekLink && !peekLink.closest(".result-item") && peekLink.closest("#detailPanel, #peekBackdrop, #changelogBackdrop")) {
+      if (peekLink.hasAttribute("data-goto-item")) openPeek("item", peekLink.getAttribute("data-goto-item"));
+      else if (peekLink.hasAttribute("data-goto-monster")) openPeek("monster", peekLink.getAttribute("data-goto-monster"));
+      else openPeek("dungeon", peekLink.getAttribute("data-open-dungeon"));
+      return;
+    }
     var gotoItemLink = e.target.closest("[data-goto-item]");
     if (gotoItemLink) { navigateTo("item", gotoItemLink.getAttribute("data-goto-item"), true); return; }
     var gotoMonsterLink = e.target.closest("[data-goto-monster]");
@@ -3200,7 +3297,7 @@
     var dgLink = e.target.closest("[data-open-dungeon]");
     if (dgLink) { navigateTo("dungeon", dgLink.getAttribute("data-open-dungeon"), true); return; }
     var boxLink = e.target.closest("[data-open-box]");
-    if (boxLink) { openBoxDetail(boxLink.getAttribute("data-open-box")); return; }
+    if (boxLink) { openPeek("box", boxLink.getAttribute("data-open-box")); return; }
     // 藍圖任務列：列裡的怪物／物品／副本連結在上面已經先處理掉了，點到列的其他地方才開詳細彈窗
     var missionDetail = e.target.closest("[data-mission-detail]");
     if (missionDetail) { openMissionDetail(missionDetail.getAttribute("data-mission-detail")); return; }
