@@ -2018,31 +2018,69 @@
     else showQuestLineBrowser();
   }
 
-  // 藍圖任務列表：依等級分段，只列「等級／目標／獎勵物品」，點列開彈窗看完整獎勵（經驗、金幣、名聲、代幣）
+  // 藍圖任務列表：用下拉選單選等級區間（每 10 級一段），下面只列那一段的任務「等級／目標／獎勵物品」，
+  // 點列開彈窗看完整獎勵（經驗、金幣、名聲、代幣）
+  var blueprintBand = null; // 目前選的區間起點（0、10、20…），記住上次選的，切換分頁回來還在
+  function blueprintBandOf(lv) { return Math.floor(lv / 10) * 10; }
   function showBlueprintBrowser() {
     currentDetail = null;
     currentView = { kind: "questtab", id: "blueprint" };
     var ids = Object.keys(MISSIONS).sort(function (a, b) {
       return MISSIONS[a].unlockLevel - MISSIONS[b].unlockLevel || Number(a) - Number(b);
     });
+    var bands = [], byBand = {};
+    ids.forEach(function (id) {
+      var b = blueprintBandOf(MISSIONS[id].unlockLevel);
+      if (!byBand[b]) { byBand[b] = []; bands.push(b); }
+      byBand[b].push(id);
+    });
+    // 預設：沒選過的話，挑上方「你目前的等級」所在的區間（沒有剛好的就取最接近、不超過的那段），都沒有就第一段
+    if (blueprintBand == null || !byBand[blueprintBand]) {
+      blueprintBand = bands[0];
+      if (dropCalcState.level != null) {
+        bands.forEach(function (b) { if (b <= dropCalcState.level) blueprintBand = b; });
+      }
+    }
+
     var html = backButtonHtml() + questTabsHtml("blueprint");
     html += '<h2 style="margin-top:0;">🗺️ 藍圖任務 <span class="count">(' + ids.length + ')</span></h2>';
-    html += '<div class="empty-note" style="padding:0 0 10px;">不用接取，角色等級到了就能進行（擊殺類要等級到了之後打的才算）。點任一列看完整獎勵；點怪物或物品名稱可以直接查詢，查完按「← 上一頁」回來。</div>';
     if (!ids.length) {
       html += '<div class="empty-note">目前沒有藍圖任務資料。</div>';
-    } else {
-      html += '<table class="dtable"><thead><tr><th style="width:64px;">等級</th><th>需要擊殺的怪物／目標</th><th>裝備／物品獎勵</th></tr></thead><tbody>';
-      ids.forEach(function (id) {
+      $detail.innerHTML = html;
+      return;
+    }
+    html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<label for="blueprintBandSelect" style="font-size:13px;color:var(--text-dim);">任務等級</label>' +
+      '<select id="blueprintBandSelect" style="padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:4px;color:var(--text);font-size:14px;">' +
+      bands.map(function (b) {
+        var open = byBand[b].filter(function (id) { return !MISSIONS[id].blocked; }).length;
+        return '<option value="' + b + '"' + (b === blueprintBand ? ' selected' : '') + '>Lv' + b + ' ~ ' + (b + 9) +
+          '（' + byBand[b].length + ' 筆' + (open < byBand[b].length ? '，' + (byBand[b].length - open) + ' 筆未開放' : '') + '）</option>';
+      }).join("") +
+      '</select></div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">不用接取，角色等級到了就能進行（擊殺類要等級到了之後打的才算）。點任一列看完整獎勵；點怪物或物品名稱會跳出視窗查看，關掉就能繼續看任務。</div>';
+    html += '<div id="blueprintTable"></div>';
+    $detail.innerHTML = html;
+
+    function renderBand() {
+      var rows = byBand[blueprintBand] || [];
+      var t = '<table class="dtable"><thead><tr><th style="width:64px;">等級</th><th>需要擊殺的怪物／目標</th><th>裝備／物品獎勵</th></tr></thead><tbody>';
+      rows.forEach(function (id) {
         var m = MISSIONS[id];
-        html += '<tr class="clickable" data-mission-detail="' + id + '"' + (m.blocked ? ' style="opacity:.55;"' : '') + '>' +
+        t += '<tr class="clickable" data-mission-detail="' + id + '"' + (m.blocked ? ' style="opacity:.55;"' : '') + '>' +
           '<td style="white-space:nowrap;">Lv' + m.unlockLevel + '</td>' +
           '<td>' + missionTargetHtml(m, false) + (m.blocked ? '<br><span style="font-size:11.5px;color:var(--text-faint);">遊戲內目前無法完成</span>' : '') + '</td>' +
           '<td>' + (m.reward ? itemChip(m.reward, m.rewardCount || 1) : '<span style="color:var(--text-faint);">－</span>') + '</td>' +
           '</tr>';
       });
-      html += '</tbody></table>';
+      t += '</tbody></table>';
+      document.getElementById("blueprintTable").innerHTML = t;
     }
-    $detail.innerHTML = html;
+    renderBand();
+    document.getElementById("blueprintBandSelect").addEventListener("change", function (e) {
+      blueprintBand = Number(e.target.value);
+      renderBand();
+    });
   }
   function openMissionDetail(id) {
     var m = MISSIONS[String(id)];
