@@ -670,6 +670,8 @@
       showPetDetail(id);
     } else if (kind === "bpet") {
       showBattlePetDetail(id);
+    } else if (kind === "dungeon") {
+      showDungeonDetail(id);
     } else if (kind === "questline") {
       showQuestLineDetail(id);
     } else if (kind === "questtab") {
@@ -1576,7 +1578,7 @@
     var dungeonRefs = (MONSTER_TO_DUNGEONS[id] || []).slice();
     if (dungeonRefs.length) {
       html += '<div class="section-title">出現副本 <span class="count">(' + dungeonRefs.length + ')</span></div>';
-      html += '<table class="dtable"><thead><tr><th>副本</th><th>島嶼</th><th>身分</th></tr></thead><tbody>';
+      html += '<table class="dtable"><thead><tr><th>副本</th><th>區域</th><th>身分</th></tr></thead><tbody>';
       dungeonRefs.forEach(function (r) {
         html += '<tr><td><span class="name-link" data-open-dungeon="' + r.dungeonId + '">' + escapeHtml(r.dungeonName) + '</span></td>' +
           '<td>' + escapeHtml(r.island || "-") + '</td>' +
@@ -1860,10 +1862,9 @@
       html += '<ul class="result-list">';
       dungeonIds.forEach(function (did) {
         var dg = DUNGEON_BY_ID[did];
-        var monsterCount = dg.islands.reduce(function (s, isl) { return s + isl.monsters.length; }, 0);
         html += '<li class="result-item" data-open-dungeon="' + did + '">' +
           '<span class="rname">' + escapeHtml(dg.name) + '</span>' +
-          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　' + dg.islands.length + ' 個島嶼・' + monsterCount + ' 種怪物</span>' +
+          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　每日 ' + (dg.entries || 0) + ' 次・' + dungeonMonsterList(dg).length + ' 種怪物</span>' +
           '</li>';
       });
       html += '</ul>';
@@ -2757,39 +2758,237 @@
     document.getElementById("petBackToList").addEventListener("click", showPetBrowser);
   }
 
-  function openDungeonDetail(dungeonId) {
-    var dg = DUNGEON_BY_ID[String(dungeonId)];
-    if (!dg) return;
-    var html = '<div class="section-title">副本</div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(dg.name) + '</div>';
-    html += '<div class="badge-row" style="margin-bottom:14px;">' +
-      '<span class="badge">等級 ' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '</span>' +
-      (dg.difficulty ? '<span class="badge">' + escapeHtml(dg.difficulty) + '</span>' : "") +
-      (dg.entries ? '<span class="badge">每日 ' + dg.entries + ' 次進場</span>' : "") +
-      '</div>';
-    var relatedBoxes = DUNGEON_TO_BOXES[String(dungeonId)] || [];
-    if (relatedBoxes.length) {
-      html += '<div class="section-title">可能掉落的寶箱（推測） <span class="count">(' + relatedBoxes.length + ')</span></div>';
-      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + relatedBoxes.map(function (b) {
-        return '<span class="map-chip" data-open-box="' + b.boxId + '">' + escapeHtml(b.boxName) + '</span>';
-      }).join("") + '</div>';
-    }
-    dg.islands.forEach(function (isl) {
-      html += '<div class="section-title" style="margin-top:14px;">' + escapeHtml(isl.name || isl.key) + '</div>';
-      if (isl.boss != null) {
-        html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
-          '<span class="map-chip" data-changelog-goto="monster:' + isl.boss + '">' + escapeHtml(MONSTERS[isl.boss] ? MONSTERS[isl.boss].name : "無資料") + '</span></div>';
-      }
-      var others = isl.monsters.filter(function (mid) { return mid !== isl.boss; });
-      if (others.length) {
-        html += '<div class="empty-note" style="padding:0 0 6px;">怪物（' + others.length + '）：</div><div class="map-chip-row">' +
-          others.map(function (mid) {
-            return '<span class="map-chip" data-changelog-goto="monster:' + mid + '">' + escapeHtml(MONSTERS[mid] ? MONSTERS[mid].name : "無資料") + '</span>';
-          }).join("") + '</div>';
-      }
+  // ---------- 副本詳細頁 ----------
+  // 副本裡不重複的怪物：[{id, isBoss, rooms:[區域名稱...]}]，首領排前面、同身分依等級排
+  function dungeonMonsterList(dg) {
+    var byId = {}, order = [];
+    (dg.islands || []).forEach(function (isl) {
+      var ids = (isl.monsters || []).slice();
+      if (isl.boss != null && ids.indexOf(isl.boss) === -1) ids.push(isl.boss);
+      ids.forEach(function (mid) {
+        var e = byId[mid];
+        if (!e) { e = byId[mid] = { id: String(mid), isBoss: false, rooms: [] }; order.push(e); }
+        if (isl.boss === mid) e.isBoss = true;
+        var roomName = isl.name || isl.key;
+        if (roomName && e.rooms.indexOf(roomName) === -1) e.rooms.push(roomName);
+      });
     });
-    $changelogBody.innerHTML = html;
-    $changelogBackdrop.style.display = "flex";
+    return order.sort(function (a, b) {
+      var ma = MONSTERS[a.id], mb = MONSTERS[b.id];
+      return (b.isBoss - a.isBoss) || ((ma ? ma.lv : 0) - (mb ? mb.lv : 0));
+    });
+  }
+
+  function monsterNameLink(mid) {
+    var mon = MONSTERS[String(mid)];
+    if (!mon) return '<span class="name-link" style="cursor:default;opacity:.5;">無資料</span>';
+    return '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + mid + '">' + escapeHtml(mon.name) + '</span>';
+  }
+
+  // 同名不同編號的怪物（例如好幾隻「[Boss]貝里教徒」）在來源清單裡只列一次，取最高機率
+  function dedupeSourcesByName(sources) {
+    var byName = {}, out = [];
+    sources.forEach(function (s) {
+      var name = MONSTERS[s.mid].name;
+      var e = byName[name];
+      if (!e) { byName[name] = s; out.push(s); }
+      else if (s.p > e.p) { out[out.indexOf(e)] = s; byName[name] = s; }
+    });
+    return out.sort(function (a, b) { return b.p - a.p; });
+  }
+
+  function boxTiersHtml(box) {
+    var html = "";
+    box.tiers.forEach(function (tier, tIdx) {
+      html += '<div class="empty-note" style="padding:10px 0 4px;">開出物品（第 ' + (tIdx + 1) + ' 組，每組開出一件）</div>';
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
+      tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
+        html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
+      });
+      html += '</tbody></table>';
+    });
+    return html;
+  }
+
+  function showDungeonDetail(dungeonId) {
+    dungeonId = String(dungeonId);
+    var dg = DUNGEON_BY_ID[dungeonId];
+    if (!dg) return;
+    currentDetail = null;
+    var monsters = dungeonMonsterList(dg);
+
+    // 掉落彙整：{物品id: {best, sources:[{mid, p, groups}]}}；怪物的掉落裡有寶箱就歸到寶箱區
+    var drops = {}, dropOrder = [];
+    var boxes = {}, boxOrder = [];
+    monsters.forEach(function (m) {
+      var mon = MONSTERS[m.id];
+      if (!mon) return;
+      var chances = monsterDropChances(mon, 1);
+      Object.keys(chances).forEach(function (iid) {
+        var c = chances[iid];
+        var d = drops[iid];
+        if (!d) { d = drops[iid] = { id: iid, best: 0, sources: [] }; dropOrder.push(d); }
+        d.sources.push({ mid: m.id, p: c.p, groups: c.groups });
+        if (c.p > d.best) d.best = c.p;
+        if (BOX_BY_ID[iid]) {
+          if (!boxes[iid]) { boxes[iid] = { id: iid, guess: false, sources: [] }; boxOrder.push(boxes[iid]); }
+          boxes[iid].sources.push({ mid: m.id, p: c.p });
+        }
+      });
+    });
+    // 名稱比對猜出來的寶箱（怪物掉落表裡找不到的才補上，標成推測）
+    (DUNGEON_TO_BOXES[dungeonId] || []).forEach(function (b) {
+      var bid = String(b.boxId);
+      if (!boxes[bid] && BOX_BY_ID[bid]) { boxes[bid] = { id: bid, guess: true, sources: [] }; boxOrder.push(boxes[bid]); }
+    });
+    dropOrder.sort(function (a, b) { return (!!BOX_BY_ID[b.id] - !!BOX_BY_ID[a.id]) || (b.best - a.best); });
+    dropOrder.forEach(function (d) { d.sources = dedupeSourcesByName(d.sources); });
+    boxOrder.forEach(function (bx) { bx.sources = dedupeSourcesByName(bx.sources); });
+
+    var html = backButtonHtml();
+    html += '<div class="section-title"><span class="name-link" id="dungeonBackToList" style="cursor:pointer;">← 副本列表</span></div>';
+    html += '<div class="detail-head"><div>' +
+      '<div class="detail-title">' + escapeHtml(dg.name) + '</div>' +
+      '<div class="detail-sub">副本編號 #' + dungeonId + '</div>' +
+      '<div class="badge-row">' +
+      (dg.group ? '<span class="badge">' + escapeHtml(dg.group) + '系列</span>' : '') +
+      (dg.difficulty ? '<span class="badge">' + escapeHtml(dg.difficulty) + '</span>' : '') +
+      '</div></div></div>';
+
+    html += '<div class="stat-grid">' +
+      '<div class="stat-tile"><div class="v">Lv' + (dg.minLv || 0) + (dg.maxLv ? '~' + dg.maxLv : '+') + '</div><div class="k">等級限制</div></div>' +
+      '<div class="stat-tile"><div class="v">' + (dg.entries || 0) + ' 次</div><div class="k">每日進場</div></div>' +
+      statTile("怪物種類", monsters.length) + statTile("掉落物品", dropOrder.length) + statTile("寶箱", boxOrder.length) +
+      '</div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin:-14px 0 18px;">等級限制：角色等級需在 ' + (dg.minLv || 0) +
+      (dg.maxLv ? ' ~ ' + dg.maxLv + ' 之間' : ' 以上') + '才能進入；每日進場次數每天重置。</div>';
+
+    // 寶箱
+    if (boxOrder.length) {
+      html += '<div class="section-title">寶箱 <span class="count">(' + boxOrder.length + ')</span></div>';
+      boxOrder.forEach(function (bx) {
+        var box = BOX_BY_ID[bx.id];
+        var srcText = bx.guess ? '<span class="group-tag">推測</span>' :
+          bx.sources.map(function (s) {
+            return escapeHtml(MONSTERS[s.mid].name) + ' <span class="' + rateClassP(s.p) + '">' + pctP(s.p) + '</span>';
+          }).join('、');
+        html += '<details class="equip-box" style="padding:10px 14px;margin-bottom:10px;">' +
+          '<summary style="cursor:pointer;"><span class="slot" style="color:var(--gold-hi);font-weight:700;">' + escapeHtml(box.name) + '</span>' +
+          '<span style="font-size:12px;color:var(--text-faint);margin-left:8px;">' + srcText + '</span></summary>' +
+          '<div style="margin-top:10px;"><div class="empty-note" style="padding:0 0 6px;">開啟需要的鑰匙：</div>' +
+          '<div class="map-chip-row">' + (box.keyId ? itemChip(box.keyId) : '<span class="map-chip" style="cursor:default;">不需要</span>') + '</div>' +
+          boxTiersHtml(box) + '</div></details>';
+      });
+    }
+
+    // 怪物與能力
+    html += '<div class="section-title">怪物與能力 <span class="count">(' + monsters.length + ')</span></div>';
+    if (!monsters.length) {
+      html += '<div class="empty-note">這個副本目前沒有怪物資料。</div>';
+    } else {
+      var multiRoom = (dg.islands || []).length > 1;
+      html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>怪物</th><th>身分</th><th>屬性</th><th>HP</th><th>攻擊</th><th>防禦</th>' +
+        '<th>命中</th><th>迴避</th><th>必殺</th><th>抗爆</th><th>經驗</th><th>主動</th>' + (multiRoom ? '<th>出現區域</th>' : '') + '</tr></thead><tbody>';
+      monsters.forEach(function (m) {
+        var mon = MONSTERS[m.id];
+        if (!mon) {
+          html += '<tr><td>' + monsterNameLink(m.id) + '</td><td colspan="' + (multiRoom ? 12 : 11) + '"><span class="rate low">無資料</span></td></tr>';
+          return;
+        }
+        html += '<tr class="clickable" data-goto-monster="' + m.id + '">' +
+          '<td>' + monsterNameLink(m.id) + '</td>' +
+          '<td>' + (m.isBoss ? '<span class="badge" style="color:var(--gold-hi);border-color:var(--gold);">首領</span>' : '一般') + '</td>' +
+          '<td><span class="el-chip" style="color:var(--' + (ELEMENT_CLASS[mon.element] || "el-none") + ')">' + (ELEMENT_LABEL[mon.element] || mon.element) + '</span></td>' +
+          '<td>' + bigNumHtml(mon.hp) + '</td><td>' + bigNumHtml(mon.atk) + '</td><td>' + bigNumHtml(mon.def) + '</td>' +
+          '<td>' + bigNumHtml(mon.hit) + '</td><td>' + bigNumHtml(mon.eva) + '</td><td>' + bigNumHtml(mon.crit) + '</td>' +
+          '<td>' + bigNumHtml(mon.critRes) + '</td><td>' + bigNumHtml(mon.exp) + '</td>' +
+          '<td>' + (mon.aggressive ? '是' : '否') + '</td>' +
+          (multiRoom ? '<td style="white-space:normal;min-width:140px;">' + escapeHtml(m.rooms.join('、')) + '</td>' : '') +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點怪物可以看完整能力、五行寶石建議，以及依你的等級換算後的掉落率／經驗。</div>';
+    }
+
+    // 區域配置（多房間的副本才列）
+    var rooms = dg.islands || [];
+    if (rooms.length > 1) {
+      // 同名的區域（例如好幾個「第五層」「入口」）合併成一筆，怪物／道具取聯集
+      var byName = {}, shown = [], emptyCount = 0;
+      function addUnique(arr, v) { if (v != null && arr.indexOf(v) === -1) arr.push(v); }
+      rooms.forEach(function (isl) {
+        var hasContent = (isl.monsters || []).length || isl.boss != null || (isl.drops || []).length || (isl.needItems || []).length;
+        if (!hasContent) { emptyCount++; return; }
+        var name = isl.name || isl.key;
+        var r = byName[name];
+        if (!r) { r = byName[name] = { name: name, bosses: [], monsters: [], drops: [], needItems: [] }; shown.push(r); }
+        addUnique(r.bosses, isl.boss);
+        (isl.monsters || []).forEach(function (mid) { addUnique(r.monsters, mid); });
+        (isl.drops || []).forEach(function (iid) { addUnique(r.drops, iid); });
+        (isl.needItems || []).forEach(function (iid) { addUnique(r.needItems, iid); });
+      });
+      html += '<div class="section-title">區域配置 <span class="count">(' + shown.length + ')</span></div>';
+      shown.forEach(function (isl) {
+        var others = isl.monsters.filter(function (mid) { return isl.bosses.indexOf(mid) === -1; });
+        var bossNames = isl.bosses.map(function (b) { return MONSTERS[String(b)] ? MONSTERS[String(b)].name : "無資料"; });
+        html += '<details class="equip-box" style="padding:10px 14px;margin-bottom:8px;">' +
+          '<summary style="cursor:pointer;"><span style="font-weight:700;">' + escapeHtml(isl.name) + '</span>' +
+          '<span style="font-size:12px;color:var(--text-faint);margin-left:8px;">' +
+          (bossNames.length ? '首領：' + escapeHtml(bossNames.join('、')) + '　' : '') + (others.length ? others.length + ' 種怪物' : '') + '</span></summary>' +
+          '<div style="margin-top:10px;">';
+        if (isl.bosses.length) {
+          html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
+            isl.bosses.map(function (b, i) {
+              return '<span class="map-chip" data-goto-monster="' + b + '">' + escapeHtml(bossNames[i]) + '</span>';
+            }).join("") + '</div>';
+        }
+        if (others.length) {
+          html += '<div class="empty-note" style="padding:0 0 6px;">怪物：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
+            others.map(function (mid) {
+              var mon = MONSTERS[String(mid)];
+              return '<span class="map-chip" data-goto-monster="' + mid + '">' + escapeHtml(mon ? mon.name : "無資料") + '</span>';
+            }).join("") + '</div>';
+        }
+        if ((isl.drops || []).length) {
+          html += '<div class="empty-note" style="padding:0 0 6px;">這個區域會取得：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
+            isl.drops.map(function (iid) { return itemChip(iid); }).join("") + '</div>';
+        }
+        if ((isl.needItems || []).length) {
+          html += '<div class="empty-note" style="padding:0 0 6px;">前往下一個區域需要：</div><div class="map-chip-row">' +
+            isl.needItems.map(function (iid) { return itemChip(iid); }).join("") + '</div>';
+        }
+        html += '</div></details>';
+      });
+      if (emptyCount) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">另有 ' + emptyCount + ' 個沒有怪物的區域（入口、通道等）未列出。</div>';
+    }
+
+    // 掉落總表
+    html += '<div class="section-title">掉落物品總表 <span class="count">(' + dropOrder.length + ')</span></div>';
+    if (!dropOrder.length) {
+      html += '<div class="empty-note">這個副本的怪物目前沒有紀錄任何掉落物。</div>';
+    } else {
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>最高機率</th><th>掉落來源</th></tr></thead><tbody>';
+      // 列本身不設 data-goto-item：來源欄裡有怪物連結，整列可點的話會被物品連結搶走
+      dropOrder.forEach(function (d) {
+        var it = ITEMS[d.id];
+        html += '<tr><td>' + (it ? '<span class="name-link" data-goto-item="' + d.id + '">' + escapeHtml(it.name) + '</span>'
+          : '<span class="name-link" style="cursor:default;opacity:.5;">無資料</span>') + '</td>' +
+          '<td><span class="' + rateClassP(d.best) + '">' + pctP(d.best) + '</span>' + (BOX_BY_ID[d.id] ? '<span class="group-tag">寶箱</span>' : '') + '</td>' +
+          '<td style="font-size:12.5px;">' + d.sources.map(function (s) {
+            return '<span class="name-link" data-goto-monster="' + s.mid + '">' + escapeHtml(MONSTERS[s.mid].name) + '</span> ' +
+              '<span class="' + rateClassP(s.p) + '">' + pctP(s.p) + '</span>' + dropGroupTags(s.groups);
+          }).join('<br>') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(DROP_FORMULA_NOTE) +
+        '這裡是未套用等級差衰減的機率，點怪物名稱可以看依你的等級換算後的數字。</div>';
+    }
+
+    $detail.innerHTML = html;
+    document.getElementById("dungeonBackToList").addEventListener("click", function () {
+      resetNavHistory();
+      showDungeonBrowser();
+    });
   }
 
   $changelogBtn.addEventListener("click", openChangelogList);
@@ -2858,7 +3057,7 @@
     var bpetLink = e.target.closest("[data-open-bpet]");
     if (bpetLink) { navigateTo("bpet", bpetLink.getAttribute("data-open-bpet"), true); return; }
     var dgLink = e.target.closest("[data-open-dungeon]");
-    if (dgLink) { openDungeonDetail(dgLink.getAttribute("data-open-dungeon")); return; }
+    if (dgLink) { navigateTo("dungeon", dgLink.getAttribute("data-open-dungeon"), true); return; }
     var boxLink = e.target.closest("[data-open-box]");
     if (boxLink) { openBoxDetail(boxLink.getAttribute("data-open-box")); return; }
     // 藍圖任務列：列裡的怪物／物品／副本連結在上面已經先處理掉了，點到列的其他地方才開詳細彈窗
