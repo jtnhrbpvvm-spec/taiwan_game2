@@ -973,6 +973,8 @@
         if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
         if (ITEM_ORIGIN[it.id] || ITEM_KILL_SOURCE[it.id]) metaParts.push("可從任務取得");
         if (LETTER_SOURCE[it.id]) metaParts.push("書信任務");
+        if (itemLetterMaterialUses(it.id).length) metaParts.push("書信材料");
+        if (BOX_KEY_TO_BOXES[String(it.id)]) metaParts.push("寶箱鑰匙");
         if (questRefs.quests.length && metaParts.indexOf("任務道具") === -1) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("藍圖任務");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
@@ -1215,6 +1217,45 @@
     }
   }
 
+  // 「這個物品是哪幾封書信要附的材料」：LETTER_SOURCE 是 書信→來源 的索引，這裡反過來建一份，用到時才算一次
+  var letterMaterialIndex = null;
+  function itemLetterMaterialUses(iid) {
+    if (!letterMaterialIndex) {
+      letterMaterialIndex = {};
+      Object.keys(LETTER_SOURCE).forEach(function (letterId) {
+        (LETTER_SOURCE[letterId] || []).forEach(function (ls) {
+          if (!ls.itemId) return;
+          var list = letterMaterialIndex[String(ls.itemId)] || (letterMaterialIndex[String(ls.itemId)] = []);
+          if (!list.some(function (x) { return x.letterId === letterId; })) {
+            list.push({ letterId: letterId, letterName: ITEMS[letterId] ? ITEMS[letterId].name : ("書信#" + letterId), count: ls.count || 1 });
+          }
+        });
+      });
+    }
+    return letterMaterialIndex[String(iid)] || [];
+  }
+  // 藍圖任務「要精煉的道具」：buildQuestReferences 沒有收這個欄位，另外建一份 物品→任務 的對照
+  var MISSIONS_REFINE_ITEMS = (function () {
+    var out = {};
+    Object.keys(MISSIONS).forEach(function (mid) {
+      var m = MISSIONS[mid];
+      if (m.refineItem == null) return;
+      (out[String(m.refineItem)] || (out[String(m.refineItem)] = [])).push({ id: mid, m: m, role: "refine" });
+    });
+    return out;
+  })();
+  var MISSION_ROLE_LABEL = { cost: "交換材料", gives: "任務給的材料", refine: "要精煉的道具", token: "R代幣" };
+  // 鑰匙 → 可以開的寶箱
+  var BOX_KEY_TO_BOXES = (function () {
+    var out = {};
+    Object.keys(BOX_BY_ID).forEach(function (bid) {
+      var k = BOX_BY_ID[bid].keyId;
+      if (k == null) return;
+      (out[String(k)] || (out[String(k)] = [])).push(bid);
+    });
+    return out;
+  })();
+
   function showItem(id) {
     id = String(id);
     var item = ITEMS[id];
@@ -1243,10 +1284,47 @@
       if (!petEvolveUses.some(function (x) { return x.petId === u.petId; })) petEvolveUses.push(u);
     });
     var killSourceText = itemKillSourceText(id);
-    if (questUses.length || petEvolveUses.length || killSourceText) {
+    // 其他「賣掉／丟掉會後悔」的用途：書信本身、交書信要附的材料、藍圖任務要交出或精煉的道具、寶箱鑰匙。
+    // 這幾種原本沒有標示，但一樣是拿去換獎勵、開箱用的，丟了就要重新收集。
+    var letterSubmit = LETTER_SOURCE[id] || [];
+    var letterMatUses = itemLetterMaterialUses(id);
+    var missionItemUses = buildQuestReferences(id).missions.filter(function (r) {
+      return r.role === "cost" || r.role === "gives" || r.role === "token";
+    });
+    if (MISSIONS_REFINE_ITEMS[id]) missionItemUses = missionItemUses.concat(MISSIONS_REFINE_ITEMS[id]);
+    var keyForBoxes = BOX_KEY_TO_BOXES[id] || [];
+    var special = questUses.length || petEvolveUses.length || letterSubmit.length || letterMatUses.length ||
+      missionItemUses.length || keyForBoxes.length;
+    if (special || killSourceText) {
       html += '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">';
-      if (questUses.length || petEvolveUses.length) {
+      if (special) {
         html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
+      }
+      // killSourceText 對書信已經會寫出「打倒誰掉落、交給誰、換到什麼」，重複寫一次只是多佔一行
+      if (letterSubmit.length && !killSourceText) {
+        var lr = letterSubmit[0];
+        html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">書信任務道具，交給 <b>' + escapeHtml(lr.npcName || "NPC") + '</b>' +
+          (lr.places && lr.places.length ? '（' + escapeHtml(lr.places.join("／")) + '）' : '') +
+          '：每封給' + (lr.fame ? ' 名聲+' + fmtNum(lr.fame) : '') + (lr.gold ? ' ' + fmtNum(lr.gold) + '金' : '') +
+          (lr.itemId ? '，要一起交 ' + itemChip(lr.itemId, lr.count) : '') + '</div>';
+      }
+      if (letterMatUses.length) {
+        html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">交書信時要一起交出的材料，用於：' +
+          letterMatUses.map(function (u) {
+            return '<span class="name-link" data-goto-item="' + u.letterId + '">' + escapeHtml(u.letterName) + '</span> ×' + u.count;
+          }).join('、') + '</div>';
+      }
+      if (missionItemUses.length) {
+        html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">藍圖任務道具，用於：' +
+          missionItemUses.map(function (r) {
+            var label = 'Lv' + r.m.unlockLevel + ' ' + (MISSION_ROLE_LABEL[r.role] || "");
+            return '<span class="name-link" data-mission-detail="' + r.id + '">' + escapeHtml(label) + '</span>';
+          }).join('、') + '</div>';
+      }
+      if (keyForBoxes.length) {
+        html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">寶箱鑰匙，可以打開 ' + keyForBoxes.length + ' 種寶箱：' +
+          keyForBoxes.map(function (bid) { return '<span class="name-link" data-open-box="' + bid + '">' + escapeHtml(BOX_BY_ID[bid].name) + '</span>'; }).join('、') +
+          '</div>';
       }
       if (questUses.length) {
         html += '<div style="font-size:13px;color:var(--text);margin-bottom:4px;">任務道具，用於：' +
@@ -1461,7 +1539,7 @@
       });
     }
 
-    var boxesUsingAsKey = Object.keys(BOX_BY_ID).filter(function (bid) { return String(BOX_BY_ID[bid].keyId) === String(id); });
+    var boxesUsingAsKey = BOX_KEY_TO_BOXES[id] || [];
     if (boxesUsingAsKey.length) {
       html += '<div class="section-title">鑰匙 <span class="count">可開啟 ' + boxesUsingAsKey.length + ' 種寶箱</span></div>';
       html += '<div class="map-chip-row">' + boxesUsingAsKey.map(function (bid) { return itemChip(bid); }).join("") + '</div>';
@@ -1601,10 +1679,27 @@
       }
     }
 
-    html += '<div class="section-title">出現地圖 <span class="count">(' + mon.maps.length + ')</span></div>';
-    html += '<div class="map-chip-row">' + mon.maps.map(function (mid) {
+    // 變身／召喚出來的型態自己沒有出生點（maps 是空的），要看牠是從哪隻怪變來的，就跟那隻同一張地圖。
+    // 例如「雪之女王」有兩隻同名不同編號：一隻由冰城的雨滴兒變身、一隻由冰峰的小不點雨滴變身。
+    var mapIds = mon.maps.slice(), mapNote = "";
+    if (!mapIds.length) {
+      var originMaps = [], originNames = [];
+      monsterOrigins(id).forEach(function (f) {
+        var src = MONSTERS[f.oid];
+        if (originNames.indexOf(src.name) === -1) originNames.push(src.name);
+        (src.maps || []).forEach(function (mid) { if (mapIds.indexOf(mid) === -1 && originMaps.indexOf(mid) === -1) originMaps.push(mid); });
+      });
+      mapIds = originMaps;
+      if (originNames.length) {
+        mapNote = '這隻自己沒有出生點，是由 ' + escapeHtml(originNames.join("、")) + ' 變身／召喚出來的，' +
+          (mapIds.length ? '所以出現在牠的地圖。' : '而來源怪物也沒有出生點，請往上一層看。');
+      }
+    }
+    html += '<div class="section-title">出現地圖 <span class="count">(' + mapIds.length + ')</span></div>';
+    html += '<div class="map-chip-row">' + mapIds.map(function (mid) {
       return '<span class="map-chip" style="cursor:default;">' + escapeHtml(mapName(mid)) + '</span>';
     }).join("") + '</div>';
+    if (mapNote) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + mapNote + '</div>';
 
     if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
       html += '<div class="section-title">五行寶石加成建議</div>';
@@ -2091,8 +2186,8 @@
     html += '<div class="empty-note" style="padding:6px 0 0;">' + escapeHtml(missionHowText(m)) + '</div>';
     html += '<div class="section-title">完成後可獲得</div>';
     html += missionRewardGridHtml(m);
-    $changelogBody.innerHTML = html;
-    $changelogBackdrop.style.display = "flex";
+    // 跟寶箱一樣走快速查看視窗（renderPeek 會開著 peekMode 呼叫進來），才不會被疊在物品視窗底下看不到
+    $peekBody.innerHTML = html;
   }
 
   // 書信任務：列出所有交了有獎勵（名聲或金幣）的書信。規則對照遊戲 submitLetter()：
@@ -2818,6 +2913,13 @@
     });
   }
 
+  // 進化要準備的材料：跟在「可進化 ○○，xx%」下一行
+  function petEvolveMatsHtml(mats) {
+    if (!mats || !mats.length) return '<div style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">需要材料：不需要材料</div>';
+    return '<div style="font-size:12.5px;color:var(--text-dim);margin-top:8px;margin-bottom:6px;">需要材料：</div>' +
+      '<div class="map-chip-row">' + mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>';
+  }
+
   function showPetDetail(petId) {
     var p = PET_INFO[String(petId)];
     if (!p) return;
@@ -2838,30 +2940,30 @@
       evolveFrom.forEach(function (f) {
         var fromPet = PET_INFO[String(f.from)];
         html += '<div class="equip-box" style="margin-bottom:10px;">' +
-          '<div class="row1"><span class="slot"><span class="name-link" data-open-pet="' + f.from + '">' + escapeHtml(fromPet ? fromPet.name : "#" + f.from) + '</span></span>' +
-          '<span class="rate">' + f.rate + '%</span></div>' +
-          '<div class="map-chip-row">' + f.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>' +
+          '<div style="font-size:13.5px;margin-bottom:8px;">由 <span class="name-link" data-open-pet="' + f.from + '">' +
+          escapeHtml(fromPet ? fromPet.name : "#" + f.from) + '</span> 進化而來，<span class="rate">' + f.rate + '%</span></div>' +
+          petEvolveMatsHtml(f.mats) +
           '</div>';
       });
     }
 
     if (p.evolve && p.evolve.length) {
       html += '<div class="section-title">可能進化成</div>';
+      // 一組材料可能進化出好幾種結果：先一行一行列「可進化 ○○，xx%」，下面再列這組要準備的材料
       p.evolve.forEach(function (ev, idx) {
         html += '<div class="equip-box" style="margin-bottom:10px;">';
         if (p.evolve.length > 1) html += '<div class="empty-note" style="padding:0 0 6px;">材料組合 ' + (idx + 1) + '：</div>';
-        html += '<div class="map-chip-row" style="margin-bottom:10px;">' + ev.mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>';
         var totalRate = ev.targets.reduce(function (s, t) { return s + t.rate; }, 0);
         ev.targets.forEach(function (t) {
           var toPet = PET_INFO[String(t.to)];
-          html += '<div class="row1" style="margin-bottom:4px;"><span class="slot"><span class="name-link" data-open-pet="' + t.to + '">' + escapeHtml(toPet ? toPet.name : "#" + t.to) + '</span></span>' +
-            '<span class="rate">' + t.rate + '%</span></div>';
+          html += '<div style="font-size:13.5px;margin-bottom:4px;">可進化 <span class="name-link" data-open-pet="' + t.to + '">' +
+            escapeHtml(toPet ? toPet.name : "#" + t.to) + '</span>，<span class="rate">' + t.rate + '%</span></div>';
         });
         if (totalRate < 100) {
-          html += '<div class="row1"><span style="color:var(--text-faint);font-size:13px;">進化失敗（掉成長階段或經驗歸零）</span>' +
+          html += '<div style="font-size:13px;color:var(--text-faint);margin-bottom:4px;">進化失敗（掉成長階段或經驗歸零），' +
             '<span class="rate low">' + (100 - totalRate) + '%</span></div>';
         }
-        html += '</div>';
+        html += petEvolveMatsHtml(ev.mats) + '</div>';
       });
     }
 
@@ -3267,14 +3369,14 @@
   var $peekBack = document.getElementById("peekBack");
   var peekStack = []; // [{kind, id}]，最後一筆是目前顯示的
 
-  var PEEK_RENDER = { item: showItem, monster: showMonster, dungeon: showDungeonDetail, box: openBoxDetail };
+  var PEEK_RENDER = { item: showItem, monster: showMonster, dungeon: showDungeonDetail, box: openBoxDetail, mission: openMissionDetail };
   function renderPeek() {
     var cur = peekStack[peekStack.length - 1];
     peekMode = true;
     try { PEEK_RENDER[cur.kind](cur.id); } finally { peekMode = false; }
     $peekBack.style.display = peekStack.length > 1 ? "" : "none";
     // 寶箱沒有主畫面的頁面可以開
-    document.getElementById("peekOpenFull").style.display = cur.kind === "box" ? "none" : "";
+    document.getElementById("peekOpenFull").style.display = (cur.kind === "box" || cur.kind === "mission") ? "none" : "";
     $peekModal.scrollTop = 0;
   }
   function openPeek(kind, id) {
@@ -3361,7 +3463,7 @@
     if (boxLink) { openPeek("box", boxLink.getAttribute("data-open-box")); return; }
     // 藍圖任務列：列裡的怪物／物品／副本連結在上面已經先處理掉了，點到列的其他地方才開詳細彈窗
     var missionDetail = e.target.closest("[data-mission-detail]");
-    if (missionDetail) { openMissionDetail(missionDetail.getAttribute("data-mission-detail")); return; }
+    if (missionDetail) { openPeek("mission", missionDetail.getAttribute("data-mission-detail")); return; }
     var questTab = e.target.closest("[data-quest-tab]");
     if (questTab) { openQuestTab(questTab.getAttribute("data-quest-tab")); return; }
     var questLineLink = e.target.closest("[data-open-questline]");
