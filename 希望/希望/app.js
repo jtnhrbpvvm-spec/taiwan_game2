@@ -1256,6 +1256,62 @@
     return out;
   })();
 
+  // ---------- 精煉（+1~+12）加成表 ----------
+  // 規則照遊戲：
+  //   攻／魔／防 = refineGain × REFINE_MULT[+N]（遊戲 _d()，倍率不是線性的，高階跳比較多）
+  //   增傷／減傷％ = 只有本來就有這項能力的裝備才會加，而且 +4 以後才開始（遊戲 bd()）：
+  //     武器、盾的「增加傷害」每級 +1%（+4 給 1%，一路到 +12 給 9%）
+  //     其他部位的增傷、以及所有部位的「減少傷害」只在 +4／+7／+10 各跳一階（1%／2%／3%）
+  var REFINE_MULT = [0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30];
+  var REFINE_PCT_STEP = [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];      // 武器／盾的增傷
+  var REFINE_PCT_TIER = [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3];      // 其他部位的增傷、所有減傷
+  var REFINE_MAX = 12;
+  function refineDmgBonus(eq, lv) {
+    var weaponLike = eq.slot === "weapon" || eq.slot === "shield";
+    return {
+      dealt: eq.dmgDealtPct > 0 ? (weaponLike ? REFINE_PCT_STEP : REFINE_PCT_TIER)[lv] : 0,
+      taken: eq.dmgTakenPct > 0 ? REFINE_PCT_TIER[lv] : 0,
+    };
+  }
+  function refineTableHtml(eq) {
+    if (eq.noUpgrade) return "";
+    var gain = eq.refineGain || {};
+    var cols = [
+      { key: "atk", label: "攻擊" },
+      { key: "def", label: "防禦" },
+      { key: "magic", label: "魔法" },
+    ].filter(function (c) { return gain[c.key]; });
+    var hasDealt = eq.dmgDealtPct > 0, hasTaken = eq.dmgTakenPct > 0;
+    if (!cols.length && !hasDealt && !hasTaken) return "";
+
+    var html = '<div class="section-title">精煉加成（+1 ~ +' + REFINE_MAX + '）</div>';
+    html += '<div class="empty-note" style="padding:0 0 8px;">每一列是精煉到那一級時，這件裝備「總共」會多出來的數值（不是每級各加多少）。' +
+      (hasDealt || hasTaken ? '增傷／減傷要精煉到 +4 才會開始給，後面幾級才再跳一階——這就是為什麼某幾個強化值特別划算。' : '') + '</div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>精煉</th>' +
+      cols.map(function (c) { return '<th>' + c.label + '</th>'; }).join('') +
+      (hasDealt ? '<th>增加傷害</th>' : '') + (hasTaken ? '<th>減少傷害</th>' : '') +
+      '</tr></thead><tbody>';
+    for (var lv = 1; lv <= REFINE_MAX; lv++) {
+      var pct = refineDmgBonus(eq, lv), prev = refineDmgBonus(eq, lv - 1);
+      // 增傷／減傷跳階的那幾級標出來，一眼看得到「精煉到這裡才會多給」
+      var stepUp = pct.dealt !== prev.dealt || pct.taken !== prev.taken;
+      html += '<tr' + (stepUp ? ' style="background:rgba(201,162,75,.10);"' : '') + '>' +
+        '<td>+' + lv + (stepUp ? ' <span class="group-tag">跳階</span>' : '') + '</td>' +
+        cols.map(function (c) {
+          return '<td><span class="rate">+' + Math.floor(gain[c.key] * REFINE_MULT[lv]) + '</span></td>';
+        }).join('') +
+        (hasDealt ? '<td>' + (pct.dealt ? '<span class="rate">+' + pct.dealt + '%</span>' : '<span class="rate low">－</span>') + '</td>' : '') +
+        (hasTaken ? '<td>' + (pct.taken ? '<span class="rate">+' + pct.taken + '%</span>' : '<span class="rate low">－</span>') + '</td>' : '') +
+        '</tr>';
+    }
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' +
+      '這些是精煉本身給的，要再加上上面那塊的基礎能力才是實際數值。' +
+      (hasDealt && (eq.slot === "weapon" || eq.slot === "shield")
+        ? '武器和盾的增加傷害每一級都會漲，其他部位只在 +4／+7／+10 漲。' : '') + '</div>';
+    return html;
+  }
+
   function windSlotNames() {
     return WIND_SLOTS.map(function (s) { return EQUIP_SLOTS[s] || SLOT_LABEL_FALLBACK[s] || s; }).join("、");
   }
@@ -1370,6 +1426,7 @@
         ? '⚠️ 這個部位不能洗發條：發條強化只能用在 ' + windSlotNames() + '，其他部位在強化面板會顯示「這個部位不能洗發條」，沒有按鈕。'
         : '✅ 這個部位可以洗發條（要先裝備起來，強化面板只列身上穿的裝備）。');
       html += '<div class="empty-note" style="padding:6px 0 0;">' + notes.map(escapeHtml).join('<br>') + '</div>';
+      html += refineTableHtml(eq);
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
