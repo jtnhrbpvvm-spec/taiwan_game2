@@ -1256,6 +1256,10 @@
     return out;
   })();
 
+  function windSlotNames() {
+    return WIND_SLOTS.map(function (s) { return EQUIP_SLOTS[s] || SLOT_LABEL_FALLBACK[s] || s; }).join("、");
+  }
+
   function showItem(id) {
     id = String(id);
     var item = ITEMS[id];
@@ -1358,9 +1362,14 @@
         eqStatPct("增加傷害", eq.dmgDealtPct) + eqStatPct("減少傷害", eq.dmgTakenPct) +
         (eq.attrs ? attrStats(eq.attrs) : "") +
         '</div></div>';
-      if (eq.noUpgrade) {
-        html += '<div class="empty-note" style="padding:6px 0 0;">⚠️ 這件裝備無法發條強化。</div>';
-      }
+      // 兩件事不要搞混：noUpgrade 擋的是「精煉」（遊戲 refineStack()）；
+      // 能不能洗發條看的是部位（遊戲 enhance() 檢查 windSlots），跟 noUpgrade 無關。
+      var notes = [];
+      if (eq.noUpgrade) notes.push('⚠️ 這件裝備不能精煉（+1、+2…）。');
+      notes.push(WIND_SLOTS.indexOf(eq.slot) === -1
+        ? '⚠️ 這個部位不能洗發條：發條強化只能用在 ' + windSlotNames() + '，其他部位在強化面板會顯示「這個部位不能洗發條」，沒有按鈕。'
+        : '✅ 這個部位可以洗發條（要先裝備起來，強化面板只列身上穿的裝備）。');
+      html += '<div class="empty-note" style="padding:6px 0 0;">' + notes.map(escapeHtml).join('<br>') + '</div>';
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
@@ -1860,6 +1869,7 @@
   // ---------- 職業 / 裝備位置 篩選 ----------
   var JOBS = window.JOBS || [];
   var EQUIP_SLOTS = window.EQUIP_SLOTS || {};
+  var WIND_SLOTS = window.WIND_SLOTS || [];
 
   var $filterJob = document.getElementById("filterJob");
   var $filterSlot = document.getElementById("filterSlot");

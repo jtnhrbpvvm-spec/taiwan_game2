@@ -92,7 +92,16 @@
   var session = initialRefs.session;
   var data = initialRefs.data; // 可能是 null，等玩家開過強化/鍊金頁面才抓得到，之後會自動補上
   var liveSnap = initialRefs.snap;
-  function snap() { return liveSnap; } // 每次都重新讀，確保拿到最新的即時狀態
+  // 🚨 一定要每次重新讀，不能把抓到的那個 snapshot 物件存起來用：
+  // 遊戲的 pushSnapshot() 是 `this.snapshot.value = this.buildSnapshot()`，每次更新都換成「全新的物件」，
+  // 不是改原本那一份。所以書籤啟動當下抓到的 snapshot 會永遠停在那一刻——
+  // 換裝備之後 loadout 還是舊的，「⚡強化」就會因為比對不到裝備名稱而不出現（金幣、材料數量也會是舊的）。
+  // session.snapshot 是 Vue 的 ref，讀 .value 才拿得到現在這一份。
+  function snap() {
+    var live = session && session.snapshot && session.snapshot.value;
+    if (live && typeof live.gold === "number") return live;
+    return liveSnap;
+  }
   function tryUpgradeRefs() {
     if (data && liveSnap) return; // 已經都有了，不用再找
     var r = findGameRefs();
@@ -273,7 +282,12 @@
         var nameEl = card.querySelector("strong");
         var name = nameEl ? nameEl.textContent.trim() : "";
         var match = items.find(function (it) { return it.name === name; });
-        if (!match) return;
+        if (!match) {
+          // 比對不到就不插按鈕。留個訊息，下次再遇到（例如遊戲把卡片上的名稱改了寫法）一看 Console 就知道。
+          console.warn("[一鍵強化] 卡片「" + name + "」在身上的裝備清單裡找不到同名的，先跳過。目前清單：",
+            items.map(function (it) { return it.slot + "=" + it.name; }));
+          return;
+        }
         var btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = "⚡強化";
