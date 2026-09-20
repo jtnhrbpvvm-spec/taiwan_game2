@@ -297,7 +297,15 @@
         btn.addEventListener("click", function (e) {
           e.preventDefault();
           e.stopPropagation();
-          try { openModal(match); } catch (err) {
+          // 🚨 目標裝備要「按下去的當下」重新讀，不能用插按鈕時抓到的那一份：
+          // 在強化頁面直接開背包換武器時，Vue 是沿用同一個卡片節點、只換掉裡面的名稱，
+          // 按鈕還是先前插進去的那一顆（injectButtons 看到卡片已經有按鈕就會跳過），
+          // 沿用舊的 match 就會顯示、甚至去強化已經換下來的那把舊武器。
+          var liveNameEl = card.querySelector("strong");
+          var liveName = liveNameEl ? liveNameEl.textContent.trim() : name;
+          var current = loadoutList().find(function (it) { return it.name === liveName; }) || match;
+          btn.title = "一鍵強化：" + current.name;
+          try { openModal(current); } catch (err) {
             console.error("[一鍵強化] 開啟視窗失敗", err);
             alert("開啟視窗時發生錯誤：" + (err && err.message ? err.message : err));
           }
