@@ -70,26 +70,9 @@
     });
   });
 
-  // 「戰寵」功能還沒有真實存檔驗證過，先隱藏起來，避免玩家誤用造成存檔損壞——
-  // 連續點「寵物」五下（1.5 秒內）才會讓它出現，之後就會一直顯示到下次重新整理頁面。
-  (function () {
-    var petsNav = document.getElementById("petsNavItem");
-    var battlePetNav = document.getElementById("battlePetNavItem");
-    if (!petsNav || !battlePetNav) return;
-    var clickCount = 0;
-    var lastClickMs = 0;
-    petsNav.addEventListener("click", function () {
-      var now = Date.now();
-      if (now - lastClickMs > 1500) clickCount = 0;
-      lastClickMs = now;
-      clickCount++;
-      if (clickCount >= 5) {
-        battlePetNav.style.display = "";
-        toast("已解鎖「戰寵」面板（尚未經過存檔驗證，請小心使用）", "ok");
-        clickCount = 0;
-      }
-    });
-  })();
+  // 「戰寵」面板原本藏在「連點寵物五下」後面，因為當時沒有真實存檔可以驗證。
+  // 2026-09-20 已經實際跑過完整流程（修改器建立 → 匯出 → 匯入遊戲，本機和線上 idle-seal 都測過）：
+  // 戰寵可以正常出戰、顯示能力與技能樹，存檔重開也還在，所以改成一般功能直接顯示。
 
   document.getElementById("transferShortcutBtn").addEventListener("click", function () {
     showPanel("transfer");
@@ -1250,9 +1233,30 @@
   function bpetKindDef(kind) {
     return (BATTLE_PET_INFO.kinds || []).find(function (k) { return k.kind === kind; });
   }
+  // 🚨 skills 一定要有（就算是空陣列）：遊戲讀存檔時是直接 `battlePet.skills.map(...)`，
+  // 少了這個欄位會丟 TypeError，整隻角色就進不去（畫面停在選角、Console 出現
+  // 「Cannot read properties of undefined (reading 'map')」）。已實際匯入遊戲驗證過。
+  // skills 的格式是 [[技能id, 等級], ...]，空的代表還沒點技能，SP 全部保留。
+  function newBattlePet(kindDef) {
+    return {
+      kind: kindDef.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
+      closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
+      summoned: false, downed: false, autoRevive: false, skills: [],
+      gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
+    };
+  }
+  // 舊版修改器產生的戰寵沒有 skills，載入時順手補上，免得匯出的存檔進不了遊戲
+  function fixBattlePetShape(bp) {
+    if (!bp) return bp;
+    if (!Array.isArray(bp.skills)) bp.skills = [];
+    if (!Array.isArray(bp.gear)) bp.gear = (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; });
+    return bp;
+  }
   function renderBattlePet(c) {
     if (!c.warehouse) c.warehouse = { gold: 0, nextStackId: 1, stacks: [], pets: [], battlePets: [] };
     if (!Array.isArray(c.warehouse.battlePets)) c.warehouse.battlePets = [];
+    fixBattlePetShape(c.battlePet);
+    c.warehouse.battlePets.forEach(fixBattlePetShape);
 
     var activeBox = document.getElementById("activeBattlePetBox");
     if (!activeBox) return; // 面板還沒被打開過，DOM 還沒建立，先跳過
@@ -1265,12 +1269,7 @@
       addBtn.addEventListener("click", function () {
         var firstKind = BATTLE_PET_INFO.kinds[0];
         if (!firstKind) { alert("目前沒有任何戰寵種類資料，請確認 data/battlePets.js 有沒有正確載入"); return; }
-        c.battlePet = {
-          kind: firstKind.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
-          closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
-          summoned: false, downed: false, autoRevive: false,
-          gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
-        };
+        c.battlePet = newBattlePet(firstKind);
         renderBattlePet(c);
       });
       activeBox.appendChild(addBtn);
@@ -1403,12 +1402,7 @@
       addBtn.onclick = function () {
         var firstKind = BATTLE_PET_INFO.kinds[0];
         if (!firstKind) { alert("目前沒有任何戰寵種類資料"); return; }
-        c.warehouse.battlePets.push({
-          kind: firstKind.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
-          closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
-          summoned: false, downed: false, autoRevive: false,
-          gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
-        });
+        c.warehouse.battlePets.push(newBattlePet(firstKind));
         renderWarehouseBattlePets(c);
       };
     }

@@ -227,7 +227,7 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 
     <div class="nav-section">角色狀態</div>
     <div class="nav-item" data-panel="pets" id="petsNavItem">🐾 寵物</div>
-    <div class="nav-item" data-panel="battlepet" id="battlePetNavItem" style="display:none;">🐉 戰寵<span class="badge">推測</span></div>
+    <div class="nav-item" data-panel="battlepet" id="battlePetNavItem">🐉 戰寵</div>
     <div class="nav-item" data-panel="potions">🧪 藥水設定</div>
     <div class="nav-item" data-panel="records">📖 物品紀錄</div>
     <div class="nav-item" data-panel="spot">📍 目前位置</div>
@@ -419,11 +419,10 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 
     <!-- ══ 戰寵 ══ -->
     <div class="panel" id="panel-battlepet">
-      <div class="panel-title">🐉 戰寵<span class="badge">推測</span></div>
+      <div class="panel-title">🐉 戰寵</div>
       <div class="panel-desc">
-        跟上面的「寵物」是完全獨立的另一套系統，資料全新、目前沒有真實存檔可以對照驗證，
-        底下欄位名稱（kind/level/exp/grade/seed/closeness/loyalty/summoned/downed/autoRevive/gear）是從遊戲原始碼反推的，
-        還沒有 100% 把握，如果存檔載入後欄位對不上或存檔壞掉，麻煩回報。
+        跟上面的「寵物」是完全獨立的另一套系統。已經實際匯進遊戲驗證過：建立出來的戰寵可以正常出戰、
+        顯示能力與技能樹，存檔重開也還在。
         <br><br>
         <b>seed</b> 是決定「天賦等級」（A/AA/AAA/S）的亂數種子，遊戲會用這個數字算出天賦，不是直接存天賦本身；
         <b>grade</b> 是進化階段（0~4，對應戰寵的 5 個外型階段）；同一時間只能有 1 隻戰寵「出戰中」，其他都放在倉庫閒置。
