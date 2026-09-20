@@ -1245,18 +1245,66 @@
       gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
     };
   }
-  // 舊版修改器產生的戰寵沒有 skills，載入時順手補上，免得匯出的存檔進不了遊戲
-  function fixBattlePetShape(bp) {
+  // ---------- 戰寵裝備 ----------
+  // 規則照遊戲 lf()：gear.pet 是 0（通用）或要等於戰寵種類；戰寵等級要 ≥ gear.lv；忠誠度要 ≥ gear.loyalty。
+  // 存檔裡的每一格放的是 {id, itemId} 物件（id 是 stack id），不是單純的物品編號——
+  // 舊版存檔的數字格式會被遊戲的 v24→v25 轉檔補成物件，這裡直接照新版寫。
+  function bpetGearById(itemId) {
+    return (BATTLE_PET_INFO.gear || []).find(function (g) { return g.id === itemId; });
+  }
+  function bpetGearFor(slotIdx, kind) {
+    return (BATTLE_PET_INFO.gear || []).filter(function (g) {
+      return g.slot === slotIdx && (g.pet === 0 || g.pet === kind);
+    }).sort(function (a, b) { return (a.lv || 0) - (b.lv || 0) || a.name.localeCompare(b.name, "zh-Hant"); });
+  }
+  function bpetGearItemId(entry) {
+    if (entry == null) return null;
+    return typeof entry === "number" ? entry : entry.itemId;
+  }
+  // 換裝備時沿用原本那一格的 id，沒有的話跟角色要一個新的 stack id，避免跟背包的 id 撞號
+  function bpetMakeGearEntry(c, itemId, prevEntry) {
+    var id = prevEntry && typeof prevEntry === "object" && prevEntry.id != null ? prevEntry.id : (c.nextStackId = (c.nextStackId || 1) + 1) - 1;
+    return { id: id, itemId: itemId };
+  }
+  var BPET_GEAR_STATS = [
+    ["atk", "攻"], ["def", "防"], ["hp", "HP"], ["ap", "AP"],
+    ["dmgDealtPct", "增傷%"], ["dmgTakenPct", "減傷%"],
+  ];
+  function bpetGearStatText(g) {
+    return BPET_GEAR_STATS.map(function (pair) {
+      var v = g[pair[0]];
+      return v ? pair[1] + (v > 0 ? "+" : "") + v : "";
+    }).filter(Boolean).join("・");
+  }
+  function bpetGearReqText(g) {
+    return "Lv" + (g.lv || 0) + (g.loyalty ? "・忠誠" + g.loyalty : "");
+  }
+  // 回傳擋住的原因（字串），可以穿就回傳空字串
+  function bpetGearBlock(g, bp) {
+    if (g.pet !== 0 && g.pet !== bp.kind) return "種類不符";
+    if ((bp.level || 0) < (g.lv || 0)) return "等級不足（需要 Lv" + g.lv + "）";
+    if ((bp.loyalty || 0) < (g.loyalty || 0)) return "忠誠度不足（需要 " + g.loyalty + "）";
+    return "";
+  }
+
+  // 舊版修改器產生的戰寵沒有 skills、而且裝備格寫的是純數字（物品編號），
+  // 這兩種格式現在的遊戲都不吃（少 skills 會讓角色載入失敗，裝備格是數字則整隻戰寵被丟掉），
+  // 載入存檔時順手補成新格式。
+  function fixBattlePetShape(bp, c) {
     if (!bp) return bp;
     if (!Array.isArray(bp.skills)) bp.skills = [];
     if (!Array.isArray(bp.gear)) bp.gear = (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; });
+    bp.gear = bp.gear.map(function (entry) {
+      if (typeof entry !== "number") return entry;
+      return { id: (c.nextStackId = (c.nextStackId || 1) + 1) - 1, itemId: entry };
+    });
     return bp;
   }
   function renderBattlePet(c) {
     if (!c.warehouse) c.warehouse = { gold: 0, nextStackId: 1, stacks: [], pets: [], battlePets: [] };
     if (!Array.isArray(c.warehouse.battlePets)) c.warehouse.battlePets = [];
-    fixBattlePetShape(c.battlePet);
-    c.warehouse.battlePets.forEach(fixBattlePetShape);
+    fixBattlePetShape(c.battlePet, c);
+    c.warehouse.battlePets.forEach(function (bp) { fixBattlePetShape(bp, c); });
 
     var activeBox = document.getElementById("activeBattlePetBox");
     if (!activeBox) return; // 面板還沒被打開過，DOM 還沒建立，先跳過
@@ -1341,15 +1389,59 @@
 
     if (!Array.isArray(bp.gear)) bp.gear = [];
     activeBox.appendChild(el("div", { class: "section-title", text: "裝備欄位", style: "margin-top:14px;" }));
+    activeBox.appendChild(el("div", {
+      class: "note",
+      text: "戰寵只能穿自己這一系的專用裝備，所以每一格只列得出來的選項——選單已經依照部位和「" +
+        (bpetKindDef(bp.kind) || {}).name + "」過濾過了。括號裡是需求等級與能力加成。",
+      style: "margin-bottom:8px;",
+    }));
     var gearGrid = el("div", { class: "grid" });
     (BATTLE_PET_INFO.gearSlots || []).forEach(function (slotName, idx) {
       var field = el("div", { class: "field wide" });
       field.appendChild(el("label", { text: slotName }));
-      var picker = makeItemPicker(bp.gear[idx], function (id) { bp.gear[idx] = id; });
-      field.appendChild(picker);
-      var clearBtn = el("button", { class: "btn btn-sm", text: "清空這格", style: "margin-top:4px;" });
-      clearBtn.addEventListener("click", function () { bp.gear[idx] = null; renderBattlePet(c); });
-      field.appendChild(clearBtn);
+
+      var list = bpetGearFor(idx, bp.kind);
+      var sel = el("select");
+      sel.appendChild(el("option", { value: "", text: "（空著）" }));
+      var currentId = bpetGearItemId(bp.gear[idx]);
+      list.forEach(function (g) {
+        var block = bpetGearBlock(g, bp);
+        var opt = el("option", {
+          value: g.id,
+          text: (block ? "⚠ " : "") + g.name + "（" + bpetGearReqText(g) + "／" + (bpetGearStatText(g) || "無加成") + "）",
+        });
+        if (currentId === g.id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      // 存檔裡放的是選單裡沒有的東西（例如手改過的 id），補一個選項免得一打開就被改掉
+      if (currentId != null && !list.some(function (g) { return g.id === currentId; })) {
+        var keep = el("option", { value: String(currentId), text: "（保留原本的 #" + currentId + "）" });
+        keep.selected = true;
+        sel.appendChild(keep);
+      }
+      sel.addEventListener("change", function () {
+        if (!sel.value) bp.gear[idx] = null;
+        else bp.gear[idx] = bpetMakeGearEntry(c, Number(sel.value), bp.gear[idx]);
+        renderBattlePet(c);
+      });
+      field.appendChild(sel);
+
+      var chosen = currentId != null ? bpetGearById(currentId) : null;
+      if (chosen) {
+        field.appendChild(el("div", {
+          class: "note",
+          text: "能力：" + (bpetGearStatText(chosen) || "無加成") + "　需求：" + bpetGearReqText(chosen),
+          style: "margin-top:4px;",
+        }));
+        var block = bpetGearBlock(chosen, bp);
+        if (block) {
+          field.appendChild(el("div", {
+            class: "note",
+            text: "⚠ 以目前的戰寵" + block + "，遊戲裡這件穿不上去（存檔還是會照寫，但進遊戲不會生效）。",
+            style: "margin-top:2px;color:#d98c3f;",
+          }));
+        }
+      }
       gearGrid.appendChild(field);
     });
     activeBox.appendChild(gearGrid);
