@@ -1386,6 +1386,64 @@
     return html;
   }
 
+  // ---------- 防爆道具（艾彼雷歐系列，名品館賣）----------
+  // 資料抄自遊戲 refine.json（2026-09-22 版）的 steps（失敗類型）與 guards，判斷規則照遊戲 bundle 的 yd()／xd()／Cd()：
+  //   step n ＝ 從 +n 衝 +n+1；failKind 0＝只損失材料、1＝掉階、2＝碎掉、3＝一般裝備掉階／G 裝碎掉
+  //   guard.when "destroy"＝這一階失敗會碎掉時才能用；"last-drop"＝這一階失敗掉階、下一階起會碎掉時才能用
+  //   guard.target "special"＝只給特殊道具（合成出來的變異裝備及其 G 版）用，"plain"＝只給其他裝備用
+  //   失敗時先擲 keepPct%：中了就退回 +toLevel，沒中就照這一階原本的失敗（碎掉或掉階）
+  //   noStones＝不能跟鎔解石一起用
+  var REFINE_FAIL_KIND = [0, 0, 0, 0, 0, 0, 1, 3, 2, 2, 2, 2]; // index ＝ step 0～11
+  var REFINE_GUARDS = [
+    { id: 8028, when: "last-drop", target: "plain", keepPct: 100, toLevel: 5, noStones: true },
+    { id: 8027, when: "destroy", target: "plain", keepPct: 70, toLevel: 7, noStones: false },
+    { id: 12362, when: "destroy", target: "special", keepPct: 80, toLevel: 6, noStones: false }
+  ];
+  function refineFailKind(step, gGear) {
+    var k = REFINE_FAIL_KIND[step];
+    return k === 2 ? "destroy" : k === 3 ? (gGear ? "destroy" : "drop") : k === 0 ? "none" : "drop";
+  }
+  function guardUsableAt(g, step, gGear, special) {
+    if ((g.target === "special") !== special || REFINE_FAIL_KIND[step] === undefined) return false;
+    var kind = refineFailKind(step, gGear);
+    if (g.when === "destroy") return kind === "destroy";
+    return kind === "drop" && REFINE_FAIL_KIND[step + 1] !== undefined && refineFailKind(step + 1, gGear) === "destroy";
+  }
+  // 能用的「目標精煉值」範圍，例如 "+9 ~ +12"
+  function guardRangeText(g, gGear, special) {
+    var lv = [];
+    for (var s = 0; s < REFINE_FAIL_KIND.length; s++) if (guardUsableAt(g, s, gGear, special)) lv.push(s + 1);
+    if (!lv.length) return "";
+    return lv.length === 1 ? "+" + lv[0] : "+" + lv[0] + " ~ +" + lv[lv.length - 1];
+  }
+  function refineGuardHtml(id) {
+    var g = REFINE_GUARDS.find(function (x) { return String(x.id) === String(id); });
+    if (!g) return "";
+    var where = [];
+    if (g.target === "special") {
+      var sp = guardRangeText(g, true, true);
+      if (sp) where.push('特殊道具（合成出來的變異裝備）衝 <b>' + sp + '</b>');
+    } else {
+      var n = guardRangeText(g, false, false), gz = guardRangeText(g, true, false);
+      if (n) where.push('一般裝備（N 裝）衝 <b>' + n + '</b>');
+      if (gz) where.push('G 化／變異裝備（G 裝）衝 <b>' + gz + '</b>');
+    }
+    var effect = g.keepPct >= 100
+      ? '失敗時 <b>100%</b> 退回 <b>+' + g.toLevel + '</b>' +
+        (g.when === "destroy" ? '，裝備不會碎掉。' : '（沒用的話這一階失敗會掉更多階）。')
+      : '失敗時 <b>' + g.keepPct + '%</b> 機率退回 <b>+' + g.toLevel + '</b>，其餘 ' + (100 - g.keepPct) + '% 照樣' +
+        (g.when === "destroy" ? '<b>碎掉</b>' : '掉階') + '。';
+    var html = '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">' +
+      '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">🛡️ 防爆道具（精煉失敗保護）</div>' +
+      '<div style="font-size:13px;color:var(--text);line-height:1.75;">' +
+      '<div>適用範圍：' + (where.length ? where.join('、') : '（目前沒有能用的精煉階段）') + '</div>' +
+      '<div>防爆效果：' + effect + '</div>' +
+      '<div>鎔解石：' + (g.noStones ? '<b>不能</b>一起使用' : '可以一起使用') + '</div>' +
+      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">用法：精煉時在「防爆」那欄勾選，一次消耗 1 個（成功或失敗都會用掉）。在村莊商店 NPC 的「名品館」分頁購買。</div>' +
+      '</div></div>';
+    return html;
+  }
+
   // ---------- G 化／變異合成（資料：希望/fusionIndex.js，規則照遊戲 fuseStack／fusionView／mg／cg）----------
   var FUSION = window.FUSION || null;
   var FUSION_KIND_ORDER = ["g", "hit", "crit", "speed"];
@@ -1684,6 +1742,8 @@
       '<span>販售價 <b>' + fmtNum(item.sell) + '</b></span>' +
       '<span>購買價 <b>' + fmtNum(item.buy) + '</b></span>' +
       '</div>';
+
+    html += refineGuardHtml(id);
 
     var questUses = ITEM_QUEST_USES[id] || [];
     var petEvolveUses = [];
