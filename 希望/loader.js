@@ -44,7 +44,7 @@
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   var oldRespawnFab = document.getElementById("iw-respawn-fab");
   if (oldRespawnFab) oldRespawnFab.remove();
-  document.querySelectorAll(".iw-mall-hint,.iw-mall-max-tag,.iw-mall-qty,.iw-mall-total").forEach(function (el) { el.remove(); });
+  document.querySelectorAll(".iw-mall-hint,.iw-mall-max-tag,.iw-mall-qty,.iw-mall-total,.iw-mall-multi-tag").forEach(function (el) { el.remove(); });
   document.querySelectorAll(".iw-mall-max").forEach(function (el) { el.classList.remove("iw-mall-max"); });
   document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) { el.classList.remove("iw-mall-super-rate"); });
   document.querySelectorAll(".iw-mall-rain").forEach(function (el) { el.remove(); });
@@ -2016,7 +2016,10 @@
     }
     var min = Math.min.apply(null, rates.map(function (r) { return r.rate; }));
     var target = rates.find(function (r) { return r.rate === min && r.period >= nowPeriod; });
-    if (!target) return { text: "已經錯過最低價時段了歐~", big: false };
+    if (!target) {
+      // 今天的最低價都過了：明天如果是超級特價日（最低 < 21,000），多提醒一句
+      return { text: "已經錯過最低價時段了歐~" + (mallDayMin(1) < MALL_SUPER_RATE ? "　明天..好像...?注意歐~" : ""), big: false };
+    }
     var superSale = min < MALL_SUPER_RATE;
     var diff = target.period - nowPeriod;
     if (diff === 0) {
@@ -2026,6 +2029,28 @@
     }
     var text = MALL_COUNTDOWN[diff] || ("今日提示：最低價在" + (target.hour < 12 ? "上午" : "下午"));
     return { text: (superSale ? MALL_SUPER_PREFIX : "") + text, big: false };
+  }
+
+  // 今天往後第 offset 天（本機時間）的最低匯率
+  function mallDayMin(offset) {
+    var now = new Date();
+    var first = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset).getTime() / MALL_HOUR_MS);
+    var min = Infinity;
+    for (var h = 0; h < 24; h++) min = Math.min(min, mallRate(first + h));
+    return min;
+  }
+  // 今天是超級特價日（最低 < 21,000）、有好幾個小時並列最低，而且「現在」正是其中第一個時段：
+  // 回傳並列的小時數，否則 0（第二個以後的特價時段、其他時段都不顯示）
+  function mallSuperLowCount() {
+    var now = new Date();
+    var first = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / MALL_HOUR_MS);
+    var list = [];
+    for (var h = 0; h < 24; h++) list.push(mallRate(first + h));
+    var min = Math.min.apply(null, list);
+    if (min >= MALL_SUPER_RATE) return 0;
+    var n = list.filter(function (r) { return r === min; }).length;
+    if (n < 2) return 0;
+    return Math.floor(now.getTime() / MALL_HOUR_MS) === first + list.indexOf(min) ? n : 0;
   }
 
   // 現在是不是今天（本機時間）最貴的那個小時；並列最高的每個小時都算。
@@ -2046,6 +2071,8 @@
     ".mall>.rate.iw-mall-max{color:#c0392b;}" +
     // 抖一下停一下（每 2 秒抖 0.4 秒），一直抖太吵
     ".iw-mall-max-tag{display:inline-block;margin-right:8px;color:#c0392b;font-weight:800;animation:iw-mall-shake 2s ease-in-out infinite;}" +
+    // 超級特價日而且並列最低好幾個小時：第一個特價時段掛在匯率那行（橘色，跟「滾！」錯開抖的時間）
+    ".iw-mall-multi-tag{display:table;margin-left:auto;color:#d35400;font-weight:800;animation:iw-mall-shake 2s ease-in-out 1s infinite;}" +
     "@keyframes iw-mall-shake{0%,20%,100%{transform:translate(0,0) rotate(0)}" +
     "4%{transform:translate(-3px,0) rotate(-3deg)}8%{transform:translate(3px,0) rotate(3deg)}" +
     "12%{transform:translate(-3px,0) rotate(-2deg)}16%{transform:translate(2px,0) rotate(1deg)}}" +
@@ -2062,7 +2089,7 @@
     ".iw-mall-rain span{position:absolute;top:-40px;font-size:22px;animation:iw-mall-fall linear forwards;}" +
     "@keyframes iw-mall-fall{0%{transform:translateY(0) rotate(0);opacity:1}85%{opacity:1}" +
     "100%{transform:translateY(var(--iw-fall)) rotate(var(--iw-spin));opacity:0}}" +
-    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag,.iw-mall-hint.iw-mall-super,.mall>.rate.iw-mall-super-rate{animation:none;}.iw-mall-rain{display:none;}}";
+    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag,.iw-mall-multi-tag,.iw-mall-hint.iw-mall-super,.mall>.rate.iw-mall-super-rate{animation:none;}.iw-mall-rain{display:none;}}";
 
   // 金幣雨：蓋在名品館面板上，約 3 秒後自己消失，不擋點擊。
   function mallCoinRain() {
@@ -2100,14 +2127,32 @@
     document.querySelectorAll(".mall > .rate.iw-mall-max").forEach(function (el) {
       if (!on || el !== rateEl) el.classList.remove("iw-mall-max");
     });
-    if (!on) return;
-    if (!rateEl.classList.contains("iw-mall-max")) rateEl.classList.add("iw-mall-max");
-    if (!rateEl.querySelector(".iw-mall-max-tag")) {
-      var tag = document.createElement("span");
-      tag.className = "iw-mall-max-tag";
-      tag.textContent = MALL_MAX_TEXT;
-      rateEl.insertBefore(tag, rateEl.firstChild);
+    if (on) {
+      if (!rateEl.classList.contains("iw-mall-max")) rateEl.classList.add("iw-mall-max");
+      if (!rateEl.querySelector(".iw-mall-max-tag")) {
+        var tag = document.createElement("span");
+        tag.className = "iw-mall-max-tag";
+        tag.textContent = MALL_MAX_TEXT;
+        rateEl.insertBefore(tag, rateEl.firstChild);
+      }
     }
+
+    // 「想跳樓 N 次」：超級特價日並列最低好幾個小時，只在第一個特價時段顯示，排在「滾！」前面。
+    // 這句比較長，跟數量欄擠在同一行會把「1 點 ＝ 🪙」和數字拆成兩行，所以它自己佔一行（靠右），
+    // 「滾！」維持在匯率同一行不動。（兩個不會同時出現：第一個特價時段不可能是當天最貴的時段。）
+    var n = rateEl && checkMallFormula() ? mallSuperLowCount() : 0;
+    var multiText = n ? "甚麼!!老闆瘋拉!? 今天居然想跳樓" + n + "次!!!!" : "";
+    document.querySelectorAll(".iw-mall-multi-tag").forEach(function (el) {
+      if (!n || el.parentNode !== rateEl) el.remove();
+    });
+    if (!n) return;
+    var multi = rateEl.querySelector(":scope > .iw-mall-multi-tag");
+    if (!multi) {
+      multi = document.createElement("span");
+      multi.className = "iw-mall-multi-tag";
+      rateEl.insertBefore(multi, rateEl.firstChild);
+    }
+    if (multi.textContent !== multiText) multi.textContent = multiText;
   }
 
   // ==========================================================================
