@@ -981,6 +981,7 @@
     while (true) {
       if (stopFlag) { reason = "stopped"; break; }
 
+      if (session.inVillage === false) { reason = "not-in-village"; break; } // 遊戲 enhance()／buy() 在村莊外會直接忽略
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
       if (entry.pendingPrev) { reason = "pending-choice"; break; }
@@ -1093,6 +1094,7 @@
       "buy-failed": "⚠️ 購買發條沒有成功扣款，真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
       "enhance-rejected": "⚠️ 這次強化沒有執行（沒用掉發條），真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
       "pending-choice": "⏸️ 這件裝備在等你選「新的／上一組」，請先在遊戲畫面選好再繼續。",
+      "not-in-village": "⏸️ 你不在村莊裡（上發條、買發條都只能在村莊做），停止。回到村莊再開始就好。",
       "winder-unusable": "⏸️ 這種發條不能用在目前這個階級，停止。",
       "item-gone": "⚠️ 找不到這件裝備了（可能被拆解或移動），停止。",
       "stopped": "⏹️ 已手動停止。",
@@ -1251,7 +1253,7 @@
 
   var alchemyBackdrop = null, alchemyModal = null;
   var alchemyRunning = false, alchemyStopFlag = false, alchemyTimer = null;
-  var alchemyStats = { attempts: 0, totalSpent: 0, totalMade: 0, targetCount: 0, budget: 0, recipeId: null, recipeName: "" };
+  var alchemyStats = { attempts: 0, successes: 0, failures: 0, totalSpent: 0, totalMade: 0, targetCount: 0, budget: 0, recipeId: null, recipeName: "" };
 
   function fmtMs(ms) {
     var s = Math.ceil(ms / 1000);
@@ -1358,7 +1360,8 @@
   function updateAlchemyStatusSummary() {
     var el = document.getElementById("iw-alchemy-status-summary");
     if (!el) return;
-    el.innerHTML = "已執行 <b>" + alchemyStats.attempts + "</b> 次　做出約 <b>" + alchemyStats.totalMade + "</b> 個　花費 <b>" + fmt(alchemyStats.totalSpent) + "</b> 金幣";
+    el.innerHTML = "已執行 <b>" + alchemyStats.attempts + "</b> 次（失敗 " + (alchemyStats.failures || 0) + "）　做出 <b>" +
+      alchemyStats.totalMade + "</b> 個　花費 <b>" + fmt(alchemyStats.totalSpent) + "</b> 金幣";
   }
   function escapeHtmlLite(s) {
     return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
@@ -1380,7 +1383,7 @@
     alchemyStopFlag = false;
     setAlchemyFormDisabled(true);
     alchemyFab.textContent = "🧪 煉金中...";
-    alchemyStats = { attempts: 0, totalSpent: 0, totalMade: 0, targetCount: targetCount, budget: budget, recipeId: recipeId, recipeName: recipeName };
+    alchemyStats = { attempts: 0, successes: 0, failures: 0, totalSpent: 0, totalMade: 0, targetCount: targetCount, budget: budget, recipeId: recipeId, recipeName: recipeName };
     var logEl = document.getElementById("iw-alchemy-log");
     if (logEl) logEl.textContent = "";
     var summaryEl = document.getElementById("iw-alchemy-summary");
@@ -1407,7 +1410,9 @@
       }[reason] || reason;
       if (summaryEl) {
         summaryEl.innerHTML = "<div>" + reasonText + "</div>" +
-          "<div style='margin-top:8px;'>製作次數：<b>" + alchemyStats.attempts + "</b> 次　總共做出：<b>" + alchemyStats.totalMade + "</b> 個<br>" +
+          "<div style='margin-top:8px;'>製作次數：<b>" + alchemyStats.attempts + "</b> 次" +
+          "（成功 <b>" + (alchemyStats.successes || 0) + "</b>・失敗 <b>" + (alchemyStats.failures || 0) + "</b>）" +
+          "　總共做出：<b>" + alchemyStats.totalMade + "</b> 個<br>" +
           "總花費：<b>" + fmt(alchemyStats.totalSpent) + "</b> 金幣</div>";
       }
       var statusSummaryEl = document.getElementById("iw-alchemy-status-summary");
@@ -1432,13 +1437,23 @@
       if (alchemyStats.budget > 0 && alchemyStats.totalSpent + (recipe.gold || 0) > alchemyStats.budget) { finish("budget"); return; }
 
       var goldBefore = session.player.gold;
+      // 遊戲 craftBomb() 失敗時也回傳 true（材料、配方書照扣，只是拿不到成品），
+      // 所以「做出幾個」要看成品數量實際增加多少，不能用「次數 × 每次數量」。
+      var productBefore = recipe.productId != null ? (session.usableCount(recipe.productId, "bagAndWarehouse") || 0) : null;
       var ok = session.craftBomb(recipeId);
       if (!ok) { finish("blocked"); return; }
       var spent = Math.max(0, goldBefore - session.player.gold);
+      var made = productBefore != null
+        ? Math.max(0, (session.usableCount(recipe.productId, "bagAndWarehouse") || 0) - productBefore)
+        : (recipe.count || 0);
       alchemyStats.attempts++;
       alchemyStats.totalSpent += spent;
-      alchemyStats.totalMade += recipe.count || 0;
-      alchemyLog("第 " + alchemyStats.attempts + " 次：花費 " + fmt(spent) + " 金幣，預期做出 " + recipe.count + " 個（成功率 " + recipe.rate + "%，失敗會扣材料但拿不到成品）");
+      alchemyStats.totalMade += made;
+      if (made > 0) alchemyStats.successes = (alchemyStats.successes || 0) + 1;
+      else alchemyStats.failures = (alchemyStats.failures || 0) + 1;
+      alchemyLog("第 " + alchemyStats.attempts + " 次：花費 " + fmt(spent) + " 金幣，" +
+        (made > 0 ? "✅ 做出 " + made + " 個" : "❌ 失敗（材料沒了，沒拿到成品）") +
+        "（成功率 " + recipe.rate + "%）");
       updateAlchemyStatusSummary();
 
       var cooldownMs = 1200; // 讀不到新的 readyAtMs 時，先給一個保守的預設間隔，避免無冷卻配方緊繃連打
