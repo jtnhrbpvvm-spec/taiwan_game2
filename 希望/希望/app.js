@@ -83,7 +83,7 @@
   // 掉落組別倍率：bundle 的 Cl（組別代號照 xl：1 一般、2 材料、3 裝備、4 首領）
   var DROP_GROUP_MULT = { 1: 0.44, 2: 0.12, 3: 0.083, 4: 1 };
   var DROP_GROUP_LABEL = { 1: "一般", 2: "材料", 3: "裝備", 4: "首領" };
-  var DROP_FORMULA_NOTE = "機率已照遊戲的掉落計算換算：一般組 ×44%、材料組 ×12%、裝備組 ×8.3%、首領組 ×100%，同一組每隻怪最多掉一件（組內機率照資料順序累加，超過 100% 的部分不算）；攻擊力 0 的怪物已扣掉 14.5% 整批落空；未含技能、狀態的掉落加成。";
+  var DROP_FORMULA_NOTE = "機率已照遊戲的掉落計算換算：一般組 ×44%、材料組 ×12%、裝備組 ×8.3%、首領組 ×100%，同一組每隻怪最多掉一件（組內機率照資料順序累加，超過 100% 的部分不算）；攻擊力 0 的怪物已扣掉 14.5% 整批落空；〔乞討〕加成可在上方選，身上狀態給的掉落加成沒算進來。";
   // 照遊戲 El()（遊戲自己顯示掉落機率的 dropChances() 就是用它）算這隻怪每件物品的掉落機率（0~1）：
   // 每組各抽一次、最多掉一件；組內照資料順序累加 rate/1,000,000 × 掉落倍率 × 組別倍率，超過 1 的部分截掉；
   // 最後乘上 (1 − 整批落空機率)。mult＝遊戲 dropMultiplier 的等級差部分（不含技能／狀態加成）。
@@ -110,9 +110,35 @@
     });
     return out;
   }
-  function playerDropMultiplier(mon) {
+  // 遊戲 dropMultiplier() = 等級差衰減（鐵匠／匠師免除） × (1 + 掉落率加成%)
+  // 掉落率加成目前只有初心者技能〔乞討〕（skills.json #230，Lv110 可學，每級 +3%，Lv10 = +30%），
+  // 另外還有 standingBuffs 的 dropRate（查詢頁無法得知玩家身上有什麼狀態，沒算進來）。
+  var DROP_BEG_SKILL_LEVELS = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];
+  function dropLevelPart(mon) {
     if (dropCalcState.level == null || dropCalcState.blacksmith) return 1;
     return dropLevelMultiplier(dropCalcState.level, mon.lv);
+  }
+  function dropBegBonusPct() { return dropCalcState.beg > 0 ? DROP_BEG_SKILL_LEVELS[dropCalcState.beg - 1] || 0 : 0; }
+  function playerDropMultiplier(mon) {
+    return dropLevelPart(mon) * (1 + dropBegBonusPct() / 100);
+  }
+  // 有輸入等級、或有選〔乞討〕時，掉落表才多一欄「換算後機率」
+  function dropAdjActive() { return dropCalcState.level != null || dropBegBonusPct() > 0; }
+  // 換算後機率的說明文字；decayMons = 這頁會被等級差衰減的怪物數（用來提醒「勾鐵匠也不會變」的情況）
+  function dropAdjNote(decayMons) {
+    var parts = [];
+    if (dropCalcState.level != null) {
+      if (dropCalcState.blacksmith) {
+        parts.push(decayMons > 0
+          ? "鐵匠／匠師不受等級差衰減（二轉爆破士會失去這個效果）。"
+          : "已勾鐵匠，但這頁的怪物跟你 Lv" + dropCalcState.level + " 的等級差都不到 30 級，本來就沒有衰減，所以數字不會變。");
+      } else {
+        parts.push("依你輸入的 Lv" + dropCalcState.level + " 套用等級差衰減" +
+          (decayMons > 0 ? "" : "（這頁的怪物等級差都不到 30 級，沒有衰減）") + "。");
+      }
+    }
+    if (dropBegBonusPct() > 0) parts.push("〔乞討〕Lv" + dropCalcState.beg + "：掉落率 ×" + (100 + dropBegBonusPct()) + "%。");
+    return parts.length ? "換算後機率：" + parts.join("") : "";
   }
   // 機率（0~1）轉成顯示文字／樣式，沿用原本 pct()/rateClass() 的格式
   function pctP(p) { return pct(p * RATE_DIVISOR); }
@@ -127,12 +153,24 @@
     return groups.map(function (g) { return '<span class="group-tag">' + (DROP_GROUP_LABEL[g] || ("組" + g)) + '</span>'; }).join("");
   }
   // blacksmith：遊戲 dropMultiplier() 是 isBlacksmith && secondJob.id !== "bomber" 才免除等級差衰減（一轉鐵匠、二轉匠師適用，爆破士不適用）
-  var dropCalcState = { level: null, blacksmith: false };
+  var dropCalcState = { level: null, blacksmith: false, beg: 0 };
 
   function dropCalcBar() {
-    var html = '<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
+    var html = '<div style="display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
     html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">' +
       '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠／匠師（二轉爆破士不適用）</label>';
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);">〔乞討〕' +
+      '<select id="dropCalcBeg" style="background:var(--ink-2);color:var(--text);border:1px solid var(--line-hi);border-radius:6px;padding:3px 6px;font-size:12.5px;">' +
+      '<option value="0">沒學</option>' + DROP_BEG_SKILL_LEVELS.map(function (v, i) {
+        return '<option value="' + (i + 1) + '"' + (dropCalcState.beg === i + 1 ? ' selected' : '') + '>Lv' + (i + 1) + '（+' + v + '%）</option>';
+      }).join('') + '</select></label>';
+    // 最常見的誤會：以為勾鐵匠會「提升」掉落率，其實只是「不被等級差打折」
+    html += '<div style="flex-basis:100%;font-size:11.5px;color:var(--text-faint);line-height:1.6;">' +
+      (dropCalcState.level == null
+        ? '💡 鐵匠不是增加掉落率，而是<b>不受等級差衰減</b>（比怪物高 30 級起掉落會打折：30 級 ×95%…55 級 ×5%）。' +
+          '要先在上方輸入<b>你目前的等級</b>，勾鐵匠才會看到差別。〔乞討〕則是真的提升掉落率（初心者技能，Lv110 可學）。'
+        : '鐵匠：不受等級差衰減（比怪物高 30 級以上才有差）。〔乞討〕：掉落率直接乘上加成。') +
+      '</div>';
     html += '</div>';
     return html;
   }
@@ -140,11 +178,13 @@
     // 快速查看視窗和主畫面可能同時有這個勾選框（同一個 id），要在「這次畫的那一邊」找
     var inPeek = peekMode;
     var $bs = detailTarget().querySelector("#dropCalcBlacksmith");
-    if ($bs) $bs.addEventListener("change", function () {
-      dropCalcState.blacksmith = $bs.checked;
+    var $beg = detailTarget().querySelector("#dropCalcBeg");
+    function rerender() {
       peekMode = inPeek;
       try { onChange(); } finally { peekMode = false; }
-    });
+    }
+    if ($bs) $bs.addEventListener("change", function () { dropCalcState.blacksmith = $bs.checked; rerender(); });
+    if ($beg) $beg.addEventListener("change", function () { dropCalcState.beg = Number($beg.value) || 0; rerender(); });
   }
   // ---------- 快速查看（彈出視窗）----------
   // 在詳細頁／彈窗裡點物品、怪物、副本連結時，不換掉主畫面，改在彈出視窗裡顯示，關掉就回到原本在看的內容。
@@ -1946,7 +1986,8 @@
       html += '<div class="empty-note">目前資料中沒有任何怪物掉落這個物品（可能來自商店、任務、製作或活動）。</div>';
     } else {
       html += dropCalcBar();
-      var showAdj = dropCalcState.level != null;
+      var showAdj = dropAdjActive();
+      var decayMons = 0; // 這頁有幾隻怪會被等級差衰減（沒有的話，勾鐵匠本來就不會變）
       // 同一隻怪可能在好幾組都有這件物品，合併成一列（機率相加，遊戲 El() 也是這樣算）
       var dropRows = [], seenMon = {};
       drops.forEach(function (d) {
@@ -1956,6 +1997,7 @@
         var base = monsterDropChances(mon, 1)[id];
         if (!base) return;
         var adj = showAdj ? monsterDropChances(mon, playerDropMultiplier(mon))[id] : null;
+        if (dropCalcState.level != null && dropLevelMultiplier(dropCalcState.level, mon.lv) < 1) decayMons++;
         dropRows.push({ m: d.m, mon: mon, base: base, adj: adj });
       });
       dropRows.sort(function (a, b) { return b.base.p - a.base.p; });
@@ -1968,7 +2010,7 @@
         if (showAdj) {
           var ratio = row.base.p > 0 ? row.adj.p / row.base.p : 1;
           adjCell = '<td><span class="' + rateClassP(row.adj.p) + '">' + pctP(row.adj.p) + '</span>' +
-            (ratio < 0.9995 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (ratio * 100).toFixed(1) + '%)</span>' : '') + '</td>';
+            (Math.abs(ratio - 1) > 0.0005 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (ratio * 100).toFixed(1) + '%)</span>' : '') + '</td>';
         }
         html += '<tr class="clickable" data-goto-monster="' + row.m + '">' +
           '<td><span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + (mon.atk === 0 ? ' <span style="color:var(--text-faint);font-size:11px;">（攻0）</span>' : '') + '</span></td>' +
@@ -1979,7 +2021,7 @@
       });
       html += '</tbody></table>';
       html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(DROP_FORMULA_NOTE) +
-        (showAdj ? (dropCalcState.blacksmith ? "換算後機率：鐵匠／匠師不受等級差衰減（二轉爆破士會失去這個效果）。" : "換算後機率：依你輸入的 Lv" + dropCalcState.level + " 套用等級差衰減。") : "") + '</div>';
+        escapeHtml(showAdj ? dropAdjNote(decayMons) : "") + '</div>';
     }
 
     detailTarget().innerHTML = html;
@@ -2133,7 +2175,7 @@
       html += '<div class="empty-note">這隻怪物目前沒有紀錄任何掉落物。</div>';
     } else {
       html += dropCalcBar();
-      var showAdj = dropCalcState.level != null;
+      var showAdj = dropAdjActive();
       var levelMult = playerDropMultiplier(mon);
       var adjChances = showAdj ? monsterDropChances(mon, levelMult) : null;
       html += '<table class="dtable"><thead><tr><th>物品</th><th>掉落機率</th>' + (showAdj ? '<th>換算後機率</th>' : '') + '</tr></thead><tbody>';
@@ -2155,9 +2197,11 @@
       var noteParts = [DROP_FORMULA_NOTE];
       if (mon.atk === 0) noteParts.push("這隻怪物攻擊力為 0，每次擊殺有 " + (DROP_WHIFF_CHANCE * 100).toFixed(1) + "% 機率整批掉落全部落空（已算進上面的機率）。");
       if (showAdj) {
-        noteParts.push(dropCalcState.blacksmith
-          ? "換算後機率：鐵匠／匠師不受等級差衰減影響（二轉爆破士會失去這個效果）。"
-          : "換算後機率：等級差 " + (dropCalcState.level - mon.lv) + " 級 → 掉落倍率 ×" + (levelMult * 100).toFixed(0) + "%。");
+        var monDecays = dropCalcState.level != null && dropLevelMultiplier(dropCalcState.level, mon.lv) < 1;
+        noteParts.push(dropAdjNote(monDecays ? 1 : 0));
+        if (dropCalcState.level != null) {
+          noteParts.push("（等級差 " + (dropCalcState.level - mon.lv) + " 級，合計掉落倍率 ×" + String(Math.round(levelMult * 1000) / 10) + "%）");
+        }
       }
       html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(noteParts.join("")) + '</div>';
     }
@@ -3708,7 +3752,8 @@
     ["🗂️ 分類下拉選單", "搜尋欄左邊可以選裝備部位（武器、頭部…）或物品分類（恢復、材料、任務…）。選了分類只會列物品；不輸入關鍵字時會直接列出整個分類。"],
     ["⚔️ 僅查詢裝備能力", "勾選後輸入能力名稱（例如「魔法」「攻速」「減傷」），只列出有這項能力加成的裝備並依數值排序，不比對物品名稱。可用空白同時查多項；能力後面可以加 >（大於等於）、<（小於等於）、=（等於）縮小範圍，例如「魔法力>20 攻速<10」。"],
     ["✅ 僅顯示目前可取得裝備", "搜尋結果上方的勾選框。勾選後只列出遊戲裡目前有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品。"],
-    ["📈 你目前的等級", "輸入後，掉落表會多一欄「換算後機率」（套用等級差衰減，鐵匠／匠師不衰減），怪物頁也會顯示換算後的每隻經驗。"],
+    ["📈 你目前的等級", "輸入後，掉落表會多一欄「換算後機率」（你比怪物高 30 級以上，掉落會打折），怪物頁也會顯示換算後的每隻經驗。"],
+    ["⚒️ 鐵匠／〔乞討〕", "掉落表上方的選項：勾「鐵匠／匠師」是不受等級差打折（不是提升掉落率，要先輸入等級、而且比怪物高 30 級以上才看得出差別）；〔乞討〕是初心者技能，直接把掉落率乘上 +3%～+30%。"],
     ["🧰 職業／裝備位置篩選", "搜尋列下方可以依職業、裝備位置列出所有符合的裝備。"],
     ["📚 其他功能", "發條強化屬性表、寵物列表、副本、寶箱，以及任務總覽（主線、書信、委託、藍圖任務）。"]
   ];
