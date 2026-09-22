@@ -46,6 +46,8 @@
   if (oldRespawnFab) oldRespawnFab.remove();
   document.querySelectorAll(".iw-mall-hint,.iw-mall-max-tag").forEach(function (el) { el.remove(); });
   document.querySelectorAll(".iw-mall-max").forEach(function (el) { el.classList.remove("iw-mall-max"); });
+  document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) { el.classList.remove("iw-mall-super-rate"); });
+  document.querySelectorAll(".iw-mall-rain").forEach(function (el) { el.remove(); });
   window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
   var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
@@ -2047,7 +2049,46 @@
     "@keyframes iw-mall-shake{0%,20%,100%{transform:translate(0,0) rotate(0)}" +
     "4%{transform:translate(-3px,0) rotate(-3deg)}8%{transform:translate(3px,0) rotate(3deg)}" +
     "12%{transform:translate(-3px,0) rotate(-2deg)}16%{transform:translate(2px,0) rotate(1deg)}}" +
-    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag{animation:none;}}";
+    // 超級特價（當天最低 < 21,000）那一小時：標題提示紅→金流光＋心跳放大、匯率那行發金光、打開名品館時下一陣金幣雨
+    ".iw-mall-hint.iw-mall-super{flex:none;max-width:100%;display:inline-block;transform-origin:left center;font-weight:900;" +
+    "background:linear-gradient(90deg,#c0392b,#e67e22,#f1c40f,#e67e22,#c0392b);background-size:200% auto;" +
+    "-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 3px rgba(241,196,15,.8));" +
+    "animation:iw-mall-shine 1.5s linear infinite,iw-mall-pulse 1s ease-in-out infinite;}" +
+    "@keyframes iw-mall-shine{to{background-position:200% center}}" +
+    "@keyframes iw-mall-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}" +
+    ".mall>.rate.iw-mall-super-rate{color:#b7791f;animation:iw-mall-glow 1.2s ease-in-out infinite alternate;}" +
+    "@keyframes iw-mall-glow{from{text-shadow:0 0 2px rgba(241,196,15,.4)}to{text-shadow:0 0 10px rgba(241,196,15,1),0 0 2px #fff}}" +
+    ".iw-mall-rain{position:fixed;pointer-events:none;overflow:hidden;z-index:99999;}" +
+    ".iw-mall-rain span{position:absolute;top:-40px;font-size:22px;animation:iw-mall-fall linear forwards;}" +
+    "@keyframes iw-mall-fall{0%{transform:translateY(0) rotate(0);opacity:1}85%{opacity:1}" +
+    "100%{transform:translateY(var(--iw-fall)) rotate(var(--iw-spin));opacity:0}}" +
+    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag,.iw-mall-hint.iw-mall-super,.mall>.rate.iw-mall-super-rate{animation:none;}.iw-mall-rain{display:none;}}";
+
+  // 金幣雨：蓋在名品館面板上，約 3 秒後自己消失，不擋點擊。
+  function mallCoinRain() {
+    var panel = document.querySelector(".mall");
+    if (!panel) return;
+    var box = panel.getBoundingClientRect();
+    var rain = document.createElement("div");
+    rain.className = "iw-mall-rain";
+    rain.style.left = box.left + "px";
+    rain.style.top = box.top + "px";
+    rain.style.width = box.width + "px";
+    rain.style.height = Math.min(box.height, window.innerHeight - box.top) + "px";
+    var icons = ["🪙", "🪙", "🪙", "💰", "✨"];
+    for (var i = 0; i < 30; i++) {
+      var s = document.createElement("span");
+      s.textContent = icons[i % icons.length];
+      s.style.left = (Math.random() * 100) + "%";
+      s.style.animationDuration = (1.4 + Math.random() * 1.2) + "s";
+      s.style.animationDelay = (Math.random() * 0.8) + "s";
+      s.style.setProperty("--iw-fall", (parseFloat(rain.style.height) + 60) + "px");
+      s.style.setProperty("--iw-spin", (Math.random() * 720 - 360) + "deg");
+      rain.appendChild(s);
+    }
+    document.body.appendChild(rain);
+    setTimeout(function () { rain.remove(); }, 3200);
+  }
 
   // 名品館「1 點 ＝ 🪙 xx」那行（遊戲的 .mall > .rate）：最貴的小時加紅色抖動標籤，其他時候拿掉。
   function updateMallMaxTag() {
@@ -2073,8 +2114,18 @@
     if (el.textContent !== hint.text) el.textContent = hint.text;
     var size = hint.big ? getComputedStyle(title).fontSize : "";
     if (el.style.fontSize !== size) el.style.fontSize = size;
+    if (el.classList.contains("iw-mall-super") !== hint.big) el.classList.toggle("iw-mall-super", hint.big);
   }
 
+  function setMallSuperRate(on) {
+    var rateEl = document.querySelector(".mall > .rate");
+    document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) {
+      if (!on || el !== rateEl) el.classList.remove("iw-mall-super-rate");
+    });
+    if (on && rateEl && !rateEl.classList.contains("iw-mall-super-rate")) rateEl.classList.add("iw-mall-super-rate");
+  }
+
+  var mallRainShown = false; // 這次打開名品館已經下過金幣雨了沒（離開名品館分頁就重設）
   function updateMallHint() {
     var existing = document.querySelector(".iw-mall-hint");
     var activeTab = document.querySelector(".tabs.toned button.active");
@@ -2082,9 +2133,18 @@
     var title = onMall && document.querySelector(".talking > strong");
     if (!title || !checkMallFormula()) {
       if (existing) existing.remove();
+      setMallSuperRate(false);
+      mallRainShown = false;
       return;
     }
     var hint = mallHint();
+    setMallSuperRate(hint.big);
+    if (hint.big && !mallRainShown) {
+      mallRainShown = true;
+      mallCoinRain();
+    } else if (!hint.big) {
+      mallRainShown = false;
+    }
     if (existing && existing.previousElementSibling === title) {
       applyMallHint(existing, hint, title);
       return;
