@@ -44,6 +44,7 @@
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   var oldRespawnFab = document.getElementById("iw-respawn-fab");
   if (oldRespawnFab) oldRespawnFab.remove();
+  document.querySelectorAll(".iw-mall-hint").forEach(function (el) { el.remove(); });
   window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
   var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
@@ -1951,6 +1952,103 @@
     if (respawnEnabled) respawnLoop();
     else if (respawnTimer) clearTimeout(respawnTimer);
   });
+
+  // ==========================================================================
+  // 名品館今日提示：打開商店 NPC 的「名品館」分頁時，在標題 NPC 名字（例如「道具商人」）後面
+  // 提示今天最低價在上午還是下午，快到的時候倒數吐槽。
+  // 匯率公式抄自遊戲 bundle（2026-09-22 版 bv/xv）：每個整點一個匯率，只跟「第幾個小時」有關，
+  // 所以今天每個小時的價格都能先算出來。啟動時會拿遊戲自己算的當下匯率（session.mallView().rate）對帳，
+  // 對不上就代表遊戲改了公式 → 整個提示不顯示，免得報錯的時段。
+  // ==========================================================================
+  var MALL_HOUR_MS = 36e5;
+  function mallRng(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = s + 1831565813 >>> 0;
+      var e = Math.imul(s ^ s >>> 15, 1 | s);
+      e = e + Math.imul(e ^ e >>> 7, 61 | e) ^ e;
+      return ((e ^ e >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function mallRate(period) {
+    return 20000 + Math.floor(mallRng(Math.imul(period, 2654435761) ^ 1835101292)() * 61) * 500;
+  }
+  var mallFormulaOk = null; // null＝還沒對帳
+  function checkMallFormula() {
+    if (mallFormulaOk !== null) return mallFormulaOk;
+    try {
+      if (typeof session.mallView !== "function") return (mallFormulaOk = false);
+      var gameRate = session.mallView().rate;
+      mallFormulaOk = gameRate === mallRate(Math.floor(Date.now() / MALL_HOUR_MS));
+      if (!mallFormulaOk) console.warn("[名品館提示] 匯率公式跟遊戲對不上（遊戲改版？），不顯示提示。遊戲：" + gameRate);
+    } catch (err) {
+      console.error("[名品館提示] 對帳失敗", err);
+      mallFormulaOk = false;
+    }
+    return mallFormulaOk;
+  }
+
+  // 今天（本機時間 00:00～23:59）最便宜的是哪幾個小時；同樣最低價有好幾個時段時，挑「還沒過的第一個」。
+  // 從最低價前 3 小時開始倒數（加上最低價那一小時，一共 4 個時段各一句）。
+  var MALL_COUNTDOWN = {
+    3: "嗯?特價?沒這回事！",
+    2: "啊!好像...就要...",
+    1: "真沒人，好想收店回家睡覺"
+  };
+  function mallHintText() {
+    var now = new Date();
+    var dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var nowPeriod = Math.floor(now.getTime() / MALL_HOUR_MS);
+    var rates = [];
+    for (var h = 0; h < 24; h++) {
+      var p = Math.floor((dayStart + h * MALL_HOUR_MS) / MALL_HOUR_MS);
+      rates.push({ hour: h, period: p, rate: mallRate(p) });
+    }
+    var min = Math.min.apply(null, rates.map(function (r) { return r.rate; }));
+    var target = rates.find(function (r) { return r.rate === min && r.period >= nowPeriod; });
+    if (!target) return "已經錯過最低價時段了歐~";
+    var diff = target.period - nowPeriod;
+    if (diff === 0) return "收店！！收店！！　隨便賣一賣～";
+    if (MALL_COUNTDOWN[diff]) return MALL_COUNTDOWN[diff];
+    return "今日提示：最低價在" + (target.hour < 12 ? "上午" : "下午");
+  }
+
+  style.textContent += ".iw-mall-hint{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--iw-accent);}";
+
+  function updateMallHint() {
+    var existing = document.querySelector(".iw-mall-hint");
+    var activeTab = document.querySelector(".tabs.toned button.active");
+    var onMall = activeTab && activeTab.textContent.trim() === "名品館";
+    var title = onMall && document.querySelector(".talking > strong");
+    if (!title || !checkMallFormula()) {
+      if (existing) existing.remove();
+      return;
+    }
+    var text = mallHintText();
+    if (existing && existing.previousElementSibling === title) {
+      if (existing.textContent !== text) existing.textContent = text;
+      return;
+    }
+    if (existing) existing.remove();
+    var hint = document.createElement("span");
+    hint.className = "iw-mall-hint";
+    hint.textContent = text;
+    title.insertAdjacentElement("afterend", hint);
+  }
+
+  window.__iwMallHintGeneration = (window.__iwMallHintGeneration || 0) + 1;
+  var myMallHintGeneration = window.__iwMallHintGeneration;
+  var mallHintObserver = new MutationObserver(function () {
+    if (window.__iwMallHintGeneration !== myMallHintGeneration) { mallHintObserver.disconnect(); return; }
+    updateMallHint();
+  });
+  mallHintObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  // 整點換匯率時，畫面不一定有變動，另外每 30 秒自己更新一次。
+  (function mallHintTick() {
+    if (window.__iwMallHintGeneration !== myMallHintGeneration) return;
+    updateMallHint();
+    setTimeout(mallHintTick, 30000);
+  })();
 
   console.log("[一鍵強化] loader 已就緒，裝備卡片上「25,000」按鈕前面應該會看到「⚡強化」按鈕。");
 })();
