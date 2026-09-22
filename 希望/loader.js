@@ -179,7 +179,15 @@
     ".iw-fab:active{transform:translateY(2px);box-shadow:inset 0 3px 8px rgba(0,0,0,.28);}",
     ".iw-fab.iw-fab-go{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;border-color:#1d4650;",
     "box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #163a42,0 4px 10px rgba(0,0,0,.22);}",
-    ".iw-fab.iw-fab-on{background:linear-gradient(180deg,#5a9a46,#47733a,#3a5f30);color:#fff;border-color:#2c4a24;}"
+    ".iw-fab.iw-fab-on{background:linear-gradient(180deg,#5a9a46,#47733a,#3a5f30);color:#fff;border-color:#2c4a24;}",
+    // 提示彈窗（例如金幣不足）：疊在一鍵強化視窗上面
+    ".iw-popup-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.45);z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;}",
+    ".iw-popup{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;width:100%;max-width:320px;",
+    "box-shadow:0 10px 30px rgba(0,0,0,.4);overflow:hidden;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;text-align:center;}",
+    ".iw-popup-title{padding:12px 16px 10px;font-size:16px;font-weight:700;border-top:4px solid var(--iw-warn);",
+    "background:linear-gradient(180deg,#fdf3e0,#f1dcb4);border-bottom:1px solid rgba(162,131,88,.55);}",
+    ".iw-popup-body{padding:14px 18px 6px;font-size:13.5px;line-height:1.7;color:var(--iw-dim);white-space:pre-line;}",
+    ".iw-popup .iw-btn{margin:10px 18px 16px;width:calc(100% - 36px);}"
   ].join("");
   document.head.appendChild(style);
 
@@ -360,6 +368,51 @@
   }
   function fmt(n) { return Math.round(n).toLocaleString("zh-TW"); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  // 讓畫面喘口氣：瀏覽器分頁在背景時，setTimeout 會被限制成「最快一秒一次」，
+  // 玩家切到別的分頁掛著，一鍵強化就會慢到一秒只洗十幾次。MessageChannel 不會被這樣限制。
+  // 另外改成「連續跑超過 30 毫秒才讓一次」，不是固定每幾次就停。
+  var lastYieldAt = 0;
+  function yieldUI(force) {
+    var now = (window.performance && performance.now()) || Date.now();
+    if (!force && now - lastYieldAt < 30) return null;
+    if (typeof flushLog === "function") flushLog();
+    // 計時要從「回來繼續跑」那一刻開始算；如果從「讓出去」那刻算，分頁在背景時回來得慢，
+    // 一回來就又超過 30 毫秒，變成每洗一次就讓一次（實測慢到一秒三十幾次）
+    function done() { lastYieldAt = (window.performance && performance.now()) || Date.now(); }
+    return new Promise(function (resolve) {
+      try {
+        var ch = new MessageChannel();
+        ch.port1.onmessage = function () { ch.port1.close(); done(); resolve(); };
+        ch.port2.postMessage(0);
+      } catch (err) { setTimeout(function () { done(); resolve(); }, 0); }
+    });
+  }
+
+  // ---------- 提示彈窗（遊戲風格，取代瀏覽器的 alert）----------
+  function showPopup(title, body) {
+    var old = document.getElementById("iw-popup-backdrop");
+    if (old) old.remove();
+    var bd = document.createElement("div");
+    bd.id = "iw-popup-backdrop";
+    bd.className = "iw-popup-backdrop";
+    var box = document.createElement("div");
+    box.className = "iw-popup";
+    var t = document.createElement("div"); t.className = "iw-popup-title"; t.textContent = title;
+    var b = document.createElement("div"); b.className = "iw-popup-body"; b.textContent = body;
+    var ok = document.createElement("button"); ok.type = "button"; ok.className = "iw-btn primary"; ok.textContent = "確定";
+    box.appendChild(t); box.appendChild(b); box.appendChild(ok);
+    bd.appendChild(box);
+    function close() { bd.remove(); document.removeEventListener("keydown", onKey, true); }
+    function onKey(e) { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } }
+    ok.addEventListener("click", close);
+    bd.addEventListener("click", function (e) { if (e.target === bd) close(); });
+    document.addEventListener("keydown", onKey, true);
+    document.body.appendChild(bd);
+    ok.focus();
+  }
+  function showGoldPopup() {
+    showPopup("💰 金幣不足", "身上的金幣不夠完成這次強化。\n請準備更多金幣，或把目標條件放寬一點再試。");
+  }
 
   // ---------- 發條（2026-09-22 改版後有好幾種）----------
   // data.options.winders 就是 options.json 的 winders：
@@ -599,6 +652,9 @@
       '<label style="margin-top:16px;">最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
       '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy" id="iw-f-autobuy-label"></label></div>' +
+      '<div class="iw-checkrow"><input type="checkbox" id="iw-f-fast"><label style="margin:0;" for="iw-f-fast">' +
+      '⚡ 快速強化（按「開始強化」後直接算好結果、扣掉金幣並完成強化；沒勾選就一次一次洗）</label></div>' +
+      '<div class="iw-warn" id="iw-f-fast-msg" style="display:none;"></div>' +
       '<div class="iw-btnrow">' +
       '<button class="iw-btn" id="iw-f-cancel">取消</button>' +
       '<button class="iw-btn primary" id="iw-f-start">開始強化</button>' +
@@ -864,31 +920,43 @@
     document.getElementById("iw-f-cancel").addEventListener("click", function () {
       if (running) { stopFlag = true; } else { closeModal(); }
     });
+    // 讀目前視窗上的設定（預測、開始都用同一份）
+    function collectSettings() {
+      var slotRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
+      function slotToReq(row) {
+        var kind = Number(row.querySelector(".iw-kind-slot").value);
+        var rangeVal = row.querySelector(".iw-kind-slot-range").value;
+        if (rangeMode === "tier") {
+          if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
+          var parts = rangeVal.split("|");
+          return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]), unit: parts[2] ? Number(parts[2]) : null };
+        }
+        if (!rangeVal) return { kind: kind, mode: "number", threshold: null };
+        var np = rangeVal.split("|");
+        return { kind: kind, mode: "number", threshold: Number(np[0]), unit: np[1] ? Number(np[1]) : null };
+      }
+      return {
+        targetGrade: Number(document.getElementById("iw-f-grade").value),
+        budget: Number(document.getElementById("iw-f-budget").value) || 0,
+        autoBuy: document.getElementById("iw-f-autobuy").checked,
+        slotRows: slotRows,
+        matchGroups: groups
+          .map(function (g) {
+            return g.map(function (checked, i) { return checked ? slotRows[i] : null; }).filter(Boolean).map(slotToReq);
+          })
+          .filter(function (g) { return g.length > 0; })
+      };
+    }
+
     document.getElementById("iw-f-start").addEventListener("click", function () {
       try {
-        var targetGrade = Number(document.getElementById("iw-f-grade").value);
-        var budget = Number(document.getElementById("iw-f-budget").value) || 0;
-        var autoBuy = document.getElementById("iw-f-autobuy").checked;
-        var slotRows = Array.prototype.slice.call(kindSlotsWrap.querySelectorAll(".iw-kind-row"));
-        function slotToReq(row) {
-          var kind = Number(row.querySelector(".iw-kind-slot").value);
-          var rangeVal = row.querySelector(".iw-kind-slot-range").value;
-          if (rangeMode === "tier") {
-            if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
-            var parts = rangeVal.split("|");
-            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]), unit: parts[2] ? Number(parts[2]) : null };
-          }
-          if (!rangeVal) return { kind: kind, mode: "number", threshold: null };
-          var np = rangeVal.split("|");
-          return { kind: kind, mode: "number", threshold: Number(np[0]), unit: np[1] ? Number(np[1]) : null };
-        }
-        // 把每個組合的勾選陣列，轉成「這個組合需要哪幾個屬性條件」，沒有任何勾選的組合直接跳過（不然會變成永遠成立）
-        var matchGroups = groups
-          .map(function (g) {
-            return g.map(function (checked, i) { return checked ? slotRows[i] : null; })
-              .filter(Boolean).map(slotToReq);
-          })
-          .filter(function (g) { return g.length > 0; });
+        var settings = collectSettings();
+        var targetGrade = settings.targetGrade;
+        var budget = settings.budget;
+        var autoBuy = settings.autoBuy;
+        var slotRows = settings.slotRows;
+        // 每個組合的勾選陣列已轉成「這個組合需要哪幾個屬性條件」，沒有任何勾選的組合直接跳過（不然會變成永遠成立）
+        var matchGroups = settings.matchGroups;
 
         if (slotRows.length >= 4 && matchGroups.length === 0) {
           alert("你準備了 " + slotRows.length + " 條屬性選項，但沒有建立任何「停止條件組合」。\n\n遊戲每次強化固定只會洗出 3 條屬性，不可能一次全部出現——請按「➕ 新增組合」，自己勾選其中最多 3 個編號當作停止條件。");
@@ -912,11 +980,76 @@
           alert(winderNow.name + " 不能用在目前這個階級的裝備上，請換一種發條。");
           return;
         }
-        if (matchGroups.length && meetsAnyGroup(currentEntryNow, matchGroups)) {
-          if (!confirm("指定能力已出現，是否重新洗裝備？\n\n（可能是屬性種類對了，但數值不是你要的）")) return;
+        // 只有「階級也已經到了」才算真的已經達成；階級還沒到的話，本來就要繼續洗，不用問
+        var gradeNow = (currentEntryNow && currentEntryNow.options && currentEntryNow.options.grade) || 0;
+        var forceReroll = false;
+        if (gradeNow >= targetGrade && meetsAnyGroup(currentEntryNow, matchGroups)) {
+          if (!confirm("這件裝備現在已經符合你設定的條件了，確定還要重新洗嗎？\n\n（按「確定」會至少洗一次，現在這組屬性就沒了）")) return;
+          forceReroll = true; // 以前按了確定也不會洗：迴圈一開始就判定「已達成」直接停
         }
 
-        startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId);
+        var fastMode = document.getElementById("iw-f-fast").checked;
+        var fastMsg = document.getElementById("iw-f-fast-msg");
+        fastMsg.style.display = "none";
+        function showMsg(text) { fastMsg.textContent = "⚠️ " + text; fastMsg.style.display = "block"; }
+
+        // 條件本身不可能出現的，兩種模式都先擋（以前會一直洗到錢花光）
+        var maxG = winderNow ? winderMaxGrade(winderNow) : targetGrade;
+        if (targetGrade > maxG) { showMsg((winderNow ? winderNow.name : "這種發條") + "最高只能洗到 " + gradeNameOf(maxG) + " 階。"); return; }
+        var stopGrades = [];
+        for (var sg = Math.max(targetGrade, gradeNow, 1); sg <= maxG; sg++) stopGrades.push(sg);
+        var why = impossibleReason(matchGroups, stopGrades);
+        if (why) { showMsg("這個條件不可能洗出來：" + why + "。"); return; }
+
+        if (!fastMode) { startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, false); return; }
+
+        // ⚡ 快速強化：先在背後算，算的上限 = 玩家付得起的次數（金幣、預算、身上的發條、能不能買）。
+        // 只跟玩家說「金幣不足」之類，不透露算出來的次數或結果。
+        if (!canPredict()) { showMsg("這個版本的遊戲不支援快速強化，請取消勾選「快速強化」改用一次一次洗。"); return; }
+        if ((currentEntryNow.count || 1) > 1) {
+          // 疊在一起的（count > 1）要先拆出一件才算得出來，交給執行流程處理
+          startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, true);
+          return;
+        }
+        var buyInfoNow = autoBuy ? winderBuyPrice(winderId) : null;
+        var computeCancelled = false;
+        var startBtn = document.getElementById("iw-f-start");
+        var cancelBtn = document.getElementById("iw-f-cancel");
+        var onCancel = function (e) { computeCancelled = true; e.stopImmediatePropagation(); };
+        startBtn.disabled = true;
+        cancelBtn.textContent = "停止";
+        cancelBtn.addEventListener("click", onCancel, true);
+        fastMsg.textContent = "⏳ 計算中…（條件越難算越久，可以按「停止」）";
+        fastMsg.style.display = "block";
+        simulatePlanAsync(currentEntryNow, winderNow, targetGrade, matchGroups, {
+          spendLimit: Math.min(session.player.gold, budget),
+          buyPrice: buyInfoNow ? buyInfoNow.price : null,
+          shouldStop: function () { return computeCancelled; }
+        }).then(function (p) {
+          cancelBtn.removeEventListener("click", onCancel, true);
+          cancelBtn.textContent = "取消";
+          startBtn.disabled = false;
+          fastMsg.style.display = "none";
+          if (p.reason === "ok") {
+            startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, true, p);
+            return;
+          }
+          var msg = {
+            gold: session.player.gold <= budget ? "金幣不足。" : "超過你設定的最大金幣預算。",
+            winders: autoBuy ? "發條不足，而且這種發條買不到。" : "發條不足。請勾選「自動購買」，或先準備更多發條。",
+            unusable: "中途會升到這種發條不能用的階級，請換一種發條。",
+            cap: "這個條件太難了，快速強化算不完。請放寬條件，或取消勾選「快速強化」改用一次一次洗。",
+            cancel: "已停止計算。",
+            unsupported: "快速強化計算失敗，請取消勾選「快速強化」改用一次一次洗。"
+          }[p.reason] || "快速強化計算失敗。";
+          showMsg(msg);
+        }).catch(function (err) {
+          cancelBtn.removeEventListener("click", onCancel, true);
+          cancelBtn.textContent = "取消";
+          startBtn.disabled = false;
+          console.warn("[一鍵強化] 快速強化計算失敗", err);
+          showMsg("快速強化計算失敗，請取消勾選「快速強化」改用一次一次洗。");
+        });
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -933,16 +1066,28 @@
     if (backdrop) { backdrop.remove(); backdrop = null; modal = null; }
   }
 
+  // 紀錄先放在暫存區，畫面要更新時（yieldUI）才一次寫進去；洗上千次時不會每次都重寫整個文字框
+  var logBuf = [];
   function log(msg) {
+    logBuf.push(msg);
+    if (logBuf.length >= 200) flushLog();
+  }
+  function flushLog() {
+    if (!logBuf.length) return;
     var el = document.getElementById("iw-enhance-log");
-    if (!el) return;
+    if (!el) { logBuf = []; return; }
     el.style.display = "block";
-    el.textContent += msg + "\n";
+    var text = el.textContent + logBuf.join("\n") + "\n";
+    logBuf = [];
+    // 洗上千次時紀錄會非常長，拖慢畫面；只留最後 300 行
+    var lines = text.split("\n");
+    if (lines.length > 320) text = "（前面的紀錄太長，已省略）\n" + lines.slice(-300).join("\n");
+    el.textContent = text;
     el.scrollTop = el.scrollHeight;
   }
 
   function setFormDisabled(disabled) {
-    ["iw-f-winder", "iw-f-grade", "iw-f-budget", "iw-f-autobuy", "iw-f-start"].forEach(function (id) {
+    ["iw-f-winder", "iw-f-grade", "iw-f-budget", "iw-f-autobuy", "iw-f-fast", "iw-f-start"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.disabled = disabled;
     });
@@ -965,29 +1110,202 @@
     return "new";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId) {
+  // ---------- 預測：遊戲的發條結果是「固定種子」算出來的 ----------
+  // 遊戲 enhanceRoll(stack, 發條, 目前階級) 的亂數種子 = (stack.chain ?? stack.id, stack.enhanceTries, 角色建立時間)，
+  // 而且這個函式只改傳進去的那個物件、不碰背包／金幣／發條數量。
+  // 所以拿一份「複製的 stack」呼叫它，就能用遊戲自己的程式算出第 1、2、3… 次會洗到什麼，完全不花任何東西。
+  // 另外：同一次（同一個種子）換不同發條，只有「升不升階」那一步不同，洗出來的屬性是一樣的。
+  // 模擬次數的硬上限：錢很多的玩家可能「付得起」上千萬次，但算太久沒有意義。
+  // 模擬一次約 0.03 毫秒，300 萬次大約 1～2 分鐘（分段算，畫面不會卡住，可以按「停止」）。
+  var PREDICT_HARD_CAP = 3000000;
+  function canPredict() {
+    return typeof session.enhanceRoll === "function" && session.identity && session.identity.createdAt != null;
+  }
+  function sameOptions(a, b) {
+    return JSON.stringify(a || null) === JSON.stringify(b || null);
+  }
+
+  // 條件本身可不可能出現（跟運氣無關）：這個階級根本不會出現的屬性、數值門檻超過上限、一組要超過 3 條…
+  // grades = 可能停下來的階級（目標階級 ～ 這種發條最高能到的階級）。回傳 null = 有可能；字串 = 不可能的原因
+  function impossibleReason(matchGroups, grades) {
+    if (!matchGroups || !matchGroups.length) return null;
+    var reasons = [];
+    var ok = matchGroups.some(function (group) {
+      if (group.length > 3) { reasons.push("一組最多只能要 3 條（每次只會洗出 3 條屬性）"); return false; }
+      return grades.some(function (g) {
+        return group.every(function (req) {
+          var name = ENCHANT_KIND_NAME[req.kind] || ("kind" + req.kind);
+          var tiers = valueTiersFor(g, req.kind);
+          if (!tiers.length) { reasons.push(name + " 在 " + gradeNameOf(g) + " 階不會出現"); return false; }
+          var possible = tiers.some(function (t) {
+            for (var v = t.min; v <= t.max; v++) if (reqSatisfiesValue(req, v, t.unit)) return true;
+            return false;
+          });
+          if (!possible) reasons.push(name + " 在 " + gradeNameOf(g) + " 階洗不到你要的數值");
+          return possible;
+        });
+      });
+    });
+    return ok ? null : (reasons[0] || "這個條件不可能洗出來");
+  }
+
+  // 從 entry 目前的狀態開始，用 winder 一直洗（照遊戲自己的 enhanceRoll），直到達成目標、錢花完、或到上限。
+  // 一邊算一邊記帳：上發條的金幣 + 身上發條用完後要買的發條，超過 spendLimit 就停（= 金幣不足，不用再往下算）。
+  // 分段計算（每 30 毫秒讓畫面喘一次），shouldStop() 回傳 true 可以中途取消。
+  // 回傳 { n, reason, cost, buys, first, beforeLast, last }，只留對帳需要的那幾次結果，不存整串（上百萬次會吃光記憶體）
+  //   reason："ok" 達成、"gold" 錢不夠、"winders" 發條不夠又買不到、"unusable" 升到這種發條不能用的階級、
+  //          "cap" 超過硬上限、"cancel" 被取消、"stacked"／"unsupported" 沒辦法算
+  async function simulatePlanAsync(entry, winder, targetGrade, matchGroups, opts) {
+    opts = opts || {};
+    var res = { n: null, reason: "cap", cost: 0, buys: 0, first: null, beforeLast: null, last: null, startedAt: Date.now() };
+    if (!canPredict() || !entry) { res.reason = "unsupported"; return res; }
+    if ((entry.count || 1) > 1) { res.reason = "stacked"; return res; } // 疊在一起的要先拆出一件，種子才確定
+    var spendLimit = opts.spendLimit == null ? Infinity : opts.spendLimit;
+    var stockLeft = opts.stock == null ? winderStock(winder.id) : opts.stock;
+    var buyPrice = opts.buyPrice; // null = 不能買／不自動買
+    var cap = opts.cap || PREDICT_HARD_CAP;
+    var tries = entry.enhanceTries || 0, options = entry.options, prev = null;
+    var sliceStart = Date.now();
+    for (var k = 1; k <= cap; k++) {
+      var grade = (options && options.grade) || 0;
+      if (!winderUsableAt(winder, grade)) { res.reason = "unusable"; return res; }
+      var costRow = (winder.costs || []).find(function (c) { return c[0] === grade; });
+      var stepCost = costRow ? (costRow[1] || 0) : 0;
+      if (stockLeft > 0) stockLeft--;
+      else if (buyPrice != null) { stepCost += buyPrice; res.buys++; }
+      else { res.reason = "winders"; return res; }
+      if (res.cost + stepCost > spendLimit) { res.reason = "gold"; return res; }
+      res.cost += stepCost;
+      var clone = { id: entry.id, chain: entry.chain, enhanceTries: tries, options: options };
+      var rolled = session.enhanceRoll(clone, winder.id, grade);
+      var chosen = rolled;
+      if (clone.pendingPrev && pickKeep(rolled, clone.pendingPrev, targetGrade, matchGroups) === "previous") chosen = clone.pendingPrev;
+      tries = clone.enhanceTries;
+      prev = options;
+      options = chosen;
+      if (k === 1) res.first = chosen;
+      if (((chosen && chosen.grade) || 0) >= targetGrade && meetsAnyGroup({ options: chosen }, matchGroups)) {
+        res.n = k; res.reason = "ok"; res.last = chosen; res.beforeLast = k > 1 ? prev : null;
+        return res;
+      }
+      if (Date.now() - sliceStart > 30) {
+        if (opts.shouldStop && opts.shouldStop()) { res.reason = "cancel"; return res; }
+        if (opts.onProgress) opts.onProgress(k);
+        await yieldUI(true);
+        sliceStart = Date.now();
+      }
+    }
+    return res;
+  }
+
+  async function startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, fastMode, prePlan) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
     document.getElementById("iw-enhance-summary").innerHTML = "";
     document.getElementById("iw-enhance-log").textContent = "";
+    logBuf = [];
 
     winderId = winderId || CLOCKWORK_ID;
     var winder = winderById(winderId) || { id: winderId, name: "發條", keepsPrevious: false };
     var stackId = item.stackId;
-    var attempts = 0, totalSpent = 0, totalUsed = 0, totalBought = 0, keptPrevious = 0;
+    var attempts = 0, totalSpent = 0, totalUsed = 0, totalBought = 0, keptPrevious = 0, fastTries = 0;
     var reason = "unknown";
+    // 快速強化才會用到事先算好的結果（plan：n = 第幾次達成，first／beforeLast／last = 對帳用的那幾次結果）。
+    // 算出來的次數、結果一律不顯示給玩家看，只拿來在背後把強化一口氣做完。
+    var predictOk = !!fastMode && canPredict(), plan = null, planTried = false, planVerified = false, fastBlocked = false;
+    // 耗時從按下「開始強化」算起（快速強化的話，包含開始前在背後計算的時間）
+    var runStartedAt = (prePlan && prePlan.startedAt) || Date.now();
+    // 快速強化時不逐筆列出每一次的結果，只在最後顯示結果
+    function rlog(msg) { if (!fastMode) log(msg); }
+    if (fastMode) log("⚡ 快速強化中…");
 
+    function attachPlan(p, entry) {
+      p.startTries = entry.enhanceTries || 0;
+      return p;
+    }
+    if (prePlan && prePlan.reason === "ok") {
+      var entry0 = findEntryByStackId(stackId);
+      if (entry0) { plan = attachPlan(prePlan, entry0); planTried = true; }
+    }
+    // 疊在一起的裝備拆出一件之後才算（開始前沒辦法算）；算不到就一次一次洗
+    async function makePlan(entry) {
+      planTried = true;
+      var buyNow = autoBuy ? winderBuyPrice(winderId) : null;
+      var p;
+      try {
+        p = await simulatePlanAsync(entry, winder, targetGrade, matchGroups, {
+          spendLimit: Math.max(0, Math.min(session.player.gold, budget - totalSpent)),
+          buyPrice: buyNow ? buyNow.price : null,
+          shouldStop: function () { return stopFlag; }
+        });
+      } catch (err) {
+        console.warn("[一鍵強化] 快速強化計算失敗，改用一般模式", err);
+        p = null;
+      }
+      if (!p || p.reason !== "ok") {
+        if (p && (p.reason === "stacked" || p.reason === "unsupported")) { planTried = false; return null; }
+        log("（快速強化算不出來，剩下的改成一次一次洗）");
+        predictOk = false;
+        return null;
+      }
+      return attachPlan(p, entry);
+    }
+
+    var runError = null;
+    try {
     while (true) {
       if (stopFlag) { reason = "stopped"; break; }
 
       if (session.inVillage === false) { reason = "not-in-village"; break; } // 遊戲 enhance()／buy() 在村莊外會直接忽略
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
+      if (entry.locked) { reason = "locked"; break; } // 遊戲 mutableStack() 遇到上鎖的直接不做
       if (entry.pendingPrev) { reason = "pending-choice"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
-      if (curGrade >= targetGrade && meetsAnyGroup(entry, matchGroups)) { reason = "success"; break; }
+      if (!(forceReroll && attempts === 0) && curGrade >= targetGrade && meetsAnyGroup(entry, matchGroups)) { reason = "success"; break; }
       if (!winderUsableAt(winder, curGrade)) { reason = "winder-unusable"; break; }
+
+      if (predictOk && !plan && !planTried && (entry.count || 1) <= 1) plan = await makePlan(entry);
+
+      // ---- 快速模式：預測已經用實際結果驗證過，中間注定不會達成的次數交給遊戲自己的 enhanceUntil 一口氣跑 ----
+      // （只用在「不會保留上一組」的發條；武爾坎努斯要每次自己選新的／上一組，遊戲的挑法跟書籤不一樣）
+      if (plan && plan.n && planVerified && predictOk && !fastBlocked && !winder.keepsPrevious && typeof session.enhanceUntil === "function") {
+        var doneInPlan = (entry.enhanceTries || 0) - plan.startTries;
+        var burn = plan.n - 1 - doneInPlan; // 留最後一次給下面一般模式親手洗、親眼確認
+        if (burn > 0) {
+          if (!autoBuy) burn = Math.min(burn, winderStock(winderId));
+          // 花費在開始前已經照「金幣、預算、發條」算過一次（付不起就不會開始），這裡直接跑
+          if (burn > 0) {
+            var fastThisPass = 0;
+            while (burn > 0 && !stopFlag) {
+              var chunk = Math.min(burn, 2000); // 遊戲 enhanceUntil 一次最多 2000 次
+              var goldBeforeFast = session.player.gold;
+              var r = session.enhanceUntil(stackId, winderId, { tries: chunk, autoBuy: autoBuy });
+              if (!r || !r.tries) break;
+              attempts += r.tries; fastTries += r.tries; totalUsed += r.tries; fastThisPass += r.tries;
+              totalBought += r.bought || 0;
+              totalSpent += Math.max(0, goldBeforeFast - session.player.gold);
+              burn -= r.tries;
+              await yieldUI(true);
+              if (r.tries < chunk) break;
+            }
+            if (fastThisPass === 0) fastBlocked = true; // 一次都沒洗成（沒錢／沒發條…），交給下面一般模式去判斷原因，避免原地打轉
+            // 跑完對一次帳：裝備現在的屬性要跟預測的一模一樣，不一樣就不再相信預測
+            var e2 = findEntryByStackId(stackId);
+            var idx2 = e2 ? (e2.enhanceTries || 0) - plan.startTries : 0;
+            // 正常情況跑完剛好停在「最後一次的前一次」，跟事先算好的 beforeLast 對帳；
+            // 沒跑完（例如中途錢不夠）就沒有對照可比，保險起見剩下的改成一次一次洗
+            if (!e2 || idx2 !== plan.n - 1 || (plan.beforeLast && !sameOptions(e2.options, plan.beforeLast))) {
+              log("⚠️ 快速強化對帳不一致，剩下的改成一次一次洗、每次都檢查（不影響結果，只是比較慢）。");
+              predictOk = false; plan = null;
+            }
+            var t2 = document.getElementById("iw-f-target-display");
+            if (t2 && e2) t2.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf((e2.options && e2.options.grade) || 0) + " 階・" + rolledKindsText(e2) + "）";
+            continue; // 回到最上面重新檢查（達成、預算、發條…）
+          }
+        }
+      }
 
       // 下一次上發條的金幣費用（高手／武爾坎努斯是 0，這時候預算只會被「買發條」用掉）
       var costRow = (winder.costs || []).find(function (c) { return c[0] === curGrade; });
@@ -1018,8 +1336,9 @@
         }
         totalSpent += buySpent;
         totalBought += 1;
-        log("購買" + winder.name + " ×1，花費 " + fmt(buySpent) + " 金幣");
-        await sleep(20);
+        rlog("購買" + winder.name + " ×1，花費 " + fmt(buySpent) + " 金幣");
+        var yb = yieldUI(); // 偶爾讓畫面喘口氣就好，不用每次都等
+        if (yb) await yb;
         continue;
       }
 
@@ -1028,7 +1347,30 @@
       var goldBefore = session.player.gold;
       var materialBefore = have;
       var triesBefore = entry.enhanceTries || 0;
+      // 事先算好的結果裡，第一次和最後一次有記下來，洗完拿來對帳
+      var predicted = null;
+      if (plan && predictOk) {
+        var pIdx = triesBefore - plan.startTries;
+        if (pIdx === 0) predicted = plan.first;
+        else if (pIdx === plan.n - 1) predicted = plan.last;
+      }
+      // 同一格疊了好幾件一樣的裝備（count > 1）時，遊戲會把被洗的那件拆成「新的一格」（splitOne），
+      // 結果在新格子上。以前書籤一直盯著原本那格，看不到結果，就會把整疊一件一件洗下去（跑過頭）。
+      var countBefore = entry.count || 1;
+      var stackedBefore = countBefore > 1;
+      var idsBefore = stackedBefore ? new Set(Array.from(session.player.stacks.keys())) : null;
       session.enhance(stackId, winderId);
+      if (stackedBefore) {
+        var newId = null;
+        session.player.stacks.forEach(function (st, id) {
+          if (newId === null && !idsBefore.has(id) && st.itemId === entry.itemId) newId = id;
+        });
+        if (newId !== null) {
+          log("（這格疊了 " + countBefore + " 件一樣的裝備，遊戲拆出一件來洗，之後都洗拆出來的這件，其他 " + (countBefore - 1) + " 件不會動）");
+          stackId = newId;
+          triesBefore = 0;
+        }
+      }
       var afterEntry = findEntryByStackId(stackId);
       var usedNow = Math.max(0, materialBefore - winderStock(winderId));
       var triesAfter = (afterEntry && afterEntry.enhanceTries) || 0;
@@ -1063,6 +1405,15 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
+      // 對帳：實際結果跟預測一樣，才開放快速模式；不一樣就不再相信預測（遊戲改了算法之類）
+      if (predicted && predictOk) {
+        if (sameOptions(newEntry && newEntry.options, predicted)) {
+          planVerified = true;
+        } else {
+          log("⚠️ 快速強化對帳不一致，剩下的改成一次一次洗、每次都檢查（不影響結果，只是比較慢）。");
+          predictOk = false; plan = null;
+        }
+      }
       var groupsOkNow = meetsAnyGroup(newEntry, matchGroups);
       var matchInfo = (matchGroups && matchGroups.length)
         ? "，需求：" + groupsText(matchGroups) + "（目前" + (groupsOkNow ? "已符合" : "未符合") + "）"
@@ -1071,15 +1422,24 @@
       if (groupsOkNow && matchGroups && matchGroups.length && newGrade < targetGrade) {
         matchInfo += "——但階級 " + gradeNameOf(newGrade) + " 還沒到目標 " + gradeNameOf(targetGrade) + "，繼續洗";
       }
-      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + keepNote + matchInfo);
+      rlog("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + keepNote + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
       if (totalSpent >= budget && !(newGrade >= targetGrade && meetsAnyGroup(newEntry, matchGroups))) { reason = "budget"; break; }
 
-      await sleep(25);
+      // 以前每次固定等 25 毫秒（一秒最多 40 次），現在連續跑 30 毫秒才讓畫面更新一次
+      var y = yieldUI();
+      if (y) await y;
+    }
+    } catch (err) {
+      // 以前這裡一出錯，視窗就永遠卡在「執行中」（按鈕全部不能按）；現在會停下來、把原因寫出來
+      runError = err;
+      reason = "error";
+      console.error("[一鍵強化] 執行中發生錯誤", err);
     }
 
+    flushLog();
     running = false;
     setFormDisabled(false);
 
@@ -1095,6 +1455,8 @@
       "enhance-rejected": "⚠️ 這次強化沒有執行（沒用掉發條），真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
       "pending-choice": "⏸️ 這件裝備在等你選「新的／上一組」，請先在遊戲畫面選好再繼續。",
       "not-in-village": "⏸️ 你不在村莊裡（上發條、買發條都只能在村莊做），停止。回到村莊再開始就好。",
+      "locked": "⏸️ 這件裝備上鎖了，遊戲不會讓它上發條。先在遊戲裡解鎖再開始。",
+      "error": "⚠️ 執行中發生錯誤而停止：" + (runError && runError.message ? runError.message : runError) + "（詳細內容在 Console，按 F12 看，麻煩截圖給我）",
       "winder-unusable": "⏸️ 這種發條不能用在目前這個階級，停止。",
       "item-gone": "⚠️ 找不到這件裝備了（可能被拆解或移動），停止。",
       "stopped": "⏹️ 已手動停止。",
@@ -1106,9 +1468,11 @@
       "<div style='margin-top:8px;'>" +
       item.label + "：" + item.name + " → <b>" + gradeNameOf(finalGrade) + " 階</b>　（" + rolledKindsText(finalEntry) + "）<br>" +
       "使用發條：<b>" + winder.name + "</b>　用掉 <b>" + totalUsed + "</b> 個<br>" +
-      "強化次數：<b>" + attempts + "</b> 次　購買發條：<b>" + totalBought + "</b> 個" +
+      "強化次數：<b>" + fmt(attempts) + "</b> 次" + (fastMode ? "（⚡ 快速強化）" : "") +
+      "　購買發條：<b>" + fmt(totalBought) + "</b> 個" +
       (keptPrevious ? "　保留上一組：<b>" + keptPrevious + "</b> 次" : "") + "<br>" +
       "總花費：<b>" + fmt(totalSpent) + "</b> 金幣" +
+      "　耗時：<b>" + ((Date.now() - runStartedAt) / 1000).toFixed(1) + "</b> 秒" +
       "</div>";
   }
 
