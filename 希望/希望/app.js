@@ -2649,8 +2649,8 @@
       (line.jobRelated ? ' <span class="badge tag-harvest">職業進度</span>' : '') + '</div>';
 
     if (line.communityNote) {
-      html += '<div style="background:rgba(90,140,201,.12);border:1px solid #5a8cc9;border-radius:4px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">' +
-        '<div style="color:#8fb8e8;font-weight:700;margin-bottom:4px;">💡 社群攻略補充（非本站遊戲資料查到的，僅供參考）</div>' +
+      html += '<div style="background:var(--note-bg);border:1px solid var(--note-line);border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">' +
+        '<div style="color:var(--note-ink);font-weight:700;margin-bottom:4px;">💡 社群攻略補充（非本站遊戲資料查到的，僅供參考）</div>' +
         escapeHtml(line.communityNote) +
         '</div>';
     }
