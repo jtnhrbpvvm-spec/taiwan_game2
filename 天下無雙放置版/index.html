@@ -67,9 +67,31 @@ main{position:relative;z-index:3;display:flex;flex:1;min-height:0;overflow:hidde
 .settings input[type=range]{width:128px;accent-color:#c9a25f}
 .settings input[type=number]{width:62px;background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:4px 6px;text-align:center}
 .settings select{background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:4px 6px;max-width:170px}
+.strategy-picker{position:relative;display:flex;align-items:center;gap:0;min-width:130px;width:130px;height:30px}
+.strategy-dropdown{position:relative;width:130px;height:30px}
+.strategy-trigger{width:130px;height:30px;padding:0 8px;border:1px solid var(--bronze);border-radius:9px;background:linear-gradient(180deg,#17242b,#0b1216);color:var(--gold);display:flex;align-items:center;gap:6px;font-size:11px;line-height:1;box-shadow:inset 0 0 0 1px #b58f5520;transition:border-color .16s,box-shadow .16s,background .16s}
+.strategy-trigger:hover,.strategy-trigger.open{border-color:var(--gold2);background:linear-gradient(180deg,#243239,#0d1519);box-shadow:0 0 10px #e9d5a322}
+.strategy-trigger .strategy-arrow{margin-left:auto;color:var(--bronze);font-size:9px;transition:transform .16s}
+.strategy-trigger.open .strategy-arrow{transform:rotate(180deg);color:var(--gold2)}
+.strategy-icon,.strat-glyph{width:24px;height:24px;flex:none;display:grid;place-items:center;text-align:center}
+.strategy-icon{font-size:0}
+.strat-glyph{border:1px solid var(--bronze);border-radius:6px;background:linear-gradient(180deg,#26343a,#0b1216);color:var(--gold2);font:700 14px/1 serif}
+.strategy-trigger .strategy-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.strategy-panel{position:fixed;width:240px;max-width:calc(100vw - 16px);max-height:70vh;overflow:auto;z-index:1001;padding:5px;border:1px solid var(--bronze);border-radius:11px;background:linear-gradient(180deg,rgba(23,36,43,.98),rgba(10,17,21,.99));box-shadow:0 12px 30px #000b,0 0 16px #b58f5520;opacity:0;transform:translateY(-6px);pointer-events:none;visibility:hidden;transition:opacity .14s ease,transform .14s ease,visibility .14s ease}
+.strategy-panel.show{opacity:1;transform:translateY(0);pointer-events:auto;visibility:visible}
+.strategy-option{width:100%;height:52px;padding:5px 7px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--text);display:grid;grid-template-columns:32px minmax(0,1fr);gap:7px;align-items:center;text-align:left;transition:border-color .14s,background .14s,box-shadow .14s}
+.strategy-option:hover{background:#24323988;border-color:#6e553088}
+.strategy-option.active{border-color:var(--gold2);background:linear-gradient(90deg,#332b1b66,#17242b);box-shadow:0 0 10px #e9d5a322}
+.strategy-option .strat-glyph{width:32px;height:32px;border-color:#765c36;font-size:16px}
+.strategy-option .strat-copy{min-width:0;line-height:1.15}
+.strategy-option .strat-name{display:block;color:var(--gold2);font-size:13px;font-weight:800;white-space:nowrap}
+.strategy-option .strat-desc{display:block;margin-top:3px;color:var(--mute);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strategy-option[data-strategy="burst"] .strat-glyph{color:var(--red);border-color:#8c413b}
+.strategy-option[data-strategy="burst"] .strat-name{color:#ffaaa3}
+.strategy-picker input[type="hidden"]{display:none}
 .settings input[type=checkbox]{width:18px;height:18px;accent-color:#c9a25f}
 .hint{font-size:9.5px;color:#657773;line-height:1.55;margin:4px 0 0}
-.footer-note{font-size:9px;color:#657773;line-height:1.5;margin-top:8px}.inventory-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.inventory-detail-grid .stat{font-size:10px}.enhance-menu{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}.enhance-menu select{background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:7px 8px;min-width:0}.combo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.footer-note{font-size:9px;color:#657773;line-height:1.5;margin-top:8px}.inventory-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.inventory-detail-grid .stat{font-size:10px}.enhance-menu{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}.enhance-menu select{background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:7px 8px;min-width:0}.combo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}.combo-grid.combo-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .combo-slot{min-height:76px;padding:8px;border:1px solid #5b4930;border-radius:10px;background:linear-gradient(180deg,#171a18,#081114);text-align:center}
 .combo-slot b{display:block;color:var(--bronze);font-size:9px;letter-spacing:.08em}
 .combo-slot strong{display:block;color:var(--gold2);font-size:11px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -117,7 +139,40 @@ main{position:relative;z-index:3;display:flex;flex:1;min-height:0;overflow:hidde
 .start-title{font:800 27px/1.15 serif;color:var(--gold2);text-align:center;letter-spacing:.08em}.start-sub{text-align:center;color:var(--mute);font-size:11px;line-height:1.6;margin:6px 0 13px}
 .class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.class-card{border:1px solid #46585a;border-radius:13px;background:linear-gradient(180deg,#17282d,#0a1418);padding:11px;cursor:pointer}.class-card.sel{border-color:var(--gold2);box-shadow:inset 0 0 0 1px #e9d5a344,0 0 16px #e9d5a322}.class-ico{font:700 27px/1 serif;color:var(--gold);float:right}.class-name{font:800 17px serif;color:var(--gold2)}.class-desc{font-size:10px;color:#aec0bc;line-height:1.5;margin-top:5px}.attr-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.attr-pill{font-size:9px;padding:3px 6px;border-radius:9px;border:1px solid #4f6665;color:var(--jade);background:#0a1719}.start-input{width:100%;margin:6px 0 10px;padding:9px 10px;border-radius:10px;border:1px solid #59666a;background:#091317;color:#ddd}.start-note{font-size:9px;color:#71847e;line-height:1.55;margin:8px 0}.start-confirm{margin-top:9px}
 .fx-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.fx{padding:8px;border:1px solid #3a4c50;border-radius:9px;background:#081417}.fx b{color:var(--gold)}.fx span{display:block;font-size:10px;color:#a8b9b4;margin-top:2px}.selected-slot{border-color:var(--gold2)!important;box-shadow:0 0 0 1px #e9d5a344 inset}.equip-chip{display:inline-flex;gap:5px;align-items:center;padding:4px 7px;border:1px solid #4b5d61;border-radius:10px;margin:2px;font-size:9px;color:#cbd8d4}.equip-chip b{color:var(--gold2)}.quality-white{color:#e8ece9}.quality-green{color:#79dc9c}.quality-blue{color:#7eafff}.quality-purple{color:#b88dff}.quality-gold{color:#f2d37c}.feature-list{display:grid;gap:5px;margin-top:7px}.feature-list div{padding:6px 8px;border:1px solid #33434a;border-radius:8px;background:#091417;font-size:10px}.feature-list b{color:var(--gold)} .role-head{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:center}.role-avatar{width:70px;height:70px;border-radius:18px;display:grid;place-items:center;border:1px solid var(--bronze);background:radial-gradient(circle at 50% 30%,#40545a,#0b1317);font:800 34px/1 serif;color:var(--gold2);box-shadow:0 0 18px #e9d5a322}.role-title{font:800 22px/1.1 serif;color:var(--gold2)}.role-sub{font-size:10px;color:var(--jade);margin-top:4px}.attr-bar{height:8px;border-radius:5px;background:#071013;border:1px solid #35474b;overflow:hidden;margin-top:4px}.attr-bar i{display:block;height:100%;background:linear-gradient(90deg,#7f9f96,#e9d5a3)}.role-eqgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}.role-eq{padding:8px;border:1px solid #3c4d52;border-radius:10px;background:linear-gradient(180deg,#0e1a1f,#081114)}.role-eq.empty{opacity:.55}.role-eq b{display:block;color:var(--bronze);font-size:9px;letter-spacing:.08em}.role-eq strong{display:block;color:var(--gold2);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.role-eq span{display:block;color:#9eafaa;font-size:9px;margin-top:3px;line-height:1.35}.role-ai{padding:8px;border:1px dashed #78603a;border-radius:9px;background:#0b1417;margin-top:8px;font-size:10px;color:#bcc9c5;line-height:1.5}.role-ai b{color:var(--gold)}
-</style></head><body>
+</style>
+<style id="inventory-feature-style">
+/* ===== [新增] 背包堆疊／分類／Tooltip／全部分解樣式 ===== */
+.inventory-feature-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.inventory-feature-tools select{background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:5px 7px;font-size:10px}
+.inventory-category-tabs{display:flex;gap:5px;overflow:auto;margin:7px 0}
+.inventory-category-tabs .tab{white-space:nowrap}
+/* ===== [新增/鎖定] 背包物品鎖定視覺 ===== */
+.inventory-slot{position:relative}
+.inventory-slot.is-locked{border-color:#e9c45b!important;box-shadow:0 0 0 1px #e9c45b66 inset}
+.inventory-slot.is-locked:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#e9c45b;border-radius:9px 0 0 9px}
+.inventory-slot .inventory-lock-btn{position:absolute;top:4px;right:4px;width:23px;height:23px;padding:0;border:1px solid #735b2f;border-radius:7px;background:#111a1d;color:#7f8b88;font-size:13px;line-height:20px;z-index:2}
+.inventory-slot .inventory-lock-btn:hover{color:#d7d7d7;border-color:#a9966a}
+.inventory-slot.is-locked .inventory-lock-btn{color:#f4cf67;border-color:#e9c45b;background:#2a2110}
+.inventory-slot:not(.is-locked):hover .inventory-lock-btn{color:#b9c1be}
+
+.inventory-slot .slot-stack{font-size:9px;color:var(--mute);margin-top:3px}
+.inventory-slot.nonstackable{border-color:#46585a}
+.inventory-slot .slot-lock{color:#ffb0a8;font-size:9px}
+.inventory-decompose-btn{border-color:#d94a40!important;color:#ffc6bf!important;background:linear-gradient(180deg,#3b1715,#180b0a)!important}
+#inventoryTooltip{position:fixed;left:0;top:0;z-index:1000;display:none;width:min(310px,calc(100vw - 20px));padding:10px;border:1px solid #8d6d3e;border-radius:10px;background:linear-gradient(180deg,#14242a,#071013);box-shadow:0 12px 35px #000d;pointer-events:none;transform:translate3d(0,0,0);will-change:transform}
+#inventoryTooltip.show{display:block}
+#inventoryTooltip .it-name{font-weight:800;font-size:14px}
+#inventoryTooltip .it-meta{font-size:10px;color:#b8c7c2;margin-top:3px}
+#inventoryTooltip .it-section{margin-top:6px;padding-top:5px;border-top:1px dashed #4a555766;font-size:10px;line-height:1.5}
+#inventoryTooltip .it-section b{color:var(--gold)}
+#inventoryDecomposeModal{z-index:90}
+#inventoryDecomposeModal .modal-box{max-height:82dvh}
+.inventory-decompose-list{display:grid;gap:4px;margin:7px 0}
+.inventory-decompose-list div{padding:5px 7px;border:1px solid #33434a;border-radius:7px;background:#091417;font-size:10px}
+.inventory-material-list{display:grid;gap:4px}
+.inventory-material-list div{display:flex;justify-content:space-between;gap:8px;padding:5px 7px;border:1px solid #3d4d53;border-radius:7px;background:#081518;font-size:10px}
+</style>
+</head><body>
 <div id="game">
 <header>
   <div class="top"><div class="player"><div class="avatar" id="avatar">無</div><div class="pinfo"><div class="pname" id="pname">少俠</div><div class="prealm" id="prealm">Lv.1</div><div class="pmeta">Lv.<span id="lv">1</span> · <span id="className">未選門派</span> · 經驗 <span id="realmText">0/60</span></div></div></div>
@@ -129,8 +184,21 @@ main{position:relative;z-index:3;display:flex;flex:1;min-height:0;overflow:hidde
 <main><aside class="side" id="side"></aside><section class="content" id="content"></section></main>
 <div class="dock" id="dock"></div>
 <div class="battle-screen" id="battleScreen"><div class="battle-head"><div class="line" style="display:flex;justify-content:space-between;gap:8px"><strong id="battleTitle">戰鬥</strong><button class="smallbtn" id="battleClose">收起畫面</button></div><div class="statusline" id="battleStatus">等待出招…</div></div><div class="fighters"><div class="fighter"><div class="line" style="display:flex;justify-content:space-between"><b id="bfPlayer">你</b><span id="bfPlayerPct">100%</span></div><div class="hpbar"><div class="hpfill" id="bfPHP"></div></div><div class="hpbar" style="margin-top:4px;background:#091d31;border-color:#2f5185"><div class="mpfill" id="bfPMP"></div></div><div class="statusline" id="bfPStatus">—</div></div><div class="fighter"><div class="line" style="display:flex;justify-content:space-between"><b id="bfEnemy">敵人</b><span id="bfEnemyPct">100%</span></div><div class="hpbar"><div class="hpfill" id="bfEHP"></div></div><div class="statusline" id="bfEStatus">—</div></div></div><div class="fightlog" id="fightLog"></div><div class="battle-actions" id="battleActions"></div></div>
-<div class="modal" id="tpModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">御劍傳送</h3><button class="smallbtn" id="tpClose">關閉</button></div><p class="desc">選擇已解鎖的狩獵地圖。</p><div class="modal-body" id="tpBody"></div></div></div><div class="modal" id="updateModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">更新選單</h3><button class="smallbtn" id="updateClose">關閉</button></div><div class="modal-body"><div class="card"><h3 class="title">天下無雙・放置版 V1.0.1</h3><p class="desc">目前版本：V1.0.1</p><div class="feature-list"><div><b>裝備：</b>背包裝備改為全手動穿戴／卸下。</div><div><b>比較：</b>武器、防具提供裝備數值對比。</div><div><b>介面：</b>左側選單加入「回／主城」並置於「門／江湖」上方。</div></div></div></div></div></div>
+<div class="modal" id="tpModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">御劍傳送</h3><button class="smallbtn" id="tpClose">關閉</button></div><p class="desc">選擇已解鎖的狩獵地圖。</p><div class="modal-body" id="tpBody"></div></div></div><div class="modal" id="updateModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">更新選單</h3><button class="smallbtn" id="updateClose">關閉</button></div><div class="modal-body"><div class="card"><h3 class="title">天下無雙・放置版 V1.0.2</h3><p class="desc">目前版本：V1.0.2</p><div class="feature-list"><div><b>裝備：</b>背包裝備改為全手動穿戴／卸下。</div><div><b>比較：</b>武器、防具提供裝備數值對比。</div><div><b>介面：</b>左側選單加入「回／主城」並置於「門／江湖」上方。</div></div></div></div></div></div>
+<div class="modal" id="potionModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">吃藥／治癒設定</h3><button class="smallbtn" id="potionClose">關閉</button></div><div class="modal-body" id="potionBody"></div></div></div>
 <div class="modal" id="inventoryDetailModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0" id="inventoryDetailTitle">物品詳情</h3><button class="smallbtn" id="inventoryDetailClose">關閉</button></div><div class="modal-body" id="inventoryDetailBody"></div></div></div>
+
+<!-- ===== [新增] 背包 Tooltip／全部分解確認視窗：節點只建立一次 ===== -->
+<div id="inventoryTooltip" role="tooltip" aria-hidden="true"></div>
+<div class="modal" id="inventoryDecomposeModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 class="title" style="margin:0">全部分解確認</h3>
+      <button class="smallbtn" type="button" onclick="closeInventoryDecompose()">取消</button>
+    </div>
+    <div class="modal-body" id="inventoryDecomposeBody"></div>
+  </div>
+</div>
 <div id="toastHost"></div>
 </div>
 <script>
@@ -326,7 +394,7 @@ const SKILL_SEED={
  '快':{type:'body',q:'blue',lv:32,r:.85,mp:14,haste:.22,desc:'提升快與閃避。',src:'3.0掉落'},
  '連旋風':{type:'sword',q:'blue',lv:36,r:1.55,mp:18,crit:.06,desc:'多段旋風。',src:'3.0掉落'},
  '木':{type:'spell',q:'green',lv:36,r:1.3,mp:16,elem:'wood',bonusVs:'beast',desc:'純木系。',src:'3.0掉落'},
- '甘霖':{type:'body',q:'blue',lv:42,r:.8,mp:20,heal:.16,desc:'命中後回復氣血。',src:'3.0掉落'},
+ '甘霖':{type:'body',q:'blue',lv:42,r:.8,mp:20,heal:.08,cd:5,desc:'命中後回復氣血。',src:'3.0掉落'},
  '狂松怒濤':{type:'spell',q:'purple',lv:42,r:1.8,mp:24,elem:'wood',desc:'木系強術。',src:'3.0掉落'},
  '金':{type:'spell',q:'green',lv:44,r:1.35,mp:16,elem:'metal',desc:'金系術法。',src:'3.0掉落'},
  '水':{type:'spell',q:'green',lv:44,r:1.35,mp:16,elem:'water',desc:'水系術法。',src:'3.0掉落'},
@@ -462,28 +530,124 @@ const QUESTS=[
  {id:'drop10',name:'尋寶修行',desc:'取得 10 件掉落物',type:'drops',target:10,reward:900},
  {id:'boss1',name:'試劍妖王',desc:'擊敗 1 名 Boss',type:'bossKills',target:1,reward:2200}
 ];
-const GAME_VERSION='v1.0.1-minfix';
+const GAME_VERSION='v1.0.2-minfix';
 const SAVE_KEY='txws_idle_v550';
 const MAX_LEVEL_30=110;
 const LEGACY_KEYS=['txws_idle_v530','txws_idle_v520','txws_idle_v510','txws_idle_v500','txws_shentong_single_v400','txws_shentong_single_v302','txws_xianlu_fusion_v1'];
 const TICK=180;
-const DEFAULT_AUTO={enabled:true,mode:'balanced',elementPref:'auto',autoSkill:true,autoPotion:true,hpThreshold:.45,mpThreshold:.25,autoAdvance:true,autoDungeon:true,autoBoss:true,bossGate:true,stopOnDeath:false,offline:true,stats:{kills:0,bossKills:0,drops:0,skillDrops:0,stones:0,exp:0,miss:0,crit:0}};
-function freshState(){return {version:GAME_VERSION,classDataVersion:'txws-official-1',createdAt:Date.now(),lastSave:Date.now(),offlineAt:Date.now(),offlineSummary:null,name:'少俠',selected:false,map:'taohua',log:[],inventory:{},inventoryInstances:{},equipment:{weapon:null,helmet:null,armor:null,bracer:null,belt:null,shoes:null,necklace:null,ring:null,artifact:null,talisman:null},skills:{equipped:[null,null,null,null],learned:{},cooldowns:{}},auto:JSON.parse(JSON.stringify(DEFAULT_AUTO)),forging:{},bossStatus:{},dungeons:{},quests:{claimed:{}},pets:{owned:['靈狐'],equipped:'靈狐'},talents:{points:0,elementPoints:0,狠:0,快:0,穩:0,智:0,準:0,metal:0,wood:0,water:0,fire:0,earth:0},inventoryQuality:{},player:{classKey:null,level:1,exp:0,spiritStone:500,attr:{狠:0,快:0,穩:0,智:0,準:0},preferredElement:'metal',stats:{}},setting:{lastPanel:'home',screenMode:'auto',comboLoop:true}}}
+
+/* ===================== 7MA 經驗系統（依使用者提供資料） =====================
+   1~66 級：使用提供的官方精確「升到下一級」經驗表。
+   67 級以上：依提供規則，以 66→67 的數值為基準，每級 ×1.055 並四捨五入。
+   怪物經驗：
+     BaseEXP = MonsterLevel × 20 × RankMultiplier
+     玩家等級 - 怪物等級：
+       <= 5  → 100%
+       6~10  → 80%
+       11~15 → 50%
+       >=16  → 10%
+       玩家低於怪物：每低 1 級 +5%，最高 +50%
+   注意：使用者提供的規格沒有給出「普通／精英／BOSS」的數值 RankMultiplier，
+   因此不臆造官方數值；系統保留可配置值，未指定的怪階使用 1.0。
+   ======================================================================== */
+const EXP_TABLE = [
+  0,13,36,67,108,158,217,286,364,451,547,
+  935,1374,1865,2407,2999,3643,4338,5084,5882,6730,
+  7333,7961,8616,9296,10002,10735,11493,12276,13086,13922,
+  16434,19071,21832,24718,27728,30862,34121,37505,41012,44645,
+  50625,56833,63267,69928,76815,83930,91270,98838,106632,114653,
+  121088,127682,134435,141347,148418,155647,163036,170583,178290,
+  186155,199666,213508,227681,242187,257024,272193,287694
+];
+const MONSTER_RANK_EXP_MULTIPLIER = Object.freeze({
+  normal:1,
+  elite:1,
+  boss:1
+});
+function getExpRequired(level){
+  level=Math.max(1,Math.floor(Number(level)||1));
+  if(level<EXP_TABLE.length) return EXP_TABLE[level];
+  let base=EXP_TABLE[EXP_TABLE.length-1];
+  for(let lv=EXP_TABLE.length;lv<=level;lv++) base=Math.round(base*1.055);
+  return base;
+}
+function getMonsterRank(e){
+  return e?.isBoss ? 'boss' : (e?.rank==='elite' ? 'elite' : 'normal');
+}
+function getLevelDifferenceMultiplier(playerLevel,monsterLevel){
+  const diff=Number(playerLevel||1)-Number(monsterLevel||1);
+  if(diff<=5){
+    if(diff<0) return 1+Math.min((-diff)*0.05,0.50);
+    return 1;
+  }
+  if(diff<=10) return 0.80;
+  if(diff<=15) return 0.50;
+  return 0.10;
+}
+function getMonsterHuntExp(monsterOrLevel,rank='normal'){
+  const monsterLevel=typeof monsterOrLevel==='object'
+    ? Number(monsterOrLevel.level)||1 : Number(monsterOrLevel)||1;
+  const r=typeof monsterOrLevel==='object' ? getMonsterRank(monsterOrLevel) : rank;
+  const rankMul=Number(MONSTER_RANK_EXP_MULTIPLIER[r])||1;
+  const base=monsterLevel*20*rankMul;
+  const mult=getLevelDifferenceMultiplier(G.player.level,monsterLevel);
+  return Math.max(0,Math.floor(base*mult));
+}
+
+const COMBAT_STRATEGIES={
+  conservative:{id:'conservative',name:'穩健',icon:'🛡',desc:'優先保命，HP 60% 喝水、40% 逃跑',hpPotion:.60,hpFlee:.40,mpReserve:.40,priority:['heal','buff_def','attack'],skillPowerBias:.8},
+  balanced:{id:'balanced',name:'均衡',icon:'⚖',desc:'平衡輸出與保命，HP 50% 喝水',hpPotion:.50,hpFlee:.25,mpReserve:.20,priority:['attack','heal','buff'],skillPowerBias:1.0},
+  aggressive:{id:'aggressive',name:'強攻',icon:'⚔',desc:'全力輸出，HP 30% 才喝水',hpPotion:.30,hpFlee:.15,mpReserve:0,priority:['attack','buff','heal'],skillPowerBias:1.2},
+  burst:{id:'burst',name:'殺無赦',icon:'💥',desc:'開場放大招，HP 20% 才喝水',hpPotion:.20,hpFlee:.10,mpReserve:0,priority:['burst','attack','buff'],skillPowerBias:1.5}
+};
+window.__combatStrategy='balanced';
+const DEFAULT_AUTO={enabled:true,mode:'balanced',combatStrategy:'balanced',elementPref:'auto',autoSkill:true,autoAdvance:true,autoDungeon:true,autoBoss:true,bossGate:true,stopOnDeath:false,offline:true,
+  potionType:'hpPotion',potionHpPct:.7,autoUsePotion:true,hpPotionKey:'hpPotion',
+  mpPotionPct:.5,autoUseMpPotion:true,mpPotionKey:'mpPotion',
+  autoBuyPotion:true,
+  healSkillId:'',healHpPct:.5,autoCastHeal:true,
+  stats:{kills:0,bossKills:0,drops:0,skillDrops:0,stones:0,exp:0,miss:0,crit:0}};
+function freshState(){return {version:GAME_VERSION,classDataVersion:'txws-official-1',createdAt:Date.now(),lastSave:Date.now(),offlineAt:Date.now(),offlineSummary:null,name:'少俠',selected:false,combatStrategy:'balanced',map:'taohua',log:[],inventory:{},inventoryInstances:{},inventoryLocks:{},equipment:{weapon:null,helmet:null,armor:null,bracer:null,belt:null,shoes:null,necklace:null,ring:null,artifact:null,talisman:null},skills:{equipped:[null,null,null,null],buffEquipped:[null,null],learned:{},cooldowns:{}},auto:JSON.parse(JSON.stringify(DEFAULT_AUTO)),forging:{},bossStatus:{},dungeons:{},quests:{claimed:{}},pets:{owned:['靈狐'],equipped:'靈狐'},talents:{points:0,elementPoints:0,狠:0,快:0,穩:0,智:0,準:0,metal:0,wood:0,water:0,fire:0,earth:0},inventoryQuality:{},player:{classKey:null,level:1,exp:0,spiritStone:500,attr:{狠:0,快:0,穩:0,智:0,準:0},preferredElement:'metal',levelBonus:{hp:0,mp:0,atk:0,def:0},stats:{}},setting:{lastPanel:'home',screenMode:'auto',comboLoop:true}}}
 let G=freshState(),battle=null,activePanel='home',mainLoop=null,nextSpawnAt=Date.now()+900,huntLog=[],pendingBoss=null,lastSecond=0;
 const $=id=>document.getElementById(id);const fmt=n=>Math.floor(Number(n)||0).toLocaleString('zh-TW');const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;$('toastHost').appendChild(d);setTimeout(()=>d.remove(),2400)}
 function log(t,cls='lg-sys'){const s=new Date().toLocaleTimeString('zh-TW',{hour12:false})+' '+t;G.log.unshift(s);if(G.log.length>150)G.log.length=150;hlog(t,cls)}
 function hlog(t,cls='lg-sys'){huntLog.unshift({t,cls});if(huntLog.length>80)huntLog.length=80;paintLog()}
 function deepMerge(base,src){if(!src||typeof src!=='object')return base;for(const k of Object.keys(src)){if(src[k]&&typeof src[k]==='object'&&!Array.isArray(src[k])&&base[k]&&typeof base[k]==='object')deepMerge(base[k],src[k]);else base[k]=src[k]}return base}
-function normalize(){G=deepMerge(freshState(),G);G.version=GAME_VERSION;if(G.classDataVersion!=='txws-official-1'){G.selected=false;G.player.classKey=null;G.player.attr={狠:0,快:0,穩:0,智:0,準:0};G.classDataVersion='txws-official-1';}G.player.attr=Object.assign({狠:0,快:0,穩:0,智:0,準:0},G.player.attr||{});G.quests=G.quests||{claimed:{}};G.quests.claimed=G.quests.claimed||{};G.pets=G.pets||{owned:['靈狐'],equipped:'靈狐'};G.pets.owned=Array.isArray(G.pets.owned)&&G.pets.owned.length?G.pets.owned:['靈狐'];if(!PET_DB[G.pets.equipped]||!G.pets.owned.includes(G.pets.equipped))G.pets.equipped=G.pets.owned[0]||'靈狐';G.talents=Object.assign({points:0,elementPoints:0,狠:0,快:0,穩:0,智:0,準:0,metal:0,wood:0,water:0,fire:0,earth:0},G.talents||{});G.inventoryQuality=G.inventoryQuality||{};G.inventoryInstances=G.inventoryInstances||{};if(!CLASSES[G.player.classKey]){G.selected=false;G.player.classKey=null}if(['home','inventory','skill','shop','forge'].includes(G.setting?.lastPanel))G.setting.lastPanel='hunt';G.player.level=clamp(Number(G.player.level)||1,1,MAX_LEVEL_30);G.player.exp=Math.max(0,Number(G.player.exp)||0);G.player.spiritStone=Math.max(0,Number(G.player.spiritStone)||0);for(const slot of SLOT_ORDER)if(!(slot in G.equipment))G.equipment[slot]=null;for(const k of ['kills','bossKills','drops','skillDrops','stones','exp','miss','crit','hpUsed','mpUsed','deaths'])G.auto.stats[k]=Number(G.auto.stats[k])||0;if(!FIVE[G.player.preferredElement])G.player.preferredElement='metal';if(!maps.find(m=>m.id===G.map))G.map='taohua';if(G.auto.elementPref==='auto'){}else if(!FIVE[G.auto.elementPref])G.auto.elementPref='auto';G.setting=G.setting||{lastPanel:'home',screenMode:'auto',comboLoop:true};G.setting.comboLoop=G.setting.comboLoop!==false;G.skills=G.skills||{equipped:[null,null,null,null],learned:{},cooldowns:{}};G.skills.equipped=(Array.isArray(G.skills.equipped)?G.skills.equipped:[]).slice(0,4);while(G.skills.equipped.length<4)G.skills.equipped.push(null);G.dungeons=G.dungeons||{};G.dungeons.five_elements_tower=G.dungeons.five_elements_tower||{floor:1,best:0};G.dungeons.trial_temple=G.dungeons.trial_temple||{best:0,runs:0};G.dungeons.maze_treasure=G.dungeons.maze_treasure||{runs:0,best:0,path:[]};G.dungeons.soul_instance=G.dungeons.soul_instance||{lastDay:'',clears:0};G.dungeons.monster_valley=G.dungeons.monster_valley||{runs:0,materials:0};G.dungeons.sand_demon_lair=G.dungeons.sand_demon_lair||{runs:0,best:0}}
+function normalize(){G=deepMerge(freshState(),G);G.version=GAME_VERSION;if(!COMBAT_STRATEGIES[G.combatStrategy])G.combatStrategy=COMBAT_STRATEGIES[G.auto.combatStrategy]?G.auto.combatStrategy:'balanced';G.auto.combatStrategy=G.combatStrategy;window.__combatStrategy=G.combatStrategy;if(G.classDataVersion!=='txws-official-1'){G.selected=false;G.player.classKey=null;G.player.attr={狠:0,快:0,穩:0,智:0,準:0};G.classDataVersion='txws-official-1';}G.player.attr=Object.assign({狠:0,快:0,穩:0,智:0,準:0},G.player.attr||{});G.player.levelBonus=Object.assign({hp:0,mp:0,atk:0,def:0},G.player.levelBonus||{});G.quests=G.quests||{claimed:{}};G.quests.claimed=G.quests.claimed||{};G.pets=G.pets||{owned:['靈狐'],equipped:'靈狐'};G.pets.owned=Array.isArray(G.pets.owned)&&G.pets.owned.length?G.pets.owned:['靈狐'];if(!PET_DB[G.pets.equipped]||!G.pets.owned.includes(G.pets.equipped))G.pets.equipped=G.pets.owned[0]||'靈狐';G.talents=Object.assign({points:0,elementPoints:0,狠:0,快:0,穩:0,智:0,準:0,metal:0,wood:0,water:0,fire:0,earth:0},G.talents||{});G.inventoryQuality=G.inventoryQuality||{};G.inventoryInstances=G.inventoryInstances||{};G.inventoryLocks=G.inventoryLocks||{};for(const [name,locks] of Object.entries(G.inventoryLocks)){if(!Array.isArray(locks))G.inventoryLocks[name]=[];else G.inventoryLocks[name]=locks.map(v=>v===true)}for(const [name,arr] of Object.entries(G.inventoryInstances)){if(Array.isArray(arr))for(const it of arr){if(it&&it.locked==null)it.locked=false}}G.setting=G.setting||{};G.setting.inventoryCategory=G.setting.inventoryCategory||'all';G.setting.inventorySort=G.setting.inventorySort||'default';G.setting.decomposeIncludeRare=!!G.setting.decomposeIncludeRare;if(!CLASSES[G.player.classKey]){G.selected=false;G.player.classKey=null}if(['home','inventory','skill','shop','forge'].includes(G.setting?.lastPanel))G.setting.lastPanel='hunt';G.player.level=clamp(Number(G.player.level)||1,1,MAX_LEVEL_30);G.player.exp=Math.max(0,Number(G.player.exp)||0);G.player.spiritStone=Math.max(0,Number(G.player.spiritStone)||0);for(const slot of SLOT_ORDER)if(!(slot in G.equipment))G.equipment[slot]=null;for(const k of ['kills','bossKills','drops','skillDrops','stones','exp','miss','crit','hpUsed','mpUsed','deaths'])G.auto.stats[k]=Number(G.auto.stats[k])||0;if(!FIVE[G.player.preferredElement])G.player.preferredElement='metal';if(!maps.find(m=>m.id===G.map))G.map='taohua';if(G.auto.elementPref==='auto'){}else if(!FIVE[G.auto.elementPref])G.auto.elementPref='auto';G.setting=G.setting||{lastPanel:'home',screenMode:'auto',comboLoop:true};G.setting.comboLoop=G.setting.comboLoop!==false;G.skills=G.skills||{equipped:[null,null,null,null],buffEquipped:[null,null],learned:{},cooldowns:{}};G.skills.equipped=(Array.isArray(G.skills.equipped)?G.skills.equipped:[]).slice(0,4);while(G.skills.equipped.length<4)G.skills.equipped.push(null);G.skills.buffEquipped=(Array.isArray(G.skills.buffEquipped)?G.skills.buffEquipped:[]).slice(0,2);while(G.skills.buffEquipped.length<2)G.skills.buffEquipped.push(null);delete G.skills.statusEquipped;G.dungeons=G.dungeons||{};G.dungeons.five_elements_tower=G.dungeons.five_elements_tower||{floor:1,best:0};G.dungeons.trial_temple=G.dungeons.trial_temple||{best:0,runs:0};G.dungeons.maze_treasure=G.dungeons.maze_treasure||{runs:0,best:0,path:[]};G.dungeons.soul_instance=G.dungeons.soul_instance||{lastDay:'',clears:0};G.dungeons.monster_valley=G.dungeons.monster_valley||{runs:0,materials:0};G.dungeons.sand_demon_lair=G.dungeons.sand_demon_lair||{runs:0,best:0};if(G.auto.hpThreshold!=null){G.auto.potionHpPct=clamp(Number(G.auto.hpThreshold)||.7,.1,.95);delete G.auto.hpThreshold}if(G.auto.mpThreshold!=null)delete G.auto.mpThreshold;if(G.auto.autoPotion!=null){G.auto.autoUsePotion=!!G.auto.autoPotion;delete G.auto.autoPotion}if(!['hpPotion','mpPotion'].includes(G.auto.potionType))G.auto.potionType='hpPotion';if(!POTION_DEF[G.auto.hpPotionKey]||POTION_DEF[G.auto.hpPotionKey].type!=='hp')G.auto.hpPotionKey='hpPotion';if(!POTION_DEF[G.auto.mpPotionKey]||POTION_DEF[G.auto.mpPotionKey].type!=='mp')G.auto.mpPotionKey='mpPotion';G.auto.potionHpPct=clamp(Number(G.auto.potionHpPct)||.7,.1,.95);G.auto.mpPotionPct=clamp(Number(G.auto.mpPotionPct)||.5,.1,.95);if(G.auto.autoUseMpPotion==null)G.auto.autoUseMpPotion=true;if(G.auto.autoBuyPotion==null)G.auto.autoBuyPotion=true;G.auto.healHpPct=clamp(Number(G.auto.healHpPct)||.5,.1,.95);if(G.auto.healSkillId&&!Object.values(SKILLS).find(sk=>sk.id===G.auto.healSkillId&&sk.heal))G.auto.healSkillId=''}
 function save(quiet=false){G.lastSave=Date.now();G.offlineAt=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(G));if(!quiet)toast('存檔完成')}catch(e){if(!quiet)toast('無法寫入存檔')}}
 function load(){let raw=null;try{raw=localStorage.getItem(SAVE_KEY)}catch(e){}if(raw){try{G=JSON.parse(raw)}catch(e){G=freshState()}}else{for(const key of LEGACY_KEYS){try{const o=localStorage.getItem(key);if(o){G=JSON.parse(o);break}}catch(e){}}}normalize();applyOffline();ensureStats();refreshMarket()}
-function applyOffline(){const now=Date.now(),last=Number(G.offlineAt)||now;const sec=clamp((now-last)/1000,0,86400);if(sec>=5&&G.selected){const beforeInv={...(G.inventory||{})};const rate=G.auto.enabled?.95:.22;const kills=Math.floor(sec/6*rate);const exp=Math.floor(kills*(5+G.player.level*.35));const stones=Math.floor(kills*(2+G.player.level*.06));G.player.exp+=exp;G.player.spiritStone+=stones;G.auto.stats.kills+=kills;G.auto.stats.exp+=exp;G.auto.stats.stones+=stones;G.player.stats.hp=1;ensureStats();G.player.stats.hp=G.player.stats.maxHp;G.player.stats.mp=G.player.stats.maxMp;for(let i=0;i<Math.floor(kills*.25);i++)offlineDrop();levelUp();const itemDrops=Object.keys(G.inventory||{}).map(name=>({name,qty:(G.inventory[name]||0)-(beforeInv[name]||0)})).filter(x=>x.qty>0);G.offlineSummary={seconds:sec,kills,exp,stones,itemDrops,at:now};G.log.unshift(`離線 ${Math.floor(sec/3600)} 小時 ${Math.floor((sec%3600)/60)} 分：獲得經驗 ${fmt(exp)}、靈石 ${fmt(stones)}、掉落 ${itemDrops.map(x=>x.name+'×'+x.qty).join('、')||'無'}`)}G.offlineAt=now}
+function saveGame(quiet=false){return save(quiet)}
+function loadGame(){return load()}
+function applyOffline(){const now=Date.now(),last=Number(G.offlineAt)||now;const sec=clamp((now-last)/1000,0,86400);if(sec>=5&&G.selected){const beforeInv={...(G.inventory||{})};const rate=G.auto.enabled?.95:.22;const kills=Math.floor(sec/6*rate);
+const pool=mapPool();
+let exp=0;
+for(let i=0;i<kills;i++){
+  const pick=pickWeighted(pool);
+  exp+=pick?getMonsterHuntExp({level:pick.level,isBoss:!!pick.isBoss,rank:pick.isBoss?'boss':'normal'}):0;
+}
+const stones=Math.floor(kills*(2+G.player.level*.06));G.player.exp+=exp;G.player.spiritStone+=stones;G.auto.stats.kills+=kills;G.auto.stats.exp+=exp;G.auto.stats.stones+=stones;G.player.stats.hp=1;ensureStats();G.player.stats.hp=G.player.stats.maxHp;G.player.stats.mp=G.player.stats.maxMp;for(let i=0;i<Math.floor(kills*.25);i++)offlineDrop();levelUp();const itemDrops=Object.keys(G.inventory||{}).map(name=>({name,qty:(G.inventory[name]||0)-(beforeInv[name]||0)})).filter(x=>x.qty>0);G.offlineSummary={seconds:sec,kills,exp,stones,itemDrops,at:now};G.log.unshift(`離線 ${Math.floor(sec/3600)} 小時 ${Math.floor((sec%3600)/60)} 分：獲得經驗 ${fmt(exp)}、靈石 ${fmt(stones)}、掉落 ${itemDrops.map(x=>x.name+'×'+x.qty).join('、')||'無'}`)}G.offlineAt=now}
 function offlineDrop(){const m=currentMap(),pool=m.mons||[];const p=pool.length?pool[Math.floor(Math.random()*pool.length)]:['水鬼',15];grantDrops(p[0],false,true)}
 function refreshMarket(){const day=new Date().toISOString().slice(0,10);if(G.marketDay===day&&Array.isArray(G.market))return;G.marketDay=day;G.market=MARKET.map(x=>({name:x[0],price:Math.round(x[1]*(.85+Math.random()*.3)),type:x[2],key:x[3]}))}
 function classData(){return CLASSES[G.player.classKey]||null}
-function expNeed(){return Math.floor(60*Math.pow(G.player.level,1.8))}
-function levelUp(){while(G.player.exp>=expNeed()&&G.player.level<MAX_LEVEL_30){G.player.exp-=expNeed();G.player.level++;const c=classData();for(const k of Object.keys(c.growth))G.player.attr[k]+=c.growth[k];G.talents.points=(G.talents.points||0)+1;let msg=`等級提升至 Lv.${G.player.level}，天賦點 +1`;if(G.player.level%5===0){G.talents.elementPoints=(G.talents.elementPoints||0)+1;msg+='，五行天賦點 +1'}log(msg,'lg-drop');toast(`升級 Lv.${G.player.level}`);ensureStats()}}
+function expNeed(){return getExpRequired(G.player.level)}
+function levelUp(){
+ while(G.player.exp>=expNeed()&&G.player.level<MAX_LEVEL_30){
+   G.player.exp-=expNeed();
+   G.player.level++;
+   G.player.levelBonus.hp+=30;
+   G.player.levelBonus.mp+=15;
+   G.player.levelBonus.atk+=3;
+   G.player.levelBonus.def+=2;
+   const c=classData();
+   for(const k of Object.keys(c.growth))G.player.attr[k]+=c.growth[k];
+   G.talents.points=(G.talents.points||0)+1;
+   let msg=`等級提升至 Lv.${G.player.level}，HP上限 +30、MP上限 +15、攻擊 +3、防禦 +2，天賦點 +1`;
+   if(G.player.level%5===0){G.talents.elementPoints=(G.talents.elementPoints||0)+1;msg+='，五行天賦點 +1'}
+   log(msg,'lg-drop');toast(`升級 Lv.${G.player.level}`);
+   ensureStats();
+ }
+}
 function chooseClass(key){const c=CLASSES[key];if(!c)return;G.player.classKey=key;G.selected=true;G.classDataVersion='txws-official-1';G.player.attr={...c.attrs};G.player.level=1;G.player.exp=0;G.name=($('startName')?.value||'少俠').slice(0,16)||'少俠';G.player.name=G.name;CLASS_SKILLS[key].forEach(n=>learnSkill(n,true));G.skills.equipped=CLASS_SKILLS[key].map(n=>SKILLS[n]?.id).filter(Boolean).slice(0,4);const starter={劍宗:['精鐵劍','青布帽','厚皮甲','青鐵護腕','皮革腰帶','青布靴','青玉項鍊','青玉戒','青玉法寶','平安護符'],戟門:['精鐵戟','青布帽','厚皮甲','青鐵護腕','皮革腰帶','青布靴','青玉項鍊','青玉戒','青玉法寶','平安護符'],詭流:['精鐵鏜','青布帽','厚皮甲','青鐵護腕','皮革腰帶','青布靴','青玉項鍊','青玉戒','青玉法寶','平安護符'],幻道:['桃木杖','青布帽','厚皮甲','青鐵護腕','皮革腰帶','青布靴','青玉項鍊','青玉戒','青玉法寶','平安護符']}[key]||[];starter.forEach(n=>G.inventory[n]=(G.inventory[n]||0)+1);save(true);$('createScreen')?.remove();toast(`建立 ${key} 角色完成`);log(`${G.name} 加入 ${key}，職業取向：${c.ai.focus}`,'lg-drop');startAuto();goPanel('character')}
 function learnSkill(name,silent=false){const sk=SKILLS[name];if(!sk)return false;if(!G.skills.learned[sk.id]){G.skills.learned[sk.id]={level:1};if(!silent)toast('領悟神通：'+name);return true}return false}
 function skillByName(n){return SKILLS[n]||Object.values(SKILLS).find(s=>s.name===n)}
@@ -497,7 +661,7 @@ function claimQuest(id){const q=QUESTS.find(x=>x.id===id);if(!q||G.quests.claime
 
 function currentMap(){return maps.find(m=>m.id===G.map)||maps[0]}
 function mapUnlocked(m){return G.player.level>=m.need}
-function ensureStats(){const p=G.player,s=p.stats||{},c=classData()||CLASSES.劍宗,attr=p.attr||c.attrs,bonus={atk:0,def:0,hp:0,mp:0,spd:0,crit:0,hit:0,evade:0,狠:0,快:0,穩:0,智:0,準:0},elementPower={metal:0,wood:0,water:0,fire:0,earth:0},elementRes={metal:0,wood:0,water:0,fire:0,earth:0};let refinePct=0;Object.values(G.equipment).filter(Boolean).forEach(it=>{const qmul={white:1,green:1.08,blue:1.18,purple:1.32,gold:1.5}[G.inventoryQuality?.[it.name]||it.quality]||1;bonus.atk+=(it.baseAtk||0)*qmul;bonus.def+=(it.baseDef||0)*qmul;bonus.hp+=(it.hp||0)*qmul;bonus.mp+=(it.mp||0)*qmul;for(const k of Object.keys(attr))if(it.attr?.[k])bonus[k]=(bonus[k]||0)+it.attr[k]*qmul;if(it.affix?.key)bonus[it.affix.key]=(bonus[it.affix.key]||0)+it.affix.value;for(const g of (it.gems||[])){if(g==='攻擊靈石')bonus.atk+=12;if(g==='防禦靈石')bonus.def+=10;if(g==='氣血靈石')bonus.hp+=100;if(typeof g==='string'&&g.endsWith('血珀')){bonus.atk+=p.level*.8;bonus.hp+=p.level*6;bonus.def+=p.level*.4}const eg={金靈石:'metal',木靈石:'wood',水靈石:'water',火靈石:'fire',土靈石:'earth'}[g];if(eg){elementPower[eg]+=.06;elementRes[eg]+=.04}}refinePct+=it.refine||0});const refineMul=1+refinePct/100;bonus.atk*=refineMul;bonus.def*=refineMul;bonus.hp*=refineMul;bonus.mp*=refineMul;const pt=petData();if(pt){bonus.atk+=pt.atk||0;bonus.def+=pt.def||0;bonus.hp+=pt.hp||0;bonus.spd+=pt.fast||0;bonus.crit+=pt.crit||0}const a={狠:attr.狠+(bonus.狠||0)+(G.talents.狠||0),快:attr.快+(bonus.快||0)+(G.talents.快||0),穩:attr.穩+(bonus.穩||0)+(G.talents.穩||0),智:attr.智+(bonus.智||0)+(G.talents.智||0),準:attr.準+(bonus.準||0)+(G.talents.準||0)};s.atk=Math.round(18+a.狠*3.4+a.智*.8+bonus.atk);s.def=Math.round(10+a.穩*2.8+a.狠*.35+bonus.def);s.maxHp=Math.round(260+p.level*34+a.穩*26+bonus.hp);s.maxMp=Math.round(110+p.level*18+a.智*22+bonus.mp);s.speed=10+a.快*1.85+(bonus.spd||0)*.3;s.critRate=clamp(.03+a.快*.002+a.狠*.0006+bonus.crit,0,.55);s.accuracy=clamp(.78+a.準*.009,0,.99);s.evasion=clamp(.03+a.快*.0045,0,.48);s.elemPower=elementPower;s.elemRes=elementRes;s.attr=a;s.hp=clamp(Number(s.hp)||s.maxHp,1,s.maxHp);s.mp=clamp(Number(s.mp)||s.maxMp,0,s.maxMp);p.stats=s}
+function ensureStats(){const p=G.player,s=p.stats||{},c=classData()||CLASSES.劍宗,attr=p.attr||c.attrs,bonus={atk:0,def:0,hp:0,mp:0,spd:0,crit:0,hit:0,evade:0,狠:0,快:0,穩:0,智:0,準:0},elementPower={metal:0,wood:0,water:0,fire:0,earth:0},elementRes={metal:0,wood:0,water:0,fire:0,earth:0};let refinePct=0;Object.values(G.equipment).filter(Boolean).forEach(it=>{const qmul={white:1,green:1.08,blue:1.18,purple:1.32,gold:1.5}[G.inventoryQuality?.[it.name]||it.quality]||1;bonus.atk+=(it.baseAtk||0)*qmul;bonus.def+=(it.baseDef||0)*qmul;bonus.hp+=(it.hp||0)*qmul;bonus.mp+=(it.mp||0)*qmul;for(const k of Object.keys(attr))if(it.attr?.[k])bonus[k]=(bonus[k]||0)+it.attr[k]*qmul;if(it.affix?.key)bonus[it.affix.key]=(bonus[it.affix.key]||0)+it.affix.value;for(const g of (it.gems||[])){if(g==='攻擊靈石')bonus.atk+=12;if(g==='防禦靈石')bonus.def+=10;if(g==='氣血靈石')bonus.hp+=100;if(typeof g==='string'&&g.endsWith('血珀')){bonus.atk+=p.level*.8;bonus.hp+=p.level*6;bonus.def+=p.level*.4}const eg={金靈石:'metal',木靈石:'wood',水靈石:'water',火靈石:'fire',土靈石:'earth'}[g];if(eg){elementPower[eg]+=.06;elementRes[eg]+=.04}}refinePct+=it.refine||0});const refineMul=1+refinePct/100;bonus.atk*=refineMul;bonus.def*=refineMul;bonus.hp*=refineMul;bonus.mp*=refineMul;const pt=petData();if(pt){bonus.atk+=pt.atk||0;bonus.def+=pt.def||0;bonus.hp+=pt.hp||0;bonus.spd+=pt.fast||0;bonus.crit+=pt.crit||0}const a={狠:attr.狠+(bonus.狠||0)+(G.talents.狠||0),快:attr.快+(bonus.快||0)+(G.talents.快||0),穩:attr.穩+(bonus.穩||0)+(G.talents.穩||0),智:attr.智+(bonus.智||0)+(G.talents.智||0),準:attr.準+(bonus.準||0)+(G.talents.準||0)};s.atk=Math.round(18+a.狠*3.4+a.智*.8+bonus.atk+(p.levelBonus?.atk||0));s.def=Math.round(10+a.穩*2.8+a.狠*.35+bonus.def+(p.levelBonus?.def||0));s.maxHp=Math.round(260+p.level*34+a.穩*26+bonus.hp+(p.levelBonus?.hp||0));s.maxMp=Math.round(110+p.level*18+a.智*22+bonus.mp+(p.levelBonus?.mp||0));s.speed=10+a.快*1.85+(bonus.spd||0)*.3;s.critRate=clamp(.03+a.快*.002+a.狠*.0006+bonus.crit,0,.55);s.accuracy=clamp(.78+a.準*.009,0,.99);s.evasion=clamp(.03+a.快*.0045,0,.48);s.elemPower=elementPower;s.elemRes=elementRes;s.attr=a;s.hp=clamp(Number(s.hp)||s.maxHp,1,s.maxHp);s.mp=clamp(Number(s.mp)||s.maxMp,0,s.maxMp);p.stats=s}
 function power(){const s=G.player.stats;return Math.round(s.atk*10+s.def*8+s.maxHp*.28+s.maxMp*.2+s.speed*14)}
 function powerRate(){return G.auto.enabled?Math.max(.1,G.player.stats.atk*.12):0}
 function fiveMultiplier(a,d){if(!a||!d||a==='none'||d==='none')return 1;if(FIVE[a].counters===d)return 1.2;if(FIVE[a].counteredBy===d)return .85;return 1}
@@ -530,9 +694,9 @@ function unequipItem(slot){const it=G.equipment[slot];if(!it)return toast('該�
 function compareEquip(name){const d=EQUIP_DB[name];if(!d)return null;const cur=G.equipment[d.slot];const candidate=makeEquip(name);if(!candidate)return null;const keys=[['baseAtk','攻'],['baseDef','防'],['hp','HP'],['mp','MP']];const lines=keys.map(([k,label])=>{const a=Number(cur?.[k]||0),b=Number(candidate?.[k]||d[k]||0),diff=b-a;return `${label}:${diff>0?'+':''}${fmt(diff)}`}).filter(x=>!/:0$/.test(x));for(const k of ['狠','準','穩','快','智']){const diff=Number(candidate?.attr?.[k]||d.attr?.[k]||0)-Number(cur?.attr?.[k]||0);if(diff)lines.push(`${k}:${diff>0?'+':''}${fmt(diff)}`)}return {slot:d.slot,cur,candidate,text:lines.join(' · ')||'主要數值無變化'} }
 function equipCompareHtml(name){const c=compareEquip(name);if(!c)return '';return `<div class="desc">對比 ${c.cur?`目前：${c.cur.name} · `:'目前：空 · '} ${c.text}</div>`}
 
-function monsterData(name,lvOverride){const row=OFFICIAL_MONSTER_DATA.find(r=>r[0]===name),base=bossBase[name]||localMons[name]||null;if(base){const sc=lvOverride?lvOverride/base.lv:1;return {name,level:lvOverride||row?.[1]||base.lv,hp:Math.round(base.hp*Math.pow(sc,1.08)*3),maxHp:Math.round(base.hp*Math.pow(sc,1.08)*3),atk:Math.round(base.atk*Math.pow(sc,1.04)*3),def:Math.round(base.def*Math.pow(sc,1.02)),speed:base.spd,interval:Math.max(850,2200-(base.spd||20)*8),element:ELEM[row?.[5]??base.elem]||'none',race:row?.[3]??base.race,size:row?.[2]??base.size??'中',alignment:row?.[4]??base.alignment??'惡',isBoss:!!bossBase[name],drops:row?.[6]||'',dropSkills:row?.[7]||'',equip:row?.[8]||[]}}
- if(row){const lv=row[1];return {name,level:lvOverride||lv,hp:Math.round(180*Math.pow(lv,1.75)*3),maxHp:Math.round(180*Math.pow(lv,1.75)*3),atk:Math.round(14*Math.pow(lv,1.44)*3),def:Math.round(6.5*Math.pow(lv,1.3)),speed:18+(lv%26),interval:Math.max(900,2200-(18+(lv%26))*8),element:ELEM[row[5]]||'none',race:row[3],size:row[2]||'中',alignment:row[4]||'惡',isBoss:false,drops:row[6],dropSkills:row[7],equip:row[8]||[]}}
- return {name,level:lvOverride||1,hp:450,maxHp:450,atk:45,def:6,speed:15,interval:1400,element:'none',race:'獸',isBoss:false,drops:'',dropSkills:'',equip:[]}}
+function monsterData(name,lvOverride){const row=OFFICIAL_MONSTER_DATA.find(r=>r[0]===name),base=bossBase[name]||localMons[name]||null;if(base){const sc=lvOverride?lvOverride/base.lv:1;return {name,level:lvOverride||row?.[1]||base.lv,hp:Math.round(base.hp*Math.pow(sc,1.08)*3),maxHp:Math.round(base.hp*Math.pow(sc,1.08)*3),atk:Math.round(base.atk*Math.pow(sc,1.04)*3),def:Math.round(base.def*Math.pow(sc,1.02)),speed:base.spd,interval:Math.max(850,2200-(base.spd||20)*8),element:ELEM[row?.[5]??base.elem]||'none',race:row?.[3]??base.race,size:row?.[2]??base.size??'中',alignment:row?.[4]??base.alignment??'惡',isBoss:!!bossBase[name],rank:bossBase[name]?'boss':'normal',drops:row?.[6]||'',dropSkills:row?.[7]||'',equip:row?.[8]||[]}}
+ if(row){const lv=row[1];return {name,level:lvOverride||lv,hp:Math.round(180*Math.pow(lv,1.75)*3),maxHp:Math.round(180*Math.pow(lv,1.75)*3),atk:Math.round(14*Math.pow(lv,1.44)*3),def:Math.round(6.5*Math.pow(lv,1.3)),speed:18+(lv%26),interval:Math.max(900,2200-(18+(lv%26))*8),element:ELEM[row[5]]||'none',race:row[3],size:row[2]||'中',alignment:row[4]||'惡',isBoss:false,rank:'normal',drops:row[6],dropSkills:row[7],equip:row[8]||[]}}
+ return {name,level:lvOverride||1,hp:450,maxHp:450,atk:45,def:6,speed:15,interval:1400,element:'none',race:'獸',isBoss:false,rank:'normal',drops:'',dropSkills:'',equip:[]}}
 function mapPool(){const m=currentMap();return (m.mons||[]).map(([name,lv])=>({name,level:lv,weight:Math.max(10,100-Math.abs(lv-G.player.level)*4),isBoss:!!bossBase[name]}))}
 function pickWeighted(pool){let total=pool.reduce((a,b)=>a+b.weight,0),r=Math.random()*total;for(const x of pool){if(r<x.weight)return x;r-=x.weight}return pool[0]}
 function spawnEncounter(){if(battle?.active||pendingBoss)return;const pick=pickWeighted(mapPool());if(!pick)return;if(pick.isBoss&&G.auto.mode!=='hunt'){if(G.auto.bossGate&&power()<pick.level*550){nextSpawnAt=Date.now()+1400;return}if(G.auto.autoBoss!==false){startEncounter(pick.name,pick.level,currentMap().id);return}}startEncounter(pick.name,pick.level,currentMap().id)}
@@ -540,24 +704,35 @@ function startEncounter(name,level,mapId,manual=false,extra={}){if(battle?.activ
 function openBattleScreen(){$('battleScreen').classList.add('show');syncBattle()}function closeBattleScreen(){$('battleScreen').classList.remove('show')}
 function battleSkillPool(){return G.skills.equipped.map((id,i)=>({slot:i,sk:Object.values(SKILLS).find(s=>s.id===id)})).filter(x=>x.sk)}
 function skillReady(sk){return (G.skills.cooldowns[sk.id]||0)<=Date.now()}
-function chooseAutoSkill(){const e=battle.enemy,s=G.player.stats,slots=G.skills.equipped||[];for(let n=0;n<4;n++){const idx=(battle.comboIndex+n)%4,id=slots[idx],sk=id?Object.values(SKILLS).find(s=>s.id===id):null;if(!sk||!skillReady(sk)||s.mp<(sk.mp||0)||(sk.hpCost&&s.hp<(s.maxHp*(sk.hpCost+.18))))continue;battle.comboIndex=(idx+1)%4;return sk}return null}
+function skillStrategyType(sk){if(!sk)return 'attack';if(sk.type==='body'&&sk.heal>0)return 'heal';if(isBuffSkill(sk))return 'buff';return 'attack'}
+function stratSkillPowerBias(){const id=G.auto.combatStrategy||window.__combatStrategy;return COMBAT_STRATEGIES[id]?.skillPowerBias||1}function stratSkillPowerBiasFor(sk){return stratSkillPowerBias()}
+function stratSkillPowerBias(){const id=G.auto.combatStrategy||window.__combatStrategy;return COMBAT_STRATEGIES[id]?.skillPowerBias||1}function stratSkillPowerBiasFor(sk){return stratSkillPowerBias()}
+function pickSkillByStrategy(type,s,e,canUse){const slots=G.skills.equipped||[];const candidates=slots.map(id=>id?Object.values(SKILLS).find(x=>x.id===id):null).filter(Boolean).filter(sk=>skillReady(sk)&&canUse(sk)&&!(sk.hpCost&&s.hp<s.maxHp*(sk.hpCost+.18)));if(type==='heal')return candidates.filter(sk=>sk.type==='body'&&sk.heal>0).sort((a,b)=>(b.heal||0)-(a.heal||0))[0]||null;if(type==='buff'||type==='buff_def')return candidates.filter(sk=>isBuffSkill(sk)).sort((a,b)=>(b.guard||0)-(a.guard||0)||(b.haste||0)-(a.haste||0))[0]||null;if(type==='burst')return candidates.filter(sk=>skillStrategyType(sk)==='attack').sort((a,b)=>(b.mp||0)-(a.mp||0)||(b.r||0)-(a.r||0))[0]||null;return candidates.filter(sk=>skillStrategyType(sk)==='attack').sort((a,b)=>((b.r||0)*(stratSkillPowerBiasFor(b)))-((a.r||0)*(stratSkillPowerBiasFor(a)))||(b.mp||0)-(a.mp||0))[0]||null}
+function chooseAutoSkill(){const strat=COMBAT_STRATEGIES[G.auto.combatStrategy||window.__combatStrategy]||COMBAT_STRATEGIES.balanced,e=battle.enemy,s=G.player.stats;const reserve=strat.mpReserve*Math.max(1,s.maxMp);const canUse=sk=>(s.mp-(sk.mp||0))>=reserve;for(const type of strat.priority){if(type==='attack'&&strat.id==='conservative'&&e.hp/e.maxHp>.35)continue;const sk=pickSkillByStrategy(type,s,e,canUse);if(sk)return sk}return null}
 function playerAttack(){const s=G.player.stats,e=battle.enemy;if(Math.random()>hitChance({accuracy:s.accuracy},{evasion:e.evasion||0})){G.auto.stats.miss++;hlog(`你攻擊 ${e.name} 未命中`,'lg-sys');return}const crit=Math.random()<s.critRate;const r=calcDamage(s,e,1,'none',crit);e.hp=Math.max(0,e.hp-r.damage);battle.damageTotal+=r.damage;battle.turn++;if(crit)G.auto.stats.crit++;hlog(`普攻命中 ${e.name}：${fmt(r.damage)} 傷害${crit?'（暴擊）':''}`,crit?'lg-crit':'lg-hit')}
 function castSkill(sk,manual=false){const s=G.player.stats,e=battle.enemy;if(!sk||!skillReady(sk)||s.mp<(sk.mp||0))return false;if(sk.hpCost&&s.hp<=s.maxHp*(sk.hpCost+.12))return false;if(sk.cleanse){s.mp-=(sk.mp||0);battle.status={burn:0,freeze:0,shock:0,break:battle.status.break||0};G.skills.cooldowns[sk.id]=Date.now()+4000;hlog(`${sk.name} 清除異常`,'lg-heal');return true}if(sk.type==='body'&&sk.heal){s.mp-=(sk.mp||0);const heal=Math.round(s.maxHp*sk.heal);s.hp=Math.min(s.maxHp,s.hp+heal);battle.status.guard=.35;G.skills.cooldowns[sk.id]=Date.now()+3000;hlog(`${sk.name} 回復 ${fmt(heal)} 氣血並進入防禦姿態`,'lg-heal');return true}if(sk.type==='body'&&sk.haste){s.mp-=(sk.mp||0);s.speed+=s.speed*sk.haste;G.skills.cooldowns[sk.id]=Date.now()+5000;hlog(`${sk.name} 提升出手速度`,'lg-heal');return true}
  if(sk.hpCost){const cost=Math.round(s.maxHp*sk.hpCost);s.hp=Math.max(1,s.hp-cost)}else s.mp-=(sk.mp||0);
  let skillLevel=Math.max(1,Math.min(5,G.skills.learned[sk.id]?.level||1));const official=officialSkillData(sk,skillLevel,e);let rr=official?1:sk.r*(1+(skillLevel)*.04);const elem=sk.element||'none';const crit=Math.random()<(s.critRate+(official?.critRate??sk.crit??0));const def={...e,def:Math.round(e.def*(battle.status.break?0.72:1))};const r=official?calcDamage(s,def,1,elem,crit,official.base,official.raceMult):calcDamage(s,def,rr,elem,crit);e.hp=Math.max(0,e.hp-r.damage);battle.damageTotal+=r.damage;battle.turn++;G.skills.cooldowns[sk.id]=Date.now()+(sk.cd||Math.max(2,Math.round(3+(sk.mp||0)/18)))*1000;if(crit)G.auto.stats.crit++;if(sk.type==='sword')battle.status.break=1;if(sk.type==='body')battle.status.guard=.35;if(sk.type==='charm'&&sk.stun&&Math.random()<sk.stun)battle.status.shock=1;if(sk.element==='fire'&&Math.random()<.45)battle.status.burn=3;if(sk.element==='water'&&Math.random()<.30)battle.status.freeze=1;if(sk.element==='metal'&&Math.random()<.28)battle.status.shock=1;const om=official?.source?`（${official.source}）`:'';hlog(`${typeName(sk.type)}·${sk.name}：${fmt(r.damage)} 傷害${r.elem>1?'（五行克制）':r.elem<1?'（被克）':''}${crit?'（暴擊）':''}${om}`,crit?'lg-crit':'lg-skill');return true}
 function enemyAttack(){const e=battle.enemy,s=G.player.stats;if(battle.status.freeze>0){battle.status.freeze--;hlog(`${e.name} 被凍結，無法行動`,'lg-skill');return}if(battle.status.shock>0){battle.status.shock--;hlog(`${e.name} 感電，行動受阻`,'lg-skill');return}if(battle.status.burn>0){const b=Math.max(1,Math.round(e.maxHp*.035));e.hp=Math.max(0,e.hp-b);battle.status.burn--;hlog(`${e.name} 灼燒 ${fmt(b)}`,'lg-skill');if(e.hp<=0)return}
  const chance=clamp(.8+(e.speed-s.speed)*.0025,0.48,.92);if(Math.random()<s.evasion){hlog(`${e.name} 攻擊落空，你閃身避開`,'lg-sys');return}let raw=Math.max(1,e.atk-s.def*.5)*(battle.status.guard||0?0.65:1)*(G.auto.mode==='guard'?.8:1);const crit=Math.random()<.08;raw*=crit?1.4:1;const d=Math.max(1,Math.round(raw*randomVariance()));s.hp=Math.max(0,s.hp-d);hlog(`${e.name} 反擊：你受 ${fmt(d)} 傷害${crit?'（暴擊）':''}`,'lg-hurt')}
-function combatTick(now){if(!battle?.active)return;ensureStats();if(G.auto.enabled&&G.auto.autoPotion&&!battle.manualOnly)autoSupport();if(G.player.stats.hp<=0)return playerDown();if(now>=battle.pAt){if(!battle.manualOnly){if(G.auto.enabled&&G.auto.autoSkill){const sk=chooseAutoSkill();if(sk){if(!castSkill(sk))playerAttack()}else playerAttack()}else playerAttack();battle.pAt=now+Math.max(550,1500-G.player.stats.speed*10)}else{battle.pAt=now+900}}if(battle.enemy.hp<=0)return onKill();if(battle.manualOnly&&battle.enemy.hp>0&&now>=battle.partyAt){const base=Math.max(1,Math.round(G.player.stats.atk*.18));const team=[.85,1.05,.65].map((m,i)=>Math.max(1,Math.round(base*m*randomVariance())));const aid=team.reduce((a,b)=>a+b,0);battle.enemy.hp=Math.max(0,battle.enemy.hp-aid);battle.damageTotal+=aid;hlog(`三人助戰：合計 ${fmt(aid)} 傷害`,'lg-skill');battle.partyAt=now+2200;if(battle.enemy.hp<=0)return onKill()}if(battle.enemy.hp<=0)return onKill();if(now>=battle.eAt){enemyAttack();battle.eAt=now+battle.enemy.interval}if(battle?.active&&now>=battle.petAt){const pet=petData();if(pet&&battle.enemy.hp>0){const pd={...battle.enemy,def:battle.enemy.def*.75};const pc={atk:Math.round((pet.atk||0)+(G.player.stats.atk*.12)),elem:G.player.preferredElement||'none',elemPower:G.player.stats.elemPower||{}};const pr=calcDamage(pc,pd,.85,pc.elem,false);battle.enemy.hp=Math.max(0,battle.enemy.hp-pr.damage);battle.damageTotal+=pr.damage;hlog(`${pet.name} 協戰：${fmt(pr.damage)} 傷害`,'lg-skill');battle.petAt=now+Math.max(1200,Math.round(2800-(pet.fast||0)*90))}}if(G.player.stats.hp<=0)return playerDown();if(battle.enemy.hp<=0)onKill()}
-function autoSupport(){const s=G.player.stats,a=G.auto;if(s.hp/s.maxHp<a.hpThreshold)usePotion('hp');if(s.mp/s.maxMp<a.mpThreshold)usePotion('mp')}
-function potionCount(type){return G.inventory[type]||0}
-function usePotion(type){const cost=100;if(!G.auto.autoPotion||G.player.spiritStone<cost)return false;G.player.spiritStone-=cost;if(type==='hp'){G.player.stats.hp=Math.min(G.player.stats.maxHp,G.player.stats.hp+Math.round(G.player.stats.maxHp*.28));G.auto.stats.hpUsed=(G.auto.stats.hpUsed||0)+1}else{G.player.stats.mp=Math.min(G.player.stats.maxMp,G.player.stats.mp+Math.round(G.player.stats.maxMp*.38));G.auto.stats.mpUsed=(G.auto.stats.mpUsed||0)+1}return true}
+function combatTick(now){if(!battle?.active)return;ensureStats();if(G.auto.enabled&&!battle.manualOnly){const strat=COMBAT_STRATEGIES[G.auto.combatStrategy||window.__combatStrategy]||COMBAT_STRATEGIES.balanced;const hpRate=G.player.stats.hp/Math.max(1,G.player.stats.maxHp);if(hpRate<strat.hpFlee)return flee();autoSupport(strat)}if(G.player.stats.hp<=0)return playerDown();if(now>=battle.pAt){if(!battle.manualOnly){if(G.auto.enabled&&G.auto.autoSkill){const sk=chooseAutoSkill();if(sk){if(!castSkill(sk))playerAttack()}else playerAttack()}else playerAttack();battle.pAt=now+Math.max(550,1500-G.player.stats.speed*10)}else{battle.pAt=now+900}}if(battle.enemy.hp<=0)return onKill();if(battle.manualOnly&&battle.enemy.hp>0&&now>=battle.partyAt){const base=Math.max(1,Math.round(G.player.stats.atk*.18));const team=[.85,1.05,.65].map((m,i)=>Math.max(1,Math.round(base*m*randomVariance())));const aid=team.reduce((a,b)=>a+b,0);battle.enemy.hp=Math.max(0,battle.enemy.hp-aid);battle.damageTotal+=aid;hlog(`三人助戰：合計 ${fmt(aid)} 傷害`,'lg-skill');battle.partyAt=now+2200;if(battle.enemy.hp<=0)return onKill()}if(battle.enemy.hp<=0)return onKill();if(now>=battle.eAt){enemyAttack();battle.eAt=now+battle.enemy.interval}if(battle?.active&&now>=battle.petAt){const pet=petData();if(pet&&battle.enemy.hp>0){const pd={...battle.enemy,def:battle.enemy.def*.75};const pc={atk:Math.round((pet.atk||0)+(G.player.stats.atk*.12)),elem:G.player.preferredElement||'none',elemPower:G.player.stats.elemPower||{}};const pr=calcDamage(pc,pd,.85,pc.elem,false);battle.enemy.hp=Math.max(0,battle.enemy.hp-pr.damage);battle.damageTotal+=pr.damage;hlog(`${pet.name} 協戰：${fmt(pr.damage)} 傷害`,'lg-skill');battle.petAt=now+Math.max(1200,Math.round(2800-(pet.fast||0)*90))}}if(G.player.stats.hp<=0)return playerDown();if(battle.enemy.hp<=0)onKill()}
+const POTION_DEF={hpPotion:{name:'凡品靈草',type:'hp',pct:.28,price:30},mpPotion:{name:'聚靈丹',type:'mp',pct:.38,price:60}};
+const POTION_CD=2000;
+function healSkillList(){return Object.values(SKILLS).filter(sk=>sk.type==='body'&&sk.heal>0&&G.skills.learned[sk.id])}
+function cleanseSkillList(){return Object.values(SKILLS).filter(sk=>sk.type==='body'&&sk.cleanse===true&&G.skills.learned[sk.id])}
+function autoSupport(strat){const s=G.player.stats,a=G.auto;strat=strat||COMBAT_STRATEGIES[a.combatStrategy||window.__combatStrategy]||COMBAT_STRATEGIES.balanced;const hpRate=s.hp/Math.max(1,s.maxHp),mpRate=s.mp/Math.max(1,s.maxMp);const shouldHeal=strat.priority.includes('heal')&&hpRate<strat.hpPotion;const shouldBuff=false;if(hpRate<strat.hpPotion&&a.autoUsePotion){if(usePotion('hp'))return true}if(shouldHeal&&a.autoCastHeal&&a.healSkillId){const sk=Object.values(SKILLS).find(x=>x.id===a.healSkillId&&x.heal>0);if(sk&&skillReady(sk)&&s.mp>=(sk.mp||0)&&castSkill(sk))return true}if(a.autoUseMpPotion&&mpRate<a.mpPotionPct&&strat.id!=='burst'){if(usePotion('mp'))return true}if(G.auto.autoSkill){if(strat.priority.includes('heal')&&hpRate<strat.hpPotion){const sk=healSkillList().find(x=>skillReady(x)&&s.mp>=(x.mp||0)&&s.mp-(x.mp||0)>=strat.mpReserve*s.maxMp);if(sk&&castSkill(sk))return true}if(battle&&battle.status&&(battle.status.burn||battle.status.freeze||battle.status.shock)){const sk=cleanseSkillList().find(x=>skillReady(x)&&s.mp>=(x.mp||0)&&s.mp-(x.mp||0)>=strat.mpReserve*s.maxMp);if(sk&&castSkill(sk))return true}}return false}
+function potionCount(key){return G.inventory[key]||0}
+function usePotion(type){const key=type==='mp'?(G.auto.mpPotionKey||'mpPotion'):(G.auto.hpPotionKey||'hpPotion');const def=POTION_DEF[key];if(!def)return false;
+ const now=Date.now();G.potionCd=G.potionCd||{};if((G.potionCd[key]||0)>now)return false;
+ if((G.inventory[key]||0)<=0){if(!G.auto.autoBuyPotion)return false;const cost=def.price*100;if(G.player.spiritStone<cost)return false;G.player.spiritStone-=cost;G.inventory[key]=(G.inventory[key]||0)+100;hlog(`藥品不足，自動購買 ${def.name} ×100`,'lg-drop')}
+ G.inventory[key]--;G.potionCd[key]=now+POTION_CD;
+ if(def.type==='hp'){G.player.stats.hp=Math.min(G.player.stats.maxHp,G.player.stats.hp+Math.round(G.player.stats.maxHp*def.pct));G.auto.stats.hpUsed=(G.auto.stats.hpUsed||0)+1;hlog(`服用${def.name}，回復氣血`,'lg-heal')}else{G.player.stats.mp=Math.min(G.player.stats.maxMp,G.player.stats.mp+Math.round(G.player.stats.maxMp*def.pct));G.auto.stats.mpUsed=(G.auto.stats.mpUsed||0)+1;hlog(`服用${def.name}，回復法力`,'lg-heal')}return true}
 function grantDrops(name,isBoss=false,offline=false){const row=OFFICIAL_MONSTER_DATA.find(r=>r[0]===name);if(row){String(row[6]||'').split(/[、,，]+/).filter(Boolean).forEach(x=>{if(Math.random()<.38||isBoss){G.inventory[x]=(G.inventory[x]||0)+1;G.auto.stats.drops++}});(row[8]||[]).forEach(eq=>{const chance=isBoss?.35:.10+(G.player.level>=row[1]?0.03:0);if(Math.random()<chance){G.inventory[eq]=(G.inventory[eq]||0)+1;G.auto.stats.drops++;if(!offline)hlog(`掉寶：${eq}`,'lg-drop')}});const s=String(row[7]||'').split(/[、,，\s]+/).filter(Boolean);if(s.length&&Math.random()<.10){const n=s[Math.floor(Math.random()*s.length)];if(SKILLS[n]){learnSkill(n);G.auto.stats.skillDrops++;hlog(`招式掉落：${n}`,'lg-drop')}}}
  if(isBoss&&!row){const blood=OFFICIAL.blood[Math.floor(Math.random()*OFFICIAL.blood.length)];G.inventory[blood]=(G.inventory[blood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${blood}`,'lg-drop');const listed=BOSS_DROP_TABLE[name]?.items||[];if(listed.length&&Math.random()<BALANCE.bossItemDropRate){const extraBlood=listed[Math.floor(Math.random()*listed.length)];G.inventory[extraBlood]=(G.inventory[extraBlood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${extraBlood}`,'lg-drop')}if(Math.random()<.50){const item=OFFICIAL.craft[Math.floor(Math.random()*OFFICIAL.craft.length)];G.inventory[item]=(G.inventory[item]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${item}`,'lg-drop')}if(Math.random()<.35){const weapon=OFFICIAL.newWeapons[Math.floor(Math.random()*OFFICIAL.newWeapons.length)];G.inventory[weapon]=(G.inventory[weapon]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${weapon}`,'lg-drop')}}
  if(Math.random()<.08){const mat=['玄鐵','精煉石','打孔石'][Math.floor(Math.random()*3)];G.inventory[mat]=(G.inventory[mat]||0)+1;G.auto.stats.drops++}
 }
-/* BALANCE：自製平衡層；放置經驗為本單機版本自訂數值。 */
-function monsterExp(e){const lv=Number(e.level)||1,gap=Math.max(-20,Math.min(30,lv-G.player.level));return e.isBoss?Math.floor(lv*60+gap*5):Math.floor(lv*16+gap*2+lv*lv*.06)}
-function onKill(){if(!battle)return;const e=battle.enemy,ctx=battle.dungeonKind?{kind:battle.dungeonKind,data:battle.dungeonData||{}}:null;battle.active=false;const exp=monsterExp(e),stone=Math.round(e.level*(e.isBoss?110:8));G.player.exp+=exp;G.player.spiritStone+=stone;G.auto.stats.kills++;G.auto.stats.exp+=exp;G.auto.stats.stones+=stone;grantDrops(e.name,e.isBoss);if(ctx)handleDungeonKill(ctx,battle.damageTotal||0);levelUp();if(e.isBoss){G.auto.stats.bossKills=(Number(G.auto.stats.bossKills)||0)+1;const b=BOSS_DB.find(x=>x.name===e.name);if(b){const st=G.bossStatus[b.id]||{kills:0,respawnAt:0};st.kills++;st.respawnAt=Date.now()+Math.max(120,60*(b.level/40));G.bossStatus[b.id]=st}}hlog(`擊殺 ${e.name}，經驗 +${fmt(exp)}、靈石 +${fmt(stone)}`,'lg-drop');nextSpawnAt=Date.now()+650;if(battle.manual)closeBattleScreen();renderAll()}
+function monsterExp(e){return getMonsterHuntExp(e)}
+function onKill(){if(!battle)return;const e=battle.enemy,ctx=battle.dungeonKind?{kind:battle.dungeonKind,data:battle.dungeonData||{}}:null;battle.active=false;const exp=monsterExp(e),stone=Math.round(e.level*(e.isBoss?110:8));G.player.exp+=exp;G.player.spiritStone+=stone;G.auto.stats.kills++;G.auto.stats.exp+=exp;G.auto.stats.stones+=stone;grantDrops(e.name,e.isBoss);if(ctx)handleDungeonKill(ctx,battle.damageTotal||0);levelUp();if(e.isBoss){G.auto.stats.bossKills=(Number(G.auto.stats.bossKills)||0)+1;const b=BOSS_DB.find(x=>x.name===e.name);if(b){const st=G.bossStatus[b.id]||{kills:0,respawnAt:0};st.kills++;st.respawnAt=Date.now()+Math.max(120,60*(b.level/40));G.bossStatus[b.id]=st}}hlog(`擊殺 ${e.name} Lv.${e.level}，經驗 +${fmt(exp)}（等級差 ${G.player.level-e.level}／怪階 ${getMonsterRank(e)}），靈石 +${fmt(stone)}`,'lg-drop');nextSpawnAt=Date.now()+650;if(battle.manual)closeBattleScreen();renderAll()}
 function playerDown(){if(!battle)return;battle.active=false;G.auto.stats.deaths=(G.auto.stats.deaths||0)+1;hlog('你倒下了，消耗復活符或回城休整。','lg-hurt');if((G.inventory['復活符']||0)>0){G.inventory['復活符']--;ensureStats();G.player.stats.hp=G.player.stats.maxHp;G.player.stats.mp=G.player.stats.maxMp;nextSpawnAt=Date.now()+1500;hlog('復活符生效，恢復戰鬥狀態','lg-heal')}else{G.map='taohua';ensureStats();G.player.stats.hp=G.player.stats.maxHp;G.player.stats.mp=G.player.stats.maxMp;nextSpawnAt=Date.now()+2500}closeBattleScreen();renderAll()}
 function flee(){if(battle){battle.active=false;hlog('你離開戰場','lg-sys')}pendingBoss=null;closeBattleScreen();nextSpawnAt=Date.now()+800;syncHud()}
 function returnHome(){G.auto.enabled=false;G.auto.offline=false;pendingBoss=null;battle=null;nextSpawnAt=Date.now()+60000;closeTeleport();closeBattleScreen();goPanel('home');save(true);toast('已返回主城，掛機與戰鬥已停止')}
@@ -576,7 +751,179 @@ function forgeSocket(slot){const it=G.equipment[slot];if(!it)return toast('該�
 const GEM_KEYS=['攻擊靈石','防禦靈石','氣血靈石','金靈石','木靈石','水靈石','火靈石','土靈石'];
 function forgeGem(slot,key){const it=G.equipment[slot];if(!it)return toast('該部位沒有裝備');if((it.gems||[]).includes(key)&&typeof key==='string'&&key.endsWith('血珀'))return toast('已鑲嵌');if((it.sockets||0)<=((it.gems||[]).length))return toast('沒有空孔');if((G.inventory[key]||0)<1)return toast('沒有 '+key);G.inventory[key]--;it.gems=it.gems||[];it.gems.push(key);toast(`鑲嵌 ${key}`);ensureStats();renderAll()}
 function forgeReroll(slot){const it=G.equipment[slot];if(!it)return toast('該部位沒有裝備');if((G.inventory['玄鐵']||0)<3)return toast('需要玄鐵 ×3');G.inventory['玄鐵']-=3;it.affix=randomAffix(it.level);toast(`${it.name} 洗煉為 ${it.affix.key}+${it.affix.value}`);ensureStats();renderAll()}
-function dismantleInventory(name){const qty=G.inventory[name]||0;if(!qty||!EQUIP_DB[name])return toast('沒有可分解裝備');G.inventory[name]--;if(G.inventoryInstances?.[name]?.length)G.inventoryInstances[name].pop();const it=EQUIP_DB[name];const iron=Math.max(1,Math.floor(it.level/8));const stone=Math.max(1,Math.floor(it.level/15));G.inventory['玄鐵']=(G.inventory['玄鐵']||0)+iron;G.player.spiritStone+=stone;toast(`${name} 分解：玄鐵×${iron}、靈石×${stone}`);renderAll()}
+/* ===== [新增/鎖定] 物品鎖定核心：鎖定只阻擋批量操作 ===== */
+function isLocked(slot){return slot?.locked===true}
+function getStackLock(name,stackIndex){return !!(G.inventoryLocks?.[name]?.[stackIndex])}
+function setStackLock(name,stackIndex,locked){
+  G.inventoryLocks=G.inventoryLocks||{};
+  G.inventoryLocks[name]=G.inventoryLocks[name]||[];
+  G.inventoryLocks[name][stackIndex]=!!locked;
+}
+function toggleLock(slot){
+  if(!slot)return false;
+  const name=slot.name||slot.id;
+  if(!name)return false;
+  if(slot.instance){
+    slot.instance.locked=!isLocked(slot.instance);
+    save(true);
+    toast(`${slot.instance.locked?'已鎖定':'已解鎖'} ${name}`);
+    renderAll();
+    return slot.instance.locked;
+  }
+  const stackIndex=Number(slot.stackIndex??slot.offset??0);
+  const next=!getStackLock(name,stackIndex);
+  setStackLock(name,stackIndex,next);
+  save(true);
+  toast(`${next?'已鎖定':'已解鎖'} ${name}`);
+  renderAll();
+  return next;
+}
+function toggleInventorySlotLock(index,event){
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const slot=window.__inventoryTooltipSlots?.[Number(index)];
+  return toggleLock(slot);
+}
+function getDecomposeLockedCount(){
+  ensureInventoryInstances();
+  let n=0;
+  for(const name of Object.keys(G.inventory||{})){
+    const qty=Math.max(0,Number(G.inventory[name]||0));
+    if(!qty||!EQUIP_DB[name])continue;
+    const arr=G.inventoryInstances?.[name]||[];
+    for(let i=0;i<qty;i++){
+      const it=arr[i]||null,m=getInventoryItemMeta(name,it);
+      if(m.canDecompose&&isLocked(it))n++;
+    }
+  }
+  return n;
+}
+function getSellCandidates(){
+  ensureInventoryInstances();
+  const out=[],locked=[];
+  for(const name of Object.keys(G.inventory||{})){
+    const qty=Math.max(0,Number(G.inventory[name]||0)),price=inventorySellPrice(name);
+    if(!qty||!EQUIP_DB[name]||!price)continue;
+    const arr=G.inventoryInstances?.[name]||[];
+    for(let i=0;i<qty;i++){
+      const it=arr[i]||makeEquip(name);
+      const equipped=Object.values(G.equipment||{}).some(x=>x===it);
+      if(equipped)continue;
+      if(isLocked(it)){locked.push({name,instance:it,index:i});continue}
+      out.push({name,instance:it,index:i,price});
+    }
+  }
+  return {targets:out,locked};
+}
+function sellInventorySingle(name,index=0){
+  const qty=Number(G.inventory[name]||0),arr=G.inventoryInstances?.[name]||[];
+  if(!qty||!EQUIP_DB[name])return toast('沒有可販賣物品');
+  const it=arr[index]||makeEquip(name),price=inventorySellPrice(name);
+  if(!price)return toast('此物品不可販賣');
+  if(Object.values(G.equipment||{}).some(x=>x===it))return toast('裝備中的道具不可販賣');
+  const locked=isLocked(it);
+  const ok=confirm(`${locked?'此道具已鎖定，確定要販賣嗎？':'確定要販賣 '+name+' 嗎？'}\n售價：${fmt(price)} 靈石`);
+  if(!ok)return;
+  G.inventory[name]=Math.max(0,qty-1);
+  if(arr.length)arr.splice(index,1);
+  G.player.spiritStone+=price;
+  save(true);closeInventoryDetail();toast(`已販賣 ${name}，獲得靈石 ${fmt(price)}`);renderAll();
+}
+function dismantleInventory(name,index=0){
+  const qty=Number(G.inventory[name]||0);
+  if(!qty||!EQUIP_DB[name])return toast('沒有可分解裝備');
+  const arr=G.inventoryInstances?.[name]||[];
+  const it=arr[index]||makeEquip(name);
+  const m=getInventoryItemMeta(name,it);
+  if(!m.canDecompose||m.questItem)return toast('此物品不可分解');
+  if(m.qualityRank>=4&&!G.setting.decomposeIncludeRare)return toast('紫色以上裝備預設不分解');
+  if(isLocked(it)){
+    const ok=confirm(`此道具已鎖定，確定要分解嗎？\n${name}`);
+    if(!ok)return;
+  }
+  const y=calculateInventoryDecomposeYield(it);
+  G.inventory[name]=Math.max(0,qty-1);
+  if(arr.length)arr.splice(index,1);
+  G.inventory['玄鐵']=(G.inventory['玄鐵']||0)+y['玄鐵'];
+  G.player.spiritStone+=y['靈石'];
+  save(true);toast(`${name} 分解：玄鐵×${y['玄鐵']}、靈石×${y['靈石']}`);renderAll()
+}
+
+/* ===== [新增] 一次全部分解：單次確認、批次彙總、保護鎖定／任務／稀有 ===== */
+function getDecomposeCandidates(includeRare=false){
+  ensureInventoryInstances();
+  const out=[];
+  for(const name of Object.keys(G.inventory||{})){
+    const qty=Math.max(0,Number(G.inventory[name]||0));
+    if(!qty||!EQUIP_DB[name])continue;
+    const arr=G.inventoryInstances?.[name]||[];
+    for(let i=0;i<qty;i++){
+      const it=arr[i]||makeEquip(name),m=getInventoryItemMeta(name,it);
+      const equipped=Object.values(G.equipment||{}).some(x=>x===it||(x?.name===name&&it&&x===it));
+      if(!m.canDecompose||m.locked||m.questItem||equipped)continue;
+      if(!includeRare&&m.qualityRank>=4)continue;
+      out.push({name,instance:it,index:i,meta:m});
+    }
+  }
+  return out;
+}
+function calculateInventoryDecomposeYield(item){
+  const lv=Math.max(1,Number(item?.level)||1);
+  return {'玄鐵':Math.max(1,Math.floor(lv/8)),'靈石':Math.max(1,Math.floor(lv/15))};
+}
+function buildDecomposeResult(candidates){
+  const result={};
+  for(const c of candidates){
+    const y=calculateInventoryDecomposeYield(c.instance||EQUIP_DB[c.name]);
+    for(const [id,n] of Object.entries(y))result[id]=(result[id]||0)+n;
+  }
+  return result;
+}
+function openInventoryDecompose(){
+  const includeRare=!!G.setting.decomposeIncludeRare;
+  const candidates=getDecomposeCandidates(includeRare);
+  const body=$('inventoryDecomposeBody');if(!body)return;
+  const result=buildDecomposeResult(candidates);
+  const skippedLocked=getDecomposeLockedCount();
+  const names=candidates.slice(0,10).map(c=>`<div>${c.name} · ${QUALITY[c.meta.quality]||'凡品'} · Lv.${c.meta.level}</div>`).join('');
+  const mats=Object.entries(result).map(([id,n])=>`<div><span>${id}</span><b>×${fmt(n)}</b></div>`).join('');
+  body.innerHTML=`<div class="card"><p class="desc">將分解道具總數：<b style="color:var(--gold2)">${candidates.length}</b> 件</p><p class="footer-note" style="color:#f4cf67">已跳過 ${skippedLocked} 件鎖定道具</p>
+    <label class="field" style="display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px"><input type="checkbox" ${includeRare?'checked':''} onchange="G.setting.decomposeIncludeRare=this.checked;openInventoryDecompose()">包含稀有（紫色以上）</label>
+    <p class="footer-note">已裝備、鎖定、任務道具永不分解；未勾選時紫色以上預設排除。</p>
+    <div class="zone"><h4>前 10 項</h4><div class="inventory-decompose-list">${names||'<div>沒有符合條件的可分解道具。</div>'}</div></div>
+    <div class="zone"><h4>可獲得材料</h4><div class="inventory-material-list">${mats||'<div>無</div>'}</div></div>
+    <p style="color:#ff9d92;font-weight:800;margin:8px 0 0">警告：分解後無法恢復</p>
+    <div class="row" style="margin-top:9px"><button class="smallbtn danger" ${candidates.length?'':'disabled'} onclick="confirmInventoryDecompose()">確認全部分解</button></div>
+  </div>`;
+  $('inventoryDecomposeModal').classList.add('show');
+}
+function closeInventoryDecompose(){$('inventoryDecomposeModal')?.classList.remove('show')}
+function confirmInventoryDecompose(){
+  const candidates=getDecomposeCandidates(!!G.setting.decomposeIncludeRare);
+  if(!candidates.length){closeInventoryDecompose();return toast('沒有符合條件的可分解道具')}
+  const result=buildDecomposeResult(candidates);
+  const byName={};
+  for(const c of candidates)(byName[c.name]??=[]).push(c);
+  for(const [name,list] of Object.entries(byName)){
+    const removeCount=list.length;
+    G.inventory[name]=Math.max(0,Number(G.inventory[name]||0)-removeCount);
+    if(G.inventoryInstances?.[name])G.inventoryInstances[name].splice(0,removeCount);
+  }
+  for(const [materialId,count] of Object.entries(result))G.inventory[materialId]=(G.inventory[materialId]||0)+count;
+  save(true);closeInventoryDecompose();renderAll();
+  toast(`全部分解完成：${candidates.length} 件，獲得 ${Object.entries(result).map(([k,v])=>`${k}×${fmt(v)}`).join('、')}`);
+  return result;
+}
+function decomposeAll(inv){
+  G.setting.decomposeIncludeRare=false;
+  const candidates=getDecomposeCandidates(false);
+  if(!candidates.length)return toast(getDecomposeLockedCount()>0?'沒有可分解的道具（鎖定道具已跳過）':'沒有可分解的道具');
+  return openInventoryDecompose();
+}
+function salvageAllEquipment(includeRare=false){
+  G.setting.decomposeIncludeRare=!!includeRare;
+  return confirmInventoryDecompose();
+}
 function synthesize(name){const d=EQUIP_DB[name];if(!d)return;const q=G.inventoryQuality?.[name]||d.quality;const same=EQUIP_NAMES.filter(n=>EQUIP_DB[n].slot===d.slot&&(G.inventoryQuality?.[n]||EQUIP_DB[n].quality)===q).filter(n=>(G.inventory[n]||0)>0);const selected=[];for(const n of same){while((G.inventory[n]||0)>0&&selected.length<3){selected.push(n);G.inventory[n]--;if(selected.length===3)break}}if(selected.length<3){selected.forEach(n=>G.inventory[n]=(G.inventory[n]||0)+1);return toast('需要 3 件同品質同部位裝備')}const order=['white','green','blue','purple','gold'],next=order[Math.min(order.length-1,order.indexOf(q)+1)];G.inventoryQuality[name]=next;G.inventory[name]=(G.inventory[name]||0)+1;toast(next==='gold'?`合成成功：${name} 已達天品`:`合成成功：${name} 品質提升至 ${QUALITY[next]}`);renderAll()}
 function enhanceEquippedAll(){let n=0;for(const s of SLOT_ORDER){const it=G.equipment[s];if(it?.enhance<15){const before=it.enhance;for(let i=before;i<15&&G.player.spiritStone>=30000*(i+1);i++)forgeEnhance(s);n++}}if(n)toast('已強化可用裝備')}
 
@@ -586,7 +933,7 @@ function buyEquip(name){const d=EQUIP_DB[name];if(!d)return;if(d.level>50)return
 /* ---------- UI ---------- */
 function paintLog(){const h=huntLog.map(x=>`<div class="${x.cls}">${x.t}</div>`).join('');if($('huntLog'))$('huntLog').innerHTML=h;if($('fightLog'))$('fightLog').innerHTML=h}
 function syncHud(){ensureStats();const p=G.player,s=p.stats,c=classData();const set=(id,v)=>{const el=$(id);if(el&&el.textContent!==String(v))el.textContent=String(v)};set('pname',G.name||'少俠');set('prealm',c?`${G.player.classKey} · Lv.${p.level}`:`Lv.${p.level}`);set('lv',String(p.level));set('className',c?G.player.classKey:'未選門派');const av=$('avatar');if(av)av.textContent=c?c.icon:'✦';set('realmText',fmt(p.exp)+'/'+fmt(expNeed()));set('power',fmt(power()));set('powerRate','+'+fmt(powerRate())+'/s');set('stone',fmt(p.spiritStone));set('hereMap',currentMap().name);set('autoState',pendingBoss?'Boss對峙':battle?.active?(G.auto.enabled?'自動戰鬥':'手動戰鬥'):(G.auto.enabled?'搜敵中':'閒置'));const hp=clamp(s.hp/s.maxHp,0,1),mp=clamp(s.mp/s.maxMp,0,1);if($('hpFill'))$('hpFill').style.width=hp*100+'%';if($('mpFill'))$('mpFill').style.width=mp*100+'%';set('hpText','氣血 '+fmt(s.hp)+' / '+fmt(s.maxHp));set('mpText','法力 '+fmt(s.mp)+' / '+fmt(s.maxMp));if($('powerFill'))$('powerFill').style.width=clamp(p.exp/expNeed(),0,1)*100+'%';set('powerText',fmt(p.exp)+' / '+fmt(expNeed()));const ab=$('autoBtn');if(ab)ab.classList.toggle('on',G.auto.enabled);if($('huntFoe')){if(battle?.active){$('huntFoe').textContent=(battle.enemy.isBoss?'★ ':'')+battle.enemy.name+' Lv.'+battle.enemy.level;$('huntFoe').className='foe '+(battle.enemy.isBoss?'lv-boss':'lv-even');$('huntBarFill').style.width=clamp(battle.enemy.hp/battle.enemy.maxHp,0,1)*100+'%';$('huntMeta').textContent=`${elementName(battle.enemy.element)} · HP ${fmt(battle.enemy.hp)}/${fmt(battle.enemy.maxHp)} · 攻 ${fmt(battle.enemy.atk)} · 防 ${fmt(battle.enemy.def)}`}else{$('huntFoe').textContent=G.auto.enabled?'搜尋對手…':'尚未開戰';$('huntFoe').className='foe lv-easy';$('huntBarFill').style.width='0%';$('huntMeta').textContent=currentMap().name+' · '+currentMap().zone}}set('tkKill',fmt(G.auto.stats.kills));set('tkStone',fmt(G.auto.stats.stones));set('tkDrop',fmt(G.auto.stats.drops));if($('huntBuffs'))$('huntBuffs').textContent=`${G.player.classKey||'未選'} · 五行 ${elementName(p.preferredElement)} · 五屬 ${Object.entries(s.attr||{}).map(([k,v])=>k+Math.floor(v)).join(' ')}`}
-function syncBattle(){if(!battle)return;const s=G.player.stats,e=battle.enemy;const pp=clamp(s.hp/s.maxHp,0,1)*100,ep=clamp(e.hp/e.maxHp,0,1)*100,mp=clamp(s.mp/s.maxMp,0,1)*100;$('bfPlayerPct').textContent=Math.round(pp)+'%';$('bfEnemyPct').textContent=Math.round(ep)+'%';$('bfPHP').style.width=pp+'%';$('bfEHP').style.width=ep+'%';$('bfPMP').style.width=mp+'%';$('bfPlayer').textContent=G.name;$('bfEnemy').textContent=(e.isBoss?'★ ':'')+e.name;$('battleTitle').textContent=e.name+' Lv.'+e.level;$('battleStatus').textContent=`${G.player.classKey||'門派'} · ${battle.turn} 回 · 傷害 ${fmt(battle.damageTotal)}${battle.manualOnly?' · 沙魔巢穴禁止自動出招':''}`;$('bfPStatus').textContent=`HP ${fmt(s.hp)} · MP ${fmt(s.mp)} · 狠${Math.floor(s.attr.狠)} 快${Math.floor(s.attr.快)} 穩${Math.floor(s.attr.穩)} 智${Math.floor(s.attr.智)} 準${Math.floor(s.attr.準)}`;$('bfEStatus').textContent=`${elementName(e.element)} · ${e.race||'獸'}${battle.status.burn?' · 灼燒':''}${battle.status.freeze?' · 凍結':''}${battle.status.shock?' · 感電':''}`;const btns=G.skills.equipped.map((id,i)=>{const sk=Object.values(SKILLS).find(x=>x.id===id);if(!sk)return `<button class="smallbtn" disabled>連招${i+1}<br>空槽</button>`;const ready=skillReady(sk)&&G.player.stats.mp>=(sk.mp||0);return `<button class="smallbtn" ${ready?'':'disabled'} onclick="manualSkill('${sk.id}')">連招${i+1} · ${sk.name}<br><span style="font-size:9px">${elementName(sk.element)} · MP ${sk.mp||0}</span></button>`}).join('');$('battleActions').innerHTML=btns+`<button class="smallbtn good" onclick="manualAttack()">普通攻擊</button><button class="smallbtn" onclick="manualPotion('hp')">氣血丹</button><button class="smallbtn" onclick="manualPotion('mp')">聚靈丹</button><button class="smallbtn danger" onclick="flee()">離開</button>`}
+function syncBattle(){if(!battle)return;const s=G.player.stats,e=battle.enemy;const pp=clamp(s.hp/s.maxHp,0,1)*100,ep=clamp(e.hp/e.maxHp,0,1)*100,mp=clamp(s.mp/s.maxMp,0,1)*100;$('bfPlayerPct').textContent=Math.round(pp)+'%';$('bfEnemyPct').textContent=Math.round(ep)+'%';$('bfPHP').style.width=pp+'%';$('bfEHP').style.width=ep+'%';$('bfPMP').style.width=mp+'%';$('bfPlayer').textContent=G.name;$('bfEnemy').textContent=(e.isBoss?'★ ':'')+e.name;$('battleTitle').textContent=e.name+' Lv.'+e.level;$('battleStatus').textContent=`${G.player.classKey||'門派'} · ${battle.turn} 回 · 傷害 ${fmt(battle.damageTotal)}${battle.manualOnly?' · 沙魔巢穴禁止自動出招':''}`;$('bfPStatus').textContent=`HP ${fmt(s.hp)} · MP ${fmt(s.mp)} · 狠${Math.floor(s.attr.狠)} 快${Math.floor(s.attr.快)} 穩${Math.floor(s.attr.穩)} 智${Math.floor(s.attr.智)} 準${Math.floor(s.attr.準)}`;$('bfEStatus').textContent=`${elementName(e.element)} · ${e.race||'獸'}${battle.status.burn?' · 灼燒':''}${battle.status.freeze?' · 凍結':''}${battle.status.shock?' · 感電':''}`;const btns=G.skills.equipped.map((id,i)=>{const sk=Object.values(SKILLS).find(x=>x.id===id);if(!sk)return `<button class="smallbtn" disabled>連招${i+1}<br>空槽</button>`;const ready=skillReady(sk)&&G.player.stats.mp>=(sk.mp||0);return `<button class="smallbtn" ${ready?'':'disabled'} onclick="manualSkill('${sk.id}')">連招${i+1} · ${sk.name}<br><span style="font-size:9px">${elementName(sk.element)} · MP ${sk.mp||0}</span></button>`}).join('');$('battleActions').innerHTML=btns+`<button class="smallbtn good" onclick="manualAttack()">普通攻擊</button><button class="smallbtn" onclick="manualPotion('hp')">凡品靈草 ×${potionCount('hpPotion')}</button><button class="smallbtn" onclick="manualPotion('mp')">聚靈丹 ×${potionCount('mpPotion')}</button><button class="smallbtn danger" onclick="flee()">離開</button>`}
 function manualAttack(){if(battle?.active){playerAttack();battle.pAt=Date.now()+700;if(battle.enemy.hp<=0)onKill();syncBattle()}}
 function manualSkill(id){if(battle?.active){const sk=Object.values(SKILLS).find(x=>x.id===id);if(castSkill(sk,true))battle.pAt=Date.now()+700;if(battle.enemy.hp<=0)onKill();syncBattle()}}
 function manualPotion(t){usePotion(t);syncBattle();syncHud()}
@@ -596,23 +943,305 @@ function classAiName(slot){const c=classData()||CLASSES.劍宗,L=G.player.level;
 function renderCharacter(){const p=G.player,s=p.stats,c=classData();if(!c)return `<div class="card"><h2 class="title">角色</h2><p class="desc">尚未建立角色。</p><button class="bigbtn" onclick="openClassScreen()">建立天下無雙角色</button></div>`;const maxAttr=Math.max(1,...Object.values(s.attr||{}));const attrs=Object.entries(s.attr||{}).map(([k,v])=>`<div class="stat" style="display:block"><div class="line"><b>${k}</b><em>${v.toFixed(1)}</em></div><div class="attr-bar"><i style="width:${Math.min(100,(v/maxAttr)*100)}%"></i></div></div>`).join('');const eqHtml=SLOT_ORDER.map(slot=>{const it=G.equipment[slot],rec=classAiName(slot);return `<div class="role-eq ${it?'':'empty'}"><b>${SLOT_NAMES[slot]}</b><strong>${it?it.name:'未裝備'}</strong><span>${it?`${QUALITY[it.quality]||'凡品'} · +${it.enhance||0} · ${Object.entries(it.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'}`:`手動選擇裝備`}</span></div>`}).join('');return `<div class="card"><div class="role-head"><div class="role-avatar">${c.icon}</div><div><div class="role-title">${G.name||'少俠'}</div><div class="role-sub">${G.player.classKey} · ${c.weapon}系武器 · Lv.${p.level}</div><p class="desc" style="margin-top:4px">${c.desc}</p></div></div><div class="row" style="margin-top:8px"><span class="badge">官方初始：狠${c.attrs.狠} 準${c.attrs.準} 穩${c.attrs.穩} 快${c.attrs.快} 智${c.attrs.智}</span><span class="badge">AI取向：${c.ai.focus}</span></div></div><div class="card"><h3 class="title">人物屬性</h3><div class="statgrid">${attrs}</div><div class="statgrid"><div class="stat">攻擊<em>${fmt(s.atk)}</em></div><div class="stat">防禦<em>${fmt(s.def)}</em></div><div class="stat">氣血<em>${fmt(s.maxHp)}</em></div><div class="stat">法力<em>${fmt(s.maxMp)}</em></div><div class="stat">命中<em>${(s.accuracy*100).toFixed(1)}%</em></div><div class="stat">閃避<em>${(s.evasion*100).toFixed(1)}%</em></div><div class="stat">暴擊<em>${(s.critRate*100).toFixed(1)}%</em></div><div class="stat">速度<em>${s.speed.toFixed(1)}</em></div></div><p class="footer-note">官方人物屬性意義：狠＝招式威力、準＝命中、穩＝HP、快＝閃避、智＝配合大招的真氣需求；本放置版再把這五項直接用於 AI 配裝。</p></div><div class="card"><div class="line"><h3 class="title" style="margin:0">角色裝備</h3><button class="smallbtn hot" onclick="goPanel('shop')">找裝備</button></div><div class="role-eqgrid">${eqHtml}</div></div><div class="card"><div class="line"><h3 class="title" style="margin:0">五屬天賦</h3><span class="badge">可分配：${G.talents.points||0}</span></div><div class="row" style="margin:6px 0"><span class="desc">每次配點</span><select id="talentAmount" class="smallbtn" style="padding:5px 8px"><option value="1">1 點</option><option value="10">10 點</option></select></div><p class="desc">天賦點由自動升級取得；可選 1 點／10 點後再投入屬性。</p><div class="fx-grid">${['狠','快','穩','智','準'].map(k=>`<div class="fx"><div class="line"><b>${k}</b><span>${G.talents[k]||0}</span></div><button class="smallbtn" style="margin-top:5px" onclick="spendTalent('${k}',Number(document.getElementById('talentAmount')?.value||1))" ${(G.talents.points||0)<=0?'disabled':''}>投入</button></div>`).join('')}</div></div><div class="card"><div class="line"><h3 class="title" style="margin:0">五行天賦</h3><span class="badge">可分配：${G.talents.elementPoints||0}</span></div><p class="desc">金、木、水、火、土五行天賦點可自由分配；每 5 級取得 1 點；使用上方 1 點／10 點選單。</p><div class="fx-grid">${['metal','wood','water','fire','earth'].map(k=>`<div class="fx"><div class="line"><b>${FIVE[k].name}</b><span>${G.talents[k]||0}</span></div><button class="smallbtn" style="margin-top:5px" onclick="spendElementTalent('${k}',Number(document.getElementById('talentAmount')?.value||1))" ${(G.talents.elementPoints||0)<=0?'disabled':''}>投入</button></div>`).join('')}</div></div><div class="card"><h3 class="title">手動配裝</h3><div class="role-ai"><b>${G.player.classKey}</b>：${c.ai.note}<br>裝備不再自動穿戴；請從背包手動選擇武器與防具，系統提供數值對比後由玩家決定。</div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="goPanel('inventory')">開啟背包裝備</button></div></div>`}
 function renderHome(){const p=G.player,s=p.stats,c=classData(),pt=petData();const quests=QUESTS.map(q=>{const pr=questProgress(q),done=!!G.quests.claimed[q.id];return `<div class="feature-list"><div><b>${q.name}</b> · ${pr}/${q.target} · ${q.desc} ${done?'✅':pr>=q.target?`<button class="smallbtn good" onclick="claimQuest('${q.id}')">領取 +${fmt(q.reward)}</button>`:''}</div></div>`}).join('');return `<div class="card"><h2 class="title">天下無雙・放置版</h2><p class="desc">${c?c.desc:'請建立角色'} 以「打怪—掉寶—配裝—煉器—升級」作為單機循環，掛機與離線收益自動運轉。</p><div class="statgrid"><div class="stat">門派<em>${G.player.classKey||'未選'}</em></div><div class="stat">等級<em>Lv.${p.level}</em></div><div class="stat">攻擊<em>${fmt(s.atk)}</em></div><div class="stat">防禦<em>${fmt(s.def)}</em></div><div class="stat">出手<em>${s.speed.toFixed(1)}</em></div><div class="stat">暴擊<em>${(s.critRate*100).toFixed(1)}%</em></div></div></div><div class="card"><h3 class="title">狠 · 快 · 穩 · 智 · 準</h3><div class="fx-grid">${Object.entries(s.attr||{}).map(([k,v])=>`<div class="fx"><b>${k}</b><span>${v.toFixed(1)}</span></div>`).join('')}</div><p class="footer-note">狠：招式威力；準：命中；穩：HP；快：閃避／攻速；智：MP。五行：金→水→木→火→土→金。克制 ×1.20，被克 ×0.85。</p></div><div class="card"><h3 class="title">離線收益（最多 24 小時）</h3><p class="desc">離開遊戲後依最後存檔時間模擬掛機收益，單次最多計算 24 小時；回來後一次結算。</p>${G.offlineSummary?`<div class="feature-list"><div><b>上次結算：</b>${Math.floor(G.offlineSummary.seconds/3600)} 小時 ${Math.floor(G.offlineSummary.seconds%3600/60)} 分 · 擊殺 ${fmt(G.offlineSummary.kills)} · 經驗 +${fmt(G.offlineSummary.exp)} · 靈石 +${fmt(G.offlineSummary.stones)}</div><div><b>掛機掉落：</b>${(G.offlineSummary.itemDrops||[]).map(x=>x.name+' ×'+x.qty).join('、')||'無'}</div></div>`:'<p class="footer-note">尚無離線收益紀錄。</p>'}</div><div class="card"><h3 class="title">自動循環</h3><div class="feature-list"><div><b>① 掛機：</b>自動尋怪、選神通、服藥、掉寶，裝備由玩家手動穿戴／卸下。</div><div><b>② 推圖：</b>達到等級後 AI 自動前進高階狩獵區。</div><div><b>③ 副本／Boss：</b>可手動挑戰，也可由 AI 自動進場。</div><div><b>④ 離線：</b>離開後模擬掛機收益，回來直接領取。</div></div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="toggleAuto()">${G.auto.enabled?'停止掛機':'開始掛機'}</button><button class="smallbtn" onclick="goPanel('character')">角色／裝備</button><button class="smallbtn" onclick="goPanel('shop')">裝備／靈寵</button><button class="smallbtn" onclick="goPanel('forge')">去煉器</button></div></div><div class="card"><h3 class="title">${pt.icon} 靈寵 · ${pt.name}</h3><p class="desc">${pt.desc} · 攻 ${pt.atk} · 防 ${pt.def} · HP ${pt.hp} · 快 ${pt.fast} · 暴擊 ${(pt.crit*100).toFixed(1)}%</p><button class="smallbtn" onclick="goPanel('shop')">前往靈寵苑切換</button></div><div class="card"><h3 class="title">天賦／任務</h3><p class="desc">未分配天賦點：${G.talents.points||0} · 升級取得 1 點。</p>${quests}</div>`}
 
-function renderWorld(){const m=currentMap();const pool=mapPool();return `<div class="hunt" id="huntBox"><div class="huntline"><span class="foe lv-easy" id="huntFoe">${G.auto.enabled?'搜尋對手…':'尚未開戰'}</span><span class="monster-meta" id="huntBuffs">${G.player.classKey||''}</span></div><div class="foebar"><i id="huntBarFill" style="width:0%"></i></div><div class="monster-meta" id="huntMeta" style="margin-top:5px">${m.name} · ${m.zone}</div><div class="tickers"><div class="ticker">擊殺<b id="tkKill">${fmt(G.auto.stats.kills)}</b></div><div class="ticker">靈石<b id="tkStone">${fmt(G.auto.stats.stones)}</b></div><div class="ticker">掉落<b id="tkDrop">${fmt(G.auto.stats.drops)}</b></div></div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="toggleAuto()">${G.auto.enabled?'停止掛機':'開始掛機'}</button><button class="smallbtn" onclick="openBattleScreen()">戰鬥畫面</button><button class="smallbtn danger" onclick="flee()">撤退</button></div><div class="battlelog" id="huntLog"></div></div><div class="card"><h2 class="title">${m.name}</h2><p class="desc">${m.desc}</p><div class="maplist">${pool.map(x=>{const d=monsterData(x.name,x.level);return `<div class="map"><div class="line"><strong class="mapname">${x.name}</strong><span class="badge">Lv.${x.level} · ${elementName(d.element)}</span></div><div class="monster-meta">種族 ${d.race||'獸'} · 攻 ${fmt(d.atk)} · 防 ${fmt(d.def)} · HP ${fmt(d.maxHp)}</div></div>`}).join('')}</div></div>`}
+function renderWorld(){const m=currentMap();const pool=mapPool();return `<div class="hunt" id="huntBox"><div class="huntline"><span class="foe lv-easy" id="huntFoe">${G.auto.enabled?'搜尋對手…':'尚未開戰'}</span><span class="monster-meta" id="huntBuffs">${G.player.classKey||''}</span></div><div class="foebar"><i id="huntBarFill" style="width:0%"></i></div><div class="monster-meta" id="huntMeta" style="margin-top:5px">${m.name} · ${m.zone}</div><div class="tickers"><div class="ticker">擊殺<b id="tkKill">${fmt(G.auto.stats.kills)}</b></div><div class="ticker">靈石<b id="tkStone">${fmt(G.auto.stats.stones)}</b></div><div class="ticker">掉落<b id="tkDrop">${fmt(G.auto.stats.drops)}</b></div></div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="toggleAuto()">${G.auto.enabled?'停止掛機':'開始掛機'}</button><button class="smallbtn" onclick="openBattleScreen()">戰鬥畫面</button><button class="smallbtn danger" onclick="flee()">撤退</button><button class="smallbtn" onclick="openPotionMenu()">吃藥／治癒</button><div class="strategy-picker" id="strategy-picker"><div class="strategy-dropdown"><button type="button" class="strategy-trigger" id="strategyTrigger" onclick="toggleStrategyPicker(event)" ontouchstart="toggleStrategyPicker(event)" aria-haspopup="true" aria-expanded="false"><span class="strategy-icon" id="combatStrategyIcon"><span class="strat-glyph">${strategyGlyph(G.auto.combatStrategy||'balanced')}</span></span><span class="strategy-name">${COMBAT_STRATEGIES[G.auto.combatStrategy||'balanced'].name}</span><span class="strategy-arrow">▼</span></button><input type="hidden" id="auto-strategy-select" value="${G.auto.combatStrategy||'balanced'}"></div></div></div><div class="battlelog" id="huntLog"></div></div><div class="card"><h2 class="title">${m.name}</h2><p class="desc">${m.desc}</p><div class="maplist">${pool.map(x=>{const d=monsterData(x.name,x.level);return `<div class="map"><div class="line"><strong class="mapname">${x.name}</strong><span class="badge">Lv.${x.level} · ${elementName(d.element)}</span></div><div class="monster-meta">種族 ${d.race||'獸'} · 攻 ${fmt(d.atk)} · 防 ${fmt(d.def)} · HP ${fmt(d.maxHp)}</div></div>`}).join('')}</div></div>`}
 function inventorySellPrice(name){const d=EQUIP_DB[name];if(!d)return 0;return Math.max(1,Math.floor(Math.max(100,Math.round(Math.pow(d.level,1.58)*12))*.35))}
-function sellInventoryAll(name){const qty=Number(G.inventory[name]||0);if(!qty)return toast('沒有可販賣的物品');const price=inventorySellPrice(name);if(!price)return toast('此物品不可販賣');const total=qty*price;G.inventory[name]=0;if(G.inventoryInstances?.[name])G.inventoryInstances[name]=[];G.player.spiritStone+=total;save(true);closeInventoryDetail();toast(`全部賣出：${name} ×${qty}，獲得靈石 ${fmt(total)}`);renderAll()}
-function openInventoryDetail(name){const qty=Number(G.inventory[name]||0);if(qty<=0)return;const d=EQUIP_DB[name];const title=$('inventoryDetailTitle'),body=$('inventoryDetailBody');if(!title||!body)return;title.textContent=name;if(d){const q=G.inventoryQuality?.[name]||d.quality;const c=compareEquip(name);body.innerHTML=`<div class="card"><p class="desc">裝備：${SLOT_NAMES[d.slot]} · ${QUALITY[q]} · Lv.${d.level}</p><div class="inventory-detail-grid"><div class="stat">攻擊<em>${fmt(d.baseAtk)}</em></div><div class="stat">防禦<em>${fmt(d.baseDef)}</em></div><div class="stat">HP<em>${fmt(d.hp)}</em></div><div class="stat">MP<em>${fmt(d.mp)}</em></div></div><p class="desc" style="margin-top:7px">${Object.entries(d.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'} · 持有 ×${qty}</p>${c?`<p class="desc">與目前裝備比較：${c.cur?c.cur.name:'空'} · ${c.text}</p>`:''}<p class="footer-note">${d.source||'可由戰鬥掉落或商店取得。'}</p><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="equipItem('${name}',false,true);closeInventoryDetail();renderAll()">裝備</button><button class="smallbtn danger" onclick="sellInventoryAll('${name}')">販賣全部 ×${qty}（${fmt(inventorySellPrice(name)*qty)}）</button><button class="smallbtn" onclick="dismantleInventory('${name}');closeInventoryDetail()">分解 1 件</button></div></div>`}else{body.innerHTML=`<div class="card"><p class="desc">物品：${name}</p><p class="desc">持有數量：×${qty}</p><p class="footer-note">材料／道具，可用於商店、煉器或戰鬥消耗。</p></div>`}$('inventoryDetailModal').classList.add('show')}
+/* ===== [修改/鎖定] 全部販賣：批次過濾 locked + 一次確認 ===== */
+let pendingBatchSell=null;
+function sellAllItems(player){
+  const {targets,locked}=getSellCandidates();
+  const totalGold=targets.reduce((sum,x)=>sum+x.price,0);
+  if(!targets.length){
+    toast(locked.length?'沒有可販賣的物品（鎖定道具已跳過）':'沒有可販賣的物品');
+    return {soldCount:0,totalGold:0,skippedLocked:locked.length};
+  }
+  pendingBatchSell={targets,locked,totalGold};
+  const body=$('inventoryDecomposeBody');
+  if(body){
+    body.innerHTML=`<div class="card">
+      <p class="desc">將販賣道具總數：<b style="color:var(--gold2)">${targets.length}</b> 件</p>
+      <p class="desc">預計獲得：<b style="color:#f0dca8">${fmt(totalGold)}</b> 靈石</p>
+      <p class="footer-note" style="color:#f4cf67">已跳過 ${locked.length} 件鎖定道具</p>
+      <p class="footer-note">裝備中的道具不會列入批次販賣。</p>
+      <p style="color:#ff9d92;font-weight:800;margin:8px 0 0">警告：確認後將批次移除上述可販賣道具</p>
+      <div class="row" style="margin-top:9px"><button class="smallbtn danger" onclick="confirmBatchSell()">確認全部販賣</button></div>
+    </div>`;
+    $('inventoryDecomposeModal').classList.add('show');
+  }
+  return {soldCount:targets.length,totalGold,skippedLocked:locked.length};
+}
+function confirmBatchSell(){
+  const data=pendingBatchSell||getSellCandidates();
+  const targets=data.targets||[];
+  if(!targets.length){pendingBatchSell=null;closeInventoryDecompose();return toast('沒有可販賣的物品（鎖定道具已跳過）')}
+  const byName={};
+  for(const x of targets)(byName[x.name]??=[]).push(x);
+  let totalGold=0,soldCount=0;
+  for(const [name,list] of Object.entries(byName)){
+    const arr=G.inventoryInstances?.[name]||[];
+    const indexes=list.map(x=>x.index).sort((a,b)=>b-a);
+    for(const i of indexes){const it=arr[i];if(isLocked(it))continue;arr.splice(i,1);soldCount++;totalGold+=inventorySellPrice(name)}
+    G.inventory[name]=Math.max(0,Number(G.inventory[name]||0)-soldCountByName(list,name,arr));
+  }
+  // 依目前原架構重新以「剩餘數量」同步，避免舊存檔缺少 instance。
+  for(const name of Object.keys(byName)){
+    const remaining=G.inventoryInstances?.[name]?.length;
+    if(Number.isFinite(remaining)&&remaining>=0&&EQUIP_DB[name])G.inventory[name]=remaining;
+  }
+  G.player.spiritStone+=totalGold;
+  pendingBatchSell=null;save(true);closeInventoryDecompose();toast(`全部販賣完成：${soldCount} 件，獲得靈石 ${fmt(totalGold)}`);renderAll();
+  return {soldCount,totalGold};
+}
+function soldCountByName(list,name,arr){return list.filter(x=>x.name===name).length}
+function sellAll(inv){return sellAllItems(G)}
+function sellInventoryAll(){
+  return sellAllItems(G);
+}
+
+function openInventoryDetail(name){const qty=Number(G.inventory[name]||0);if(qty<=0)return;const d=EQUIP_DB[name];const title=$('inventoryDetailTitle'),body=$('inventoryDetailBody');if(!title||!body)return;title.textContent=name;if(d){const q=G.inventoryQuality?.[name]||d.quality;const c=compareEquip(name);body.innerHTML=`<div class="card"><p class="desc">裝備：${SLOT_NAMES[d.slot]} · ${QUALITY[q]} · Lv.${d.level}</p><div class="inventory-detail-grid"><div class="stat">攻擊<em>${fmt(d.baseAtk)}</em></div><div class="stat">防禦<em>${fmt(d.baseDef)}</em></div><div class="stat">HP<em>${fmt(d.hp)}</em></div><div class="stat">MP<em>${fmt(d.mp)}</em></div></div><p class="desc" style="margin-top:7px">${Object.entries(d.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'} · 持有 ×${qty}</p>${c?`<p class="desc">與目前裝備比較：${c.cur?c.cur.name:'空'} · ${c.text}</p>`:''}<p class="footer-note">${d.source||'可由戰鬥掉落或商店取得。'}</p><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="equipItem('${name}',false,true);closeInventoryDetail();renderAll()">裝備</button><button class="smallbtn danger" onclick="sellInventorySingle('${name}',0)">販賣 1 件（${fmt(inventorySellPrice(name))}）</button><button class="smallbtn danger" onclick="sellInventoryAll()">全部販賣</button><button class="smallbtn" onclick="dismantleInventory('${name}',0);closeInventoryDetail()">分解 1 件</button></div></div>`}else{body.innerHTML=`<div class="card"><p class="desc">物品：${name}</p><p class="desc">持有數量：×${qty}</p><p class="footer-note">材料／道具，可用於商店、煉器或戰鬥消耗。</p></div>`}$('inventoryDetailModal').classList.add('show')}
 function closeInventoryDetail(){$('inventoryDetailModal')?.classList.remove('show')}
 
-function renderInventory(){const names=Object.keys(G.inventory).filter(k=>G.inventory[k]>0);const equips=names.filter(n=>EQUIP_DB[n]).sort((a,b)=>(EQUIP_DB[a].level||0)-(EQUIP_DB[b].level||0));const mats=names.filter(n=>!EQUIP_DB[n]);const tab=window.inventoryTab||'all';const shown=tab==='all'?equips:equips.filter(n=>tab==='weapon'?EQUIP_DB[n].slot==='weapon':['helmet','armor','bracer','belt','shoes','necklace','ring','artifact','talisman'].includes(EQUIP_DB[n].slot));const eqHtml=shown.map(n=>{const d=EQUIP_DB[n],q=G.inventoryQuality?.[n]||d.quality;return `<div class="item" onclick="openInventoryDetail('${n}')" style="cursor:pointer"><div class="line"><strong class="quality-${q}">${n}</strong><span class="qty">×${G.inventory[n]}</span></div><div class="desc">${SLOT_NAMES[d.slot]} · ${QUALITY[q]} · Lv.${d.level} · 攻 ${fmt(d.baseAtk)} · 防 ${fmt(d.baseDef)} · ${Object.entries(d.attr).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')}</div>${equipCompareHtml(n)}<div class="row" style="margin-top:5px"><button class="smallbtn hot" onclick="event.stopPropagation();openInventoryDetail('${n}')">選擇</button></div></div>`}).join('');const matHtml=mats.map(n=>`<div class="item" onclick="openInventoryDetail('${n}')" style="cursor:pointer"><div class="line"><strong>${n}</strong><span class="qty">×${G.inventory[n]}</span></div><div class="desc">材料／道具 · 點選查看文字與說明</div></div>`).join('');return `<div class="card"><h2 class="title">背包</h2><div class="inventory-tabs"><button class="tab ${tab==='all'?'active':''}" onclick="inventoryTab='all';renderAll()">全部裝備</button><button class="tab ${tab==='weapon'?'active':''}" onclick="inventoryTab='weapon';renderAll()">武器</button><button class="tab ${tab==='armor'?'active':''}" onclick="inventoryTab='armor';renderAll()">防具</button><button class="tab ${tab==='item'?'active':''}" onclick="inventoryTab='item';renderAll()">物品</button></div><p class="footer-note">點選物品查看文字與說明；選擇裝備後可裝備、販賣全部或分解。販賣不包含身上已穿戴裝備。</p></div><div class="card"><h2 class="title">身上裝備</h2><div>${SLOT_ORDER.map(s=>{const it=G.equipment[s];return `<div class="item"><div class="line"><span class="equip-chip"><b>${SLOT_NAMES[s]}</b>${it?it.name+' +'+(it.enhance||0):'空'}</span>${it?`<button class="smallbtn danger" onclick="unequipItem('${s}')">卸下</button>`:''}</div>${it?`<div class="desc">攻 ${fmt(it.baseAtk)} · 防 ${fmt(it.baseDef)} · HP ${fmt(it.hp)} · MP ${fmt(it.mp)} · ${Object.entries(it.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'}</div>`:''}</div>`}).join('')}</div></div><div class="card"><h2 class="title">${tab==='item'?'物品欄':tab==='weapon'?'武器物品欄':tab==='armor'?'防具物品欄':'全部裝備物品欄'}</h2><div class="invgrid">${tab==='item'?matHtml:(eqHtml||'<p class="desc">尚無裝備。</p>')}</div></div>`}
+/* ===== [新增] 統一背包加入：stackable／maxStack／category 資料結構 ===== */
+function addItemToInventory(itemOrName,qty=1,options={}){
+  const item=typeof itemOrName==='string'?{id:itemOrName,name:itemOrName}:itemOrName||{};
+  const name=item.name||item.id;if(!name)return false;
+  qty=Math.max(0,Number(qty)||0);if(!qty)return false;
+  const meta=Object.assign({},getInventoryItemMeta(name,item),options);
+  G.inventory=G.inventory||{};G.inventoryInstances=G.inventoryInstances||{};
+  G.inventory[name]=Number(G.inventory[name]||0);
+  if(meta.stackable){
+    G.inventory[name]+=qty;
+    return true;
+  }
+  G.inventoryInstances[name]=G.inventoryInstances[name]||[];
+  for(let i=0;i<qty;i++){
+    const inst=JSON.parse(JSON.stringify(item));
+    inst.id=inst.id||name;inst.name=name;inst.stackable=false;inst.count=1;
+    inst.maxStack=1;inst.category=meta.category;inst.quality=inst.quality||meta.quality;inst.canDecompose=inst.canDecompose??meta.canDecompose;
+    G.inventoryInstances[name].push(inst);G.inventory[name]++;
+  }
+  return true;
+}
+/* ===== [修改] 背包：堆疊／分類／排序／Tooltip ===== */
+const INVENTORY_CATEGORY_LABELS={all:'全部',weapon:'武器',armor:'防具',accessory:'飾品',consumable:'消耗品',material:'材料',other:'其他'};
+const INVENTORY_QUALITY_RANK={white:1,green:2,blue:3,purple:4,gold:5};
+const INVENTORY_MAX_STACK=999;
 
-function renderSkills(){const equip=G.skills.equipped.map((id,i)=>Object.values(SKILLS).find(s=>s.id===id));const rows=SKILL_LIST.map(sk=>{const got=!!G.skills.learned[sk.id],eqIdx=G.skills.equipped.indexOf(sk.id);return `<div class="skill ${eqIdx>=0?'eqd':''}"><div class="line"><strong class="skill-name">${sk.name}</strong><span class="skill-tag">${typeName(sk.type)} · ${QUALITY[sk.q]} · Lv.${sk.lv}</span></div><div class="skill-info">倍率 ${(sk.r*100).toFixed(0)}% · ${elementName(sk.element)} · MP ${sk.mp||0}${sk.hpCost?' · HP消耗 '+Math.round(sk.hpCost*100)+'%':''} · ${sk.desc}<br><span class="muted">來源：${sk.src}</span></div><div class="row" style="margin-top:5px;align-items:center"><select class="smallbtn" style="padding:6px 8px" ${got?'':'disabled'} onchange="assignSkillSlot('${sk.id}',Number(this.value))"><option value="-1" ${eqIdx<0?'selected':''}>不上陣</option>${[0,1,2,3].map(i=>`<option value="${i}" ${eqIdx===i?'selected':''}>連招${i+1}</option>`).join('')}</select>${got?'':(sk.lv<=50?'<button class="smallbtn good" onclick="buySkill(\''+sk.id+'\')">研讀</button>':'<span class="skill-tag">怪物掉落</span>')}</div></div>`}).join('');return `<div class="card"><h2 class="title">神通／4槽連招</h2><p class="desc">全門派共用神通庫。可自由把已學招式放入 1～4 槽，戰鬥 AI 依槽位順序輪轉；五行克制、MP 與冷卻仍會即時判斷。</p><div class="combo-grid">${equip.map((sk,i)=>`<div class="combo-slot ${sk?'active':''}"><b>連招 ${i+1}</b><strong>${sk?sk.name:'空槽'}</strong><span>${sk?elementName(sk.element)+' · MP '+(sk.mp||0):'等待配置'}</span></div>`).join('')}</div><div class="dungeon-note">連招：1 → 2 → 3 → 4 循環。當當前槽位因 MP／冷卻不可用時，AI 會往後尋找下一招，不會卡住。</div></div><div class="skilllist">${rows}</div>`}
+function inventoryQualityRank(q){return INVENTORY_QUALITY_RANK[q]||1}
+function inventoryCategory(name,item){
+  const d=item||EQUIP_DB[name];
+  if(d?.slot){
+    if(d.slot==='weapon')return 'weapon';
+    if(['helmet','armor','bracer','belt','shoes'].includes(d.slot))return 'armor';
+    if(['necklace','ring','artifact','talisman'].includes(d.slot))return 'accessory';
+  }
+  const market=MARKET.find(x=>x[0]===name);
+  if(market?.[2]==='potion')return 'consumable';
+  if(market?.[2]==='material'||market?.[2]==='gem')return 'material';
+  if(/石|鐵|晶|玉|草|丹|血珀|材料/.test(name))return 'material';
+  if(/符|藥|水|丹/.test(name))return 'consumable';
+  return 'other';
+}
+function getInventoryItemMeta(name,instance=null){
+  const d=instance||EQUIP_DB[name]||{};
+  const q=instance?.quality||G.inventoryQuality?.[name]||d.quality||'white';
+  const category=instance?.category||d.category||inventoryCategory(name,d);
+  const isEquip=!!EQUIP_DB[name];
+  return {
+    id:instance?.id||name,name:instance?.name||name,category,
+    stackable:instance?.stackable??(!isEquip),
+    count:1,maxStack:Number(instance?.maxStack)||INVENTORY_MAX_STACK,
+    quality:q,qualityRank:inventoryQualityRank(q),
+    level:Number(instance?.level||d.level)||0,
+    canDecompose:instance?.canDecompose??(isEquip),
+    locked:!!instance?.locked,questItem:!!instance?.questItem,
+    requiredLevel:Number(instance?.requiredLevel||d.level)||0,
+    baseAtk:Number(instance?.baseAtk??d.baseAtk)||0,
+    baseDef:Number(instance?.baseDef??d.baseDef)||0,
+    hp:Number(instance?.hp??d.hp)||0,mp:Number(instance?.mp??d.mp)||0,
+    attr:instance?.attr||d.attr||{},
+    extraAttr:instance?.extraAttr||instance?.affix||d.extraAttr||null,
+    setEffect:instance?.setEffect||d.setEffect||null,
+    description:instance?.description||instance?.flavorText||d.description||d.flavorText||d.source||'可由戰鬥掉落、商店或系統取得。'
+  };
+}
+function ensureInventoryInstances(){
+  G.inventoryInstances=G.inventoryInstances||{};
+  for(const name of Object.keys(G.inventory||{})){
+    const qty=Math.max(0,Number(G.inventory[name]||0));
+    if(!EQUIP_DB[name])continue;
+    const arr=G.inventoryInstances[name]=G.inventoryInstances[name]||[];
+    while(arr.length<qty){
+      const it=makeEquip(name);
+      if(it)arr.push(it);else break;
+    }
+    if(arr.length>qty)arr.length=qty;
+  }
+}
+function inventorySlotEntries(){
+  ensureInventoryInstances();
+  const out=[];
+  for(const name of Object.keys(G.inventory||{})){
+    const qty=Math.max(0,Number(G.inventory[name]||0));
+    if(!qty)continue;
+    const meta=getInventoryItemMeta(name);
+    if(meta.stackable){
+      for(let offset=0;offset<qty;offset+=meta.maxStack){
+        out.push({name,instance:null,count:Math.min(meta.maxStack,qty-offset),offset,stackIndex:Math.floor(offset/meta.maxStack)});
+      }
+    }else{
+      const arr=G.inventoryInstances?.[name]||[];
+      for(let i=0;i<qty;i++)out.push({name,instance:arr[i]||null,count:1,offset:i});
+    }
+  }
+  return out;
+}
+function inventoryCategoryCounts(){
+  const counts={all:0,weapon:0,armor:0,accessory:0,consumable:0,material:0,other:0};
+  for(const slot of inventorySlotEntries()){
+    const cat=inventoryCategory(slot.name,slot.instance);
+    counts[cat]+=slot.count;
+    counts.all+=slot.count;
+  }
+  return counts;
+}
+function inventorySortEntries(entries){
+  const mode=G.setting?.inventorySort||'default';
+  return entries.sort((a,b)=>{
+    const A=getInventoryItemMeta(a.name,a.instance),B=getInventoryItemMeta(b.name,b.instance);
+    if(mode==='quality')return B.qualityRank-A.qualityRank||B.level-A.level||A.id.localeCompare(B.id);
+    if(mode==='level')return B.level-A.level||B.qualityRank-A.qualityRank||A.id.localeCompare(B.id);
+    if(mode==='quantity')return B.count-A.count||B.qualityRank-A.qualityRank||A.id.localeCompare(B.id);
+    if(mode==='name')return A.name.localeCompare(B.name);
+    return A.category.localeCompare(B.category)||B.qualityRank-A.qualityRank||B.level-A.level||A.id.localeCompare(B.id);
+  });
+}
+function inventorySetCategory(v){G.setting.inventoryCategory=v;save(true);renderAll()}
+function inventorySetSort(v){G.setting.inventorySort=v;save(true);renderAll()}
+function inventoryTooltipData(slot){
+  const m=getInventoryItemMeta(slot.name,slot.instance);
+  const attrs=Object.entries(m.attr||{}).filter(([,v])=>Number(v));
+  const extra=typeof m.extraAttr==='object'
+    ? Object.entries(m.extraAttr).filter(([,v])=>v).map(([k,v])=>`${k}+${typeof v==='object'?(v.value??''):v}`).join('、')
+    : String(m.extraAttr||'');
+  const setText=typeof m.setEffect==='string'?m.setEffect:(m.setEffect?JSON.stringify(m.setEffect):'');
+  return `<div class="it-name quality-${m.quality}">${m.name}</div>
+    <div class="it-meta">${QUALITY[m.quality]||'凡品'} · ${INVENTORY_CATEGORY_LABELS[m.category]||m.category}${m.level?` · Lv.${m.level}`:''}</div>
+    <div class="it-section"><b>等級需求：</b>${m.requiredLevel||'無'}</div>
+    <div class="it-section"><b>主屬性：</b>${[
+      m.baseAtk?`攻擊 +${fmt(m.baseAtk)}`:'',
+      m.baseDef?`防禦 +${fmt(m.baseDef)}`:'',
+      m.hp?`HP +${fmt(m.hp)}`:'',
+      m.mp?`MP +${fmt(m.mp)}`:''
+    ].filter(Boolean).join('、')||attrs.map(([k,v])=>`${k}+${v}`).join('、')||'無'}</div>
+    ${extra?`<div class="it-section"><b>附加屬性：</b>${extra}</div>`:''}
+    ${setText?`<div class="it-section"><b>套裝效果：</b>${setText}</div>`:''}
+    <div class="it-section"><b>數量：</b>×${slot.count} / ${m.maxStack}</div>
+    <div class="it-section">${m.description}</div>
+    <div class="it-section"><b>操作：</b>右鍵分解 / 雙擊使用</div>`;
+}
+function inventoryTooltipNode(){return $('inventoryTooltip')}
+let inventoryTooltipTimer=0,inventoryTooltipRaf=0,inventoryTooltipPoint={x:0,y:0};
+function hideInventoryTooltip(){
+  clearTimeout(inventoryTooltipTimer);
+  const tip=inventoryTooltipNode();if(!tip)return;
+  tip.classList.remove('show');tip.setAttribute('aria-hidden','true');
+}
+function moveInventoryTooltip(e){
+  inventoryTooltipPoint={x:e.clientX,y:e.clientY};
+  if(inventoryTooltipRaf)return;
+  inventoryTooltipRaf=requestAnimationFrame(()=>{
+    inventoryTooltipRaf=0;
+    const tip=inventoryTooltipNode();if(!tip||!tip.classList.contains('show'))return;
+    const pad=10,w=tip.offsetWidth,h=tip.offsetHeight;
+    let x=inventoryTooltipPoint.x+14,y=inventoryTooltipPoint.y+14;
+    if(x+w>innerWidth-pad)x=inventoryTooltipPoint.x-w-14;
+    if(y+h>innerHeight-pad)y=inventoryTooltipPoint.y-h-14;
+    x=Math.max(pad,Math.min(x,innerWidth-w-pad));y=Math.max(pad,Math.min(y,innerHeight-h-pad));
+    tip.style.transform=`translate3d(${x}px,${y}px,0)`;
+  });
+}
+function showInventoryTooltip(slot,e){
+  clearTimeout(inventoryTooltipTimer);
+  const tip=inventoryTooltipNode();if(!tip)return;
+  tip.innerHTML=inventoryTooltipData(slot);tip.classList.add('show');tip.setAttribute('aria-hidden','false');
+  moveInventoryTooltip(e);
+}
+function bindInventoryTooltips(){
+  const source=window.__inventoryTooltipSlots||inventorySlotEntries();
+  document.querySelectorAll('.inventory-slot').forEach(el=>{
+    const data=source[Number(el.dataset.inventoryIndex)];
+    if(!data)return;
+    el.onmouseenter=e=>{clearTimeout(inventoryTooltipTimer);inventoryTooltipTimer=setTimeout(()=>showInventoryTooltip(data,e),300)};
+    el.onmousemove=moveInventoryTooltip;
+    el.onmouseleave=hideInventoryTooltip;
+    el.ontouchstart=e=>{
+      clearTimeout(inventoryTooltipTimer);
+      const t=e.touches?.[0];if(!t)return;
+      inventoryTooltipTimer=setTimeout(()=>showInventoryTooltip(data,t),500);
+    };
+    el.ontouchend=hideInventoryTooltip;
+    el.ontouchcancel=hideInventoryTooltip;
+  });
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.inventory-slot'))hideInventoryTooltip()});
+document.addEventListener('contextmenu',e=>{if(e.target.closest('.inventory-slot')){e.preventDefault();hideInventoryTooltip()}});
+function renderInventory(){
+  const tab=G.setting?.inventoryCategory||'all', counts=inventoryCategoryCounts();
+  let entries=inventorySlotEntries().filter(x=>tab==='all'||inventoryCategory(x.name,x.instance)===tab);
+  entries=inventorySortEntries(entries);
+  const catTabs=Object.entries(INVENTORY_CATEGORY_LABELS).map(([k,label])=>`<button class="tab ${tab===k?'active':''}" onclick="inventorySetCategory('${k}')">${label} (${fmt(counts[k]||0)})</button>`).join('');
+  window.__inventoryTooltipSlots=entries.slice();
+  const rows=entries.map((slot,idx)=>{
+    const m=getInventoryItemMeta(slot.name,slot.instance),q=m.quality,d=m;
+    const equip=m.category==='weapon'||m.category==='armor'||m.category==='accessory';
+    const displayDesc=equip
+      ? `${SLOT_NAMES[EQUIP_DB[slot.name]?.slot]||'裝備'} · ${QUALITY[q]||'凡品'} · Lv.${d.level} · 攻 ${fmt(d.baseAtk)} · 防 ${fmt(d.baseDef)} · ${Object.entries(d.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'}`
+      : `${INVENTORY_CATEGORY_LABELS[m.category]||'其他'} · ${d.description}`;
+    const slotLocked=m.locked||isLocked(slot.instance)||(!slot.instance&&getStackLock(slot.name,slot.stackIndex??slot.offset??0));
+    slot.locked=!!slotLocked;
+    return `<div class="item inventory-slot ${m.stackable?'':'nonstackable'} ${slot.locked?'is-locked':''}" data-inventory-index="${idx}" oncontextmenu="toggleInventorySlotLock(${idx},event)" ondblclick="inventoryUseHint('${slot.name.replace(/'/g,"\\'")}')">
+      <button type="button" class="inventory-lock-btn" title="${slot.locked?'解鎖':'鎖定'}" onclick="event.preventDefault();event.stopPropagation();toggleInventorySlotLock(${idx},event)">${slot.locked?'🔒':'🔓'}</button>
+      <div class="line"><strong class="quality-${q}">${slot.name}</strong><span class="qty">×${slot.count}</span></div>
+      <div class="desc">${displayDesc}</div>
+      <div class="slot-stack">${m.stackable?`堆疊 ${slot.count}/${m.maxStack}`:'單件物品'}${m.locked?' · <span class="slot-lock">已鎖定</span>':''}</div>
+      ${equip?`${equipCompareHtml(slot.name)}`:''}
+      <div class="row" style="margin-top:5px"><button class="smallbtn hot" onclick="event.stopPropagation();openInventoryDetail('${slot.name.replace(/'/g,"\\'")}')">選擇</button></div>
+    </div>`;
+  }).join('');
+  const totalSlots=inventorySlotEntries().length;
+  setTimeout(bindInventoryTooltips,0);
+  return `<div class="card"><h2 class="title">背包</h2>
+    <div class="inventory-category-tabs">${catTabs}</div>
+    <div class="inventory-feature-tools">
+      <select onchange="inventorySetSort(this.value)">
+        <option value="default" ${G.setting.inventorySort==='default'?'selected':''}>預設：分類／品質／等級／ID</option>
+        <option value="quality" ${G.setting.inventorySort==='quality'?'selected':''}>排序：品質</option>
+        <option value="level" ${G.setting.inventorySort==='level'?'selected':''}>排序：等級</option>
+        <option value="quantity" ${G.setting.inventorySort==='quantity'?'selected':''}>排序：數量</option>
+        <option value="name" ${G.setting.inventorySort==='name'?'selected':''}>排序：名稱</option>
+      </select>
+      <button class="smallbtn" onclick="sellInventoryAll()">全部販賣</button>
+      <button class="smallbtn inventory-decompose-btn" onclick="openInventoryDecompose()">全部分解</button>
+    </div>
+    <p class="footer-note">共 ${totalSlots} 格；可堆疊道具同類合併，不可堆疊裝備每件獨立一格。分類切換只過濾目前背包視圖。</p>
+  </div>
+  <div class="card"><h2 class="title">身上裝備</h2><div>${SLOT_ORDER.map(s=>{const it=G.equipment[s];return `<div class="item"><div class="line"><span class="equip-chip"><b>${SLOT_NAMES[s]}</b>${it?it.name+' +'+(it.enhance||0):'空'}</span>${it?`<button class="smallbtn danger" onclick="unequipItem('${s}')">卸下</button>`:''}</div>${it?`<div class="desc">攻 ${fmt(it.baseAtk)} · 防 ${fmt(it.baseDef)} · HP ${fmt(it.hp)} · MP ${fmt(it.mp)} · ${Object.entries(it.attr||{}).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'}</div>`:''}</div>`}).join('')}</div></div>
+  <div class="card"><h2 class="title">${INVENTORY_CATEGORY_LABELS[tab]||'全部'}物品欄</h2><div class="invgrid">${rows||'<p class="desc">目前沒有符合此分類的物品。</p>'}</div></div>`;
+}
+function inventoryUseHint(name){toast(`${name}：目前版本保留既有物品使用流程。`)}
+
+function renderSkills(){const equip=G.skills.equipped.map((id,i)=>Object.values(SKILLS).find(s=>s.id===id));const buffEquip=(G.skills.buffEquipped||[null,null]).map(id=>Object.values(SKILLS).find(s=>s.id===id));const rows=SKILL_LIST.map(sk=>{const got=!!G.skills.learned[sk.id],eqIdx=G.skills.equipped.indexOf(sk.id),isBuff=isBuffSkill(sk),isStatus=isStatusSkill(sk),buffIdx=isBuff?(G.skills.buffEquipped||[]).indexOf(sk.id):-1;const selectors=[];if(!isBuff&&!isStatus)selectors.push(`<select class="smallbtn" style="padding:6px 8px" ${got?'':'disabled'} onchange="assignSkillSlot('${sk.id}',Number(this.value))"><option value="-1" ${eqIdx<0?'selected':''}>不上陣</option>${[0,1,2,3].map(i=>`<option value="${i}" ${eqIdx===i?'selected':''}>連招${i+1}</option>`).join('')}</select>`);if(isBuff)selectors.push(`<select class="smallbtn" style="padding:6px 8px" ${got?'':'disabled'} onchange="assignBuffSlot('${sk.id}',Number(this.value))"><option value="-1" ${buffIdx<0?'selected':''}>增益不上陣</option>${[0,1].map(i=>`<option value="${i}" ${buffIdx===i?'selected':''}>增益槽${i+1}</option>`).join('')}</select>`);if(isStatus)selectors.push(`<span class="skill-tag">${got?'掛機自動施放（依冷卻／MP自動輪詢）':'尚未習得'}</span>`);return `<div class="skill ${eqIdx>=0||buffIdx>=0||(isStatus&&got)?'eqd':''}"><div class="line"><strong class="skill-name">${sk.name}</strong><span class="skill-tag">${typeName(sk.type)} · ${QUALITY[sk.q]} · Lv.${sk.lv}</span></div><div class="skill-info">倍率 ${(sk.r*100).toFixed(0)}% · ${elementName(sk.element)} · MP ${sk.mp||0}${sk.hpCost?' · HP消耗 '+Math.round(sk.hpCost*100)+'%':''} · ${sk.desc}<br><span class="muted">來源：${sk.src}</span></div><div class="row" style="margin-top:5px;align-items:center;flex-wrap:wrap;gap:6px">${selectors.join('')}${got?'':(sk.lv<=50?'<button class="smallbtn good" onclick="buySkill(\''+sk.id+'\')">研讀</button>':'<span class="skill-tag">怪物掉落</span>')}</div></div>`}).join('');return `<div class="card"><h2 class="title">神通／4槽連招</h2><p class="desc">全門派共用神通庫，但僅限武學攻擊招式（不含增益／狀態類）。可自由把已學招式放入 1～4 槽，戰鬥 AI 依槽位順序輪轉；五行克制、MP 與冷卻仍會即時判斷。</p><div class="combo-grid">${equip.map((sk,i)=>`<div class="combo-slot ${sk?'active':''}"><b>連招 ${i+1}</b><strong>${sk?sk.name:'空槽'}</strong><span>${sk?elementName(sk.element)+' · MP '+(sk.mp||0):'等待配置'}</span></div>`).join('')}</div><div class="dungeon-note">連招：1 → 2 → 3 → 4 循環。當當前槽位因 MP／冷卻不可用時，AI 會往後尋找下一招，不會卡住。增益／狀態類神通不可放入本連招（見下方獨立分類）。</div></div><div class="card"><h2 class="title">增益神通／2槽連招</h2><p class="desc">放置提升出手速度（haste）或減傷姿態（guard）類神通，僅作用於角色自身。掛機時 AI 會依冷卻與 MP 狀況自動輪詢施放；不可與神通／4槽連招混用同一槽位系統。</p><div class="combo-grid combo-grid-2">${buffEquip.map((sk,i)=>`<div class="combo-slot ${sk?'active':''}"><b>增益 ${i+1}</b><strong>${sk?sk.name:'空槽'}</strong><span>${sk?'MP '+(sk.mp||0):'等待配置'}</span></div>`).join('')}</div></div><div class="card"><h2 class="title">狀態神通（自動）</h2><p class="desc">回復氣血（heal）與淨化異常（cleanse）類神通不需手動配槽：只要習得，掛機時 AI 會依角色氣血比例、異常狀態、冷卻與 MP 自動輪詢施放。</p></div><div class="skilllist">${rows}</div>`}
 function buySkill(id){const sk=Object.values(SKILLS).find(s=>s.id===id);if(!sk)return;if(sk.lv>50)return toast('Lv.51以上招式只能由怪物掉落');if(G.player.level<sk.lv)return toast(`需要 Lv.${sk.lv}`);if(G.player.spiritStone<Math.max(60,sk.lv*18))return toast('靈石不足');G.player.spiritStone-=Math.max(60,sk.lv*18);learnSkill(sk.name);renderAll()}
 function assignSkillSlot(id,slot){const sk=Object.values(SKILLS).find(s=>s.id===id);if(!sk)return;slot=Number(slot);G.skills.equipped=Array.isArray(G.skills.equipped)?G.skills.equipped.slice(0,4):[null,null,null,null];while(G.skills.equipped.length<4)G.skills.equipped.push(null);for(let i=0;i<4;i++)if(G.skills.equipped[i]===id)G.skills.equipped[i]=null;if(slot>=0&&slot<4){const old=G.skills.equipped[slot];if(old&&old!==id){const oldIdx=G.skills.equipped.indexOf(old);if(oldIdx>=0)G.skills.equipped[oldIdx]=null}G.skills.equipped[slot]=id}save(true);renderAll()}
+function isBuffSkill(sk){return !!sk&&sk.type==='body'&&(sk.haste>0||sk.guard>0)}
+function isStatusSkill(sk){return !!sk&&sk.type==='body'&&(sk.heal>0||sk.cleanse===true)}
+function assignBuffSlot(id,slot){const sk=Object.values(SKILLS).find(s=>s.id===id);if(!sk||!isBuffSkill(sk))return;slot=Number(slot);G.skills.buffEquipped=Array.isArray(G.skills.buffEquipped)?G.skills.buffEquipped.slice(0,2):[null,null];while(G.skills.buffEquipped.length<2)G.skills.buffEquipped.push(null);for(let i=0;i<2;i++)if(G.skills.buffEquipped[i]===id)G.skills.buffEquipped[i]=null;if(slot>=0&&slot<2){const old=G.skills.buffEquipped[slot];if(old&&old!==id){const oldIdx=G.skills.buffEquipped.indexOf(old);if(oldIdx>=0)G.skills.buffEquipped[oldIdx]=null}G.skills.buffEquipped[slot]=id}save(true);renderAll()}
 function equipSkill(id){const idx=(G.skills.equipped||[]).indexOf(id);if(idx>=0){assignSkillSlot(id,-1);return}const slot=(G.skills.equipped||[]).findIndex(x=>!x);assignSkillSlot(id,slot<0?0:slot)}
 function renderShop(){const L=G.player.level;const all=EQUIP_NAMES.slice().filter(n=>EQUIP_DB[n].level<=50).sort((a,b)=>EQUIP_DB[a].level-EQUIP_DB[b].level);const weapons=all.filter(n=>EQUIP_DB[n].slot==='weapon');const armor=all.filter(n=>EQUIP_DB[n].slot!=='weapon');const equipCard=n=>{const d=EQUIP_DB[n],locked=L<d.level,cost=Math.max(100,Math.round(Math.pow(d.level,1.58)*12));return `<div class="shopitem"><div class="line"><strong class="quality-${d.quality}">${d.slot==='weapon'?'⚔':'🛡'} ${n}</strong><span class="price">${fmt(cost)}</span></div><div class="desc">Lv.${d.level} · ${SLOT_NAMES[d.slot]} · 五行 ${elementName(d.element)} · 攻 ${fmt(d.baseAtk)} · 防 ${fmt(d.baseDef)} · HP ${fmt(d.hp)}<br>${Object.entries(d.attr).filter(([,v])=>v).map(([k,v])=>k+'+'+v).join('、')||'基礎屬性'}<br><span class="muted">${d.source}</span></div><button class="smallbtn ${locked?'':'good'}" style="margin-top:5px" ${locked?'disabled':''} onclick="buyEquip('${n}')">${locked?'Lv.'+d.level+'解鎖':'購買'}</button></div>`};const starter=`<div class="shopgrid">${Object.values(BASIC_EQUIP).map(d=>`<div class="shopitem"><div class="line"><strong>${d.name}</strong><span class="price">50</span></div><div class="desc">新手通用裝 · ${SLOT_NAMES[d.slot]}</div><button class="smallbtn" onclick="G.player.spiritStone>=50&&(G.player.spiritStone-=50,G.inventory['${d.name}']=(G.inventory['${d.name}']||0)+1,renderAll())">購買</button></div>`).join('')}</div>`;const matShop=(G.market||[]).map((x,i)=>`<div class="shopitem"><div class="line"><strong>${x.name}</strong><span class="price">${fmt(x.price)}</span></div><div class="desc">${x.type}</div><button class="smallbtn" onclick="buyShopItem('${x.type}',${i})">購買</button></div>`).join('');const petShop=Object.values(PET_DB).map(x=>`<div class="pet ${G.pets.equipped===x.name?'equipped':''}"><div class="peticon">${x.icon}</div><div class="petname">${x.name}</div><div class="desc">${x.desc}<br>攻 ${x.atk} · 防 ${x.def} · HP ${x.hp} · 快 ${x.fast} · 暴擊 ${(x.crit*100).toFixed(1)}%</div><button class="smallbtn" style="margin-top:5px" onclick="buyPet('${x.name}')">${G.pets.owned.includes(x.name)?(G.pets.equipped===x.name?'已出戰':'出戰'):(x.cost?'購買 '+fmt(x.cost):'領取')}</button></div>`).join('');return `<div class="card"><h2 class="title">武器舖</h2><p class="desc">仿官方商鋪交易：商店只開放 Lv.1～50 武器；Lv.51 以上不販售，改由江湖打怪掉落。</p><div class="shopgrid">${weapons.map(equipCard).join('')}</div></div><div class="card"><h2 class="title">防具店</h2><p class="desc">頭盔、衣服、護腕、腰帶、鞋、項鍊、戒指、法寶、護符；商店開放至 Lv.50，50級以上裝備靠怪物掉寶取得。</p><div class="shopgrid">${armor.map(equipCard).join('')}</div></div><div class="card"><h2 class="title">Lv.50以上掉寶</h2><p class="desc">Lv.51+ 裝備不進商店名單。AI 掛機會依官方怪物資料尋找相應掉落，取得後自動比較、穿戴；3.0 怪物與裝備資料沿用官方掉落表。</p><div class="feature-list"><div><b>掉寶：</b>水鬼～靈甲鬼等官方 3.0 怪物依等級逐步取得高階裝備。</div><div><b>職業武器：</b>烈火、八步伏魔槍、絕煞、太乙維持高階取得／打造，不在 Lv.50 商店販售。</div></div></div><div class="card"><h2 class="title">新手雜貨</h2>${starter}</div><div class="card"><h2 class="title">材料商</h2><div class="shopgrid">${matShop}</div></div><div class="card"><h2 class="title">靈寵苑</h2><p class="desc">全職通用；靈寵提供被動屬性並在戰鬥中自動協戰。</p><div class="petlist">${petShop}</div></div>`}
 function enhanceSelected(slot){if(!slot||!G.equipment[slot])return toast('請先選擇已裝備部位');forgeEnhance(slot)}
 function enhanceSelectedToAvailable(slot){const it=G.equipment[slot];if(!it)return toast('請先選擇已裝備部位');let count=0;while((it.enhance||0)<15){const cost=30000*((it.enhance||0)+1);if(G.player.spiritStone<cost)break;forgeEnhance(slot);count++}toast(count?`${it.name} 共強化 ${count} 次`:'靈石不足或已達 +15')}
 
-function renderForge(){const enhanceTarget=window.enhanceMenuSlot||SLOT_ORDER.find(s=>G.equipment[s])||SLOT_ORDER[0];const targetIt=G.equipment[enhanceTarget];const enhanceMenu=`<div class="card"><h3 class="title">強化選單</h3><p class="desc">選擇身上裝備後直接強化；每次強化消耗 30000 × 下一強化等級靈石，最高 +15（+1~+6 成功率 100%，+7~+13 成功率 33.3%，+14~+15 成功率 16.7%）。</p><div class="enhance-menu"><select onchange="enhanceMenuSlot=this.value;renderAll()">${SLOT_ORDER.map(s=>`<option value="${s}" ${enhanceTarget===s?'selected':''}>${SLOT_NAMES[s]}${G.equipment[s]?' · '+G.equipment[s].name+' +'+(G.equipment[s].enhance||0):' · 空'}</option>`).join('')}</select><button class="smallbtn hot" ${targetIt?'':'disabled'} onclick="enhanceSelected('${enhanceTarget}')">強化 +1</button><button class="smallbtn" ${targetIt?'':'disabled'} onclick="enhanceSelectedToAvailable('${enhanceTarget}')">強化至可用</button></div>${targetIt?`<p class="footer-note">目前 +${targetIt.enhance||0} → 下一級 +${(targetIt.enhance||0)+1}，需要靈石 ${fmt(30000*((targetIt.enhance||0)+1))}。</p>`:'<p class="footer-note">目前沒有可強化裝備。</p>'}</div>`;const eq=SLOT_ORDER.map(s=>({slot:s,it:G.equipment[s]}));const equipHtml=eq.map(x=>`<div class="stat" style="display:block"><div class="line"><strong>${SLOT_NAMES[x.slot]}</strong><span>${x.it?x.it.name+' +'+(x.it.enhance||0):'空'}</span></div>${x.it?`<div class="desc">精煉 ${x.it.refine||0}% · 孔 ${x.it.sockets||0}/3 · 詞條 ${x.it.affix?x.it.affix.key+'+'+x.it.affix.value:'—'}${x.it.gems?.length?' · '+x.it.gems.join('、'):''}</div><div class="row" style="margin-top:5px"><button class="smallbtn" onclick="forgeEnhance('${x.slot}')">強化</button><button class="smallbtn" onclick="forgeRefine('${x.slot}')">精煉</button><button class="smallbtn" onclick="forgeSocket('${x.slot}')">開孔</button><button class="smallbtn" onclick="forgeReroll('${x.slot}')">洗煉</button></div>`:''}</div>`).join('');const target=G.equipment.weapon?'weapon':SLOT_ORDER.find(s=>G.equipment[s])||'weapon';const gemBtns=G.equipment[target]?(GEM_KEYS.map(k=>`<button class="smallbtn" onclick="forgeGem('${target}','${k}')">${k} (${G.inventory[k]||0})</button>`).join('')+OFFICIAL.blood.filter(k=>(G.inventory[k]||0)>0).map(k=>`<button class="smallbtn" onclick="forgeGem('${target}','${k}')">${k} (${G.inventory[k]||0})</button>`).join('')):'先裝備物品';const synth=EQUIP_NAMES.filter(n=>G.inventory[n]&&G.inventory[n]>=1).slice(0,24).map(n=>`<button class="smallbtn" onclick="synthesize('${n}')">3合1：${n}</button>`).join('');return enhanceMenu+`<div class="card"><h2 class="title">煉器殿 · 10部位</h2><p class="desc">八大功能完整開啟：強化、精煉、開孔、鑲嵌靈石、五行靈石、洗煉、分解、合成。</p><div class="statgrid">${equipHtml}</div></div><div class="card"><h3 class="title">靈石鑲嵌</h3><div class="row">${gemBtns}</div><p class="footer-note">每件最多 3 孔；攻擊／防禦／氣血靈石與五行靈石皆為通用材料。</p></div><div class="card"><h3 class="title">裝備合成</h3><p class="desc">選一件現有裝備作為目標，消耗任意 3 件同品質、同部位裝備。</p><div class="row">${synth||'背包沒有可合成的裝備'}</div></div>`}
+function renderForge(){const enhanceTarget=window.enhanceMenuSlot||SLOT_ORDER.find(s=>G.equipment[s])||SLOT_ORDER[0];const targetIt=G.equipment[enhanceTarget];const enhanceMenu=`<div class="card"><h3 class="title">強化選單</h3><p class="desc">選擇身上裝備後直接強化；每次強化消耗 30000 × 下一強化等級靈石，最高 +15（+1~+6 成功率 100%，+7~+13 成功率 33.3%，+14~+15 成功率 16.7%）。</p><div class="enhance-menu"><select onchange="enhanceMenuSlot=this.value;renderAll()">${SLOT_ORDER.map(s=>`<option value="${s}" ${enhanceTarget===s?'selected':''}>${SLOT_NAMES[s]}${G.equipment[s]?' · '+G.equipment[s].name+' +'+(G.equipment[s].enhance||0):' · 空'}</option>`).join('')}</select><button class="smallbtn hot" ${targetIt?'':'disabled'} onclick="enhanceSelected('${enhanceTarget}')">強化 +1</button><button class="smallbtn" ${targetIt?'':'disabled'} onclick="enhanceSelectedToAvailable('${enhanceTarget}')">強化至可用</button></div>${targetIt?`<p class="footer-note">目前 +${targetIt.enhance||0} → 下一級 +${(targetIt.enhance||0)+1}，需要靈石 ${fmt(30000*((targetIt.enhance||0)+1))}。</p>`:'<p class="footer-note">目前沒有可強化裝備。</p>'}</div>`;const eq=SLOT_ORDER.map(s=>({slot:s,it:G.equipment[s]}));const equipHtml=eq.map(x=>`<div class="stat" style="display:block"><div class="line"><strong>${SLOT_NAMES[x.slot]}</strong><span>${x.it?x.it.name+' +'+(x.it.enhance||0):'空'}</span></div>${x.it?`<div class="desc">精煉 ${x.it.refine||0}% · 孔 ${x.it.sockets||0}/3 · 詞條 ${x.it.affix?x.it.affix.key+'+'+x.it.affix.value:'—'}${x.it.gems?.length?' · '+x.it.gems.join('、'):''}</div><div class="row" style="margin-top:5px"><button class="smallbtn" onclick="forgeEnhance('${x.slot}')">強化</button><button class="smallbtn" onclick="forgeRefine('${x.slot}')">精煉</button><button class="smallbtn" onclick="forgeSocket('${x.slot}')">開孔</button><button class="smallbtn" onclick="forgeReroll('${x.slot}')">洗煉</button></div>`:''}</div>`).join('');const gemTarget=window.gemMenuSlot||(G.equipment.weapon?'weapon':SLOT_ORDER.find(s=>G.equipment[s]))||'weapon';const gemIt=G.equipment[gemTarget];const gemSlotSelect=`<select onchange="gemMenuSlot=this.value;renderAll()">${SLOT_ORDER.map(s=>`<option value="${s}" ${gemTarget===s?'selected':''}>${SLOT_NAMES[s]}${G.equipment[s]?' · '+G.equipment[s].name+'（孔 '+(G.equipment[s].gems?.length||0)+'/'+(G.equipment[s].sockets||0)+'）':' · 空'}</option>`).join('')}</select>`;const gemBtns=gemIt?((gemIt.sockets||0)<=((gemIt.gems||[]).length)?'已無空孔，請先「開孔」':(GEM_KEYS.map(k=>`<button class="smallbtn" onclick="forgeGem('${gemTarget}','${k}')">${k} (${G.inventory[k]||0})</button>`).join('')+OFFICIAL.blood.filter(k=>(G.inventory[k]||0)>0).map(k=>`<button class="smallbtn" onclick="forgeGem('${gemTarget}','${k}')">${k} (${G.inventory[k]||0})</button>`).join(''))):'該部位尚未裝備';const synth=EQUIP_NAMES.filter(n=>G.inventory[n]&&G.inventory[n]>=1).slice(0,24).map(n=>`<button class="smallbtn" onclick="synthesize('${n}')">3合1：${n}</button>`).join('');return enhanceMenu+`<div class="card"><h2 class="title">煉器殿 · 10部位</h2><p class="desc">八大功能完整開啟：強化、精煉、開孔、鑲嵌靈石、五行靈石、洗煉、分解、合成。</p><div class="statgrid">${equipHtml}</div></div><div class="card"><h3 class="title">靈石鑲嵌</h3><div class="enhance-menu">${gemSlotSelect}</div><div class="row" style="margin-top:6px">${gemBtns}</div><p class="footer-note">武器、防具（頭盔／衣服／護腕／腰帶／鞋）與飾品（項鍊／戒指／法寶／護符）皆可鑲嵌，每件最多 3 孔；攻擊／防禦／氣血靈石與五行靈石皆為通用材料。</p></div><div class="card"><h3 class="title">裝備合成</h3><p class="desc">選一件現有裝備作為目標，消耗任意 3 件同品質、同部位裝備。</p><div class="row">${synth||'背包沒有可合成的裝備'}</div></div>`}
 
 function dungeonToday(id){const today=new Date().toISOString().slice(0,10);const st=G.dungeons[id]||{};if(st.day!==today){st.day=today;st.clears=0}G.dungeons[id]=st;return st}
 function grantDungeonItem(name,qty=1){G.inventory[name]=(G.inventory[name]||0)+qty}
@@ -632,20 +1261,85 @@ function resolveSandDemonLair(ctx,total){const st=G.dungeons.sand_demon_lair||{r
 function handleDungeonKill(ctx,total){if(!ctx)return;switch(ctx.kind){case 'five_elements_tower':resolveFiveElementsTower(ctx.data||{});break;case 'soul_instance':resolveSoulDungeon(ctx.data||{});break;case 'monster_valley':resolveMonsterValley(ctx.data||{});break;case 'sand_demon_lair':resolveSandDemonLair(ctx.data||{},total);break;}}
 function dungeonEnter(id,manual=true){const d=DUNGEONS.find(x=>x.id===id);if(!d)return;if(G.player.level<d.need&&d.kind!=='soul')return toast(`需要 Lv.${d.need}`);if(d.kind==='tower')return startFiveElementsTower(manual);if(d.kind==='trial'){if(!manual)return;runTrialTemple();renderAll();return}if(d.kind==='maze'){if(!manual)return;return startMaze()}if(d.kind==='soul')return startSoulDungeon(manual);if(d.kind==='dense')return startMonsterValley(manual);if(d.kind==='sand')return startSandDemonLair()}
 function renderBoss(){const maze=G.dungeons.maze_treasure||{},tower=G.dungeons.five_elements_tower||{floor:1,best:0},trial=G.dungeons.trial_temple||{best:0,runs:0},soul=dungeonToday('soul_instance'),dense=G.dungeons.monster_valley||{runs:0,materials:0},sand=G.dungeons.sand_demon_lair||{runs:0,best:0};return `<div class="card"><h2 class="title">Boss</h2><p class="desc">Boss 沿用天下無雙 3.0 的四大王與鬼王秘境／鬼王秘島脈絡；AI 可依掛機設定自動追擊，手動挑戰仍保留完整戰鬥畫面。</p>${BOSS_DB.map(b=>{const st=G.bossStatus[b.id]||{};return `<div class="map"><div class="line"><strong class="mapname">${b.name}</strong><span class="badge boss">${elementName(b.element)} Lv.${b.level}</span></div><div class="monster-meta">建議戰力 ${fmt(b.recommendPower)} · 已擊破 ${st.kills||0} · ${bossReady(b.id)?'可挑戰':'重生 '+bossRemain(b.id)+' 秒'}</div><button class="smallbtn ${bossReady(b.id)?'hot':''}" ${bossReady(b.id)?'':'disabled'} style="margin-top:5px" onclick="startBoss('${b.id}')">${bossReady(b.id)?'挑戰':'等待'}</button></div>`}).join('')}</div><div class="card"><h3 class="title">【3.0 資料副本】</h3><p class="desc">依官網「特色副本」清單與 3.0／近期資料脈絡整合為本離線版專用玩法；獎勵與副本機制採單機平衡設計。</p><div class="dungeon3-grid"><div class="dungeon3"><h4>五行妖閣</h4><div class="d3meta">層數 ${tower.floor}/10 · 歷史最高 ${tower.best||0} 層</div><div class="d3desc">逐層挑戰五行妖。每層提高生命與防禦，通關後推進下一層。</div><div class="d3reward">產出：高階五行靈石、五行妖魄、3.0神通秘籍</div><button class="smallbtn hot" style="margin-top:7px" onclick="dungeonEnter('five_elements_tower')">挑戰第 ${tower.floor} 層</button></div><div class="dungeon3"><h4>試煉神殿</h4><div class="d3meta">5 回合 · 最高傷害 ${fmt(trial.best||0)} · 挑戰 ${trial.runs||0} 次</div><div class="d3desc">使用4槽連招進行5回合極限輸出，依總傷害分級核發獎勵。</div><div class="d3reward">產出：試煉獎勵、靈石、五行資源、神通秘籍</div><button class="smallbtn hot" style="margin-top:7px" onclick="dungeonEnter('trial_temple')">開始 5 回合試煉</button></div><div class="dungeon3"><h4>迷宮尋寶</h4><div class="d3meta">三段路線 · ${maze.active?'進行中':'待出發'} · 歷史獎勵 ${fmt(maze.best||0)}</div><div class="d3desc">每段選擇精英怪、寶箱或仙人指路；不同路線帶來不同收益傾向。</div><div class="d3reward">產出：玄鐵、五行寶石碎片、材料、神通秘籍</div>${maze.active?`<div class="dungeon-note">第 ${maze.step||1}/3 段：選擇路線</div><div class="maze-path"><button class="smallbtn" onclick="mazeChoose('elite')">⚔ 精英怪</button><button class="smallbtn" onclick="mazeChoose('chest')">▣ 寶箱</button><button class="smallbtn" onclick="mazeChoose('guide')">✦ 仙人指路</button></div>`:`<button class="smallbtn hot" style="margin-top:7px" onclick="dungeonEnter('maze_treasure')">進入迷宮</button>`}</div><div class="dungeon3"><h4>魂魄副本</h4><div class="d3meta">今日 ${soul.clears||0}/1 · ${G.player.level>=100?'第2層（Lv.120）':'第1層（Lv.80）'}</div><div class="d3desc">以官方聚魂谷設定為基礎：Lv.100以上進第2層，其餘進第1層；每日一次。</div><div class="d3reward">產出：聚魂丹、魂魄晶髓、魂魄碎片、高級神通秘籍</div><button class="smallbtn ${soul.clears?'':'hot'}" style="margin-top:7px" ${soul.clears?'disabled':''} onclick="dungeonEnter('soul_instance')">${soul.clears?'今日已完成':'進入聚魂谷'}</button></div><div class="dungeon3"><h4>聚妖谷</h4><div class="d3meta">Lv.80 · 已進入 ${dense.runs||0} 次 · 累計玄鐵 ${dense.materials||0}</div><div class="d3desc">高密度連戰8批聚妖怪；參考官方聚妖谷 Lv.80以上與全天開放方向，本版改用離線資源成本。</div><div class="d3reward">產出：大量玄鐵、精煉石、打孔石等裝備分解材料</div><button class="smallbtn hot" style="margin-top:7px" onclick="dungeonEnter('monster_valley')">進入聚妖谷 · 100,000靈石</button></div><div class="dungeon3"><h4>沙魔巢穴</h4><div class="d3meta">Lv.90 · 單機團本 · 已通關 ${sand.runs||0} 次</div><div class="d3desc">玩家＋三人助戰的高難度團本。保留近期官方「不可開啟自動打怪模式」限制，必須手動操作4槽連招。</div><div class="d3reward">產出：天品通用裝備、沙魔套裝圖紙、沙魔靈珠、稀有血珀材料</div><button class="smallbtn danger" style="margin-top:7px" onclick="dungeonEnter('sand_demon_lair')">手動挑戰沙魔巢穴</button></div></div></div>`}
-function renderAI(){const a=G.auto,c=classData(),guide=officialGuide(),target=battle?.active?battle.enemy:null;const bossRows=BOSS_DB.map(b=>{const st=G.bossStatus[b.id]||{};return `<div class="map"><div class="line"><strong class="mapname">${b.name}</strong><span class="badge boss">${elementName(b.element)} Lv.${b.level}</span></div><div class="monster-meta">已擊破 ${st.kills||0} · ${bossReady(b.id)?'AI可追擊':'重生中 '+bossRemain(b.id)+' 秒'}</div></div>`}).join('');return `<div class="card settings"><h2 class="title">✦ 智能掛機</h2><p class="desc">這裡取代原本的 Boss 選單。依官方「內掛」概念，由 AI 統一處理尋怪、戰鬥、選招、吃藥、推圖、掉寶與 Boss 追擊；玩家不需要手動按升級。</p><div class="field"><span>智能掛機總開關</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>AI 自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>AI 自動吃丹</span><input type="checkbox" ${a.autoPotion?'checked':''} onchange="setAuto('autoPotion',this.checked)"></div><div class="field"><span>HP 低於</span><input type="number" value="${Math.round(a.hpThreshold*100)}" min="10" max="90" onchange="setAuto('hpThreshold',this.value/100)"><b>%</b></div><div class="field"><span>MP 低於</span><input type="number" value="${Math.round(a.mpThreshold*100)}" min="10" max="90" onchange="setAuto('mpThreshold',this.value/100)"><b>%</b></div><div class="field"><span>AI 自動推進江湖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>AI 自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>AI 自動追擊 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>戰鬥模式</span><select onchange="setAuto('mode',this.value)"><option value="balanced" ${a.mode==='balanced'?'selected':''}>平衡掛機</option><option value="exp" ${a.mode==='exp'?'selected':''}>優先經驗</option><option value="drop" ${a.mode==='drop'?'selected':''}>優先掉寶</option><option value="boss" ${a.mode==='boss'?'selected':''}>Boss優先</option></select></div><div class="field"><span>五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI選克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card"><h3 class="title">AI 目前決策</h3><div class="feature-list"><div><b>角色：</b>${c?G.player.classKey:'未建立'} · Lv.${G.player.level}</div><div><b>狩獵建議：</b>${guide.areas.join('、')}</div><div><b>官方節奏：</b>${guide.note}</div><div><b>目前目標：</b>${target?target.name+' Lv.'+target.level:'AI 搜尋中'}</div><div><b>自動升級：</b>經驗達標立即升級並取得天賦點，不再提供手動「升級」按鈕。</div></div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="goPanel('inventory')">手動配裝</button><button class="smallbtn" onclick="goPanel('character')">查看角色</button></div></div><div class="card"><h3 class="title">Boss 智能追擊</h3><p class="desc">Boss 不再獨立佔用左側選單；AI 會依戰力門檻、Boss 重生狀態與目前模式自動決定是否追擊。</p><div class="maplist">${bossRows}</div></div><div class="card"><h3 class="title">官方內掛取向</h3><p class="desc">官方資料區把「內掛系統」與自動戰鬥列為特色系統；本單機版將其集中為一個 AI 入口，並串起怪物、掉寶、裝備與 Boss。高階裝備仍依怪物資料取得，不因商店而提前售出。</p></div>`} 
+function renderAI(){const a=G.auto,c=classData(),guide=officialGuide(),target=battle?.active?battle.enemy:null;const bossRows=BOSS_DB.map(b=>{const st=G.bossStatus[b.id]||{};return `<div class="map"><div class="line"><strong class="mapname">${b.name}</strong><span class="badge boss">${elementName(b.element)} Lv.${b.level}</span></div><div class="monster-meta">已擊破 ${st.kills||0} · ${bossReady(b.id)?'AI可追擊':'重生中 '+bossRemain(b.id)+' 秒'}</div></div>`}).join('');return `<div class="card settings"><h2 class="title">✦ 智能掛機</h2><p class="desc">這裡取代原本的 Boss 選單。依官方「內掛」概念，由 AI 統一處理尋怪、戰鬥、選招、吃藥、推圖、掉寶與 Boss 追擊；玩家不需要手動按升級。</p><div class="field"><span>智能掛機總開關</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>AI 自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>吃藥／治癒設定</span><button class="smallbtn hot" onclick="openPotionMenu()">開啟設定</button></div><div class="field"><span>AI 自動推進江湖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>AI 自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>AI 自動追擊 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>戰鬥模式</span><select onchange="setAuto('mode',this.value)"><option value="balanced" ${a.mode==='balanced'?'selected':''}>平衡掛機</option><option value="exp" ${a.mode==='exp'?'selected':''}>優先經驗</option><option value="drop" ${a.mode==='drop'?'selected':''}>優先掉寶</option><option value="boss" ${a.mode==='boss'?'selected':''}>Boss優先</option></select></div><div class="field"><span>五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI選克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card"><h3 class="title">AI 目前決策</h3><div class="feature-list"><div><b>角色：</b>${c?G.player.classKey:'未建立'} · Lv.${G.player.level}</div><div><b>狩獵建議：</b>${guide.areas.join('、')}</div><div><b>官方節奏：</b>${guide.note}</div><div><b>目前目標：</b>${target?target.name+' Lv.'+target.level:'AI 搜尋中'}</div><div><b>自動升級：</b>經驗達標立即升級並取得天賦點，不再提供手動「升級」按鈕。</div></div><div class="row" style="margin-top:8px"><button class="smallbtn hot" onclick="goPanel('inventory')">手動配裝</button><button class="smallbtn" onclick="goPanel('character')">查看角色</button></div></div><div class="card"><h3 class="title">Boss 智能追擊</h3><p class="desc">Boss 不再獨立佔用左側選單；AI 會依戰力門檻、Boss 重生狀態與目前模式自動決定是否追擊。</p><div class="maplist">${bossRows}</div></div><div class="card"><h3 class="title">官方內掛取向</h3><p class="desc">官方資料區把「內掛系統」與自動戰鬥列為特色系統；本單機版將其集中為一個 AI 入口，並串起怪物、掉寶、裝備與 Boss。高階裝備仍依怪物資料取得，不因商店而提前售出。</p></div>`} 
 function setScreenMode(mode){document.body.classList.remove('screen-auto','screen-portrait','screen-pc');document.body.classList.add('screen-'+mode);G.setting.screenMode=mode;save(true);toast(mode==='portrait'?'已切換 9:16 手機全螢幕':mode==='pc'?'已切換 PC 16:9 全螢幕':'已切換自動尺寸');renderAll()}
 function toggleFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.().then(()=>toast('已進入全螢幕')).catch(()=>toast('瀏覽器未允許全螢幕'))}else{document.exitFullscreen?.().then(()=>toast('已退出全螢幕')).catch(()=>{})}}
 function applyScreenMode(){const m=G.setting.screenMode||'auto';document.body.classList.remove('screen-auto','screen-portrait','screen-pc');document.body.classList.add('screen-'+m)}
 function logoutGame(){save(true);sessionStorage.setItem('txws_logout','1');location.reload()}
 function openUpdateMenu(){$('updateModal')?.classList.add('show')}
 function closeUpdateMenu(){$('updateModal')?.classList.remove('show')}
-function renderSystem(){const a=G.auto;const mode=G.setting.screenMode||'auto';return `<div class="card settings"><h2 class="title">智能掛機</h2><div class="field"><span>自動戰鬥</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>自動吃丹</span><input type="checkbox" ${a.autoPotion?'checked':''} onchange="setAuto('autoPotion',this.checked)"></div><div class="field"><span>HP低於</span><input type="number" value="${Math.round(a.hpThreshold*100)}" min="10" max="90" onchange="setAuto('hpThreshold',this.value/100)"><b>%</b></div><div class="field"><span>MP低於</span><input type="number" value="${Math.round(a.mpThreshold*100)}" min="10" max="90" onchange="setAuto('mpThreshold',this.value/100)"><b>%</b></div><div class="field"><span>自動推圖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>自動追 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>技能五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI 依敵人克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card settings"><h2 class="title">畫面設定</h2><p class="desc">依裝置切換顯示比例；全螢幕可配合瀏覽器使用。</p><div class="row" style="margin-top:8px"><button class="smallbtn ${mode==='portrait'?'hot':''}" onclick="setScreenMode('portrait')">📱 手機 9:16</button><button class="smallbtn ${mode==='pc'?'hot':''}" onclick="setScreenMode('pc')">🖥️ PC 16:9</button><button class="smallbtn ${mode==='auto'?'hot':''}" onclick="setScreenMode('auto')">自動尺寸</button><button class="smallbtn" onclick="toggleFullscreen()">⛶ 全螢幕</button></div><p class="footer-note">目前：${mode==='portrait'?'手機 9:16':mode==='pc'?'PC 16:9':'自動尺寸'}</p></div><div class="card settings"><h2 class="title">角色／存檔</h2><div class="field"><span>道號</span><input id="nameInput" value="${G.name||'少俠'}" style="max-width:150px;background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:5px"></div><div class="row" style="margin-top:9px"><button class="smallbtn hot" onclick="openUpdateMenu()">更新選單</button><button class="smallbtn" onclick="save()">儲存</button><button class="smallbtn" onclick="exportSave()">匯出</button><button class="smallbtn" onclick="importSave()">匯入</button><button class="smallbtn danger" onclick="resetGame()">重置</button></div><p class="footer-note">V1.0.1 · 四門派創角 · 4槽自由連招 · 10部位裝備 · 3.0掉落 · 六大3.0資料副本 · 靈寵 · 天賦 · 自動戰鬥 · 離線收益</p></div>`}
-function setAuto(k,v){if(k==='hpThreshold'||k==='mpThreshold')v=clamp(Number(v)||.2,.1,.9);G.auto[k]=v;if(k==='enabled')toast(v?'掛機啟動':'掛機停止');renderAll();save(true)}
+function openPotionMenu(){renderPotionMenu();$('potionModal')?.classList.add('show')}
+function closePotionMenu(){$('potionModal')?.classList.remove('show')}
+function renderPotionMenu(){const body=$('potionBody');if(!body)return;const a=G.auto;const heals=healSkillList();const hpOptions=Object.entries(POTION_DEF).filter(([,d])=>d.type==='hp');const mpOptions=Object.entries(POTION_DEF).filter(([,d])=>d.type==='mp');
+ body.innerHTML=`<div class="card settings"><h3 class="title">自動吃藥</h3><div class="field"><span>HP 藥品種類</span><select onchange="setAuto('hpPotionKey',this.value)">${hpOptions.map(([k,d])=>`<option value="${k}" ${a.hpPotionKey===k?'selected':''}>${d.name} ×${potionCount(k)}</option>`).join('')}</select></div><div class="field"><span>啟用HP自動吃藥</span><input type="checkbox" ${a.autoUsePotion?'checked':''} onchange="setAuto('autoUsePotion',this.checked)"></div><div class="field"><span>HP 低於</span><input type="number" value="${Math.round(a.potionHpPct*100)}" min="10" max="95" onchange="setAuto('potionHpPct',this.value/100)"><b>%</b></div><div class="field"><span>MP 藥品種類</span><select onchange="setAuto('mpPotionKey',this.value)">${mpOptions.map(([k,d])=>`<option value="${k}" ${a.mpPotionKey===k?'selected':''}>${d.name} ×${potionCount(k)}</option>`).join('')}</select></div><div class="field"><span>啟用MP自動吃藥</span><input type="checkbox" ${a.autoUseMpPotion?'checked':''} onchange="setAuto('autoUseMpPotion',this.checked)"></div><div class="field"><span>MP 低於</span><input type="number" value="${Math.round(a.mpPotionPct*100)}" min="10" max="95" onchange="setAuto('mpPotionPct',this.value/100)"><b>%</b></div><div class="field"><span>藥品不足自動購買100罐</span><input type="checkbox" ${a.autoBuyPotion?'checked':''} onchange="setAuto('autoBuyPotion',this.checked)"></div><p class="footer-note">吃藥優先使用背包中既有的所選藥品；藥品數量為0時，若已啟用自動購買，將自動花費靈石一次購買100罐再服用；HP、MP吃藥各自獨立設有2秒冷卻時間。</p></div><div class="card settings"><h3 class="title">自動施法治癒魔法</h3><div class="field"><span>啟用自動施放治癒魔法</span><input type="checkbox" ${a.autoCastHeal?'checked':''} onchange="setAuto('autoCastHeal',this.checked)"></div><div class="field"><span>治癒技能</span><select onchange="setAuto('healSkillId',this.value)"><option value="">無</option>${heals.map(sk=>`<option value="${sk.id}" ${a.healSkillId===sk.id?'selected':''}>${sk.name}（回${Math.round(sk.heal*100)}% · MP${sk.mp||0} · CD${sk.cd||3}秒）</option>`).join('')}</select></div><div class="field"><span>HP 低於</span><input type="number" value="${Math.round(a.healHpPct*100)}" min="10" max="95" onchange="setAuto('healHpPct',this.value/100)"><b>%</b></div><p class="footer-note">${heals.length?'治癒魔法與吃藥各自依HP%／MP%門檻獨立判斷，可能同時觸發。使用治癒魔法需消耗對應MP並依技能自身冷卻時間限制，MP不足或冷卻中不會施放。':'尚未學會任何治癒類神通，請先於「神通」頁面學習如：甘霖、春風、蘇生、療傷等回復類招式。'}</p></div>`}
+function renderSystem(){const a=G.auto;const mode=G.setting.screenMode||'auto';return `<div class="card settings"><h2 class="title">智能掛機</h2><div class="field"><span>自動戰鬥</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>吃藥／治癒設定</span><button class="smallbtn hot" onclick="openPotionMenu()">開啟設定</button></div><div class="field"><span>自動推圖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>自動追 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>技能五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI 依敵人克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card settings"><h2 class="title">畫面設定</h2><p class="desc">依裝置切換顯示比例；全螢幕可配合瀏覽器使用。</p><div class="row" style="margin-top:8px"><button class="smallbtn ${mode==='portrait'?'hot':''}" onclick="setScreenMode('portrait')">📱 手機 9:16</button><button class="smallbtn ${mode==='pc'?'hot':''}" onclick="setScreenMode('pc')">🖥️ PC 16:9</button><button class="smallbtn ${mode==='auto'?'hot':''}" onclick="setScreenMode('auto')">自動尺寸</button><button class="smallbtn" onclick="toggleFullscreen()">⛶ 全螢幕</button></div><p class="footer-note">目前：${mode==='portrait'?'手機 9:16':mode==='pc'?'PC 16:9':'自動尺寸'}</p></div><div class="card settings"><h2 class="title">角色／存檔</h2><div class="field"><span>道號</span><input id="nameInput" value="${G.name||'少俠'}" style="max-width:150px;background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:5px"></div><div class="row" style="margin-top:9px"><button class="smallbtn hot" onclick="openUpdateMenu()">更新選單</button><button class="smallbtn" onclick="save()">儲存</button><button class="smallbtn" onclick="exportSave()">匯出</button><button class="smallbtn" onclick="importSave()">匯入</button><button class="smallbtn danger" onclick="resetGame()">重置</button></div><p class="footer-note">V1.0.2 · 四門派創角 · 4槽自由連招 · 10部位裝備 · 3.0掉落 · 六大3.0資料副本 · 靈寵 · 天賦 · 自動戰鬥 · 離線收益</p></div>`}
+const STRATEGY_GLYPHS={conservative:'守',balanced:'衡',aggressive:'劍',burst:'煞'};
+function strategyGlyph(id){return STRATEGY_GLYPHS[id]||STRATEGY_GLYPHS.balanced}
+function strategyPickerOptions(activeId){
+  return Object.values(COMBAT_STRATEGIES).map(st=>`<button type="button" class="strategy-option ${st.id===activeId?'active':''}" data-strategy="${st.id}" onclick="selectStrategy('${st.id}')" ontouchstart="selectStrategy('${st.id}',event)" aria-selected="${st.id===activeId?'true':'false'}"><span class="strat-glyph">${strategyGlyph(st.id)}</span><span class="strat-copy"><span class="strat-name">${st.name}</span><span class="strat-desc">${st.desc}</span></span></button>`).join('');
+}
+function openStrategyPicker(){
+  const trigger=$('strategyTrigger');if(!trigger)return;
+  let panel=$('strategyPanel');
+  if(!panel){panel=document.createElement('div');panel.id='strategyPanel';panel.className='strategy-panel';panel.setAttribute('role','menu');document.body.appendChild(panel)}
+  const id=G.combatStrategy&&COMBAT_STRATEGIES[G.combatStrategy]?G.combatStrategy:'balanced';
+  panel.innerHTML=strategyPickerOptions(id);
+  const r=trigger.getBoundingClientRect(),gap=5,w=Math.min(240,window.innerWidth-16);
+  let left=Math.max(8,Math.min(window.innerWidth-w-8,r.right-w));
+  let top=r.bottom+gap;
+  if(top+Math.min(panel.scrollHeight||208,window.innerHeight-16)>window.innerHeight-8)top=Math.max(8,r.top-Math.min(panel.scrollHeight||208,window.innerHeight-16)-gap);
+  panel.style.width=w+'px';panel.style.left=left+'px';panel.style.top=top+'px';
+  panel.classList.add('show');trigger.classList.add('open');trigger.setAttribute('aria-expanded','true');
+}
+function closeStrategyPicker(){
+  const panel=$('strategyPanel'),trigger=$('strategyTrigger');
+  if(panel)panel.classList.remove('show');
+  if(trigger){trigger.classList.remove('open');trigger.setAttribute('aria-expanded','false')}
+}
+function toggleStrategyPicker(e){
+  if(e){if(e.type==='touchstart'){if(toggleStrategyPicker._touch&&Date.now()-toggleStrategyPicker._touch<450){e.preventDefault();return}toggleStrategyPicker._touch=Date.now();e.preventDefault()}else if(toggleStrategyPicker._touch&&Date.now()-toggleStrategyPicker._touch<450)return;e.stopPropagation()}
+  const panel=$('strategyPanel');panel&&panel.classList.contains('show')?closeStrategyPicker():openStrategyPicker();
+}
+function selectStrategy(id,e){
+  if(e){if(e.type==='touchstart'){e.preventDefault();if(selectStrategy._touch&&Date.now()-selectStrategy._touch<450)return;selectStrategy._touch=Date.now()}e.stopPropagation()}
+  if(!COMBAT_STRATEGIES[id])return;
+  setCombatStrategy(id);
+  const input=$('auto-strategy-select');if(input)input.value=id;
+  updateStrategyPickerUI(id);
+  closeStrategyPicker();
+}
+function updateStrategyPickerUI(id){
+  const st=COMBAT_STRATEGIES[id]||COMBAT_STRATEGIES.balanced;
+  const trigger=$('strategyTrigger');
+  const icon=$('combatStrategyIcon');
+  const input=$('auto-strategy-select');
+  if(input)input.value=st.id;
+  if(icon)icon.innerHTML=`<span class="strat-glyph">${strategyGlyph(st.id)}</span>`;
+  if(trigger){
+    const name=trigger.querySelector('.strategy-name');if(name)name.textContent=st.name;
+    trigger.title=st.desc;
+  }
+  const panel=$('strategyPanel');
+  if(panel&&panel.classList.contains('show'))panel.innerHTML=strategyPickerOptions(st.id);
+}
+document.addEventListener('click',e=>{
+  const trigger=$('strategyTrigger'),panel=$('strategyPanel');
+  if(panel&&panel.classList.contains('show')&&(!trigger||(!trigger.contains(e.target)&&!panel.contains(e.target))))closeStrategyPicker();
+});
+document.addEventListener('touchstart',e=>{
+  const trigger=$('strategyTrigger'),panel=$('strategyPanel');
+  if(panel&&panel.classList.contains('show')&&(!trigger||(!trigger.contains(e.target)&&!panel.contains(e.target))))closeStrategyPicker();
+},{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStrategyPicker()});
+
+function setCombatStrategy(id){if(!COMBAT_STRATEGIES[id])return;G.combatStrategy=id;G.auto.combatStrategy=id;window.__combatStrategy=id;const sel=$('auto-strategy-select');if(sel)sel.value=id;updateStrategyPickerUI(id);save(true);toast('戰鬥策略：'+COMBAT_STRATEGIES[id].name);}
+function syncStrategyUI(){const id=COMBAT_STRATEGIES[G.combatStrategy]?G.combatStrategy:'balanced';G.auto.combatStrategy=id;window.__combatStrategy=id;updateStrategyPickerUI(id)}
+function setAuto(k,v){if(k==='potionHpPct'||k==='healHpPct')v=clamp(Number(v)||.2,.1,.95);G.auto[k]=v;if(k==='enabled')toast(v?'掛機啟動':'掛機停止');renderAll();save(true)}
 function exportSave(){try{const s='TXWS510:'+btoa(unescape(encodeURIComponent(JSON.stringify(G))));prompt('複製以下存檔碼',s)}catch(e){toast('匯出失敗')}}
 function importSave(){const s=prompt('貼上 TXWS520 / 舊版存檔碼');if(!s)return;try{G=JSON.parse(decodeURIComponent(escape(atob(s.replace(/^TXWS\d+:/,'')))));normalize();ensureStats();save(true);renderAll();toast('匯入成功')}catch(e){toast('存檔碼無效')}}
 function resetGame(){if(confirm('確定重置天下無雙放置版存檔？')){try{localStorage.removeItem(SAVE_KEY)}catch(e){}location.reload()}}
 function manualLevel(){const need=expNeed();if(G.player.exp<need)return toast('經驗未滿');levelUp();renderAll()}
-function renderAll(){ensureStats();const views={home:renderHome,character:renderCharacter,hunt:renderWorld,inventory:renderInventory,skill:renderSkills,shop:renderShop,forge:renderForge,boss:renderBoss,system:renderSystem};$('content').innerHTML=(views[activePanel]||renderHome)();renderSide();syncHud();paintLog();const ni=$('nameInput');if(ni)ni.onchange=e=>{G.name=G.player.name=e.target.value.slice(0,16)||'少俠';syncHud();save(true)}}
+function renderAll(){ensureStats();const views={home:renderHome,character:renderCharacter,hunt:renderWorld,inventory:renderInventory,skill:renderSkills,shop:renderShop,forge:renderForge,boss:renderBoss,system:renderSystem};$('content').innerHTML=(views[activePanel]||renderHome)();renderSide();syncStrategyUI();if(activePanel==='inventory')setTimeout(bindInventoryTooltips,0);syncHud();paintLog();const ni=$('nameInput');if(ni)ni.onchange=e=>{G.name=G.player.name=e.target.value.slice(0,16)||'少俠';syncHud();save(true)}}
 function tickSecond(){ensureStats();const s=G.player.stats;if(!battle?.active){s.hp=Math.min(s.maxHp,s.hp+Math.max(1,Math.round(s.maxHp*.018)));s.mp=Math.min(s.maxMp,s.mp+Math.max(1,Math.round(s.maxMp*.03)));if(G.auto.autoAdvance)autoAdvance();if(G.auto.autoDungeon&&G.auto.enabled&&Math.random()<.018){const ready=DUNGEONS.filter(d=>G.player.level>=d.need&&['tower','trial','soul','dense'].includes(d.kind));if(ready.length&&Math.random()<.25)dungeonEnter(ready[Math.floor(Math.random()*ready.length)].id,false)}}else{s.mp=Math.min(s.maxMp,s.mp+Math.max(1,Math.round(s.maxMp*.008)))}levelUp();if(Date.now()%5000<1000)save(true);if(activePanel==='home'||activePanel==='boss')renderAll()}
 function loop(){const now=Date.now();if(G.auto.enabled&&!G.selected){G.auto.enabled=false;return}if(activePanel==='home')return;if(battle?.active)combatTick(now);else if(G.auto.enabled&&!pendingBoss&&now>=nextSpawnAt)spawnEncounter();if(now-lastSecond>=1000){lastSecond=now;tickSecond()}syncHud();if(battle?.active&&$('battleScreen').classList.contains('show'))syncBattle()}
 function manualStart(){const pick=pickWeighted(mapPool());if(pick)startEncounter(pick.name,pick.level,currentMap().id,true)}
@@ -654,12 +1348,12 @@ function openTeleport(){const body=$('tpBody');if(!body)return;body.innerHTML=`<
 function closeTeleport(){$('tpModal').classList.remove('show')}
 function updateStaticLabels(){document.title='天下無雙放置版';const p=document.querySelector('header .prealm');if(p)p.textContent='Lv.1';}
 /* ---------- 啟動 ---------- */
-$('tpBtn').onclick=openTeleport;$('homeBtn').onclick=returnHome;$('autoBtn').onclick=toggleAuto;$('settingsBtn').onclick=()=>goPanel('system');$('tpClose').onclick=closeTeleport;$('updateClose').onclick=closeUpdateMenu;$('inventoryDetailClose').onclick=closeInventoryDetail;$('battleClose').onclick=()=>{closeBattleScreen();renderAll()};
+$('tpBtn').onclick=openTeleport;$('homeBtn').onclick=returnHome;$('autoBtn').onclick=toggleAuto;$('settingsBtn').onclick=()=>goPanel('system');$('tpClose').onclick=closeTeleport;$('updateClose').onclick=closeUpdateMenu;$('inventoryDetailClose').onclick=closeInventoryDetail;$('battleClose').onclick=()=>{closeBattleScreen();renderAll()};$('potionClose').onclick=closePotionMenu;
 window.addEventListener('beforeunload',()=>save(true));window.addEventListener('pagehide',()=>save(true));
 load();applyScreenMode();updateStaticLabels();
 const wasLogout=sessionStorage.getItem('txws_logout')==='1';sessionStorage.removeItem('txws_logout');
 (wasLogout||!G.selected)?openClassScreen():null;
 ensureStats();refreshMarket();hlog('天下無雙放置陣列已就位：選職業後由智能掛機 AI 自動戰鬥、4槽連招與自動升級。','lg-sys');renderAll();mainLoop=setInterval(loop,TICK);
-Object.assign(window,{toggleAuto,returnHome,openInventoryDetail,closeInventoryDetail,sellInventoryAll,enhanceSelected,enhanceSelectedToAvailable,renderAI,openTeleport,closeTeleport,moveMap,goPanel,renderAll,manualStart,startEncounter,startBoss,flee,manualAttack,manualSkill,manualPotion,equipSkill,buySkill,buyShopItem,buyEquip,forgeEnhance,forgeRefine,forgeSocket,forgeGem,forgeReroll,dismantleInventory,synthesize,enhanceEquippedAll,dungeonEnter,runTrialTemple,startMaze,mazeChoose,assignSkillSlot,save,exportSave,importSave,resetGame,setAuto,setScreenMode,toggleFullscreen,logoutGame,openUpdateMenu,closeUpdateMenu,equipItem,unequipItem,buyPet,equipPet,spendTalent,claimQuest});
+Object.assign(window,{toggleAuto,returnHome,openInventoryDetail,closeInventoryDetail,sellInventoryAll,sellInventorySingle,toggleLock,isLocked,decomposeAll,sellAll,saveGame,loadGame,enhanceSelected,enhanceSelectedToAvailable,renderAI,openTeleport,closeTeleport,moveMap,goPanel,renderAll,manualStart,startEncounter,startBoss,flee,manualAttack,manualSkill,manualPotion,equipSkill,buySkill,buyShopItem,buyEquip,forgeEnhance,forgeRefine,forgeSocket,forgeGem,forgeReroll,dismantleInventory,sellAllItems,salvageAllEquipment,openInventoryDecompose,closeInventoryDecompose,confirmInventoryDecompose,addItemToInventory,inventorySetCategory,inventorySetSort,synthesize,enhanceEquippedAll,dungeonEnter,runTrialTemple,startMaze,mazeChoose,assignSkillSlot,assignBuffSlot,save,exportSave,importSave,resetGame,setAuto,setCombatStrategy,syncStrategyUI,setScreenMode,toggleFullscreen,logoutGame,openUpdateMenu,closeUpdateMenu,openPotionMenu,closePotionMenu,equipItem,unequipItem,buyPet,equipPet,spendTalent,claimQuest});
 </script>
 </body></html>
