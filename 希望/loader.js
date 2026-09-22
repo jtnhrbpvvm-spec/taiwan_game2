@@ -115,38 +115,71 @@
   // ---------- 樣式 ----------
   var style = document.createElement("style");
   style.id = STYLE_ID;
+  // 配色跟遊戲本體一致（取自遊戲 index.css）：奶油羊皮紙面板、深棕描邊、立體按鈕、藍綠色主按鈕。
+  // 用自己的 --iw-* 變數，不去動遊戲原本的 CSS 變數。
   style.textContent = [
+    ":root{--iw-panel:#f8efdd;--iw-inset:#f6ead2;--iw-sel:#f3ddb2;--iw-line:#cdb48a;--iw-line-hi:#a28358;--iw-edge:#6b4a2a;",
+    "--iw-text:#45301f;--iw-dim:#725c46;--iw-faint:#8a735b;--iw-accent:#8d6a30;--iw-ink:#6b4d17;",
+    "--iw-go:#2f6b78;--iw-go-lift:#377986;--iw-go-sink:#245663;--iw-btn-top:#fff7e6;--iw-btn-bottom:#edd4a4;--iw-warn:#a8412f;}",
     "[id^=iw-enhance] *,[id^=iw-alchemy] *,.iw-inline-btn{box-sizing:border-box;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;}",
-    ".iw-inline-btn{background:#7c5cbf;color:#fff;border:none;border-radius:6px;padding:6px 10px;",
-    "font-size:12.5px;font-weight:700;cursor:pointer;margin-right:8px;white-space:nowrap;}",
-    ".iw-inline-btn:hover{background:#9270d6;}",
-    "#iw-enhance-backdrop,#iw-alchemy-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999998;",
+    // 強化卡片上的「⚡強化」：遊戲的藍綠色主按鈕樣式，比「換一件」顯眼一點
+    ".iw-inline-btn{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;",
+    "border:2px solid #1d4650;border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer;margin-right:8px;white-space:nowrap;",
+    "box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #163a42,0 3px 6px rgba(0,0,0,.18);}",
+    ".iw-inline-btn:hover{background:linear-gradient(180deg,#3f8796,var(--iw-go-lift),var(--iw-go));}",
+    ".iw-inline-btn:active{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.3);}",
+    "#iw-enhance-backdrop,#iw-alchemy-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999998;",
     "display:flex;align-items:center;justify-content:center;padding:16px;}",
-    "#iw-enhance-modal,#iw-alchemy-modal{background:#1c1712;color:#e8e0d0;border:1px solid #3a2f22;border-radius:10px;",
-    "width:100%;max-width:420px;max-height:88vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.6);position:relative;}",
-    "#iw-enhance-modal h2,#iw-alchemy-modal h2{margin:0 0 14px;font-size:16px;color:#e0b95c;}",
-    "#iw-enhance-modal label,#iw-alchemy-modal label{display:block;font-size:12.5px;color:#b8ab90;margin:12px 0 4px;}",
+    "#iw-enhance-modal,#iw-alchemy-modal{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;",
+    "width:100%;max-width:440px;max-height:88vh;overflow-y:auto;padding:0 20px 20px;box-shadow:0 10px 30px rgba(0,0,0,.35);position:relative;}",
+    "#iw-enhance-modal h2,#iw-alchemy-modal h2{margin:0 -20px 14px;padding:12px 44px 11px 20px;font-size:16px;color:var(--iw-text);",
+    "background:linear-gradient(180deg,#fdf3e0,#f1dcb4);border-bottom:1px solid rgba(162,131,88,.55);",
+    "border-top:4px solid var(--iw-go);position:sticky;top:0;z-index:1;}",
+    "#iw-enhance-modal label,#iw-alchemy-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--iw-accent);margin:12px 0 4px;}",
     "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number]{width:100%;padding:8px 9px;",
-    "background:#2a231a;border:1px solid #4a3d2c;border-radius:5px;color:#e8e0d0;font-size:13.5px;}",
-    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus{outline:none;border-color:#c9a24b;}",
-    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target{font-size:14px;color:#e8e0d0;background:#2a231a;border:1px solid #4a3d2c;",
-    "border-radius:6px;padding:9px 10px;}",
-    "#iw-enhance-modal .iw-warn{font-size:11.5px;color:#e0b95c;margin-top:6px;line-height:1.6;display:none;}",
-    ".iw-checkrow{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#d8cdb8;}",
+    "background:var(--iw-inset);border:1px solid #b99b6c;border-radius:8px;color:var(--iw-text);font-size:13.5px;",
+    "box-shadow:inset 0 2px 4px rgba(0,0,0,.08);}",
+    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus{outline:none;",
+    "border-color:var(--iw-go);box-shadow:inset 0 2px 4px rgba(0,0,0,.08),0 0 0 3px rgba(47,107,120,.16);}",
+    "#iw-enhance-modal input[type=checkbox],#iw-alchemy-modal input[type=checkbox]{accent-color:var(--iw-go);width:16px;height:16px;}",
+    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target{font-size:14px;color:var(--iw-text);background:rgba(255,250,240,.8);",
+    "border:1px solid rgba(162,131,88,.5);border-left:4px solid var(--iw-go);border-radius:10px;padding:9px 10px;}",
+    "#iw-enhance-modal .iw-warn{font-size:11.5px;color:var(--iw-warn);background:rgba(168,65,47,.07);border:1px solid rgba(168,65,47,.35);",
+    "border-radius:8px;padding:6px 9px;margin-top:6px;line-height:1.6;display:none;}",
+    ".iw-checkrow{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--iw-dim);}",
     ".iw-checkrow input{width:auto;}",
+    ".iw-checkrow label{font-weight:400 !important;color:var(--iw-dim) !important;}",
     ".iw-btnrow{display:flex;gap:10px;margin-top:18px;}",
-    ".iw-btn{flex:1;padding:10px;border-radius:6px;border:1px solid #4a3d2c;background:#2a231a;",
-    "color:#e8e0d0;font-size:13.5px;cursor:pointer;}",
-    ".iw-btn.primary{background:#c9a24b;color:#241c15;border-color:#c9a24b;font-weight:700;}",
-    ".iw-btn.primary:hover{background:#ddb968;}",
-    ".iw-mode-btn.active{background:#7c5cbf;border-color:#7c5cbf;color:#fff;}",
+    // 遊戲的立體按鈕
+    ".iw-btn{flex:1;padding:9px 10px;border-radius:10px;border:2px solid var(--iw-edge);",
+    "background:linear-gradient(180deg,var(--iw-btn-top) 0%,#f6e5c3 52%,var(--iw-btn-bottom) 100%);color:var(--iw-text);font-size:13.5px;cursor:pointer;",
+    "box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -3px 6px rgba(0,0,0,.12),0 2px 0 #4a3119,0 3px 7px rgba(0,0,0,.15);}",
+    ".iw-btn:active:not(:disabled){background:linear-gradient(180deg,#f5e1bd,#fbeed3);box-shadow:inset 0 3px 8px rgba(0,0,0,.28);transform:translateY(2px);}",
+    ".iw-btn.primary{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;border-color:#1d4650;font-weight:700;",
+    "box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #163a42,0 3px 7px rgba(0,0,0,.18);}",
+    ".iw-btn.primary:hover{background:linear-gradient(180deg,#3f8796,var(--iw-go-lift),var(--iw-go));}",
+    ".iw-mode-btn.active{background:linear-gradient(180deg,#f5e1bd,#fbeed3);border-color:var(--iw-go);color:var(--iw-go);font-weight:700;",
+    "box-shadow:inset 0 3px 7px rgba(0,0,0,.22);transform:translateY(1px);}",
     ".iw-btn:disabled{opacity:.45;cursor:not-allowed;}",
-    "#iw-enhance-log,#iw-alchemy-log{margin-top:14px;background:#141009;border:1px solid #3a2f22;border-radius:6px;",
-    "padding:10px;font-size:12.5px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;}",
+    "#iw-enhance-log,#iw-alchemy-log{margin-top:14px;background:var(--iw-inset);color:var(--iw-text);border:1px solid rgba(162,131,88,.5);border-radius:10px;",
+    "box-shadow:inset 0 2px 5px rgba(0,0,0,.08);padding:10px;font-size:12.5px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;}",
     "#iw-enhance-summary,#iw-alchemy-summary{margin-top:12px;font-size:13px;line-height:1.8;}",
-    "#iw-enhance-summary b,#iw-alchemy-summary b,#iw-alchemy-status-summary b{color:#e0b95c;}",
-    "#iw-enhance-close,#iw-alchemy-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#b8ab90;",
-    "font-size:18px;cursor:pointer;}"
+    "#iw-enhance-summary:not(:empty),#iw-alchemy-summary:not(:empty){background:rgba(255,250,240,.8);border:1px solid rgba(162,131,88,.5);border-radius:10px;padding:10px 12px;}",
+    "#iw-enhance-summary b,#iw-alchemy-summary b,#iw-alchemy-status-summary b{color:var(--iw-ink);}",
+    // ✕ 用 sticky + float 釘在標題列右上角，視窗內容往下捲也不會跟著捲走
+    "#iw-enhance-close,#iw-alchemy-close{position:sticky;float:right;top:12px;margin:12px -6px -40px 0;z-index:3;width:28px;height:28px;padding:0;line-height:24px;",
+    "background:linear-gradient(180deg,var(--iw-btn-top),var(--iw-btn-bottom));border:2px solid var(--iw-edge);border-radius:50%;",
+    "color:var(--iw-text);font-size:13px;cursor:pointer;box-shadow:0 2px 0 #4a3119;}",
+    "#iw-enhance-modal::-webkit-scrollbar,#iw-alchemy-modal::-webkit-scrollbar,#iw-enhance-log::-webkit-scrollbar,#iw-alchemy-log::-webkit-scrollbar{width:8px;}",
+    "#iw-enhance-modal::-webkit-scrollbar-thumb,#iw-alchemy-modal::-webkit-scrollbar-thumb,#iw-enhance-log::-webkit-scrollbar-thumb,#iw-alchemy-log::-webkit-scrollbar-thumb{background:var(--iw-line-hi);border-radius:4px;}",
+    // 左下角浮動按鈕（自動煉金／自動重生）：遊戲的膠囊按鈕樣式
+    ".iw-fab{border:2px solid var(--iw-edge);border-radius:999px;font-weight:700;cursor:pointer;color:var(--iw-text);",
+    "background:linear-gradient(180deg,var(--iw-btn-top) 0%,#f6e5c3 52%,var(--iw-btn-bottom) 100%);",
+    "box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -3px 6px rgba(0,0,0,.12),0 2px 0 #4a3119,0 4px 10px rgba(0,0,0,.22);}",
+    ".iw-fab:active{transform:translateY(2px);box-shadow:inset 0 3px 8px rgba(0,0,0,.28);}",
+    ".iw-fab.iw-fab-go{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;border-color:#1d4650;",
+    "box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #163a42,0 4px 10px rgba(0,0,0,.22);}",
+    ".iw-fab.iw-fab-on{background:linear-gradient(180deg,#5a9a46,#47733a,#3a5f30);color:#fff;border-color:#2c4a24;}"
   ].join("");
   document.head.appendChild(style);
 
@@ -161,23 +194,42 @@
     if (!Array.isArray(opts)) return [];
     return opts.map(function (o) { return o.kind; });
   }
+  // 發條屬性的 unit（遊戲 Xl）：0 = 直接加數值、1 = 每 N 級 +1、2 = 每 N 級 +2（XG 以上的力量／敏捷／智力／幸運）
+  var UNIT_DIRECT = 0;
+  var PERCENT_KINDS = { 13: true, 14: true, 23: true }; // 遊戲 uu：這幾種直接加值的後面要加 %
+  function perLevelGain(unit) { return unit === 2 ? 2 : 1; }
+  // 跟遊戲 Su() 一樣的寫法：「攻擊力 +45」「每級力量：每 10 級 +2」
+  function optionText(o) {
+    var name = ENCHANT_KIND_NAME[o.kind] || ("kind" + o.kind);
+    if (!o.unit) return name + " " + (o.value > 0 ? "+" : "") + o.value + (PERCENT_KINDS[o.kind] ? "%" : "");
+    return name + "：每 " + o.value + " 級 +" + perLevelGain(o.unit);
+  }
   function rolledKindsText(entry) {
-    var kinds = rolledKindsOf(entry);
-    if (!kinds.length) return "無屬性";
-    return kinds.map(function (k) { return ENCHANT_KIND_NAME[k] || ("kind" + k); }).join("、");
+    var opts = entry && entry.options && entry.options.options;
+    if (!Array.isArray(opts) || !opts.length) return "無屬性";
+    return opts.map(optionText).join("、");
   }
   // 這幾種「依等級增加」屬性，數字越小代表越常加點、越好，比較方向要反過來（要 <= 而不是 >=）
+  // （syncEnchantTablesFromGame() 會再依遊戲資料裡「有 unit>0 的屬性」重新整理一次）
   var LOWER_IS_BETTER_KINDS = { 15: true, 16: true, 17: true, 18: true, 19: true, 20: true };
-  // requirements: array of { kind, mode, threshold, min, max }
+  // requirements: array of { kind, mode, threshold, min, max, unit }
   //   mode:"number" -> threshold 有值代表「要洗到符合門檻」（一般屬性是 >=，依等級增加屬性是 <=），null 代表不限數值
   //   mode:"tier"   -> min/max 有值代表「要落在這個機率區間」，null 代表不限範圍
-  function reqSatisfiesValue(req, value) {
+  //   unit          -> 依等級增加屬性的「每 N 級 +1 還是 +2」；每 10 級 +2 比每 8 級 +1 還強，所以不能只比數字
+  function reqSatisfiesValue(req, value, unit) {
+    var perLevel = LOWER_IS_BETTER_KINDS[req.kind];
     if (req.mode === "tier") {
       if (req.min == null) return true;
+      if (perLevel && req.unit != null && (unit || 1) !== req.unit) return false;
       return value >= req.min && value <= req.max;
     }
     if (req.threshold == null) return true;
-    return LOWER_IS_BETTER_KINDS[req.kind] ? value <= req.threshold : value >= req.threshold;
+    if (perLevel) {
+      // 比「每一級平均加多少」：洗到的 (+gain / value) 要 >= 門檻的 (+gain / threshold)
+      var gotGain = perLevelGain(unit || 1), needGain = perLevelGain(req.unit || 1);
+      return gotGain * req.threshold >= needGain * value;
+    }
+    return value >= req.threshold;
   }
   function meetsKindRequirement(entry, requirements) {
     if (!requirements || !requirements.length) return true; // 沒指定就當作沒有這個限制
@@ -190,7 +242,7 @@
         if (used[j]) continue;
         var r = rolled[j];
         if (r.kind !== req.kind) continue;
-        if (!reqSatisfiesValue(req, r.value)) continue;
+        if (!reqSatisfiesValue(req, r.value, r.unit)) continue;
         used[j] = true;
         if (backtrack(i + 1)) return true;
         used[j] = false;
@@ -202,9 +254,15 @@
   function kindRequirementText(requirements) {
     return (requirements || []).map(function (req) {
       var name = ENCHANT_KIND_NAME[req.kind] || ("kind" + req.kind);
-      if (req.mode === "tier" && req.min != null) return name + "(" + req.min + "~" + req.max + ")";
+      var perLevel = LOWER_IS_BETTER_KINDS[req.kind];
+      var gainText = perLevel ? " 級 +" + perLevelGain(req.unit || 1) : "";
+      if (req.mode === "tier" && req.min != null) {
+        return name + "(" + (perLevel ? "每 " : "") + (req.min === req.max ? req.min : req.min + "~" + req.max) + gainText + ")";
+      }
       if (req.mode !== "tier" && req.threshold != null) {
-        return name + "(" + (LOWER_IS_BETTER_KINDS[req.kind] ? "≤" : "≥") + req.threshold + ")";
+        return perLevel
+          ? name + "(每 " + req.threshold + gainText + " 或更好)"
+          : name + "(≥" + req.threshold + (PERCENT_KINDS[req.kind] ? "%" : "") + ")";
       }
       return name;
     }).join("、");
@@ -235,6 +293,39 @@
       if (t.max > max) max = t.max;
     });
     return { min: min, max: max };
+  }
+  // 用遊戲正在用的 options（options.json）重建屬性表，作者改機率／加新階級時不用再手動更新這支書籤。
+  // 讀不到就沿用上面寫死的表。遊戲格式：
+  //   kinds:      [{kind, name}]
+  //   appearance: [[階級, kind, 權重]]
+  //   values:     [[階級, kind, min, max, 權重, unit]]
+  function syncEnchantTablesFromGame() {
+    var o = data && data.options;
+    if (!o) return;
+    try {
+      if (Array.isArray(o.kinds) && o.kinds.length) {
+        ENCHANT_KINDS = o.kinds.map(function (k) { return { kind: k.kind, name: k.name }; });
+        ENCHANT_KIND_NAME = {};
+        ENCHANT_KINDS.forEach(function (k) { ENCHANT_KIND_NAME[k.kind] = k.name; });
+      }
+      if (Array.isArray(o.appearance) && o.appearance.length) {
+        var app = {};
+        o.appearance.forEach(function (r) { (app[String(r[0])] = app[String(r[0])] || []).push({ kind: r[1], weight: r[2] }); });
+        ENCHANT_APPEARANCE = app;
+      }
+      if (Array.isArray(o.values) && o.values.length) {
+        var vals = {}, perLevel = {};
+        o.values.forEach(function (r) {
+          var key = r[0] + "-" + r[1];
+          (vals[key] = vals[key] || []).push({ min: r[2], max: r[3], weight: r[4], unit: r[5] || 0 });
+          if (r[5]) perLevel[r[1]] = true;
+        });
+        ENCHANT_VALUES = vals;
+        if (Object.keys(perLevel).length) LOWER_IS_BETTER_KINDS = perLevel;
+      }
+    } catch (err) {
+      console.warn("[一鍵強化] 讀遊戲的屬性表失敗，改用書籤內建的表", err);
+    }
   }
   function loadoutList() {
     var s = snap();
@@ -427,6 +518,7 @@
     modal = document.createElement("div");
     modal.id = "iw-enhance-modal";
 
+    syncEnchantTablesFromGame();
     var freshEntry = findEntryByStackId(item.stackId);
     var curGrade = (freshEntry && freshEntry.options && freshEntry.options.grade) || 0;
 
@@ -481,7 +573,7 @@
       pendingNote +
       '<label>使用的發條</label>' +
       '<select id="iw-f-winder">' + winderOptions + '</select>' +
-      '<div id="iw-f-winder-note" style="font-size:12px;color:#b8ab90;margin-top:4px;"></div>' +
+      '<div id="iw-f-winder-note" style="font-size:12px;color:var(--iw-dim);margin-top:4px;"></div>' +
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
@@ -531,13 +623,28 @@
     }
     updateModeButtons();
 
+    // 選項的 value 格式：依數字 "門檻|unit"、依階級 "min|max|unit"（unit 只有依等級增加屬性用得到）
     function rangeOptionsHtmlByNumber(grade, kind) {
-      var bounds = overallBoundsFor(grade, kind);
       var html = '<option value="">（不限數值）</option>';
+      if (LOWER_IS_BETTER_KINDS[kind]) {
+        // 依等級增加屬性只會洗到表上那幾個數字（例如 10/8/6/4），直接列出來，並寫清楚是 +1 還是 +2
+        var seen = {};
+        valueTiersFor(grade, kind)
+          .map(function (t) { return { v: t.min, unit: t.unit || 1 }; })
+          .sort(function (a, b) { return b.unit - a.unit || a.v - b.v; })
+          .forEach(function (o) {
+            var key = o.v + "|" + o.unit;
+            if (seen[key]) return;
+            seen[key] = true;
+            html += '<option value="' + key + '">每 ' + o.v + ' 級 +' + perLevelGain(o.unit) + '（或更好）</option>';
+          });
+        return html;
+      }
+      var bounds = overallBoundsFor(grade, kind);
       if (!bounds) return html;
-      var symbol = LOWER_IS_BETTER_KINDS[kind] ? "≤" : "≥";
+      var pctSign = PERCENT_KINDS[kind] ? "%" : "";
       for (var v = bounds.min; v <= bounds.max; v++) {
-        html += '<option value="' + v + '">' + symbol + ' ' + v + '</option>';
+        html += '<option value="' + v + '|0">≥ ' + v + pctSign + '</option>';
       }
       return html;
     }
@@ -545,10 +652,15 @@
       var tiers = valueTiersFor(grade, kind);
       var total = tiers.reduce(function (s, t) { return s + t.weight; }, 0) || 1;
       var html = '<option value="">（不限範圍）</option>';
+      var perLevel = LOWER_IS_BETTER_KINDS[kind];
       tiers.forEach(function (t) {
         var pct = t.weight / total * 100;
         var pctText = pct >= 10 ? pct.toFixed(0) : pct.toFixed(1);
-        html += '<option value="' + t.min + '|' + t.max + '">' + t.min + '~' + t.max + '（' + pctText + '%）</option>';
+        var range = t.min === t.max ? String(t.min) : t.min + '~' + t.max;
+        var label = perLevel
+          ? '每 ' + range + ' 級 +' + perLevelGain(t.unit || 1)
+          : range + (PERCENT_KINDS[kind] ? "%" : "");
+        html += '<option value="' + t.min + '|' + t.max + '|' + (t.unit || 0) + '">' + label + '（' + pctText + '%）</option>';
       });
       return html;
     }
@@ -628,10 +740,10 @@
       groupsList.innerHTML = "";
       groups.forEach(function (g, gIdx) {
         var row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 8px;background:var(--bg3,#2a231a);border-radius:5px;";
+        row.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 8px;background:rgba(255,250,240,.8);border:1px solid rgba(162,131,88,.45);border-radius:8px;";
         var label = document.createElement("span");
         label.textContent = "組合" + (gIdx + 1) + "：";
-        label.style.cssText = "flex:none;font-size:12.5px;color:var(--text2,#d8cdb8);";
+        label.style.cssText = "flex:none;font-size:12.5px;color:var(--iw-dim);";
         row.appendChild(label);
         for (var i = 0; i < n; i++) {
           var cbLabel = document.createElement("label");
@@ -704,7 +816,7 @@
         row.style.cssText = "display:flex;gap:6px;align-items:center;";
         var numLabel = document.createElement("span");
         numLabel.textContent = numerals[i] || String(i + 1);
-        numLabel.style.cssText = "flex:none;width:20px;color:var(--gold,#c9a24b);font-weight:700;";
+        numLabel.style.cssText = "flex:none;width:20px;color:var(--iw-go);font-weight:700;";
         var kindSel = document.createElement("select");
         kindSel.className = "iw-kind-slot";
         kindSel.style.flex = "1";
@@ -745,9 +857,11 @@
           if (rangeMode === "tier") {
             if (!rangeVal) return { kind: kind, mode: "tier", min: null, max: null };
             var parts = rangeVal.split("|");
-            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]) };
+            return { kind: kind, mode: "tier", min: Number(parts[0]), max: Number(parts[1]), unit: parts[2] ? Number(parts[2]) : null };
           }
-          return { kind: kind, mode: "number", threshold: rangeVal ? Number(rangeVal) : null };
+          if (!rangeVal) return { kind: kind, mode: "number", threshold: null };
+          var np = rangeVal.split("|");
+          return { kind: kind, mode: "number", threshold: Number(np[0]), unit: np[1] ? Number(np[1]) : null };
         }
         // 把每個組合的勾選陣列，轉成「這個組合需要哪幾個屬性條件」，沒有任何勾選的組合直接跳過（不然會變成永遠成立）
         var matchGroups = groups
@@ -985,15 +1099,14 @@
   var alchemyFab = document.createElement("button");
   alchemyFab.id = "iw-alchemy-fab";
   alchemyFab.textContent = "🧪 自動煉金";
-  alchemyFab.style.cssText = "background:#4a90a4;color:#fff;" +
-    "border:none;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;" +
-    "box-shadow:0 4px 14px rgba(0,0,0,.4);";
+  alchemyFab.className = "iw-fab iw-fab-go";
+  alchemyFab.style.cssText = "padding:10px 18px;font-size:14px;";
 
   var alchemyHideBtn = document.createElement("button");
   alchemyHideBtn.title = "隱藏這個區塊（不會中斷背景執行）";
   alchemyHideBtn.textContent = "×";
-  alchemyHideBtn.style.cssText = "background:#2a231a;color:#b8ab90;border:none;border-radius:50%;" +
-    "width:22px;height:22px;line-height:22px;padding:0;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);";
+  alchemyHideBtn.className = "iw-fab";
+  alchemyHideBtn.style.cssText = "border-radius:50%;width:26px;height:26px;line-height:20px;padding:0;font-size:13px;";
 
   alchemyRow.appendChild(alchemyFab);
   alchemyRow.appendChild(alchemyHideBtn);
@@ -1002,9 +1115,8 @@
   var respawnFab = document.createElement("button");
   respawnFab.id = "iw-respawn-fab";
   respawnFab.textContent = "🔄 自動重生：關閉";
-  respawnFab.style.cssText = "background:#5a6b47;color:#fff;" +
-    "border:none;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;" +
-    "box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:.85;align-self:stretch;";
+  respawnFab.className = "iw-fab";
+  respawnFab.style.cssText = "padding:9px 16px;font-size:13px;align-self:stretch;";
   // 遊戲本身已經在地圖上方加了「定時自動重生」按鈕，這個功能不需要了，先隱藏起來。
   // 按鈕沒顯示就按不到，respawnEnabled 一直是 false，下面的重生迴圈不會跑；要恢復時把這行拿掉就好。
   respawnFab.style.display = "none";
@@ -1014,9 +1126,9 @@
   alchemyShowBtn.id = "iw-alchemy-show-btn";
   alchemyShowBtn.title = "顯示自動煉金按鈕";
   alchemyShowBtn.textContent = "🧪";
+  alchemyShowBtn.className = "iw-fab iw-fab-go";
   alchemyShowBtn.style.cssText = "position:fixed;left:18px;bottom:18px;z-index:999999;display:none;" +
-    "background:#4a90a4;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer;" +
-    "box-shadow:0 4px 14px rgba(0,0,0,.4);";
+    "border-radius:50%;width:42px;height:42px;padding:0;font-size:17px;";
 
   document.body.appendChild(alchemyFabWrap);
   document.body.appendChild(alchemyShowBtn);
@@ -1351,7 +1463,7 @@
   respawnFab.addEventListener("click", function () {
     respawnEnabled = !respawnEnabled;
     respawnFab.textContent = "🔄 自動重生：" + (respawnEnabled ? "開啟中" : "關閉");
-    respawnFab.style.background = respawnEnabled ? "#7ea45a" : "#5a6b47";
+    respawnFab.classList.toggle("iw-fab-on", respawnEnabled);
     if (respawnEnabled) respawnLoop();
     else if (respawnTimer) clearTimeout(respawnTimer);
   });
