@@ -549,11 +549,14 @@
       var maxG = Math.min(winderMaxGrade(w), grades.length || FALLBACK_MAX_GRADE);
       var html = "";
       for (var g = 1; g <= maxG; g++) {
-        html += '<option value="' + g + '"' + (g === selected ? " selected" : "") + '>' + (grades[g - 1] || g) + '</option>';
+        var tag = g === curGrade ? "（目前階級：就地重洗屬性）" : g > curGrade ? "（要先升階才會停）" : "";
+        html += '<option value="' + g + '"' + (g === selected ? " selected" : "") + '>' + (grades[g - 1] || g) + tag + '</option>';
       }
       return html;
     }
-    var defaultTarget = Math.min(curGrade + 1, winderMaxGrade(defaultWinder));
+    // 預設目標＝目前階級（大部分人是要「就地重洗屬性」）。以前預設是「目前 +1」，
+    // 玩家回報：XG 裝備預設目標變成 SG，選單列出 SG 才有的「每 3 級」，洗到 XG 的「每 4 級」也不會停（因為還沒升到 SG）。
+    var defaultTarget = Math.min(Math.max(curGrade, 1), winderMaxGrade(defaultWinder));
     var gradeOptions = gradeOptionsHtml(defaultWinder, defaultTarget);
     var pendingNote = (freshEntry && freshEntry.pendingPrev)
       ? '<div class="iw-warn" style="display:block;">⚠️ 這件裝備上次用武爾坎努斯的發條還沒選「新的／上一組」，請先在遊戲畫面選好一組再開始（不然遊戲不會讓它再上發條）。</div>'
@@ -608,9 +611,23 @@
 
     var gradeSelect = document.getElementById("iw-f-grade");
     var warnEl = document.getElementById("iw-f-warn");
+    // 目標比目前階級高時，一定要講清楚：屬性符合了也不會停，要先升階；順便算出用這種發條每次升階的機率
     function updateWarn() {
       var target = Number(gradeSelect.value);
-      warnEl.style.display = (target - curGrade >= 2) ? "block" : "none";
+      if (target <= curGrade) { warnEl.style.display = "none"; return; }
+      var wSel = document.getElementById("iw-f-winder");
+      var w = (wSel && winderById(Number(wSel.value))) || defaultWinder;
+      var rows = (w && w.grades || []).filter(function (r) { return r[0] === curGrade; });
+      var total = rows.reduce(function (s, r) { return s + r[2]; }, 0);
+      var up = rows.filter(function (r) { return r[1] > curGrade; }).reduce(function (s, r) { return s + r[2]; }, 0);
+      var upPct = total ? up / total * 100 : 0;
+      if (curGrade === 0) { warnEl.style.display = "none"; return; } // 還沒上過發條：第一次一定先變 N，往上洗是正常流程
+      var nowName = gradeNameOf(curGrade), targetName = gradeNameOf(target);
+      warnEl.innerHTML = "⚠️ 目標 <b>" + targetName + "</b> 比目前的 <b>" + nowName + "</b> 高：就算屬性已經符合，<b>還沒升到 " + targetName +
+        " 之前都不會停</b>。" + (w ? w.name + " 從 " + nowName + " 升階的機率每次約 " + (upPct >= 1 ? upPct.toFixed(1) : upPct.toFixed(2)) + "%" : "") +
+        (target - curGrade >= 2 ? "，而且要連升 " + (target - curGrade) + " 階，可能把預算花光也到不了" : "") +
+        "。只想重洗屬性的話，請把目標設成「" + nowName + "」。";
+      warnEl.style.display = "block";
     }
 
     var kindCountInput = document.getElementById("iw-f-kind-count");
@@ -1045,9 +1062,14 @@
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
+      var groupsOkNow = meetsAnyGroup(newEntry, matchGroups);
       var matchInfo = (matchGroups && matchGroups.length)
-        ? "，需求：" + groupsText(matchGroups) + "（目前" + (meetsAnyGroup(newEntry, matchGroups) ? "已符合" : "未符合") + "）"
+        ? "，需求：" + groupsText(matchGroups) + "（目前" + (groupsOkNow ? "已符合" : "未符合") + "）"
         : "";
+      // 屬性對了卻沒停，最常見就是階級還沒到目標，直接在紀錄裡講出來
+      if (groupsOkNow && matchGroups && matchGroups.length && newGrade < targetGrade) {
+        matchInfo += "——但階級 " + gradeNameOf(newGrade) + " 還沒到目標 " + gradeNameOf(targetGrade) + "，繼續洗";
+      }
       log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + keepNote + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
