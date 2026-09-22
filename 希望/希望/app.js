@@ -164,13 +164,15 @@
       '<option value="0">沒學</option>' + DROP_BEG_SKILL_LEVELS.map(function (v, i) {
         return '<option value="' + (i + 1) + '"' + (dropCalcState.beg === i + 1 ? ' selected' : '') + '>Lv' + (i + 1) + '（+' + v + '%）</option>';
       }).join('') + '</select></label>';
-    // 最常見的誤會：以為勾鐵匠會「提升」掉落率，其實只是「不被等級差打折」
-    html += '<div style="flex-basis:100%;font-size:11.5px;color:var(--text-faint);line-height:1.6;">' +
-      (dropCalcState.level == null
-        ? '💡 鐵匠不是增加掉落率，而是<b>不受等級差衰減</b>（比怪物高 30 級起掉落會打折：30 級 ×95%…55 級 ×5%）。' +
-          '要先在上方輸入<b>你目前的等級</b>，勾鐵匠才會看到差別。〔乞討〕則是真的提升掉落率（初心者技能，Lv110 可學）。'
-        : '鐵匠：不受等級差衰減（比怪物高 30 級以上才有差）。〔乞討〕：掉落率直接乘上加成。') +
-      '</div>';
+    // 最常見的誤會：以為勾鐵匠會「提升」掉落率，其實只是「不被等級差打折」——勾了鐵匠才顯示這段說明
+    if (dropCalcState.blacksmith) {
+      html += '<div style="flex-basis:100%;font-size:11.5px;color:var(--text-faint);line-height:1.6;">' +
+        '💡 鐵匠不是增加掉落率，而是<b>不受等級差衰減</b>（比怪物高 30 級起掉落會打折：30 級 ×95%…55 級 ×5%）。' +
+        (dropCalcState.level == null
+          ? '要先在上方輸入<b>你目前的等級</b>，才會看到差別。'
+          : '只有比怪物高 30 級以上的怪才會看到差別。') +
+        '</div>';
+    }
     html += '</div>';
     return html;
   }
