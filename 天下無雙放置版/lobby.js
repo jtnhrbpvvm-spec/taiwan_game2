@@ -223,10 +223,23 @@
     if (!(n >= 1 && n <= SLOT_COUNT)) n = 0;
     if (!n) { n = 1; for (let i = 1; i <= SLOT_COUNT; i++) if (summary(i)) { n = i; break; } }
     selected = n;
+    lastClickSlot = 0; lastClickAt = 0;
     show('lb-select');
     renderSelect();
   }
-  function selectSlot(n){ selected = n; renderSelect(); }
+  /* 拱門內連點兩下＝直接進入遊戲。
+     （第一下若整塊重繪，原生 dblclick 會因為節點被換掉而不觸發，所以這裡自己判斷間隔） */
+  let lastClickSlot = 0, lastClickAt = 0;
+  function selectSlot(n){
+    const now = Date.now();
+    const dbl = (n === lastClickSlot && now - lastClickAt <= 600);
+    lastClickSlot = n; lastClickAt = now;
+    const s = summary(n);
+    if (dbl && s && !s.broken) { lastClickSlot = 0; enterSlot(n); return; }
+    if (n === selected) { updateInfo(); return; }   // 已選取：不重繪，保留節點
+    selected = n;
+    renderSelect();
+  }
 
   function renderSelect(){
     let html = '';

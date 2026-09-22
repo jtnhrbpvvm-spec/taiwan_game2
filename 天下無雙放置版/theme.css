@@ -1,0 +1,437 @@
+/* ============================================================
+   天下無雙放置版 — 介面主題 V2（墨藍・鎏金）
+   依作者提供的介面示意圖重做：圓形頭像環、四格資源卡、氣血／法力長條、
+   經驗條、雙排十格下方選單，以及戰鬥血條的「即時扣血＋延遲尾條＋傷害飄字」。
+   本檔只做樣式覆蓋，載入順序在 index.html 內建樣式之後。
+   ============================================================ */
+:root{
+  --bg:#050a18;--panel:#101d3a;--panel2:#0a142b;
+  --gold:#f0c674;--gold2:#ffeab5;--gold-dim:#8a6a2c;
+  --line:rgba(240,198,116,.32);
+  --text:#dde6fa;--mute:#93a4c9;
+  --hp1:#b3222f;--hp2:#ff6a5a;--mp1:#1d5fbf;--mp2:#59b6ff;
+  --dock:122px;
+}
+html,body{background:#04070f;color:var(--text)}
+#game{
+  background:
+    radial-gradient(90% 42% at 50% 0%,rgba(96,140,220,.18),transparent 70%),
+    radial-gradient(70% 30% at 50% 100%,rgba(120,90,40,.16),transparent 70%),
+    linear-gradient(180deg,#0e1c3c 0%,#0a142b 40%,#05090f 100%),
+    linear-gradient(180deg,#0e1c3c,#070c1a);
+  color:var(--text);
+}
+#game:before{background:linear-gradient(90deg,transparent 0 8%,rgba(240,198,116,.10) 8% 9%,transparent 9% 91%,rgba(240,198,116,.10) 91% 92%,transparent 92%)}
+#game:after{background:radial-gradient(circle at 22% 16%,rgba(240,198,116,.08),transparent 26%),radial-gradient(circle at 80% 42%,rgba(110,170,255,.08),transparent 28%)}
+
+/* ---------------- 上方角色列 ---------------- */
+#game header{
+  padding:calc(9px + env(safe-area-inset-top)) 11px 9px;
+  background:linear-gradient(180deg,rgba(9,17,38,.96),rgba(5,9,20,.92));
+  border-bottom:1px solid var(--line);
+  box-shadow:0 3px 18px #000a;
+}
+#game .top{grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+#game .player{gap:11px;align-items:center}
+.avatar-ring{
+  position:relative;flex:none;width:60px;height:60px;border-radius:50%;padding:3px;
+  background:conic-gradient(from 210deg,#f6d98a,#8a6a2c 35%,#f6d98a 55%,#5e4a1e 80%,#f6d98a);
+  box-shadow:0 0 16px rgba(240,198,116,.35),inset 0 0 8px #000;
+}
+#game .avatar{
+  width:100%;height:100%;border-radius:50%;border:1px solid rgba(255,235,180,.5);
+  background:radial-gradient(circle at 50% 35%,#1b2c56,#060c1c 75%);
+  color:var(--gold2);font:800 26px/1 serif;text-shadow:0 0 12px rgba(240,198,116,.6);
+}
+#game .pname{color:var(--gold2);font:800 21px/1.15 serif;letter-spacing:.06em;text-shadow:0 2px 6px #000}
+/* 門派徽記：火焰＋武器 */
+.emb{width:84%;height:84%;display:block;filter:drop-shadow(0 0 6px rgba(255,150,40,.55))}
+.emb-flame{transform-origin:32px 42px;animation:embFlicker 2.4s ease-in-out infinite alternate}
+@keyframes embFlicker{0%{transform:scale(1) translateY(0);opacity:.92}50%{transform:scale(1.045,1.02) translateY(-.4px);opacity:1}100%{transform:scale(.985,1.035) translateY(.3px);opacity:.95}}
+.emb-none{color:var(--gold2);font:800 24px/1 serif}
+#game .role-avatar{border:1px solid rgba(240,198,116,.4);background:radial-gradient(circle at 50% 32%,#22355f,#070d1e 78%);box-shadow:inset 0 0 14px #000,0 0 12px rgba(240,198,116,.2)}
+#game .role-avatar .emb{width:88%;height:88%}
+@media (prefers-reduced-motion:reduce){.emb-flame{animation:none}}
+
+#game .prealm{display:none}
+.prow{display:flex;align-items:center;gap:7px;margin-top:3px}
+.class-badge{
+  padding:1px 9px;border:1px solid rgba(240,198,116,.65);border-radius:11px;
+  background:rgba(240,198,116,.10);color:var(--gold);font-size:11.5px;font-weight:800;letter-spacing:.08em;
+}
+.lv-tag{color:#8fd0ff;font-size:12.5px;font-weight:800;letter-spacing:.04em}
+.lv-tag:before{content:"†";margin-right:5px;color:var(--gold-dim)}
+#game .pmeta{margin-top:4px;color:var(--mute);font-size:11px;letter-spacing:.03em}
+#game .pmeta b{color:var(--gold2);font-weight:700}
+
+#game .actions{display:flex;gap:9px;align-items:flex-start}
+.act{display:flex;flex-direction:column;align-items:center;gap:3px}
+.act span{color:#b9c8e8;font-size:9.5px;letter-spacing:.06em}
+#game .actions .icon{
+  width:42px;height:42px;border-radius:50%;border:1px solid rgba(240,198,116,.55);
+  background:radial-gradient(circle at 50% 30%,#1a2b52,#070d1e 78%);
+  color:var(--gold);font:700 17px/1 serif;box-shadow:0 0 10px rgba(0,0,0,.6),inset 0 0 8px rgba(240,198,116,.10);
+}
+#game .actions .icon:hover{border-color:var(--gold2);color:var(--gold2);box-shadow:0 0 14px rgba(240,198,116,.45)}
+#game .actions .icon.on{background:radial-gradient(circle at 50% 30%,#55421c,#120c04 80%);border-color:var(--gold2);color:#fff3cf;box-shadow:0 0 16px rgba(240,198,116,.6)}
+
+/* 四格資源卡 */
+#game .resources{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+#game .res{
+  display:flex;align-items:center;gap:7px;padding:6px 8px;min-width:0;
+  border:1px solid var(--line);border-radius:13px;
+  background:linear-gradient(180deg,rgba(20,35,68,.95),rgba(8,14,30,.95));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 10px #0007;
+}
+.res-ico{flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:9px;font-size:14px;font-style:normal;
+  background:radial-gradient(circle at 50% 35%,rgba(240,198,116,.22),rgba(10,18,38,.9));border:1px solid rgba(240,198,116,.35)}
+.res-body{min-width:0;line-height:1.25}
+#game .res b{display:block;color:#9db0d6;font-size:10px;font-weight:600;letter-spacing:.06em}
+#game .res span{display:block;color:var(--gold2);font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#game .res #powerRate{display:inline-block;margin-left:4px;color:#6fe3a5;font-size:9.5px;font-weight:700}
+#game .res #hereMap,#game .res #autoState{color:#bfe3ff;font-size:12.5px}
+
+/* 氣血／法力 */
+#game .vitals{grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+#game .vital{
+  height:26px;border-radius:14px;border:1px solid rgba(255,110,96,.55);background:#22080f;
+  box-shadow:inset 0 0 10px #000,0 0 10px rgba(255,90,70,.12);
+  clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%);
+}
+#game .vital.mana{border-color:rgba(90,175,255,.55);background:#06162e;box-shadow:inset 0 0 10px #000,0 0 10px rgba(90,150,255,.14)}
+#game .vital i{background:linear-gradient(90deg,var(--hp1),var(--hp2));box-shadow:0 0 12px rgba(255,90,70,.4) inset}
+#game .vital.mana i{background:linear-gradient(90deg,var(--mp1),var(--mp2));box-shadow:0 0 12px rgba(90,160,255,.4) inset}
+#game .vital span{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-shadow:0 1px 3px #000,0 0 6px #0008;padding-right:10px}
+#game .vital:before{content:"❤";position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:2;font-size:12px;color:#ffb3a6}
+#game .vital.mana:before{content:"✦";color:#a8d8ff}
+#game .vital span{padding-left:18px}
+
+/* 經驗條 */
+#game .progress{margin-top:8px}
+#game .bar{height:22px;border-radius:12px;border:1px solid rgba(240,198,116,.45);background:#080f26;box-shadow:inset 0 0 10px #000}
+#game .fill{background:linear-gradient(90deg,#8a6a2c,#f6d98a 70%,#fff2c9);box-shadow:0 0 14px rgba(240,198,116,.35)}
+#game .bartext{color:#ffeab5;font-size:11px;font-weight:800;text-shadow:0 1px 3px #000}
+
+/* ---------------- 內容區 ---------------- */
+#game .side{display:none}
+#game .content{padding:9px 10px calc(var(--dock) + 16px) 10px}
+#game .card{
+  border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(180deg,rgba(18,32,63,.96),rgba(7,13,28,.97));
+  box-shadow:0 4px 18px #0008,inset 0 1px 0 rgba(255,255,255,.05);
+  padding:11px 12px;margin-bottom:10px;
+}
+#game .card .title,#game .title{color:var(--gold2);font:800 18px/1.2 serif;letter-spacing:.08em;text-shadow:0 2px 6px #000}
+#game .desc,#game .monster-meta,#game .footer-note,#game .hint{color:#a8b8d8}
+#game .stat{
+  padding:8px 10px;border:1px solid rgba(240,198,116,.22);border-radius:11px;
+  background:linear-gradient(180deg,rgba(14,26,52,.9),rgba(7,13,28,.9));font-size:11.5px;color:#b9c8e8;
+}
+#game .stat em{color:#8fd8ff;font-style:normal;font-weight:800}
+#game .statgrid{gap:7px}
+#game .smallbtn{border:1px solid rgba(240,198,116,.45);border-radius:10px;background:linear-gradient(180deg,rgba(18,32,62,.95),rgba(7,12,26,.95));color:var(--gold)}
+#game .smallbtn.hot{border-color:var(--gold2);background:linear-gradient(180deg,#f6e2ae,#c9a25f);color:#2a1d06}
+#game .smallbtn:hover{border-color:var(--gold2);color:var(--gold2)}
+#game .smallbtn.hot:hover{color:#1d1403}
+#game .tab{border-color:rgba(240,198,116,.4);background:rgba(10,18,38,.85);color:var(--gold)}
+#game .tab.active{background:linear-gradient(180deg,#f6e2ae,#c9a25f);color:#2a1d06}
+#game .bigbtn{border-color:#f6d98a;background:linear-gradient(180deg,#f8ebc6,#b8913f);color:#2b1e07}
+#game .map,#game .item,#game .shopitem,#game .skill,#game .pet,#game .dungeon3,#game .enemy{
+  border-color:rgba(240,198,116,.22);background:linear-gradient(180deg,rgba(14,26,52,.9),rgba(7,13,28,.92));border-radius:12px;
+}
+#game .modal-box{background:linear-gradient(180deg,#132247,#070d1c);border-top:1px solid var(--line)}
+#game .toast{background:rgba(10,18,38,.96);border-color:rgba(240,198,116,.5);color:var(--gold2)}
+
+/* ---------------- 下方選單（雙排五格） ---------------- */
+#game .dock,.dock{
+  height:var(--dock);grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(0,1fr);gap:5px;
+  padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(11,23,48,.97),rgba(4,8,18,.98));
+  border-top:1px solid var(--line);box-shadow:0 -6px 20px #000b;
+}
+.dock button{
+  border:1px solid rgba(240,198,116,.3);border-right:1px solid rgba(240,198,116,.3);border-radius:12px;
+  background:linear-gradient(180deg,rgba(18,32,62,.92),rgba(7,13,28,.95));
+  color:#b9c8e8;font-size:9.5px;letter-spacing:.06em;gap:3px;
+}
+.dock button b{font-size:17px;font-weight:700;color:var(--gold);text-shadow:0 0 8px rgba(240,198,116,.4)}
+.dock button:hover{border-color:rgba(240,198,116,.6);color:var(--gold2)}
+.dock button.active{
+  border-color:var(--gold2);color:#fff3cf;
+  background:linear-gradient(180deg,rgba(90,70,28,.95),rgba(20,14,4,.95));
+  box-shadow:0 0 14px rgba(240,198,116,.4),inset 0 0 10px rgba(255,235,180,.12);
+}
+.dock button.active b{color:var(--gold2)}
+
+/* ---------------- 戰鬥：即時扣血＋延遲尾條＋傷害飄字 ---------------- */
+.hpbar,.foebar{position:relative;overflow:hidden}
+.hptrail{
+  position:absolute;left:0;top:0;bottom:0;width:100%;z-index:0;border-radius:inherit;
+  background:linear-gradient(90deg,rgba(255,190,150,.75),rgba(255,120,90,.75));
+  transition:width .55s cubic-bezier(.25,.8,.3,1) .32s;
+}
+.hpbar .hpfill,.hpbar .mpfill,.foebar i:not(.hptrail){position:relative;z-index:1;transition:width .1s linear}
+.hpbar .hptrail,.foebar .hptrail{transition:width .55s cubic-bezier(.25,.8,.3,1) .32s}
+.hpbar.flash:after,.foebar.flash:after{
+  content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(circle at var(--hitx,70%) 50%,rgba(255,240,200,.85),rgba(255,140,60,.35) 45%,transparent 70%);
+  animation:hitFlash .42s ease-out forwards;
+}
+@keyframes hitFlash{0%{opacity:1}100%{opacity:0}}
+.fighter,.hunt,.battle-screen .fighters{position:relative}
+.dmg-float{
+  position:absolute;top:6px;z-index:9;transform:translateX(-50%);pointer-events:none;
+  font:800 22px/1 "Noto Serif TC",serif;color:#ffd98a;
+  text-shadow:0 0 10px rgba(255,140,60,.9),0 2px 5px #000,0 0 3px #000;
+  animation:dmgUp .95s ease-out forwards;
+}
+.dmg-float.crit{font-size:28px;color:#fff0c0;text-shadow:0 0 14px rgba(255,170,60,1),0 2px 6px #000}
+.dmg-float.hurt{color:#ff9f92;text-shadow:0 0 10px rgba(255,70,60,.85),0 2px 5px #000}
+.dmg-float.heal{color:#8fe3ac;text-shadow:0 0 10px rgba(60,220,140,.7),0 2px 5px #000}
+@keyframes dmgUp{
+  0%{opacity:0;transform:translate(-50%,10px) scale(.75)}
+  16%{opacity:1;transform:translate(-50%,-2px) scale(1.18)}
+  30%{transform:translate(-50%,-8px) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-46px) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){.dmg-float{animation-duration:.4s}.hptrail{transition:none}}
+
+.battle-screen{background:linear-gradient(180deg,#0a142b,#04070f)}
+.battle-screen .fighter{border-color:rgba(240,198,116,.25);background:linear-gradient(180deg,rgba(16,29,58,.92),rgba(6,11,24,.95))}
+.foebar{height:14px;border-color:rgba(255,120,96,.5);background:#1c0a0d}
+.foebar i{background:linear-gradient(90deg,#c22c25,#ff9384)}
+.hpbar{border-color:rgba(255,120,96,.45);height:20px;border-radius:10px}
+.hpnum{position:absolute;inset:0;z-index:3;display:grid;place-items:center;font:800 10px/1 Arial,"Microsoft JhengHei",sans-serif;color:#fff0d8;letter-spacing:0;white-space:nowrap;text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none}
+@media(max-width:420px){.hpnum{font-size:9px}}
+
+@media(max-width:420px){
+  :root{--dock:128px}
+  .dock button{border-width:8px;font-size:8.5px;gap:1px}
+  .dock button b{font-size:14px}
+  .dock button.active{border-width:11px}
+  .avatar-ring{width:52px;height:52px}
+  #game .avatar{font-size:22px}
+  #game .pname{font-size:18px}
+  #game .actions{gap:6px}
+  #game .actions .icon{width:36px;height:36px;font-size:15px}
+  .act span{font-size:9px}
+  #game .res{padding:5px 5px;gap:4px;border-radius:11px}
+  .res-ico{width:20px;height:20px;font-size:11px;border-radius:7px}
+  #game .res b{font-size:9px;letter-spacing:0}
+  #game .res span{font-size:11.5px;letter-spacing:-.02em}
+  #game .res #powerRate{margin-left:0;font-size:9px}
+  #game .res #hereMap,#game .res #autoState{font-size:11px}
+  #game .vital{height:23px}
+  .dock button b{font-size:15px}
+  .dock button{font-size:9px}
+}
+
+/* ============================================================
+   實圖邊框（由作者提供的介面示意圖裁切，圖片：圖片/ui/*.png）
+   以 border-image 九宮格拉伸，四角花紋不變形。
+   ============================================================ */
+#game .card{
+  border:16px solid transparent;border-radius:0;
+  border-image:url("圖片/ui/frame-panel.png") 46 / 16px / 0 stretch;
+  background:linear-gradient(180deg,rgba(16,29,58,.92),rgba(6,12,26,.94));
+  background-clip:padding-box;
+  padding:10px 12px;box-shadow:0 4px 18px #0008;
+}
+#game .res{
+  border:9px solid transparent;border-radius:0;
+  border-image:url("圖片/ui/res-card.png") 18 / 9px / 0 stretch;
+  background:linear-gradient(180deg,rgba(18,32,62,.9),rgba(7,13,28,.92));
+  background-clip:padding-box;padding:3px 4px;box-shadow:none;
+}
+#game .stat,#game .map,#game .item,#game .shopitem,#game .skill,#game .pet,#game .dungeon3{
+  border:9px solid transparent;border-radius:0;
+  border-image:url("圖片/ui/frame-box.png") 16 / 9px / 0 stretch;
+  background:linear-gradient(180deg,rgba(14,26,52,.88),rgba(7,13,28,.9));
+  background-clip:padding-box;
+}
+#game .stat{padding:4px 7px}
+.dock button{
+  min-height:0;overflow:hidden;
+  border:11px solid transparent;border-radius:0;
+  border-image:url("圖片/ui/btn.png") 20 / 11px / 0 stretch;
+  background:linear-gradient(180deg,rgba(16,29,58,.85),rgba(6,12,26,.9));
+  background-clip:padding-box;box-shadow:none;
+}
+.dock button:hover{filter:brightness(1.25)}
+.dock button.active{
+  border:14px solid transparent;
+  border-image:url("圖片/ui/btn-active.png") 26 / 14px / 0 stretch;
+  background:linear-gradient(180deg,rgba(74,52,18,.55),rgba(20,13,4,.75));
+  background-clip:padding-box;box-shadow:none;color:#fff3cf;
+}
+#game .actions .icon{border-radius:50%}
+/* ============================================================
+   背景圖（圖片/bg.jpg）＋ 原圖按鈕 ＋ 電腦版三區塊
+   ============================================================ */
+html,body{background:#04070f}
+#game{
+  background:
+    linear-gradient(180deg,rgba(4,8,20,.72),rgba(4,8,20,.48) 35%,rgba(3,6,14,.84)),
+    url("圖片/bg.jpg") center center / cover no-repeat,
+    linear-gradient(180deg,#0e1c3c,#05090f);
+}
+#game:before,#game:after{opacity:.10}
+#game header{background:linear-gradient(180deg,rgba(6,12,28,.92),rgba(5,9,20,.72));backdrop-filter:blur(2px)}
+#game .content{background:transparent}
+
+/* 下方按鈕：直接使用示意圖裁下的按鈕圖（含圖示與文字），未選變小、選取放大 */
+.dock button{
+  font-size:0;line-height:0;
+  background-repeat:no-repeat;background-position:center 50%;background-size:auto 80%;
+  transform:scale(.9);transition:transform .18s ease,filter .18s ease;
+}
+.dock button b{display:none}
+.dock button[data-ico="character"]{background-image:url("圖片/ui/ico-char.png")}
+.dock button[data-ico="hunt"]{background-image:url("圖片/ui/ico-hunt.png")}
+.dock button[data-ico="inventory"]{background-image:url("圖片/ui/ico-inventory.png")}
+.dock button[data-ico="skill"]{background-image:url("圖片/ui/ico-skill.png")}
+.dock button[data-ico="shop"]{background-image:url("圖片/ui/ico-shop.png")}
+.dock button[data-ico="home"]{background-image:url("圖片/ui/ico-home.png")}
+.dock button[data-ico="boss"]{background-image:url("圖片/ui/ico-boss.png")}
+.dock button[data-ico="forge"]{background-image:url("圖片/ui/ico-forge.png")}
+.dock button[data-ico="system"]{background-image:url("圖片/ui/ico-system.png")}
+.dock button[data-ico="warehouse"]{background-image:url("圖片/ui/ico-warehouse.png")}
+.dock button:hover{transform:scale(.96);filter:brightness(1.15)}
+.dock button.active{
+  transform:scale(1.1);z-index:2;
+  filter:brightness(1.18) drop-shadow(0 0 10px rgba(255,190,90,.55));
+  background-repeat:no-repeat;background-position:center 50%;background-size:auto 86%;
+}
+@media (prefers-reduced-motion:reduce){.dock button{transition:none}}
+
+/* 電腦版：三區塊（上＝角色與能力值／中＝功能內容／下＝按鈕） */
+#deskChar{display:none}
+@media (min-width:760px){
+  #deskChar{display:block;flex:0 0 auto;padding:8px 10px 0}
+  .dk-card{margin-bottom:0;padding:9px 12px}
+  .dk-head{display:flex;align-items:center;gap:12px}
+  .dk-ava{width:62px;height:62px;flex:none;border-radius:14px;display:grid;place-items:center}
+  .dk-name{color:var(--gold2);font:800 19px/1.15 serif;letter-spacing:.06em}
+  .dk-sub{margin-top:3px;color:#a8b8d8;font-size:12px}
+  .dk-stats{grid-template-columns:repeat(6,1fr);margin-top:8px}
+  .dk-attrs{grid-template-columns:repeat(5,1fr);margin-top:6px}
+  #game .dk-stats .stat,#game .dk-attrs .stat{display:flex;justify-content:space-between;gap:6px;font-size:11px}
+  :root{--dock:156px}
+  .dock{width:min(960px,100%);gap:9px;padding:11px 14px calc(11px + env(safe-area-inset-bottom));justify-items:center}
+  .dock button{width:100%;max-width:168px}
+  .dock button.active{transform:scale(1.06)}
+  #game .content{padding-top:8px}
+}
+/* ============================================================
+   背景圖鋪滿整個版面＋UI 半透明（可隱約看到背景）
+   ============================================================ */
+html,body{
+  background:url("圖片/bg.jpg") center center / cover no-repeat,#04070f;
+}
+#game{
+  background:linear-gradient(180deg,rgba(4,9,20,.42),rgba(4,9,20,.28) 40%,rgba(3,6,14,.48));
+  backdrop-filter:none;
+}
+#game:before,#game:after{opacity:.07}
+#game header{
+  background:linear-gradient(180deg,rgba(6,12,28,.58),rgba(5,9,20,.34));
+  backdrop-filter:blur(3px);
+}
+#game .dock,.dock{
+  background:linear-gradient(180deg,rgba(8,16,34,.52),rgba(3,7,16,.66));
+  backdrop-filter:blur(3px);
+}
+#game .card{
+  background:linear-gradient(180deg,rgba(16,29,58,.56),rgba(6,12,26,.62));
+  background-clip:padding-box;backdrop-filter:blur(2px);
+}
+#game .res{
+  background-color:transparent;
+  background-image:linear-gradient(180deg,rgba(18,32,62,.5),rgba(7,13,28,.58));
+  background-clip:padding-box;
+}
+.dock button{background-color:rgba(10,19,40,.42);background-clip:padding-box}
+.dock button.active{background-color:rgba(74,52,18,.5)}
+#game .stat,#game .map,#game .item,#game .shopitem,#game .skill,#game .pet,#game .dungeon3{
+  background:linear-gradient(180deg,rgba(14,26,52,.5),rgba(7,13,28,.56));
+  background-clip:padding-box;
+}
+#game .vital{background:rgba(34,8,15,.62)}
+#game .vital.mana{background:rgba(6,22,46,.62)}
+#game .bar{background:rgba(8,15,38,.62)}
+#game .modal-box{background:linear-gradient(180deg,rgba(19,34,71,.94),rgba(7,13,28,.96));backdrop-filter:blur(4px)}
+.battle-screen{background:linear-gradient(180deg,rgba(10,20,43,.90),rgba(4,7,15,.94));backdrop-filter:blur(3px)}
+.battle-screen .fighter{background:linear-gradient(180deg,rgba(16,29,58,.6),rgba(6,11,24,.68))}
+#warehouse-window-frame{background:linear-gradient(180deg,rgba(19,34,39,.94),rgba(7,15,18,.96));backdrop-filter:blur(4px)}
+/* ---------------- 戰鬥畫面：半透明，可看到背景圖 ---------------- */
+.battle-screen{
+  background:
+    linear-gradient(180deg,rgba(5,10,24,.62),rgba(3,7,16,.74)),
+    url("圖片/bg.jpg") center center / cover no-repeat,
+    linear-gradient(180deg,#0a142b,#04070f);
+  backdrop-filter:blur(4px);
+}
+.battle-screen .battle-head{
+  background:linear-gradient(180deg,rgba(6,12,28,.62),rgba(5,9,20,.42));
+  border-bottom-color:rgba(240,198,116,.4);
+}
+.battle-screen .fighter{
+  background:linear-gradient(180deg,rgba(16,29,58,.5),rgba(6,11,24,.58));
+  border-color:rgba(240,198,116,.3);
+}
+.battle-screen .fightlog{background:rgba(4,9,20,.34)}
+.battle-screen .battle-actions{
+  background:linear-gradient(180deg,rgba(6,12,28,.5),rgba(3,7,16,.66));
+  border-top-color:rgba(240,198,116,.4);
+}
+.battle-screen .smallbtn{background:linear-gradient(180deg,rgba(18,32,62,.72),rgba(7,12,26,.78))}
+
+/* ---------------- 共用倉庫：使用另一張背景圖 ---------------- */
+#warehouse-window-frame{
+  background:
+    linear-gradient(180deg,rgba(5,10,24,.78),rgba(3,7,16,.86)),
+    url("圖片/bg-warehouse.jpg") center center / cover no-repeat,
+    linear-gradient(180deg,#132247,#070d1c);
+  backdrop-filter:blur(4px);
+  border-color:rgba(240,198,116,.55);
+}
+#warehouse-window-drag{
+  background:linear-gradient(180deg,rgba(12,24,50,.55),rgba(5,10,22,.35));
+  border-bottom-color:rgba(240,198,116,.45);
+}
+#warehouse-window-content{background:transparent}
+#warehouse-window-content .wh-bar,#warehouse-window-content .wh-item{
+  background:linear-gradient(180deg,rgba(14,26,52,.62),rgba(6,12,26,.68));
+  border-color:rgba(240,198,116,.3);
+}
+#warehouse-window-content .wh-item:hover:not(:disabled){background:linear-gradient(180deg,rgba(28,48,88,.75),rgba(10,18,38,.8))}
+#warehouse-window-content .wh-list{background:rgba(4,9,20,.3);border-radius:8px;padding:4px}
+#warehouse-window-content .tab{background:rgba(8,16,34,.6)}
+#warehouse-window-content .tab.active{background:linear-gradient(180deg,#f6e2ae,#c9a25f)}
+/* ---------------- 獵場／戰鬥面板與其餘區塊：同樣半透明 ---------------- */
+#game .hunt{
+  border:11px solid transparent;border-radius:0;
+  border-image:url("圖片/ui/frame-box.png") 16 / 9px / 0 stretch;
+  background:linear-gradient(180deg,rgba(14,26,52,.5),rgba(6,12,26,.58));
+  background-clip:padding-box;
+}
+#game .hunt.fighting{border-image:url("圖片/ui/btn-active.png") 26 / 12px / 0 stretch}
+#game .ticker{background:linear-gradient(180deg,rgba(14,26,52,.48),rgba(6,12,26,.56));border-color:rgba(240,198,116,.25)}
+#game .foebar{background:rgba(28,10,13,.6)}
+#game .battlelog,#game .fightlog{background:rgba(4,9,20,.32);border-radius:8px;padding:6px 8px;border-top-color:rgba(240,198,116,.25)}
+#game .combo-slot{background:linear-gradient(180deg,rgba(24,28,24,.5),rgba(8,17,20,.58));border-color:rgba(240,198,116,.28)}
+#game .tp{background:linear-gradient(180deg,rgba(14,26,52,.5),rgba(6,12,26,.56));border-color:rgba(240,198,116,.25)}
+#game .maze-event,#game .dungeon-note,#game .dungeon-cond div{background:rgba(9,20,40,.5);border-color:rgba(240,198,116,.25)}
+#game .feature-list>div{background:rgba(9,20,40,.42)}
+#game .strategy-trigger{background:linear-gradient(180deg,rgba(23,36,43,.6),rgba(11,18,22,.68))}
+#game .strategy-trigger:hover,#game .strategy-trigger.open{background:linear-gradient(180deg,rgba(36,50,57,.72),rgba(13,21,25,.78))}
+.strategy-panel{background:linear-gradient(180deg,rgba(19,34,71,.92),rgba(7,13,28,.95));backdrop-filter:blur(4px)}
+#game .settings select,#game .settings input[type=number],#game .settings input[type=text],
+#game select,#game input[type=number],#game input[type=search],#game input[type=text]{
+  background:rgba(9,19,40,.6);color:#e6edff;border-color:rgba(240,198,116,.35);
+}
+#game .inventory-feature-tools select,#game .inventory-category-tabs .tab{background:rgba(9,19,40,.55)}
+#game .inventory-category-tabs .tab.active{background:linear-gradient(180deg,#f6e2ae,#c9a25f)}
+#game .enemy,#game .quest,#game .questlist>div{background:linear-gradient(180deg,rgba(14,26,52,.5),rgba(6,12,26,.56))}
+#game .equip-chip,#game .inventory-slot{background:linear-gradient(180deg,rgba(14,26,52,.5),rgba(6,12,26,.56))}
+#inventoryTooltip{background:linear-gradient(180deg,rgba(20,36,60,.95),rgba(7,16,19,.96));backdrop-filter:blur(4px)}
