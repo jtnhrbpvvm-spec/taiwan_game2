@@ -1344,6 +1344,279 @@
     return html;
   }
 
+  // ---------- G 化／變異合成（資料：希望/fusionIndex.js，規則照遊戲 fuseStack／fusionView／mg／cg）----------
+  var FUSION = window.FUSION || null;
+  var FUSION_KIND_ORDER = ["g", "hit", "crit", "speed"];
+  var FUSION_KIND_LABEL = { g: "G 化", hit: "命中型", crit: "必殺型", speed: "攻速型" }; // 跟遊戲按鈕上的字一樣
+  var FUSION_REFINE_MULT = { 5: 1, 6: 1.1, 7: 1.2, 8: 1.5, 9: 2, 10: 2.5, 11: 3, 12: 3.5 }; // 輔G裝備的精煉倍率（遊戲 og）
+  var FUSION_TIER_MULT = { g: 2, dg: 4, xg: 6 };                                              // 輔G裝備的階級倍率（遊戲 ig）
+  var FUSION_TIER_LABEL = { n: "N 裝", g: "G 裝", dg: "DG 裝", xg: "XG 裝", variant: "變異型（命中／必殺／攻速）" };
+  // 1 PT 換多少 %：裝備等級越高越少（遊戲 pg = 100 / (43.3 + 0.3806 × 等級)）
+  function fusionPtFactor(lv) { return 100 / (43.3 + 0.3806 * Math.max(0, lv || 0)); }
+  // 成功率（遊戲 mg）：min(上限, (書的基礎% + PT × 換算) × (1 + 技能加成%))
+  function fusionRate(base, bonusPct, pt, lv) {
+    var cap = (FUSION && FUSION.cap) || 90;
+    return Math.min(cap, (base + Math.max(0, pt) * fusionPtFactor(lv)) * (1 + Math.max(0, bonusPct) / 100));
+  }
+  // 輔G裝備的 PT（遊戲 cg）：+5 以上才有，看裝備等級、階級、精煉；最後無條件捨去到 0.5
+  function fusionGearPt(tier, lv, refine) {
+    var r = FUSION_REFINE_MULT[refine];
+    if (r === undefined || refine < 5 || !(lv > 0)) return 0;
+    var i = Math.sqrt(lv);
+    var base = tier === "n" ? Math.floor(i)
+      : tier === "variant" ? Math.floor(i) + 2
+      : Math.floor(i * FUSION_TIER_MULT[tier] * 2) / 2;
+    return Math.floor(base * r * 2) / 2;
+  }
+  function fusionSlotGroup(slot) {
+    if (slot === "weapon") return "weapon";
+    if (["head", "body", "legs", "feet", "shield"].indexOf(slot) !== -1) return "armor";
+    return "accessory";
+  }
+  // 遊戲 wv：同種類、equipLvCap >= 裝備等級的書都能用；排序是成功率高的在前，同成功率卷數小的在前
+  function fusionBooksFor(kind, minLv) {
+    return ((FUSION && FUSION.books) || []).filter(function (b) {
+      return b.kind === kind && b.equipLvCap >= minLv;
+    }).sort(function (a, b) { return b.rate - a.rate || (a.vol == null ? 99 : a.vol) - (b.vol == null ? 99 : b.vol) || a.item - b.item; });
+  }
+  var fusionSourceIndex = null; // 目標裝備 id → [{from, kind}]，第一次用到才建
+  function fusionSourcesOf(id) {
+    if (!FUSION) return [];
+    if (!fusionSourceIndex) {
+      fusionSourceIndex = {};
+      Object.keys(FUSION.targets).forEach(function (from) {
+        var t = FUSION.targets[from];
+        FUSION_KIND_ORDER.forEach(function (k) {
+          if (t[k] != null) (fusionSourceIndex[t[k]] = fusionSourceIndex[t[k]] || []).push({ from: from, kind: k });
+        });
+      });
+    }
+    return fusionSourceIndex[id] || [];
+  }
+  // 資料裡同一種材料有時會拆成好幾筆（例如鑽石 ×1、鑽石 ×1），遊戲扣的是加總，顯示時合併
+  function fusionMergedMats(mats) {
+    var order = [], sum = {};
+    (mats || []).forEach(function (m) {
+      if (!(m[0] in sum)) { order.push(m[0]); sum[m[0]] = 0; }
+      sum[m[0]] += m[1];
+    });
+    return order.map(function (id) { return [id, sum[id]]; });
+  }
+  function fusionBonusSkill(kind) { return kind === "g" ? FUSION.growSkill : FUSION.variantSkill; }
+
+  function fusionSectionHtml(id, eq) {
+    if (!FUSION) return "";
+    var t = FUSION.targets[id] || {};
+    var kinds = FUSION_KIND_ORDER.filter(function (k) { return t[k] != null; });
+    var sources = fusionSourcesOf(id);
+    if (!kinds.length && !sources.length && !t.noFuse) return "";
+
+    var html = '<details class="fold-section"><summary class="section-title">G 化／變異合成' +
+      '<span class="fold-hint">點擊展開</span></summary>';
+    if (sources.length) {
+      html += '<div class="empty-note" style="padding:0 0 10px;">這件可以由 ' + sources.map(function (s) {
+        return itemChip(s.from, null, '<span class="group-tag">' + FUSION_KIND_LABEL[s.kind] + '</span>');
+      }).join(' ') + ' 合成出來。</div>';
+    }
+    if (t.noFuse) {
+      html += '<div class="empty-note" style="padding:0 0 10px;">⚠️ 這件裝備不能 G 化（遊戲裡會顯示「這件不能 G 化」）。</div>';
+    }
+    if (kinds.length && !t.noFuse) {
+      var skill = FUSION.slotSkill && FUSION.slotSkill[fusionSlotGroup(eq.slot)];
+      html += '<div class="empty-note" style="padding:0 0 10px;line-height:1.8;">在村莊鐵匠組合長的「G 化」分頁製作，<b>只有鐵匠職業</b>做得了，' +
+        '要先學〔' + escapeHtml(skill ? skill.name : "合成") + '〕。失敗的話<b>整件裝備消失</b>；成功會變成目標裝備，但精煉值歸零。' +
+        '成功率最高 ' + FUSION.cap + '%，可以放「輔 G」（精煉材料，或 +5 以上的非配件裝備）往上加，下面有試算。</div>';
+      // 類型分頁（G 化／命中型／必殺型／攻速型）：一次只顯示一種的書單，下面試算的「種類」也會跟著切
+      if (kinds.length > 1) {
+        html += '<div class="fusion-kind-tabs" data-fusion-tabs="' + id + '">' + kinds.map(function (k, i) {
+          return '<button type="button" class="hint-chip' + (i === 0 ? ' active' : '') + '" data-fusion-tab="' + k + '">' + FUSION_KIND_LABEL[k] + '</button>';
+        }).join('') + '</div>';
+      }
+      kinds.forEach(function (k, idx) {
+        var books = fusionBooksFor(k, eq.minLv);
+        html += '<div class="equip-box" data-fusion-kind="' + k + '"' + (idx === 0 ? '' : ' style="display:none;"') + '>' +
+          '<div class="row1"><span><span class="slot">' + FUSION_KIND_LABEL[k] + '</span>　成品：' + itemChip(t[k]) + '</span>' +
+          '<span class="badge">' + books.length + ' 本書可用</span></div>';
+        if (!books.length) {
+          html += '<div class="empty-note">沒有等級上限夠的融合書。</div></div>';
+          return;
+        }
+        html += '<div style="overflow-x:auto;"><table class="dtable fusion-books"><thead><tr>' +
+          '<th>融合書</th><th>基礎成功率</th><th>需精煉</th><th>輔G格</th><th>費用</th></tr></thead><tbody>';
+        books.forEach(function (b) {
+          var req = ['角色 Lv' + b.charLv, '力量 ' + b.strMin, '〔' + (skill ? skill.name : '合成') + '〕Lv' + b.skillLv];
+          // 遊戲資料裡有幾本（例如 G 篇第 18～20 卷）沒有材料、費用也是 0，看起來是作者還沒填完
+          var unfinished = !b.gold && !(b.mats || []).length;
+          html += '<tr class="fusion-book-row">' +
+            '<td>' + itemChip(b.item) + (unfinished ? ' <span class="group-tag" title="遊戲資料裡這本沒有材料、費用也是 0，可能還沒開放">資料未填</span>' : '') + '</td>' +
+            '<td><span class="rate">' + b.rate + '%</span></td>' +
+            '<td>+' + b.refine + '</td>' +
+            '<td>' + b.auxSlots + '</td>' +
+            '<td>' + (b.gold ? bigNumHtml(b.gold) : '免費') + '</td>' +
+            '</tr>' +
+            '<tr class="fusion-mats-row"><td colspan="5">' +
+            '<span class="fusion-req">需求：' + escapeHtml(req.join('・')) + '</span>' +
+            '<span class="fusion-req">材料：</span>' + ((b.mats || []).length
+              ? fusionMergedMats(b.mats).map(function (m) { return itemChip(m[0], m[1]); }).join(' ')
+              : '<span class="fusion-req">（無）</span>') +
+            '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+      });
+      html += fusionSimHtml(id, eq, kinds);
+    }
+    html += '</details>';
+    return html;
+  }
+
+  // 成功率試算：選書、技能等級、輔G，即時算出成功率（跟遊戲 G 化頁顯示的數字同一套公式）
+  function fusionSimHtml(id, eq, kinds) {
+    var html = '<div class="equip-box fusion-sim" data-fusion-sim="' + id + '" data-lv="' + eq.minLv + '">' +
+      '<div class="row1"><span class="slot">🧮 成功率試算</span>' +
+      '<span class="badge">這件 Lv' + eq.minLv + '：每 1 PT ≈ +' + fusionPtFactor(eq.minLv).toFixed(2) + '%</span></div>' +
+      '<div class="fusion-sim-grid">' +
+      '<label>種類<select data-f="kind">' + kinds.map(function (k) { return '<option value="' + k + '">' + FUSION_KIND_LABEL[k] + '</option>'; }).join('') + '</select></label>' +
+      '<label>融合書<select data-f="book"></select></label>' +
+      '<label><span data-f="skill-name"></span><select data-f="skill"></select></label>' +
+      '</div>' +
+      '<div data-f="aux" style="margin-top:10px;"></div>' +
+      '<div data-f="result" class="fusion-sim-result"></div>' +
+      '</div>';
+    return html;
+  }
+
+  function wireFusionSim(root) {
+    if (!FUSION || !root) return;
+    root.querySelectorAll("[data-fusion-sim]").forEach(function (box) {
+      var lv = Number(box.getAttribute("data-lv")) || 0;
+      var $kind = box.querySelector('[data-f="kind"]');
+      var $book = box.querySelector('[data-f="book"]');
+      var $skill = box.querySelector('[data-f="skill"]');
+      var $skillName = box.querySelector('[data-f="skill-name"]');
+      var $aux = box.querySelector('[data-f="aux"]');
+      var $result = box.querySelector('[data-f="result"]');
+      var gemOptions = FUSION.gems.map(function (g) {
+        var it = ITEMS[g.id];
+        return '<option value="gem:' + g.id + '">' + escapeHtml(it ? it.name : ('#' + g.id)) + '（' + (Math.round(g.pt * 100) / 100) + ' PT）</option>';
+      }).join('');
+      var auxState = []; // 每一格：{type:"", "gem", "gear", gemId, tier, lv, refine}
+
+      function currentBook() {
+        var books = fusionBooksFor($kind.value, lv);
+        return books.find(function (b) { return String(b.item) === $book.value; }) || books[0];
+      }
+      function fillBooks() {
+        var books = fusionBooksFor($kind.value, lv);
+        $book.innerHTML = books.map(function (b) {
+          var it = ITEMS[b.item];
+          return '<option value="' + b.item + '">' + escapeHtml(it ? it.name : ('#' + b.item)) + '（基礎 ' + b.rate + '%・' + b.auxSlots + ' 格）</option>';
+        }).join('');
+        var sk = fusionBonusSkill($kind.value);
+        $skillName.textContent = '〔' + sk.name + '〕等級';
+        var prev = Number($skill.value) || 0;
+        $skill.innerHTML = '<option value="0">沒學（+0%）</option>' + sk.levels.map(function (v, i) {
+          return '<option value="' + (i + 1) + '">Lv' + (i + 1) + '（+' + v + '%）</option>';
+        }).join('');
+        $skill.value = String(Math.min(prev, sk.levels.length));
+      }
+      function renderAux() {
+        var book = currentBook();
+        var slots = book ? book.auxSlots : 0;
+        auxState.length = Math.min(auxState.length, slots);
+        while (auxState.length < slots) auxState.push({ type: "" });
+        $aux.innerHTML = '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:6px;">輔 G（這本書有 ' + slots + ' 格；配件不能當輔 G，裝備要 +5 以上）</div>' +
+          auxState.map(function (a, i) {
+            var html = '<div class="fusion-aux-row" data-slot="' + i + '"><span class="fusion-aux-no">' + (i + 1) + '</span>' +
+              '<select data-a="pick"><option value="">（空）</option>' + gemOptions + '<option value="gear">裝備（自己填）</option></select>';
+            if (a.type === "gear") {
+              html += '<select data-a="tier">' + Object.keys(FUSION_TIER_LABEL).map(function (k) {
+                return '<option value="' + k + '"' + (a.tier === k ? ' selected' : '') + '>' + FUSION_TIER_LABEL[k] + '</option>';
+              }).join('') + '</select>' +
+                '<label class="fusion-aux-lv">Lv<input type="number" data-a="lv" min="1" max="300" value="' + (a.lv || lv || 1) + '"></label>' +
+                '<select data-a="refine">' + [5, 6, 7, 8, 9, 10, 11, 12].map(function (r) {
+                  return '<option value="' + r + '"' + ((a.refine || 5) === r ? ' selected' : '') + '>+' + r + '</option>';
+                }).join('') + '</select>';
+            }
+            html += '<span class="fusion-aux-pt" data-a="pt"></span></div>';
+            return html;
+          }).join('');
+        auxState.forEach(function (a, i) {
+          var row = $aux.querySelector('[data-slot="' + i + '"]');
+          var pick = row.querySelector('[data-a="pick"]');
+          pick.value = a.type === "gem" ? "gem:" + a.gemId : a.type === "gear" ? "gear" : "";
+          pick.addEventListener("change", function () {
+            if (pick.value === "gear") { a.type = "gear"; a.tier = a.tier || "n"; a.lv = a.lv || lv || 1; a.refine = a.refine || 7; }
+            else if (pick.value) { a.type = "gem"; a.gemId = Number(pick.value.slice(4)); }
+            else a.type = "";
+            renderAux();
+          });
+          ["tier", "lv", "refine"].forEach(function (f) {
+            var el = row.querySelector('[data-a="' + f + '"]');
+            if (!el) return;
+            el.addEventListener(f === "lv" ? "input" : "change", function () {
+              a[f] = f === "tier" ? el.value : Number(el.value) || 0;
+              compute();
+            });
+          });
+        });
+        compute();
+      }
+      function auxPt(a) {
+        if (a.type === "gem") {
+          var g = FUSION.gems.find(function (x) { return x.id === a.gemId; });
+          return g ? g.pt : 0;
+        }
+        if (a.type === "gear") return fusionGearPt(a.tier, a.lv, a.refine);
+        return 0;
+      }
+      function compute() {
+        var book = currentBook();
+        if (!book) { $result.textContent = "沒有可用的融合書"; return; }
+        var sk = fusionBonusSkill($kind.value);
+        var skLv = Number($skill.value) || 0;
+        var bonus = skLv > 0 ? (sk.levels[skLv - 1] || 0) : 0;
+        var pt = 0;
+        auxState.forEach(function (a, i) {
+          var p = auxPt(a);
+          pt += p;
+          var el = $aux.querySelector('[data-slot="' + i + '"] [data-a="pt"]');
+          if (el) el.textContent = a.type ? (Math.round(p * 100) / 100) + ' PT' : '';
+        });
+        var rate = fusionRate(book.rate, bonus, pt, lv);
+        var raw = (book.rate + pt * fusionPtFactor(lv)) * (1 + bonus / 100);
+        var capped = raw > FUSION.cap;
+        // 還差多少 PT 才到上限（給玩家參考要再塞多少輔G）
+        var needPt = Math.max(0, (FUSION.cap / (1 + bonus / 100) - book.rate) / fusionPtFactor(lv) - pt);
+        $result.innerHTML = '成功率 <b class="fusion-rate">' + (Math.round(rate * 10) / 10) + '%</b>' +
+          '<span class="fusion-formula">＝（基礎 ' + book.rate + '% ＋ 輔G ' + (Math.round(pt * 100) / 100) + ' PT × ' + fusionPtFactor(lv).toFixed(3) + '%）' +
+          (bonus ? ' × (1 ＋ ' + bonus + '%)' : '') + (capped ? '，超過上限以 ' + FUSION.cap + '% 計' : '') + '</span>' +
+          (!capped && needPt > 0 ? '<span class="fusion-formula">要到 ' + FUSION.cap + '% 還差約 ' + (Math.ceil(needPt * 10) / 10) + ' PT</span>' : '');
+      }
+      // 上面的類型分頁跟試算的「種類」互相同步
+      var section = box.closest("details") || root;
+      function showKind(k) {
+        section.querySelectorAll("[data-fusion-kind]").forEach(function (el) {
+          el.style.display = el.getAttribute("data-fusion-kind") === k ? "" : "none";
+        });
+        section.querySelectorAll("[data-fusion-tab]").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-fusion-tab") === k);
+        });
+      }
+      section.querySelectorAll("[data-fusion-tab]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var k = b.getAttribute("data-fusion-tab");
+          showKind(k);
+          if ($kind.value !== k) { $kind.value = k; fillBooks(); renderAux(); }
+        });
+      });
+      $kind.addEventListener("change", function () { showKind($kind.value); fillBooks(); renderAux(); });
+      $book.addEventListener("change", renderAux);
+      $skill.addEventListener("change", compute);
+      fillBooks();
+      renderAux();
+    });
+  }
+
   function windSlotNames() {
     return WIND_SLOTS.map(function (s) { return EQUIP_SLOTS[s] || SLOT_LABEL_FALLBACK[s] || s; }).join("、");
   }
@@ -1459,6 +1732,7 @@
         : '✅ 這個部位可以洗發條（要先裝備起來，強化面板只列身上穿的裝備）。');
       html += '<div class="empty-note" style="padding:6px 0 0;">' + notes.map(escapeHtml).join('<br>') + '</div>';
       html += refineTableHtml(eq);
+      html += fusionSectionHtml(id, eq);
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
@@ -1710,6 +1984,7 @@
 
     detailTarget().innerHTML = html;
     wireDropCalcBar(function () { showItem(id); });
+    wireFusionSim(detailTarget());
   }
 
   function eqStat(label, v) {

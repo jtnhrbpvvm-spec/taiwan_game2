@@ -411,6 +411,37 @@ footer span{font-variant-numeric:tabular-nums;}
 .fold-section[open] > summary .fold-hint{display:none;}
 .fold-section > summary:hover .fold-hint{border-color:var(--gold); color:var(--gold-hi);}
 .fold-section > summary:focus-visible{outline:2px solid var(--gold); outline-offset:3px; border-radius:4px;}
+/* G 化：類型分頁、書單 */
+.fusion-kind-tabs{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 10px;}
+.fusion-kind-tabs .hint-chip.active{border-color:var(--gold); color:var(--gold-hi); font-weight:700;
+  background:linear-gradient(180deg, #f5e1bd, #fbeed3); box-shadow:inset 0 3px 7px rgba(0,0,0,.2); transform:translateY(1px);}
+html[data-theme="classic"] .fusion-kind-tabs .hint-chip.active{background:var(--panel-hi); box-shadow:none; transform:none;}
+table.fusion-books{white-space:nowrap;}
+table.fusion-books tr.fusion-book-row td{border-bottom:none; padding-bottom:3px;}
+table.fusion-books tr.fusion-mats-row td{white-space:normal; padding-top:2px; font-size:12px; line-height:2;}
+table.fusion-books tbody tr:nth-child(4n+3) td, table.fusion-books tbody tr:nth-child(4n+4) td{background:rgba(225,205,167,.18);}
+table.fusion-books tbody tr:nth-child(4n+1) td, table.fusion-books tbody tr:nth-child(4n+2) td{background:transparent;}
+html[data-theme="classic"] table.fusion-books tbody tr:nth-child(4n+3) td,
+html[data-theme="classic"] table.fusion-books tbody tr:nth-child(4n+4) td{background:rgba(255,255,255,.025);}
+.fusion-req{color:var(--text-dim); margin-right:8px;}
+.fusion-req + .fusion-req{margin-left:6px;}
+/* G 化成功率試算 */
+.fusion-sim-grid{display:flex; gap:10px; flex-wrap:wrap;}
+.fusion-sim-grid label{display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-dim); flex:1; min-width:150px;}
+.fusion-sim select, .fusion-sim input{
+  background:var(--ink-2); color:var(--text); border:1px solid var(--line-hi); border-radius:8px;
+  padding:7px 8px; font-size:13px; font-family:inherit; max-width:100%;
+}
+.fusion-sim select:focus, .fusion-sim input:focus{outline:none; border-color:var(--gold);}
+.fusion-aux-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px;}
+.fusion-aux-row > select[data-a="pick"]{flex:1; min-width:170px;}
+.fusion-aux-no{width:20px; text-align:center; font-weight:700; color:var(--gold);}
+.fusion-aux-lv{display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-dim);}
+.fusion-aux-lv input{width:70px;}
+.fusion-aux-pt{font-size:12px; color:var(--gold-hi); font-variant-numeric:tabular-nums; min-width:56px;}
+.fusion-sim-result{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:13.5px; color:var(--text);}
+.fusion-rate{font-size:20px; color:var(--gold-hi); font-variant-numeric:tabular-nums; margin:0 4px;}
+.fusion-formula{display:block; font-size:12px; color:var(--text-faint); margin-top:4px;}
 /* 增傷／減傷跳階的那幾列 */
 table.dtable tr.refine-step td{background:rgba(201,162,75,.16);}
 
@@ -676,6 +707,7 @@ html[data-theme="classic"] #changelogModal{border-width:1px !important; box-shad
 <script src="希望/quests.js"></script>
 <script src="希望/missions.js"></script>
 <script src="希望/enchant.js"></script>
+<script src="希望/fusionIndex.js"></script>
 <script src="希望/app.js"></script>
 </body>
 </html>
