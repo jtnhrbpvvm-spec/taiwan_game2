@@ -1001,6 +1001,15 @@
         var why = impossibleReason(matchGroups, stopGrades);
         if (why) { showMsg("這個條件不可能洗出來：" + why + "。"); return; }
 
+        // 連「下一次」都付不起（上發條的錢＋身上沒發條時要買的錢），兩種模式都直接跳彈窗，不用開始了才停
+        var nextCostRow = (winderNow && winderNow.costs || []).find(function (c) { return c[0] === gradeNow; });
+        var firstCost = nextCostRow ? (nextCostRow[1] || 0) : 0;
+        if (winderStock(winderId) < 1 && autoBuy) {
+          var bpNow = winderBuyPrice(winderId);
+          if (bpNow) firstCost += bpNow.price;
+        }
+        if (firstCost > session.player.gold) { showMsg("金幣不足。"); showGoldPopup(); return; }
+
         if (!fastMode) { startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, false); return; }
 
         // ⚡ 快速強化：先在背後算，算的上限 = 玩家付得起的次數（金幣、預算、身上的發條、能不能買）。
@@ -1043,6 +1052,8 @@
             unsupported: "快速強化計算失敗，請取消勾選「快速強化」改用一次一次洗。"
           }[p.reason] || "快速強化計算失敗。";
           showMsg(msg);
+          // 身上金幣真的不夠（不是預算設太低）才跳彈窗
+          if (p.reason === "gold" && session.player.gold <= budget) showGoldPopup();
         }).catch(function (err) {
           cancelBtn.removeEventListener("click", onCancel, true);
           cancelBtn.textContent = "取消";
@@ -1252,6 +1263,45 @@
       return attachPlan(p, entry);
     }
 
+    // ⚡ 快速強化「瞬間出結果」：強化期間先不讓遊戲重畫畫面、不寫遊戲紀錄、不重算角色數值，
+    // 全部做完才重畫一次、寫一行總結。以前遊戲的批次函式每 2000 次就重畫一次＋寫一行「自動上發條 2000 次…」，
+    // 機率很低的組合要跑幾百批，看起來就像一直在跑強化動畫，紀錄也被洗版。
+    // （batch 是遊戲自己的開關：batch = true 時 push() 不寫紀錄；applyNow／refreshPlayerStats 暫時換成只做記號）
+    var quietSaved = null;
+    function beginQuiet() {
+      if (!fastMode || quietSaved) return;
+      quietSaved = {
+        batch: session.batch,
+        own: {
+          applyNow: Object.prototype.hasOwnProperty.call(session, "applyNow") ? session.applyNow : undefined,
+          refreshPlayerStats: Object.prototype.hasOwnProperty.call(session, "refreshPlayerStats") ? session.refreshPlayerStats : undefined
+        }
+      };
+      session.batch = true;
+      session.applyNow = function () { session.dirty = true; };
+      session.refreshPlayerStats = function () {};
+    }
+    function endQuiet() {
+      if (!quietSaved) return;
+      var saved = quietSaved;
+      quietSaved = null;
+      ["applyNow", "refreshPlayerStats"].forEach(function (name) {
+        if (saved.own[name] !== undefined) session[name] = saved.own[name];
+        else delete session[name];
+      });
+      session.batch = saved.batch;
+      try {
+        session.refreshPlayerStats();
+        var fin = findEntryByStackId(stackId);
+        if (attempts > 0 && typeof session.push === "function") {
+          session.push("⚡ 一鍵強化：" + item.name + " 上發條 " + fmt(attempts) + " 次，現在是 " +
+            gradeNameOf((fin && fin.options && fin.options.grade) || 0) + " 階", "equip");
+        }
+        session.applyNow();
+      } catch (err) { console.warn("[一鍵強化] 結束時更新畫面失敗", err); }
+    }
+    beginQuiet();
+
     var runError = null;
     try {
     while (true) {
@@ -1287,7 +1337,8 @@
               totalBought += r.bought || 0;
               totalSpent += Math.max(0, goldBeforeFast - session.player.gold);
               burn -= r.tries;
-              await yieldUI(true);
+              var yf = yieldUI(); // 連續跑超過 30 毫秒才讓一次，不是每批都停（遊戲畫面這時也不會重畫）
+              if (yf) await yf;
               if (r.tries < chunk) break;
             }
             if (fastThisPass === 0) fastBlocked = true; // 一次都沒洗成（沒錢／沒發條…），交給下面一般模式去判斷原因，避免原地打轉
@@ -1301,7 +1352,7 @@
               predictOk = false; plan = null;
             }
             var t2 = document.getElementById("iw-f-target-display");
-            if (t2 && e2) t2.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf((e2.options && e2.options.grade) || 0) + " 階・" + rolledKindsText(e2) + "）";
+            if (t2 && e2 && !fastMode) t2.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf((e2.options && e2.options.grade) || 0) + " 階・" + rolledKindsText(e2) + "）";
             continue; // 回到最上面重新檢查（達成、預算、發條…）
           }
         }
@@ -1424,7 +1475,7 @@
       }
       rlog("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + keepNote + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
-      if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
+      if (targetDisplay && !fastMode) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
       if (totalSpent >= budget && !(newGrade >= targetGrade && meetsAnyGroup(newEntry, matchGroups))) { reason = "budget"; break; }
 
@@ -1438,6 +1489,7 @@
       reason = "error";
       console.error("[一鍵強化] 執行中發生錯誤", err);
     }
+    endQuiet(); // 不管成功、停止、出錯，都一定要把遊戲的重畫／紀錄還原
 
     flushLog();
     running = false;
@@ -1445,6 +1497,8 @@
 
     var finalEntry = findEntryByStackId(stackId);
     var finalGrade = (finalEntry && finalEntry.options && finalEntry.options.grade) || 0;
+    var finalDisplay = document.getElementById("iw-f-target-display");
+    if (finalDisplay && finalEntry) finalDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(finalGrade) + " 階・" + rolledKindsText(finalEntry) + "）";
     var reasonText = {
       "success": "✅ 已達成目標階級！",
       "budget": "⏸️ 已達到（或即將超過）預算上限，停止。",
@@ -1467,7 +1521,7 @@
       "<div>" + reasonText + "</div>" +
       "<div style='margin-top:8px;'>" +
       item.label + "：" + item.name + " → <b>" + gradeNameOf(finalGrade) + " 階</b>　（" + rolledKindsText(finalEntry) + "）<br>" +
-      "使用發條：<b>" + winder.name + "</b>　用掉 <b>" + totalUsed + "</b> 個<br>" +
+      "使用發條：<b>" + winder.name + "</b>　用掉 <b>" + fmt(totalUsed) + "</b> 個<br>" +
       "強化次數：<b>" + fmt(attempts) + "</b> 次" + (fastMode ? "（⚡ 快速強化）" : "") +
       "　購買發條：<b>" + fmt(totalBought) + "</b> 個" +
       (keptPrevious ? "　保留上一組：<b>" + keptPrevious + "</b> 次" : "") + "<br>" +
