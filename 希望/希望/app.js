@@ -1284,7 +1284,9 @@
     var hasDealt = eq.dmgDealtPct > 0, hasTaken = eq.dmgTakenPct > 0;
     if (!cols.length && !hasDealt && !hasTaken) return "";
 
-    var html = '<div class="section-title">精煉加成（+1 ~ +' + REFINE_MAX + '）</div>';
+    // 平常收起來，點標題才展開清單（<details> 原生支援鍵盤操作）
+    var html = '<details class="fold-section"><summary class="section-title">精煉加成（+1 ~ +' + REFINE_MAX + '）' +
+      '<span class="fold-hint">點擊展開</span></summary>';
     html += '<div class="empty-note" style="padding:0 0 8px;">每一列是精煉到那一級時，這件裝備「總共」會多出來的數值（不是每級各加多少）。' +
       (hasDealt || hasTaken ? '增傷／減傷要精煉到 +4 才會開始給，後面幾級才再跳一階——這就是為什麼某幾個強化值特別划算。' : '') + '</div>';
     html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>精煉</th>' +
@@ -1295,7 +1297,7 @@
       var pct = refineDmgBonus(eq, lv), prev = refineDmgBonus(eq, lv - 1);
       // 增傷／減傷跳階的那幾級標出來，一眼看得到「精煉到這裡才會多給」
       var stepUp = pct.dealt !== prev.dealt || pct.taken !== prev.taken;
-      html += '<tr' + (stepUp ? ' style="background:rgba(201,162,75,.10);"' : '') + '>' +
+      html += '<tr' + (stepUp ? ' class="refine-step"' : '') + '>' +
         '<td>+' + lv + (stepUp ? ' <span class="group-tag">跳階</span>' : '') + '</td>' +
         cols.map(function (c) {
           return '<td><span class="rate">+' + Math.floor(gain[c.key] * REFINE_MULT[lv]) + '</span></td>';
@@ -1309,6 +1311,7 @@
       '這些是精煉本身給的，要再加上上面那塊的基礎能力才是實際數值。' +
       (hasDealt && (eq.slot === "weapon" || eq.slot === "shield")
         ? '武器和盾的增加傷害每一級都會漲，其他部位只在 +4／+7／+10 漲。' : '') + '</div>';
+    html += '</details>';
     return html;
   }
 

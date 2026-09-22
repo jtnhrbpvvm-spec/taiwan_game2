@@ -5,11 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>希望存檔修改器</title>
 <style>
+/* 預設：遊戲風格（配色取自遊戲 index.css）。
+   舊版深色風格在 html[data-theme="classic"]，上方「切換風格」按鈕會切換，選擇記在瀏覽器 localStorage（跟物品查詢頁共用）。 */
 :root{
+  color-scheme:light only;
+  --bg:#eee0c5; --bg2:#f8efdd; --bg3:#f6ead2; --bg4:#f3ddb2;
+  --border:#cdb48a; --accent:#2f6b78; --accent2:#377986;
+  --text:#45301f; --text2:#725c46; --text3:#8a735b;
+  --green:#1f6a47; --red:#b5352a; --yellow:#8f6205;
+  --gold:#8d6a30; --gold-hi:#6b4d17;
+  --edge:#6b4a2a; --border-hi:#a28358;
+  --btn-top:#fff7e6; --btn-bottom:#edd4a4;
+}
+html[data-theme="classic"]{
+  color-scheme:dark;
   --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a; --bg4:#2a2f47;
   --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
   --text:#e8eaf6; --text2:#9fa8da; --text3:#5a6088;
   --green:#4caf50; --red:#ef5350; --yellow:#ffc107;
+  --gold:#c9a24b; --gold-hi:initial;
 }
 html{background:var(--bg);}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -184,7 +198,116 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
 .toast.err{border-color:var(--red);color:var(--red);}
 .toast.warn{border-color:var(--yellow);color:var(--yellow);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+
+/* ==========================================================================
+   遊戲風格的元件外觀（切到舊版風格時整段不生效，舊版維持上面原本的樣式）
+   ========================================================================== */
+html:not([data-theme="classic"]) body{background:transparent;}
+html:not([data-theme="classic"]) body::before{
+  content:""; position:fixed; inset:0; z-index:-1;
+  background:
+    linear-gradient(rgba(238,224,197,.55), rgba(238,224,197,.8)),
+    url("希望/town-bg.webp") center / cover no-repeat,
+    var(--bg);
+}
+html:not([data-theme="classic"]) #topbar{
+  background:rgba(248,239,221,.95); border-bottom:1px solid rgba(162,131,88,.6);
+  border-top:4px solid var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+html:not([data-theme="classic"]) .bar-title{color:var(--accent);}
+html:not([data-theme="classic"]) .bar-sep{color:var(--border-hi);}
+html:not([data-theme="classic"]) #main,
+html:not([data-theme="classic"]) #content{background:transparent;}
+html:not([data-theme="classic"]) #sidebar{background:rgba(248,239,221,.9); border-right:1px solid rgba(162,131,88,.55);}
+html:not([data-theme="classic"]) .nav-section{color:var(--gold); font-weight:700;}
+html:not([data-theme="classic"]) .nav-item{color:var(--text2); border-radius:9px; border:1px solid transparent; border-left-width:3px;}
+html:not([data-theme="classic"]) .nav-item:hover{background:rgba(243,221,178,.7); color:var(--text);}
+html:not([data-theme="classic"]) .nav-item.active{
+  background:linear-gradient(180deg, var(--btn-top), var(--btn-bottom)); color:var(--text); font-weight:700;
+  border-color:rgba(107,74,42,.45); border-left-color:var(--accent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 3px rgba(0,0,0,.12);
+}
+html:not([data-theme="classic"]) .nav-item .badge{background:var(--bg4); color:var(--text2);}
+
+html:not([data-theme="classic"]) .panel.active{
+  background:rgba(248,239,221,.93); border:1px solid rgba(162,131,88,.5); border-radius:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 2px 8px rgba(0,0,0,.08); padding:18px 20px;
+}
+html:not([data-theme="classic"]) .panel-title{color:var(--text); border-bottom:1px dashed rgba(162,131,88,.6);}
+html:not([data-theme="classic"]) .section-title{color:var(--gold); font-weight:700; border-bottom-color:rgba(162,131,88,.4);}
+
+html:not([data-theme="classic"]) .btn{
+  background:linear-gradient(180deg, var(--btn-top) 0%, #f6e5c3 52%, var(--btn-bottom) 100%);
+  border:2px solid var(--edge); color:var(--text); border-radius:10px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.85), inset 0 -3px 6px rgba(0,0,0,.12), 0 2px 0 #4a3119, 0 3px 7px rgba(0,0,0,.15);
+  transition:transform .06s, box-shadow .06s, border-color .15s;
+}
+html:not([data-theme="classic"]) .btn:hover{border-color:var(--accent); color:var(--text);}
+html:not([data-theme="classic"]) .btn:active:not([disabled]){
+  background:linear-gradient(180deg, #f5e1bd, #fbeed3); box-shadow:inset 0 3px 8px rgba(0,0,0,.28); transform:translateY(2px);
+}
+html:not([data-theme="classic"]) .btn.btn-accent{
+  background:linear-gradient(180deg, var(--accent2), var(--accent), #245663); color:#fff; border-color:#1d4650;
+}
+html:not([data-theme="classic"]) .btn.btn-accent:hover{background:linear-gradient(180deg, #3f8796, var(--accent2), var(--accent));}
+html:not([data-theme="classic"]) .btn.btn-danger{color:var(--red); border-color:var(--red);}
+html:not([data-theme="classic"]) .btn.btn-danger:hover{background:var(--red); color:#fff;}
+html:not([data-theme="classic"]) .btn.btn-sm{padding:4px 10px;}
+
+html:not([data-theme="classic"]) input[type=text],
+html:not([data-theme="classic"]) input[type=number],
+html:not([data-theme="classic"]) select,
+html:not([data-theme="classic"]) textarea{
+  background:var(--bg3); border:1px solid #b99b6c; border-radius:8px; box-shadow:inset 0 2px 4px rgba(0,0,0,.08);
+}
+html:not([data-theme="classic"]) input:focus,
+html:not([data-theme="classic"]) select:focus,
+html:not([data-theme="classic"]) textarea:focus{border-color:var(--accent); box-shadow:inset 0 2px 4px rgba(0,0,0,.08), 0 0 0 3px rgba(47,107,120,.16);}
+html:not([data-theme="classic"]) input[readonly]{background:#efe3cb;}
+html:not([data-theme="classic"]) input[type=checkbox],
+html:not([data-theme="classic"]) input[type=radio]{accent-color:var(--accent);}
+
+html:not([data-theme="classic"]) table.etable{background:rgba(255,250,240,.55); border:1px solid rgba(162,131,88,.4); border-radius:10px; border-collapse:separate; border-spacing:0; overflow:hidden;}
+html:not([data-theme="classic"]) table.etable th{background:rgba(225,205,167,.6); color:var(--text2); font-weight:700; border-bottom-color:rgba(162,131,88,.5);}
+html:not([data-theme="classic"]) table.etable td{border-bottom:1px solid rgba(162,131,88,.2);}
+html:not([data-theme="classic"]) table.etable tr:last-child td{border-bottom:none;}
+
+html:not([data-theme="classic"]) .icon-btn{background:linear-gradient(180deg, var(--btn-top), var(--btn-bottom)); border:1px solid var(--border-hi); border-radius:8px;}
+html:not([data-theme="classic"]) .item-picker .suggest{background:var(--bg2); border-color:var(--border-hi); border-radius:10px; box-shadow:0 6px 16px rgba(0,0,0,.18);}
+html:not([data-theme="classic"]) .item-picker .suggest div:hover{background:var(--bg4);}
+html:not([data-theme="classic"]) .tag{background:var(--bg3); border-color:var(--border-hi);}
+
+html:not([data-theme="classic"]) .raw-field,
+html:not([data-theme="classic"]) .item-preview-box,
+html:not([data-theme="classic"]) .equip-filter{background:rgba(255,250,240,.7); border-color:rgba(162,131,88,.5); border-radius:12px;}
+html:not([data-theme="classic"]) .item-preview-box .ip-stats div{background:var(--bg4);}
+html:not([data-theme="classic"]) .cap-card{background:rgba(255,250,240,.75); border-color:rgba(162,131,88,.5); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
+html:not([data-theme="classic"]) .cap-card:hover{border-color:var(--accent);}
+html:not([data-theme="classic"]) .dropzone{border-color:var(--border-hi); border-radius:12px; background:rgba(255,250,240,.5);}
+html:not([data-theme="classic"]) .dropzone:hover,
+html:not([data-theme="classic"]) .dropzone.drag{border-color:var(--accent); background:rgba(47,107,120,.07);}
+
+html:not([data-theme="classic"]) .modal-overlay{background:rgba(40,26,14,.55);}
+html:not([data-theme="classic"]) .modal-box{background:var(--bg2); border:2px solid var(--edge); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.35);}
+
+html:not([data-theme="classic"]) .skill-job-title{background:var(--bg4); color:var(--gold-hi); border-left-color:var(--accent);}
+html:not([data-theme="classic"]) .skill-card{background:var(--bg3); border-color:rgba(162,131,88,.5); border-radius:8px;}
+html:not([data-theme="classic"]) .skill-card.checked{background:#e3eef0; border-color:var(--accent);}
+
+html:not([data-theme="classic"]) .toast{background:var(--bg2); box-shadow:0 6px 18px rgba(0,0,0,.2);}
+html:not([data-theme="classic"]) #sidebar::-webkit-scrollbar,
+html:not([data-theme="classic"]) #content::-webkit-scrollbar{width:9px;}
+html:not([data-theme="classic"]) #sidebar::-webkit-scrollbar-thumb,
+html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:var(--border-hi); border-radius:5px;}
 </style>
+<script>
+  // 在畫面畫出來之前套用上次選的風格（跟物品查詢頁共用同一個設定）
+  (function () {
+    try {
+      if (localStorage.getItem("wishTheme") === "classic") document.documentElement.setAttribute("data-theme", "classic");
+    } catch (e) { /* 讀不到 localStorage 就用預設的遊戲風格 */ }
+  })();
+</script>
 </head>
 <body>
 
@@ -204,7 +327,27 @@ textarea.raw{width:100%;min-height:90px;font-family:ui-monospace,"SF Mono",Menlo
     <button class="btn btn-sm" id="defaultCharBtn" disabled title="設為預設載入角色">★</button>
   </div>
   <span id="loadStatus" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
+  <button class="btn btn-sm" id="themeToggle" type="button">🎨 切換風格</button>
 </div>
+<script>
+  // 風格切換：遊戲風格（預設）⇄ 舊版深色風格
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    function isClassic() { return root.getAttribute("data-theme") === "classic"; }
+    function refreshLabel() {
+      btn.textContent = isClassic() ? "🏰 切換成遊戲風格" : "🌙 切換成舊版風格";
+      btn.title = isClassic() ? "目前是舊版深色風格" : "目前是遊戲風格";
+    }
+    btn.addEventListener("click", function () {
+      if (isClassic()) root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", "classic");
+      try { localStorage.setItem("wishTheme", isClassic() ? "classic" : "game"); } catch (e) { /* 存不了就只在這次有效 */ }
+      refreshLabel();
+    });
+    refreshLabel();
+  })();
+</script>
 
 <div id="main">
   <div id="sidebar">
