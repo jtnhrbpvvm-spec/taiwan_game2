@@ -44,7 +44,8 @@
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   var oldRespawnFab = document.getElementById("iw-respawn-fab");
   if (oldRespawnFab) oldRespawnFab.remove();
-  document.querySelectorAll(".iw-mall-hint").forEach(function (el) { el.remove(); });
+  document.querySelectorAll(".iw-mall-hint,.iw-mall-max-tag").forEach(function (el) { el.remove(); });
+  document.querySelectorAll(".iw-mall-max").forEach(function (el) { el.classList.remove("iw-mall-max"); });
   window.__iwAlchemyGeneration = (window.__iwAlchemyGeneration || 0) + 1;
   var myAlchemyGeneration = window.__iwAlchemyGeneration;
   if (window.__iwEnhanceObserver) { window.__iwEnhanceObserver.disconnect(); }
@@ -1999,6 +2000,8 @@
   // 最低價那一小時改成跳樓大拍賣，字放大到跟 NPC 名字一樣。
   var MALL_SUPER_RATE = 21000;
   var MALL_SUPER_PREFIX = "（老闆今天好像不一樣?）";
+  // 當天最貴的那個小時：不擠在標題提示裡，改成在名品館「1 點 ＝ 🪙 xx」那行前面加紅色抖動的標籤、數字也變紅。
+  var MALL_MAX_TEXT = "滾！不要妨礙我做生意";
   // 回傳 { text, big }：big＝字要放大到跟 NPC 名字一樣
   function mallHint() {
     var now = new Date();
@@ -2023,7 +2026,48 @@
     return { text: (superSale ? MALL_SUPER_PREFIX : "") + text, big: false };
   }
 
-  style.textContent += ".iw-mall-hint{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--iw-accent);}";
+  // 現在是不是今天（本機時間）最貴的那個小時；並列最高的每個小時都算。
+  function mallAtMaxNow() {
+    var now = new Date();
+    var dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var first = Math.floor(dayStart / MALL_HOUR_MS);
+    var min = Infinity, max = -Infinity;
+    for (var h = 0; h < 24; h++) {
+      var r = mallRate(first + h);
+      if (r < min) min = r;
+      if (r > max) max = r;
+    }
+    return min !== max && mallRate(Math.floor(now.getTime() / MALL_HOUR_MS)) === max;
+  }
+
+  style.textContent += ".iw-mall-hint{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--iw-accent);}" +
+    ".mall>.rate.iw-mall-max{color:#c0392b;}" +
+    // 抖一下停一下（每 2 秒抖 0.4 秒），一直抖太吵
+    ".iw-mall-max-tag{display:inline-block;margin-right:8px;color:#c0392b;font-weight:800;animation:iw-mall-shake 2s ease-in-out infinite;}" +
+    "@keyframes iw-mall-shake{0%,20%,100%{transform:translate(0,0) rotate(0)}" +
+    "4%{transform:translate(-3px,0) rotate(-3deg)}8%{transform:translate(3px,0) rotate(3deg)}" +
+    "12%{transform:translate(-3px,0) rotate(-2deg)}16%{transform:translate(2px,0) rotate(1deg)}}" +
+    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag{animation:none;}}";
+
+  // 名品館「1 點 ＝ 🪙 xx」那行（遊戲的 .mall > .rate）：最貴的小時加紅色抖動標籤，其他時候拿掉。
+  function updateMallMaxTag() {
+    var rateEl = document.querySelector(".mall > .rate");
+    var on = !!rateEl && checkMallFormula() && mallAtMaxNow();
+    document.querySelectorAll(".iw-mall-max-tag").forEach(function (el) {
+      if (!on || el.parentNode !== rateEl) el.remove();
+    });
+    document.querySelectorAll(".mall > .rate.iw-mall-max").forEach(function (el) {
+      if (!on || el !== rateEl) el.classList.remove("iw-mall-max");
+    });
+    if (!on) return;
+    if (!rateEl.classList.contains("iw-mall-max")) rateEl.classList.add("iw-mall-max");
+    if (!rateEl.querySelector(".iw-mall-max-tag")) {
+      var tag = document.createElement("span");
+      tag.className = "iw-mall-max-tag";
+      tag.textContent = MALL_MAX_TEXT;
+      rateEl.insertBefore(tag, rateEl.firstChild);
+    }
+  }
 
   function applyMallHint(el, hint, title) {
     if (el.textContent !== hint.text) el.textContent = hint.text;
@@ -2057,12 +2101,14 @@
   var mallHintObserver = new MutationObserver(function () {
     if (window.__iwMallHintGeneration !== myMallHintGeneration) { mallHintObserver.disconnect(); return; }
     updateMallHint();
+    updateMallMaxTag();
   });
   mallHintObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   // 整點換匯率時，畫面不一定有變動，另外每 30 秒自己更新一次。
   (function mallHintTick() {
     if (window.__iwMallHintGeneration !== myMallHintGeneration) return;
     updateMallHint();
+    updateMallMaxTag();
     setTimeout(mallHintTick, 30000);
   })();
 
