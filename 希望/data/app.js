@@ -2332,6 +2332,26 @@
       gradeRow.appendChild(gradeSelect);
       box.appendChild(gradeRow);
 
+      // 2026-09-22 改版：用「武爾坎努斯的發條」洗完後，舊的那組會暫存在 stack.pendingPrev，
+      // 遊戲會要玩家在「新的／上一組」之間選一組，選之前不能再上發條。這裡改的是「新的」那組（stack.options），
+      // 如果進遊戲選了「上一組」，這裡的修改就會被蓋掉，所以提供一鍵清掉暫存（等於直接選「新的」）。
+      if (stack.pendingPrev) {
+        var pendingRow = el("div", { style: "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:8px 10px;border:1px dashed var(--border);border-radius:6px;font-size:12.5px;" });
+        var prevGrade = ENCHANT_GRADES[(stack.pendingPrev.grade || 1) - 1] || stack.pendingPrev.grade;
+        var prevKinds = (stack.pendingPrev.options || []).map(function (o) {
+          var k = ENCHANT_KINDS.find(function (x) { return x.kind === o.kind; });
+          return (k ? k.name : "kind" + o.kind) + " " + o.value;
+        }).join("、") || "沒有選項";
+        pendingRow.appendChild(el("span", { text: "⚠️ 這件裝備還在等遊戲裡選「新的／上一組」。上一組：" + prevGrade + "（" + prevKinds + "）。下面改的是「新的」那組。" }));
+        var clearPendingBtn = el("button", { class: "btn", text: "清掉上一組（直接採用下面這組）" });
+        clearPendingBtn.addEventListener("click", function () {
+          delete stack.pendingPrev;
+          renderDetail();
+        });
+        pendingRow.appendChild(clearPendingBtn);
+        box.appendChild(pendingRow);
+      }
+
       var listWrap = el("div", {});
       opts.options.forEach(function (opt, idx) {
         listWrap.appendChild(buildOptionRow(opt, idx, opts, gradeSelect.value));

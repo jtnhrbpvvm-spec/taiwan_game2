@@ -8,9 +8,11 @@
   "use strict";
 
   var STYLE_ID = "iw-enhance-style";
-  var CLOCKWORK_ID = 26731; // 實習生的發條（強化用材料，寫死在遊戲原始碼裡）
-  // 目前作者只開放到 DG（N=1,G=2,DG=3）。XG/SG 開放後，把這個數字調成 grades.length 就會全部開放。
-  var MAX_SELECTABLE_GRADE_INDEX = 3;
+  var CLOCKWORK_ID = 26731; // 實習生的發條（預設用的發條；2026-09-22 改版後可以在視窗裡改選其他發條）
+  // 2026-09-22 改版：發條不只一種，每種能洗到的最高階級不同（實習生到 DG、高手／武爾坎努斯到 SG），
+  // 可選的目標階級改成看「選到的發條」的 grades 表（options.json winders[].grades 的 [from,to,weight]）來決定。
+  // 讀不到 winders 資料時（舊版遊戲）就退回原本的上限 DG。
+  var FALLBACK_MAX_GRADE = 3;
 
   // 附魔屬性對照表（kind -> 名稱），來自 enchant.js
   var ENCHANT_KINDS = [{"kind": 1, "name": "攻擊力"}, {"kind": 2, "name": "魔法力"}, {"kind": 3, "name": "命中率"}, {"kind": 4, "name": "迴避率"}, {"kind": 5, "name": "防禦力"}, {"kind": 6, "name": "必殺技"}, {"kind": 7, "name": "攻擊速度"}, {"kind": 8, "name": "移動速度"}, {"kind": 9, "name": "HP"}, {"kind": 10, "name": "AP"}, {"kind": 11, "name": "HP%"}, {"kind": 12, "name": "AP%"}, {"kind": 13, "name": "增加傷害"}, {"kind": 14, "name": "減少傷害"}, {"kind": 15, "name": "每級力量"}, {"kind": 16, "name": "每級敏捷"}, {"kind": 17, "name": "每級智力"}, {"kind": 18, "name": "每級幸運"}, {"kind": 19, "name": "每級體力"}, {"kind": 20, "name": "每級精神"}, {"kind": 21, "name": "減少道具配戴限制等級"}, {"kind": 22, "name": "經驗值獲得量"}, {"kind": 23, "name": "[副本]增加傷害"}];
@@ -268,10 +270,98 @@
   function fmt(n) { return Math.round(n).toLocaleString("zh-TW"); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+  // ---------- 發條（2026-09-22 改版後有好幾種）----------
+  // data.options.winders 就是 options.json 的 winders：
+  //   { id, name, keepsPrevious, costs:[[目前階級, 每次金幣]], grades:[[目前階級, 洗完階級, 權重]] }
+  // keepsPrevious=true 的發條（武爾坎努斯）洗完不會直接套用，而是讓玩家在「新的／上一組」之間選一組（stack.pendingPrev）。
+  function winderList() {
+    var list = data && data.options && data.options.winders;
+    if (Array.isArray(list) && list.length) return list;
+    return [{ id: CLOCKWORK_ID, name: "實習生的發條", keepsPrevious: false, costs: [], grades: [] }];
+  }
+  function winderById(id) {
+    return winderList().find(function (w) { return w.id === id; }) || null;
+  }
+  function winderMaxGrade(w) {
+    if (!w || !Array.isArray(w.grades) || !w.grades.length) return FALLBACK_MAX_GRADE;
+    return w.grades.reduce(function (m, g) { return Math.max(m, g[1] || 0); }, 0);
+  }
+  // 這個階級還能不能用這種發條（costs 表裡沒有這個階級 = 遊戲不給上）
+  function winderUsableAt(w, grade) {
+    if (!w || !Array.isArray(w.costs) || !w.costs.length) return true;
+    return w.costs.some(function (c) { return c[0] === grade; });
+  }
+  function winderStock(id) {
+    try { return session.usableCount(id, "bagAndWarehouse") || 0; } catch (err) { return 0; }
+  }
+  // 買一個發條要多少金幣：NPC 商店（實習生）用 shopPrice；名品館的發條價格每小時浮動，用遊戲自己算的現價。
+  function winderBuyPrice(id) {
+    var p = data && data.shopPrice && data.shopPrice.get(id);
+    if (p) return { price: p, source: "shop" };
+    try {
+      var mallItem = typeof session.mallItemFor === "function" && session.mallItemFor(id);
+      if (mallItem && typeof session.mallPrice === "function") return { price: session.mallPrice(mallItem), source: "mall" };
+    } catch (err) { /* 這個小時的價目表沒有這項 */ }
+    var s = snap();
+    var mp = s && s.mall && s.mall.prices && s.mall.prices.get && s.mall.prices.get(id);
+    if (mp) return { price: mp, source: "mall" };
+    return null;
+  }
+  function buyWinder(id) {
+    var info = winderBuyPrice(id);
+    if (!info) return false;
+    var before = winderStock(id);
+    if (info.source === "shop") session.buy(id, 1);
+    else if (typeof session.buyMallItem === "function") session.buyMallItem(id, info.price, 1);
+    return winderStock(id) > before;
+  }
+  // 遊戲強化頁面目前選中的發條（按鈕上有 data-winder，選中的那顆有 .on）
+  function selectedWinderInGameUi() {
+    var el = document.querySelector("button.winder.on[data-winder]");
+    return el ? Number(el.getAttribute("data-winder")) : null;
+  }
+
   // ---------- 把「⚡強化」按鈕插到每張裝備卡片的強化費用按鈕前面 ----------
+  // 2026-09-22 改版後的強化頁：一次只顯示一件裝備的大卡片 <div class="card" data-id="stackId">，
+  // 標題列有「換一件」(button.swap)，下面是發條選擇鈕 [data-winder]，或是「新的／上一組」二選一 [data-keep]。
+  // stackId 直接寫在 data-id 上，不用再靠名稱比對，背包裡沒穿在身上的裝備也能用。
+  function injectWindCardButton() {
+    var cards = document.querySelectorAll(".card[data-id]");
+    cards.forEach(function (card) {
+      var swapBtn = card.querySelector(":scope > div:first-child > button.swap");
+      if (!swapBtn || !card.querySelector("[data-winder],[data-keep]")) return; // 不是強化卡片（例如鎔解頁）
+      var stackId = Number(card.getAttribute("data-id"));
+      var existing = card.querySelector("[data-iw-btn]");
+      if (existing) { existing.setAttribute("data-stack", String(stackId)); return; } // Vue 換裝備時會沿用節點，只更新 stackId
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "⚡強化";
+      btn.setAttribute("data-iw-btn", "1");
+      btn.setAttribute("data-stack", String(stackId));
+      btn.className = "iw-inline-btn";
+      btn.style.marginLeft = "auto";
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var sid = Number(btn.getAttribute("data-stack"));
+        var nameEl = card.querySelector("strong");
+        var name = nameEl ? nameEl.textContent.trim() : ("Stack " + sid);
+        var worn = loadoutList().find(function (it) { return it.stackId === sid; });
+        var current = worn || { slot: "", stackId: sid, name: name, label: "背包" };
+        try { openModal(current); } catch (err) {
+          console.error("[一鍵強化] 開啟視窗失敗", err);
+          alert("開啟視窗時發生錯誤：" + (err && err.message ? err.message : err));
+        }
+      });
+      swapBtn.parentNode.insertBefore(btn, swapBtn);
+    });
+  }
+
   function injectButtons() {
     try {
       tryUpgradeRefs(); // 如果一開始沒抓到 data/snap，這裡有機會重新補上（現在畫面上如果有 .card 元素，通常代表 data 也拿得到了）
+      if (data) injectWindCardButton();
+      // 舊版強化頁（每個部位一張小卡片，按鈕上顯示金幣費用）——保留相容，作者如果改回來也能用
       var goButtons = document.querySelectorAll(".card:not([data-id]) > div:first-child > button.go");
       if (goButtons.length === 0) return;
       if (!data) { console.warn("[一鍵強化] 找到強化按鈕的畫面了，但還沒抓到 data，稍後畫面變動時會自動重試"); return; }
@@ -339,11 +429,41 @@
 
     var freshEntry = findEntryByStackId(item.stackId);
     var curGrade = (freshEntry && freshEntry.options && freshEntry.options.grade) || 0;
-    var defaultTarget = Math.min(curGrade + 1, grades.length, MAX_SELECTABLE_GRADE_INDEX);
-    var visibleGrades = grades.slice(0, MAX_SELECTABLE_GRADE_INDEX);
-    var gradeOptions = visibleGrades.map(function (g, idx) {
-      return '<option value="' + (idx + 1) + '"' + ((idx + 1) === defaultTarget ? " selected" : "") + '>' + g + '</option>';
+
+    // 預設發條：遊戲畫面上目前選的那顆 → 這個階級能用、而且身上有的 → 這個階級能用的第一個
+    var winders = winderList();
+    var uiWinderId = selectedWinderInGameUi();
+    var defaultWinder =
+      winders.find(function (w) { return w.id === uiWinderId && winderUsableAt(w, curGrade); }) ||
+      winders.find(function (w) { return winderUsableAt(w, curGrade) && winderStock(w.id) > 0; }) ||
+      winders.find(function (w) { return winderUsableAt(w, curGrade); }) ||
+      winders[0];
+    function winderOptionText(w) {
+      var buy = winderBuyPrice(w.id);
+      var parts = ["持有 " + fmt(winderStock(w.id))];
+      parts.push("最高 " + (grades[winderMaxGrade(w) - 1] || winderMaxGrade(w)));
+      if (buy) parts.push("可買 " + fmt(buy.price) + "金" + (buy.source === "mall" ? "・名品館" : ""));
+      if (w.keepsPrevious) parts.push("可保留上一組");
+      if (!winderUsableAt(w, curGrade)) parts.push("目前階級不能用");
+      return w.name + "（" + parts.join("・") + "）";
+    }
+    var winderOptions = winders.map(function (w) {
+      return '<option value="' + w.id + '"' + (w === defaultWinder ? " selected" : "") +
+        (winderUsableAt(w, curGrade) ? "" : " disabled") + '>' + winderOptionText(w) + '</option>';
     }).join("");
+    function gradeOptionsHtml(w, selected) {
+      var maxG = Math.min(winderMaxGrade(w), grades.length || FALLBACK_MAX_GRADE);
+      var html = "";
+      for (var g = 1; g <= maxG; g++) {
+        html += '<option value="' + g + '"' + (g === selected ? " selected" : "") + '>' + (grades[g - 1] || g) + '</option>';
+      }
+      return html;
+    }
+    var defaultTarget = Math.min(curGrade + 1, winderMaxGrade(defaultWinder));
+    var gradeOptions = gradeOptionsHtml(defaultWinder, defaultTarget);
+    var pendingNote = (freshEntry && freshEntry.pendingPrev)
+      ? '<div class="iw-warn" style="display:block;">⚠️ 這件裝備上次用武爾坎努斯的發條還沒選「新的／上一組」，請先在遊戲畫面選好一組再開始（不然遊戲不會讓它再上發條）。</div>'
+      : "";
 
     function kindOptionsHtmlFor(grade) {
       return ENCHANT_KINDS.map(function (k) {
@@ -358,6 +478,10 @@
       '<h2>⚡ 一鍵強化</h2>' +
       '<label>目標裝備</label>' +
       '<div class="iw-target" id="iw-f-target-display">' + item.label + '：' + item.name + '（目前 ' + gradeNameOf(curGrade) + ' 階・' + rolledKindsText(freshEntry) + '）</div>' +
+      pendingNote +
+      '<label>使用的發條</label>' +
+      '<select id="iw-f-winder">' + winderOptions + '</select>' +
+      '<div id="iw-f-winder-note" style="font-size:12px;color:#b8ab90;margin-top:4px;"></div>' +
       '<label>目標階級（洗到這階或更高就停）</label>' +
       '<select id="iw-f-grade">' + gradeOptions + '</select>' +
       '<div class="iw-warn" id="iw-f-warn">⚠️ 高階級的成功機率可能非常低（甚至目前材料完全洗不上去），選這個目標有可能把預算花光也到不了，請自行評估。</div>' +
@@ -377,8 +501,7 @@
       '</div>' +
       '<label style="margin-top:16px;">最大金幣預算</label>' +
       '<input type="number" id="iw-f-budget" min="0" step="1000" value="' + Math.floor((snap().gold || 0)) + '">' +
-      '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy">沒有實習生的發條時，自動花金幣購買繼續（每個 ' +
-      fmt((data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)) || 0) + ' 金幣）</label></div>' +
+      '<div class="iw-checkrow"><input type="checkbox" id="iw-f-autobuy"><label style="margin:0;" for="iw-f-autobuy" id="iw-f-autobuy-label"></label></div>' +
       '<div class="iw-btnrow">' +
       '<button class="iw-btn" id="iw-f-cancel">取消</button>' +
       '<button class="iw-btn primary" id="iw-f-start">開始強化</button>' +
@@ -454,6 +577,35 @@
     modeTierBtn.addEventListener("click", function () { rangeMode = "tier"; updateModeButtons(); refreshAllRangeSelects(); });
     gradeSelect.addEventListener("change", function () { updateWarn(); refreshAllKindSelects(); refreshAllRangeSelects(); });
     updateWarn();
+
+    var winderSelect = document.getElementById("iw-f-winder");
+    function refreshWinderInfo() {
+      var w = winderById(Number(winderSelect.value)) || defaultWinder;
+      var buy = winderBuyPrice(w.id);
+      var label = document.getElementById("iw-f-autobuy-label");
+      var autobuy = document.getElementById("iw-f-autobuy");
+      if (buy) {
+        label.textContent = "沒有" + w.name + "時，自動花金幣購買繼續（每個 " + fmt(buy.price) + " 金幣" +
+          (buy.source === "mall" ? "，名品館價格每小時會變" : "") + "）";
+        autobuy.disabled = false;
+      } else {
+        label.textContent = w.name + "買不到（不在商店／名品館），只能用身上現有的";
+        autobuy.checked = false;
+        autobuy.disabled = true;
+      }
+      var cost = (w.costs || []).find(function (c) { return c[0] === curGrade; });
+      var notes = ["每次上發條 " + (cost ? (cost[1] ? fmt(cost[1]) + " 金幣" : "不用金幣") : "費用依遊戲計算")];
+      if (w.keepsPrevious) notes.push("洗完會自動在「新的／上一組」之間留下比較符合目標的那組");
+      document.getElementById("iw-f-winder-note").textContent = notes.join("；");
+    }
+    winderSelect.addEventListener("change", function () {
+      var w = winderById(Number(winderSelect.value)) || defaultWinder;
+      var keep = Math.min(Number(gradeSelect.value) || 1, winderMaxGrade(w));
+      gradeSelect.innerHTML = gradeOptionsHtml(w, keep);
+      refreshWinderInfo();
+      updateWarn(); refreshAllKindSelects(); refreshAllRangeSelects();
+    });
+    refreshWinderInfo();
 
     // ---------- 停止條件組合（多組 AND，組跟組之間是 OR）----------
     var groupsWrap = document.getElementById("iw-f-groups-wrap");
@@ -617,11 +769,21 @@
         // 有可能玩家之前已經洗出想要的屬性種類，只是數值不是他要的，這種情況直接開始跑，
         // 一開始就會馬上判定「已符合」而停下來，等於白跑。跳一次確認，讓玩家自己決定要不要重洗。
         var currentEntryNow = findEntryByStackId(item.stackId);
+        if (currentEntryNow && currentEntryNow.pendingPrev) {
+          alert("這件裝備還在等你選「新的／上一組」（上次用了武爾坎努斯的發條）。\n\n請先在遊戲畫面按「選這組」，再開始一鍵強化。");
+          return;
+        }
+        var winderId = Number(document.getElementById("iw-f-winder").value) || CLOCKWORK_ID;
+        var winderNow = winderById(winderId);
+        if (winderNow && !winderUsableAt(winderNow, (currentEntryNow && currentEntryNow.options && currentEntryNow.options.grade) || 0)) {
+          alert(winderNow.name + " 不能用在目前這個階級的裝備上，請換一種發條。");
+          return;
+        }
         if (matchGroups.length && meetsAnyGroup(currentEntryNow, matchGroups)) {
           if (!confirm("指定能力已出現，是否重新洗裝備？\n\n（可能是屬性種類對了，但數值不是你要的）")) return;
         }
 
-        startRun(item, targetGrade, budget, autoBuy, matchGroups);
+        startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId);
       } catch (err) {
         console.error("[一鍵強化] 啟動失敗", err);
         alert("啟動時發生錯誤：" + (err && err.message ? err.message : err));
@@ -647,7 +809,7 @@
   }
 
   function setFormDisabled(disabled) {
-    ["iw-f-grade", "iw-f-budget", "iw-f-autobuy", "iw-f-start"].forEach(function (id) {
+    ["iw-f-winder", "iw-f-grade", "iw-f-budget", "iw-f-autobuy", "iw-f-start"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.disabled = disabled;
     });
@@ -655,16 +817,32 @@
     if (cancel) cancel.textContent = disabled ? "停止" : "取消";
   }
 
-  async function startRun(item, targetGrade, budget, autoBuy, matchGroups) {
+  // 用 keepsPrevious 發條洗完後，「新的」跟「上一組」要留哪一組：
+  // 先比「是否達成目標（階級 + 屬性條件）」，再比階級，再比「屬性條件是否符合」；全部一樣就留新的（跟直接洗一樣）。
+  function pickKeep(newOptions, prevOptions, targetGrade, matchGroups) {
+    function score(opts) {
+      var grade = (opts && opts.grade) || 0;
+      var groupsOk = meetsAnyGroup({ options: opts }, matchGroups);
+      return [grade >= targetGrade && groupsOk ? 1 : 0, grade, groupsOk ? 1 : 0];
+    }
+    var a = score(newOptions), b = score(prevOptions);
+    for (var i = 0; i < a.length; i++) {
+      if (b[i] !== a[i]) return b[i] > a[i] ? "previous" : "new";
+    }
+    return "new";
+  }
+
+  async function startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId) {
     running = true;
     stopFlag = false;
     setFormDisabled(true);
     document.getElementById("iw-enhance-summary").innerHTML = "";
     document.getElementById("iw-enhance-log").textContent = "";
 
+    winderId = winderId || CLOCKWORK_ID;
+    var winder = winderById(winderId) || { id: winderId, name: "發條", keepsPrevious: false };
     var stackId = item.stackId;
-    var price = (data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)) || 0;
-    var attempts = 0, totalSpent = 0, totalUsed = 0, totalBought = 0;
+    var attempts = 0, totalSpent = 0, totalUsed = 0, totalBought = 0, keptPrevious = 0;
     var reason = "unknown";
 
     while (true) {
@@ -672,63 +850,89 @@
 
       var entry = findEntryByStackId(stackId);
       if (!entry) { reason = "item-gone"; break; }
+      if (entry.pendingPrev) { reason = "pending-choice"; break; }
       var curGrade = (entry.options && entry.options.grade) || 0;
       if (curGrade >= targetGrade && meetsAnyGroup(entry, matchGroups)) { reason = "success"; break; }
+      if (!winderUsableAt(winder, curGrade)) { reason = "winder-unusable"; break; }
 
-      if (totalSpent >= budget) { reason = "budget"; break; }
+      // 下一次上發條的金幣費用（高手／武爾坎努斯是 0，這時候預算只會被「買發條」用掉）
+      var costRow = (winder.costs || []).find(function (c) { return c[0] === curGrade; });
+      var nextCost = costRow ? (costRow[1] || 0) : 0;
+      if (nextCost > 0 && totalSpent + nextCost > budget) { reason = "budget"; break; }
 
-      var have = session.usableCount(CLOCKWORK_ID, "bagAndWarehouse") || 0;
+      var have = winderStock(winderId);
       if (have < 1) {
         if (!autoBuy) { reason = "no-material"; break; }
-        if (!price) { reason = "no-price"; break; }
-        if (session.player.gold < price) { reason = "no-gold-for-material"; break; }
-        if (totalSpent + price > budget) { reason = "budget"; break; }
+        var buyInfo = winderBuyPrice(winderId);
+        if (!buyInfo || !buyInfo.price) { reason = "no-price"; break; }
+        if (session.player.gold < buyInfo.price) { reason = "no-gold-for-material"; break; }
+        if (totalSpent + buyInfo.price > budget) { reason = "budget"; break; }
         var goldBeforeBuy = session.player.gold;
-        session.buy(CLOCKWORK_ID, 1);
+        var bought = buyWinder(winderId);
         var buySpent = goldBeforeBuy - session.player.gold;
-        if (buySpent <= 0) {
-          console.error("[一鍵強化] session.buy() 沒有扣款，診斷資訊：", {
+        if (!bought || buySpent <= 0) {
+          console.error("[一鍵強化] 購買發條失敗，診斷資訊：", {
             "session.inVillage": session.inVillage,
-            "發條商店價格 price": price,
+            "發條": winderId + " " + winder.name,
+            "價格來源": buyInfo.source,
+            "價格 price": buyInfo.price,
             "扣款前金幣 goldBefore": goldBeforeBuy,
-            "扣款後金幣 goldAfter": session.player.gold,
-            "data.shopPrice.get(26731)": data.shopPrice && data.shopPrice.get(CLOCKWORK_ID)
+            "扣款後金幣 goldAfter": session.player.gold
           });
           reason = "buy-failed";
           break;
         }
         totalSpent += buySpent;
         totalBought += 1;
-        log("購買發條 ×1，花費 " + fmt(buySpent) + " 金幣");
+        log("購買" + winder.name + " ×1，花費 " + fmt(buySpent) + " 金幣");
         await sleep(20);
         continue;
       }
 
+      // 2026-09-22 改版後高手／武爾坎努斯的發條每次 0 金幣，不能再用「有沒有扣錢」判斷成功，
+      // 改看發條數量有沒有少、或裝備的 enhanceTries 有沒有增加。
       var goldBefore = session.player.gold;
       var materialBefore = have;
-      session.enhance(stackId, CLOCKWORK_ID);
-      var spent = goldBefore - session.player.gold;
-      if (spent <= 0) {
-        console.error("[一鍵強化] session.enhance() 沒有扣款，診斷資訊：", {
+      var triesBefore = entry.enhanceTries || 0;
+      session.enhance(stackId, winderId);
+      var afterEntry = findEntryByStackId(stackId);
+      var usedNow = Math.max(0, materialBefore - winderStock(winderId));
+      var triesAfter = (afterEntry && afterEntry.enhanceTries) || 0;
+      if (usedNow <= 0 && triesAfter <= triesBefore) {
+        console.error("[一鍵強化] session.enhance() 沒有執行，診斷資訊：", {
           "session.inVillage": session.inVillage,
           "stackId": stackId,
+          "發條": winderId + " " + winder.name,
           "扣款前金幣 goldBefore": goldBefore,
           "扣款後金幣 goldAfter": session.player.gold,
-          "usableCount(26731,bagAndWarehouse)": session.usableCount(CLOCKWORK_ID, "bagAndWarehouse")
+          "發條數量": winderStock(winderId),
+          "pendingPrev": afterEntry && afterEntry.pendingPrev
         });
         reason = "enhance-rejected";
         break;
       }
+      var spent = Math.max(0, goldBefore - session.player.gold);
       attempts++;
       totalSpent += spent;
-      totalUsed += Math.max(0, materialBefore - (session.usableCount(CLOCKWORK_ID, "bagAndWarehouse") || 0));
+      totalUsed += usedNow;
+
+      var keepNote = "";
+      if (afterEntry && afterEntry.pendingPrev && typeof session.keepEnhance === "function") {
+        var keep = pickKeep(afterEntry.options, afterEntry.pendingPrev, targetGrade, matchGroups);
+        var rolledText = rolledKindsText(afterEntry);
+        session.keepEnhance(stackId, keep);
+        if (keep === "previous") {
+          keptPrevious++;
+          keepNote = "（洗出 " + rolledText + "，不如上一組，保留上一組）";
+        }
+      }
 
       var newEntry = findEntryByStackId(stackId);
       var newGrade = (newEntry && newEntry.options && newEntry.options.grade) || 0;
       var matchInfo = (matchGroups && matchGroups.length)
         ? "，需求：" + groupsText(matchGroups) + "（目前" + (meetsAnyGroup(newEntry, matchGroups) ? "已符合" : "未符合") + "）"
         : "";
-      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + matchInfo);
+      log("第 " + attempts + " 次強化：花費 " + fmt(spent) + " 金幣，結果 " + gradeNameOf(newGrade) + " 階（" + rolledKindsText(newEntry) + "）" + keepNote + matchInfo);
       var targetDisplay = document.getElementById("iw-f-target-display");
       if (targetDisplay) targetDisplay.textContent = item.label + "：" + item.name + "（目前 " + gradeNameOf(newGrade) + " 階・" + rolledKindsText(newEntry) + "）";
 
@@ -747,9 +951,11 @@
       "budget": "⏸️ 已達到（或即將超過）預算上限，停止。",
       "no-material": "⏸️ 發條用完了（沒有勾選自動購買），停止。",
       "no-gold-for-material": "⏸️ 金幣不夠買下一個發條，停止。",
-      "no-price": "⚠️ 讀不到發條的商店價格，停止。",
+      "no-price": "⚠️ 這種發條買不到（不在商店／這個小時的名品館價目表），停止。",
       "buy-failed": "⚠️ 購買發條沒有成功扣款，真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
-      "enhance-rejected": "⚠️ 這次強化沒有成功扣款，真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
+      "enhance-rejected": "⚠️ 這次強化沒有執行（沒用掉發條），真正原因已印在 Console（按 F12 看），麻煩截圖給我看。",
+      "pending-choice": "⏸️ 這件裝備在等你選「新的／上一組」，請先在遊戲畫面選好再繼續。",
+      "winder-unusable": "⏸️ 這種發條不能用在目前這個階級，停止。",
       "item-gone": "⚠️ 找不到這件裝備了（可能被拆解或移動），停止。",
       "stopped": "⏹️ 已手動停止。",
       "unknown": "發生未知狀況，停止。"
@@ -759,7 +965,9 @@
       "<div>" + reasonText + "</div>" +
       "<div style='margin-top:8px;'>" +
       item.label + "：" + item.name + " → <b>" + gradeNameOf(finalGrade) + " 階</b>　（" + rolledKindsText(finalEntry) + "）<br>" +
-      "強化次數：<b>" + attempts + "</b> 次　購買發條：<b>" + totalBought + "</b> 個<br>" +
+      "使用發條：<b>" + winder.name + "</b>　用掉 <b>" + totalUsed + "</b> 個<br>" +
+      "強化次數：<b>" + attempts + "</b> 次　購買發條：<b>" + totalBought + "</b> 個" +
+      (keptPrevious ? "　保留上一組：<b>" + keptPrevious + "</b> 次" : "") + "<br>" +
       "總花費：<b>" + fmt(totalSpent) + "</b> 金幣" +
       "</div>";
   }
