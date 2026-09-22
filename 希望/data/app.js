@@ -1118,6 +1118,186 @@
     showCenterModal("⚠️ 寵物需求未達標", lines.join("\n"));
   }
 
+  // ---------- 寵物鑑定（2026-09 新系統，規則照遊戲 bundle 的 appraisePet／O_／E_／A_）----------
+  // 存檔欄位（跟裝備鑑定一樣的格式）：pet.unidentified（true＝未鑑定）、pet.appraisal（[{kind, value, unit:0}]）、pet.apprTries
+  // 每種屬性各自擲：出現機率 10% + (階級-1)×3%；出現後抽倍率 k（權重 PET_APPR_WEIGHTS），數值 = k × 權重 ÷ 5，k=0 就不列
+  // ⚠️ 種類編號用遊戲「現行」的（c_）：1攻 2魔 3命中 4迴避 5防禦 6必殺 7攻速 8移速 11 HP% 12 AP% 13增傷 14減傷
+  var PET_APPR_KINDS = [[1, 25], [2, 25], [5, 25], [8, 15], [7, 10], [3, 10], [4, 10], [6, 10], [11, 10], [12, 10], [13, 5], [14, 5]];
+  var PET_APPR_KIND_NAME = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺技", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%", 13: "增加傷害%", 14: "減少傷害%" };
+  var PET_APPR_K = [-2, -1, 0, 1, 2, 3, 4, 5];
+  var PET_APPR_WEIGHTS = [120000, 170000, 230000, 255000, 210000, 10000, 5000, 0]; // 遊戲 m_.pet
+  var openPetApprUid = null; // 寵物表格目前展開鑑定編輯的那一隻
+
+  function petApprChance(tier) { return 0.1 + Math.max(0, (tier || 1) - 1) * 0.03; }
+  function petApprWeight(kind) { var p = PET_APPR_KINDS.find(function (x) { return x[0] === kind; }); return p ? p[1] : 0; }
+  // 遊戲抽得到的數值（k=-2~4，k=5 權重是 0 抽不到；0 等於沒有這條）
+  function petApprLegalValues(kind) {
+    var w = petApprWeight(kind);
+    return [-2, -1, 1, 2, 3, 4].map(function (k) { return k * w / 5; });
+  }
+  function petApprLineText(r) {
+    var name = PET_APPR_KIND_NAME[r.kind] || ("種類#" + r.kind);
+    var pct = /%$/.test(name);
+    return name.replace(/%$/, "") + " " + (r.value > 0 ? "+" : "") + r.value + (pct ? "%" : "");
+  }
+  function petApprSummary(pet) {
+    if (pet.unidentified) return "未鑑定";
+    var list = pet.appraisal || [];
+    if (!list.length) return "已鑑定（沒有屬性）";
+    return list.map(petApprLineText).join("、");
+  }
+  function petApprRollK() {
+    var r = Math.random() * 1000000;
+    for (var i = 0; i < PET_APPR_WEIGHTS.length; i++) {
+      r -= PET_APPR_WEIGHTS[i];
+      if (r < 0) return PET_APPR_K[i];
+    }
+    return PET_APPR_K[PET_APPR_K.length - 1];
+  }
+  function petApprRoll(tier) {
+    var chance = petApprChance(tier), out = [];
+    PET_APPR_KINDS.forEach(function (pair) {
+      if (Math.random() >= chance) return;
+      var k = petApprRollK();
+      if (k !== 0) out.push({ kind: pair[0], value: k * pair[1] / 5, unit: 0 });
+    });
+    return out;
+  }
+
+  function petApprEditor(c, pet, onChange) {
+    var def = PETS[String(pet.id)] || {};
+    var box = el("div", { style: "padding:10px 4px;font-size:13px;" });
+    box.appendChild(el("div", {
+      style: "color:var(--text3);margin-bottom:10px;line-height:1.6;",
+      text: "「" + (def.name || "") + "」是 " + (def.tier || 1) + " 階：每種屬性出現機率 " + Math.round(petApprChance(def.tier) * 1000) / 10 +
+        "%（出現後還有 23% 抽到 0 等於沒有）。遊戲裡到寵物鑑定師付「寵物賣價」鑑定一次，出戰中的那隻不能鑑定、鑑定完不能重來；這裡可以直接改。"
+    }));
+
+    function apply(list, unidentified) {
+      pet.unidentified = !!unidentified;
+      pet.appraisal = unidentified ? [] : list.map(function (r) { return { kind: r.kind, value: r.value, unit: 0 }; });
+      pet.apprTries = Math.max(pet.apprTries || 0, unidentified ? (pet.apprTries || 0) : 1);
+      petsTouched = true;
+      onChange();
+    }
+
+    // 狀態
+    var stateRow = el("div", { style: "display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;" });
+    stateRow.appendChild(el("span", { text: "目前：" }));
+    var stateText = el("b", { text: petApprSummary(pet) });
+    stateRow.appendChild(stateText);
+    var resetBtn = el("button", { class: "btn btn-sm", text: "↩ 改回未鑑定" });
+    resetBtn.addEventListener("click", function () {
+      apply([], true);
+      lines = [];
+      refresh();
+      toast("「" + (def.name || "") + "」改回未鑑定", "ok");
+    });
+    stateRow.appendChild(resetBtn);
+    box.appendChild(stateRow);
+
+    // 抽
+    var gachaRow = el("div", { style: "display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;" });
+    var rollBtn = el("button", { class: "btn btn-accent btn-sm", text: "🎲 照遊戲規則抽一次（不限次數）" });
+    var useBtn = el("button", { class: "btn btn-sm", text: "✅ 套用這次抽到的" });
+    useBtn.disabled = true;
+    var rolled = null;
+    var rollPreview = el("span", { style: "color:var(--text3);", text: "" });
+    rollBtn.addEventListener("click", function () {
+      rolled = petApprRoll(def.tier);
+      useBtn.disabled = false;
+      rollPreview.textContent = rolled.length ? "抽到：" + rolled.map(petApprLineText).join("、") : "抽到：這次沒有任何屬性";
+    });
+    useBtn.addEventListener("click", function () {
+      if (!rolled) return;
+      apply(rolled, false);
+      lines = rolled.map(function (r) { return { kind: r.kind, value: r.value }; });
+      rolled = null;
+      useBtn.disabled = true;
+      rollPreview.textContent = "";
+      refresh();
+      toast("已套用鑑定結果到「" + (def.name || "") + "」", "ok");
+    });
+    gachaRow.appendChild(rollBtn);
+    gachaRow.appendChild(useBtn);
+    gachaRow.appendChild(rollPreview);
+    box.appendChild(gachaRow);
+
+    // 手動
+    box.appendChild(el("div", { style: "font-weight:700;margin:14px 0 6px;", text: "✏️ 自己挑屬性（每種最多一條，只能選遊戲抽得到的數值）" }));
+    var lines = (pet.appraisal || []).map(function (r) { return { kind: r.kind, value: r.value }; });
+    var linesWrap = el("div", {});
+    box.appendChild(linesWrap);
+    var manualBtns = el("div", { style: "display:flex;gap:8px;margin-top:6px;" });
+    var addBtn = el("button", { class: "btn btn-sm", text: "➕ 加一條" });
+    var saveBtn = el("button", { class: "btn btn-accent btn-sm", text: "💾 套用手動設定" });
+    manualBtns.appendChild(addBtn);
+    manualBtns.appendChild(saveBtn);
+    box.appendChild(manualBtns);
+
+    function usedKinds(except) {
+      var s = {};
+      lines.forEach(function (l, i) { if (i !== except) s[l.kind] = true; });
+      return s;
+    }
+    function renderLines() {
+      linesWrap.innerHTML = "";
+      if (!lines.length) linesWrap.appendChild(el("div", { style: "color:var(--text3);", text: "（沒有任何屬性。按「加一條」新增；套用空的等於「已鑑定但沒有屬性」。）" }));
+      lines.forEach(function (line, idx) {
+        var row = el("div", { style: "display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;" });
+        var used = usedKinds(idx);
+        var kindSel = el("select", { style: "min-width:120px;" });
+        PET_APPR_KINDS.forEach(function (pair) {
+          var o = el("option", { value: pair[0], text: PET_APPR_KIND_NAME[pair[0]] + (used[pair[0]] ? "（已選）" : "") });
+          if (pair[0] === line.kind) o.selected = true;
+          if (used[pair[0]]) o.disabled = true;
+          kindSel.appendChild(o);
+        });
+        kindSel.addEventListener("change", function () {
+          line.kind = Number(kindSel.value);
+          var legal = petApprLegalValues(line.kind);
+          if (legal.indexOf(line.value) === -1) line.value = legal[2]; // 換種類後數值不合法就改成 +1 檔
+          renderLines();
+        });
+        var valSel = el("select", { style: "width:90px;" });
+        var legal = petApprLegalValues(line.kind);
+        if (legal.indexOf(line.value) === -1) line.value = legal[2];
+        legal.forEach(function (v) {
+          var o = el("option", { value: v, text: (v > 0 ? "+" : "") + v });
+          if (v === line.value) o.selected = true;
+          valSel.appendChild(o);
+        });
+        valSel.addEventListener("change", function () { line.value = Number(valSel.value); });
+        var del = el("button", { class: "icon-btn", text: "✕" });
+        del.addEventListener("click", function () { lines.splice(idx, 1); renderLines(); });
+        row.appendChild(kindSel);
+        row.appendChild(valSel);
+        row.appendChild(del);
+        linesWrap.appendChild(row);
+      });
+      addBtn.disabled = lines.length >= PET_APPR_KINDS.length;
+    }
+    addBtn.addEventListener("click", function () {
+      var used = usedKinds(-1);
+      var free = PET_APPR_KINDS.find(function (p) { return !used[p[0]]; });
+      if (!free) return;
+      lines.push({ kind: free[0], value: free[1] / 5 });
+      renderLines();
+    });
+    saveBtn.addEventListener("click", function () {
+      apply(lines, false);
+      refresh();
+      toast("已套用手動鑑定到「" + (def.name || "") + "」", "ok");
+    });
+
+    function refresh() {
+      stateText.textContent = petApprSummary(pet);
+      renderLines();
+    }
+    renderLines();
+    return box;
+  }
+
   function renderPets(c) {
     var $tbody = document.querySelector("#petsTable tbody");
     $tbody.innerHTML = "";
@@ -1204,6 +1384,19 @@
       }
       updateBonusCell();
 
+      var tdAppr = document.createElement("td");
+      tdAppr.style.fontSize = "12px";
+      var apprSummary = el("div", { style: "margin-bottom:4px;line-height:1.5;", text: petApprSummary(pet) });
+      var apprBtn = el("button", { class: "btn btn-sm", text: openPetApprUid === pet.uid ? "▲ 收起" : "🔍 鑑定" });
+      apprBtn.disabled = !PETS[String(pet.id)];
+      apprBtn.addEventListener("click", function () {
+        openPetApprUid = openPetApprUid === pet.uid ? null : pet.uid;
+        renderPets(c);
+      });
+      tdAppr.appendChild(apprSummary);
+      tdAppr.appendChild(apprBtn);
+      tr.appendChild(tdAppr);
+
       var tdAct = document.createElement("td");
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () {
@@ -1216,12 +1409,22 @@
       tr.appendChild(tdAct);
 
       $tbody.appendChild(tr);
+
+      if (openPetApprUid === pet.uid && PETS[String(pet.id)]) {
+        var apprTr = document.createElement("tr");
+        var apprTd = el("td", { colspan: "11" });
+        apprTd.style.background = "var(--bg2)";
+        apprTd.appendChild(petApprEditor(c, pet, function () { apprSummary.textContent = petApprSummary(pet); }));
+        apprTr.appendChild(apprTd);
+        $tbody.appendChild(apprTr);
+      }
     });
 
     document.getElementById("addPetBtn").onclick = function () {
       var uid = c.nextPetUid++;
-      // 新增的寵物先留空，讓玩家自己從下拉選單挑選
-      c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0 });
+      // 新增的寵物先留空，讓玩家自己從下拉選單挑選。
+      // 鑑定欄位照遊戲收養新寵物的預設（未鑑定、沒有屬性、鑑定次數 0）；少了這幾個欄位，遊戲進化／重置鑑定時會出錯。
+      c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0, unidentified: true, appraisal: [], apprTries: 0 });
       // 如果角色原本沒有任何出戰寵物，新增的這隻自動設為出戰
       if (!c.activePetUid) c.activePetUid = uid;
       petsTouched = true;
@@ -2439,13 +2642,15 @@
   }
 
   // ---------- 鑑定（跟發條強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
-  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
-  var APPR_FF = {
-    weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
-    magicWeapon: [[1, 25], [2, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
-    armor: [[3, 25], [4, 10], [7, 5], [11, 5], [12, 5]],
-    shoes: [[3, 25], [4, 10], [7, 5], [8, 15], [11, 5], [12, 5]],
-    accessory: [[1, 5], [2, 5], [3, 5], [4, 5], [6, 5], [7, 5], [5, 5], [8, 5], [11, 5], [12, 5]]
+  // 種類編號照遊戲「現行」的 c_（存檔 v28 起重新編號：舊 3防 4攻速 5必殺 6命中 7迴避 → 新 3命中 4迴避 5防禦 6必殺 7攻速）。
+  // 以前用舊編號，修改器寫進存檔的鑑定在遊戲裡會變成別的屬性（例如攻速變迴避）。
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%" };
+  var APPR_FF = { // 遊戲 l_：[種類, 權重]
+    weapon: [[1, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    armor: [[5, 25], [7, 10], [4, 5], [11, 5], [12, 5]],
+    shoes: [[5, 25], [7, 10], [4, 5], [8, 15], [11, 5], [12, 5]],
+    accessory: [[1, 5], [2, 5], [5, 5], [7, 5], [3, 5], [4, 5], [6, 5], [8, 5], [11, 5], [12, 5]]
   };
   var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
   var APPR_MF = {

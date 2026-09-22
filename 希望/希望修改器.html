@@ -556,7 +556,11 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
         「目前加成」欄位會即時算出照這隻寵物目前的 grow／hunger，實際會提供多少能力（部分屬性有 9 階段各自不同的成長曲線，沒有曲線的屬性固定不變，只看有沒有 hunger）。
         <b>grow 最低要是 1</b>：屬性加成表只有 9 格（對應 grow 1~9），grow:0 查不到資料會顯示「無任何能力」，所以新增寵物預設 grow 是 1。
       </div>
-      <table class="etable" id="petsTable"><thead><tr><th style="width:5%">出戰</th><th style="width:18%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th style="width:16%">目前加成</th><th></th></tr></thead><tbody></tbody></table>
+      <table class="etable" id="petsTable"><thead><tr><th style="width:5%">出戰</th><th style="width:18%">寵物</th><th>Uid</th><th>成長階段</th><th>經驗</th><th>飽食度</th><th>所需等級</th><th>所需名聲</th><th style="width:16%">目前加成</th><th style="width:14%">鑑定</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="panel-desc" style="margin-top:8px;">
+        <b>🔍 寵物鑑定</b>：按「鑑定」欄的按鈕展開，可以照遊戲規則抽（不限次數，滿意再套用），或自己挑屬性和數值（只能選遊戲抽得到的數值）。
+        只有<b>出戰中</b>那隻的鑑定屬性會加到角色身上；進化成 6 階時遊戲會把鑑定清掉。
+      </div>
       <button class="btn btn-accent btn-sm" id="addPetBtn" style="margin-top:10px;">➕ 新增寵物</button>
     </div>
 

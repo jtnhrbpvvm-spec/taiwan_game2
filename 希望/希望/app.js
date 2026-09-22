@@ -215,13 +215,15 @@
 
 
   // ---------- 鐵匠鑑定（跟齒輪強化是不同系統，公式反推自遊戲原始程式碼）----------
-  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "防禦力", 4: "攻擊速度", 5: "必殺", 6: "命中率", 7: "迴避率", 8: "移動速度", 11: "HP%", 12: "AP%" };
-  var APPR_FF = {
-    weapon: [[1, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
-    magicWeapon: [[1, 25], [2, 25], [4, 10], [6, 10], [5, 10], [11, 5]],
-    armor: [[3, 25], [4, 10], [7, 5], [11, 5], [12, 5]],
-    shoes: [[3, 25], [4, 10], [7, 5], [8, 15], [11, 5], [12, 5]],
-    accessory: [[1, 5], [2, 5], [3, 5], [4, 5], [6, 5], [7, 5], [5, 5], [8, 5], [11, 5], [12, 5]]
+  // 種類編號照遊戲「現行」的 c_（存檔 v28 起重新編號：舊 3防 4攻速 5必殺 6命中 7迴避 → 新 3命中 4迴避 5防禦 6必殺 7攻速）。
+  // 以前用舊編號，修改器寫進存檔的鑑定在遊戲裡會變成別的屬性（例如攻速變迴避）。
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%" };
+  var APPR_FF = { // 遊戲 l_：[種類, 權重]
+    weapon: [[1, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    armor: [[5, 25], [7, 10], [4, 5], [11, 5], [12, 5]],
+    shoes: [[5, 25], [7, 10], [4, 5], [8, 15], [11, 5], [12, 5]],
+    accessory: [[1, 5], [2, 5], [5, 5], [7, 5], [3, 5], [4, 5], [6, 5], [8, 5], [11, 5], [12, 5]]
   };
   var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
   var APPR_MF = {
@@ -3512,6 +3514,55 @@
       '<div class="map-chip-row">' + mats.map(function (mid) { return itemChip(mid); }).join('') + '</div>';
   }
 
+  // ---------- 寵物鑑定（2026-09 新系統，規則照遊戲 bundle 的 appraisePet／petAppraisalInput／O_／E_／A_）----------
+  //   新收養的寵物都是「未鑑定」；到寵物鑑定師付「寵物賣價」的金幣鑑定一次，出戰中的那隻不能鑑定
+  //   每一種屬性各自擲一次：出現機率 = 10% + (階級-1)×3%；出現了再抽倍率 k（下表），數值 = k × 權重 ÷ 5，k=0 等於沒出現
+  //   只有「出戰中」那隻的鑑定屬性會加到角色身上；進化成 6 階的寵物，鑑定會清掉、變回未鑑定
+  //   種類編號照遊戲現行的 c_：1攻 2魔 3命中 4迴避 5防禦 6必殺 7攻速 8移速 11 HP% 12 AP% 13增傷 14減傷
+  var PET_APPR_KINDS = [[1, 25], [2, 25], [5, 25], [8, 15], [7, 10], [3, 10], [4, 10], [6, 10], [11, 10], [12, 10], [13, 5], [14, 5]];
+  var PET_APPR_KIND_NAME = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺技", 7: "攻擊速度", 8: "移動速度", 11: "HP", 12: "AP", 13: "增加傷害", 14: "減少傷害" };
+  var PET_APPR_PCT_KINDS = { 11: 1, 12: 1, 13: 1, 14: 1 };
+  var PET_APPR_ROLL = [[-2, 12], [-1, 17], [1, 25.5], [2, 21], [3, 1], [4, 0.5]]; // [倍率 k, 機率%]；另外 23% 抽到 0＝這條沒出現
+  var PET_APPRAISERS = "雪山礦村、獅子城的「寵物鑑定師‧瑪亞」，努瓦村的「寵物鑑定師瑪麗」";
+  function petApprChance(tier) { return 0.1 + Math.max(0, tier - 1) * 0.03; }
+  function petApprValueText(kind, v) { return (v > 0 ? "+" : "") + v + (PET_APPR_PCT_KINDS[kind] ? "%" : ""); }
+  function petAppraisalHtml(petId, p) {
+    var chance = petApprChance(p.tier || 1);
+    var item = ITEMS[String(petId)];
+    var fee = item ? item.sell : null;
+    var expect = PET_APPR_KINDS.length * chance * 0.77;
+    var html = '<details class="fold-section" open><summary class="section-title">寵物鑑定<span class="fold-hint">點擊收合</span></summary>';
+    html += '<div class="equip-box" style="margin-bottom:10px;font-size:13px;line-height:1.8;">' +
+      '<div>鑑定地點：' + PET_APPRAISERS + '。</div>' +
+      '<div>費用：<b>' + (fee != null ? fmtNum(fee) + '</b> 金幣（等於這隻寵物的賣價）' : '</b>這隻寵物的賣價') + '，每隻只能鑑定一次。</div>' +
+      '<div>每一種屬性各自有 <b>' + Math.round(chance * 1000) / 10 + '%</b> 機率出現（' + (p.tier || 1) + ' 階；1 階 10%、每高一階 +3%），' +
+      '平均每隻會鑑定出約 <b>' + Math.round(expect * 10) / 10 + '</b> 條；也可能一條都沒有。</div>' +
+      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">' +
+      '・新收養的寵物都是「未鑑定」；<b>出戰中的那隻不能鑑定</b>，要先換另一隻出戰。<br>' +
+      '・只有<b>出戰中</b>那隻的鑑定屬性會加到角色身上。<br>' +
+      '・進化成 <b>6 階</b>寵物時鑑定會被清掉、變回未鑑定（要再付一次錢）；進化成 5 階以下會保留。<br>' +
+      '・屬性可能是負的（下表紅字），鑑定完不能重來。</div>' +
+      '</div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>屬性</th>' +
+      PET_APPR_ROLL.map(function (r) { return '<th>' + (r[0] > 0 ? '+' : '') + r[0] + ' 檔<br><span style="font-weight:400;color:var(--text-faint);">' + r[1] + '%</span></th>'; }).join('') +
+      '<th>出現率</th></tr></thead><tbody>';
+    PET_APPR_KINDS.forEach(function (pair) {
+      var kind = pair[0], w = pair[1];
+      html += '<tr><td>' + PET_APPR_KIND_NAME[kind] + '</td>' +
+        PET_APPR_ROLL.map(function (r) {
+          var v = r[0] * w / 5;
+          return '<td><span class="rate' + (v < 0 ? ' low" style="color:var(--red,#c0392b);' : '') + '">' + petApprValueText(kind, v) + '</span></td>';
+        }).join('') +
+        '<td>' + Math.round(chance * 77 * 10) / 10 + '%</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin:6px 0 16px;">' +
+      '表頭的 % 是「這條屬性出現時」落在哪一檔的機率；另外有 23% 會抽到 0 檔，等於這條沒出現，所以「出現率」＝階級機率 × 77%。' +
+      '+3、+4 檔非常少見（合計 1.5%）。</div>';
+    html += '</details>';
+    return html;
+  }
+
   function showPetDetail(petId) {
     var p = PET_INFO[String(petId)];
     if (!p) return;
@@ -3558,6 +3609,8 @@
         html += petEvolveMatsHtml(ev.mats) + '</div>';
       });
     }
+
+    html += petAppraisalHtml(petId, p);
 
     var statKeys = Object.keys(PET_STAT_LABEL);
     html += '<table class="dtable"><thead><tr><th>成長階段</th>' + statKeys.map(function (k) { return '<th>' + PET_STAT_LABEL[k] + '</th>'; }).join('') + '</tr></thead><tbody>';
