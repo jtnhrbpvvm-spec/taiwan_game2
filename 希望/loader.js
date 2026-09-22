@@ -180,6 +180,14 @@
     ".iw-fab.iw-fab-go{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;border-color:#1d4650;",
     "box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #163a42,0 4px 10px rgba(0,0,0,.22);}",
     ".iw-fab.iw-fab-on{background:linear-gradient(180deg,#5a9a46,#47733a,#3a5f30);color:#fff;border-color:#2c4a24;}",
+    // 「⚡ 快速強化中...」三個點輪流亮起（只用 opacity 動畫，瀏覽器忙的時候也盡量能繼續動）
+    ".iw-busy{display:none;margin-top:10px;padding:8px 12px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--iw-go);",
+    "background:rgba(47,107,120,.08);border:1px solid rgba(47,107,120,.35);}",
+    ".iw-busy .iw-dots i{font-style:normal;display:inline-block;margin-left:1px;opacity:.15;will-change:opacity;animation:iwDot 1.2s infinite;}",
+    ".iw-busy .iw-dots i:nth-child(2){animation-delay:.2s;}",
+    ".iw-busy .iw-dots i:nth-child(3){animation-delay:.4s;}",
+    ".iw-busy small{display:block;margin-top:2px;font-weight:400;color:var(--iw-dim);}",
+    "@keyframes iwDot{0%,20%{opacity:.15;}40%{opacity:1;}100%{opacity:.15;}}",
     // 提示彈窗（例如金幣不足）：疊在一鍵強化視窗上面
     ".iw-popup-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.45);z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;}",
     ".iw-popup{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;width:100%;max-width:320px;",
@@ -371,20 +379,33 @@
   // 讓畫面喘口氣：瀏覽器分頁在背景時，setTimeout 會被限制成「最快一秒一次」，
   // 玩家切到別的分頁掛著，一鍵強化就會慢到一秒只洗十幾次。MessageChannel 不會被這樣限制。
   // 另外改成「連續跑超過 30 毫秒才讓一次」，不是固定每幾次就停。
-  var lastYieldAt = 0;
+  var lastYieldAt = 0, lastPaintAt = 0;
   function yieldUI(force) {
     var now = (window.performance && performance.now()) || Date.now();
     if (!force && now - lastYieldAt < 30) return null;
     if (typeof flushLog === "function") flushLog();
     // 計時要從「回來繼續跑」那一刻開始算；如果從「讓出去」那刻算，分頁在背景時回來得慢，
     // 一回來就又超過 30 毫秒，變成每洗一次就讓一次（實測慢到一秒三十幾次）
-    function done() { lastYieldAt = (window.performance && performance.now()) || Date.now(); }
+    function done() {
+      lastYieldAt = (window.performance && performance.now()) || Date.now();
+    }
+    // 分頁在前景時，每隔約 0.1 秒確實讓瀏覽器畫一次畫面（MessageChannel 不保證會重畫，
+    // 玩家會以為當機）；背景分頁不會畫畫面，就只用 MessageChannel，才不會被限速
+    var wantPaint = !document.hidden && now - lastPaintAt > 100;
     return new Promise(function (resolve) {
+      var finished = false;
+      function fin() { if (finished) return; finished = true; done(); resolve(); }
+      if (wantPaint) {
+        lastPaintAt = now;
+        try { requestAnimationFrame(function () { setTimeout(fin, 0); }); } catch (err) { /* 沒有 rAF 就靠下面的保險 */ }
+        setTimeout(fin, 80); // 保險：rAF 沒有觸發（例如分頁剛好切到背景）也不會卡住
+        return;
+      }
       try {
         var ch = new MessageChannel();
-        ch.port1.onmessage = function () { ch.port1.close(); done(); resolve(); };
+        ch.port1.onmessage = function () { ch.port1.close(); fin(); };
         ch.port2.postMessage(0);
-      } catch (err) { setTimeout(function () { done(); resolve(); }, 0); }
+      } catch (err) { setTimeout(fin, 0); }
     });
   }
 
@@ -655,6 +676,8 @@
       '<div class="iw-checkrow"><input type="checkbox" id="iw-f-fast"><label style="margin:0;" for="iw-f-fast">' +
       '⚡ 快速強化（按「開始強化」後直接算好結果、扣掉金幣並完成強化；沒勾選就一次一次洗）</label></div>' +
       '<div class="iw-warn" id="iw-f-fast-msg" style="display:none;"></div>' +
+      '<div class="iw-busy" id="iw-f-busy">⚡ 快速強化中<span class="iw-dots"><i>.</i><i>.</i><i>.</i></span>' +
+      '<small>條件越難要算越久，畫面暫時不會變動是正常的，可以按「停止」</small></div>' +
       '<div class="iw-btnrow">' +
       '<button class="iw-btn" id="iw-f-cancel">取消</button>' +
       '<button class="iw-btn primary" id="iw-f-start">開始強化</button>' +
@@ -783,6 +806,11 @@
       var cost = (w.costs || []).find(function (c) { return c[0] === curGrade; });
       var notes = ["每次上發條 " + (cost ? (cost[1] ? fmt(cost[1]) + " 金幣" : "不用金幣") : "費用依遊戲計算")];
       if (w.keepsPrevious) notes.push("洗完會自動在「新的／上一組」之間留下比較符合目標的那組");
+      // 遊戲發條按鈕上的百分比是「升階機率」；已經是這種發條能到的最高階時會顯示 0.0%，
+      // 玩家常以為是「不能強化」，其實還是可以上發條重洗屬性
+      if (curGrade >= winderMaxGrade(w)) {
+        notes.push("已經是這種發條能到的最高階（" + gradeNameOf(winderMaxGrade(w)) + "），遊戲顯示升階機率 0.0% 是正常的，上發條會重洗屬性、不會再升階");
+      }
       document.getElementById("iw-f-winder-note").textContent = notes.join("；");
     }
     winderSelect.addEventListener("change", function () {
@@ -1028,8 +1056,8 @@
         startBtn.disabled = true;
         cancelBtn.textContent = "停止";
         cancelBtn.addEventListener("click", onCancel, true);
-        fastMsg.textContent = "⏳ 計算中…（條件越難算越久，可以按「停止」）";
-        fastMsg.style.display = "block";
+        var busyEl = document.getElementById("iw-f-busy");
+        busyEl.style.display = "block"; // 「⚡ 快速強化中...」點點會一直跑，玩家才不會以為當機
         simulatePlanAsync(currentEntryNow, winderNow, targetGrade, matchGroups, {
           spendLimit: Math.min(session.player.gold, budget),
           buyPrice: buyInfoNow ? buyInfoNow.price : null,
@@ -1039,6 +1067,7 @@
           cancelBtn.textContent = "取消";
           startBtn.disabled = false;
           fastMsg.style.display = "none";
+          if (p.reason !== "ok") busyEl.style.display = "none"; // 成功的話繼續顯示，交給 startRun 做完再關
           if (p.reason === "ok") {
             startRun(item, targetGrade, budget, autoBuy, matchGroups, winderId, forceReroll, true, p);
             return;
@@ -1058,6 +1087,7 @@
           cancelBtn.removeEventListener("click", onCancel, true);
           cancelBtn.textContent = "取消";
           startBtn.disabled = false;
+          busyEl.style.display = "none";
           console.warn("[一鍵強化] 快速強化計算失敗", err);
           showMsg("快速強化計算失敗，請取消勾選「快速強化」改用一次一次洗。");
         });
@@ -1229,7 +1259,8 @@
     var runStartedAt = (prePlan && prePlan.startedAt) || Date.now();
     // 快速強化時不逐筆列出每一次的結果，只在最後顯示結果
     function rlog(msg) { if (!fastMode) log(msg); }
-    if (fastMode) log("⚡ 快速強化中…");
+    var busyBox = document.getElementById("iw-f-busy");
+    if (fastMode && busyBox) busyBox.style.display = "block";
 
     function attachPlan(p, entry) {
       p.startTries = entry.enhanceTries || 0;
@@ -1490,6 +1521,7 @@
       console.error("[一鍵強化] 執行中發生錯誤", err);
     }
     endQuiet(); // 不管成功、停止、出錯，都一定要把遊戲的重畫／紀錄還原
+    if (busyBox) busyBox.style.display = "none";
 
     flushLog();
     running = false;
