@@ -1444,6 +1444,117 @@
     return html;
   }
 
+  // ---------- 只在特定 NPC／功能頁才有用的道具（精煉材料、鎔解石、鎔解燃料與催化劑、古代英雄碎片與兌換卷）----------
+  // 資料抄自遊戲 refine.json／hero.json（2026-09-22 版），規則照遊戲 bundle：
+  //   精煉 refineStack()：每一階固定吃一種寶石（steps[].material）；勾了任何鎔解石就多付 advancedCost 金幣，
+  //     鎔解石只對「寶石相同」的那幾階有效（_d()），不同顏色可以一起勾、加成相加（vd()）
+  //   鐵匠〔鎔解〕meltStack()：只有一轉是鐵匠才能用；+5 以上、而且精煉值 ≤ 4＋技能等級（iv()）的裝備才能熔；
+  //     燃料看部位（nv()），數量＝max(1, 裝備等級÷10 取整)（rv()）；每放 1 種催化劑，每一個產出機率 +10%（sv()）
+  //   鑄煉鎔解 smeltStack()：+3 以上裝備、付金幣，50% 機率拿到 1 顆鎔解石（gv()），裝備等級／精煉越高越容易出高級的
+  //   古代英雄 exchangeHeroShards()／redeemHeroGear()：碎片 10 片換 5 張兌換卷；第 3 篇起 300 片換 1 個翅膀材料；
+  //     兌換卷 1 張換 1 件「自己一轉職業」的古代英雄裝備，拿到就是 +8
+  var REFINE_STEP_MATERIAL = [432, 432, 432, 433, 433, 433, 434, 434, 434, 3981, 3981, 3981]; // index ＝ step（從 +n 衝 +n+1）
+  var REFINE_STONES = [
+    { id: 3693, gem: 433, bonus: 5 }, { id: 3694, gem: 433, bonus: 20 },
+    { id: 3695, gem: 434, bonus: 10 }, { id: 3696, gem: 434, bonus: 20 },
+    { id: 6859, gem: 3981, bonus: 10 }
+  ];
+  var REFINE_ADV_COST = 10000;
+  var MELT_FUELS = [
+    { id: 5158, slots: "武器、盾" }, { id: 5157, slots: "頭、身體、腿、腳" }, { id: 5155, slots: "飾品等其他部位" }
+  ];
+  var MELT_CATALYSTS = [3643, 3644];
+  var HERO_CHAPTERS = [
+    { chapter: 1, shard: 20578, voucher: 20571, tier: 20, material: null },
+    { chapter: 2, shard: 20579, voucher: 20572, tier: 40, material: null },
+    { chapter: 3, shard: 20580, voucher: 20573, tier: 60, material: 20585 },
+    { chapter: 4, shard: 20581, voucher: 20574, tier: 80, material: 20586 },
+    { chapter: 5, shard: 20582, voucher: 20575, tier: 100, material: 20587 },
+    { chapter: 6, shard: 20583, voucher: 20576, tier: 120, material: 20588 },
+    { chapter: 7, shard: 20584, voucher: 20577, tier: 140, material: 20589 }
+  ];
+  var HERO_RULES = { shardsPerTrade: 10, vouchersPerTrade: 5, shardsPerMaterial: 300, gearRefine: 8 };
+
+  // 某種寶石負責的精煉範圍，例如 432 → "+1 ~ +3"
+  function refineMaterialRange(gemId) {
+    var lv = [];
+    REFINE_STEP_MATERIAL.forEach(function (m, step) { if (m === gemId) lv.push(step + 1); });
+    if (!lv.length) return "";
+    return lv.length === 1 ? "+" + lv[0] : "+" + lv[0] + " ~ +" + lv[lv.length - 1];
+  }
+  function npcUseBox(title, lines, foot) {
+    return '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">' +
+      '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">' + title + '</div>' +
+      '<div style="font-size:13px;color:var(--text);line-height:1.75;">' +
+      lines.map(function (l) { return '<div>' + l + '</div>'; }).join('') +
+      (foot ? '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">' + foot + '</div>' : '') +
+      '</div></div>';
+  }
+  function npcItemUsesHtml(id) {
+    id = Number(id);
+    var html = "";
+
+    // 精煉寶石
+    var range = refineMaterialRange(id);
+    if (range) {
+      var stones = REFINE_STONES.filter(function (s) { return s.gem === id; });
+      html += npcUseBox('🔨 精煉材料（打鐵舖・精煉）', [
+        '裝備精煉衝 <b>' + range + '</b> 時，每精煉一次消耗 1 個。',
+        stones.length ? '這幾階可以加的鎔解石：' + stones.map(function (s) { return itemChip(s.id) + '（成功率 +' + s.bonus + '%）'; }).join('、') : ''
+      ].filter(Boolean), '鐵匠用〔鎔解〕熔掉 +5 以上的裝備也可能熔出寶石。戰寵裝備的精煉一樣吃這些寶石。');
+    }
+
+    // 鎔解石
+    var stone = REFINE_STONES.find(function (s) { return s.id === id; });
+    if (stone) {
+      var others = REFINE_STONES.filter(function (s) { return s.gem === stone.gem && s.id !== stone.id; });
+      html += npcUseBox('🔨 鎔解石（打鐵舖・精煉加成功率）', [
+        '精煉衝 <b>' + refineMaterialRange(stone.gem) + '</b>（吃 ' + itemChip(stone.gem) + ' 的那幾階）時勾選，成功率 <b>+' + stone.bonus + '%</b>。',
+        others.length ? '可以跟 ' + others.map(function (s) { return itemChip(s.id) + '（+' + s.bonus + '%）'; }).join('、') + ' 一起勾，加成相加。' : '',
+        '只要勾了鎔解石，每次精煉多付 <b>' + fmtNum(REFINE_ADV_COST) + '</b> 金幣（進階合成費），勾幾顆都一樣。',
+        '每次精煉每種鎔解石消耗 1 顆（成功或失敗都會用掉）。不能跟 ' + itemChip(8028) + ' 一起用。'
+      ].filter(Boolean), '除了下面列的掉落／開箱，也可以到雪山礦村的「雷」（鑄煉鎔解）把 +3 以上的裝備拿去鑄煉，有 50% 機率得到 1 顆，裝備等級和精煉值越高越容易出高級的。');
+    }
+
+    // 鎔解燃料
+    var fuel = MELT_FUELS.find(function (f) { return f.id === id; });
+    if (fuel) {
+      html += npcUseBox('🔥 鎔解燃料（鐵匠〔鎔解〕）', [
+        '鐵匠用〔鎔解〕熔掉<b>' + fuel.slots + '</b>時的燃料。',
+        '每熔一件消耗 <b>裝備等級 ÷ 10</b> 個（無條件捨去，最少 1 個），例如 Lv85 的裝備要 8 個。',
+        '其他部位用的燃料：' + MELT_FUELS.filter(function (f) { return f.id !== id; }).map(function (f) { return itemChip(f.id) + '（' + f.slots + '）'; }).join('、') + '。'
+      ], '只有一轉是鐵匠才能鎔解；要 +5 以上、而且精煉值不超過「4＋〔鎔解〕等級」的裝備才能熔。熔完裝備會消失，換成 ' +
+        itemChip(432) + '、' + itemChip(433) + '、' + itemChip(434) + '（精煉越高越容易出高級寶石）。');
+    }
+
+    // 鎔解催化劑
+    if (MELT_CATALYSTS.indexOf(id) !== -1) {
+      html += npcUseBox('🔥 鎔解催化劑（鐵匠〔鎔解〕）', [
+        '鐵匠用〔鎔解〕熔裝備時可以勾選，每一種產出的機率都 <b>+10%</b>。',
+        '可以跟 ' + MELT_CATALYSTS.filter(function (c) { return c !== id; }).map(function (c) { return itemChip(c); }).join('、') + ' 一起放，兩種都放就是 +20%。',
+        '每熔一件每種消耗 1 個。'
+      ], '只有一轉是鐵匠才能鎔解。');
+    }
+
+    // 古代英雄碎片／兌換卷
+    HERO_CHAPTERS.forEach(function (c) {
+      if (c.shard === id) {
+        html += npcUseBox('📜 古代英雄碎片（古代英雄 NPC）', [
+          '<b>' + HERO_RULES.shardsPerTrade + '</b> 片換 <b>' + HERO_RULES.vouchersPerTrade + '</b> 張 ' + itemChip(c.voucher) + '。',
+          c.material ? '<b>' + HERO_RULES.shardsPerMaterial + '</b> 片換 1 個 ' + itemChip(c.material) + '。' : ''
+        ].filter(Boolean), '在村莊找古代英雄系列的 NPC（例如「古代英雄神話初學者」）兌換，一次可以換多組。');
+      }
+      if (c.voucher === id) {
+        html += npcUseBox('📜 古代英雄裝備兌換卷（古代英雄 NPC）', [
+          '1 張換 1 件 Lv' + c.tier + ' 的古代英雄裝備，拿到就是 <b>+' + HERO_RULES.gearRefine + '</b>。',
+          '只能選<b>自己一轉職業</b>的那一套（每個職業 5 件可以挑）。',
+          '由 ' + itemChip(c.shard) + ' ' + HERO_RULES.shardsPerTrade + ' 片換 ' + HERO_RULES.vouchersPerTrade + ' 張。'
+        ], '在村莊找古代英雄系列的 NPC 兌換。');
+      }
+    });
+    return html;
+  }
+
   // ---------- G 化／變異合成（資料：希望/fusionIndex.js，規則照遊戲 fuseStack／fusionView／mg／cg）----------
   var FUSION = window.FUSION || null;
   var FUSION_KIND_ORDER = ["g", "hit", "crit", "speed"];
@@ -1744,6 +1855,7 @@
       '</div>';
 
     html += refineGuardHtml(id);
+    html += npcItemUsesHtml(id);
 
     var questUses = ITEM_QUEST_USES[id] || [];
     var petEvolveUses = [];
