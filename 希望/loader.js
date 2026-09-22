@@ -806,11 +806,6 @@
       var cost = (w.costs || []).find(function (c) { return c[0] === curGrade; });
       var notes = ["每次上發條 " + (cost ? (cost[1] ? fmt(cost[1]) + " 金幣" : "不用金幣") : "費用依遊戲計算")];
       if (w.keepsPrevious) notes.push("洗完會自動在「新的／上一組」之間留下比較符合目標的那組");
-      // 遊戲發條按鈕上的百分比是「升階機率」；已經是這種發條能到的最高階時會顯示 0.0%，
-      // 玩家常以為是「不能強化」，其實還是可以上發條重洗屬性
-      if (curGrade >= winderMaxGrade(w)) {
-        notes.push("已經是這種發條能到的最高階（" + gradeNameOf(winderMaxGrade(w)) + "），遊戲顯示升階機率 0.0% 是正常的，上發條會重洗屬性、不會再升階");
-      }
       document.getElementById("iw-f-winder-note").textContent = notes.join("；");
     }
     winderSelect.addEventListener("change", function () {
