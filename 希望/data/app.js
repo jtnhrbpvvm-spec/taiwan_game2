@@ -2191,10 +2191,24 @@
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_VALUE_RANGES = window.ENCHANT_VALUE_RANGES || {};
-  // 已由玩家實測確認：這 6 種「每級XX」屬性，數字代表「每N級才加1點」，所以數字越小越強
+  var ENCHANT_VALUES = window.ENCHANT_VALUES || {}; // 每個區間（含權重），用來列出「遊戲實際洗得到的數字」
+  var WIND_SLOTS = window.WIND_SLOTS || [];          // 遊戲只允許這幾個部位上發條
+  // 已由玩家實測確認：這 6 種「每級XX」屬性，數字代表「每N級才加點」，所以數字越小越強。
+  // 加幾點看 unit：1 = 每 N 級 +1、2 = 每 N 級 +2（XG 以上的力量／敏捷／智力／幸運）
   var REVERSED_PER_LEVEL_KINDS = [15, 16, 17, 18, 19, 20];
+  var ENCHANT_PERCENT_KINDS = [13, 14, 23];
   function enchantKindLabel(kind, name) {
     return REVERSED_PER_LEVEL_KINDS.indexOf(kind) !== -1 ? name + "（數字越小越強）" : name;
+  }
+  function enchantUnitText(kind, unit) {
+    if (unit) return "每 N 級 +" + (unit === 2 ? 2 : 1);
+    return ENCHANT_PERCENT_KINDS.indexOf(kind) !== -1 ? "%" : "";
+  }
+  // 這個階級、這種屬性遊戲會洗出來的固定數字（例如 XG 力量只會有 10/8/6/4）；是連續區間就回傳 null
+  function enchantDiscreteValues(gradeStr, kind) {
+    var tiers = ENCHANT_VALUES[gradeStr + "-" + kind] || [];
+    if (!tiers.length || !tiers.every(function (t) { return t.min === t.max; })) return null;
+    return tiers.map(function (t) { return t.min; }).sort(function (a, b) { return a - b; });
   }
 
   function renderEnchant(c) {
@@ -2205,7 +2219,8 @@
     if (!$slot.dataset.wired) {
       $slot.dataset.wired = "1";
       Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
-        $slot.appendChild(el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] }));
+        var cannotWind = WIND_SLOTS.length && WIND_SLOTS.indexOf(slotKey) === -1;
+        $slot.appendChild(el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] + (cannotWind ? "（遊戲不能上發條）" : "") }));
       });
     }
 
@@ -2238,7 +2253,10 @@
 
       var kindSelect = el("select", { style: "flex:1;min-width:140px;" });
       ENCHANT_KINDS.forEach(function (k) {
-        var o = el("option", { value: k.kind, text: enchantKindLabel(k.kind, k.name) });
+        // 這個階級洗不出來的屬性標出來（目前選的那個就算洗不出來也保留，不然會被偷偷換掉）
+        var possible = !!ENCHANT_VALUE_RANGES[gradeValStr + "-" + k.kind];
+        var o = el("option", { value: k.kind, text: enchantKindLabel(k.kind, k.name) + (possible ? "" : "（這個階級洗不出來）") });
+        if (!possible && opt.kind !== k.kind) o.disabled = true;
         if (opt.kind === k.kind) o.selected = true;
         kindSelect.appendChild(o);
       });
@@ -2275,12 +2293,24 @@
       row.appendChild(valueInput);
 
       var isReversed = REVERSED_PER_LEVEL_KINDS.indexOf(opt.kind) !== -1;
-      row.appendChild(el("span", {
-        style: "font-size:12px;color:var(--text3);",
-        text: range
-          ? ("許可範圍：" + range.min + " ~ " + range.max + (isReversed ? "（數字越小越強，代表每N級+1點）" : "") + "　（超過會自動修正回邊界值）")
-          : "此等級查無這個屬性的範圍資料，暫不限制輸入"
-      }));
+      // 單位跟著「這個階級」的資料走：同樣是力量，G/DG 是每 N 級 +1，XG/SG 是每 N 級 +2
+      if (range && opt.unit !== range.unit) opt.unit = range.unit;
+      var discrete = enchantDiscreteValues(gradeValStr, opt.kind);
+      var unitText = range ? enchantUnitText(opt.kind, range.unit) : "";
+      var hintSpan = el("span", { style: "font-size:12px;color:var(--text3);" });
+      function refreshHint() {
+        hintSpan.textContent = range
+          ? ((isReversed ? "＝每 " + opt.value + " 級 +" + (range.unit === 2 ? 2 : 1) + "　" : "") +
+             "許可範圍：" + range.min + " ~ " + range.max + (unitText && !isReversed ? unitText : "") +
+             (isReversed ? "（數字越小越強）" : "") +
+             (discrete ? "　遊戲只會洗出：" + discrete.join("、") : "") +
+             "　（超過會自動修正回邊界值）")
+          : "此等級查無這個屬性的範圍資料，暫不限制輸入";
+      }
+      refreshHint();
+      valueInput.addEventListener("input", refreshHint);
+      valueInput.addEventListener("change", refreshHint);
+      row.appendChild(hintSpan);
 
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () {
@@ -2301,7 +2331,29 @@
       }
       var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
       if (!stack) return;
-      if (!stack.options) stack.options = { grade: 1, options: [] };
+      var stackItem = ITEMS[String(stack.itemId)];
+      if (WIND_SLOTS.length && stackItem && WIND_SLOTS.indexOf(stackItem.slot) === -1) {
+        $detail.appendChild(el("div", {
+          class: "panel-desc",
+          style: "color:var(--yellow);margin:0 0 10px;",
+          text: "⚠️ 遊戲裡這個部位不能上發條（只有 " + WIND_SLOTS.map(function (s) { return EQUIP_SLOTS[s] || s; }).join("、") +
+            " 可以）。硬改的話屬性一樣會生效，但這是遊戲裡不可能出現的裝備。"
+        }));
+      }
+      if (!stack.options) {
+        // 只是打開來看，不要偷偷幫它加上發條資料；按下按鈕才真的寫進存檔
+        var emptyBox = el("div", { class: "item-preview-box" });
+        emptyBox.appendChild(el("div", { class: "ip-name", text: itemName(stack.itemId) + "（Stack " + stack.id + "）" }));
+        emptyBox.appendChild(el("div", { style: "margin-bottom:10px;", text: "這件裝備還沒上過發條。" }));
+        var startBtn = el("button", { class: "btn btn-accent btn-sm", text: "🔮 開始編輯（先設為 N 階）" });
+        startBtn.addEventListener("click", function () {
+          stack.options = { grade: 1, options: [] };
+          renderDetail();
+        });
+        emptyBox.appendChild(startBtn);
+        $detail.appendChild(emptyBox);
+        return;
+      }
       var opts = stack.options;
       if (!Array.isArray(opts.options)) opts.options = [];
 
@@ -2325,7 +2377,11 @@
         // 換等級後，每條屬性的合法範圍會跟著變，既有數值要重新夾一次
         opts.options.forEach(function (opt) {
           var r = ENCHANT_VALUE_RANGES[gradeSelect.value + "-" + opt.kind];
-          if (r) opt.value = Math.max(r.min, Math.min(r.max, opt.value));
+          if (r) {
+            opt.value = Math.max(r.min, Math.min(r.max, opt.value));
+            // 階級換了，單位也要跟著換（例如 DG→XG 的力量從「每 N 級 +1」變「每 N 級 +2」），不然存檔會是遊戲洗不出來的組合
+            opt.unit = r.unit;
+          }
         });
         renderDetail();
       });

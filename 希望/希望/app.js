@@ -52,8 +52,15 @@
   var REVERSED_PER_LEVEL_KINDS = [15, 16, 17, 18, 19, 20];
   function enchantKindLabel(kind, name) {
     return REVERSED_PER_LEVEL_KINDS.indexOf(kind) !== -1
-      ? name + "（數字越小越強：每 N 級 +1 點）"
+      ? name + "（每 N 級加點，數字越小越強）"
       : name;
+  }
+  // 發條屬性的 unit：0 = 直接加數值、1 = 每 N 級 +1、2 = 每 N 級 +2（XG 以上的力量／敏捷／智力／幸運）
+  var ENCHANT_PERCENT_KINDS = [13, 14, 23]; // 遊戲裡這幾種直接加值的後面有 %
+  function enchantValueText(kind, min, max, unit) {
+    var range = min === max ? String(min) : (min + " ~ " + max);
+    if (unit) return "每 " + range + " 級 +" + (unit === 2 ? 2 : 1);
+    return range + (ENCHANT_PERCENT_KINDS.indexOf(kind) !== -1 ? "%" : "");
   }
   var ENCHANT_GRADES = window.ENCHANT_GRADES || [];
   var ENCHANT_APPEARANCE = window.ENCHANT_APPEARANCE || {};
@@ -1164,17 +1171,39 @@
       var realWinders = ENCHANT_WINDERS.filter(function (w) {
         return w.name.indexOf("不可交易") === -1 && w.name.indexOf("無法交易") === -1;
       });
+      html += '<div class="empty-note" style="padding:0 0 8px;">「不可交易」版本的發條機率跟一般版完全一樣，這裡只列一般版。' +
+        '遊戲強化頁只會顯示商店或名品館買得到的發條。</div>';
       realWinders.forEach(function (w) {
-        html += '<div class="equip-box"><div class="row1"><span class="slot">' + escapeHtml(w.name) + '</span></div>';
-        html += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.9;">';
-        w.grades.forEach(function (row) {
-          // 已由玩家實測驗證修正：表格裡的原始數字 0 代表「還沒強化過」，1~5 才對應 N~SG（要 -1 才是陣列索引）
-          var from = row[0] === 0 ? "尚未強化過" : (ENCHANT_GRADES[row[0] - 1] || ("更高階#" + row[0]));
-          var to = ENCHANT_GRADES[row[1] - 1] || ("更高階#" + row[1]);
-          var rate = (row[2] / 1000).toFixed(2) + "%";
-          html += escapeHtml(from) + " → " + escapeHtml(to) + "：" + rate + "<br>";
+        var gradeName = function (g) { return g === 0 ? "尚未強化過" : (ENCHANT_GRADES[g - 1] || ("更高階#" + g)); };
+        var maxGrade = (w.grades || []).reduce(function (m, r) { return Math.max(m, r[1]); }, 0);
+        var costByGrade = {};
+        (w.costs || []).forEach(function (c) { costByGrade[c[0]] = c[1]; });
+        html += '<div class="equip-box"><div class="row1"><span class="slot">' + escapeHtml(w.name) + '</span>' +
+          '<span style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<span class="badge">最高 ' + escapeHtml(ENCHANT_GRADES[maxGrade - 1] || String(maxGrade)) + '</span>' +
+          (w.keepsPrevious ? '<span class="badge tag-harvest" title="洗完不會直接套用，可以在「新的」跟「上一組」之間選一組留下">可保留上一組</span>' : '') +
+          '</span></div>';
+        // 依「目前階級」分組：每一組列出升級機率，以及這個階級每次上發條要花的金幣
+        var byFrom = {};
+        (w.grades || []).forEach(function (row) { (byFrom[row[0]] = byFrom[row[0]] || []).push(row); });
+        html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr>' +
+          '<th>目前階級</th><th>洗完</th><th>機率</th><th>每次金幣</th></tr></thead><tbody>';
+        Object.keys(byFrom).map(Number).sort(function (a, b) { return a - b; }).forEach(function (from) {
+          var rows = byFrom[from];
+          var total = rows.reduce(function (s, r) { return s + r[2]; }, 0) || 1;
+          var cost = costByGrade[from];
+          rows.forEach(function (row, i) {
+            // 已由玩家實測驗證修正：表格裡的原始數字 0 代表「還沒強化過」，1~5 才對應 N~SG（要 -1 才是陣列索引）
+            var up = row[1] > row[0];
+            html += '<tr>' +
+              '<td>' + (i === 0 ? escapeHtml(gradeName(from)) : '') + '</td>' +
+              '<td>' + escapeHtml(gradeName(row[1])) + (up && from !== 0 ? ' <span class="group-tag">升階</span>' : '') + '</td>' +
+              '<td><span class="rate' + (up ? '' : ' low') + '">' + (row[2] / total * 100).toFixed(2).replace(/\.?0+$/, "") + '%</span></td>' +
+              '<td>' + (i === 0 ? (cost === undefined ? '－' : cost ? fmtNum(cost) : '不用金幣') : '') + '</td>' +
+              '</tr>';
+          });
         });
-        html += "</div></div>";
+        html += '</tbody></table></div></div>';
       });
     }
 
@@ -1194,7 +1223,7 @@
         var rangeWeightTotal = ranges.reduce(function (s, r) { return s + r.weight; }, 0);
         var rangeText = ranges.length
           ? ranges.map(function (r) {
-              var label = r.min === r.max ? String(r.min) : (r.min + " ~ " + r.max);
+              var label = enchantValueText(a.kind, r.min, r.max, r.unit);
               var subPct = rangeWeightTotal ? "（" + (r.weight / rangeWeightTotal * 100).toFixed(1) + "%）" : "";
               return label + subPct;
             }).join("、")

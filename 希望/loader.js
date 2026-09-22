@@ -523,7 +523,9 @@
     var curGrade = (freshEntry && freshEntry.options && freshEntry.options.grade) || 0;
 
     // 預設發條：遊戲畫面上目前選的那顆 → 這個階級能用、而且身上有的 → 這個階級能用的第一個
-    var winders = winderList();
+    // 遊戲強化頁只列商店／名品館買得到的發條；「不可交易」版買不到，身上有才列出來（書籤可以直接拿來用）
+    var winders = winderList().filter(function (w) { return winderBuyPrice(w.id) || winderStock(w.id) > 0; });
+    if (!winders.length) winders = winderList();
     var uiWinderId = selectedWinderInGameUi();
     var defaultWinder =
       winders.find(function (w) { return w.id === uiWinderId && winderUsableAt(w, curGrade); }) ||
