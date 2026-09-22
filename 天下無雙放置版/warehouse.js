@@ -1,14 +1,16 @@
 /* ============================================================
    天下無雙放置版 — 共用倉庫（參考 idle-lineage 可拖曳倉庫視窗）
-   4 個存檔角色共用；可存放物品與靈石。
-   存檔鍵：txws_idle_warehouse_v1 → { stones, items:[{uid,name,count,instance,quality}] }
+   同一模式的角色共用；一般模式與奇緣模式各有獨立倉庫，互不相通。可存放物品與靈石。
+   存檔鍵：一般 txws_idle_warehouse_v1／奇緣 txws_idle_warehouse_qiyuan_v1 → { stones, items:[{uid,name,count,instance,quality}] }
    - 可堆疊道具：同名合併為一格（count 累加）
    - 裝備：每件一格，保留完整實例（強化、精煉、寶石、詞綴）
    鎖定中的物品無法存入（需先在背包解鎖）。
    ============================================================ */
 (function(){
   'use strict';
-  const WH_KEY = 'txws_idle_warehouse_v1';
+  const WH_KEYS = { normal: 'txws_idle_warehouse_v1', qiyuan: 'txws_idle_warehouse_qiyuan_v1' };
+  const whKey = () => (typeof G !== 'undefined' && G.mode === 'qiyuan') ? WH_KEYS.qiyuan : WH_KEYS.normal;
+  const modeName = () => (typeof G !== 'undefined' && G.mode === 'qiyuan') ? '奇緣模式' : '一般模式';
   const WH_MAX = 200;
   const $id = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,14 +21,14 @@
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   function loadWh(){
     let w = null;
-    try { w = JSON.parse(localStorage.getItem(WH_KEY) || 'null'); } catch(e){}
+    try { w = JSON.parse(localStorage.getItem(whKey()) || 'null'); } catch(e){}
     if (!w || typeof w !== 'object') w = {};
     w.stones = Math.max(0, Number(w.stones) || 0);
     w.items = Array.isArray(w.items) ? w.items.filter(it => it && it.name && (Number(it.count) || 0) > 0) : [];
     return w;
   }
   function saveWh(w){
-    try { localStorage.setItem(WH_KEY, JSON.stringify(w)); return true; }
+    try { localStorage.setItem(whKey(), JSON.stringify(w)); return true; }
     catch(e){ toast('無法寫入倉庫（瀏覽器儲存空間不足或被封鎖）'); return false; }
   }
   function metaOf(it){ return getInventoryItemMeta(it.name, it.instance || null); }
@@ -158,7 +160,7 @@
       : `<div class="wh-empty">${search ? '倉庫沒有符合搜尋的物品' : '此分類倉庫是空的'}</div>`;
     const searching = document.activeElement && document.activeElement.id === 'wh-search';
     box.innerHTML = `
-      <div class="wh-note">將物品或靈石存入倉庫，<b>所有存檔角色共用</b>。點背包物品＝存入；點倉庫物品＝取出（依「數量」欄，留空＝整疊全部）。鎖定中的物品需先解鎖才能存入。</div>
+      <div class="wh-note">將物品或靈石存入倉庫，<b>${modeName()}的角色共用</b>（一般模式與奇緣模式倉庫互不相通）。點背包物品＝存入；點倉庫物品＝取出（依「數量」欄，留空＝整疊全部）。鎖定中的物品需先解鎖才能存入。</div>
       <div class="wh-bar">
         <span class="wh-money">靈石　背包 <b>${fmt(G.player.spiritStone)}</b>　倉庫 <b>${fmt(w.stones)}</b></span>
         <input id="wh-stone-amt" type="number" min="1" value="1000" class="wh-push" aria-label="靈石數量">
@@ -188,6 +190,7 @@
     const win = $id('warehouse-window');
     win.classList.remove('hidden');
     win.setAttribute('aria-hidden', 'false');
+    const title = $id('warehouse-window-title'); if (title) title.textContent = `共用倉庫・${modeName()}`;
     render();
   }
   function close(){

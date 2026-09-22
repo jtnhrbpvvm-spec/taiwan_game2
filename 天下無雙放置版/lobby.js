@@ -53,6 +53,7 @@
     const pw = Math.round((st.atk||0)*10 + (st.def||0)*8 + (st.maxHp||0)*.28 + (st.maxMp||0)*.2 + (st.speed||0)*14);
     return {
       name: s.name || p.name || '少俠', cls: p.classKey, gender: p.gender === 'f' ? 'f' : 'm',
+      mode: s.mode === 'qiyuan' ? 'qiyuan' : 'normal',
       lv: p.level || 1, map: map ? map.name : '—', power: pw,
       hp: st.hp, mhp: st.maxHp, mp: st.mp, mmp: st.maxMp, def: st.def,
       attr, stone: p.spiritStone || 0
@@ -141,6 +142,13 @@
             <button type="button" class="lb-gender-btn" data-gender="f" title="女性">♀</button>
           </div>
         </div>
+        <div><h3 class="lb-sec-title">模式（建立後無法更改）</h3>
+          <div id="lb-mode">
+            <button type="button" class="lb-mode-btn" data-mode="normal">一般模式</button>
+            <button type="button" class="lb-mode-btn" data-mode="qiyuan">奇緣模式</button>
+          </div>
+          <div id="lb-mode-desc"></div>
+        </div>
         <div id="lb-name-row"><label for="startName">角色名稱</label><input id="startName" class="lb-input" maxlength="16" placeholder="輸入角色名稱，例如：無雙劍客" autocomplete="off"></div>
         <div><h3 class="lb-sec-title">初始屬性</h3><div id="lb-stats"></div></div>
         <div id="lb-create-meta"></div>
@@ -163,7 +171,11 @@
     return root;
   }
 
-  let selected = 1, createCls = null, createGender = 'm';
+  let selected = 1, createCls = null, createGender = 'm', createMode = 'normal';
+  const MODE_INFO = {
+    normal: { name: '一般模式', desc: '可自由強化、精煉、鑲嵌與 3合1 升品；倉庫與其他一般模式角色共用。' },
+    qiyuan: { name: '奇緣模式', desc: '裝備無法以任何方式強化，只能靠打怪掉落；掉落裝備隨機帶有品階、強度與強化值。倉庫與一般模式分開、不共通。' }
+  };
 
   function show(which){
     const root = $id('lobby');
@@ -179,6 +191,8 @@
     if (cls) { pickClass(cls.dataset.class); return; }
     const gd = e.target.closest('[data-gender]');
     if (gd) { pickGender(gd.dataset.gender); return; }
+    const md = e.target.closest('[data-mode]');
+    if (md) { pickMode(md.dataset.mode); return; }
     const btn = e.target.closest('[data-act]');
     if (!btn || btn.disabled) {
       // 登入畫面：點任意處（全螢幕鈕以外）直接進入角色選擇
@@ -218,7 +232,7 @@
     let html = '';
     for (let n = 1; n <= SLOT_COUNT; n++) {
       const s = summary(n);
-      const label = s ? `${esc(s.name)}<small>${esc(s.cls)} Lv.${s.lv || '—'}</small>` : '空白';
+      const label = s ? `${esc(s.name)}<small>${esc(s.cls)} Lv.${s.lv || '—'}</small>${s.mode === 'qiyuan' ? '<em class="lb-mode-tag">奇緣模式</em>' : ''}` : '空白';
       html += `<button type="button" class="lb-slot ${s ? 'filled' : 'empty'} ${n === selected ? 'selected' : ''}" data-slot="${n}" title="${s ? '雙擊進入遊戲' : '空白存檔'}">
         <div class="lb-arch-top"></div>
         <div class="lb-arch-body">${portraitHtml(s && s.cls, s && s.gender)}<span class="lb-slot-label">${label}</span><span class="lb-slot-num">存檔 ${n}</span></div>
@@ -234,7 +248,7 @@
     const set = (id, v) => { const el = $id(id); if (el) el.textContent = empty ? '' : v; };
     const a = (s && s.attr) || {};
     set('lbi-name', s ? s.name : '');
-    set('lbi-cls', s ? s.cls : '');
+    set('lbi-cls', s ? (s.broken ? s.cls : `${s.cls}・${MODE_INFO[s.mode].name}`) : '');
     set('lbi-map', broken ? '' : s && s.map);
     set('lbi-power', broken ? '' : s && num(s.power));
     set('lbi-hp', broken ? '' : s && `${num(s.hp)} / ${num(s.mhp)}`);
@@ -308,6 +322,12 @@
     show('lb-create');
     pickClass(Object.keys(CLASSES)[0]);
     pickGender('m');
+    pickMode('normal');
+  }
+  function pickMode(m){
+    createMode = m === 'qiyuan' ? 'qiyuan' : 'normal';
+    document.querySelectorAll('.lb-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === createMode));
+    $id('lb-mode-desc').textContent = MODE_INFO[createMode].desc;
   }
   function pickClass(k){
     const c = CLASSES[k];
@@ -344,6 +364,7 @@
     G = freshState();
     normalize();
     G.player.gender = createGender;
+    G.mode = createMode;
     GAME_ACTIVE = true;
     applyScreenMode();
     hideLobby();
