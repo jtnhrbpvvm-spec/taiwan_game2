@@ -1995,7 +1995,12 @@
     2: "啊!好像...就要...",
     1: "真沒人，好想收店回家睡覺"
   };
-  function mallHintText() {
+  // 當天最低匯率低於這個值（也就是 20,000 或 20,500）算「超級特價」：前面的提醒都加一句前綴，
+  // 最低價那一小時改成跳樓大拍賣，字放大到跟 NPC 名字一樣。
+  var MALL_SUPER_RATE = 21000;
+  var MALL_SUPER_PREFIX = "（老闆今天好像不一樣?）";
+  // 回傳 { text, big }：big＝字要放大到跟 NPC 名字一樣
+  function mallHint() {
     var now = new Date();
     var dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     var nowPeriod = Math.floor(now.getTime() / MALL_HOUR_MS);
@@ -2006,14 +2011,25 @@
     }
     var min = Math.min.apply(null, rates.map(function (r) { return r.rate; }));
     var target = rates.find(function (r) { return r.rate === min && r.period >= nowPeriod; });
-    if (!target) return "已經錯過最低價時段了歐~";
+    if (!target) return { text: "已經錯過最低價時段了歐~", big: false };
+    var superSale = min < MALL_SUPER_RATE;
     var diff = target.period - nowPeriod;
-    if (diff === 0) return "收店！！收店！！　隨便賣一賣～";
-    if (MALL_COUNTDOWN[diff]) return MALL_COUNTDOWN[diff];
-    return "今日提示：最低價在" + (target.hour < 12 ? "上午" : "下午");
+    if (diff === 0) {
+      return superSale
+        ? { text: "老闆跳樓！最終特價！！錯過不再！！！", big: true }
+        : { text: "收店！！收店！！　隨便賣一賣～", big: false };
+    }
+    var text = MALL_COUNTDOWN[diff] || ("今日提示：最低價在" + (target.hour < 12 ? "上午" : "下午"));
+    return { text: (superSale ? MALL_SUPER_PREFIX : "") + text, big: false };
   }
 
   style.textContent += ".iw-mall-hint{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--iw-accent);}";
+
+  function applyMallHint(el, hint, title) {
+    if (el.textContent !== hint.text) el.textContent = hint.text;
+    var size = hint.big ? getComputedStyle(title).fontSize : "";
+    if (el.style.fontSize !== size) el.style.fontSize = size;
+  }
 
   function updateMallHint() {
     var existing = document.querySelector(".iw-mall-hint");
@@ -2024,16 +2040,16 @@
       if (existing) existing.remove();
       return;
     }
-    var text = mallHintText();
+    var hint = mallHint();
     if (existing && existing.previousElementSibling === title) {
-      if (existing.textContent !== text) existing.textContent = text;
+      applyMallHint(existing, hint, title);
       return;
     }
     if (existing) existing.remove();
-    var hint = document.createElement("span");
-    hint.className = "iw-mall-hint";
-    hint.textContent = text;
-    title.insertAdjacentElement("afterend", hint);
+    var el = document.createElement("span");
+    el.className = "iw-mall-hint";
+    applyMallHint(el, hint, title);
+    title.insertAdjacentElement("afterend", el);
   }
 
   window.__iwMallHintGeneration = (window.__iwMallHintGeneration || 0) + 1;
