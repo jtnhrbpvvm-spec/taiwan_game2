@@ -53,8 +53,30 @@
   function tryPlay(){
     if (!wanted || stopped) return;
     const a = ensureAudio();
+    a.muted = false;
+    a.volume = volume;
     const p = a.play();
-    if (p && typeof p.catch === 'function') p.catch(() => armUserGesture());
+    if (p && typeof p.catch === 'function') p.catch(() => { armUserGesture(); tryMutedUnmute(); });
+  }
+
+  /* 有聲自動播放被擋 → 改用「靜音播放（瀏覽器一律允許）→ 立刻解除靜音」。
+     部分瀏覽器會在解除靜音時再次擋下並暫停，所以 armUserGesture 仍然保留當保險。 */
+  function tryMutedUnmute(){
+    if (!wanted || stopped || !audio) return;
+    const a = audio;
+    a.muted = true;
+    const p = a.play();
+    if (!p || typeof p.then !== 'function') return;
+    p.then(() => {
+      if (!wanted || stopped || audio !== a) return;
+      a.muted = false;
+      a.volume = volume;
+      /* 解除靜音後確認真的還在播、而且沒被靜音；失敗就退回等待互動 */
+      setTimeout(() => {
+        if (!wanted || stopped || audio !== a) return;
+        if (a.paused || a.muted) { a.muted = true; armUserGesture(); }
+      }, 250);
+    }).catch(() => {});
   }
 
   /* 被自動播放政策擋下 → 等使用者第一次互動再播 */
@@ -65,6 +87,8 @@
       disarm();
       if (!wanted || stopped) return;
       const a = ensureAudio();
+      a.muted = false;
+      a.volume = volume;
       a.play().catch(() => {});
     };
     ['pointerdown','keydown','touchstart'].forEach(ev =>
@@ -114,6 +138,6 @@
   window.TXWSLoginBGM = {
     start, stop, setVolume,
     get volume(){ return volume; },
-    get playing(){ return !!(audio && !audio.paused); }
+    get playing(){ return !!(audio && !audio.paused && !audio.muted); }
   };
 })();

@@ -69,6 +69,12 @@
 #lb-login .lb-btn.ghost{font-size:clamp(12px,1.7cqh,16px);padding:clamp(8px,1.4cqh,13px) 4px;color:#cdbb8e;border-color:rgba(217,178,95,.4)}
 .lb-tap-hint{margin:.4cqh 0 0;font-size:clamp(11px,1.6cqh,14px);letter-spacing:.35em;text-indent:.35em;color:var(--gold);animation:lbPulse 2.4s ease-in-out infinite}
 @keyframes lbPulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* 登入畫面兩階段：先只有背景圖＋「請點擊螢幕」，點一下才浮出選單
+   （顯示／隱藏由 lobby.js 直接設 inline style，這裡只管外觀） */
+#lb-login-tap{margin:0;font:700 clamp(13px,2.2cqh,22px)/1.6 "Noto Serif TC","Songti TC","PMingLiU",serif;text-shadow:0 0 14px rgba(217,178,95,.4),0 2px 6px #000}
+#lb-login:not(.gated) #lb-login-menu{animation:lbMenuIn .45s ease both}
+@keyframes lbMenuIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 #lb-login-meta{color:#9d937e;text-shadow:0 1px 3px #000}
 #lb-login-version{margin-bottom:.8cqh;font-size:clamp(11px,1.6cqh,15px);font-weight:700;letter-spacing:.12em;color:var(--gold)}
 #lb-login-disclaimer{font-size:clamp(9px,1.25cqh,11px);line-height:1.6;color:#8f8672}
@@ -83,7 +89,7 @@
   #lb-login-title .lb-rule{margin-top:1.4cqh}
   #lb-login-menu{width:min(86%,360px);gap:1.4cqh}
 }
-@media (prefers-reduced-motion:reduce){#lb-login .lb-sparks,.lb-tap-hint,#lb-login .lb-login-art{animation:none}}
+@media (prefers-reduced-motion:reduce){#lb-login .lb-sparks,.lb-tap-hint,#lb-login .lb-login-art,#lb-login:not(.gated) #lb-login-menu{animation:none}}
 
 
 /* ============ 2. 角色選擇 ============ */

@@ -83,10 +83,10 @@
           <div class="lb-rule"><i></i></div>
         </div>
         <div id="lb-login-menu">
-          <button class="lb-btn" type="button" data-act="open-select">開始遊戲</button>
+          <button class="lb-btn" type="button" data-act="open-select">登入遊戲</button>
           <button class="lb-btn ghost" type="button" data-act="fullscreen">全螢幕</button>
-          <p class="lb-tap-hint">點擊畫面任意處進入</p>
         </div>
+        <p class="lb-tap-hint" id="lb-login-tap">請點擊螢幕</p>
         <div id="lb-login-meta">
           <div id="lb-login-version"></div>
           <div id="lb-login-note">角色存檔保存在此瀏覽器；最多 4 名角色，共用同一個倉庫。更換裝置前請先在角色選擇畫面「匯出進度」。</div>
@@ -189,6 +189,9 @@
   }
 
   function onClick(e){
+    /* 登入畫面第一階段：只有背景圖與「請點擊螢幕」。
+       這一下點擊算使用者互動，可解除瀏覽器的自動播放限制，同時浮出選單。 */
+    if (e.target.closest('#lb-login') && $id('lb-login').classList.contains('gated')) { ungateLogin(); return; }
     const slot = e.target.closest('.lb-slot');
     if (slot) { selectSlot(+slot.dataset.slot); return; }
     const cls = e.target.closest('[data-class]');
@@ -198,11 +201,7 @@
     const md = e.target.closest('[data-mode]');
     if (md) { pickMode(md.dataset.mode); return; }
     const btn = e.target.closest('[data-act]');
-    if (!btn || btn.disabled) {
-      // 登入畫面：點任意處（全螢幕鈕以外）直接進入角色選擇
-      if (e.target.closest('#lb-login')) openSelect();
-      return;
-    }
+    if (!btn || btn.disabled) return;   // 登入畫面需按「登入遊戲」才進角色選擇
     const act = btn.dataset.act;
     if (act === 'open-select') openSelect();
     else if (act === 'fullscreen') lobbyFullscreen();
@@ -214,6 +213,18 @@
     else if (act === 'delete') deleteSlot(selected);
     else if (act === 'create-back') openSelect(selected);
     else if (act === 'create-start') createStart();
+  }
+
+  /* 登入畫面的點擊鎖：on＝只顯示背景圖與「請點擊螢幕」，off＝浮出選單 */
+  function setLoginGate(on){
+    $id('lb-login').classList.toggle('gated', !!on);
+    $id('lb-login-menu').style.display = on ? 'none' : '';
+    $id('lb-login-tap').style.display = on ? '' : 'none';
+  }
+  /* 解除點擊鎖：浮出選單，並在這個使用者互動的當下啟動背景音樂 */
+  function ungateLogin(){
+    setLoginGate(false);
+    try { window.TXWSLoginBGM && window.TXWSLoginBGM.start(); } catch(e){}
   }
 
   function lobbyFullscreen(){
@@ -394,8 +405,10 @@
     build();
     const fromLogout = sessionStorage.getItem('txws_logout') === '1';
     sessionStorage.removeItem('txws_logout');
-    if (fromLogout) openSelect(); else show('lb-login');
-    /* 登入／選角期間播放背景音樂（等網頁內容載入完才開始下載） */
+    if (fromLogout) { setLoginGate(false); openSelect(); }
+    else { setLoginGate(true); show('lb-login'); }
+    /* 登入／選角期間播放背景音樂（等網頁內容載入完才開始下載）。
+       若瀏覽器擋下自動播放，登入畫面那一下「請點擊螢幕」會補啟動。 */
     try { window.TXWSLoginBGM && window.TXWSLoginBGM.start(); } catch(e){}
   }
   window.TXWSLobby = { openSelect, enterSlot, summary, slotKey };
