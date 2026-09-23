@@ -182,7 +182,11 @@
     root.classList.remove('hidden');
     ['lb-login','lb-select','lb-create'].forEach(id => $id(id).classList.toggle('hidden', id !== which));
   }
-  function hideLobby(){ $id('lobby').classList.add('hidden'); }
+  /* 進入遊戲：關閉登入／選角背景音樂 */
+  function hideLobby(){
+    $id('lobby').classList.add('hidden');
+    try { window.TXWSLoginBGM && window.TXWSLoginBGM.stop(); } catch(e){}
+  }
 
   function onClick(e){
     const slot = e.target.closest('.lb-slot');
@@ -391,6 +395,8 @@
     const fromLogout = sessionStorage.getItem('txws_logout') === '1';
     sessionStorage.removeItem('txws_logout');
     if (fromLogout) openSelect(); else show('lb-login');
+    /* 登入／選角期間播放背景音樂（等網頁內容載入完才開始下載） */
+    try { window.TXWSLoginBGM && window.TXWSLoginBGM.start(); } catch(e){}
   }
   window.TXWSLobby = { openSelect, enterSlot, summary, slotKey };
   boot();
