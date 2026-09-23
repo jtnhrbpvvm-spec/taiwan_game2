@@ -44,7 +44,8 @@
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   var oldRespawnFab = document.getElementById("iw-respawn-fab");
   if (oldRespawnFab) oldRespawnFab.remove();
-  document.querySelectorAll(".iw-mall-hint,.iw-mall-max-tag,.iw-mall-qty,.iw-mall-total,.iw-mall-multi-tag").forEach(function (el) { el.remove(); });
+  // .iw-mall-qty / .iw-mall-total 是舊版留下的「購買數量」欄，現在不做了，但還是要清掉
+  document.querySelectorAll(".iw-mall-hint,.iw-mall-extra,.iw-mall-max-tag,.iw-mall-qty,.iw-mall-total,.iw-mall-multi-tag").forEach(function (el) { el.remove(); });
   document.querySelectorAll(".iw-mall-max").forEach(function (el) { el.classList.remove("iw-mall-max"); });
   document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) { el.classList.remove("iw-mall-super-rate"); });
   document.querySelectorAll(".iw-mall-rain").forEach(function (el) { el.remove(); });
@@ -2002,7 +2003,7 @@
   // 最低價那一小時改成跳樓大拍賣，字放大到跟 NPC 名字一樣。
   var MALL_SUPER_RATE = 21000;
   var MALL_SUPER_PREFIX = "（老闆今天好像不一樣?）";
-  // 當天最貴的那個小時：不擠在標題提示裡，改成在名品館「1 點 ＝ 🪙 xx」那行前面加紅色抖動的標籤、數字也變紅。
+  // 當天最貴的那個小時：不擠在標題提示裡，改成在名品館長條圖下面自己那行加紅色抖動的標籤、匯率數字也變紅。
   var MALL_MAX_TEXT = "滾！不要妨礙我做生意";
   // 回傳 { text, big }：big＝字要放大到跟 NPC 名字一樣
   function mallHint() {
@@ -2068,28 +2069,35 @@
   }
 
   style.textContent += ".iw-mall-hint{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--iw-accent);}" +
-    ".mall>.rate.iw-mall-max{color:#c0392b;}" +
+    // NPC 名字那行（遊戲的 .talking）是 flex 而且不換行，超級特價那句放大後會把「道具商人」擠成一個字一行，
+    // 所以有掛我們的提示時允許換行，那句自己佔滿一行（見下面的 flex:0 0 100%），NPC 名字維持在第一行。
+    ".talking:has(> .iw-mall-hint){flex-wrap:wrap;}" +
+    // 2026-09-23 改版後遊戲自己的匯率那行是 flex，裡面已經有「1 點 ＝ 🪙 xx」「便宜/普通/貴」和換匯倒數，
+    // 下面還多了一條長條圖（.gauge），再塞東西進去會把它擠成兩行。我們的標籤改成自己一行，掛在長條圖下面。
+    ".iw-mall-extra{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:0 0 6px;}" +
+    // 最貴的小時只染「1 點 ＝ 🪙 xx」那一段，不整行染色（整行會蓋掉遊戲自己的「貴」和倒數的顏色）
+    ".mall>.rate>span.iw-mall-max{color:#c0392b;}" +
     // 抖一下停一下（每 2 秒抖 0.4 秒），一直抖太吵
-    ".iw-mall-max-tag{display:inline-block;margin-right:8px;color:#c0392b;font-weight:800;animation:iw-mall-shake 2s ease-in-out infinite;}" +
-    // 超級特價日而且並列最低好幾個小時：第一個特價時段掛在匯率那行（橘色，跟「滾！」錯開抖的時間）
-    ".iw-mall-multi-tag{display:table;margin-left:auto;color:#d35400;font-weight:800;animation:iw-mall-shake 2s ease-in-out 1s infinite;}" +
+    ".iw-mall-max-tag{display:inline-block;margin-left:auto;color:#c0392b;font-weight:800;animation:iw-mall-shake 2s ease-in-out infinite;}" +
+    // 超級特價日而且並列最低好幾個小時：第一個特價時段的提示（橘色，跟「滾！」錯開抖的時間）
+    ".iw-mall-multi-tag{display:inline-block;margin-left:auto;color:#d35400;font-weight:800;animation:iw-mall-shake 2s ease-in-out 1s infinite;}" +
     "@keyframes iw-mall-shake{0%,20%,100%{transform:translate(0,0) rotate(0)}" +
     "4%{transform:translate(-3px,0) rotate(-3deg)}8%{transform:translate(3px,0) rotate(3deg)}" +
     "12%{transform:translate(-3px,0) rotate(-2deg)}16%{transform:translate(2px,0) rotate(1deg)}}" +
     // 超級特價（當天最低 < 21,000）那一小時：標題提示紅→金流光＋心跳放大、匯率那行發金光、打開名品館時下一陣金幣雨
-    ".iw-mall-hint.iw-mall-super{flex:none;max-width:100%;display:inline-block;transform-origin:left center;font-weight:900;" +
+    ".iw-mall-hint.iw-mall-super{flex:0 0 100%;max-width:100%;display:block;transform-origin:left center;font-weight:900;" +
     "background:linear-gradient(90deg,#c0392b,#e67e22,#f1c40f,#e67e22,#c0392b);background-size:200% auto;" +
     "-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 3px rgba(241,196,15,.8));" +
     "animation:iw-mall-shine 1.5s linear infinite,iw-mall-pulse 1s ease-in-out infinite;}" +
     "@keyframes iw-mall-shine{to{background-position:200% center}}" +
     "@keyframes iw-mall-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}" +
-    ".mall>.rate.iw-mall-super-rate{color:#b7791f;animation:iw-mall-glow 1.2s ease-in-out infinite alternate;}" +
+    ".mall>.rate>span.iw-mall-super-rate{color:#b7791f;animation:iw-mall-glow 1.2s ease-in-out infinite alternate;}" +
     "@keyframes iw-mall-glow{from{text-shadow:0 0 2px rgba(241,196,15,.4)}to{text-shadow:0 0 10px rgba(241,196,15,1),0 0 2px #fff}}" +
     ".iw-mall-rain{position:fixed;pointer-events:none;overflow:hidden;z-index:99999;}" +
     ".iw-mall-rain span{position:absolute;top:-40px;font-size:22px;animation:iw-mall-fall linear forwards;}" +
     "@keyframes iw-mall-fall{0%{transform:translateY(0) rotate(0);opacity:1}85%{opacity:1}" +
     "100%{transform:translateY(var(--iw-fall)) rotate(var(--iw-spin));opacity:0}}" +
-    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag,.iw-mall-multi-tag,.iw-mall-hint.iw-mall-super,.mall>.rate.iw-mall-super-rate{animation:none;}.iw-mall-rain{display:none;}}";
+    "@media (prefers-reduced-motion:reduce){.iw-mall-max-tag,.iw-mall-multi-tag,.iw-mall-hint.iw-mall-super,.mall>.rate>span.iw-mall-super-rate{animation:none;}.iw-mall-rain{display:none;}}";
 
   // 金幣雨：蓋在名品館面板上，約 3 秒後自己消失，不擋點擊。
   function mallCoinRain() {
@@ -2117,255 +2125,81 @@
     setTimeout(function () { rain.remove(); }, 3200);
   }
 
-  // 名品館「1 點 ＝ 🪙 xx」那行（遊戲的 .mall > .rate）：最貴的小時加紅色抖動標籤，其他時候拿掉。
+  // 我們自己的那一行：接在遊戲的匯率列（.mall > .rate）和長條圖（.mall > .gauge，2026-09-23 改版新增）後面。
+  // 遊戲那行現在是 flex，已經塞了「便宜/普通/貴」和換匯倒數，所以我們的東西一律放這行，不動遊戲的版面。
+  function mallExtraRow(create) {
+    var panel = document.querySelector(".mall");
+    if (!panel) return null;
+    var row = panel.querySelector(":scope > .iw-mall-extra");
+    if (row || !create) return row;
+    var rateEl = panel.querySelector(":scope > .rate");
+    if (!rateEl) return null;
+    row = document.createElement("div");
+    row.className = "iw-mall-extra";
+    var next = rateEl.nextElementSibling;
+    // 有長條圖就掛在長條圖下面，沒有（遊戲又改版）就退回掛在匯率那行下面
+    (next && next.classList.contains("gauge") ? next : rateEl).insertAdjacentElement("afterend", row);
+    return row;
+  }
+
+  // 當天最貴的小時：「1 點 ＝ 🪙 xx」那一段文字變紅（只染那個 span，不整行染色，免得蓋掉遊戲自己
+  // 的「便宜/普通/貴」和倒數的顏色），紅色抖動標籤放在我們自己那行的右邊。
   function updateMallMaxTag() {
     var rateEl = document.querySelector(".mall > .rate");
-    var on = !!rateEl && checkMallFormula() && mallAtMaxNow();
+    var numEl = rateEl && rateEl.firstElementChild; // 遊戲的「1 點 ＝ 🪙 xx」
+    var ok = !!numEl && checkMallFormula();
+    var on = ok && mallAtMaxNow();
+    document.querySelectorAll(".iw-mall-max").forEach(function (el) {
+      if (!on || el !== numEl) el.classList.remove("iw-mall-max");
+    });
+
+    // 「想跳樓 N 次」：超級特價日並列最低好幾個小時，只在第一個特價時段顯示。
+    // （兩個不會同時出現：第一個特價時段不可能是當天最貴的時段。）
+    var n = ok ? mallSuperLowCount() : 0;
+    var row = mallExtraRow(on || n > 0);
     document.querySelectorAll(".iw-mall-max-tag").forEach(function (el) {
-      if (!on || el.parentNode !== rateEl) el.remove();
+      if (!on || el.parentNode !== row) el.remove();
     });
-    document.querySelectorAll(".mall > .rate.iw-mall-max").forEach(function (el) {
-      if (!on || el !== rateEl) el.classList.remove("iw-mall-max");
+    document.querySelectorAll(".iw-mall-multi-tag").forEach(function (el) {
+      if (!n || el.parentNode !== row) el.remove();
     });
+    // 沒東西要放就把整行收掉，不留一條空白（版面跟沒裝工具時一樣）
+    if (!on && !n) {
+      if (row) row.remove();
+      return;
+    }
+    if (!row) return;
     if (on) {
-      if (!rateEl.classList.contains("iw-mall-max")) rateEl.classList.add("iw-mall-max");
-      if (!rateEl.querySelector(".iw-mall-max-tag")) {
+      numEl.classList.add("iw-mall-max");
+      if (!row.querySelector(":scope > .iw-mall-max-tag")) {
         var tag = document.createElement("span");
         tag.className = "iw-mall-max-tag";
         tag.textContent = MALL_MAX_TEXT;
-        rateEl.insertBefore(tag, rateEl.firstChild);
+        row.appendChild(tag);
       }
     }
-
-    // 「想跳樓 N 次」：超級特價日並列最低好幾個小時，只在第一個特價時段顯示，排在「滾！」前面。
-    // 這句比較長，跟數量欄擠在同一行會把「1 點 ＝ 🪙」和數字拆成兩行，所以它自己佔一行（靠右），
-    // 「滾！」維持在匯率同一行不動。（兩個不會同時出現：第一個特價時段不可能是當天最貴的時段。）
-    var n = rateEl && checkMallFormula() ? mallSuperLowCount() : 0;
-    var multiText = n ? "甚麼!!老闆瘋拉!? 今天居然想跳樓" + n + "次!!!!" : "";
-    document.querySelectorAll(".iw-mall-multi-tag").forEach(function (el) {
-      if (!n || el.parentNode !== rateEl) el.remove();
-    });
     if (!n) return;
-    var multi = rateEl.querySelector(":scope > .iw-mall-multi-tag");
+    var multiText = "甚麼!!老闆瘋拉!? 今天居然想跳樓" + n + "次!!!!";
+    var multi = row.querySelector(":scope > .iw-mall-multi-tag");
     if (!multi) {
       multi = document.createElement("span");
       multi.className = "iw-mall-multi-tag";
-      rateEl.insertBefore(multi, rateEl.firstChild);
+      row.appendChild(multi);
     }
     if (multi.textContent !== multiText) multi.textContent = multiText;
   }
 
   // ==========================================================================
-  // 名品館一次買多個：遊戲的 buyMallItem 一次只買 1 個（或發條的 ×10 套餐），
-  // 在「1 點 ＝ 🪙 xx」那行左邊的空白放一個數量欄（不動商品列表），數量 > 1 時點商品就連續買。
-  // 有套餐而且套餐比較便宜（發條 ×10）時，先用套餐湊、零頭再單買。
-  // 金幣不夠就買到付得起為止；買到一半換整點（價格變了），遊戲會拒絕，就停下來。
   // ==========================================================================
-  var MALL_QTY_MAX = 9999;
-  var mallQty = 1;
-  style.textContent +=
-    ".iw-mall-qty{float:left;display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:700;color:var(--iw-dim);text-shadow:none;}" +
-    ".iw-mall-qty button{width:22px;height:22px;padding:0;border:1.5px solid var(--iw-line-hi);border-radius:6px;cursor:pointer;" +
-    "background:linear-gradient(180deg,var(--iw-btn-top),var(--iw-btn-bottom));color:var(--iw-text);font-weight:800;line-height:1;}" +
-    ".iw-mall-qty input{width:52px;height:22px;padding:0 4px;border:1.5px solid var(--iw-line-hi);border-radius:6px;background:#fffaf0;" +
-    "color:var(--iw-text);font-weight:700;text-align:center;font-variant-numeric:tabular-nums;-moz-appearance:textfield;}" +
-    ".iw-mall-qty input::-webkit-inner-spin-button,.iw-mall-qty input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}" +
-    // 數量 > 1 時整組變藍綠色，提醒「現在點下去會買很多個」
-    ".iw-mall-qty.iw-on{color:var(--iw-go);}.iw-mall-qty.iw-on input{border-color:var(--iw-go);background:#e6f3f5;}" +
-    // 每件商品價錢前面的「(數量, 總價)」；金幣不夠整批就變紅
-    ".iw-mall-total{flex:none;margin-right:6px;font-size:.78rem;font-weight:700;color:var(--iw-go);font-variant-numeric:tabular-nums;white-space:nowrap;}" +
-    ".iw-mall-total.iw-poor{color:var(--iw-warn);}";
-
-  // 買 want 個要怎麼湊、總共多少錢：有套餐而且比較便宜（發條 ×10）就先用套餐，零頭單買。
-  function mallPlan(item, want) {
-    var price = session.mallPrice(item);
-    var bundlePrice = item.bundle && typeof session.mallBundlePrice === "function" ? session.mallBundlePrice(item) : null;
-    var bundles = 0;
-    if (bundlePrice != null && bundlePrice < price * item.bundle.count) bundles = Math.floor(want / item.bundle.count);
-    var singles = want - bundles * (bundles ? item.bundle.count : 0);
-    return { price: price, bundlePrice: bundlePrice, bundles: bundles, singles: singles, total: bundles * (bundlePrice || 0) + singles * price };
+  // 名品館一次買多個：拿掉了。作者 2026-09-23 改版加了遊戲自己的購買數量彈窗（數量加減、
+  // ×1/×10/×100/最多、會自動湊套餐並顯示「省下 X」），比我們這套完整、對玩家也更有利，
+  // 我們原本的「購買數量」欄、每列的「(數量, 總價)」和攔截點擊就全部退場。
+  // 這裡只負責把舊版 loader 已經掛上去的攔截器解掉，免得同一個分頁重新載入後還在攔。
+  // ==========================================================================
+  if (window.__iwMallQtyClick) {
+    document.removeEventListener("click", window.__iwMallQtyClick, true);
+    window.__iwMallQtyClick = undefined;
   }
-
-  function mallItemOfButton(btn) {
-    var list = (session.data && session.data.mall) || (data && data.mall);
-    var idx = Array.prototype.indexOf.call(document.querySelectorAll(".mall > button.opt-btn"), btn);
-    return list && list[idx];
-  }
-
-  function updateMallTotals() {
-    var buttons = document.querySelectorAll(".mall > button.opt-btn");
-    buttons.forEach(function (btn) {
-      var tag = btn.querySelector(".iw-mall-total");
-      var item = mallQty > 1 ? mallItemOfButton(btn) : null;
-      var priceEl = btn.querySelector(":scope > span.gold, :scope > span.danger");
-      if (!item || !priceEl) { if (tag) tag.remove(); return; }
-      var plan;
-      try { plan = mallPlan(item, mallQty); } catch (err) { if (tag) tag.remove(); return; }
-      var text = "(" + fmt(mallQty) + ", " + fmt(plan.total) + ")";
-      if (!tag) {
-        tag = document.createElement("span");
-        tag.className = "iw-mall-total";
-      }
-      if (tag.nextElementSibling !== priceEl) btn.insertBefore(tag, priceEl);
-      if (tag.textContent !== text) tag.textContent = text;
-      var poor = session.player.gold < plan.total;
-      if (tag.classList.contains("iw-poor") !== poor) tag.classList.toggle("iw-poor", poor);
-      var tip = poor ? "金幣不夠一次買 " + fmt(mallQty) + " 個，點下去會買到付得起為止" : "一次買 " + fmt(mallQty) + " 個共 " + fmt(plan.total) + " 金";
-      if (plan.bundles) tip += "（" + fmt(plan.bundles) + " 組 ×" + item.bundle.count + " 套餐＋" + fmt(plan.singles) + " 個單買）";
-      if (tag.title !== tip) tag.title = tip;
-    });
-  }
-
-  function clampQty(v) {
-    v = Math.floor(Number(v));
-    if (!isFinite(v) || v < 1) return 1;
-    return Math.min(MALL_QTY_MAX, v);
-  }
-
-  function renderMallQty(box) {
-    var input = box.querySelector("input");
-    if (document.activeElement !== input && input.value !== String(mallQty)) input.value = String(mallQty);
-    box.classList.toggle("iw-on", mallQty > 1);
-    box.title = mallQty > 1 ? "點商品會一次買 " + mallQty + " 個" : "點商品一次買 1 個";
-    updateMallTotals();
-  }
-
-  function updateMallQty() {
-    var rateEl = document.querySelector(".mall > .rate");
-    document.querySelectorAll(".iw-mall-qty").forEach(function (el) { if (el.parentNode !== rateEl) el.remove(); });
-    if (!rateEl) return;
-    var box = rateEl.querySelector(".iw-mall-qty");
-    if (!box) {
-      box = document.createElement("span");
-      box.className = "iw-mall-qty";
-      box.innerHTML = '購買數量 <button type="button" data-step="-1" aria-label="減少">−</button>' +
-        '<input type="number" inputmode="numeric" min="1" max="' + MALL_QTY_MAX + '" aria-label="名品館購買數量">' +
-        '<button type="button" data-step="1" aria-label="增加">+</button>';
-      var input = box.querySelector("input");
-      box.addEventListener("click", function (ev) {
-        var step = ev.target.closest && ev.target.closest("[data-step]");
-        if (!step) return;
-        mallQty = clampQty(mallQty + Number(step.getAttribute("data-step")));
-        renderMallQty(box);
-      });
-      input.addEventListener("input", function () {
-        if (input.value === "") return; // 正在清空重打，先不改
-        mallQty = clampQty(input.value);
-        box.classList.toggle("iw-on", mallQty > 1);
-        updateMallTotals();
-      });
-      input.addEventListener("blur", function () { renderMallQty(box); });
-      input.addEventListener("keydown", function (ev) { if (ev.key === "Enter") input.blur(); });
-      rateEl.insertBefore(box, rateEl.firstChild);
-    }
-    renderMallQty(box);
-  }
-
-  function buyMallMany(item, want) {
-    var id = item.id, bought = 0, spent = 0, stop = "";
-    var plan = mallPlan(item, want);
-    var price = plan.price, bundlePrice = plan.bundlePrice, useBundle = plan.bundles > 0;
-    var saved = {
-      batch: session.batch,
-      applyNow: Object.prototype.hasOwnProperty.call(session, "applyNow") ? session.applyNow : undefined
-    };
-    // 跟⚡快速強化一樣：買的時候不寫逐筆紀錄、不重畫，全部買完才重畫一次、寫一行總結
-    session.batch = true;
-    session.applyNow = function () { session.dirty = true; };
-    try {
-      while (useBundle && want - bought >= item.bundle.count) {
-        if (session.player.gold < bundlePrice) { stop = "gold"; break; }
-        var g0 = session.player.gold;
-        if (!session.buyMallItem(id, bundlePrice, item.bundle.count)) { stop = "fail"; break; }
-        bought += item.bundle.count; spent += g0 - session.player.gold;
-      }
-      while (!stop && bought < want) {
-        if (session.player.gold < price) { stop = "gold"; break; }
-        var g1 = session.player.gold;
-        if (!session.buyMallItem(id, price, 1)) { stop = "fail"; break; }
-        bought += 1; spent += g1 - session.player.gold;
-      }
-    } finally {
-      if (saved.applyNow !== undefined) session.applyNow = saved.applyNow; else delete session.applyNow;
-      session.batch = saved.batch;
-    }
-    var msg = "🛒 名品館：買下 " + item.name + " ×" + fmt(bought) + "（−" + fmt(spent) + "）";
-    if (bought < want) {
-      msg += stop === "gold" ? "，金幣不足，想買 " + fmt(want) + " 個" : "，價格剛好更新了，剩下 " + fmt(want - bought) + " 個沒買";
-    }
-    try { if (bought > 0 || stop) session.push(msg, "sell"); session.applyNow(); } catch (err) { console.warn("[名品館] 更新畫面失敗", err); }
-  }
-
-  // 錢夠買幾個：套餐會讓總價不是一直往上加（買 10 個可能比買 9 個便宜），所以從想買的數量往下一個一個試。
-  function mallAffordable(item, want) {
-    var gold = session.player.gold;
-    for (var k = want; k > 0; k--) {
-      var p = mallPlan(item, k);
-      if (p.total <= gold) return { count: k, total: p.total };
-    }
-    return { count: 0, total: 0 };
-  }
-
-  // 金幣不夠買整批：跳窗說明最多能買幾個，按「買 N 個」才買，取消就什麼都不做。
-  function confirmMallPartial(item, want, need, can) {
-    var old = document.getElementById("iw-popup-backdrop");
-    if (old) old.remove();
-    var bd = document.createElement("div");
-    bd.id = "iw-popup-backdrop";
-    bd.className = "iw-popup-backdrop";
-    var box = document.createElement("div");
-    box.className = "iw-popup";
-    var t = document.createElement("div"); t.className = "iw-popup-title"; t.textContent = "💰 金幣不足";
-    var b = document.createElement("div"); b.className = "iw-popup-body";
-    b.textContent = "想買 " + item.name + " ×" + fmt(want) + "，需要 " + fmt(need) + " 金。\n" +
-      "身上有 " + fmt(session.player.gold) + " 金，\n最多可以買 " + fmt(can.count) + " 個（" + fmt(can.total) + " 金）。";
-    var row = document.createElement("div"); row.className = "iw-btnrow";
-    var cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "iw-btn"; cancel.textContent = "取消";
-    var ok = document.createElement("button"); ok.type = "button"; ok.className = "iw-btn primary"; ok.textContent = "買 " + fmt(can.count) + " 個";
-    ok.disabled = can.count < 1;
-    row.appendChild(cancel); row.appendChild(ok);
-    box.appendChild(t); box.appendChild(b); box.appendChild(row);
-    bd.appendChild(box);
-    function close() { bd.remove(); document.removeEventListener("keydown", onKey, true); }
-    function onKey(e) { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } }
-    cancel.addEventListener("click", close);
-    ok.addEventListener("click", function () {
-      close();
-      try { buyMallMany(item, can.count); } catch (err) {
-        console.error("[名品館] 批次購買失敗", err);
-        alert("批次購買時發生錯誤：" + (err && err.message ? err.message : err));
-      }
-    });
-    bd.addEventListener("click", function (e) { if (e.target === bd) close(); });
-    document.addEventListener("keydown", onKey, true);
-    document.body.appendChild(bd);
-    ok.focus();
-  }
-  style.textContent += ".iw-popup .iw-btnrow{margin:10px 18px 16px;}.iw-popup .iw-btnrow .iw-btn{margin:0;width:auto;}";
-
-  // 用捕獲階段攔下商品按鈕的點擊（比遊戲自己的 onClick 先收到）；數量是 1 或點的是「×10」套餐就不管，照遊戲原本的。
-  if (window.__iwMallQtyClick) document.removeEventListener("click", window.__iwMallQtyClick, true);
-  window.__iwMallQtyClick = function (ev) {
-    if (mallQty <= 1) return;
-    var btn = ev.target.closest && ev.target.closest(".mall > button.opt-btn");
-    if (!btn || btn.disabled || ev.target.closest(".bulk")) return;
-    var item = mallItemOfButton(btn);
-    if (!item) return; // 對不上就讓遊戲照原本的買 1 個
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    try {
-      var need = mallPlan(item, mallQty).total;
-      if (session.player.gold < need) {
-        confirmMallPartial(item, mallQty, need, mallAffordable(item, mallQty));
-        return;
-      }
-      buyMallMany(item, mallQty);
-    } catch (err) {
-      console.error("[名品館] 批次購買失敗", err);
-      alert("批次購買時發生錯誤：" + (err && err.message ? err.message : err));
-    }
-  };
-  document.addEventListener("click", window.__iwMallQtyClick, true);
 
   function applyMallHint(el, hint, title) {
     if (el.textContent !== hint.text) el.textContent = hint.text;
@@ -2374,12 +2208,14 @@
     if (el.classList.contains("iw-mall-super") !== hint.big) el.classList.toggle("iw-mall-super", hint.big);
   }
 
+  // 金光只上在「1 點 ＝ 🪙 xx」那個 span，不上整行（整行會把遊戲自己的「便宜」和換匯倒數也染金）
   function setMallSuperRate(on) {
     var rateEl = document.querySelector(".mall > .rate");
+    var numEl = rateEl && rateEl.firstElementChild;
     document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) {
-      if (!on || el !== rateEl) el.classList.remove("iw-mall-super-rate");
+      if (!on || el !== numEl) el.classList.remove("iw-mall-super-rate");
     });
-    if (on && rateEl && !rateEl.classList.contains("iw-mall-super-rate")) rateEl.classList.add("iw-mall-super-rate");
+    if (on && numEl) numEl.classList.add("iw-mall-super-rate");
   }
 
   var mallRainShown = false; // 這次打開名品館已經下過金幣雨了沒（離開名品館分頁就重設）
@@ -2419,16 +2255,13 @@
     if (window.__iwMallHintGeneration !== myMallHintGeneration) { mallHintObserver.disconnect(); return; }
     updateMallHint();
     updateMallMaxTag();
-    updateMallQty();
   });
-  // characterData：金幣數字變了（只有文字變、沒有換元素）也要重新判斷「(數量, 總價)」要不要變紅
   mallHintObserver.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] });
   // 整點換匯率時，畫面不一定有變動，另外每 30 秒自己更新一次。
   (function mallHintTick() {
     if (window.__iwMallHintGeneration !== myMallHintGeneration) return;
     updateMallHint();
     updateMallMaxTag();
-    updateMallQty();
     setTimeout(mallHintTick, 30000);
   })();
 
