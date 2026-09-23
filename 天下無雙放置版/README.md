@@ -1,4 +1,4 @@
-# 天下無雙・放置版 — 版本 V1.0.6
+# 天下無雙・放置版 — 版本 V1.0.7
 
 單機放置型網頁遊戲。直接用瀏覽器開啟 `index.html` 即可遊玩，不需要伺服器。
 
@@ -6,7 +6,8 @@
 
 | 檔案 | 說明 |
 |---|---|
-| `index.html` | 遊戲主檔（含大部分遊戲邏輯） |
+| `index.html` | 遊戲主檔（HTML 結構與內建樣式；V1.0.7 起遊戲邏輯已移到 `data/`） |
+| `data/*.js` | **遊戲邏輯，共 31 個模組**（資料、戰鬥、背包、煉器、副本、介面…）。哪個功能在哪個檔、載入順序、常見需求對照表都寫在 [`data/README.md`](data/README.md) |
 | `lobby.js` | 登入頁、角色選擇頁（4 個存檔欄位）、創建角色頁 |
 | `lobby.css` | 上面三個頁面與倉庫視窗的樣式 |
 | `warehouse.js` | 共用倉庫（同模式角色共用；一般／奇緣模式各自獨立） |
@@ -44,10 +45,10 @@ python tools/build-icon-css.py
 
 **規則：之後每一次修改（每一批更新）版本號最後一碼自動 +1**，例如 V1.0.4 → V1.0.5 → V1.0.6。已推送的版本不再回頭改版本號。
 
-改版本號時要同步改 `index.html` 裡這幾處（搜尋目前版本號即可全部找到）：
-1. `const GAME_VERSION='v1.0.6';`（登入頁版號會自動讀這個）
-2. 更新選單標題「天下無雙・放置版 V1.0.6」與「目前版本：V1.0.6」，並把更新選單內容換成該版的更新重點
-3. 設定頁底部「V1.0.6 · …」
+改版本號時要同步改這幾處（搜尋目前版本號即可全部找到）：
+1. `data/config.js` 的 `const GAME_VERSION='v1.0.7';`（登入頁版號會自動讀這個）
+2. `index.html` 更新選單標題「天下無雙・放置版 V1.0.7」與「目前版本：V1.0.7」，並把更新選單內容換成該版的更新重點
+3. `data/system-ui.js` 設定頁底部「V1.0.7 · …」
 4. 本 README 最上方標題的版本號，並在下表新增一列
 
 （`index.html` 裡另外兩處 `GAME_VERSION` 是程式讀取常數，會自動跟著更新，不必手改。存檔沒有任何版本比對邏輯，`G.version` 只寫不讀，所以改版號不會影響既有存檔。）
@@ -57,7 +58,8 @@ python tools/build-icon-css.py
 | V1.0.3 | 2026-09-23 | 已推送 | 登入／選角（4 格）／創角、共用倉庫、移除狀態神通、增益 2 槽修正、副本進入與條件提示、自動喝水修正、Boss 重生 5 分鐘、主城不暫停、升品素質修正、登入主視覺、倉庫移到下方選單、奇緣模式（含開放開孔與鑲嵌） |
 | V1.0.5 | 2026-09-23 | 本版（未推送） | 介面改版：墨藍鎏金風格、圓形頭像環＋門派徽記、四格資源卡、氣血／法力長條、經驗條、雙排十格下方選單；戰鬥血條即時扣血＋延遲尾條＋傷害飄字；實圖邊框與實圖按鈕（未選縮小／選取放大）；背景圖鋪滿全畫面＋UI 半透明；戰鬥畫面與倉庫各自背景；電腦版三區塊；選角拱門連點兩下進入遊戲 |
 | V1.0.6 | 2026-09-23 | 本版（未推送） | 圖示全面重繪：下方十顆按鈕、上方四顆圓鈕、四張資源卡改用高解析遮罩＋CSS 上色（取代原本從示意圖裁切的低解析 PNG）；選中的下方按鈕外框跑流動金光；左上角色徽記改為火焰龍紋圓環；資源卡改雙金線邊框、成長值改青色三角；遮罩改為內嵌 data URI，`file://` 直接開啟也能正常顯示；刪除重複的「修改後」資料夾 |
-| V1.0.7 | — | 下一版 | 下一次修改時使用 |
+| V1.0.7 | 2026-09-23 | 本版（未推送） | 程式碼模組化：`index.html` 裡約 1,270 行的行內 `<script>` 依功能拆成 `data/` 底下 31 個 .js 檔（詳見 [`data/README.md`](data/README.md)）。拆分過程逐行比對、玩法／數值／存檔格式完全不變。另刪除 `data/combat.js` 中重複貼上兩次的 `stratSkillPowerBias()`／`stratSkillPowerBiasFor()`（兩份內容完全相同，刪除後行為不變，避免日後改到被覆蓋的那一份） |
+| V1.0.8 | — | 下一版 | 下一次修改時使用 |
 
 ### 介面改版 V2（依示意圖）
 
@@ -103,7 +105,7 @@ python tools/build-icon-css.py
 
 ### 資料夾整理（移除與遊戲無關的檔案）
 
-遊戲實際只載入 `index.html`、`lobby.css`、`lobby.js`、`warehouse.js` 與 `圖片/login-bg.jpg`。以下舊檔案已從「天下無雙放置版」根目錄刪除（都還在 git 歷史裡，需要時可救回）：
+遊戲實際只載入 `index.html`、`data/*.js`（V1.0.7 起）、`lobby.css`、`lobby.js`、`warehouse.js` 與 `圖片/login-bg.jpg`。以下舊檔案已從「天下無雙放置版」根目錄刪除（都還在 git 歷史裡，需要時可救回）：
 - 舊專案「仙途·轮回诀」的程式：`auth.js avatars.js cave.js combat.js config.js cultivate.js explore.js friends.js inventory.js lang.js laws.js main.js mainstory.js pets.js save.js sfx.js shop.js shop_ext.js talents.js treasure.js ui.js style.css electron-main.js package.json gen_shop_ext.py`
 - 測試與修補檔：`test_auth.js test_savecode.js test_systems.js enhance_rate_fix.patch minimal_fix.patch version_fix.patch FINAL_AUDIT.txt`
 - 過時說明：`README.md`（仙途說明）、`README.txt`（v5.5 說明）、`SHA256SUMS.txt`
