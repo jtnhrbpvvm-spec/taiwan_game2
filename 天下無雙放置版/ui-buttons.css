@@ -1,0 +1,227 @@
+/* ============================================================
+   天下無雙放置版 — 按鈕重繪（向量版）
+   取代原本從示意圖裁切的 btn.png / ico-*.png（來源解析度不足，放大必糊）。
+   改用 SVG 遮罩 + CSS 漸層繪製，任何螢幕密度都銳利，顏色可單行調整。
+   載入順序必須在 theme.css 之後。
+   ============================================================ */
+:root{
+  --btn-face-1:rgba(14,26,52,.88);
+  --btn-face-2:rgba(5,10,22,.92);
+  --btn-edge:rgba(198,158,84,.52);
+  --btn-edge-hi:rgba(255,226,160,.14);
+  --btn-ico-1:#ffe6ac;
+  --btn-ico-2:#c8973f;
+  --btn-label:#d9c391;
+
+  --btn-on-face-1:rgba(96,66,22,.62);
+  --btn-on-face-2:rgba(32,19,6,.78);
+  --btn-on-edge:#f7d98f;
+  --btn-on-ico-1:#fff6d8;
+  --btn-on-ico-2:#f3bf62;
+  --btn-on-label:#fff3cf;
+  --btn-on-glow:rgba(247,201,110,.48);
+
+  --dock:130px;
+}
+
+/* ---------- 共用：SVG 遮罩圖示 ---------- */
+.ui-ico,
+.dock button b,
+#game .actions .icon:before{
+  display:block;
+  background:linear-gradient(180deg,var(--btn-ico-1),var(--btn-ico-2));
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-position:center;  mask-position:center;
+  -webkit-mask-size:contain;     mask-size:contain;
+  transition:background .18s ease;
+}
+
+/* ============================================================
+   下方選單（雙排五格）
+   ============================================================ */
+.dock button,
+#game .dock button{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:6px 4px;
+  border:1px solid var(--btn-edge);
+  border-radius:14px;
+  border-image:none;
+  background:linear-gradient(180deg,var(--btn-face-1),var(--btn-face-2));
+  background-clip:padding-box;
+  box-shadow:inset 0 1px 0 var(--btn-edge-hi),0 2px 8px rgba(0,0,0,.45);
+  color:var(--btn-label);
+  font:600 11.5px/1.15 "Noto Serif TC",serif;
+  letter-spacing:.06em;
+  text-shadow:0 1px 2px #000;
+  transform:none;
+  overflow:hidden;
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,color .18s ease;
+}
+/* 蓋掉 theme.css 裡逐顆指定的點陣圖（選擇器權重較高，需同等權重覆蓋） */
+.dock button[data-ico]{background-image:none}
+
+.dock button b,
+#game .dock button b{
+  width:25px;height:25px;flex:none;
+  font-size:0;line-height:0;
+}
+
+/* 圖示遮罩：由作者提供的高解析示意圖抽出（圖片/ui/mask/*.png，128px 方形）。
+   只取圖示本身、不取按鈕外框與文字，所以顏色仍由下方 CSS 控制。
+   純向量版本保留在 圖片/ui/svg/，把路徑換回去即可切換。 */
+.dock button[data-ico="character"] b{-webkit-mask-image:url("圖片/ui/mask/char.png");     mask-image:url("圖片/ui/mask/char.png")}
+.dock button[data-ico="hunt"] b     {-webkit-mask-image:url("圖片/ui/mask/hunt.png");     mask-image:url("圖片/ui/mask/hunt.png")}
+.dock button[data-ico="inventory"] b{-webkit-mask-image:url("圖片/ui/mask/inventory.png");mask-image:url("圖片/ui/mask/inventory.png")}
+.dock button[data-ico="skill"] b    {-webkit-mask-image:url("圖片/ui/mask/skill.png");    mask-image:url("圖片/ui/mask/skill.png")}
+.dock button[data-ico="shop"] b     {-webkit-mask-image:url("圖片/ui/mask/shop.png");     mask-image:url("圖片/ui/mask/shop.png")}
+.dock button[data-ico="home"] b     {-webkit-mask-image:url("圖片/ui/mask/home.png");     mask-image:url("圖片/ui/mask/home.png")}
+.dock button[data-ico="boss"] b     {-webkit-mask-image:url("圖片/ui/mask/boss.png");     mask-image:url("圖片/ui/mask/boss.png")}
+.dock button[data-ico="forge"] b    {-webkit-mask-image:url("圖片/ui/mask/forge.png");    mask-image:url("圖片/ui/mask/forge.png")}
+.dock button[data-ico="system"] b   {-webkit-mask-image:url("圖片/ui/mask/system.png");   mask-image:url("圖片/ui/mask/system.png")}
+.dock button[data-ico="warehouse"] b{-webkit-mask-image:url("圖片/ui/mask/warehouse.png");mask-image:url("圖片/ui/mask/warehouse.png")}
+
+/* Boss：暗黑血色＋餘燼光暈，和其餘金色圖示明顯區隔 */
+.dock button[data-ico="boss"] b{
+  background:linear-gradient(180deg,#ff6a34 0%,#d12a18 44%,#61100c 100%);
+  filter:drop-shadow(0 0 5px rgba(206,40,22,.6));
+}
+
+.dock button:hover,
+#game .dock button:hover{
+  border-color:rgba(247,217,143,.8);
+  color:#f3e2b4;
+  box-shadow:inset 0 1px 0 rgba(255,235,180,.2),0 0 12px rgba(240,198,116,.28);
+  transform:none;filter:none;
+}
+
+.dock button.active,
+#game .dock button.active{
+  border:1px solid var(--btn-on-edge);
+  border-image:none;
+  background:linear-gradient(180deg,var(--btn-on-face-1),var(--btn-on-face-2));
+  background-clip:padding-box;
+  color:var(--btn-on-label);
+  box-shadow:0 0 16px var(--btn-on-glow),inset 0 0 12px rgba(255,220,150,.18),inset 0 1px 0 rgba(255,240,200,.28);
+  transform:scale(1.04);
+  filter:none;
+  z-index:2;
+}
+.dock button.active b{background:linear-gradient(180deg,var(--btn-on-ico-1),var(--btn-on-ico-2))}
+.dock button.active[data-ico="boss"] b{
+  background:linear-gradient(180deg,#ffb066 0%,#ef3f22 46%,#8a140f 100%);
+  filter:drop-shadow(0 0 9px rgba(255,80,40,.85));
+}
+
+/* ============================================================
+   上方圓形功能鍵（傳送／掛機／倉庫／設定）
+   示意圖的結構：外細金環 → 暗色間隙 → 內金環 → 深色內底。
+   兩道金環用 inset box-shadow 疊出來，任何解析度都銳利。
+   ============================================================ */
+#game .actions .icon{
+  /* 按鈕裡還留著原本的文字節點（傳／掛／倉／⚙）。即使字級歸零，它在 grid 或
+     flow 裡仍會佔一列，把圖示往上擠並在下方留出一塊空的暗區。
+     所以改成：容器只負責畫圓，圖示用絕對定位自己置中。 */
+  position:relative;
+  display:block;
+  padding:0;
+  font-size:0;line-height:0;color:transparent;
+  border:1px solid rgba(216,178,104,.92);
+  background:radial-gradient(circle at 50% 44%,#1a2846 0%,#0e1832 62%,#080f22 100%);
+  box-shadow:
+    inset 0 0 0 2.5px rgba(5,10,22,.95),
+    inset 0 0 0 4px rgba(198,158,90,.7),
+    inset 0 0 12px rgba(0,0,0,.45),
+    0 2px 8px rgba(0,0,0,.5);
+}
+#game .actions .icon:before{
+  content:"";
+  position:absolute;inset:0;
+  -webkit-mask-size:20px 20px; mask-size:20px 20px;
+  -webkit-mask-position:center;  mask-position:center;
+}
+#game .actions #tpBtn:before      {-webkit-mask-image:url("圖片/ui/mask/tp.png");       mask-image:url("圖片/ui/mask/tp.png")}
+#game .actions #autoBtn:before    {-webkit-mask-image:url("圖片/ui/mask/auto.png");     mask-image:url("圖片/ui/mask/auto.png")}
+#game .actions #whBtn:before      {-webkit-mask-image:url("圖片/ui/mask/warehouse.png");mask-image:url("圖片/ui/mask/warehouse.png")}
+#game .actions #settingsBtn:before{-webkit-mask-image:url("圖片/ui/mask/system.png");   mask-image:url("圖片/ui/mask/system.png")}
+/* 傳送在示意圖裡是銀白色的，保留這個區別 */
+#game .actions #tpBtn:before{background:linear-gradient(180deg,#f2f7ff,#9fb4cc)}
+
+#game .actions .icon:hover{
+  border-color:var(--btn-on-edge);
+  box-shadow:
+    inset 0 0 0 2.5px rgba(5,10,22,.95),
+    inset 0 0 0 4px rgba(247,217,143,.85),
+    0 0 12px rgba(240,198,116,.4);
+}
+#game .actions .icon:hover:before{background:linear-gradient(180deg,var(--btn-on-ico-1),var(--btn-on-ico-2))}
+#game .actions #tpBtn:hover:before{background:linear-gradient(180deg,#ffffff,#cfe0f2)}
+
+/* 啟用中：對應示意圖的青色外光環 */
+#game .actions .icon.on{
+  /* 示意圖的啟用態只換外光環，內底維持深色；theme.css 原本會把底改成琥珀色，
+     那和青環疊在一起會混濁，所以這裡蓋回去。 */
+  background:radial-gradient(circle at 50% 44%,#152a44 0%,#0c1930 62%,#070f22 100%);
+  border-color:rgba(236,205,140,.95);
+  box-shadow:
+    inset 0 0 0 2.5px rgba(5,10,22,.95),
+    inset 0 0 0 4px rgba(214,178,104,.8),
+    0 0 0 2px rgba(74,214,230,.9),
+    0 0 14px rgba(74,214,230,.55),
+    0 0 26px rgba(74,214,230,.3);
+}
+#game .actions .icon.on:before{background:linear-gradient(180deg,var(--btn-on-ico-1),var(--btn-on-ico-2))}
+
+/* ============================================================
+   左上角色徽記：示意圖的火焰龍紋圓環
+   只取環本身（中心與環外皆透明），所以裡面仍是遊戲動態產生的門派徽記。
+   ============================================================ */
+.avatar-ring{
+  box-sizing:border-box;
+  width:68px;height:68px;padding:11px;
+  border-radius:50%;
+  background:url("圖片/ui/avatar-ring.png") center/contain no-repeat;
+  box-shadow:none;
+  filter:drop-shadow(0 0 7px rgba(240,190,110,.38));
+}
+/* 徽記變大後角色資訊欄變窄，門派徽章不能被擠到換行 */
+.prow{flex-wrap:nowrap;min-width:0}
+.class-badge{white-space:nowrap;flex:none}
+#game .pname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#game .pmeta{white-space:nowrap}
+#game .avatar{
+  border:1px solid rgba(255,235,180,.3);
+  background:radial-gradient(circle at 50% 38%,#16243f 0%,#0a1224 60%,#050a16 100%);
+  box-shadow:inset 0 0 10px #000;
+  font-size:22px;
+}
+
+/* ============================================================
+   小尺寸調整
+   ============================================================ */
+@media(max-width:420px){
+  :root{--dock:126px}
+  .dock button,#game .dock button{
+    border-width:1px;border-radius:12px;
+    font-size:10.5px;gap:3px;padding:5px 2px;
+  }
+  .dock button.active,#game .dock button.active{border-width:1px}
+  .dock button b,#game .dock button b{width:22px;height:22px}
+  #game .actions .icon:before{-webkit-mask-size:17px 17px;mask-size:17px 17px}
+  .avatar-ring{width:58px;height:58px;padding:9px}
+  #game .avatar{font-size:19px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .dock button,#game .dock button{transition:none}
+  .dock button.active,#game .dock button.active{transform:none}
+}
+
+/* 沒有 mask 支援的舊瀏覽器：退回文字字符，至少不會變空白 */
+@supports not ((-webkit-mask-image:url("#a")) or (mask-image:url("#a"))){
+  .dock button b,#game .dock button b{
+    background:none;font-size:17px;line-height:1;width:auto;height:auto;
+    color:var(--btn-ico-1);text-shadow:0 0 8px rgba(240,198,116,.4);
+  }
+  #game .actions .icon{font-size:17px;line-height:1;color:var(--btn-ico-1)}
+  #game .actions .icon:before{display:none}
+}

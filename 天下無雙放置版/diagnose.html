@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>介面診斷</title>
+<link rel="stylesheet" href="ui-buttons.css">
+<link rel="stylesheet" href="ui-icon-masks.css">
+<style>
+  body{margin:0;padding:18px;background:#0a1226;color:#dde6fa;
+       font:14px/1.6 "Microsoft JhengHei","Noto Sans TC",sans-serif}
+  h1{font-size:19px;margin:0 0 4px;color:#f0c674}
+  h2{font-size:15px;margin:22px 0 8px;color:#f0c674;border-bottom:1px solid rgba(240,198,116,.3);padding-bottom:4px}
+  table{border-collapse:collapse;width:100%;max-width:760px}
+  td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+  td:first-child{color:#9db0d6;width:210px}
+  .ok{color:#6fe3a5;font-weight:700}
+  .bad{color:#ff8a76;font-weight:700}
+  .warn{color:#ffd166;font-weight:700}
+  code{background:#111c38;padding:1px 5px;border-radius:4px;font-size:12.5px;word-break:break-all}
+  .swatch{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+  .swatch figure{margin:0;text-align:center;font-size:11px;color:#9db0d6}
+  .box{width:56px;height:56px;border:1px dashed rgba(240,198,116,.35);border-radius:8px;margin-bottom:4px}
+  /* 用外部檔案當遮罩：file:// 下會被 CORS 擋掉 */
+  .m{background:linear-gradient(180deg,#ffe6ac,#c8973f);
+     -webkit-mask:url("圖片/ui/mask/boss.png") center/contain no-repeat;
+             mask:url("圖片/ui/mask/boss.png") center/contain no-repeat}
+  /* 用 data URI 當遮罩（修正後的做法）：同源，不受限制 */
+  .d{background:linear-gradient(180deg,#ffe6ac,#c8973f);
+     -webkit-mask-image:var(--ico-boss); mask-image:var(--ico-boss);
+     -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+     -webkit-mask-position:center;  mask-position:center;
+     -webkit-mask-size:contain;     mask-size:contain}
+  .r{background:url("圖片/ui/avatar-ring.png") center/contain no-repeat}
+  #summary{margin-top:18px;padding:12px 14px;border-radius:8px;
+           background:#111c38;border:1px solid rgba(240,198,116,.3);max-width:760px}
+</style>
+</head>
+<body>
+<h1>天下無雙放置版 — 介面診斷</h1>
+<div style="color:#9db0d6;font-size:12.5px">把這一頁看到的內容回報給我即可。</div>
+
+<h2>1. 這一頁是從哪裡開的</h2>
+<table><tbody id="t-env"></tbody></table>
+
+<h2>2. ui-buttons.css 有沒有載入</h2>
+<table><tbody id="t-css"></tbody></table>
+
+<h2>3. 圖檔能不能讀到</h2>
+<table><tbody id="t-img"></tbody></table>
+
+<h2>4. 瀏覽器支不支援遮罩</h2>
+<table><tbody id="t-mask"></tbody></table>
+
+<h2>5. 眼睛確認</h2>
+<div class="swatch">
+  <figure><div class="box d"></div>Boss（內嵌遮罩）</figure>
+  <figure><div class="box m"></div>Boss（外部檔遮罩）</figure>
+  <figure><div class="box r"></div>龍紋環</figure>
+  <figure><div class="box"><img src="圖片/ui/mask/char.png" width="56" height="56" alt="" style="display:block"></div>直接 img</figure>
+</div>
+<div style="color:#9db0d6;font-size:12.5px;margin-top:8px">
+  <b style="color:#f0c674">第 1 格是關鍵</b>：應該看到金色鬼面。<br>
+  第 2 格用 file:// 開時空白是<b>正常的</b>（外部遮罩檔會被 CORS 擋掉，這就是原本的問題）。<br>
+  第 3 格金色圓環、第 4 格黑色剪影，都應該看得到。
+</div>
+
+<div id="summary">判讀中…</div>
+
+<script>
+(function(){
+  function row(tb, label, value, cls){
+    var tr = document.createElement('tr');
+    var a = document.createElement('td'); a.textContent = label;
+    var b = document.createElement('td');
+    if (cls) { var s = document.createElement('span'); s.className = cls; s.textContent = value; b.appendChild(s); }
+    else { b.innerHTML = '<code>' + String(value).replace(/[<&]/g, function(c){return c==='<'?'&lt;':'&amp;';}) + '</code>'; }
+    tr.appendChild(a); tr.appendChild(b); tb.appendChild(tr);
+  }
+
+  var problems = [];
+
+  // ---- 1. 環境 ----
+  var env = document.getElementById('t-env');
+  row(env, '完整網址', location.href);
+  row(env, '協定', location.protocol,
+      location.protocol === 'file:' ? 'warn' : 'ok');
+  row(env, '瀏覽器', navigator.userAgent);
+
+  // ---- 2. CSS ----
+  var css = document.getElementById('t-css');
+  var probe = document.createElement('div');
+  probe.className = 'dock';
+  var btn = document.createElement('button');
+  btn.setAttribute('data-ico', 'boss');
+  var bEl = document.createElement('b');
+  btn.appendChild(bEl); probe.appendChild(btn);
+  probe.style.cssText = 'position:absolute;left:-9999px;top:0';
+  document.body.appendChild(probe);
+
+  var rootVar = getComputedStyle(document.documentElement).getPropertyValue('--btn-edge').trim();
+  var loaded = rootVar !== '';
+  row(css, 'ui-buttons.css 已載入', loaded ? '是' : '否 — 這就是原因', loaded ? 'ok' : 'bad');
+  if (!loaded) problems.push('ui-buttons.css 沒有載入。');
+  row(css, '--btn-edge 變數值', rootVar || '(空的)');
+
+  var bcs = getComputedStyle(bEl);
+  var maskVal = bcs.maskImage && bcs.maskImage !== 'none' ? bcs.maskImage
+              : (bcs.webkitMaskImage || 'none');
+  var isData = /^url\(\s*["']?data:/.test(maskVal);
+  row(css, 'Boss 按鈕的遮罩來源',
+      isData ? '內嵌 data URI（正確）' : maskVal.slice(0, 120),
+      isData ? 'ok' : 'bad');
+  var maskApplied = maskVal && maskVal !== 'none';
+  row(css, '遮罩規則有生效', maskApplied ? '是' : '否', maskApplied ? 'ok' : 'bad');
+  if (loaded && !maskApplied) problems.push('CSS 載入了但遮罩規則沒套上。');
+  if (maskApplied && !isData && location.protocol === 'file:') {
+    problems.push('遮罩還在指向外部檔案，file:// 下會被擋掉 —— ui-icon-masks.css 沒有載入。');
+  }
+
+  // 字體大小：若退回相容模式會變成 17px
+  row(css, 'b 元素字級 (0px 為正常)', bcs.fontSize);
+  if (bcs.fontSize !== '0px' && bcs.fontSize !== '') {
+    problems.push('觸發了舊瀏覽器相容模式（@supports 判定沒有遮罩支援）。');
+  }
+
+  // ---- 3. 圖檔 ----
+  var imgTb = document.getElementById('t-img');
+  var files = ['圖片/ui/mask/boss.png','圖片/ui/mask/char.png','圖片/ui/avatar-ring.png','圖片/bg.jpg'];
+  var pending = files.length, failed = [];
+  files.forEach(function(f){
+    var im = new Image();
+    im.onload = function(){ row(imgTb, f, '讀到了 (' + im.naturalWidth + '×' + im.naturalHeight + ')', 'ok'); done(); };
+    im.onerror = function(){ row(imgTb, f, '讀不到', 'bad'); failed.push(f); done(); };
+    im.src = f;
+  });
+  function done(){ if (--pending === 0) finish(failed); }
+
+  // ---- 4. 遮罩支援 ----
+  var mk = document.getElementById('t-mask');
+  var sup = (window.CSS && CSS.supports) ? CSS.supports('mask-image','url(a.png)') : null;
+  var supWk = (window.CSS && CSS.supports) ? CSS.supports('-webkit-mask-image','url(a.png)') : null;
+  row(mk, 'mask-image', sup === null ? '無法偵測' : (sup ? '支援' : '不支援'), sup ? 'ok' : 'bad');
+  row(mk, '-webkit-mask-image', supWk === null ? '無法偵測' : (supWk ? '支援' : '不支援'), supWk ? 'ok' : 'bad');
+  if (sup === false && supWk === false) problems.push('這個瀏覽器不支援 CSS 遮罩。');
+
+  function finish(failedFiles){
+    if (failedFiles.length) {
+      problems.push('有 ' + failedFiles.length + ' 個圖檔讀不到：' + failedFiles.join('、'));
+    }
+    var s = document.getElementById('summary');
+    if (!problems.length) {
+      s.innerHTML = '<span class="ok">全部檢查通過。</span><br>'
+        + '如果遊戲本身還是舊的樣子，代表 index.html 被瀏覽器快取住了，'
+        + '或是你開到別的路徑。請對照本頁最上方的「完整網址」。';
+    } else {
+      s.innerHTML = '<span class="bad">找到 ' + problems.length + ' 個問題：</span><ul style="margin:8px 0 0;padding-left:20px">'
+        + problems.map(function(p){ return '<li>' + p + '</li>'; }).join('') + '</ul>';
+    }
+  }
+  document.body.removeChild(probe);
+})();
+</script>
+</body>
+</html>
