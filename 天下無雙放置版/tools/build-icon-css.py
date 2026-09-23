@@ -24,6 +24,9 @@ DOCK = {
     "system": "system", "warehouse": "warehouse",
 }
 ACTIONS = {"tp": "#tpBtn", "auto": "#autoBtn", "warehouse": "#whBtn", "system": "#settingsBtn"}
+# 資源卡的四個圖示。那四張卡在 HTML 裡沒有可區分的 class，用 nth-child 對應，
+# 順序固定為 戰力／靈石／所在地／狀態。
+RESOURCES = {"res-power": 1, "res-stone": 2, "res-place": 3, "res-state": 4}
 
 
 def data_uri(path):
@@ -48,7 +51,7 @@ lines = [
 
 total = 0
 uris = {}
-for name in sorted(set(list(DOCK) + list(ACTIONS))):
+for name in sorted(set(list(DOCK) + list(ACTIONS) + list(RESOURCES))):
     path = os.path.join(MASK_DIR, name + ".png")
     if not os.path.exists(path):
         print("!! 找不到", path)
@@ -79,6 +82,15 @@ for name, sel in ACTIONS.items():
     lines.append(
         '#game .actions %s:before{-webkit-mask-image:var(--ico-%s);mask-image:var(--ico-%s)}'
         % (sel, name, name)
+    )
+
+lines.append("")
+for name, nth in RESOURCES.items():
+    if name not in uris:
+        continue
+    lines.append(
+        '#game .resources .res:nth-child(%d) .res-ico{-webkit-mask-image:var(--ico-%s);mask-image:var(--ico-%s)}'
+        % (nth, name, name)
     )
 lines.append("")
 

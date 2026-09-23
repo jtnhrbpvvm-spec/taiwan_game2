@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>介面診斷</title>
-<link rel="stylesheet" href="ui-buttons.css">
-<link rel="stylesheet" href="ui-icon-masks.css">
+<link rel="stylesheet" href="../ui-buttons.css">
+<link rel="stylesheet" href="../ui-icon-masks.css">
 <style>
   body{margin:0;padding:18px;background:#0a1226;color:#dde6fa;
        font:14px/1.6 "Microsoft JhengHei","Noto Sans TC",sans-serif}
@@ -23,15 +23,25 @@
   .box{width:56px;height:56px;border:1px dashed rgba(240,198,116,.35);border-radius:8px;margin-bottom:4px}
   /* 用外部檔案當遮罩：file:// 下會被 CORS 擋掉 */
   .m{background:linear-gradient(180deg,#ffe6ac,#c8973f);
-     -webkit-mask:url("圖片/ui/mask/boss.png") center/contain no-repeat;
-             mask:url("圖片/ui/mask/boss.png") center/contain no-repeat}
+     -webkit-mask:url("../圖片/ui/mask/boss.png") center/contain no-repeat;
+             mask:url("../圖片/ui/mask/boss.png") center/contain no-repeat}
   /* 用 data URI 當遮罩（修正後的做法）：同源，不受限制 */
   .d{background:linear-gradient(180deg,#ffe6ac,#c8973f);
      -webkit-mask-image:var(--ico-boss); mask-image:var(--ico-boss);
      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
      -webkit-mask-position:center;  mask-position:center;
      -webkit-mask-size:contain;     mask-size:contain}
-  .r{background:url("圖片/ui/avatar-ring.png") center/contain no-repeat}
+  .r{background:url("../圖片/ui/avatar-ring.png") center/contain no-repeat}
+  /* 選中按鈕的流動金光用的是漸層遮罩（非外部圖檔），這一格確認它在 file:// 下也能畫出環 */
+  @property --diag-ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+  .g{position:relative;border-radius:8px}
+  .g:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:3px;
+    background:conic-gradient(from var(--diag-ang),rgba(196,150,74,.55) 0deg,#fffaea 80deg,rgba(196,150,74,.55) 164deg,rgba(196,150,74,.55) 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+            mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:diagFlow 2.6s linear infinite}
+  @keyframes diagFlow{to{--diag-ang:360deg}}
   #summary{margin-top:18px;padding:12px 14px;border-radius:8px;
            background:#111c38;border:1px solid rgba(240,198,116,.3);max-width:760px}
 </style>
@@ -57,7 +67,8 @@
   <figure><div class="box d"></div>Boss（內嵌遮罩）</figure>
   <figure><div class="box m"></div>Boss（外部檔遮罩）</figure>
   <figure><div class="box r"></div>龍紋環</figure>
-  <figure><div class="box"><img src="圖片/ui/mask/char.png" width="56" height="56" alt="" style="display:block"></div>直接 img</figure>
+  <figure><div class="box"><img src="../圖片/ui/mask/char.png" width="56" height="56" alt="" style="display:block"></div>直接 img</figure>
+  <figure><div class="box g" style="border:0"></div>流動金光</figure>
 </div>
 <div style="color:#9db0d6;font-size:12.5px;margin-top:8px">
   <b style="color:#f0c674">第 1 格是關鍵</b>：應該看到金色鬼面。<br>
@@ -126,7 +137,7 @@
 
   // ---- 3. 圖檔 ----
   var imgTb = document.getElementById('t-img');
-  var files = ['圖片/ui/mask/boss.png','圖片/ui/mask/char.png','圖片/ui/avatar-ring.png','圖片/bg.jpg'];
+  var files = ['../圖片/ui/mask/boss.png','../圖片/ui/mask/char.png','../圖片/ui/avatar-ring.png','../圖片/bg.jpg'];
   var pending = files.length, failed = [];
   files.forEach(function(f){
     var im = new Image();

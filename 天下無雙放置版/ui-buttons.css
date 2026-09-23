@@ -107,6 +107,40 @@
   z-index:2;
 }
 .dock button.active b{background:linear-gradient(180deg,var(--btn-on-ico-1),var(--btn-on-ico-2))}
+
+/* 選中的按鈕：外框跑一道流動金光。
+   用 @property 讓 conic-gradient 的角度可以做動畫（直接旋轉元素的話，
+   下面那層環狀遮罩會跟著轉，環就破了）。
+   遮罩用的是漸層不是外部圖檔，所以 file:// 直接開也沒問題。
+   z-index:-1 讓它蓋在按鈕底色之上、文字與圖示之下。 */
+@property --dock-ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+
+.dock button.active{position:relative;isolation:isolate}
+.dock button.active:before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;
+  border-radius:inherit;
+  padding:2.2px;
+  /* 整圈都有一層暗金打底，讓邊框隨時看得見；亮的那一段是跑動的高光。 */
+  background:conic-gradient(from var(--dock-ang),
+    rgba(196,150,74,.55)    0deg,
+    rgba(232,190,110,.75)  34deg,
+    #ffe9ae                62deg,
+    #fffaea                80deg,
+    #ffd77a                98deg,
+    rgba(232,190,110,.75) 126deg,
+    rgba(196,150,74,.55)  164deg,
+    rgba(196,150,74,.55)  360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  animation:dockFlow 2.6s linear infinite;
+  pointer-events:none;
+}
+@keyframes dockFlow{to{--dock-ang:360deg}}
+/* 光環接手做高光，底下那圈固定邊框就收斂一點，不然會看起來是兩層 */
+.dock button.active,#game .dock button.active{border-color:rgba(214,178,104,.75)}
 .dock button.active[data-ico="boss"] b{
   background:linear-gradient(180deg,#ffb066 0%,#ef3f22 46%,#8a140f 100%);
   filter:drop-shadow(0 0 9px rgba(255,80,40,.85));
@@ -172,6 +206,45 @@
 #game .actions .icon.on:before{background:linear-gradient(180deg,var(--btn-on-ico-1),var(--btn-on-ico-2))}
 
 /* ============================================================
+   資源卡（戰力／靈石／所在地／狀態）
+   取代 theme.css 用 res-card.png 拉伸出來的邊框（來源解析度不足）。
+   雙金線＋深色內底用 border + inset box-shadow 疊出來，任何解析度都銳利。
+   ============================================================ */
+#game .resources{grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
+#game .res{
+  display:flex;align-items:center;gap:6px;
+  min-width:0;padding:5px 6px;
+  border:1px solid rgba(214,176,104,.9);
+  border-radius:5px;
+  border-image:none;
+  background:linear-gradient(180deg,#14243f 0%,#0c1728 62%,#08101f 100%);
+  background-clip:padding-box;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(6,12,24,.95),
+    inset 0 0 0 2.5px rgba(186,148,84,.5),
+    0 2px 6px rgba(0,0,0,.45);
+}
+.res-ico{
+  flex:none;width:26px;height:26px;
+  border:0;border-radius:0;
+  font-size:0;line-height:0;
+  background:linear-gradient(180deg,#ffe6ac,#c8973f);
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-position:center;  mask-position:center;
+  -webkit-mask-size:contain;     mask-size:contain;
+}
+/* 靈石在示意圖裡是藍寶石，保留這個區別 */
+#game .resources .res:nth-child(2) .res-ico{
+  background:linear-gradient(180deg,#e2f4ff 0%,#5ab4ea 48%,#1f66bd 100%);
+}
+#game .res b{color:#a9bcd8;font-size:9.5px;font-weight:600;letter-spacing:.06em}
+#game .res span{color:#f4dfae;font-size:13px;font-weight:800}
+/* 成長值：示意圖用青色三角，取代原本的綠色 */
+#game .res #powerRate{color:#5fd6e0;font-size:9px;font-weight:700;margin-left:0}
+#game .res #powerRate:before{content:"▲";margin-right:2px;font-size:7px;vertical-align:1px}
+#game .res #hereMap,#game .res #autoState{color:#cfe4ff;font-size:12px}
+
+/* ============================================================
    左上角色徽記：示意圖的火焰龍紋圓環
    只取環本身（中心與環外皆透明），所以裡面仍是遊戲動態產生的門派徽記。
    ============================================================ */
@@ -209,11 +282,22 @@
   #game .actions .icon:before{-webkit-mask-size:17px 17px;mask-size:17px 17px}
   .avatar-ring{width:58px;height:58px;padding:9px}
   #game .avatar{font-size:19px}
+  #game .resources{gap:4px}
+  #game .res{padding:4px 4px;gap:4px;border-radius:4px}
+  .res-ico{width:22px;height:22px}
+  #game .res b{font-size:8.5px;letter-spacing:0}
+  #game .res span{font-size:11.5px;letter-spacing:-.02em}
+  #game .res #hereMap,#game .res #autoState{font-size:10.5px}
 }
 
 @media (prefers-reduced-motion:reduce){
   .dock button,#game .dock button{transition:none}
   .dock button.active,#game .dock button.active{transform:none}
+  /* 關掉流光，改成固定的一圈亮邊 */
+  .dock button.active:before{
+    animation:none;
+    background:linear-gradient(140deg,#fff7dc,#ffd782 45%,rgba(255,230,160,.35));
+  }
 }
 
 /* 沒有 mask 支援的舊瀏覽器：退回文字字符，至少不會變空白 */
