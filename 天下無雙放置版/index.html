@@ -181,7 +181,7 @@ main{position:relative;z-index:3;display:flex;flex:1;min-height:0;overflow:hidde
 <div id="game">
 <header>
   <div class="top"><div class="player"><div class="avatar-ring"><div class="avatar" id="avatar">無</div></div><div class="pinfo"><div class="pname" id="pname">少俠</div><div class="prealm" id="prealm">Lv.1</div><div class="prow"><span class="class-badge" id="className">未選門派</span><span class="lv-tag">Lv.<span id="lv">1</span></span></div><div class="pmeta">總經驗：<b id="realmText">0/60</b></div></div></div>
-    <div class="actions"><div class="act"><button class="icon" id="tpBtn" title="御劍傳送">傳</button><span>傳送</span></div><div class="act"><button class="icon" id="autoBtn" title="自動掛機">掛</button><span>掛機</span></div><div class="act"><button class="icon" id="whBtn" title="共用倉庫" onclick="openWarehouseWindow()">倉</button><span>倉庫</span></div><div class="act"><button class="icon" id="settingsBtn" title="設定">⚙</button><span>設定</span></div></div></div>
+    <div class="actions"><div class="act"><button class="icon" id="townBtn" title="返回城鎮">城</button><span>城鎮</span></div><div class="act"><button class="icon" id="tpBtn" title="御劍傳送">傳</button><span>傳送</span></div><div class="act"><button class="icon" id="autoBtn" title="自動掛機">掛</button><span>掛機</span></div><div class="act"><button class="icon" id="whBtn" title="共用倉庫" onclick="openWarehouseWindow()">倉</button><span>倉庫</span></div><div class="act"><button class="icon" id="settingsBtn" title="設定">⚙</button><span>設定</span></div></div></div>
   <div class="resources"><div class="res"><i class="res-ico">⚔</i><div class="res-body"><b>戰力</b><span id="power">0</span><span id="powerRate">+0/s</span></div></div><div class="res"><i class="res-ico">◈</i><div class="res-body"><b>靈石</b><span id="stone">500</span></div></div><div class="res"><i class="res-ico">⌖</i><div class="res-body"><b>所在地</b><span id="hereMap">桃花林</span></div></div><div class="res"><i class="res-ico">✸</i><div class="res-body"><b>狀態</b><span id="autoState">閒置</span></div></div></div>
   <div class="vitals"><div class="vital"><i id="hpFill"></i><span id="hpText">氣血 0/0</span></div><div class="vital mana"><i id="mpFill"></i><span id="mpText">法力 0/0</span></div></div>
   <div class="progress"><div class="bar"><div class="fill" id="powerFill"></div><div class="bartext" id="powerText">0 / 35</div></div></div>
@@ -190,7 +190,7 @@ main{position:relative;z-index:3;display:flex;flex:1;min-height:0;overflow:hidde
 <main><aside class="side" id="side"></aside><section class="content" id="content"></section></main>
 <div class="dock" id="dock"></div>
 <div class="battle-screen" id="battleScreen"><div class="battle-head"><div class="line" style="display:flex;justify-content:space-between;gap:8px"><strong id="battleTitle">戰鬥</strong><button class="smallbtn" id="battleClose">收起畫面</button></div><div class="statusline" id="battleStatus">等待出招…</div></div><div class="fighters"><div class="fighter"><div class="line" style="display:flex;justify-content:space-between"><b id="bfPlayer">你</b><span id="bfPlayerPct">100%</span></div><div class="hpbar"><i class="hptrail" id="bfPHPTrail"></i><div class="hpfill" id="bfPHP"></div><span class="hpnum" id="bfPHPNum"></span></div><div class="hpbar" style="margin-top:4px;background:#091d31;border-color:#2f5185"><div class="mpfill" id="bfPMP"></div></div><div class="statusline" id="bfPStatus">—</div></div><div class="fighter"><div class="line" style="display:flex;justify-content:space-between"><b id="bfEnemy">敵人</b><span id="bfEnemyPct">100%</span></div><div class="hpbar"><i class="hptrail" id="bfEHPTrail"></i><div class="hpfill" id="bfEHP"></div><span class="hpnum" id="bfEHPNum"></span></div><div class="statusline" id="bfEStatus">—</div></div></div><div class="fightlog" id="fightLog"></div><div class="battle-actions" id="battleActions"></div></div>
-<div class="modal" id="tpModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">御劍傳送</h3><button class="smallbtn" id="tpClose">關閉</button></div><p class="desc">選擇已解鎖的狩獵地圖。</p><div class="modal-body" id="tpBody"></div></div></div><div class="modal" id="updateModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">更新選單</h3><button class="smallbtn" id="updateClose">關閉</button></div><div class="modal-body"><div class="card"><h3 class="title">天下無雙・放置版 V1.0.8</h3><p class="desc">目前版本：V1.0.8</p><div class="feature-list"><div><b>獵場版面：</b>獵場頁面移除最上方的角色資訊卡，讓獵場面板成為該頁最頂端的區塊。角色數值不受影響，仍可在「角色」分頁與上方角色列查看；其他分頁的角色卡照常顯示。</div><div><b>戰鬥數值重做：</b>防禦改為比例減傷，不會再出現「傷害被壓成 1 點」；「準」屬性恢復作用（原本命中率恆為 99.5%）；怪物血量與攻防改由等級曲線推導，修正高等級時「玩家要打 165 下、怪物 1 下就打死玩家」的失衡。</div><div><b>程式整併：</b>原本拆在 data/ 的 32 個模組已併回 index.html，改為單一檔案。</div><div><b>程式整理：</b>原本全部寫在 index.html 裡的遊戲程式，已依功能拆成 data/ 資料夾內 31 個 .js 檔（資料、戰鬥、背包、煉器、副本、介面…各自獨立），玩法與數值完全沒有更動，方便日後只改需要的部分。</div><div><b>圖示重繪：</b>下方十顆按鈕、上方四顆圓鈕、四張資源卡的圖示全部重繪，改用高解析遮罩上色，任何螢幕密度都不會糊。</div><div><b>選中特效：</b>下方選單目前選取的按鈕，外框會跑一道流動的金光。</div><div><b>角色徽記：</b>左上角改為火焰龍紋圓環，中間仍顯示門派徽記。</div><div><b>資源卡：</b>戰力／靈石／所在地／狀態改為雙金線邊框，成長值改以青色三角顯示。</div><div><b>相容性：</b>圖示改為內嵌，直接用瀏覽器開啟 index.html 也能正常顯示。</div><div><b>介面：</b>全新墨藍鎏金介面：圓形頭像環、四格資源卡、氣血／法力長條、經驗條、雙排十格下方選單；背景圖鋪滿全畫面，UI 半透明可見背景。</div><div><b>下方選單：</b>改用實圖按鈕，未選縮小、選取放大；電腦版改為三區塊（角色與能力值／功能內容／按鈕）。</div><div><b>選角：</b>在角色拱門內連點兩下可直接進入遊戲。</div><div><b>戰鬥：</b>血條改為「即時扣血＋延遲尾條＋傷害飄字」，並顯示實際 HP 數值。</div><div><b>登入／選角：</b>全新登入畫面；4 個角色欄位，舊存檔自動成為存檔 1。</div><div><b>倉庫：</b>新增共用倉庫（下方選單「倉庫」），4 個角色共用物品與靈石。</div><div><b>神通：</b>移除狀態神通；增益神通 2 槽可正常自動施放（加速／減傷 20 秒）。</div><div><b>副本：</b>狩獵中也能進入副本；點選副本會先顯示進入條件。</div><div><b>吃藥：</b>自動吃藥改依「吃藥設定」的 HP／MP 百分比。</div><div><b>裝備：</b>升品後素質會依品質提升（天品為凡品的 1.5 倍）。</div><div><b>奇緣模式：</b>創角時可選。掉落裝備隨機帶品階、強度與強化值；無法強化、精煉、洗煉、升品（可開孔與鑲嵌）；倉庫與一般模式分開。</div><div><b>其他：</b>Boss 重生 5 分鐘；停在主城畫面不再暫停遊戲。</div></div></div></div></div></div>
+<div class="modal" id="tpModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">御劍傳送</h3><button class="smallbtn" id="tpClose">關閉</button></div><p class="desc">選擇已解鎖的狩獵地圖。</p><div class="modal-body" id="tpBody"></div></div></div><div class="modal" id="updateModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">更新選單</h3><button class="smallbtn" id="updateClose">關閉</button></div><div class="modal-body"><div class="card"><h3 class="title">天下無雙・放置版 V1.0.9</h3><p class="desc">目前版本：V1.0.9</p><div class="feature-list"><div><b>獵場版面：</b>獵場頁面移除最上方的角色資訊卡，讓獵場面板成為該頁最頂端的區塊。角色數值不受影響，仍可在「角色」分頁與上方角色列查看；其他分頁的角色卡照常顯示。</div><div><b>戰鬥數值重做：</b>防禦改為比例減傷，不會再出現「傷害被壓成 1 點」；「準」屬性恢復作用（原本命中率恆為 99.5%）；怪物血量與攻防改由等級曲線推導，修正高等級時「玩家要打 165 下、怪物 1 下就打死玩家」的失衡。</div><div><b>程式整併：</b>原本拆在 data/ 的 32 個模組已併回 index.html，改為單一檔案。</div><div><b>程式整理：</b>原本全部寫在 index.html 裡的遊戲程式，已依功能拆成 data/ 資料夾內 31 個 .js 檔（資料、戰鬥、背包、煉器、副本、介面…各自獨立），玩法與數值完全沒有更動，方便日後只改需要的部分。</div><div><b>圖示重繪：</b>下方十顆按鈕、上方四顆圓鈕、四張資源卡的圖示全部重繪，改用高解析遮罩上色，任何螢幕密度都不會糊。</div><div><b>選中特效：</b>下方選單目前選取的按鈕，外框會跑一道流動的金光。</div><div><b>角色徽記：</b>左上角改為火焰龍紋圓環，中間仍顯示門派徽記。</div><div><b>資源卡：</b>戰力／靈石／所在地／狀態改為雙金線邊框，成長值改以青色三角顯示。</div><div><b>相容性：</b>圖示改為內嵌，直接用瀏覽器開啟 index.html 也能正常顯示。</div><div><b>介面：</b>全新墨藍鎏金介面：圓形頭像環、四格資源卡、氣血／法力長條、經驗條、雙排十格下方選單；背景圖鋪滿全畫面，UI 半透明可見背景。</div><div><b>下方選單：</b>改用實圖按鈕，未選縮小、選取放大；電腦版改為三區塊（角色與能力值／功能內容／按鈕）。</div><div><b>選角：</b>在角色拱門內連點兩下可直接進入遊戲。</div><div><b>戰鬥：</b>血條改為「即時扣血＋延遲尾條＋傷害飄字」，並顯示實際 HP 數值。</div><div><b>登入／選角：</b>全新登入畫面；4 個角色欄位，舊存檔自動成為存檔 1。</div><div><b>倉庫：</b>新增共用倉庫（下方選單「倉庫」），4 個角色共用物品與靈石。</div><div><b>神通：</b>移除狀態神通；增益神通 2 槽可正常自動施放（加速／減傷 20 秒）。</div><div><b>副本：</b>狩獵中也能進入副本；點選副本會先顯示進入條件。</div><div><b>吃藥：</b>自動吃藥改依「吃藥設定」的 HP／MP 百分比。</div><div><b>裝備：</b>升品後素質會依品質提升（天品為凡品的 1.5 倍）。</div><div><b>奇緣模式：</b>創角時可選。掉落裝備隨機帶品階、強度與強化值；無法強化、精煉、洗煉、升品（可開孔與鑲嵌）；倉庫與一般模式分開。</div><div><b>其他：</b>Boss 重生 5 分鐘；停在主城畫面不再暫停遊戲。</div></div></div></div></div></div>
 <div class="modal" id="potionModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0">吃藥／治癒設定</h3><button class="smallbtn" id="potionClose">關閉</button></div><div class="modal-body" id="potionBody"></div></div></div>
 <div class="modal" id="dungeonModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0" id="dungeonModalTitle">副本</h3><button class="smallbtn" onclick="closeDungeonPrompt()">關閉</button></div><div class="modal-body" id="dungeonModalBody"></div></div></div>
 <div class="modal" id="inventoryDetailModal"><div class="modal-box"><div class="modal-head"><h3 class="title" style="margin:0" id="inventoryDetailTitle">物品詳情</h3><button class="smallbtn" id="inventoryDetailClose">關閉</button></div><div class="modal-body" id="inventoryDetailBody"></div></div></div>
@@ -262,6 +262,25 @@ const OFFICIAL = {
   craft:['融珀丹','五靈珠','伊舍那精魄','魔王血晶','仙魄'],
   blood:['白髮血珀','鬼王血珀','鬼魔血珀','鬼仙血珀','食魔血珀','巨獸血珀','妖姬血珀','摩那血珀','妖厲血珀']
 };
+
+// 【官方整合 - 批次1】活動物品
+// 目前使用者提供的批次1只有名稱，未提供官方的品質、等級需求、屬性、售價、
+// 堆疊規則或完整效果數值；依規則保留 null，不自行補值。
+const OFFICIAL_BATCH1_ITEMS = [
+  {name:'聚魂符',cat:'活動物品',quality:null,lvReq:null,stats:null,price:null,source:null,stackable:null,src:'官方'},
+  {name:'試煉令',cat:'活動物品',quality:null,lvReq:null,stats:null,price:null,source:null,stackable:null,src:'官方'},
+  {name:'新手禮包',cat:'活動物品',quality:null,lvReq:null,stats:null,price:null,source:null,stackable:null,src:'官方'},
+  {name:'逆轉羅盤',cat:'活動物品',quality:null,lvReq:null,stats:null,price:null,source:null,stackable:null,src:'官方'},
+  {name:'九龍無悔樽',cat:'活動物品',quality:null,lvReq:null,stats:null,price:null,source:null,stackable:null,src:'官方'}
+];
+
+// 【官方整合 - 批次1】配套資料索引
+// 僅建立官方名稱索引；目前未提供完整規則與數值，因此不修改既有遊戲邏輯。
+const OFFICIAL_BATCH1_SYSTEMS = [
+  {name:'魂值',type:'配套系統',details:null,src:'官方'},
+  {name:'練功場',type:'配套系統',details:null,src:'官方'},
+  {name:'加持保護',type:'配套系統',details:null,src:'官方'}
+];
 const OFFICIAL_MONSTER_DATA=[
  ['狐狸',4,'小','獸','中立','火','肉、狐狸毛、狐狸皮、狐狸獸骨、木靈珠、狐狸血珀','',['碎玉戒指']],
  ['野豬',6,'中','獸','中立','土','野豬鬃、野豬牙、野豬皮、野豬血珀、金靈珠','',['飲馬戰盔']],
@@ -285,6 +304,33 @@ const OFFICIAL_MONSTER_DATA=[
  ['聚妖怪',120,'中','蟲','惡','水','','',[]],
  ...OFFICIAL.monsters3
 ];
+// 【官方整合 - 批次2】官方怪物資料（版本待確認）
+// 本檔目前已有以下官方怪物名稱、等級、體型、種族、相性、五行與掉落資料，
+// 但來源內容沒有明確標示 1.0 版本，因此依規則不得自行歸類為 1.0。
+// HP／攻擊／防禦／地圖也未在這批既有資料中提供，全部保留為 null。
+const OFFICIAL_BATCH2_MONSTERS_PENDING_VERSION = [
+  {name:'狐狸',lv:4,size:'小',race:'獸',affinity:'中立',element:'火',hp:null,atk:null,def:null,drops:['肉','狐狸毛','狐狸皮','狐狸獸骨','木靈珠','狐狸血珀'],dropSkills:[],dropEquips:['碎玉戒指'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'野豬',lv:6,size:'中',race:'獸',affinity:'中立',element:'土',hp:null,atk:null,def:null,drops:['野豬鬃','野豬牙','野豬皮','野豬血珀','金靈珠'],dropSkills:[],dropEquips:['飲馬戰盔'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'白狐狸',lv:8,size:'小',race:'獸',affinity:'中立',element:'木',hp:null,atk:null,def:null,drops:['白狐皮','白狐血','狐狸獸骨','破損的獸皮'],dropSkills:['止傷'],dropEquips:['重劍','赤金遊鳳袍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'蜘蛛精',lv:9,size:'中',race:'精',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['繭','水悠草','蜘蛛爪','蜘蛛皮','蜘蛛血','無憂草','翡翠石','蜘蛛精血珀'],dropSkills:[],dropEquips:['鋼劍','魁星冠'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'虎',lv:10,size:'中',race:'獸',affinity:'中立',element:'土',hp:null,atk:null,def:null,drops:['破損的獸皮','完整的獸皮','金靈環'],dropSkills:['魑'],dropEquips:['熟金面甲','金剛戟'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'野盜',lv:12,size:'中',race:'人',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['獸血','金礦石','完整的獸皮'],dropSkills:['速'],dropEquips:['雲遊皮袍','乾坤頂','長刀'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'熊',lv:15,size:'中',race:'精',affinity:'中立',element:'金',hp:null,atk:null,def:null,drops:['破損的獸皮','熊掌','獸心','獸骨','獸眼','完整的獸皮'],dropSkills:['桑折','卷浪'],dropEquips:['金背','金虺袍','骷髏項鍊'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'松鬼',lv:15,size:'中',race:'怪',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['松鬼掌','松鬼毛','松鬼血','松鬼血珀'],dropSkills:['地滅','蒼松'],dropEquips:['硬皮衣','青峰劍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'山鬼',lv:18,size:'大',race:'精',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['銅礦石','鐵礦石','銀礦石','金礦石','玄鐵礦石','土靈珠','山鬼膽','山鬼皮','山鬼血'],dropSkills:['腕狙','治傷'],dropEquips:['皂色箭衣','真武劍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'獸鬼',lv:22,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['破損的獸皮','獸鬼之爪','完整的獸皮','獸鬼血珀'],dropSkills:['大雪','春分'],dropEquips:['學士冠','三尖兩刃戟'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'鬼僧',lv:24,size:'中',race:'人',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['獸骨','完整的獸皮','金靈珠','琥珀石','鬼僧血珀'],dropSkills:['火','土','金','水'],dropEquips:['舍利戒指','鳳羽鏜','青銅劍','鐵盔'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'樹精',lv:25,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['木材','沉木','香木','木靈珠','樹精原石','樹精血','木凰草'],dropSkills:['谷雨','竹裂'],dropEquips:['虎皮鐵甲盔','闊刃劍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'綠毛蜘蛛精',lv:35,size:'中',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['繭','蛛網結','妖爪','水靈珠','翡翠石','絲線','獸血'],dropSkills:['清心'],dropEquips:['杖','鬼臉','柔劍','蓼葉'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'九尾狐',lv:38,size:'中',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['完整的獸皮','藍水晶','靈石','靈晶','獸血'],dropSkills:['速','松濤'],dropEquips:[],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'山尤',lv:45,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['獸眼','黃玉石','金靈珠','完整的獸皮','獸血','山尤項鍊'],dropSkills:['櫻散','龍卷飛殘葉'],dropEquips:['虎皮鐵甲盔','骷髏帽','萬刃','無極'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'腐尸',lv:24,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['腐尸頭皮','腐尸肉','金株草'],dropSkills:['地滅','怒松橫斷'],dropEquips:['鳳羽鏜','雲紋頭皮靴','紫焱馳風袍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'沙鬼',lv:30,size:'大',race:'精',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['銅礦石','玄鐵礦石','沙鬼之證','土靈珠'],dropSkills:['治傷'],dropEquips:['雲遊皮袍'],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'五行妖',lv:120,size:'大',race:'無',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','五行妖魄'],dropSkills:[],dropEquips:[],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'聚魂怪',lv:80,size:'中',race:'蟲',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['聚魂丹'],dropSkills:[],dropEquips:[],map:null,ver:'待確認',aliases:null,src:'官方'},
+  {name:'聚妖怪',lv:120,size:'中',race:'蟲',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:null,ver:'待確認',aliases:null,src:'官方'}
+];
+
 const localMons={
  '狐狸':{lv:4,hp:80,atk:12,def:5,spd:15,elem:'火',size:'小',race:'獸'},'野豬':{lv:6,hp:150,atk:18,def:10,spd:8,elem:'土',size:'中',race:'獸'},'白狐狸':{lv:8,hp:200,atk:25,def:8,spd:22,elem:'木',size:'小',race:'獸'},'蜘蛛精':{lv:9,hp:250,atk:30,def:12,spd:18,elem:'水',size:'中',race:'精'},'虎':{lv:10,hp:350,atk:40,def:18,spd:20,elem:'土',size:'中',race:'獸'},'野盜':{lv:12,hp:400,atk:45,def:20,spd:25,elem:'金',size:'中',race:'人'},'熊':{lv:15,hp:700,atk:60,def:30,spd:12,elem:'金',size:'中',race:'精'},'松鬼':{lv:15,hp:550,atk:65,def:22,spd:28,elem:'木',size:'中',race:'怪'},'山鬼':{lv:18,hp:900,atk:75,def:35,spd:22,elem:'無',size:'大',race:'精'},'獸鬼':{lv:22,hp:1100,atk:95,def:40,spd:30,elem:'火',size:'中',race:'怪'},'鬼僧':{lv:24,hp:1300,atk:110,def:48,spd:28,elem:'火',size:'中',race:'人'},'樹精':{lv:25,hp:1500,atk:120,def:55,spd:18,elem:'木',size:'大',race:'精'},'老樹精':{lv:28,hp:1800,atk:140,def:65,spd:20,elem:'木',size:'大',race:'精'},'僵屍':{lv:28,hp:1600,atk:130,def:58,spd:15,elem:'土',size:'中',race:'怪'},'骷髏兵':{lv:32,hp:2200,atk:170,def:70,spd:32,elem:'金',size:'中',race:'怪'},'綠毛蜘蛛精':{lv:35,hp:2800,atk:200,def:85,spd:35,elem:'木',size:'中',race:'精'},'九尾狐':{lv:38,hp:3200,atk:230,def:95,spd:42,elem:'水',size:'中',race:'怪'},'劍靈':{lv:40,hp:3500,atk:260,def:100,spd:55,elem:'金',size:'中',race:'靈'},'腐尸':{lv:24,hp:1400,atk:105,def:45,spd:18,elem:'土',size:'中',race:'靈'},'白神鬼':{lv:44,hp:4200,atk:300,def:125,spd:40,elem:'水',size:'大',race:'怪'},'山尤':{lv:45,hp:4500,atk:320,def:130,spd:38,elem:'土',size:'大',race:'怪'},'劍魔':{lv:48,hp:5200,atk:380,def:150,spd:58,elem:'金',size:'中',race:'魔'},'幻影妖':{lv:55,hp:7500,atk:520,def:200,spd:58,elem:'無',size:'中',race:'精'},'沙鬼':{lv:30,hp:9500,atk:680,def:260,spd:42,elem:'土',size:'大',race:'精'},'石魔':{lv:65,hp:14000,atk:950,def:350,spd:25,elem:'土',size:'巨',race:'怪'},'樓蘭殘魂':{lv:70,hp:16000,atk:1050,def:400,spd:62,elem:'無',size:'中',race:'靈'},'地龍':{lv:75,hp:22000,atk:1400,def:480,spd:35,elem:'土',size:'巨',race:'獸'},'守陵傀儡':{lv:70,hp:18000,atk:1100,def:400,spd:20,elem:'金',size:'大',race:'怪'},'王陵鬼將':{lv:80,hp:28000,atk:1800,def:620,spd:48,elem:'無',size:'大',race:'靈'},'湖妖':{lv:88,hp:38000,atk:2300,def:780,spd:55,elem:'水',size:'大',race:'精'},'幻魅':{lv:90,hp:45000,atk:2800,def:900,spd:65,elem:'無',size:'中',race:'精'},'心魔':{lv:100,hp:65000,atk:3800,def:1150,spd:70,elem:'無',size:'大',race:'魔'},'五行妖':{lv:120,hp:24000,atk:2200,def:680,spd:50,elem:'無',size:'大',race:'無'},'聚魂怪':{lv:80,hp:18000,atk:950,def:330,spd:42,elem:'水',size:'中',race:'蟲'},'聚妖怪':{lv:120,hp:34000,atk:2800,def:980,spd:52,elem:'水',size:'中',race:'蟲'},'沙魔':{lv:110,hp:90000,atk:5600,def:1650,spd:48,elem:'土',size:'巨',race:'魔'}
 };
@@ -717,6 +763,13 @@ const COMBAT_TARGET = {
   bossDefMul:  1.5   // Boss 防禦倍率
 };
 
+/* 【官方整合 - 批次16】怪物戰鬥倍率調整
+ * 需求：怪物 HP ×7、怪物傷害 ×4、怪物防禦 ×4；只作用於怪物戰鬥模型，不修改玩家屬性。
+ */
+const MONSTER_HP_MUL = 7;
+const MONSTER_ATK_MUL = 4;
+const MONSTER_DEF_MUL = 4;
+
 /* ---------------------------------------------------------------------------
    模組 3：防禦公式
    ---------------------------------------------------------------------------
@@ -836,8 +889,8 @@ function monsterBaseline(lv){
   const playerDefMul = defenceMultiplier(PLAYER_REF.def(L), L); // 怪打玩家時的保留率
   return {
     def,
-    hp:  PLAYER_REF.atk(L) * monDefMul * COMBAT_TARGET.killHits * ease,
-    atk: PLAYER_REF.hp(L) / COMBAT_TARGET.surviveHits / playerDefMul * ease
+    hp:  PLAYER_REF.atk(L) * monDefMul * COMBAT_TARGET.killHits * ease * MONSTER_HP_MUL,
+    atk: PLAYER_REF.hp(L) / COMBAT_TARGET.surviveHits / playerDefMul * ease * MONSTER_ATK_MUL
   };
 }
 /* 套上體型、種族、個體權重與 Boss 倍率，得到最終三圍。
@@ -853,7 +906,7 @@ function monsterStats(lv, size, race, isBoss, name, handTuned){
   const out = {
     hp:  Math.round(b.hp  * sm.hp  * rm.hp  * bh * w),
     atk: Math.round(b.atk * sm.atk * rm.atk * ba * wAtk),
-    def: Math.round(b.def * sm.def * rm.def * bd * wDef),
+    def: Math.round(b.def * sm.def * rm.def * bd * wDef * MONSTER_DEF_MUL),
     evasion: Math.min(.35, sm.eva),                          // [自研] 讓「準」有意義
     weight: w
   };
@@ -966,7 +1019,7 @@ function claimQuest(id){const q=QUESTS.find(x=>x.id===id);if(!q||G.quests.claime
 /* ══════════════════ [14/32] data/stats.js ══════════════════ */
 /* 數值公式：ensureStats() 總屬性、戰力、五行相克、命中／暴擊、calcDamage() 傷害計算
  * 由 index.html 拆分而來。載入順序與檔案關係請見 data/README.md */
-function currentMap(){return maps.find(m=>m.id===G.map)||maps[0]}
+function currentMap(){return maps.find(m=>m.id===G.map)||maps[0]||{id:'',name:'',zone:'',need:1,desc:'',mons:[]}}
 function mapUnlocked(m){return G.player.level>=m.need}
 function ensureStats(){const p=G.player,s=p.stats||{},c=classData()||CLASSES.劍宗,attr=p.attr||c.attrs,bonus={atk:0,def:0,hp:0,mp:0,spd:0,crit:0,hit:0,evade:0,狠:0,快:0,穩:0,智:0,準:0},elementPower={metal:0,wood:0,water:0,fire:0,earth:0},elementRes={metal:0,wood:0,water:0,fire:0,earth:0};let refinePct=0;Object.values(G.equipment).filter(Boolean).forEach(it=>{const qmul=it.qBaked?1:(QUALITY_MUL[G.inventoryQuality?.[it.name]||it.quality]||1);bonus.atk+=(it.baseAtk||0)*qmul;bonus.def+=(it.baseDef||0)*qmul;bonus.hp+=(it.hp||0)*qmul;bonus.mp+=(it.mp||0)*qmul;for(const k of Object.keys(attr))if(it.attr?.[k])bonus[k]=(bonus[k]||0)+it.attr[k]*qmul;if(it.affix?.key)bonus[it.affix.key]=(bonus[it.affix.key]||0)+it.affix.value;for(const g of (it.gems||[])){if(g==='攻擊靈石')bonus.atk+=12;if(g==='防禦靈石')bonus.def+=10;if(g==='氣血靈石')bonus.hp+=100;if(typeof g==='string'&&g.endsWith('血珀')){bonus.atk+=p.level*.8;bonus.hp+=p.level*6;bonus.def+=p.level*.4}const eg={金靈石:'metal',木靈石:'wood',水靈石:'water',火靈石:'fire',土靈石:'earth'}[g];if(eg){elementPower[eg]+=.06;elementRes[eg]+=.04}}refinePct+=it.refine||0});const refineMul=1+refinePct/100;bonus.atk*=refineMul;bonus.def*=refineMul;bonus.hp*=refineMul;bonus.mp*=refineMul;const pt=petData();if(pt){bonus.atk+=pt.atk||0;bonus.def+=pt.def||0;bonus.hp+=pt.hp||0;bonus.spd+=pt.fast||0;bonus.crit+=pt.crit||0}const a={狠:attr.狠+(bonus.狠||0)+(G.talents.狠||0),快:attr.快+(bonus.快||0)+(G.talents.快||0),穩:attr.穩+(bonus.穩||0)+(G.talents.穩||0),智:attr.智+(bonus.智||0)+(G.talents.智||0),準:attr.準+(bonus.準||0)+(G.talents.準||0)};/* 模組4：五屬轉換。係數集中在 data/combat-model.js 的 ATTR_CONV（含官方定義對照與自研標註）。
    數值與改動前完全相同——這幾條是整個數值模型的錨，改了會連帶讓怪物模型需要重新校準。 */
@@ -1121,7 +1174,7 @@ function usePotion(type){const key=type==='mp'?(G.auto.mpPotionKey||'mpPotion'):
 /* 掉落結算 grantDrops()、怪物經驗 monsterExp()
  * 由 index.html 拆分而來。載入順序與檔案關係請見 data/README.md */
 function grantDrops(name,isBoss=false,offline=false){const row=OFFICIAL_MONSTER_DATA.find(r=>r[0]===name);if(row){String(row[6]||'').split(/[、,，]+/).filter(Boolean).forEach(x=>{if(Math.random()<.38||isBoss){G.inventory[x]=(G.inventory[x]||0)+1;G.auto.stats.drops++}});(row[8]||[]).forEach(eq=>{const chance=isBoss?.35:.10+(G.player.level>=row[1]?0.03:0);if(Math.random()<chance){const _it=gainEquipDrop(eq,row[1],isBoss);G.auto.stats.drops++;if(!offline)hlog(`掉寶：${eq}${_it?` · ${QUALITY[_it.quality]}${equipTag(_it)}`:''}`,'lg-drop')}});const s=String(row[7]||'').split(/[、,，\s]+/).filter(Boolean);if(s.length&&Math.random()<.10){const n=s[Math.floor(Math.random()*s.length)];if(SKILLS[n]){learnSkill(n);G.auto.stats.skillDrops++;hlog(`招式掉落：${n}`,'lg-drop')}}}
- if(isBoss&&!row){const blood=OFFICIAL.blood[Math.floor(Math.random()*OFFICIAL.blood.length)];G.inventory[blood]=(G.inventory[blood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${blood}`,'lg-drop');const listed=BOSS_DROP_TABLE[name]?.items||[];if(listed.length&&Math.random()<BALANCE.bossItemDropRate){const extraBlood=listed[Math.floor(Math.random()*listed.length)];G.inventory[extraBlood]=(G.inventory[extraBlood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${extraBlood}`,'lg-drop')}if(Math.random()<.50){const item=OFFICIAL.craft[Math.floor(Math.random()*OFFICIAL.craft.length)];G.inventory[item]=(G.inventory[item]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${item}`,'lg-drop')}if(Math.random()<.35){const weapon=OFFICIAL.newWeapons[Math.floor(Math.random()*OFFICIAL.newWeapons.length)];const _bw=gainEquipDrop(weapon,EQUIP_DB[weapon]?.level||G.player.level,true);G.auto.stats.drops++;hlog(`Boss掉落：${weapon}${_bw?` · ${QUALITY[_bw.quality]}${equipTag(_bw)}`:''}`,'lg-drop')}}
+ if(isBoss&&!row){if(OFFICIAL.blood.length){const blood=OFFICIAL.blood[Math.floor(Math.random()*OFFICIAL.blood.length)];G.inventory[blood]=(G.inventory[blood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${blood}`,'lg-drop')}const listed=BOSS_DROP_TABLE[name]?.items||[];if(listed.length&&Math.random()<BALANCE.bossItemDropRate){const extraBlood=listed[Math.floor(Math.random()*listed.length)];G.inventory[extraBlood]=(G.inventory[extraBlood]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${extraBlood}`,'lg-drop')}if(OFFICIAL.craft.length&&Math.random()<.50){const item=OFFICIAL.craft[Math.floor(Math.random()*OFFICIAL.craft.length)];G.inventory[item]=(G.inventory[item]||0)+1;G.auto.stats.drops++;hlog(`Boss掉落：${item}`,'lg-drop')}if(Math.random()<.35){const weapon=OFFICIAL.newWeapons[Math.floor(Math.random()*OFFICIAL.newWeapons.length)];const _bw=gainEquipDrop(weapon,EQUIP_DB[weapon]?.level||G.player.level,true);G.auto.stats.drops++;hlog(`Boss掉落：${weapon}${_bw?` · ${QUALITY[_bw.quality]}${equipTag(_bw)}`:''}`,'lg-drop')}}
  if(Math.random()<.08){const mat=['玄鐵','精煉石','打孔石'][Math.floor(Math.random()*3)];G.inventory[mat]=(G.inventory[mat]||0)+1;G.auto.stats.drops++}
 }
 function monsterExp(e){return getMonsterHuntExp(e)}
@@ -1136,7 +1189,7 @@ function returnHome(){G.auto.enabled=false;G.auto.offline=false;pendingBoss=null
 function toggleAuto(){G.auto.enabled=!G.auto.enabled;G.auto.offline=true;toast(G.auto.enabled?'自動掛機已啟動':'自動掛機已停止');if(G.auto.enabled)nextSpawnAt=Date.now()+500;save(true);renderAll()}
 function startAuto(){G.auto.enabled=true;nextSpawnAt=Date.now()+400;renderAll()}
 function moveMap(id){const m=maps.find(x=>x.id===id);if(!m||!mapUnlocked(m))return toast(`需要 Lv.${m?.need||1}`);G.map=id;flee();hlog('前往 '+m.name,'lg-drop');renderAll()}
-function autoAdvance(){if(!G.auto.autoAdvance)return;const pl=G.player.level,here=currentMap(),guide=officialGuide();const preferred=guide.areas.map(n=>maps.find(m=>m.name===n)).filter(Boolean).filter(m=>mapUnlocked(m));const cands=(preferred.length?preferred:maps.filter(m=>m.id!==here.id&&mapUnlocked(m))).filter(m=>m.id!==here.id).sort((a,b)=>b.need-a.need);if(cands[0]&&cands[0].need>=here.need){G.map=cands[0].id;hlog(`AI依官方等級節奏前往：${cands[0].name}`,'lg-drop')}}
+function autoAdvance(){if(!G.auto.autoAdvance)return;if(!maps.length)return;const pl=G.player.level,here=currentMap(),guide=officialGuide();const preferred=guide.areas.map(n=>maps.find(m=>m.name===n)).filter(Boolean).filter(m=>mapUnlocked(m));const cands=(preferred.length?preferred:maps.filter(m=>m.id!==here.id&&mapUnlocked(m))).filter(m=>m.id!==here.id).sort((a,b)=>b.need-a.need);if(!cands.length)return;if(cands[0]&&cands[0].need>=here.need){G.map=cands[0].id;hlog(`AI依官方等級節奏前往：${cands[0].name}`,'lg-drop')}}
 function startBoss(id){const b=BOSS_DB.find(x=>x.id===id);if(!b)return;const st=G.bossStatus[id]||{};if(st.respawnAt&&st.respawnAt>Date.now())return toast('Boss 尚未重生');if(power()<b.recommendPower*.5)return toast('戰力不足，建議先提升裝備');if(!dungeonPrepare())return;startEncounter(b.name,b.level,'boss',true)}
 function bossReady(id){const st=G.bossStatus[id]||{};return !st.respawnAt||st.respawnAt<=Date.now()}
 function bossRemain(id){const st=G.bossStatus[id]||{};return Math.max(0,Math.ceil(((st.respawnAt||0)-Date.now())/1000))}
@@ -1790,7 +1843,7 @@ function openPotionMenu(){renderPotionMenu();$('potionModal')?.classList.add('sh
 function closePotionMenu(){$('potionModal')?.classList.remove('show')}
 function renderPotionMenu(){const body=$('potionBody');if(!body)return;const a=G.auto;const heals=healSkillList();const hpOptions=Object.entries(POTION_DEF).filter(([,d])=>d.type==='hp');const mpOptions=Object.entries(POTION_DEF).filter(([,d])=>d.type==='mp');
  body.innerHTML=`<div class="card settings"><h3 class="title">自動吃藥</h3><div class="field"><span>HP 藥品種類</span><select onchange="setAuto('hpPotionKey',this.value)">${hpOptions.map(([k,d])=>`<option value="${k}" ${a.hpPotionKey===k?'selected':''}>${d.name} ×${potionCount(k)}</option>`).join('')}</select></div><div class="field"><span>啟用HP自動吃藥</span><input type="checkbox" ${a.autoUsePotion?'checked':''} onchange="setAuto('autoUsePotion',this.checked)"></div><div class="field"><span>HP 低於</span><input type="number" value="${Math.round(a.potionHpPct*100)}" min="10" max="95" onchange="setAuto('potionHpPct',this.value/100)"><b>%</b></div><div class="field"><span>MP 藥品種類</span><select onchange="setAuto('mpPotionKey',this.value)">${mpOptions.map(([k,d])=>`<option value="${k}" ${a.mpPotionKey===k?'selected':''}>${d.name} ×${potionCount(k)}</option>`).join('')}</select></div><div class="field"><span>啟用MP自動吃藥</span><input type="checkbox" ${a.autoUseMpPotion?'checked':''} onchange="setAuto('autoUseMpPotion',this.checked)"></div><div class="field"><span>MP 低於</span><input type="number" value="${Math.round(a.mpPotionPct*100)}" min="10" max="95" onchange="setAuto('mpPotionPct',this.value/100)"><b>%</b></div><div class="field"><span>藥品不足自動購買100罐</span><input type="checkbox" ${a.autoBuyPotion?'checked':''} onchange="setAuto('autoBuyPotion',this.checked)"></div><p class="footer-note">吃藥優先使用背包中既有的所選藥品；藥品數量為0時，若已啟用自動購買，將自動花費靈石一次購買100罐再服用；HP、MP吃藥各自獨立設有2秒冷卻時間。</p></div><div class="card settings"><h3 class="title">自動施法治癒魔法</h3><div class="field"><span>啟用自動施放治癒魔法</span><input type="checkbox" ${a.autoCastHeal?'checked':''} onchange="setAuto('autoCastHeal',this.checked)"></div><div class="field"><span>治癒技能</span><select onchange="setAuto('healSkillId',this.value)"><option value="">無</option>${heals.map(sk=>`<option value="${sk.id}" ${a.healSkillId===sk.id?'selected':''}>${sk.name}（回${Math.round(sk.heal*100)}% · MP${sk.mp||0} · CD${sk.cd||3}秒）</option>`).join('')}</select></div><div class="field"><span>HP 低於</span><input type="number" value="${Math.round(a.healHpPct*100)}" min="10" max="95" onchange="setAuto('healHpPct',this.value/100)"><b>%</b></div><p class="footer-note">${heals.length?'治癒魔法與吃藥各自依HP%／MP%門檻獨立判斷，可能同時觸發。使用治癒魔法需消耗對應MP並依技能自身冷卻時間限制，MP不足或冷卻中不會施放。':'尚未學會任何治癒類神通，請先於「神通」頁面學習如：甘霖、春風、蘇生、療傷等回復類招式。'}</p></div>`}
-function renderSystem(){const a=G.auto;const mode=G.setting.screenMode||'auto';return `<div class="card settings"><h2 class="title">智能掛機</h2><div class="field"><span>自動戰鬥</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>吃藥／治癒設定</span><button class="smallbtn hot" onclick="openPotionMenu()">開啟設定</button></div><div class="field"><span>自動推圖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>自動追 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>技能五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI 依敵人克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card settings"><h2 class="title">畫面設定</h2><p class="desc">依裝置切換顯示比例；全螢幕可配合瀏覽器使用。</p><div class="row" style="margin-top:8px"><button class="smallbtn ${mode==='portrait'?'hot':''}" onclick="setScreenMode('portrait')">📱 手機 9:16</button><button class="smallbtn ${mode==='pc'?'hot':''}" onclick="setScreenMode('pc')">🖥️ PC 16:9</button><button class="smallbtn ${mode==='auto'?'hot':''}" onclick="setScreenMode('auto')">自動尺寸</button><button class="smallbtn" onclick="toggleFullscreen()">⛶ 全螢幕</button></div><p class="footer-note">目前：${mode==='portrait'?'手機 9:16':mode==='pc'?'PC 16:9':'自動尺寸'}</p></div><div class="card settings"><h2 class="title">角色／存檔</h2><div class="field"><span>道號</span><input id="nameInput" value="${G.name||'少俠'}" style="max-width:150px;background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:5px"></div><div class="row" style="margin-top:9px"><button class="smallbtn hot" onclick="openUpdateMenu()">更新選單</button><button class="smallbtn" onclick="save()">儲存</button><button class="smallbtn" onclick="exportSave()">匯出</button><button class="smallbtn" onclick="importSave()">匯入</button><button class="smallbtn danger" onclick="resetGame()">重置</button></div><div class="row" style="margin-top:7px"><button class="smallbtn hot" onclick="openWarehouseWindow()">共用倉庫</button><button class="smallbtn" onclick="logoutGame()">返回角色選擇</button></div><p class="footer-note">V1.0.8 · 四門派創角 · 4槽自由連招 · 10部位裝備 · 3.0掉落 · 六大3.0資料副本 · 靈寵 · 天賦 · 自動戰鬥 · 離線收益</p></div>`}
+function renderSystem(){const a=G.auto;const mode=G.setting.screenMode||'auto';return `<div class="card settings"><h2 class="title">智能掛機</h2><div class="field"><span>自動戰鬥</span><input type="checkbox" ${a.enabled?'checked':''} onchange="setAuto('enabled',this.checked)"></div><div class="field"><span>自動選招</span><input type="checkbox" ${a.autoSkill?'checked':''} onchange="setAuto('autoSkill',this.checked)"></div><div class="field"><span>吃藥／治癒設定</span><button class="smallbtn hot" onclick="openPotionMenu()">開啟設定</button></div><div class="field"><span>自動推圖</span><input type="checkbox" ${a.autoAdvance?'checked':''} onchange="setAuto('autoAdvance',this.checked)"></div><div class="field"><span>自動副本</span><input type="checkbox" ${a.autoDungeon?'checked':''} onchange="setAuto('autoDungeon',this.checked)"></div><div class="field"><span>自動追 Boss</span><input type="checkbox" ${a.autoBoss?'checked':''} onchange="setAuto('autoBoss',this.checked)"></div><div class="field"><span>Boss 戰力門檻</span><input type="checkbox" ${a.bossGate?'checked':''} onchange="setAuto('bossGate',this.checked)"></div><div class="field"><span>技能五行偏好</span><select onchange="setAuto('elementPref',this.value)"><option value="auto" ${a.elementPref==='auto'?'selected':''}>AI 依敵人克制</option>${['metal','wood','water','fire','earth'].map(k=>`<option value="${k}" ${a.elementPref===k?'selected':''}>${FIVE[k].name}</option>`).join('')}</select></div></div><div class="card settings"><h2 class="title">畫面設定</h2><p class="desc">依裝置切換顯示比例；全螢幕可配合瀏覽器使用。</p><div class="row" style="margin-top:8px"><button class="smallbtn ${mode==='portrait'?'hot':''}" onclick="setScreenMode('portrait')">📱 手機 9:16</button><button class="smallbtn ${mode==='pc'?'hot':''}" onclick="setScreenMode('pc')">🖥️ PC 16:9</button><button class="smallbtn ${mode==='auto'?'hot':''}" onclick="setScreenMode('auto')">自動尺寸</button><button class="smallbtn" onclick="toggleFullscreen()">⛶ 全螢幕</button></div><p class="footer-note">目前：${mode==='portrait'?'手機 9:16':mode==='pc'?'PC 16:9':'自動尺寸'}</p></div><div class="card settings"><h2 class="title">角色／存檔</h2><div class="field"><span>道號</span><input id="nameInput" value="${G.name||'少俠'}" style="max-width:150px;background:#091317;color:#ddd;border:1px solid #59666a;border-radius:6px;padding:5px"></div><div class="row" style="margin-top:9px"><button class="smallbtn hot" onclick="openUpdateMenu()">更新選單</button><button class="smallbtn" onclick="save()">儲存</button><button class="smallbtn" onclick="exportSave()">匯出</button><button class="smallbtn" onclick="importSave()">匯入</button><button class="smallbtn danger" onclick="resetGame()">重置</button></div><div class="row" style="margin-top:7px"><button class="smallbtn hot" onclick="openWarehouseWindow()">共用倉庫</button><button class="smallbtn" onclick="logoutGame()">返回角色選擇</button></div><p class="footer-note">V1.0.9 · 四門派創角 · 4槽自由連招 · 10部位裝備 · 3.0掉落 · 六大3.0資料副本 · 靈寵 · 天賦 · 自動戰鬥 · 離線收益</p></div>`}
 const STRATEGY_GLYPHS={conservative:'守',balanced:'衡',aggressive:'劍',burst:'煞'};
 function strategyGlyph(id){return STRATEGY_GLYPHS[id]||STRATEGY_GLYPHS.balanced}
 function strategyPickerOptions(activeId){
@@ -1892,12 +1945,564 @@ function openTeleport(){const body=$('tpBody');if(!body)return;body.innerHTML=`<
 function closeTeleport(){$('tpModal').classList.remove('show')}
 function updateStaticLabels(){document.title='天下無雙放置版';const p=document.querySelector('header .prealm');if(p)p.textContent='Lv.1';}
 /* ---------- 啟動 ---------- */
-$('tpBtn').onclick=openTeleport;if($('homeBtn'))$('homeBtn').onclick=returnHome;$('autoBtn').onclick=toggleAuto;$('settingsBtn').onclick=()=>goPanel('system');$('tpClose').onclick=closeTeleport;$('updateClose').onclick=closeUpdateMenu;$('inventoryDetailClose').onclick=closeInventoryDetail;$('battleClose').onclick=()=>{closeBattleScreen();renderAll()};$('potionClose').onclick=closePotionMenu;
+$('tpBtn').onclick=openTeleport;$('townBtn').onclick=()=>returnHome();if($('homeBtn'))$('homeBtn').onclick=returnHome;$('autoBtn').onclick=toggleAuto;$('settingsBtn').onclick=()=>goPanel('system');$('tpClose').onclick=closeTeleport;$('updateClose').onclick=closeUpdateMenu;$('inventoryDetailClose').onclick=closeInventoryDetail;$('battleClose').onclick=()=>{closeBattleScreen();renderAll()};$('potionClose').onclick=closePotionMenu;
 window.addEventListener('beforeunload',()=>save(true));window.addEventListener('pagehide',()=>save(true));
 /* 登入／選角／倉庫由 lobby.js、warehouse.js 接手：進入角色前不載入任何存檔、不寫入存檔 */
 normalize();applyScreenMode();updateStaticLabels();
 ensureStats();refreshMarket();hlog('天下無雙放置陣列已就位：選職業後由智能掛機 AI 自動戰鬥、4槽連招與自動升級。','lg-sys');renderAll();mainLoop=setInterval(loop,TICK);
 Object.assign(window,{showDmg,toggleAuto,returnHome,openInventoryDetail,closeInventoryDetail,sellInventoryAll,sellInventorySingle,toggleLock,isLocked,decomposeAll,sellAll,saveGame,loadGame,enhanceSelected,enhanceSelectedToAvailable,renderAI,openTeleport,closeTeleport,moveMap,goPanel,renderAll,manualStart,startEncounter,startBoss,flee,manualAttack,manualSkill,manualPotion,equipSkill,buySkill,buyShopItem,buyEquip,forgeEnhance,forgeRefine,forgeSocket,forgeGem,forgeReroll,dismantleInventory,sellAllItems,salvageAllEquipment,openInventoryDecompose,closeInventoryDecompose,confirmInventoryDecompose,addItemToInventory,inventorySetCategory,inventorySetSort,synthesize,enhanceEquippedAll,dungeonEnter,runTrialTemple,startMaze,mazeChoose,equipItemAt,openDungeonPrompt,closeDungeonPrompt,confirmDungeonPrompt,assignSkillSlot,assignBuffSlot,save,exportSave,importSave,resetGame,setAuto,setCombatStrategy,syncStrategyUI,setScreenMode,toggleFullscreen,logoutGame,openUpdateMenu,closeUpdateMenu,openPotionMenu,closePotionMenu,equipItem,unequipItem,buyPet,equipPet,spendTalent,claimQuest});
+
+
+/* ============================================================================
+   【官方整合 - 批次1～15】資料整合索引
+   說明：本區只整理現有資料常數到15批，不修改既有函式、UI、CSS或遊戲邏輯。
+   未在目前對話中提供官方原始資料的批次，維持 pending / null，不自行補值。
+   ============================================================================ */
+const OFFICIAL_BATCH1_DATA = {
+  items: OFFICIAL_BATCH1_ITEMS,
+  systems: OFFICIAL_BATCH1_SYSTEMS,
+  src: '官方'
+};
+
+const OFFICIAL_BATCH2_DATA = {
+  equipment: EQUIP_DB,
+  basicEquipment: BASIC_EQUIP,
+  shopItems: MARKET,
+  blood: OFFICIAL.blood,
+  consumables: null,
+  materials: null,
+  spiritStones: null,
+  src: '待確認',
+  note: '現有裝備／商店／血珀資料保留；消耗品、材料、完整靈石官方資料尚未在本對話提供。'
+};
+
+/* ============================================================================
+   【增量融合 - 檔案2】背包／武器／裝備設定＋血珀鑲嵌
+   說明：檔案1為主體。檔案2的裝備資料、背包、煉器與背包 UI 已存在於
+   [3/32]、[21/32]、[22/32]、[26/32]，本區只登記融合結果，不覆蓋既有函式。
+   血珀沿用 OFFICIAL.blood，裝備開孔／鑲嵌沿用 forgeSocket／forgeGem。
+   ============================================================================ */
+const OFFICIAL_BATCH16_DATA = {
+  inventorySettings: '檔案2已融合',
+  weaponSettings: '檔案2已融合',
+  equipmentSettings: '檔案2已融合',
+  bloodAmber: OFFICIAL.blood,
+  socketing: {enabled:true,maxSocketsPerEquipment:3},
+  src:'檔案2增量融合'
+};
+
+const OFFICIAL_BATCH3_DATA = {
+  skills: SKILLS,
+  formulas: OFFICIAL_SKILL_FORMULAS,
+  src: '待確認',
+  note: '現有技能資料保留；完整官方技能原始表尚未在本對話提供。'
+};
+
+const OFFICIAL_BATCH4_DATA = {
+  classes: CLASSES,
+  classSkills: CLASS_SKILLS,
+  src: '待確認',
+  note: '現有四職資料保留；成長曲線的官方原始資料尚未在本對話提供。'
+};
+
+// 【官方整合 - 批次5】官方 1.0 怪物資料
+const OFFICIAL_BATCH5_DATA = {
+  version:'1.0', src:'官方', verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/105.html',
+  monsters:[
+    {name:'狐狸',lv:4,size:'小',race:'獸',affinity:'中立',element:'火',hp:null,atk:null,def:null,drops:['肉','狐狸毛','狐狸皮','狐狸獸骨','木靈珠','狐狸血泊'],dropSkills:[],dropEquips:['碎玉戒指'],map:'桃花林、桃花谷、谷道',ver:'1.0',sourceName:'狐狸',aliases:['狐狸'],src:'官方'},
+    {name:'野豬',lv:6,size:'中',race:'獸',affinity:'中立',element:'土',hp:null,atk:null,def:null,drops:['野豬鬃','野豬牙','野豬皮','野豬血珀','金靈珠'],dropSkills:[],dropEquips:['飲馬戰盔'],map:'桃花林、桃花谷、谷道、帝釋天東郊、帝釋天西郊、帝釋天南郊',ver:'1.0',sourceName:'野猪',aliases:['野猪'],src:'官方'},
+    {name:'白狐狸',lv:8,size:'小',race:'獸',affinity:'中立',element:'木',hp:null,atk:null,def:null,drops:['白狐皮','白狐血','狐狸獸骨','破損的獸皮'],dropSkills:['止傷'],dropEquips:['重劍','赤金遊鳳袍'],map:'桃花林、白狐洞',ver:'1.0',sourceName:'白狐狸',aliases:['白狐狸'],src:'官方'},
+    {name:'蜘蛛精',lv:9,size:'中',race:'精',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['繭','水悠草','蜘蛛爪','蜘蛛皮','蜘蛛血','無憂草','翡翠石','蜘蛛精血珀'],dropSkills:[],dropEquips:['鋼劍','魁星冠'],map:'桃花谷、桃花林、谷道',ver:'1.0',sourceName:'蜘蛛精',aliases:['蜘蛛精'],src:'官方'},
+    {name:'虎',lv:10,size:'中',race:'獸',affinity:'中立',element:'土',hp:null,atk:null,def:null,drops:['破損的獸皮','完整的獸皮','金靈環'],dropSkills:['魑'],dropEquips:['熟金面甲','金剛戟'],map:'谷道、玄陽村野外',ver:'1.0',sourceName:'虎',aliases:['虎'],src:'官方'},
+    {name:'野盜',lv:12,size:'中',race:'人',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['獸血','金礦石','完整的獸皮'],dropSkills:['速'],dropEquips:['雲遊皮袍','乾坤頂','長刀'],map:'谷道、帝釋天郊外、亂木村野外、無生村野外、日藏村野外、月藏村野外、玄陽村野外',ver:'1.0',sourceName:'野盗',aliases:['野盗'],src:'官方'},
+    {name:'熊',lv:15,size:'中',race:'精',affinity:'中立',element:'金',hp:null,atk:null,def:null,drops:['破損的獸皮','熊掌','獸心','獸骨','獸眼','完整的獸皮'],dropSkills:['桑折','卷浪'],dropEquips:['金背','金虺袍','骷髏項鍊'],map:'亂木村野外、無生村野外、日藏村野外、月藏村野外',ver:'1.0',sourceName:'熊',aliases:['熊'],src:'官方'},
+    {name:'松鬼',lv:15,size:'中',race:'怪',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['松鬼掌','松鬼毛','松鬼血','松鬼血珀'],dropSkills:['地滅','蒼松'],dropEquips:['硬皮衣','青峰劍'],map:'谷道、帝釋天郊外',ver:'1.0',sourceName:'松鬼',aliases:['松鬼'],src:'官方'},
+    {name:'山鬼',lv:18,size:'大',race:'精',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['銅礦石','鐵礦石','銀礦石','金礦石','玄鐵礦石','土靈珠','山鬼膽','山鬼皮','山鬼血'],dropSkills:['腕狙','治傷'],dropEquips:['皂色箭衣','真武劍'],map:'谷道',ver:'1.0',sourceName:'山鬼',aliases:['山鬼'],src:'官方'},
+    {name:'獸鬼',lv:22,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['破損的獸皮','獸鬼之爪','完整的獸皮','獸鬼血珀'],dropSkills:['大雪','春分'],dropEquips:['學士冠','三尖兩刃戟'],map:'谷道、帝釋天郊外、日藏村野外',ver:'1.0',sourceName:'兽鬼',aliases:['兽鬼'],src:'官方'},
+    {name:'鬼僧',lv:24,size:'中',race:'人',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['獸骨','完整的獸皮','金靈珠','琥珀石','鬼僧血珀'],dropSkills:['火','土','金','水'],dropEquips:['舍利戒指','鳳羽鏜','青銅劍','鐵盔'],map:'玄陽村野外、亂木村野外、無生村野外、月藏村野外',ver:'1.0',sourceName:'鬼僧',aliases:['鬼僧'],src:'官方'},
+    {name:'樹精',lv:25,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['木材','沉木','香木','木靈珠','樹精原石','樹精血','木凰草'],dropSkills:['谷雨','竹裂'],dropEquips:['虎皮鐵甲盔','闊刃劍'],map:'妖之林',ver:'1.0',sourceName:'树精',aliases:['树精'],src:'官方'},
+    {name:'樹精1',lv:28,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['木材','沉木','香木','木靈珠','樹精原石','碧葉瓊汁','木凰草'],dropSkills:['療傷','魅','木'],dropEquips:['金錐帽','玄武藤甲'],map:'妖之林',ver:'1.0',sourceName:'树精1',aliases:['树精1'],src:'官方'},
+    {name:'蠻盜',lv:30,size:'中',race:'人',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['完整的獸皮','蠻盜血珀','藍貓眼石','銀礦石','金礦石'],dropSkills:['狠','連旋風'],dropEquips:['騰龍戰甲','蓼葉'],map:'玄陽村野外、亂木村野外、無生村野外、日藏村野外、月藏村野外',ver:'1.0',sourceName:'蛮盗',aliases:['蛮盗'],src:'官方'},
+    {name:'骷髏',lv:35,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['傀儡骨','枯骨','鐵礦石','骷髏頭','藍水晶','獸眼','獸骨'],dropSkills:['甘霖','楓舞'],dropEquips:['杖'],map:'亂葬窟一層、亂葬窟二層',ver:'1.0',sourceName:'骷髅',aliases:['骷髅'],src:'官方'},
+    {name:'綠毛蜘蛛精',lv:35,size:'中',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['繭','蛛網結','妖爪','水靈珠','翡翠石','絲線','獸血'],dropSkills:['清心'],dropEquips:['杖','鬼臉','柔劍','蓼葉'],map:'妖之林三層',ver:'1.0',sourceName:'绿毛蜘蛛精',aliases:['绿毛蜘蛛精'],src:'官方'},
+    {name:'骷髏',lv:38,size:'中',race:'靈',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['骷髏頭','枯骨','骷髏骨','鐵礦石','持弓骷髏血珀','藍水晶','獸骨'],dropSkills:['續命','準'],dropEquips:['朝天巾','鳳羽鏜','精鋼戟','青銅劍','衮銀槍','紫焱馳風袍'],map:'亂葬窟一層、亂葬窟二層',ver:'1.0',sourceName:'骷髅',aliases:['骷髅'],src:'官方'},
+    {name:'九尾狐',lv:38,size:'中',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['完整的獸皮','藍水晶','靈石','靈晶','獸血'],dropSkills:['速','松濤'],dropEquips:[],map:'妖之林三層',ver:'1.0',sourceName:'九尾狐',aliases:['九尾狐'],src:'官方'},
+    {name:'骷髏',lv:40,size:'中',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['骷髏頭','枯骨','骷髏骨','鐵礦石','持槍骷髏血珀','藍水晶','銅礦石','玄鐵礦石'],dropSkills:['櫻飛','穩'],dropEquips:['羅英劍','三尖兩刃戟','神遊帽','紗羅巾'],map:'亂葬窟一層、亂葬窟二層',ver:'1.0',sourceName:'骷髅',aliases:['骷髅'],src:'官方'},
+    {name:'山尤',lv:45,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['獸眼','黃玉石','金靈珠','完整的獸皮','獸血','山尤項鍊'],dropSkills:['櫻散','龍卷飛殘葉'],dropEquips:['虎皮鐵甲盔','骷髏帽','萬刃','無極'],map:'妖之林三層',ver:'1.0',sourceName:'山尤',aliases:['山尤'],src:'官方'},
+    {name:'黑骷髏',lv:45,size:'中',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['黑骷髏頭','枯骨','琥珀石','玄鐵礦石','黑骷髏骸骨','黑骷髏血珀'],dropSkills:['快'],dropEquips:['貫甲錐','學士冠','白虹劍'],map:'亂葬窟一層',ver:'1.0',sourceName:'黑骷髅',aliases:['黑骷髅'],src:'官方'},
+    {name:'黑骷髏',lv:48,size:'中',race:'靈',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['黑骷髏頭','枯骨','玄鐵礦石','破土符','黑骷髏骸骨','淨葉水','琥珀石','木靈珠'],dropSkills:['直覺','怒雷鳴'],dropEquips:['凌霄劍','鬼噬','鐵盔','趕月'],map:'劍塚',ver:'1.0',sourceName:'黑骷髅',aliases:['黑骷髅'],src:'官方'},
+    {name:'黑骷髏',lv:50,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['玄鐵礦石','枯骨','破土符','黑骷髏頭','黑骷髏骸骨','琥珀石'],dropSkills:['蘇生','排除'],dropEquips:['金錐帽','夜叉戟','蛇頭杖','乘風','日劍'],map:'劍塚',ver:'1.0',sourceName:'黑骷髅',aliases:['黑骷髅'],src:'官方'},
+    {name:'惡鬼僧',lv:55,size:'中',race:'人',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['血戒指','完整的獸皮','琥珀石','金靈珠','華蘭液','妖爪','惡鬼僧血珀','靈符碎片','火龍草'],dropSkills:[],dropEquips:['細紗帽','虎紋嵌釘皮靴','含光','黔月','皓月'],map:'亂葬窟二層、亂葬窟三層、亂葬窟四層',ver:'1.0',sourceName:'恶鬼僧',aliases:['恶鬼僧'],src:'官方'},
+    {name:'赤毛蜘蛛精',lv:60,size:'中',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['繭','蜘蛛卵','妖爪','火靈珠','絲線'],dropSkills:[],dropEquips:['銀盔','烏金鎖鏈靴','巨闕','龍脊','司命','九環金杖'],map:'劍塚二層、劍塚三層、劍塚四層',ver:'1.0',sourceName:'赤毛蜘蛛精',aliases:['赤毛蜘蛛精'],src:'官方'},
+    {name:'黑山尤',lv:65,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['靈符碎片','獸眼','翎風露','完整的獸皮','金靈珠','黃玉石','金靈環','火龍草'],dropSkills:[],dropEquips:['地煞戰靴','熾漓金鎖靴','五色滾雲袍','獅子短袍','凝霜','龍脊','吞龍貫'],map:'亂葬窟三層、亂葬窟四層、亂葬窟五層',ver:'1.0',sourceName:'黑山尤',aliases:['黑山尤'],src:'官方'},
+    {name:'白骨精',lv:68,size:'大',race:'精',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['魔骷髏','枯骨','黃玉石','不明水晶'],dropSkills:['巨龍卷','雷鳴'],dropEquips:['黑鐵面甲','逍遙履','熟鋼鏈甲','紫焱袍','辟邪寶玉'],map:'劍塚三層、劍塚四層',ver:'1.0',sourceName:'白骨精',aliases:['白骨精'],src:'官方'},
+    {name:'亡魂',lv:72,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['玄鐵礦石','銀礦石','妖爪','琥珀石','亡靈符咒','玄清漿','碧葉瓊汁','火龍草'],dropSkills:['迅'],dropEquips:['玄冰'],map:'亂葬窟四層、亂葬窟五層',ver:'1.0',sourceName:'亡魂',aliases:['亡魂'],src:'官方'},
+    {name:'亡魂',lv:75,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['玄鐵礦石','銀礦石','妖爪','琥珀石','亡靈符咒','金靈珠','玄清漿'],dropSkills:['狂鷲落'],dropEquips:['紫金冠','九曜戰袍'],map:'劍塚三層、劍塚四層',ver:'1.0',sourceName:'亡魂',aliases:['亡魂'],src:'官方'},
+    {name:'赤鬼',lv:75,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['烤臘腸','銅礦石','金礦石','赤鬼皮','完整的獸皮','瑪瑙石','火靈珠'],dropSkills:[],dropEquips:['流火金盔','逍遙袍'],map:'鬼湖通道',ver:'1.0',sourceName:'赤鬼',aliases:['赤鬼'],src:'官方'},
+    {name:'獸鬼',lv:78,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['破損的獸皮','烤鴨','完整的獸皮','妖爪','靈石'],dropSkills:['龍卷飛殘葉'],dropEquips:['惡魔面甲','雲羽紅魄甲'],map:'鬼湖通道',ver:'1.0',sourceName:'兽鬼',aliases:['兽鬼'],src:'官方'},
+    {name:'肥遺',lv:80,size:'大',race:'怪',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['鱗','水靈珠','翡翠石'],dropSkills:[],dropEquips:['皓月','龍降冠'],map:'鬼湖洞一層、鬼湖洞二層',ver:'1.0',sourceName:'肥遗',aliases:['肥遗'],src:'官方'},
+    {name:'九鳳',lv:82,size:'巨',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['銅礦石','琥珀石','火靈珠','靈石','九鳳之膽'],dropSkills:[],dropEquips:[],map:'鬼湖洞一層、鬼湖洞二層、鬼湖洞三層',ver:'1.0',sourceName:'九凤',aliases:['九凤'],src:'官方'},
+    {name:'豬鬼',lv:86,size:'巨',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['豬鬼眼','金礦石','獸眼','琥珀石','完整的獸皮','土靈珠','妖爪'],dropSkills:[],dropEquips:['天刑'],map:'鬼湖洞二層、鬼湖洞三層、鬼湖洞四層',ver:'1.0',sourceName:'猪鬼',aliases:['猪鬼'],src:'官方'},
+    {name:'鬼衛',lv:90,size:'巨',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['魔骷髏','枯骨','玄鐵礦石','銅礦石','金礦石','鬼衛心臟'],dropSkills:['凶雕爪'],dropEquips:['溟冷'],map:'鬼湖洞三層、鬼湖洞四層、鬼湖洞五層',ver:'1.0',sourceName:'鬼卫',aliases:['鬼卫'],src:'官方'},
+    {name:'鬼姬',lv:95,size:'中',race:'精',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['黃石','銀礦石','水靈珠','妖爪','藍水晶','鬼姬血'],dropSkills:[],dropEquips:['方玉佩','金剛'],map:'鬼湖洞四層、鬼湖洞五層、鬼湖殿',ver:'1.0',sourceName:'鬼姬',aliases:['鬼姬'],src:'官方'}
+  ]
+};
+
+// 【官方整合 - 批次6】官方 2.0 怪物資料
+const OFFICIAL_BATCH6_DATA = {
+  version:'2.0',src:'官方',verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/106.html',
+  monsters:[
+    {name:'蠻野刀夫',lv:12,size:'中',race:'人',affinity:'中',element:'火',hp:null,atk:null,def:null,drops:['破損的獸皮','鐵礦石'],dropSkills:[],dropEquips:['重劍'],map:'多聞天東郊、多聞天南郊、多聞天西郊',ver:'2.0',sourceName:'蛮野刀夫',aliases:['蛮野刀夫'],src:'官方'},
+    {name:'蠻野斧夫',lv:15,size:'中',race:'人',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['獸血','玄鐵礦石'],dropSkills:[],dropEquips:['杖','硬皮衣'],map:'多聞天東郊、多聞天南郊、多聞天西郊',ver:'2.0',sourceName:'蛮野斧夫',aliases:['蛮野斧夫'],src:'官方'},
+    {name:'冥鬼',lv:16,size:'中',race:'怪',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['冥鬼毛','肉'],dropSkills:[],dropEquips:['金背'],map:'琉璃村野外',ver:'2.0',sourceName:'冥鬼',aliases:['冥鬼'],src:'官方'},
+    {name:'蠻野鏢夫',lv:18,size:'中',race:'人',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['骷髏項鍊','金礦石'],dropSkills:[],dropEquips:['精鋼戟'],map:'多聞天東郊、多聞天南郊、多聞天西郊',ver:'2.0',sourceName:'蛮野镖夫',aliases:['蛮野镖夫'],src:'官方'},
+    {name:'毒蠍',lv:19,size:'小',race:'獸',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['蠍子尾巴','金靈環'],dropSkills:[],dropEquips:['金虺袍'],map:'多聞天東郊',ver:'2.0',sourceName:'毒蝎',aliases:['毒蝎'],src:'官方'},
+    {name:'蠻野鏢客',lv:20,size:'中',race:'人',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['異族尖角鞋','妖爪'],dropSkills:['桑折'],dropEquips:[],map:'神獸村野外、神泉崗野外',ver:'2.0',sourceName:'蛮野镖客',aliases:['蛮野镖客'],src:'官方'},
+    {name:'沙蜘蛛',lv:20,size:'中',race:'精',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['蜘蛛爪','繭','破損的獸皮','木靈珠','妖爪'],dropSkills:[],dropEquips:['鋼劍','碎玉戒指'],map:'多聞天東郊',ver:'2.0',sourceName:'沙蜘蛛',aliases:['沙蜘蛛'],src:'官方'},
+    {name:'蠻野刀客',lv:22,size:'中',race:'人',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['獸血','藍水晶','異族尖角鞋','獸眼'],dropSkills:[],dropEquips:['青鋒劍'],map:'神獸村野外、神泉崗野外',ver:'2.0',sourceName:'蛮野刀客',aliases:['蛮野刀客'],src:'官方'},
+    {name:'腐尸',lv:24,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['腐尸頭皮','腐尸肉','金株草'],dropSkills:['地滅','怒松橫斷'],dropEquips:['鳳羽鏜','雲紋頭皮靴','紫焱馳風袍'],map:'沼澤周邊一',ver:'2.0',sourceName:'腐尸',aliases:['腐尸'],src:'官方'},
+    {name:'蠻野斧客',lv:25,size:'中',race:'人',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['異族尖角鞋','銅礦石','獸心'],dropSkills:['蒼松'],dropEquips:['學士冠'],map:'神獸村野外、神泉崗野外',ver:'2.0',sourceName:'蛮野斧客',aliases:['蛮野斧客'],src:'官方'},
+    {name:'毒瘴腐尸',lv:26,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['腐尸頭皮','腐尸肉','鐵礦石','翡翠石','金靈珠','金株草'],dropSkills:['腕狙'],dropEquips:['萬刃','神遊帽'],map:'沼澤周邊一、沼澤周邊二',ver:'2.0',sourceName:'毒瘴腐尸',aliases:['毒瘴腐尸'],src:'官方'},
+    {name:'遮那',lv:26,size:'中',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['破損的獸皮','翡翠石','遮那戰斧'],dropSkills:['止傷'],dropEquips:['鐵盔'],map:'悲竹村野外、三難村野外、琉璃村野外',ver:'2.0',sourceName:'遮那',aliases:['遮那'],src:'官方'},
+    {name:'風鬼',lv:27,size:'中',race:'精',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['風鬼刺','獸心'],dropSkills:[],dropEquips:['真武劍'],map:'悲竹村野外、三難村野外',ver:'2.0',sourceName:'风鬼',aliases:['风鬼'],src:'官方'},
+    {name:'蠅頭鬼',lv:29,size:'中',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['蠅頭','破損的獸皮','金株草'],dropSkills:['狠','谷雨'],dropEquips:['闊刃劍','細紗帽'],map:'沼澤周邊二',ver:'2.0',sourceName:'蝇头鬼',aliases:['蝇头鬼'],src:'官方'},
+    {name:'沙鬼',lv:30,size:'大',race:'精',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['銅礦石','玄鐵礦石','沙鬼之證','土靈珠'],dropSkills:['治傷'],dropEquips:['雲遊皮袍'],map:'悲竹村野外、三難村野外、琉璃村野外',ver:'2.0',sourceName:'沙鬼',aliases:['沙鬼'],src:'官方'},
+    {name:'蛤蟆鬼',lv:31,size:'中',race:'精',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['蛤蟆皮','肉','金株草'],dropSkills:['卷浪'],dropEquips:['紗羅巾','騰龍戰甲'],map:'沼澤周邊二',ver:'2.0',sourceName:'蛤蟆鬼',aliases:['蛤蟆鬼'],src:'官方'},
+    {name:'長矛厭鬼',lv:32,size:'小',race:'怪',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['厭鬼眼珠','獸心','碧葉瓊汁','厭鬼頭皮'],dropSkills:['魑'],dropEquips:['三尖兩刃戟'],map:'王陵周邊一',ver:'2.0',sourceName:'长矛厌鬼',aliases:['长矛厌鬼'],src:'官方'},
+    {name:'紅鬼蠍',lv:33,size:'大',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['紅鬼蠍鉗子','紅鬼蠍尾巴','瑪瑙石','碧葉瓊汁','水悠草'],dropSkills:['快','雷光電閃','狂浪潮'],dropEquips:['含光','飲馬戰盔'],map:'海市蜃樓一、海市蜃樓二',ver:'2.0',sourceName:'红鬼蝎',aliases:['红鬼蝎'],src:'官方'},
+    {name:'鬼蛆',lv:34,size:'中',race:'蟲',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['鬼蛆卵','腐爛的肉','獸心','琥珀石'],dropSkills:['療傷','木'],dropEquips:['落英劍','鬼臉'],map:'絕望沼澤一層',ver:'2.0',sourceName:'鬼蛆',aliases:['鬼蛆'],src:'官方'},
+    {name:'毒箭厭鬼',lv:34,size:'小',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['厭鬼眼珠','琥珀石','厭鬼頭皮','獸眼'],dropSkills:[],dropEquips:['熟金面甲','皂色箭衣','蓼葉'],map:'王陵周邊一',ver:'2.0',sourceName:'毒箭厌鬼',aliases:['毒箭厌鬼'],src:'官方'},
+    {name:'飛天',lv:35,size:'中',race:'怪',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['飛天爪','破損的獸皮','藍水晶','魅','水靈珠','水悠草'],dropSkills:['快'],dropEquips:['凝霜','虎皮鐵甲盔'],map:'海市蜃樓一、海市蜃樓二',ver:'2.0',sourceName:'飞天',aliases:['飞天'],src:'官方'},
+    {name:'戒刀厭鬼',lv:36,size:'小',race:'怪',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['飛毒翅膀','金靈環','獸眼'],dropSkills:['清心'],dropEquips:['黑鐵面甲'],map:'王陵周邊二',ver:'2.0',sourceName:'戒刀厌鬼',aliases:['戒刀厌鬼'],src:'官方'},
+    {name:'黑鬼蠍',lv:38,size:'大',race:'怪',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['黑鬼蠍鉗子','黑鬼蠍尾巴','琥珀石','淨葉水','水悠草'],dropSkills:['櫻散'],dropEquips:['無極','銀盔'],map:'海市蜃樓二',ver:'2.0',sourceName:'黑鬼蝎',aliases:['黑鬼蝎'],src:'官方'},
+    {name:'飛鏢厭鬼',lv:38,size:'小',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['厭鬼眼珠','厭鬼頭皮','破損的獸皮','翡翠石','獸眼'],dropSkills:['連旋風'],dropEquips:['虎皮鐵甲盔','舍利戒指'],map:'王陵周邊二',ver:'2.0',sourceName:'飞镖厌鬼',aliases:['飞镖厌鬼'],src:'官方'},
+    {name:'鬼蜥',lv:39,size:'中',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['鬼蜥腳爪','鬼蜥鱗片','獸心'],dropSkills:['穩','櫻飛','木'],dropEquips:['巨闕','烏金鎖鏈靴','玄武藤甲'],map:'絕望沼澤一層、絕望沼澤二層',ver:'2.0',sourceName:'鬼蜥',aliases:['鬼蜥'],src:'官方'},
+    {name:'巨目',lv:41,size:'大',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['巨目眼珠','獸','華蘭液','金靈珠','水悠草'],dropSkills:['怒雷鳴'],dropEquips:['龍脊','骷髏帽'],map:'海市蜃樓一、海市蜃樓二、黃石洞一層',ver:'2.0',sourceName:'巨目',aliases:['巨目'],src:'官方'},
+    {name:'鬼俑刀偶',lv:43,size:'中',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['泥鎧甲碎片','銅礦石','金靈珠'],dropSkills:[],dropEquips:['貫甲錐','魁星冠'],map:'地下王陵一層、地下王陵二層',ver:'2.0',sourceName:'鬼俑刀偶',aliases:['鬼俑刀偶'],src:'官方'},
+    {name:'毛鬼',lv:44,size:'中',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['毛鬼獠牙','獸心','獸眼','繭','絲線'],dropSkills:['續命','準'],dropEquips:['辟邪寶玉','日劍'],map:'絕望沼澤二層',ver:'2.0',sourceName:'毛鬼',aliases:['毛鬼'],src:'官方'},
+    {name:'鬼俑槍偶',lv:45,size:'中',race:'靈',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['泥鎧甲碎片','玄鐵礦石','瑪瑙石','土姜草'],dropSkills:['大雪'],dropEquips:['皓月','赤金遊鳳袍'],map:'地下王陵一層、地下王陵二層、百官陵',ver:'2.0',sourceName:'鬼俑枪偶',aliases:['鬼俑枪偶'],src:'官方'},
+    {name:'琅滄',lv:46,size:'大',race:'怪',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['琅滄眼','獸膽','獸眼','黃玉石'],dropSkills:['蘇生','排除'],dropEquips:['司命','追雲','獅子短袍'],map:'黃石洞一層、黃石洞二層',ver:'2.0',sourceName:'琅沧',aliases:['琅沧'],src:'官方'},
+    {name:'鬼俑弓偶',lv:48,size:'中',race:'靈',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['泥鎧甲碎片','鐵礦石','藍水晶','土姜草'],dropSkills:['春風'],dropEquips:['白虹劍','金錐帽'],map:'地下王陵一層、地下王陵二層、百官陵',ver:'2.0',sourceName:'鬼俑弓偶',aliases:['鬼俑弓偶'],src:'官方'},
+    {name:'百官俑',lv:52,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['玉笏','黃玉石','銀礦石','土姜草'],dropSkills:['火','土','金','水','木'],dropEquips:['凌霄劍','鬼噬'],map:'地下王陵二層、百官陵',ver:'2.0',sourceName:'百官俑',aliases:['百官俑'],src:'官方'},
+    {name:'飛毒',lv:54,size:'巨',race:'精',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['獸膽','飛毒翅膀','金靈環'],dropSkills:['清心'],dropEquips:['黑鐵面甲'],map:'黃石洞二層、黃石洞三層',ver:'2.0',sourceName:'飞毒',aliases:['飞毒'],src:'官方'},
+    {name:'噩咒刀手',lv:58,size:'中',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['詛咒枯骨','骷髏頭','藍水晶'],dropSkills:['甘霖'],dropEquips:['吞龍貫','乾坤頂'],map:'皇陵魔窟',ver:'2.0',sourceName:'噩咒刀手',aliases:['噩咒刀手'],src:'官方'},
+    {name:'噩咒弓手',lv:62,size:'中',race:'靈',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['詛咒枯骨','骷髏頭','銅礦石','火靈珠','髮束'],dropSkills:['楓舞','松濤','巨竹崩'],dropEquips:['夜叉戟','虎紋嵌釘皮靴'],map:'皇陵魔窟',ver:'2.0',sourceName:'噩咒弓手',aliases:['噩咒弓手'],src:'官方'},
+    {name:'噩咒槍手',lv:75,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['詛咒枯骨','骷髏頭','鐵礦石','翡翠石'],dropSkills:['竹裂','巨龍卷'],dropEquips:['蛇頭杖','五色滾雲袍'],map:'皇陵魔窟',ver:'2.0',sourceName:'噩咒枪手',aliases:['噩咒枪手'],src:'官方'},
+    {name:'阿鼻',lv:75,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['肉','阿鼻面罩','翎風露','木靈珠','瑪瑙石'],dropSkills:[],dropEquips:['九環金杖','紫焱袍'],map:'天國山周邊一、天國山周邊二',ver:'2.0',sourceName:'阿鼻',aliases:['阿鼻'],src:'官方'},
+    {name:'黃石怪',lv:76,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['銅礦石','鐵礦石','玄鐵礦石','銀礦石','土靈珠','石符','靈石','獸膽'],dropSkills:['巨龍卷'],dropEquips:['逍遙履','逍遙袍'],map:'黃石洞三層、黃金殿',ver:'2.0',sourceName:'黄石怪',aliases:['黄石怪'],src:'官方'},
+    {name:'烈阿鼻',lv:78,size:'大',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['藍水晶','金礦石','阿鼻面罩'],dropSkills:[],dropEquips:['皓月','乘風'],map:'天國山周邊二',ver:'2.0',sourceName:'烈阿鼻',aliases:['烈阿鼻'],src:'官方'},
+    {name:'阿摩達',lv:80,size:'中',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['肉','完整的獸皮'],dropSkills:[],dropEquips:['觸鬚帽','熾漓金鎖靴','雲羽紅魄甲'],map:'黃仙廟密道',ver:'2.0',sourceName:'阿摩达',aliases:['阿摩达'],src:'官方'},
+    {name:'修業',lv:82,size:'中',race:'精',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['修業枯骨','骷髏頭','枯骨','玄清漿','妖爪'],dropSkills:[],dropEquips:['溟冷','惡魔面甲'],map:'鬼王洞一層、鬼王洞二層',ver:'2.0',sourceName:'修业',aliases:['修业'],src:'官方'},
+    {name:'鬼羅漢',lv:84,size:'中',race:'人',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['黃玉石','妖爪'],dropSkills:[],dropEquips:['龍降冠','千星墨霧袍','絕影'],map:'黃仙廟密道',ver:'2.0',sourceName:'鬼罗汉',aliases:['鬼罗汉'],src:'官方'},
+    {name:'邪靈護法',lv:88,size:'中',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['骷髏頭','翡翠石','護法頭顱','護法披風','金靈珠','靈石'],dropSkills:['凶雕爪'],dropEquips:['熟鋼鏈甲'],map:'鬼王洞二層',ver:'2.0',sourceName:'邪灵护法',aliases:['邪灵护法'],src:'官方'},
+    {name:'毗羅',lv:90,size:'大',race:'怪',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['玄鐵礦石','翡翠石','豬鼻頭盔','金礦石','靈石'],dropSkills:['狂鷲落','狂浪潮'],dropEquips:['地煞戰靴'],map:'鬼王洞三層',ver:'2.0',sourceName:'毗罗',aliases:['毗罗'],src:'官方'},
+    {name:'幻姬',lv:93,size:'中',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['幻姬角','獸眼','銅礦石','翡翠石','碧葉瓊汁'],dropSkills:[],dropEquips:['天刑','紫金冠','方玉佩'],map:'鬼王洞三層、鬼王洞四層',ver:'2.0',sourceName:'幻姬',aliases:['幻姬'],src:'官方'},
+    {name:'阿磔屠',lv:95,size:'大',race:'精',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['髮束','獸角','獸眼','鐵礦石','阿磔屠護腕'],dropSkills:[],dropEquips:['流火金盔','九曜戰袍','金剛'],map:'鬼王洞四層',ver:'2.0',sourceName:'阿磔屠',aliases:['阿磔屠'],src:'官方'}
+  ]
+};
+
+// 【官方整合 - 批次7】官方 2.5 怪物資料
+const OFFICIAL_BATCH7_DATA = {
+  version:'2.5',src:'官方',verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/108.html',
+  monsters:[
+    {name:'嗔吃魔',lv:80,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['嗔吃魔心'],dropSkills:[],dropEquips:[],map:'劍塚幻境-2',ver:'2.5',sourceName:'嗔吃魔',aliases:['嗔吃魔'],src:'官方'},
+    {name:'巨瞳精',lv:82,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹'],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'巨瞳精',aliases:['巨瞳精'],src:'官方'},
+    {name:'赤焰妖',lv:84,size:'中',race:'獸',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'劍塚幻境-2',ver:'2.5',sourceName:'赤焰妖',aliases:['赤焰妖'],src:'官方'},
+    {name:'彌陀魔',lv:85,size:'大',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'弥陀魔',aliases:['弥陀魔'],src:'官方'},
+    {name:'冥幽魔',lv:85,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['淨葉水','混元丹','冥幽魔爪'],dropSkills:[],dropEquips:[],map:'白龍幻境-7',ver:'2.5',sourceName:'冥幽魔',aliases:['冥幽魔'],src:'官方'},
+    {name:'魅由鬼',lv:86,size:'中',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['淨葉水','魅由鬼魄'],dropSkills:[],dropEquips:[],map:'劍塚幻境-2',ver:'2.5',sourceName:'魅由鬼',aliases:['魅由鬼'],src:'官方'},
+    {name:'火雲邪魔',lv:88,size:'中',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'火云邪魔',aliases:['火云邪魔'],src:'官方'},
+    {name:'沙羅摩',lv:89,size:'巨',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['沙羅魔劍'],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'沙罗摩',aliases:['沙罗摩'],src:'官方'},
+    {name:'痴念鬼',lv:90,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['翎風露','混元丹','痴念鬼心'],dropSkills:[],dropEquips:[],map:'劍塚幻境-2',ver:'2.5',sourceName:'痴念鬼',aliases:['痴念鬼'],src:'官方'},
+    {name:'巨瞳妖',lv:90,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹','巨瞳妖魄'],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'巨瞳妖',aliases:['巨瞳妖'],src:'官方'},
+    {name:'猛鬼',lv:90,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['翎風露'],dropSkills:[],dropEquips:[],map:'白龍幻境-7',ver:'2.5',sourceName:'猛鬼',aliases:['猛鬼'],src:'官方'},
+    {name:'六足小妖',lv:90,size:'中',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['妖足'],dropSkills:[],dropEquips:[],map:'巴羅幻境-11',ver:'2.5',sourceName:'六足小妖',aliases:['六足小妖'],src:'官方'},
+    {name:'縛地靈',lv:92,size:'中',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['靈藥'],dropSkills:[],dropEquips:[],map:'劍塚幻境-2',ver:'2.5',sourceName:'缚地灵',aliases:['缚地灵'],src:'官方'},
+    {name:'俱生魔',lv:92,size:'大',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['淨葉水','混元丹'],dropSkills:[],dropEquips:[],map:'鬼湖幻境-3',ver:'2.5',sourceName:'俱生魔',aliases:['俱生魔'],src:'官方'},
+    {name:'蠍精',lv:93,size:'小',race:null,affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['玄清漿','蠍毒'],dropSkills:[],dropEquips:[],map:'白龍幻境-7',ver:'2.5',sourceName:'蝎精',aliases:['蝎精'],src:'官方'},
+    {name:'獸魔',lv:94,size:'中',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹','獸魔膽'],dropSkills:[],dropEquips:[],map:'亂骷幻境-4',ver:'2.5',sourceName:'兽魔',aliases:['兽魔'],src:'官方'},
+    {name:'嗜血骷髏',lv:94,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['華蘭液','嗜血骷髏刀'],dropSkills:[],dropEquips:[],map:'絕澤幻境-6',ver:'2.5',sourceName:'嗜血骷髅',aliases:['嗜血骷髅'],src:'官方'},
+    {name:'白瘠',lv:95,size:'中',race:'蟲',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹'],dropSkills:[],dropEquips:[],map:'亂骷幻境-4',ver:'2.5',sourceName:'白瘠',aliases:['白瘠'],src:'官方'},
+    {name:'結羅妖姬',lv:95,size:'中',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['妖姬心'],dropSkills:[],dropEquips:[],map:'桃林幻境-5',ver:'2.5',sourceName:'结罗妖姬',aliases:['结罗妖姬'],src:'官方'},
+    {name:'巨鉗妖',lv:95,size:'大',race:'蟲',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['巨妖鉗'],dropSkills:[],dropEquips:[],map:'巴羅幻境-11',ver:'2.5',sourceName:'巨钳妖',aliases:['巨钳妖'],src:'官方'},
+    {name:'紅衣怪',lv:96,size:'中',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['玄清漿'],dropSkills:[],dropEquips:[],map:'亂骷幻境-4',ver:'2.5',sourceName:'红衣怪',aliases:['红衣怪'],src:'官方'},
+    {name:'鬼童',lv:96,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'桃林幻境-5',ver:'2.5',sourceName:'鬼童',aliases:['鬼童'],src:'官方'},
+    {name:'豬面妖',lv:96,size:'巨',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'白龍幻境-7',ver:'2.5',sourceName:'猪面妖',aliases:['猪面妖'],src:'官方'},
+    {name:'鐵面骷髏',lv:97,size:'中',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹'],dropSkills:[],dropEquips:[],map:'絕澤幻境-6',ver:'2.5',sourceName:'铁面骷髅',aliases:['铁面骷髅'],src:'官方'},
+    {name:'痴食龍',lv:98,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['華蘭液','痴食龍骨'],dropSkills:[],dropEquips:[],map:'絕澤幻境-6',ver:'2.5',sourceName:'痴食龙',aliases:['痴食龙'],src:'官方'},
+    {name:'首冢鬼',lv:98,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['首冢鬼戟'],dropSkills:[],dropEquips:[],map:'亂骷幻境-4',ver:'2.5',sourceName:'首冢鬼',aliases:['首冢鬼'],src:'官方'},
+    {name:'悟心鬼',lv:98,size:'中',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['悟心鬼戟'],dropSkills:[],dropEquips:[],map:'天鬼幻境-8',ver:'2.5',sourceName:'悟心鬼',aliases:['悟心鬼'],src:'官方'},
+    {name:'羅侯',lv:99,size:'中',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['羅侯血'],dropSkills:[],dropEquips:[],map:'桃林幻境-5',ver:'2.5',sourceName:'罗侯',aliases:['罗侯'],src:'官方'},
+    {name:'魅妖',lv:99,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'蔓谷幻境-12',ver:'2.5',sourceName:'魅妖',aliases:['魅妖'],src:'官方'},
+    {name:'惡僧魔',lv:100,size:'中',race:'人',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['玄清漿'],dropSkills:[],dropEquips:[],map:'桃林幻境-5',ver:'2.5',sourceName:'恶僧魔',aliases:['恶僧魔'],src:'官方'},
+    {name:'極樂妖',lv:100,size:'大',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['混元丹'],dropSkills:[],dropEquips:[],map:'亂骷幻境-10',ver:'2.5',sourceName:'极乐妖',aliases:['极乐妖'],src:'官方'},
+    {name:'亡靈',lv:102,size:'中',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['華蘭液'],dropSkills:[],dropEquips:[],map:'天鬼幻境-8',ver:'2.5',sourceName:'亡灵',aliases:['亡灵'],src:'官方'},
+    {name:'怨魂',lv:103,size:'中',race:'靈',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['翎風露','怨魂之心'],dropSkills:[],dropEquips:[],map:'亂骷幻境-10',ver:'2.5',sourceName:'怨魂',aliases:['怨魂'],src:'官方'},
+    {name:'鬼蛤蟆',lv:104,size:'中',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['蛤蟆鬼眼'],dropSkills:[],dropEquips:[],map:'天鬼幻境-8',ver:'2.5',sourceName:'鬼蛤蟆',aliases:['鬼蛤蟆'],src:'官方'},
+    {name:'鷲獅鳥',lv:105,size:'中',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['鷲獅鳥爪'],dropSkills:[],dropEquips:[],map:'亂骷幻境-10',ver:'2.5',sourceName:'鹫狮鸟',aliases:['鹫狮鸟'],src:'官方'},
+    {name:'天精怪',lv:105,size:'中',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'食人幻境-14',ver:'2.5',sourceName:'天精怪',aliases:['天精怪'],src:'官方'},
+    {name:'樹怪',lv:106,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'黑石幻境-13',ver:'2.5',sourceName:'树怪',aliases:['树怪'],src:'官方'},
+    {name:'六足上妖',lv:108,size:'大',race:'精',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['六足妖爪'],dropSkills:[],dropEquips:[],map:'蔓谷幻境-12',ver:'2.5',sourceName:'六足上妖',aliases:['六足上妖'],src:'官方'},
+    {name:'赤角怪',lv:110,size:'中',race:null,affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['赤角怪頭角'],dropSkills:[],dropEquips:[],map:'黑石幻境-13',ver:'2.5',sourceName:'赤角怪',aliases:['赤角怪'],src:'官方'},
+    {name:'斷魂',lv:112,size:'小',race:'怪',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:['斷魂頭顱'],dropSkills:[],dropEquips:[],map:'食人幻境-14',ver:'2.5',sourceName:'断魂',aliases:['断魂'],src:'官方'},
+    {name:'彌呼',lv:114,size:'中',race:null,affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'食人幻境-14',ver:'2.5',sourceName:'弭呼',aliases:['弭呼'],src:'官方'},
+    {name:'蛾天冥妖',lv:119,size:'大',race:'人',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'魔巢廢墟-15',ver:'2.5',sourceName:'蛾天冥妖',aliases:['蛾天冥妖'],src:'官方'},
+    {name:'肉面具',lv:120,size:'中',race:'人',affinity:'惡',element:null,hp:null,atk:null,def:null,drops:[],dropSkills:[],dropEquips:[],map:'魔巢廢墟-15',ver:'2.5',sourceName:'肉面具',aliases:['肉面具'],src:'官方'}
+  ]
+};
+
+// 【官方整合 - 批次8】官方 3.0 怪物資料
+const OFFICIAL_BATCH8_DATA = {
+  version:'3.0',src:'官方',verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/486.html',
+  monsters:OFFICIAL.monsters3.map(x=>({name:x[0],lv:x[1],size:x[2],race:x[3],affinity:x[4],element:x[5],hp:null,atk:null,def:null,drops:x[6]?x[6].split('、').filter(Boolean):[],dropSkills:x[7]?x[7].split('、').filter(Boolean):[],dropEquips:Array.isArray(x[8])?x[8]:[],map:null,ver:'3.0',sourceName:x[0],aliases:[x[0]],src:'官方'}))
+};
+
+// 【官方整合 - 批次9】官方群魔島怪物資料
+const OFFICIAL_BATCH9_DATA = {
+  version:'群魔島',src:'官方',verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/623.html',
+  monsters:[
+    {name:'炎蛛',lv:60,size:'中',race:'獸',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['炎蛛血珀'],dropSkills:['清心'],dropEquips:[],map:'群魔島周邊',ver:'群魔島',sourceName:'炎蛛',aliases:['炎蛛'],src:'官方'},
+    {name:'迅山尤',lv:60,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['山尤血珀'],dropSkills:['土'],dropEquips:[],map:'群魔島周邊',ver:'群魔島',sourceName:'迅山尤',aliases:['迅山尤'],src:'官方'},
+    {name:'靈巫',lv:52,size:'中',race:'靈',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['靈巫血珀'],dropSkills:['火'],dropEquips:[],map:'群魔島周邊',ver:'群魔島',sourceName:'灵巫',aliases:['灵巫'],src:'官方'},
+    {name:'骨弓',lv:62,size:'中',race:'靈',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['骨弓血珀'],dropSkills:['快'],dropEquips:[],map:'群魔島一層',ver:'群魔島',sourceName:'骨弓',aliases:['骨弓'],src:'官方'},
+    {name:'骨精',lv:68,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['骨精血珀'],dropSkills:['穩'],dropEquips:[],map:'群魔島一層',ver:'群魔島',sourceName:'骨精',aliases:['骨精'],src:'官方'},
+    {name:'骨槍',lv:75,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['骨槍血珀'],dropSkills:['準'],dropEquips:[],map:'群魔島一層',ver:'群魔島',sourceName:'骨枪',aliases:['骨枪'],src:'官方'},
+    {name:'烈蝕',lv:68,size:'中',race:'獸',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['魔島密匙3','烈蝕血珀'],dropSkills:['痊癒'],dropEquips:[],map:'群魔島二層',ver:'群魔島',sourceName:'烈蚀',aliases:['烈蚀'],src:'官方'},
+    {name:'魂滅',lv:72,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['魔島密匙3'],dropSkills:['葉楓飛'],dropEquips:[],map:'群魔島二層',ver:'群魔島',sourceName:'魂灭',aliases:['魂灭'],src:'官方'},
+    {name:'土靈',lv:72,size:'大',race:'怪',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['魔島密匙3','土靈血珀'],dropSkills:['狠'],dropEquips:[],map:'群魔島二層',ver:'群魔島',sourceName:'土灵',aliases:['土灵'],src:'官方'},
+    {name:'凶靈',lv:65,size:'大',race:'怪',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['魔島密匙4','凶靈血珀'],dropSkills:['直覺'],dropEquips:[],map:'群魔島三層',ver:'群魔島',sourceName:'凶灵',aliases:['凶灵'],src:'官方'},
+    {name:'炎鬼',lv:75,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙4','炎鬼血珀'],dropSkills:[],dropEquips:['雷鳴'],map:'群魔島三層',ver:'群魔島',sourceName:'炎鬼',aliases:['炎鬼'],src:'官方'},
+    {name:'魂劫',lv:75,size:'中',race:'靈',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['魔島密匙4'],dropSkills:['酷炎烈炙'],dropEquips:[],map:'群魔島三層',ver:'群魔島',sourceName:'魂劫',aliases:['魂劫'],src:'官方'},
+    {name:'阿鼻',lv:75,size:'大',race:'精',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['魔島密匙5','阿鼻血珀'],dropSkills:['續命'],dropEquips:[],map:'群魔島四層',ver:'群魔島',sourceName:'阿鼻',aliases:['阿鼻'],src:'官方'},
+    {name:'巨食骨魔',lv:75,size:'巨',race:'獸',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['魔島密匙5','魔食血珀'],dropSkills:['水'],dropEquips:[],map:'群魔島四層',ver:'群魔島',sourceName:'巨食骨魔',aliases:['巨食骨魔'],src:'官方'},
+    {name:'靈凰',lv:82,size:'大',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙5','靈凰血珀'],dropSkills:['智'],dropEquips:[],map:'群魔島四層',ver:'群魔島',sourceName:'灵凰',aliases:['灵凰'],src:'官方'},
+    {name:'黃石怪',lv:76,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['魔島密匙6','石怪血珀'],dropSkills:['赤炎壁'],dropEquips:[],map:'群魔島五層',ver:'群魔島',sourceName:'黄石怪',aliases:['黄石怪'],src:'官方'},
+    {name:'疾亭鬼',lv:76,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙6','疾鬼血珀'],dropSkills:['蘇生'],dropEquips:[],map:'群魔島五層',ver:'群魔島',sourceName:'疾亭鬼',aliases:['疾亭鬼'],src:'官方'},
+    {name:'孽障',lv:82,size:'中',race:'精',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['魔島密匙6'],dropSkills:['木'],dropEquips:['鉑裂履碎片'],map:'群魔島五層',ver:'群魔島',sourceName:'孽障',aliases:['孽障'],src:'官方'},
+    {name:'怒阿鼻',lv:78,size:'大',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙7','怒阿鼻血珀'],dropSkills:['谷雨'],dropEquips:['喋鳳靴碎片'],map:'群魔島六層',ver:'群魔島',sourceName:'怒阿鼻',aliases:['怒阿鼻'],src:'官方'},
+    {name:'玲瓏妖',lv:78,size:'大',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙7'],dropSkills:['酷雪寒'],dropEquips:[],map:'群魔島六層',ver:'群魔島',sourceName:'玲珑妖',aliases:['玲珑妖'],src:'官方'},
+    {name:'靈妖',lv:85,size:'中',race:'靈',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['魔島密匙7'],dropSkills:['怒松橫斷'],dropEquips:['鉑裂戰衫碎片'],map:'群魔島六層',ver:'群魔島',sourceName:'灵妖',aliases:['灵妖'],src:'官方'},
+    {name:'豬龍',lv:80,size:'大',race:'怪',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['魔島密匙8','豬龍血珀'],dropSkills:['雷光電閃'],dropEquips:['弒血戰鎧碎片'],map:'群魔島七層',ver:'群魔島',sourceName:'猪龙',aliases:['猪龙'],src:'官方'},
+    {name:'阿摩達',lv:80,size:'中',race:'精',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['魔島密匙8','阿摩達血珀'],dropSkills:['巨龍卷'],dropEquips:['喋鳳戰甲碎片'],map:'群魔島七層',ver:'群魔島',sourceName:'阿摩达',aliases:['阿摩达'],src:'官方'},
+    {name:'護法靈鬼',lv:88,size:'中',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['魔島密匙8','護法血珀'],dropSkills:['開雲破霧'],dropEquips:['鉑裂巾碎片'],map:'群魔島七層',ver:'群魔島',sourceName:'护法灵鬼',aliases:['护法灵鬼'],src:'官方'},
+    {name:'翅蜥',lv:88,size:'大',race:'蟲',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['魔島密匙8','翅蜥血珀'],dropSkills:['竹裂'],dropEquips:['弒血履碎片'],map:'群魔島七層',ver:'群魔島',sourceName:'翅蜥',aliases:['翅蜥'],src:'官方'},
+    {name:'異靈',lv:80,size:'中',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['異靈血珀'],dropSkills:['赤雕'],dropEquips:['銀龍履碎片'],map:'群魔島八層',ver:'群魔島',sourceName:'异灵',aliases:['异灵'],src:'官方'},
+    {name:'鬼豬',lv:86,size:'巨',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:[],dropSkills:['開雲破霧'],dropEquips:['弒血盔碎片'],map:'群魔島八層',ver:'群魔島',sourceName:'鬼猪',aliases:['鬼猪'],src:'官方'},
+    {name:'靈道',lv:90,size:'中',race:'人',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['靈道血珀'],dropSkills:['地滅'],dropEquips:['喋鳳面甲碎片'],map:'群魔島八層',ver:'群魔島',sourceName:'灵道',aliases:['灵道'],src:'官方'},
+    {name:'鬼耆尼',lv:84,size:'中',race:'人',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['耆尼血珀'],dropSkills:['訊'],dropEquips:[],map:'群魔島九層',ver:'群魔島',sourceName:'鬼耆尼',aliases:['鬼耆尼'],src:'官方'},
+    {name:'鬼軍士',lv:90,size:'巨',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['鬼士血珀'],dropSkills:['赤炎壁'],dropEquips:[],map:'群魔島九層',ver:'群魔島',sourceName:'鬼军士',aliases:['鬼军士'],src:'官方'},
+    {name:'毗羅',lv:90,size:'大',race:'怪',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['毗羅血珀'],dropSkills:['狂鷲落'],dropEquips:[],map:'群魔島九層',ver:'群魔島',sourceName:'毗罗',aliases:['毗罗'],src:'官方'},
+    {name:'靈姬',lv:95,size:'中',race:'精',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:[],dropSkills:['酷炎烈炙'],dropEquips:['銀龍戰袍碎片'],map:'群魔島九層',ver:'群魔島',sourceName:'灵姬',aliases:['灵姬'],src:'官方'},
+    {name:'幽姬',lv:93,size:'中',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['幽姬血珀'],dropSkills:['猛虎襲'],dropEquips:['銀龍冠碎片'],map:'群魔島十層',ver:'群魔島',sourceName:'幽姬',aliases:['幽姬'],src:'官方'},
+    {name:'阿磔屠',lv:95,size:'大',race:'精',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:[],dropSkills:['酷雪寒'],dropEquips:[],map:'群魔島十層',ver:'群魔島',sourceName:'阿磔屠',aliases:['阿磔屠'],src:'官方'},
+    {name:'靈甲',lv:95,size:'大',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['靈甲血珀'],dropSkills:['鶴展雙翅'],dropEquips:[],map:'群魔島十層',ver:'群魔島',sourceName:'灵甲',aliases:['灵甲'],src:'官方'}
+  ]
+};
+
+// 【官方整合 - 批次10】官方妖器怪物資料
+const OFFICIAL_BATCH10_DATA = {
+  version:'妖器',src:'官方',verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/12510.html',
+  monsters:[
+    {name:'妖殿守衛',lv:90,size:'大',race:'怪',affinity:'惡',element:'土',hp:null,atk:null,def:null,drops:['伽藍舍利'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'妖殿守卫',aliases:['妖殿守卫'],src:'官方'},
+    {name:'青龍衛',lv:120,size:'大',race:'怪',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','妖石舍利','青龍鱗碎片'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'青龙卫',aliases:['青龙卫'],src:'官方'},
+    {name:'白虎衛',lv:120,size:'大',race:'靈',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','妖石舍利','白虎牙碎片'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'白虎卫',aliases:['白虎卫'],src:'官方'},
+    {name:'朱雀衛',lv:120,size:'大',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','妖石舍利','朱雀翎碎片'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'朱雀卫',aliases:['朱雀卫'],src:'官方'},
+    {name:'玄武衛',lv:120,size:'大',race:'獸',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','妖石舍利','玄武鑒碎片'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'玄武卫',aliases:['玄武卫'],src:'官方'},
+    {name:'五行妖',lv:120,size:'大',race:'無',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','五行妖魄'],dropSkills:[],dropEquips:[],map:'五行妖閣',ver:'妖器',sourceName:'五行妖',aliases:['五行妖'],src:'官方'},
+    {name:'羅煞妖姬',lv:120,size:'中',race:'靈',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['止傷符','匯體符','還神符','伽藍舍利','佛陀舍利','無著舍利','阿耆尼舍利','羅煞妖魄'],dropSkills:[],dropEquips:[],map:'侍衛領地、將軍領地、龍炎池3層、玄靈澤3層',ver:'妖器',sourceName:'罗煞妖姬',aliases:['罗煞妖姬'],src:'官方'},
+    {name:'前朝煉獄',lv:120,size:'大',race:'怪',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['前朝水晶','止傷符','匯體符','還神符','伽藍舍利','佛陀舍利','無著舍利','阿耆尼舍利','明王舍利','前朝妖魄'],dropSkills:[],dropEquips:[],map:'前朝侍衛殿、前朝將軍殿、前朝公主殿、前朝宰相殿',ver:'妖器',sourceName:'前朝炼狱',aliases:['前朝炼狱'],src:'官方'},
+    {name:'青龍幻象',lv:150,size:'巨',race:'無',affinity:'惡',element:'木',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','免死金牌','聚魂符','必殺符','狂暴符','迅雷符','清心符','妖石舍利','妖龍無悔樽','青龍鱗碎片','青龍鱗片'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'青龙幻象',aliases:['青龙幻象'],src:'官方'},
+    {name:'白虎靈體',lv:150,size:'巨',race:'無',affinity:'惡',element:'金',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','免死金牌','聚魂符','必殺符','狂暴符','迅雷符','清心符','妖石舍利','妖龍無悔樽','白虎牙碎片','白虎獠牙'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'白虎灵体',aliases:['白虎灵体'],src:'官方'},
+    {name:'朱雀虛影',lv:150,size:'巨',race:'無',affinity:'惡',element:'火',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','免死金牌','聚魂符','必殺符','狂暴符','迅雷符','清心符','妖石舍利','妖龍無悔樽','朱雀翎碎片','朱雀炎翎'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'朱雀虚影',aliases:['朱雀虚影'],src:'官方'},
+    {name:'玄武化身',lv:150,size:'巨',race:'無',affinity:'惡',element:'水',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','免死金牌','聚魂符','必殺符','狂暴符','迅雷符','清心符','妖石舍利','妖龍無悔樽','玄武鑒碎片','玄武冰鑒'],dropSkills:[],dropEquips:[],map:'四象妖殿',ver:'妖器',sourceName:'玄武化身',aliases:['玄武化身'],src:'官方'},
+    {name:'五行妖王',lv:150,size:'巨',race:'無',affinity:'惡',element:'無',hp:null,atk:null,def:null,drops:['伽藍舍利','佛陀舍利','無著舍利','妖石舍利','妖龍無悔樽','五行妖魄'],dropSkills:[],dropEquips:[],map:'五行妖閣',ver:'妖器',sourceName:'五行妖王',aliases:['五行妖王'],src:'官方'}
+  ]
+};
+
+// 【官方整合 - 批次11】BOSS 官方資料來源對齊
+const OFFICIAL_BATCH11_DATA = {
+  bosses:BOSS_DB, drops:BOSS_DROP_TABLE, src:'官方', verified:true,
+  officialPage:'https://tx.7ma.cn/gamedata/data/monster/359.html',
+  note:'官方 BOSS 資料頁涵蓋 1.0、2.0、2.5、3.0、群魔島等 BOSS；本遊戲既有 BOSS_DB 僅保留目前已建立的戰鬥 Boss。未在遊戲常數中建立的官方 BOSS 不刪除也不自動覆蓋既有數值。'
+};
+
+// 【官方整合 - 批次12】官方掉落率狀態
+const OFFICIAL_BATCH12_DATA = {
+  monsterRates:null,bossRates:null,dungeonRates:null,
+  currentBossDefaultRate:(typeof BALANCE!=='undefined'?BALANCE.bossItemDropRate:null),
+  currentBossDefaultRateSrc:'推算',src:'官方',verified:true,
+  note:'官方怪物頁公布掉落物品／招式／裝備，但未公布數值掉落率；因此官方掉落率維持 null，不以推算值冒充官方。'
+};
+
+// 【官方整合 - 批次13】官方地圖／城鎮資料更新
+const OFFICIAL_MAP_DATA = [
+  {name:'帝釋天城',region:'帝釋天城區域',lvReq:null,monsters:null,boss:null,events:[],desc:'官方資料區列出的帝釋天城主城區域。',routes:[
+    {from:'妖之林一層',to:'帝釋天東郊',coord:'2,255'},
+    {from:'妖之林一層',to:'妖之林密室',coord:'2,145'},
+    {from:'妖之林一層',to:'妖之林上二層',coord:'22,16'},
+    {from:'妖之林一層',to:'妖之林下二層',coord:'117,318'},
+    {from:'妖之林密室',to:'妖之林一層',coord:'18,30'},
+    {from:'妖之林上二層',to:'妖之林一層',coord:'26,275'},
+    {from:'妖之林上二層',to:'妖之林三層',coord:'92,252'},
+    {from:'妖之林下二層',to:'妖之林一層',coord:'26,255'},
+    {from:'妖之林下二層',to:'妖之林三層',coord:'77,29'},
+    {from:'妖之林下三層',to:'妖之林上二層',coord:'7,193'},
+    {from:'妖之林下三層',to:'妖之林下二層',coord:'85,262'},
+    {from:'亂葬窟一層',to:'亂木村野外',coord:'18,9'},
+    {from:'亂葬窟一層',to:'亂葬窟二層',coord:'81,192'},
+    {from:'亂葬窟二層',to:'亂葬窟一層',coord:'17,27'},
+    {from:'亂葬窟二層',to:'亂葬窟三層',coord:'105,220'},
+    {from:'亂葬窟三層',to:'亂葬窟二層',coord:'49,22'},
+    {from:'亂葬窟三層',to:'亂葬窟四層',coord:'61,237'},
+    {from:'亂葬窟四層',to:'亂葬窟三層',coord:'99,69'},
+    {from:'亂葬窟四層',to:'亂葬窟五層',coord:'109,173'},
+    {from:'亂葬窟五層',to:'亂葬窟四層',coord:'38,229'},
+    {from:'劍冢一層',to:'玄陽村野外',coord:'109,80'},
+    {from:'劍冢一層',to:'劍冢二層',coord:'30,58'},
+    {from:'劍冢一層',to:'劍冢三層',coord:'46,155'},
+    {from:'劍冢二層',to:'劍冢一層',coord:'9,17'},
+    {from:'劍冢二層',to:'劍冢三層',coord:'69,18'},
+    {from:'劍冢二層',to:'劍冢四層',coord:'85,126'},
+    {from:'劍冢三層',to:'劍冢一層',coord:'81,203'},
+    {from:'劍冢三層',to:'劍冢二層',coord:'30,43'},
+    {from:'劍冢三層',to:'劍冢四層',coord:'50,115'},
+    {from:'劍冢四層',to:'劍冢二層',coord:'33,31'},
+    {from:'劍冢四層',to:'劍冢三層',coord:'33,282'},
+    {from:'鬼湖通道',to:'月藏村野外',coord:'43,13'},
+    {from:'鬼湖通道',to:'鬼湖洞野外',coord:'73,210'}
+  ],aliases:['帝释天城'],src:'官方'},
+  {name:'多聞天城',region:'多聞天城區域',lvReq:null,monsters:null,boss:null,events:[],desc:'官方資料區列出的多聞天城區域。',routes:[
+    {from:'絕望沼澤一層',to:'沼澤周邊上二',coord:'135,39'},
+    {from:'絕望沼澤一層',to:'絕望沼澤二層',coord:'6,22'},
+    {from:'絕望沼澤二層',to:'絕望沼澤一層',coord:'140,24'},
+    {from:'海市蜃樓一',to:'海市蜃樓二',coord:'87,249'},
+    {from:'海市蜃樓二',to:'黃石洞一層',coord:'46,80'},
+    {from:'黃石洞一層',to:'海市蜃樓二',coord:'23,346'},
+    {from:'黃石洞一層',to:'黃石洞二層',coord:'110,190'},
+    {from:'黃石洞二層',to:'黃石洞一層',coord:'12,129'},
+    {from:'黃石洞二層',to:'黃石洞三層',coord:'22,266'},
+    {from:'黃石洞三層',to:'黃石洞二層',coord:'18,205'},
+    {from:'黃石洞三層',to:'黃金殿',coord:'52,137'},
+    {from:'黃金殿',to:'黃石洞三層',coord:'12,38'},
+    {from:'地下王陵一層',to:'王陵周邊二',coord:'54,274'},
+    {from:'地下王陵一層',to:'地下王陵二層',coord:'99,280'},
+    {from:'地下王陵二層',to:'地下王陵一層',coord:'110,317'},
+    {from:'地下王陵二層',to:'百官陵',coord:'12,43'},
+    {from:'百官陵',to:'地下王陵二層',coord:'12,286'},
+    {from:'百官陵',to:'皇陵魔窟',coord:'100,27'},
+    {from:'皇陵魔窟',to:'百官陵',coord:'35,28'},
+    {from:'天國山',to:'天國山周邊四',coord:'34,169'},
+    {from:'天國山',to:'黃仙廟密道',coord:'20,32'},
+    {from:'黃仙廟密道',to:'天國山',coord:'9,192'},
+    {from:'黃仙廟密道',to:'鬼王洞一層',coord:'115,185'},
+    {from:'鬼王洞一層',to:'黃仙廟密道',coord:'27,303'},
+    {from:'鬼王洞一層',to:'鬼王洞二層',coord:'110,44'},
+    {from:'鬼王洞二層',to:'鬼王洞一層',coord:'111,38'},
+    {from:'鬼王洞二層',to:'鬼王洞三層',coord:'28,328'},
+    {from:'鬼王洞三層',to:'鬼王洞二層',coord:'13,313'},
+    {from:'鬼王洞三層',to:'鬼王洞四層',coord:'114,31'},
+    {from:'鬼王洞四層',to:'鬼王洞三層',coord:'65,168'},
+    {from:'鬼王洞四層',to:'鬼王殿',coord:'42,100'},
+    {from:'鬼王殿',to:'鬼王洞四層',coord:'23,45'}
+  ],aliases:['多闻天城'],src:'官方'},
+  {name:'伊舍那天城',region:'伊舍那天城區域',lvReq:null,monsters:null,boss:null,events:[],desc:'官方 3.0 主城及附屬村落與野外冒險區域。',routes:[
+    {from:'黑石林一層',to:'靈石村野外東',coord:'3,139'},
+    {from:'黑石林一層',to:'黑石林二層',coord:'91,129'},
+    {from:'黑石林一層',to:'黑石林四層',coord:'44,275'},
+    {from:'黑石林二層',to:'卧龍村野外',coord:'56,16'},
+    {from:'黑石林二層',to:'黑石林一層',coord:'4,133'},
+    {from:'黑石林二層',to:'黑石林三層',coord:'68,276'},
+    {from:'黑石林三層',to:'祥云村野外一',coord:'45,274'},
+    {from:'黑石林三層',to:'黑石林二層',coord:'65,17'},
+    {from:'黑石林三層',to:'黑石林四層',coord:'5,164'},
+    {from:'黑石林四層',to:'黑石林一層',coord:'41,15'},
+    {from:'黑石林四層',to:'黑石林三層',coord:'91,172'},
+    {from:'黑石林四層',to:'黑石林五層',coord:'86,42'},
+    {from:'黑石林五層',to:'黑石林四層',coord:'22,48'},
+    {from:'巴羅山一層',to:'妙音村野外',coord:'57,12'},
+    {from:'巴羅山一層',to:'巴羅山二層',coord:'26,193'},
+    {from:'巴羅山二層',to:'伊舍那天南郊三',coord:'91,158'},
+    {from:'巴羅山二層',to:'巴羅山一層',coord:'58,20'},
+    {from:'巴羅山二層',to:'巴羅山三層',coord:'54,349'},
+    {from:'巴羅山三層',to:'巴羅山二層',coord:'54,15'},
+    {from:'巴羅山三層',to:'巴羅山四層',coord:'109,128'},
+    {from:'巴羅山四層',to:'巴羅山三層',coord:'11,185'},
+    {from:'巴羅山四層',to:'巴羅山五層',coord:'63,268'},
+    {from:'巴羅山五層',to:'巴羅山四層',coord:'43,19'},
+    {from:'食人谷一層',to:'伏魔村野外',coord:'8,128'},
+    {from:'食人谷一層',to:'食人谷二層',coord:'59,30'},
+    {from:'食人谷二層',to:'食人谷一層',coord:'52,304'},
+    {from:'食人谷二層',to:'食人谷三層',coord:'59,20'},
+    {from:'食人谷三層',to:'食人谷二層',coord:'55,307'},
+    {from:'食人谷三層',to:'食人谷四層',coord:'7,161'},
+    {from:'食人谷四層',to:'食人谷三層',coord:'89,120'},
+    {from:'食人谷四層',to:'食人谷五層',coord:'30,25'},
+    {from:'食人谷五層',to:'食人谷四層',coord:'32,274'},
+    {from:'白龍隘口一',to:'臥龍村野外',coord:'98,347'},
+    {from:'白龍隘口一',to:'白龍隘口二',coord:'26,218'},
+    {from:'白龍隘口二',to:'白龍隘口一',coord:'62,349'},
+    {from:'白龍隘口二',to:'白龍洞一層',coord:'56,63'},
+    {from:'白龍洞一層',to:'白龍隘口二',coord:'58,348'},
+    {from:'白龍洞一層',to:'白龍洞二層',coord:'58,11'},
+    {from:'白龍洞一層',to:'白龍洞二層',coord:'111,12'},
+    {from:'白龍洞一層',to:'白龍洞三層',coord:'5,323'},
+    {from:'白龍洞一層',to:'白龍洞四層',coord:'5,15'},
+    {from:'白龍洞二層',to:'白龍洞一層',coord:'56,349'},
+    {from:'白龍洞二層',to:'白龍洞三層',coord:'12,351'},
+    {from:'白龍洞二層',to:'白龍洞四層',coord:'7,193'},
+    {from:'白龍洞三層',to:'白龍洞一層',coord:'115,336'},
+    {from:'白龍洞三層',to:'白龍洞二層',coord:'113,33'},
+    {from:'白龍洞三層',to:'白龍洞四層',coord:'64,16'},
+    {from:'白龍洞四層',to:'白龍洞一層',coord:'114,350'},
+    {from:'白龍洞四層',to:'白龍洞二層',coord:'116,191'},
+    {from:'白龍洞四層',to:'白龍洞三層',coord:'61,344'}
+  ],aliases:['伊舍那天城'],src:'官方'},
+  {name:'妖魅幻境',region:'妖魅幻境區域',lvReq:null,monsters:null,boss:null,events:[],desc:'官方資料區列出幻境一層至二十六層及各層結界／幻境路線。',subMaps:[
+    '幻境一層—天國結界','幻境二層—食人幻境','幻境三層—妖林幻境','幻境四層—劍冢幻境','幻境五層—蔓谷幻境','幻境六層—黃石幻境','幻境七層—鬼湖幻境','幻境八層—妖林幻境','幻境九層—亂骷幻境','幻境十層—日藏結界','幻境十一層—黃石幻境','幻境十二層—桃林幻境','幻境十三層—絕澤幻境','幻境十四層—天鬼幻境','幻境十五層—鬼湖幻境','幻境十六層—白龍幻境','幻境十七層—蔓湖幻境','幻境十八層—神泉結界','幻境十九層—王陵幻境','幻境二十層—絕澤幻境','幻境二十一層—天鬼幻境','幻境二十二層—魅妖幻境','幻境二十三層—亂骷幻境','幻境二十四層—巴羅幻境','幻境二十五層—天國幻境','幻境二十六層—桃林結界'
+  ],routes:[],aliases:['妖魅幻境'],src:'官方'},
+  {name:'群魔島',region:'群魔島區域',lvReq:null,monsters:null,boss:null,events:[],desc:'官方資料區列出群魔島周邊及一至十層。',routes:[
+    {from:'群魔島周邊',to:'群魔島一層',coord:'75,177'},
+    {from:'群魔島一層',to:'群魔島周邊',coord:'11,22'},
+    {from:'群魔島一層',to:'群魔島二層',coord:'111,35'},
+    {from:'群魔島二層',to:'群魔島一層',coord:'12,20'},
+    {from:'群魔島二層',to:'群魔島三層',coord:'114,338'},
+    {from:'群魔島三層',to:'群魔島二層',coord:'8,324'},
+    {from:'群魔島三層',to:'群魔島四層',coord:'120,59'},
+    {from:'群魔島四層',to:'群魔島三層',coord:'14,40'},
+    {from:'群魔島四層',to:'群魔島五層',coord:'113,340'},
+    {from:'群魔島五層',to:'群魔島四層',coord:'72,42'},
+    {from:'群魔島五層',to:'群魔島六層',coord:'52,185'},
+    {from:'群魔島六層',to:'群魔島五層',coord:'20,254'},
+    {from:'群魔島六層',to:'群魔島七層',coord:'93,51'},
+    {from:'群魔島七層',to:'群魔島六層',coord:'23,297'},
+    {from:'群魔島七層',to:'群魔島八層',coord:'110,78'},
+    {from:'群魔島八層',to:'群魔島七層',coord:'108,62'},
+    {from:'群魔島八層',to:'群魔島九層',coord:'53,314'},
+    {from:'群魔島九層',to:'群魔島八層',coord:'18,386'},
+    {from:'群魔島九層',to:'群魔島十層',coord:'35,40'},
+    {from:'群魔島十層',to:'群魔島周邊',coord:'128,354'}
+  ],aliases:['群魔岛'],src:'官方'},
+  {name:'羅煞天城＆前朝神跡',region:'官方地圖資料',lvReq:null,monsters:null,boss:null,events:[],desc:'官方資料區列有「羅煞天城&前朝神跡」地圖入口分類；本區詳細內容不在本次現有資料頁文本中展開。',routes:[],aliases:['罗煞天城&前朝神迹'],src:'官方'}
+];
+
+const OFFICIAL_TOWN_DATA = [
+  {name:'桃花村',type:'村落',region:'帝釋天城區域',coord:null,aliases:['桃花村'],src:'官方'},
+  {name:'帝釋天城',type:'主城',region:'帝釋天城區域',coord:null,aliases:['帝释天城'],src:'官方'},
+  {name:'多聞天城',type:'主城',region:'多聞天城區域',coord:null,aliases:['多闻天城'],src:'官方'},
+  {name:'無生村',type:'村落',region:'官方任務地圖',coord:null,aliases:['无生村'],src:'官方'},
+  {name:'亂木村',type:'村落',region:'官方任務地圖',coord:null,aliases:['乱木村'],src:'官方'},
+  {name:'玄陽村',type:'村落',region:'官方任務地圖',coord:null,aliases:['玄阳村'],src:'官方'},
+  {name:'日藏村',type:'村落',region:'官方任務地圖',coord:null,aliases:['日藏村'],src:'官方'},
+  {name:'月藏村',type:'村落',region:'官方任務地圖',coord:null,aliases:['月臧村','月藏村'],src:'官方'},
+  {name:'琉璃村',type:'村落',region:'官方任務地圖',coord:null,aliases:['琉璃村'],src:'官方'},
+  {name:'三難村',type:'村落',region:'官方任務地圖',coord:null,aliases:['三难村'],src:'官方'},
+  {name:'悲竹村',type:'村落',region:'官方任務地圖',coord:null,aliases:['悲竹村'],src:'官方'},
+  {name:'神獸村',type:'村落',region:'官方任務地圖',coord:null,aliases:['神兽村'],src:'官方'},
+  {name:'神泉崗',type:'野外聚落',region:'官方任務地圖',coord:null,aliases:['神泉岗'],src:'官方'},
+  {name:'伊舍那天城',type:'3.0主城',region:'伊舍那天城區域',coord:null,aliases:['伊舍那天城'],src:'官方'},
+  {name:'妙音村',type:'3.0附屬村落',region:'伊舍那天城區域',coord:null,aliases:['妙音村'],src:'官方'},
+  {name:'靈石村',type:'3.0附屬村落',region:'伊舍那天城區域',coord:null,aliases:['灵石村'],src:'官方'},
+  {name:'祥雲村',type:'3.0附屬村落',region:'伊舍那天城區域',coord:null,aliases:['祥雲村'],src:'官方'},
+  {name:'伏魔村',type:'3.0附屬村落',region:'伊舍那天城區域',coord:null,aliases:['伏魔村'],src:'官方'},
+  {name:'臥龍村',type:'3.0附屬村落',region:'伊舍那天城區域',coord:null,aliases:['卧龙村'],src:'官方'},
+  {name:'羅煞天城',type:'城市',region:'羅煞天城＆前朝神跡',coord:null,aliases:['罗煞天城'],src:'官方'}
+];
+
+// 【官方整合 - 批次14】官方副本資料更新
+const OFFICIAL_DUNGEON_DATA = [
+  {name:'試煉神殿',lvReq:60,condition:'每週一至週五 20:00-21:00；由桃花村 NPC「試煉守衛」進入；依等級區間分層。',rewards:['經驗'],dailyLimit:null,schedule:'週一至週五 20:00-21:00',entrance:'桃花村／試煉守衛',rules:['不可使用神行符等標記傳送符咒','每層設兩個獨立試煉區','怪物包含試煉神獸、神殿刀手、神殿弓手、神殿槍手、蟲族化身'],src:'官方'},
+  {name:'城主府地宮',lvReq:60,condition:'每週六 20:40-21:00；先經城主府地宮地道，戰勝地宮守衛取得地宮密匙後進入。',rewards:['城主寶箱','地宮寶箱','試煉令×5','新手赤桑霜包×5','銀票×5','免死金牌×20','聚魂符×20'],dailyLimit:null,schedule:'週六 20:40-21:00',entrance:'城主府通道／地宮通道守衛',rules:['不可使用神行符等標記傳送符','死亡回城點依所在層不同','擊敗地煞魔後出現城主寶箱與地宮寶箱'],src:'官方'},
+  {name:'桃林獵場',lvReq:80,condition:'等級80-94可交付100萬天下幣進入獵場1層；等級≥95可交付200萬天下幣進入獵場2層。',rewards:['經驗'],dailyLimit:null,schedule:'官方試行時間：每週二、週四 00:00-06:00',entrance:'桃花村 65,162／獵場管事',rules:['安全地圖、不可PK','地圖內設商鋪可購買藥品等常用物資'],src:'官方'},
+  {name:'迷宮尋寶',lvReq:null,condition:'活動期間由桃花村 NPC「迷宮引路人」進入臥龍潭迷宮；每角色三種寶箱中僅能開啟一次。',rewards:['高級寶箱','中級寶箱','普通寶箱','新手四經丹','新手免死金牌','新手赤桑霜包','新手雙經丹','新手中級雙經丹'],dailyLimit:'每角色1次',schedule:'活動時間依官方公告',entrance:'桃花村 14,20／迷宮引路人',rules:['隨機傳送至迷宮座標','不可使用傳送符、馳風符、迅雷符、幫召','不可PK、不可使用免死金牌','攔路虎可掉落金錢與通慧符'],src:'官方'},
+  {name:'魂魄副本',lvReq:null,condition:'不限等級；每日可由桃花村 NPC「魂魄副本守護」進入1次。Lv1-99進入1層，Lv100以上進入2層。',rewards:['聚魂丹','魂魄','經驗','金錢'],dailyLimit:'每角色1次',schedule:'全天開放',entrance:'桃花村 46,131／魂魄副本守護',rules:['死亡並回城後當日無法再次進入','1-99層怪物80級、安全地圖','100級以上怪物120級、冒險地圖','每日聚魂丹掉落上限依等級30/40/50/60'],src:'官方'},
+  {name:'魔龍堡',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料頁列為特色副本',rules:null,src:'官方'},
+  {name:'輪迴殿',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料頁列為特色副本；2025-11-06公告記載 NPC 輪迴殿守護移至桃花村 46,128。',rules:null,src:'官方'},
+  {name:'海盜入侵',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料頁列為特色副本',rules:null,src:'官方'},
+  {name:'勇闖武道場',lvReq:80,condition:'活動期間，等級≥80可由桃花村武門外 NPC「武道場管事」進入；共3層。',rewards:['經驗令','武士勳章','勇者寶箱'],dailyLimit:null,schedule:'週六活動，實際時間依官方公告',entrance:'桃花村武門外／武道場管事',rules:['第1層安全、第2-3層冒險','集齊武士勳章≥5可通往更高層','活動結束自動傳回桃花村'],src:'官方'},
+  {name:'五行妖閣',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料區列為特色副本／妖器相關地圖',rules:null,src:'官方'},
+  {name:'妖器練功場',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料區列為特色副本',rules:null,src:'官方'},
+  {name:'聚妖谷',lvReq:80,condition:'角色等級≥80；每次進入消耗金錢100萬，不限次數；由桃花村 NPC「聚妖谷守護」進入。',rewards:['妖力值'],dailyLimit:'不限次數',schedule:'全天開放',entrance:'桃花村 50,20／聚妖谷守護',rules:['不可記點、神行、幫召、白虎技能','只能收集妖力值，無法釋放妖器技能'],src:'官方'},
+  {name:'沙魔巢穴',lvReq:null,condition:null,rewards:null,dailyLimit:null,schedule:null,entrance:'官方資料區列為全新冒險副本；詳細條件以官方副本頁／公告為準。',rules:null,src:'官方'}
+];
+
+// 【官方整合 - 批次15】城鎮／NPC／對話資料更新
+const OFFICIAL_NPC_DATA = [
+  {town:'桃花村',name:'算卜算',func:'五行占卜',dialog:null,coord:'18,168',context:'發放隨機守護信物',src:'官方'},
+  {town:'無生村',name:'無生守護',func:'五行占卜子任務',dialog:null,coord:null,context:'提交金靈符後取得神秘卷軸',src:'官方'},
+  {town:'亂木村',name:'亂木守護',func:'五行占卜子任務',dialog:null,coord:null,context:'提交木靈符後取得盟約',src:'官方'},
+  {town:'桃花村',name:'桃花居士',func:'五行占卜子任務',dialog:null,coord:null,context:'取得神秘卷軸並完成盟誓之約',src:'官方'},
+  {town:'無生村／亂木村／玄陽村／日藏村／月藏村',name:'徵夫長',func:'幫會據點交接任務',dialog:null,coord:null,context:'血印盟約任務環節',src:'官方'},
+  {town:'桃花村',name:'老將軍',func:'任務交付',dialog:null,coord:null,context:'提交血印盟約取得任務獎勵',src:'官方'},
+  {town:'玄陽村',name:'玄陽守護',func:'五行占卜子任務',dialog:null,coord:null,context:'提交火靈符後取得文經',src:'官方'},
+  {town:'帝釋天城',name:'文韜',func:'任務／問答',dialog:null,coord:null,context:'解答問題並處理文經',src:'官方'},
+  {town:'帝釋天城',name:'武略',func:'任務／道具',dialog:null,coord:null,context:'取得特製烤鴨並引出嗜血狐狸精',src:'官方'},
+  {town:'月藏村',name:'月藏守護',func:'五行占卜子任務',dialog:null,coord:null,context:'提交水靈符取得引路符',src:'官方'},
+  {town:'月藏村',name:'火夫',func:'任務／材料',dialog:null,coord:null,context:'取得神秘卷軸與兵器原材料任務',src:'官方'},
+  {town:'帝釋天城',name:'地痞蘇',func:'任務提示／材料交付',dialog:null,coord:null,context:'心念舊恩任務',src:'官方'},
+  {town:'桃花村',name:'學童',func:'溫故知新',dialog:null,coord:'40,194',context:'回答所有提問取得經驗與隨機獎勵',src:'官方'},
+  {town:'帝釋天城',name:'佑輔',func:'樂善好施任務',dialog:null,coord:null,context:'領取菩提信',src:'官方'},
+  {town:'帝釋天城',name:'老乞丐',func:'樂善好施任務',dialog:null,coord:null,context:'接受資助並發放菩提珠等獎勵',src:'官方'},
+  {town:'桃花村',name:'童女',func:'菩提珠兌換',dialog:null,coord:null,context:'用菩提珠兌換菩提蓮',src:'官方'},
+  {town:'桃花村',name:'童男',func:'稱號兌換',dialog:null,coord:null,context:'用菩提珠兌換無雙善人稱號',src:'官方'},
+  {town:'桃花谷',name:'異域商販',func:'魂魄任務交付',dialog:null,coord:null,context:'交付狂豬之眼、山鬼之爪',src:'官方'},
+  {town:'玄陽村野外',name:'玄陽',func:'魂魄任務交付',dialog:null,coord:null,context:'交付猛虎皮、瘋熊掌、蠻盜頭巾',src:'官方'},
+  {town:'亂木村野外',name:'傻寶',func:'魂魄任務交付',dialog:null,coord:null,context:'交付一刀骨、銀槍頭、百步骸骨',src:'官方'},
+  {town:'鬼湖洞野外',name:'易多寶',func:'魂魄任務交付',dialog:null,coord:null,context:'交付多組魂魄任務材料',src:'官方'},
+  {town:'帝釋天城',name:'張遺風',func:'助人為樂任務發起',dialog:null,coord:'65,224',context:'每日環式任務入口',src:'官方'},
+  {town:'帝釋天城',name:'查詢使',func:'任務進度查詢',dialog:null,coord:null,context:'查詢助人為樂任務進度',src:'官方'},
+  {town:'桃花村',name:'迷宮引路人',func:'迷宮尋寶傳送／返回',dialog:null,coord:'14,20',context:'傳送至臥龍潭迷宮及返回桃花村',src:'官方'},
+  {town:'桃花村',name:'試煉守衛',func:'試煉神殿入口',dialog:null,coord:null,context:'進入試煉神殿',src:'官方'},
+  {town:'桃花村',name:'獵場管事',func:'桃林獵場入口',dialog:null,coord:'65,162',context:'80-94級獵場1層、95級以上獵場2層',src:'官方'},
+  {town:'桃花村',name:'魂魄副本守護',func:'魂魄副本入口',dialog:null,coord:'46,131',context:'每日進入一次',src:'官方'},
+  {town:'桃花村',name:'聚妖谷守護',func:'聚妖谷入口',dialog:null,coord:'50,20',context:'等級≥80進入；每次100萬天下幣、不限次數',src:'官方'},
+  {town:'城主府通道',name:'地宮通道守衛',func:'城主府地宮入口',dialog:null,coord:'9,23',context:'進入地宮通道',src:'官方'},
+  {town:'帝釋天城',name:'天下活動使',func:'武道場獎勵兌換',dialog:null,coord:null,context:'兌換經驗令經驗獎勵',src:'官方'},
+  {town:'桃花村武門',name:'武道場管事',func:'勇闖武道場入口',dialog:null,coord:null,context:'等級≥80可進入活動地圖',src:'官方'},
+  {town:'無生村天神廟',name:'神官',func:'助人為樂任務對象',dialog:null,coord:null,context:'任務環節涉及人物',src:'官方'}
+];
+
+const OFFICIAL_BATCH13_DATA = {
+  maps:OFFICIAL_MAP_DATA,towns:OFFICIAL_TOWN_DATA,src:'官方',verified:true,
+  officialSources:['https://tx.7ma.cn/gamedata/data/map/58.html','https://tx.7ma.cn/gamedata/data/map/60.html','https://tx.7ma.cn/gamedata/data/map/61.html','https://tx.7ma.cn/gamedata/data/map/497.html','https://tx.7ma.cn/gamedata/data/map/634.html'],
+  note:'已將官方地圖走法與座標、主要城鎮／村落整理為獨立資料表；既有 maps 保留不刪除。'
+};
+
+const OFFICIAL_BATCH14_DATA = {
+  dungeons:OFFICIAL_DUNGEON_DATA,src:'官方',verified:true,
+  officialSources:['https://tx.7ma.cn/gamedata/','https://tx.7ma.cn/gamedata/fb/289.html','https://tx.7ma.cn/gamedata/fb/336.html','https://tx.7ma.cn/gamedata/fb/596.html','https://tx.7ma.cn/gamedata/fb/812.html','https://tx.7ma.cn/gamedata/fb/12509.html'],
+  note:'已將官方特色副本清單與目前可核實的進入條件、時間、NPC、獎勵／規則整理為獨立資料表；未有官方頁面數據的欄位維持 null。'
+};
+
+const OFFICIAL_BATCH15_DATA = {
+  towns:OFFICIAL_TOWN_DATA,npcs:OFFICIAL_NPC_DATA,dialogs:OFFICIAL_NPC_DATA.map(x=>({town:x.town,name:x.name,dialog:x.dialog,src:x.src})),src:'官方',verified:true,
+  officialSources:['https://tx.7ma.cn/gamedata/data/task/133.html','https://tx.7ma.cn/gamedata/fb/289.html','https://tx.7ma.cn/gamedata/fb/336.html','https://tx.7ma.cn/gamedata/fb/596.html','https://tx.7ma.cn/gamedata/fb/812.html','https://tx.7ma.cn/gamedata/fb/12509.html'],
+  note:'已由官方任務／副本頁整理可核實的城鎮、村落與 NPC；NPC 對話內容只有在官方原文有明確對話文本時才填寫，目前未見完整逐 NPC 對話稿，因此 dialog 保持 null，不自行編造。'
+};
+
+const OFFICIAL_INTEGRATION_BATCHES = Object.freeze([
+  {batch:1,name:'活動物品',status:'已整合索引',data:OFFICIAL_BATCH1_DATA},
+  {batch:2,name:'物品資料',status:'現有資料已索引／官方完整性待確認',data:OFFICIAL_BATCH2_DATA},
+  {batch:3,name:'技能資料',status:'現有資料已索引／官方完整性待確認',data:OFFICIAL_BATCH3_DATA},
+  {batch:4,name:'職業資料',status:'現有資料已索引／官方成長曲線待確認',data:OFFICIAL_BATCH4_DATA},
+  {batch:5,name:'官方怪物 1.0',status:'已核實官方資料頁',data:OFFICIAL_BATCH5_DATA},
+  {batch:6,name:'官方怪物 2.0',status:'已核實官方資料頁',data:OFFICIAL_BATCH6_DATA},
+  {batch:7,name:'官方怪物 2.5',status:'已核實官方資料頁',data:OFFICIAL_BATCH7_DATA},
+  {batch:8,name:'官方怪物 3.0',status:'現有 3.0 資料已索引',data:OFFICIAL_BATCH8_DATA},
+  {batch:9,name:'群魔島怪物',status:'已核實官方資料頁',data:OFFICIAL_BATCH9_DATA},
+  {batch:10,name:'妖器怪物',status:'已核實官方資料頁',data:OFFICIAL_BATCH10_DATA},
+  {batch:11,name:'BOSS 資料',status:'現有資料已索引／官方完整性待確認',data:OFFICIAL_BATCH11_DATA},
+  {batch:12,name:'物品爆率',status:'已核實官方資料頁未提供數值掉落率',data:OFFICIAL_BATCH12_DATA},
+  {batch:13,name:'野外地圖',status:'已更新官方地圖／城鎮資料',data:OFFICIAL_BATCH13_DATA},
+  {batch:14,name:'副本資料',status:'已更新官方副本資料',data:OFFICIAL_BATCH14_DATA},
+  {batch:15,name:'城鎮與 NPC',status:'已更新官方城鎮／NPC資料',data:OFFICIAL_BATCH15_DATA}
+]);
+
 </script>
 <script src="warehouse.js"></script>
 <script src="login-bgm.js"></script>
