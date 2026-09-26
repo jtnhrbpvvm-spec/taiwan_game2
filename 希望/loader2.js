@@ -1,0 +1,787 @@
+﻿// ==========================================================================
+// 放置希望 改機面板 loader2
+//
+// 遊戲：https://idle-seal.pp771007.workers.dev/
+//
+// 用法（三種都可以，內容是同一份）：
+//   1. 遊戲畫面按 F12 → Console → 貼上整份 → Enter
+//   2. Tampermonkey / Violentmonkey 新增腳本，貼上整份
+//      （@match https://idle-seal.pp771007.workers.dev/*）
+//   3. 做成書籤：javascript: + encodeURIComponent(這份檔案的全文)
+//      ⚠️ 一定要整段編碼。半套編碼過的書籤會留下 %27 在程式碼裡
+//      （typeof x===%27function%27），整段 SyntaxError、面板連畫都畫不出來。
+//
+// 對應 2026-09 改版：掉寶已改走 giveDrop() → giveUnidentified()，
+// 事後用 give() 補發會造成永遠白色、按不了鑑定的裝備。詳見檔案內註解。
+// ==========================================================================
+/*
+ * 放置希望 改機面板 (idle-seal cheat panel)
+ *
+ * 以 prototype 覆寫的方式掛在遊戲的 session 物件上。不改遊戲檔案、不碰存檔格式，
+ * 重新整理後重新注入即可。
+ *
+ * 遊戲：https://idle-seal.pp771007.workers.dev/
+ */
+(() => {
+  'use strict';
+
+  const PANEL_ID = 'idle-seal-cheat-panel';
+  if (document.getElementById(PANEL_ID)) return;
+
+  // ---------------------------------------------------------------- 設定儲存
+
+  const MULT_KEY = 'idle_seal_mults_v2';
+  const TOGGLE_KEY = 'idle_seal_toggles_v1';
+  const COLLAPSE_KEY = 'idle_seal_panel_collapsed';
+
+  const DROP_COUNT_MAX = 10;
+
+  const MULT_DEFAULTS = {
+    moveSpeed: 5,
+    gold: 5,
+    exp: 5,
+    dmg: 5,
+    respawn: 5,
+    fame: 5,
+    drop: 5,
+    dropCount: 1, // 每次掉落給幾個（1~10）
+    petFeed: 1, // 寵物餵食速度倍率
+    bpetExp: 1, // 戰鬥寵物經驗倍率
+  };
+
+  const TOGGLE_DEFAULTS = {
+    skipEvolveMaterials: false,
+    maxRefine: false,
+  };
+
+  function load(key, defaults) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) return Object.assign({}, defaults, JSON.parse(raw));
+    } catch (e) {
+      /* localStorage 被鎖或內容壞掉，就用預設值 */
+    }
+    return Object.assign({}, defaults);
+  }
+
+  function save(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      /* 存不進去不影響本次執行 */
+    }
+  }
+
+  const mults = load(MULT_KEY, MULT_DEFAULTS);
+  const toggles = load(TOGGLE_KEY, TOGGLE_DEFAULTS);
+
+  const saveMults = () => save(MULT_KEY, mults);
+  const saveToggles = () => save(TOGGLE_KEY, toggles);
+
+  // ------------------------------------------------------------ 找 session
+
+  let session = null;
+  let patched = false;
+
+  // session 是遊戲那顆巨大的狀態物件。這三個方法同時存在的東西只有它。
+  function looksLikeSession(obj) {
+    return (
+      obj &&
+      typeof obj === 'object' &&
+      typeof obj.moveSpeed === 'function' &&
+      typeof obj.wornItems === 'function' &&
+      typeof obj.tick === 'function'
+    );
+  }
+
+  function scanObjectGraph(root, maxDepth, maxNodes) {
+    const seen = new Set();
+    const queue = [[root, 0]];
+    let count = 0;
+    while (queue.length) {
+      const [obj, depth] = queue.shift();
+      if (!obj || typeof obj !== 'object' || seen.has(obj)) continue;
+      seen.add(obj);
+      if (++count > maxNodes) break;
+      if (looksLikeSession(obj)) return obj;
+      if (depth >= maxDepth) continue;
+      let keys;
+      try {
+        keys = Object.keys(obj);
+      } catch (e) {
+        continue;
+      }
+      for (const k of keys) {
+        let v;
+        try {
+          v = obj[k];
+        } catch (e) {
+          continue;
+        }
+        if (v && typeof v === 'object') queue.push([v, depth + 1]);
+      }
+    }
+    return null;
+  }
+
+  function findVueRoots() {
+    const roots = [];
+    for (const el of document.querySelectorAll('*')) {
+      for (const k of Object.keys(el)) {
+        if (k.startsWith('__vue') || k.startsWith('__vnode')) {
+          if (el[k]) roots.push(el[k]);
+        }
+      }
+    }
+    return roots;
+  }
+
+  function locateSession() {
+    if (looksLikeSession(window.__idleSealManualSession)) {
+      return window.__idleSealManualSession;
+    }
+    for (const root of findVueRoots()) {
+      const found = scanObjectGraph(root, 8, 30000);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // -------------------------------------------------------------- 覆寫本體
+
+  const MAX_REFINE = 12;
+
+  // skipEvolveMaterials 只能在寵物進化的呼叫期間生效。
+  // 全域把 usableCount 開成 Infinity、take 變成空操作會弄壞副本入場的丟棄邏輯、
+  // 自動料理、任務交付等等 —— 那是舊版會當掉的原因。
+  let inEvolveScope = 0;
+
+  function withEvolveScope(fn, self, args) {
+    inEvolveScope++;
+    try {
+      return fn.apply(self, args);
+    } finally {
+      inEvolveScope--;
+    }
+  }
+
+  const evolveSkipActive = () => toggles.skipEvolveMaterials && inEvolveScope > 0;
+
+  function applyPatches(s) {
+    const proto = Object.getPrototypeOf(s);
+    if (proto.__idleSealPatched) return;
+    proto.__idleSealPatched = true;
+
+    const wrap = (name, make) => {
+      if (typeof proto[name] !== 'function') {
+        console.warn(`[idle-seal 改機] 找不到 ${name}()，這一項跳過（遊戲可能又改版了）`);
+        return;
+      }
+      proto[name] = make(proto[name]);
+    };
+
+    // 移動速度：回傳值直接放大。
+    wrap('moveSpeed', (orig) => function (...args) {
+      const v = orig.apply(this, args);
+      return typeof v === 'number' && Number.isFinite(v) ? v * mults.moveSpeed : v;
+    });
+
+    // 經驗：每殺一隻的經驗值放大。
+    wrap('expPerKill', (orig) => function (...args) {
+      const v = orig.apply(this, args);
+      try {
+        return Math.max(1, Math.round(v * mults.exp));
+      } catch (e) {
+        return v;
+      }
+    });
+
+    // 掉寶：改遊戲自己的倍率，讓掉落物照原路徑走 giveDrop()。
+    //
+    // 不要在 rewardKill 之後用 give() 補發 —— 改版後掉寶會經過
+    //   giveDrop(id) → dropsUnidentified(id) ? giveUnidentified(id,1) : give(id,1)
+    // give() 建出來的堆疊沒有 unidentified 旗標，鑑定守門會判成 'done'，
+    // 結果就是一堆永遠白色、永遠不能鑑定的裝備。
+    // 改 dropMultiplier 連離線掛機結算也一起生效。
+    wrap('dropMultiplier', (orig) => function (...args) {
+      const v = orig.apply(this, args);
+      return typeof v === 'number' && Number.isFinite(v) ? v * mults.drop : v;
+    });
+
+    // 掉落數量：同一件掉落物一次給 N 個。
+    //
+    // 一定要沿用 giveDrop 自己的分岔，不能寫死成 give()：
+    //   dropsUnidentified(id) ? giveUnidentified(id, n) : give(id, n)
+    // 兩個函式本來就收數量參數，所以 unidentified 旗標會正確帶上，
+    // 不會變成一堆按不了鑑定的白裝。
+    const dropCount = () => {
+      const n = Math.round(Number(mults.dropCount) || 1);
+      return Math.min(DROP_COUNT_MAX, Math.max(1, n));
+    };
+
+    wrap('giveDrop', (orig) => function (itemId) {
+      const n = dropCount();
+      if (n <= 1) return orig.call(this, itemId);
+      const id = this.dropsUnidentified(itemId)
+        ? this.giveUnidentified(itemId, n)
+        : this.give(itemId, n);
+      // rewardKill 只會把這件算 1 個，補上差額讓本趟統計對得起來。
+      try {
+        this.drops.set(itemId, (this.drops.get(itemId) ?? 0) + (n - 1));
+        this.player.looted += n - 1;
+      } catch (e) {
+        /* ignore */
+      }
+      return id;
+    });
+
+    // 離線掛機結算走的是 applyOfflineChunk 裡的 inline 分岔，不經過 giveDrop，
+    // 所以數量要在這裡另外放大。loot 換成新的 Map，不去動呼叫端那份統計。
+    wrap('applyOfflineChunk', (orig) => function (chunk) {
+      const n = dropCount();
+      try {
+        if (n > 1 && chunk?.loot instanceof Map) {
+          chunk = { ...chunk, loot: new Map([...chunk.loot].map(([id, c]) => [id, c * n])) };
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      return orig.call(this, chunk);
+    });
+
+    // 金錢：自動販賣的收入放大。
+    wrap('sellSweep', (orig) => function (...args) {
+      let before = 0;
+      try {
+        before = this.player?.gold ?? 0;
+      } catch (e) {
+        /* ignore */
+      }
+      const result = orig.apply(this, args);
+      try {
+        if (this.player && mults.gold > 1) {
+          const delta = this.player.gold - before;
+          if (delta > 0) this.player.gold += Math.round(delta * (mults.gold - 1));
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      return result;
+    });
+
+    // 傷害：只在 tick 期間暫時放大我方的 atk / mag，算完就還原。
+    // 直接改 stats 會被 refreshPlayerStats() 覆蓋掉，所以逐 tick 套用。
+    wrap('tick', (orig) => function (...args) {
+      let backup = null;
+      try {
+        if (mults.dmg > 1 && Array.isArray(this.battle?.units)) {
+          backup = [];
+          for (const u of this.battle.units) {
+            if (u.side !== 'ally' || !u.stats) continue;
+            for (const key of ['atk', 'mag']) {
+              if (typeof u.stats[key] === 'number') {
+                backup.push([u.stats, key, u.stats[key]]);
+                u.stats[key] = Math.round(u.stats[key] * mults.dmg);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        backup = null;
+      }
+
+      const result = orig.apply(this, args);
+
+      try {
+        if (backup) for (const [stats, key, value] of backup) stats[key] = value;
+      } catch (e) {
+        /* ignore */
+      }
+      return result;
+    });
+
+    // 怪物重生：原函式每 tick 固定扣一個步長，這裡按實際經過時間再多扣一些。
+    wrap('tickRespawns', (orig) => {
+      let lastAt = null;
+      return function (...args) {
+        const result = orig.apply(this, args);
+        try {
+          const now = performance.now();
+          const dt = lastAt === null ? 0 : now - lastAt;
+          lastAt = now;
+          if (mults.respawn > 1 && dt > 0 && Array.isArray(this.instances)) {
+            const extra = dt * (mults.respawn - 1);
+            for (const inst of this.instances) {
+              if (inst.alive || !(inst.respawnMs > 0)) continue;
+              inst.respawnMs = Math.max(0, inst.respawnMs - extra);
+              if (inst.respawnMs <= 0) {
+                inst.alive = true;
+                inst.respawnMs = 0;
+                inst.lastUnitId = undefined;
+                this.dirty = true;
+              }
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
+        return result;
+      };
+    });
+
+    // --- 寵物經驗 ---------------------------------------------------------
+    //
+    // 🚨 不要去乘 buildPetView() 回傳的 exp 欄位。那個值是
+    //      xy(pet, def) = Math.min(1, pet.exp / by(def, pet.grow))
+    //    也就是「這一條進度的比例」，乘完一樣被 Math.min(1, …) 夾在 1，
+    //    畫面上就變成百分比而不是倍數 —— 這是玩家回報的那個問題。
+    //    真正的經驗在 pet.exp，由 tickPet() → feedOnce() → Cy() 累加。
+    //
+    // 寵物（grow/exp，靠餵飼料）與戰鬥寵物（level/exp，靠打怪）是兩套系統，
+    // 分兩個倍率處理。
+
+    // 寵物：把餵食的時間流速加快。吃掉的便當／自動購買花的錢會等比增加，
+    // 這是刻意的 —— 直接塞 exp 需要知道 by() 裡的私有常數，換版就會壞。
+    wrap('tickPet', (orig) => function (ms) {
+      const n = Math.max(1, Number(mults.petFeed) || 1);
+      return orig.call(this, n > 1 && typeof ms === 'number' ? ms * n : ms);
+    });
+
+    // 戰鬥寵物：每隻怪的經驗由 zd() 算死，重複結算 N 次就是 N 倍，
+    // 升級與上限判斷都留給原本的 Bd() 處理。
+    wrap('rewardBattlePetExp', (orig) => function (monster) {
+      const n = Math.max(1, Math.round(Number(mults.bpetExp) || 1));
+      let result;
+      for (let i = 0; i < n; i++) result = orig.call(this, monster);
+      return result;
+    });
+
+    // 名聲：交任務拿到的名聲放大。
+    // player.fame 會被整顆換成新物件 {current,total}，所以比對前後數值而不是留參考。
+    wrap('submitQuest', (orig) => function (...args) {
+      let beforeCurrent = 0;
+      let beforeTotal = 0;
+      try {
+        if (this.player?.fame) {
+          beforeCurrent = this.player.fame.current;
+          beforeTotal = this.player.fame.total;
+        }
+      } catch (e) {
+        /* ignore */
+      }
+
+      const result = orig.apply(this, args);
+
+      try {
+        const fame = this.player?.fame;
+        if (fame && mults.fame > 1) {
+          const dCurrent = fame.current - beforeCurrent;
+          const dTotal = fame.total - beforeTotal;
+          if (dCurrent > 0) fame.current += Math.round(dCurrent * (mults.fame - 1));
+          if (dTotal > 0) fame.total += Math.round(dTotal * (mults.fame - 1));
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      return result;
+    });
+
+    // --- 寵物進化跳過材料 -------------------------------------------------
+    //
+    // 改版後進化有四道門檻，缺一個都按不下去：
+    //   1. buildPetView 回傳的 recipe.blocked = Ey(pet, def, recipe, count)
+    //      UI 判斷是 `disabled: blocked !== undefined`，所以要 delete 掉，
+    //      設成 false 一樣是 disabled。
+    //   2. recipe.mats[].count 來自 buildPetPanel 傳進來的 Map，不是 usableCount，
+    //      數量 0 的材料不會被挑進 defaultPick，挑到的數量就湊不到 min。
+    //   3. evolvePet 裡的 Ey() 會看 grow >= 9 與 exp 是否滿，材料再多也過不了。
+    //   4. py() 檢查挑的材料 usableCount > 0，接著 take() 真的扣。
+    const EVOLVE_GROW_MAX = 9;
+
+    wrap('evolvePet', (orig) => function (uid, ...rest) {
+      if (!toggles.skipEvolveMaterials) return orig.call(this, uid, ...rest);
+      try {
+        // 補滿成長度與經驗，過掉 Ey() 的 'grow' / 'exp'。
+        const pet = this.pets?.find((p) => p.uid === uid);
+        if (pet && (pet.grow < EVOLVE_GROW_MAX || pet.exp < Number.MAX_SAFE_INTEGER)) {
+          this.replacePet({ ...pet, grow: EVOLVE_GROW_MAX, exp: Number.MAX_SAFE_INTEGER });
+        }
+        return withEvolveScope(orig, this, [uid, ...rest]);
+      } catch (e) {
+        console.warn('[idle-seal 改機] evolvePet 失敗', e);
+        return false;
+      }
+    });
+
+    wrap('buildPetView', (orig) => function (...args) {
+      const result = orig.apply(this, args);
+      if (!toggles.skipEvolveMaterials) return result;
+      try {
+        for (const recipe of result?.recipes ?? []) {
+          delete recipe.blocked; // UI 只看 !== undefined
+          const ids = (recipe.mats ?? []).map((m) => {
+            m.count = Math.max(m.count, recipe.need ?? 1);
+            return m.id;
+          });
+          // 原本的 defaultPick 只收 count > 0 的材料，這裡直接湊滿。
+          recipe.defaultPick = ids.slice(0, recipe.need ?? ids.length);
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      return result;
+    });
+
+    wrap('usableCount', (orig) => function (...args) {
+      if (evolveSkipActive()) return Infinity;
+      return orig.apply(this, args);
+    });
+
+    // 舊版遊戲用 countOf，新版改成 usableCount。兩個都掛著以防再改回去。
+    wrap('countOf', (orig) => function (...args) {
+      if (evolveSkipActive()) return Infinity;
+      return orig.apply(this, args);
+    });
+
+    wrap('take', (orig) => function (...args) {
+      if (evolveSkipActive()) return;
+      return orig.apply(this, args);
+    });
+
+    // --- 精煉必定 +12 -----------------------------------------------------
+    //
+    // 改版後簽名變成 refineStack(stackId, stones = [], guardId)，而且要回傳
+    //   { kind, name, from, level }
+    // 給精煉面板收尾。舊版覆寫用 call(this, e) 吃掉後兩個參數又回傳 undefined，
+    // 所以面板會卡住。
+    wrap('refineStack', (orig) => function (stackId, ...rest) {
+      if (!toggles.maxRefine) return orig.call(this, stackId, ...rest);
+      try {
+        const stack = this.mutableStack(stackId);
+        if (!stack) return;
+
+        const def = this.data.equipById.get(stack.itemId);
+        if (!def || def.noUpgrade) return orig.call(this, stackId, ...rest);
+
+        const from = stack.refine ?? 0;
+        if (from >= MAX_REFINE) return;
+
+        // splitOne 讓「一疊 N 件」只精煉其中一件，跟原函式一致。
+        const one = this.splitOne(stack);
+        one.refine = MAX_REFINE;
+
+        const name = this.itemName(one.itemId);
+        this.push(`${name} 精煉成功 → +${MAX_REFINE}`, 'equip');
+        this.cue('success');
+        this.refreshPlayerStats();
+        this.applyNow();
+
+        return { kind: 'success', name, from, level: MAX_REFINE };
+      } catch (e) {
+        console.warn('[idle-seal 改機] refineStack 覆寫失敗，改跑原本的', e);
+        return orig.call(this, stackId, ...rest);
+      }
+    });
+
+    console.log('[idle-seal 改機] 原型方法覆寫完成');
+  }
+
+  function tryPatchLoop(attemptsLeft) {
+    if (patched) return;
+    const found = locateSession();
+    if (found) {
+      session = found;
+      window.__idleSealSession = found;
+      applyPatches(found);
+      patched = true;
+      setStatus('已找到並套用 (session 物件命中)');
+      return;
+    }
+    if (attemptsLeft <= 0) {
+      setStatus('自動尋找失敗，請進到遊戲畫面後按「重新尋找並套用」');
+      return;
+    }
+    setTimeout(() => tryPatchLoop(attemptsLeft - 1), 1000);
+  }
+
+  // ------------------------------------------------------------------ 面板
+
+  let statusEl = null;
+  const setStatus = (text) => {
+    if (statusEl) statusEl.textContent = text;
+  };
+
+  const el = (tag, css, text) => {
+    const node = document.createElement(tag);
+    if (css) node.style.cssText = css;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  const SLIDERS = [
+    { key: 'moveSpeed', label: '移動速度倍率' },
+    { key: 'gold', label: '金錢倍率（自動販賣）' },
+    { key: 'exp', label: '經驗倍率' },
+    { key: 'dmg', label: '傷害倍率（我方）' },
+    { key: 'respawn', label: '怪物重生速度倍率' },
+    { key: 'fame', label: '名聲倍率（交任務時）' },
+    { key: 'drop', label: '掉寶機率倍率' },
+    { key: 'dropCount', label: '掉落數量（每次 ×N 個）', max: DROP_COUNT_MAX, unit: '個' },
+    { key: 'petFeed', label: '寵物餵食速度倍率' },
+    { key: 'bpetExp', label: '戰鬥寵物經驗倍率' },
+  ];
+
+  const ATTRS = [
+    { key: 'str', label: '力量' },
+    { key: 'agi', label: '敏捷' },
+    { key: 'int', label: '智力' },
+    { key: 'sta', label: '體力' },
+    { key: 'wis', label: '精神' },
+    { key: 'luck', label: '幸運' },
+  ];
+
+  function buildPanel() {
+    const panel = el(
+      'div',
+      'position:fixed;top:80px;right:20px;z-index:999999;width:270px;' +
+        'max-height:calc(100vh - 100px);background:#1c1712;color:#eee;' +
+        'border:1px solid #4a3f33;border-radius:8px;' +
+        'font-family:-apple-system,"Microsoft JhengHei",sans-serif;font-size:13px;' +
+        'box-shadow:0 4px 16px rgba(0,0,0,.5);user-select:none;' +
+        'display:flex;flex-direction:column;overflow:hidden;'
+    );
+    panel.id = PANEL_ID;
+
+    // --- 標題列（可拖曳、可收合）
+    const header = el(
+      'div',
+      'padding:10px 12px;background:#2a221a;border-radius:8px 8px 0 0;cursor:move;' +
+        'font-weight:bold;border-bottom:1px solid #4a3f33;flex-shrink:0;' +
+        'display:flex;justify-content:space-between;align-items:center;'
+    );
+    header.appendChild(el('span', '', '放置希望 改機面板'));
+
+    let collapsed = false;
+    try {
+      collapsed = !!localStorage.getItem(COLLAPSE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+
+    const collapseBtn = el(
+      'button',
+      'background:transparent;border:1px solid #4a3f33;color:#eee;width:22px;height:22px;' +
+        'line-height:1;border-radius:4px;cursor:pointer;font-size:12px;flex-shrink:0;',
+      collapsed ? '▸' : '▾'
+    );
+    header.appendChild(collapseBtn);
+    panel.appendChild(header);
+
+    const body = el('div', 'padding:12px;overflow-y:auto;flex:1;');
+    if (collapsed) body.style.display = 'none';
+    panel.appendChild(body);
+
+    collapseBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      collapsed = !collapsed;
+      body.style.display = collapsed ? 'none' : '';
+      collapseBtn.textContent = collapsed ? '▸' : '▾';
+      try {
+        localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '');
+      } catch (e) {
+        /* ignore */
+      }
+    });
+
+    // --- 倍率滑桿
+    for (const field of SLIDERS) {
+      const row = el('div', 'margin-bottom:10px;');
+      const labelRow = el('div', 'display:flex;justify-content:space-between;margin-bottom:4px;');
+      labelRow.appendChild(el('span', '', field.label));
+      const unit = field.unit ?? 'x';
+      const valueText = el('span', 'color:#e0b060;', `${mults[field.key]}${unit}`);
+      labelRow.appendChild(valueText);
+      row.appendChild(labelRow);
+
+      const slider = el('input', 'width:100%;');
+      slider.type = 'range';
+      slider.min = '1';
+      slider.max = String(field.max ?? 100);
+      slider.step = '1';
+      slider.value = String(mults[field.key]);
+      slider.addEventListener('input', () => {
+        mults[field.key] = Number(slider.value);
+        valueText.textContent = `${mults[field.key]}${unit}`;
+        saveMults();
+      });
+      row.appendChild(slider);
+      body.appendChild(row);
+    }
+
+    statusEl = el('div', 'font-size:12px;color:#999;margin:8px 0;min-height:32px;', '尋找 session 物件中...');
+    body.appendChild(statusEl);
+
+    // --- 開關
+    const checkbox = (id, label, checked, onChange, warning) => {
+      const wrap = el(
+        'div',
+        'display:flex;flex-direction:column;margin-bottom:12px;padding:8px;' +
+          'background:#241d16;border-radius:4px;'
+      );
+      const top = el('div', 'display:flex;align-items:center;gap:8px;');
+      const input = el('input');
+      input.type = 'checkbox';
+      input.id = id;
+      input.checked = checked;
+      const labelEl = el('label', 'cursor:pointer;flex:1;', label);
+      labelEl.htmlFor = id;
+      input.addEventListener('change', () => onChange(input.checked));
+      top.appendChild(input);
+      top.appendChild(labelEl);
+      wrap.appendChild(top);
+      if (warning) {
+        wrap.appendChild(
+          el(
+            'div',
+            'color:#ffb020;font-size:11px;margin-top:4px;padding-left:21px;line-height:1.4;',
+            warning
+          )
+        );
+      }
+      body.appendChild(wrap);
+    };
+
+    checkbox(
+      'idle-seal-toggle-evolve',
+      '寵物進化跳過材料需求',
+      !!toggles.skipEvolveMaterials,
+      (v) => {
+        toggles.skipEvolveMaterials = v;
+        saveToggles();
+      },
+      '只在進化的當下略過材料檢查，不會再影響副本入場與任務交付。'
+    );
+
+    checkbox(
+      'idle-seal-toggle-refine',
+      `裝備精煉必定成功（+${MAX_REFINE}）`,
+      !!toggles.maxRefine,
+      (v) => {
+        toggles.maxRefine = v;
+        saveToggles();
+      },
+      '標記為不可強化（noUpgrade）的裝備會照原本流程走。'
+    );
+
+    // --- 能力值
+    body.appendChild(el('div', 'font-weight:bold;margin:4px 0 8px;color:#e0b060;', '能力值直接設定'));
+
+    const inputs = {};
+    const grid = el('div', 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;');
+    for (const attr of ATTRS) {
+      const cell = el('div');
+      cell.appendChild(el('div', 'font-size:11px;color:#999;margin-bottom:2px;', attr.label));
+      const input = el(
+        'input',
+        'width:100%;padding:5px;background:#100d09;border:1px solid #4a3f33;color:#eee;' +
+          'border-radius:4px;box-sizing:border-box;'
+      );
+      input.type = 'number';
+      input.min = '0';
+      input.placeholder = '0';
+      cell.appendChild(input);
+      grid.appendChild(cell);
+      inputs[attr.key] = input;
+    }
+    body.appendChild(grid);
+
+    const attrStatus = el('div', 'font-size:12px;color:#999;margin-bottom:8px;min-height:16px;');
+    body.appendChild(attrStatus);
+
+    const buttonRow = el('div', 'display:flex;gap:8px;margin-bottom:12px;');
+    const loadBtn = el(
+      'button',
+      'flex:1;padding:8px;background:#3a3a3a;color:#fff;border:none;border-radius:4px;' +
+        'cursor:pointer;font-size:12px;',
+      '讀取目前數值'
+    );
+    loadBtn.addEventListener('click', () => {
+      const attributes = session?.player?.attributes;
+      if (!attributes) {
+        attrStatus.textContent = '尚未找到 session，無法讀取';
+        return;
+      }
+      for (const attr of ATTRS) inputs[attr.key].value = attributes[attr.key] ?? 0;
+      attrStatus.textContent = '已讀取目前數值';
+    });
+
+    const applyBtn = el(
+      'button',
+      'flex:1;padding:8px;background:#5a3d1f;color:#fff;border:none;border-radius:4px;' +
+        'cursor:pointer;font-size:12px;',
+      '套用'
+    );
+    applyBtn.addEventListener('click', () => {
+      if (!session?.player) {
+        attrStatus.textContent = '尚未找到 session，無法套用';
+        return;
+      }
+      try {
+        const next = {};
+        for (const attr of ATTRS) {
+          next[attr.key] = Math.max(0, Math.floor(Number(inputs[attr.key].value) || 0));
+        }
+        session.player.attributes = next;
+        session.refreshPlayerStats?.();
+        session.applyNow?.();
+        attrStatus.textContent = '已套用';
+      } catch (e) {
+        console.warn('[idle-seal 改機] 套用能力值失敗', e);
+        attrStatus.textContent = '套用出錯（詳見 console）';
+      }
+    });
+
+    buttonRow.appendChild(loadBtn);
+    buttonRow.appendChild(applyBtn);
+    body.appendChild(buttonRow);
+
+    const retryBtn = el(
+      'button',
+      'width:100%;padding:8px;background:#5a3d1f;color:#fff;border:none;border-radius:4px;' +
+        'cursor:pointer;font-size:13px;',
+      '重新尋找並套用'
+    );
+    retryBtn.addEventListener('click', () => {
+      patched = false;
+      if (session) Object.getPrototypeOf(session).__idleSealPatched = false;
+      setStatus('重新尋找中...');
+      tryPatchLoop(5);
+    });
+    body.appendChild(retryBtn);
+
+    // --- 拖曳
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    header.addEventListener('mousedown', (e) => {
+      if (e.target === collapseBtn) return;
+      dragging = true;
+      offsetX = e.clientX - panel.offsetLeft;
+      offsetY = e.clientY - panel.offsetTop;
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      panel.style.left = `${e.clientX - offsetX}px`;
+      panel.style.top = `${e.clientY - offsetY}px`;
+      panel.style.right = 'auto';
+    });
+    document.addEventListener('mouseup', () => {
+      dragging = false;
+    });
+
+    return panel;
+  }
+
+  document.body.appendChild(buildPanel());
+  tryPatchLoop(10);
+})();
