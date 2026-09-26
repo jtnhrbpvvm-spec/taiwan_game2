@@ -45,8 +45,7 @@
     fame: 5,
     drop: 5,
     dropCount: 1, // 每次掉落給幾個（1~10）
-    petFeed: 1, // 寵物餵食速度倍率
-    bpetExp: 1, // 戰鬥寵物經驗倍率
+    petExp: 1, // 寵物 ＋ 戰寵 共用的經驗倍率
   };
 
   const TOGGLE_DEFAULTS = {
@@ -235,18 +234,35 @@
       return id;
     });
 
-    // 離線掛機結算走的是 applyOfflineChunk 裡的 inline 分岔，不經過 giveDrop，
-    // 所以數量要在這裡另外放大。loot 換成新的 Map，不去動呼叫端那份統計。
-    wrap('applyOfflineChunk', (orig) => function (chunk) {
+    // 離線掛機結算不經過 giveDrop，要另外放大。
+    //
+    // 掛在 withOfflineRng 而不是 applyOfflineChunk —— 離線那一圈長這樣：
+    //
+    //   let ue = new Map;
+    //   for (…) { let a = e.withOfflineRng(t => jl(i.drops, r, t, …));
+    //             for (…) ue.set(id, (ue.get(id) ?? 0) + c) }
+    //   for (let [id, c] of ue) o.set(id, (o.get(id) ?? 0) + c);   // ← 結算摘要
+    //   e.applyOfflineChunk({ kills: le, loot: ue, … })            // ← 進背包
+    //
+    // 摘要 o 和背包讀的是同一份 ue，而且摘要先累加。所以在 applyOfflineChunk
+    // 放大只會讓背包變多、摘要報少；在這裡放大才兩邊一致。
+    //
+    // withOfflineRng 全檔只有那一處在用（本體是 `return this.withRng(e)`），
+    // 回傳一定是 itemId → 數量的 Map。還是檢查一次型別，免得改版後它被挪去別的地方用。
+    wrap('withOfflineRng', (orig) => function (fn) {
+      const result = orig.call(this, fn);
       const n = dropCount();
+      if (n <= 1 || !(result instanceof Map)) return result;
       try {
-        if (n > 1 && chunk?.loot instanceof Map) {
-          chunk = { ...chunk, loot: new Map([...chunk.loot].map(([id, c]) => [id, c * n])) };
+        const scaled = new Map();
+        for (const [id, count] of result) {
+          if (typeof count !== 'number' || !Number.isFinite(count)) return result;
+          scaled.set(id, count * n);
         }
+        return scaled;
       } catch (e) {
-        /* ignore */
+        return result;
       }
-      return orig.call(this, chunk);
     });
 
     // 金錢：自動販賣的收入放大。
@@ -329,28 +345,65 @@
       };
     });
 
-    // --- 寵物經驗 ---------------------------------------------------------
+    // --- 寵物經驗（寵物 ＋ 戰寵共用一個倍率）-------------------------------
+    //
+    // 遊戲裡是兩套完全獨立的系統，同一個倍率要分別掛：
+    //
+    //   寵物 pets        grow 0~9 ＋ 每段的 exp，靠餵飼料
+    //                    tickPet(ms) → feedOnce(pet, def) → Cy(pet, def, feed)
+    //   戰寵 battlePets  level ＋ exp，靠打怪
+    //                    rewardBattlePetExp(monster) → zd() 算經驗 → Bd() 給經驗＋升級
     //
     // 🚨 不要去乘 buildPetView() 回傳的 exp 欄位。那個值是
     //      xy(pet, def) = Math.min(1, pet.exp / by(def, pet.grow))
-    //    也就是「這一條進度的比例」，乘完一樣被 Math.min(1, …) 夾在 1，
-    //    畫面上就變成百分比而不是倍數 —— 這是玩家回報的那個問題。
-    //    真正的經驗在 pet.exp，由 tickPet() → feedOnce() → Cy() 累加。
-    //
-    // 寵物（grow/exp，靠餵飼料）與戰鬥寵物（level/exp，靠打怪）是兩套系統，
-    // 分兩個倍率處理。
+    //    也就是「這一條進度的比例」，乘完照樣被 Math.min(1, …) 夾在 1，
+    //    畫面上就變成百分比而不是倍數。真正的經驗在 pet.exp。
 
-    // 寵物：把餵食的時間流速加快。吃掉的便當／自動購買花的錢會等比增加，
-    // 這是刻意的 —— 直接塞 exp 需要知道 by() 裡的私有常數，換版就會壞。
-    wrap('tickPet', (orig) => function (ms) {
-      const n = Math.max(1, Number(mults.petFeed) || 1);
-      return orig.call(this, n > 1 && typeof ms === 'number' ? ms * n : ms);
+    const petExpMult = () => Math.max(1, Math.round(Number(mults.petExp) || 1));
+
+    // 寵物：讓 feedOnce 多跑 N-1 次，多的那幾次不吃飼料也不花錢。
+    //
+    // 之前的做法是把 tickPet(ms) 的時間流速 ×N，那有兩個問題：
+    // 便當盒空著又沒開自動購買時 feedOnce 原封不動回傳，完全沒效果（實測感覺不到
+    // 經驗變多就是這個）；有飼料時則是飼料與金錢等比燒掉，不是「經驗倍率」。
+    //
+    // 現在改成：第一次照常吃一份，剩下 N-1 次把 takeFromLunchbox() 暫時改成
+    // 直接回傳這隻寵物該吃的飼料量。餵多少、要不要進下一個 grow，
+    // 全部還是交給遊戲自己的 Cy()，不需要 by() 裡那些私有常數。
+    let freeFeedAmount;
+
+    wrap('takeFromLunchbox', (orig) => function (...args) {
+      if (freeFeedAmount !== undefined) return freeFeedAmount;
+      return orig.apply(this, args);
     });
 
-    // 戰鬥寵物：每隻怪的經驗由 zd() 算死，重複結算 N 次就是 N 倍，
-    // 升級與上限判斷都留給原本的 Bd() 處理。
+    wrap('feedOnce', (orig) => function (pet, def) {
+      let result = orig.call(this, pet, def);
+
+      const n = petExpMult();
+      if (n <= 1) return result;
+
+      // 這隻寵物吃的飼料種類本來就記在 def.food 上，用遊戲自己的表查。
+      const feed = this.data?.petFoodByKind?.get(def?.food)?.feed;
+      if (!(typeof feed === 'number' && feed > 0)) return result;
+
+      const previous = freeFeedAmount;
+      freeFeedAmount = feed;
+      try {
+        for (let i = 1; i < n; i++) result = orig.call(this, result, def);
+      } catch (e) {
+        console.warn('[idle-seal 改機] 寵物加餐失敗', e);
+      } finally {
+        freeFeedAmount = previous;
+      }
+      return result;
+    });
+
+    // 戰寵：每隻怪給的經驗由 zd(sys, monster.exp, playerLevel) 算死，
+    // 重複結算 N 次就是 N 倍。升級與 maxLevel 上限都留給原本的 Bd()。
+    // 沒召出戰寵時 orig 會自己 early return，重複呼叫不會有副作用。
     wrap('rewardBattlePetExp', (orig) => function (monster) {
-      const n = Math.max(1, Math.round(Number(mults.bpetExp) || 1));
+      const n = petExpMult();
       let result;
       for (let i = 0; i < n; i++) result = orig.call(this, monster);
       return result;
@@ -527,8 +580,7 @@
     { key: 'fame', label: '名聲倍率（交任務時）' },
     { key: 'drop', label: '掉寶機率倍率' },
     { key: 'dropCount', label: '掉落數量（每次 ×N 個）', max: DROP_COUNT_MAX, unit: '個' },
-    { key: 'petFeed', label: '寵物餵食速度倍率' },
-    { key: 'bpetExp', label: '戰鬥寵物經驗倍率' },
+    { key: 'petExp', label: '寵物經驗倍率（含戰寵）' },
   ];
 
   const ATTRS = [
@@ -744,6 +796,55 @@
     buttonRow.appendChild(loadBtn);
     buttonRow.appendChild(applyBtn);
     body.appendChild(buttonRow);
+
+    // --- 副本次數
+    //
+    // 每日次數記在 session.dungeon.used 上，形狀是 { [quota]: 已用次數 }：
+    //   dungeonEntriesLeft(def) = gg(def, { day, used }) = max(0, def.entries - used[def.quota])
+    //   dungeonBlock(def)       次數用完就回傳 'no-entry'
+    //   enterDungeon(id)        進場時 _g() 把該 quota +1
+    //   hg(state, today)        跨日時整個 used 清成 {}
+    // 所以直接清空 used 就等於「今天還沒進過任何副本」。quota 是共用配額的
+    // 群組鍵（同一組副本共吃一份次數），清空就全部一起重置。
+    body.appendChild(el('div', 'font-weight:bold;margin:4px 0 8px;color:#e0b060;', '副本'));
+
+    const dungeonStatus = el('div', 'font-size:12px;color:#999;margin-bottom:8px;min-height:16px;');
+
+    const resetDungeonBtn = el(
+      'button',
+      'width:100%;padding:8px;background:#5a3d1f;color:#fff;border:none;border-radius:4px;' +
+        'cursor:pointer;font-size:13px;margin-bottom:8px;',
+      '重置今日副本次數'
+    );
+    resetDungeonBtn.addEventListener('click', () => {
+      if (!session?.dungeon) {
+        dungeonStatus.textContent = '尚未找到 session，無法重置';
+        return;
+      }
+      try {
+        const used = session.dungeon.used ?? {};
+        const cleared = Object.keys(used).length;
+
+        if (session.dungeon.run) {
+          // 副本進行中 dungeonBlock() 會回傳 'in-run'，清了次數也還是進不去。
+          dungeonStatus.textContent = '目前正在副本裡，先離開再重置';
+          return;
+        }
+
+        session.dungeon.used = {};
+        // 讓面板重畫，同時把 dirty 推進存檔。
+        session.applyNow?.();
+
+        dungeonStatus.textContent =
+          cleared > 0 ? `已重置 ${cleared} 組配額，次數回滿` : '本來就沒有用掉任何次數';
+      } catch (e) {
+        console.warn('[idle-seal 改機] 重置副本次數失敗', e);
+        dungeonStatus.textContent = '重置出錯（詳見 console）';
+      }
+    });
+
+    body.appendChild(resetDungeonBtn);
+    body.appendChild(dungeonStatus);
 
     const retryBtn = el(
       'button',
