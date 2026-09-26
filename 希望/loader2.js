@@ -33,6 +33,7 @@
   const MULT_KEY = 'idle_seal_mults_v2';
   const TOGGLE_KEY = 'idle_seal_toggles_v1';
   const COLLAPSE_KEY = 'idle_seal_panel_collapsed';
+  const RISK_ACK_KEY = 'idle_seal_risk_ack_v1'; // 危險倍率確認過沒有
 
   const DROP_COUNT_MAX = 10;
 
@@ -43,8 +44,8 @@
     dmg: 5,
     respawn: 5,
     fame: 5,
-    drop: 5,
-    dropCount: 1, // 每次掉落給幾個（1~10）
+    drop: 5, // 超過 2 就會開始餓死同 tier 排後面的稀有物品，所以拉過 2 會跳彈窗確認
+    dropCount: 1, // 打一隻怪 ＝ 平常打幾隻的收穫（1~10）
     petExp: 1, // 寵物 ＋ 戰寵 共用的經驗倍率
     petFeed: 1, // 寵物餵食速度倍率（餵食間隔縮短）
   };
@@ -74,9 +75,11 @@
 
   const mults = load(MULT_KEY, MULT_DEFAULTS);
   const toggles = load(TOGGLE_KEY, TOGGLE_DEFAULTS);
+  const riskAcks = load(RISK_ACK_KEY, {});
 
   const saveMults = () => save(MULT_KEY, mults);
   const saveToggles = () => save(TOGGLE_KEY, toggles);
+  const saveRiskAcks = () => save(RISK_ACK_KEY, riskAcks);
 
   // ------------------------------------------------------------ 找 session
 
@@ -208,34 +211,59 @@
       return typeof v === 'number' && Number.isFinite(v) ? v * mults.drop : v;
     });
 
-    // 掉落數量：同一件掉落物一次給 N 個。
+    // 掉落數量：打一隻怪 ＝ 平常打 N 隻的收穫。
     //
-    // 一定要沿用 giveDrop 自己的分岔，不能寫死成 give()：
-    //   dropsUnidentified(id) ? giveUnidentified(id, n) : give(id, n)
-    // 兩個函式本來就收數量參數，所以 unidentified 旗標會正確帶上，
-    // 不會變成一堆按不了鑑定的白裝。
+    // 重點是「多擲幾次骰」而不是「同一件給 N 個」。前者每一次都是正常倍率下的
+    // 獨立擲骰，掉出來的種類分布跟真的多打 N 隻一樣；後者只會讓背包塞滿同一件。
+    //
+    // 沒辦法直接再呼叫一次 Ol()（它是 bundle 裡的模組層函式，拿不到），
+    // 但 dropChances(monster) = Dl(drops, dropMultiplier, whiffChance) 回傳的是
+    // 「每殺一隻，每件物品各自的機率」，tier 互斥的邏輯已經算進去了。
+    // 用它逐件獨立擲骰，正好就是遊戲自己離線結算的模型 ——
+    // jl() 對每件物品跑的是 binomial(殺怪數, p)，同樣是獨立的。
+    //
+    // 用 Math.random() 而不是遊戲的 withRng()：後者是有種子的共用亂數流，
+    // 多抽會連帶改變之後的戰鬥擲骰。
     const dropCount = () => {
       const n = Math.round(Number(mults.dropCount) || 1);
       return Math.min(DROP_COUNT_MAX, Math.max(1, n));
     };
 
-    wrap('giveDrop', (orig) => function (itemId) {
+    wrap('rewardKill', (orig) => function (monsterId, ...rest) {
+      const result = orig.call(this, monsterId, ...rest);
+
       const n = dropCount();
-      if (n <= 1) return orig.call(this, itemId);
-      const id = this.dropsUnidentified(itemId)
-        ? this.giveUnidentified(itemId, n)
-        : this.give(itemId, n);
-      // rewardKill 只會把這件算 1 個，補上差額讓本趟統計對得起來。
+      if (n <= 1) return result;
+
       try {
-        this.drops.set(itemId, (this.drops.get(itemId) ?? 0) + (n - 1));
-        this.player.looted += n - 1;
+        const monster = this.data.monsterById.get(monsterId);
+        if (!monster) return result;
+
+        const chances = this.dropChances(monster);
+        if (!(chances instanceof Map)) return result;
+
+        // 第 1 隻是原函式已經算過的，這裡補剩下的 n-1 隻。
+        for (let kill = 1; kill < n; kill++) {
+          for (const [itemId, p] of chances) {
+            if (!(p > 0) || Math.random() >= p) continue;
+            // giveDrop 自己會分岔 giveUnidentified / give，旗標才會正確。
+            this.giveDrop(itemId);
+            this.drops.set(itemId, (this.drops.get(itemId) ?? 0) + 1);
+            this.player.looted += 1;
+            this.player.seenItems.add(itemId);
+          }
+        }
       } catch (e) {
-        /* ignore */
+        console.warn('[idle-seal 改機] 追加掉落失敗', e);
       }
-      return id;
+      return result;
+      // 刻意不呼叫 push()／lootFx()／cue()：N=10 時一隻怪會噴掉幾十行訊息，
+      // 蓋掉戰鬥紀錄。拿到什麼看本趟統計（this.drops）就好。
     });
 
-    // 離線掛機結算不經過 giveDrop，要另外放大。
+    // 離線掛機結算不經過 rewardKill，要另外放大。
+    // 那邊的 jl() 已經是「殺 N 隻」的 binomial，所以把結果的件數 ×N
+    // 期望值就等於多打 N 倍的怪。
     //
     // 掛在 withOfflineRng 而不是 applyOfflineChunk —— 離線那一圈長這樣：
     //
@@ -590,8 +618,24 @@
     { key: 'dmg', label: '傷害倍率（我方）' },
     { key: 'respawn', label: '怪物重生速度倍率' },
     { key: 'fame', label: '名聲倍率（交任務時）' },
-    { key: 'drop', label: '掉寶機率倍率' },
-    { key: 'dropCount', label: '掉落數量（每次 ×N 個）', max: DROP_COUNT_MAX, unit: '個' },
+    {
+      key: 'drop',
+      label: '掉寶機率倍率',
+      // 上限 5：再往上只是把稀有物品餓死得更徹底，收穫不會真的變多。
+      max: 5,
+      // Ol() 每個 tier 只選一件，而且是 o = rng/(mul*Tl) 減到負數的第一項勝出。
+      // mul 一大，第一項的區間就吃掉整個 [0,1)，同 tier 後面的項目再也掉不出來。
+      // 門檻是 mul >= Cl / (Tl * w0)；實際資料裡最早 2.39x 就開始餓死。
+      // 所以超過 2 倍要先跳彈窗，按確認才生效。
+      confirmAbove: 2,
+      confirmText:
+        '⚠ 掉寶機率超過 2 倍，可能會無法取得低機率掉落物。\n\n' +
+        '遊戲的擲骰是「同一類別最多只掉一件」，倍率一高，清單排前面的常見物品會把機率吃光，' +
+        '排後面的稀有物品就再也掉不出來。\n\n' +
+        '想要更多收穫，建議改用下面的「掉落數量」—— 那個等於多打幾隻怪，不會有這個問題。\n\n' +
+        '確定要調到 2 倍以上嗎？',
+    },
+    { key: 'dropCount', label: '掉落數量（＝多打 N 倍的怪）', max: DROP_COUNT_MAX, unit: '倍' },
     { key: 'petExp', label: '寵物經驗倍率（含戰寵）' },
     { key: 'petFeed', label: '寵物餵食速度倍率（耗飼料）' },
   ];
@@ -604,6 +648,9 @@
     { key: 'wis', label: '精神' },
     { key: 'luck', label: '幸運' },
   ];
+
+  // 需要等面板貼進 DOM 之後才跳的確認彈窗（見倍率滑桿那段）。
+  const pendingRiskChecks = [];
 
   function buildPanel() {
     const panel = el(
@@ -660,6 +707,10 @@
 
     // --- 倍率滑桿
     for (const field of SLIDERS) {
+      const max = field.max ?? 100;
+      // 上限調低過的項目，把舊設定裡超標的值夾回來（例如掉寶機率從 100 降到 5）。
+      mults[field.key] = Math.min(max, Math.max(1, Number(mults[field.key]) || 1));
+
       const row = el('div', 'margin-bottom:10px;');
       const labelRow = el('div', 'display:flex;justify-content:space-between;margin-bottom:4px;');
       labelRow.appendChild(el('span', '', field.label));
@@ -671,16 +722,75 @@
       const slider = el('input', 'width:100%;');
       slider.type = 'range';
       slider.min = '1';
-      slider.max = String(field.max ?? 100);
+      slider.max = String(max);
       slider.step = '1';
       slider.value = String(mults[field.key]);
-      slider.addEventListener('input', () => {
-        mults[field.key] = Number(slider.value);
-        valueText.textContent = `${mults[field.key]}${unit}`;
+
+      // confirmAbove 的項目超過門檻要先跳彈窗，按確認才生效。
+      const threshold = field.confirmAbove;
+      const risky = (value) => threshold !== undefined && value > threshold;
+
+      // 確認狀態存在 localStorage，所以只會問一次，不是每次注入都問。
+      // 掉回門檻以下會清掉，下次再拉上去重新問。
+      let confirmed = !!riskAcks[field.key];
+
+      const show = (value) => {
+        slider.value = String(value);
+        valueText.textContent = `${value}${unit}`;
+      };
+
+      const commit = (value) => {
+        mults[field.key] = value;
+        show(value);
         saveMults();
+        if (!risky(value) && confirmed) {
+          confirmed = false;
+          delete riskAcks[field.key];
+          saveRiskAcks();
+        }
+      };
+
+      const ask = () => {
+        if (!window.confirm(field.confirmText)) return false;
+        confirmed = true;
+        riskAcks[field.key] = true;
+        saveRiskAcks();
+        return true;
+      };
+
+      slider.addEventListener('input', () => {
+        const value = Number(slider.value);
+        // 拖曳中先只更新數字。還沒確認過的危險值不寫進設定，等 change 問過再說。
+        valueText.textContent = `${value}${unit}`;
+        if (risky(value) && !confirmed) return;
+        commit(value);
       });
+
+      // 彈窗掛在 change（放開滑桿）而不是 input（拖曳中連續觸發），
+      // 否則從 1 拉到 5 會被問四次。
+      slider.addEventListener('change', () => {
+        const value = Number(slider.value);
+        if (!risky(value) || confirmed) {
+          commit(value);
+          return;
+        }
+        if (ask()) commit(value);
+        else show(mults[field.key]); // 取消就退回上一個生效的值
+      });
+
       row.appendChild(slider);
       body.appendChild(row);
+
+      // 面板開起來就已經在危險區、而且從來沒確認過（例如這就是預設值）——
+      // 先退回門檻，問過才放行。這是「按下確認後才生效」的字面意思。
+      // 排進 pendingRiskChecks，等面板真的貼進 DOM 後才跳，不然彈窗會比面板早出現。
+      if (risky(mults[field.key]) && !confirmed) {
+        const wanted = mults[field.key];
+        commit(threshold);
+        pendingRiskChecks.push(() => {
+          if (ask()) commit(wanted);
+        });
+      }
     }
 
     statusEl = el('div', 'font-size:12px;color:#999;margin:8px 0;min-height:32px;', '尋找 session 物件中...');
@@ -897,5 +1007,6 @@
   }
 
   document.body.appendChild(buildPanel());
+  for (const check of pendingRiskChecks) check();
   tryPatchLoop(10);
 })();
