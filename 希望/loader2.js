@@ -46,6 +46,7 @@
     drop: 5,
     dropCount: 1, // 每次掉落給幾個（1~10）
     petExp: 1, // 寵物 ＋ 戰寵 共用的經驗倍率
+    petFeed: 1, // 寵物餵食速度倍率（餵食間隔縮短）
   };
 
   const TOGGLE_DEFAULTS = {
@@ -361,6 +362,17 @@
 
     const petExpMult = () => Math.max(1, Math.round(Number(mults.petExp) || 1));
 
+    // 寵物餵食速度：tickPet(ms) 每累積 ay 毫秒餵一次，把時間流速 ×N 就是
+    // 餵食間隔縮成 1/N。這一項會真的吃掉便當／自動購買花錢，跟下面的
+    // 經驗倍率是兩件事：
+    //   餵食速度 ×N  → 餵的「次數」變 N 倍（飼料與金錢等比消耗）
+    //   經驗倍率 ×M  → 每餵一次的「經驗」變 M 倍（多的那幾份不用飼料）
+    // 兩個都拉的話效果相乘（N×M），這是刻意的。
+    wrap('tickPet', (orig) => function (ms) {
+      const n = Math.max(1, Number(mults.petFeed) || 1);
+      return orig.call(this, n > 1 && typeof ms === 'number' ? ms * n : ms);
+    });
+
     // 寵物：讓 feedOnce 多跑 N-1 次，多的那幾次不吃飼料也不花錢。
     //
     // 之前的做法是把 tickPet(ms) 的時間流速 ×N，那有兩個問題：
@@ -581,6 +593,7 @@
     { key: 'drop', label: '掉寶機率倍率' },
     { key: 'dropCount', label: '掉落數量（每次 ×N 個）', max: DROP_COUNT_MAX, unit: '個' },
     { key: 'petExp', label: '寵物經驗倍率（含戰寵）' },
+    { key: 'petFeed', label: '寵物餵食速度倍率（耗飼料）' },
   ];
 
   const ATTRS = [
