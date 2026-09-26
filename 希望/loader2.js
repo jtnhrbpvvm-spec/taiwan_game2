@@ -576,6 +576,42 @@
       }
     });
 
+    // 戰寵裝備的精煉是完全獨立的一條路，跟 refineStack 沒有共用程式碼：
+    //   refineBattlePetGear(slotIndex, stones = [])
+    // 它改的是 battlePet.gear[slot]，不是 player.stacks，而且沒有回傳值
+    // （UI 直接呼叫、不看結果），所以不用像 refineStack 那樣回傳結果物件。
+    wrap('refineBattlePetGear', (orig) => function (slot, ...rest) {
+      if (!toggles.maxRefine) return orig.call(this, slot, ...rest);
+      try {
+        if (!this.inVillage) return;
+
+        const pet = this.battlePet;
+        // 這一格沒穿東西時 battlePetGearInputs 會回傳空物件。
+        const { worn } = this.battlePetGearInputs(slot) ?? {};
+        if (!pet || !worn || !Array.isArray(pet.gear)) return orig.call(this, slot, ...rest);
+
+        const from = worn.refine ?? 0;
+        if (from >= MAX_REFINE) return;
+
+        const gear = [...pet.gear];
+        gear[slot] = {
+          ...worn,
+          refine: MAX_REFINE,
+          refineTries: (worn.refineTries ?? 0) + 1,
+        };
+        this.battlePet = { ...pet, gear };
+
+        this.push(`${this.itemName(worn.itemId)} 精煉成功 → +${MAX_REFINE}`, 'equip');
+        this.cue('success');
+        this.refreshBattlePetUnit();
+        this.dirty = true;
+        this.applyNow();
+      } catch (e) {
+        console.warn('[idle-seal 改機] refineBattlePetGear 覆寫失敗，改跑原本的', e);
+        return orig.call(this, slot, ...rest);
+      }
+    });
+
     console.log('[idle-seal 改機] 原型方法覆寫完成');
   }
 
@@ -839,7 +875,7 @@
 
     checkbox(
       'idle-seal-toggle-refine',
-      `裝備精煉必定成功（+${MAX_REFINE}）`,
+      `裝備精煉必定成功（+${MAX_REFINE}，含戰寵裝備）`,
       !!toggles.maxRefine,
       (v) => {
         toggles.maxRefine = v;
