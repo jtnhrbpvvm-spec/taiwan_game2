@@ -1628,6 +1628,16 @@
     }
     if (typeof mapId === "number") params.push("map=" + mapId);
     else console.warn("[掉落查詢] 讀不到目前地圖", session);
+    // 正在打的怪物：野外狩獵時遊戲把選的目標存在 placement.target（完整怪物資料，有編號，同名不同隻也分得出來）；
+    // 在副本裡改帶副本編號（dungeon.run.dungeonId）。在村莊、釣魚時都不帶，網站就照地圖顯示。
+    try {
+      var run = session.dungeon && session.dungeon.run;
+      if (run && typeof run.dungeonId === "number") {
+        params.push("dg=" + run.dungeonId);
+      } else if (session.onHuntingGround && session.placement && session.placement.target && typeof session.placement.target.id === "number") {
+        params.push("mon=" + session.placement.target.id);
+      }
+    } catch (e) { /* 讀不到就只帶地圖 */ }
     // 測試用：F12 先執行 window.IW_DROP_SITE_URL = "http://localhost:8000/希望物品查詢.html" 再貼書籤，就會改開本機的網站
     var base = window.IW_DROP_SITE_URL || DROP_SITE_URL;
     return base + (base.indexOf("?") === -1 ? "?" : "&") + params.join("&");
@@ -1645,6 +1655,16 @@
         try { m = session.data && session.data.mapById && session.data.mapById.get(Number(v)); } catch (e) { m = null; }
         if (!m && data && data.mapById) m = data.mapById.get(Number(v));
         out.push((m && m.name ? m.name : "地圖") + " #" + v);
+      }
+      else if (p[0] === "mon") {
+        var mon = null;
+        try { mon = session.data && session.data.monsterById && session.data.monsterById.get(Number(v)); } catch (e) { mon = null; }
+        out.push("打 " + (mon && mon.name ? mon.name : "怪物") + " #" + v);
+      }
+      else if (p[0] === "dg") {
+        var dgDef = null;
+        try { dgDef = session.data && session.data.dungeonById && session.data.dungeonById.get(Number(v)); } catch (e) { dgDef = null; }
+        out.push("副本 " + (dgDef && dgDef.name ? dgDef.name : "#" + v));
       }
     });
     if (q.indexOf("map=") === -1) out.push("⚠️ 沒讀到地圖");

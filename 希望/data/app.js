@@ -20,9 +20,6 @@
   var itemArr = Object.keys(ITEMS).map(function (id) { return { id: id, name: ITEMS[id].name }; });
   var petArr = Object.keys(PETS).map(function (id) { return { id: id, name: PETS[id].name, tier: PETS[id].tier }; });
 
-  // 修改器對照的遊戲存檔版本（bundle 的 jx() 產生 {v:61,...}；2026-09-27 對照）
-  var SUPPORTED_SAVE_VERSION = 61;
-
   var saveData = null;
   var currentCharIndex = 0;
   var originalFileName = "idle-seal-save.json";
@@ -171,13 +168,6 @@
         document.getElementById("delCharBtn").disabled = false;
         document.getElementById("defaultCharBtn").disabled = false;
         toast("存檔載入成功", "ok");
-        // 遊戲讀檔時會把舊版存檔一路升級到最新版（bundle 的 migrations），但修改器是直接改檔案，
-        // 版本太舊的欄位跟現在的遊戲對不起來（例如 v58 以前職業還在 questFlags、v59 以前委託還要接取）。
-        if (typeof data.v === "number" && data.v < SUPPORTED_SAVE_VERSION) {
-          toast("這份存檔是舊版格式（v" + data.v + "），建議先用遊戲讀一次再匯出，修改器是照 v" + SUPPORTED_SAVE_VERSION + " 的格式寫的", "warn");
-        } else if (typeof data.v === "number" && data.v > SUPPORTED_SAVE_VERSION) {
-          toast("這份存檔比修改器新（v" + data.v + "），遊戲可能又改版了，部分欄位可能對不上", "warn");
-        }
         renderAll();
         showPanel("basic");
       } catch (err) {

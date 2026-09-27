@@ -592,6 +592,7 @@
   function mapName(id) { return MAPS[String(id)] || ("地圖#" + id); }
   // 地圖進入條件（update_data.py 照 world.json 傳送門條件＋地圖 reqLevel 算的）：[{lv, fame}]，任一組達到就走得到
   var MAP_ACCESS = window.MAP_ACCESS || {};
+  var gameCurrentMap = null; // 書籤從遊戲帶來的目前地圖（網址 map=），怪物頁會在那張地圖標「你在這裡」
   function mapAccessText(mid) {
     var opts = MAP_ACCESS[String(mid)];
     if (!opts || !opts.length) return "";
@@ -2626,7 +2627,10 @@
     html += '<div class="section-title">出現地圖 <span class="count">(' + mapIds.length + ')</span></div>';
     html += '<div class="map-chip-row">' + mapIds.map(function (mid) {
       var access = mapAccessText(mid);
-      return '<span class="map-chip" data-open-map="' + mid + '" title="看這張地圖的所有怪物和掉落">' + escapeHtml(mapName(mid)) +
+      var here = gameCurrentMap != null && String(mid) === gameCurrentMap;
+      return '<span class="map-chip" data-open-map="' + mid + '" title="看這張地圖的所有怪物和掉落"' +
+        (here ? ' style="border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,162,75,.35);"' : '') + '>' +
+        (here ? '📍 ' : '') + escapeHtml(mapName(mid)) + (here ? ' <span style="font-size:11px;color:var(--gold-hi);">（你在這裡）</span>' : '') +
         (access ? ' <span style="font-size:11px;color:var(--text-faint);">（' + escapeHtml(access) + '）</span>' : '') +
         (MAP_PENALTY[String(mid)] ? ' <span style="font-size:11px;color:var(--danger, #c0392b);">⚠️廢墟</span>' : '') + '</span>';
     }).join("") + '</div>';
@@ -4952,6 +4956,7 @@
 
   // ---------- 網址參數：書籤工具「📊 掉落查詢」從遊戲帶資料過來 ----------
   // ?lv=等級&smith=1(鐵匠／匠師)&beg=乞討等級&map=目前地圖&from=game，另外 q=關鍵字 可以直接搜尋
+  // mon=正在打的怪物編號（野外狩獵時）、dg=正在跑的副本編號（副本裡）；開啟順序：q > mon > dg > map
   (function applyUrlParams() {
     var p;
     try { p = new URLSearchParams(location.search); } catch (e) { return; }
@@ -4960,13 +4965,18 @@
     if (p.get("smith") === "1") dropCalcState.blacksmith = true;
     var beg = Number(p.get("beg"));
     if (beg >= 1) dropCalcState.beg = Math.min(DROP_BEG_SKILL_LEVELS.length, Math.floor(beg));
-    var map = p.get("map"), q = p.get("q");
+    var map = p.get("map"), q = p.get("q"), mon = p.get("mon"), dg = p.get("dg");
+    if (map) gameCurrentMap = String(map);
+    if (mon && !MONSTERS[String(mon)]) mon = null;
+    if (dg && !DUNGEON_BY_ID[String(dg)]) dg = null;
     if (p.get("from") === "game") {
       var parts = [];
       if (dropCalcState.level != null) parts.push("Lv" + dropCalcState.level);
       parts.push(dropCalcState.blacksmith ? "鐵匠／匠師（不受等級差衰減）" : "非鐵匠系");
       parts.push(dropCalcState.beg ? "〔乞討〕Lv" + dropCalcState.beg : "沒學〔乞討〕");
-      if (map) parts.push("目前在〔" + mapName(map) + "〕");
+      if (dg) parts.push("正在副本〔" + DUNGEON_BY_ID[String(dg)].name + "〕");
+      else if (map) parts.push("目前在〔" + mapName(map) + "〕");
+      if (mon) parts.push("正在打〔" + MONSTERS[String(mon)].name + "〕");
       var bar = document.createElement("div");
       bar.style.cssText = "margin:8px 0 0;padding:8px 12px;border-radius:6px;background:var(--panel-hi);border:1px solid var(--gold);font-size:12.5px;color:var(--text);";
       bar.textContent = "🎮 已從遊戲帶入：" + parts.join("・") + "。想查別的東西，直接用上面的搜尋框。";
@@ -4975,6 +4985,11 @@
     if (q) {
       $input.value = q;
       $input.dispatchEvent(new Event("input"));
+    } else if (mon) {
+      // 跟點左邊清單一樣打開怪物頁（同名不同隻也分得出來，因為是用編號）；頁面上的地圖標籤可以點回整張地圖
+      navigateTo("monster", String(mon), false);
+    } else if (dg) {
+      navigateTo("dungeon", String(dg), false);
     } else if (map && MAPS[String(map)]) {
       showMapDetail(map);
     }
