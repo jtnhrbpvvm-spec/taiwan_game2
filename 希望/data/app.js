@@ -20,6 +20,9 @@
   var itemArr = Object.keys(ITEMS).map(function (id) { return { id: id, name: ITEMS[id].name }; });
   var petArr = Object.keys(PETS).map(function (id) { return { id: id, name: PETS[id].name, tier: PETS[id].tier }; });
 
+  // 修改器對照的遊戲存檔版本（bundle 的 jx() 產生 {v:61,...}；2026-09-27 對照）
+  var SUPPORTED_SAVE_VERSION = 61;
+
   var saveData = null;
   var currentCharIndex = 0;
   var originalFileName = "idle-seal-save.json";
@@ -39,7 +42,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -74,13 +77,17 @@
   // 2026-09-20 已經實際跑過完整流程（修改器建立 → 匯出 → 匯入遊戲，本機和線上 idle-seal 都測過）：
   // 戰寵可以正常出戰、顯示能力與技能樹，存檔重開也還在，所以改成一般功能直接顯示。
 
+  // 主線劇情 2026-09-27 那版遊戲整套拿掉了，新資料的 questLines.js 是空的，就不顯示這個選單
+  var questLinesNav = document.querySelector('.nav-item[data-panel="questlines"]');
+  if (questLinesNav && !Object.keys(MAIN_QUEST_LINES).length) questLinesNav.style.display = "none";
+
   document.getElementById("transferShortcutBtn").addEventListener("click", function () {
     showPanel("transfer");
   });
 
   // ---------- 功能總覽卡片 ----------
   var CAPABILITIES = [
-    { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業、轉職進度、名聲、遊玩時間。" },
+    { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉）、名聲。" },
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
@@ -94,8 +101,9 @@
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
     { panel: "spot", icon: "📍", title: "目前位置", desc: "所在地圖、座標、正在打的怪物或採集點。" },
     { panel: "individuality", icon: "🌠", title: "個性化", desc: "編輯已展現屬性、階段、副屬性，含展現上限對照。" },
-    { panel: "quests", icon: "📜", title: "任務", desc: "地點/委託/內容三層選單找任務，勾選決定是否在進行中清單。" },
-    { panel: "missions", icon: "🎯", title: "討伐任務", desc: "查詢討伐怪物換獎勵的清單，可勾選標記是否已完成。" },
+    { panel: "quests", icon: "📜", title: "委託任務", desc: "地點/委託/內容三層選單查委託，一鍵把繳交物品補到背包。" },
+    { panel: "daily", icon: "🗓️", title: "每日任務", desc: "查看/更換今天的任務卡、改進度、一鍵做完、補滿換卡次數。" },
+    { panel: "missions", icon: "🎯", title: "藍圖任務", desc: "希望路線的任務清單，可改進度、勾選標記是否已完成。" },
     { panel: "dungeon", icon: "🏛️", title: "副本", desc: "查看/重置每日副本進場次數，清空副本紀錄。" },
     { panel: "party", icon: "👥", title: "隊伍", desc: "把另一個角色加入隊伍（複製對方目前的戰鬥快照）。" },
     { panel: "advanced", icon: "🔧", title: "進階欄位", desc: "離線紀錄、亂數種子等，格式已驗證但仍以原始 JSON 編輯。", conf: "mid" },
@@ -163,6 +171,13 @@
         document.getElementById("delCharBtn").disabled = false;
         document.getElementById("defaultCharBtn").disabled = false;
         toast("存檔載入成功", "ok");
+        // 遊戲讀檔時會把舊版存檔一路升級到最新版（bundle 的 migrations），但修改器是直接改檔案，
+        // 版本太舊的欄位跟現在的遊戲對不起來（例如 v58 以前職業還在 questFlags、v59 以前委託還要接取）。
+        if (typeof data.v === "number" && data.v < SUPPORTED_SAVE_VERSION) {
+          toast("這份存檔是舊版格式（v" + data.v + "），建議先用遊戲讀一次再匯出，修改器是照 v" + SUPPORTED_SAVE_VERSION + " 的格式寫的", "warn");
+        } else if (typeof data.v === "number" && data.v > SUPPORTED_SAVE_VERSION) {
+          toast("這份存檔比修改器新（v" + data.v + "），遊戲可能又改版了，部分欄位可能對不上", "warn");
+        }
         renderAll();
         showPanel("basic");
       } catch (err) {
@@ -424,6 +439,7 @@
     renderSpot(c);
     renderIndividuality(c);
     renderQuests(c);
+    renderDaily(c);
     renderMissions(c);
     renderDungeon(c);
     renderParty(c);
@@ -450,39 +466,32 @@
       ));
     }
 
-    var tier1Options = JOBS.filter(function (j) { return j.tier !== 2; }).map(function (j) { return { value: j.id, label: j.name + " (" + j.id + ")" }; });
-    wrap.appendChild(fieldSelect("職業（一轉）Job", tier1Options, function () { return c.job; }, function (v) { c.job = v; renderBasic(c); }));
-
-    var secondJobOptions = [{ value: "", label: "（尚未二轉）" }].concat(
-      SECOND_JOBS.map(function (j) {
-        var fromName = j.from ? (JOB_NAME[j.from] || j.from) : "";
-        return { value: j.id, label: j.name + (fromName ? "・從 " + fromName : "") + " (" + j.id + ")" };
-      })
-    );
-    var secondJobField = fieldSelect(
-      "二轉職業 secondJob",
-      secondJobOptions,
-      function () { return c.secondJob || ""; },
+    // 職業：存檔 v34 起只存一個 currentJob（一轉或二轉的職業 id），一轉職業由二轉的 from 反推（遊戲 Qf()）；
+    // 舊的 job／secondJob／advanceStep 欄位遊戲早就不讀了。沒有 currentJob 代表還是初心者。
+    var jobOptions = JOBS.map(function (j) {
+      var fromName = j.from ? (JOB_NAME[j.from] || j.from) : "";
+      return { value: j.id, label: (j.tier === 2 ? "【二轉】" + j.name + "・從 " + fromName : "【一轉】" + j.name) + " (" + j.id + ")" };
+    });
+    var jobField = fieldSelect("職業 currentJob", jobOptions,
+      function () { return currentJobOf(c); },
       function (v) {
-        if (v) {
-          var chosen = SECOND_JOBS.find(function (j) { return j.id === v; });
-          c.secondJob = v;
-          if (chosen && chosen.from) c.job = chosen.from; // 二轉職業一定是從特定一轉職業分支出來的，一併同步，避免兩個欄位對不上
-          c.advanceStep = 999; // 遊戲只判斷「advanceStep 有沒有到二轉完成的門檻」，數字多少不重要，衝到一個絕對夠大的值即可
-          toast("已設定二轉職業" + (chosen && chosen.from ? "，一轉職業已同步改成 " + (JOB_NAME[chosen.from] || chosen.from) : "") + "，轉職進度已自動設為完成", "ok");
-        } else {
-          delete c.secondJob;
-        }
+        c.currentJob = v;
+        // 舊版殘留欄位一併清掉，免得看 JSON 時搞混
+        delete c.job; delete c.secondJob; delete c.advanceStep;
         renderBasic(c);
-      }
-    );
-    secondJobField.appendChild(el("div", {
+        renderLoadout(c);
+      });
+    var firstJobId = firstJobOf(currentJobOf(c));
+    jobField.appendChild(el("div", {
       style: "font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;",
-      text: "遊戲判斷目前職業，是看「advanceStep 有沒有到二轉完成」再決定要不要顯示 secondJob，兩個要一起設定才會生效——選這裡會自動幫你把 advanceStep 一起設好，不用再手動繞路。"
+      text: "選二轉職業時，一轉職業自動是它的來源職業（目前一轉：" + (JOB_NAME[firstJobId] || firstJobId) + "）。" +
+        "遊戲在轉職時會清空技能欄與已學技能，這裡直接改不會，技能請到「已學技能」自己調整。"
     }));
-    wrap.appendChild(secondJobField);
-
-    wrap.appendChild(fieldNumber("轉職進度 advanceStep", function () { return c.advanceStep; }, function (v) { c.advanceStep = v; }));
+    wrap.appendChild(jobField);
+    wrap.appendChild(fieldCheckbox("二轉費用已付過 secondJobPaid（是＝之後換二轉免付金錢）",
+      function () { return c.secondJobPaid; }, function (v) { c.secondJobPaid = v; }));
+    wrap.appendChild(fieldCheckbox("已向精靈女王領過戰寵 bpetSpiritTaken（改成否可以再領一次）",
+      function () { return c.bpetSpiritTaken; }, function (v) { c.bpetSpiritTaken = v; }));
     wrap.appendChild(fieldCheckbox("在村莊中 inVillage", function () { return c.inVillage; }, function (v) { c.inVillage = v; }));
     if ("townId" in c) {
       wrap.appendChild(fieldNumber("所在村莊 townId", function () { return c.townId; }, function (v) { c.townId = v; }));
@@ -747,11 +756,25 @@
     var job = JOBS.find(function (j) { return j.id === jobId; });
     return job ? job.equipBit : null;
   }
+  // 存檔 v34 起職業只存 currentJob；沒有的話是初心者（jobs.json startingJob）
+  function currentJobOf(c) { return c.currentJob || "novice"; }
+  function firstJobOf(jobId) {
+    var j = JOBS.find(function (x) { return x.id === jobId; });
+    return j && j.from ? j.from : jobId;
+  }
+  // 遊戲 equipBits：一轉職業的位元，加上二轉職業的位元（有二轉、而且不同位元時）
+  function equipBitsOf(c) {
+    var cur = currentJobOf(c), first = firstJobOf(cur);
+    var bits = [], b1 = getEquipBitForJob(first), b2 = cur !== first ? getEquipBitForJob(cur) : null;
+    if (b1 != null) bits.push(b1);
+    if (b2 != null && b2 !== b1) bits.push(b2);
+    return bits;
+  }
 
   function renderLoadout(c) {
     var wrap = document.getElementById("loadoutFields");
     wrap.innerHTML = "";
-    var equipBit = getEquipBitForJob(c.job);
+    var equipBits = equipBitsOf(c);
 
     Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
       var box = el("div", { class: "field" });
@@ -768,7 +791,7 @@
         var it = ITEMS[String(stack.itemId)];
         if (!it || !it.slot || it.slot !== slotKey) return false;
         if ((it.minLv || 0) > (c.level || 0)) return false;
-        if (equipBit !== null && it.jobs && !(it.jobs & (1 << equipBit))) return false;
+        if (equipBits.length && it.jobs != null && !equipBits.some(function (b) { return ((it.jobs >>> b) & 1) === 1; })) return false;
         return true;
       });
 
@@ -1061,17 +1084,17 @@
     var def = PETS[String(pet.id)];
     if (!def) return { lvOk: true, fameOk: true };
     var lvOk = (c.level || 0) >= (def.lv || 0);
-    var fameOk = ((c.fame && c.fame.current) || 0) >= (def.fame || 0);
+    // 遊戲 yy()：角色等級 ≥ 寵物 lv，而且「累計名聲」fame.total ≥ 寵物 fame
+    var fameOk = ((c.fame && c.fame.total) || 0) >= (def.fame || 0);
     return { lvOk: lvOk, fameOk: fameOk, def: def };
   }
 
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速", hit: "命中", dmgDealtPct: "增傷" };
-  // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關；
-  // 沒有 hunger 就是全部歸零。有的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
-  // 沒有 growth 陣列的屬性，就固定用寵物基礎資料裡的那個數字，不會隨 grow 變動。
-  function petBonusAt(def, grow, hunger) {
+  // 照遊戲 vy()：飽食度 hunger 在存檔 v39 就拿掉了（改成餵食累積 exp 升階），加成只看成長階段 grow：
+  // 每個屬性各自看，grow > 0 而且 growth[屬性][grow-1] 有值就用那個；否則用寵物基礎資料的數字（grow 0 也是基礎值）。
+  function petBonusAt(def, grow) {
     var out = {};
-    if (!def || !hunger || hunger <= 0) {
+    if (!def) {
       Object.keys(PET_STAT_LABEL).forEach(function (k) { out[k] = 0; });
       return out;
     }
@@ -1113,7 +1136,7 @@
     var lines = [];
     lines.push("寵物「" + petName(pet.id) + "」尚未達到出戰條件：");
     if (!r.lvOk) lines.push("・角色等級不足：目前 " + (c.level || 0) + "，需要 " + r.def.lv);
-    if (!r.fameOk) lines.push("・角色名聲不足：目前 " + ((c.fame && c.fame.current) || 0) + "，需要 " + r.def.fame);
+    if (!r.fameOk) lines.push("・角色累計名聲不足：目前 " + ((c.fame && c.fame.total) || 0) + "，需要 " + r.def.fame);
     lines.push("\n請調整後再匯出存檔，否則這隻寵物在遊戲裡不會顯示出戰按鈕。");
     showCenterModal("⚠️ 寵物需求未達標", lines.join("\n"));
   }
@@ -1322,14 +1345,10 @@
       var tdPet = document.createElement("td");
       tdPet.appendChild(makePetSelect(pet.id, function (newId) {
         pet.id = newId;
-        // grow 的屬性加成陣列（growth.atk/mag/def）只有 9 格，索引方式是 grow-1，
-        // 所以 grow:0 查不到任何一格資料，遊戲會顯示「無任何能力」。最低要設 1 才有基礎加成。
+        // 遊戲收養新寵物是 grow 0（用基礎能力），這裡預設 1 讓成長曲線的第一格生效
         pet.grow = 1;
         pet.exp = 0;
-        // hunger 一定要 > 0 加成才會生效，預設直接給滿（該寵物的飽食度上限 feedFull），
-        // 不用讓玩家自己還要另外調整才看得到效果。
-        var def = PETS[String(newId)];
-        pet.hunger = def ? def.feedFull : 0;
+        delete pet.hunger; // v39 起遊戲沒有飽食度了
         petsTouched = true;
         renderPets(c);
         warnIfPetInvalid(pet, c);
@@ -1337,7 +1356,7 @@
       if (invalid) tdPet.style.color = "var(--red)";
       tr.appendChild(tdPet);
 
-      ["uid", "grow", "exp", "hunger"].forEach(function (field) {
+      ["uid", "grow", "exp"].forEach(function (field) {
         var td = document.createElement("td");
         var inpAttrs = { type: "number", value: pet[field], style: "width:100%;min-width:56px;" };
         if (field === "grow") { inpAttrs.min = "0"; inpAttrs.max = "9"; } // 成長階段最高只到 9，超過遊戲裡的加成表也查不到
@@ -1346,7 +1365,7 @@
           var v = inp.valueAsNumber;
           if (field === "grow" && !isNaN(v) && v > 9) { v = 9; inp.value = "9"; }
           pet[field] = isNaN(v) ? 0 : Math.max(0, v);
-          if (field === "grow" || field === "hunger") updateBonusCell();
+          if (field === "grow") updateBonusCell();
         });
         td.appendChild(inp);
         tr.appendChild(td);
@@ -1379,8 +1398,8 @@
       tr.appendChild(tdBonus);
       function updateBonusCell() {
         var def = PETS[String(pet.id)];
-        tdBonus.textContent = petBonusText(petBonusAt(def, pet.grow, pet.hunger));
-        tdBonus.title = "只有出戰中、而且飽食度(hunger) > 0 的寵物，這個加成才會真的套用到角色身上";
+        tdBonus.textContent = petBonusText(petBonusAt(def, pet.grow));
+        tdBonus.title = "只有出戰中的寵物，這個加成才會真的套用到角色身上";
       }
       updateBonusCell();
 
@@ -1412,7 +1431,7 @@
 
       if (openPetApprUid === pet.uid && PETS[String(pet.id)]) {
         var apprTr = document.createElement("tr");
-        var apprTd = el("td", { colspan: "11" });
+        var apprTd = el("td", { colspan: "10" });
         apprTd.style.background = "var(--bg2)";
         apprTd.appendChild(petApprEditor(c, pet, function () { apprSummary.textContent = petApprSummary(pet); }));
         apprTr.appendChild(apprTd);
@@ -1424,7 +1443,9 @@
       var uid = c.nextPetUid++;
       // 新增的寵物先留空，讓玩家自己從下拉選單挑選。
       // 鑑定欄位照遊戲收養新寵物的預設（未鑑定、沒有屬性、鑑定次數 0）；少了這幾個欄位，遊戲進化／重置鑑定時會出錯。
-      c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, hunger: 0, unidentified: true, appraisal: [], apprTries: 0 });
+      // 欄位照遊戲 hy()：seed 是這隻寵物自己的亂數種子（鑑定／進化會用到），evolveTries 是進化嘗試次數
+      c.pets.push({ uid: uid, id: 0, grow: 0, exp: 0, seed: (Math.floor(Math.random() * 4294967295) >>> 0) || 1, evolveTries: 0,
+        unidentified: true, appraisal: [], apprTries: 0 });
       // 如果角色原本沒有任何出戰寵物，新增的這隻自動設為出戰
       if (!c.activePetUid) c.activePetUid = uid;
       petsTouched = true;
@@ -1446,6 +1467,7 @@
       closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
       summoned: false, downed: false, autoRevive: false, skills: [],
       gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
+      upgradeTries: 0, mode: "active", // v52 起遊戲新建的戰寵都有 mode（active／counter／support 戰鬥姿態），預設 active
     };
   }
   // ---------- 戰寵裝備 ----------
@@ -1496,6 +1518,7 @@
   function fixBattlePetShape(bp, c) {
     if (!bp) return bp;
     if (!Array.isArray(bp.skills)) bp.skills = [];
+    if (!bp.mode) bp.mode = "active";
     if (!Array.isArray(bp.gear)) bp.gear = (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; });
     bp.gear = bp.gear.map(function (entry) {
       if (typeof entry !== "number") return entry;
@@ -1703,11 +1726,11 @@
     }
   }
 
-  function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem) {
+  function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem, what) {
     var wrap = el("div", { class: "field wide" });
     wrap.appendChild(el("label", { text: label }));
     var row = el("div", { style: "display:flex;align-items:center;gap:8px;flex-wrap:wrap;" });
-    row.appendChild(el("span", { text: "生命剩餘" }));
+    row.appendChild(el("span", { text: (what || "生命") + "剩餘" }));
     var input = el("input", { type: "number", step: "1", min: "0", max: "100", style: "width:64px;" });
     input.value = Math.round((getPct() || 0) * 100);
     input.addEventListener("input", function () {
@@ -1766,12 +1789,24 @@
           function () { return slot.threshold; },
           function (v) { slot.threshold = v; },
           slot.itemId,
-          function (id) { slot.itemId = id; }));
+          function (id) { slot.itemId = id; }, "AP"));
       });
     } else if ("apPotionId" in c) {
       // 舊版存檔：AP 藥水只有單一物品，沒有閾值設定
       wrap.appendChild(potionItemOnlyRow("AP藥水", c.apPotionId, function (id) { c.apPotionId = id; }));
     }
+
+    // 存檔 v51 起：戰寵自己的生命／AP 藥水槽（結構跟角色的一樣）
+    [["bpetPotionSlots", "戰寵藥水", "戰寵生命"], ["bpetApPotionSlots", "戰寵AP藥水", "戰寵AP"]].forEach(function (def) {
+      if (!Array.isArray(c[def[0]])) return;
+      c[def[0]].forEach(function (slot, idx) {
+        wrap.appendChild(potionPercentRow(def[1] + (idx + 1),
+          function () { return slot.threshold; },
+          function (v) { slot.threshold = v; },
+          slot.itemId,
+          function (id) { slot.itemId = id; }, def[2]));
+      });
+    });
 
     if (Array.isArray(c.attackSlots)) {
       // 新版存檔：自動攻擊改成陣列，每一格是 {kind:"skill"等, id:技能或攻擊ID}
@@ -1828,7 +1863,6 @@
 
   function renderTagLists(c) {
     renderTagListFor("seenItems", "seenItemInput", "seenItemSuggest", "seenItemTags", c);
-    renderTagListFor("trackedItems", "trackedItemInput", "trackedItemSuggest", "trackedItemTags", c);
   }
 
   function renderSpot(c) {
@@ -1990,8 +2024,9 @@
     return "擊殺「" + monsterName(q.monsterId) + "」，繳交「" + itemName(q.itemId) + "」x" + q.count;
   }
 
+  // 委託（quests.json）：存檔 v59 起不用接取了（activeQuests 欄位被遊戲刪掉），背包有足夠的繳交物品就能直接到委託處交，
+  // 所以這裡只剩查詢，不寫存檔。
   function renderQuests(c) {
-    if (!Array.isArray(c.activeQuests)) c.activeQuests = [];
 
     var $town = document.getElementById("questFilterTown");
     var $page = document.getElementById("questFilterPage");
@@ -2053,7 +2088,6 @@
       }
       var q = QUESTS[qid];
       var page = QUEST_PAGES[String(q.pageId)] || {};
-      var checked = c.activeQuests.indexOf(Number(qid)) !== -1;
 
       var lvRange = "Lv" + q.reqLevel + (q.reqLevelMax != null ? " ~ Lv" + q.reqLevelMax : " 以上");
       var fameRange = (q.reqFameMin || 0) + " ~ " + (q.reqFameMax != null ? q.reqFameMax : "無上限");
@@ -2086,49 +2120,19 @@
       });
       box.appendChild(grid);
 
-      var checkLabel = el("label", { style: "display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;cursor:pointer;" });
-      var cb = el("input", { type: "checkbox" });
-      cb.checked = checked;
-      cb.addEventListener("change", function () {
-        var qNum = Number(qid);
-        var idx = c.activeQuests.indexOf(qNum);
-        if (cb.checked && idx === -1) c.activeQuests.push(qNum);
-        else if (!cb.checked && idx !== -1) c.activeQuests.splice(idx, 1);
-        renderActiveList();
-      });
-      checkLabel.appendChild(cb);
-      checkLabel.appendChild(document.createTextNode("此任務目前算在「進行中」清單裡"));
-      box.appendChild(checkLabel);
+      // 想直接完成：把繳交物品補到背包就行（委託不用接取、沒有進度欄位）
+      if (!progressDone) {
+        var fillBtn = el("button", { class: "btn btn-sm", type: "button", text: "🎒 把「" + itemName(q.itemId) + "」補到 " + q.count + " 個", style: "margin-top:14px;" });
+        fillBtn.addEventListener("click", function () {
+          setStackTotal(c, q.itemId, q.count);
+          renderStacks(c);
+          renderDetail();
+          toast("背包的「" + itemName(q.itemId) + "」已補到 " + q.count + " 個，到委託處就能交", "ok");
+        });
+        box.appendChild(fillBtn);
+      }
 
       $detail.appendChild(box);
-    }
-
-    function renderActiveList() {
-      var $list = document.getElementById("questActiveList");
-      $list.innerHTML = "";
-      if (!c.activeQuests.length) {
-        $list.appendChild(el("div", { class: "panel-desc", text: "目前沒有進行中的任務。" }));
-        return;
-      }
-      c.activeQuests.forEach(function (qNum) {
-        var q = QUESTS[String(qNum)];
-        var page = q ? QUEST_PAGES[String(q.pageId)] : null;
-        var chip = el("div", {
-          style: "display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--accent);" +
-            "border-radius:20px;padding:6px 12px;margin:0 8px 8px 0;font-size:12.5px;cursor:pointer;"
-        });
-        chip.textContent = q ? ("#" + qNum + "　" + (page ? page.title : "") + "　" + questDesc(q)) : ("#" + qNum + "（找不到資料）");
-        chip.addEventListener("click", function () {
-          if (!q) return;
-          $town.value = "";
-          updatePageOptions();
-          $page.value = String(q.pageId);
-          updateQuestOptions();
-          $quest.value = String(qNum);
-          renderDetail();
-        });
-        $list.appendChild(chip);
-      });
     }
 
     $town.onchange = function () { updatePageOptions(); updateQuestOptions(); renderDetail(); };
@@ -2138,12 +2142,25 @@
     updatePageOptions();
     updateQuestOptions();
     renderDetail();
-    renderActiveList();
   }
 
-  // ---------- 討伐任務（唯讀查詢，missions.json）----------
+  // ---------- 藍圖任務（missions.json，遊戲內叫「希望路線」，舊稱討伐任務）----------
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
+  // kind 不是 kill 的，monsterId 不是真的怪物（遊戲 missionWhat()），要照 kind 顯示目標
+  function missionTargetText(m) {
+    var kind = m.kind || "kill";
+    var place = m.townName ? "（" + m.townName + "）" : "";
+    if (kind === "kill") return "擊殺「" + monsterName(m.monsterId) + "」x" + m.need;
+    if (kind === "dungeon") return "進入副本「" + (m.dungeonName || "副本") + "」";
+    if (kind === "talk") return "找「" + (m.npc || "NPC") + "」談話" + place;
+    if (kind === "exchange") return "跟「" + (m.npc || "NPC") + "」交換" + place;
+    if (kind === "craft") return "找「" + (m.npc || "NPC") + "」拿材料並精煉" + place;
+    return kind;
+  }
+  function missionListText(mid, m) {
+    return "#" + mid + "　Lv" + m.unlockLevel + "　" + missionTargetText(m) + (m.blocked ? "（遊戲內目前無法完成）" : "");
+  }
 
   function renderDungeon(c) {
     if (!c.dungeon || typeof c.dungeon !== "object") c.dungeon = { day: 0, used: {} };
@@ -2157,6 +2174,11 @@
       function () { return c.dungeon.day || 0; },
       function (v) { c.dungeon.day = v; }
     ));
+    // v44／v59 新增的副本設定（v59 把「倒下就結束」的是否改成「倒下幾次就結束」，0 = 不會因倒下結束）
+    wrap.appendChild(fieldCheckbox("清完全部房間才離開 dungeonClearAll",
+      function () { return c.dungeonClearAll; }, function (v) { c.dungeonClearAll = v; }));
+    wrap.appendChild(fieldNumber("倒下幾次就結束 dungeonEndDowns（0＝不結束）",
+      function () { return c.dungeonEndDowns || 0; }, function (v) { c.dungeonEndDowns = Math.max(0, Math.floor(v)); }));
 
     document.getElementById("dungeonHistoryCount").textContent = "(" + c.dungeonHistory.length + " 筆)";
 
@@ -2220,7 +2242,7 @@
         var m = MISSIONS[mid];
         var done = c.missionsDone.indexOf(Number(mid)) !== -1;
         $monster.appendChild(el("option", {
-          value: mid, text: (done ? "✅ " : "") + "#" + mid + "　Lv" + m.unlockLevel + "　擊殺「" + monsterName(m.monsterId) + "」x" + m.need
+          value: mid, text: (done ? "✅ " : "") + missionListText(mid, m)
         }));
       });
     }
@@ -2229,16 +2251,19 @@
       var mid = $monster.value;
       $detail.innerHTML = "";
       if (!mid) {
-        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一筆討伐任務查看詳細內容。" }));
+        $detail.appendChild(el("div", { class: "panel-desc", text: "選擇一筆藍圖任務查看詳細內容。" }));
         return;
       }
       var m = MISSIONS[mid];
       var box = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;" });
       box.appendChild(el("div", { style: "font-weight:700;font-size:14.5px;margin-bottom:10px;", text: "#" + mid }));
-      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:6px;", text: "任務內容：擊殺「" + monsterName(m.monsterId) + "」x" + m.need }));
+      box.appendChild(el("div", { style: "font-size:13.5px;color:var(--text2);margin-bottom:6px;", text: "任務內容：" + missionTargetText(m) }));
+      if (m.blocked) {
+        box.appendChild(el("div", { style: "font-size:13px;color:var(--red);margin-bottom:6px;", text: "⚠️ 這筆在遊戲裡目前無法完成（不計進度、不能領獎），勾成已完成也拿不到獎勵。" }));
+      }
 
       var killRow = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13.5px;" });
-      killRow.appendChild(el("span", { text: "目前擊殺進度（已由真實存檔驗證，格式為 [[任務ID, 擊殺數], ...]）：" }));
+      killRow.appendChild(el("span", { text: ((m.kind || "kill") === "kill" ? "目前擊殺進度" : "目前進度（達到需求數就算做完，可以去領獎）") + "（格式為 [[任務ID, 進度], ...]）：" }));
       var killInput = el("input", { type: "number", min: "0", max: String(m.need), style: "width:70px;" });
       killInput.value = getKillCount(mid);
       killInput.addEventListener("input", function () {
@@ -2252,10 +2277,11 @@
 
       var rows = [
         ["解鎖等級", "Lv" + m.unlockLevel],
-        ["需要擊殺數", String(m.need)],
+        ["需求數量", String(m.need)],
         ["經驗獎勵", String(m.exp)],
         ["金錢獎勵", String(m.gold)],
       ];
+      if (m.fame) rows.push(["名聲獎勵", String(m.fame)]);
       if (m.token) {
         rows.push(["代幣獎勵", (MISSION_TOKEN_ITEM_ID ? itemName(MISSION_TOKEN_ITEM_ID) : "代幣") + " x" + m.token]);
       }
@@ -2285,7 +2311,7 @@
         renderDoneList();
       });
       checkLabel.appendChild(cb);
-      checkLabel.appendChild(document.createTextNode("此討伐任務算已完成（missionsDone，已由真實存檔驗證是任務 ID 陣列）"));
+      checkLabel.appendChild(document.createTextNode("此藍圖任務算已完成、獎勵已領（missionsDone，任務 ID 陣列）"));
       box.appendChild(checkLabel);
 
       $detail.appendChild(box);
@@ -2295,7 +2321,7 @@
       var $list = document.getElementById("missionDoneList");
       $list.innerHTML = "";
       if (!c.missionsDone.length) {
-        $list.appendChild(el("div", { class: "panel-desc", text: "目前沒有已完成的討伐任務。" }));
+        $list.appendChild(el("div", { class: "panel-desc", text: "目前沒有已完成的藍圖任務。" }));
         return;
       }
       c.missionsDone.slice().sort(function (a, b) { return a - b; }).forEach(function (mNum) {
@@ -2304,7 +2330,7 @@
           style: "display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--accent);" +
             "border-radius:20px;padding:6px 12px;margin:0 8px 8px 0;font-size:12.5px;cursor:pointer;"
         });
-        chip.textContent = m ? ("#" + mNum + "　Lv" + m.unlockLevel + "　擊殺「" + monsterName(m.monsterId) + "」x" + m.need) : ("#" + mNum + "（找不到資料）");
+        chip.textContent = m ? missionListText(mNum, m) : ("#" + mNum + "（找不到資料）");
         chip.addEventListener("click", function () {
           if (!m) return;
           $level.value = "";
@@ -2324,9 +2350,179 @@
     renderDoneList();
   }
 
+  // ---------- 每日任務（daily.json，存檔 v53 新增 characters[].daily）----------
+  // 存檔格式（遊戲 zv()／issueDaily()）：
+  //   daily = { day, cards:[{questId, count, accepted, claimed}], kills, swapsLeft, milestonesClaimed, rngState }
+  //   day 是「台灣時間早上 6 點換日」的天數編號（遊戲 pg()：floor((時間 - 22 小時) / 24 小時)，UTC 22:00 換日）；
+  //   開遊戲時 day 不是今天就會重新發卡（上一天完成沒領的會自動領掉，day=0 代表從來沒發過、不會補領）。
+  //   進度：擊殺卡 = daily.kills - card.count（接取當下記住 kills，之後打的才算）；其他卡 = card.count。
+  var DAILY = window.DAILY || { rules: {}, milestones: [], quests: [] };
+  var DAILY_BY_ID = {};
+  DAILY.quests.forEach(function (q) { DAILY_BY_ID[q.id] = q; });
+  var DAILY_TIER_NAMES = ["SSS", "SS", "S", "A", "B", "C"];
+  var DAILY_KIND_LABEL = { kill: "擊殺", fish: "釣魚", feed: "餵寵物", refine: "寶石強化", smelt: "找雷分解" };
+  function dailyToday() { return Math.floor((Date.now() - 22 * 36e5) / (24 * 36e5)); }
+  function dailyQuestLabel(q) {
+    if (!q) return "（找不到資料）";
+    var what = q.kind === "kill" ? "擊殺等級差 " + ((DAILY.rules || {}).levelWindow || 25) + " 內的怪（角色 Lv" + q.minLevel + "~" + q.maxLevel + " 的卡）"
+      : q.kind === "fish" && q.mapId != null ? "在〔" + (MAPS[String(q.mapId)] || ("地圖#" + q.mapId)) + "〕釣魚"
+      : (DAILY_KIND_LABEL[q.kind] || q.kind);
+    return "[" + (DAILY_TIER_NAMES[q.tier] || q.tier) + "] " + what + " ×" + q.need + "　→ R代幣 ×" + q.token + (q.exp ? "、經驗 " + fmtNum2(q.exp) : "");
+  }
+  function dailyProgress(d, card) {
+    var q = DAILY_BY_ID[card.questId];
+    if (!q || !card.accepted) return 0;
+    var r = q.kind === "kill" ? d.kills - card.count : card.count;
+    return Math.max(0, Math.min(q.need, r));
+  }
+  function dailySetProgress(d, card, v) {
+    var q = DAILY_BY_ID[card.questId];
+    if (!q) return;
+    v = Math.max(0, Math.min(q.need, Math.floor(v) || 0));
+    card.accepted = true;
+    if (q.kind === "kill") {
+      if (d.kills < v) d.kills = v;
+      card.count = d.kills - v;
+    } else {
+      card.count = v;
+    }
+  }
+
+  function renderDaily(c) {
+    var wrap = document.getElementById("dailyEditor");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!DAILY.quests.length) {
+      wrap.appendChild(el("div", { class: "panel-desc", text: "目前沒有每日任務資料（data/daily.js 是空的，請重新執行 update_data.py）。" }));
+      return;
+    }
+    if (!c.daily || typeof c.daily !== "object") c.daily = { day: 0, cards: [], kills: 0, swapsLeft: 0, milestonesClaimed: 0, rngState: 0 };
+    var d = c.daily;
+    if (!Array.isArray(d.cards)) d.cards = [];
+    var rules = DAILY.rules || {};
+    var today = dailyToday();
+
+    var info = el("div", { style: "font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.8;" });
+    info.textContent = "存檔裡的天數編號 day = " + d.day + "，今天是 " + today + "。" +
+      (d.day === 0 ? "（還沒發過卡，進遊戲會發今天的卡）" : d.day === today ? "（是今天的卡，改下面的內容會直接生效）"
+        : "（不是今天的卡：進遊戲會先自動領掉已完成的，再發今天的新卡，所以改下面的卡沒有意義）");
+    wrap.appendChild(info);
+
+    var grid = el("div", { class: "grid" });
+    grid.appendChild(fieldNumber("今天累計擊殺數 kills（擊殺卡的進度用）", function () { return d.kills || 0; },
+      function (v) { d.kills = Math.max(0, Math.floor(v)); drawCards(); }));
+    grid.appendChild(fieldNumber("剩餘換卡次數 swapsLeft（每天 " + (rules.swapsPerDay || 10) + " 次）", function () { return d.swapsLeft || 0; },
+      function (v) { d.swapsLeft = Math.max(0, Math.floor(v)); }));
+    grid.appendChild(fieldNumber("已領幾個禮物盒 milestonesClaimed（共 " + (DAILY.milestones || []).length + " 個）", function () { return d.milestonesClaimed || 0; },
+      function (v) { d.milestonesClaimed = Math.max(0, Math.min((DAILY.milestones || []).length, Math.floor(v))); }));
+    wrap.appendChild(grid);
+
+    var btnRow = el("div", { class: "form-row", style: "margin:12px 0;" });
+    var doneAll = el("button", { class: "btn btn-accent btn-sm", type: "button", text: "✅ 全部接取並做完（進遊戲按領取）" });
+    doneAll.addEventListener("click", function () {
+      d.cards.forEach(function (card) {
+        var q = DAILY_BY_ID[card.questId];
+        if (q && !card.claimed) dailySetProgress(d, card, q.need);
+      });
+      drawCards();
+      toast("每張未領的卡都已接取並做完", "ok");
+    });
+    var swapReset = el("button", { class: "btn btn-sm", type: "button", text: "🔄 換卡次數補滿" });
+    swapReset.addEventListener("click", function () {
+      d.swapsLeft = rules.swapsPerDay || 10;
+      renderDaily(c);
+      toast("換卡次數已補滿", "ok");
+    });
+    var reissue = el("button", { class: "btn btn-sm", type: "button", text: "🎲 清空，讓遊戲重新發今天的卡" });
+    reissue.addEventListener("click", function () {
+      if (!confirm("清空目前的卡片（沒領的獎勵不會補發），進遊戲會重新發一組今天的卡。確定嗎？")) return;
+      c.daily = { day: 0, cards: [], kills: 0, swapsLeft: 0, milestonesClaimed: 0, rngState: d.rngState || 0 };
+      renderDaily(c);
+      toast("已清空，進遊戲會重新發卡", "ok");
+    });
+    btnRow.appendChild(doneAll); btnRow.appendChild(swapReset); btnRow.appendChild(reissue);
+    wrap.appendChild(btnRow);
+
+    var table = el("table", { class: "etable" });
+    table.innerHTML = '<thead><tr><th style="width:44%">任務卡</th><th>進度</th><th>已接取</th><th>已領獎</th></tr></thead>';
+    var tbody = el("tbody");
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    function drawCards() {
+      tbody.innerHTML = "";
+      if (!d.cards.length) {
+        var tr0 = el("tr");
+        tr0.appendChild(el("td", { colspan: "4", text: "目前沒有任務卡（進遊戲會自動發）。" }));
+        tbody.appendChild(tr0);
+        return;
+      }
+      d.cards.forEach(function (card) {
+        var q = DAILY_BY_ID[card.questId];
+        var tr = el("tr");
+
+        // 換成別張卡：同種類（擊殺／雜務）的都可以選
+        var tdQ = el("td");
+        var sel = el("select", { style: "width:100%;" });
+        DAILY.quests.filter(function (x) { return !q || (x.kind === "kill") === (q.kind === "kill"); }).forEach(function (x) {
+          var opt = el("option", { value: String(x.id), text: dailyQuestLabel(x) });
+          if (x.id === card.questId) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener("change", function () {
+          card.questId = Number(sel.value);
+          card.count = 0; card.accepted = false; card.claimed = false;
+          drawCards();
+        });
+        tdQ.appendChild(sel);
+        tr.appendChild(tdQ);
+
+        var tdP = el("td");
+        var pin = el("input", { type: "number", min: "0", max: String(q ? q.need : 0), style: "width:70px;" });
+        pin.value = dailyProgress(d, card);
+        pin.addEventListener("change", function () { dailySetProgress(d, card, pin.valueAsNumber); drawCards(); });
+        tdP.appendChild(pin);
+        tdP.appendChild(document.createTextNode(" / " + (q ? q.need : "?")));
+        tr.appendChild(tdP);
+
+        [["accepted", function (v) {
+          card.accepted = v;
+          if (v && q && q.kind === "kill") card.count = d.kills; // 跟遊戲接取時一樣，從現在的擊殺數開始算
+          if (!v) card.count = 0;
+        }], ["claimed", function (v) { card.claimed = v; }]].forEach(function (def) {
+          var td = el("td");
+          var cb = el("input", { type: "checkbox" });
+          cb.checked = !!card[def[0]];
+          cb.addEventListener("change", function () { def[1](cb.checked); drawCards(); });
+          td.appendChild(cb);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+    drawCards();
+  }
+
   // ---------- 隊伍 ----------
+  // 隊伍（遊戲 recruit()，存檔 v61 格式）：
+  //   party    = 隊友的 sourceId（= 對方角色 id）陣列，最多 5 人
+  //   allyBook = 名冊 [{snapshot, settings?}]，snapshot 是對方角色自己的 snapshot 複製一份；
+  //              讀檔時 party 裡找不到名冊的 id 會被遊戲丟掉，所以兩邊要一起寫
+  var PARTY_MAX = 5;
   function renderParty(c) {
     if (!Array.isArray(c.party)) c.party = [];
+    if (!Array.isArray(c.allyBook)) c.allyBook = [];
+    // 舊版修改器曾經把整份快照塞進 party，遊戲讀檔會丟掉；這裡順手修成 id + 名冊
+    c.party = c.party.map(function (m) {
+      if (m && typeof m === "object" && m.sourceId) {
+        if (!c.allyBook.some(function (b) { return b.snapshot && b.snapshot.sourceId === m.sourceId; })) c.allyBook.push({ snapshot: m });
+        return m.sourceId;
+      }
+      return m;
+    }).filter(function (id, i, arr) { return typeof id === "string" && arr.indexOf(id) === i; });
+
+    function bookEntry(id) { return c.allyBook.find(function (b) { return b.snapshot && b.snapshot.sourceId === id; }); }
+    function snapJobLabel(s) { var j = s && (s.currentJobId || s.jobId); return (j && JOB_NAME[j]) || j || ""; }
 
     var $list = document.getElementById("partyMemberList");
     var $select = document.getElementById("partyAddSelect");
@@ -2336,18 +2532,18 @@
     if (!c.party.length) {
       $list.appendChild(el("div", { class: "panel-desc", text: "目前隊伍是空的。" }));
     } else {
-      c.party.forEach(function (member, idx) {
+      c.party.forEach(function (id, idx) {
+        var s = (bookEntry(id) || {}).snapshot;
         var row = el("div", {
           style: "display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);" +
             "border-radius:6px;padding:10px 14px;margin-bottom:8px;"
         });
-        var jobLabel = (JOB_NAME && JOB_NAME[member.jobId]) || member.jobId || "";
         row.appendChild(el("div", {
           style: "flex:1;font-size:13.5px;",
-          text: member.name + "　Lv" + member.level + "　" + jobLabel +
-            (member.stats ? "　ATK " + member.stats.atk + " / DEF " + member.stats.def : "")
+          text: s ? (s.name + "　Lv" + s.level + "　" + snapJobLabel(s) + (s.stats ? "　ATK " + s.stats.atk + " / DEF " + s.stats.def : ""))
+            : ("（名冊裡找不到 " + id + "，遊戲讀檔會自動移除）")
         }));
-        var delBtn = el("button", { class: "icon-btn", text: "✕" });
+        var delBtn = el("button", { class: "icon-btn", text: "✕", title: "移出隊伍（名冊保留）" });
         delBtn.addEventListener("click", function () {
           c.party.splice(idx, 1);
           renderParty(c);
@@ -2365,8 +2561,8 @@
     } else {
       $select.appendChild(el("option", { value: "", text: "選擇要加入的角色..." }));
       others.forEach(function (other) {
-        var jobLabel = (JOB_NAME && JOB_NAME[other.job]) || other.job || "";
-        $select.appendChild(el("option", { value: other.id, text: other.name + "　Lv" + other.level + "　" + jobLabel }));
+        var jid = currentJobOf(other);
+        $select.appendChild(el("option", { value: other.id, text: other.name + "　Lv" + other.level + "　" + (JOB_NAME[jid] || jid) }));
       });
       $btn.disabled = false;
     }
@@ -2376,16 +2572,16 @@
       if (!targetId) { toast("請先選擇要加入隊伍的角色", "warn"); return; }
       var target = saveData.characters.find(function (ch) { return ch.id === targetId; });
       if (!target || !target.snapshot) { toast("找不到該角色的快照資料，可能還沒存過檔", "err"); return; }
+      var inParty = c.party.indexOf(targetId) !== -1;
+      if (!inParty && c.party.length >= PARTY_MAX) { toast("隊伍最多 " + PARTY_MAX + " 個隊友", "warn"); return; }
 
       var snapshotCopy = JSON.parse(JSON.stringify(target.snapshot));
-      var existingIdx = c.party.findIndex(function (m) { return m.sourceId === targetId; });
-      if (existingIdx !== -1) {
-        c.party[existingIdx] = snapshotCopy;
-        toast("已更新「" + target.name + "」在隊伍裡的快照", "ok");
-      } else {
-        c.party.push(snapshotCopy);
-        toast("已將「" + target.name + "」加入隊伍", "ok");
-      }
+      snapshotCopy.sourceId = targetId;
+      var entry = bookEntry(targetId);
+      if (entry) entry.snapshot = snapshotCopy; // 保留原本的 settings（隊友的藥水設定等）
+      else c.allyBook.push({ snapshot: snapshotCopy });
+      if (!inParty) c.party.push(targetId);
+      toast(inParty ? "已更新「" + target.name + "」的快照" : "已將「" + target.name + "」加入隊伍", "ok");
       renderParty(c);
     };
   }
@@ -3124,7 +3320,7 @@
         if (!r.lvOk || !r.fameOk) {
           var parts = [];
           if (!r.lvOk) parts.push("等級不足（目前 " + (c.level || 0) + " / 需要 " + r.def.lv + "）");
-          if (!r.fameOk) parts.push("名聲不足（目前 " + ((c.fame && c.fame.current) || 0) + " / 需要 " + r.def.fame + "）");
+          if (!r.fameOk) parts.push("累計名聲不足（目前 " + ((c.fame && c.fame.total) || 0) + " / 需要 " + r.def.fame + "）");
           problems.push("・角色「" + c.name + "」的「" + petName(pet.id) + "」：" + parts.join("、"));
         }
       });

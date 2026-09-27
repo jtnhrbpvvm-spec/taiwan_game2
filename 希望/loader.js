@@ -1598,6 +1598,124 @@
   respawnFab.style.display = "none";
   alchemyFabWrap.appendChild(respawnFab);
 
+  // ==========================================================================
+  // 📊 掉落查詢：讀玩家目前的等級、是不是鐵匠系、〔乞討〕等級、所在地圖，
+  // 帶到掉落查詢網站（網址參數），在遊戲畫面上開一個視窗顯示；網站本身的搜尋照樣能用。
+  // 判斷方式跟遊戲 dropMultiplier() 一樣：一轉是鐵匠、而且二轉不是爆破士，才不受等級差衰減。
+  // ==========================================================================
+  var DROP_SITE_URL = "https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E5%B8%8C%E6%9C%9B/%E5%B8%8C%E6%9C%9B%E7%89%A9%E5%93%81%E6%9F%A5%E8%A9%A2.html";
+  var BEG_SKILL_ID = 230; // 〔乞討〕：初心者技能，每級掉落率 +3%
+  var oldDropBackdrop = document.getElementById("iw-drop-backdrop");
+  if (oldDropBackdrop) oldDropBackdrop.remove();
+
+  function dropQueryUrl() {
+    var p = session && session.player;
+    var params = ["from=game"];
+    if (p && typeof p.level === "number") params.push("lv=" + p.level);
+    try {
+      var second = session.secondJob;
+      if (session.isBlacksmith && !(second && second.id === "bomber")) params.push("smith=1");
+    } catch (e) { /* 讀不到職業就當作不是鐵匠 */ }
+    try {
+      var beg = session.skills && typeof session.skills.get === "function" ? (session.skills.get(BEG_SKILL_ID) || 0) : 0;
+      if (beg > 0) params.push("beg=" + beg);
+    } catch (e) { /* 讀不到技能就當作沒學 */ }
+    // 目前地圖：遊戲 currentMapId（在村莊＝村莊編號，在野外＝所在地圖）；讀不到就退回畫面快照的 mapId
+    var mapId;
+    try { mapId = session.currentMapId; } catch (e) { mapId = undefined; }
+    if (typeof mapId !== "number") {
+      try { var sv = snap(); mapId = sv && typeof sv.mapId === "number" ? sv.mapId : undefined; } catch (e) { mapId = undefined; }
+    }
+    if (typeof mapId === "number") params.push("map=" + mapId);
+    else console.warn("[掉落查詢] 讀不到目前地圖", session);
+    // 測試用：F12 先執行 window.IW_DROP_SITE_URL = "http://localhost:8000/希望物品查詢.html" 再貼書籤，就會改開本機的網站
+    var base = window.IW_DROP_SITE_URL || DROP_SITE_URL;
+    return base + (base.indexOf("?") === -1 ? "?" : "&") + params.join("&");
+  }
+  // 視窗標題顯示這次讀到的資料，不用等網站更新也能確認書籤有沒有讀對
+  function dropQueryReadText() {
+    var q = dropQueryUrl().split("?")[1] || "", out = [];
+    q.split("&").forEach(function (kv) {
+      var p = kv.split("="), v = decodeURIComponent(p[1] || "");
+      if (p[0] === "lv") out.push("Lv" + v);
+      else if (p[0] === "smith") out.push("鐵匠系");
+      else if (p[0] === "beg") out.push("乞討Lv" + v);
+      else if (p[0] === "map") {
+        var m = null;
+        try { m = session.data && session.data.mapById && session.data.mapById.get(Number(v)); } catch (e) { m = null; }
+        if (!m && data && data.mapById) m = data.mapById.get(Number(v));
+        out.push((m && m.name ? m.name : "地圖") + " #" + v);
+      }
+    });
+    if (q.indexOf("map=") === -1) out.push("⚠️ 沒讀到地圖");
+    return out.join("・");
+  }
+
+  function openDropQuery() {
+    var url = dropQueryUrl();
+    var old = document.getElementById("iw-drop-backdrop");
+    if (old) old.remove();
+    var backdrop = document.createElement("div");
+    backdrop.id = "iw-drop-backdrop";
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;";
+    var box = document.createElement("div");
+    box.style.cssText = "width:min(1100px,100%);height:min(92vh,100%);background:#f6ecd8;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5);";
+    var bar = document.createElement("div");
+    bar.style.cssText = "display:flex;align-items:center;gap:10px;padding:8px 12px;background:#5a3d1e;color:#fff;font-size:14px;flex-wrap:wrap;";
+    var title = document.createElement("b");
+    title.textContent = "📊 掉落查詢";
+    title.style.flex = "1";
+    var refresh = document.createElement("button");
+    refresh.className = "iw-fab";
+    refresh.textContent = "🔄 重新讀取目前位置";
+    refresh.style.cssText = "padding:4px 10px;font-size:12.5px;";
+    var newTab = document.createElement("a");
+    newTab.textContent = "在新分頁開啟 ↗";
+    newTab.target = "_blank";
+    newTab.rel = "noopener";
+    newTab.style.cssText = "color:#ffe7a8;font-size:12.5px;";
+    var close = document.createElement("button");
+    close.className = "iw-fab";
+    close.textContent = "×";
+    close.title = "關閉";
+    close.style.cssText = "border-radius:50%;width:28px;height:28px;padding:0;font-size:15px;";
+    var frame = document.createElement("iframe");
+    frame.style.cssText = "flex:1;border:0;width:100%;background:#f6ecd8;";
+    function load() {
+      var u = dropQueryUrl();
+      frame.src = u;
+      newTab.href = u;
+      title.textContent = "📊 掉落查詢　" + dropQueryReadText();
+      console.log("[掉落查詢] " + u);
+    }
+    refresh.addEventListener("click", load);
+    close.addEventListener("click", function () { backdrop.remove(); });
+    backdrop.addEventListener("click", function (e) { if (e.target === backdrop) backdrop.remove(); });
+    bar.appendChild(title);
+    bar.appendChild(refresh);
+    bar.appendChild(newTab);
+    bar.appendChild(close);
+    var hint = document.createElement("div");
+    hint.textContent = "下面一片空白的話，按右上角「在新分頁開啟」。";
+    hint.style.cssText = "font-size:11.5px;color:#7a6a55;padding:4px 12px;background:#efe2c6;";
+    box.appendChild(bar);
+    box.appendChild(hint);
+    box.appendChild(frame);
+    backdrop.appendChild(box);
+    document.body.appendChild(backdrop);
+    load();
+    newTab.href = url;
+  }
+
+  var dropFab = document.createElement("button");
+  dropFab.id = "iw-drop-fab";
+  dropFab.textContent = "📊 掉落查詢";
+  dropFab.className = "iw-fab";
+  dropFab.title = "用目前的等級、職業、〔乞討〕和所在地圖，打開掉落查詢網站";
+  dropFab.style.cssText = "padding:9px 16px;font-size:13px;align-self:stretch;";
+  dropFab.addEventListener("click", openDropQuery);
+  alchemyFabWrap.appendChild(dropFab);
+
   var alchemyShowBtn = document.createElement("button");
   alchemyShowBtn.id = "iw-alchemy-show-btn";
   alchemyShowBtn.title = "顯示自動煉金按鈕";

@@ -224,6 +224,40 @@ body::before{
 @media (max-width:820px){ .swipe-hint{display:block;} }
 /* grid 子項預設 min-width:auto，寬表格會把整欄撐開造成手機整頁左右溢出；設 0 讓表格外層的 overflow-x 自己捲動 */
 .cols > *{min-width:0;}
+/* 特殊用途道具提醒：點標題開關下面的用途說明（預設收合），標題出現時放大再縮回一次 */
+details.special-use > summary{
+  list-style:none; cursor:pointer; user-select:none;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+}
+details.special-use > summary::-webkit-details-marker{display:none;}
+.special-use-title{
+  display:inline-block; transform-origin:left center;
+  color:var(--gold-hi); font-weight:700; font-size:14px;
+  animation:special-use-pulse .9s ease-in-out .15s 1;
+}
+.special-use-hint{font-size:12px; color:var(--text-dim); white-space:nowrap;}
+.special-use-hint::after{content:"▸ 點開看用途";}
+details.special-use[open] .special-use-hint::after{content:"▾ 收起";}
+details.special-use[open] > summary{margin-bottom:6px;}
+@keyframes special-use-pulse{
+  0%{transform:scale(1);}
+  45%{transform:scale(1.28);}
+  100%{transform:scale(1);}
+}
+/* 廢墟地圖名聲懲罰提醒：跟特殊用途道具一樣，標題出現時放大再縮回一次 */
+.ruin-warn{
+  background:rgba(192,57,43,.10); border:1px solid rgba(192,57,43,.55); border-radius:4px;
+  padding:12px 14px; margin:0 0 18px;
+}
+.ruin-warn-title{
+  display:inline-block; transform-origin:left center;
+  color:#c0392b; font-weight:800; font-size:14px;
+  animation:special-use-pulse .9s ease-in-out .15s 1;
+}
+.ruin-warn-body{font-size:13px; color:var(--text); margin-top:6px; line-height:1.8;}
+html[data-theme="classic"] .ruin-warn-title{color:#ff7a6b;}
+@media (prefers-reduced-motion: reduce){ .special-use-title, .ruin-warn-title{animation:none;} }
+
 /* 委託任務：桌機顯示完整表格，手機只顯示接取 NPC＋等級／名聲，點開看詳細 */
 .cm-mobile{display:none;}
 /* 表格裡的物品標籤窄螢幕換行時不要被拆成兩半互相重疊 */
@@ -706,8 +740,11 @@ html[data-theme="classic"] #changelogModal{border-width:1px !important; box-shad
 <script src="希望/changelog.js"></script>
 <script src="希望/quests.js"></script>
 <script src="希望/missions.js"></script>
+<script src="希望/daily.js"></script>
+<script src="希望/itemDesc.js"></script>
 <script src="希望/enchant.js"></script>
 <script src="希望/fusionIndex.js"></script>
+<script src="希望/smithIndex.js"></script>
 <script src="希望/app.js"></script>
 </body>
 </html>

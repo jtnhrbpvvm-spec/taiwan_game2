@@ -47,6 +47,8 @@
   var QUEST_PAGES = window.QUEST_PAGES || {};
   var MISSIONS = window.MISSIONS || {};
   var MISSION_TOKEN_ITEM_ID = window.MISSION_TOKEN_ITEM_ID || null;
+  var DAILY = window.DAILY || { rules: {}, milestones: [], quests: [] };
+  var ITEM_DESC = window.ITEM_DESC || {}; // 遊戲裡的物品說明文字（item-desc.json）
   var ENCHANT_KINDS = window.ENCHANT_KINDS || [];
   // 已由玩家實測確認：這 6 種「每級XX」屬性，數字代表「每N級才加1點」，所以數字越小越強（不是每級直接加這麼多點）
   var REVERSED_PER_LEVEL_KINDS = [15, 16, 17, 18, 19, 20];
@@ -88,7 +90,34 @@
   // 每組各抽一次、最多掉一件；組內照資料順序累加 rate/1,000,000 × 掉落倍率 × 組別倍率，超過 1 的部分截掉；
   // 最後乘上 (1 − 整批落空機率)。mult＝遊戲 dropMultiplier 的等級差部分（不含技能／狀態加成）。
   // 回傳 {物品id: {p: 機率, groups: [組別...], raw: 資料原始 rate 加總}}
+  // 變種（2026-09-27 06 點那版起）：怪物每次出生／重生，從「本體＋variants」平均隨機抽一種（遊戲 rollVariant()），
+  // 變種只覆寫部分欄位（{...本體, ...變種}，跟遊戲 Df() 一樣）。遊戲的 dropChances() 是把每一種的機率平均，這裡照做。
+  function monsterForms(mon) {
+    if (!mon.variants || !mon.variants.length) return [mon];
+    if (!mon._forms) {
+      Object.defineProperty(mon, "_forms", {
+        value: [mon].concat(mon.variants.map(function (v) { return Object.assign({}, mon, v, { variants: null }); })),
+        enumerable: false
+      });
+    }
+    return mon._forms;
+  }
   function monsterDropChances(mon, mult) {
+    var forms = monsterForms(mon);
+    if (forms.length === 1) return monsterDropChancesOne(mon, mult);
+    var out = {};
+    forms.forEach(function (f) {
+      var c = monsterDropChancesOne(f, mult);
+      Object.keys(c).forEach(function (iid) {
+        var e = out[iid] || (out[iid] = { p: 0, groups: [], raw: 0 });
+        e.p += c[iid].p / forms.length;
+        e.raw += c[iid].raw / forms.length;
+        c[iid].groups.forEach(function (g) { if (e.groups.indexOf(g) === -1) e.groups.push(g); });
+      });
+    });
+    return out;
+  }
+  function monsterDropChancesOne(mon, mult) {
     var keep = 1 - dropWhiffChance(mon);
     var byGroup = {}, order = [], out = {};
     (mon.drops || []).forEach(function (d) {
@@ -201,6 +230,7 @@
     // 畫面已經換成寵物／副本／任務等其他頁面時，不要把舊的物品／怪物頁蓋回來
     if (!$detail.querySelector('[data-detail-of="' + currentDetail.type + ":" + currentDetail.id + '"]')) return;
     if (currentDetail.type === "monster") showMonster(currentDetail.id);
+    else if (currentDetail.type === "map") showMapDetail(currentDetail.id);
     else showItem(currentDetail.id);
   }
   function wireGlobalLevelField() {
@@ -353,7 +383,7 @@
     }
     if (craftSrc) {
       var matsHtml = (craftSrc.mats || []).map(function (m) { return itemChip(m[0], m[1]); }).join("");
-      lines.push("取得方式：用 " + itemChip(craftSrc.bookId) + " 製作，材料：" + matsHtml +
+      lines.push("取得方式：" + (craftSrc.npc ? "找 <b>" + escapeHtml(craftSrc.npc) + "</b> " : "") + "用 " + itemChip(craftSrc.bookId) + " 製作，材料：" + matsHtml +
         "，花費 " + fmtNum(craftSrc.gold) + " 金幣，成功率 " + craftSrc.ratePct + "%");
     }
     (LETTER_SOURCE[String(iid)] || []).forEach(function (ls) {
@@ -371,9 +401,8 @@
     return lines.join("<br>");
   }
   var PET_STAT_LABEL = { atk: "攻", def: "防", mag: "魔", aspd: "攻速", crit: "爆擊", eva: "迴避", mspd: "移速", hit: "命中", dmgDealtPct: "增傷" };
-  // 對照真實遊戲邏輯反推：寵物要飽食度(hunger) > 0 才會有任何加成，跟成長階段(grow)無關。
-  // 有 hunger 的話，每個屬性各自看：growth[屬性][grow-1] 有值就用那個（9 階段各自不同數值），
-  // 沒有 growth 陣列的屬性，固定用基礎資料裡的數字，不會隨 grow 變動。
+  // 照遊戲 vy()（飽食度 hunger 在存檔 v39 拿掉了）：每個屬性各自看，grow > 0 而且 growth[屬性][grow-1] 有值就用那個，
+  // 沒有 growth 陣列的屬性（或 grow 0），固定用基礎資料裡的數字。
   function petStatAt(pet, statKey, grow) {
     var curve = pet.growth && pet.growth[statKey];
     if (curve && grow > 0 && curve[grow - 1] !== undefined) return curve[grow - 1];
@@ -561,6 +590,43 @@
     return p < 1 ? "rate low" : "rate";
   }
   function mapName(id) { return MAPS[String(id)] || ("地圖#" + id); }
+  // 地圖進入條件（update_data.py 照 world.json 傳送門條件＋地圖 reqLevel 算的）：[{lv, fame}]，任一組達到就走得到
+  var MAP_ACCESS = window.MAP_ACCESS || {};
+  function mapAccessText(mid) {
+    var opts = MAP_ACCESS[String(mid)];
+    if (!opts || !opts.length) return "";
+    return opts.map(function (o) {
+      return "Lv" + o.lv + (o.fame ? "＋累計名聲 " + fmtNum(o.fame) : "");
+    }).join(" 或 ") + " 才走得到";
+  }
+  // 廢墟地圖的名聲懲罰（maps.json penalty，遊戲 fieldPenalty）：累計名聲 < fame 時，待在這張地圖能力大幅下降
+  var MAP_PENALTY = window.MAP_PENALTY || {};
+  var PENALTY_STAT_LABEL = { atk: "攻擊", mag: "魔法", def: "防禦", hit: "命中", eva: "迴避", crit: "必殺", aspd: "攻速", mspd: "移速", hpPct: "HP", maxHp: "HP 上限", maxAp: "AP 上限" };
+  function penaltyEffectText(p) {
+    var byVal = {}, order = [];
+    Object.keys(p.stats || {}).forEach(function (k) {
+      var v = p.stats[k];
+      if (!v) return;
+      if (!byVal[v]) { byVal[v] = []; order.push(v); }
+      byVal[v].push(PENALTY_STAT_LABEL[k] || k);
+    });
+    var parts = order.map(function (v) { return byVal[v].join("、") + " " + (v > 0 ? "+" : "") + v + "%"; });
+    // taken 跟裝備的「減少傷害」同一個欄位：負的代表受到的傷害變多
+    if (p.taken) parts.push("受到的傷害 " + (p.taken < 0 ? "+" + (-p.taken) : "-" + p.taken) + "%");
+    if (p.dealt) parts.push("造成的傷害 " + (p.dealt > 0 ? "+" : "") + p.dealt + "%");
+    return parts.join("；");
+  }
+  function ruinPenaltyWarningHtml(mapIds) {
+    var hits = (mapIds || []).filter(function (mid) { return MAP_PENALTY[String(mid)]; });
+    if (!hits.length) return "";
+    var p = MAP_PENALTY[String(hits[0])];
+    return '<div class="ruin-warn">' +
+      '<div class="ruin-warn-title">⚠️ 廢墟地圖：累計名聲不到 ' + fmtNum(p.fame) + '，能力值會被扣 90%！</div>' +
+      '<div class="ruin-warn-body">這隻怪物出現在〔' + escapeHtml(hits.map(mapName).join("、")) + '〕。' +
+      '角色的<b>累計名聲</b>低於 ' + fmtNum(p.fame) + ' 時，待在這' + (hits.length > 1 ? '些' : '張') + '地圖會：' +
+      escapeHtml(penaltyEffectText(p)) + '。名聲夠了就不會被扣。</div>' +
+      '</div>';
+  }
   function townName(id) {
     var t = TOWNS[String(id)];
     if (t) return t.name;
@@ -627,13 +693,14 @@
   enchantChip.className = "hint-chip";
   enchantChip.style.borderColor = "var(--gold)";
   enchantChip.style.color = "var(--gold-hi)";
-  enchantChip.textContent = "🔮 發條強化屬性表";
+  // 原本的「🔮 發條強化屬性表」改成「⚒️ 鐵匠相關」，裡面分成發條強化／找雷分解／強硬分解三個分頁
+  enchantChip.textContent = "⚒️ 鐵匠相關";
   enchantChip.addEventListener("click", function () {
     resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
-    showEnchantTable();
+    openSmithTab(smithLastTab);
     scrollToDetail();
   });
   $hintRow.appendChild(enchantChip);
@@ -668,20 +735,21 @@
   });
   $hintRow.appendChild(dungeonChip);
 
-  var boxChip = document.createElement("span");
-  boxChip.className = "hint-chip";
-  boxChip.style.borderColor = "var(--gold)";
-  boxChip.style.color = "var(--gold-hi)";
-  boxChip.textContent = "🎁 寶箱";
-  boxChip.addEventListener("click", function () {
+  // 原本的「🎁 寶箱」按鈕換成「🗺️ 地圖」（寶箱還是可以從副本頁、物品頁點進去）
+  var mapChip = document.createElement("span");
+  mapChip.className = "hint-chip";
+  mapChip.style.borderColor = "var(--gold)";
+  mapChip.style.color = "var(--gold-hi)";
+  mapChip.textContent = "🗺️ 地圖";
+  mapChip.addEventListener("click", function () {
     resetNavHistory();
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
-    showBoxBrowser();
+    showMapDetail(mapBrowserLast);
     scrollToDetail();
   });
-  $hintRow.appendChild(boxChip);
+  $hintRow.appendChild(mapChip);
 
   var questLineChip = document.createElement("span");
   questLineChip.className = "hint-chip";
@@ -693,7 +761,7 @@
     $input.value = "";
     currentMatches = { items: [], monsters: [] };
     renderResultList("");
-    showQuestLineBrowser();
+    openQuestTab(defaultQuestTab());
     scrollToDetail();
   });
   $hintRow.appendChild(questLineChip);
@@ -737,6 +805,10 @@
       showBattlePetDetail(id);
     } else if (kind === "dungeon") {
       showDungeonDetail(id);
+    } else if (kind === "map") {
+      showMapDetail(id);
+    } else if (kind === "smith") {
+      openSmithTab(id);
     } else if (kind === "questline") {
       showQuestLineDetail(id);
     } else if (kind === "questtab") {
@@ -1179,6 +1251,22 @@
       '</div></div>';
   }
 
+  // R代幣（missions.json tokenItemId）也是每日任務的獎勵
+  function renderDailyTokenCard() {
+    var minT = null, maxT = 0, giftT = 0;
+    DAILY.quests.forEach(function (q) {
+      if (minT == null || q.token < minT) minT = q.token;
+      if (q.token > maxT) maxT = q.token;
+    });
+    (DAILY.milestones || []).forEach(function (m) { giftT += m.token || 0; });
+    return '<div class="equip-box">' +
+      '<div class="row1"><span class="slot">🗓️ 每日任務　獎勵</span></div>' +
+      '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '每張任務卡依評級給 ×' + minT + ' ~ ×' + maxT + '，累計完成的禮物盒合計再給 ×' + giftT + '。' +
+      '<span class="name-link" data-goto-questtab="daily" style="margin-left:6px;">看每日任務 →</span>' +
+      '</div></div>';
+  }
+
   function renderMissionRefCard(r) {
     var m = r.m;
     var roleText = { reward: "獎勵物品", token: "任務代幣", grants: "交換可得", gives: "NPC 給的材料", cost: "交換要交出" }[r.role] || "";
@@ -1192,11 +1280,257 @@
       '</div>';
   }
 
+  // ---------- ⚒️ 鐵匠相關：發條強化／找雷分解（鎔解）／強硬分解 ----------
+  var SMITH = window.SMITH || {};
+  var smithLastTab = "enchant";
+  function smithTabsHtml(active) {
+    var tabs = [["enchant", "🔮 發條強化"], ["smelt", "🔥 找雷分解"]];
+    if (SMITH.hardDecompose) tabs.push(["decompose", "💔 強硬分解"]);
+    return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
+      var on = t[0] === active;
+      return '<button type="button" data-smith-tab="' + t[0] + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
+        'border:1px solid ' + (on ? "var(--gold)" : "var(--line-hi)") + ';background:' + (on ? "var(--gold)" : "var(--ink-2)") + ';color:' + (on ? "var(--ink)" : "var(--text)") + ';">' + t[1] + '</button>';
+    }).join("") + '</div>';
+  }
+  function openSmithTab(tab) {
+    smithLastTab = tab || "enchant";
+    currentView = { kind: "smith", id: smithLastTab };
+    if (smithLastTab === "smelt") showSmeltPage();
+    else if (smithLastTab === "decompose" && SMITH.hardDecompose) showHardDecomposePage();
+    else { smithLastTab = "enchant"; showEnchantTable(); }
+  }
+  function smithNpcText(npcs) {
+    return (npcs || []).map(function (n) { return escapeHtml(n.town) + '的「' + escapeHtml(n.npc) + '」'; }).join("、") || "（資料裡找不到 NPC）";
+  }
+  function goldHtml(n) { return bigNumHtml(n) + ' 金'; }
+
+  // 找雷分解（鎔解）：規則照遊戲 smeltInput()／smeltRoll()，細節寫在 update_data.py 產生 smithIndex.js 那段
+  var smeltPick = null;   // 目前選的裝備 id
+  function smeltCost(itemId, refine) {
+    var it = ITEMS[itemId];
+    return Math.floor(((it && it.buy) || 0) * (5 + refine) * (10 + refine) / 50);
+  }
+  function smeltStoneChances(itemId, refine) {
+    var sm = SMITH.smelt || {};
+    var eq = ITEMS[itemId] && ITEMS[itemId].equip;
+    var cut = sm.levelCut || [];
+    var growth = sm.lvGrowth && sm.lvGrowth[itemId] != null ? sm.lvGrowth[itemId] : 1;
+    var L = ((eq && eq.minLv) || 0) + (cut[Math.max(0, Math.min(cut.length - 1, refine))] || 0) * growth;
+    var ws = (sm.stones || []).map(function (s) { return Math.max(0, s.base + s.perLevel * L + s.perRefine * refine); });
+    var total = ws.reduce(function (a, b) { return a + b; }, 0);
+    return { level: L, list: (sm.stones || []).map(function (s, i) { return { id: s.id, share: total > 0 ? ws[i] / total : 0 }; }) };
+  }
+  function showSmeltPage() {
+    currentDetail = null;
+    var sm = SMITH.smelt;
+    var html = backButtonHtml() + smithTabsHtml("smelt");
+    html += '<h2 style="margin-top:0;">🔥 找雷分解（鎔解）</h2>';
+    if (!sm) {
+      $detail.innerHTML = html + '<div class="empty-note">資料檔是舊版，請重新執行 update_data.py。</div>';
+      return;
+    }
+    var succ = sm.success != null ? sm.success : 0.5;
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・地點：' + smithNpcText(sm.npcs) + '（要人在村莊裡）。<br>' +
+      '・只收 <b>+' + (sm.minRefine || 3) + ' 以上</b>、沒有上鎖的裝備。<br>' +
+      '・費用 ＝ 裝備的購買價 ×（5＋精煉）×（10＋精煉）÷ 50，精煉越高越貴。<br>' +
+      '・<b>成功率固定 ' + Math.round(succ * 100) + '%</b>；成功會得到 1 顆鎔解石，<b>失敗什麼都沒有</b>。<b>不管成功或失敗，裝備都會消失</b>、錢都會扣。<br>' +
+      '・成功時拿到哪一種鎔解石，看裝備的等級和精煉值：等級越高、精煉越高，越容易出高級的鎔解石。' +
+      '</div>';
+
+    html += '<div class="section-title">試算</div>';
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">' +
+      '<div class="item-picker" style="position:relative;flex:1;min-width:220px;max-width:420px;">' +
+      '<input id="smeltSearch" type="text" placeholder="輸入裝備名稱，例如：艾希頓" autocomplete="off" value="' + (smeltPick && ITEMS[smeltPick] ? escapeHtml(ITEMS[smeltPick].name) : "") + '" ' +
+      'style="width:100%;padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:4px;color:var(--text);font-size:14px;">' +
+      '<div id="smeltSuggest" class="suggest" style="position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:4px;max-height:260px;overflow:auto;display:none;"></div>' +
+      '</div></div>';
+    html += '<div id="smeltResult"></div>';
+
+    // 鎔解石的用途速查
+    html += '<div class="section-title">鎔解石 <span class="count">（點名稱看用途）</span></div><div class="map-chip-row">' +
+      (sm.stones || []).map(function (s) {
+        var it = ITEMS[s.id];
+        return itemChip(s.id, null, it ? '<span style="color:var(--text-faint);font-size:11.5px;">賣 ' + fmtNum(it.sell) + '</span>' : '');
+      }).join("") + '</div>';
+    $detail.innerHTML = html;
+
+    var $s = document.getElementById("smeltSearch"), $sug = document.getElementById("smeltSuggest");
+    $s.addEventListener("input", function () {
+      var q = $s.value.trim();
+      if (!q) { $sug.style.display = "none"; return; }
+      var hits = [];
+      Object.keys(ITEMS).some(function (id) {
+        var it = ITEMS[id];
+        if (it.equip && it.name.indexOf(q) !== -1 && !isTestItemName(it.name)) hits.push(id);
+        return hits.length >= 30;
+      });
+      $sug.innerHTML = hits.length ? hits.map(function (id) {
+        return '<div data-smelt-pick="' + id + '" style="padding:6px 10px;cursor:pointer;font-size:13px;">' + escapeHtml(ITEMS[id].name) +
+          ' <span style="color:var(--text-faint);font-size:11.5px;">Lv' + (ITEMS[id].equip.minLv || 0) + '</span></div>';
+      }).join("") : '<div style="padding:6px 10px;font-size:13px;color:var(--text-faint);">找不到這個名稱的裝備</div>';
+      $sug.style.display = "block";
+    });
+    $sug.addEventListener("click", function (e) {
+      var row = e.target.closest("[data-smelt-pick]");
+      if (!row) return;
+      smeltPick = row.getAttribute("data-smelt-pick");
+      $s.value = ITEMS[smeltPick].name;
+      $sug.style.display = "none";
+      renderSmeltResult();
+    });
+    renderSmeltResult();
+  }
+  function renderSmeltResult() {
+    var box = document.getElementById("smeltResult");
+    if (!box) return;
+    var sm = SMITH.smelt, succ = sm.success != null ? sm.success : 0.5;
+    if (!smeltPick || !ITEMS[smeltPick]) {
+      box.innerHTML = '<div class="empty-note" style="padding:0 0 6px;">輸入裝備名稱並從清單點選，會列出這件裝備從 +' + (sm.minRefine || 3) + ' 到 +12 鎔解的費用、各種鎔解石的機率和期望回收金額。</div>';
+      return;
+    }
+    var it = ITEMS[smeltPick];
+    var h = '<div class="equip-box"><div class="row1"><span class="slot">' + itemChip(smeltPick) + '</span>' +
+      '<span class="badge">需求等級 ' + (it.equip.minLv || 0) + '</span><span class="badge">購買價 ' + fmtNum(it.buy) + '</span><span class="badge">直接賣掉 ' + fmtNum(it.sell) + ' 金</span></div>';
+    var stones = sm.stones || [];
+    h += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>精煉</th><th>費用</th>' +
+      stones.map(function (s) { return '<th style="text-align:center;">' + (ITEMS[s.id] ? escapeHtml(ITEMS[s.id].name) : '#' + s.id) + '</th>'; }).join("") +
+      '<th>期望回收</th></tr></thead><tbody>';
+    for (var r = sm.minRefine || 3; r <= 12; r++) {
+      var ch = smeltStoneChances(smeltPick, r);
+      var expValue = 0;
+      h += '<tr><td>+' + r + '</td><td>' + goldHtml(smeltCost(smeltPick, r)) + '</td>' + ch.list.map(function (c) {
+        var p = succ * c.share;
+        expValue += p * ((ITEMS[c.id] && ITEMS[c.id].sell) || 0);
+        return '<td style="text-align:center;"><span class="' + rateClassP(p) + '">' + (p > 0 ? pctP(p) : '－') + '</span></td>';
+      }).join("") + '<td>' + fmtNum(Math.round(expValue)) + ' 金</td></tr>';
+    }
+    h += '</tbody></table></div>';
+    h += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;line-height:1.7;">' +
+      '表格的機率已經包含 ' + Math.round(succ * 100) + '% 的成功率（同一列加起來是 ' + Math.round(succ * 100) + '%，剩下的是失敗）。' +
+      '「期望回收」是把鎔出的鎔解石直接賣給商店的平均收入，只供參考；鎔解石的真正價值在拿去做合成、融合材料。' +
+      '裝備直接賣掉可以拿 ' + fmtNum(it.sell) + ' 金，鎔解一定會失去這件裝備。</div></div>';
+    box.innerHTML = h;
+  }
+
+  // 強硬分解：規則照遊戲 decomposeInput()／decomposeStacks()
+  var HARD_DEC_TIER = { 5: "一般", 10: ".G", 15: ".DG", 20: ".XG" };
+  function hardDecChance(row, refine) {
+    var bonus = refine > 0 && row.bonus ? (row.bonus[Math.min(refine, row.bonus.length) - 1] || 0) : 0;
+    return Math.min(100, row.pct + bonus) / 100;
+  }
+  function showHardDecomposePage() {
+    currentDetail = null;
+    var hd = SMITH.hardDecompose;
+    var product = hd.product, rows = hd.rows || [];
+    var html = backButtonHtml() + smithTabsHtml("decompose");
+    html += '<h2 style="margin-top:0;">💔 強硬分解 <span class="count">(' + rows.length + ' 件裝備)</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・地點：' + smithNpcText(hd.npcs) + '（要人在村莊裡）。<br>' +
+      '・只收<b>艾希頓系列裝備</b>（下面的清單），上鎖的不會出現在分解清單。<br>' +
+      '・每件付固定費用，有一定機率得到 1 個 ' + itemChip(product) + '；<b>失敗什麼都沒有，而且不管成功或失敗，裝備都會消失、錢都會扣</b>（遊戲畫面上沒有特別提醒）。<br>' +
+      '・.XG 裝備的精煉值越高，機率越高（其他等級精煉不影響）。' +
+      '</div>';
+
+    // 依等級整理：費用、基本機率、平均要花多少錢換 1 個
+    var tiers = {};
+    rows.forEach(function (r) {
+      var k = r.pct + "|" + r.cost;
+      (tiers[k] || (tiers[k] = { pct: r.pct, cost: r.cost, rows: [], bonus: null })).rows.push(r);
+      if (r.bonus) tiers[k].bonus = r.bonus;
+    });
+    var tierList = Object.keys(tiers).map(function (k) { return tiers[k]; }).sort(function (a, b) { return a.pct - b.pct; });
+    html += '<div class="section-title">費用與機率</div>';
+    html += '<table class="dtable"><thead><tr><th>裝備等級</th><th>件數</th><th>每件費用</th><th>機率</th><th>平均換到 1 個要花</th><th>平均要拆幾件</th></tr></thead><tbody>';
+    tierList.forEach(function (t) {
+      var p = t.pct / 100;
+      html += '<tr><td>' + (HARD_DEC_TIER[t.pct] || (t.pct + "%")) + '</td><td>' + t.rows.length + '</td><td>' + goldHtml(t.cost) + '</td>' +
+        '<td>' + t.pct + '%' + (t.bonus ? '（精煉加成見下表）' : '') + '</td><td>' + goldHtml(Math.round(t.cost / p)) + '</td><td>' + (1 / p).toFixed(1) + ' 件</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    var bonusTier = tierList.filter(function (t) { return t.bonus; })[0];
+    if (bonusTier) {
+      html += '<div class="section-title">' + (HARD_DEC_TIER[bonusTier.pct] || "") + ' 裝備的精煉加成</div>';
+      html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:560px;"><thead><tr><th>精煉</th><th>機率</th><th>平均換到 1 個要花</th><th>平均要拆幾件</th></tr></thead><tbody>';
+      for (var rf = 0; rf <= bonusTier.bonus.length; rf++) {
+        var pr = hardDecChance(bonusTier, rf);
+        html += '<tr><td>+' + rf + '</td><td><span class="' + rateClassP(pr) + '">' + Math.round(pr * 100) + '%</span></td>' +
+          '<td>' + goldHtml(Math.round(bonusTier.cost / pr)) + '</td><td>' + (1 / pr).toFixed(1) + ' 件</td></tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+
+    // 凝結之魂拿來做什麼
+    var uses = Object.keys(FORGE_BY_BOOK).filter(function (b) {
+      return (FORGE_BY_BOOK[b].mats || []).some(function (m) { return String(m[0]) === String(product); });
+    });
+    if (uses.length) {
+      html += '<div class="section-title">' + (ITEMS[product] ? escapeHtml(ITEMS[product].name) : "產物") + ' 的用途 <span class="count">(' + uses.length + ' 本製作書)</span></div>';
+      var needs = uses.map(function (b) {
+        return (FORGE_BY_BOOK[b].mats || []).filter(function (m) { return String(m[0]) === String(product); }).reduce(function (s, m) { return s + m[1]; }, 0);
+      });
+      html += '<div class="empty-note" style="padding:0 0 8px;">用來製作「渾沌的炙卡爾」「純白的坦柏特」系列裝備，每本製作書要 ' +
+        Math.min.apply(null, needs) + (Math.max.apply(null, needs) !== Math.min.apply(null, needs) ? '～' + Math.max.apply(null, needs) : '') + ' 個。點製作書看完整材料和成功率：</div>';
+      html += '<details><summary style="cursor:pointer;font-size:13px;margin-bottom:6px;">展開全部製作書</summary><div class="map-chip-row">' +
+        uses.map(function (b, i) { return itemChip(b, null, '<span style="color:var(--text-faint);font-size:11.5px;">×' + needs[i] + '</span>'); }).join("") + '</div></details>';
+    }
+
+    // 全部可以分解的裝備，照系列排：一般／.G／.DG／.XG 四欄
+    var series = {}, order = [];
+    rows.forEach(function (r) {
+      var name = ITEMS[r.item] ? ITEMS[r.item].name : ("#" + r.item);
+      var base = name.replace(/\.(XG|DG|G)$/, "");
+      if (!series[base]) { series[base] = {}; order.push(base); }
+      series[base][r.pct] = r;
+    });
+    html += '<div class="section-title">可以分解的裝備 <span class="count">(' + order.length + ' 個系列)</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>裝備</th>' +
+      tierList.map(function (t) { return '<th>' + (HARD_DEC_TIER[t.pct] || t.pct + "%") + '</th>'; }).join("") + '</tr></thead><tbody>';
+    order.forEach(function (base) {
+      html += '<tr><td>' + escapeHtml(base) + '</td>' + tierList.map(function (t) {
+        var r = series[base][t.pct];
+        if (!r) return '<td>－</td>';
+        var it = ITEMS[r.item];
+        return '<td><span class="name-link" data-goto-item="' + r.item + '">' + t.pct + '%</span>' +
+          (it ? '<br><span style="font-size:11.5px;color:var(--text-faint);">直接賣 ' + fmtNum(it.sell) + ' 金</span>' : '') + '</td>';
+      }).join("") + '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點機率可以看那件裝備的詳細資料。「直接賣」是賣給商店的價錢，給你比較拆掉划不划算。</div>';
+    $detail.innerHTML = html;
+  }
+
+  // 物品頁上的鐵匠分解提示：艾希頓裝備可以強硬分解／凝結之魂怎麼來／鎔解石怎麼來
+  function smithItemNoteHtml(id) {
+    var lines = [];
+    var hd = SMITH.hardDecompose;
+    if (hd) {
+      var row = (hd.rows || []).filter(function (r) { return String(r.item) === String(id); })[0];
+      if (row) {
+        lines.push('💔 可以<b>強硬分解</b>：付 ' + goldHtml(row.cost) + '，' + row.pct + '% 機率得到 ' + itemChip(hd.product) +
+          (row.bonus ? '（精煉越高機率越高，+12 可達 ' + Math.round(hardDecChance(row, 12) * 100) + '%）' : '') + '，失敗裝備一樣消失。');
+      }
+      if (String(hd.product) === String(id)) {
+        lines.push('💔 取得方式：把艾希頓系列裝備拿去<b>強硬分解</b>（' + smithNpcText(hd.npcs) + '）。');
+      }
+    }
+    var sm = SMITH.smelt;
+    if (sm && (sm.stones || []).some(function (s) { return String(s.id) === String(id); })) {
+      lines.push('🔥 取得方式：把 +' + (sm.minRefine || 3) + ' 以上的裝備拿去<b>找雷分解（鎔解）</b>（' + smithNpcText(sm.npcs) + '），裝備等級、精煉越高越容易出高級的。');
+    }
+    if (!lines.length) return "";
+    var tab = lines.some(function (l) { return l.indexOf("🔥") === 0; }) ? "smelt" : "decompose";
+    return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' + lines.join("<br>") +
+      ' <span class="name-link" data-goto-smith="' + tab + '">看完整說明 →</span></div>';
+  }
+
   function showEnchantTable(gradeIdx, winderOpen) {
     gradeIdx = gradeIdx || 0;
     var gradeNum = gradeIdx + 1; // ENCHANT_APPEARANCE / ENCHANT_VALUES 的 key 是 1-indexed (N=1)
 
-    var html = '<h2 style="margin-top:0;">🔮 發條強化屬性表</h2>';
+    currentDetail = null;
+    var html = smithTabsHtml("enchant") + '<h2 style="margin-top:0;">🔮 發條強化屬性表</h2>';
     html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">';
     ENCHANT_GRADES.forEach(function (g, idx) {
       var active = idx === gradeIdx;
@@ -1849,6 +2183,7 @@
     html += '<div class="detail-head" data-detail-of="item:' + id + '"><div>' +
       '<div class="detail-title">' + escapeHtml(item.name) + '</div>' +
       '<div class="detail-sub">物品編號 #' + id + '</div>' +
+      (ITEM_DESC[id] ? '<div class="detail-sub" style="margin-top:6px;font-style:italic;white-space:pre-line;">' + escapeHtml(ITEM_DESC[id]) + '</div>' : '') +
       '</div></div>';
 
     html += '<div class="price-row">' +
@@ -1857,6 +2192,7 @@
       '</div>';
 
     html += refineGuardHtml(id);
+    html += smithItemNoteHtml(id);
     html += npcItemUsesHtml(id);
 
     var questUses = ITEM_QUEST_USES[id] || [];
@@ -1878,8 +2214,11 @@
       missionItemUses.length || keyForBoxes.length;
     if (special || killSourceText) {
       html += '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">';
+      // 特殊用途道具：標題可以點開／收合下面的用途說明（預設收合），標題會放大再縮回一次提醒使用者
       if (special) {
-        html += '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</div>';
+        html += '<details class="special-use">' +
+          '<summary><span class="special-use-title">⚠️ 這是特殊用途道具，不要隨便賣掉／丟掉</span><span class="special-use-hint"></span></summary>' +
+          '<div class="special-use-body">';
       }
       // killSourceText 對書信已經會寫出「打倒誰掉落、交給誰、換到什麼」，重複寫一次只是多佔一行
       if (letterSubmit.length && !killSourceText) {
@@ -1923,6 +2262,7 @@
       if (killSourceText) {
         html += '<div style="font-size:13px;color:var(--text);margin-top:4px;">' + killSourceText + '</div>';
       }
+      if (special) html += '</div></details>';
       html += '</div>';
     }
 
@@ -2117,14 +2457,7 @@
       if (box.dungeons || box.dungeonGuess) html += '<div style="margin-bottom:10px;">' + boxSourceBadges(box) + '</div>';
       html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
       html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
-      box.tiers.forEach(function (tier, tIdx) {
-        html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
-        html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
-        tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
-          html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
-        });
-        html += '</tbody></table>';
-      });
+      html += boxTiersHtml(box);
     }
 
     var boxesUsingAsKey = BOX_KEY_TO_BOXES[id] || [];
@@ -2144,9 +2477,11 @@
     }
 
     var questRefs = buildQuestReferences(id);
-    html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length) + ')</span></div>';
+    var isDailyToken = DAILY.quests.length > 0 && MISSION_TOKEN_ITEM_ID != null && Number(id) === MISSION_TOKEN_ITEM_ID;
+    html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length + (isDailyToken ? 1 : 0)) + ')</span></div>';
+    if (isDailyToken) html += renderDailyTokenCard();
     if (!questRefs.quests.length && !questRefs.missions.length) {
-      html += '<div class="empty-note">這個物品跟任務／藍圖任務系統沒有關聯。</div>';
+      if (!isDailyToken) html += '<div class="empty-note">這個物品跟任務／藍圖任務系統沒有關聯。</div>';
     } else {
       questRefs.quests.forEach(function (r) {
         html += renderQuestRefCard(r);
@@ -2235,6 +2570,23 @@
     var elLabel = ELEMENT_LABEL[mon.element] || mon.element;
     var elClass = ELEMENT_CLASS[mon.element] || "el-none";
 
+    // 變身／召喚出來的型態自己沒有出生點（maps 是空的），要看牠是從哪隻怪變來的，就跟那隻同一張地圖。
+    // 例如「雪之女王」有兩隻同名不同編號：一隻由冰城的雨滴兒變身、一隻由冰峰的小不點雨滴變身。
+    var mapIds = mon.maps.slice(), mapNote = "";
+    if (!mapIds.length) {
+      var originMaps = [], originNames = [];
+      monsterOrigins(id).forEach(function (f) {
+        var src = MONSTERS[f.oid];
+        if (originNames.indexOf(src.name) === -1) originNames.push(src.name);
+        (src.maps || []).forEach(function (mid) { if (mapIds.indexOf(mid) === -1 && originMaps.indexOf(mid) === -1) originMaps.push(mid); });
+      });
+      mapIds = originMaps;
+      if (originNames.length) {
+        mapNote = '這隻自己沒有出生點，是由 ' + escapeHtml(originNames.join("、")) + ' 變身／召喚出來的，' +
+          (mapIds.length ? '所以出現在牠的地圖。' : '而來源怪物也沒有出生點，請往上一層看。');
+      }
+    }
+
     var html = backButtonHtml();
     html += '<div class="detail-head" data-detail-of="monster:' + id + '"><div>' +
       '<div class="detail-title">' + escapeHtml(mon.name) + '</div>' +
@@ -2244,6 +2596,7 @@
       '<span class="badge">' + (mon.aggressive ? "主動攻擊" : "被動") + '</span>' +
       (mon.isHarvest ? '<span class="badge tag-harvest">採集點</span>' : '') +
       '</div></div></div>';
+    html += ruinPenaltyWarningHtml(mapIds);
 
     html += '<div class="stat-grid">' +
       statTile("HP", mon.hp) + statTile("攻擊", mon.atk) + statTile("防禦", mon.def) +
@@ -2270,27 +2623,17 @@
       }
     }
 
-    // 變身／召喚出來的型態自己沒有出生點（maps 是空的），要看牠是從哪隻怪變來的，就跟那隻同一張地圖。
-    // 例如「雪之女王」有兩隻同名不同編號：一隻由冰城的雨滴兒變身、一隻由冰峰的小不點雨滴變身。
-    var mapIds = mon.maps.slice(), mapNote = "";
-    if (!mapIds.length) {
-      var originMaps = [], originNames = [];
-      monsterOrigins(id).forEach(function (f) {
-        var src = MONSTERS[f.oid];
-        if (originNames.indexOf(src.name) === -1) originNames.push(src.name);
-        (src.maps || []).forEach(function (mid) { if (mapIds.indexOf(mid) === -1 && originMaps.indexOf(mid) === -1) originMaps.push(mid); });
-      });
-      mapIds = originMaps;
-      if (originNames.length) {
-        mapNote = '這隻自己沒有出生點，是由 ' + escapeHtml(originNames.join("、")) + ' 變身／召喚出來的，' +
-          (mapIds.length ? '所以出現在牠的地圖。' : '而來源怪物也沒有出生點，請往上一層看。');
-      }
-    }
     html += '<div class="section-title">出現地圖 <span class="count">(' + mapIds.length + ')</span></div>';
     html += '<div class="map-chip-row">' + mapIds.map(function (mid) {
-      return '<span class="map-chip" style="cursor:default;">' + escapeHtml(mapName(mid)) + '</span>';
+      var access = mapAccessText(mid);
+      return '<span class="map-chip" data-open-map="' + mid + '" title="看這張地圖的所有怪物和掉落">' + escapeHtml(mapName(mid)) +
+        (access ? ' <span style="font-size:11px;color:var(--text-faint);">（' + escapeHtml(access) + '）</span>' : '') +
+        (MAP_PENALTY[String(mid)] ? ' <span style="font-size:11px;color:var(--danger, #c0392b);">⚠️廢墟</span>' : '') + '</span>';
     }).join("") + '</div>';
     if (mapNote) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + mapNote + '</div>';
+    if (mapIds.some(function (mid) { return MAP_ACCESS[String(mid)]; })) {
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">括號裡是從樂園鎮出發、照遊戲的傳送門條件，最低要多少等級／累計名聲才走得到那張地圖。</div>';
+    }
 
     if (ELEMENT_ORDER.indexOf(mon.element) !== -1) {
       html += '<div class="section-title">五行寶石加成建議</div>';
@@ -2613,14 +2956,7 @@
     }
     html += '<div class="empty-note" style="padding:0 0 10px;">需要搭配鑰匙一起消耗才能打開：</div>';
     html += '<div class="map-chip-row">' + itemChip(box.keyId) + '</div>';
-    box.tiers.forEach(function (tier, tIdx) {
-      html += '<div class="section-title" style="margin-top:14px;">開出物品（第 ' + (tIdx + 1) + ' 組）</div>';
-      html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
-      tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
-        html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
-      });
-      html += '</tbody></table>';
-    });
+    html += boxTiersHtml(box);
     // 寶箱一律在快速查看視窗裡顯示（renderPeek 會開著 peekMode 呼叫進來）
     $peekBody.innerHTML = html;
   }
@@ -2636,7 +2972,8 @@
         var dg = DUNGEON_BY_ID[did];
         html += '<li class="result-item" data-open-dungeon="' + did + '">' +
           '<span class="rname">' + escapeHtml(dg.name) + '</span>' +
-          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　每日 ' + (dg.entries || 0) + ' 次・' + dungeonMonsterList(dg).length + ' 種怪物</span>' +
+          '<span class="rmeta">Lv' + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+") + '　每日 ' + (dg.entries || 0) + ' 次・' + dungeonMonsterList(dg).length + ' 種怪物' +
+          (dg.requires && dg.requires.secondJob ? '・需二轉' : '') + (dg.requires && dg.requires.party ? '・需隊友' : '') + (dg.floors ? '・有名聲減益' : '') + '</span>' +
           '</li>';
       });
       html += '</ul>';
@@ -2691,9 +3028,14 @@
     $detail.innerHTML = html;
   }
 
-  // ---------- 任務分頁：主線任務／書信任務／委託任務 ----------
+  // ---------- 任務分頁：每日任務／書信任務／委託任務／藍圖任務（主線任務只在舊資料還有時才顯示）----------
+  // 2026-09-27 那版遊戲把主線劇情整套拿掉了（存檔 v57→58 刪掉 questFlags），新資料的 MAIN_QUEST_LINES 會是空的
+  function hasMainQuestLines() { return Object.keys(MAIN_QUEST_LINES).length > 0; }
+  function defaultQuestTab() { return DAILY.quests.length ? "daily" : (hasMainQuestLines() ? "main" : "commission"); }
   function questTabsHtml(active) {
-    var tabs = [["main", "📖 主線任務"], ["letter", "✉️ 書信任務"], ["commission", "📜 委託任務"], ["blueprint", "🗺️ 藍圖任務"]];
+    var tabs = [["daily", "🗓️ 每日任務"], ["letter", "✉️ 書信任務"], ["commission", "📜 委託任務"], ["blueprint", "🗺️ 藍圖任務"]];
+    if (!DAILY.quests.length) tabs.shift();
+    if (hasMainQuestLines()) tabs.unshift(["main", "📖 主線任務"]);
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
       var on = t[0] === active;
       return '<button type="button" data-quest-tab="' + t[0] + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
@@ -2704,7 +3046,212 @@
     if (tab === "letter") showLetterQuestBrowser();
     else if (tab === "commission") showCommissionBrowser();
     else if (tab === "blueprint") showBlueprintBrowser();
-    else showQuestLineBrowser();
+    else if (tab === "daily" && DAILY.quests.length) showDailyBrowser();
+    else if (tab === "main" && hasMainQuestLines()) showQuestLineBrowser();
+    else openQuestTab(defaultQuestTab());
+  }
+
+  // ---------- 每日任務（daily.json，2026-09-27 新增）----------
+  // 規則照遊戲 bundle：
+  //   issueDaily()：每天換日發卡。非擊殺任務依「種類@地圖」分組，隨機挑 fixedSlots 組（不重複），每組再隨機挑一個評級；
+  //                 擊殺任務從 minLevel ≤ 角色等級 ≤ maxLevel 的那 6 個評級裡隨機挑 killSlots 張（可以重複）。
+  //   接取後才開始計數；擊殺只算「跟角色等級差 ≤ levelWindow」的怪（離線掛機打的也算）。
+  //   未接取的擊殺卡可以換卡（每天 swapsPerDay 次，換成不同評級）；已接取未完成可以放棄（進度歸零）。
+  //   每張卡給 token 個 R代幣（擊殺卡另給經驗）；milestones 是累計完成幾項的禮物盒，最後一個要全部完成才能領。
+  //   換日時沒領的卡和禮物盒會自動領掉。
+  var DAILY_TIER_NAMES = ["SSS", "SS", "S", "A", "B", "C"];
+  var DAILY_TIER_COLORS = ["#e0564a", "#e08a3a", "#d6b13f", "#5fae5b", "#4f8fd0", "#8a8f99"];
+  var DAILY_KIND_LABEL = { kill: "擊殺", fish: "釣魚", feed: "餵寵物", refine: "寶石強化", smelt: "找雷分解" };
+  var DAILY_KIND_HOW = {
+    fish: "釣魚每消耗 1 個魚餌算 1 次（有沒有釣到都算）",
+    feed: "帶著寵物，寵物每從便當盒吃 1 次算 1 次",
+    refine: "精煉（裝備或戰寵裝備）每試 1 次算 1 次，成功失敗都算",
+    smelt: "找雷分解每分解 1 件算 1 次"
+  };
+  var dailyLevel = null; // 每日任務頁自己的等級欄，沒填過就跟上方「你目前的等級」
+  function dailyTierBadge(tier) {
+    return '<span style="display:inline-block;min-width:34px;text-align:center;padding:1px 6px;border-radius:4px;font-weight:800;font-size:12px;color:#fff;background:' +
+      (DAILY_TIER_COLORS[tier] || "#777") + ';">' + escapeHtml(DAILY_TIER_NAMES[tier] || ("#" + tier)) + '</span>';
+  }
+  function dailyRules() {
+    var r = DAILY.rules || {};
+    return { levelWindow: r.levelWindow != null ? r.levelWindow : 25, swapsPerDay: r.swapsPerDay != null ? r.swapsPerDay : 10,
+      fixedSlots: r.fixedSlots != null ? r.fixedSlots : 3, killSlots: r.killSlots != null ? r.killSlots : 5 };
+  }
+  // 擊殺任務的等級區段（依 minLevel 排好），每段 6 個評級
+  function dailyKillBrackets() {
+    var byKey = {}, list = [];
+    DAILY.quests.forEach(function (q) {
+      if (q.kind !== "kill") return;
+      var k = q.minLevel + "-" + q.maxLevel;
+      if (!byKey[k]) { byKey[k] = { minLevel: q.minLevel, maxLevel: q.maxLevel, tiers: [] }; list.push(byKey[k]); }
+      byKey[k].tiers.push(q);
+    });
+    list.sort(function (a, b) { return a.minLevel - b.minLevel; });
+    list.forEach(function (b) { b.tiers.sort(function (x, y) { return x.tier - y.tier; }); });
+    return list;
+  }
+  // 非擊殺任務的分組（遊戲 Uv()：kind@mapId），每組 6 個評級
+  function dailyFixedGroups() {
+    var byKey = {}, list = [];
+    DAILY.quests.forEach(function (q) {
+      if (q.kind === "kill") return;
+      var k = q.kind + "@" + (q.mapId != null ? q.mapId : 0);
+      if (!byKey[k]) { byKey[k] = { kind: q.kind, mapId: q.mapId, tiers: [] }; list.push(byKey[k]); }
+      byKey[k].tiers.push(q);
+    });
+    var order = { fish: 0, feed: 1, refine: 2, smelt: 3 };
+    list.sort(function (a, b) {
+      return (order[a.kind] != null ? order[a.kind] : 9) - (order[b.kind] != null ? order[b.kind] : 9) ||
+        (a.mapId == null ? -1 : b.mapId == null ? 1 : a.mapId - b.mapId);
+    });
+    list.forEach(function (g) { g.tiers.sort(function (x, y) { return x.tier - y.tier; }); });
+    return list;
+  }
+  function dailyGroupLabel(g) {
+    if (g.kind === "fish") return g.mapId != null ? "在〔" + mapName(g.mapId) + "〕釣魚" : "釣魚（任何地點）";
+    return DAILY_KIND_LABEL[g.kind] || g.kind;
+  }
+  // 某個等級能領到的組（組內每個評級的等級範圍都一樣，看第一個就好）
+  function dailyGroupOpen(g, lv) { var q = g.tiers[0]; return !!q && lv >= q.minLevel && lv <= q.maxLevel; }
+
+  function showDailyBrowser() {
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "daily" };
+    var rules = dailyRules();
+    var tokenName = missionTokenName();
+    var brackets = dailyKillBrackets();
+    var groups = dailyFixedGroups();
+    var tierCount = DAILY_TIER_NAMES.length;
+
+    var html = backButtonHtml() + questTabsHtml("daily");
+    html += '<h2 style="margin-top:0;">🗓️ 每日任務 <span class="count">(' + DAILY.quests.length + ')</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・每天<b>台灣時間早上 6 點</b>換日，發 <b>' + (rules.fixedSlots + rules.killSlots) + '</b> 張任務卡：<b>' + rules.fixedSlots + '</b> 張雜務（釣魚／餵寵物／寶石強化／找雷分解，隨機挑不同組）＋ <b>' + rules.killSlots + '</b> 張擊殺任務（依你的等級）。評級（' +
+      DAILY_TIER_NAMES.join("／") + '）隨機，評級越高要做的量越多、獎勵越多。<br>' +
+      '・要先<b>接取</b>才開始計數。擊殺任務只算<b>跟你等級相差 ' + rules.levelWindow + ' 級以內</b>的怪，不限哪一種（離線掛機打的也算）。<br>' +
+      '・還沒接取的擊殺卡可以<b>換卡</b>，每天 ' + rules.swapsPerDay + ' 次（會換成不同評級）；已接取但還沒完成的可以放棄，進度歸零。<br>' +
+      '・每張卡給 ' + escapeHtml(tokenName) + '（擊殺卡另給經驗），累計完成數量還有禮物盒。換日時沒領的卡和禮物盒會自動幫你領。' +
+      '</div>';
+
+    // 累計完成禮物盒
+    var ms = DAILY.milestones || [];
+    if (ms.length) {
+      html += '<div class="section-title">累計完成禮物盒</div>';
+      html += '<table class="dtable"><thead><tr><th>條件</th><th>獎勵</th></tr></thead><tbody>';
+      var totalToken = 0, totalFame = 0;
+      ms.forEach(function (m, i) {
+        var parts = [];
+        if (m.token) parts.push(itemChip(MISSION_TOKEN_ITEM_ID, m.token));
+        if (m.fame) parts.push("名聲 +" + fmtNum(m.fame));
+        totalToken += m.token || 0; totalFame += m.fame || 0;
+        html += '<tr><td style="white-space:nowrap;">' + (i === ms.length - 1 ? '🎁 全部完成（' + m.done + ' 項）' : '完成 ' + m.done + ' 項') + '</td><td>' + (parts.join("　") || "－") + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      var maxCardToken = 0;
+      DAILY.quests.forEach(function (q) { if (q.token > maxCardToken) maxCardToken = q.token; });
+      html += '<div class="empty-note" style="padding:6px 0 0;">禮物盒合計 ' + escapeHtml(tokenName) + ' ×' + totalToken + (totalFame ? '、名聲 +' + fmtNum(totalFame) : '') +
+        '；卡片全抽到 ' + DAILY_TIER_NAMES[0] + ' 時一天最多再拿 ' + escapeHtml(tokenName) + ' ×' + (maxCardToken * (rules.fixedSlots + rules.killSlots)) + '。</div>';
+    }
+
+    // 依等級看今天可能抽到什麼
+    var lv = dailyLevel != null ? dailyLevel : dropCalcState.level;
+    html += '<div class="section-title">依等級查看可能抽到的任務</div>';
+    html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<label for="dailyLevelInput" style="font-size:13px;color:var(--text-dim);">你的等級</label>' +
+      '<input id="dailyLevelInput" type="number" min="1" max="999" placeholder="輸入等級..." value="' + (lv != null ? lv : "") + '" ' +
+      'style="width:110px;padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:4px;color:var(--text);font-size:14px;">' +
+      '</div>';
+    html += '<div id="dailyByLevel"></div>';
+
+    // 全部擊殺任務一覽
+    html += '<div class="section-title">擊殺任務一覽 <span class="count">（每格：要打幾隻／經驗；R代幣看評級）</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" id="dailyKillTable" style="min-width:640px;"><thead><tr><th>角色等級</th>';
+    for (var t = 0; t < tierCount; t++) {
+      var tk = brackets.length && brackets[0].tiers[t] ? brackets[0].tiers[t].token : null;
+      html += '<th style="text-align:center;">' + dailyTierBadge(t) + (tk != null ? '<br><span style="font-weight:400;">代幣 ×' + tk + '</span>' : '') + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+    brackets.forEach(function (b) {
+      html += '<tr data-daily-bracket="' + b.minLevel + '-' + b.maxLevel + '"><td style="white-space:nowrap;">Lv' + b.minLevel + ' ~ ' + b.maxLevel + '</td>';
+      for (var t2 = 0; t2 < tierCount; t2++) {
+        var q = b.tiers[t2];
+        html += '<td style="text-align:center;white-space:nowrap;">' + (q ? q.need + ' 隻<br><span style="color:var(--text-faint);font-size:12px;">' + bigNumHtml(q.exp || 0, "+") + '</span>' : '－') + '</td>';
+      }
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    // 雜務一覽
+    html += '<div class="section-title">雜務任務一覽 <span class="count">（每格：要做幾次）</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>任務</th><th>等級</th>';
+    for (var t3 = 0; t3 < tierCount; t3++) html += '<th style="text-align:center;">' + dailyTierBadge(t3) + '</th>';
+    html += '</tr></thead><tbody>';
+    groups.forEach(function (g) {
+      var q0 = g.tiers[0];
+      html += '<tr><td>' + escapeHtml(dailyGroupLabel(g)) + '</td><td style="white-space:nowrap;">Lv' + q0.minLevel + ' ~ ' + q0.maxLevel + '</td>';
+      for (var t4 = 0; t4 < tierCount; t4++) html += '<td style="text-align:center;">' + (g.tiers[t4] ? g.tiers[t4].need : '－') + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="empty-note" style="padding:6px 0 0;">' + Object.keys(DAILY_KIND_HOW).map(function (k) {
+      return '<b>' + escapeHtml(DAILY_KIND_LABEL[k]) + '</b>：' + escapeHtml(DAILY_KIND_HOW[k]);
+    }).join('<br>') + '<br>「釣魚（任何地點）」在哪裡釣都算；指定地圖的只算在那張地圖釣的。</div>';
+
+    $detail.innerHTML = html;
+
+    function renderByLevel() {
+      var box = document.getElementById("dailyByLevel");
+      var rows = document.querySelectorAll("#dailyKillTable tr[data-daily-bracket]");
+      var cur = dailyLevel != null ? dailyLevel : dropCalcState.level;
+      if (cur == null || !(cur >= 1)) {
+        box.innerHTML = '<div class="empty-note" style="padding:0 0 6px;">輸入等級後，會列出這個等級每天可能抽到的擊殺任務和雜務。</div>';
+        Array.prototype.forEach.call(rows, function (tr) { tr.style.background = ""; });
+        return;
+      }
+      var bracket = null;
+      brackets.forEach(function (b) { if (cur >= b.minLevel && cur <= b.maxLevel) bracket = b; });
+      Array.prototype.forEach.call(rows, function (tr) {
+        tr.style.background = bracket && tr.getAttribute("data-daily-bracket") === bracket.minLevel + "-" + bracket.maxLevel ? "rgba(201,162,75,.18)" : "";
+      });
+      var h = '';
+      h += '<div class="equip-box"><div class="row1"><span class="slot">⚔️ 擊殺任務（' + rules.killSlots + ' 張）</span>' +
+        '<span class="badge">算得到的怪：Lv' + Math.max(1, cur - rules.levelWindow) + ' ~ ' + (cur + rules.levelWindow) + '</span></div>';
+      if (!bracket) {
+        h += '<div class="empty-note">這個等級沒有擊殺任務。</div>';
+      } else {
+        h += '<table class="dtable"><thead><tr><th>評級</th><th>擊殺數</th><th>經驗</th><th>' + escapeHtml(tokenName) + '</th></tr></thead><tbody>';
+        bracket.tiers.forEach(function (q) {
+          h += '<tr><td>' + dailyTierBadge(q.tier) + '</td><td>' + q.need + ' 隻</td><td>' + bigNumHtml(q.exp || 0, "+") + '</td><td>×' + q.token + '</td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+      h += '</div>';
+      var open = groups.filter(function (g) { return dailyGroupOpen(g, cur); });
+      var closed = groups.filter(function (g) { return !dailyGroupOpen(g, cur); });
+      h += '<div class="equip-box"><div class="row1"><span class="slot">🧺 雜務（' + rules.fixedSlots + ' 張）</span>' +
+        '<span class="badge">從 ' + open.length + ' 組裡挑 ' + Math.min(rules.fixedSlots, open.length) + ' 組</span></div>';
+      if (!open.length) {
+        h += '<div class="empty-note">這個等級沒有雜務可以抽。</div>';
+      } else {
+        h += '<div style="font-size:13px;color:var(--text-dim);line-height:1.9;">' + open.map(function (g) {
+          return '・' + escapeHtml(dailyGroupLabel(g)) + '　<span style="color:var(--text-faint);">' +
+            g.tiers.map(function (q) { return DAILY_TIER_NAMES[q.tier] + ' ' + q.need; }).join("／") + '</span>';
+        }).join('<br>') + '</div>';
+      }
+      if (closed.length) {
+        h += '<div class="empty-note" style="padding:6px 0 0;">等級還不夠、抽不到：' + closed.map(function (g) {
+          return escapeHtml(dailyGroupLabel(g)) + '（Lv' + g.tiers[0].minLevel + '）';
+        }).join("、") + '</div>';
+      }
+      h += '</div>';
+      box.innerHTML = h;
+    }
+    renderByLevel();
+    document.getElementById("dailyLevelInput").addEventListener("input", function (e) {
+      dailyLevel = e.target.value ? Number(e.target.value) : null;
+      renderByLevel();
+    });
   }
 
   // 藍圖任務列表：用下拉選單選等級區間（每 10 級一段），下面只列那一段的任務「等級／目標／獎勵物品」，
@@ -3383,7 +3930,7 @@
       tiers.map(function (t) { return '<option value="' + t + '"' + (tierFilter === t ? " selected" : "") + '>' + t + ' 階</option>'; }).join('') +
       '<option value="bpet">戰寵</option>' +
       '</select></div>';
-    html += '<div class="empty-note" style="padding:0 0 10px;">出戰中的寵物才會生效，而且飽食度(hunger)一定要大於 0，不然不管成長階段多高，加成一律歸零。點寵物名稱看牠 9 個成長階段各自提供多少能力。</div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">出戰中的寵物才會生效（遊戲改版後已經沒有飽食度，加成只看成長階段）。點寵物名稱看牠 9 個成長階段各自提供多少能力。</div>';
     if (!petIds.length) {
       html += '<div class="empty-note">這個階級沒有寵物資料。</div>';
     } else {
@@ -3573,9 +4120,10 @@
       '<span class="badge">' + p.tier + ' 階</span>' +
       '<span class="badge">出戰需求 Lv' + p.lv + '</span>' +
       '<span class="badge">出戰需求名聲 ' + fmtNum(p.fame) + '</span>' +
-      '<span class="badge">飽食度上限 ' + fmtNum(p.feedFull) + '</span>' +
+      '<span class="badge">升一階要餵 ' + fmtNum(p.feedFull) + ' 起（每階 +10%）</span>' +
       '</div>';
-    html += '<div class="empty-note" style="padding:0 0 14px;">飽食度(hunger)必須大於 0，下面的加成才會真的套用到角色身上；沒有成長曲線的屬性，不管幾階都固定不變。</div>';
+    // 遊戲 by()：第 g 階升下一階要累積 round(feedFull × (10 + g) / 10) 的餵食量；飽食度 hunger 在存檔 v39 就拿掉了
+    html += '<div class="empty-note" style="padding:0 0 14px;">出戰中就會套用下面的加成（遊戲改版後已經沒有飽食度）；沒有成長曲線的屬性，不管幾階都固定不變。</div>';
 
     var evolveFrom = PET_EVOLVE_FROM[String(petId)] || [];
     if (evolveFrom.length) {
@@ -3688,6 +4236,11 @@
 
   // 副本裡不重複的怪物：[{id, role:"spawn"|"morph"|"summon", isBoss, from, rooms:[區域名稱...]}]
   // 出生點上的怪（首領排前面、依等級）後面緊接著牠變身／召喚出來的型態
+  // 房間的首領：新資料一個房間可以有好幾隻（bosses），舊資料只有單一 boss
+  function roomBosses(isl) {
+    if (isl.bosses && isl.bosses.length) return isl.bosses;
+    return isl.boss != null ? [isl.boss] : [];
+  }
   function dungeonMonsterList(dg) {
     var byId = {}, base = [], children = {};
     (dg.islands || []).forEach(function (isl) {
@@ -3703,10 +4256,11 @@
         return e;
       }
       var ids = (isl.monsters || []).slice();
-      if (isl.boss != null && ids.indexOf(isl.boss) === -1) ids.push(isl.boss);
+      var bosses = roomBosses(isl);
+      bosses.forEach(function (b) { if (ids.indexOf(b) === -1) ids.push(b); });
       ids.forEach(function (mid) {
         var e = touch(mid, "spawn");
-        if (isl.boss === mid) e.isBoss = true;
+        if (bosses.indexOf(mid) !== -1) e.isBoss = true;
       });
       (isl.derived || []).forEach(function (d) {
         var r = monsterReactions(d.from).filter(function (x) { return x.to === d.id; })[0];
@@ -3762,14 +4316,26 @@
     return out.sort(function (a, b) { return b.p - a.p; });
   }
 
+  // 寶箱內容。新格式（有 draws／tierMeta）照遊戲開箱規則：開一次抽 draws 次，每次先照權重抽一組、再在組內抽一件，
+  // 組內機率加起來不到 100% 的部分是「什麼都沒開到」；舊格式是每組各開出一件。
   function boxTiersHtml(box) {
     var html = "";
+    var isNew = !!box.tierMeta;
+    if (isNew) {
+      html += '<div class="empty-note" style="padding:10px 0 4px;">每開一次會抽 <b>' + (box.draws || 1) + '</b> 次；每次先抽一組' +
+        (box.tiers.length > 1 ? '（各組機率寫在標題）' : '') + '，再從那一組抽一件，下面的機率是「抽到這一組之後」拿到各物品的機率。</div>';
+    }
     box.tiers.forEach(function (tier, tIdx) {
-      html += '<div class="empty-note" style="padding:10px 0 4px;">開出物品（第 ' + (tIdx + 1) + ' 組，每組開出一件）</div>';
+      var meta = isNew ? box.tierMeta[tIdx] || {} : null;
+      html += '<div class="empty-note" style="padding:10px 0 4px;">開出物品（第 ' + (tIdx + 1) + ' 組' +
+        (isNew ? (box.tiers.length > 1 ? '，抽到這組 ' + meta.pct + '%' : '') : '，每組開出一件') + '）</div>';
       html += '<table class="dtable"><thead><tr><th>物品</th><th>機率</th></tr></thead><tbody>';
       tier.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (t) {
         html += itemLinkRow(t.itemId, '<td><span class="rate' + (t.pct < 1 ? " low" : "") + '">' + t.pct + '%</span></td>');
       });
+      if (isNew && meta.nothingPct > 0) {
+        html += '<tr><td style="color:var(--text-faint);">（什麼都沒開到）</td><td><span class="rate low">' + meta.nothingPct + '%</span></td></tr>';
+      }
       html += '</tbody></table>';
     });
     return html;
@@ -3826,7 +4392,70 @@
       statTile("怪物種類", monsters.length) + statTile("掉落物品", dropOrder.length) + statTile("寶箱", boxOrder.length) +
       '</div>';
     html += '<div style="font-size:11.5px;color:var(--text-faint);margin:-14px 0 18px;">等級限制：角色等級需在 ' + (dg.minLv || 0) +
-      (dg.maxLv ? ' ~ ' + dg.maxLv + ' 之間' : ' 以上') + '才能進入；每日進場次數每天重置。</div>';
+      (dg.maxLv ? ' ~ ' + dg.maxLv + ' 之間' : ' 以上') + '才能進入；每日進場次數每天台灣時間早上 6 點重置。</div>';
+
+    // 進場時會被丟掉的道具（遊戲 enterDungeon() 的 forbid）
+    if (dg.forbid && dg.forbid.length) {
+      html += '<div class="ruin-warn" style="margin-top:12px;"><div class="ruin-warn-title">⚠️ 進入時會把身上這些道具全部丟掉</div>' +
+        '<div class="ruin-warn-body">進場前記得先存到倉庫：</div><div class="map-chip-row" style="margin-top:6px;">' +
+        dg.forbid.map(function (iid) { return itemChip(iid); }).join("") + '</div></div>';
+    }
+
+    // 進場條件（遊戲 dungeonBlock()）：要二轉、要有隊友
+    var req = dg.requires || {};
+    if (req.secondJob || req.party) {
+      var reqs = [];
+      if (req.secondJob) reqs.push("<b>已經二轉</b>");
+      if (req.party) reqs.push("<b>隊伍裡至少要有 1 名隊友</b>");
+      html += '<div class="equip-box" style="margin-top:12px;font-size:13px;line-height:1.8;">🚪 進場條件：除了等級，還要' + reqs.join("、而且") + '，不然進不去。</div>';
+    }
+
+    // 每層減益（賢者之塔Another）：每層固定的增減傷；累計名聲不到該層門檻時，再疊上名聲懲罰（遊戲 vg()／副本「減益」視窗）
+    if (dg.floors && dg.floors.length) {
+      var fp = dg.famePenalty || null;
+      var fameGates = dg.floors.map(function (f) { return f.fame || 0; });
+      var maxGate = Math.max.apply(null, fameGates);
+      function signedPct(v, reverse) {
+        // taken 跟裝備的「減少傷害」同一個欄位：負的代表受到的傷害變多，所以顯示時反過來
+        var shown = reverse ? -v : v;
+        return (shown > 0 ? "+" : "") + shown + "%";
+      }
+      html += '<div class="section-title">每層減益 <span class="count">（副本裡「減益」按鈕看到的同一份）</span></div>';
+      if (fp) {
+        html += '<div class="ruin-warn"><div class="ruin-warn-title">⚠️ 累計名聲不到該層門檻（最高 ' + fmtNum(maxGate) + '），減益會加重、掉落率 ' + (fp.dropPct || 0) + '%！</div>' +
+          '<div class="ruin-warn-body">名聲不足時，除了下表的基本減益，還會再：' + escapeHtml(penaltyEffectText({ stats: fp.stats, taken: fp.taken, dealt: fp.dealt })) +
+          (fp.dropPct ? '；掉落率 ' + fp.dropPct + '%' : '') + '。</div></div>';
+      }
+      html += '<table class="dtable"><thead><tr><th>樓層</th><th>名聲門檻</th><th>造成的傷害</th><th>受到的傷害</th>' + (fp ? '<th>名聲不足時</th>' : '') + '</tr></thead><tbody>';
+      dg.floors.forEach(function (f) {
+        var shortCell = "";
+        if (fp) {
+          shortCell = '<td style="font-size:12.5px;color:#c0392b;">造成 ' + signedPct((f.dealt || 0) + (fp.dealt || 0)) +
+            '、受到 ' + signedPct((f.taken || 0) + (fp.taken || 0), true) + '</td>';
+        }
+        html += '<tr><td>第 ' + f.floor + ' 層</td><td>' + fmtNum(f.fame || 0) + '</td>' +
+          '<td>' + signedPct(f.dealt || 0) + '</td><td>' + signedPct(f.taken || 0, true) + '</td>' + shortCell + '</tr>';
+      });
+      html += '</tbody></table>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">看的是<b>累計名聲</b>（fame.total）。名聲夠的話只有「造成／受到的傷害」那兩欄的基本減益。</div>';
+    }
+
+    // 單人加成：這趟從頭到尾沒帶隊友才有（遊戲 soloBuff）
+    if (dg.soloBuffs && dg.soloBuffs.length && !req.party) {
+      html += '<div class="section-title">單人挑戰加成 <span class="count">（整趟都沒帶隊友時才有）</span></div>';
+      dg.soloBuffs.forEach(function (b) {
+        html += '<div class="equip-box"><div class="equip-stat-grid">' +
+          '<div>攻擊<br><b>+' + fmtNum(b.atk || 0) + '</b></div>' +
+          '<div>魔法<br><b>+' + fmtNum(b.mag || 0) + '</b></div>' +
+          '<div>防禦<br><b>+' + fmtNum(b.def || 0) + '</b></div>' +
+          '<div>命中<br><b>+' + fmtNum(b.hit || 0) + '</b></div>' +
+          '<div>迴避<br><b>+' + fmtNum(b.eva || 0) + '</b></div>' +
+          '<div>必殺<br><b>+' + fmtNum(b.crit || 0) + '</b></div>' +
+          '<div>增加傷害<br><b>+' + (b.dealtPct || 0) + '%</b></div>' +
+          '<div>減少傷害<br><b>+' + (b.takenPct || 0) + '%</b></div>' +
+          '</div>' + (dg.soloBuffs.length > 1 ? '<div class="empty-note" style="padding:6px 0 0;">在〔' + escapeHtml(mapName(b.mapId)) + '〕的區域</div>' : '') + '</div>';
+      });
+    }
 
     // 寶箱
     if (boxOrder.length) {
@@ -3897,12 +4526,13 @@
       var byName = {}, shown = [], emptyCount = 0;
       function addUnique(arr, v) { if (v != null && arr.indexOf(v) === -1) arr.push(v); }
       rooms.forEach(function (isl) {
-        var hasContent = (isl.monsters || []).length || isl.boss != null || (isl.drops || []).length || (isl.needItems || []).length;
+        var bosses = roomBosses(isl);
+        var hasContent = (isl.monsters || []).length || bosses.length || (isl.drops || []).length || (isl.needItems || []).length;
         if (!hasContent) { emptyCount++; return; }
         var name = isl.name || isl.key;
         var r = byName[name];
         if (!r) { r = byName[name] = { name: name, bosses: [], monsters: [], drops: [], needItems: [] }; shown.push(r); }
-        addUnique(r.bosses, isl.boss);
+        bosses.forEach(function (b) { addUnique(r.bosses, b); });
         (isl.monsters || []).forEach(function (mid) { addUnique(r.monsters, mid); });
         (isl.drops || []).forEach(function (iid) { addUnique(r.drops, iid); });
         (isl.needItems || []).forEach(function (iid) { addUnique(r.needItems, iid); });
@@ -3971,6 +4601,200 @@
     });
   }
 
+  // ---------- 地圖頁（從怪物頁的「出現地圖」點進來）----------
+  // 這張地圖出生的怪物（MONSTERS[].maps）＋牠們變身／召喚出來的型態，再把所有掉落合併成一張總表。
+  // 掉落機率跟怪物頁一樣：有輸入等級就套等級差衰減和〔乞討〕加成（playerDropMultiplier），沒輸入就是原始機率。
+  function mapMonsterList(mid) {
+    var midNum = Number(mid), seen = {}, list = [];
+    Object.keys(MONSTERS).forEach(function (id) {
+      if ((MONSTERS[id].maps || []).indexOf(midNum) === -1) return;
+      seen[id] = true;
+      list.push({ id: id, role: "spawn", from: null });
+    });
+    // 變身／召喚型態沒有自己的出生點，跟著來源怪物算（可能好幾層）
+    for (var i = 0; i < list.length; i++) {
+      monsterReactions(list[i].id).forEach(function (r) {
+        var to = String(r.to);
+        if (seen[to] || !MONSTERS[to]) return;
+        seen[to] = true;
+        list.push({ id: to, role: r.act === "summon" ? "summon" : "morph", from: list[i].id });
+      });
+    }
+    return list;
+  }
+
+  // 地圖下拉選單的選項：有怪物出生的地圖（沒有名字的「地圖 #N」不列），依怪物最低等級排序，副本地圖另外一組
+  var mapBrowserLast = null; // 上次在地圖頁選的地圖，按「🗺️ 地圖」回來時還在
+  var mapOptionCache = null;
+  function mapOptions() {
+    if (mapOptionCache) return mapOptionCache;
+    var info = {};
+    Object.keys(MONSTERS).forEach(function (id) {
+      var mon = MONSTERS[id];
+      (mon.maps || []).forEach(function (mid) {
+        var e = info[mid] || (info[mid] = { id: String(mid), count: 0, minLv: null, maxLv: null, lvs: [] });
+        e.count++;
+        if (mon.isHarvest) return;
+        e.lvs.push(mon.lv);
+        if (e.minLv == null || mon.lv < e.minLv) e.minLv = mon.lv;
+        if (e.maxLv == null || mon.lv > e.maxLv) e.maxLv = mon.lv;
+      });
+    });
+    // 排序用中位數：低等小怪常常散在很多張地圖，用最低等級排會讓高等地圖跑到前面
+    Object.keys(info).forEach(function (k) {
+      var l = info[k].lvs.sort(function (a, b) { return a - b; });
+      info[k].midLv = l.length ? l[Math.floor(l.length / 2)] : null;
+    });
+    var dungeonMaps = {};
+    Object.keys(DUNGEON_BY_ID).forEach(function (did) { dungeonMaps[String(DUNGEON_BY_ID[did].mapId)] = true; });
+    var list = Object.keys(info).map(function (k) { return info[k]; }).filter(function (e) {
+      return MAPS[e.id] && !/^地圖 ?#/.test(MAPS[e.id]);
+    });
+    list.forEach(function (e) { e.dungeon = !!dungeonMaps[e.id]; });
+    list.sort(function (a, b) {
+      return ((a.midLv == null ? 9999 : a.midLv) - (b.midLv == null ? 9999 : b.midLv)) || (Number(a.id) - Number(b.id));
+    });
+    mapOptionCache = list;
+    return list;
+  }
+  function mapSelectHtml(mid) {
+    var list = mapOptions();
+    function opt(e) {
+      var lv = e.minLv == null ? "只有採集點" : "Lv" + e.minLv + (e.maxLv !== e.minLv ? "~" + e.maxLv : "");
+      return '<option value="' + e.id + '"' + (e.id === mid ? " selected" : "") + '>' + escapeHtml(MAPS[e.id]) + '（' + lv + '）' +
+        (MAP_PENALTY[e.id] ? '⚠️廢墟' : '') + '</option>';
+    }
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">' +
+      '<label for="mapSelect" style="font-size:13px;color:var(--text-dim);">選擇地圖</label>' +
+      '<select id="mapSelect" style="flex:1;min-width:200px;max-width:420px;padding:8px 10px;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:4px;color:var(--text);font-size:14px;">' +
+      '<option value="">請選擇地圖（' + list.length + ' 張，依怪物的主要等級排序）...</option>' +
+      '<optgroup label="野外地圖">' + list.filter(function (e) { return !e.dungeon; }).map(opt).join("") + '</optgroup>' +
+      '<optgroup label="副本地圖">' + list.filter(function (e) { return e.dungeon; }).map(opt).join("") + '</optgroup>' +
+      '</select></div>';
+  }
+  function wireMapSelect() {
+    var sel = document.getElementById("mapSelect");
+    if (!sel) return;
+    sel.addEventListener("change", function () {
+      if (!sel.value) return;
+      currentView = { kind: "map", id: sel.value };
+      showMapDetail(sel.value);
+    });
+  }
+
+  function showMapDetail(mid) {
+    mid = mid == null ? "" : String(mid);
+    currentDetail = { type: "map", id: mid };
+    if (mid) mapBrowserLast = mid;
+    if (!mid) {
+      $detail.innerHTML = backButtonHtml() + '<h2 style="margin-top:0;" data-detail-of="map:">🗺️ 地圖</h2>' + mapSelectHtml("") +
+        '<div class="empty-note">選一張地圖，會列出這張地圖出現的所有怪物，以及合併起來的掉落物品總表。' +
+        '上方輸入你的等級的話，掉落機率會換算成你實際打得到的數字。</div>';
+      wireMapSelect();
+      return;
+    }
+    var monsters = mapMonsterList(mid);
+
+    var drops = {}, dropOrder = [];
+    monsters.forEach(function (m) {
+      var mon = MONSTERS[m.id];
+      if (!mon || monsterNeverKilled(m.id)) return;
+      var chances = monsterDropChances(mon, playerDropMultiplier(mon));
+      Object.keys(chances).forEach(function (iid) {
+        var c = chances[iid];
+        var d = drops[iid];
+        if (!d) { d = drops[iid] = { id: iid, best: 0, sources: [] }; dropOrder.push(d); }
+        d.sources.push({ mid: m.id, p: c.p, groups: c.groups });
+        if (c.p > d.best) d.best = c.p;
+      });
+    });
+    dropOrder.sort(function (a, b) { return (!!BOX_BY_ID[b.id] - !!BOX_BY_ID[a.id]) || (b.best - a.best); });
+    dropOrder.forEach(function (d) {
+      d.sources = dedupeSourcesByName(d.sources).sort(function (a, b) { return b.p - a.p; });
+    });
+
+    var spawnMons = monsters.filter(function (m) { return m.role === "spawn"; }).map(function (m) { return MONSTERS[m.id]; });
+    var lvs = spawnMons.filter(function (m) { return !m.isHarvest; }).map(function (m) { return m.lv; });
+    var dungeonsHere = Object.keys(DUNGEON_BY_ID).filter(function (did) { return String(DUNGEON_BY_ID[did].mapId) === mid; });
+
+    var html = backButtonHtml() + mapSelectHtml(mid);
+    html += '<div class="detail-head" data-detail-of="map:' + mid + '"><div>' +
+      '<div class="detail-title">🗺️ ' + escapeHtml(mapName(mid)) + '</div>' +
+      '<div class="detail-sub">地圖編號 #' + mid + '</div>' +
+      '<div class="badge-row">' +
+      (mapAccessText(mid) ? '<span class="badge">' + escapeHtml(mapAccessText(mid)) + '</span>' : '') +
+      (MAP_PENALTY[mid] ? '<span class="badge" style="color:#c0392b;">廢墟地圖</span>' : '') +
+      '</div></div></div>';
+    html += ruinPenaltyWarningHtml([mid]);
+
+    if (dungeonsHere.length) {
+      html += '<div class="equip-box" style="margin-bottom:14px;font-size:13px;">這張地圖是副本：' +
+        dungeonsHere.map(function (did) { return '<span class="name-link" data-open-dungeon="' + did + '">' + escapeHtml(DUNGEON_BY_ID[did].name) + '</span>'; }).join("、") +
+        '（副本頁有首領、區域配置和寶箱）</div>';
+    }
+
+    html += '<div class="stat-grid">' +
+      statTile("怪物種類", monsters.length) + statTile("掉落物品", dropOrder.length) +
+      (lvs.length ? '<div class="stat-tile"><div class="v">Lv' + Math.min.apply(null, lvs) + '~' + Math.max.apply(null, lvs) + '</div><div class="k">怪物等級</div></div>' : '') +
+      '</div>';
+
+    // 怪物清單
+    html += '<div class="section-title">出現的怪物 <span class="count">(' + monsters.length + ')</span></div>';
+    if (!monsters.length) {
+      html += '<div class="empty-note">資料裡沒有怪物在這張地圖出生。</div>';
+    } else {
+      var ordered = monsters.filter(function (m) { return m.role === "spawn"; }).sort(function (a, b) {
+        var ma = MONSTERS[a.id], mb = MONSTERS[b.id];
+        return (!!ma.isHarvest - !!mb.isHarvest) || (ma.lv - mb.lv);
+      });
+      var childrenOf = {};
+      monsters.forEach(function (m) { if (m.from) (childrenOf[m.from] || (childrenOf[m.from] = [])).push(m); });
+      html += '<table class="dtable"><thead><tr><th>怪物</th><th>等級</th><th>類型</th>' +
+        (dropCalcState.level != null ? '<th>換算後經驗</th>' : '') + '</tr></thead><tbody>';
+      function row(m, depth) {
+        var mon = MONSTERS[m.id];
+        var tag = mon.isHarvest ? "採集點" : m.role === "morph" ? "變身型態" : m.role === "summon" ? "召喚" : (mon.aggressive ? "主動攻擊" : "被動");
+        html += '<tr class="clickable" data-goto-monster="' + m.id + '">' +
+          '<td style="padding-left:' + (10 + depth * 18) + 'px;">' + (depth ? '↳ ' : '') + '<span class="name-link">' + escapeHtml(mon.name) + '</span></td>' +
+          '<td>' + mon.lv + '</td><td style="font-size:12.5px;">' + tag + '</td>' +
+          (dropCalcState.level != null ? '<td>' + (mon.isHarvest ? '－' : bigNumHtml(monsterExpAt(mon, dropCalcState.level))) + '</td>' : '') +
+          '</tr>';
+        (childrenOf[m.id] || []).forEach(function (c) { row(c, depth + 1); });
+      }
+      ordered.forEach(function (m) { row(m, 0); });
+      html += '</tbody></table>';
+    }
+
+    // 掉落總表
+    html += '<div class="section-title">掉落物品總表 <span class="count">(' + dropOrder.length + ')</span></div>';
+    if (dropOrder.length) html += dropCalcBar();
+    if (!dropOrder.length) {
+      html += '<div class="empty-note">這張地圖的怪物目前沒有紀錄任何掉落物。</div>';
+    } else {
+      html += '<div class="empty-note" style="padding:0 0 8px;">' + (dropCalcState.level != null
+        ? '機率已照你輸入的 Lv' + dropCalcState.level + (dropCalcState.blacksmith ? ' 換算（鐵匠／匠師不受等級差衰減）' : ' 換算等級差衰減') +
+          (dropBegBonusPct() ? '，加上〔乞討〕+' + dropBegBonusPct() + '%' : '') + '。'
+        : '上方輸入你的等級，這裡會換算成你實際打得到的機率。') + '</div>';
+      html += '<table class="dtable"><thead><tr><th>物品</th><th>最高機率</th><th>掉落來源</th></tr></thead><tbody>';
+      dropOrder.forEach(function (d) {
+        var it = ITEMS[d.id];
+        html += '<tr><td>' + (it ? '<span class="name-link" data-goto-item="' + d.id + '">' + escapeHtml(it.name) + '</span>'
+          : '<span class="name-link" style="cursor:default;opacity:.5;">無資料</span>') + '</td>' +
+          '<td><span class="' + rateClassP(d.best) + '">' + pctP(d.best) + '</span>' + (BOX_BY_ID[d.id] ? '<span class="group-tag">寶箱</span>' : '') + '</td>' +
+          '<td style="font-size:12.5px;">' + d.sources.map(function (s) {
+            return '<span class="name-link" data-goto-monster="' + s.mid + '">' + escapeHtml(MONSTERS[s.mid].name) + '</span> ' +
+              '<span class="' + rateClassP(s.p) + '">' + pctP(s.p) + '</span>' + dropGroupTags(s.groups);
+          }).join('<br>') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + escapeHtml(DROP_FORMULA_NOTE) + '</div>';
+    }
+
+    $detail.innerHTML = html;
+    wireMapSelect();
+    wireDropCalcBar(function () { showMapDetail(mid); });
+  }
+
   $changelogBtn.addEventListener("click", openChangelogList);
 
   // ---------- 使用說明（原本放在標題下方的長說明，改成按鈕點開，沿用更新紀錄的彈窗）----------
@@ -3982,7 +4806,9 @@
     ["📈 你目前的等級", "輸入後，掉落表會多一欄「換算後機率」（你比怪物高 30 級以上，掉落會打折），怪物頁也會顯示換算後的每隻經驗。"],
     ["⚒️ 鐵匠／〔乞討〕", "掉落表上方的選項：勾「鐵匠／匠師」是不受等級差打折（不是提升掉落率，要先輸入等級、而且比怪物高 30 級以上才看得出差別）；〔乞討〕是初心者技能，直接把掉落率乘上 +3%～+30%。"],
     ["🧰 職業／裝備位置篩選", "搜尋列下方可以依職業、裝備位置列出所有符合的裝備。"],
-    ["📚 其他功能", "發條強化屬性表、寵物列表、副本、寶箱，以及任務總覽（主線、書信、委託、藍圖任務）。"]
+    ["🗺️ 地圖", "用下拉選單選一張地圖，列出這張地圖的所有怪物和合併的掉落總表（有輸入等級就換算成實際機率）。怪物頁的「出現地圖」也可以直接點進去。"],
+    ["⚒️ 鐵匠相關", "發條強化屬性表，以及兩種分解：找雷分解（鎔解，選裝備就能算出每個精煉值的費用、各種鎔解石機率）和強硬分解（艾希頓裝備換凝結之魂的費用、機率、精煉加成）。"],
+    ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務）。寶箱可以從副本頁或物品頁點進去看。"]
   ];
   function openHelp() {
     var html = '<div class="section-title">使用說明</div>';
@@ -4079,7 +4905,7 @@
       return;
     }
     // 在彈出視窗（委託詳細／寶箱）裡點寵物、任務線這類還是會換掉主畫面的連結時，先把視窗關掉，不然新頁面會被蓋住
-    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet]")) {
+    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith]")) {
       closePeek();
       closeChangelog();
     }
@@ -4112,9 +4938,47 @@
     if (missionDetail) { openPeek("mission", missionDetail.getAttribute("data-mission-detail")); return; }
     var questTab = e.target.closest("[data-quest-tab]");
     if (questTab) { openQuestTab(questTab.getAttribute("data-quest-tab")); return; }
+    var smithTab = e.target.closest("[data-smith-tab]");
+    if (smithTab) { openSmithTab(smithTab.getAttribute("data-smith-tab")); return; }
+    var gotoSmith = e.target.closest("[data-goto-smith]");
+    if (gotoSmith) { navigateTo("smith", gotoSmith.getAttribute("data-goto-smith"), true); return; }
+    var mapLink = e.target.closest("[data-open-map]");
+    if (mapLink) { navigateTo("map", mapLink.getAttribute("data-open-map"), true); return; }
+    var gotoQuestTab = e.target.closest("[data-goto-questtab]");
+    if (gotoQuestTab) { navigateTo("questtab", gotoQuestTab.getAttribute("data-goto-questtab"), true); return; }
     var questLineLink = e.target.closest("[data-open-questline]");
     if (questLineLink) navigateTo("questline", questLineLink.getAttribute("data-open-questline"), true);
   });
+
+  // ---------- 網址參數：書籤工具「📊 掉落查詢」從遊戲帶資料過來 ----------
+  // ?lv=等級&smith=1(鐵匠／匠師)&beg=乞討等級&map=目前地圖&from=game，另外 q=關鍵字 可以直接搜尋
+  (function applyUrlParams() {
+    var p;
+    try { p = new URLSearchParams(location.search); } catch (e) { return; }
+    var lv = Number(p.get("lv"));
+    if (lv >= 1) dropCalcState.level = Math.floor(lv);
+    if (p.get("smith") === "1") dropCalcState.blacksmith = true;
+    var beg = Number(p.get("beg"));
+    if (beg >= 1) dropCalcState.beg = Math.min(DROP_BEG_SKILL_LEVELS.length, Math.floor(beg));
+    var map = p.get("map"), q = p.get("q");
+    if (p.get("from") === "game") {
+      var parts = [];
+      if (dropCalcState.level != null) parts.push("Lv" + dropCalcState.level);
+      parts.push(dropCalcState.blacksmith ? "鐵匠／匠師（不受等級差衰減）" : "非鐵匠系");
+      parts.push(dropCalcState.beg ? "〔乞討〕Lv" + dropCalcState.beg : "沒學〔乞討〕");
+      if (map) parts.push("目前在〔" + mapName(map) + "〕");
+      var bar = document.createElement("div");
+      bar.style.cssText = "margin:8px 0 0;padding:8px 12px;border-radius:6px;background:var(--panel-hi);border:1px solid var(--gold);font-size:12.5px;color:var(--text);";
+      bar.textContent = "🎮 已從遊戲帶入：" + parts.join("・") + "。想查別的東西，直接用上面的搜尋框。";
+      $hintRow.parentNode.insertBefore(bar, $hintRow.nextSibling);
+    }
+    if (q) {
+      $input.value = q;
+      $input.dispatchEvent(new Event("input"));
+    } else if (map && MAPS[String(map)]) {
+      showMapDetail(map);
+    }
+  })();
 
   wireGlobalLevelField();
 })();
