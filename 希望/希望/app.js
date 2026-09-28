@@ -5184,9 +5184,11 @@
       bar.textContent = "🎮 已從遊戲帶入：" + parts.join("・") + "。想查別的東西，直接用上面的搜尋框。";
       $hintRow.parentNode.insertBefore(bar, $hintRow.nextSibling);
     }
+    var opened = true;
     if (q) {
       $input.value = q;
       $input.dispatchEvent(new Event("input"));
+      opened = false;
     } else if (mon) {
       // 跟點左邊清單一樣打開怪物頁（同名不同隻也分得出來，因為是用編號）；頁面上的地圖標籤可以點回整張地圖
       navigateTo("monster", String(mon), false);
@@ -5194,6 +5196,18 @@
       navigateTo("dungeon", String(dg), false);
     } else if (map && MAPS[String(map)]) {
       showMapDetail(map);
+    } else {
+      opened = false;
+    }
+    // 窄畫面（手機、或書籤開在遊戲裡的視窗比較窄時）是上下排版，詳細頁在搜尋區下面。
+    // 這段在頁面還在載入時就執行了，字型／圖片載完後版面會被撐高，當下捲的位置會跑掉（看起來像停在初始畫面），
+    // 所以等整頁載完再直接捲一次（不用 smooth，免得被後續的版面變動打斷）。
+    if (opened && stackedLayoutQuery && stackedLayoutQuery.matches) {
+      var scrollNow = function () {
+        window.scrollTo(0, Math.max(0, $detail.getBoundingClientRect().top + window.pageYOffset - 8));
+      };
+      if (document.readyState === "complete") setTimeout(scrollNow, 50);
+      else window.addEventListener("load", function () { setTimeout(scrollNow, 50); });
     }
   })();
 
