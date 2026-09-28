@@ -39,7 +39,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -93,6 +93,7 @@
     { panel: "warehouse", icon: "🏦", title: "倉庫", desc: "編輯所有角色共用的倉庫金錢與物品。" },
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
+    { panel: "gems", icon: "💎", title: "技能寶石", desc: "開寶石位置、指定技能與寶石、新增寶石並設定每一格的強化結果。" },
     { panel: "pets", icon: "🐾", title: "寵物", desc: "新增寵物、調整成長階段、經驗、飽食度。" },
     { panel: "potions", icon: "🧪", title: "藥水設定", desc: "自動回血 / 回 AP 的閾值與藥水種類。" },
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
@@ -422,6 +423,7 @@
     renderLoadout(c);
     renderSkillsPanel(c);
     renderBuffsPanel(c);
+    renderGems(c);
     renderPets(c);
     renderBattlePet(c);
     renderPotions(c);
@@ -2152,6 +2154,219 @@
     return "#" + mid + "　Lv" + m.unlockLevel + "　" + missionTargetText(m) + (m.blocked ? "（遊戲內目前無法完成）" : "");
   }
 
+  var DUNGEON_NAMES = window.DUNGEON_NAMES || {};
+
+  // ---------- 副本任務組（存檔 dungeonMissionSets，v75 新增）----------
+  // missions.json 裡有 set 的任務屬於某個副本（set = 副本編號），要先在遊戲的副本面板「接任務」才會計數；
+  // 放棄時遊戲會把那組未完成任務的進度清掉（這裡取消勾選也照做）。
+  function renderDungeonMissionSets(c) {
+    var box = document.getElementById("missionSetBox");
+    if (!box) return;
+    box.innerHTML = "";
+    var sets = {};
+    Object.keys(MISSIONS).forEach(function (mid) {
+      var s = MISSIONS[mid].set;
+      if (s != null) (sets[s] || (sets[s] = [])).push(Number(mid));
+    });
+    var setIds = Object.keys(sets).map(Number).sort(function (a, b) { return a - b; });
+    if (!setIds.length) { box.style.display = "none"; return; }
+    box.style.display = "";
+    if (!Array.isArray(c.dungeonMissionSets)) {
+      box.appendChild(el("div", { class: "panel-desc", text: "這個存檔還是舊版格式（沒有 dungeonMissionSets），先用新版遊戲開過一次再匯出，才能設定副本任務。" }));
+      return;
+    }
+    box.appendChild(el("div", { class: "section-title", text: "副本任務組（dungeonMissionSets）" }));
+    var row = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:14px;" });
+    setIds.forEach(function (s) {
+      var label = el("label", { style: "display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;" });
+      var cb = el("input", { type: "checkbox" });
+      cb.checked = c.dungeonMissionSets.indexOf(s) !== -1;
+      cb.addEventListener("change", function () {
+        var idx = c.dungeonMissionSets.indexOf(s);
+        if (cb.checked && idx === -1) c.dungeonMissionSets.push(s);
+        if (!cb.checked && idx !== -1) {
+          c.dungeonMissionSets.splice(idx, 1);
+          c.missionKills = c.missionKills.filter(function (r) { return sets[s].indexOf(r[0]) === -1 || c.missionsDone.indexOf(r[0]) !== -1; });
+        }
+        toast((cb.checked ? "已接取" : "已放棄") + "「" + (DUNGEON_NAMES[String(s)] || s) + "」的副本任務", "ok");
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode((DUNGEON_NAMES[String(s)] || ("副本#" + s)) + "（" + sets[s].length + " 筆）"));
+      row.appendChild(label);
+    });
+    box.appendChild(row);
+  }
+
+  // ---------- 技能寶石（存檔 gems，v69 新增；資料 data/gems.js）----------
+  // 存檔格式（bundle Vu()/startGemEnchant()/unlockGemSlot()/setGemSlot()）：
+  //   gems.owned  = [{uid, itemId, cells:[{symbol:"sun"|"moon"|"star"|"comet", ok:true/false}], seed}]
+  //   gems.slots  = [{skillId, gemUid}]（開了幾格就有幾筆，最多 GEMS.slots.length 格）
+  //   gems.nextUid
+  // 寶石數值 = base + 成功格子的 sun/moon/star/comet 值；技能的 gem 種類要跟寶石 type 一樣，同技能不能兩顆同 attr。
+  var GEMS = window.GEMS || null;
+  var GEM_TYPE_LABEL = { attack: "攻擊", heal: "恢復", support: "輔助" };
+  var GEM_SYMBOLS = [["sun", "☀ 太陽"], ["moon", "☾ 月亮"], ["star", "★ 星星"], ["comet", "☄ 彗星"]];
+  function gemValue(g) {
+    var d = GEMS && GEMS.defs[String(g.itemId)];
+    if (!d) return "?";
+    return (g.cells || []).reduce(function (s, cell) { return s + (cell.ok ? (d[cell.symbol] || 0) : 0); }, d.base || 0);
+  }
+  function allSkillsById() {
+    var out = {};
+    Object.keys(SKILLS).forEach(function (jobId) { SKILLS[jobId].forEach(function (s) { out[s.id] = s; }); });
+    return out;
+  }
+  function renderGems(c) {
+    var wrap = document.getElementById("gemPanelBody");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!GEMS) { wrap.appendChild(el("div", { class: "panel-desc", text: "找不到技能寶石資料（data/gems.js），請重新執行 update_data.py。" })); return; }
+    if (!c.gems || typeof c.gems !== "object") {
+      wrap.appendChild(el("div", { class: "panel-desc", text: "這個存檔還沒有技能寶石欄位（舊版格式）。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var gems = c.gems;
+    if (!Array.isArray(gems.owned)) gems.owned = [];
+    if (!Array.isArray(gems.slots)) gems.slots = [];
+    if (typeof gems.nextUid !== "number") gems.nextUid = gems.owned.reduce(function (m, g) { return Math.max(m, g.uid + 1); }, 1);
+    var cellsMax = (GEMS.enchant && GEMS.enchant.cells) || 10;
+    var skillById = allSkillsById();
+    var gemSkills = Object.keys(skillById).map(function (k) { return skillById[k]; }).filter(function (s) { return s.gem; });
+
+    // --- 寶石位置 ---
+    wrap.appendChild(el("div", { class: "section-title", text: "寶石位置（已開 " + gems.slots.length + " / " + GEMS.slots.length + "）" }));
+    var slotTable = el("table", { class: "etable" });
+    slotTable.innerHTML = "<thead><tr><th>位置</th><th>開啟條件</th><th>技能</th><th>寶石</th></tr></thead>";
+    var tb = el("tbody");
+    gems.slots.forEach(function (slot, idx) {
+      var tr = el("tr");
+      var need = GEMS.slots[idx] || {};
+      tr.appendChild(el("td", { text: "第 " + (idx + 1) + " 格" }));
+      tr.appendChild(el("td", { text: "Lv" + (need.minLevel || "?") }));
+      var skSel = el("select");
+      skSel.appendChild(el("option", { value: "", text: "（未指定技能）" }));
+      var learned = {};
+      (c.skills || []).forEach(function (p) { learned[p[0]] = true; });
+      gemSkills.slice().sort(function (a, b) { return (learned[b.id] ? 1 : 0) - (learned[a.id] ? 1 : 0); }).forEach(function (s) {
+        var o = el("option", { value: s.id, text: s.name + "（" + (GEM_TYPE_LABEL[s.gem] || s.gem) + "）" + (learned[s.id] ? "" : "・未學") });
+        if (slot.skillId === s.id) o.selected = true;
+        skSel.appendChild(o);
+      });
+      skSel.addEventListener("change", function () {
+        slot.skillId = skSel.value ? Number(skSel.value) : null;
+        var g = gems.owned.find(function (x) { return x.uid === slot.gemUid; });
+        var sk = skillById[slot.skillId];
+        if (g && (!sk || (GEMS.defs[String(g.itemId)] || {}).type !== sk.gem)) slot.gemUid = null;  // 種類不合，遊戲也會卸下
+        renderGems(c);
+      });
+      var tdS = el("td"); tdS.appendChild(skSel); tr.appendChild(tdS);
+      var gemSel = el("select");
+      gemSel.appendChild(el("option", { value: "", text: "（空）" }));
+      var sk = skillById[slot.skillId];
+      gems.owned.forEach(function (g) {
+        var d = GEMS.defs[String(g.itemId)] || {};
+        if (sk && d.type !== sk.gem) return;
+        var usedElsewhere = gems.slots.some(function (s2, j) { return j !== idx && s2.gemUid === g.uid; });
+        if (usedElsewhere) return;
+        var o = el("option", { value: g.uid, text: itemName(g.itemId) + "（數值 " + gemValue(g) + "）" });
+        if (slot.gemUid === g.uid) o.selected = true;
+        gemSel.appendChild(o);
+      });
+      gemSel.disabled = !slot.skillId;
+      gemSel.addEventListener("change", function () { slot.gemUid = gemSel.value ? Number(gemSel.value) : null; });
+      var tdG = el("td"); tdG.appendChild(gemSel); tr.appendChild(tdG);
+      tb.appendChild(tr);
+    });
+    slotTable.appendChild(tb);
+    wrap.appendChild(slotTable);
+    var slotBtns = el("div", { class: "form-row", style: "margin-top:8px;" });
+    var addSlot = el("button", { class: "btn btn-sm btn-accent", text: "➕ 開一格" });
+    addSlot.disabled = gems.slots.length >= GEMS.slots.length;
+    addSlot.addEventListener("click", function () { gems.slots.push({ skillId: null, gemUid: null }); renderGems(c); });
+    var delSlot = el("button", { class: "btn btn-sm btn-danger", text: "➖ 關掉最後一格" });
+    delSlot.disabled = !gems.slots.length;
+    delSlot.addEventListener("click", function () { gems.slots.pop(); renderGems(c); });
+    slotBtns.appendChild(addSlot); slotBtns.appendChild(delSlot);
+    wrap.appendChild(slotBtns);
+
+    // --- 擁有的寶石 ---
+    wrap.appendChild(el("div", { class: "section-title", style: "margin-top:20px;", text: "已開始強化的寶石（" + gems.owned.length + " 顆）" }));
+    gems.owned.forEach(function (g) {
+      var d = GEMS.defs[String(g.itemId)] || {};
+      var card = el("div", { style: "background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;" });
+      var head = el("div", { style: "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;" });
+      head.appendChild(el("b", { text: itemName(g.itemId) }));
+      head.appendChild(el("span", { class: "note", text: "uid " + g.uid + "・" + (GEM_TYPE_LABEL[d.type] || d.type || "?") + "・目前數值 " + gemValue(g) + "（基礎 " + (d.base || 0) + "）" }));
+      var del = el("button", { class: "btn btn-sm btn-danger", text: "🗑 刪除" });
+      del.addEventListener("click", function () {
+        gems.owned = gems.owned.filter(function (x) { return x !== g; });
+        gems.slots.forEach(function (s) { if (s.gemUid === g.uid) s.gemUid = null; });
+        renderGems(c);
+      });
+      head.appendChild(del);
+      card.appendChild(head);
+      var cellsRow = el("div", { style: "display:flex;flex-wrap:wrap;gap:6px;" });
+      if (!Array.isArray(g.cells)) g.cells = [];
+      for (var i = 0; i < cellsMax; i++) {
+        (function (i) {
+          var cell = g.cells[i];
+          var sel = el("select", { style: "width:auto;" });
+          sel.appendChild(el("option", { value: "", text: (i + 1) + ". 未強化" }));
+          var failsBefore = g.cells.slice(0, i).filter(function (x) { return !x.ok; }).length;
+          var cometOk = failsBefore >= ((GEMS.enchant && GEMS.enchant.cometAfterFails) || cellsMax);
+          GEM_SYMBOLS.forEach(function (sym) {
+            if (sym[0] === "comet" && !cometOk && !(cell && cell.symbol === "comet")) return;  // 遊戲：累計失敗夠多格才能選彗星，而且必成功
+            [true, false].forEach(function (ok) {
+              if (sym[0] === "comet" && !ok) return;
+              var v = sym[0] + ":" + (ok ? "1" : "0");
+              var o = el("option", { value: v, text: (i + 1) + ". " + sym[1] + (ok ? " 成功 +" + (d[sym[0]] || 0) : " 失敗") });
+              if (cell && cell.symbol === sym[0] && !!cell.ok === ok) o.selected = true;
+              sel.appendChild(o);
+            });
+          });
+          sel.disabled = i > g.cells.length;  // 只能一格一格往後填，遊戲的 cells 是依序的陣列
+          sel.addEventListener("change", function () {
+            if (!sel.value) { g.cells = g.cells.slice(0, i); }
+            else { var p = sel.value.split(":"); g.cells[i] = { symbol: p[0], ok: p[1] === "1" }; }
+            renderGems(c);
+          });
+          cellsRow.appendChild(sel);
+        })(i);
+      }
+      card.appendChild(cellsRow);
+      var quick = el("div", { class: "form-row", style: "margin-top:8px;" });
+      var best = GEM_SYMBOLS.map(function (s) { return s[0]; }).filter(function (s) { return s !== "comet"; })
+        .sort(function (a, b) { return (d[b] || 0) - (d[a] || 0); })[0];
+      // 彗星要累計失敗 cometAfterFails 格才能選，所以「最高」是每格都選數值最大的太陽／月亮／星星並成功
+      var maxBtn = el("button", { class: "btn btn-sm", text: "⚡ 全部填滿（" + cellsMax + " 格都選數值最高的並成功）" });
+      maxBtn.addEventListener("click", function () {
+        g.cells = [];
+        for (var k = 0; k < cellsMax; k++) g.cells.push({ symbol: best, ok: true });
+        renderGems(c);
+      });
+      quick.appendChild(maxBtn);
+      card.appendChild(quick);
+      wrap.appendChild(card);
+    });
+    var addRow = el("div", { class: "form-row", style: "margin-top:8px;" });
+    var gemPick = el("select");
+    gemPick.appendChild(el("option", { value: "", text: "選一種技能寶石新增..." }));
+    Object.keys(GEMS.defs).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (id) {
+      var d = GEMS.defs[id];
+      gemPick.appendChild(el("option", { value: id, text: itemName(id) + "（" + (GEM_TYPE_LABEL[d.type] || d.type) + "）" }));
+    });
+    var addGem = el("button", { class: "btn btn-sm btn-accent", text: "➕ 新增寶石" });
+    addGem.addEventListener("click", function () {
+      if (!gemPick.value) { toast("請先選寶石種類", "warn"); return; }
+      gems.owned.push({ uid: gems.nextUid, itemId: Number(gemPick.value), cells: [], seed: Math.floor(Math.random() * 4294967295) });
+      gems.nextUid++;
+      renderGems(c);
+    });
+    addRow.appendChild(gemPick); addRow.appendChild(addGem);
+    wrap.appendChild(addRow);
+    wrap.appendChild(el("div", { class: "note", style: "margin-top:8px;", text: "寶石本身是背包裡的道具，放進「強化」之後才會變成這裡的一顆（遊戲 startGemEnchant 會從背包扣掉一個）。這裡新增不會動到背包。seed 是遊戲用來決定之後強化結果的亂數種子。" }));
+  }
+
   function renderDungeon(c) {
     if (!c.dungeon || typeof c.dungeon !== "object") c.dungeon = { day: 0, used: {} };
     if (!c.dungeon.used || typeof c.dungeon.used !== "object") c.dungeon.used = {};
@@ -2189,6 +2404,7 @@
   function renderMissions(c) {
     if (!Array.isArray(c.missionsDone)) c.missionsDone = [];
     if (!Array.isArray(c.missionKills)) c.missionKills = [];
+    renderDungeonMissionSets(c);
 
     function getKillCount(mid) {
       var entry = c.missionKills.find(function (row) { return row[0] === Number(mid); });

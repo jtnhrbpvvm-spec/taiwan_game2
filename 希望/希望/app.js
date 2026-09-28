@@ -351,6 +351,16 @@
   var ITEM_KILL_SOURCE = window.ITEM_KILL_SOURCE || {};
   var ITEM_ORIGIN = window.ITEM_ORIGIN || {};
   var BPET_CRAFT_SOURCE = window.BPET_CRAFT_SOURCE || {};
+  // 同一成品的全部製作書（屬性自然石有 4 本）；舊資料沒有就退回上面的單一配方
+  var BPET_CRAFT_SOURCE_ALL = window.BPET_CRAFT_SOURCE_ALL || null;
+  // 2026-09-28 改版新增的取得方式（update_data.py 產生）
+  var EXCHANGE_OFFERS = window.EXCHANGE_OFFERS || [];
+  var EXCHANGE_BY_GET = window.EXCHANGE_BY_GET || {};
+  var EXCHANGE_BY_GIVE = window.EXCHANGE_BY_GIVE || {};
+  var GM_DICE = window.GM_DICE || null;
+  var FISHING_SOCK = window.FISHING_SOCK || null;
+  var GEMS = window.GEMS || null;
+  var JOB_ADVANCE = window.JOB_ADVANCE || null;
   var LETTER_SOURCE = window.LETTER_SOURCE || {};
   var LETTER_BY_MONSTER = window.LETTER_BY_MONSTER || {};
   // 物品取得方式，三種來源合併判斷：
@@ -381,11 +391,12 @@
     } else if (eventOrigins.length && !npcOrigins.length) {
       lines.push("取得方式：戰鬥／狩獵事件觸發（查不到是哪隻怪物）");
     }
-    if (craftSrc) {
-      var matsHtml = (craftSrc.mats || []).map(function (m) { return itemChip(m[0], m[1]); }).join("");
-      lines.push("取得方式：" + (craftSrc.npc ? "找 <b>" + escapeHtml(craftSrc.npc) + "</b> " : "") + "用 " + itemChip(craftSrc.bookId) + " 製作，材料：" + matsHtml +
-        "，花費 " + fmtNum(craftSrc.gold) + " 金幣，成功率 " + craftSrc.ratePct + "%");
-    }
+    var craftList = BPET_CRAFT_SOURCE_ALL && BPET_CRAFT_SOURCE_ALL[String(iid)] ? BPET_CRAFT_SOURCE_ALL[String(iid)] : (craftSrc ? [craftSrc] : []);
+    craftList.forEach(function (cs) {
+      var matsHtml = (cs.mats || []).map(function (m) { return itemChip(m[0], m[1]); }).join("");
+      lines.push("取得方式：" + (cs.npc ? "找 <b>" + escapeHtml(cs.npc) + "</b> " : "") + "用 " + itemChip(cs.bookId) + " 製作，材料：" + matsHtml +
+        "，花費 " + fmtNum(cs.gold) + " 金幣，成功率 " + cs.ratePct + "%");
+    });
     (LETTER_SOURCE[String(iid)] || []).forEach(function (ls) {
       var monsterHtml = ls.monsterId
         ? '<span class="name-link" data-goto-monster="' + ls.monsterId + '">' + escapeHtml(ls.monsterName || ("怪物#" + ls.monsterId)) + '</span>'
@@ -583,7 +594,8 @@
     if (p >= 10) return p.toFixed(1) + "%";
     if (p >= 1) return p.toFixed(2) + "%";
     if (p >= 0.01) return p.toFixed(3) + "%";
-    return p.toFixed(4) + "%";
+    if (p >= 0.0001 || p === 0) return p.toFixed(4) + "%";
+    return "< 0.0001%";  // 變體平均之後有些機率小到 4 位小數顯示不出來
   }
   function rateClass(rate) {
     var p = (rate / RATE_DIVISOR) * 100;
@@ -1093,6 +1105,7 @@
         if (ALCHEMY_BY_PRODUCT[it.id]) metaParts.push("可煉金取得");
         if (BOX_BY_ID[it.id]) metaParts.push("寶箱");
         if (ITEM_TO_BOXES[it.id]) metaParts.push("可從開箱取得");
+        if (EXCHANGE_BY_GET[it.id]) metaParts.push("可兌換取得");
         if (ITEM_QUEST_USES[it.id]) metaParts.push("任務道具");
         if (ITEM_PET_EVOLVE_USES[it.id]) metaParts.push("寵物進化材料");
         if (ITEM_ORIGIN[it.id] || ITEM_KILL_SOURCE[it.id]) metaParts.push("可從任務取得");
@@ -2315,7 +2328,8 @@
       html += '<table class="dtable"><thead><tr><th>NPC</th><th>地點</th><th>價格</th></tr></thead><tbody>';
       radixEntries.forEach(function (s) {
         html += '<tr>' +
-          '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span></td>' +
+          '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span>' +
+          (s.group ? '<br><span class="group-tag" title="這一區只有穿得上成品的職業才看得到">' + escapeHtml(s.group) + '</span>' : '') + '</td>' +
           '<td>' + escapeHtml(townName(s.t)) + '</td>' +
           '<td><span class="rate">' + fmtNum(s.price) + ' ' + escapeHtml(tokenName) + '</span></td>' +
           '</tr>';
@@ -2477,6 +2491,10 @@
       html += '</tbody></table>';
     }
 
+    html += exchangeSectionHtml(id);
+    html += extraSourcesHtml(id);
+    html += gemSectionHtml(id);
+
     var questRefs = buildQuestReferences(id);
     var isDailyToken = DAILY.quests.length > 0 && MISSION_TOKEN_ITEM_ID != null && Number(id) === MISSION_TOKEN_ITEM_ID;
     html += '<div class="section-title">任務關聯 <span class="count">(' + (questRefs.quests.length + questRefs.missions.length + (isDailyToken ? 1 : 0)) + ')</span></div>';
@@ -2539,6 +2557,155 @@
     detailTarget().innerHTML = html;
     wireDropCalcBar(function () { showItem(id); });
     wireFusionSim(detailTarget());
+  }
+
+  function boxPctText(p) { return String(Math.round(p * 10000) / 10000) + "%"; }
+
+  // ---------- NPC 兌換（towns.json offers，2026-09-28 update_data.py 產生 exchangeIndex.js）----------
+  var EXCHANGE_KIND_LABEL = { trade: "兌換", upgrade: "升級", dismantle: "拆解" };
+  function exchangeTownsText(o) {
+    return (o.towns || []).map(function (t) { return townName(t); }).join("／");
+  }
+  function exchangeOfferCells(o) {
+    var need = (o.give || []).map(function (g) { return itemChip(g[0], g[1]); }).join("");
+    if (o.gear) {
+      var ids = o.gear.ids || [];
+      need = '交一件 ' + ids.slice(0, 3).map(function (g) { return itemChip(g); }).join("") +
+        (ids.length > 3 ? '等 ' + ids.length + ' 種之一' : (ids.length > 1 ? '之一' : '')) +
+        '（精煉 +' + (o.gear.minRefine || 0) + ' 以上）' + (need ? '<br>再加 ' + need : '');
+    }
+    var get = (o.get || []).map(function (g) { return itemChip(g[0], g[1]); }).join("");
+    return { need: need || '－', get: get || '－' };
+  }
+  function exchangeRowHtml(o) {
+    var c = exchangeOfferCells(o);
+    return '<tr><td><b>' + escapeHtml(o.npc) + '</b><br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(exchangeTownsText(o)) + '</span></td>' +
+      '<td><span class="group-tag">' + (EXCHANGE_KIND_LABEL[o.kind] || o.kind) + '</span>' + (o.menu ? '<br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(o.menu) + '</span>' : '') +
+      (o.minLv ? '<br><span class="lv-tag">Lv' + o.minLv + '+</span>' : '') + '</td>' +
+      '<td style="font-size:12.5px;">' + c.need + '</td><td style="font-size:12.5px;">' + c.get + '</td></tr>';
+  }
+  function exchangeTableHtml(title, idxs) {
+    if (!idxs.length) return '';
+    var html = '<div class="section-title">' + title + ' <span class="count">(' + idxs.length + ')</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>NPC</th><th>種類</th><th>要交出</th><th>換到</th></tr></thead><tbody>';
+    idxs.forEach(function (i) { if (EXCHANGE_OFFERS[i]) html += exchangeRowHtml(EXCHANGE_OFFERS[i]); });
+    return html + '</tbody></table></div>';
+  }
+  function exchangeSectionHtml(id) {
+    var html = exchangeTableHtml('可跟 NPC 兌換取得', EXCHANGE_BY_GET[id] || []);
+    html += exchangeTableHtml('可拿去跟 NPC 兌換', EXCHANGE_BY_GIVE[id] || []);
+    if (html) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">「升級」「拆解」要交的是那件裝備本身（精煉值要夠、不能是鎖定或穿在身上的）；有 Lv 標示的要角色等級到了才能換。</div>';
+    return html;
+  }
+
+  // ---------- 其他 2026-09-28 新增的取得方式（擲十八啦、黃金臭襪子、每日任務獎勵道具）----------
+  // 艾希頓裝備強硬分解由鐵匠頁（smithItemNoteHtml）處理，這裡不重複。
+  function extraSourcesHtml(id) {
+    var parts = [];
+    if (GM_DICE) {
+      if (String(GM_DICE.prizeEgg) === id) parts.push('取得方式：帶 ' + itemChip(GM_DICE.entryEgg) + ' 找〔復活節兔子〕擲十八啦，贏了（50%）得到這個，輸了入場蛋會被收走。');
+      if (String(GM_DICE.entryEgg) === id) parts.push('可以拿去跟〔復活節兔子〕擲十八啦，贏了得到 ' + itemChip(GM_DICE.prizeEgg) + '。');
+    }
+    if (FISHING_SOCK) {
+      if (String(FISHING_SOCK.box) === id) parts.push('取得方式：用 ' + itemChip(FISHING_SOCK.bait) + ' 當魚餌，每釣到一次都會多拿到一個。');
+      if (String(FISHING_SOCK.bait) === id) parts.push('當魚餌用：每釣到一次都會多拿到一個 ' + itemChip(FISHING_SOCK.box) + '。');
+    }
+    // 每日任務卡片完成時給的道具（daily.json quests[].item，遊戲 Gy() 會直接給）
+    var dailySeen = {};
+    (DAILY.quests || []).forEach(function (q) {
+      if (!q.item || String(q.item[0]) !== id) return;
+      var key = q.kind + ":" + q.item[1];
+      if (dailySeen[key]) return;
+      dailySeen[key] = true;
+      parts.push('取得方式：每日任務「' + escapeHtml(DAILY_KIND_LABEL[q.kind] || q.kind) + '」卡片完成獎勵 ×' + q.item[1] +
+        (q.minLevel ? '（Lv' + q.minLevel + (q.maxLevel ? '~' + q.maxLevel : '+') + '）' : ''));
+    });
+    if (!parts.length) return '';
+    return '<div class="section-title">其他取得方式／用途</div><div style="font-size:13px;line-height:1.9;">' + parts.join('<br>') + '</div>';
+  }
+
+  // ---------- 技能寶石（gems.json，2026-09-28 新增）----------
+  var GEM_TYPE_LABEL = { attack: "攻擊", heal: "恢復", support: "輔助" };
+  var GEM_ATTR_LABEL = { damage: "傷害增加", cooldown: "冷卻時間減少", apCost: "技能AP減少", critChance: "致命機率增加", critMult: "致命係數增加", heal: "療癒恢復增加", duration: "持續時間增加", hit: "命中增加" };
+  var GEM_TIER_LABEL = ["N", "G", "DG", "XG"];
+  function gemSectionHtml(id) {
+    if (!GEMS || !GEMS.defs) return '';
+    var html = '';
+    var def = GEMS.defs[id];
+    if (def) {
+      var en = GEMS.enchant || {};
+      var cells = en.cells || 10;
+      // 彗星要累計失敗 cometAfterFails 格才能選（bundle Gu()），所以最高值是每格都成功、選數值最大的太陽／月亮／星星
+      var failsNeeded = en.cometAfterFails || cells;
+      var bestNormal = Math.max(def.sun || 0, def.moon || 0, def.star || 0);
+      var maxVal = def.base + Math.max(cells * bestNormal, Math.max(0, cells - failsNeeded) * (def.comet || 0));
+      html += '<div class="section-title">技能寶石 <span class="count">' + (GEM_TYPE_LABEL[def.type] || def.type) + '・' + (GEM_TIER_LABEL[def.tier] || def.tier) + '</span></div>';
+      html += '<div class="equip-box"><div class="equip-stat-grid">' +
+        '<div>效果<br><b>' + escapeHtml(GEM_ATTR_LABEL[def.attr] || def.attr) + '</b></div>' +
+        '<div>基礎值<br><b>' + def.base + '</b></div>' +
+        '<div>☀ 太陽<br><b>+' + def.sun + '</b>（' + (en.sun || 0) + '%）</div>' +
+        '<div>☾ 月亮<br><b>+' + def.moon + '</b>（' + (en.moon || 0) + '%）</div>' +
+        '<div>★ 星星<br><b>+' + def.star + '</b>（' + (en.star || 0) + '%）</div>' +
+        '<div>☄ 彗星<br><b>+' + def.comet + '</b>（必成功）</div>' +
+        '<div>強化費用<br><b>' + bigNumHtml(def.enchantCost) + '</b></div>' +
+        '</div></div>';
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">只能鑲在可鑲「' + (GEM_TYPE_LABEL[def.type] || def.type) + '」寶石的技能上，同一個技能不能鑲兩顆同效果的。' +
+        '強化共 ' + cells + ' 格，每格選太陽／月亮／星星（括號是成功率），成功就加上那個數值；累計失敗 ' + (en.cometAfterFails || 0) + ' 格之後，剩下的格子可以選必成功的彗星。' +
+        '數值 = 基礎值 + 成功格子的加總（最高 ' + maxVal + '）。</div>';
+    }
+    // 合成：同階 count 顆 → 抽一顆
+    var composeUses = [], composeGets = [];
+    (GEMS.compose || []).forEach(function (c) {
+      var total = c.results.reduce(function (s, r) { return s + r[1]; }, 0) || 1;
+      if (def && def.tier === c.tier) composeUses.push(c);
+      c.results.forEach(function (r) { if (String(r[0]) === id) composeGets.push({ c: c, p: r[1] / total * 100 }); });
+    });
+    composeUses.forEach(function (c) {
+      html += '<div style="font-size:13px;margin-top:8px;">合成：任意 ' + c.count + ' 顆 ' + (GEM_TIER_LABEL[c.tier] || c.tier) + ' 階技能寶石 + ' + bigNumHtml(c.cost) + ' 希望幣，隨機得到一顆（共 ' + c.results.length + ' 種）。</div>';
+    });
+    composeGets.forEach(function (g) {
+      html += '<div style="font-size:13px;margin-top:8px;">取得方式：' + g.c.count + ' 顆 ' + (GEM_TIER_LABEL[g.c.tier] || g.c.tier) + ' 階技能寶石合成，抽到這顆的機率 ' + boxPctText(g.p) + '。</div>';
+    });
+    return html;
+  }
+
+  // ---------- 怪物變體能力表、昏厥量表（2026-09-28 新增）----------
+  var VARIANT_FIELDS = [["hp", "HP"], ["atk", "攻擊"], ["def", "防禦"], ["hit", "命中"], ["eva", "迴避"], ["crit", "必殺"], ["critRes", "抗爆"], ["exp", "經驗"]];
+  function monsterVariantsHtml(mon) {
+    if (!mon.variants || !mon.variants.length) return '';
+    var forms = monsterForms(mon);
+    var html = '<div class="section-title">型態 <span class="count">(' + forms.length + ' 種，每次出現隨機一種)</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>型態</th><th>屬性</th>' +
+      VARIANT_FIELDS.map(function (f) { return '<th>' + f[1] + '</th>'; }).join('') + '<th>掉落</th></tr></thead><tbody>';
+    forms.forEach(function (f, i) {
+      var v = i === 0 ? {} : mon.variants[i - 1];
+      var sameDrops = i > 0 && JSON.stringify(v.drops || mon.drops) === JSON.stringify(mon.drops);
+      html += '<tr><td>' + (i === 0 ? '本體' : '變體 ' + i) + '</td>' +
+        '<td><span class="el-chip" style="color:var(--' + (ELEMENT_CLASS[f.element] || "el-none") + ')">' + (ELEMENT_LABEL[f.element] || f.element) + '</span></td>' +
+        VARIANT_FIELDS.map(function (fl) {
+          var changed = i > 0 && v[fl[0]] !== undefined && v[fl[0]] !== mon[fl[0]];
+          return '<td' + (changed ? ' style="color:var(--gold-hi);font-weight:700;"' : '') + '>' + bigNumHtml(f[fl[0]]) + '</td>';
+        }).join('') +
+        '<td>' + (i === 0 ? '－' : (sameDrops ? '同本體' : '<span style="color:var(--gold-hi);">不同</span>')) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">金色是跟本體不一樣的數值。屬性不同時，五行寶石的最佳選擇也會跟著變（下面的建議是照本體算的）。</div>';
+    return html;
+  }
+  // 昏厥量表（bundle Em()/Dm()）：技能打中累積，滿了不能動；弱點是每次出現隨機 1～2 種減益
+  function monsterGroggyHtml(mon) {
+    var g = mon.groggy;
+    if (!g) return '';
+    return '<div class="section-title">昏厥量表</div>' +
+      '<div class="equip-box"><div class="equip-stat-grid">' +
+      '<div>量表<br><b>' + bigNumHtml(g.gauge) + '</b></div>' +
+      (g.durationMs ? '<div>昏厥時間<br><b>' + (g.durationMs / 1000) + ' 秒</b></div>' : '') +
+      (g.defPct ? '<div>昏厥時防禦<br><b>−' + Math.abs(g.defPct) + '%</b></div>' : '') +
+      (g.takenPct ? '<div>昏厥時受到傷害<br><b>+' + g.takenPct + '%</b></div>' : '') +
+      (g.weakBonusPct ? '<div>打中弱點<br><b>多累積 ' + g.weakBonusPct + '%</b></div>' : '') +
+      (g.growPct ? '<div>每昏厥一次量表變長<br><b>+' + g.growPct + '%（最多 +' + (g.growCapPct || 0) + '%）</b></div>' : '') +
+      '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">技能打中會累積昏厥量表，滿了這隻怪會不能動一段時間。弱點是每次出現隨機 1～2 種減益，帶那種減益的技能打中會多累積。</div>';
   }
 
   function eqStat(label, v) {
@@ -2614,6 +2781,9 @@
     }
 
     // 變身／召喚：自己會變成什麼、以及是由誰變身／召喚出來的
+    html += monsterVariantsHtml(mon);
+    html += monsterGroggyHtml(mon);
+
     var originHtml = monsterOriginsHtml(id);
     if (monsterReactions(id).length || originHtml) {
       html += '<div class="section-title">變身與召喚</div>';
@@ -3039,6 +3209,7 @@
   function questTabsHtml(active) {
     var tabs = [["daily", "🗓️ 每日任務"], ["letter", "✉️ 書信任務"], ["commission", "📜 委託任務"], ["blueprint", "🗺️ 藍圖任務"]];
     if (!DAILY.quests.length) tabs.shift();
+    if (JOB_ADVANCE && JOB_ADVANCE.jobs.length) tabs.push(["job", "🎓 轉職"]);
     if (hasMainQuestLines()) tabs.unshift(["main", "📖 主線任務"]);
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
       var on = t[0] === active;
@@ -3052,7 +3223,38 @@
     else if (tab === "blueprint") showBlueprintBrowser();
     else if (tab === "daily" && DAILY.quests.length) showDailyBrowser();
     else if (tab === "main" && hasMainQuestLines()) showQuestLineBrowser();
+    else if (tab === "job" && JOB_ADVANCE && JOB_ADVANCE.jobs.length) showJobAdvanceBrowser();
     else openQuestTab(defaultQuestTab());
+  }
+
+  // ---------- 轉職（jobs.json advanceNpc／req，2026-09-26 起取代主線劇情的轉職線）----------
+  // 條件照 bundle jobOffers()：一轉＝初心者、等級 ≥ advanceLevel；二轉＝從對應一轉、req 的等級／名聲／金幣（付過錢 secondJobPaid 再轉就免金幣）
+  function showJobAdvanceBrowser() {
+    currentDetail = null;
+    currentView = { kind: "questtab", id: "job" };
+    var html = backButtonHtml() + questTabsHtml("job");
+    html += '<h2 style="margin-top:0;">🎓 轉職</h2>';
+    var jobName = {};
+    (window.JOBS || []).forEach(function (j) { jobName[j.id] = j.name; });
+    html += '<div class="empty-note" style="padding:0 0 10px;">到城鎮找對應的 NPC 談話就能轉職，不用跑劇情。一轉：初心者 Lv' + (JOB_ADVANCE.advanceLevel || 10) +
+      ' 以上；二轉：從對應的一轉職業、等級／名聲／金幣都要夠（二轉付過一次錢，之後重轉就不用再付）。二轉時技能與屬性點會重置。</div>';
+    [1, 2].forEach(function (tier) {
+      var list = JOB_ADVANCE.jobs.filter(function (j) { return j.tier === tier; });
+      if (!list.length) return;
+      html += '<div class="section-title">' + (tier === 1 ? '一轉' : '二轉') + ' <span class="count">(' + list.length + ')</span></div>';
+      html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>職業</th>' + (tier === 2 ? '<th>從</th>' : '') +
+        '<th>找誰</th><th>地點</th><th>等級</th>' + (tier === 2 ? '<th>名聲</th><th>金幣</th>' : '') + '</tr></thead><tbody>';
+      list.forEach(function (j) {
+        var req = j.req || {};
+        html += '<tr><td><b>' + escapeHtml(j.name) + '</b>' + (j.desc ? '<br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(j.desc) + '</span>' : '') + '</td>' +
+          (tier === 2 ? '<td>' + escapeHtml(jobName[j.from] || j.from || "") + '</td>' : '') +
+          '<td>' + escapeHtml(j.npc) + '</td><td>' + escapeHtml((j.towns || []).map(townName).join("／") || "-") + '</td>' +
+          '<td>Lv' + (req.level || 0) + '</td>' +
+          (tier === 2 ? '<td>' + bigNumHtml(req.fame || 0) + '</td><td>' + bigNumHtml(req.gold || 0) + '</td>' : '') + '</tr>';
+      });
+      html += '</tbody></table></div>';
+    });
+    $detail.innerHTML = html;
   }
 
   // ---------- 每日任務（daily.json，2026-09-27 新增）----------
@@ -4806,13 +5008,13 @@
     ["🔍 搜尋", "輸入物品名稱，查出會掉落它的怪物、出現地圖與掉落機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。名稱的字不用連在一起，例如「木劍」也會找到「木製劍」。"],
     ["🗂️ 分類下拉選單", "搜尋欄左邊可以選裝備部位（武器、頭部…）或物品分類（恢復、材料、任務…）。選了分類只會列物品；不輸入關鍵字時會直接列出整個分類。"],
     ["⚔️ 僅查詢裝備能力", "勾選後輸入能力名稱（例如「魔法」「攻速」「減傷」），只列出有這項能力加成的裝備並依數值排序，不比對物品名稱。可用空白同時查多項；能力後面可以加 >（大於等於）、<（小於等於）、=（等於）縮小範圍，例如「魔法力>20 攻速<10」。"],
-    ["✅ 僅顯示目前可取得裝備", "搜尋結果上方的勾選框。勾選後只列出遊戲裡目前有取得管道（掉落、商店、任務、製作、合成、開箱、釣魚等）的物品。"],
+    ["✅ 僅顯示目前可取得裝備", "搜尋結果上方的勾選框。勾選後只列出遊戲裡目前有取得管道（掉落、商店、NPC 兌換、任務、製作、合成、開箱、釣魚、分解、每日任務等）的物品。"],
     ["📈 你目前的等級", "輸入後，掉落表會多一欄「換算後機率」（你比怪物高 30 級以上，掉落會打折），怪物頁也會顯示換算後的每隻經驗。"],
     ["⚒️ 鐵匠／〔乞討〕", "掉落表上方的選項：勾「鐵匠／匠師」是不受等級差打折（不是提升掉落率，要先輸入等級、而且比怪物高 30 級以上才看得出差別）；〔乞討〕是初心者技能，直接把掉落率乘上 +3%～+30%。"],
     ["🧰 職業／裝備位置篩選", "搜尋列下方可以依職業、裝備位置列出所有符合的裝備。"],
     ["🗺️ 地圖", "用下拉選單選一張地圖，列出這張地圖的所有怪物和合併的掉落總表（有輸入等級就換算成實際機率）。怪物頁的「出現地圖」也可以直接點進去。"],
     ["⚒️ 鐵匠相關", "發條強化屬性表，以及兩種分解：找雷分解（鎔解，選裝備就能算出每個精煉值的費用、各種鎔解石機率）和強硬分解（艾希頓裝備換凝結之魂的費用、機率、精煉加成）。"],
-    ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務）。寶箱可以從副本頁或物品頁點進去看。"]
+    ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"]
   ];
   function openHelp() {
     var html = '<div class="section-title">使用說明</div>';
