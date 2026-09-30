@@ -301,7 +301,12 @@ td .map-chip{display:inline-block;}
 .result-item:nth-child(even){background:rgba(241,227,199,.55);}
 .result-item:hover{background:var(--panel-hi); border-color:var(--line-hi);}
 .result-item.active{background:var(--panel-hi); border-color:var(--go); box-shadow:inset 0 0 0 1px var(--go);}
-.result-item .rname{font-weight:500; font-size:14.5px;}
+.result-item .rname{font-weight:500; font-size:14.5px; display:inline-flex; align-items:center;}
+/* 物品／戰寵技能圖示（遊戲圖集切出來的一格，希望/app.js atlasIconHtml）；放大時保持像素風不糊掉 */
+.game-icon{display:inline-block; flex:none; vertical-align:middle; background-repeat:no-repeat; margin-right:6px;}
+.game-icon.px{image-rendering:pixelated;}
+.map-chip .game-icon{margin:-3px 4px -3px -4px;}
+.detail-title .game-icon{margin-right:10px; position:relative; top:-2px;}
 .result-item .rmeta{font-size:12px; color:var(--text-faint); white-space:nowrap;}
 
 .empty-note{color:var(--text-faint); font-size:13.5px; padding:20px 6px; line-height:1.8;}
@@ -747,6 +752,7 @@ html[data-theme="classic"] #changelogModal{border-width:1px !important; box-shad
 <script src="希望/smithIndex.js"></script>
 <script src="希望/exchangeIndex.js"></script>
 <script src="希望/gemIndex.js"></script>
+<script src="希望/iconIndex.js"></script>
 <script src="希望/app.js"></script>
 </body>
 </html>

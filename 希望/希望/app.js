@@ -689,16 +689,36 @@
   // 物品編號在 ITEMS 裡查不到時（例如遊戲剛更新、資料還沒補齊），一律顯示「無資料」，
   // 不要把編號秀給玩家看；查不到的也不給點擊連結，因為點了也沒有對應頁面可以看。
   // suffixHtml：接在名稱後面的額外內容（例如鍛造成品的機率），可省略
+  // 物品／戰寵技能圖示：照遊戲 ItemIcon 元件的算法，從圖集（希望/iconIndex.js 的 ICON_ATLAS）切出第 n 格：
+  // background-position = -(n % cols × cell) -(floor(n / cols) × cell)，再依顯示大小等比縮放。
+  // 物品的格子編號是 items.js 的 ic（update_data.py 從 icons.json 對好的）；沒有圖集或對不到就不畫。
+  var ICON_ATLAS = window.ICON_ATLAS || {};
+  function atlasIconHtml(atlas, cell, size) {
+    if (!atlas || cell == null) return '';
+    var s = size / atlas.cell;
+    return '<span class="game-icon' + (size > atlas.cell ? ' px' : '') + '" aria-hidden="true" style="width:' + size + 'px;height:' + size + 'px;' +
+      "background-image:url('" + atlas.url + "');background-size:" + (atlas.cols * atlas.cell * s) + 'px auto;' +
+      'background-position:-' + (cell % atlas.cols * atlas.cell * s) + 'px -' + (Math.floor(cell / atlas.cols) * atlas.cell * s) + 'px;"></span>';
+  }
+  function itemIconHtml(id, size) {
+    var it = ITEMS[id];
+    return it ? atlasIconHtml(ICON_ATLAS.items, it.ic, size || 32) : '';
+  }
+  function bpetSkillIconHtml(iconId, size) {
+    var atlas = ICON_ATLAS["bpet-skills"];
+    return atlas && atlas.index ? atlasIconHtml(atlas, atlas.index[String(iconId)], size || 32) : '';
+  }
+
   function itemChip(id, qty, suffixHtml) {
     var it = ITEMS[id];
     var suffix = (qty != null ? ' ×' + qty : '') + (suffixHtml ? ' ' + suffixHtml : '');
     if (!it) return '<span class="map-chip" style="opacity:.5;">無資料' + suffix + '</span>';
-    return '<span class="map-chip" data-goto-item="' + id + '">' + escapeHtml(it.name) + suffix + '</span>';
+    return '<span class="map-chip" data-goto-item="' + id + '">' + itemIconHtml(id, 20) + escapeHtml(it.name) + suffix + '</span>';
   }
   function itemLinkRow(id, extraCellsHtml) {
     var it = ITEMS[id];
     if (!it) return '<tr><td><span class="name-link" style="cursor:default;opacity:.5;">無資料</span></td>' + extraCellsHtml + '</tr>';
-    return '<tr class="clickable" data-goto-item="' + id + '"><td><span class="name-link">' + escapeHtml(it.name) + '</span></td>' + extraCellsHtml + '</tr>';
+    return '<tr class="clickable" data-goto-item="' + id + '"><td>' + itemIconHtml(id, 28) + '<span class="name-link">' + escapeHtml(it.name) + '</span></td>' + extraCellsHtml + '</tr>';
   }
 
   // 一些常見搜尋建議（挑幾個知名度高的字）
@@ -1115,7 +1135,7 @@
         if (questRefs.quests.length && metaParts.indexOf("任務道具") === -1) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("藍圖任務");
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
-          '<span class="rname">' + escapeHtml(it.name) + '</span>' +
+          '<span class="rname">' + itemIconHtml(it.id, 32) + escapeHtml(it.name) + '</span>' +
           '<span class="rmeta">' + (metaParts.length ? metaParts.join("・") : "無掉落／販售紀錄") + '</span></li>';
       });
     }
@@ -2195,7 +2215,7 @@
 
     var html = backButtonHtml();
     html += '<div class="detail-head" data-detail-of="item:' + id + '"><div>' +
-      '<div class="detail-title">' + escapeHtml(item.name) + '</div>' +
+      '<div class="detail-title">' + itemIconHtml(id, 64) + escapeHtml(item.name) + '</div>' +
       '<div class="detail-sub">物品編號 #' + id + '</div>' +
       (ITEM_DESC[id] ? '<div class="detail-sub" style="margin-top:6px;font-style:italic;white-space:pre-line;">' + escapeHtml(ITEM_DESC[id]) + '</div>' : '') +
       '</div></div>';
@@ -4116,7 +4136,7 @@
       html2 += '<ul class="result-list">';
       BATTLE_PET_INFO.kinds.forEach(function (k) {
         html2 += '<li class="result-item" data-open-bpet="' + k.kind + '">' +
-          '<span class="rname">' + escapeHtml(k.name) + '</span>' +
+          '<span class="rname">' + itemIconHtml(k.itemId, 32) + escapeHtml(k.name) + '</span>' +
           '<span class="rmeta">' + escapeHtml(ELEMENT_LABEL[k.element] || k.element) + '屬性　' + (k.stages || []).length + ' 個進化階段</span>' +
           '</li>';
       });
@@ -4144,7 +4164,7 @@
       petIds.forEach(function (pid) {
         var p = PET_INFO[pid];
         html += '<li class="result-item" data-open-pet="' + pid + '">' +
-          '<span class="rname">' + escapeHtml(p.name) + '</span>' +
+          '<span class="rname">' + itemIconHtml(pid, 32) + escapeHtml(p.name) + '</span>' +
           '<span class="rmeta">' + p.tier + '階　Lv' + p.lv + '・名聲 ' + fmtNum(p.fame) + '</span>' +
           '</li>';
       });
@@ -4164,7 +4184,7 @@
 
     var html = backButtonHtml();
     html += '<div class="section-title"><span class="name-link" id="bpetBackToList" style="cursor:pointer;">← 戰寵列表</span></div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(k.name) + '</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + itemIconHtml(k.itemId, 64) + escapeHtml(k.name) + '</div>';
     html += '<div class="badge-row" style="margin-bottom:14px;">' +
       '<span class="el-chip" style="color:var(--' + (ELEMENT_CLASS[k.element] || "el-none") + ')">' + escapeHtml(ELEMENT_LABEL[k.element] || k.element) + '屬性</span>' +
       '<span class="badge">最高等級 ' + BATTLE_PET_INFO.maxLevel + '</span>' +
@@ -4230,7 +4250,7 @@
       html += '<div class="section-title">技能 <span class="count">(' + skills.length + ')</span></div>';
       skills.forEach(function (s) {
         html += '<div class="equip-box" style="margin-bottom:10px;">';
-        html += '<div class="row1"><span class="slot">' + escapeHtml(s.name) + '</span><span class="rate">開放等級 Lv' + s.unlockLevel + '</span></div>';
+        html += '<div class="row1"><span class="slot">' + bpetSkillIconHtml(s.icon, 32) + escapeHtml(s.name) + '</span><span class="rate">開放等級 Lv' + s.unlockLevel + '</span></div>';
         html += '<div class="empty-note" style="padding:0 0 8px;">' + escapeHtml((s.levels && s.levels[0] && s.levels[0].tip) || "") + '</div>';
         if (s.levels && s.levels.length) {
           html += '<table class="dtable"><thead><tr><th>技能等級</th><th>SP</th><th>AP</th><th>威力</th><th>冷卻</th></tr></thead><tbody>';
@@ -4321,7 +4341,7 @@
     if (!p) return;
     var html = backButtonHtml();
     html += '<div class="section-title"><span class="name-link" id="petBackToList" style="cursor:pointer;">← 寵物列表</span></div>';
-    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + escapeHtml(p.name) + '</div>';
+    html += '<div class="detail-title" style="font-size:19px;margin-bottom:8px;">' + itemIconHtml(petId, 64) + escapeHtml(p.name) + '</div>';
     html += '<div class="badge-row" style="margin-bottom:14px;">' +
       '<span class="badge">' + p.tier + ' 階</span>' +
       '<span class="badge">出戰需求 Lv' + p.lv + '</span>' +
