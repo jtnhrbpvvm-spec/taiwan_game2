@@ -3,7 +3,7 @@
 <title>套裝效果一覽</title>
 <style>
 :root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;
-  --金:#b8860b;--木:#16a34a;--水:#2563eb;--火:#dc2626;--土:#92400e}
+  --金:#8a6500;--木:#15803d;--水:#2563eb;--火:#dc2626;--土:#92400e}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;
   --金:#facc15;--木:#4ade80;--水:#60a5fa;--火:#f87171;--土:#d6a36a}}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengH
 h1{font-size:22px;margin:4px 0}
 .sub{color:var(--mute);font-size:13px;line-height:1.7}
 .rules{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
-.rules b{color:var(--acc)}
+.rules b{color:var(--acct)}
 .ctl{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2;display:flex;flex-direction:column;gap:8px}
 .ctl input{box-sizing:border-box;width:100%;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -33,12 +33,16 @@ h2{font-size:17px;margin:24px 0 8px}
 .pcs td{padding:5px 4px;border-top:1px dashed var(--line);vertical-align:top}
 .pcs td.s{color:var(--mute);white-space:nowrap;width:36px}
 .pcs td.n{white-space:nowrap;font-weight:bold}
-.fx{color:var(--acc);font-weight:bold;white-space:nowrap}
+.fx{color:var(--acct);font-weight:bold;white-space:nowrap}
 .fxd{color:var(--mute);font-size:12px}
 .c金{color:var(--金);--c:var(--金)}.c木{color:var(--木);--c:var(--木)}.c水{color:var(--水);--c:var(--水)}.c火{color:var(--火);--c:var(--火)}.c土{color:var(--土);--c:var(--土)}
 .card.c金,.card.c木,.card.c水,.card.c火,.card.c土{color:var(--fg)}
 mark{background:#fde68a;color:#111;border-radius:2px}
 .empty{color:var(--mute);padding:24px;text-align:center}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
 </style></head><body><div class="wrap">
 <a class="back" href="index.html">← 回攻略首頁</a>
 <h1>❖ 套裝效果一覽</h1>

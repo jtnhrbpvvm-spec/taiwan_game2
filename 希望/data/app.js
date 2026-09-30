@@ -1912,6 +1912,19 @@
     var iv = indivInterval(attr, stage), vals = iv === undefined ? [indivShownValue(attr, stage)] : [iv, indivShownValue(attr, stage)], i = 0;
     return t.name.replace(/%d/g, function () { return String(vals[i++]); }).replace(/%%/g, "%");
   }
+  // 數值欄後面的預覽：這條屬性實際讓角色多多少能力。
+  // 「每 N 等級 力量 M」類要乘上角色等級（遊戲 Ru()：floor(等級 ÷ N) × M）；百分比類加上 %。
+  function indivPreviewText(attr, stage, charLv) {
+    var t = indivType(attr.kind);
+    var name = indivTypeLabel(attr.kind).replace(/^每等級\s*/, "").replace(/%$/, "");
+    var shown = indivShownValue(attr, stage);
+    var iv = indivInterval(attr, stage);
+    if (iv !== undefined) {
+      return iv > 0 ? name + " +" + fmtNum2(Math.floor(charLv / iv) * shown) + "（Lv" + charLv + "）" : name + " +0";
+    }
+    var pct = t && /%%/.test(t.name);
+    return name + " +" + fmtNum2(shown) + (pct ? "%" : "");
+  }
   function indivUpgradeChance(stageDef, fails) {
     return stageDef.upgradeRate <= 0 ? 0 : Math.min(1, (stageDef.upgradeRate + stageDef.upgradePity * fails) / INDIV_RATE_DIVISOR);
   }
@@ -2008,6 +2021,13 @@
       var baseInput = el("input", { type: "number", style: "width:74px;", title: "存檔裡的原始值 base" });
       baseInput.value = attr.base;
       if (band) { baseInput.min = band.min; baseInput.max = band.max; }
+      // 打字時就即時更新後面的預覽（只預覽，真正寫入存檔在離開欄位時，會先限制在合法範圍內）
+      baseInput.addEventListener("input", function () {
+        var v = baseInput.valueAsNumber;
+        if (!isFinite(v)) return;
+        if (band) v = Math.max(band.min, Math.min(band.max, Math.round(v)));
+        preview.textContent = "→ " + indivPreviewText({ kind: attr.kind, base: v }, ind.stage, charLv);
+      });
       baseInput.addEventListener("change", function () {
         var v = baseInput.valueAsNumber;
         if (!isFinite(v)) v = band ? band.max : attr.base;
@@ -2020,6 +2040,12 @@
         style: "font-size:11.5px;color:var(--text3);white-space:nowrap;",
         text: band ? "（" + attr.grade + "：" + band.min + "～" + band.max + "）" : "（查不到這個等級的範圍）"
       }));
+      var preview = el("span", {
+        style: "font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;",
+        title: "套用目前階段 +" + ind.stage + " 的成長後，這條屬性實際增加的能力",
+        text: "→ " + indivPreviewText(attr, ind.stage, charLv)
+      });
+      row.appendChild(preview);
 
       var lockLabel = el("label", { style: "display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);white-space:nowrap;" });
       var lockCb = el("input", { type: "checkbox" });
@@ -2033,10 +2059,8 @@
       delBtn.addEventListener("click", function () { ind.attrs.splice(idx, 1); renderIndividuality(c); });
       row.appendChild(delBtn);
 
-      // 第二行：跟遊戲畫面一樣的效果文字（套用目前階段的曲線），能力值類的另外算出目前等級實際加多少
+      // 第二行：跟遊戲畫面一樣的效果文字（套用目前階段的曲線）；實際加多少能力看數值欄後面的預覽
       var notes = ["遊戲顯示：" + indivEffectText(attr, ind.stage)];
-      var iv = indivInterval(attr, ind.stage);
-      if (iv !== undefined && iv > 0) notes.push("Lv" + charLv + " 目前 +" + (Math.floor(charLv / iv) * indivShownValue(attr, ind.stage)));
       var warn = [];
       if (band && (attr.base < band.min || attr.base > band.max)) {
         warn.push("base " + attr.base + " 超出 " + attr.grade + " 的正常範圍 " + band.min + "～" + band.max + "（可能是舊版修改器填的，重選一次等級就會修正）");
