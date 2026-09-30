@@ -311,6 +311,20 @@
   var DROP_INDEX = window.DROP_INDEX || {};
   var SHOP_INDEX = window.SHOP_INDEX || {};
   var RADIX_INDEX = window.RADIX_INDEX || {};
+  // 名品館（遊戲 NPC「黑市商人」的商城頁面）：用點數計價，1 點換多少金幣每小時變動，所以跟金幣商店分開顯示。
+  // update_data.py 寫在 shopIndex.js 的 MALL_INDEX = {towns: [城鎮id], items: {物品id: {points, pack?, category}}}
+  var MALL_INDEX = window.MALL_INDEX || { towns: [], items: {} };
+  function mallSectionHtml(id) {
+    var m = MALL_INDEX.items[String(id)];
+    if (!m) return '';
+    var towns = MALL_INDEX.towns.map(townName).join("、");
+    return '<div class="section-title">名品館（黑市商人）</div>' +
+      '<table class="dtable"><thead><tr><th>分類</th><th>價格</th><th>地點</th></tr></thead><tbody><tr>' +
+      '<td>' + escapeHtml(m.category || "-") + '</td>' +
+      '<td><span class="rate">' + fmtNum(m.points) + ' 點</span>' + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>' +
+      '<td>' + escapeHtml(towns || "-") + '</td></tr></tbody></table>' +
+      '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">找村莊的「黑市商人」開名品館購買；用點數計價，1 點折合多少金幣會隨時段變動。</div>';
+  }
   var FORGE_BY_BOOK = window.FORGE_BY_BOOK || {};
   var FORGE_BY_PRODUCT = window.FORGE_BY_PRODUCT || {};
   var FORGE_PART_NAME = { weapon: "武器", armor: "防具", accessory: "配件" };
@@ -1130,6 +1144,7 @@
           }).concat(metaParts);
         }
         if (shopCount) metaParts.push("商店有賣");
+        if (MALL_INDEX.items[it.id]) metaParts.push("名品館有賣");
         if (radixCount) metaParts.push("拉迪克斯有賣");
         if (FORGE_BY_BOOK[it.id]) metaParts.push("鍛造書");
         if (FORGE_BY_PRODUCT[it.id]) metaParts.push("可鍛造取得");
@@ -1823,7 +1838,7 @@
       '<div>適用範圍：' + (where.length ? where.join('、') : '（目前沒有能用的精煉階段）') + '</div>' +
       '<div>防爆效果：' + effect + '</div>' +
       '<div>鎔解石：' + (g.noStones ? '<b>不能</b>一起使用' : '可以一起使用') + '</div>' +
-      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">用法：精煉時在「防爆」那欄勾選，一次消耗 1 個（成功或失敗都會用掉）。在村莊商店 NPC 的「名品館」分頁購買。</div>' +
+      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">用法：精煉時在「防爆」那欄勾選，一次消耗 1 個（成功或失敗都會用掉）。找村莊的「黑市商人」開名品館購買。</div>' +
       '</div></div>';
     return html;
   }
@@ -2340,9 +2355,11 @@
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
+    var mallEntry = MALL_INDEX.items[id];
     html += '<div class="section-title">販售商店 <span class="count">(' + shopEntries.length + ')</span></div>';
     if (!shopEntries.length) {
-      html += '<div class="empty-note">沒有商店販售這個物品（可能只能靠掉落、任務或製作取得）。</div>';
+      html += '<div class="empty-note">' + (mallEntry ? '一般商店沒有賣，但可以在下面的名品館用點數買。'
+        : '沒有商店販售這個物品（可能只能靠掉落、任務或製作取得）。') + '</div>';
     } else {
       html += '<table class="dtable"><thead><tr><th>NPC</th><th>地點</th><th>價格</th></tr></thead><tbody>';
       shopEntries.forEach(function (s) {
@@ -2354,6 +2371,7 @@
       });
       html += '</tbody></table>';
     }
+    html += mallSectionHtml(id);
 
     var radixEntries = (RADIX_INDEX[id] || []).slice();
     if (radixEntries.length) {
@@ -3908,9 +3926,9 @@
       var ks = itemKillSourceText(iid);
       if (ks) lines.push(ks);
     }
-    var dropN = dropMonsterCount(iid), shopN = (SHOP_INDEX[String(iid)] || []).length;
-    if (dropN || shopN) {
-      lines.push("另外：" + [dropN ? dropN + " 種怪物會掉落" : "", shopN ? "商店有賣" : ""].filter(Boolean).join("、") + "（點道具看詳細）");
+    var dropN = dropMonsterCount(iid), shopN = (SHOP_INDEX[String(iid)] || []).length, mallN = MALL_INDEX.items[String(iid)] ? 1 : 0;
+    if (dropN || shopN || mallN) {
+      lines.push("另外：" + [dropN ? dropN + " 種怪物會掉落" : "", shopN ? "商店有賣" : "", mallN ? "名品館有賣" : ""].filter(Boolean).join("、") + "（點道具看詳細）");
     }
     return lines.join("<br>");
   }

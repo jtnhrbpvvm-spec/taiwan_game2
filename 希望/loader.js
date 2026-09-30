@@ -2096,7 +2096,7 @@
   });
 
   // ==========================================================================
-  // 名品館今日提示：打開商店 NPC 的「名品館」分頁時，在標題 NPC 名字（例如「道具商人」）後面
+  // 名品館今日提示：打開名品館（2026-09-30 起是獨立的 NPC「黑市商人」，之前是商店 NPC 的「名品館」分頁）時，在標題 NPC 名字後面
   // 提示今天最低價在上午還是下午，快到的時候倒數吐槽。
   // 匯率公式抄自遊戲 bundle（2026-09-22 版 bv/xv）：每個整點一個匯率，只跟「第幾個小時」有關，
   // 所以今天每個小時的價格都能先算出來。啟動時會拿遊戲自己算的當下匯率（session.mallView().rate）對帳，
@@ -2359,8 +2359,11 @@
   var mallRainShown = false; // 這次打開名品館已經下過金幣雨了沒（離開名品館分頁就重設）
   function updateMallHint() {
     var existing = document.querySelector(".iw-mall-hint");
+    // 2026-09-30 改版：名品館從商店 NPC 的分頁，改成獨立的 NPC「黑市商人」（role=mall），打開就直接是商城面板、沒有分頁了。
+    // 所以改看「畫面上有沒有商城面板的匯率列 .mall > .rate」；舊版的「名品館」分頁判斷留著當備援。
     var activeTab = document.querySelector(".tabs.toned button.active");
-    var onMall = activeTab && activeTab.textContent.trim() === "名品館";
+    var onMall = !!document.querySelector(".mall > .rate") ||
+      !!(activeTab && activeTab.textContent.trim() === "名品館");
     var title = onMall && document.querySelector(".talking > strong");
     if (!title || !checkMallFormula()) {
       if (existing) existing.remove();
