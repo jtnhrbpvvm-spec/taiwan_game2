@@ -260,8 +260,10 @@ html[data-theme="classic"] .ruin-warn-title{color:#ff7a6b;}
 
 /* 委託任務：桌機顯示完整表格，手機只顯示接取 NPC＋等級／名聲，點開看詳細 */
 .cm-mobile{display:none;}
-/* 表格裡的物品標籤窄螢幕換行時不要被拆成兩半互相重疊 */
-td .map-chip{display:inline-block;}
+/* 物品／怪物標籤夾在說明文字中間時（「取得方式：找○○用 [書] 製作，材料：[鑽石×1]…」），
+   一般 inline 元素的上下內距不會撐開行高，換行後上下兩行的標籤會疊在一起擋住文字；
+   改成 inline-flex（整顆當一個方塊），行高就會跟著標籤＋圖示的高度長高，也不會被拆成兩半。 */
+.map-chip{display:inline-flex; align-items:center; vertical-align:middle; max-width:100%; margin:2px 0;}
 /* 數值格：展開成完整數字時太長就換行，不要凸出框外；縮寫的數字加虛線底線提示可以點 */
 .equip-stat-grid div, .stat-tile .v{overflow-wrap:anywhere; min-width:0;}
 .num-abbr{cursor:pointer; border-bottom:1px dotted currentColor;}
@@ -305,8 +307,13 @@ td .map-chip{display:inline-block;}
 /* 物品／戰寵技能圖示（遊戲圖集切出來的一格，希望/app.js atlasIconHtml）；放大時保持像素風不糊掉 */
 .game-icon{display:inline-block; flex:none; vertical-align:middle; background-repeat:no-repeat; margin-right:6px;}
 .game-icon.px{image-rendering:pixelated;}
+img.game-icon{object-fit:contain;}
+/* 寵物列表：名稱下面一行小字寫取得方式 */
+.pet-obtain{display:block; font-size:11.5px; font-weight:400; color:var(--text-faint); line-height:1.4;}
 .map-chip .game-icon{margin:-3px 4px -3px -4px;}
 .detail-title .game-icon{margin-right:10px; position:relative; top:-2px;}
+.map-chip.bpet-stage-chip{display:inline-flex; flex-direction:column; align-items:center; padding:6px 12px; border-radius:12px;}
+.map-chip.bpet-stage-chip .game-icon{margin:0 0 4px;}
 .result-item .rmeta{font-size:12px; color:var(--text-faint); white-space:nowrap;}
 
 .empty-note{color:var(--text-faint); font-size:13.5px; padding:20px 6px; line-height:1.8;}

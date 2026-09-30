@@ -708,6 +708,20 @@
     var atlas = ICON_ATLAS["bpet-skills"];
     return atlas && atlas.index ? atlasIconHtml(atlas, atlas.index[String(iconId)], size || 32) : '';
   }
+  // 怪物／戰寵外觀：每個 model 一個動態 WebP（update_data.py 從遊戲動畫表的待機動作做的，ICON_ATLAS.monsterAnim）。
+  // loading="lazy"：列表很長時，捲到才下載。遊戲本身就沒有圖的 model（約 30 個）對不到，就不畫。
+  function modelIconHtml(model, size) {
+    var anim = ICON_ATLAS.monsterAnim;
+    var ver = anim && anim.v && model ? anim.v[model] : null;
+    if (!ver) return '';
+    size = size || 32;
+    return '<img class="game-icon" src="' + anim.dir + encodeURIComponent(model) + '.webp?v=' + ver + '" width="' + size + '" height="' + size +
+      '" loading="lazy" decoding="async" alt="">';
+  }
+  function monsterIconHtml(monId, size) {
+    var mon = MONSTERS[monId];
+    return mon ? modelIconHtml(mon.model, size) : '';
+  }
 
   function itemChip(id, qty, suffixHtml) {
     var it = ITEMS[id];
@@ -1081,7 +1095,7 @@
         var harvestTag = mon.isHarvest ? " ・採集" : "";
         html += looseDivider(currentMatches.monsters, idx);
         html += '<li class="result-item" data-type="monster" data-id="' + m.id + '">' +
-          '<span class="rname">' + escapeHtml(m.name) + '</span>' +
+          '<span class="rname">' + monsterIconHtml(m.id, 32) + escapeHtml(m.name) + '</span>' +
           '<span class="rmeta">Lv.' + m.lv + harvestTag + '</span></li>';
       });
     }
@@ -2563,7 +2577,7 @@
             (Math.abs(ratio - 1) > 0.0005 ? '<span style="color:var(--text-faint);font-size:11px;margin-left:4px;">(×' + (ratio * 100).toFixed(1) + '%)</span>' : '') + '</td>';
         }
         html += '<tr class="clickable" data-goto-monster="' + row.m + '">' +
-          '<td><span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + (mon.atk === 0 ? ' <span style="color:var(--text-faint);font-size:11px;">（攻0）</span>' : '') + '</span></td>' +
+          '<td>' + monsterIconHtml(row.m, 32) + '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link">' + escapeHtml(mon.name) + (mon.atk === 0 ? ' <span style="color:var(--text-faint);font-size:11px;">（攻0）</span>' : '') + '</span></td>' +
           '<td>' + escapeHtml(maps || "-") + '</td>' +
           '<td><span class="' + rateClassP(row.base.p) + '" title="資料原始值 ' + pct(row.base.raw) + '（未換算）">' + pctP(row.base.p) + '</span>' + dropGroupTags(row.base.groups) + '</td>' +
           adjCell +
@@ -2777,7 +2791,7 @@
 
     var html = backButtonHtml();
     html += '<div class="detail-head" data-detail-of="monster:' + id + '"><div>' +
-      '<div class="detail-title">' + escapeHtml(mon.name) + '</div>' +
+      '<div class="detail-title">' + monsterIconHtml(id, 96) + escapeHtml(mon.name) + '</div>' +
       '<div class="detail-sub">怪物編號 #' + id + '　・　等級 ' + mon.lv + '</div>' +
       '<div class="badge-row">' +
       '<span class="el-chip" style="color:var(--' + elClass + ')">' + elLabel + '屬性</span>' +
@@ -2901,7 +2915,7 @@
           adjCell = '<td><span class="' + rateClassP(adjChances[iid].p) + '">' + pctP(adjChances[iid].p) + '</span></td>';
         }
         html += '<tr class="clickable" data-goto-item="' + iid + '">' +
-          '<td><span class="name-link">' + escapeHtml(name) + '</span></td>' +
+          '<td>' + itemIconHtml(iid, 28) + '<span class="name-link">' + escapeHtml(name) + '</span></td>' +
           '<td><span class="' + rateClassP(base.p) + '" title="資料原始值 ' + pct(base.raw) + '（未換算）">' + pctP(base.p) + '</span>' + dropGroupTags(base.groups) + '</td>' +
           adjCell +
           '</tr>';
@@ -4116,6 +4130,70 @@
   var BPET_STAT_LABEL = { hp: "HP", ap: "AP", atk: "攻擊", hit: "命中", crit: "爆擊", def: "防禦", eva: "迴避", reviveCost: "復活費用", sp: "SP", exp: "所需經驗" };
   var BPET_AURA_LABEL = { atk: "攻擊", mag: "魔法", def: "防禦", hit: "命中", eva: "迴避", aspd: "攻速", crit: "爆擊", mspd: "移速", hp: "HP", ap: "AP" };
 
+  // 寵物的取得方式（寵物本身就是物品：ITEM_OBTAIN 是 update_data.py 照遊戲所有取得管道算的；進化來的看 PET_EVOLVE_FROM）。
+  // 一階寵物（蛋／種子）幾乎都是打怪掉落，列表上直接標出來，詳細頁再列出會掉的怪。
+  var OBTAIN_KIND_LABEL = {
+    drop: "打怪掉落", box: "開箱", shop: "商店", gamble: "擲十八啦", fusion: "合成", forge: "鍛造", radix: "拉迪克斯",
+    hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
+    alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解"
+  };
+  function petObtainKinds(petId) {
+    var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
+    if ((PET_EVOLVE_FROM[String(petId)] || []).length) kinds.push("evolve");
+    return kinds;
+  }
+  function petObtainText(petId) {
+    var kinds = petObtainKinds(petId);
+    if (!kinds.length) return "查不到取得方式";
+    return kinds.map(function (k) {
+      if (k === "evolve") return "上一階進化";
+      if (k === "drop") return "打怪掉落（" + dropMonsterCount(petId) + " 種怪）";
+      return OBTAIN_KIND_LABEL[k] || k;
+    }).join("・");
+  }
+  // 詳細頁「取得方式」：打怪掉落列出會掉的怪（掉率高的在前），開箱列出寶箱，擲十八啦說明規則，其他管道請到物品頁看
+  function petObtainHtml(petId) {
+    var id = String(petId);
+    var kinds = petObtainKinds(id).filter(function (k) { return k !== "evolve"; });
+    if (!kinds.length) return '';
+    // 怪物表可能有二、三十列，預設收起來（標題就寫出摘要），不然要捲很久才看得到下面的進化／加成
+    var html = '<details class="fold-section"><summary class="section-title">取得方式：' + escapeHtml(petObtainText(id)) +
+      '<span class="fold-hint">點擊展開</span></summary>';
+    if (kinds.indexOf("drop") !== -1) {
+      var seen = {}, rows = [];
+      (DROP_INDEX[id] || []).forEach(function (d) {
+        var mon = MONSTERS[String(d.m)];
+        if (!mon || seen[d.m]) return;
+        seen[d.m] = true;
+        var c = monsterDropChances(mon, 1)[id];
+        if (c) rows.push({ m: d.m, mon: mon, p: c.p });
+      });
+      rows.sort(function (a, b) { return b.p - a.p; });
+      html += '<div class="empty-note" style="padding:0 0 8px;">打倒下面的怪物有機率掉落（共 ' + rows.length + ' 種，點怪物看牠在哪裡）：</div>';
+      html += '<div style="overflow-x:auto;margin-bottom:14px;"><table class="dtable"><thead><tr><th>怪物</th><th>出現地圖</th><th>掉落機率</th></tr></thead><tbody>';
+      rows.forEach(function (r) {
+        html += '<tr class="clickable" data-goto-monster="' + r.m + '"><td>' + monsterIconHtml(r.m, 32) +
+          '<span class="lv-tag">Lv.' + r.mon.lv + '</span><span class="name-link">' + escapeHtml(r.mon.name) + '</span></td>' +
+          '<td>' + escapeHtml(r.mon.maps.map(mapName).join("、") || "-") + '</td>' +
+          '<td><span class="' + rateClassP(r.p) + '">' + pctP(r.p) + '</span></td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    if (kinds.indexOf("box") !== -1) {
+      html += '<div class="empty-note" style="padding:0 0 6px;">開寶箱取得：</div><div class="map-chip-row" style="margin-bottom:14px;">' +
+        (ITEM_TO_BOXES[id] || []).map(function (b) { return itemChip(b.boxId, null, '<span class="rate low">' + boxPctText(b.pct) + '</span>'); }).join('') + '</div>';
+    }
+    if (kinds.indexOf("gamble") !== -1 && GM_DICE && String(GM_DICE.prizeEgg) === id) {
+      html += '<div style="font-size:13px;margin-bottom:14px;">帶 ' + itemChip(GM_DICE.entryEgg) + ' 找〔復活節兔子〕擲十八啦，贏了（50%）得到這隻，輸了入場蛋會被收走。</div>';
+    }
+    var others = kinds.filter(function (k) { return ["drop", "box", "gamble"].indexOf(k) === -1; });
+    if (others.length) {
+      html += '<div style="font-size:13px;margin-bottom:14px;">也可以從「' + others.map(function (k) { return OBTAIN_KIND_LABEL[k] || k; }).join("、") +
+        '」取得，詳細請看物品頁 ' + itemChip(id) + '。</div>';
+    }
+    return html + '</details>';
+  }
+
   function showPetBrowser(tierFilter) {
     var allIds = Object.keys(PET_INFO).sort(function (a, b) {
       return (PET_INFO[a].tier - PET_INFO[b].tier) || (PET_INFO[a].lv - PET_INFO[b].lv);
@@ -4164,7 +4242,8 @@
       petIds.forEach(function (pid) {
         var p = PET_INFO[pid];
         html += '<li class="result-item" data-open-pet="' + pid + '">' +
-          '<span class="rname">' + itemIconHtml(pid, 32) + escapeHtml(p.name) + '</span>' +
+          '<span class="rname">' + itemIconHtml(pid, 32) + '<span>' + escapeHtml(p.name) +
+          '<span class="pet-obtain">取得：' + escapeHtml(petObtainText(pid)) + '</span></span></span>' +
           '<span class="rmeta">' + p.tier + '階　Lv' + p.lv + '・名聲 ' + fmtNum(p.fame) + '</span>' +
           '</li>';
       });
@@ -4192,7 +4271,11 @@
 
     if (k.stages && k.stages.length) {
       html += '<div class="section-title">進化階段</div>';
-      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + k.stages.map(function (s, idx) { return '<span class="map-chip">' + (idx + 1) + '. ' + escapeHtml(s) + '</span>'; }).join('') + '</div>';
+      // 每個階段的外觀：遊戲 buildArenaBattlePet 用 models[grade]，沒有就用 model
+      html += '<div class="map-chip-row" style="margin-bottom:14px;">' + k.stages.map(function (s, idx) {
+        var stageIcon = modelIconHtml((k.models && k.models[idx]) || k.model, 48);
+        return '<span class="map-chip' + (stageIcon ? ' bpet-stage-chip' : '') + '">' + stageIcon + (idx + 1) + '. ' + escapeHtml(s) + '</span>';
+      }).join('') + '</div>';
     }
 
     if (BATTLE_PET_INFO.upgrades && BATTLE_PET_INFO.upgrades.length) {
@@ -4350,6 +4433,7 @@
       '</div>';
     // 遊戲 by()：第 g 階升下一階要累積 round(feedFull × (10 + g) / 10) 的餵食量；飽食度 hunger 在存檔 v39 就拿掉了
     html += '<div class="empty-note" style="padding:0 0 14px;">出戰中就會套用下面的加成（遊戲改版後已經沒有飽食度）；沒有成長曲線的屬性，不管幾階都固定不變。</div>';
+    html += petObtainHtml(petId);
 
     var evolveFrom = PET_EVOLVE_FROM[String(petId)] || [];
     if (evolveFrom.length) {
@@ -4527,7 +4611,7 @@
   function monsterNameLink(mid) {
     var mon = MONSTERS[String(mid)];
     if (!mon) return '<span class="name-link" style="cursor:default;opacity:.5;">無資料</span>';
-    return '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + mid + '">' + escapeHtml(mon.name) + '</span>';
+    return monsterIconHtml(mid, 32) + '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + mid + '">' + escapeHtml(mon.name) + '</span>';
   }
 
   // 同名不同編號的怪物（例如好幾隻「[Boss]貝里教徒」）在來源清單裡只列一次，取最高機率
@@ -4775,14 +4859,14 @@
         if (isl.bosses.length) {
           html += '<div class="empty-note" style="padding:0 0 6px;">首領：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
             isl.bosses.map(function (b, i) {
-              return '<span class="map-chip" data-goto-monster="' + b + '">' + escapeHtml(bossNames[i]) + '</span>';
+              return '<span class="map-chip" data-goto-monster="' + b + '">' + monsterIconHtml(b, 20) + escapeHtml(bossNames[i]) + '</span>';
             }).join("") + '</div>';
         }
         if (others.length) {
           html += '<div class="empty-note" style="padding:0 0 6px;">怪物：</div><div class="map-chip-row" style="margin-bottom:8px;">' +
             others.map(function (mid) {
               var mon = MONSTERS[String(mid)];
-              return '<span class="map-chip" data-goto-monster="' + mid + '">' + escapeHtml(mon ? mon.name : "無資料") + '</span>';
+              return '<span class="map-chip" data-goto-monster="' + mid + '">' + monsterIconHtml(mid, 20) + escapeHtml(mon ? mon.name : "無資料") + '</span>';
             }).join("") + '</div>';
         }
         if ((isl.drops || []).length) {
@@ -4981,7 +5065,7 @@
         var mon = MONSTERS[m.id];
         var tag = mon.isHarvest ? "採集點" : m.role === "morph" ? "變身型態" : m.role === "summon" ? "召喚" : (mon.aggressive ? "主動攻擊" : "被動");
         html += '<tr class="clickable" data-goto-monster="' + m.id + '">' +
-          '<td style="padding-left:' + (10 + depth * 18) + 'px;">' + (depth ? '↳ ' : '') + '<span class="name-link">' + escapeHtml(mon.name) + '</span></td>' +
+          '<td style="padding-left:' + (10 + depth * 18) + 'px;">' + (depth ? '↳ ' : '') + monsterIconHtml(m.id, 32) + '<span class="name-link">' + escapeHtml(mon.name) + '</span></td>' +
           '<td>' + mon.lv + '</td><td style="font-size:12.5px;">' + tag + '</td>' +
           (dropCalcState.level != null ? '<td>' + (mon.isHarvest ? '－' : bigNumHtml(monsterExpAt(mon, dropCalcState.level))) + '</td>' : '') +
           '</tr>';
