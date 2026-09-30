@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>物品一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--acct:#6d28d9;--link:#6d28d9;--get:#15803d;--use:#1d4ed8;--warn:#b91c1c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--acct:#c4b5fd;--link:#c4b5fd;--get:#86efac;--use:#93c5fd;--warn:#fca5a5}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+a{color:var(--link);text-underline-offset:2px}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 10px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.ctl{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2;display:flex;flex-direction:column;gap:8px}
+.ctl input{box-sizing:border-box;width:100%;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);cursor:pointer}
+.chips button.on{border-color:var(--acc);background:var(--acc);color:#111;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.card h3{margin:0 0 8px;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card h3 .ic{font-size:22px}
+.row{display:grid;grid-template-columns:auto 1fr;gap:8px;font-size:13.5px;line-height:1.7;margin-top:4px}
+.row>b{white-space:nowrap}
+.row.get>b{color:var(--get)}.row.use>b{color:var(--use)}
+.row ul{margin:0;padding-left:18px}
+.note{font-size:12.5px;color:var(--warn);margin-top:6px}
+.tag{font-size:11.5px;padding:0 7px;border-radius:8px;background:var(--head);color:var(--mute);font-weight:normal}
+table.mini{border-collapse:collapse;font-size:12.5px;margin-top:4px;width:100%}
+table.mini td,table.mini th{border:1px solid var(--line);padding:3px 6px;text-align:left}
+table.mini th{background:var(--head)}
+mark{background:#fde68a;color:#111;border-radius:2px}
+.empty{color:var(--mute);padding:20px;text-align:center}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🎒 物品一覽</h1>
+<div class="sub">資料來源：凡塵修仙傳-紅塵篇 data/ 下的 config-shop.js、alchemy.js、field.js、library.js、config-enhance.js、config-talisman.js、config-merit.js、config-aptitude.js、config-golden-core.js、config-strange-fire.js、config-race.js、config-daily-quests.js、config-defense.js、config-zhenmo.js 等。<br>
+「<b>取得</b>」＝從哪裡拿，「<b>能力／用途</b>」＝拿來做什麼。掉落類只寫「有機會」，不列機率。</div>
+<div class="ctl"><input id="q" placeholder="搜尋物品、取得方式或用途，例如：星允鐵、千寶閣、渡劫、壽元…"><div class="chips" id="fc"></div></div>
+<div id="out"></div>
+<div class="empty" id="empty" hidden>找不到符合的物品</div>
+</div>
+<script>
+const ITEMS=[
+// ---- 貨幣與資源 ----
+{cat:"貨幣資源",icon:"💰",name:"靈石",get:["野外擊殺妖獸（每張地圖不同，見<a href='經驗與地圖.html'>經驗與地圖</a>）","秘境（死守天南城、鎮魔塔）","每日任務（500／1,500／4,000）","凡俗宗門任務「打掃清潔」（50）"],use:["丹藥堂買丹藥、鍛造、強化、進化","兌換靈寵與維持費、夥伴贈禮","靈田培育、屬性秘典、千寶閣購物"]},
+{cat:"貨幣資源",icon:"💎",name:"聲望",get:["野外每擊殺一隻：野外歷練 1～3、開放世界 1～10、上古禁區／幽冥禁域 1～30、諸天戰場 1～100","每日任務（20／50／120）"],use:["解鎖活動","千寶閣壽元丹、星允鐵袋需要一起付聲望","靈寶閣兌換寶物：每件依宗門階段需 1 萬／10 萬／50 萬聲望，外加靈石"]},
+{cat:"貨幣資源",icon:"☯️",name:"功德",get:["斬殺敵對陣營的野外修士（1～10）","懸賞伏誅","死守天南城（每波 3～12，首領波 80～200）","鎮魔塔 BOSS"],use:["每滿 <b>30,000</b> 自動凝結 1 顆<b>七彩補天石</b>"]},
+{cat:"貨幣資源",icon:"📚",name:"武學積分",get:["宗門任務「整理武學秘典」（凡俗 1、修真 10、至高 50）","每日任務（5／12／30）"],use:["藏書閣參悟古籍：每次 10 點，四維各 +0.1，每本上限 200 次（另有敏捷）","屬性秘典（需拜入修真仙門）：每次 50 積分＋100 靈草＋1,000 靈石，本命五行傷害 +0.01%，每本上限 1,000 次（滿 +10%）"]},
+{cat:"貨幣資源",icon:"🔮",name:"獸丹",get:["宗門任務「餵養靈獸」（修真仙門，10）","宗門任務「餵養仙獸」（至高聖地，50）"],use:["兌換靈寵、出戰維持費、復活（5,000）、重新領悟技能（2,000），見<a href='靈寵一覽.html'>靈寵一覽</a>"]},
+{cat:"貨幣資源",icon:"⛏️",name:"礦石",get:["宗門任務「礦脈採礦」（修真仙門／至高聖地，限<b>傳說僕從</b>，固定 60 秒一趟，每趟 1～30）"],use:["符寶坊煉製符寶：每枚 500 礦石＋100 萬靈石"]},
+// ---- 靈草 ----
+{cat:"靈草丹藥",icon:"🌱",name:"靈草",get:["宗門任務「種植靈草」（凡俗 1、修真 10、至高 50）"],use:["靈田培育高階靈草","屬性秘典每次 100 株"]},
+{cat:"靈草丹藥",icon:"🌿",name:"高階靈草（凡品／上品／極品／仙品）",get:["宗門<b>靈田</b>培育：<table class='mini'><tr><th>品級</th><th>靈草</th><th>靈石</th></tr><tr><td>凡品</td><td>10</td><td>5</td></tr><tr><td>上品</td><td>50</td><td>10</td></tr><tr><td>極品</td><td>200</td><td>20</td></tr><tr><td>仙品</td><td>500</td><td>50</td></tr></table>"],use:["煉丹房煉製神丹、凝元丹（見下方）"]},
+{cat:"靈草丹藥",icon:"❤️",name:"氣血丹藥：凝血草／培元丹／九轉還魂丹",get:["丹藥堂購買：50／200／500 靈石"],use:["立即回復最大氣血 <b>5%／10%／30%</b>","氣血類與靈力類各自有 5 秒冷卻；裝備特效「丹心」可提高回復量","九轉還魂丹不會被「自動購買」買走","渡劫時開自動補血、帶足丹藥可加勝算（見<a href='常見問題.html'>常見問題</a>）"]},
+{cat:"靈草丹藥",icon:"💧",name:"靈力丹藥：聚氣散／回天靈液／造化神髓液",get:["丹藥堂購買：40／150／350 靈石"],use:["立即回復最大靈力 <b>5%／10%／30%</b>","造化神髓液不會被「自動購買」買走"]},
+{cat:"靈草丹藥",icon:"🧪",name:"煉丹房神丹",get:["宗門<b>煉丹房</b>煉製（每顆 1 株對應靈草，煉好直接服用）"],use:["<table class='mini'><tr><th>神丹</th><th>材料</th><th>效果</th></tr><tr><td>大力神丸</td><td>凡品靈草</td><td>力量 +0.1</td></tr><tr><td>洗髓丹</td><td>上品靈草</td><td>體質 +0.1</td></tr><tr><td>身法丹</td><td>上品靈草</td><td>敏捷 +0.1</td></tr><tr><td>悟道丹</td><td>極品靈草</td><td>悟性 +0.1</td></tr><tr><td>九轉聚靈丹</td><td>仙品靈草</td><td>靈力 +0.1</td></tr><tr><td>駐顏駐魅力丹</td><td>仙品靈草＋1,000 靈石</td><td>魅力 +20（無上限）</td></tr></table>","戰鬥屬性的神丹每種最多服用 <b>200 顆</b>"],note:"⚠️ 煉丹房的「洗髓丹」是加體質的神丹，和千寶閣用來重測靈根的【洗髓丹】是不同東西。"},
+{cat:"靈草丹藥",icon:"🔴",name:"凝元丹",get:["煉丹房煉製（只在<b>築基期、金丹期</b>出現）：5 株上品靈草＋1 萬靈石"],use:["築基期：丹田 +5%；金丹期：溫養 +5%","丹田決定進金丹時的金丹品級（氣血、靈力上限最多 +50%），溫養決定元嬰品級（術法傷害最多 +60%、化神渡劫勝算 ±10%）"]},
+{cat:"靈草丹藥",icon:"⏳",name:"壽元丹（普通～四紋）",get:["千寶閣隨機上架（每 3 小時刷新），要付靈石＋聲望：<table class='mini'><tr><th>丹藥</th><th>壽元</th><th>價格</th></tr><tr><td>普通壽元丹</td><td>+10 年</td><td>10 萬＋50 聲望</td></tr><tr><td>一紋壽元丹</td><td>+20 年</td><td>20 萬＋50 聲望</td></tr><tr><td>二紋壽元丹</td><td>+30 年</td><td>50 萬＋50 聲望</td></tr><tr><td>三紋壽元丹</td><td>+50 年</td><td>100 萬＋50 聲望</td></tr><tr><td>四紋壽元丹</td><td>+100 年</td><td>1,000 萬＋200 聲望</td></tr></table>"],use:["標下後立即服用，增加壽元","紫色、橙色的可能有其他客人搶拍，要加價競標"]},
+// ---- 珍貴物資 ----
+{cat:"珍貴物資",icon:"💎",name:"七彩補天石",get:["功德每滿 30,000 自動凝結 1 顆"],use:["千寶閣「珍貴物資」購買：破障丹、洗髓丹、伐骨丹、化神靈果（各 1 顆）"]},
+{cat:"珍貴物資",icon:"🔮",name:"破障丹",get:["千寶閣：1 顆七彩補天石"],use:["渡劫時<b>自動服用 1 顆</b>：心魔戰力 −10%、渡劫勝算 +10%，勝算上限由 80% 提高到 <b>90%</b>"]},
+{cat:"珍貴物資",icon:"🧪",name:"洗髓丹（重測靈根）",get:["千寶閣：1 顆七彩補天石"],use:["重新測試<b>先天靈根</b>，測完可選保留新或舊結果（見<a href='靈根體質一覽.html'>靈根體質一覽</a>）"]},
+{cat:"珍貴物資",icon:"🦴",name:"伐骨丹（重測體質）",get:["千寶閣：1 顆七彩補天石"],use:["重新測試<b>先天體質</b>，測完可選保留新或舊結果"]},
+{cat:"珍貴物資",icon:"🍑",name:"化神靈果",get:["千寶閣：1 顆七彩補天石"],use:["元嬰期渡劫化神時自動服用 1 顆：化神勝算 +10%（可抵銷人元嬰的 −10%）"]},
+// ---- 裝備材料 ----
+{cat:"裝備材料",icon:"🌠",name:"星允鐵",get:["分解裝備：橙色 3、白金 15；白～紫得碎鐵（見下方）","暗殺者必掉 1～3；敵對陣營野外修士有機會掉","懸賞伏誅：人榜 1～5、地榜 5～12、天榜 12～20","死守天南城（首領波 3～6）、鎮魔塔 BOSS","礦脈採礦有機會掉 1～2","千寶閣常駐：每顆 30 萬靈石，每日限購 10 顆；偶爾上架「星允鐵袋」（每顆 40 萬靈石＋20 聲望）"],use:["強化裝備：每次 目標等級 × 品級係數（白綠 1、藍 2、紫 3、橙白金 5）顆，另加 目標等級 × 5 萬靈石","橙色 +20 進化成白金：300 顆＋1,000 萬靈石","種族銘刻（紫色以上重抽種族特效）：每次 50 顆＋1 小時靈石收入"]},
+{cat:"裝備材料",icon:"🔩",name:"碎鐵",get:["分解白色 10、綠色 20、藍色 40、紫色 80"],use:["滿 <b>500</b> 個自動熔鑄成 1 顆星允鐵"]},
+{cat:"裝備材料",icon:"📜",name:"鍛造圖紙",get:["天榜懸賞伏誅、死守天南城首領波、鎮魔塔 BOSS 有機會掉","圖紙等級＝不超過人物等級的最高一檔（未滿 Lv.1500 給 1500 檔），部位隨機"],use:["鍛造 <b>Lv.1500 以上</b>的裝備（1500／2500／3500／5000／6500／8000／10000 檔）","分部位、分等級：例如「劍・1500 等」只能打 1500 等的劍；每張一件，另需 10 萬靈石"]},
+{cat:"裝備材料",icon:"🔰",name:"符寶",get:["宗門「符寶坊」煉製：500 礦石＋100 萬靈石，種類與品階<b>隨機</b>（下品、中品、上品）"],use:["鑲嵌在<b>橙色</b>裝備的孔（每件 1～3 孔，神器不開孔）；打掉換新時舊符寶會碎掉","四維符（力量、體質、悟性、靈力）：下／中／上品 +0.1／+0.3／+0.6","屬性符（護體、身法、玄冰、烈焰、蝕毒、庚金、天雷）：+1%／+2%／+3%","剋制符（斬妖、鎮魂、誅邪、清心）：對該族傷害 +3%／+6%／+10%，同族合計最多 +20%"]},
+{cat:"裝備材料",icon:"🏺",name:"剋制法寶（降妖葫蘆／鎮魂鈴／誅魔鏡／清心蓮台）",get:["鎮魔塔樓主層（10、20…100 層）首次擊敗必得該 BOSS 種族的法寶（30 層以下下品、70 層以下中品、以上上品）","野外擊殺有種族的敵人稀有掉落","千寶閣常駐：下品，四族任選，每日限購 1 件"],use:["穿在「法寶欄」（2 格）才生效：對妖獸／鬼物／魔修／心魔傷害 +5%／+10%／+15%（下／中／上品），同族合計最多 +15%","3 件同族同品（未穿戴）可合煉成高一品；也能賣掉換靈石"]},
+{cat:"裝備材料",icon:"❖",name:"秘境套裝部件",get:["秘境「魔屠天南」守城：首領波必掉 1 件，第 20 波起一般波也有機會"],use:["30 組套裝，紫色以上穿 2／4／6 件啟動效果，見<a href='套裝效果一覽.html'>套裝效果一覽</a>"]},
+// ---- 秘境 ----
+{cat:"秘境收藏",icon:"🔥",name:"異火碎片",get:["死守天南城（一般波有機會 1～2，首領波 3～8）","鎮魔塔 BOSS（第 1 層 3～6 片，越高層越多；問答答得越好倍率越高）"],use:["集滿 <b>100 片</b>在背包合成 1 朵異火（品階隨機）"]},
+{cat:"秘境收藏",icon:"☄️",name:"天下異火（50 種）",get:["異火碎片合成"],use:["<b>每朵</b>（含重複）：秘境中受到傷害 −3%，最多 −30%（10 朵）","<b>每種</b>第一次收錄：永久加成（例如帝炎 攻擊 +5%、火傷 +5%），收錄於天磯錄；重複取得不再加"]},
+{cat:"秘境收藏",icon:"🧩",name:"夥伴碎片",get:["死守天南城第 11 波起、鎮魔塔第 11～60 層"],use:["集滿 100 片激活（結識）該夥伴，見<a href='夥伴一覽.html'>夥伴一覽</a>"]}
+];
+const CATS=[...new Set(ITEMS.map(i=>i.cat))];
+let fc="";
+const qEl=document.getElementById("q");
+const strip=s=>s.replace(/<[^>]+>/g,"");
+const hl=(s,q)=>{if(!q)return s;return s.split(/(<[^>]+>)/).map(p=>p.startsWith("<")?p:p.split(q).join(`<mark>${q}</mark>`)).join("")};
+function render(){
+  document.getElementById("fc").innerHTML=["",...CATS].map(c=>`<button data-c="${c}" class="${fc===c?"on":""}">${c||"全部"}${c?` (${ITEMS.filter(i=>i.cat===c).length})`:""}</button>`).join("");
+  document.querySelectorAll("#fc button").forEach(b=>b.onclick=()=>{fc=b.dataset.c;render()});
+  const q=qEl.value.trim().replace(/[<>&"]/g,"");
+  let h="",n=0;
+  CATS.forEach(c=>{
+    if(fc&&fc!==c)return;
+    const list=ITEMS.filter(i=>i.cat===c&&(!q||strip(i.name+i.get.join("")+i.use.join("")+(i.note||"")).includes(q)));
+    if(!list.length)return;n+=list.length;
+    h+=`<h2>${c}</h2><div class="grid">${list.map(i=>`<div class="card"><h3><span class="ic">${i.icon}</span>${hl(i.name,q)}</h3>
+      <div class="row get"><b>取得</b><ul>${i.get.map(x=>`<li>${hl(x,q)}</li>`).join("")}</ul></div>
+      <div class="row use"><b>能力／用途</b><ul>${i.use.map(x=>`<li>${hl(x,q)}</li>`).join("")}</ul></div>
+      ${i.note?`<div class="note">${hl(i.note,q)}</div>`:""}</div>`).join("")}</div>`;
+  });
+  document.getElementById("out").innerHTML=h;
+  document.getElementById("empty").hidden=n>0;
+}
+qEl.addEventListener("input",render);render();
+</script></body></html>
