@@ -14,9 +14,9 @@ h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mute);font-size:13px;margin-bo
 .ctl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2}
 input,select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
 input{flex:1;min-width:200px}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px}
 th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.55}
-th{background:var(--line);font-size:13px;position:sticky;top:54px}
+th{background:var(--line);font-size:13px;position:sticky;top:var(--ctl-h,0px);z-index:1}
 td.n{color:var(--mute);width:36px}
 .src{display:inline-block;padding:1px 7px;border-radius:10px;color:#fff;font-size:12px;white-space:nowrap}
 .s凡{background:var(--fan)}.s吞{background:var(--tun)}.s斗{background:var(--dou)}
@@ -24,7 +24,7 @@ td.n{color:var(--mute);width:36px}
 .ans.x{color:var(--ng);background:var(--ngbg)}
 .opts{color:var(--mute);font-size:12px;margin-top:3px}.opts .c{color:var(--ok);font-weight:bold}
 .exp{color:var(--mute);font-size:12px}
-@media (max-width:640px){td.n,th.n,td.e,th.e{display:none}th{top:96px}}
+@media (max-width:640px){td.n,th.n,td.e,th.e{display:none}}
 </style></head><body><div class="wrap">
 <h1>鎮魔塔問答題庫 · 題目與正確答案</h1>
 <div class="sub">資料來源：凡塵修仙傳-紅塵篇 data/config-zhenmo-questions.js（共 300 題）。遊戲出題時選擇題選項會打亂，請以「答案文字」為準。</div>
@@ -43,5 +43,5 @@ function render(){const q=document.getElementById("q").value.trim(),fs=document.
 const f=rows.filter(r=>(!fs||r.s===fs)&&(!ft||r.type===ft)&&(!q||(r.t+(r.o||[]).join()+r.ans+r.e).includes(q)));
 document.getElementById("tb").innerHTML=f.map(r=>`<tr><td class="n">${r.i}</td><td><span class="src s${r.s}">${NM[r.s]}</span></td><td>${esc(r.t)}${r.o?`<div class="opts">${r.o.map((o,j)=>`<span class="${"ABCD"[j]===r.a?"c":""}">${"ABCD"[j]}. ${esc(o)}</span>`).join("　")}</div>`:""}</td><td><span class="ans ${r.a==="X"?"x":""}">${esc(r.ans)}</span></td><td class="e exp">${esc(r.e)}</td></tr>`).join("");
 document.getElementById("cnt").textContent=`顯示 ${f.length} / ${rows.length} 題`}
-["q","fs","ft"].forEach(id=>document.getElementById(id).addEventListener("input",render));render();
+const setH=()=>document.documentElement.style.setProperty("--ctl-h",document.querySelector(".ctl").offsetHeight+"px");setH();addEventListener("resize",setH);["q","fs","ft"].forEach(id=>document.getElementById(id).addEventListener("input",render));render();
 </script></body></html>
