@@ -314,17 +314,49 @@
   // 名品館（遊戲 NPC「黑市商人」的商城頁面）：用點數計價，1 點換多少金幣每小時變動，所以跟金幣商店分開顯示。
   // update_data.py 寫在 shopIndex.js 的 MALL_INDEX = {towns: [城鎮id], items: {物品id: {points, pack?, category}}}
   var MALL_INDEX = window.MALL_INDEX || { towns: [], items: {} };
+  // 名品館匯率：每個整點換一次，只跟「第幾個小時」有關（抄自遊戲 bundle 的 mallView，跟書籤 loader.js 的 mallRate 同一套）。
+  // 商品金幣價＝點數×匯率。遊戲改公式時 update_data.py 的「名品館匯率公式檢查」會用紅字提醒，這裡跟 loader.js 要一起改。
+  var MALL_HOUR_MS = 36e5;
+  function mallRng(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = s + 1831565813 >>> 0;
+      var e = Math.imul(s ^ s >>> 15, 1 | s);
+      e = e + Math.imul(e ^ e >>> 7, 61 | e) ^ e;
+      return ((e ^ e >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function mallRate(period) {
+    return 20000 + Math.floor(mallRng(Math.imul(period, 2654435761) ^ 1835101292)() * 61) * 500;
+  }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  // 價格那格的內容（整點換價時由下面的計時器重畫）
+  function mallNowHtml(points) {
+    var now = new Date();
+    var rate = mallRate(Math.floor(now.getTime() / MALL_HOUR_MS));
+    var h = pad2(now.getHours());
+    return '<div style="font-size:12px;color:var(--text-dim);margin-bottom:2px;">目前 ' + h + ':00～' + h + ':59 的價格為</div>' +
+      '<span class="rate">' + fmtNum(points * rate) + ' 金幣</span>' +
+      '<div style="font-size:11.5px;color:var(--text-faint);">' + fmtNum(points) + ' 點 × 1 點＝' + fmtNum(rate) + '</div>';
+  }
   function mallSectionHtml(id) {
     var m = MALL_INDEX.items[String(id)];
     if (!m) return '';
-    var towns = MALL_INDEX.towns.map(townName).join("、");
-    return '<div class="section-title">名品館（黑市商人）</div>' +
-      '<table class="dtable"><thead><tr><th>分類</th><th>價格</th><th>地點</th></tr></thead><tbody><tr>' +
-      '<td>' + escapeHtml(m.category || "-") + '</td>' +
-      '<td><span class="rate">' + fmtNum(m.points) + ' 點</span>' + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>' +
-      '<td>' + escapeHtml(towns || "-") + '</td></tr></tbody></table>' +
-      '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">找村莊的「黑市商人」開名品館購買；用點數計價，1 點折合多少金幣會隨時段變動。</div>';
+    return '<div class="section-title">名品館</div>' +
+      '<table class="dtable"><thead><tr><th>NPC</th><th>價格</th><th>分類</th></tr></thead><tbody><tr>' +
+      '<td><span class="name-link" style="cursor:default;">黑市商人</span></td>' +
+      '<td data-mall-points="' + m.points + '">' + mallNowHtml(m.points) + '</td>' +
+      '<td>' + escapeHtml(m.category || "-") + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>' +
+      '</tr></tbody></table>' +
+      '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">1 點折合多少金幣每個整點換一次（' + fmtNum(20000) + '～' + fmtNum(50000) + '），價格會自動跟著更新。</div>';
   }
+  // 頁面一直開著跨過整點時，把畫面上的名品館價格換成新時段的
+  setInterval(function () {
+    document.querySelectorAll("[data-mall-points]").forEach(function (td) {
+      var html = mallNowHtml(Number(td.getAttribute("data-mall-points")));
+      if (td.innerHTML !== html) td.innerHTML = html;
+    });
+  }, 30000);
   var FORGE_BY_BOOK = window.FORGE_BY_BOOK || {};
   var FORGE_BY_PRODUCT = window.FORGE_BY_PRODUCT || {};
   var FORGE_PART_NAME = { weapon: "武器", armor: "防具", accessory: "配件" };
@@ -2358,7 +2390,7 @@
     var mallEntry = MALL_INDEX.items[id];
     html += '<div class="section-title">販售商店 <span class="count">(' + shopEntries.length + ')</span></div>';
     if (!shopEntries.length) {
-      html += '<div class="empty-note">' + (mallEntry ? '一般商店沒有賣，但可以在下面的名品館用點數買。'
+      html += '<div class="empty-note">' + (mallEntry ? '一般商店沒有賣，但可以在下面的名品館（黑市商人）買。'
         : '沒有商店販售這個物品（可能只能靠掉落、任務或製作取得）。') + '</div>';
     } else {
       html += '<table class="dtable"><thead><tr><th>NPC</th><th>地點</th><th>價格</th></tr></thead><tbody>';
