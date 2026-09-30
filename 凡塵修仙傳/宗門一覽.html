@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宗門一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--acct:#6d28d9;--link:#6d28d9;
+  --good:#1d4ed8;--evil:#b91c1c;--exp:#15803d;--pow:#c2410c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--acct:#c4b5fd;--link:#c4b5fd;
+  --good:#93c5fd;--evil:#fca5a5;--exp:#86efac;--pow:#fdba74}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+a{color:var(--link);text-underline-offset:2px}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:26px 0 10px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.85}
+.box b{color:var(--acct)}
+.box ul{margin:0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:13.5px;line-height:1.55}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 12px}
+.ctl span{font-size:13px;color:var(--mute)}
+.ctl button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);cursor:pointer}
+.ctl button.on{border-color:var(--acc);background:var(--acc);color:#111;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.card h3{margin:0 0 6px;font-size:17px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fac{font-size:12px;font-weight:bold;padding:0 8px;border-radius:9px;border:1px solid currentColor}
+.f正{color:var(--good)}.f邪{color:var(--evil)}
+.stat{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:13px;margin:6px 0}
+.stat .b{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.stat .b i{display:block;height:100%}
+.stat .e i{background:var(--exp)}.stat .p i{background:var(--pow)}
+.stat b{font-variant-numeric:tabular-nums}
+.leg{font-size:13px;margin:6px 0}
+.sk{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px;font-size:13px;line-height:1.7}
+.sk b{color:var(--acct)}
+.sk small{color:var(--mute)}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>⛩️ 宗門一覽</h1>
+<div class="sub">資料來源：凡塵修仙傳-紅塵篇 data/config-sects.js、sect.js、config-profession.js、config-quests.js。</div>
+
+<h2>拜師規則</h2>
+<div class="box"><ul>
+<li>宗門分三個階段：<b>凡俗宗門</b>（凡人起可加入）、<b>修真仙門</b>（金丹起）、<b>至高聖地</b>（仙人初境起），每階段各 6 個宗門。</li>
+<li>每個階段<b>只能拜入一個</b>宗門，選定後<b>無法退出或改投</b>。境界超過建議範圍仍可<b>補拜入</b>還沒選的階段。</li>
+<li>拜入即學會該宗門的 <b>2 招技能，永久保留</b>；三個階段都拜完，最多同時擁有 <b>6 招</b>宗門技能。</li>
+<li>已拜過的宗門可以隨時按「<b>回歸宗門</b>」切回去。<b>經驗倍率、戰力倍率、宗門任務、傳承加成只看「目前所屬」的那一個宗門</b>，技能則全部都能用。</li>
+<li>宗門設施（任務、靈田、靈獸園、靈寶閣、藏書閣、鍛造閣、煉丹房）要<b>待在宗門</b>才能用；沒有宗門是「散修」，設施都不能用。</li>
+<li><b>第一次拜入宗門</b>時會進行先天靈根／體質的資質測試（見<a href="靈根體質一覽.html">靈根體質一覽</a>）。</li>
+<li>轉世會洗掉宗門與宗門技能，要重新拜入（見<a href="常見問題.html">常見問題</a>）。</li>
+</ul></div>
+
+<h2>加成怎麼算</h2>
+<div class="box"><ul>
+<li><b>經驗倍率</b>：打怪、打坐拿到的所有經驗直接乘上這個倍率。</li>
+<li><b>戰力倍率</b>：換算成攻擊、氣血加成＝（倍率 − 1）× 20%，例如 ×2.5 → +30%、×6.0 → +100%。倍率 1.0 以下沒有加成，0.8 會變成 −4%。</li>
+<li><b>宗門技能</b>：每回合 40% 機率從已學會的技能中隨機施放一招（靈力夠才放，不夠就改普攻）。威力：凡俗 150%、修真 200%、至高 300% 攻擊力；<b>力量</b>類用物理攻擊、<b>悟性</b>類用術法攻擊。</li>
+<li><b>渡劫</b>：目前境界已開放的宗門技能階段學了幾個，渡劫勝算最多 +10%。</li>
+<li><b>陣營</b>：每個拜過的宗門算 5 分、每招學會的仙法算 1 分，邪派分數比較高才算邪派（同分算正派），影響懸賞榜的敵對陣營。</li>
+</ul></div>
+
+<h2>宗門傳承</h2>
+<div class="sub" style="margin-bottom:8px">每個宗門傳承一種武器（職業）。你的<b>主修職業</b>和目前所屬宗門的傳承武器相同時，額外獲得：</div>
+<div class="tw"><table><thead><tr><th>階段</th><th class="num">主修武器的武器攻擊</th><th class="num">職業熟練度獲得</th></tr></thead><tbody id="legacy"></tbody></table></div>
+
+<h2>全部宗門（18 個）</h2>
+<div class="ctl"><span>排序：</span><button data-s="" class="on">預設</button><button data-s="exp">經驗倍率高→低</button><button data-s="power">戰力倍率高→低</button>
+<span style="margin-left:10px">陣營：</span><button data-f="" class="on">全部</button><button data-f="正">正派</button><button data-f="邪">邪派</button></div>
+<div id="out"></div>
+
+<h2>宗門任務</h2>
+<div class="sub" style="margin-bottom:8px">依<b>目前所屬宗門</b>的階段決定能接哪些任務與獎勵。一趟約 <span id="qsec"></span> 秒（派僕從執行時依僕從效率加快），最多同時派 <span id="qmax"></span> 名僕從。宗門任務只給道具，不給靈石（凡俗的打掃清潔除外）。</div>
+<div class="tw"><table><thead><tr><th>任務</th><th>凡俗宗門</th><th>修真仙門</th><th>至高聖地</th></tr></thead><tbody id="quests"></tbody></table></div>
+</div>
+<script>
+const D={"cats":[{"tier":1,"category":"一、凡俗宗門 (金丹期以前可加入)","minRealm":"凡人","items":[{"name":"武當","faction":"正","weapon":"劍","prof":"劍修","profIcon":"🗡️","exp":1.1,"power":1.1,"skills":[{"name":"太極拳","aoe":false,"mag":false,"mult":150,"mp":500},{"name":"純陽無極功","aoe":false,"mag":true,"mult":150,"mp":600}]},{"name":"峨嵋","faction":"正","weapon":"笛","prof":"音修","profIcon":"🎶","exp":1.2,"power":1,"skills":[{"name":"峨嵋劍法","aoe":false,"mag":false,"mult":150,"mp":600},{"name":"清心普善咒","aoe":true,"mag":true,"mult":150,"mp":800}]},{"name":"少林寺","faction":"正","weapon":"刀","prof":"刀修","profIcon":"🔪","exp":1,"power":1.3,"skills":[{"name":"金剛伏魔","aoe":false,"mag":false,"mult":150,"mp":800},{"name":"獅子吼","aoe":true,"mag":true,"mult":150,"mp":800}]},{"name":"全真教","faction":"正","weapon":"筆","prof":"符修","profIcon":"🖌️","exp":1.3,"power":1,"skills":[{"name":"全真劍法","aoe":false,"mag":false,"mult":150,"mp":600},{"name":"先天功","aoe":false,"mag":true,"mult":150,"mp":800}]},{"name":"皇朝","faction":"邪","weapon":"弓","prof":"弓修","profIcon":"🏹","exp":1.2,"power":1.2,"skills":[{"name":"真龍拳","aoe":false,"mag":false,"mult":150,"mp":800},{"name":"皇極經世","aoe":true,"mag":true,"mult":150,"mp":900}]},{"name":"逍遙派","faction":"正","weapon":"扇","prof":"扇修","profIcon":"🪭","exp":1.2,"power":1.1,"skills":[{"name":"天山折梅手","aoe":false,"mag":false,"mult":150,"mp":600},{"name":"逍遙扇舞","aoe":true,"mag":true,"mult":150,"mp":800}]}]},{"tier":2,"category":"二、修真仙門 (金丹期以上可加入)","minRealm":"金丹","items":[{"name":"崑崙仙宗","faction":"正","weapon":"扇","prof":"扇修","profIcon":"🪭","exp":1.5,"power":1.5,"skills":[{"name":"玉清仙法","aoe":true,"mag":true,"mult":200,"mp":1200},{"name":"崑崙印","aoe":false,"mag":false,"mult":200,"mp":1100}]},{"name":"蜀山劍派","faction":"正","weapon":"劍","prof":"劍修","profIcon":"🗡️","exp":1,"power":2.5,"skills":[{"name":"萬劍訣","aoe":true,"mag":true,"mult":200,"mp":1500},{"name":"天劍","aoe":false,"mag":false,"mult":200,"mp":1200}]},{"name":"丹鼎司","faction":"正","weapon":"筆","prof":"符修","profIcon":"🖌️","exp":3,"power":0.8,"skills":[{"name":"三昧真火","aoe":true,"mag":true,"mult":200,"mp":1400},{"name":"丹爐撼岳","aoe":false,"mag":false,"mult":200,"mp":1100}]},{"name":"御獸仙宗","faction":"正","weapon":"弓","prof":"弓修","profIcon":"🏹","exp":1.2,"power":2.2,"skills":[{"name":"獸王怒","aoe":false,"mag":false,"mult":200,"mp":1100},{"name":"萬獸奔騰","aoe":true,"mag":true,"mult":200,"mp":1500}]},{"name":"天魔教","faction":"邪","weapon":"刀","prof":"刀修","profIcon":"🔪","exp":1.5,"power":3.5,"skills":[{"name":"噬血斬","aoe":false,"mag":false,"mult":200,"mp":1100},{"name":"天魔解體","aoe":true,"mag":true,"mult":200,"mp":1500}]},{"name":"天音閣","faction":"正","weapon":"笛","prof":"音修","profIcon":"🎶","exp":2,"power":1.8,"skills":[{"name":"天音破魔曲","aoe":true,"mag":true,"mult":200,"mp":1500},{"name":"裂石音刃","aoe":false,"mag":false,"mult":200,"mp":1200}]}]},{"tier":3,"category":"三、至高聖地 (仙人初境解鎖)","minRealm":"仙人初境","items":[{"name":"太清道德宗","faction":"正","weapon":"扇","prof":"扇修","profIcon":"🪭","exp":4,"power":3,"skills":[{"name":"太極陰陽圖","aoe":true,"mag":true,"mult":300,"mp":2400},{"name":"九轉金丹掌","aoe":false,"mag":false,"mult":300,"mp":1800}]},{"name":"玉清闡教宗","faction":"正","weapon":"筆","prof":"符修","profIcon":"🖌️","exp":3,"power":4.5,"skills":[{"name":"翻天印","aoe":false,"mag":false,"mult":300,"mp":2100},{"name":"金光神咒","aoe":true,"mag":true,"mult":300,"mp":2400}]},{"name":"上清截教宗","faction":"正","weapon":"劍","prof":"劍修","profIcon":"🗡️","exp":2.5,"power":6,"skills":[{"name":"誅仙劍陣","aoe":true,"mag":false,"mult":300,"mp":3000},{"name":"上清雷法","aoe":false,"mag":true,"mult":300,"mp":1800}]},{"name":"萬界仙門","faction":"正","weapon":"弓","prof":"弓修","profIcon":"🏹","exp":5,"power":5,"skills":[{"name":"萬界穿梭","aoe":false,"mag":false,"mult":300,"mp":1800},{"name":"諸天寂滅","aoe":true,"mag":true,"mult":300,"mp":3000}]},{"name":"九幽黃泉","faction":"邪","weapon":"刀","prof":"刀修","profIcon":"🔪","exp":3.5,"power":5.5,"skills":[{"name":"九幽冥掌","aoe":false,"mag":false,"mult":300,"mp":2100},{"name":"黃泉引魂","aoe":true,"mag":true,"mult":300,"mp":2700}]},{"name":"天籟仙宮","faction":"正","weapon":"笛","prof":"音修","profIcon":"🎶","exp":4,"power":4,"skills":[{"name":"天籟九霄","aoe":true,"mag":true,"mult":300,"mp":2700},{"name":"仙音斷魂","aoe":false,"mag":false,"mult":300,"mp":2100}]}]}],"legacy":{"1":{"weaponPct":0.1,"profMult":1.3},"2":{"weaponPct":0.2,"profMult":1.6},"3":{"weaponPct":0.3,"profMult":2}},"tierNames":{"1":"初級","2":"中級","3":"高級"},"quests":[{"key":"clean","tiers":{"1":{"name":"打掃清潔","icon":"🧹","rewards":{"coins":50}},"2":{"name":"餵養靈獸","icon":"🥩","rewards":{"beastCore":10}},"3":{"name":"餵養仙獸","icon":"🐉","rewards":{"beastCore":50}}}},{"key":"plant","tiers":{"1":{"name":"種植靈草","icon":"🌱","rewards":{"spiritGrass":1}},"2":{"name":"種植靈草","icon":"🌱","rewards":{"spiritGrass":10}},"3":{"name":"種植靈草","icon":"🌱","rewards":{"spiritGrass":50}}}},{"key":"book","tiers":{"1":{"name":"整理武學秘典","icon":"📚","rewards":{"martialPoints":1}},"2":{"name":"整理武學秘典","icon":"📚","rewards":{"martialPoints":10}},"3":{"name":"整理武學秘典","icon":"📚","rewards":{"martialPoints":50}}}},{"key":"mine","tiers":{"2":{"name":"礦脈採礦","icon":"⛏️","rewards":{"ore":[1,30]},"requiredQuality":"傳說","duration":60},"3":{"name":"礦脈採礦","icon":"⛏️","rewards":{"ore":[1,30]},"requiredQuality":"傳說","duration":60}}}],"rewardInfo":{"coins":{"label":"靈石","field":"coins"},"beastCore":{"label":"獸丹","field":"beastCore"},"spiritGrass":{"label":"靈草","field":"spiritGrass"},"martialPoints":{"label":"武學積分","field":"martialPoints"},"ore":{"label":"礦石","field":"ore"}},"questSec":20,"maxServants":10};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const full=n=>Number(n).toLocaleString("zh-TW");
+const TIERN={1:"凡俗宗門",2:"修真仙門",3:"至高聖地"};
+document.getElementById("legacy").innerHTML=[1,2,3].map(t=>`<tr><td>${TIERN[t]}</td><td class="num">+${Math.round(D.legacy[t].weaponPct*100)}%</td><td class="num">×${D.legacy[t].profMult}</td></tr>`).join("");
+const maxExp=Math.max(...D.cats.flatMap(c=>c.items.map(s=>s.exp))),maxPow=Math.max(...D.cats.flatMap(c=>c.items.map(s=>s.power)));
+const buff=p=>{const v=Math.round((p-1)*20);return (v>0?"+":"")+v+"%"};
+let sortBy="",fac="";
+function card(s,tier){return `<div class="card"><h3>${esc(s.name)}<span class="fac f${s.faction}">${s.faction}派</span></h3>
+  <div class="stat e"><span>經驗</span><span class="b e"><i style="width:${s.exp/maxExp*100}%"></i></span><b>×${s.exp}</b></div>
+  <div class="stat p"><span>戰力</span><span class="b p"><i style="width:${s.power/maxPow*100}%"></i></span><b>×${s.power}</b></div>
+  <div class="leg">⚔️ 攻擊、氣血 <b>${buff(s.power)}</b>　${s.profIcon||""} 傳承：${esc(s.prof||"")}（${esc(s.weapon)}）</div>
+  <div class="sk">${s.skills.map(k=>`<b>${esc(k.name)}</b>　<small>${k.aoe?"群體":"單體"}・${k.mag?"悟性（術法）":"力量（物理）"}・威力 ${k.mult}%・耗靈 ${full(k.mp)}</small>`).join("<br>")}</div></div>`}
+function render(){
+  document.querySelectorAll(".ctl button[data-s]").forEach(b=>b.classList.toggle("on",b.dataset.s===sortBy));
+  document.querySelectorAll(".ctl button[data-f]").forEach(b=>b.classList.toggle("on",b.dataset.f===fac));
+  document.getElementById("out").innerHTML=D.cats.map(c=>{
+    let items=c.items.filter(s=>!fac||s.faction===fac);
+    if(sortBy)items=[...items].sort((a,b)=>b[sortBy]-a[sortBy]);
+    if(!items.length)return "";
+    return `<h2 style="font-size:15px">${esc(c.category)} <span class="sub">・${D.tierNames[c.tier]}技能・${c.minRealm}起可加入</span></h2><div class="grid">${items.map(s=>card(s,c.tier)).join("")}</div>`}).join("");
+}
+document.querySelectorAll(".ctl button[data-s]").forEach(b=>b.onclick=()=>{sortBy=b.dataset.s;render()});
+document.querySelectorAll(".ctl button[data-f]").forEach(b=>b.onclick=()=>{fac=b.dataset.f;render()});
+render();
+document.getElementById("qsec").textContent=D.questSec;document.getElementById("qmax").textContent=D.maxServants;
+const rw=r=>Object.entries(r.rewards).map(([k,v])=>`${D.rewardInfo[k].label} ${Array.isArray(v)?v[0]+"～"+v[1]:full(v)}`).join("、");
+document.getElementById("quests").innerHTML=D.quests.map(q=>{const any=Object.values(q.tiers)[0];return `<tr><td>${any.icon} ${({clean:"雜務",plant:"靈田",book:"藏書",mine:"採礦"})[q.key]||q.key}</td>${[1,2,3].map(t=>{const x=q.tiers[t];return `<td>${x?`<b>${esc(x.name)}</b><br>${rw(x)}${x.requiredQuality?`<br><small class="sub">限${x.requiredQuality}僕從・固定 ${x.duration} 秒</small>`:""}`:`<span class="sub">—</span>`}</td>`}).join("")}</tr>`}).join("");
+</script></body></html>
