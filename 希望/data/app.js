@@ -1874,9 +1874,50 @@
   var INDIVIDUALITY_STAGES = window.INDIVIDUALITY_STAGES || [];
   var INDIVIDUALITY_TYPES = window.INDIVIDUALITY_TYPES || [];
   var INDIVIDUALITY_ROLLS = window.INDIVIDUALITY_ROLLS || [];
+  var INDIVIDUALITY_CURVES = window.INDIVIDUALITY_CURVES || [];
+  var INDIVIDUALITY_INTERVAL_BASE = window.INDIVIDUALITY_INTERVAL_BASE || 35;
+
+  // ---- 個性化數值：照遊戲 bundle（2026-09-30 版 Tu/Pu/Fu/Iu/Ou）----
+  // 存檔 attrs[].base 是「原始值」，遊戲顯示的數值＝base 套上「目前階段」的成長曲線（types[].curve）：
+  //   曲線單位 1＝直接加（base + v）、2＝百分比（round(base × (100 + v) / 100)）。
+  // 「每 N 等級 力量 M」的 N＝intervalBase − intervalCurve 在目前階段的值。
+  // base 的合法範圍只看「這個屬性第一次出現的那個階段」的 rolls（Tu 的 baseBands）；後面階段的 rolls 是換算後的顯示範圍，
+  // 不能拿來填 base——舊版修改器就是填了目前階段的上限，進遊戲再乘一次曲線，數值會暴增好幾倍。
+  var INDIV_CURVE_ABSOLUTE = 1, INDIV_CURVE_PERCENT = 2, INDIV_RATE_DIVISOR = 1e5;
+  var indivCurveMap = {};
+  INDIVIDUALITY_CURVES.forEach(function (r) { (indivCurveMap[r[0]] = indivCurveMap[r[0]] || {})[r[1]] = { unit: r[2], value: r[3] }; });
+  var indivBands = {}, indivFirstStage = {}, indivKindsByStage = {};
+  INDIVIDUALITY_ROLLS.forEach(function (r) {
+    var stage = r[0], kind = r[1];
+    (indivKindsByStage[stage] = indivKindsByStage[stage] || {})[kind] = true;
+    if (indivFirstStage[kind] === undefined || stage < indivFirstStage[kind]) { indivFirstStage[kind] = stage; indivBands[kind] = {}; }
+    if (indivFirstStage[kind] === stage) indivBands[kind][r[2]] = { gradePct: r[4], min: r[5], max: r[6] };
+  });
+  function indivType(kind) { return INDIVIDUALITY_TYPES.find(function (x) { return x.kind === kind; }); }
+  function indivCurve(curveId, stage) { return (indivCurveMap[curveId] || {})[stage] || { unit: INDIV_CURVE_ABSOLUTE, value: 0 }; }
+  function indivShownValue(attr, stage) {
+    var t = indivType(attr.kind);
+    if (!t) return attr.base;
+    var cv = indivCurve(t.curve, stage);
+    return cv.unit === INDIV_CURVE_PERCENT ? Math.round(attr.base * (100 + cv.value) / 100) : attr.base + cv.value;
+  }
+  function indivInterval(attr, stage) {
+    var t = indivType(attr.kind);
+    return t && t.intervalCurve ? INDIVIDUALITY_INTERVAL_BASE - indivCurve(t.intervalCurve, stage).value : undefined;
+  }
+  // 跟遊戲畫面一樣的效果文字，例如「每32等級 力量10」「攻擊力1300」「HP13%」
+  function indivEffectText(attr, stage) {
+    var t = indivType(attr.kind);
+    if (!t) return String(indivShownValue(attr, stage));
+    var iv = indivInterval(attr, stage), vals = iv === undefined ? [indivShownValue(attr, stage)] : [iv, indivShownValue(attr, stage)], i = 0;
+    return t.name.replace(/%d/g, function () { return String(vals[i++]); }).replace(/%%/g, "%");
+  }
+  function indivUpgradeChance(stageDef, fails) {
+    return stageDef.upgradeRate <= 0 ? 0 : Math.min(1, (stageDef.upgradeRate + stageDef.upgradePity * fails) / INDIV_RATE_DIVISOR);
+  }
 
   function indivTypeLabel(kind) {
-    var t = INDIVIDUALITY_TYPES.find(function (x) { return x.kind === kind; });
+    var t = indivType(kind);
     if (!t) return "種類#" + kind;
     return t.name.replace(/%d%%/g, "%").replace(/%d/g, "").trim();
   }
@@ -1894,27 +1935,46 @@
     failsInput.value = ind.fails || 0;
     failsInput.oninput = function () { ind.fails = failsInput.valueAsNumber || 0; };
 
+    var maxStage = INDIVIDUALITY_STAGES.length - 1;
+    stageInput.max = maxStage;
     var stageDef = INDIVIDUALITY_STAGES[ind.stage] || null;
-    var nextStageDef = INDIVIDUALITY_STAGES[ind.stage + 1] || null;
     var infoBox = document.getElementById("indivStageInfo");
     if (stageDef) {
-      var infoLines = ["目前階段展現上限：" + stageDef.slots + " 條"];
-      if (nextStageDef) {
-        infoLines.push("升到 +" + (ind.stage + 1) + "：需要等級 " + nextStageDef.upgradeLevel + "，成功率約 " + (stageDef.upgradeRate / 1000) + "%");
+      // 遊戲 canUpgradeIndividuality()：看的是「目前階段」的 upgradeLevel／upgradeFame（不是下一階的）；
+      // 成功率＝(upgradeRate + upgradePity × 失敗次數) ÷ 100000（Ou），+5 以上每失敗一次會加一點保底。
+      var infoLines = ["目前 +" + ind.stage + "：同時展現 " + stageDef.slots + " 條，展現一次花 " + fmtNum2(stageDef.revealFame) + " 名聲／條"];
+      if (ind.stage < maxStage) {
+        var chance = indivUpgradeChance(stageDef, ind.fails || 0);
+        infoLines.push("升到 +" + (ind.stage + 1) + "：角色 Lv" + stageDef.upgradeLevel + " 以上、花 " + fmtNum2(stageDef.upgradeFame) + " 名聲，" +
+          "成功率 " + (Math.round(chance * 10000) / 100) + "%" +
+          (stageDef.upgradePity ? "（基本 " + (stageDef.upgradeRate / 1000) + "%，每失敗一次 +" + (stageDef.upgradePity / 1000) + "%）" : ""));
       } else {
-        infoLines.push("已達最高階段");
+        infoLines.push("已達最高階段 +" + maxStage);
       }
       infoBox.textContent = infoLines.join("　|　");
     } else {
-      infoBox.textContent = "找不到這個階段的參考資料（stage 超出範圍 0~10）";
+      infoBox.textContent = "找不到這個階段的參考資料（stage 超出範圍 0~" + maxStage + "）";
     }
 
-    var typeOptions = INDIVIDUALITY_TYPES.map(function (t) { return { value: t.kind, label: indivTypeLabel(t.kind) }; });
+    var charLv = Number(c.level) || 1;
+    var typeOptions = INDIVIDUALITY_TYPES.map(function (t) {
+      var first = indivFirstStage[t.kind];
+      // 遊戲展現時只會從「目前階段有出現」的種類裡抽；還沒開放的種類標出幾階才會出現
+      return { value: t.kind, label: indivTypeLabel(t.kind) + (first !== undefined && first > ind.stage ? "（+" + first + " 起）" : "") };
+    });
 
     var listWrap = document.getElementById("indivAttrsList");
     listWrap.innerHTML = "";
+    // 遊戲展現時同一種屬性不會重複（revealIndividuality 會排除已經有的種類）
+    var kindCount = {};
+    ind.attrs.forEach(function (a) { kindCount[a.kind] = (kindCount[a.kind] || 0) + 1; });
+    if (stageDef && ind.attrs.length > stageDef.slots) {
+      listWrap.appendChild(el("div", {
+        style: "font-size:12.5px;color:var(--orange,#d35400);margin-bottom:8px;",
+        text: "⚠️ 目前 +" + ind.stage + " 正常最多展現 " + stageDef.slots + " 條，這裡有 " + ind.attrs.length + " 條。遊戲會把存檔裡的每一條都算進能力（不會因為超過條數就不生效），但正常玩不會出現這種狀況。"
+      }));
+    }
     ind.attrs.forEach(function (attr, idx) {
-      var active = !!(stageDef && idx < stageDef.slots);
       var row = el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);flex-wrap:wrap;" });
 
       var kindSelect = el("select", { style: "flex:1;min-width:140px;" });
@@ -1924,11 +1984,11 @@
         kindSelect.appendChild(opt);
       });
 
+      // 選種類／等級時，base 填「該屬性第一次出現階段」那個等級的上限（遊戲抽到的最好結果），進遊戲再由曲線換算成目前階段的數值
       function applyRollValue() {
-        var roll = INDIVIDUALITY_ROLLS.find(function (r) {
-          return r[0] === ind.stage && r[1] === attr.kind && r[2] === attr.grade;
-        });
-        if (roll) attr.base = roll[6]; // maxVal
+        var band = (indivBands[attr.kind] || {})[attr.grade];
+        if (band) attr.base = band.max;
+        renderIndividuality(c);
       }
 
       kindSelect.addEventListener("change", function () { attr.kind = Number(kindSelect.value); applyRollValue(); });
@@ -1943,6 +2003,24 @@
       gradeSelect.addEventListener("change", function () { attr.grade = gradeSelect.value; applyRollValue(); });
       row.appendChild(gradeSelect);
 
+      // base 可以在這個等級的合法範圍內自己調（遊戲抽的時候就是在這個範圍裡隨機）
+      var band = (indivBands[attr.kind] || {})[attr.grade];
+      var baseInput = el("input", { type: "number", style: "width:74px;", title: "存檔裡的原始值 base" });
+      baseInput.value = attr.base;
+      if (band) { baseInput.min = band.min; baseInput.max = band.max; }
+      baseInput.addEventListener("change", function () {
+        var v = baseInput.valueAsNumber;
+        if (!isFinite(v)) v = band ? band.max : attr.base;
+        if (band) v = Math.max(band.min, Math.min(band.max, Math.round(v)));
+        attr.base = v;
+        renderIndividuality(c);
+      });
+      row.appendChild(baseInput);
+      row.appendChild(el("span", {
+        style: "font-size:11.5px;color:var(--text3);white-space:nowrap;",
+        text: band ? "（" + attr.grade + "：" + band.min + "～" + band.max + "）" : "（查不到這個等級的範圍）"
+      }));
+
       var lockLabel = el("label", { style: "display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);white-space:nowrap;" });
       var lockCb = el("input", { type: "checkbox" });
       lockCb.checked = !!attr.locked;
@@ -1951,26 +2029,33 @@
       lockLabel.appendChild(document.createTextNode("鎖定"));
       row.appendChild(lockLabel);
 
-      row.appendChild(el("span", {
-        style: "font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap;" +
-          (active ? "color:var(--green);border:1px solid var(--green);" : "color:var(--text3);border:1px solid var(--border);"),
-        text: active ? "生效中" : "尚未生效"
-      }));
-
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () { ind.attrs.splice(idx, 1); renderIndividuality(c); });
       row.appendChild(delBtn);
+
+      // 第二行：跟遊戲畫面一樣的效果文字（套用目前階段的曲線），能力值類的另外算出目前等級實際加多少
+      var notes = ["遊戲顯示：" + indivEffectText(attr, ind.stage)];
+      var iv = indivInterval(attr, ind.stage);
+      if (iv !== undefined && iv > 0) notes.push("Lv" + charLv + " 目前 +" + (Math.floor(charLv / iv) * indivShownValue(attr, ind.stage)));
+      var warn = [];
+      if (band && (attr.base < band.min || attr.base > band.max)) {
+        warn.push("base " + attr.base + " 超出 " + attr.grade + " 的正常範圍 " + band.min + "～" + band.max + "（可能是舊版修改器填的，重選一次等級就會修正）");
+      }
+      if (kindCount[attr.kind] > 1) warn.push("同一種屬性重複了（遊戲不會展現重複的種類）");
+      row.appendChild(el("div", { style: "flex-basis:100%;font-size:12px;color:var(--text2);", text: notes.join("　・　") }));
+      if (warn.length) row.appendChild(el("div", { style: "flex-basis:100%;font-size:12px;color:var(--red);", text: "⚠️ " + warn.join("；") }));
 
       listWrap.appendChild(row);
     });
 
     document.getElementById("indivAddAttrBtn").onclick = function () {
-      var newAttr = { kind: INDIVIDUALITY_TYPES[0].kind, grade: "B", base: 1, locked: false };
-      var roll = INDIVIDUALITY_ROLLS.find(function (r) {
-        return r[0] === ind.stage && r[1] === newAttr.kind && r[2] === newAttr.grade;
-      });
-      if (roll) newAttr.base = roll[6];
-      ind.attrs.push(newAttr);
+      // 預設挑目前階段遊戲抽得到、而且還沒有的種類
+      var have = {};
+      ind.attrs.forEach(function (a) { have[a.kind] = true; });
+      var avail = INDIVIDUALITY_TYPES.filter(function (t) { return (indivKindsByStage[ind.stage] || {})[t.kind] && !have[t.kind]; });
+      var kind = (avail[0] || INDIVIDUALITY_TYPES[0]).kind;
+      var band = (indivBands[kind] || {}).B;
+      ind.attrs.push({ kind: kind, grade: "B", base: band ? band.max : 1, locked: false });
       renderIndividuality(c);
     };
 
@@ -1994,7 +2079,9 @@
         return;
       }
       var over = total > cap;
-      minorCapBox.textContent = "已使用 " + total + " / 上限 " + cap + " 點" + (over ? "　⚠️ 已超過目前階段上限" : "");
+      // 遊戲 addMinorPoint()：每點該能力 +3，花 minorFame 名聲；退點每點花 minorResetFame 名聲＋minorResetGold 金幣
+      minorCapBox.textContent = "已使用 " + total + " / 上限 " + cap + " 點（每點該能力 +3，加一點花 " + fmtNum2(stageDef.minorFame) + " 名聲）" +
+        (over ? "　⚠️ 已超過目前階段上限" : "");
       minorCapBox.style.color = over ? "var(--red)" : "var(--text2)";
     }
 
