@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>凡塵修仙傳攻略</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#a78bfa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:32px 16px}
+h1{font-size:26px;margin:0 0 6px}
+.sub{color:var(--mute);font-size:14px;margin-bottom:22px}
+.ctl input{box-sizing:border-box;width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+a.card{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;transition:border-color .15s,transform .15s}
+a.card:hover,a.card:focus-visible{border-color:var(--acc);transform:translateY(-2px);outline:none}
+.card .ic{font-size:28px;line-height:1}
+.card h2{font-size:17px;margin:4px 0 0}
+.card p{margin:0;color:var(--mute);font-size:13.5px;line-height:1.6}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tags span{font-size:11.5px;padding:1px 8px;border-radius:9px;background:var(--line);color:var(--mute)}
+.empty{color:var(--mute);text-align:center;padding:24px}
+footer{margin-top:28px;color:var(--mute);font-size:12px;text-align:center}
+</style></head><body><div class="wrap">
+<h1>🗡️ 凡塵修仙傳攻略</h1>
+<div class="sub">《凡塵修仙傳-紅塵篇》資料整理，內容取自遊戲的資料檔。</div>
+<div class="ctl"><input id="q" placeholder="搜尋頁面…"></div>
+<div class="grid" id="grid"></div>
+<footer>資料來源：k559610142-art.github.io</footer>
+</div><script>
+// 新增頁面時，在這裡加一筆即可
+const PAGES=[
+  {href:"鎮魔塔問答答案.html",icon:"📜",title:"鎮魔塔問答答案",desc:"鎮魔塔知識問答 300 題的題目與正確答案，可依出處、題型篩選與搜尋。",tags:["鎮魔塔","問答","凡人修仙傳","吞噬星空","斗羅大陸"]},
+  {href:"靈根體質一覽.html",icon:"🌟",title:"靈根體質一覽",desc:"先天靈根 22 種、先天體質 24 種的能力加成，依稀有度排列，附抽數試算。",tags:["資質","靈根","體質","洗髓丹","伐骨丹"]},
+  {href:"五行共鳴一覽.html",icon:"☯️",title:"五行共鳴一覽",desc:"裝備五行搭配觸發的 22 種共鳴：名稱、能力、達成條件與配法，附配裝試算。",tags:["裝備","五行","共鳴","星君加持"]},
+  {href:"套裝效果一覽.html",icon:"❖",title:"套裝效果一覽",desc:"秘境 30 組套裝的 2／4／6 件效果、6 個部件與各部件特效，可依主題、五行篩選。",tags:["裝備","套裝","秘境","特效"]}
+];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(){
+  const q=document.getElementById("q").value.trim();
+  const list=PAGES.filter(p=>!q||(p.title+p.desc+p.tags.join("")).includes(q));
+  document.getElementById("grid").innerHTML=list.length?list.map(p=>`<a class="card" href="${encodeURI(p.href)}"><div class="ic">${p.icon}</div><h2>${esc(p.title)}</h2><p>${esc(p.desc)}</p><div class="tags">${p.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div></a>`).join(""):`<div class="empty">找不到符合的頁面</div>`;
+}
+document.getElementById("q").addEventListener("input",render);render();
+</script></body></html>
