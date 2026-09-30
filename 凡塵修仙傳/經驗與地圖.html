@@ -30,7 +30,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:12.5px}
 .ctl input,.ctl select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);width:150px}
 .res{font-size:15px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
 .res b{font-size:20px;color:var(--acc)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(360px,100%),1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .card h3{margin:0 0 2px;font-size:17px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .card h3 small{font-weight:normal;color:var(--mute);font-size:12px}
@@ -38,6 +38,11 @@ details summary{cursor:pointer;color:var(--acc);font-size:12.5px}
 .kv span:nth-child(odd){color:var(--mute)}
 .card table th,.card table td{font-size:12.5px;padding:5px 6px}
 .card table th{position:static}
+.card table th,.card table td{white-space:normal}
+.card table td.num,.card table th.num{white-space:nowrap}
+.card table td.warn{font-size:12px;line-height:1.5}
+.card .kv span{min-width:0;overflow-wrap:anywhere}
+.card{min-width:0}
 .warn{color:var(--warn)}
 .mon{display:flex;flex-wrap:wrap;gap:8px}
 .mon div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
@@ -71,9 +76,9 @@ details summary{cursor:pointer;color:var(--acc);font-size:12.5px}
 
 <div id="p-map" hidden>
 <div class="box" style="font-size:13.5px">
-<b>每隻經驗</b>＝地圖經驗倍率 × 15 × 刷新補償（打得越久的地圖補越多），已含補償、未含宗門與靈寵加成。<b>基礎每小時</b>＝倍率 × 15 × 每秒 0.32 隻 × 3600。<br>
+<b>單隻妖獸經驗</b>已經套用該地圖的加倍，未含宗門、靈寵、裝備等個人加成；實際數值會依你的打怪速度微調。<br>
 <b>妖獸強度</b>跟著你的階數走：地圖決定境界、你決定階數（你 N 階會遇到 N 階或高一階）；比地圖境界低時會被<span class="warn">境界壓制</span>，妖獸氣血、攻擊再放大。<br>
-下方各地圖的氣血、攻擊是遊戲地圖卡片上顯示的<b>平均值</b>（強度倍率取中間）。打坐：待在宗門或主城每 5 秒得到「倍率 × 50」經驗。
+下方各地圖的氣血、攻擊是遊戲地圖卡片上顯示的<b>平均值</b>（強度倍率取中間）。打坐：待在宗門或主城每 5 秒得到 150 經驗。
 </div>
 <h2>妖獸種類</h2>
 <div class="mon" id="monList"></div>
@@ -118,13 +123,12 @@ document.getElementById("monList").innerHTML=D.monsters.map(m=>`<div>${m.icon} <
 let mh="",lastCat="";
 D.maps.forEach(m=>{
   if(m.cat!==lastCat){if(lastCat)mh+="</div>";mh+=`<h2>${esc(m.cat)}</h2><div class="grid">`;lastCat=m.cat}
-  if(m.safe){mh+=`<div class="card"><h3>🏯 ${m.name} <small>安全區</small></h3><div class="kv"><span>打坐經驗</span><span>每 5 秒 ${full(m.expRate*50)}（每小時約 ${wan(m.expRate*50*720)}）</span></div></div>`;return}
+  if(m.safe){mh+=`<div class="card"><h3>🏯 ${m.name} <small>安全區</small></h3><div class="kv"><span>打坐經驗</span><span>每 5 秒 ${full(m.expRate*50)}</span></div></div>`;return}
   const a=m.attrs;
   const entry=[m.minRealm?`${D.realms[m.minRealm].name}以上才能進入`:"無限制",`適合 ${D.realms[m.suit[0]].name}${m.suit[1]!==m.suit[0]?"～"+D.realms[m.suit[1]].name:""}`].join("；");
-  mh+=`<div class="card"><h3>${m.name} <small>經驗倍率 ×${full(m.expRate)}${m.fixed?"・挑戰圖（妖獸固定 10 階）":""}</small></h3>
+  mh+=`<div class="card"><h3>${m.name} ${m.fixed?"<small>挑戰圖（妖獸固定 10 階）</small>":""}</h3>
   <div class="kv"><span>進入</span><span>${entry}</span>
-  <span>基礎每小時經驗</span><span><b>${wan(m.expRate*15*D.kps*3600)}</b></span>
-  <span>每隻經驗</span><span>${wan(m.samples[0].kill)}</span>
+  <span>單隻妖獸經驗</span><span><b>${full(m.samples[0].kill)}</b> <span class="sub">（以下經驗為地圖加倍後）</span></span>
   <span>每隻靈石</span><span>約 ${full(m.coins)}（±20%）</span>
   <span>每隻聲望</span><span>1～${m.rep}</span>
   <span>種族</span><span>${esc(m.race)}</span>
