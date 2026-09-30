@@ -50,7 +50,7 @@ a:hover{text-decoration-thickness:2px}
 </style></head><body><div class="wrap">
 <a href="index.html" style="color:var(--mute);font-size:13px;text-decoration:none">← 回攻略首頁</a>
 <h1>先天靈根 &amp; 先天體質</h1>
-<div class="sub">資料來源：凡塵修仙傳-紅塵篇 data/config-aptitude.js。第一次拜入宗門時各擲一次，轉世保留；可用【洗髓丹】重測靈根、【伐骨丹】重測體質（各需 1 顆七彩補天石），重測後可選擇保留新或舊結果。<br>
+<div class="sub">第一次拜入宗門時各擲一次，轉世保留；可用【洗髓丹】重測靈根、【伐骨丹】重測體質（各需 1 顆七彩補天石），重測後可選擇保留新或舊結果。<br>
 由最稀有排到最常見。</div>
 <div class="tabs"><button data-k="roots" class="on">先天靈根（22 種）</button><button data-k="phys">先天體質（24 種）</button><button data-k="calc">🎲 抽數試算</button></div>
 <div id="calc" hidden>
@@ -97,7 +97,7 @@ function render(){
   chips();
 }
 qEl.addEventListener("input",render);
-// ---- 抽數試算（依 aptitude.js：入門測試「再來一次」兩項一起重抽，且另有 0.04% 直接給至尊靈根＋神體；洗髓丹／伐骨丹各自只重抽一項）----
+// ---- 抽數試算 ----
 const BOTH_TOP=0.0004,TOP={roots:"至尊靈根",phys:"神體"};
 function gradeOrder(k){const m={};D[k].forEach(r=>m[r.grade]=(m[r.grade]||0)+r.chance);return Object.keys(m).sort((a,b)=>m[a]-m[b])}
 function fillSel(id,k){

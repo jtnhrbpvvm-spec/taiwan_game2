@@ -57,8 +57,7 @@ a:hover{text-decoration-thickness:2px}
 <li>到頂期間的經驗<b>不會浪費</b>，會先存起來，最多存到「升到下一個境界的等級上限」所需的量。</li>
 <li>突破境界後，存著的經驗會<b>自動補升</b>等級。</li>
 <li>老玩家如果等級已經超過上限，等級不會被降，只是在境界追上之前不再升級。</li>
-</ul>
-<div class="src">來源：config-level.js、leveling.js</div></div></details>
+</ul></div></details>
 
 <details><summary>等級和境界有什麼不同？經驗是分開算的嗎？</summary><div class="a">
 是兩條<b>分開的成長線</b>，但共用同一份經驗：打怪、打坐拿到的經驗會<b>同時</b>加到境界修為和人物等級。
@@ -68,8 +67,7 @@ a:hover{text-decoration-thickness:2px}
 
 <details><summary>等待渡劫的時候，打怪的經驗會浪費嗎？</summary><div class="a">
 <b>境界修為</b>會暫停累積（已經 10 階圓滿、封頂）。但下面這些<span class="yes">照樣成長</span>：
-<ul><li>人物等級（到了境界等級上限就先存起來）</li><li>靈寵等級</li><li>築基期灌丹田、金丹期溫養的進度（包含溢出的修為）</li></ul>
-<div class="src">來源：leveling.js 的 gainExp</div></div></details>
+<ul><li>人物等級（到了境界等級上限就先存起來）</li><li>靈寵等級</li><li>築基期灌丹田、金丹期溫養的進度（包含溢出的修為）</li></ul></div></details>
 
 <details><summary>哪些境界突破需要渡劫？</summary><div class="a">
 <ul><li><b>凡人 → 煉氣、煉氣 → 築基</b>：修滿 10 階<span class="yes">自動突破</span>，多出來的經驗保留。</li>
@@ -86,15 +84,65 @@ a:hover{text-decoration-thickness:2px}
 勝算＝<b>基礎 60%</b>＋丹藥準備（最多 +10%）＋宗門技能（最多 +10%），<b>上限 80%</b>。開打前就決定結果，畫面顯示的勝算就是實際勝率。
 <ul><li><b>丹藥</b>：要開啟【自動補血】，背包氣血丹藥的「回復量 × 數量」總和到 3.0 就拿滿（例如 10 顆九轉還魂丹，或 30 顆培元丹、60 株凝血草）。</li>
 <li><b>宗門技能</b>：目前境界已開放的宗門技能階段學了幾個（例：築基只開放初級，學了就 +10%；化神開放初級＋中級，各 +5%）。</li>
-<li><b>先天資質</b>：天雷之體 +5%；四靈根、五靈根 −5%。</li></ul>
-<b>合體期起天劫加劇</b>，基礎勝算再扣：合體 −5%、大乘 −10%、渡劫 −15%、仙人初境 −20%、天仙 −25%、真仙起 −30%。
-<div class="src">來源：config-tribulation.js</div></div></details>
+<li><b>先天資質</b>：天雷之體 +5%；四靈根、五靈根 −5%。</li>
+<li><b>破障丹</b>：渡劫時自動服用，勝算 +10%，上限由 80% 提高到 90%。</li>
+<li><b>元嬰 → 化神</b>那一次另外看元嬰品級（人 −10%、地 ±0、天 +10%），化神靈果 +10%（見下方結丹與元嬰）。</li></ul>
+<b>合體期起天劫加劇</b>，基礎勝算再扣：合體 −5%、大乘 −10%、渡劫 −15%、仙人初境 −20%、天仙 −25%、真仙起 −30%。</div></details>
 
 <details><summary>渡劫失敗會怎樣？</summary><div class="a">
 <ul><li>損失身上 <b>10% 靈石</b>。</li>
 <li>小境界掉 <b>3 階</b>（10 階 → 7 階），並扣回這幾階的屬性；<b>大境界不會倒退</b>。</li>
 <li>進入<b>虛弱</b>：攻擊力、氣血上限、靈力上限 <b>×0.7</b>（−30%），直到重新修回 10 階才解除。</li>
 <li>渡劫期間壽元流逝速度 ×4。</li></ul></div></details>
+
+<h2>🟡 結丹與元嬰</h2>
+<details><summary>什麼是丹田、結丹？要怎麼累積？</summary><div class="a">
+<b>築基期</b>開始累積「<b>丹田</b>」，渡劫進入金丹期的那一刻，依丹田的充盈程度<b>結成金丹</b>，決定金丹品級。<br>
+<b>金丹期</b>再累積「<b>溫養</b>」，渡劫進入元嬰期時依「金丹品級＋溫養」<b>破丹成嬰</b>，決定元嬰品級。
+<ul><li>築基期／金丹期拿到的修為（含宗門、靈寵等加成後）會按比例灌進丹田／溫養：<b>修完整個境界（1～10 階）剛好灌到 50%</b>。</li>
+<li>修滿 10 階、等待渡劫時，原本不再累積的修為<b>照樣灌進丹田／溫養</b>，所以圓滿後多練一段時間再渡劫，品級會更好。</li>
+<li>目前進度可以在人物面板的「金丹」一行看到，會顯示「此時結丹可成○品金丹」。跨過 50%、75%、100% 時日誌也會提示。</li></ul>
+<div class="sub">參考：築基期修完 1～10 階約需 82.5 萬修為，丹田灌滿（100%）總共約需 165 萬；金丹期修完約 550 萬，溫養灌滿約 1,100 萬。</div></div></details>
+
+<details><summary>金丹有哪些品級？有什麼效果？</summary><div class="a">
+<table><tr><th>金丹</th><th>結丹時丹田</th><th>效果</th></tr>
+<tr><td>下品金丹</td><td>未滿 50%</td><td>無加成</td></tr>
+<tr><td>中品金丹</td><td>50% 以上</td><td>氣血、靈力上限 +10%</td></tr>
+<tr><td>上品金丹</td><td>75% 以上</td><td>氣血、靈力上限 +20%</td></tr>
+<tr><td>極品金丹</td><td>100%</td><td>氣血、靈力上限 +35%</td></tr>
+<tr><td>🌈 超品金丹</td><td>100% 時有機會升格</td><td>氣血、靈力上限 +50%</td></tr></table>
+金丹的加成是<b>永久</b>的（直到轉世），也會決定之後元嬰的起點。</div></details>
+
+<details><summary>超品金丹怎麼得到？</summary><div class="a">
+丹田灌到 <b>100%</b> 再結丹，就有機會直接升格成超品金丹。<b>先天資質越好，機會越高</b>：天靈根、變異靈根、特殊靈根、至尊靈根，以及道體、神體都會提高成超品的機會（至尊靈根、神體提高最多）。丹田沒滿 100% 就沒有機會。</div></details>
+
+<details><summary>怎樣讓丹田、溫養更快滿？</summary><div class="a">
+<ul><li><b>凝元丹</b>：煉丹房煉製（只在築基期、金丹期出現），每顆 5 株上品靈草＋1 萬靈石，<b>丹田／溫養 +5%</b>，從 0 吃到滿要 20 顆。</li>
+<li><b>圓滿後先別急著渡劫</b>：10 階修滿後繼續打怪，修為會繼續灌進丹田／溫養。</li>
+<li>提高經驗獲取的方法（宗門經驗倍率、靈幻狐、蛟龍、悟道等）都會讓丹田跟著變快。</li></ul></div></details>
+
+<details><summary>元嬰品級怎麼決定？</summary><div class="a">
+元嬰＝<b>金丹品級決定起點</b>，<b>溫養</b>到 50% 再升 1 級、到 100% 再升 2 級：
+<table><tr><th>金丹＼溫養</th><th>未滿 50%</th><th>50% 以上</th><th>100%</th></tr>
+<tr><td>下品金丹</td><td>人元嬰・下</td><td>人元嬰・中</td><td>人元嬰・上</td></tr>
+<tr><td>中品金丹</td><td>人元嬰・上</td><td>地元嬰・下</td><td>地元嬰・中</td></tr>
+<tr><td>上品金丹</td><td>地元嬰・下</td><td>地元嬰・中</td><td>地元嬰・上</td></tr>
+<tr><td>極品金丹</td><td>地元嬰・上</td><td>天元嬰・下</td><td>天元嬰・中</td></tr>
+<tr><td>超品金丹</td><td>天元嬰・下</td><td>天元嬰・中</td><td>天元嬰・上</td></tr></table>
+下品金丹再怎麼溫養都只能成人元嬰；超品金丹必成天元嬰。成天元嬰時會出現天地異象。</div></details>
+
+<details><summary>元嬰有什麼效果？</summary><div class="a">
+<table><tr><th>元嬰</th><th>術法傷害</th><th>元嬰 → 化神渡劫勝算</th></tr>
+<tr><td>人元嬰・下／中／上</td><td>+0%／+5%／+10%</td><td class="no">−10%</td></tr>
+<tr><td>地元嬰・下／中／上</td><td>+15%／+20%／+25%</td><td>±0</td></tr>
+<tr><td>天元嬰・下／中／上</td><td>+35%／+45%／+60%</td><td class="yes">+10%</td></tr></table>
+術法傷害加成是永久的（直到轉世）；渡劫勝算只影響<b>元嬰 → 化神</b>那一次。</div></details>
+
+<details><summary>人元嬰化神勝算很低，有辦法補救嗎？</summary><div class="a">
+可以買<b>化神靈果</b>（千寶閣珍貴物資，1 顆七彩補天石）：元嬰期渡劫化神時自動服用 1 顆，<b>化神勝算 +10%</b>，剛好抵銷人元嬰的 −10%。另外也可以帶破障丹、備足丹藥、學滿宗門技能來拉高勝算（見上方渡劫問題）。</div></details>
+
+<details><summary>轉世後金丹、元嬰會保留嗎？</summary><div class="a">
+<span class="no">不會。</span>轉世會把丹田、金丹、元嬰全部洗掉，下一世築基期重新累積。</div></details>
 
 <h2>🌀 轉世輪迴</h2>
 <details open><summary>轉世（輪迴）會保留什麼？</summary><div class="a">
@@ -109,8 +157,7 @@ a:hover{text-decoration-thickness:2px}
 <li>丹田／金丹／元嬰</li>
 <li>壽元回到凡人的 60 年，年齡回到 16 歲</li>
 <li>待渡劫狀態、虛弱狀態（轉世會清掉虛弱）</li></ul>
-⚠️ 等級回到 Lv.1 後，<b>要換穿的</b>鍛造裝備仍受「人物等級 ≥ 裝備等級」限制；程式沒有在轉世時把身上的裝備脫下。
-<div class="src">來源：leveling.js 的 triggerReincarnate、config-aptitude.js</div></div></details>
+⚠️ 等級回到 Lv.1 後，<b>要換穿的</b>鍛造裝備仍受「人物等級 ≥ 裝備等級」限制；程式沒有在轉世時把身上的裝備脫下。</div></details>
 
 <details><summary>什麼時候可以轉世？</summary><div class="a">
 境界達到<b>仙人初境</b>以上才能轉世輪迴。轉世無法復原，按下前會再確認一次。</div></details>
@@ -120,8 +167,7 @@ a:hover{text-decoration-thickness:2px}
 <span class="no">壽元歸零＝身死道消，存檔清除、重新開始。</span>
 <ul><li>歲月會自然流逝：待在安全區最慢，野外依危險度加速（野外 ×1.5、開放世界 ×2、上古禁區與幽冥禁域 ×3、至高戰場 ×4，渡劫中 ×4），離線時半速。</li>
 <li><b>底線保護</b>：剩餘壽元 ≤「目前境界死亡折壽 × 3」時，自然流逝就停止——時間本身不會害死你。</li>
-<li>但觸底後<b>再戰死 3 次</b>就會身死道消。只有「死亡」會讓壽元歸零。</li></ul>
-<div class="src">來源：config-lifespan.js</div></div></details>
+<li>但觸底後<b>再戰死 3 次</b>就會身死道消。只有「死亡」會讓壽元歸零。</li></ul></div></details>
 
 <details><summary>每次死亡扣多少壽元？突破能加多少？</summary><div class="a">
 <table><tr><th>境界</th><th>突破得壽元</th><th>死亡折壽</th></tr>
@@ -138,8 +184,7 @@ a:hover{text-decoration-thickness:2px}
 <ul><li><b>背景掛機</b>（縮小視窗、切 App、手機鎖螢幕）：約為線上的 <b>93～95%</b>。</li>
 <li><b>關掉遊戲</b>：經驗、靈石、功德等約為線上的 <b>50%</b>。</li>
 <li>離線<b>最多結算 12 小時</b>。</li>
-<li>在安全區打坐（靜修）和僕從任務<b>不打折</b>。</li></ul>
-<div class="src">來源：config-maps.js</div></div></details>
+<li>在安全區打坐（靜修）和僕從任務<b>不打折</b>。</li></ul></div></details>
 
 <details><summary>有哪些經驗加成？</summary><div class="a">
 全部相乘：
