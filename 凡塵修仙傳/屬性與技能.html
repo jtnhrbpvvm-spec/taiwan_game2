@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>屬性與技能</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--phys:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--phys:#fbbf24}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:22px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tabs{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+.tabs button,.chips button{font:inherit;padding:8px 16px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}
+.tabs button.on,.chips button.on{border-color:var(--acc);box-shadow:inset 0 -3px 0 var(--acc);font-weight:bold}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chips button{padding:4px 12px;font-size:13px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:9px;border:1px solid currentColor;white-space:nowrap;font-weight:bold}
+.t-p{color:var(--phys)}.t-m{color:var(--acct)}.t-s{color:var(--ok)}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0}
+.ctl label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+.ctl input,.ctl select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);width:120px;box-sizing:border-box}
+.ctl input.wide{width:260px;max-width:100%}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.res div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--mute)}
+.res b{display:block;font-size:19px;color:var(--acct);font-variant-numeric:tabular-nums}
+.empty{color:var(--mute);padding:20px;text-align:center}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>💪 屬性與技能</h1>
+<div class="sub">六大屬性各自影響什麼、每一招技能吃的是物理攻擊還是術法攻擊。數字都是遊戲畫面上看到的大小。</div>
+<div class="box">
+<b>先講結論：</b>
+<ul>
+<li><span class="tag t-p">物理</span> 的技能看<b>物理攻擊</b>（力量）；<span class="tag t-m">術法</span> 的技能看<b>術法攻擊</b>（悟性）。</li>
+<li><b>普通攻擊永遠是物理</b>，連擊、追擊、橫掃、風擊、靈寵的攻擊技能也都用物理攻擊算。悟性只對術法技能有用。</li>
+<li>物理攻擊和術法攻擊<b>共用同一把武器的攻擊力</b>，差別只在力量／悟性，以及「物理攻擊 %」「術法攻擊 %」這類加成。</li>
+<li>敵人沒有分物理防禦、術法防禦：兩種傷害都一樣會被閃避、被減傷。</li>
+</ul>
+</div>
+<div class="tabs"><button data-k="stat" class="on">🧬 六大屬性</button><button data-k="rule">⚔️ 出手與傷害</button><button data-k="skill">📖 技能一覽</button></div>
+
+<div id="p-stat">
+<h2>每個屬性影響什麼</h2>
+<div class="tw"><table><thead><tr><th>屬性</th><th>影響</th><th>每 1 點</th><th>跟技能的關係</th></tr></thead><tbody>
+<tr><td class="nw"><b>力量</b></td><td>物理攻擊</td><td>基礎攻擊 +5，再讓攻擊 +0.1%</td><td>普通攻擊、所有<span class="tag t-p">物理</span>技能、連擊／追擊／橫掃、靈寵攻擊技能；燒傷、中毒每層的傷害也用物理攻擊算</td></tr>
+<tr><td class="nw"><b>悟性</b></td><td>術法攻擊</td><td>基礎攻擊 +5，再讓攻擊 +0.1%</td><td>只影響<span class="tag t-m">術法</span>技能的傷害</td></tr>
+<tr><td class="nw"><b>體質</b></td><td>氣血上限</td><td>氣血上限 +0.2%</td><td>補血技能、魔功反噬都按氣血上限的比例計算</td></tr>
+<tr><td class="nw"><b>靈力</b></td><td>靈力上限</td><td>靈力上限 +100</td><td>不會增加技能傷害，只決定能放幾次技能；靈力不夠時那一回合改成普通攻擊</td></tr>
+<tr><td class="nw"><b>敏捷</b></td><td>暴擊、連擊、命中、閃避</td><td>暴擊率 +0.01%（上限 30%，暴擊傷害 ×1.5）<br>連擊率 +0.04%（上限 10%）<br>命中 +0.08%（抵銷敵人閃避）<br>閃避 +0.08%</td><td>暴擊對普通攻擊和技能都有效；連擊只會在普通攻擊的回合多打一次普通攻擊</td></tr>
+<tr><td class="nw"><b>魅力</b></td><td>不參與戰鬥</td><td>—</td><td>無</td></tr>
+</tbody></table></div>
+
+<h2>屬性點從哪裡來</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>數量</th></tr></thead><tbody>
+<tr><td class="nw">境界與階數</td><td>起始 5 點，每升 1 階 +1，每突破一個大境界再 +5；力量、體質、悟性、靈力、敏捷五項都一樣多（下方試算可查）</td></tr>
+<tr><td class="nw">煉丹房丹藥</td><td>每顆 +0.1，每種最多 200 顆（+20）</td></tr>
+<tr><td class="nw">藏書閣研讀</td><td>每次 +0.1，每種最多 200 次（+20）</td></tr>
+<tr><td class="nw">裝備</td><td>每件給少量屬性點（品質越高、強化越高越多，飾品較多），全身加起來每項大約幾點</td></tr>
+<tr><td class="nw">符寶（鑲嵌）</td><td>四維符每枚：下品 +0.1、中品 +0.3、上品 +0.6</td></tr>
+<tr><td class="nw">四維 % 加成</td><td>裝備詞條、稱號、先天資質等的「力量 %」「四維 %」，會乘在上面的總和上</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">人物等級<b>不加屬性點</b>：每升 1 級只有氣血上限 +0.005%、靈力上限 +5。</div>
+
+<h2>試算</h2>
+<div class="sub">「額外點數」填丹藥、藏書閣、裝備、符寶加起來的量；「武器攻擊」填裝備卡片上顯示的數字（多把武器只算最高的那一把）。</div>
+<div class="ctl">
+  <label>境界<select id="cRealm"></select></label>
+  <label>階數<select id="cStage"></select></label>
+  <label>人物等級<input id="cLv" type="number" min="1" max="10000" value="1"></label>
+  <label>武器攻擊<input id="cWp" type="number" min="0" value="625"></label>
+</div>
+<div class="ctl">
+  <label>力量 額外點數<input id="cStr" type="number" min="0" step="0.1" value="0"></label>
+  <label>悟性 額外點數<input id="cInt" type="number" min="0" step="0.1" value="0"></label>
+  <label>體質 額外點數<input id="cCon" type="number" min="0" step="0.1" value="0"></label>
+  <label>靈力 額外點數<input id="cSpr" type="number" min="0" step="0.1" value="0"></label>
+  <label>敏捷 額外點數<input id="cAgi" type="number" min="0" step="0.1" value="0"></label>
+</div>
+<div class="ctl">
+  <label>物理攻擊增益 %<input id="cBp" type="number" min="-90" max="200" value="0"></label>
+  <label>術法攻擊增益 %<input id="cBm" type="number" min="-90" max="200" value="0"></label>
+  <label>氣血增益 %<input id="cBh" type="number" min="-90" max="200" value="0"></label>
+</div>
+<div class="res" id="cRes"></div>
+<div class="sub">攻擊力、氣血上限在畫面上是<b>以 100 為一格跳動</b>的，所以只加一兩點屬性時數字可能完全不動，要累積到跨過下一格才會變。</div>
+</div>
+
+<div id="p-rule" hidden>
+<h2>攻擊力怎麼算</h2>
+<div class="box">
+<b>物理攻擊</b>＝（武器攻擊 ＋ 力量 × 5）×（1 ＋ 力量 × 0.1%）×（1 ＋ 增益）<br>
+<b>術法攻擊</b>＝（武器攻擊 ＋ 悟性 × 5）×（1 ＋ 悟性 × 0.1%）×（1 ＋ 增益）
+<ul>
+<li>武器攻擊：身上 6 種武器只取<b>最高的一把</b>，其他武器只提供屬性點。主修職業對應的武器、宗門傳承另有加成。</li>
+<li>增益：<b>全部相加，上限 +200%</b>。物理與術法分開計算。</li>
+<li>同時加兩邊的增益：「攻擊 %」（裝備詞條、套裝、稱號、劍修被動、夥伴被動、先天資質）、五行共鳴的攻擊加成、宗門戰力倍率（每 ×1 換成 +20%，例如 ×2.5 → +30%、×6 → +100%）、靈寵青蒼狼 +15%／九幽蛟龍 +30%（出戰中）、增益類技能。</li>
+<li>只加物理：「物理攻擊 %」（刀修被動每階 +2%）。</li>
+<li>只加術法：「術法攻擊 %」（扇修被動每階 +2%、元嬰品級的術法傷害）。</li>
+<li>渡劫失敗的「虛弱」會讓攻擊、氣血、靈力上限 ×0.7。</li>
+</ul>
+</div>
+
+<h2>每回合怎麼出手</h2>
+<div class="box">
+<ul>
+<li>每回合有 <b>40%</b> 會放技能：從你會的「宗門技能＋靈寶閣武學」裡隨機抽一招。靈力夠就施放，<b>靈力不夠就改成普通攻擊</b>。</li>
+<li>其餘回合是<b>普通攻擊</b>（物理攻擊 ×100%，打第一隻）。這時才會判定連擊。</li>
+<li>技能傷害＝對應的攻擊力 × 技能威力 ×（1 ＋ 技能傷害加成）。技能傷害加成來自裝備特效「法爆」、符修被動（每階 +2%）、金靈星君加持（+20%）、煉共鳴（+10%）等。</li>
+<li>裝備特效「聚靈」會降低技能消耗的靈力。</li>
+</ul>
+<b>另外自動發動的招式</b>（每回合出手後各自判定，不耗你的靈力、不佔上面那 40%）：
+<ul>
+<li><b>職業技能</b>：熟練度到 5／8／10 階解鎖，由高階往低階判定，發動一招就停。</li>
+<li><b>神器專屬技能</b>：裝在神器欄就有。</li>
+<li><b>夥伴絕學</b>：隊伍裡每位夥伴各自判定，用的是夥伴自己的靈力，但<b>傷害用你的攻擊力算</b>。</li>
+<li><b>靈寵技能</b>：攻擊類一律用你的<b>物理攻擊</b>算。</li>
+</ul>
+這幾類自動招式不吃「技能傷害加成」，但照樣吃攻擊力、暴擊、屬性效果。
+</div>
+
+<h2>每一擊的結算順序</h2>
+<div class="tw"><table><thead><tr><th class="num">順序</th><th>項目</th><th>說明</th></tr></thead><tbody>
+<tr><td class="num">1</td><td class="nw">閃避</td><td>敵人閃避 − 你的命中（敏捷、洞察），閃掉就沒有傷害</td></tr>
+<tr><td class="num">2</td><td class="nw">傷害浮動</td><td>每一擊 ±10%，平均不變</td></tr>
+<tr><td class="num">3</td><td class="nw">金重擊</td><td>觸發時該擊 ×2</td></tr>
+<tr><td class="num">4</td><td class="nw">雷擊</td><td>觸發時該擊 ×1.3，並無視目標減傷</td></tr>
+<tr><td class="num">5</td><td class="nw">五行相剋</td><td>剋制 +30%、被剋 −30%（看你的本命五行）</td></tr>
+<tr><td class="num">6</td><td class="nw">暴擊</td><td>觸發時該擊 ×1.5（敏捷）</td></tr>
+<tr><td class="num">7</td><td class="nw">減傷</td><td>敵人減傷 − 你的破甲；雷擊、暗蝕會跳過這一步</td></tr>
+<tr><td class="num">8</td><td class="nw">附加狀態</td><td>冰凍 1 回合；燒傷每層每回合＝物理攻擊 × 15%（最多 3 層、3 回合）；中毒每層每回合＝物理攻擊 × 8%（最多 5 層、3 回合）</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">技能自帶的屬性效果（例如「必定燒傷」）會和你裝備上的觸發率取較高的那個。<b>術法技能觸發的燒傷、中毒，每層傷害還是用物理攻擊算</b>。</div>
+
+<h2>物理和術法還有哪裡不同</h2>
+<div class="box">
+<ul>
+<li><b>你被打的時候</b>：裝備特效「金身」減少妖獸的傷害，「化勁」減少修士、心魔、懸賞人物武學的傷害。</li>
+<li><b>死守天南城、鎮魔塔</b>：不會一招一招放技能，直接拿物理攻擊、術法攻擊<b>較高的那個</b>當你的輸出。</li>
+<li><b>戰力</b>（人物面板、戰力榜）：同樣取物理、術法較高的那個來算。</li>
+<li><b>渡劫、懸賞對決</b>：出手規則和野外相同。</li>
+</ul>
+</div>
+</div>
+
+<div id="p-skill" hidden>
+<div class="sub">威力是對應攻擊力的倍率；耗靈是畫面上顯示的數字。宗門技能、靈寶閣武學要靠每回合 40% 的技能判定抽到才會施放；職業、神器、夥伴的招式是自動發動，表中的機率是每回合的發動率。</div>
+<div class="ctl"><label>搜尋<input class="wide" id="q" placeholder="技能、宗門、夥伴名稱…"></label></div>
+<div class="chips" id="fSrc"></div>
+<div class="chips" id="fType"></div>
+<div class="sub" id="cnt"></div>
+<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th>範圍</th><th class="num">威力</th><th class="num">耗靈</th><th class="num">發動率</th><th>附帶效果</th></tr></thead><tbody id="skBody"></tbody></table></div>
+<div class="empty" id="skEmpty" hidden>找不到符合的技能</div>
+
+<h2>仙法（武學密典）</h2>
+<div class="sub">武學密典裡的 200 種仙法目前<b>還沒有開放取得方式</b>，只能瀏覽。先列出各屬性吃哪種攻擊力，開放後可以參考。主動仙法要放進技能格才會施放（Lv.1 有 1 格，每 100 級多 1 格）；光環學會就永久生效。</div>
+<div class="tw"><table><thead><tr><th>屬性</th><th>正邪</th><th>類型</th><th>攻擊招附帶</th><th>光環（下品／中品／上品）</th></tr></thead><tbody id="spBody"></tbody></table></div>
+<div class="sub" style="margin-top:6px">邪道魔功傷害 ×1.25，但每次施放會反噬自己的氣血（下品 3%、中品 5%、上品 8%、絕學 12%，不會因此死亡）。無屬性的法則絕學一律算術法。</div>
+<div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
+</div>
+</div>
+<script>
+const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const full=n=>Number(n).toLocaleString("zh-TW");
+const $=id=>document.getElementById(id);
+
+// ---- 試算 ----
+REALMS.forEach((r,i)=>$("cRealm").insertAdjacentHTML("beforeend",`<option value="${i}">${r}</option>`));
+for(let s=1;s<=10;s++)$("cStage").insertAdjacentHTML("beforeend",`<option value="${s}">${s} 階</option>`);
+function calc(){
+  const v=id=>+$(id).value||0, r=v("cRealm"), s=v("cStage"), lv=Math.max(1,v("cLv"));
+  const base=5+(r*10+s-1)+5*r;
+  const st={str:base+v("cStr"),int:base+v("cInt"),con:base+v("cCon"),spr:base+v("cSpr"),agi:base+v("cAgi")};
+  const buff=x=>Math.max(-0.9,Math.min(2,x/100));
+  const atk=(p,b)=>Math.max(1,Math.round((v("cWp")/100+p*0.05)*(1+p*0.001)*(1+buff(b))))*100;
+  const hp=Math.max(1,Math.round(50*Math.pow(1.05,r+(s-1)/10)*(1+st.con*0.002)*(1+buff(v("cBh")))*(1+lv*0.00005)))*100;
+  const mp=Math.max(1,Math.round(5+st.spr+lv*0.05))*100;
+  const pc=x=>+x.toFixed(2)+"%";
+  $("cRes").innerHTML=[
+    ["境界基本屬性",base],["物理攻擊",full(atk(st.str,v("cBp")))],["術法攻擊",full(atk(st.int,v("cBm")))],
+    ["氣血上限",full(hp)],["靈力上限",full(mp)],["暴擊率",pc(Math.min(30,st.agi*0.01))],["連擊率",pc(Math.min(10,st.agi*0.04))],
+    ["命中",pc(st.agi*0.08)],["敏捷給的閃避",pc(st.agi*0.08)]
+  ].map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("");
+}
+document.querySelectorAll("#p-stat input,#p-stat select").forEach(e=>e.oninput=calc);calc();
+
+// ---- 技能 ----
+// [來源, 所屬, 技能, 類型 p/m/s, 範圍, 威力, 原始耗靈, 發動率%, 附帶效果]
+const S=[];
+const sect=(tier,list)=>list.forEach(([o,n,t,g,mp])=>S.push(["宗門技能",o,n,t,g,{1:1.5,2:2,3:3}[tier],mp,null,""]));
+sect(1,[["武當","太極拳","p","單體",45],["武當","純陽無極功","m","單體",60],["峨嵋","峨嵋劍法","p","單體",60],["峨嵋","清心普善咒","m","全體",75],
+["少林寺","金剛伏魔","p","單體",75],["少林寺","獅子吼","m","全體",75],["全真教","全真劍法","p","單體",60],["全真教","先天功","m","單體",75],
+["皇朝","真龍拳","p","單體",75],["皇朝","皇極經世","m","全體",90],["逍遙派","天山折梅手","p","單體",60],["逍遙派","逍遙扇舞","m","全體",75]]);
+sect(2,[["崑崙仙宗","玉清仙法","m","全體",120],["崑崙仙宗","崑崙印","p","單體",105],["蜀山劍派","萬劍訣","m","全體",150],["蜀山劍派","天劍","p","單體",120],
+["丹鼎司","三昧真火","m","全體",135],["丹鼎司","丹爐撼岳","p","單體",105],["御獸仙宗","獸王怒","p","單體",105],["御獸仙宗","萬獸奔騰","m","全體",150],
+["天魔教","噬血斬","p","單體",105],["天魔教","天魔解體","m","全體",150],["天音閣","天音破魔曲","m","全體",150],["天音閣","裂石音刃","p","單體",120]]);
+sect(3,[["太清道德宗","太極陰陽圖","m","全體",240],["太清道德宗","九轉金丹掌","p","單體",180],["玉清闡教宗","翻天印","p","單體",210],["玉清闡教宗","金光神咒","m","全體",240],
+["上清截教宗","誅仙劍陣","p","全體",300],["上清截教宗","上清雷法","m","單體",180],["萬界仙門","萬界穿梭","p","單體",180],["萬界仙門","諸天寂滅","m","全體",300],
+["九幽黃泉","九幽冥掌","p","單體",210],["九幽黃泉","黃泉引魂","m","全體",270],["天籟仙宮","天籟九霄","m","全體",270],["天籟仙宮","仙音斷魂","p","單體",210]]);
+[["初級宗門","寒冰綿掌","m","單體",2,90,"30% 凍結"],["初級宗門","烈火刀法","p","全體",1.8,120,"40% 燒傷"],
+["中級宗門","萬毒噬心功","m","全體",2.6,180,"60% 中毒"],["中級宗門","天罡破軍斬","p","單體",3.5,180,"50% 金重擊（該擊 ×2）"],
+["高級宗門","太虛寒獄","m","全體",4,300,"50% 凍結"],["高級宗門","九幽焚天訣","p","單體",6,360,"必定燒傷"]]
+.forEach(([o,n,t,g,m,mp,fx])=>S.push(["靈寶閣武學",o,n,t,g,m,mp,null,fx]));
+[["劍修 5 階","萬劍歸宗","p","全體",1.2,10,""],["劍修 8 階","人劍合一","p","單體",2.5,10,"50% 金重擊"],["劍修 10 階","一劍開天","p","單體",4,8,"必定金重擊"],
+["刀修 5 階","狂刀斬","p","單體",2,12,"40% 金重擊"],["刀修 8 階","霸刀裂地","p","全體",1.5,10,""],["刀修 10 階","刀皇天斬","p","全體",2.5,8,"60% 金重擊"],
+["扇修 5 階","清風拂面","m","全體",1.2,12,"30% 凍結"],["扇修 8 階","羽化風暴","m","全體",1.8,10,"50% 中毒"],["扇修 10 階","風帝天罡","m","全體",2.8,8,"60% 凍結"],
+["弓修 5 階","連珠箭","p","單體",1.8,12,"30% 雷擊"],["弓修 8 階","穿雲破日","p","單體",3,10,"60% 雷擊"],["弓修 10 階","弓帝射天","p","全體",2.2,8,"80% 雷擊"],
+["音修 5 階","清心曲","s","自身",null,12,"回復 8% 氣血與 8% 靈力"],["音修 8 階","天魔音","m","全體",1.5,8,"敵方全體凍結 1 回合"],["音修 10 階","樂帝九韶","m","全體",2.2,8,"60% 凍結，回復 10% 氣血"],
+["符修 5 階","爆炎符","m","單體",2,12,"60% 燒傷"],["符修 8 階","萬毒符陣","m","全體",1.6,10,"60% 中毒"],["符修 10 階","符祖敕令","m","全體",3,8,"80% 燒傷"]]
+.forEach(([o,n,t,g,m,ch,fx])=>S.push(["職業技能",o,n,t,g,m,null,ch,fx]));
+[["混沌鐘","鐘鎮諸天","p","全體",2.5,18,"40% 凍結"],["三世銅棺","三世輪迴","s","自身",null,20,"受到傷害 −50% 持續 2 回合，回復 12% 氣血"],
+["荒天帝大羅劍胎","一劍破天險，帝威嚇世間","p","單體",2.5,18,"必定金重擊"],["萬物母氣鼎","萬物母氣","p","全體",1.8,18,"必定燒傷，回復 8% 氣血與 8% 靈力"],
+["吞天魔罐","吞天噬地","m","單體",3,18,"必定中毒，吸取傷害 30% 回復氣血"],["無始鐘","一見無始道成空","m","單體",1.5,18,"敵方全體凍結 1 回合"]]
+.forEach(([o,n,t,g,m,ch,fx])=>S.push(["神器技能",o,n,t,g,m,null,ch,fx]));
+[["蕭炎","佛怒火蓮","m","全體",2.6,17,"必定燒傷"],["林動","吞噬祖符","m","單體",2.6,17,"吸取傷害 30% 回復氣血"],["風希","裂風","p","全體",2.2,16,""],["厲飛雨","天煞魔威","p","單體",2.2,16,""],
+["韓立","青竹蜂雲劍陣","p","全體",2.4,18,"必定雷擊"],["南宮婉","素女輪迴","m","全體",2.2,17,"回復 8% 氣血"],["辰南","逆天一擊","p","單體",3,18,""],
+["牧塵","八部浮屠","m","全體",2.2,17,"受到傷害 −30% 持續 2 回合"],["唐三","藍銀囚籠・昊天錘","p","單體",1.6,16,"敵方全體凍結 1 回合"],["葉凡","聖體鎮世","p","單體",3,18,"回復 6% 氣血"],
+["狠人大帝","吞天魔功","m","單體",3,18,"必定中毒，吸取傷害 25%"],["無始大帝","無始鐘鳴","p","全體",2.2,17,"受到傷害 −30% 持續 2 回合"],["段德","源術・封","m","單體",2.2,16,"必定凍結"],
+["鬥戰聖皇","鬥戰聖法","p","單體",2.6,17,""],["虛空大帝","虛空鏡照","m","單體",2.6,17,""],["恆宇大帝","恆宇爐煉","m","全體",2.2,17,"必定燒傷"],["青帝","青蓮綻世","m","全體",2.2,17,"回復 10% 氣血"],
+["西皇母","西皇塔鎮","m","單體",2.2,17,"受到傷害 −40% 持續 2 回合"],["阿彌陀佛大帝","佛光普照","s","自身",null,17,"回復 15% 氣血，受到傷害 −50% 持續 2 回合"],["羅峰","金角巨獸","p","全體",2.5,18,"回復 10% 氣血"],
+["石昊","十凶寶術","p","全體",2.4,18,"必定雷擊"],["王林","殺戮之道","m","單體",2.6,17,""],["孟浩","封天一指","m","單體",2.6,17,""],["白小純","不死長生功","s","自身",null,16,"回復 15% 氣血，受到傷害 −40% 持續 2 回合"],
+["秦羽","星辰變","m","全體",2.4,18,""],["林雷","大地脈動","p","全體",2.2,17,""],["張小凡","噬魂","m","單體",2.2,16,"吸取傷害 25%"],["李七夜","萬古一擊","m","單體",3,18,""],["洪","永恆神威","p","單體",3,18,""],
+["雷神","雷神之怒","m","全體",2.4,18,"必定雷擊"],["霍雨浩","冰碧帝皇蠍・極致之冰","m","全體",2,17,"必定凍結"],["唐舞麟","金龍王・毀滅","p","單體",2.6,17,""],["古月娜","銀龍王・生命之光","m","全體",2,17,"回復 12% 氣血"],
+["唐軒宇","創世","m","全體",2.4,18,"回復 8% 氣血"],["奧斯卡","恢復大香腸","s","自身",null,15,"回復 12% 氣血與 8% 靈力"],["馬紅俊","鳳凰火線","m","全體",1.6,15,"必定燒傷"],
+["寧榮榮","七寶琉璃塔","s","自身",null,15,"回復 10% 靈力，受到傷害 −25% 持續 2 回合"],["小醫仙","厄難毒霧","m","全體",1.6,15,"必定中毒"],["紫靈","妙音鎖魂","m","單體",1.4,15,"敵方全體凍結 1 回合"],
+["徐欣","守望之心","s","自身",null,15,"回復 10% 氣血，受到傷害 −20% 持續 2 回合"],["秦霜","霜月斬","p","單體",1.8,15,"必定凍結"],["巴巴塔","弱點分析","m","單體",1.5,15,"回復 6% 靈力"],
+["金角巨獸","巨獸踐踏","p","全體",1.6,15,""],["摩雲藤","吞噬生機","m","單體",1.5,15,"吸取傷害 30% 回復氣血"]]
+.forEach(([o,n,t,g,m,ch,fx])=>S.push(["夥伴絕學",o,n,t,g,m,null,ch,fx]));
+
+const TYPE={p:["物理","t-p"],m:["術法","t-m"],s:["輔助","t-s"]};
+const mpShow=b=>Math.max(1,Math.ceil(b*0.1-1e-9))*100;
+const flt={src:"全部",type:"all"};
+function chips(box,key,opts){
+  $(box).innerHTML=opts.map(([v,l])=>`<button data-v="${v}" class="${flt[key]===v?"on":""}">${l}</button>`).join("");
+  $(box).querySelectorAll("button").forEach(b=>b.onclick=()=>{flt[key]=b.dataset.v;chips(box,key,opts);renderSkills()});
+}
+function renderSkills(){
+  const q=$("q").value.trim();
+  const list=S.filter(r=>(flt.src==="全部"||r[0]===flt.src)&&(flt.type==="all"||r[3]===flt.type)&&(!q||(r[0]+r[1]+r[2]+r[8]).includes(q)));
+  const n=k=>list.filter(r=>r[3]===k).length;
+  $("cnt").textContent=`共 ${list.length} 招：物理 ${n("p")}、術法 ${n("m")}、輔助 ${n("s")}`;
+  $("skBody").innerHTML=list.map(r=>`<tr><td class="nw">${r[0]}<br><span class="sub">${esc(r[1])}</span></td><td><b>${esc(r[2])}</b></td>
+  <td><span class="tag ${TYPE[r[3]][1]}">${TYPE[r[3]][0]}</span></td><td class="nw">${r[4]}</td>
+  <td class="num">${r[5]?Math.round(r[5]*100)+"%":"—"}</td><td class="num">${r[6]?full(mpShow(r[6])):"—"}</td><td class="num">${r[7]?r[7]+"%":"—"}</td><td>${esc(r[8])||"—"}</td></tr>`).join("");
+  $("skEmpty").hidden=list.length>0;
+}
+chips("fSrc","src",["全部","宗門技能","靈寶閣武學","職業技能","神器技能","夥伴絕學"].map(s=>[s,s]));
+chips("fType","type",[["all","物理＋術法＋輔助"],["p","只看物理"],["m","只看術法"],["s","只看輔助"]]);
+$("q").oninput=renderSkills;renderSkills();
+
+// ---- 仙法 ----
+$("spBody").innerHTML=[
+["金","正","p","金重擊","物理攻擊 +5%／+10%／+15%"],["木","正","m","吸取傷害 10% 回復氣血","氣血上限 +6%／+12%／+18%"],["水","正","m","凍結","靈力上限 +8%／+16%／+25%"],
+["火","正","m","燒傷","燒傷機率 +4%／+8%／+12%"],["土","正","p","—","減傷 +2%／+4%／+6%"],["雷","正","m","雷擊","雷擊機率 +4%／+8%／+12%"],
+["冰","邪","m","凍結","冰凍機率 +4%／+8%／+12%"],["毒","邪","m","中毒","中毒機率 +4%／+8%／+12%"],
+["血","邪","p","吸取傷害 25% 回復氣血","物理、術法攻擊 +8%／+15%／+22%，氣血上限 −3%／−5%／−8%"],["冥","邪","m","中毒","閃避 +2%／+4%／+6%"]
+].map(r=>`<tr><td class="nw"><b>${r[0]}</b></td><td class="nw">${r[1]==="正"?"正道仙法":"邪道魔功"}</td><td><span class="tag ${TYPE[r[2]][1]}">${TYPE[r[2]][0]}</span></td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join("");
+$("sgBody").innerHTML=[["下品",1.6,1.1,0.8,"×1.15","−15%","12%",60],["中品",2.4,1.7,1.2,"×1.25","−25%","20%",150],["上品",3.4,2.5,1.6,"×1.4","−35%","30%",300],["絕學",5,3.8,2,"×1.8","−50%","50%",600]]
+.map(r=>`<tr><td><b>${r[0]}</b></td><td class="num">${Math.round(r[1]*100)}%</td><td class="num">${Math.round(r[2]*100)}%</td><td class="num">${Math.round(r[3]*100)}%</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td><td class="num">${r[6]}</td><td class="num">${full(mpShow(r[7]))}</td></tr>`).join("");
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["stat","rule","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
+</script></body></html>
