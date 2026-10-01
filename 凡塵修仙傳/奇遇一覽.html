@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>奇遇一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b,.card b{color:var(--acct)}
+.box ul,.card ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:9px;border:1px solid currentColor;white-space:nowrap;font-weight:bold}
+.t-o{color:var(--warn)}.t-c{color:var(--ok)}.t-w{color:var(--acct)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(480px,100%),1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.75;min-width:0}
+.card h3{margin:0 0 4px;font-size:17px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card h4{margin:10px 0 2px;font-size:13px;color:var(--mute);font-weight:normal}
+.card table{margin-top:4px}
+.card th,.card td{font-size:13px;padding:5px 8px}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🌀 奇遇一覽</h1>
+<div class="sub">切換地圖時有機會遇到的異界空間、機緣小遊戲與機緣任務：怎麼觸發、怎麼玩、給什麼。</div>
+
+<div class="box">
+<b>先看這幾點：</b>
+<ul>
+<li>奇遇只會在你<b>自己切換地圖</b>時出現，離線掛機不會觸發。</li>
+<li>遇到後會先<b>封存</b>起來，畫面左側出現「🌀 異界」入口，想打的時候再點進去。最多同時封存 <b>4 個</b>，滿了就不會再出現新的。</li>
+<li>封存 <b>24 小時</b>沒進去會消散（三界戰場保留到當週結束）。</li>
+<li>一旦進入就<b>不能中途離開</b>，只能打完或認輸。中途重新整理或關掉頁面，這次奇遇直接作廢、<b>沒有任何獎勵</b>。</li>
+<li>所有奇遇都會給「下品武學秘典碎片」，集滿 100 片可以合成一招下品仙法。</li>
+</ul>
+</div>
+
+<h2>次數上限</h2>
+<div class="tw"><table><thead><tr><th>分類</th><th>包含</th><th class="num">上限</th></tr></thead><tbody>
+<tr><td><span class="tag t-o">異界</span></td><td>虛天殿、血色禁地</td><td class="num">每天合計 2 次</td></tr>
+<tr><td><span class="tag t-c">機緣</span></td><td>強者現身、靈獸競速、古洞尋寶、丹爐試火</td><td class="num">每天合計 3 次</td></tr>
+<tr><td><span class="tag t-w">每週</span></td><td>三界戰場</td><td class="num">每週 1 次</td></tr>
+<tr><td><span class="tag t-c">任務</span></td><td>機緣任務</td><td class="num">每天 2 個，同時只能有 1 個</td></tr>
+</tbody></table></div>
+
+<h2>怎麼觸發</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>條件</th><th>會遇到</th></tr></thead><tbody>
+<tr><td class="nw"><b>秘密路線</b></td><td>在 10 分鐘內依序走：<b>宗門 → 天南城 → 天星城 → 宗門</b>。這是唯一能<b>主動觸發</b>的方式（進天星城時偶爾會在日誌聽到茶樓傳聞，就是在講這條路線）</td><td>🏯 虛天殿</td></tr>
+<tr><td class="nw"><b>禁地感應</b></td><td>每<b>進入野外地圖 30 次</b>必定觸發一次。當天異界次數已用完時會保留，隔天第一次進野外就觸發</td><td>🩸 血色禁地</td></tr>
+<tr><td class="nw"><b>空間裂縫</b></td><td>進入野外地圖時隨機出現</td><td>虛天殿、血色禁地、強者現身、古洞尋寶其中之一</td></tr>
+<tr><td class="nw"><b>城中機緣</b></td><td>進入天南城或天星城時隨機出現（宗門不算）</td><td>靈獸競速、丹爐試火、強者現身其中之一；也可能接到機緣任務</td></tr>
+<tr><td class="nw"><b>三界召令</b></td><td>每週（週一起算）<b>第一次切換地圖</b>必定出現</td><td>⚔️ 三界戰場</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">想多遇到奇遇，就多在城鎮和野外之間來回切換地圖。</div>
+
+<h2>獎勵裡的「H」是什麼</h2>
+<div class="box">H＝你<b>目前境界每小時練功的靈石收入</b>。例如「H × 3」就是三小時份的靈石，境界越高拿得越多。<br>
+<b>實力換算</b>：奇遇裡用的是另一套小數字，但會看你的戰力與氣血相對「同境界一般玩家」的強弱，換成 <b>0.6～1.8 倍</b>套在你的角色上。裝備好會比較輕鬆，但不會強到碾壓。</div>
+
+<h2>異界</h2>
+<div class="grid">
+<div class="card">
+<h3>🏯 虛天殿 <span class="tag t-o">異界</span></h3>
+古修遺留的八層殿堂，一路往下闖，最深處是守鼎傀儡。
+<h4>規則</h4>
+<ul>
+<li>共 <b>8 層</b>，每層可以選路，會遇到敵人、奇遇、寶箱或調息點。</li>
+<li>敵人會<b>預告下一步</b>要做什麼，看清楚再決定出招。</li>
+<li>每打贏一場，從三門功法裡<b>選一門</b>，效果持續到這次闖關結束。</li>
+<li>最後的守鼎傀儡固定 170 氣血、15 攻擊。</li>
+</ul>
+<h4>可選的功法</h4>
+<div class="tw"><table><tbody>
+<tr><td class="nw">青元劍訣</td><td>攻擊 +25%</td><td class="nw">羅煙步</td><td>15% 機率閃避攻擊</td></tr>
+<tr><td class="nw">大衍訣</td><td>法術消耗 −5 靈力</td><td class="nw">長春功</td><td>每場勝利回復 12% 氣血</td></tr>
+<tr><td class="nw">玄冰甲</td><td>防禦 +3</td><td class="nw">噬金蟲</td><td>每回合額外造成 4 點傷害</td></tr>
+<tr><td class="nw">血靈鑽</td><td>劍訣傷害的 20% 轉為氣血</td><td class="nw">紫羅極火</td><td>法術倍率 1.8 → 2.4</td></tr>
+<tr><td class="nw">乾藍冰焰</td><td>每場戰鬥開場獲得 10 點護體</td><td class="nw">大庚劍陣</td><td>劍訣無視 3 點防禦並 +2 傷害</td></tr>
+</tbody></table></div>
+<h4>獎勵</h4>
+<ul>
+<li>每闖過一層：H × 0.25、秘典碎片 2（失敗或認輸也保留已闖過的層）</li>
+<li>通關：再給 H × 3、星允鐵 30、異火碎片 20～40、秘典碎片 15</li>
+<li><b>第一次通關</b>：中品剋制法寶 1 件（種族隨機）</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>🩸 血色禁地 <span class="tag t-o">異界</span></h3>
+墨蛟盤踞的禁地，帶著夥伴與靈寵排兵布陣的戰棋。
+<h4>我方陣容</h4>
+<ul>
+<li>你本人，加上<b>隊伍裡前 2 位夥伴</b>與<b>出戰中的前 2 隻靈寵</b>。</li>
+<li>不足 3 人會補「宗門弟子」；我方每超過 3 人，敵方就多一隻血狼。</li>
+<li>夥伴的「神通」高於「攻伐」的算法系，<b>射程 2</b>；射程 2 以上的單位被近身攻擊時無法反擊。</li>
+<li>夥伴和靈寵只吃到你一半的實力加成。</li>
+</ul>
+<h4>五行相剋</h4>
+攻擊方剋制對方 <b>+30%</b>，被剋 <b>−20%</b>：金 → 木 → 土 → 水 → 火 → 金。<br>
+你的五行＝本命五行（身上最多的那種裝備五行）；靈寵固定：靈幻狐火、青蒼狼木、九幽蛟龍水。
+<h4>地形</h4>
+<div class="tw"><table><tbody>
+<tr><td class="nw"><b>山</b></td><td>進入要 2 點移動，站上去防禦 +3</td><td class="nw"><b>林</b></td><td>站在裡面受傷 −25%</td></tr>
+<tr><td class="nw"><b>河</b></td><td>無法通過</td><td class="nw"><b>泉</b></td><td>回合開始回復 6 點氣血</td></tr>
+</tbody></table></div>
+<h4>獎勵</h4>
+<ul>
+<li>獲勝：H × 3、異火碎片 15～30、秘典碎片 12，並有機會拿到天驕或尊者夥伴碎片 5～10</li>
+<li><b>6 回合內</b>獲勝：再多 H × 1</li>
+<li><b>第一次獲勝</b>：中品降妖葫蘆（對妖獸的剋制法寶）</li>
+<li>落敗或認輸：H × 0.5、秘典碎片 3</li>
+</ul>
+</div>
+</div>
+
+<h2>每週</h2>
+<div class="card">
+<h3>⚔️ 三界戰場 <span class="tag t-w">每週</span></h3>
+人界、靈界、魔界千名修士（你加上 999 名對手）的淘汰賽。不佔每日次數。
+<h4>賽制</h4>
+<ul>
+<li><b>海選 5 輪</b>：打完後依勝場排名，<b>前 100 名</b>晉級。</li>
+<li><b>百強單淘汰</b>：前 28 名種子第一輪輪空，之後 64 強 → 32 強 → 16 強 → 8 強 → 4 強 → 決賽，輸一場就出局。</li>
+<li>可以按「略過演出，直接打完」，系統會自動幫你選剋制對手的戰法。</li>
+</ul>
+<h4>戰法相剋（每場選一種）</h4>
+<b>猛攻剋奇襲、奇襲剋穩守、穩守剋猛攻。</b>開打前探子會回報對手的流派與慣用戰法，照下表出招最有利：
+<div class="tw"><table><thead><tr><th>對手流派</th><th>慣用戰法</th><th>你該出</th></tr></thead><tbody>
+<tr><td>劍修、符修</td><td>猛攻</td><td><b>穩守</b></td></tr>
+<tr><td>體修、陣修</td><td>穩守</td><td><b>奇襲</b></td></tr>
+<tr><td>法修、魔修</td><td>奇襲</td><td><b>猛攻</b></td></tr>
+</tbody></table></div>
+<div class="sub">對手不一定每次都用慣用戰法，但照這樣選勝算最高。</div>
+<h4>獎勵</h4>
+海選每贏一場：H × 0.5、秘典碎片 2。另外依最終名次：
+<div class="tw"><table><thead><tr><th>名次</th><th class="num">靈石</th><th class="num">秘典碎片</th><th class="num">七彩補天石</th><th>其他</th></tr></thead><tbody>
+<tr><td>百強</td><td class="num">H × 4</td><td class="num">8</td><td class="num">—</td><td>—</td></tr>
+<tr><td>64 強</td><td class="num">H × 6</td><td class="num">10</td><td class="num">—</td><td>—</td></tr>
+<tr><td>32 強</td><td class="num">H × 8</td><td class="num">12</td><td class="num">—</td><td>—</td></tr>
+<tr><td>16 強</td><td class="num">H × 12</td><td class="num">16</td><td class="num">—</td><td>—</td></tr>
+<tr><td>8 強</td><td class="num">H × 16</td><td class="num">20</td><td class="num">1</td><td>—</td></tr>
+<tr><td>4 強</td><td class="num">H × 24</td><td class="num">30</td><td class="num">2</td><td>至高夥伴碎片 5～8</td></tr>
+<tr><td>亞軍</td><td class="num">H × 32</td><td class="num">40</td><td class="num">3</td><td>至高夥伴碎片 10～15、中品剋制法寶</td></tr>
+<tr><td><b>冠軍</b></td><td class="num">H × 48</td><td class="num">60</td><td class="num">5</td><td>至高夥伴碎片 20～30、上品剋制法寶</td></tr>
+</tbody></table></div>
+<div class="sub">至高評級的夥伴碎片只有這裡拿得到，要 500 片才能激活，見<a href="夥伴一覽.html">夥伴一覽</a>。</div>
+</div>
+
+<h2>機緣</h2>
+<div class="grid">
+<div class="card">
+<h3>🌟 強者現身 <span class="tag t-c">機緣</span></h3>
+一位尊者或帝境強者途經此地（帝境比較少見）。會優先遇到你<b>還沒結識</b>的夥伴。
+<h4>三種應對，選一種</h4>
+<div class="tw"><table><thead><tr><th>應對</th><th>碎片倍率</th><th class="num">秘典碎片</th><th>說明</th></tr></thead><tbody>
+<tr><td class="nw"><b>虛心請教</b></td><td>× 1</td><td class="num">5</td><td>穩定，沒有風險</td></tr>
+<tr><td class="nw"><b>斗膽切磋</b></td><td>贏 × 2.2<br>輸 × 0.6</td><td class="num">10</td><td>勝算看你的實力，對手是帝境時更難贏</td></tr>
+<tr><td class="nw"><b>奉上靈石護法</b></td><td>× 1.6</td><td class="num">8</td><td>要花 H × 1 的靈石，穩定拿到較多</td></tr>
+</tbody></table></div>
+<h4>獎勵</h4>
+<ul>
+<li>該夥伴的碎片：尊者 8～12 片、帝境 10～15 片，再乘上面的倍率</li>
+<li>如果遇到的是<b>已經結識</b>的夥伴，改成加好感 60 × 倍率</li>
+<li>帝境夥伴要 300 片才能激活，這裡是唯一的來源</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>🐎 靈獸競速 <span class="tag t-c">機緣</span></h3>
+城中舉辦的靈獸競速，對手 5 隻。
+<h4>規則</h4>
+<ul>
+<li>上場的是你<b>出戰中的第一隻靈寵</b>；沒有靈寵會借你一隻靈狐。靈寵等級越高跑得稍快（最多 +3%）。</li>
+<li>有 <b>3 次鞭策</b>：每次加速 1.2 秒、消耗 35 體力。體力耗盡會力竭。</li>
+<li>賽道<b>最後 30% 是衝刺段，鞭策效果加倍</b>。</li>
+</ul>
+<h4>訣竅</h4>
+<b>三次鞭策都留到衝刺段再用</b>，效果最好；完全不鞭策幾乎一定墊底。
+<h4>獎勵</h4>
+<div class="tw"><table><thead><tr><th>名次</th><th class="num">靈石</th><th class="num">秘典碎片</th><th class="num">獸丹</th></tr></thead><tbody>
+<tr><td>第 1 名</td><td class="num">H × 1.5</td><td class="num">20</td><td class="num">3,000</td></tr>
+<tr><td>第 2 名</td><td class="num">H × 0.8</td><td class="num">10</td><td class="num">1,500</td></tr>
+<tr><td>第 3 名</td><td class="num">H × 0.5</td><td class="num">6</td><td class="num">800</td></tr>
+<tr><td>其他</td><td class="num">H × 0.2</td><td class="num">2</td><td class="num">—</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="card">
+<h3>⛏️ 古洞尋寶 <span class="tag t-c">機緣</span></h3>
+山壁崩開一座古修洞府，在 6 × 6 的格子裡挖寶。
+<h4>規則</h4>
+<ul>
+<li>有 <b>8 把靈鋤</b>，挖一格用掉一把。</li>
+<li>挖到<b>機關</b>會多毀一把靈鋤。</li>
+<li>挖開空地會顯示<b>周圍八格裡還有幾個沒挖到的寶物</b>（機關不算在內），可以用來推測位置。</li>
+<li>隨時可以「收手離開」，已挖到的照拿。</li>
+</ul>
+<h4>洞裡有什麼</h4>
+<div class="tw"><table><thead><tr><th>東西</th><th class="num">數量</th><th>挖到得到</th></tr></thead><tbody>
+<tr><td>📜 秘典殘頁</td><td class="num">4</td><td>秘典碎片 8</td></tr>
+<tr><td>💰 靈石袋</td><td class="num">3</td><td>H × 0.3</td></tr>
+<tr><td>🔥 異火餘燼</td><td class="num">1</td><td>異火碎片 5～10</td></tr>
+<tr><td>🏺 古修遺寶</td><td class="num">1</td><td>星允鐵 20、秘典碎片 15</td></tr>
+<tr><td>💥 機關</td><td class="num">4</td><td>多毀一把靈鋤</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="card">
+<h3>⚗️ 丹爐試火 <span class="tag t-c">機緣</span></h3>
+丹道前輩邀你試掌爐火，共五爐。
+<h4>規則</h4>
+<ul>
+<li>指針會來回擺動，<b>每一爐都比上一爐快</b>。</li>
+<li>停在<b>綠區得 2 分</b>、<b>黃區得 1 分</b>，五爐滿分 10 分。</li>
+</ul>
+<h4>獎勵（依總分）</h4>
+<div class="tw"><table><thead><tr><th>丹品</th><th class="num">總分</th><th class="num">靈石</th><th class="num">秘典碎片</th><th>其他</th></tr></thead><tbody>
+<tr><td><b>極品</b></td><td class="num">9 以上</td><td class="num">H × 1</td><td class="num">20</td><td>破障丹 1 顆</td></tr>
+<tr><td>上品</td><td class="num">6～8</td><td class="num">H × 0.8</td><td class="num">12</td><td>—</td></tr>
+<tr><td>中品</td><td class="num">3～5</td><td class="num">H × 0.5</td><td class="num">6</td><td>—</td></tr>
+<tr><td>廢丹</td><td class="num">0～2</td><td class="num">H × 0.1</td><td class="num">2</td><td>—</td></tr>
+</tbody></table></div>
+<div class="sub">極品等於五爐裡最多只能有一爐停在黃區。破障丹平常要用七彩補天石買，這裡可以免費拿。</div>
+</div>
+</div>
+
+<h2>機緣任務</h2>
+<div class="card">
+<h3>📜 機緣任務 <span class="tag t-c">任務</span></h3>
+進入天南城或天星城時，有機會接到路人的托付。只有任務、沒有其他奇遇時，左側入口會顯示「📜 任務」。
+<h4>規則</h4>
+<ul>
+<li>每個任務<b>三個步驟</b>，由「前往某張地圖」和「在野外擊殺 40～120 隻」組成。</li>
+<li>擊殺數<b>離線掛機也會算</b>；要你前往的野外地圖一定是你進得去的。</li>
+<li>接到後 <b>48 小時</b>內要完成，逾時作廢。</li>
+</ul>
+<h4>四種任務</h4>
+<div class="tw"><table><thead><tr><th>任務</th><th>步驟</th></tr></thead><tbody>
+<tr><td class="nw"><b>散修遺願</b></td><td>前往野外 → 擊殺 → 前往城鎮</td></tr>
+<tr><td class="nw"><b>古籍殘頁</b></td><td>前往城鎮 → 前往野外 → 擊殺</td></tr>
+<tr><td class="nw"><b>妖獸作亂</b></td><td>前往野外 → 擊殺 → 前往野外</td></tr>
+<tr><td class="nw"><b>丹方尋藥</b></td><td>前往野外 → 擊殺 → 前往城鎮</td></tr>
+</tbody></table></div>
+<h4>獎勵</h4>
+完成：<b>H × 2</b>、秘典碎片 <b>25</b>。以花的力氣來說，是秘典碎片最划算的來源之一。
+</div>
+
+<h2>秘典碎片來源整理</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>一次最多</th><th>條件</th></tr></thead><tbody>
+<tr><td>三界戰場</td><td class="num">60＋海選每勝 2</td><td>冠軍</td></tr>
+<tr><td>虛天殿</td><td class="num">31</td><td>八層全過（每層 2＋通關 15）</td></tr>
+<tr><td>古洞尋寶</td><td class="num">47</td><td>四張殘頁與遺寶全挖到</td></tr>
+<tr><td>機緣任務</td><td class="num">25</td><td>完成三步驟</td></tr>
+<tr><td>靈獸競速</td><td class="num">20</td><td>第 1 名</td></tr>
+<tr><td>丹爐試火</td><td class="num">20</td><td>極品</td></tr>
+<tr><td>血色禁地</td><td class="num">12</td><td>獲勝</td></tr>
+<tr><td>強者現身</td><td class="num">10</td><td>選斗膽切磋</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">集滿 100 片在武學密典合成一招下品仙法，各招效果見<a href="屬性與技能.html">屬性與技能</a>。</div>
+</div></body></html>
