@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>煉丹・藏書閣・靈田</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--hl:#f3efff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--hl:#2a2540}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:28px 0 8px}
+h3{font-size:15px;margin:16px 0 6px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.toc{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:14px;margin:10px 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.flow{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:14px}
+.flow span{background:var(--head);border:1px solid var(--line);border-radius:6px;padding:3px 10px}
+.flow i{font-style:normal;color:var(--mute)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+tr.sum td{background:var(--head);font-weight:bold}
+.yes{color:var(--ok);font-weight:bold}.no{color:var(--warn);font-weight:bold}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px 24px}
+.calc h4{margin:0 0 4px;font-size:13px;color:var(--mute)}
+.calc label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:5px 0;font-size:14px}
+.calc select,.calc input{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.calc input{width:80px}
+.res{font-size:14px;line-height:1.9}
+.res .row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line)}
+.res .row b{color:var(--acct)}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🧪 煉丹・藏書閣・靈田</h1>
+<div class="sub">三個宗門設施，都是用資源換<b>永久屬性</b>：靈田把靈草養成高階靈草，煉丹房把高階靈草煉成丹藥，藏書閣用武學積分參悟古籍和屬性秘典。</div>
+<div class="toc"><a href="#flow">整體流程</a><a href="#field">靈田</a><a href="#pill">煉丹房</a><a href="#lib">藏書閣古籍</a><a href="#book">屬性秘典</a><a href="#calc">補滿試算</a><a href="#tips">順序建議</a></div>
+
+<h2 id="flow">整體流程</h2>
+<div class="box">
+<div class="flow"><span>宗門任務「種植靈草」</span><i>→</i><span>靈草</span><i>→</i><span>靈田培育</span><i>→</i><span>凡品／上品／極品／仙品靈草</span><i>→</i><span>煉丹房</span><i>→</i><span>屬性點 +0.1</span></div>
+<div class="flow" style="margin-top:8px"><span>宗門任務「整理武學秘典」、每日任務</span><i>→</i><span>武學積分</span><i>→</i><span>藏書閣</span><i>→</i><span>屬性點 +0.1／屬性傷害 +0.01%</span></div>
+<ul style="margin-top:8px">
+<li>三個設施都要<b>拜入宗門並待在宗門</b>才能開。</li>
+<li>都可以按 ×1、×10 或「最高」批次處理，培育和煉製是立刻完成，不用等。</li>
+<li>煉丹和古籍每種各有 <b>200 次</b>的上限，全部補滿是六大屬性裡五項各 <b>+40 點</b>（丹藥 +20、古籍 +20）。屬性點的作用見<a href="屬性與技能.html">屬性與技能</a>。</li>
+<li>培育、煉丹、參悟的次數都會算進每日任務的進度，見<a href="日常與僕從.html">日常與僕從</a>。</li>
+</ul>
+</div>
+
+<h2 id="field">🌾 靈田</h2>
+<div class="tw"><table><thead><tr><th>培育 1 株</th><th class="num">靈草</th><th class="num">靈石</th><th>拿來煉什麼</th></tr></thead><tbody>
+<tr><td class="nw">凡品靈草</td><td class="num">10</td><td class="num">5</td><td>大力神丸（力量）</td></tr>
+<tr><td class="nw">上品靈草</td><td class="num">50</td><td class="num">10</td><td>洗髓丹（體質）、身法丹（敏捷）、凝元丹</td></tr>
+<tr><td class="nw">極品靈草</td><td class="num">200</td><td class="num">20</td><td>悟道丹（悟性）</td></tr>
+<tr><td class="nw">仙品靈草</td><td class="num">500</td><td class="num">50</td><td>九轉聚靈丹（靈力）、駐顏駐魅力丹（魅力）</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">靈草來自宗門任務「種植靈草」：凡俗宗門每趟 1 株、修真仙門 10 株、至高聖地 50 株，可以派僕從去做。靈草除了培育，屬性秘典每次參悟也要 100 株。</div>
+
+<h2 id="pill">🧪 煉丹房</h2>
+<div class="tw"><table><thead><tr><th>丹藥</th><th>材料（每顆）</th><th>效果（每顆）</th><th class="num">上限</th><th class="num">吃滿要的靈草</th><th class="num">吃滿要的靈石</th></tr></thead><tbody id="pillT"></tbody></table></div>
+<div class="box">
+<ul>
+<li>煉成就<b>直接服用</b>，不會放進背包。每張丹藥卡片會顯示已服用幾顆。</li>
+<li>五種屬性丹每顆 <b>+0.1 點</b>，各 200 顆封頂（+20 點）。吃滿之後再煉也沒有效果，遊戲會擋下來。</li>
+<li>丹藥的效果<b>轉世後保留</b>，吃過的顆數不會歸零。</li>
+<li><b>駐顏駐魅力丹</b>加的是魅力，沒有上限，但魅力不影響戰鬥。</li>
+<li><b>凝元丹</b>只在築基期、金丹期出現，用來灌丹田和溫養，見<a href="渡劫金丹壽元.html">渡劫・金丹・壽元</a>。</li>
+<li>⚠️ 煉丹房的「洗髓丹」是加體質的丹藥；千寶閣用七彩補天石買的「洗髓丹」是重測靈根用的，兩個同名但不是同一樣東西。</li>
+</ul>
+</div>
+
+<h2 id="lib">📚 藏書閣・古籍</h2>
+<div class="box">
+<ul>
+<li>力量、體質、悟性、靈力、敏捷各一本古籍。每參悟一次花 <b>10 武學積分</b>，該屬性 <b>+0.1 點</b>。</li>
+<li>每本上限 <b>200 次</b>（+20 點），一本補滿要 2,000 積分，五本共 <b>10,000 積分</b>。</li>
+<li><span class="no">轉世會把古籍的參悟次數歸零</span>，要重新參悟。丹藥不會歸零，這是兩者最大的差別。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th>武學積分來源</th><th class="num">凡俗宗門</th><th class="num">修真仙門</th><th class="num">至高聖地</th></tr></thead><tbody>
+<tr><td>宗門任務「整理武學秘典」（每趟）</td><td class="num">1</td><td class="num">10</td><td class="num">50</td></tr>
+<tr><th>每日任務（每項）</th><th class="num">簡單</th><th class="num">普通</th><th class="num">困難</th></tr>
+<tr><td>完成一項的獎勵</td><td class="num">5</td><td class="num">12</td><td class="num">30</td></tr>
+</tbody></table></div>
+
+<h2 id="book">📖 藏書閣・屬性秘典</h2>
+<div class="box">
+<ul>
+<li>要<b>拜入過修真仙門</b>（金丹期起）才會開放。</li>
+<li>每參悟一次：<b>50 武學積分＋100 株靈草＋1,000 靈石</b>，對應的傷害 <b>+0.01%</b>。</li>
+<li>每本上限 <b>1,000 次</b>（+10%）。一本補滿要 5 萬積分＋10 萬株靈草＋100 萬靈石。</li>
+<li>裝備特效「<b>通玄</b>」會放大秘典的效果，最多再 +60%（+10% 變成 +16%），見<a href="裝備與強化.html">裝備與強化</a>。</li>
+<li><span class="no">轉世會把秘典的參悟次數歸零。</span>一本要投入的資源很多，轉世前先想清楚。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th>秘典</th><th>加成的對象</th><th>什麼時候有用</th></tr></thead><tbody>
+<tr><td class="nw">⚔️《庚金劍典》</td><td>本命五行是金時，所有直接命中的傷害；另外加金重擊那一擊的傷害</td><td>本命金，或常打出金重擊</td></tr>
+<tr><td class="nw">🌿《乙木長生訣》</td><td>本命五行是木時，所有直接命中的傷害</td><td>本命木</td></tr>
+<tr><td class="nw">💧《癸水真經》</td><td>本命五行是水時，所有直接命中的傷害</td><td>本命水</td></tr>
+<tr><td class="nw">🔥《丙火焚天錄》</td><td>本命五行是火時，所有直接命中的傷害；另外加燒傷每層的傷害</td><td>本命火，或靠燒傷輸出</td></tr>
+<tr><td class="nw">⛰️《戊土玄黃功》</td><td>本命五行是土時，所有直接命中的傷害</td><td>本命土</td></tr>
+<tr><td class="nw">❄️《玄冰寒魄訣》</td><td>對凍結中的目標造成的傷害</td><td>冰凍觸發率高</td></tr>
+<tr><td class="nw">⚡《九霄雷典》</td><td>雷擊那一擊的傷害</td><td>雷擊觸發率高</td></tr>
+<tr><td class="nw">☠️《萬毒真經》</td><td>中毒每層的傷害</td><td>靠中毒輸出</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">本命五行＝身上裝備件數最多的那個五行（神器不算），可以在<a href="屬性與技能.html">屬性與技能</a>帶入角色後看到。五本五行秘典一次只有對得上本命的那一本有用，換了一身裝備、本命五行變了，原本那本就沒有效果。</div>
+
+<h2 id="calc">🧮 補滿試算</h2>
+<div class="box">
+<div class="sub" style="margin-bottom:8px">填目前已服用的顆數和已參悟的次數（遊戲裡煉丹房、藏書閣的卡片上有寫），算出補到全滿還要多少資源。</div>
+<div class="calc">
+<div><h4>丹藥已服用（0～200 顆）</h4><div id="cP"></div></div>
+<div><h4>古籍已參悟（0～200 次）</h4><div id="cS"></div>
+<label>目前宗門<select id="cT"><option value="1">凡俗宗門</option><option value="10" selected>修真仙門</option><option value="50">至高聖地</option></select></label></div>
+<div class="res" id="cOut"></div>
+</div></div>
+
+<h2 id="tips">順序建議</h2>
+<div class="tw"><table><thead><tr><th>階段</th><th>建議</th></tr></thead><tbody>
+<tr><td class="nw">凡俗宗門</td><td>靈草每趟只有 1 株，先煉最便宜的<b>大力神丸</b>（一顆只要 10 株靈草）。武學積分照自己的路線先點力量或悟性那一本古籍。</td></tr>
+<tr><td class="nw">築基、金丹期</td><td>上品靈草優先留給<b>凝元丹</b>。金丹和元嬰的品級只有這一次機會，比多幾點體質重要。</td></tr>
+<tr><td class="nw">修真仙門</td><td>靈草每趟 10 株，開始補體質、敏捷和自己主要的攻擊屬性。屬性秘典開放了，但每次要 100 株靈草，會和煉丹搶材料；先把便宜的丹藥吃滿再碰秘典。</td></tr>
+<tr><td class="nw">至高聖地</td><td>靈草每趟 50 株，把貴的悟道丹、九轉聚靈丹補滿，再把積分和靈草投進對得上本命五行、或對得上你主要屬性效果的那一兩本秘典。</td></tr>
+<tr><td class="nw">準備轉世</td><td>丹藥會留下來，所以靈草優先煉丹；古籍和秘典會歸零，快轉世時就不要再投入大量積分。</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">物理路線看力量、術法路線看悟性；體質加氣血，靈力加靈力上限，敏捷影響出手。建議是依花費整理的方向，實際可以到<a href="屬性與技能.html">屬性與技能</a>把數字填進去比較。</div>
+</div>
+<script src="profile.js"></script>
+<script>
+const $=id=>document.getElementById(id),PF=window.PROFILE||null,fm=n=>Math.round(n).toLocaleString("zh-TW");
+// 高階靈草：培育 1 株要的靈草、靈石
+const HERB={"凡品":[10,5],"上品":[50,10],"極品":[200,20],"仙品":[500,50]};
+// 代號、丹藥、屬性、用哪種高階靈草
+const PILL=[["str","大力神丸","力量","凡品"],["con","洗髓丹","體質","上品"],["int","悟道丹","悟性","極品"],["spr","九轉聚靈丹","靈力","仙品"],["agi","身法丹","敏捷","上品"]];
+let tg=0,tc=0;
+$("pillT").innerHTML=PILL.map(([k,n,s,h])=>{const g=HERB[h][0]*200,c=HERB[h][1]*200;tg+=g;tc+=c;
+  return `<tr><td class="nw"><b style="color:var(--acct)">${n}</b></td><td>${h}靈草 1 株</td><td>${s} +0.1</td><td class="num">200 顆（+20）</td><td class="num">${fm(g)}</td><td class="num">${fm(c)}</td></tr>`}).join("")
+ +`<tr class="sum"><td colspan="4">五種全部吃滿</td><td class="num">${fm(tg)}</td><td class="num">${fm(tc)}</td></tr>`
+ +`<tr><td class="nw"><b style="color:var(--acct)">駐顏駐魅力丹</b></td><td>仙品靈草 1 株＋1,000 靈石</td><td>魅力 +20</td><td class="num">沒有上限</td><td class="num">每顆 500</td><td class="num">每顆 1,050</td></tr>`
+ +`<tr><td class="nw"><b style="color:var(--acct)">凝元丹</b></td><td>上品靈草 5 株＋1 萬靈石</td><td>丹田／溫養 +5%</td><td class="num">吃到滿為止</td><td class="num">每顆 250</td><td class="num">每顆 10,050</td></tr>`;
+
+const used=(o,k)=>Math.max(0,Math.min(200,Math.round(+((o||{})[k])||0)));
+$("cP").innerHTML=PILL.map(([k,n,s])=>`<label>${n}（${s}）<input type="number" min="0" max="200" id="p_${k}" value="${PF?used(PF.pillUsed,k):0}"></label>`).join("");
+$("cS").innerHTML=PILL.map(([k,n,s])=>`<label>${s}古籍<input type="number" min="0" max="200" id="s_${k}" value="${PF?used(PF.studyCounts,k):0}"></label>`).join("");
+if(PF&&PF.sectSkills)$("cT").value=PF.sectSkills[3]?"50":PF.sectSkills[2]?"10":"1";
+function calc(){
+  const per=+$("cT").value,val=id=>Math.max(0,Math.min(200,Math.round(+$(id).value||0)));
+  let grass=0,coins=0,pills=0,study=0;const herbs={};
+  PILL.forEach(([k,n,s,h])=>{const left=200-val("p_"+k);pills+=left;herbs[h]=(herbs[h]||0)+left;grass+=left*HERB[h][0];coins+=left*HERB[h][1];study+=200-val("s_"+k)});
+  const pts=study*10,row=(a,b)=>`<div class="row"><span>${a}</span><b>${b}</b></div>`;
+  $("cOut").innerHTML=`<div class="sub">補到全滿還需要</div>`
+    +row("丹藥",`${fm(pills)} 顆（屬性共 +${(pills*.1).toFixed(1)}）`)
+    +row("高階靈草",Object.keys(HERB).filter(h=>herbs[h]).map(h=>`${h} ${fm(herbs[h])}`).join("、")||"不用")
+    +row("換算成靈草",`${fm(grass)} 株`)+row("培育靈石",fm(coins))
+    +row("「種植靈草」任務",`約 ${fm(Math.ceil(grass/per))} 趟`)
+    +row("古籍參悟",`${fm(study)} 次（屬性共 +${(study*.1).toFixed(1)}）`)
+    +row("武學積分",fm(pts))
+    +row("「整理武學秘典」任務",`約 ${fm(Math.ceil(pts/per))} 趟`)
+    +`<div class="sub" style="margin-top:6px">任務趟數是只靠宗門任務、依你選的宗門階段估算；每日任務也給武學積分，實際會少一些。不含屬性秘典和凝元丹。</div>`;
+}
+document.querySelectorAll("#cP input,#cS input,#cT").forEach(el=>el.oninput=calc);
+calc();
+</script></body></html>

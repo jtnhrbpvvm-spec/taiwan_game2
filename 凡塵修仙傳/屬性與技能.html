@@ -69,6 +69,9 @@ td.nw{white-space:nowrap}
 .gsub{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
 .gcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13.5px;line-height:1.8;margin-top:8px}
 .gcard b{color:var(--acct)}
+.gcard h4{margin:10px 0 2px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:var(--mute);font-weight:bold}
+.gcard .gtitle{font-size:15px}
+.gcard .off{color:var(--mute)}
 .warn{color:var(--warn)}
 #setupBox{max-width:880px}
 #setupBox details{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
@@ -663,20 +666,65 @@ function normEq(eq){
   if((eq.quality==="橙色"||eq.quality==="白金")&&slotType(eq.name)!=="artifact"){if(!Array.isArray(eq.sockets))eq.sockets=[null,null,null]}else delete eq.sockets;
   return eq;
 }
-function itemInfo(eq){
-  const d=gdef(eq),lb=LB[eq.lingbaoId],out=[],e=1+(eq.enhance||0)*.025,pts={};
-  if(WEAPONS.includes(eq.name)){let L=Math.max(0,ELV.indexOf(eq.level||10))/9*10;if(BPL[eq.level])L=BPL[eq.level];if(!eq.level&&lb)L=LB_WL[lb.t]||0;
-    out.push(`武器攻擊 <b>${full(Math.round(5*Math.pow(1.05,L)*(QM[eq.quality]||1)*e*100))}</b>（未含職業、體質加成）`)}
-  if(d){const t=TPL[d.tpl]||TPL["均衡"];for(const k in t)pts[k]=t[k]*.5*(QM[eq.quality]||1)*e*(ACCS.includes(d.slot)?1.25:1)}
+// 裝備詳細資訊用的對照：特效 [名稱, 紫色值, 上限, 格式, 說明]、套裝各主題的 2／4／6 件效果、品質給的減傷／閃避／觸發率
+const FXD=[["追擊",.08,.3,"pct","{v} 機率追加一次攻擊 ×0.6"],["破甲",10,40,"pt","攻擊時無視目標 {v} 減傷"],["吸血",.03,.15,"pct","造成傷害的 {v} 轉為氣血"],["噬魂",.03,.15,"pct","擊殺敵人時回復 {v} 氣血"],["橫掃",.1,.35,"pct","普攻 {v} 機率波及其他敵人 ×0.4"],
+["首擊",.25,1,"pct","每波戰鬥第一擊傷害 +{v}"],["法爆",.05,.3,"pct","技能傷害 +{v}"],["剋敵",.08,.4,"pct","五行剋制時傷害再 +{v}"],["斬殺",.2,.8,"pct","對氣血低於 20% 的敵人傷害 +{v}"],["疾風",.05,.2,"pct","{v} 機率本回合再出手一次"],
+["燃魂",.08,.4,"pct","氣血高於 80% 時傷害 +{v}"],["洞察",5,20,"pt","無視敵人 {v} 閃避"],["聚靈",.08,.4,"pct","技能耗靈 −{v}"],["寒徹",.1,.5,"pct","對凍結中的敵人傷害 +{v}"],["冰封",.3,.8,"pct","凍結敵人時 {v} 機率擴散到另一名敵人"],
+["焚燼",.2,1,"pct","燒傷傷害 +{v}"],["蝕骨",.2,1,"pct","中毒傷害 +{v}"],["毒爆",1,4,"x","中毒疊滿時引爆，造成攻擊力 {v} 傷害"],["連雷",.5,1.5,"x","雷擊時再劈另一名敵人 {v}"],["反震",.08,.4,"pct","受到攻擊時反彈 {v} 傷害"],
+["護體",8,30,"pt","氣血低於 30% 時減傷 +{v}"],["先手盾",10,30,"pt","每波戰鬥前 2 回合減傷 +{v}"],["回春",.01,.05,"pct","戰鬥中每回合回復 {v} 氣血"],["回靈",.015,.075,"pct","戰鬥中每回合回復 {v} 靈力"],["定神",.15,.6,"pct","被凍結機率 −{v}"],
+["閃擊",.8,2.4,"x","閃避後反擊一次 {v}"],["金身",.06,.3,"pct","受到妖獸的傷害 −{v}"],["化勁",.06,.3,"pct","受到修士、心魔、懸賞人物武學的傷害 −{v}"],["延壽",.1,.5,"pct","戰死折壽 −{v}"],["丹心",.15,.6,"pct","丹藥回復量 +{v}"],
+["聚財",.03,.3,"pct","野外靈石 +{v}"],["悟道",.02,.2,"pct","修為獲得 +{v}"],["積德",.05,.5,"pct","功德獲得 +{v}"],["奪寶",.1,1,"pct","裝備掉落率提高 {v}（相對值）"],["尋鐵",.1,1,"pct","星允鐵獲得 +{v}"],
+["役使",.05,.5,"pct","僕從任務速度 +{v}"],["獸魂",.1,.6,"pct","靈寵傷害 +{v}"],["通玄",.1,.6,"pct","藏書閣屬性秘典效果 +{v}"]];
+const fxVal=(v,f)=>f==="pct"?+(v*100).toFixed(1)+"%":f==="pt"?+v.toFixed(1)+"%":"×"+ +v.toFixed(2);
+const SET_INFO={};[["物攻","太乙 蒼龍 真武 祝融 盤古",["力量 +5%","物理攻擊 +8%","普攻 15% 機率觸發「{n}之怒」，對全體造成物理攻擊 ×1.5"]],
+["法攻","神霄 太昊 玄女 羲和 黃庭",["悟性 +5%","術法攻擊 +8%","施展技能時 15% 機率再連發一次"]],
+["防禦","白帝 句芒 玄天 炎帝 軒轅",["體質 +5%","減傷 +5%","受到致命傷時保留 1 點氣血（每波一次）"]],
+["閃避","天樞 瑤光 洛神 畢方 須彌",["閃避 +3%","閃避成功後，下一擊傷害 +30%","閃避上限 +5%"]],
+["屬性","戮仙 神農 太陰 三昧 九州",["{x}傷 +5%","{x}傷觸發時，該擊傷害 +20%","{x}傷上限 +10%"]],
+["收益","大衍 蓬萊 歸墟 丹霄 萬壽",["野外靈石 +5%","修為獲得 +5%","星允鐵獲得 +15%"]]]
+.forEach(([t,names,tiers])=>names.split(" ").forEach((n,i)=>SET_INFO[n]=[t+"・"+"金木水火土"[i],tiers.map(s=>s.replace("{n}",n).replace("{x}","金毒冰火雷"[i]))]));
+const DEFQ={"白色":1,"綠色":1.5,"藍色":2,"紫色":3,"橙色":4,"白金":5},EVAQ={"白色":.5,"綠色":1,"藍色":1.5,"紫色":2,"橙色":3,"白金":4},TRQ={"白色":2,"綠色":3,"藍色":5,"紫色":7,"橙色":10,"白金":13};
+const ELFX={"金":"金重擊","木":"中毒","水":"冰凍","火":"燒傷","土":"雷擊"},PURPLE_UP=["紫色","橙色","白金"];
+const LB_ATTR={lb1_sword:"金重擊觸發率 +12%",lb1_armor:"減傷 +8%、燒傷觸發率 +8%",lb2_sword:"金重擊觸發率 +18%、冰凍觸發率 +10%",lb2_armor:"減傷 +15%、閃避 +5%、燒傷觸發率 +10%",lb3_sword:"金重擊觸發率 +25%、冰凍觸發率 +15%、燒傷觸發率 +20%",
+lb3_artifact:"減傷 +20%、閃避 +10%",lb3_artifact_coffin:"減傷 +30%、閃避 +5%",lb3_artifact_sword:"金重擊觸發率 +25%、雷擊觸發率 +15%",lb3_artifact_cauldron:"減傷 +10%、燒傷觸發率 +20%",lb3_artifact_jar:"中毒觸發率 +25%、冰凍觸發率 +15%",lb3_artifact_wushi:"閃避 +25%、減傷 +10%"};
+const TALIS_ALL={str:"力量符",con:"體質符",int:"悟性符",spr:"靈力符",def:"護體符",eva:"身法符",ice:"玄冰符",fire:"烈焰符",poison:"蝕毒符",metal:"庚金符",thunder:"天雷符"};
+const talisText=s=>{const n=TALIS_ALL[s.type];if(!n)return "其他符寶";const four=["str","con","int","spr"].includes(s.type);
+  return `${GRADE[s.grade]||""}${n} <b>+${four?({1:.1,2:.3,3:.6})[s.grade]||0:(s.grade||0)+"%"}</b>${four?"":` <span class="off">（不影響上方試算）</span>`}`};
+// 目前選中那件裝備的詳細資訊卡：基本能力、特效、套裝、詞條、鑲嵌、神器技能
+function itemDetail(eq){
+  const d=gdef(eq),lb=LB[eq.lingbaoId],q=eq.quality,e=1+(eq.enhance||0)*.025,pts={},st=slotType(eq.name),act=PURPLE_UP.includes(q),h=[];
+  const sec=(t,rows)=>{rows=rows.filter(Boolean);if(rows.length)h.push(`<h4>${t}</h4>${rows.map(r=>`<div>${r}</div>`).join("")}`)};
+  const base=[];
+  if(st==="weapon"){let L=Math.max(0,ELV.indexOf(eq.level||10))/9*10;if(BPL[eq.level])L=BPL[eq.level];if(!eq.level&&lb)L=LB_WL[lb.t]||0;
+    base.push(`武器攻擊 <b>${full(Math.round(5*Math.pow(1.05,L)*(QM[q]||1)*e*100))}</b> <span class="off">（未含職業、體質加成；六把武器只取最高的一把）</span>`)}
+  if(d){const t=TPL[d.tpl]||TPL["均衡"];for(const k in t)pts[k]=t[k]*.5*(QM[q]||1)*e*(ACCS.includes(d.slot)?1.25:1)}
   else if(lb){const sum=Object.values(lb.s).reduce((a,b)=>a+b,0);for(const k in lb.s)pts[k]=(lb.a?10:LB_BUDGET[lb.t])*e*lb.s[k]/sum}
-  const pt=Object.keys(pts).map(k=>`${STAT_LABEL[k]} +${pts[k].toFixed(2)}`).join("、");if(pt)out.push(pt);
-  if(d){const act=["紫色","橙色","白金"].includes(eq.quality);
-    out.push(`四維模板「${d.tpl}」・五行 ${d.elem}`);
-    if(d.fx)out.push(`特效【${d.fx}】${act?"":"（紫色以上才生效）"}`);
-    if(d.set)out.push(`❖ ${d.set}套${act?"":"（紫色以上才算件數）"}`)}
-  if(lb&&lb.a)out.push("神器不計入五行共鳴，也不能強化");
-  if(eq.level&&eq.level>(build.level||1))out.push(`<span class="warn">⚠️ 遊戲裡要人物等級 Lv.${full(eq.level)} 才能穿（目前 Lv.${full(build.level||1)}）</span>`);
-  return out;
+  const pt=Object.keys(pts).map(k=>`${STAT_LABEL[k]} <b>+${pts[k].toFixed(2)}</b>`).join("、");if(pt)base.push(`屬性點：${pt}`);
+  if(d){
+    if(st==="weapon")base.push(`${ELFX[d.elem]}觸發率 <b>+${TRQ[q]}%</b> <span class="off">（武器的屬性傷害跟著五行）</span>`);
+    else if(st==="armor")base.push(`減傷 <b>+${DEFQ[q]*(eq.name==="盔甲"?1.5:1)}%</b>${eq.name==="盔甲"?` <span class="off">（盔甲是其他防具的 1.5 倍）</span>`:""}`);
+    else if(st==="accessory")base.push(`閃避 <b>+${EVAQ[q]}%</b>`);
+    base.push(`五行 <b>${d.elem}</b>・四維模板「${d.tpl}」・來源：${CH_NAME[d.ch]||""}`)}
+  if(lb){if(LB_ATTR[eq.lingbaoId])base.push(`附帶：<b>${LB_ATTR[eq.lingbaoId]}</b>`);base.push(`五行 <b>${lb.e}</b>・來源：靈寶閣${lb.a?"（神器不計入五行共鳴）":""}`)}
+  if(eq.enhance)base.push(`<span class="off">強化 +${eq.enhance}：武器攻擊與屬性點 +${+(eq.enhance*2.5).toFixed(1)}%（上面的數字已算入）；減傷、閃避、觸發率、詞條不受強化影響。</span>`);
+  if(eq.level&&eq.level>(build.level||1))base.push(`<span class="warn">⚠️ 遊戲裡要人物等級 Lv.${full(eq.level)} 才能穿（目前 Lv.${full(build.level||1)}）</span>`);
+  sec("基本能力",base);
+  if(d&&d.fx){const f=FXD.find(x=>x[0]===d.fx),m=q==="白金"?2:q==="橙色"?1.5:1;
+    sec("特效",[`<b>【${d.fx}】</b>${f?f[4].replace("{v}",`<b>${fxVal(f[1]*m,f[3])}</b>`):""}${act?"":` <span class="warn">（紫色以上才生效，目前沒有效果）</span>`}`,
+      f?`<span class="off">紫色 ${fxVal(f[1],f[3])}／橙色 ${fxVal(f[1]*1.5,f[3])}／白金 ${fxVal(f[1]*2,f[3])}；多件同名特效相加，上限 ${fxVal(f[2],f[3])}。</span>`:""])}
+  if(d&&d.set){const info=SET_INFO[d.set];let n=0;SLOTS.forEach(k=>{const x=build.equipment[k],dx=gdef(x);if(dx&&dx.set===d.set&&PURPLE_UP.includes(x.quality))n++});
+    sec("套裝",[`<b>❖ ${d.set}套</b>${info?`（${info[0]}）`:""}・身上 <b>${n}</b> / 6 件${act?"":` <span class="warn">（這件未達紫色，不算件數）</span>`}`]
+      .concat(info?[2,4,6].map((c,i)=>`${n>=c?"✅":"⬜"} ${c} 件：${info[1][i]}`):[]))}
+  if(d){const mx=SUB_N[q]||0,subs=(eq.subs||[]).filter(Boolean).map(sb=>{const def=SUBS.find(x=>x[0]===sb[0]);
+      return def?`${def[1]} <b>+${+(sb[1]*(def[2]==="pct"?100:1)).toFixed(2)}%</b>${def[5]?"":` <span class="off">（不影響上方試算）</span>`}`:""}).filter(Boolean);
+    sec(`隨機詞條（${subs.length} / ${mx}）`,subs.length?subs:[`<span class="off">${mx?"還沒設定詞條，可以在上面選。":"白色裝備沒有詞條。"}</span>`])}
+  if(lb&&!lb.a)sec("隨機詞條",[`<span class="off">靈寶閣寶物沒有隨機詞條、特效，也不屬於套裝；可以強化，但不能進化成白金。</span>`]);
+  if(Array.isArray(eq.sockets)){const sk=eq.sockets.map((s,i)=>s?`孔 ${i+1}：${talisText(s)}`:"").filter(Boolean);
+    sec("鑲嵌符寶",sk.length?sk:[`<span class="off">還沒有鑲符寶。</span>`])}
+  if(lb&&lb.a){const s=S.find(x=>x[0]==="神器技能"&&x[1]===ART_OWNER[eq.lingbaoId]);
+    if(s)sec("專屬技能",[`<b>【${s[2]}】</b>${TYPE[s[3]][0]}・${s[4]}${s[5]?`・威力 ${Math.round(s[5]*100)}%`:""}・每回合 ${s[7]}% 發動`,s[8],
+      `<span class="off">裝在神器欄才有；每回合出手後額外判定，不耗靈力，不吃「技能傷害」加成。神器不能強化、沒有鑲嵌孔。</span>`])}
+  return h.join("");
 }
 function renderGear(){
   const a=lastA,E=build.equipment;
@@ -703,7 +751,7 @@ function renderGear(){
       for(let i=0;i<3;i++){const sk=eq.sockets[i],v=sk?(TALIS.some(t=>t[0]===sk.type)?sk.type+"_"+sk.grade:"other"):"";
         ed+=`<label>孔 ${i+1}<select data-sock="${i}"><option value="">（空）</option>${TALIS.map(t=>[3,2,1].map(g=>`<option value="${t[0]}_${g}" ${v===t[0]+"_"+g?"selected":""}>${GRADE[g]}${t[1]} +${({1:.1,2:.3,3:.6})[g]}</option>`).join("")).join("")}<option value="other" ${v==="other"?"selected":""}>其他符寶（不影響試算）</option></select></label>`}
       ed+=`</div></div>`}
-    ed+=`<div class="gcard ${Q_CLS[eq.quality]||""}"><b>${esc(eqName(eq))}</b>　${eq.quality==="七彩"?"造化神器・七彩":eq.quality}${eq.level?"・Lv."+eq.level:""}${eq.enhance?"・+"+eq.enhance:""}<br>${itemInfo(eq).join("<br>")}</div>`;
+    ed+=`<div class="gcard ${Q_CLS[eq.quality]||""}"><div class="off">📋 【${gearSel}】目前裝備的詳細資訊</div><div class="gtitle"><b>${esc(eqName(eq))}</b>　${eq.quality==="七彩"?"造化神器・七彩":eq.quality}${eq.level?"・Lv."+eq.level:""}${eq.enhance?"・+"+eq.enhance:""}</div>${itemDetail(eq)}</div>`;
   }else ed+=`</div><div class="sub">這個部位還沒有裝備，從上面的選單挑一件。</div>`;
   const cb=x=>full(Math.round(x*100));
   $("gearBox").innerHTML=`<div class="doll"><div class="gcol">${DOLL.left.map(cell).join("")}</div>
@@ -726,7 +774,7 @@ function renderGear(){
     if(!def)e.subs.splice(i,1);else{while(e.subs.length<i)e.subs.push(["chaPct",0]);e.subs[i]=[def[0],+subRange(e,def)[1].toFixed(4)]}}));
   box.querySelectorAll("[data-subv]").forEach(s=>s.onchange=()=>upd(e=>{const i=+s.dataset.subv,def=SUBS.find(x=>x[0]===e.subs[i][0]);e.subs[i]=[e.subs[i][0],Math.max(0,+s.value||0)/(def[2]==="pct"?100:1)]}));
   box.querySelectorAll("[data-sock]").forEach(s=>s.onchange=()=>upd(e=>{const i=+s.dataset.sock,v=s.value;while(e.sockets.length<3)e.sockets.push(null);
-    e.sockets[i]=!v?null:v==="other"?{type:"def",grade:1}:{type:v.split("_")[0],grade:+v.split("_")[1]}}));
+    e.sockets[i]=!v?null:v==="other"?{type:"other",grade:1}:{type:v.split("_")[0],grade:+v.split("_")[1]}}));
 }
 // ---- 角色設定（宗門、職業、資質、丹藥、夥伴、稱號…）----
 const TITLE_NAME={bp17:"天工初成",bpTier1500:"渡劫神兵",bp60:"百工造化",bpTier5000:"真仙寶庫",bpTier10000:"道祖神兵",bpAll:"萬器天工",bpPlat17:"先天道器師",codex50:"初窺天磯",codex200:"藏器小成",codex350:"百器通明",codex500:"萬寶歸宗",
