@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>鎮魔塔 BOSS 一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--gate:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--gate:#fbbf24}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:22px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.55}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+tr.g10 td{background:color-mix(in srgb,var(--gate) 12%,transparent)}
+tr.g5 td{background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.tag{display:inline-block;font-size:11.5px;padding:0 7px;border-radius:9px;border:1px solid currentColor;white-space:nowrap;font-weight:bold}
+.t-g{color:var(--gate)}.t-k{color:var(--acct)}.t-w{color:var(--warn)}.t-o{color:var(--ok)}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0}
+.ctl label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute);max-width:100%}
+.ctl input,.ctl select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);width:140px;box-sizing:border-box;max-width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chips button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}
+.chips button.on{border-color:var(--acc);box-shadow:inset 0 -3px 0 var(--acc);font-weight:bold}
+details summary{cursor:pointer;color:var(--acct);font-size:13px}
+.dt{font-size:13px;line-height:1.75;margin-top:4px;min-width:260px}
+.dt b{color:var(--fg)}
+.dt .m{color:var(--mute)}
+.intro{color:var(--mute);font-size:12.5px;line-height:1.6;margin-top:2px}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🗼 鎮魔塔 BOSS 一覽</h1>
+<div class="sub">鎮魔塔 100 層每一層 BOSS 的強度、屬性、光環與獎勵。問答題目的答案見<a href="鎮魔塔問答答案.html">鎮魔塔問答答案</a>。數字都是遊戲畫面上看到的大小。</div>
+
+<div class="box">
+<b>流程與規則：</b>
+<ul>
+<li>煉虛期開放。每層先答 <b>10 題</b>知識問答（每題限時 30 秒），再開 BOSS 房門挑戰；打贏才會前進到下一層。</li>
+<li>每天可挑戰 <b>3 次</b>，按下「開始問答」時就扣一次，失敗或中途離開也算。</li>
+<li><b>答對越多，這一層的獎勵倍率越高</b>：答對 0 題 ×1.0，每多對一題 +0.1，<b>10 題全對 ×2.5</b>。挑戰失敗時問答成績作廢，要重新答題（再扣一次）。</li>
+<li>戰鬥是自動的：你每回合的傷害＝<b>物理攻擊與術法攻擊較高的那個 × 1.3</b>；不能吃丹藥，靈寵也不出手。<b>600 回合</b>內沒打倒 BOSS 算失敗。</li>
+<li>BOSS 每次挑戰的攻擊和氣血會<b>隨機浮動 ±20%</b>，所以同一層有時打得過、有時打不過。</li>
+<li><b>境界壓制</b>：BOSS 境界比你高時，每高 1 個大境界，BOSS 氣血 +100%、攻擊 +120%。塔的強度是第 1～10 層煉虛 1～10 階、11～20 層合體……91～100 層混沌道祖，越級爬塔會非常吃力。</li>
+<li>個位數是 <span class="tag t-k">5</span> 的層是鎮關者（攻擊特別高），個位數是 <span class="tag t-g">0</span> 的層是樓主（攻擊更高、光環多一個、獎勵加倍）。</li>
+</ul>
+</div>
+
+<h2>種族特性</h2>
+<div class="tw"><table><thead><tr><th>種族</th><th>特性</th><th>對應的剋制法寶</th></tr></thead><tbody>
+<tr><td class="nw">🐉 妖獸</td><td>氣血 +10%</td><td>降妖葫蘆</td></tr>
+<tr><td class="nw">👻 鬼物</td><td>閃避 +5、不會中毒</td><td>鎮魂鈴</td></tr>
+<tr><td class="nw">😈 魔修</td><td>攻擊時吸取造成傷害的 10% 化為氣血</td><td>誅魔鏡</td></tr>
+<tr><td class="nw">🌀 心魔</td><td>沒有額外特性</td><td>清心蓮台</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">下表的氣血與閃避已經把種族特性算進去。剋制法寶、剋制符、斬妖錄可以提高對該種族的傷害，見<a href="物品一覽.html">物品一覽</a>。</div>
+
+<h2>各層 BOSS</h2>
+<div class="chips" id="fRange"></div>
+<div class="chips" id="fKind"></div>
+<div class="tw"><table><thead><tr><th class="num">層</th><th>BOSS</th><th>強度</th><th class="num">攻擊</th><th class="num">氣血</th><th class="num">減傷</th><th class="num">閃避</th><th>屬性傷害</th><th>光環與獎勵</th></tr></thead><tbody id="body"></tbody></table></div>
+<div class="sub" style="margin-top:6px">第 1～9 層是專屬 BOSS，第 10 層起由系統依規則產生。攻擊、氣血是你和 BOSS 同境界時的基準值，未含每次挑戰的 ±20% 浮動，也未含境界壓制。靈石獎勵是答對 0 題的基礎值。</div>
+</div>
+<script>
+const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
+const $=id=>document.getElementById(id),full=n=>Number(n).toLocaleString("zh-TW");
+const fmt=n=>{n=Math.round(n);return n>=1e8?+(n/1e8).toFixed(2)+" 億":n>=1e4?+(n/1e4).toFixed(2)+" 萬":full(n)};
+const RACE={beast:["🐉","妖獸"],ghost:["👻","鬼物"],demon:["😈","魔修"],heart:["🌀","心魔"]};
+const AFFIX={thunder:"雷擊",poison:"中毒",ice:"冰凍",metal:"金重擊",fire:"燒傷"};
+const SUFFIX_RACE={"魔君":"demon","屍王":"ghost","妖皇":"beast","鬼帝":"ghost","魔龍":"beast","邪神":"demon","劍魔":"demon","血尊":"demon","戰神":"heart","魔尊":"demon"};
+const COINS={6:2450,7:2700,8:2950,9:3150,10:3350,11:6900,12:8400,13:8400,14:8400,15:8400};
+const B={
+1:{name:"棄天神",race:"demon",title:"塔底魔神",stage:1,atkMult:1,def:20,eva:10,affix:"thunder",affixVal:15,element:"金",intro:"被諸天大能棄於塔底的上古魔神，手持雷紋魔劍，一聲怒嘯引動九天劫雷。",auras:[{name:"劫雷天威",player:{def:5,freeze:.02},self:{atk:.1}},{name:"魔神怒嘯",player:{curse:.05},self:{def:5}}],rewards:{coinMinutes:10,merit:[120,240],shards:[3,6],iron:[4,8]}},
+2:{name:"不滅骨",race:"ghost",title:"皇道殭屍",stage:2,atkMult:1,def:25,eva:5,affix:"poison",affixVal:15,element:"土",intro:"前朝帝王死後不腐，龍袍裹屍、骨化金剛，以皇陵屍氣鎮守塔中第二層。",auras:[{name:"屍氣瀰漫",player:{dot:.001,poison:.04},self:{def:10}},{name:"不滅之軀",player:{},self:{regen:.001}}],rewards:{coinMinutes:11,merit:[130,260],shards:[3,6],iron:[4,8]}},
+3:{name:"主咒之王",race:"ghost",title:"束縛幽冥",stage:3,atkMult:1.5,def:15,eva:15,affix:"ice",affixVal:18,element:"水",intro:"端坐符咒王座的幽冥咒主，被咒言纏身者動彈不得。",auras:[{name:"束縛咒域",player:{atk:.1,freeze:.03},self:{eva:5}},{name:"奪魂詛咒",player:{curse:.08,eva:3},self:{}}],rewards:{coinMinutes:13,merit:[150,300],shards:[4,7],iron:[5,9]}},
+4:{name:"幽冥鬼虎",race:"ghost",title:"冥火凶獸",stage:4,atkMult:1,def:10,eva:20,affix:"metal",affixVal:18,element:"金",intro:"幽冥鬼林中吞噬萬千亡魂的凶虎，周身燃著冥火，利爪所及魂飛魄散。",auras:[{name:"百鬼夜行",player:{eva:5,dot:.001},self:{atk:.1}},{name:"冥火纏身",player:{burn:.04},self:{eva:5}},{name:"凶虎之威",player:{def:5},self:{atk:.05}}],rewards:{coinMinutes:14,merit:[160,320],shards:[4,7],iron:[5,10]}},
+5:{name:"青瞑爪龍",race:"beast",title:"雷雲蒼龍",stage:5,atkMult:3,def:20,eva:15,affix:"thunder",affixVal:18,element:"木",intro:"盤踞雷雲之上的青鱗爪龍，是塔中第一道真正的難關。",auras:[{name:"蒼龍威壓",player:{atk:.08,def:8},self:{regen:.001}},{name:"風雷龍域",player:{freeze:.02,curse:.05},self:{eva:5}},{name:"龍鱗護體",player:{},self:{def:5}}],rewards:{coinMinutes:20,merit:[250,500],shards:[6,10],iron:[8,14]}},
+6:{name:"黑暗法老王",race:"ghost",title:"封印神王",stage:6,atkMult:1,def:30,eva:5,affix:"fire",affixVal:18,element:"土",intro:"被萬道鎖鏈封印於古陵深處的黃金神王，聖符迸發烈日神光。",auras:[{name:"烈日神威",player:{burn:.05,dot:.001},self:{def:10}},{name:"法老詛咒",player:{curse:.08,atk:.05},self:{regen:.001}},{name:"黃沙蔽日",player:{eva:5},self:{eva:3}}],rewards:{coinMinutes:15,merit:[170,340],shards:[4,8],iron:[6,11]}},
+7:{name:"墨大夫",race:"demon",title:"奪舍魔醫",stage:7,atkMult:2.5,hpMult:1.443,def:15,eva:8,affix:"poison",affixVal:15,element:"水",intro:"七玄門神手谷的神醫，暗中修煉魔道邪術，殘魂受塔中魔氣滋養重凝魔身。",auras:[{name:"奪舍魔瞳",player:{},self:{def:5}},{name:"血煉續命",player:{},self:{regen:.001}}],rewards:{coinMinutes:14,merit:[135,270],shards:[3,6],iron:[4,8]}},
+8:{name:"墨居仁",race:"demon",title:"血魔真身",stage:8,atkMult:2.53,hpMult:1.635,def:15,eva:8,affix:"fire",affixVal:15,element:"火",intro:"墨大夫殘魂在第七層潰散之際，引塔底萬魂之力重塑魔軀，自號血魔。",auras:[{name:"血煞封魔陣",player:{burn:.04},self:{def:5}},{name:"萬魂哀嚎",player:{curse:.05},self:{}}],rewards:{coinMinutes:14,merit:[140,280],shards:[3,7],iron:[4,9]}},
+9:{name:"襲胸雙雄",title:"自封紅十字軍",stage:9,atkMult:2.71,hpMult:1.531,def:10,eva:20,affix:"metal",affixVal:15,element:"金",intro:"兩個披著紅十字白袍的怪人，專趁人不備出手偷襲，誤闖鎮魔塔後把一身滑溜身法練成了「雙雄夾擊」。",auras:[{name:"紅十字軍旗號",player:{atk:.05},self:{}},{name:"雙雄夾擊",player:{curse:.06},self:{}}],rewards:{coinMinutes:15,merit:[145,290],shards:[3,7],iron:[4,9]}}};
+for(let n=1;n<=9;n++)B[n].realm=6;
+// 第 10 層起：依規則產生
+(function(){
+  const TUNE={10:[1.35,1.162],11:[2.375,1.541],12:[2.039,1.428],13:[1.811,1.346],14:[2.252,1.501],15:[1.822,1.35],16:[2.44,1.562],17:[2.151,1.467],18:[2.118,1.455],19:[2.039,1.428],20:[1.376,1.173],21:[2.243,1.498],22:[1.743,1.32],23:[1.717,1.31],24:[2.143,1.464],
+  25:[1.429,1.195],26:[1.787,1.337],27:[1.853,1.361],28:[2.023,1.422],29:[2.016,1.42],30:[1.085,1.042],31:[1.892,1.375],32:[1.892,1.375],33:[1.867,1.366],34:[1.846,1.359],35:[1.27,1.127],36:[1.603,1.266],37:[1.394,1.181],38:[1.557,1.248],39:[1.537,1.24],40:[.992,.996],
+  41:[1.656,1.287],42:[1.289,1.135],43:[1.44,1.2],44:[1.591,1.261],45:[1.376,1.173],46:[1.808,1.345],47:[1.554,1.247],48:[1.352,1.163],49:[1.365,1.168],50:[1.029,1.014],51:[3.299,1.816],52:[2.81,1.676],53:[2.875,1.696],54:[2.559,1.6],55:[.994,.997],56:[2.684,1.638],
+  57:[2.87,1.694],58:[3.182,1.784],59:[3.325,1.823],60:[1.63,1.304],61:[3.541,1.882],62:[2.982,1.727],63:[3.152,1.775],64:[2.584,1.607],65:[.928,.963],66:[2.54,1.594],67:[2.098,1.448],68:[2.235,1.495],69:[2.326,1.525],70:[1.327,1.152],71:[2.147,1.465],72:[1.996,1.413],
+  73:[2.062,1.436],74:[2.731,1.653],75:[1.071,1.035],76:[2.953,1.718],77:[2.082,1.443],78:[2.027,1.424],79:[2.151,1.467],80:[1.525,1.235],81:[2.086,1.444],82:[1.864,1.365],83:[1.557,1.248],84:[1.882,1.372],85:[.742,.861],86:[2.066,1.437],87:[2.344,1.531],88:[2.407,1.551],
+  89:[2.609,1.615],90:[1.339,1.157],91:[2.624,1.62],92:[2.256,1.502],93:[1.97,1.404],94:[1.808,1.345],95:[1.625,1.275],96:[1.563,1.25],97:[1.381,1.175],98:[1.777,1.333],99:[1.808,1.345],100:[.941,.97]};
+  const PRE=["玄冥","赤炎","九幽","太虛","血煞","青冥","紫霄","玄冰","幽羅","天魔"],SUF=["魔君","屍王","妖皇","鬼帝","魔龍","邪神","劍魔","血尊","戰神","魔尊"];
+  const AFX=["thunder","poison","ice","metal","fire"],ELE=["金","木","水","火","土"],r3=v=>Math.round(v*1000)/1000;
+  const AUR=[s=>({name:"威壓",player:{atk:.05*s},self:{atk:.05*s}}),s=>({name:"鐵壁",player:{},self:{def:Math.round(5*s)}}),s=>({name:"迷蹤",player:{eva:Math.round(3*s)},self:{eva:Math.round(3*s)}}),
+    s=>({name:"寒獄",player:{freeze:Math.min(.08,.02*s)},self:{}}),s=>({name:"焚天",player:{burn:.04*s},self:{}}),s=>({name:"蝕骨",player:{poison:.04*s},self:{}}),s=>({name:"詛咒",player:{curse:.05*s},self:{}}),
+    s=>({name:"噬命",player:{dot:.001*s},self:{}}),s=>({name:"不滅",player:{},self:{regen:.001*s}}),s=>({name:"破甲",player:{def:Math.round(5*s)},self:{}})];
+  for(let n=10;n<=100;n++){
+    const realm=6+Math.floor((n-1)/10),stage=(n-1)%10+1,g10=n%10===0,g5=n%10===5,d=Math.floor(n/10),suffix=SUF[d%10],name=PRE[(n+d)%10]+suffix;
+    const s=1+(n-7)/93,count=(n<=30?2:n<=70?3:4)+(g10?1:0),auras=[];
+    for(let i=0;i<count;i++){const a=AUR[(n*3+d+i*7)%10](s);["player","self"].forEach(p=>Object.keys(a[p]).forEach(k=>a[p][k]=r3(a[p][k])));a.name=name.slice(0,2)+a.name;auras.push(a)}
+    const rw=g10?2:1;
+    B[n]={name,title:g10?"樓主":g5?"鎮關者":"守塔魔頭",realm,stage,race:SUFFIX_RACE[suffix],atkMult:r3((1+(n-1)*.01)*(g10?2:g5?1.5:1)*TUNE[n][0]),hpMult:r3((1+(n-1)*.005)*TUNE[n][1]),
+      def:Math.min(35,15+d*2),eva:Math.min(25,8+d*2),affix:AFX[n%5],affixVal:Math.min(35,15+d*2),element:ELE[n%5],auras,
+      rewards:{coinMinutes:Math.round((10+n*.5)*rw),merit:[(100+n*5)*rw,(200+n*10)*rw],shards:[(3+d)*rw,(6+Math.floor(n/8))*rw],iron:[(4+d)*rw,(8+Math.floor(n/8))*rw]}};
+  }
+})();
+// 同境界一般玩家的基準（BOSS 強度以它為準）
+const typStat=(r,s)=>(5+(r*10+s-1)+5*r)*1.1,typBuff=L=>Math.min(50,10+L*10);
+const typHp=(r,s,L)=>50*Math.pow(1.05,L)*(1+typStat(r,s)*.002);
+const typNormal=(r,s,L)=>{const st=typStat(r,s);return (5*Math.pow(1.05,Math.min(L,10))*1.25+st*.05)*(1+st*.001)*(1+typBuff(L)/100)};
+function stats(n){
+  const b=B[n],L=b.realm+(b.stage-1)/10,eva=b.eva+(b.race==="ghost"?5:0);
+  const atk=Math.round(typHp(b.realm,b.stage,L)*(1+typBuff(L)/100)/400*b.atkMult*100)/100;
+  const hp=Math.round(typNormal(b.realm,b.stage,L)*1.3*300*(1-b.def/100)*(1-b.eva/100)*(b.hpMult||1)*(b.race==="beast"?1.1:1));
+  return{b,L,atk,hp,eva};
+}
+const pc=v=>+(v*100).toFixed(1);
+function auraText(a){
+  const p=a.player,s=a.self;
+  const neg=[p.atk&&`你的攻擊 −${pc(p.atk)}%`,p.def&&`你的減傷 −${p.def}`,p.eva&&`你的閃避 −${p.eva}`,p.curse&&`詛咒：你受到的傷害 +${pc(p.curse)}%`,p.dot&&`每回合扣你 ${pc(p.dot)}% 氣血`,
+    p.freeze&&`每回合 ${pc(p.freeze)}% 凍結你`,p.burn&&`每回合 ${pc(p.burn)}% 使你燒傷`,p.poison&&`每回合 ${pc(p.poison)}% 使你中毒`].filter(Boolean);
+  const pos=[s.atk&&`攻擊 +${pc(s.atk)}%`,s.def&&`減傷 +${s.def}`,s.eva&&`閃避 +${s.eva}`,s.regen&&`每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
+  return `<b>【${a.name}】</b>${neg.join("、")}${neg.length&&pos.length?"；":""}${pos.length?"自身"+pos.join("、"):""}`;
+}
+let fR="",fK="";
+function chips(){
+  const ranges=[["","全部"]].concat(Array.from({length:10},(_,i)=>[i,`${i*10+1}～${i*10+10} 層・${REALMS[6+i]}`]));
+  $("fRange").innerHTML=ranges.map(([v,l])=>`<button data-v="${v}" class="${String(fR)===String(v)?"on":""}">${l}</button>`).join("");
+  $("fKind").innerHTML=[["","全部"],["g10","只看樓主（10、20…）"],["g5","只看鎮關者（5、15…）"]].map(([v,l])=>`<button data-v="${v}" class="${fK===v?"on":""}">${l}</button>`).join("");
+  $("fRange").querySelectorAll("button").forEach(x=>x.onclick=()=>{fR=x.dataset.v;chips();render()});
+  $("fKind").querySelectorAll("button").forEach(x=>x.onclick=()=>{fK=x.dataset.v;chips();render()});
+}
+function render(){
+  let h="";
+  for(let n=1;n<=100;n++){
+    if(fR!==""&&Math.floor((n-1)/10)!==+fR)continue;
+    const g10=n%10===0,g5=n%10===5;if(fK==="g10"&&!g10||fK==="g5"&&!g5)continue;
+    const x=stats(n),b=x.b,race=RACE[b.race],rw=b.rewards,coins=Math.floor(COINS[b.realm]*1160/60*rw.coinMinutes);
+    const extra=[];
+    if(n>=11&&n<=40)extra.push("天驕夥伴碎片 8～15 片");if(n>=41&&n<=60)extra.push("尊者或天驕夥伴碎片 8～15 片");
+    if(g10&&b.race)extra.push(`<b>首次擊敗</b>必得${n<=30?"下品":n<=70?"中品":"上品"}${({beast:"降妖葫蘆",ghost:"鎮魂鈴",demon:"誅魔鏡",heart:"清心蓮台"})[b.race]}`);
+    extra.push("有機會掉鍛造圖紙（答對越多機會越高）");
+    h+=`<tr class="${g10?"g10":g5?"g5":""}"><td class="num"><b>${n}</b></td>
+    <td><b>${b.name}</b>${g10?` <span class="tag t-g">樓主</span>`:g5&&n>9?` <span class="tag t-k">鎮關者</span>`:""}<br><span class="sub">${n<10?b.title+"・":""}${race?race[0]+race[1]:"人修"}・五行 ${b.element}</span>${b.intro?`<div class="intro">${b.intro}</div>`:""}</td>
+    <td class="nw">${REALMS[b.realm]} ${b.stage} 階</td>
+    <td class="num">${fmt(x.atk*100)}<br><span class="sub">×${b.atkMult}</span></td><td class="num">${fmt(x.hp*100)}</td>
+    <td class="num">${b.def}%</td><td class="num">${x.eva}%</td><td class="nw">${AFFIX[b.affix]} ${b.affixVal}%</td>
+    <td><details><summary>${b.auras.length} 個光環・獎勵</summary><div class="dt">${b.auras.map(auraText).join("<br>")}
+    <div style="margin-top:4px"><span class="m">獎勵（× 問答倍率）：</span>靈石 ${fmt(coins)}、功德 ${rw.merit[0]}～${rw.merit[1]}、異火碎片 ${rw.shards[0]}～${rw.shards[1]}、星允鐵 ${rw.iron[0]}～${rw.iron[1]}</div>
+    <div><span class="m">另外：</span>${extra.join("；")}</div></div></details></td></tr>`;
+  }
+  $("body").innerHTML=h;
+}
+chips();render();
+</script></body></html>
