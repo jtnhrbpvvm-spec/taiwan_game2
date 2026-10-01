@@ -105,7 +105,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="box" id="saveBox">
 <b>📥 讀取存檔，自動帶入你的角色</b><br>
 在遊戲的「命運與系統」按「📤 匯出存檔代碼」→ 複製代碼，貼到下面再按「讀取存檔」。會把你的境界、屬性點、武器、增益帶進下面的試算，並列出你已學的技能各打多少；帶入後可以自己改數字，看看換裝或多吃丹藥會變多少。
-<div class="sub">代碼只在你自己的瀏覽器裡計算，不會上傳到任何地方，也不會改動你的存檔。</div>
+<div class="sub">代碼只在你自己的瀏覽器裡計算，不會上傳到任何地方，也不會改動你的存檔。讀取後，攻略站的其他頁面也會標出你的進度（已結識的夥伴、已達成的稱號、鎮魔塔層數等）；資料只暫存在這個分頁，關掉分頁或按「清除」就會消失。</div>
 <textarea id="saveCode" placeholder="把存檔代碼貼在這裡（FS2: 開頭的一長串）" spellcheck="false"></textarea>
 <div class="ctl" style="margin-bottom:0"><button class="btn" id="saveLoad">讀取存檔</button><button class="btn ghost" id="saveClear">清除</button><span id="saveMsg"></span></div>
 </div>
@@ -288,6 +288,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
 </div>
 </div>
+<script src="profile.js"></script>
 <script>
 const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -812,14 +813,21 @@ function rebuild(){
   set("cBp",f4(a.bp.v*100));set("cBm",f4(a.bm.v*100));set("cBh",f4(a.bh.v*100));set("cSk",f4(((1+a.burst)*a.skillMult-1)*100));
   calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded};mySkills=a.mine;calc();showSave(a);renderGear();renderSetup();
 }
+function loadPlayer(p){
+  build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;
+  $("cRealm").value=p.realmIndex||0;$("cStage").value=p.stage||1;$("cLv").value=p.level||1;
+  rebuild();
+}
 $("saveLoad").onclick=async()=>{
   const m=$("saveMsg");m.className="";m.textContent="讀取中…";
   try{
     const p=await decodeSave($("saveCode").value);
     if(!p||typeof p!=="object"||typeof p.realmIndex!=="number")throw new Error("這不是遊戲的存檔代碼");
-    build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;
-    $("cRealm").value=p.realmIndex||0;$("cStage").value=p.stage||1;$("cLv").value=p.level||1;
-    rebuild();
+    loadPlayer(p);
+    if(window.saveProfile){   // 其他頁面沒有裝備名冊，先把裝備名稱、套裝、資質名稱附上再暫存
+      Object.values(p.equipment||{}).forEach(eq=>{const d=gdef(eq);if(d){eq._n=d.name;eq._set=d.set}else if(eq&&LB[eq.lingbaoId])eq._n=LB[eq.lingbaoId].n});
+      p._root=lastA.rootDef?lastA.rootDef[0]:"";p._phy=lastA.phyDef?lastA.phyDef[0]:"";
+      saveProfile(p)}
     m.textContent=`讀取完成，已帶入「${p.name||"角色"}」的數字與裝備`;
   }catch(e){$("saveOut").innerHTML="";m.className="err";m.textContent="讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"代碼不完整或格式不對，請重新複製整段代碼")}
 };
@@ -832,11 +840,12 @@ function readHash(){
 }
 addEventListener("hashchange",readHash);
 $("saveClear").onclick=()=>{$("saveCode").value="";$("saveOut").innerHTML="";$("saveMsg").className="";$("saveMsg").textContent="";
-  $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";rebuild()};
+  $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";if(window.clearProfile)clearProfile();rebuild()};
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
   ["calc","stat","rule","aid","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
 ["cRealm","cStage","cLv"].forEach(id=>$(id).oninput=rebuild);
 rebuild();
+if(window.PROFILE&&!/^#save=/.test(location.hash)){loadPlayer(window.PROFILE);$("saveMsg").textContent=`已沿用先前讀取的「${window.PROFILE.name||"角色"}」`}
 readHash();
 </script></body></html>

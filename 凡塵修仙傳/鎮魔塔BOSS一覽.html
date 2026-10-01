@@ -72,6 +72,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="tw"><table><thead><tr><th class="num">層</th><th>BOSS</th><th>強度</th><th class="num">攻擊</th><th class="num">氣血</th><th class="num">減傷</th><th class="num">閃避</th><th>屬性傷害</th><th>光環與獎勵</th></tr></thead><tbody id="body"></tbody></table></div>
 <div class="sub" style="margin-top:6px">第 1～9 層是專屬 BOSS，第 10 層起由系統依規則產生。攻擊、氣血是你和 BOSS 同境界時的基準值，未含每次挑戰的 ±20% 浮動，也未含境界壓制。靈石獎勵是答對 0 題的基礎值。</div>
 </div>
+<script src="profile.js"></script>
 <script>
 const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
 const $=id=>document.getElementById(id),full=n=>Number(n).toLocaleString("zh-TW");
@@ -133,6 +134,8 @@ function auraText(a){
   return `<b>【${a.name}】</b>${neg.join("、")}${neg.length&&pos.length?"；":""}${pos.length?"自身"+pos.join("、"):""}`;
 }
 let fR="",fK="";
+// 已帶入角色時：標出目前樓層
+const ZM=window.PROFILE?(window.PROFILE.zhenmo||{floor:1,best:0}):null;
 function chips(){
   const ranges=[["","全部"]].concat(Array.from({length:10},(_,i)=>[i,`${i*10+1}～${i*10+10} 層・${REALMS[6+i]}`]));
   $("fRange").innerHTML=ranges.map(([v,l])=>`<button data-v="${v}" class="${String(fR)===String(v)?"on":""}">${l}</button>`).join("");
@@ -150,7 +153,8 @@ function render(){
     if(n>=11&&n<=40)extra.push("天驕夥伴碎片 8～15 片");if(n>=41&&n<=60)extra.push("尊者或天驕夥伴碎片 8～15 片");
     if(g10&&b.race)extra.push(`<b>首次擊敗</b>必得${n<=30?"下品":n<=70?"中品":"上品"}${({beast:"降妖葫蘆",ghost:"鎮魂鈴",demon:"誅魔鏡",heart:"清心蓮台"})[b.race]}`);
     extra.push("有機會掉鍛造圖紙（答對越多機會越高）");
-    h+=`<tr class="${g10?"g10":g5?"g5":""}"><td class="num"><b>${n}</b></td>
+    const zf=ZM?(ZM.floor||1):0,mark=!ZM?"":n<zf||(ZM.best||0)>=n?`<br><span class="ok">✅</span>`:n===zf?`<br><span class="tag t-w">你在這</span>`:"";
+    h+=`<tr class="${g10?"g10":g5?"g5":""}"><td class="num"><b>${n}</b>${mark}</td>
     <td><b>${b.name}</b>${g10?` <span class="tag t-g">樓主</span>`:g5&&n>9?` <span class="tag t-k">鎮關者</span>`:""}<br><span class="sub">${n<10?b.title+"・":""}${race?race[0]+race[1]:"人修"}・五行 ${b.element}</span>${b.intro?`<div class="intro">${b.intro}</div>`:""}</td>
     <td class="nw">${REALMS[b.realm]} ${b.stage} 階</td>
     <td class="num">${fmt(x.atk*100)}<br><span class="sub">×${b.atkMult}</span></td><td class="num">${fmt(x.hp*100)}</td>
@@ -161,5 +165,7 @@ function render(){
   }
   $("body").innerHTML=h;
 }
+if(ZM){fR=String(Math.min(9,Math.floor(((ZM.floor||1)-1)/10)));
+  $("fRange").insertAdjacentHTML("beforebegin",`<div class="sub" style="color:var(--acct);font-weight:bold">你目前要挑戰第 ${Math.min(100,ZM.floor||1)} 層，最高通過第 ${ZM.best||0} 層。已自動切到你所在的那十層。</div>`)}
 chips();render();
 </script></body></html>

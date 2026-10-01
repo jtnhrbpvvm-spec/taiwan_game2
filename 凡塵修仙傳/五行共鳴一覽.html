@@ -71,6 +71,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="res" id="calcOut"></div>
 </div>
 </div>
+<script src="profile.js"></script>
 <script>
 const EL=["金","木","水","火","土"];
 // lay＝一種可以達成的 17 格配法（free＝不論屬性）
@@ -101,7 +102,7 @@ const DATA=[
   {name:"木靈星君加持",icon:"🌿",eff:"生命恢復 +20%",note:"安全區打坐每秒回血由最大氣血 10% 提升為 12%（野外戰鬥中無效）。效果最弱，只加快回城療傷。",cond:"木 ≥ 5 件",lay:{木:5,free:12}},
   {name:"水靈星君加持",icon:"💧",eff:"生命 +20%",note:"氣血上限 ×1.2（含境界帶來的部分）。生存流，高難度地圖常被打回城時選它。",cond:"水 ≥ 5 件",lay:{水:5,free:12}},
   {name:"火靈星君加持",icon:"🔥",eff:"傷害 +20%",note:"物理與法術攻擊力 ×1.2，普攻、宗門技能、靈寵攻擊都提升。輸出流，最通用的首選。",cond:"火 ≥ 5 件",lay:{火:5,free:12}},
-  {name:"土靈星君加持",icon:"⛰️",eff:"體質 +20%",note:"總體質（含裝備）×1.2，只放大體質換算的氣血，境界越高占比越小。前期有感，中後期不如水。",cond:"土 ≥ 5 件",lay:{土:5,free:12}}]}
+  {name:"土靈星君加持",icon:"⛰️",eff:"體質 +20%",note:"遊戲寫體質 +20%，實際是氣血上限的增益 +20%（體質點數不變），效果和水靈星君相同。",cond:"土 ≥ 5 件",lay:{土:5,free:12}}]}
 ];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const strip=s=>s.replace(/<[^>]+>/g,"");
@@ -123,6 +124,9 @@ qEl.addEventListener("input",render);render();
 
 // ---- 配裝試算 ----
 const cnt={金:3,木:3,水:3,火:3,土:5};
+// 已帶入角色時：用身上 17 件裝備的五行當起點，並在最上面顯示目前啟動的共鳴
+const PF=window.PROFILE||null;
+if(PF){EL.forEach(e=>cnt[e]=0);Object.keys(PF.equipment||{}).forEach(s=>{const q=PF.equipment[s];if(s!=="神器"&&q&&cnt[q.element]!==undefined)cnt[q.element]++})}
 const find=nm=>DATA.flatMap(g=>g.items).find(r=>r.name===nm);
 const PURE={水:"冰共鳴",火:"炎共鳴",金:"罡共鳴",木:"生共鳴",土:"岩共鳴"};
 const DUAL={"木+水":"榮共鳴","金+木":"庚共鳴","金+火":"煉共鳴","金+土":"鋒岩共鳴","木+火":"焚共鳴","木+土":"蠱共鳴","水+火":"既濟共鳴","水+土":"瘴共鳴","火+土":"熔共鳴"};
@@ -154,6 +158,8 @@ function calcRender(){
   document.getElementById("calcOut").innerHTML=h;
 }
 calcRender();
+if(PF){const r=judge(cnt),names=(r.sp?[r.sp]:[]).concat(r.singles.map(e=>e+"靈星君加持")),tot=EL.reduce((s,e)=>s+cnt[e],0);
+  document.querySelector(".tabs").insertAdjacentHTML("beforebegin",`<div class="rules" style="border-color:var(--acct)">👤 你身上 ${tot} 件有五行的裝備：${EL.map(e=>`<span class="e${e}"><b>${e} ${cnt[e]}</b></span>`).join("、")}。<br>目前啟動：<b>${names.length?names.map(n=>{const x=find(n);return x.icon+" "+x.name+"（"+esc(x.eff)+"）"}).join("；"):"沒有任何共鳴"}</b><br>「配裝試算」分頁已經帶入這個配置，可以直接調整看看差幾件。</div>`)}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
   const c=b.dataset.k==="calc";document.getElementById("pCalc").hidden=!c;document.getElementById("pList").hidden=c});
 </script></body></html>

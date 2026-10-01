@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>賺錢管道</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1050px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0}
+.ctl label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+.ctl select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);width:180px;max-width:100%}
+.hv{font-size:15px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.hv b{font-size:20px;color:var(--acct)}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>💰 賺錢管道</h1>
+<div class="sub">除了打怪以外的靈石來源：坊市回收、僕從商隊、洞府產業、懸賞賞金，以及天星賭坊。</div>
+
+<div class="box">
+<b>先認識「H」：</b>這些收入幾乎都用 <b>H＝你目前境界掛機 1 小時的靈石</b>來換算（看境界，不看你實際在哪張圖、打多快）。所以境界越高，每一項都跟著變多。選你的境界，下面所有表格會換算成實際靈石。
+</div>
+<div class="ctl"><label>你的境界<select id="realm"></select></label></div>
+<div class="hv" id="hv"></div>
+
+<h2>每日收入一覽</h2>
+<div class="tw"><table><thead><tr><th>管道</th><th>每日上限</th><th class="num">換算靈石</th><th>要做什麼</th></tr></thead><tbody id="sum"></tbody></table></div>
+
+<h2>① 坊市回收</h2>
+<div class="box">天星城坊市的<b>收購商</b>，把用不到的東西賣掉。每天回收總額上限是 <b>H × 2 小時</b>，隔天重置。
+<ul>
+<li>鎖定的裝備和神器不會被賣；鑲在裝備上的符寶會一起賣掉。</li>
+<li>可以勾選<b>「背包滿時自動賣出」</b>：背包滿了之後新掉的白～紫裝備直接賣錢（額度不夠時照舊分解），橙色以上照舊進暫存區。</li>
+<li>主修職業每一階讓回收價 <b>+2%</b>（10 階 +20%），見<a href="職業一覽.html">職業一覽</a>。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th>賣什麼</th><th>價格</th><th class="num">換算靈石</th></tr></thead><tbody id="sell"></tbody></table></div>
+<div class="sub" style="margin-top:6px">裝備價格還要乘<b>等級係數</b>：0.5 ＋ 0.5 ×（裝備等級 ÷ 你目前穿得上的最高等級），最多 1。也就是跟得上你等級的裝備賣全價，最低等的賣半價。上表是全價。</div>
+
+<h2>② 僕從商隊</h2>
+<div class="box">
+<ul>
+<li>宗門任務「🐫 商隊跑商」，<b>只能派僕從去</b>，每趟固定 <b>2 小時</b>（不受僕從效率影響）。</li>
+<li><b>所有僕從合計每天最多 4 趟</b>。離線、關掉遊戲時照常進行。</li>
+<li>每趟帶回 H 的 10～30 分鐘，再乘僕從品質：一般 ×1、優秀 ×1.2、稀有 ×1.4、史詩 ×1.7、傳說 ×2。所以<b>商隊要派品質最高的僕從</b>。</li>
+<li>有機會另外帶回星允鐵 1～3 或異火碎片 1～2。</li>
+<li>出發時照一般任務付派遣費（依品質 50～300 靈石）。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th>僕從品質</th><th class="num">每趟</th><th class="num">每天 4 趟平均</th></tr></thead><tbody id="car"></tbody></table></div>
+
+<h2>③ 洞府產業</h2>
+<div class="box">
+<ul>
+<li>宗門分頁的「🏞️ 洞府產業」，不在宗門也能打開。有<b>靈田</b>和<b>礦脈</b>兩種，第一次打開各送 1 級。</li>
+<li>依時間自動累積，<b>關掉遊戲也會算</b>；但累積到上限時數就停，要回來收成。</li>
+<li>升級花靈石，升級前會自動幫你收成。</li>
+<li>靈田另外產<b>靈草</b>（可以拿去宗門靈田培育成煉丹材料）；礦脈另外產<b>礦石</b>（煉符寶用）和每小時 0.2 顆<b>星允鐵</b>。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th class="num">等級</th><th class="num">每小時靈石</th><th class="num">換算</th><th class="num">累積上限</th><th class="num">放滿可收</th><th class="num">升到下一級</th><th class="num">靈田靈草／時</th><th class="num">礦脈礦石／時</th></tr></thead><tbody id="est"></tbody></table></div>
+<div class="sub" style="margin-top:6px" id="estNote"></div>
+
+<h2>④ 懸賞賞金</h2>
+<div class="tw"><table><thead><tr><th>榜別</th><th>伏誅額外給</th><th class="num">換算靈石</th></tr></thead><tbody id="bty"></tbody></table></div>
+<div class="sub" style="margin-top:6px">懸賞榜每 4 小時 6 名，全部打完一輪是 H 的 75 分鐘。規則見<a href="懸賞與善惡.html">懸賞與善惡</a>。</div>
+
+<h2>⑤ 自己做了拿去賣</h2>
+<div class="box">煉的丹、打的裝備可以賣給坊市回收，或放到大道石碑的<b>寄售</b>賣給其他玩家。高境界時白色裝備的回收價可能高過 1 萬靈石的鍛造費，但受每日回收上限限制，等於每天多一筆固定收入而已。</div>
+
+<h2>天星賭坊（不是穩定收入）</h2>
+<div class="box">天星城坊市的石拱門。<b>長期來看一定是虧的</b>，它的作用是讓靈石太多的人有地方花，偶爾能大賺。每天下注總額（買隕石＋擲骰合計）有上限，依境界提高；擲骰單把最多是每日上限的 20%，最少 1,000 靈石。</div>
+<div class="sub">你的境界每日下注上限：<b id="cas"></b></div>
+<h2 style="font-size:15px">賭星隕石</h2>
+<div class="tw"><table><thead><tr><th>隕石</th><th class="num">價格</th><th>可能切出</th></tr></thead><tbody>
+<tr><td class="nw">🌑 凡品隕石</td><td class="num">10 萬</td><td>廢石、靈石 5 萬～15 萬、碎鐵 50～150、礦石 50～150、星允鐵 1～2、異火碎片 1～3</td></tr>
+<tr><td class="nw">🌗 靈品隕石</td><td class="num">100 萬</td><td>廢石、靈石 50 萬～150 萬、星允鐵 2～5（大獎 8～15）、異火碎片 10～20、紫色裝備、橙色裝備</td></tr>
+<tr><td class="nw">☄️ 仙品隕石</td><td class="num">1,000 萬</td><td>廢石、靈石 800 萬～1,600 萬、星允鐵 20～40（大獎 80～150）、異火碎片 100～200、橙色裝備、<b>整朵天下異火</b></td></tr>
+</tbody></table></div>
+<h2 style="font-size:15px">擲骰比大小（三顆骰子）</h2>
+<div class="tw"><table><thead><tr><th>押法</th><th>贏的條件</th><th class="num">淨贏倍數</th></tr></thead><tbody>
+<tr><td class="nw">大</td><td>總點 11～17（三顆相同算莊家贏）</td><td class="num">1 倍</td></tr>
+<tr><td class="nw">小</td><td>總點 4～10（三顆相同算莊家贏）</td><td class="num">1 倍</td></tr>
+<tr><td class="nw">任意豹子</td><td>三顆點數相同</td><td class="num">24 倍</td></tr>
+<tr><td class="nw">指定豹子</td><td>三顆都是你指定的點數</td><td class="num">150 倍</td></tr>
+<tr><td class="nw">押總點</td><td>總點剛好等於你押的數字</td><td class="num">4 或 17 點 50 倍；5 或 16 點 18 倍；6 或 15 點 14 倍；7 或 14 點 12 倍；8 或 13 點 8 倍；9～12 點 6 倍</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">賭坊有四個稱號：累計切石 100 顆、切出整朵異火、押中指定豹子、擲骰單把淨贏 1 億，見<a href="稱號與異火.html">稱號與異火</a>。</div>
+</div>
+<script src="profile.js"></script>
+<script>
+const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
+const COINS=[20,20,80,250,1000,1650,2450,2700,2950,3150,3350,6900,8400,8400,8400,8400];
+const CASINO=[100,200,500,1000,2000,5000,10000,20000,30000,50000,80000,100000,150000,200000,300000,500000];
+const $=id=>document.getElementById(id);
+const wan=n=>{n=Math.round(n);return n>=1e8?+(n/1e8).toFixed(2)+" 億":n>=1e4?+(n/1e4).toFixed(2)+" 萬":n.toLocaleString("zh-TW")};
+const RATE=[.05,.07,.09,.11,.13,.15,.17,.19,.22,.25],CAP=[8,8,10,12,14,16,18,20,22,24],UP=[1,1.2,1.4,1.6,1.8,2,2.3,2.6,3],GRASS=[2,3,4,5,6,8,10,12,15,20],ORE=[1,1,2,2,3,3,4,5,6,8];
+$("realm").innerHTML=REALMS.map((r,i)=>`<option value="${i}" ${i===(window.PROFILE?Math.min(15,window.PROFILE.realmIndex||0):6)?"selected":""}>${r}</option>`).join("");
+function render(){
+  const r=+$("realm").value,H=COINS[r]*1160,m=x=>H/60*x;
+  $("hv").innerHTML=`${REALMS[r]}的 H＝<b>${wan(H)}</b> 靈石`;
+  $("sum").innerHTML=[
+    ["坊市回收","H × 2 小時",H*2,"賣掉用不到的裝備、丹藥、碎片"],
+    ["僕從商隊","4 趟，每趟 H 的 10～30 分鐘 × 品質",m(20)*4*2,"派品質最高的僕從（右邊以傳說僕從的平均計）"],
+    ["洞府產業","靈田＋礦脈，各 H × 5%～25% × 24 小時",H*.25*24*2,"每天回來收成（右邊以兩邊都 10 級、整天不漏計）"],
+    ["懸賞賞金","每 4 小時一輪，H 的 75 分鐘",m(75)*6,"把榜上 6 名都打完（右邊以一天 6 輪全清計，實際很難）"]
+  ].map(x=>`<tr><td class="nw"><b>${x[0]}</b></td><td>${x[1]}</td><td class="num">約 ${wan(x[2])}</td><td>${x[3]}</td></tr>`).join("");
+  $("sell").innerHTML=[["白色裝備","H 的 0.5 分鐘",.5],["綠色裝備","H 的 1 分鐘",1],["藍色裝備","H 的 2 分鐘",2],["紫色裝備","H 的 4 分鐘",4],["橙色裝備","H 的 10 分鐘",10],["白金裝備","H 的 30 分鐘",30],["異火碎片（每個）","H 的 1 分鐘",1],["星允鐵（每顆）","H 的 2 分鐘",2]]
+    .map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td class="num">${wan(m(x[2]))}</td></tr>`).join("")+`<tr><td>丹藥堂的丹藥</td><td>商店價的 20%</td><td class="num">—</td></tr>`;
+  $("car").innerHTML=[["一般",1],["優秀",1.2],["稀有",1.4],["史詩",1.7],["傳說",2]].map(([n,q])=>`<tr><td>${n}</td><td class="num">${wan(m(10)*q)}～${wan(m(30)*q)}</td><td class="num">約 ${wan(m(20)*q*4)}</td></tr>`).join("");
+  $("est").innerHTML=RATE.map((x,i)=>`<tr><td class="num">${i+1}</td><td class="num">H × ${Math.round(x*100)}%</td><td class="num">${wan(H*x)}</td><td class="num">${CAP[i]} 小時</td><td class="num">${wan(H*x*CAP[i])}</td><td class="num">${i<9?wan(H*UP[i])+`（H × ${UP[i]}）`:"—"}</td><td class="num">${GRASS[i]}</td><td class="num">${ORE[i]}</td></tr>`).join("");
+  const tot=UP.reduce((a,b)=>a+b,0);
+  $("estNote").innerHTML=`一座從 1 級升到 10 級合計要 H × ${+tot.toFixed(1)} 小時（${wan(H*tot)} 靈石），兩座就是兩倍。10 級時一座每天產 H × 6 小時，大約三天回本。升級費用和產出都跟著你當時的境界算，所以早升早划算。`;
+  $("bty").innerHTML=[["🌟 天榜","H 的 30 分鐘",30],["⭐ 地榜","H 的 15 分鐘",15],["✦ 人榜","H 的 5 分鐘",5]].map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td class="num">${wan(m(x[2]))}</td></tr>`).join("");
+  $("cas").textContent=wan(CASINO[r]*10000)+" 靈石";
+}
+$("realm").oninput=render;render();
+</script></body></html>

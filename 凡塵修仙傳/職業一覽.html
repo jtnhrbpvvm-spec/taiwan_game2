@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>職業一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--phys:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--phys:#fbbf24}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b,.card b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:9px;border:1px solid currentColor;white-space:nowrap;font-weight:bold}
+.t-p{color:var(--phys)}.t-m{color:var(--acct)}.t-s{color:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(480px,100%),1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.75;min-width:0}
+.card h3{margin:0 0 4px;font-size:17px}
+.card h4{margin:10px 0 2px;font-size:13px;color:var(--mute);font-weight:normal}
+.card th,.card td{font-size:13px;padding:5px 8px}
+.ranks{font-size:13px;color:var(--mute);line-height:1.9}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🗡️ 職業一覽</h1>
+<div class="sub">六種職業（武器流派）的被動、職業技能、熟練度門檻，以及和宗門傳承的搭配。</div>
+
+<div class="box">
+<b>基本規則：</b>
+<ul>
+<li>人物等級 <b>Lv.10</b> 起可以選一個<b>主修職業</b>，六種職業各對應一種武器。</li>
+<li>只有主修會累積熟練度；六種職業的熟練度<b>各自保存</b>，換主修不會歸零。</li>
+<li>第一次選主修免費，之後每次改修要 <b>10 萬靈石</b>。</li>
+<li>主修帶來三樣東西：<b>被動加成</b>（依階數）、<b>對應武器的武器攻擊加成</b>、到 5／8／10 階解鎖的<b>職業技能</b>。</li>
+<li>職業技能每回合出手後自動判定，不耗靈力；由高階往低階依序判定，發動一招就停。不需要裝備對應武器也會發動。</li>
+</ul>
+</div>
+
+<h2>熟練度怎麼來</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>熟練度</th></tr></thead><tbody>
+<tr><td class="nw">野外擊殺</td><td>每隻 +1，再乘地圖倍率：野外歷練 ×1、開放世界 ×2、上古禁區與幽冥禁域 ×3、諸天至高戰場 ×4</td></tr>
+<tr><td class="nw">懸賞伏誅</td><td>每名 +200</td></tr>
+<tr><td class="nw">離線掛機</td><td>照野外擊殺計算，再 ×0.5</td></tr>
+<tr><td class="nw">宗門傳承</td><td>主修武器和目前宗門的傳承武器相同時，熟練度獲得量 ×1.3（凡俗）／×1.6（修真）／×2.0（至高）</td></tr>
+</tbody></table></div>
+
+<h2>十階門檻與武器加成</h2>
+<div class="tw"><table><thead><tr><th class="num">階</th><th class="num">累計熟練度</th><th class="num">主修武器的武器攻擊</th><th>解鎖</th></tr></thead><tbody>
+<tr><td class="num">1</td><td class="num">0</td><td class="num">+0%</td><td></td></tr>
+<tr><td class="num">2</td><td class="num">500</td><td class="num">+3%</td><td></td></tr>
+<tr><td class="num">3</td><td class="num">3,000</td><td class="num">+6%</td><td></td></tr>
+<tr><td class="num">4</td><td class="num">10,000</td><td class="num">+9%</td><td></td></tr>
+<tr><td class="num">5</td><td class="num">25,000</td><td class="num">+12%</td><td>第一招職業技能</td></tr>
+<tr><td class="num">6</td><td class="num">60,000</td><td class="num">+15%</td><td></td></tr>
+<tr><td class="num">7</td><td class="num">120,000</td><td class="num">+18%</td><td></td></tr>
+<tr><td class="num">8</td><td class="num">250,000</td><td class="num">+21%</td><td>第二招職業技能</td></tr>
+<tr><td class="num">9</td><td class="num">500,000</td><td class="num">+24%</td><td></td></tr>
+<tr><td class="num">10</td><td class="num">1,000,000</td><td class="num">+30%</td><td>第三招職業技能、帝級稱號（攻擊 +2%）</td></tr>
+</tbody></table></div>
+<div class="box"><b>這個加成只看一把武器，不是六把加總：</b>
+<ul>
+<li>加成只給<b>主修職業對應的那一種武器</b>，其他五把沒有。</li>
+<li>身上六種武器只取<b>武器攻擊最高的一把</b>（算完加成後比較），其他五把只貢獻詞條、特效、五行和套裝件數。</li>
+<li>所以主修的那把最好就是你最強的武器；它如果比別把弱太多，會被蓋過去，加成等於沒吃到。</li>
+<li>先天武器體質（先天劍體等）另外給對應武器 +15%，不管主修什麼；和主修同一種武器時相加。</li>
+</ul>
+武器攻擊怎麼算見<a href="屬性與技能.html">屬性與技能</a>。另外主修每一階讓坊市回收價 +2%，見<a href="賺錢管道.html">賺錢管道</a>。</div>
+
+<h2>宗門傳承</h2>
+<div class="box">每個宗門都有一種傳承武器。<b>主修職業的武器＝目前所屬宗門的傳承武器</b>時，那把武器的武器攻擊再加成，熟練度也累積得更快：
+<div class="tw" style="margin-top:6px"><table><thead><tr><th>宗門階段</th><th class="num">武器攻擊再加</th><th class="num">熟練度倍率</th><th>劍</th><th>刀</th><th>扇</th><th>弓</th><th>笛</th><th>筆</th></tr></thead><tbody>
+<tr><td class="nw">凡俗宗門</td><td class="num">+10%</td><td class="num">×1.3</td><td>武當</td><td>少林寺</td><td>逍遙派</td><td>皇朝</td><td>峨嵋</td><td>全真教</td></tr>
+<tr><td class="nw">修真仙門</td><td class="num">+20%</td><td class="num">×1.6</td><td>蜀山劍派</td><td>天魔教</td><td>崑崙仙宗</td><td>御獸仙宗</td><td>天音閣</td><td>丹鼎司</td></tr>
+<tr><td class="nw">至高聖地</td><td class="num">+30%</td><td class="num">×2.0</td><td>上清截教宗</td><td>九幽黃泉</td><td>太清道德宗</td><td>萬界仙門</td><td>天籟仙宮</td><td>玉清闡教宗</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">10 階加上至高聖地傳承，主修武器的武器攻擊合計 +60%；再有對應的先天武器體質則是 +75%。各宗門的倍率見<a href="宗門一覽.html">宗門一覽</a>。</div></div>
+
+<h2>六種職業</h2>
+<div class="grid" id="out"></div>
+<div class="sub" style="margin-top:8px">技能威力是對應攻擊力的倍率；發動率是每回合的機率。職業技能不吃「技能傷害」加成，但照樣吃攻擊力、暴擊和屬性效果。</div>
+</div>
+<script src="profile.js"></script>
+<script>
+const P=[
+["🗡️","劍修","劍","劍童 劍徒 劍癡 劍狂 劍魔 劍王 劍尊 劍神 劍仙 劍帝","攻擊（物理、術法都加）","1.5%","15%",
+ [[5,"萬劍歸宗","p","全體",1.2,10,""],[8,"人劍合一","p","單體",2.5,10,"50% 金重擊"],[10,"一劍開天","p","單體",4,8,"必定金重擊"]],"兩種攻擊力都加，最通用。"],
+["🔪","刀修","刀","刀童 刀客 刀癡 刀狂 刀魔 刀霸 刀尊 刀聖 刀仙 刀皇","物理攻擊","2%","20%",
+ [[5,"狂刀斬","p","單體",2,12,"40% 金重擊"],[8,"霸刀裂地","p","全體",1.5,10,""],[10,"刀皇天斬","p","全體",2.5,8,"60% 金重擊"]],"普通攻擊永遠是物理，所以刀修的被動每一回合都吃得到。"],
+["🪭","扇修","扇","扇童 羽客 扇癡 風狂 扇魔 風王 羽尊 扇聖 風仙 風帝","術法攻擊","2%","20%",
+ [[5,"清風拂面","m","全體",1.2,12,"30% 凍結"],[8,"羽化風暴","m","全體",1.8,10,"50% 中毒"],[10,"風帝天罡","m","全體",2.8,8,"60% 凍結"]],"三招都是全體術法，適合悟性高、術法技能多的配法。"],
+["🏹","弓修","弓","弓童 射手 箭癡 箭狂 箭魔 弓王 射尊 箭神 弓仙 弓帝","首擊傷害（每波戰鬥第一擊）","5%","50%",
+ [[5,"連珠箭","p","單體",1.8,12,"30% 雷擊"],[8,"穿雲破日","p","單體",3,10,"60% 雷擊"],[10,"弓帝射天","p","全體",2.2,8,"80% 雷擊"]],"雷擊會無視目標減傷，打高減傷的敵人特別有用。"],
+["🎶","音修","笛","樂童 琴徒 音癡 樂狂 音魔 琴王 樂尊 音神 琴仙 樂帝","每回合回復靈力","0.3%","3%",
+ [[5,"清心曲","s","自身",null,12,"回復 8% 氣血與 8% 靈力"],[8,"天魔音","m","全體",1.5,8,"敵方全體凍結 1 回合"],[10,"樂帝九韶","m","全體",2.2,8,"60% 凍結，回復 10% 氣血"]],"續航型：回靈讓技能放得更頻繁，還有回血和全體控制。"],
+["🖌️","符修","筆","符童 符師 墨癡 符狂 符魔 符王 符尊 符聖 符仙 符祖","技能傷害","2%","20%",
+ [[5,"爆炎符","m","單體",2,12,"60% 燒傷"],[8,"萬毒符陣","m","全體",1.6,10,"60% 中毒"],[10,"符祖敕令","m","全體",3,8,"80% 燒傷"]],"「技能傷害」只加宗門技能、靈寶閣武學和仙法，不加普通攻擊。"]];
+const T={p:["物理","t-p"],m:["術法","t-m"],s:["輔助","t-s"]};
+// 已帶入角色時：標出主修與各職業的熟練度
+const PF=window.PROFILE||null,PID=["sword","blade","fan","bow","flute","brush"],REXP=[0,500,3000,10000,25000,60000,120000,250000,500000,1000000];
+function mine(i){
+  if(!PF)return "";
+  const exp=(PF.proficiency||{})[PID[i]]||0;let rank=1;REXP.forEach((n,k)=>{if(exp>=n)rank=k+1});
+  const main=PF.profession===PID[i];if(!main&&!exp)return "";
+  return `<div style="color:var(--acct);font-weight:bold">${main?"👤 你的主修・":"👤 "}第 ${rank} 階（熟練度 ${exp.toLocaleString("zh-TW")}${rank<10?`，下一階 ${REXP[rank].toLocaleString("zh-TW")}`:""}）</div>`;
+}
+document.getElementById("out").innerHTML=P.map((p,pi)=>`<div class="card"><h3>${p[0]} ${p[1]} <span class="sub">武器：${p[2]}</span></h3>${mine(pi)}
+<div><b>被動：</b>${p[4]} 每階 +${p[5]}，10 階共 +${p[6]}</div>
+<div class="sub">${p[8]}</div>
+<h4>職業技能</h4>
+<div class="tw"><table><thead><tr><th class="num">階</th><th>技能</th><th>類型</th><th>範圍</th><th class="num">威力</th><th class="num">發動率</th><th>附帶</th></tr></thead><tbody>
+${p[7].map(s=>`<tr><td class="num">${s[0]}</td><td class="nw"><b>${s[1]}</b></td><td><span class="tag ${T[s[2]][1]}">${T[s[2]][0]}</span></td><td class="nw">${s[3]}</td><td class="num">${s[4]?Math.round(s[4]*100)+"%":"—"}</td><td class="num">${s[5]}%</td><td>${s[6]||"—"}</td></tr>`).join("")}
+</tbody></table></div>
+<h4>十階稱號</h4><div class="ranks">${p[3].split(" ").map((r,i)=>`${i+1} ${r}`).join("　")}</div></div>`).join("");
+</script></body></html>

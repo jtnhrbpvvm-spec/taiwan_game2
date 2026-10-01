@@ -80,6 +80,7 @@ a:hover{text-decoration-thickness:2px}
 <li>進金丹會凝結金丹、進元嬰會成元嬰。</li></ul></div></details>
 
 <h2>⚡ 渡劫</h2>
+<div class="sub" style="margin-bottom:8px">完整表格與勝算、凝元丹試算見<a href="渡劫金丹壽元.html">渡劫・金丹・壽元</a>。</div>
 <details><summary>渡劫成功率怎麼算？怎麼提高？</summary><div class="a">
 勝算＝<b>基礎 60%</b>＋丹藥準備（最多 +10%）＋宗門技能（最多 +10%），<b>上限 80%</b>。開打前就決定結果，畫面顯示的勝算就是實際勝率。
 <ul><li><b>丹藥</b>：要開啟【自動補血】，背包氣血丹藥的「回復量 × 數量」總和到 3.0 就拿滿（例如 10 顆九轉還魂丹，或 30 顆培元丹、60 株凝血草）。</li>
@@ -201,6 +202,15 @@ a:hover{text-decoration-thickness:2px}
 地圖妖獸的境界比你高時，每高 1 個大境界，妖獸<b>氣血 +100%、攻擊 +120%</b>（線性累加）。剛突破的 1 階最吃力，同境界後期（10 階）打下一境界的圖壓制就很小。<br>
 妖獸強度是「地圖決定境界、你決定階數」：你 N 階會遇到同階或高一階的妖獸，強度是同階一般玩家的 1.5～3 倍（築基以前 1～1.5 倍）。</div></details>
 
+<h2>🗡️ 武器與職業</h2>
+<details><summary>每把武器都有主修加成嗎？身上六把武器的加成是全部加總嗎？</summary><div class="a">
+<span class="no">不會加總，也不是每把都有。</span>
+<ul><li><b>主修加成只給一種武器</b>：主修職業對應的那一種（主修劍修就只有「劍」），其他五把沒有這個加成。宗門傳承的加成也一樣，只加在同一把上。</li>
+<li><b>武器攻擊只取一把</b>：身上六種武器裡，算完加成後<b>武器攻擊最高的那一把</b>才算數，六把不會相加。其他五把只貢獻它們的詞條、特效、五行和套裝件數。</li>
+<li>所以主修的那把武器，最好就是你等級、品質、強化最高的一把，加成才不會浪費；主修的那把如果太弱，會被別把蓋過去，加成等於沒吃到。</li>
+<li>先天武器體質（先天劍體、霸刀戰體等）是另一筆 +15%，給對應的武器，<b>不管你主修什麼</b>；和主修是同一種武器時會加在一起。</li></ul>
+同一把武器上的加成是相加的：主修 10 階 +30%、至高聖地傳承 +30%、武器體質 +15%，合計最多 +75%。詳見<a href="職業一覽.html">職業一覽</a>、<a href="屬性與技能.html">屬性與技能</a>。</div></details>
+
 <h2>🎲 其他</h2>
 <details><summary>先天靈根、體質可以重抽嗎？</summary><div class="a">
 可以。入門測試時可以免費「再來一次」（靈根體質一起重抽）；之後用千寶閣的【洗髓丹】重測靈根、【伐骨丹】重測體質（各 1 顆七彩補天石），重測後可選保留新或舊結果。詳見<a href="靈根體質一覽.html">靈根體質一覽</a>。</div></details>
@@ -211,6 +221,7 @@ a:hover{text-decoration-thickness:2px}
 </div>
 <div class="empty" id="empty" hidden>找不到相關問題</div>
 </div>
+<script src="profile.js"></script>
 <script>
 const items=[...document.querySelectorAll("#list details")];
 document.getElementById("q").addEventListener("input",e=>{

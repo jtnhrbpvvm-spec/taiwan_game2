@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>渡劫・金丹・壽元</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--hl:#f3efff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--hl:#2a2540}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:28px 0 8px}
+h3{font-size:15px;margin:16px 0 6px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.toc{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:14px;margin:10px 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+tr.me td{background:var(--hl)}
+.yes{color:var(--ok);font-weight:bold}.no{color:var(--warn);font-weight:bold}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px 24px}
+.calc label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0;font-size:14px}
+.calc label.chk{justify-content:flex-start}
+.calc select,.calc input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);max-width:170px}
+.calc input[type=number]{width:80px}
+.res{font-size:14px;line-height:1.9}
+.big{font-size:30px;font-weight:bold;color:var(--acct);line-height:1.3}
+.res .row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line)}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>⚡ 渡劫・金丹・壽元</h1>
+<div class="sub">渡劫勝算怎麼湊、失敗會掉什麼；築基期的丹田、金丹期的溫養如何決定金丹與元嬰品級；以及壽元的增減與流逝速度。</div>
+<div class="toc"><a href="#trib">渡劫</a><a href="#calc">勝算試算</a><a href="#demon">心魔</a><a href="#fail">渡劫失敗</a><a href="#core">丹田與金丹</a><a href="#infant">元嬰</a><a href="#pill">凝元丹試算</a><a href="#life">壽元</a></div>
+
+<h2 id="trib">⚡ 渡劫</h2>
+<div class="box">
+<ul>
+<li><b>凡人 → 煉氣、煉氣 → 築基</b>：修滿 10 階<span class="yes">自動突破</span>，不用渡劫。</li>
+<li><b>築基 → 金丹起</b>：修滿 10 階後修為封頂，<span class="no">必須渡劫</span>（打贏自己的心魔）才能晉升。</li>
+<li>勝敗在<b>開打前就決定</b>：畫面顯示的勝算就是實際勝率。戰鬥只是過程，戰況和結果相反時，會在最後一刻以「絕處逢生」或「心魔反噬」收尾。所以<b>把裝備練得再強也不會提高勝算</b>，要靠下面列的幾項準備。</li>
+<li>正在和懸賞人物對決時不能渡劫。</li>
+</ul>
+</div>
+
+<h3>勝算的組成</h3>
+<div class="tw"><table><thead><tr><th>項目</th><th class="num">勝算</th><th>怎麼拿</th></tr></thead><tbody>
+<tr><td class="nw">基礎</td><td class="num">60%</td><td>固定。合體期起會被「天劫加劇」扣減（見下表）。</td></tr>
+<tr><td class="nw">丹藥準備</td><td class="num">最多 +10%</td><td>要先<b>開啟【自動補血】</b>，否則不算。背包裡氣血丹藥的「回復量 × 數量」加總達到 300% 就拿滿：凝血草每株算 5%、培元丹每顆 10%、九轉還魂丹每顆 30%。也就是 <b>10 顆九轉還魂丹</b>，或 30 顆培元丹、60 株凝血草；不足時按比例給。</td></tr>
+<tr><td class="nw">宗門技能</td><td class="num">最多 +10%</td><td>看「目前境界已開放的宗門階段」學了幾個。築基期只開放凡俗宗門，學了就 +10%；金丹～渡劫期開放凡俗＋修真，各 +5%；仙人初境起三個階段都開放，每個約 +3.3%。</td></tr>
+<tr><td class="nw">破障丹</td><td class="num">+10%</td><td>持有時渡劫<b>自動服用 1 顆</b>：勝算 +10%、<b>上限由 80% 提高到 90%</b>，心魔戰力 −10%。千寶閣 1 顆七彩補天石。</td></tr>
+<tr><td class="nw">先天資質</td><td class="num">±5%</td><td>天雷之體 +5%；四靈根、五靈根 −5%。見<a href="靈根體質一覽.html">靈根體質一覽</a>。</td></tr>
+<tr><td class="nw">元嬰品級</td><td class="num">±10%</td><td>只影響<b>元嬰 → 化神</b>那一次：人元嬰 −10%、地元嬰 ±0、天元嬰 +10%。</td></tr>
+<tr><td class="nw">化神靈果</td><td class="num">+10%</td><td>只在<b>元嬰 → 化神</b>那一次自動服用 1 顆。千寶閣 1 顆七彩補天石。</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">全部相加後，<b>上限 80%</b>（有破障丹時 90%）。不帶破障丹，其他項目加得再多也只到 80%。</div>
+
+<h3>合體期起天劫加劇</h3>
+<div class="tw"><table><thead><tr><th>渡劫時的境界</th><th class="num">基礎勝算</th><th class="num">心魔戰力</th><th class="num">準備全滿（無破障丹）</th><th class="num">再帶破障丹</th></tr></thead><tbody id="hard"></tbody></table></div>
+<div class="sub" style="margin-top:6px">「準備全滿」＝丹藥 +10%、宗門技能 +10%，不含先天資質。真仙以後不帶破障丹最高只有 50%，帶了也只有 60%，失敗的代價要先算進去。</div>
+
+<h2 id="calc">🧮 勝算試算</h2>
+<div class="box"><div class="calc">
+<div>
+<label>目前境界（要渡的劫）<select id="cR"></select></label>
+<label class="chk"><input type="checkbox" id="cAuto" checked> 已開啟自動補血</label>
+<label>凝血草（株）<input type="number" id="cH1" min="0" value="0"></label>
+<label>培元丹（顆）<input type="number" id="cH2" min="0" value="0"></label>
+<label>九轉還魂丹（顆）<input type="number" id="cH3" min="0" value="10"></label>
+<div id="cTiers"></div>
+<label>先天資質<select id="cApt"><option value="0">沒有影響</option><option value="0.05">天雷之體（+5%）</option><option value="-0.05">四靈根／五靈根（−5%）</option><option value="0">天雷之體＋四／五靈根（抵銷）</option></select></label>
+<label class="chk"><input type="checkbox" id="cPill"> 帶破障丹</label>
+<div id="cInfantBox">
+<label>元嬰品級<select id="cInf"><option value="-0.1">人元嬰（−10%）</option><option value="0" selected>地元嬰（±0）</option><option value="0.1">天元嬰（+10%）</option></select></label>
+<label class="chk"><input type="checkbox" id="cFruit"> 帶化神靈果</label>
+</div>
+</div>
+<div class="res" id="cOut"></div>
+</div></div>
+
+<h2 id="demon">🧍 心魔</h2>
+<div class="box">
+心魔是你的鏡像：<b>戰力＝你的物理攻擊力、氣血＝你的氣血上限</b>，減傷、閃避、屬性傷害、五行都和你一樣（同五行不相剋）。種族算「心魔」，打贏會記進斬妖錄，見<a href="種族剋制.html">種族剋制</a>。
+<ul>
+<li>合體期起，心魔戰力隨天劫加劇提高（上表）；帶破障丹則 −10%。</li>
+<li>渡劫是一對一，你的群體技能也只會打在心魔身上；靈寵、神器技能、職業技能、夥伴絕學照常發動。</li>
+<li>心魔每回合有四成機會施展下面其中一招魔功；被靈寵封印時放不出來，被凍結則整回合不能出手。</li>
+</ul>
+</div>
+<div class="tw"><table><thead><tr><th>魔功</th><th class="num">威力</th><th>效果</th></tr></thead><tbody>
+<tr><td class="nw">心魔幻殺</td><td class="num">180%</td><td>單純的高傷害</td></tr>
+<tr><td class="nw">蝕魂魔焰</td><td class="num">160%</td><td>單純的高傷害</td></tr>
+<tr><td class="nw">魔念侵心</td><td class="num">120%</td><td>另外吸走你最大靈力的 30%</td></tr>
+<tr><td class="nw">魔影加身</td><td class="num">—</td><td>心魔自身攻擊 ×1.5，持續 3 回合（這回合改用普通攻擊）</td></tr>
+</tbody></table></div>
+
+<h2 id="fail">💀 渡劫失敗</h2>
+<div class="box">
+渡劫失敗<b>視同死亡一次</b>：
+<ul>
+<li><b>折壽</b>：依目前境界扣壽元（見<a href="#life">壽元表</a>），所有靈寵陣亡。壽元扣到 0 就身死道消、存檔清除。</li>
+<li>損失身上 <b>10% 靈石</b>，跌回安全區，氣血剩 1。</li>
+<li>小境界掉 <b>3 階</b>（10 階 → 7 階）、修為歸零，並扣回這 3 階升階時加的屬性；<b>大境界不會倒退</b>。</li>
+<li>陷入<b>虛弱</b>：攻擊力（物理、術法）、氣血上限、靈力上限 <b>−30%</b>，直到重新修回 10 階才解除。</li>
+<li>已經吃掉的破障丹、化神靈果不會退回。</li>
+<li>渡劫進行中壽元流逝速度 ×4。</li>
+</ul>
+築基、金丹期失敗後重修的那 3 階，修為照樣會灌進丹田／溫養，不算白練。
+</div>
+
+<h2 id="core">🟡 丹田與金丹</h2>
+<div class="box">
+<ul>
+<li><b>築基期</b>累積「<b>丹田</b>」，渡劫進金丹的那一刻依丹田結成金丹；<b>金丹期</b>累積「<b>溫養</b>」，渡劫進元嬰時依「金丹品級＋溫養」破丹成嬰。</li>
+<li>這兩個境界拿到的修為會按比例灌進去：<b>修完整個境界（1～10 階）剛好灌到 50%</b>。</li>
+<li>10 階圓滿、等待渡劫時，原本封頂不再累積的修為<b>照樣灌進丹田／溫養</b>。所以想要好品級，就是<b>圓滿後先別渡劫</b>，再多練一倍的量把它灌滿。</li>
+<li>人物面板「金丹」一行會顯示目前進度和「此時結丹可成○品金丹」；跨過 50%、75%、100% 時日誌會提示。</li>
+<li>金丹、元嬰一旦結成就<b>不能重來</b>，只有轉世會全部洗掉、下一世重新累積。</li>
+</ul>
+<div class="sub">參考：築基期修完 1～10 階約需 82.5 萬修為，丹田灌滿共約 165 萬；金丹期修完約 550 萬，溫養灌滿共約 1,100 萬。</div>
+</div>
+<div class="tw"><table><thead><tr><th>金丹</th><th>結丹時的丹田</th><th class="num">氣血、靈力上限</th><th>之後成嬰的起點</th></tr></thead><tbody>
+<tr><td class="nw">下品金丹</td><td>未滿 50%</td><td class="num">+0%</td><td>人元嬰・下</td></tr>
+<tr><td class="nw">中品金丹</td><td>50% 以上</td><td class="num">+10%</td><td>人元嬰・上</td></tr>
+<tr><td class="nw">上品金丹</td><td>75% 以上</td><td class="num">+20%</td><td>地元嬰・下</td></tr>
+<tr><td class="nw">極品金丹</td><td>100%</td><td class="num">+35%</td><td>地元嬰・上</td></tr>
+<tr><td class="nw">🌈 超品金丹</td><td>100% 時有機會升格</td><td class="num">+50%</td><td>天元嬰・下</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">超品金丹只有丹田 100% 才有機會，沒滿就完全沒有。先天資質越好機會越高：天靈根、變異靈根、特殊靈根、至尊靈根，以及道體、神體都會提高（至尊靈根、神體提高最多）。</div>
+
+<h2 id="infant">👶 元嬰</h2>
+<div class="box">元嬰＝<b>金丹品級決定起點</b>，溫養到 50% 再升 1 級、到 100% 再升 2 級。下品金丹再怎麼溫養都只能成人元嬰；極品金丹只要溫養過半就是天元嬰；超品金丹必成天元嬰。</div>
+<div class="tw"><table><thead><tr><th>金丹＼溫養</th><th>未滿 50%</th><th>50% 以上</th><th>100%</th></tr></thead><tbody id="inf"></tbody></table></div>
+<h3>元嬰的效果</h3>
+<div class="tw"><table><thead><tr><th>元嬰</th><th class="num">下</th><th class="num">中</th><th class="num">上</th><th>元嬰 → 化神的渡劫勝算</th></tr></thead><tbody>
+<tr><td class="nw">人元嬰</td><td class="num">術法 +0%</td><td class="num">+5%</td><td class="num">+10%</td><td class="no">−10%</td></tr>
+<tr><td class="nw">地元嬰</td><td class="num">術法 +15%</td><td class="num">+20%</td><td class="num">+25%</td><td>±0</td></tr>
+<tr><td class="nw">🌈 天元嬰</td><td class="num">術法 +35%</td><td class="num">+45%</td><td class="num">+60%</td><td class="yes">+10%</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">術法傷害加成一直有效到轉世；勝算加減只管化神那一次，人元嬰可以用化神靈果（+10%）補回來。走物理路線的角色，元嬰品級只差在化神勝算，金丹的氣血靈力加成才是重點。術法傷害加到哪裡見<a href="屬性與技能.html">屬性與技能</a>。</div>
+
+<h2 id="pill">🔴 凝元丹試算</h2>
+<div class="box">
+<b>凝元丹</b>：煉丹房煉製（只在築基期、金丹期出現），每顆 <b>5 株上品靈草＋1 萬靈石</b>，丹田／溫養 <b>+5%</b>。從 0 吃到滿要 20 顆（100 株上品靈草＋20 萬靈石）；上品靈草在宗門靈田用 50 株靈草＋10 靈石培育 1 株。
+<div class="calc" style="margin-top:8px">
+<div>
+<label>階段<select id="pK"><option value="d">築基期（丹田）</option><option value="n">金丹期（溫養）</option></select></label>
+<label>目前進度（%）<input type="number" id="pV" min="0" max="100" value="50"></label>
+<label id="pCoreL">已結成的金丹<select id="pC"><option value="0">下品</option><option value="1" selected>中品</option><option value="2">上品</option><option value="3">極品</option><option value="4">超品</option></select></label>
+</div>
+<div class="res" id="pOut"></div>
+</div></div>
+
+<h2 id="life">⏳ 壽元</h2>
+<div class="box">
+<ul>
+<li>壽元和戰力無關，但<span class="no">歸零＝身死道消，存檔清除、重新開始</span>。</li>
+<li><b>增加</b>：每突破一個大境界加一次（下表）；千寶閣的壽元丹。</li>
+<li><b>減少</b>：每次死亡（野外戰死、渡劫失敗）依目前境界折壽；歲月自然流逝。</li>
+<li><b>底線保護</b>：剩餘壽元 ≤「目前境界死亡折壽 × 3」時，自然流逝就停止，時間本身不會害死你。但觸底後<b>再死 3 次</b>就結束了。只有死亡能讓壽元歸零。</li>
+<li>新角色 16 歲起算；流逝的歲月和折壽都會算進年齡。轉世後壽元回到凡人的 60 年、年齡回到 16 歲。</li>
+</ul>
+</div>
+
+<h3>流逝速度看你待在哪</h3>
+<div class="tw"><table><thead><tr><th>所在地</th><th class="num">流逝速度</th></tr></thead><tbody>
+<tr><td>城鎮、宗門（安全區）</td><td class="num">×1</td></tr>
+<tr><td>野外歷練</td><td class="num">×1.5</td></tr>
+<tr><td>開放世界</td><td class="num">×2</td></tr>
+<tr><td>上古禁區、幽冥禁域</td><td class="num">×3</td></tr>
+<tr><td>諸天至高戰場</td><td class="num">×4</td></tr>
+<tr><td>渡劫進行中</td><td class="num">×4</td></tr>
+<tr><td>離線</td><td class="num">再 ×0.5</td></tr>
+</tbody></table></div>
+
+<h3>各境界的壽元</h3>
+<div class="tw"><table><thead><tr><th>境界</th><th class="num">突破得壽元</th><th class="num">死亡折壽</th><th class="num">流逝底線</th><th class="num">安全區每小時</th><th>該境界的練功圖</th><th class="num">在練功圖每小時</th><th class="num">這份壽元可撐</th></tr></thead><tbody id="lifeT"></tbody></table></div>
+<div class="sub" style="margin-top:6px">單位是年，時間是線上的實際時間。流逝速度依<b>你目前的境界</b>計算，境界越高、每一年過得越慢。「這份壽元可撐」是只算突破這個境界拿到的壽元、一直待在練功圖能撐多久，大約是正常修滿這個境界所需時間的 5 倍；前面境界剩下的壽元會繼續累加，所以不常死的話壽元會越存越多。真正會把壽元耗光的是<b>反覆戰死和渡劫失敗</b>。</div>
+
+<h3>補壽元、少折壽</h3>
+<div class="tw"><table><thead><tr><th>方法</th><th>說明</th></tr></thead><tbody>
+<tr><td class="nw">突破境界</td><td>最大的來源，越後面給越多。</td></tr>
+<tr><td class="nw">壽元丹</td><td>千寶閣隨機上架，付靈石＋聲望，標下立即服用：普通 +10 年（10 萬）、一紋 +20 年（20 萬）、二紋 +30 年（50 萬）、三紋 +50 年（100 萬）、四紋 +100 年（1,000 萬）。詳見<a href="物品一覽.html">物品一覽</a>、<a href="日常與僕從.html">日常與僕從</a>。</td></tr>
+<tr><td class="nw">裝備特效「延壽」</td><td>減少每次死亡的折壽，最多減一半。哪些裝備有見<a href="裝備與強化.html">裝備與強化</a>。</td></tr>
+<tr><td class="nw">壽元快見底時</td><td>回城鎮或宗門掛著（流逝最慢），先不要渡劫和越級打怪；觸底後歲月不再流逝，剩下的每一次死亡都很貴。</td></tr>
+</tbody></table></div>
+
+<div class="sub" style="margin-top:16px">其他常被問到的問題（轉世保留什麼、等待渡劫時經驗會不會浪費）見<a href="常見問題.html">常見問題</a>；各境界修為見<a href="經驗與地圖.html">經驗與地圖</a>。</div>
+</div>
+<script src="profile.js"></script>
+<script>
+const R=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
+const PF=window.PROFILE||null,$=id=>document.getElementById(id),pct=v=>Math.round(v*100)+"%";
+const hardOf=ri=>ri<7?0:Math.min(0.3,(ri-6)*0.05);
+
+// 天劫加劇表
+$("hard").innerHTML=[[2,"築基～煉虛"],[7],[8],[9],[10],[11],[12,"真仙以上"]].map(([ri,name])=>{
+  const h=hardOf(ri),base=0.6-h;
+  return `<tr><td class="nw">${name||R[ri]}</td><td class="num">${pct(base)}</td><td class="num">${h?"+"+pct(h):"—"}</td><td class="num">${pct(Math.min(0.8,base+0.2))}</td><td class="num">${pct(Math.min(0.9,base+0.3))}</td></tr>`;
+}).join("");
+
+// 勝算試算
+const TN=["凡俗宗門","修真仙門","至高聖地"];
+$("cR").innerHTML=R.slice(2,15).map((n,i)=>`<option value="${i+2}">${n} → ${R[i+3]}</option>`).join("");
+let learned=[true,true,true];
+if(PF){
+  if(PF.realmIndex>=2&&PF.realmIndex<=14)$("cR").value=PF.realmIndex;
+  if(PF.sectSkills)learned=[1,2,3].map(t=>!!PF.sectSkills[t]);
+  const g=PF.goldenCore;
+  if(g&&g.infant!=null)$("cInf").value=g.infant<3?"-0.1":g.infant<6?"0":"0.1";
+}
+function tiers(){
+  const ri=+$("cR").value,n=ri<3?1:ri<10?2:3;
+  $("cTiers").innerHTML=TN.slice(0,n).map((t,i)=>`<label class="chk"><input type="checkbox" data-t="${i}" ${learned[i]?"checked":""}> 已學${t}的技能</label>`).join("");
+  $("cTiers").querySelectorAll("input").forEach(el=>el.onchange=()=>{learned[+el.dataset.t]=el.checked;calc()});
+  $("cInfantBox").hidden=ri!==4;
+  return n;
+}
+function calc(){
+  const ri=+$("cR").value,n=tiers(),hard=hardOf(ri);
+  const stock=$("cAuto").checked?(+$("cH1").value||0)*0.05+(+$("cH2").value||0)*0.1+(+$("cH3").value||0)*0.3:0;
+  const potion=0.1*Math.min(1,stock/3);
+  const skill=0.1*learned.slice(0,n).filter(Boolean).length/n;
+  const pill=$("cPill").checked?0.1:0,cap=pill?0.9:0.8,apt=+$("cApt").value;
+  const core=ri===4?+$("cInf").value:0,fruit=ri===4&&$("cFruit").checked?0.1:0;
+  const raw=0.6-hard+potion+skill+pill+apt+core+fruit,total=Math.max(0,Math.min(cap,raw));
+  const row=(k,v,show=true)=>show?`<div class="row"><span>${k}</span><span>${v}</span></div>`:"";
+  const sg=v=>(v>=0?"+":"−")+(Math.round(Math.abs(v)*1000)/10)+"%";
+  const tips=[];
+  if(!$("cAuto").checked)tips.push("開啟自動補血，丹藥才會算進勝算。");
+  else if(potion<0.1)tips.push(`丹藥還差 ${Math.ceil((3-stock)/0.3-1e-9)} 顆九轉還魂丹的量就拿滿。`);
+  if(skill<0.1)tips.push("把目前開放的宗門階段技能都學起來。");
+  if(raw>cap+1e-9)tips.push(`加起來已經超過上限 ${pct(cap)}，多的部分沒有用。`+(pill?"":"想再高只能帶破障丹。"));
+  else if(!pill)tips.push("帶破障丹可再 +10%，上限也提高到 90%。");
+  $("cOut").innerHTML=`<div class="sub">${R[ri]} → ${R[ri+1]} 的渡劫勝算</div><div class="big">${Math.round(total*1000)/10}%</div><div class="sub">上限 ${pct(cap)}</div>`
+    +row("基礎","60%")+row("天劫加劇",sg(-hard),hard>0)+row("丹藥準備",sg(potion))+row("宗門技能",sg(skill))
+    +row("破障丹",sg(pill),pill>0)+row("先天資質",sg(apt),apt!==0)+row("元嬰品級",sg(core),core!==0)+row("化神靈果",sg(fruit),fruit>0)
+    +(tips.length?`<div class="sub" style="margin-top:6px">${tips.join("<br>")}</div>`:"");
+}
+["cR","cAuto","cH1","cH2","cH3","cApt","cPill","cInf","cFruit"].forEach(id=>$(id).oninput=calc);
+calc();
+
+// 元嬰對照表
+const CG=["下品金丹","中品金丹","上品金丹","極品金丹","🌈 超品金丹"],IB=[0,2,3,5,6];
+const IG=["人元嬰・下","人元嬰・中","人元嬰・上","地元嬰・下","地元嬰・中","地元嬰・上","天元嬰・下","天元嬰・中","天元嬰・上"],IM=[0,5,10,15,20,25,35,45,60];
+$("inf").innerHTML=CG.map((c,i)=>`<tr><td class="nw">${c}</td>${[0,1,2].map(s=>`<td>${IG[IB[i]+s]}</td>`).join("")}</tr>`).join("");
+
+// 凝元丹試算
+if(PF&&PF.goldenCore){
+  const g=PF.goldenCore;
+  if(PF.realmIndex===3){$("pK").value="n";$("pV").value=Math.floor((g.nurture||0)*100);if(g.core!=null)$("pC").value=g.core}
+  else if(PF.realmIndex===2)$("pV").value=Math.floor((g.dantian||0)*100);
+}
+function pcalc(){
+  const k=$("pK").value,v=Math.max(0,Math.min(100,+$("pV").value||0)),full=k==="d"?165:1100,c=+$("pC").value;
+  $("pCoreL").hidden=k==="d";
+  const now=k==="d"?(v>=100?"極品金丹（有機會超品）":v>=75?"上品金丹":v>=50?"中品金丹":"下品金丹"):IG[IB[c]+(v>=100?2:v>=50?1:0)];
+  const goals=(k==="d"?[50,75,100]:[50,100]).filter(t=>t>v);
+  const name=t=>k==="d"?(t===100?"極品金丹":t===75?"上品金丹":"中品金丹"):IG[IB[c]+(t===100?2:1)];
+  $("pOut").innerHTML=`<div class="sub">現在${k==="d"?"結丹":"成嬰"}可成</div><div class="big" style="font-size:22px">${now}</div>`
+    +(goals.length?goals.map(t=>{const n=Math.ceil((t-v)/5-1e-9),exp=Math.round((t-v)/100*full*10)/10;
+      return `<div class="row"><span>到 ${t}%（${name(t)}）</span><span>凝元丹 ${n} 顆｜或再練約 ${exp.toLocaleString("zh-TW")} 萬修為</span></div><div class="sub">＝上品靈草 ${n*5} 株＋靈石 ${n} 萬</div>`}).join("")
+     :`<div class="sub">已經滿了，可以渡劫。</div>`)
+    +(k==="n"?`<div class="sub" style="margin-top:6px">${IG[IB[c]+(v>=100?2:v>=50?1:0)]}：術法傷害 +${IM[IB[c]+(v>=100?2:v>=50?1:0)]}%</div>`:"");
+}
+["pK","pV","pC"].forEach(id=>$(id).oninput=pcalc);
+pcalc();
+
+// 壽元表：得壽元、折壽、修滿所需時數、練功圖、練功圖的流逝倍率
+const L=[[60,1,0.5,"靈山大川",1.5],[100,1,1,"靈山大川",1.5],[200,3,2,"深淵險地",1.5],[500,5,3,"上古遺跡",1.5],[800,5,5,"天南",2],[1000,5,10,"亂星海",2],[1200,8,20,"鬼谷八荒",2],
+[1500,8,48,"黑風海域",3],[2000,10,240,"蠻荒古地",3],[3000,10,720,"血天大陸",3],[4000,15,1200,"星空古路",3],[4500,15,2400,"九天仙域",3],[5000,20,3600,"冥界",3],
+[20000,50,4800,"仙界戰場",4],[50000,100,4800,"萬界戰場",4],[100000,200,7200,"混沌初界",4]];
+const f=v=>v>=100?Math.round(v).toLocaleString("zh-TW"):v>=10?v.toFixed(1):v.toFixed(2);
+const dur=h=>h>=48?Math.round(h/24)+" 天":(Math.round(h*10)/10)+" 小時";
+$("lifeT").innerHTML=L.map(([gain,cost,hrs,map,m],i)=>{
+  const safeH=Math.max(6,hrs*5*m),perSafe=gain/safeH;
+  return `<tr class="${PF&&PF.realmIndex===i?"me":""}"><td class="nw">${R[i]}${i?"":"（初始）"}${PF&&PF.realmIndex===i?" 👤":""}</td><td class="num">${i?"+":""}${gain.toLocaleString("zh-TW")}</td><td class="num">${cost}</td><td class="num">${cost*3}</td><td class="num">${f(perSafe)}</td><td class="nw">${map}</td><td class="num">${f(perSafe*m)}</td><td class="num">${dur(safeH/m)}</td></tr>`;
+}).join("");
+</script></body></html>

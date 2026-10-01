@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>種族剋制</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🐉 種族剋制</h1>
+<div class="sub">敵人分成四個種族，各有特性；你可以從四個來源累積「對某一族的傷害加成」。</div>
+
+<div class="box">
+<b>重點：</b>
+<ul>
+<li>剋制＝你對該種族的<b>傷害加成</b>，四個來源相加，<b>同一族合計最多 +50%</b>。</li>
+<li>四個來源各有自己的上限：斬妖錄 6%、剋制符 20%、剋制法寶 15%、裝備種族特效 9%，加起來剛好 50%。</li>
+<li>只加傷害，<b>不會算進戰力</b>，人物面板和戰力榜的數字不會變。</li>
+<li>正道修士、正派懸賞人物是「人修」，沒有種族，剋制對他們無效。</li>
+</ul>
+</div>
+
+<h2>四個種族</h2>
+<div class="tw"><table><thead><tr><th>種族</th><th>特性</th><th>哪裡會遇到</th></tr></thead><tbody>
+<tr><td class="nw"><b>🐉 妖獸</b></td><td>氣血 +10%</td><td>野外大部分地圖的主力（約七成）；鎮魔塔名字結尾是「妖皇」「魔龍」的 BOSS</td></tr>
+<tr><td class="nw"><b>👻 鬼物</b></td><td>閃避 +5、不會中毒</td><td>野外約三成；<b>幽冥禁域四張圖全部是鬼物</b>；鎮魔塔「屍王」「鬼帝」</td></tr>
+<tr><td class="nw"><b>😈 魔修</b></td><td>攻擊時吸取造成傷害的 10% 化為氣血</td><td>野外的邪修、暗殺者、邪派懸賞人物、死守天南城首領；鎮魔塔「魔君」「邪神」「劍魔」「血尊」「魔尊」</td></tr>
+<tr><td class="nw"><b>🌀 心魔</b></td><td>沒有額外特性</td><td>渡劫的心魔；鎮魔塔「戰神」</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">鬼物不會中毒，打幽冥禁域或鬼物 BOSS 時，毒屬性的武器和技能會白費。各層 BOSS 的種族見<a href="鎮魔塔BOSS一覽.html">鎮魔塔 BOSS 一覽</a>。</div>
+
+<h2>來源一：斬妖錄（上限 6%）</h2>
+<div class="sub">天磯錄的「斬妖錄」分頁。累計斬殺數達到門檻就永久加成，<b>只取最高的一階，不累加</b>。</div>
+<div class="tw" style="margin-top:6px"><table><thead><tr><th>種族</th><th class="num">+2%</th><th class="num">+4%</th><th class="num">+6%</th></tr></thead><tbody>
+<tr><td>🐉 妖獸</td><td class="num">100 隻</td><td class="num">1,000 隻</td><td class="num">10,000 隻</td></tr>
+<tr><td>👻 鬼物</td><td class="num">100 隻</td><td class="num">1,000 隻</td><td class="num">10,000 隻</td></tr>
+<tr><td>😈 魔修</td><td class="num">2,000 名</td><td class="num">20,000 名</td><td class="num">30,000 名</td></tr>
+<tr><td>🌀 心魔</td><td class="num">50 次</td><td class="num">100 次</td><td class="num">200 次</td></tr>
+</tbody></table></div>
+<div id="mine"></div>
+
+<h2>來源二：剋制符（上限 20%）</h2>
+<div class="tw"><table><thead><tr><th>符寶</th><th>對象</th><th class="num">下品</th><th class="num">中品</th><th class="num">上品</th></tr></thead><tbody>
+<tr><td>🐉 斬妖符</td><td>妖獸</td><td class="num">+3%</td><td class="num">+6%</td><td class="num">+10%</td></tr>
+<tr><td>👻 鎮魂符</td><td>鬼物</td><td class="num">+3%</td><td class="num">+6%</td><td class="num">+10%</td></tr>
+<tr><td>😈 誅邪符</td><td>魔修</td><td class="num">+3%</td><td class="num">+6%</td><td class="num">+10%</td></tr>
+<tr><td>🌀 清心符</td><td>心魔</td><td class="num">+3%</td><td class="num">+6%</td><td class="num">+10%</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">在宗門符寶坊另外煉製（不會混進一般符寶的隨機池），鑲在橙色或白金裝備的孔上。同一族合計最多 +20%，也就是兩枚上品就滿了。</div>
+
+<h2>來源三：剋制法寶（上限 15%）</h2>
+<div class="tw"><table><thead><tr><th>法寶</th><th>對象</th><th class="num">下品</th><th class="num">中品</th><th class="num">上品</th></tr></thead><tbody>
+<tr><td>🏺 降妖葫蘆</td><td>妖獸</td><td class="num">+5%</td><td class="num">+10%</td><td class="num">+15%</td></tr>
+<tr><td>🔔 鎮魂鈴</td><td>鬼物</td><td class="num">+5%</td><td class="num">+10%</td><td class="num">+15%</td></tr>
+<tr><td>🔮 誅魔鏡</td><td>魔修</td><td class="num">+5%</td><td class="num">+10%</td><td class="num">+15%</td></tr>
+<tr><td>🌸 清心蓮台</td><td>心魔</td><td class="num">+5%</td><td class="num">+10%</td><td class="num">+15%</td></tr>
+</tbody></table></div>
+<div class="box">
+<ul>
+<li>要穿在角色裝備視窗的<b>法寶欄</b>（共 2 格）才生效。兩格可以放同一族疊加，但同一族最多 +15%，所以一件上品就滿了，另一格可以放別族。</li>
+<li><b>合煉</b>：3 件同族、同品、沒穿在身上的法寶 → 1 件高一品。</li>
+<li>最多持有 40 件，滿了之後掉落的會自動賣掉。賣價是你目前境界每小時靈石收入的 5／15／45 分鐘份（下／中／上品）。</li>
+</ul>
+<b>取得：</b>
+<ul>
+<li>鎮魔塔樓主層（10、20…100 層）<b>第一次擊敗</b>必得該 BOSS 種族的法寶：30 層以下下品、70 層以下中品、以上上品。</li>
+<li>野外擊殺有種族的敵人有極小機會掉落，大多是下品，偶爾中品。</li>
+<li>千寶閣常駐：下品，四族任選，每天限買 1 件，價格是你目前境界 6 小時的靈石收入。</li>
+<li>奇遇：虛天殿第一次通關、血色禁地第一次獲勝、三界戰場亞軍與冠軍，見<a href="奇遇一覽.html">奇遇一覽</a>。</li>
+</ul>
+</div>
+
+<h2>來源四：裝備種族特效（上限 9%）</h2>
+<div class="tw"><table><thead><tr><th>裝備品質</th><th class="num">每件的數值</th></tr></thead><tbody>
+<tr><td>紫色</td><td class="num">+1%～+2%</td></tr><tr><td>橙色</td><td class="num">+2%～+3%</td></tr><tr><td>白金</td><td class="num">+3%～+4%</td></tr>
+</tbody></table></div>
+<div class="box">一件裝備最多帶一條種族特效（對某一族的傷害），穿在身上才生效，同族多件相加、最多 +9%。三種取得方式：
+<ul>
+<li><b>新掉落</b>：紫色、橙色裝備產生時有機會自帶一條，橙色機會較高。</li>
+<li><b>種族銘刻</b>：強化視窗裡，紫色以上的裝備可以花 <b>50 顆星允鐵＋1 小時份的靈石</b>重抽種族與數值；原本沒有的會刻上一條。</li>
+<li><b>白金進化</b>：進化時必定帶一條；原本就有的會升到白金的數值。</li>
+</ul>
+</div>
+
+<h2>怎麼湊滿 50%</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th class="num">上限</th><th>最省事的湊法</th></tr></thead><tbody>
+<tr><td>斬妖錄</td><td class="num">6%</td><td>掛機自然會滿（妖獸、鬼物最快；魔修要 3 萬名最慢）</td></tr>
+<tr><td>剋制符</td><td class="num">20%</td><td>2 枚上品，或 1 上品＋2 中品</td></tr>
+<tr><td>剋制法寶</td><td class="num">15%</td><td>1 件上品</td></tr>
+<tr><td>裝備種族特效</td><td class="num">9%</td><td>3 件白金，或橙色 3～5 件</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">不必四族都湊。看你卡在哪裡再針對：野外和死守天南城首領偏妖獸、魔修，幽冥禁域全是鬼物，渡劫是心魔。</div>
+</div><script src="profile.js"></script>
+<script>
+if(window.PROFILE){const k=window.PROFILE.raceKills||{},T={beast:["🐉 妖獸",[100,1000,10000]],ghost:["👻 鬼物",[100,1000,10000]],demon:["😈 魔修",[2000,20000,30000]],heart:["🌀 心魔",[50,100,200]]};
+  document.getElementById("mine").innerHTML=`<div class="box">👤 你的斬殺數：`+Object.keys(T).map(id=>{const n=k[id]||0,t=T[id][1],lv=t.filter(x=>n>=x).length;
+    return `${T[id][0]} <b>${n.toLocaleString("zh-TW")}</b>（目前 +${lv*2}%${lv<3?`，下一階 ${t[lv].toLocaleString("zh-TW")}`:"，已滿"}）`}).join("　")+`</div>`}
+</script>
+</body></html>

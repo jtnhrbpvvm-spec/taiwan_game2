@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>死守天南城</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--gate:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--gate:#fbbf24}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1050px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🏯 死守天南城</h1>
+<div class="sub">秘境「魔屠天南」：一人守住 100 波妖潮。每波的強度、首領光環、獎勵，以及守城榜。</div>
+
+<div class="box">
+<b>規則：</b>
+<ul>
+<li>煉虛期開放（活動「秘境」→ 魔屠天南）。每天可挑戰 <b>3 次</b>，影片載入完、真正開始守城時才扣次數。</li>
+<li>共 <b>100 波</b>，每 10 波是首領波。每守住一波<b>立刻發獎勵</b>；中途離開或失守，已經拿到的都保留。</li>
+<li>勝負是自動算的：每一波開始時，用你<b>當下的數值</b>和那一波妖潮在背後打一場，<b>每波都是滿血開打</b>。</li>
+<li>你每回合的傷害＝<b>物理攻擊與術法攻擊較高的那個 × 1.3</b>。減傷、閃避、五行、屬性傷害照算；宗門技能、夥伴絕學、裝備特效<b>沒有逐招計入</b>（那 1.3 倍就是平均估算）。</li>
+<li>守不住的那一波，播到一半就會判定「天南失守」並結算。</li>
+<li>可以切 ×1／×2／×4 速度。影片第一次進入要下載（約 7.5 MB），同一次遊戲再進就不用。</li>
+</ul>
+</div>
+<div id="mine"></div>
+
+<h2>每波強度</h2>
+<div class="sub">強度以「某個境界的一般玩家」為基準，中間的波次平滑遞增。</div>
+<div class="tw" style="margin-top:6px"><table><thead><tr><th class="num">波次</th><th>基準強度</th><th class="num">波次</th><th>基準強度</th></tr></thead><tbody>
+<tr><td class="num">第 1 波</td><td>煉虛 1 階</td><td class="num">第 50 波</td><td>天仙 10 階</td></tr>
+<tr><td class="num">第 10 波</td><td>合體 10 階</td><td class="num">第 60 波</td><td>真仙 10 階</td></tr>
+<tr><td class="num">第 20 波</td><td>大乘 10 階</td><td class="num">第 70 波</td><td>大羅金仙 10 階</td></tr>
+<tr><td class="num">第 30 波</td><td>渡劫 10 階</td><td class="num">第 80 波</td><td>混元大羅金仙 10 階</td></tr>
+<tr><td class="num">第 40 波</td><td>仙人初境 10 階</td><td class="num">第 90 波</td><td>混沌道祖 10 階</td></tr>
+</tbody></table></div>
+<div class="box">
+在基準之上還有三樣會讓後面更難：
+<ul>
+<li><b>每波額外成長</b>：攻擊與氣血每一波再 ×1.008，累積到第 50 波約 ×1.48、第 100 波約 ×2.2。畫面上的「妖潮 ×N」就是這個。</li>
+<li><b>境界壓制</b>：那一波的境界比你高時，每高 1 個大境界，妖潮氣血 +100%、攻擊 +120%。<b>境界是門檻，裝備只能讓你多守幾波</b>。</li>
+<li><b>減傷、閃避、異屬性</b>：隨波次提高。減傷 15% → 25%、閃避 8% → 14%、異屬性（冰、毒、雷輪流）觸發率 10% → 35%。妖潮也有命中，會抵掉你一部分閃避。</li>
+</ul>
+<b>種族</b>：一般波是妖獸（氣血 +10%），首領波是魔修（攻擊吸血 10%）。降妖葫蘆、誅魔鏡這類剋制在這裡有效，見<a href="種族剋制.html">種族剋制</a>。
+</div>
+
+<h2>大概能守到第幾波（遊戲設計時的模擬）</h2>
+<div class="sub">「一般」＝和該境界一般玩家差不多；「好裝」＝攻擊 2 倍、氣血 1.5 倍、減傷 30、閃避 20；「頂配」＝攻擊 4 倍、氣血 2 倍、減傷 60、閃避 40。</div>
+<div class="tw" style="margin-top:6px"><table><thead><tr><th>你的境界</th><th class="num">同強度是第幾波</th><th class="num">一般</th><th class="num">好裝</th><th class="num">頂配</th></tr></thead><tbody>
+<tr><td>煉虛 1 階</td><td class="num">1</td><td class="num">1</td><td class="num">4～5</td><td class="num">9～12</td></tr>
+<tr><td>煉虛 10 階</td><td class="num">6</td><td class="num">2～5</td><td class="num">8～9</td><td class="num">14～18</td></tr>
+<tr><td>合體 10 階</td><td class="num">10</td><td class="num">5～9</td><td class="num">16～17</td><td class="num">24～28</td></tr>
+<tr><td>渡劫 10 階</td><td class="num">30</td><td class="num">11～18</td><td class="num">34～35</td><td class="num">39～45</td></tr>
+<tr><td>天仙 10 階</td><td class="num">50</td><td class="num">17～23</td><td class="num">49～53</td><td class="num">56～59</td></tr>
+<tr><td>真仙 10 階</td><td class="num">60</td><td class="num">19～29</td><td class="num">49～62</td><td class="num">67～69</td></tr>
+<tr><td>混沌道祖 10 階</td><td class="num">90</td><td class="num">29～42</td><td class="num">69～79</td><td class="num">89～99</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">好裝大約能守到「和自己同強度」的那一波；要全破 100 波，大概要混沌道祖加上頂級配置。</div>
+
+<h2>十位首領與光環</h2>
+<div class="sub">首領本身不比同波次的妖潮強，差別在<b>光環</b>：整場有效，一邊削弱你、一邊強化自己。越後面的首領光環越多。</div>
+<div class="tw" style="margin-top:6px"><table><thead><tr><th class="num">波次</th><th>首領</th><th>光環</th></tr></thead><tbody id="boss"></tbody></table></div>
+<div class="sub" style="margin-top:6px">守城一波大約 20 回合就分勝負，所以這裡的光環每回合效果比鎮魔塔強很多。中毒、燒傷、凍結多的首領，可以靠萬毒不侵體、裝備特效「定神」、冰共鳴等減輕。</div>
+
+<h2>獎勵</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>一般波</th><th>首領波（每 10 波）</th></tr></thead><tbody>
+<tr><td class="nw"><b>靈石</b></td><td>該波強度的境界掛機 2 分鐘的收入</td><td>3 倍</td></tr>
+<tr><td class="nw"><b>功德</b></td><td>3～12</td><td>80～200</td></tr>
+<tr><td class="nw"><b>異火碎片</b></td><td>有機會 1～2</td><td>必得 3～8</td></tr>
+<tr><td class="nw"><b>星允鐵</b></td><td>有機會 1～2</td><td>必得 3～6</td></tr>
+<tr><td class="nw"><b>裝備</b></td><td>有機會掉一件武器或防具（非秘境裝備）；第 20 波起有機會掉秘境套裝部件</td><td><b>必掉 1 件秘境套裝部件</b></td></tr>
+<tr><td class="nw"><b>夥伴碎片</b></td><td colspan="2">第 11 波起每守住一波有機會得 3～8 片天驕夥伴碎片；第 40 波起改為尊者碎片（尊者都結識完才回頭給天驕）</td></tr>
+<tr><td class="nw"><b>鍛造圖紙</b></td><td>—</td><td>有機會，波次越後面機會越高</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">掉落裝備的品質隨波次提高：前 29 波以藍、紫為主，30 波起只出紫、橙，60 波起以橙色為主。裝備等級是不超過你人物等級的最高一檔。30 組套裝的效果見<a href="套裝效果一覽.html">套裝效果一覽</a>。</div>
+
+<h2>守城稱號</h2>
+<div class="tw"><table><thead><tr><th class="num">歷史最高守住</th><th>稱號</th><th>永久加成</th></tr></thead><tbody>
+<tr><td class="num">第 10 波</td><td>天南守卒</td><td>減傷 +1%</td></tr>
+<tr><td class="num">第 30 波</td><td>天南守將</td><td>攻擊 +1%</td></tr>
+<tr><td class="num">第 50 波</td><td>鎮城仙將</td><td>氣血上限 +2%</td></tr>
+<tr><td class="num">第 80 波</td><td>魔屠天南</td><td>攻擊 +2%</td></tr>
+<tr><td class="num">第 100 波</td><td>天南城守護神</td><td>全屬性 +3%</td></tr>
+</tbody></table></div>
+
+<h2>守城排行榜</h2>
+<div class="box">
+<ul>
+<li>在大道石碑的「死守天南城」分頁。依守住的波數排名，同波數先達成的在前，全破會標示。</li>
+<li>打出<b>比自己之前送審過更高</b>的波數時會自動送審；<b>要管理者審核通過才會上榜</b>，被駁回會顯示原因。</li>
+<li>守城畫面的「通關紀錄」可以看自己最近 20 場的波數和當時的戰力。</li>
+</ul>
+</div>
+</div>
+<script src="profile.js"></script>
+<script>
+const NAMES=["九首魔蛟","血翼魔王","骨龍","噬魂魔將","赤瞳屍王","萬足魔蠍","幽冥鬼帝","煉獄魔猿","天魔化身","魔祖真身"];
+const AUR=[
+[["九首毒涎",{poison:.12},{def:5}],["蛟威",{atk:.05},{atk:.05}]],
+[["血翼颶風",{eva:5,dot:.01},{eva:5}],["嗜血",{},{regen:.01}]],
+[["骨龍寒息",{freeze:.06},{def:8}],["枯骨詛咒",{curse:.08},{}]],
+[["噬魂魔音",{atk:.1},{atk:.08}],["魂火",{burn:.12},{}],["魔將鐵甲",{},{def:8}]],
+[["屍王瘴氣",{poison:.15,dot:.01},{}],["赤瞳凝視",{def:8,freeze:.05},{}],["不腐之身",{},{regen:.01}]],
+[["萬足劇毒",{poison:.18},{atk:.05}],["蠍尾麻痺",{freeze:.06},{}],["甲殼",{},{def:10}]],
+[["鬼帝威壓",{atk:.1,def:5},{atk:.1}],["幽冥詛咒",{curse:.1,dot:.01},{}],["百鬼護駕",{},{eva:8,regen:.01}]],
+[["煉獄業火",{burn:.18,dot:.01},{atk:.1}],["魔猿狂暴",{eva:5},{atk:.1}],["赤鐵筋骨",{},{def:10}]],
+[["天魔噬心",{atk:.12,curse:.1},{}],["天魔寒獄",{freeze:.08},{def:8}],["天魔不滅",{dot:.015},{regen:.015}]],
+[["魔祖降世",{atk:.12,def:8,eva:5},{atk:.15}],["萬魔詛咒",{curse:.12,dot:.015},{}],["混沌魔焰",{burn:.15,poison:.15},{}],["魔祖真身",{freeze:.06},{def:10,regen:.015}]]];
+const pc=v=>+(v*100).toFixed(1);
+function txt([n,p,s]){
+  const a=[p.atk&&`你的攻擊 −${pc(p.atk)}%`,p.def&&`你的減傷 −${p.def}`,p.eva&&`你的閃避 −${p.eva}`,p.curse&&`你受到的傷害 +${pc(p.curse)}%`,p.dot&&`每回合扣你 ${pc(p.dot)}% 氣血`,p.freeze&&`每回合 ${pc(p.freeze)}% 凍結你`,p.burn&&`每回合 ${pc(p.burn)}% 使你燒傷`,p.poison&&`每回合 ${pc(p.poison)}% 使你中毒`].filter(Boolean);
+  const b=[s.atk&&`攻擊 +${pc(s.atk)}%`,s.def&&`減傷 +${s.def}`,s.eva&&`閃避 +${s.eva}`,s.regen&&`每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
+  return `<b>【${n}】</b>${a.join("、")}${a.length&&b.length?"；":""}${b.length?"自身"+b.join("、"):""}`}
+if(window.PROFILE){const b=window.PROFILE.defenseBest||0,next=[10,30,50,80,100].find(x=>x>b);
+  document.getElementById("mine").innerHTML=`<div class="box">👤 你的歷史最高：<b>守住第 ${b} 波</b>。${next?`下一個稱號在第 ${next} 波。`:"五個守城稱號都拿到了。"}</div>`}
+document.getElementById("boss").innerHTML=NAMES.map((n,i)=>`<tr><td class="num">第 ${(i+1)*10} 波</td><td class="nw"><b>${n}</b></td><td>${AUR[i].map(txt).join("<br>")}</td></tr>`).join("");
+</script></body></html>
