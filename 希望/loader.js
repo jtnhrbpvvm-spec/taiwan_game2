@@ -2097,7 +2097,8 @@
 
   // ==========================================================================
   // 名品館今日提示：打開名品館（2026-09-30 起是獨立的 NPC「黑市商人」，之前是商店 NPC 的「名品館」分頁）時，在標題 NPC 名字後面
-  // 提示今天最低價在上午還是下午，快到的時候倒數吐槽。
+  // 提示今天最低價在哪個時段（清晨／上午／下午／晚間，每 6 小時一段），快到的時候倒數吐槽；
+  // 今天的最低價過了、明天的又落在清晨時，晚間改成預告「隔日清晨前半段／後半段」。
   // 匯率公式抄自遊戲 bundle（2026-09-22 版 bv/xv）：每個整點一個匯率，只跟「第幾個小時」有關，
   // 所以今天每個小時的價格都能先算出來。啟動時會拿遊戲自己算的當下匯率（session.mallView().rate）對帳，
   // 對不上就代表遊戲改了公式 → 整個提示不顯示，免得報錯的時段。
@@ -2156,8 +2157,20 @@
     var min = Math.min.apply(null, rates.map(function (r) { return r.rate; }));
     var target = rates.find(function (r) { return r.rate === min && r.period >= nowPeriod; });
     if (!target) {
-      // 今天的最低價都過了：明天如果是超級特價日（最低 < 21,000），多提醒一句
-      return { text: "已經錯過最低價時段了歐~" + (mallDayMin(1) < MALL_SUPER_RATE ? "　明天..好像...?注意歐~" : ""), big: false };
+      // 今天的最低價都過了。
+      // 現在是晚間（18 點後）而且明天的最低價落在清晨（00～05）：睡前先預告是清晨前半段（00～02）還是後半段（03～05），
+      // 不然等隔天打開遊戲才看到「今日提示：清晨」時通常已經來不及了。
+      var tomorrowMin = mallDayMin(1);
+      var tomorrowSuper = tomorrowMin < MALL_SUPER_RATE;
+      var tomorrowHour = mallDayFirstMinHour(1);
+      if (now.getHours() >= 18 && tomorrowHour < 6) {
+        return {
+          text: (tomorrowSuper ? "（老闆明天好像不一樣?）" : "") + "隔日提示：最低價在隔日清晨" + (tomorrowHour < 3 ? "前半段" : "後半段"),
+          big: false
+        };
+      }
+      // 其他情況：明天如果是超級特價日（最低 < 21,000），多提醒一句
+      return { text: "已經錯過最低價時段了歐~" + (tomorrowSuper ? "　明天..好像...?注意歐~" : ""), big: false };
     }
     var superSale = min < MALL_SUPER_RATE;
     var diff = target.period - nowPeriod;
@@ -2166,8 +2179,25 @@
         ? { text: "老闆跳樓！最終特價！！錯過不再！！！", big: true }
         : { text: "收店！！收店！！　隨便賣一賣～", big: false };
     }
-    var text = MALL_COUNTDOWN[diff] || ("今日提示：最低價在" + (target.hour < 12 ? "上午" : "下午"));
+    var text = MALL_COUNTDOWN[diff] || ("今日提示：最低價在" + mallDayPart(target.hour));
     return { text: (superSale ? MALL_SUPER_PREFIX : "") + text, big: false };
+  }
+
+  // 一天分四個時段，每 6 小時一段：清晨 00～05、上午 06～11、下午 12～17、晚間 18～23
+  function mallDayPart(hour) {
+    return ["清晨", "上午", "下午", "晚間"][Math.floor(hour / 6)];
+  }
+
+  // 今天往後第 offset 天（本機時間）第一個最低價是幾點（0～23）
+  function mallDayFirstMinHour(offset) {
+    var now = new Date();
+    var first = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset).getTime() / MALL_HOUR_MS);
+    var best = 0, min = Infinity;
+    for (var h = 0; h < 24; h++) {
+      var r = mallRate(first + h);
+      if (r < min) { min = r; best = h; }
+    }
+    return best;
   }
 
   // 今天往後第 offset 天（本機時間）的最低匯率
