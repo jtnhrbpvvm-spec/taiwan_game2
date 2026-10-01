@@ -495,8 +495,19 @@ async function decodeSave(code){
   const t=(code||"").trim(),bytes=s=>Uint8Array.from(atob(s.replace(/\s+/g,"")),c=>c.charCodeAt(0));
   if(t.startsWith("FS2:")){
     if(typeof DecompressionStream!=="function")throw new Error("這個瀏覽器版本太舊，無法解開存檔代碼，請更新瀏覽器後再試");
-    const buf=await new Response(new Blob([bytes(t.slice(4))]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
-    return JSON.parse(new TextDecoder().decode(buf));
+    // 一塊一塊解開：代碼被截斷時，前面已經解開的部分還能用
+    const rd=new Blob([bytes(t.slice(4))]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader(),parts=[];let cut=false;
+    try{for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value)}}catch(e){cut=true}
+    const all=new Uint8Array(parts.reduce((a,c)=>a+c.length,0));let o=0;parts.forEach(c=>{all.set(c,o);o+=c.length});
+    const txt=new TextDecoder().decode(all);
+    if(!cut)return JSON.parse(txt);
+    // 截斷的存檔：只留到最後一個完整的最外層欄位
+    let depth=0,inStr=false,esc=false,last=-1;
+    for(let i=0;i<txt.length;i++){const c=txt[i];
+      if(inStr){if(esc)esc=false;else if(c==="\\")esc=true;else if(c==='"')inStr=false;continue}
+      if(c==='"')inStr=true;else if(c==="{"||c==="[")depth++;else if(c==="}"||c==="]")depth--;else if(c===","&&depth===1)last=i}
+    if(last<0)throw new Error(`代碼被截斷了（只收到 ${t.length.toLocaleString("zh-TW")} 個字），請回遊戲重新複製整段代碼`);
+    const p=JSON.parse(txt.slice(0,last)+"}");p._cut=t.length;return p;
   }
   if(t.startsWith("{"))return JSON.parse(t);
   if(t.startsWith("%7B"))return JSON.parse(decodeURIComponent(t));
@@ -877,6 +888,7 @@ $("saveLoad").onclick=async()=>{
       p._root=lastA.rootDef?lastA.rootDef[0]:"";p._phy=lastA.phyDef?lastA.phyDef[0]:"";
       saveProfile(p)}
     m.textContent=`讀取完成，已帶入「${p.name||"角色"}」的數字與裝備`;
+    if(p._cut){m.className="err";m.textContent=`⚠️ 這段代碼不完整（只收到 ${p._cut.toLocaleString("zh-TW")} 個字，後面被截斷）。已用讀得到的部分帶入「${p.name||"角色"}」，境界、裝備通常還在，但排在存檔後段的資料可能缺少、試算會偏低。要完整結果請回遊戲重新複製整段代碼。`}
   }catch(e){$("saveOut").innerHTML="";m.className="err";m.textContent="讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"代碼不完整或格式不對，請重新複製整段代碼")}
 };
 // 網址帶 #save=存檔代碼 時自動讀取（從遊戲直接開過來用），讀完就把代碼從網址列拿掉
