@@ -34,6 +34,17 @@ td.nw{white-space:nowrap}
 .res div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--mute)}
 .res b{display:block;font-size:19px;color:var(--acct);font-variant-numeric:tabular-nums}
 .empty{color:var(--mute);padding:20px;text-align:center}
+#saveCode{box-sizing:border-box;width:100%;height:70px;font:12px/1.4 ui-monospace,Consolas,monospace;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);margin-top:8px;resize:vertical}
+.btn{font:inherit;padding:8px 18px;border:1px solid var(--acc);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer;font-weight:bold}
+.btn.ghost{border-color:var(--line);font-weight:normal}
+#saveMsg{font-size:13px;color:var(--mute);align-self:center}
+#saveMsg.err{color:var(--warn)}
+#saveOut h3{font-size:15px;margin:16px 0 6px}
+#saveOut .tw{margin-bottom:6px}
+#saveOut td,#saveOut th{font-size:13.5px;padding:6px 10px}
+.who{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13.5px;margin-top:10px}
+.who span b{color:var(--fg)}
+.src{color:var(--mute);font-size:12.5px;line-height:1.7}
 :root{--link:#6d28d9;--acct:#6d28d9}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
 a{color:var(--link);text-underline-offset:2px}
@@ -50,6 +61,14 @@ a:hover{text-decoration-thickness:2px}
 <li>物理攻擊和術法攻擊<b>共用同一把武器的攻擊力</b>，差別只在力量／悟性，以及「物理攻擊 %」「術法攻擊 %」這類加成。</li>
 <li>敵人沒有分物理防禦、術法防禦：兩種傷害都一樣會被閃避、被減傷。</li>
 </ul>
+</div>
+<div class="box" id="saveBox">
+<b>📥 讀取存檔，直接算出你的詳細數字</b><br>
+在遊戲的「命運與系統」按「📤 匯出存檔代碼」→ 複製代碼，貼到下面再按「讀取存檔」。會依你的境界、丹藥、藏書閣、身上裝備、套裝、稱號、職業、資質、夥伴等，算出各屬性的來源、攻擊力的每一項增益，以及你每一招技能實際打多少。
+<div class="sub">代碼只在你自己的瀏覽器裡計算，不會上傳到任何地方，也不會改動你的存檔。</div>
+<textarea id="saveCode" placeholder="把存檔代碼貼在這裡（FS2: 開頭的一長串）" spellcheck="false"></textarea>
+<div class="ctl" style="margin-bottom:0"><button class="btn" id="saveLoad">讀取存檔</button><button class="btn ghost" id="saveClear">清除</button><span id="saveMsg"></span></div>
+<div id="saveOut"></div>
 </div>
 <div class="tabs"><button data-k="stat" class="on">🧬 六大屬性</button><button data-k="rule">⚔️ 出手與傷害</button><button data-k="skill">📖 技能一覽</button></div>
 
@@ -272,6 +291,208 @@ $("spBody").innerHTML=[
 $("sgBody").innerHTML=[["下品",1.6,1.1,0.8,"×1.15","−15%","12%",60],["中品",2.4,1.7,1.2,"×1.25","−25%","20%",150],["上品",3.4,2.5,1.6,"×1.4","−35%","30%",300],["絕學",5,3.8,2,"×1.8","−50%","50%",600]]
 .map(r=>`<tr><td><b>${r[0]}</b></td><td class="num">${Math.round(r[1]*100)}%</td><td class="num">${Math.round(r[2]*100)}%</td><td class="num">${Math.round(r[3]*100)}%</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td><td class="num">${r[6]}</td><td class="num">${full(mpShow(r[7]))}</td></tr>`).join("");
 
+// ---- 讀取存檔 ----
+const GC={"劍":"精鋼劍,均衡,追擊,;松紋劍,剛猛,破甲,;寒鐵劍,玄妙,吸血,;赤銅劍,剛柔,焚燼,;黃楊劍,均衡,橫掃,;庚金劍,剛猛,首擊,;青元劍,玄妙,蝕骨,;寒魄劍,剛柔,剋敵,;赤霄劍,均衡,斬殺,;鎮岳劍,剛猛,連雷,;太白劍,玄妙,燃魂,;建木劍,剛柔,洞察,;玄冥劍,均衡,寒徹,;南明劍,剛猛,追擊,;后土劍,玄妙,破甲,;血刃劍,剛柔,吸血,;蠱毒劍,均衡,噬魂,;幽冥劍,剛猛,橫掃,;血焰劍,玄妙,焚燼,;屍山劍,剛柔,法爆,;鎏金劍,均衡,剋敵,;翡翠劍,剛猛,毒爆,;珍珠劍,玄妙,疾風,;瑪瑙劍,剛柔,燃魂,;和闐劍,均衡,連雷,;戮仙劍,剛猛,聚靈,戮仙;神農劍,玄妙,追擊,神農;太陰劍,剛柔,冰封,太陰;三昧劍,均衡,吸血,三昧;九州劍,剛猛,噬魂,九州;太初劍,玄妙,橫掃,;開天劍,剛柔,首擊,;陷仙劍,均衡,法爆,;絕仙劍,剛猛,剋敵,;青竹蜂雲劍,玄妙,斬殺,;青冥劍,剛柔,疾風,;東皇劍,均衡,蝕骨,;木德劍,剛猛,洞察,;北斗劍,玄妙,聚靈,;寒淵劍,剛柔,冰封,;共工劍,均衡,破甲,;天一劍,剛猛,吸血,;燭龍劍,玄妙,焚燼,;赤帝劍,剛柔,橫掃,;九鳳劍,均衡,首擊,;天火劍,剛猛,焚燼,;坤輿劍,玄妙,剋敵,;泰山劍,剛柔,斬殺,;地藏劍,均衡,連雷,;厚德劍,剛猛,燃魂,","刀":"青銅刀,剛猛,吸血,;竹節刃,剛柔,噬魂,;秋水刀,均衡,橫掃,;紅纓刃,厚重,焚燼,;石紋刀,剛猛,法爆,;斬魄刃,剛柔,剋敵,;碧落刀,均衡,蝕骨,;流雲刃,厚重,疾風,;焚天刀,剛猛,燃魂,;玄黃刃,剛柔,連雷,;天罡刀,均衡,聚靈,;扶桑刃,厚重,追擊,;北冥刀,剛猛,寒徹,;離火刃,剛柔,吸血,;戊己刀,均衡,噬魂,;奪魄刃,厚重,橫掃,;噬心刀,剛猛,首擊,;黃泉刃,剛柔,法爆,;魔焰刀,均衡,焚燼,;白骨刃,厚重,斬殺,;琉璃刀,剛猛,疾風,;沉香刃,剛柔,毒爆,;水晶刀,均衡,洞察,;珊瑚刃,厚重,聚靈,;黃玉刀,剛猛,連雷,;太乙刃,剛柔,破甲,太乙;蒼龍刀,均衡,吸血,蒼龍;真武刃,厚重,冰封,真武;祝融刀,剛猛,橫掃,祝融;盤古刃,剛柔,首擊,盤古;金蚨子母刃,均衡,法爆,;紫霄刃,厚重,剋敵,;星隕刀,剛猛,斬殺,;破虛刃,剛柔,疾風,;木德刀,均衡,燃魂,;生生刃,厚重,洞察,;萬靈刀,剛猛,蝕骨,;青虛刃,剛柔,追擊,;天一刀,均衡,破甲,;冰皇刃,厚重,冰封,;雪域刀,剛猛,噬魂,;龍宮刃,剛柔,橫掃,;天火刀,均衡,焚燼,;熾天刃,厚重,法爆,;丹陽刀,剛猛,剋敵,;火德刃,剛柔,焚燼,;厚德刀,均衡,疾風,;乾坤刃,厚重,燃魂,;太嶽刀,剛猛,連雷,;八荒刃,剛柔,聚靈,","扇":"鐵骨扇,玄妙,橫掃,;桑木扇,雅致,首擊,;冷泉扇,靈動,法爆,;烈陽扇,法體,焚燼,;厚土扇,玄妙,斬殺,;破軍扇,雅致,疾風,;長青扇,靈動,蝕骨,;冰魄扇,法體,洞察,;流火扇,玄妙,聚靈,;山河扇,雅致,連雷,;誅邪扇,靈動,破甲,;青帝扇,法體,吸血,;天河扇,玄妙,寒徹,;朱雀扇,雅致,橫掃,;崑崙扇,靈動,首擊,;鬼哭扇,法體,法爆,;鬼藤扇,玄妙,剋敵,;冥河扇,雅致,斬殺,;焚魂扇,靈動,焚燼,;墳土扇,法體,燃魂,;珍瓏扇,玄妙,洞察,;紫檀扇,雅致,毒爆,;冰玉扇,靈動,追擊,;赤玉扇,法體,破甲,;玳瑁扇,玄妙,連雷,;神霄扇,雅致,噬魂,神霄;太昊扇,靈動,橫掃,太昊;玄女扇,法體,冰封,玄女;羲和扇,玄妙,法爆,羲和;黃庭扇,雅致,剋敵,黃庭;戮仙扇,靈動,斬殺,戮仙;神農扇,法體,疾風,神農;太陰扇,玄妙,燃魂,太陰;三昧扇,雅致,焚燼,三昧;九州扇,靈動,聚靈,九州;破虛扇,法體,追擊,;斷界扇,玄妙,破甲,;萬劍扇,雅致,吸血,;青虛扇,靈動,噬魂,;靈樞扇,法體,毒爆,;碧霄扇,玄妙,首擊,;乾藍冰焰扇,雅致,法爆,;四海扇,靈動,寒徹,;月魄扇,法體,斬殺,;火德扇,玄妙,疾風,;赤明扇,雅致,焚燼,;朝陽扇,靈動,洞察,;八荒扇,法體,聚靈,;洪荒扇,玄妙,連雷,;鎮獄扇,雅致,破甲,","弓":"白銅弓,剛猛,法爆,;青藤弓,靈動,剋敵,;碧波弓,均衡,斬殺,;丹霞弓,剛柔,焚燼,;山紋弓,剛猛,燃魂,;流光弓,靈動,洞察,;蒼松弓,均衡,蝕骨,;滄浪弓,剛柔,追擊,;炎陽弓,剛猛,破甲,;磐石弓,靈動,連雷,;金闕弓,均衡,噬魂,;萬木弓,剛柔,橫掃,;弱水弓,剛猛,寒徹,;九陽弓,靈動,法爆,;不周弓,均衡,剋敵,;修羅弓,剛柔,斬殺,;血藤弓,剛猛,疾風,;陰煞弓,靈動,燃魂,;煉獄弓,均衡,焚燼,;骷髏弓,剛柔,聚靈,;紫金弓,剛猛,追擊,;檀香弓,靈動,毒爆,;月華弓,均衡,吸血,;霞光弓,剛柔,噬魂,;墨玉弓,剛猛,連雷,;太乙弓,靈動,首擊,太乙;蒼龍弓,均衡,法爆,蒼龍;真武弓,剛柔,冰封,真武;祝融弓,剛猛,斬殺,祝融;盤古弓,靈動,疾風,盤古;金烏弓,均衡,燃魂,;西極弓,剛柔,洞察,;天刑弓,剛猛,聚靈,;無量弓,靈動,追擊,;長春弓,均衡,破甲,;九嶷弓,剛柔,吸血,;瀛洲弓,剛猛,蝕骨,;方丈弓,靈動,橫掃,;星河弓,均衡,首擊,;天潢弓,剛柔,冰封,;太虛弓,剛猛,剋敵,;靈霄弓,靈動,斬殺,;焰魔弓,均衡,焚燼,;鳳凰弓,剛柔,燃魂,;陽燧弓,剛猛,洞察,;離明弓,靈動,焚燼,;山海弓,均衡,追擊,;玄穹弓,剛柔,破甲,;中州弓,剛猛,連雷,;大荒弓,靈動,噬魂,","笛":"銀紋笛,玄妙,斬殺,;柳葉笛,靈動,疾風,;霜紋笛,雅致,燃魂,;火紋笛,均衡,焚燼,;岩骨笛,玄妙,聚靈,;金蟬笛,靈動,追擊,;翠微笛,雅致,蝕骨,;玄冰笛,均衡,吸血,;火鳳笛,玄妙,噬魂,;坤元笛,靈動,連雷,;斬仙笛,雅致,首擊,;乙木笛,均衡,法爆,;滄溟笛,玄妙,寒徹,;太陽笛,靈動,斬殺,;息壤笛,雅致,疾風,;追魂笛,均衡,燃魂,;腐骨笛,玄妙,洞察,;寒屍笛,靈動,聚靈,;赤魔笛,雅致,焚燼,;魔岩笛,均衡,破甲,;金縷笛,玄妙,吸血,;碧玉笛,靈動,毒爆,;鮫綃笛,雅致,橫掃,;琥珀笛,均衡,首擊,;田黃笛,玄妙,連雷,;天樞笛,靈動,剋敵,天樞;瑤光笛,雅致,斬殺,瑤光;洛神笛,均衡,冰封,洛神;畢方笛,玄妙,燃魂,畢方;須彌笛,靈動,洞察,須彌;戮仙笛,雅致,聚靈,戮仙;神農笛,均衡,追擊,神農;太陰笛,玄妙,破甲,太陰;三昧笛,靈動,焚燼,三昧;九州笛,雅致,噬魂,九州;無量笛,均衡,橫掃,;九霄笛,玄妙,首擊,;太初笛,靈動,法爆,;方丈笛,雅致,剋敵,;花神笛,均衡,毒爆,;鴻蒙笛,玄妙,疾風,;靈霄笛,靈動,燃魂,;碧海笛,雅致,寒徹,;北斗笛,均衡,聚靈,;離明笛,玄妙,追擊,;熒惑笛,靈動,焚燼,;燭龍笛,雅致,吸血,;大荒笛,均衡,噬魂,;崆峒笛,玄妙,連雷,;坤輿笛,靈動,首擊,","筆":"鎏銀筆,玄妙,燃魂,;棗木筆,雅致,洞察,;淡月筆,法體,聚靈,;朱漆筆,靈動,焚燼,;黃沙筆,玄妙,破甲,;白虹筆,雅致,吸血,;靈藤筆,法體,蝕骨,;凌波筆,靈動,橫掃,;紫焰筆,玄妙,首擊,;岳峙筆,雅致,連雷,;裂空筆,法體,剋敵,;長生筆,靈動,斬殺,;癸水筆,玄妙,寒徹,;丙火筆,雅致,燃魂,;玄武筆,法體,洞察,;殺生筆,靈動,聚靈,;屍木筆,玄妙,追擊,;鬼霧筆,雅致,破甲,;業火筆,法體,焚燼,;黑沙筆,靈動,噬魂,;玲瓏筆,玄妙,橫掃,;蘭亭筆,雅致,毒爆,;明珠筆,法體,法爆,;丹鳳筆,靈動,剋敵,;雲錦筆,玄妙,連雷,;神霄筆,雅致,疾風,神霄;太昊筆,法體,燃魂,太昊;玄女筆,靈動,冰封,玄女;羲和筆,玄妙,聚靈,羲和;黃庭筆,雅致,追擊,黃庭;戮仙筆,法體,破甲,戮仙;神農筆,靈動,吸血,神農;太陰筆,玄妙,噬魂,太陰;三昧筆,雅致,焚燼,三昧;九州筆,法體,首擊,九州;大衍筆,靈動,法爆,大衍;蓬萊筆,玄妙,蝕骨,蓬萊;歸墟筆,雅致,斬殺,歸墟;丹霄筆,法體,疾風,丹霄;萬壽筆,靈動,連雷,萬壽;開天筆,玄妙,洞察,;陷仙筆,雅致,聚靈,;青冥筆,法體,蝕骨,;東皇筆,靈動,破甲,;寒淵筆,玄妙,吸血,;共工筆,雅致,冰封,;赤帝筆,法體,橫掃,;九鳳筆,靈動,首擊,;泰山筆,玄妙,連雷,;地藏筆,雅致,剋敵,","頭":"精鋼冠,厚重,護體,;松紋盔,靈動,先手盾,;寒鐵巾,法體,回春,;赤銅冠,均衡,回靈,;黃楊盔,厚重,定神,;庚金巾,靈動,閃擊,;青元冠,法體,金身,;寒魄盔,均衡,化勁,;赤霄巾,厚重,延壽,;鎮岳冠,靈動,丹心,;太白盔,法體,反震,;建木巾,均衡,護體,;玄冥冠,厚重,先手盾,;南明盔,靈動,回春,;后土巾,法體,回靈,;血刃冠,均衡,定神,;蠱毒盔,厚重,閃擊,;幽冥巾,靈動,金身,;血焰冠,法體,化勁,;屍山盔,均衡,延壽,;鎏金巾,厚重,丹心,;翡翠冠,靈動,反震,;珍珠盔,法體,護體,;瑪瑙巾,均衡,先手盾,;和闐冠,厚重,回春,;神霄盔,靈動,回靈,神霄;太昊巾,法體,定神,太昊;玄女冠,均衡,閃擊,玄女;羲和盔,厚重,金身,羲和;黃庭巾,靈動,化勁,黃庭;白帝冠,法體,延壽,白帝;句芒盔,均衡,丹心,句芒;玄天巾,厚重,反震,玄天;炎帝冠,靈動,護體,炎帝;軒轅盔,法體,先手盾,軒轅;紫霄巾,均衡,回春,;星隕冠,厚重,回靈,;破虛盔,靈動,定神,;生生巾,法體,閃擊,;萬靈冠,均衡,金身,;青虛盔,厚重,化勁,;冰皇巾,靈動,延壽,;雪域冠,法體,丹心,;龍宮盔,均衡,反震,;熾天巾,厚重,護體,;丹陽冠,靈動,先手盾,;火德盔,法體,回春,;乾坤巾,均衡,回靈,;太嶽冠,厚重,定神,;八荒盔,靈動,閃擊,","內衣":"青銅衣,厚重,回春,;竹節軟甲,剛柔,回靈,;秋水內襯,法體,定神,;紅纓衣,均衡,閃擊,;石紋軟甲,厚重,金身,;斬魄內襯,剛柔,化勁,;碧落衣,法體,延壽,;流雲軟甲,均衡,丹心,;焚天內襯,厚重,反震,;玄黃衣,剛柔,護體,;天罡軟甲,法體,先手盾,;扶桑內襯,均衡,回春,;北冥衣,厚重,回靈,;離火軟甲,剛柔,定神,;戊己內襯,法體,閃擊,;奪魄衣,均衡,金身,;噬心軟甲,厚重,化勁,;黃泉內襯,剛柔,延壽,;魔焰衣,法體,丹心,;白骨軟甲,均衡,反震,;琉璃內襯,厚重,護體,;沉香衣,剛柔,先手盾,;水晶軟甲,法體,回春,;珊瑚內襯,均衡,回靈,;黃玉衣,厚重,定神,;白帝軟甲,剛柔,閃擊,白帝;句芒內襯,法體,金身,句芒;玄天衣,均衡,化勁,玄天;炎帝軟甲,厚重,延壽,炎帝;軒轅內襯,剛柔,丹心,軒轅;大衍衣,法體,反震,大衍;蓬萊軟甲,均衡,護體,蓬萊;歸墟內襯,厚重,先手盾,歸墟;丹霄衣,剛柔,回春,丹霄;萬壽軟甲,法體,回靈,萬壽;斷界內襯,均衡,定神,;萬劍衣,厚重,閃擊,;金烏軟甲,剛柔,金身,;靈樞內襯,法體,化勁,;碧霄衣,均衡,延壽,;長春軟甲,厚重,丹心,;四海內襯,剛柔,反震,;月魄衣,法體,護體,;星河軟甲,均衡,先手盾,;赤明內襯,厚重,回春,;朝陽衣,剛柔,回靈,;焰魔軟甲,法體,定神,;洪荒內襯,均衡,閃擊,;鎮獄衣,厚重,金身,;山海軟甲,剛柔,化勁,","盔甲":"鐵骨甲,厚重,定神,;桑木戰甲,剛柔,閃擊,;冷泉鎧,法體,金身,;烈陽甲,均衡,化勁,;厚土戰甲,厚重,延壽,;破軍鎧,剛柔,丹心,;長青甲,法體,反震,;冰魄戰甲,均衡,護體,;流火鎧,厚重,先手盾,;山河甲,剛柔,回春,;誅邪戰甲,法體,回靈,;青帝鎧,均衡,定神,;天河甲,厚重,閃擊,;朱雀戰甲,剛柔,金身,;崑崙鎧,法體,化勁,;鬼哭甲,均衡,延壽,;鬼藤戰甲,厚重,丹心,;冥河鎧,剛柔,反震,;焚魂甲,法體,護體,;墳土戰甲,均衡,先手盾,;珍瓏鎧,厚重,回春,;紫檀甲,剛柔,回靈,;冰玉戰甲,法體,定神,;赤玉鎧,均衡,閃擊,;玳瑁甲,厚重,金身,;太乙戰甲,剛柔,化勁,太乙;蒼龍鎧,法體,延壽,蒼龍;真武甲,均衡,丹心,真武;祝融戰甲,厚重,反震,祝融;盤古鎧,剛柔,護體,盤古;白帝甲,法體,先手盾,白帝;句芒戰甲,均衡,回春,句芒;玄天鎧,厚重,回靈,玄天;炎帝甲,剛柔,定神,炎帝;軒轅戰甲,法體,閃擊,軒轅;西極鎧,均衡,金身,;天刑甲,厚重,化勁,;無量戰甲,剛柔,延壽,;九嶷鎧,法體,丹心,;瀛洲甲,均衡,反震,;方丈戰甲,厚重,護體,;天潢鎧,剛柔,先手盾,;太虛甲,法體,回春,;靈霄戰甲,均衡,回靈,;鳳凰鎧,厚重,定神,;陽燧甲,剛柔,閃擊,;離明戰甲,法體,金身,;玄穹鎧,均衡,化勁,;中州甲,厚重,延壽,;大荒戰甲,剛柔,丹心,","手套":"白銅護手,剛柔,金身,;青藤手套,剛猛,化勁,;碧波指套,厚重,延壽,;丹霞護手,均衡,丹心,;山紋手套,剛柔,反震,;流光指套,剛猛,護體,;蒼松護手,厚重,先手盾,;滄浪手套,均衡,回春,;炎陽指套,剛柔,回靈,;磐石護手,剛猛,定神,;金闕手套,厚重,閃擊,;萬木指套,均衡,金身,;弱水護手,剛柔,化勁,;九陽手套,剛猛,延壽,;不周指套,厚重,丹心,;修羅護手,均衡,反震,;血藤手套,剛柔,護體,;陰煞指套,剛猛,先手盾,;煉獄護手,厚重,回春,;骷髏手套,均衡,回靈,;紫金指套,剛柔,定神,;檀香護手,剛猛,閃擊,;月華手套,厚重,金身,;霞光指套,均衡,化勁,;墨玉護手,剛柔,延壽,;太乙手套,剛猛,丹心,太乙;蒼龍指套,厚重,反震,蒼龍;真武護手,均衡,護體,真武;祝融手套,剛柔,先手盾,祝融;盤古指套,剛猛,回春,盤古;天樞護手,厚重,回靈,天樞;瑤光手套,均衡,定神,瑤光;洛神指套,剛柔,閃擊,洛神;畢方護手,剛猛,金身,畢方;須彌手套,厚重,化勁,須彌;九霄指套,均衡,延壽,;太初護手,剛柔,丹心,;開天手套,剛猛,反震,;花神指套,厚重,護體,;鴻蒙護手,均衡,先手盾,;青冥手套,剛柔,回春,;碧海指套,剛猛,回靈,;北斗護手,厚重,定神,;寒淵手套,均衡,閃擊,;熒惑指套,剛柔,金身,;燭龍護手,剛猛,化勁,;赤帝手套,厚重,延壽,;崆峒指套,均衡,丹心,;坤輿護手,剛柔,反震,;泰山手套,剛猛,護體,","長靴":"銀紋靴,靈動,延壽,;柳葉履,厚重,丹心,;霜紋靴,均衡,反震,;火紋履,剛柔,護體,;岩骨靴,靈動,先手盾,;金蟬履,厚重,回春,;翠微靴,均衡,回靈,;玄冰履,剛柔,定神,;火鳳靴,靈動,閃擊,;坤元履,厚重,金身,;斬仙靴,均衡,化勁,;乙木履,剛柔,延壽,;滄溟靴,靈動,丹心,;太陽履,厚重,反震,;息壤靴,均衡,護體,;追魂履,剛柔,先手盾,;腐骨靴,靈動,回春,;寒屍履,厚重,回靈,;赤魔靴,均衡,定神,;魔岩履,剛柔,閃擊,;金縷靴,靈動,金身,;碧玉履,厚重,化勁,;鮫綃靴,均衡,延壽,;琥珀履,剛柔,丹心,;田黃靴,靈動,反震,;白帝履,厚重,護體,白帝;句芒靴,均衡,先手盾,句芒;玄天履,剛柔,回春,玄天;炎帝靴,靈動,回靈,炎帝;軒轅履,厚重,定神,軒轅;天樞靴,均衡,閃擊,天樞;瑤光履,剛柔,金身,瑤光;洛神靴,靈動,化勁,洛神;畢方履,厚重,延壽,畢方;須彌靴,均衡,丹心,須彌;陷仙履,剛柔,反震,;絕仙靴,靈動,護體,;紫霄履,厚重,先手盾,;東皇靴,均衡,回春,;木德履,剛柔,回靈,;生生靴,靈動,定神,;共工履,厚重,閃擊,;天一靴,均衡,金身,;冰皇履,剛柔,化勁,;九鳳靴,靈動,延壽,;天火履,厚重,丹心,;熾天靴,均衡,反震,;地藏履,剛柔,護體,;厚德靴,靈動,先手盾,;乾坤履,厚重,回春,","披風":"鎏銀披風,法體,反震,;棗木斗篷,靈動,護體,;淡月羽衣,厚重,先手盾,;朱漆披風,雅致,回春,;黃沙斗篷,法體,回靈,;白虹羽衣,靈動,定神,;靈藤披風,厚重,閃擊,;凌波斗篷,雅致,金身,;紫焰羽衣,法體,化勁,;岳峙披風,靈動,延壽,;裂空斗篷,厚重,丹心,;長生羽衣,雅致,反震,;癸水披風,法體,護體,;丙火斗篷,靈動,先手盾,;玄武羽衣,厚重,回春,;殺生披風,雅致,回靈,;屍木斗篷,法體,定神,;鬼霧羽衣,靈動,閃擊,;業火披風,厚重,金身,;黑沙斗篷,雅致,化勁,;玲瓏羽衣,法體,延壽,;蘭亭披風,靈動,丹心,;明珠斗篷,厚重,反震,;丹鳳羽衣,雅致,護體,;雲錦披風,法體,先手盾,;神霄斗篷,靈動,回春,神霄;太昊羽衣,厚重,回靈,太昊;玄女披風,雅致,定神,玄女;羲和斗篷,法體,閃擊,羲和;黃庭羽衣,靈動,金身,黃庭;天樞披風,厚重,化勁,天樞;瑤光斗篷,雅致,延壽,瑤光;洛神羽衣,法體,丹心,洛神;畢方披風,靈動,反震,畢方;須彌斗篷,厚重,護體,須彌;風雷翅,雅致,先手盾,;破虛披風,法體,回春,;斷界斗篷,靈動,回靈,;萬靈羽衣,厚重,定神,;青虛披風,雅致,閃擊,;靈樞斗篷,法體,金身,;雪域羽衣,靈動,化勁,;龍宮披風,厚重,延壽,;四海斗篷,雅致,丹心,;丹陽羽衣,法體,反震,;火德披風,靈動,護體,;赤明斗篷,厚重,先手盾,;太嶽羽衣,雅致,回春,;八荒披風,法體,回靈,;洪荒斗篷,靈動,定神,","腰帶":"精鋼腰帶,厚重,剋敵,;松紋束帶,均衡,閃擊,;寒鐵腰帶,剛柔,定神,;赤銅束帶,法體,回春,;黃楊腰帶,靈動,聚財,;庚金束帶,剛猛,悟道,;青元腰帶,玄妙,積德,;寒魄束帶,雅致,奪寶,;赤霄腰帶,厚重,尋鐵,;鎮岳束帶,均衡,役使,;太白腰帶,剛柔,獸魂,;建木束帶,法體,通玄,;玄冥腰帶,靈動,回靈,;南明束帶,剛猛,法爆,;后土腰帶,玄妙,剋敵,;血刃束帶,雅致,閃擊,;蠱毒腰帶,厚重,定神,;幽冥束帶,均衡,回春,;血焰腰帶,剛柔,聚財,;屍山束帶,法體,悟道,;鎏金腰帶,靈動,積德,;翡翠束帶,剛猛,奪寶,;珍珠腰帶,玄妙,尋鐵,;瑪瑙束帶,雅致,役使,;和闐腰帶,厚重,獸魂,;太乙束帶,均衡,通玄,太乙;蒼龍腰帶,剛柔,回靈,蒼龍;真武束帶,法體,法爆,真武;祝融腰帶,靈動,剋敵,祝融;盤古束帶,剛猛,閃擊,盤古;白帝腰帶,玄妙,定神,白帝;句芒束帶,雅致,回春,句芒;玄天腰帶,厚重,聚財,玄天;炎帝束帶,均衡,悟道,炎帝;軒轅腰帶,剛柔,積德,軒轅;大衍束帶,法體,奪寶,大衍;蓬萊腰帶,靈動,尋鐵,蓬萊;歸墟束帶,剛猛,役使,歸墟;丹霄腰帶,玄妙,獸魂,丹霄;萬壽束帶,雅致,通玄,萬壽;萬劍腰帶,厚重,回靈,;金烏束帶,均衡,法爆,;碧霄腰帶,剛柔,剋敵,;長春束帶,法體,閃擊,;月魄腰帶,靈動,定神,;星河束帶,剛猛,回春,;朝陽腰帶,玄妙,聚財,;焰魔束帶,雅致,悟道,;鎮獄腰帶,厚重,積德,;山海束帶,均衡,奪寶,","項鍊":"青銅項鍊,靈動,定神,;竹節珠鍊,玄妙,回春,;秋水玉墜,雅致,聚財,;紅纓項鍊,均衡,悟道,;石紋珠鍊,法體,積德,;斬魄玉墜,厚重,奪寶,;碧落項鍊,剛猛,尋鐵,;流雲珠鍊,剛柔,役使,;焚天玉墜,靈動,獸魂,;玄黃項鍊,玄妙,通玄,;天罡珠鍊,雅致,回靈,;扶桑玉墜,均衡,法爆,;北冥項鍊,法體,剋敵,;離火珠鍊,厚重,閃擊,;戊己玉墜,剛猛,定神,;奪魄項鍊,剛柔,回春,;噬心珠鍊,靈動,聚財,;黃泉玉墜,玄妙,悟道,;魔焰項鍊,雅致,積德,;白骨珠鍊,均衡,奪寶,;琉璃玉墜,法體,尋鐵,;沉香項鍊,厚重,役使,;水晶珠鍊,剛猛,獸魂,;珊瑚玉墜,剛柔,通玄,;黃玉項鍊,靈動,回靈,;神霄珠鍊,玄妙,法爆,神霄;太昊玉墜,雅致,剋敵,太昊;玄女項鍊,均衡,閃擊,玄女;羲和珠鍊,法體,定神,羲和;黃庭玉墜,厚重,回春,黃庭;戮仙項鍊,剛猛,聚財,戮仙;神農珠鍊,剛柔,悟道,神農;太陰玉墜,靈動,積德,太陰;三昧項鍊,玄妙,奪寶,三昧;九州珠鍊,雅致,尋鐵,九州;大衍玉墜,均衡,役使,大衍;蓬萊項鍊,法體,獸魂,蓬萊;歸墟珠鍊,厚重,通玄,歸墟;丹霄玉墜,剛猛,回靈,丹霄;萬壽項鍊,剛柔,法爆,萬壽;天刑珠鍊,靈動,剋敵,;無量玉墜,玄妙,閃擊,;瀛洲項鍊,雅致,定神,;方丈珠鍊,均衡,回春,;太虛玉墜,法體,聚財,;靈霄項鍊,厚重,悟道,;陽燧珠鍊,剛猛,積德,;離明玉墜,剛柔,奪寶,;中州項鍊,靈動,尋鐵,;大荒珠鍊,玄妙,役使,","戒指":"鐵骨戒,剛猛,聚財,;桑木指環,玄妙,悟道,;冷泉戒,均衡,積德,;烈陽指環,剛柔,奪寶,;厚土戒,法體,尋鐵,;破軍指環,雅致,役使,;長青戒,靈動,獸魂,;冰魄指環,厚重,通玄,;流火戒,剛猛,回靈,;山河指環,玄妙,法爆,;誅邪戒,均衡,剋敵,;青帝指環,剛柔,閃擊,;天河戒,法體,定神,;朱雀指環,雅致,回春,;崑崙戒,靈動,聚財,;鬼哭指環,厚重,悟道,;鬼藤戒,剛猛,積德,;冥河指環,玄妙,奪寶,;焚魂戒,均衡,尋鐵,;墳土指環,剛柔,役使,;珍瓏戒,法體,獸魂,;紫檀指環,雅致,通玄,;冰玉戒,靈動,回靈,;赤玉指環,厚重,法爆,;玳瑁戒,剛猛,剋敵,;太乙指環,玄妙,閃擊,太乙;蒼龍戒,均衡,定神,蒼龍;真武指環,剛柔,回春,真武;祝融戒,法體,聚財,祝融;盤古指環,雅致,悟道,盤古;天樞戒,靈動,積德,天樞;瑤光指環,厚重,奪寶,瑤光;洛神戒,剛猛,尋鐵,洛神;畢方指環,玄妙,役使,畢方;須彌戒,均衡,獸魂,須彌;戮仙指環,剛柔,通玄,戮仙;神農戒,法體,回靈,神農;太陰指環,雅致,法爆,太陰;三昧戒,靈動,剋敵,三昧;九州指環,厚重,閃擊,九州;太初戒,剛猛,定神,;開天指環,玄妙,回春,;鴻蒙戒,均衡,聚財,;青冥指環,剛柔,悟道,;北斗戒,法體,積德,;寒淵指環,雅致,奪寶,;燭龍戒,靈動,尋鐵,;赤帝指環,厚重,役使,;坤輿戒,剛猛,獸魂,;泰山指環,玄妙,通玄,","耳環":"白銅耳環,雅致,積德,;青藤耳墜,靈動,奪寶,;碧波耳環,均衡,尋鐵,;丹霞耳墜,玄妙,役使,;山紋耳環,剛柔,獸魂,;流光耳墜,法體,通玄,;蒼松耳環,厚重,回靈,;滄浪耳墜,剛猛,法爆,;炎陽耳環,雅致,剋敵,;磐石耳墜,靈動,閃擊,;金闕耳環,均衡,定神,;萬木耳墜,玄妙,回春,;弱水耳環,剛柔,聚財,;九陽耳墜,法體,悟道,;不周耳環,厚重,積德,;修羅耳墜,剛猛,奪寶,;血藤耳環,雅致,尋鐵,;陰煞耳墜,靈動,役使,;煉獄耳環,均衡,獸魂,;骷髏耳墜,玄妙,通玄,;紫金耳環,剛柔,回靈,;檀香耳墜,法體,法爆,;月華耳環,厚重,剋敵,;霞光耳墜,剛猛,閃擊,;墨玉耳環,雅致,定神,;神霄耳墜,靈動,回春,神霄;太昊耳環,均衡,聚財,太昊;玄女耳墜,玄妙,悟道,玄女;羲和耳環,剛柔,積德,羲和;黃庭耳墜,法體,奪寶,黃庭;天樞耳環,厚重,尋鐵,天樞;瑤光耳墜,剛猛,役使,瑤光;洛神耳環,雅致,獸魂,洛神;畢方耳墜,靈動,通玄,畢方;須彌耳環,均衡,回靈,須彌;大衍耳墜,玄妙,法爆,大衍;蓬萊耳環,剛柔,剋敵,蓬萊;歸墟耳墜,法體,閃擊,歸墟;丹霄耳環,厚重,定神,丹霄;萬壽耳墜,剛猛,回春,萬壽;絕仙耳環,雅致,聚財,;紫霄耳墜,靈動,悟道,;木德耳環,均衡,積德,;生生耳墜,玄妙,奪寶,;天一耳環,剛柔,尋鐵,;冰皇耳墜,法體,役使,;天火耳環,厚重,獸魂,;熾天耳墜,剛猛,通玄,;厚德耳環,雅致,回靈,;乾坤耳墜,靈動,法爆,","腰牌":"銀紋令,均衡,尋鐵,;柳葉腰牌,雅致,役使,;霜紋令牌,玄妙,獸魂,;火紋令,靈動,通玄,;岩骨腰牌,厚重,回靈,;金蟬令牌,剛柔,法爆,;翠微令,法體,剋敵,;玄冰腰牌,剛猛,閃擊,;火鳳令牌,均衡,定神,;坤元令,雅致,回春,;斬仙腰牌,玄妙,聚財,;乙木令牌,靈動,悟道,;滄溟令,厚重,積德,;太陽腰牌,剛柔,奪寶,;息壤令牌,法體,尋鐵,;追魂令,剛猛,役使,;腐骨腰牌,均衡,獸魂,;寒屍令牌,雅致,通玄,;赤魔令,玄妙,回靈,;魔岩腰牌,靈動,法爆,;金縷令牌,厚重,剋敵,;碧玉令,剛柔,閃擊,;鮫綃腰牌,法體,定神,;琥珀令牌,剛猛,回春,;田黃令,均衡,聚財,;白帝腰牌,雅致,悟道,白帝;句芒令牌,玄妙,積德,句芒;玄天令,靈動,奪寶,玄天;炎帝腰牌,厚重,尋鐵,炎帝;軒轅令牌,剛柔,役使,軒轅;大衍令,法體,獸魂,大衍;蓬萊腰牌,剛猛,通玄,蓬萊;歸墟令牌,均衡,回靈,歸墟;丹霄令,雅致,法爆,丹霄;萬壽腰牌,玄妙,剋敵,萬壽;破虛令牌,靈動,閃擊,;斷界令,厚重,定神,;萬劍腰牌,剛柔,回春,;青虛令牌,法體,聚財,;靈樞令,剛猛,悟道,;碧霄腰牌,均衡,積德,;龍宮令牌,雅致,奪寶,;四海令,玄妙,尋鐵,;月魄腰牌,靈動,役使,;火德令牌,厚重,獸魂,;赤明令,剛柔,通玄,;朝陽腰牌,法體,回靈,;八荒令牌,剛猛,法爆,;洪荒令,均衡,剋敵,;鎮獄腰牌,雅致,閃擊,"};
+const GCX={};for(const k in GC)GCX[k]=GC[k].split(";").map(r=>r.split(","));
+const QM={"白色":1,"綠色":1.1,"藍色":1.25,"紫色":1.35,"橙色":1.5,"白金":2};
+const TPL={"均衡":{str:.5,int:.5,con:.5,spr:.5},"剛猛":{str:1.6,con:.4},"玄妙":{int:1.6,spr:.4},"厚重":{con:1.6,str:.4},"靈動":{agi:1.2,spr:.8},"剛柔":{str:1,con:1},"法體":{int:1,con:1},"雅致":{int:1}};
+const WEAPONS=["劍","刀","扇","弓","笛","筆"],ACCS=["腰帶","項鍊","戒指","耳環","腰牌"];
+const SLOTS=WEAPONS.concat(["頭","內衣","盔甲","手套","長靴","披風"],ACCS);
+const ELV=[10,50,100,200,300,400,500,700,800,1000],BPL={1500:11,2500:12,3500:13,5000:14,6500:15,8000:15.5,10000:16};
+const EQ4={str:1,con:1,int:1,spr:1};
+const LB={lb1_sword:{t:1,n:"玄鐵重劍",s:{str:2,spr:1}},lb1_armor:{t:1,n:"赤焰護心甲",s:{con:1}},lb2_sword:{t:2,n:"紫電青霜劍",s:{str:2,spr:1}},lb2_armor:{t:2,n:"玄武鎮獄甲",s:{con:1}},lb3_sword:{t:3,n:"誅仙劍",s:{str:2,spr:1}},
+lb3_artifact:{a:1,n:"混沌鐘",s:EQ4},lb3_artifact_coffin:{a:1,n:"三世銅棺",s:{str:10,con:45,int:10,spr:15}},lb3_artifact_sword:{a:1,n:"荒天帝大羅劍胎",s:{str:45,con:10,int:10,spr:15}},
+lb3_artifact_cauldron:{a:1,n:"萬物母氣鼎",s:EQ4},lb3_artifact_jar:{a:1,n:"吞天魔罐",s:{str:10,con:10,int:45,spr:15}},lb3_artifact_wushi:{a:1,n:"無始鐘",s:EQ4}};
+const LB_BUDGET={1:2.5,2:4,3:6},LB_WL={1:4,2:8,3:10};
+const SECTS={"武當":[1,"劍"],"峨嵋":[1,"笛"],"少林寺":[1,"刀"],"全真教":[1,"筆"],"皇朝":[1,"弓"],"逍遙派":[1,"扇"],"崑崙仙宗":[2,"扇"],"蜀山劍派":[2,"劍"],"丹鼎司":[2,"筆"],"御獸仙宗":[2,"弓"],"天魔教":[2,"刀"],"天音閣":[2,"笛"],
+"太清道德宗":[3,"扇"],"玉清闡教宗":[3,"筆"],"上清截教宗":[3,"劍"],"萬界仙門":[3,"弓"],"九幽黃泉":[3,"刀"],"天籟仙宮":[3,"笛"]};
+const PROF={sword:["劍修","劍",{atkPct:.015}],blade:["刀修","刀",{physPct:.02}],fan:["扇修","扇",{magPct:.02}],bow:["弓修","弓",{}],flute:["音修","笛",{}],brush:["符修","筆",{"fx:法爆":.02}]};
+const RANK_EXP=[0,500,3000,10000,25000,60000,120000,250000,500000,1000000],PROF_WB=[0,.03,.06,.09,.12,.15,.18,.21,.24,.30],LEGACY={1:.1,2:.2,3:.3};
+const SET_THEME={};[["物攻","太乙 蒼龍 真武 祝融 盤古"],["法攻","神霄 太昊 玄女 羲和 黃庭"],["防禦","白帝 句芒 玄天 炎帝 軒轅"]].forEach(([t,n])=>n.split(" ").forEach(x=>SET_THEME[x]=t));
+const SET_BONUS={"物攻":[[2,{strPct:.05}],[4,{physPct:.08}]],"法攻":[[2,{intPct:.05}],[4,{magPct:.08}]],"防禦":[[2,{conPct:.05}]]};
+const TITLE={bp17:{statPct:.01},bpTier1500:{atkPct:.01},bp60:{hpPct:.02},bpTier5000:{atkPct:.02},bpTier10000:{statPct:.02},bpAll:{atkPct:.03},bpPlat17:{"fx:法爆":.03},codex50:{statPct:.01},codex200:{statPct:.01},codex350:{hpPct:.02},
+codex500:{atkPct:.02},codex700:{statPct:.01},codexAll:{atkPct:.02},codexPlat:{statPct:.03},catWeapon:{atkPct:.02},slotFlute:{sprPct:.03},purple200:{"fx:法爆":.02},orange200:{statPct:.01},plat1:{atkPct:.02},plat50:{statPct:.02},
+enh20:{atkPct:.02},wearPlat5:{statPct:.02},realm3:{hpPct:.01},realm5:{atkPct:.01},realm8:{hpPct:.01},realm11:{atkPct:.01},realm13:{statPct:.01},realm15:{statPct:.02},sectOuter:{"fx:法爆":.01},sectCore:{"fx:法爆":.01},
+sectElder:{"fx:法爆":.02},sectGrand:{statPct:.02},karmaEvil:{atkPct:.01},profSword:{atkPct:.02},profBlade:{atkPct:.02},profFan:{atkPct:.02},profBow:{atkPct:.02},profFlute:{atkPct:.02},profBrush:{atkPct:.02},
+casinoTriple:{statPct:.01},defense30:{atkPct:.01},defense50:{hpPct:.02},defense80:{atkPct:.02},defense100:{statPct:.03}};
+const FIRE={f01:{atkPct:.05},f02:{magPct:.05},f03:{statPct:.03},f04:{physPct:.04},f05:{"fx:法爆":.04},f06:{atkPct:.03},f07:{hpPct:.04},f10:{atkPct:.02},f12:{magPct:.02},f14:{hpPct:.03},f16:{statPct:.015},f21:{intPct:.02},
+f22:{conPct:.02},f27:{strPct:.02},f29:{atkPct:.01},f30:{magPct:.01},f32:{sprPct:.02},f36:{strPct:.01},f39:{physPct:.01},f41:{conPct:.01},f43:{intPct:.01},f45:{magPct:.005},f50:{hpPct:.01}};
+const PARTNER={xiaoyan:["蕭炎",{magPct:.02}],lindong:["林動",{atkPct:.03}],dashanren:["風希",{}],lifeiyu:["厲飛雨",{physPct:.04}],hanli:["韓立",{atkPct:.04,statPct:.03}],nangongwan:["南宮婉",{magPct:.03}],chennan:["辰南",{atkPct:.04}],
+muchen:["牧塵",{statPct:.03,hpPct:.02}],tangsan:["唐三",{}],yefan:["葉凡",{hpPct:.04,conPct:.04}],hengren:["狠人大帝",{magPct:.05}],wushi:["無始大帝",{atkPct:.02}],duande:["段德",{}],douzhan:["鬥戰聖皇",{physPct:.05}],
+xukong:["虛空大帝",{atkPct:.02}],hengyu:["恆宇大帝",{hpPct:.02}],qingdi:["青帝",{magPct:.03}],xihuangmu:["西皇母",{magPct:.03}],amituo:["阿彌陀佛大帝",{}],luofeng:["羅峰",{hpPct:.05,atkPct:.04}],shihao:["石昊",{atkPct:.05,statPct:.02}],
+wanglin:["王林",{atkPct:.03}],menghao:["孟浩",{statPct:.03}],baixiaochun:["白小純",{hpPct:.03}],qinyu:["秦羽",{statPct:.03,magPct:.03}],linlei:["林雷",{physPct:.03}],zhangxiaofan:["張小凡",{magPct:.02}],liqiye:["李七夜",{statPct:.03}],
+hong:["洪",{atkPct:.04,statPct:.03}],leishen:["雷神",{atkPct:.04}],huoyuhao:["霍雨浩",{magPct:.03,intPct:.02}],tangwulin:["唐舞麟",{physPct:.04,hpPct:.02}],guyuena:["古月娜",{hpPct:.03,magPct:.02}],tangxuanyu:["唐軒宇",{statPct:.03,atkPct:.04}],
+aosika:["奧斯卡",{hpPct:.02}],mahongjun:["馬紅俊",{}],ningrongrong:["寧榮榮",{statPct:.03}],xiaoyixian:["小醫仙",{}],ziling:["紫靈",{}],xuxin:["徐欣",{hpPct:.02}],qinshuang:["秦霜",{atkPct:.02}],babata:["巴巴塔",{intPct:.02}],
+jinjiao:["金角巨獸",{hpPct:.02}],moyunteng:["摩雲藤",{hpPct:.02}]};
+const ROOT_GROUP={fake5:"五靈根",fake4:"四靈根",true3:"三靈根",true2:"雙靈根",heaven:"天靈根"};
+const ROOT={wind:["風靈根",{agiPct:.1}],thunder:["雷靈根",{atkPct:.05}],ice:["冰靈根",{}],dark:["暗靈根",{}],none:["無屬性靈根",{statPct:.08}],sun:["日靈根",{physPct:.12}],moon:["月靈根",{magPct:.12}],immortal:["仙靈根",{statPct:.08,hpPct:.1}],
+chaos:["混沌靈根",{statPct:.12,atkPct:.1,hpPct:.1}],taichu:["太初靈根",{statPct:.1,atkPct:.12,hpPct:.08}],hongmeng:["鴻蒙靈根",{statPct:.1,magPct:.12}],genesis:["創世靈根",{statPct:.1,physPct:.12,hpPct:.08}],wutai:["先天五太靈根",{statPct:.15,hpPct:.1}],
+wuxing5:["先天五行靈根",{statPct:.1}],kongling:["空靈根",{statPct:.1}],kongming:["空明靈根",{statPct:.1,atkPct:.1}],kongshi:["空識靈根",{statPct:.1,intPct:.15,magPct:.08}]};
+const PHYS={mortal:["凡體",{}],metalBody:["庚金本源體",{},{elem:"金"}],woodBody:["乙木本源體",{hpPct:.05},{elem:"木"}],waterBody:["癸水本源體",{},{elem:"水"}],fireBody:["九陽赤炎體",{},{elem:"火"}],earthBody:["戊土本源體",{},{elem:"土"}],
+thunderBody:["天雷之體",{}],iceBody:["玄冰之體",{}],yinBody:["純陰之體",{magPct:.1}],yangBody:["純陽之體",{physPct:.1}],herbBody:["天生藥體",{}],poisonBody:["萬毒不侵體",{}],
+swordBody:["先天劍體",{},{weapon:"劍"}],bladeBody:["霸刀戰體",{},{weapon:"刀"}],fanBody:["風靈仙體",{},{weapon:"扇"}],bowBody:["神射之體",{},{weapon:"弓"}],fluteBody:["天籟道體",{},{weapon:"笛"}],brushBody:["符靈道體",{},{weapon:"筆"}],
+chaosBody:["混沌體",{statPct:.1,atkPct:.1,hpPct:.1}],holyBody:["荒古聖體",{hpPct:.25,conPct:.1}],daoBody:["先天聖體道胎",{hpPct:.2,magPct:.05}],tyrantBody:["蒼天霸體",{atkPct:.15,hpPct:.1}],doublePupil:["重瞳",{atkPct:.05}],supremeBone:["至尊骨",{atkPct:.08,"fx:法爆":.15,statPct:.05}]};
+const CORE=[["下品金丹",0],["中品金丹",.1],["上品金丹",.2],["極品金丹",.35],["超品金丹",.5]];
+const INFANT=[["人元嬰・下",0],["人元嬰・中",.05],["人元嬰・上",.1],["地元嬰・下",.15],["地元嬰・中",.2],["地元嬰・上",.25],["天元嬰・下",.35],["天元嬰・中",.45],["天元嬰・上",.6]];
+const WX=["金","木","水","火","土"];
+const RES_SINGLE={"金":["金靈星君加持",{skillMult:1.2}],"木":["木靈星君加持",{}],"水":["水靈星君加持",{hpMult:1.2}],"火":["火靈星君加持",{atkMult:1.2}],"土":["土靈星君加持",{conMult:1.2}]};
+const RES_PURE={"水":"冰共鳴","火":"炎共鳴","金":"罡共鳴","木":"生共鳴","土":"岩共鳴"};
+const RES_DUAL={"金+木":["庚共鳴",{atkMult:1.1}],"金+火":["煉共鳴",{skillMult:1.1}],"金+土":["鋒岩共鳴",{}],"木+水":["榮共鳴",{hpMult:1.1}],"木+火":["焚共鳴",{atkMult:1.1}],"木+土":["蠱共鳴",{}],"水+火":["既濟共鳴",{}],"水+土":["瘴共鳴",{hpMult:1.1}],"火+土":["熔共鳴",{}]};
+const ART_OWNER={lb3_artifact:"混沌鐘",lb3_artifact_coffin:"三世銅棺",lb3_artifact_sword:"荒天帝大羅劍胎",lb3_artifact_cauldron:"萬物母氣鼎",lb3_artifact_jar:"吞天魔罐",lb3_artifact_wushi:"無始鐘"};
+const STAT_LABEL={str:"力量",int:"悟性",con:"體質",spr:"靈力",agi:"敏捷"};
+
+async function decodeSave(code){
+  const t=(code||"").trim(),bytes=s=>Uint8Array.from(atob(s.replace(/\s+/g,"")),c=>c.charCodeAt(0));
+  if(t.startsWith("FS2:")){
+    if(typeof DecompressionStream!=="function")throw new Error("這個瀏覽器版本太舊，無法解開存檔代碼，請更新瀏覽器後再試");
+    const buf=await new Response(new Blob([bytes(t.slice(4))]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
+    return JSON.parse(new TextDecoder().decode(buf));
+  }
+  if(t.startsWith("{"))return JSON.parse(t);
+  if(t.startsWith("%7B"))return JSON.parse(decodeURIComponent(t));
+  return JSON.parse(new TextDecoder().decode(bytes(t)));
+}
+const gdef=eq=>{if(!eq||!eq.gearId)return null;const i=eq.gearId.lastIndexOf("-"),slot=eq.gearId.slice(0,i),r=(GCX[slot]||[])[+eq.gearId.slice(i+1)-1];return r?{slot,name:r[0],tpl:r[1],fx:r[2],set:r[3]}:null};
+function analyze(p){
+  const eqs=p.equipment||{},r=p.realmIndex||0,s=p.stage||1,lv=p.level||1,weak=p.weakened?0.7:1;
+  const enh=eq=>1+(eq.enhance||0)*0.025;
+  // 本命五行與五行共鳴
+  const cnt={};WX.forEach(e=>cnt[e]=0);let elem=null;const ec={};
+  SLOTS.forEach(k=>{const eq=eqs[k];if(!eq||cnt[eq.element]===undefined)return;cnt[eq.element]++;ec[eq.element]=(ec[eq.element]||0)+1});
+  SLOTS.forEach(k=>{const eq=eqs[k];if(eq&&ec[eq.element]&&(elem===null||ec[eq.element]>ec[elem]))elem=eq.element});
+  const sets=Math.min(...WX.map(e=>cnt[e])),rest={};WX.forEach(e=>rest[e]=cnt[e]-sets);
+  const res=[];WX.filter(e=>cnt[e]>=5).forEach(e=>res.push(RES_SINGLE[e]));
+  let sp=null;
+  if(sets>=3)sp=["五行聖共鳴",{atkMult:1.3}];
+  else if(sets>=2){const pe=WX.find(e=>rest[e]>=6);if(pe)sp=[RES_PURE[pe],{}]}
+  if(!sp&&sets>=1){const pair=WX.filter(e=>rest[e]>=5);if(pair.length>=2){const k=pair[0]+"+"+pair[1];sp=k==="金+水"?[rest["水"]>rest["金"]?"雷共鳴":"毒共鳴",{}]:RES_DUAL[k]||null}}
+  if(sp)res.push(sp);
+  const rm={atkMult:1,hpMult:1,conMult:1,skillMult:1};res.forEach(x=>{for(const k in x[1])rm[k]*=x[1][k]});
+  // 職業、宗門
+  const prof=PROF[p.profession]||null;let rank=0;
+  if(prof){rank=1;RANK_EXP.forEach((n,i)=>{if(((p.proficiency||{})[p.profession]||0)>=n)rank=i+1})}
+  const sectName=p.sect&&p.sect.name,sect=SECTS[sectName]||null,legacy=prof&&sect&&sect[1]===prof[1]?LEGACY[sect[0]]:0;
+  // 資質
+  const apt=p.aptitude||null,rootDef=apt&&apt.root?(ROOT[apt.root.id]||[(apt.root.elems||[]).join("")+(ROOT_GROUP[apt.root.group]||""),{}]):null;
+  const phyDef=apt&&PHYS[apt.physique]||null,phySp=phyDef&&phyDef[2]||{};
+  // 各來源的 % 加成
+  const src=[],add=(label,b)=>{if(b&&Object.keys(b).length)src.push([label,b])};
+  const subs={};SLOTS.concat("神器").forEach(k=>{const eq=eqs[k];if(eq&&Array.isArray(eq.subs))eq.subs.forEach(([kk,v])=>subs[kk]=(subs[kk]||0)+v)});add("裝備詞條",subs);
+  const setCnt={};SLOTS.forEach(k=>{const eq=eqs[k],d=gdef(eq);if(d&&d.set&&["紫色","橙色","白金"].includes(eq.quality))setCnt[d.set]=(setCnt[d.set]||0)+1});
+  const setList=[];for(const n in setCnt){setList.push(`${n}套 ${setCnt[n]} 件`);const b={};(SET_BONUS[SET_THEME[n]]||[]).forEach(([pc,bb])=>{if(setCnt[n]>=pc)Object.assign(b,bb)});add(n+"套裝",b)}
+  const tb={};(p.titles||[]).forEach(id=>{const b=TITLE[id];if(b)for(const k in b)tb[k]=(tb[k]||0)+b[k]});add("稱號",tb);
+  if(prof){const b={};for(const k in prof[2])b[k]=prof[2][k]*rank;add(prof[0]+"被動",b)}
+  const fb={};for(const id in (p.fireCollection||{})){const b=FIRE[id];if(b&&p.fireCollection[id]>0)for(const k in b)fb[k]=(fb[k]||0)+b[k]}add("異火收錄",fb);
+  const team=(p.partnerTeam||[]).filter(id=>PARTNER[id]&&(p.partners||[]).includes(id));
+  team.forEach(id=>{const m=(((p.partnerBond||{})[id]||{}).pts||0)>=1500?1.2:1,b={};for(const k in PARTNER[id][1])b[k]=PARTNER[id][1][k]*m;add("夥伴"+PARTNER[id][0],b)});
+  if(rootDef)add(rootDef[0],rootDef[1]);
+  if(phyDef){const b=Object.assign({},phyDef[1]);if(phySp.weapon&&eqs[phySp.weapon])b["fx:法爆"]=(b["fx:法爆"]||0)+.1;if(phySp.elem&&elem===phySp.elem)b.atkPct=(b.atkPct||0)+.08;add(phyDef[0],b)}
+  let g=p.goldenCore;if(!g)g={core:r>2?1:null,infant:r>3?4:null};
+  {const b={};if(g.core!=null&&CORE[g.core]&&CORE[g.core][1]){b.hpPct=CORE[g.core][1];b.mpPct=CORE[g.core][1]}add(g.core!=null&&CORE[g.core]?CORE[g.core][0]:"金丹",b);
+   if(g.infant!=null&&INFANT[g.infant]&&INFANT[g.infant][1])add(INFANT[g.infant][0],{magPct:INFANT[g.infant][1]})}
+  const tot=k=>src.reduce((a,[,b])=>a+(b[k]||0),0),from=k=>src.filter(([,b])=>b[k]).map(([l,b])=>[l,b[k]]);
+  // 屬性點
+  const base=5+(r*10+s-1)+5*r,stats={};
+  ["str","int","con","spr","agi"].forEach(k=>{
+    const pill=Math.min(200,(p.pillUsed||{})[k]||0)*.1,study=Math.min(200,(p.studyCounts||{})[k]||0)*.1;let gear=0,sock=0;
+    SLOTS.concat("神器").forEach(sl=>{const eq=eqs[sl];if(!eq)return;const d=gdef(eq);
+      if(d){const t=TPL[d.tpl]||TPL["均衡"];gear+=(t[k]||0)*.5*(QM[eq.quality]||1)*enh(eq)*(ACCS.includes(d.slot)?1.25:1)}
+      else if(LB[eq.lingbaoId]){const it=LB[eq.lingbaoId],sum=Object.values(it.s).reduce((a,b)=>a+b,0);gear+=(it.a?10:LB_BUDGET[it.t])*enh(eq)*(it.s[k]||0)/sum}
+      if(k!=="agi"&&Array.isArray(eq.sockets))eq.sockets.forEach(x=>{if(x&&x.type===k)sock+=({1:.1,2:.3,3:.6})[x.grade]||0})});
+    const pct=tot(k+"Pct")+tot("statPct");
+    stats[k]={base,pill,study,gear,sock,pct,pctFrom:from(k+"Pct").concat(from("statPct")),total:(base+pill+study+gear+sock)*(1+pct)}});
+  // 武器攻擊
+  let wp=null;
+  WEAPONS.forEach(sl=>{const eq=eqs[sl];if(!eq)return;let L=Math.max(0,ELV.indexOf(eq.level||10))/9*10;if(BPL[eq.level])L=BPL[eq.level];
+    const lb=!eq.level&&LB[eq.lingbaoId];if(lb)L=LB_WL[lb.t]||0;
+    const pm=1+(phySp.weapon===sl?.15:0)+(prof&&prof[1]===sl?PROF_WB[rank-1]+legacy:0),atk=5*Math.pow(1.05,L)*(QM[eq.quality]||1)*enh(eq)*pm,d=gdef(eq);
+    if(!wp||atk>wp.atk)wp={atk,slot:sl,name:(d?d.name:lb?lb.n:sl),quality:eq.quality,level:eq.level||0,enhance:eq.enhance||0,pm}});
+  // 增益
+  const beasts=(p.beasts||[]).filter(b=>b.alive&&b.active!==false).map(b=>b.id);
+  const buff=kind=>{const list=[];
+    if(kind==="hp")list.push(...from("hpPct"));else list.push(...from("atkPct"),...from(kind+"Pct"));
+    if(kind==="hp"){const v=(rm.hpMult-1)+(rm.conMult-1);if(v)list.push(["五行共鳴",v])}
+    else if(rm.atkMult!==1)list.push(["五行共鳴",rm.atkMult-1]);
+    if(p.sect&&p.sect.powerMult&&p.sect.powerMult!==1)list.push([sectName||"宗門",(p.sect.powerMult-1)*.2]);
+    if(beasts.includes("wolf"))list.push(["靈寵青蒼狼",.15]);if(beasts.includes("dragon"))list.push(["靈寵九幽蛟龍",.3]);
+    const raw=list.reduce((a,x)=>a+x[1],0);return{list,raw,v:Math.max(-.9,Math.min(2,raw))}};
+  const bp=buff("phys"),bm=buff("mag"),bh=buff("hp"),w=wp?wp.atk:0;
+  const atk=(st,b)=>Math.max(1,Math.round((w+st*.05)*(1+st*.001)*(1+b.v)*weak));
+  const phys=atk(stats.str.total,bp),mag=atk(stats.int.total,bm);
+  const reinc=(p.reincarnateBonus&&p.reincarnateBonus.nv2Hp)||0;
+  const hp=Math.max(1,Math.round((50*Math.pow(1.05,r+(s-1)/10)*(1+stats.con.total*.002)*(1+bh.v)*(1+lv*.00005)+reinc)*weak));
+  const mp=Math.max(1,Math.round(((5+stats.spr.total)*(1+tot("mpPct"))+lv*.05)*weak));
+  const agi=stats.agi.total,crit=Math.min(30,agi*.01),combo=Math.min(10,agi*.04);
+  // 技能傷害、耗靈
+  let fxBurst=0,fxMp=0;SLOTS.forEach(k=>{const eq=eqs[k],d=gdef(eq),m=eq&&({"紫色":1,"橙色":1.5,"白金":2})[eq.quality];if(!d||!m)return;if(d.fx==="法爆")fxBurst+=.05*m;if(d.fx==="聚靈")fxMp+=.08*m});
+  const burstFrom=from("fx:法爆");if(fxBurst)burstFrom.unshift(["裝備特效法爆",Math.min(.3,fxBurst)]);
+  const burst=burstFrom.reduce((a,x)=>a+x[1],0);fxMp=Math.min(.4,fxMp);
+  // 會的技能
+  const mine=[];
+  [1,2,3].forEach(t=>{const n=(p.sectSkills||{})[t];if(n)S.filter(x=>x[0]==="宗門技能"&&x[1]===n).forEach(x=>mine.push(x))});
+  (p.learnedSkills||[]).forEach(sk=>{mine.push(S.find(x=>x[0]==="靈寶閣武學"&&x[2]===sk.name)||["靈寶閣武學","",sk.name,sk.type==="buff"?"s":sk.dmgType==="mag"?"m":"p",sk.type==="aoe"?"全體":sk.type==="buff"?"自身":"單體",sk.type==="buff"?null:sk.mult,sk.mpCost,null,sk.type==="buff"?`攻擊力 ×${sk.mult}，持續 ${sk.duration} 回合`:""])});
+  if(prof)S.filter(x=>x[0]==="職業技能"&&x[1].startsWith(prof[0])&&rank>=parseInt(x[1].replace(/\D+/g,""))).forEach(x=>mine.push(x));
+  const art=eqs["神器"]&&ART_OWNER[eqs["神器"].lingbaoId];if(art)S.filter(x=>x[0]==="神器技能"&&x[1]===art).forEach(x=>mine.push(x));
+  team.forEach(id=>S.filter(x=>x[0]==="夥伴絕學"&&x[1]===PARTNER[id][0]).forEach(x=>mine.push(x)));
+  return{p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
+    power:Math.round(Math.max(phys,mag)*(1+crit/100*.5)*(1+combo/100)*1.8)};
+}
+function showSave(a){
+  const d2=v=>+v.toFixed(2),pc=v=>(v>=0?"+":"")+ +(v*100).toFixed(2)+"%",cb=v=>full(Math.round(v*100)),p=a.p;
+  const srcTxt=l=>l.length?l.map(([n,v])=>`${esc(n)} ${pc(v)}`).join("、"):"無";
+  const who=[["道號",esc(p.name||"—")],["境界",`${REALMS[a.r]||"?"} ${a.s} 階`],["人物等級","Lv."+full(a.lv)],["宗門",esc(a.sectName||"無")],
+    ["職業",a.prof?`${a.prof[0]} ${a.rank} 階${a.legacy?"（宗門傳承）":""}`:"未選"],["先天靈根",a.rootDef?esc(a.rootDef[0]):"未測"],["先天體質",a.phyDef?a.phyDef[0]:"未測"],
+    ["金丹／元嬰",[a.g.core!=null&&CORE[a.g.core]?CORE[a.g.core][0]:"",a.g.infant!=null&&INFANT[a.g.infant]?INFANT[a.g.infant][0]:""].filter(Boolean).join("、")||"尚未凝結"],
+    ["本命五行",a.elem||"無"],["五行共鳴",a.res.length?a.res.map(x=>x[0]).join("、"):"無"],["套裝",a.setList.join("、")||"無"],
+    ["出戰夥伴",a.team.map(id=>PARTNER[id][0]).join("、")||"無"]];
+  const sk=["str","int","con","spr","agi"].map(k=>{const x=a.stats[k];return `<tr><td class="nw"><b>${STAT_LABEL[k]}</b></td><td class="num">${x.base}</td><td class="num">${d2(x.pill)}</td><td class="num">${d2(x.study)}</td><td class="num">${d2(x.gear)}</td><td class="num">${d2(x.sock)}</td>
+    <td class="num">${x.pct?pc(x.pct):"—"}</td><td class="num"><b>${d2(x.total)}</b></td></tr>`}).join("");
+  const pctNote=["str","int","con","spr","agi"].filter(k=>a.stats[k].pct).map(k=>`${STAT_LABEL[k]}：${srcTxt(a.stats[k].pctFrom)}`).join("<br>");
+  const w=a.wp,bRow=(n,b,note)=>`<tr><td class="nw"><b>${n}</b></td><td class="src">${srcTxt(b.list)}</td><td class="num"><b>${pc(b.v)}</b>${b.raw>2?`<br><span class="src">合計 ${pc(b.raw)}，超過上限</span>`:""}</td></tr>`;
+  const ws=w?w.atk:0,strT=a.stats.str.total,intT=a.stats.int.total;
+  const step=(n,st,b,out)=>`<tr><td class="nw"><b>${n}</b></td><td class="num">${cb(ws)}</td><td class="num">+${cb(st*.05)}</td><td class="num">×${d2(1+st*.001)}</td><td class="num">×${d2(1+b.v)}</td>${a.weak<1?`<td class="num">×0.7</td>`:""}<td class="num"><b>${cb(out)}</b></td></tr>`;
+  const skills=a.mine.map(x=>{const boosted=x[0]==="宗門技能"||x[0]==="靈寶閣武學";
+    const dmg=x[5]&&x[3]!=="s"?(x[3]==="m"?a.mag:a.phys)*x[5]*(boosted?(1+a.burst)*a.skillMult:1):null;
+    return `<tr><td class="nw">${x[0]}${x[1]?`<br><span class="sub">${esc(x[1])}</span>`:""}</td><td><b>${esc(x[2])}</b></td><td><span class="tag ${TYPE[x[3]][1]}">${TYPE[x[3]][0]}</span></td><td class="nw">${x[4]}</td>
+    <td class="num">${dmg?`<b>${cb(dmg)}</b>`:"—"}</td><td class="num">${x[6]?cb(Math.ceil(mpShow(x[6])/100*(1-a.fxMp))):"—"}</td><td>${esc(x[8])||"—"}</td></tr>`}).join("");
+  $("saveOut").innerHTML=`<div class="who">${who.map(([k,v])=>`<span>${k}：<b>${v}</b></span>`).join("")}</div>
+  ${a.weak<1?`<div class="sub" style="color:var(--warn)">⚠️ 目前處於渡劫失敗的「虛弱」狀態，攻擊、氣血、靈力上限 ×0.7（已算進下面的數字）。</div>`:""}
+  <h3>結果</h3>
+  <div class="res">${[["物理攻擊",cb(a.phys)],["術法攻擊",cb(a.mag)],["氣血上限",cb(a.hp)],["靈力上限",cb(a.mp)],["戰力",cb(a.power)],["暴擊率",d2(a.crit)+"%"],["連擊率",d2(a.combo)+"%"],["命中",d2(a.agi*.08)+"%"],["敏捷給的閃避",d2(a.agi*.08)+"%"],["技能傷害加成",pc((1+a.burst)*a.skillMult-1)]].map(([k,v])=>`<div>${k}<b>${v}</b></div>`).join("")}</div>
+  <h3>屬性點來源</h3>
+  <div class="tw"><table><thead><tr><th>屬性</th><th class="num">境界</th><th class="num">丹藥</th><th class="num">藏書閣</th><th class="num">裝備</th><th class="num">符寶</th><th class="num">% 加成</th><th class="num">總值</th></tr></thead><tbody>${sk}</tbody></table></div>
+  ${pctNote?`<div class="src">% 加成來源——${pctNote}</div>`:""}
+  <h3>攻擊力怎麼來的</h3>
+  <div class="src">主武器：${w?`<b>${esc(w.name)}</b>（${w.quality}${w.level?"・Lv."+w.level:""}${w.enhance?"・+"+w.enhance:""}${w.pm>1?"・職業／體質加成 ×"+d2(w.pm):""}），武器攻擊 ${cb(w.atk)}`:"沒有裝備武器，只剩屬性給的基礎攻擊"}</div>
+  <div class="tw"><table><thead><tr><th></th><th class="num">武器攻擊</th><th class="num">屬性基礎</th><th class="num">屬性 %</th><th class="num">增益</th>${a.weak<1?`<th class="num">虛弱</th>`:""}<th class="num">結果</th></tr></thead><tbody>${step("物理攻擊",strT,a.bp,a.phys)}${step("術法攻擊",intT,a.bm,a.mag)}</tbody></table></div>
+  <h3>增益明細（全部相加，上限 +200%）</h3>
+  <div class="tw"><table><thead><tr><th>項目</th><th>來源</th><th class="num">合計</th></tr></thead><tbody>${bRow("物理攻擊",a.bp)}${bRow("術法攻擊",a.bm)}${bRow("氣血上限",a.bh)}
+  <tr><td class="nw"><b>技能傷害</b></td><td class="src">${srcTxt(a.burstFrom)}${a.skillMult!==1?`；五行共鳴 ×${d2(a.skillMult)}`:""}</td><td class="num"><b>${pc((1+a.burst)*a.skillMult-1)}</b></td></tr></tbody></table></div>
+  ${a.reinc?`<div class="src">氣血上限另含轉世保留的 ${cb(a.reinc)}。</div>`:""}
+  <h3>你會的技能（共 ${a.mine.length} 招）</h3>
+  ${a.mine.length?`<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th>範圍</th><th class="num">每次傷害</th><th class="num">耗靈</th><th>附帶效果</th></tr></thead><tbody>${skills}</tbody></table></div>
+  <div class="src">每次傷害是打在一個目標上、還沒算敵人減傷與 ±10% 浮動的數字；宗門技能與靈寶閣武學已含技能傷害加成。暴擊、金重擊、雷擊、五行相剋另外再乘。</div>`:`<div class="sub">還沒有學會任何技能。</div>`}
+  <div class="src" style="margin-top:8px">沒有算進去的：禁術或靈寵技能的暫時增益、種族剋制、藏書閣屬性秘典、靈寵給的暴擊與命中。這些只在戰鬥當下生效。</div>`;
+}
+$("saveLoad").onclick=async()=>{
+  const m=$("saveMsg");m.className="";m.textContent="讀取中…";
+  try{
+    const p=await decodeSave($("saveCode").value);
+    if(!p||typeof p!=="object"||typeof p.realmIndex!=="number")throw new Error("這不是遊戲的存檔代碼");
+    showSave(analyze(p));m.textContent="讀取完成";
+  }catch(e){$("saveOut").innerHTML="";m.className="err";m.textContent="讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"代碼不完整或格式不對，請重新複製整段代碼")}
+};
+// 網址帶 #save=存檔代碼 時自動讀取（從遊戲直接開過來用），讀完就把代碼從網址列拿掉
+function readHash(){
+  const m=location.hash.match(/^#save=(.+)$/);if(!m)return;
+  try{$("saveCode").value=decodeURIComponent(m[1])}catch(e){return}
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  $("saveLoad").click();$("saveBox").scrollIntoView();
+}
+addEventListener("hashchange",readHash);
+$("saveClear").onclick=()=>{$("saveCode").value="";$("saveOut").innerHTML="";$("saveMsg").className="";$("saveMsg").textContent=""};
+
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
   ["stat","rule","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
+readHash();
 </script></body></html>
