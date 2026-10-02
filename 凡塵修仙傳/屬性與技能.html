@@ -303,13 +303,14 @@ a:hover{text-decoration-thickness:2px}
 <div class="empty" id="skEmpty" hidden>找不到符合的技能</div>
 
 <h2>仙法（武學密典）</h2>
-<div class="sub"><b>下品仙法</b>可以用「下品武學秘典碎片」合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的下品仙法；碎片來自奇遇與機緣。<b>中品、上品、絕學目前還沒有取得方式</b>。主動仙法要放進技能格才會施放（Lv.1 有 1 格，每 100 級多 1 格），放進去後和宗門技能一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招。</div>
+<div class="sub"><b>下品仙法</b>可以用「下品武學秘典碎片」合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的下品仙法；碎片來自奇遇與機緣。<b>中品、上品、絕學目前還沒有取得方式</b>。主動仙法要放進技能格才會施放（Lv.1 有 1 格，每 100 級多 1 格），放進去後和宗門技能一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招；含絕學的完整清單、碎片來源與光環合計見<a href="仙法一覽.html">仙法一覽</a>。</div>
 <div class="tw"><table><thead><tr><th>屬性</th><th>正邪</th><th>類型</th><th>攻擊招附帶</th><th>光環（下品／中品／上品）</th></tr></thead><tbody id="spBody"></tbody></table></div>
 <div class="sub" style="margin-top:6px">邪道魔功傷害 ×1.25，但每次施放會反噬自己的氣血（下品 3%、中品 5%、上品 8%、絕學 12%，不會因此死亡）。無屬性的法則絕學一律算術法。</div>
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
 </div>
 </div>
 <script src="profile.js"></script>
+<script src="site.js"></script>
 <script>
 const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

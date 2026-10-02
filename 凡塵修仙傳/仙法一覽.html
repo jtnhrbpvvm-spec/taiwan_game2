@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>仙法一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--acct:#6d28d9;--link:#6d28d9;--warn:#b91c1c;--ok:#15803d;--phys:#b45309;--g0:#6b7280;--g1:#0369a1;--g2:#7e22ce;--g3:#a16207}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--acct:#c4b5fd;--link:#c4b5fd;--warn:#fca5a5;--ok:#4ade80;--phys:#fbbf24;--g0:#9ca3af;--g1:#38bdf8;--g2:#c084fc;--g3:#fde68a}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+a{color:var(--link);text-underline-offset:2px}
+.wrap{max-width:1150px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:26px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul{margin:4px 0;padding-left:20px}
+.me{border-color:var(--acc)}
+.ctl input{box-sizing:border-box;width:100%;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);cursor:pointer}
+.chips button.on{border-color:var(--acc);background:var(--acc);color:#111;font-weight:bold}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:9px;border:1px solid currentColor;white-space:nowrap;font-weight:bold}
+.t-p{color:var(--phys)}.t-m{color:var(--acct)}.t-s{color:var(--ok)}
+.g-low{color:var(--g0)}.g-mid{color:var(--g1)}.g-high{color:var(--g2)}.g-ultimate{color:var(--g3)}
+.evil{color:var(--warn)}
+.got{color:var(--ok);font-size:12.5px;font-weight:bold;white-space:nowrap}
+tr.mine td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.empty{color:var(--mute);padding:20px;text-align:center}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>📜 仙法一覽</h1>
+<div class="sub">武學密典收錄的 200 招仙法：10 種屬性各有下品、中品、上品 6 招，另有 20 招絕學。仙法不分宗門，任何人都能學。</div>
+
+<div class="box" id="me" hidden></div>
+
+<div class="box">
+<ul>
+<li><b>怎麼學</b>：目前只有<b>下品仙法</b>學得到，用下品武學秘典碎片集滿 100 片，在武學密典按「合成」，會隨機學會一招還沒學過的下品仙法（60 招全學會後就不能再合成）。<b>中品、上品、絕學目前還沒有取得方式</b>，密典裡可以先看效果。</li>
+<li><b>技能格</b>：主動仙法要放進技能格才會施放。Lv.1 有 1 格，每 100 級多 1 格（Lv.100 兩格、Lv.200 三格…）。轉世後等級歸零，超出格數的仙法暫時不生效，等級回來就恢復。</li>
+<li><b>施放方式</b>：每回合有 40% 會放技能，從宗門技能、靈寶閣武學和技能格裡的仙法中隨機挑一招；靈力不夠就改成普通攻擊。補血招不會看你血量，滿血也可能放出來。</li>
+<li><b>光環</b>是被動，學會就永久生效、不佔技能格，學幾本就疊幾本。</li>
+<li><b>邪道魔功</b>（冰、毒、血、冥）的傷害是正道的 1.25 倍，但每次施放會反噬自己的氣血（依氣血上限的比例，不會因此死亡）。補助、補血、光環的數值和正道相同。</li>
+<li><b>物理還是術法</b>：金、土、血屬性的攻擊招吃物理攻擊，其他屬性和無屬性的法則絕學吃術法攻擊。仙法吃得到「技能傷害 +X%」的加成。</li>
+</ul>
+</div>
+
+<h2>全部仙法</h2>
+<div class="ctl"><input id="q" placeholder="搜尋仙法名稱或效果，例如：火球術、定身、吸取、補血…"></div>
+<div class="chips" id="fGrade"></div>
+<div class="chips" id="fAttr"></div>
+<div class="chips" id="fRole"></div>
+<div class="sub" id="cnt"></div>
+<div class="tw"><table><thead><tr><th>仙法</th><th>品階</th><th>屬性</th><th>類型</th><th>吃哪種攻擊</th><th>效果</th><th class="num">耗靈</th></tr></thead><tbody id="spBody"></tbody></table></div>
+<div class="empty" id="spEmpty" hidden>找不到符合的仙法</div>
+
+<h2>各品階的數值</h2>
+<div class="sub">同一品階、同一類型的招式數值都一樣，差別只在屬性帶來的附加效果。威力是對應攻擊力的倍率；邪道魔功的單體、群體、牽制威力再乘 1.25。</div>
+<div class="tw"><table><thead><tr><th>品階</th><th class="num">單體</th><th class="num">群體（每個敵人）</th><th class="num">牽制</th><th class="num">定身機率</th><th class="num">增益</th><th class="num">守護</th><th class="num">持續</th><th class="num">補血</th><th class="num">屬性效果機率</th><th class="num">耗靈</th><th class="num">魔功反噬</th></tr></thead><tbody id="gradeBody"></tbody></table></div>
+<div class="sub" style="margin-top:6px">下品的牽制招只打單一敵人，中品以上打全部敵人。定身＝目標 1 回合無法行動。增益是物理攻擊、術法攻擊一起乘；守護是你受到的傷害減少。</div>
+
+<h2>十種屬性</h2>
+<div class="tw"><table><thead><tr><th>屬性</th><th>正邪</th><th>吃哪種攻擊</th><th>攻擊招附帶</th><th>補助招</th><th>光環（下品／中品／上品）</th></tr></thead><tbody id="attrBody"></tbody></table></div>
+
+<h2>附帶效果是什麼</h2>
+<div class="tw"><table><thead><tr><th>效果</th><th>作用</th><th>哪些屬性會帶</th></tr></thead><tbody>
+<tr><td class="nw"><b>金重擊</b></td><td>這一擊傷害變 2 倍</td><td>金</td></tr>
+<tr><td class="nw"><b>燒傷</b></td><td>目標每回合扣血，每層＝你的攻擊力 × 15%，最多疊 3 層，持續 3 回合（再次命中會重新計時）</td><td>火</td></tr>
+<tr><td class="nw"><b>凍結</b></td><td>目標 1 回合無法行動</td><td>水、冰</td></tr>
+<tr><td class="nw"><b>中毒</b></td><td>目標每回合扣血，每層＝你的攻擊力 × 8%，最多疊 5 層，持續 3 回合</td><td>毒、冥</td></tr>
+<tr><td class="nw"><b>雷擊</b></td><td>這一擊傷害 ×1.3，而且無視目標的減傷</td><td>雷</td></tr>
+<tr><td class="nw"><b>吸取傷害</b></td><td>依這招造成的傷害回復自己的氣血</td><td>木（10%）、血（25%）</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">攻擊招的屬性效果機率不會和你裝備、靈根的同屬性機率相加，而是兩邊取比較高的那個；招式自帶的機率不受「屬性機率最多 50%」的限制。光環給的屬性機率、減傷、閃避則是和裝備、靈根加在一起再套上限（屬性機率 50%、減傷 60%、閃避 40%）。</div>
+
+<h2>光環學滿能加多少</h2>
+<div class="sub">光環全部疊加。血屬性光環會扣氣血上限，學之前先看一下划不划算。</div>
+<div class="tw"><table><thead><tr><th>範圍</th><th>合計加成</th></tr></thead><tbody id="auraBody"></tbody></table></div>
+
+<h2>秘典碎片哪裡拿</h2>
+<div class="sub">所有奇遇都會給下品武學秘典碎片，玩法與訣竅見<a href="奇遇一覽.html">奇遇一覽</a>。</div>
+<div class="tw"><table><thead><tr><th>奇遇</th><th>碎片數量</th></tr></thead><tbody>
+<tr><td class="nw"><b>虛天殿</b></td><td>每闖過一層 2 片（中途失敗也保留）；通關再加 15 片</td></tr>
+<tr><td class="nw"><b>血色禁地</b></td><td>獲勝 12 片；撤退 3 片</td></tr>
+<tr><td class="nw"><b>三界戰場</b></td><td>海選每勝一場 2 片；依最後名次再給：百強 8、64 強 10、32 強 12、16 強 16、8 強 20、4 強 30、亞軍 40、冠軍 60</td></tr>
+<tr><td class="nw"><b>強者現身</b></td><td>虛心請教 5 片；斗膽切磋贏了 10 片、輸了沒有；奉上靈石護法 8 片</td></tr>
+<tr><td class="nw"><b>靈獸競速</b></td><td>第一名 20、第二名 10、第三名 6、其他名次 2</td></tr>
+<tr><td class="nw"><b>古洞尋寶</b></td><td>每挖到一份秘典殘頁 8 片；每挖到一件古修遺寶 15 片</td></tr>
+<tr><td class="nw"><b>丹爐試火</b></td><td>極品 20、上品 12、中品 6、廢丹 2</td></tr>
+<tr><td class="nw"><b>機緣任務</b></td><td>每完成一個 25 片</td></tr>
+</tbody></table></div>
+
+<h2>學仙法會影響陣營</h2>
+<div class="box">
+你是正派還是邪派，是把拜入的宗門和學會的仙法加起來算：<b>每個宗門算 5 分、每招仙法算 1 分</b>，各自記在正道或邪道那一邊，邪道分數<b>高於</b>正道才算邪派（同分算正派）。下品魔功是合成時隨機學到的，學多了可能讓陣營翻過去，進而改變懸賞榜出現的對象和功德來源，細節見<a href="懸賞與善惡.html">懸賞與善惡</a>。
+</div>
+</div>
+<script src="profile.js"></script>
+<script src="site.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct=v=>Math.round(v*100)+"%";
+const mpShow=b=>(Math.max(1,Math.ceil(b*0.1-1e-9))*100).toLocaleString("zh-TW");
+// 品階：名稱、單體、群體、牽制、定身、增益、守護、持續、補血、屬性效果、耗靈、反噬
+const GRADE={low:["下品",1.6,1.1,.8,.4,1.15,.15,3,.12,.15,60,.03],mid:["中品",2.4,1.7,1.2,.6,1.25,.25,3,.2,.25,150,.05],high:["上品",3.4,2.5,1.6,.8,1.4,.35,4,.3,.35,300,.08],ultimate:["絕學",5,3.8,2,1,1.8,.5,5,.5,.5,600,.12]};
+const GK=["low","mid","high"];
+const FX={metal:"金重擊",fire:"燒傷",ice:"凍結",poison:"中毒",thunder:"雷擊"};
+const AURA_LABEL={physPct:"物理攻擊",magPct:"術法攻擊",hpPct:"氣血上限",mpPct:"靈力上限",def:"減傷",eva:"閃避",fire:"燒傷機率",ice:"冰凍機率",poison:"中毒機率",metal:"金重擊機率",thunder:"雷擊機率"};
+const ROLE={atk:"⚔️ 攻擊",control:"⛓️ 牽制",support:"🛡️ 補助",heal:"💚 補血",aura:"🌟 光環"};
+const KINDS=["single","aoe","control",null,"heal","aura"];
+// 屬性：代號、名稱、是否邪道、物理 p／術法 m、附帶效果、吸取比例、補助類型、光環三品、招式名稱（下｜中｜上，各 6 招：單體 群體 牽制 補助 補血 光環）
+const ATTR=[
+["metal","金",0,"p","metal",0,"buff",[{physPct:.05},{physPct:.1},{physPct:.15}],"庚金指 金芒散 鎖金索 銳金訣 金身回元術 金剛心經|太白劍訣 萬刃金雨 金光定身法 破軍戰意訣 金蟬蛻生術 不壞金身經|誅仙劍氣 太乙金光劍陣 困仙金繩 庚辛殺伐真意 金烏回生法 太白庚金道典"],
+["wood","木",0,"m",null,.1,"buff",[{hpPct:.06},{hpPct:.12},{hpPct:.18}],"青藤刺 飛葉術 纏木術 春風化雨訣 枯木逢春術 長青心經|乙木神針 萬木森羅 青藤縛仙陣 生生不息訣 回春妙法 青帝長生經|建木天矛 萬古青林劫 扶桑鎖天藤 青帝造化訣 蟠桃續命術 建木通天道典"],
+["water","水",0,"m","ice",0,"shield",[{mpPct:.08},{mpPct:.16},{mpPct:.25}],"水箭術 水龍捲 寒潭困 若水護體訣 甘霖術 若水心經|玄水神槍 滄海怒濤 弱水牢籠 上善若水訣 天一聖水術 玄水真經|天河倒懸 四海歸墟 三千弱水困仙陣 北冥鯤鵬護身法 瑤池聖露 滄溟道典"],
+["fire","火",0,"m","fire",0,"buff",[{fire:4},{fire:8},{fire:12}],"火球術 火雨術 焚身縛 炎陽訣 丹火療傷術 離火心經|赤帝火龍拳 火海燎原 九龍神火罩 朱雀真意訣 浴火回春術 離火真經|太陽真火印 焚天煮海 八卦爐封天 朱雀天炎道 涅槃重生法 南明離火道典"],
+["earth","土",0,"p",null,0,"shield",[{def:2},{def:4},{def:6}],"飛石術 地刺術 流沙陷 厚土訣 土靈養身術 后土心經|撼山拳 地裂崩山 泥沼困龍陣 不動如山訣 戊己回元術 坤元真經|五嶽鎮天印 大地崩滅 息壤鎖仙 后土載物真意 息壤造化術 后土皇地祇道典"],
+["thunder","雷",0,"m","thunder",0,"buff",[{thunder:4},{thunder:8},{thunder:12}],"掌心雷 雷網術 麻痺雷咒 雷動訣 雷澤養氣術 雷音心經|五雷正法 九霄雷暴 雷獄困鎖 雷神附體訣 雷霆淬體術 九天應元雷經|紫霄神雷 滅世雷劫 萬雷天牢 雷帝降世訣 雷劫淬生術 九霄雷祖道典"],
+["ice","冰",1,"m","ice",0,"shield",[{ice:4},{ice:8},{ice:12}],"玄陰冰刺 寒魄魔霜 冰獄咒 陰寒魔甲 寒髓回元術 玄陰魔經|冥河寒刃 萬里冰封 玄冥冰棺 太陰寒煞罩 寒蟾吐息術 太陰魔經|九幽玄冰魔指 極寒冰淵劫 冰封萬古 太陰鬼帝寒軀 寒玉魔骨術 玄冥真魔典"],
+["poison","毒",1,"m","poison",0,"buff",[{poison:4},{poison:8},{poison:12}],"蛇毒針 毒霧術 蝕骨麻散 百毒煉體訣 以毒攻毒術 萬毒魔經|腐心魔掌 瘴氣蔽日 千蛛縛魂網 五毒附體訣 蠱王續命術 五毒魔經|天蠶噬心蠱 萬毒滅世 九毒鎖魂陣 毒王降世訣 萬蠱歸元術 萬毒老祖魔典"],
+["blood","血",1,"p",null,.25,"buff",[{physPct:.08,magPct:.08,hpPct:-.03},{physPct:.15,magPct:.15,hpPct:-.05},{physPct:.22,magPct:.22,hpPct:-.08}],"血刃 血雨術 血縛咒 燃血魔功 吞血回元術 血煞魔經|化血神刀 血河倒灌 血獄囚魂 血魔狂化訣 噬血重生術 血河魔經|血神子殺 血海滔天 萬魂血牢 血神降世訣 滴血重生大法 血神魔典"],
+["nether","冥",1,"m","poison",0,"buff",[{eva:2},{eva:4},{eva:6}],"勾魂指 陰風鬼嘯 攝魂咒 鬼影附身訣 陰靈聚氣術 幽冥魔經|奪魄魔掌 百鬼夜行 鎖魂鈴咒 冥王附體訣 借屍還魂術 九幽魔經|閻羅索命 黃泉鬼域 輪迴鎖魂陣 冥帝真身訣 冥河返生術 冥帝輪迴魔典"]];
+// 絕學：代號、名稱、是否邪道、所屬屬性（空＝無屬性的法則）、類型、牽制是否打全體、光環
+const ULT=[
+["law-sword","太初劍道",0,"metal","single"],["law-life","萬物生長法則",0,"wood","heal"],["law-sea","滄海歸一大道",0,"water","aoe"],["law-sun","大日燭照法則",0,"fire","aoe"],
+["law-earth","大地承載法則",0,"earth","shield"],["law-thunder","天罰雷道",0,"thunder","aoe"],["law-time","時間法則・光陰逆轉",0,"","control",1],["law-space","空間法則・虛空封禁",0,"","control",0],
+["law-karma","因果法則",0,"","aura",0,{physPct:.2,magPct:.2}],["law-dao","大道衍天",0,"","aura",0,{hpPct:.15,mpPct:.15,def:5,eva:3}],
+["taboo-devour","天魔噬天禁法",1,"blood","single"],["taboo-sacrifice","血祭萬靈",1,"blood","aoe"],["taboo-banner","萬魂幡・百萬陰魂",1,"nether","aoe"],["taboo-slay","斬仙禁術",1,"metal","single"],
+["taboo-plague","毒絕天下",1,"poison","aoe"],["taboo-silence","冰封天地・永寂",1,"ice","control",1],["taboo-burnsoul","燃魂秘法",1,"","buff"],["taboo-undying","不死魔軀",1,"","shield"],
+["taboo-demongod","魔神降臨",1,"","aura",0,{physPct:.35,magPct:.35,hpPct:-.1}],["taboo-swallow","吞天魔功",1,"","aura",0,{hpPct:.3,def:4,eva:-2}]];
+
+const auraText=a=>Object.keys(AURA_LABEL).filter(k=>a[k]).map(k=>`${AURA_LABEL[k]} ${a[k]>0?"+":"−"}${/Pct$/.test(k)?pct(Math.abs(a[k])):Math.abs(a[k])+"%"}`).join("、");
+const SPELLS=[];
+function make(id,name,gk,attr,evil,kind,ctrlAoe,aura){
+  const g=GRADE[gk],pw=evil?1.25:1,dt=attr?attr[3]:"m",atkName=dt==="p"?"物理攻擊":"術法攻擊";
+  const role=kind==="single"||kind==="aoe"?"atk":kind==="buff"||kind==="shield"?"support":kind;
+  const parts=[];let type="s";
+  if(kind==="single"||kind==="aoe"){type=dt;
+    parts.push(`${kind==="aoe"?"對全部敵人各":"對單一敵人"}造成${atkName} × ${+(g[kind==="aoe"?2:1]*pw).toFixed(2)} 的傷害`);
+    if(attr&&attr[4])parts.push(`${pct(g[9])} 機率${FX[attr[4]]}`);
+    if(attr&&attr[5])parts.push(`吸取傷害的 ${pct(attr[5])} 回復氣血`);
+  }else if(kind==="control"){type=dt;
+    parts.push(`${ctrlAoe?"對全部敵人各":"對單一敵人"}造成${atkName} × ${+(g[3]*pw).toFixed(2)} 的傷害，${g[4]>=1?"必定":pct(g[4])+" 機率"}定身 1 回合`);
+  }else if(kind==="buff")parts.push(`物理攻擊、術法攻擊 ×${g[5]}，持續 ${g[7]} 回合`);
+  else if(kind==="shield")parts.push(`受到的傷害 −${pct(g[6])}，持續 ${g[7]} 回合`);
+  else if(kind==="heal")parts.push(`立即回復氣血上限的 ${pct(g[8])}`);
+  else parts.push("被動："+auraText(aura));
+  if(kind!=="aura"&&evil)parts.push(`反噬自己 ${pct(g[11])} 氣血`);
+  SPELLS.push({id,name,gk,grade:g[0],attr:attr?attr[0]:"law",attrName:attr?attr[1]:"法則",evil,role,type,desc:parts.join("；"),mp:kind==="aura"?null:g[10],aura:kind==="aura"?aura:null,
+    kindName:evil?(gk==="ultimate"?"禁忌法":"邪道魔功"):(gk==="ultimate"?"法則大道":"正道仙法")});
+}
+ATTR.forEach(a=>a[8].split("|").forEach((line,gi)=>line.split(" ").forEach((name,i)=>make(`${a[0]}-${GK[gi]}-${i+1}`,name,GK[gi],a,a[2],KINDS[i]||a[6],gi>0,a[7][gi]))));
+ULT.forEach(u=>make(u[0],u[1],"ultimate",ATTR.find(a=>a[0]===u[3])||null,u[2],u[4],!!u[5],u[6]));
+
+// ---- 你的進度 ----
+const P=window.PROFILE,learned=new Set(P&&Array.isArray(P.spells)?P.spells:[]);
+const slotN=P?1+Math.floor((P.level||1)/100):0,slotted=new Set(P&&Array.isArray(P.spellSlots)?P.spellSlots.slice(0,slotN).filter(id=>learned.has(id)):[]);
+if(P){
+  const low=SPELLS.filter(s=>s.gk==="low"),lowGot=low.filter(s=>learned.has(s.id)).length,good=SPELLS.filter(s=>learned.has(s.id)&&!s.evil).length,bad=learned.size?SPELLS.filter(s=>learned.has(s.id)&&s.evil).length:0;
+  const names=SPELLS.filter(s=>slotted.has(s.id)).map(s=>s.name);
+  $("me").hidden=false;$("me").classList.add("me");
+  $("me").innerHTML=`<b>你的進度</b>：已學會 <b>${good+bad}</b>／200 招（下品 ${lowGot}／60；正道 ${good} 招、邪道 ${bad} 招）。技能格 <b>${slotN}</b> 格，${names.length?"目前放了："+names.map(esc).join("、"):"目前沒有放仙法"}。秘典碎片 <b>${Number(P.spellShards||0).toLocaleString("zh-TW")}</b>／100。表格中已學會的招式會標出來。`;
+}
+
+// ---- 全部仙法 ----
+const TYPE={p:["物理","t-p"],m:["術法","t-m"],s:["輔助","t-s"]};
+const flt={grade:"all",attr:"all",role:"all"};
+function chips(box,key,opts){
+  $(box).innerHTML=opts.map(([v,l])=>`<button data-v="${v}" class="${flt[key]===v?"on":""}">${l}</button>`).join("");
+  $(box).querySelectorAll("button").forEach(b=>b.onclick=()=>{flt[key]=b.dataset.v;chips(box,key,opts);render()});
+}
+function render(){
+  const q=$("q").value.trim();
+  const list=SPELLS.filter(s=>(flt.grade==="all"||s.gk===flt.grade)
+    &&(flt.attr==="all"||(flt.attr==="good"?!s.evil:flt.attr==="evil"?s.evil:s.attr===flt.attr))
+    &&(flt.role==="all"||(flt.role==="mine"?learned.has(s.id):s.role===flt.role))
+    &&(!q||(s.name+s.grade+s.attrName+s.kindName+ROLE[s.role]+s.desc).includes(q)));
+  $("cnt").textContent=`顯示 ${list.length} 招`+(P?`，其中已學會 ${list.filter(s=>learned.has(s.id)).length} 招`:"");
+  $("spBody").innerHTML=list.map(s=>`<tr class="${learned.has(s.id)?"mine":""}"><td class="nw"><b>${esc(s.name)}</b>${learned.has(s.id)?`<br><span class="got">✓ 已學會${slotted.has(s.id)?"・已放技能格":""}</span>`:""}</td>
+    <td class="nw"><b class="g-${s.gk}">${s.grade}</b></td><td class="nw">${s.attrName}<br><span class="sub${s.evil?" evil":""}">${s.kindName}</span></td>
+    <td class="nw">${ROLE[s.role]}</td><td><span class="tag ${TYPE[s.type][1]}">${TYPE[s.type][0]}</span></td><td>${esc(s.desc)}</td><td class="num">${s.mp?mpShow(s.mp):"—"}</td></tr>`).join("");
+  $("spEmpty").hidden=list.length>0;
+}
+chips("fGrade","grade",[["all","全部品階"],["low","下品（學得到）"],["mid","中品"],["high","上品"],["ultimate","絕學"]]);
+chips("fAttr","attr",[["all","全部屬性"],["good","正道"],["evil","邪道"],...ATTR.map(a=>[a[0],a[1]]),["law","法則"]]);
+chips("fRole","role",[["all","全部類型"],...Object.keys(ROLE).map(k=>[k,ROLE[k]])].concat(P?[["mine","✓ 只看已學會"]]:[]));
+$("q").oninput=render;render();
+
+// ---- 各品階 ----
+$("gradeBody").innerHTML=Object.keys(GRADE).map(k=>{const g=GRADE[k];return `<tr><td class="nw"><b class="g-${k}">${g[0]}</b></td><td class="num">${pct(g[1])}</td><td class="num">${pct(g[2])}</td><td class="num">${pct(g[3])}</td><td class="num">${pct(g[4])}</td>
+  <td class="num">×${g[5]}</td><td class="num">−${pct(g[6])}</td><td class="num">${g[7]} 回合</td><td class="num">${pct(g[8])}</td><td class="num">${pct(g[9])}</td><td class="num">${mpShow(g[10])}</td><td class="num">${pct(g[11])}</td></tr>`}).join("");
+
+// ---- 十種屬性 ----
+$("attrBody").innerHTML=ATTR.map(a=>`<tr><td class="nw"><b>${a[1]}</b></td><td class="nw${a[2]?" evil":""}">${a[2]?"邪道魔功":"正道仙法"}</td><td><span class="tag ${TYPE[a[3]][1]}">${TYPE[a[3]][0]}</span></td>
+  <td>${a[4]?FX[a[4]]:a[5]?`吸取傷害 ${pct(a[5])} 回復氣血`:"—"}</td><td class="nw">${a[6]==="buff"?"增益（加攻擊）":"守護（減少受傷）"}</td><td>${a[7].map(auraText).join("<br>")}</td></tr>`).join("");
+
+// ---- 光環合計 ----
+const sumAura=list=>{const t={};list.forEach(s=>{for(const k in s.aura)t[k]=+((t[k]||0)+s.aura[k]).toFixed(4)});return auraText(t)};
+const auras=SPELLS.filter(s=>s.aura);
+$("auraBody").innerHTML=[["下品光環 10 本全學（目前學得到的）",auras.filter(s=>s.gk==="low")],["只學正道的 6 本下品光環",auras.filter(s=>s.gk==="low"&&!s.evil)],
+  ["下品＋中品＋上品 30 本全學",auras.filter(s=>s.gk!=="ultimate")],["再加 4 本絕學光環",auras]]
+  .map(r=>`<tr><td class="nw"><b>${r[0]}</b></td><td>${sumAura(r[1])}</td></tr>`).join("");
+</script></body></html>
