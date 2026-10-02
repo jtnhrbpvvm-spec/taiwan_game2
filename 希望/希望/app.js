@@ -871,6 +871,22 @@
   });
   $hintRow.appendChild(mapChip);
 
+  var skillChip = document.createElement("span");
+  skillChip.className = "hint-chip";
+  skillChip.style.borderColor = "var(--gold)";
+  skillChip.style.color = "var(--gold-hi)";
+  skillChip.textContent = "✨ 技能";
+  skillChip.addEventListener("click", function () {
+    resetNavHistory();
+    $input.value = "";
+    currentMatches = { items: [], monsters: [] };
+    renderResultList("");
+    currentView = { kind: "skills", id: skillLastJob || "" };
+    showSkillBrowser(skillLastJob || "");
+    scrollToDetail();
+  });
+  $hintRow.appendChild(skillChip);
+
   var questLineChip = document.createElement("span");
   questLineChip.className = "hint-chip";
   questLineChip.style.borderColor = "var(--gold)";
@@ -929,6 +945,10 @@
       showMapDetail(id);
     } else if (kind === "smith") {
       openSmithTab(id);
+    } else if (kind === "skills") {
+      showSkillBrowser(id);
+    } else if (kind === "skill") {
+      showSkillDetail(id);
     } else if (kind === "questline") {
       showQuestLineDetail(id);
     } else if (kind === "questtab") {
@@ -1400,6 +1420,311 @@
       '</div>' +
       '<div style="margin-top:8px;">' + missionRewardGridHtml(m) + '</div>' +
       '</div>';
+  }
+
+  // ---------- ✨ 技能（2026-10-02 新增）----------
+  // 資料 希望/skillIndex.js（update_data.py 從 skills.json 做的，原始 1 MB 多）不在開頁時載入，第一次點「技能」才動態載入。
+  // SKILL_INDEX = {jobs:[{id,name,trees:{tree:分頁名稱}}], skills:{職業id:[技能]}}；
+  // 技能的 lv = {欄位: 值（每級都一樣）或 [每級的值]}、n = 總級數，欄位意義見 update_data.py 那段註解。
+  var SKILL_INDEX = window.SKILL_INDEX || null;
+  var skillIndexWaiting = null;
+  var skillLastJob = null;
+  function withSkillIndex(run) {
+    if (SKILL_INDEX) { run(); return; }
+    $detail.innerHTML = '<div class="empty-note">技能資料載入中…</div>';
+    if (skillIndexWaiting) { skillIndexWaiting.push(run); return; }
+    skillIndexWaiting = [run];
+    var s = document.createElement("script");
+    s.src = "希望/skillIndex.js?v=" + ((ICON_ATLAS.skillData && ICON_ATLAS.skillData.v) || "1");
+    s.onload = function () {
+      SKILL_INDEX = window.SKILL_INDEX || { jobs: [], skills: {} };
+      var list = skillIndexWaiting; skillIndexWaiting = null;
+      // 載入期間使用者可能已經點去別頁，只跑最後一個、而且還停在技能頁才畫
+      if (currentView && (currentView.kind === "skills" || currentView.kind === "skill")) list[list.length - 1]();
+    };
+    s.onerror = function () {
+      skillIndexWaiting = null;
+      $detail.innerHTML = '<div class="empty-note">技能資料載入失敗，請檢查網路後再點一次「技能」。</div>';
+    };
+    document.head.appendChild(s);
+  }
+  var SKILL_KIND_LABEL = { attack: "攻擊", support: "輔助", passive: "被動", heal: "恢復", life: "生活" };
+  var SKILL_ELEMENT_LABEL = { none: "無", fire: "火", water: "水", tree: "木", steel: "金", earth: "土", sun: "光", dark: "闇" };
+  var SKILL_ASSOC_LABEL = { atk: "攻擊力", mag: "魔法力", magAtk: "魔法力＋攻擊力", atkMag: "攻擊力＋魔法力" };
+  var SKILL_GEM_LABEL = { attack: "攻擊", heal: "恢復", support: "輔助" };
+  var SKILL_STAT_LABEL = {
+    atk: "攻擊", def: "防禦", hit: "命中", crit: "必殺", eva: "迴避", mag: "魔法力", maxHp: "最大 HP", maxAp: "最大 AP", atkSpeed: "攻速",
+    throwSplash: "投擲濺射", meleeSplash: "普攻濺射", throwDouble: "投擲兩次", throwDamage: "投擲傷害", throwCritMult: "投擲必殺倍率",
+    apShield: "AP 抵傷", skillCooldownFixed: "技能冷卻固定", comboDamage: "連續技傷害", moveSpeed: "移動速度", dodgeChance: "閃避",
+    dropRate: "掉落率", apRegen: "AP 回復", shield: "護盾", invulnerable: "無敵", reflect: "反傷", counter: "反擊", reviveOnDeath: "死亡時復活"
+  };
+  var SKILL_STATUS_LABEL = {
+    dot: "持續傷害", regen: "持續回血", apRegen: "持續回 AP", shield: "護盾", invulnerable: "無敵", reflect: "反傷", counter: "反擊",
+    apDrain: "持續失去 AP", stun: "無法行動", noAttack: "無法攻擊", noMove: "無法移動", noHeal: "無法恢復", lure: "把怪引過來", revive: "死亡時復活"
+  };
+  var SKILL_EQUIP_LABEL = { shield: "盾牌", weapon: "武器" };
+  var SKILL_TRIGGER_LABEL = { combo: "打出連續技時", hit: "被打中時", attack: "普通攻擊時", castSkill: "施放指定技能時", castElement: "施放指定屬性技能時" };
+  function skillJobDef(jobId) {
+    return (SKILL_INDEX.jobs || []).filter(function (j) { return j.id === jobId; })[0];
+  }
+  function skillFind(jobId, skillId) {
+    return (SKILL_INDEX.skills[jobId] || []).filter(function (s) { return String(s.id) === String(skillId); })[0];
+  }
+  // 技能在第 i 級（0 起算）某個欄位的值
+  function skillLvVal(s, key, i) {
+    var v = s.lv ? s.lv[key] : undefined;
+    return Array.isArray(v) ? v[i] : v;
+  }
+  function skillIconHtml(skillId, size) {
+    var a = ICON_ATLAS.skills;
+    size = size || 32;
+    if (!a || !a.dir || (a.has || []).indexOf(Number(skillId)) < 0) return '';
+    return '<img class="game-icon' + (size > 32 ? ' px' : '') + '" src="' + a.dir + skillId + '.webp?v=' + a.v + '" width="' + size + '" height="' + size +
+      '" loading="lazy" decoding="async" alt="" aria-hidden="true">';
+  }
+  function skillLinkHtml(jobId, skillId, suffix) {
+    var s = skillFind(jobId, skillId);
+    if (!s) return '<span style="opacity:.6;">技能 #' + escapeHtml(String(skillId)) + '</span>';
+    return '<span class="map-chip" style="cursor:pointer;" data-goto-skill="' + jobId + ':' + s.id + '">' + skillIconHtml(s.id, 20) + escapeHtml(s.name) + (suffix || '') + '</span>';
+  }
+  function skillSec(ms) {
+    if (ms >= 60000 && ms % 60000 === 0) return (ms / 60000) + ' 分鐘';
+    return (Math.round(ms / 10) / 100) + ' 秒';
+  }
+  // 每級的值整理成一句：全部一樣就寫一個；不一樣寫「Lv1 a → LvN b」；前面幾級沒有（null）的寫「LvK 起」
+  function skillPerLevelText(arr, fmt) {
+    fmt = fmt || function (v) { return String(v); };
+    if (!Array.isArray(arr)) return arr == null ? '' : fmt(arr);
+    var first = -1;
+    for (var i = 0; i < arr.length; i++) { if (arr[i] != null) { first = i; break; } }
+    if (first < 0) return '';
+    var vals = arr.slice(first).filter(function (v) { return v != null; });
+    var same = vals.every(function (v) { return v === vals[0]; });
+    var pre = first > 0 ? '技能 Lv' + (first + 1) + ' 起：' : '';
+    if (same) return pre + fmt(vals[0]);
+    return pre + 'Lv' + (first + 1) + ' ' + fmt(vals[0]) + ' → Lv' + arr.length + ' ' + fmt(vals[vals.length - 1]);
+  }
+  function skillPct(v) { return v + '%'; }
+  function skillStatusName(st) {
+    if (st.kind === "stat") return (SKILL_STAT_LABEL[st.stat] || st.stat || "能力") + (st.debuff ? '下降' : '上升');
+    return SKILL_STATUS_LABEL[st.kind] || st.kind;
+  }
+  function skillNeedText(jobId, o) {
+    var parts = [];
+    if (o.requiresSkill != null) parts.push('要先學 ' + skillLinkHtml(jobId, o.requiresSkill));
+    if (o.requiresMark != null) parts.push('目標身上要有 ' + skillLinkHtml(jobId, o.requiresMark) + ' 留下的印記');
+    if (o.requiresBuff != null) parts.push('自己身上要有 ' + skillLinkHtml(jobId, o.requiresBuff) + ' 的效果');
+    return parts.length ? '（' + parts.join('、') + '）' : '';
+  }
+  // 技能的特殊效果，一項一行
+  function skillEffectLines(jobId, s) {
+    var lines = [];
+    (s.buffs || []).forEach(function (b) {
+      var t = '🟢 增益：<b>' + escapeHtml(SKILL_STAT_LABEL[b.stat] || b.stat) + '</b>' + (b.party ? '（全隊）' : '');
+      if (b.byLevel) t += '，數值 ' + skillPerLevelText(b.byLevel, function (v) { return v + (b.pct ? '%' : ''); });
+      else if (b.byPartySize) t += '，依隊伍人數（2 人起）：' + b.byPartySize.map(function (v) { return v + (b.pct ? '%' : ''); }).join(' / ');
+      else if (b.fixed != null) t += '，固定 ' + b.fixed + (b.pct ? '%' : '');
+      else if (b.stat !== "invulnerable") t += '，數值看下表的「效果值」' + (b.pct ? '（%）' : '');
+      if (b.magScale) t += '，會隨魔法力提高';
+      if (b.everyMs) t += '，每 ' + skillSec(b.everyMs) + ' 一次';
+      if (b.mask) t += '（只對指定職業的隊友有效）';
+      lines.push(t);
+    });
+    (s.selfBuffs || []).concat(s.castStatuses || []).forEach(function (b) {
+      var who = b.target === "party" ? '全隊' : '自己';
+      var name = b.kind && b.kind !== "stat" ? (SKILL_STATUS_LABEL[b.kind] || b.kind) : (SKILL_STAT_LABEL[b.stat] || b.stat);
+      var t = '🟢 施放時' + who + '獲得 <b>' + escapeHtml(name) + '</b> ' + skillPerLevelText(b.value, function (v) { return v + (b.pct ? '%' : ''); });
+      if (b.chancePct != null) t += '，機率 ' + skillPerLevelText(b.chancePct, skillPct);
+      if (b.fixedDurationMs) t += '，持續 ' + skillSec(b.fixedDurationMs);
+      else if (b.durationMs) t += '，持續 ' + skillPerLevelText(b.durationMs, skillSec);
+      lines.push(t + skillNeedText(jobId, b));
+    });
+    if (s.selfBuffsOneOf) lines.push('（上面的自身增益每次只會隨機出現其中一種）');
+    (s.debuffs || []).forEach(function (d) {
+      var pl = d.perLevel || {};
+      var t = '🔴 減益：<b>' + escapeHtml(skillStatusName({ kind: d.kind, stat: d.stat, debuff: true })) + '</b>';
+      if (d.kind === "stat") t += ' ' + skillPerLevelText(pl.value != null ? pl.value : d.pct, function (v) { return Math.abs(v) + '%'; });
+      if (d.kind === "dot") {
+        var tick = pl.value != null ? pl.value : (d.tickAtkPct != null ? d.tickAtkPct : null);
+        if (tick != null) t += ' 每 ' + skillSec(d.tickMs || 1000) + ' 造成攻擊力 ' + skillPerLevelText(tick, skillPct);
+        else if (d.tickAmount != null) t += ' 每 ' + skillSec(d.tickMs || 1000) + ' ' + d.tickAmount;
+      }
+      t += '，機率 ' + skillPerLevelText(pl.chancePct != null ? pl.chancePct : d.chancePct, skillPct);
+      var dur = pl.durationMs != null ? pl.durationMs : d.durationMs;
+      if (dur && (Array.isArray(dur) || dur > 0)) t += '，持續 ' + skillPerLevelText(dur, skillSec);
+      if (d.gather) t += '（會把周圍的怪聚過來）';
+      lines.push(t + skillNeedText(jobId, d));
+    });
+    if (s.debuffsOneOf) lines.push('（上面的減益每次只會隨機出現其中一種）');
+    (s.extraDamage || []).forEach(function (x) {
+      lines.push('💥 追加傷害：威力 ' + skillPerLevelText(x.pct, skillPct) + '，機率 ' + skillPerLevelText(x.chancePct, skillPct) +
+        (x.noBoss ? '（對 Boss 無效）' : '') + skillNeedText(jobId, x));
+    });
+    if (s.doubleDamage) lines.push('💥 傷害加倍：機率 ' + skillPerLevelText(s.doubleDamage.chancePct, skillPct) +
+      (s.doubleDamage.noCritStack ? '（必殺時不會再加倍）' : '') + skillNeedText(jobId, s.doubleDamage));
+    if (s.critMultiplier != null && s.critMultiplier !== 2) lines.push('💥 必殺時傷害 ×' + s.critMultiplier + '（一般技能是 ×2）');
+    if (s.superCrit) lines.push('💥 超級必殺：機率 ' + skillPerLevelText(s.superCrit.chancePct, skillPct));
+    if (s.lifestealPct) lines.push('🩸 吸血：造成傷害的 ' + skillPerLevelText(s.lifestealPct, skillPct) + ' 補回自己 HP');
+    if (s.castHeal) lines.push('💚 施放時' + (s.castHeal.target === "party" ? '全隊' : '自己') + '回復 HP ' + skillPerLevelText(s.castHeal.value) +
+      (s.castHeal.chancePct != null ? '，機率 ' + skillPerLevelText(s.castHeal.chancePct, skillPct) : '') + skillNeedText(jobId, s.castHeal));
+    if (s.healFormula) lines.push('💚 回復量會隨' + (SKILL_STAT_LABEL[s.healFormula.stat] || s.healFormula.stat) + '提高');
+    if (s.instantDeath) lines.push('☠️ 即死：機率 ' + skillPerLevelText(s.instantDeath.chancePct, skillPct));
+    if (s.hpPctDamage) {
+      var h = s.hpPctDamage;
+      lines.push('☠️ 依目標 HP 計算傷害：' + h.successPct + '% 機率打掉 ' + h.onSuccessPct + '%，其餘打掉 ' + h.onFailPct + '%' +
+        (h.capAboveHp ? '；目標 HP 超過 ' + fmtNum(h.capAboveHp) + ' 時固定 ' + fmtNum(h.cappedDamage) : ''));
+    }
+    if (s.mark) lines.push('🎯 打中後在目標身上留下印記' + (s.mark.chancePct != null ? '，機率 ' + skillPerLevelText(s.mark.chancePct, skillPct) : '') +
+      '，持續 ' + skillPerLevelText(s.mark.durationMs, skillSec) + '（給其他技能接續用）' + skillNeedText(jobId, s.mark));
+    (s.triggers || []).forEach(function (tr) {
+      var t = '⚡ ' + (SKILL_TRIGGER_LABEL[tr.when] || tr.when);
+      if (tr.skillIds) t += '（' + tr.skillIds.map(function (id) { return skillLinkHtml(jobId, id); }).join('') + '）';
+      if (tr.element) t += '（' + (SKILL_ELEMENT_LABEL[tr.element] || tr.element) + '屬性）';
+      t += '，' + skillPerLevelText(tr.chancePct, skillPct) + ' 機率';
+      if (tr.heal) t += '回復 HP ' + skillPerLevelText(tr.heal);
+      if (tr.damage) t += '追加傷害 ' + skillPerLevelText(tr.damage);
+      if (tr.statuses) {
+        t += '讓' + (tr.target === "enemy" ? '敵人' : tr.target === "party" ? '全隊' : '自己') + ' ' +
+          tr.statuses.map(function (st) { return '<b>' + escapeHtml(skillStatusName(st)) + '</b>'; }).join('、');
+        if (tr.pct) t += ' ' + skillPerLevelText(tr.pct, skillPct);
+        if (tr.flat) t += ' ' + skillPerLevelText(tr.flat);
+        if (tr.tickAtkPct) t += '（每跳攻擊力 ' + skillPerLevelText(tr.tickAtkPct, skillPct) + '）';
+      }
+      if (tr.durationMs) t += '，持續 ' + skillPerLevelText(tr.durationMs, skillSec);
+      lines.push(t);
+    });
+    if (s.resetsSkill) lines.push('🔁 ' + skillPerLevelText(s.resetsSkill.chancePct, skillPct) + ' 機率重置 ' + skillLinkHtml(jobId, s.resetsSkill.skillId) + ' 的冷卻');
+    if (s.noStackWith) lines.push('⚠️ 不能跟 ' + s.noStackWith.map(function (id) { return skillLinkHtml(jobId, id); }).join('') + ' 同時生效');
+    if (s.requiresBuff != null) lines.push('⚠️ 自己身上要有 ' + skillLinkHtml(jobId, s.requiresBuff) + ' 的效果才能用');
+    if (s.requiresEquip) lines.push('⚠️ 要裝備 ' + (s.requiresEquip.equip || []).map(function (e) { return SKILL_EQUIP_LABEL[e] || e; }).join('、') + ' 才能用');
+    if (s.notForJobs) lines.push('⚠️ 對這些職業的隊友無效：' + s.notForJobs.map(function (j) { var d = skillJobDef(j); return d ? d.name : j; }).join('、'));
+    if (s.rootsSelf) lines.push('⚠️ 效果期間自己不能移動');
+    if (s.pickTarget) lines.push('🎯 可以指定要放在哪個隊友身上');
+    if (s.xpFill) lines.push('✨ 施放後連續技量表直接集滿');
+    if (s.weak) lines.push('🧩 破綻類型 ' + s.weak.join('、') + '：打到怪物對應的弱點時，破綻值累積得更快');
+    return lines;
+  }
+  var SKILL_LEVEL_COLS = [
+    ["reqLv", "角色等級"], ["pts", "SP"], ["dmg", null], ["ap", "AP"], ["cdMs", "冷卻"], ["castMs", "詠唱"], ["recMs", "收招"],
+    ["durMs", "持續"], ["area", "目標數"], ["range", "射程"], ["crit", "必殺加成"], ["hate", "仇恨"], ["stagger", "破綻值"]
+  ];
+  function skillListKey(jobId, tree) { return jobId + (tree ? ':' + tree : ''); }
+  function showSkillBrowser(key) {
+    withSkillIndex(function () {
+      currentDetail = null;
+      var parts = String(key || "").split(":");
+      var job = skillJobDef(parts[0]) || skillJobDef(skillLastJob) || (SKILL_INDEX.jobs || [])[0];
+      if (!job) { $detail.innerHTML = '<div class="empty-note">沒有技能資料。</div>'; return; }
+      skillLastJob = job.id;
+      var all = SKILL_INDEX.skills[job.id] || [];
+      var trees = Object.keys(job.trees || {}).filter(function (t) { return all.some(function (s) { return String(s.tree) === t; }); });
+      var tree = trees.indexOf(parts[1]) >= 0 ? parts[1] : "";
+      var tabBtn = function (attr, val, label, on) {
+        return '<button type="button" ' + attr + '="' + val + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
+          'border:1px solid ' + (on ? "var(--gold)" : "var(--line-hi)") + ';background:' + (on ? "var(--gold)" : "var(--ink-2)") + ';color:' + (on ? "var(--ink)" : "var(--text)") + ';">' + escapeHtml(label) + '</button>';
+      };
+      var html = backButtonHtml() + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' +
+        SKILL_INDEX.jobs.map(function (j) { return tabBtn("data-skill-list", j.id, j.name, j.id === job.id); }).join("") + '</div>';
+      if (trees.length > 1) {
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabBtn("data-skill-list", job.id, "全部", !tree) +
+          trees.map(function (t) { return tabBtn("data-skill-list", skillListKey(job.id, t), (t === "1" ? "" : "二轉・") + job.trees[t], t === tree); }).join("") + '</div>';
+      }
+      var list = all.filter(function (s) { return !tree || String(s.tree) === tree; }).slice().sort(function (a, b) {
+        return a.tree - b.tree || (a.reqLv || 0) - (b.reqLv || 0) || a.id - b.id;
+      });
+      html += '<h2 style="margin-top:0;">✨ ' + escapeHtml(job.name) + '技能 <span class="count">(' + list.length + ')</span></h2>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">每升 1 級拿 ' + (SKILL_INDEX.spPerLevel || 0) + ' 點 SP' +
+        (SKILL_INDEX.spBonus || []).map(function (b) { return '，Lv' + b.level + ' 另外多 ' + b.points + ' 點'; }).join("") + '。點技能看每一級的數值。</div>';
+      html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>技能</th><th>類型</th><th>需求等級</th><th>最高</th><th>學滿 SP</th></tr></thead><tbody>';
+      list.forEach(function (s) {
+        var sp = 0;
+        for (var i = 0; i < s.n; i++) sp += skillLvVal(s, "pts", i) || 0;
+        html += '<tr class="clickable" data-goto-skill="' + job.id + ':' + s.id + '"><td>' + skillIconHtml(s.id, 28) + '<span class="name-link">' + escapeHtml(s.name) + '</span>' +
+          (trees.length > 1 && !tree && String(s.tree) !== "1" ? ' <span class="group-tag">' + escapeHtml(job.trees[String(s.tree)] || "二轉") + '</span>' : '') + '</td>' +
+          '<td>' + (SKILL_KIND_LABEL[s.kind] || s.kind) + (s.element && s.element !== "none" ? '・' + (SKILL_ELEMENT_LABEL[s.element] || s.element) : '') + '</td>' +
+          '<td>Lv' + (s.reqLv || 1) + '</td><td>' + s.n + ' 級</td><td>' + sp + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      $detail.innerHTML = html;
+    });
+  }
+  function showSkillDetail(key) {
+    withSkillIndex(function () {
+      currentDetail = null;
+      var parts = String(key).split(":"), jobId = parts[0];
+      var s = skillFind(jobId, parts[1]), job = skillJobDef(jobId);
+      if (!s || !job) { $detail.innerHTML = backButtonHtml() + '<div class="empty-note">找不到這個技能。</div>'; return; }
+      skillLastJob = jobId;
+      var html = backButtonHtml();
+      html += '<div class="detail-title">' + skillIconHtml(s.id, 48) + escapeHtml(s.name) + '</div>';
+      html += '<div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><span class="name-link" data-skill-list="' + skillListKey(jobId, String(s.tree)) + '">' +
+        escapeHtml(job.name) + (String(s.tree) !== "1" ? '・二轉 ' + escapeHtml(job.trees[String(s.tree)] || "") : '') + '</span></div>';
+      if (s.desc) html += '<div class="empty-note" style="padding:0 0 12px;font-style:italic;">' + escapeHtml(s.desc) + '</div>';
+      var badges = ['類型 ' + (SKILL_KIND_LABEL[s.kind] || s.kind), '需求等級 ' + (s.reqLv || 1), '最高 ' + s.n + ' 級'];
+      if (s.element && s.element !== "none") badges.push('屬性 ' + (SKILL_ELEMENT_LABEL[s.element] || s.element));
+      if (s.kind === "attack" || s.kind === "heal") badges.push('看 ' + (SKILL_ASSOC_LABEL[s.assoc] || s.assoc));
+      if (s.gem) badges.push('可鑲 ' + (SKILL_GEM_LABEL[s.gem] || s.gem) + '寶石');
+      if (s.starter) badges.push('創角就有');
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">' + badges.map(function (b) { return '<span class="badge">' + escapeHtml(b) + '</span>'; }).join("") + '</div>';
+
+      // 前置技能／這個技能是誰的前置
+      var pre = skillLvVal(s, "prereq", 0), preLv = skillLvVal(s, "prereqLv", 0);
+      var unlocks = (SKILL_INDEX.skills[jobId] || []).filter(function (o) { return o.id !== s.id && String(skillLvVal(o, "prereq", 0)) === String(s.id); });
+      if (pre != null || unlocks.length) {
+        html += '<div class="equip-box" style="font-size:13px;line-height:2.1;margin-bottom:14px;">';
+        if (pre != null) html += '前置技能：' + skillLinkHtml(jobId, pre, preLv ? ' <span style="color:var(--text-faint);font-size:11.5px;">Lv' + preLv + '</span>' : '') + '<br>';
+        if (unlocks.length) html += '學了之後可以學：' + unlocks.map(function (o) {
+          var need = skillLvVal(o, "prereqLv", 0);
+          return skillLinkHtml(jobId, o.id, need ? ' <span style="color:var(--text-faint);font-size:11.5px;">要 Lv' + need + '</span>' : '');
+        }).join("");
+        html += '</div>';
+      }
+
+      var effects = skillEffectLines(jobId, s);
+      if (effects.length) {
+        html += '<div class="section-title">特殊效果</div><div class="equip-box" style="font-size:13px;line-height:2.1;margin-bottom:14px;">' + effects.join('<br>') + '</div>';
+      }
+
+      // 每級數值：整欄都是 0／沒有的欄位不顯示
+      var dmgLabel = s.kind === "attack" ? "威力" : s.kind === "heal" ? "回復量" : "效果值";
+      var cols = SKILL_LEVEL_COLS.filter(function (c) {
+        for (var i = 0; i < s.n; i++) { if (skillLvVal(s, c[0], i)) return true; }
+        return false;
+      });
+      if (cols.length) {
+        var msCols = { cdMs: 1, castMs: 1, recMs: 1, durMs: 1 };
+        var spSum = 0;
+        html += '<div class="section-title">每級數值</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>技能等級</th>' +
+          cols.map(function (c) { return '<th>' + (c[1] || dmgLabel) + '</th>'; }).join("") + '</tr></thead><tbody>';
+        for (var i = 0; i < s.n; i++) {
+          html += '<tr><td>Lv' + (i + 1) + '</td>' + cols.map(function (c) {
+            var v = skillLvVal(s, c[0], i);
+            if (v == null) return '<td>－</td>';
+            if (c[0] === "pts") { spSum += v; return '<td>' + v + ' <span style="color:var(--text-faint);font-size:11.5px;">累計 ' + spSum + '</span></td>'; }
+            if (c[0] === "reqLv") return '<td>Lv' + v + '</td>';
+            if (c[0] === "dmg") return '<td>' + fmtNum(v) + (s.kind === "attack" ? '%' : '') + '</td>';
+            if (c[0] === "crit") return '<td>+' + (Math.round(v * (i + 1) * 100) / 100) + '</td>';   // 遊戲 sC()：crit × 技能等級
+            if (msCols[c[0]]) return '<td>' + (v ? skillSec(v) : '0') + '</td>';
+            return '<td>' + fmtNum(v) + '</td>';
+          }).join("") + '</tr>';
+        }
+        html += '</tbody></table></div>';
+        var notes = [];
+        var has = function (k) { return cols.some(function (c) { return c[0] === k; }); };
+        if (has("castMs")) notes.push('<b>詠唱</b>：按下去到真的放出來要等的時間，詠唱中被打斷就放不出來。');
+        if (has("recMs")) {
+          var fixed = true;
+          for (var k = 0; k < s.n; k++) { if (skillLvVal(s, "recMs", k) && !skillLvVal(s, "recFixed", k)) fixed = false; }
+          notes.push('<b>收招</b>：放完之後不能做其他動作的時間。' + (fixed ? '這個技能的收招時間固定，不受攻速影響。'
+            : '攻速越高越短：實際時間＝表上的時間 ×（1 − 0.0053 × 攻速），攻速最多算到 150（剩約 20%）。'));
+        }
+        if (has("hate")) notes.push('<b>仇恨</b>：打中時額外加在怪物對你的仇恨值上（平常仇恨＝造成的傷害），怪會去打仇恨最高的人。');
+        if (has("crit")) notes.push('<b>必殺加成</b>：用這個技能時額外加的必殺值。');
+        if (has("stagger")) notes.push('<b>破綻值</b>：打中時累積在怪物破綻量表上的量，集滿怪物會暫時無法行動、防禦下降。');
+        if (notes.length) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:8px;line-height:1.9;">' + notes.join('<br>') + '</div>';
+      }
+      $detail.innerHTML = html;
+    });
   }
 
   // ---------- ⚒️ 鐵匠相關：發條強化／找雷分解（鎔解）／強硬分解 ----------
@@ -5352,6 +5677,7 @@
     ["🧰 職業／裝備位置篩選", "搜尋列下方可以依職業、裝備位置列出所有符合的裝備。"],
     ["🗺️ 地圖", "用下拉選單選一張地圖，列出這張地圖的所有怪物和合併的掉落總表（有輸入等級就換算成實際機率）。怪物頁的「出現地圖」也可以直接點進去。"],
     ["⚒️ 鐵匠相關", "發條強化屬性表，以及兩種分解：找雷分解（鎔解，選裝備就能算出每個精煉值的費用、各種鎔解石機率）和強硬分解（艾希頓裝備換凝結之魂的費用、機率、精煉加成）。"],
+    ["✨ 技能", "各職業（含二轉分支）的技能列表；點技能看前置技能、特殊效果，以及每一級的威力、AP、冷卻、詠唱、收招、仇恨等數值。"],
     ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"]
   ];
   function openHelp() {
@@ -5457,6 +5783,16 @@
     if (commissionDetail) { openCommissionDetail(commissionDetail.getAttribute("data-commission-detail"), commissionDetail.getAttribute("data-commission-detail-town")); return; }
     var backLink = e.target.closest("[data-go-back]");
     if (backLink) { goBackOneView(); return; }
+    // 技能頁：換職業／分支分頁不記上一頁（跟鐵匠分頁一樣），點進某個技能才記
+    var skillList = e.target.closest("[data-skill-list]");
+    if (skillList) {
+      var listKey = skillList.getAttribute("data-skill-list");
+      if (currentView && currentView.kind === "skills") { currentView.id = listKey; showSkillBrowser(listKey); }
+      else navigateTo("skills", listKey, true);
+      return;
+    }
+    var skillLink = e.target.closest("[data-goto-skill]");
+    if (skillLink) { navigateTo("skill", skillLink.getAttribute("data-goto-skill"), true); return; }
     // 詳細頁／彈窗裡的物品、怪物、副本連結 → 快速查看視窗；左側清單、各種列表（.result-item）照舊換主畫面
     var peekLink = e.target.closest("[data-goto-item],[data-goto-monster],[data-open-dungeon]");
     if (peekLink && !peekLink.closest(".result-item") && peekLink.closest("#detailPanel, #peekBackdrop, #changelogBackdrop")) {
