@@ -73,6 +73,15 @@ td.nw{white-space:nowrap}
 .gcard .gtitle{font-size:15px}
 .gcard .off{color:var(--mute)}
 .warn{color:var(--warn)}
+#cmpDlg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
+#cmpDlg[hidden]{display:none}
+#cmpDlg .cmp-box{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;max-width:1040px;width:100%;max-height:92vh;overflow:auto;padding:14px 18px;box-sizing:border-box}
+#cmpDlg .cmp-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:-14px;background:var(--bg);padding:8px 0;z-index:1}
+#cmpDlg .cmp-top b{font-size:17px}
+#cmpDlg td,#cmpDlg th{font-size:13.5px;padding:6px 10px}
+#cmpDlg small{color:var(--mute)}
+.up{color:var(--ok);font-weight:bold}.down{color:var(--warn);font-weight:bold}
+.cmp-chg{margin:8px 0;padding-left:20px;font-size:13.5px;line-height:1.8}
 #setupBox{max-width:880px}
 #setupBox details{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
 #setupBox summary{cursor:pointer;padding:9px 14px;font-size:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -127,6 +136,7 @@ a:hover{text-decoration-thickness:2px}
 <h2>配裝</h2>
 <div class="sub">點部位就能換裝：可以選遊戲裡目前開放的全部裝備（17 個部位各 50 種，加上靈寶閣寶物與 6 件神器），再調品質、等級、強化、詞條與鑲嵌。換完會立刻重算下面的數字。<b>這裡只是試算，不會也無法寫回遊戲。</b></div>
 <div id="gearBox"></div>
+<div class="ctl" style="align-items:center"><button class="btn" id="cmpOpen">🗺️ 試算換裝前後打每張地圖的傷害</button><button class="btn ghost" id="cmpPin">📌 把目前配置記成「換裝前」</button><span class="sub" id="cmpBase"></span></div>
 
 <h2>角色設定</h2>
 <div class="sub">裝備以外的加成來源。讀取存檔後會自動帶入你的現況，也可以點開來改，看看換宗門、升職業階數、多吃丹藥或換夥伴會變多少。</div>
@@ -309,6 +319,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
 </div>
 </div>
+<div id="cmpDlg" hidden role="dialog" aria-modal="true" aria-label="換裝前後比較"><div class="cmp-box"><div class="cmp-top"><b>🗺️ 換裝前後：打每張地圖的傷害</b><button class="btn ghost" id="cmpClose" type="button">✕ 關閉</button></div><div id="cmpOut"></div></div></div>
 <script src="profile.js"></script>
 <script src="site.js"></script>
 <script>
@@ -1036,6 +1047,42 @@ function renderHunt(a){
   </tbody></table></div>
   <div class="sub" style="margin-top:6px">秘境每天各只能打 3 次，所以用「每次」和「每日」來算，沒辦法換成每小時。兩個秘境都不給經驗，練等還是要靠上面的地圖。</div>`;
 }
+// ---- 換裝前後比較：用「換裝前」的配置和目前的配置各算一次每張地圖 ----
+let baseBuild=blankBuild(),baseNote="";
+const hm=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")};
+function setBase(note){baseBuild=JSON.parse(JSON.stringify(build));baseNote=note;$("cmpBase").textContent="換裝前＝"+(note||"還沒記錄（空白角色）")}
+function openCmp(){
+  const A0=analyze(baseBuild),A1=lastA,P0=hPlayer(A0),P1=hPlayer(A1),cb=v=>full(Math.round(v*100)),pc=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%";
+  const SL={ok:"🟢 穩定",pot:"🟡 要吃藥",risk:"🟠 有風險",no:"🔴 撐不住",lock:"🔒 進不去"};
+  // 變化：better＝數字變大是好事還是壞事
+  const chg=(x,y,better)=>{if(!(x>0)||Math.abs(y-x)/x<.0005)return `<small>不變</small>`;const d=(y-x)/x,good=(d>0)===(better>0);return `<span class="${good?"up":"down"}">${d>0?"+":"−"}${pc(Math.abs(d))}</span>`};
+  const pair=(k,x,y,fmt,better)=>`<div>${k}<b>${fmt(y)}</b><small>換裝前 ${fmt(x)}</small> ${chg(x,y,better)}</div>`;
+  const tag=eq=>eq?`${esc(eqName(eq))}<small>（${[eq.quality,eq.level?"Lv."+eq.level:"",eq.enhance?"+"+eq.enhance:""].filter(Boolean).join("・")}）</small>`:"<small>未裝備</small>";
+  const E0=baseBuild.equipment||{},E1=build.equipment||{};
+  const gear=SLOTS.concat("神器").filter(s=>JSON.stringify(E0[s]||null)!==JSON.stringify(E1[s]||null)).map(s=>`<li><b>${s}</b>：${tag(E0[s])} → ${tag(E1[s])}</li>`).join("");
+  const dmg=x=>x.avg.hp/x.h;
+  const body=[1,2,3,4,5].map(c=>`<tr><td colspan="7" style="background:var(--head);font-weight:bold">${HCAT[c]}</td></tr>`+HMAPS.filter(m=>m[1]===c).map(m=>{
+    const x=hEval(A0,P0,m),y=hEval(A1,P1,m),lx=x.state==="lock",ly=y.state==="lock";
+    if(lx&&ly)return `<tr class="hlock"><td class="nw">${y.name}</td><td colspan="6">🔒 ${y.lock}</td></tr>`;
+    const v=(l,s)=>l?`<small>🔒</small>`:s;
+    return `<tr><td class="nw"><b>${y.name}</b><br><small>${ly?"":y.lv+"・氣血 "+cb(y.avg.hp)}</small></td>
+      <td class="num">${v(lx,cb(dmg(x)))}</td><td class="num">${v(ly,`<b>${cb(dmg(y))}</b>`)}</td><td class="num">${lx||ly?"—":chg(dmg(x),dmg(y),1)}</td>
+      <td class="num nw">${v(lx,+x.h.toFixed(1))} → ${v(ly,`<b>${+y.h.toFixed(1)}</b>`)} 下</td>
+      <td class="num nw">${v(lx,pc(x.A))} → ${v(ly,`<b>${pc(y.A)}</b>`)}</td>
+      <td class="nw">${lx?SL.lock:SL[x.state]} → ${ly?`🔒 ${y.lock}`:`<b>${SL[y.state]}</b>`}</td></tr>`}).join("")).join("");
+  $("cmpOut").innerHTML=`<div class="sub">換裝前＝<b>${esc(baseNote||"還沒記錄，以空白角色計算")}</b>；換裝後＝「試算」分頁目前的境界、等級、配裝與角色設定。${baseNote?"":"先配好原本的裝備，按「📌 把目前配置記成『換裝前』」，再換裝回來比較。"}</div>
+  <div class="res" style="margin-top:10px">${pair("每回合平均輸出",P0.round,P1.round,cb,1)}${pair("物理攻擊",A0.phys,A1.phys,cb,1)}${pair("術法攻擊",A0.mag,A1.mag,cb,1)}${pair("氣血上限",A0.hp,A1.hp,cb,1)}
+    ${pair("減傷",P0.def,P1.def,v=>+v.toFixed(1)+"%",1)}${pair("閃避",P0.eva,P1.eva,v=>+v.toFixed(1)+"%",1)}</div>
+  ${gear?`<div class="sub">換了這些部位：</div><ul class="cmp-chg">${gear}</ul>`:`<div class="sub">裝備和換裝前完全一樣${JSON.stringify(baseBuild)===JSON.stringify(build)?"，數字不會有差別。先到上面的配裝換幾件再回來看。":"（只改了境界、等級或角色設定）。"}</div>`}
+  <div class="tw"><table><thead><tr><th>地圖</th><th class="num">換裝前傷害</th><th class="num">換裝後傷害</th><th class="num">變化</th><th class="num">殺一隻要幾下</th><th class="num">一波掉血</th><th>判定</th></tr></thead><tbody>${body}</tbody></table></div>
+  <div class="sub" style="margin-top:8px"><b>傷害</b>＝每回合對那張地圖的妖獸平均打掉多少氣血，已經扣掉妖獸的減傷與閃避，並把暴擊、連擊、技能算成平均值。<b>一波掉血</b>＝打完一波平均會掉自己氣血的幾成，換防具、飾品主要看這一欄。算法和「打怪推薦」分頁相同，沒算進去的項目也一樣（屬性傷害、五行相剋、種族剋制、吸血、靈寵與夥伴的招式等）；「試算」區手動改的數字不會反映在這裡。</div>`;
+  $("cmpDlg").hidden=false;$("cmpDlg").querySelector(".cmp-box").scrollTop=0;$("cmpClose").focus();
+}
+const closeCmp=()=>{if(!$("cmpDlg").hidden){$("cmpDlg").hidden=true;$("cmpOpen").focus()}};
+$("cmpOpen").onclick=openCmp;$("cmpClose").onclick=closeCmp;
+$("cmpPin").onclick=()=>setBase(`你在 ${hm()} 記下的配置`);
+$("cmpDlg").addEventListener("click",e=>{if(e.target===$("cmpDlg"))closeCmp()});
+addEventListener("keydown",e=>{if(e.key==="Escape")closeCmp()});
 // 依目前的境界、等級與配裝重算，並把結果帶進試算欄位
 function rebuild(){
   build.realmIndex=+$("cRealm").value||0;build.stage=+$("cStage").value||1;build.level=Math.max(1,Math.min(10000,Math.round(+$("cLv").value||1)));
@@ -1048,7 +1095,7 @@ function rebuild(){
 function loadPlayer(p){
   build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;
   $("cRealm").value=p.realmIndex||0;$("cStage").value=p.stage||1;$("cLv").value=p.level||1;
-  rebuild();
+  rebuild();setBase("讀取存檔時的配置");
 }
 $("saveLoad").onclick=async()=>{
   const m=$("saveMsg");m.className="";m.textContent="讀取中…";
@@ -1073,12 +1120,12 @@ function readHash(){
 }
 addEventListener("hashchange",readHash);
 $("saveClear").onclick=()=>{$("saveCode").value="";$("saveOut").innerHTML="";$("saveMsg").className="";$("saveMsg").textContent="";
-  $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";if(window.clearProfile)clearProfile();rebuild()};
+  $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";if(window.clearProfile)clearProfile();rebuild();setBase("")};
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
   ["calc","hunt","stat","rule","aid","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
 ["cRealm","cStage","cLv"].forEach(id=>$(id).oninput=rebuild);
-rebuild();
+rebuild();setBase("");
 if(window.PROFILE&&!/^#save=/.test(location.hash)){loadPlayer(window.PROFILE);$("saveMsg").textContent=`已沿用先前讀取的「${window.PROFILE.name||"角色"}」`}
 readHash();
 </script></body></html>
