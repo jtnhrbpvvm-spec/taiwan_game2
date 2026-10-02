@@ -765,7 +765,17 @@
   }
   function itemIconHtml(id, size) {
     var it = ITEMS[id];
-    return it ? atlasIconHtml(ICON_ATLAS.items, it.ic, size || 32) : '';
+    if (!it) return '';
+    size = size || 32;
+    // 一個圖示一個檔（update_data.py split_item_icons 切的，ids[格子編號] = 檔名）：畫面上顯示到才下載那一個，
+    // 不用為了一個圖示下載整張 2 MB 的圖集。沒有切圖資料時退回用整張圖集。
+    var atlas = ICON_ATLAS.items;
+    var file = atlas && atlas.dir && atlas.ids && it.ic != null ? atlas.ids[it.ic] : null;
+    if (file != null) {
+      return '<img class="game-icon' + (size > atlas.cell ? ' px' : '') + '" src="' + atlas.dir + file + '.webp?v=' + atlas.v +
+        '" width="' + size + '" height="' + size + '" loading="lazy" decoding="async" alt="" aria-hidden="true">';
+    }
+    return atlasIconHtml(atlas, it.ic, size);
   }
   function bpetSkillIconHtml(iconId, size) {
     var atlas = ICON_ATLAS["bpet-skills"];
