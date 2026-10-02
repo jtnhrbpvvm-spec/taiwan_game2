@@ -350,6 +350,23 @@
       '</tr></tbody></table>' +
       '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">1 點折合多少金幣每個整點換一次（' + fmtNum(20000) + '～' + fmtNum(50000) + '），價格會自動跟著更新。</div>';
   }
+  // 限時加成道具（藥水／符咒／福袋）的效果：MALL_INDEX.potions = {物品id: {stat, amount, durationMs, maxLv?}}，文字照遊戲 dS()
+  var POTION_STAT_LABEL = { exp: "經驗值", drop: "道具掉落率", atk: "攻擊力", mag: "魔法力", hit: "命中", aspd: "攻擊速度" };
+  function potionDurationText(ms) {
+    var min = Math.round(ms / 60000);
+    if (min >= 1440 && min % 1440 === 0) return (min / 1440) + ' 天';
+    if (min >= 60 && min % 60 === 0) return (min / 60) + ' 小時';
+    return min + ' 分鐘';
+  }
+  function potionNoteHtml(id) {
+    var p = (MALL_INDEX.potions || {})[String(id)];
+    if (!p) return '';
+    var timed = p.stat === "exp" || p.stat === "drop";
+    return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' +
+      (timed ? '🍀 使用' : '🧪 喝下') + '後：<b>' + escapeHtml(POTION_STAT_LABEL[p.stat] || p.stat) + ' +' + p.amount + (p.stat === "aspd" ? '' : '%') + '</b>，持續 ' +
+      potionDurationText(p.durationMs) + '。' +
+      (p.maxLv != null ? '<br>⚠️ <b>限 Lv' + p.maxLv + ' 以下</b>的角色使用，超過就不能用。' : '') + '</div>';
+  }
   // 頁面一直開著跨過整點時，把畫面上的名品館價格換成新時段的
   setInterval(function () {
     document.querySelectorAll("[data-mall-points]").forEach(function (td) {
@@ -1381,6 +1398,8 @@
   function smithTabsHtml(active) {
     var tabs = [["enchant", "🔮 發條強化"], ["smelt", "🔥 找雷分解"]];
     if (SMITH.hardDecompose) tabs.push(["decompose", "💔 強硬分解"]);
+    if (SMITH.ashtonConvert) tabs.push(["convert", "💠 艾希頓轉換"]);
+    if (SMITH.sageTickets) tabs.push(["sage", "📜 賢者合成券"]);
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
       var on = t[0] === active;
       return '<button type="button" data-smith-tab="' + t[0] + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
@@ -1392,6 +1411,8 @@
     currentView = { kind: "smith", id: smithLastTab };
     if (smithLastTab === "smelt") showSmeltPage();
     else if (smithLastTab === "decompose" && SMITH.hardDecompose) showHardDecomposePage();
+    else if (smithLastTab === "convert" && SMITH.ashtonConvert) showAshtonConvertPage();
+    else if (smithLastTab === "sage" && SMITH.sageTickets) showSageTicketPage();
     else { smithLastTab = "enchant"; showEnchantTable(); }
   }
   function smithNpcText(npcs) {
@@ -1596,9 +1617,160 @@
     $detail.innerHTML = html;
   }
 
-  // 物品頁上的鐵匠分解提示：艾希頓裝備可以強硬分解／凝結之魂怎麼來／鎔解石怎麼來
+  // 艾希頓轉換：規則照遊戲 convertInput()／convertStacks()
+  function showAshtonConvertPage() {
+    currentDetail = null;
+    var ac = SMITH.ashtonConvert, rows = ac.rows || [];
+    var html = backButtonHtml() + smithTabsHtml("convert");
+    html += '<h2 style="margin-top:0;">💠 艾希頓轉換 <span class="count">(' + rows.length + ' 件裝備)</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・地點：' + smithNpcText(ac.npcs) + '（要人在村莊裡）。<br>' +
+      '・只收 <b>.G 以上的艾希頓系列裝備</b>（下面的清單），上鎖的不會出現在清單。<br>' +
+      '・每件用掉 1 張 ' + itemChip(ac.scroll) + '，<b>不用錢、必定成功</b>，換到 1 個對應等級的結晶；裝備會消失。<br>' +
+      '・部分裝備有精煉門檻（下表），精煉不夠不能轉換。<br>' +
+      '・同一件裝備也能拿去強硬分解換凝結之魂，兩邊只能選一邊。' +
+      '</div>';
+
+    // 依「產物 + 精煉門檻」整理
+    var groups = {}, gOrder = [];
+    rows.forEach(function (r) {
+      var k = r.product + "|" + (r.refine || 0);
+      if (!groups[k]) { groups[k] = { product: r.product, refine: r.refine || 0, rows: [] }; gOrder.push(k); }
+      groups[k].rows.push(r);
+    });
+    var productOrder = [];
+    rows.forEach(function (r) { if (productOrder.indexOf(r.product) < 0) productOrder.push(r.product); });
+    gOrder.sort(function (a, b) {
+      return productOrder.indexOf(groups[a].product) - productOrder.indexOf(groups[b].product) || groups[a].refine - groups[b].refine;
+    });
+    html += '<div class="section-title">換到什麼</div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>換到</th><th>裝備精煉門檻</th><th>件數</th></tr></thead><tbody>';
+    gOrder.forEach(function (k) {
+      var g = groups[k];
+      html += '<tr><td>' + itemChip(g.product) + '</td><td>' + (g.refine > 0 ? '+' + g.refine + ' 以上' : '不限') + '</td><td>' + g.rows.length + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="section-title">可以轉換的裝備 <span class="count">(' + rows.length + ' 件)</span></div>';
+    gOrder.forEach(function (k) {
+      var g = groups[k];
+      html += '<details><summary style="cursor:pointer;font-size:13px;margin-bottom:6px;">' +
+        escapeHtml(ITEMS[g.product] ? ITEMS[g.product].name : "#" + g.product) + '・' + (g.refine > 0 ? '精煉 +' + g.refine + ' 以上' : '精煉不限') +
+        '（' + g.rows.length + ' 件）</summary><div class="map-chip-row" style="margin-bottom:10px;">' +
+        g.rows.map(function (r) { return itemChip(r.item); }).join("") + '</div></details>';
+    });
+
+    // 結晶拿來做什麼：賢者的合成券
+    var sg = SMITH.sageTickets;
+    if (sg) {
+      html += '<div class="section-title">結晶的用途</div>';
+      html += '<div class="empty-note" style="padding:0 0 8px;">拿來當「賢者的合成券」的材料，把炙卡爾／坦柏特裝備升一階：</div>';
+      html += '<div class="map-chip-row">' + (sg.tickets || []).map(function (tk) {
+        var need = (tk.mats || []).filter(function (m) { return productOrder.indexOf(m[0]) >= 0; });
+        return itemChip(tk.item, null, need.map(function (m) {
+          return '<span style="color:var(--text-faint);font-size:11.5px;">' + escapeHtml(ITEMS[m[0]] ? ITEMS[m[0]].name : "#" + m[0]) + ' ×' + m[1] + '</span>';
+        }).join(" "));
+      }).join("") + ' <span class="name-link" data-goto-smith="sage">看賢者合成券 →</span></div>';
+    }
+    $detail.innerHTML = html;
+  }
+
+  // 賢者的合成券：規則照遊戲 sageFuseInput()／sageFuse()
+  function showSageTicketPage() {
+    currentDetail = null;
+    var sg = SMITH.sageTickets, tickets = sg.tickets || [];
+    var html = backButtonHtml() + smithTabsHtml("sage");
+    html += '<h2 style="margin-top:0;">📜 賢者合成券 <span class="count">(' + tickets.length + ' 種)</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・地點：' + smithNpcText(sg.npcs) + '（要人在村莊裡）。<br>' +
+      '・只收<b>「渾沌的炙卡爾」「純白的坦柏特」系列裝備</b>，一張券把一件裝備升一階（一般 → .G → .DG → .XG）。<br>' +
+      '・<b>必定成功</b>，不用鐵匠、不用合成技能；成功後<b>精煉歸零</b>。<br>' +
+      '・條件：角色等級和裝備精煉都要達標，另外要付材料和金幣（下表）。' +
+      '</div>';
+
+    html += '<div class="section-title">每張券的條件與花費</div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>合成券</th><th>角色等級</th><th>裝備精煉</th><th>材料</th><th>金幣</th><th>適用</th></tr></thead><tbody>';
+    tickets.forEach(function (tk) {
+      html += '<tr><td>' + itemChip(tk.item) + '</td><td>Lv' + tk.charLv + '</td><td>+' + tk.refine + ' 以上</td>' +
+        '<td><div class="map-chip-row">' + (tk.mats || []).map(function (m) {
+          return itemChip(m[0], null, '<span style="color:var(--text-faint);font-size:11.5px;">×' + m[1] + '</span>');
+        }).join("") + '</div></td><td>' + goldHtml(tk.gold) + '</td><td>' + (tk.accepts || []).length + ' 件</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    // 每個系列一列：一般 → .G → .DG → .XG，照券的順序往上接
+    var nextOf = {}, isTarget = {};
+    tickets.forEach(function (tk, ti) {
+      (tk.accepts || []).forEach(function (a) { nextOf[a[0]] = { to: a[1], ticket: ti }; isTarget[a[1]] = true; });
+    });
+    var chains = [];
+    Object.keys(nextOf).forEach(function (id) {
+      if (isTarget[id]) return;
+      var chain = [Number(id)], cur = id;
+      while (nextOf[cur] && chain.length <= tickets.length) { cur = nextOf[cur].to; chain.push(cur); }
+      chains.push(chain);
+    });
+    chains.sort(function (a, b) { return a[0] - b[0]; });
+    html += '<div class="section-title">適用的裝備 <span class="count">(' + chains.length + ' 個系列)</span></div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="min-width:640px;"><thead><tr><th>原本</th>' +
+      tickets.map(function (tk) {
+        return '<th>用 ' + escapeHtml(ITEMS[tk.item] ? ITEMS[tk.item].name : "#" + tk.item) + '</th>';
+      }).join("") + '</tr></thead><tbody>';
+    chains.forEach(function (chain) {
+      html += '<tr>';
+      for (var i = 0; i <= tickets.length; i++) {
+        var eid = chain[i];
+        html += '<td>' + (eid == null ? '－' : '<span class="name-link" data-goto-item="' + eid + '">' +
+          escapeHtml(ITEMS[eid] ? ITEMS[eid].name : "#" + eid) + '</span>') + '</td>';
+      }
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點裝備名稱可以看那件裝備的詳細資料。</div>';
+    $detail.innerHTML = html;
+  }
+
+  // 物品頁上的鐵匠分解提示：艾希頓裝備可以強硬分解／凝結之魂怎麼來／鎔解石怎麼來／艾希頓轉換／賢者合成券
   function smithItemNoteHtml(id) {
-    var lines = [];
+    var lines = [], tab = null;
+    var ac = SMITH.ashtonConvert;
+    if (ac) {
+      var acRow = (ac.rows || []).filter(function (r) { return String(r.item) === String(id); })[0];
+      if (acRow) {
+        lines.push('💠 可以<b>轉換</b>：用 1 張 ' + itemChip(ac.scroll) + ' 換 1 個 ' + itemChip(acRow.product) +
+          (acRow.refine > 0 ? '（要精煉 +' + acRow.refine + ' 以上）' : '') + '，必定成功，裝備消失。');
+      }
+      if ((ac.rows || []).some(function (r) { return String(r.product) === String(id); })) {
+        lines.push('💠 取得方式：用 ' + itemChip(ac.scroll) + ' 把艾希頓系列裝備拿去<b>轉換</b>（' + smithNpcText(ac.npcs) + '）。');
+      }
+      if (String(ac.scroll) === String(id)) {
+        lines.push('💠 用途：把 .G 以上的艾希頓系列裝備<b>轉換</b>成艾希頓的結晶（' + smithNpcText(ac.npcs) + '），一件用 1 張。');
+      }
+      if (lines.length) tab = "convert";
+    }
+    var sg = SMITH.sageTickets;
+    if (sg) {
+      var before = lines.length;
+      (sg.tickets || []).forEach(function (tk) {
+        var cost = (tk.mats || []).map(function (m) { return itemChip(m[0], null, '<span style="color:var(--text-faint);font-size:11.5px;">×' + m[1] + '</span>'); }).join("") +
+          ' ＋ ' + goldHtml(tk.gold);
+        if (String(tk.item) === String(id)) {
+          lines.push('📜 用途：把 +' + tk.refine + ' 以上的炙卡爾／坦柏特裝備升一階（' + smithNpcText(sg.npcs) + '），角色要 Lv' + tk.charLv + '，另外要 ' + cost + '，必定成功。');
+        }
+        if ((tk.mats || []).some(function (m) { return String(m[0]) === String(id); })) {
+          lines.push('📜 用途：' + itemChip(tk.item) + ' 的材料。');
+        }
+        (tk.accepts || []).forEach(function (a) {
+          if (String(a[0]) === String(id)) {
+            lines.push('📜 可以用 ' + itemChip(tk.item) + ' 升成 ' + itemChip(a[1]) + '：角色 Lv' + tk.charLv + '、精煉 +' + tk.refine + ' 以上，另外要 ' + cost + '，必定成功、精煉歸零。');
+          }
+          if (String(a[1]) === String(id)) {
+            lines.push('📜 取得方式：' + itemChip(a[0]) + ' 用 ' + itemChip(tk.item) + ' 升上來（' + smithNpcText(sg.npcs) + '）。');
+          }
+        });
+      });
+      if (lines.length > before && !tab) tab = "sage";
+    }
     var hd = SMITH.hardDecompose;
     if (hd) {
       var row = (hd.rows || []).filter(function (r) { return String(r.item) === String(id); })[0];
@@ -1615,7 +1787,7 @@
       lines.push('🔥 取得方式：把 +' + (sm.minRefine || 3) + ' 以上的裝備拿去<b>找雷分解（鎔解）</b>（' + smithNpcText(sm.npcs) + '），裝備等級、精煉越高越容易出高級的。');
     }
     if (!lines.length) return "";
-    var tab = lines.some(function (l) { return l.indexOf("🔥") === 0; }) ? "smelt" : "decompose";
+    if (!tab) tab = lines.some(function (l) { return l.indexOf("🔥") === 0; }) ? "smelt" : "decompose";
     return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' + lines.join("<br>") +
       ' <span class="name-link" data-goto-smith="' + tab + '">看完整說明 →</span></div>';
   }
@@ -2287,6 +2459,7 @@
       '</div>';
 
     html += refineGuardHtml(id);
+    html += potionNoteHtml(id);
     html += smithItemNoteHtml(id);
     html += npcItemUsesHtml(id);
 
@@ -2665,7 +2838,8 @@
     var c = exchangeOfferCells(o);
     return '<tr><td><b>' + escapeHtml(o.npc) + '</b><br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(exchangeTownsText(o)) + '</span></td>' +
       '<td><span class="group-tag">' + (EXCHANGE_KIND_LABEL[o.kind] || o.kind) + '</span>' + (o.menu ? '<br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(o.menu) + '</span>' : '') +
-      (o.minLv ? '<br><span class="lv-tag">Lv' + o.minLv + '+</span>' : '') + '</td>' +
+      (o.minLv ? '<br><span class="lv-tag">Lv' + o.minLv + '+</span>' : '') +
+      (o.once ? '<br><span class="group-tag">限換一次</span>' : '') + '</td>' +
       '<td style="font-size:12.5px;">' + c.need + '</td><td style="font-size:12.5px;">' + c.get + '</td></tr>';
   }
   function exchangeTableHtml(title, idxs) {
@@ -2678,7 +2852,7 @@
   function exchangeSectionHtml(id) {
     var html = exchangeTableHtml('可跟 NPC 兌換取得', EXCHANGE_BY_GET[id] || []);
     html += exchangeTableHtml('可拿去跟 NPC 兌換', EXCHANGE_BY_GIVE[id] || []);
-    if (html) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">「升級」「拆解」要交的是那件裝備本身（精煉值要夠、不能是鎖定或穿在身上的）；有 Lv 標示的要角色等級到了才能換。</div>';
+    if (html) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">「升級」「拆解」要交的是那件裝備本身（精煉值要夠、不能是鎖定或穿在身上的）；有 Lv 標示的要角色等級到了才能換；「限換一次」是每個角色只能換一次。</div>';
     return html;
   }
 
@@ -4185,7 +4359,7 @@
   var OBTAIN_KIND_LABEL = {
     drop: "打怪掉落", box: "開箱", shop: "商店", gamble: "擲十八啦", fusion: "合成", forge: "鍛造", radix: "拉迪克斯",
     hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
-    alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解"
+    alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換"
   };
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();

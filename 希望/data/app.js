@@ -1453,14 +1453,21 @@
   // 少了這個欄位會丟 TypeError，整隻角色就進不去（畫面停在選角、Console 出現
   // 「Cannot read properties of undefined (reading 'map')」）。已實際匯入遊戲驗證過。
   // skills 的格式是 [[技能id, 等級], ...]，空的代表還沒點技能，SP 全部保留。
+  // 存檔格式版本（存檔最外層的 v）。遊戲改版會搬欄位，修改器新增東西時要照載入的那份存檔的版本來寫。
+  function saveVersion() {
+    return saveData && typeof saveData.v === "number" ? saveData.v : 0;
+  }
   function newBattlePet(kindDef) {
-    return {
+    var bp = {
       kind: kindDef.kind, level: 1, exp: 0, grade: 0, seed: Math.floor(Math.random() * 1000000),
       closeness: 0, closenessMs: 0, loyalty: 0, loyaltyMs: 0,
-      summoned: false, downed: false, autoRevive: false, skills: [],
+      summoned: false, downed: false, skills: [],
       gear: (BATTLE_PET_INFO.gearSlots || []).map(function () { return null; }),
-      upgradeTries: 0, mode: "active", // v52 起遊戲新建的戰寵都有 mode（active／counter／support 戰鬥姿態），預設 active
+      upgradeTries: 0, mode: "active", // v52 起遊戲新建的戰寵都有 mode，預設 active（v83 起存檔升級會把 support 改成 counter）
     };
+    // autoRevive 在 v84 被遊戲拿掉了（存檔升級時會直接刪掉這個欄位），新版存檔不要再寫
+    if (saveVersion() < 84) bp.autoRevive = false;
+    return bp;
   }
   // ---------- 戰寵裝備 ----------
   // 規則照遊戲 lf()：gear.pet 是 0（通用）或要等於戰寵種類；戰寵等級要 ≥ gear.lv；忠誠度要 ≥ gear.loyalty。
@@ -1601,7 +1608,8 @@
     }
     grid.appendChild(boolField("summoned（目前是否召喚在場上）", "summoned"));
     grid.appendChild(boolField("downed（是否已經倒下，等待復活）", "downed"));
-    grid.appendChild(boolField("autoRevive（自動復活）", "autoRevive"));
+    // v84 起遊戲沒有 autoRevive 了，新版存檔不顯示這個開關（勾了也沒用，還會多寫一個遊戲不認得的欄位）
+    if (saveVersion() < 84) grid.appendChild(boolField("autoRevive（自動復活）", "autoRevive"));
 
     activeBox.appendChild(grid);
 
@@ -2469,7 +2477,9 @@
     var addGem = el("button", { class: "btn btn-sm btn-accent", text: "➕ 新增寶石" });
     addGem.addEventListener("click", function () {
       if (!gemPick.value) { toast("請先選寶石種類", "warn"); return; }
-      gems.owned.push({ uid: gems.nextUid, itemId: Number(gemPick.value), cells: [], seed: Math.floor(Math.random() * 4294967295) });
+      var newGem = { uid: gems.nextUid, itemId: Number(gemPick.value), cells: [], seed: Math.floor(Math.random() * 4294967295) };
+      if (saveVersion() >= 85) newGem.locked = false; // v85 起每顆寶石都有 locked（上鎖），遊戲升級存檔時也是全部補 false
+      gems.owned.push(newGem);
       gems.nextUid++;
       renderGems(c);
     });
