@@ -30,6 +30,14 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 tr.mine td{background:color-mix(in srgb,var(--acc) 18%,transparent)}
 .warn{color:var(--warn)}.ok{color:var(--ok)}
 #me{margin:12px 0}
+.ysg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px}
+.ysc{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--tc);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.75;min-width:0}
+.ysc.mine{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.ysc h3{margin:0;font-size:16px;color:var(--tc)}
+.ysc ol{margin:6px 0 0;padding-left:20px}
+.ysc b{color:var(--acct)}
+.ysc .st{display:block;font-size:12.5px}
+.ysc .you{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}
 </style></head><body><div class="wrap">
 <a class="back" href="index.html">← 回攻略首頁</a>
 <h1>🔮 元神一覽</h1>
@@ -73,6 +81,22 @@ tr.mine td{background:color-mix(in srgb,var(--acc) 18%,transparent)}
 <li>修為速度的加成會和靈根、裝備「悟道」等修為加成加在一起。</li>
 </ul></div>
 
+<h2>十二種元神的取得條件</h2>
+<div class="sub">每一種元神都要<b>四個條件同時成立</b>：指定的先天體質、對應等級的先天靈根、元嬰期以上、材料齊全。十二種的差別只在「要哪一個體質」和「要哪一級靈根」。</div>
+<div class="box" style="margin:10px 0"><b>從零開始的步驟</b>
+<ol style="margin:4px 0;padding-left:22px">
+<li><b>測資質</b>：第一次拜入宗門時會測出先天靈根和先天體質。資質轉世也不會變。</li>
+<li><b>先把體質洗到想要的那一個</b>：體質決定元神種類。用伐骨丹重測體質，測完可以選保留新的或舊的，所以不會越洗越差。神體是最稀有的一級，道體次之。</li>
+<li><b>再把靈根洗到對應的等級</b>：神體要配至尊靈根（9 種任一）、道體要配特殊靈根（4 種任一）。用洗髓丹重測，同樣可以選保留新或舊。</li>
+<li><b>境界修到元嬰期</b>，才能學元嬰化神法。</li>
+<li><b>備齊材料</b>：化神訣殘本 10,000 頁，破障丹、洗髓丹、伐骨丹、化神靈果各 5 顆。</li>
+<li>到人物面板點「元神」那一行，按<b>凝聚元神</b>。</li>
+</ol>
+<span class="warn">⚠️ 洗髓丹、伐骨丹同時也是凝聚材料</span>：重測資質時別全部用光，最後要各留 5 顆。洗髓丹、伐骨丹都是千寶閣用七彩補天石換（每顆 1 顆）。<br>
+轉世後元神會消散，資質還在，但要<b>重新備齊一整份材料</b>再凝聚一次。
+</div>
+<div class="ysg" id="conds"></div>
+
 <h2>凝聚的代價</h2>
 <div class="box"><ul>
 <li><span class="warn"><b>金丹和元嬰的加成全部消失</b></span>：金丹的氣血、靈力上限加成，元嬰的術法傷害加成和化神渡劫勝算，凝聚後都不再計算。</li>
@@ -112,6 +136,24 @@ const P=window.PROFILE,apt=P&&P.aptitude,mine=apt&&YS.find(y=>y[0]===apt.physiqu
 const eff=y=>{const pct=y[3]==="heaven"?30:10;return y[4]==="雷"?`雷擊觸發時，該擊傷害 +${pct}%`:y[4]==="風"?`風擊追加的那一擊傷害 +${pct}%`:`本命五行鎖定為${y[4]}，造成的傷害 +${pct}%${y[4]==="火"?"（含燒傷）":""}`};
 document.getElementById("types").innerHTML=YS.map(y=>`<tr class="${(have||mine)===y?"mine":""}"><td class="nw">${y[1]}<br><span class="sub">${y[3]==="heaven"?"神體":"道體"}</span></td><td class="nw">${y[5]} <b>${y[2]}</b></td>
 <td class="nw ${y[3]==="heaven"?"t-heaven":"t-earth"}">${y[3]==="heaven"?"天元神":"地元神"}</td><td>${y[4]}</td><td>${eff(y)}</td></tr>`).join("");
+// ---- 十二種元神各自的取得條件 ----
+const ROOTS={heaven:["至尊靈根","混沌靈根、太初靈根、鴻蒙靈根、創世靈根、先天五太靈根、先天五行靈根、空靈根、空明靈根、空識靈根",9,"supreme"],earth:["特殊靈根","無屬性靈根、日靈根、月靈根、仙靈根",4,"special"]};
+const COST=[["huashenScrolls","化神訣殘本",10000],["breakPills","破障丹",5],["rootPills","洗髓丹",5],["physiquePills","伐骨丹",5],["spiritFruits","化神靈果",5]];
+const num=n=>Number(n||0).toLocaleString("zh-TW"),yes=(ok,t)=>`<span class="st ${ok?"ok":"warn"}">${ok?"✓":"✗"} ${t}</span>`;
+document.getElementById("conds").innerHTML=YS.map(y=>{
+  const hv=y[3]==="heaven",R=ROOTS[y[3]],isMine=apt&&apt.physique===y[0],done=have===y;let you="";
+  if(P&&done)you=`<div class="you ok"><b>✓ 你已經凝聚了這個元神</b></div>`;
+  else if(P&&!have&&apt&&apt.physique){
+    if(isMine){const rootOk=apt.root&&apt.root.group===R[3],realmOk=(P.realmIndex||0)>=4;
+      you=`<div class="you"><b>你的進度</b>${yes(true,"體質符合（"+(P._phy||y[1])+"）")}${yes(rootOk,rootOk?"靈根符合（"+(P._root||R[0])+"）":"靈根是"+(P._root||"其他等級")+"，要用洗髓丹重測到"+R[0])}
+        ${yes(realmOk,realmOk?"境界已到元嬰期以上":"境界還沒到元嬰期")}${COST.filter(c=>P[c[0]]!==undefined||c[0]==="huashenScrolls").map(c=>yes((P[c[0]]||0)>=c[2],`${c[1]} ${num(P[c[0]])}／${num(c[2])}`)).join("")}</div>`}
+    else you=`<div class="you">你的體質是${P._phy||"其他體質"}，要用伐骨丹重測到「${y[1]}」才能走這條路。</div>`}
+  return `<div class="ysc${isMine||done?" mine":""}" style="--tc:var(--${hv?"heaven":"earth"})"><h3>${y[5]} ${y[2]}</h3>
+  <span class="sub">${hv?"天元神":"地元神"}・偏好${y[4]}・修為速度 +${hv?50:20}%・${eff(y)}</span>
+  <ol><li>先天體質：<b>${y[1]}</b>（${hv?"神體":"道體"}，只能是這一個）</li>
+  <li>先天靈根：<b>${R[0]}</b>，${R[2]} 種任一種都可以<br><span class="sub">${R[1]}</span></li>
+  <li>境界：<b>元嬰期以上</b></li>
+  <li>材料：化神訣殘本 10,000 頁，破障丹、洗髓丹、伐骨丹、化神靈果各 5 顆</li></ol>${you}</div>`}).join("");
 if(P){
   const g=apt&&apt.root&&apt.root.group,canRoot=mine&&g===(mine[3]==="heaven"?"supreme":"special"),realmOk=(P.realmIndex||0)>=4;
   let t;
