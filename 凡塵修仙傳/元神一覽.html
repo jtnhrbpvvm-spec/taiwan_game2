@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>元神一覽</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--acct:#6d28d9;--link:#6d28d9;--warn:#b91c1c;--ok:#15803d;
+  --heaven:#be185d;--earth:#1d4ed8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--acct:#c4b5fd;--link:#c4b5fd;--warn:#fca5a5;--ok:#86efac;
+  --heaven:#f9a8d4;--earth:#93c5fd}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+a{color:var(--link);text-underline-offset:2px}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:26px 0 10px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.85}
+.box b{color:var(--acct)}
+.box ul{margin:0;padding-left:20px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.tier{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--tc);border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.8}
+.tier h3{margin:0 0 4px;font-size:18px;color:var(--tc)}
+.tier b{color:var(--acct)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nw{white-space:nowrap}
+.t-heaven{color:var(--heaven);font-weight:bold}.t-earth{color:var(--earth);font-weight:bold}
+tr.mine td{background:color-mix(in srgb,var(--acc) 18%,transparent)}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+#me{margin:12px 0}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🔮 元神一覽</h1>
+<div class="sub">元嬰期之後，先天資質夠好的修士可以學「元嬰化神法」，把金丹和元嬰凝聚成元神。凝聚後修煉更快、偏好屬性的傷害更高，但也有代價。</div>
+<div id="me"></div>
+
+<h2>誰能凝聚元神</h2>
+<div class="two">
+<div class="tier" style="--tc:var(--heaven)"><h3>🌈 天元神</h3>
+條件：先天體質是<b>神體</b>，而且先天靈根是<b>至尊靈根</b><br>
+修為速度 <b>+50%</b><br>偏好屬性的傷害 <b>+30%</b></div>
+<div class="tier" style="--tc:var(--earth)"><h3>地元神</h3>
+條件：先天體質是<b>道體</b>，而且先天靈根是<b>特殊靈根</b><br>
+修為速度 <b>+20%</b><br>偏好屬性的傷害 <b>+10%</b></div>
+</div>
+<div class="box" style="margin-top:12px"><ul>
+<li>境界要到<b>元嬰期以上</b>。</li>
+<li>只有上面兩種組合可以，<b>要兩項同時符合</b>。例如「神體＋特殊靈根」或「道體＋至尊靈根」都<span class="warn">不能</span>凝聚元神。</li>
+<li>元神的種類<b>由先天體質決定</b>（見下表），靈根只決定能不能凝聚。</li>
+<li>體質和靈根原本的能力照常生效，元神是另外多出來的。</li>
+<li>想知道抽到這種資質大概要多少次，可以用<a href="靈根體質一覽.html">靈根體質一覽</a>的抽數試算。</li>
+</ul></div>
+
+<h2>凝聚需要的材料</h2>
+<div class="tw"><table><thead><tr><th>材料</th><th class="num">數量</th><th>怎麼取得</th></tr></thead><tbody>
+<tr><td class="nw">📖 化神訣殘本</td><td class="num">10,000</td><td>見下方「殘本來源」</td></tr>
+<tr><td class="nw">🔮 破障丹</td><td class="num">5</td><td rowspan="4">千寶閣珍貴物資，每顆 1 顆七彩補天石。四種各 5 顆，一共 <b>20 顆七彩補天石</b>（功德每滿 3 萬凝結 1 顆）</td></tr>
+<tr><td class="nw">🧪 洗髓丹</td><td class="num">5</td></tr>
+<tr><td class="nw">🦴 伐骨丹</td><td class="num">5</td></tr>
+<tr><td class="nw">🍑 化神靈果</td><td class="num">5</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">在人物面板點「元神」那一行就能打開元神視窗，材料夠了按「凝聚元神」。</div>
+
+<h2>十二種元神</h2>
+<div class="tw"><table><thead><tr><th>先天體質</th><th>元神</th><th>等級</th><th>偏好屬性</th><th>偏好屬性的效果</th></tr></thead><tbody id="types"></tbody></table></div>
+<div class="box" style="margin-top:12px"><ul>
+<li><b>五行偏好</b>（金、木、水、火、土）：你的<b>本命五行會鎖定成這個屬性</b>（不再看身上哪種五行的裝備最多），你造成的直接傷害全部乘上加成；火元神連燒傷也一起加。</li>
+<li><b>雷偏好</b>：觸發雷擊的那一擊再乘上加成。</li>
+<li><b>風偏好</b>：風擊追加的那一擊乘上加成。</li>
+<li>這個傷害加成是<b>獨立的倍率</b>，不算在「增益」裡，所以不受增益 +200% 上限的限制。</li>
+<li>修為速度的加成會和靈根、裝備「悟道」等修為加成加在一起。</li>
+</ul></div>
+
+<h2>凝聚的代價</h2>
+<div class="box"><ul>
+<li><span class="warn"><b>金丹和元嬰的加成全部消失</b></span>：金丹的氣血、靈力上限加成，元嬰的術法傷害加成和化神渡劫勝算，凝聚後都不再計算。</li>
+<li><span class="warn"><b>先天資質鎖定</b></span>：不能再用洗髓丹、伐骨丹重測；仙府信箱賜予的資質也無法接受。</li>
+<li><b>轉世時元神消散</b>，資質解鎖，要重新凝聚。還沒用掉的化神訣殘本會保留。</li>
+<li>凝聚時會解鎖該偏好屬性的專屬頭像框，轉世後頭像框仍然保留。</li>
+</ul></div>
+<div class="sub" style="margin-top:6px">拿超品金丹加天元嬰・上的人來比：凝聚前有氣血、靈力上限 +50% 和術法傷害 +60%；凝聚成天元神後這些沒了，換成所有傷害 +30%（五行偏好）和修為速度 +50%。走物理路線的人損失的只有氣血和靈力上限。金丹、元嬰的品級見<a href="渡劫金丹壽元.html">渡劫・金丹・壽元</a>。</div>
+
+<h2>殘本來源</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>每次數量</th><th>備註</th></tr></thead><tbody>
+<tr><td class="nw">鎮魔塔</td><td>每擊敗一層 BOSS 30～80</td><td>樓主層（10、20…100 層）加倍</td></tr>
+<tr><td class="nw">死守天南城</td><td>首領波必掉 20～40；一般波有機會掉 3～8</td><td>每 10 波一個首領</td></tr>
+<tr><td class="nw">奇遇・異界空間</td><td>每次結算 50～150</td><td>見<a href="奇遇一覽.html">奇遇一覽</a></td></tr>
+<tr><td class="nw">懸賞伏誅</td><td>天榜 40、地榜 25、人榜 15</td><td>見<a href="懸賞與善惡.html">懸賞與善惡</a></td></tr>
+<tr><td class="nw">每日任務</td><td>一輪 10 項全部領完 50</td><td>每 4 小時刷新一輪</td></tr>
+<tr><td class="nw">野外擊殺</td><td>有機會掉 1～3</td><td>只限適合境界在<b>化神以上</b>的地圖（亂星海起）</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">設計上認真玩大約 3～4 週可以集滿 1 萬頁。</div>
+
+<h2>元神專屬頭像框</h2>
+<div class="tw"><table><thead><tr><th>偏好屬性</th><th>頭像框</th></tr></thead><tbody>
+<tr><td>金</td><td>庚金元神環</td></tr><tr><td>木</td><td>乙木元神環</td></tr><tr><td>水</td><td>癸水元神環</td></tr><tr><td>火</td><td>丙火元神環</td></tr>
+<tr><td>土</td><td>戊土元神環</td></tr><tr><td>雷</td><td>紫雷元神環</td></tr><tr><td>風</td><td>青風元神環</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">凝聚後洞府的頭像外圈會多一圈屬性色的光暈（天元神會旋轉），戰場上也會出現元神虛影，出手時飄字會標出加成。</div>
+</div>
+<script src="profile.js"></script>
+<script>
+// [先天體質 id, 體質名稱, 元神, 等級, 偏好, 圖示]
+const YS=[["holyBody","荒古聖體","庚金天元神","heaven","金","⚔️"],["daoBody","先天聖體道胎","乙木天元神","heaven","木","🌿"],["doublePupil","重瞳","癸水天元神","heaven","水","💧"],
+["tyrantBody","蒼天霸體","丙火天元神","heaven","火","🔥"],["supremeBone","至尊骨","戊土天元神","heaven","土","⛰️"],["chaosBody","混沌體","混沌天元神","heaven","雷","🌀"],
+["swordBody","先天劍體","劍心地元神","earth","金","🗡️"],["bladeBody","霸刀戰體","刀魄地元神","earth","火","🔪"],["fanBody","風靈仙體","風靈地元神","earth","風","🌪️"],
+["bowBody","神射之體","神目地元神","earth","木","🏹"],["fluteBody","天籟道體","天籟地元神","earth","水","🎶"],["brushBody","符靈道體","符籙地元神","earth","雷","🖌️"]];
+const P=window.PROFILE,apt=P&&P.aptitude,mine=apt&&YS.find(y=>y[0]===apt.physique),have=P&&P.yuanshen&&YS.find(y=>y[0]===P.yuanshen.type);
+const eff=y=>{const pct=y[3]==="heaven"?30:10;return y[4]==="雷"?`雷擊觸發時，該擊傷害 +${pct}%`:y[4]==="風"?`風擊追加的那一擊傷害 +${pct}%`:`本命五行鎖定為${y[4]}，造成的傷害 +${pct}%${y[4]==="火"?"（含燒傷）":""}`};
+document.getElementById("types").innerHTML=YS.map(y=>`<tr class="${(have||mine)===y?"mine":""}"><td class="nw">${y[1]}<br><span class="sub">${y[3]==="heaven"?"神體":"道體"}</span></td><td class="nw">${y[5]} <b>${y[2]}</b></td>
+<td class="nw ${y[3]==="heaven"?"t-heaven":"t-earth"}">${y[3]==="heaven"?"天元神":"地元神"}</td><td>${y[4]}</td><td>${eff(y)}</td></tr>`).join("");
+if(P){
+  const g=apt&&apt.root&&apt.root.group,canRoot=mine&&g===(mine[3]==="heaven"?"supreme":"special"),realmOk=(P.realmIndex||0)>=4;
+  let t;
+  if(have)t=`你已經凝聚了 <b>${have[5]} ${have[2]}</b>（${eff(have)}）。`;
+  else if(!apt||!apt.physique)t=`你還沒有做過資質測試（第一次拜入宗門時會測）。`;
+  else if(mine&&canRoot)t=`你的資質（${P._phy||mine[1]}＋${P._root||"靈根"}）<span class="ok"><b>可以凝聚 ${mine[5]} ${mine[2]}</b></span>。${realmOk?"":"境界到元嬰期後就能學元嬰化神法。"}目前化神訣殘本 ${Number(P.huashenScrolls||0).toLocaleString("zh-TW")} / 10,000。`;
+  else if(mine)t=`你的體質（${P._phy||mine[1]}）符合，但靈根（${P._root||"—"}）不是${mine[3]==="heaven"?"至尊靈根":"特殊靈根"}，<span class="warn">目前無法凝聚元神</span>。可以用洗髓丹重測靈根。`;
+  else t=`你的資質（${P._phy||"體質"}＋${P._root||"靈根"}）<span class="warn">目前無法凝聚元神</span>：體質要是神體或道體。可以用伐骨丹重測體質、洗髓丹重測靈根。`;
+  document.getElementById("me").innerHTML=`<div class="box">👤 ${t}</div>`;
+}
+</script></body></html>

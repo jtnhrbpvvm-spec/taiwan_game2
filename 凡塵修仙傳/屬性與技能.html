@@ -85,6 +85,17 @@ td.nw{white-space:nowrap}
 .cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:4px 12px;margin-top:6px}
 label.ck{display:flex;flex-direction:row;align-items:flex-start;gap:6px;font-size:13px;color:var(--fg);line-height:1.5;cursor:pointer}
 label.ck input{width:16px;height:16px;margin:2px 0 0;flex:none;accent-color:var(--acc);padding:0}
+:root{--hok:#15803d;--hpot:#a16207;--hrisk:#c2410c;--hno:#b91c1c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hok:#86efac;--hpot:#fde047;--hrisk:#fdba74;--hno:#fca5a5}}
+.hs{font-weight:bold;white-space:nowrap}.hs.ok{color:var(--hok)}.hs.pot{color:var(--hpot)}.hs.risk{color:var(--hrisk)}.hs.no{color:var(--hno)}.hs.lock{color:var(--mute);font-weight:normal}
+tr.hlock td{color:var(--mute)}
+tr.hbest td{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.hrec{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));margin:10px 0}
+.hrec>div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.75;min-width:0}
+.hrec>div.top{border:2px solid var(--acc)}
+.hrec b.big{font-size:19px;color:var(--acct)}
+.hrec small{color:var(--mute);font-size:12.5px}
+#huntOut td small{color:var(--mute);font-size:12px}
 :root{--link:#6d28d9;--acct:#6d28d9}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
 a{color:var(--link);text-underline-offset:2px}
@@ -102,7 +113,7 @@ a:hover{text-decoration-thickness:2px}
 <li>敵人沒有分物理防禦、術法防禦：兩種傷害都一樣會被閃避、被減傷。</li>
 </ul>
 </div>
-<div class="tabs"><button data-k="calc" class="on">🧮 試算</button><button data-k="stat">🧬 六大屬性</button><button data-k="rule">⚔️ 出手與傷害</button><button data-k="aid">🛡️ 輔助狀態說明</button><button data-k="skill">📖 技能一覽</button></div>
+<div class="tabs"><button data-k="calc" class="on">🧮 試算</button><button data-k="hunt">🗺️ 打怪推薦</button><button data-k="stat">🧬 六大屬性</button><button data-k="rule">⚔️ 出手與傷害</button><button data-k="aid">🛡️ 輔助狀態說明</button><button data-k="skill">📖 技能一覽</button></div>
 
 <div id="p-calc">
 <div class="box" id="saveBox">
@@ -150,6 +161,13 @@ a:hover{text-decoration-thickness:2px}
 <div id="cSkills"></div>
 
 <div id="saveOut"></div>
+</div>
+
+<div id="p-hunt" hidden>
+<div class="box">
+依「試算」分頁目前的<b>境界、等級、配裝與角色設定</b>（讀取存檔後就是你的角色），用遊戲自己的掛機估算公式，算出每張地圖你<b>幾下殺一隻、一波會掉多少血、每小時能拿多少經驗和靈石</b>，再挑出「活得下來、經驗又最高」的地圖。回「試算」分頁換裝或改設定，這裡會跟著重算。
+</div>
+<div id="huntOut"></div>
 </div>
 
 <div id="p-stat" hidden>
@@ -521,6 +539,8 @@ function analyze(p){
   const cnt={};WX.forEach(e=>cnt[e]=0);let elem=null;const ec={};
   SLOTS.forEach(k=>{const eq=eqs[k];if(!eq||cnt[eq.element]===undefined)return;cnt[eq.element]++;ec[eq.element]=(ec[eq.element]||0)+1});
   SLOTS.forEach(k=>{const eq=eqs[k];if(eq&&ec[eq.element]&&(elem===null||ec[eq.element]>ec[elem]))elem=eq.element});
+  // 五行偏好的元神：本命五行鎖定為元神的屬性
+  {const YSE={holyBody:"金",daoBody:"木",doublePupil:"水",tyrantBody:"火",supremeBone:"土",swordBody:"金",bladeBody:"火",bowBody:"木",fluteBody:"水"};if(p.yuanshen&&YSE[p.yuanshen.type])elem=YSE[p.yuanshen.type]}
   const sets=Math.min(...WX.map(e=>cnt[e])),rest={};WX.forEach(e=>rest[e]=cnt[e]-sets);
   const res=[];WX.filter(e=>cnt[e]>=5).forEach(e=>res.push(RES_SINGLE[e]));
   let sp=null;
@@ -549,7 +569,8 @@ function analyze(p){
   if(rootDef)add(rootDef[0],rootDef[1]);
   if(phyDef){const b=Object.assign({},phyDef[1]);if(phySp.weapon&&eqs[phySp.weapon])b["fx:法爆"]=(b["fx:法爆"]||0)+.1;if(phySp.elem&&elem===phySp.elem)b.atkPct=(b.atkPct||0)+.08;add(phyDef[0],b)}
   let g=p.goldenCore;if(!g)g={core:r>2?1:null,infant:r>3?4:null};
-  {const b={};if(g.core!=null&&CORE[g.core]&&CORE[g.core][1]){b.hpPct=CORE[g.core][1];b.mpPct=CORE[g.core][1]}add(g.core!=null&&CORE[g.core]?CORE[g.core][0]:"金丹",b);
+  const ysOn=!!(p.yuanshen&&p.yuanshen.type);   // 凝聚元神後，金丹與元嬰化入元神，加成消失
+  if(!ysOn){const b={};if(g.core!=null&&CORE[g.core]&&CORE[g.core][1]){b.hpPct=CORE[g.core][1];b.mpPct=CORE[g.core][1]}add(g.core!=null&&CORE[g.core]?CORE[g.core][0]:"金丹",b);
    if(g.infant!=null&&INFANT[g.infant]&&INFANT[g.infant][1])add(INFANT[g.infant][0],{magPct:INFANT[g.infant][1]})}
   const learned=(p.spells||[]).filter(id=>SPELL[id]),au={};
   learned.forEach(id=>{const a=SPELL[id].aura;if(a)for(const k in a)if(/Pct$/.test(k))au[k==="mpPct"?"auraMp":k]=(au[k==="mpPct"?"auraMp":k]||0)+a[k]});add("仙法光環",au);
@@ -614,7 +635,7 @@ function analyze(p){
   (p.beasts||[]).filter(b=>b.alive&&b.active!==false).forEach(b=>(b.skills||[]).forEach(id=>{const k=BEAST_BUFF[id];if(k)aid.push(["暫時",`${BEAST_NAME[b.id]||"靈寵"}・${k[0]}`,`${k[4]}，持續 ${k[2]} 回合`])}));
   slotted.forEach(id=>{const x=SPELL[id];if(x.buff)aid.push(["暫時","仙法・"+x.name,`物理攻擊、術法攻擊各 ${pc1(x.buff-1)}（進增益），持續 ${x.turns} 回合`]);if(x.shield)aid.push(["暫時","仙法・"+x.name,`你受到的傷害 −${Math.round(x.shield*100)}%，持續 ${x.turns} 回合`])});
   (p.learnedSkills||[]).forEach(sk=>{if(sk.type==="buff")aid.push(["暫時","禁術・"+sk.name,`物理攻擊、術法攻擊各 ${pc1(sk.mult-1)}（進增益），持續 ${sk.duration} 回合`])});
-  return{mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
+  return{tot,eqs,mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
     power:Math.round(Math.max(phys,mag)*(1+crit/100*.5)*(1+combo/100)*1.8)};
 }
 function showSave(a){
@@ -863,6 +884,157 @@ $("setupBox").onchange=()=>{
   b.reincarnateBonus=Object.assign({},b.reincarnateBonus,{nv2Hp:Math.max(0,+F.reinc||0)/100});b.weakened=!!F.weak;
   rebuild();
 };
+// ---- 打怪推薦：照遊戲的掛機估算（一般玩家基準、境界壓制、收益速度上限）----
+// [名稱, 區, 經驗係數, 每隻靈石, 境界門檻, 妖獸位置, 固定位置, 強度範圍, 攻擊倍率, 四維門檻, 適合境界上限]
+const HMAPS=[["靈山大川",1,8,20,0,0,null,null,.7,0,1],["深淵險地",1,20,80,0,2,null,null,1,0,2],["上古遺跡",1,50,250,0,3,null,null,1,0,3],
+["天南",2,100,1000,0,4,null,null,1,0,4],["亂星海",2,300,1650,0,5,null,null,1,0,5],["鬼谷八荒",2,1000,2450,0,6,null,null,1,0,6],["墜魔谷",2,1200,2550,6,6,6.9,[5,10],1,0,6],
+["黑風海域",3,1400,2700,7,7,null,null,1,100,7],["崑吾山",3,1600,2700,7,7,7.9,[5,10],1,100,7],["蠻荒古地",3,1900,2950,8,8,null,null,1,100,8],["雷鳴大陸",3,2100,2950,8,8,8.9,[8,15],1,100,8],
+["血天大陸",3,2500,3150,9,9,null,null,1,100,9],["天淵戰場",3,3000,3150,9,9,9.9,[8,20],1,100,9],["星空古路",3,3000,3350,10,10,null,null,1,100,10],["荒古禁地",3,5000,3350,6,10,10.9,[15,25],1,100,10],
+["九天仙域",3,5000,6900,11,11,null,null,1,100,11],["太初古礦",3,6500,4200,6,10.5,10.9,[15,30],1,100,11],["上蒼（葬天島）",3,8000,6900,6,11,11.9,[15,40],1,100,11],
+["不死山",4,6000,7300,10,12,null,null,1,160,12],["神墟",4,7000,7750,10,12.3,null,null,1,160,12],["仙陵",4,8000,8200,10,12.6,null,null,1,160,12],["冥界",4,9000,8400,10,12.9,null,null,1,160,12],
+["仙界戰場",5,15000,8400,10,13.5,null,null,1,180,13],["萬界戰場",5,25000,8400,10,14.5,null,null,1,180,14],["混沌初界",5,50000,8400,10,15.5,null,null,1,180,15]];
+const HCAT={1:"一、野外歷練",2:"二、開放世界",3:"三、上古禁區",4:"四、幽冥禁域",5:"五、諸天戰場"},HATTR={1:[0,2],2:[5,4],3:[10,6],4:[10,6],5:[15,8]};
+// 同境界「一般玩家」的基準：妖獸的氣血、攻擊與收益補償都以它為準
+const T={
+  stat:L=>{const r=Math.floor(L+1e-9),s=Math.round((L-r)*10)+1;return(5+(r*10+s-1)+5*r)*1.1},
+  buff:L=>Math.min(50,10+L*10),
+  normal:L=>{const st=T.stat(L);return(5*Math.pow(1.05,Math.min(L,10))*1.25+st*.05)*(1+st*.001)*(1+T.buff(L)/100)},
+  hp:L=>50*Math.pow(1.05,L)*(1+T.stat(L)*.002),
+  round:L=>{const st=T.stat(L);return(1+Math.min(30,st*.01)/100*.5)*(1+Math.min(10,st*.04)/100)*1.1},
+  hit:L=>T.stat(L)*.08};
+const hLabel=L=>{const r=Math.min(15,Math.floor(L+1e-6));return REALMS[r]+Math.min(10,Math.round((L-r)*10)+1)+"階"};
+// 種族讓「殺一隻要幾下」變成幾倍：妖獸氣血 +10%、鬼物閃避 +5；幽冥禁域只出鬼物
+const hRace=(dark,baseEva,hit)=>{const th=e=>1-Math.max(0,Math.min(95,e-hit))/100;return(dark?0:5/7)*1.1+(dark?1:2/7)*th(baseEva)/th(baseEva+5)};
+const hStr=(L,m)=>m[7]||(Math.floor(L+1e-6)<=2?[1,1.5]:[1.5,3]);
+const hTypRounds=m=>{const L=m[5],[def,eva]=HATTR[m[1]],hit=T.hit(L),st=hStr(L,m),fixed=m[6]!=null?T.normal(m[6])/T.normal(L):1;
+  return 5*(st[0]+st[1])/2*fixed*hRace(m[1]===4,eva,hit)/T.round(L)/(1-def/100)/(1-Math.max(0,eva-hit)/100)};
+const H_LBDEF={lb1_armor:[8,0],lb2_armor:[15,5],lb3_artifact:[20,10],lb3_artifact_coffin:[30,5],lb3_artifact_cauldron:[10,0],lb3_artifact_wushi:[10,25]};
+const H_PAR={chennan:["def",3],wushi:["def",3],hengyu:["def",2],xihuangmu:["def",2],amituo:["def",3],baixiaochun:["def",3],linlei:["def",2],jinjiao:["def",2],
+  dashanren:["eva",3],nangongwan:["eva",2],duande:["eva",2],xukong:["eva",3],ziling:["eva",2]};
+const H_PAREXP={babata:.03,liqiye:.1},H_PARCOIN={duande:.1};
+const H_RESDEF={"岩共鳴":10,"鋒岩共鳴":8,"熔共鳴":8,"五行聖共鳴":15};
+const H_SETS={def:"白帝 句芒 玄天 炎帝 軒轅".split(" "),eva:"天樞 瑤光 洛神 畢方 須彌".split(" "),gain:"大衍 蓬萊 歸墟 丹霄 萬壽".split(" ")};
+const H_ROOTEXP={fake5:-.25,fake4:-.15,true3:0,true2:.2,heaven:.5,variant:.4,special:.6,supreme:1},H_ROOTID={immortal:.8,hongmeng:1.2,kongling:1.3,kongshi:1.1};
+const H_SECTEXP={"武當":1.1,"峨嵋":1.2,"少林寺":1,"全真教":1.3,"皇朝":1.2,"逍遙派":1.2,"崑崙仙宗":1.5,"蜀山劍派":1,"丹鼎司":3,"御獸仙宗":1.2,"天魔教":1.5,"天音閣":2,
+  "太清道德宗":4,"玉清闡教宗":3,"上清截教宗":2.5,"萬界仙門":5,"九幽黃泉":3.5,"天籟仙宮":4};
+const H_PACE=[20,20,80,250,1000,1650,2450,2700,2950,3150,3350,6900,8400,8400,8400,8400];
+const hWan=n=>{n=Math.round(n);const a=Math.abs(n);return a>=1e8?+(n/1e8).toFixed(2)+" 億":a>=1e4?+(n/1e4).toFixed(1)+" 萬":full(n)};
+// 你的防禦面與收益加成（「試算」沒算的部分）：減傷、閃避、金身、修為加成、靈石加成
+function hPlayer(a){
+  const p=a.p,E=a.eqs,FM={"紫色":1,"橙色":1.5,"白金":2},setN={};
+  let def=0,eva=0,parDef=0,parEva=0,jin=0,wuFx=0,wu=0,caiFx=0,cai=0,dong=0,evaCap=40;
+  SLOTS.concat("神器").forEach(k=>{const eq=E[k];if(!eq)return;const d=gdef(eq),q=eq.quality,fm=FM[q];
+    if(d){const st=slotType(k);if(st==="armor")def+=(DEFQ[q]||0)*(k==="盔甲"?1.5:1);else if(st==="accessory")eva+=EVAQ[q]||0;
+      if(fm){if(d.fx==="金身")jin+=.06*fm;if(d.fx==="悟道")wuFx+=.02*fm;if(d.fx==="聚財")caiFx+=.03*fm;if(d.fx==="洞察")dong+=5*fm;if(d.set)setN[d.set]=(setN[d.set]||0)+1}}
+    else if(H_LBDEF[eq.lingbaoId]){def+=H_LBDEF[eq.lingbaoId][0];eva+=H_LBDEF[eq.lingbaoId][1]}
+    else if(eq.stats){def+=+eq.stats.def||0;eva+=+eq.stats.eva||0}
+    (Array.isArray(eq.subs)?eq.subs:[]).forEach(sb=>{if(!sb)return;const[kk,v]=sb;if(kk==="def")def+=v;else if(kk==="eva")eva+=v;else if(kk==="fx:悟道")wu+=v;else if(kk==="fx:聚財")cai+=v});
+    (Array.isArray(eq.sockets)?eq.sockets:[]).forEach(x=>{if(x&&x.type==="def")def+=x.grade||0;if(x&&x.type==="eva")eva+=x.grade||0})});
+  for(const n in setN){const c=setN[n];if(H_SETS.def.includes(n)&&c>=4)def+=5;if(H_SETS.eva.includes(n)){if(c>=2)eva+=3;if(c>=6)evaCap+=5}
+    if(H_SETS.gain.includes(n)){if(c>=2)cai+=.05;if(c>=4)wu+=.05}}
+  a.res.forEach(x=>def+=H_RESDEF[x[0]]||0);
+  a.team.forEach(id=>{const m=(((p.partnerBond||{})[id]||{}).pts||0)>=1500?1.2:1,x=H_PAR[id];
+    if(x){const v=x[1]*m;if(x[0]==="def"){def+=v;parDef+=v}else{eva+=v;parEva+=v}}
+    wu+=(H_PAREXP[id]||0)*m;cai+=(H_PARCOIN[id]||0)*m});
+  const apt=p.aptitude||{},rt=apt.root;let rootExp=0;
+  if(rt){rootExp=H_ROOTID[rt.id]!=null?H_ROOTID[rt.id]:H_ROOTEXP[rt.group]||0;
+    if((rt.elems||[]).includes("土"))def+=5*(({heaven:1,true2:.4,true3:.2})[rt.group]||0);if(rt.id==="wuxing5")def+=5;if(rt.id==="kongling")eva+=5}
+  if(apt.physique==="earthBody"||apt.physique==="holyBody")def+=5;
+  const phyExp=apt.physique==="chaosBody"||apt.physique==="daoBody"?.3:0;
+  const ysExp=p.yuanshen&&p.yuanshen.type?(p.yuanshen.tier==="heaven"?.5:.2):0;
+  eva+=a.agi*.08;def=Math.min(60,def);eva=Math.min(evaCap,eva);
+  const wuAll=Math.min(.2,wuFx)+wu+rootExp+phyExp+ysExp,sectExp=p.sect?(H_SECTEXP[p.sect.name]||+p.sect.expMult||1):1;
+  const fox=a.beasts.includes("fox"),dragon=a.beasts.includes("dragon");
+  return{def,eva,parDef,parEva,jin:Math.min(.3,jin),dong:Math.min(20,dong),hit:a.agi*.08,
+    sectExp,fox,dragon,wuAll,expMult:sectExp*(fox?1.1:1)*(dragon?1.2:1)*Math.max(0,1+wuAll),coinMult:1+Math.min(.3,caiFx)+cai,
+    round:Math.max(a.phys,a.mag)*(1+a.crit/100*.5)*(1+a.combo/100)*1.1};
+}
+// 妖獸打你時實際生效的閃避、減傷：自己最多 20、夥伴給的最多再 10；妖獸有命中會抵銷閃避
+const hTaken=(P,atk,monL,useJin)=>{const pe=Math.min(Math.max(0,P.eva-P.parEva-T.hit(monL)),20)+Math.min(P.parEva,10),own=Math.min(Math.max(0,P.def-P.parDef),20),par=Math.min(P.parDef,10);
+  return atk*(1-pe/100)*(1-Math.min(1-(1-(own+par)/100)*(1-(useJin?P.jin:0)),.2+par/100))};
+function hEval(a,P,m){
+  const pL=a.r+(a.s-1)/10,[name,cat,er,coins,minR,L0,fixL,,atkM,minS,top]=m,[mDef,mEva]=HATTR[cat];
+  const need=Math.max(minR,Math.floor(L0+1e-9)-1);
+  let lock="";if(a.r<need)lock=`境界要到${REALMS[need]}`;else if(minS&&["str","con","int","spr"].some(k=>a.stats[k].total<minS))lock=`力量、體質、悟性、靈力都要 ${minS} 點以上`;
+  const gap=Math.max(0,L0-pL),lvAt=u=>fixL!=null?fixL:Math.round(Math.min(Math.max(pL+u,L0),top+(a.r<=top?1:.9))*1000)/1000;
+  const mon=(u,mult)=>{const L=lvAt(u);return{L,hp:Math.max(1,Math.round(T.normal(L)*5*(1+gap)*mult)),
+    atk:Math.max(.01,Math.round(T.hp(L)*atkM*(({0:1.5,1:1.5,2:1.125})[Math.floor(L+1e-6)]||1)*(1+1.2*gap)*mult)/100)}};
+  const st=hStr(lvAt(.05),m),avg=mon(.05,(st[0]+st[1])/2),bad=mon(.1,st[0]+(st[1]-st[0])*.75);
+  const ev=Math.max(0,mEva-P.hit),race=hRace(cat===4,mEva,P.hit);
+  const hitsOf=x=>Math.max(1,x.hp/Math.max(.01,P.round*(1-mDef/100))/(1-ev/100)*race);
+  const wave=(x,n)=>{const h=hitsOf(x);let t=0;for(let k=1;k<=n;k++)t+=Math.max(0,k*h-1);return hTaken(P,x.atk,x.L,true)*t};
+  const h=hitsOf(avg),typ=hTypRounds(m),speed=(11+2*typ)/(11+2*h),f=Math.min(1,speed),A=wave(avg,2)/a.hp,W=wave(bad,3)/a.hp,wavesHr=3600/(11+2*h);
+  // 每小時：經驗＝係數 × 15 × 每秒 1/3 隻 × 3600；靈石＝每隻靈石 × 每秒 1/3 隻 × 3600（都再乘速度，最多 1）
+  const lo=hLabel(lvAt(0)),hi=hLabel(lvAt(.1));
+  return{name,cat,lock,gap,avg,lv:lo===hi?lo:lo.replace(/階$/,"")+"～"+(hi.replace(/\d+階$/,"")===lo.replace(/\d+階$/,"")?hi.match(/\d+階$/)[0]:hi),st,h,speed,f,A,W,kills:wavesHr*2,exp:er*18000*f*P.expMult,coins:coins*1200*f*P.coinMult,potion:wavesHr*Math.max(0,A-.3)/.1*200,
+    state:lock?"lock":A>=1?"no":W>=1?"risk":A>.3?"pot":"ok"};
+}
+// 死守天南城：用平均值照同一套規則打一遍，估計能守到第幾波與靈石（首領光環、屬性傷害沒算，所以首領波抓得比較保守）
+function hDefense(a,P){
+  if(a.r<6)return null;
+  const pL=a.r+(a.s-1)/10,ms=[[1,6],[10,7.9],[20,8.9],[30,9.9],[40,10.9],[50,11.9],[60,12.9],[70,13.9],[80,14.9],[90,15.9]].map(([w,L])=>({w,L,a:T.normal(L)}));
+  const seg=w=>{for(let i=0;i<ms.length-1;i++)if(w<=ms[i+1].w)return[ms[i],ms[i+1]];return null},last=[ms[8],ms[9]];
+  const atkOf=w=>{const s=seg(w),[x,y]=s||last;return s?x.a*Math.pow(y.a/x.a,(Math.max(w,x.w)-x.w)/(y.w-x.w)):y.a*Math.pow(y.a/x.a,(w-y.w)/(y.w-x.w))};
+  const LOf=w=>{const s=seg(w),[x,y]=s||last;return s?x.L+(y.L-x.L)*(Math.max(w,x.w)-x.w)/(y.w-x.w):Math.min(15.9,y.L+(y.L-x.L)*(w-y.w)/(y.w-x.w))};
+  const pAtk=Math.max(a.phys,a.mag)*1.3*(1+a.crit/100*.5)*(1+a.combo/100),pHp=a.hp*5;
+  let best=0,coins=0;
+  for(let w=1;w<=100;w++){
+    const t=(w-1)/99,boss=w%10===0,L=LOf(w),gap=Math.max(0,L-pL),base=atkOf(w),grow=Math.pow(1.008,w-1);
+    const eDmg=hTaken(P,base*grow*(1+1.2*gap),L,false),eHp=base*grow*(1+gap)*18*(boss?1:1.1);
+    const net=pAtk*(1-Math.max(0,8+6*t-P.hit-P.dong)/100)*(1-(15+10*t)/100)-(boss?.1*eDmg:0);
+    if(net<=0)break;
+    const Re=Math.ceil(eHp/net),Rp=Math.ceil(pHp/eDmg);
+    if(Re>150||Re>Rp*(boss?.8:1))break;
+    best=w;let r=0;for(let i=0;i<16;i++)if(T.normal(i)<=base)r=i;
+    coins+=Math.floor(H_PACE[r]*1160/60*2*(boss?3:1));
+  }
+  return{best,coins};
+}
+function renderHunt(a){
+  const P=hPlayer(a),rows=HMAPS.map(m=>hEval(a,P,m)),cb=v=>full(Math.round(v*100)),pc=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%";
+  const top=(list,key)=>list.reduce((b,x)=>!b||x[key]>b[key]?x:b,null);
+  const ok=rows.filter(x=>x.state==="ok"),pot=rows.filter(x=>x.state==="ok"||x.state==="pot");
+  const best=top(ok,"exp"),bestPot=top(pot,"exp"),bestCoin=top(ok,"coins"),open=rows.filter(x=>x.state!=="lock");
+  const SL={ok:"🟢 穩定",pot:"🟡 要吃藥",risk:"🟠 有風險",no:"🔴 撐不住",lock:"🔒 進不去"};
+  const card=(cls,title,x,why)=>`<div class="${cls}">${title}<br><b class="big">${x.name}</b><br>每小時經驗 <b>${hWan(x.exp)}</b>・靈石 <b>${hWan(x.coins)}</b><br><small>${why}</small></div>`;
+  let rec="";
+  if(best)rec+=card("top","🟢 最推薦（活得下來、經驗最高）",best,`約 ${+best.h.toFixed(1)} 下殺一隻；一波平均掉 ${pc(best.A)} 氣血，等下一波時調息就補得回來，不太需要丹藥。`);
+  if(bestPot&&(!best||bestPot.exp>best.exp*1.02))rec+=card("","🟡 想更快：帶丹藥去打",bestPot,`經驗比較高，但一波平均掉 ${pc(bestPot.A)} 氣血，調息補不回來，要開自動補血；丹藥每小時約花 ${hWan(bestPot.potion)} 靈石。`);
+  if(bestCoin&&best&&bestCoin.name!==best.name)rec+=card("","💰 想賺靈石",bestCoin,`在穩定的地圖裡靈石最多。`);
+  if(!best&&!bestPot)rec=`<div class="top">${open.length?"以目前的數值，每張進得去的地圖都有被一波帶走的風險。先回宗門打坐、補裝備或提升境界，再回「試算」分頁看看換裝後的結果。":"目前沒有進得去的戰鬥地圖。"}</div>`;
+  const body=[1,2,3,4,5].map(c=>{const list=rows.filter(x=>x.cat===c);
+    return `<tr><td colspan="8" style="background:var(--head);font-weight:bold">${HCAT[c]}</td></tr>`+list.map(x=>{
+      if(x.state==="lock")return `<tr class="hlock"><td class="nw">${x.name}</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">${x.lock}</td></tr>`;
+      return `<tr class="${best&&x.name===best.name?"hbest":""}"><td class="nw"><b>${x.name}</b></td><td><span class="hs ${x.state}">${SL[x.state]}</span></td>
+      <td class="nw">${x.lv}<br><small>氣血 ${cb(x.avg.hp)}・攻擊 ${cb(x.avg.atk)}${x.gap>=.05?`<br><span class="warn">境界壓制 ${x.gap.toFixed(1)}</span>`:""}</small></td>
+      <td class="num">${+x.h.toFixed(1)} 下<br><small>${Math.round(x.kills)} 隻／時</small></td>
+      <td class="num">${pc(x.A)}<br><small>較差 ${pc(x.W)}</small></td>
+      <td class="num">${x.state==="no"?`<small>活著才有<br>${hWan(x.exp)}</small>`:`<b>${hWan(x.exp)}</b><br><small>${x.f>=1?"已達上限":"速度 "+pc(x.speed)}</small>`}</td>
+      <td class="num">${x.state==="no"?`<small>${hWan(x.coins)}</small>`:hWan(x.coins)}</td>
+      <td class="num">${x.potion>=1?hWan(x.potion):"—"}</td></tr>`}).join("")}).join("");
+  const D=hDefense(a,P),pe0=Math.min(Math.max(0,P.eva-P.parEva-T.hit(a.r+(a.s-1)/10)),20)+Math.min(P.parEva,10),pd0=Math.min(Math.max(0,P.def-P.parDef),20)+Math.min(P.parDef,10);
+  const z=a.p.zhenmo||{};
+  $("huntOut").innerHTML=`<div class="hrec">${rec}</div>
+  <h2>你的戰鬥數值</h2>
+  <div class="res">${[["每回合平均輸出",cb(P.round)],["氣血上限",cb(a.hp)],["減傷（面板／實際）",`${+P.def.toFixed(1)}%／${+pd0.toFixed(1)}%`],["閃避（面板／對同階妖獸）",`${+P.eva.toFixed(1)}%／${+pe0.toFixed(1)}%`],
+    ["經驗加成",`×${+P.expMult.toFixed(2)}`],["靈石加成",`×${+P.coinMult.toFixed(2)}`]].map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("")}</div>
+  <div class="sub">每回合平均輸出＝物理、術法攻擊取高的 × 暴擊期望 × 連擊期望 × 1.1（技能）。經驗加成＝宗門 ×${P.sectExp}${P.fox?"・靈幻狐 ×1.1":""}${P.dragon?"・九幽蛟龍 ×1.2":""}・修為加成 ${P.wuAll>=0?"+":"−"}${Math.round(Math.abs(P.wuAll)*100)}%（先天靈根與體質、元神、裝備「悟道」、收益套裝、夥伴）。被打時減傷、閃避實際最多各 20%，夥伴給的另外最多 10%，妖獸的命中還會抵銷閃避。</div>
+  <h2>每張地圖的估算</h2>
+  <div class="tw"><table><thead><tr><th>地圖</th><th>判定</th><th>遇到的妖獸（平均）</th><th class="num">殺一隻</th><th class="num">一波掉血</th><th class="num">每小時經驗</th><th class="num">每小時靈石</th><th class="num">丹藥花費／時</th></tr></thead><tbody>${body}</tbody></table></div>
+  <div class="sub" style="margin-top:8px">
+  <b>判定怎麼來的</b>：🟢 穩定＝一波平均掉血不到 30%（每波之間調息 10 秒可回 30%），而且較差的一波也不會倒。🟡 要吃藥＝不會被一波帶走，但調息補不回來。🟠 有風險＝遇到較差的一波（3 隻、偏強）會倒。🔴 撐不住＝平均的一波就會倒。<br>
+  <b>每小時經驗有上限</b>：遊戲規定殺得比「同境界一般玩家」快也不會拿更多，所以寫「已達上限」的地圖再加強攻擊也不會變多，該往下一張圖走；寫「速度 N%」表示你殺得比一般玩家慢，收益按比例減少。<br>
+  <b>估算的範圍</b>：和遊戲離線結算用同一套算法，只看攻擊、暴擊、連擊、氣血、減傷、閃避、金身。<b>沒算</b>吸血、回春、護盾、靈寵與夥伴的招式、屬性傷害、五行相剋、種族剋制，也沒算稱號、異火、仙法光環給的減傷閃避與修為加成，所以實際通常會比表上快一點、耐打一點；遊戲作者實測線上收益約比這個估算多 2～4 成。丹藥花費以培元丹（回 10%、200 靈石）估計。挑戰圖的妖獸強度落差很大，請多留餘裕。
+  </div>
+  <h2>副本（秘境）</h2>
+  <div class="tw"><table><thead><tr><th>副本</th><th>經驗</th><th>靈石</th><th>說明</th></tr></thead><tbody>
+  <tr><td class="nw"><b>死守天南城</b></td><td>不給經驗</td><td>${D?(D.best?`每次約 <b>${hWan(D.coins)}</b><br><small>每日 3 次，約 ${hWan(D.coins*3)}</small>`:"第 1 波就守不住"):"—"}</td>
+    <td>${D?(D.best?`估計能守到<b>第 ${D.best} 波</b>${D.best>=100?"（全破）":""}。`:"以目前數值連第 1 波都守不住。")+"每守住一波就發靈石（首領波 3 倍），另有功德、異火碎片、星允鐵、套裝部件、夥伴碎片、化神訣殘本。首領波有光環，實際可能差幾波。":"煉虛期才開放。"}<br><a href="死守天南城.html">死守天南城攻略</a></td></tr>
+  <tr><td class="nw"><b>鎮魔塔</b></td><td>不給經驗</td><td>每層不同</td><td>${a.r<6?"煉虛期才開放。":`${z.best?`你目前最高通過第 ${z.best} 層。`:""}每層先答題再打 BOSS，靈石、功德、碎片依層數與答對題數而定，每日 3 次。`}<br><a href="鎮魔塔BOSS一覽.html">鎮魔塔 BOSS 一覽</a>・<a href="鎮魔塔問答答案.html">問答答案</a></td></tr>
+  <tr><td class="nw"><b>奇遇、異界</b></td><td colspan="2">依事件而定</td><td>野外掛機時隨機觸發，沒辦法用每小時計算。<br><a href="奇遇一覽.html">奇遇一覽</a></td></tr>
+  </tbody></table></div>
+  <div class="sub" style="margin-top:6px">秘境每天各只能打 3 次，所以用「每次」和「每日」來算，沒辦法換成每小時。兩個秘境都不給經驗，練等還是要靠上面的地圖。</div>`;
+}
 // 依目前的境界、等級與配裝重算，並把結果帶進試算欄位
 function rebuild(){
   build.realmIndex=+$("cRealm").value||0;build.stage=+$("cStage").value||1;build.level=Math.max(1,Math.min(10000,Math.round(+$("cLv").value||1)));
@@ -870,7 +1042,7 @@ function rebuild(){
   set("cWp",f4((a.wp?a.wp.atk:0)*100));
   [["cStr","str"],["cInt","int"],["cCon","con"],["cSpr","spr"],["cAgi","agi"]].forEach(([id,k])=>set(id,f4(a.stats[k].total-a.base)));
   set("cBp",f4(a.bp.v*100));set("cBm",f4(a.bm.v*100));set("cBh",f4(a.bh.v*100));set("cSk",f4(((1+a.burst)*a.skillMult-1)*100));
-  calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded};mySkills=a.mine;calc();showSave(a);renderGear();renderSetup();
+  calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded};mySkills=a.mine;calc();showSave(a);renderGear();renderSetup();renderHunt(a);
 }
 function loadPlayer(p){
   build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;
@@ -903,7 +1075,7 @@ $("saveClear").onclick=()=>{$("saveCode").value="";$("saveOut").innerHTML="";$("
   $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";if(window.clearProfile)clearProfile();rebuild()};
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
-  ["calc","stat","rule","aid","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
+  ["calc","hunt","stat","rule","aid","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
 ["cRealm","cStage","cLv"].forEach(id=>$(id).oninput=rebuild);
 rebuild();
 if(window.PROFILE&&!/^#save=/.test(location.hash)){loadPlayer(window.PROFILE);$("saveMsg").textContent=`已沿用先前讀取的「${window.PROFILE.name||"角色"}」`}
