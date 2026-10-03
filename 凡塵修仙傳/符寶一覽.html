@@ -71,8 +71,8 @@ a:hover{text-decoration-thickness:2px}
 
 <h2 id="cap">上限</h2>
 <div class="tw"><table><thead><tr><th>項目</th><th class="num">上限</th><th>說明</th></tr></thead><tbody>
-<tr><td class="nw">減傷（護體符）</td><td class="num">60%</td><td>和防具、詞條、靈寶閣寶物給的減傷加在一起算。六件橙色防具本身就有 26%，快到上限時再鑲護體符就浪費了。</td></tr>
-<tr><td class="nw">閃避（身法符）</td><td class="num">40%</td><td>和飾品、詞條的閃避加在一起算。</td></tr>
+<tr><td class="nw">防禦（護體符）</td><td class="num">無</td><td>防禦已改成點數、沒有上限，和防具、詞條、靈寶閣寶物給的防禦直接相加（受到的傷害 × 120 ÷ (120 ＋ 防禦)）。鑲再多都有用，只是效果遞減。</td></tr>
+<tr><td class="nw">閃避（身法符）</td><td class="num">無</td><td>閃避也是點數、沒有上限，和飾品、詞條的閃避直接相加（閃掉的機率＝D ÷ (D ＋ 100)，D＝閃避 − 對方命中）。</td></tr>
 <tr><td class="nw">冰凍、燒傷、中毒、金重擊、雷擊觸發率</td><td class="num">各 50%</td><td>和武器五行、詞條、靈寶閣寶物的觸發率加在一起算。</td></tr>
 <tr><td class="nw">剋制符（同一種族）</td><td class="num">+20%</td><td>同族的剋制符合計最多 +20%：上品 2 枚，或中品 3 枚加下品 1 枚就滿。多鑲沒有用。</td></tr>
 <tr><td class="nw">種族剋制總和</td><td class="num">+50%</td><td>剋制符再加上斬妖錄、剋制法寶、裝備種族特效，同一族合計最多 +50%。</td></tr>
@@ -111,13 +111,13 @@ a:hover{text-decoration-thickness:2px}
 <script src="site.js"></script>
 <script>
 const $=id=>document.getElementById(id),PF=window.PROFILE||null,fm=n=>Math.round(n).toLocaleString("zh-TW");
-// 代號、名稱、圖示、類別（f 四維、p 屬性、r 剋制）、效果、備註
+// 代號、名稱、圖示、類別（f 四維、n 防禦與閃避的點數、p 屬性觸發率、r 剋制）、效果、備註
 const T=[["str","力量符","💪","f","力量","物理攻擊的主要屬性"],["con","體質符","🛡️","f","體質","氣血上限"],["int","悟性符","📖","f","悟性","術法攻擊的主要屬性"],["spr","靈力符","✨","f","靈力","靈力上限"],
-["def","護體符","🧱","p","減傷","上限 60%"],["eva","身法符","💨","p","閃避","上限 40%"],["ice","玄冰符","❄️","p","冰凍觸發率","上限 50%"],["fire","烈焰符","🔥","p","燒傷觸發率","上限 50%"],
+["def","護體符","🧱","n","防禦","點數，沒有上限"],["eva","身法符","💨","n","閃避","點數，沒有上限"],["ice","玄冰符","❄️","p","冰凍觸發率","上限 50%"],["fire","烈焰符","🔥","p","燒傷觸發率","上限 50%"],
 ["poison","蝕毒符","☠️","p","中毒觸發率","上限 50%"],["metal","庚金符","⚔️","p","金重擊觸發率","上限 50%"],["thunder","天雷符","⚡","p","雷擊觸發率","上限 50%"],
 ["rbeast","斬妖符","🐉","r","對妖獸的傷害","同族合計最多 +20%"],["rghost","鎮魂符","👻","r","對鬼物的傷害","同族合計最多 +20%"],["rdemon","誅邪符","😈","r","對魔修的傷害","同族合計最多 +20%"],["rheart","清心符","🌀","r","對心魔的傷害","同族合計最多 +20%"]];
-const V={f:[.1,.3,.6],p:[1,2,3],r:[3,6,10]},GN={f:"四維符（一般爐）",p:"屬性符（一般爐）",r:"剋制符（剋制爐）"},GR=["下品","中品","上品"];
-const val=(k,g)=>k==="f"?"+"+V.f[g]:"+"+V[k][g]+"%";
+const V={f:[.1,.3,.6],n:[1,2,3],p:[1,2,3],r:[3,6,10]},GN={f:"四維符（一般爐）",n:"屬性符（一般爐）：防禦、閃避",p:"屬性符（一般爐）：屬性傷害",r:"剋制符（剋制爐）"},GR=["下品","中品","上品"];
+const val=(k,g)=>k==="f"||k==="n"?"+"+V[k][g]:"+"+V[k][g]+"%";
 let last="";
 $("listT").innerHTML=T.map(t=>{const head=t[3]!==last?`<tr class="grp"><th colspan="6">${GN[t[3]]}</th></tr>`:"";last=t[3];
   return head+`<tr><td class="nw">${t[2]} <b style="color:var(--acct)">${t[1]}</b></td><td>${t[4]}</td><td class="num">${val(t[3],0)}</td><td class="num">${val(t[3],1)}</td><td class="num">${val(t[3],2)}</td><td>${t[5]}</td></tr>`}).join("");
@@ -128,7 +128,7 @@ if(PF&&PF.equipment){
   Object.values(PF.equipment).forEach(eq=>{if(!eq||!Array.isArray(eq.sockets))return;eq.sockets.forEach(s=>{holes++;if(!s)return;used++;const t=T.find(x=>x[0]===s.type);if(!t)return;
     const o=sum[s.type]||(sum[s.type]={t,n:[0,0,0],v:0});const g=Math.max(1,Math.min(3,+s.grade||1))-1;o.n[g]++;o.v+=V[t[3]][g]})});
   const rows=Object.values(sum).map(o=>{const capped=o.t[3]==="r"&&o.v>20;
-    return `<b>${o.t[2]}${o.t[1]}</b> ${o.n.map((n,i)=>n?`${GR[i]}×${n}`:"").filter(Boolean).join("、")}＝${o.t[4]} +${o.t[3]==="f"?o.v.toFixed(1):(capped?20:o.v)+"%"}${capped?`（鑲了 ${o.v}%，超過 20% 的部分沒有用）`:""}`});
+    return `<b>${o.t[2]}${o.t[1]}</b> ${o.n.map((n,i)=>n?`${GR[i]}×${n}`:"").filter(Boolean).join("、")}＝${o.t[4]} +${o.t[3]==="f"?o.v.toFixed(1):o.t[3]==="n"?o.v:(capped?20:o.v)+"%"}${capped?`（鑲了 ${o.v}%，超過 20% 的部分沒有用）`:""}`});
   $("mine").innerHTML=`<div class="box" style="border-color:var(--acct)">👤 你身上的孔位：<b>${used}</b> / ${holes} 個已鑲${holes?"":"（身上沒有帶孔的裝備）"}${rows.length?"<br>"+rows.join("<br>"):""}</div>`;
 }
 

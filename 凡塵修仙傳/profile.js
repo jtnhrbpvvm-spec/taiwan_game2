@@ -7,7 +7,7 @@
   const KEEP = ["name", "gender", "realmIndex", "stage", "level", "sect", "sectSkills", "profession", "proficiency", "aptitude", "goldenCore",
     "titles", "fireCollection", "strangeFires", "fireShards", "partners", "partnerTeam", "partnerBond", "partnerShards", "beasts",
     "spells", "spellSlots", "spellShards", "equipment", "pillUsed", "studyCounts", "learnedSkills", "reincarnateBonus", "weakened",
-    "zhenmo", "defenseBest", "karma", "merit", "butianStones", "raceKills", "raceTreasures", "raceTreasureSlots", "bountyKills", "reincarnations", "yuanshen", "huashenScrolls", "breakPills", "rootPills", "physiquePills", "spiritFruits","_root", "_phy"];
+    "zhenmo", "defenseBest", "karma", "merit", "butianStones", "raceKills", "raceTreasures", "raceTreasureSlots", "bountyKills", "reincarnations", "yuanshen", "huashenScrolls", "breakPills", "rootPills", "physiquePills", "spiritFruits", "talents", "talentRespecs", "refineStones", "craftCur", "_root", "_phy"];
   let store = null;
   try { store = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) { store = null; }
   window.PROFILE = store && store.data ? store.data : null;

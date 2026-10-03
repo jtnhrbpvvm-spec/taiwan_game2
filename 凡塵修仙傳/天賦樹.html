@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>天賦樹</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--acct:#6d28d9;--link:#6d28d9;--warn:#b91c1c;--ok:#15803d;
+  --c-gong:#b91c1c;--c-fa:#6d28d9;--c-jin:#a16207;--c-shen:#0369a1;--c-ling:#15803d;--c-zao:#a21caf}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--acct:#c4b5fd;--link:#c4b5fd;--warn:#fca5a5;--ok:#86efac;
+  --c-gong:#f87171;--c-fa:#c4b5fd;--c-jin:#fbbf24;--c-shen:#38bdf8;--c-ling:#4ade80;--c-zao:#e879f9}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+a{color:var(--link);text-underline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:26px 0 10px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.85;margin:12px 0}
+.box b{color:var(--acct)}
+.box ul{margin:0;padding-left:20px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.6}
+th{background:var(--head);font-size:13px;white-space:nowrap}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nw{white-space:nowrap}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0}
+.ctl label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+.ctl input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);width:130px}
+.btn{font:inherit;padding:8px 14px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}
+.res{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.res div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--mute)}
+.res b{display:block;font-size:18px;color:var(--acct)}
+.tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:12px}
+.br{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--tc);border-radius:10px;padding:12px 14px;min-width:0}
+.br h3{margin:0;font-size:17px;color:var(--tc)}
+.br .rowh{font-size:12.5px;color:var(--mute);margin:10px 0 4px;display:flex;justify-content:space-between;gap:8px}
+.br .rowh.lock{color:var(--warn)}
+.nd{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:6px;font-size:13.5px;line-height:1.55}
+.nd.nb{border-style:dashed}
+.nd.ks{border:2px solid var(--tc)}
+.nd.on{background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.nd b{color:var(--tc)}
+.nd small{color:var(--mute);font-size:12.5px}
+.nd .pm{display:flex;align-items:center;gap:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nd button{font:inherit;width:28px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer;padding:0}
+.nd button:disabled{opacity:.35;cursor:default}
+#sum{font-size:14px;line-height:1.8}
+</style></head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🌳 天賦樹</h1>
+<div class="sub">人物面板（修仙分頁）的「天賦」。六條路線依戰鬥風格分，點數來自人物等級和轉世，但整棵樹遠比你拿得到的點數多，所以一定要取捨。下面可以直接試點，看加起來是什麼效果。</div>
+
+<div class="box"><b>重點整理</b>
+<ul>
+<li>點數最多 <b>79 點</b>（人物等級 64 ＋ 轉世 15），整棵樹要 <b>168 點</b>：最多只能點滿不到 3 條路線。</li>
+<li>每條路線 4 排，要先在<b>同一條路線</b>投入夠多點數，下一排才會開：第二重 5 點、第三重 12 點、第四重（核心）20 點。</li>
+<li><b>核心天賦全樹最多同時 2 個</b>，而且多半有代價（例如物攻 ×1.35 但氣血 ×0.75）。</li>
+<li>天賦<b>不給「攻擊 +%」這種會佔增益上限的加成</b>：給的是暴擊、防禦、特效，或是乘在最後的獨立倍率，所以增益已經頂到上限的人點了一樣有用。</li>
+<li>天賦給的特效（法爆、金身、追擊…）<b>不受裝備特效的上限限制</b>，直接往上加。</li>
+<li><span class="warn"><b>轉世會清空天賦</b></span>，要重新點；轉世本身會再給天賦點。</li>
+<li>鎮魔塔的 BOSS 是照「點了一半天賦的玩家」調的強度，<b>完全沒點天賦去爬塔會比以前難</b>；野外和死守天南城沒有因為天賦調強，點了就是純賺。</li>
+</ul></div>
+
+<h2>天賦點怎麼來</h2>
+<div class="tw"><table><thead><tr><th>來源</th><th>規則</th><th class="num">最多</th></tr></thead><tbody>
+<tr><td class="nw"><b>人物等級</b></td><td>Lv.1～100 每 10 級 1 點；Lv.100～1000 每 50 級 1 點；Lv.1000～10000 每 250 級 1 點。<br><span class="sub">Lv.50＝5 點、Lv.100＝10 點、Lv.500＝18 點、Lv.1000＝28 點、Lv.5000＝44 點、Lv.10000＝64 點。等級受境界上限限制，見<a href="經驗與地圖.html">經驗與地圖</a>。</span></td><td class="num">64</td></tr>
+<tr><td class="nw"><b>轉世</b></td><td>第 1～3 次轉世各 +3 點，第 4～9 次各 +1 點，之後不再增加。轉世後等級回到 Lv.1，等級給的點數要重新練回來。</td><td class="num">15</td></tr>
+<tr><td class="nw"><b>重置</b></td><td>在天賦視窗按重置，全部點數退回。<b>第一次免費</b>；之後越重置越貴：第 1 次付費要 2 小時練功收入的靈石，第 2 次 4 小時……最多 10 小時。</td><td class="num">—</td></tr>
+</tbody></table></div>
+
+<h2>試點看看</h2>
+<div class="sub">填等級和轉世次數算出可用點數，再按 ＋／− 加點；規則和遊戲相同（每排的門檻、核心最多 2 個）。在<a href="屬性與技能.html">屬性與技能</a>讀取過存檔的話，會先帶入你目前的等級與加點。</div>
+<div class="ctl">
+  <label>人物等級<input id="lv" type="number" min="1" max="10000" value="100"></label>
+  <label>轉世次數<input id="re" type="number" min="0" max="999" value="0"></label>
+  <button class="btn" id="reset">全部清空</button>
+</div>
+<div class="res" id="pts"></div>
+<div class="tree" id="tree"></div>
+<h2>目前加點的合計</h2>
+<div class="box" id="sum"></div>
+
+<h2>怎麼選</h2>
+<div class="tw"><table><thead><tr><th>你的情況</th><th>建議</th></tr></thead><tbody>
+<tr><td class="nw">剛拿到幾點、主要在掛機</td><td><b>☯️ 造化</b>第一重的「悟道」「聚財」：修為 +10%、野外靈石 +15%，點滿只要 10 點，而且不影響戰鬥。之後第二重的「尋鐵」對強化裝備有幫助。</td></tr>
+<tr><td class="nw">要爬鎮魔塔</td><td>遊戲是用「⚔️ 鋒芒、破甲」和「🛡️ 銅皮、護魂」輪流點來校準 BOSS 的，先把這幾個補上，塔的難度才會回到原本的水準。魔修、心魔 BOSS 是術法攻擊，護魂（魔防）對牠們才有用。</td></tr>
+<tr><td class="nw">物理輸出（刀、劍、弓）</td><td><b>⚔️ 攻伐</b>：鋒芒（暴擊率）配第三重「劍意」（暴擊傷害），因為暴擊現在是 ×2。核心「血祭」是物攻 ×1.35 的獨立倍率，但氣血只剩 75%，血量不夠穩之前不要點。</td></tr>
+<tr><td class="nw">術法輸出（扇、筆、仙法）</td><td><b>🔮 術法</b>：靈慧（魔法暴擊）＋法爆（技能傷害）。核心「天人合一」術攻 ×1.35、物攻 ×0.7——普通攻擊永遠是物理，所以普攻會變弱，技能施放率不高的人要考慮。</td></tr>
+<tr><td class="nw">增益已經頂到上限</td><td>🔮 術法的核心「萬法歸宗」讓增益上限再 +20%，是少數能突破上限的方法；但要先在術法路線投 20 點。</td></tr>
+<tr><td class="nw">容易被打死、怕折壽</td><td><b>🛡️ 金身</b>：銅皮點滿 15 點防禦，將近四件橙色防具的量；核心「不滅」每波保 1 點氣血再加氣血 ×1.1，沒有代價。造化第三重「丹心」另有戰死折壽 −15%。</td></tr>
+<tr><td class="nw">閃避流</td><td><b>💨 身法</b>核心「無相」閃避 ×1.5 但防禦歸零；反過來 🛡️ 金身的「金剛」防禦 ×1.5 但閃避歸零。兩個一起點會互相抵銷，防禦和閃避都只剩一半，等於白點。</td></tr>
+<tr><td class="nw">靈寵是主力</td><td><b>🐉 御靈</b>：獸魂＋萬靈共鳴共 +70% 靈寵傷害；核心「獸神附體」再 +80%，代價是自己的攻擊 ×0.85。</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin-top:6px">防禦、魔防、閃避的點數換算成多少減傷，見<a href="屬性與技能.html">屬性與技能</a>的「⚔️ 出手與傷害」分頁。「分解洗煉石 +50%」的洗煉石用途見<a href="裝備與強化.html">裝備與強化</a>。</div>
+</div>
+<script src="profile.js"></script>
+<script src="site.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+// 路線：[代號, 名稱, 圖示, 簡介, 節點…]；節點：[名稱, 每點效果, 點數上限, 第幾重(0～3), 合計用的效果 {項目: 每點數值}]
+const BR=[
+["gong","攻伐","⚔️","物理輸出：暴擊、破甲、斬殺",[
+ ["鋒芒","暴擊率 +1%",5,0,{"暴擊率":[1,"%"]}],["破甲","無視目標 2 減傷",5,0,{"破甲":[2,""]}],
+ ["斬殺","對氣血低於 20% 的敵人傷害 +6%",5,1,{"斬殺傷害":[6,"%"]}],["金鋒","金傷 +2%",5,1,{"金傷":[2,"%"]}],
+ ["劍意","暴擊傷害 +10%（×2 → ×2.1）",3,2,{"暴擊傷害倍率":[.1,"x"]}],["戰意","每波第一擊 +20%、氣血高於 80% 時傷害 +5%",3,2,{"每波第一擊":[20,"%"],"氣血高於 80% 時傷害":[5,"%"]}],
+ ["血祭","物攻 ×1.35，氣血 ×0.75",1,3,{"物理攻擊倍率":[.35,"m"],"氣血倍率":[-.25,"m"]}],["破釜沉舟","暴擊率 +10%，防禦減半",1,3,{"暴擊率":[10,"%"],"防禦倍率":[-.5,"m"]}]]],
+["fa","術法","🔮","術法輸出：魔法暴擊、屬性傷害、技能",[
+ ["靈慧","魔法暴擊率 +1%",5,0,{"魔法暴擊率":[1,"%"]}],["法爆","技能傷害 +3%",5,0,{"技能傷害":[3,"%"]}],
+ ["雷法","雷傷 +2%",5,1,{"雷傷":[2,"%"]}],["冰心","冰傷 +2%",5,1,{"冰傷":[2,"%"]}],
+ ["聚靈","技能耗靈 −6%、每回合回靈 +0.5%",3,2,{"技能耗靈減少":[6,"%"],"每回合回靈":[.5,"%"]}],["五雷正法","雷擊時再劈另一名敵人 ×0.3",3,2,{"連雷倍率":[.3,"x"]}],
+ ["天人合一","術攻 ×1.35，物攻 ×0.7",1,3,{"術法攻擊倍率":[.35,"m"],"物理攻擊倍率":[-.3,"m"]}],["萬法歸宗","增益上限 +20%",1,3,{"增益上限":[20,"%"]}]]],
+["jin","金身","🛡️","生存：防禦、魔防、回血、減傷",[
+ ["銅皮","防禦 +3",5,0,{"防禦":[3,""]}],["護魂","魔防 +3",5,0,{"魔防":[3,""]}],
+ ["回春","每回合回血 +0.3%",5,1,{"每回合回血":[.3,"%"]}],["金身","受到物理傷害 −2%",5,1,{"受到物理傷害減少":[2,"%"]}],
+ ["不動明王","每波前 2 回合防禦 +5",3,2,{"每波前 2 回合防禦":[5,""]}],["化勁","受到術法傷害 −3%",3,2,{"受到術法傷害減少":[3,"%"]}],
+ ["金剛","防禦 ×1.5，閃避歸零",1,3,{"防禦倍率":[.5,"m"],"閃避倍率":[-1,"m"]}],["不滅","受到致命傷時保留 1 點氣血（每波一次）、氣血 ×1.1",1,3,{"氣血倍率":[.1,"m"],"致命傷保留 1 點氣血（每波一次）":[1,"f"]}]]],
+["shen","身法","💨","閃避、命中、追擊、再動",[
+ ["輕身","閃避 +2",5,0,{"閃避":[2,""]}],["鷹眼","命中 +2",5,0,{"命中":[2,""]}],
+ ["追風","2% 機率追加一次攻擊",5,1,{"追擊機率":[2,"%"]}],["疾風","1% 機率本回合再出手",5,1,{"再出手機率":[1,"%"]}],
+ ["殘影","閃避後反擊一次 ×0.3",3,2,{"閃避後反擊倍率":[.3,"x"]}],["洞察","命中 +3（無視敵人 3 點閃避）",3,2,{"命中":[3,""]}],
+ ["無相","閃避 ×1.5，防禦歸零",1,3,{"閃避倍率":[.5,"m"],"防禦倍率":[-1,"m"]}],["流光","閃避後下一擊 +30%、追擊機率 +8%",1,3,{"追擊機率":[8,"%"],"閃避後下一擊傷害 +30%":[1,"f"]}]]],
+["ling","御靈","🐉","靈寵、吸血、反震",[
+ ["獸魂","靈寵傷害 +5%",5,0,{"靈寵傷害":[5,"%"]}],["護主","受到攻擊時反彈 2% 傷害",5,0,{"反彈傷害":[2,"%"]}],
+ ["噬魂","擊殺回血 +1%",5,1,{"擊殺回血":[1,"%"]}],["血契","造成傷害的 1% 轉為氣血",5,1,{"吸血":[1,"%"]}],
+ ["萬靈共鳴","靈寵傷害 +15%",3,2,{"靈寵傷害":[15,"%"]}],["橫掃千軍","普攻 5% 機率波及其他敵人",3,2,{"橫掃機率":[5,"%"]}],
+ ["獸神附體","靈寵傷害 +80%，自身攻擊 ×0.85",1,3,{"靈寵傷害":[80,"%"],"物理攻擊倍率":[-.15,"m"],"術法攻擊倍率":[-.15,"m"]}],["群魔亂舞","普攻 15% 機率對全體 ×1.5、橫掃機率 +10%",1,3,{"橫掃機率":[10,"%"],"普攻 15% 機率對全體 ×1.5":[1,"f"]}]]],
+["zao","造化","☯️","放置經濟：修為、靈石、掉落、材料",[
+ ["悟道","修為 +2%",5,0,{"修為":[2,"%"]}],["聚財","野外靈石 +3%",5,0,{"野外靈石":[3,"%"]}],
+ ["尋鐵","星允鐵 +5%",5,1,{"星允鐵":[5,"%"]}],["積德","功德 +4%",5,1,{"功德":[4,"%"]}],
+ ["奪寶","裝備掉落率 +10%",3,2,{"裝備掉落率":[10,"%"]}],["丹心","丹藥回復 +10%、戰死折壽 −5%",3,2,{"丹藥回復":[10,"%"],"戰死折壽減少":[5,"%"]}],
+ ["天道酬勤","修為、靈石 +15%，攻擊 ×0.9",1,3,{"修為":[15,"%"],"野外靈石":[15,"%"],"物理攻擊倍率":[-.1,"m"],"術法攻擊倍率":[-.1,"m"]}],["點石成金","分解得到的洗煉石 +50%",1,3,{"分解洗煉石":[50,"%"]}]]]];
+const ROW=["第一重","第二重（本路線先投 5 點）","第三重・要訣（本路線先投 12 點）","第四重・核心（本路線先投 20 點）"],REQ=[0,5,12,20];
+const lvPts=lv=>{let p=0,prev=0;[[100,10],[1000,50],[10000,250]].forEach(([up,ev])=>{const L=Math.min(lv,up);if(L>prev)p+=Math.floor((L-prev)/ev);prev=up});return p};
+const rePts=n=>[3,3,3,1,1,1,1,1,1].slice(0,Math.max(0,n)).reduce((a,b)=>a+b,0);
+// 加點狀態：{ "gong1": 點數 }，代號＝路線代號＋第幾個（和遊戲存檔相同）
+let pick={};
+const PF=window.PROFILE;
+if(PF){if(PF.level)$("lv").value=PF.level;if(PF.reincarnations)$("re").value=PF.reincarnations;
+  if(PF.talents&&typeof PF.talents==="object")for(const k in PF.talents)if(+PF.talents[k]>0)pick[k]=+PF.talents[k]}
+const spent=()=>Object.values(pick).reduce((a,b)=>a+b,0);
+const brSpent=b=>b[4].reduce((s,n,i)=>s+(pick[b[0]+(i+1)]||0),0);
+const keyN=()=>BR.reduce((s,b)=>s+b[4].filter((n,i)=>n[3]===3&&pick[b[0]+(i+1)]>0).length,0);
+function total(){return lvPts(Math.max(1,Math.min(10000,+$("lv").value||1)))+rePts(+$("re").value||0)}
+// 能不能再 +1：回傳空字串（可以）或原因
+function block(b,i){const n=b[4][i],id=b[0]+(i+1),cur=pick[id]||0;
+  if(cur>=n[2])return "已點滿";if(spent()>=total())return "沒有點數了";
+  if(brSpent(b)<REQ[n[3]])return `本路線要先投 ${REQ[n[3]]} 點`;
+  if(n[3]===3&&!cur&&keyN()>=2)return "核心最多 2 個";return ""}
+// 能不能 −1：退掉後，同路線較高排已點的節點仍要符合門檻
+function canSub(b,i){const id=b[0]+(i+1);if(!pick[id])return false;
+  const row=b[4][i][3];return b[4].every((n,j)=>{if(!(pick[b[0]+(j+1)]>0)||n[3]<=row)return true;
+    const below=b[4].reduce((s,x,k)=>s+(x[3]<n[3]?(pick[b[0]+(k+1)]||0)-(k===i?1:0):0),0);return below>=REQ[n[3]]})}
+function render(){
+  const tot=total(),sp=spent();
+  $("pts").innerHTML=[["等級給的點數",lvPts(Math.max(1,+$("lv").value||1))],["轉世給的點數",rePts(+$("re").value||0)],["已使用",sp],["剩餘",`<span class="${tot-sp<0?"warn":""}">${tot-sp}</span>`],["核心天賦",keyN()+" / 2"]].map(([k,v])=>`<div>${k}<b>${v}</b></div>`).join("")
+    +(sp>tot?`<div class="warn">點數超過了：遊戲裡遇到這種情況（例如轉世後等級回到 1）會把天賦全部退回。</div>`:"");
+  $("tree").innerHTML=BR.map(b=>{const bs=brSpent(b);
+    return `<div class="br" style="--tc:var(--c-${b[0]})"><h3>${b[2]} ${b[1]} <small class="sub" style="font-weight:normal">已投 ${bs} 點</small></h3><div class="sub">${b[3]}</div>`+
+    [0,1,2,3].map(r=>`<div class="rowh ${bs<REQ[r]?"lock":""}"><span>${ROW[r]}</span><span>${bs<REQ[r]?"🔒 還差 "+(REQ[r]-bs)+" 點":""}</span></div>`+
+      b[4].map((n,i)=>{if(n[3]!==r)return "";const id=b[0]+(i+1),cur=pick[id]||0,why=block(b,i);
+        return `<div class="nd ${r===3?"ks":r===2?"nb":""} ${cur?"on":""}"><span><b>${n[0]}</b> <small>${r===3?"核心":"每點"}</small><br>${n[1]}</span>
+        <span class="pm"><button data-id="${id}" data-d="-1" ${canSub(b,i)?"":"disabled"} aria-label="${n[0]} 減一點">−</button>${cur} / ${n[2]}<button data-id="${id}" data-d="1" ${why?"disabled":""} title="${why}" aria-label="${n[0]} 加一點">＋</button></span></div>`}).join("")).join("")+`</div>`}).join("");
+  $("tree").querySelectorAll("button").forEach(x=>x.onclick=()=>{const id=x.dataset.id;pick[id]=(pick[id]||0)+ +x.dataset.d;if(pick[id]<=0)delete pick[id];render()});
+  // 合計
+  const sum={};BR.forEach(b=>b[4].forEach((n,i)=>{const c=pick[b[0]+(i+1)]||0;if(c)for(const k in n[4]){const[v,t]=n[4][k];(sum[k]=sum[k]||[0,t])[0]+=t==="f"?1:v*c}}));
+  const fmt=(k,[v,t])=>t==="f"?k:t==="m"?`${k.replace("倍率","")} ×${+Math.max(0,1+v).toFixed(2)}`:t==="x"?`${k} ${k==="暴擊傷害倍率"?"×"+ +(2+v).toFixed(1):"×"+ +v.toFixed(1)}`:`${k} +${+v.toFixed(1)}${t}`;
+  const keys=Object.keys(sum);
+  $("sum").innerHTML=keys.length?`<ul>${keys.map(k=>`<li>${fmt(k,sum[k])}</li>`).join("")}</ul>`+
+    (pick.jin7&&pick.shen7?`<div class="warn">「金剛」和「無相」一起點會互相抵銷：防禦、閃避都只剩一半。</div>`:"")+
+    `<div class="sub">寫「×」的倍率是乘在最後的獨立倍率，同一項有多個核心時先相加再乘（例如血祭 +0.35、天人合一 −0.3，物理攻擊 ×1.05）。</div>`:"還沒有加點。";
+}
+$("lv").oninput=$("re").oninput=render;$("reset").onclick=()=>{pick={};render()};
+render();
+</script></body></html>

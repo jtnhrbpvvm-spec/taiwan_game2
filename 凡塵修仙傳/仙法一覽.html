@@ -76,7 +76,7 @@ tr.mine td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
 <tr><td class="nw"><b>雷擊</b></td><td>這一擊傷害 ×1.3，而且無視目標的減傷</td><td>雷</td></tr>
 <tr><td class="nw"><b>吸取傷害</b></td><td>依這招造成的傷害回復自己的氣血</td><td>木（10%）、血（25%）</td></tr>
 </tbody></table></div>
-<div class="sub" style="margin-top:6px">攻擊招的屬性效果機率不會和你裝備、靈根的同屬性機率相加，而是兩邊取比較高的那個；招式自帶的機率不受「屬性機率最多 50%」的限制。光環給的屬性機率、減傷、閃避則是和裝備、靈根加在一起再套上限（屬性機率 50%、減傷 60%、閃避 40%）。</div>
+<div class="sub" style="margin-top:6px">攻擊招的屬性效果機率不會和你裝備、靈根的同屬性機率相加，而是兩邊取比較高的那個；招式自帶的機率不受「屬性機率最多 50%」的限制。光環給的屬性機率是和裝備、靈根加在一起再套上限（50%）；光環給的防禦、閃避是點數，直接加上去、沒有上限。</div>
 
 <h2>光環學滿能加多少</h2>
 <div class="sub">光環全部疊加。血屬性光環會扣氣血上限，學之前先看一下划不划算。</div>
@@ -111,7 +111,7 @@ const mpShow=b=>(Math.max(1,Math.ceil(b*0.1-1e-9))*100).toLocaleString("zh-TW");
 const GRADE={low:["下品",1.6,1.1,.8,.4,1.15,.15,3,.12,.15,60,.03],mid:["中品",2.4,1.7,1.2,.6,1.25,.25,3,.2,.25,150,.05],high:["上品",3.4,2.5,1.6,.8,1.4,.35,4,.3,.35,300,.08],ultimate:["絕學",5,3.8,2,1,1.8,.5,5,.5,.5,600,.12]};
 const GK=["low","mid","high"];
 const FX={metal:"金重擊",fire:"燒傷",ice:"凍結",poison:"中毒",thunder:"雷擊"};
-const AURA_LABEL={physPct:"物理攻擊",magPct:"術法攻擊",hpPct:"氣血上限",mpPct:"靈力上限",def:"減傷",eva:"閃避",fire:"燒傷機率",ice:"冰凍機率",poison:"中毒機率",metal:"金重擊機率",thunder:"雷擊機率"};
+const AURA_LABEL={physPct:"物理攻擊",magPct:"術法攻擊",hpPct:"氣血上限",mpPct:"靈力上限",def:"防禦",eva:"閃避",fire:"燒傷機率",ice:"冰凍機率",poison:"中毒機率",metal:"金重擊機率",thunder:"雷擊機率"};
 const ROLE={atk:"⚔️ 攻擊",control:"⛓️ 牽制",support:"🛡️ 補助",heal:"💚 補血",aura:"🌟 光環"};
 const KINDS=["single","aoe","control",null,"heal","aura"];
 // 屬性：代號、名稱、是否邪道、物理 p／術法 m、附帶效果、吸取比例、補助類型、光環三品、招式名稱（下｜中｜上，各 6 招：單體 群體 牽制 補助 補血 光環）

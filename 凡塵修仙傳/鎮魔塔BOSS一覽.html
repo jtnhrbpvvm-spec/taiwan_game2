@@ -50,7 +50,9 @@ a:hover{text-decoration-thickness:2px}
 <li>煉虛期開放。每層先答 <b>10 題</b>知識問答（每題限時 30 秒），再開 BOSS 房門挑戰；打贏才會前進到下一層。</li>
 <li>每天可挑戰 <b>3 次</b>，按下「開始問答」時就扣一次，失敗或中途離開也算。</li>
 <li><b>答對越多，這一層的獎勵倍率越高</b>：答對 0 題 ×1.0，每多對一題 +0.1，<b>10 題全對 ×2.5</b>。挑戰失敗時問答成績作廢，要重新答題（再扣一次）。</li>
-<li>戰鬥是自動的：你每回合的傷害＝<b>物理攻擊與術法攻擊較高的那個 × 1.3</b>；不能吃丹藥，靈寵也不出手。<b>600 回合</b>內沒打倒 BOSS 算失敗。</li>
+<li>戰鬥是自動的：你每回合的傷害＝<b>物理攻擊與術法攻擊較高的那個 × 1.3</b>；不能吃丹藥，靈寵也不出手。<b>600 回合</b>內沒打倒 BOSS 算失敗。術法攻擊較高時整場算術法，暴擊看魔法暴擊率（悟性）。</li>
+<li><b>BOSS 的攻擊分物理、術法</b>：😈魔修和🌀心魔 BOSS 是<b>術法攻擊</b>，打你看的是<b>魔防</b>（防禦 × 0.6 ＋ 靈力 × 0.1 ＋ 飾品詞條）；🐉妖獸和👻鬼物 BOSS 是物理攻擊，看防禦。光環的「你的防禦 −N」會同時扣防禦和魔防。</li>
+<li><span class="warn"><b>沒點天賦會變難</b></span>：戰鬥公式改版後，BOSS 的攻擊照「點了一半天賦點的玩家」重新調過（下表的攻擊已經是新數字，大多比以前高兩到六成）。把天賦點在鋒芒、破甲、銅皮、護魂這類戰鬥天賦上，難度才會和以前差不多，見<a href="天賦樹.html">天賦樹</a>。</li>
 <li>BOSS 每次挑戰的攻擊和氣血會<b>隨機浮動 ±20%</b>，所以同一層有時打得過、有時打不過。</li>
 <li><b>境界壓制</b>：BOSS 境界比你高時，每高 1 個大境界，BOSS 氣血 +100%、攻擊 +120%。塔的強度是第 1～10 層煉虛 1～10 階、11～20 層合體……91～100 層混沌道祖，越級爬塔會非常吃力。</li>
 <li>個位數是 <span class="tag t-k">5</span> 的層是鎮關者（攻擊特別高），個位數是 <span class="tag t-g">0</span> 的層是樓主（攻擊更高、光環多一個、獎勵加倍）。</li>
@@ -70,7 +72,9 @@ a:hover{text-decoration-thickness:2px}
 <div class="chips" id="fRange"></div>
 <div class="chips" id="fKind"></div>
 <div class="tw"><table><thead><tr><th class="num">層</th><th>BOSS</th><th>強度</th><th class="num">攻擊</th><th class="num">氣血</th><th class="num">減傷</th><th class="num">閃避</th><th>屬性傷害</th><th>光環與獎勵</th></tr></thead><tbody id="body"></tbody></table></div>
-<div class="sub" style="margin-top:6px">第 1～10 層和第 15、20、30、40、50 層是專屬 BOSS（有自己的名字、來歷與光環），其餘各層由系統依規則產生。攻擊、氣血是你和 BOSS 同境界時的基準值，未含每次挑戰的 ±20% 浮動，也未含境界壓制。靈石獎勵是答對 0 題的基礎值。</div>
+<div class="sub" style="margin-top:6px">第 1～10 層和第 15、20、30、40、50、60 層是專屬 BOSS（有自己的名字、來歷與光環），其餘各層由系統依規則產生。攻擊、氣血是你和 BOSS 同境界時的基準值，未含每次挑戰的 ±20% 浮動，也未含境界壓制。靈石獎勵是答對 0 題的基礎值。<br>
+BOSS 的「減傷」仍是百分比（你的破甲直接扣它）；「閃避」是點數，扣掉你的命中後，被閃掉的機率＝D ÷ (D ＋ 100)。BOSS 沒有另外的魔抗，物理、術法打牠一樣。<br>
+每層另外給 <b>🌀 洗煉石</b>（第 1～19 層 1 顆，每 20 層多 1 顆，第 100 層 6 顆，再乘問答倍率），並有機會掉<b>做裝通貨</b>：每層都可能掉天機石，30 層起可能掉混元晶，每 10 層的樓主可能掉破虛石，50 層起的樓主還可能掉造化玉；答對越多越容易掉。用途見<a href="裝備與強化.html">裝備與強化</a>。</div>
 </div>
 <script src="profile.js"></script>
 <script src="site.js"></script>
@@ -124,6 +128,15 @@ Object.assign(B,{
 30:{hand:1,name:"天照大神",race:"heart",title:"八咫神鏡",realm:8,stage:10,atkMult:2.72,hpMult:1.193,def:21,eva:14,affix:"fire",affixVal:21,element:"火",intro:"傳說中隱身天岩戶、令天地失光的日之女神，手捧八咫神鏡，背負日輪。鎮魔塔借她的神鏡鎮守第三十層——凡登樓者皆要先照一照鏡子，鏡中映出的不是神，而是你心底最深的執念。",auras:[{name:"天岩戶封印",player:{freeze:.025},self:{}},{name:"日輪神威",player:{atk:.062},self:{atk:.062}},{name:"八咫鏡照心",player:{dot:.001},self:{}}],rewards:{coinMinutes:50,merit:[500,1000],shards:[12,18],iron:[14,22]}},
 40:{hand:1,name:"需佐能呼",race:"demon",title:"暴風荒神",realm:9,stage:10,atkMult:2.73,hpMult:1.19,def:23,eva:16,affix:"thunder",affixVal:23,element:"水",intro:"天照大神之弟、掌管滄海與暴風的荒神，因性情狂暴被逐出高天原，曾一劍斬下八岐大蛇的八顆頭顱。斬蛇之後蛇血浸透劍身，連同塔中魔氣一起侵入心神，從此雷雲隨行、所到之處怒濤翻湧，坐鎮第四十層，只求再戰。",auras:[{name:"雷火灼身",player:{burn:.054},self:{}},{name:"颶風護體",player:{},self:{def:7}},{name:"荒神不滅",player:{},self:{regen:.001}},{name:"蛇血劍毒",player:{poison:.054},self:{}}],rewards:{coinMinutes:60,merit:[600,1200],shards:[14,22],iron:[16,26]}},
 50:{hand:1,name:"六道極聖",race:"demon",title:"六道輪迴",realm:10,stage:10,atkMult:6.95,hpMult:1.9,def:25,eva:18,affix:"thunder",affixVal:25,element:"土",intro:"魔道六宗公認的第一人，修成「六道輪迴」魔功，一身法力深不可測，連正道元嬰老怪聽到名號也要退避三舍。鎮魔塔以他為第五十層樓主——從這一層起是修仙者的分水嶺，過不了他的人，就只配在下面五十層打轉。",auras:[{name:"魔魂蝕骨",player:{poison:.058},self:{}},{name:"天道輪轉",player:{eva:4},self:{eva:4}},{name:"六道破甲",player:{def:7},self:{}},{name:"六道輪迴咒",player:{curse:.073},self:{}}],rewards:{coinMinutes:70,merit:[700,1400],shards:[16,24],iron:[18,28]}}});
+Object.assign(B,{
+60:{hand:1,name:"天裁真君",race:"demon",title:"聖羽天罰",realm:11,stage:10,atkMult:5.183,hpMult:1.689,def:27,eva:20,affix:"thunder",affixVal:27,element:"金",intro:"奉天庭之命下界鎮守此塔的六翼天人，手持七曜神杖，代天執掌審判。千年來與塔中群魔朝夕相對，魔氣一點一滴滲入聖羽——如今在他眼中，凡是登塔之人皆是罪人，皆當受裁。",auras:[{name:"天裁審判",player:{curse:.078},self:{}},{name:"聖光禁錮",player:{freeze:.031},self:{}},{name:"六翼天威",player:{atk:.078},self:{atk:.078}},{name:"罪業焚魂",player:{dot:.002},self:{}}],rewards:{coinMinutes:80,merit:[800,1600],shards:[18,26],iron:[20,30]}}});
+// 戰鬥公式改版（防禦與閃避改點數、魔防、天賦）後，各層 BOSS 攻擊再乘的倍率
+const ATK2={5:1.084,7:1.154,8:1.125,9:1.087,10:1.092,11:1.177,12:1.219,13:1.175,14:1.103,15:1.154,16:1.173,17:1.159,18:1.133,19:1.156,20:1.154,21:1.222,22:1.275,23:1.184,24:1.219,25:1.245,
+26:1.137,27:1.183,28:1.176,29:1.184,30:1.229,31:1.164,32:1.233,33:1.238,34:1.167,35:1.197,36:1.33,37:1.316,38:1.241,39:1.224,40:1.287,41:1.203,42:1.263,43:1.297,44:1.195,45:1.187,
+46:1.194,47:1.239,48:1.253,49:1.245,50:1.279,51:1.531,52:1.703,53:1.67,54:1.656,55:1.339,56:1.597,57:1.577,58:1.484,59:1.377,60:1.438,61:1.375,62:1.464,63:1.449,64:1.504,65:1.3,
+66:1.579,67:1.743,68:1.64,69:1.594,70:1.526,71:1.651,72:1.552,73:1.638,74:1.394,75:1.369,76:1.43,77:1.545,78:1.704,79:1.599,80:1.49,81:1.636,82:1.596,83:1.943,84:1.518,85:1.385,
+86:1.607,87:1.426,88:1.456,89:1.38,90:1.36,91:1.418,92:1.52,93:1.646,94:1.628,95:1.417,96:1.753,97:1.759,98:1.627,99:1.527,100:1.513};
+for(const n in ATK2)B[n].atkMult=Math.round(B[n].atkMult*ATK2[n]*1000)/1000;
 // 同境界一般玩家的基準（BOSS 強度以它為準）
 const typStat=(r,s)=>(5+(r*10+s-1)+5*r)*1.1,typBuff=L=>Math.min(50,10+L*10);
 const typHp=(r,s,L)=>50*Math.pow(1.05,L)*(1+typStat(r,s)*.002);
@@ -131,15 +144,15 @@ const typNormal=(r,s,L)=>{const st=typStat(r,s);return (5*Math.pow(1.05,Math.min
 function stats(n){
   const b=B[n],L=b.realm+(b.stage-1)/10,eva=b.eva+(b.race==="ghost"?5:0);
   const atk=Math.round(typHp(b.realm,b.stage,L)*(1+typBuff(L)/100)/400*b.atkMult*100)/100;
-  const hp=Math.round(typNormal(b.realm,b.stage,L)*1.3*300*(1-b.def/100)*(1-b.eva/100)*(b.hpMult||1)*(b.race==="beast"?1.1:1));
+  const hp=Math.round(typNormal(b.realm,b.stage,L)*1.3*300*(1-b.def/100)*(1-b.eva/(b.eva+100))*(b.hpMult||1)*(b.race==="beast"?1.1:1));
   return{b,L,atk,hp,eva};
 }
 const pc=v=>+(v*100).toFixed(1);
 function auraText(a){
   const p=a.player,s=a.self;
-  const neg=[p.atk&&`你的攻擊 −${pc(p.atk)}%`,p.def&&`你的減傷 −${p.def}`,p.eva&&`你的閃避 −${p.eva}`,p.curse&&`詛咒：你受到的傷害 +${pc(p.curse)}%`,p.dot&&`每回合扣你 ${pc(p.dot)}% 氣血`,
+  const neg=[p.atk&&`你的攻擊 −${pc(p.atk)}%`,p.def&&`你的防禦、魔防 −${p.def}`,p.eva&&`你的閃避 −${p.eva}`,p.curse&&`詛咒：你受到的傷害 +${pc(p.curse)}%`,p.dot&&`每回合扣你 ${pc(p.dot)}% 氣血`,
     p.freeze&&`每回合 ${pc(p.freeze)}% 凍結你`,p.burn&&`每回合 ${pc(p.burn)}% 使你燒傷`,p.poison&&`每回合 ${pc(p.poison)}% 使你中毒`].filter(Boolean);
-  const pos=[s.atk&&`攻擊 +${pc(s.atk)}%`,s.def&&`減傷 +${s.def}`,s.eva&&`閃避 +${s.eva}`,s.regen&&`每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
+  const pos=[s.atk&&`攻擊 +${pc(s.atk)}%`,s.def&&`減傷 +${s.def}%`,s.eva&&`閃避 +${s.eva}`,s.regen&&`每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
   return `<b>【${a.name}】</b>${neg.join("、")}${neg.length&&pos.length?"；":""}${pos.length?"自身"+pos.join("、"):""}`;
 }
 let fR="",fK="";
@@ -163,12 +176,14 @@ function render(){
     if(g10&&b.race)extra.push(`<b>首次擊敗</b>必得${n<=30?"下品":n<=70?"中品":"上品"}${({beast:"降妖葫蘆",ghost:"鎮魂鈴",demon:"誅魔鏡",heart:"清心蓮台"})[b.race]}`);
     extra.push(`化神訣殘本 ${g10?"60～160":"30～80"} 頁`);
     extra.push("有機會掉鍛造圖紙（答對越多機會越高）");
+    extra.push(`洗煉石 ${1+Math.floor(n/20)} 顆 × 問答倍率`);
+    extra.push("做裝通貨：有機會掉天機石"+(n>=30?"、混元晶":"")+(g10?"、破虛石":"")+(g10&&n>=50?"、造化玉":""));
     const zf=ZM?(ZM.floor||1):0,mark=!ZM?"":n<zf||(ZM.best||0)>=n?`<br><span class="ok">✅</span>`:n===zf?`<br><span class="tag t-w">你在這</span>`:"";
     h+=`<tr class="${g10?"g10":g5?"g5":""}"><td class="num"><b>${n}</b>${mark}</td>
     <td><b>${b.name}</b>${g10?` <span class="tag t-g">樓主</span>`:g5&&n>9?` <span class="tag t-k">鎮關者</span>`:""}<br><span class="sub">${n<10||b.hand?b.title+"・":""}${race?race[0]+race[1]:"人修"}・五行 ${b.element}</span>${b.intro?`<div class="intro">${b.intro}</div>`:""}</td>
     <td class="nw">${REALMS[b.realm]} ${b.stage} 階</td>
-    <td class="num">${fmt(x.atk*100)}<br><span class="sub">×${b.atkMult}</span></td><td class="num">${fmt(x.hp*100)}</td>
-    <td class="num">${b.def}%</td><td class="num">${x.eva}%</td><td class="nw">${AFFIX[b.affix]} ${b.affixVal}%</td>
+    <td class="num">${fmt(x.atk*100)}<br><span class="sub">${b.race==="demon"||b.race==="heart"?"🔮術法":"⚔️物理"}・×${b.atkMult}</span></td><td class="num">${fmt(x.hp*100)}</td>
+    <td class="num">${b.def}%</td><td class="num">${x.eva}</td><td class="nw">${AFFIX[b.affix]} ${b.affixVal}%</td>
     <td><details><summary>${b.auras.length} 個光環・獎勵</summary><div class="dt">${b.auras.map(auraText).join("<br>")}
     <div style="margin-top:4px"><span class="m">獎勵（× 問答倍率）：</span>靈石 ${fmt(coins)}、功德 ${rw.merit[0]}～${rw.merit[1]}、異火碎片 ${rw.shards[0]}～${rw.shards[1]}、星允鐵 ${rw.iron[0]}～${rw.iron[1]}</div>
     <div><span class="m">另外：</span>${extra.join("；")}</div></div></details></td></tr>`;

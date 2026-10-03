@@ -65,7 +65,7 @@ a:hover{text-decoration-thickness:2px}
 <ul>
 <li>都是<b>橙色</b>品質，<b>沒有裝備等級限制</b>，換到就能穿。取得時隨機開 <b>1～3 個鑲嵌孔</b>，可以鑲符寶。</li>
 <li>可以用星允鐵強化到 <b>+20</b>（花費和一般橙色裝備相同），但<span class="no">不能進化成白金</span>。</li>
-<li>沒有隨機詞條、沒有特效、不屬於任何套裝；它們的優勢是屬性點多、附帶的屬性觸發率和減傷高。</li>
+<li>沒有隨機詞條、沒有特效、不屬於任何套裝；它們的優勢是屬性點多、附帶的屬性觸發率和防禦高。</li>
 <li>會算進<b>五行共鳴</b>的件數（三把劍都是金；盔甲是火、水），見<a href="五行共鳴一覽.html">五行共鳴一覽</a>。</li>
 <li>三把劍的武器攻擊分別相當於元嬰、大乘、仙人初境水準的橙色武器。誅仙劍和 Lv.1000 的橙色武器同級，之後會被 Lv.1500 以上的圖紙武器和白金武器超過。</li>
 <li>武器攻擊只取身上最高的一把；主修劍修時這把劍才吃得到主修加成，見<a href="職業一覽.html">職業一覽</a>。</li>
@@ -105,7 +105,7 @@ a:hover{text-decoration-thickness:2px}
 <tr><td class="nw">剛拜入凡俗宗門</td><td>初級四件加起來才 40 萬靈石＋4 萬聲望，聲望夠了就換。兩招武學能補上前期的技能數量；劍和盔甲沒有等級限制，可以一路穿到修真宗門。</td></tr>
 <tr><td class="nw">物理路線（力量）</td><td>武學優先《天罡破軍斬》《九幽焚天訣》（單體）和《烈火刀法》（全體）。神器選<b>荒天帝大羅劍胎</b>：力量最多，技能必定重擊。</td></tr>
 <tr><td class="nw">術法路線（悟性）</td><td>武學優先《萬毒噬心功》《太虛寒獄》（都是全體）。神器選<b>吞天魔罐</b>：悟性最多，技能是唯一的高倍率術法，還能吸血。</td></tr>
-<tr><td class="nw">容易戰死、怕折壽</td><td><b>三世銅棺</b>（體質與減傷最高，技能減傷又回血）或<b>無始鐘</b>（閃避最高，技能讓全體敵人停一回合）。</td></tr>
+<tr><td class="nw">容易戰死、怕折壽</td><td><b>三世銅棺</b>（體質與防禦最高，技能減傷又回血）或<b>無始鐘</b>（閃避最高，技能讓全體敵人停一回合）。</td></tr>
 <tr><td class="nw">掛機打一群怪</td><td><b>混沌鐘</b>（全體 250% 加凍結）或<b>萬物母氣鼎</b>（全體燒傷，順便回血回靈）。</td></tr>
 <tr><td class="nw">聲望不夠</td><td>高級階段每件 50 萬聲望，比靈石更難湊。先決定要哪一件神器再存，不要把聲望花在用不到的武學上。</td></tr>
 </tbody></table></div>
@@ -117,7 +117,7 @@ a:hover{text-decoration-thickness:2px}
 const $=id=>document.getElementById(id),PF=window.PROFILE||null;
 const TIER=["","初級","中級","高級"],BUDGET=[0,2.5,4,6],WL=[0,4,8,10];
 const SL={str:"力量",con:"體質",int:"悟性",spr:"靈力"};
-const AL={def:"減傷",eva:"閃避",metal:"金重擊觸發率",thunder:"雷擊觸發率",fire:"燒傷觸發率",poison:"中毒觸發率",ice:"冰凍觸發率"};
+const AL={def:"防禦",eva:"閃避",metal:"金重擊觸發率",thunder:"雷擊觸發率",fire:"燒傷觸發率",poison:"中毒觸發率",ice:"冰凍觸發率"};
 const n2=v=>String(Math.round(v*100)/100);
 const pts=(s,b)=>{const sum=Object.values(s).reduce((a,c)=>a+c,0);return Object.keys(s).map(k=>`${SL[k]} +${n2(b*s[k]/sum)}`).join("、")};
 const attrs=a=>Object.keys(a).map(k=>`${AL[k]} +${a[k]}%`).join("、");
