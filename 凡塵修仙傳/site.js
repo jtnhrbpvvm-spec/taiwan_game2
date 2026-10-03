@@ -1,4 +1,4 @@
-// 全站共用：頁面頂部的全站搜尋、物品彈窗（文字裡出現的物品名稱可以點開看取得方式與用途）。
+// 全站共用：頁面頂部的全站搜尋、物品彈窗（文字裡出現的物品名稱可以點開看取得方式與用途）、名詞說明彈窗（下方 TERMS）。
 // 每個頁面都要 <script src="site.js"></script>（放在 profile.js 後面）。
 (function () {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -42,6 +42,27 @@
 .gs-flash{outline:3px solid var(--acc);outline-offset:3px;border-radius:4px;transition:outline-color .6s}`;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
+  // ---------- 名詞說明：文字裡出現 keys 的地方會變成可點的，點開跳出 html ----------
+  //   新增名詞：在這裡加一筆 { name, icon, keys, html, more: [連結文字, 網址] }
+  const TERMS = [
+    { term: true, name: "增益上限", icon: "📈", cat: "名詞說明", keys: ["增益上限"], more: ["屬性與技能：讀取存檔看你的增益明細", "屬性與技能.html"],
+      html: `<div class="itm-row g"><b>是什麼</b><ul>
+<li>遊戲裡寫「攻擊 +10%」「物理攻擊 +8%」「氣血上限 +5%」「宗門戰力 ×2.5」「靈寵戰力 +15%」這類加成，都不是直接乘上去，而是先<b>全部加在一起</b>變成「增益」，再一次乘在攻擊或氣血上。</li>
+<li>增益分三份，各算各的：<b>物理攻擊、術法攻擊、氣血上限</b>。每一份加總後最多只算到「增益上限」，<b>超過的部分完全沒用</b>。</li></ul></div>
+<div class="itm-row u"><b>上限多少</b><ul>
+<li>凡人～渡劫：<b>+200%</b></li>
+<li>仙人初境 +220%、天仙 +240%、真仙 +255%、大羅金仙 +270%、混元大羅金仙 +285%、混沌道祖 <b>+300%</b></li>
+<li>天賦核心「<b>萬法歸宗</b>」：三份增益的上限各再 <b>+20%</b>（例：+200% → +220%，混沌道祖 +300% → +320%）</li></ul></div>
+<div class="itm-row g"><b>萬法歸宗值不值得</b><ul>
+<li><b>增益還沒頂到上限的人，點了完全沒效果。</b>要頂到上限的那一份才會變強。</li>
+<li>已經頂到 +200% 的人：攻擊（或氣血）從 ×3 變成 ×3.2，實際<b>約 +6.7%</b>；上限 +300% 的人約 +5%。</li>
+<li>代價：要先在🔮術法路線投 20 點，而且佔掉 2 個核心天賦名額的其中一個。</li></ul></div>
+<div class="itm-row u"><b>不佔上限的</b><ul>
+<li>獨立倍率：天賦核心的「物攻 ×1.35」這類、圖紙防具的氣血 %、元神的傷害加成</li>
+<li>力量、悟性等<b>屬性點</b>的 % 加成（「全屬性 +3%」「力量 +5%」）</li>
+<li>技能傷害 %、暴擊、屬性傷害、種族剋制、五行相剋</li></ul></div>
+<div class="itm-note">怎麼知道自己有沒有頂到：到「屬性與技能」讀取存檔，「增益明細」那張表超過上限時會寫「合計 +N%，超過上限」。</div>` }
+  ];
   // ---------- 物品彈窗 ----------
   let KEYMAP = null, RX = null;
   const STOP = ["符寶坊", "符寶一覽"];   // 含有物品名稱、但不是在講該物品的詞
@@ -49,7 +70,7 @@
   function buildKeys() {
     if (KEYMAP || !window.ITEMS) return;
     KEYMAP = {};
-    window.ITEMS.forEach(it => (it.keys || []).forEach(k => (KEYMAP[k] = KEYMAP[k] || []).push(it)));
+    window.ITEMS.concat(TERMS).forEach(it => (it.keys || []).forEach(k => (KEYMAP[k] = KEYMAP[k] || []).push(it)));
     const all = Object.keys(KEYMAP).concat(STOP).sort((a, b) => b.length - a.length);
     RX = new RegExp(all.map(reEsc).join("|"), "g");
   }
@@ -70,7 +91,7 @@
         if (!list || (self && list.every(it => it.name === self))) continue;
         if (m.index > last) frag.appendChild(document.createTextNode(v.slice(last, m.index)));
         const sp = document.createElement("span");
-        sp.className = "itm"; sp.tabIndex = 0; sp.setAttribute("role", "button"); sp.dataset.k = m[0]; sp.title = "點一下看取得方式";
+        sp.className = "itm"; sp.tabIndex = 0; sp.setAttribute("role", "button"); sp.dataset.k = m[0]; sp.title = list[0].term ? "點一下看說明" : "點一下看取得方式";
         if (self) sp.dataset.from = self;
         sp.textContent = m[0]; frag.appendChild(sp);
         last = m.index + m[0].length; hit = true;
@@ -82,6 +103,7 @@
   }
   let dlg = null, lastFocus = null;
   function itemHtml(it) {
+    if (it.term) return `<div data-itm-self="${esc(it.name)}"><h3><span>${it.icon}</span>${esc(it.name)}<small>${esc(it.cat)}</small></h3>${it.html}</div>`;
     return `<div data-itm-self="${esc(it.name)}"><h3><span>${it.icon}</span>${esc(it.name)}<small>${esc(it.cat)}</small></h3>
       <div class="itm-row g"><b>取得</b><ul>${it.get.map(x => `<li>${x}</li>`).join("")}</ul></div>
       <div class="itm-row u"><b>能力／用途</b><ul>${it.use.map(x => `<li>${x}</li>`).join("")}</ul></div>
@@ -89,19 +111,21 @@
   }
   function openItem(key, from) {
     buildKeys();
-    let list = (KEYMAP && KEYMAP[key]) || (window.ITEMS || []).filter(it => it.name === key);
+    let list = (KEYMAP && KEYMAP[key]) || (window.ITEMS || []).concat(TERMS).filter(it => it.name === key);
     if (from && list.length > 1) list = list.filter(it => it.name !== from);
     if (!list.length) return;
     if (!dlg) {
       dlg = document.createElement("div"); dlg.id = "itmDlg"; dlg.hidden = true;
       dlg.setAttribute("role", "dialog"); dlg.setAttribute("aria-modal", "true"); dlg.setAttribute("aria-label", "物品說明");
       dlg.innerHTML = `<div class="itm-box"><div class="itm-top"><span id="itmCnt"></span><button class="itm-x" type="button">✕ 關閉</button></div><div id="itmBody"></div>
-        <div class="itm-foot"><a href="物品一覽.html">🎒 到物品一覽看全部物品 →</a></div></div>`;
+        <div class="itm-foot"></div></div>`;
       document.body.appendChild(dlg);
       dlg.addEventListener("click", e => { if (e.target === dlg || e.target.closest(".itm-x")) closeItem(); });
     }
     if (dlg.hidden) lastFocus = document.activeElement;
-    dlg.querySelector("#itmCnt").textContent = list.length > 1 ? `「${key}」有 ${list.length} 種，別弄混：` : "物品說明";
+    const term = list[0].term;
+    dlg.querySelector("#itmCnt").textContent = term ? "名詞說明" : list.length > 1 ? `「${key}」有 ${list.length} 種，別弄混：` : "物品說明";
+    dlg.querySelector(".itm-foot").innerHTML = term ? (list[0].more ? `<a href="${encodeURI(list[0].more[1])}">📖 ${esc(list[0].more[0])} →</a>` : "") : `<a href="物品一覽.html">🎒 到物品一覽看全部物品 →</a>`;
     const body = dlg.querySelector("#itmBody");
     body.innerHTML = list.map(itemHtml).join('<hr class="itm-sep">');
     linkify(body);
@@ -159,6 +183,9 @@
     const strip = s => s.replace(/<[^>]+>/g, "");
     let h = "";
     buildKeys();
+    const terms2 = TERMS.filter(it => has(it.name + it.keys.join(" ")));
+    if (terms2.length) h += `<div class="gs-h">名詞說明（點開看解說）</div>` + terms2.map(it =>
+      `<button type="button" class="gs-r" data-item="${esc(it.name)}"><b>${it.icon} ${mark(it.name, terms)}</b><small>${esc(snippet(strip(it.html), terms))}</small></button>`).join("");
     const items = (window.ITEMS || []).filter(it => has(it.name + (it.keys || []).join(" ")));
     if (items.length) h += `<div class="gs-h">物品（點開看取得方式與用途）</div>` + items.slice(0, 8).map(it =>
       `<button type="button" class="gs-r" data-item="${esc(it.name)}"><b>${it.icon} ${mark(it.name, terms)}</b><small>${esc(snippet(strip(it.get.join("；")), terms))}</small></button>`).join("");
