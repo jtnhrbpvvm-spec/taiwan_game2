@@ -60,13 +60,15 @@ a:hover{text-decoration-thickness:2px}
 <li>每煉一枚：<b>500 礦石＋100 萬靈石</b>，可以按 ×1、×10 或「最高」連續煉。</li>
 <li>分成兩個爐：<b>一般符寶</b>（四維符、屬性符共 11 種）和<b>剋制符</b>（4 種），花費一樣。</li>
 <li><span class="no">種類和品階都是隨機的，不能指定。</span>一般爐從 11 種裡隨機出一種，剋制爐從 4 種裡隨機出一種。</li>
-<li>品階分下品、中品、上品。下品最常見，中品偶爾出，<b>上品非常少見</b>。想要「指定種類的上品」要有煉很多枚的心理準備。</li>
+<li>品階分下品、中品、上品、<b>🌟極品</b>。煉製只會出下、中、上品：下品最常見，中品偶爾出，<b>上品非常少見</b>；<b>極品煉不出來，只能合成</b>。</li>
+<li><b>合成</b>（符寶坊的「⚗️ 合成」區）：<b>同一種</b>符寶可以往上合，一定成功。下品 ×3 → 中品（50 萬靈石）、中品 ×4 → 上品（200 萬）、上品 ×5 → 極品（1,000 萬）。一枚極品＝60 枚同種下品。只能用持有中的，已經鑲在裝備上的不算。</li>
+<li>所以不要的下品別丟：同種湊 3 枚就能合成中品，用合的拿上品比直接賭上品省。</li>
 <li>煉出來的符寶放在符寶坊的持有清單，同種同品階會疊在一起，沒有數量上限。</li>
 </ul>
 </div>
 
 <h2 id="list">15 種符寶</h2>
-<div class="tw"><table><thead><tr><th>符寶</th><th>效果</th><th class="num">下品</th><th class="num">中品</th><th class="num">上品</th><th>備註</th></tr></thead><tbody id="listT"></tbody></table></div>
+<div class="tw"><table><thead><tr><th>符寶</th><th>效果</th><th class="num">下品</th><th class="num">中品</th><th class="num">上品</th><th class="num">🌟極品</th><th>備註</th></tr></thead><tbody id="listT"></tbody></table></div>
 <div class="sub" style="margin-top:6px">四維符加的是屬性點（和丹藥、古籍同一種點數）；屬性符加的是百分點，直接加在裝備給的數值上；剋制符是對該種族造成的傷害。屬性點和各種觸發率的作用見<a href="屬性與技能.html">屬性與技能</a>，種族見<a href="種族剋制.html">種族剋制</a>。</div>
 
 <h2 id="cap">上限</h2>
@@ -116,17 +118,17 @@ const T=[["str","力量符","💪","f","力量","物理攻擊的主要屬性"],[
 ["def","護體符","🧱","n","防禦","點數，沒有上限"],["eva","身法符","💨","n","閃避","點數，沒有上限"],["ice","玄冰符","❄️","p","冰凍觸發率","上限 50%"],["fire","烈焰符","🔥","p","燒傷觸發率","上限 50%"],
 ["poison","蝕毒符","☠️","p","中毒觸發率","上限 50%"],["metal","庚金符","⚔️","p","金重擊觸發率","上限 50%"],["thunder","天雷符","⚡","p","雷擊觸發率","上限 50%"],
 ["rbeast","斬妖符","🐉","r","對妖獸的傷害","同族合計最多 +20%"],["rghost","鎮魂符","👻","r","對鬼物的傷害","同族合計最多 +20%"],["rdemon","誅邪符","😈","r","對魔修的傷害","同族合計最多 +20%"],["rheart","清心符","🌀","r","對心魔的傷害","同族合計最多 +20%"]];
-const V={f:[.1,.3,.6],n:[1,2,3],p:[1,2,3],r:[3,6,10]},GN={f:"四維符（一般爐）",n:"屬性符（一般爐）：防禦、閃避",p:"屬性符（一般爐）：屬性傷害",r:"剋制符（剋制爐）"},GR=["下品","中品","上品"];
+const V={f:[.1,.3,.6,1],n:[1,2,3,5],p:[1,2,3,5],r:[3,6,10,15]},GN={f:"四維符（一般爐）",n:"屬性符（一般爐）：防禦、閃避",p:"屬性符（一般爐）：屬性傷害",r:"剋制符（剋制爐）"},GR=["下品","中品","上品","極品"];
 const val=(k,g)=>k==="f"||k==="n"?"+"+V[k][g]:"+"+V[k][g]+"%";
 let last="";
-$("listT").innerHTML=T.map(t=>{const head=t[3]!==last?`<tr class="grp"><th colspan="6">${GN[t[3]]}</th></tr>`:"";last=t[3];
-  return head+`<tr><td class="nw">${t[2]} <b style="color:var(--acct)">${t[1]}</b></td><td>${t[4]}</td><td class="num">${val(t[3],0)}</td><td class="num">${val(t[3],1)}</td><td class="num">${val(t[3],2)}</td><td>${t[5]}</td></tr>`}).join("");
+$("listT").innerHTML=T.map(t=>{const head=t[3]!==last?`<tr class="grp"><th colspan="7">${GN[t[3]]}</th></tr>`:"";last=t[3];
+  return head+`<tr><td class="nw">${t[2]} <b style="color:var(--acct)">${t[1]}</b></td><td>${t[4]}</td><td class="num">${val(t[3],0)}</td><td class="num">${val(t[3],1)}</td><td class="num">${val(t[3],2)}</td><td class="num">${val(t[3],3)}</td><td>${t[5]}</td></tr>`}).join("");
 
 // 已帶入角色時：統計身上鑲了哪些符寶
 if(PF&&PF.equipment){
   const sum={};let holes=0,used=0;
   Object.values(PF.equipment).forEach(eq=>{if(!eq||!Array.isArray(eq.sockets))return;eq.sockets.forEach(s=>{holes++;if(!s)return;used++;const t=T.find(x=>x[0]===s.type);if(!t)return;
-    const o=sum[s.type]||(sum[s.type]={t,n:[0,0,0],v:0});const g=Math.max(1,Math.min(3,+s.grade||1))-1;o.n[g]++;o.v+=V[t[3]][g]})});
+    const o=sum[s.type]||(sum[s.type]={t,n:[0,0,0,0],v:0});const g=Math.max(1,Math.min(4,+s.grade||1))-1;o.n[g]++;o.v+=V[t[3]][g]})});
   const rows=Object.values(sum).map(o=>{const capped=o.t[3]==="r"&&o.v>20;
     return `<b>${o.t[2]}${o.t[1]}</b> ${o.n.map((n,i)=>n?`${GR[i]}×${n}`:"").filter(Boolean).join("、")}＝${o.t[4]} +${o.t[3]==="f"?o.v.toFixed(1):o.t[3]==="n"?o.v:(capped?20:o.v)+"%"}${capped?`（鑲了 ${o.v}%，超過 20% 的部分沒有用）`:""}`});
   $("mine").innerHTML=`<div class="box" style="border-color:var(--acct)">👤 你身上的孔位：<b>${used}</b> / ${holes} 個已鑲${holes?"":"（身上沒有帶孔的裝備）"}${rows.length?"<br>"+rows.join("<br>"):""}</div>`;

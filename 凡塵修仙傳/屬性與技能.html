@@ -627,9 +627,9 @@ function analyze(p){
   ["str","int","con","spr","agi"].forEach(k=>{
     const pill=Math.min(200,(p.pillUsed||{})[k]||0)*.1,study=Math.min(200,(p.studyCounts||{})[k]||0)*.1;let gear=0,sock=0;
     SLOTS.concat("神器").forEach(sl=>{const eq=eqs[sl];if(!eq)return;const d=gdef(eq);
-      if(d){const t=TPL[d.tpl]||TPL["均衡"];gear+=(t[k]||0)*.5*(QM[eq.quality]||1)*enh(eq)*(ACCS.includes(d.slot)?1.25:1)}
+      if(d){const t=TPL[d.tpl]||TPL["均衡"];gear+=(t[k]||0)*.5*(QM[eq.quality]||1)*enh(eq)*(ACCS.includes(d.slot)?1.25:1)*(({1:1.1,2:1.2})[eq.ancient]||1)}
       else if(LB[eq.lingbaoId]){const it=LB[eq.lingbaoId],sum=Object.values(it.s).reduce((a,b)=>a+b,0);gear+=(it.a?10:LB_BUDGET[it.t])*enh(eq)*(it.s[k]||0)/sum}
-      if(k!=="agi"&&Array.isArray(eq.sockets))eq.sockets.forEach(x=>{if(x&&x.type===k)sock+=({1:.1,2:.3,3:.6})[x.grade]||0})});
+      if(k!=="agi"&&Array.isArray(eq.sockets))eq.sockets.forEach(x=>{if(x&&x.type===k)sock+=({1:.1,2:.3,3:.6,4:1})[x.grade]||0})});
     const pct=tot(k+"Pct")+tot("statPct");
     stats[k]={base,pill,study,gear,sock,pct,pctFrom:from(k+"Pct").concat(from("statPct")),total:(base+pill+study+gear+sock)*(1+pct)}});
   // 武器攻擊
@@ -941,15 +941,15 @@ $("setupBox").onchange=()=>{
   rebuild();
 };
 // ---- 打怪推薦：照遊戲的掛機估算（一般玩家基準、境界壓制、收益速度上限）----
-// [名稱, 區, 經驗係數, 每隻靈石, 境界門檻, 妖獸位置, 固定位置, 強度範圍, 攻擊倍率, 四維門檻, 適合境界上限]
+// [名稱, 區, 經驗係數, 每隻靈石, 境界門檻, 妖獸位置, 固定位置, 強度範圍, 攻擊倍率, 四維門檻, 適合境界上限, 階數門檻（境界＋(階−1)/10）]
 const HMAPS=[["靈山大川",1,8,20,0,0,null,null,.7,0,1],["深淵險地",1,20,80,0,2,null,null,1,0,2],["上古遺跡",1,50,250,0,3,null,null,1,0,3],
 ["天南",2,100,1000,0,4,null,null,1,0,4],["亂星海",2,300,1650,0,5,null,null,1,0,5],["鬼谷八荒",2,1000,2450,0,6,null,null,1,0,6],["墜魔谷",2,1200,2550,6,6,6.9,[5,10],1,0,6],
 ["黑風海域",3,1400,2700,7,7,null,null,1,100,7],["崑吾山",3,1600,2700,7,7,7.9,[5,10],1,100,7],["蠻荒古地",3,1900,2950,8,8,null,null,1,100,8],["雷鳴大陸",3,2100,2950,8,8,8.9,[8,15],1,100,8],
-["血天大陸",3,2500,3150,9,9,null,null,1,100,9],["天淵戰場",3,3000,3150,9,9,9.9,[11,20],1,100,9],["星空古路",3,3000,3350,10,10,null,null,1,100,10],["荒古禁地",3,5000,3350,6,10,10.9,[15,25],1,100,10],
-["九天仙域",3,5000,6900,11,11,null,null,1,100,11],["太初古礦",3,6500,4200,6,10.5,10.9,[15,30],1,100,11],["上蒼（葬天島）",3,8000,6900,6,11,11.9,[15,40],1,100,11],
-["不死山",4,6000,7300,10,12,null,null,1,160,12],["神墟",4,7000,7750,10,12.3,null,null,1,160,12],["仙陵",4,8000,8200,10,12.6,null,null,1,160,12],["冥界",4,9000,8400,10,12.9,null,null,1,160,12],
-["仙界戰場",5,15000,8400,10,13.5,null,null,1,180,13],["萬界戰場",5,25000,8400,10,14.5,null,null,1,180,14],["混沌初界",5,50000,8400,10,15.5,null,null,1,180,15]];
-const HCAT={1:"一、野外歷練",2:"二、開放世界",3:"三、上古禁區",4:"四、幽冥禁域",5:"五、諸天戰場"},HATTR={1:[0,2],2:[5,4],3:[10,6],4:[10,6],5:[15,8]};
+["血天大陸",6,2500,3150,9,9,null,[8,15],1,100,9],["天淵戰場",6,3000,3150,9,9,9.9,[11,20],1,100,9],["星空古路",6,3000,3350,10,10,null,[10,15],1,100,10],["荒古禁地",6,5000,3350,6,10,10.9,[15,25],1,100,10],
+["九天仙域",4,5000,6900,11,11,null,[10,15],1,100,11],["太初古礦",4,6500,4200,6,10.5,10.9,[15,30],1,100,11],["上蒼（葬天島）",4,8000,6900,6,11,11.9,[15,40],1,100,11],
+["不死山",4,6000,7300,10,12,null,[40,50],1,160,12,12],["神墟",4,7000,7750,10,12.3,null,[50,60],1,160,12,12.3],["仙陵",4,8000,8200,10,12.6,null,[60,70],1,160,12,12.6],["冥界",4,9000,8400,10,12.9,null,[70,80],1,160,12,12.9],
+["仙界戰場",5,15000,8400,10,13.5,null,[80,120],1,180,13,13],["萬界戰場",5,25000,8400,10,14.5,null,[120,160],1,180,14,14],["混沌初界",5,50000,8400,10,15.5,null,[160,200],1,180,15,15]];
+const HCAT={1:"落雲宗周邊",2:"慕蘭草原",3:"大晉王朝區域",6:"無邊海",4:"靈界・第四區（幽冥禁域）",5:"靈界・第五區（諸天戰場）"},HORD=[1,2,3,6,4,5],HATTR={1:[0,2],2:[5,4],3:[10,6],4:[10,6],5:[15,8],6:[10,6]};
 // 同境界「一般玩家」的基準：妖獸的氣血、攻擊與收益補償都以它為準
 const T={
   stat:L=>{const r=Math.floor(L+1e-9),s=Math.round((L-r)*10)+1;return(5+(r*10+s-1)+5*r)*1.1},
@@ -979,7 +979,7 @@ const hMix=m=>{const d0=HATTR[m[1]][0],pool=hPool(m),tw=pool.reduce((s,x)=>s+x[1
 const hRace=(m,baseEva,hit)=>{const th=e=>1-evaDodge(e-hit),pool=hPool(m),tw=pool.reduce((s,x)=>s+x[1],0);
   return pool.reduce((s,[mo,w])=>s+w/tw*(mo[0]==="beast"?1.1:1)*th(baseEva)/th(baseEva+(mo[0]==="ghost"?5:0)),0)};
 // 各境界的主要練功地圖（挑戰模式的收益照這張圖算）
-const H_MAIN=["靈山大川","靈山大川","深淵險地","上古遺跡","天南","亂星海","鬼谷八荒","黑風海域","蠻荒古地","血天大陸","星空古路","九天仙域","冥界","仙界戰場","萬界戰場","混沌初界"];
+const H_MAIN=["靈山大川","靈山大川","深淵險地","上古遺跡","天南","亂星海","鬼谷八荒","黑風海域","蠻荒古地","血天大陸","星空古路","九天仙域","不死山","仙界戰場","萬界戰場","混沌初界"];
 const hStr=(L,m)=>m[7]||(Math.floor(L+1e-6)<=2?[1,1.5]:[1.5,3]);
 const hTypRounds=m=>{const L=m[5],[def,eva]=HATTR[m[1]],hit=T.hit(L),st=hStr(L,m),fixed=m[6]!=null?T.normal(m[6])/T.normal(L):1;
   return 5*(st[0]+st[1])/2*fixed*hRace(m,eva,hit)*hMix(m)/T.round(L)/(1-def/100)/(1-evaDodge(eva-hit))};
@@ -1004,7 +1004,7 @@ function hPlayer(a){
     else if(H_LBDEF[eq.lingbaoId]){def+=H_LBDEF[eq.lingbaoId][0];eva+=H_LBDEF[eq.lingbaoId][1]}
     else if(eq.stats){def+=+eq.stats.def||0;eva+=+eq.stats.eva||0}
     (Array.isArray(eq.subs)?eq.subs:[]).forEach(sb=>{if(!sb)return;const[kk,v]=sb;if(kk==="def")def+=v;else if(kk==="eva")eva+=v;else if(kk==="mdef")mdefX+=v;else if(kk==="fx:悟道")wu+=v;else if(kk==="fx:聚財")cai+=v});
-    (Array.isArray(eq.sockets)?eq.sockets:[]).forEach(x=>{if(x&&x.type==="def")def+=x.grade||0;if(x&&x.type==="eva")eva+=x.grade||0})});
+    (Array.isArray(eq.sockets)?eq.sockets:[]).forEach(x=>{const sv=x&&(x.grade===4?5:x.grade||0);if(x&&x.type==="def")def+=sv;if(x&&x.type==="eva")eva+=sv})});
   for(const n in setN){const c=setN[n];if(H_SETS.def.includes(n)&&c>=4)def+=5;if(H_SETS.eva.includes(n)){if(c>=2)eva+=3;if(c>=6)eva+=5}
     if(H_SETS.gain.includes(n)){if(c>=2)cai+=.05;if(c>=4)wu+=.05}}
   a.res.forEach(x=>def+=H_RESDEF[x[0]]||0);
@@ -1030,9 +1030,10 @@ function hPlayer(a){
 // 敵人打你一下：先看閃避（敵人的命中會抵銷），再過防禦（術法攻擊改看魔防）；金身這類護盾在防禦之後算，最多再減 20%
 const hTaken=(P,atk,monL,useJin,mag)=>atk*(1-evaDodge(P.eva-T.hit(monL)))*defMult(mag?P.mdef:P.def)*(1-(useJin?Math.min(.2,P.jin):0));
 function hEval(a,P,m){
-  const pL=a.r+(a.s-1)/10,[name,cat,er,coins,minR,L0,fixL,,atkM,minS,top]=m,[mDef,mEva]=HATTR[cat];
-  const need=Math.max(minR,Math.floor(L0+1e-9)-1);
-  let lock="";const over=Math.max(0,need-a.r);if(minS&&["str","con","int","spr"].some(k=>a.stats[k].total<minS))lock=`力量、體質、悟性、靈力都要 ${minS} 點以上`;
+  const pL=a.r+(a.s-1)/10,[name,cat,er,coins,minR,L0,fixL,,atkM,minS,top,minL]=m,[mDef,mEva]=HATTR[cat];
+  const need=Math.max(minR,Math.floor(L0+1e-9)-1,minL?Math.floor(minL+1e-9):0);
+  // 境界或階數不到門檻＝挑戰模式；同境界只差階數算越 1 個境界
+  let lock="";const over=pL<Math.max(need,minL||0)-1e-9?Math.max(1,need-a.r):0;if(minS&&["str","con","int","spr"].some(k=>a.stats[k].total<minS))lock=`力量、體質、悟性、靈力都要 ${minS} 點以上`;
   const gap=Math.max(0,L0-pL),lvAt=u=>fixL!=null?fixL:Math.round(Math.min(Math.max(pL+u,L0),top+(a.r<=top?1:.9))*1000)/1000;
   const mon=(u,mult)=>{const L=lvAt(u);return{L,hp:Math.max(1,Math.round(T.normal(L)*5*(1+gap)*mult)),
     atk:Math.max(.01,Math.round(T.hp(L)*atkM*(({0:1.5,1:1.5,2:1.125})[Math.floor(L+1e-6)]||1)*(1+1.2*gap)*mult)/100)}};
@@ -1081,7 +1082,7 @@ function renderHunt(a){
   if(bestPot&&(!best||bestPot.exp>best.exp*1.02))rec+=card("","🟡 想更快：帶丹藥去打",bestPot,`經驗比較高，但一波平均掉 ${pc(bestPot.A)} 氣血，調息補不回來，要開自動補血；丹藥每小時約花 ${hWan(bestPot.potion)} 靈石。`);
   if(bestCoin&&best&&bestCoin.name!==best.name)rec+=card("","💰 想賺靈石",bestCoin,`在穩定的地圖裡靈石最多。`);
   if(!best&&!bestPot)rec=`<div class="top">${open.length?"以目前的數值，每張進得去的地圖都有被一波帶走的風險。先回宗門打坐、補裝備或提升境界，再回「試算」分頁看看換裝後的結果。":"目前沒有進得去的戰鬥地圖。"}</div>`;
-  const body=[1,2,3,4,5].map(c=>{const list=rows.filter(x=>x.cat===c);
+  const body=HORD.map(c=>{const list=rows.filter(x=>x.cat===c);
     return `<tr><td colspan="8" style="background:var(--head);font-weight:bold">${HCAT[c]}</td></tr>`+list.map(x=>{
       if(x.state==="lock")return `<tr class="hlock"><td class="nw">${x.name}</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">${x.lock}</td></tr>`;
       return `<tr class="${best&&x.name===best.name?"hbest":""}"><td class="nw"><b>${x.name}</b>${x.over?`<br><small>⚔️ 挑戰模式<br>收益照${x.main}・做裝通貨 ×${x.craft}</small>`:""}</td><td><span class="hs ${x.state}">${SL[x.state]}</span></td>
@@ -1103,7 +1104,8 @@ function renderHunt(a){
   <div class="sub" style="margin-top:8px">
   <b>判定怎麼來的</b>：🟢 穩定＝一波平均掉血不到 30%（每波之間調息 10 秒可回 30%），而且較差的一波也不會倒。🟡 要吃藥＝不會被一波帶走，但調息補不回來。🟠 有風險＝遇到較差的一波（3 隻、偏強）會倒。🔴 撐不住＝平均的一波就會倒。<br>
   <b>每小時經驗有上限</b>：遊戲規定殺得比「同境界一般玩家」快也不會拿更多，所以寫「已達上限」的地圖再加強攻擊也不會變多，該往下一張圖走；寫「速度 N%」表示你殺得比一般玩家慢，收益按比例減少。<br>
-  <b>⚔️ 挑戰模式</b>：境界不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽，而且不能離線或背景掛機；好處只有做裝通貨掉率加倍，所以不列入上面的推薦。<br>
+  <b>靈界</b>：第四、五區在靈界，要從人界地圖的飛升點進去，進、出各要一套五行傳送陣靈石（金木水火土各 1 顆），在靈界戰死是回天元城外，不會回人界。這兩區的妖獸強度是同階一般玩家的 40～200 倍，門檻也改成看階數（例如神墟要真仙 4 階）。<br>
+  <b>⚔️ 挑戰模式</b>：境界或階數不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽，而且不能離線或背景掛機；好處只有做裝通貨掉率加倍，所以不列入上面的推薦。<br>
   <b>估算的範圍</b>：和遊戲離線結算用同一套算法，只看攻擊、暴擊、連擊、氣血、防禦、閃避、金身，妖獸一律當成物理攻擊。<b>沒算</b>魔防（術法型妖獸與魔修打你是看魔防）、妖獸的暴擊與技能、天賦給的暴擊、吸血、回春、護盾、靈寵與夥伴的招式、屬性傷害、五行相剋、種族剋制，也沒算稱號、異火、仙法光環給的防禦閃避與修為加成，所以實際通常會比表上快一點、耐打一點；遊戲作者實測線上收益約比這個估算多 2～4 成。丹藥花費以培元丹（回 10%、200 靈石）估計。挑戰圖的妖獸強度落差很大，請多留餘裕。
   </div>
   <h2>副本（秘境）</h2>
@@ -1129,7 +1131,7 @@ function openCmp(){
   const E0=baseBuild.equipment||{},E1=build.equipment||{};
   const gear=SLOTS.concat("神器").filter(s=>JSON.stringify(E0[s]||null)!==JSON.stringify(E1[s]||null)).map(s=>`<li><b>${s}</b>：${tag(E0[s])} → ${tag(E1[s])}</li>`).join("");
   const dmg=x=>x.avg.hp/x.h;
-  const body=[1,2,3,4,5].map(c=>`<tr><td colspan="7" style="background:var(--head);font-weight:bold">${HCAT[c]}</td></tr>`+HMAPS.filter(m=>m[1]===c).map(m=>{
+  const body=HORD.map(c=>`<tr><td colspan="7" style="background:var(--head);font-weight:bold">${HCAT[c]}</td></tr>`+HMAPS.filter(m=>m[1]===c).map(m=>{
     const x=hEval(A0,P0,m),y=hEval(A1,P1,m),lx=x.state==="lock",ly=y.state==="lock";
     if(lx&&ly)return `<tr class="hlock"><td class="nw">${y.name}</td><td colspan="6">🔒 ${y.lock}</td></tr>`;
     const v=(l,s)=>l?`<small>🔒</small>`:s;

@@ -177,6 +177,7 @@ function render(){
     extra.push(`化神訣殘本 ${g10?"60～160":"30～80"} 頁`);
     extra.push("有機會掉鍛造圖紙（答對越多機會越高）");
     extra.push(`洗煉石 ${1+Math.floor(n/20)} 顆 × 問答倍率`);
+    if(n>=60)extra.push("有機會掉 1 顆傳送陣靈石（屬性隨機）");
     extra.push("做裝通貨：有機會掉天機石"+(n>=30?"、混元晶":"")+(g10?"、破虛石":"")+(g10&&n>=50?"、造化玉":""));
     const zf=ZM?(ZM.floor||1):0,mark=!ZM?"":n<zf||(ZM.best||0)>=n?`<br><span class="ok">✅</span>`:n===zf?`<br><span class="tag t-w">你在這</span>`:"";
     h+=`<tr class="${g10?"g10":g5?"g5":""}"><td class="num"><b>${n}</b>${mark}</td>

@@ -72,7 +72,7 @@ a:hover{text-decoration-thickness:2px}
 <li>煉成就<b>直接服用</b>，不會放進背包。每張丹藥卡片會顯示已服用幾顆。</li>
 <li>五種屬性丹每顆 <b>+0.1 點</b>，各 200 顆封頂（+20 點）。吃滿之後再煉也沒有效果，遊戲會擋下來。</li>
 <li>丹藥的效果<b>轉世後保留</b>，吃過的顆數不會歸零。</li>
-<li><b>駐顏駐魅力丹</b>加的是魅力，沒有上限，但魅力不影響戰鬥。</li>
+<li><b>駐顏駐魅力丹</b>加的是魅力，每顆 +0.5、最多 5,000 顆（原本每顆 +20、沒有上限；以前吃的不會被扣回去）。魅力不影響戰鬥。</li>
 <li><b>凝元丹</b>只在築基期、金丹期出現，用來灌丹田和溫養，見<a href="渡劫金丹壽元.html">渡劫・金丹・壽元</a>。</li>
 <li>⚠️ 煉丹房的「洗髓丹」是加體質的丹藥；千寶閣用七彩補天石買的「洗髓丹」是重測靈根用的，兩個同名但不是同一樣東西。</li>
 </ul>
@@ -146,7 +146,7 @@ let tg=0,tc=0;
 $("pillT").innerHTML=PILL.map(([k,n,s,h])=>{const g=HERB[h][0]*200,c=HERB[h][1]*200;tg+=g;tc+=c;
   return `<tr><td class="nw"><b style="color:var(--acct)">${n}</b></td><td>${h}靈草 1 株</td><td>${s} +0.1</td><td class="num">200 顆（+20）</td><td class="num">${fm(g)}</td><td class="num">${fm(c)}</td></tr>`}).join("")
  +`<tr class="sum"><td colspan="4">五種全部吃滿</td><td class="num">${fm(tg)}</td><td class="num">${fm(tc)}</td></tr>`
- +`<tr><td class="nw"><b style="color:var(--acct)">駐顏駐魅力丹</b></td><td>仙品靈草 1 株＋1,000 靈石</td><td>魅力 +20</td><td class="num">沒有上限</td><td class="num">每顆 500</td><td class="num">每顆 1,050</td></tr>`
+ +`<tr><td class="nw"><b style="color:var(--acct)">駐顏駐魅力丹</b></td><td>仙品靈草 1 株＋1,000 靈石</td><td>魅力 +0.5</td><td class="num">5,000 顆</td><td class="num">每顆 500</td><td class="num">每顆 1,050</td></tr>`
  +`<tr><td class="nw"><b style="color:var(--acct)">凝元丹</b></td><td>上品靈草 5 株＋1 萬靈石</td><td>丹田／溫養 +5%</td><td class="num">吃到滿為止</td><td class="num">每顆 250</td><td class="num">每顆 10,050</td></tr>`;
 
 const used=(o,k)=>Math.max(0,Math.min(200,Math.round(+((o||{})[k])||0)));
