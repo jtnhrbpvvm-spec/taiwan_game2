@@ -36,14 +36,15 @@ a:hover{text-decoration-thickness:2px}
 </style></head><body><div class="wrap">
 <a class="back" href="index.html">← 回攻略首頁</a>
 <h1>🏅 稱號與異火</h1>
-<div class="sub">達成就永久生效、而且全部疊加的兩種收藏加成：72 個稱號和 50 種天下異火。</div>
-<div class="tabs"><button data-k="title" class="on">🏅 稱號（72）</button><button data-k="fire">☄️ 天下異火（50）</button></div>
+<div class="sub">達成就永久生效、而且全部疊加的兩種收藏加成：75 個稱號和 50 種天下異火。</div>
+<div class="tabs"><button data-k="title" class="on">🏅 稱號（75）</button><button data-k="fire">☄️ 天下異火（50）</button></div>
 
 <div id="p-title">
 <div class="box">
 <ul>
 <li>稱號<b>達成後永久保留</b>，所有已達成稱號的加成<b>全部疊加</b>，不用配戴。</li>
 <li>可以另外選一個顯示在道號旁邊，只是外觀，不影響加成。</li>
+<li><a href="世界Boss.html">世界 Boss</a> 的 3 個名次稱號是<b>純外觀</b>，沒有數值加成，領獎時依名次取得。</li>
 <li>收藏類稱號（全收某部位、某五行等）<b>不含秘境裝備</b>，所以不必湊齊套裝也能拿。</li>
 <li>「攻擊 +X%」是物理、術法攻擊都加；「全屬性 +X%」是力量、悟性、體質、靈力、敏捷的點數各乘上去。詳細見<a href="屬性與技能.html">屬性與技能</a>的「輔助狀態說明」。</li>
 </ul>
@@ -89,7 +90,8 @@ const T=[
 ["其他","正道楷模","善惡值達「善」","功德 +5%"],["其他","魔道巨擘","善惡值達「惡」","攻擊 +1%"],["其他","賞金獵人","懸賞伏誅 50 名","功德 +5%"],
 ["職業","劍帝","劍修練到第 10 階","攻擊 +2%"],["職業","刀皇","刀修練到第 10 階","攻擊 +2%"],["職業","風帝","扇修練到第 10 階","攻擊 +2%"],["職業","弓帝","弓修練到第 10 階","攻擊 +2%"],["職業","樂帝","音修練到第 10 階","攻擊 +2%"],["職業","符祖","符修練到第 10 階","攻擊 +2%"],
 ["賭運","賭石大家","天星賭坊累計切石 100 顆","野外靈石 +2%"],["賭運","天選之人","天星賭坊切出整朵異火","裝備掉落率提高 10%"],["賭運","豹子頭","天星賭坊押中指定豹子","全屬性 +1%"],["賭運","一擲千金","天星賭坊擲骰單把淨贏 1 億靈石","野外靈石 +2%"],
-["守城","天南守卒","死守天南城守住第 10 波","防禦 +1"],["守城","天南守將","死守天南城守住第 30 波","攻擊 +1%"],["守城","鎮城仙將","死守天南城守住第 50 波","氣血上限 +2%"],["守城","魔屠天南","死守天南城守住第 80 波","攻擊 +2%"],["守城","天南城守護神","死守天南城守住第 100 波","全屬性 +3%"]];
+["守城","天南守卒","死守天南城守住第 10 波","防禦 +1"],["守城","天南守將","死守天南城守住第 30 波","攻擊 +1%"],["守城","鎮城仙將","死守天南城守住第 50 波","氣血上限 +2%"],["守城","魔屠天南","死守天南城守住第 80 波","攻擊 +2%"],["守城","天南城守護神","死守天南城守住第 100 波","全屬性 +3%"],
+["世界 Boss","誅天第一","世界 Boss 傷害第 1 名","外觀稱號（無加成）"],["世界 Boss","誅魔先鋒","世界 Boss 傷害前 10 名","外觀稱號（無加成）"],["世界 Boss","斬魔一擊","給世界 Boss 最後一擊","外觀稱號（無加成）"]];
 // [品階, 名稱, 出處, 加成, 簡介]
 const F=[
 ["帝焰","帝炎","《鬥破蒼穹》","攻擊 +5%、火傷 +5%","眾火之主，傳說由諸般異火相融而成。"],["帝焰","虛無吞炎","《鬥破蒼穹》","術法攻擊 +5%、吸血 +3%","無形無色，專吞萬物之火與靈魂。"],
@@ -119,7 +121,7 @@ function renderT(){
 }
 // 已帶入角色時：標出已達成的稱號、已收錄的異火
 const PF=window.PROFILE||null;
-const TID="bp17 bpTier1500 bp60 bpTier5000 bpTier10000 bpAll bpPlat17 codex50 codex100 codex200 codex350 codex500 codex700 codexAll codexPlat catWeapon catArmor catAccessory slotSword slotBlade slotFan slotBow slotFlute slotBrush elemMetal elemWood elemWater elemFire elemEarth purple200 orange200 plat1 plat50 enh10 enh15 enh20 wearPlat5 iron10000 realm2 realm3 realm4 realm5 realm7 realm8 realm10 realm11 realm13 realm15 sectOuter sectInner sectCore sectDeacon sectElder sectGrand karmaGood karmaEvil bounty50 profSword profBlade profFan profBow profFlute profBrush casinoStone100 casinoFire casinoTriple casinoBigWin defense10 defense30 defense50 defense80 defense100".split(" ");
+const TID="bp17 bpTier1500 bp60 bpTier5000 bpTier10000 bpAll bpPlat17 codex50 codex100 codex200 codex350 codex500 codex700 codexAll codexPlat catWeapon catArmor catAccessory slotSword slotBlade slotFan slotBow slotFlute slotBrush elemMetal elemWood elemWater elemFire elemEarth purple200 orange200 plat1 plat50 enh10 enh15 enh20 wearPlat5 iron10000 realm2 realm3 realm4 realm5 realm7 realm8 realm10 realm11 realm13 realm15 sectOuter sectInner sectCore sectDeacon sectElder sectGrand karmaGood karmaEvil bounty50 profSword profBlade profFan profBow profFlute profBrush casinoStone100 casinoFire casinoTriple casinoBigWin defense10 defense30 defense50 defense80 defense100 wbTop1 wbTop10 wbLastHit".split(" ");
 const hasT=t=>!!PF&&(PF.titles||[]).includes(TID[T.indexOf(t)]);
 const hasF=t=>!!PF&&((PF.fireCollection||{})["f"+String(F.indexOf(t)+1).padStart(2,"0")]||0)>0;
 function renderF(){
@@ -131,10 +133,10 @@ function renderF(){
 // 全部稱號的加成合計
 (function(){const sum={};T.forEach(t=>t[3].split("、").forEach(x=>{const m=x.match(/^(.+) \+([\d.]+)%$/);if(m)sum[m[1]]=(sum[m[1]]||0)+ +m[2]}));
   const keys=["攻擊","全屬性","氣血上限","技能傷害"];
-  $("tSum").innerHTML="72 個稱號全部達成的話，主要加成合計："+keys.map(k=>`${k} +${+sum[k].toFixed(1)}%`).join("、")+"（職業帝級稱號要六種職業都練到 10 階）。"})();
+  $("tSum").innerHTML="75 個稱號全部達成的話，主要加成合計："+keys.map(k=>`${k} +${+sum[k].toFixed(1)}%`).join("、")+"（職業帝級稱號要六種職業都練到 10 階）。"})();
 $("tQ").oninput=renderT;$("fQ").oninput=renderF;renderT();renderF();
 if(PF){const nt=T.filter(hasT).length,nf=F.filter(hasF).length;
-  $("tSum").insertAdjacentHTML("beforebegin",`<div class="sub" style="margin-top:6px;color:var(--acct);font-weight:bold">✅ 你已達成 ${nt} / 72 個稱號。</div>`);
+  $("tSum").insertAdjacentHTML("beforebegin",`<div class="sub" style="margin-top:6px;color:var(--acct);font-weight:bold">✅ 你已達成 ${nt} / 75 個稱號。</div>`);
   $("fBody").closest(".tw").insertAdjacentHTML("afterend",`<div class="sub" style="margin-top:6px;color:var(--acct);font-weight:bold">✅ 你已收錄 ${nf} / 50 種異火；持有異火共 ${PF.strangeFires||0} 朵，異火碎片 ${PF.fireShards||0} 片。</div>`)}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
   ["title","fire"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
