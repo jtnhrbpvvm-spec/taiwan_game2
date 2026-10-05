@@ -183,7 +183,7 @@ a:hover{text-decoration-thickness:2px}
 
 <h3>各境界的壽元</h3>
 <div class="tw"><table><thead><tr><th>境界</th><th class="num">突破得壽元</th><th class="num">死亡折壽</th><th class="num">流逝底線</th><th class="num">安全區每小時</th><th>該境界的練功圖</th><th class="num">在練功圖每小時</th><th class="num">這份壽元可撐</th></tr></thead><tbody id="lifeT"></tbody></table></div>
-<div class="sub" style="margin-top:6px">單位是年，時間是線上的實際時間。流逝速度依<b>你目前的境界</b>計算，境界越高、每一年過得越慢。「這份壽元可撐」是只算突破這個境界拿到的壽元、一直待在練功圖能撐多久，大約是正常修滿這個境界所需時間的 5 倍；前面境界剩下的壽元會繼續累加，所以不常死的話壽元會越存越多。真正會把壽元耗光的是<b>反覆戰死和渡劫失敗</b>。</div>
+<div class="sub" style="margin-top:6px">單位是年，時間是線上的實際時間。流逝速度依<b>你目前的境界</b>計算，境界越高、每一年過得越慢。「這份壽元可撐」是只算突破這個境界拿到的壽元、一直待在練功圖能撐多久，大約是正常修滿這個境界所需時間的 5 倍。<b>渡劫、仙人初境、大羅金仙、混元大羅金仙、混沌道祖</b>的流逝另外調慢了：渡劫、仙人初境約 5.5 倍，大羅金仙約 11 倍，混元大羅金仙、混沌道祖約 15 倍（連同前面累積的壽元，可撐修滿時間的 19／20／25／28／30 倍）。前面境界剩下的壽元會繼續累加，所以不常死的話壽元會越存越多。真正會把壽元耗光的是<b>反覆戰死和渡劫失敗</b>。</div>
 
 <h3>補壽元、少折壽</h3>
 <div class="tw"><table><thead><tr><th>方法</th><th>說明</th></tr></thead><tbody>
@@ -277,12 +277,17 @@ pcalc();
 
 // 壽元表：得壽元、折壽、修滿所需時數、練功圖、練功圖的流逝倍率
 const L=[[60,1,0.5,"靈山大川",1.5],[100,1,1,"靈山大川",1.5],[200,3,2,"深淵險地",1.5],[500,5,3,"上古遺跡",1.5],[800,5,5,"天南",2],[1000,5,10,"亂星海",2],[1200,8,20,"鬼谷八荒",2],
-[1500,8,48,"黑風海域",3],[2000,10,240,"蠻荒古地",3],[3000,10,720,"血天大陸",3],[4000,15,1200,"星空古路",3],[4500,15,2400,"九天仙域",3],[5000,20,3600,"冥界",3],
+[1500,8,48,"黑風海域",3],[2000,10,240,"蠻荒古地",3],[3000,10,720,"血天大陸",3],[4000,15,1200,"星空古路",3],[4500,15,2400,"九天仙域",3],[5000,20,3600,"不死山",3],
 [20000,50,4800,"仙界戰場",4],[50000,100,4800,"萬界戰場",4],[100000,200,7200,"混沌初界",4]];
 const f=v=>v>=100?Math.round(v).toLocaleString("zh-TW"):v>=10?v.toFixed(1):v.toFixed(2);
 const dur=h=>h>=48?Math.round(h/24)+" 天":(Math.round(h*10)/10)+" 小時";
+// 這幾個境界另外指定「累積壽元（扣掉底線）在練功圖可撐修滿時間的幾倍」，流逝比其他境界慢
+const LT={9:19,10:20,13:25,14:28,15:30};
+let lifeSum=0;
 $("lifeT").innerHTML=L.map(([gain,cost,hrs,map,m],i)=>{
-  const safeH=Math.max(6,hrs*5*m),perSafe=gain/safeH;
+  lifeSum+=gain;
+  const pm=LT[i]?LT[i]*gain/(lifeSum-cost*3):5;
+  const safeH=Math.max(6,hrs*pm*m),perSafe=gain/safeH;
   return `<tr class="${PF&&PF.realmIndex===i?"me":""}"><td class="nw">${R[i]}${i?"":"（初始）"}${PF&&PF.realmIndex===i?" 👤":""}</td><td class="num">${i?"+":""}${gain.toLocaleString("zh-TW")}</td><td class="num">${cost}</td><td class="num">${cost*3}</td><td class="num">${f(perSafe)}</td><td class="nw">${map}</td><td class="num">${f(perSafe*m)}</td><td class="num">${dur(safeH/m)}</td></tr>`;
 }).join("");
 </script></body></html>

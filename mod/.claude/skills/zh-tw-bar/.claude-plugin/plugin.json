@@ -1,0 +1,6 @@
+{
+  "name": "zh-tw-bar",
+  "version": "0.1.0",
+  "description": "繁體中文介面文字，並在輸入框上方顯示 5 小時／每週流量、資料夾與網路下拉選單",
+  "types": "./types/index.d.ts"
+}

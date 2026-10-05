@@ -31,7 +31,7 @@
   // 讀到的存檔已被遊戲判定「存檔驗證異常」時，在畫面最上方用紅色閃字提醒是哪一種狀況
   function flagKind(reason) {
     const r = String(reason || "");
-    if (/^修煉進度過快/.test(r)) return ["修煉進度過快", "新增的修煉進度超過「遊玩時數 × 10 倍＋2 小時」。"];
+    if (/^修煉進度過快/.test(r)) return ["修煉進度過快", "新增的修煉進度超過「遊玩時數 × 60 倍＋2 小時」。"];
     if (/存檔代碼/.test(r)) return ["匯入的存檔代碼有問題", "匯入過被修改、或沒有簽章的存檔代碼。"];
     if (/簽章遺失/.test(r)) return ["存檔的簽章被拿掉", "本機存檔或匯入的代碼少了簽章，視同被修改。"];
     if (/存檔內容被修改/.test(r)) return ["本機存檔被改過", "存檔內容和簽章對不上。"];
@@ -54,7 +54,15 @@
     }
     if (!bar) { bar = document.createElement("div"); bar.id = "pfFlag"; bar.setAttribute("role", "alert"); bar.setAttribute("data-noitm", ""); document.body.insertAdjacentElement("afterbegin", bar); }
     const k = flagKind(ig.reason);
-    bar.innerHTML = `<b>⚠️ 這份存檔已被判定「存檔驗證異常」：${esc(k[0])}</b><br>`
+    // 遊戲已放寬：2026/10/5 17:00（台灣時間）前的標記、以及舊門檻（低於 60 倍）下判的「修煉進度過快」，更新遊戲後會自動解除
+    const lifted = ig.at < Date.UTC(2026, 9, 5, 9) || (/^修煉進度過快/.test(ig.reason || "") && (ig.speedMax || 10) < 60);
+    bar.style.background = lifted ? "#166534" : "";
+    bar.innerHTML = lifted
+      ? `<b style="animation:none">✅ 這份存檔帶有舊的「存檔驗證異常」標記（${esc(k[0])}），遊戲已經放寬</b><br>`
+        + `<small>把遊戲更新到最新版、開一次遊戲，標記就會自動解除，排行榜、寄售與世界 Boss 恢復使用。<br>`
+        + `還沒更新前仍然無法進排行榜、無法寄售（拍賣）上架與出價。 <a href="常見問題.html#flagged">詳細說明</a></small>`
+        + `<button id="pfFlagX" type="button" aria-label="關閉提醒" title="關閉提醒">✕</button>`
+      : `<b>⚠️ 這份存檔已被判定「存檔驗證異常」：${esc(k[0])}</b><br>`
       + `<small>${esc(k[1])}${ig.reason ? `遊戲記錄的原因：「${esc(ig.reason)}」。` : ""}<br>`
       + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a></small>`
       + `<button id="pfFlagX" type="button" aria-label="關閉提醒" title="關閉提醒">✕</button>`;
