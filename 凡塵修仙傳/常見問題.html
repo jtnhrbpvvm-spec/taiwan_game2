@@ -304,6 +304,19 @@ a:hover{text-decoration-thickness:2px}
 <li>每日重置（每日任務、秘境次數、奇遇次數等）看的是伺服器的日期，改裝置日期不會提早重置。</li>
 </ul></div></details>
 
+<details id="flagged"><summary>為什麼顯示「存檔驗證異常」，不能寄售、出價？</summary><div class="a">
+這和調時間、加速器<b>無關</b>（那只是多出來的收益不算，不會標記存檔）。這是遊戲的存檔驗證判定這份存檔有問題，會被標記的情況有三種：
+<table><tr><th>狀況</th><th>遊戲記錄的原因</th><th>怎麼發生的</th></tr>
+<tr><td><b>本機存檔被改過</b></td><td>「存檔內容被修改」「簽章遺失」</td><td>存檔帶有簽章，內容和簽章對不上，或簽章被拿掉。</td></tr>
+<tr><td><b>匯入的存檔代碼有問題</b></td><td>「存檔代碼被修改」「存檔代碼沒有簽章」「簽章遺失」</td><td>匯入了被改過的代碼，或沒有簽章的代碼。沒簽章的舊代碼只接受 <b>2026/10/6 00:00（台灣時間）以前</b>匯出的。匯入時會先跳警告，按了確認才會被標記。</td></tr>
+<tr><td><b>修煉進度過快</b></td><td>「修煉進度過快：…」</td><td>新增的修煉進度超過「遊玩時數 × 10 倍＋2 小時」。</td></tr></table>
+<ul>
+<li><b>被標記之後</b>：不能上排行榜、不能在寄售上架與出價、不能挑戰<a href="世界Boss.html">世界 Boss</a>和領獎。<b>單機遊玩完全不受影響，也不會刪檔</b>。</li>
+<li><b>怎麼知道是哪一種</b>：被標記的當下，遊戲日誌會出現「⚠️ 存檔驗證異常（原因）」，括號裡就是原因；寄售的提示本身不會寫。也可以把存檔代碼貼到<a href="屬性與技能.html">屬性與技能</a>讀取，被標記的存檔會在攻略頁最上方用紅字顯示是哪一種。</li>
+<li><b>標記寫在存檔裡，會跟著存檔代碼走</b>，目前沒有自己解除的方法。覺得是誤判的話，要找作者處理。</li>
+<li>別人給的、或用工具處理過的存檔代碼不要匯入。</li>
+</ul></div></details>
+
 <details><summary>寄售怎麼打不開？世界 Boss 什麼時候開？</summary><div class="a">
 <b>寄售</b>只在週一～週五開放（台灣時間），<b>週六、週日整天</b>和<b>每週一 15:00～24:00</b> 休市。休市期間結束的拍賣不會消失，恢復後到「待處理」領取，見<a href="洞府與其他.html#market">洞府與其他</a>。<br>
 <b>世界 Boss</b> 在活動選單的「👹 三界之戰」，要聲望 1 萬、境界大乘，每週六 20:00～週日 20:00 開放，見<a href="世界Boss.html">世界 Boss</a>。</div></details>
@@ -346,4 +359,6 @@ document.getElementById("q").addEventListener("input",e=>{
 });
 document.getElementById("openAll").onclick=()=>items.forEach(d=>d.open=true);
 document.getElementById("closeAll").onclick=()=>items.forEach(d=>d.open=false);
+function openHash(){const d=location.hash.length>1&&document.getElementById(decodeURIComponent(location.hash.slice(1)));if(d&&d.tagName==="DETAILS"){d.open=true;d.scrollIntoView()}}
+addEventListener("hashchange",openHash);openHash();
 </script></body></html>

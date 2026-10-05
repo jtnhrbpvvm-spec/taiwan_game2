@@ -7,7 +7,7 @@
   const KEEP = ["name", "gender", "realmIndex", "stage", "level", "sect", "sectSkills", "profession", "proficiency", "aptitude", "goldenCore",
     "titles", "fireCollection", "strangeFires", "fireShards", "partners", "partnerTeam", "partnerBond", "partnerShards", "beasts",
     "spells", "spellSlots", "spellShards", "equipment", "pillUsed", "studyCounts", "learnedSkills", "reincarnateBonus", "weakened",
-    "zhenmo", "defenseBest", "karma", "merit", "butianStones", "raceKills", "raceTreasures", "raceTreasureSlots", "bountyKills", "reincarnations", "yuanshen", "huashenScrolls", "breakPills", "rootPills", "physiquePills", "spiritFruits", "talents", "talentRespecs", "refineStones", "craftCur", "_root", "_phy"];
+    "zhenmo", "defenseBest", "karma", "merit", "butianStones", "raceKills", "raceTreasures", "raceTreasureSlots", "bountyKills", "reincarnations", "yuanshen", "huashenScrolls", "breakPills", "rootPills", "physiquePills", "spiritFruits", "talents", "talentRespecs", "refineStones", "craftCur", "integrity", "_root", "_phy"];
   let store = null;
   try { store = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) { store = null; }
   window.PROFILE = store && store.data ? store.data : null;
@@ -28,7 +28,34 @@
   };
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // 讀到的存檔已被遊戲判定「存檔驗證異常」時，在畫面最上方用紅色閃字提醒是哪一種狀況
+  function flagKind(reason) {
+    const r = String(reason || "");
+    if (/^修煉進度過快/.test(r)) return ["修煉進度過快", "新增的修煉進度超過「遊玩時數 × 10 倍＋2 小時」。"];
+    if (/存檔代碼/.test(r)) return ["匯入的存檔代碼有問題", "匯入過被修改、或沒有簽章的存檔代碼。"];
+    if (/簽章遺失/.test(r)) return ["存檔的簽章被拿掉", "本機存檔或匯入的代碼少了簽章，視同被修改。"];
+    if (/存檔內容被修改/.test(r)) return ["本機存檔被改過", "存檔內容和簽章對不上。"];
+    return ["原因不明", ""];
+  }
+  function flagBar() {
+    let bar = document.getElementById("pfFlag");
+    const ig = window.PROFILE && window.PROFILE.integrity;
+    if (!ig || !ig.flagged) { if (bar) bar.remove(); return; }
+    if (!document.getElementById("pfFlagCss")) {
+      const st = document.createElement("style"); st.id = "pfFlagCss";
+      st.textContent = "#pfFlag{position:sticky;top:0;z-index:50;background:#b91c1c;color:#fff;padding:8px 14px;font-size:14px;line-height:1.7;text-align:center}"
+        + "#pfFlag b{font-size:15px;animation:pfBlink 1s steps(1) infinite}#pfFlag a{color:#fff;text-decoration:underline}#pfFlag small{font-size:13px;opacity:.95}"
+        + "@keyframes pfBlink{50%{color:#fde047}}@media (prefers-reduced-motion:reduce){#pfFlag b{animation:none}}";
+      document.head.appendChild(st);
+    }
+    if (!bar) { bar = document.createElement("div"); bar.id = "pfFlag"; bar.setAttribute("role", "alert"); bar.setAttribute("data-noitm", ""); document.body.insertAdjacentElement("afterbegin", bar); }
+    const k = flagKind(ig.reason);
+    bar.innerHTML = `<b>⚠️ 這份存檔已被判定「存檔驗證異常」：${esc(k[0])}</b><br>`
+      + `<small>${esc(k[1])}${ig.reason ? `遊戲記錄的原因：「${esc(ig.reason)}」。` : ""}<br>`
+      + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a></small>`;
+  }
   function banner() {
+    flagBar();
     const wrap = document.querySelector(".wrap");
     if (!wrap) return;
     let bar = document.getElementById("pfBar");
