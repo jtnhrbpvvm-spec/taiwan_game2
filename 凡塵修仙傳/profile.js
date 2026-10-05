@@ -40,10 +40,14 @@
   function flagBar() {
     let bar = document.getElementById("pfFlag");
     const ig = window.PROFILE && window.PROFILE.integrity;
-    if (!ig || !ig.flagged) { if (bar) bar.remove(); return; }
+    let hid = 0;
+    try { hid = +sessionStorage.getItem(KEY + "_flagHide") || 0; } catch (e) {}
+    // 按過關閉就不再顯示，直到重新讀取存檔
+    if (!ig || !ig.flagged || hid === window.PROFILE_AT) { if (bar) bar.remove(); return; }
     if (!document.getElementById("pfFlagCss")) {
       const st = document.createElement("style"); st.id = "pfFlagCss";
-      st.textContent = "#pfFlag{position:sticky;top:0;z-index:50;background:#b91c1c;color:#fff;padding:8px 14px;font-size:14px;line-height:1.7;text-align:center}"
+      st.textContent = "#pfFlagX{position:absolute;top:4px;right:6px;width:32px;height:32px;border:1px solid rgba(255,255,255,.6);border-radius:6px;background:transparent;color:#fff;font-size:18px;line-height:1;cursor:pointer}#pfFlagX:hover{background:rgba(255,255,255,.18)}"
+        + "#pfFlag{position:sticky;top:0;z-index:50;background:#b91c1c;color:#fff;padding:8px 46px 8px 14px;font-size:14px;line-height:1.7;text-align:center}"
         + "#pfFlag b{font-size:15px;animation:pfBlink 1s steps(1) infinite}#pfFlag a{color:#fff;text-decoration:underline}#pfFlag small{font-size:13px;opacity:.95}"
         + "@keyframes pfBlink{50%{color:#fde047}}@media (prefers-reduced-motion:reduce){#pfFlag b{animation:none}}";
       document.head.appendChild(st);
@@ -52,7 +56,12 @@
     const k = flagKind(ig.reason);
     bar.innerHTML = `<b>⚠️ 這份存檔已被判定「存檔驗證異常」：${esc(k[0])}</b><br>`
       + `<small>${esc(k[1])}${ig.reason ? `遊戲記錄的原因：「${esc(ig.reason)}」。` : ""}<br>`
-      + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a></small>`;
+      + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a></small>`
+      + `<button id="pfFlagX" type="button" aria-label="關閉提醒" title="關閉提醒">✕</button>`;
+    document.getElementById("pfFlagX").onclick = () => {
+      try { sessionStorage.setItem(KEY + "_flagHide", String(window.PROFILE_AT)); } catch (e) {}
+      bar.remove();
+    };
   }
   function banner() {
     flagBar();
