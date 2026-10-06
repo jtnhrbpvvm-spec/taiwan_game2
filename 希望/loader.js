@@ -2338,7 +2338,8 @@
     }
     if (!row) return;
     if (on) {
-      numEl.classList.add("iw-mall-max");
+      // 已經有就不要再 add，理由同 setMallSuperRate（不然最貴那一小時也會無限迴圈卡死）
+      if (!numEl.classList.contains("iw-mall-max")) numEl.classList.add("iw-mall-max");
       if (!row.querySelector(":scope > .iw-mall-max-tag")) {
         var tag = document.createElement("span");
         tag.className = "iw-mall-max-tag";
@@ -2383,7 +2384,10 @@
     document.querySelectorAll(".iw-mall-super-rate").forEach(function (el) {
       if (!on || el !== numEl) el.classList.remove("iw-mall-super-rate");
     });
-    if (on && numEl) numEl.classList.add("iw-mall-super-rate");
+    // 🚨 一定要先檢查「還沒有」才 add：classList.add 就算 class 已經在上面，瀏覽器還是會送出一筆 class 變動，
+    // 下面的 MutationObserver 看 class 變動就再跑一次這裡 → 無限迴圈、整個遊戲畫面卡死。
+    // 2026-10-06 23 點（第一次真的遇到超級特價那一小時）實際發生：開了黑市完全沒反應。
+    if (on && numEl && !numEl.classList.contains("iw-mall-super-rate")) numEl.classList.add("iw-mall-super-rate");
   }
 
   var mallRainShown = false; // 這次打開名品館已經下過金幣雨了沒（離開名品館分頁就重設）
