@@ -91,6 +91,10 @@ td.nw{white-space:nowrap}
 .sbody .ctl{margin:8px 0}
 .sbody label{max-width:100%;min-width:0}
 .sbody .ctl select{width:230px;max-width:100%}
+.dnum{background:none;border:0;padding:0;font:inherit;font-weight:bold;color:var(--link);cursor:pointer;text-decoration:underline dashed;text-underline-offset:3px;font-variant-numeric:tabular-nums}
+.ddbox{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+.ddl{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px dashed var(--line)}.ddl:last-child{border-bottom:0}
+.ddl span{color:var(--fg)}.ddl small{display:block;color:var(--mute);font-size:12px}.ddl b{color:var(--acct);white-space:nowrap;font-variant-numeric:tabular-nums}.ddl .dv{font-size:15px}
 .cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:4px 12px;margin-top:6px}
 label.ck{display:flex;flex-direction:row;align-items:flex-start;gap:6px;font-size:13px;color:var(--fg);line-height:1.5;cursor:pointer}
 label.ck input{width:16px;height:16px;margin:2px 0 0;flex:none;accent-color:var(--acc);padding:0}
@@ -164,6 +168,7 @@ a:hover{text-decoration-thickness:2px}
   <label>氣血增益 %<input id="cBh" type="number" min="-90" max="320" step="any" value="0"></label>
   <label>技能傷害加成 %<input id="cSk" type="number" min="0" step="any" value="0"></label>
 </div>
+<div id="cTemp"></div>
 <div class="sub" id="cNote"></div>
 <div class="res" id="cRes"></div>
 <div class="sub">攻擊力、氣血上限在畫面上是<b>以 100 為一格跳動</b>的，所以只加一兩點屬性時數字可能完全不動，要累積到跨過下一格才會變。三種增益各自的上限是 +200%，仙人初境起依境界提高（上面「增益上限」那格就是你目前的上限）。</div>
@@ -342,6 +347,7 @@ a:hover{text-decoration-thickness:2px}
 <div id="cmpDlg" hidden role="dialog" aria-modal="true" aria-label="換裝前後比較"><div class="cmp-box"><div class="cmp-top"><b>🗺️ 換裝前後：打每張地圖的傷害</b><button class="btn ghost" id="cmpClose" type="button">✕ 關閉</button></div><div id="cmpOut"></div></div></div>
 <script src="profile.js"></script>
 <script src="site.js"></script>
+<script src="dmg.js"></script>
 <script>
 const REALMS=["凡人","煉氣","築基","金丹","元嬰","化神","煉虛","合體","大乘","渡劫","仙人初境","天仙","真仙","大羅金仙","混元大羅金仙","混沌道祖"];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -357,23 +363,78 @@ function calc(){
   const st={str:base+v("cStr"),int:base+v("cInt"),con:base+v("cCon"),spr:base+v("cSpr"),agi:base+v("cAgi")};
   const X=calcX,cap=(BUFF_CAP[r]||200)+X.capAdd,buff=x=>Math.max(-0.9,Math.min(cap,x)/100);
   const atk=(p,b,m)=>Math.max(1,Math.round((v("cWp")/100+p*0.05)*(1+p*0.001)*(1+buff(b))*m*X.weak));
-  const phys=atk(st.str,v("cBp"),X.physMult),mag=atk(st.int,v("cBm"),X.magMult);
+  const T=tempNow(),phys0=atk(st.str,v("cBp"),X.physMult),mag0=atk(st.int,v("cBm"),X.magMult),phys=T.buff?atk(st.str,v("cBp")+T.buff,X.physMult):phys0,mag=T.buff?atk(st.int,v("cBm")+T.buff,X.magMult):mag0;
   const hp=Math.max(1,Math.round((50*Math.pow(1.05,r+(s-1)/10)*(1+st.con*0.002)*(1+buff(v("cBh")))*X.hpMult*(1+lv*0.00005)+X.reinc)*X.weak));
   const mp=Math.max(1,Math.round(((5+st.spr)*X.mpMult+lv*0.05)*X.weak));
   const pc=x=>+x.toFixed(2)+"%",cb=x=>full(Math.round(x*100)),crit=Math.min(30,st.agi*0.01),mcrit=Math.min(30,st.int*0.01),combo=Math.min(10,st.agi*0.04),pt=x=>+x.toFixed(2);
   $("cRes").innerHTML=[
     ["境界基本屬性",base],["物理攻擊",cb(phys)],["術法攻擊",cb(mag)],
-    ["氣血上限",cb(hp)],["靈力上限",cb(mp)],["戰力",cb(Math.round(Math.max(phys,mag)*(1+(mag>phys?mcrit:crit)/100)*(1+combo/100)*1.8))],["暴擊率（物理）",pc(crit+X.critAdd)],["魔法暴擊率（術法技能）",pc(mcrit+X.mcritAdd)],["暴擊傷害","×"+pt(X.critDmg)],["連擊率",pc(combo)],
+    ["氣血上限",cb(hp)],["靈力上限",cb(mp)],["戰力",cb(Math.round(Math.max(phys0,mag0)*(1+(mag0>phys0?mcrit:crit)/100)*(1+combo/100)*1.8))],["暴擊率（物理）",pc(crit+X.critAdd+T.crit)],["魔法暴擊率（術法技能）",pc(mcrit+X.mcritAdd+T.crit)],["暴擊傷害","×"+pt(X.critDmg)],["連擊率",pc(combo+T.combo)],
     ["命中",pt(st.agi*0.08+X.hitAdd)],["敏捷給的閃避",pt(st.agi*0.08)],["靈力給的魔防",pt(st.spr*0.1)],["增益上限","+"+cap+"%"]
   ].map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("");
   $("cNote").innerHTML=X.loaded?`已帶入存檔的數字${X.weak<1?"，<span style='color:var(--warn)'>含渡劫失敗的「虛弱」×0.7</span>":""}${X.reinc?`，氣血含轉世保留的 ${cb(X.reinc)}`:""}${X.mpMult!==1?`，靈力含金丹與光環的 ×${+X.mpMult.toFixed(3)}`:""}${X.hpMult!==1?`，氣血含圖紙防具與天賦核心的 ×${+X.hpMult.toFixed(3)}`:""}${X.physMult!==1||X.magMult!==1?`，攻擊含天賦核心的 物理 ×${+X.physMult.toFixed(2)}／術法 ×${+X.magMult.toFixed(2)}`:""}。按「清除」可回到空白。`:"";
-  const sk=1+v("cSk")/100;
-  $("cSkills").innerHTML=mySkills.length?`<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th class="num">每次傷害</th></tr></thead><tbody>${mySkills.map(x=>{
-    const boosted=x[0]==="宗門技能"||x[0]==="靈寶閣武學"||x[0]==="仙法",d=x[5]&&x[3]!=="s"?(x[3]==="m"?mag:phys)*x[5]*(boosted?sk:1):null;
-    return `<tr><td class="nw">${x[0]}${x[1]?`<br><span class="sub">${esc(x[1])}</span>`:""}</td><td><b>${esc(x[2])}</b></td><td><span class="tag ${TYPE[x[3]][1]}">${TYPE[x[3]][0]}</span></td><td class="num">${d?`<b>${cb(d)}</b>`:"—"}</td></tr>`}).join("")}</tbody></table></div>
-  <div class="sub" style="margin-top:6px">每次傷害是打在一個目標上、還沒算敵人減傷與 ±10% 浮動的數字，會跟著上面的試算變動。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法。耗靈、範圍、附帶效果請到「技能一覽」分頁查。宗門技能和仙法只列已放進技能格的。</div>`
-  :`<div class="sub">讀取存檔後，這裡會列出你已學會的每一招技能各打多少。</div>`;
+  const sk=1+v("cSk")/100,A=calcA,rows=[["普通攻擊","","普通攻擊","p","單體",1,null,null,""]].concat(mySkills,T.rows);
+  const tgt=tempTarget(),rc=A&&tempOn.race!==false?DMG.race(A,tempRace,tempTal/100):{v:0,parts:[]};
+  skDetail={};
+  $("cSkills").innerHTML=`<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th class="num">每次傷害（平均）</th></tr></thead><tbody>${rows.map(x=>{
+    const boosted=x[0]==="宗門技能"||x[0]==="靈寶閣武學"||x[0]==="仙法",pet=x[0]==="靈寵技能",mg=x[3]==="m",raw=x[5]&&x[3]!=="s"?(mg?mag:phys)*x[5]*(boosted?sk:1):null,key=x[0]+"|"+x[1]+"|"+x[2];
+    let cell="—";
+    if(raw!=null&&A){const h=DMG.hit(A,{raw,power:mg?mag:phys,mag:mg,path:pet?"pet":boosted||x[0]==="普通攻擊"?"main":"proc",crit:((mg?mcrit+X.mcritAdd:crit+X.critAdd)+T.crit)/100,critDmg:X.critDmg,
+        target:Object.assign({race:tempRace},tgt),vuln:T.vuln,race:rc.v,petHit:T.hit,petPen:T.pen,on:{ranhun:tempOn.ranhun!==false,shouji:tempOn.shouji===true,zhansha:tempOn.zhansha===true}});
+      skDetail[key]=detailHtml(raw,h,pet,T.life,cb);cell=`<button type="button" class="dnum" data-k="${esc(key)}">${cb(h.total)}</button>`}
+    else if(raw!=null)cell=`<b>${cb(raw)}</b>`;
+    return `<tr><td class="nw">${x[0]}${x[1]?`<br><span class="sub">${esc(x[1])}</span>`:""}</td><td><b>${esc(x[2])}</b></td><td><span class="tag ${TYPE[x[3]][1]}">${TYPE[x[3]][0]}</span></td><td class="num">${cell}</td></tr>${skDetail[key]?`<tr class="dd" data-k="${esc(key)}" ${openD.has(key)?"":"hidden"}><td colspan="4">${skDetail[key]}</td></tr>`:""}`}).join("")}</tbody></table></div>
+  <div class="sub" style="margin-top:6px"><b>點數字可以看這一下是怎麼算出來的。</b>數字是打在一個目標上的<b>平均值</b>：已經把命中率、敵人減傷、暴擊、屬性觸發（金重擊、雷擊等）、屬性秘典、種族剋制照機率攤進去，燒傷與中毒則是「整段總傷害 ÷ 持續回合」再乘觸發率。實際每一下會有 ±10% 浮動。對象和各種效果在上方「戰鬥中才有的效果」調整。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法；宗門技能和仙法只列已放進技能格的。<br>沒有算進去的：連擊、追擊、橫掃多打的那幾下；對凍結中敵人的加傷（寒徹、玄冰秘典）；仙法招式自帶的屬性效果；連雷、毒爆這類打到其他敵人的連鎖傷害。</div>`;
 }
+function detailHtml(raw,h,pet,life,cb){
+  const row=(l,v,n)=>`<div class="ddl"><span>${l}${n?`<small>${n}</small>`:""}</span><b>${v}</b></div>`;
+  let s=row("原始傷害","<span class='dv'>"+cb(raw)+"</span>","攻擊力 × 招式威力（含技能傷害加成）");
+  h.parts.forEach(([l,m,n])=>s+=row(esc(l),"×"+ +m.toFixed(4),esc(n)));
+  if(!pet){s+=row("直接傷害（平均）","<span class='dv'>"+cb(h.direct)+"</span>");
+    if(h.burn)s+=row("燒傷","+"+cb(h.burn),`觸發後每層每回合 ${cb(h.burn1)}（總傷害 ÷ 持續 ${DMG.C.BURN_TURNS} 回合），再乘觸發率與命中率`);
+    if(h.poison)s+=row("中毒","+"+cb(h.poison),`觸發後每層每回合 ${cb(h.poison1)}（總傷害 ÷ 持續 ${DMG.C.POISON_TURNS} 回合），再乘觸發率與命中率`)}
+  s+=row("<b>合計</b>","<span class='dv'>"+cb(h.total)+"</span>");
+  if(life&&!pet)s+=row("靈寵「血祭」吸血","回復 "+cb(h.total*life),"不是傷害，是打完替你回的氣血");
+  return `<div class="ddbox">${s}</div>`}
+// ---- 戰鬥中才有的效果：預設全部算進去，可以逐項取消 ----
+let calcT=null,calcA=null,tempRace="beast",tempMap="",tempTal=0,skDetail={};const tempOn={},openD=new Set(),RACE_N={beast:"🐉妖獸",ghost:"👻鬼物",demon:"😈魔修",heart:"🌀心魔"},NOT_DARK=["九天仙域","太初古礦","上蒼（葬天島）"];
+function tempNow(){const T=calcT,on=k=>T&&T[k]&&tempOn[k]!==false,o={buff:0,crit:0,combo:0,vuln:1,hit:0,pen:0,life:0,rows:[]};if(!T)return o;
+  if(on("petAtk"))o.buff+=T.petAtk[1]*100;if(on("self"))o.buff+=T.self[1]*100;if(on("petCrit"))o.crit=T.petCrit[1];if(on("petCombo"))o.combo=T.petCombo[1];
+  if(on("vuln"))o.vuln=1+T.vuln[1];if(on("petHitFx"))o.hit=T.petHitFx[1];if(on("petPen"))o.pen=T.petPen[1];if(on("petLife"))o.life=T.petLife[1];if(tempOn.petHit!==false)o.rows=T.petHit;return o}
+function tempTarget(){const m=HMAPS.find(x=>x[0]===(tempMap||H_MAIN[+$("cRealm").value||0]))||HMAPS[0],[def,eva]=HATTR[m[1]];
+  return{name:m[0],def,eva,nature:DMG.C.DARK_MAP_CATEGORIES.includes(m[1])&&!NOT_DARK.includes(m[0])?"dark":null}}
+function renderTemp(){const T=calcT,A=calcA,box=$("cTemp");if(!T||!A){box.innerHTML="";return}
+  const p0=x=>+(x*100).toFixed(2)+"%",n1=x=>+(+x).toFixed(2),it=[],tg=tempTarget();
+  if(T.petAtk)it.push(["petAtk",`${T.petAtk[0]}：物理、術法攻擊增益 +${p0(T.petAtk[1])}`]);
+  if(T.self)it.push(["self",`${T.self[0]}：物理、術法攻擊增益 +${p0(T.self[1])}`]);
+  if(T.petCrit)it.push(["petCrit",`${T.petCrit[0]}：暴擊率、魔法暴擊率 +${T.petCrit[1]}%`]);
+  if(T.petCombo)it.push(["petCombo",`${T.petCombo[0]}：連擊率 +${T.petCombo[1]}%`]);
+  if(T.vuln)it.push(["vuln",`${T.vuln[0]}：敵人受到的傷害 +${p0(T.vuln[1])}`]);
+  if(T.petHitFx)it.push(["petHitFx",`${T.petHitFx[0]}：命中 +${T.petHitFx[1]}`]);
+  if(T.petPen)it.push(["petPen",`${T.petPen[0]}：破甲 +${T.petPen[1]}`]);
+  if(T.petLife)it.push(["petLife",`${T.petLife[0]}：造成傷害的 ${p0(T.petLife[1])} 化為氣血`]);
+  if(T.petHit.length)it.push(["petHit",`靈寵的攻擊技能 ${T.petHit.length} 招列進下方的技能傷害表`]);
+  const cond=[["ranhun","燃魂","氣血高於 80% 時",true],["shouji","首擊","每波的第一下",false],["zhansha","斬殺","目標氣血低於 20% 時",false]].filter(c=>A.fx[c[1]]);
+  const rb=DMG.race(A,tempRace,tempTal/100);
+  const affTxt=DMG.AFF.concat(DMG.VAR).filter(k=>A.aff[k]>0).map(k=>`${DMG.AFF_NAME[k]} ${n1(A.aff[k])}%`).join("、")||"都沒有";
+  const srcOf=l=>l.map(([n,v])=>`${esc(n)} ${typeof v==="number"?n1(v):""}`).join("、");
+  const books=DMG.EX.books.map(([key,name,wx,eff])=>{const v=eff?A.book[eff]:A.book.wuxing[wx];return v?`${name} +${p0(v)}`:""}).filter(Boolean).join("、");
+  box.innerHTML=`<div class="box" style="margin-top:8px"><b>戰鬥中才有的效果</b><div class="sub">這些要在戰鬥中施放或對上特定敵人才有，預設算進去（看的是最大傷害），取消勾選就不算。攻擊增益和其他增益加在一起算，超過增益上限的部分一樣沒用；氣血、靈力、戰力不受這些影響。</div>
+  <div class="ctl" style="margin-top:8px"><label>打哪張地圖的妖獸<select data-t="map"><option value="">自己境界的主要地圖（${esc(H_MAIN[+$("cRealm").value||0])}）</option>${HMAPS.map(m=>`<option value="${esc(m[0])}" ${m[0]===tempMap?"selected":""}>${esc(m[0])}</option>`).join("")}</select></label>
+  <label>對象的種族<select data-t="raceSel">${Object.keys(RACE_N).map(k=>`<option value="${k}" ${k===tempRace?"selected":""}>${RACE_N[k]}（你的剋制 +${p0(DMG.race(A,k,tempTal/100).v)}）</option>`).join("")}</select></label>
+  <label>手動加的剋制符 %<input data-t="tal" type="number" min="0" max="20" step="any" value="${tempTal}"></label></div>
+  <div class="sub">對象：${esc(tg.name)}的妖獸，減傷 ${tg.def}%、閃避 ${tg.eva}${tg.nature?"、本質為暗":""}；五行隨機。剋制符是鑲在裝備孔位上的，存檔裡有的已經算進去；「手動加」是給你試算還沒鑲的，和已鑲的合計最多 ${p0(DMG.C.RACE_TALISMAN_CAP)}，整個種族剋制最多 ${p0(DMG.C.RACE_DMG_CAP)}。${rb.parts.length?`目前對${RACE_N[tempRace]}：${rb.parts.map(([n,v])=>`${n} +${p0(v)}`).join("、")}${rb.capped?"（已達上限）":""}。`:""}</div>
+  <div class="cks">${it.map(([k,l])=>`<label class="ck"><input type="checkbox" data-t="${k}" ${tempOn[k]!==false?"checked":""}><span>${esc(l)}</span></label>`).join("")}
+  <label class="ck"><input type="checkbox" data-t="race" ${tempOn.race!==false?"checked":""}><span>種族剋制算進技能傷害</span></label>
+  ${cond.map(([k,n,w,d])=>`<label class="ck"><input type="checkbox" data-t="${k}" ${(d?tempOn[k]!==false:tempOn[k]===true)?"checked":""}><span>裝備特效「${n}」+${p0(A.fx[n])}（${w}才有）</span></label>`).join("")}</div>
+  <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--link)">你的屬性觸發率、命中、破甲與屬性秘典</summary><div class="sub" style="line-height:1.9">
+  <b>屬性觸發率</b>：${affTxt}${A.resName?`（五行共鳴：${esc(A.resName)}）`:""}<br>
+  ${DMG.AFF.concat(DMG.VAR).filter(k=>A.affFrom[k].length).map(k=>`${DMG.AFF_NAME[k]}：${srcOf(A.affFrom[k])}，上限 ${A.cap[k]}%`).join("<br>")}${DMG.AFF.concat(DMG.VAR).some(k=>A.affFrom[k].length)?"<br>":""}
+  <b>命中</b> ${n1(A.evaPen)}：敏捷給 ${n1(A.agiHit)}${A.fx["洞察"]?`、洞察 ${n1(A.fx["洞察"])}`:""}${A.talHit?`、天賦 ${n1(A.talHit)}`:""}。<b>破甲</b> ${n1(A.pen)}（直接扣掉敵人的減傷 %）。<br>
+  <b>屬性秘典</b>：${books||"還沒有參悟"}${A.fx["通玄"]?`（已含通玄 +${p0(A.fx["通玄"])}）`:""}。本命五行：${A.elem||"無"}${A.ys?`；元神偏好 ${A.ys[0]||({thunder:"雷",wind:"風"})[A.ys[1]]||""} +${p0(A.ys[2])}`:""}${A.ignoreCounter?"；五行聖共鳴不受五行相剋影響":""}。</div></details></div>`}
+$("cTemp").onchange=e=>{const k=e.target.dataset.t;if(!k)return;if(k==="raceSel")tempRace=e.target.value;else if(k==="map")tempMap=e.target.value;else if(k==="tal")tempTal=Math.max(0,Math.min(20,+e.target.value||0));else tempOn[k]=e.target.checked;
+  if(k==="raceSel"||k==="map"||k==="tal")renderTemp();calc()};
+$("cSkills").onclick=e=>{const b=e.target.closest(".dnum");if(!b)return;const k=b.dataset.k,r=[...$("cSkills").querySelectorAll("tr.dd")].find(x=>x.dataset.k===k);if(!r)return;r.hidden=!r.hidden;r.hidden?openD.delete(k):openD.add(k)};
 let calcX={weak:1,reinc:0,mpMult:1,loaded:false,capAdd:0,physMult:1,magMult:1,hpMult:1,critAdd:0,mcritAdd:0,critDmg:2,hitAdd:0},mySkills=[];
 document.querySelectorAll("#p-calc input,#p-calc select").forEach(e=>e.oninput=calc);
 
@@ -453,6 +514,9 @@ SP_ATTR.forEach(([key,an,evil,dt,eff,ls,sup,aura,names])=>names.split("|").forEa
     const r=["仙法",own,row[0],row[1],row[2],row[3],row[4],null,row[5]];S.push(r);SPELL[id]=Object.assign({row:r,name},extra)})}));
 // 靈寵增益技能
 const BEAST_NAME={fox:"靈幻狐",wolf:"青蒼狼",dragon:"九幽蛟龍"};
+// 靈寵技能裡會影響你輸出的：增益與控場（同一種取最高）、攻擊技能（威力＝你的物理攻擊的倍率）
+const PET_FX={b1:["振奮長嘯",{atk:.15}],b5:["鷹眼",{crit:10}],b6:["疾影連擊",{combo:12}],b7:["洞明之眼",{hit:15}],b8:["血祭",{lifesteal:.1}],b9:["破軍之勢",{armorPen:20}],b10:["萬獸之王",{atk:.3,crit:10}],c5:["破綻印",{vuln:.2}],c10:["時光凝滯",{vuln:.25}]};
+const PET_HIT={a1:["利爪撕咬",.3,"單體"],a2:["烈焰吐息",.18,"全體"],a3:["毒牙穿心",.25,"單體"],a4:["雷光一閃",.5,"單體"],a5:["焚天火雨",.3,"全體"],a6:["獠牙斬首",.55,"單體"],a7:["噬血狂咬",.6,"單體"],a8:["裂地震爪",.45,"全體"],a9:["流星墜",.9,"單體"],a10:["萬獸奔騰",1.2,"單體"]};
 // 設定區的靈寵清單：這裡列的＋存檔裡有、但這裡還沒收錄的都會列出來（每種只能養一隻，所以用勾選、不會重複）
 const BEAST_INFO={fox:"經驗 +10%，只影響「打怪推薦」的每小時經驗",wolf:"物理、術法攻擊與氣血上限 +15%",dragon:"物理、術法攻擊與氣血上限 +30%、經驗 +20%"},BEAST_MAX=3;
 const beastIds=b=>[...new Set(Object.keys(BEAST_INFO).concat((b.beasts||[]).map(x=>x.id).filter(Boolean)))];
@@ -697,7 +761,17 @@ function analyze(p){
   (p.beasts||[]).filter(b=>b.alive&&b.active!==false).forEach(b=>(b.skills||[]).forEach(id=>{const k=BEAST_BUFF[id];if(k)aid.push(["暫時",`${BEAST_NAME[b.id]||"靈寵"}・${k[0]}`,`${k[4]}，持續 ${k[2]} 回合`])}));
   slotted.forEach(id=>{const x=SPELL[id];if(x.buff)aid.push(["暫時","仙法・"+x.name,`物理攻擊、術法攻擊各 ${pc1(x.buff-1)}（進增益），持續 ${x.turns} 回合`]);if(x.shield)aid.push(["暫時","仙法・"+x.name,`你受到的傷害 −${Math.round(x.shield*100)}%，持續 ${x.turns} 回合`])});
   (p.learnedSkills||[]).forEach(sk=>{if(sk.type==="buff")aid.push(["暫時","禁術・"+sk.name,`物理攻擊、術法攻擊各 ${pc1(sk.mult-1)}（進增益），持續 ${sk.duration} 回合`])});
-  return{tot,eqs,tal,leg,cap,hpMult,armorHp,physMult:tm("phys"),magMult:tm("mag"),defMult:tm("def"),evaMult:tm("eva"),critBase,magCrit,critDmg,mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
+  // 戰鬥中才有的效果（試算區可以勾選要不要算）：同一種效果取最高的那個
+  const bsk=[];(p.beasts||[]).filter(b=>b.alive&&b.active!==false).forEach(b=>(b.skills||[]).forEach(id=>bsk.push([BEAST_NAME[b.id]||b.name||"靈寵",id])));
+  const bestFx=k=>bsk.reduce((m,[n,id])=>{const f=PET_FX[id];return f&&f[1][k]&&(!m||f[1][k]>m[1])?[`${n}「${f[0]}」`,f[1][k]]:m},null);
+  const selfB=[];(p.learnedSkills||[]).forEach(sk=>{if(sk.type==="buff"&&sk.mult>1)selfB.push([`禁術「${sk.name}」`,sk.mult-1])});slotted.forEach(id=>{const x=SPELL[id];if(x.buff>1)selfB.push([`仙法「${x.name}」`,x.buff-1])});
+  let fxBeast=0;SLOTS.forEach(k=>{const eq=eqs[k],d=gdef(eq),m=eq&&({"紫色":1,"橙色":1.5,"白金":2})[eq.quality];if(d&&m&&d.fx==="獸魂")fxBeast+=.1*m});
+  const beastDmg=1+Math.min(.6,fxBeast)+tot("fx:獸魂");
+  const auraAll={};learned.forEach(id=>{const au2=SPELL[id].aura;if(au2)for(const k in au2)auraAll[k]=(auraAll[k]||0)+au2[k]});
+  const ex=DMG.attrs(p,{gdef:eq=>{const d=gdef(eq);return d?{fx:d.fx,set:d.set}:null},elem,agi:stats.agi.total,aura:auraAll,rank,team:team.map(id=>[id,(((p.partnerBond||{})[id]||{}).pts||0)>=1500]),artifact:k=>k==="神器"});
+  const temp={petAtk:bestFx("atk"),petCrit:bestFx("crit"),petCombo:bestFx("combo"),vuln:bestFx("vuln"),petHitFx:bestFx("hit"),petPen:bestFx("armorPen"),petLife:bestFx("lifesteal"),self:selfB.sort((x,y)=>y[1]-x[1])[0]||null,
+    petHit:bsk.filter(([,id])=>PET_HIT[id]).map(([n,id])=>["靈寵技能",n,PET_HIT[id][0],"p",PET_HIT[id][2],PET_HIT[id][1]*beastDmg,null,null,""])};
+  return{temp,ex,tot,eqs,tal,leg,cap,hpMult,armorHp,physMult:tm("phys"),magMult:tm("mag"),defMult:tm("def"),evaMult:tm("eva"),critBase,magCrit,critDmg,mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
     power:Math.round(Math.max(phys,mag)*(1+(mag>phys?magCritBase:critBase)/100)*(1+combo/100)*1.8)};
 }
 function showSave(a){
@@ -721,7 +795,7 @@ function showSave(a){
   <div class="who">${who.map(([k,v])=>`<span>${k}：<b>${v}</b></span>`).join("")}</div>
   <h3>你的輔助狀態</h3>
   ${a.aid.length?`<div class="tw"><table><thead><tr><th>類型</th><th>來源</th><th>實際加到哪</th></tr></thead><tbody>${aidRows}</tbody></table></div>
-  <div class="src">「常駐」已經算進上面的結果；「暫時」是戰鬥中施放後才有的，沒有算進去。只列出會影響攻擊力、氣血、靈力、屬性點、技能傷害與承受傷害的項目，詳細規則見「輔助狀態說明」分頁。</div>`:`<div class="sub">目前沒有會影響攻擊力或氣血的輔助狀態。</div>`}
+  <div class="src">「常駐」已經算進這份明細；「暫時」是戰鬥中施放後才有的，這份明細不含，上方試算區的「戰鬥中才有的效果」可以勾選算進去。只列出會影響攻擊力、氣血、靈力、屬性點、技能傷害與承受傷害的項目，詳細規則見「輔助狀態說明」分頁。</div>`:`<div class="sub">目前沒有會影響攻擊力或氣血的輔助狀態。</div>`}
   <h3>屬性點來源</h3>
   <div class="tw"><table><thead><tr><th>屬性</th><th class="num">境界</th><th class="num">丹藥</th><th class="num">藏書閣</th><th class="num">裝備</th><th class="num">符寶</th><th class="num">% 加成</th><th class="num">總值</th></tr></thead><tbody>${sk}</tbody></table></div>
   ${pctNote?`<div class="src">% 加成來源——${pctNote}</div>`:""}
@@ -734,7 +808,7 @@ function showSave(a){
   ${a.physMult!==1||a.magMult!==1?`<div class="src">天賦核心另外乘在攻擊上：物理攻擊 ×${d2(a.physMult)}、術法攻擊 ×${d2(a.magMult)}（不佔增益上限，上面的結果已算入）。</div>`:""}
   ${a.hpMult!==1?`<div class="src">氣血上限另乘 ×${+a.hpMult.toFixed(3)}（圖紙防具與天賦核心，不佔增益上限）。</div>`:""}
   ${a.reinc?`<div class="src">氣血上限另含轉世保留的 ${cb(a.reinc)}。</div>`:""}
-  <div class="src" style="margin-top:8px">仙法與宗門技能：技能格 ${a.slotN} 格，已學 ${a.learnedN} 招。沒有算進去的：禁術或靈寵技能的暫時增益、種族剋制、藏書閣屬性秘典、靈寵給的暴擊與命中。這些只在戰鬥當下生效。</div>`;
+  <div class="src" style="margin-top:8px">仙法與宗門技能：技能格 ${a.slotN} 格，已學 ${a.learnedN} 招。這份明細只列常駐的數字；禁術、仙法補助、靈寵技能、種族剋制這些戰鬥中才有的效果，在上方試算區可以勾選要不要算進去。屬性觸發、命中、破甲、屬性秘典、剋制符也在那裡，算進「已學技能的傷害」那張表（點數字看明細）。</div>`;
 }
 // ---- 配裝 ----
 const blankBuild=()=>({name:"",realmIndex:0,stage:1,level:1,equipment:{},goldenCore:{core:null,infant:null}});
@@ -1172,7 +1246,7 @@ function rebuild(){
   set("cWp",f4((a.wp?a.wp.atk:0)*100));
   [["cStr","str"],["cInt","int"],["cCon","con"],["cSpr","spr"],["cAgi","agi"]].forEach(([id,k])=>set(id,f4(a.stats[k].total-a.base)));
   set("cBp",f4(a.bp.v*100));set("cBm",f4(a.bm.v*100));set("cBh",f4(a.bh.v*100));set("cSk",f4(((1+a.burst)*a.skillMult-1)*100));
-  calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded,capAdd:a.tal.buffCap||0,physMult:a.physMult,magMult:a.magMult,hpMult:a.hpMult,critAdd:(a.tal.crit||0)*100,mcritAdd:(a.tal.magCrit||0)*100,critDmg:a.critDmg,hitAdd:a.tal.hit||0};mySkills=a.mine;calc();showSave(a);renderGear();renderSetup();renderHunt(a);
+  calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded,capAdd:a.tal.buffCap||0,physMult:a.physMult,magMult:a.magMult,hpMult:a.hpMult,critAdd:(a.tal.crit||0)*100,mcritAdd:(a.tal.magCrit||0)*100,critDmg:a.critDmg,hitAdd:a.tal.hit||0};mySkills=a.mine;calcT=a.temp;calcA=a.ex;renderTemp();calc();showSave(a);renderGear();renderSetup();renderHunt(a);
 }
 function loadPlayer(p){
   build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;
