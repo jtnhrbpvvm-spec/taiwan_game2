@@ -324,7 +324,7 @@ a:hover{text-decoration-thickness:2px}
 </div>
 
 <div id="p-skill" hidden>
-<div class="sub">威力是對應攻擊力的倍率；耗靈是畫面上顯示的數字。宗門技能、靈寶閣武學要靠每回合 40% 的技能判定抽到才會施放；職業、神器、夥伴的招式是自動發動，表中的機率是每回合的發動率。</div>
+<div class="sub">威力是對應攻擊力的倍率；耗靈是畫面上顯示的數字。宗門技能（要先放進技能格）、靈寶閣武學要靠每回合 40% 的技能判定抽到才會施放；職業、神器、夥伴的招式是自動發動，表中的機率是每回合的發動率。</div>
 <div class="ctl"><label>搜尋<input class="wide" id="q" placeholder="技能、宗門、夥伴名稱…"></label></div>
 <div class="chips" id="fSrc"></div>
 <div class="chips" id="fType"></div>
@@ -333,7 +333,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="empty" id="skEmpty" hidden>找不到符合的技能</div>
 
 <h2>仙法（武學密典）</h2>
-<div class="sub"><b>下品仙法</b>可以用「下品武學秘典碎片」合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的下品仙法；碎片來自奇遇與機緣。<b>中品、上品、絕學目前還沒有取得方式</b>。主動仙法要放進技能格才會施放（Lv.1 有 1 格，每 100 級多 1 格），放進去後和宗門技能一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招；含絕學的完整清單、碎片來源與光環合計見<a href="仙法一覽.html">仙法一覽</a>。</div>
+<div class="sub"><b>下品、中品、上品仙法</b>各用自己的武學秘典碎片合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的該品階仙法；下品碎片來自奇遇與機緣，中品碎片是人界野外妖獸掉的，上品碎片是靈界野外妖獸掉的。<b>絕學目前還沒有取得方式</b>。主動仙法和<b>宗門技能都要放進技能格</b>才會施放（基本 3 格，每 100 級多 1 格），放進去後和靈寶閣武學一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招；含絕學的完整清單、碎片來源與光環合計見<a href="仙法一覽.html">仙法一覽</a>。</div>
 <div class="tw"><table><thead><tr><th>屬性</th><th>正邪</th><th>類型</th><th>攻擊招附帶</th><th>光環（下品／中品／上品）</th></tr></thead><tbody id="spBody"></tbody></table></div>
 <div class="sub" style="margin-top:6px">邪道魔功傷害 ×1.25，但每次施放會反噬自己的氣血（下品 3%、中品 5%、上品 8%、絕學 12%，不會因此死亡）。無屬性的法則絕學一律算術法。</div>
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
@@ -371,7 +371,7 @@ function calc(){
   $("cSkills").innerHTML=mySkills.length?`<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th class="num">每次傷害</th></tr></thead><tbody>${mySkills.map(x=>{
     const boosted=x[0]==="宗門技能"||x[0]==="靈寶閣武學"||x[0]==="仙法",d=x[5]&&x[3]!=="s"?(x[3]==="m"?mag:phys)*x[5]*(boosted?sk:1):null;
     return `<tr><td class="nw">${x[0]}${x[1]?`<br><span class="sub">${esc(x[1])}</span>`:""}</td><td><b>${esc(x[2])}</b></td><td><span class="tag ${TYPE[x[3]][1]}">${TYPE[x[3]][0]}</span></td><td class="num">${d?`<b>${cb(d)}</b>`:"—"}</td></tr>`}).join("")}</tbody></table></div>
-  <div class="sub" style="margin-top:6px">每次傷害是打在一個目標上、還沒算敵人減傷與 ±10% 浮動的數字，會跟著上面的試算變動。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法。耗靈、範圍、附帶效果請到「技能一覽」分頁查。仙法只列已放進技能格的。</div>`
+  <div class="sub" style="margin-top:6px">每次傷害是打在一個目標上、還沒算敵人減傷與 ±10% 浮動的數字，會跟著上面的試算變動。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法。耗靈、範圍、附帶效果請到「技能一覽」分頁查。宗門技能和仙法只列已放進技能格的。</div>`
   :`<div class="sub">讀取存檔後，這裡會列出你已學會的每一招技能各打多少。</div>`;
 }
 let calcX={weak:1,reinc:0,mpMult:1,loaded:false,capAdd:0,physMult:1,magMult:1,hpMult:1,critAdd:0,mcritAdd:0,critDmg:2,hitAdd:0},mySkills=[];
@@ -380,6 +380,11 @@ document.querySelectorAll("#p-calc input,#p-calc select").forEach(e=>e.oninput=c
 // ---- 技能 ----
 // [來源, 所屬, 技能, 類型 p/m/s, 範圍, 威力, 原始耗靈, 發動率%, 附帶效果]
 const S=[];
+// 宗門技能要放進技能格才施放；新學會、還沒放過的會自動放進空格，自己卸下的不會被放回去
+function sectIdsOf(p){const o={};[1,2,3].forEach(t=>{const n=(p.sectSkills||{})[t];if(n)S.filter(x=>x[0]==="宗門技能"&&x[1]===n).forEach(x=>o["sect:"+x[2]]=x)});return o}
+function effSlots(p,slotN){const sr=sectIdsOf(p),got=p.spells||[],ok=id=>!!(sr[id]||(SPELL[id]&&!SPELL[id].aura&&got.includes(id))),slots=(p.spellSlots||[]).slice(),seen=p.sectSkillSeen||[];
+  Object.keys(sr).forEach(id=>{if(seen.includes(id)||slots.slice(0,slotN).includes(id))return;for(let i=0;i<slotN;i++)if(!ok(slots[i])){slots[i]=id;return}});
+  return Array.from({length:slotN},(_,i)=>ok(slots[i])?slots[i]:null)}
 const sect=(tier,list)=>list.forEach(([o,n,t,g,mp])=>S.push(["宗門技能",o,n,t,g,{1:1.5,2:2,3:3}[tier],mp,null,""]));
 sect(1,[["武當","太極拳","p","單體",45],["武當","純陽無極功","m","單體",60],["峨嵋","峨嵋劍法","p","單體",60],["峨嵋","清心普善咒","m","全體",75],
 ["少林寺","金剛伏魔","p","單體",75],["少林寺","獅子吼","m","全體",75],["全真教","全真劍法","p","單體",60],["全真教","先天功","m","單體",75],
@@ -665,13 +670,13 @@ function analyze(p){
   const burst=burstFrom.reduce((a,x)=>a+x[1],0);fxMp=Math.min(.4,fxMp);
   // 會的技能
   const mine=[];
-  [1,2,3].forEach(t=>{const n=(p.sectSkills||{})[t];if(n)S.filter(x=>x[0]==="宗門技能"&&x[1]===n).forEach(x=>mine.push(x))});
   (p.learnedSkills||[]).forEach(sk=>{mine.push(S.find(x=>x[0]==="靈寶閣武學"&&x[2]===sk.name)||["靈寶閣武學","",sk.name,sk.type==="buff"?"s":sk.dmgType==="mag"?"m":"p",sk.type==="aoe"?"全體":sk.type==="buff"?"自身":"單體",sk.type==="buff"?null:sk.mult,sk.mpCost,null,sk.type==="buff"?`攻擊力 ×${sk.mult}，持續 ${sk.duration} 回合`:""])});
   if(prof)S.filter(x=>x[0]==="職業技能"&&x[1].startsWith(prof[0])&&rank>=parseInt(x[1].replace(/\D+/g,""))).forEach(x=>mine.push(x));
   const art=eqs["神器"]&&ART_OWNER[eqs["神器"].lingbaoId];if(art)S.filter(x=>x[0]==="神器技能"&&x[1]===art).forEach(x=>mine.push(x));
   team.forEach(id=>S.filter(x=>x[0]==="夥伴絕學"&&x[1]===PARTNER[id][0]).forEach(x=>mine.push(x)));
-  const slotN=1+Math.floor(lv/100),slotted=(p.spellSlots||[]).slice(0,slotN).filter(id=>SPELL[id]&&!SPELL[id].aura&&learned.includes(id));
-  slotted.forEach(id=>mine.push(SPELL[id].row));
+  const slotN=3+Math.floor(lv/100),sectRow=sectIdsOf(p);
+  const slotIds=effSlots(p,slotN).filter(Boolean),slotted=slotIds.filter(id=>SPELL[id]);
+  slotIds.forEach(id=>mine.push(sectRow[id]||SPELL[id].row));
   // 輔助狀態：[類型, 來源, 實際效果]
   const pc1=v=>(v>=0?"+":"−")+ +(Math.abs(v)*100).toFixed(2)+"%";
   const TXT={atkPct:"物理攻擊、術法攻擊",physPct:"物理攻擊",magPct:"術法攻擊",hpPct:"氣血上限",mpPct:"靈力上限",auraMp:"靈力上限",statPct:"力量、悟性、體質、靈力、敏捷的點數",strPct:"力量點數",intPct:"悟性點數",conPct:"體質點數",sprPct:"靈力點數",agiPct:"敏捷點數","fx:法爆":"技能傷害"};
@@ -726,7 +731,7 @@ function showSave(a){
   ${a.physMult!==1||a.magMult!==1?`<div class="src">天賦核心另外乘在攻擊上：物理攻擊 ×${d2(a.physMult)}、術法攻擊 ×${d2(a.magMult)}（不佔增益上限，上面的結果已算入）。</div>`:""}
   ${a.hpMult!==1?`<div class="src">氣血上限另乘 ×${+a.hpMult.toFixed(3)}（圖紙防具與天賦核心，不佔增益上限）。</div>`:""}
   ${a.reinc?`<div class="src">氣血上限另含轉世保留的 ${cb(a.reinc)}。</div>`:""}
-  <div class="src" style="margin-top:8px">仙法：技能格 ${a.slotN} 格，已學 ${a.learnedN} 招。沒有算進去的：禁術或靈寵技能的暫時增益、種族剋制、藏書閣屬性秘典、靈寵給的暴擊與命中。這些只在戰鬥當下生效。</div>`;
+  <div class="src" style="margin-top:8px">仙法與宗門技能：技能格 ${a.slotN} 格，已學 ${a.learnedN} 招。沒有算進去的：禁術或靈寵技能的暫時增益、種族剋制、藏書閣屬性秘典、靈寵給的暴擊與命中。這些只在戰鬥當下生效。</div>`;
 }
 // ---- 配裝 ----
 const blankBuild=()=>({name:"",realmIndex:0,stage:1,level:1,equipment:{},goldenCore:{core:null,infant:null}});
@@ -888,13 +893,14 @@ function renderSetup(){
   const beastOn=id=>(b.beasts||[]).some(x=>x.id===id&&x.alive&&x.active!==false);
   const ptOpts=[["","（無）"]].concat(Object.keys(PARTNER).map(id=>[id,PARTNER[id][0]+(effText(PARTNER[id][1])?`（${effText(PARTNER[id][1])}）`:"")]));
   const phyOpts=[["","（未測）"]].concat(Object.keys(PHYS).map(id=>{const x=PHYS[id],sp=x[2]||{},t=[effText(x[1]),sp.weapon&&`裝備${sp.weapon}時該武器攻擊 +15%、技能傷害 +10%`,sp.elem&&`本命五行為${sp.elem}時攻擊 +8%`].filter(Boolean).join("、");return [id,x[0]+(t?`（${t}）`:"")]}));
-  const slotN=Math.min(10,1+Math.floor((b.level||1)/100)),slots=b.spellSlots||[];
-  const spOpts=[["","（空）"]].concat(ACTIVE_IDS.map(id=>{const r=SPELL[id].row;return [id,`${r[2]}（${r[1]}・${TYPE[r[3]][0]}${r[5]?" ×"+r[5]:""}）`]}));
+  const slotN=Math.min(10,3+Math.floor((b.level||1)/100)),slots=effSlots(b,3+Math.floor((b.level||1)/100)),sectRow=sectIdsOf(b);
+  shownSect=Object.keys(sectRow);
+  const spOpts=[["","（空）"]].concat(Object.keys(sectRow).map(id=>{const r=sectRow[id];return [id,`🏯${r[2]}（${r[1]}・${TYPE[r[3]][0]} ×${r[5]}）`]}),ACTIVE_IDS.map(id=>{const r=SPELL[id].row;return [id,`${r[2]}（${r[1]}・${TYPE[r[3]][0]}${r[5]?" ×"+r[5]:""}）`]}));
   const titles=b.titles||[],fires=b.fireCollection||{},spells=b.spells||[],learned=(b.learnedSkills||[]).map(x=>x.name);
   $("setupBox").innerHTML=
   sec("sect","宗門與職業",`${(b.sect&&b.sect.name)||"無宗門"}・${b.profession&&PROF[b.profession]?PROF[b.profession][0]+" "+rank+" 階":"未選職業"}`,
     `<div class="ctl"><label>凡俗宗門${sel("s1",sectOpts(1),ss[1])}</label><label>修真仙門${sel("s2",sectOpts(2),ss[2])}</label><label>至高聖地${sel("s3",sectOpts(3),ss[3])}</label></div>
-    <div class="sub">每個階段拜過的宗門都會留下 2 招技能；目前所屬宗門以最高階段的那個計算（戰力倍率、傳承武器）。</div>
+    <div class="sub">每個階段拜過的宗門都會留下 2 招技能（要放進下方「武學與仙法」的技能格才會施放）；目前所屬宗門以最高階段的那個計算（戰力倍率、傳承武器）。</div>
     <div class="ctl"><label>主修職業${sel("prof",[["","（未選）"]].concat(Object.keys(PROF).map(id=>[id,`${PROF[id][0]}（武器：${PROF[id][1]}）`])),b.profession)}</label><label>職業階數${sel("rank",Array.from({length:10},(_,i)=>[i+1,i+1+" 階"]),rank)}</label></div>`)+
   sec("apt","資質與金丹",`${rootId?ROOT[rootId][0]:"一般靈根"}・${PHYS[apt.physique]?PHYS[apt.physique][0]:"未測體質"}`,
     `<div class="ctl"><label>先天靈根${sel("root",[["","一般靈根（五～天靈根，不影響攻擊與氣血）"]].concat(Object.keys(ROOT).map(id=>[id,ROOT[id][0]+(effText(ROOT[id][1])?`（${effText(ROOT[id][1])}）`:"")])),rootId)}</label>
@@ -916,10 +922,11 @@ function renderSetup(){
   sec("skill","武學與仙法",`靈寶閣武學 ${LB_SKILLS.filter(x=>learned.includes(x[2])).length}・光環 ${spells.filter(id=>AURA_IDS.includes(id)).length}`,
     `<div class="sub">靈寶閣武學</div><div class="cks">${LB_SKILLS.map(x=>chk("lb_"+x[2],learned.includes(x[2]),`${x[2]}（${x[1]}・${TYPE[x[3]][0]}${x[4]} ×${x[5]}）`)).join("")}</div>
     <div class="sub" style="margin-top:8px">下品仙法光環（學會就永久生效）</div><div class="cks">${AURA_IDS.map(id=>chk("a_"+id,spells.includes(id),`${SPELL[id].name}（${SPELL[id].row[8].replace("光環：","")}）`)).join("")}</div>
-    <div class="sub" style="margin-top:8px">技能格（Lv.1 有 1 格，每 100 級多 1 格；這裡最多列 10 格）</div><div class="ctl">${Array.from({length:slotN},(_,i)=>`<label>第 ${i+1} 格${sel("sp"+i,spOpts,SPELL[slots[i]]&&!SPELL[slots[i]].aura?slots[i]:"")}</label>`).join("")}</div>`)+
+    <div class="sub" style="margin-top:8px">技能格（基本 3 格，每 100 級多 1 格；宗門技能和主動仙法都要放進來才會施放，這裡最多列 10 格）</div><div class="ctl">${Array.from({length:slotN},(_,i)=>`<label>第 ${i+1} 格${sel("sp"+i,spOpts,slots[i]||"")}</label>`).join("")}</div>`)+
   sec("etc","其他",`${b.weakened?"虛弱中":"無虛弱"}`,
     `<div class="ctl"><label>轉世保留的氣血上限${num("reinc",Math.round(((b.reincarnateBonus||{}).nv2Hp||0)*100))}</label>${chk("weak",!!b.weakened,"虛弱（渡劫失敗，攻擊、氣血、靈力上限 ×0.7）")}</div>`);
 }
+let shownSect=[];
 $("setupBox").onchange=()=>{
   const b=build,F={};document.querySelectorAll("#setupBox [data-f]").forEach(e=>F[e.dataset.f]=e.type==="checkbox"?e.checked:e.value);
   b.sectSkills={1:F.s1||null,2:F.s2||null,3:F.s3||null};const top=F.s3||F.s2||F.s1;b.sect=top?{name:top,powerMult:SECTS[top][2]}:null;
@@ -935,8 +942,8 @@ $("setupBox").onchange=()=>{
   const keepSk=(b.learnedSkills||[]).filter(x=>!LB_SKILLS.some(y=>y[2]===x.name));
   b.learnedSkills=keepSk.concat(LB_SKILLS.filter(x=>F["lb_"+x[2]]).map(x=>({name:x[2],type:x[4]==="全體"?"aoe":"single",dmgType:x[3]==="m"?"mag":"phys",mult:x[5],mpCost:x[6]})));
   const slots=[];for(let i=0;i<10;i++)if(("sp"+i) in F)slots[i]=F["sp"+i]||null;
-  b.spellSlots=slots.concat((b.spellSlots||[]).slice(slots.length));
-  b.spells=[...new Set((b.spells||[]).filter(id=>!AURA_IDS.includes(id)).concat(AURA_IDS.filter(id=>F["a_"+id]),slots.filter(Boolean)))];
+  b.spellSlots=slots.concat((b.spellSlots||[]).slice(slots.length));b.sectSkillSeen=[...new Set((b.sectSkillSeen||[]).concat(shownSect))];
+  b.spells=[...new Set((b.spells||[]).filter(id=>!AURA_IDS.includes(id)).concat(AURA_IDS.filter(id=>F["a_"+id]),slots.filter(id=>SPELL[id])))];
   b.reincarnateBonus=Object.assign({},b.reincarnateBonus,{nv2Hp:Math.max(0,+F.reinc||0)/100});b.weakened=!!F.weak;
   rebuild();
 };
@@ -1105,7 +1112,8 @@ function renderHunt(a){
   <b>判定怎麼來的</b>：🟢 穩定＝一波平均掉血不到 30%（每波之間調息 10 秒可回 30%），而且較差的一波也不會倒。🟡 要吃藥＝不會被一波帶走，但調息補不回來。🟠 有風險＝遇到較差的一波（3 隻、偏強）會倒。🔴 撐不住＝平均的一波就會倒。<br>
   <b>每小時經驗有上限</b>：遊戲規定殺得比「同境界一般玩家」快也不會拿更多，所以寫「已達上限」的地圖再加強攻擊也不會變多，該往下一張圖走；寫「速度 N%」表示你殺得比一般玩家慢，收益按比例減少。<br>
   <b>靈界</b>：第四、五區在靈界，要從人界地圖的飛升點進去，進、出各要一套五行傳送陣靈石（金木水火土各 1 顆），在靈界戰死是回天元城外，不會回人界。這兩區的妖獸強度是同階一般玩家的 40～200 倍，門檻也改成看階數（例如神墟要真仙 4 階）。<br>
-  <b>⚔️ 挑戰模式</b>：境界或階數不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽，而且不能離線或背景掛機；好處只有做裝通貨掉率加倍，所以不列入上面的推薦。<br>
+  <b>⚔️ 挑戰模式</b>：境界或階數不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽；現在可以離線、背景掛機（撐不住才送回）。好處是做裝通貨、武學秘典碎片掉率加倍，並有機會掉鍛造圖紙，練等不划算，所以不列入上面的推薦。<br>
+  <b>🌀 時空秘境</b>（亂星海）：妖獸是你境界 10 階的 30 倍強度，不掉靈石、每秒還要扣 1 萬靈石，經驗照主要練功地圖算，是拿靈石換掉寶的地方，也不列入推薦；規則見<a href="經驗與地圖.html">經驗與地圖</a>。<br>
   <b>估算的範圍</b>：和遊戲離線結算用同一套算法，只看攻擊、暴擊、連擊、氣血、防禦、閃避、金身，妖獸一律當成物理攻擊。<b>沒算</b>魔防（術法型妖獸與魔修打你是看魔防）、妖獸的暴擊與技能、天賦給的暴擊、吸血、回春、護盾、靈寵與夥伴的招式、屬性傷害、五行相剋、種族剋制，也沒算稱號、異火、仙法光環給的防禦閃避與修為加成，所以實際通常會比表上快一點、耐打一點；遊戲作者實測線上收益約比這個估算多 2～4 成。丹藥花費以培元丹（回 10%、200 靈石）估計。挑戰圖的妖獸強度落差很大，請多留餘裕。
   </div>
   <h2>副本（秘境）</h2>

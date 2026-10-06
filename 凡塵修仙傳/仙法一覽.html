@@ -35,15 +35,16 @@ tr.mine td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
 </style></head><body><div class="wrap">
 <a class="back" href="index.html">← 回攻略首頁</a>
 <h1>📜 仙法一覽</h1>
-<div class="sub">武學密典收錄的 200 招仙法：10 種屬性各有下品、中品、上品 6 招，另有 20 招絕學。仙法不分宗門，任何人都能學。</div>
+<div class="sub">武學密典收錄的 200 招仙法：10 種屬性各有下品、中品、上品 6 招，另有 20 招絕學。仙法不分宗門，任何人都能學。密典現在也收錄 36 招宗門武學（拜入宗門才學得到，招式見<a href="宗門一覽.html">宗門一覽</a>）。</div>
 
 <div class="box" id="me" hidden></div>
 
 <div class="box">
 <ul>
-<li><b>怎麼學</b>：目前只有<b>下品仙法</b>學得到，用下品武學秘典碎片集滿 100 片，在武學密典按「合成」，會隨機學會一招還沒學過的下品仙法（60 招全學會後就不能再合成）。<b>中品、上品、絕學目前還沒有取得方式</b>，密典裡可以先看效果。</li>
-<li><b>技能格</b>：主動仙法要放進技能格才會施放。Lv.1 有 1 格，每 100 級多 1 格（Lv.100 兩格、Lv.200 三格…）。轉世後等級歸零，超出格數的仙法暫時不生效，等級回來就恢復。</li>
-<li><b>施放方式</b>：每回合有 40% 會放技能，從宗門技能、靈寶閣武學和技能格裡的仙法中隨機挑一招；靈力不夠就改成普通攻擊。補血招不會看你血量，滿血也可能放出來。</li>
+<li><b>怎麼學</b>：<b>下品、中品、上品</b>各有自己的武學秘典碎片，集滿 100 片在武學密典按「合成」，會隨機學會一招還沒學過的該品階仙法（那一品 60 招全學會後就不能再合成）。下品碎片來自奇遇，中品碎片是人界野外妖獸掉的，上品碎片是靈界野外妖獸掉的。<b>絕學目前還沒有取得方式</b>，密典裡可以先看效果。</li>
+<li><b>技能格</b>：主動仙法和<b>宗門武學</b>都要放進技能格才會施放。基本 <b>3 格</b>，每 100 級多 1 格（Lv.100 四格、Lv.200 五格…）。轉世後等級歸零，超出格數的招式暫時不生效，等級回來就恢復。</li>
+<li><b>宗門武學併進密典了</b>：以前拜入宗門學到的招式會自動施放，現在和仙法一樣要放格子。新學會的宗門武學會自動放進空格（舊存檔讀檔時也會補放），你自己卸下的不會被塞回去；格子不夠時要自己取捨。密典裡依宗門階段分品階：初級宗門＝下品、中級＝中品、高級＝上品，只是分類，威力沒變（150%／200%／300%）。靈寶閣買的武學不用放格子，照舊自動參戰。</li>
+<li><b>施放方式</b>：每回合有 40% 會放技能，從靈寶閣武學和技能格裡的仙法、宗門武學中隨機挑一招；靈力不夠就改成普通攻擊。補血招不會看你血量，滿血也可能放出來。</li>
 <li><b>光環</b>是被動，學會就永久生效、不佔技能格，學幾本就疊幾本。</li>
 <li><b>邪道魔功</b>（冰、毒、血、冥）的傷害是正道的 1.25 倍，但每次施放會反噬自己的氣血（依氣血上限的比例，不會因此死亡）。補助、補血、光環的數值和正道相同。</li>
 <li><b>物理還是術法</b>：金、土、血屬性的攻擊招吃物理攻擊，其他屬性和無屬性的法則絕學吃術法攻擊。仙法吃得到「技能傷害 +X%」的加成。</li>
@@ -83,7 +84,12 @@ tr.mine td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
 <div class="tw"><table><thead><tr><th>範圍</th><th>合計加成</th></tr></thead><tbody id="auraBody"></tbody></table></div>
 
 <h2>秘典碎片哪裡拿</h2>
-<div class="sub">所有奇遇都會給下品武學秘典碎片，玩法與訣竅見<a href="奇遇一覽.html">奇遇一覽</a>。</div>
+<div class="tw"><table><thead><tr><th>碎片</th><th>哪裡拿</th><th>大約多快</th></tr></thead><tbody>
+<tr><td class="nw"><b>下品武學秘典碎片</b></td><td>所有奇遇與機緣（下表）</td><td>每天約 60～80 片</td></tr>
+<tr><td class="nw"><b>中品武學秘典碎片</b></td><td>人界野外的妖獸（安全區不掉）</td><td>每小時最多約 4 片</td></tr>
+<tr><td class="nw"><b>上品武學秘典碎片</b></td><td>靈界野外的妖獸</td><td>每小時最多約 2 片</td></tr>
+</tbody></table></div>
+<div class="sub" style="margin:6px 0">中品、上品碎片照「掉寶次數」算，殺再快每小時也有上限，離線、背景掛機照樣掉。用<a href="經驗與地圖.html">挑戰模式</a>越級進圖時掉率 ×1.5～×3；亂星海的時空秘境是中品碎片 ×3。下品碎片的奇遇玩法與訣竅見<a href="奇遇一覽.html">奇遇一覽</a>。</div>
 <div class="tw"><table><thead><tr><th>奇遇</th><th>碎片數量</th></tr></thead><tbody>
 <tr><td class="nw"><b>虛天殿</b></td><td>每闖過一層 2 片（中途失敗也保留）；通關再加 15 片</td></tr>
 <tr><td class="nw"><b>血色禁地</b></td><td>獲勝 12 片；撤退 3 片</td></tr>
@@ -160,12 +166,13 @@ ULT.forEach(u=>make(u[0],u[1],"ultimate",ATTR.find(a=>a[0]===u[3])||null,u[2],u[
 
 // ---- 你的進度 ----
 const P=window.PROFILE,learned=new Set(P&&Array.isArray(P.spells)?P.spells:[]);
-const slotN=P?1+Math.floor((P.level||1)/100):0,slotted=new Set(P&&Array.isArray(P.spellSlots)?P.spellSlots.slice(0,slotN).filter(id=>learned.has(id)):[]);
+const slotN=P?3+Math.floor((P.level||1)/100):0,slotIds=P&&Array.isArray(P.spellSlots)?P.spellSlots.slice(0,slotN):[],slotted=new Set(slotIds.filter(id=>learned.has(id)));
 if(P){
   const low=SPELLS.filter(s=>s.gk==="low"),lowGot=low.filter(s=>learned.has(s.id)).length,good=SPELLS.filter(s=>learned.has(s.id)&&!s.evil).length,bad=learned.size?SPELLS.filter(s=>learned.has(s.id)&&s.evil).length:0;
-  const names=SPELLS.filter(s=>slotted.has(s.id)).map(s=>s.name);
+  const names=slotIds.map(id=>typeof id==="string"&&id.startsWith("sect:")?"🏯"+id.slice(5):slotted.has(id)?(SPELLS.find(s=>s.id===id)||{}).name:"").filter(Boolean);
+  const got=g=>SPELLS.filter(s=>s.gk===g&&learned.has(s.id)).length,sh=k=>Number(P[k]||0).toLocaleString("zh-TW");
   $("me").hidden=false;$("me").classList.add("me");
-  $("me").innerHTML=`<b>你的進度</b>：已學會 <b>${good+bad}</b>／200 招（下品 ${lowGot}／60；正道 ${good} 招、邪道 ${bad} 招）。技能格 <b>${slotN}</b> 格，${names.length?"目前放了："+names.map(esc).join("、"):"目前沒有放仙法"}。秘典碎片 <b>${Number(P.spellShards||0).toLocaleString("zh-TW")}</b>／100。表格中已學會的招式會標出來。`;
+  $("me").innerHTML=`<b>你的進度</b>：已學會 <b>${good+bad}</b>／200 招（下品 ${lowGot}／60、中品 ${got("mid")}／60、上品 ${got("high")}／60；正道 ${good} 招、邪道 ${bad} 招）。技能格 <b>${slotN}</b> 格，${names.length?"目前放了："+names.map(esc).join("、"):"目前沒有放招式"}。秘典碎片：下品 <b>${sh("spellShards")}</b>、中品 <b>${sh("spellShardsMid")}</b>、上品 <b>${sh("spellShardsHigh")}</b>（各 100 片合成一招）。表格中已學會的招式會標出來。`;
 }
 
 // ---- 全部仙法 ----
@@ -187,7 +194,7 @@ function render(){
     <td class="nw">${ROLE[s.role]}</td><td><span class="tag ${TYPE[s.type][1]}">${TYPE[s.type][0]}</span></td><td>${esc(s.desc)}</td><td class="num">${s.mp?mpShow(s.mp):"—"}</td></tr>`).join("");
   $("spEmpty").hidden=list.length>0;
 }
-chips("fGrade","grade",[["all","全部品階"],["low","下品（學得到）"],["mid","中品"],["high","上品"],["ultimate","絕學"]]);
+chips("fGrade","grade",[["all","全部品階"],["low","下品"],["mid","中品"],["high","上品"],["ultimate","絕學"]]);
 chips("fAttr","attr",[["all","全部屬性"],["good","正道"],["evil","邪道"],...ATTR.map(a=>[a[0],a[1]]),["law","法則"]]);
 chips("fRole","role",[["all","全部類型"],...Object.keys(ROLE).map(k=>[k,ROLE[k]])].concat(P?[["mine","✓ 只看已學會"]]:[]));
 $("q").oninput=render;render();
