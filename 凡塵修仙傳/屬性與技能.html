@@ -434,7 +434,7 @@ function renderTemp(){const T=calcT,A=calcA,box=$("cTemp");if(!T||!A){box.innerH
   if(T.self)it.push(["self",`${T.self[0]}：物理、術法攻擊增益 +${p0(T.self[1])}`]);
   if(T.petCrit)it.push(["petCrit",`${T.petCrit[0]}：暴擊率、魔法暴擊率 +${T.petCrit[1]}%`]);
   if(T.petCombo)it.push(["petCombo",`${T.petCombo[0]}：連擊率 +${T.petCombo[1]}%`]);
-  if(T.vuln)it.push(["vuln",`${T.vuln[0]}：敵人受到的傷害 +${p0(T.vuln[1])}`]);
+  if(T.vuln)it.push(["vuln",`${T.vuln[0]}：敵人受到的傷害 +${p0(T.vuln[1])}（只加在普通攻擊、宗門技能、靈寶閣武學、仙法和靈寵技能；職業技能、神器技能、夥伴絕學不吃）`]);
   if(T.petHitFx)it.push(["petHitFx",`${T.petHitFx[0]}：命中 +${T.petHitFx[1]}`]);
   if(T.petPen)it.push(["petPen",`${T.petPen[0]}：破甲 +${T.petPen[1]}`]);
   if(T.petLife)it.push(["petLife",`${T.petLife[0]}：造成傷害的 ${p0(T.petLife[1])} 化為氣血`]);
