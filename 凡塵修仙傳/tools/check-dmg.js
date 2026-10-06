@@ -46,6 +46,17 @@ function __mk(){
   return JSON.stringify({ p: player, a, elem: getPlayerElement(), agi: nv2Stat('agi'), aura: au, rank: getProfRank(player.profession),
     team: getPartnerTeam().map(x => [x.id, getBondLevel(x.id).lv >= 5]), gd, art: Object.keys(player.equipment).filter(k => equipTypes[k] === "artifact"), fxAll: getGearEffects(), tot: getBonusTotals() });
 }
+// 整回合的普通攻擊（含連擊、橫掃、之怒、追擊、風擊、疾風、連雷、套裝屬性加傷）：回傳打在所有敵人身上的平均總傷害
+function __turn(n, t, N){
+  const els = ["金","木","水","火","土"]; let sum = 0; const HP = 1e12;
+  for (let i = 0; i < n; i++) {
+    const targets = []; for (let j = 0; j < N; j++) targets.push({ name: "x", hp: HP, maxHp: HP, attrs: { def: t.def, eva: t.eva, race: t.race, element: els[(i + j) % 5], freezeResist: 1 }, status: newStatus() });
+    gearFirstStrikeUsed = true; gearDodgeStrikeReady = false; player.maxHp = 1e9; player.hp = 1e9; player.mp = 0;
+    playerAttackTurn([], targets, []);
+    sum += targets.reduce((s, x) => s + (HP - x.hp), 0);
+  }
+  return JSON.stringify({ avg: sum / n, phys: getPhysAttack(), combo: nv2Combo(), haste: gearFx("疾風") });
+}
 function __mc(n, t, mag, raw, power){
   const base = getPlayerCombatAttrs(); let sum = 0; const els = ["金","木","水","火","土"];
   for (let i = 0; i < n; i++) { const r = resolveHit(raw, { attrs: base, power, dmgType: mag ? 'mag' : 'phys' }, { attrs: { def: t.def, eva: t.eva, race: t.race, nature: t.nature, element: els[i % 5] }, status: newStatus() }); sum += r.dmg; }
@@ -80,6 +91,15 @@ for (let i = 0; i < N; i++) {
     const off = (h.direct - mc) / mc * 100;
     console.log(`MC#${i} game ${mc.toFixed(3)}  page ${h.direct.toFixed(3)}  差 ${off.toFixed(2)}%  [金${A.aff.metal} 雷${A.aff.thunder} 暗${A.aff.dark} 光${A.aff.light} 破甲${A.pen} 命中${A.evaPen.toFixed(1)}]`);
     if (Math.abs(off) > 1) bad++;
+    // 整回合比對：頁面的「普通攻擊」＋追加攻擊，乘上疾風再出手一次的機率（頁面沒有把疾風算進單列）
+    const N3 = 1 + (i / 30) % 3, t2 = { def: 15, eva: 8 + Math.round(T.agi * 0.08), race: "beast" };
+    const R = JSON.parse(g.run(`__turn(30000, ${JSON.stringify(t2)}, ${N3})`));
+    const A2 = Object.assign({}, A, { aff: Object.assign({}, A.aff, { ice: 0 }) }), inst = x => x.direct + x.chainT + x.direct * ["fire", "poison"].reduce((s, k) => s, 0);
+    const base = { crit: ga.crit, critDmg: ga.critDmg, target: t2, vuln: 1, race: DMG.race(A, "beast", 0).v, on: { ranhun: true } };
+    const nm = DMG.normal(A2, base, R.phys, R.combo, N3, inst), ex = DMG.extras(A2, base, R.phys, N3).reduce((s, x) => s + x[1] * inst(x[2]), 0);
+    const mine = (nm.total + ex) * (1 + R.haste), off2 = (mine - R.avg) / R.avg * 100;
+    console.log(`  整回合（${N3} 隻） game ${R.avg.toFixed(2)}  page ${mine.toFixed(2)}  差 ${off2.toFixed(2)}%  [連擊${(R.combo * 100).toFixed(1)}% 橫掃${A.fx["橫掃"] || 0} 追擊${A.fx["追擊"] || 0} 風${A.aff.wind} 連雷${A.fx["連雷"] || 0} 之怒${A.rage} 疾風${R.haste}]`);
+    if (Math.abs(off2) > 3) bad++;
   }
 }
 console.log(`共 ${n} 個角色，不一致 ${bad}`);

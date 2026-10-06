@@ -3,7 +3,7 @@
 const { load } = require("./game-vm.js");
 const g = load();
 const out = g.run(`(function(){
-  const KI = k => /^(ice|fire|poison|metal|thunder|wind|light|dark|hit|freezeResist|burnMax|poisonMax|ignoreCounter)$/.test(k) || /^(cap|elemDmg|elemBoost|special):/.test(k) || /^fx:(破甲|洞察|剋敵|寒徹|焚燼|蝕骨|通玄|首擊|燃魂|斬殺)$/.test(k);
+  const KI = k => /^(ice|fire|poison|metal|thunder|wind|light|dark|hit|freezeResist|burnMax|poisonMax|ignoreCounter)$/.test(k) || /^(cap|elemDmg|elemBoost|special):/.test(k) || /^fx:(破甲|洞察|剋敵|寒徹|焚燼|蝕骨|通玄|首擊|燃魂|斬殺|連雷|毒爆|追擊|橫掃|疾風|吸血)$/.test(k);
   const f = b => { const o = {}; for (const k in (b || {})) if (KI(k) && b[k]) o[k] = b[k]; return o; };
   const ne = o => Object.keys(o).length > 0;
   const SP = s => { const o = {}; if (s && s.nature) o.nature = s.nature; if (s && s.poisonImmune) o.poisonImmune = 1; return o; };
@@ -29,7 +29,7 @@ const out = g.run(`(function(){
   EX.fxTier = GEAR_EFFECT_TIER_MULT;
   for (const t in YUANSHEN_TYPES) { const y = YUANSHEN_TYPES[t]; EX.ys[t] = [y.elem || null, y.affix || null, YUANSHEN_TIERS[y.tier].dmg]; }
   talismanTypes.forEach(t => { if (t.kind === 'race' || KI(t.key)) EX.talis[t.key || t.id || t.type] = { kind: t.kind, race: t.race || null, key: t.key, v: [1, 2, 3, 4].map(gr => { try { return getTalismanValue(t.key || t.id || t.type, gr); } catch (e) { return null; } }) }; });
-  EX.C = { AFFIX_CAP, METAL_BONUS, THUNDER_BONUS, BURN_RATE, BURN_TURNS, BURN_MAX_STACKS, POISON_RATE, POISON_TURNS, POISON_MAX_STACKS, LIGHT_BONUS, LIGHT_DARK_COUNTER_BONUS, WUXING_COUNTER_BONUS, WUXING_COUNTERED_PENALTY, RACE_TALISMAN_CAP, RACE_DMG_CAP, hitPer: NV2.hitPer, evaK: NV2.evaK, ELEMENT_BOOK_GAIN, WIND_HIT_MULT, DARK_LIFESTEAL, DARK_MAP_CATEGORIES, ROOT_SINGLE_COUNT, ROOT_SUPREME_SETS, ROOT_PURE_SETS, ROOT_PURE_REST, ROOT_DUAL_SETS, ROOT_DUAL_REST, PARTNER_LV5_PASSIVE_MULT, RACE_TREASURE_CAP, raceGearCap: RACE_GEAR.cap, treasure: RACE_TREASURE_GRADES.map(x => x.bonus), slay: Object.fromEntries(Object.entries(RACE_SLAY_TIERS).map(([k, a]) => [k, a.map(x => [x.kills, x.bonus])])), setQ: GEAR_SET_MIN_QUALITY, wxc: WUXING_COUNTERS };
+  EX.C = { AFFIX_CAP, METAL_BONUS, THUNDER_BONUS, BURN_RATE, BURN_TURNS, BURN_MAX_STACKS, POISON_RATE, POISON_TURNS, POISON_MAX_STACKS, LIGHT_BONUS, LIGHT_DARK_COUNTER_BONUS, WUXING_COUNTER_BONUS, WUXING_COUNTERED_PENALTY, RACE_TALISMAN_CAP, RACE_DMG_CAP, hitPer: NV2.hitPer, evaK: NV2.evaK, ELEMENT_BOOK_GAIN, WIND_HIT_MULT, DARK_LIFESTEAL, comboCap: NV2.comboCap, comboPer: NV2.comboPer, monType: Object.fromEntries(Object.entries(MONSTER_TYPES).map(([k, v]) => [k, [v.name, v.def, v.mres || 0, v.eva]])), DARK_MAP_CATEGORIES, ROOT_SINGLE_COUNT, ROOT_SUPREME_SETS, ROOT_PURE_SETS, ROOT_PURE_REST, ROOT_DUAL_SETS, ROOT_DUAL_REST, PARTNER_LV5_PASSIVE_MULT, RACE_TREASURE_CAP, raceGearCap: RACE_GEAR.cap, treasure: RACE_TREASURE_GRADES.map(x => x.bonus), slay: Object.fromEntries(Object.entries(RACE_SLAY_TIERS).map(([k, a]) => [k, a.map(x => [x.kills, x.bonus])])), setQ: GEAR_SET_MIN_QUALITY, wxc: WUXING_COUNTERS };
   EX.books = elementBooks.map(b => [b.key, b.name, b.wuxing || null, b.effect || null]);
   EX.monAttr = monsterAttrsByMapCategory;
   return JSON.stringify(EX);
