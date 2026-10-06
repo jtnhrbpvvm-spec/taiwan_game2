@@ -453,6 +453,9 @@ SP_ATTR.forEach(([key,an,evil,dt,eff,ls,sup,aura,names])=>names.split("|").forEa
     const r=["仙法",own,row[0],row[1],row[2],row[3],row[4],null,row[5]];S.push(r);SPELL[id]=Object.assign({row:r,name},extra)})}));
 // 靈寵增益技能
 const BEAST_NAME={fox:"靈幻狐",wolf:"青蒼狼",dragon:"九幽蛟龍"};
+// 設定區的靈寵清單：這裡列的＋存檔裡有、但這裡還沒收錄的都會列出來（每種只能養一隻，所以用勾選、不會重複）
+const BEAST_INFO={fox:"經驗 +10%，只影響「打怪推薦」的每小時經驗",wolf:"物理、術法攻擊與氣血上限 +15%",dragon:"物理、術法攻擊與氣血上限 +30%、經驗 +20%"},BEAST_MAX=3;
+const beastIds=b=>[...new Set(Object.keys(BEAST_INFO).concat((b.beasts||[]).map(x=>x.id).filter(Boolean)))];
 const BEAST_BUFF={b1:["振奮長嘯",30,3,"攻擊 ×1.15","物理攻擊、術法攻擊各 +15%（進增益）"],b2:["岩膚術",30,3,"受傷減少 15%","你受到的傷害 −15%"],b3:["靈動身法",60,3,"閃避 +8","你的閃避 +8%"],b4:["鐵壁護身",60,3,"減傷 +10","你的減傷 +10%"],
 b5:["鷹眼",100,3,"暴擊率 +10%","普通攻擊與技能的暴擊率 +10%"],b6:["疾影連擊",100,3,"連擊率 +12%","普通攻擊的連擊率 +12%"],b7:["洞明之眼",300,4,"命中 +15","抵銷敵人 15% 閃避"],b8:["血祭",300,4,"吸血 10%","造成傷害的 10% 回復氣血"],
 b9:["破軍之勢",500,4,"破甲 +20","無視敵人 20% 減傷"],b10:["萬獸之王",1000,4,"攻擊 ×1.30、受傷減少 25%、暴擊率 +10%","物理攻擊、術法攻擊各 +30%（進增益）；你受到的傷害 −25%；暴擊率 +10%"]};
@@ -890,7 +893,7 @@ function renderSetup(){
   let rank=1;if(b.profession)RANK_EXP.forEach((n,i)=>{if(((b.proficiency||{})[b.profession]||0)>=n)rank=i+1});
   const apt=b.aptitude||{},rootId=apt.root&&ROOT[apt.root.id]?apt.root.id:"",g=b.goldenCore||{};
   const team=(b.partnerTeam||[]).filter(id=>PARTNER[id]),bond=id=>(((b.partnerBond||{})[id]||{}).pts||0)>=1500;
-  const beastOn=id=>(b.beasts||[]).some(x=>x.id===id&&x.alive&&x.active!==false);
+  const beastOn=id=>(b.beasts||[]).some(x=>x.id===id&&x.alive&&x.active!==false),beastLabel=id=>BEAST_NAME[id]||((b.beasts||[]).find(x=>x.id===id)||{}).name||id,beastFull=beastIds(b).filter(beastOn).length>=BEAST_MAX;
   const ptOpts=[["","（無）"]].concat(Object.keys(PARTNER).map(id=>[id,PARTNER[id][0]+(effText(PARTNER[id][1])?`（${effText(PARTNER[id][1])}）`:"")]));
   const phyOpts=[["","（未測）"]].concat(Object.keys(PHYS).map(id=>{const x=PHYS[id],sp=x[2]||{},t=[effText(x[1]),sp.weapon&&`裝備${sp.weapon}時該武器攻擊 +15%、技能傷害 +10%`,sp.elem&&`本命五行為${sp.elem}時攻擊 +8%`].filter(Boolean).join("、");return [id,x[0]+(t?`（${t}）`:"")]}));
   const slotN=Math.min(10,3+Math.floor((b.level||1)/100)),slots=effSlots(b,3+Math.floor((b.level||1)/100)),sectRow=sectIdsOf(b);
@@ -910,8 +913,9 @@ function renderSetup(){
   sec("pill","丹藥與藏書閣","每種各 0～200",
     `<div class="sub">煉丹房丹藥：每顆 +0.1 點</div><div class="ctl">${ST5.map(k=>`<label>${STAT_LABEL[k]}丹藥（顆）${num("pill_"+k,Math.min(200,(b.pillUsed||{})[k]||0),200)}</label>`).join("")}</div>
     <div class="sub">藏書閣研讀：每次 +0.1 點</div><div class="ctl">${ST5.map(k=>`<label>${STAT_LABEL[k]}研讀（次）${num("study_"+k,Math.min(200,(b.studyCounts||{})[k]||0),200)}</label>`).join("")}</div>`)+
-  sec("ally","靈寵與夥伴",`${[beastOn("wolf")&&"青蒼狼",beastOn("dragon")&&"九幽蛟龍"].concat(team.map(id=>PARTNER[id][0])).filter(Boolean).join("、")||"無"}`,
-    `<div class="cks">${chk("wolf",beastOn("wolf"),"青蒼狼出戰（物理、術法攻擊與氣血上限 +15%）")}${chk("dragon",beastOn("dragon"),"九幽蛟龍出戰（物理、術法攻擊與氣血上限 +30%）")}</div>
+  sec("ally","靈寵與夥伴",`${beastIds(b).filter(beastOn).map(beastLabel).concat(team.map(id=>PARTNER[id][0])).filter(Boolean).join("、")||"無"}`,
+    `<div class="cks">${beastIds(b).map(id=>`<label class="ck"><input type="checkbox" data-f="bst_${esc(id)}" ${beastOn(id)?"checked":""} ${!beastOn(id)&&beastFull?"disabled":""}><span>${esc(beastLabel(id))}出戰（${BEAST_INFO[id]||"攻略還沒收錄這隻靈寵，牠的加成沒有算進去"}）</span></label>`).join("")}</div>
+    <div class="sub">每種靈寵只能養一隻，最多 ${BEAST_MAX} 隻同時出戰。</div>
     <div class="ctl"><label>隊伍夥伴 1${sel("pt0",ptOpts,team[0])}</label>${chk("pl0",team[0]&&bond(team[0]),"好感 LV5（被動 ×1.2）")}</div>
     <div class="ctl"><label>隊伍夥伴 2${sel("pt1",ptOpts,team[1])}</label>${chk("pl1",team[1]&&bond(team[1]),"好感 LV5（被動 ×1.2）")}</div>`)+
   sec("title","稱號與異火",`稱號 ${titles.filter(id=>TITLE[id]).length}・異火 ${Object.keys(fires).filter(id=>FIRE[id]&&fires[id]>0).length}`,
@@ -934,7 +938,7 @@ $("setupBox").onchange=()=>{
   b.aptitude=b.aptitude||{};b.aptitude.root=F.root?{group:"pick",id:F.root}:(b.aptitude.root&&!ROOT[b.aptitude.root.id]?b.aptitude.root:{group:"true3",elems:[]});b.aptitude.physique=F.phy||"mortal";
   b.goldenCore=Object.assign({},b.goldenCore,{core:F.core===""?null:+F.core,infant:F.infant===""?null:+F.infant});
   b.pillUsed=b.pillUsed||{};b.studyCounts=b.studyCounts||{};ST5.forEach(k=>{b.pillUsed[k]=Math.max(0,Math.min(200,Math.round(+F["pill_"+k]||0)));b.studyCounts[k]=Math.max(0,Math.min(200,Math.round(+F["study_"+k]||0)))});
-  b.beasts=b.beasts||[];["wolf","dragon"].forEach(id=>{const x=b.beasts.find(y=>y.id===id);if(F[id]){if(x){x.alive=true;x.active=true}else b.beasts.push({id,alive:true,level:1,skills:[]})}else if(x)x.active=false});
+  b.beasts=b.beasts||[];beastIds(b).forEach(id=>{const x=b.beasts.find(y=>y.id===id);if(F["bst_"+id]){if(x){x.alive=true;x.active=true}else b.beasts.push({id,alive:true,level:1,skills:[]})}else if(x)x.active=false});
   const team=[];[0,1].forEach(i=>{const id=F["pt"+i];if(id&&!team.includes(id)){team.push(id);b.partnerBond=b.partnerBond||{};const old=b.partnerBond[id]||{};b.partnerBond[id]=Object.assign({},old,{pts:F["pl"+i]?1500:Math.min(old.pts>=700?old.pts:700,1499)})}});
   b.partnerTeam=team;b.partners=[...new Set((b.partners||[]).concat(team))];
   b.titles=(b.titles||[]).filter(id=>!TITLE[id]).concat(Object.keys(TITLE).filter(id=>F["t_"+id]));
