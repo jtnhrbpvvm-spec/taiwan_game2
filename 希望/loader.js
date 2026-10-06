@@ -461,8 +461,24 @@
     if (!w || !Array.isArray(w.costs) || !w.costs.length) return true;
     return w.costs.some(function (c) { return c[0] === grade; });
   }
+  // 遊戲數「有幾個可以用」時要給一個用途名稱（scope），遊戲照這個名稱＋玩家的倉庫設定決定要不要把倉庫裡的也算進去。
+  // 以前這裡一律傳 "bagAndWarehouse"，但遊戲從來沒有這個名稱（2026-10-01～10-06 的版本都查過），等於永遠只算背包：
+  // 倉庫裡明明有發條／材料／配方書，書籤卻當成沒有（自動買發條白花錢、自動煉金說做不下去）。
+  // 名稱遊戲改過（10-05 以前強化、煉金都是 "materials"，10-06 起拆成 "enhance"／"craft"），
+  // 所以直接從遊戲自己的函式原始碼裡把它用的名稱讀出來，讀不到才用預設值。
+  function gameScope(fnName, re, fallback) {
+    try {
+      var m = String(session[fnName]).match(re);
+      if (m) return m[1];
+    } catch (err) { /* 讀不到就用預設值 */ }
+    return fallback;
+  }
+  // 強化：遊戲 enhance() 裡的 this.usableCount(發條, `enhance`)
+  var ENHANCE_SCOPE = gameScope("enhance", /usableCount\([^(),]+,\s*[`'"](\w+)[`'"]\s*\)/, "enhance");
+  // 煉金：遊戲 craftBomb() 裡的 this.bombBatch(配方, 輔助, 次數, `craft`)
+  var CRAFT_SCOPE = gameScope("craftBomb", /bombBatch\([^()]*,\s*[`'"](\w+)[`'"]\s*\)/, "craft");
   function winderStock(id) {
-    try { return session.usableCount(id, "bagAndWarehouse") || 0; } catch (err) { return 0; }
+    try { return session.usableCount(id, ENHANCE_SCOPE) || 0; } catch (err) { return 0; }
   }
   // 買一個發條要多少金幣：NPC 商店（實習生）用 shopPrice；名品館的發條價格每小時浮動，用遊戲自己算的現價。
   function winderBuyPrice(id) {
@@ -1864,9 +1880,9 @@
     if (alchemyBackdrop) return;
     if (alchemyRunning) { openAlchemyStatusModal(); return; }
     var panel;
-    try { panel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); } catch (err) { panel = null; }
+    try { panel = session.buildAlchemyPanel(session.usableCounts(CRAFT_SCOPE)); } catch (err) { panel = null; }
     if (!panel || !panel.recipes || !panel.recipes.length) {
-      alert("目前拿不到任何可用的煉金配方（可能不是鐵匠職業，或是身上沒有對應的配方書/材料/技能）。");
+      alert("目前拿不到任何可用的煉金配方（可能不是鐵匠職業，或是身上沒有對應的配方書/材料/技能）。\n\n配方書如果放在倉庫，要先在遊戲的製作畫面勾選「含倉庫」，或把書拿到背包。");
       return;
     }
 
@@ -1979,7 +1995,7 @@
 
     function findRecipe() {
       var panel;
-      try { panel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); }
+      try { panel = session.buildAlchemyPanel(session.usableCounts(CRAFT_SCOPE)); }
       catch (err) { console.error("[自動煉金] buildAlchemyPanel 呼叫失敗，可能是遊戲改版了，請回報作者", err); return null; }
       if (!panel) return null;
       return panel.recipes.find(function (r) { return r.id === recipeId; }) || null;
@@ -2025,15 +2041,24 @@
       if (alchemyStats.budget > 0 && alchemyStats.totalSpent + (recipe.gold || 0) > alchemyStats.budget) { finish("budget"); return; }
 
       var goldBefore = session.player.gold;
-      // 遊戲 craftBomb() 失敗時也回傳 true（材料、配方書照扣，只是拿不到成品），
-      // 所以「做出幾個」要看成品數量實際增加多少，不能用「次數 × 每次數量」。
-      var productBefore = recipe.productId != null ? (session.usableCount(recipe.productId, "bagAndWarehouse") || 0) : null;
-      var ok = session.craftBomb(recipeId);
-      if (!ok) { finish("blocked"); return; }
+      // 遊戲 craftBomb() 回傳 {tries, fails, exp, items:[{itemId, count}]}：
+      //   tries = 0  → 根本沒做（材料／金幣／技能不夠、冷卻中…），什麼都沒扣。這個物件還是「真值」，
+      //                以前用 if (!ok) 判斷永遠抓不到，會把「沒做」當成「做了但失敗」一直重試、次數一直往上加。
+      //   製作失敗    → tries = 1、items 是空的（材料、配方書照扣，只是拿不到成品）。
+      // 很舊的版本回傳 true／false，保留相容：這時候「做出幾個」改看成品數量實際增加多少。
+      var productBefore = recipe.productId != null ? (session.usableCount(recipe.productId, CRAFT_SCOPE) || 0) : null;
+      var result = session.craftBomb(recipeId);
+      var isResultObj = !!result && typeof result === "object" && typeof result.tries === "number";
+      if (!result || (isResultObj && result.tries < 1)) { finish("blocked"); return; }
       var spent = Math.max(0, goldBefore - session.player.gold);
-      var made = productBefore != null
-        ? Math.max(0, (session.usableCount(recipe.productId, "bagAndWarehouse") || 0) - productBefore)
-        : (recipe.count || 0);
+      var made;
+      if (isResultObj) {
+        made = (result.items || []).reduce(function (sum, it) { return sum + (it.count || 0); }, 0);
+      } else {
+        made = productBefore != null
+          ? Math.max(0, (session.usableCount(recipe.productId, CRAFT_SCOPE) || 0) - productBefore)
+          : (recipe.count || 0);
+      }
       alchemyStats.attempts++;
       alchemyStats.totalSpent += spent;
       alchemyStats.totalMade += made;
@@ -2046,7 +2071,7 @@
 
       var cooldownMs = 1200; // 讀不到新的 readyAtMs 時，先給一個保守的預設間隔，避免無冷卻配方緊繃連打
       var afterPanel = null;
-      try { afterPanel = session.buildAlchemyPanel(session.usableCounts("bagAndWarehouse")); } catch (err) { /* 讀不到就用預設間隔，不中斷流程 */ }
+      try { afterPanel = session.buildAlchemyPanel(session.usableCounts(CRAFT_SCOPE)); } catch (err) { /* 讀不到就用預設間隔，不中斷流程 */ }
       var afterRecipe = afterPanel && afterPanel.recipes.find(function (r) { return r.id === recipeId; });
       if (afterRecipe && afterRecipe.readyAtMs > Date.now()) cooldownMs = afterRecipe.readyAtMs - Date.now() + 50;
       alchemyTimer = setTimeout(step, cooldownMs);
@@ -2426,10 +2451,21 @@
 
   window.__iwMallHintGeneration = (window.__iwMallHintGeneration || 0) + 1;
   var myMallHintGeneration = window.__iwMallHintGeneration;
+  // 畫面一有變動不直接更新，而是「排一次 0.1 秒後更新」，這段時間內再有變動就不重複排：
+  //  1. 保險：萬一更新時又不小心動到畫面（像 2026-10-06 那次 classList.add 的無限迴圈），
+  //     最多變成每 0.1 秒白跑一次，不會把整個遊戲卡死。
+  //  2. 省資源：遊戲戰鬥中畫面每秒變動很多次，以前每一次變動都會整個重算一遍。
+  var mallHintPending = false;
   var mallHintObserver = new MutationObserver(function () {
     if (window.__iwMallHintGeneration !== myMallHintGeneration) { mallHintObserver.disconnect(); return; }
-    updateMallHint();
-    updateMallMaxTag();
+    if (mallHintPending) return;
+    mallHintPending = true;
+    setTimeout(function () {
+      mallHintPending = false;
+      if (window.__iwMallHintGeneration !== myMallHintGeneration) return;
+      updateMallHint();
+      updateMallMaxTag();
+    }, 100);
   });
   mallHintObserver.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] });
   // 整點換匯率時，畫面不一定有變動，另外每 30 秒自己更新一次。
