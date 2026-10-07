@@ -910,6 +910,7 @@ function itemDetail(eq){
   if(d){const t=TPL[d.tpl]||TPL["均衡"];for(const k in t)pts[k]=t[k]*.5*(QM[q]||1)*e*(ACCS.includes(d.slot)?1.25:1)}
   else if(lb){const sum=Object.values(lb.s).reduce((a,b)=>a+b,0);for(const k in lb.s)pts[k]=(lb.a?10:LB_BUDGET[lb.t])*e*lb.s[k]/sum}
   const pt=Object.keys(pts).map(k=>`${STAT_LABEL[k]} <b>+${pts[k].toFixed(2)}</b>`).join("、");if(pt)base.push(`屬性點：${pt}`);
+  if(d&&d.tpl==="雅致"&&eq.level)base.push(`魅力 <b>+${full(Math.floor(Math.floor(eq.level*5*({"白色":1,"綠色":2,"藍色":3,"紫色":5,"橙色":8,"白金":12})[q]*("LAR".includes(d.ch)?1.15:1)*(st==="accessory"?1.25:1))*(1+(eq.enhance||0)*.05)))}</b> <span class="off">（雅致模板才有；不影響戰鬥與試算）</span>`);
   if(d){
     if(st==="weapon")base.push(`${ELFX[d.elem]}觸發率 <b>+${TRQ[q]}%</b> <span class="off">（武器的屬性傷害跟著五行）</span>`);
     else if(st==="armor")base.push(`防禦 <b>+${DEFQ[q]*(eq.name==="盔甲"?1.5:1)}</b>${eq.name==="盔甲"?` <span class="off">（盔甲是其他防具的 1.5 倍）</span>`:""}`);
@@ -930,7 +931,8 @@ function itemDetail(eq){
     sec(`隨機詞條（${subs.length} / ${mx}）`,subs.length?subs:[`<span class="off">${mx?"還沒設定詞條，可以在上面選。":"白色裝備沒有詞條。"}</span>`])}
   if(lb&&!lb.a)sec("隨機詞條",[`<span class="off">靈寶閣寶物沒有隨機詞條、特效，也不屬於套裝；可以強化，但不能進化成白金。</span>`]);
   if(Array.isArray(eq.sockets)){const sk=eq.sockets.map((s,i)=>s?`孔 ${i+1}：${talisText(s)}`:"").filter(Boolean);
-    sec("鑲嵌符寶",sk.length?sk:[`<span class="off">還沒有鑲符寶。</span>`])}
+    sec(`鑲嵌符寶（孔位 ${eq.sockets.length}）`,sk.length?sk:[`<span class="off">還沒有鑲符寶。</span>`])}
+  else if(d&&(q==="橙色"||q==="白金"))sec("鑲嵌符寶",[`<span class="off">橙色、白金每件有 1～3 個鑲嵌孔（取得時隨機）；這件還沒設定孔位，可以在上面加。</span>`]);
   if(lb&&lb.a){const s=S.find(x=>x[0]==="神器技能"&&x[1]===ART_OWNER[eq.lingbaoId]);
     if(s)sec("專屬技能",[`<b>【${s[2]}】</b>${TYPE[s[3]][0]}・${s[4]}${s[5]?`・威力 ${Math.round(s[5]*100)}%`:""}・每回合 ${s[7]}% 發動`,s[8],
       `<span class="off">裝在神器欄才有；每回合出手後額外判定，不耗靈力，不吃「技能傷害」加成。神器不能強化、沒有鑲嵌孔。</span>`])}
@@ -1341,7 +1343,8 @@ $("shareShort").onclick=async()=>{const m=$("shareMsg"),btn=$("shareShort");if(!
   try{s=await ask("https://da.gd/s",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>x.trim())}catch(e){}
   if(!s&&shLong.length<1900)try{s=await ask("https://is.gd/create.php?format=json&url="+encodeURIComponent(shLong),{},x=>JSON.parse(x).shorturl||"")}catch(e){}
   btn.disabled=false;
-  if(s){$("shareUrl").value=s;m.textContent=(await shCopy(s)?"短網址已產生並複製：":"短網址已產生：")+s+"。短網址服務哪天停了連結就會失效，要長期保存請留上面按「分享配裝」產生的長連結。"}
+  const dg=s.match(/^https:\/\/da\.gd\/([\w-]+)$/);if(dg)s=new URL("s.html?"+dg[1],location.href).href;   // 改用站內的中繼頁開啟：手機上的聊天軟體不一定會照第三方短網址跳轉
+  if(s){$("shareUrl").value=s;m.textContent=(await shCopy(s)?"短連結已產生並複製：":"短連結已產生：")+decodeURI(s)+"。它靠第三方短網址服務記住內容，服務哪天停了就會失效；要長期保存請留按「分享配裝」產生的長連結。"}
   else m.textContent="短網址服務目前連不上，請直接使用長連結（再按一次「分享配裝」可以重新顯示）。"};
 function readShare(){const mb=location.hash.match(/^#b=([\w-]+)$/);if(!mb)return false;const m=$("saveMsg");
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}

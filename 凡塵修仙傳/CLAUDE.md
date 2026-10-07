@@ -10,6 +10,7 @@
 - 經驗不顯示「每小時經驗」（依裝備而不同），也不寫地圖的經驗倍率；只顯示已套用地圖加倍後的單隻妖獸經驗。
   - 例外：`屬性與技能.html` 的「打怪推薦」分頁是依讀取的存檔（玩家自己的數值與裝備）計算，使用者要求顯示每張地圖每小時經驗與靈石。算法照遊戲的掛機估算移植，改動後要用遊戲本體的程式比對。
 - `dmg.js` 是 `屬性與技能.html`「已學技能的傷害」用的平均傷害計算（屬性觸發、命中、破甲、屬性秘典、種族剋制）。裡面 `/*EX*/…/*EX*/` 之間的資料是產生出來的，不要手改：遊戲更新數值後執行 `node tools/build-dmg.js` 重新產生，再執行 `node tools/check-dmg.js` 用遊戲本體驗算（要顯示「不一致 0」）。`tools/game-vm.js` 會在 Node 裡載入遊戲本體，預設找 `../../idle-lineage-class/-username-.github.io-`（相對於 repo 根目錄），可用環境變數 `FANCHEN_GAME` 指定。
+- `s.html` 是分享短連結的中繼頁（`s.html?代號` → 向短網址服務問回完整連結 → 轉到 `屬性與技能.html#b=…`），不是攻略頁，不用加進 `PAGES`。
 - `profile.js` 是全站共用的存檔暫存；新頁面要 `<script src="profile.js"></script>`，需要新的存檔欄位時加到它的 `KEEP` 清單。
 - `site.js` 是全站共用的頂部搜尋與物品彈窗；新頁面要在 profile.js 後面加 `<script src="site.js"></script>`，內容要放在 `.wrap` 裡。
   - **新增或修改任何頁面的內容後，都要執行 `node tools/build-search.js` 重建 `search-index.js`**（用 Edge／Chrome 無頭模式把每頁跑一遍；頁面清單取自 `index.html` 的 `PAGES`）。

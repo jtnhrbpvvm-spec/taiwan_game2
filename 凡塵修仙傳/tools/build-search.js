@@ -26,7 +26,7 @@ try {
   const pages = home.pages;
   if (!pages.length) throw new Error("index.html 讀不到頁面清單");
   const entries = [];
-  const files = fs.readdirSync(root).filter(f => f.endsWith(".html") && f !== "index.html" && f !== TMP);
+  const files = fs.readdirSync(root).filter(f => f.endsWith(".html") && f !== "index.html" && f !== "s.html" && f !== TMP);   // s.html 是分享短連結的中繼頁，不是攻略頁
   files.forEach(f => { if (!pages.some(p => p[0] === f)) console.warn("⚠️ " + f + " 還沒加到 index.html 的 PAGES"); });
   pages.forEach((p, pi) => {
     if (!files.includes(p[0])) { console.warn("⚠️ PAGES 裡的 " + p[0] + " 找不到檔案"); return; }

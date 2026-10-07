@@ -35,6 +35,8 @@ td.nw{white-space:nowrap}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
 a{color:var(--link);text-underline-offset:2px}
 a:hover{text-decoration-thickness:2px}
+.gnm{background:none;border:0;padding:0;font:inherit;font-weight:bold;color:var(--link);cursor:pointer;text-decoration:underline dashed;text-underline-offset:3px}
+.gcard h4{margin:12px 0 4px;font-size:14px;color:var(--acct)}.gcard div{font-size:13.5px;line-height:1.8}.gcard .off{color:var(--mute)}
 .fxn{background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--link);cursor:pointer;text-decoration:underline dashed;text-underline-offset:3px}
 #fxDlg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
 #fxDlg[hidden]{display:none}
@@ -226,6 +228,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="chips" id="fSlot"></div>
 <div class="chips" id="fCh"></div>
 <div class="chips" id="fEl"></div>
+<div class="sub"><b>點裝備名稱</b>會跳出這件裝備的加成：選品質和等級，就能看到武器攻擊、屬性點、防禦／閃避／觸發率、特效數值、詞條數與鑲嵌孔。</div>
 <div class="sub" id="catCnt"></div>
 <div class="tw"><table><thead><tr><th>部位</th><th>名稱</th><th>五行</th><th>來源</th><th>四維模板</th><th>特效</th><th>套裝</th></tr></thead><tbody id="catBody"></tbody></table></div>
 <div class="empty" id="catEmpty" hidden>找不到符合的裝備</div>
@@ -277,6 +280,32 @@ function openFxDlg(fx,c){const rows=[];Object.keys(GC).forEach(slot=>{if(FX_SLOT
   document.getElementById("fxdOut").innerHTML=`<div class="sub" style="margin-bottom:8px">特效要紫色以上才生效。來源決定怎麼拿到、能打到幾等：凡俗／修真／至高鍛造在鍛造閣自己打，奪寶、拍賣、秘境的要靠掉落或購買。</div>
   <div class="tw"><table><thead><tr><th>部位</th><th>裝備</th><th>五行</th><th>來源</th><th>四維模板</th><th>套裝</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="nw">${r[0]}</td><td class="nw"><b>${r[1]}</b></td><td>${r[2]}</td><td class="nw">${CH[r[3]]||r[3]}</td><td>${r[4]}</td><td>${r[6]?r[6]+"套":"—"}</td></tr>`).join("")}</tbody></table></div>`;
   const d=document.getElementById("fxDlg");d.hidden=false;d.querySelector(".fxd-box").scrollTop=0;document.getElementById("fxdClose").focus()}
+// 圖鑑的裝備卡：選品質、等級，看這件裝備固定帶的加成（和遊戲裝備欄看到的那幾行對應）
+const GQ=["白色","綠色","藍色","紫色","橙色","白金"],G_QM={"白色":1,"綠色":1.1,"藍色":1.25,"紫色":1.35,"橙色":1.5,"白金":2},G_QOLD={"白色":1,"綠色":2,"藍色":3,"紫色":5,"橙色":8,"白金":12};
+const G_TPL={"均衡":{力量:.5,悟性:.5,體質:.5,靈力:.5},"剛猛":{力量:1.6,體質:.4},"玄妙":{悟性:1.6,靈力:.4},"厚重":{體質:1.6,力量:.4},"靈動":{敏捷:1.2,靈力:.8},"剛柔":{力量:1,體質:1},"法體":{悟性:1,體質:1},"雅致":{悟性:1}};
+const G_DEF={"白色":1,"綠色":1.5,"藍色":2,"紫色":3,"橙色":4,"白金":5},G_EVA={"白色":.5,"綠色":1,"藍色":1.5,"紫色":2,"橙色":3,"白金":4},G_TR={"白色":2,"綠色":3,"藍色":5,"紫色":7,"橙色":10,"白金":13},G_ELFX={"金":"金重擊","木":"中毒","水":"冰凍","火":"燒傷","土":"雷擊"};
+const G_ELV=[10,50,100,200,300,400,500,700,800,1000],G_BPL={1500:11,2500:12,3500:13,5000:14,6500:15,8000:15.5,10000:16},G_BPM={1500:1.25,2500:1.5,3500:1.8,5000:2.1,6500:2.5,8000:2.9,10000:3.4},G_BPA={1500:3.3,2500:7.5,3500:12.5,5000:17.5,6500:25,8000:31.5,10000:40};
+const G_CHLV={"1":[10,50,100],"2":[200,300,400,500],"3":[700,800,1000,1500,2500,3500,5000,6500,8000,10000]},G_SUBN={"白色":0,"綠色":1,"藍色":2,"紫色":2,"橙色":3,"白金":4},G_ENH={"白色":10,"綠色":10,"藍色":12,"紫色":15,"橙色":20,"白金":20};
+let gSel={i:-1,q:"橙色",lv:0};
+function gearCard(){const r=ALL[gSel.i];if(!r)return;const [slot,name,el,ch,tpl,fx,set]=r,c=FX_SLOTCAT(slot),q=gSel.q,lvs=G_CHLV[ch]||G_ELV,n0=x=>Number(x).toLocaleString("zh-TW");
+  if(!lvs.includes(gSel.lv))gSel.lv=lvs[lvs.length-1];const lv=gSel.lv,ext="LAR".includes(ch),act=["紫色","橙色","白金"].includes(q),rows=[];
+  if(c===0){const L=G_BPL[lv]||Math.max(0,G_ELV.indexOf(lv))/9*10;rows.push(`⚔️ 武器攻擊 <b>${n0(Math.round(5*Math.pow(1.05,L)*(G_BPM[lv]||1)*G_QM[q]*100))}</b> <span class="off">（六把武器只取最高的一把）</span>`)}
+  if(c===1&&G_BPA[lv])rows.push(`🛡️ 氣血上限 <b>+${+(G_BPA[lv]*G_QM[q]/1.5/1.5).toFixed(1)}%</b> <span class="off">（圖紙防具才有；+20 時 +${+(G_BPA[lv]*G_QM[q]/1.5).toFixed(1)}%）</span>`);
+  const tp=G_TPL[tpl]||G_TPL["均衡"];rows.push("屬性點："+Object.keys(tp).map(k=>`${k} <b>+${(tp[k]*.5*G_QM[q]*(c===2?1.25:1)).toFixed(2)}</b>`).join("、")+` <span class="off">（遊戲畫面顯示到小數 1 位）</span>`);
+  if(tpl==="雅致")rows.push(`魅力 <b>+${n0(Math.floor(lv*5*G_QOLD[q]*(ext?1.15:1)*(c===2?1.25:1)))}</b> <span class="off">（不影響戰鬥）</span>`);
+  rows.push(c===0?`${G_ELFX[el]}觸發率 <b>+${G_TR[q]}%</b> <span class="off">（武器的屬性傷害跟著五行）</span>`:c===1?`防禦 <b>+${G_DEF[q]*(slot==="盔甲"?1.5:1)}</b>${slot==="盔甲"?' <span class="off">（盔甲是其他防具的 1.5 倍）</span>':""}`:`💨 閃避 <b>+${G_EVA[q]}</b>`);
+  rows.push(`<span class="off">強化每 +1：武器攻擊、屬性點、魅力與圖紙防具氣血變高（+20 共 ×1.5，魅力 ×2）；防禦、閃避、觸發率不變。</span>`);
+  const f=FX.find(x=>x[0]===fx),m=q==="白金"?2:q==="橙色"?1.5:1;
+  document.getElementById("fxdTitle").textContent=`Lv.${lv} ${q==="白金"?"先天・":""}${name}`;
+  document.getElementById("fxdOut").innerHTML=`<div class="sub">${slot}・${tpl}・${CH[ch]}｜五行 <b>${el}</b></div>
+  <div class="ctl" style="margin:8px 0"><label>品質<select id="gcQ">${GQ.map(x=>`<option ${x===q?"selected":""}>${x}</option>`).join("")}</select></label><label>裝備等級<select id="gcL">${lvs.map(x=>`<option ${x===lv?"selected":""}>${x}</option>`).join("")}</select></label></div>
+  <div class="gcard"><h4>加成（強化 +0）</h4>${rows.map(x=>`<div>${x}</div>`).join("")}
+  ${fx?`<h4>特效</h4><div>✦ <b>【${fx}】</b>${f?f[4].replace(/\{v\}/g,`<b>${fv(f[1]*m,f[3])}</b>`):""}${act?"":' <span class="warn">（紫色以上才生效，這個品質沒有效果）</span>'}</div>${f?`<div class="off">紫色 ${fv(f[1],f[3])}／橙色 ${fv(f[1]*1.5,f[3])}／白金 ${fv(f[1]*2,f[3])}；多件同名特效相加，上限 ${fv(f[2],f[3])}。</div>`:""}`:""}
+  ${set?`<h4>套裝</h4><div>❖ <b>${set}套</b>的部件（紫色以上才算件數），2／4／6 件的效果見<a href="套裝效果一覽.html">套裝效果一覽</a>。</div>`:""}
+  <h4>其他</h4><div>隨機詞條 <b>${G_SUBN[q]}</b> 條・強化上限 <b>+${G_ENH[q]}</b>・鑲嵌孔 ${q==="橙色"||q==="白金"?"<b>1～3 孔</b>（取得時隨機"+(q==="白金"?"，進化後沿用原本的孔":"")+"）":"<b>沒有</b>（橙色以上才有）"}</div>
+  <div class="off">${ext?"奪寶、拍賣、秘境的裝備：隨機詞條只會抽到數值範圍的上半段。":"鍛造閣可以指定部位打造，品質隨機。"}想把它穿上去看整體數字，請到<a href="屬性與技能.html">屬性與技能</a>的配裝。</div></div>`;
+  const d=document.getElementById("fxDlg");d.hidden=false;document.getElementById("gcQ").onchange=e=>{gSel.q=e.target.value;gearCard()};document.getElementById("gcL").onchange=e=>{gSel.lv=+e.target.value;gearCard()}}
+addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".gnm");if(b){gSel.i=+b.dataset.g;gSel.lv=0;gearCard();document.getElementById("fxDlg").querySelector(".fxd-box").scrollTop=0}});
 function closeFxDlg(){document.getElementById("fxDlg").hidden=true}
 addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".fxn");if(b)openFxDlg(b.dataset.fx,+b.dataset.c);else if(e.target.id==="fxdClose"||e.target.id==="fxDlg")closeFxDlg()});
 addEventListener("keydown",e=>{if(e.key==="Escape")closeFxDlg()});
@@ -301,7 +330,7 @@ function chips(box,key,opts){$(box).innerHTML=opts.map(([v,l])=>`<button data-v=
 function renderCat(){const q=$("catQ").value.trim();
   const list=ALL.filter(r=>(!F.slot||r[0]===F.slot)&&(!F.ch||r[3]===F.ch)&&(!F.el||r[2]===F.el)&&(!q||(r[1]+r[4]+r[5]+r[6]+(r[6]?"套":"")).includes(q)));
   $("catCnt").textContent=`共 ${list.length} 種`;
-  $("catBody").innerHTML=list.slice(0,400).map(r=>`<tr><td class="nw">${r[0]}</td><td class="nw"><b>${r[1]}</b></td><td>${r[2]}</td><td class="nw">${CH[r[3]]}</td><td>${r[4]}</td><td>${r[5]||"—"}</td><td>${r[6]?r[6]+"套":"—"}</td></tr>`).join("")+(list.length>400?`<tr><td colspan="7" class="empty">只顯示前 400 種，請用搜尋或篩選縮小範圍</td></tr>`:"");
+  $("catBody").innerHTML=list.slice(0,400).map(r=>`<tr><td class="nw">${r[0]}</td><td class="nw"><button type="button" class="gnm" data-g="${ALL.indexOf(r)}" title="看這件裝備的加成">${r[1]}</button></td><td>${r[2]}</td><td class="nw">${CH[r[3]]}</td><td>${r[4]}</td><td>${r[5]||"—"}</td><td>${r[6]?r[6]+"套":"—"}</td></tr>`).join("")+(list.length>400?`<tr><td colspan="7" class="empty">只顯示前 400 種，請用搜尋或篩選縮小範圍</td></tr>`:"");
   $("catEmpty").hidden=list.length>0}
 chips("fSlot","slot",[["","全部部位"]].concat(Object.keys(GC).map(s=>[s,s])));
 chips("fCh","ch",[["","全部來源"]].concat(Object.entries(CH)));
