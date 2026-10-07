@@ -1329,22 +1329,30 @@ async function shDecode(str){const b=atob(str.slice(1).replace(/-/g,"+").replace
     raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer())}
   return JSON.parse(new TextDecoder().decode(raw))}
 const shCopy=async txt=>{try{await navigator.clipboard.writeText(txt);return true}catch(e){const i=$("shareUrl");i.focus();i.select();try{return document.execCommand("copy")}catch(e2){return false}}};
+// 自己架的短連結服務網址（結尾不要斜線）；留空就改用外面的短網址服務
+const SHARE_API="https://tw.s8gh6n2fyj.workers.dev";
 let shLong="";
 $("shareBtn").onclick=async()=>{const m=$("shareMsg");$("shareBox").hidden=false;
   try{shLong=location.origin+location.pathname+"#b="+await shEncode(sharePack())}catch(e){m.textContent="產生連結失敗："+e.message;return}
   $("shareUrl").value=shLong;$("shareSys").hidden=!navigator.share;$("shareShort").disabled=!/^https?:$/.test(location.protocol);
-  m.innerHTML=`連結長度 ${shLong.length.toLocaleString("zh-TW")} 個字。太長不好貼的話可以按「產生短網址」：會把這條連結交給第三方的短網址服務（spoo.me，連不上時改用 da.gd），<b>連結內容（道號與配裝）也會傳給它</b>，介意的話直接用上面這條。`;
+  m.innerHTML=`連結長度 ${shLong.length.toLocaleString("zh-TW")} 個字。太長不好貼的話可以按「產生短網址」${SHARE_API?"，會換成一條很短的連結。":"：會把這條連結交給第三方的短網址服務（spoo.me，連不上時改用 da.gd），<b>連結內容（道號與配裝）也會傳給它</b>，介意的話直接用上面這條。"}`;
   $("shareBox").scrollIntoView({block:"nearest"})};
 $("shareCopy").onclick=async()=>{$("shareMsg").textContent=await shCopy($("shareUrl").value)?"已複製到剪貼簿":"複製失敗，請手動選取上面的連結複製"};
 $("shareSys").onclick=()=>{navigator.share({title:"凡塵修仙傳配裝："+(build.name||"我的角色"),url:$("shareUrl").value}).catch(()=>{})};
 $("shareShort").onclick=async()=>{const m=$("shareMsg"),btn=$("shareShort");if(!shLong)return;btn.disabled=true;m.textContent="正在產生短網址…";
   const ask=async(url,opt,pick)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),10000);try{const r=await fetch(url,Object.assign({signal:c.signal},opt));if(!r.ok)throw 0;const s=pick(await r.text());if(!/^https:\/\/[\w.]+\/\S+$/.test(s))throw 0;return s}finally{clearTimeout(tm)}};
   let s="";
+  if(SHARE_API){let full=false;
+    try{const c=new AbortController(),tm=setTimeout(()=>c.abort(),10000),r=await fetch(SHARE_API+"/new",{method:"POST",headers:{"Content-Type":"text/plain"},body:shLong.slice(shLong.indexOf("#b=")+3),signal:c.signal});clearTimeout(tm);
+      if(r.status===429)full=true;else if(r.ok){const id=(await r.text()).trim();if(/^[0-9A-Za-z]{5,12}$/.test(id))s=SHARE_API+"/"+id}}catch(e){}
+    btn.disabled=false;
+    if(s){$("shareUrl").value=s;m.textContent=(await shCopy(s)?"短連結已產生並複製：":"短連結已產生：")+s+"。超過一年就會自動失效；要長期保存請留按「分享配裝」產生的長連結。"}
+    else m.textContent=full?"今天的短連結數量已經用完了，請明天再試；現在可以先用長連結（再按一次「分享配裝」可以重新顯示）。":"短連結服務目前連不上，請直接使用長連結（再按一次「分享配裝」可以重新顯示）。";
+    return}
   try{s=await ask("https://spoo.me/",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>String(JSON.parse(x).short_url||"").replace(/^http:/,"https:"))}catch(e){}
   if(!s)try{s=await ask("https://da.gd/s",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>x.trim())}catch(e){}
   if(!s&&shLong.length<1900)try{s=await ask("https://is.gd/create.php?format=json&url="+encodeURIComponent(shLong),{},x=>JSON.parse(x).shorturl||"")}catch(e){}
   btn.disabled=false;
-  const dg=s.match(/^https:\/\/da\.gd\/([\w-]+)$/);if(dg)s=new URL("s.html?"+dg[1],location.href).href;   // 改用站內的中繼頁開啟：手機上的聊天軟體不一定會照第三方短網址跳轉
   if(s){$("shareUrl").value=s;m.textContent=(await shCopy(s)?"短連結已產生並複製：":"短連結已產生：")+decodeURI(s)+"。它靠第三方短網址服務記住內容，服務哪天停了就會失效；要長期保存請留按「分享配裝」產生的長連結。"}
   else m.textContent="短網址服務目前連不上，請直接使用長連結（再按一次「分享配裝」可以重新顯示）。"};
 function readShare(){const mb=location.hash.match(/^#b=([\w-]+)$/);if(!mb)return false;const m=$("saveMsg");
