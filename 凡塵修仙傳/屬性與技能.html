@@ -135,7 +135,12 @@ a:hover{text-decoration-thickness:2px}
 在遊戲的「命運與系統」按「📤 匯出存檔代碼」→ 複製代碼，貼到下面再按「讀取存檔」。會把你的境界、屬性點、武器、增益帶進下面的試算，並列出你已學的技能各打多少；帶入後可以自己改數字，看看換裝或多吃丹藥會變多少。
 <div class="sub">代碼只在你自己的瀏覽器裡計算，不會上傳到任何地方，也不會改動你的存檔。讀取後，攻略站的其他頁面也會標出你的進度（已結識的夥伴、已達成的稱號、鎮魔塔層數等）；資料只暫存在這個分頁，關掉分頁或按「清除」就會消失。</div>
 <textarea id="saveCode" placeholder="把存檔代碼貼在這裡（FS2: 開頭的一長串）" spellcheck="false"></textarea>
-<div class="ctl" style="margin-bottom:0"><button class="btn" id="saveLoad">讀取存檔</button><button class="btn ghost" id="saveClear">清除</button><span id="saveMsg"></span></div>
+<div class="ctl" style="margin-bottom:0"><button class="btn" id="saveLoad">讀取存檔</button><button class="btn ghost" id="saveClear">清除</button><button class="btn ghost" id="shareBtn" type="button">🔗 分享配裝</button><span id="saveMsg"></span></div>
+<div class="box" id="shareBox" hidden style="margin-bottom:0">
+<b>分享連結</b><div class="sub">別人打開這條連結，就會看到你現在的境界、等級、配裝和「戰鬥中才有的效果」設定（含道號）；不會動到對方自己讀過的存檔。<b>連結裡不含存檔代碼</b>，也不含靈石、背包、倉庫裝備等其他存檔內容，別人沒辦法用它還原或匯入你的存檔。</div>
+<div class="ctl" style="margin:8px 0 0"><input id="shareUrl" readonly style="flex:1;min-width:200px" aria-label="分享連結"><button class="btn" id="shareCopy" type="button">複製</button><button class="btn ghost" id="shareShort" type="button">產生短網址</button><button class="btn ghost" id="shareSys" type="button" hidden>用手機分享</button></div>
+<div class="sub" id="shareMsg" style="margin-top:6px"></div>
+</div>
 </div>
 
 <h2>配裝</h2>
@@ -853,9 +858,11 @@ const ENH_CAP={"白色":10,"綠色":10,"藍色":12,"紫色":15,"橙色":20,"白�
 const CH_NAME={"1":"凡俗宗門鍛造","2":"修真宗門鍛造","3":"至高宗門鍛造（含圖紙）","L":"奪寶","A":"拍賣","R":"秘境"};
 const CH_LV={"1":[10,50,100],"2":[200,300,400,500],"3":[700,800,1000,1500,2500,3500,5000,6500,8000,10000]};
 const SUBS=[["strPct","力量","pct",.02,.05,1],["intPct","悟性","pct",.02,.05,1],["conPct","體質","pct",.02,.05,1],["sprPct","靈力","pct",.02,.05,1],["atkPct","攻擊","pct",.02,.04,1],["hpPct","氣血上限","pct",.02,.05,1],["fx:法爆","技能傷害","pct",.02,.05,1],
-["chaPct","魅力","pct",.02,.05],["def","防禦","num",1,3],["eva","閃避","num",1,2],["mdef","魔防（只出在飾品）","num",2,5],["ice","冰傷","pt",2,5],["fire","火傷","pt",2,5],["poison","毒傷","pt",2,5],["metal","金傷","pt",2,5],["thunder","雷傷","pt",2,5],["fx:剋敵","剋制傷害","pct",.02,.05],
+["chaPct","魅力","pct",.02,.05],["def","防禦","num",1,3],["eva","閃避","num",1,2],["mdef","魔防","num",2,5],["ice","冰傷","pt",2,5],["fire","火傷","pt",2,5],["poison","毒傷","pt",2,5],["metal","金傷","pt",2,5],["thunder","雷傷","pt",2,5],["fx:剋敵","剋制傷害","pct",.02,.05],
 ["fx:回春","每回合回血","pct",.003,.008],["fx:回靈","每回合回靈","pct",.005,.01],["fx:噬魂","擊殺回血","pct",.01,.02],["fx:聚財","靈石","pct",.02,.06],["fx:悟道","修為","pct",.01,.03],["fx:積德","功德","pct",.03,.08],["fx:尋鐵","星允鐵","pct",.03,.08],["fx:獸魂","靈寵傷害","pct",.03,.08]];
 const TALIS=[["str","力量符"],["int","悟性符"],["con","體質符"],["spr","靈力符"]],GRADE=["","下品","中品","上品"];
+const SUB_W={"strPct":"322","conPct":"232","intPct":"323","sprPct":"223","chaPct":"123","atkPct":"312","hpPct":"132","def":"031","eva":"123","mdef":"003","ice":"312","fire":"312","poison":"312","metal":"312","thunder":"312","fx:法爆":"312","fx:剋敵":"312","fx:回春":"132","fx:回靈":"123","fx:噬魂":"312","fx:聚財":"113","fx:悟道":"113","fx:積德":"113","fx:尋鐵":"123","fx:獸魂":"213"},SUB_MARK=["","△","○","◎"],SUB_CAT=["weapon","armor","accessory"];
+const subWhere=k=>{const w=SUB_W[k]||"222";return ["武器","防具","飾品"].map((n,i)=>+w[i]?n+SUB_MARK[+w[i]]:"").filter(Boolean).join(" ")};
 const slotType=s=>WEAPONS.includes(s)?"weapon":ACCS.includes(s)?"accessory":s==="神器"?"artifact":"armor";
 const eqName=eq=>{const d=gdef(eq);return d?(eq.quality==="白金"?"先天・":"")+d.name:eq&&LB[eq.lingbaoId]?LB[eq.lingbaoId].n:eq?eq.name:""};
 const lvOptions=eq=>{const d=gdef(eq);if(!d)return [];const l=(CH_LV[d.ch]||ELV).slice();if(eq.level&&!l.includes(eq.level))l.push(eq.level);return l.sort((a,b)=>a-b)};
@@ -945,9 +952,9 @@ function renderGear(){
     if(ENH_CAP[eq.quality])ed+=`<label>強化（0～${ENH_CAP[eq.quality]}）<input id="gEnh" type="number" min="0" max="${ENH_CAP[eq.quality]}" value="${eq.enhance||0}"></label>`;
     ed+=`<label>&nbsp;<button class="btn ghost" id="gOff">卸下</button></label></div>`;
     const n=d?SUB_N[eq.quality]||0:0;
-    if(n){ed+=`<div class="gsub"><div class="sub">隨機詞條（${eq.quality}最多 ${n} 條；★ 會影響試算）。新掉落的裝備詞條另有天、地、玄、黃、凡五級，數值是括號範圍的 ×1.3／×1.15／×1／×0.85／×0.7，可以直接改數字。</div>`;
+    if(n){ed+=`<div class="gsub"><div class="sub">隨機詞條（${eq.quality}最多 ${n} 條；★ 會影響試算）。新掉落的裝備詞條另有天、地、玄、黃、凡五級，數值是括號範圍的 ×1.3／×1.15／×1／×0.85／×0.7，可以直接改數字。<br>詞條後面的括號是<b>骰得出這條詞條的部位</b>：◎ 容易出、○ 普通、△ 少見，沒列出的部位骰不出（例如魔防只出在飾品、防禦不會出在武器）。</div>`;
       for(let i=0;i<n;i++){const sb=(eq.subs||[])[i],def=sb&&SUBS.find(x=>x[0]===sb[0]),rg=def?subRange(eq,def):null,pctF=def&&def[2]==="pct";
-        ed+=`<div class="ctl"><label>詞條 ${i+1}<select data-sub="${i}"><option value="">（無）</option>${SUBS.map(x=>`<option value="${x[0]}" ${sb&&sb[0]===x[0]?"selected":""}>${x[5]?"★ ":""}${x[1]}</option>`).join("")}</select></label>
+        ed+=`<div class="ctl"><label>詞條 ${i+1}<select data-sub="${i}"><option value="">（無）</option>${SUBS.map(x=>{const no=(SUB_W[x[0]]||"222")[SUB_CAT.indexOf(slotType(gearSel))]==="0",cur=sb&&sb[0]===x[0];return `<option value="${x[0]}" ${cur?"selected":""} ${no&&!cur?"disabled":""}>${x[5]?"★ ":""}${x[1]}（${subWhere(x[0])}）${no?"・這個部位骰不出":""}</option>`}).join("")}</select></label>
         ${def?`<label>數值${def[2]==="num"?"":" %"}（玄級 ${+(rg[0]*(pctF?100:1)).toFixed(2)}～${+(rg[1]*(pctF?100:1)).toFixed(2)}）<input data-subv="${i}" type="number" step="any" min="0" value="${+(sb[1]*(pctF?100:1)).toFixed(2)}"></label>`:""}</div>`}
       ed+=`</div>`}
     if(Array.isArray(eq.sockets)){ed+=`<div class="gsub"><div class="sub">鑲嵌孔（橙色、白金每件 1～3 孔；這裡只列會影響試算的四維符）</div><div class="ctl">`;
@@ -1300,8 +1307,53 @@ $("saveLoad").onclick=async()=>{
     if(p._cut){m.className="err";m.textContent=`⚠️ 這段代碼不完整（只收到 ${p._cut.toLocaleString("zh-TW")} 個字，後面被截斷）。已用讀得到的部分帶入「${p.name||"角色"}」，境界、裝備通常還在，但排在存檔後段的資料可能缺少、試算會偏低。要完整結果請回遊戲重新複製整段代碼。`}
   }catch(e){$("saveOut").innerHTML="";m.className="err";m.textContent="讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"代碼不完整或格式不對，請重新複製整段代碼")}
 };
+// ---- 分享：把目前的境界、等級、配裝與戰鬥設定壓進網址（#b=…），打開就還原 ----
+// 只帶試算用得到的欄位（白名單）：靈石、背包、倉庫裡的裝備、僕從、壽元、存檔簽章等一律不放進連結
+const SH_KEEP=["name","realmIndex","stage","level","sect","sectSkills","sectSkillSeen","profession","aptitude","goldenCore","titles","fireCollection","partnerTeam","spells","spellSlots","pillUsed","studyCounts","elementStudy","learnedSkills","reincarnateBonus","weakened","raceKills","raceTreasureSlots","yuanshen","talents"];
+const SH_EQ=["gearId","lingbaoId","name","category","quality","level","enhance","element","subs","sockets","legend","ancient","raceFx","stats"];
+function sharePack(){const b=build,o={};SH_KEEP.forEach(k=>{if(b[k]!=null)o[k]=b[k]});
+  o.equipment={};for(const k in (b.equipment||{})){const e=b.equipment[k];if(!e)continue;const x={};SH_EQ.forEach(f=>{if(e[f]!=null&&e[f]!==""&&e[f]!==0)x[f]=e[f]});o.equipment[k]=x}
+  const team=b.partnerTeam||[];o.partners=(b.partners||[]).filter(id=>team.includes(id));o.partnerBond={};team.forEach(id=>{const x=(b.partnerBond||{})[id];if(x)o.partnerBond[id]={pts:x.pts||0}});
+  if(b.profession)o.proficiency={[b.profession]:(b.proficiency||{})[b.profession]||0};
+  const tr=(b.raceTreasureSlots||[]).filter(x=>x!=null);o.raceTreasures=(b.raceTreasures||[]).filter(x=>tr.includes(x.id));
+  o.beasts=(b.beasts||[]).map(x=>({id:x.id,name:x.name,alive:x.alive,active:x.active,skills:x.skills}));
+  return{v:1,p:o,t:{on:tempOn,map:tempMap,mon:tempMon,n:tempN,tal:tempTal}}}
+async function shEncode(obj){const raw=new TextEncoder().encode(JSON.stringify(obj));let bytes=raw,tag="j";
+  if(window.CompressionStream){try{bytes=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());tag="z"}catch(e){bytes=raw}}
+  let s="";for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
+  return tag+btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+async function shDecode(str){const b=atob(str.slice(1).replace(/-/g,"+").replace(/_/g,"/")),bytes=Uint8Array.from(b,c=>c.charCodeAt(0));let raw=bytes;
+  if(str[0]==="z"){if(!window.DecompressionStream)throw new Error("這個瀏覽器太舊，打不開分享連結，請換新版的 Chrome、Edge、Safari 或 Firefox");
+    raw=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer())}
+  return JSON.parse(new TextDecoder().decode(raw))}
+const shCopy=async txt=>{try{await navigator.clipboard.writeText(txt);return true}catch(e){const i=$("shareUrl");i.focus();i.select();try{return document.execCommand("copy")}catch(e2){return false}}};
+let shLong="";
+$("shareBtn").onclick=async()=>{const m=$("shareMsg");$("shareBox").hidden=false;
+  try{shLong=location.origin+location.pathname+"#b="+await shEncode(sharePack())}catch(e){m.textContent="產生連結失敗："+e.message;return}
+  $("shareUrl").value=shLong;$("shareSys").hidden=!navigator.share;$("shareShort").disabled=!/^https?:$/.test(location.protocol);
+  m.innerHTML=`連結長度 ${shLong.length.toLocaleString("zh-TW")} 個字。太長不好貼的話可以按「產生短網址」：會把這條連結交給第三方的短網址服務（da.gd），<b>連結內容（道號與配裝）也會傳給它</b>，介意的話直接用上面這條。`;
+  $("shareBox").scrollIntoView({block:"nearest"})};
+$("shareCopy").onclick=async()=>{$("shareMsg").textContent=await shCopy($("shareUrl").value)?"已複製到剪貼簿":"複製失敗，請手動選取上面的連結複製"};
+$("shareSys").onclick=()=>{navigator.share({title:"凡塵修仙傳配裝："+(build.name||"我的角色"),url:$("shareUrl").value}).catch(()=>{})};
+$("shareShort").onclick=async()=>{const m=$("shareMsg"),btn=$("shareShort");if(!shLong)return;btn.disabled=true;m.textContent="正在產生短網址…";
+  const ask=async(url,opt,pick)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),10000);try{const r=await fetch(url,Object.assign({signal:c.signal},opt));if(!r.ok)throw 0;const s=pick(await r.text());if(!/^https:\/\/[\w.]+\/\S+$/.test(s))throw 0;return s}finally{clearTimeout(tm)}};
+  let s="";
+  try{s=await ask("https://da.gd/s",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>x.trim())}catch(e){}
+  if(!s&&shLong.length<1900)try{s=await ask("https://is.gd/create.php?format=json&url="+encodeURIComponent(shLong),{},x=>JSON.parse(x).shorturl||"")}catch(e){}
+  btn.disabled=false;
+  if(s){$("shareUrl").value=s;m.textContent=(await shCopy(s)?"短網址已產生並複製：":"短網址已產生：")+s+"。短網址服務哪天停了連結就會失效，要長期保存請留上面按「分享配裝」產生的長連結。"}
+  else m.textContent="短網址服務目前連不上，請直接使用長連結（再按一次「分享配裝」可以重新顯示）。"};
+function readShare(){const mb=location.hash.match(/^#b=([\w-]+)$/);if(!mb)return false;const m=$("saveMsg");
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  shDecode(mb[1]).then(d=>{if(!d||!d.p||typeof d.p!=="object")throw new Error("連結內容不對");
+    loadPlayer(d.p);const t=d.t||{};Object.keys(tempOn).forEach(k=>delete tempOn[k]);Object.assign(tempOn,t.on||{});
+    tempMap=typeof t.map==="string"?t.map:"";tempMon=typeof t.mon==="string"?t.mon:"";tempN=Math.max(1,Math.min(5,+t.n||3));tempTal=Math.max(0,Math.min(20,+t.tal||0));renderTemp();calc();
+    m.className="";m.textContent=`已載入分享的配裝「${d.p.name||"角色"}」（不會覆蓋你自己讀過的存檔）`;$("saveBox").scrollIntoView()})
+  .catch(e=>{m.className="err";m.textContent="分享連結讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"連結不完整，請對方重新複製")});
+  return true}
 // 網址帶 #save=存檔代碼 時自動讀取（從遊戲直接開過來用），讀完就把代碼從網址列拿掉
 function readHash(){
+  if(readShare())return;
   const m=location.hash.match(/^#save=(.+)$/);if(!m)return;
   try{$("saveCode").value=decodeURIComponent(m[1])}catch(e){return}
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
@@ -1315,6 +1367,6 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.que
   ["calc","hunt","stat","rule","aid","skill"].forEach(k=>$("p-"+k).hidden=k!==b.dataset.k)});
 ["cRealm","cStage","cLv"].forEach(id=>$(id).oninput=rebuild);
 rebuild();setBase("");
-if(window.PROFILE&&!/^#save=/.test(location.hash)){loadPlayer(window.PROFILE);$("saveMsg").textContent=`已沿用先前讀取的「${window.PROFILE.name||"角色"}」`}
+if(window.PROFILE&&!/^#(save|b)=/.test(location.hash)){loadPlayer(window.PROFILE);$("saveMsg").textContent=`已沿用先前讀取的「${window.PROFILE.name||"角色"}」`}
 readHash();
 </script></body></html>
