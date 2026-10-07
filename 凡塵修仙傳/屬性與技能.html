@@ -1333,14 +1333,15 @@ let shLong="";
 $("shareBtn").onclick=async()=>{const m=$("shareMsg");$("shareBox").hidden=false;
   try{shLong=location.origin+location.pathname+"#b="+await shEncode(sharePack())}catch(e){m.textContent="產生連結失敗："+e.message;return}
   $("shareUrl").value=shLong;$("shareSys").hidden=!navigator.share;$("shareShort").disabled=!/^https?:$/.test(location.protocol);
-  m.innerHTML=`連結長度 ${shLong.length.toLocaleString("zh-TW")} 個字。太長不好貼的話可以按「產生短網址」：會把這條連結交給第三方的短網址服務（da.gd），<b>連結內容（道號與配裝）也會傳給它</b>，介意的話直接用上面這條。`;
+  m.innerHTML=`連結長度 ${shLong.length.toLocaleString("zh-TW")} 個字。太長不好貼的話可以按「產生短網址」：會把這條連結交給第三方的短網址服務（spoo.me，連不上時改用 da.gd），<b>連結內容（道號與配裝）也會傳給它</b>，介意的話直接用上面這條。`;
   $("shareBox").scrollIntoView({block:"nearest"})};
 $("shareCopy").onclick=async()=>{$("shareMsg").textContent=await shCopy($("shareUrl").value)?"已複製到剪貼簿":"複製失敗，請手動選取上面的連結複製"};
 $("shareSys").onclick=()=>{navigator.share({title:"凡塵修仙傳配裝："+(build.name||"我的角色"),url:$("shareUrl").value}).catch(()=>{})};
 $("shareShort").onclick=async()=>{const m=$("shareMsg"),btn=$("shareShort");if(!shLong)return;btn.disabled=true;m.textContent="正在產生短網址…";
   const ask=async(url,opt,pick)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),10000);try{const r=await fetch(url,Object.assign({signal:c.signal},opt));if(!r.ok)throw 0;const s=pick(await r.text());if(!/^https:\/\/[\w.]+\/\S+$/.test(s))throw 0;return s}finally{clearTimeout(tm)}};
   let s="";
-  try{s=await ask("https://da.gd/s",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>x.trim())}catch(e){}
+  try{s=await ask("https://spoo.me/",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>String(JSON.parse(x).short_url||"").replace(/^http:/,"https:"))}catch(e){}
+  if(!s)try{s=await ask("https://da.gd/s",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"url="+encodeURIComponent(shLong)},x=>x.trim())}catch(e){}
   if(!s&&shLong.length<1900)try{s=await ask("https://is.gd/create.php?format=json&url="+encodeURIComponent(shLong),{},x=>JSON.parse(x).shorturl||"")}catch(e){}
   btn.disabled=false;
   const dg=s.match(/^https:\/\/da\.gd\/([\w-]+)$/);if(dg)s=new URL("s.html?"+dg[1],location.href).href;   // 改用站內的中繼頁開啟：手機上的聊天軟體不一定會照第三方短網址跳轉
