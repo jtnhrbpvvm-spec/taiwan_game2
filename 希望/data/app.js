@@ -39,7 +39,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "slot","inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -87,6 +87,7 @@
     { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉）、名聲。" },
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
+    { panel: "slot", icon: "🔀", title: "存檔位置", desc: "把兩個角色在遊戲選角畫面上的格子互換（例如第 1 格 ↔ 第 6 格）。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
     { panel: "enchant", icon: "🔮", title: "發條強化", desc: "編輯裝備的發條強化屬性，數值旁邊附機率表算出的範圍參考。" },
     { panel: "appraisal", icon: "🔨", title: "鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" },
@@ -418,6 +419,7 @@
     renderCharSelect();
     var c = saveData.characters[currentCharIndex];
     renderBasic(c);
+    renderSlot(c);
     renderAttrs(c);
     renderStacks(c);
     renderLoadout(c);
@@ -440,6 +442,104 @@
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
+  }
+
+  // ---------- 存檔位置（選角畫面的格子順序）----------
+  // 遊戲選角畫面的排法（bundle 選角元件）：[...characters].sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))，
+  // 也就是照「建立時間」由舊到新，同時間再比 id；存檔裡 characters 陣列的順序完全不影響。
+  // 2026-10-07 實測：只調換陣列順序，遊戲畫面沒有任何變化；互換建立時間後，Lv300 的角色從第 1 格換到第 6 格，
+  // 進入角色正常（等級、金幣、每日任務都在），遊戲重新存檔後順序也維持。
+  // createdAt 另外的用途：每日任務抽卡、個性化展現的亂數種子（之後抽到的結果會不同，不會壞檔）。
+  function slotOrder() {
+    return saveData.characters.slice().sort(function (a, b) {
+      return (a.createdAt || 0) - (b.createdAt || 0) || String(a.id).localeCompare(String(b.id));
+    });
+  }
+  // 互換兩個角色的格子：把「目前各格的建立時間」原樣留在格子上，換的是誰坐在哪一格。
+  // 有角色建立時間一樣（舊版修改器複製出來的）時，順序本來是靠 id 排的，換了也不保證照我們要的排，
+  // 所以遇到一樣的就往後 +1 毫秒，讓每一格的時間都不同。
+  function swapSlots(idA, idB) {
+    var order = slotOrder();
+    var times = order.map(function (c) { return c.createdAt || 0; });
+    var ia = -1, ib = -1;
+    order.forEach(function (c, i) { if (c.id === idA) ia = i; if (c.id === idB) ib = i; });
+    if (ia < 0 || ib < 0 || ia === ib) return false;
+    var tmp = order[ia]; order[ia] = order[ib]; order[ib] = tmp;
+    for (var k = 1; k < times.length; k++) {
+      if (times[k] <= times[k - 1]) times[k] = times[k - 1] + 1;
+    }
+    order.forEach(function (c, k) { c.createdAt = times[k]; });
+    return true;
+  }
+  var slotPickA = null, slotPickB = null;   // 兩個下拉選單目前選的角色 id（重畫時保留）
+  var slotForChar = null;                   // 上面的選擇是替哪個「目前編輯的角色」記的；換角色就重設回預設
+  function renderSlot(c) {
+    var wrap = document.getElementById("slotBody");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (slotForChar !== c.id) { slotForChar = c.id; slotPickA = null; slotPickB = null; }
+    var order = slotOrder();
+    if (order.length < 2) {
+      wrap.appendChild(el("div", { class: "panel-desc", text: "這份存檔只有一個角色，沒有可以互換的對象。先用上方的「複製」做出另一個角色，或在遊戲裡建立新角色。" }));
+      return;
+    }
+    var has = function (id) { return order.some(function (o) { return o.id === id; }); };
+    // 左邊預設是目前正在編輯的角色，右邊預設是任意一個不是它的角色
+    if (!has(slotPickA)) slotPickA = c.id;
+    if (!has(slotPickB) || slotPickB === slotPickA) {
+      slotPickB = order.filter(function (o) { return o.id !== slotPickA; })[0].id;
+    }
+    function buildSelect(current, onChange) {
+      var sel = document.createElement("select");
+      order.forEach(function (o, i) {
+        sel.appendChild(el("option", { value: o.id, text: "第 " + (i + 1) + " 格　" + o.name + "　Lv." + o.level }));
+      });
+      sel.value = current;
+      sel.addEventListener("change", function () { onChange(sel.value); });
+      return sel;
+    }
+    var row = el("div", { style: "display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;" });
+    var fa = el("div", { class: "field", style: "flex:1;min-width:200px;" });
+    fa.appendChild(el("label", { text: "當前角色" }));
+    fa.appendChild(buildSelect(slotPickA, function (v) {
+      slotPickA = v;
+      if (slotPickB === v) slotPickB = null;
+      renderSlot(c);
+    }));
+    var fb = el("div", { class: "field", style: "flex:1;min-width:200px;" });
+    fb.appendChild(el("label", { text: "更換檔案位置（要互換的角色）" }));
+    fb.appendChild(buildSelect(slotPickB, function (v) {
+      slotPickB = v;
+      if (slotPickA === v) slotPickA = null;
+      renderSlot(c);
+    }));
+    row.appendChild(fa);
+    row.appendChild(el("div", { style: "font-size:20px;padding-bottom:6px;", text: "⇄" }));
+    row.appendChild(fb);
+    var btn = el("button", { class: "btn btn-accent", text: "🔀 互換位置" });
+    btn.addEventListener("click", function () {
+      var a = order.filter(function (o) { return o.id === slotPickA; })[0];
+      var b = order.filter(function (o) { return o.id === slotPickB; })[0];
+      if (!a || !b || a === b) { toast("請選兩個不同的角色", "warn"); return; }
+      if (!swapSlots(a.id, b.id)) { toast("互換失敗", "warn"); return; }
+      toast("已互換「" + a.name + "」和「" + b.name + "」的位置", "ok");
+      renderSlot(c);
+      if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
+    });
+    row.appendChild(btn);
+    wrap.appendChild(row);
+
+    // 目前的格子順序（遊戲選角畫面一頁 4 格）
+    var list = el("div", { class: "panel-desc", style: "line-height:2;" });
+    list.appendChild(el("div", { style: "font-weight:700;margin-bottom:4px;", text: "目前遊戲選角畫面的順序（一頁 4 格）：" }));
+    order.forEach(function (o, i) {
+      var mark = o.id === slotPickA ? "　← 當前角色" : (o.id === slotPickB ? "　← 要互換的角色" : "");
+      list.appendChild(el("div", {
+        style: (o.id === slotPickA || o.id === slotPickB) ? "font-weight:700;" : "",
+        text: "第 " + (i + 1) + " 格（第 " + (Math.floor(i / 4) + 1) + " 頁）：" + o.name + "　Lv." + o.level + mark
+      }));
+    });
+    wrap.appendChild(list);
   }
 
   function renderBasic(c) {

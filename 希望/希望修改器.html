@@ -314,7 +314,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V40</span>
+  <span class="bar-title">🧭 希望存檔修改器V41</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -358,6 +358,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <div class="nav-item" data-panel="basic">👤 基本資料</div>
     <div class="nav-item" data-panel="attrs">📊 屬性點數</div>
     <div class="nav-item" data-panel="equip">🛡️ 裝備欄位</div>
+    <div class="nav-item" data-panel="slot">🔀 存檔位置</div>
 
     <div class="nav-section">物品</div>
     <div class="nav-item" data-panel="inventory">🎒 背包</div>
@@ -415,6 +416,22 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
       <div class="panel-title">👤 基本資料</div>
       <div class="panel-desc">名稱、等級、經驗值、金錢、HP、職業、名聲。職業只有一個欄位 <code>currentJob</code>（一轉或二轉都存這裡，存檔 v34 起的格式），舊的轉職進度 advanceStep 遊戲已經不讀了。</div>
       <div class="grid" id="basicFields"></div>
+    </div>
+
+    <!-- ══ 存檔位置 ══ -->
+    <div class="panel" id="panel-slot">
+      <div class="panel-title">🔀 存檔位置</div>
+      <div class="panel-desc">
+        把兩個角色在遊戲「選擇角色」畫面上的位置互換（例如第 1 格 ↔ 第 6 格）。
+        <div style="margin-top:8px;"><b>換位後的影響</b></div>
+        <ul style="margin:6px 0 0 20px;line-height:1.9;">
+          <li><b>不受影響</b>：等級、金幣、技能、能力值、寵物、戰寵、背包、裝備、技能寶石、隊伍、倉庫。</li>
+          <li><b>每日任務</b>：任務卡會跟著格子走，換位後抽到的卡會變成對方那一格原本會抽到的。今天的卡已經抽好的話不變，隔天才開始不同。</li>
+          <li><b>個性化</b>：已經展現的不變；之後再展現，結果會跟原本會出的不一樣。</li>
+          <li>建議角色回到村莊、存檔之後再換位。</li>
+        </ul>
+      </div>
+      <div id="slotBody"></div>
     </div>
 
     <!-- ══ 屬性 ══ -->

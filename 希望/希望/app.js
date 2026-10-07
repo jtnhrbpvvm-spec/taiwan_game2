@@ -3665,10 +3665,11 @@
       html += '<ul class="result-list">';
       CHANGELOG.forEach(function (entry, idx) {
         var total = entry.categories.reduce(function (s, c) { return s + c.entries.length; }, 0);
-        var summary = entry.categories.map(function (c) { return c.label.replace(/\s*\(.+?\)/, "") + " " + c.entries.length + " 筆"; }).join("、");
+        // kind = "note"：手寫的功能更新說明（網站／修改器／書籤工具改了什麼），不是爬蟲比對出來的新增資料，單位用「項」
+        var summary = entry.categories.map(function (c) { return c.label.replace(/\s*\(.+?\)/, "") + " " + c.entries.length + (c.kind === "note" ? " 項" : " 筆"); }).join("、");
         html += '<li class="result-item" data-changelog-idx="' + idx + '">' +
           '<span class="rname">' + escapeHtml(entry.date) + '</span>' +
-          '<span class="rmeta">' + escapeHtml(summary) + '（共 ' + total + ' 筆）</span>' +
+          '<span class="rmeta">' + escapeHtml(summary) + '（共 ' + total + (entry.categories.every(function (c) { return c.kind === "note"; }) ? ' 項）' : ' 筆）') + '</span>' +
           '</li>';
       });
       html += '</ul>';
@@ -3683,6 +3684,12 @@
     html += '<div class="detail-sub" style="margin-bottom:14px;">' + escapeHtml(entry.date) + '</div>';
     entry.categories.forEach(function (cat) {
       html += '<div class="section-title">' + escapeHtml(cat.label) + ' <span class="count">(' + cat.entries.length + ')</span></div>';
+      if (cat.kind === "note") {
+        // 功能更新說明：一項一行的文字，不做成小標籤（句子太長）
+        html += '<ul style="margin:0 0 14px;padding-left:20px;font-size:13.5px;line-height:1.9;color:var(--text);">' +
+          cat.entries.map(function (e) { return '<li>' + escapeHtml(e.name) + '</li>'; }).join("") + '</ul>';
+        return;
+      }
       html += '<div class="map-chip-row">';
       cat.entries.forEach(function (e) {
         if (cat.kind === "item" || cat.kind === "monster") {
