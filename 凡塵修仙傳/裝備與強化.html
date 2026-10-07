@@ -35,6 +35,14 @@ td.nw{white-space:nowrap}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
 a{color:var(--link);text-underline-offset:2px}
 a:hover{text-decoration-thickness:2px}
+.fxn{background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--link);cursor:pointer;text-decoration:underline dashed;text-underline-offset:3px}
+#fxDlg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
+#fxDlg[hidden]{display:none}
+#fxDlg .fxd-box{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:14px 18px;box-sizing:border-box}
+#fxDlg .fxd-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:-14px;background:var(--bg);padding:8px 0;z-index:1}
+#fxDlg .fxd-top b{font-size:17px;color:var(--acct)}
+#fxDlg .fxd-x{font:inherit;padding:6px 14px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}
+#fxDlg td,#fxDlg th{font-size:13.5px;padding:6px 10px}
 </style></head><body><div class="wrap">
 <a class="back" href="index.html">← 回攻略首頁</a>
 <h1>⚒️ 裝備與強化</h1>
@@ -146,9 +154,9 @@ a:hover{text-decoration-thickness:2px}
 <div class="sub" style="margin-top:6px">◎ 很常出、○ 普通、△ 少見、✕ 不會出。</div>
 
 <h2>裝備特效（38 種）</h2>
-<div class="sub">每種裝備固定帶一個特效，<b>紫色以上才生效</b>。表中是紫色的數值，橙色 ×1.5、白金 ×2。多件同名特效相加，加到上限為止（詞綴、稱號、天賦、傳奇威能給的同名加成另外算，不受這個上限限制）。</div>
+<div class="sub">每種裝備固定帶一個特效，<b>紫色以上才生效</b>。表中是紫色的數值，橙色 ×1.5、白金 ×2。多件同名特效相加，加到上限為止（詞綴、稱號、天賦、傳奇威能給的同名加成另外算，不受這個上限限制）。<br>特效是跟著裝備種類固定的，不是骰出來的；右邊三欄是<b>哪一類部位有裝備帶這個特效</b>，數字是圖鑑裡有幾件，<b>點數字會跳出是哪些裝備</b>：◎ 選擇多、○ 普通、△ 選擇少（比較難湊）、✕ 這類部位沒有。武器＝劍刀扇弓笛筆，防具＝頭、內衣、盔甲、手套、長靴、披風，飾品＝腰帶、項鍊、戒指、耳環、腰牌。</div>
 <div class="ctl"><input id="fxQ" placeholder="搜尋特效名稱或效果，例如：吸血、防禦、靈石…"></div>
-<div class="tw"><table><thead><tr><th>特效</th><th>效果（紫色）</th><th class="num">橙色</th><th class="num">白金</th><th class="num">上限</th></tr></thead><tbody id="fxBody"></tbody></table></div>
+<div class="tw"><table><thead><tr><th>特效</th><th>效果（紫色）</th><th class="num">橙色</th><th class="num">白金</th><th class="num">上限</th><th class="num">武器</th><th class="num">防具</th><th class="num">飾品</th></tr></thead><tbody id="fxBody"></tbody></table></div>
 </div>
 
 <div id="p-craft" hidden>
@@ -223,6 +231,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="empty" id="catEmpty" hidden>找不到符合的裝備</div>
 </div>
 </div>
+<div id="fxDlg" hidden role="dialog" aria-modal="true" aria-label="帶這個特效的裝備"><div class="fxd-box"><div class="fxd-top"><b id="fxdTitle"></b><button class="fxd-x" id="fxdClose" type="button">✕ 關閉</button></div><div id="fxdOut"></div></div></div>
 <script src="profile.js"></script>
 <script src="site.js"></script>
 <script>
@@ -259,6 +268,18 @@ function renderLeg(){const q=$("legQ").value.trim();
   $("legBody").innerHTML=LEGENDS.filter(x=>!q||x.join("").includes(q)).map(x=>`<tr><td class="nw"><b>${x[0]}</b></td><td>${x[1]}</td><td>${x[2]}</td></tr>`).join("")||`<tr><td colspan="3" class="empty">找不到符合的威能</td></tr>`}
 $("legQ").oninput=renderLeg;renderLeg();
 // 特效：[名稱, 紫色值, 上限, 格式, 說明]
+// 每種特效在武器／防具／飾品各有幾件裝備帶著
+const FXN={"追擊":[16,0,0],"破甲":[18,0,0],"吸血":[17,0,0],"焚燼":[23,0,0],"橫掃":[18,0,0],"首擊":[17,0,0],"蝕骨":[11,0,0],"剋敵":[17,0,17],"斬殺":[18,0,0],"連雷":[19,0,0],"燃魂":[19,0,0],"洞察":[15,0,0],"寒徹":[8,0,0],"噬魂":[15,0,0],"法爆":[17,0,17],"毒爆":[8,0,0],"疾風":[16,0,0],"聚靈":[18,0,0],"冰封":[10,0,0],"護體":[0,28,0],"先手盾":[0,27,0],"回春":[0,28,17],"回靈":[0,27,17],"定神":[0,28,17],"閃擊":[0,27,17],"金身":[0,27,0],"化勁":[0,27,0],"延壽":[0,27,0],"丹心":[0,27,0],"反震":[0,27,0],"聚財":[0,0,18],"悟道":[0,0,18],"積德":[0,0,19],"奪寶":[0,0,19],"尋鐵":[0,0,19],"役使":[0,0,19],"獸魂":[0,0,18],"通玄":[0,0,18]},FXAVG=[0,1,2].map(i=>{const v=Object.values(FXN).map(x=>x[i]).filter(Boolean);return v.reduce((a,b)=>a+b,0)/v.length});
+const fxMark=(k,i)=>{const n=(FXN[k]||[0,0,0])[i];return n?`${MARK[n>=FXAVG[i]*1.3?3:n<=FXAVG[i]*.7?1:2]} <button type="button" class="fxn" data-fx="${k}" data-c="${i}" title="看是哪些裝備">${n} 件</button>`:MARK[0]};
+const FX_CAT=["武器","防具","飾品"],FX_SLOTCAT=s=>"劍刀扇弓笛筆".includes(s)?0:["腰帶","項鍊","戒指","耳環","腰牌"].includes(s)?2:1;
+function openFxDlg(fx,c){const rows=[];Object.keys(GC).forEach(slot=>{if(FX_SLOTCAT(slot)!==c)return;GC[slot].split(";").forEach(x=>{const r=x.split(",");if(r[4]===fx)rows.push([slot].concat(r))})});
+  document.getElementById("fxdTitle").textContent=`帶「${fx}」的${FX_CAT[c]}（${rows.length} 件）`;
+  document.getElementById("fxdOut").innerHTML=`<div class="sub" style="margin-bottom:8px">特效要紫色以上才生效。來源決定怎麼拿到、能打到幾等：凡俗／修真／至高鍛造在鍛造閣自己打，奪寶、拍賣、秘境的要靠掉落或購買。</div>
+  <div class="tw"><table><thead><tr><th>部位</th><th>裝備</th><th>五行</th><th>來源</th><th>四維模板</th><th>套裝</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="nw">${r[0]}</td><td class="nw"><b>${r[1]}</b></td><td>${r[2]}</td><td class="nw">${CH[r[3]]||r[3]}</td><td>${r[4]}</td><td>${r[6]?r[6]+"套":"—"}</td></tr>`).join("")}</tbody></table></div>`;
+  const d=document.getElementById("fxDlg");d.hidden=false;d.querySelector(".fxd-box").scrollTop=0;document.getElementById("fxdClose").focus()}
+function closeFxDlg(){document.getElementById("fxDlg").hidden=true}
+addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".fxn");if(b)openFxDlg(b.dataset.fx,+b.dataset.c);else if(e.target.id==="fxdClose"||e.target.id==="fxDlg")closeFxDlg()});
+addEventListener("keydown",e=>{if(e.key==="Escape")closeFxDlg()});
 const FX=[["追擊",.08,.3,"pct","{v} 機率追加一次攻擊 ×0.6"],["破甲",10,40,"pt","攻擊時無視目標 {v} 減傷／魔抗"],["吸血",.03,.15,"pct","造成傷害的 {v} 轉為氣血"],["噬魂",.03,.15,"pct","擊殺敵人時回復 {v} 氣血"],["橫掃",.1,.35,"pct","普攻 {v} 機率波及其他敵人 ×0.4"],
 ["首擊",.25,1,"pct","每波戰鬥第一擊傷害 +{v}"],["法爆",.05,.3,"pct","技能傷害 +{v}"],["剋敵",.08,.4,"pct","五行剋制時傷害再 +{v}"],["斬殺",.2,.8,"pct","對氣血低於 20% 的敵人傷害 +{v}"],["疾風",.05,.2,"pct","{v} 機率本回合再出手一次"],
 ["燃魂",.08,.4,"pct","氣血高於 80% 時傷害 +{v}"],["洞察",5,20,"num","命中 +{v}（無視敵人 {v} 點閃避）"],["聚靈",.08,.4,"pct","技能耗靈 −{v}"],["寒徹",.1,.5,"pct","對凍結中的敵人傷害 +{v}"],["冰封",.3,.8,"pct","凍結敵人時 {v} 機率擴散到另一名敵人"],
@@ -269,7 +290,7 @@ const FX=[["追擊",.08,.3,"pct","{v} 機率追加一次攻擊 ×0.6"],["破甲"
 ["役使",.05,.5,"pct","僕從任務速度 +{v}"],["獸魂",.1,.6,"pct","靈寵傷害 +{v}"],["通玄",.1,.6,"pct","藏書閣屬性秘典效果 +{v}"]];
 const fv=(v,f)=>f==="pct"?+(v*100).toFixed(1)+"%":f==="pt"?+v.toFixed(1)+"%":f==="num"?String(+v.toFixed(1)):"×"+ +v.toFixed(2);
 function renderFx(){const q=$("fxQ").value.trim();
-  $("fxBody").innerHTML=FX.filter(x=>!q||(x[0]+x[4]).includes(q)).map(x=>`<tr><td class="nw"><b>${x[0]}</b></td><td>${x[4].replace(/\{v\}/g,`<b class="q3">${fv(x[1],x[3])}</b>`)}</td><td class="num q4">${fv(x[1]*1.5,x[3])}</td><td class="num q5">${fv(x[1]*2,x[3])}</td><td class="num">${fv(x[2],x[3])}</td></tr>`).join("")||`<tr><td colspan="5" class="empty">找不到符合的特效</td></tr>`}
+  $("fxBody").innerHTML=FX.filter(x=>!q||(x[0]+x[4]).includes(q)).map(x=>`<tr><td class="nw"><b>${x[0]}</b></td><td>${x[4].replace(/\{v\}/g,`<b class="q3">${fv(x[1],x[3])}</b>`)}</td><td class="num q4">${fv(x[1]*1.5,x[3])}</td><td class="num q5">${fv(x[1]*2,x[3])}</td><td class="num">${fv(x[2],x[3])}</td>${[0,1,2].map(i=>`<td class="num nw">${fxMark(x[0],i)}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="8" class="empty">找不到符合的特效</td></tr>`}
 $("fxQ").oninput=renderFx;renderFx();
 // 圖鑑
 const CH={"1":"凡俗鍛造","2":"修真鍛造","3":"至高鍛造、圖紙","L":"奪寶","A":"拍賣","R":"秘境"};
