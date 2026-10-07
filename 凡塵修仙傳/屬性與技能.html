@@ -91,6 +91,8 @@ td.nw{white-space:nowrap}
 .sbody .ctl{margin:8px 0}
 .sbody label{max-width:100%;min-width:0}
 .sbody .ctl select{width:230px;max-width:100%}
+#recoWarn{position:fixed;top:0;left:0;right:0;z-index:95;background:var(--card);border-bottom:3px solid var(--warn);color:var(--warn);font-size:clamp(20px,4.5vw,30px);font-weight:bold;text-align:center;padding:14px 16px;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#recoWarn[hidden]{display:none}
 .dnum{background:none;border:0;padding:0;font:inherit;font-weight:bold;color:var(--link);cursor:pointer;text-decoration:underline dashed;text-underline-offset:3px;font-variant-numeric:tabular-nums}
 .ddbox{font-size:13.5px}
 .ddl{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px dashed var(--line)}.ddl:last-child{border-bottom:0}
@@ -146,7 +148,8 @@ a:hover{text-decoration-thickness:2px}
 <h2>配裝</h2>
 <div class="sub">點部位就能換裝：可以選遊戲裡目前開放的全部裝備（17 個部位各 50 種，加上靈寶閣寶物與 6 件神器），再調品質、等級、強化、詞條與鑲嵌。換完會立刻重算下面的數字。<b>這裡只是試算，不會也無法寫回遊戲。</b></div>
 <div id="gearBox"></div>
-<div class="ctl" style="align-items:center"><button class="btn" id="cmpOpen">🗺️ 試算換裝前後打每張地圖的傷害</button><button class="btn ghost" id="cmpPin">📌 把目前配置記成「換裝前」</button><span class="sub" id="cmpBase"></span></div>
+<div class="ctl" style="align-items:center"><button class="btn" id="recoOpen" type="button">🎯 裝備推薦</button><button class="btn" id="cmpOpen">🗺️ 試算換裝前後打每張地圖的傷害</button><button class="btn ghost" id="cmpPin">📌 把目前配置記成「換裝前」</button><span class="sub" id="cmpBase"></span></div>
+<div class="sub" id="recoMsg"></div>
 
 <h2>角色設定</h2>
 <div class="sub">裝備以外的加成來源。讀取存檔後會自動帶入你的現況，也可以點開來改，看看換宗門、升職業階數、多吃丹藥或換夥伴會變多少。</div>
@@ -349,6 +352,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
 </div>
 </div>
+<div id="recoWarn" hidden role="alert">⚠️ 僅為建議配裝，實際還請遊戲中多多嘗試</div>
 <div id="dmgDlg" hidden role="dialog" aria-modal="true" aria-label="傷害計算明細"><div class="cmp-box" style="max-width:560px"><div class="cmp-top"><b id="dmgTitle"></b><button class="btn ghost" id="dmgClose" type="button">✕ 關閉</button></div><div id="dmgOut"></div></div></div>
 <div id="cmpDlg" hidden role="dialog" aria-modal="true" aria-label="換裝前後比較"><div class="cmp-box"><div class="cmp-top"><b>🗺️ 換裝前後：打每張地圖的傷害</b><button class="btn ghost" id="cmpClose" type="button">✕ 關閉</button></div><div id="cmpOut"></div></div></div>
 <script src="profile.js"></script>
@@ -759,13 +763,13 @@ function analyze(p){
     if(beasts.includes("wolf"))list.push(["靈寵青蒼狼",.15]);if(beasts.includes("dragon"))list.push(["靈寵九幽蛟龍",.3]);
     const raw=list.reduce((a,x)=>a+x[1],0);return{list,raw,v:Math.max(-.9,Math.min(cap,raw))}};
   const bp=buff("phys"),bm=buff("mag"),bh=buff("hp"),w=wp?wp.atk:0;
-  const atk=(st,b,k)=>Math.max(1,Math.round((w+st*.05)*(1+st*.001)*(1+b.v)*tm(k)*weak));
-  const phys=atk(stats.str.total,bp,"phys"),mag=atk(stats.int.total,bm,"mag");
+  const atkRaw=(st,b,k)=>(w+st*.05)*(1+st*.001)*(1+b.v)*tm(k)*weak,atk=(st,b,k)=>Math.max(1,Math.round(atkRaw(st,b,k)));
+  const phys=atk(stats.str.total,bp,"phys"),mag=atk(stats.int.total,bm,"mag"),physRaw=atkRaw(stats.str.total,bp,"phys"),magRaw=atkRaw(stats.int.total,bm,"mag");
   const reinc=(p.reincarnateBonus&&p.reincarnateBonus.nv2Hp)||0;
   // 圖紙防具的氣血與天賦核心是獨立倍率，不佔增益上限
   let armorHp=0;ARMORS.forEach(sl=>{const eq=eqs[sl];if(eq&&BPA[eq.level])armorHp+=BPA[eq.level]*(QM[eq.quality]||1)/1.5*enh(eq)/1.5});
   const hpMult=(1+armorHp/100)*tm("hp");
-  const hp=Math.max(1,Math.round((50*Math.pow(1.05,r+(s-1)/10)*(1+stats.con.total*.002)*(1+bh.v)*hpMult*(1+lv*.00005)+reinc)*weak));
+  const hpRaw=(50*Math.pow(1.05,r+(s-1)/10)*(1+stats.con.total*.002)*(1+bh.v)*hpMult*(1+lv*.00005)+reinc)*weak,hp=Math.max(1,Math.round(hpRaw));
   const mpMult=Math.max(.1,1+tot("auraMp"))*(1+tot("mpPct"));
   const mp=Math.max(1,Math.round(((5+stats.spr.total)*mpMult+lv*.05)*weak));
   const agi=stats.agi.total,critBase=Math.min(30,agi*.01),crit=critBase+(tal.crit||0)*100,magCritBase=Math.min(30,stats.int.total*.01),magCrit=magCritBase+(tal.magCrit||0)*100,critDmg=2+(tal.critDmg||0),combo=Math.min(10,agi*.04);
@@ -809,7 +813,7 @@ function analyze(p){
   const ex=DMG.attrs(p,{gdef:eq=>{const d=gdef(eq);return d?{fx:d.fx,set:d.set}:null},elem,agi:stats.agi.total,aura:auraAll,rank,team:team.map(id=>[id,(((p.partnerBond||{})[id]||{}).pts||0)>=1500]),artifact:k=>k==="神器"});
   const temp={petAtk:bestFx("atk"),petCrit:bestFx("crit"),petCombo:bestFx("combo"),vuln:bestFx("vuln"),petHitFx:bestFx("hit"),petPen:bestFx("armorPen"),petLife:bestFx("lifesteal"),self:selfB.sort((x,y)=>y[1]-x[1])[0]||null,
     petHit:bsk.filter(([,id])=>PET_HIT[id]).map(([n,id])=>["靈寵技能",n,PET_HIT[id][0],"p",PET_HIT[id][2],PET_HIT[id][1]*beastDmg,null,null,""])};
-  return{temp,ex,tot,eqs,tal,leg,cap,hpMult,armorHp,physMult:tm("phys"),magMult:tm("mag"),defMult:tm("def"),evaMult:tm("eva"),critBase,magCrit,critDmg,mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
+  return{physRaw,magRaw,hpRaw,powerRaw:Math.max(physRaw,magRaw)*(1+(magRaw>physRaw?magCritBase:critBase)/100)*(1+combo/100)*1.8,temp,ex,tot,eqs,tal,leg,cap,hpMult,armorHp,physMult:tm("phys"),magMult:tm("mag"),defMult:tm("def"),evaMult:tm("eva"),critBase,magCrit,critDmg,mpMult,aid,learnedN:learned.length,slotN,p,r,s,lv,weak,base,stats,wp,bp,bm,bh,phys,mag,hp,mp,crit,combo,agi,burst,burstFrom,skillMult:rm.skillMult,fxMp,mine,res,setList,prof,rank,legacy,sectName,rootDef,phyDef,g,team,beasts,elem,reinc,
     power:Math.round(Math.max(phys,mag)*(1+(mag>phys?magCritBase:critBase)/100)*(1+combo/100)*1.8)};
 }
 function showSave(a){
@@ -1309,6 +1313,76 @@ $("saveLoad").onclick=async()=>{
     if(p._cut){m.className="err";m.textContent=`⚠️ 這段代碼不完整（只收到 ${p._cut.toLocaleString("zh-TW")} 個字，後面被截斷）。已用讀得到的部分帶入「${p.name||"角色"}」，境界、裝備通常還在，但排在存檔後段的資料可能缺少、試算會偏低。要完整結果請回遊戲重新複製整段代碼。`}
   }catch(e){$("saveOut").innerHTML="";m.className="err";m.textContent="讀取失敗："+(e&&e.message&&/[一-鿿]/.test(e.message)?e.message:"代碼不完整或格式不對，請重新複製整段代碼")}
 };
+// ---- 裝備推薦：依等級或想要的屬性，試著配出最好的一身裝備 ----
+const RECO_FIELDS=[["str","力量",2],["int","悟性",2],["con","體質",2],["spr","靈力",2],["agi","敏捷",2],["phys","物理攻擊",-2],["mag","術法攻擊",-2],["hp","氣血上限",-2],["mp","靈力上限",-2],["def","防禦",1],["eva","閃避",1]];
+const RECO_FOCUS={auto:"自動（戰力最高）",phys:"物理攻擊",mag:"術法攻擊",hp:"氣血上限"};
+function recoVals(b){const a=analyze(b),h=hPlayer(a),v={phys:a.physRaw*100,mag:a.magRaw*100,hp:a.hpRaw*100,mp:a.mp*100,def:h.def,eva:h.eva,power:a.powerRaw};["str","int","con","spr","agi"].forEach(k=>v[k]=a.stats[k].total);return v}
+// 分數：[主要, 次要]。照屬性配時主要＝離目標多遠（不夠或超過都算），次要＝戰力；照等級配時主要＝偏重的那一項，次要＝氣血
+function recoScore(v,o){if(o.mode==="target"){let pen=0;for(const k in o.target){const g=o.target[k];if(g>0)pen+=Math.pow((g-v[k])/g,2)}return [-pen,v.power]}
+  return [o.focus==="phys"?v.phys:o.focus==="mag"?v.mag:o.focus==="hp"?v.hp:v.power,v.hp]}
+const recoBetter=(x,y)=>x[0]>y[0]+1e-9||(Math.abs(x[0]-y[0])<=1e-9&&x[1]>y[1]+1e-9);
+function recommend(o){
+  const b=JSON.parse(JSON.stringify(build)),E=b.equipment=b.equipment||{},L=o.level;b.level=L;
+  const ev=()=>recoScore(recoVals(b),o);
+  // 這個等級穿得上的最高一檔；一律以白金 +20、3 個鑲嵌孔來比（能拿到的最好狀態）
+  const mk=(slot,i,old)=>{const r=GCX[slot][i],lv=(CH_LV[r[2]]||ELV).filter(x=>x<=L);if(!lv.length)return null;
+    return{name:slot,gearId:slot+"-"+String(i+1).padStart(2,"0"),quality:"白金",level:lv[lv.length-1],enhance:20,element:r[1],subs:old&&gdef(old)&&Array.isArray(old.subs)?old.subs.filter(Boolean).slice(0,4):[],sockets:old&&Array.isArray(old.sockets)?old.sockets.slice(0,3).concat([null,null,null]).slice(0,3):[null,null,null]}};
+  let cur=ev(),any=false;
+  const tryEq=(slot,eq)=>{const keep=E[slot];E[slot]=eq;const s=ev();if(recoBetter(s,cur)){cur=s;any=true;return true}E[slot]=keep;return false};
+  const pass=()=>{let moved=false;
+    SLOTS.forEach(slot=>{const cs=(GCX[slot]||[]).map((r,i)=>mk(slot,i,E[slot])).filter(Boolean).sort((x,y)=>y.level-x.level);const now=E[slot];
+      cs.forEach(c=>{if(now&&c.gearId===now.gearId&&c.level===now.level&&now.quality===c.quality&&(now.enhance||0)>=c.enhance)return;c.subs=(E[slot]&&gdef(E[slot])&&E[slot].subs||c.subs).filter(Boolean).slice(0,4);if(E[slot]&&Array.isArray(E[slot].sockets))c.sockets=E[slot].sockets.slice(0,3).concat([null,null,null]).slice(0,3);if(tryEq(slot,c))moved=true})});
+    // 詞條：每一格試這個部位骰得出的每一種，數值取玄級的最大值
+    SLOTS.forEach(slot=>{const eq=E[slot];if(!gdef(eq))return;const n=SUB_N[eq.quality]||0,ci=SUB_CAT.indexOf(slotType(slot));eq.subs=(eq.subs||[]).filter(Boolean);
+      for(let p0=0;p0<n;p0++)SUBS.forEach(sd=>{const p=Math.min(p0,eq.subs.length);if((SUB_W[sd[0]]||"222")[ci]==="0"||eq.subs.some((x,j)=>j!==p&&x[0]===sd[0]))return;
+        const old=eq.subs[p],nv=[sd[0],subRange(eq,sd)[1]];if(old&&old[0]===nv[0]&&old[1]>=nv[1])return;eq.subs[p]=nv;const s=ev();
+        if(recoBetter(s,cur)){cur=s;any=moved=true}else if(old)eq.subs[p]=old;else eq.subs.length=p})});
+    // 鑲嵌孔：四維符每種都試（上品）
+    SLOTS.forEach(slot=>{const eq=E[slot];if(!eq||!Array.isArray(eq.sockets))return;
+      eq.sockets.forEach((old,j)=>TALIS.forEach(([ty])=>{if(old&&old.type===ty&&old.grade>=3)return;const was=eq.sockets[j];eq.sockets[j]={type:ty,grade:3};const s=ev();if(recoBetter(s,cur)){cur=s;any=moved=true}else eq.sockets[j]=was}))});
+    return moved};
+  for(let k=0;k<4&&pass();k++);
+  // 套裝要湊滿件數才有效果，一件一件換湊不出來：把每一組套裝整組換上去比比看
+  const sets={};SLOTS.forEach(slot=>(GCX[slot]||[]).forEach((r,i)=>{if(r[5])(sets[r[5]]=sets[r[5]]||[]).push([slot,i])}));
+  let got=false;
+  Object.keys(sets).forEach(n=>{const snap=JSON.stringify(E),before=cur;sets[n].forEach(([slot,i])=>{const c=mk(slot,i,E[slot]);if(c)E[slot]=c});
+    const s=ev();if(recoBetter(s,before)){cur=s;any=got=true}else{const old=JSON.parse(snap);Object.keys(E).forEach(k=>delete E[k]);Object.assign(E,old)}});
+  if(got)for(let k=0;k<3&&pass();k++);
+  return{build:b,changed:any,vals:recoVals(b)}}
+let recoPrev=null,recoWarnTm=0;
+// 套用推薦後，畫面最上方用紅色大字提醒 10 秒
+function recoWarn(){const w=$("recoWarn");w.hidden=false;clearTimeout(recoWarnTm);recoWarnTm=setTimeout(()=>{w.hidden=true},10000)}
+function openReco(){
+  const v=recoVals(build),lv=build.level||1,f=(x,d)=>d<0?String(Math.round(x/100)*100):d?(+x.toFixed(d)).toString():String(Math.round(x));
+  $("dmgTitle").textContent="🎯 裝備推薦";
+  $("dmgOut").innerHTML=`<div class="sub">會在下面的配裝直接換上推薦的裝備，可以再手動調整；按「還原」就回到推薦前。推薦的是<b>拿得到的最好狀態</b>：白金 +20、詞條取玄級最大值、3 個鑲嵌孔鑲上品符；只看等級穿不穿得上，不管你有沒有那張圖紙、套裝掉不掉、宗門能打到幾等。神器不會動。</div>
+  <div class="cks" style="grid-template-columns:1fr;margin-top:10px">
+  <label class="ck"><input type="radio" name="recoM" value="now" checked><span>依照目前等級（Lv.${full(lv)}）能穿的最好裝備</span></label>
+  <label class="ck"><input type="radio" name="recoM" value="lv"><span>指定等級：Lv.<input id="recoLv" type="number" min="10" max="10000" value="${Math.max(10,lv)}" style="width:90px"> 能穿的最好裝備（人物等級也會改成這個數字）</span></label>
+  <label class="ck"><input type="radio" name="recoM" value="target"><span>指定想要的屬性：把下表的數字改成你想達到的值，會盡量配到最接近</span></label></div>
+  <div class="ctl" style="margin-top:8px"><label>偏重哪一項<select id="recoFocus">${Object.keys(RECO_FOCUS).map(k=>`<option value="${k}">${RECO_FOCUS[k]}</option>`).join("")}</select></label></div>
+  <div id="recoT" hidden><div class="sub">只有你<b>改過的欄位</b>會被當成目標，會盡量<b>剛好配到那個數字</b>（太多太少都算偏離）；在不偏離目標的前提下，再盡量拉高戰力。目標以 Lv.${full(lv)} 能穿的裝備來配。</div>
+  <div class="tw"><table><thead><tr><th>屬性</th><th class="num">目前</th><th class="num">想要</th></tr></thead><tbody>${RECO_FIELDS.map(([k,n,d])=>`<tr><td class="nw"><b>${n}</b></td><td class="num">${full(+f(v[k],d))}</td><td class="num"><input data-rk="${k}" data-cur="${f(v[k],d)}" type="number" min="0" step="any" value="${f(v[k],d)}" style="width:120px"></td></tr>`).join("")}</tbody></table></div></div>
+  <div class="ctl" style="margin-top:12px"><button class="btn" id="recoGo" type="button">推薦配裝</button><span class="sub" id="recoErr" style="align-self:center;color:var(--warn)"></span></div>`;
+  const mode=()=>document.querySelector("input[name=recoM]:checked").value,sync=()=>{$("recoT").hidden=mode()!=="target"};
+  document.querySelectorAll("input[name=recoM]").forEach(r=>r.onchange=sync);$("recoLv").onfocus=()=>{document.querySelector("input[name=recoM][value=lv]").checked=true;sync()};
+  $("recoGo").onclick=async()=>{const m=mode(),o={mode:m==="target"?"target":"best",focus:$("recoFocus").value,level:m==="lv"?Math.max(1,Math.min(10000,Math.round(+$("recoLv").value||0))):lv,target:{}};
+    if(o.level<10){$("recoErr").textContent="Lv.10 以上才有裝備可以穿。";return}
+    if(m==="target"){document.querySelectorAll("#recoT [data-rk]").forEach(i=>{if(i.value!==i.dataset.cur&&+i.value>0)o.target[i.dataset.rk]=+i.value});
+      if(!Object.keys(o.target).length){$("recoErr").textContent="請先把至少一個欄位改成你想要的數字。";return}}
+    $("recoGo").disabled=true;$("recoErr").style.color="var(--mute)";$("recoErr").textContent="計算中，大約幾秒鐘…";await new Promise(z=>setTimeout(z,30));
+    const before=recoVals(build),prev=JSON.stringify(build),prevLv=$("cLv").value,r=recommend(o);closeDmg();
+    if(!r.changed){$("recoMsg").innerHTML="🎯 裝備推薦：目前這身已經是找得到的最好配置，沒有更動。";return}
+    recoPrev={build:prev,lv:prevLv};build=r.build;$("cLv").value=o.level;rebuild();recoWarn();
+    const a=r.vals,line=k=>{const x=RECO_FIELDS.find(y=>y[0]===k);return `${x[1]} ${full(+f(before[k],x[2]))} → <b>${full(+f(a[k],x[2]))}</b>`};
+    let msg;
+    if(o.mode==="target")msg="照你要的屬性配好了："+Object.keys(o.target).map(k=>{const x=RECO_FIELDS.find(y=>y[0]===k),df=a[k]-o.target[k],near=Math.abs(df)<=Math.abs(o.target[k])*.02;return `${line(k)}（目標 ${full(o.target[k])}，${near?"✅ 幾乎剛好":"<span class='warn'>"+(df<0?"還差 ":"多了 ")+full(+f(Math.abs(df),x[2]<0?0:x[2]))+"，"+(df<0?"這個等級的裝備最多只能到這裡":"再少就會掉到目標以下或離得更遠")+"</span>"}）`}).join("；")+"。";
+    else msg=`已換上 Lv.${full(o.level)} 能穿的最好裝備（偏重${RECO_FOCUS[o.focus]}）：${["phys","mag","hp"].map(line).join("、")}。`;
+    $("recoMsg").innerHTML="🎯 "+msg+` <button class="btn ghost" id="recoUndo" type="button" style="padding:2px 10px">↩ 還原</button>`;
+    $("recoUndo").onclick=()=>{if(!recoPrev)return;build=JSON.parse(recoPrev.build);$("cLv").value=recoPrev.lv;recoPrev=null;rebuild();$("recoMsg").textContent="已還原成推薦前的配裝。"};
+    $("recoMsg").scrollIntoView({block:"center"})};
+  $("dmgDlg").hidden=false;$("dmgDlg").querySelector(".cmp-box").scrollTop=0}
+$("recoOpen").onclick=openReco;
 // ---- 分享：把目前的境界、等級、配裝與戰鬥設定壓進網址（#b=…），打開就還原 ----
 // 只帶試算用得到的欄位（白名單）：靈石、背包、倉庫裡的裝備、僕從、壽元、存檔簽章等一律不放進連結
 const SH_KEEP=["name","realmIndex","stage","level","sect","sectSkills","sectSkillSeen","profession","aptitude","goldenCore","titles","fireCollection","partnerTeam","spells","spellSlots","pillUsed","studyCounts","elementStudy","learnedSkills","reincarnateBonus","weakened","raceKills","raceTreasureSlots","yuanshen","talents"];
