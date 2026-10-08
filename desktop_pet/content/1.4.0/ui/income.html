@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob:; style-src 'self' 'unsafe-inline'" />
+    <title>每小時收益</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 14px 16px 18px; font: 14px/1.5 "Microsoft JhengHei", sans-serif; color: #4a3a22; background: #fff8e6; }
+      h1 { margin: 0; font-size: 18px; }
+      #since { margin: 2px 0 10px; color: #86704a; font-size: 13px; }
+      nav { display: flex; gap: 6px; margin-bottom: 10px; border-bottom: 2px solid #c9b182; }
+      nav button { font: inherit; padding: 5px 14px; border: 1px solid #c9b182; border-bottom: 0; border-radius: 8px 8px 0 0; background: #f3e6c8; color: #86704a; cursor: pointer; }
+      nav button.on { background: #2f7d86; border-color: #2f7d86; color: #fff; font-weight: bold; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      th, td { padding: 5px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid #e3d3ad; }
+      th:first-child, td:first-child { text-align: left; }
+      thead th { font-size: 13px; color: #86704a; font-weight: normal; border-bottom: 2px solid #c9b182; }
+      tfoot td { font-weight: bold; border-top: 2px solid #c9b182; border-bottom: 0; }
+      tfoot tr + tr td { border-top: 0; font-weight: normal; }
+      .income { color: #2e7d32; }
+      .expense, .minus { color: #c0392b; }
+      th.expense { color: #c0392b; }
+      .now td:first-child::after { content: "　進行中"; color: #2f7d86; font-size: 12px; }
+      .empty { padding: 28px 0; text-align: center; color: #86704a; }
+      .note { margin: 12px 0 0; color: #86704a; font-size: 12px; line-height: 1.6; }
+      /* 拿到的東西 */
+      #range { font: inherit; padding: 3px 8px; margin-bottom: 8px; border: 1px solid #c9b182; border-radius: 6px; background: #fff; color: inherit; }
+      #item-rows td:first-child { display: flex; align-items: center; gap: 8px; white-space: normal; }
+      #item-rows i { flex: none; width: 24px; height: 24px; background-repeat: no-repeat; image-rendering: pixelated; }
+      .sold { color: #c0392b; font-weight: bold; }
+      .all-sold .name { color: #86704a; }
+    </style>
+  </head>
+  <body>
+    <h1>每小時收益</h1>
+    <p id="since"></p>
+    <nav>
+      <button type="button" data-tab="hours">每小時明細</button>
+      <button type="button" data-tab="items">這段時間拿到的東西</button>
+    </nav>
+
+    <section id="tab-hours">
+      <table id="table" hidden>
+        <thead>
+          <tr>
+            <th>時段</th>
+            <th>打怪收入</th>
+            <th>自動販售收入</th>
+            <th class="expense">自動喝水支出</th>
+            <th class="expense">寵物支出</th>
+            <th class="expense">雜項支出</th>
+            <th>淨收入</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot id="foot"></tfoot>
+      </table>
+      <p id="empty" class="empty">還沒有資料。角色出發掛機之後，這裡每幾秒會更新一次。</p>
+      <p class="note">
+        打怪收入＝掉落物照商店賣價估的價值（這遊戲打怪不直接掉錢），裡面包含之後被自動賣掉的東西，所以不要跟販售收入相加。<br />
+        淨收入＝自動販售收入 − 三項支出，也就是金幣實際的增減。寵物支出包含戰寵藥水；雜項支出是投擲道具和聖水。<br />
+        只記這次開啟桌寵以來的資料，重新啟動程式就會重新開始。
+      </p>
+    </section>
+
+    <section id="tab-items" hidden>
+      <select id="range"></select>
+      <table id="item-table" hidden>
+        <thead>
+          <tr>
+            <th>物品</th>
+            <th>拿到</th>
+            <th>單價</th>
+            <th>價值</th>
+          </tr>
+        </thead>
+        <tbody id="item-rows"></tbody>
+        <tfoot id="item-foot"></tfoot>
+      </table>
+      <p id="item-empty" class="empty">這段時間還沒有掉東西。</p>
+      <p class="note">
+        名稱後面標「（賣出）」＝拿到的全部被自動販售賣掉了；只賣掉一部分會寫「（賣出 幾個）」。<br />
+        只算打怪掉的東西，以及遊戲每 10 秒一次的自動販售。自己在村莊手動賣的不會標記。<br />
+        價值＝商店賣價 × 拿到的數量。
+      </p>
+    </section>
+    <script src="income.js"></script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "version": "1.4.0",
+  "shell": 1,
+  "files": [
+    {
+      "path": "game-preload.js",
+      "sha256": "44a8940472e0aa3c4859789f568a92aaa125d7d25d15630eeaf75445cbba9f87",
+      "size": 722
+    },
+    {
+      "path": "income-preload.js",
+      "sha256": "a4186e63dcc82334b6a2ae1e8475739aa0b854accf8f4062d2b4faf5f1d3e023",
+      "size": 287
+    },
+    {
+      "path": "income.js",
+      "sha256": "fb33c185fe8f970e321b1b99ff28b4c23c3e398428fc203b2adc64eeb4e8df41",
+      "size": 5076
+    },
+    {
+      "path": "main.js",
+      "sha256": "d79a8ebc3de69b6138ded44416aef18cab8808db01b744855e2d80babdd02e90",
+      "size": 39660
+    },
+    {
+      "path": "mall.js",
+      "sha256": "3fc36becd448d9804383d25b51bca73ba97459b4ef0bc267f108b8b6968acb65",
+      "size": 3824
+    },
+    {
+      "path": "pet-preload.js",
+      "sha256": "fe7e27ac5dd1982d367828c867352e7bc056c9ada74073064906716c600ebcb2",
+      "size": 1068
+    },
+    {
+      "path": "pet/index.html",
+      "sha256": "372533189fcc6a9d80c8b9c9866e3837b1e9be98795e079f7d5eaf5c995dacf8",
+      "size": 5286
+    },
+    {
+      "path": "pet/pet.js",
+      "sha256": "cc6bedaff2969058056511322c63bcf1757d64a7447d4afd9fe2290fde6badc5",
+      "size": 18077
+    },
+    {
+      "path": "picker-preload.js",
+      "sha256": "668b8cc17890217c8d0cf20058b56b007ed156416a6070ffa3a23fa139d17f60",
+      "size": 351
+    },
+    {
+      "path": "saves-preload.js",
+      "sha256": "f06d110d84afb4d636b73149081228f98f39970b6d9ed5534fcc2441d4c6250c",
+      "size": 608
+    },
+    {
+      "path": "ui/help.html",
+      "sha256": "ed282c7c8c79cea55aa7e6f3046678b2574527756d8863c9ceee1242e8d0cab1",
+      "size": 4086
+    },
+    {
+      "path": "ui/income.html",
+      "sha256": "d6274b8b79859b7f82dd039ca8d4b0cde4892f329502ac8b31578a3cd655462e",
+      "size": 4548
+    },
+    {
+      "path": "ui/income.js",
+      "sha256": "01f09f6b1032143d37b2dc442038714188bc4da026434080b04313e5659669ce",
+      "size": 6240
+    },
+    {
+      "path": "ui/picker.html",
+      "sha256": "e9b6416629cc0f2de9137a9d8b6331d8051b22b6dc38d211c3cecd3c49fa7b95",
+      "size": 2253
+    },
+    {
+      "path": "ui/picker.js",
+      "sha256": "4b650718bd1338b56c3652271d591c3d367ed101bdb64bb4ce85dedef918c159",
+      "size": 3222
+    },
+    {
+      "path": "ui/saves.html",
+      "sha256": "6465e4a59c6ace909d56e29173aadd5d6c536c166585af0df42c852e989ce087",
+      "size": 4521
+    },
+    {
+      "path": "ui/saves.js",
+      "sha256": "13b1362a599d3960553d213a3f2e901b43df07517b948b0e3dfcae8d63df6aa0",
+      "size": 3976
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>存檔管理</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 14px 16px 18px; font: 14px/1.6 "Microsoft JhengHei", sans-serif; color: #4a3a22; background: #eee0c5; }
+      h1 { margin: 0 0 10px; font-size: 18px; }
+      section { margin-bottom: 12px; padding: 12px 14px 14px; background: #fff8e6; border: 1px solid #c9b182; border-radius: 12px; }
+      h2 { margin: 0 0 4px; font-size: 15px; color: #2f7d86; }
+      p { margin: 4px 0 8px; }
+      .dim { color: #86704a; font-size: 13px; }
+      button { font: inherit; padding: 5px 14px; border-radius: 8px; border: 1px solid #c9b182; background: #fff; color: inherit; cursor: pointer; }
+      button.primary { border-color: #2f7d86; background: #2f7d86; color: #fff; }
+      button.danger { border-color: #c0392b; background: #c0392b; color: #fff; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      input { font: inherit; width: 9em; padding: 5px 10px; border: 1px solid #c9b182; border-radius: 8px; letter-spacing: 0.15em; text-transform: lowercase; }
+      .msg { margin: 8px 0 0; font-size: 13px; }
+      .msg:empty { display: none; }
+      .msg.ok { color: #2e7d32; }
+      .msg.bad { color: #c0392b; }
+      #code-box { display: none; margin-top: 8px; align-items: center; gap: 10px; }
+      #code-box.on { display: flex; }
+      #code { font: bold 26px/1 Consolas, monospace; letter-spacing: 0.2em; padding: 8px 14px; background: #fff; border: 2px dashed #b7791f; border-radius: 10px; user-select: all; }
+      /* 匯入前的確認框：蓋在整個視窗上 */
+      #confirm { display: none; position: fixed; inset: 0; padding: 20px; background: rgba(60, 45, 20, 0.55); align-items: center; justify-content: center; }
+      #confirm.on { display: flex; }
+      #confirm > div { width: 100%; max-width: 380px; padding: 16px 18px; background: #fff8e6; border: 2px solid #b7791f; border-radius: 14px; }
+      #confirm ul { margin: 6px 0 10px; padding-left: 1.3em; max-height: 9em; overflow-y: auto; }
+      #confirm .warn { color: #c0392b; font-weight: bold; }
+      #confirm .row { justify-content: flex-end; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>存檔管理</h1>
+
+    <section>
+      <h2>匯出存檔</h2>
+      <p class="dim">把桌寵裡目前的進度存成一個檔案，拿來備份或搬到別台電腦。</p>
+      <button id="export" class="primary" type="button">匯出成檔案…</button>
+      <p id="export-msg" class="msg"></p>
+    </section>
+
+    <section>
+      <h2>匯入存檔</h2>
+      <p class="dim">選一個遊戲或桌寵匯出的存檔檔案。匯入前會先讓你看裡面有哪些角色。</p>
+      <button id="import" type="button">從檔案匯入…</button>
+      <p id="import-msg" class="msg"></p>
+    </section>
+
+    <section>
+      <h2>轉移碼</h2>
+      <p class="dim">
+        不用傳檔案，用六個英數字把進度搬到另一台裝置。跟遊戲裡的轉移碼是同一套，網頁版和桌寵之間可以互通。<br />
+        轉移碼 24 小時後失效。存檔會暫時放在外部空間（Litterbox），知道這六碼的人都讀得到，不要貼到公開的地方。
+      </p>
+      <div class="row">
+        <button id="make-code" class="primary" type="button">產生轉移碼</button>
+      </div>
+      <div id="code-box">
+        <span id="code"></span>
+        <button id="copy" type="button">複製</button>
+      </div>
+      <p id="make-msg" class="msg"></p>
+      <div class="row" style="margin-top: 6px">
+        <input id="code-input" maxlength="40" placeholder="六碼轉移碼" spellcheck="false" />
+        <button id="use-code" type="button">用轉移碼匯入</button>
+      </div>
+      <p id="use-msg" class="msg"></p>
+    </section>
+
+    <div id="confirm">
+      <div>
+        <h2 id="confirm-title">要匯入這份存檔嗎？</h2>
+        <p class="dim" id="confirm-from"></p>
+        <ul id="confirm-list"></ul>
+        <p id="confirm-warn" class="warn"></p>
+        <div class="row">
+          <button id="confirm-no" type="button">取消</button>
+          <button id="confirm-yes" class="danger" type="button">匯入</button>
+        </div>
+      </div>
+    </div>
+    <script src="saves.js"></script>
+  </body>
+</html>
