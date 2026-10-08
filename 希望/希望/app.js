@@ -921,6 +921,43 @@
     $hintRow.appendChild(stoneChip);
   }
 
+  // 上面那一排按鈕越加越多，收進一顆「其他各種功能」裡：按下去跳出彈窗，裡面就是原本那些按鈕（原封不動搬進去，功能照舊）。
+  // 之後要加新功能照樣 $hintRow.appendChild(...) 寫在這段前面就會自動被收進來。
+  (function () {
+    var chips = Array.prototype.slice.call($hintRow.children);
+    if (!chips.length) return;
+    var backdrop = document.createElement("div");
+    backdrop.id = "featureMenuBackdrop";
+    backdrop.style.cssText = "display:none;position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999;align-items:center;justify-content:center;padding:20px;";
+    backdrop.innerHTML =
+      '<div style="background:var(--panel);border:2px solid var(--btn-edge);border-radius:var(--radius);width:100%;max-width:420px;max-height:82vh;overflow-y:auto;padding:22px;position:relative;">' +
+      '<button type="button" data-feature-menu-close="1" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;">✕</button>' +
+      '<div class="section-title" style="margin-top:0;">其他各種功能</div>' +
+      '<div id="featureMenuList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div></div>';
+    document.body.appendChild(backdrop);
+    var list = backdrop.querySelector("#featureMenuList");
+    chips.forEach(function (chip) {
+      chip.style.textAlign = "center";
+      chip.style.padding = "10px 12px";
+      chip.style.fontSize = "14px";
+      list.appendChild(chip);
+    });
+    function close() { backdrop.style.display = "none"; }
+    // 點到任何一顆功能按鈕（它自己的動作照跑）、✕、或視窗外面都關掉彈窗
+    backdrop.addEventListener("click", function (e) {
+      if (e.target === backdrop || e.target.closest("[data-feature-menu-close], .hint-chip")) close();
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    var menuChip = document.createElement("span");
+    menuChip.className = "hint-chip";
+    menuChip.style.borderColor = "var(--gold)";
+    menuChip.style.color = "var(--gold-hi)";
+    menuChip.textContent = "🧰 其他各種功能，可以點進來看看歐";
+    menuChip.addEventListener("click", function () { backdrop.style.display = "flex"; });
+    $hintRow.appendChild(menuChip);
+  })();
+
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
 
