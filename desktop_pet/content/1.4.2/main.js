@@ -10,6 +10,7 @@ const path = require("path");
 const petShell = global.petShell;
 const mall = require("./mall");
 const income = require("./income");
+const gm = require("./gm");
 
 const GAME_URL = "https://idle-seal.pp771007.workers.dev/";
 // 同網域的純文字檔。要動 localStorage／sessionStorage 時先開這個，不要開遊戲本身：
@@ -70,9 +71,10 @@ let savesWin;
 let mapInfoWin;
 let pickerWin;
 // 使用者設定。petModel 沒設＝桌寵外觀跟著目前在打的怪物
-let settings = { petModel: undefined, helpSeen: false, mallReminder: true };
+let settings = { petModel: undefined, helpSeen: false, mallReminder: true, gmReminder: true };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
 let lastMallKey; // 上一次講過黑店提醒的那個小時
+let lastGmKey; // 上一次講過的線上GM提醒（快出現／出現中，各只講一次）
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -560,10 +562,27 @@ function pickerEntries() {
   return [...byModel.values()];
 }
 
-/** 桌寵開口說一句話。桌寵被藏起來的話改用系統通知，不然提醒就白講了。 */
-function say(text) {
+const SAY_GAP_MS = 15500; // 一句話在桌寵頭上停 15 秒，下一句等它消失再講
+const sayQueue = [];
+let sayBusy = false;
+
+function sayNext() {
+  const text = sayQueue.shift();
+  if (text === undefined) {
+    sayBusy = false;
+    return;
+  }
+  sayBusy = true;
+  // 桌寵被藏起來的話改用系統通知，不然提醒就白講了
   if (petWin?.isVisible()) petWin.webContents.send("pet:say", text);
   else if (Notification.isSupported()) new Notification({ title: "放置希望桌寵", body: text }).show();
+  setTimeout(sayNext, SAY_GAP_MS);
+}
+
+/** 桌寵開口說一句話。同時有好幾句要講（例如整點時黑店跟線上GM都要提醒）就排隊一句一句來，不會互相蓋掉。 */
+function say(text) {
+  sayQueue.push(text);
+  if (!sayBusy) sayNext();
 }
 
 let askSeq = 0;
@@ -595,11 +614,24 @@ function mallTick() {
   say(r.text);
 }
 
+/**
+ * 線上GM提醒：出現前一小時講一次、出現的那一小時講一次（這次已經跟他擲過就不講）。
+ * 他的出現時間都在整點，所以跟黑店共用整點的檢查。
+ */
+function gmTick() {
+  if (!settings.gmReminder) return;
+  const r = gm.reminder(Date.now(), lastRaw?.gmDuelWindow);
+  if (!r || r.key === lastGmKey) return;
+  lastGmKey = r.key;
+  say(r.text);
+}
+
 /** 每個整點（多等 2 秒，確定已經跨過去）檢查一次。 */
-function scheduleMallTick() {
+function scheduleHourlyTick() {
   setTimeout(() => {
     mallTick();
-    scheduleMallTick();
+    gmTick();
+    scheduleHourlyTick();
   }, mall.msToNextHour() + 2000);
 }
 
@@ -632,6 +664,17 @@ function buildMenu() {
         saveSettings();
         lastMallKey = undefined; // 重新打開時，正好在提醒時段就馬上講一次
         mallTick();
+      },
+    },
+    {
+      label: "線上GM提醒",
+      type: "checkbox",
+      checked: settings.gmReminder,
+      click: (item) => {
+        settings.gmReminder = item.checked;
+        saveSettings();
+        lastGmKey = undefined;
+        gmTick();
       },
     },
     // 開機自動啟動只有安裝版有意義（開發版登記的會是 electron.exe 本身）
@@ -767,7 +810,7 @@ const READ_STATE = `(() => {
     const bag = {};
     for (const s of c.stacks ?? []) bag[s.itemId] = (bag[s.itemId] ?? 0) + (s.count ?? 1);
     return { id: c.id, name: c.name, level: c.level, exp: c.exp, gold: c.gold, elapsedMs: c.elapsedMs, savedAt: c.savedAt,
-      inVillage: !!c.inVillage, townId: c.townId, mapId: c.spot?.mapId, targetId: c.spot?.targetId,
+      inVillage: !!c.inVillage, townId: c.townId, mapId: c.spot?.mapId, targetId: c.spot?.targetId, gmDuelWindow: c.gmDuelWindow,
       fishingMapId: c.fishing?.mapId, dungeonId: c.dungeon?.run?.dungeonId, bag, hidden: document.hidden, income: readIncome(),
       // 黑店面板開著的時候畫面上的匯率（沒開就是 null），給黑店提醒對帳用
       mallRate: Number((document.querySelector(".mall > .rate")?.textContent.match(/\\d[\\d,]{4,}/)?.[0] ?? "").replace(/,/g, "")) || null };
@@ -853,18 +896,22 @@ app.whenReady().then(async () => {
   powerMonitor.on("resume", loadGame);
   // 電腦睡著時整點的計時器不會響，醒來補檢查一次
   powerMonitor.on("resume", mallTick);
+  powerMonitor.on("resume", gmTick);
   // 每次打開桌寵先報一次今天的黑店特價：已經在倒數時段裡（前 3 小時內）就直接講幾點，
   // 還早的話只講落在清晨／上午／下午／晚間哪一段。等桌寵畫出來再講，所以延後幾秒
   setTimeout(() => {
-    if (!settings.mallReminder || !mallFormulaOk) return;
-    if (mall.reminder()) mallTick();
-    else say(mall.dailyHint());
+    if (settings.mallReminder && mallFormulaOk) {
+      if (mall.reminder()) mallTick();
+      else say(mall.dailyHint());
+    }
+    // 線上GM快出現或正在歡喜城的話也講一聲
+    gmTick();
   }, 6000);
-  scheduleMallTick();
+  scheduleHourlyTick();
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
-  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, quit: () => app.quit() });
+  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, quit: () => app.quit() });
 });
 
 app.on("before-quit", () => {

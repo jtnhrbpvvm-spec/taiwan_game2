@@ -73,4 +73,4 @@ function dailyHint(now = new Date()) {
 /** 到下一個整點還有幾毫秒。 */
 const msToNextHour = (now = new Date()) => HOUR_MS - (now.getTime() % HOUR_MS);
 
-module.exports = { rate, periodOf, todayTarget, reminder, dailyHint, msToNextHour };
+module.exports = { rng, rate, periodOf, todayTarget, reminder, dailyHint, msToNextHour };

@@ -1,11 +1,16 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.2",
   "shell": 1,
   "files": [
     {
       "path": "game-preload.js",
       "sha256": "44a8940472e0aa3c4859789f568a92aaa125d7d25d15630eeaf75445cbba9f87",
       "size": 722
+    },
+    {
+      "path": "gm.js",
+      "sha256": "eeb92d9aa883cfdc614db7b93409b9d1f3334c47c452cb4acd3a9e10dc04d59d",
+      "size": 3906
     },
     {
       "path": "income-preload.js",
@@ -19,13 +24,13 @@
     },
     {
       "path": "main.js",
-      "sha256": "d79a8ebc3de69b6138ded44416aef18cab8808db01b744855e2d80babdd02e90",
-      "size": 39660
+      "sha256": "5d0d73a5e9786b4f538b136de3945385a127c430be40e5db2a4f447795f08a63",
+      "size": 41125
     },
     {
       "path": "mall.js",
-      "sha256": "3fc36becd448d9804383d25b51bca73ba97459b4ef0bc267f108b8b6968acb65",
-      "size": 3824
+      "sha256": "3807d6d7b1e988e8bd21471b05b00b28072f54fa66aa5a4acd642ebbfb72d8aa",
+      "size": 3829
     },
     {
       "path": "pet-preload.js",
@@ -54,8 +59,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "ed282c7c8c79cea55aa7e6f3046678b2574527756d8863c9ceee1242e8d0cab1",
-      "size": 4086
+      "sha256": "d7686fefec7e2a1e28548034c03f94d860eb3a7ad3c56e9df8275b40df5b1874",
+      "size": 4247
     },
     {
       "path": "ui/income.html",
