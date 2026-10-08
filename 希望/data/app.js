@@ -319,6 +319,26 @@
 
   function petName(id) { return (PETS[String(id)] || {}).name || ("寵物#" + id); }
 
+  // 6／7 階的分類（寵物大師「7 階進化」用）：種族・稀有度，7 階再加類型；.G 是 7 階冶煉出來的，沒有分類。
+  // 天蛋沒有「一般」，資料寫 normal 的遊戲也當稀有算（bundle Ex()）。
+  var PET_FAMILY_LABEL = { seed: "種子", piya: "咕咕", bird: "鳥蛋", sky: "天蛋", dragon: "黑龍", mand: "曼德拉", fox: "三尾狐" };
+  var PET_RARITY_LABEL = { normal: "一般", rare: "稀有", super: "超稀有" };
+  var PET_KIND_LABEL = { atk: "攻擊", mag: "魔法", mix: "綜合" };
+  var PET_SMELT_RESULT = {};
+  Object.keys(PETS).forEach(function (id) {
+    ((PETS[id].smelt || {}).to || []).forEach(function (t) { PET_SMELT_RESULT[String(t.to)] = true; });
+  });
+  function petTag(id) {
+    var def = PETS[String(id)] || {};
+    if (PET_SMELT_RESULT[String(id)]) return "冶煉";
+    var m = def.master;
+    if (!m) return "";
+    var rarity = m.rarity === "normal" && m.family !== "seed" && m.family !== "piya" && m.family !== "bird" ? "rare" : m.rarity;
+    return (PET_FAMILY_LABEL[m.family] || m.family) + "・" + (PET_RARITY_LABEL[rarity] || rarity) + (m.kind ? "・" + (PET_KIND_LABEL[m.kind] || m.kind) : "");
+  }
+  // 這一階要餵多少才滿（bundle rS()）：round(feedFull × (10 + grow) / 10)
+  function petExpFull(def, grow) { return Math.round((def.feedFull || 0) * (10 + grow) / 10); }
+
   // 依「階級」分組排序好的寵物清單，供下拉選單使用
   var petsByTier = {};
   petArr.forEach(function (p) {
@@ -341,7 +361,8 @@
       var group = document.createElement("optgroup");
       group.label = "階級 " + t;
       petsByTier[t].forEach(function (p) {
-        var opt = el("option", { value: p.id, text: p.name });
+        var tag = petTag(p.id);
+        var opt = el("option", { value: p.id, text: p.name + (tag ? "〔" + tag + "〕" : "") });
         if (hasCurrent && String(currentId) === p.id) opt.selected = true;
         group.appendChild(opt);
       });
@@ -1537,6 +1558,17 @@
       tr.appendChild(tdAppr);
 
       var tdAct = document.createElement("td");
+      tdAct.style.whiteSpace = "nowrap";
+      // 7 階進化要「+9 而且經驗 100%」的 6 階、寵物冶煉要 +9 的 7 階，一鍵養到那個狀態
+      var fullBtn = el("button", { class: "btn btn-sm", text: "養滿", title: "成長階段設成 +9、經驗餵到 100%（7 階進化／寵物冶煉的條件）" });
+      fullBtn.disabled = !PETS[String(pet.id)];
+      fullBtn.addEventListener("click", function () {
+        pet.grow = 9;
+        pet.exp = petExpFull(PETS[String(pet.id)], 9);
+        renderPets(c);
+        toast("「" + petName(pet.id) + "」已養到 +9、經驗 100%", "ok");
+      });
+      tdAct.appendChild(fullBtn);
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () {
         var wasActive = c.activePetUid === pet.uid;

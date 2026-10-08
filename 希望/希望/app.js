@@ -4977,6 +4977,9 @@
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
     if ((PET_EVOLVE_FROM[String(petId)] || []).length) kinds.push("evolve");
+    var p = PET_INFO[String(petId)];
+    if (p && p.master && p.master.kind) kinds.push("petMaster");
+    if ((PET_SMELT_FROM[String(petId)] || []).length) kinds.push("petSmelt");
     return kinds;
   }
   function petObtainText(petId) {
@@ -4984,6 +4987,8 @@
     if (!kinds.length) return "查不到取得方式";
     return kinds.map(function (k) {
       if (k === "evolve") return "上一階進化";
+      if (k === "petMaster") return "7 階進化（5 隻 6 階交給寵物大師）";
+      if (k === "petSmelt") return "寵物冶煉（7 階吃掉指定寵物）";
       if (k === "drop") return "打怪掉落（" + dropMonsterCount(petId) + " 種怪）";
       return OBTAIN_KIND_LABEL[k] || k;
     }).join("・");
@@ -4991,7 +4996,8 @@
   // 詳細頁「取得方式」：打怪掉落列出會掉的怪（掉率高的在前），開箱列出寶箱，擲十八啦說明規則，其他管道請到物品頁看
   function petObtainHtml(petId) {
     var id = String(petId);
-    var kinds = petObtainKinds(id).filter(function (k) { return k !== "evolve"; });
+    // 進化／7 階進化／冶煉在下面各有自己的區塊，這裡只列「直接拿得到」的管道
+    var kinds = petObtainKinds(id).filter(function (k) { return ["evolve", "petMaster", "petSmelt"].indexOf(k) === -1; });
     if (!kinds.length) return '';
     // 怪物表可能有二、三十列，預設收起來（標題就寫出摘要），不然要捲很久才看得到下面的進化／加成
     var html = '<details class="fold-section"><summary class="section-title">取得方式：' + escapeHtml(petObtainText(id)) +
@@ -5029,6 +5035,283 @@
         '」取得，詳細請看物品頁 ' + itemChip(id) + '。</div>';
     }
     return html + '</details>';
+  }
+
+  // ---------- 7 階寵物（2026-10-08 新增，規則照遊戲 bundle）----------
+  // 6 階寵物沒有材料進化了，7 階改成兩套機制：
+  //  A. 寵物大師「7 階進化」（petMasterPlan／Fx／Mx／Nx／Vx）：交出 5 隻「+9 而且經驗餵滿」的 6 階寵物＋手續費，5 隻都會消失。
+  //     稀有度點數決定抽一般／稀有／超稀有，種族權重決定哪一族，類型權重決定攻擊／魔法／綜合，同一格有好幾隻就平分；
+  //     抽到的「稀有度＋種族」沒有對應的 7 階寵物就是失敗。
+  //  B. 寵物冶煉家「寵物冶煉」（petSmeltRows／petSmelt／SS）：7 階本體養到 +9，吃掉指定的寵物＋寵物之魂＋金幣，
+  //     有機率變成 .G 寵物；失敗時本體照 PET_SMELT_FAIL 的權重掉到 +0～+9，被吃掉的寵物和材料一樣沒了。
+  // 下面這幾張表寫死在遊戲程式裡（不在資料檔），遊戲改了要跟著改：xx／Sx／Cx／wx／Tx／Dx／Ox／kx／Ax／Bx。
+  var PET_SMELT_FAIL = window.PET_SMELT_FAIL || [];
+  var PET_SOUL_ID = window.PET_SOUL_ID;
+  var PET_NPC_TOWNS = window.PET_NPC_TOWNS || {};
+  var PET_FAMILY_LABEL = { seed: "種子", piya: "咕咕", bird: "鳥蛋", sky: "天蛋", dragon: "黑龍", mand: "曼德拉", fox: "三尾狐" };
+  var PET_RARITY_LABEL = { normal: "一般", rare: "稀有", super: "超稀有" };
+  var PET_KIND_LABEL = { atk: "攻擊", mag: "魔法", mix: "綜合" };
+  var PET_MASTER_FAMILIES = ["seed", "piya", "bird", "sky", "dragon", "mand", "fox"];
+  var PET_MASTER_RARITIES = ["normal", "rare", "super"];
+  var PET_MASTER_KINDS = ["atk", "mag", "mix"];
+  var PET_MASTER_COUNT = 5;
+  var PET_MASTER_SPECIAL = { dragon: 1, mand: 1, fox: 1 };
+  // 一隻 6 階提供多少「種族權重」；null＝這一族沒有一般，資料寫 normal 的也當稀有算
+  var PET_MASTER_FAMILY_PT = {
+    seed: { normal: 80, rare: 100, super: 120 }, piya: { normal: 60, rare: 80, super: 100 }, bird: { normal: 40, rare: 60, super: 80 },
+    sky: { normal: null, rare: 60, super: 80 }, dragon: { normal: null, rare: 10, super: 20 },
+    mand: { normal: null, rare: 10, super: 20 }, fox: { normal: null, rare: 10, super: 20 }
+  };
+  var PET_MASTER_RARITY_AT = { normal: 100, rare: 200, super: 400 }; // 稀有度點數的三條門檻
+  var PET_MASTER_KIND_OWN = 20, PET_MASTER_KIND_OTHER = 2;
+  var PET_MASTER_FEE = {
+    seed: { normal: 2e6, rare: 4e6, super: 8e6 }, piya: { normal: 6e6, rare: 12e6, super: 24e6 }, bird: { normal: 18e6, rare: 36e6, super: 72e6 },
+    sky: { normal: 36e6, rare: 36e6, super: 72e6 }, dragon: { normal: 108e6, rare: 108e6, super: 216e6 },
+    mand: { normal: 108e6, rare: 108e6, super: 216e6 }, fox: { normal: 108e6, rare: 108e6, super: 216e6 }
+  };
+  function petMasterRarity(m) {
+    return m.rarity === "normal" && PET_MASTER_FAMILY_PT[m.family].normal === null ? "rare" : m.rarity;
+  }
+  function petMasterRarityPt(m) {
+    var r = petMasterRarity(m);
+    if (PET_MASTER_SPECIAL[m.family]) return r === "super" ? 80 : 50;
+    return r === "super" ? 50 : r === "rare" ? 40 : 20;
+  }
+  // 6 階沒有 kind 欄位，遊戲 jx() 用攻擊／魔法的基礎值判斷：只有一邊的看那邊；兩邊都有的話，一般＝綜合，稀有以上看哪邊高
+  function petMasterKind(p) {
+    if (p.master && p.master.kind) return p.master.kind;
+    var atk = p.stats.atk, mag = p.stats.mag;
+    if (mag === 0 && atk > 0) return "atk";
+    if (atk === 0 && mag > 0) return "mag";
+    if (p.master && petMasterRarity(p.master) === "normal") return "mix";
+    return atk > mag ? "atk" : mag > atk ? "mag" : "mix";
+  }
+  function petMasterRarityOdds(pt) {
+    var at = PET_MASTER_RARITY_AT;
+    function lerp(lo, hi) { return Math.min(1, Math.max(0, (pt - lo) / (hi - lo))); }
+    var t;
+    if (pt >= at.rare) { t = lerp(at.rare, at.super); return { fail: 0, normal: 0, rare: 1 - t, super: t }; }
+    if (pt >= at.normal) { t = lerp(at.normal, at.rare); return { fail: 0, normal: 1 - t, rare: t, super: 0 }; }
+    t = lerp(0, at.normal);
+    return { fail: 1 - t, normal: t, rare: 0, super: 0 };
+  }
+  function petMasterShare(weights, keys) {
+    var total = keys.reduce(function (s, k) { return s + weights[k]; }, 0), out = {};
+    keys.forEach(function (k) { out[k] = total > 0 ? weights[k] / total : 1 / keys.length; });
+    return out;
+  }
+  var PET_MASTER_OUTPUT_IDS = Object.keys(PET_INFO).filter(function (id) { return PET_INFO[id].master && PET_INFO[id].master.kind; });
+  // pets：交出去的 6 階寵物資料（PET_INFO 的項目）。回傳各種點數、手續費、失敗機率、每隻 7 階的機率（0～1）
+  function petMasterOdds(pets) {
+    var family = {}, kind = { atk: 0, mag: 0, mix: 0 }, rarityPt = 0, fee = 0;
+    PET_MASTER_FAMILIES.forEach(function (f) { family[f] = 0; });
+    pets.forEach(function (p) {
+      var r = petMasterRarity(p.master), own = petMasterKind(p);
+      rarityPt += petMasterRarityPt(p.master);
+      family[p.master.family] += PET_MASTER_FAMILY_PT[p.master.family][r] || 0;
+      PET_MASTER_KINDS.forEach(function (k) { kind[k] += k === own ? PET_MASTER_KIND_OWN : PET_MASTER_KIND_OTHER; });
+      fee += PET_MASTER_FEE[p.master.family][r];
+    });
+    function match(r, f, k) {
+      return PET_MASTER_OUTPUT_IDS.filter(function (id) {
+        var m = PET_INFO[id].master;
+        return petMasterRarity(m) === r && m.family === f && (k === undefined || m.kind === k);
+      });
+    }
+    var rarity = petMasterRarityOdds(rarityPt), familyShare = petMasterShare(family, PET_MASTER_FAMILIES);
+    var fail = rarity.fail, odds = {};
+    PET_MASTER_RARITIES.forEach(function (r) {
+      if (!(rarity[r] > 0)) return;
+      PET_MASTER_FAMILIES.forEach(function (f) {
+        if (!(familyShare[f] > 0)) return;
+        if (!match(r, f).length) { fail += rarity[r] * familyShare[f]; return; }
+        var kinds = PET_MASTER_KINDS.filter(function (k) { return match(r, f, k).length > 0; });
+        var kindShare = petMasterShare(kind, kinds);
+        kinds.forEach(function (k) {
+          if (!(kindShare[k] > 0)) return;
+          var hit = match(r, f, k);
+          hit.forEach(function (id) { odds[id] = (odds[id] || 0) + rarity[r] * familyShare[f] * kindShare[k] / hit.length; });
+        });
+      });
+    });
+    return { rarityPt: rarityPt, rarity: rarity, family: family, familyShare: familyShare, kind: kind, fee: fee, fail: fail, odds: odds };
+  }
+  // 反查：這隻寵物可以由哪幾隻 7 階冶煉出來
+  var PET_SMELT_FROM = {};
+  Object.keys(PET_INFO).forEach(function (id) {
+    ((PET_INFO[id].smelt || {}).to || []).forEach(function (t) {
+      (PET_SMELT_FROM[String(t.to)] || (PET_SMELT_FROM[String(t.to)] = [])).push({ from: id, rate: t.rate });
+    });
+  });
+
+  function pct1(p) { return (Math.round(p * 1000) / 10) + "%"; }
+  function petMasterTagText(p) {
+    return PET_FAMILY_LABEL[p.master.family] + "・" + PET_RARITY_LABEL[petMasterRarity(p.master)] + "・" + PET_KIND_LABEL[petMasterKind(p)];
+  }
+  function petNpcText(role, fallback) {
+    var n = PET_NPC_TOWNS[role];
+    return n ? n.towns.map(townName).join("、") + "的「" + n.name + "」" : "「" + fallback + "」";
+  }
+  function petLinkChip(id, suffixHtml) {
+    var p = PET_INFO[String(id)];
+    return '<span class="map-chip" data-open-pet="' + id + '">' + itemIconHtml(id, 20) + escapeHtml(p ? p.name : "#" + id) +
+      (suffixHtml ? ' ' + suffixHtml : '') + '</span>';
+  }
+  // 7 階進化模擬器：選 5 隻 6 階，照遊戲公式算出每隻 7 階的機率。prefill：預先選好的寵物 id（不足 5 隻的留空）
+  function petMasterSimHtml(prefill) {
+    var sixIds = Object.keys(PET_INFO).filter(function (id) { return PET_INFO[id].tier === 6 && PET_INFO[id].master; });
+    if (!sixIds.length) return '';
+    var html = '<div class="equip-box" style="margin-bottom:14px;">' +
+      '<div style="font-size:13.5px;margin-bottom:8px;">🧮 <b>7 階進化模擬器</b>：選 ' + PET_MASTER_COUNT + ' 隻要交出去的 6 階寵物（可以重複選同一種）</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
+    for (var i = 0; i < PET_MASTER_COUNT; i++) {
+      var cur = prefill && prefill[i] != null ? String(prefill[i]) : "";
+      html += '<select class="pm-sim-pick" style="padding:7px 8px;max-width:100%;background:var(--ink-2);border:1px solid var(--line-hi);border-radius:3px;color:var(--text);">' +
+        '<option value="">（第 ' + (i + 1) + ' 隻）</option>';
+      PET_MASTER_FAMILIES.forEach(function (f) {
+        var ids = sixIds.filter(function (id) { return PET_INFO[id].master.family === f; });
+        if (!ids.length) return;
+        html += '<optgroup label="' + PET_FAMILY_LABEL[f] + '">' + ids.map(function (id) {
+          var p = PET_INFO[id];
+          return '<option value="' + id + '"' + (id === cur ? ' selected' : '') + '>' + escapeHtml(p.name) + '（' +
+            PET_RARITY_LABEL[petMasterRarity(p.master)] + '・' + PET_KIND_LABEL[petMasterKind(p)] + '）</option>';
+        }).join('') + '</optgroup>';
+      });
+      html += '</select>';
+    }
+    return html + '</div><div id="pmSimOut"></div></div>';
+  }
+  function renderPetMasterSim() {
+    var out = document.getElementById("pmSimOut");
+    if (!out) return;
+    var pets = Array.prototype.map.call(document.querySelectorAll(".pm-sim-pick"), function (s) { return PET_INFO[s.value]; }).filter(Boolean);
+    if (pets.length < PET_MASTER_COUNT) {
+      out.innerHTML = '<div class="empty-note" style="padding:0;">還要再選 ' + (PET_MASTER_COUNT - pets.length) + ' 隻。</div>';
+      return;
+    }
+    var r = petMasterOdds(pets);
+    function parts(share, labels) {
+      return Object.keys(labels).filter(function (k) { return share[k] > 0; })
+        .map(function (k) { return labels[k] + ' <span class="rate">' + pct1(share[k]) + '</span>'; }).join('　') || '-';
+    }
+    var kindShare = petMasterShare(r.kind, PET_MASTER_KINDS);
+    var html = '<div style="font-size:13px;line-height:1.9;margin-bottom:8px;">' +
+      '稀有度點數 <b>' + r.rarityPt + '</b> → ' + parts(r.rarity, PET_RARITY_LABEL) + '<br>' +
+      '種族 → ' + parts(r.familyShare, PET_FAMILY_LABEL) + '<br>' +
+      '類型 → ' + parts(kindShare, PET_KIND_LABEL) + '<span style="color:var(--text-faint);">（那一族沒有的類型會剔掉再重新分配）</span><br>' +
+      '手續費 ' + bigNumHtml(r.fee) + ' 希望幣　失敗（' + PET_MASTER_COUNT + ' 隻都不會回來）<span class="rate' + (r.fail > 0 ? '' : ' low') + '">' + pct1(r.fail) + '</span></div>';
+    var ids = Object.keys(r.odds).filter(function (id) { return r.odds[id] > 0; }).sort(function (a, b) { return r.odds[b] - r.odds[a] || a - b; });
+    html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>可能進化成</th><th>分類</th><th>機率</th></tr></thead><tbody>';
+    ids.forEach(function (id) {
+      html += '<tr class="clickable" data-open-pet="' + id + '"><td>' + itemIconHtml(id, 28) + '<span class="name-link">' + escapeHtml(PET_INFO[id].name) + '</span></td>' +
+        '<td>' + petMasterTagText(PET_INFO[id]) + '</td><td><span class="' + rateClassP(r.odds[id]) + '">' + pct1(r.odds[id]) + '</span></td></tr>';
+    });
+    out.innerHTML = html + '</tbody></table></div>';
+  }
+  function bindPetMasterSim() {
+    Array.prototype.forEach.call(document.querySelectorAll(".pm-sim-pick"), function (s) { s.addEventListener("change", renderPetMasterSim); });
+    renderPetMasterSim();
+  }
+  // 7 階進化的共通規則（6 階、7 階的詳細頁和寵物列表共用）
+  function petMasterRulesHtml() {
+    var at = PET_MASTER_RARITY_AT;
+    function row(f) {
+      var pt = PET_MASTER_FAMILY_PT[f], fee = PET_MASTER_FEE[f];
+      return '<tr><td>' + PET_FAMILY_LABEL[f] + '</td>' + PET_MASTER_RARITIES.map(function (r) {
+        return '<td>' + (pt[r] === null ? '<span class="rate low">-</span>' : '權重 ' + pt[r] + '・點數 ' + petMasterRarityPt({ family: f, rarity: r }) +
+          '・' + bigNumHtml(fee[r])) + '</td>';
+      }).join('') + '</tr>';
+    }
+    var families = PET_MASTER_FAMILIES.filter(function (f) {
+      return Object.keys(PET_INFO).some(function (id) { return PET_INFO[id].tier === 6 && PET_INFO[id].master && PET_INFO[id].master.family === f; });
+    });
+    return '<details class="fold-section"><summary class="section-title">7 階進化規則<span class="fold-hint">點擊展開</span></summary>' +
+      '<ol style="font-size:13px;line-height:1.85;margin:0 0 10px;padding-left:20px;">' +
+      '<li>到 ' + escapeHtml(petNpcText("petMaster", "寵物大師")) + '，交出 <b>' + PET_MASTER_COUNT + ' 隻 6 階寵物</b>：每隻都要 <b>+9 而且經驗餵到 100%</b>，出戰中的那隻不能交。</li>' +
+      '<li>不管成功或失敗，<b>' + PET_MASTER_COUNT + ' 隻都會消失</b>，手續費（' + PET_MASTER_COUNT + ' 隻各自的金額加總）也照扣。成功拿到的是 +0、未鑑定的 7 階。</li>' +
+      '<li><b>稀有度</b>：把 ' + PET_MASTER_COUNT + ' 隻的「點數」加起來。' + at.normal + ' 點＝100% 一般，' + at.rare + ' 點＝100% 稀有，' + at.super +
+      ' 點＝100% 超稀有，中間照比例混（例：150 點＝一般 50%、稀有 50%；250 點＝稀有 75%、超稀有 25%）。</li>' +
+      '<li><b>種族</b>：照 ' + PET_MASTER_COUNT + ' 隻的「權重」比例抽。混到別族時，如果抽中的稀有度在那一族沒有 7 階寵物，就算<b>失敗</b>。</li>' +
+      '<li><b>類型</b>（攻擊／魔法／綜合）：每隻給自己的類型 ' + PET_MASTER_KIND_OWN + '、另外兩種各 ' + PET_MASTER_KIND_OTHER +
+      '，照比例抽；同一格有好幾隻 7 階就平分。6 階的類型看基礎能力：只有攻擊或只有魔法的就是那一種，兩種都有的「一般」算綜合、「稀有以上」看哪個高。</li>' +
+      '</ol><div style="overflow-x:auto;margin-bottom:14px;"><table class="dtable"><thead><tr><th>一隻 6 階提供</th>' +
+      PET_MASTER_RARITIES.map(function (r) { return '<th>' + PET_RARITY_LABEL[r] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      families.map(row).join('') + '</tbody></table></div></details>';
+  }
+  function petMasterSectionHtml(petId, p) {
+    if (!p.master || (p.tier !== 6 && !p.master.kind)) return '';
+    var m = p.master, r = petMasterRarity(m), html = '', prefill = [];
+    if (p.tier === 6) {
+      html += '<div class="section-title">7 階進化 <span class="count">(' + escapeHtml(petMasterTagText(p)) + ')</span></div>' +
+        '<div style="font-size:13.5px;line-height:1.8;margin-bottom:10px;">這隻沒有材料進化，要湊 <b>' + PET_MASTER_COUNT + ' 隻 +9、經驗 100% 的 6 階</b>交給' +
+        escapeHtml(petNpcText("petMaster", "寵物大師")) + '，會全部被吃掉、換一隻 7 階。<br>牠交出去時算：種族〔' + PET_FAMILY_LABEL[m.family] +
+        '〕權重 <span class="rate">+' + (PET_MASTER_FAMILY_PT[m.family][r] || 0) + '</span>、稀有度點數 <span class="rate">+' + petMasterRarityPt(m) +
+        '</span>、類型〔' + PET_KIND_LABEL[petMasterKind(p)] + '〕、手續費 ' + bigNumHtml(PET_MASTER_FEE[m.family][r]) + '。</div>';
+      for (var i = 0; i < PET_MASTER_COUNT; i++) prefill.push(petId);
+    } else {
+      // 預設幫忙選一組「同族、同稀有度、同類型」的 6 階，讓玩家先看到大概的機率再自己換
+      var six = Object.keys(PET_INFO).filter(function (id) { var q = PET_INFO[id]; return q.tier === 6 && q.master && q.master.family === m.family; });
+      var sameRarity = six.filter(function (id) { return petMasterRarity(PET_INFO[id].master) === r; });
+      var sameKind = sameRarity.filter(function (id) { return petMasterKind(PET_INFO[id]) === m.kind; });
+      var pool = sameKind.length ? sameKind : sameRarity.length ? sameRarity : six;
+      for (var j = 0; pool.length && j < PET_MASTER_COUNT; j++) prefill.push(pool[j % pool.length]);
+      html += '<div class="section-title">取得方式：7 階進化 <span class="count">(' + escapeHtml(petMasterTagText(p)) + ')</span></div>' +
+        '<div style="font-size:13.5px;line-height:1.8;margin-bottom:10px;">湊 <b>' + PET_MASTER_COUNT + ' 隻 +9、經驗 100% 的 6 階</b>交給' +
+        escapeHtml(petNpcText("petMaster", "寵物大師")) + '，' + PET_MASTER_COUNT + ' 隻全部被吃掉，有機率換到這隻。要抽中牠，三關都要中：' +
+        '稀有度抽到〔' + PET_RARITY_LABEL[r] + '〕、種族抽到〔' + PET_FAMILY_LABEL[m.family] + '〕、類型抽到〔' + PET_KIND_LABEL[m.kind] + '〕' +
+        '（同一格還有別隻就再平分）。所以盡量交〔' + PET_FAMILY_LABEL[m.family] + '〕族、類型是〔' + PET_KIND_LABEL[m.kind] + '〕的 6 階：</div>' +
+        '<div class="map-chip-row" style="margin-bottom:10px;">' + six.map(function (id) {
+          return petLinkChip(id, '<span class="rate low">' + PET_RARITY_LABEL[petMasterRarity(PET_INFO[id].master)] + '・' + PET_KIND_LABEL[petMasterKind(PET_INFO[id])] + '</span>');
+        }).join('') + '</div>';
+    }
+    return html + petMasterSimHtml(prefill) + petMasterRulesHtml();
+  }
+  function petSmeltCondHtml(fromId, sm) {
+    var needs = sm.needs.map(function (n) {
+      return petLinkChip(n.id, '<span class="rate low">' + (n.grow > 0 ? '+' + n.grow + ' 以上' : '不限成長') + '</span>');
+    }).join('');
+    return '<div style="font-size:13px;line-height:1.8;">本體 ' + petLinkChip(fromId, '<span class="rate low">+' + sm.grow + '</span>') + '（不能是出戰中）</div>' +
+      '<div style="font-size:12.5px;color:var(--text-dim);margin:6px 0;">要吃掉的寵物（共 ' + sm.needs.length + ' 隻，出戰中的不算）：</div>' +
+      '<div class="map-chip-row">' + needs + '</div>' +
+      '<div style="font-size:12.5px;color:var(--text-dim);margin:8px 0 6px;">另外要：</div>' +
+      '<div class="map-chip-row">' + itemChip(PET_SOUL_ID, sm.soul) + '<span class="map-chip" style="cursor:default;">' + bigNumHtml(sm.gold) + ' 希望幣</span></div>';
+  }
+  function petSmeltFailHtml() {
+    var total = PET_SMELT_FAIL.reduce(function (s, w) { return s + w; }, 0);
+    if (!total) return '';
+    return '<div style="font-size:12.5px;color:var(--text-faint);line-height:1.8;margin-top:8px;">失敗時：被吃掉的寵物、寵物之魂、希望幣都不會退，' +
+      '本體留著但經驗歸零，成長階段重抽 → ' + PET_SMELT_FAIL.map(function (w, g) { return '+' + g + '：' + pct1(w / total); }).join('、') + '。</div>';
+  }
+  function petSmeltSectionHtml(petId, p) {
+    var html = '';
+    var from = PET_SMELT_FROM[String(petId)] || [];
+    if (from.length) {
+      html += '<div class="section-title">取得方式：寵物冶煉 <span class="count">(' + from.length + ' 隻 7 階可以冶煉成牠)</span></div>' +
+        '<div class="empty-note" style="padding:0 0 10px;">到 ' + escapeHtml(petNpcText("petSmelt", "寵物冶煉家")) +
+        '，拿下面任何一隻 7 階當本體冶煉。成功後本體直接變成這隻（+0）；機率高的排前面。</div>';
+      from.slice().sort(function (a, b) { return b.rate - a.rate || a.from - b.from; }).forEach(function (f) {
+        var sm = PET_INFO[f.from].smelt;
+        html += '<details class="fold-section equip-box" style="margin-bottom:10px;"><summary style="font-size:13.5px;">' +
+          '<span class="name-link" data-open-pet="' + f.from + '">' + escapeHtml(PET_INFO[f.from].name) + '</span> 冶煉，' +
+          '<span class="rate">' + pct1(f.rate / 10000) + '</span><span class="fold-hint">看條件</span></summary>' +
+          '<div style="margin-top:10px;">' + petSmeltCondHtml(f.from, sm) + '</div></details>';
+      });
+      html += petSmeltFailHtml();
+    }
+    if (p.smelt) {
+      var sm2 = p.smelt, okRate = sm2.to.reduce(function (s, t) { return s + t.rate; }, 0) / 10000;
+      html += '<div class="section-title">寵物冶煉 <span class="count">(成功率 ' + pct1(okRate) + ')</span></div>' +
+        '<div class="equip-box" style="margin-bottom:10px;">' +
+        '<div class="empty-note" style="padding:0 0 8px;">到 ' + escapeHtml(petNpcText("petSmelt", "寵物冶煉家")) + '，把這隻當本體冶煉：</div>';
+      sm2.to.forEach(function (t) {
+        var toPet = PET_INFO[String(t.to)];
+        html += '<div style="font-size:13.5px;margin-bottom:4px;">可冶煉成 <span class="name-link" data-open-pet="' + t.to + '">' +
+          escapeHtml(toPet ? toPet.name : "#" + t.to) + '</span>，<span class="rate">' + pct1(t.rate / 10000) + '</span></div>';
+      });
+      html += '<div style="font-size:13px;color:var(--text-faint);margin-bottom:8px;">冶煉失敗，<span class="rate low">' + pct1(1 - okRate) + '</span></div>' +
+        petSmeltCondHtml(petId, sm2) + petSmeltFailHtml() + '</div>';
+    }
+    return html;
   }
 
   function showPetBrowser(tierFilter) {
@@ -5072,6 +5355,11 @@
       '<option value="bpet">戰寵</option>' +
       '</select></div>';
     html += '<div class="empty-note" style="padding:0 0 10px;">出戰中的寵物才會生效（遊戲改版後已經沒有飽食度，加成只看成長階段）。點寵物名稱看牠 9 個成長階段各自提供多少能力。</div>';
+    if (tierFilter === 6 || tierFilter === 7) {
+      html += '<div class="empty-note" style="padding:0 0 10px;">7 階有兩種：一種是把 ' + PET_MASTER_COUNT + ' 隻 6 階交給寵物大師換來的，' +
+        '另一種（名字有 .G）是拿 7 階去找寵物冶煉家、吃掉指定的寵物冶煉出來的。點寵物看牠各自的條件。</div>' +
+        petMasterSimHtml([]) + petMasterRulesHtml();
+    }
     if (!petIds.length) {
       html += '<div class="empty-note">這個階級沒有寵物資料。</div>';
     } else {
@@ -5081,12 +5369,13 @@
         html += '<li class="result-item" data-open-pet="' + pid + '">' +
           '<span class="rname">' + itemIconHtml(pid, 32) + '<span>' + escapeHtml(p.name) +
           '<span class="pet-obtain">取得：' + escapeHtml(petObtainText(pid)) + '</span></span></span>' +
-          '<span class="rmeta">' + p.tier + '階　Lv' + p.lv + '・名聲 ' + fmtNum(p.fame) + '</span>' +
+          '<span class="rmeta">' + (p.master ? escapeHtml(petMasterTagText(p)) + '　' : '') + p.tier + '階　Lv' + p.lv + '・名聲 ' + fmtNum(p.fame) + '</span>' +
           '</li>';
       });
       html += '</ul>';
     }
     $detail.innerHTML = html;
+    bindPetMasterSim();
     document.getElementById("petTierFilter").addEventListener("change", function (e) {
       showPetBrowser(e.target.value ? (e.target.value === "bpet" ? "bpet" : Number(e.target.value)) : null);
     });
@@ -5305,6 +5594,8 @@
       });
     }
 
+    html += petMasterSectionHtml(petId, p) + petSmeltSectionHtml(petId, p);
+
     html += petAppraisalHtml(petId, p);
 
     var statKeys = Object.keys(PET_STAT_LABEL);
@@ -5318,6 +5609,7 @@
     html += '</tbody></table>';
 
     $detail.innerHTML = html;
+    bindPetMasterSim();
     document.getElementById("petBackToList").addEventListener("click", showPetBrowser);
   }
 
