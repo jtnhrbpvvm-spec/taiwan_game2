@@ -489,6 +489,13 @@
       if (times[k] <= times[k - 1]) times[k] = times[k - 1] + 1;
     }
     order.forEach(function (c, k) { c.createdAt = times[k]; });
+    // 遊戲裡「離開」分頁的角色清單沒有排序，是直接照存檔 characters 陣列的順序畫的（bundle ExitTab：[...characters]），
+    // 所以陣列也要排成跟格子一樣的順序，不然選角畫面換了、離開那邊還是舊的。
+    // 陣列順序動了，「目前編輯的角色」是用陣列位置記的，要跟著改，上方的角色選單也要重畫。
+    var editing = saveData.characters[currentCharIndex];
+    saveData.characters = order;
+    currentCharIndex = Math.max(0, order.indexOf(editing));
+    renderCharSelect();
     return true;
   }
   var slotPickA = null, slotPickB = null;   // 兩個下拉選單目前選的角色 id（重畫時保留）
