@@ -70,7 +70,7 @@ let savesWin;
 let mapInfoWin;
 let pickerWin;
 // 使用者設定。petModel 沒設＝桌寵外觀跟著目前在打的怪物
-let settings = { petModel: undefined, helpSeen: false, mallReminder: true };
+let settings = { petModel: undefined, helpSeen: false, mallReminder: true, lastVersion: undefined };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
 let lastMallKey; // 上一次講過黑店提醒的那個小時
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
@@ -864,6 +864,12 @@ app.whenReady().then(async () => {
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
+  // 版本跟上次啟動時不一樣＝剛更新完，在桌寵頭上講一聲，使用者才知道更新有成功
+  if (settings.lastVersion !== petShell.contentVersion) {
+    if (settings.lastVersion) setTimeout(() => petWin?.webContents.send("pet:notice", `已更新到 ${petShell.contentVersion}`), 3000);
+    settings.lastVersion = petShell.contentVersion;
+    saveSettings();
+  }
   if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, quit: () => app.quit() });
 });
 
