@@ -369,6 +369,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <div class="nav-item" data-panel="skills">✨ 已學技能</div>
     <div class="nav-item" data-panel="buffs">🌟 輔助狀態</div>
     <div class="nav-item" data-panel="gems">💎 技能寶石</div>
+    <div class="nav-item" data-panel="stones">💠 鑲嵌石</div>
 
     <div class="nav-section">角色狀態</div>
     <div class="nav-item" data-panel="pets" id="petsNavItem">🐾 寵物</div>
@@ -570,6 +571,16 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
         寶石數值 = 基礎值 + 成功格子的加總。寶石位置照角色等級一格一格開（遊戲開格要付錢，這裡直接開）。
       </div>
       <div id="gemPanelBody"></div>
+    </div>
+
+    <!-- ══ 鑲嵌石 ══ -->
+    <div class="panel" id="panel-stones">
+      <div class="panel-title">💠 鑲嵌石</div>
+      <div class="panel-desc">
+        2026-10-08 改版新增的系統：角色身上固定四顆石頭，每強化成功一階多一條能力。
+        這裡列出每顆石頭目前的能力，並且可以把「變更次數」補回上限。
+      </div>
+      <div id="stonePanelBody"></div>
     </div>
 
     <!-- ══ 寵物 ══ -->
@@ -820,6 +831,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <script src="data/missions.js"></script>
 <script src="data/daily.js"></script>
 <script src="data/gems.js"></script>
+<script src="data/stones.js"></script>
 <script src="data/enchant.js"></script>
 <script src="data/questLines.js"></script>
 <script src="data/app.js?v=42"></script>

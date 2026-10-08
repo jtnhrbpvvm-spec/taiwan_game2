@@ -38,6 +38,8 @@
   if (oldBackdrop) oldBackdrop.remove();
   var oldAlchemyBackdrop = document.getElementById("iw-alchemy-backdrop");
   if (oldAlchemyBackdrop) oldAlchemyBackdrop.remove();
+  var oldStoneBackdrop = document.getElementById("iw-stone-backdrop");
+  if (oldStoneBackdrop) oldStoneBackdrop.remove();
   var oldAlchemyFabWrap = document.getElementById("iw-alchemy-fab-wrap");
   if (oldAlchemyFabWrap) oldAlchemyFabWrap.remove();
   var oldAlchemyShowBtn = document.getElementById("iw-alchemy-show-btn");
@@ -126,28 +128,28 @@
     ":root{--iw-panel:#f8efdd;--iw-inset:#f6ead2;--iw-sel:#f3ddb2;--iw-line:#cdb48a;--iw-line-hi:#a28358;--iw-edge:#6b4a2a;",
     "--iw-text:#45301f;--iw-dim:#725c46;--iw-faint:#8a735b;--iw-accent:#8d6a30;--iw-ink:#6b4d17;",
     "--iw-go:#2f6b78;--iw-go-lift:#377986;--iw-go-sink:#245663;--iw-btn-top:#fff7e6;--iw-btn-bottom:#edd4a4;--iw-warn:#a8412f;}",
-    "[id^=iw-enhance] *,[id^=iw-alchemy] *,.iw-inline-btn{box-sizing:border-box;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;}",
+    "[id^=iw-enhance] *,[id^=iw-alchemy] *,[id^=iw-stone] *,.iw-inline-btn{box-sizing:border-box;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;}",
     // 強化卡片上的「⚡強化」：遊戲的藍綠色主按鈕樣式，比「換一件」顯眼一點
     ".iw-inline-btn{background:linear-gradient(180deg,var(--iw-go-lift),var(--iw-go),var(--iw-go-sink));color:#fff;",
     "border:2px solid #1d4650;border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer;margin-right:8px;white-space:nowrap;",
     "box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #163a42,0 3px 6px rgba(0,0,0,.18);}",
     ".iw-inline-btn:hover{background:linear-gradient(180deg,#3f8796,var(--iw-go-lift),var(--iw-go));}",
     ".iw-inline-btn:active{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.3);}",
-    "#iw-enhance-backdrop,#iw-alchemy-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999998;",
+    "#iw-enhance-backdrop,#iw-alchemy-backdrop,#iw-stone-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999998;",
     "display:flex;align-items:center;justify-content:center;padding:16px;}",
-    "#iw-enhance-modal,#iw-alchemy-modal{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;",
+    "#iw-enhance-modal,#iw-alchemy-modal,#iw-stone-modal{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;",
     "width:100%;max-width:440px;max-height:88vh;overflow-y:auto;padding:0 20px 20px;box-shadow:0 10px 30px rgba(0,0,0,.35);position:relative;}",
-    "#iw-enhance-modal h2,#iw-alchemy-modal h2{margin:0 -20px 14px;padding:12px 44px 11px 20px;font-size:16px;color:var(--iw-text);",
+    "#iw-enhance-modal h2,#iw-alchemy-modal h2,#iw-stone-modal h2{margin:0 -20px 14px;padding:12px 44px 11px 20px;font-size:16px;color:var(--iw-text);",
     "background:linear-gradient(180deg,#fdf3e0,#f1dcb4);border-bottom:1px solid rgba(162,131,88,.55);",
     "border-top:4px solid var(--iw-go);position:sticky;top:0;z-index:1;}",
-    "#iw-enhance-modal label,#iw-alchemy-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--iw-accent);margin:12px 0 4px;}",
-    "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number]{width:100%;padding:8px 9px;",
+    "#iw-enhance-modal label,#iw-alchemy-modal label,#iw-stone-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--iw-accent);margin:12px 0 4px;}",
+    "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number],#iw-stone-modal select,#iw-stone-modal input[type=number]{width:100%;padding:8px 9px;",
     "background:var(--iw-inset);border:1px solid #b99b6c;border-radius:8px;color:var(--iw-text);font-size:13.5px;",
     "box-shadow:inset 0 2px 4px rgba(0,0,0,.08);}",
-    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus{outline:none;",
+    "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus,#iw-stone-modal select:focus,#iw-stone-modal input:focus{outline:none;",
     "border-color:var(--iw-go);box-shadow:inset 0 2px 4px rgba(0,0,0,.08),0 0 0 3px rgba(47,107,120,.16);}",
     "#iw-enhance-modal input[type=checkbox],#iw-alchemy-modal input[type=checkbox]{accent-color:var(--iw-go);width:16px;height:16px;}",
-    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target{font-size:14px;color:var(--iw-text);background:rgba(255,250,240,.8);",
+    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target,#iw-stone-modal .iw-target{font-size:14px;color:var(--iw-text);background:rgba(255,250,240,.8);",
     "border:1px solid rgba(162,131,88,.5);border-left:4px solid var(--iw-go);border-radius:10px;padding:9px 10px;}",
     "#iw-enhance-modal .iw-warn{font-size:11.5px;color:var(--iw-warn);background:rgba(168,65,47,.07);border:1px solid rgba(168,65,47,.35);",
     "border-radius:8px;padding:6px 9px;margin-top:6px;line-height:1.6;display:none;}",
@@ -172,11 +174,23 @@
     "#iw-enhance-summary:not(:empty),#iw-alchemy-summary:not(:empty){background:rgba(255,250,240,.8);border:1px solid rgba(162,131,88,.5);border-radius:10px;padding:10px 12px;}",
     "#iw-enhance-summary b,#iw-alchemy-summary b,#iw-alchemy-status-summary b{color:var(--iw-ink);}",
     // ✕ 用 sticky + float 釘在標題列右上角，視窗內容往下捲也不會跟著捲走
-    "#iw-enhance-close,#iw-alchemy-close{position:sticky;float:right;top:12px;margin:12px -6px -40px 0;z-index:3;width:28px;height:28px;padding:0;line-height:24px;",
+    "#iw-enhance-close,#iw-alchemy-close,#iw-stone-close{position:sticky;float:right;top:12px;margin:12px -6px -40px 0;z-index:3;width:28px;height:28px;padding:0;line-height:24px;",
     "background:linear-gradient(180deg,var(--iw-btn-top),var(--iw-btn-bottom));border:2px solid var(--iw-edge);border-radius:50%;",
     "color:var(--iw-text);font-size:13px;cursor:pointer;box-shadow:0 2px 0 #4a3119;}",
     "#iw-enhance-modal::-webkit-scrollbar,#iw-alchemy-modal::-webkit-scrollbar,#iw-enhance-log::-webkit-scrollbar,#iw-alchemy-log::-webkit-scrollbar{width:8px;}",
     "#iw-enhance-modal::-webkit-scrollbar-thumb,#iw-alchemy-modal::-webkit-scrollbar-thumb,#iw-enhance-log::-webkit-scrollbar-thumb,#iw-alchemy-log::-webkit-scrollbar-thumb{background:var(--iw-line-hi);border-radius:4px;}",
+    // 鑲嵌石試算視窗：表格比較寬，視窗放大一點；結果表格用遊戲的羊皮紙配色
+    "#iw-stone-modal{max-width:600px;}",
+    "#iw-stone-modal::-webkit-scrollbar{width:8px;}#iw-stone-modal::-webkit-scrollbar-thumb{background:var(--iw-line-hi);border-radius:4px;}",
+    ".iw-stone-sec{margin:20px -20px 0;padding:8px 20px;font-size:14px;font-weight:700;color:var(--iw-text);",
+    "background:linear-gradient(180deg,#f6e5c3,#f1dcb4);border-top:1px solid rgba(162,131,88,.55);border-bottom:1px solid rgba(162,131,88,.55);}",
+    ".iw-stone-out{margin-top:12px;overflow-x:auto;}",
+    ".iw-stone-table{width:100%;border-collapse:collapse;font-size:12.5px;background:rgba(255,250,240,.8);border:1px solid rgba(162,131,88,.5);}",
+    ".iw-stone-table th{padding:6px 7px;text-align:left;font-size:11.5px;color:var(--iw-accent);border-bottom:1px solid var(--iw-line);white-space:nowrap;}",
+    ".iw-stone-table td{padding:6px 7px;border-bottom:1px solid rgba(205,180,138,.45);color:var(--iw-text);vertical-align:top;}",
+    ".iw-stone-table small{color:var(--iw-faint);font-size:11px;}",
+    ".iw-stone-table tr.iw-stone-best td{background:var(--iw-sel);font-weight:700;}",
+    ".iw-stone-note{margin-top:7px;font-size:12px;line-height:1.7;color:var(--iw-dim);}",
     // 左下角浮動按鈕（自動煉金／自動重生）：遊戲的膠囊按鈕樣式
     ".iw-fab{border:2px solid var(--iw-edge);border-radius:999px;font-weight:700;cursor:pointer;color:var(--iw-text);",
     "background:linear-gradient(180deg,var(--iw-btn-top) 0%,#f6e5c3 52%,var(--iw-btn-bottom) 100%);",
@@ -547,6 +561,7 @@
     try {
       tryUpgradeRefs(); // 如果一開始沒抓到 data/snap，這裡有機會重新補上（現在畫面上如果有 .card 元素，通常代表 data 也拿得到了）
       if (data) injectWindCardButton();
+      injectStoneCalcButton();
       // 舊版強化頁（每個部位一張小卡片，按鈕上顯示金幣費用）——保留相容，作者如果改回來也能用
       var goButtons = document.querySelectorAll(".card:not([data-id]) > div:first-child > button.go");
       if (goButtons.length === 0) return;
@@ -591,6 +606,315 @@
     } catch (err) {
       console.error("[一鍵強化] 插入按鈕時發生錯誤", err);
     }
+  }
+
+  // ==========================================================================
+  // 🧮 鑲嵌石試算（遊戲 2026-10-08 新增鑲嵌石）
+  // 進到「角色 → 鑲嵌石」畫面時，在右上角「？」說明鈕前面插一顆「🧮 試算」。只算機率跟花費，不會幫玩家按任何東西。
+  // 機率、花費全部讀遊戲自己的資料（data.stones、session.stonesView()），算法照遊戲的 md()/hd()：
+  //   變更一次抽中 ＝ 那一階能力組抽到那種能力的權重比例 × 那種能力的數值區間裡「≥ 最低數值」的比例；
+  //   勾固定券就只剩後面那一項（種類不變，只重抽數值）。
+  // data.stones：stones[].steps[] = {crystal, powder, success(/10000), group, gold, change:{crystal, gold}}、
+  //   groups = Map(能力組 → [[kind, 權重]])、kinds = Map(kind → {option, bands:[{min, max, weight}]})。
+  // ==========================================================================
+  var stoneBackdrop = null;
+  var STONE_DUST_PER_CRYSTAL = 10; // 閃亮粉末換閃亮結晶的比例（towns.json 寶石收藏家扎羅：10 換 1；讀得到遊戲資料就用遊戲的）
+  function stoneDefs() { return data && data.stones && Array.isArray(data.stones.stones) && data.stones.groups ? data.stones : null; }
+  function stoneKindName(kind) {
+    var k = stoneDefs().kinds.get(kind);
+    var o = k && data.options && data.options.kinds && data.options.kinds.find(function (x) { return x.kind === k.option; });
+    return o ? o.name : "能力 #" + kind;
+  }
+  function stoneAttrLabel(kind, value) {
+    try { return session.stoneAttrText({ kind: kind, value: value }); } catch (err) { return stoneKindName(kind) + " +" + value; }
+  }
+  function stoneKindChances(group) {
+    var list = stoneDefs().groups.get(group) || [];
+    var total = list.reduce(function (s, g) { return s + g[1]; }, 0);
+    return total > 0 ? list.map(function (g) { return [g[0], g[1] / total]; }) : [];
+  }
+  function stoneValueChance(kind, min) {
+    var k = stoneDefs().kinds.get(kind), bands = (k && k.bands) || [];
+    var total = bands.reduce(function (s, b) { return s + b.weight; }, 0);
+    if (total <= 0) return 0;
+    if (min == null) return 1;
+    return bands.reduce(function (s, b) {
+      var size = b.max - b.min + 1, hit = Math.min(size, Math.max(0, b.max - min + 1));
+      return s + b.weight / total * (hit / size);
+    }, 0);
+  }
+  function stoneValueRange(kind) {
+    var k = stoneDefs().kinds.get(kind), bands = (k && k.bands) || [];
+    return bands.length ? [Math.min.apply(null, bands.map(function (b) { return b.min; })), Math.max.apply(null, bands.map(function (b) { return b.max; }))] : [0, 0];
+  }
+  // 這顆石頭只有某幾階抽得到的能力（遊戲畫面上的紅字，照遊戲 ad()）
+  function stoneRareKinds(def) {
+    var count = {};
+    def.steps.forEach(function (st) { stoneKindChances(st.group).forEach(function (c) { count[c[0]] = (count[c[0]] || 0) + 1; }); });
+    var rare = {};
+    Object.keys(count).forEach(function (k) { if (count[k] < def.steps.length) rare[k] = true; });
+    return rare;
+  }
+  function stoneHave(itemId) {
+    try { return Number(session.usableCount(itemId, "stone")) || 0; } catch (err) { return 0; }
+  }
+  function stoneMallItem(use) {
+    var mall = (session.data && session.data.mall) || (data && data.mall);
+    return Array.isArray(mall) ? mall.find(function (m) { return m.use === use; }) : null;
+  }
+  // 名品館那張券現在一張多少金幣（count 張一起買的平均；有套餐的話遊戲會自動湊套餐）
+  function stoneTicketGold(use, count) {
+    try {
+      var it = stoneMallItem(use);
+      return it ? session.mallTotal(it, count || 1) / (count || 1) : null;
+    } catch (err) { return null; }
+  }
+  function stoneTicketCount(use) {
+    try { return Number(session.mallItemCount(use)) || 0; } catch (err) { return 0; }
+  }
+  function stonePct(p) {
+    if (!(p > 0)) return "0%";
+    var v = p * 100;
+    return (v >= 1 ? Math.round(v * 100) / 100 : Number(v.toPrecision(2))) + "%";
+  }
+  function stoneAvg(n) {
+    if (!isFinite(n)) return "抽不到";
+    return n < 10 ? String(Math.round(n * 10) / 10) : fmt(n);
+  }
+  function stoneTriesFor(p, conf) {
+    if (!(p > 0)) return Infinity;
+    return p >= 1 ? 1 : Math.ceil(Math.log(1 - conf) / Math.log(1 - p));
+  }
+
+  function injectStoneCalcButton() {
+    var panel = document.querySelector("section.stones, .panel.stones");
+    if (!panel || panel.querySelector("[data-iw-stone-btn]")) return;
+    var anchor = panel.querySelector('[data-kind="stone-help"]');
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "🧮 試算";
+    btn.title = "鑲嵌石試算：變更要洗幾次、強化要多少材料";
+    btn.className = "iw-inline-btn";
+    btn.setAttribute("data-iw-btn", "1");
+    btn.setAttribute("data-iw-stone-btn", "1");
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      try { openStoneCalc(); } catch (err) {
+        console.error("[鑲嵌石試算] 開啟視窗失敗", err);
+        alert("開啟視窗時發生錯誤：" + (err && err.message ? err.message : err));
+      }
+    });
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
+    else panel.insertBefore(btn, panel.firstChild);
+  }
+
+  function closeStoneCalc() {
+    if (stoneBackdrop) { stoneBackdrop.remove(); stoneBackdrop = null; }
+  }
+
+  function openStoneCalc() {
+    if (stoneBackdrop) return;
+    tryUpgradeRefs();
+    var defs = stoneDefs(), view = null;
+    try { view = session.stonesView(); } catch (err) { view = null; }
+    if (!defs || !view || !Array.isArray(view.stones)) {
+      showPopup("🧮 鑲嵌石試算", "讀不到遊戲的鑲嵌石資料。\n有可能是遊戲改版了，請回報給作者。");
+      return;
+    }
+    var pickedEls = Array.prototype.slice.call(document.querySelectorAll('.stones [data-kind="stone-pick"]'));
+    var picked = Math.max(0, pickedEls.findIndex(function (el) { return el.classList.contains("on"); }));
+    var crystalName = (data.itemById.get(view.crystalId) || {}).name || "結晶";
+    var powderName = (data.itemById.get(view.powderId) || {}).name || "粉末";
+    var lockItem = stoneMallItem("stone-lock"), chargeItem = stoneMallItem("stone-charge");
+    var lockName = (lockItem && lockItem.name) || "固定券", chargeName = (chargeItem && chargeItem.name) || "充值券";
+    var lockBundle = lockItem && lockItem.bundle && lockItem.bundle.count > 1 ? lockItem.bundle.count : 0;
+
+    stoneBackdrop = document.createElement("div");
+    stoneBackdrop.id = "iw-stone-backdrop";
+    var modal = document.createElement("div");
+    modal.id = "iw-stone-modal";
+    modal.innerHTML =
+      '<button id="iw-stone-close">✕</button>' +
+      '<h2>🧮 鑲嵌石試算</h2>' +
+      '<label>石頭</label>' +
+      '<select id="iw-s-stone">' + view.stones.map(function (s, i) {
+        return '<option value="' + i + '"' + (i === picked ? " selected" : "") + '>' + s.name + " +" + s.step + "（變更次數剩 " + s.changes + "）</option>";
+      }).join("") + '</select>' +
+      '<div id="iw-s-now" class="iw-target" style="margin-top:8px;font-size:12.5px;line-height:1.7;"></div>' +
+      '<div class="iw-stone-sec">🔁 變更要洗幾次</div>' +
+      '<label>要洗哪一階的能力</label><select id="iw-s-step"></select>' +
+      '<label>想要的能力</label><select id="iw-s-kind"></select>' +
+      '<label id="iw-s-min-label">數值至少要多少（留空＝不限）</label><input type="number" id="iw-s-min" step="1">' +
+      (lockBundle ? '<label>' + lockName + '怎麼買</label><select id="iw-s-ticket">' +
+        '<option value="1">不夠時讓遊戲現買（一次買 1 張）</option>' +
+        '<option value="' + lockBundle + '">先到名品館買 ' + lockBundle + ' 張的套餐</option></select>' : '') +
+      '<div id="iw-s-change-out" class="iw-stone-out"></div>' +
+      '<div class="iw-stone-sec">⬆️ 強化要多少材料</div>' +
+      '<label>強化到幾階</label><select id="iw-s-target"></select>' +
+      '<div id="iw-s-up-out" class="iw-stone-out"></div>' +
+      '<div class="iw-btnrow"><button class="iw-btn" id="iw-s-ok">關閉</button></div>';
+    stoneBackdrop.appendChild(modal);
+    document.body.appendChild(stoneBackdrop);
+
+    var $ = function (id) { return document.getElementById(id); };
+    var $stone = $("iw-s-stone"), $step = $("iw-s-step"), $kind = $("iw-s-kind"), $min = $("iw-s-min"), $target = $("iw-s-target");
+    var cur = function () { var i = Number($stone.value); return { def: defs.stones[i], st: view.stones[i] }; };
+
+    function fillStone() {
+      var c = cur(), rare = stoneRareKinds(c.def);
+      var latest = c.st.attrs[c.st.attrs.length - 1];
+      $("iw-s-now").innerHTML = (latest ? "最新一條（+" + c.st.step + "）：<b>" + latest.text + "</b>" : "還沒強化，沒有能力可以變更") +
+        "<br>持有：" + crystalName + " " + fmt(stoneHave(view.crystalId)) + "、" + powderName + " " + fmt(stoneHave(view.powderId)) +
+        "、" + lockName + " " + fmt(stoneTicketCount("stone-lock")) + "、金幣 " + fmt(snap().gold);
+      $step.innerHTML = c.def.steps.map(function (sd, i) {
+        var n = i + 1;
+        var note = n === c.st.step ? "目前最新，可以變更" : n < c.st.step ? "已經過了，遊戲裡改不了" : "還沒強化到";
+        var hasRare = stoneKindChances(sd.group).some(function (x) { return rare[x[0]]; });
+        return '<option value="' + n + '"' + (n === Math.max(1, c.st.step) ? " selected" : "") + ">+" + n + (hasRare ? "・稀有" : "") + "（" + note + "）</option>";
+      }).join("");
+      var opts = [];
+      for (var t = c.st.step + 1; t <= c.def.steps.length; t++) opts.push('<option value="' + t + '"' + (t === c.def.steps.length ? " selected" : "") + ">+" + t + "</option>");
+      $target.innerHTML = opts.join("");
+      $target.disabled = !opts.length;
+      fillKinds();
+    }
+    function fillKinds() {
+      var c = cur(), sd = c.def.steps[Number($step.value) - 1], rare = stoneRareKinds(c.def), prev = Number($kind.value) || 0;
+      var chances = stoneKindChances(sd.group);
+      $kind.innerHTML = '<option value="0">不指定（什麼能力都可以）</option>' + chances.map(function (x) {
+        return '<option value="' + x[0] + '"' + (x[0] === prev ? " selected" : "") + ">" + (rare[x[0]] ? "★ " : "") + stoneKindName(x[0]) + "（" + stonePct(x[1]) + "）</option>";
+      }).join("");
+      fillMin();
+    }
+    function fillMin() {
+      var kind = Number($kind.value);
+      var label = $("iw-s-min-label");
+      if (kind) {
+        var r = stoneValueRange(kind);
+        $min.min = r[0]; $min.max = r[1];
+        label.textContent = "數值至少要多少（" + r[0] + "～" + r[1] + "，留空＝不限）";
+      } else {
+        $min.removeAttribute("min"); $min.removeAttribute("max");
+        label.textContent = "數值至少要多少（留空＝不限）";
+      }
+      render();
+    }
+
+    function renderChange() {
+      var c = cur(), stepNo = Number($step.value), sd = c.def.steps[stepNo - 1], out = $("iw-s-change-out");
+      var kind = Number($kind.value), min = $min.value === "" ? null : Math.floor(Number($min.value));
+      if (min != null && !isFinite(min)) min = null;
+      var chances = stoneKindChances(sd.group);
+      var pKind = kind ? (chances.filter(function (x) { return x[0] === kind; })[0] || [0, 0])[1] : 1;
+      var pAny = chances.reduce(function (s, x) { return kind && x[0] !== kind ? s : s + x[1] * stoneValueChance(x[0], min); }, 0);
+      if (!kind && min == null) { out.innerHTML = '<div class="iw-stone-note">選一種想要的能力，或填一個最低數值，就會算出平均要變更幾次。</div>'; return; }
+      if (!(pAny > 0)) { out.innerHTML = '<div class="iw-stone-note" style="color:var(--iw-warn);">這一階抽不到這個條件（數值超過上限，或這一階沒有這種能力）。</div>'; return; }
+      var left = c.st.changes, perTicket = view.changesPerTicket || 50;
+      var ticketMode = $("iw-s-ticket") ? Number($("iw-s-ticket").value) : 1;
+      var ticketGold = stoneTicketGold("stone-lock", ticketMode);
+      var latest = stepNo === c.st.step ? c.st.attrs[c.st.attrs.length - 1] : null;
+      // 固定券只重抽數值：要嘛已經指定能力，要嘛就是洗「目前最新那一條」現在的能力
+      var lockKind = kind || (latest ? latest.attr.kind : 0);
+      var pVal = lockKind && min != null ? stoneValueChance(lockKind, min) : 0;
+      var rows = [];
+      function row(name, p, tries, ticketTries, within) {
+        rows.push({ name: name, p: p, tries: tries, tickets: ticketTries, within: within,
+          crystal: tries * sd.change.crystal, gold: tries * sd.change.gold + (ticketGold != null ? ticketTries * ticketGold : 0) });
+      }
+      row("不用" + lockName + "<br><small>能力跟數值一起重抽</small>", pAny, 1 / pAny, 0, 1 - Math.pow(1 - pAny, left));
+      var alreadyKind = !!(latest && latest.attr.kind === lockKind);
+      if (pVal > 0 && alreadyKind) {
+        row("每次都用" + lockName + "<br><small>目前已經是「" + stoneKindName(lockKind) + "」，只重抽數值</small>", pVal, 1 / pVal, 1 / pVal, 1 - Math.pow(1 - pVal, left));
+      }
+      if (kind && !alreadyKind && pVal > 0 && pVal < 1 && pKind > 0 && pKind < 1) {
+        // 兩段式：先不用券洗到那種能力（順便數值也到了就直接結束），沒到再用券只洗數值
+        var within = 0, notYet = 1;
+        for (var t = 1; t <= left; t++) {
+          within += notYet * pKind * (pVal + (1 - pVal) * (1 - Math.pow(1 - pVal, left - t)));
+          notYet *= 1 - pKind;
+        }
+        var lockTries = (1 - pVal) / pVal;
+        row("先洗到能力，再用" + lockName + "洗數值", null, 1 / pKind + lockTries, lockTries, within);
+      }
+      var html = '<table class="iw-stone-table"><thead><tr><th>做法</th><th>每次機率</th><th>平均次數</th><th>' + crystalName + '</th><th>金幣</th><th>剩 ' + left + ' 次內洗到</th></tr></thead><tbody>';
+      var best = rows.reduce(function (a, b) { return b.gold < a.gold ? b : a; });
+      rows.forEach(function (r) {
+        html += "<tr" + (r === best && rows.length > 1 ? ' class="iw-stone-best"' : "") + "><td>" + r.name + "</td><td>" + (r.p == null ? "－" : stonePct(r.p)) + "</td><td>" + stoneAvg(r.tries) +
+          "</td><td>" + stoneAvg(r.crystal) + "</td><td>" + fmt(r.gold) + (r.tickets > 0 ? "<br><small>含" + lockName + " " + stoneAvg(r.tickets) + " 張</small>" : "") +
+          "</td><td>" + stonePct(r.within) + "</td></tr>";
+      });
+      html += "</tbody></table>";
+      var notes = [];
+      var target = (kind ? (min != null ? stoneAttrLabel(kind, min) + " 以上" : stoneKindName(kind)) : "任何能力、數值 " + min + " 以上");
+      notes.push("目標：+" + stepNo + " 洗到「" + target + "」。平均值是期望值，運氣不好會多很多：不用券要有 90% 把握得準備 " + stoneAvg(stoneTriesFor(pAny, 0.9)) + " 次。");
+      if (rows.length > 1) notes.push("底色那一列是平均花費最少的做法" + (ticketGold != null ? "（" + lockName + "現在一張約 " + fmt(ticketGold) + " 金幣，每個整點會變）" : "") + "。");
+      if (best.tries > left) {
+        var need = Math.ceil((best.tries - left) / perTicket), chargeGold = stoneTicketGold("stone-charge", 1);
+        notes.push("⚠️ 平均次數比剩下的變更次數（" + left + "）還多，大約要再用 " + need + " 張" + chargeName + "（一張 +" + perTicket + " 次" +
+          (chargeGold != null ? "，現在一張約 " + fmt(chargeGold) + " 金幣" : "") + "）。");
+      }
+      var haveCrystal = stoneHave(view.crystalId);
+      if (haveCrystal < best.crystal) notes.push("⚠️ " + crystalName + "只有 " + fmt(haveCrystal) + " 個，平均要 " + stoneAvg(best.crystal) + " 個（現在夠變更 " + Math.floor(haveCrystal / sd.change.crystal) + " 次）。");
+      if (stepNo !== c.st.step) notes.push("提醒：遊戲只能變更最新那一條（目前是 +" + c.st.step + "），這一階是先幫你算好備用的。");
+      out.innerHTML = html + notes.map(function (n) { return '<div class="iw-stone-note">' + n + "</div>"; }).join("");
+    }
+
+    function renderUpgrade() {
+      var c = cur(), out = $("iw-s-up-out"), target = Number($target.value);
+      if (!target || target <= c.st.step) { out.innerHTML = '<div class="iw-stone-note">這顆已經強化到最高了。</div>'; return; }
+      var sum = { tries: 0, crystal: 0, powder: 0, gold: 0 }, allOk = 1;
+      var html = '<table class="iw-stone-table"><thead><tr><th>階</th><th>成功率</th><th>平均次數</th><th>' + crystalName + "</th><th>" + powderName + "</th><th>金幣</th></tr></thead><tbody>";
+      for (var n = c.st.step + 1; n <= target; n++) {
+        var sd = c.def.steps[n - 1], rate = sd.success / 10000, tries = rate > 0 ? 1 / rate : Infinity;
+        allOk *= rate;
+        sum.tries += tries; sum.crystal += tries * sd.crystal; sum.powder += tries * sd.powder; sum.gold += tries * sd.gold;
+        html += "<tr><td>+" + n + "</td><td>" + stonePct(rate) + "</td><td>" + stoneAvg(tries) + "</td><td>" + stoneAvg(tries * sd.crystal) +
+          "</td><td>" + stoneAvg(tries * sd.powder) + "</td><td>" + fmt(tries * sd.gold) + "</td></tr>";
+      }
+      html += '<tr class="iw-stone-best"><td colspan="2">平均合計</td><td>' + stoneAvg(sum.tries) + "</td><td>" + stoneAvg(sum.crystal) + "</td><td>" + stoneAvg(sum.powder) +
+        "</td><td>" + fmt(sum.gold) + "</td></tr></tbody></table>";
+      var notes = ["強化失敗只扣材料、階數不會掉。全部一次就成功的機率是 " + stonePct(allOk) + "。這裡只算強化，不含之後變更的花費。"];
+      var haveC = stoneHave(view.crystalId), haveP = stoneHave(view.powderId), gold = snap().gold;
+      var dustId = null;
+      (view.decompose || []).forEach(function (d) { d.yields.forEach(function (y) { if (y.itemId !== view.crystalId && y.itemId !== view.powderId) dustId = y.itemId; }); });
+      var dustName = dustId != null ? ((data.itemById.get(dustId) || {}).name || "粉末") : "";
+      var haveDust = dustId != null ? stoneHave(dustId) : 0;
+      var needC = Math.max(0, sum.crystal - haveC - Math.floor(haveDust / STONE_DUST_PER_CRYSTAL)), needP = Math.max(0, sum.powder - haveP);
+      notes.push("持有：" + crystalName + " " + fmt(haveC) + (dustId != null ? "（另有" + dustName + " " + fmt(haveDust) + "，" + STONE_DUST_PER_CRYSTAL + " 個可換 1 個）" : "") +
+        "、" + powderName + " " + fmt(haveP) + "、金幣 " + fmt(gold) + "。");
+      if (needC <= 0 && needP <= 0 && gold >= sum.gold) notes.push("✅ 照平均值算，手上的材料跟金幣都夠。");
+      else {
+        var lack = [];
+        if (needC > 0) lack.push(crystalName + " 約 " + fmt(Math.ceil(needC)) + " 個");
+        if (needP > 0) lack.push(powderName + " 約 " + fmt(Math.ceil(needP)) + " 個");
+        if (gold < sum.gold) lack.push("金幣 約 " + fmt(sum.gold - gold));
+        notes.push("⚠️ 照平均值算還缺：" + lack.join("、") + "。");
+      }
+      if ((needC > 0 || needP > 0) && (view.decompose || []).length) {
+        // 補齊缺的材料大概要打碎幾顆：每顆寶石平均給的結晶（含粉末換的）跟七彩粉末，兩種材料取比較多的那個
+        var per = view.decompose.map(function (d) {
+          var avg = function (id) { return d.yields.reduce(function (s, y) { return y.itemId === id ? s + (y.min + y.max) / 2 * y.chance / 10000 : s; }, 0); };
+          var cPer = avg(view.crystalId) + (dustId != null ? avg(dustId) / STONE_DUST_PER_CRYSTAL : 0), pPer = avg(view.powderId);
+          var gems = Math.max(needC > 0 ? (cPer > 0 ? needC / cPer : Infinity) : 0, needP > 0 ? (pPer > 0 ? needP / pPer : Infinity) : 0);
+          return ((data.itemById.get(d.gemId) || {}).name || "寶石") + " 約 " + stoneAvg(Math.ceil(gems)) + " 顆（持有 " + fmt(stoneHave(d.gemId)) + "）";
+        });
+        notes.push("要補齊缺的材料，只打碎同一種寶石的話大約要：" + per.join("；") + "。");
+      }
+      out.innerHTML = html + notes.map(function (n) { return '<div class="iw-stone-note">' + n + "</div>"; }).join("");
+    }
+    function render() { renderChange(); renderUpgrade(); }
+
+    $stone.addEventListener("change", fillStone);
+    $step.addEventListener("change", fillKinds);
+    $kind.addEventListener("change", fillMin);
+    $min.addEventListener("input", renderChange);
+    $target.addEventListener("change", renderUpgrade);
+    if ($("iw-s-ticket")) $("iw-s-ticket").addEventListener("change", renderChange);
+    $("iw-stone-close").addEventListener("click", closeStoneCalc);
+    $("iw-s-ok").addEventListener("click", closeStoneCalc);
+    stoneBackdrop.addEventListener("click", function (e) { if (e.target === stoneBackdrop) closeStoneCalc(); });
+    fillStone();
   }
 
   injectButtons();

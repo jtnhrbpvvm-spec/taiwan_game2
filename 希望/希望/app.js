@@ -902,6 +902,25 @@
   });
   $hintRow.appendChild(questLineChip);
 
+  // 鑲嵌石（2026-10-08 新增的系統）：資料檔是舊版、沒有 stoneIndex.js 時就不顯示
+  if (window.STONES) {
+    var stoneChip = document.createElement("span");
+    stoneChip.className = "hint-chip";
+    stoneChip.style.borderColor = "var(--gold)";
+    stoneChip.style.color = "var(--gold-hi)";
+    stoneChip.textContent = "💠 鑲嵌石";
+    stoneChip.addEventListener("click", function () {
+      resetNavHistory();
+      $input.value = "";
+      currentMatches = { items: [], monsters: [] };
+      renderResultList("");
+      currentView = { kind: "stones", id: "" };
+      showStoneGuide();
+      scrollToDetail();
+    });
+    $hintRow.appendChild(stoneChip);
+  }
+
   // ---------- 搜尋 ----------
   var currentMatches = { items: [], monsters: [] };
 
@@ -953,6 +972,8 @@
       showQuestLineDetail(id);
     } else if (kind === "questtab") {
       openQuestTab(id);
+    } else if (kind === "stones") {
+      showStoneGuide();
     }
     if (restoreScrollY != null) window.scrollTo(0, restoreScrollY);
     else scrollToDetail();
@@ -3086,6 +3107,7 @@
     html += exchangeSectionHtml(id);
     html += extraSourcesHtml(id);
     html += gemSectionHtml(id);
+    html += stoneSectionHtml(id);
 
     var questRefs = buildQuestReferences(id);
     var isDailyToken = DAILY.quests.length > 0 && MISSION_TOKEN_ITEM_ID != null && Number(id) === MISSION_TOKEN_ITEM_ID;
@@ -3260,6 +3282,218 @@
       html += '<div style="font-size:13px;margin-top:8px;">取得方式：' + g.c.count + ' 顆 ' + (GEM_TIER_LABEL[g.c.tier] || g.c.tier) + ' 階技能寶石合成，抽到這顆的機率 ' + boxPctText(g.p) + '。</div>';
     });
     return html;
+  }
+
+  // ---------- 鑲嵌石（stones.json，2026-10-08 新增；update_data.py build_stones() 產生 stoneIndex.js）----------
+  // 角色身上固定 4 顆石頭，跟上面的技能寶石是兩個系統。STONES 的欄位說明寫在 build_stones()。
+  // steps[i] = [結晶, 七彩粉末, 成功率/10000, 能力組, 金幣, 變更要的結晶, 變更要的金幣]
+  var STONES = window.STONES || null;
+  function stonePctText(p) { return (Math.round(p * 1000000) / 10000) + "%"; }
+  function stoneItemName(id) { return ITEMS[id] ? ITEMS[id].name : "無資料"; }
+  function stoneYieldText(y) {
+    return '×' + (y[1] === y[2] ? y[1] : y[1] + '~' + y[2]) + (y[3] < 10000 ? '（' + stonePctText(y[3] / 10000) + '）' : '');
+  }
+  function stoneGroupChances(group) {
+    var list = STONES.groups[group] || [];
+    var total = list.reduce(function (s, g) { return s + g[1]; }, 0) || 1;
+    var out = {};
+    list.forEach(function (g) { out[g[0]] = g[1] / total; });
+    return out;
+  }
+  // 「紅字能力」＝這顆石頭只有某幾階抽得到的能力（遊戲 ad()：出現在某些階的能力組、但不是每一階都有）
+  function stoneRareKinds(stone) {
+    var count = {};
+    stone.steps.forEach(function (st) {
+      Object.keys(stoneGroupChances(st[3])).forEach(function (k) { count[k] = (count[k] || 0) + 1; });
+    });
+    var rare = {};
+    Object.keys(count).forEach(function (k) { if (count[k] < stone.steps.length) rare[k] = true; });
+    return rare;
+  }
+  function stoneStepIsRare(stone, idx) {
+    var rare = stoneRareKinds(stone);
+    return Object.keys(stoneGroupChances(stone.steps[idx][3])).some(function (k) { return rare[k]; });
+  }
+  function stoneStepsText(idxs) { return idxs.map(function (i) { return '+' + (i + 1); }).join('／'); }
+  function stoneGuideLinkHtml() {
+    return '<div style="margin-top:8px;"><span class="name-link" data-goto-stones="1" style="cursor:pointer;">看鑲嵌石完整說明 →</span></div>';
+  }
+  // 分解表：onlyItemId 有給就只列那一種產物（物品頁用）
+  function stoneDecomposeTableHtml(onlyItemId) {
+    var cols = [];
+    STONES.decompose.forEach(function (d) { d[1].forEach(function (y) { if (cols.indexOf(y[0]) < 0) cols.push(y[0]); }); });
+    if (onlyItemId != null) cols = cols.filter(function (c) { return c === onlyItemId; });
+    var html = '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>打碎的寶石</th>' +
+      cols.map(function (c) { return '<th><span class="name-link" data-goto-item="' + c + '">' + escapeHtml(stoneItemName(c)) + '</span></th>'; }).join('') + '</tr></thead><tbody>';
+    STONES.decompose.forEach(function (d) {
+      html += itemLinkRow(d[0], cols.map(function (c) {
+        var y = d[1].filter(function (x) { return x[0] === c; })[0];
+        return '<td>' + (y ? stoneYieldText(y) : '－') + '</td>';
+      }).join(''));
+    });
+    return html + '</tbody></table></div>';
+  }
+  function stoneCostTableHtml(stone) {
+    var html = '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>階</th><th>成功率</th><th>' +
+      escapeHtml(stoneItemName(STONES.crystalId)) + '</th><th>' + escapeHtml(stoneItemName(STONES.powderId)) +
+      '</th><th>金幣</th><th>變更一次</th></tr></thead><tbody>';
+    var sum = [0, 0, 0], avg = [0, 0, 0];
+    stone.steps.forEach(function (st, i) {
+      var rate = st[2] / 10000, rare = stoneStepIsRare(stone, i);
+      [st[0], st[1], st[4]].forEach(function (v, k) { sum[k] += v; avg[k] += rate > 0 ? v / rate : 0; });
+      html += '<tr' + (rare ? ' class="refine-step"' : '') + '><td><b>+' + (i + 1) + '</b>' + (rare ? ' <span class="group-tag">稀有</span>' : '') + '</td>' +
+        '<td><span class="rate' + (rate < 0.5 ? ' low' : '') + '">' + stonePctText(rate) + '</span></td>' +
+        '<td>' + st[0] + '</td><td>' + st[1] + '</td><td>' + bigNumHtml(st[4]) + '</td>' +
+        '<td>' + st[5] + ' 個＋' + bigNumHtml(st[6]) + '</td></tr>';
+    });
+    html += '<tr><td colspan="2">一次都沒失敗</td><td>' + sum[0] + '</td><td>' + sum[1] + '</td><td>' + bigNumHtml(sum[2]) + '</td><td>－</td></tr>';
+    html += '<tr><td colspan="2">照成功率平均</td><td>約 ' + Math.round(avg[0]) + '</td><td>約 ' + Math.round(avg[1]) + '</td><td>約 ' +
+      bigNumHtml(Math.round(avg[2])) + '</td><td>－</td></tr>';
+    return html + '</tbody></table></div>';
+  }
+  // 每顆石頭抽到各種能力的機率：大多數階一個機率，少數階不同的另外標出是哪幾階
+  function stoneAbilityTableHtml() {
+    var kinds = Object.keys(STONES.kinds).map(Number).sort(function (a, b) { return a - b; });
+    var html = '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>能力</th>' +
+      STONES.stones.map(function (s) { return '<th>' + escapeHtml(s.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    kinds.forEach(function (kind) {
+      var cells = STONES.stones.map(function (s) {
+        var byChance = {}; // 機率文字 → 哪幾階
+        s.steps.forEach(function (st, i) {
+          var p = stoneGroupChances(st[3])[kind] || 0;
+          (byChance[p] = byChance[p] || []).push(i);
+        });
+        var ps = Object.keys(byChance).map(Number).sort(function (a, b) { return byChance[b].length - byChance[a].length; });
+        if (ps.length === 1) return ps[0] > 0 ? stonePctText(ps[0]) : '<span style="color:var(--text-faint);">－</span>';
+        var parts = [];
+        if (ps[0] > 0) parts.push(stonePctText(ps[0]));
+        ps.slice(1).forEach(function (p) {
+          if (p > 0) parts.push('<span style="font-size:12px;color:' + (ps[0] > 0 ? 'var(--text-faint)' : 'var(--bad, #c0392b)') + ';">' +
+            (ps[0] > 0 ? '' : '<b>') + stoneStepsText(byChance[p]) + '：' + stonePctText(p) + (ps[0] > 0 ? '' : '</b>') + '</span>');
+        });
+        return parts.join('<br>');
+      });
+      if (cells.every(function (c) { return c.indexOf('－') >= 0 && c.indexOf('%') < 0; })) return;
+      html += '<tr><td><b>' + escapeHtml(STONES.kinds[kind].name) + '</b></td>' + cells.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+    });
+    return html + '</tbody></table></div>';
+  }
+  function stoneBandsTableHtml() {
+    var groups = [];
+    Object.keys(STONES.kinds).map(Number).sort(function (a, b) { return a - b; }).forEach(function (kind) {
+      var k = STONES.kinds[kind], key = JSON.stringify(k.bands) + k.pct;
+      var g = groups.filter(function (x) { return x.key === key; })[0];
+      if (g) g.names.push(k.name); else groups.push({ key: key, names: [k.name], k: k });
+    });
+    var html = '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>能力</th><th>平均</th><th>數值區間（抽到那一段的機率）</th></tr></thead><tbody>';
+    groups.forEach(function (g) {
+      var total = g.k.bands.reduce(function (s, b) { return s + b[2]; }, 0) || 1;
+      var unit = g.k.pct ? '%' : '';
+      var mean = g.k.bands.reduce(function (s, b) { return s + b[2] / total * (b[0] + b[1]) / 2; }, 0);
+      html += '<tr><td><b>' + g.names.map(escapeHtml).join('<br>') + '</b></td><td>' + (Math.round(mean * 10) / 10) + unit + '</td><td style="font-size:12.5px;line-height:1.9;">' +
+        g.k.bands.map(function (b) {
+          return '<span style="white-space:nowrap;margin-right:10px;">' + (b[0] === b[1] ? b[0] : b[0] + '~' + b[1]) + unit +
+            ' <span style="color:var(--text-faint);">(' + stonePctText(b[2] / total) + ')</span></span>';
+        }).join(' ') + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+  }
+  var STONE_TICKET_NOTE = {
+    lock: function () { return '「變更」時勾選使用，每變更一次消耗 1 張：能力的種類不變，只重抽數值。沒勾就是種類跟數值一起重抽。'; },
+    charge: function () {
+      return '讓一顆鑲嵌石的變更次數 +' + STONES.changesPerTicket + '。加完不能超過 ' + STONES.changeCap + ' 次，所以要剩 ' +
+        (STONES.changeCap - STONES.changesPerTicket) + ' 次以下才能用。';
+    }
+  };
+  function stoneTicketsHtml() {
+    var keys = Object.keys(STONES.tickets || {}).filter(function (k) { return STONE_TICKET_NOTE[k]; });
+    if (!keys.length) return '';
+    var html = '<table class="dtable"><thead><tr><th>道具</th><th>用途</th><th>名品館價格</th></tr></thead><tbody>';
+    keys.forEach(function (k) {
+      var id = STONES.tickets[k], m = MALL_INDEX.items[String(id)];
+      html += itemLinkRow(id, '<td style="font-size:12.5px;">' + STONE_TICKET_NOTE[k]() + '</td>' +
+        (m ? '<td data-mall-points="' + m.points + '">' + mallNowHtml(m.points) + '</td>' : '<td>－</td>'));
+    });
+    return html + '</tbody></table>';
+  }
+  function showStoneGuide() {
+    currentDetail = null;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">💠 鑲嵌石</h2>';
+    if (!STONES || !STONES.stones) {
+      $detail.innerHTML = html + '<div class="empty-note">資料檔是舊版，請重新執行 update_data.py。</div>';
+      return;
+    }
+    var maxStep = STONES.stones[0] ? STONES.stones[0].steps.length : 0;
+    var crystal = escapeHtml(stoneItemName(STONES.crystalId)), powder = escapeHtml(stoneItemName(STONES.powderId));
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・位置：「角色」→「鑲嵌石」分頁。每個角色身上固定有 ' + STONES.stones.length + ' 顆石頭（' +
+      STONES.stones.map(function (s) { return escapeHtml(s.name); }).join('、') + '），不是道具、不佔裝備格，跟技能寶石是兩個不同的系統。<br>' +
+      '・<b>強化</b>：每顆最高 +' + maxStep + '，每成功一階就多一條隨機能力；' + STONES.stones.length + ' 顆的能力全部直接加在角色身上。<br>' +
+      '・強化失敗只會扣掉材料跟金幣，<b>階數不會掉</b>。<br>' +
+      '・<b>變更</b>：只能重抽「最新那一條」能力，前面幾階的改不了。每顆石頭有 ' + STONES.changeCap + ' 次變更次數，每變更一次扣 1 次。<br>' +
+      '・<b>初始化</b>：整顆回到 +0 重新強化，但變更次數不會補回來。<br>' +
+      '・遊戲的變更畫面可以設定「想要的能力／最低數值／最多幾次」讓它自動抽。' +
+      '</div>';
+
+    html += '<div class="section-title">材料從哪來</div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">在鑲嵌石畫面的「分解」分頁把精煉用的寶石打碎（括號是出現機率，沒寫就是必定給）：</div>';
+    html += stoneDecomposeTableHtml(null);
+    if (STONES.dustId != null) {
+      html += exchangeTableHtml(escapeHtml(stoneItemName(STONES.dustId)) + ' 可以換成 ' + crystal, (EXCHANGE_BY_GIVE[String(STONES.dustId)] || []));
+    }
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">強化要「' + crystal + '＋' + powder + '＋金幣」，變更要「' + crystal + '＋金幣」。</div>';
+
+    // 花費完全一樣的石頭合在同一張表
+    var costGroups = [];
+    STONES.stones.forEach(function (s) {
+      var key = JSON.stringify(s.steps.map(function (st) { return [st[0], st[1], st[2], st[4], st[5], st[6]]; }));
+      var g = costGroups.filter(function (x) { return x.key === key; })[0];
+      if (g) g.stones.push(s); else costGroups.push({ key: key, stones: [s] });
+    });
+    costGroups.forEach(function (g) {
+      html += '<div class="section-title">強化花費 <span class="count">' + g.stones.map(function (s) { return escapeHtml(s.name); }).join('、') + '</span></div>';
+      html += stoneCostTableHtml(g.stones[0]);
+    });
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">每一列是「強化到那一階」要的東西，失敗也照扣。標「稀有」的那幾階有機會抽到紅字能力（見下表）。' +
+      '「變更一次」是重抽那一階能力的花費。「照成功率平均」是把失敗重試也算進去的期望值。</div>';
+
+    html += '<div class="section-title">會抽到什麼能力</div>';
+    html += stoneAbilityTableHtml();
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">格子裡是每強化成功一次（或每變更一次）抽到那種能力的機率；有標階數的代表只有那幾階是那個機率。' +
+      '紅字的能力只有那幾階抽得到。同一種能力可以重複抽到，數值會加在一起。</div>';
+
+    html += '<div class="section-title">抽到之後的數值</div>';
+    html += stoneBandsTableHtml();
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">先照機率抽一段，再從那一段裡平均抽一個數字。用固定券變更時重抽的就是這個。</div>';
+
+    var tickets = stoneTicketsHtml();
+    if (tickets) {
+      html += '<div class="section-title">相關的名品館道具</div>' + tickets;
+      html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">身上沒有券的時候，遊戲會直接用當下的名品館價格扣金幣現買。</div>';
+    }
+    $detail.innerHTML = html;
+  }
+  // 物品頁：鑲嵌石的材料、可以打碎的寶石、兩張名品館的券
+  function stoneSectionHtml(id) {
+    if (!STONES || !STONES.stones) return '';
+    var num = Number(id), body = '';
+    var col = function (idx) { return STONES.stones.reduce(function (a, s) { return a.concat(s.steps.map(function (st) { return st[idx]; })); }, []); };
+    var range = function (idx) { var v = col(idx); return Math.min.apply(null, v) + '~' + Math.max.apply(null, v); };
+    var yieldedBy = STONES.decompose.some(function (d) { return d[1].some(function (y) { return y[0] === num; }); });
+    if (num === STONES.crystalId) body += '鑲嵌石的材料：強化每一階要 ' + range(0) + ' 個，變更一次要 ' + range(5) + ' 個。';
+    else if (num === STONES.powderId) body += '鑲嵌石的材料：強化每一階要 ' + range(1) + ' 個（變更不用）。';
+    else if (num === STONES.dustId) body += '本身不能直接拿來強化鑲嵌石，要先找 NPC 換成 ' + itemChip(STONES.crystalId) + '（見上面的 NPC 兌換）。';
+    if (yieldedBy) body += '<div style="margin:8px 0 6px;">取得方式：在鑲嵌石畫面的「分解」分頁把寶石打碎。</div>' + stoneDecomposeTableHtml(num);
+    var dec = STONES.decompose.filter(function (d) { return d[0] === num; })[0];
+    if (dec) {
+      body += '可以在鑲嵌石畫面的「分解」分頁打碎，每打碎一顆得到：<div class="map-chip-row" style="margin-top:6px;">' +
+        dec[1].map(function (y) { return itemChip(y[0], null, stoneYieldText(y)); }).join('') + '</div>';
+    }
+    Object.keys(STONES.tickets || {}).forEach(function (k) {
+      if (STONES.tickets[k] === num && STONE_TICKET_NOTE[k]) body += STONE_TICKET_NOTE[k]();
+    });
+    if (!body) return '';
+    return '<div class="section-title">鑲嵌石</div><div style="font-size:13px;line-height:1.9;">' + body + '</div>' + stoneGuideLinkHtml();
   }
 
   // ---------- 怪物變體能力表、昏厥量表（2026-09-28 新增）----------
@@ -5685,7 +5919,8 @@
     ["🗺️ 地圖", "用下拉選單選一張地圖，列出這張地圖的所有怪物和合併的掉落總表（有輸入等級就換算成實際機率）。怪物頁的「出現地圖」也可以直接點進去。"],
     ["⚒️ 鐵匠相關", "發條強化屬性表，以及兩種分解：找雷分解（鎔解，選裝備就能算出每個精煉值的費用、各種鎔解石機率）和強硬分解（艾希頓裝備換凝結之魂的費用、機率、精煉加成）。"],
     ["✨ 技能", "各職業（含二轉分支）的技能列表；點技能看前置技能、特殊效果，以及每一級的威力、AP、冷卻、詠唱、收招、仇恨等數值。"],
-    ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"]
+    ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"],
+    ["💠 鑲嵌石", "角色身上四顆石頭的玩法、每一階的強化花費與成功率、會抽到哪些能力與數值機率、材料怎麼來（打碎寶石、找 NPC 兌換），以及相關的名品館道具。材料、可打碎的寶石、兩張券的物品頁也會列出用途。"]
   ];
   function openHelp() {
     var html = '<div class="section-title">使用說明</div>';
@@ -5782,7 +6017,7 @@
       return;
     }
     // 在彈出視窗（委託詳細／寶箱）裡點寵物、任務線這類還是會換掉主畫面的連結時，先把視窗關掉，不然新頁面會被蓋住
-    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith]")) {
+    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones]")) {
       closePeek();
       closeChangelog();
     }
@@ -5829,6 +6064,7 @@
     if (smithTab) { openSmithTab(smithTab.getAttribute("data-smith-tab")); return; }
     var gotoSmith = e.target.closest("[data-goto-smith]");
     if (gotoSmith) { navigateTo("smith", gotoSmith.getAttribute("data-goto-smith"), true); return; }
+    if (e.target.closest("[data-goto-stones]")) { navigateTo("stones", "", true); return; }
     var mapLink = e.target.closest("[data-open-map]");
     if (mapLink) { navigateTo("map", mapLink.getAttribute("data-open-map"), true); return; }
     var gotoQuestTab = e.target.closest("[data-goto-questtab]");

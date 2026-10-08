@@ -56,7 +56,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "slot","inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "slot","inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "stones", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -112,6 +112,7 @@
     { panel: "skills", icon: "✨", title: "已學技能", desc: "點選新增/移除技能，設定等級，支援全選滿等。" },
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
     { panel: "gems", icon: "💎", title: "技能寶石", desc: "開寶石位置、指定技能與寶石、新增寶石並設定每一格的強化結果。" },
+    { panel: "stones", icon: "💠", title: "鑲嵌石", desc: "查看四顆石頭目前的能力，把變更次數補回上限。" },
     { panel: "pets", icon: "🐾", title: "寵物", desc: "新增寵物、調整成長階段、經驗、飽食度。" },
     { panel: "potions", icon: "🧪", title: "藥水設定", desc: "自動回血 / 回 AP 的閾值與藥水種類。" },
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
@@ -444,6 +445,7 @@
     renderSkillsPanel(c);
     renderBuffsPanel(c);
     renderGems(c);
+    renderStones(c);
     renderPets(c);
     renderBattlePet(c);
     renderPotions(c);
@@ -2605,6 +2607,66 @@
     addRow.appendChild(gemPick); addRow.appendChild(addGem);
     wrap.appendChild(addRow);
     wrap.appendChild(el("div", { class: "note", style: "margin-top:8px;", text: "寶石本身是背包裡的道具，放進「強化」之後才會變成這裡的一顆（遊戲 startGemEnchant 會從背包扣掉一個）。這裡新增不會動到背包。seed 是遊戲用來決定之後強化結果的亂數種子。" }));
+  }
+
+  // ---------- 鑲嵌石（2026-10-08 改版新增）----------
+  // 存檔 stones：四顆石頭各一筆 { attrs:[{kind,value}], changes }，changes 是「還剩幾次變更」。
+  // 這個面板只顯示目前的能力，唯一會動到存檔的是把變更次數補回上限。
+  var STONES = window.STONES || null;
+  function stoneAttrText(a) {
+    var k = (STONES.kinds || {})[String(a.kind)];
+    return (k ? k.name : "能力 #" + a.kind) + " " + (a.value > 0 ? "+" : "") + a.value + (k && k.pct ? "%" : "");
+  }
+  function renderStones(c) {
+    var wrap = document.getElementById("stonePanelBody");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!STONES) { wrap.appendChild(el("div", { class: "panel-desc", text: "找不到鑲嵌石資料（data/stones.js），請重新執行 update_data.py。" })); return; }
+    if (!Array.isArray(c.stones) || !c.stones.length) {
+      wrap.appendChild(el("div", { class: "panel-desc", text: "這個存檔還沒有鑲嵌石（舊版格式）。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var cap = STONES.changeCap || 300;
+    var isFull = function (s) { return (s.changes || 0) >= cap; };
+    var refill = function (s) { s.changes = cap; };
+
+    var allBtn = el("button", { class: "btn", text: "🔄 四顆全部補滿變更次數" });
+    allBtn.disabled = c.stones.every(isFull);
+    allBtn.addEventListener("click", function () {
+      c.stones.forEach(refill);
+      renderStones(c);
+      toast("四顆石頭的變更次數都補回 " + cap + " 次", "ok");
+    });
+    wrap.appendChild(allBtn);
+
+    c.stones.forEach(function (s, idx) {
+      var attrs = Array.isArray(s.attrs) ? s.attrs : [];
+      var name = (STONES.names || [])[idx] || ("第 " + (idx + 1) + " 顆");
+      wrap.appendChild(el("div", { class: "section-title", text: name + " +" + attrs.length }));
+      if (!attrs.length) {
+        wrap.appendChild(el("div", { class: "panel-desc", style: "margin:0 0 8px;", text: "還沒強化。" }));
+      } else {
+        var table = el("table", { class: "etable" });
+        table.innerHTML = "<thead><tr><th style=\"width:70px;\">階</th><th>能力</th></tr></thead>";
+        var tb = el("tbody");
+        attrs.forEach(function (a, i) {
+          tb.appendChild(el("tr", null, [el("td", { text: "+" + (i + 1) }), el("td", { text: stoneAttrText(a) })]));
+        });
+        table.appendChild(tb);
+        wrap.appendChild(table);
+      }
+      var row = el("div", { style: "display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13px;" });
+      row.appendChild(el("span", { text: "變更次數　" + (s.changes || 0) + " / " + cap }));
+      var btn = el("button", { class: "btn btn-sm", text: "補滿" });
+      btn.disabled = isFull(s);
+      btn.addEventListener("click", function () {
+        refill(s);
+        renderStones(c);
+        toast(name + " 的變更次數補回 " + cap + " 次", "ok");
+      });
+      row.appendChild(btn);
+      wrap.appendChild(row);
+    });
   }
 
   function renderDungeon(c) {
