@@ -1,8 +1,8 @@
-version: 1.3.3
+version: 1.3.4
 files:
-  - url: hope-desktop-pet-setup-1.3.3.exe
-    sha512: a3rm/xsD94x4AvyOoX68mMpynJu57wbzqEYYxT/JqAblp3XyjOKo2lAH7JbJWWQT8un7cef7CvS35F11XqDnJg==
-    size: 94614099
-path: hope-desktop-pet-setup-1.3.3.exe
-sha512: a3rm/xsD94x4AvyOoX68mMpynJu57wbzqEYYxT/JqAblp3XyjOKo2lAH7JbJWWQT8un7cef7CvS35F11XqDnJg==
-releaseDate: '2026-10-08T12:49:18.702Z'
+  - url: hope-desktop-pet-setup-1.3.4.exe
+    sha512: b7h0lMjbp9OKhLY/vI1PPTBUkutSKp3okEumUXjdU4iJKVp35Z5W4fx8ifSkKTKpcJcjfB8upRp5ZL9u0YVtBw==
+    size: 94615540
+path: hope-desktop-pet-setup-1.3.4.exe
+sha512: b7h0lMjbp9OKhLY/vI1PPTBUkutSKp3okEumUXjdU4iJKVp35Z5W4fx8ifSkKTKpcJcjfB8upRp5ZL9u0YVtBw==
+releaseDate: '2026-10-08T13:09:18.595Z'
