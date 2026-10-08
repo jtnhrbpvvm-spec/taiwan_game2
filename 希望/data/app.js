@@ -2,6 +2,23 @@
   "use strict";
 
   var ITEMS = window.ITEMS || {};
+  // 次元守護者飾品（吊墜/耳環/手鐲/戒指）會成長：遊戲用連號物品 ID 表示等級（0lv 的 ID +1 = 1lv … +6 = 6lv），
+  // 但匯出的 items.js 只有 0lv。缺的等級沿用 0lv 的部位/需求/職業補上，不然裝備欄會認不出來、顯示成沒裝備。
+  // 能力值目前沒有資料，先用 0lv 的數值，並標 statsFromBase 讓預覽提示。
+  var GROWTH_MAX_LV = 6;
+  Object.keys(ITEMS).forEach(function (id) {
+    var base = ITEMS[id];
+    var m = /^(.*)\.0lv$/.exec(base.name || "");
+    if (!m || !base.slot) return;
+    for (var lv = 1; lv <= GROWTH_MAX_LV; lv++) {
+      var key = String(Number(id) + lv);
+      if (ITEMS[key]) break; // 撞到別的物品就停，不覆蓋真實資料
+      var copy = JSON.parse(JSON.stringify(base));
+      copy.name = m[1] + "." + lv + "lv";
+      copy.statsFromBase = true;
+      ITEMS[key] = copy;
+    }
+  });
   // 五行寶石系統：鑲到武器上的屬性，直接存在該武器 stack 的 element 欄位（跟 refine 平行，不是巢狀在 options 裡）
   var ELEMENT_LABEL = { fire: "火", water: "水", tree: "木", steel: "金", earth: "土", sun: "光", dark: "闇" };
   var ELEMENT_LIST = ["fire", "water", "tree", "steel", "earth", "sun", "dark"];
@@ -280,6 +297,7 @@
     if (it.slot) {
       var slotLabel = EQUIP_SLOTS[it.slot] || it.slot;
       html += '<div style="margin-bottom:8px;font-size:12.5px;color:var(--text2);">裝備部位：<b style="color:var(--text);">' + slotLabel + '</b>　需求等級：<b style="color:var(--text);">Lv' + (it.minLv || 0) + '</b></div>';
+      if (it.statsFromBase) html += '<div style="margin-bottom:8px;font-size:12px;color:var(--yellow);">※ 這個等級的能力值尚未收錄，以下顯示的是 0lv 的數值。</div>';
       html += '<div class="ip-stats">';
       Object.keys(STAT_LABELS).forEach(function (k) {
         if (it[k]) html += '<div>' + STAT_LABELS[k] + ' <b>' + (it[k] > 0 ? "+" : "") + it[k] + '</b></div>';
@@ -876,7 +894,8 @@
 
       var currentStackId = c.loadout[slotKey];
       var currentStack = currentStackId ? c.stacks.find(function (s) { return s.id === currentStackId; }) : null;
-      var currentItem = currentStack ? ITEMS[String(currentStack.itemId)] : null;
+      // 資料庫裡沒有的物品（例如遊戲新加的）也要當成「有裝備」，不能顯示成空欄位
+      var currentItem = currentStack ? (ITEMS[String(currentStack.itemId)] || { name: "未知物品 #" + currentStack.itemId }) : null;
 
       var eligible = c.stacks.filter(function (stack) {
         if (currentStack && stack.id === currentStack.id) return false; // 目前裝備的另外顯示，不重複列出
