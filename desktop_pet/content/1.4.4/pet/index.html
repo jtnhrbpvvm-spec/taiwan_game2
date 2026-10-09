@@ -6,8 +6,9 @@
     <title>放置希望桌寵</title>
     <style>
       html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; }
-      #pet { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 0.2s; }
-      body.focus #pet { opacity: 0.5; }
+      /* 桌寵：可以有好幾隻，每隻一張畫布，由 pet.js 加進來 */
+      .pet { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 0.2s; }
+      body.focus .pet { opacity: 0.5; }
       #bubble {
         position: absolute; left: 0; top: 0; padding: 4px 10px; border-radius: 10px;
         font: 13px/1.4 "Microsoft JhengHei", sans-serif; color: #4a3a22; white-space: nowrap;
@@ -75,7 +76,6 @@
     </style>
   </head>
   <body>
-    <canvas id="pet"></canvas>
     <div id="bubble"></div>
     <div id="speech"></div>
     <div id="ask">

@@ -25,6 +25,7 @@ const MAX_LOOT_SHOWN = 4; // 一次存檔之間撿到很多種東西時，桌寵
 const POLL_MS = 3000;
 const PET_STRIP_HEIGHT = 320; // 要放得下拉到最大的桌寵＋頭上的提示框
 const DEFAULT_MODEL = "t_by"; // 咕咕
+const MAX_PETS = 10; // 桌面上最多同時幾隻桌寵
 const SELFTEST = process.argv.includes("--selftest");
 
 // 遊戲的 session 物件（這次掛機的收支累計、目前位置都在裡面）沒有掛在 window 上，要從 Vue 的元件樹裡找：
@@ -71,8 +72,10 @@ let incomeWin;
 let savesWin;
 let mapInfoWin;
 let pickerWin;
-// 使用者設定。petModel 沒設＝桌寵外觀跟著目前在打的怪物
-let settings = { petModel: undefined, helpSeen: false, mallReminder: true, gmReminder: true, stayPut: false, bookmarkTool: true,
+let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
+// 使用者設定。petCount＝桌面上幾隻桌寵（都顧同一個角色，只是熱鬧）；
+// petModels[i]＝第 i 隻自己選的外觀，沒選（null）就跟著目前在打的怪物
+let settings = { petCount: 1, petModels: [], helpSeen: false, mallReminder: true, gmReminder: true, stayPut: false, bookmarkTool: true,
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { damage: false, exp: false, loot: false } };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
@@ -84,6 +87,11 @@ function loadSettings() {
   try {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
     settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow } };
+    // 1.4.3 以前只有一隻，外觀記在 petModel
+    if (!Array.isArray(settings.petModels)) settings.petModels = [];
+    if (saved.petModel && !saved.petModels) settings.petModels = [saved.petModel];
+    delete settings.petModel;
+    settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
 }
 
@@ -322,15 +330,16 @@ function createPetWindow() {
   petWin.setIgnoreMouseEvents(true, { forward: true });
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
-    petWin.webContents.send("pet:model", resolveModel());
+    sendPets();
     petWin.webContents.send("pet:stay", settings.stayPut);
     petWin.webContents.send("pet:focus-show", settings.focusShow);
     if (lastState) petWin.webContents.send("pet:state", lastState);
   });
 }
 
-function popupMenu() {
-  buildMenu().popup({ window: petWin });
+/** petIndex＝對第幾隻桌寵按的右鍵。 */
+function popupMenu(petIndex) {
+  buildMenu(petIndex).popup({ window: petWin });
 }
 
 function setClickThrough(on) {
@@ -351,11 +360,12 @@ function toggleClickThrough() {
   else setClickThrough(!clickThrough);
 }
 
-function openSizer() {
+/** 大小是全部桌寵共用的；拉條開在被按右鍵的那一隻頭上。 */
+function openSizer(petIndex = 0) {
   // 拉條要用滑鼠操作，專注模式開著的話先關掉；桌寵被藏起來的話先叫出來
   if (clickThrough) setClickThrough(false);
   if (!petWin.isVisible()) petWin.showInactive();
-  petWin.webContents.send("pet:open-sizer");
+  petWin.webContents.send("pet:open-sizer", petIndex);
 }
 
 /** 說明、選外觀這種一般的小視窗：同一種只開一個，已經開著就拉到前面。 */
@@ -557,17 +567,37 @@ function incomeMenu() {
   };
 }
 
-function openPicker() {
+/** 幫第 petIndex 隻桌寵挑外觀。視窗已經開著、這次換了一隻的話，重新載入讓它標出那一隻目前選的。 */
+function openPicker(petIndex = 0) {
+  const retarget = pickerWin && !pickerWin.isDestroyed() && pickerTarget !== petIndex;
+  pickerTarget = petIndex;
   pickerWin = openPanel(pickerWin, "picker.html", {
     width: 440,
     height: 640,
     title: "選擇桌寵外觀",
     webPreferences: { preload: path.join(__dirname, "picker-preload.js") },
   });
+  if (retarget) pickerWin.webContents.reload();
 }
 
-/** 桌寵現在該長什麼樣：使用者自己選的優先，沒選就跟著目前蹲點在打的那隻怪。 */
-const resolveModel = () => settings.petModel ?? game.monster.get(lastRaw?.targetId)?.model ?? DEFAULT_MODEL;
+/**
+ * 每一隻桌寵現在該長什麼樣（陣列長度＝桌寵數量）：
+ * 使用者幫那一隻選的優先，沒選就跟著目前蹲點在打的那隻怪。
+ */
+function resolveModels() {
+  const following = game.monster.get(lastRaw?.targetId)?.model ?? DEFAULT_MODEL;
+  return Array.from({ length: settings.petCount }, (_, i) => settings.petModels[i] ?? following);
+}
+
+const sendPets = () => petWin?.webContents.send("pet:pets", resolveModels());
+
+function setPetCount(count) {
+  settings.petCount = count;
+  saveSettings();
+  sendPets();
+  // 正在幫牠挑外觀的那一隻被收掉了，視窗跟著關
+  if (pickerTarget >= count && pickerWin && !pickerWin.isDestroyed()) pickerWin.close();
+}
 
 /**
  * 選外觀視窗的清單：同一張動畫表只列一次（很多怪共用同一張，例如各種前綴的咕咕），
@@ -685,7 +715,10 @@ function focusShowItem(key, label) {
   };
 }
 
-function buildMenu() {
+/** petIndex＝這次是對第幾隻桌寵按的右鍵（從系統匣開的話當作第一隻）。 */
+function buildMenu(petIndex = 0) {
+  if (!(petIndex >= 0 && petIndex < settings.petCount)) petIndex = 0;
+  const many = settings.petCount > 1;
   return Menu.buildFromTemplate([
     { label: gameWin.isVisible() ? "隱藏遊戲視窗" : "顯示遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
     { type: "separator" },
@@ -709,8 +742,16 @@ function buildMenu() {
         settings.stayPut = item.checked;
         saveSettings();
         petWin.webContents.send("pet:stay", settings.stayPut);
-    petWin.webContents.send("pet:focus-show", settings.focusShow);
       },
+    },
+    {
+      label: "桌寵數量",
+      submenu: Array.from({ length: MAX_PETS }, (_, i) => ({
+        label: `${i + 1} 隻`,
+        type: "radio",
+        checked: settings.petCount === i + 1,
+        click: () => setPetCount(i + 1),
+      })),
     },
     incomeMenu(),
     { label: "目前地圖資訊…", click: openMapInfo },
@@ -726,8 +767,8 @@ function buildMenu() {
         if (!item.checked) loadGame();
       },
     },
-    { label: "調整大小…", click: openSizer },
-    { label: "選擇桌寵外觀…", click: openPicker },
+    { label: many ? "調整大小…（全部一起）" : "調整大小…", click: () => openSizer(petIndex) },
+    { label: many ? `選擇這隻桌寵的外觀…（第 ${petIndex + 1} 隻）` : "選擇桌寵外觀…", click: () => openPicker(petIndex) },
     {
       label: mallFormulaOk ? "黑店優惠提醒" : "黑店優惠提醒（遊戲改版，暫時停用）",
       type: "checkbox",
@@ -834,14 +875,20 @@ ipcMain.handle("pet:item-atlas", async () => {
 });
 ipcMain.on("pet:interactive", (_e, on) => petWin?.setIgnoreMouseEvents(!on, { forward: true }));
 ipcMain.handle("income:get", incomeDetail);
-ipcMain.handle("picker:list", () => ({ entries: pickerEntries(), current: settings.petModel ?? null }));
+ipcMain.handle("picker:list", () => ({
+  entries: pickerEntries(),
+  current: settings.petModels[pickerTarget] ?? null,
+  title: settings.petCount > 1 ? `選擇桌寵外觀（第 ${pickerTarget + 1} 隻）` : "選擇桌寵外觀",
+}));
 ipcMain.on("picker:choose", (_e, model) => {
-  settings.petModel = typeof model === "string" && /^[\w-]+$/.test(model) ? model : undefined;
+  const models = Array.from({ length: MAX_PETS }, (_, i) => settings.petModels[i] ?? null);
+  models[pickerTarget] = typeof model === "string" && /^[\w-]+$/.test(model) ? model : null;
+  settings.petModels = models;
   saveSettings();
-  petWin?.webContents.send("pet:model", resolveModel());
+  sendPets();
 });
 ipcMain.on("pet:toggle-game", toggleGame);
-ipcMain.on("pet:menu", popupMenu);
+ipcMain.on("pet:menu", (_e, index) => popupMenu(index));
 
 // ── 讀遊戲狀態 ────────────────────────────────────────────
 
@@ -943,7 +990,7 @@ async function pollState() {
   const { bag, mallRate, income: _income, ...rest } = s;
   lastState = { ...rest, ...describePlace(s) };
   petWin?.webContents.send("pet:state", lastState);
-  petWin?.webContents.send("pet:model", resolveModel());
+  sendPets();
 }
 
 // ── 啟動 ──────────────────────────────────────────────────
@@ -995,7 +1042,7 @@ app.whenReady().then(async () => {
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
-  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, quit: () => app.quit() });
+  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, quit: () => app.quit() });
 });
 
 app.on("before-quit", () => {

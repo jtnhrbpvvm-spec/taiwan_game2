@@ -286,11 +286,35 @@
       let chosen = "";
       const MAX_SHOWN = 90;
       // 縮圖直接用動畫表當背景圖、只露出左上角第一格（待機的第一格）；捲到看得見才載圖，不然幾百張一起載太慢
+      // 不能當桌寵的：遊戲站上沒有圖，或只有一格靜態圖、沒有走路動畫（箱子、礦石、樹那類）。
+      // 這個畫面讀不到動畫表的說明檔，改看圖的形狀：能用的動畫表至少 5 列格子（每列 6 格），不能用的最多 2 列，
+      // 所以高度不到寬度一半的就是不能用的。發現一個就把卡片拿掉並記下來，下次打開直接不列。
+      const UNUSABLE_KEY = "looks.unusable";
+      const unusable = new Set();
+      try {
+        for (const model of JSON.parse(localStorage.getItem(UNUSABLE_KEY)) || []) unusable.add(model);
+      } catch (e) {}
+      function dropCard(el, remember) {
+        unusable.add(el.dataset.model);
+        try {
+          if (remember) localStorage.setItem(UNUSABLE_KEY, JSON.stringify([...unusable]));
+        } catch (e) {}
+        const card = el.closest(".pick");
+        if (card) card.remove();
+      }
       const thumbs = new IntersectionObserver((seen) => {
         for (const s of seen) {
           if (!s.isIntersecting) continue;
           thumbs.unobserve(s.target);
-          s.target.style.backgroundImage = `url(${GAME_URL}sprites/${s.target.dataset.model}.webp)`;
+          const url = `${GAME_URL}sprites/${s.target.dataset.model}.webp`;
+          const image = new Image();
+          image.onload = () => {
+            if (image.naturalHeight < image.naturalWidth / 2) dropCard(s.target, true);
+            else s.target.style.backgroundImage = `url(${url})`;
+          };
+          // 載不到可能只是暫時沒網路，這次先不列，但不記下來
+          image.onerror = () => dropCard(s.target, false);
+          image.src = url;
         }
       });
       function markChosen() {
@@ -299,7 +323,7 @@
       }
       function renderLooks() {
         const q = $("search").value.trim().toLowerCase();
-        const shown = (entries || []).filter((e) => !q || e.search.toLowerCase().includes(q)).slice(0, MAX_SHOWN);
+        const shown = (entries || []).filter((e) => !unusable.has(e.model) && (!q || e.search.toLowerCase().includes(q))).slice(0, MAX_SHOWN);
         $("looks-empty").hidden = !!entries && entries.length > 0;
         thumbs.disconnect();
         $("list").innerHTML = shown.map((e) => `<button class="pick" data-model="${e.model}"><i data-model="${e.model}"></i><span>${escapeHtml(e.name)}</span><small>${e.group}</small></button>`).join("");

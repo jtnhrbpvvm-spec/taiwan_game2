@@ -10,7 +10,13 @@ const THUMB = 80;
 
 let entries = [];
 let current = null; // 目前選的動畫表；null＝跟著在打的怪物
-const missing = new Set(); // 遊戲站上沒有圖的
+// 不能當桌寵的：遊戲站上沒有圖，或只有一格靜態圖、沒有走路動畫（箱子、礦石、樹那類）。
+// 要載了動畫表才知道，所以發現一個就把卡片拿掉並記下來，下次打開直接不列。
+const UNUSABLE_KEY = "picker.unusable";
+const missing = new Set();
+try {
+  for (const model of JSON.parse(localStorage.getItem(UNUSABLE_KEY)) ?? []) missing.add(model);
+} catch {}
 
 const thumbLoader = new IntersectionObserver((seen) => {
   for (const s of seen) {
@@ -22,10 +28,12 @@ const thumbLoader = new IntersectionObserver((seen) => {
 
 async function drawThumb(card) {
   const got = await window.pickerApi.getSprite(card.dataset.model);
-  if (!got?.meta.layout?.idle) {
+  if (!got?.meta.layout?.idle || !got.meta.layout.walk) {
+    // 連不上遊戲站（got 是 null）可能只是暫時的，這種不記下來
     missing.add(card.dataset.model);
-    card.classList.add("missing");
-    card.querySelector("small").textContent = "沒有圖";
+    if (got) localStorage.setItem(UNUSABLE_KEY, JSON.stringify([...missing]));
+    card.remove();
+    empty.hidden = list.children.length > 0;
     return;
   }
   const image = await createImageBitmap(new Blob([got.image]));
@@ -43,7 +51,7 @@ function markCurrent() {
 
 function render() {
   const q = search.value.trim().toLowerCase();
-  const shown = entries.filter((e) => !q || e.search.toLowerCase().includes(q)).slice(0, MAX_SHOWN);
+  const shown = entries.filter((e) => !missing.has(e.model) && (!q || e.search.toLowerCase().includes(q))).slice(0, MAX_SHOWN);
   thumbLoader.disconnect();
   list.replaceChildren(
     ...shown.map((e) => {
@@ -84,6 +92,7 @@ search.addEventListener("input", render);
 window.pickerApi.list().then((got) => {
   entries = got.entries;
   current = got.current;
+  document.title = got.title; // 有好幾隻桌寵時，標題會寫這次是在幫第幾隻挑
   // 目前選的那隻排最前面，一打開就看得到
   entries.sort((a, b) => (b.model === current) - (a.model === current));
   render();
