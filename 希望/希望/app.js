@@ -4190,7 +4190,8 @@
     }
     if (src === "questLineIndex") return MAIN_QUEST_LINES[id] ? 'data-open-questline="' + id + '"' : "";
     if (src === "missions") return MISSIONS[id] ? 'data-mission-detail="' + id + '"' : "";
-    if (src === "quests" || src === "quest pages") return 'data-goto-questtab="commission"';
+    if (src === "quests") return 'data-goto-commission="q:' + id + '"';
+    if (src === "quest pages") return 'data-goto-commission="p:' + id + '"';
     if (src === "daily") return DAILY.quests.length ? 'data-goto-questtab="daily"' : "";
     if (CHANGELOG_ITEM_SOURCES.indexOf(src) !== -1) return ITEMS[id] ? 'data-changelog-goto="item:' + id + '"' : "";
     return "";
@@ -4783,17 +4784,17 @@
       t.pages.forEach(function (pg) {
         var list = questsByPage[pg.pageId] || [];
         var note = commissionNoFameNote(pg.page);
-        html += '<div class="equip-box" style="margin-bottom:12px;">';
+        html += '<div class="equip-box" data-commission-page="' + pg.pageId + '" style="margin-bottom:12px;">';
         html += '<div class="row1"><span class="slot">' + escapeHtml(pg.page.title) + '</span><span style="color:var(--text-faint);font-size:12px;">' + pg.npcs.map(escapeHtml).join("、") + '・' + list.length + ' 個委託</span></div>';
         if (note) html += '<div class="empty-note" style="padding:0 0 6px;">⚠️ ' + note + '</div>';
-        var rowAttrs = function (q) {
-          return 'data-commission-row="1" data-town="' + t.townId + '" data-lv="' + q.reqLevel + '" data-fame="' + (q.reqFameMin || 0) + '"';
+        var rowAttrs = function (q, qid) {
+          return 'data-commission-row="1" data-quest-id="' + qid + '" data-town="' + t.townId + '" data-lv="' + q.reqLevel + '" data-fame="' + (q.reqFameMin || 0) + '"';
         };
         // 桌機：完整表格
         html += '<div class="cm-desktop" style="overflow-x:auto;"><table class="dtable" style="min-width:600px;"><thead><tr><th>繳交物品</th><th>相關怪物</th><th>可接等級</th><th>可接名聲</th><th>獎勵</th></tr></thead><tbody>';
         list.forEach(function (r) {
           var q = r.q, mon = MONSTERS[String(q.monsterId)];
-          html += '<tr ' + rowAttrs(q) + '>' +
+          html += '<tr ' + rowAttrs(q, r.id) + '>' +
             '<td style="white-space:nowrap;">' + itemChip(q.itemId, q.count) + '</td>' +
             '<td>' + (mon ? '<span class="lv-tag">Lv.' + mon.lv + '</span><span class="name-link" data-goto-monster="' + q.monsterId + '">' + escapeHtml(mon.name) + '</span>' : "－") + '</td>' +
             '<td style="white-space:nowrap;">' + commissionLevelText(q) + '</td>' +
@@ -4806,7 +4807,7 @@
         html += '<div class="cm-mobile">';
         list.forEach(function (r) {
           var q = r.q;
-          html += '<div ' + rowAttrs(q) + ' data-commission-detail="' + r.id + '" data-commission-detail-town="' + t.townId + '" role="button" tabindex="0" ' +
+          html += '<div ' + rowAttrs(q, r.id) + ' data-commission-detail="' + r.id + '" data-commission-detail-town="' + t.townId + '" role="button" tabindex="0" ' +
             'style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer;">' +
             '<span class="name-link" style="font-size:14px;">' + pg.npcs.map(escapeHtml).join("、") + ' ›</span>' +
             '<span style="text-align:right;font-size:12.5px;line-height:1.6;color:var(--text-dim);white-space:nowrap;">' + commissionLevelText(q) + '<br>名聲 ' + commissionFameText(q, pg.page) + '</span>' +
@@ -4874,6 +4875,28 @@
     $jumpBy.addEventListener("change", fillJumpOptions);
     $jumpTo.addEventListener("change", doJump);
     fillJumpOptions();
+  }
+
+  // 從更新紀錄點某個委託／委託分類過來：開委託任務頁，捲到那一筆（或那個分類的框）並標黃。
+  // target 是「q:委託編號」或「p:分類編號」；同一個分類可能在好幾個城鎮都有，取畫面上第一個。
+  function focusCommissionTarget(target) {
+    var type = target.charAt(0), id = target.slice(2);
+    var sel = type === "q" ? '[data-commission-row][data-quest-id="' + id + '"]' : '[data-commission-page="' + id + '"]';
+    // 桌機表格和手機清單各有一組列，只取看得到的那一組（display:none 的 offsetParent 是 null）
+    var hits = Array.prototype.slice.call($detail.querySelectorAll(sel)).filter(function (el) { return el.offsetParent !== null; });
+    var $status = document.getElementById("commissionJumpStatus");
+    if (!hits.length) {
+      if ($status) $status.textContent = "委託任務頁裡沒有這一筆（可能沒有城鎮的委託處在發）";
+      return;
+    }
+    var marks = type === "q" ? hits : Array.prototype.slice.call(hits[0].querySelectorAll("[data-commission-row]"));
+    marks.forEach(function (el) { el.style.background = "rgba(201,162,75,.16)"; });
+    var townSec = hits[0].closest("[data-commission-town]");
+    var townTitle = townSec ? townSec.querySelector(".section-title") : null;
+    if ($status && townTitle) $status.textContent = "📍 " + townTitle.textContent.replace(/^\S+\s*/, "") + (type === "q" && hits.length > 1 ? "（共 " + hits.length + " 處）" : "");
+    var bar = document.getElementById("commissionBar");
+    var top = hits[0].getBoundingClientRect().top + window.pageYOffset - (bar ? bar.offsetHeight : 0) - 8;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }
 
   // 委託詳細視窗（手機版點 NPC 開啟），沿用更新紀錄／寶箱共用的那個彈出視窗
@@ -6602,6 +6625,15 @@
     if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones],[data-goto-skill]")) {
       closePeek();
       closeChangelog();
+    }
+    var gotoCommission = e.target.closest("[data-goto-commission]");
+    if (gotoCommission) {
+      closePeek();
+      closeChangelog();
+      // 帶目前的捲動位置進去＝navigateTo 不要自己捲回頂端，交給 focusCommissionTarget 捲到那一筆
+      navigateTo("questtab", "commission", true, window.pageYOffset);
+      focusCommissionTarget(gotoCommission.getAttribute("data-goto-commission"));
+      return;
     }
     var commissionDetail = e.target.closest("[data-commission-detail]");
     if (commissionDetail) { openCommissionDetail(commissionDetail.getAttribute("data-commission-detail"), commissionDetail.getAttribute("data-commission-detail-town")); return; }
