@@ -34,7 +34,7 @@ function __build(o){
     skills: getAllSkills().length, evil: isEvilHuntUnlocked() });
 }
 // 這個強度下每波混入野外修士／暗殺者的機率（遊戲用的是地圖的遭遇補償，強度不同就不同）
-function __cult(k){ __map.nv2Str = [k, k]; player.reputation = __rep; player.karma = __karma; player.currentMap = __map; player.currentMapIsSafe = false; const on = isEvilHuntUnlocked(), m = getWaveChanceMult() * nv2RewardSpeedAdj(getRewardMap(), null), ks = getKarmaState().key;
+function __cult(k){ __map.nv2Str = [k, k]; player.reputation = __rep; player.karma = __karma; player.currentMap = __map; player.currentMapIsSafe = false; const on = isEvilHuntUnlocked(), m = getWaveChanceMult() * nv2RewardSpeedAdj(getRewardMap(), null, getRewardSpeedCap()), ks = getKarmaState().key;
   const o = { cult: on ? Math.min(1, FIELD_CULTIVATOR_WAVE_CHANCE * m) : 0, amb: on && ks !== 'neutral' ? Math.min(1, AMBUSH_WAVE_CHANCE * m * getAptitudeSpecial().ambushMult) : 0, ambDemon: ks === 'good' };
   __map.nv2Str = [SPACETIME_REALM_STR0, SPACETIME_REALM_STR0]; return JSON.stringify(o); }
 function __run(N, T, k){

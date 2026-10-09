@@ -1229,7 +1229,7 @@ function renderHunt(a){
       <td class="nw">${REALMS[R.r]}10階<br><small>氣血 ${cb(R.est.avg.hp)}・攻擊 ${cb(R.est.avg.atk)}<br>強度 ${ST.str} 倍</small></td>
       <td class="num">${+R.est.h.toFixed(1)} 下<br><small>${R.sim.median<60?"—":Math.round(R.sim.killsHr)+" 隻／時"}</small></td>
       <td class="num">${pc(R.est.A)}<br><small>撐過 1 小時 ${stPc(R.sim.p60)}</small></td>
-      <td class="num"><b>${hWan(R.exp)}</b></td><td class="num"><span class="warn">−${hWan(ST.upkeep*3600)}</span></td><td class="num">${R.potCost>=1&&R.sim.median>=60?hWan(R.potCost):"—"}</td></tr>`:`<tr class="hlock"><td class="nw">時空秘境</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">只有${REALMS[ST.maxRealm]}以下才能進</td></tr>`);
+      <td class="num"><b>${hWan(R.exp)}</b><br><small>最多 ${ST.rewardCap} 倍</small></td><td class="num"><span class="warn">−${hWan(ST.upkeep*3600)}</span></td><td class="num">${R.potCost>=1&&R.sim.median>=60?hWan(R.potCost):"—"}</td></tr>`:`<tr class="hlock"><td class="nw">時空秘境</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">只有${REALMS[ST.maxRealm]}以下才能進</td></tr>`);
   const D=hDefense(a,P),pe0=evaDodge(P.eva-T.hit(a.r+(a.s-1)/10))*100,p1=v=>+v.toFixed(1);
   const z=a.p.zhenmo||{};
   $("huntOut").innerHTML=`<div class="hrec">${rec}</div>
@@ -1244,7 +1244,7 @@ function renderHunt(a){
   <b>每小時經驗有上限</b>：遊戲規定殺得比「同境界一般玩家」快也不會拿更多，所以寫「已達上限」的地圖再加強攻擊也不會變多，該往下一張圖走；寫「速度 N%」表示你殺得比一般玩家慢，收益按比例減少。<br>
   <b>靈界</b>：第四、五區在靈界，要從人界地圖的飛升點進去，進、出各要一套五行傳送陣靈石（金木水火土各 1 顆），在靈界戰死是回天元城外，不會回人界。這兩區的妖獸強度是同階一般玩家的 40～200 倍，門檻也改成看階數（例如神墟要真仙 4 階）。<br>
   <b>⚔️ 挑戰模式</b>：境界或階數不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽；現在可以離線、背景掛機（撐不住才送回）。好處是做裝通貨、武學秘典碎片掉率加倍，並有機會掉鍛造圖紙，練等不划算，所以不列入上面的推薦。<br>
-  <b>🌀 時空秘境</b>（亂星海）：妖獸是你境界 10 階的 30 倍強度，不掉靈石、每秒還要扣 1 萬靈石，經驗照主要練功地圖算，是拿靈石換掉寶的地方，所以不列入推薦；撐不撐得住看下面的「時空秘境存活機率」，規則見<a href="經驗與地圖.html">經驗與地圖</a>。<br>
+  <b>🌀 時空秘境</b>（亂星海）：妖獸是你境界 10 階的 30 倍強度，不掉靈石、每秒還要扣 1 萬靈石，經驗照主要練功地圖算（殺得夠快最多 3 倍），是拿靈石換掉寶的地方，所以不列入推薦；撐不撐得住看下面的「時空秘境存活機率」，規則見<a href="經驗與地圖.html">經驗與地圖</a>。<br>
   <b>估算的範圍</b>：和遊戲離線結算用同一套算法，只看攻擊、暴擊、連擊、氣血、防禦、閃避、金身，妖獸一律當成物理攻擊。<b>沒算</b>魔防（術法型妖獸與魔修打你是看魔防）、妖獸的暴擊與技能、天賦給的暴擊、吸血、回春、護盾、靈寵與夥伴的招式、屬性傷害、五行相剋、種族剋制，也沒算稱號、異火、仙法光環給的防禦閃避與修為加成，所以實際通常會比表上快一點、耐打一點；遊戲作者實測線上收益約比這個估算多 2～4 成。丹藥花費以培元丹（回 10%、200 靈石）估計。挑戰圖的妖獸強度落差很大，請多留餘裕。
   </div>
   <h2>🌀 時空秘境存活機率</h2>
@@ -1273,11 +1273,11 @@ function stCalc(a,P){
   if(a.r>ST.maxRealm)return null;
   const d=Object.assign(stDefaults(a),stOpt),F=n=>a.ex.fx[n]||0,mg=a.mag>a.phys,est=hEval(a,P,stM(a.r)),main=HMAPS.find(x=>x[0]===H_MAIN[a.r]),typ=hTypRounds(main);
   // 野外修士的遭遇照遊戲的補償：這裡的妖獸要打很久，所以幾乎每一波都會遇到；殺得比一般玩家快才會按比例減少
-  const wc=ST.base[a.r][4]*Math.min(1,(11+2*est.h)/(11+2*typ)),pot=ST.potions[d.pot]||null,on=d.cult&&a.r>=ST.cult.realm;
+  const wc=ST.base[a.r][4]*Math.min(1,ST.rewardCap*(11+2*est.h)/(11+2*typ)),pot=ST.potions[d.pot]||null,on=d.cult&&a.r>=ST.cult.realm;
   const I={r:a.r,hp:a.hp,atk:Math.max(a.phys,a.mag),mag:mg,skill:1.1,crit:(mg?a.magCrit:a.crit)/100,critDmg:a.critDmg,combo:a.combo/100,pen:a.ex.pen,hit:a.ex.evaPen,def:P.def,mdef:P.mdef,eva:P.eva,
     jin:F("金身"),huajin:F("化勁"),life:F("吸血"),soul:F("噬魂"),regen:F("回春"),reflect:F("反震"),shield:F("先手盾")*a.defMult,huti:F("護體")*a.defMult,undying:a.ex.undying,fr:F("定神"),light:a.ex.aff.light,dark:a.ex.aff.dark,aff:a.ex.aff,elem:!!a.ex.elem&&!a.ex.ignoreCounter,counter:F("剋敵"),dodgeHit:F("閃擊"),
     potion:pot?{th:Math.max(1,Math.min(99,d.th||50)),amt:pot[1]*(1+F("丹心"))}:null,cult:on?Math.min(1,ST.cult.p[0]*wc):0,amb:on&&d.amb?Math.min(1,ST.cult.p[1]*wc):0,ambDemon:d.ks>=0};
-  return{r:a.r,d,I,est,pot,on,key:JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*Math.min(1,(11+2*typ)/(11+2*est.h))*P.expMult};
+  return{r:a.r,d,I,est,pot,on,key:JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*Math.min(ST.rewardCap,(11+2*typ)/(11+2*est.h))*P.expMult};
 }
 function stSim(c){
   const sim=DMG.spacetime(c.I,{n:120}),v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
