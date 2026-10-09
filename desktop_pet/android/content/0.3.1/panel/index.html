@@ -68,8 +68,18 @@
       <section id="tab-settings">
         <div class="card" id="permission" hidden>
           <h2>需要一個權限</h2>
-          <p>桌寵要顯示在其他 App 上面，請開啟「顯示在其他應用程式上層」。按下面的按鈕會帶你到設定頁，把開關打開後回到這裡。</p>
+          <p>桌寵要顯示在其他 App 上面，請開啟「顯示在其他應用程式上層」（有些手機叫「浮動視窗」「懸浮視窗」）。按下面的按鈕會帶你到設定頁，把開關打開後回到這裡。</p>
           <button class="act primary" data-action="start">前往開啟權限</button>
+          <h2 style="margin-top: 16px">出現「應用程式存取權已遭拒絕」的話</h2>
+          <p>這是安卓對「不是從商店安裝的 App」多加的一道保護，要先手動解除一次：</p>
+          <ol style="margin: 6px 0; padding-left: 1.4em">
+            <li>先按「關閉」。</li>
+            <li>按下面的「打開應用程式資訊」。</li>
+            <li>按畫面右上角的「⋮」（三個點），選「允許受限制的設定」，照手機的指示驗證。</li>
+            <li>回到這裡，再按一次上面的「前往開啟權限」。</li>
+          </ol>
+          <button class="act" data-action="appInfo">打開應用程式資訊</button>
+          <p class="dim">找不到「⋮」的話：到手機的「設定 → 應用程式 → 放置希望桌寵」，在那個畫面的右上角。要先看過一次「已遭拒絕」的訊息，那個選項才會出現。</p>
         </div>
         <div class="card" id="update" hidden>
           <h2>有新版 <span id="update-version"></span></h2>
@@ -151,8 +161,8 @@
         </div>
         <div class="card">
           <h2>第一次使用</h2>
-          <p>遊戲畫面會自己打開。新玩家直接建角色；已經有在玩的話，在原本的裝置產生轉移碼，到這裡的選角畫面輸入六碼取回。</p>
-          <p class="dim">手機版目前不支援用檔案匯入、匯出存檔，請用轉移碼。</p>
+          <p>遊戲畫面會自己打開。新玩家直接建角色；已經有在玩的話，在選角畫面用轉移碼取回，或按「匯入」選存檔檔案。</p>
+          <p class="dim">在選角畫面按「匯出」，存檔會放到手機的「下載」資料夾。</p>
         </div>
         <div class="card">
           <h2>要注意的事</h2>

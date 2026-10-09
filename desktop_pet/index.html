@@ -153,8 +153,8 @@
       <section class="download">
         <h2>安卓手機版（測試中）</h2>
         <!-- ANDROID:START 這一段由安卓專案的 tools/publish.js 在每次發布 APK 時自動改寫，不要手動改 -->
-        <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/desktop_pet/android/hope-pet-android-0.3.0.apk" download>下載安卓版</a>
-        <p class="meta">版本 0.3.0・約 1.5 MB・Android 8 以上</p>
+        <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/desktop_pet/android/hope-pet-android-0.3.1.apk" download>下載安卓版</a>
+        <p class="meta">版本 0.3.1・約 1.6 MB・Android 8 以上</p>
         <!-- ANDROID:END -->
         <p class="note">桌寵會浮在手機畫面上，遊戲在背景繼續掛機。之後有新版，桌寵會自己更新或提醒你。</p>
       </section>
@@ -164,9 +164,18 @@
         <ol>
           <li>按「下載安卓版」，下載完點開那個 APK 檔。</li>
           <li>手機會問要不要允許「安裝未知來源的應用程式」，選允許，再按安裝。</li>
-          <li>打開 App，照畫面指示開啟「顯示在其他應用程式上層」的權限，桌寵就會出現。</li>
-          <li>第一次會自動打開遊戲。新玩家直接建角色；已經有在玩的話，在原本的裝置產生<b>轉移碼</b>，到選角畫面輸入六碼取回進度。</li>
+          <li>打開 App，照畫面指示開啟「顯示在其他應用程式上層」的權限（有些手機叫「浮動視窗」「懸浮視窗」），桌寵就會出現。</li>
+          <li>第一次會自動打開遊戲。新玩家直接建角色；已經有在玩的話，到選角畫面用<b>轉移碼</b>取回進度，或按「匯入」選存檔檔案。</li>
         </ol>
+        <h3>開權限時出現「應用程式存取權已遭拒絕」</h3>
+        <p>這是安卓對「不是從商店安裝的 App」多加的一道保護，OPPO、小米、三星等新款手機都會遇到。要先手動解除一次：</p>
+        <ol>
+          <li>先按「關閉」。</li>
+          <li>回到桌寵的畫面，按「打開應用程式資訊」（或到手機的「設定 → 應用程式 → 放置希望桌寵」）。</li>
+          <li>按畫面右上角的「⋮」（三個點），選「允許受限制的設定」，照手機的指示驗證。</li>
+          <li>回到桌寵，再按一次「前往開啟權限」，這次就可以把開關打開了。</li>
+        </ol>
+        <p class="note">要先看過一次「已遭拒絕」的訊息，「允許受限制的設定」那個選項才會出現。</p>
         <h3>怎麼操作</h3>
         <table>
           <tr><td>點桌寵</td><td>打開遊戲，按上方的「收起」或返回鍵收回去</td></tr>
@@ -179,7 +188,7 @@
           <li><span class="warn">安卓版還在測試，只在模擬器上測過，還沒有實機回報。</span>遇到問題請告訴作者。</li>
           <li>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</li>
           <li>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</li>
-          <li>手機版搬進度請用轉移碼，目前不支援用檔案匯入、匯出存檔。</li>
+          <li>在選角畫面按「匯出」，存檔會放到手機的「下載」資料夾。</li>
           <li>不要同時在瀏覽器或電腦版掛同一個角色，進度會互相蓋掉。</li>
         </ul>
       </section>
