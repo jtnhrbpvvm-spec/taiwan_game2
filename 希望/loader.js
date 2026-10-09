@@ -710,6 +710,22 @@
     });
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
     else panel.insertBefore(btn, panel.firstChild);
+    // 「🎯 自動洗」：兩段式自動變更（先洗屬性、再用固定券洗數值），放在「🧮 試算」前面
+    var runBtn = document.createElement("button");
+    runBtn.type = "button";
+    runBtn.textContent = "🎯 自動洗";
+    runBtn.title = "鑲嵌石自動洗：先洗出指定屬性，再用固定券洗指定數值";
+    runBtn.className = "iw-inline-btn";
+    runBtn.setAttribute("data-iw-btn", "1");
+    runBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      try { openStoneRun(); } catch (err) {
+        console.error("[鑲嵌石自動洗] 開啟視窗失敗", err);
+        alert("開啟視窗時發生錯誤：" + (err && err.message ? err.message : err));
+      }
+    });
+    btn.parentNode.insertBefore(runBtn, btn);
   }
 
   // ==========================================================================
@@ -729,11 +745,17 @@
   // 「補」永遠是呼叫遊戲自己的 chargeStone()，價格、扣款、紀錄都是遊戲在做，書籤不自己算。
   // ==========================================================================
   var STONE_AUTO_KEY = "iw-stone-auto-charge";
-  var stoneAuto = { on: false, mode: "own" };   // mode：own = 只用身上的充值券；buy = 券用完照名品館現價買
+  // mode：充值券 own = 只用身上的；buy = 用完照名品館現價買。lockMode：固定券（🎯 自動洗第二階段用），一樣兩種。
+  var stoneAuto = { on: false, mode: "own", lockMode: "own" };
   try {
     var savedStoneAuto = JSON.parse(localStorage.getItem(STONE_AUTO_KEY) || "null");
-    if (savedStoneAuto) { stoneAuto.on = !!savedStoneAuto.on; stoneAuto.mode = savedStoneAuto.mode === "buy" ? "buy" : "own"; }
+    if (savedStoneAuto) {
+      stoneAuto.on = !!savedStoneAuto.on;
+      stoneAuto.mode = savedStoneAuto.mode === "buy" ? "buy" : "own";
+      stoneAuto.lockMode = savedStoneAuto.lockMode === "buy" ? "buy" : "own";
+    }
   } catch (err) { /* 讀不到就用預設（關閉） */ }
+  var stoneOrigUntil = null;   // 遊戲原本的 changeStoneUntil（沒包自動 +50 的那層），🎯 自動洗自己管補次數，直接叫這個
   function saveStoneAuto() {
     try { localStorage.setItem(STONE_AUTO_KEY, JSON.stringify(stoneAuto)); } catch (err) { /* 存不了就只在這次有效 */ }
   }
@@ -762,6 +784,7 @@
       delete session.changeStoneAttr;
     }
     var origUntil = session.changeStoneUntil, origAttr = session.changeStoneAttr;
+    stoneOrigUntil = origUntil;
     session.changeStoneUntil = function (index, opts) {
       if (!stoneAuto.on) return origUntil.call(this, index, opts);
       var goldStart = this.player.gold;
@@ -844,6 +867,368 @@
     }
     var infoEl = box.querySelector(".iw-stone-auto-info"), text = stoneAutoInfoText();
     if (infoEl && infoEl.textContent !== text) infoEl.textContent = text;
+  }
+
+  // ==========================================================================
+  // 🎯 鑲嵌石自動洗（2026-10-09 新增）：兩段式自動變更
+  //   ① 洗屬性：不用固定券，屬性和數值一起重抽，洗到指定屬性為止（遊戲 want = {kind}）
+  //   ② 洗數值：用固定券，屬性不變只重抽數值，洗到「至少多少」為止（遊戲 lock = true、want = {kind: 0, min}）
+  // 一開始就已經是指定屬性 → 直接從 ② 開始；① 洗到的那一下數值剛好也達標 → 直接結束。
+  // 每一次變更都是呼叫遊戲自己的 changeStoneUntil（一次洗 1 下），機率、扣材料、扣金幣、買固定券都是遊戲在做；
+  // 這裡只負責：看現在這條該用哪個階段、次數用完要不要補 +50、有沒有超過上限／預算、什麼時候停。
+  // 補次數自己管（不經過上面包的那層），確定還要再洗才補，不會在最後一下白補一張。
+  // 執行期間把遊戲的 batch 打開，遊戲紀錄不會被一次一行洗版，結束時自己寫一行總結。
+  // ==========================================================================
+  style.textContent += "#iw-stone-modal .iw-stone-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}" +
+    "#iw-stone-modal label.iw-stone-check{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--iw-text);cursor:pointer;}" +
+    "#iw-stone-modal label.iw-stone-check input{width:16px;height:16px;}" +
+    ".iw-stone-steps{display:flex;gap:8px;margin-top:12px;}" +
+    ".iw-stone-step{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--iw-line-hi);background:rgba(255,250,240,.7);font-size:12.5px;line-height:1.6;color:var(--iw-dim);}" +
+    ".iw-stone-step b{display:block;font-size:13px;color:var(--iw-text);}" +
+    ".iw-stone-step.done{border-color:#3d7a3a;background:#eef6e8;}.iw-stone-step.done b::after{content:' ✓';color:#3d7a3a;}" +
+    ".iw-stone-step.now{border:2px solid var(--iw-go);background:#e9f3f4;}.iw-stone-step.now b{color:var(--iw-go);}" +
+    ".iw-stone-log{margin-top:12px;background:#fffaf0;border:1px solid var(--iw-line);border-radius:9px;padding:9px 11px;font-size:12.5px;line-height:1.9;max-height:220px;overflow:auto;}" +
+    ".iw-stone-log .hi{color:var(--iw-go);font-weight:700;}.iw-stone-log .ok{color:#3d7a3a;font-weight:700;}.iw-stone-log .cost{color:var(--iw-warn);}" +
+    ".iw-stone-sum{margin-top:12px;border-radius:9px;background:var(--iw-sel);padding:10px 12px;font-size:13px;line-height:1.9;}" +
+    // 左下角的浮動按鈕（自動煉金／掉落查詢）疊在所有視窗上面，會蓋住鑲嵌石視窗左下角的按鈕；鑲嵌石視窗開著的時候先藏起來
+    "body:has(#iw-stone-backdrop) #iw-alchemy-fab-wrap,body:has(#iw-stone-backdrop) #iw-alchemy-show-btn{display:none !important;}";
+
+  var stoneRunBackdrop = null, stoneRunning = false, stoneRunStop = false;
+  window.__iwStoneRunGeneration = (window.__iwStoneRunGeneration || 0) + 1;
+  var myStoneRunGeneration = window.__iwStoneRunGeneration;
+  function closeStoneRun() {
+    if (stoneRunning) { stoneRunStop = true; return; } // 執行中按關閉＝先停下來，停好之後再按一次才關
+    if (stoneRunBackdrop) { stoneRunBackdrop.remove(); stoneRunBackdrop = null; }
+  }
+  // 那種能力「至少多少」的選項：照遊戲自動變更那個選單的做法（_d()），每個數值區間的起點＋最大值
+  function stoneMinChoices(kind) {
+    var k = stoneDefs().kinds.get(kind), bands = (k && k.bands) || [];
+    var set = {};
+    bands.slice(1).forEach(function (b) { set[b.min] = true; });
+    var max = bands.reduce(function (m, b) { return Math.max(m, b.max); }, 0);
+    if (max > 1) set[max] = true;
+    return Object.keys(set).map(Number).sort(function (a, b) { return a - b; });
+  }
+  function openStoneRun() {
+    if (stoneRunBackdrop || stoneBackdrop) return;
+    tryUpgradeRefs();
+    var defs = stoneDefs(), view = null;
+    try { view = session.stonesView(); } catch (err) { view = null; }
+    if (!defs || !view || !Array.isArray(view.stones) || !stoneOrigUntil) {
+      showPopup("🎯 鑲嵌石自動洗", "讀不到遊戲的鑲嵌石資料。\n有可能是遊戲改版了，請回報給作者。");
+      return;
+    }
+    var pickedEls = Array.prototype.slice.call(document.querySelectorAll('.stones [data-kind="stone-pick"]'));
+    var picked = Math.max(0, pickedEls.findIndex(function (el) { return el.classList.contains("on"); }));
+    var crystalName = (data.itemById.get(view.crystalId) || {}).name || "結晶";
+    var lockItem = stoneMallItem("stone-lock"), chargeItem = stoneMallItem("stone-charge");
+    var lockName = (lockItem && lockItem.name) || "固定券", chargeName = (chargeItem && chargeItem.name) || "充值券";
+    var perTicket = view.changesPerTicket || 50;
+
+    stoneRunBackdrop = document.createElement("div");
+    stoneRunBackdrop.id = "iw-stone-backdrop";
+    var modal = document.createElement("div");
+    modal.id = "iw-stone-modal";
+    modal.innerHTML =
+      '<button id="iw-stone-close">✕</button>' +
+      '<h2>🎯 鑲嵌石自動洗</h2>' +
+      '<div id="iw-r-setup">' +
+        '<label>石頭</label><select id="iw-r-stone"></select>' +
+        '<div id="iw-r-now" class="iw-target" style="margin-top:8px;font-size:12.5px;line-height:1.7;"></div>' +
+        '<div class="iw-stone-sec">① 洗屬性 <small style="font-weight:400;color:var(--iw-dim);font-size:11.5px;">不用固定券，屬性和數值一起重抽</small></div>' +
+        '<label>目標屬性</label><select id="iw-r-kind"></select>' +
+        '<div class="iw-stone-sec">② 洗數值 <small style="font-weight:400;color:var(--iw-dim);font-size:11.5px;">用固定券，屬性不會變，只重抽數值</small></div>' +
+        '<div class="iw-stone-row2">' +
+          '<div><label>最低數值</label><select id="iw-r-min"></select></div>' +
+          '<div><label>' + lockName + '用完時</label><select id="iw-r-lock"></select></div>' +
+        '</div>' +
+        '<div class="iw-stone-sec">🔁 變更次數用完時 <small style="font-weight:400;color:var(--iw-dim);font-size:11.5px;">就是畫面上那顆「+' + perTicket + '」</small></div>' +
+        '<label class="iw-stone-check"><input type="checkbox" id="iw-r-auto"> 次數用完自動 +' + perTicket + '</label>' +
+        '<label>' + chargeName + '用完時</label><select id="iw-r-charge"></select>' +
+        '<div class="iw-stone-note">跟鑲嵌石畫面上那一列是同一個設定，改這裡那邊也會跟著變。確定還要再洗才會補。</div>' +
+        '<div class="iw-stone-sec">🛑 上限</div>' +
+        '<div class="iw-stone-row2">' +
+          '<div><label>最多變更幾次</label><input type="number" id="iw-r-max" min="1" step="1" value="300"></div>' +
+          '<div><label>金幣預算</label><input type="number" id="iw-r-budget" min="0" step="1000"></div>' +
+        '</div>' +
+        '<div class="iw-stone-sec">📊 預估 <small style="font-weight:400;color:var(--iw-dim);font-size:11.5px;">平均值，運氣不好會多很多</small></div>' +
+        '<div id="iw-r-est" class="iw-stone-out"></div>' +
+        '<div class="iw-btnrow"><button class="iw-btn" id="iw-r-cancel">取消</button><button class="iw-btn primary" id="iw-r-start">開始</button></div>' +
+      '</div>' +
+      '<div id="iw-r-run" style="display:none;">' +
+        '<div id="iw-r-goal" class="iw-target" style="margin-top:8px;font-size:13px;line-height:1.7;"></div>' +
+        '<div class="iw-stone-steps"><div class="iw-stone-step" id="iw-r-step1"></div><div class="iw-stone-step" id="iw-r-step2"></div></div>' +
+        '<div class="iw-stone-log" id="iw-r-log"></div>' +
+        '<div class="iw-stone-sum" id="iw-r-sum"></div>' +
+        '<div class="iw-btnrow"><button class="iw-btn" id="iw-r-back" style="display:none;">再洗一次</button><button class="iw-btn primary" id="iw-r-stop">⏹ 停止</button></div>' +
+      '</div>';
+    stoneRunBackdrop.appendChild(modal);
+    document.body.appendChild(stoneRunBackdrop);
+
+    var $ = function (id) { return document.getElementById(id); };
+    var $stone = $("iw-r-stone"), $kind = $("iw-r-kind"), $min = $("iw-r-min"), $lock = $("iw-r-lock"), $auto = $("iw-r-auto"), $charge = $("iw-r-charge");
+    var cur = function () {
+      var i = Number($stone.value), state = session.stoneAt(i).state;
+      return { index: i, def: defs.stones[i], state: state, step: state.attrs.length, latest: state.attrs[state.attrs.length - 1] || null };
+    };
+    var attrText = function (a) { return a ? stoneAttrLabel(a.kind, a.value) : "（沒有）"; };
+
+    function fillStoneList() {
+      var v = session.stonesView(), keep = $stone.value === "" ? picked : Number($stone.value);
+      $stone.innerHTML = v.stones.map(function (s, i) {
+        return '<option value="' + i + '"' + (i === keep ? " selected" : "") + '>' + s.name + " +" + s.step + "（變更次數剩 " + s.changes + " / " + v.changeCap + "）</option>";
+      }).join("");
+    }
+    function fillTicketSelects() {
+      var lockHave = stoneTicketCount("stone-lock"), chargeHave = stoneTicketCount("stone-charge");
+      var lockGold = stoneTicketGold("stone-lock", 1), chargeGold = stoneTicketGold("stone-charge", 1);
+      $lock.innerHTML = '<option value="own">只用身上的（' + fmt(lockHave) + ' 張）</option>' +
+        '<option value="buy">自動買' + (lockGold ? "（現價 " + fmt(lockGold) + " 金／張）" : "") + '</option>';
+      $lock.value = stoneAuto.lockMode;
+      $charge.innerHTML = '<option value="own">只用身上的（' + fmt(chargeHave) + ' 張）</option>' +
+        '<option value="buy">自動買' + (chargeGold ? "（現價 " + fmt(chargeGold) + " 金／張）" : "") + '</option>';
+      $charge.value = stoneAuto.mode;
+      $auto.checked = stoneAuto.on;
+      $charge.disabled = !stoneAuto.on;
+    }
+    function fillKinds() {
+      var c = cur();
+      if (!c.latest) {
+        $("iw-r-now").innerHTML = "這顆還沒強化，沒有能力可以變更。先在遊戲裡按「強化」。";
+        $kind.innerHTML = ""; $min.innerHTML = "";
+        renderEstimate();
+        return;
+      }
+      $("iw-r-now").innerHTML = "目前最新這一條（+" + c.step + "）：<b>" + attrText(c.latest) + "</b><br>只能洗最新這一條，前面幾階的能力不會動。" +
+        "<br>持有：" + crystalName + " " + fmt(stoneHave(view.crystalId)) + "、金幣 " + fmt(snap().gold);
+      var sd = c.def.steps[c.step - 1], rare = stoneRareKinds(c.def), prev = Number($kind.value) || c.latest.kind;
+      $kind.innerHTML = stoneKindChances(sd.group).map(function (x) {
+        return '<option value="' + x[0] + '"' + (x[0] === prev ? " selected" : "") + ">" + (rare[x[0]] ? "★ " : "") + stoneKindName(x[0]) + "（每次 " + stonePct(x[1]) + "）" +
+          (x[0] === c.latest.kind ? "・現在就是" : "") + "</option>";
+      }).join("");
+      fillMin();
+    }
+    function fillMin() {
+      var kind = Number($kind.value), prev = $min.value;
+      $min.innerHTML = '<option value="">不限（只跑第一階段）</option>' + stoneMinChoices(kind).map(function (v) {
+        return '<option value="' + v + '"' + (String(v) === prev ? " selected" : "") + ">" + stoneAttrLabel(kind, v) + " 以上（每次 " + stonePct(stoneValueChance(kind, v)) + "）</option>";
+      }).join("");
+      renderEstimate();
+    }
+    function readPlan() {
+      var c = cur(), kind = Number($kind.value), min = $min.value === "" ? null : Number($min.value);
+      return { c: c, kind: kind, min: min, maxTries: Math.max(1, Math.floor(Number($("iw-r-max").value) || 0)), budget: Math.max(0, Number($("iw-r-budget").value) || 0) };
+    }
+    function renderEstimate() {
+      var out = $("iw-r-est"), p = readPlan(), c = p.c;
+      $("iw-r-start").disabled = true;
+      if (!c.latest || !p.kind) { out.innerHTML = ""; return; }
+      var sd = c.def.steps[c.step - 1];
+      var kindOk = c.latest.kind === p.kind, valOk = p.min == null || c.latest.value >= p.min;
+      if (kindOk && valOk) { out.innerHTML = '<div class="iw-stone-note">現在這條就已經是目標了，不用洗。</div>'; return; }
+      var p1 = (stoneKindChances(sd.group).filter(function (x) { return x[0] === p.kind; })[0] || [0, 0])[1];
+      var p2 = p.min == null ? 1 : stoneValueChance(p.kind, p.min);
+      if (!(p1 > 0) || !(p2 > 0)) { out.innerHTML = '<div class="iw-stone-note" style="color:var(--iw-warn);">這一階抽不到這個條件。</div>'; return; }
+      // ① 平均 1/p1 次；② 從 ① 過來的話，洗到屬性那一下已經抽過一次數值，所以平均還要 (1 − p2)/p2 次
+      var e1 = kindOk ? 0 : 1 / p1, e2 = p.min == null ? 0 : (kindOk ? 1 / p2 : (1 - p2) / p2);
+      var total = e1 + e2, changeGold = sd.change.gold, changeCrystal = sd.change.crystal;
+      var lockHave = stoneTicketCount("stone-lock"), lockGold = stoneTicketGold("stone-lock", 1) || 0;
+      var lockBuy = stoneAuto.lockMode === "buy" ? Math.max(0, e2 - lockHave) : 0;
+      var chargeNeed = Math.max(0, Math.ceil((total - c.state.changes) / perTicket));
+      var chargeHave = stoneTicketCount("stone-charge"), chargeGold = stoneTicketGold("stone-charge", 1) || 0;
+      var chargeBuy = stoneAuto.on && stoneAuto.mode === "buy" ? Math.max(0, chargeNeed - chargeHave) : 0;
+      var gold1 = e1 * changeGold, gold2 = e2 * changeGold + lockBuy * lockGold, gold3 = chargeBuy * chargeGold;
+      var html = '<table class="iw-stone-table"><thead><tr><th>階段</th><th>平均次數</th><th>' + crystalName + '</th><th>券</th><th>金幣</th></tr></thead><tbody>' +
+        "<tr><td>① 洗屬性</td><td>" + (kindOk ? "已經是了" : stoneAvg(e1)) + "</td><td>" + stoneAvg(e1 * changeCrystal) + "</td><td>－</td><td>" + fmt(gold1) + "</td></tr>" +
+        "<tr><td>② 洗數值</td><td>" + (p.min == null ? "不跑" : stoneAvg(e2)) + "</td><td>" + stoneAvg(e2 * changeCrystal) + "</td><td>" + (e2 > 0 ? lockName + " " + stoneAvg(e2) : "－") + "</td><td>" + fmt(gold2) + "</td></tr>" +
+        "<tr><td>補變更次數</td><td>－</td><td>－</td><td>" + (chargeNeed > 0 ? chargeName + " " + chargeNeed : "不用補") + "</td><td>" + fmt(gold3) + "</td></tr>" +
+        '<tr class="iw-stone-best"><td>合計</td><td>' + stoneAvg(total) + "</td><td>" + stoneAvg(total * changeCrystal) + "</td><td></td><td>" + fmt(gold1 + gold2 + gold3) + "</td></tr></tbody></table>";
+      var notes = [];
+      if (e2 > lockHave && stoneAuto.lockMode !== "buy") notes.push("⚠️ " + lockName + "平均要 " + stoneAvg(e2) + " 張，身上只有 " + fmt(lockHave) + " 張；選「只用身上的」可能會停在第二階段。");
+      if (chargeNeed > 0 && !stoneAuto.on) notes.push("⚠️ 平均次數比剩下的變更次數（" + c.state.changes + "）多，沒有勾「次數用完自動 +" + perTicket + "」的話會中途停下來。");
+      if (chargeNeed > chargeHave && stoneAuto.on && stoneAuto.mode !== "buy") notes.push("⚠️ " + chargeName + "平均要 " + chargeNeed + " 張，身上只有 " + fmt(chargeHave) + " 張。");
+      var haveCrystal = stoneHave(view.crystalId);
+      if (haveCrystal < total * changeCrystal) notes.push("⚠️ " + crystalName + "只有 " + fmt(haveCrystal) + " 個，平均要 " + stoneAvg(total * changeCrystal) + " 個。");
+      if (total > p.maxTries) notes.push("⚠️ 平均次數比你設的上限（" + fmt(p.maxTries) + " 次）多，很可能洗不到就停了。");
+      out.innerHTML = html + notes.map(function (n) { return '<div class="iw-stone-note" style="color:var(--iw-warn);">' + n + "</div>"; }).join("");
+      $("iw-r-start").disabled = false;
+    }
+    function syncAutoSettings() {
+      stoneAuto.on = $auto.checked;
+      stoneAuto.mode = $charge.value === "buy" ? "buy" : "own";
+      stoneAuto.lockMode = $lock.value === "buy" ? "buy" : "own";
+      saveStoneAuto();
+      $charge.disabled = !stoneAuto.on;
+      // 鑲嵌石畫面上那一列是同一份設定：整列拿掉，injectStoneAutoRow 會照新的設定重插
+      document.querySelectorAll(".iw-stone-auto").forEach(function (el) { el.remove(); });
+      renderEstimate();
+    }
+    function showSetup() {
+      $("iw-r-setup").style.display = "";
+      $("iw-r-run").style.display = "none";
+      view = session.stonesView();
+      fillStoneList();
+      fillTicketSelects();
+      if (!$("iw-r-budget").value) $("iw-r-budget").value = Math.floor(snap().gold);
+      fillKinds();
+    }
+
+    $stone.addEventListener("change", function () { $kind.value = ""; fillKinds(); });
+    $kind.addEventListener("change", fillMin);
+    $min.addEventListener("change", renderEstimate);
+    $("iw-r-max").addEventListener("input", renderEstimate);
+    [$auto, $charge, $lock].forEach(function (el) { el.addEventListener("change", syncAutoSettings); });
+    $("iw-stone-close").addEventListener("click", closeStoneRun);
+    $("iw-r-cancel").addEventListener("click", closeStoneRun);
+    stoneRunBackdrop.addEventListener("click", function (e) { if (e.target === stoneRunBackdrop && !stoneRunning) closeStoneRun(); });
+    $("iw-r-stop").addEventListener("click", function () {
+      if (stoneRunning) stoneRunStop = true;
+      else closeStoneRun();
+    });
+    $("iw-r-back").addEventListener("click", function () { if (!stoneRunning) showSetup(); });
+    $("iw-r-start").addEventListener("click", function () { runStonePlan(readPlan()); });
+    showSetup();
+
+    // ---------- 執行 ----------
+    function runStonePlan(plan) {
+      var index = plan.c.index, kind = plan.kind, min = plan.min, stoneName = plan.c.def.name, stepNo = plan.c.step;
+      var goalText = (min == null ? stoneKindName(kind) : stoneAttrLabel(kind, min) + " 以上");
+      var stat = { t1: 0, t2: 0, crystal: 0, lockUsed: 0, lockBought: 0, chargeTicket: 0, chargeBought: 0, goldStart: session.player.gold, got1: null };
+      var phase = 0, reason = "", logLines = 0;
+      var $log = $("iw-r-log");
+      $("iw-r-setup").style.display = "none";
+      $("iw-r-run").style.display = "";
+      $("iw-r-goal").innerHTML = stoneName + " +" + stepNo + "　目標：<b>" + goalText + "</b>";
+      $log.innerHTML = "";
+      $("iw-r-back").style.display = "none";
+      $("iw-r-stop").textContent = "⏹ 停止";
+      function log(text, cls) {
+        var div = document.createElement("div");
+        if (cls) div.className = cls;
+        div.textContent = text;
+        $log.appendChild(div);
+        if (++logLines > 400 && $log.firstChild) $log.removeChild($log.firstChild);
+        $log.scrollTop = $log.scrollHeight;
+      }
+      function spent() { return stat.goldStart - session.player.gold; }
+      function paint(done) {
+        var s1 = $("iw-r-step1"), s2 = $("iw-r-step2");
+        var kindOk1 = stat.got1 != null;
+        s1.className = "iw-stone-step" + (kindOk1 ? " done" : phase === 1 && !done ? " now" : "");
+        s1.innerHTML = "<b>① 洗屬性</b>" + (kindOk1 ? (stat.t1 > 0 ? fmt(stat.t1) + " 次洗到「" + stat.got1 + "」" : "一開始就是了") : phase === 1 && !done ? "進行中…已變更 " + fmt(stat.t1) + " 次" : "變更了 " + fmt(stat.t1) + " 次");
+        s2.className = "iw-stone-step" + (done === "ok" && min != null ? " done" : phase === 2 && !done ? " now" : "");
+        s2.innerHTML = "<b>② 洗數值</b>" + (min == null ? "不跑（數值不限）" : done === "ok" ? (stat.t2 > 0 ? fmt(stat.t2) + " 次洗到目標" : "不用洗，數值已經達標") :
+          phase === 2 && !done ? "進行中…已變更 " + fmt(stat.t2) + " 次" : stat.t2 > 0 ? "變更了 " + fmt(stat.t2) + " 次" : "還沒開始");
+        var changesLeft = stoneChangesLeft(session, index);
+        $("iw-r-sum").innerHTML = (done === "ok" ? "✅ <b>完成：" + attrText(session.stoneAt(index).state.attrs.slice(-1)[0]) + "</b><br>" : done ? "⏸️ <b>" + reason + "</b><br>" : "") +
+          (done ? "合計" : "目前累計") + "：變更 <b>" + fmt(stat.t1 + stat.t2) + "</b> 次・" + crystalName + " <b>" + fmt(stat.crystal) + "</b>・" +
+          lockName + " <b>" + fmt(stat.lockUsed + stat.lockBought) + "</b>" + (stat.lockBought ? "（買 " + fmt(stat.lockBought) + " 張）" : "") + "・" +
+          chargeName + " <b>" + fmt(stat.chargeTicket + stat.chargeBought) + "</b>" + (stat.chargeBought ? "（買 " + fmt(stat.chargeBought) + " 張）" : "") +
+          "・金幣 <b>" + fmt(spent()) + "</b><br>變更次數剩 <b>" + fmt(changesLeft) + "</b>・預算還剩 <b>" + fmt(Math.max(0, plan.budget - spent())) + "</b>";
+      }
+      var STOP_TEXT = {
+        changes: "變更次數用完（沒有勾自動 +" + perTicket + "）", chargeFail: "變更次數用完，補不了（" + chargeName + "用完、金幣不夠，或已經到次數上限）",
+        crystal: crystalName + "用完", ticket: lockName + "用完（沒有開自動買）", gold: "金幣不夠", budget: "會超過你設的金幣預算",
+        tries: "已經變更到你設的上限 " + fmt(plan.maxTries) + " 次", stopped: "已手動停止", blocked: "遊戲不讓這顆石頭變更", reloaded: "書籤工具被重新載入"
+      };
+      stoneRunning = true; stoneRunStop = false;
+      var savedBatch = session.batch;
+      session.batch = true;
+      var lastYield = Date.now();
+      function finish(result) {
+        session.batch = savedBatch;
+        stoneRunning = false;
+        var where = phase === 2 ? "停在 ② 洗數值：" : phase === 1 ? "停在 ① 洗屬性：" : "";
+        if (result !== "ok") reason = where + (STOP_TEXT[reason] || reason);
+        try {
+          var nowAttr = attrText(session.stoneAt(index).state.attrs.slice(-1)[0]);
+          if (stat.t1 + stat.t2 > 0 && typeof session.push === "function") {
+            session.push("🎯 鑲嵌石自動洗：" + stoneName + " +" + stepNo + " 變更 " + fmt(stat.t1 + stat.t2) + " 次，現在是 " + nowAttr + (result === "ok" ? "（達成）" : "（" + reason + "）"), "sys");
+          }
+          if (typeof session.refreshPlayerStats === "function") session.refreshPlayerStats();
+          if (typeof session.applyNow === "function") session.applyNow();
+        } catch (err) { console.warn("[鑲嵌石自動洗] 結束時更新畫面失敗", err); }
+        if (result === "ok") log("✅ 達成：" + attrText(session.stoneAt(index).state.attrs.slice(-1)[0]), "ok");
+        else log("⏸️ " + reason, "cost");
+        paint(result);
+        $("iw-r-back").style.display = "";
+        $("iw-r-stop").textContent = "關閉";
+      }
+      function step() {
+        try {
+          for (;;) {
+            if (window.__iwStoneRunGeneration !== myStoneRunGeneration) { reason = "reloaded"; return finish("stop"); }
+            if (stoneRunStop) { reason = "stopped"; return finish("stop"); }
+            var state = session.stoneAt(index).state, last = state.attrs[state.attrs.length - 1];
+            if (!last || state.attrs.length !== stepNo) { reason = "blocked"; return finish("stop"); }
+            var kindOk = last.kind === kind, valOk = min == null || last.value >= min;
+            if (kindOk && stat.got1 == null) {
+              stat.got1 = attrText(last);
+              if (stat.t1 > 0 && !valOk) log("① 第 " + stat.t1 + " 次：" + attrText(last) + "　→ 屬性到手，進入第二階段", "hi");
+              else if (stat.t1 === 0 && !valOk) log("一開始就是「" + stoneKindName(kind) + "」，直接從第二階段開始", "hi");
+            }
+            if (kindOk && valOk) return finish("ok");
+            phase = kindOk ? 2 : 1;
+            if (stat.t1 + stat.t2 >= plan.maxTries) { reason = "tries"; return finish("stop"); }
+            var sd = plan.c.def.steps[stepNo - 1];
+            // 次數用完：確定還要再洗才補
+            if (state.changes <= 0) {
+              if (!stoneAuto.on) { reason = "changes"; return finish("stop"); }
+              var chargeHave = stoneTicketCount("stone-charge");
+              if (chargeHave < 1 && stoneAuto.mode === "buy") {
+                var top = session.stoneTicketTopUp("stone-charge");
+                if (top && spent() + top.total + sd.change.gold > plan.budget) { reason = "budget"; return finish("stop"); }
+              }
+              var goldBeforeCharge = session.player.gold;
+              var how = stoneAutoChargeOnce(session, index);
+              if (!how) { reason = "chargeFail"; return finish("stop"); }
+              if (how === "buy") { stat.chargeBought++; log("🔁 變更次數用完 → 照現價買 1 張" + chargeName + "（−" + fmt(goldBeforeCharge - session.player.gold) + "），+" + perTicket, "cost"); }
+              else { stat.chargeTicket++; log("🔁 變更次數用完 → 用掉 1 張" + chargeName + "，+" + perTicket, "cost"); }
+              continue;
+            }
+            // 預算：這一下要花的金幣（變更費＋第二階段沒券時現買的固定券）
+            var lock = phase === 2, lockBuy = stoneAuto.lockMode === "buy";
+            var needBuyLock = lock && stoneTicketCount("stone-lock") < 1;
+            if (needBuyLock && !lockBuy) { reason = "ticket"; return finish("stop"); }
+            var ticketPrice = lock ? session.stoneTicketPrice() : undefined;
+            var cost = sd.change.gold + (needBuyLock ? (ticketPrice || 0) : 0);
+            if (spent() + cost > plan.budget) { reason = "budget"; return finish("stop"); }
+            var res = stoneOrigUntil.call(session, index, {
+              lock: lock, tries: 1, want: lock ? { kind: 0, min: min } : { kind: kind }, autoBuy: lockBuy, shownTicketPrice: ticketPrice
+            });
+            if (!res || res.tries < 1) {
+              if (res && res.stop === "target") continue; // 回到上面重新判斷
+              reason = (res && res.stop) || "blocked";
+              return finish("stop");
+            }
+            stat.crystal += res.crystal || 0;
+            if (lock) { stat.t2 += res.tries; stat.lockUsed += res.tickets || 0; stat.lockBought += res.bought || 0; }
+            else stat.t1 += res.tries;
+            var after = session.stoneAt(index).state.attrs.slice(-1)[0];
+            var done = after.kind === kind && (min == null || after.value >= min);
+            if (lock) {
+              // 身上的固定券用完、開始現買：只在第一次講一聲，之後每一行後面標「現買」就好，不然每洗一下就多一行
+              if (res.bought && stat.lockBought === res.bought) log("🎫 " + lockName + "用完 → 之後每次照現價買 1 張（現在一張 " + fmt(ticketPrice || 0) + " 金幣）", "cost");
+              log("② 第 " + stat.t2 + " 次：" + attrText(after) + (res.bought ? "（現買）" : ""), done ? "ok" : "");
+            } else if (after.kind !== kind) log("① 第 " + stat.t1 + " 次：" + attrText(after));
+            else if (done) log("① 第 " + stat.t1 + " 次：" + attrText(after) + "　→ 屬性和數值一次到位", "ok");
+            // 連續跑超過 30 毫秒就讓畫面喘口氣（更新進度、讓「停止」按得到）
+            if (Date.now() - lastYield > 30) {
+              paint(false);
+              lastYield = Date.now();
+              setTimeout(function () { lastYield = Date.now(); step(); }, 0);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("[鑲嵌石自動洗] 執行時發生錯誤", err);
+          reason = "發生錯誤：" + (err && err.message ? err.message : err);
+          finish("stop");
+        }
+      }
+      paint(false);
+      step();
+    }
   }
 
   function closeStoneCalc() {
