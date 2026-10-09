@@ -40,6 +40,8 @@
   if (oldAlchemyBackdrop) oldAlchemyBackdrop.remove();
   var oldStoneBackdrop = document.getElementById("iw-stone-backdrop");
   if (oldStoneBackdrop) oldStoneBackdrop.remove();
+  // 鑲嵌石「次數用完自動 +50」那一列：上面的勾選框綁的是舊版 loader 的設定，要整列拿掉重插
+  document.querySelectorAll(".iw-stone-auto").forEach(function (el) { el.remove(); });
   var oldAlchemyFabWrap = document.getElementById("iw-alchemy-fab-wrap");
   if (oldAlchemyFabWrap) oldAlchemyFabWrap.remove();
   var oldAlchemyShowBtn = document.getElementById("iw-alchemy-show-btn");
@@ -562,6 +564,7 @@
       tryUpgradeRefs(); // 如果一開始沒抓到 data/snap，這裡有機會重新補上（現在畫面上如果有 .card 元素，通常代表 data 也拿得到了）
       if (data) injectWindCardButton();
       injectStoneCalcButton();
+      injectStoneAutoRow();
       // 舊版強化頁（每個部位一張小卡片，按鈕上顯示金幣費用）——保留相容，作者如果改回來也能用
       var goButtons = document.querySelectorAll(".card:not([data-id]) > div:first-child > button.go");
       if (goButtons.length === 0) return;
@@ -707,6 +710,140 @@
     });
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
     else panel.insertBefore(btn, panel.firstChild);
+  }
+
+  // ==========================================================================
+  // 🔁 鑲嵌石：變更次數用完自動 +50（2026-10-09 新增）
+  // 遊戲規則（bundle stoneChangeGate()／chargeStone()／changeStoneUntil()）：
+  //   - 每顆石頭有「變更次數」（上限 data.stones.changeCap），用完就不能再變更，自動變更會停在 stop = "changes"。
+  //   - 畫面上「變更次數」那列的「+50」按鈕 = session.chargeStone(第幾顆, 預期金幣)：
+  //       身上有〔石頭屬性變更次數充值券〕（名品館 use = "stone-charge"）→ 用掉一張，預期金幣要傳 0；
+  //       身上沒有 → 直接照名品館現價扣金幣（session.stoneTicketTopUp("stone-charge").total，跟當下匯率走），
+  //       預期金幣要傳那個數字，對不上（剛好跨整點換匯率）遊戲就不做。
+  // 這裡做的事：在那一列下面多一列「☐ 次數用完自動 +50」＋「只用身上的券／券用完自動買」，
+  // 勾起來之後把遊戲的 changeStoneUntil（自動變更）和 changeStoneAttr（手動變更）包一層：
+  //   - 自動變更中途次數用完 → 補 +50 再接著洗，直到洗到目標、洗完設定的次數，或補不了為止；
+  //   - 自動變更結束時還沒洗到目標、次數剛好是 0 → 也補一次（不然「自動」按鈕會是灰的，沒辦法再按）；
+  //     已經洗到目標就不補，免得白花一張券；
+  //   - 手動按「變更」把次數用到 0 → 補一次（手動沒有目標可以判斷，一律補）。
+  // 「補」永遠是呼叫遊戲自己的 chargeStone()，價格、扣款、紀錄都是遊戲在做，書籤不自己算。
+  // ==========================================================================
+  var STONE_AUTO_KEY = "iw-stone-auto-charge";
+  var stoneAuto = { on: false, mode: "own" };   // mode：own = 只用身上的充值券；buy = 券用完照名品館現價買
+  try {
+    var savedStoneAuto = JSON.parse(localStorage.getItem(STONE_AUTO_KEY) || "null");
+    if (savedStoneAuto) { stoneAuto.on = !!savedStoneAuto.on; stoneAuto.mode = savedStoneAuto.mode === "buy" ? "buy" : "own"; }
+  } catch (err) { /* 讀不到就用預設（關閉） */ }
+  function saveStoneAuto() {
+    try { localStorage.setItem(STONE_AUTO_KEY, JSON.stringify(stoneAuto)); } catch (err) { /* 存不了就只在這次有效 */ }
+  }
+  // 補一次 +50。回傳 "ticket"（用了一張券）／"buy"（照現價買）／null（補不了：沒券又不買、金幣不夠、次數已達上限…）
+  function stoneAutoChargeOnce(sess, index) {
+    try {
+      if (stoneTicketCount("stone-charge") > 0) return sess.chargeStone(index, 0) ? "ticket" : null;
+      if (stoneAuto.mode !== "buy") return null;
+      var top = sess.stoneTicketTopUp("stone-charge");
+      if (!top || !(top.total > 0) || sess.player.gold < top.total) return null;
+      return sess.chargeStone(index, top.total) ? "buy" : null;
+    } catch (err) {
+      console.error("[鑲嵌石自動 +50] 補次數失敗", err);
+      return null;
+    }
+  }
+  function stoneChangesLeft(sess, index) {
+    try { return Number(sess.stoneAt(index).state.changes) || 0; } catch (err) { return 0; }
+  }
+  (function installStoneAutoHook() {
+    if (typeof session.changeStoneUntil !== "function" || typeof session.chargeStone !== "function" ||
+        typeof session.stoneAt !== "function" || typeof session.stoneTicketTopUp !== "function") return; // 舊版遊戲沒有鑲嵌石
+    // 書籤重複點（熱重載）時，先把上一版包的那層拿掉，露出遊戲原本的函式再重包
+    if (session.__iwStoneHooked) {
+      delete session.changeStoneUntil;
+      delete session.changeStoneAttr;
+    }
+    var origUntil = session.changeStoneUntil, origAttr = session.changeStoneAttr;
+    session.changeStoneUntil = function (index, opts) {
+      if (!stoneAuto.on) return origUntil.call(this, index, opts);
+      var goldStart = this.player.gold;
+      var left = Math.max(0, Math.floor((opts && opts.tries) || 0));
+      var total = null, chargeFailed = false;
+      // 一輪最多洗 changesPerTicket 次就要補一次，設定的次數最多 300，40 圈綽綽有餘；純粹是防呆不讓它無限轉
+      for (var guard = 0; guard < 40; guard++) {
+        var res = origUntil.call(this, index, Object.assign({}, opts, { tries: left }));
+        if (!total) total = res;
+        else {
+          total.tries += res.tries; total.bought += res.bought; total.tickets += res.tickets; total.crystal += res.crystal;
+          if (res.attr) total.attr = res.attr;
+          total.stop = res.stop; total.goldShort = res.goldShort;
+        }
+        left -= res.tries;
+        if (res.stop !== "changes" || left <= 0) break;
+        if (!stoneAutoChargeOnce(this, index)) { chargeFailed = true; break; }
+      }
+      // 還沒洗到目標、次數剛好用光 → 先補好，玩家才能接著按「自動」
+      if (!chargeFailed && total.tries > 0 && total.stop !== "target" && stoneChangesLeft(this, index) <= 0) stoneAutoChargeOnce(this, index);
+      total.gold = goldStart - this.player.gold; // 連補次數花的金幣一起算進結果視窗的「花費」
+      return total;
+    };
+    if (typeof origAttr === "function") {
+      session.changeStoneAttr = function (index, lock, expected) {
+        var out = origAttr.call(this, index, lock, expected);
+        if (stoneAuto.on && out && stoneChangesLeft(this, index) <= 0) stoneAutoChargeOnce(this, index);
+        return out;
+      };
+    }
+    session.__iwStoneHooked = true;
+  })();
+
+  style.textContent += ".iw-stone-auto{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:6px 0 2px;padding:7px 10px;font-size:12.5px;" +
+    "color:var(--iw-text);background:rgba(255,250,240,.75);border:1px dashed var(--iw-line-hi);border-radius:10px;}" +
+    ".iw-stone-auto label{display:inline-flex;align-items:center;gap:5px;font-weight:700;cursor:pointer;white-space:nowrap;}" +
+    ".iw-stone-auto select{padding:3px 6px;font-size:12.5px;border:1px solid var(--iw-line-hi);border-radius:7px;background:#fffaf0;color:var(--iw-text);}" +
+    ".iw-stone-auto .iw-stone-auto-info{flex:1 1 100%;font-size:11.5px;color:var(--iw-dim);line-height:1.6;}";
+
+  function stoneAutoInfoText() {
+    var have = stoneTicketCount("stone-charge");
+    var item = stoneMallItem("stone-charge"), name = (item && item.name) || "充值券";
+    var price = stoneTicketGold("stone-charge", 1);
+    var text = "身上的" + name + "：" + fmt(have) + " 張。";
+    if (stoneAuto.mode === "buy") text += "用完之後照名品館現價買" + (price ? "（現在一張 " + fmt(price) + " 金幣，每個整點會變）" : "") + "。";
+    else text += "用完就停下來，不會花金幣買。";
+    if (stoneAuto.on) text += "已經洗到目標時不會補。";
+    return text;
+  }
+  // 在遊戲「變更次數」那一列下面插一列設定；畫面重畫被拿掉時會再插回去。內容一樣就不動（不然會一直觸發畫面變動）。
+  function injectStoneAutoRow() {
+    var row = document.querySelector('.stones [data-kind="stone-changes"]');
+    var box = document.querySelector(".iw-stone-auto");
+    if (!row || !session.__iwStoneHooked) { if (box) box.remove(); return; }
+    if (box && box.previousElementSibling !== row) { box.remove(); box = null; }
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "iw-stone-auto";
+      var label = document.createElement("label");
+      var check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = stoneAuto.on;
+      label.appendChild(check);
+      label.appendChild(document.createTextNode("次數用完自動 +" + ((stoneDefs() && stoneDefs().changesPerTicket) || 50)));
+      var select = document.createElement("select");
+      [["own", "只用身上的充值券"], ["buy", "券用完自動買（名品館現價）"]].forEach(function (o) {
+        var opt = document.createElement("option");
+        opt.value = o[0]; opt.textContent = o[1];
+        select.appendChild(opt);
+      });
+      select.value = stoneAuto.mode;
+      var info = document.createElement("span");
+      info.className = "iw-stone-auto-info";
+      check.addEventListener("change", function () { stoneAuto.on = check.checked; saveStoneAuto(); info.textContent = stoneAutoInfoText(); });
+      select.addEventListener("change", function () { stoneAuto.mode = select.value === "buy" ? "buy" : "own"; saveStoneAuto(); info.textContent = stoneAutoInfoText(); });
+      box.appendChild(label);
+      box.appendChild(select);
+      box.appendChild(info);
+      row.insertAdjacentElement("afterend", box);
+    }
+    var infoEl = box.querySelector(".iw-stone-auto-info"), text = stoneAutoInfoText();
+    if (infoEl && infoEl.textContent !== text) infoEl.textContent = text;
   }
 
   function closeStoneCalc() {
