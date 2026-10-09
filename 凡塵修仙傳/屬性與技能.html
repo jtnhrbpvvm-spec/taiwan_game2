@@ -1264,7 +1264,7 @@ const ST=DMG.EX.st,stM=r=>["時空秘境",2,0,0,0,r,r+.9,[ST.str,ST.str],1,0,r],
 MPOOL["時空秘境"]=ST.mon.map(x=>x.id+x.w).join(" ");
 let stOpt={};   // 在畫面上改過的設定（丹藥、門檻、野外修士、暗殺者）；重新讀取存檔時清掉
 // 模擬要打 120 場、比較花時間，所以只在讀取存檔時算一次；之後改能力值、裝備或設定都要按「試算時空秘境」才重算。stR＝上次試算的結果，stRun＝這次重畫要不要重算
-let stR=null,stRun=false;
+let stR=null,stRun=false,stInfo="";
 function stDefaults(a){
   const p=a.p,au=p.autoHp,buy=ST.potions.map((x,i)=>[x,i]).filter(([x])=>!x[3]).sort((x,y)=>y[0][1]-x[0][1])[0],k=p.karma||0,ks=k>=ST.cult.karma[0]?1:k<=ST.cult.karma[1]?-1:0;
   return{pot:au&&au.enabled&&buy?buy[1]:-1,th:(au&&+au.threshold)||50,cult:a.r>=ST.cult.realm&&(p.reputation==null||p.reputation>=ST.cult.rep),amb:ks!==0,ks};
@@ -1304,19 +1304,21 @@ function stHtml(a,R,cur){
   <tr><td class="nw"><b>一般妖獸</b><br><small>${REALMS[R.r]}10階 × ${ST.str} 倍</small></td><td>每波 ${ST.wave[0]}～${ST.wave[1]} 隻<br><small>皮厚型氣血多、敏捷型會閃、猛攻型常暴擊、術法型看魔防</small></td>${foe(B[0],B[1],false,C.def,C.eva,R.est.h)}</tr>
   <tr class="${I.cult>0?"":"hlock"}"><td class="nw"><b>野外修士</b><br><small>妖獸的 ${C.mult[0]} 倍</small></td><td>${I.cult>0?`<span class="warn">${often(I.cult)}</span>`:R.r<C.realm?`${REALMS[C.realm]}以上才會遇到`:"目前設定為不會遇到"}<br><small>聲望 ${full(C.rep)} 以上、${REALMS[C.realm]}以上；正道、魔道各半，魔道的打中你會吸血</small></td>${foe(B[0]*C.mult[0],B[1]*C.mult[0]*B[3],true,C.def,C.eva)}</tr>
   <tr class="${I.amb>0?"":"hlock"}"><td class="nw"><b>暗殺者</b><br><small>妖獸的 ${C.mult[1]} 倍</small></td><td>${I.amb>0?`<span class="warn">${often(I.amb)}</span>`:"目前設定為不會遇到"}<br><small>${kg}</small></td>${foe(B[0]*C.mult[1],B[1]*C.mult[1]*B[3],true,C.def,C.eva)}</tr>
-  </tbody></table></div>
-  <div class="sub" style="margin:6px 0 10px">出沒的妖獸：${ST.mon.map(x=>x.n).join("、")}（各種機會相同）。表上的妖獸是平均值，實際每隻依型態氣血 ×0.8～1.2、攻擊 ×0.65～1；「你殺一隻」用每回合平均輸出估算，「打中你一下」是沒暴擊、沒放技能的一下。野外修士和暗殺者不會暴擊、沒有技能，但<b>一波裡是和妖獸一起打你</b>，而且血厚、要打很久。</div>`;
+  </tbody></table></div>`;
+  // 詳細說明收進彈窗（按「時空秘境說明」才顯示）
+  stInfo=`<b>出沒的妖獸</b>：${ST.mon.map(x=>x.n).join("、")}（各種機會相同）。表上的妖獸是平均值，實際每隻依型態氣血 ×0.8～1.2、攻擊 ×0.65～1；「你殺一隻」用每回合平均輸出估算，「打中你一下」是沒暴擊、沒放技能的一下。野外修士和暗殺者不會暴擊、沒有技能，但<b>一波裡是和妖獸一起打你</b>，而且血厚、要打很久。<br>
+  <b>怎麼算的</b>：時空秘境沒有「通關」，只有撐不撐得住，所以這裡算的是存活機率。用按下試算當時「試算」分頁的角色，照遊戲的規則一秒一回合實際打 120 場、每場最多 1 小時：每波 ${ST.wave[0]}～${ST.wave[1]} 隻、打完只調息 ${ST.respawn} 秒（回 ${Math.round(ST.rest*ST.respawn*100)}% 氣血），妖獸的型態、暴擊、技能（重擊、狂暴、自癒、寒息凍結、毒與燒傷、破甲）和冰毒雷屬性都會出現；你這邊算了防禦、魔防、閃避、金身、化勁、吸血、噬魂、回春、反震、先手盾、護體、防禦套裝的保命，以及自動補血（每 ${ST.cd} 秒最多一顆）。<br>
+  <b>野外修士</b>：獵殺邪修開放後（聲望 ${full(ST.cult.rep)} 以上、${REALMS[ST.cult.realm]}以上），這裡的妖獸要打很久，所以<span class="warn">幾乎每一波都會多一名野外修士</span>（氣血、攻擊是這裡妖獸的 ${ST.cult.mult[0]} 倍，術法攻擊、看魔防）；善惡到了「善」或「惡」還會再多一名暗殺者（${ST.cult.mult[1]} 倍）。讀取存檔時會照你的聲望和善惡自動勾選，也可以自己改（改完要再按試算）。<br>
+  <b>偏保守</b>：你的輸出只算單體普攻（含暴擊、連擊，技能只算平均 +10%），也算了你的冰（凍住妖獸）、火、毒、金、雷屬性觸發、五行相剋與閃擊；<b>沒算</b>群攻技能、靈寵與夥伴的招式和護盾、首擊／橫掃／追擊／疾風這類特效、屬性秘典與種族剋制，所以實際通常會比這裡好一些，輸出靠群攻、靈寵的配置差距會比較大。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。`;
   const why={ok:"120 場裡幾乎每一場都撐滿 1 小時，可以放著掛；掛越久累積的風險越高，靈石夠再去。",pot:"有時撐得滿 1 小時、有時中途倒下。戰死會折壽、掉 10% 靈石，建議再補一點防禦、氣血或回復再去。",risk:"撐得過前幾分鐘，但掛久一定會倒。只適合人在螢幕前短時間刷，快撐不住就自己離開。",no:"以目前的數值幾乎一進去就會倒，先不要去。"}[R.v[0]];
   return ctl+`<div class="hrec"><div class="top">${R.v[1]}　${REALMS[R.r]}的時空秘境（妖獸＝${REALMS[R.r]}10階 × ${ST.str} 倍）<br><b class="big">撐過 1 小時：${stPc(s.p60)}</b><br>撐過 10 分鐘 <b>${stPc(s.p10)}</b>・有一半的場次能撐 <b>${md}</b><br><small>${why}</small></div></div>
   <div class="res">${[["妖獸氣血",cb(R.est.avg.hp)],["妖獸攻擊",cb(R.est.avg.atk)],["你殺一隻",`約 ${+R.est.h.toFixed(1)} 下`],["每小時擊殺",s.median<60?"—":`約 ${Math.round(s.killsHr)} 隻`],["丹藥",!R.pot?"沒開":s.median<60?"—":`約 ${Math.round(s.potsHr)} 顆／時`],["維持秘境的靈石",`${hWan(ST.upkeep*3600)}／時`]]
     .concat(coins>0?[["你的靈石可撐",coins>=ST.upkeep?`約 ${+(coins/ST.upkeep/3600).toFixed(1)} 小時`:"不到 1 萬，進不去"]]:[]).map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("")}</div>
   <h3 style="margin:14px 0 6px">會遇到的對手</h3>${foes}
-  <div class="sub"><b>怎麼算的</b>：時空秘境沒有「通關」，只有撐不撐得住，所以這裡算的是存活機率。用按下試算當時「試算」分頁的角色，照遊戲的規則一秒一回合實際打 120 場、每場最多 1 小時：每波 ${ST.wave[0]}～${ST.wave[1]} 隻、打完只調息 ${ST.respawn} 秒（回 ${Math.round(ST.rest*ST.respawn*100)}% 氣血），妖獸的型態、暴擊、技能（重擊、狂暴、自癒、寒息凍結、毒與燒傷、破甲）和冰毒雷屬性都會出現；你這邊算了防禦、魔防、閃避、金身、化勁、吸血、噬魂、回春、反震、先手盾、護體、防禦套裝的保命，以及自動補血（每 ${ST.cd} 秒最多一顆）。<br>
-  <b>野外修士</b>：獵殺邪修開放後（聲望 ${full(ST.cult.rep)} 以上、${REALMS[ST.cult.realm]}以上），這裡的妖獸要打很久，所以<span class="warn">幾乎每一波都會多一名野外修士</span>（氣血、攻擊是這裡妖獸的 ${ST.cult.mult[0]} 倍，術法攻擊、看魔防）；善惡到了「善」或「惡」還會再多一名暗殺者（${ST.cult.mult[1]} 倍）。讀取存檔時會照你的聲望和善惡自動勾選，也可以自己改（改完要再按試算）。<br>
-  <b>偏保守</b>：你的輸出只算單體普攻（含暴擊、連擊，技能只算平均 +10%），也算了你的冰（凍住妖獸）、火、毒、金、雷屬性觸發、五行相剋與閃擊；<b>沒算</b>群攻技能、靈寵與夥伴的招式和護盾、首擊／橫掃／追擊／疾風這類特效、屬性秘典與種族剋制，所以實際通常會比這裡好一些，輸出靠群攻、靈寵的配置差距會比較大。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。</div>`;
+  <div class="ctl" style="margin-top:8px"><button class="btn ghost stInfo" type="button">📖 時空秘境說明</button><span class="sub">出沒的妖獸、怎麼算的、野外修士與沒算進去的項目</span></div>`;
 }
 document.addEventListener("change",e=>{const t=e.target;if(!t.classList||!t.classList.contains("stI"))return;stOpt[t.dataset.k]=t.type==="checkbox"?t.checked:+t.value;if(lastA)renderHunt(lastA)});
-document.addEventListener("click",e=>{const t=e.target;if(!t.classList||!t.classList.contains("stGo")||!lastA)return;stRun=true;renderHunt(lastA)});
+document.addEventListener("click",e=>{const t=e.target;if(!t.classList)return;if(t.classList.contains("stInfo")){shPop("🌀 時空秘境說明",stInfo);return}if(!t.classList.contains("stGo")||!lastA)return;stRun=true;renderHunt(lastA)});
 // ---- 換裝前後比較：用「換裝前」的配置和目前的配置各算一次每張地圖 ----
 let baseBuild=blankBuild(),baseNote="";
 const hm=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")};
