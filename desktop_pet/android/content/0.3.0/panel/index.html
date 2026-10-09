@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>放置希望桌寵</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body { display: flex; flex-direction: column; font: 15px/1.6 sans-serif; color: #4a3a22; background: #eee0c5; }
+      header { padding: 12px 16px 0; background: #5a3d1e; color: #fff; }
+      header h1 { margin: 0; font-size: 18px; }
+      #status { margin: 2px 0 8px; font-size: 13px; opacity: 0.85; }
+      nav { display: flex; gap: 4px; }
+      nav button { flex: 1; font: inherit; padding: 8px 0; border: 0; border-radius: 10px 10px 0 0; background: #7a5a36; color: #f3e6c8; }
+      nav button.on { background: #eee0c5; color: #4a3a22; font-weight: bold; }
+      main { flex: 1; overflow-y: auto; padding: 12px; }
+      section { display: none; }
+      section.on { display: block; }
+      .card { margin-bottom: 12px; padding: 12px 14px; background: #fff8e6; border: 1px solid #c9b182; border-radius: 12px; }
+      h2 { margin: 0 0 6px; font-size: 15px; color: #2f7d86; }
+      .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e9dcbb; }
+      .row:last-child { border-bottom: 0; }
+      .row > span { flex: 1; }
+      .row small { display: block; color: #86704a; font-size: 12px; line-height: 1.4; }
+      input[type="checkbox"] { width: 22px; height: 22px; accent-color: #2f7d86; }
+      input[type="range"] { width: 100%; accent-color: #2f7d86; }
+      button.act { font: inherit; padding: 10px 14px; border-radius: 10px; border: 1px solid #c9b182; background: #fff; color: inherit; }
+      button.primary { border-color: #2f7d86; background: #2f7d86; color: #fff; }
+      button.danger { border-color: #c0392b; color: #c0392b; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .buttons button { flex: 1 1 40%; }
+      .warn { color: #c0392b; font-weight: bold; }
+      .dim { color: #86704a; font-size: 13px; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+      th, td { padding: 5px 4px; text-align: right; border-bottom: 1px solid #e3d3ad; }
+      th:first-child, td:first-child { text-align: left; }
+      th { font-weight: normal; color: #86704a; font-size: 12px; }
+      .income { color: #2e7d32; }
+      .expense, .minus, .sold { color: #c0392b; }
+      .sold { font-weight: bold; }
+      .scroll { overflow-x: auto; }
+      select, input[type="search"] { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid #c9b182; border-radius: 8px; background: #fff; color: inherit; }
+      #list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+      .pick { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border: 1px solid #c9b182; border-radius: 10px; background: #fff8e6; font: inherit; color: inherit; }
+      .pick i { width: 72px; height: 72px; background-repeat: no-repeat; background-size: 600% auto; }
+      .pick span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .pick small { color: #86704a; font-size: 10px; }
+      .chosen { border-color: #2f7d86 !important; box-shadow: 0 0 0 2px #2f7d86 inset; }
+      #follow { width: 100%; text-align: left; }
+      .help td:first-child { width: 6.5em; font-weight: bold; white-space: nowrap; }
+      .help td { text-align: left; vertical-align: top; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>放置希望桌寵</h1>
+      <p id="status"></p>
+      <nav>
+        <button data-tab="settings">設定</button>
+        <button data-tab="income">收益</button>
+        <button data-tab="looks">外觀</button>
+        <button data-tab="help">說明</button>
+      </nav>
+    </header>
+    <main>
+      <!-- ── 設定 ── -->
+      <section id="tab-settings">
+        <div class="card" id="permission" hidden>
+          <h2>需要一個權限</h2>
+          <p>桌寵要顯示在其他 App 上面，請開啟「顯示在其他應用程式上層」。按下面的按鈕會帶你到設定頁，把開關打開後回到這裡。</p>
+          <button class="act primary" data-action="start">前往開啟權限</button>
+        </div>
+        <div class="card" id="update" hidden>
+          <h2>有新版 <span id="update-version"></span></h2>
+          <p>按下面的按鈕下載，下載完會跳出系統的安裝畫面，再按一次「更新」就完成了。存檔和設定都會保留。</p>
+          <button class="act primary" data-action="installUpdate">下載並安裝</button>
+          <p class="dim" id="update-progress"></p>
+        </div>
+        <div class="card">
+          <div class="buttons">
+            <button class="act primary" data-action="toggleGame">顯示遊戲</button>
+            <button class="act" data-action="mapInfo">目前地圖資訊</button>
+            <button class="act" data-action="start" id="start">啟動桌寵</button>
+            <button class="act danger" data-action="stop">結束桌寵</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>桌寵</h2>
+          <label class="row"><span>顯示桌寵<small>關掉只是把桌寵藏起來，遊戲照常掛機</small></span><input type="checkbox" data-key="showPet" /></label>
+          <div class="row"><span>大小 <b id="size-value"></b><input id="size" type="range" min="50" max="200" step="5" /></span></div>
+          <label class="row"><span>書籤工具<small>把書籤工具載進遊戲：鑲嵌石試算、自動洗、一鍵強化等</small></span><input type="checkbox" data-key="bookmarkTool" /></label>
+        </div>
+        <div class="card">
+          <h2>提醒</h2>
+          <label class="row"><span>黑店優惠提醒<small id="mall-note">每次啟動報今天的特價時段；最低價前 3 小時起每個整點提醒</small></span><input type="checkbox" data-key="mallReminder" /></label>
+          <label class="row"><span>線上GM提醒<small>復活節兔子出現在歡喜城的前一小時，和他出現的那一小時</small></span><input type="checkbox" data-key="gmReminder" /></label>
+        </div>
+        <div class="card">
+          <h2>專注模式</h2>
+          <label class="row"><span>開啟專注模式<small>桌寵變半透明、點不到，頭上也不再飄字。要關掉從通知列的「設定」回到這裡</small></span><input type="checkbox" data-key="focus" /></label>
+          <p class="dim" style="margin: 8px 0 0">專注模式下，桌寵頭上還要顯示（可複選）：</p>
+          <label class="row"><span>顯示傷害</span><input type="checkbox" data-key="focusDamage" /></label>
+          <label class="row"><span>顯示經驗值</span><input type="checkbox" data-key="focusExp" /></label>
+          <label class="row"><span>顯示物品取得</span><input type="checkbox" data-key="focusLoot" /></label>
+        </div>
+        <p class="dim" id="version"></p>
+      </section>
+
+      <!-- ── 收益 ── -->
+      <section id="tab-income">
+        <div class="card">
+          <h2>每小時收益</h2>
+          <p class="dim" id="since"></p>
+          <div class="scroll"><table id="hours"></table></div>
+          <p class="dim" id="income-empty">還沒有資料。角色出發掛機之後，這裡每幾秒會更新一次。</p>
+        </div>
+        <div class="card">
+          <h2>這段時間拿到的東西</h2>
+          <select id="range"></select>
+          <div class="scroll"><table id="items" style="margin-top: 8px"></table></div>
+          <p class="dim" id="items-empty">這段時間還沒有掉東西。</p>
+        </div>
+        <p class="dim">
+          打怪收入＝掉落物照商店賣價估的價值，包含之後被自動賣掉的東西，不要跟販售收入相加。淨收入＝自動販售收入 − 三項支出。<br />
+          「（賣出）」＝拿到的全部被自動販售賣掉了；自己在村莊手動賣的不會標記。只記這次啟動以來的資料。
+        </p>
+      </section>
+
+      <!-- ── 外觀 ── -->
+      <section id="tab-looks">
+        <div class="card">
+          <button class="act" id="follow">跟著目前在打的怪物<small style="display: block; color: #86704a">預設。換地方掛機，桌寵也跟著換</small></button>
+          <input id="search" type="search" placeholder="搜尋怪物或戰寵名稱" style="margin-top: 10px" />
+          <p class="dim" id="looks-empty">要先進遊戲選好角色，才讀得到外觀清單。</p>
+          <div id="list"></div>
+        </div>
+      </section>
+
+      <!-- ── 說明 ── -->
+      <section id="tab-help">
+        <div class="card">
+          <h2>怎麼用</h2>
+          <p>遊戲會在背景繼續掛機，畫面上留一隻桌寵。不要同時在瀏覽器開遊戲，兩邊的進度會互相蓋掉。</p>
+          <table class="help">
+            <tr><td>點桌寵</td><td>打開遊戲。按上方的「收起」或返回鍵收回去</td></tr>
+            <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
+            <tr><td>長按桌寵</td><td>打開這個設定畫面</td></tr>
+            <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h2>第一次使用</h2>
+          <p>遊戲畫面會自己打開。新玩家直接建角色；已經有在玩的話，在原本的裝置產生轉移碼，到這裡的選角畫面輸入六碼取回。</p>
+          <p class="dim">手機版目前不支援用檔案匯入、匯出存檔，請用轉移碼。</p>
+        </div>
+        <div class="card">
+          <h2>要注意的事</h2>
+          <p>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</p>
+          <p>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。遇到掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // 設定畫面。跟桌寵服務之間靠 window.Android（MainActivity.Bridge）溝通；
+      // 收益表跟外觀清單要去問遊戲頁面裡的探子，是非同步的：Android.ask(種類, 編號) → window.__reply(編號, 資料)。
+      const $ = (id) => document.getElementById(id);
+      const GAME_URL = "https://idle-seal.pp771007.workers.dev/";
+      const number = (n) => Math.round(n).toLocaleString("zh-TW");
+      const clock = (ms) => new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+      const waiting = new Map();
+      let askSeq = 0;
+      const ask = (kind) => new Promise((resolve) => {
+        const id = String(++askSeq);
+        waiting.set(id, resolve);
+        Android.ask(kind, id);
+      });
+      window.__reply = (id, data) => {
+        const resolve = waiting.get(id);
+        waiting.delete(id);
+        if (resolve) resolve(data);
+      };
+
+      // ── 分頁 ──
+      let tab = "settings";
+      function showTab(name) {
+        tab = name;
+        for (const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.tab === name);
+        for (const s of document.querySelectorAll("section")) s.classList.toggle("on", s.id === "tab-" + name);
+        if (name === "income") loadIncome();
+        if (name === "looks") loadLooks();
+      }
+      document.querySelector("nav").addEventListener("click", (e) => e.target.dataset.tab && showTab(e.target.dataset.tab));
+
+      // ── 設定 ──
+      function refresh() {
+        const settings = JSON.parse(Android.settings());
+        const status = JSON.parse(Android.status());
+        for (const box of document.querySelectorAll("input[data-key]")) box.checked = !!settings[box.dataset.key];
+        $("size").value = settings.sizePercent;
+        $("size-value").textContent = settings.sizePercent + "%";
+        $("permission").hidden = status.overlay;
+        $("start").hidden = status.running;
+        $("status").textContent = status.running ? status.status : status.overlay ? "桌寵沒有在執行" : "還沒有權限";
+        document.querySelector('[data-action="toggleGame"]').textContent = status.gameShown ? "收起遊戲" : "顯示遊戲";
+        if (status.running && status.mallOk === false) $("mall-note").innerHTML = '<span class="warn">遊戲改版，暫時停用</span>';
+        $("version").textContent = "版本 " + status.version + (status.contentVersion && status.contentVersion !== status.version ? "（內容 " + status.contentVersion + "）" : "");
+        $("update").hidden = !status.appUpdate;
+        $("update-version").textContent = status.appUpdate || "";
+        chosen = settings.petModel;
+        markChosen();
+      }
+      document.addEventListener("change", (e) => {
+        const key = e.target.dataset && e.target.dataset.key;
+        if (key) Android.set(key, String(e.target.checked));
+      });
+      $("size").addEventListener("input", () => {
+        $("size-value").textContent = $("size").value + "%";
+        Android.set("sizePercent", $("size").value);
+      });
+      document.addEventListener("click", (e) => {
+        const action = e.target.dataset && e.target.dataset.action;
+        if (!action) return;
+        Android.action(action);
+        setTimeout(refresh, 600);
+      });
+
+      // ── 收益 ──
+      let income;
+      const COLUMNS = [["hunt", "income", "打怪"], ["sales", "income", "販售"], ["potions", "expense", "喝水"], ["pets", "expense", "寵物"], ["misc", "expense", "雜項"]];
+      function hourRow(label, h) {
+        const cells = COLUMNS.map(([key, kind]) => `<td class="${h[key] ? kind : ""}">${h[key] ? (kind === "expense" ? "−" : "") + number(h[key]) : "0"}</td>`).join("");
+        const net = `<td class="${h.net < 0 ? "minus" : h.net > 0 ? "income" : ""}">${h.net > 0 ? "+" : h.net < 0 ? "−" : ""}${number(Math.abs(h.net))}</td>`;
+        return `<tr><td>${label}</td>${cells}${net}</tr>`;
+      }
+      async function loadIncome() {
+        income = await ask("income");
+        const has = !!income && income.hours.length > 0;
+        $("hours").hidden = !has;
+        $("income-empty").hidden = has;
+        if (!has) {
+          $("since").textContent = "";
+          renderItems();
+          return;
+        }
+        $("since").textContent = `從 ${clock(income.startedAt)} 到現在・有在掛機的時間 ${Math.floor(income.total.activeMs / 60000)} 分鐘`;
+        const head = `<tr><th>時段</th>${COLUMNS.map(([, kind, name]) => `<th class="${kind === "expense" ? "expense" : ""}">${name}</th>`).join("")}<th>淨收入</th></tr>`;
+        const rows = [...income.hours].reverse().map((h) => hourRow(clock(h.start), h)).join("");
+        $("hours").innerHTML = head + rows + hourRow("<b>合計</b>", income.total) + hourRow("平均每小時", income.average);
+        const keep = $("range").value || "all";
+        $("range").innerHTML = `<option value="all">從啟動到現在</option>` + [...income.hours].reverse().map((h) => `<option value="${h.start}">${clock(h.start)}～${clock(h.start + 36e5)}</option>`).join("");
+        $("range").value = [...$("range").options].some((o) => o.value === keep) ? keep : "all";
+        renderItems();
+      }
+      function renderItems() {
+        const source = !income ? undefined : $("range").value === "all" || !$("range").value ? income.total : income.hours.find((h) => String(h.start) === $("range").value);
+        const items = ((source && source.items) || []).filter((item) => item.got > 0);
+        $("items").hidden = items.length === 0;
+        $("items-empty").hidden = items.length > 0;
+        const rows = items.map((item) => {
+          // 賣掉的數量可能比這段時間拿到的多（賣的是之前囤的），那也算全部賣出
+          const sold = item.sold >= item.got ? '<span class="sold">（賣出）</span>' : item.sold > 0 ? `<span class="sold">（賣出 ${number(item.sold)} 個）</span>` : "";
+          return `<tr><td>${escapeHtml(item.name)}${sold}</td><td>×${number(item.got)}</td><td>${number(item.sell)}</td><td>${number(item.sell * item.got)}</td></tr>`;
+        }).join("");
+        const total = items.reduce((sum, item) => sum + item.sell * item.got, 0);
+        $("items").innerHTML = `<tr><th>物品</th><th>拿到</th><th>單價</th><th>價值</th></tr>${rows}<tr><td><b>合計 ${items.length} 種</b></td><td></td><td></td><td><b>${number(total)}</b></td></tr>`;
+      }
+      const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+      $("range").addEventListener("change", renderItems);
+      setInterval(() => tab === "income" && loadIncome(), 3000);
+
+      // ── 外觀 ──
+      let entries;
+      let chosen = "";
+      const MAX_SHOWN = 90;
+      // 縮圖直接用動畫表當背景圖、只露出左上角第一格（待機的第一格）；捲到看得見才載圖，不然幾百張一起載太慢
+      const thumbs = new IntersectionObserver((seen) => {
+        for (const s of seen) {
+          if (!s.isIntersecting) continue;
+          thumbs.unobserve(s.target);
+          s.target.style.backgroundImage = `url(${GAME_URL}sprites/${s.target.dataset.model}.webp)`;
+        }
+      });
+      function markChosen() {
+        $("follow").classList.toggle("chosen", !chosen);
+        for (const card of $("list").children) card.classList.toggle("chosen", card.dataset.model === chosen);
+      }
+      function renderLooks() {
+        const q = $("search").value.trim().toLowerCase();
+        const shown = (entries || []).filter((e) => !q || e.search.toLowerCase().includes(q)).slice(0, MAX_SHOWN);
+        $("looks-empty").hidden = !!entries && entries.length > 0;
+        thumbs.disconnect();
+        $("list").innerHTML = shown.map((e) => `<button class="pick" data-model="${e.model}"><i data-model="${e.model}"></i><span>${escapeHtml(e.name)}</span><small>${e.group}</small></button>`).join("");
+        for (const i of $("list").querySelectorAll("i")) thumbs.observe(i);
+        markChosen();
+      }
+      async function loadLooks() {
+        if (!entries || entries.length === 0) {
+          entries = (await ask("entries")) || [];
+          // 目前選的那隻排最前面，一打開就看得到
+          entries.sort((a, b) => (b.model === chosen) - (a.model === chosen));
+        }
+        renderLooks();
+      }
+      function choose(model) {
+        chosen = model;
+        Android.set("petModel", model);
+        markChosen();
+      }
+      $("list").addEventListener("click", (e) => {
+        const card = e.target.closest(".pick");
+        if (card) choose(card.dataset.model);
+      });
+      $("follow").addEventListener("click", () => choose(""));
+      $("search").addEventListener("input", renderLooks);
+
+      window.__updateProgress = (text) => ($("update-progress").textContent = text);
+      // 桌寵有沒有在跑、有沒有新版，都可能在這個畫面開著的時候才變，定時更新一下
+      setInterval(() => tab === "settings" && refresh(), 3000);
+
+      showTab("settings");
+      refresh();
+      // 告訴外殼這一份設定畫面有正常載入（下載回來的新版如果壞掉，外殼等不到這一聲就會換回內建的）
+      if (Android.ready) Android.ready();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "version": "0.3.0",
+  "shell": 1,
+  "files": [
+    {
+      "path": "agent.js",
+      "sha256": "7d4303116c9ed253c7552d9aa00f33eab1018ba8d26d03f4204c49a78ce32fdc",
+      "size": 14389
+    },
+    {
+      "path": "panel/index.html",
+      "sha256": "93c3e412877fcd35aae5c874aaa3eb074d2f5422c8acf05a368b90442e32b485",
+      "size": 19596
+    }
+  ]
+}
