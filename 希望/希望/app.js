@@ -976,6 +976,7 @@
       currentAbilityTotal = null;
       currentBrowseTotal = null;
       currentAbilityFields = [];
+      currentMatches.pages = [];
     }
     if (kind === "item") {
       var it = ITEMS[id];
@@ -991,29 +992,26 @@
       currentMatches.items = [];
       renderResultList(mon ? mon.name : "");
       showMonster(id);
-    } else if (kind === "pet") {
-      showPetDetail(id);
-    } else if (kind === "bpet") {
-      showBattlePetDetail(id);
-    } else if (kind === "dungeon") {
-      showDungeonDetail(id);
-    } else if (kind === "map") {
-      showMapDetail(id);
-    } else if (kind === "smith") {
-      openSmithTab(id);
-    } else if (kind === "skills") {
-      showSkillBrowser(id);
-    } else if (kind === "skill") {
-      showSkillDetail(id);
-    } else if (kind === "questline") {
-      showQuestLineDetail(id);
-    } else if (kind === "questtab") {
-      openQuestTab(id);
-    } else if (kind === "stones") {
-      showStoneGuide();
+    } else {
+      showPageView(kind, id);
     }
     if (restoreScrollY != null) window.scrollTo(0, restoreScrollY);
     else scrollToDetail();
+  }
+  // 物品／怪物以外的頁面：只換右邊詳細頁，不動左側清單也不捲動（navigateTo 和搜尋結果的「頁面／功能」共用）
+  function showPageView(kind, id) {
+    if (kind === "pet") showPetDetail(id);
+    else if (kind === "pets") showPetBrowser(id === "bpet" ? "bpet" : (Number(id) || null));
+    else if (kind === "bpet") showBattlePetDetail(id);
+    else if (kind === "dungeon") showDungeonDetail(id);
+    else if (kind === "dungeons") showDungeonBrowser();
+    else if (kind === "map") showMapDetail(id);
+    else if (kind === "smith") openSmithTab(id);
+    else if (kind === "skills") showSkillBrowser(id);
+    else if (kind === "skill") showSkillDetail(id);
+    else if (kind === "questline") showQuestLineDetail(id);
+    else if (kind === "questtab") openQuestTab(id);
+    else if (kind === "stones") showStoneGuide();
   }
   // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
   // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
@@ -1145,12 +1143,193 @@
     renderResultList("");
   }
 
+  // ---------- 搜尋：頁面／功能 ----------
+  // 除了物品和怪物，查詢頁本來就有的頁面（更新紀錄、任務、寵物、副本、地圖、技能、鐵匠…）也能用關鍵字搜到，點了直接跳過去。
+  // 每筆：{ idx, icon, iconItem, name, meta, kw, kind, id, feature, notes }
+  //   kind／id：showPageView 認得的種類；另外 changelog（id 空＝列表，數字＝第幾筆）和 help 是彈窗
+  //   kw：名稱以外也算符合的關鍵字；feature：上方功能按鈕對應的大頁面（排最前面）；notes：更新紀錄的功能說明文字
+  var SITE_PAGE_LIMIT = 60;    // 最多列幾筆
+  var SITE_PAGE_COLLAPSED = 6; // 先顯示幾筆，其餘收起來，免得把物品／怪物擠到很下面
+  var sitePageCache = null;
+  var sitePagesExpanded = false;
+  var activeSitePage = null;   // 目前右邊開著的是哪一筆頁面結果（重畫清單時用來標回去）
+  var lastSearchQuery = "";
+  function sitePageList() {
+    if (sitePageCache) return sitePageCache;
+    var list = [];
+    function add(icon, name, meta, kw, kind, id, extra) {
+      var p = { idx: list.length, icon: icon, name: name, meta: meta, kw: kw || [], kind: kind, id: id == null ? "" : String(id) };
+      if (extra) Object.keys(extra).forEach(function (k) { p[k] = extra[k]; });
+      list.push(p);
+      return p;
+    }
+    var F = { feature: true };
+    var petIds = Object.keys(PET_INFO);
+    var dungeonIds = Object.keys(DUNGEON_BY_ID);
+
+    add("📋", "更新紀錄", "每次更新新增了哪些物品、怪物與功能", ["更新", "改版", "新增", "changelog"], "changelog", "", F);
+    add("❓", "使用說明", "這個查詢頁每個功能怎麼用", ["說明", "教學", "幫助", "help"], "help", "", F);
+    if (petIds.length) add("🐾", "寵物列表", "共 " + petIds.length + " 隻寵物，可依階級篩選", ["寵物", "pet"], "pets", "", F);
+    if (petIds.some(function (id) { return PET_INFO[id].tier === 6; })) {
+      add("🐾", "寵物大師／寵物冶煉", "6 階換 7 階的機率試算與規則", ["寵物", "6階", "7階", "6 階", "7 階"], "pets", "6", F);
+    }
+    if (BATTLE_PET_INFO.kinds.length) add("🐉", "戰寵列表", "共 " + BATTLE_PET_INFO.kinds.length + " 種戰寵", ["戰寵", "寵物"], "pets", "bpet", F);
+    if (dungeonIds.length) add("🏛️", "副本", "共 " + dungeonIds.length + " 個副本", ["dungeon"], "dungeons", "", F);
+    add("🗺️", "地圖", "選一張地圖看所有怪物和掉落總表", ["map"], "map", "", F);
+    add("✨", "技能", "各職業的技能列表與每一級數值", ["skill"], "skills", "", F);
+    var questKw = ["任務", "任務總覽"];
+    if (hasMainQuestLines()) add("📖", "主線任務", "任務總覽", questKw, "questtab", "main", F);
+    if (DAILY.quests.length) add("🗓️", "每日任務", "任務總覽・每天換日發的任務卡與禮物盒", questKw.concat(["每日"]), "questtab", "daily", F);
+    add("✉️", "書信任務", "任務總覽・怪物掉的書信交給 NPC 換名聲／金幣", questKw.concat(["書信"]), "questtab", "letter", F);
+    add("📜", "委託任務", "任務總覽・各城鎮委託處的委託", questKw.concat(["委託"]), "questtab", "commission", F);
+    add("🗺️", "藍圖任務", "任務總覽・等級到了就能進行的任務", questKw.concat(["藍圖"]), "questtab", "blueprint", F);
+    if (JOB_ADVANCE && JOB_ADVANCE.jobs.length) add("🎓", "轉職", "任務總覽・一轉／二轉的條件與 NPC", questKw.concat(["職業", "一轉", "二轉"]), "questtab", "job", F);
+    var smithKw = ["鐵匠", "鐵匠相關"];
+    add("🔮", "發條強化", "鐵匠相關・發條強化屬性表", smithKw.concat(["強化", "發條"]), "smith", "enchant", F);
+    add("🔥", "找雷分解", "鐵匠相關・鎔解費用與鎔解石機率", smithKw.concat(["分解", "鎔解", "熔解"]), "smith", "smelt", F);
+    if (SMITH.hardDecompose) add("💔", "強硬分解", "鐵匠相關・艾希頓裝備換凝結之魂", smithKw.concat(["分解"]), "smith", "decompose", F);
+    if (SMITH.ashtonConvert) add("💠", "艾希頓轉換", "鐵匠相關・艾希頓裝備換成結晶", smithKw.concat(["艾希頓"]), "smith", "convert", F);
+    if (SMITH.sageTickets) add("📜", "賢者合成券", "鐵匠相關・裝備升一階的條件與花費", smithKw.concat(["賢者", "合成"]), "smith", "sage", F);
+    if (STONES) add("💠", "鑲嵌石", "強化花費、成功率、能力機率與材料來源", ["鑲嵌", "石頭"], "stones", "", F);
+
+    dungeonIds.forEach(function (did) {
+      var dg = DUNGEON_BY_ID[did];
+      add("🏛️", dg.name, "副本・Lv" + (dg.minLv || 0) + (dg.maxLv ? "~" + dg.maxLv : "+"), [], "dungeon", did);
+    });
+    BATTLE_PET_INFO.kinds.forEach(function (k) {
+      add("🐉", k.name, "戰寵・" + (ELEMENT_LABEL[k.element] || k.element) + "屬性", [], "bpet", k.kind, { iconItem: k.itemId });
+    });
+    petIds.sort(function (a, b) { return (PET_INFO[a].tier - PET_INFO[b].tier) || (PET_INFO[a].lv - PET_INFO[b].lv); }).forEach(function (pid) {
+      var p = PET_INFO[pid];
+      add("🐾", p.name, "寵物・" + p.tier + "階 Lv" + p.lv, [], "pet", pid, { iconItem: pid });
+    });
+    mapOptions().forEach(function (e) {
+      var lv = e.minLv == null ? "只有採集點" : "Lv" + e.minLv + (e.maxLv !== e.minLv ? "~" + e.maxLv : "");
+      add("🗺️", MAPS[e.id], (e.dungeon ? "副本地圖・" : "地圖・") + lv + "・" + e.count + " 種怪物", [], "map", e.id);
+    });
+    Object.keys(MAIN_QUEST_LINES).forEach(function (lid) {
+      add("📖", MAIN_QUEST_LINES[lid].title, "主線任務・共 " + MAIN_QUEST_LINES[lid].parts.length + " 個步驟", [], "questline", lid);
+    });
+    if (JOB_ADVANCE) {
+      JOB_ADVANCE.jobs.forEach(function (j) {
+        add("🎓", "轉職：" + j.name, "轉職・找 " + (j.npc || "NPC"), [], "questtab", "job");
+      });
+    }
+    CHANGELOG.forEach(function (entry, i) {
+      var notes = [];
+      entry.categories.forEach(function (c) {
+        if (c.kind === "note") c.entries.forEach(function (e) { notes.push(e.name); });
+      });
+      var summary = entry.categories.map(function (c) { return c.label.replace(/\s*\(.+?\)/, "") + " " + c.entries.length + (c.kind === "note" ? " 項" : " 筆"); }).join("、");
+      add("📋", entry.date, "更新紀錄・" + summary, [], "changelog", i, { notes: notes });
+    });
+    // 技能資料是另外載入的（loadSkillIndex），還沒載好就先不列；放最後面，載好重建清單時前面每筆的 idx 才不會變
+    if (SKILL_INDEX) {
+      (SKILL_INDEX.jobs || []).forEach(function (job) {
+        (SKILL_INDEX.skills[job.id] || []).forEach(function (s) {
+          add("✨", s.name, "技能・" + job.name + (String(s.tree) !== "1" && job.trees && job.trees[String(s.tree)] ? "（" + job.trees[String(s.tree)] + "）" : ""), [], "skill", job.id + ":" + s.id);
+        });
+      });
+    }
+    sitePageCache = list;
+    return list;
+  }
+  function sitePageIsPopup(p) { return p.kind === "changelog" || p.kind === "help"; }
+  // 名稱比對跟物品／怪物一樣（字可以不連在一起）；kw 要完整包含關鍵字；更新紀錄另外比對功能說明的內文（至少 2 個字）
+  function matchSitePages(q) {
+    var ql = q.toLowerCase();
+    var exact = [], loose = [];
+    var multiChar = Array.from(ql).length >= 2; // 只打一個字時不比對 kw 和內文，不然「鐵」會把鐵匠的分頁全列出來
+    sitePageList().forEach(function (p) {
+      var gap = nameMatchGap(p.name.toLowerCase(), ql);
+      if (gap !== 0 && multiChar && p.kw.some(function (k) { return k.indexOf(ql) !== -1; })) gap = 0;
+      if (gap === 0) { exact.push(p); return; }
+      if (p.notes && multiChar) {
+        var note = p.notes.filter(function (n) { return n.toLowerCase().indexOf(ql) !== -1; })[0];
+        if (note) {
+          var at = note.toLowerCase().indexOf(ql), from = Math.max(0, at - 12);
+          var copy = {};
+          Object.keys(p).forEach(function (k) { copy[k] = p[k]; });
+          copy.meta = "更新紀錄・" + (from > 0 ? "…" : "") + note.slice(from, at + ql.length + 28) + (at + ql.length + 28 < note.length ? "…" : "");
+          exact.push(copy);
+          return;
+        }
+      }
+      if (gap > 0) loose.push({ p: p, gap: gap });
+    });
+    // 大頁面排最前面，其餘照原順序
+    exact = exact.filter(function (p) { return p.feature; }).concat(exact.filter(function (p) { return !p.feature; }));
+    loose.sort(function (a, b) { return a.gap - b.gap || a.p.name.length - b.p.name.length; });
+    return exact.concat(loose.map(function (l) { return l.p; })).slice(0, SITE_PAGE_LIMIT);
+  }
+  // userClick：使用者自己點的才捲動（打字搜尋時自動開的不捲，不然手機上搜尋欄會被捲走）
+  function openSitePage(idx, userClick) {
+    var p = sitePageList()[idx];
+    if (!p) return;
+    if (p.kind === "help") { openHelp(); return; }
+    if (p.kind === "changelog") {
+      if (p.id === "") openChangelogList();
+      else { openChangelogDetail(Number(p.id)); $changelogBackdrop.style.display = "flex"; }
+      return;
+    }
+    var id = p.id;
+    if (p.kind === "map" && !id) id = mapBrowserLast || "";
+    if (p.kind === "skills" && !id) id = skillLastJob || "";
+    resetNavHistory();
+    currentView = { kind: p.kind, id: id };
+    showPageView(p.kind, id);
+    activeSitePage = idx;
+    markActive("page", idx);
+    if (userClick && stackedLayoutQuery && stackedLayoutQuery.matches) scrollToDetail();
+  }
+  // 說明文字比較長，放在名稱下面一行（跟寵物列表的「取得：」同一種排法），不然會把名稱擠成直的
+  function sitePageLabelHtml(p) {
+    return ((p.iconItem != null && itemIconHtml(p.iconItem, 32)) || '<span style="display:inline-block;width:32px;margin-right:6px;text-align:center;font-size:18px;flex:none;">' + p.icon + '</span>') +
+      '<span>' + escapeHtml(p.name) + '<span class="pet-obtain">' + escapeHtml(p.meta) + '</span></span>';
+  }
+  // 只搜到彈窗類的頁面（更新紀錄、使用說明）時不自動跳出來，在右邊放連結讓使用者自己點
+  function showSitePageHint(pages) {
+    $detail.innerHTML = '<div class="welcome"><div class="big">◈</div><p>找到 ' + pages.length + ' 個相關頁面，點一下開啟：</p>' +
+      '<p style="line-height:2.2;">' + pages.slice(0, SITE_PAGE_COLLAPSED).map(function (p) {
+        return '<span class="name-link" data-site-page="' + p.idx + '" style="cursor:pointer;">' + p.icon + ' ' + escapeHtml(p.name) + '</span>';
+      }).join("<br>") + '</p></div>';
+  }
+  // 清單重畫之後把目前開著的那一筆標回去
+  function remarkActive() {
+    if (activeSitePage != null) markActive("page", activeSitePage);
+    else if (currentDetail) markActive(currentDetail.type, currentDetail.id);
+  }
+  // 技能資料在背景載好：如果畫面還停在同一次搜尋的結果，把技能補進「頁面／功能」
+  function onSkillIndexLoaded() {
+    sitePageCache = null;
+    // 更新紀錄的某一筆還開著：重畫一次，讓裡面的技能變成可以點
+    if (changelogDetailIdx != null && $changelogBackdrop.style.display !== "none" && document.getElementById("changelogBackToList")) {
+      var modalScroll = $changelogModal.scrollTop;
+      openChangelogDetail(changelogDetailIdx);
+      $changelogModal.scrollTop = modalScroll;
+    }
+    if (!lastSearchQuery || $input.value.trim() !== lastSearchQuery) return;
+    if (categoryFilterValue() || ($abilityOnly && $abilityOnly.checked)) return;
+    var before = (currentMatches.pages || []).length;
+    currentMatches.pages = matchSitePages(lastSearchQuery);
+    if (currentMatches.pages.length === before) return;
+    var hadResults = before + currentMatches.items.length + currentMatches.monsters.length > 0;
+    renderResultList(lastSearchQuery);
+    remarkActive();
+    // 原本什麼都沒找到（右邊是「找不到」），現在有技能了就直接開第一筆
+    if (!hadResults) openSitePage(currentMatches.pages[0].idx);
+  }
+
   function runSearch(qRaw) {
     var q = (qRaw || "").trim();
     currentMatches.items = [];
     currentMatches.monsters = [];
+    currentMatches.pages = [];
     currentAbilityTotal = null;
     currentBrowseTotal = null;
+    sitePagesExpanded = false;
+    activeSitePage = null;
+    lastSearchQuery = "";
 
     if (q === "") {
       if (categoryFilterValue() && !($abilityOnly && $abilityOnly.checked)) { runCategoryBrowse(); return; }
@@ -1179,17 +1358,30 @@
 
     // 選了物品分類時只找物品，不列怪物
     currentMatches.monsters = categoryFilterValue() ? [] : matchByName(monsterList, q).slice(0, 200);
+    // 頁面／功能也一樣，選了分類就不列
+    currentMatches.pages = categoryFilterValue() ? [] : matchSitePages(q);
+    lastSearchQuery = q;
+    loadSkillIndex(); // 技能名稱要等技能資料載好才搜得到，背景先抓（載好會自己補進清單）
 
     renderResultList(q);
 
     // 自動選第一個最相關的結果
     var exactMonster = currentMatches.monsters.find(function (m) { return m.name === q; });
     var exactItem = currentMatches.items.find(function (it) { return it.name === q; });
+    // 關鍵字剛好是某個頁面的名稱（或大頁面的關鍵字，例如「任務」「寵物」）就直接開那一頁；彈窗類的不自動跳
+    var ql = q.toLowerCase();
+    var openablePages = currentMatches.pages.filter(function (p) { return !sitePageIsPopup(p); });
+    var exactPage = openablePages.find(function (p) { return p.name.toLowerCase() === ql || (p.feature && p.kw.indexOf(ql) !== -1); });
 
     if (exactMonster) {
       showMonster(exactMonster.id);
     } else if (exactItem) {
       showItem(exactItem.id);
+    } else if (exactPage) {
+      openSitePage(exactPage.idx);
+    } else if (!currentMatches.monsters.length && !currentMatches.items.length && currentMatches.pages.length) {
+      if (openablePages.length) openSitePage(openablePages[0].idx);
+      else showSitePageHint(currentMatches.pages);
     } else if (currentMatches.monsters.length && !currentMatches.items.length) {
       showMonster(currentMatches.monsters[0].id);
     } else if (currentMatches.items.length && !currentMatches.monsters.length) {
@@ -1208,11 +1400,12 @@
     $resultCount.textContent = "";
     $resultList.innerHTML = $abilityOnly && $abilityOnly.checked
       ? '<li class="empty-note">輸入裝備能力搜尋，例如：魔法、攻速、減傷；可用空白同時查多項，能力後面可加 &gt;（大於等於）、&lt;（小於等於）、=（等於）縮小數值範圍，例如「魔法力&gt;20 攻速&lt;10」。</li>'
-      : '<li class="empty-note">開始輸入以搜尋物品或怪物名稱。</li>';
+      : '<li class="empty-note">開始輸入以搜尋物品或怪物名稱；也可以搜尋頁面，例如：更新紀錄、任務、寵物、副本、地圖、技能。</li>';
   }
 
   function renderResultList(q) {
-    var total = currentMatches.items.length + currentMatches.monsters.length;
+    var pages = currentMatches.pages || [];
+    var total = currentMatches.items.length + currentMatches.monsters.length + pages.length;
     var shownTotal = currentAbilityTotal != null ? currentAbilityTotal : (currentBrowseTotal != null ? currentBrowseTotal : total);
     $resultCount.textContent = total ? "(" + shownTotal + ")" : "";
     // 不連續字的結果前面加一行分隔，讓玩家知道下面這些是「字沒有連在一起」比對到的
@@ -1239,8 +1432,21 @@
 
     var html = "";
 
+    if (pages.length) {
+      html += '<li class="empty-note" style="padding:6px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">頁面／功能 (' + pages.length + ')</li>';
+      var shownPages = sitePagesExpanded ? pages : pages.slice(0, SITE_PAGE_COLLAPSED);
+      shownPages.forEach(function (p) {
+        html += '<li class="result-item" data-type="page" data-id="' + p.idx + '">' +
+          '<span class="rname">' + sitePageLabelHtml(p) + '</span></li>';
+      });
+      if (shownPages.length < pages.length) {
+        html += '<li class="empty-note" data-pages-expand="1" style="padding:4px 6px 8px;font-size:12px;cursor:pointer;color:var(--gold-hi);">▾ 還有 ' +
+          (pages.length - shownPages.length) + ' 筆頁面／功能，點一下展開</li>';
+      }
+    }
+
     if (currentMatches.monsters.length) {
-      html += '<li class="empty-note" style="padding:6px 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">怪物 (' + currentMatches.monsters.length + ')</li>';
+      html += '<li class="empty-note" style="padding:' + (pages.length ? '10px' : '6px') + ' 6px 2px;color:var(--gold-hi);font-size:12px;font-weight:700;">怪物 (' + currentMatches.monsters.length + ')</li>';
       currentMatches.monsters.forEach(function (m, idx) {
         var mon = MONSTERS[m.id];
         var harvestTag = mon.isHarvest ? " ・採集" : "";
@@ -1310,6 +1516,7 @@
   }
 
   function markActive(type, id) {
+    if (type !== "page") activeSitePage = null;
     var nodes = $resultList.querySelectorAll(".result-item");
     nodes.forEach(function (n) {
       n.classList.toggle("active", n.dataset.type === type && n.dataset.id === String(id));
@@ -1317,8 +1524,15 @@
   }
 
   $resultList.addEventListener("click", function (e) {
+    if (e.target.closest("[data-pages-expand]")) {
+      sitePagesExpanded = true;
+      renderResultList(lastSearchQuery);
+      remarkActive();
+      return;
+    }
     var item = e.target.closest(".result-item");
     if (!item) return;
+    if (item.dataset.type === "page") { openSitePage(Number(item.dataset.id), true); return; }
     resetNavHistory();
     if (item.dataset.type === "monster") { currentView = { kind: "monster", id: item.dataset.id }; showMonster(item.dataset.id); }
     else { currentView = { kind: "item", id: item.dataset.id }; showItem(item.dataset.id); }
@@ -1490,19 +1704,25 @@
   function withSkillIndex(run) {
     if (SKILL_INDEX) { run(); return; }
     $detail.innerHTML = '<div class="empty-note">技能資料載入中…</div>';
-    if (skillIndexWaiting) { skillIndexWaiting.push(run); return; }
-    skillIndexWaiting = [run];
+    loadSkillIndex(run);
+  }
+  // run 可以不給：搜尋時在背景先把技能資料抓回來（讓技能名稱也搜得到），不動畫面
+  function loadSkillIndex(run) {
+    if (SKILL_INDEX) { if (run) run(); return; }
+    if (skillIndexWaiting) { if (run) skillIndexWaiting.push(run); return; }
+    skillIndexWaiting = run ? [run] : [];
     var s = document.createElement("script");
     s.src = "希望/skillIndex.js?v=" + ((ICON_ATLAS.skillData && ICON_ATLAS.skillData.v) || "1");
     s.onload = function () {
       SKILL_INDEX = window.SKILL_INDEX || { jobs: [], skills: {} };
       var list = skillIndexWaiting; skillIndexWaiting = null;
       // 載入期間使用者可能已經點去別頁，只跑最後一個、而且還停在技能頁才畫
-      if (currentView && (currentView.kind === "skills" || currentView.kind === "skill")) list[list.length - 1]();
+      if (list.length && currentView && (currentView.kind === "skills" || currentView.kind === "skill")) list[list.length - 1]();
+      onSkillIndexLoaded();
     };
     s.onerror = function () {
-      skillIndexWaiting = null;
-      $detail.innerHTML = '<div class="empty-note">技能資料載入失敗，請檢查網路後再點一次「技能」。</div>';
+      var list = skillIndexWaiting; skillIndexWaiting = null;
+      if (list.length) $detail.innerHTML = '<div class="empty-note">技能資料載入失敗，請檢查網路後再點一次「技能」。</div>';
     };
     document.head.appendChild(s);
   }
@@ -3915,6 +4135,7 @@
     currentAbilityFields = [];
     currentMatches.items = [{ id: id, name: name }];
     currentMatches.monsters = [];
+    currentMatches.pages = [];
     renderResultList(name);
     showItem(id);
     scrollToDetail();
@@ -3948,9 +4169,38 @@
     }
     $changelogBackdrop.style.display = "flex";
   }
+  // 物品／怪物以外的分類（kind 都是 other）：看標籤括號裡的資料檔名稱，對得到查詢頁裡的頁面就讓它可以點。
+  // 回傳要加在小標籤上的屬性（沿用各頁面原本的 data-open-*／data-goto-*，由最下面的 document click 統一處理），對不到回傳空字串。
+  var CHANGELOG_ITEM_SOURCES = ["shopIndex", "radixIndex", "forgeIndex", "cookIndex", "alchemyIndex", "exchangeIndex", "boxIndex", "letterIndex"];
+  function changelogLinkAttr(cat, e) {
+    var m = /\(([^)]+)\)\s*$/.exec(cat.label || "");
+    var src = m ? m[1] : "", id = String(e.id);
+    if (src === "pets") return PET_INFO[id] ? 'data-open-pet="' + id + '"' : "";
+    if (src === "battlePetIndex") return BATTLE_PET_INFO.kinds.some(function (k) { return String(k.kind) === id; }) ? 'data-open-bpet="' + id + '"' : "";
+    if (src === "dungeonIndex") return DUNGEON_BY_ID[id] ? 'data-open-dungeon="' + id + '"' : "";
+    if (src === "maps") return mapOptions().some(function (o) { return o.id === id; }) ? 'data-open-map="' + id + '"' : "";
+    if (src === "skills") {
+      // 編號是「職業-技能編號」。技能資料是另外載入的，還沒載好就先不給點（openChangelogDetail 會在背景抓，載好重畫）；
+      // 有些紀錄到的技能現在的技能頁沒有（例如已經拿掉的），也不給點
+      var sk = /^([A-Za-z0-9_]+)-(\d+)$/.exec(id);
+      if (!sk || !SKILL_INDEX) return "";
+      // 技能後來可能搬到別的職業（紀錄時的職業找不到），用技能編號到所有職業裡找
+      var skJob = skillFind(sk[1], sk[2]) ? sk[1] : Object.keys(SKILL_INDEX.skills || {}).filter(function (j) { return skillFind(j, sk[2]); })[0];
+      return skJob ? 'data-goto-skill="' + skJob + ':' + sk[2] + '"' : "";
+    }
+    if (src === "questLineIndex") return MAIN_QUEST_LINES[id] ? 'data-open-questline="' + id + '"' : "";
+    if (src === "missions") return MISSIONS[id] ? 'data-mission-detail="' + id + '"' : "";
+    if (src === "quests" || src === "quest pages") return 'data-goto-questtab="commission"';
+    if (src === "daily") return DAILY.quests.length ? 'data-goto-questtab="daily"' : "";
+    if (CHANGELOG_ITEM_SOURCES.indexOf(src) !== -1) return ITEMS[id] ? 'data-changelog-goto="item:' + id + '"' : "";
+    return "";
+  }
+  var changelogDetailIdx = null; // 最後一次畫的是哪一筆更新紀錄（技能資料載好時用來重畫）
   function openChangelogDetail(idx) {
     var entry = CHANGELOG[idx];
     if (!entry) return;
+    changelogDetailIdx = idx;
+    if (!SKILL_INDEX && entry.categories.some(function (c) { return /\(skills\)\s*$/.test(c.label || ""); })) loadSkillIndex();
     var html = '<div class="section-title"><span class="name-link" id="changelogBackToList" style="cursor:pointer;">← 更新紀錄</span></div>';
     html += '<div class="detail-sub" style="margin-bottom:14px;">' + escapeHtml(entry.date) + '</div>';
     entry.categories.forEach(function (cat) {
@@ -3966,7 +4216,8 @@
         if (cat.kind === "item" || cat.kind === "monster") {
           html += '<span class="map-chip" data-changelog-goto="' + cat.kind + ':' + e.id + '">' + escapeHtml(e.name) + '</span>';
         } else {
-          html += '<span class="map-chip">' + escapeHtml(e.name) + '</span>';
+          var linkAttr = changelogLinkAttr(cat, e);
+          html += '<span class="map-chip"' + (linkAttr ? ' ' + linkAttr + ' style="cursor:pointer;"' : '') + '>' + escapeHtml(e.name) + '</span>';
         }
       });
       html += '</div>';
@@ -6238,7 +6489,7 @@
 
   // ---------- 使用說明（原本放在標題下方的長說明，改成按鈕點開，沿用更新紀錄的彈窗）----------
   var HELP_SECTIONS = [
-    ["🔍 搜尋", "輸入物品名稱，查出會掉落它的怪物、出現地圖與掉落機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。名稱的字不用連在一起，例如「木劍」也會找到「木製劍」。"],
+    ["🔍 搜尋", "輸入物品名稱，查出會掉落它的怪物、出現地圖與掉落機率，以及哪些商店有賣；輸入怪物名稱，查出牠的能力與完整掉落表。名稱的字不用連在一起，例如「木劍」也會找到「木製劍」。查詢頁裡的頁面也搜得到：輸入「更新紀錄」「任務」「寵物」「副本」「地圖」「技能」「鐵匠」，或是寵物、副本、地圖、技能的名稱，結果最上面的「頁面／功能」點一下就會跳到那一頁。"],
     ["🗂️ 分類下拉選單", "搜尋欄左邊可以選裝備部位（武器、頭部…）或物品分類（恢復、材料、任務…）。選了分類只會列物品；不輸入關鍵字時會直接列出整個分類。"],
     ["⚔️ 僅查詢裝備能力", "勾選後輸入能力名稱（例如「魔法」「攻速」「減傷」），只列出有這項能力加成的裝備並依數值排序，不比對物品名稱。可用空白同時查多項；能力後面可以加 >（大於等於）、<（小於等於）、=（等於）縮小範圍，例如「魔法力>20 攻速<10」。"],
     ["✅ 僅顯示目前可取得裝備", "搜尋結果上方的勾選框。勾選後只列出遊戲裡目前有取得管道（掉落、商店、NPC 兌換、任務、製作、合成、開箱、釣魚、分解、每日任務等）的物品。"],
@@ -6345,8 +6596,10 @@
       numToggle.title = showFull ? "點一下縮短" : "點一下看完整數字";
       return;
     }
+    var sitePageLink = e.target.closest("[data-site-page]");
+    if (sitePageLink) { openSitePage(Number(sitePageLink.getAttribute("data-site-page")), true); return; }
     // 在彈出視窗（委託詳細／寶箱）裡點寵物、任務線這類還是會換掉主畫面的連結時，先把視窗關掉，不然新頁面會被蓋住
-    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones]")) {
+    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones],[data-goto-skill]")) {
       closePeek();
       closeChangelog();
     }
