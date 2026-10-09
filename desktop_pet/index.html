@@ -40,9 +40,11 @@
     <main>
       <header>
         <h1>放置希望桌寵</h1>
-        <p>遊戲在背景照常掛機，桌面上留一隻桌寵陪你工作</p>
+        <p>遊戲在背景照常掛機，畫面上留一隻桌寵陪你</p>
       </header>
 
+      <!-- 電腦跟手機各看各的：下面的程式會依照裝置只留其中一塊。沒有開 JavaScript 的話兩塊都會顯示。 -->
+      <div id="view-pc">
       <!-- DOWNLOAD:START 這一段由 scripts/copy-release.js 在每次打包安裝檔時自動改寫，不要手動改 -->
       <section class="download">
         <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/desktop_pet/hope-desktop-pet-setup-1.4.0.exe" download>下載安裝檔</a>
@@ -51,39 +53,6 @@
       </section>
       <!-- DOWNLOAD:END -->
 
-      <section class="download">
-        <h2>安卓手機版（測試中）</h2>
-        <!-- ANDROID:START 這一段由安卓專案的 tools/publish.js 在每次發布 APK 時自動改寫，不要手動改 -->
-        <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/desktop_pet/android/hope-pet-android-0.3.0.apk" download>下載安卓版</a>
-        <p class="meta">版本 0.3.0・約 1.5 MB・Android 8 以上</p>
-        <!-- ANDROID:END -->
-        <p class="note">桌寵會浮在手機畫面上，遊戲在背景繼續掛機。之後有新版，桌寵會自己更新或提醒你。</p>
-      </section>
-
-      <section>
-        <h2>安卓版安裝須知</h2>
-        <ol>
-          <li>按「下載安卓版」，下載完點開那個 APK 檔。</li>
-          <li>手機會問要不要允許「安裝未知來源的應用程式」，選允許，再按安裝。</li>
-          <li>打開 App，照畫面指示開啟「顯示在其他應用程式上層」的權限，桌寵就會出現。</li>
-          <li>第一次會自動打開遊戲。新玩家直接建角色；已經有在玩的話，在原本的裝置產生<b>轉移碼</b>，到選角畫面輸入六碼取回進度。</li>
-        </ol>
-        <h3>怎麼操作</h3>
-        <table>
-          <tr><td>點桌寵</td><td>打開遊戲，按上方的「收起」或返回鍵收回去</td></tr>
-          <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
-          <tr><td>長按桌寵</td><td>打開設定：提醒、收益、外觀、專注模式</td></tr>
-          <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
-        </table>
-        <h3>裝之前先知道</h3>
-        <ul>
-          <li><span class="warn">安卓版還在測試，只在模擬器上測過，還沒有實機回報。</span>遇到問題請告訴作者。</li>
-          <li>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</li>
-          <li>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</li>
-          <li>手機版搬進度請用轉移碼，目前不支援用檔案匯入、匯出存檔。</li>
-          <li>不要同時在瀏覽器或電腦版掛同一個角色，進度會互相蓋掉。</li>
-        </ul>
-      </section>
 
       <section>
         <h2>安裝須知</h2>
@@ -175,6 +144,74 @@
         <h3>收益表的數字是怎麼算的</h3>
         <p>打怪收入是掉落物照商店賣價估的價值；淨收入是自動販售收入減掉三種支出，也就是金幣實際的增減。只記這次開啟桌寵以來的資料，重新啟動就會歸零。</p>
       </section>
+      </div>
+
+      <div id="view-mobile">
+        <section id="ios-note" hidden>
+          <p><span class="warn">iPhone 和 iPad 目前不支援。</span>桌寵只有 Windows 電腦版和安卓手機版。</p>
+        </section>
+      <section class="download">
+        <h2>安卓手機版（測試中）</h2>
+        <!-- ANDROID:START 這一段由安卓專案的 tools/publish.js 在每次發布 APK 時自動改寫，不要手動改 -->
+        <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/desktop_pet/android/hope-pet-android-0.3.0.apk" download>下載安卓版</a>
+        <p class="meta">版本 0.3.0・約 1.5 MB・Android 8 以上</p>
+        <!-- ANDROID:END -->
+        <p class="note">桌寵會浮在手機畫面上，遊戲在背景繼續掛機。之後有新版，桌寵會自己更新或提醒你。</p>
+      </section>
+
+      <section>
+        <h2>安卓版安裝須知</h2>
+        <ol>
+          <li>按「下載安卓版」，下載完點開那個 APK 檔。</li>
+          <li>手機會問要不要允許「安裝未知來源的應用程式」，選允許，再按安裝。</li>
+          <li>打開 App，照畫面指示開啟「顯示在其他應用程式上層」的權限，桌寵就會出現。</li>
+          <li>第一次會自動打開遊戲。新玩家直接建角色；已經有在玩的話，在原本的裝置產生<b>轉移碼</b>，到選角畫面輸入六碼取回進度。</li>
+        </ol>
+        <h3>怎麼操作</h3>
+        <table>
+          <tr><td>點桌寵</td><td>打開遊戲，按上方的「收起」或返回鍵收回去</td></tr>
+          <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
+          <tr><td>長按桌寵</td><td>打開設定：提醒、收益、外觀、專注模式</td></tr>
+          <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
+        </table>
+        <h3>裝之前先知道</h3>
+        <ul>
+          <li><span class="warn">安卓版還在測試，只在模擬器上測過，還沒有實機回報。</span>遇到問題請告訴作者。</li>
+          <li>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</li>
+          <li>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</li>
+          <li>手機版搬進度請用轉移碼，目前不支援用檔案匯入、匯出存檔。</li>
+          <li>不要同時在瀏覽器或電腦版掛同一個角色，進度會互相蓋掉。</li>
+        </ul>
+      </section>
+      </div>
+
+      <p id="switch" class="note" style="text-align: center; margin-top: 18px" hidden>
+        <a href="#" id="switch-link"></a>
+      </p>
     </main>
+    <script>
+      // 依照裝置只顯示一種版本的下載和說明：手機、平板看安卓版，其他看電腦版。
+      // 判斷錯了或想看另一種，頁面最下面有連結可以切換；網址加 ?view=pc 或 ?view=mobile 也可以直接指定。
+      (() => {
+        const ua = navigator.userAgent;
+        const isIos = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1); // 新的 iPad 會自稱是 Mac
+        const asked = new URLSearchParams(location.search).get("view");
+        let view = asked === "pc" || asked === "mobile" ? asked : /Android|Mobile/i.test(ua) || isIos ? "mobile" : "pc";
+        const show = () => {
+          document.getElementById("view-pc").hidden = view !== "pc";
+          document.getElementById("view-mobile").hidden = view !== "mobile";
+          document.getElementById("ios-note").hidden = !isIos;
+          document.getElementById("switch-link").textContent = view === "pc" ? "改看安卓手機版的下載和說明" : "改看電腦版的下載和說明";
+          document.getElementById("switch").hidden = false;
+        };
+        document.getElementById("switch-link").addEventListener("click", (e) => {
+          e.preventDefault();
+          view = view === "pc" ? "mobile" : "pc";
+          show();
+          window.scrollTo(0, 0);
+        });
+        show();
+      })();
+    </script>
   </body>
 </html>
