@@ -64,6 +64,7 @@ let pendingSave; // 等下一次 bootGame 寫進去的存檔文字
 const game = { monster: new Map(), map: new Map(), town: new Map(), dungeon: new Map(), item: new Map(), battlePets: [], iconIndex: {}, iconAtlas: undefined };
 let lastState;
 let lastRaw; // 上一次讀到的存檔摘要，用來比出「這段時間多了什麼」
+let lastDamage; // 上一次讀到的累計傷害 { id, total }
 let clickThrough = false; // 專注模式：桌寵完全不吃滑鼠
 let helpWin;
 let incomeWin;
@@ -71,7 +72,9 @@ let savesWin;
 let mapInfoWin;
 let pickerWin;
 // 使用者設定。petModel 沒設＝桌寵外觀跟著目前在打的怪物
-let settings = { petModel: undefined, helpSeen: false, mallReminder: true, gmReminder: true };
+let settings = { petModel: undefined, helpSeen: false, mallReminder: true, gmReminder: true, stayPut: false, bookmarkTool: true,
+  // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
+  focusShow: { damage: false, exp: false, loot: false } };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
 let lastMallKey; // 上一次講過黑店提醒的那個小時
 let lastGmKey; // 上一次講過的線上GM提醒（快出現／出現中，各只講一次）
@@ -79,7 +82,8 @@ const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json
 
 function loadSettings() {
   try {
-    settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) };
+    const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
+    settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow } };
   } catch {}
 }
 
@@ -319,6 +323,8 @@ function createPetWindow() {
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
     petWin.webContents.send("pet:model", resolveModel());
+    petWin.webContents.send("pet:stay", settings.stayPut);
+    petWin.webContents.send("pet:focus-show", settings.focusShow);
     if (lastState) petWin.webContents.send("pet:state", lastState);
   });
 }
@@ -412,6 +418,28 @@ function incomeDetail() {
     current: undefined,
   };
 }
+
+// ── 書籤工具 ──────────────────────────────────────────────
+// 把書籤工具（loader.js）載進遊戲視窗，做的事跟玩家在瀏覽器點那顆書籤完全一樣：
+// 鑲嵌石畫面多出「🧮 試算」「🎯 自動洗」和「次數用完自動 +50」，另外還有一鍵強化、自動煉金等書籤工具原本的功能。
+// 直接載線上那一份而不是抄一份進桌寵，這樣書籤工具更新，桌寵這邊重新載入遊戲就會跟著更新。
+const BOOKMARK_TOOL_URL = "https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E5%B8%8C%E6%9C%9B/loader.js";
+const BOOKMARK_RETRY_MS = 60000;
+
+// 書籤工具要等進了角色（找得到 session）才能載，不然它會跳「找不到 session」的警告；
+// 遊戲重新載入或換角色後 session 是新的，要再載一次（跟玩家再點一次書籤一樣）。載入失敗隔一陣子再試。
+const LOAD_BOOKMARK_TOOL = `(() => {
+  ${FIND_SESSION}
+  const session = findSession();
+  if (!session || window.__petToolSession === session || Date.now() < (window.__petToolRetryAt ?? 0)) return false;
+  window.__petToolSession = session;
+  import(${JSON.stringify(BOOKMARK_TOOL_URL)} + "?v=" + Date.now()).catch((e) => {
+    console.error("書籤工具載入失敗", e);
+    window.__petToolSession = undefined;
+    window.__petToolRetryAt = Date.now() + ${BOOKMARK_RETRY_MS};
+  });
+  return true;
+})()`;
 
 // ── 目前地圖資訊 ──────────────────────────────────────────
 // 跟書籤工具的「📊 掉落查詢」是同一個功能：讀角色目前的等級、是不是鐵匠系、〔乞討〕等級、所在地圖、正在打的怪，
@@ -643,15 +671,61 @@ function checkMallFormula(shownRate) {
   console.error(`黑店匯率公式跟遊戲對不上（遊戲顯示 ${shownRate}），提醒先關掉`);
 }
 
+/** 專注模式子選單裡的一個勾選項：專注模式下要不要顯示這一類飄字。 */
+function focusShowItem(key, label) {
+  return {
+    label,
+    type: "checkbox",
+    checked: !!settings.focusShow[key],
+    click: (item) => {
+      settings.focusShow = { ...settings.focusShow, [key]: item.checked };
+      saveSettings();
+      petWin.webContents.send("pet:focus-show", settings.focusShow);
+    },
+  };
+}
+
 function buildMenu() {
   return Menu.buildFromTemplate([
     { label: gameWin.isVisible() ? "隱藏遊戲視窗" : "顯示遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
     { type: "separator" },
-    { label: "專注模式（桌寵不擋滑鼠）", type: "checkbox", checked: clickThrough, accelerator: CLICK_THROUGH_KEY, click: toggleClickThrough },
+    {
+      label: "專注模式",
+      submenu: [
+        { label: "開啟專注模式（桌寵不擋滑鼠）", type: "checkbox", checked: clickThrough, accelerator: CLICK_THROUGH_KEY, click: toggleClickThrough },
+        { type: "separator" },
+        { label: "專注模式下，桌寵頭上還要顯示（可複選）：", enabled: false },
+        focusShowItem("damage", "顯示傷害"),
+        focusShowItem("exp", "顯示經驗值"),
+        focusShowItem("loot", "顯示物品取得"),
+      ],
+    },
     { label: "顯示桌寵", type: "checkbox", checked: petWin.isVisible(), click: () => (petWin.isVisible() ? petWin.hide() : petWin.showInactive()) },
+    {
+      label: "原地不走動",
+      type: "checkbox",
+      checked: settings.stayPut,
+      click: (item) => {
+        settings.stayPut = item.checked;
+        saveSettings();
+        petWin.webContents.send("pet:stay", settings.stayPut);
+    petWin.webContents.send("pet:focus-show", settings.focusShow);
+      },
+    },
     incomeMenu(),
     { label: "目前地圖資訊…", click: openMapInfo },
     { type: "separator" },
+    {
+      label: "書籤工具（鑲嵌石試算、自動洗…）",
+      type: "checkbox",
+      checked: settings.bookmarkTool,
+      click: (item) => {
+        settings.bookmarkTool = item.checked;
+        saveSettings();
+        // 關掉的話要重新載入遊戲，才能把已經載進去的書籤工具拿掉；打開則下一次讀狀態時就會載
+        if (!item.checked) loadGame();
+      },
+    },
     { label: "調整大小…", click: openSizer },
     { label: "選擇桌寵外觀…", click: openPicker },
     {
@@ -800,7 +874,9 @@ const READ_STATE = `(() => {
       }
       return { hunt, sales: n(p.goldFromSales), potions: n(p.goldSpentOnPotions) + n(p.goldSpentOnApPotions),
         pets: n(p.goldSpentOnPets) + n(p.goldSpentOnBpetPotions), misc: n(p.goldSpentOnThrowables) + n(p.goldSpentOnHolyWater),
-        drops: [...(session.drops ?? [])], sold: [...(session.__petSold ?? [])] };
+        drops: [...(session.drops ?? [])], sold: [...(session.__petSold ?? [])],
+        // 這趟打出去的總傷害（自己＋戰寵＋隊友），桌寵「顯示傷害」用
+        damage: [...(session.damageBy ?? [])].reduce((sum, [, dealt]) => sum + n(dealt), 0) };
     } catch { return null; }
   };
   try {
@@ -854,8 +930,16 @@ async function pollState() {
     if (events.length) petWin?.webContents.send("pet:events", events);
   }
   lastRaw = s;
+  if (settings.bookmarkTool) inGame(LOAD_BOOKMARK_TOOL);
   if (s.mallRate) checkMallFormula(s.mallRate);
-  if (s.income) income.record(s.id, s.income);
+  if (s.income) {
+    income.record(s.id, s.income);
+    // 傷害是遊戲裡即時累計的，每次讀狀態（幾秒一次）都比得出差額，不用等 10 秒一次的存檔。
+    // 變小＝重新出發、統計歸零了，那次不算
+    const dealt = lastDamage?.id === s.id ? s.income.damage - lastDamage.total : 0;
+    lastDamage = { id: s.id, total: s.income.damage };
+    if (dealt > 0) petWin?.webContents.send("pet:events", [{ kind: "damage", n: dealt }]);
+  }
   const { bag, mallRate, income: _income, ...rest } = s;
   lastState = { ...rest, ...describePlace(s) };
   petWin?.webContents.send("pet:state", lastState);

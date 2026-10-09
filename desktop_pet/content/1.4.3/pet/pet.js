@@ -18,6 +18,7 @@ const GROUND_GAP = 2; // 腳底離視窗底邊
 const EDGE_MARGIN = 60;
 const WALK_SPEED = [35, 70]; // px/秒
 const IDLE_SECONDS = [2, 7];
+const STEP_SECONDS = [2, 5]; // 原地不走動時，一次踏步踏多久
 const HOP_MS = 320;
 const HOP_HEIGHT = 26;
 const ALPHA_SOLID = 40;
@@ -44,6 +45,10 @@ let interactive = false; // 視窗目前吃不吃滑鼠：游標在桌寵身上�
 let sizerOpen = false;
 let sizePercent = clamp(Number(localStorage.getItem(SIZE_KEY)) || 100, ...SIZE_PERCENT);
 let clickThrough = false;
+// 專注模式下要顯示哪幾類飄字（右鍵選單「專注模式」裡勾的），以及每種事件算哪一類
+let focusShow = { damage: false, exp: false, loot: false };
+const FLOATER_GROUP = { damage: "damage", exp: "exp", levelup: "exp", loot: "loot", gold: "loot" };
+let stay = false; // 原地不走動（右鍵選單的開關）：只在原地踏步或揮擊，不左右走
 let drag; // { grabX, startY, startLift, moved }
 let stroked = 0;
 
@@ -148,10 +153,22 @@ function think(dt) {
   if (pet.action === "idle") {
     pet.idleLeftMs -= dt;
     if (pet.idleLeftMs > 0 || hovering || sizerOpen || asking) return;
+    if (stay) {
+      // 原地不走動：改成在原地踏幾秒的步
+      pet.stepLeftMs = rand(...STEP_SECONDS) * 1000;
+      setAction("walk");
+      return;
+    }
     pet.targetX = rand(EDGE_MARGIN, window.innerWidth - EDGE_MARGIN);
     pet.speed = rand(...WALK_SPEED);
     pet.facing = pet.targetX < pet.x ? -1 : 1;
     setAction("walk");
+    return;
+  }
+  if (stay) {
+    // 原地踏步：播走路的動畫但不移動，踏夠了就休息
+    pet.stepLeftMs = (pet.stepLeftMs ?? 0) - dt;
+    if (pet.stepLeftMs <= 0 || hovering || sizerOpen || asking) rest();
     return;
   }
   const step = (pet.speed * dt) / 1000;
@@ -288,11 +305,17 @@ function spawnFloater(kind, text, iconIndex) {
 const compact = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1)}億` : n >= 1e4 ? `${(n / 1e4).toFixed(1)}萬` : String(n));
 
 async function playEvents(events) {
+  // 一般模式：經驗、金錢、掉寶、升級都飄，傷害不飄（幾秒就一筆，太吵）。
+  // 專注模式：預設全部不飄，只飄使用者在右鍵選單「專注模式」裡勾的那幾類
+  events = events.filter((e) => (clickThrough ? focusShow[FLOATER_GROUP[e.kind]] : e.kind !== "damage"));
+  if (events.length === 0) return;
   if (events.some((e) => e.kind === "loot")) await ensureAtlas();
-  swing();
+  // 傷害幾秒就來一筆，只有它的時候不用每次都揮
+  if (events.some((e) => e.kind !== "damage")) swing();
   events.forEach((e, i) => {
     setTimeout(() => {
-      if (e.kind === "exp") spawnFloater("exp", `+${compact(e.n)} EXP`);
+      if (e.kind === "damage") spawnFloater("damage", `傷害 ${compact(e.n)}`);
+      else if (e.kind === "exp") spawnFloater("exp", `+${compact(e.n)} EXP`);
       else if (e.kind === "gold") spawnFloater("gold", `+${compact(e.n)} 金`);
       else if (e.kind === "loot") spawnFloater("loot", `${e.name} ×${e.n}`, e.icon);
       else if (e.kind === "levelup") {
@@ -408,6 +431,11 @@ window.petApi.onEvents(playEvents);
 // 程式本身要講的話（例如有新版），一樣從頭上冒出來
 window.petApi.onNotice((text) => spawnFloater("hint", text));
 window.petApi.onSay(say);
+window.petApi.onFocusShow((show) => (focusShow = show));
+window.petApi.onStay((on) => {
+  stay = on;
+  if (on && pet.action === "walk") rest(); // 正在走的話先停下來
+});
 window.petApi.onAsk(ask);
 window.petApi.onClickThrough((on) => {
   clickThrough = on;

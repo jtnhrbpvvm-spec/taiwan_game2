@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.4.3",
   "shell": 1,
   "files": [
     {
@@ -24,8 +24,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "5d0d73a5e9786b4f538b136de3945385a127c430be40e5db2a4f447795f08a63",
-      "size": 41125
+      "sha256": "b90fa58241a1741acfd6caf8cc76ea7211a75ea4cf6f2aadacdcc16806a2b032",
+      "size": 45303
     },
     {
       "path": "mall.js",
@@ -34,18 +34,18 @@
     },
     {
       "path": "pet-preload.js",
-      "sha256": "fe7e27ac5dd1982d367828c867352e7bc056c9ada74073064906716c600ebcb2",
-      "size": 1068
+      "sha256": "1e32d8032e9c44366e1a54e37e9a8eb613f83c326a7e3ffcb531c4ef2fd80a45",
+      "size": 1215
     },
     {
       "path": "pet/index.html",
-      "sha256": "372533189fcc6a9d80c8b9c9866e3837b1e9be98795e079f7d5eaf5c995dacf8",
-      "size": 5286
+      "sha256": "63a03b19c975cc83ac9fdf23ed99d236f82be4708c6b7d436fc44e81b4668e90",
+      "size": 5328
     },
     {
       "path": "pet/pet.js",
-      "sha256": "cc6bedaff2969058056511322c63bcf1757d64a7447d4afd9fe2290fde6badc5",
-      "size": 18077
+      "sha256": "7f1c70dffb2febec5b0defff4008db2f60da37dd3ebb9e935241d8a2f9eb3ac5",
+      "size": 19675
     },
     {
       "path": "picker-preload.js",
@@ -59,8 +59,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "d7686fefec7e2a1e28548034c03f94d860eb3a7ad3c56e9df8275b40df5b1874",
-      "size": 4247
+      "sha256": "025445ae5dc831882e4e7ffd378b76c1999662773d878f18cc8d5be55e82008f",
+      "size": 4706
     },
     {
       "path": "ui/income.html",
