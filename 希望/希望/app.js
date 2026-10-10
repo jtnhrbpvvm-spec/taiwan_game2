@@ -3994,6 +3994,13 @@
     var m = /(?:\.(EX|GX)|_(S+))$/.exec(name);
     return (m ? (m[1] || m[2]) + ' 級' : '一般') + (g.clone ? '（克隆）' : '');
   }
+  // 各等級時裝分解拿到的結晶數，由多到少排（一樣多的維持原本的等級順序；不能分解的 n = 0 排最後）
+  function costumeGradesByCrystals() {
+    return COSTUME.grades.map(function (g, i) {
+      var d = COSTUME.decompose.filter(function (x) { return x[0] === g.grade; })[0];
+      return { g: g, n: d ? d[1] : 0, i: i };
+    }).sort(function (a, b) { return b.n - a.n || a.i - b.i; });
+  }
   function costumeThreadPct(step, size, count) { return Math.min(count, step.threadMax) * size * 70 / step.threadDiv; }
   function showCostumeGuide() {
     currentDetail = null;
@@ -4050,9 +4057,8 @@
       '</div>';
 
     html += '<div class="section-title">分解</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>時裝等級</th><th>分解一件拿到 ' + crystal + '</th></tr></thead><tbody>';
-    COSTUME.grades.forEach(function (g) {
-      var d = COSTUME.decompose.filter(function (x) { return x[0] === g.grade; })[0];
-      html += '<tr><td><b>' + escapeHtml(costumeGradeLabel(g)) + '</b></td><td>' + (d ? '×' + d[1] + '（有強化過的再多拿「強化值」個，例如 +5 就是 ×' + (d[1] + 5) + '）' : '不能分解') + '</td></tr>';
+    costumeGradesByCrystals().forEach(function (x) {
+      html += '<tr><td><b>' + escapeHtml(costumeGradeLabel(x.g)) + '</b></td><td>' + (x.n ? '×' + x.n + '（有強化過的再多拿「強化值」個，例如 +5 就是 ×' + (x.n + 5) + '）' : '不能分解') + '</td></tr>';
     });
     html += '</tbody></table></div>';
     html += sysNote('穿在身上的時裝不能分解。');
@@ -4197,9 +4203,8 @@
         } else if (num === COSTUME.exBox.item) {
           cNote = '取得方式：找' + npcText + '<b>兌換</b>，' + itemChip(COSTUME.crystal, COSTUME.exBox.crystals) + '換 1 個。';
         } else if (num === COSTUME.crystal) {
-          cNote = '取得方式（都找' + npcText + '）：<br>・<b>分解</b>時裝：' + COSTUME.grades.map(function (g) {
-            var d = COSTUME.decompose.filter(function (x) { return x[0] === g.grade; })[0];
-            return d ? escapeHtml(costumeGradeLabel(g)) + ' ×' + d[1] : null;
+          cNote = '取得方式（都找' + npcText + '）：<br>・<b>分解</b>時裝：' + costumeGradesByCrystals().map(function (x) {
+            return x.n ? escapeHtml(costumeGradeLabel(x.g)) + ' ×' + x.n : null;
           }).filter(function (x, i, arr) { return x && arr.indexOf(x) === i; }).join('、') + '（強化過的再加強化值）。<br>' +
             '・<b>兌換</b>：' + itemChip(COSTUME.powder, COSTUME.powderPerCrystal) + '換 1 個。';
         } else if (num === COSTUME.powder) {
