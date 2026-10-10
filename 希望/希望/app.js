@@ -921,6 +921,26 @@
     $hintRow.appendChild(stoneChip);
   }
 
+  // 光環／時裝強化／哈比兔大富翁（2026-10-10 新增的系統）：沒有對應的資料檔就不顯示
+  [["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE]].forEach(function (def) {
+    if (!def[2]) return;
+    var chip = document.createElement("span");
+    chip.className = "hint-chip";
+    chip.style.borderColor = "var(--gold)";
+    chip.style.color = "var(--gold-hi)";
+    chip.textContent = def[1];
+    chip.addEventListener("click", function () {
+      resetNavHistory();
+      $input.value = "";
+      currentMatches = { items: [], monsters: [] };
+      renderResultList("");
+      currentView = { kind: def[0], id: "" };
+      showPageView(def[0], "");
+      scrollToDetail();
+    });
+    $hintRow.appendChild(chip);
+  });
+
   // 上面那一排按鈕越加越多，收進一顆「其他各種功能」裡：按下去跳出彈窗，裡面就是原本那些按鈕（原封不動搬進去，功能照舊）。
   // 之後要加新功能照樣 $hintRow.appendChild(...) 寫在這段前面就會自動被收進來。
   (function () {
@@ -1012,6 +1032,9 @@
     else if (kind === "questline") showQuestLineDetail(id);
     else if (kind === "questtab") openQuestTab(id);
     else if (kind === "stones") showStoneGuide();
+    else if (kind === "aura") showAuraGuide();
+    else if (kind === "costume") showCostumeGuide();
+    else if (kind === "marble") showMarbleGuide();
   }
   // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
   // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
@@ -1191,6 +1214,9 @@
     if (SMITH.ashtonConvert) add("💠", "艾希頓轉換", "鐵匠相關・艾希頓裝備換成結晶", smithKw.concat(["艾希頓"]), "smith", "convert", F);
     if (SMITH.sageTickets) add("📜", "賢者合成券", "鐵匠相關・裝備升一階的條件與花費", smithKw.concat(["賢者", "合成"]), "smith", "sage", F);
     if (STONES) add("💠", "鑲嵌石", "強化花費、成功率、能力機率與材料來源", ["鑲嵌", "石頭"], "stones", "", F);
+    if (window.AURA) add("✨", "光環", "精煉、G 化、靈魂結晶的機率與能力", ["光環", "靈魂", "結晶", "G化", "祭司"], "aura", "", F);
+    if (window.COSTUME) add("👗", "時裝強化", "強化成功率、加成、繼承、分解、合成", ["時裝", "套裝", "線團", "伊索德", "布布"], "costume", "", F);
+    if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開時裝的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
 
     dungeonIds.forEach(function (did) {
       var dg = DUNGEON_BY_ID[did];
@@ -2555,6 +2581,8 @@
   var REFINE_MAX = 12;
   function refineDmgBonus(eq, lv) {
     var weaponLike = eq.slot === "weapon" || eq.slot === "shield";
+    // 光環（10-10 新增）增傷、減傷都是每級 +1%（遊戲 wf()）
+    if (eq.slot === "aura") return { dealt: eq.dmgDealtPct > 0 ? REFINE_PCT_STEP[lv] : 0, taken: eq.dmgTakenPct > 0 ? REFINE_PCT_STEP[lv] : 0 };
     return {
       dealt: eq.dmgDealtPct > 0 ? (weaponLike ? REFINE_PCT_STEP : REFINE_PCT_TIER)[lv] : 0,
       taken: eq.dmgTakenPct > 0 ? REFINE_PCT_TIER[lv] : 0,
@@ -3365,6 +3393,7 @@
     html += extraSourcesHtml(id);
     html += gemSectionHtml(id);
     html += stoneSectionHtml(id);
+    html += sysSectionHtml(id);
 
     var questRefs = buildQuestReferences(id);
     var isDailyToken = DAILY.quests.length > 0 && MISSION_TOKEN_ITEM_ID != null && Number(id) === MISSION_TOKEN_ITEM_ID;
@@ -3751,6 +3780,363 @@
     });
     if (!body) return '';
     return '<div class="section-title">鑲嵌石</div><div style="font-size:13px;line-height:1.9;">' + body + '</div>' + stoneGuideLinkHtml();
+  }
+
+  // ---------- 光環／時裝強化／哈比兔大富翁（2026-10-10 新增；update_data.py build_aura()／build_costume()／build_marble()）----------
+  // 三份資料的欄位跟遊戲規則都寫在那三個 build 函式的說明裡，這裡只負責排版。
+  var AURA = window.AURA || null;
+  var COSTUME = window.COSTUME || null;
+  var MARBLE = window.MARBLE || null;
+  function sysPct(p) { return (Math.round(p * 100) / 100) + "%"; }
+  function sysNote(text) { return '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">' + text + '</div>'; }
+  function sysNpcText(npc) {
+    if (!npc || !npc.name) return '';
+    return '「' + escapeHtml(npc.name) + '」（' + npc.towns.map(function (t) { return escapeHtml(townName(t)); }).join('、') + '）';
+  }
+  function sysChipRow(ids) {
+    return '<div class="map-chip-row">' + ids.map(function (x) { return Array.isArray(x) ? itemChip(x[0], x[1]) : itemChip(x); }).join('') + '</div>';
+  }
+  // 名品館有賣的那幾樣列成一張價格表（沒有就不畫）
+  function sysMallTableHtml(ids) {
+    var rows = ids.filter(function (id) { return MALL_INDEX.items[String(id)]; });
+    if (!rows.length) return '';
+    var html = '<div class="section-title">相關的名品館道具</div><table class="dtable"><thead><tr><th>道具</th><th>名品館價格</th></tr></thead><tbody>';
+    rows.forEach(function (id) {
+      var m = MALL_INDEX.items[String(id)];
+      html += itemLinkRow(id, '<td data-mall-points="' + m.points + '">' + mallNowHtml(m.points) + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>');
+    });
+    return html + '</tbody></table>';
+  }
+  function sysGuideLinkHtml(kind, label) {
+    return '<div style="margin-top:8px;"><span class="name-link" data-goto-sys="' + kind + '" style="cursor:pointer;">' + label + ' →</span></div>';
+  }
+  function sysOldDataHtml(title) {
+    return backButtonHtml() + '<h2 style="margin-top:0;">' + title + '</h2><div class="empty-note">資料檔是舊版，請重新執行 update_data.py。</div>';
+  }
+
+  // ----- ✨ 光環 -----
+  var AURA_TIER_LABEL = ["一般", "G", "DG", "XG"];
+  var AURA_STATS = [["atk", "攻擊"], ["magic", "魔法"], ["def", "防禦"], ["crit", "必殺"], ["eva", "迴避"], ["hit", "命中"], ["atkSpeed", "攻速"], ["moveSpeed", "移速"]];
+  function auraTierLabel(t) { return AURA_TIER_LABEL[t] || ("第 " + (t + 1) + " 階"); }
+  function auraOptionText(kind, o) {
+    var k = AURA.kinds[String(kind)] || { name: "#" + kind };
+    return o.min + '~' + o.max + (k.pct ? '%' : '');
+  }
+  // 放 powder 個粉末（scroll：有沒有用卷軸）時，做出 0～N 條屬性的機率
+  function auraCountChances(powder, scroll) {
+    var s = AURA.soul, r = Math.floor(powder * (scroll ? s.scroll.mult : 1)) / s.minPowder;
+    var w = s.countWeights.map(function (x, i) { return x * Math.pow(r, i); });
+    var total = w.reduce(function (a, b) { return a + b; }, 0) || 1;
+    return w.map(function (x) { return x / total * 100; });
+  }
+  function showAuraGuide() {
+    currentDetail = null;
+    if (!AURA || !AURA.tiers) { $detail.innerHTML = sysOldDataHtml("✨ 光環"); return; }
+    var s = AURA.soul, tiers = AURA.tiers, maxRefine = AURA.books[0] ? AURA.books[0].refine : REFINE_MAX;
+    var powder = escapeHtml(stoneItemName(s.powder)), maxCount = s.countWeights.length - 1;
+    var refineMat = AURA.refine[0] && AURA.refine[0].steps[0] ? AURA.refine[0].steps[0].material : null;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">✨ 光環</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・光環是一件<b>裝備</b>，穿在裝備欄最後一格「光環」，要 <b>Lv' + (tiers[0].minLv || 0) + '</b> 才能穿，所有職業都能用。<br>' +
+      '・共 ' + tiers.length + ' 階：' + tiers.map(function (t) { return escapeHtml(stoneItemName(t.id)); }).join(' → ') + '。<br>' +
+      '・<b>精煉</b>（裝備 → 加工 → 精煉）：只吃' + (refineMat ? '「' + escapeHtml(stoneItemName(refineMat)) + '」' : '材料') + '，不用金幣；失敗會掉階，但<b>不會爆</b>。<br>' +
+      '・<b>G 化</b>：精煉到 +' + maxRefine + ' 之後找 ' + sysNpcText(AURA.npc) + ' 升一階，<b>失敗整件光環會消失</b>。<br>' +
+      '・<b>靈魂結晶</b>：同一個 NPC 用「' + powder + '」做結晶，鑲進光環的空欄，結晶上的屬性就加在身上。每件光環有 ' +
+      AURA.slots.min + '~' + AURA.slots.max + ' 個欄位（拿到那一刻隨機決定，之後不會變）。' +
+      '</div>';
+
+    html += '<div class="section-title">相關道具（點進去看取得方式）</div>';
+    var matIds = tiers.map(function (t) { return t.id; });
+    if (refineMat) matIds.push(refineMat);
+    matIds.push(s.powder, s.scroll.item);
+    s.colors.forEach(function (c) { matIds.push(c.item); });
+    s.colors.forEach(function (c) { matIds.push(c.enhancer); });
+    AURA.books.forEach(function (b) { matIds.push(b.item); });
+    html += sysChipRow(matIds);
+
+    html += '<div class="section-title">各階基本能力</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>光環</th>' +
+      AURA_STATS.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '<th>增傷</th><th>精煉每 1 倍</th></tr></thead><tbody>';
+    tiers.forEach(function (t) {
+      var g = t.refineGain || {};
+      html += itemLinkRow(t.id, AURA_STATS.map(function (c) { return '<td>' + (t[c[0]] ? '+' + t[c[0]] : '－') + '</td>'; }).join('') +
+        '<td>' + (t.dmgDealtPct ? '+' + t.dmgDealtPct + '%' : '－') + '</td><td>攻魔防各 +' + (g.atk || 0) + '</td>');
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="section-title">精煉：成功率／材料／加成</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>精煉</th><th>' +
+      (refineMat ? escapeHtml(stoneItemName(refineMat)) : '材料') + '</th><th>失敗</th>' +
+      tiers.map(function (t) { return '<th>' + auraTierLabel(t.tier) + ' 成功率</th>'; }).join('') +
+      tiers.map(function (t) { return '<th>' + auraTierLabel(t.tier) + ' 累計加成</th>'; }).join('') + '</tr></thead><tbody>';
+    var stoneSum = 0;
+    for (var lv = 1; lv <= maxRefine; lv++) {
+      var st0 = AURA.refine[0].steps[lv - 1];
+      if (!st0) break;
+      stoneSum += st0.count;
+      html += '<tr><td><b>+' + (lv - 1) + ' → +' + lv + '</b></td><td>×' + st0.count + '</td><td>' + (st0.failKind ? '掉 ' + st0.failDrop + ' 階' : '不掉') + '</td>';
+      tiers.forEach(function (t) {
+        var st = (AURA.refine[t.tier] || { steps: [] }).steps[lv - 1];
+        html += '<td>' + (st ? '<span class="rate' + (st.success < 50 ? ' low' : '') + '">' + st.success + '%</span>' : '－') + '</td>';
+      });
+      tiers.forEach(function (t) {
+        var gain = Math.floor(((t.refineGain || {}).atk || 0) * REFINE_MULT[lv]);
+        html += '<td style="font-size:12.5px;">攻魔防 +' + gain + (t.dmgDealtPct > 0 && REFINE_PCT_STEP[lv] ? '・增傷 +' + REFINE_PCT_STEP[lv] + '%' : '') + '</td>';
+      });
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    html += sysNote('一次都沒失敗的話，+0 衝到 +' + maxRefine + ' 共要 ' + stoneSum + ' 個。「掉 N 階」是失敗後精煉值往下掉幾階。增傷的精煉加成只有本身就有增傷的光環（G 以上）才有。');
+
+    html += '<div class="section-title">G 化（升階）</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>升階</th><th>條件</th><th>融合書</th><th>材料</th><th>金幣</th><th>成功率</th></tr></thead><tbody>';
+    AURA.books.forEach(function (b) {
+      var from = tiers.filter(function (t) { return t.tier === b.tier; })[0];
+      if (!from) return;
+      html += '<tr><td style="white-space:nowrap;">' + auraTierLabel(b.tier) + ' → <b>' + auraTierLabel(b.tier + 1) + '</b></td><td>精煉 +' + b.refine + '</td>' +
+        '<td>' + itemChip(b.item, 1) + '</td><td>' + b.mats.map(function (m) { return itemChip(m[0], m[1]); }).join('') + '</td>' +
+        '<td>' + bigNumHtml(b.gold) + '</td><td><span class="rate">' + Math.min(b.rate, 90) + '%</span></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += sysNote('<b style="color:var(--bad, #c0392b);">G 化失敗整件光環直接消失</b>（連鑲在上面的結晶一起），融合書、材料、金幣也照扣。' +
+      '成功的話換成下一階、精煉值歸 0，鑲著的結晶會跟著留下來。');
+
+    html += '<div class="section-title">靈魂結晶：製作</div>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・一次最少放 ' + fmtNum(s.minPowder) + ' 個' + powder + '，製作費＝粉末數 × ' + fmtNum(s.powderFee) + ' 金幣（' + fmtNum(s.minPowder) + ' 個就是 ' + bigNumHtml(s.minPowder * s.powderFee) + '）。<br>' +
+      '・<b>粉末放越多，屬性條數越多</b>（0～' + maxCount + ' 條，0 條就是空的結晶）。勾「' + escapeHtml(stoneItemName(s.scroll.item)) + '」會消耗 1 張，粉末當成 ' + s.scroll.mult + ' 倍來算條數，製作費不變。<br>' +
+      '・<b>顏色</b>：' + s.colors.length + ' 色各 ' + s.colorPct + '%。放增強劑的話那一色每個 +' + s.enhancerPct + '%，放滿 ' + s.enhancerMax + ' 個必定出那一色。<br>' +
+      '・每一條屬性從那個顏色的清單裡<b>平均抽一種</b>（同一種可以重複抽到），數值在範圍內平均抽。' +
+      '</div>';
+    var amounts = [1, 2, 3, 5, 10, 20].map(function (m) { return s.minPowder * m; });
+    html += '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>粉末</th><th>製作費</th>';
+    for (var n = 0; n <= maxCount; n++) html += '<th>' + n + ' 條</th>';
+    html += '<th>用卷軸時 ' + maxCount + ' 條</th></tr></thead><tbody>';
+    amounts.forEach(function (amt) {
+      var ch = auraCountChances(amt, false), chScroll = auraCountChances(amt, true);
+      html += '<tr><td><b>' + fmtNum(amt) + '</b></td><td>' + bigNumHtml(amt * s.powderFee) + '</td>' +
+        ch.map(function (p) { return '<td>' + sysPct(p) + '</td>'; }).join('') + '<td>' + sysPct(chScroll[maxCount]) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="section-title">靈魂結晶：各顏色會出的屬性</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>屬性</th>' +
+      s.colors.map(function (c) { return '<th><span class="name-link" data-goto-item="' + c.item + '">' + escapeHtml(stoneItemName(c.item).replace(/靈魂結晶$/, '')) + '</span></th>'; }).join('') + '</tr></thead><tbody>';
+    var kindOrder = [];
+    s.colors.forEach(function (c) { c.options.forEach(function (o) { if (kindOrder.indexOf(o.kind) < 0) kindOrder.push(o.kind); }); });
+    kindOrder.sort(function (a, b) { return a - b; });
+    kindOrder.forEach(function (kind) {
+      var cells = s.colors.map(function (c) { return c.options.filter(function (o) { return o.kind === kind; })[0]; });
+      var only = cells.filter(Boolean).length === 1; // 只有一個顏色有的屬性標出來
+      html += '<tr><td><b>' + escapeHtml((AURA.kinds[String(kind)] || {}).name || ('#' + kind)) + '</b>' + (only ? ' <span class="group-tag">限定</span>' : '') + '</td>' +
+        cells.map(function (o) { return '<td>' + (o ? auraOptionText(kind, o) : '<span style="color:var(--text-faint);">－</span>') + '</td>'; }).join('') + '</tr>';
+    });
+    html += '<tr><td>每一條抽中某一種</td>' + s.colors.map(function (c) { return '<td>' + sysPct(100 / c.options.length) + '</td>'; }).join('') + '</tr>';
+    html += '<tr><td>增強劑</td>' + s.colors.map(function (c) { return '<td>' + itemChip(c.enhancer) + '</td>'; }).join('') + '</tr>';
+    html += '</tbody></table></div>';
+    html += sysNote('想要標「限定」的屬性就要指定那個顏色。遊戲的製作畫面可以設定「想要的屬性／最低數值」讓它自動做到中為止，沒中的可以勾自動分解。');
+
+    html += '<div class="section-title">靈魂結晶：鑲嵌與分解</div>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・<b>鑲嵌</b>：把結晶鑲進光環的空欄，不用錢。一件光環最多鑲滿它自己的欄數（' + AURA.slots.min + '~' + AURA.slots.max + ' 欄）。<br>' +
+      '・<b>拔掉</b>：拔下來的結晶<b>直接消失</b>，不會回到背包。<br>' +
+      '・<b>分解</b>：背包裡不要的結晶一顆換回 ' + s.decompose.gives + ' 個' + powder + '，每顆付 ' + bigNumHtml(s.decompose.fee) + ' 金幣。' +
+      '</div>';
+    html += sysMallTableHtml([refineMat, s.scroll.item].concat(s.colors.map(function (c) { return c.enhancer; })).filter(function (x) { return x != null; }));
+    $detail.innerHTML = html;
+  }
+
+  // ----- 👗 時裝強化 -----
+  // 時裝等級的叫法：照同一組裡第一件的名稱結尾（.EX／.GX／_S…），沒有結尾的就是一般時裝
+  function costumeGradeLabel(g) {
+    var name = g.items.length ? stoneItemName(g.items[0]) : '';
+    var m = /(?:\.(EX|GX)|_(S+))$/.exec(name);
+    return (m ? (m[1] || m[2]) + ' 級' : '一般') + (g.clone ? '（克隆）' : '');
+  }
+  function costumeThreadPct(step, size, count) { return Math.min(count, step.threadMax) * size * 70 / step.threadDiv; }
+  function showCostumeGuide() {
+    currentDetail = null;
+    if (!COSTUME || !COSTUME.smelt) { $detail.innerHTML = sysOldDataHtml("👗 時裝強化"); return; }
+    var crystal = escapeHtml(stoneItemName(COSTUME.crystal)), powder = escapeHtml(stoneItemName(COSTUME.powder));
+    var maxStep = COSTUME.smelt.length, cp = COSTUME.compose, spin = COSTUME.spin;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">👗 時裝強化</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・NPC：' + sysNpcText(COSTUME.npc) + '，有強化／繼承／分解／合成／兌換五個分頁。<br>' +
+      '・對象是「時裝」：裝備欄的分離型（帽子／上衣／下褲／鞋子）和一件式套裝。時裝不能用一般的精煉和發條，只能在這裡強化。<br>' +
+      '・<b>強化</b>：最高 +' + maxStep + '，吃「' + crystal + '」＋金幣；可以另外放「閃亮線團」提高成功率。失敗不會爆，但從 +' +
+      (COSTUME.smelt.filter(function (x) { return x.failDrop === 0; }).length) + ' 往上衝開始，失敗會掉階。<br>' +
+      '・強化加的是<b>攻擊／魔法／防禦</b>（三項同一個數字）和<b>增傷 %</b>，等級越高的時裝加越多（見下面的加成表）。' +
+      '</div>';
+
+    html += '<div class="section-title">相關道具（點進去看取得方式）</div>';
+    html += sysChipRow([COSTUME.crystal, COSTUME.powder].concat(COSTUME.threads.map(function (t) { return t[0]; })).concat([COSTUME.exBox.item, cp.box]));
+    if (MARBLE) html += sysGuideLinkHtml("marble", "時裝本體可以從哈比兔大富翁的寶箱開出，看大富翁說明");
+
+    html += '<div class="section-title">強化：成功率與花費</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>強化</th><th>成功率</th><th>' +
+      crystal + '</th><th>金幣</th><th>失敗</th>' +
+      COSTUME.threads.map(function (t) { return '<th>' + escapeHtml(stoneItemName(t[0]).replace(/^閃亮/, '')) + '每個</th>'; }).join('') +
+      '<th>線團上限</th><th>放滿大線團</th></tr></thead><tbody>';
+    var sum = [0, 0];
+    COSTUME.smelt.forEach(function (st, i) {
+      var base = st.ratePpm / 10000, bigSize = Math.max.apply(null, COSTUME.threads.map(function (t) { return t[1]; }));
+      sum[0] += st.crystals; sum[1] += st.fee;
+      html += '<tr><td><b>+' + i + ' → +' + (i + 1) + '</b></td><td><span class="rate' + (base < 50 ? ' low' : '') + '">' + sysPct(base) + '</span></td>' +
+        '<td>×' + st.crystals + '</td><td>' + bigNumHtml(st.fee) + '</td><td>' + (st.failDrop ? '掉 ' + st.failDrop + ' 階' : '不掉') + '</td>' +
+        COSTUME.threads.map(function (t) { return '<td>+' + sysPct(costumeThreadPct(st, t[1], 1)) + '</td>'; }).join('') +
+        '<td>' + st.threadMax + ' 個</td><td><span class="rate">' + sysPct(Math.min(100, base + costumeThreadPct(st, bigSize, st.threadMax))) + '</span></td></tr>';
+    });
+    html += '<tr><td colspan="2">一次都沒失敗</td><td>×' + sum[0] + '</td><td>' + bigNumHtml(sum[1]) + '</td><td colspan="' + (COSTUME.threads.length + 3) + '">－</td></tr>';
+    html += '</tbody></table></div>';
+    html += sysNote('線團一次只能放一種，放幾個加幾次，超過「線團上限」的不會多算；成功率最高 100%。結晶、金幣、線團不管成功失敗都會扣。');
+
+    html += '<div class="section-title">強化加成（累計）</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>強化</th>' +
+      COSTUME.grades.map(function (g) { return '<th>' + escapeHtml(costumeGradeLabel(g)) + '<br><span style="font-weight:400;font-size:11.5px;">' + g.items.length + ' 件</span></th>'; }).join('') + '</tr></thead><tbody>';
+    for (var lv = 1; lv <= maxStep; lv++) {
+      html += '<tr><td><b>+' + lv + '</b></td>' + COSTUME.grades.map(function (g) {
+        var s = g.steps[lv];
+        return '<td style="font-size:12.5px;">' + (s ? '攻魔防 +' + s[0] + (s[1] ? '・增傷 +' + s[1] + '%' : '') : '－') + '</td>';
+      }).join('') + '</tr>';
+    }
+    html += '<tr><td>例如</td>' + COSTUME.grades.map(function (g) { return '<td>' + itemChip(g.items[0]) + '</td>'; }).join('') + '</tr>';
+    html += '</tbody></table></div>';
+    html += sysNote('每一格是強化到那一階時「總共」多的能力（不是那一階單獨加的）。時裝本身的基本能力請點進物品頁看。');
+
+    html += '<div class="section-title">繼承</div>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・把一件時裝的強化值整個搬到另一件：兩件要<b>同等級、同部位</b>（克隆裝只能對克隆裝），而且來源的強化值要比較高；來源那件不能穿在身上。<br>' +
+      '・繼承必定成功，<b>來源那件會消失</b>，只收金幣：' +
+      COSTUME.smelt.map(function (st, i) { return '<span style="white-space:nowrap;">+' + (i + 1) + '：' + bigNumHtml(st.inheritFee) + '</span>'; }).join('、') + '。' +
+      '</div>';
+
+    html += '<div class="section-title">分解</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>時裝等級</th><th>分解一件拿到 ' + crystal + '</th></tr></thead><tbody>';
+    COSTUME.grades.forEach(function (g) {
+      var d = COSTUME.decompose.filter(function (x) { return x[0] === g.grade; })[0];
+      html += '<tr><td><b>' + escapeHtml(costumeGradeLabel(g)) + '</b></td><td>' + (d ? '×' + d[1] + '（有強化過的再多拿「強化值」個，例如 +5 就是 ×' + (d[1] + 5) + '）' : '不能分解') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += sysNote('穿在身上的時裝不能分解。');
+
+    html += '<div class="section-title">兌換／合成／寶石提煉</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>項目</th><th>要交出</th><th>拿到</th></tr></thead><tbody>';
+    html += '<tr><td><b>兌換</b></td><td>' + itemChip(COSTUME.powder, COSTUME.powderPerCrystal) + '</td><td>' + itemChip(COSTUME.crystal, 1) + '</td></tr>';
+    html += '<tr><td><b>兌換</b></td><td>' + itemChip(COSTUME.crystal, COSTUME.exBox.crystals) + '</td><td>' + itemChip(COSTUME.exBox.item, 1) + '</td></tr>';
+    var cpGrade = COSTUME.grades.filter(function (g) { return g.grade === cp.grade; })[0];
+    html += '<tr><td><b>合成</b><br><span class="rate' + (cp.rate < 50 ? ' low' : '') + '">' + cp.rate + '%</span></td><td>' + (cpGrade ? escapeHtml(costumeGradeLabel(cpGrade)) : '指定等級的') + '時裝 ×' + cp.parts + '（不能是穿著的）' +
+      itemChip(COSTUME.crystal, cp.crystals) + '<span class="map-chip">金幣 ' + bigNumHtml(cp.fee) + '</span></td><td>成功：' + itemChip(cp.box, 1) +
+      '<br>失敗：' + itemChip(cp.fail.item, cp.fail.min + '~' + cp.fail.max) + '</td></tr>';
+    var outTotal = spin.outs.reduce(function (a, o) { return a + o[1]; }, 0) || 1;
+    html += '<tr><td><b>寶石提煉</b></td><td>' + spin.mats.map(function (m) { return itemChip(m[0], m[1]); }).join('') +
+      '<span class="map-chip">金幣 ' + bigNumHtml(spin.fee) + '</span></td><td>' +
+      spin.outs.map(function (o) { return itemChip(o[0], null, '<span class="group-tag">' + sysPct(o[1] / outTotal * 100) + '</span>'); }).join('') + '</td></tr>';
+    html += '</tbody></table></div>';
+    html += sysNote('合成失敗時裝、結晶、金幣都會扣，只補一些粉末。寶石提煉每次必定給一個線團，機率決定是哪一種。');
+    $detail.innerHTML = html;
+  }
+
+  // ----- 🎲 哈比兔大富翁 -----
+  var MARBLE_SQUARE = {
+    start: ["🏁", "起點"], gold: ["🪙", "金幣"], gem: ["💎", "寶石"], item: ["🧧", "符咒／福袋"], feed: ["🍖", "寵物食物"],
+    sparkle: ["✨", "結晶粉末"], green: ["🟩", "綠寶箱"], blue: ["🟦", "藍寶箱"], red: ["🟥", "紅寶箱"], more: ["🎲", "再擲一次"]
+  };
+  function marbleSquareName(k) { return MARBLE_SQUARE[k] ? MARBLE_SQUARE[k][0] + ' ' + MARBLE_SQUARE[k][1] : k; }
+  function marblePrizeListHtml(list) {
+    var total = list.reduce(function (a, x) { return a + x.weight; }, 0) || 1;
+    return list.map(function (x) {
+      return itemChip(x.item, x.min === x.max ? x.min : x.min + '~' + x.max, list.length > 1 ? '<span class="group-tag">' + sysPct(x.weight / total * 100) + '</span>' : '');
+    }).join('');
+  }
+  function marbleLapText(i) { return i + 1 < MARBLE.lapMult.length ? '第 ' + (i + 1) + ' 圈' : '第 ' + (i + 1) + ' 圈起'; }
+  function showMarbleGuide() {
+    currentDetail = null;
+    if (!MARBLE || !MARBLE.board) { $detail.innerHTML = sysOldDataHtml("🎲 哈比兔大富翁"); return; }
+    var board = MARBLE.board, balloon = escapeHtml(stoneItemName(MARBLE.balloon)), leaked = escapeHtml(stoneItemName(MARBLE.leaked));
+    var count = {};
+    board.forEach(function (k) { count[k] = (count[k] || 0) + 1; });
+    var mall = MALL_INDEX.items[String(MARBLE.balloon)];
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">🎲 哈比兔大富翁</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・每擲一次骰子消耗 1 顆「' + balloon + '」，擲 1～' + MARBLE.dice + ' 點，在一圈 ' + board.length + ' 格的棋盤上前進，停在哪一格就拿那一格的獎勵。<br>' +
+      '・停在「再擲一次」會免費再擲，不多花氣球。<br>' +
+      '・每經過起點一次算完成一圈，並拿到 1 個「' + leaked + '」，可以找' + sysNpcText(MARBLE.exchangeNpc) + '換回氣球。<br>' +
+      '・<b>圈數越多，綠／藍寶箱開出時裝的機率越高</b>：' +
+      MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' ×' + m; }).join('、') + '。位置和圈數每個角色各自記錄，<b>不會重置</b>。<br>' +
+      '・遊戲裡可以選「連擲」次數，也可以勾氣球不夠時自動用金幣買。' +
+      '</div>';
+
+    html += '<div class="section-title">氣球怎麼來</div>' + sysChipRow([MARBLE.balloon, MARBLE.leaked]);
+    if (mall) {
+      html += '<table class="dtable" style="margin-top:8px;"><thead><tr><th>道具</th><th>名品館價格</th></tr></thead><tbody>' +
+        itemLinkRow(MARBLE.balloon, '<td data-mall-points="' + mall.points + '">' + mallNowHtml(mall.points) + '</td>') + '</tbody></table>';
+    }
+    html += exchangeTableHtml(leaked + ' 可以換回氣球', (EXCHANGE_BY_GIVE[String(MARBLE.leaked)] || []));
+
+    html += '<div class="section-title">棋盤（從起點開始，共 ' + board.length + ' 格）</div><div class="map-chip-row">' +
+      board.map(function (k, i) { return '<span class="map-chip" style="cursor:default;" title="第 ' + (i + 1) + ' 格">' + (i + 1) + '. ' + marbleSquareName(k) + '</span>'; }).join('') + '</div>';
+
+    html += '<div class="section-title">每一種格子的獎勵</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>格子</th><th>格數</th><th>獎勵</th></tr></thead><tbody>';
+    var order = ["gold", "gem", "item", "feed", "sparkle", "green", "blue", "red", "more", "start"];
+    order.filter(function (k) { return count[k]; }).forEach(function (k) {
+      var body;
+      if (k === "gold") {
+        body = '金幣＝氣球當下的名品館價格 × ' + Math.round(MARBLE.gold.min * 100) + '%～' + Math.round(MARBLE.gold.max * 100) + '%（平均抽）';
+      } else if (MARBLE.boxes[k]) {
+        var b = MARBLE.boxes[k];
+        body = '<b>時裝</b>：' + (b.lapScaled
+          ? MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' <span class="rate' + (b.costumePct * m < 50 ? ' low' : '') + '">' + sysPct(b.costumePct * m) + '</span>'; }).join('、')
+          : '<span class="rate">' + sysPct(b.costumePct) + '</span>（不受圈數影響）');
+        if (b.others.length) body += '<div style="margin-top:6px;">沒開到時裝就拿下面其中一樣：</div><div class="map-chip-row" style="margin-top:4px;">' + marblePrizeListHtml(b.others) + '</div>';
+      } else if (MARBLE.squares[k]) {
+        body = '<div class="map-chip-row">' + marblePrizeListHtml(MARBLE.squares[k]) + '</div>';
+      } else {
+        body = k === "more" ? '沒有獎勵，免費再擲一次' : '沒有獎勵（經過就算一圈、拿 1 個' + leaked + '）';
+      }
+      html += '<tr><td style="white-space:nowrap;"><b>' + marbleSquareName(k) + '</b></td><td>' + count[k] + ' 格<br><span style="font-size:11.5px;color:var(--text-faint);">' +
+        sysPct(count[k] / board.length * 100) + '</span></td><td style="font-size:12.5px;">' + body + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += sysNote('「格數」下面的百分比是那種格子佔棋盤的比例，可以當成每擲一次停在上面的大概機率。物品後面的百分比是那一格裡抽中它的機率。');
+
+    // 每顆氣球開出時裝的機率（估算）：各寶箱格數 ÷ 總格數 × 那種寶箱的時裝機率；停在「再擲一次」等於多一次機會
+    var moreBonus = 1 / (1 - (count.more || 0) / board.length);
+    html += '<div class="section-title">每顆氣球開出時裝的機率（估算）</div><table class="dtable"><thead><tr><th>圈數</th><th>每顆氣球</th><th>平均幾顆開一件</th></tr></thead><tbody>';
+    MARBLE.lapMult.forEach(function (m, i) {
+      var p = 0;
+      Object.keys(MARBLE.boxes).forEach(function (k) {
+        var b = MARBLE.boxes[k];
+        p += (count[k] || 0) / board.length * Math.min(100, b.costumePct * (b.lapScaled ? m : 1)) / 100;
+      });
+      p *= moreBonus;
+      html += '<tr><td><b>' + marbleLapText(i) + '</b></td><td><span class="rate">' + sysPct(p * 100) + '</span></td><td>約 ' + (Math.round(10 / p) / 10) + ' 顆</td></tr>';
+    });
+    html += '</tbody></table>';
+    html += sysNote('用「每一格被停到的機會差不多」估算的，實際會有一點出入。一圈 ' + board.length + ' 格、平均一次走 ' + ((MARBLE.dice + 1) / 2) + ' 格，大約 ' +
+      Math.round(board.length / ((MARBLE.dice + 1) / 2)) + ' 顆氣球走完一圈。');
+
+    html += '<div class="section-title">寶箱會開出的時裝 <span class="count">(' + MARBLE.costumes.length + ')</span></div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">開到時裝時從下面平均抽一件（每件 ' + sysPct(100 / MARBLE.costumes.length) + '），三種寶箱的清單都一樣。</div>';
+    html += sysChipRow(MARBLE.costumes);
+    if (COSTUME) html += sysGuideLinkHtml("costume", "時裝拿到之後怎麼強化，看時裝強化說明");
+    $detail.innerHTML = html;
+  }
+  // 物品頁：三個系統的關鍵道具下面放一個連到說明頁的連結
+  function sysSectionHtml(id) {
+    var num = Number(id), html = '';
+    function has(list) { return list.indexOf(num) >= 0; }
+    if (AURA && AURA.tiers) {
+      var s = AURA.soul, ids = AURA.tiers.map(function (t) { return t.id; }).concat([s.powder, s.scroll.item]);
+      s.colors.forEach(function (c) { ids.push(c.item, c.enhancer); });
+      AURA.books.forEach(function (b) { ids.push(b.item); });
+      AURA.refine.forEach(function (g) { g.steps.forEach(function (st) { ids.push(st.material); }); });
+      if (has(ids)) html += '<div class="section-title">光環</div>' + sysGuideLinkHtml("aura", "這是光環系統的道具，看光環完整說明");
+    }
+    if (COSTUME && COSTUME.smelt) {
+      var cids = [COSTUME.crystal, COSTUME.powder, COSTUME.exBox.item, COSTUME.compose.box].concat(COSTUME.threads.map(function (t) { return t[0]; }));
+      var isCostume = COSTUME.grades.some(function (g) { return g.items.indexOf(num) >= 0; });
+      if (has(cids) || isCostume) {
+        html += '<div class="section-title">時裝強化</div>' +
+          sysGuideLinkHtml("costume", isCostume ? "這件時裝可以強化，看時裝強化說明（成功率、加成、繼承、分解）" : "這是時裝強化用的道具，看時裝強化說明");
+      }
+    }
+    if (MARBLE && MARBLE.board && (has([MARBLE.balloon, MARBLE.leaked]) || has(MARBLE.costumes))) {
+      html += '<div class="section-title">哈比兔大富翁</div>' +
+        sysGuideLinkHtml("marble", has(MARBLE.costumes) ? "這件時裝可以從哈比兔大富翁的寶箱開出，看大富翁說明" : "這是哈比兔大富翁的道具，看大富翁說明");
+    }
+    return html;
   }
 
   // ---------- 怪物變體能力表、昏厥量表（2026-09-28 新增）----------
@@ -6523,7 +6909,10 @@
     ["⚒️ 鐵匠相關", "發條強化屬性表，以及兩種分解：找雷分解（鎔解，選裝備就能算出每個精煉值的費用、各種鎔解石機率）和強硬分解（艾希頓裝備換凝結之魂的費用、機率、精煉加成）。"],
     ["✨ 技能", "各職業（含二轉分支）的技能列表；點技能看前置技能、特殊效果，以及每一級的威力、AP、冷卻、詠唱、收招、仇恨等數值。"],
     ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"],
-    ["💠 鑲嵌石", "角色身上四顆石頭的玩法、每一階的強化花費與成功率、會抽到哪些能力與數值機率、材料怎麼來（打碎寶石、找 NPC 兌換），以及相關的名品館道具。材料、可打碎的寶石、兩張券的物品頁也會列出用途。"]
+    ["💠 鑲嵌石", "角色身上四顆石頭的玩法、每一階的強化花費與成功率、會抽到哪些能力與數值機率、材料怎麼來（打碎寶石、找 NPC 兌換），以及相關的名品館道具。材料、可打碎的寶石、兩張券的物品頁也會列出用途。"],
+    ["✨ 光環", "光環裝備四個階級的能力、精煉成功率與加成、G 化（升階）的條件與風險，以及靈魂結晶的製作機率（條數、顏色、每種屬性的數值範圍）、鑲嵌與分解。"],
+    ["👗 時裝強化", "時裝每一階的強化成功率與花費、線團能加多少成功率、各等級時裝的強化加成，以及繼承、分解、兌換、合成、寶石提煉的規則。"],
+    ["🎲 哈比兔大富翁", "棋盤 32 格的配置、每種格子的獎勵與機率、寶箱開出時裝的機率（會隨圈數提高）、可開出的時裝清單，以及氣球的取得方式。"]
   ];
   function openHelp() {
     var html = '<div class="section-title">使用說明</div>';
@@ -6622,7 +7011,7 @@
     var sitePageLink = e.target.closest("[data-site-page]");
     if (sitePageLink) { openSitePage(Number(sitePageLink.getAttribute("data-site-page")), true); return; }
     // 在彈出視窗（委託詳細／寶箱）裡點寵物、任務線這類還是會換掉主畫面的連結時，先把視窗關掉，不然新頁面會被蓋住
-    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones],[data-goto-skill]")) {
+    if (e.target.closest("#changelogBackdrop, #peekBackdrop") && e.target.closest("[data-open-questline],[data-open-pet],[data-open-bpet],[data-goto-questtab],[data-open-map],[data-goto-smith],[data-goto-stones],[data-goto-sys],[data-goto-skill]")) {
       closePeek();
       closeChangelog();
     }
@@ -6679,6 +7068,8 @@
     var gotoSmith = e.target.closest("[data-goto-smith]");
     if (gotoSmith) { navigateTo("smith", gotoSmith.getAttribute("data-goto-smith"), true); return; }
     if (e.target.closest("[data-goto-stones]")) { navigateTo("stones", "", true); return; }
+    var gotoSys = e.target.closest("[data-goto-sys]");
+    if (gotoSys) { navigateTo(gotoSys.getAttribute("data-goto-sys"), "", true); return; }
     var mapLink = e.target.closest("[data-open-map]");
     if (mapLink) { navigateTo("map", mapLink.getAttribute("data-open-map"), true); return; }
     var gotoQuestTab = e.target.closest("[data-goto-questtab]");

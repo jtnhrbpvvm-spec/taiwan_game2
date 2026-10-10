@@ -1000,6 +1000,175 @@
       box.appendChild(row);
       wrap.appendChild(box);
     });
+    renderAura(c);
+  }
+
+  // ---------- 光環的靈魂結晶（10-10 新增的系統；存檔欄位用離線版實測過）----------
+  // 光環那一疊：soulSlots = 結晶欄數（遊戲在拿到的當下隨機給 AURA.slots.min~max），
+  //             souls = [{itemId: 結晶, options: [{kind, value, unit: 0}]}]（鑲上去的結晶，最多 soulSlots 顆）
+  // 穿著的光環是 loadout.aura = 那一疊的 id，上面「光環 (aura)」那一格就是在改它。
+  var AURA = window.AURA || null;
+  function renderAura(c) {
+    var wrap = document.getElementById("auraFields");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!AURA || !EQUIP_SLOTS.aura) return;
+    var tierIds = AURA.tiers.map(function (t) { return t[0]; });
+    var colorOf = function (itemId) { return AURA.colors.filter(function (x) { return x.item === itemId; })[0]; };
+    var kindLabel = function (kind) { return (AURA.kinds[String(kind)] || {}).name || ("#" + kind); };
+    var rerender = function () { renderLoadout(c); };
+
+    wrap.appendChild(el("div", { class: "section-title", text: "光環的靈魂結晶" }));
+    wrap.appendChild(el("div", {
+      style: "font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px;",
+      text: "列出背包裡每一件光環。可以改階級、精煉值、結晶欄數（遊戲正常是 " + AURA.slots.min + "~" + AURA.slots.max +
+        " 欄），以及鑲在上面的靈魂結晶（顏色決定能選哪些屬性，每顆最多 " + AURA.maxOptions + " 條）。" +
+        "數值旁邊的範圍是遊戲正常做得出來的範圍，超過也能存，但正常玩不會出現。"
+    }));
+
+    var addRow = el("div", { style: "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" });
+    tierIds.forEach(function (itemId) {
+      var btn = el("button", { class: "btn btn-sm", type: "button", text: "＋ " + itemName(itemId) });
+      btn.addEventListener("click", function () {
+        var newId = c.nextStackId || 1;
+        c.nextStackId = newId + 1;
+        c.stacks.push({ id: newId, itemId: itemId, count: 1, soulSlots: AURA.slots.max });
+        rerender();
+        renderStacks(c);
+      });
+      addRow.appendChild(btn);
+    });
+    wrap.appendChild(addRow);
+
+    var auras = c.stacks.filter(function (s) { return tierIds.indexOf(s.itemId) >= 0; });
+    if (!auras.length) {
+      wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);", text: "背包裡沒有光環，可以用上面的按鈕新增一件。" }));
+      return;
+    }
+    auras.forEach(function (stack) {
+      var worn = c.loadout.aura === stack.id;
+      var card = el("div", { style: "border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;" });
+      var head = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;" });
+      head.appendChild(el("b", { text: itemName(stack.itemId) + (stack.refine ? " +" + stack.refine : "") }));
+      head.appendChild(el("span", { style: "font-size:11.5px;color:var(--text3);", text: "Stack " + stack.id + (worn ? "・穿著中" : "") }));
+      var wearBtn = el("button", { class: "btn btn-sm", type: "button", text: worn ? "卸下" : "穿上" });
+      wearBtn.addEventListener("click", function () {
+        if (worn) delete c.loadout.aura; else c.loadout.aura = stack.id;
+        rerender();
+      });
+      head.appendChild(wearBtn);
+      card.appendChild(head);
+
+      var grid = el("div", { class: "grid", style: "grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:10px;" });
+      grid.appendChild(fieldSelect("階級",
+        tierIds.map(function (id) { return { value: String(id), label: itemName(id) }; }),
+        function () { return String(stack.itemId); },
+        function (v) { stack.itemId = Number(v); rerender(); renderStacks(c); }));
+      var refineOpts = [];
+      for (var rv = 0; rv <= 12; rv++) refineOpts.push({ value: String(rv), label: "+" + rv });
+      grid.appendChild(fieldSelect("精煉值 refine", refineOpts,
+        function () { return String(stack.refine || 0); },
+        function (v) { stack.refine = Number(v); rerender(); renderStacks(c); }));
+      var slotOpts = [];
+      for (var sv = AURA.slots.min; sv <= AURA.slots.max; sv++) slotOpts.push({ value: String(sv), label: sv + " 欄" });
+      // 存檔裡是範圍外的數字（例如手動改過）也要列出來，不能默默換掉
+      if (stack.soulSlots != null && (stack.soulSlots < AURA.slots.min || stack.soulSlots > AURA.slots.max)) {
+        slotOpts.push({ value: String(stack.soulSlots), label: stack.soulSlots + " 欄（超出正常範圍）" });
+      }
+      if (stack.soulSlots == null) slotOpts.unshift({ value: "", label: "（還沒決定，進遊戲時隨機）" });
+      grid.appendChild(fieldSelect("結晶欄數 soulSlots", slotOpts,
+        function () { return stack.soulSlots == null ? "" : String(stack.soulSlots); },
+        function (v) { if (v === "") delete stack.soulSlots; else stack.soulSlots = Number(v); rerender(); }));
+      card.appendChild(grid);
+
+      var souls = stack.souls || [];
+      var slotCount = stack.soulSlots == null ? AURA.slots.max : stack.soulSlots;
+      souls.forEach(function (soul, soulIdx) {
+        var color = colorOf(soul.itemId);
+        var box = el("div", { style: "border-top:1px dashed var(--border);padding-top:10px;margin-top:10px;" });
+        var top = el("div", { style: "display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;" });
+        top.appendChild(el("span", { style: "font-size:12px;color:var(--text3);", text: "第 " + (soulIdx + 1) + " 欄" }));
+        var colorSelect = el("select", { style: "min-width:150px;" });
+        if (!color) colorSelect.appendChild(el("option", { value: String(soul.itemId), text: itemName(soul.itemId), selected: "selected" }));
+        AURA.colors.forEach(function (x) {
+          var opt = el("option", { value: String(x.item), text: itemName(x.item) });
+          if (x.item === soul.itemId) opt.selected = true;
+          colorSelect.appendChild(opt);
+        });
+        colorSelect.addEventListener("change", function () {
+          soul.itemId = Number(colorSelect.value);
+          // 換顏色之後，新顏色沒有的屬性留著也不會壞，但正常做不出來，所以拿掉
+          var next = colorOf(soul.itemId);
+          soul.options = (soul.options || []).filter(function (o) { return next.options.some(function (x) { return x.kind === o.kind; }); });
+          rerender();
+        });
+        top.appendChild(colorSelect);
+        var pullBtn = el("button", { class: "icon-btn", type: "button", text: "✕", title: "拔掉這顆結晶" });
+        pullBtn.addEventListener("click", function () {
+          souls.splice(soulIdx, 1);
+          if (souls.length) stack.souls = souls; else delete stack.souls;
+          rerender();
+        });
+        top.appendChild(pullBtn);
+        box.appendChild(top);
+
+        if (!soul.options) soul.options = [];
+        soul.options.forEach(function (o, optIdx) {
+          var def = color ? color.options.filter(function (x) { return x.kind === o.kind; })[0] : null;
+          var pct = (AURA.kinds[String(o.kind)] || {}).pct ? "%" : "";
+          var line = el("div", { style: "display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0 4px 16px;" });
+          var kindSelect = el("select", { style: "min-width:140px;" });
+          if (!def) kindSelect.appendChild(el("option", { value: String(o.kind), text: kindLabel(o.kind) + "（這個顏色正常沒有）", selected: "selected" }));
+          (color ? color.options : []).forEach(function (x) {
+            var opt = el("option", { value: String(x.kind), text: kindLabel(x.kind) });
+            if (x.kind === o.kind) opt.selected = true;
+            kindSelect.appendChild(opt);
+          });
+          kindSelect.addEventListener("change", function () {
+            o.kind = Number(kindSelect.value);
+            var nd = color.options.filter(function (x) { return x.kind === o.kind; })[0];
+            if (nd) o.value = nd.max;
+            rerender();
+          });
+          line.appendChild(kindSelect);
+          var valueInput = el("input", { type: "number", style: "width:90px;" });
+          valueInput.value = o.value;
+          valueInput.addEventListener("input", function () { o.value = valueInput.valueAsNumber || 0; });
+          line.appendChild(valueInput);
+          line.appendChild(el("span", { style: "font-size:11.5px;color:var(--text3);", text: def ? "範圍 " + def.min + "~" + def.max + pct : pct }));
+          var delBtn = el("button", { class: "icon-btn", type: "button", text: "✕", title: "刪掉這一條屬性" });
+          delBtn.addEventListener("click", function () { soul.options.splice(optIdx, 1); rerender(); });
+          line.appendChild(delBtn);
+          box.appendChild(line);
+        });
+        if (color && soul.options.length < AURA.maxOptions) {
+          var addOpt = el("button", { class: "btn btn-sm", type: "button", text: "＋ 屬性", style: "margin-left:16px;" });
+          addOpt.addEventListener("click", function () {
+            var first = color.options[0];
+            soul.options.push({ kind: first.kind, value: first.max, unit: 0 });
+            rerender();
+          });
+          box.appendChild(addOpt);
+        }
+        card.appendChild(box);
+      });
+
+      var foot = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;" });
+      foot.appendChild(el("span", { style: "font-size:12px;color:var(--text3);", text: "已鑲 " + souls.length + " / " + slotCount + " 欄" }));
+      if (souls.length < slotCount) {
+        var addSoul = el("button", { class: "btn btn-sm", type: "button", text: "＋ 鑲一顆結晶" });
+        addSoul.addEventListener("click", function () {
+          var first = AURA.colors[0];
+          stack.souls = souls.concat([{ itemId: first.item, options: [{ kind: first.options[0].kind, value: first.options[0].max, unit: 0 }] }]);
+          rerender();
+        });
+        foot.appendChild(addSoul);
+      } else if (souls.length > slotCount) {
+        foot.appendChild(el("span", { style: "font-size:12px;color:var(--red);", text: "⚠️ 鑲的結晶比欄數多，正常玩不會出現這種狀況。" }));
+      }
+      card.appendChild(foot);
+      wrap.appendChild(card);
+    });
   }
 
   // ---------- 已學技能 ----------
