@@ -181,7 +181,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="res" id="cRes"></div>
 <div class="sub">攻擊力、氣血上限在畫面上是<b>以 100 為一格跳動</b>的，所以只加一兩點屬性時數字可能完全不動，要累積到跨過下一格才會變。三種增益各自的上限是 +200%，仙人初境起依境界提高（上面「增益上限」那格就是你目前的上限）。</div>
 
-<h2>🌀 時空秘境存活機率</h2>
+<h2>🌀 時空秘境・⚔️ 仙魔戰場存活機率</h2>
 <div id="stCalc"></div>
 
 <h2>已學技能的傷害</h2>
@@ -1205,7 +1205,7 @@ function hDefense(a,P){
   return{best,coins};
 }
 function renderHunt(a){
-  const P=hPlayer(a),cur=stCalc(a,P);if(stRun&&cur)stR=stSim(cur);stRun=false;const R=cur&&stR,rows=HMAPS.map(m=>hEval(a,P,m)),cb=v=>full(Math.round(v*100)),pc=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%";
+  const P=hPlayer(a),cur={},R={};SZ_IDS.forEach(z=>{cur[z]=stCalc(a,P,SZ[z]);if(stRun[z]&&cur[z])stR[z]=stSim(cur[z]);stRun[z]=false;R[z]=cur[z]&&stR[z]});const rows=HMAPS.map(m=>hEval(a,P,m)),cb=v=>full(Math.round(v*100)),pc=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%";
   const top=(list,key)=>list.reduce((b,x)=>!b||x[key]>b[key]?x:b,null);
   const ok=rows.filter(x=>x.state==="ok"&&!x.over),pot=rows.filter(x=>(x.state==="ok"||x.state==="pot")&&!x.over);
   const best=top(ok,"exp"),bestPot=top(pot,"exp"),bestCoin=top(ok,"coins"),open=rows.filter(x=>x.state!=="lock");
@@ -1225,11 +1225,7 @@ function renderHunt(a){
       <td class="num">${pc(x.A)}<br><small>較差 ${pc(x.W)}</small></td>
       <td class="num">${x.state==="no"?`<small>活著才有<br>${hWan(x.exp)}</small>`:`<b>${hWan(x.exp)}</b><br><small>${x.f>=1?"已達上限":"速度 "+pc(x.speed)}</small>`}</td>
       <td class="num">${x.state==="no"?`<small>${hWan(x.coins)}</small>`:hWan(x.coins)}</td>
-      <td class="num">${x.potion>=1?hWan(x.potion):"—"}</td></tr>`}).join("")}).join("")+`<tr><td colspan="8" style="background:var(--head);font-weight:bold">亂星海・時空秘境（拿靈石換掉寶，不列入推薦）</td></tr>`+(cur&&!R?`<tr><td class="nw"><b>時空秘境</b></td><td colspan="7">還沒試算。按下面「時空秘境存活機率」的「🌀 試算時空秘境」。</td></tr>`:R?`<tr><td class="nw"><b>時空秘境</b>${R.key!==cur.key?`<br><small class="warn">上次試算的結果</small>`:""}<br><small>經驗照${R.main}</small></td><td><span class="hs ${R.v[0]}">${R.v[1]}</span></td>
-      <td class="nw">${REALMS[R.r]}10階<br><small>氣血 ${cb(R.est.avg.hp)}・攻擊 ${cb(R.est.avg.atk)}<br>強度 ${ST.str} 倍</small></td>
-      <td class="num">${+R.est.h.toFixed(1)} 下<br><small>${R.sim.median<60?"—":Math.round(R.sim.killsHr)+" 隻／時"}</small></td>
-      <td class="num">${pc(R.est.A)}<br><small>撐過 1 小時 ${stPc(R.sim.p60)}</small></td>
-      <td class="num"><b>${hWan(R.exp)}</b><br><small>最多 ${ST.rewardCap} 倍</small></td><td class="num"><span class="warn">−${hWan(ST.upkeep*3600)}</span></td><td class="num">${R.potCost>=1&&R.sim.median>=60?hWan(R.potCost):"—"}</td></tr>`:`<tr class="hlock"><td class="nw">時空秘境</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">只有${REALMS[ST.maxRealm]}以下才能進</td></tr>`);
+      <td class="num">${x.potion>=1?hWan(x.potion):"—"}</td></tr>`}).join("")}).join("")+SZ_IDS.map(z=>stRow(a,SZ[z],cur[z],R[z],cb,pc)).join("");
   const D=hDefense(a,P),pe0=evaDodge(P.eva-T.hit(a.r+(a.s-1)/10))*100,p1=v=>+v.toFixed(1);
   const z=a.p.zhenmo||{};
   $("huntOut").innerHTML=`<div class="hrec">${rec}</div>
@@ -1244,10 +1240,11 @@ function renderHunt(a){
   <b>每小時經驗有上限</b>：遊戲規定殺得比「同境界一般玩家」快也不會拿更多，所以寫「已達上限」的地圖再加強攻擊也不會變多，該往下一張圖走；寫「速度 N%」表示你殺得比一般玩家慢，收益按比例減少。<br>
   <b>靈界</b>：第四、五區在靈界，要從人界地圖的飛升點進去，進、出各要一套五行傳送陣靈石（金木水火土各 1 顆），在靈界戰死是回天元城外，不會回人界。這兩區的妖獸強度是同階一般玩家的 40～200 倍，門檻也改成看階數（例如神墟要真仙 4 階）。<br>
   <b>⚔️ 挑戰模式</b>：境界或階數不到門檻的地圖現在可以越級進去，但經驗、靈石照你境界的主要練功地圖算（不會比較多），戰死照樣折壽；現在可以離線、背景掛機（撐不住才送回）。好處是做裝通貨、武學秘典碎片掉率加倍，並有機會掉鍛造圖紙，練等不划算，所以不列入上面的推薦。<br>
-  <b>🌀 時空秘境</b>（亂星海）：妖獸是你境界 10 階的 30 倍強度，不掉靈石、每秒還要扣 1 萬靈石，經驗照主要練功地圖算（殺得夠快最多 3 倍），是拿靈石換掉寶的地方，所以不列入推薦；撐不撐得住看下面的「時空秘境存活機率」，規則見<a href="經驗與地圖.html">經驗與地圖</a>。<br>
+  <b>🌀 時空秘境</b>（亂星海）：妖獸是你境界 10 階的 30 倍強度，不掉靈石、每秒還要扣 1 萬靈石，經驗照主要練功地圖算（殺得夠快最多 3 倍），是拿靈石換掉寶的地方，所以不列入推薦；撐不撐得住看下面的存活機率，規則見<a href="經驗與地圖.html">經驗與地圖</a>。<br>
+  <b>⚔️ 仙魔戰場</b>（靈界・風元大陸）：仙人初境以上才能進，敵人是你境界的 10 階、強度和你的主要練功地圖一樣，但 <b>1 秒就刷新</b>，而且經驗、靈石<b>沒有上限</b>，殺得越快拿得越多。能不能掛看的是撐不撐得住，所以放在下面和時空秘境一起試算，不列入上面的推薦。表上的每小時經驗、靈石是線上掛機的數字，離線、背景掛機會少很多。<br>
   <b>估算的範圍</b>：和遊戲離線結算用同一套算法，只看攻擊、暴擊、連擊、氣血、防禦、閃避、金身，妖獸一律當成物理攻擊。<b>沒算</b>魔防（術法型妖獸與魔修打你是看魔防）、妖獸的暴擊與技能、天賦給的暴擊、吸血、回春、護盾、靈寵與夥伴的招式、屬性傷害、五行相剋、種族剋制，也沒算稱號、異火、仙法光環給的防禦閃避與修為加成，所以實際通常會比表上快一點、耐打一點；遊戲作者實測線上收益約比這個估算多 2～4 成。丹藥花費以培元丹（回 10%、200 靈石）估計。挑戰圖的妖獸強度落差很大，請多留餘裕。
   </div>
-  <h2>🌀 時空秘境存活機率</h2>
+  <h2>🌀 時空秘境・⚔️ 仙魔戰場存活機率</h2>
   <div id="stHunt"></div>
   <h2>副本（秘境）</h2>
   <div class="tw"><table><thead><tr><th>副本</th><th>經驗</th><th>靈石</th><th>說明</th></tr></thead><tbody>
@@ -1257,68 +1254,92 @@ function renderHunt(a){
   <tr><td class="nw"><b>奇遇、異界</b></td><td colspan="2">依事件而定</td><td>野外掛機時隨機觸發，沒辦法用每小時計算。<br><a href="奇遇一覽.html">奇遇一覽</a></td></tr>
   </tbody></table></div>
   <div class="sub" style="margin-top:6px">秘境每天各只能打 3 次，所以用「每次」和「每日」來算，沒辦法換成每小時。兩個秘境都不給經驗，練等還是要靠上面的地圖。</div>`;
-  $("stHunt").innerHTML=$("stCalc").innerHTML=stHtml(a,R,cur);
+  $("stHunt").innerHTML=$("stCalc").innerHTML=SZ_IDS.map(z=>stHtml(a,SZ[z],R[z],cur[z])).join("");
 }
-// ---- 時空秘境：存活機率。照遊戲每秒一回合的規則實際打 120 場（妖獸型態與技能、調息、自動補血、野外修士都照遊戲），不是套公式 ----
-const ST=DMG.EX.st,stM=r=>["時空秘境",2,0,0,0,r,r+.9,[ST.str,ST.str],1,0,r],stPc=v=>v>=.995?"99% 以上":v<=.005?"不到 1%":Math.round(v*100)+"%";
-MPOOL["時空秘境"]=ST.mon.map(x=>x.id+x.w).join(" ");
+// ---- 時空秘境、仙魔戰場：存活機率。照遊戲每秒一回合的規則實際打 120 場（妖獸型態與技能、調息、自動補血、野外修士都照遊戲），不是套公式 ----
+// 兩張圖共用同一套模擬與畫面：st＝亂星海時空秘境（仙人初境以下、強度固定 30 倍、3 秒刷新、每秒扣靈石、收益上限 3 倍）；
+//   xm＝靈界仙魔戰場（仙人初境以上、強度同主要練功地圖、1 秒刷新、收益不封頂）
+const SZ={st:{id:"st",S:DMG.EX.st,icon:"🌀",name:"時空秘境",where:"亂星海",cat:2},xm:{id:"xm",S:DMG.EX.xm,icon:"⚔️",name:"仙魔戰場",where:"靈界・風元大陸",cat:5}},SZ_IDS=["st","xm"],ST=SZ.st.S;
+const stPc=v=>v>=.995?"99% 以上":v<=.005?"不到 1%":Math.round(v*100)+"%";
+SZ_IDS.forEach(z=>MPOOL[SZ[z].name]=SZ[z].S.mon.map(x=>x.id+x.w).join(" "));
+// 這個境界的妖獸強度 [最低, 最高] 與「氣血／攻擊基準 × 平均強度」
+const stStr=(Z,r)=>{const b=Z.S.base[r-Z.S.minRealm];return b[5]||[Z.S.str,Z.S.str]},stTxt=x=>x[0]===x[1]?x[0]+"":x[0]+"～"+x[1];
+const stIn=(Z,r)=>r>=Z.S.minRealm&&r<=Z.S.maxRealm;
 let stOpt={};   // 在畫面上改過的設定（丹藥、門檻、野外修士、暗殺者）；重新讀取存檔時清掉
-// 模擬要打 120 場、比較花時間，所以只在讀取存檔時算一次；之後改能力值、裝備或設定都要按「試算時空秘境」才重算。stR＝上次試算的結果，stRun＝這次重畫要不要重算
-let stR=null,stRun=false,stInfo="";
+// 模擬要打 120 場、比較花時間，所以只在讀取存檔時算一次；之後改能力值、裝備或設定都要按「試算」才重算。stR＝上次試算的結果，stRun＝這次重畫要不要重算
+const stR={},stRun={},stInfo={};
 function stDefaults(a){
   const p=a.p,au=p.autoHp,buy=ST.potions.map((x,i)=>[x,i]).filter(([x])=>!x[3]).sort((x,y)=>y[0][1]-x[0][1])[0],k=p.karma||0,ks=k>=ST.cult.karma[0]?1:k<=ST.cult.karma[1]?-1:0;
   return{pot:au&&au.enabled&&buy?buy[1]:-1,th:(au&&+au.threshold)||50,cult:a.r>=ST.cult.realm&&(p.reputation==null||p.reputation>=ST.cult.rep),amb:ks!==0,ks};
 }
-function stCalc(a,P){
-  if(a.r>ST.maxRealm)return null;
-  const d=Object.assign(stDefaults(a),stOpt),F=n=>a.ex.fx[n]||0,mg=a.mag>a.phys,est=hEval(a,P,stM(a.r)),main=HMAPS.find(x=>x[0]===H_MAIN[a.r]),typ=hTypRounds(main);
-  // 野外修士的遭遇照遊戲的補償：這裡的妖獸要打很久，所以幾乎每一波都會遇到；殺得比一般玩家快才會按比例減少
-  const wc=ST.base[a.r][4]*Math.min(1,ST.rewardCap*(11+2*est.h)/(11+2*typ)),pot=ST.potions[d.pot]||null,on=d.cult&&a.r>=ST.cult.realm;
+function stCalc(a,P,Z){
+  if(!stIn(Z,a.r))return null;
+  const S=Z.S,B=S.base[a.r-S.minRealm],str=stStr(Z,a.r),d=Object.assign(stDefaults(a),stOpt),F=n=>a.ex.fx[n]||0,mg=a.mag>a.phys;
+  const est=hEval(a,P,[Z.name,Z.cat,0,0,0,a.r,a.r+.9,str,1,0,a.r]),main=HMAPS.find(x=>x[0]===H_MAIN[a.r]),typ=hTypRounds(main),cap=S.rewardCap||Infinity;
+  // 收益上限的折扣：殺得比主要練功地圖的一般玩家快 cap 倍以上才打折（仙魔戰場不封頂）。野外修士的遭遇也乘同一個折扣，這裡的妖獸要打很久，所以幾乎每一波都會遇到
+  const adj=Math.min(1,cap*(11+2*est.h)/(11+2*typ)),wc=B[4]*adj,pot=S.potions[d.pot]||null,on=d.cult&&a.r>=S.cult.realm;
+  // 線上每小時收益＝主要練功地圖的設計值 × (一般玩家一波的時間 ÷ 你在這裡一波的時間) × 折扣；這裡刷新比較快，所以分母用這張圖的刷新秒數
+  const rate=(11+2*typ)/(S.respawn+1+2*est.h)*adj;
   const I={r:a.r,hp:a.hp,atk:Math.max(a.phys,a.mag),mag:mg,skill:1.1,crit:(mg?a.magCrit:a.crit)/100,critDmg:a.critDmg,combo:a.combo/100,pen:a.ex.pen,hit:a.ex.evaPen,def:P.def,mdef:P.mdef,eva:P.eva,
     jin:F("金身"),huajin:F("化勁"),life:F("吸血"),soul:F("噬魂"),regen:F("回春"),reflect:F("反震"),shield:F("先手盾")*a.defMult,huti:F("護體")*a.defMult,undying:a.ex.undying,fr:F("定神"),light:a.ex.aff.light,dark:a.ex.aff.dark,aff:a.ex.aff,elem:!!a.ex.elem&&!a.ex.ignoreCounter,counter:F("剋敵"),dodgeHit:F("閃擊"),
-    potion:pot?{th:Math.max(1,Math.min(99,d.th||50)),amt:pot[1]*(1+F("丹心"))}:null,cult:on?Math.min(1,ST.cult.p[0]*wc):0,amb:on&&d.amb?Math.min(1,ST.cult.p[1]*wc):0,ambDemon:d.ks>=0};
-  return{r:a.r,d,I,est,pot,on,key:JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*Math.min(ST.rewardCap,(11+2*typ)/(11+2*est.h))*P.expMult};
+    potion:pot?{th:Math.max(1,Math.min(99,d.th||50)),amt:pot[1]*(1+F("丹心"))}:null,cult:on?Math.min(1,S.cult.p[0]*wc):0,amb:on&&d.amb?Math.min(1,S.cult.p[1]*wc):0,ambDemon:d.ks>=0};
+  return{z:Z.id,r:a.r,d,I,est,pot,on,str,key:Z.id+JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*rate*P.expMult,coins:main[3]*1200*rate*P.coinMult};
 }
 function stSim(c){
-  const sim=DMG.spacetime(c.I,{n:120}),v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
+  const sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S}),v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
   return Object.assign({},c,{sim,v,potCost:c.pot?sim.potsHr*c.pot[2]:0});
 }
-// R＝上次試算的結果（沒有就只顯示設定與按鈕），cur＝目前的角色與設定
-function stHtml(a,R,cur){
-  if(!cur)return `<div class="box">${REALMS[a.r]}進不去時空秘境：只有${REALMS[ST.maxRealm]}以下的修士才能進。</div>`;
+// 「每張地圖的估算」表格最下面的那一列
+function stRow(a,Z,cur,R,cb,pc){
+  const S=Z.S,head=`<tr><td colspan="8" style="background:var(--head);font-weight:bold">${Z.where}・${Z.name}（${S.upkeep?"拿靈石換掉寶":"經驗不封頂，要看撐不撐得住"}，不列入推薦）</td></tr>`;
+  if(!cur)return head+`<tr class="hlock"><td class="nw">${Z.name}</td><td><span class="hs lock">🔒 進不去</span></td><td colspan="6">${S.minRealm?REALMS[S.minRealm]+"以上才能進":"只有"+REALMS[S.maxRealm]+"以下才能進"}</td></tr>`;
+  if(!R)return head+`<tr><td class="nw"><b>${Z.name}</b></td><td colspan="7">還沒試算。按下面存活機率的「${Z.icon} 試算${Z.name}」。</td></tr>`;
+  return head+`<tr><td class="nw"><b>${Z.name}</b>${R.key!==cur.key?`<br><small class="warn">上次試算的結果</small>`:""}<br><small>收益照${R.main}</small></td><td><span class="hs ${R.v[0]}">${R.v[1]}</span></td>
+      <td class="nw">${REALMS[R.r]}10階<br><small>氣血 ${cb(R.est.avg.hp)}・攻擊 ${cb(R.est.avg.atk)}<br>強度 ${stTxt(R.str)} 倍</small></td>
+      <td class="num">${+R.est.h.toFixed(1)} 下<br><small>${R.sim.median<60?"—":Math.round(R.sim.killsHr)+" 隻／時"}</small></td>
+      <td class="num">${pc(R.est.A)}<br><small>撐過 1 小時 ${stPc(R.sim.p60)}</small></td>
+      <td class="num"><b>${hWan(R.exp)}</b><br><small>${S.rewardCap?"最多 "+S.rewardCap+" 倍":"不封頂"}</small></td><td class="num">${S.upkeep?`<span class="warn">−${hWan(S.upkeep*3600)}</span>`:hWan(R.coins)}</td><td class="num">${R.potCost>=1&&R.sim.median>=60?hWan(R.potCost):"—"}</td></tr>`;
+}
+// R＝上次試算的結果（沒有就只顯示設定與按鈕），cur＝目前的角色與設定（進不去就是 null）
+function stHtml(a,Z,R,cur){
+  const S=Z.S,title=`<h3 style="margin:16px 0 8px">${Z.icon} ${Z.name}（${Z.where}）</h3>`,go=`${Z.icon} 試算${Z.name}`;
+  if(!cur)return title+`<div class="sub" style="margin-bottom:10px">${REALMS[a.r]}進不去${Z.name}：${S.minRealm?REALMS[S.minRealm]+"以上的修士才能進，而且人要在靈界":"只有"+REALMS[S.maxRealm]+"以下的修士才能進"}。</div>`;
   const dc=cur.d,stale=R&&R.key!==cur.key;
-  const ctl=`<div class="ctl" data-noitm style="align-items:center"><label>自動補血<select class="stI" data-k="pot"><option value="-1">不開</option>${ST.potions.map((x,i)=>`<option value="${i}" ${dc.pot===i?"selected":""}>${x[0]}（回 ${Math.round(x[1]*100)}%${x[3]?"，背包要有":"，每顆 "+x[2]+" 靈石"}）</option>`).join("")}</select></label>
+  const ctl=title+`<div class="ctl" data-noitm style="align-items:center"><label>自動補血<select class="stI" data-k="pot"><option value="-1">不開</option>${S.potions.map((x,i)=>`<option value="${i}" ${dc.pot===i?"selected":""}>${x[0]}（回 ${Math.round(x[1]*100)}%${x[3]?"，背包要有":"，每顆 "+x[2]+" 靈石"}）</option>`).join("")}</select></label>
   <label>氣血低於幾 % 就吃<input class="stI" data-k="th" type="number" min="1" max="99" value="${dc.th}" ${cur.pot?"":"disabled"}></label>
-  <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" style="width:auto;min-width:0;flex:none;margin:0" class="stI" data-k="cult" ${cur.on?"checked":""} ${a.r>=ST.cult.realm?"":"disabled"}> 會遇到野外修士</label>
+  <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" style="width:auto;min-width:0;flex:none;margin:0" class="stI" data-k="cult" ${cur.on?"checked":""} ${a.r>=S.cult.realm?"":"disabled"}> 會遇到野外修士</label>
   <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" style="width:auto;min-width:0;flex:none;margin:0" class="stI" data-k="amb" ${cur.on&&dc.amb?"checked":""} ${cur.on?"":"disabled"}> 會遇到暗殺者</label></div>
-  <div class="ctl" style="align-items:center"><button class="btn stGo" type="button">🌀 試算時空秘境</button>${stale?`<span class="warn"><b>能力值、裝備或設定已經和上次試算時不同，下面還是舊的結果，按「試算時空秘境」才會更新。</b></span>`:""}</div>
-  <div class="sub" style="margin-bottom:10px">這項試算要實際模擬 120 場，比較花時間，所以<b>只在讀取存檔時自動算一次</b>。之後修改能力值、換裝備，或改上面的自動補血、野外修士設定，<b>都要按「🌀 試算時空秘境」才會重新計算</b>，沒按之前顯示的是上一次的結果。</div>`;
-  if(!R)return ctl+`<div class="box">還沒試算。讀取存檔會自動算一次；也可以直接按上面的「🌀 試算時空秘境」，用「試算」分頁目前的境界、等級與配裝來算。</div>`;
+  <div class="ctl" style="align-items:center"><button class="btn stGo" data-z="${Z.id}" type="button">${go}</button>${stale?`<span class="warn"><b>能力值、裝備或設定已經和上次試算時不同，下面還是舊的結果，按「${go}」才會更新。</b></span>`:""}</div>
+  <div class="sub" style="margin-bottom:10px">這項試算要實際模擬 120 場，比較花時間，所以<b>只在讀取存檔時自動算一次</b>。之後修改能力值、換裝備，或改上面的自動補血、野外修士設定，<b>都要按「${go}」才會重新計算</b>，沒按之前顯示的是上一次的結果。</div>`;
+  if(!R)return ctl+`<div class="box">還沒試算。讀取存檔會自動算一次；也可以直接按上面的「${go}」，用「試算」分頁目前的境界、等級與配裝來算。</div>`;
   const cb=v=>full(Math.round(v*100)),s=R.sim,d=R.d,md=s.median>=s.T?"超過 1 小時":s.median>=60?`約 ${Math.floor(s.median/60)} 分 ${s.median%60} 秒`:`約 ${s.median} 秒`,coins=a.p.coins,A=R.est.A*100;
   // 這裡會遇到的三種對手：一般妖獸、野外修士、暗殺者（後兩種是術法攻擊，氣血與攻擊是妖獸平均值的 1.5／3 倍）
-  const B=ST.base[R.r],I=R.I,C=ST.cult,dg=1-evaDodge(I.eva-B[2]),pc1=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%";
-  const foe=(hp,atk,mag,def,eva,h)=>{const one=atk*defMult(mag?I.mdef:I.def)*(1-Math.min(ST.shieldMax,mag?I.huajin:I.jin));
-    return `<td class="num">${cb(hp)}</td><td class="num">${cb(atk)}<br><small>${mag?"術法（看魔防）":"物理為主"}</small></td><td class="num">${+(h||Math.max(1,hp/Math.max(.01,R.round*(1-def/100))/(1-evaDodge(eva-R.hitP)))).toFixed(1)} 下</td><td class="num">${cb(one)}<br><small>你氣血的 ${pc1(one/I.hp)}・閃掉 ${pc1(1-dg)}</small></td>`};
+  const B=S.base[R.r-S.minRealm],kA=B[5]?(B[5][0]+B[5][1])/2:1,hp0=B[0]*kA,atk0=B[1]*kA,I=R.I,C=S.cult,dg=1-evaDodge(I.eva-B[2]),pc1=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%",st=stTxt(R.str);
+  const foe=(hp,atk,mag,def,eva,h,kind)=>{const one=atk*defMult(mag?I.mdef:I.def)*(1-Math.min(S.shieldMax,mag?I.huajin:I.jin));
+    return `<td class="num">${cb(hp)}</td><td class="num">${cb(atk)}<br><small>${kind||(mag?"術法（看魔防）":"物理為主")}</small></td><td class="num">${+(h||Math.max(1,hp/Math.max(.01,R.round*(1-def/100))/(1-evaDodge(eva-R.hitP)))).toFixed(1)} 下</td><td class="num">${cb(one)}<br><small>你氣血的 ${pc1(one/I.hp)}・閃掉 ${pc1(1-dg)}</small></td>`};
   const often=p=>p>=.95?"每一波都會多一名":p>=.5?"大多數的波次會多一名":p>0?`大約每 ${Math.round(1/p)} 波多一名`:"",kg=d.ks>0?"你是「善」，來的是邪派刺客（魔道，打中你會吸血）":d.ks<0?"你是「惡」，來的是正道獵魔人":"善惡到「善」或「惡」才會出現";
+  const demon=S.mon.some(x=>x.race==="demon"),rng=k=>{const v=S.mon.map(x=>x[k]);return `×${+Math.min(...v).toFixed(2)}～${+Math.max(...v).toFixed(2)}`};
   const foes=`<div class="tw"><table><thead><tr><th>對手</th><th>什麼時候出現</th><th class="num">氣血</th><th class="num">攻擊</th><th class="num">你殺一隻</th><th class="num">打中你一下</th></tr></thead><tbody>
-  <tr><td class="nw"><b>一般妖獸</b><br><small>${REALMS[R.r]}10階 × ${ST.str} 倍</small></td><td>每波 ${ST.wave[0]}～${ST.wave[1]} 隻<br><small>皮厚型氣血多、敏捷型會閃、猛攻型常暴擊、術法型看魔防</small></td>${foe(B[0],B[1],false,C.def,C.eva,R.est.h)}</tr>
-  <tr class="${I.cult>0?"":"hlock"}"><td class="nw"><b>野外修士</b><br><small>妖獸的 ${C.mult[0]} 倍</small></td><td>${I.cult>0?`<span class="warn">${often(I.cult)}</span>`:R.r<C.realm?`${REALMS[C.realm]}以上才會遇到`:"目前設定為不會遇到"}<br><small>聲望 ${full(C.rep)} 以上、${REALMS[C.realm]}以上；正道、魔道各半，魔道的打中你會吸血</small></td>${foe(B[0]*C.mult[0],B[1]*C.mult[0]*B[3],true,C.def,C.eva)}</tr>
-  <tr class="${I.amb>0?"":"hlock"}"><td class="nw"><b>暗殺者</b><br><small>妖獸的 ${C.mult[1]} 倍</small></td><td>${I.amb>0?`<span class="warn">${often(I.amb)}</span>`:"目前設定為不會遇到"}<br><small>${kg}</small></td>${foe(B[0]*C.mult[1],B[1]*C.mult[1]*B[3],true,C.def,C.eva)}</tr>
+  <tr><td class="nw"><b>一般${demon?"敵人":"妖獸"}</b><br><small>${REALMS[R.r]}10階 × ${st} 倍</small></td><td>每波 ${S.wave[0]}～${S.wave[1]} 隻<br><small>${demon?"妖獸和魔修各半；魔修是術法攻擊（看魔防），打中你還會吸血":"皮厚型氣血多、敏捷型會閃、猛攻型常暴擊、術法型看魔防"}</small></td>${foe(hp0,atk0,false,C.def,C.eva,R.est.h,demon?"物理、術法各半":"")}</tr>
+  <tr class="${I.cult>0?"":"hlock"}"><td class="nw"><b>野外修士</b><br><small>平均強度的 ${C.mult[0]} 倍</small></td><td>${I.cult>0?`<span class="warn">${often(I.cult)}</span>`:R.r<C.realm?`${REALMS[C.realm]}以上才會遇到`:"目前設定為不會遇到"}<br><small>聲望 ${full(C.rep)} 以上、${REALMS[C.realm]}以上；正道、魔道各半，魔道的打中你會吸血</small></td>${foe(hp0*C.mult[0],atk0*C.mult[0]*B[3],true,C.def,C.eva)}</tr>
+  <tr class="${I.amb>0?"":"hlock"}"><td class="nw"><b>暗殺者</b><br><small>平均強度的 ${C.mult[1]} 倍</small></td><td>${I.amb>0?`<span class="warn">${often(I.amb)}</span>`:"目前設定為不會遇到"}<br><small>${kg}</small></td>${foe(hp0*C.mult[1],atk0*C.mult[1]*B[3],true,C.def,C.eva)}</tr>
   </tbody></table></div>`;
-  // 詳細說明收進彈窗（按「時空秘境說明」才顯示）
-  stInfo=`<b>出沒的妖獸</b>：${ST.mon.map(x=>x.n).join("、")}（各種機會相同）。表上的妖獸是平均值，實際每隻依型態氣血 ×0.8～1.2、攻擊 ×0.65～1；「你殺一隻」用每回合平均輸出估算，「打中你一下」是沒暴擊、沒放技能的一下。野外修士和暗殺者不會暴擊、沒有技能，但<b>一波裡是和妖獸一起打你</b>，而且血厚、要打很久。<br>
-  <b>怎麼算的</b>：時空秘境沒有「通關」，只有撐不撐得住，所以這裡算的是存活機率。用按下試算當時「試算」分頁的角色，照遊戲的規則一秒一回合實際打 120 場、每場最多 1 小時：每波 ${ST.wave[0]}～${ST.wave[1]} 隻、打完只調息 ${ST.respawn} 秒（回 ${Math.round(ST.rest*ST.respawn*100)}% 氣血），妖獸的型態、暴擊、技能（重擊、狂暴、自癒、寒息凍結、毒與燒傷、破甲）和冰毒雷屬性都會出現；你這邊算了防禦、魔防、閃避、金身、化勁、吸血、噬魂、回春、反震、先手盾、護體、防禦套裝的保命，以及自動補血（每 ${ST.cd} 秒最多一顆）。<br>
-  <b>野外修士</b>：獵殺邪修開放後（聲望 ${full(ST.cult.rep)} 以上、${REALMS[ST.cult.realm]}以上），這裡的妖獸要打很久，所以<span class="warn">幾乎每一波都會多一名野外修士</span>（氣血、攻擊是這裡妖獸的 ${ST.cult.mult[0]} 倍，術法攻擊、看魔防）；善惡到了「善」或「惡」還會再多一名暗殺者（${ST.cult.mult[1]} 倍）。讀取存檔時會照你的聲望和善惡自動勾選，也可以自己改（改完要再按試算）。<br>
-  <b>偏保守</b>：你的輸出只算單體普攻（含暴擊、連擊，技能只算平均 +10%），也算了你的冰（凍住妖獸）、火、毒、金、雷屬性觸發、五行相剋與閃擊；<b>沒算</b>群攻技能、靈寵與夥伴的招式和護盾、首擊／橫掃／追擊／疾風這類特效、屬性秘典與種族剋制，所以實際通常會比這裡好一些，輸出靠群攻、靈寵的配置差距會比較大。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。`;
-  const why={ok:"120 場裡幾乎每一場都撐滿 1 小時，可以放著掛；掛越久累積的風險越高，靈石夠再去。",pot:"有時撐得滿 1 小時、有時中途倒下。戰死會折壽、掉 10% 靈石，建議再補一點防禦、氣血或回復再去。",risk:"撐得過前幾分鐘，但掛久一定會倒。只適合人在螢幕前短時間刷，快撐不住就自己離開。",no:"以目前的數值幾乎一進去就會倒，先不要去。"}[R.v[0]];
-  return ctl+`<div class="hrec"><div class="top">${R.v[1]}　${REALMS[R.r]}的時空秘境（妖獸＝${REALMS[R.r]}10階 × ${ST.str} 倍）<br><b class="big">撐過 1 小時：${stPc(s.p60)}</b><br>撐過 10 分鐘 <b>${stPc(s.p10)}</b>・有一半的場次能撐 <b>${md}</b><br><small>${why}</small></div></div>
-  <div class="res">${[["妖獸氣血",cb(R.est.avg.hp)],["妖獸攻擊",cb(R.est.avg.atk)],["你殺一隻",`約 ${+R.est.h.toFixed(1)} 下`],["每小時擊殺",s.median<60?"—":`約 ${Math.round(s.killsHr)} 隻`],["丹藥",!R.pot?"沒開":s.median<60?"—":`約 ${Math.round(s.potsHr)} 顆／時`],["維持秘境的靈石",`${hWan(ST.upkeep*3600)}／時`]]
-    .concat(coins>0?[["你的靈石可撐",coins>=ST.upkeep?`約 ${+(coins/ST.upkeep/3600).toFixed(1)} 小時`:"不到 1 萬，進不去"]]:[]).map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("")}</div>
-  <h3 style="margin:14px 0 6px">會遇到的對手</h3>${foes}
-  <div class="ctl" style="margin-top:8px"><button class="btn ghost stInfo" type="button">📖 時空秘境說明</button><span class="sub">出沒的妖獸、怎麼算的、野外修士與沒算進去的項目</span></div>`;
+  // 詳細說明收進彈窗（按「說明」才顯示）
+  stInfo[Z.id]=`<b>出沒的${demon?"敵人":"妖獸"}</b>：${S.mon.map(x=>x.n).join("、")}（各種機會相同）。表上是平均值，${R.str[0]!==R.str[1]?`每隻的強度在 ${st} 倍之間隨機，`:""}再依型態氣血 ${rng("hp")}、攻擊 ${rng("atk")}；「你殺一隻」用每回合平均輸出估算，「打中你一下」是沒暴擊、沒放技能的一下。野外修士和暗殺者不會暴擊、沒有技能，但<b>一波裡是和${demon?"其他敵人":"妖獸"}一起打你</b>，而且血厚、要打很久。<br>
+  <b>怎麼算的</b>：${Z.name}沒有「通關」，只有撐不撐得住，所以這裡算的是存活機率。用按下試算當時「試算」分頁的角色，照遊戲的規則一秒一回合實際打 120 場、每場最多 1 小時：每波 ${S.wave[0]}～${S.wave[1]} 隻、打完只調息 ${S.respawn} 秒（回 ${Math.round(S.rest*S.respawn*100)}% 氣血），敵人的型態、暴擊、技能（重擊、狂暴、自癒、寒息凍結、毒與燒傷、破甲、撕咬吸血）和冰毒雷屬性都會出現；你這邊算了防禦、魔防、閃避、金身、化勁、吸血、噬魂、回春、反震、先手盾、護體、防禦套裝的保命，以及自動補血（每 ${S.cd} 秒最多一顆）。<br>
+  <b>野外修士</b>：獵殺邪修開放後（聲望 ${full(C.rep)} 以上、${REALMS[C.realm]}以上），這裡的敵人要打很久，所以<span class="warn">幾乎每一波都會多一名野外修士</span>（氣血、攻擊是這裡平均強度的 ${C.mult[0]} 倍，術法攻擊、看魔防）；善惡到了「善」或「惡」還會再多一名暗殺者（${C.mult[1]} 倍）。讀取存檔時會照你的聲望和善惡自動勾選，也可以自己改（改完要再按試算）。${S.rewardCap?"":"殺得很快的話，遇到的次數會照比例變少。"}<br>
+  <b>每小時經驗</b>：照你境界的主要練功地圖計算，${S.rewardCap?`最多是它的 ${S.rewardCap} 倍`:"沒有上限，殺得越快拿得越多"}。這裡顯示的是線上掛機的數字，用「殺一隻要幾下」估算；離線、背景掛機${S.rewardCap?"的上限相同，但":""}是用一般的 10 秒刷新來算，會比線上少${S.rewardCap?"":"很多"}。<br>
+  <b>偏保守</b>：你的輸出只算單體普攻（含暴擊、連擊，技能只算平均 +10%），也算了你的冰（凍住敵人）、火、毒、金、雷屬性觸發、五行相剋與閃擊；<b>沒算</b>群攻技能、靈寵與夥伴的招式和護盾、首擊／橫掃／追擊／疾風這類特效、屬性秘典與種族剋制，所以實際通常會比這裡好一些，輸出靠群攻、靈寵的配置差距會比較大。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。`;
+  const why={ok:"120 場裡幾乎每一場都撐滿 1 小時，可以放著掛；掛越久累積的風險越高"+(S.upkeep?"，靈石夠再去。":"。"),pot:"有時撐得滿 1 小時、有時中途倒下。戰死會折壽、掉 10% 靈石，建議再補一點防禦、氣血或回復再去。",risk:"撐得過前幾分鐘，但掛久一定會倒。只適合人在螢幕前短時間刷，快撐不住就自己離開。",no:"以目前的數值幾乎一進去就會倒，先不要去。"}[R.v[0]];
+  const tiles=[["敵人氣血",cb(R.est.avg.hp)],["敵人攻擊",cb(R.est.avg.atk)],["你殺一隻",`約 ${+R.est.h.toFixed(1)} 下`],["每小時擊殺",s.median<60?"—":`約 ${Math.round(s.killsHr)} 隻`],["丹藥",!R.pot?"沒開":s.median<60?"—":`約 ${Math.round(s.potsHr)} 顆／時`],["每小時經驗（線上）",hWan(R.exp)]]
+    .concat(S.upkeep?[["維持秘境的靈石",`${hWan(S.upkeep*3600)}／時`]].concat(coins>0?[["你的靈石可撐",coins>=S.upkeep?`約 ${+(coins/S.upkeep/3600).toFixed(1)} 小時`:"不到 1 萬，進不去"]]:[]):[["每小時靈石（線上）",hWan(R.coins)]]);
+  return ctl+`<div class="hrec"><div class="top">${R.v[1]}　${REALMS[R.r]}的${Z.name}（敵人＝${REALMS[R.r]}10階 × ${st} 倍）<br><b class="big">撐過 1 小時：${stPc(s.p60)}</b><br>撐過 10 分鐘 <b>${stPc(s.p10)}</b>・有一半的場次能撐 <b>${md}</b><br><small>${why}</small></div></div>
+  <div class="res">${tiles.map(([k,x])=>`<div>${k}<b>${x}</b></div>`).join("")}</div>
+  <h3 style="margin:14px 0 6px;font-size:15px">會遇到的對手</h3>${foes}
+  <div class="ctl" style="margin-top:8px"><button class="btn ghost stInfo" data-z="${Z.id}" type="button">📖 ${Z.name}說明</button><span class="sub">出沒的敵人、怎麼算的、野外修士、每小時經驗與沒算進去的項目</span></div>`;
 }
 document.addEventListener("change",e=>{const t=e.target;if(!t.classList||!t.classList.contains("stI"))return;stOpt[t.dataset.k]=t.type==="checkbox"?t.checked:+t.value;if(lastA)renderHunt(lastA)});
-document.addEventListener("click",e=>{const t=e.target;if(!t.classList)return;if(t.classList.contains("stInfo")){shPop("🌀 時空秘境說明",stInfo);return}if(!t.classList.contains("stGo")||!lastA)return;stRun=true;renderHunt(lastA)});
+document.addEventListener("click",e=>{const t=e.target;if(!t.classList)return;const Z=SZ[t.dataset.z];if(!Z)return;if(t.classList.contains("stInfo")){shPop(`${Z.icon} ${Z.name}說明`,stInfo[Z.id]||"");return}if(!t.classList.contains("stGo")||!lastA)return;stRun[Z.id]=true;renderHunt(lastA)});
 // ---- 換裝前後比較：用「換裝前」的配置和目前的配置各算一次每張地圖 ----
 let baseBuild=blankBuild(),baseNote="";
 const hm=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")};
@@ -1365,7 +1386,7 @@ function rebuild(){
   calcX={weak:a.weak,reinc:a.reinc,mpMult:a.mpMult,loaded:buildLoaded,capAdd:a.tal.buffCap||0,physMult:a.physMult,magMult:a.magMult,hpMult:a.hpMult,critAdd:(a.tal.crit||0)*100,mcritAdd:(a.tal.magCrit||0)*100,critDmg:a.critDmg,hitAdd:a.tal.hit||0};mySkills=a.mine;calcT=a.temp;calcA=a.ex;renderTemp();calc();showSave(a);renderGear();renderSetup();renderHunt(a);
 }
 function loadPlayer(p){
-  build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;stOpt={};stRun=true;
+  build=JSON.parse(JSON.stringify(p));if(!build.equipment||typeof build.equipment!=="object")build.equipment={};buildLoaded=true;stOpt={};SZ_IDS.forEach(z=>stRun[z]=true);
   $("cRealm").value=p.realmIndex||0;$("cStage").value=p.stage||1;$("cLv").value=p.level||1;
   rebuild();setBase("讀取存檔時的配置");
 }

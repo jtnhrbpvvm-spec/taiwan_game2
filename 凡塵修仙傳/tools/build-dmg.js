@@ -33,20 +33,30 @@ const out = g.run(`(function(){
   EX.books = elementBooks.map(b => [b.key, b.name, b.wuxing || null, b.effect || null]);
   EX.monAttr = monsterAttrsByMapCategory;
   // 時空秘境的存活模擬（DMG.spacetime）：各境界妖獸的氣血／攻擊／命中、出沒妖獸的型態與技能、調息與丹藥
-  EX.st = (function(){
-    const S = SPACETIME_REALM, f = findMapByName(S.name), map = maps[f.c].items[f.i], prof = fieldCategoryProfile(map), keepR = player.realmIndex, keepM = player.currentMap;
-    const base = []; player.currentMap = map;
-    for (let r = 0; r <= S.maxRealm; r++) { player.realmIndex = r; const ms = nv2MonsterStats(map); base.push([ms.hp, ms.atk, +nv2TypHit(ms.L).toFixed(4), +fieldMagicAtkComp(ms.L).toFixed(6), +nv2WaveChanceMult(map).toFixed(4)]); }
+  // 存活模擬用的地圖資料：st＝亂星海時空秘境（強度固定，base 已含倍率）、xm＝靈界仙魔戰場（強度是範圍，base 是 1 倍、第 6 欄放 [最低, 最高]）
+  const zone = (map, r0, r1, ranged, more) => {
+    const prof = fieldCategoryProfile(map), keepR = player.realmIndex, keepM = player.currentMap, base = []; player.currentMap = map;
+    for (let r = r0; r <= r1; r++) {
+      player.realmIndex = r; const ms = nv2MonsterStats(map), L = ms.L;
+      const row = ranged ? [+(nv2TypNormal(L) * NV2.hitsSame).toFixed(4), +(nv2TypHp(L) * NV2.monAtkPct * (map.nv2AtkMult || 1) * (NV2.monAtkEarly[Math.floor(L + 1e-6)] || 1) / 100).toFixed(6)] : [ms.hp, ms.atk];
+      row.push(+nv2TypHit(L).toFixed(4), +fieldMagicAtkComp(L).toFixed(6), +nv2WaveChanceMult(map).toFixed(4)); if (ranged) row.push(map.nv2Str.slice());
+      base.push(row);
+    }
     player.realmIndex = keepR; player.currentMap = keepM;
     const mon = fieldMonsterPool(map).map(({ m, w }) => { const t = monsterTypeOf(m), tr = RACE_TRAITS[m.race] || {};
-      return { id: m.id, n: m.name, w, race: m.race, mag: t.atkType === 'mag' || m.race === 'demon' ? 1 : 0, hp: +(t.hp * raceHpMult(m.race)).toFixed(6), atk: +monsterTypeAtkMult(t, prof.def, m).toFixed(6),
+      return { id: m.id, n: m.name, w, race: m.race, mag: t.atkType === 'mag' || m.race === 'demon' ? 1 : 0, cast: m.type === 'caster' ? 1 : 0, hp: +(t.hp * raceHpMult(m.race)).toFixed(6), atk: +monsterTypeAtkMult(t, prof.def, m).toFixed(6),
         def: Math.max(0, prof.def + t.def), mres: Math.max(0, prof.def + (t.mres || 0)), eva: prof.eva + (tr.eva || 0), evaT: t.eva, crit: t.crit, sk: m.skills || [], steal: tr.lifesteal || 0 }; });
     const sk = {}; for (const k in MONSTER_SKILLS) { sk[k] = Object.assign({}, MONSTER_SKILLS[k]); delete sk[k].name; delete sk[k].icon; delete sk[k].comp; }
-    return { maxRealm: S.maxRealm, upkeep: S.upkeepPerSec, rewardCap: S.rewardSpeedCap || 1, respawn: map.respawnSec, str: map.nv2Str[0], wave: [NV2.waveMin, NV2.waveMax], rest: NV2.restHealPct / 100, variance: NV2.dmgVariance, critDmg: NV2.critDmg,
+    const act = activityData.find(a => a.id === 'evil');
+    return Object.assign({ minRealm: r0, maxRealm: r1, respawn: map.respawnSec, str: ranged ? 1 : map.nv2Str[0], wave: [NV2.waveMin, NV2.waveMax], rest: NV2.restHealPct / 100, variance: NV2.dmgVariance, critDmg: NV2.critDmg,
       defK: DEF_K, mdefFromDef: MDEF_FROM_DEF, shieldMax: PLAYER_SELF_SHIELD_MAX / 100, cd: POTION_COOLDOWN_SECONDS, skillChance: MONSTER_SKILL_CHANCE, sk, freeze: FREEZE_TURNS, lightHeal: LIGHT_HEAL,
       affix: [prof.affixProb, prof.affixChance, MONSTER_AFFIX_TYPES, MONSTER_CASTER_AFFIX_MULT], potions: shopItems.filter(s => s.type === 'heal').map(s => [s.name, s.amount, s.cost, s.noAutoBuy ? 1 : 0]), base, mon,
-      cult: (function(){ const act = activityData.find(a => a.id === 'evil'); return { rep: act.minRep, realm: act.minRealmIndex, p: [FIELD_CULTIVATOR_WAVE_CHANCE, AMBUSH_WAVE_CHANCE], mult: [FIELD_CULTIVATOR_POWER_MULT, AMBUSH_POWER_MULT], karma: [KARMA_GOOD_THRESHOLD, KARMA_EVIL_THRESHOLD], steal: RACE_TRAITS.demon.lifesteal, def: prof.def, eva: prof.eva }; })() };
-  })();
+      cult: { rep: act.minRep, realm: act.minRealmIndex, p: [FIELD_CULTIVATOR_WAVE_CHANCE, AMBUSH_WAVE_CHANCE], mult: [FIELD_CULTIVATOR_POWER_MULT, AMBUSH_POWER_MULT], karma: [KARMA_GOOD_THRESHOLD, KARMA_EVIL_THRESHOLD], steal: RACE_TRAITS.demon.lifesteal, def: prof.def, eva: prof.eva } }, more);
+  };
+  const byName = n => { const f = findMapByName(n); return maps[f.c].items[f.i]; };
+  EX.st = zone(byName(SPACETIME_REALM.name), 0, SPACETIME_REALM.maxRealm, false, { upkeep: SPACETIME_REALM.upkeepPerSec, rewardCap: SPACETIME_REALM.rewardSpeedCap || 1 });
+  // rewardCap 0＝收益不封頂
+  { const xm = byName("仙魔戰場"); EX.xm = zone(xm, xm.hardMinRealm, realms.length - 1, true, { upkeep: 0, rewardCap: isFinite(xm.rewardSpeedCap) ? xm.rewardSpeedCap : 0 }); }
   return JSON.stringify(EX);
 })()`);
 const fs = require("fs"), file = require("path").join(__dirname, "..", "dmg.js");
