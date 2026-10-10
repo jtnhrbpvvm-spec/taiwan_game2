@@ -1532,6 +1532,12 @@
         if (BOX_KEY_TO_BOXES[String(it.id)]) metaParts.push("寶箱鑰匙");
         if (questRefs.quests.length && metaParts.indexOf("任務道具") === -1) metaParts.push("任務道具");
         if (questRefs.missions.length) metaParts.push("藍圖任務");
+        // 10-10 新增的三個管道（大富翁／布布的時裝／祭司的光環）沒有自己的索引，直接看 ITEM_OBTAIN
+        ((ITEM_OBTAIN || {})[String(it.id)] || []).forEach(function (ch) {
+          if (ch === "marble") metaParts.push("大富翁");
+          else if (ch === "costume") metaParts.push("時裝（布布）");
+          else if (ch === "aura") metaParts.push("光環（祭司）");
+        });
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
           '<span class="rname">' + itemIconHtml(it.id, 32) + escapeHtml(it.name) + '</span>' +
           '<span class="rmeta">' + (metaParts.length ? metaParts.join("・") : "無掉落／販售紀錄") + '</span></li>';
@@ -4122,19 +4128,69 @@
       s.colors.forEach(function (c) { ids.push(c.item, c.enhancer); });
       AURA.books.forEach(function (b) { ids.push(b.item); });
       AURA.refine.forEach(function (g) { g.steps.forEach(function (st) { ids.push(st.material); }); });
-      if (has(ids)) html += '<div class="section-title">光環</div>' + sysGuideLinkHtml("aura", "這是光環系統的道具，看光環完整說明");
+      if (has(ids)) {
+        var auraNote = '';
+        var fromBook = AURA.books.filter(function (b) {
+          var src = AURA.tiers.filter(function (t) { return t.tier === b.tier; })[0];
+          return src && src.next === num;
+        })[0];
+        if (s.colors.some(function (c) { return c.item === num; })) {
+          auraNote = '取得方式：找' + sysNpcText(AURA.npc) + '用' + itemChip(s.powder, s.minPowder + ' 個以上') + '製作（顏色隨機，可以放增強劑指定）。';
+        } else if (num === s.powder) {
+          auraNote = '把不要的靈魂結晶拿去分解，一顆換回 ' + s.decompose.gives + ' 個（每顆付 ' + bigNumHtml(s.decompose.fee) + ' 金幣）。';
+        } else if (fromBook) {
+          auraNote = '取得方式：把上一階的光環精煉到 +' + fromBook.refine + '，找' + sysNpcText(AURA.npc) + ' G 化（' + Math.min(fromBook.rate, 90) + '%，失敗整件消失）。';
+        }
+        html += '<div class="section-title">光環</div>' + (auraNote ? '<div style="font-size:13px;line-height:1.9;">' + auraNote + '</div>' : '') +
+          sysGuideLinkHtml("aura", "這是光環系統的道具，看光環完整說明");
+      }
     }
     if (COSTUME && COSTUME.smelt) {
       var cids = [COSTUME.crystal, COSTUME.powder, COSTUME.exBox.item, COSTUME.compose.box].concat(COSTUME.threads.map(function (t) { return t[0]; }));
       var isCostume = COSTUME.grades.some(function (g) { return g.items.indexOf(num) >= 0; });
       if (has(cids) || isCostume) {
-        html += '<div class="section-title">時裝強化</div>' +
+        var cp = COSTUME.compose, npcText = sysNpcText(COSTUME.npc), cNote = '';
+        var cpGrade = COSTUME.grades.filter(function (g) { return g.grade === cp.grade; })[0];
+        if (num === cp.box) {
+          cNote = '取得方式：找' + npcText + '做<b>合成</b>，交出 ' + (cpGrade ? escapeHtml(costumeGradeLabel(cpGrade)) : '') + '時裝 ×' + cp.parts + '（不能是穿著的）＋' +
+            itemChip(COSTUME.crystal, cp.crystals) + '＋' + bigNumHtml(cp.fee) + ' 金幣，成功率 <span class="rate low">' + cp.rate + '%</span>。' +
+            '失敗材料全扣，只補' + itemChip(cp.fail.item, cp.fail.min + '~' + cp.fail.max) + '。';
+        } else if (num === COSTUME.exBox.item) {
+          cNote = '取得方式：找' + npcText + '<b>兌換</b>，' + itemChip(COSTUME.crystal, COSTUME.exBox.crystals) + '換 1 個。';
+        } else if (num === COSTUME.crystal) {
+          cNote = '取得方式（都找' + npcText + '）：<br>・<b>分解</b>時裝：' + COSTUME.grades.map(function (g) {
+            var d = COSTUME.decompose.filter(function (x) { return x[0] === g.grade; })[0];
+            return d ? escapeHtml(costumeGradeLabel(g)) + ' ×' + d[1] : null;
+          }).filter(function (x, i, arr) { return x && arr.indexOf(x) === i; }).join('、') + '（強化過的再加強化值）。<br>' +
+            '・<b>兌換</b>：' + itemChip(COSTUME.powder, COSTUME.powderPerCrystal) + '換 1 個。';
+        } else if (num === COSTUME.powder) {
+          cNote = '取得方式：' + (MARBLE ? '哈比兔大富翁的格子和寶箱；' : '') + '時裝合成失敗時補 ' + cp.fail.min + '~' + cp.fail.max + ' 個。' +
+            COSTUME.powderPerCrystal + ' 個可以找' + npcText + '換成 1 個' + itemChip(COSTUME.crystal) + '。';
+        } else if (!isCostume) {
+          var out = COSTUME.spin.outs.filter(function (o) { return o[0] === num; })[0];
+          var total = COSTUME.spin.outs.reduce(function (a, o) { return a + o[1]; }, 0) || 1;
+          if (out) {
+            cNote = '取得方式：找' + npcText + '做<b>寶石提煉</b>，交出' + COSTUME.spin.mats.map(function (m) { return itemChip(m[0], m[1]); }).join('') +
+              '＋' + bigNumHtml(COSTUME.spin.fee) + ' 金幣，必定給一個線團，是這一種的機率 <span class="rate">' + sysPct(out[1] / total * 100) + '</span>。';
+          }
+        }
+        html += '<div class="section-title">時裝強化</div>' + (cNote ? '<div style="font-size:13px;line-height:1.9;">' + cNote + '</div>' : '') +
           sysGuideLinkHtml("costume", isCostume ? "這件時裝可以強化，看時裝強化說明（成功率、加成、繼承、分解）" : "這是時裝強化用的道具，看時裝強化說明");
       }
     }
-    if (MARBLE && MARBLE.board && (has([MARBLE.balloon, MARBLE.leaked]) || has(MARBLE.costumes))) {
-      html += '<div class="section-title">哈比兔大富翁</div>' +
-        sysGuideLinkHtml("marble", has(MARBLE.costumes) ? "這件時裝可以從哈比兔大富翁的寶箱開出，看大富翁說明" : "這是哈比兔大富翁的道具，看大富翁說明");
+    if (MARBLE && MARBLE.board) {
+      var isPrize = has(MARBLE.costumes);
+      var squareKinds = [];
+      Object.keys(MARBLE.squares).forEach(function (k) { if (MARBLE.squares[k].some(function (x) { return x.item === num; })) squareKinds.push(k); });
+      Object.keys(MARBLE.boxes).forEach(function (k) { if (MARBLE.boxes[k].others.some(function (x) { return x.item === num; })) squareKinds.push(k); });
+      if (has([MARBLE.balloon, MARBLE.leaked]) || isPrize || squareKinds.length) {
+        var mNote = '';
+        if (isPrize) mNote = '取得方式：哈比兔大富翁的綠／藍／紅寶箱有機率開出時裝，開到時從 ' + MARBLE.costumes.length + ' 件裡平均抽一件。';
+        else if (num === MARBLE.leaked) mNote = '取得方式：玩哈比兔大富翁，每經過起點一次拿 1 個。';
+        else if (squareKinds.length) mNote = '取得方式：哈比兔大富翁停在「' + squareKinds.map(marbleSquareName).join('」「') + '」格有機會拿到。';
+        html += '<div class="section-title">哈比兔大富翁</div>' + (mNote ? '<div style="font-size:13px;line-height:1.9;">' + mNote + '</div>' : '') +
+          sysGuideLinkHtml("marble", "看哈比兔大富翁完整說明（棋盤、機率、獎勵）");
+      }
     }
     return html;
   }
@@ -5632,7 +5688,8 @@
   var OBTAIN_KIND_LABEL = {
     drop: "打怪掉落", box: "開箱", shop: "商店", gamble: "擲十八啦", fusion: "合成", forge: "鍛造", radix: "拉迪克斯",
     hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
-    alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換"
+    alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換",
+    marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）"
   };
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
