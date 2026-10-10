@@ -6,7 +6,7 @@ const out = g.run(`(function(){
   const KI = k => /^(ice|fire|poison|metal|thunder|wind|light|dark|hit|def|eva|mdef|regen|freezeResist|burnMax|poisonMax|ignoreCounter)$/.test(k) || /^(cap|elemDmg|elemBoost|special):/.test(k) || /^fx:/.test(k);
   const f = b => { const o = {}; for (const k in (b || {})) if (KI(k) && b[k]) o[k] = b[k]; return o; };
   const ne = o => Object.keys(o).length > 0;
-  const SP = s => { const o = {}; if (s && s.nature) o.nature = s.nature; if (s && s.poisonImmune) o.poisonImmune = 1; return o; };
+  const SP = s => { const o = {}; if (s && s.nature) o.nature = s.nature; if (s && s.poisonImmune) o.poisonImmune = 1; if (s && s.ambushMult) o.ambushMult = s.ambushMult; return o; };
   const EX = { title: {}, fire: {}, partner: {}, rootPick: {}, rootGroup: {}, aff: {}, phys: {}, prof: {}, set: {}, tal: {}, leg: {}, resSingle: {}, resPure: {}, resDual: {}, fx: {}, ys: {}, talis: {} };
   titleList.forEach(t => { const b = f(t.bonus); if (ne(b)) EX.title[t.id] = b; });
   for (const id in strangeFireById) { const b = f(strangeFireById[id].bonus); if (ne(b)) EX.fire[id] = b; }

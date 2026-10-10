@@ -1331,12 +1331,18 @@ function stCalc(a,P,Z){
   const rate=(11+2*typ)/(S.respawn+1+2*est.h)*adj;
   const I=stInput(a,P);
   Object.assign(I,{potion:pot?{th:Math.max(1,Math.min(99,d.th||50)),amt:pot[1]*(1+F("丹心"))}:null,mpPotion:d.mpOn&&mpBuy?{th:Math.max(1,Math.min(99,d.mpTh||30)),amt:mpBuy[1]*(1+F("丹心"))}:null,
-    cult:on?Math.min(1,S.cult.p[0]*wc):0,amb:on&&d.amb?Math.min(1,S.cult.p[1]*wc):0,ambDemon:d.ks>=0});
+    cult:on?Math.min(1,S.cult.p[0]*wc):0,amb:on&&d.amb?Math.min(1,S.cult.p[1]*wc*a.ex.ambushMult):0,ambDemon:d.ks>=0});
   return{z:Z.id,r:a.r,d,I,est,pot,on,str,key:Z.id+JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*rate*P.expMult,coins:main[3]*1200*rate*P.coinMult,
-    rw:{typ,cap,er:main[2],co:main[3],em:P.expMult,cm:P.coinMult,gap:S.respawn+1,n:(S.wave[0]+S.wave[1])/2+I.cult+I.amb}};
+    rw:{typ,cap,er:main[2],co:main[3],em:P.expMult,cm:P.coinMult,gap:S.respawn+1,n:(S.wave[0]+S.wave[1])/2+I.cult+I.amb,adj,cu0:on?S.cult.p[0]*B[4]:0,am0:on&&d.amb?S.cult.p[1]*B[4]*a.ex.ambushMult:0}};
 }
 function stSim(c){
-  const sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S}),v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
+  let sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S});
+  // 野外修士的遭遇會隨你的實際擊殺速度打折（收益上限）。第一遍是用「只算普攻」的速度估的；如果模擬出來你其實殺得快很多、折扣明顯變大，就照實際速度把遭遇機率調低再跑一遍
+  if(sim.median>=60&&sim.killsHr>0&&(c.I.cult>0||c.I.amb>0)){
+    const w=c.rw,rpk=Math.max(.2,3600/sim.killsHr-w.gap/w.n),adj2=Math.min(1,w.cap*(11+2*rpk)/(11+2*w.typ));
+    if(adj2<w.adj*.9){c=Object.assign({},c,{I:Object.assign({},c.I,{cult:Math.min(1,w.cu0*adj2),amb:Math.min(1,w.am0*adj2)})});sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S})}
+  }
+  const v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
   const out=Object.assign({},c,{sim,v,potCost:c.pot?sim.potsHr*c.pot[2]:0});
   if(sim.median>=60&&sim.killsHr>0){
     // 每隻的收益＝主要練功地圖的設定 × 遊戲的刷新補償 × 收益上限的折扣（折扣看你實際幾回合殺一隻）
@@ -1387,7 +1393,7 @@ function stHtml(a,Z,R,cur){
   <b>你這邊算了什麼</b>：每回合 40% 從技能格的仙法、宗門武學和靈寶閣武學裡挑一招施放（靈力不夠就改普攻；群攻、定身、補血、增益、護盾、吸血、魔功反噬都照算），普攻的連擊、橫掃、追擊、風擊、疾風、「之怒」，首擊、燃魂、斬殺、連雷、毒爆、冰封這些特效，神器技能、職業技能、隊伍裡夥伴的絕學、出戰靈寵的技能（攻擊、控場、增益、治療、淨化），加上防禦、魔防、閃避、金身、化勁、吸血、噬魂、回春、反震、閃擊、先手盾、護體、防禦套裝的保命、各種護盾，以及自動補血、補靈（每 ${S.cd} 秒最多一顆）。<br>
   <b>野外修士</b>：獵殺邪修開放後（聲望 ${full(C.rep)} 以上、${REALMS[C.realm]}以上），這裡的敵人要打很久，所以<span class="warn">幾乎每一波都會多一名野外修士</span>（氣血、攻擊是這裡平均強度的 ${C.mult[0]} 倍，術法攻擊、看魔防）；善惡到了「善」或「惡」還會再多一名暗殺者（${C.mult[1]} 倍）。讀取存檔時會照你的聲望和善惡自動勾選，也可以自己改（改完要再按試算）。${S.rewardCap?"":"殺得很快的話，遇到的次數會照比例變少。"}<br>
   <b>每小時經驗</b>：照你境界的主要練功地圖計算，${S.rewardCap?`每隻的收益有上限（殺得比一般玩家快 ${S.rewardCap} 倍以上就打折），但這裡刷新快、一波隻數多，殺得快時每小時還是會比 ${S.rewardCap} 倍多`:"沒有上限，殺得越快拿得越多"}。這裡顯示的是線上掛機的數字，用模擬出來的擊殺速度換算（技能、靈寵、夥伴都算在內）；離線、背景掛機${S.rewardCap?"的上限相同，但":""}是用一般的 10 秒刷新來算，會比線上少${S.rewardCap?"":"很多"}。<br>
-  <b>和遊戲的差別</b>：這個模擬照遊戲線上戰鬥的流程一項一項算，並用遊戲本體實際對打比對過；每次試算有幾個百分點的隨機誤差。沒有算到的只有：暫存區滿了會被送出去、靈寵的維持費付不出來會被召回。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。`;
+  <b>和遊戲的差別</b>：這個模擬照遊戲線上戰鬥的流程一項一項算，並用遊戲本體實際對打比對過；每次試算有幾個百分點的隨機誤差，剛好在撐得住與撐不住的邊緣時會略偏保守。<b>沒有算到的</b>：<span class="warn">身上有接懸賞時，這裡幾乎每一波都會變成和懸賞人物的一對一對決（不刷妖獸），要掛機請先把懸賞打完或放棄</span>；暫存區滿了會被送出去；靈寵的維持費付不出來會被召回；打久了善惡值變動，暗殺者可能開始或不再出現；背包裡的九轉還魂丹、造化神髓液會被優先吃掉（這裡照你選的丹藥算）。離線、背景掛機則是遊戲用平均值判定（你平均一波掉 ${A>=10?Math.round(A):+A.toFixed(1)}% 氣血，不到 100% 就算撐得住），不看運氣。規則與掉落見<a href="經驗與地圖.html">經驗與地圖</a>。`;
   const why={ok:"120 場裡幾乎每一場都撐滿 1 小時，可以放著掛；掛越久累積的風險越高"+(S.upkeep?"，靈石夠再去。":"。"),pot:"有時撐得滿 1 小時、有時中途倒下。戰死會折壽、掉 10% 靈石，建議再補一點防禦、氣血或回復再去。",risk:"撐得過前幾分鐘，但掛久一定會倒。只適合人在螢幕前短時間刷，快撐不住就自己離開。",no:"以目前的數值幾乎一進去就會倒，先不要去。"}[R.v[0]];
   const tiles=[["敵人氣血",cb(R.est.avg.hp)],["敵人攻擊",cb(R.est.avg.atk)],["只用普攻殺一隻",`約 ${+R.est.h.toFixed(1)} 下`],["每小時擊殺",s.median<60?"—":`約 ${Math.round(s.killsHr)} 隻`],["丹藥",!R.pot?"沒開":s.median<60?"—":`約 ${Math.round(s.potsHr)} 顆／時`],["每小時經驗（線上）",hWan(R.exp)]]
     .concat(S.upkeep?[["維持秘境的靈石",`${hWan(S.upkeep*3600)}／時`]].concat(coins>0?[["你的靈石可撐",coins>=S.upkeep?`約 ${+(coins/S.upkeep/3600).toFixed(1)} 小時`:"不到 1 萬，進不去"]]:[]):[["每小時靈石（線上）",hWan(R.coins)]]);
