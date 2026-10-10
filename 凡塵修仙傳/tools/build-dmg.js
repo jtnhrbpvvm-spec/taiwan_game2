@@ -3,7 +3,7 @@
 const { load } = require("./game-vm.js");
 const g = load();
 const out = g.run(`(function(){
-  const KI = k => /^(ice|fire|poison|metal|thunder|wind|light|dark|hit|freezeResist|burnMax|poisonMax|ignoreCounter)$/.test(k) || /^(cap|elemDmg|elemBoost|special):/.test(k) || /^fx:(破甲|洞察|剋敵|寒徹|焚燼|蝕骨|通玄|首擊|燃魂|斬殺|連雷|毒爆|追擊|橫掃|疾風|吸血|回春|噬魂|金身|化勁|護體|先手盾|丹心|定神|反震|閃擊)$/.test(k);
+  const KI = k => /^(ice|fire|poison|metal|thunder|wind|light|dark|hit|def|eva|mdef|regen|freezeResist|burnMax|poisonMax|ignoreCounter)$/.test(k) || /^(cap|elemDmg|elemBoost|special):/.test(k) || /^fx:/.test(k);
   const f = b => { const o = {}; for (const k in (b || {})) if (KI(k) && b[k]) o[k] = b[k]; return o; };
   const ne = o => Object.keys(o).length > 0;
   const SP = s => { const o = {}; if (s && s.nature) o.nature = s.nature; if (s && s.poisonImmune) o.poisonImmune = 1; return o; };
@@ -57,6 +57,22 @@ const out = g.run(`(function(){
   EX.st = zone(byName(SPACETIME_REALM.name), 0, SPACETIME_REALM.maxRealm, false, { upkeep: SPACETIME_REALM.upkeepPerSec, rewardCap: SPACETIME_REALM.rewardSpeedCap || 1 });
   // rewardCap 0＝收益不封頂
   { const xm = byName("仙魔戰場"); EX.xm = zone(xm, xm.hardMinRealm, realms.length - 1, true, { upkeep: 0, rewardCap: isFinite(xm.rewardSpeedCap) ? xm.rewardSpeedCap : 0 }); }
+  // 戰鬥中會出手的東西（存活模擬用）：技能格裡的仙法與宗門武學、職業技能、神器技能、夥伴絕學、靈寵技能，以及靈力、護盾相關的常數
+  EX.cb = (function(){
+    const strip = (o, drop) => { const r = {}; for (const k in o) if (!drop.includes(k) && o[k] !== undefined && o[k] !== false && o[k] !== null) r[k] = o[k]; return r; };
+    const D = ["name", "msg", "desc", "isSpell", "tier", "grade", "id"];
+    const spell = {}; spellList.filter(s => s.active).forEach(s => spell[s.id] = strip(spellToCombatSkill(s), D));
+    const sect = {}; sectData.forEach(c => c.items.forEach(s => s.skills.forEach(k => sect[k.name] = strip(k, D))));
+    const prof = {}; professions.forEach(p => prof[p.id] = p.skills.map(s => strip(s, ["name", "msg", "desc"])));
+    const art = {}; for (const id in artifactSkills) art[id] = strip(artifactSkills[id], ["name", "msg", "desc"]);
+    const partner = {}; partnerList.forEach(p => partner[p.id] = Object.assign(strip(p.skill, ["name", "msg", "desc"]), { mp: PARTNER_SKILL_MP[getPartnerTier(p).name] || 20 }));
+    const beast = {}; beastSkills.forEach(s => beast[s.id] = Object.assign(strip(s, ["name", "id", "minLv", "mp"]), s.mp ? { mp_: s.mp } : {}, { mp: BEAST_SKILL_MP_BY_LV[s.minLv] || 10 }));   // mp＝這招耗的靈寵靈力；原本的 mp（幫主人回靈的比例）改叫 mp_
+    return { spell, sect, prof, art, partner, beast, mpScale: NV2.mpScale, prefix: SECT_SKILL_SLOT_PREFIX,
+      pet: { mpMax: BEAST_MP_MAX, regen: BEAST_MP_REGEN, chance: BEAST_SKILL_CHANCE, freezeCd: BEAST_FREEZE_COOLDOWN, max: BEAST_ACTIVE_MAX },
+      par: { mpMax: PARTNER_MP_MAX, regen: PARTNER_MP_REGEN, lv5: PARTNER_LV5_SKILL_BONUS },
+      cap: { self: PLAYER_SELF_SHIELD_MAX / 100, pet: PLAYER_PET_BONUS_MAX / 100, par: PLAYER_PARTNER_BONUS_MAX / 100 },
+      mpPotions: shopItems.filter(s => s.type === 'mp').map(s => [s.name, s.amount, s.cost, s.noAutoBuy ? 1 : 0]) };
+  })();
   // 世界 Boss 的 30 回合傷害模擬（DMG.wboss）：五隻 Boss 的數值與光環、各境界各階的 Boss 攻擊與命中
   EX.wb = (function(){
     const keepR = player.realmIndex, keepS = player.stage, L = [];
