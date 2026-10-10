@@ -961,7 +961,7 @@
   }
 
   // 光環／時裝強化／哈比兔大富翁（2026-10-10 新增的系統）：沒有對應的資料檔就不顯示
-  [["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE]].forEach(function (def) {
+  [["gems", "💎 技能寶石", window.GEMS], ["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE]].forEach(function (def) {
     if (!def[2]) return;
     var chip = document.createElement("span");
     chip.className = "hint-chip";
@@ -1071,6 +1071,7 @@
     else if (kind === "questline") showQuestLineDetail(id);
     else if (kind === "questtab") openQuestTab(id);
     else if (kind === "stones") showStoneGuide();
+    else if (kind === "gems") showGemGuide();
     else if (kind === "aura") showAuraGuide();
     else if (kind === "costume") showCostumeGuide();
     else if (kind === "marble") showMarbleGuide();
@@ -1253,6 +1254,7 @@
     if (SMITH.ashtonConvert) add("💠", "艾希頓轉換", "鐵匠相關・艾希頓裝備換成結晶", smithKw.concat(["艾希頓"]), "smith", "convert", F);
     if (SMITH.sageTickets) add("📜", "賢者合成券", "鐵匠相關・裝備升一階的條件與花費", smithKw.concat(["賢者", "合成"]), "smith", "sage", F);
     if (STONES) add("💠", "鑲嵌石", "強化花費、成功率、能力機率與材料來源", ["鑲嵌", "石頭"], "stones", "", F);
+    if (GEMS) add("💎", "技能寶石", "位置解鎖、附魔機率與數值、合成機率", ["技能寶石", "寶石", "附魔", "彗星", "原石"], "gems", "", F);
     if (window.AURA) add("✨", "光環", "精煉、G 化、靈魂結晶的機率與能力", ["光環", "靈魂", "結晶", "G化", "祭司"], "aura", "", F);
     if (window.COSTUME) add("👗", "時裝強化", "強化成功率、加成、繼承、分解、合成", ["時裝", "套裝", "線團", "伊索德", "布布"], "costume", "", F);
     if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開時裝的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
@@ -3588,16 +3590,17 @@
       html += '<div class="section-title">技能寶石 <span class="count">' + (GEM_TYPE_LABEL[def.type] || def.type) + '・' + (GEM_TIER_LABEL[def.tier] || def.tier) + '</span></div>';
       html += '<div class="equip-box"><div class="equip-stat-grid">' +
         '<div>效果<br><b>' + escapeHtml(GEM_ATTR_LABEL[def.attr] || def.attr) + '</b></div>' +
-        '<div>基礎值<br><b>' + def.base + '</b></div>' +
-        '<div>☀ 太陽<br><b>+' + def.sun + '</b>（' + (en.sun || 0) + '%）</div>' +
-        '<div>☾ 月亮<br><b>+' + def.moon + '</b>（' + (en.moon || 0) + '%）</div>' +
-        '<div>★ 星星<br><b>+' + def.star + '</b>（' + (en.star || 0) + '%）</div>' +
-        '<div>☄ 彗星<br><b>+' + def.comet + '</b>（必成功）</div>' +
-        '<div>強化費用<br><b>' + bigNumHtml(def.enchantCost) + '</b></div>' +
+        '<div>基礎值<br><b>' + gemPct(def.base) + '</b></div>' +
+        '<div>☀ 太陽<br><b>+' + gemPct(def.sun) + '</b>（成功率 ' + (en.sun || 0) + '%）</div>' +
+        '<div>☾ 月亮<br><b>+' + gemPct(def.moon) + '</b>（成功率 ' + (en.moon || 0) + '%）</div>' +
+        '<div>★ 星星<br><b>+' + gemPct(def.star) + '</b>（成功率 ' + (en.star || 0) + '%）</div>' +
+        '<div>☄ 彗星<br><b>+' + gemPct(def.comet) + '</b>（必成功）</div>' +
+        '<div>附魔費用（每格）<br><b>' + bigNumHtml(def.enchantCost) + '</b></div>' +
         '</div></div>';
       html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">只能鑲在可鑲「' + (GEM_TYPE_LABEL[def.type] || def.type) + '」寶石的技能上，同一個技能不能鑲兩顆同效果的。' +
-        '強化共 ' + cells + ' 格，每格選太陽／月亮／星星（括號是成功率），成功就加上那個數值；累計失敗 ' + (en.cometAfterFails || 0) + ' 格之後，剩下的格子可以選必成功的彗星。' +
-        '數值 = 基礎值 + 成功格子的加總（最高 ' + maxVal + '）。</div>';
+        '附魔共 ' + cells + ' 格，每格選太陽／月亮／星星，成功就加上那個數值；累計失敗 ' + (en.cometAfterFails || 0) + ' 格之後，剩下的格子可以選必成功的彗星。' +
+        '效果 = 基礎值 + 成功格子的加總（最高 ' + escapeHtml(gemEffectText(def, maxVal)) + '）。</div>';
+      html += sysGuideLinkHtml("gems", "看技能寶石完整說明（位置、附魔、合成）");
     }
     // 合成：同階 count 顆 → 抽一顆
     var composeUses = [], composeGets = [];
@@ -3613,6 +3616,126 @@
       html += '<div style="font-size:13px;margin-top:8px;">取得方式：' + g.c.count + ' 顆 ' + (GEM_TIER_LABEL[g.c.tier] || g.c.tier) + ' 階技能寶石合成，抽到這顆的機率 ' + boxPctText(g.p) + '。</div>';
     });
     return html;
+  }
+  // ----- 💎 技能寶石說明頁（2026-10-10 加進「其他各種功能」）-----
+  // 寶石的數值存的是「千分之幾」：畫面上顯示 數值/10 %（遊戲 f()），冷卻跟 AP 是減少、其他是增加。
+  var GEM_ATTR_SHORT = { cooldown: "冷卻", critMult: "致命係數", critChance: "致命機率", damage: "傷害", hit: "命中", duration: "持續", apCost: "AP", heal: "療癒" };
+  var GEM_SYMBOLS = [["sun", "☀ 太陽"], ["moon", "☾ 月亮"], ["star", "★ 星星"], ["comet", "☄ 彗星"]];
+  function gemPct(v) { return (Math.round(v) / 10) + '%'; }
+  function gemEffectText(def, v) {
+    return (GEM_ATTR_SHORT[def.attr] || def.attr) + ' ' + (def.attr === "cooldown" || def.attr === "apCost" ? '−' : '+') + gemPct(v);
+  }
+  // 附魔 cells 格的「最高」跟「照最划算的點法的平均」（跟遊戲自動附魔的算法一樣，Kd()）：
+  // 每一格從能點的符號裡挑期望值最高的；彗星要累計失敗 cometAfterFails 格才能點、必定成功。
+  function gemEnchantStats(def) {
+    var en = GEMS.enchant, memo = {};
+    function go(cell, fails) {
+      if (cell >= en.cells) return { ev: 0, max: 0 };
+      var key = cell + ':' + fails;
+      if (memo[key]) return memo[key];
+      var best = null;
+      GEM_SYMBOLS.forEach(function (s) {
+        var sym = s[0];
+        if (sym === "comet" && fails < en.cometAfterFails) return;
+        var p = sym === "comet" ? 1 : (en[sym] || 0) / 100, v = def[sym] || 0;
+        var ok = go(cell + 1, fails), bad = p >= 1 ? ok : go(cell + 1, fails + 1);
+        var cand = { ev: p * (v + ok.ev) + (1 - p) * bad.ev, max: Math.max(v + ok.max, p >= 1 ? 0 : bad.max) };
+        if (!best || cand.ev > best.ev) best = { ev: cand.ev, max: best ? Math.max(best.max, cand.max) : cand.max };
+        else best.max = Math.max(best.max, cand.max);
+      });
+      return (memo[key] = best);
+    }
+    var r = go(0, 0);
+    return { avg: def.base + r.ev, max: def.base + r.max };
+  }
+  function showGemGuide() {
+    currentDetail = null;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">💎 技能寶石</h2>';
+    if (!GEMS || !GEMS.defs || !GEMS.enchant) {
+      $detail.innerHTML = html + '<div class="empty-note">資料檔是舊版，請重新執行 update_data.py。</div>';
+      return;
+    }
+    var en = GEMS.enchant, slots = GEMS.slots || [];
+    var ids = Object.keys(GEMS.defs).map(Number).sort(function (a, b) { return a - b; });
+    var tiers = [];
+    ids.forEach(function (id) { var t = GEMS.defs[id].tier; if (tiers.indexOf(t) < 0) tiers.push(t); });
+    tiers.sort(function (a, b) { return a - b; });
+    var costOf = function (t) { var id = ids.filter(function (x) { return GEMS.defs[x].tier === t; })[0]; return id != null ? GEMS.defs[id].enchantCost : 0; };
+
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・技能寶石是鑲在<b>技能</b>上的：一個位置＝一支技能＋一顆寶石，最多開 ' + slots.length + ' 個位置。跟鑲嵌石、精煉用的寶石是不同的系統。<br>' +
+      '・寶石分 <b>攻擊／輔助／恢復</b> 三型，要跟技能同一型才鑲得上；同一支技能，同一種效果只能鑲一顆。<br>' +
+      '・拿到的寶石是「未開放」的原石，要先<b>附魔</b>把 ' + en.cells + ' 格全部點完才裝得上，成功幾格就是幾星。<br>' +
+      '・寶石有 ' + tiers.map(function (t) { return GEM_TIER_LABEL[t] || t; }).join('／') + ' ' + tiers.length + ' 階，階級越高基礎值和每格加的數值越多。<br>' +
+      '・<b>合成</b>：同一階 3 顆換 1 顆新的原石（要重新附魔），有機會升一階。' +
+      '</div>';
+
+    html += '<div class="section-title">寶石位置</div><table class="dtable"><thead><tr><th>位置</th><th>需要等級</th><th>開啟費用</th></tr></thead><tbody>';
+    slots.forEach(function (s, i) {
+      html += '<tr><td><b>第 ' + (i + 1) + ' 個</b></td><td><span class="lv-tag">Lv' + s.minLevel + '</span></td><td>' + bigNumHtml(s.cost) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    html += '<div class="section-title">附魔</div><div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・一共 ' + en.cells + ' 格，每格自己選一個符號來點：' +
+      GEM_SYMBOLS.filter(function (s) { return s[0] !== "comet"; }).map(function (s) { return s[1] + ' <b>' + (en[s[0]] || 0) + '%</b>'; }).join('、') +
+      '。成功就加上那個符號的數值，<b>失敗那一格就作廢</b>（不能重點）。<br>' +
+      '・成功率越低的符號加得越多（太陽最多、星星最少）。<br>' +
+      '・累計失敗滿 <b>' + en.cometAfterFails + '</b> 格之後，剩下的格子可以點「☄ 彗星」，<b>必定成功</b>而且加得最多。<br>' +
+      '・每點一格都要付附魔費（成功失敗都收）：' +
+      tiers.map(function (t) { return (GEM_TIER_LABEL[t] || t) + ' ' + bigNumHtml(costOf(t)); }).join('、') +
+      '；點滿 ' + en.cells + ' 格就是 ' + tiers.map(function (t) { return (GEM_TIER_LABEL[t] || t) + ' ' + bigNumHtml(costOf(t) * en.cells); }).join('、') + '。<br>' +
+      '・寶石的效果＝基礎值＋成功那幾格的加總。' +
+      '</div>';
+
+    Object.keys(GEM_TYPE_LABEL).forEach(function (type) {
+      var list = ids.filter(function (id) { return GEMS.defs[id].type === type; });
+      if (!list.length) return;
+      // 同一種效果排在一起、階級由低到高
+      list.sort(function (a, b) {
+        var da = GEMS.defs[a], db = GEMS.defs[b];
+        return da.attr === db.attr ? da.tier - db.tier : (da.attr < db.attr ? -1 : 1);
+      });
+      html += '<div class="section-title">' + GEM_TYPE_LABEL[type] + '型寶石 <span class="count">(' + list.length + ')</span></div>' +
+        '<div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>寶石</th><th>基礎</th>' +
+        GEM_SYMBOLS.map(function (s) { return '<th>' + s[1] + '</th>'; }).join('') + '<th>平均</th><th>最高</th></tr></thead><tbody>';
+      list.forEach(function (id) {
+        var def = GEMS.defs[id], st = gemEnchantStats(def);
+        html += itemLinkRow(id, '<td>' + gemPct(def.base) + '</td>' +
+          GEM_SYMBOLS.map(function (s) { return '<td>+' + gemPct(def[s[0]] || 0) + '</td>'; }).join('') +
+          '<td>' + escapeHtml(gemEffectText(def, st.avg)) + '</td><td><span class="rate">' + escapeHtml(gemEffectText(def, st.max)) + '</span></td>');
+      });
+      html += '</tbody></table></div>';
+    });
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">符號那幾欄是點成功一格加多少。「平均」是每一格都照最划算的方式點（跟遊戲自動附魔的「平均」點法一樣）算出來的期望值；' +
+      '「最高」是運氣最好時的結果。冷卻和 AP 是減少，其他是增加。</div>';
+
+    (GEMS.compose || []).forEach(function (c) {
+      var total = c.results.reduce(function (s, r) { return s + r[1]; }, 0) || 1;
+      var byTier = {};
+      c.results.forEach(function (r) {
+        var d = GEMS.defs[r[0]], t = d ? d.tier : -1;
+        (byTier[t] = byTier[t] || { sum: 0, rows: [] }).sum += r[1];
+        byTier[t].rows.push(r);
+      });
+      html += '<div class="section-title">合成：' + (GEM_TIER_LABEL[c.tier] || c.tier) + ' 階 ×' + c.count + ' <span class="count">' + fmtNum(c.cost) + ' 金幣</span></div>';
+      html += '<div class="empty-note" style="padding:0 0 8px;">任意 ' + c.count + ' 顆 ' + (GEM_TIER_LABEL[c.tier] || c.tier) + ' 階寶石換 1 顆原石：' +
+        Object.keys(byTier).map(Number).sort(function (a, b) { return b - a; }).map(function (t) {
+          return '<b>' + (GEM_TIER_LABEL[t] || t) + ' 階 ' + sysPct(byTier[t].sum / total * 100) + '</b>';
+        }).join('、') + '。</div>';
+      html += '<div class="map-chip-row">' + c.results.slice().sort(function (a, b) { return b[1] - a[1]; }).map(function (r) {
+        return itemChip(r[0], null, '<span class="group-tag">' + sysPct(r[1] / total * 100) + '</span>');
+      }).join('') + '</div>';
+    });
+    // 哪幾階只能靠合成：那一階的寶石在 ITEM_OBTAIN 裡除了 gem（寶石合成）沒有別的管道
+    var composeOnly = !ITEM_OBTAIN ? [] : tiers.filter(function (t) {
+      return ids.filter(function (id) { return GEMS.defs[id].tier === t; }).every(function (id) {
+        return (ITEM_OBTAIN[String(id)] || []).every(function (ch) { return ch === "gem"; });
+      });
+    });
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">寶石的取得方式（掉落、寶箱）請點進寶石的物品頁看' +
+      (composeOnly.length ? '；' + composeOnly.map(function (t) { return GEM_TIER_LABEL[t] || t; }).join('、') + ' 階目前只能靠合成' : '') + '。</div>';
+    $detail.innerHTML = html;
   }
 
   // ---------- 鑲嵌石（stones.json，2026-10-08 新增；update_data.py build_stones() 產生 stoneIndex.js）----------
@@ -7011,6 +7134,7 @@
     ["✨ 技能", "各職業（含二轉分支）的技能列表；點技能看前置技能、特殊效果，以及每一級的威力、AP、冷卻、詠唱、收招、仇恨等數值。"],
     ["📚 其他功能", "寵物列表、副本，以及任務總覽（每日、書信、委託、藍圖任務、轉職）。寶箱可以從副本頁或物品頁點進去看。物品頁會列出 NPC 兌換、技能寶石等資訊；有變體的怪物會列出各型態能力。"],
     ["💠 鑲嵌石", "角色身上四顆石頭的玩法、每一階的強化花費與成功率、會抽到哪些能力與數值機率、材料怎麼來（打碎寶石、找 NPC 兌換），以及相關的名品館道具。材料、可打碎的寶石、兩張券的物品頁也會列出用途。"],
+    ["💎 技能寶石", "鑲在技能上的寶石：位置的解鎖等級與費用、附魔每種符號的成功率、每顆寶石各符號加多少與平均／最高效果、合成的費用與機率。寶石的物品頁有連結可以回到這一頁。"],
     ["✨ 光環", "光環裝備四個階級的能力、精煉成功率與加成、G 化（升階）的條件與風險，以及靈魂結晶的製作機率（條數、顏色、每種屬性的數值範圍）、鑲嵌與分解。"],
     ["👗 時裝強化", "時裝每一階的強化成功率與花費、線團能加多少成功率、各等級時裝的強化加成，以及繼承、分解、兌換、合成、寶石提煉的規則。"],
     ["🎲 哈比兔大富翁", "棋盤 32 格的配置、每種格子的獎勵與機率、寶箱開出時裝的機率（會隨圈數提高）、可開出的時裝清單，以及氣球的取得方式。"]
