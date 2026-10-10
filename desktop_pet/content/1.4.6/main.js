@@ -76,6 +76,8 @@ let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
 // 使用者設定。petCount＝桌面上幾隻桌寵（都顧同一個角色，只是熱鬧）；
 // petModels[i]＝第 i 隻自己選的外觀，沒選（null）就跟著目前在打的怪物
 let settings = { petCount: 1, petModels: [], petColors: [], helpSeen: false, mallReminder: true, gmReminder: true, stayPets: [], bookmarkTool: true,
+  // 摸桌寵時偶爾會講的特別的話：今天（day）已經講過哪幾句
+  petTalk: { day: "", said: [] },
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { damage: false, exp: false, loot: false } };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
@@ -710,6 +712,39 @@ function gmTick() {
   say(r.text);
 }
 
+// ── 摸桌寵時的特別對話 ────────────────────────────────────
+// 每摸出一顆愛心有一成機率講一句，四句各自一天只講一次：
+// 今天線上GM第一次、第二次各幾點出現、今天黑店最低價是哪幾個小時、今天黑店最低價是多少。
+const PET_TALK_CHANCE = 0.1;
+const hourList = (hours) => hours.map((h) => `${h}～${h + 1} 點`).join("、");
+const PET_TALKS = {
+  gm1: () => `今天線上GM第一次會在 ${hourList([gm.todayHours()[0]])}出現在${gm.TOWN}`,
+  gm2: () => `今天線上GM第二次會在 ${hourList([gm.todayHours()[1]])}出現在${gm.TOWN}`,
+  mallHours: () => `今天黑店最低價的時段是 ${hourList(mall.todayLowest().hours)}`,
+  mallPrice: () => {
+    const lowest = mall.todayLowest();
+    return `今天黑店最低價是 ${lowest.rate.toLocaleString("zh-TW")}${lowest.superSale ? "，是超絕特惠價！" : ""}`;
+  },
+};
+
+/** 桌寵被摸出一顆愛心。chance 是自我測試用的，平常不用給。 */
+function petted(chance = PET_TALK_CHANCE) {
+  if (Math.random() >= chance) return undefined;
+  const now = new Date();
+  const day = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  const said = settings.petTalk?.day === day ? settings.petTalk.said : [];
+  // 黑店公式跟遊戲對不上的時候，黑店那兩句會報錯，就不講
+  const left = Object.keys(PET_TALKS).filter((key) => !said.includes(key) && (mallFormulaOk || key.startsWith("gm")));
+  if (left.length === 0) return undefined;
+  const key = left[Math.floor(Math.random() * left.length)];
+  settings.petTalk = { day, said: [...said, key] };
+  saveSettings();
+  const text = PET_TALKS[key]();
+  say(text);
+  return text;
+}
+ipcMain.on("pet:petted", () => petted());
+
 /** 每個整點（多等 2 秒，確定已經跨過去）檢查一次。 */
 function scheduleHourlyTick() {
   setTimeout(() => {
@@ -1100,7 +1135,7 @@ app.whenReady().then(async () => {
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
-  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, setStay, quit: () => app.quit() });
+  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, setStay, petted, quit: () => app.quit() });
 });
 
 app.on("before-quit", () => {

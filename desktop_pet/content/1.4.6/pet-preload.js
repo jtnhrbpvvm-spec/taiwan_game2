@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld("petApi", {
   onOpenSizer: (cb) => ipcRenderer.on("pet:open-sizer", (_e, index) => cb(index)),
   setInteractive: (on) => ipcRenderer.send("pet:interactive", on),
   toggleGame: () => ipcRenderer.send("pet:toggle-game"),
+  // 桌寵被摸到冒愛心了（主程式會擲骰子決定要不要講一句特別的話）
+  petted: () => ipcRenderer.send("pet:petted"),
   // index＝對第幾隻桌寵按的右鍵
   showMenu: (index) => ipcRenderer.send("pet:menu", index),
 });

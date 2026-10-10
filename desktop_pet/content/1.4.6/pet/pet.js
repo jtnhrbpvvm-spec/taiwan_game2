@@ -462,6 +462,7 @@ document.addEventListener("mousemove", (e) => {
   if (stroked >= PET_STROKE) {
     stroked = 0;
     spawnFloater("heart", "♥", undefined, hovered);
+    window.petApi.petted();
   }
 });
 document.addEventListener("mousedown", (e) => {

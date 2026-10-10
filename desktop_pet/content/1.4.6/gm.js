@@ -57,6 +57,12 @@ function wakeInMs(now = Date.now()) {
   return periodStart(periodIndex(now) + 1) - now;
 }
 
+/** 今天（台灣時間的日期）兩次出現各從幾點開始。摸桌寵時偶爾會講的那一句用。 */
+function todayHours(now = Date.now()) {
+  const day = Math.floor((now + TAIWAN_OFFSET_MS) / DAY_MS);
+  return [0, 1].map((i) => taiwanHour(windowOf(day * WINDOWS_PER_DAY + i).startMs));
+}
+
 const taiwanHour = (ms) => Math.floor(((ms + TAIWAN_OFFSET_MS) % DAY_MS) / HOUR_MS);
 
 /**
@@ -77,4 +83,4 @@ function reminder(now = Date.now(), playedWindow) {
   return { key: `soon-${w.window}`, text: `線上GM ${when}（${taiwanHour(w.startMs)} 點）會出現在${TOWN}` };
 }
 
-module.exports = { periodIndex, windowOf, upcoming, wakeInMs, reminder, taiwanHour };
+module.exports = { periodIndex, windowOf, upcoming, wakeInMs, reminder, taiwanHour, todayHours, TOWN };

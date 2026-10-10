@@ -70,7 +70,18 @@ function dailyHint(now = new Date()) {
   return `今日黑店特價時段已經過了，明天在${dayPart(tomorrow.hour)}${tomorrow.superSale ? "，而且是超絕特惠價" : ""}`;
 }
 
+/**
+ * 今天（本機時間）黑店的最低價，以及是哪幾個小時（並列最低就全部列出來，過了的也算）。
+ * 摸桌寵時偶爾會講的那兩句用。
+ */
+function todayLowest(now = new Date()) {
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const rates = Array.from({ length: 24 }, (_, hour) => rate(Math.floor((dayStart + hour * HOUR_MS) / HOUR_MS)));
+  const min = Math.min(...rates);
+  return { rate: min, hours: rates.flatMap((r, hour) => (r === min ? [hour] : [])), superSale: min <= SUPER_RATE };
+}
+
 /** 到下一個整點還有幾毫秒。 */
 const msToNextHour = (now = new Date()) => HOUR_MS - (now.getTime() % HOUR_MS);
 
-module.exports = { rng, rate, periodOf, todayTarget, reminder, dailyHint, msToNextHour };
+module.exports = { rng, rate, periodOf, todayTarget, todayLowest, reminder, dailyHint, msToNextHour };

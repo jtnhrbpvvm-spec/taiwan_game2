@@ -83,7 +83,7 @@
         </div>
         <div class="card" id="update" hidden>
           <h2>有新版 <span id="update-version"></span></h2>
-          <p>按下面的按鈕下載，下載完會跳出系統的安裝畫面，再按一次「更新」就完成了。存檔和設定都會保留。</p>
+          <p>按下面的按鈕下載，下載完會跳出系統的安裝畫面，再按一次「更新」。<b>裝完請按「開啟」，桌寵才會回來</b>（更新時系統會先把桌寵關掉；按到「完成」的話，自己再點一次桌寵的圖示就好）。存檔和設定都會保留。</p>
           <button class="act primary" data-action="installUpdate">下載並安裝</button>
           <p class="dim" id="update-progress"></p>
         </div>
@@ -113,6 +113,10 @@
           <label class="row"><span>顯示傷害</span><input type="checkbox" data-key="focusDamage" /></label>
           <label class="row"><span>顯示經驗值</span><input type="checkbox" data-key="focusExp" /></label>
           <label class="row"><span>顯示物品取得</span><input type="checkbox" data-key="focusLoot" /></label>
+        </div>
+        <div class="card" id="check" hidden>
+          <button class="act" data-action="checkUpdate">檢查更新</button>
+          <p class="dim" id="check-result">桌寵每 6 小時會自己檢查一次，想馬上確認可以按這裡。</p>
         </div>
         <p class="dim" id="version"></p>
       </section>
@@ -225,6 +229,7 @@
         if (status.running && status.mallOk === false) $("mall-note").innerHTML = '<span class="warn">遊戲改版，暫時停用</span>';
         $("version").textContent = "版本 " + status.version + (status.contentVersion && status.contentVersion !== status.version ? "（內容 " + status.contentVersion + "）" : "");
         $("update").hidden = !status.appUpdate;
+        $("check").hidden = !status.canCheck;
         $("update-version").textContent = status.appUpdate || "";
         chosen = settings.petModel;
         markChosen();
@@ -386,6 +391,7 @@
       $("search").addEventListener("input", renderLooks);
 
       window.__updateProgress = (text) => ($("update-progress").textContent = text);
+      window.__checkResult = (text) => ($("check-result").textContent = text);
       // 桌寵有沒有在跑、有沒有新版，都可能在這個畫面開著的時候才變，定時更新一下
       setInterval(() => tab === "settings" && refresh(), 3000);
 
