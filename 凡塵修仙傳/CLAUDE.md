@@ -11,6 +11,7 @@
   - 例外：`屬性與技能.html` 的「打怪推薦」分頁是依讀取的存檔（玩家自己的數值與裝備）計算，使用者要求顯示每張地圖每小時經驗與靈石。算法照遊戲的掛機估算移植，改動後要用遊戲本體的程式比對。
 - `dmg.js` 是 `屬性與技能.html`「已學技能的傷害」用的平均傷害計算（屬性觸發、命中、破甲、屬性秘典、種族剋制）。裡面 `/*EX*/…/*EX*/` 之間的資料是產生出來的，不要手改：遊戲更新數值後執行 `node tools/build-dmg.js` 重新產生，再執行 `node tools/check-dmg.js` 用遊戲本體驗算（要顯示「不一致 0」）。`tools/game-vm.js` 會在 Node 裡載入遊戲本體，預設找 `../../idle-lineage-class/-username-.github.io-`（相對於 repo 根目錄），可用環境變數 `FANCHEN_GAME` 指定。
 - `dmg.js` 的 `DMG.spacetime` 是亂星海時空秘境與靈界仙魔戰場共用的存活模擬（`EX.st`／`EX.xm`，頁面上是 `SZ.st`／`SZ.xm`；仙魔戰場的強度是範圍、每隻各擲；一秒一回合實際打 120 場，`屬性與技能.html` 的「試算」與「打怪推薦」分頁共用 `stCalc`／`stHtml`）。妖獸、技能、調息、丹藥、野外修士的數值都在產生出來的 `EX.st` 裡；遊戲改了戰鬥規則（`combat.js` 的 `combatTick`／`fieldCombatRound`、`monster.js`、`elements.js` 的 `resolveHit`）要跟著改模擬，再執行 `node tools/check-spacetime.js` 讓遊戲本體實打比對（要顯示「不一致 0」；要跑十幾分鐘）。「時空秘境沒有通關」，頁面上一律叫存活機率。模擬比較花時間，使用者要求**只在讀取存檔時自動算一次**，之後改能力值、裝備或設定都要按「🌀 試算時空秘境」才重算（`stRun`／`stR`），不要改回每次重畫都算。
+- `dmg.js` 的 `DMG.wboss` 是世界 Boss 的 30 回合傷害模擬（`屬性與技能.html`「試算」分頁的 `wbHtml`；資料在產生出來的 `EX.wb`）。算得快，所以每次重畫都重算，不用按鈕。遊戲改了世界 Boss 的回合規則（`world-boss.js` 的 `wbRound`／`wbBossStats`／`startWorldBossFight`）或 Boss 數值要跟著改，再執行 `node tools/check-wboss.js`（要顯示「不一致 0」，約 2 分鐘）。
 - 分享的短連結：`屬性與技能.html` 裡的 `SHARE_API` 是使用者自己架的短連結服務網址（程式在 `tools/share-worker/worker.js`，部署在 Cloudflare Workers＋KV，設定方式寫在該檔開頭）；留空時改用外面的短網址服務。改分享資料的格式時，`worker.js` 的格式檢查要一起看。
 - `profile.js` 是全站共用的存檔暫存；新頁面要 `<script src="profile.js"></script>`，需要新的存檔欄位時加到它的 `KEEP` 清單。
 - `site.js` 是全站共用的頂部搜尋與物品彈窗；新頁面要在 profile.js 後面加 `<script src="site.js"></script>`，內容要放在 `.wrap` 裡。

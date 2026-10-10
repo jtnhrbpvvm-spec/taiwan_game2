@@ -181,6 +181,9 @@ a:hover{text-decoration-thickness:2px}
 <div class="res" id="cRes"></div>
 <div class="sub">攻擊力、氣血上限在畫面上是<b>以 100 為一格跳動</b>的，所以只加一兩點屬性時數字可能完全不動，要累積到跨過下一格才會變。三種增益各自的上限是 +200%，仙人初境起依境界提高（上面「增益上限」那格就是你目前的上限）。</div>
 
+<h2>🐲 世界 Boss：30 回合能打多少</h2>
+<div id="wbCalc"></div>
+
 <h2>🌀 時空秘境・⚔️ 仙魔戰場存活機率</h2>
 <div id="stCalc"></div>
 
@@ -1255,6 +1258,23 @@ function renderHunt(a){
   </tbody></table></div>
   <div class="sub" style="margin-top:6px">秘境每天各只能打 3 次，所以用「每次」和「每日」來算，沒辦法換成每小時。兩個秘境都不給經驗，練等還是要靠上面的地圖。</div>`;
   $("stHunt").innerHTML=$("stCalc").innerHTML=SZ_IDS.map(z=>stHtml(a,SZ[z],R[z],cur[z])).join("");
+  $("wbCalc").innerHTML=wbHtml(a,P);
+}
+// ---- 世界 Boss：照遊戲的回合規則把五隻 Boss 各打 1000 場（每場 30 回合），算平均傷害與撐滿的機率。算得很快，所以每次重畫都重算 ----
+function wbHtml(a,P){
+  const W=DMG.EX.wb,I={A:a.ex,r:a.r,s:a.s,hp:a.hp,phys:a.phys,mag:a.mag,crit:a.crit/100,magCrit:a.magCrit/100,critDmg:a.critDmg,combo:a.combo/100,def:P.def,mdef:P.mdef,eva:P.eva};
+  const rs=W.boss.map((B,i)=>DMG.wboss(I,i)),num=v=>hWan(v*100),pc1=v=>(v*100>=10?Math.round(v*100):+(v*100).toFixed(1))+"%",best=rs.reduce((m,x)=>Math.max(m,x.avg),0);
+  const rows=W.boss.map((B,i)=>{const x=rs[i],rb=DMG.race(a.ex,B.race,0).v,wx=!a.ex.elem||a.ex.ignoreCounter?"":DMG.C.wxc[a.ex.elem]===B.el?"・你剋牠":DMG.C.wxc[B.el]===a.ex.elem?"・牠剋你":"";
+    return `<tr class="${x.avg===best?"hbest":""}"><td class="nw"><b>${B.icon} ${B.n}</b><br><small>${RACE_N[B.race]||B.race}・${B.el}${wx}<br>${B.mag?"術法攻擊（看魔防）":"物理攻擊（看防禦）"}</small></td>
+    <td class="num"><b>${num(x.avg)}</b><br><small>${rb?"種族剋制 +"+pc1(rb):"沒有種族剋制"}</small></td>
+    <td class="num">${num(x.lo)}～${num(x.hi)}</td>
+    <td class="num">${num(x.avg*W.daily*2)}</td>
+    <td class="num"><span class="hs ${x.live>=.9?"ok":x.live>=.5?"pot":x.live>=.1?"risk":"no"}">${stPc(x.live)}</span><br><small>平均撐 ${+x.rounds.toFixed(1)} 回合</small></td>
+    <td class="num">${num(x.hitOne)}<br><small>你氣血的 ${pc1(x.hitOne/a.hp)}・閃掉 ${pc1(x.dodge)}</small></td></tr>`}).join("");
+  return `<div class="sub">用上面目前的角色，照遊戲的規則把五隻 Boss 各打 1,000 場。每週只開一隻，五隻依序輪替；數字是遊戲畫面上看到的大小。換裝或改設定會立刻重算。${a.r<8?`<br><span class="warn">世界 Boss 要大乘、聲望 10,000 才開放，下面是用你現在的境界先估。</span>`:""}</div>
+  <div class="tw" style="margin-top:6px"><table><thead><tr><th>Boss</th><th class="num">一次平均傷害</th><th class="num">十次有八次落在</th><th class="num">一隻打滿 ${W.daily*2} 次</th><th class="num">撐滿 ${W.rounds} 回合（⭐）</th><th class="num">牠打中你一下</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="sub" style="margin-top:6px"><b>怎麼算的</b>：世界 Boss 每回合固定用你物理、術法攻擊較高的那一種 × ${W.skill} 打一下（連擊會再打一下），暴擊、金雷冰火毒的屬性觸發、五行相剋、種族剋制、破甲、命中、屬性秘典都照算，掛在 Boss 身上的燒傷、中毒也算進傷害。<b>技能、靈寵、夥伴不會出手</b>，也沒有吸血、回春、丹藥、金身這些保命效果，所以只看你的氣血、防禦（妖獸）或魔防（魔修、心魔）、閃避撐不撐得住。Boss 的攻擊跟著你的境界和階數走，各隻的光環（降你攻擊、詛咒、燒傷、凍結）也都算進去。倒下不扣壽元，已經打出的傷害照算，但後面的回合就沒了。<br>
+  <b>沒算的</b>：「戰鬥中才有的效果」（禁術、靈寵增益等暫時加成）沒有算進去；先手盾、護體是野外每波才有的效果，這裡也不算。這個模擬和遊戲本體實打比對過，平均傷害的誤差在 1～2% 以內。單次傷害現在沒有上限，名次看一隻打下來的累計傷害；規則與獎勵見<a href="世界Boss.html">世界 Boss</a>。</div>`;
 }
 // ---- 時空秘境、仙魔戰場：存活機率。照遊戲每秒一回合的規則實際打 120 場（妖獸型態與技能、調息、自動補血、野外修士都照遊戲），不是套公式 ----
 // 兩張圖共用同一套模擬與畫面：st＝亂星海時空秘境（仙人初境以下、強度固定 30 倍、3 秒刷新、每秒扣靈石、收益上限 3 倍）；
