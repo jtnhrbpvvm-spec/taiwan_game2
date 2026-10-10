@@ -1,5 +1,5 @@
 {
-  "version": "1.4.4",
+  "version": "1.4.5",
   "shell": 1,
   "files": [
     {
@@ -24,8 +24,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "65fba71ac1a1a92056a322629141a945eaaf9151cfcb36484f810bcced75a48b",
-      "size": 47591
+      "sha256": "e7cab6eef3dc739042b7d6a03643fc59796ed92c3f743afdf7d14ab716e7a28b",
+      "size": 50790
     },
     {
       "path": "mall.js",
@@ -34,8 +34,8 @@
     },
     {
       "path": "pet-preload.js",
-      "sha256": "3e138056b453bab231e0d566ad14d9248a43ea84787c37dfc968ca6109f4355a",
-      "size": 1351
+      "sha256": "303e55a3cd2097e6beacb020ee6620b9336068e576fe499aadd4e6973a03d412",
+      "size": 1487
     },
     {
       "path": "pet/index.html",
@@ -44,13 +44,13 @@
     },
     {
       "path": "pet/pet.js",
-      "sha256": "12a79e9796233d76093fc9aa3ee3094407412e83a09dc69055471a93bc38dd5e",
-      "size": 23702
+      "sha256": "71d3718047fd2f6a7dfff48f70112c977a5516944aeab0e02f2cfe6b9f4d6837",
+      "size": 24517
     },
     {
       "path": "picker-preload.js",
-      "sha256": "668b8cc17890217c8d0cf20058b56b007ed156416a6070ffa3a23fa139d17f60",
-      "size": 351
+      "sha256": "d7a6e1d55b66c7def32397b9044d4810516885eae68088536de3338dddfe72e4",
+      "size": 514
     },
     {
       "path": "saves-preload.js",
@@ -59,8 +59,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "2370dd06d3e7458e2fa2db552f83421bde2b7644ab3e553cfdae6326c29d3d11",
-      "size": 4978
+      "sha256": "0b7746ae49131b0c7f7b4fcbb493494e56b6b79da14763a3c43f42ef7a3005f6",
+      "size": 5122
     },
     {
       "path": "ui/income.html",
@@ -74,13 +74,13 @@
     },
     {
       "path": "ui/picker.html",
-      "sha256": "e9b6416629cc0f2de9137a9d8b6331d8051b22b6dc38d211c3cecd3c49fa7b95",
-      "size": 2253
+      "sha256": "c47e95beeaa8581e57047f20791f6bb453badca5fa6ca4fc1786226b251b7083",
+      "size": 3595
     },
     {
       "path": "ui/picker.js",
-      "sha256": "b62e21c9b66c75665942a9f039f606536800a7f404d0de5432d7973154df3316",
-      "size": 3873
+      "sha256": "56cdf2b4e33919f73743964a7d4469733fb71218d46fb701ffcb21ff0c200d1e",
+      "size": 5429
     },
     {
       "path": "ui/saves.html",

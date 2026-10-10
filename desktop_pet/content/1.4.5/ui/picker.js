@@ -1,11 +1,10 @@
 // 選擇桌寵外觀：列出遊戲裡所有有動畫表的怪物跟戰寵，點一下桌面上的桌寵就立刻換。
-// 縮圖是每張動畫表的待機第一格，捲到看得見才去載（全部約四百多張，一次全載太慢）。
+// 縮圖是每張動畫表的待機第一格，捲到看得見才去載（全部約四百多張，一次全載太慢）；卡片本身全部列出來，往下捲就看得到。
 const list = document.getElementById("list");
 const empty = document.getElementById("empty");
 const search = document.getElementById("search");
 const follow = document.getElementById("follow");
 
-const MAX_SHOWN = 120; // 沒搜尋時不用把四百多張卡片全畫出來
 const THUMB = 80;
 
 let entries = [];
@@ -51,7 +50,7 @@ function markCurrent() {
 
 function render() {
   const q = search.value.trim().toLowerCase();
-  const shown = entries.filter((e) => !missing.has(e.model) && (!q || e.search.toLowerCase().includes(q))).slice(0, MAX_SHOWN);
+  const shown = entries.filter((e) => !missing.has(e.model) && (!q || e.search.toLowerCase().includes(q)));
   thumbLoader.disconnect();
   list.replaceChildren(
     ...shown.map((e) => {
@@ -89,10 +88,50 @@ list.addEventListener("click", (e) => {
 follow.addEventListener("click", () => choose(null));
 search.addEventListener("input", render);
 
+// ── 顏色 ──
+// 三條拉條整隻調色。拖的時候桌面上的桌寵和下面的縮圖馬上跟著變，放開才存起來。
+const COLOR_KEYS = ["hue", "sat", "light"];
+const colorInput = (key) => document.getElementById(`color-${key}`);
+let colorRange;
+
+function readColor() {
+  return Object.fromEntries(COLOR_KEYS.map((key) => [key, Number(colorInput(key).value)]));
+}
+
+function showColor() {
+  const c = readColor();
+  document.getElementById("color-hue-value").textContent = `${c.hue}°`;
+  document.getElementById("color-sat-value").textContent = `${c.sat}%`;
+  document.getElementById("color-light-value").textContent = `${c.light}%`;
+  const changed = COLOR_KEYS.some((key) => c[key] !== colorRange[key][2]);
+  list.style.setProperty("--pet-filter", changed ? `hue-rotate(${c.hue}deg) saturate(${c.sat}%) brightness(${c.light}%)` : "none");
+}
+
+function setupColor(range, color) {
+  colorRange = range;
+  for (const key of COLOR_KEYS) {
+    const input = colorInput(key);
+    [input.min, input.max] = range[key];
+    input.value = String(color?.[key] ?? range[key][2]);
+    input.addEventListener("input", () => {
+      showColor();
+      window.pickerApi.setColor(readColor(), false);
+    });
+    input.addEventListener("change", () => window.pickerApi.setColor(readColor(), true));
+  }
+  document.getElementById("color-reset").addEventListener("click", () => {
+    for (const key of COLOR_KEYS) colorInput(key).value = String(range[key][2]);
+    showColor();
+    window.pickerApi.setColor(readColor(), true);
+  });
+  showColor();
+}
+
 window.pickerApi.list().then((got) => {
   entries = got.entries;
   current = got.current;
   document.title = got.title; // 有好幾隻桌寵時，標題會寫這次是在幫第幾隻挑
+  setupColor(got.colorRange, got.color);
   // 目前選的那隻排最前面，一打開就看得到
   entries.sort((a, b) => (b.model === current) - (a.model === current));
   render();

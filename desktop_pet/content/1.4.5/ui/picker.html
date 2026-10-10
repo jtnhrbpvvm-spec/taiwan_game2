@@ -21,11 +21,25 @@
       .on { border-color: #2f7d86 !important; box-shadow: 0 0 0 2px #2f7d86 inset; }
       .card.missing { opacity: 0.4; cursor: default; }
       #empty { padding: 24px; text-align: center; color: #86704a; }
+      /* 整隻調色：三條拉條，下面清單的縮圖會跟著變色當預覽 */
+      #color { margin: 0; padding: 6px 10px 8px; border: 1px solid #c9b182; border-radius: 8px; background: #fff; display: grid; grid-template-columns: auto 1fr 3.5em; gap: 2px 8px; align-items: center; }
+      #color legend { padding: 0 4px; color: #86704a; font-size: 13px; }
+      #color input { width: 100%; accent-color: #2f7d86; }
+      #color output { text-align: right; font-variant-numeric: tabular-nums; }
+      #color-reset { grid-column: 1 / -1; justify-self: end; font: inherit; font-size: 13px; padding: 2px 10px; border: 1px solid #c9b182; border-radius: 6px; background: #fff8e6; color: inherit; cursor: pointer; }
+      #list canvas { filter: var(--pet-filter, none); }
     </style>
   </head>
   <body>
     <header>
       <button id="follow" type="button">跟著目前在打的怪物<small>預設。換地方掛機，桌寵也跟著換</small></button>
+      <fieldset id="color">
+        <legend>顏色（整隻一起變，換了外觀也會留著）</legend>
+        <label for="color-hue">色相</label><input id="color-hue" type="range" /><output id="color-hue-value"></output>
+        <label for="color-sat">鮮豔度</label><input id="color-sat" type="range" /><output id="color-sat-value"></output>
+        <label for="color-light">亮度</label><input id="color-light" type="range" /><output id="color-light-value"></output>
+        <button id="color-reset" type="button">恢復原色</button>
+      </fieldset>
       <input id="search" type="search" placeholder="搜尋怪物或戰寵名稱" autofocus />
     </header>
     <div id="list"></div>

@@ -67,7 +67,6 @@ let clickThrough = false;
 // 專注模式下要顯示哪幾類飄字（右鍵選單「專注模式」裡勾的），以及每種事件算哪一類
 let focusShow = { damage: false, exp: false, loot: false };
 const FLOATER_GROUP = { damage: "damage", exp: "exp", levelup: "exp", loot: "loot", gold: "loot" };
-let stay = false; // 原地不走動（右鍵選單的開關）：只在原地踏步或揮擊，不左右走
 let drag; // { pet, grabX, startY, startLift, moved }
 let stroked = 0;
 
@@ -197,7 +196,7 @@ function think(p, dt) {
   if (p.action === "idle") {
     p.idleLeftMs -= dt;
     if (p.idleLeftMs > 0 || held(p)) return;
-    if (stay) {
+    if (p.stay) {
       // 原地不走動：改成在原地踏幾秒的步
       p.stepLeftMs = rand(...STEP_SECONDS) * 1000;
       setAction(p, "walk");
@@ -209,7 +208,7 @@ function think(p, dt) {
     setAction(p, "walk");
     return;
   }
-  if (stay) {
+  if (p.stay) {
     // 原地踏步：播走路的動畫但不移動，踏夠了就休息
     p.stepLeftMs = (p.stepLeftMs ?? 0) - dt;
     if (p.stepLeftMs <= 0 || held(p)) rest(p);
@@ -507,6 +506,8 @@ window.petApi.onPets((models) => {
   if (!Array.isArray(models) || models.length === 0) return;
   while (pets.length > models.length) removePet(pets.pop());
   while (pets.length < models.length) pets.push(createPet(pets.length));
+  applyStay(); // 新加進來的也要套上牠的設定
+  applyColors();
   pets.forEach((p, i) => loadModel(p, models[i]));
 });
 window.petApi.onEvents(playEvents);
@@ -514,9 +515,31 @@ window.petApi.onEvents(playEvents);
 window.petApi.onNotice((text) => spawnFloater("hint", text));
 window.petApi.onSay(say);
 window.petApi.onFocusShow((show) => (focusShow = show));
-window.petApi.onStay((on) => {
-  stay = on;
-  if (on) for (const p of pets) if (p.action === "walk") rest(p); // 正在走的先停下來
+// 原地不走動（右鍵選單）：只在原地踏步或揮擊，不左右走。每隻可以各自開關，送來的是每一隻的設定；
+// 只送一個 true／false 就是全部一起
+let stayFlags = false;
+function applyStay() {
+  for (const p of pets) {
+    const on = Array.isArray(stayFlags) ? !!stayFlags[p.index] : !!stayFlags;
+    if (on && !p.stay && p.action === "walk") rest(p); // 正在走的先停下來
+    p.stay = on;
+  }
+}
+// 整隻調色（選外觀視窗裡的三條拉條）：用濾鏡轉色相、調鮮豔度和亮度，圖本身的明暗層次會留著
+let petColors = [];
+function applyColors() {
+  for (const p of pets) {
+    const c = petColors[p.index];
+    p.canvas.style.filter = c ? `hue-rotate(${c.hue}deg) saturate(${c.sat}%) brightness(${c.light}%)` : "";
+  }
+}
+window.petApi.onColors((colors) => {
+  petColors = Array.isArray(colors) ? colors : [];
+  applyColors();
+});
+window.petApi.onStay((flags) => {
+  stayFlags = flags;
+  applyStay();
 });
 window.petApi.onAsk(ask);
 window.petApi.onClickThrough((on) => {

@@ -75,7 +75,7 @@ let pickerWin;
 let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
 // 使用者設定。petCount＝桌面上幾隻桌寵（都顧同一個角色，只是熱鬧）；
 // petModels[i]＝第 i 隻自己選的外觀，沒選（null）就跟著目前在打的怪物
-let settings = { petCount: 1, petModels: [], helpSeen: false, mallReminder: true, gmReminder: true, stayPut: false, bookmarkTool: true,
+let settings = { petCount: 1, petModels: [], petColors: [], helpSeen: false, mallReminder: true, gmReminder: true, stayPets: [], bookmarkTool: true,
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { damage: false, exp: false, loot: false } };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
@@ -91,6 +91,11 @@ function loadSettings() {
     if (!Array.isArray(settings.petModels)) settings.petModels = [];
     if (saved.petModel && !saved.petModels) settings.petModels = [saved.petModel];
     delete settings.petModel;
+    if (!Array.isArray(settings.petColors)) settings.petColors = [];
+    // 1.4.4 以前「原地不走動」是全部共用的一個開關（stayPut），現在每隻各記各的（stayPets）
+    if (!Array.isArray(settings.stayPets)) settings.stayPets = [];
+    if (saved.stayPut && !saved.stayPets) settings.stayPets = Array(MAX_PETS).fill(true);
+    delete settings.stayPut;
     settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
 }
@@ -331,7 +336,7 @@ function createPetWindow() {
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
     sendPets();
-    petWin.webContents.send("pet:stay", settings.stayPut);
+    sendStay();
     petWin.webContents.send("pet:focus-show", settings.focusShow);
     if (lastState) petWin.webContents.send("pet:state", lastState);
   });
@@ -573,7 +578,7 @@ function openPicker(petIndex = 0) {
   pickerTarget = petIndex;
   pickerWin = openPanel(pickerWin, "picker.html", {
     width: 440,
-    height: 640,
+    height: 760,
     title: "選擇桌寵外觀",
     webPreferences: { preload: path.join(__dirname, "picker-preload.js") },
   });
@@ -589,11 +594,32 @@ function resolveModels() {
   return Array.from({ length: settings.petCount }, (_, i) => settings.petModels[i] ?? following);
 }
 
-const sendPets = () => petWin?.webContents.send("pet:pets", resolveModels());
+// 每隻桌寵可以整隻調色：hue＝色相轉幾度、sat＝鮮豔度 %、light＝亮度 %。[最小, 最大, 預設]
+const COLOR_RANGE = { hue: [0, 360, 0], sat: [0, 200, 100], light: [50, 150, 100] };
+
+/** 把選外觀視窗送來的顏色整理成合法的數字；全部都是預設值就回傳 null（＝不調色）。 */
+function cleanColor(color) {
+  const out = {};
+  let changed = false;
+  for (const [key, [min, max, normal]] of Object.entries(COLOR_RANGE)) {
+    const value = Number(color?.[key]);
+    out[key] = Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : normal;
+    if (out[key] !== normal) changed = true;
+  }
+  return changed ? out : null;
+}
+
+const sendColors = () => petWin?.webContents.send("pet:colors", Array.from({ length: settings.petCount }, (_, i) => settings.petColors[i] ?? null));
+
+function sendPets() {
+  sendColors(); // 先送，新加進來的桌寵一出現就是調好的顏色
+  petWin?.webContents.send("pet:pets", resolveModels());
+}
 
 function setPetCount(count) {
   settings.petCount = count;
   saveSettings();
+  sendStay(); // 先送，新加進來的桌寵一出現就套上牠的設定
   sendPets();
   // 正在幫牠挑外觀的那一隻被收掉了，視窗跟著關
   if (pickerTarget >= count && pickerWin && !pickerWin.isDestroyed()) pickerWin.close();
@@ -715,6 +741,18 @@ function focusShowItem(key, label) {
   };
 }
 
+const stays = (petIndex) => !!settings.stayPets[petIndex];
+const allStay = () => Array.from({ length: settings.petCount }, (_, i) => stays(i)).every(Boolean);
+const sendStay = () => petWin?.webContents.send("pet:stay", Array.from({ length: settings.petCount }, (_, i) => stays(i)));
+
+/** 原地不走動。有給 petIndex 就只改那一隻；沒給就是全部（連之後才加進來的也一起）。 */
+function setStay(on, petIndex) {
+  const flags = Array.from({ length: MAX_PETS }, (_, i) => (petIndex === undefined || i === petIndex ? on : stays(i)));
+  settings.stayPets = flags;
+  saveSettings();
+  sendStay();
+}
+
 /** petIndex＝這次是對第幾隻桌寵按的右鍵（從系統匣開的話當作第一隻）。 */
 function buildMenu(petIndex = 0) {
   if (!(petIndex >= 0 && petIndex < settings.petCount)) petIndex = 0;
@@ -734,16 +772,16 @@ function buildMenu(petIndex = 0) {
       ],
     },
     { label: "顯示桌寵", type: "checkbox", checked: petWin.isVisible(), click: () => (petWin.isVisible() ? petWin.hide() : petWin.showInactive()) },
-    {
-      label: "原地不走動",
-      type: "checkbox",
-      checked: settings.stayPut,
-      click: (item) => {
-        settings.stayPut = item.checked;
-        saveSettings();
-        petWin.webContents.send("pet:stay", settings.stayPut);
-      },
-    },
+    // 只有一隻時是單純的開關；有好幾隻時展開成「這一隻」和「全部」
+    many
+      ? {
+          label: "原地不走動",
+          submenu: [
+            { label: `這一隻（第 ${petIndex + 1} 隻）`, type: "checkbox", checked: stays(petIndex), click: (item) => setStay(item.checked, petIndex) },
+            { label: "全部桌寵", type: "checkbox", checked: allStay(), click: (item) => setStay(item.checked) },
+          ],
+        }
+      : { label: "原地不走動", type: "checkbox", checked: stays(0), click: (item) => setStay(item.checked) },
     {
       label: "桌寵數量",
       submenu: Array.from({ length: MAX_PETS }, (_, i) => ({
@@ -815,9 +853,19 @@ async function fetchBytes(relPath) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/** 抓遊戲站上的檔案，存一份在本機；之後斷網也拿得到上次那份。 */
-async function cachedBytes(relPath) {
+const SPRITE_KEEP_MS = 7 * 24 * 60 * 60 * 1000; // 圖檔在本機留 7 天，過了才重新下載一次
+
+/**
+ * 抓遊戲站上的檔案，存一份在本機；之後斷網也拿得到上次那份。
+ * keepMs 有給的話：本機那份還沒超過這麼久就直接用，不再連網路下載（圖檔很少改，看過的就留在本機）。
+ */
+async function cachedBytes(relPath, keepMs = 0) {
   const file = path.join(app.getPath("userData"), "game-cache", relPath);
+  if (keepMs > 0) {
+    try {
+      if (Date.now() - fs.statSync(file).mtimeMs < keepMs) return fs.readFileSync(file);
+    } catch {}
+  }
   try {
     const bytes = await fetchBytes(relPath);
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -856,7 +904,7 @@ async function loadGameData() {
 ipcMain.handle("pet:sprite", async (_e, model) => {
   if (!/^[\w-]+$/.test(model)) return null;
   try {
-    const [meta, image] = await Promise.all([cachedBytes(`sprites/${model}.json`), cachedBytes(`sprites/${model}.webp`)]);
+    const [meta, image] = await Promise.all([cachedBytes(`sprites/${model}.json`, SPRITE_KEEP_MS), cachedBytes(`sprites/${model}.webp`, SPRITE_KEEP_MS)]);
     return { meta: JSON.parse(meta.toString("utf8")), image };
   } catch (e) {
     console.error(`動畫表 ${model} 載入失敗：`, e.message);
@@ -878,6 +926,8 @@ ipcMain.handle("income:get", incomeDetail);
 ipcMain.handle("picker:list", () => ({
   entries: pickerEntries(),
   current: settings.petModels[pickerTarget] ?? null,
+  color: settings.petColors[pickerTarget] ?? null,
+  colorRange: COLOR_RANGE,
   title: settings.petCount > 1 ? `選擇桌寵外觀（第 ${pickerTarget + 1} 隻）` : "選擇桌寵外觀",
 }));
 ipcMain.on("picker:choose", (_e, model) => {
@@ -886,6 +936,14 @@ ipcMain.on("picker:choose", (_e, model) => {
   settings.petModels = models;
   saveSettings();
   sendPets();
+});
+// 拉條拖動的過程一直送過來，桌寵馬上跟著變；放開（save）才寫進設定檔
+ipcMain.on("picker:color", (_e, color, save) => {
+  const colors = Array.from({ length: MAX_PETS }, (_, i) => settings.petColors[i] ?? null);
+  colors[pickerTarget] = cleanColor(color);
+  settings.petColors = colors;
+  if (save) saveSettings();
+  sendColors();
 });
 ipcMain.on("pet:toggle-game", toggleGame);
 ipcMain.on("pet:menu", (_e, index) => popupMenu(index));
@@ -1042,7 +1100,7 @@ app.whenReady().then(async () => {
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
-  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, quit: () => app.quit() });
+  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, setStay, quit: () => app.quit() });
 });
 
 app.on("before-quit", () => {

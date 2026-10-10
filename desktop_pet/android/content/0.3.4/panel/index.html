@@ -43,7 +43,7 @@
       select, input[type="search"] { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid #c9b182; border-radius: 8px; background: #fff; color: inherit; }
       #list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
       .pick { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border: 1px solid #c9b182; border-radius: 10px; background: #fff8e6; font: inherit; color: inherit; }
-      .pick i { width: 72px; height: 72px; background-repeat: no-repeat; background-size: 600% auto; }
+      .pick i { width: 72px; height: 72px; background-repeat: no-repeat; background-size: 600% auto; filter: var(--pet-filter, none); }
       .pick span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
       .pick small { color: #86704a; font-size: 10px; }
       .chosen { border-color: #2f7d86 !important; box-shadow: 0 0 0 2px #2f7d86 inset; }
@@ -141,6 +141,13 @@
       <section id="tab-looks">
         <div class="card">
           <button class="act" id="follow">跟著目前在打的怪物<small style="display: block; color: #86704a">預設。換地方掛機，桌寵也跟著換</small></button>
+          <!-- 整隻調色。舊版 App 不認得這個設定，那時候這一塊不顯示 -->
+          <div id="color" hidden style="margin-top: 10px">
+            <div class="row"><span>色相 <b id="color-hue-value"></b><input id="color-hue" type="range" min="0" max="360" /></span></div>
+            <div class="row"><span>鮮豔度 <b id="color-sat-value"></b><input id="color-sat" type="range" min="0" max="200" /></span></div>
+            <div class="row"><span>亮度 <b id="color-light-value"></b><input id="color-light" type="range" min="50" max="150" /></span></div>
+            <button class="act" id="color-reset">恢復原色</button>
+          </div>
           <input id="search" type="search" placeholder="搜尋怪物或戰寵名稱" style="margin-top: 10px" />
           <p class="dim" id="looks-empty">要先進遊戲選好角色，才讀得到外觀清單。</p>
           <div id="list"></div>
@@ -221,6 +228,7 @@
         $("update-version").textContent = status.appUpdate || "";
         chosen = settings.petModel;
         markChosen();
+        setupColor(settings.petColor);
       }
       document.addEventListener("change", (e) => {
         const key = e.target.dataset && e.target.dataset.key;
@@ -282,9 +290,36 @@
       setInterval(() => tab === "income" && loadIncome(), 3000);
 
       // ── 外觀 ──
+      // 整隻調色：三條拉條，拖的時候桌寵和下面的縮圖馬上跟著變。設定存成「色相,鮮豔度,亮度」。
+      const COLOR_KEYS = ["hue", "sat", "light"];
+      const COLOR_NORMAL = { hue: 0, sat: 100, light: 100 };
+      let colorReady = false;
+      function showColor() {
+        const c = {};
+        for (const key of COLOR_KEYS) c[key] = Number($("color-" + key).value);
+        $("color-hue-value").textContent = c.hue + "°";
+        $("color-sat-value").textContent = c.sat + "%";
+        $("color-light-value").textContent = c.light + "%";
+        const changed = COLOR_KEYS.some((key) => c[key] !== COLOR_NORMAL[key]);
+        $("list").style.setProperty("--pet-filter", changed ? `hue-rotate(${c.hue}deg) saturate(${c.sat}%) brightness(${c.light}%)` : "none");
+        return changed ? `${c.hue},${c.sat},${c.light}` : "";
+      }
+      // 畫面每幾秒會重讀一次設定；拉條只在第一次照設定擺好，之後不要去動，不然拖到一半會被拉回去
+      function setupColor(saved) {
+        if (colorReady || saved === undefined) return;
+        colorReady = true;
+        $("color").hidden = false;
+        const parts = String(saved).split(",").map(Number);
+        COLOR_KEYS.forEach((key, i) => ($("color-" + key).value = parts.length === 3 && Number.isFinite(parts[i]) ? parts[i] : COLOR_NORMAL[key]));
+        showColor();
+        for (const key of COLOR_KEYS) $("color-" + key).addEventListener("input", () => Android.set("petColor", showColor()));
+        $("color-reset").addEventListener("click", () => {
+          for (const key of COLOR_KEYS) $("color-" + key).value = COLOR_NORMAL[key];
+          Android.set("petColor", showColor());
+        });
+      }
       let entries;
       let chosen = "";
-      const MAX_SHOWN = 90;
       // 縮圖直接用動畫表當背景圖、只露出左上角第一格（待機的第一格）；捲到看得見才載圖，不然幾百張一起載太慢
       // 不能當桌寵的：遊戲站上沒有圖，或只有一格靜態圖、沒有走路動畫（箱子、礦石、樹那類）。
       // 這個畫面讀不到動畫表的說明檔，改看圖的形狀：能用的動畫表至少 5 列格子（每列 6 格），不能用的最多 2 列，
@@ -323,7 +358,7 @@
       }
       function renderLooks() {
         const q = $("search").value.trim().toLowerCase();
-        const shown = (entries || []).filter((e) => !unusable.has(e.model) && (!q || e.search.toLowerCase().includes(q))).slice(0, MAX_SHOWN);
+        const shown = (entries || []).filter((e) => !unusable.has(e.model) && (!q || e.search.toLowerCase().includes(q)));
         $("looks-empty").hidden = !!entries && entries.length > 0;
         thumbs.disconnect();
         $("list").innerHTML = shown.map((e) => `<button class="pick" data-model="${e.model}"><i data-model="${e.model}"></i><span>${escapeHtml(e.name)}</span><small>${e.group}</small></button>`).join("");
