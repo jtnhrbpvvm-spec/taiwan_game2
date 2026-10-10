@@ -104,7 +104,8 @@
     { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉）、名聲。" },
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
-    { panel: "slot", icon: "🔀", title: "存檔位置", desc: "把兩個角色在遊戲選角畫面上的格子互換（例如第 1 格 ↔ 第 6 格）。" },
+    // 遊戲已內建存檔排序，存檔位置先隱藏
+    // { panel: "slot", icon: "🔀", title: "存檔位置", desc: "把兩個角色在遊戲選角畫面上的格子互換（例如第 1 格 ↔ 第 6 格）。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
     { panel: "enchant", icon: "🔮", title: "發條強化", desc: "編輯裝備的發條強化屬性，數值旁邊附機率表算出的範圍參考。" },
     { panel: "appraisal", icon: "🔨", title: "鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" },
