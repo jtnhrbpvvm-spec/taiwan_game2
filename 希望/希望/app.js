@@ -374,6 +374,17 @@
     }
     return (POTION_STAT_LABEL[p.stat] || p.stat) + ' +' + p.amount + (p.stat === "aspd" ? '' : '%');
   }
+  // 等級 → 每竿經驗的顯示文字（沒填等級是空字串；等級不到門檻時說明要幾級）
+  function fishExpText(lv) {
+    if (!FISHING_EXP || !FISHING_EXP.exp.length || !lv) return '';
+    if (lv < FISHING_EXP.from) return '要 Lv' + FISHING_EXP.from + ' 以上';
+    return fmtNum(FISHING_EXP.exp[Math.min(lv - FISHING_EXP.from, FISHING_EXP.exp.length - 1)]);
+  }
+  document.addEventListener("input", function (e) {
+    if (!e.target.matches || !e.target.matches("[data-fish-exp-lv]")) return;
+    var out = e.target.parentNode.querySelector("[data-fish-exp-out]");
+    if (out) out.value = fishExpText(Math.floor(Number(e.target.value)) || 0);
+  });
   function potionNoteHtml(id) {
     var p = (MALL_INDEX.potions || {})[String(id)];
     if (!p) return '';
@@ -382,11 +393,11 @@
     var extra = '';
     if (p.stat === "fishHook") extra += '<br>每一竿同時用 ' + (p.baits || 1) + ' 個魚餌、釣上 ' + (p.baits || 1) + ' 樣東西（魚餌不夠就有幾個用幾個）。';
     if (p.stat === "fishExp" && FISHING_EXP && FISHING_EXP.exp.length) {
-      var ex = FISHING_EXP.exp, lastLv = FISHING_EXP.from + ex.length - 1;
-      extra += '<br>效果期間每釣一竿就拿一次經驗，給多少看角色等級：Lv' + FISHING_EXP.from + ' ' + bigNumHtml(ex[0]) +
-        '、Lv' + lastLv + ' 以上 ' + bigNumHtml(ex[ex.length - 1]) + '。';
+      // 等級自己輸入、經驗值自動算（唯讀）；預設帶上方「你目前的等級」，沒填就空著
       var myLv = Number((document.getElementById("globalDropLevel") || {}).value) || 0;
-      if (myLv >= FISHING_EXP.from) extra += '你填的 Lv' + myLv + ' 每竿是 <b>' + fmtNum(ex[Math.min(myLv - FISHING_EXP.from, ex.length - 1)]) + '</b>。';
+      extra += '<br>效果期間每釣一竿就拿一次經驗，給多少看角色等級 ' +
+        '<input type="number" data-fish-exp-lv="1" min="1" max="999" placeholder="等級" value="' + (myLv || '') + '" style="width:76px;padding:3px 6px;">' +
+        ' 經驗值 <input type="text" data-fish-exp-out="1" readonly tabindex="-1" value="' + escapeHtml(fishExpText(myLv)) + '" style="width:150px;padding:3px 6px;">';
     }
     return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' +
       (timed ? '🍀 使用' : '🧪 喝下') + '後：<b>' + escapeHtml(potionEffectText(p)) + '</b>，持續 ' +
