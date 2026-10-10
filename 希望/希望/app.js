@@ -358,14 +358,42 @@
     if (min >= 60 && min % 60 === 0) return (min / 60) + ' 小時';
     return min + ' 分鐘';
   }
+  // 釣魚經驗表（10-10 新增）：FISHING_EXP = {from, exp[]}，角色 Lv ≥ from 時每釣一竿給 exp[Lv - from]，超過表尾用最後一個（遊戲 yw()）
+  var FISHING_EXP = window.FISHING_EXP || null;
+  var POTION_PCT_KINDS = { 13: true, 14: true, 22: true, 23: true }; // 數值後面要加 % 的裝備選項
+  // 效果那一句照遊戲 cw() 的寫法：釣魚的兩種（10-10 新增）沒有百分比，變身藥水是一串裝備選項
+  function potionEffectText(p) {
+    if (p.stat === "fishHook") return '釣魚一竿釣 ' + (p.baits || 1) + ' 樣';
+    if (p.stat === "fishExp") return '釣魚得經驗';
+    if (p.stat === "morph") {
+      if (!p.bonus || !p.bonus.length) return '變身（沒有加成）';
+      return '變身，' + p.bonus.map(function (b) {
+        var k = (window.ENCHANT_KINDS || []).filter(function (x) { return x.kind === b.kind; })[0];
+        return (k ? k.name : '#' + b.kind) + ' +' + b.value + (POTION_PCT_KINDS[b.kind] ? '%' : '');
+      }).join('、');
+    }
+    return (POTION_STAT_LABEL[p.stat] || p.stat) + ' +' + p.amount + (p.stat === "aspd" ? '' : '%');
+  }
   function potionNoteHtml(id) {
     var p = (MALL_INDEX.potions || {})[String(id)];
     if (!p) return '';
-    var timed = p.stat === "exp" || p.stat === "drop";
+    var fishing = p.stat === "fishHook" || p.stat === "fishExp";
+    var timed = p.stat === "exp" || p.stat === "drop" || fishing;
+    var extra = '';
+    if (p.stat === "fishHook") extra += '<br>每一竿同時用 ' + (p.baits || 1) + ' 個魚餌、釣上 ' + (p.baits || 1) + ' 樣東西（魚餌不夠就有幾個用幾個）。';
+    if (p.stat === "fishExp" && FISHING_EXP && FISHING_EXP.exp.length) {
+      var ex = FISHING_EXP.exp, lastLv = FISHING_EXP.from + ex.length - 1;
+      extra += '<br>效果期間每釣一竿就拿一次經驗，給多少看角色等級：Lv' + FISHING_EXP.from + ' ' + bigNumHtml(ex[0]) +
+        '、Lv' + lastLv + ' 以上 ' + bigNumHtml(ex[ex.length - 1]) + '。';
+      var myLv = Number((document.getElementById("globalDropLevel") || {}).value) || 0;
+      if (myLv >= FISHING_EXP.from) extra += '你填的 Lv' + myLv + ' 每竿是 <b>' + fmtNum(ex[Math.min(myLv - FISHING_EXP.from, ex.length - 1)]) + '</b>。';
+    }
     return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' +
-      (timed ? '🍀 使用' : '🧪 喝下') + '後：<b>' + escapeHtml(POTION_STAT_LABEL[p.stat] || p.stat) + ' +' + p.amount + (p.stat === "aspd" ? '' : '%') + '</b>，持續 ' +
-      potionDurationText(p.durationMs) + '。' +
-      (p.maxLv != null ? '<br>⚠️ <b>限 Lv' + p.maxLv + ' 以下</b>的角色使用，超過就不能用。' : '') + '</div>';
+      (timed ? '🍀 使用' : '🧪 喝下') + '後：<b>' + escapeHtml(potionEffectText(p)) + '</b>，持續 ' +
+      potionDurationText(p.durationMs) + '。' + extra +
+      (p.maxLv != null ? '<br>⚠️ <b>限 Lv' + p.maxLv + ' 以下</b>的角色使用，超過就不能用。' : '') +
+      (p.minLv != null ? '<br>⚠️ 要 <b>Lv' + p.minLv + '</b> 以上才能用。' : '') +
+      (p.minFame != null ? '<br>⚠️ 要<b>累積名聲 ' + fmtNum(p.minFame) + '</b> 以上才能用。' : '') + '</div>';
   }
   // 頁面一直開著跨過整點時，把畫面上的名品館價格換成新時段的
   setInterval(function () {
