@@ -11,7 +11,7 @@ javascript:(() => {
    *   6. 生命明細：角色分頁的「最大生命」下面顯示算式和各項來源
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
-   * 物品管理的按鈕在「背包」分頁最上面那一列。
+   * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊）。
    *
    * 用法：整個檔案全選複製，貼到書籤的「網址」欄位即可（第一行的 javascript: 要保留）。
    * 修改注意：
@@ -214,7 +214,8 @@ javascript:(() => {
    * 模擬盤上的寶石是存檔寶石的「複本」，不會動到遊戲，直到按下「確定並套用」。
    * DPS 用遊戲自己的 calc()：暫時把 S.gems 換成模擬配置、算完立刻換回來。
    * 讀遊戲全域：S / PS / SKILLS / calc / gemCells / gemMods / linkedSupports /
-   *            openSet / canPlace / afterGrid / markDirty / saveNow / ui / toast / fmt。
+   *            openSet / canPlace / afterGrid / markDirty / saveNow / ui / toast / fmt，
+   *            以及畫圖用的 gemArt / gemOverlay 和遊戲的 sgrid 樣式。
    * 存檔結構：S.gems 是所有寶石（x 小於 0 代表沒放），S.gp 是使用中的構築分頁，
    *          S.gpages[i] 是其他分頁的快照，格式為 [寶石編號, x, y, 旋轉] 的陣列。
    */
@@ -288,7 +289,7 @@ javascript:(() => {
         '</div>' +
         '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">' +
           '<div>' +
-            '<div data-r="grid" style="position:relative;width:' + N * CELL + 'px;height:' + N * CELL + 'px;background:#1a1410;user-select:none"></div>' +
+            '<div data-r="grid" class="sgrid" style="width:' + (N * CELL + 15) + 'px;max-width:none;user-select:none"></div>' +
             '<div data-r="held" style="margin-top:6px;min-height:26px"></div>' +
             '<div style="color:#a89a84;font-size:12px">點下方寶石拿起 → 點格子放下；點已放的寶石可拿起<br>R 旋轉、右鍵放回、Esc 取消</div>' +
           '</div>' +
@@ -310,39 +311,38 @@ javascript:(() => {
         (i === page ? 'background:#ffd84a;color:#2a2118;font-weight:bold' : '') + '">' + (i + 1) + (i === S.gp ? '（使用中）' : '') + '</button>').join('');
     };
 
+    /* 小圖示：用遊戲畫寶石的 gemArt()（和技能分頁下方清單同一張圖） */
+    const icon = (g, rot) => {
+      const a = gemArt(g.id, rot, 5, g.sh);
+      return '<span class="awart" style="display:inline-block;vertical-align:middle;width:' + 2 * a.W + 'px;height:' + 2 * a.H + 'px">' + a.svg + '</span>';
+    };
+    const fitArt = el => el.querySelectorAll('.awart svg').forEach(v => { v.style.display = 'block'; v.style.width = '100%'; v.style.height = '100%'; });
+
+    /* 盤面直接沿用遊戲的外觀：容器掛上遊戲的 sgrid 樣式，格子用遊戲的 open／lock 樣式，
+     * 寶石圖和名稱用遊戲的 gemOverlay() 產生，放得下／放不下的提示用遊戲的 drop／ghost 樣式 */
     const drawGrid = () => {
-      const occ = occupied();
       const prev = new Map();
       if (held && hover) {
         const ok = fits(held, hover[0], hover[1]);
         for (const [x, y] of gemCells(held, hover[0], hover[1], held.rot)) prev.set(x + ',' + y, ok);
       }
-      const labelAt = new Map();
-      for (const g of gems) {
-        const cs = gemCells(g).slice().sort((a, b) => a[1] - b[1] || a[0] - b[0]);
-        labelAt.set(cs[0][0] + ',' + cs[0][1], g);
-      }
       let h = '';
       for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-        const k = x + ',' + y, g = occ.get(k);
-        let bg = realOpen.has(k) ? '#3a3026' : (allOpen ? '#2a2420' : '#15100c');
-        let extra = '';
-        if (g) { bg = SKILLS[g.id].col; extra = SKILLS[g.id].act ? 'box-shadow:inset 0 0 0 2px rgba(255,255,255,.55);' : 'box-shadow:inset 0 0 0 2px rgba(0,0,0,.45);'; }
-        if (prev.has(k)) extra += 'outline:3px solid ' + (prev.get(k) ? '#7dffc8' : '#ff5a6a') + ';outline-offset:-3px;';
-        const lab = labelAt.get(k);
-        h += '<div data-x="' + x + '" data-y="' + y + '" style="position:absolute;left:' + x * CELL + 'px;top:' + y * CELL + 'px;width:' + (CELL - 2) + 'px;height:' + (CELL - 2) + 'px;background:' + bg + ';' + extra + 'cursor:pointer;overflow:visible">' +
-          (lab ? '<span style="position:absolute;left:2px;top:1px;z-index:2;font:bold 11px/12px sans-serif;color:#fff;text-shadow:0 0 2px #000,1px 1px 0 #000;white-space:nowrap;pointer-events:none">' + SKILLS[lab.id].n + '</span>' : '') +
-          '</div>';
+        const k = x + ',' + y, open = realOpen.has(k);
+        let cls = open || allOpen ? 'open' : 'lock';
+        if (prev.has(k)) cls += prev.get(k) ? ' drop' : ' ghost';
+        h += '<button data-x="' + x + '" data-y="' + y + '" class="' + cls + '" style="cursor:pointer' + (!open && allOpen ? ';opacity:.55' : '') + '"></button>';
       }
+      for (const g of gems) h += gemOverlay(g, false);
       elGrid.innerHTML = h;
     };
 
     const drawHeld = () => {
       elHeld.innerHTML = held
-        ? '手上：<b style="color:' + SKILLS[held.id].col + '">' + SKILLS[held.id].n + '</b>（旋轉 ' + held.rot * 90 + '°） <button data-a="rot" style="' + BTN + '">旋轉</button> <button data-a="drop" style="' + BTN + '">放回</button>'
+        ? '手上：' + icon(held, held.rot) + ' <b style="color:' + SKILLS[held.id].col + '">' + SKILLS[held.id].n + '</b> <button data-a="rot" style="' + BTN + '">旋轉</button> <button data-a="drop" style="' + BTN + '">放回</button>'
         : '<span style="color:#a89a84">手上沒有寶石</span>';
+      fitArt(elHeld);
     };
-
     /* 右側數據：總 DPS，以及每顆寶石「拿掉它會少多少」的貢獻 */
     const drawStat = () => {
       const total = dpsOf(gems);
@@ -381,7 +381,7 @@ javascript:(() => {
       const btn = list => {
         const g = list[0], sk = SKILLS[g.id];
         return '<button data-a="pick" data-u="' + g.u + '" title="' + String(sk.d || '').replace(/"/g, '&quot;') + '" style="margin:2px;padding:2px 6px;border:1px solid ' + sk.col + ';background:#1a1410;color:#f0e6d2;cursor:pointer">' +
-          sk.n + (g.sh ? '（變異）' : '') + (list.length > 1 ? ' ×' + list.length : '') + '</button>';
+          icon(g, 0) + ' ' + sk.n + (g.sh ? '（變異）' : '') + (list.length > 1 ? ' ×' + list.length : '') + '</button>';
       };
       const all = [...groups.values()];
       const act = all.filter(l => SKILLS[l[0].id].act), sup = all.filter(l => !SKILLS[l[0].id].act);
@@ -389,6 +389,7 @@ javascript:(() => {
         '<div><b>主動技能</b>　' + (act.map(btn).join('') || '<span style="color:#a89a84">沒有剩餘</span>') + '</div>' +
         '<div style="margin-top:4px"><b>輔助寶石</b>　' + (sup.map(btn).join('') || '<span style="color:#a89a84">沒有剩餘</span>') + '</div>' +
         '<div style="color:#a89a84;font-size:12px">只列出你存檔裡持有的寶石；滑鼠停在按鈕上可看說明</div>';
+      fitArt(elPal);
     };
 
     const refresh = () => { drawPages(); drawGrid(); drawHeld(); drawStat(); drawPal(); };
@@ -804,17 +805,18 @@ javascript:(() => {
   }
 
   /* ===== 入口按鈕 =====
-   * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁最上面那一列。
+   * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
+   * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
   if (first && (CFG.planner || CFG.items)) {
-    const addBtn = (host, cls, label, fn) => {
+    const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
       b.className = 'btn sm ' + cls;
       b.textContent = label;
-      b.style.marginLeft = '8px';
+      if (margin) b.style.marginLeft = margin;
       b.addEventListener('click', e => { e.stopPropagation(); fn(); });
       host.appendChild(b);
     };
@@ -822,10 +824,10 @@ javascript:(() => {
       if (typeof S === 'undefined' || !S || typeof ui === 'undefined') return;
       const panel = document.querySelector('#panel');
       if (!panel) return;
-      if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner);
-      if (CFG.items && ui.tab === 'bag') addBtn(panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
+      if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
+      if (CFG.items && ui.tab === 'bag') addBtn(panel.querySelector('.row.tools') || panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
     }, CFG.btnRefreshMs);
   }
 
-  if (!first) { try { toast('小工具已經啟用：配置模擬在「技能」分頁，物品管理在「背包」分頁', 'lvl'); } catch (e) {} }
+  if (!first) { try { toast('小工具已經啟用：配置模擬在「技能」分頁，物品管理在「背包」分頁的保留規則旁邊', 'lvl'); } catch (e) {} }
 })();
