@@ -43,7 +43,8 @@ javascript:(() => {
     hpDetail: true,         /* 角色分頁顯示生命來源明細 */
     hpFont: 11,             /* 生命明細文字大小（px） */
     hpRefreshMs: 300,       /* 生命明細更新間隔 */
-    planCell: 46            /* 配置模擬的格子大小（px） */
+    planCell: 46,           /* 配置模擬的格子大小（px） */
+    gemPrice: 200           /* 商店一顆技能寶石的灰燼價格（匯入代碼自動補買時用） */
   };
 
   /* 所有功能只在第一次點書籤時安裝 */
@@ -570,6 +571,7 @@ javascript:(() => {
      *   F:裝備編號等號符文編號,符文編號;...   鑲嵌
      *   E:裝備編號;裝備編號                   換上
      *   G1:寶石配置   G2:寶石配置             一次指定多個構築的配置（數字是構築編號）
+     *   B:寶石代號等號數量;...                向商店補買寶石到指定的持有數量（匯入當下就會詢問並購買）
      *   例：G1:varrow:4,3,1|G2:pierce:0,0,1|F:19963=13149,19709|E:19963
      * 用了 G1／G2 這種多構築寫法時，裝備一律穿在使用中的構築，
      * 其他有指定配置的構築，裝備和天賦會改成和使用中的構築相同。 */
@@ -595,13 +597,39 @@ javascript:(() => {
       }
       return miss;
     };
+    /* 向商店補買寶石。寫法是「寶石代號=需要持有的數量」，只補不足的部分（變異寶石不算在內），
+     * 所以同一串代碼重複匯入不會重複購買。做法和遊戲商店的購買按鈕相同：扣灰燼、呼叫 giveGem()。 */
+    const buyGems = str => {
+      const todo = [];
+      for (const t of String(str).split(';').map(x => x.trim()).filter(Boolean)) {
+        const kv = t.split('=');
+        const id = kv[0], want = +kv[1] || 0;
+        if (!SKILLS[id] || !CLASS[S.cls].gems.includes(id)) continue;
+        const own = S.gems.filter(g => g.id === id && !g.sh).length;
+        if (want > own) todo.push([id, want - own]);
+      }
+      if (!todo.length) return;
+      const count = todo.reduce((n, x) => n + x[1], 0);
+      const cost = count * CFG.gemPrice;
+      const list = todo.map(x => SKILLS[x[0]].n + ' ×' + x[1]).join('、');
+      if (S.ash < cost) { alert('這份配置需要先買寶石：' + list + '，共 ' + cost + ' 灰燼，但你的灰燼不夠。'); return; }
+      if (!confirm('這份配置需要先向商店購買寶石：\n\n' + list + '\n\n共 ' + cost + ' 灰燼（你有 ' + fmt(S.ash) + '）。現在購買？\n按取消的話不會購買，缺的寶石會排不上去。')) return;
+      for (const x of todo) for (let i = 0; i < x[1]; i++) { S.ash -= CFG.gemPrice; giveGem(x[0]); }
+      markDirty();
+      saveNow();
+      ui.render();
+    };
     const importCode = code => {
       let miss = [];
       held = null;
       gear = null;
       multi = null;
       let single = null;
-      for (const part of String(code).split('|').map(t => t.trim()).filter(Boolean)) {
+      const allParts = String(code).split('|').map(t => t.trim()).filter(Boolean);
+      /* B 段要最先處理：先把缺的寶石買齊，後面排配置時才找得到 */
+      for (const part of allParts) if (/^B:/i.test(part)) buyGems(part.slice(2));
+      for (const part of allParts) {
+        if (/^B:/i.test(part)) continue;
         const gm = /^G(\d):/i.exec(part);
         if (gm) {
           const p = +gm[1] - 1;
