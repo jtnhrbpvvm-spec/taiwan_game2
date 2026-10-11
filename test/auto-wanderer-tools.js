@@ -287,6 +287,7 @@ javascript:(() => {
           '<b style="font-size:15px">技能配置模擬</b><span data-r="pages"></span><span style="flex:1"></span>' +
           '<label style="cursor:pointer"><input type="checkbox" data-a="open"> 預覽全部 36 格</label>' +
           '<button data-a="reset" style="' + BTN + '">重新讀取</button><button data-a="clear" style="' + BTN + '">清空</button>' +
+          '<button data-a="imp" style="' + BTN + '">匯入配置</button><button data-a="exp" style="' + BTN + '">匯出配置</button>' +
         '</div>' +
         '<div data-r="copy" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
         '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">' +
@@ -456,6 +457,34 @@ javascript:(() => {
     };
     window.addEventListener('keydown', onKey, true);
 
+    /* 配置代碼：每顆寶石一段，用分號隔開，格式是「寶石代號[*][#編號]:x,y,旋轉」。
+     *   寶石代號是遊戲內部的英文代號（例如 varrow 是劇毒箭矢），* 代表變異寶石，
+     *   #編號 是存檔裡那顆寶石的編號，可以省略；x、y 從 0 開始，旋轉是 0 到 3。
+     *   例：varrow:4,3,1;multi*:3,2,3;prec:2,2,2 */
+    const exportCode = () => gems.map(g => g.id + (g.sh ? '*' : '') + '#' + g.u + ':' + g.x + ',' + g.y + ',' + g.rot).join(';');
+    const importCode = code => {
+      const miss = [];
+      gems = [];
+      held = null;
+      for (const tok of String(code).split(';').map(t => t.trim()).filter(Boolean)) {
+        const m = /^([a-zA-Z]+)(\*?)(?:#(\d+))?:(-?\d+),(-?\d+),(\d)$/.exec(tok);
+        if (!m) { miss.push(tok); continue; }
+        const id = m[1], mut = !!m[2], u = m[3] ? +m[3] : null, x = +m[4], y = +m[5], rot = +m[6] % 4;
+        const free = g => g.id === id && !gems.some(o => o.u === g.u);
+        /* 先找編號相同的那一顆，再找同樣是（或不是）變異的，最後才用任何一顆同名的 */
+        const cand = [...S.gems.filter(g => free(g) && g.u === u), ...S.gems.filter(g => free(g) && !!g.sh === mut), ...S.gems.filter(free)];
+        let ok = null;
+        for (const g of cand) {
+          const c = clone(g, x, y, rot);
+          if (fits(c, x, y)) { ok = c; break; }
+        }
+        if (ok) gems.push(ok);
+        else miss.push((SKILLS[id] ? SKILLS[id].n : id) + (mut ? '（變異）' : ''));
+      }
+      refresh();
+      if (miss.length) alert('有 ' + miss.length + ' 顆放不上去（沒有這顆寶石，或位置超出、重疊、尚未解鎖）：' + miss.join('、'));
+    };
+
     /* 把模擬盤寫回存檔 */
     const apply = () => {
       if (gems.some(g => gemCells(g).some(([x, y]) => !realOpen.has(x + ',' + y)))) {
@@ -517,6 +546,17 @@ javascript:(() => {
       if (a === 'reset') { gems = load(page); held = null; }
       if (a === 'cpGems') { gems = load(src); held = null; }
       if (a === 'cpEquip') { copyEquip(); return; }
+      if (a === 'exp') {
+        const code = exportCode();
+        try { navigator.clipboard.writeText(code); } catch (err) {}
+        prompt('配置代碼（已嘗試複製到剪貼簿，也可以在這裡全選複製）', code);
+        return;
+      }
+      if (a === 'imp') {
+        const code = prompt('貼上配置代碼。匯入後只會改模擬盤，按「確定並套用」才寫入存檔。');
+        if (code) importCode(code);
+        return;
+      }
       if (a === 'clear') { gems = []; held = null; }
       if (a === 'drop') { held = null; }
       if (a === 'pick') { const g = S.gems.find(o => String(o.u) === b.dataset.u); if (g) held = clone(g, -1, -1, 0); }
