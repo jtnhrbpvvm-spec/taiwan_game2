@@ -231,6 +231,8 @@ javascript:(() => {
     let src = -1;
     /* 匯入代碼帶進來的裝備計畫：{ fuse: [{ u, runes: [符文編號] }], equip: [裝備編號] }，按確定時才執行 */
     let gear = null;
+    /* 匯入代碼帶進來的多構築計畫：{ 構築索引: 寶石配置 }，按確定時一次寫入 */
+    let multi = null;
     let gems = [];
     let held = null;
     let hover = null;
@@ -488,27 +490,39 @@ javascript:(() => {
       if (rs.filter(r => !r.uq && AFFIX[r.a].dv != null).length > 1) return '神眷詞綴最多一條';
       return '';
     };
-    const gearLines = () => {
+    /* 計畫內容的文字說明，顯示在紅框和確認視窗裡 */
+    const planLines = () => {
       const out = [];
-      for (const f of gear.fuse) {
-        const it = allItems().find(o => o.u === f.u);
-        const rs = f.runes.map(u => S.runes.find(r => r.u === u));
-        out.push('鑲嵌 ' + (it ? itemName(it) + '（' + SLOT_NAME[it.slot] + '）' : '#' + f.u) + ' ← ' + rs.map(r => r ? runeText(r) : '（找不到）').join('、'));
+      if (gear) {
+        for (const f of gear.fuse) {
+          const it = allItems().find(o => o.u === f.u);
+          const rs = f.runes.map(u => S.runes.find(r => r.u === u));
+          out.push('鑲嵌 ' + (it ? itemName(it) + '（' + SLOT_NAME[it.slot] + '）' : '#' + f.u) + ' ← ' + rs.map(r => r ? runeText(r) : '（找不到）').join('、'));
+        }
+        for (const u of gear.equip) {
+          const it = allItems().find(o => o.u === u);
+          out.push('換上 ' + (it ? SLOT_NAME[it.slot] + '：' + itemName(it) : '#' + u));
+        }
       }
-      for (const u of gear.equip) {
-        const it = allItems().find(o => o.u === u);
-        out.push('換上 ' + (it ? SLOT_NAME[it.slot] + '：' + itemName(it) : '#' + u));
+      if (multi) {
+        for (const k of Object.keys(multi)) {
+          const p = +k;
+          out.push('構築 ' + (p + 1) + '：寫入 ' + multi[k].length + ' 顆寶石的配置' +
+            (p === S.gp ? '（使用中）' : '，裝備和天賦改成和使用中的構築 ' + (S.gp + 1) + ' 相同'));
+        }
       }
       return out;
     };
     const drawGear = () => {
-      elGear.innerHTML = !gear ? '' :
+      elGear.innerHTML = !gear && !multi ? '' :
         '<div style="background:#1a1410;border:1px solid #c8323c;border-radius:4px;padding:6px 8px;margin-bottom:8px">' +
-        '<b style="color:#ffb070">裝備計畫</b>（按「確定並套用」時執行，鑲嵌無法復原） <button data-a="gearClear" style="' + BTN + '">取消裝備計畫</button>' +
-        gearLines().map(l => '<div style="font-size:12px">' + l.replace(/</g, '&lt;') + '</div>').join('') + '</div>';
+        '<b style="color:#ffb070">匯入的計畫</b>（按「確定並套用」時執行' + (gear ? '，鑲嵌無法復原' : '') + '） <button data-a="gearClear" style="' + BTN + '">取消計畫</button>' +
+        planLines().map(l => '<div style="font-size:12px">' + l.replace(/</g, '&lt;') + '</div>').join('') + '</div>';
     };
-    /* 執行裝備計畫。全部先檢查過才動手；回傳 false 代表使用者取消或檢查沒過（這時什麼都沒改） */
+    /* 執行裝備計畫。全部先檢查過才動手；回傳 false 代表使用者取消或檢查沒過（這時什麼都沒改）。
+     * 多構築計畫一律穿在使用中的構築上，其他構築之後再照抄；單一構築則穿在選定的目標構築 */
     const runGear = () => {
+      const tp = multi ? S.gp : page;
       for (const f of gear.fuse) {
         const err = fuseCheck(f);
         if (err) { alert('裝備計畫無法執行，沒有做任何變更。\n鑲嵌 #' + f.u + '：' + err); return false; }
@@ -522,7 +536,7 @@ javascript:(() => {
         if (!it) { alert('裝備計畫無法執行，沒有做任何變更。\n找不到要換上的裝備 #' + u); return false; }
         if (!canWear(it)) { alert('裝備計畫無法執行，沒有做任何變更。\n等級不足，穿不上 ' + itemName(it)); return false; }
       }
-      if (!confirm('即將執行裝備計畫（套用到構築 ' + (page + 1) + '）：\n\n' + gearLines().join('\n') +
+      if (!confirm('即將執行（裝備穿在構築 ' + (tp + 1) + '）：\n\n' + planLines().join('\n') +
         '\n\n鑲嵌會消耗 ' + fuseItems.length + ' 顆灌注石 Lv3、' + ashNeed + ' 灰燼和上面列出的符文，鑲嵌後無法取下、無法復原。\n確定執行？')) return false;
 
       for (let i = 0; i < gear.fuse.length; i++) {
@@ -533,13 +547,13 @@ javascript:(() => {
       }
       for (const u of gear.equip) {
         const it = allItems().find(o => o.u === u);
-        if (page === S.gp) {
+        if (tp === S.gp) {
           if (S.bag.includes(it)) equipItem(u);
         } else {
-          const cur = S.bld[page];
+          const cur = S.bld[tp];
           const eq = Object.assign({}, cur ? cur.eq : eqOf(S.gp));
           eq[it.slot] = u;
-          S.bld[page] = { eq: eq, asc: cur ? cur.asc : S.tal.asc, p: cur ? [...cur.p] : [...S.tal.p], art: cur ? cur.art : S.art.on };
+          S.bld[tp] = { eq: eq, asc: cur ? cur.asc : S.tal.asc, p: cur ? [...cur.p] : [...S.tal.p], art: cur ? cur.art : S.art.on };
         }
       }
       gear = null;
@@ -552,28 +566,19 @@ javascript:(() => {
      *   寶石代號是遊戲內部的英文代號（例如 varrow 是劇毒箭矢），* 代表變異寶石，
      *   #編號 是存檔裡那顆寶石的編號，可以省略；x、y 從 0 開始，旋轉是 0 到 3。
      *   例：varrow:4,3,1;multi*:3,2,3;prec:2,2,2
-     * 後面可以用直線符號接上裝備計畫（只有匯入支援，匯出不會帶）：
-     *   F:裝備編號等號符文編號,符文編號;...   代表鑲嵌
-     *   E:裝備編號;裝備編號                   代表換上
-     *   例：varrow:4,3,1|F:19963=13149,19709|E:19963 */
+     * 進階用法（只有匯入支援，匯出不會帶），各段用直線符號隔開：
+     *   F:裝備編號等號符文編號,符文編號;...   鑲嵌
+     *   E:裝備編號;裝備編號                   換上
+     *   G1:寶石配置   G2:寶石配置             一次指定多個構築的配置（數字是構築編號）
+     *   例：G1:varrow:4,3,1|G2:pierce:0,0,1|F:19963=13149,19709|E:19963
+     * 用了 G1／G2 這種多構築寫法時，裝備一律穿在使用中的構築，
+     * 其他有指定配置的構築，裝備和天賦會改成和使用中的構築相同。 */
     const exportCode = () => gems.map(g => g.id + (g.sh ? '*' : '') + '#' + g.u + ':' + g.x + ',' + g.y + ',' + g.rot).join(';');
-    const importCode = code => {
+    /* 把一段寶石配置排進模擬盤（會先清空），回傳放不上去的清單 */
+    const parseGems = str => {
       const miss = [];
       gems = [];
-      held = null;
-      gear = null;
-      const parts = String(code).split('|').map(t => t.trim());
-      for (const part of parts.slice(1)) {
-        const body = part.slice(2).split(';').map(t => t.trim()).filter(Boolean);
-        if (!gear) gear = { fuse: [], equip: [] };
-        if (/^F:/i.test(part)) {
-          for (const t of body) { const kv = t.split('='); gear.fuse.push({ u: +kv[0], runes: (kv[1] || '').split(',').filter(Boolean).map(Number) }); }
-        } else if (/^E:/i.test(part)) {
-          for (const t of body) gear.equip.push(+t);
-        }
-      }
-      if (gear && !gear.fuse.length && !gear.equip.length) gear = null;
-      for (const tok of parts[0].split(';').map(t => t.trim()).filter(Boolean)) {
+      for (const tok of String(str).split(';').map(t => t.trim()).filter(Boolean)) {
         const m = /^([a-zA-Z]+)(\*?)(?:#(\d+))?:(-?\d+),(-?\d+),(\d)$/.exec(tok);
         if (!m) { miss.push(tok); continue; }
         const id = m[1], mut = !!m[2], u = m[3] ? +m[3] : null, x = +m[4], y = +m[5], rot = +m[6] % 4;
@@ -588,37 +593,86 @@ javascript:(() => {
         if (ok) gems.push(ok);
         else miss.push((SKILLS[id] ? SKILLS[id].n : id) + (mut ? '（變異）' : ''));
       }
+      return miss;
+    };
+    const importCode = code => {
+      let miss = [];
+      held = null;
+      gear = null;
+      multi = null;
+      let single = null;
+      for (const part of String(code).split('|').map(t => t.trim()).filter(Boolean)) {
+        const gm = /^G(\d):/i.exec(part);
+        if (gm) {
+          const p = +gm[1] - 1;
+          if (p < 0 || p >= S.gpages.length) { miss.push('沒有構築 ' + gm[1]); continue; }
+          if (!multi) multi = {};
+          miss = miss.concat(parseGems(part.slice(3)).map(n => '構築 ' + gm[1] + ' 的 ' + n));
+          multi[p] = gems;
+        } else if (/^F:/i.test(part)) {
+          if (!gear) gear = { fuse: [], equip: [] };
+          for (const t of part.slice(2).split(';').map(x => x.trim()).filter(Boolean)) {
+            const kv = t.split('=');
+            gear.fuse.push({ u: +kv[0], runes: (kv[1] || '').split(',').filter(Boolean).map(Number) });
+          }
+        } else if (/^E:/i.test(part)) {
+          if (!gear) gear = { fuse: [], equip: [] };
+          for (const t of part.slice(2).split(';').map(x => x.trim()).filter(Boolean)) gear.equip.push(+t);
+        } else {
+          single = part;
+        }
+      }
+      if (gear && !gear.fuse.length && !gear.equip.length) gear = null;
+      if (multi) {
+        /* 模擬盤先顯示使用中的構築（有的話），否則顯示計畫裡的第一個 */
+        if (!multi[page]) page = multi[S.gp] ? S.gp : +Object.keys(multi)[0];
+        gems = multi[page];
+      } else if (single != null) {
+        miss = parseGems(single);
+      } else {
+        gems = load(page);
+      }
       refresh();
-      if (miss.length) alert('有 ' + miss.length + ' 顆放不上去（沒有這顆寶石，或位置超出、重疊、尚未解鎖）：' + miss.join('、'));
+      if (miss.length) alert('有 ' + miss.length + ' 項放不上去（沒有這顆寶石，或位置超出、重疊、尚未解鎖）：' + miss.join('、'));
     };
 
-    /* 把模擬盤寫回存檔 */
+    /* 把一份配置寫進某個構築：使用中的直接改寶石位置，其他的只改快照。回傳放不下的數量 */
+    const writeLayout = (p, list) => {
+      if (p !== S.gp) { S.gpages[p] = list.map(g => [g.u, g.x, g.y, g.rot]); return 0; }
+      let miss = 0;
+      for (const g of S.gems) g.x = g.y = -1;
+      for (const c of list) {
+        const g = S.gems.find(o => o.u === c.u);
+        if (g && canPlace(g, c.x, c.y, c.rot)) { g.x = c.x; g.y = c.y; g.rot = c.rot; } else { miss++; }
+      }
+      ui.selGem = null; ui.ghost = null;
+      return miss;
+    };
+
+    /* 把模擬盤（或匯入的多構築計畫）寫回存檔 */
     const apply = () => {
-      if (gems.some(g => gemCells(g).some(([x, y]) => !realOpen.has(x + ',' + y)))) {
+      if (multi && multi[page]) multi[page] = gems;
+      const lists = multi ? multi : { [page]: gems };
+      const pages = Object.keys(lists).map(Number);
+      if (pages.some(p => lists[p].some(g => gemCells(g).some(([x, y]) => !realOpen.has(x + ',' + y))))) {
         alert('有寶石放在尚未解鎖的格子上，無法套用。請先移開，或取消「預覽全部 36 格」。');
         return;
       }
-      /* 有裝備計畫就先做（使用者取消或檢查沒過就整個不套用） */
-      if (gear && !runGear()) { refresh(); return; }
+      /* 有裝備計畫就先做（使用者取消或檢查沒過就整個不套用）；沒有裝備計畫的多構築寫入也先確認 */
+      if (gear) { if (!runGear()) { refresh(); return; } }
+      else if (multi && !confirm('即將執行：\n\n' + planLines().join('\n') + '\n\n確定執行？')) return;
+
       let miss = 0;
-      if (page === S.gp) {
-        /* 使用中的分頁：直接改寶石位置，再走遊戲自己放寶石後的流程 */
-        for (const g of S.gems) g.x = g.y = -1;
-        for (const p of gems) {
-          const g = S.gems.find(o => o.u === p.u);
-          if (g && canPlace(g, p.x, p.y, p.rot)) { g.x = p.x; g.y = p.y; g.rot = p.rot; } else { miss++; }
-        }
-        ui.selGem = null; ui.ghost = null;
-        afterGrid();
-      } else {
-        /* 其他分頁：只改該分頁的快照，切換過去時遊戲才會套用 */
-        S.gpages[page] = gems.map(g => [g.u, g.x, g.y, g.rot]);
-        markDirty();
+      for (const p of pages) {
+        miss += writeLayout(p, lists[p]);
+        /* 多構築計畫：其他構築的裝備、天賦、神器照抄使用中的構築 */
+        if (multi && p !== S.gp) S.bld[p] = { eq: Object.assign({}, eqOf(S.gp)), asc: S.tal.asc, p: [...S.tal.p], art: S.art.on };
       }
+      if (pages.includes(S.gp)) afterGrid(); else markDirty();
       saveNow();
       ui.render();
       close();
-      toast('已套用到構築 ' + (page + 1) + (miss ? '（' + miss + ' 顆放不下）' : ''), 'lvl');
+      toast('已套用到構築 ' + pages.map(p => p + 1).join('、') + (miss ? '（' + miss + ' 顆放不下）' : ''), 'lvl');
     };
 
     const cellOf = e => { const c = e.target.closest('[data-x]'); return c ? [+c.dataset.x, +c.dataset.y] : null; };
@@ -651,11 +705,17 @@ javascript:(() => {
       if (a === 'apply') { apply(); return; }
       if (a === 'open') { allOpen = b.checked; drawGrid(); return; }
       if (a === 'rot') { rotate(); return; }
-      if (a === 'page') { page = +b.dataset.v; gems = load(page); held = null; }
+      if (a === 'page') {
+        /* 多構築計畫中切換分頁：先把目前盤面存回計畫，再顯示另一個構築的計畫內容 */
+        if (multi && multi[page]) multi[page] = gems;
+        page = +b.dataset.v;
+        gems = multi && multi[page] ? multi[page] : load(page);
+        held = null;
+      }
       if (a === 'reset') { gems = load(page); held = null; }
       if (a === 'cpGems') { gems = load(src); held = null; }
       if (a === 'cpEquip') { copyEquip(); return; }
-      if (a === 'gearClear') { gear = null; drawGear(); return; }
+      if (a === 'gearClear') { gear = null; multi = null; drawGear(); return; }
       if (a === 'exp') {
         const code = exportCode();
         try { navigator.clipboard.writeText(code); } catch (err) {}
