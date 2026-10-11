@@ -226,8 +226,9 @@ javascript:(() => {
     const N = 6;
     const CELL = CFG.planCell;
     const clone = (g, x, y, rot) => { const c = { u: g.u, id: g.id, x: x, y: y, rot: rot || 0 }; if (g.sh) c.sh = g.sh; return c; };
-    const realOpen = openSet();
+    let realOpen = openSet();
     let page = S.gp;
+    let src = -1;
     let gems = [];
     let held = null;
     let hover = null;
@@ -287,6 +288,7 @@ javascript:(() => {
           '<label style="cursor:pointer"><input type="checkbox" data-a="open"> 預覽全部 36 格</label>' +
           '<button data-a="reset" style="' + BTN + '">重新讀取</button><button data-a="clear" style="' + BTN + '">清空</button>' +
         '</div>' +
+        '<div data-r="copy" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
         '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">' +
           '<div>' +
             '<div data-r="grid" class="sgrid" style="width:' + (N * CELL + 15) + 'px;max-width:none;user-select:none"></div>' +
@@ -303,12 +305,65 @@ javascript:(() => {
       '</div>';
     document.body.appendChild(root);
     const q = k => root.querySelector('[data-r="' + k + '"]');
-    const elGrid = q('grid'), elHeld = q('held'), elStat = q('stat'), elPal = q('pal'), elPages = q('pages');
+    const elGrid = q('grid'), elHeld = q('held'), elStat = q('stat'), elPal = q('pal'), elPages = q('pages'), elCopy = q('copy');
 
     const drawPages = () => {
       elPages.innerHTML = '套用到構築：' + S.gpages.map((_, i) =>
         '<button data-a="page" data-v="' + i + '" style="' + BTN + ';margin-left:3px;' +
         (i === page ? 'background:#ffd84a;color:#2a2118;font-weight:bold' : '') + '">' + (i + 1) + (i === S.gp ? '（使用中）' : '') + '</button>').join('');
+
+      /* 複製列：來源不能和目標是同一個構築 */
+      if (src < 0 || src === page) src = S.gpages.findIndex((_, i) => i !== page);
+      elCopy.innerHTML = src < 0 ? '' :
+        '從構築 <select data-r="src" style="padding:2px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
+        S.gpages.map((_, i) => i === page ? '' : '<option value="' + i + '"' + (i === src ? ' selected' : '') + '>' + (i + 1) + (i === S.gp ? '（使用中）' : '') + '</option>').join('') +
+        '</select> 複製到構築 ' + (page + 1) + '：' +
+        '<button data-a="cpGems" style="' + BTN + '">複製技能組</button>' +
+        '<button data-a="cpEquip" style="' + BTN + '">複製裝備</button>' +
+        '<small style="color:#a89a84">技能組先複製到模擬盤，按「確定並套用」才寫入；裝備會立刻寫入</small>';
+    };
+
+    /* 某個構築綁定的裝備（部位 → 物品編號）：使用中的讀身上，其他讀 S.bld 的記錄 */
+    const eqOf = p => {
+      if (p === S.gp) { const m = {}; for (const sl of SLOTS) if (S.equip[sl]) m[sl] = S.equip[sl].u; return m; }
+      return S.bld[p] ? S.bld[p].eq : null;
+    };
+    /* 把來源構築的裝備複製給目標構築。
+     * 目標是使用中的構築：用遊戲的 equipItem() 真的穿上；
+     * 目標是其他構築：只改 S.bld 裡的記錄（天賦和神器沿用目標原本的，沒有記錄就用目前的） */
+    const copyEquip = () => {
+      const eq = eqOf(src);
+      if (!eq || !Object.keys(eq).length) { alert('構築 ' + (src + 1) + ' 沒有記錄裝備（還沒切換過的構築不會有記錄）'); return; }
+      const pool = [...SLOTS.map(sl => S.equip[sl]).filter(Boolean), ...S.bag];
+      const names = SLOTS.filter(sl => eq[sl]).map(sl => {
+        const it = pool.find(o => o.u === eq[sl]);
+        return SLOT_NAME[sl] + '：' + (it ? itemName(it) : '（找不到，可能已分解）');
+      });
+      if (!confirm('把構築 ' + (src + 1) + ' 的裝備複製到構築 ' + (page + 1) + '？\n\n' + names.join('\n') + '\n\n這會立刻寫入存檔。')) return;
+      let fail = 0;
+      if (page === S.gp) {
+        for (const sl of SLOTS) {
+          const u = eq[sl];
+          if (!u || (S.equip[sl] && S.equip[sl].u === u)) continue;
+          const it = S.bag.find(o => o.u === u);
+          if (!it || !canWear(it)) { fail++; continue; }
+          equipItem(u);
+        }
+        realOpen = openSet();
+      } else {
+        const cur = S.bld[page];
+        S.bld[page] = {
+          eq: Object.assign({}, eq),
+          asc: cur ? cur.asc : S.tal.asc,
+          p: cur ? [...cur.p] : [...S.tal.p],
+          art: cur ? cur.art : S.art.on
+        };
+        markDirty();
+      }
+      saveNow();
+      ui.render();
+      refresh();
+      toast('已把構築 ' + (src + 1) + ' 的裝備複製到構築 ' + (page + 1) + (fail ? '（' + fail + ' 件無法穿上）' : ''), 'lvl');
     };
 
     /* 小圖示：用遊戲畫寶石的 gemArt()（和技能分頁下方清單同一張圖） */
@@ -460,11 +515,15 @@ javascript:(() => {
       if (a === 'rot') { rotate(); return; }
       if (a === 'page') { page = +b.dataset.v; gems = load(page); held = null; }
       if (a === 'reset') { gems = load(page); held = null; }
+      if (a === 'cpGems') { gems = load(src); held = null; }
+      if (a === 'cpEquip') { copyEquip(); return; }
       if (a === 'clear') { gems = []; held = null; }
       if (a === 'drop') { held = null; }
       if (a === 'pick') { const g = S.gems.find(o => String(o.u) === b.dataset.u); if (g) held = clone(g, -1, -1, 0); }
       refresh();
     });
+
+    root.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.r === 'src') src = +e.target.value; });
 
     refresh();
   };
