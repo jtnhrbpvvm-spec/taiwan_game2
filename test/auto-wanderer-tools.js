@@ -10,7 +10,8 @@ javascript:(() => {
    *   5. 物品管理：分頁列出裝備、石板、符文、技能寶石，用關鍵字和數值比較搜尋，批次分解／鎖定／解鎖
    *   6. 生命明細：角色分頁的「最大生命」下面顯示算式和各項來源
    *
-   * 第一次點書籤會啟用 1、2、3、6 並跳出選單；之後再點只會跳出選單（選 4 或 5）。
+   * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
+   * 物品管理的按鈕在「背包」分頁最上面那一列。
    *
    * 用法：整個檔案全選複製，貼到書籤的「網址」欄位即可（第一行的 javascript: 要保留）。
    * 修改注意：
@@ -35,15 +36,16 @@ javascript:(() => {
     cdFont: 10,             /* 冷卻文字大小（px） */
     cdColor: '#ffe08a',     /* 冷卻文字顏色 */
     cdRefreshMs: 100,       /* 冷卻文字更新間隔 */
-    planner: true,          /* 選單裡顯示「技能配置模擬」 */
-    items: true,            /* 選單裡顯示「物品管理」 */
+    planner: true,          /* 技能分頁加上「配置模擬」按鈕 */
+    items: true,            /* 背包分頁加上「物品管理」按鈕 */
+    btnRefreshMs: 300,      /* 檢查入口按鈕是否還在的間隔 */
     hpDetail: true,         /* 角色分頁顯示生命來源明細 */
     hpFont: 11,             /* 生命明細文字大小（px） */
     hpRefreshMs: 300,       /* 生命明細更新間隔 */
     planCell: 46            /* 配置模擬的格子大小（px） */
   };
 
-  /* 1～3 只在第一次點書籤時安裝 */
+  /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
   window.__awTools = 1;
 
@@ -781,32 +783,29 @@ javascript:(() => {
     }, CFG.hpRefreshMs);
   }
 
-  /* ===== 選單：每次點書籤都會出現，選要開哪個視窗 ===== */
-  const openMenu = () => {
-    if (document.querySelector('#awPlan') || document.querySelector('#awItems') || document.querySelector('#awMenu')) return;
-    const items = [];
-    if (CFG.planner) items.push(['技能配置模擬', openPlanner]);
-    if (CFG.items) items.push(['物品管理', openItems]);
-    if (!items.length) return;
-    if (items.length === 1) { items[0][1](); return; }
+  /* ===== 入口按鈕 =====
+   * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁最上面那一列。
+   * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
+   * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
+   */
+  if (first && (CFG.planner || CFG.items)) {
+    const addBtn = (host, cls, label, fn) => {
+      if (!host || host.querySelector('.' + cls)) return;
+      const b = document.createElement('button');
+      b.className = 'btn sm ' + cls;
+      b.textContent = label;
+      b.style.marginLeft = '8px';
+      b.addEventListener('click', e => { e.stopPropagation(); fn(); });
+      host.appendChild(b);
+    };
+    setInterval(() => {
+      if (typeof S === 'undefined' || !S || typeof ui === 'undefined') return;
+      const panel = document.querySelector('#panel');
+      if (!panel) return;
+      if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner);
+      if (CFG.items && ui.tab === 'bag') addBtn(panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
+    }, CFG.btnRefreshMs);
+  }
 
-    const root = document.createElement('div');
-    root.id = 'awMenu';
-    root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:14px/1.5 sans-serif;color:#f0e6d2';
-    root.innerHTML =
-      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:200px">' +
-        '<b>小工具</b>' +
-        items.map((it, i) => '<button data-i="' + i + '" style="padding:8px 12px;cursor:pointer;font-size:14px">' + it[0] + '</button>').join('') +
-        '<button data-i="-1" style="padding:4px 12px;cursor:pointer">關閉</button>' +
-      '</div>';
-    document.body.appendChild(root);
-    root.addEventListener('click', e => {
-      const b = e.target.closest('button[data-i]');
-      if (!b && e.target !== root) return;
-      root.remove();
-      if (b && +b.dataset.i >= 0) items[+b.dataset.i][1]();
-    });
-  };
-
-  openMenu();
+  if (!first) { try { toast('小工具已經啟用：配置模擬在「技能」分頁，物品管理在「背包」分頁', 'lvl'); } catch (e) {} }
 })();
