@@ -291,5 +291,82 @@
     return params.join("&");
   }
 
-  window.__petAgent = { tick, incomeSummary, entries, mapQuery };
+  // ── 下拉選單 ────────────────────────────────────────────
+  // 遊戲畫面是掛在背景服務的懸浮視窗上，系統不准這種視窗跳出網頁下拉選單（<select>）的選項，點了完全沒反應：
+  // 精煉到 +幾、個性化升到幾階段、指定屬性那些全部選不了。這裡把點擊攔下來，改在頁面裡自己畫一份選項清單，
+  // 選好再把值填回去、通知遊戲
+  const TOP_LAYER = 2147483647;
+  let picker; // 開著的選項清單
+
+  function closePicker() {
+    if (picker) picker.remove();
+    picker = undefined;
+  }
+
+  function pick(select, option) {
+    closePicker();
+    if (!select.isConnected || option.disabled || select.selectedIndex === option.index) return;
+    select.selectedIndex = option.index;
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function openPicker(select) {
+    closePicker();
+    picker = document.createElement("div");
+    picker.style.cssText = `position:fixed;inset:0;z-index:${TOP_LAYER};display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(40,25,10,.45);`;
+    picker.addEventListener("click", (e) => e.target === picker && closePicker());
+    const list = document.createElement("div");
+    list.style.cssText = "min-width:60%;max-width:100%;max-height:70%;overflow-y:auto;background:#fff8e8;border:2px solid #a07a3c;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font:16px/1.3 sans-serif;color:#4a3418;";
+    let chosen;
+    let group;
+    for (const option of select.options) {
+      const parent = option.parentElement;
+      if (parent !== group && parent.tagName === "OPTGROUP") {
+        const head = document.createElement("div");
+        head.textContent = parent.label;
+        head.style.cssText = "padding:8px 16px 4px;font-size:13px;color:#8a6a3a;";
+        list.append(head);
+      }
+      group = parent;
+      const row = document.createElement("div");
+      row.textContent = option.label || option.text;
+      row.style.cssText = "padding:13px 16px;border-top:1px solid #ead9b8;";
+      if (option.disabled) row.style.opacity = ".4";
+      else row.addEventListener("click", () => pick(select, option));
+      if (option.selected) {
+        row.style.background = "#f0dcae";
+        row.style.fontWeight = "bold";
+        chosen = row;
+      }
+      list.append(row);
+    }
+    picker.append(list);
+    document.documentElement.append(picker);
+    if (chosen) chosen.scrollIntoView({ block: "center" });
+  }
+
+  const plainSelect = (e) => {
+    const select = e.target && e.target.closest && e.target.closest("select");
+    return select && !select.disabled && !select.multiple && select.size <= 1 ? select : undefined;
+  };
+  // 系統的選項是在 mousedown 的預設動作裡跳的，擋掉它；自己的清單等 click 才開，免得同一下點擊順便點到清單裡的選項
+  window.addEventListener("mousedown", (e) => plainSelect(e) && e.preventDefault(), true);
+  window.addEventListener("click", (e) => {
+    const select = plainSelect(e);
+    if (select) openPicker(select);
+  }, true);
+
+  /** 在遊戲畫面下方浮一行字，幾秒後自己消失。遊戲開著的時候桌寵是藏起來的，要講的話改從這裡出來。 */
+  function toast(text) {
+    const box = document.createElement("div");
+    box.textContent = text;
+    box.style.cssText = `position:fixed;left:16px;right:16px;bottom:24px;z-index:${TOP_LAYER};padding:12px 16px;border-radius:12px;background:rgba(60,40,18,.94);color:#fff8e8;font:15px/1.4 sans-serif;text-align:center;word-break:break-all;pointer-events:none;transition:opacity .4s;`;
+    document.documentElement.append(box);
+    setTimeout(() => (box.style.opacity = "0"), 4500);
+    setTimeout(() => box.remove(), 5000);
+    return true;
+  }
+
+  window.__petAgent = { tick, incomeSummary, entries, mapQuery, toast };
 })();

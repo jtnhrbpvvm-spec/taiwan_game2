@@ -1,11 +1,11 @@
 {
-  "version": "0.3.5",
+  "version": "0.3.6",
   "shell": 1,
   "files": [
     {
       "path": "agent.js",
-      "sha256": "7d4303116c9ed253c7552d9aa00f33eab1018ba8d26d03f4204c49a78ce32fdc",
-      "size": 14389
+      "sha256": "3f6bc03512b983e13e83328aab6c4c827f5d43bf1b22b193fbd663b1949c0299",
+      "size": 18341
     },
     {
       "path": "panel/index.html",
