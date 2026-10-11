@@ -9,9 +9,11 @@ javascript:(() => {
    *
    *   5. 物品管理：分頁列出裝備、石板、符文、技能寶石，用關鍵字和數值比較搜尋，批次分解／鎖定／解鎖
    *   6. 生命明細：角色分頁的「最大生命」下面顯示算式和各項來源
+   *   7. 存檔備份：備份到瀏覽器或下載成檔案，可以還原；套用匯入的計畫前會自動備份
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
-   * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊）。
+   * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
+   * 存檔備份的按鈕在「選單」分頁的標題旁。
    *
    * 用法：整個檔案全選複製，貼到書籤的「網址」欄位即可（第一行的 javascript: 要保留）。
    * 修改注意：
@@ -44,7 +46,10 @@ javascript:(() => {
     hpFont: 11,             /* 生命明細文字大小（px） */
     hpRefreshMs: 300,       /* 生命明細更新間隔 */
     planCell: 46,           /* 配置模擬的格子大小（px） */
-    gemPrice: 200           /* 商店一顆技能寶石的灰燼價格（匯入代碼自動補買時用） */
+    gemPrice: 200,          /* 商店一顆技能寶石的灰燼價格（匯入代碼自動補買時用） */
+    backup: true,           /* 選單分頁加上「存檔備份」按鈕 */
+    backupKeep: 5,          /* 瀏覽器裡最多保留幾份備份 */
+    autoBackup: true        /* 配置模擬執行匯入的計畫（鑲嵌、多構築）前自動備份 */
   };
 
   /* 所有功能只在第一次點書籤時安裝 */
@@ -686,6 +691,8 @@ javascript:(() => {
         alert('有寶石放在尚未解鎖的格子上，無法套用。請先移開，或取消「預覽全部 36 格」。');
         return;
       }
+      /* 執行匯入的計畫前先自動備份一份，做錯了可以到「存檔備份」還原 */
+      if (CFG.autoBackup && (gear || multi)) { saveNow(); backupNow('套用計畫前自動備份'); }
       /* 有裝備計畫就先做（使用者取消或檢查沒過就整個不套用）；沒有裝備計畫的多構築寫入也先確認 */
       if (gear) { if (!runGear()) { refresh(); return; } }
       else if (multi && !confirm('即將執行：\n\n' + planLines().join('\n') + '\n\n確定執行？')) return;
@@ -1101,13 +1108,125 @@ javascript:(() => {
     }, CFG.hpRefreshMs);
   }
 
+  /* ===== 7. 存檔備份 =====
+   * 備份：把整個存檔物件 S 轉成文字，存一份在瀏覽器（localStorage 的 awtools.backups），也可以下載成檔案。
+   * 還原：把備份寫回遊戲的存檔位置（SAVE_KEY），再重新整理頁面讓遊戲重新載入。
+   *   - 寫回前把 TAB.gone 設為 true，遊戲離開頁面時的自動存檔就不會把備份蓋掉。
+   *   - 把備份裡的時間改成現在，這樣重新載入時不會被當成離線很久而發放離線收益，
+   *     也不會被比較舊的雲端存檔蓋回去。
+   *   - 還原前會先把目前的進度自動備份一份，還原錯了可以再還原回來。
+   * 瀏覽器裡的備份只留最新的幾份（CFG.backupKeep），清除瀏覽器資料時會一起消失，重要的請下載成檔案。
+   */
+  const BK_KEY = 'awtools.backups';
+  const bkList = () => { try { return JSON.parse(localStorage.getItem(BK_KEY)) || []; } catch (e) { return []; } };
+  const bkSave = list => {
+    try { localStorage.setItem(BK_KEY, JSON.stringify(list)); return true; }
+    catch (e) { alert('瀏覽器的儲存空間不夠，備份沒有存成功。請先刪掉舊的備份，或改用下載成檔案。'); return false; }
+  };
+  const bkStamp = t => {
+    const d = new Date(t), z = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds());
+  };
+  /* 把目前的進度備份到瀏覽器裡，回傳是否成功 */
+  const backupNow = label => {
+    if (typeof S === 'undefined' || !S) return false;
+    const list = bkList();
+    list.unshift({ t: Date.now(), label: label || '手動備份', name: S.name || '', lvl: S.lvl, data: JSON.stringify(S) });
+    return bkSave(list.slice(0, CFG.backupKeep));
+  };
+  const bkDownload = (text, name, lvl, t) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    a.download = 'auto-wanderer_' + (name || 'save') + '_LV' + lvl + '_' + bkStamp(t).replace(/[: ]/g, '-') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  /* 用一份備份文字還原存檔，成功的話頁面會重新整理 */
+  const restoreSave = (text, when) => {
+    let o = null;
+    try { o = JSON.parse(text); } catch (e) {}
+    if (!o || !o.cls || !Array.isArray(o.gems) || !Array.isArray(o.bag)) { alert('這不是有效的自走勇者存檔。'); return; }
+    if (!confirm('要還原成這份存檔嗎？\n\n角色：' + (o.name || '（未命名）') + '　LV' + o.lvl + (when ? '\n備份時間：' + when : '') +
+      '\n\n目前的進度會被覆蓋（還原前會先自動備份一份），頁面會重新整理。')) return;
+    if (!backupNow('還原前自動備份') && !confirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
+    o.t = Date.now();
+    TAB.gone = true;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); }
+    catch (e) { TAB.gone = false; alert('寫入存檔失敗，沒有還原。'); return; }
+    location.reload();
+  };
+
+  const openBackup = () => {
+    if (document.querySelector('#awBackup')) return;
+    if (typeof S === 'undefined' || !S) { alert('請先進入遊戲再開啟存檔備份'); return; }
+    const BTN = 'padding:2px 8px;cursor:pointer';
+    const root = document.createElement('div');
+    root.id = 'awBackup';
+    root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
+    root.innerHTML =
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;width:min(560px,96vw);max-height:94vh;overflow:auto">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+          '<b style="font-size:15px">存檔備份</b><span style="flex:1"></span><button data-a="close" style="' + BTN + '">關閉</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+          '<button data-a="save" style="' + BTN + ';font-weight:bold;background:#ffd84a;color:#2a2118;border:1px solid #000">立即備份（存在瀏覽器）</button>' +
+          '<button data-a="dlNow" style="' + BTN + '">把目前進度下載成檔案</button>' +
+          '<label style="' + BTN + ';border:1px solid #6a5a4a;background:#1a1410">從檔案還原…<input type="file" data-r="file" accept=".json,application/json" style="display:none"></label>' +
+        '</div>' +
+        '<div data-r="list"></div>' +
+        '<div style="color:#a89a84;font-size:12px;margin-top:8px">' +
+          '瀏覽器裡最多保留 ' + CFG.backupKeep + ' 份，超過會刪掉最舊的；清除瀏覽器資料時也會一起消失，重要的備份請下載成檔案。<br>' +
+          '還原會覆蓋目前的進度並重新整理頁面；還原前會先自動備份目前的進度。' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(root);
+    const elList = root.querySelector('[data-r="list"]');
+
+    const draw = () => {
+      const list = bkList();
+      elList.innerHTML = list.length ? list.map((b, i) =>
+        '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-bottom:1px solid #3a3026;background:#1a1410">' +
+          '<div style="flex:1"><b>' + bkStamp(b.t) + '</b> <small style="color:#a89a84">' + String(b.label).replace(/</g, '&lt;') + '</small><br>' +
+          '<small style="color:#c8bca8">' + String(b.name || '（未命名）').replace(/</g, '&lt;') + '　LV' + b.lvl + '　' + Math.round(b.data.length / 1024) + ' KB</small></div>' +
+          '<button data-a="restore" data-i="' + i + '" style="' + BTN + '">還原</button>' +
+          '<button data-a="dl" data-i="' + i + '" style="' + BTN + '">下載</button>' +
+          '<button data-a="del" data-i="' + i + '" style="' + BTN + '">刪除</button>' +
+        '</div>').join('') : '<div style="padding:10px;color:#a89a84;background:#1a1410">瀏覽器裡還沒有備份</div>';
+    };
+
+    const close = () => root.remove();
+    root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); }, true);
+    root.querySelector('[data-r="file"]').addEventListener('change', e => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => restoreSave(String(rd.result), '檔案 ' + f.name);
+      rd.readAsText(f);
+      e.target.value = '';
+    });
+    root.addEventListener('click', e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const a = b.dataset.a, list = bkList(), it = list[+b.dataset.i];
+      if (a === 'close') { close(); return; }
+      if (a === 'save') { saveNow(); if (backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
+      if (a === 'dlNow') { saveNow(); bkDownload(JSON.stringify(S), S.name, S.lvl, Date.now()); return; }
+      if (!it) return;
+      if (a === 'dl') { bkDownload(it.data, it.name, it.lvl, it.t); return; }
+      if (a === 'del') { if (confirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
+      if (a === 'restore') { restoreSave(it.data, bkStamp(it.t)); }
+    });
+    draw();
+  };
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items)) {
+  if (first && (CFG.planner || CFG.items || CFG.backup)) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -1122,6 +1241,7 @@ javascript:(() => {
       const panel = document.querySelector('#panel');
       if (!panel) return;
       if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
+      if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
       if (CFG.items && ui.tab === 'bag') addBtn(panel.querySelector('.row.tools') || panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
     }, CFG.btnRefreshMs);
   }
