@@ -32,7 +32,8 @@ javascript:(() => {
     hpColor: '#c8323c',     /* 生命顏色 */
     shieldColor: '#9ab0ff', /* 護盾顏色 */
     barRefreshMs: 100,      /* 血條更新間隔 */
-    skillCd: true,          /* 技能寶石顯示冷卻時間 */
+    skillCd: true,          /* 技能寶石顯示冷卻時間（盤面上的寶石） */
+    trayCd: true,           /* 未放置的寶石清單也顯示冷卻時間（要先開 skillCd） */
     cdFont: 10,             /* 冷卻文字大小（px） */
     cdColor: '#ffe08a',     /* 冷卻文字顏色 */
     cdRefreshMs: 100,       /* 冷卻文字更新間隔 */
@@ -185,6 +186,25 @@ javascript:(() => {
         }
         if (badge.textContent !== text) badge.textContent = text;
       });
+
+      /* 下方「未放置的寶石」清單：在說明文字最前面補上冷卻時間。
+       * 還沒放上盤面所以吃不到輔助寶石，這裡算的是只含冷卻縮減的秒數。 */
+      if (CFG.trayCd) {
+        document.querySelectorAll('#tray button.gem[data-u]').forEach(el => {
+          const small = el.querySelector('small');
+          if (!small || small.querySelector('.awtcd')) return;
+          const g = S.gems.find(x => String(x.u) === el.dataset.u);
+          if (!g) return;
+          let cd;
+          try { cd = effCd(g); } catch (e) { return; }
+          if (cd == null) return;
+          const tag = document.createElement('i');
+          tag.className = 'awtcd';
+          tag.style.cssText = 'font-style:normal;color:' + CFG.cdColor;
+          tag.textContent = '冷卻 ' + (typeof cd === 'string' ? cd : cd.toFixed(2) + ' 秒') + '・';
+          small.insertBefore(tag, small.firstChild);
+        });
+      }
     }, CFG.cdRefreshMs);
   }
 
