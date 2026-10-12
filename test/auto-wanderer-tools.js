@@ -15,6 +15,7 @@ javascript:(function awTools() {
    *   0. 常駐模式：遊戲自己重新整理（更新、還原備份）後，小工具會自動重新啟用
    *  11. 解鎖三神器：選單分頁的按鈕，把還沒有的神器直接加進存檔（1 級）
    *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
+   *  13. 自動刷神話：無限君主旁的按鈕，沒掉神話獨特就自動讀回挑戰前的存檔再打
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -30,7 +31,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V9';
+  const VERSION = 'V11';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -71,6 +72,8 @@ javascript:(function awTools() {
     arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
     monAuto: true,          /* 地圖分頁的無限君主加上「打贏後自動接著打」勾選框 */
     monAutoMs: 3000,        /* 打贏無限君主後等幾毫秒再自動挑戰下一場 */
+    monLoop: true,          /* 無限君主加上「自動刷神話」按鈕（沒掉神話獨特就自動讀回挑戰前的存檔） */
+    monLoopLootMs: 2500,    /* 自動刷神話：打贏後等幾毫秒讓掉落物落地，再收起來檢查 */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
 
@@ -1943,6 +1946,32 @@ javascript:(function awTools() {
       } catch (e) {}
     };
     if (typeof realLbSend === 'function') window.lbSend = () => { if (window.__awOne) { lbMask(); return; } return realLbSend(); };
+    /* 單格模式開啟時也不送「匿名遊玩統計」（遊戲 v0.2.457 加入）。
+     * 遊戲用 stEv() 把事件（打 Boss 花幾秒、無限之塔到幾層、每日擊殺數…）先排進佇列，
+     * 佇列放在記憶體的 stQ 和瀏覽器的 autowanderer.stq，之後由 stSend() 一次送出。
+     * 這裡的處理：
+     *   - 開著單格模式時，stEv() 不記錄、stSend() 不送出，並把佇列清空
+     *   - 「每日統計」是隔天才結算前一天的總數，所以開過單格模式的那一天會記下來（awtools.stday），
+     *     那一天的每日統計就算之後關掉開關也不送
+     * 清空佇列只動 autowanderer.stq 這一個項目，不會碰存檔（autowanderer.v1）。 */
+    const ST_QUEUE = 'autowanderer.stq', ST_TAINT = 'awtools.stday';
+    const realStEv = window.stEv, realStSend = window.stSend;
+    const stClear = () => {
+      try { if (typeof stQ !== 'undefined') stQ = []; } catch (e) {}
+      try { if (localStorage.getItem(ST_QUEUE) !== null) localStorage.setItem(ST_QUEUE, '[]'); } catch (e) {}
+    };
+    const stMark = () => { try { if (S && S.st && S.st.d) localStorage.setItem(ST_TAINT, S.st.d); } catch (e) {} };
+    if (typeof realStEv === 'function') {
+      window.stEv = (t, a) => {
+        if (window.__awOne || window.__awNoStat) { stMark(); return; }
+        let bad = null;
+        try { bad = localStorage.getItem(ST_TAINT); } catch (e) {}
+        if (t === 'day' && a && bad && a.d === bad) return;
+        return realStEv(t, a);
+      };
+    }
+    if (typeof realStSend === 'function') window.stSend = () => { if (window.__awOne || window.__awNoStat) { stClear(); return; } return realStSend(); };
+    setInterval(() => { if (window.__awOne) stMark(); }, 60000);
     /* 寶石圖示有快取，切換後要清掉才會重畫 */
     const redraw = () => {
       try { for (const k of Object.keys(GEM_ART)) delete GEM_ART[k]; } catch (e) {}
@@ -1960,12 +1989,14 @@ javascript:(function awTools() {
     oneCellToggle = () => {
       if (!window.__awOne) {
         if (!confirm('【單格模式】\n\n開啟後每顆技能寶石只佔一格，輔助寶石不用相鄰就會生效。\n\n' +
-          '這是直接修改遊戲規則，傷害會遠高於正常玩法，修改【可能】被作者封鎖。開啟期間不會上傳排行榜，但雲端存檔仍看得到異常的數值。\n\n' +
+          '這是直接修改遊戲規則，傷害會遠高於正常玩法，修改【可能】被作者封鎖。開啟期間不會上傳排行榜和匿名遊玩統計，但雲端存檔仍看得到異常的數值。\n\n' +
           '可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n' +
           '另外：沒有點書籤時遊戲會照原本的形狀計算；之後關閉這個開關，放不下的寶石會退回寶石欄。\n\n確定要開啟嗎？')) return;
         window.__awOne = true;
         try { localStorage.setItem(ONE_KEY, '1'); } catch (e) {}
         lbMask();
+        stMark();
+        stClear();
         redraw();
         try { toast('單格模式已開啟', 'lvl'); } catch (e) {}
         return;
@@ -1981,7 +2012,7 @@ javascript:(function awTools() {
     };
     let was = false;
     try { was = localStorage.getItem(ONE_KEY) === '1'; } catch (e) {}
-    if (was) { window.__awOne = true; redraw(); }
+    if (was) { window.__awOne = true; stMark(); stClear(); redraw(); }
   }
 
   /* ===== 11. 解鎖三神器 =====
@@ -2028,7 +2059,8 @@ javascript:(function awTools() {
         ui.monBoard = function () {
           const html = realBoard.apply(this, arguments);
           return String(html).replace('</h3>', '<label class="awMonAuto" style="margin-left:8px;font-size:12px;font-weight:normal;cursor:pointer;white-space:nowrap">' +
-            '<input type="checkbox"' + (monAuto ? ' checked' : '') + '> 打贏後自動接著打</label></h3>');
+            '<input type="checkbox"' + (monAuto ? ' checked' : '') + '> 打贏後自動接著打</label>' +
+            (CFG.monLoop ? '<button class="btn sm awMonLoopBtn" style="margin-left:8px">自動刷神話</button>' : '') + '</h3>');
         };
         document.addEventListener('change', e => {
           const t = e.target;
@@ -2043,6 +2075,8 @@ javascript:(function awTools() {
       if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G) return;
       const m = S.gd.m || 0;
       if (lastM < 0) { lastM = m; return; }
+      /* 自動刷神話進行中時由它自己決定什麼時候開打 */
+      if (window.__awNoStat) { lastM = m; due = 0; return; }
       if (m > lastM && monAuto) due = Date.now() + CFG.monAutoMs;
       lastM = m;
       if (!due || Date.now() < due) return;
@@ -2053,6 +2087,130 @@ javascript:(function awTools() {
       if (!canMonarch()) { try { toast('無限印記不夠了，連續挑戰結束', 'lvl'); } catch (e) {} return; }
       try { startGuard(4); } catch (e) {}
     }, 500);
+  }
+
+  /* ===== 13. 自動刷神話（無限君主存讀檔） =====
+   * 地圖分頁「無限君主」標題旁的按鈕。無限君主每次打贏有 0.1% 機率掉神話獨特（裝備或石板）。
+   * 這個功能自動重複「打一場 → 沒掉就讀回打之前的存檔」：
+   *   1. 開始時把目前進度存成「起點」（放在 awtools.monbase，和存檔備份的 5 份分開，不會被擠掉）
+   *   2. 挑戰無限君主。打贏後等掉落物落地、全部收起來，數背包和石板裡的神話獨特有沒有變多
+   *   3. 沒有變多（或打輸）：把起點寫回存檔並重新載入，印記回到打之前的數量，再打一次
+   *   4. 有變多：把「現在的進度」存成新的起點（東西留下，印記少 5 個），還沒達標就繼續
+   * 所以印記只有在真的掉出神話時才會被用掉。達標、印記不夠或按停止時結束。
+   * 一場一場檢查，而不是把印記打完才檢查，是因為這樣每一場都能重來，不用賭同一批裡掉兩件。
+   * 進度記在瀏覽器的 awtools.monloop，重新載入後（要開常駐模式，小工具才會自己回來）會接著跑。
+   * 進行中不記錄、不上傳匿名遊玩統計。讀回起點時，起點之後拿到的其他東西（神話裝備、材料、經驗）都會消失。
+   */
+  const LOOP_KEY = 'awtools.monloop', BASE_KEY = 'awtools.monbase';
+  const loopGet = () => { try { return JSON.parse(localStorage.getItem(LOOP_KEY)) || null; } catch (e) { return null; } };
+  const loopSet = o => { try { if (o) localStorage.setItem(LOOP_KEY, JSON.stringify(o)); else localStorage.removeItem(LOOP_KEY); } catch (e) {} };
+  const mythCount = () => ({ sl: S.slates.filter(t => t.my).length, uq: S.bag.filter(t => t.my).length });
+  /* 把目前進度存成起點；回傳是否成功 */
+  const baseWrite = () => {
+    try { saveNow(); localStorage.setItem(BASE_KEY, JSON.stringify(S)); return true; } catch (e) { return false; }
+  };
+  /* 把起點寫回存檔並重新載入。不經過「存檔備份」，所以不會產生自動備份、也不會擠掉原有的備份 */
+  const baseRestore = () => {
+    let o = null;
+    try { o = JSON.parse(localStorage.getItem(BASE_KEY)); } catch (e) {}
+    if (!o || !o.cls || !Array.isArray(o.bag) || !Array.isArray(o.gems)) return false;
+    o.t = Date.now();
+    TAB.gone = true;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch (e) { TAB.gone = false; return false; }
+    location.reload();
+    return true;
+  };
+  const loopStart = () => {
+    if (typeof S === 'undefined' || !S || typeof G === 'undefined' || !G) { alert('請先進入遊戲'); return; }
+    if (loopGet()) { if (confirm('自動刷神話正在進行中，要停止嗎？\n\n停止後會留在目前的進度。')) loopSet(null); return; }
+    if (!canMonarch()) { alert('無限印記不足 ' + MONARCH.mk + ' 個，沒辦法開始。'); return; }
+    if (G.boss || G.tw || G.dead) { alert('請先結束目前的挑戰再開始。'); return; }
+    const keys = mythKeys().length;
+    if (!confirm('【自動刷神話】\n\n會自動重複：挑戰無限君主 → 沒掉神話獨特就讀回挑戰前的存檔 → 再挑戰。\n' +
+      '掉出神話獨特時才會保留進度（用掉 ' + MONARCH.mk + ' 個印記），然後繼續刷到達標或印記不夠為止。\n\n' +
+      '機率：每次打贏 0.1% 掉神話獨特，共 ' + keys + ' 種（其中 1 種是石板），所以平均要打約 1000 場才有一件，指定石板約 ' + (1000 * keys) + ' 場。\n\n' +
+      '注意：\n・讀回存檔時，這一場拿到的其他東西（神話裝備、奇蹟石、材料）都會消失\n・進行中請不要自己操作角色或切換地圖\n' +
+      '・要開著常駐模式，重新載入後才會自動接著跑\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份\n\n確定要開始嗎？')) return;
+    const a = prompt('新拿到的「神話石板」至少要幾塊才算達標？（不指定石板就填 0）', '1');
+    if (a === null) return;
+    const b = prompt('新拿到的「神話獨特」（裝備和石板合計）至少要幾件才算達標？', '2');
+    if (b === null) return;
+    const goalSl = Math.max(0, Math.floor(+a || 0)), goalAll = Math.max(goalSl, Math.floor(+b || 0));
+    if (goalAll < 1) { alert('目標至少要 1 件。'); return; }
+    try { saveNow(); backupNow('自動刷神話前自動備份'); } catch (e) {}
+    if (!baseWrite()) { alert('瀏覽器的儲存空間不夠，起點存不進去，沒有開始。請先到「存檔備份」刪掉一些舊備份。'); return; }
+    const c = mythCount();
+    loopSet({ on: 1, goalSl: goalSl, goalAll: goalAll, gotSl: 0, gotAll: 0, baseM: S.gd.m || 0, baseSl: c.sl, baseUq: c.uq, tries: 0, t0: Date.now() });
+    try { toast('自動刷神話開始', 'lvl'); } catch (e) {}
+  };
+  if (first && CFG.monLoop) {
+    document.addEventListener('click', e => {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('.awMonLoopBtn')) { e.stopPropagation(); e.preventDefault(); loopStart(); return; }
+      if (t.closest('.awLoopStop')) { e.stopPropagation(); loopSet(null); try { toast('自動刷神話已停止，留在目前的進度', 'lvl'); } catch (err) {} }
+    }, true);
+    /* 進行中在畫面上方顯示狀態列 */
+    const drawBar = L => {
+      let el = document.querySelector('#awLoopBar');
+      if (!L) { if (el) el.remove(); return; }
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'awLoopBar';
+        el.style.cssText = 'position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:99998;background:rgba(26,20,16,.92);border:1px solid #ffd84a;border-radius:4px;padding:3px 8px;font:12px/1.5 sans-serif;color:#f0e6d2;white-space:nowrap;max-width:96vw;overflow:hidden';
+        document.body.appendChild(el);
+      }
+      const min = Math.round((Date.now() - L.t0) / 60000);
+      const txt = '自動刷神話：第 ' + (L.tries + 1) + ' 場　石板 ' + L.gotSl + '/' + L.goalSl + '　合計 ' + L.gotAll + '/' + L.goalAll + '　已 ' + min + ' 分鐘 ';
+      if (el.dataset.t !== txt) { el.dataset.t = txt; el.innerHTML = txt.replace(/</g, '&lt;') + '<button class="awLoopStop" style="padding:0 6px;cursor:pointer">停止</button>'; }
+    };
+    let phase = 'start', at = 0, startTry = 0;
+    const stop = msg => { loopSet(null); window.__awNoStat = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
+    setInterval(() => {
+      const L = loopGet();
+      window.__awNoStat = !!(L && L.on);
+      drawBar(L);
+      if (!L || !L.on) { phase = 'start'; startTry = 0; return; }
+      if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G || TAB.gone || phase === 'wait') return;
+      const now = Date.now(), m = S.gd.m || 0;
+      if (phase === 'start') {
+        if (G.dead || G.boss || G.tw || now < at) return;
+        /* 進度已經超過起點（例如打贏之後、檢查之前頁面被重新載入）：直接去檢查掉落 */
+        if (m > L.baseM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
+        if (m < L.baseM) { stop('目前的進度和起點對不上，自動刷神話已停止'); return; }
+        if (!canMonarch()) { stop('無限印記不足 ' + MONARCH.mk + ' 個，自動刷神話結束'); return; }
+        try { startGuard(4); } catch (e) {}
+        if (G.boss && G.guard === 4) { phase = 'fight'; startTry = 0; }
+        else if (++startTry > 30) stop('一直無法開始挑戰，自動刷神話已停止');
+        return;
+      }
+      if (phase === 'fight') {
+        if (G.boss) return;
+        if (m > L.baseM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
+        /* 打輸或超時：讀回起點重打 */
+        L.tries++; loopSet(L); phase = 'wait';
+        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+        return;
+      }
+      if (phase === 'loot') {
+        if (now < at) return;
+        try { grabDrops(); } catch (e) {}
+        const c = mythCount(), nSl = Math.max(0, c.sl - L.baseSl), nUq = Math.max(0, c.uq - L.baseUq);
+        L.tries++;
+        if (nSl + nUq > 0) {
+          L.gotSl += nSl; L.gotAll += nSl + nUq;
+          const saved = baseWrite();
+          L.baseM = m; L.baseSl = c.sl; L.baseUq = c.uq;
+          if (L.gotSl >= L.goalSl && L.gotAll >= L.goalAll) { stop('自動刷神話達標：神話石板 ' + L.gotSl + ' 塊、合計 ' + L.gotAll + ' 件，共打了 ' + L.tries + ' 場'); return; }
+          if (!saved) { stop('拿到神話獨特了，但瀏覽器儲存空間不夠、起點更新失敗，為了不弄丟它已停止'); return; }
+          loopSet(L); phase = 'start'; at = now + 1500;
+          try { toast('拿到神話獨特！已更新起點，繼續刷', 'lvl', 1); } catch (e) {}
+          return;
+        }
+        loopSet(L); phase = 'wait';
+        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+      }
+    }, 700);
   }
 
   /* ===== 入口按鈕 =====
