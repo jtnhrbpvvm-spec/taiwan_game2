@@ -1039,6 +1039,8 @@ javascript:(() => {
      *         （插槽是 v0.2.410 才加的第六格，舊格式只有五格也可以）
      *   keep  保留規則的陣列；每條規則 { on: 是否啟用, c: [條件…] }，同一條裡的條件要全部符合，
      *         符合任何一條啟用中的規則就不會被自動分解
+     *   xr    批次萃取規則，格式和 keep 一樣，但意思相反：符合任何一條的裝備會被「批次萃取」選中
+     *         （神話、已鎖定、神話獨特遊戲本來就不會批次萃取）；代碼裡沒寫 xr 就不動它
      * 條件的寫法（k 是種類）：
      *   any  任何詞綴階級 ≤ t            af   指定詞綴 a 階級 ≤ t（v 是最低數值）
      *   cnt  清單 a 裡的詞綴至少 n 條階級 ≤ t（a 留空代表任何詞綴）
@@ -1068,13 +1070,19 @@ javascript:(() => {
       const out = ['自動分解：' + (RAR5.filter((_, i) => r.auto[i]).join('、') || '都不分解'), '', '保留規則（符合任何一條就留下）：'];
       r.keep.forEach((g, i) => out.push((i + 1) + '. ' + (g.on ? '' : '［停用］') + g.c.map(condText).join(' 而且 ')));
       if (!r.keep.length) out.push('（沒有）');
+      if (r.xr) {
+        out.push('', '批次萃取規則（符合任何一條就會被萃取；神話、已鎖定的不會）：');
+        r.xr.forEach((g, i) => out.push((i + 1) + '. ' + (g.on ? '' : '［停用］') + g.c.map(condText).join(' 而且 ')));
+        if (!r.xr.length) out.push('（沒有）');
+      }
       return out.join('\n');
     };
     /* 檢查匯入的內容，回傳錯誤訊息；空字串代表沒問題 */
     const rulesCheck = r => {
       if (!r || !Array.isArray(r.auto) || r.auto.length < 5 || r.auto.length > 6 || !Array.isArray(r.keep)) return '格式不對，要有 auto（5 或 6 個數字）和 keep（陣列）';
-      if (r.keep.length > KEEP_MAXG) return '保留規則最多 ' + KEEP_MAXG + ' 條';
-      for (const g of r.keep) {
+      if (r.xr != null && !Array.isArray(r.xr)) return 'xr（萃取規則）要是陣列';
+      if (r.keep.length > KEEP_MAXG || (r.xr || []).length > KEEP_MAXG) return '每一組規則最多 ' + KEEP_MAXG + ' 條';
+      for (const g of r.keep.concat(r.xr || [])) {
         if (!g || !Array.isArray(g.c) || !g.c.length) return '每條規則都要有條件';
         if (g.c.length > KEEP_MAXC) return '每條規則最多 ' + KEEP_MAXC + ' 個條件';
         for (const c of g.c) {
@@ -1087,18 +1095,19 @@ javascript:(() => {
       return '';
     };
     const editRules = () => {
-      const cur = JSON.stringify({ auto: S.set.auto, keep: S.set.keep || [] });
+      const cur = JSON.stringify({ auto: S.set.auto, keep: S.set.keep || [], xr: S.set.xr || [] });
       const text = prompt('裝備的拾取規則。\n這一串就是目前的設定（可以複製起來備份）；要改的話貼上新的再按確定，按取消就不變。', cur);
       if (text == null || text.trim() === cur) return;
       let r = null;
       try { r = JSON.parse(text); } catch (e) {}
       const err = rulesCheck(r);
       if (err) { alert('沒有套用：' + err); return; }
-      r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(g => ({ on: g.on ? 1 : 0, c: g.c })) };
-      if (!confirm('要把裝備的拾取規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。\n（神話、神話獨特、插槽裝備不受影響）')) return;
+      r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(g => ({ on: g.on ? 1 : 0, c: g.c })), xr: r.xr ? r.xr.map(g => ({ on: g.on ? 1 : 0, c: g.c })) : null };
+      if (!confirm('要把裝備的規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。' + (r.xr ? '' : '\n（這串沒有帶萃取規則，萃取規則維持原樣）'))) return;
       backupNow('改拾取規則前自動備份');
       S.set.auto = r.auto;
       S.set.keep = r.keep;
+      if (r.xr) S.set.xr = r.xr;
       markDirty(); saveNow(); ui.render();
       toast('拾取規則已更新', 'lvl');
     };
