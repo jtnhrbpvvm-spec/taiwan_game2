@@ -28,7 +28,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V6';
+  const VERSION = 'V7';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -340,6 +340,107 @@ javascript:(function awTools() {
       try { S.gems = list; return fn(); } catch (e) { return null; } finally { S.gems = keep; }
     };
     const dpsOf = list => { const r = withGems(list, () => calc()); return r ? r.dps : 0; };
+
+    /* ----- 修正後的 DPS 估計 -----
+     * 遊戲面板的 DPS（calc().dps）有幾件事沒算，自動排盤和建議配裝如果只看面板會挑錯：
+     *   1. 神王之戒：盤上只有一顆主動技能時，那顆技能傷害加倍、冷卻再縮短（面板完全沒算）
+     *   2. 施放動畫：每次施放後約 0.19 秒內不能再施放（動畫 0.3 秒的前六成），「連發」的額外施放
+     *      每次再佔 0.22 秒；冷卻比這還短也沒用，技能一多還會互相排擠
+     *   3. 普通攻擊：每次施放會讓普攻延後 0.2 秒，技能放得很密時普攻幾乎打不出去
+     *   4. 中毒層數：劇毒箭矢的毒層上限是 psnMax 加毒素累積的層數，命中夠密時是上限在決定傷害；
+     *      普攻上的毒和它共用同一隻怪身上的層數
+     * modelDps(M, false) 照抄遊戲 calc() 裡算 DPS 的那一段，結果應該和面板一樣；
+     * modelDps(M, true) 是加上以上修正的版本。
+     * 因為是照抄，遊戲改公式後會對不上，所以 fixDps() 會定期拿「不修正」的結果和面板比，
+     * 差超過 1% 就認定這份公式過期，之後一律改回面板數字（fixBad 會變成 true，畫面上會提示）。
+     * 沒有處理的：神眷詞綴、擊中或擊殺時觸發的獨特效果、多目標。 */
+    const ANIM_LOCK = 0.19, EXTRA_GAP = 0.22, ATK_LOCK = 0.2;
+    let fixBad = false, fixChecks = 0;
+    const modelDps = (M, fix) => {
+      const n = k => M.T[k] || 0, U = M.U;
+      const acts = activeGems();
+      const has = id => acts.some(g => g.id === id);
+      const C = (M.mn + M.mx) / 2, G0 = 1 + M.crit / 100 * (M.critm / 100 - 1);
+      const fixedHit = n('fixedHit');
+      const mom = STK.mom.max + n('momMax');
+      let basic = fixedHit ? M.aps : C * M.dmgMul * M.aps * G0 * (has('dance') ? (1 + .05 * mom) * (1 + mom * n('momDmg')) : 1);
+      const p = M.psnHit;
+      const stackUnit = C * M.dmgMul * G0 * PSN_K * M.psn * (1 + n('psnRate'));
+      let basicStacks = p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
+      const king = fix && U.kingr && acts.filter(g => !SKILLS[g.id].aura).length === 1;
+      let T = 0;
+      const rows = [];
+      for (const g of acts) {
+        const a = SKILLS[g.id], s = gemMods(g);
+        if (a.sus) { if (a.sdps) T += a.sdps(M, s) * M.skillMul * critF2(M, s); continue; }
+        if (g.id === 'summon') {
+          T += C * M.minMul * MIN.k / MIN.atk * (1 + n('minAs')) * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) *
+            (1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm) / 100 - 1));
+          continue;
+        }
+        const plain = !s.trig && !n('endb') && !n('oath');
+        let e = s.trig ? Math.max(TRIG.cd * (1 - n('trigCd')), 1 / (1.5 * M.aps * M.crit / 100 + .01))
+          : n('endb') ? uv('endb', 0, U.endb) * acts.filter(t => !SKILLS[t.id].sus).length / M.aps
+          : n('oath') ? OATH.cd : a.cd * (1 - s.cd) * (1 - M.cdr / 100);
+        if (king && plain) e *= 1 - n('kingCd');
+        rows.push({ g: g, a: a, s: s, e: e });
+      }
+      /* 施放動畫的排擠：所有技能佔用的時間加起來超過 1，就一起等比例變慢 */
+      let slow = 1, castRate = 0;
+      if (fix) {
+        let util = 0;
+        for (const r of rows) util += (ANIM_LOCK + EXTRA_GAP * r.s.extra) / r.e;
+        slow = Math.max(1, util);
+        for (const r of rows) castRate += (1 + r.s.extra) / (r.e * slow);
+      }
+      let skillStacks = 0;
+      for (const r of rows) {
+        if (fixedHit) break;
+        const a = r.a, s = r.s, e = r.e * slow;
+        const mul = (s.trig && !n('trigFull') ? TRIG.k : 1) * (1 + s.dmg) * (a.tg.includes('proj') ? 1 + n('projDmg') : 1) * (a.tg.includes('spell') ? 1 + n('spell') : 1) *
+          (king && !a.tg.includes('minion') ? 1 + uv('kingr', 0, U.kingr) / 100 : 1);
+        const unit = C * (a.tg.includes('minion') ? M.minMul : M.skillMul) * critF2(M, s);
+        if (fix && r.g.id === 'varrow') {
+          const hps = (1 + s.extra) / e, nst = Math.min(M.psnMax + s.pstk, PSN_T * hps);
+          skillStacks = Math.max(skillStacks, nst);
+          T += unit * mul * a.hit * ((1 + .6 * s.extra) / e + (1 + .6 * s.extra) / (1 + s.extra) * PSN_K * M.psn * (1 + n('psnRate')) * nst);
+        } else {
+          T += unit * mul * (a.est ? a.est(s, M, e) : a.hit || 0) * (1 + .6 * s.extra) / e;
+        }
+      }
+      if (fix) {
+        const k = Math.max(0, 1 - castRate * ATK_LOCK);
+        basic *= k;
+        basicStacks = Math.min(basicStacks * k, Math.max(0, M.psnMax - skillStacks));
+      }
+      T += basic + (fixedHit ? 0 : stackUnit * basicStacks);
+      const cdOfGem = g => SKILLS[g.id].cd * (1 - gemMods(g).cd) * (1 - M.cdr / 100);
+      const gChain = acts.find(g => g.id === 'chain');
+      if (gChain) { const al = M.ail * (1 + gemMods(gChain).ail); T *= 1 + AIL.shk.v * al * Math.min(1, AIL.shk.t * al / cdOfGem(gChain)); }
+      const gVul = acts.find(g => g.id === 'cvul');
+      if (gVul) T *= 1 + CRS.vu.v * M.crs * Math.min(1, CRS.vu.t / cdOfGem(gVul));
+      const gTnt = acts.find(g => g.id === 'taunt');
+      if (gTnt && n('tntVul')) T *= 1 + n('tntVul') * Math.min(1, (TNT_T + n('tntT')) / cdOfGem(gTnt));
+      if (n('psnVul') && (p.length || has('varrow'))) T *= 1 + n('psnVul');
+      if (!fixedHit && has('frenzy')) T *= 1.35 + n('frz');
+      for (const h of HIT_MUL) if (h.est) T *= h.est(M, n);
+      return T;
+    };
+    /* 要在 withGems() 裡面呼叫（它會讀盤上的寶石） */
+    const fixDps = M => {
+      if (fixBad) return M.dps;
+      try {
+        if (fixChecks++ % 200 === 0) {
+          const raw = modelDps(M, false);
+          if (!(Math.abs(raw - M.dps) <= 0.01 * Math.max(1, M.dps))) { fixBad = true; return M.dps; }
+        }
+        const v = modelDps(M, true);
+        return isFinite(v) ? v : M.dps;
+      } catch (e) { fixBad = true; return M.dps; }
+    };
+    const fixOf = list => withGems(list, () => fixDps(calc())) || 0;
+    /* 除錯用：在主控台可以用 __awFix.model(calc(), false) 和面板數字對照，確認照抄的公式還對得上 */
+    window.__awFix = { model: modelDps, bad: () => fixBad };
     const cdOf = g => withGems(gems, () => {
       const sk = SKILLS[g.id];
       if (!sk.act || sk.sus || sk.aura || !sk.cd) return '';
@@ -481,6 +582,7 @@ javascript:(function awTools() {
     /* 右側數據：總 DPS，以及每顆寶石「拿掉它會少多少」的貢獻 */
     const drawStat = () => {
       const total = dpsOf(gems);
+      const fixed = fixOf(gems);
       const now = PS.dps || 0;
       const diff = now ? (total / now - 1) * 100 : 0;
       const rows = gems.map(g => ({ g, d: total - dpsOf(gems.filter(o => o !== g)) })).sort((a, b) => b.d - a.d);
@@ -488,6 +590,9 @@ javascript:(function awTools() {
         '<div style="background:#1a1410;padding:8px;border-radius:4px">' +
           '<div>模擬 DPS</div><div style="font:bold 22px/1.3 monospace;color:#ffd84a">' + fmt(Math.round(total)) + '</div>' +
           '<div style="color:#a89a84">目前遊戲內：' + fmt(Math.round(now)) + '　<b style="color:' + (diff >= 0 ? '#7dffc8' : '#ff5a6a') + '">' + (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%</b></div>' +
+          (fixBad
+            ? '<div style="color:#ffb070;font-size:12px">修正公式和目前的遊戲版本對不上，自動排盤和建議配裝暫時改用面板數字</div>'
+            : '<div title="把神王之戒、施放動畫的上限、普攻被技能排擠、中毒層數上限算進去的估計值；自動排盤和建議配裝用這個數字比較">修正後估計：<b style="color:#7dffc8;font-family:monospace">' + fmt(Math.round(fixed)) + '</b></div>') +
           (page !== S.gp ? '<div style="color:#ffb070;font-size:12px">以目前穿著的裝備與天賦計算</div>' : '') +
         '</div>' +
         '<div style="margin:8px 0 4px;color:#a89a84">每顆寶石的貢獻（拿掉它會少多少）</div>';
@@ -607,12 +712,12 @@ javascript:(function awTools() {
     let sugRes = null;
     const suggest = opt => {
       const keepEq = Object.assign({}, S.equip);
-      const evalNow = () => withGems(gems, () => calc());
+      const evalNow = () => withGems(gems, () => { const m = calc(); m.fix = fixDps(m); return m; });
       const score = () => {
         const m = evalNow();
         if (!m) return 0;
         /* 傷害相同時挑防禦比較好的（例如胸甲通常不加傷害），所以防禦只佔很小的比重 */
-        let s = m.dps * (1 + 0.001 * (m.maxhp / 1000 + m.armRed / 25 + m.dodge / 25));
+        let s = m.fix * (1 + 0.001 * (m.maxhp / 1000 + m.armRed / 25 + m.dodge / 25));
         if (opt.minHp > 0 && m.maxhp < opt.minHp) s *= Math.pow(m.maxhp / opt.minHp, 8);
         if (opt.minArm > 0 && m.armRed < opt.minArm) s *= Math.pow((m.armRed + 1) / (opt.minArm + 1), 3);
         return s;
@@ -700,7 +805,7 @@ javascript:(function awTools() {
       if (!sugOpt) { elSug.innerHTML = ''; return; }
       const o = sugOpt;
       let h = '<div style="background:#1a1410;border:1px solid #6a5a4a;border-radius:4px;padding:6px 8px;margin-bottom:8px">' +
-        '<b style="color:#ffd84a">建議配裝</b>　<span style="color:#a89a84;font-size:12px">以模擬盤上的技能和遊戲面板 DPS 為準' + (window.__awOne ? '（單格模式）' : '') + '</span>' +
+        '<b style="color:#ffd84a">建議配裝</b>　<span style="color:#a89a84;font-size:12px">以模擬盤上的技能和修正後的 DPS 估計為準' + (window.__awOne ? '（單格模式）' : '') + '</span>' +
         '<div style="margin:4px 0">可以更換的部位：' + SLOTS.map(sl => '<label style="margin-right:8px;white-space:nowrap;cursor:pointer"><input type="checkbox" data-sg="slot" data-v="' + sl + '"' + (o.slots[sl] ? ' checked' : '') + '> ' + SLOT_NAME[sl] + '</label>').join('') + '</div>' +
         '<div style="margin:4px 0">生命不低於 <input data-sg="hp" type="number" value="' + o.minHp + '" style="width:70px;background:#2a2118;color:#f0e6d2;border:1px solid #6a5a4a">　' +
         '<label style="white-space:nowrap;cursor:pointer"><input type="checkbox" data-sg="arm"' + (o.keepArm ? ' checked' : '') + '> 護甲減傷不低於目前</label></div>' +
@@ -710,7 +815,7 @@ javascript:(function awTools() {
       else if (sugRes === 'fail') h += '<div style="margin-top:6px;color:#ff5a6a">計算失敗，沒有做任何變更。</div>';
       else if (sugRes) {
         const b = sugRes.before, a = sugRes.after;
-        const pct = b.dps ? (a.dps / b.dps - 1) * 100 : 0;
+        const pct = b.fix ? (a.fix / b.fix - 1) * 100 : 0;
         h += '<div style="margin-top:6px;border-top:1px solid #3a3026;padding-top:6px">';
         if (!sugRes.changes.length) h += '<div>目前穿的已經是最好的組合，沒有建議更換的部位。</div>';
         else {
@@ -718,12 +823,13 @@ javascript:(function awTools() {
             h += '<div style="font-size:12px">' + SLOT_NAME[c.sl] + '：' + String(c.old).replace(/</g, '&lt;') + ' → <b>' + String(c.name).replace(/</g, '&lt;') + '</b>' +
               (c.fuse ? '<br><span style="color:#a89a84">　鑲嵌：' + c.fuse.runes.map(u => runeText(S.runes.find(r => r.u === u))).join('、').replace(/</g, '&lt;') + '</span>' : '') + '</div>';
           }
-          h += '<div style="margin-top:4px">面板 DPS ' + fmt(Math.round(b.dps)) + ' → <b style="color:#ffd84a">' + fmt(Math.round(a.dps)) + '</b>（' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%）　' +
+          h += '<div style="margin-top:4px">' + (fixBad ? '面板 DPS ' : '修正後估計 ') + fmt(Math.round(b.fix)) + ' → <b style="color:#ffd84a">' + fmt(Math.round(a.fix)) + '</b>（' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%）　' +
+            (fixBad ? '' : '面板 DPS ' + fmt(Math.round(b.dps)) + ' → ' + fmt(Math.round(a.dps)) + '　') +
             '生命 ' + Math.round(b.maxhp) + ' → ' + Math.round(a.maxhp) + '　護甲減傷 ' + Math.round(b.armRed) + '% → ' + Math.round(a.armRed) + '%　閃避 ' + Math.round(b.dodge) + '% → ' + Math.round(a.dodge) + '%</div>' +
             '<button data-a="sugUse" style="' + BTN + ';margin-top:4px;background:#ffd84a;color:#2a2118;border:1px solid #000">加入計畫</button>' +
             ' <span style="color:#a89a84;font-size:12px">加入後按「確定並套用」才會真的換裝' + (sugRes.changes.some(c => c.fuse) ? '和鑲嵌' : '') + '</span>';
         }
-        h += '<div style="color:#a89a84;font-size:12px;margin-top:4px">面板沒算進去的效果（神王之戒、神眷詞綴、擊中或擊殺時觸發的獨特效果）不在比較範圍內，帶這類效果的部位建議取消勾選。</div></div>';
+        h += '<div style="color:#a89a84;font-size:12px;margin-top:4px">' + (fixBad ? '修正公式和目前的遊戲版本對不上，這次是用面板數字比較的。' : '已算入神王之戒、施放動畫上限和中毒層數上限。') + '神眷詞綴、擊中或擊殺時觸發的獨特效果不在比較範圍內，帶這類效果的部位建議取消勾選。</div></div>';
       }
       elSug.innerHTML = h + '</div>';
     };
@@ -755,7 +861,7 @@ javascript:(function awTools() {
       const isAct = g => SKILLS[g.id].act && !SKILLS[g.id].aura;
       const occOf = list => { const s = new Set(); for (const g of list) for (const c of gemCells(g)) s.add(c[0] + ',' + c[1]); return s; };
       const fitsIn = (occ, g, x, y, rot) => gemCells(g, x, y, rot).every(c => realOpen.has(c[0] + ',' + c[1]) && !occ.has(c[0] + ',' + c[1]));
-      const value = list => dpsOf(list) * (1 - 0.0005 * list.length);
+      const value = list => fixOf(list) * (1 - 0.0005 * list.length);
       const okSet = list => !opt.oneAct || list.filter(isAct).length <= 1;
       const rnd = n => Math.floor(Math.random() * n);
       /* 起點：目前模擬盤上放得下、沒被排除的寶石 */
@@ -806,7 +912,7 @@ javascript:(function awTools() {
         if (my !== autoRun || !document.body.contains(root)) return;
         const end = Date.now() + 40;
         while (Date.now() < end) step();
-        if (Date.now() - t0 < total) { onTick((Date.now() - t0) / total, dpsOf(best)); setTimeout(loop, 0); return; }
+        if (Date.now() - t0 < total) { onTick((Date.now() - t0) / total, fixOf(best)); setTimeout(loop, 0); return; }
         /* 收尾：拿掉也不影響分數的寶石就拿掉 */
         for (let i = best.length - 1; i >= 0; i--) {
           const rest = best.filter((g, j) => j !== i);
@@ -820,7 +926,7 @@ javascript:(function awTools() {
       if (!autoOpt) { elAuto.innerHTML = ''; return; }
       const o = autoOpt, busy = o.busy;
       elAuto.innerHTML = '<div style="background:#1a1410;border:1px solid #6a5a4a;border-radius:4px;padding:6px 8px;margin-bottom:8px">' +
-        '<b style="color:#ffd84a">自動排盤</b>　<span style="color:#a89a84;font-size:12px">從持有的寶石找面板 DPS 最高的排法' + (window.__awOne ? '（單格模式）' : '') + '</span>' +
+        '<b style="color:#ffd84a">自動排盤</b>　<span style="color:#a89a84;font-size:12px">從持有的寶石找修正後 DPS 估計最高的排法' + (window.__awOne ? '（單格模式）' : '') + '</span>' +
         '<div style="margin:4px 0">' +
           '<label style="margin-right:10px;white-space:nowrap;cursor:pointer"><input type="checkbox" data-au="one"' + (o.oneAct ? ' checked' : '') + '> 只放一顆主動技能（神王之戒）</label>' +
           '<label style="margin-right:10px;white-space:nowrap;cursor:pointer"><input type="checkbox" data-au="sacr"' + (o.noSacr ? ' checked' : '') + '> 不使用血祭</label>' +
@@ -832,7 +938,7 @@ javascript:(function awTools() {
         ' <button data-a="autoClose" style="' + BTN + '">關閉</button>' +
         (autoUndo && !busy ? ' <button data-a="autoUndo" style="' + BTN + '">復原成計算前的盤面</button>' : '') +
         (autoMsg ? '<div style="margin-top:6px">' + autoMsg + '</div>' : '') +
-        '<div style="color:#a89a84;font-size:12px;margin-top:4px">結果只會放到模擬盤，按「確定並套用」才寫入。從目前的模擬盤開始找，每次結果可能略有不同；面板沒算進去的效果不在比較範圍內。</div></div>';
+        '<div style="color:#a89a84;font-size:12px;margin-top:4px">結果只會放到模擬盤，按「確定並套用」才寫入。從目前的模擬盤開始找，每次結果可能略有不同；神眷詞綴、觸發型獨特效果和多目標不在比較範圍內。</div></div>';
     };
     const readAuto = () => {
       if (!autoOpt) return;
@@ -1088,20 +1194,21 @@ javascript:(function awTools() {
       if (a === 'autoUndo') { if (autoUndo) { gems = autoUndo; autoUndo = null; held = null; autoMsg = '已復原。'; refresh(); drawAuto(); } return; }
       if (a === 'autoRun') {
         readAuto();
-        const before = dpsOf(gems), prev = gems;
+        const before = fixOf(gems), prev = gems;
+        const label = fixBad ? '面板 DPS ' : '修正後估計 ';
         held = null;
         autoOpt.busy = true; autoMsg = '計算中… 0%'; drawAuto();
         autoSolve(autoOpt, (frac, d) => {
           autoMsg = '計算中… ' + Math.round(frac * 100) + '%　目前最好：' + fmt(Math.round(d));
           drawAuto();
         }, best => {
-          const after = dpsOf(best);
+          const after = fixOf(best);
           autoOpt.busy = false;
           if (after > before * 1.0001) {
             autoUndo = prev; gems = best;
-            autoMsg = '找到更好的排法：面板 DPS ' + fmt(Math.round(before)) + ' → <b style="color:#ffd84a">' + fmt(Math.round(after)) + '</b>（+' + ((after / (before || 1) - 1) * 100).toFixed(1) + '%），已放到模擬盤。';
+            autoMsg = '找到更好的排法：' + label + fmt(Math.round(before)) + ' → <b style="color:#ffd84a">' + fmt(Math.round(after)) + '</b>（+' + ((after / (before || 1) - 1) * 100).toFixed(1) + '%），已放到模擬盤。';
           } else {
-            autoMsg = '沒有找到比目前模擬盤更好的排法（面板 DPS ' + fmt(Math.round(before)) + '）。';
+            autoMsg = '沒有找到比目前模擬盤更好的排法（' + label + fmt(Math.round(before)) + '）。';
           }
           refresh(); drawAuto();
         });
