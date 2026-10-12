@@ -70,6 +70,8 @@ function __build(o){
 // 這個強度下每波混入野外修士／暗殺者的機率（遊戲用的是地圖的遭遇補償，強度不同就不同）
 function __cult(z, k){ __str(z, k); player.reputation = __rep; player.karma = __karma; player.currentMap = __Z[z].map; player.currentMapIsSafe = false; const on = isEvilHuntUnlocked(), m = getWaveChanceMult() * nv2RewardSpeedAdj(getRewardMap(), null, getRewardSpeedCap()), ks = getKarmaState().key;
   const o = { cult: on ? Math.min(1, FIELD_CULTIVATOR_WAVE_CHANCE * m) : 0, amb: on && ks !== 'neutral' ? Math.min(1, AMBUSH_WAVE_CHANCE * m * getAptitudeSpecial().ambushMult) : 0, ambDemon: ks === 'good' };
+  // 折扣前的遭遇機率與「只用估算速度」的折扣：遊戲實際是看最近幾波的實測速度打折，攻略頁用模擬出來的擊殺速度再調一次（stSim），這裡把原始值交給它
+  const w0 = getWaveChanceMult(); o.adj = w0 > 0 ? m / w0 : 1; o.cu0 = on ? FIELD_CULTIVATOR_WAVE_CHANCE * w0 : 0; o.am0 = on && ks !== 'neutral' ? AMBUSH_WAVE_CHANCE * w0 * getAptitudeSpecial().ambushMult : 0;
   __str(z); return JSON.stringify(o); }
 function __run(z, N, T, k){
   __str(z, k); const ts = [], Z = __Z[z];
@@ -124,7 +126,8 @@ const groups = [
 ];
 // 攻略頁這邊：存檔 → analyze → hPlayer → stCalc 的輸入 → 模擬
 const sim = (p, z, k, cu, seed) => JSON.parse(page.run(`(function(p, cu){ stOpt = {}; const a = analyze(p), P = hPlayer(a), c = stCalc(a, P, SZ.${z}); if (!c) return JSON.stringify(null);
-  Object.assign(c.I, cu); const s = DMG.spacetime(c.I, { S: SZ.${z}.S, n: 300, T: ${T}, str: ${k}, seed: ${seed} });
+  Object.assign(c.I, { cult: cu.cult, amb: cu.amb, ambDemon: cu.ambDemon }); Object.assign(c.rw, { cu0: cu.cu0, am0: cu.am0, adj: cu.adj, n: 2 + cu.cult + cu.amb });
+  const s = stSim(c, { n: 300, T: ${T}, str: ${k}, seed: ${seed} }).sim;
   return JSON.stringify({ p10: s.p10, p60: s.p60, median: s.median, hp: a.hp, phys: a.phys, mag: a.mag, nsk: c.I.skills.length, npar: c.I.partners.length, nb: c.I.beasts.length, art: !!c.I.art }); })(${JSON.stringify(p)}, ${JSON.stringify(cu)})`));
 const RATE = process.argv[5] === "rate";
 let bad = 0, rows = 0;

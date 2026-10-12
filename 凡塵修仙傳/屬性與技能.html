@@ -893,13 +893,15 @@ const subWhere=k=>{const w=SUB_W[k]||"222";return ["武器","防具","飾品"].m
 const slotType=s=>WEAPONS.includes(s)?"weapon":ACCS.includes(s)?"accessory":s==="神器"?"artifact":"armor";
 const eqName=eq=>{const d=gdef(eq);return d?(eq.quality==="白金"?"先天・":"")+d.name:eq&&LB[eq.lingbaoId]?LB[eq.lingbaoId].n:eq?eq.name:""};
 const lvOptions=eq=>{const d=gdef(eq);if(!d)return [];const l=(CH_LV[d.ch]||ELV).slice();if(eq.level&&!l.includes(eq.level))l.push(eq.level);return l.sort((a,b)=>a-b)};
+const subMax=eq=>{const n=SUB_N[eq.quality]||0;return n?Math.max(n+(eq.quality==="橙色"||eq.quality==="白金"?2:1),(eq.subs||[]).length):0};
 const subRange=(eq,s)=>{const d=gdef(eq),sc=SUB_SCALE[eq.quality]||0,ext=d&&"LAR".includes(d.ch);return [(s[3]+(s[4]-s[3])*(ext?.5:0))*sc,s[4]*sc]};
 // 讓一件裝備符合遊戲規則：等級落在該來源的範圍、強化不超過上限、詞條數與孔位依品質
 function normEq(eq){
   if(!eq)return eq;const d=gdef(eq);
   if(d){const l=CH_LV[d.ch]||ELV;if(!l.includes(eq.level)){const ok=l.filter(x=>x<=(build.level||1));eq.level=ok.length?ok[ok.length-1]:l[0]}eq.element=d.elem}
   eq.enhance=Math.max(0,Math.min(ENH_CAP[eq.quality]||0,Math.round(+eq.enhance||0)));
-  eq.subs=(Array.isArray(eq.subs)?eq.subs:[]).slice(0,SUB_N[eq.quality]||0);
+  eq.subs=Array.isArray(eq.subs)?eq.subs:[];eq.subs=eq.subs.slice(0,subMax(eq));
+  if(eq.quality!=="橙色"&&eq.quality!=="白金")delete eq.ancient;
   if((eq.quality==="橙色"||eq.quality==="白金")&&slotType(eq.name)!=="artifact"){if(!Array.isArray(eq.sockets))eq.sockets=[null,null,null]}else delete eq.sockets;
   return eq;
 }
@@ -979,14 +981,15 @@ function renderGear(){
     if(d)ed+=`<label>品質<select id="gQ">${Q_LIST.map(q=>`<option ${q===eq.quality?"selected":""}>${q}</option>`).join("")}</select></label>
       <label>裝備等級<select id="gLv">${lvOptions(eq).map(l=>`<option ${l===eq.level?"selected":""}>${l}</option>`).join("")}</select></label>`;
     if(ENH_CAP[eq.quality])ed+=`<label>強化（0～${ENH_CAP[eq.quality]}）<input id="gEnh" type="number" min="0" max="${ENH_CAP[eq.quality]}" value="${eq.enhance||0}"></label>`;
+    if(d&&(eq.quality==="橙色"||eq.quality==="白金"))ed+=`<label>遠古／太古<select id="gAnc"><option value="0">一般</option><option value="1" ${eq.ancient===1?"selected":""}>遠古（四維 ×1.1）</option><option value="2" ${eq.ancient===2?"selected":""}>太古（四維 ×1.2、多 1 條詞條）</option></select></label>`;
     ed+=`<label>&nbsp;<button class="btn ghost" id="gOff">卸下</button></label></div>`;
-    const n=d?SUB_N[eq.quality]||0:0;
-    if(n){ed+=`<div class="gsub"><div class="sub">隨機詞條（${eq.quality}最多 ${n} 條；★ 會影響試算）。新掉落的裝備詞條另有天、地、玄、黃、凡五級，數值是括號範圍的 ×1.3／×1.15／×1／×0.85／×0.7，可以直接改數字。<br>詞條後面的括號是<b>骰得出這條詞條的部位</b>：◎ 容易出、○ 普通、△ 少見，沒列出的部位骰不出（例如魔防只出在飾品、防禦不會出在武器）。</div>`;
+    const n=d?subMax(eq):0,n0=SUB_N[eq.quality]||0;
+    if(n){ed+=`<div class="gsub"><div class="sub">隨機詞條（${eq.quality}一般 ${n0} 條${n>n0?`；<b>太古多 1 條、「入魔淬煉」大成功再多 1 條，所以最多 ${n0+2} 條</b>，這裡留了 ${n} 格，沒有的就選「無」`:""}；★ 會影響試算）。詞條有天、地、玄、黃、凡五級，數值是玄級範圍的 ×1.3／×1.15／×1／×0.85／×0.7，每格都列出玄級範圍和<b>天級上限</b>（太古裝的詞條全部是天級上限），可以直接改數字。<br>詞條後面的括號是<b>骰得出這條詞條的部位</b>：◎ 容易出、○ 普通、△ 少見，沒列出的部位骰不出（例如魔防只出在飾品、防禦不會出在武器）。</div>`;
       for(let i=0;i<n;i++){const sb=(eq.subs||[])[i],def=sb&&SUBS.find(x=>x[0]===sb[0]),rg=def?subRange(eq,def):null,pctF=def&&def[2]==="pct";
         ed+=`<div class="ctl"><label>詞條 ${i+1}<select data-sub="${i}"><option value="">（無）</option>${SUBS.map(x=>{const no=(SUB_W[x[0]]||"222")[SUB_CAT.indexOf(slotType(gearSel))]==="0",cur=sb&&sb[0]===x[0];return `<option value="${x[0]}" ${cur?"selected":""} ${no&&!cur?"disabled":""}>${x[5]?"★ ":""}${x[1]}（${subWhere(x[0])}）${no?"・這個部位骰不出":""}</option>`}).join("")}</select></label>
-        ${def?`<label>數值${def[2]==="num"?"":" %"}（玄級 ${+(rg[0]*(pctF?100:1)).toFixed(2)}～${+(rg[1]*(pctF?100:1)).toFixed(2)}）<input data-subv="${i}" type="number" step="any" min="0" value="${+(sb[1]*(pctF?100:1)).toFixed(2)}"></label>`:""}</div>`}
+        ${def?`<label>數值${def[2]==="num"?"":" %"}（玄級 ${+(rg[0]*(pctF?100:1)).toFixed(2)}～${+(rg[1]*(pctF?100:1)).toFixed(2)}，天級上限 ${+(rg[1]*1.3*(pctF?100:1)).toFixed(2)}）<input data-subv="${i}" type="number" step="any" min="0" value="${+(sb[1]*(pctF?100:1)).toFixed(2)}"></label>`:""}</div>`}
       ed+=`</div>`}
-    if(Array.isArray(eq.sockets)){ed+=`<div class="gsub"><div class="sub">鑲嵌孔（橙色、白金每件 1～3 孔；這裡只列會影響試算的四維符）</div><div class="ctl">`;
+    if(Array.isArray(eq.sockets)){ed+=`<div class="gsub"><div class="sub">鑲嵌孔（橙色、白金取得時 1～3 孔，可以用「打洞器」補到 3 孔，所以這裡固定給 3 格；只列會影響試算的四維符）</div><div class="ctl">`;
       for(let i=0;i<3;i++){const sk=eq.sockets[i],v=sk?(TALIS.some(t=>t[0]===sk.type)?sk.type+"_"+sk.grade:"other"):"";
         ed+=`<label>孔 ${i+1}<select data-sock="${i}"><option value="">（空）</option>${TALIS.map(t=>[3,2,1].map(g=>`<option value="${t[0]}_${g}" ${v===t[0]+"_"+g?"selected":""}>${GRADE[g]}${t[1]} +${({1:.1,2:.3,3:.6})[g]}</option>`).join("")).join("")}<option value="other" ${v==="other"?"selected":""}>其他符寶（不影響試算）</option></select></label>`}
       ed+=`</div></div>`}
@@ -1008,6 +1011,7 @@ function renderGear(){
   if($("gQ"))$("gQ").onchange=ev=>upd(e=>{e.quality=ev.target.value});
   if($("gLv"))$("gLv").onchange=ev=>upd(e=>{e.level=+ev.target.value});
   if($("gEnh"))$("gEnh").onchange=ev=>upd(e=>{e.enhance=+ev.target.value});
+  if($("gAnc"))$("gAnc").onchange=ev=>upd(e=>{const v=+ev.target.value;if(v)e.ancient=v;else delete e.ancient});
   if($("gOff"))$("gOff").onclick=()=>{build.equipment[gearSel]=null;rebuild()};
   box.querySelectorAll("[data-sub]").forEach(s=>s.onchange=()=>upd(e=>{const i=+s.dataset.sub,def=SUBS.find(x=>x[0]===s.value);e.subs=e.subs||[];
     if(!def)e.subs.splice(i,1);else{while(e.subs.length<i)e.subs.push(["chaPct",0]);e.subs[i]=[def[0],+subRange(e,def)[1].toFixed(4)]}}));
@@ -1335,12 +1339,13 @@ function stCalc(a,P,Z){
   return{z:Z.id,r:a.r,d,I,est,pot,on,str,key:Z.id+JSON.stringify(I),round:P.round,hitP:P.hit,main:main[0],exp:main[2]*18000*rate*P.expMult,coins:main[3]*1200*rate*P.coinMult,
     rw:{typ,cap,er:main[2],co:main[3],em:P.expMult,cm:P.coinMult,gap:S.respawn+1,n:(S.wave[0]+S.wave[1])/2+I.cult+I.amb,adj,cu0:on?S.cult.p[0]*B[4]:0,am0:on&&d.amb?S.cult.p[1]*B[4]*a.ex.ambushMult:0}};
 }
-function stSim(c){
-  let sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S});
+function stSim(c,o){
+  const so=Object.assign({n:120,S:SZ[c.z].S},o);
+  let sim=DMG.spacetime(c.I,so);
   // 野外修士的遭遇會隨你的實際擊殺速度打折（收益上限）。第一遍是用「只算普攻」的速度估的；如果模擬出來你其實殺得快很多、折扣明顯變大，就照實際速度把遭遇機率調低再跑一遍
   if(sim.median>=60&&sim.killsHr>0&&(c.I.cult>0||c.I.amb>0)){
     const w=c.rw,rpk=Math.max(.2,3600/sim.killsHr-w.gap/w.n),adj2=Math.min(1,w.cap*(11+2*rpk)/(11+2*w.typ));
-    if(adj2<w.adj*.9){c=Object.assign({},c,{I:Object.assign({},c.I,{cult:Math.min(1,w.cu0*adj2),amb:Math.min(1,w.am0*adj2)})});sim=DMG.spacetime(c.I,{n:120,S:SZ[c.z].S})}
+    if(adj2<w.adj*.9){c=Object.assign({},c,{I:Object.assign({},c.I,{cult:Math.min(1,w.cu0*adj2),amb:Math.min(1,w.am0*adj2)})});sim=DMG.spacetime(c.I,so)}
   }
   const v=sim.p60>=.9?["ok","🟢 掛得住"]:sim.p60>=.3?["pot","🟡 看運氣"]:sim.p10>=.3?["risk","🟠 撐不久"]:["no","🔴 撐不住"];
   const out=Object.assign({},c,{sim,v,potCost:c.pot?sim.potsHr*c.pot[2]:0});

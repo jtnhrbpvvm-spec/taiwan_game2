@@ -1,4 +1,4 @@
-javascript:(() => {
+javascript:(function awTools() {
   /*
    * 自走勇者 Auto Wanderer 小工具（書籤版）
    *   1. 背景運行：分頁切到背景時遊戲照常跑，不會變成離線收益
@@ -12,6 +12,7 @@ javascript:(() => {
    *   7. 存檔備份：備份到瀏覽器或下載成檔案，可以還原；套用匯入的計畫前會自動備份
    *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉；獨特裝備可以只保留指定階級以上
    *   9. 禁止自動更新：遊戲出新版時不會自己重新整理
+   *   0. 常駐模式：遊戲自己重新整理（更新、還原備份）後，小工具會自動重新啟用
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -27,7 +28,7 @@ javascript:(() => {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V3';
+  const VERSION = 'V4';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -64,8 +65,48 @@ javascript:(() => {
     slateMax: 999999,       /* 石板的新上限 */
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
-    noUpdate: true          /* 禁止遊戲自動更新（自動重新整理） */
+    noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
+    host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
+
+  /* ===== 0. 常駐模式 =====
+   * 書籤的程式只活在當下這個頁面，頁面一重新整理就沒了。
+   * 常駐模式的做法：第一次點書籤時不直接安裝，而是在原本的頁面上蓋一個全螢幕的框架（iframe），
+   * 在框架裡重新載入遊戲，再把這整份小工具放進框架裡執行。
+   * 之後遊戲自己重新整理（自動更新、選單裡的更新按鈕、還原備份）只會重新載入框架，
+   * 外層頁面還在，所以每次框架載入完成就再放一次小工具。
+   * 外層原本那份遊戲不用特別處理：遊戲本來就規定同時只能有一個分頁在玩，
+   * 框架裡的遊戲啟動時，外層那份會自己存檔並停下來。
+   * 注意：按瀏覽器的重新整理（F5）是重新載入外層頁面，小工具還是會消失，要再點一次書籤。
+   */
+  const SELF = awTools.toString();
+  let inHost = false;
+  try { inHost = window !== window.top && !!window.top.__awHost; } catch (e) {}
+  if (CFG.host && !inHost && window === window.top) {
+    const runIn = w => {
+      try {
+        const d = w.document;
+        const s = d.createElement('script');
+        s.textContent = '(' + SELF + ')();';
+        (d.body || d.documentElement).appendChild(s);
+        s.remove();
+      } catch (e) {}
+    };
+    /* 已經是常駐模式：再點一次書籤就轉給框架裡的那一份處理（它會提示已經啟用） */
+    if (window.__awHost) { runIn(window.__awHost.contentWindow); return; }
+    if (!window.__awTools) {
+      const f = document.createElement('iframe');
+      window.__awHost = f;
+      f.allow = 'autoplay; fullscreen; clipboard-read; clipboard-write';
+      f.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483647;background:#000';
+      f.addEventListener('load', () => { runIn(f.contentWindow); try { f.contentWindow.focus(); } catch (e) {} });
+      /* 先把地上的東西收起來並存檔，框架裡的遊戲才會讀到最新進度 */
+      try { if (typeof S !== 'undefined' && S && typeof saveNow === 'function') { if (typeof grabDrops === 'function') grabDrops(); saveNow(); } } catch (e) {}
+      f.src = location.href;
+      document.body.appendChild(f);
+      return;
+    }
+  }
 
   /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
