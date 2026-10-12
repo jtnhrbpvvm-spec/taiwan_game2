@@ -24,6 +24,10 @@ javascript:(() => {
    *   - 百分比符號後面不要直接接兩個十六進位字元（會被瀏覽器當成網址編碼）
    */
 
+  /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
+   * 用來確認書籤裡貼的是不是最新版 */
+  const VERSION = 'V1';
+
   /* ===== 設定 ===== */
   const CFG = {
     keepAlive: true,        /* 背景運行 */
@@ -311,7 +315,7 @@ javascript:(() => {
     root.innerHTML =
       '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;max-width:96vw;max-height:94%;overflow:auto">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">' +
-          '<b style="font-size:15px">技能配置模擬</b><span data-r="pages"></span><span style="flex:1"></span>' +
+          '<b style="font-size:15px">技能配置模擬</b><span style="color:#a89a84;font-size:12px">' + VERSION + '</span><span data-r="pages"></span><span style="flex:1"></span>' +
           '<label style="cursor:pointer"><input type="checkbox" data-a="open"> 預覽全部 36 格</label>' +
           '<button data-a="reset" style="' + BTN + '">重新讀取</button><button data-a="clear" style="' + BTN + '">清空</button>' +
           '<button data-a="imp" style="' + BTN + '">匯入配置</button><button data-a="exp" style="' + BTN + '">匯出配置</button>' +
