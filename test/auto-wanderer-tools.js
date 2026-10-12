@@ -29,6 +29,7 @@ javascript:(() => {
     keepAlive: true,        /* 背景運行 */
     bossBar: true,          /* BOSS 血條 */
     tickMs: 100,            /* 背景時每幾毫秒推動一次遊戲迴圈 */
+    bgGrabMs: 2000,         /* 背景時每幾毫秒把地上的掉落物收起來一次（0 = 不收，等回到畫面才撿） */
     barTop: 2,              /* 血條距離畫面頂端（px） */
     barSide: 8,             /* 血條左右留白（px） */
     barHeight: 14,          /* 血條高度（px） */
@@ -83,10 +84,17 @@ javascript:(() => {
     };
     window.cancelAnimationFrame = i => { pending.delete(i) || nativeCaf(i); };
 
+    let lastGrab = 0;
     const fire = () => {
       if (!document.hidden) return;
       const t = performance.now();
       [...pending.values()].forEach(f => f(t));
+      /* 背景時每一步的時間比較長，飛向角色的掉落物會一直飛過頭、撿不起來，
+       * 所以定時呼叫遊戲自己的 grabDrops()（遊戲在分頁被隱藏時也是用它把地上的東西收起來） */
+      if (CFG.bgGrabMs && t - lastGrab >= CFG.bgGrabMs) {
+        lastGrab = t;
+        try { if (typeof grabDrops === 'function' && typeof G !== 'undefined' && G && !G.dead) grabDrops(); } catch (e) {}
+      }
     };
 
     try {
@@ -238,7 +246,8 @@ javascript:(() => {
     if (typeof S === 'undefined' || !S || !S.gems || !PS) { alert('請先進入遊戲再開啟配置模擬'); return; }
 
     const N = 6;
-    const CELL = CFG.planCell;
+    /* 窄螢幕（手機）時把格子縮小到整個技能盤放得進畫面；43 是外框、內距和技能盤邊框的寬度 */
+    const CELL = Math.max(28, Math.min(CFG.planCell, Math.floor((window.innerWidth * 0.96 - 43) / N)));
     const clone = (g, x, y, rot) => { const c = { u: g.u, id: g.id, x: x, y: y, rot: rot || 0 }; if (g.sh) c.sh = g.sh; return c; };
     let realOpen = openSet();
     let page = S.gp;
@@ -300,7 +309,7 @@ javascript:(() => {
     root.id = 'awPlan';
     root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
     root.innerHTML =
-      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;max-width:96vw;max-height:94vh;overflow:auto">' +
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;max-width:96vw;max-height:94%;overflow:auto">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">' +
           '<b style="font-size:15px">技能配置模擬</b><span data-r="pages"></span><span style="flex:1"></span>' +
           '<label style="cursor:pointer"><input type="checkbox" data-a="open"> 預覽全部 36 格</label>' +
@@ -313,9 +322,9 @@ javascript:(() => {
           '<div>' +
             '<div data-r="grid" class="sgrid" style="width:' + (N * CELL + 15) + 'px;max-width:none;user-select:none"></div>' +
             '<div data-r="held" style="margin-top:6px;min-height:26px"></div>' +
-            '<div style="color:#a89a84;font-size:12px">點下方寶石拿起 → 點格子放下；點已放的寶石可拿起<br>R 旋轉、右鍵放回、Esc 取消</div>' +
+            '<div style="color:#a89a84;font-size:12px">點下方寶石拿起 → 點格子放下；點已放的寶石可拿起<br>R 旋轉、右鍵放回、Esc 取消（手機請用拿起後出現的「旋轉」「放回」按鈕）</div>' +
           '</div>' +
-          '<div data-r="stat" style="min-width:270px;max-width:340px"></div>' +
+          '<div data-r="stat" style="min-width:min(270px,100%);max-width:340px"></div>' +
         '</div>' +
         '<div data-r="pal" style="margin-top:10px;max-width:' + (N * CELL + 370) + 'px"></div>' +
         '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">' +
@@ -974,25 +983,26 @@ javascript:(() => {
     root.id = 'awItems';
     root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
     root.innerHTML =
-      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;width:min(760px,96vw);max-height:94vh;display:flex;flex-direction:column">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-          '<b style="font-size:15px">物品管理</b><span data-r="tabs"></span><span style="flex:1"></span>' +
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(760px,96vw);max-height:94%;display:flex;flex-direction:column">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
+          '<b style="font-size:15px;white-space:nowrap">物品管理</b><span data-r="tabs"></span><span style="flex:1"></span>' +
           '<button data-a="rules" style="' + BTN + '">拾取規則</button>' +
           '<button data-a="close" style="' + BTN + '">關閉</button>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-          '<input data-r="kw" placeholder="例如：戒指 暴擊率>8 等級>=60 -已鎖定" style="flex:1;padding:4px 6px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
+          '<input data-r="kw" placeholder="例如：戒指 暴擊率>8 等級>=60 -已鎖定" style="flex:1;min-width:160px;padding:4px 6px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
           '<select data-r="sort" style="padding:3px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
             '<option value="rar">依稀有度／階級</option><option value="lv">依等級</option><option value="slot">依種類</option><option value="new">原本順序</option></select>' +
         '</div>' +
         '<div data-r="bar" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap"></div>' +
         '<div data-r="sum" style="color:#a89a84;margin-bottom:4px"></div>' +
         '<div data-r="list" style="overflow:auto;flex:1;min-height:120px;background:#1a1410"></div>' +
-        '<div style="color:#a89a84;font-size:12px;margin-top:4px">' +
+        /* 搜尋說明：畫面矮（手機）時預設收起來，把空間留給清單 */
+        '<details' + (window.innerHeight >= 700 ? ' open' : '') + ' style="color:#a89a84;font-size:12px;margin-top:4px"><summary style="cursor:pointer">搜尋說明</summary>' +
           '空白分隔多個條件（全部都要符合），前面加 - 代表排除。<br>' +
           '文字：名稱、部位、稀有度、詞綴文字，以及裝備中、已鎖定、使用中、配置中、變異等狀態。<br>' +
           '數值：詞綴名稱或 等級／LV、T（階級，越小越好）、灰燼、詞綴數、孔、基礎護甲、基礎閃避、武器傷害上限，後面接 &gt; &lt; &gt;= &lt;= = 和數字。' +
-        '</div>' +
+        '</details>' +
       '</div>';
     document.body.appendChild(root);
     const q = k => root.querySelector('[data-r="' + k + '"]');
@@ -1267,7 +1277,7 @@ javascript:(() => {
     root.id = 'awBackup';
     root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
     root.innerHTML =
-      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;width:min(560px,96vw);max-height:94vh;overflow:auto">' +
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(560px,96vw);max-height:94%;overflow:auto">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
           '<b style="font-size:15px">存檔備份</b><span style="flex:1"></span><button data-a="close" style="' + BTN + '">關閉</button>' +
         '</div>' +
