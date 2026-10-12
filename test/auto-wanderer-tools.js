@@ -963,6 +963,7 @@ javascript:(() => {
       '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;width:min(760px,96vw);max-height:94vh;display:flex;flex-direction:column">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
           '<b style="font-size:15px">物品管理</b><span data-r="tabs"></span><span style="flex:1"></span>' +
+          '<button data-a="rules" style="' + BTN + '">拾取規則</button>' +
           '<button data-a="close" style="' + BTN + '">關閉</button>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
@@ -1018,6 +1019,73 @@ javascript:(() => {
       }).join('') || '<div style="padding:12px;color:#a89a84">沒有符合的物品</div>';
     };
 
+    /* ----- 拾取規則（裝備）的匯出／匯入 -----
+     * 遊戲的設定存在 S.set：
+     *   auto  五個 0／1，依序是 普通、魔法、稀有、傳奇、獨特 要不要自動分解
+     *   keep  保留規則的陣列；每條規則 { on: 是否啟用, c: [條件…] }，同一條裡的條件要全部符合，
+     *         符合任何一條啟用中的規則就不會被自動分解
+     * 條件的寫法（k 是種類）：
+     *   any  任何詞綴階級 ≤ t            af   指定詞綴 a 階級 ≤ t（v 是最低數值）
+     *   cnt  清單 a 裡的詞綴至少 n 條階級 ≤ t（a 留空代表任何詞綴）
+     *   rar  稀有度 ≥ r（0 普通 … 3 傳奇、4 獨特或插槽）
+     *   slot 部位在 s 裡    lv 物品等級 ≥ l    uq 獨特    dv 神眷詞綴階級 ≤ t    sock 插槽數在 h 裡
+     *   條件加上 not: 1 代表反過來
+     * 神話裝備、神話獨特、插槽裝備本來就不會被自動分解，不用寫規則。 */
+    const RAR5 = ['普通', '魔法', '稀有', '傳奇', '獨特'];
+    const afName = a => (AFFIX[a] ? AFFIX[a].n : a);
+    const condText = c => {
+      const tier = 'T' + c.t + ' 以上';
+      let t = '';
+      if (c.k === 'any') t = '有任何 ' + tier + ' 的詞綴';
+      else if (c.k === 'af') t = '有 ' + tier + ' 的「' + afName(c.a) + '」' + (c.v > 0 ? '（數值 ≥ ' + c.v + '）' : '');
+      else if (c.k === 'cnt') t = '至少 ' + (c.n || 1) + ' 條 ' + tier + ' 的詞綴' + (c.a && c.a.length ? '，限：' + c.a.map(afName).join('、') : '');
+      else if (c.k === 'rar') t = '稀有度 ≥ ' + (['普通', '魔法', '稀有', '傳奇', '獨特／插槽'][c.r] || c.r);
+      else if (c.k === 'slot') t = '部位是 ' + (c.s || []).map(x => SLOT_NAME[x] || x).join('、');
+      else if (c.k === 'lv') t = '物品等級 ≥ ' + c.l;
+      else if (c.k === 'uq') t = '獨特裝備';
+      else if (c.k === 'dv') t = '有 T' + (c.t == null ? 99 : c.t) + ' 以上的神眷詞綴';
+      else if (c.k === 'sock') t = '插槽裝備' + (c.h ? '（' + c.h.join('／') + ' 孔）' : '');
+      else t = '（不認得的條件 ' + c.k + '）';
+      return (c.not ? '不是：' : '') + t;
+    };
+    const rulesText = r => {
+      const out = ['自動分解：' + (RAR5.filter((_, i) => r.auto[i]).join('、') || '都不分解'), '', '保留規則（符合任何一條就留下）：'];
+      r.keep.forEach((g, i) => out.push((i + 1) + '. ' + (g.on ? '' : '［停用］') + g.c.map(condText).join(' 而且 ')));
+      if (!r.keep.length) out.push('（沒有）');
+      return out.join('\n');
+    };
+    /* 檢查匯入的內容，回傳錯誤訊息；空字串代表沒問題 */
+    const rulesCheck = r => {
+      if (!r || !Array.isArray(r.auto) || r.auto.length !== 5 || !Array.isArray(r.keep)) return '格式不對，要有 auto（5 個數字）和 keep（陣列）';
+      if (r.keep.length > KEEP_MAXG) return '保留規則最多 ' + KEEP_MAXG + ' 條';
+      for (const g of r.keep) {
+        if (!g || !Array.isArray(g.c) || !g.c.length) return '每條規則都要有條件';
+        if (g.c.length > KEEP_MAXC) return '每條規則最多 ' + KEEP_MAXC + ' 個條件';
+        for (const c of g.c) {
+          if (!c || !KEEP_K[c.k]) return '不認得的條件種類：' + (c && c.k);
+          const ids = c.k === 'af' ? [c.a] : c.k === 'cnt' ? (c.a || []) : [];
+          for (const id of ids) if (!AFFIX[id]) return '不認得的詞綴代號：' + id;
+        }
+      }
+      return '';
+    };
+    const editRules = () => {
+      const cur = JSON.stringify({ auto: S.set.auto, keep: S.set.keep || [] });
+      const text = prompt('裝備的拾取規則。\n這一串就是目前的設定（可以複製起來備份）；要改的話貼上新的再按確定，按取消就不變。', cur);
+      if (text == null || text.trim() === cur) return;
+      let r = null;
+      try { r = JSON.parse(text); } catch (e) {}
+      const err = rulesCheck(r);
+      if (err) { alert('沒有套用：' + err); return; }
+      r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(g => ({ on: g.on ? 1 : 0, c: g.c })) };
+      if (!confirm('要把裝備的拾取規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。\n（神話、神話獨特、插槽裝備不受影響）')) return;
+      backupNow('改拾取規則前自動備份');
+      S.set.auto = r.auto;
+      S.set.keep = r.keep;
+      markDirty(); saveNow(); ui.render();
+      toast('拾取規則已更新', 'lvl');
+    };
+
     const done = () => { recalc(); markDirty(); saveNow(); ui.render(); draw(); };
     const close = () => { root.remove(); };
     root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); }, true);
@@ -1034,6 +1102,7 @@ javascript:(() => {
       const a = b.dataset.a;
       const picked = () => K.all().filter(it => sel.has(it.u));
       if (a === 'close') { close(); return; }
+      if (a === 'rules') { editRules(); return; }
       if (a === 'tab') { kind = b.dataset.v; K = KINDS[kind]; sel.clear(); draw(); return; }
       if (a === 'all') { for (const it of shown()) sel.add(it.u); draw(); return; }
       if (a === 'none') { sel.clear(); draw(); return; }
