@@ -1,0 +1,11 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aw-offline",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\a2095\\Desktop\\爬蟲\\auto-wanderer-tool\\aw_crawler.py", "--serve", "--no-browser"],
+      "port": 8378
+    }
+  ]
+}

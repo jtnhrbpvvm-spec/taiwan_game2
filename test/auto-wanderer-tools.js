@@ -10,6 +10,8 @@ javascript:(() => {
    *   5. 物品管理：分頁列出裝備、石板、符文、技能寶石，用關鍵字和數值比較搜尋，批次分解／鎖定／解鎖
    *   6. 生命明細：角色分頁的「最大生命」下面顯示算式和各項來源
    *   7. 存檔備份：備份到瀏覽器或下載成檔案，可以還原；套用匯入的計畫前會自動備份
+   *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉
+   *   9. 禁止自動更新：遊戲出新版時不會自己重新整理
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -49,7 +51,11 @@ javascript:(() => {
     gemPrice: 200,          /* 商店一顆技能寶石的灰燼價格（匯入代碼自動補買時用） */
     backup: true,           /* 選單分頁加上「存檔備份」按鈕 */
     backupKeep: 5,          /* 瀏覽器裡最多保留幾份備份 */
-    autoBackup: true        /* 配置模擬執行匯入的計畫（鑲嵌、多構築）前自動備份 */
+    autoBackup: true,       /* 配置模擬執行匯入的計畫（鑲嵌、多構築）前自動備份 */
+    noLimit: true,          /* 物品持有無上限（背包、石板、符文） */
+    itemMax: 99999,         /* 新的持有上限；想保留一個上限就改小 */
+    saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
+    noUpdate: true          /* 禁止遊戲自動更新（自動重新整理） */
   };
 
   /* 所有功能只在第一次點書籤時安裝 */
@@ -1220,6 +1226,72 @@ javascript:(() => {
     draw();
   };
 
+  /* ===== 8. 物品持有無上限 =====
+   * 遊戲的上限是寫死的常數（背包 BAG_MAX 500、石板 500、符文 1000），常數本身改不了，
+   * 所以改的是「用到這些上限的函式」：把函式的原始碼取出來，把上限換成 CFG.itemMax，
+   * 再重新建立成同名的函式蓋回去。這樣不用照抄遊戲的程式，遊戲改版後只要寫法沒變就還有效。
+   * 會處理兩種：最上層的函式（撿裝備、撿石板、卸下裝備、萃取、切換構築…），
+   * 以及 ui 物件裡的方法（按鈕會不會因為「滿了」而變成不能按）。
+   * 注意：存檔會跟著物品數量變大。瀏覽器的儲存空間和雲端存檔都有大小限制，
+   * 遊戲存檔失敗時不會提示，所以另外每分鐘檢查一次存檔大小，太大就跳警告。
+   */
+  if (first && CFG.noLimit) {
+    const N = String(CFG.itemMax);
+    const RULES = [
+      [/\bBAG_MAX\b/g, N],
+      [/\bSLATE_MAX\b/g, N],
+      [/\bRUNE_MAX\b/g, N],
+      [/S\.slates\.length>=500/g, 'S.slates.length>=' + N],
+      [/S\.runes\.length>=1e3/g, 'S.runes.length>=' + N]
+    ];
+    const patchSrc = src => { let out = src; for (const r of RULES) out = out.replace(r[0], r[1]); return out; };
+    const srcOf = f => Function.prototype.toString.call(f);
+    const patched = [];
+    for (const name of Object.getOwnPropertyNames(window)) {
+      let f;
+      try { f = window[name]; } catch (e) { continue; }
+      if (typeof f !== 'function') continue;
+      const src = srcOf(f);
+      if (src.indexOf('[native code]') >= 0 || !/^(async\s+)?function\b/.test(src)) continue;
+      const out = patchSrc(src);
+      if (out === src) continue;
+      try { window[name] = (0, eval)('(' + out + ')'); patched.push(name); } catch (e) {}
+    }
+    if (typeof ui !== 'undefined') {
+      for (const name of Object.keys(ui)) {
+        const f = ui[name];
+        if (typeof f !== 'function') continue;
+        const src = srcOf(f), out = patchSrc(src);
+        if (out === src) continue;
+        /* 先當成一般函式或箭頭函式重建；失敗的話就是「名稱(){}」這種方法寫法，包進物件裡再取出來 */
+        try { ui[name] = (0, eval)('(' + out + ')'); patched.push('ui.' + name); }
+        catch (e) { try { ui[name] = (0, eval)('({' + out + '})')[name]; patched.push('ui.' + name); } catch (e2) {} }
+      }
+    }
+    window.__awPatched = patched;
+
+    let lastWarn = 0;
+    setInterval(() => {
+      if (typeof S === 'undefined' || !S) return;
+      let kb = 0;
+      try { kb = Math.round(JSON.stringify(S).length / 1024); } catch (e) { return; }
+      if (kb >= CFG.saveWarnKB && Date.now() - lastWarn > 600000) {
+        lastWarn = Date.now();
+        try { toast('存檔已經 ' + kb + ' KB，再大可能會存不進去（雲端存檔尤其容易失敗），建議清掉一些物品', 'bad', 1); } catch (e) {}
+      }
+    }, 60000);
+  }
+
+  /* ===== 9. 禁止自動更新 =====
+   * 遊戲每 10 分鐘檢查一次新版，有新版就倒數 5 秒自動重新整理（書籤會跟著失效）。
+   * 遊戲用 upd.tried 記「這個版本已經試著更新過了」，是 true 就不會再自動更新；
+   * 這裡把它固定成 true，並把負責重新整理的 updNow() 換成空的。
+   * 「有新版本」的提示和選單裡手動更新的按鈕不受影響，要更新時自己重新整理頁面即可。
+   */
+  if (first && CFG.noUpdate) {
+    try { Object.defineProperty(upd, 'tried', { get: () => true, set: () => {}, configurable: true }); } catch (e) {}
+    window.updNow = () => {};
+  }
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
