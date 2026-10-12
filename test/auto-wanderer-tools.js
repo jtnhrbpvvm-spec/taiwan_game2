@@ -10,7 +10,7 @@ javascript:(() => {
    *   5. 物品管理：分頁列出裝備、石板、符文、技能寶石，用關鍵字和數值比較搜尋，批次分解／鎖定／解鎖
    *   6. 生命明細：角色分頁的「最大生命」下面顯示算式和各項來源
    *   7. 存檔備份：備份到瀏覽器或下載成檔案，可以還原；套用匯入的計畫前會自動備份
-   *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉
+   *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉；獨特裝備可以只保留指定階級以上
    *   9. 禁止自動更新：遊戲出新版時不會自己重新整理
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -53,7 +53,9 @@ javascript:(() => {
     backupKeep: 5,          /* 瀏覽器裡最多保留幾份備份 */
     autoBackup: true,       /* 配置模擬執行匯入的計畫（鑲嵌、多構築）前自動備份 */
     noLimit: true,          /* 物品持有無上限（背包、石板、符文） */
-    itemMax: 99999,         /* 新的持有上限；想保留一個上限就改小 */
+    itemMax: 99999,         /* 背包和符文的新上限；想保留一個上限就改小 */
+    slateMax: 999999,       /* 石板的新上限 */
+    uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true          /* 禁止遊戲自動更新（自動重新整理） */
   };
@@ -1316,15 +1318,39 @@ javascript:(() => {
    * 注意：存檔會跟著物品數量變大。瀏覽器的儲存空間和雲端存檔都有大小限制，
    * 遊戲存檔失敗時不會提示，所以另外每分鐘檢查一次存檔大小，太大就跳警告。
    */
-  if (first && CFG.noLimit) {
-    const N = String(CFG.itemMax);
-    const RULES = [
-      [/\bBAG_MAX\b/g, N],
-      [/\bSLATE_MAX\b/g, N],
-      [/\bRUNE_MAX\b/g, N],
-      [/S\.slates\.length>=500/g, 'S.slates.length>=' + N],
-      [/S\.runes\.length>=1e3/g, 'S.runes.length>=' + N]
-    ];
+  if (first && (CFG.noLimit || CFG.uqKeepHi)) {
+    const N = String(CFG.itemMax), NS = String(CFG.slateMax);
+    const RULES = [];
+    if (CFG.noLimit) {
+      RULES.push(
+        [/\bBAG_MAX\b/g, N],
+        [/\bRUNE_MAX\b/g, N],
+        [/S\.runes\.length>=1e3/g, 'S.runes.length>=' + N],
+        [/\$\{S\.runes\.length\}\/1000/g, '${S.runes.length}/' + N],
+        [/\bSLATE_MAX\b/g, NS],
+        [/S\.slates\.length>=500/g, 'S.slates.length>=' + NS],
+        [/\$\{S\.slates\.length\}\/500/g, '${S.slates.length}/' + NS]
+      );
+    }
+    /* 獨特裝備依階級決定留不留（階級：0 一般、1 高階、2 終局、3 守護者、4 終焉）。
+     * 遊戲的保留規則只能設「是不是獨特」，分不出階級，所以把撿裝備時問「要不要自動分解」的那一步
+     * 換成這裡的版本：
+     *   - CFG.uqKeepHi 以上的獨特：一律不分解
+     *   - 低於這個階級的獨特：當成沒有「獨特一律保留」那條規則，照其餘的保留規則判斷
+     *     （前提是遊戲設定裡「獨特自動分解」有打開）
+     * 建議遊戲的保留規則裡留著「獨特一律保留」那一條：這樣哪天忘了點書籤，
+     * 最壞只是低階獨特塞進背包，不會把終局裝備分解掉。 */
+    if (CFG.uqKeepHi) {
+      window.__awSalv = t => {
+        const hi = t.uq && UNIQUE[t.uq] ? (UNIQUE[t.uq].hi || 0) : -1;
+        if (t.uq && hi >= CFG.uqKeepHi) return false;
+        if (autoSalv(t)) return true;
+        if (!t.uq || t.my || t.sock || t.lk || t.rar >= 4 || !S.set.auto[4]) return false;
+        const others = (S.set.keep || []).filter(g => !(g.c.length === 1 && g.c[0].k === 'uq' && !g.c[0].not));
+        return !keepMatch(t, others);
+      };
+      RULES.push([/\bautoSalv\(/g, '__awSalv(']);
+    }
     const patchSrc = src => { let out = src; for (const r of RULES) out = out.replace(r[0], r[1]); return out; };
     const srcOf = f => Function.prototype.toString.call(f);
     const patched = [];
