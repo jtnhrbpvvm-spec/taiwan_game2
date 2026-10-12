@@ -1035,17 +1035,19 @@ javascript:(() => {
 
     /* ----- 拾取規則（裝備）的匯出／匯入 -----
      * 遊戲的設定存在 S.set：
-     *   auto  五個 0／1，依序是 普通、魔法、稀有、傳奇、獨特 要不要自動分解
+     *   auto  0／1 的陣列，依序是 普通、魔法、稀有、傳奇、獨特、插槽 要不要自動分解
+     *         （插槽是 v0.2.410 才加的第六格，舊格式只有五格也可以）
      *   keep  保留規則的陣列；每條規則 { on: 是否啟用, c: [條件…] }，同一條裡的條件要全部符合，
      *         符合任何一條啟用中的規則就不會被自動分解
      * 條件的寫法（k 是種類）：
      *   any  任何詞綴階級 ≤ t            af   指定詞綴 a 階級 ≤ t（v 是最低數值）
      *   cnt  清單 a 裡的詞綴至少 n 條階級 ≤ t（a 留空代表任何詞綴）
      *   rar  稀有度 ≥ r（0 普通 … 3 傳奇、4 獨特或插槽）
-     *   slot 部位在 s 裡    lv 物品等級 ≥ l    uq 獨特    dv 神眷詞綴階級 ≤ t    sock 插槽數在 h 裡
+     *   slot 部位在 s 裡    lv 物品等級 ≥ l    dv 神眷詞綴階級 ≤ t    sock 插槽數在 h 裡
+     *   uq   獨特裝備；u 是指定的獨特代號清單，留空代表任何獨特（v0.2.415 起可以指定）
      *   條件加上 not: 1 代表反過來
      * 神話裝備、神話獨特、插槽裝備本來就不會被自動分解，不用寫規則。 */
-    const RAR5 = ['普通', '魔法', '稀有', '傳奇', '獨特'];
+    const RAR5 = ['普通', '魔法', '稀有', '傳奇', '獨特', '插槽'];
     const afName = a => (AFFIX[a] ? AFFIX[a].n : a);
     const condText = c => {
       const tier = 'T' + c.t + ' 以上';
@@ -1056,7 +1058,7 @@ javascript:(() => {
       else if (c.k === 'rar') t = '稀有度 ≥ ' + (['普通', '魔法', '稀有', '傳奇', '獨特／插槽'][c.r] || c.r);
       else if (c.k === 'slot') t = '部位是 ' + (c.s || []).map(x => SLOT_NAME[x] || x).join('、');
       else if (c.k === 'lv') t = '物品等級 ≥ ' + c.l;
-      else if (c.k === 'uq') t = '獨特裝備';
+      else if (c.k === 'uq') t = '獨特裝備' + (c.u && c.u.length ? '：' + c.u.map(x => (UNIQUE[x] ? UNIQUE[x].n : x)).join('、') : '（任何一件）');
       else if (c.k === 'dv') t = '有 T' + (c.t == null ? 99 : c.t) + ' 以上的神眷詞綴';
       else if (c.k === 'sock') t = '插槽裝備' + (c.h ? '（' + c.h.join('／') + ' 孔）' : '');
       else t = '（不認得的條件 ' + c.k + '）';
@@ -1070,7 +1072,7 @@ javascript:(() => {
     };
     /* 檢查匯入的內容，回傳錯誤訊息；空字串代表沒問題 */
     const rulesCheck = r => {
-      if (!r || !Array.isArray(r.auto) || r.auto.length !== 5 || !Array.isArray(r.keep)) return '格式不對，要有 auto（5 個數字）和 keep（陣列）';
+      if (!r || !Array.isArray(r.auto) || r.auto.length < 5 || r.auto.length > 6 || !Array.isArray(r.keep)) return '格式不對，要有 auto（5 或 6 個數字）和 keep（陣列）';
       if (r.keep.length > KEEP_MAXG) return '保留規則最多 ' + KEEP_MAXG + ' 條';
       for (const g of r.keep) {
         if (!g || !Array.isArray(g.c) || !g.c.length) return '每條規則都要有條件';
@@ -1079,6 +1081,7 @@ javascript:(() => {
           if (!c || !KEEP_K[c.k]) return '不認得的條件種類：' + (c && c.k);
           const ids = c.k === 'af' ? [c.a] : c.k === 'cnt' ? (c.a || []) : [];
           for (const id of ids) if (!AFFIX[id]) return '不認得的詞綴代號：' + id;
+          if (c.k === 'uq') for (const id of (c.u || [])) if (!UNIQUE[id]) return '不認得的獨特裝備代號：' + id;
         }
       }
       return '';
@@ -1346,7 +1349,7 @@ javascript:(() => {
         if (t.uq && hi >= CFG.uqKeepHi) return false;
         if (autoSalv(t)) return true;
         if (!t.uq || t.my || t.sock || t.lk || t.rar >= 4 || !S.set.auto[4]) return false;
-        const others = (S.set.keep || []).filter(g => !(g.c.length === 1 && g.c[0].k === 'uq' && !g.c[0].not));
+        const others = (S.set.keep || []).filter(g => !(g.c.length === 1 && g.c[0].k === 'uq' && !g.c[0].not && !(g.c[0].u && g.c[0].u.length)));
         return !keepMatch(t, others);
       };
       RULES.push([/\bautoSalv\(/g, '__awSalv(']);
