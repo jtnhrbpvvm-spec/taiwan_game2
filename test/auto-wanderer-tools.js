@@ -12,6 +12,7 @@ javascript:(() => {
    *   7. 存檔備份：備份到瀏覽器或下載成檔案，可以還原；套用匯入的計畫前會自動備份
    *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉；獨特裝備可以只保留指定階級以上
    *   9. 禁止自動更新：遊戲出新版時不會自己重新整理
+   *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -26,7 +27,7 @@ javascript:(() => {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V1';
+  const VERSION = 'V3';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -47,6 +48,7 @@ javascript:(() => {
     cdColor: '#ffe08a',     /* 冷卻文字顏色 */
     cdRefreshMs: 100,       /* 冷卻文字更新間隔 */
     planner: true,          /* 技能分頁加上「配置模擬」按鈕 */
+    oneCell: true,          /* 技能分頁加上「單格模式」開關（寶石只佔一格、輔助不用相鄰） */
     items: true,            /* 背包分頁加上「物品管理」按鈕 */
     btnRefreshMs: 300,      /* 檢查入口按鈕是否還在的間隔 */
     hpDetail: true,         /* 角色分頁顯示生命來源明細 */
@@ -1344,6 +1346,36 @@ javascript:(() => {
    * 注意：存檔會跟著物品數量變大。瀏覽器的儲存空間和雲端存檔都有大小限制，
    * 遊戲存檔失敗時不會提示，所以另外每分鐘檢查一次存檔大小，太大就跳警告。
    */
+  /* 第 8、10 項共用：把遊戲裡原始碼符合規則的函式改寫後蓋回去，回傳改到的函式名稱。
+   * RULES 是 [正規表示式, 取代成的文字] 的陣列。 */
+  const patchAll = RULES => {
+    const patchSrc = src => { let out = src; for (const r of RULES) out = out.replace(r[0], r[1]); return out; };
+    const srcOf = f => Function.prototype.toString.call(f);
+    const patched = [];
+    for (const name of Object.getOwnPropertyNames(window)) {
+      let f;
+      try { f = window[name]; } catch (e) { continue; }
+      if (typeof f !== 'function') continue;
+      const src = srcOf(f);
+      if (src.indexOf('[native code]') >= 0 || !/^(async\s+)?function\b/.test(src)) continue;
+      const out = patchSrc(src);
+      if (out === src) continue;
+      try { window[name] = (0, eval)('(' + out + ')'); patched.push(name); } catch (e) {}
+    }
+    if (typeof ui !== 'undefined') {
+      for (const name of Object.keys(ui)) {
+        const f = ui[name];
+        if (typeof f !== 'function') continue;
+        const src = srcOf(f), out = patchSrc(src);
+        if (out === src) continue;
+        /* 先當成一般函式或箭頭函式重建；失敗的話就是「名稱(){}」這種方法寫法，包進物件裡再取出來 */
+        try { ui[name] = (0, eval)('(' + out + ')'); patched.push('ui.' + name); }
+        catch (e) { try { ui[name] = (0, eval)('({' + out + '})')[name]; patched.push('ui.' + name); } catch (e2) {} }
+      }
+    }
+    return patched;
+  };
+
   if (first && (CFG.noLimit || CFG.uqKeepHi)) {
     const N = String(CFG.itemMax), NS = String(CFG.slateMax);
     const RULES = [];
@@ -1377,31 +1409,7 @@ javascript:(() => {
       };
       RULES.push([/\bautoSalv\(/g, '__awSalv(']);
     }
-    const patchSrc = src => { let out = src; for (const r of RULES) out = out.replace(r[0], r[1]); return out; };
-    const srcOf = f => Function.prototype.toString.call(f);
-    const patched = [];
-    for (const name of Object.getOwnPropertyNames(window)) {
-      let f;
-      try { f = window[name]; } catch (e) { continue; }
-      if (typeof f !== 'function') continue;
-      const src = srcOf(f);
-      if (src.indexOf('[native code]') >= 0 || !/^(async\s+)?function\b/.test(src)) continue;
-      const out = patchSrc(src);
-      if (out === src) continue;
-      try { window[name] = (0, eval)('(' + out + ')'); patched.push(name); } catch (e) {}
-    }
-    if (typeof ui !== 'undefined') {
-      for (const name of Object.keys(ui)) {
-        const f = ui[name];
-        if (typeof f !== 'function') continue;
-        const src = srcOf(f), out = patchSrc(src);
-        if (out === src) continue;
-        /* 先當成一般函式或箭頭函式重建；失敗的話就是「名稱(){}」這種方法寫法，包進物件裡再取出來 */
-        try { ui[name] = (0, eval)('(' + out + ')'); patched.push('ui.' + name); }
-        catch (e) { try { ui[name] = (0, eval)('({' + out + '})')[name]; patched.push('ui.' + name); } catch (e2) {} }
-      }
-    }
-    window.__awPatched = patched;
+    window.__awPatched = patchAll(RULES);
 
     let lastWarn = 0;
     setInterval(() => {
@@ -1425,13 +1433,91 @@ javascript:(() => {
     try { Object.defineProperty(upd, 'tried', { get: () => true, set: () => {}, configurable: true }); } catch (e) {}
     window.updNow = () => {};
   }
+  /* ===== 10. 單格模式 =====
+   * 技能分頁標題旁的開關。開啟後：
+   *   - 每顆技能寶石（包含變異寶石）在技能盤上只佔一格
+   *   - 輔助寶石不用相鄰，放在盤上就對所有符合條件的主動技能生效
+   * 做法：遊戲用 gemShape() 取寶石形狀、用 linkRule() 決定連結方式（遊戲本來就有「全部連結」的 all 規則），
+   * 這裡把用到 gemShape() 的函式改成呼叫 __awShape()，並把 linkRule() 包一層，兩者都看 __awOne 這個開關。
+   * 不改 SKILLS 裡的形狀資料，因為掉落變異寶石時會拿它當底，改了會產生永久變形的寶石。
+   * 開關狀態記在瀏覽器裡，下次點書籤會自動恢復。
+   * 注意：沒有點書籤時（例如剛開網頁、離線收益結算）遊戲會照原本的形狀計算，
+   * 重疊的寶石連結會亂掉；關閉開關時，放不下的寶石會退回寶石欄。
+   */
+  const ONE_KEY = 'awtools.onecell';
+  let oneCellToggle = null;
+  if (first && CFG.oneCell) {
+    window.__awOne = false;
+    window.__awShape = g => window.__awOne ? [[0, 0]] : (g.sh || SKILLS[g.id].shape);
+    window.__awOnePatched = patchAll([
+      [/\bgemShape\(/g, '__awShape('],
+      /* gemArt() 畫寶石圖示時直接讀形狀，也要跟著變成一格 */
+      [/\((\w+)\|\|(\w+)\.shape\)\.map/g, '(window.__awOne?[[0,0]]:($1||$2.shape)).map']
+    ]);
+    const realLink = window.linkRule;
+    if (typeof realLink === 'function') window.linkRule = () => window.__awOne ? 'all' : realLink();
+    /* 單格模式開啟時不上傳排行榜。
+     * 遊戲每次存檔和每次離開無限之塔都會呼叫 lbSend()，它用 S.lb.sent（已上傳的最高層數）判斷要不要上傳。
+     * 這裡除了直接擋掉，還把 S.lb.sent 補到目前的最高層數，這樣單格模式打出來的層數
+     * 之後也不會被上傳（包含關掉開關、或沒點書籤的時候），要等正常玩法打到更高層才會再上傳。 */
+    const realLbSend = window.lbSend;
+    const lbMask = () => {
+      try {
+        if (!S || !S.lb || !S.tw) return;
+        if (S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
+        S.lb.sn = S.name;
+        S.lb.sb = S.tal.asc || '';
+      } catch (e) {}
+    };
+    if (typeof realLbSend === 'function') window.lbSend = () => { if (window.__awOne) { lbMask(); return; } return realLbSend(); };
+    /* 寶石圖示有快取，切換後要清掉才會重畫 */
+    const redraw = () => {
+      try { for (const k of Object.keys(GEM_ART)) delete GEM_ART[k]; } catch (e) {}
+      try { recalc(); ui.selGem = null; ui.ghost = null; ui.render(); } catch (e) {}
+    };
+    /* 用原本的形狀檢查：超出技能盤、放在未解鎖的格子、或和前面的寶石重疊的，都算放不下 */
+    const misfits = () => {
+      const open = openSet(), used = new Set(), bad = [];
+      for (const g of placed()) {
+        const cs = gemCells(g).map(c => c[0] + ',' + c[1]);
+        if (cs.every(c => open.has(c) && !used.has(c))) cs.forEach(c => used.add(c)); else bad.push(g);
+      }
+      return bad;
+    };
+    oneCellToggle = () => {
+      if (!window.__awOne) {
+        if (!confirm('【單格模式】\n\n開啟後每顆技能寶石只佔一格，輔助寶石不用相鄰就會生效。\n\n' +
+          '這是直接修改遊戲規則，傷害會遠高於正常玩法，修改【可能】被作者封鎖。開啟期間不會上傳排行榜，但雲端存檔仍看得到異常的數值。\n\n' +
+          '可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n' +
+          '另外：沒有點書籤時遊戲會照原本的形狀計算；之後關閉這個開關，放不下的寶石會退回寶石欄。\n\n確定要開啟嗎？')) return;
+        window.__awOne = true;
+        try { localStorage.setItem(ONE_KEY, '1'); } catch (e) {}
+        lbMask();
+        redraw();
+        try { toast('單格模式已開啟', 'lvl'); } catch (e) {}
+        return;
+      }
+      window.__awOne = false;
+      const bad = misfits();
+      if (bad.length && !confirm('關閉單格模式後，有 ' + bad.length + ' 顆寶石照原本的形狀放不下，會退回寶石欄。\n\n確定要關閉嗎？')) { window.__awOne = true; return; }
+      for (const g of bad) g.x = g.y = -1;
+      try { localStorage.removeItem(ONE_KEY); } catch (e) {}
+      try { markDirty(); } catch (e) {}
+      redraw();
+      try { toast('單格模式已關閉' + (bad.length ? '，' + bad.length + ' 顆寶石退回寶石欄' : ''), 'lvl'); } catch (e) {}
+    };
+    let was = false;
+    try { was = localStorage.getItem(ONE_KEY) === '1'; } catch (e) {}
+    if (was) { window.__awOne = true; redraw(); }
+  }
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items || CFG.backup)) {
+  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell)) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -1446,6 +1532,7 @@ javascript:(() => {
       const panel = document.querySelector('#panel');
       if (!panel) return;
       if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
+      if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
       if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
       if (CFG.items && ui.tab === 'bag') addBtn(panel.querySelector('.row.tools') || panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
     }, CFG.btnRefreshMs);

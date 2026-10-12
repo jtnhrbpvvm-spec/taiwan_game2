@@ -79,8 +79,8 @@ const out = g.run(`(function(){
     for (let r = 0; r < realms.length; r++) { const row = []; for (let s = 1; s <= 10; s++) { player.realmIndex = r; player.stage = s; const b = wbBossStats({ atkMult: 1 }); row.push([+b.atk.toFixed(5), +b.attrs.evaPen.toFixed(4)]); } L.push(row); }
     player.realmIndex = keepR; player.stage = keepS;
     const boss = WB_BOSSES.map(B => { const ag = combineAuras(B.auras), st = wbBossStats(B).attrs; player.realmIndex = keepR; player.stage = keepS;
-      return { n: B.name, t: B.title, icon: B.icon, race: B.race, el: B.element, def: st.def, eva: st.eva, af: B.affix || "", afv: B.affixVal || 0, am: B.atkMult || 1, mag: ['demon', 'heart'].includes(B.race) ? 1 : 0, pa: ag.player, sa: ag.self, aura: (B.auras || []).map(a => a.name).join("、") }; });
-    return { rounds: WB.rounds, skill: ZHENMO_PLAYER_SKILL_MULT, daily: WB.dailyMax, variance: NV2.dmgVariance, defK: DEF_K, freeze: FREEZE_TURNS, boss, L };
+      return { n: B.name, t: B.title, icon: B.icon, race: B.race, el: B.element, def: st.def, eva: st.eva, af: B.affix || "", afv: B.affixVal || 0, am: B.atkMult || 1, mag: ['demon', 'heart'].includes(B.race) ? 1 : 0, crit: st.alwaysCrit ? 1 : 0, combo: st.alwaysCombo ? 1 : 0, nodef: st.ignoreDef ? 1 : 0, trait: (RACE_TRAITS[B.race] || {}).desc || "", rn: (RACES[B.race] || {}).icon + (RACES[B.race] || {}).name, pa: ag.player, sa: ag.self, aura: (B.auras || []).map(a => a.name).join("、") }; });
+    return { rounds: WB.rounds, critDmg: NV2.critDmg, inf: WB.infiniteHp ? 1 : 0, skill: ZHENMO_PLAYER_SKILL_MULT, daily: WB.dailyMax, variance: NV2.dmgVariance, defK: DEF_K, freeze: FREEZE_TURNS, boss, L };
   })();
   return JSON.stringify(EX);
 })()`);

@@ -55,7 +55,7 @@
     if (!bar) { bar = document.createElement("div"); bar.id = "pfFlag"; bar.setAttribute("role", "alert"); bar.setAttribute("data-noitm", ""); document.body.insertAdjacentElement("afterbegin", bar); }
     const k = flagKind(ig.reason);
     // 遊戲已放寬：2026/10/5 17:00（台灣時間）前的標記、以及舊門檻（低於 60 倍）下判的「修煉進度過快」，更新遊戲後會自動解除
-    const lifted = ig.at < Date.UTC(2026, 9, 5, 9) || (/^修煉進度過快/.test(ig.reason || "") && (ig.speedMax || 10) < 60);
+    const lifted = ig.at < Date.UTC(2026, 9, 5, 9) || (/^修煉進度過快/.test(ig.reason || "") && ((ig.speedMax || 10) < 60 || ig.at < Date.UTC(2026, 9, 14, 16)));
     bar.style.background = lifted ? "#166534" : "";
     bar.innerHTML = lifted
       ? `<b style="animation:none">✅ 這份存檔帶有舊的「存檔驗證異常」標記（${esc(k[0])}），遊戲已經放寬</b><br>`
