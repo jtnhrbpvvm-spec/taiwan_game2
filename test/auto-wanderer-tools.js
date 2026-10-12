@@ -30,7 +30,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V8';
+  const VERSION = 'V9';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2013,7 +2013,31 @@ javascript:(function awTools() {
   const MON_KEY = 'awtools.monauto';
   let monAuto = false;
   try { monAuto = localStorage.getItem(MON_KEY) === '1'; } catch (e) {}
+  /* 勾選框直接加進遊戲產生「無限君主」那一塊畫面的函式（ui.monBoard）輸出的內容裡。
+   * 地圖分頁打怪時會一直重畫，如果等畫完才用計時器補上去，勾選框會一閃一閃；
+   * 包在輸出裡就會跟著畫面一起出現。包不到（遊戲改版）時 monWrapped 維持 false，退回用計時器補。 */
+  let monWrapped = false;
+  const setMonAuto = on => {
+    monAuto = !!on;
+    try { if (monAuto) localStorage.setItem(MON_KEY, '1'); else localStorage.removeItem(MON_KEY); } catch (e) {}
+  };
   if (first && CFG.monAuto) {
+    try {
+      const realBoard = ui.monBoard;
+      if (typeof realBoard === 'function') {
+        ui.monBoard = function () {
+          const html = realBoard.apply(this, arguments);
+          return String(html).replace('</h3>', '<label class="awMonAuto" style="margin-left:8px;font-size:12px;font-weight:normal;cursor:pointer;white-space:nowrap">' +
+            '<input type="checkbox"' + (monAuto ? ' checked' : '') + '> 打贏後自動接著打</label></h3>');
+        };
+        document.addEventListener('change', e => {
+          const t = e.target;
+          if (t && t.closest && t.closest('.awMonAuto')) setMonAuto(t.checked);
+        }, true);
+        monWrapped = true;
+        if (ui.tab === 'map') ui.render();
+      }
+    } catch (e) {}
     let lastM = -1, due = 0;
     setInterval(() => {
       if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G) return;
@@ -2055,7 +2079,7 @@ javascript:(function awTools() {
       if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
       if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
       if (CFG.arts && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
-      if (CFG.monAuto && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
+      if (CFG.monAuto && !monWrapped && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
         const h3 = [...panel.querySelectorAll('h3')].find(h => h.textContent.indexOf(MONARCH.n) === 0);
         if (h3 && !h3.querySelector('.awMonAuto')) {
           const lab = document.createElement('label');
@@ -2064,10 +2088,7 @@ javascript:(function awTools() {
           const cb = document.createElement('input');
           cb.type = 'checkbox';
           cb.checked = monAuto;
-          cb.addEventListener('change', () => {
-            monAuto = cb.checked;
-            try { if (monAuto) localStorage.setItem(MON_KEY, '1'); else localStorage.removeItem(MON_KEY); } catch (e) {}
-          });
+          cb.addEventListener('change', () => setMonAuto(cb.checked));
           lab.addEventListener('click', e => e.stopPropagation());
           lab.appendChild(cb);
           lab.appendChild(document.createTextNode(' 打贏後自動接著打'));
