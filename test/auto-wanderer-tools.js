@@ -13,6 +13,8 @@ javascript:(function awTools() {
    *   8. 物品持有無上限：背包、石板、符文的數量上限拿掉；獨特裝備可以只保留指定階級以上
    *   9. 禁止自動更新：遊戲出新版時不會自己重新整理
    *   0. 常駐模式：遊戲自己重新整理（更新、還原備份）後，小工具會自動重新啟用
+   *  11. 解鎖三神器：選單分頁的按鈕，把還沒有的神器直接加進存檔（1 級）
+   *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -28,7 +30,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V7';
+  const VERSION = 'V8';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -66,6 +68,9 @@ javascript:(function awTools() {
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
+    arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
+    monAuto: true,          /* 地圖分頁的無限君主加上「打贏後自動接著打」勾選框 */
+    monAutoMs: 3000,        /* 打贏無限君主後等幾毫秒再自動挑戰下一場 */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
 
@@ -1692,6 +1697,7 @@ javascript:(function awTools() {
    * 瀏覽器裡的備份只留最新的幾份（CFG.backupKeep），清除瀏覽器資料時會一起消失，重要的請下載成檔案。
    */
   const BK_KEY = 'awtools.backups';
+  const EXTRA_BAK = 'autowanderer.v1.bak-claude';
   const bkList = () => { try { return JSON.parse(localStorage.getItem(BK_KEY)) || []; } catch (e) { return []; } };
   const bkSave = list => {
     try { localStorage.setItem(BK_KEY, JSON.stringify(list)); return true; }
@@ -1768,6 +1774,14 @@ javascript:(function awTools() {
           '<button data-a="dl" data-i="' + i + '" style="' + BTN + '">下載</button>' +
           '<button data-a="del" data-i="' + i + '" style="' + BTN + '">刪除</button>' +
         '</div>').join('') : '<div style="padding:10px;color:#a89a84;background:#1a1410">瀏覽器裡還沒有備份</div>';
+      /* 書籤以外留下的臨時備份（例如請 Claude 直接改存檔時，它在修改前留的那一份），列出來讓使用者自己刪 */
+      let extra = null;
+      try { extra = localStorage.getItem(EXTRA_BAK); } catch (e) {}
+      if (extra) {
+        elList.innerHTML += '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;margin-top:6px;border:1px dashed #6a5a4a;background:#1a1410">' +
+          '<div style="flex:1"><b>臨時備份</b> <small style="color:#a89a84">Claude 修改存檔前留下的</small><br><small style="color:#c8bca8">' + Math.round(extra.length / 1024) + ' KB</small></div>' +
+          '<button data-a="xRestore" style="' + BTN + '">還原</button><button data-a="xDel" style="' + BTN + '">刪除</button></div>';
+      }
     };
 
     const close = () => root.remove();
@@ -1786,6 +1800,8 @@ javascript:(function awTools() {
       if (a === 'close') { close(); return; }
       if (a === 'save') { saveNow(); if (backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
       if (a === 'dlNow') { saveNow(); bkDownload(JSON.stringify(S), S.name, S.lvl, Date.now()); return; }
+      if (a === 'xDel') { if (confirm('刪除這份臨時備份？')) { try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
+      if (a === 'xRestore') { let x = null; try { x = localStorage.getItem(EXTRA_BAK); } catch (err) {} if (x) restoreSave(x, '臨時備份'); return; }
       if (!it) return;
       if (a === 'dl') { bkDownload(it.data, it.name, it.lvl, it.t); return; }
       if (a === 'del') { if (confirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
@@ -1968,13 +1984,60 @@ javascript:(function awTools() {
     if (was) { window.__awOne = true; redraw(); }
   }
 
+  /* ===== 11. 解鎖三神器 =====
+   * 選單分頁標題旁的按鈕。神器記在存檔的 S.art.has 裡（代號對應 { lv 等級, xp 經驗 }），
+   * 這裡把還沒有的神器直接加進去，等級 1、經驗 0；已經有的不會動。
+   * 神器的種類從遊戲的 ARTS 讀，之後遊戲多出新神器也會一起解鎖。
+   */
+  const unlockArts = () => {
+    if (typeof S === 'undefined' || !S || typeof ARTS === 'undefined') { alert('請先進入遊戲'); return; }
+    const miss = Object.keys(ARTS).filter(k => !(S.art && S.art.has && S.art.has[k]));
+    if (!miss.length) { toast('神器都已經有了', 'lvl'); return; }
+    const names = miss.map(k => ARTS[k].n).join('、');
+    if (!confirm('【解鎖三神器】\n\n會把還沒有的神器直接加進存檔（1 級）：\n' + names + '\n\n' +
+      '這是直接修改存檔，修改【可能】被作者封鎖（雲端存檔看得到）。\n可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n確定要解鎖嗎？')) return;
+    if (CFG.autoBackup) { try { saveNow(); backupNow('解鎖神器前自動備份'); } catch (e) {} }
+    if (!S.art) S.art = { on: '', has: {} };
+    if (!S.art.has) S.art.has = {};
+    for (const k of miss) S.art.has[k] = { lv: 1, xp: 0 };
+    try { recalc(); markDirty(); saveNow(); ui.badge('char', 1); ui.render(); } catch (e) {}
+    try { toast('已解鎖神器：' + names + '（到角色分頁點一下戴上）', 'lvl', 1); } catch (e) {}
+  };
+
+  /* ===== 12. 無限君主連續挑戰 =====
+   * 地圖分頁「無限君主」標題旁的勾選框。勾選後，每次打贏無限君主，等幾秒就自動再挑戰一次，
+   * 直到無限印記不夠、打輸或陣亡為止。只在「剛打贏」之後接著打，不會平白自己開打。
+   * 判斷打贏：存檔裡的擊敗次數 S.gd.m 增加。開打用遊戲自己的 startGuard(4)（4 是無限君主），
+   * 它會自己檢查並扣無限印記、把地上的掉落物收起來。勾選狀態記在瀏覽器裡。
+   */
+  const MON_KEY = 'awtools.monauto';
+  let monAuto = false;
+  try { monAuto = localStorage.getItem(MON_KEY) === '1'; } catch (e) {}
+  if (first && CFG.monAuto) {
+    let lastM = -1, due = 0;
+    setInterval(() => {
+      if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G) return;
+      const m = S.gd.m || 0;
+      if (lastM < 0) { lastM = m; return; }
+      if (m > lastM && monAuto) due = Date.now() + CFG.monAutoMs;
+      lastM = m;
+      if (!due || Date.now() < due) return;
+      /* 陣亡、取消勾選，或等了半分鐘還不能開打（例如使用者自己去打別的），就放棄這一次 */
+      if (!monAuto || G.dead || Date.now() > due + 30000) { due = 0; return; }
+      if (G.boss || G.tw) return;
+      due = 0;
+      if (!canMonarch()) { try { toast('無限印記不夠了，連續挑戰結束', 'lvl'); } catch (e) {} return; }
+      try { startGuard(4); } catch (e) {}
+    }, 500);
+  }
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell)) {
+  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto)) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -1991,6 +2054,26 @@ javascript:(function awTools() {
       if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
       if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
       if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
+      if (CFG.arts && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
+      if (CFG.monAuto && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
+        const h3 = [...panel.querySelectorAll('h3')].find(h => h.textContent.indexOf(MONARCH.n) === 0);
+        if (h3 && !h3.querySelector('.awMonAuto')) {
+          const lab = document.createElement('label');
+          lab.className = 'awMonAuto';
+          lab.style.cssText = 'margin-left:8px;font-size:12px;font-weight:normal;cursor:pointer;white-space:nowrap';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = monAuto;
+          cb.addEventListener('change', () => {
+            monAuto = cb.checked;
+            try { if (monAuto) localStorage.setItem(MON_KEY, '1'); else localStorage.removeItem(MON_KEY); } catch (e) {}
+          });
+          lab.addEventListener('click', e => e.stopPropagation());
+          lab.appendChild(cb);
+          lab.appendChild(document.createTextNode(' 打贏後自動接著打'));
+          h3.appendChild(lab);
+        }
+      }
       if (CFG.items && ui.tab === 'bag') addBtn(panel.querySelector('.row.tools') || panel.firstElementChild, 'awBtnItems', '物品管理', openItems);
     }, CFG.btnRefreshMs);
   }
