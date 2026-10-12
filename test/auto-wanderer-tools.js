@@ -631,12 +631,21 @@ javascript:(() => {
       ui.render();
     };
     const importCode = code => {
+      const allParts = String(code).split('|').map(t => t.trim()).filter(Boolean);
+      /* 先確認貼進來的真的是配置代碼，再動模擬盤。
+       * 不然貼錯東西（例如拾取規則的代碼）會把模擬盤清空，接著按確定就會把所有寶石取下 */
+      const GEM_RE = /^[a-zA-Z]+\*?(?:#\d+)?:-?\d+,-?\d+,\d$/;
+      const looksValid = allParts.some(part => /^[FEB]:/i.test(part) ||
+        part.replace(/^G\d:/i, '').split(';').some(t => GEM_RE.test(t.trim())));
+      if (!looksValid) {
+        alert('這不像是技能配置的代碼，沒有做任何變更。\n\n如果你貼的是拾取規則（開頭是 {"auto":…），它要貼在「背包」分頁 →「物品管理」→「拾取規則」。');
+        return;
+      }
       let miss = [];
       held = null;
       gear = null;
       multi = null;
       let single = null;
-      const allParts = String(code).split('|').map(t => t.trim()).filter(Boolean);
       /* B 段要最先處理：先把缺的寶石買齊，後面排配置時才找得到 */
       for (const part of allParts) if (/^B:/i.test(part)) buyGems(part.slice(2));
       for (const part of allParts) {
@@ -697,6 +706,9 @@ javascript:(() => {
         alert('有寶石放在尚未解鎖的格子上，無法套用。請先移開，或取消「預覽全部 36 格」。');
         return;
       }
+      /* 要寫入的配置是空的、而那個構築原本有寶石：很可能是誤操作，先問清楚 */
+      const emptied = pages.filter(p => !lists[p].length && load(p).length);
+      if (emptied.length && !confirm('構築 ' + emptied.map(p => p + 1).join('、') + ' 的模擬盤是空的，套用後那個構築的寶石會全部被取下。\n\n確定要這樣做嗎？')) return;
       /* 執行匯入的計畫前先自動備份一份，做錯了可以到「存檔備份」還原 */
       if (CFG.autoBackup && (gear || multi)) { saveNow(); backupNow('套用計畫前自動備份'); }
       /* 有裝備計畫就先做（使用者取消或檢查沒過就整個不套用）；沒有裝備計畫的多構築寫入也先確認 */
