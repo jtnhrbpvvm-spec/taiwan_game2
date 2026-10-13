@@ -19,6 +19,7 @@ javascript:(function awTools() {
    *  14. 置頂視窗：選單分頁的按鈕，把遊戲搬進永遠在最上層的小視窗
    *  15. 省資源：背景時不畫畫面；單格模式開著時降低畫面更新次數、不產生粒子和傷害數字
    *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
+   *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -34,7 +35,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V18';
+  const VERSION = 'V21';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -85,6 +86,15 @@ javascript:(function awTools() {
     monLoopBatch: 1,        /* 自動刷神話：「每打幾場才讀一次檔」的預設值（開始時還可以再改） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
+  /* 上面是預設值。在遊戲裡的「小工具設定」（第 17 項）改過的項目存在瀏覽器的 awtools.cfg，
+   * 這裡把它們蓋到 CFG 上；只接受上面有的項目，而且型別要一樣（開關對開關、數字對數字）。
+   * 所以平常不用再改這個檔案，改檔案只是改「預設值」。 */
+  const CFG_KEY = 'awtools.cfg';
+  const CFG_DEF = Object.assign({}, CFG);
+  try {
+    const saved = JSON.parse(localStorage.getItem(CFG_KEY)) || {};
+    for (const k of Object.keys(saved)) if (k in CFG_DEF && typeof saved[k] === typeof CFG_DEF[k]) CFG[k] = saved[k];
+  } catch (e) {}
 
   /* ===== 0. 常駐模式 =====
    * 書籤的程式只活在當下這個頁面，頁面一重新整理就沒了。
@@ -145,6 +155,85 @@ javascript:(function awTools() {
       return;
     }
   }
+
+  /* ===== 對話框 =====
+   * 提示、確認、輸入都用這裡自己畫的對話框，不用瀏覽器內建的 alert／confirm／prompt。原因：
+   *   - 內建的視窗一跳出來整個頁面就停住，遊戲也跟著暫停
+   *   - 置頂的小視窗裡，內建視窗不一定跳得出來
+   *   - 內建的輸入框只有一行，貼長的代碼很不方便，也沒辦法一次問好幾個欄位
+   * 這些函式都是「非同步」的：uiConfirm() 回傳的是之後才會有結果的 Promise，
+   * 所以呼叫的地方要寫 await，外層的函式要加 async。uiAlert() 不用等，可以直接呼叫。
+   * 同時有好幾個對話框時會排隊，一次只顯示一個。
+   *   uiAlert(文字)                      只有「確定」
+   *   uiConfirm(文字)                    回傳 true／false
+   *   uiPrompt(文字, 預設值, 是否多行)    回傳輸入的文字，取消是 null
+   *   uiForm(文字, [{ label, value, type, multiline }])  回傳每個欄位的文字陣列，取消是 null
+   */
+  const dlgQueue = [];
+  let dlgBusy = false;
+  const dlgNext = () => {
+    if (dlgBusy || !dlgQueue.length) return;
+    dlgBusy = true;
+    const job = dlgQueue.shift(), opt = job.opt;
+    const root = document.createElement('div');
+    root.id = 'awDlg';
+    root.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:14px/1.6 sans-serif;color:#f0e6d2';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#2a2118;border:2px solid #ffd84a;border-radius:6px;padding:14px;box-sizing:border-box;width:min(520px,94vw);max-height:92%;display:flex;flex-direction:column;gap:10px';
+    const msg = document.createElement('div');
+    msg.style.cssText = 'white-space:pre-wrap;overflow:auto;word-break:break-word;min-height:1.6em';
+    msg.textContent = opt.msg;
+    box.appendChild(msg);
+    const inputs = [];
+    for (const f of (opt.fields || [])) {
+      const lab = document.createElement('label');
+      lab.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex-shrink:0';
+      if (f.label) {
+        const sp = document.createElement('span');
+        sp.style.cssText = 'white-space:pre-wrap;font-size:13px';
+        sp.textContent = f.label;
+        lab.appendChild(sp);
+      }
+      const el = document.createElement(f.multiline ? 'textarea' : 'input');
+      if (f.multiline) el.rows = 5; else el.type = f.type || 'text';
+      el.value = f.value == null ? '' : String(f.value);
+      el.style.cssText = 'padding:6px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a;font:13px/1.4 monospace;box-sizing:border-box;width:100%';
+      lab.appendChild(el);
+      box.appendChild(lab);
+      inputs.push(el);
+    }
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-shrink:0';
+    const done = v => { root.remove(); dlgBusy = false; job.resolve(v); dlgNext(); };
+    const ok = () => done(opt.kind === 'alert' ? undefined : opt.kind === 'confirm' ? true : inputs.map(i => i.value));
+    const cancel = () => done(opt.kind === 'alert' ? undefined : opt.kind === 'confirm' ? false : null);
+    const mk = (text, cls, primary, fn) => {
+      const b = document.createElement('button');
+      b.textContent = text;
+      b.className = cls;
+      b.style.cssText = 'padding:4px 16px;cursor:pointer' + (primary ? ';font-weight:bold;background:#ffd84a;color:#2a2118;border:1px solid #000' : '');
+      b.addEventListener('click', fn);
+      row.appendChild(b);
+      return b;
+    };
+    if (opt.kind !== 'alert') mk('取消', 'awDlgNo', false, cancel);
+    const okBtn = mk('確定', 'awDlgOk', true, ok);
+    box.appendChild(row);
+    root.appendChild(box);
+    root.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); ok(); }
+    }, true);
+    root.addEventListener('click', e => e.stopPropagation());
+    document.body.appendChild(root);
+    try { (inputs[0] || okBtn).focus(); if (inputs[0]) inputs[0].select(); } catch (e) {}
+  };
+  const dlgShow = opt => new Promise(resolve => { dlgQueue.push({ opt: opt, resolve: resolve }); dlgNext(); });
+  const uiAlert = msg => dlgShow({ kind: 'alert', msg: String(msg) });
+  const uiConfirm = msg => dlgShow({ kind: 'confirm', msg: String(msg) });
+  const uiForm = (msg, fields) => dlgShow({ kind: 'form', msg: String(msg), fields: fields });
+  const uiPrompt = (msg, def, multiline) => uiForm(msg, [{ value: def, multiline: !!multiline }]).then(v => (v ? v[0] : null));
 
   /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
@@ -362,7 +451,7 @@ javascript:(function awTools() {
    */
   const openPlanner = () => {
     if (document.querySelector('#awPlan')) return;
-    if (typeof S === 'undefined' || !S || !S.gems || !PS) { alert('請先進入遊戲再開啟配置模擬'); return; }
+    if (typeof S === 'undefined' || !S || !S.gems || !PS) { uiAlert('請先進入遊戲再開啟配置模擬'); return; }
 
     const N = 6;
     /* 窄螢幕（手機）時把格子縮小到整個技能盤放得進畫面；43 是外框、內距和技能盤邊框的寬度 */
@@ -585,15 +674,15 @@ javascript:(function awTools() {
     /* 把來源構築的裝備複製給目標構築。
      * 目標是使用中的構築：用遊戲的 equipItem() 真的穿上；
      * 目標是其他構築：只改 S.bld 裡的記錄（天賦和神器沿用目標原本的，沒有記錄就用目前的） */
-    const copyEquip = () => {
+    const copyEquip = async () => {
       const eq = eqOf(src);
-      if (!eq || !Object.keys(eq).length) { alert('構築 ' + (src + 1) + ' 沒有記錄裝備（還沒切換過的構築不會有記錄）'); return; }
+      if (!eq || !Object.keys(eq).length) { uiAlert('構築 ' + (src + 1) + ' 沒有記錄裝備（還沒切換過的構築不會有記錄）'); return; }
       const pool = [...SLOTS.map(sl => S.equip[sl]).filter(Boolean), ...S.bag];
       const names = SLOTS.filter(sl => eq[sl]).map(sl => {
         const it = pool.find(o => o.u === eq[sl]);
         return SLOT_NAME[sl] + '：' + (it ? itemName(it) : '（找不到，可能已分解）');
       });
-      if (!confirm('把構築 ' + (src + 1) + ' 的裝備複製到構築 ' + (page + 1) + '？\n\n' + names.join('\n') + '\n\n這會立刻寫入存檔。')) return;
+      if (!await uiConfirm('把構築 ' + (src + 1) + ' 的裝備複製到構築 ' + (page + 1) + '？\n\n' + names.join('\n') + '\n\n這會立刻寫入存檔。')) return;
       let fail = 0;
       if (page === S.gp) {
         for (const sl of SLOTS) {
@@ -709,6 +798,8 @@ javascript:(function awTools() {
     const rotate = () => { if (held) { held.rot = (held.rot + 1) % 4; drawGrid(); drawHeld(); } };
     const close = () => { window.removeEventListener('keydown', onKey, true); root.remove(); };
     const onKey = e => {
+      /* 對話框開著、或正在輸入框裡打字時，不要把按鍵當成快速鍵（不然打不出 r，按 Esc 會連模擬視窗一起關掉） */
+      if (document.querySelector('#awDlg') || (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) return;
       if (e.key === 'Escape') { close(); } else if (e.key === 'r' || e.key === 'R') { rotate(); } else { return; }
       e.stopPropagation(); e.preventDefault();
     };
@@ -1024,29 +1115,29 @@ javascript:(function awTools() {
 
     /* 執行裝備計畫。全部先檢查過才動手；回傳 false 代表使用者取消或檢查沒過（這時什麼都沒改）。
      * 多構築計畫一律穿在使用中的構築上，其他構築之後再照抄；單一構築則穿在選定的目標構築 */
-    const runGear = () => {
+    const runGear = async () => {
       const tp = multi ? S.gp : page;
       for (const f of gear.fuse) {
         const err = fuseCheck(f);
-        if (err) { alert('裝備計畫無法執行，沒有做任何變更。\n鑲嵌 #' + f.u + '：' + err); return false; }
+        if (err) { uiAlert('裝備計畫無法執行，沒有做任何變更。\n鑲嵌 #' + f.u + '：' + err); return false; }
       }
       const fuseItems = gear.fuse.map(f => S.bag.find(o => o.u === f.u));
       const ashNeed = fuseItems.reduce((n, it) => n + ALCH_ASH.f(it.ilvl), 0);
-      if ((S.mat.i3 || 0) < fuseItems.length) { alert('灌注石 Lv3 不夠：需要 ' + fuseItems.length + ' 顆，你有 ' + (S.mat.i3 || 0) + ' 顆。沒有做任何變更。'); return false; }
-      if (S.ash < ashNeed) { alert('符文灰燼不夠：需要 ' + ashNeed + '。沒有做任何變更。'); return false; }
+      if ((S.mat.i3 || 0) < fuseItems.length) { uiAlert('灌注石 Lv3 不夠：需要 ' + fuseItems.length + ' 顆，你有 ' + (S.mat.i3 || 0) + ' 顆。沒有做任何變更。'); return false; }
+      if (S.ash < ashNeed) { uiAlert('符文灰燼不夠：需要 ' + ashNeed + '。沒有做任何變更。'); return false; }
       for (const u of gear.equip) {
         const it = allItems().find(o => o.u === u);
-        if (!it) { alert('裝備計畫無法執行，沒有做任何變更。\n找不到要換上的裝備 #' + u); return false; }
-        if (!canWear(it)) { alert('裝備計畫無法執行，沒有做任何變更。\n等級不足，穿不上 ' + itemName(it)); return false; }
+        if (!it) { uiAlert('裝備計畫無法執行，沒有做任何變更。\n找不到要換上的裝備 #' + u); return false; }
+        if (!canWear(it)) { uiAlert('裝備計畫無法執行，沒有做任何變更。\n等級不足，穿不上 ' + itemName(it)); return false; }
       }
-      if (!confirm('即將執行（裝備穿在構築 ' + (tp + 1) + '）：\n\n' + planLines().join('\n') +
+      if (!await uiConfirm('即將執行（裝備穿在構築 ' + (tp + 1) + '）：\n\n' + planLines().join('\n') +
         '\n\n鑲嵌會消耗 ' + fuseItems.length + ' 顆灌注石 Lv3、' + ashNeed + ' 灰燼和上面列出的符文，鑲嵌後無法取下、無法復原。\n確定執行？')) return false;
 
       for (let i = 0; i < gear.fuse.length; i++) {
         const it = fuseItems[i];
         it.sock.st = gear.fuse[i].runes.slice();
         fuse(it);
-        if (it.sock) { it.sock.st = []; alert('鑲嵌 ' + itemName(it) + ' 沒有成功，已停止後續步驟。'); return false; }
+        if (it.sock) { it.sock.st = []; uiAlert('鑲嵌 ' + itemName(it) + ' 沒有成功，已停止後續步驟。'); return false; }
       }
       for (const u of gear.equip) {
         const it = allItems().find(o => o.u === u);
@@ -1101,7 +1192,7 @@ javascript:(function awTools() {
     };
     /* 向商店補買寶石。寫法是「寶石代號=需要持有的數量」，只補不足的部分（變異寶石不算在內），
      * 所以同一串代碼重複匯入不會重複購買。做法和遊戲商店的購買按鈕相同：扣灰燼、呼叫 giveGem()。 */
-    const buyGems = str => {
+    const buyGems = async str => {
       const todo = [];
       for (const t of String(str).split(';').map(x => x.trim()).filter(Boolean)) {
         const kv = t.split('=');
@@ -1114,14 +1205,14 @@ javascript:(function awTools() {
       const count = todo.reduce((n, x) => n + x[1], 0);
       const cost = count * CFG.gemPrice;
       const list = todo.map(x => SKILLS[x[0]].n + ' ×' + x[1]).join('、');
-      if (S.ash < cost) { alert('這份配置需要先買寶石：' + list + '，共 ' + cost + ' 灰燼，但你的灰燼不夠。'); return; }
-      if (!confirm('這份配置需要先向商店購買寶石：\n\n' + list + '\n\n共 ' + cost + ' 灰燼（你有 ' + fmt(S.ash) + '）。現在購買？\n按取消的話不會購買，缺的寶石會排不上去。')) return;
+      if (S.ash < cost) { uiAlert('這份配置需要先買寶石：' + list + '，共 ' + cost + ' 灰燼，但你的灰燼不夠。'); return; }
+      if (!await uiConfirm('這份配置需要先向商店購買寶石：\n\n' + list + '\n\n共 ' + cost + ' 灰燼（你有 ' + fmt(S.ash) + '）。現在購買？\n按取消的話不會購買，缺的寶石會排不上去。')) return;
       for (const x of todo) for (let i = 0; i < x[1]; i++) { S.ash -= CFG.gemPrice; giveGem(x[0]); }
       markDirty();
       saveNow();
       ui.render();
     };
-    const importCode = code => {
+    const importCode = async code => {
       const allParts = String(code).split('|').map(t => t.trim()).filter(Boolean);
       /* 先確認貼進來的真的是配置代碼，再動模擬盤。
        * 不然貼錯東西（例如拾取規則的代碼）會把模擬盤清空，接著按確定就會把所有寶石取下 */
@@ -1129,7 +1220,7 @@ javascript:(function awTools() {
       const looksValid = allParts.some(part => /^[FEB]:/i.test(part) ||
         part.replace(/^G\d:/i, '').split(';').some(t => GEM_RE.test(t.trim())));
       if (!looksValid) {
-        alert('這不像是技能配置的代碼，沒有做任何變更。\n\n如果你貼的是拾取規則（開頭是 {"auto":…），它要貼在「背包」分頁 →「物品管理」→「拾取規則」。');
+        uiAlert('這不像是技能配置的代碼，沒有做任何變更。\n\n如果你貼的是拾取規則（開頭是 {"auto":…），它要貼在「背包」分頁 →「物品管理」→「拾取規則」。');
         return;
       }
       let miss = [];
@@ -1138,7 +1229,7 @@ javascript:(function awTools() {
       multi = null;
       let single = null;
       /* B 段要最先處理：先把缺的寶石買齊，後面排配置時才找得到 */
-      for (const part of allParts) if (/^B:/i.test(part)) buyGems(part.slice(2));
+      for (const part of allParts) if (/^B:/i.test(part)) await buyGems(part.slice(2));
       for (const part of allParts) {
         if (/^B:/i.test(part)) continue;
         const gm = /^G(\d):/i.exec(part);
@@ -1172,7 +1263,7 @@ javascript:(function awTools() {
         gems = load(page);
       }
       refresh();
-      if (miss.length) alert('有 ' + miss.length + ' 項放不上去（沒有這顆寶石，或位置超出、重疊、尚未解鎖）：' + miss.join('、'));
+      if (miss.length) uiAlert('有 ' + miss.length + ' 項放不上去（沒有這顆寶石，或位置超出、重疊、尚未解鎖）：' + miss.join('、'));
     };
 
     /* 把一份配置寫進某個構築：使用中的直接改寶石位置，其他的只改快照。回傳放不下的數量 */
@@ -1189,22 +1280,22 @@ javascript:(function awTools() {
     };
 
     /* 把模擬盤（或匯入的多構築計畫）寫回存檔 */
-    const apply = () => {
+    const apply = async () => {
       if (multi && multi[page]) multi[page] = gems;
       const lists = multi ? multi : { [page]: gems };
       const pages = Object.keys(lists).map(Number);
       if (pages.some(p => lists[p].some(g => gemCells(g).some(([x, y]) => !realOpen.has(x + ',' + y))))) {
-        alert('有寶石放在尚未解鎖的格子上，無法套用。請先移開，或取消「預覽全部 36 格」。');
+        uiAlert('有寶石放在尚未解鎖的格子上，無法套用。請先移開，或取消「預覽全部 36 格」。');
         return;
       }
       /* 要寫入的配置是空的、而那個構築原本有寶石：很可能是誤操作，先問清楚 */
       const emptied = pages.filter(p => !lists[p].length && load(p).length);
-      if (emptied.length && !confirm('構築 ' + emptied.map(p => p + 1).join('、') + ' 的模擬盤是空的，套用後那個構築的寶石會全部被取下。\n\n確定要這樣做嗎？')) return;
+      if (emptied.length && !await uiConfirm('構築 ' + emptied.map(p => p + 1).join('、') + ' 的模擬盤是空的，套用後那個構築的寶石會全部被取下。\n\n確定要這樣做嗎？')) return;
       /* 執行匯入的計畫前先自動備份一份，做錯了可以到「存檔備份」還原 */
       if (CFG.autoBackup && (gear || multi)) { saveNow(); backupNow('套用計畫前自動備份'); }
       /* 有裝備計畫就先做（使用者取消或檢查沒過就整個不套用）；沒有裝備計畫的多構築寫入也先確認 */
-      if (gear) { if (!runGear()) { refresh(); return; } }
-      else if (multi && !confirm('即將執行：\n\n' + planLines().join('\n') + '\n\n確定執行？')) return;
+      if (gear) { if (!(await runGear())) { refresh(); return; } }
+      else if (multi && !await uiConfirm('即將執行：\n\n' + planLines().join('\n') + '\n\n確定執行？')) return;
 
       let miss = 0;
       for (const p of pages) {
@@ -1242,7 +1333,7 @@ javascript:(function awTools() {
       const g = occupied().get(c[0] + ',' + c[1]); if (!g) return;
       gems = gems.filter(o => o !== g); refresh();
     });
-    root.addEventListener('click', e => {
+    root.addEventListener('click', async e => {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const a = b.dataset.a;
       if (a === 'close') { close(); return; }
@@ -1250,7 +1341,7 @@ javascript:(function awTools() {
       if (a === 'open') { allOpen = b.checked; drawGrid(); return; }
       if (a === 'rot') { rotate(); return; }
       if (a === 'sug') {
-        if (page !== S.gp) { alert('建議配裝是用目前穿著的裝備來比較，請先把「套用到構築」切到使用中的構築。'); return; }
+        if (page !== S.gp) { uiAlert('建議配裝是用目前穿著的裝備來比較，請先把「套用到構築」切到使用中的構築。'); return; }
         if (!sugOpt) {
           const sl = {};
           for (const s of SLOTS) sl[s] = true;
@@ -1290,7 +1381,7 @@ javascript:(function awTools() {
       if (a === 'sugClose') { sugOpt = null; sugRes = null; drawSug(); return; }
       if (a === 'sugRun') {
         readSug();
-        if (page !== S.gp) { alert('請先把「套用到構築」切到使用中的構築。'); return; }
+        if (page !== S.gp) { uiAlert('請先把「套用到構築」切到使用中的構築。'); return; }
         sugRes = 'busy'; drawSug();
         /* 先讓「計算中」畫出來再開始算 */
         setTimeout(() => {
@@ -1319,11 +1410,11 @@ javascript:(function awTools() {
       if (a === 'exp') {
         const code = exportCode();
         try { navigator.clipboard.writeText(code); } catch (err) {}
-        prompt('配置代碼（已嘗試複製到剪貼簿，也可以在這裡全選複製）', code);
+        await uiPrompt('配置代碼（已嘗試複製到剪貼簿，也可以在這裡全選複製）', code, true);
         return;
       }
       if (a === 'imp') {
-        const code = prompt('貼上配置代碼。匯入後只會改模擬盤和顯示裝備計畫，按「確定並套用」才寫入存檔。');
+        const code = await uiPrompt('貼上配置代碼。匯入後只會改模擬盤和顯示裝備計畫，按「確定並套用」才寫入存檔。', '', true);
         if (code) importCode(code);
         return;
       }
@@ -1351,7 +1442,7 @@ javascript:(function awTools() {
    */
   const openItems = () => {
     if (document.querySelector('#awItems')) return;
-    if (typeof S === 'undefined' || !S || !S.bag) { alert('請先進入遊戲再開啟物品管理'); return; }
+    if (typeof S === 'undefined' || !S || !S.bag) { uiAlert('請先進入遊戲再開啟物品管理'); return; }
 
     const BTN = 'padding:2px 8px;cursor:pointer';
     const esc2 = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -1640,16 +1731,16 @@ javascript:(function awTools() {
       }
       return '';
     };
-    const editRules = () => {
+    const editRules = async () => {
       const cur = JSON.stringify({ auto: S.set.auto, keep: S.set.keep || [], xr: S.set.xr || [] });
-      const text = prompt('裝備的拾取規則。\n這一串就是目前的設定（可以複製起來備份）；要改的話貼上新的再按確定，按取消就不變。', cur);
+      const text = await uiPrompt('裝備的拾取規則。\n這一串就是目前的設定（可以複製起來備份）；要改的話貼上新的再按確定，按取消就不變。', cur, true);
       if (text == null || text.trim() === cur) return;
       let r = null;
       try { r = JSON.parse(text); } catch (e) {}
       const err = rulesCheck(r);
-      if (err) { alert('沒有套用：' + err); return; }
+      if (err) { uiAlert('沒有套用：' + err); return; }
       r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(g => ({ on: g.on ? 1 : 0, c: g.c })), xr: r.xr ? r.xr.map(g => ({ on: g.on ? 1 : 0, c: g.c })) : null };
-      if (!confirm('要把裝備的規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。' + (r.xr ? '' : '\n（這串沒有帶萃取規則，萃取規則維持原樣）'))) return;
+      if (!await uiConfirm('要把裝備的規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。' + (r.xr ? '' : '\n（這串沒有帶萃取規則，萃取規則維持原樣）'))) return;
       backupNow('改拾取規則前自動備份');
       S.set.auto = r.auto;
       S.set.keep = r.keep;
@@ -1669,7 +1760,7 @@ javascript:(function awTools() {
       if (b.checked) sel.add(u); else sel.delete(u);
       draw();
     });
-    root.addEventListener('click', e => {
+    root.addEventListener('click', async e => {
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const a = b.dataset.a;
       const picked = () => K.all().filter(it => sel.has(it.u));
@@ -1684,9 +1775,9 @@ javascript:(function awTools() {
       if (a === 'salv') {
         const list = picked().filter(it => !K.prot(it));
         const skip = picked().length - list.length;
-        if (!list.length) { alert('選取的物品都不能分解（裝備中、使用中、配置中、已鎖定、神話獨特、一般技能寶石都會跳過）'); return; }
+        if (!list.length) { uiAlert('選取的物品都不能分解（裝備中、使用中、配置中、已鎖定、神話獨特、一般技能寶石都會跳過）'); return; }
         const ash = list.reduce((n, it) => n + K.ash(it), 0);
-        if (!confirm('確定分解 ' + list.length + ' 件' + K.label + '？可得 ' + ash + ' 符文灰燼。' + (skip ? ' 另有 ' + skip + ' 件不能分解，會跳過。' : '') + ' 分解後無法復原。')) return;
+        if (!await uiConfirm('確定分解 ' + list.length + ' 件' + K.label + '？可得 ' + ash + ' 符文灰燼。' + (skip ? ' 另有 ' + skip + ' 件不能分解，會跳過。' : '') + ' 分解後無法復原。')) return;
         const n = K.remove(list);
         sel.clear();
         done();
@@ -1769,7 +1860,7 @@ javascript:(function awTools() {
   const bkList = () => { try { return JSON.parse(localStorage.getItem(BK_KEY)) || []; } catch (e) { return []; } };
   const bkSave = list => {
     try { localStorage.setItem(BK_KEY, JSON.stringify(list)); return true; }
-    catch (e) { alert('瀏覽器的儲存空間不夠，備份沒有存成功。請先刪掉舊的備份，或改用下載成檔案。'); return false; }
+    catch (e) { uiAlert('瀏覽器的儲存空間不夠，備份沒有存成功。請先刪掉舊的備份，或改用下載成檔案。'); return false; }
   };
   const bkStamp = t => {
     const d = new Date(t), z = n => String(n).padStart(2, '0');
@@ -1792,23 +1883,23 @@ javascript:(function awTools() {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
   /* 用一份備份文字還原存檔，成功的話頁面會重新整理 */
-  const restoreSave = (text, when) => {
+  const restoreSave = async (text, when) => {
     let o = null;
     try { o = JSON.parse(text); } catch (e) {}
-    if (!o || !o.cls || !Array.isArray(o.gems) || !Array.isArray(o.bag)) { alert('這不是有效的自走勇者存檔。'); return; }
-    if (!confirm('要還原成這份存檔嗎？\n\n角色：' + (o.name || '（未命名）') + '　LV' + o.lvl + (when ? '\n備份時間：' + when : '') +
+    if (!o || !o.cls || !Array.isArray(o.gems) || !Array.isArray(o.bag)) { uiAlert('這不是有效的自走勇者存檔。'); return; }
+    if (!await uiConfirm('要還原成這份存檔嗎？\n\n角色：' + (o.name || '（未命名）') + '　LV' + o.lvl + (when ? '\n備份時間：' + when : '') +
       '\n\n目前的進度會被覆蓋（還原前會先自動備份一份），頁面會重新整理。')) return;
-    if (!backupNow('還原前自動備份') && !confirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
+    if (!backupNow('還原前自動備份') && !await uiConfirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
     o.t = Date.now();
     TAB.gone = true;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); }
-    catch (e) { TAB.gone = false; alert('寫入存檔失敗，沒有還原。'); return; }
+    catch (e) { TAB.gone = false; uiAlert('寫入存檔失敗，沒有還原。'); return; }
     location.reload();
   };
 
   const openBackup = () => {
     if (document.querySelector('#awBackup')) return;
-    if (typeof S === 'undefined' || !S) { alert('請先進入遊戲再開啟存檔備份'); return; }
+    if (typeof S === 'undefined' || !S) { uiAlert('請先進入遊戲再開啟存檔備份'); return; }
     const BTN = 'padding:2px 8px;cursor:pointer';
     const root = document.createElement('div');
     root.id = 'awBackup';
@@ -1862,17 +1953,17 @@ javascript:(function awTools() {
       rd.readAsText(f);
       e.target.value = '';
     });
-    root.addEventListener('click', e => {
+    root.addEventListener('click', async e => {
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const a = b.dataset.a, list = bkList(), it = list[+b.dataset.i];
       if (a === 'close') { close(); return; }
       if (a === 'save') { saveNow(); if (backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
       if (a === 'dlNow') { saveNow(); bkDownload(JSON.stringify(S), S.name, S.lvl, Date.now()); return; }
-      if (a === 'xDel') { if (confirm('刪除這份臨時備份？')) { try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
+      if (a === 'xDel') { if (await uiConfirm('刪除這份臨時備份？')) { try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
       if (a === 'xRestore') { let x = null; try { x = localStorage.getItem(EXTRA_BAK); } catch (err) {} if (x) restoreSave(x, '臨時備份'); return; }
       if (!it) return;
       if (a === 'dl') { bkDownload(it.data, it.name, it.lvl, it.t); return; }
-      if (a === 'del') { if (confirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
+      if (a === 'del') { if (await uiConfirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
       if (a === 'restore') { restoreSave(it.data, bkStamp(it.t)); }
     });
     draw();
@@ -2051,9 +2142,9 @@ javascript:(function awTools() {
       }
       return bad;
     };
-    oneCellToggle = () => {
+    oneCellToggle = async () => {
       if (!window.__awOne) {
-        if (!confirm('【單格模式】\n\n開啟後每顆技能寶石只佔一格，輔助寶石不用相鄰就會生效。\n\n' +
+        if (!await uiConfirm('【單格模式】\n\n開啟後每顆技能寶石只佔一格，輔助寶石不用相鄰就會生效。\n\n' +
           '這是直接修改遊戲規則，傷害會遠高於正常玩法，修改【可能】被作者封鎖。開啟期間不會上傳排行榜和匿名遊玩統計，但雲端存檔仍看得到異常的數值。\n\n' +
           '可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n' +
           '另外：沒有點書籤時遊戲會照原本的形狀計算；之後關閉這個開關，放不下的寶石會退回寶石欄。\n\n確定要開啟嗎？')) return;
@@ -2068,7 +2159,7 @@ javascript:(function awTools() {
       }
       window.__awOne = false;
       const bad = misfits();
-      if (bad.length && !confirm('關閉單格模式後，有 ' + bad.length + ' 顆寶石照原本的形狀放不下，會退回寶石欄。\n\n確定要關閉嗎？')) { window.__awOne = true; return; }
+      if (bad.length && !await uiConfirm('關閉單格模式後，有 ' + bad.length + ' 顆寶石照原本的形狀放不下，會退回寶石欄。\n\n確定要關閉嗎？')) { window.__awOne = true; return; }
       for (const g of bad) g.x = g.y = -1;
       try { localStorage.removeItem(ONE_KEY); } catch (e) {}
       try { markDirty(); } catch (e) {}
@@ -2085,12 +2176,12 @@ javascript:(function awTools() {
    * 這裡把還沒有的神器直接加進去，等級 1、經驗 0；已經有的不會動。
    * 神器的種類從遊戲的 ARTS 讀，之後遊戲多出新神器也會一起解鎖。
    */
-  const unlockArts = () => {
-    if (typeof S === 'undefined' || !S || typeof ARTS === 'undefined') { alert('請先進入遊戲'); return; }
+  const unlockArts = async () => {
+    if (typeof S === 'undefined' || !S || typeof ARTS === 'undefined') { uiAlert('請先進入遊戲'); return; }
     const miss = Object.keys(ARTS).filter(k => !(S.art && S.art.has && S.art.has[k]));
     if (!miss.length) { toast('神器都已經有了', 'lvl'); return; }
     const names = miss.map(k => ARTS[k].n).join('、');
-    if (!confirm('【解鎖三神器】\n\n會把還沒有的神器直接加進存檔（1 級）：\n' + names + '\n\n' +
+    if (!await uiConfirm('【解鎖三神器】\n\n會把還沒有的神器直接加進存檔（1 級）：\n' + names + '\n\n' +
       '這是直接修改存檔，修改【可能】被作者封鎖（雲端存檔看得到）。\n可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n確定要解鎖嗎？')) return;
     if (CFG.autoBackup) { try { saveNow(); backupNow('解鎖神器前自動備份'); } catch (e) {} }
     if (!S.art) S.art = { on: '', has: {} };
@@ -2189,30 +2280,31 @@ javascript:(function awTools() {
     location.reload();
     return true;
   };
-  const loopStart = () => {
-    if (typeof S === 'undefined' || !S || typeof G === 'undefined' || !G) { alert('請先進入遊戲'); return; }
-    if (loopGet()) { if (confirm('自動刷神話正在進行中，要停止嗎？\n\n停止後會留在目前的進度。')) loopSet(null); return; }
-    if (!canMonarch()) { alert('無限印記不足 ' + MONARCH.mk + ' 個，沒辦法開始。'); return; }
-    if (G.boss || G.tw || G.dead) { alert('請先結束目前的挑戰再開始。'); return; }
+  const loopStart = async () => {
+    if (typeof S === 'undefined' || !S || typeof G === 'undefined' || !G) { uiAlert('請先進入遊戲'); return; }
+    if (loopGet()) { if (await uiConfirm('自動刷神話正在進行中，要停止嗎？\n\n停止後會留在目前的進度。')) loopSet(null); return; }
+    if (!canMonarch()) { uiAlert('無限印記不足 ' + MONARCH.mk + ' 個，沒辦法開始。'); return; }
+    if (G.boss || G.tw || G.dead) { uiAlert('請先結束目前的挑戰再開始。'); return; }
     const keys = mythKeys().length;
-    if (!confirm('【自動刷神話】\n\n會自動重複：挑戰無限君主 → 沒掉神話獨特就讀回挑戰前的存檔 → 再挑戰。\n' +
+    const maxBatch = Math.max(1, Math.floor(S.tw.mk / MONARCH.mk));
+    /* 說明和三個設定放在同一個對話框裡，一次填完 */
+    const ans = await uiForm('【自動刷神話】\n\n會自動重複：挑戰無限君主 → 沒掉神話獨特就讀回挑戰前的存檔 → 再挑戰。\n' +
       '掉出神話獨特時才會保留進度（用掉 ' + MONARCH.mk + ' 個印記），然後繼續刷到達標或印記不夠為止。\n\n' +
       '機率：每次打贏 0.1% 掉神話獨特，共 ' + keys + ' 種（其中 1 種是石板），所以平均要打約 1000 場才有一件，指定石板約 ' + (1000 * keys) + ' 場。\n\n' +
       '注意：\n・讀回存檔時，這一場拿到的其他東西（神話裝備、奇蹟石、材料）都會消失\n・進行中請不要自己操作角色或切換地圖\n' +
-      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計，也不會上傳雲端存檔；結束後才恢復\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份\n\n確定要開始嗎？')) return;
-    const a = prompt('新拿到的「神話石板」至少要幾塊才算達標？（不指定石板就填 0）', '1');
-    if (a === null) return;
-    const b = prompt('新拿到的「神話獨特」（裝備和石板合計）至少要幾件才算達標？', '2');
-    if (b === null) return;
-    const goalSl = Math.max(0, Math.floor(+a || 0)), goalAll = Math.max(goalSl, Math.floor(+b || 0));
-    if (goalAll < 1) { alert('目標至少要 1 件。'); return; }
-    const maxBatch = Math.max(1, Math.floor(S.tw.mk / MONARCH.mk));
-    const d = prompt('每打幾場才讀一次檔？\n\n1 = 每場都讀檔（最省印記，每掉一件只花 ' + MONARCH.mk + ' 個）\n數字越大越省時間，但掉出神話時，那一批已經打掉的印記不會回來。\n' +
-      '每場打完都會立刻檢查，掉了就馬上保留。\n\n你現在有 ' + S.tw.mk + ' 個印記，最多可以填 ' + maxBatch + '。', String(Math.min(CFG.monLoopBatch, maxBatch)));
-    if (d === null) return;
-    const batch = Math.max(1, Math.min(maxBatch, Math.floor(+d || 1)));
+      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計，也不會上傳雲端存檔；結束後才恢復\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份', [
+      { label: '新拿到的「神話石板」至少幾塊才算達標（不指定石板就填 0）', value: '1', type: 'number' },
+      { label: '新拿到的「神話獨特」（裝備和石板合計）至少幾件才算達標', value: '2', type: 'number' },
+      { label: '每打幾場才讀一次檔（1 = 每場都讀，最省印記；數字越大越省時間，但掉出神話時那一批打掉的印記不會回來）\n你現在有 ' + S.tw.mk + ' 個印記，最多可以填 ' + maxBatch, value: String(Math.min(CFG.monLoopBatch, maxBatch)), type: 'number' }
+    ]);
+    if (!ans) return;
+    const goalSl = Math.max(0, Math.floor(+ans[0] || 0)), goalAll = Math.max(goalSl, Math.floor(+ans[1] || 0));
+    if (goalAll < 1) { uiAlert('目標至少要 1 件。'); return; }
+    const batch = Math.max(1, Math.min(maxBatch, Math.floor(+ans[2] || 1)));
+    /* 填設定的時候遊戲還在跑，狀況可能變了，開始前再確認一次 */
+    if (loopGet() || !canMonarch() || G.boss || G.tw || G.dead) { uiAlert('目前的狀況沒辦法開始（正在挑戰中，或印記不夠），請稍後再試。'); return; }
     try { saveNow(); backupNow('自動刷神話前自動備份'); } catch (e) {}
-    if (!baseWrite()) { alert('瀏覽器的儲存空間不夠，起點存不進去，沒有開始。請先到「存檔備份」刪掉一些舊備份。'); return; }
+    if (!baseWrite()) { uiAlert('瀏覽器的儲存空間不夠，起點存不進去，沒有開始。請先到「存檔備份」刪掉一些舊備份。'); return; }
     const c = mythCount();
     loopSet({ on: 1, goalSl: goalSl, goalAll: goalAll, gotSl: 0, gotAll: 0, baseM: S.gd.m || 0, seenM: S.gd.m || 0, baseSl: c.sl, baseUq: c.uq, tries: 0, batch: batch, done: 0, t0: Date.now() });
     try { toast('自動刷神話開始', 'lvl'); } catch (e) {}
@@ -2343,11 +2435,11 @@ javascript:(function awTools() {
   const pinToggle = () => {
     let top = null;
     try { top = window.top; } catch (e) {}
-    if (!top || typeof top.__awPin !== 'function') { alert('「置頂視窗」需要常駐模式。請確認檔案開頭的 host 是 true，重新整理頁面後再點一次書籤。'); return; }
+    if (!top || typeof top.__awPin !== 'function') { uiAlert('「置頂視窗」需要常駐模式。請確認檔案開頭的 host 是 true，重新整理頁面後再點一次書籤。'); return; }
     try { if (typeof S !== 'undefined' && S) { grabDrops(); saveNow(); } } catch (e) {}
     top.__awPin().then(r => {
-      if (r === 'nosupport') alert('這個瀏覽器不支援置頂小視窗（需要電腦版 Chrome 或 Edge 116 以上）。');
-    }).catch(e => { alert('開不了置頂視窗：' + (e && e.message ? e.message : e)); });
+      if (r === 'nosupport') uiAlert('這個瀏覽器不支援置頂小視窗（需要電腦版 Chrome 或 Edge 116 以上）。');
+    }).catch(e => { uiAlert('開不了置頂視窗：' + (e && e.message ? e.message : e)); });
   };
 
   /* ===== 15. 省資源 =====
@@ -2396,7 +2488,7 @@ javascript:(function awTools() {
    */
   const openCards = () => {
     if (document.querySelector('#awCards')) return;
-    if (typeof S === 'undefined' || !S) { alert('請先進入遊戲'); return; }
+    if (typeof S === 'undefined' || !S) { uiAlert('請先進入遊戲'); return; }
     const BTN = 'padding:2px 8px;cursor:pointer';
     const root = document.createElement('div');
     root.id = 'awCards';
@@ -2450,13 +2542,140 @@ javascript:(function awTools() {
     draw();
   };
 
+  /* ===== 17. 小工具設定 =====
+   * 選單分頁的按鈕。把檔案開頭 CFG 的每個項目列出來讓使用者在遊戲裡改，不用改檔案。
+   * 改過的項目（只存和預設值不同的）記在瀏覽器的 awtools.cfg，下次載入時蓋到 CFG 上。
+   * 大部分功能是在小工具啟動時依設定決定要不要安裝的，所以儲存後要重新載入遊戲才會生效
+   * （開著常駐模式的話，重新載入後小工具會自己回來）。
+   * CFG_UI 決定畫面上的分組、順序和說明文字；之後 CFG 多了新項目，要在這裡也加一行才會出現在畫面上。
+   * 欄位的種類看預設值：true／false 是勾選框、數字是數字框、# 開頭的文字是顏色。
+   */
+  const CFG_UI = [
+    ['基本', [
+      ['host', '常駐模式', '遊戲重新載入後小工具自動回來。關掉的話，每次重新載入都要再點一次書籤'],
+      ['keepAlive', '背景運行', '分頁在背景或被蓋住時遊戲照常跑，不會變成離線收益'],
+      ['bgGrabMs', '背景時每幾毫秒收一次掉落物', '0 = 不收，等回到畫面才撿'],
+      ['noUpdate', '禁止遊戲自動更新', '有新版時不會自己重新整理，要更新請用遊戲選單裡的更新按鈕']
+    ]],
+    ['畫面顯示', [
+      ['bossBar', 'BOSS 血條', '打 BOSS 時在畫面最上方顯示名稱、生命、護盾、剩餘時間'],
+      ['barHeight', '血條高度（px）'], ['barFont', '血條文字大小（px）'], ['barTop', '血條離頂端的距離（px）'], ['barSide', '血條左右留白（px）'],
+      ['hpColor', '血條生命顏色'], ['shieldColor', '血條護盾顏色'],
+      ['skillCd', '技能盤上顯示冷卻秒數'], ['trayCd', '未放置的寶石也顯示冷卻秒數'],
+      ['cdFont', '冷卻文字大小（px）'], ['cdColor', '冷卻文字顏色'],
+      ['hpDetail', '角色分頁顯示生命來源明細'], ['hpFont', '生命明細文字大小（px）']
+    ]],
+    ['功能按鈕', [
+      ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
+      ['cards', '卡片進度', '地圖分頁'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
+      ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現']
+    ]],
+    ['物品上限', [
+      ['noLimit', '物品持有無上限', '背包、石板、符文'],
+      ['itemMax', '背包和符文的上限'], ['slateMax', '石板的上限'],
+      ['uqKeepHi', '獨特裝備這個階級以上一律保留', '0 一般、1 高階、2 終局、3 守護者、4 終焉；填 0 關閉這個功能'],
+      ['saveWarnKB', '存檔超過幾 KB 就提醒']
+    ]],
+    ['省資源', [
+      ['eco', '省資源', '下面兩項的總開關'],
+      ['bgNoDraw', '背景時不畫畫面'],
+      ['ecoFps', '單格模式時畫面每秒更新幾次', '0 = 不限制；只影響畫面，不影響遊戲速度']
+    ]],
+    ['無限君主', [
+      ['monAutoMs', '打贏後等幾毫秒再自動挑戰'],
+      ['monLoopLootMs', '自動刷神話：打贏後等幾毫秒再檢查掉落'],
+      ['monLoopBatch', '自動刷神話：每打幾場讀一次檔的預設值']
+    ]],
+    ['其他', [
+      ['autoBackup', '套用匯入的計畫、解鎖神器前自動備份'], ['backupKeep', '瀏覽器裡最多保留幾份備份'],
+      ['planCell', '配置模擬的格子大小（px）'], ['gemPrice', '商店一顆技能寶石的灰燼價格', '匯入代碼自動補買時用'],
+      ['tickMs', '背景時每幾毫秒推動一次遊戲', '太小會吃資源，太大遊戲會變慢'],
+      ['barRefreshMs', '血條更新間隔（毫秒）'], ['cdRefreshMs', '冷卻文字更新間隔（毫秒）'], ['hpRefreshMs', '生命明細更新間隔（毫秒）'], ['btnRefreshMs', '檢查按鈕是否還在的間隔（毫秒）']
+    ]]
+  ];
+  const openSettings = () => {
+    if (document.querySelector('#awCfg')) return;
+    const BTN = 'padding:2px 8px;cursor:pointer';
+    const root = document.createElement('div');
+    root.id = 'awCfg';
+    root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    let h = '';
+    for (const grp of CFG_UI) {
+      h += '<div style="margin:8px 0 2px;color:#ffd84a;font-weight:bold">' + esc(grp[0]) + '</div>';
+      for (const row of grp[1]) {
+        const k = row[0], def = CFG_DEF[k], cur = CFG[k];
+        if (def === undefined) continue;
+        const changed = cur !== def;
+        let field;
+        if (typeof def === 'boolean') field = '<input type="checkbox" data-k="' + k + '"' + (cur ? ' checked' : '') + '>';
+        else if (typeof def === 'number') field = '<input type="number" data-k="' + k + '" value="' + cur + '" style="width:84px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">';
+        else field = '<input type="color" data-k="' + k + '" value="' + esc(cur) + '" style="width:44px;height:22px;padding:0;border:1px solid #6a5a4a;background:#1a1410">';
+        h += '<label style="display:flex;gap:8px;align-items:center;padding:3px 6px;border-bottom:1px solid #3a3026;cursor:pointer">' +
+          '<span style="flex:1"><span' + (changed ? ' style="color:#7dffc8"' : '') + '>' + esc(row[1]) + '</span>' +
+          (row[2] ? '<br><small style="color:#a89a84">' + esc(row[2]) + '</small>' : '') + '</span>' + field + '</label>';
+      }
+    }
+    root.innerHTML =
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(560px,96vw);max-height:94%;display:flex;flex-direction:column">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
+          '<b style="font-size:15px;white-space:nowrap">小工具設定</b><span style="color:#a89a84">' + VERSION + '</span><span style="flex:1"></span>' +
+          '<button data-a="reset" style="' + BTN + '">全部恢復預設</button><button data-a="close" style="' + BTN + '">取消</button>' +
+        '</div>' +
+        '<div data-r="list" style="overflow:auto;flex:1;min-height:120px;background:#1a1410;padding:0 4px 6px">' + h + '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">' +
+          '<span style="flex:1;color:#a89a84;font-size:12px">綠色的是改過的項目。儲存後要重新載入遊戲才會生效。</span>' +
+          '<button data-a="save" style="' + BTN + ';font-weight:bold;background:#ffd84a;color:#2a2118;border:1px solid #000">儲存</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    /* 存好之後問要不要馬上重新載入 */
+    const reloadAsk = async () => {
+      close();
+      let hosted = false;
+      try { hosted = window !== window.top; } catch (e) { hosted = true; }
+      if (!await uiConfirm('設定已儲存，重新載入遊戲後生效。\n\n現在重新載入嗎？（會先存檔' + (hosted && CFG.host ? '，小工具會自己回來）' : '；重新載入後要再點一次書籤）'))) return;
+      try { if (typeof S !== 'undefined' && S) { grabDrops(); saveNow(); } } catch (e) {}
+      location.reload();
+    };
+    root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); }, true);
+    root.addEventListener('click', async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const a = b.dataset.a;
+      if (a === 'close') { close(); return; }
+      if (a === 'reset') {
+        if (!await uiConfirm('把所有設定恢復成預設值？')) return;
+        try { localStorage.removeItem(CFG_KEY); } catch (err) {}
+        reloadAsk();
+        return;
+      }
+      if (a === 'save') {
+        const diff = {};
+        for (const el of root.querySelectorAll('[data-k]')) {
+          const k = el.dataset.k, def = CFG_DEF[k];
+          let v;
+          if (typeof def === 'boolean') v = el.checked;
+          else if (typeof def === 'number') {
+            v = +el.value;
+            if (el.value === '' || !isFinite(v) || v < 0) { uiAlert('「' + (el.closest('label').querySelector('span span') || {}).textContent + '」要填 0 以上的數字。'); return; }
+          } else v = String(el.value);
+          if (v !== def) diff[k] = v;
+        }
+        if (diff.host === false && !await uiConfirm('你關掉了常駐模式。\n\n關掉之後，遊戲每次重新載入（包含等一下這一次）小工具都會消失，要再點一次書籤；自動刷神話和置頂視窗也會不能用。\n\n確定要關掉嗎？')) return;
+        try { localStorage.setItem(CFG_KEY, JSON.stringify(diff)); } catch (err) { uiAlert('瀏覽器的儲存空間不夠，設定沒有存成功。'); return; }
+        reloadAsk();
+      }
+    });
+  };
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto || CFG.pin || CFG.cards)) {
+  if (first) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -2499,9 +2718,40 @@ javascript:(function awTools() {
       if (CFG.backup) a.push(['awBtnBackup', '存檔備份', openBackup]);
       if (CFG.arts) a.push(['awBtnArts', '解鎖三神器', unlockArts]);
       if (CFG.pin && pinOk()) a.push(['awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle]);
+      a.push(['awBtnCfg', '小工具設定', openSettings]);
       return a;
     });
-    try { if (ui.tab === 'map' || ui.tab === 'more') ui.render(); } catch (e) {}
+    /* 「技能」和「背包」分頁的按鈕也用同樣的方式直接寫進畫面內容，不靠計時器補：
+     * 技能分頁插在標題（h2）的結尾前面；背包分頁插在工具列（class 是 row tools 的那一列，
+     * 裡面只有按鈕，所以它後面第一個 </div> 就是這一列的結尾）的結尾前面。
+     * 找不到插入的位置（遊戲改版）就原樣輸出，下面的計時器會當後備把按鈕補上。 */
+    const wrapHtml = (name, edit) => {
+      try {
+        const real = ui[name];
+        if (typeof real !== 'function') return;
+        ui[name] = function () {
+          const html = String(real.apply(this, arguments));
+          try { return edit(html); } catch (e) { return html; }
+        };
+      } catch (e) {}
+    };
+    const btnHtml = (items, margin) => {
+      for (const it of items) btnFns[it[0]] = it[2];
+      return items.map(it => '<button class="btn sm ' + it[0] + '"' + (margin ? ' style="margin-left:' + margin + '"' : '') + '>' + it[1] + '</button>').join('');
+    };
+    const insertAt = (html, i, add) => (i < 0 || !add ? html : html.slice(0, i) + add + html.slice(i));
+    wrapHtml('p_skill', html => {
+      const a = [];
+      if (CFG.planner) a.push(['awBtnPlan', '配置模擬', openPlanner]);
+      if (oneCellToggle) a.push(['awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle]);
+      return insertAt(html, html.indexOf('</h2>'), btnHtml(a, '8px'));
+    });
+    wrapHtml('p_bag', html => {
+      if (!CFG.items) return html;
+      const t = html.indexOf('class="row tools"');
+      return insertAt(html, t < 0 ? -1 : html.indexOf('</div>', t), btnHtml([['awBtnItems', '物品管理', openItems]], ''));
+    });
+    try { ui.render(); } catch (e) {}
     /* 按鈕要掛在哪裡：分頁有標題（h2）就掛在標題旁；
      * v0.2.458 之後「地圖」和「選單」分頁沒有標題了，就在分頁最上面自己放一列（awBar）來裝按鈕 */
     const barOf = panel => {
@@ -2527,6 +2777,7 @@ javascript:(function awTools() {
       if (CFG.cards && ui.tab === 'map') addBtn(barOf(panel), 'awBtnCards', '卡片進度', openCards, '8px');
       if (CFG.arts && ui.tab === 'more') addBtn(barOf(panel), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
       if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(barOf(panel), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
+      if (ui.tab === 'more') addBtn(barOf(panel), 'awBtnCfg', '小工具設定', openSettings, '8px');
       if (CFG.monAuto && !monWrapped && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
         const h3 = [...panel.querySelectorAll('h3')].find(h => h.textContent.indexOf(MONARCH.n) === 0);
         if (h3 && !h3.querySelector('.awMonAuto')) {
