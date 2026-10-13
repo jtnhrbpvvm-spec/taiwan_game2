@@ -35,7 +35,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V21';
+  const VERSION = 'V22';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2015,7 +2015,10 @@ javascript:(function awTools() {
       RULES.push(
         [/\bBAG_MAX\b/g, N],
         [/\bRUNE_MAX\b/g, N],
-        [/S\.runes\.length>=1e3/g, 'S.runes.length>=' + N],
+        /* 符文上限在程式裡是直接寫 1e3 的，有三種寫法：單獨比較、加上「這一批要萃取的數量」再比較
+         * （批次萃取 xtrPlan 和它的提示文字）、以及「還剩幾格」的 1e3 減掉目前數量 */
+        [/(S\.runes\.length(?:\+[\w.]+)?)>=1e3/g, '$1>=' + N],
+        [/1e3-S\.runes\.length/g, N + '-S.runes.length'],
         [/\$\{S\.runes\.length\}\/1000/g, '${S.runes.length}/' + N],
         [/\bSLATE_MAX\b/g, NS],
         [/S\.slates\.length>=500/g, 'S.slates.length>=' + NS],
