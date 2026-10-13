@@ -17,6 +17,8 @@ javascript:(function awTools() {
    *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
    *  13. 自動刷神話：無限君主旁的按鈕，沒掉神話獨特就自動讀回挑戰前的存檔再打
    *  14. 置頂視窗：選單分頁的按鈕，把遊戲搬進永遠在最上層的小視窗
+   *  15. 省資源：背景時不畫畫面；單格模式開著時降低畫面更新次數、不產生粒子和傷害數字
+   *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -32,7 +34,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V16';
+  const VERSION = 'V17';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -70,6 +72,10 @@ javascript:(function awTools() {
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
+    cards: true,            /* 地圖分頁加上「卡片進度」按鈕 */
+    eco: true,              /* 省資源（下面三項的總開關） */
+    bgNoDraw: true,         /* 分頁在背景或被蓋住時不畫畫面（看不到，省下繪圖的資源） */
+    ecoFps: 15,             /* 單格模式開著時，畫面每秒更新幾次（0 = 不限制）；遊戲運算速度不受影響 */
     arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
     pin: true,              /* 選單分頁加上「置頂視窗」按鈕（把遊戲搬進永遠在最上層的小視窗；要開常駐模式） */
     monAuto: true,          /* 地圖分頁的無限君主加上「打贏後自動接著打」勾選框 */
@@ -2343,13 +2349,113 @@ javascript:(function awTools() {
     }).catch(e => { alert('開不了置頂視窗：' + (e && e.message ? e.message : e)); });
   };
 
+  /* ===== 15. 省資源 =====
+   * 遊戲每一個畫面都會把整個場景重畫一次，還會產生一堆粒子（擊中的火花、拖尾）和傷害數字。
+   * 這些只是視覺效果，不影響戰鬥結果，但技能一多就很吃資源，單格模式尤其明顯。這裡做三件事：
+   *   - 分頁在背景（或被蓋住）時完全不畫：反正看不到（bgNoDraw，不管有沒有開單格模式都生效）
+   *   - 單格模式開著時，畫面更新降到每秒 ecoFps 次（遊戲本身的運算速度不變，只是畫得比較少次）
+   *   - 單格模式開著時，不產生粒子、拖尾和傷害數字
+   * 做法是把遊戲的 draw()（畫場景）、eliteTags()（菁英頭上的標籤）、burst()、streak()、num() 各包一層。
+   * 有些粒子是遊戲直接塞進 G.parts 的，包不到，所以畫之前順手清掉。
+   */
+  if (first && CFG.eco) {
+    const ecoOn = () => !!window.__awOne;
+    let lastDraw = 0, skipped = false;
+    const realDraw = window.draw, realTags = window.eliteTags;
+    if (typeof realDraw === 'function') {
+      window.draw = function () {
+        skipped = false;
+        if (CFG.bgNoDraw && document.hidden) { skipped = true; return; }
+        if (ecoOn()) {
+          try { if (G.parts.length) G.parts.length = 0; } catch (e) {}
+          if (CFG.ecoFps > 0) {
+            const now = performance.now();
+            if (now - lastDraw < 1000 / CFG.ecoFps) { skipped = true; return; }
+            lastDraw = now;
+          }
+        }
+        return realDraw.apply(this, arguments);
+      };
+    }
+    if (typeof realTags === 'function') window.eliteTags = function () { if (skipped) return; return realTags.apply(this, arguments); };
+    for (const name of ['burst', 'streak', 'num']) {
+      const real = window[name];
+      if (typeof real !== 'function') continue;
+      window[name] = function () { if (ecoOn()) return; return real.apply(this, arguments); };
+    }
+  }
+
+  /* ===== 16. 卡片進度 =====
+   * 地圖分頁標題旁的按鈕，列出每張地圖的怪物卡片：目前幾階、加成是什麼、擊殺數和離下一階還差多少，
+   * 以及那張地圖每種怪各殺了幾隻。資料全部讀遊戲自己的：
+   *   MAPS[i].card = [加成的詞綴代號, [一階, 二階, 三階的數值]]，MAPS[i].m 是那張地圖的怪物代號
+   *   S.kills['地圖編號_怪物代號'] 是擊殺數，cardKills(i) 是整張地圖的合計，cardTier(i) 是目前階數
+   *   CARD_N 是三階各自的門檻，CARD_LOOK 是解鎖外觀特效的門檻
+   * 只有在線上實際打死的怪才會算，離線收益不算。
+   */
+  const openCards = () => {
+    if (document.querySelector('#awCards')) return;
+    if (typeof S === 'undefined' || !S) { alert('請先進入遊戲'); return; }
+    const BTN = 'padding:2px 8px;cursor:pointer';
+    const root = document.createElement('div');
+    root.id = 'awCards';
+    root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
+    root.innerHTML =
+      '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(620px,96vw);max-height:94%;display:flex;flex-direction:column">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
+          '<b style="font-size:15px;white-space:nowrap">怪物卡片進度</b><span data-r="sum" style="color:#a89a84"></span><span style="flex:1"></span>' +
+          '<button data-a="close" style="' + BTN + '">關閉</button>' +
+        '</div>' +
+        '<div data-r="list" style="overflow:auto;flex:1;min-height:120px;background:#1a1410"></div>' +
+        '<div style="color:#a89a84;font-size:12px;margin-top:6px">只有在線上實際打死的怪才會算，離線收益的擊殺不算。每張地圖看的是那張地圖所有怪物的擊殺合計。</div>' +
+      '</div>';
+    document.body.appendChild(root);
+    const elList = root.querySelector('[data-r="list"]'), elSum = root.querySelector('[data-r="sum"]');
+    const esc = t => String(t).replace(/</g, '&lt;');
+    const draw = () => {
+      let h = '', full = 0, count = 0;
+      MAPS.forEach((mp, i) => {
+        if (!mp.card) return;
+        count++;
+        const k = cardKills(i), tier = cardTier(i), max = CARD_N.length;
+        if (tier >= max) full++;
+        const af = AFFIX[mp.card[0]];
+        const val = n => (af && af.f ? af.f(mp.card[1][n]) : mp.card[0] + ' ' + mp.card[1][n]);
+        const next = tier < max ? CARD_N[tier] : (k < CARD_LOOK ? CARD_LOOK : 0);
+        const prev = tier > 0 ? CARD_N[tier - 1] : 0;
+        const pct = next ? Math.max(0, Math.min(100, (k - (tier < max ? prev : CARD_N[max - 1])) / (next - (tier < max ? prev : CARD_N[max - 1])) * 100)) : 100;
+        const locked = i > S.unlocked && !(typeof ssMap === 'function' && ssMap(i));
+        let eta = '';
+        if (next && i === S.map && S.kpm > 0) eta = '　以目前每分鐘 ' + Math.round(S.kpm) + ' 隻估計，約 ' + Math.ceil((next - k) / S.kpm) + ' 分鐘';
+        const mons = mp.m.map(id => esc(MON[id] ? MON[id].n : id) + ' ' + fmt(S.kills[i + '_' + id] || 0)).join('　');
+        h += '<div style="padding:6px 8px;border-bottom:1px solid #3a3026' + (i === S.map ? ';background:#2a2118' : '') + (locked ? ';opacity:.5' : '') + '">' +
+          '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b>' + esc(mp.n) + '</b>' + (i === S.map ? '<small style="color:#7dffc8">目前所在</small>' : '') + (locked ? '<small>尚未解鎖</small>' : '') +
+          '<span style="flex:1"></span><span style="color:' + (tier >= max ? '#ffd84a' : '#f0e6d2') + '">' + (tier >= max ? '已滿階' : tier + ' / ' + max + ' 階') + '</span></div>' +
+          '<div style="font-size:12px">目前加成：' + (tier > 0 ? '<b style="color:#7dffc8">' + esc(val(tier - 1)) + '</b>' : '<span style="color:#a89a84">還沒有</span>') +
+          (tier < max ? '　下一階：' + esc(val(tier)) : '') + '</div>' +
+          '<div style="height:8px;background:#0e0b08;border:1px solid #6a5a4a;margin:3px 0"><div style="height:100%;width:' + pct.toFixed(1) + '%;background:' + (tier >= max ? '#ffd84a' : '#7dffc8') + '"></div></div>' +
+          '<div style="font-size:12px">擊殺 <b>' + fmt(k) + '</b>' + (next ? ' / ' + fmt(next) + (tier >= max ? '（外觀特效）' : '') + '　還差 <b>' + fmt(next - k) + '</b>' + eta : '　外觀特效已解鎖') + '</div>' +
+          '<div style="font-size:12px;color:#a89a84">' + mons + '</div></div>';
+      });
+      const top = elList.scrollTop;
+      elList.innerHTML = h || '<div style="padding:10px;color:#a89a84">沒有卡片資料</div>';
+      elList.scrollTop = top;
+      elSum.textContent = '已滿階 ' + full + ' / ' + count + ' 張';
+    };
+    const timer = setInterval(() => { if (!document.body.contains(root)) { clearInterval(timer); return; } draw(); }, 2000);
+    const close = () => { clearInterval(timer); root.remove(); };
+    root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); }, true);
+    root.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (b && b.dataset.a === 'close') close(); });
+    draw();
+  };
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto || CFG.pin)) {
+  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto || CFG.pin || CFG.cards)) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -2366,6 +2472,7 @@ javascript:(function awTools() {
       if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
       if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
       if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
+      if (CFG.cards && ui.tab === 'map') addBtn(panel.querySelector('h2'), 'awBtnCards', '卡片進度', openCards, '8px');
       if (CFG.arts && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
       if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
       if (CFG.monAuto && !monWrapped && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
