@@ -31,7 +31,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V12';
+  const VERSION = 'V13';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -74,6 +74,7 @@ javascript:(function awTools() {
     monAutoMs: 3000,        /* 打贏無限君主後等幾毫秒再自動挑戰下一場 */
     monLoop: true,          /* 無限君主加上「自動刷神話」按鈕（沒掉神話獨特就自動讀回挑戰前的存檔） */
     monLoopLootMs: 2500,    /* 自動刷神話：打贏後等幾毫秒讓掉落物落地，再收起來檢查 */
+    monLoopBatch: 1,        /* 自動刷神話：「每打幾場才讀一次檔」的預設值（開始時還可以再改） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
 
@@ -2098,6 +2099,10 @@ javascript:(function awTools() {
    *   4. 有變多：把「現在的進度」存成新的起點（東西留下，印記少 5 個），還沒達標就繼續
    * 所以印記只有在真的掉出神話時才會被用掉。達標、印記不夠或按停止時結束。
    * 一場一場檢查，而不是把印記打完才檢查，是因為這樣每一場都能重來，不用賭同一批裡掉兩件。
+   * 也可以設定「每打幾場才讀一次檔」（batch）：每場打完照樣立刻檢查，沒掉就接著打，
+   * 打滿這一批（或印記不夠）才讀回起點。讀檔次數變少所以比較快，
+   * 代價是掉出神話、更新起點的那一刻，這一批已經打掉的印記不會回來。
+   * 進度裡的 done 是這一批已經打了幾場，seenM 是已經檢查過的擊敗次數（用來認出還沒檢查的勝場）。
    * 進度記在瀏覽器的 awtools.monloop，重新載入後（要開常駐模式，小工具才會自己回來）會接著跑。
    * 進行中不記錄、不上傳匿名遊玩統計。讀回起點時，起點之後拿到的其他東西（神話裝備、材料、經驗）都會消失。
    */
@@ -2137,10 +2142,15 @@ javascript:(function awTools() {
     if (b === null) return;
     const goalSl = Math.max(0, Math.floor(+a || 0)), goalAll = Math.max(goalSl, Math.floor(+b || 0));
     if (goalAll < 1) { alert('目標至少要 1 件。'); return; }
+    const maxBatch = Math.max(1, Math.floor(S.tw.mk / MONARCH.mk));
+    const d = prompt('每打幾場才讀一次檔？\n\n1 = 每場都讀檔（最省印記，每掉一件只花 ' + MONARCH.mk + ' 個）\n數字越大越省時間，但掉出神話時，那一批已經打掉的印記不會回來。\n' +
+      '每場打完都會立刻檢查，掉了就馬上保留。\n\n你現在有 ' + S.tw.mk + ' 個印記，最多可以填 ' + maxBatch + '。', String(Math.min(CFG.monLoopBatch, maxBatch)));
+    if (d === null) return;
+    const batch = Math.max(1, Math.min(maxBatch, Math.floor(+d || 1)));
     try { saveNow(); backupNow('自動刷神話前自動備份'); } catch (e) {}
     if (!baseWrite()) { alert('瀏覽器的儲存空間不夠，起點存不進去，沒有開始。請先到「存檔備份」刪掉一些舊備份。'); return; }
     const c = mythCount();
-    loopSet({ on: 1, goalSl: goalSl, goalAll: goalAll, gotSl: 0, gotAll: 0, baseM: S.gd.m || 0, baseSl: c.sl, baseUq: c.uq, tries: 0, t0: Date.now() });
+    loopSet({ on: 1, goalSl: goalSl, goalAll: goalAll, gotSl: 0, gotAll: 0, baseM: S.gd.m || 0, seenM: S.gd.m || 0, baseSl: c.sl, baseUq: c.uq, tries: 0, batch: batch, done: 0, t0: Date.now() });
     try { toast('自動刷神話開始', 'lvl'); } catch (e) {}
   };
   if (first && CFG.monLoop) {
@@ -2161,7 +2171,7 @@ javascript:(function awTools() {
         document.body.appendChild(el);
       }
       const min = Math.round((Date.now() - L.t0) / 60000);
-      const txt = '自動刷神話：第 ' + (L.tries + 1) + ' 場　石板 ' + L.gotSl + '/' + L.goalSl + '　合計 ' + L.gotAll + '/' + L.goalAll + '　已 ' + min + ' 分鐘 ';
+      const txt = '自動刷神話：第 ' + (L.tries + 1) + ' 場' + (L.batch > 1 ? '（這批 ' + ((L.done || 0) + 1) + '/' + L.batch + '）' : '') + '　石板 ' + L.gotSl + '/' + L.goalSl + '　合計 ' + L.gotAll + '/' + L.goalAll + '　已 ' + min + ' 分鐘 ';
       if (el.dataset.t !== txt) { el.dataset.t = txt; el.innerHTML = txt.replace(/</g, '&lt;') + '<button class="awLoopStop" style="padding:0 6px;cursor:pointer">停止</button>'; }
     };
     /* 進行中不留下、也不送出任何紀錄：
@@ -2191,12 +2201,30 @@ javascript:(function awTools() {
       if (!L || !L.on) { phase = 'start'; startTry = 0; return; }
       if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G || TAB.gone || phase === 'wait') return;
       const now = Date.now(), m = S.gd.m || 0;
+      /* 舊版留下的進度沒有這幾個欄位，補上預設值（每場都讀檔） */
+      if (!L.batch) L.batch = 1;
+      if (L.done == null) L.done = 0;
+      if (L.seenM == null) L.seenM = L.baseM;
+      /* 讀回起點：這一批從頭算起 */
+      const reload = () => {
+        L.done = 0; L.seenM = L.baseM; loopSet(L); phase = 'wait';
+        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+      };
+      /* 一場打完（沒掉神話）之後：這一批打滿了、或印記不夠再打，就讀回起點；否則接著打下一場 */
+      const next = () => {
+        L.done++; L.seenM = m;
+        if (L.done >= L.batch || !canMonarch()) { reload(); return; }
+        loopSet(L); phase = 'start'; at = now + 500;
+      };
       if (phase === 'start') {
         if (G.dead || G.boss || G.tw || now < at) return;
-        /* 進度已經超過起點（例如打贏之後、檢查之前頁面被重新載入）：直接去檢查掉落 */
-        if (m > L.baseM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
+        /* 有一場打贏了還沒檢查（例如打贏之後、檢查之前頁面被重新載入）：直接去檢查掉落 */
+        if (m > L.seenM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
         if (m < L.baseM) { stop('目前的進度和起點對不上，自動刷神話已停止'); return; }
-        if (!canMonarch()) { stop('無限印記不足 ' + MONARCH.mk + ' 個，自動刷神話結束'); return; }
+        if (!canMonarch()) {
+          if (L.done > 0) reload(); else stop('無限印記不足 ' + MONARCH.mk + ' 個，自動刷神話結束');
+          return;
+        }
         try { startGuard(4); } catch (e) {}
         if (G.boss && G.guard === 4) { phase = 'fight'; startTry = 0; }
         else if (++startTry > 30) stop('一直無法開始挑戰，自動刷神話已停止');
@@ -2204,10 +2232,9 @@ javascript:(function awTools() {
       }
       if (phase === 'fight') {
         if (G.boss) return;
-        if (m > L.baseM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
-        /* 打輸或超時：讀回起點重打 */
-        L.tries++; loopSet(L); phase = 'wait';
-        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+        if (m > L.seenM) { phase = 'loot'; at = now + CFG.monLoopLootMs; return; }
+        /* 打輸或超時：算打完一場 */
+        L.tries++; next();
         return;
       }
       if (phase === 'loot') {
@@ -2216,17 +2243,17 @@ javascript:(function awTools() {
         const c = mythCount(), nSl = Math.max(0, c.sl - L.baseSl), nUq = Math.max(0, c.uq - L.baseUq);
         L.tries++;
         if (nSl + nUq > 0) {
+          /* 掉了：把現在的進度存成新的起點，這一批已經用掉的印記就不拿回來了 */
           L.gotSl += nSl; L.gotAll += nSl + nUq;
           const saved = baseWrite();
-          L.baseM = m; L.baseSl = c.sl; L.baseUq = c.uq;
+          L.baseM = m; L.seenM = m; L.done = 0; L.baseSl = c.sl; L.baseUq = c.uq;
           if (L.gotSl >= L.goalSl && L.gotAll >= L.goalAll) { stop('自動刷神話達標：神話石板 ' + L.gotSl + ' 塊、合計 ' + L.gotAll + ' 件，共打了 ' + L.tries + ' 場'); return; }
           if (!saved) { stop('拿到神話獨特了，但瀏覽器儲存空間不夠、起點更新失敗，為了不弄丟它已停止'); return; }
           loopSet(L); phase = 'start'; at = now + 1500;
           try { toast('拿到神話獨特！已更新起點，繼續刷', 'lvl', 1); } catch (e) {}
           return;
         }
-        loopSet(L); phase = 'wait';
-        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+        next();
       }
     }, 700);
   }
