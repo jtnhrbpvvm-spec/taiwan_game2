@@ -34,7 +34,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V17';
+  const VERSION = 'V18';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -446,7 +446,8 @@ javascript:(function awTools() {
         const a = SKILLS[g.id], s = gemMods(g);
         if (a.sus) { if (a.sdps) T += a.sdps(M, s) * M.skillMul * critF2(M, s); continue; }
         if (g.id === 'summon') {
-          T += C * M.minMul * MIN.k / MIN.atk * (1 + n('minAs')) * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) *
+          /* v0.2.487 起召喚物攻速改成讀 M.minAs 和 M.minAsX（萬軍統御把自己的攻速加成分給召喚物）；舊版沒有這兩個欄位 */
+          T += C * M.minMul * MIN.k / MIN.atk * (1 + (M.minAs != null ? M.minAs + (M.minAsX || 0) : n('minAs'))) * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) *
             (1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm) / 100 - 1));
           continue;
         }
@@ -2462,8 +2463,58 @@ javascript:(function awTools() {
       b.className = 'btn sm ' + cls;
       b.textContent = label;
       if (margin) b.style.marginLeft = margin;
-      b.addEventListener('click', e => { e.stopPropagation(); fn(); });
+      btnFns[cls] = fn;
       host.appendChild(b);
+    };
+    /* 按鈕的點擊統一在這裡處理（看按鈕的 class 找對應的功能），
+     * 這樣不管按鈕是用 addBtn() 補上去的，還是直接寫在畫面內容裡的（見下面的 wrapPanel），都按得到 */
+    const btnFns = {};
+    document.addEventListener('click', e => {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      for (const cls of Object.keys(btnFns)) {
+        if (t.closest('.' + cls)) { e.stopPropagation(); e.preventDefault(); btnFns[cls](); return; }
+      }
+    }, true);
+    const BAR_CSS = 'display:flex;flex-wrap:wrap;gap:6px 0;margin:0 0 6px -8px';
+    /* 「地圖」和「選單」分頁沒有標題可以掛按鈕，而且地圖分頁打怪時會一直重畫，
+     * 用計時器補按鈕會一閃一閃。所以把遊戲產生這兩個分頁內容的函式包一層，
+     * 直接在內容最前面加一列按鈕，跟著畫面一起出現。list() 回傳這一列要放的 [class, 文字, 功能]。 */
+    const wrapPanel = (name, list) => {
+      try {
+        const real = ui[name];
+        if (typeof real !== 'function') return;
+        ui[name] = function () {
+          const html = String(real.apply(this, arguments));
+          if (/<h2[\s>]/.test(html)) return html;
+          const items = list();
+          for (const it of items) btnFns[it[0]] = it[2];
+          return items.length ? '<div class="awBar" style="' + BAR_CSS + '">' + items.map(it => '<button class="btn sm ' + it[0] + '" style="margin-left:8px">' + it[1] + '</button>').join('') + '</div>' + html : html;
+        };
+      } catch (e) {}
+    };
+    wrapPanel('p_map', () => CFG.cards ? [['awBtnCards', '卡片進度', openCards]] : []);
+    wrapPanel('p_more', () => {
+      const a = [];
+      if (CFG.backup) a.push(['awBtnBackup', '存檔備份', openBackup]);
+      if (CFG.arts) a.push(['awBtnArts', '解鎖三神器', unlockArts]);
+      if (CFG.pin && pinOk()) a.push(['awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle]);
+      return a;
+    });
+    try { if (ui.tab === 'map' || ui.tab === 'more') ui.render(); } catch (e) {}
+    /* 按鈕要掛在哪裡：分頁有標題（h2）就掛在標題旁；
+     * v0.2.458 之後「地圖」和「選單」分頁沒有標題了，就在分頁最上面自己放一列（awBar）來裝按鈕 */
+    const barOf = panel => {
+      const h2 = panel.querySelector('h2');
+      if (h2) return h2;
+      let bar = panel.querySelector('.awBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'awBar';
+        bar.style.cssText = BAR_CSS;
+        panel.insertBefore(bar, panel.firstChild);
+      }
+      return bar;
     };
     setInterval(() => {
       if (typeof S === 'undefined' || !S || typeof ui === 'undefined') return;
@@ -2471,10 +2522,11 @@ javascript:(function awTools() {
       if (!panel) return;
       if (CFG.planner && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnPlan', '配置模擬', openPlanner, '8px');
       if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
-      if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
-      if (CFG.cards && ui.tab === 'map') addBtn(panel.querySelector('h2'), 'awBtnCards', '卡片進度', openCards, '8px');
-      if (CFG.arts && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
-      if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
+      /* 這四個平常已經由 wrapPanel 寫進畫面裡了；這裡是包不到的時候（舊版有標題、或遊戲又改版）的後備 */
+      if (CFG.backup && ui.tab === 'more') addBtn(barOf(panel), 'awBtnBackup', '存檔備份', openBackup, '8px');
+      if (CFG.cards && ui.tab === 'map') addBtn(barOf(panel), 'awBtnCards', '卡片進度', openCards, '8px');
+      if (CFG.arts && ui.tab === 'more') addBtn(barOf(panel), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
+      if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(barOf(panel), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
       if (CFG.monAuto && !monWrapped && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
         const h3 = [...panel.querySelectorAll('h3')].find(h => h.textContent.indexOf(MONARCH.n) === 0);
         if (h3 && !h3.querySelector('.awMonAuto')) {
