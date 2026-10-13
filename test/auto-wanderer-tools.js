@@ -16,6 +16,7 @@ javascript:(function awTools() {
    *  11. 解鎖三神器：選單分頁的按鈕，把還沒有的神器直接加進存檔（1 級）
    *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
    *  13. 自動刷神話：無限君主旁的按鈕，沒掉神話獨特就自動讀回挑戰前的存檔再打
+   *  14. 置頂視窗：選單分頁的按鈕，把遊戲搬進永遠在最上層的小視窗
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -31,7 +32,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V13';
+  const VERSION = 'V16';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -70,6 +71,7 @@ javascript:(function awTools() {
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
     arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
+    pin: true,              /* 選單分頁加上「置頂視窗」按鈕（把遊戲搬進永遠在最上層的小視窗；要開常駐模式） */
     monAuto: true,          /* 地圖分頁的無限君主加上「打贏後自動接著打」勾選框 */
     monAutoMs: 3000,        /* 打贏無限君主後等幾毫秒再自動挑戰下一場 */
     monLoop: true,          /* 無限君主加上「自動刷神話」按鈕（沒掉神話獨特就自動讀回挑戰前的存檔） */
@@ -113,6 +115,27 @@ javascript:(function awTools() {
       try { if (typeof S !== 'undefined' && S && typeof saveNow === 'function') { if (typeof grabDrops === 'function') grabDrops(); saveNow(); } } catch (e) {}
       f.src = location.href;
       document.body.appendChild(f);
+      /* 置頂視窗（第 14 項）：把遊戲的框架搬進瀏覽器的「文件子母畫面」視窗，那種視窗永遠在最上層。
+       * 這段要放在外層頁面執行，因為框架一搬動，裡面的遊戲就會重新載入，寫在框架裡的程式跑到一半會被中斷。
+       * 再呼叫一次是關閉；關閉（或使用者自己關掉小視窗）時把框架搬回原本的頁面。 */
+      window.__awPin = async () => {
+        const api = window.documentPictureInPicture;
+        if (!api) return 'nosupport';
+        if (api.window) { api.window.close(); return 'closed'; }
+        const pip = await api.requestWindow({ width: Math.max(360, Math.min(window.innerWidth, 1000)), height: Math.max(480, Math.min(window.innerHeight, 900)) });
+        pip.document.title = document.title;
+        pip.document.body.style.cssText = 'margin:0;background:#000;overflow:hidden';
+        pip.__awHost = f;
+        pip.__awPin = window.__awPin;
+        pip.__awPinned = 1;
+        const note = document.createElement('div');
+        note.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#1a1410;color:#f0e6d2;display:flex;align-items:center;justify-content:center;font:16px/1.8 sans-serif;text-align:center';
+        note.textContent = '遊戲正在置頂的小視窗裡進行。關掉那個小視窗就會回到這裡。這個分頁請不要關。';
+        document.body.appendChild(note);
+        pip.document.body.appendChild(f);
+        pip.addEventListener('pagehide', () => { note.remove(); document.body.appendChild(f); });
+        return 'ok';
+      };
       return;
     }
   }
@@ -125,6 +148,24 @@ javascript:(function awTools() {
    * 遊戲主迴圈靠 requestAnimationFrame 驅動，分頁在背景時瀏覽器不會呼叫它，
    * 中斷超過 60 秒就會改用離線收益。這裡在背景時改由 Web Worker 計時器推動。
    */
+  /* 背景也照常跑的計時器。瀏覽器會把背景（包含被其他視窗蓋住）分頁的 setInterval 放慢，
+   * 一開始是每秒一次，超過五分鐘後可能變成每分鐘一次；需要在背景持續運作的功能
+   * （無限君主連續挑戰、自動刷神話）用 every() 註冊，背景時改由下面的 Worker 計時器來叫。 */
+  const bgTimers = [];
+  const bgRun = () => {
+    const now = Date.now();
+    for (const e of bgTimers) {
+      if (now - e.last < e.ms) continue;
+      e.last = now;
+      try { e.fn(); } catch (err) {}
+    }
+  };
+  const every = (fn, ms) => {
+    const e = { fn: fn, ms: ms, last: 0 };
+    bgTimers.push(e);
+    setInterval(() => { if (Date.now() - e.last >= ms * 0.8) { e.last = Date.now(); try { fn(); } catch (err) {} } }, ms);
+  };
+
   if (first && CFG.keepAlive) {
     const nativeRaf = window.requestAnimationFrame.bind(window);
     const nativeCaf = window.cancelAnimationFrame.bind(window);
@@ -145,6 +186,7 @@ javascript:(function awTools() {
       if (!document.hidden) return;
       const t = performance.now();
       [...pending.values()].forEach(f => f(t));
+      bgRun();
       /* 背景時每一步的時間比較長，飛向角色的掉落物會一直飛過頭、撿不起來，
        * 所以定時呼叫遊戲自己的 grabDrops()（遊戲在分頁被隱藏時也是用它把地上的東西收起來） */
       if (CFG.bgGrabMs && t - lastGrab >= CFG.bgGrabMs) {
@@ -152,6 +194,21 @@ javascript:(function awTools() {
         try { if (typeof grabDrops === 'function' && typeof G !== 'undefined' && G && !G.dead) grabDrops(); } catch (e) {}
       }
     };
+
+    /* 把遊戲的主迴圈接到上面的包裝上。
+     * 遊戲啟動時就用原本的 requestAnimationFrame 排了第一次 frame()，那一次不在 pending 裡；
+     * 如果小工具是在背景被放進來的（常駐模式下遊戲在背景重新載入，例如自動刷神話讀檔），
+     * 那一次永遠等不到，整個遊戲會停住，直到切回畫面才被當成「離線」結算、Boss 戰也跟著中斷。
+     * 所以這裡自己再排一次。為了避免原本那一次之後也跑起來變成兩條迴圈（遊戲會變兩倍速），
+     * 把 frame() 包一層：同一個時間點只執行一次，多出來的那條就不會再往下排。 */
+    try {
+      const realFrame = window.frame;
+      if (typeof realFrame === 'function') {
+        let lastT = -1;
+        window.frame = t => { if (t === lastT) return; lastT = t; return realFrame(t); };
+        window.requestAnimationFrame(window.frame);
+      }
+    } catch (e) {}
 
     try {
       /* Worker 的計時器不會被背景分頁節流 */
@@ -2072,7 +2129,7 @@ javascript:(function awTools() {
       }
     } catch (e) {}
     let lastM = -1, due = 0;
-    setInterval(() => {
+    every(() => {
       if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G) return;
       const m = S.gd.m || 0;
       if (lastM < 0) { lastM = m; return; }
@@ -2190,7 +2247,7 @@ javascript:(function awTools() {
     }
     let phase = 'start', at = 0, startTry = 0, wasOn = false;
     const stop = msg => { loopSet(null); statWipe(); window.__awNoStat = false; wasOn = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
-    setInterval(() => {
+    every(() => {
       const L = loopGet();
       const on = !!(L && L.on);
       /* 剛結束（包含按狀態列的停止）：先把佇列清乾淨，再恢復記錄 */
@@ -2258,13 +2315,41 @@ javascript:(function awTools() {
     }, 700);
   }
 
+  /* ===== 14. 置頂視窗 =====
+   * 選單分頁標題旁的按鈕。網頁沒有辦法叫瀏覽器視窗「永遠在最上層」，
+   * 但電腦版 Chrome／Edge（116 以上）有「文件子母畫面」：一個永遠在最上層的小視窗，裡面可以放網頁內容。
+   * 這裡把遊戲搬進那個小視窗（實際的搬動寫在第 0 項的 __awPin，因為要在外層頁面執行）。
+   * 小視窗不會被其他視窗蓋住，也就不會被瀏覽器當成背景而暫停。
+   * 搬進去和搬回來時遊戲都會重新載入一次（先存檔），小工具靠常駐模式自己回來。
+   * 需要常駐模式；手機和其他瀏覽器不支援。
+   */
+  const pinnedNow = () => { try { return !!window.parent.__awPinned; } catch (e) { return false; } };
+  /* 按鈕只在真的能用的時候才顯示：要有常駐模式的外層頁面，而且瀏覽器有「文件子母畫面」功能。
+   * 手機、Firefox、Safari、舊版 Chrome 沒有這個功能，按鈕就不會出現，免得使用者按了只看到錯誤訊息。
+   * 已經在小視窗裡的時候，外層是那個小視窗（它身上有 __awPinned），按鈕要留著才能取消置頂。 */
+  const pinOk = () => {
+    try {
+      const t = window.top;
+      return typeof t.__awPin === 'function' && (!!t.__awPinned || 'documentPictureInPicture' in t);
+    } catch (e) { return false; }
+  };
+  const pinToggle = () => {
+    let top = null;
+    try { top = window.top; } catch (e) {}
+    if (!top || typeof top.__awPin !== 'function') { alert('「置頂視窗」需要常駐模式。請確認檔案開頭的 host 是 true，重新整理頁面後再點一次書籤。'); return; }
+    try { if (typeof S !== 'undefined' && S) { grabDrops(); saveNow(); } } catch (e) {}
+    top.__awPin().then(r => {
+      if (r === 'nosupport') alert('這個瀏覽器不支援置頂小視窗（需要電腦版 Chrome 或 Edge 116 以上）。');
+    }).catch(e => { alert('開不了置頂視窗：' + (e && e.message ? e.message : e)); });
+  };
+
   /* ===== 入口按鈕 =====
    * 「配置模擬」按鈕放在技能分頁的標題旁，「物品管理」按鈕放在背包分頁的工具列
    * （拾取篩選／批次分解／保留規則那一列）最後面。
    * 遊戲會不斷重畫面板，所以定時檢查按鈕還在不在，不在就補回去。
    * 按鈕沿用遊戲的 btn sm 樣式；不加 data-act，遊戲自己的點擊處理就不會理它。
    */
-  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto)) {
+  if (first && (CFG.planner || CFG.items || CFG.backup || CFG.oneCell || CFG.arts || CFG.monAuto || CFG.pin)) {
     const addBtn = (host, cls, label, fn, margin) => {
       if (!host || host.querySelector('.' + cls)) return;
       const b = document.createElement('button');
@@ -2282,6 +2367,7 @@ javascript:(function awTools() {
       if (oneCellToggle && ui.tab === 'skill') addBtn(panel.querySelector('h2'), 'awBtnOne', '單格模式：' + (window.__awOne ? '開' : '關'), oneCellToggle, '8px');
       if (CFG.backup && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnBackup', '存檔備份', openBackup, '8px');
       if (CFG.arts && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
+      if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(panel.querySelector('h2'), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
       if (CFG.monAuto && !monWrapped && ui.tab === 'map' && typeof MONARCH !== 'undefined') {
         const h3 = [...panel.querySelectorAll('h3')].find(h => h.textContent.indexOf(MONARCH.n) === 0);
         if (h3 && !h3.querySelector('.awMonAuto')) {
