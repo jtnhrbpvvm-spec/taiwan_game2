@@ -31,7 +31,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V11';
+  const VERSION = 'V12';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2130,7 +2130,7 @@ javascript:(function awTools() {
       '掉出神話獨特時才會保留進度（用掉 ' + MONARCH.mk + ' 個印記），然後繼續刷到達標或印記不夠為止。\n\n' +
       '機率：每次打贏 0.1% 掉神話獨特，共 ' + keys + ' 種（其中 1 種是石板），所以平均要打約 1000 場才有一件，指定石板約 ' + (1000 * keys) + ' 場。\n\n' +
       '注意：\n・讀回存檔時，這一場拿到的其他東西（神話裝備、奇蹟石、材料）都會消失\n・進行中請不要自己操作角色或切換地圖\n' +
-      '・要開著常駐模式，重新載入後才會自動接著跑\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份\n\n確定要開始嗎？')) return;
+      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計，也不會上傳雲端存檔；結束後才恢復\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份\n\n確定要開始嗎？')) return;
     const a = prompt('新拿到的「神話石板」至少要幾塊才算達標？（不指定石板就填 0）', '1');
     if (a === null) return;
     const b = prompt('新拿到的「神話獨特」（裝備和石板合計）至少要幾件才算達標？', '2');
@@ -2164,11 +2164,29 @@ javascript:(function awTools() {
       const txt = '自動刷神話：第 ' + (L.tries + 1) + ' 場　石板 ' + L.gotSl + '/' + L.goalSl + '　合計 ' + L.gotAll + '/' + L.goalAll + '　已 ' + min + ' 分鐘 ';
       if (el.dataset.t !== txt) { el.dataset.t = txt; el.innerHTML = txt.replace(/</g, '&lt;') + '<button class="awLoopStop" style="padding:0 6px;cursor:pointer">停止</button>'; }
     };
-    let phase = 'start', at = 0, startTry = 0;
-    const stop = msg => { loopSet(null); window.__awNoStat = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
+    /* 進行中不留下、也不送出任何紀錄：
+     *   - 匿名遊玩統計：第 10 項包過的 stEv()／stSend() 看到 __awNoStat 就不記錄、不送出。
+     *     但每次重新載入時，遊戲會在小工具回來之前先記一筆「開始遊玩」，所以這裡每一輪都把待送佇列清空，
+     *     結束的那一刻再清一次，才恢復正常記錄。只動 autowanderer.stq，不碰存檔。
+     *   - Google 雲端存檔：進行中不上傳（不然作者那邊會看到存檔反覆回到同一個狀態），
+     *     結束後遊戲下一次存檔就會把最後的進度傳上去。 */
+    const statWipe = () => {
+      try { if (typeof stQ !== 'undefined' && stQ && stQ.length) stQ = []; } catch (e) {}
+      try { const q = localStorage.getItem('autowanderer.stq'); if (q !== null && q !== '[]') localStorage.setItem('autowanderer.stq', '[]'); } catch (e) {}
+    };
+    const realGcUpload = window.gcUpload;
+    if (typeof realGcUpload === 'function') {
+      window.gcUpload = function () { if (window.__awNoStat) return Promise.resolve(false); return realGcUpload.apply(this, arguments); };
+    }
+    let phase = 'start', at = 0, startTry = 0, wasOn = false;
+    const stop = msg => { loopSet(null); statWipe(); window.__awNoStat = false; wasOn = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
     setInterval(() => {
       const L = loopGet();
-      window.__awNoStat = !!(L && L.on);
+      const on = !!(L && L.on);
+      /* 剛結束（包含按狀態列的停止）：先把佇列清乾淨，再恢復記錄 */
+      if (on || wasOn) statWipe();
+      wasOn = on;
+      window.__awNoStat = on;
       drawBar(L);
       if (!L || !L.on) { phase = 'start'; startTry = 0; return; }
       if (typeof S === 'undefined' || !S || !S.gd || typeof G === 'undefined' || !G || TAB.gone || phase === 'wait') return;
