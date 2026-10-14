@@ -17,7 +17,7 @@ javascript:(function awTools() {
    *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
    *  13. 自動刷神話：無限君主旁的按鈕，沒掉神話獨特就自動讀回挑戰前的存檔再打
    *  14. 置頂視窗：選單分頁的按鈕，把遊戲搬進永遠在最上層的小視窗
-   *  15. 省資源：背景時不畫畫面；單格模式開著時降低畫面更新次數、不產生粒子和傷害數字
+   *  15. 省資源：背景時不畫畫面；節能模式（戰鬥畫面左下角的開關，單格模式開著時也會啟用）降低畫面更新次數、不產生粒子和傷害數字
    *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
@@ -35,7 +35,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V22';
+  const VERSION = 'V24';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -74,9 +74,10 @@ javascript:(function awTools() {
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
     cards: true,            /* 地圖分頁加上「卡片進度」按鈕 */
-    eco: true,              /* 省資源（下面三項的總開關） */
+    eco: true,              /* 省資源（下面幾項的總開關） */
     bgNoDraw: true,         /* 分頁在背景或被蓋住時不畫畫面（看不到，省下繪圖的資源） */
-    ecoFps: 15,             /* 單格模式開著時，畫面每秒更新幾次（0 = 不限制）；遊戲運算速度不受影響 */
+    ecoBtn: true,           /* 戰鬥畫面左下角加上「節能模式」開關（降低畫面更新次數、不產生粒子和傷害數字） */
+    ecoFps: 15,             /* 節能模式時，畫面每秒更新幾次（0 = 不限制）；遊戲運算速度不受影響 */
     arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
     pin: true,              /* 選單分頁加上「置頂視窗」按鈕（把遊戲搬進永遠在最上層的小視窗；要開常駐模式） */
     monAuto: true,          /* 地圖分頁的無限君主加上「打贏後自動接著打」勾選框 */
@@ -2449,13 +2450,54 @@ javascript:(function awTools() {
    * 遊戲每一個畫面都會把整個場景重畫一次，還會產生一堆粒子（擊中的火花、拖尾）和傷害數字。
    * 這些只是視覺效果，不影響戰鬥結果，但技能一多就很吃資源，單格模式尤其明顯。這裡做三件事：
    *   - 分頁在背景（或被蓋住）時完全不畫：反正看不到（bgNoDraw，不管有沒有開單格模式都生效）
-   *   - 單格模式開著時，畫面更新降到每秒 ecoFps 次（遊戲本身的運算速度不變，只是畫得比較少次）
-   *   - 單格模式開著時，不產生粒子、拖尾和傷害數字
+   *   - 節能模式時，畫面更新降到每秒 ecoFps 次（遊戲本身的運算速度不變，只是畫得比較少次）
+   *   - 節能模式時，不產生粒子、拖尾和傷害數字
+   * 節能模式：戰鬥畫面左下角（地圖名稱上面）的開關，點一下就切換、馬上生效，狀態記在瀏覽器的 awtools.eco。
+   * 單格模式開著時不管開關怎麼設都會啟用。
    * 做法是把遊戲的 draw()（畫場景）、eliteTags()（菁英頭上的標籤）、burst()、streak()、num() 各包一層。
    * 有些粒子是遊戲直接塞進 G.parts 的，包不到，所以畫之前順手清掉。
    */
+  const ECO_KEY = 'awtools.eco';
+  let ecoUser = false;
+  try { ecoUser = localStorage.getItem(ECO_KEY) === '1'; } catch (e) {}
   if (first && CFG.eco) {
-    const ecoOn = () => !!window.__awOne;
+    const ecoOn = () => ecoUser || !!window.__awOne;
+    /* 開關沿用遊戲畫面上標籤（chip）的樣式，放進左下角那一排（#lstack）的最上面。
+     * 關閉時用黃色、開啟時用綠色，比較顯眼。那一排本身不接收點擊（pointer-events:none），所以按鈕自己要打開；
+     * 點擊要擋住往外傳，不然會被當成點了戰鬥畫面。 */
+    if (CFG.ecoBtn) {
+      const ecoLabel = b => {
+        const on = ecoOn();
+        const txt = '🔋 節能模式：' + (on ? '開' : '關') + (on && !ecoUser ? '（單格模式）' : '');
+        if (b.textContent !== txt) b.textContent = txt;
+        b.style.color = on ? '#7dffc8' : '#ffd84a';
+        b.style.borderColor = on ? '#7dffc8' : '#ffd84a';
+      };
+      every(() => {
+        const stack = document.querySelector('#lstack');
+        if (!stack) return;
+        let b = stack.querySelector('.awEcoBtn');
+        if (!b) {
+          b = document.createElement('button');
+          b.className = 'chip awEcoBtn';
+          b.title = '降低畫面更新次數、不產生粒子和傷害數字，比較不會卡；只影響畫面，不影響戰鬥結果';
+          /* 遊戲用 zoom:var(--uz) 依螢幕大小放大這一排標籤，這裡跟著用，大小才會一致 */
+          b.style.cssText = 'pointer-events:auto;cursor:pointer;zoom:var(--uz,1);padding:1px 6px;border-width:1px;background:rgba(20,14,28,.8)';
+          b.addEventListener('click', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (window.__awOne && ecoUser) { ecoUser = false; }
+            else if (window.__awOne) { try { toast('單格模式開著時一定會節能，關掉單格模式才能關閉', 'lvl'); } catch (err) {} return; }
+            else ecoUser = !ecoUser;
+            try { if (ecoUser) localStorage.setItem(ECO_KEY, '1'); else localStorage.removeItem(ECO_KEY); } catch (err) {}
+            ecoLabel(b);
+            try { toast('節能模式已' + (ecoUser ? '開啟' : '關閉'), 'lvl'); } catch (err) {}
+          });
+          stack.insertBefore(b, stack.firstChild);
+        }
+        ecoLabel(b);
+      }, 500);
+    }
     let lastDraw = 0, skipped = false;
     const realDraw = window.draw, realTags = window.eliteTags;
     if (typeof realDraw === 'function') {
@@ -2580,9 +2622,10 @@ javascript:(function awTools() {
       ['saveWarnKB', '存檔超過幾 KB 就提醒']
     ]],
     ['省資源', [
-      ['eco', '省資源', '下面兩項的總開關'],
+      ['eco', '省資源', '下面幾項的總開關'],
       ['bgNoDraw', '背景時不畫畫面'],
-      ['ecoFps', '單格模式時畫面每秒更新幾次', '0 = 不限制；只影響畫面，不影響遊戲速度']
+      ['ecoBtn', '節能模式開關', '戰鬥畫面左下角，點一下切換；關掉這項就不顯示開關'],
+      ['ecoFps', '節能模式時畫面每秒更新幾次', '0 = 不限制；只影響畫面，不影響遊戲速度']
     ]],
     ['無限君主', [
       ['monAutoMs', '打贏後等幾毫秒再自動挑戰'],
