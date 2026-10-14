@@ -78,8 +78,12 @@ let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
 let settings = { petCount: 1, petModels: [], petColors: [], helpSeen: false, mallReminder: true, gmReminder: true, stayPets: [], bookmarkTool: true,
   // 摸桌寵時偶爾會講的特別的話：今天（day）已經講過哪幾句
   petTalk: { day: "", said: [] },
+  // 桌寵喊「摸我」的那一天（一天只喊一次）
+  petCall: "",
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
-  focusShow: { damage: false, exp: false, loot: false } };
+  focusShow: { damage: false, exp: false, loot: false },
+  // 一般模式下桌寵頭上要飄哪些字。預設跟以前一樣：傷害不飄（幾秒一筆太吵），其他都飄
+  normalShow: { damage: false, exp: true, loot: true } };
 let mallFormulaOk = true; // 黑店匯率公式跟遊戲畫面對不上時變 false，之後不再提醒
 let lastMallKey; // 上一次講過黑店提醒的那個小時
 let lastGmKey; // 上一次講過的線上GM提醒（快出現／出現中，各只講一次）
@@ -88,7 +92,8 @@ const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json
 function loadSettings() {
   try {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
-    settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow } };
+    settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow },
+      normalShow: { ...settings.normalShow, ...saved.normalShow } };
     // 1.4.3 以前只有一隻，外觀記在 petModel
     if (!Array.isArray(settings.petModels)) settings.petModels = [];
     if (saved.petModel && !saved.petModels) settings.petModels = [saved.petModel];
@@ -340,6 +345,7 @@ function createPetWindow() {
     sendPets();
     sendStay();
     petWin.webContents.send("pet:focus-show", settings.focusShow);
+    petWin.webContents.send("pet:normal-show", settings.normalShow);
     if (lastState) petWin.webContents.send("pet:state", lastState);
   });
 }
@@ -649,26 +655,39 @@ function pickerEntries() {
 }
 
 const SAY_GAP_MS = 15500; // 一句話在桌寵頭上停 15 秒，下一句等它消失再講
-const sayQueue = [];
+const sayQueue = []; // { text, onShow }
 let sayBusy = false;
+let sayTimer;
 
 function sayNext() {
-  const text = sayQueue.shift();
-  if (text === undefined) {
+  const next = sayQueue.shift();
+  if (next === undefined) {
     sayBusy = false;
     return;
   }
   sayBusy = true;
   // 桌寵被藏起來的話改用系統通知，不然提醒就白講了
-  if (petWin?.isVisible()) petWin.webContents.send("pet:say", text);
-  else if (Notification.isSupported()) new Notification({ title: "放置希望桌寵", body: text }).show();
-  setTimeout(sayNext, SAY_GAP_MS);
+  if (petWin?.isVisible()) {
+    petWin.webContents.send("pet:say", next.text);
+    next.onShow?.();
+  } else if (Notification.isSupported()) new Notification({ title: "放置希望桌寵", body: next.text }).show();
+  sayTimer = setTimeout(sayNext, SAY_GAP_MS);
 }
 
-/** 桌寵開口說一句話。同時有好幾句要講（例如整點時黑店跟線上GM都要提醒）就排隊一句一句來，不會互相蓋掉。 */
-function say(text) {
-  sayQueue.push(text);
+/**
+ * 桌寵開口說一句話。同時有好幾句要講（例如整點時黑店跟線上GM都要提醒）就排隊一句一句來，不會互相蓋掉。
+ * onShow：真的出現在桌寵頭上的那一刻要做的事（排隊等很久、或桌寵藏起來改發通知的話，等到出現才算／不算）。
+ */
+function say(text, onShow) {
+  sayQueue.push({ text, onShow });
   if (!sayBusy) sayNext();
+}
+
+/** 插隊：馬上講，把桌寵頭上現在那句換掉。排隊中的照樣接在後面。 */
+function sayNow(text) {
+  clearTimeout(sayTimer);
+  sayQueue.unshift({ text });
+  sayNext();
 }
 
 let askSeq = 0;
@@ -727,23 +746,66 @@ const PET_TALKS = {
   },
 };
 
+const today = (now = new Date()) => `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
 /** 桌寵被摸出一顆愛心。chance 是自我測試用的，平常不用給。 */
 function petted(chance = PET_TALK_CHANCE) {
-  if (Math.random() >= chance) return undefined;
-  const now = new Date();
-  const day = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  // 桌寵剛喊完「摸我」：這一下一定講，而且馬上講
+  const called = Date.now() < petCallUntil;
+  if (called) petCallUntil = 0;
+  else if (Math.random() >= chance) return undefined;
+  const day = today();
   const said = settings.petTalk?.day === day ? settings.petTalk.said : [];
   // 黑店公式跟遊戲對不上的時候，黑店那兩句會報錯，就不講
-  const left = Object.keys(PET_TALKS).filter((key) => !said.includes(key) && (mallFormulaOk || key.startsWith("gm")));
-  if (left.length === 0) return undefined;
+  const usable = Object.keys(PET_TALKS).filter((key) => mallFormulaOk || key.startsWith("gm"));
+  let left = usable.filter((key) => !said.includes(key));
+  if (left.length === 0) {
+    if (!called) return undefined;
+    left = usable; // 是它叫人來摸的，今天四句都講過了也要回一句
+  }
   const key = left[Math.floor(Math.random() * left.length)];
-  settings.petTalk = { day, said: [...said, key] };
+  settings.petTalk = { day, said: [...new Set([...said, key])] };
   saveSettings();
   const text = PET_TALKS[key]();
-  say(text);
+  if (called) sayNow(text);
+  else say(text);
   return text;
 }
 ipcMain.on("pet:petted", () => petted());
+
+// ── 桌寵喊「摸我」────────────────────────────────────────
+// 啟動後隨機 1～30 分鐘喊一次，一天只喊一次（跨重啟也算，記在設定的 petCall）。喊出來 30 秒內摸到，
+// 就馬上講一句上面的特別對話。一直開著跨過半夜的話，隔天再隨機倒數一次
+const PET_CALL_TEXT = "現在！摸我！立刻！！";
+const PET_CALL_MIN_MS = 60 * 1000;
+const PET_CALL_MAX_MS = 30 * 60 * 1000;
+const PET_CALL_WINDOW_MS = 30 * 1000;
+const PET_CALL_RETRY_MS = 5 * 60 * 1000; // 該喊的時候摸不到（桌寵藏起來、專注模式），過一陣子再看
+let petCallTimer;
+let petCallUntil = 0; // 這個時間之前摸到就算數
+
+const petCallDelay = () => PET_CALL_MIN_MS + Math.random() * (PET_CALL_MAX_MS - PET_CALL_MIN_MS);
+
+function schedulePetCall(delay = petCallDelay()) {
+  clearTimeout(petCallTimer);
+  petCallTimer = setTimeout(petCall, delay);
+}
+
+/** 隔天半夜過後再隨機倒數一次 */
+function schedulePetCallTomorrow() {
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  schedulePetCall(midnight - Date.now() + petCallDelay());
+}
+
+function petCall() {
+  if (settings.petCall === today()) return schedulePetCallTomorrow();
+  if (!petWin?.isVisible() || clickThrough) return schedulePetCall(PET_CALL_RETRY_MS);
+  settings.petCall = today();
+  saveSettings();
+  say(PET_CALL_TEXT, () => (petCallUntil = Date.now() + PET_CALL_WINDOW_MS));
+  schedulePetCallTomorrow();
+}
 
 /** 每個整點（多等 2 秒，確定已經跨過去）檢查一次。 */
 function scheduleHourlyTick() {
@@ -762,16 +824,16 @@ function checkMallFormula(shownRate) {
   console.error(`黑店匯率公式跟遊戲對不上（遊戲顯示 ${shownRate}），提醒先關掉`);
 }
 
-/** 專注模式子選單裡的一個勾選項：專注模式下要不要顯示這一類飄字。 */
-function focusShowItem(key, label) {
+/** 飄字子選單裡的一個勾選項。group＝"focusShow"（專注模式）或 "normalShow"（一般模式），key＝哪一類飄字。 */
+function showItem(group, key, label) {
   return {
     label,
     type: "checkbox",
-    checked: !!settings.focusShow[key],
+    checked: !!settings[group][key],
     click: (item) => {
-      settings.focusShow = { ...settings.focusShow, [key]: item.checked };
+      settings[group] = { ...settings[group], [key]: item.checked };
       saveSettings();
-      petWin.webContents.send("pet:focus-show", settings.focusShow);
+      petWin.webContents.send(group === "focusShow" ? "pet:focus-show" : "pet:normal-show", settings[group]);
     },
   };
 }
@@ -801,9 +863,18 @@ function buildMenu(petIndex = 0) {
         { label: "開啟專注模式（桌寵不擋滑鼠）", type: "checkbox", checked: clickThrough, accelerator: CLICK_THROUGH_KEY, click: toggleClickThrough },
         { type: "separator" },
         { label: "專注模式下，桌寵頭上還要顯示（可複選）：", enabled: false },
-        focusShowItem("damage", "顯示傷害"),
-        focusShowItem("exp", "顯示經驗值"),
-        focusShowItem("loot", "顯示物品取得"),
+        showItem("focusShow", "damage", "顯示傷害"),
+        showItem("focusShow", "exp", "顯示經驗值"),
+        showItem("focusShow", "loot", "顯示物品取得"),
+      ],
+    },
+    {
+      label: "一般模式飄字",
+      submenu: [
+        { label: "一般模式下，桌寵頭上要顯示（可複選）：", enabled: false },
+        showItem("normalShow", "damage", "顯示傷害"),
+        showItem("normalShow", "exp", "顯示經驗值"),
+        showItem("normalShow", "loot", "顯示物品取得"),
       ],
     },
     { label: "顯示桌寵", type: "checkbox", checked: petWin.isVisible(), click: () => (petWin.isVisible() ? petWin.hide() : petWin.showInactive()) },
@@ -1132,10 +1203,11 @@ app.whenReady().then(async () => {
     gmTick();
   }, 6000);
   scheduleHourlyTick();
+  if (!SELFTEST) schedulePetCall();
   petShell.updates.start({ notify: (text) => petWin?.webContents.send("pet:notice", text), say, ask });
   // 走到這裡代表視窗都開好、遊戲也載入了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用）
   petShell.markHealthy();
-  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, setStay, petted, quit: () => app.quit() });
+  if (SELFTEST) require("./selftest").run({ gameWin, petWin, showGame, inGame, READ_STATE, getState: () => lastState, diffEvents, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin, say, ask, income, openIncome, getIncomeWin: () => incomeWin, buildMenu, openSaves, getSavesWin: () => savesWin, openMapInfo, getMapInfoWin: () => mapInfoWin, READ_MAP_QUERY, saves: { stageImport, makeTransferCode, fetchTransferCode, readSave }, FIND_SESSION, setPetCount, setStay, petted, petCall, settings: () => settings, quit: () => app.quit() });
 });
 
 app.on("before-quit", () => {

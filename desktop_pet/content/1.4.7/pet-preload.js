@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("petApi", {
   onAsk: (cb) => ipcRenderer.on("pet:ask", (_e, question) => cb(question)),
   answer: (id, ok) => ipcRenderer.send("pet:answer", { id, ok }),
   onFocusShow: (cb) => ipcRenderer.on("pet:focus-show", (_e, show) => cb(show)),
+  onNormalShow: (cb) => ipcRenderer.on("pet:normal-show", (_e, show) => cb(show)),
   // 每一隻桌寵的調色（陣列；null＝不調）
   onColors: (cb) => ipcRenderer.on("pet:colors", (_e, colors) => cb(colors)),
   onStay: (cb) => ipcRenderer.on("pet:stay", (_e, on) => cb(on)),

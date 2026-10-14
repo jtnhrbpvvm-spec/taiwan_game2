@@ -66,6 +66,8 @@ let sizePercent = clamp(Number(localStorage.getItem(SIZE_KEY)) || 100, ...SIZE_P
 let clickThrough = false;
 // 專注模式下要顯示哪幾類飄字（右鍵選單「專注模式」裡勾的），以及每種事件算哪一類
 let focusShow = { damage: false, exp: false, loot: false };
+// 一般模式下要顯示哪幾類（右鍵選單「一般模式飄字」）
+let normalShow = { damage: false, exp: true, loot: true };
 const FLOATER_GROUP = { damage: "damage", exp: "exp", levelup: "exp", loot: "loot", gold: "loot" };
 let drag; // { pet, grabX, startY, startLift, moved }
 let stroked = 0;
@@ -356,9 +358,9 @@ function spawnFloater(kind, text, iconIndex, p = pet) {
 const compact = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1)}億` : n >= 1e4 ? `${(n / 1e4).toFixed(1)}萬` : String(n));
 
 async function playEvents(events) {
-  // 一般模式：經驗、金錢、掉寶、升級都飄，傷害不飄（幾秒就一筆，太吵）。
+  // 一般模式：飄右鍵選單「一般模式飄字」勾的那幾類（預設經驗、金錢、掉寶、升級都飄，傷害不飄，幾秒就一筆太吵）。
   // 專注模式：預設全部不飄，只飄使用者在右鍵選單「專注模式」裡勾的那幾類
-  events = events.filter((e) => (clickThrough ? focusShow[FLOATER_GROUP[e.kind]] : e.kind !== "damage"));
+  events = events.filter((e) => (clickThrough ? focusShow : normalShow)[FLOATER_GROUP[e.kind]]);
   if (events.length === 0) return;
   if (events.some((e) => e.kind === "loot")) await ensureAtlas();
   // 傷害幾秒就來一筆，只有它的時候不用每次都揮。字只從主角頭上冒，其他幾隻跟著揮
@@ -516,6 +518,7 @@ window.petApi.onEvents(playEvents);
 window.petApi.onNotice((text) => spawnFloater("hint", text));
 window.petApi.onSay(say);
 window.petApi.onFocusShow((show) => (focusShow = show));
+window.petApi.onNormalShow((show) => (normalShow = show));
 // 原地不走動（右鍵選單）：只在原地踏步或揮擊，不左右走。每隻可以各自開關，送來的是每一隻的設定；
 // 只送一個 true／false 就是全部一起
 let stayFlags = false;
