@@ -223,17 +223,36 @@ return Object.keys(localStorage).filter((k) => k.startsWith(prefix))
 }
 function writeSealedSave(next) {
 const old = localStorage.getItem(SAVE_KEY);
+window.__wowbmSaveWriting = true;
+try {
 if (old) localStorage.setItem(`wowbm.backup.${SAVE_KEY}.${Date.now()}`, old);
 saveBackups().slice(10).forEach((b) => localStorage.removeItem(b.key));
 localStorage.setItem(SAVE_KEY, next);
+} finally {
+window.__wowbmSaveWriting = false;
 }
+}
+const gameRunning = () => !!document.getElementById('benilla');
+function lockGameSaveWrites() {
+if (window.__wowbmSaveLock) return;
+window.__wowbmSaveLock = true;
+const setItem = Storage.prototype.setItem;
+Storage.prototype.setItem = function (k, v) {
+if (this === localStorage && k === SAVE_KEY && !window.__wowbmSaveWriting) return; // 遊戲的寫入：丟掉
+return setItem.call(this, k, v);
+};
+}
+function commitSave(next) {
+const running = gameRunning();
+if (running) lockGameSaveWrites();
+writeSealedSave(next);
+if (running) setTimeout(() => go(location.href), 600);
+return running;
+}
+const RELOAD_NOTE = '（遊戲執行中修改，寫入後會自動重新載入遊戲，進行中的這一局會中斷）';
 function rawSaveSection() {
 const box = h('div', { className: 'opt' });
 box.append(h('b', {}, '原始存檔編輯器（進階）'));
-if (document.getElementById('benilla')) {
-box.append(h('div', { className: 'note' }, '遊戲執行中不能改存檔，請先用上面的「跳到可以改存檔的頁面」。'));
-return box;
-}
 const area = h('textarea', { rows: 9, spellcheck: false, placeholder: '讀取中…' });
 area.style.whiteSpace = 'pre';
 const msg = msgLine();
@@ -255,27 +274,30 @@ const save = async () => {
 const text = area.value.replace(/\r\n/g, '\n');
 if (text === loaded) { msg.ok('沒有改動。'); return; }
 if (!text.trim()) { msg.err('內容是空的，沒有寫入'); return; }
-if (!isModded() && !confirm('這會直接修改帳號存檔（永久的）。舊存檔會先自動備份。\n要繼續嗎？')) return;
+if (!confirm('這會直接修改帳號存檔（永久的）。舊存檔會先自動備份。' +
+(gameRunning() ? '\n寫入後會自動重新載入遊戲，進行中的這一局會中斷。' : '') + '\n要繼續嗎？')) return;
 try {
 const next = await saveEncode(text.endsWith('\n') ? text : text + '\n');
 if ((await saveDecode(next)).trimEnd() !== text.trimEnd()) throw new Error('重新封裝後驗證失敗，沒有寫入');
-writeSealedSave(next);
 markModded('存檔修改');
+const reloading = commitSave(next);
 loaded = await saveDecode(next);
-msg.ok('已寫入存檔（舊的已備份）。按「開啟遊戲」看結果；改壞了可以用下面的備份還原。');
+msg.ok(reloading ? '已寫入存檔（舊的已備份），重新載入遊戲中…'
+: '已寫入存檔（舊的已備份）。按「開啟遊戲」看結果；改壞了可以用下面的備份還原。');
 renderBackups();
 } catch (e) {
 msg.err(e);
 }
 };
 const restore = async (b) => {
-if (!confirm(`要把存檔還原成 ${new Date(b.at).toLocaleString()} 的備份嗎？\n（現在的存檔也會先備份）`)) return;
+if (!confirm(`要把存檔還原成 ${new Date(b.at).toLocaleString()} 的備份嗎？\n（現在的存檔也會先備份）` +
+(gameRunning() ? '\n還原後會自動重新載入遊戲。' : ''))) return;
 const sealed = localStorage.getItem(b.key);
 try {
 await saveDecode(sealed); // 確認備份本身是好的
-writeSealedSave(sealed);
+const reloading = commitSave(sealed);
 await load(); // load() 會清掉訊息，所以訊息放在後面
-msg.ok(`已還原成 ${new Date(b.at).toLocaleString()} 的備份。`);
+msg.ok(`已還原成 ${new Date(b.at).toLocaleString()} 的備份。` + (reloading ? '重新載入遊戲中…' : ''));
 } catch (e) {
 msg.err(e);
 }
@@ -290,13 +312,14 @@ new Date(b.at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-d
 box.append(
 h('div', { className: 'note' },
 '這是解密後的帳號存檔，一行一筆、用 | 分隔。改完按「儲存」會重新加密寫回（寫入前自動備份）。',
-'不確定的欄位不要亂改；改壞了遊戲可能會把存檔當成損壞、重新開始，這時用下面的備份還原。'),
+'不確定的欄位不要亂改；改壞了遊戲可能會把存檔當成損壞、重新開始，這時用下面的備份還原。',
+gameRunning() ? RELOAD_NOTE : ''),
 area,
 h('div', { className: 'row' },
 h('button', { onclick: save }, '儲存'),
 h('button', { onclick: load }, '重新讀取'),
 h('button', { onclick: () => saveFile(`AzerothSurvivors 存檔明文 ${stamp()}.txt`, new Blob([area.value], { type: 'text/plain' })) }, '下載明文'),
-h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')),
+gameRunning() ? null : h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')),
 msg,
 backupList);
 load();
@@ -306,19 +329,12 @@ function talentSection() {
 const box = h('div', { className: 'opt' });
 box.append(h('b', {}, '天賦點數（存檔修改）'));
 const msg = msgLine();
-if (document.getElementById('benilla')) {
-box.append(
-h('div', { className: 'note' },
-'遊戲執行中不能改存檔（遊戲之後會把舊資料寫回去）。按下面的按鈕跳到不會啟動遊戲的頁面，',
-'在那裡再按一次書籤、到「修改」分頁修改，改完按「開啟遊戲」。'),
-h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/rogue.css') }, '跳到可以改存檔的頁面')));
-return box;
-}
 const list = h('div', { className: 'stats' }, '讀取存檔中…');
 box.append(
 h('div', { className: 'note' },
 '直接改帳號存檔裡的天賦經驗。每個職業最多 51 點，按「全滿」就是 51 點。',
-'寫入前會自動備份舊存檔（存在這個網站的瀏覽器儲存裡）。只會列出玩過、有天賦紀錄的職業。'),
+'寫入前會自動備份舊存檔（存在這個網站的瀏覽器儲存裡）。只會列出玩過、有天賦紀錄的職業。',
+gameRunning() ? RELOAD_NOTE : ''),
 list, msg);
 const render = async () => {
 let plain;
@@ -333,7 +349,8 @@ return;
 const rows = parseTalents(plain);
 if (!rows.length) { list.replaceChildren(h('div', { className: 'note' }, '存檔裡還沒有天賦紀錄：先完整打完一局。')); return; }
 const write = async (cls, xp) => {
-if (!isModded() && !confirm('這會直接修改帳號存檔（永久的）。改完這一局標記為「已修改」，不會上傳任何資料。\n要繼續嗎？')) return;
+if (!confirm('這會直接修改帳號存檔（永久的），舊存檔會先自動備份。' +
+(gameRunning() ? '\n寫入後會自動重新載入遊戲，進行中的這一局會中斷。' : '') + '\n要繼續嗎？')) return;
 try {
 const sealed = localStorage.getItem(SAVE_KEY);
 const cur = await saveDecode(sealed);
@@ -345,9 +362,10 @@ parts[2] = String(Math.max(0, Math.floor(xp)));
 lines[i] = parts.join('|');
 const next = await saveEncode(lines.join('\n'));
 if ((await saveDecode(next)) !== lines.join('\n')) throw new Error('重新封裝後驗證失敗，沒有寫入');
-writeSealedSave(next);
 markModded('天賦點數修改');
-msg.ok(`已寫入：${CLASS_NAMES[cls] || '職業 ' + cls} 天賦經驗 = ${parts[2]}。按「開啟遊戲」進遊戲看天賦畫面。`);
+const reloading = commitSave(next);
+msg.ok(`已寫入：${CLASS_NAMES[cls] || '職業 ' + cls} 天賦經驗 = ${parts[2]}。` +
+(reloading ? '重新載入遊戲中…' : '按「開啟遊戲」進遊戲看天賦畫面。'));
 await render();
 } catch (e) {
 msg.err(e);
@@ -361,7 +379,7 @@ h('small', {}, `天賦經驗 ${r.xp}` + (r.alloc ? `・已配置 ${r.alloc.split
 h('button', { onclick: () => write(r.cls, TALENT_FULL_XP) }, '全滿'),
 input,
 h('button', { onclick: () => write(r.cls, Number(input.value)) }, '套用'));
-}), h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')));
+}), ...(gameRunning() ? [] : [h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲'))]));
 };
 render();
 return box;
@@ -885,8 +903,8 @@ h('div', { className: 'note' },
 '戰況面板、低血量警示、首領預告、自動走位，都要用遊戲內建的 WebBridge 讀資料。',
 'WebBridge 只能在遊戲啟動時打開，所以要：'),
 h('ol', { className: 'note' },
-h('li', {}, '按下面的按鈕，頁面會跳到一個空白頁（目前這一局會中斷）。'),
-h('li', {}, '在空白頁上再按一次書籤，遊戲會自動以即時模式重新載入（開局、效能設定照舊）。')),
+h('li', {}, '按下面的按鈕，頁面會跳到一頁只有程式碼文字的頁面（那是遊戲的樣式檔，這是正常的；目前這一局會中斷）。'),
+h('li', {}, '在那一頁上再按一次書籤，遊戲會自動以即時模式重新載入（開局、效能設定照舊）。')),
 h('div', { className: 'row' },
 h('button', { onclick: requestBridgeBoot }, '重新啟動並啟用即時資料')));
 return;
@@ -1321,7 +1339,8 @@ btn.disabled = false;
 };
 const doImport = async (btn) => {
 if (gameRunning && confirm('遊戲正在執行，還原後遊戲可能會把舊資料寫回去。\n\n'
-+ '建議先跳到同網站「不會啟動遊戲」的頁面，在那裡再按一次書籤、到「備份」分頁做還原。\n\n要現在跳過去嗎？')) {
++ '建議先跳到同網站「不會啟動遊戲」的頁面（只會顯示一頁程式碼文字，這是正常的），'
++ '在那裡再按一次書籤、到「備份」分頁做還原。\n\n要現在跳過去嗎？')) {
 go(location.origin + '/rogue.css');
 return;
 }
