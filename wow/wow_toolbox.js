@@ -358,7 +358,14 @@ input, h('span', { className: 'note' }, '經驗'));
 });
 let nameInput = null;
 if (m.name) {
-nameInput = h('input', { type: 'text', value: m.name.value, maxLength: 12, placeholder: '英文字母 2～12 個' });
+nameInput = h('input', { type: 'text', value: m.name.value, placeholder: '英文字母 2～12 個',
+autocomplete: 'off', spellcheck: false, inputMode: 'latin' });
+const onlyLetters = () => {
+const v = nameInput.value.replace(/[^A-Za-z]/g, '').slice(0, 12);
+if (v !== nameInput.value) nameInput.value = v;
+};
+nameInput.addEventListener('input', (e) => { if (!e.isComposing) onlyLetters(); });
+nameInput.addEventListener('compositionend', onlyLetters);
 edits.push((lines) => {
 const v = nameInput.value.trim();
 if (!/^[A-Za-z]{2,12}$/.test(v)) throw new Error('名字只能用英文字母，2～12 個字（遊戲規定）');
