@@ -166,6 +166,121 @@ h('div', { className: 'note' },
 '會重新載入頁面，進行中的這一局會中斷，懸浮按鈕也要再按一次書籤叫出來。',
 '選「隨機」每次開局都重抽（複製的網址則固定是抽到的那個）。效能分頁的設定會保留。'));
 }
+const SAVE_KEY = 'rogue.characters';
+const SAVE_SECRET = [0x9c, 0x4e, 0x27, 0xd1, 0x6a, 0xf0, 0x13, 0xb8, 0x5d, 0xe2, 0x71, 0x0c, 0xa9, 0x36, 0xc4, 0x8f];
+const TALENT_FULL_XP = 999999;
+const CLASS_NAMES = { 1: '戰士', 2: '聖騎士', 3: '獵人', 4: '盜賊', 5: '牧師', 7: '薩滿', 8: '法師', 9: '術士', 11: '德魯伊' };
+const utf8 = (s) => new TextEncoder().encode(s);
+const concatBytes = (...parts) => {
+const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+let i = 0;
+for (const p of parts) { out.set(p, i); i += p.length; }
+return out;
+};
+let saveHmacKey = null;
+async function saveHmac(...parts) {
+if (!crypto.subtle) throw new Error('這個網址不是安全連線（https 或本機），瀏覽器不提供加密功能');
+saveHmacKey ||= await crypto.subtle.importKey('raw', concatBytes(utf8('azeroth-survivors/save/v1/'), new Uint8Array(SAVE_SECRET)),
+{ name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+return new Uint8Array(await crypto.subtle.sign('HMAC', saveHmacKey, concatBytes(...parts)));
+}
+async function saveXor(nonce, data) {
+const out = data.slice();
+for (let i = 0; i < out.length; i += 20) {
+const ctr = new Uint8Array(8);
+new DataView(ctr.buffer).setUint32(0, i / 20, true);
+const ks = await saveHmac(utf8('ks'), nonce, ctr);
+for (let j = 0; j < 20 && i + j < out.length; j++) out[i + j] ^= ks[j];
+}
+return out;
+}
+async function saveDecode(sealed) {
+if (!sealed?.startsWith('RSE1:')) throw new Error('存檔格式不認得（不是 RSE1）');
+const blob = Uint8Array.from(atob(sealed.slice(5)), (c) => c.charCodeAt(0));
+const nonce = blob.slice(0, 16);
+const ct = blob.slice(16, -20);
+const tag = blob.slice(-20);
+const want = await saveHmac(utf8('tag'), nonce, ct);
+if (want.some((x, i) => x !== tag[i])) throw new Error('存檔驗證失敗（遊戲改版換了金鑰？）');
+return new TextDecoder().decode(await saveXor(nonce, ct));
+}
+async function saveEncode(text) {
+const nonce = crypto.getRandomValues(new Uint8Array(16));
+const ct = await saveXor(nonce, utf8(text));
+const tag = await saveHmac(utf8('tag'), nonce, ct);
+return 'RSE1:' + btoa(String.fromCharCode(...concatBytes(nonce, ct, tag)));
+}
+function parseTalents(plain) {
+return plain.split('\n').map((line, row) => ({ line, row })).filter((x) => x.line.startsWith('talent|')).map(({ line, row }) => {
+const [, cls, xp, alloc = ''] = line.split('|');
+return { row, cls: Number(cls), xp: Number(xp), alloc };
+});
+}
+function talentSection() {
+const box = h('div', { className: 'opt' });
+box.append(h('b', {}, '天賦點數（存檔修改）'));
+const msg = msgLine();
+if (document.getElementById('benilla')) {
+box.append(
+h('div', { className: 'note' },
+'遊戲執行中不能改存檔（遊戲之後會把舊資料寫回去）。按下面的按鈕跳到不會啟動遊戲的頁面，',
+'在那裡再按一次書籤、到「修改」分頁修改，改完按「開啟遊戲」。'),
+h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/rogue.css') }, '跳到可以改存檔的頁面')));
+return box;
+}
+const list = h('div', { className: 'stats' }, '讀取存檔中…');
+box.append(
+h('div', { className: 'note' },
+'直接改帳號存檔裡的天賦經驗。每個職業最多 51 點，按「全滿」就是 51 點。',
+'寫入前會自動備份舊存檔（存在這個網站的瀏覽器儲存裡）。只會列出玩過、有天賦紀錄的職業。'),
+list, msg);
+const render = async () => {
+let plain;
+try {
+const sealed = localStorage.getItem(SAVE_KEY);
+if (!sealed) { list.replaceChildren(h('div', { className: 'note' }, '找不到存檔：先在這個網址玩過一局再來。')); return; }
+plain = await saveDecode(sealed);
+} catch (e) {
+list.replaceChildren(h('div', { className: 'err' }, '讀不到存檔：' + (e?.message || e)));
+return;
+}
+const rows = parseTalents(plain);
+if (!rows.length) { list.replaceChildren(h('div', { className: 'note' }, '存檔裡還沒有天賦紀錄：先完整打完一局。')); return; }
+const write = async (cls, xp) => {
+if (!isModded() && !confirm('這會直接修改帳號存檔（永久的）。改完這一局標記為「已修改」，不會上傳任何資料。\n要繼續嗎？')) return;
+try {
+const sealed = localStorage.getItem(SAVE_KEY);
+const cur = await saveDecode(sealed);
+const lines = cur.split('\n');
+const i = lines.findIndex((l) => l.startsWith(`talent|${cls}|`));
+if (i < 0) throw new Error('存檔裡找不到這個職業的天賦紀錄');
+const parts = lines[i].split('|');
+parts[2] = String(Math.max(0, Math.floor(xp)));
+lines[i] = parts.join('|');
+const next = await saveEncode(lines.join('\n'));
+if ((await saveDecode(next)) !== lines.join('\n')) throw new Error('重新封裝後驗證失敗，沒有寫入');
+localStorage.setItem(`wowbm.backup.${SAVE_KEY}.${Date.now()}`, sealed);
+localStorage.setItem(SAVE_KEY, next);
+markModded('天賦點數修改');
+msg.ok(`已寫入：${CLASS_NAMES[cls] || '職業 ' + cls} 天賦經驗 = ${parts[2]}。按「開啟遊戲」進遊戲看天賦畫面。`);
+await render();
+} catch (e) {
+msg.err(e);
+}
+};
+list.replaceChildren(...rows.map((r) => {
+const input = h('input', { type: 'number', min: 0, step: 1, value: r.xp });
+return h('div', { className: 'stat-row' },
+h('span', { className: 'stat-name' }, CLASS_NAMES[r.cls] || `職業 ${r.cls}`,
+h('small', {}, `天賦經驗 ${r.xp}` + (r.alloc ? `・已配置 ${r.alloc.split(',').filter(Boolean).length} 項` : ''))),
+h('button', { onclick: () => write(r.cls, TALENT_FULL_XP) }, '全滿'),
+input,
+h('button', { onclick: () => write(r.cls, Number(input.value)) }, '套用'));
+}), h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')));
+};
+render();
+return box;
+}
 function isModded() { return !!window.__wowbmModded; }
 function markModded(reason) {
 if (!window.__wowbmModded) window.__wowbmModded = { reasons: [], at: Date.now(), blocked: 0 };
@@ -453,6 +568,7 @@ range.addEventListener('change', () => apply(range.value));
 show();
 body.append(
 status,
+talentSection(),
 statsSection(),
 h('div', { className: 'opt' },
 h('div', { className: 'field' }, h('b', {}, '遊戲速度'), h('span', { className: 'slider' }, range, label)),
