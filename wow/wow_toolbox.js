@@ -101,6 +101,130 @@ const req = (r) => new Promise((resolve, reject) => {
 r.onsuccess = () => resolve(r.result);
 r.onerror = () => reject(r.error);
 });
+const ZHTW_KEY = 'wowbm.zhtw';
+const ASSETS = load('wowbm.assets', null) || 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/wow/';
+const zhtwOn = () => load(ZHTW_KEY, false) === true;
+const zhtwActive = () => window.__wowbmZhtw === true || (window.__wowbmZhtwPending === true && !window.__wowbmZhtwErr);
+async function zhtwFetch() {
+const get = async (name, kind) => {
+const r = await fetch(ASSETS + 'zh_tw/' + name);
+if (!r.ok) throw new Error(`${name} 下載失敗（${r.status}）`);
+return r[kind]();
+};
+try {
+const [data, font] = await Promise.all([get('zh_tw.json', 'json'), get('azs_tc.ttf', 'blob')]);
+if (data?.v !== 1) throw new Error('zh_tw.json 格式不對');
+return { data, fontUrl: URL.createObjectURL(font) };
+} catch (e) {
+window.__wowbmZhtwErr = e?.message || String(e);
+return null;
+}
+}
+function zhtwHookFont(fontUrl) {
+const isFont = (u) => /(^|\/)fonts\/azs_sc\.ttf(\?|#|$)/i.test(String(u));
+const open = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+return open.call(this, method, isFont(url) ? fontUrl : url, ...rest);
+};
+const f = window.fetch;
+window.fetch = function (input, init) {
+return f.call(this, typeof input === 'string' && isFont(input) ? fontUrl : input, init);
+};
+}
+function fnv(s) {
+let x = 0x811c9dc5;
+for (const c of new TextEncoder().encode(s)) x = Math.imul(x ^ c, 0x01000193) >>> 0;
+return x.toString(36);
+}
+function findBytes(u8, pat, from = 0) {
+for (let i = u8.indexOf(pat[0], from); i >= 0; i = u8.indexOf(pat[0], i + 1)) {
+let k = 1;
+while (k < pat.length && u8[i + k] === pat[k]) k++;
+if (k === pat.length) return i;
+}
+return -1;
+}
+function zhtwPatch(mem, data) {
+const te = new TextEncoder();
+const u8 = new Uint8Array(mem.buffer);
+const at = findBytes(u8, te.encode('zh简体中文{'));
+if (at < 0) throw new Error('遊戲記憶體裡找不到簡體中文文字');
+const start = at + te.encode('zh简体中文').length;
+const end = findBytes(u8, te.encode('\n}'), start) + 2;
+if (end < start + 2) throw new Error('簡體中文文字的結尾找不到');
+const zh = JSON.parse(new TextDecoder().decode(u8.subarray(start, end)));
+const map = new Map();
+for (let i = 0; i + 1 < data.chars.length; i += 2) map.set(data.chars[i], data.chars[i + 1]);
+const conv = (s) => s.replace(/[㐀-鿿]/g, (c) => map.get(c) || c);
+const out = {};
+let fallback = 0;
+for (const [k, v] of Object.entries(zh)) {
+const t = data.strings[k];
+if (Array.isArray(t) && typeof v === 'string' && t[0] === fnv(v)) out[k] = t[1];
+else { out[k] = typeof v === 'string' ? conv(v) : v; fallback++; }
+}
+let bytes = te.encode(JSON.stringify(out));
+if (bytes.length > end - start) {
+bytes = te.encode(conv(new TextDecoder().decode(u8.subarray(start, end))));
+fallback = Object.keys(zh).length;
+}
+if (bytes.length > end - start) throw new Error('繁體文字放不下');
+u8.set(bytes, start);
+u8.fill(0x20, start + bytes.length, end); // JSON 結尾後面的空白不影響解析
+const label = te.encode(data.label || '繁體中文');
+if (label.length === 12) u8.set(label, at + 2); // 語言選單上的名稱（跟「简体中文」一樣 12 個位元組才換）
+return { total: Object.keys(zh).length, fallback };
+}
+async function zhtwPrepare() {
+if (!zhtwOn()) return null;
+const got = await zhtwFetch();
+if (!got) return null;
+zhtwHookFont(got.fontUrl);
+window.__wowbmZhtwPending = true;
+return (mem) => {
+try {
+window.__wowbmZhtwInfo = zhtwPatch(mem, got.data);
+window.__wowbmZhtw = true;
+} catch (e) {
+window.__wowbmZhtwErr = e?.message || String(e);
+}
+};
+}
+function zhtwSection(redraw) {
+if (!onGame()) {
+return h('div', { className: 'opt' }, h('b', {}, '繁體中文'),
+h('div', { className: 'note' }, '要在遊戲網站上才能切換。'));
+}
+const running = !!document.getElementById('benilla');
+const on = zhtwOn();
+const err = window.__wowbmZhtwErr;
+const state = !on ? '目前：簡體中文（遊戲原本的樣子）。'
+: zhtwActive() ? '目前：繁體中文 ✓'
+: running ? '已設定成繁體，但這次遊戲是用簡體啟動的：按下面的按鈕重新啟動。'
+: '已設定成繁體，下次由工具箱啟動遊戲時套用。';
+const info = window.__wowbmZhtwInfo;
+return h('div', { className: 'opt' },
+h('b', {}, '繁體中文'),
+h('div', { className: 'note' }, state),
+err && h('div', { className: 'err' }, '繁體套用失敗：' + err),
+info?.fallback ? h('div', { className: 'note' },
+`遊戲改版後有 ${info.fallback} 句新文字，這些用逐字轉換（用詞可能是大陸用法）。`) : null,
+h('div', { className: 'row' },
+!on && h('button', { onclick: () => { store(ZHTW_KEY, true); zhtwRestart(); } }, '切換成繁體中文（重新啟動遊戲）'),
+on && !zhtwActive() && running && h('button', { onclick: zhtwRestart }, '用繁體重新啟動遊戲'),
+on && h('button', { onclick: () => {
+store(ZHTW_KEY, false);
+if (zhtwActive()) restartGame(currentParams().toString(), '正在改回簡體中文……', 'util', '✓ 已改回簡體中文。');
+else redraw();
+} }, '改回簡體')),
+h('div', { className: 'note' },
+'遊戲內的語言要選中文（Options 裡的語言選單，切換後會顯示「繁體中文」）。',
+h('br'), '用工具箱開局、套用效能設定、修改存檔時，遊戲都會自動用繁體啟動；',
+'自己重新整理網頁或從網址開遊戲則會是簡體，叫出工具箱後會提示你一鍵切回繁體。'));
+}
+function zhtwRestart() {
+restartGame(currentParams().toString(), '正在以繁體中文重新啟動遊戲……', 'util', '✓ 已用繁體中文啟動遊戲。');
+}
 const ZONES = [['av', '奧特蘭克山谷'], ['ab', '阿拉希盆地'], ['wsg', '戰歌峽谷'], ['elwynn', '艾爾文森林'],
 ['duskwood', '暮色森林'], ['feralas', '菲拉斯'], ['brm', '黑石山'], ['aq', '安其拉之門'], ['arena', '古拉巴許競技場']];
 const CLASSES = [['warrior', '戰士'], ['paladin', '聖騎士'], ['hunter', '獵人'], ['rogue', '盜賊'], ['priest', '牧師'],
@@ -159,7 +283,10 @@ body.append(
 h('label', {}, '模式', mode),
 runOnly,
 h('div', { className: 'row' },
-h('button', { onclick: () => go(buildUrl()) }, '開始（重新載入遊戲）'),
+h('button', { onclick: () => {
+const url = new URL(buildUrl());
+if (url.origin === location.origin) openGame(url.searchParams); else go(url.href);
+} }, '開始（重新載入遊戲）'),
 h('button', { onclick: copy }, '複製開局網址')),
 msg,
 h('div', { className: 'note' },
@@ -287,13 +414,7 @@ w.document.getElementById('m').textContent = message;
 w.eval('(' + reloadDriver.toString() + ')(' + JSON.stringify('(' + WOWBM.toString() + ')()') + ',' + JSON.stringify(target) + ')');
 }
 function reloadWithToolbox(message) {
-const qs = currentParams().toString();
-let target = location.origin + '/' + (qs ? '?' + qs : '');
-if (bridgeReady()) {
-try { sessionStorage.setItem(BOOT_KEY, qs); } catch {}
-target = location.origin + '/rogue.css';
-}
-reopenAt(target, message, 'mods', '✓ 修改已套用，網頁已重新整理，工具箱已自動重新開啟。');
+restartGame(currentParams().toString(), message, 'mods', '✓ 修改已套用，網頁已重新整理，工具箱已自動重新開啟。');
 }
 function consumeReopen() {
 try {
@@ -794,17 +915,34 @@ function requestBridgeBoot() {
 try { sessionStorage.setItem(BOOT_KEY, currentParams().toString()); } catch {}
 reopenAt(location.origin + '/rogue.css', '正在以即時模式重新啟動遊戲……', 'live', '✓ 已用即時模式重新啟動遊戲，戰況功能可以用了。');
 }
+function restartGame(qs, message, tab, note) {
+let target = location.origin + '/' + (qs ? '?' + qs : '');
+if (bridgeReady() || zhtwOn()) {
+try { sessionStorage.setItem(BOOT_KEY, qs); } catch {}
+target = location.origin + '/rogue.css';
+}
+reopenAt(target, message, tab, note);
+}
+function openGame(params) {
+if (onGame() && zhtwOn()) restartGame(params.toString(), '正在以繁體中文啟動遊戲……', null, null);
+else go(gameUrl(params));
+}
 function pendingBoot() {
 try { return sessionStorage.getItem(BOOT_KEY); } catch { return null; }
 }
 async function bootWithBridge(qs) {
 try { sessionStorage.removeItem(BOOT_KEY); } catch {}
 const hub = bridgeHub();
+const zhtw = await zhtwPrepare(); // 繁體中文（沒開或下載失敗是 null）
 const instantiate = WebAssembly.instantiate;
 WebAssembly.instantiate = async function (...args) {
 const r = await instantiate.apply(this, args);
 const inst = r instanceof WebAssembly.Instance ? r : r?.instance;
-if (inst?.exports?.memory instanceof WebAssembly.Memory && !window.__wowbmMem) window.__wowbmMem = inst.exports.memory;
+const mem = inst?.exports?.memory;
+if (mem instanceof WebAssembly.Memory && !window.__wowbmMem) {
+window.__wowbmMem = mem;
+zhtw?.(mem);
+}
 return r;
 };
 let env;
@@ -1087,7 +1225,7 @@ if (scaleOn.checked) p.set('renderScale', String(scale.get() / 100));
 const d = Math.round(Number(far.value));
 if (far.value !== '' && d > 0) p.set('farclip', String(d));
 if (mute.checked) p.set('MasterVolume', '0');
-go(gameUrl(p));
+openGame(p);
 };
 body.append(
 h('div', { className: 'row' }, '快速套用：',
@@ -1212,6 +1350,7 @@ h('label', { className: 'inline' }, box, h('b', {}, title)),
 h('div', { className: 'note' }, desc));
 };
 body.append(
+zhtwSection(() => { body.replaceChildren(); utilTab(body); }),
 toggle('noLeave', '防誤關',
 '要關分頁、重新整理或離開網頁時，先跳出確認視窗。用工具箱開局、套用效能設定不會跳。'),
 toggle('wake', '防休眠',
@@ -1428,7 +1567,7 @@ for (const d of data.indexedDB || []) await restoreDb(d);
 showMsg('還原完成。重新載入遊戲後生效。');
 await refresh();
 body.append(h('div', { className: 'row' },
-h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')));
+h('button', { onclick: () => openGame(new URLSearchParams()) }, '開啟遊戲')));
 } catch (e) {
 showErr(e);
 } finally {
@@ -1677,13 +1816,16 @@ h('div', {},
 h('b', {}, 'WoW 工具箱'),
 h('div', {}, '這是工具箱用的頁面，不會啟動遊戲（後面那些文字是遊戲的樣式檔，不是壞掉）。'),
 h('div', {}, '在右邊的面板完成操作後，按下面的按鈕回到遊戲。'),
-h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲'))));
+h('button', { onclick: () => openGame(new URLSearchParams()) }, '開啟遊戲'))));
 }
 const reopen = consumeReopen();
-if (reopen) {
-if (reopen.tab) current = reopen.tab;
+if (reopen?.tab) {
+current = reopen.tab;
 toggle(true);
 if (reopen.note) body.prepend(h('div', { className: 'msg' }, reopen.note));
+} else if (zhtwOn() && onGame() && document.getElementById('benilla') && !zhtwActive()) {
+current = 'util';
+toggle(true);
 }
 }
 const bootQs = onGame() && !document.getElementById('benilla') ? pendingBoot() : null;

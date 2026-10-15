@@ -1,0 +1,15 @@
+azs_tc.ttf — WoW 工具箱「繁體中文」功能用的字型
+
+這是 Noto Sans TC（Medium 500）只保留遊戲用得到的字的子集，
+另外從遊戲原本的字型（Noto Sans SC 的子集）補進 Noto Sans TC 沒有的簡體字。
+
+Copyright (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org/
+（https://scripts.sil.org/OFL）
+
+本字型依 SIL Open Font License 1.1 授權，可以免費使用、修改、再散布，但不能單獨販售。
+
+zh_tw.json：遊戲的簡體中文文字用 OpenCC（https://github.com/BYVoid/OpenCC，Apache License 2.0）
+轉成台灣繁體用詞的結果。
