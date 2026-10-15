@@ -267,20 +267,14 @@ if (!layer) return;
 layer.querySelector('.modal')?.remove();
 layer.append(h('div', { className: 'modal' }, h('div', {}, text)));
 }
-function reloadWithToolbox(message) {
-const bridge = bridgeReady();
-const qs = currentParams().toString();
-let target = location.origin + '/' + (qs ? '?' + qs : '');
-try {
-sessionStorage.setItem(REOPEN_KEY, '1');
-if (bridge) { sessionStorage.setItem(BOOT_KEY, qs); target = location.origin + '/rogue.css'; }
-} catch {}
+function reopenAt(target, message, tab, note) {
+try { sessionStorage.setItem(REOPEN_KEY, JSON.stringify({ tab, note })); } catch {}
 window.__wowbmNav = true; // 「防誤關」不要跳確認
 showModal(message);
 let w = null;
 try { w = window.open('', 'wowbm_reload', 'width=420,height=200'); } catch {}
 if (!w) {
-showModal(message + '\n\n瀏覽器擋住了彈出視窗，無法自動重開工具箱：重新整理後請再按一次書籤。');
+showModal(message + '\n\n瀏覽器擋住了彈出視窗，無法自動重開工具箱：換頁後請再按一次書籤。');
 setTimeout(() => { location.href = target; }, 3000);
 return;
 }
@@ -292,11 +286,23 @@ w.document.close();
 w.document.getElementById('m').textContent = message;
 w.eval('(' + reloadDriver.toString() + ')(' + JSON.stringify('(' + WOWBM.toString() + ')()') + ',' + JSON.stringify(target) + ')');
 }
+function reloadWithToolbox(message) {
+const qs = currentParams().toString();
+let target = location.origin + '/' + (qs ? '?' + qs : '');
+if (bridgeReady()) {
+try { sessionStorage.setItem(BOOT_KEY, qs); } catch {}
+target = location.origin + '/rogue.css';
+}
+reopenAt(target, message, 'mods', '✓ 修改已套用，網頁已重新整理，工具箱已自動重新開啟。');
+}
 function consumeReopen() {
 try {
-if (sessionStorage.getItem(REOPEN_KEY)) { sessionStorage.removeItem(REOPEN_KEY); return true; }
+const v = sessionStorage.getItem(REOPEN_KEY);
+if (!v) return null;
+sessionStorage.removeItem(REOPEN_KEY);
+try { return JSON.parse(v) || {}; } catch { return {}; }
 } catch {}
-return false;
+return null;
 }
 function commitAndReload(next, message) {
 if (gameRunning()) lockGameSaveWrites();
@@ -786,7 +792,7 @@ const bridgeReady = () => !!window.__wowbmBridge && window.__wenilla_bridge === 
 const bridgeLive = () => bridgeReady() && performance.now() - window.__wowbmBridge.lastAt < 3000;
 function requestBridgeBoot() {
 try { sessionStorage.setItem(BOOT_KEY, currentParams().toString()); } catch {}
-go(location.origin + '/rogue.css');
+reopenAt(location.origin + '/rogue.css', '正在以即時模式重新啟動遊戲……', 'live', '✓ 已用即時模式重新啟動遊戲，戰況功能可以用了。');
 }
 function pendingBoot() {
 try { return sessionStorage.getItem(BOOT_KEY); } catch { return null; }
@@ -1398,9 +1404,9 @@ btn.disabled = false;
 };
 const doImport = async (btn) => {
 if (gameRunning && confirm('遊戲正在執行，還原後遊戲可能會把舊資料寫回去。\n\n'
-+ '建議先跳到同網站「不會啟動遊戲」的頁面（只會顯示一頁程式碼文字，這是正常的），'
-+ '在那裡再按一次書籤、到「備份」分頁做還原。\n\n要現在跳過去嗎？')) {
-go(location.origin + '/rogue.css');
++ '建議先切換到不會啟動遊戲的頁面再還原（工具箱會自動跟過去、打開「備份」分頁）。\n\n要現在切換嗎？')) {
+reopenAt(location.origin + '/rogue.css', '正在切換到可以還原的頁面……', 'backup',
+'✓ 已切換到不會啟動遊戲的頁面，現在可以按「匯入還原」了。還原完按「開啟遊戲」。');
 return;
 }
 const file = await pickFile('.json,application/json');
@@ -1483,6 +1489,11 @@ padding: 2px 0; border-bottom: 1px solid #221d12; }
 button.big { width: 100%; padding: 9px; font-weight: bold; font-size: 15px; color: #1b1406;
 background: linear-gradient(180deg, #ffe08a, #c9a227 60%, #9c7a14); border-color: #ffe08a; }
 button.big:hover { background: linear-gradient(180deg, #fff0b8, #d9b237 60%, #ac8a24); }
+.cover { position: fixed; inset: 0; z-index: 2147483640; display: grid; place-items: center;
+background: radial-gradient(600px 300px at 50% 30%, rgba(201,162,39,.18), transparent 70%), #0f0d09; }
+.cover > div { display: grid; gap: 10px; justify-items: center; max-width: min(460px, 86vw); text-align: center;
+color: #e8e2d0; font: 15px/1.7 system-ui, "Microsoft JhengHei", sans-serif; }
+.cover b { color: #f0c94a; font-size: 22px; }
 .modal { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; background: #000b; }
 .modal > div { max-width: min(420px, 86vw); padding: 22px 26px; border-radius: 10px; text-align: center;
 white-space: pre-wrap; background: #15130f; color: #f3e3b0; border: 2px solid #c9a227;
@@ -1660,10 +1671,19 @@ const modTimer = setInterval(() => {
 fab.classList.toggle('mod', isModded());
 fab.title = isModded() ? 'WoW 工具箱（已使用修改功能：這一局不上傳）' : 'WoW 工具箱（可拖曳）';
 }, 1000);
-if (consumeReopen()) {
-current = 'mods';
+if (location.pathname === '/rogue.css' && !document.getElementById('benilla')) {
+shadow.prepend(h('div', { className: 'cover' },
+h('div', {},
+h('b', {}, 'WoW 工具箱'),
+h('div', {}, '這是工具箱用的頁面，不會啟動遊戲（後面那些文字是遊戲的樣式檔，不是壞掉）。'),
+h('div', {}, '在右邊的面板完成操作後，按下面的按鈕回到遊戲。'),
+h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲'))));
+}
+const reopen = consumeReopen();
+if (reopen) {
+if (reopen.tab) current = reopen.tab;
 toggle(true);
-body.prepend(h('div', { className: 'msg' }, '✓ 修改已套用，網頁已重新整理，工具箱已自動重新開啟。'));
+if (reopen.note) body.prepend(h('div', { className: 'msg' }, reopen.note));
 }
 }
 const bootQs = onGame() && !document.getElementById('benilla') ? pendingBoot() : null;
