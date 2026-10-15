@@ -216,6 +216,92 @@ const [, cls, xp, alloc = ''] = line.split('|');
 return { row, cls: Number(cls), xp: Number(xp), alloc };
 });
 }
+function saveBackups() {
+const prefix = `wowbm.backup.${SAVE_KEY}.`;
+return Object.keys(localStorage).filter((k) => k.startsWith(prefix))
+.map((k) => ({ key: k, at: Number(k.slice(prefix.length)) })).sort((a, b) => b.at - a.at);
+}
+function writeSealedSave(next) {
+const old = localStorage.getItem(SAVE_KEY);
+if (old) localStorage.setItem(`wowbm.backup.${SAVE_KEY}.${Date.now()}`, old);
+saveBackups().slice(10).forEach((b) => localStorage.removeItem(b.key));
+localStorage.setItem(SAVE_KEY, next);
+}
+function rawSaveSection() {
+const box = h('div', { className: 'opt' });
+box.append(h('b', {}, '原始存檔編輯器（進階）'));
+if (document.getElementById('benilla')) {
+box.append(h('div', { className: 'note' }, '遊戲執行中不能改存檔，請先用上面的「跳到可以改存檔的頁面」。'));
+return box;
+}
+const area = h('textarea', { rows: 9, spellcheck: false, placeholder: '讀取中…' });
+area.style.whiteSpace = 'pre';
+const msg = msgLine();
+const backupList = h('div', { className: 'row' });
+let loaded = '';
+const load = async () => {
+try {
+const sealed = localStorage.getItem(SAVE_KEY);
+if (!sealed) { area.value = ''; area.placeholder = '找不到存檔：先在這個網址玩過一局。'; return; }
+loaded = await saveDecode(sealed);
+area.value = loaded;
+msg.ok('');
+} catch (e) {
+msg.err(e);
+}
+renderBackups();
+};
+const save = async () => {
+const text = area.value.replace(/\r\n/g, '\n');
+if (text === loaded) { msg.ok('沒有改動。'); return; }
+if (!text.trim()) { msg.err('內容是空的，沒有寫入'); return; }
+if (!isModded() && !confirm('這會直接修改帳號存檔（永久的）。舊存檔會先自動備份。\n要繼續嗎？')) return;
+try {
+const next = await saveEncode(text.endsWith('\n') ? text : text + '\n');
+if ((await saveDecode(next)).trimEnd() !== text.trimEnd()) throw new Error('重新封裝後驗證失敗，沒有寫入');
+writeSealedSave(next);
+markModded('存檔修改');
+loaded = await saveDecode(next);
+msg.ok('已寫入存檔（舊的已備份）。按「開啟遊戲」看結果；改壞了可以用下面的備份還原。');
+renderBackups();
+} catch (e) {
+msg.err(e);
+}
+};
+const restore = async (b) => {
+if (!confirm(`要把存檔還原成 ${new Date(b.at).toLocaleString()} 的備份嗎？\n（現在的存檔也會先備份）`)) return;
+const sealed = localStorage.getItem(b.key);
+try {
+await saveDecode(sealed); // 確認備份本身是好的
+writeSealedSave(sealed);
+await load(); // load() 會清掉訊息，所以訊息放在後面
+msg.ok(`已還原成 ${new Date(b.at).toLocaleString()} 的備份。`);
+} catch (e) {
+msg.err(e);
+}
+};
+function renderBackups() {
+const list = saveBackups().slice(0, 5);
+backupList.replaceChildren(...(list.length
+? [h('span', { className: 'note' }, '還原備份：'), ...list.map((b) => h('button', { onclick: () => restore(b) },
+new Date(b.at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })))]
+: [h('span', { className: 'note' }, '還沒有備份（第一次儲存時會自動備份）。')]));
+}
+box.append(
+h('div', { className: 'note' },
+'這是解密後的帳號存檔，一行一筆、用 | 分隔。改完按「儲存」會重新加密寫回（寫入前自動備份）。',
+'不確定的欄位不要亂改；改壞了遊戲可能會把存檔當成損壞、重新開始，這時用下面的備份還原。'),
+area,
+h('div', { className: 'row' },
+h('button', { onclick: save }, '儲存'),
+h('button', { onclick: load }, '重新讀取'),
+h('button', { onclick: () => saveFile(`AzerothSurvivors 存檔明文 ${stamp()}.txt`, new Blob([area.value], { type: 'text/plain' })) }, '下載明文'),
+h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')),
+msg,
+backupList);
+load();
+return box;
+}
 function talentSection() {
 const box = h('div', { className: 'opt' });
 box.append(h('b', {}, '天賦點數（存檔修改）'));
@@ -259,8 +345,7 @@ parts[2] = String(Math.max(0, Math.floor(xp)));
 lines[i] = parts.join('|');
 const next = await saveEncode(lines.join('\n'));
 if ((await saveDecode(next)) !== lines.join('\n')) throw new Error('重新封裝後驗證失敗，沒有寫入');
-localStorage.setItem(`wowbm.backup.${SAVE_KEY}.${Date.now()}`, sealed);
-localStorage.setItem(SAVE_KEY, next);
+writeSealedSave(next);
 markModded('天賦點數修改');
 msg.ok(`已寫入：${CLASS_NAMES[cls] || '職業 ' + cls} 天賦經驗 = ${parts[2]}。按「開啟遊戲」進遊戲看天賦畫面。`);
 await render();
@@ -569,6 +654,7 @@ show();
 body.append(
 status,
 talentSection(),
+rawSaveSection(),
 statsSection(),
 h('div', { className: 'opt' },
 h('div', { className: 'field' }, h('b', {}, '遊戲速度'), h('span', { className: 'slider' }, range, label)),
