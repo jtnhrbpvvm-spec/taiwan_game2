@@ -166,9 +166,315 @@ h('div', { className: 'note' },
 '會重新載入頁面，進行中的這一局會中斷，懸浮按鈕也要再按一次書籤叫出來。',
 '選「隨機」每次開局都重抽（複製的網址則固定是抽到的那個）。效能分頁的設定會保留。'));
 }
+function isModded() { return !!window.__wowbmModded; }
+function markModded(reason) {
+if (!window.__wowbmModded) window.__wowbmModded = { reasons: [], at: Date.now(), blocked: 0 };
+const m = window.__wowbmModded;
+if (!m.reasons.includes(reason)) m.reasons.push(reason);
+installGuard();
+}
+function uploadAllowed(url, method) {
+if (!isModded()) return true;
+let u;
+try { u = new URL(String(url), location.href); } catch { return false; }
+const m = String(method || 'GET').toUpperCase();
+return u.origin === location.origin && (m === 'GET' || m === 'HEAD');
+}
+function blocked(what) {
+window.__wowbmModded.blocked++;
+console.warn('WoW 工具箱：這一頁用過修改功能，已擋下上傳 →', what);
+}
+function installGuard() {
+if (window.__wowbmGuard) return;
+window.__wowbmGuard = true;
+const origFetch = window.fetch;
+window.fetch = function (input, init) {
+const url = typeof input === 'string' || input instanceof URL ? input : input?.url;
+const method = init?.method || (typeof input === 'object' && input?.method) || 'GET';
+if (!uploadAllowed(url, method)) {
+blocked(`fetch ${method} ${url}`);
+return Promise.reject(new TypeError('WoW 工具箱：已使用修改功能，這一局不上傳'));
+}
+return origFetch.apply(this, arguments);
+};
+const xOpen = XMLHttpRequest.prototype.open;
+const xSend = XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.open = function (method, url) {
+this.__wowbm = { method, url };
+return xOpen.apply(this, arguments);
+};
+XMLHttpRequest.prototype.send = function () {
+const r = this.__wowbm || {};
+if (!uploadAllowed(r.url, r.method)) {
+blocked(`xhr ${r.method} ${r.url}`);
+throw new DOMException('WoW 工具箱：已使用修改功能，這一局不上傳', 'NetworkError');
+}
+return xSend.apply(this, arguments);
+};
+if (navigator.sendBeacon) {
+const beacon = navigator.sendBeacon.bind(navigator);
+navigator.sendBeacon = (url, data) => {
+if (isModded()) { blocked(`beacon ${url}`); return false; }
+return beacon(url, data);
+};
+}
+const WS = window.WebSocket;
+const Guarded = function (url, protocols) {
+if (isModded()) {
+blocked(`websocket ${url}`);
+throw new DOMException('WoW 工具箱：已使用修改功能，這一局不上傳', 'SecurityError');
+}
+return protocols === undefined ? new WS(url) : new WS(url, protocols);
+};
+Guarded.prototype = WS.prototype;
+for (const k of ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED']) Guarded[k] = WS[k];
+window.WebSocket = Guarded;
+}
+function timeWarp() {
+if (window.__wowbmTime) return window.__wowbmTime;
+const real = performance.now.bind(performance);
+const T = { k: 1, base: real(), virt: real(), real };
+performance.now = function () { return T.virt + (T.real() - T.base) * T.k; };
+window.__wowbmTime = T;
+return T;
+}
+function setSpeed(k) {
+const T = timeWarp();
+const r = T.real();
+T.virt += (r - T.base) * T.k; // 從現在這一刻接續，時間不會跳
+T.base = r;
+T.k = k;
+if (k !== 1) markModded(`遊戲速度 ${k} 倍`);
+}
+const getSpeed = () => window.__wowbmTime?.k ?? 1;
+const STAT_FIELDS = [
+['hp', '最大血量', '例：224'],
+['dmg', '傷害倍率', '1 = 100%'],
+['cd', '冷卻倍率', '越低越快，0.5 = 冷卻減半'],
+['crit', '暴擊率', '0.05 = 5%'],
+['cm', '暴擊傷害倍率', '2 = 200%'],
+['spd', '移動速度倍率', '1 = 100%'],
+['pick', '拾取範圍', '碼'],
+['xp', '經驗倍率', '1 = 100%'],
+['arm', '減傷', '0.08 = 8%，不要超過 0.9'],
+['reg', '每秒回血', ''],
+['area', '範圍倍率', '1 = 100%'],
+['luck', '幸運', '越高卡片越稀有，1000 = 全部傳說'],
+['gold', '金幣倍率', '1 = 100%'],
+];
+const STAT_INDEX = Object.fromEntries(STAT_FIELDS.map(([k], i) => [k, i]));
+const LUCK_MAX = 1000;
+function statState() {
+if (!window.__wowbmStats) window.__wowbmStats = { base: null, frozen: {}, error: '' };
+return window.__wowbmStats;
+}
+const memF32 = () => (window.__wowbmMem ? new Float32Array(window.__wowbmMem.buffer) : null);
+function statsPlausible(f, base) {
+const v = (k) => f[base + STAT_INDEX[k]];
+return v('hp') > 0 && v('hp') < 1e7 && v('crit') >= 0 && v('crit') <= 10 && v('cm') > 0 && v('cm') < 100 &&
+v('pick') > 0 && v('pick') < 1e4 && v('spd') > 0 && v('spd') < 100;
+}
+async function findStats() {
+const st = statState();
+st.base = null;
+if (!window.__wowbmMem) throw new Error('需要用即時模式啟動遊戲（戰況分頁）');
+const hub = window.__wowbmBridge;
+const r = await hub.lua('return ' + STAT_FIELDS.map(([k]) => `AZS_STATS.${k}`).join(', '));
+if (!r.ok) throw new Error('讀不到目前屬性（' + (r.error || '遊戲還在載入') + '）');
+const want = (r.values || []).map(Number);
+if (want.length !== STAT_FIELDS.length || !want.every(Number.isFinite) || !(want[STAT_INDEX.hp] > 0) || !(want[STAT_INDEX.pick] > 0)) {
+throw new Error('遊戲還沒給出角色屬性，等這一局開始後再按一次');
+}
+const tol = (v) => Math.max(0.002, Math.abs(v) * 0.003); // 介面上的數字有四捨五入
+const close = (x, v) => Math.abs(x - v) <= tol(v);
+const f = memF32();
+const L = STAT_INDEX.luck;
+const hits = [];
+for (let i = L; i < f.length - STAT_FIELDS.length; i++) {
+if (!close(f[i], want[L])) continue;
+const base = i - L;
+let ok = true;
+for (let k = 0; k < want.length; k++) {
+if (!close(f[base + k], want[k])) { ok = false; break; }
+}
+if (ok) hits.push(base);
+if (hits.length > 5) break;
+}
+if (hits.length !== 1) throw new Error(hits.length ? '找到好幾個可能的位置，無法確定（升級或選卡後再按一次）' : '在記憶體裡找不到屬性表（升級或選卡後再按一次）');
+st.base = hits[0];
+st.error = '';
+return st.base;
+}
+function readStats() {
+const st = statState();
+const f = memF32();
+if (!f || st.base === null) return null;
+if (!statsPlausible(f, st.base)) { st.base = null; st.error = '位置失效了，請按「重新尋找」'; return null; }
+return Object.fromEntries(STAT_FIELDS.map(([k], i) => [k, f[st.base + i]]));
+}
+function freezeTick() {
+const st = statState();
+const keys = Object.keys(st.frozen);
+if (!keys.length || st.base === null) return;
+const f = memF32();
+if (!f || !statsPlausible(f, st.base)) { st.base = null; st.error = '位置失效了，請按「重新尋找」'; return; }
+for (const k of keys) {
+const i = st.base + STAT_INDEX[k];
+if (f[i] !== st.frozen[k]) f[i] = st.frozen[k];
+}
+}
+function setFrozen(key, value) {
+const st = statState();
+if (value === null || !Number.isFinite(value)) delete st.frozen[key];
+else {
+st.frozen[key] = Math.fround(value);
+markModded('角色屬性修改');
+}
+freezeTick();
+}
+const mods = { timer: 0 };
+function modsStart() {
+mods.timer = setInterval(freezeTick, 100);
+}
+function modsStop() {
+clearInterval(mods.timer);
+if (getSpeed() !== 1) setSpeed(1);
+}
+function statsSection() {
+const box = h('div', { className: 'opt' });
+const st = statState();
+if (!window.__wowbmMem) {
+box.append(
+h('b', {}, '角色屬性修改'),
+h('div', { className: 'note' },
+'需要用「即時模式」啟動遊戲：到「戰況」分頁按「重新啟動並啟用即時資料」（要按兩次書籤）。',
+'可以改傷害、冷卻、暴擊、移動速度、幸運等所有角色屬性，也能讓升級卡片一律是最高稀有度。'));
+return box;
+}
+const status = h('div', { className: 'note' });
+const best = h('input', { type: 'checkbox', checked: st.frozen.luck === LUCK_MAX });
+const rows = h('div', { className: 'stats' });
+const inputs = {};
+const confirmMod = () => isModded() || confirm('使用修改功能後，這一局會標記為「已修改」，不會上傳任何資料（例如排行榜）。\n要繼續嗎？');
+const render = () => {
+rows.replaceChildren(...STAT_FIELDS.map(([k, name, hint]) => {
+const cur = h('span', { className: 'cur' });
+const input = h('input', { type: 'number', step: 'any', placeholder: '數值' });
+const lock = h('input', { type: 'checkbox', checked: k in st.frozen, title: '鎖定這個數值' });
+if (k in st.frozen) input.value = +st.frozen[k].toFixed(4);
+const apply = () => {
+if (!lock.checked) { setFrozen(k, null); if (k === 'luck') best.checked = false; return; }
+if (!confirmMod()) { lock.checked = false; return; }
+const v = input.value === '' ? Number(cur.dataset.v) : Number(input.value);
+if (!Number.isFinite(v)) { lock.checked = false; return; }
+input.value = +v.toFixed(4);
+setFrozen(k, v);
+if (k === 'luck') best.checked = v === LUCK_MAX;
+};
+lock.addEventListener('change', apply);
+input.addEventListener('change', () => { if (input.value !== '' && !lock.checked) lock.checked = true; apply(); });
+inputs[k] = { cur, input, lock };
+return h('div', { className: 'stat-row' },
+h('span', { className: 'stat-name', title: hint }, name, hint ? h('small', {}, hint) : null),
+cur, input, h('label', { className: 'inline' }, lock, '鎖定'));
+}));
+};
+const refresh = () => {
+const s = readStats();
+status.className = s ? 'note' : 'err';
+status.textContent = s ? `已找到角色屬性。鎖定 ${Object.keys(st.frozen).length} 項。`
+: (st.error || '還沒找到角色屬性，請按「尋找角色屬性」（要在這一局開始之後）。');
+for (const [k] of STAT_FIELDS) {
+const c = inputs[k]?.cur;
+if (!c) continue;
+c.dataset.v = s ? s[k] : '';
+c.textContent = s ? (+s[k].toFixed(3)).toString() : '—';
+}
+};
+const timer = setInterval(() => { if (!box.isConnected) clearInterval(timer); else refresh(); }, 500);
+const find = async (btn) => {
+btn.disabled = true;
+status.className = 'note';
+status.textContent = '尋找中…（約 1 秒）';
+try { await findStats(); } catch (e) { st.error = '尋找失敗：' + (e?.message || e); }
+btn.disabled = false;
+refresh();
+};
+best.addEventListener('change', () => {
+if (best.checked && !confirmMod()) { best.checked = false; return; }
+if (best.checked && st.base === null) { best.checked = false; status.className = 'err'; status.textContent = '請先按「尋找角色屬性」。'; return; }
+setFrozen('luck', best.checked ? LUCK_MAX : null);
+render();
+refresh();
+});
+box.append(
+h('b', {}, '角色屬性修改'),
+h('div', { className: 'note' }, '天賦、裝備、升級強化的效果最後都加在這些屬性上，直接改就等於改天賦。勾「鎖定」才會生效，取消勾選就恢復遊戲的計算。'),
+h('div', { className: 'row' },
+h('button', { onclick: (e) => find(e.currentTarget) }, st.base === null ? '尋找角色屬性' : '重新尋找'),
+h('button', { onclick: () => { st.frozen = {}; best.checked = false; render(); refresh(); } }, '全部解除鎖定')),
+status,
+h('label', { className: 'inline best' }, best, h('b', {}, '升級卡片一律最高稀有度'),
+h('small', {}, '（把幸運鎖在 1000。已經抽好的卡不會變：這一局第一次升級的卡在開局時就抽好了，按「重抽」就會換成傳說）')),
+rows);
+render();
+refresh();
+if (st.base === null && bridgeLive()) find(box.querySelector('button'));
+return box;
+}
+function modsTab(body) {
+const status = h('div', {});
+const showStatus = () => {
+if (!status.isConnected) return clearInterval(timer);
+const m = window.__wowbmModded;
+status.className = m ? 'err' : 'msg';
+status.textContent = m
+? `⚠ 這一頁已使用修改功能（${m.reasons.join('、')}）。\n這一局不會上傳任何資料` + (m.blocked ? `，已擋下 ${m.blocked} 次上傳。` : '。') +
+'\n重新載入頁面（新的一局）才會恢復。'
+: '✓ 目前沒有使用修改功能，遊戲照常運作。';
+};
+const timer = setInterval(showStatus, 1000);
+const range = h('input', { type: 'range', min: 25, max: 300, step: 25, value: Math.round(getSpeed() * 100) });
+const label = h('span', { className: 'pct' });
+const show = () => { label.textContent = (range.value / 100) + '×'; };
+const apply = (pct) => {
+range.value = pct;
+show();
+if (Number(pct) !== 100 && !isModded() && !confirm('使用修改功能後，這一局會標記為「已修改」，不會上傳任何資料（例如排行榜）。\n要繼續嗎？')) {
+range.value = Math.round(getSpeed() * 100);
+show();
+return;
+}
+setSpeed(pct / 100);
+showStatus();
+};
+range.addEventListener('input', show);
+range.addEventListener('change', () => apply(range.value));
+show();
+body.append(
+status,
+statsSection(),
+h('div', { className: 'opt' },
+h('div', { className: 'field' }, h('b', {}, '遊戲速度'), h('span', { className: 'slider' }, range, label)),
+h('div', { className: 'row' },
+h('button', { onclick: () => apply(50) }, '0.5× 慢動作'),
+h('button', { onclick: () => apply(100) }, '1× 正常'),
+h('button', { onclick: () => apply(200) }, '2× 加速')),
+h('div', { className: 'note' },
+'立刻生效，不用重新載入。慢動作比較好躲、加速可以快點打完；升級選卡時遊戲本來就會暫停。',
+'按「收起」或重新載入會回到正常速度。')),
+h('div', { className: 'note-box' },
+h('b', {}, '關於排行榜：'),
+'用過「角色屬性修改」「遊戲速度」「自動走位」「Lua 主控台」其中任何一個，這一頁就標記為已修改，',
+'之後所有對外上傳（連到其他網站、送出資料、WebSocket）都會被擋下，讀取遊戲檔案不受影響。',
+h('br'),
+'目前網頁版沒有發現線上排行榜（實測整局沒有任何上傳），這是預防：作者之後加了排行榜，修改過的那一局也傳不上去。'));
+showStatus();
+}
 const BOOT_KEY = 'wowbm.boot';
 const LIVE_SAVE = 'wowbm.live';
-const PHASES = { ready: '準備中（移動就開始）', playing: '進行中', paused: '暫停', over: '結束', won: '勝利', lost: '失敗' };
+const PHASES = { ready: '準備中（移動就開始）', playing: '進行中', choosing: '升級選卡中（暫停）', paused: '暫停',
+over: '結束', won: '勝利', lost: '失敗' };
 function bridgeHub() {
 if (window.__wowbmBridge) return window.__wowbmBridge;
 const hub = { frame: null, lastAt: 0, subs: new Set(), pending: new Map(), seq: 0 };
@@ -209,6 +515,13 @@ try { return sessionStorage.getItem(BOOT_KEY); } catch { return null; }
 async function bootWithBridge(qs) {
 try { sessionStorage.removeItem(BOOT_KEY); } catch {}
 const hub = bridgeHub();
+const instantiate = WebAssembly.instantiate;
+WebAssembly.instantiate = async function (...args) {
+const r = await instantiate.apply(this, args);
+const inst = r instanceof WebAssembly.Instance ? r : r?.instance;
+if (inst?.exports?.memory instanceof WebAssembly.Memory && !window.__wowbmMem) window.__wowbmMem = inst.exports.memory;
+return r;
+};
 let env;
 Object.defineProperty(window, '__wenilla_env', {
 configurable: true,
@@ -294,10 +607,12 @@ if (i.boss) lines.push(`下一隻${i.bossFinal ? '（最終）' : ''}：${i.boss
 }
 if (self) {
 lines.push(`❤ ${self.health}/${self.maxHealth}（${Math.round(pct)}%）　Lv ${self.level}` +
-(i ? `　經驗 ${i.xp}/${i.xpMax}　金幣 ${i.money}` : ''));
+(i ? `　經驗 ${i.xp}/${i.xpMax}　金幣 ${Math.floor(i.money / 10000)}` : ''));
 }
 lines.push(`敵人：10碼內 ${near10}・30碼內 ${near30}` + (Number.isFinite(nearest) ? `・最近 ${nearest.toFixed(1)} 碼` : ''));
 if (live.opts.auto !== 'off') lines.push(`🤖 自動走位：${live.opts.auto === 'evade' ? '躲避敵人' : '繞圈'}`);
+if (getSpeed() !== 1) lines.push(`⏩ 遊戲速度 ${getSpeed()}×`);
+if (isModded()) lines.push('⚠ 已修改：這一局不上傳');
 hud.textContent = lines.join('\n');
 }
 autoMove(hub, f);
@@ -311,7 +626,11 @@ if (live.holding) { hub?.send({ op: 'release' }); live.holding = false; }
 live.track = [];
 return;
 }
-if (!live.holding) { hub.send({ op: 'hold', cmd: 'MOVEFORWARD' }); live.holding = true; }
+if (!live.holding) {
+markModded('自動走位');
+hub.send({ op: 'hold', cmd: 'MOVEFORWARD' });
+live.holding = true;
+}
 let dyaw;
 if (live.opts.auto === 'circle') {
 dyaw = 0.3;
@@ -389,12 +708,18 @@ liveApply();
 return h('span', { className: 'slider' }, range, label);
 };
 const auto = select([['off', '關'], ['evade', '躲避敵人'], ['circle', '繞圈']], live.opts.auto);
-auto.addEventListener('change', () => { live.opts.auto = auto.value; liveApply(); });
+const confirmMod = () => isModded() || confirm('使用修改功能後，這一局會標記為「已修改」，不會上傳任何資料（例如排行榜）。\n要繼續嗎？');
+auto.addEventListener('change', () => {
+if (auto.value !== 'off' && !confirmMod()) { auto.value = live.opts.auto; return; }
+live.opts.auto = auto.value;
+liveApply();
+});
 const code = h('textarea', { rows: 3, placeholder: 'return UnitHealth("player"), GetMoney(), AZS_GetRunTime()' });
 const out = h('pre', { className: 'out' });
 const run = async () => {
 const chunk = code.value.trim();
-if (!chunk) return;
+if (!chunk || !confirmMod()) return;
+markModded('Lua 主控台');
 out.textContent = '執行中…';
 const r = await hub.lua(chunk);
 out.textContent = r.ok ? (r.values.length ? r.values.map((v) => JSON.stringify(v)).join('\n') : '（完成，沒有回傳值）')
@@ -418,10 +743,11 @@ h('div', { className: 'opt' },
 h('div', { className: 'field' }, h('b', {}, '自動走位'), auto),
 h('div', { className: 'note' },
 '躲避敵人：自動往敵人少的方向跑；繞圈：一直繞大圈。卡住會自動轉向。',
-'開著時角色會一直往前走，要自己操作就切回「關」。準備階段開啟會直接開始這一局。')),
+'開著時角色會一直往前走，要自己操作就切回「關」。準備階段開啟會直接開始這一局。',
+'屬於修改功能：用了這一局就不會上傳（見「修改」分頁）。')),
 h('details', {},
 h('summary', {}, '進階：Lua 主控台'),
-h('div', { className: 'note' }, '直接對遊戲介面執行 Lua（魔獸世界 1.12 的介面函式，加上 AZS_ 開頭的倖存者函式）。Ctrl+Enter 執行。'),
+h('div', { className: 'note' }, '直接對遊戲介面執行 Lua（魔獸世界 1.12 的介面函式，加上 AZS_ 開頭的倖存者函式）。Ctrl+Enter 執行。屬於修改功能：執行後這一局不會上傳。'),
 code,
 h('div', { className: 'row' }, h('button', { onclick: run }, '執行')),
 out));
@@ -845,6 +1171,7 @@ const LAST_TAB = 'wowbm.tab';
 const TABS = [
 ['launch', '開局', launchTab],
 ['live', '戰況', liveTab],
+['mods', '修改', modsTab],
 ['perf', '效能', perfTab],
 ['util', '便利', utilTab],
 ['backup', '備份', backupTab],
@@ -860,6 +1187,20 @@ background: radial-gradient(circle at 35% 30%, #5a4a1c, #1d180c); color: #f0c94a
 border: 2px solid #c9a227; box-shadow: 0 3px 12px #000b; font: 22px/1 system-ui, sans-serif;
 opacity: .82; transition: opacity .15s, transform .15s; }
 .fab:hover, .fab.open { opacity: 1; }
+.fab.mod::after { content: ""; position: absolute; right: -2px; top: -2px; width: 12px; height: 12px;
+border-radius: 50%; background: #ff4d4d; border: 2px solid #15130f; }
+.note-box { padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #f3e3b0;
+background: rgba(201,162,39,.08); border: 1px solid #4a3d18; }
+.note-box b { color: #f0c94a; }
+.stats { display: grid; gap: 3px; margin-top: 4px; }
+.stat-row { display: grid; grid-template-columns: 1fr 4.2em 5.5em auto; gap: 6px; align-items: center;
+padding: 2px 0; border-bottom: 1px solid #221d12; }
+.stat-name { display: grid; line-height: 1.2; }
+.stat-name small, .best small { color: #888; font-size: 11px; }
+.cur { text-align: right; color: #9fd38a; font: 12px ui-monospace, Consolas, monospace; }
+.stat-row input[type=number] { padding: 2px 4px; }
+label.best { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0;
+padding: 6px 8px; border-radius: 6px; background: rgba(201,162,39,.1); border: 1px solid #4a3d18; }
 .fab.drag { cursor: grabbing; transform: scale(1.08); }
 .panel { position: fixed; z-index: 2147483646; width: min(460px, calc(100vw - ${GAP * 2}px));
 max-height: calc(100vh - ${GAP * 2}px); display: flex; flex-direction: column;
@@ -934,7 +1275,7 @@ function toolbox() {
 const old = document.getElementById(ROOT_ID);
 if (old) { old.__wowbmClose?.(); return; }
 const host = h('div', { id: ROOT_ID });
-host.__wowbmClose = () => { utilStop(); liveStop(); host.remove(); };
+host.__wowbmClose = () => { utilStop(); liveStop(); modsStop(); clearInterval(modTimer); host.remove(); };
 const shadow = host.attachShadow({ mode: 'open' });
 for (const ev of ['keydown', 'keyup', 'keypress', 'pointerdown', 'pointerup', 'wheel', 'contextmenu']) {
 host.addEventListener(ev, (e) => e.stopPropagation());
@@ -1026,6 +1367,11 @@ shadow.append(h('style', {}, CSS), panel, fab);
 setPos(pos.x, pos.y);
 utilStart(shadow);
 liveStart(shadow);
+modsStart();
+const modTimer = setInterval(() => {
+fab.classList.toggle('mod', isModded());
+fab.title = isModded() ? 'WoW 工具箱（已使用修改功能：這一局不上傳）' : 'WoW 工具箱（可拖曳）';
+}, 1000);
 }
 const bootQs = onGame() && !document.getElementById('benilla') ? pendingBoot() : null;
 if (bootQs !== null) {
