@@ -1,4 +1,4 @@
-void (() => {
+void (function WOWBM() {
 const GAME = 'https://wow.aethus.pl/';
 const LAUNCH_KEYS = ['glue', 'bg', 'class', 'race', 'name', 'gender'];
 const PERF_KEYS = ['pbr_lite', 'pipe_warm', 'renderScale', 'farclip', 'MasterVolume'];
@@ -170,6 +170,11 @@ const SAVE_KEY = 'rogue.characters';
 const SAVE_SECRET = [0x9c, 0x4e, 0x27, 0xd1, 0x6a, 0xf0, 0x13, 0xb8, 0x5d, 0xe2, 0x71, 0x0c, 0xa9, 0x36, 0xc4, 0x8f];
 const TALENT_FULL_XP = 999999;
 const CLASS_NAMES = { 1: '戰士', 2: '聖騎士', 3: '獵人', 4: '盜賊', 5: '牧師', 7: '薩滿', 8: '法師', 9: '術士', 11: '德魯伊' };
+const STAT_NAMES = {
+kills: '累計擊殺', gold: '累計金幣', guardians: '擊敗守護者', bosses: '擊敗首領',
+runs: '遊玩場次', wins: '勝利場次', caches: '開啟寶箱',
+};
+const REOPEN_KEY = 'wowbm.reopen';
 const utf8 = (s) => new TextEncoder().encode(s);
 const concatBytes = (...parts) => {
 const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
@@ -210,12 +215,6 @@ const ct = await saveXor(nonce, utf8(text));
 const tag = await saveHmac(utf8('tag'), nonce, ct);
 return 'RSE1:' + btoa(String.fromCharCode(...concatBytes(nonce, ct, tag)));
 }
-function parseTalents(plain) {
-return plain.split('\n').map((line, row) => ({ line, row })).filter((x) => x.line.startsWith('talent|')).map(({ line, row }) => {
-const [, cls, xp, alloc = ''] = line.split('|');
-return { row, cls: Number(cls), xp: Number(xp), alloc };
-});
-}
 function saveBackups() {
 const prefix = `wowbm.backup.${SAVE_KEY}.`;
 return Object.keys(localStorage).filter((k) => k.startsWith(prefix))
@@ -242,144 +241,198 @@ if (this === localStorage && k === SAVE_KEY && !window.__wowbmSaveWriting) retur
 return setItem.call(this, k, v);
 };
 }
-function commitSave(next) {
-const running = gameRunning();
-if (running) lockGameSaveWrites();
-writeSealedSave(next);
-if (running) setTimeout(() => go(location.href), 600);
-return running;
+function reloadDriver(src, target) {
+const op = window.opener;
+const say = (t) => { document.getElementById('m').textContent = t; };
+try { op.__wowbmOldPage = true; } catch {}
+setTimeout(() => { op.location.href = target; }, 1200);
+const t0 = Date.now();
+const timer = setInterval(() => {
+let ready = false;
+try { ready = !op.__wowbmOldPage && op.document.readyState !== 'loading' && !!op.document.body; } catch {}
+if (ready) {
+clearInterval(timer);
+try { op.eval(src); } catch (e) { say('重新開啟工具箱失敗：' + e + '\n請回到遊戲頁面再按一次書籤。'); return; }
+say('✓ 已重新整理，工具箱已重新開啟');
+setTimeout(() => window.close(), 800);
+} else if (Date.now() - t0 > 30000) {
+clearInterval(timer);
+say('等太久了，請回到遊戲頁面再按一次書籤。');
 }
-const RELOAD_NOTE = '（遊戲執行中修改，寫入後會自動重新載入遊戲，進行中的這一局會中斷）';
-function rawSaveSection() {
+}, 150);
+}
+function showModal(text) {
+const layer = util.layer;
+if (!layer) return;
+layer.querySelector('.modal')?.remove();
+layer.append(h('div', { className: 'modal' }, h('div', {}, text)));
+}
+function reloadWithToolbox(message) {
+const bridge = bridgeReady();
+const qs = currentParams().toString();
+let target = location.origin + '/' + (qs ? '?' + qs : '');
+try {
+sessionStorage.setItem(REOPEN_KEY, '1');
+if (bridge) { sessionStorage.setItem(BOOT_KEY, qs); target = location.origin + '/rogue.css'; }
+} catch {}
+window.__wowbmNav = true; // 「防誤關」不要跳確認
+showModal(message);
+let w = null;
+try { w = window.open('', 'wowbm_reload', 'width=420,height=200'); } catch {}
+if (!w) {
+showModal(message + '\n\n瀏覽器擋住了彈出視窗，無法自動重開工具箱：重新整理後請再按一次書籤。');
+setTimeout(() => { location.href = target; }, 3000);
+return;
+}
+w.document.write('<!doctype html><meta charset="utf-8"><title>WoW 工具箱</title>' +
+'<body style="margin:0;height:100vh;display:grid;place-items:center;box-sizing:border-box;padding:16px;' +
+'background:#15130f;color:#f3e3b0;border:2px solid #c9a227;text-align:center;white-space:pre-wrap;' +
+'font:bold 17px \'Microsoft JhengHei\',system-ui,sans-serif"><div id="m"></div></body>');
+w.document.close();
+w.document.getElementById('m').textContent = message;
+w.eval('(' + reloadDriver.toString() + ')(' + JSON.stringify('(' + WOWBM.toString() + ')()') + ',' + JSON.stringify(target) + ')');
+}
+function consumeReopen() {
+try {
+if (sessionStorage.getItem(REOPEN_KEY)) { sessionStorage.removeItem(REOPEN_KEY); return true; }
+} catch {}
+return false;
+}
+function commitAndReload(next, message) {
+if (gameRunning()) lockGameSaveWrites();
+writeSealedSave(next);
+reloadWithToolbox(message);
+}
+function parseSave(plain) {
+const lines = plain.replace(/\r\n/g, '\n').split('\n');
+const model = { lines, name: null, talents: [], stats: [], items: 0, seen: 0 };
+lines.forEach((line, row) => {
+const p = line.split('|');
+if (p[0] === 'pick' && p.length > 5) model.name = { row, value: p[5] };
+else if (p[0] === 'talent') model.talents.push({ row, cls: Number(p[1]), xp: Number(p[2]), alloc: p[3] || '' });
+else if (p[0] === 'stat') {
+model.statRow = row;
+model.stats = (p[1] || '').split(',').filter(Boolean).map((kv) => {
+const [k, v] = kv.split('=');
+return { key: k, value: v };
+});
+} else if (p[0] === 'items') model.items = (p[1] || '').split(',').filter(Boolean).length;
+else if (p[0] === 'seen') model.seen = (p[1] || '').split(',').filter(Boolean).length;
+});
+return model;
+}
+function saveSection() {
 const box = h('div', { className: 'opt' });
-box.append(h('b', {}, '原始存檔編輯器（進階）'));
-const area = h('textarea', { rows: 9, spellcheck: false, placeholder: '讀取中…' });
-area.style.whiteSpace = 'pre';
 const msg = msgLine();
-const backupList = h('div', { className: 'row' });
-let loaded = '';
-const load = async () => {
+const form = h('div', { className: 'grid' }, '讀取存檔中…');
+box.append(
+h('b', {}, '存檔修改'),
+h('div', { className: 'note' },
+'直接修改帳號存檔。改好之後按最下面的「修改完成」，會自動備份舊存檔、寫入、重新整理網頁，並自動重新開啟工具箱。',
+gameRunning() ? '（進行中的這一局會中斷）' : ''),
+form, msg);
+const render = async () => {
+let plain;
 try {
 const sealed = localStorage.getItem(SAVE_KEY);
-if (!sealed) { area.value = ''; area.placeholder = '找不到存檔：先在這個網址玩過一局。'; return; }
-loaded = await saveDecode(sealed);
-area.value = loaded;
-msg.ok('');
+if (!sealed) { form.replaceChildren(h('div', { className: 'note' }, '找不到存檔：先在這個網址玩過一局。')); return; }
+plain = await saveDecode(sealed);
 } catch (e) {
-msg.err(e);
+form.replaceChildren(h('div', { className: 'err' }, '讀不到存檔：' + (e?.message || e)));
+return;
 }
-renderBackups();
-};
-const save = async () => {
-const text = area.value.replace(/\r\n/g, '\n');
-if (text === loaded) { msg.ok('沒有改動。'); return; }
+const m = parseSave(plain);
+const edits = []; // 每一項：() => 套用到 lines 上
+const talentRows = m.talents.map((t) => {
+const input = h('input', { type: 'number', min: 0, step: 1, value: t.xp });
+edits.push((lines) => {
+const p = lines[t.row].split('|');
+p[2] = String(Math.max(0, Math.floor(Number(input.value) || 0)));
+lines[t.row] = p.join('|');
+});
+return h('div', { className: 'stat-row' },
+h('span', { className: 'stat-name' }, CLASS_NAMES[t.cls] || `職業 ${t.cls}`,
+h('small', {}, t.alloc ? `已配置 ${t.alloc.split(',').filter(Boolean).length} 個天賦` : '還沒配置天賦')),
+h('button', { onclick: () => { input.value = TALENT_FULL_XP; } }, '全滿 51 點'),
+input, h('span', { className: 'note' }, '經驗'));
+});
+let nameInput = null;
+if (m.name) {
+nameInput = h('input', { type: 'text', value: m.name.value, maxLength: 12, placeholder: '英文字母 2～12 個' });
+edits.push((lines) => {
+const v = nameInput.value.trim();
+if (!/^[A-Za-z]{2,12}$/.test(v)) throw new Error('名字只能用英文字母，2～12 個字（遊戲規定）');
+const p = lines[m.name.row].split('|');
+p[5] = v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+lines[m.name.row] = p.join('|');
+});
+}
+const statInputs = m.stats.map((s) => {
+const input = h('input', { type: 'number', min: 0, step: 1, value: s.value });
+return { s, input };
+});
+if (statInputs.length) {
+edits.push((lines) => {
+lines[m.statRow] = 'stat|' + statInputs.map(({ s, input }) =>
+`${s.key}=${Math.max(0, Math.floor(Number(input.value) || 0))}`).join(',');
+});
+}
+const raw = h('textarea', { rows: 8, spellcheck: false, value: plain });
+raw.style.whiteSpace = 'pre';
+const finish = async (useRaw) => {
+let text;
+if (useRaw) {
+text = raw.value.replace(/\r\n/g, '\n');
+} else {
+const lines = m.lines.slice();
+try { edits.forEach((f) => f(lines)); } catch (e) { msg.err(e); return; }
+text = lines.join('\n');
+}
+if (text === plain) { msg.ok('沒有改動。'); return; }
 if (!text.trim()) { msg.err('內容是空的，沒有寫入'); return; }
-if (!confirm('這會直接修改帳號存檔（永久的）。舊存檔會先自動備份。' +
-(gameRunning() ? '\n寫入後會自動重新載入遊戲，進行中的這一局會中斷。' : '') + '\n要繼續嗎？')) return;
+if (!confirm('確定要修改帳號存檔嗎？（舊存檔會先自動備份，改壞了可以還原）')) return;
 try {
-const next = await saveEncode(text.endsWith('\n') ? text : text + '\n');
-if ((await saveDecode(next)).trimEnd() !== text.trimEnd()) throw new Error('重新封裝後驗證失敗，沒有寫入');
+const next = await saveEncode(text);
+if ((await saveDecode(next)) !== text) throw new Error('重新封裝後驗證失敗，沒有寫入');
 markModded('存檔修改');
-const reloading = commitSave(next);
-loaded = await saveDecode(next);
-msg.ok(reloading ? '已寫入存檔（舊的已備份），重新載入遊戲中…'
-: '已寫入存檔（舊的已備份）。按「開啟遊戲」看結果；改壞了可以用下面的備份還原。');
-renderBackups();
+commitAndReload(next, '修改完畢……\n即將重新整理網頁');
 } catch (e) {
 msg.err(e);
 }
 };
 const restore = async (b) => {
-if (!confirm(`要把存檔還原成 ${new Date(b.at).toLocaleString()} 的備份嗎？\n（現在的存檔也會先備份）` +
-(gameRunning() ? '\n還原後會自動重新載入遊戲。' : ''))) return;
+if (!confirm(`要把存檔還原成 ${new Date(b.at).toLocaleString()} 的備份嗎？（現在的存檔也會先備份）`)) return;
+try {
 const sealed = localStorage.getItem(b.key);
-try {
 await saveDecode(sealed); // 確認備份本身是好的
-const reloading = commitSave(sealed);
-await load(); // load() 會清掉訊息，所以訊息放在後面
-msg.ok(`已還原成 ${new Date(b.at).toLocaleString()} 的備份。` + (reloading ? '重新載入遊戲中…' : ''));
+commitAndReload(sealed, '已還原備份……\n即將重新整理網頁');
 } catch (e) {
 msg.err(e);
 }
 };
-function renderBackups() {
-const list = saveBackups().slice(0, 5);
-backupList.replaceChildren(...(list.length
-? [h('span', { className: 'note' }, '還原備份：'), ...list.map((b) => h('button', { onclick: () => restore(b) },
-new Date(b.at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })))]
-: [h('span', { className: 'note' }, '還沒有備份（第一次儲存時會自動備份）。')]));
-}
-box.append(
-h('div', { className: 'note' },
-'這是解密後的帳號存檔，一行一筆、用 | 分隔。改完按「儲存」會重新加密寫回（寫入前自動備份）。',
-'不確定的欄位不要亂改；改壞了遊戲可能會把存檔當成損壞、重新開始，這時用下面的備份還原。',
-gameRunning() ? RELOAD_NOTE : ''),
-area,
+const backups = saveBackups().slice(0, 5);
+form.replaceChildren(...[
+h('div', { className: 'sub' }, '天賦（每個職業最多 51 點）'),
+...(talentRows.length ? talentRows : [h('div', { className: 'note' }, '存檔裡還沒有天賦紀錄：先完整打完一局。')]),
+m.name ? h('div', { className: 'sub' }, '角色') : null,
+m.name ? h('label', {}, '名字', nameInput) : null,
+statInputs.length ? h('div', { className: 'sub' }, '累計統計（可能會影響成就，未實測）') : null,
+...statInputs.map(({ s, input }) => h('label', {}, STAT_NAMES[s.key] || s.key, input)),
+h('div', { className: 'note' }, `已收集裝備 ${m.items} 件、圖鑑首飾 ${m.seen} 種（編號在下面「進階」裡）。`),
 h('div', { className: 'row' },
-h('button', { onclick: save }, '儲存'),
-h('button', { onclick: load }, '重新讀取'),
-h('button', { onclick: () => saveFile(`AzerothSurvivors 存檔明文 ${stamp()}.txt`, new Blob([area.value], { type: 'text/plain' })) }, '下載明文'),
-gameRunning() ? null : h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')),
-msg,
-backupList);
-load();
-return box;
-}
-function talentSection() {
-const box = h('div', { className: 'opt' });
-box.append(h('b', {}, '天賦點數（存檔修改）'));
-const msg = msgLine();
-const list = h('div', { className: 'stats' }, '讀取存檔中…');
-box.append(
-h('div', { className: 'note' },
-'直接改帳號存檔裡的天賦經驗。每個職業最多 51 點，按「全滿」就是 51 點。',
-'寫入前會自動備份舊存檔（存在這個網站的瀏覽器儲存裡）。只會列出玩過、有天賦紀錄的職業。',
-gameRunning() ? RELOAD_NOTE : ''),
-list, msg);
-const render = async () => {
-let plain;
-try {
-const sealed = localStorage.getItem(SAVE_KEY);
-if (!sealed) { list.replaceChildren(h('div', { className: 'note' }, '找不到存檔：先在這個網址玩過一局再來。')); return; }
-plain = await saveDecode(sealed);
-} catch (e) {
-list.replaceChildren(h('div', { className: 'err' }, '讀不到存檔：' + (e?.message || e)));
-return;
-}
-const rows = parseTalents(plain);
-if (!rows.length) { list.replaceChildren(h('div', { className: 'note' }, '存檔裡還沒有天賦紀錄：先完整打完一局。')); return; }
-const write = async (cls, xp) => {
-if (!confirm('這會直接修改帳號存檔（永久的），舊存檔會先自動備份。' +
-(gameRunning() ? '\n寫入後會自動重新載入遊戲，進行中的這一局會中斷。' : '') + '\n要繼續嗎？')) return;
-try {
-const sealed = localStorage.getItem(SAVE_KEY);
-const cur = await saveDecode(sealed);
-const lines = cur.split('\n');
-const i = lines.findIndex((l) => l.startsWith(`talent|${cls}|`));
-if (i < 0) throw new Error('存檔裡找不到這個職業的天賦紀錄');
-const parts = lines[i].split('|');
-parts[2] = String(Math.max(0, Math.floor(xp)));
-lines[i] = parts.join('|');
-const next = await saveEncode(lines.join('\n'));
-if ((await saveDecode(next)) !== lines.join('\n')) throw new Error('重新封裝後驗證失敗，沒有寫入');
-markModded('天賦點數修改');
-const reloading = commitSave(next);
-msg.ok(`已寫入：${CLASS_NAMES[cls] || '職業 ' + cls} 天賦經驗 = ${parts[2]}。` +
-(reloading ? '重新載入遊戲中…' : '按「開啟遊戲」進遊戲看天賦畫面。'));
-await render();
-} catch (e) {
-msg.err(e);
-}
-};
-list.replaceChildren(...rows.map((r) => {
-const input = h('input', { type: 'number', min: 0, step: 1, value: r.xp });
-return h('div', { className: 'stat-row' },
-h('span', { className: 'stat-name' }, CLASS_NAMES[r.cls] || `職業 ${r.cls}`,
-h('small', {}, `天賦經驗 ${r.xp}` + (r.alloc ? `・已配置 ${r.alloc.split(',').filter(Boolean).length} 項` : ''))),
-h('button', { onclick: () => write(r.cls, TALENT_FULL_XP) }, '全滿'),
-input,
-h('button', { onclick: () => write(r.cls, Number(input.value)) }, '套用'));
-}), ...(gameRunning() ? [] : [h('div', { className: 'row' }, h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲'))]));
+h('button', { className: 'big', onclick: () => finish(false) }, '✔ 修改完成')),
+h('details', {},
+h('summary', {}, '進階：原始文字、備份還原'),
+h('div', { className: 'note' }, '解密後的存檔原文（一行一筆、用 | 分隔）。看得懂再改，改完按下面的按鈕。'),
+raw,
+h('div', { className: 'row' },
+h('button', { onclick: () => finish(true) }, '套用原始文字'),
+h('button', { onclick: () => saveFile(`AzerothSurvivors 存檔明文 ${stamp()}.txt`, new Blob([raw.value], { type: 'text/plain' })) }, '下載明文')),
+h('div', { className: 'row' },
+h('span', { className: 'note' }, backups.length ? '還原備份：' : '還沒有備份（第一次修改時會自動備份）。'),
+...backups.map((b) => h('button', { onclick: () => restore(b) },
+new Date(b.at).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }))))),
+].filter(Boolean));
 };
 render();
 return box;
@@ -671,8 +724,7 @@ range.addEventListener('change', () => apply(range.value));
 show();
 body.append(
 status,
-talentSection(),
-rawSaveSection(),
+saveSection(),
 statsSection(),
 h('div', { className: 'opt' },
 h('div', { className: 'field' }, h('b', {}, '遊戲速度'), h('span', { className: 'slider' }, range, label)),
@@ -1420,6 +1472,14 @@ padding: 2px 0; border-bottom: 1px solid #221d12; }
 .stat-name small, .best small { color: #888; font-size: 11px; }
 .cur { text-align: right; color: #9fd38a; font: 12px ui-monospace, Consolas, monospace; }
 .stat-row input[type=number] { padding: 2px 4px; }
+.sub { margin-top: 6px; padding-bottom: 2px; color: #f0c94a; border-bottom: 1px solid #4a3d18; }
+button.big { width: 100%; padding: 9px; font-weight: bold; font-size: 15px; color: #1b1406;
+background: linear-gradient(180deg, #ffe08a, #c9a227 60%, #9c7a14); border-color: #ffe08a; }
+button.big:hover { background: linear-gradient(180deg, #fff0b8, #d9b237 60%, #ac8a24); }
+.modal { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; background: #000b; }
+.modal > div { max-width: min(420px, 86vw); padding: 22px 26px; border-radius: 10px; text-align: center;
+white-space: pre-wrap; background: #15130f; color: #f3e3b0; border: 2px solid #c9a227;
+font: bold 17px/1.6 system-ui, "Microsoft JhengHei", sans-serif; box-shadow: 0 10px 40px #000; }
 label.best { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0;
 padding: 6px 8px; border-radius: 6px; background: rgba(201,162,39,.1); border: 1px solid #4a3d18; }
 .fab.drag { cursor: grabbing; transform: scale(1.08); }
@@ -1593,6 +1653,11 @@ const modTimer = setInterval(() => {
 fab.classList.toggle('mod', isModded());
 fab.title = isModded() ? 'WoW 工具箱（已使用修改功能：這一局不上傳）' : 'WoW 工具箱（可拖曳）';
 }, 1000);
+if (consumeReopen()) {
+current = 'mods';
+toggle(true);
+body.prepend(h('div', { className: 'msg' }, '✓ 修改已套用，網頁已重新整理，工具箱已自動重新開啟。'));
+}
 }
 const bootQs = onGame() && !document.getElementById('benilla') ? pendingBoot() : null;
 if (bootQs !== null) {
