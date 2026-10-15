@@ -9,6 +9,10 @@ const base = onGame() ? location.origin + '/' : GAME;
 const qs = params.toString();
 return base + (qs ? '?' + qs : '');
 }
+function go(url) {
+window.__wowbmNav = true;
+location.href = url;
+}
 const currentParams = () => new URLSearchParams(
 onGame() && /^\/(index\.html)?$/.test(location.pathname) ? location.search : '');
 function h(tag, attrs, ...kids) {
@@ -39,6 +43,34 @@ try { const v = JSON.parse(localStorage.getItem(key)); return v ?? dflt; } catch
 }
 function store(key, value) {
 try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+function draggable(el, key, dflt) {
+let pos = load(key, null) || dflt();
+const place = () => {
+const w = el.offsetWidth || 160;
+const ht = el.offsetHeight || 24;
+pos = { x: Math.max(0, Math.min(innerWidth - w, pos.x)), y: Math.max(0, Math.min(innerHeight - ht, pos.y)) };
+el.style.left = pos.x + 'px';
+el.style.top = pos.y + 'px';
+};
+let d = null;
+el.addEventListener('pointerdown', (e) => {
+if (e.button !== 0) return;
+el.setPointerCapture(e.pointerId);
+d = { sx: e.clientX, sy: e.clientY, x: pos.x, y: pos.y };
+e.preventDefault();
+});
+el.addEventListener('pointermove', (e) => {
+if (!d) return;
+pos = { x: d.x + e.clientX - d.sx, y: d.y + e.clientY - d.sy };
+place();
+});
+const end = () => { if (d) { d = null; store(key, pos); } };
+el.addEventListener('pointerup', end);
+el.addEventListener('pointercancel', end);
+el.title = '可以拖曳到別的位置';
+place();
+return place;
 }
 function saveFile(name, blob) {
 const url = URL.createObjectURL(blob);
@@ -127,12 +159,273 @@ body.append(
 h('label', {}, '模式', mode),
 runOnly,
 h('div', { className: 'row' },
-h('button', { onclick: () => { location.href = buildUrl(); } }, '開始（重新載入遊戲）'),
+h('button', { onclick: () => go(buildUrl()) }, '開始（重新載入遊戲）'),
 h('button', { onclick: copy }, '複製開局網址')),
 msg,
 h('div', { className: 'note' },
 '會重新載入頁面，進行中的這一局會中斷，懸浮按鈕也要再按一次書籤叫出來。',
 '選「隨機」每次開局都重抽（複製的網址則固定是抽到的那個）。效能分頁的設定會保留。'));
+}
+const BOOT_KEY = 'wowbm.boot';
+const LIVE_SAVE = 'wowbm.live';
+const PHASES = { ready: '準備中（移動就開始）', playing: '進行中', paused: '暫停', over: '結束', won: '勝利', lost: '失敗' };
+function bridgeHub() {
+if (window.__wowbmBridge) return window.__wowbmBridge;
+const hub = { frame: null, lastAt: 0, subs: new Set(), pending: new Map(), seq: 0 };
+hub.obj = {
+hz: 4, radius: 40, maxUnits: 40, events: true, queue: [],
+onFrame(f) {
+hub.frame = f;
+hub.lastAt = performance.now();
+hub.subs.forEach((s) => s.frame?.(f));
+},
+onEvent(name, data) {
+if (name === 'lua' && data && hub.pending.has(data.id)) {
+hub.pending.get(data.id)(data);
+hub.pending.delete(data.id);
+}
+hub.subs.forEach((s) => s.event?.(name, data));
+},
+};
+hub.send = (cmd) => hub.obj.queue.push(cmd);
+hub.lua = (chunk, timeout = 3000) => new Promise((resolve) => {
+const id = ++hub.seq;
+hub.pending.set(id, resolve);
+hub.send({ op: 'lua', id, chunk });
+setTimeout(() => { if (hub.pending.delete(id)) resolve({ id, ok: false, error: '逾時（遊戲沒有回應）' }); }, timeout);
+});
+window.__wowbmBridge = hub;
+return hub;
+}
+const bridgeReady = () => !!window.__wowbmBridge && window.__wenilla_bridge === window.__wowbmBridge.obj;
+const bridgeLive = () => bridgeReady() && performance.now() - window.__wowbmBridge.lastAt < 3000;
+function requestBridgeBoot() {
+try { sessionStorage.setItem(BOOT_KEY, currentParams().toString()); } catch {}
+go(location.origin + '/rogue.css');
+}
+function pendingBoot() {
+try { return sessionStorage.getItem(BOOT_KEY); } catch { return null; }
+}
+async function bootWithBridge(qs) {
+try { sessionStorage.removeItem(BOOT_KEY); } catch {}
+const hub = bridgeHub();
+let env;
+Object.defineProperty(window, '__wenilla_env', {
+configurable: true,
+get: () => env,
+set: (v) => { env = Object.assign({}, v, { bridge: '1' }); },
+});
+const html = await (await fetch('/', { cache: 'no-store' })).text();
+history.replaceState(null, '', '/' + (qs ? '?' + qs : ''));
+document.open();
+document.write(html);
+document.close();
+window.__wenilla_bridge = hub.obj;
+}
+const live = {
+opts: Object.assign({ hud: true, lowHp: true, lowPct: 30, boss: true, bossSec: 10, auto: 'off' }, load(LIVE_SAVE, {})),
+layer: null,
+els: {},
+timers: [],
+info: null,        // Lua 每秒查一次的資料
+holding: false,
+track: [],         // 自動走位：最近幾次的位置（判斷卡住）
+alerted: new Set(),
+lastRunTime: 0,
+};
+const fmtTime = (s) => {
+s = Math.max(0, Math.floor(s || 0));
+return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const INFO_LUA = `
+local up = AZS_GetUpcomingBosses and AZS_GetUpcomingBosses() or {}
+local nb, nl, nf = "", -1, false
+for i = 1, table.getn(up) do
+local b = up[i]
+if b.left and b.left > 0 and (nl < 0 or b.left < nl) then nb, nl, nf = b.name, b.left, b.final end
+end
+local active = AZS_GetBosses and AZS_GetBosses() or {}
+return AZS_GetPhase and AZS_GetPhase() or "", AZS_GetRunTime and AZS_GetRunTime() or 0,
+AZS_GetRunLength and AZS_GetRunLength() or 0, nb, nl, nf and 1 or 0,
+UnitXP("player"), UnitXPMax("player"), GetMoney(), table.getn(active)`;
+async function livePoll() {
+if (!bridgeLive()) { live.info = null; return; }
+const r = await window.__wowbmBridge.lua(INFO_LUA, 2000);
+if (!r.ok) return;
+const [phase, runTime, runLength, boss, bossLeft, bossFinal, xp, xpMax, money, activeBosses] = r.values;
+live.info = { phase, runTime, runLength, boss, bossLeft, bossFinal: !!bossFinal, xp, xpMax, money, activeBosses };
+if (runTime < live.lastRunTime) live.alerted.clear();
+live.lastRunTime = runTime;
+if (live.opts.boss && boss && bossLeft > 0 && bossLeft <= live.opts.bossSec && !live.alerted.has(boss + '@' + Math.round(runTime + bossLeft))) {
+live.alerted.add(boss + '@' + Math.round(runTime + bossLeft));
+showBanner(`${bossFinal ? '最終首領' : '首領'}「${boss}」${Math.ceil(bossLeft)} 秒後出現！`);
+}
+}
+function showBanner(text) {
+const el = live.els.banner;
+if (!el) return;
+el.textContent = text;
+el.classList.add('show');
+clearTimeout(el._t);
+el._t = setTimeout(() => el.classList.remove('show'), 4000);
+}
+function liveTick() {
+const hub = window.__wowbmBridge;
+const f = bridgeLive() ? hub.frame : null;
+const self = f?.self;
+const { hud, warn } = live.els;
+const pct = self && self.maxHealth ? self.health / self.maxHealth * 100 : 100;
+warn.classList.toggle('show', !!(live.opts.lowHp && self && !self.dead && pct < live.opts.lowPct));
+const wasHidden = hud.hidden;
+hud.hidden = !live.opts.hud || !f;
+if (!hud.hidden) {
+if (wasHidden) requestAnimationFrame(() => live.placeHud?.()); // 剛顯示：照實際大小再擺一次，避免超出畫面
+const enemies = (f.units || []).filter((u) => u.hostile && !u.dead && u.kind === 'unit');
+const near10 = enemies.filter((u) => u.dist <= 10).length;
+const near30 = enemies.filter((u) => u.dist <= 30).length;
+const nearest = enemies.reduce((m, u) => Math.min(m, u.dist), Infinity);
+const i = live.info;
+const lines = [];
+if (i) {
+lines.push(`⏱ ${fmtTime(i.runTime)} / ${fmtTime(i.runLength)}　${PHASES[i.phase] || i.phase}`);
+if (i.activeBosses > 0) lines.push(`⚔ 首領戰中（${i.activeBosses}）`);
+if (i.boss) lines.push(`下一隻${i.bossFinal ? '（最終）' : ''}：${i.boss}，${fmtTime(i.bossLeft)} 後`);
+}
+if (self) {
+lines.push(`❤ ${self.health}/${self.maxHealth}（${Math.round(pct)}%）　Lv ${self.level}` +
+(i ? `　經驗 ${i.xp}/${i.xpMax}　金幣 ${i.money}` : ''));
+}
+lines.push(`敵人：10碼內 ${near10}・30碼內 ${near30}` + (Number.isFinite(nearest) ? `・最近 ${nearest.toFixed(1)} 碼` : ''));
+if (live.opts.auto !== 'off') lines.push(`🤖 自動走位：${live.opts.auto === 'evade' ? '躲避敵人' : '繞圈'}`);
+hud.textContent = lines.join('\n');
+}
+autoMove(hub, f);
+}
+function autoMove(hub, f) {
+const self = f?.self;
+const phase = live.info?.phase;
+const want = live.opts.auto !== 'off' && self && !self.dead && (!phase || phase === 'ready' || phase === 'playing');
+if (!want) {
+if (live.holding) { hub?.send({ op: 'release' }); live.holding = false; }
+live.track = [];
+return;
+}
+if (!live.holding) { hub.send({ op: 'hold', cmd: 'MOVEFORWARD' }); live.holding = true; }
+let dyaw;
+if (live.opts.auto === 'circle') {
+dyaw = 0.3;
+} else {
+let vx = 0;
+let vy = 0;
+for (const u of f.units || []) {
+if (!u.hostile || u.dead || u.kind !== 'unit' || u.dist > 30) continue;
+const dx = self.pos[0] - u.pos[0];
+const dy = self.pos[1] - u.pos[1];
+const d = Math.max(Math.hypot(dx, dy), 0.5);
+vx += dx / (d * d);
+vy += dy / (d * d);
+}
+dyaw = vx || vy ? wrapAngle(Math.atan2(vy, vx) - self.facing) : 0.15; // 沒有敵人就慢慢繞
+dyaw = Math.max(-0.8, Math.min(0.8, dyaw));
+}
+live.track.push(self.pos);
+if (live.track.length > 6) live.track.shift();
+if (live.track.length === 6) {
+const [a] = live.track;
+if (Math.hypot(self.pos[0] - a[0], self.pos[1] - a[1]) < 1) { dyaw = Math.PI / 2; live.track = []; }
+}
+if (Math.abs(dyaw) > 0.01) hub.send({ op: 'look', dyaw });
+}
+function liveApply() {
+store(LIVE_SAVE, live.opts);
+}
+function liveStart(layer) {
+live.layer = layer;
+live.els.hud = h('div', { className: 'hud', hidden: true });
+live.els.warn = h('div', { className: 'lowhp' });
+live.els.banner = h('div', { className: 'banner' });
+layer.append(live.els.warn, live.els.hud, live.els.banner);
+live.placeHud = draggable(live.els.hud, 'wowbm.hudPos', () => ({ x: 6, y: 110 }));
+live.timers.push(setInterval(liveTick, 250), setInterval(livePoll, 1000));
+}
+function liveStop() {
+live.timers.forEach(clearInterval);
+live.timers = [];
+if (live.holding) { window.__wowbmBridge?.send({ op: 'release' }); live.holding = false; }
+Object.values(live.els).forEach((el) => el.remove());
+live.els = {};
+}
+function liveTab(body) {
+if (!bridgeReady()) {
+body.append(
+h('div', { className: 'err' }, '即時資料沒有啟用。'),
+h('div', { className: 'note' },
+'戰況面板、低血量警示、首領預告、自動走位，都要用遊戲內建的 WebBridge 讀資料。',
+'WebBridge 只能在遊戲啟動時打開，所以要：'),
+h('ol', { className: 'note' },
+h('li', {}, '按下面的按鈕，頁面會跳到一個空白頁（目前這一局會中斷）。'),
+h('li', {}, '在空白頁上再按一次書籤，遊戲會自動以即時模式重新載入（開局、效能設定照舊）。')),
+h('div', { className: 'row' },
+h('button', { onclick: requestBridgeBoot }, '重新啟動並啟用即時資料')));
+return;
+}
+const hub = window.__wowbmBridge;
+const opt = (key, title, desc, extra) => {
+const box = h('input', { type: 'checkbox', checked: !!live.opts[key] });
+box.addEventListener('change', () => { live.opts[key] = box.checked; liveApply(); });
+return h('div', { className: 'opt' },
+h('label', { className: 'inline' }, box, h('b', {}, title)),
+h('div', { className: 'note' }, desc), extra || null);
+};
+const num = (key, min, max, step, suffix) => {
+const range = h('input', { type: 'range', min, max, step, value: live.opts[key] });
+const label = h('span', { className: 'pct' }, live.opts[key] + suffix);
+range.addEventListener('input', () => {
+live.opts[key] = Number(range.value);
+label.textContent = range.value + suffix;
+liveApply();
+});
+return h('span', { className: 'slider' }, range, label);
+};
+const auto = select([['off', '關'], ['evade', '躲避敵人'], ['circle', '繞圈']], live.opts.auto);
+auto.addEventListener('change', () => { live.opts.auto = auto.value; liveApply(); });
+const code = h('textarea', { rows: 3, placeholder: 'return UnitHealth("player"), GetMoney(), AZS_GetRunTime()' });
+const out = h('pre', { className: 'out' });
+const run = async () => {
+const chunk = code.value.trim();
+if (!chunk) return;
+out.textContent = '執行中…';
+const r = await hub.lua(chunk);
+out.textContent = r.ok ? (r.values.length ? r.values.map((v) => JSON.stringify(v)).join('\n') : '（完成，沒有回傳值）')
+: '錯誤：' + (r.error || r.message || JSON.stringify(r));
+};
+code.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) run(); });
+const status = h('div', { className: 'msg' });
+const showStatus = () => {
+if (!status.isConnected) return clearInterval(statusTimer);
+const ok = bridgeLive();
+status.className = ok ? 'msg' : 'note';
+status.textContent = ok ? '即時資料：連線中' : '即時資料：已啟用，等待遊戲回報（載入中，或分頁在背景）…';
+};
+const statusTimer = setInterval(showStatus, 1000);
+body.append(
+status,
+opt('hud', '戰況面板', '畫面左上角顯示時間、下一隻首領倒數、血量、經驗、金幣、附近敵人數。'),
+opt('lowHp', '低血量警示', '血量低於設定值時，畫面四周閃紅光。', h('div', { className: 'field' }, '門檻', num('lowPct', 10, 80, 5, '%'))),
+opt('boss', '首領預告', '首領出現前在畫面上方提醒。', h('div', { className: 'field' }, '提前', num('bossSec', 5, 60, 5, ' 秒'))),
+h('div', { className: 'opt' },
+h('div', { className: 'field' }, h('b', {}, '自動走位'), auto),
+h('div', { className: 'note' },
+'躲避敵人：自動往敵人少的方向跑；繞圈：一直繞大圈。卡住會自動轉向。',
+'開著時角色會一直往前走，要自己操作就切回「關」。準備階段開啟會直接開始這一局。')),
+h('details', {},
+h('summary', {}, '進階：Lua 主控台'),
+h('div', { className: 'note' }, '直接對遊戲介面執行 Lua（魔獸世界 1.12 的介面函式，加上 AZS_ 開頭的倖存者函式）。Ctrl+Enter 執行。'),
+code,
+h('div', { className: 'row' }, h('button', { onclick: run }, '執行')),
+out));
+showStatus();
 }
 const LOW_SCALE_SAVE = 'wowbm.lowScale';
 function perfTab(body) {
@@ -183,7 +476,7 @@ if (scaleOn.checked) p.set('renderScale', String(scale.get() / 100));
 const d = Math.round(Number(far.value));
 if (far.value !== '' && d > 0) p.set('farclip', String(d));
 if (mute.checked) p.set('MasterVolume', '0');
-location.href = gameUrl(p);
+go(gameUrl(p));
 };
 body.append(
 h('div', { className: 'row' }, '快速套用：',
@@ -205,6 +498,119 @@ h('div', { className: 'note' },
 h('br'), '渲染縮放、地形距離、靜音是透過網址覆蓋遊戲設定，還沒在正式網站實測，沒效果的話跟我說。',
 h('br'), '目前網址上的效能參數：', h('code', {},
 PERF_KEYS.filter((k) => cur.has(k)).map((k) => `${k}=${cur.get(k)}`).join('&') || '（無）')));
+}
+const UTIL_SAVE = 'wowbm.util';
+const util = {
+opts: load(UTIL_SAVE, { noLeave: false, wake: false, fps: false }),
+layer: null,     // main.js 給的 Shadow DOM，FPS 小框放這裡
+wake: null,      // WakeLockSentinel
+wakeMsg: '',
+fpsEl: null,
+raf: 0,
+listeners: [],
+};
+function utilListen(target, ev, fn) {
+target.addEventListener(ev, fn);
+util.listeners.push([target, ev, fn]);
+}
+function onBeforeUnload(e) {
+if (!util.opts.noLeave || window.__wowbmNav) return;
+e.preventDefault();
+e.returnValue = '';
+}
+async function wakeOn() {
+if (util.wake || !util.opts.wake) return;
+if (!navigator.wakeLock) { util.wakeMsg = '這個瀏覽器不支援防休眠。'; return; }
+if (document.visibilityState !== 'visible') return;
+try {
+const lock = await navigator.wakeLock.request('screen');
+util.wake = lock;
+util.wakeMsg = '已啟用：螢幕不會自動休眠。';
+lock.addEventListener('release', () => { if (util.wake === lock) util.wake = null; });
+} catch (e) {
+util.wakeMsg = '瀏覽器拒絕了：' + (e?.message || e);
+}
+}
+function wakeOff() {
+util.wake?.release().catch(() => {});
+util.wake = null;
+util.wakeMsg = '';
+}
+function fpsOn() {
+if (util.fpsEl || !util.layer) return;
+util.fpsEl = h('div', { className: 'fps' }, 'FPS …');
+util.layer.append(util.fpsEl);
+draggable(util.fpsEl, 'wowbm.fpsPos', () => ({ x: innerWidth - 190, y: 150 }));
+let frames = 0;
+let worst = 0;
+let last = performance.now();
+let start = last;
+const tick = (now) => {
+frames++;
+worst = Math.max(worst, now - last);
+last = now;
+if (now - start >= 1000) {
+const fps = Math.round(frames * 1000 / (now - start));
+util.fpsEl.textContent = `FPS ${fps} · 最慢 ${Math.round(worst)}ms`;
+util.fpsEl.className = 'fps' + (fps < 30 ? ' bad' : fps < 50 ? ' meh' : '');
+frames = 0;
+worst = 0;
+start = now;
+}
+util.raf = requestAnimationFrame(tick);
+};
+util.raf = requestAnimationFrame(tick);
+}
+function fpsOff() {
+cancelAnimationFrame(util.raf);
+util.fpsEl?.remove();
+util.fpsEl = null;
+}
+function utilApply() {
+store(UTIL_SAVE, util.opts);
+if (util.opts.wake) wakeOn(); else wakeOff();
+if (util.opts.fps) fpsOn(); else fpsOff();
+}
+function utilStart(layer) {
+util.layer = layer;
+utilListen(window, 'beforeunload', onBeforeUnload);
+utilListen(document, 'visibilitychange', () => { if (document.visibilityState === 'visible') wakeOn(); });
+utilApply();
+}
+function utilStop() {
+for (const [t, ev, fn] of util.listeners) t.removeEventListener(ev, fn);
+util.listeners = [];
+wakeOff();
+fpsOff();
+}
+function utilTab(body) {
+const status = h('div', { className: 'note' });
+const refresh = () => {
+status.textContent = util.opts.wake ? util.wakeMsg || '啟用中…' : '';
+};
+const toggle = (key, title, desc) => {
+const box = h('input', { type: 'checkbox', checked: !!util.opts[key] });
+box.addEventListener('change', async () => {
+util.opts[key] = box.checked;
+utilApply();
+await sleep(300);
+refresh();
+});
+return h('div', { className: 'opt' },
+h('label', { className: 'inline' }, box, h('b', {}, title)),
+h('div', { className: 'note' }, desc));
+};
+body.append(
+toggle('noLeave', '防誤關',
+'要關分頁、重新整理或離開網頁時，先跳出確認視窗。用工具箱開局、套用效能設定不會跳。'),
+toggle('wake', '防休眠',
+'玩的時候螢幕不會自動變暗、休眠。切到別的分頁會暫停，切回來自動恢復。'),
+status,
+toggle('fps', 'FPS 顯示',
+'畫面左上角顯示每秒幅數，以及最近一秒最慢的一幀（數字突然變大 = 卡頓）。'),
+h('div', { className: 'note' },
+'開關會記住，下次叫出工具箱自動套用。按「收起」或再按一次書籤，這些功能會一起停掉。'));
+refresh();
 }
 const FORMAT = 'wow-aethus-backup';
 const KNOWN_DBS = ['azeroth-survivors-addons'];
@@ -388,7 +794,7 @@ btn.disabled = false;
 const doImport = async (btn) => {
 if (gameRunning && confirm('遊戲正在執行，還原後遊戲可能會把舊資料寫回去。\n\n'
 + '建議先跳到同網站「不會啟動遊戲」的頁面，在那裡再按一次書籤、到「備份」分頁做還原。\n\n要現在跳過去嗎？')) {
-location.href = location.origin + '/rogue.css';
+go(location.origin + '/rogue.css');
 return;
 }
 const file = await pickFile('.json,application/json');
@@ -410,7 +816,7 @@ for (const d of data.indexedDB || []) await restoreDb(d);
 showMsg('還原完成。重新載入遊戲後生效。');
 await refresh();
 body.append(h('div', { className: 'row' },
-h('button', { onclick: () => { location.href = location.origin + '/'; } }, '開啟遊戲')));
+h('button', { onclick: () => go(location.origin + '/') }, '開啟遊戲')));
 } catch (e) {
 showErr(e);
 } finally {
@@ -438,7 +844,9 @@ const FAB_POS = 'wowbm.fabPos';
 const LAST_TAB = 'wowbm.tab';
 const TABS = [
 ['launch', '開局', launchTab],
+['live', '戰況', liveTab],
 ['perf', '效能', perfTab],
+['util', '便利', utilTab],
 ['backup', '備份', backupTab],
 ];
 const FAB_SIZE = 46;
@@ -490,12 +898,43 @@ hr { border: none; border-top: 1px solid #333; margin: 2px 0; width: 100%; }
 table { width: 100%; border-collapse: collapse; }
 td, th { padding: 4px; border-bottom: 1px solid #333; text-align: left; vertical-align: top; }
 code { background: #000; padding: 0 4px; border-radius: 3px; word-break: break-all; }
+.opt { display: grid; gap: 2px; padding: 6px 0; border-bottom: 1px solid #2a2618; }
+.opt b { color: #f3e3b0; }
+.fps, .hud { cursor: move; touch-action: none; user-select: none; }
+.fps { position: fixed; z-index: 2147483645;
+padding: 2px 8px; border-radius: 4px; background: #000a; color: #9fd38a;
+font: 12px/1.5 ui-monospace, Consolas, monospace; }
+.fps.meh { color: #f0c94a; }
+.fps.bad { color: #ff8a80; }
+.hud { position: fixed; z-index: 2147483645; white-space: pre;
+padding: 6px 10px; border-radius: 6px; background: #000b; color: #eee; border: 1px solid #4a3d18;
+font: 12px/1.6 system-ui, "Microsoft JhengHei", sans-serif; }
+.hud[hidden] { display: none; }
+.lowhp { position: fixed; inset: 0; z-index: 2147483644; pointer-events: none; opacity: 0;
+box-shadow: inset 0 0 60px 18px #ff1a1a; transition: opacity .3s; }
+.lowhp.show { animation: wowbm-pulse 1s ease-in-out infinite; }
+@keyframes wowbm-pulse { 0%, 100% { opacity: .25; } 50% { opacity: .9; } }
+.banner { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 2147483645;
+pointer-events: none; padding: 8px 18px; border-radius: 6px; background: #300c; color: #ffd36b;
+border: 1px solid #c9a227; font: bold 18px system-ui, "Microsoft JhengHei", sans-serif;
+opacity: 0; transition: opacity .3s; }
+.banner.show { opacity: 1; }
+textarea { width: 100%; padding: 4px 6px; background: #0c0b08; color: #eee; border: 1px solid #555;
+border-radius: 4px; font: 12px/1.4 ui-monospace, Consolas, monospace; resize: vertical; }
+pre.out { margin: 0; padding: 4px 6px; background: #000; border-radius: 4px; color: #9fd38a;
+font: 12px/1.4 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; }
+pre.out:empty { display: none; }
+details { display: grid; gap: 6px; }
+details[open] { display: grid; }
+summary { cursor: pointer; color: #f3e3b0; }
+ol { margin: 0; padding-left: 1.4em; }
 `;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 function toolbox() {
 const old = document.getElementById(ROOT_ID);
-if (old) { old.remove(); return; }
+if (old) { old.__wowbmClose?.(); return; }
 const host = h('div', { id: ROOT_ID });
+host.__wowbmClose = () => { utilStop(); liveStop(); host.remove(); };
 const shadow = host.attachShadow({ mode: 'open' });
 for (const ev of ['keydown', 'keyup', 'keypress', 'pointerdown', 'pointerup', 'wheel', 'contextmenu']) {
 host.addEventListener(ev, (e) => e.stopPropagation());
@@ -525,7 +964,7 @@ place();
 const panel = h('div', { className: 'panel', hidden: true },
 h('div', { className: 'head' },
 h('b', {}, 'WoW 工具箱'),
-h('button', { title: '把懸浮按鈕也收掉（再按一次書籤叫回來）', onclick: () => host.remove() }, '收起'),
+h('button', { title: '把懸浮按鈕也收掉（再按一次書籤叫回來）', onclick: () => host.__wowbmClose() }, '收起'),
 h('button', { className: 'x', title: '關閉面板', onclick: () => toggle(false) }, '×')),
 h('div', { className: 'tabs' }, TABS.map(([id, label]) => {
 tabBtns[id] = h('button', { onclick: () => show(id) }, label);
@@ -585,6 +1024,13 @@ addEventListener('resize', onResize);
 shadow.append(h('style', {}, CSS), panel, fab);
 (document.body || document.documentElement).append(host);
 setPos(pos.x, pos.y);
+utilStart(shadow);
+liveStart(shadow);
 }
+const bootQs = onGame() && !document.getElementById('benilla') ? pendingBoot() : null;
+if (bootQs !== null) {
+bootWithBridge(bootQs).then(toolbox, (e) => alert('WoW 工具箱：遊戲載入失敗 ' + (e?.message || e)));
+} else {
 toolbox();
+}
 })();
