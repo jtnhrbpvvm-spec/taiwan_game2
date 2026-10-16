@@ -21,6 +21,7 @@ javascript:(function awTools() {
    *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
+   *  18. 不上傳雲端存檔：小工具設定裡的選項（預設關閉）；自動刷神話進行中也一律不上傳
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -35,7 +36,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V24';
+  const VERSION = 'V27';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -85,6 +86,7 @@ javascript:(function awTools() {
     monLoop: true,          /* 無限君主加上「自動刷神話」按鈕（沒掉神話獨特就自動讀回挑戰前的存檔） */
     monLoopLootMs: 2500,    /* 自動刷神話：打贏後等幾毫秒讓掉落物落地，再收起來檢查 */
     monLoopBatch: 1,        /* 自動刷神話：「每打幾場才讀一次檔」的預設值（開始時還可以再改） */
+    noCloud: false,         /* 不上傳 Google 雲端存檔（開啟期間遊戲會顯示沒登入 Google，關掉後自動恢復） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
   /* 上面是預設值。在遊戲裡的「小工具設定」（第 17 項）改過的項目存在瀏覽器的 awtools.cfg，
@@ -1971,7 +1973,7 @@ javascript:(function awTools() {
   };
 
   /* ===== 8. 物品持有無上限 =====
-   * 遊戲的上限是寫死的常數（背包 BAG_MAX 500、石板 500、符文 1000），常數本身改不了，
+   * 遊戲的上限是寫死的常數（v0.2.555 起背包 BAG_MAX、石板、符文都是 5000），常數本身改不了，
    * 所以改的是「用到這些上限的函式」：把函式的原始碼取出來，把上限換成 CFG.itemMax，
    * 再重新建立成同名的函式蓋回去。這樣不用照抄遊戲的程式，遊戲改版後只要寫法沒變就還有效。
    * 會處理兩種：最上層的函式（撿裝備、撿石板、卸下裝備、萃取、切換構築…），
@@ -2016,14 +2018,15 @@ javascript:(function awTools() {
       RULES.push(
         [/\bBAG_MAX\b/g, N],
         [/\bRUNE_MAX\b/g, N],
-        /* 符文上限在程式裡是直接寫 1e3 的，有三種寫法：單獨比較、加上「這一批要萃取的數量」再比較
-         * （批次萃取 xtrPlan 和它的提示文字）、以及「還剩幾格」的 1e3 減掉目前數量 */
-        [/(S\.runes\.length(?:\+[\w.]+)?)>=1e3/g, '$1>=' + N],
-        [/1e3-S\.runes\.length/g, N + '-S.runes.length'],
-        [/\$\{S\.runes\.length\}\/1000/g, '${S.runes.length}/' + N],
+        /* 符文上限在程式裡是直接寫數字的（v0.2.555 以前 1e3，之後 5e3），有三種寫法：單獨比較、
+         * 加上「這一批要萃取的數量」再比較（批次萃取和它的提示文字）、以及「還剩幾格」的上限減掉目前數量。
+         * 石板也一樣（以前 500，之後 5e3）。新舊寫法都認，遊戲再改數字時只要補在這裡。 */
+        [/(S\.runes\.length(?:\+[\w.]+)?)>=(?:1e3|5e3)/g, '$1>=' + N],
+        [/(?:1e3|5e3)-S\.runes\.length/g, N + '-S.runes.length'],
+        [/\$\{S\.runes\.length\}\/(?:5000|1000)/g, '${S.runes.length}/' + N],
         [/\bSLATE_MAX\b/g, NS],
-        [/S\.slates\.length>=500/g, 'S.slates.length>=' + NS],
-        [/\$\{S\.slates\.length\}\/500/g, '${S.slates.length}/' + NS]
+        [/S\.slates\.length>=(?:5e3|500)\b/g, 'S.slates.length>=' + NS],
+        [/\$\{S\.slates\.length\}\/(?:5000|500)\b/g, '${S.slates.length}/' + NS]
       );
     }
     /* 獨特裝備依階級決定留不留（階級：0 一般、1 高階、2 終局、3 守護者、4 終焉）。
@@ -2080,6 +2083,37 @@ javascript:(function awTools() {
    * 注意：沒有點書籤時（例如剛開網頁、離線收益結算）遊戲會照原本的形狀計算，
    * 重疊的寶石連結會亂掉；關閉開關時，放不下的寶石會退回寶石欄。
    */
+  /* 「匿名遊玩統計」（遊戲 v0.2.457 加入）的攔截，單格模式和自動刷神話（第 13 項）共用，
+   * 所以只要其中一個有開就裝上（之前放在單格模式裡面，關掉單格模式時自動刷神話就擋不到統計）。
+   * 遊戲用 stEv() 把事件（打 Boss 花幾秒、無限之塔到幾層、每日擊殺數…）先排進佇列，
+   * 佇列放在記憶體的 stQ 和瀏覽器的 autowanderer.stq，之後由 stSend() 一次送出。
+   * 這裡的處理：
+   *   - 開著單格模式（__awOne）或自動刷神話進行中（__awNoStat）時，stEv() 不記錄、stSend() 不送出，並把佇列清空
+   *   - 「每日統計」是隔天才結算前一天的總數，所以開過單格模式的那一天會記下來（awtools.stday），
+   *     那一天的每日統計就算之後關掉開關也不送
+   * 清空佇列只動 autowanderer.stq 這一個項目，不會碰存檔（autowanderer.v1）。
+   * 注意：遊戲啟動時用 setInterval(stSend, 60 秒) 拿走的是原本的 stSend，換不掉；
+   * 但它只會送佇列裡的東西，佇列在這裡被擋住、清空，所以送不出東西。 */
+  const ST_QUEUE = 'autowanderer.stq', ST_TAINT = 'awtools.stday';
+  const stClear = () => {
+    try { if (typeof stQ !== 'undefined' && stQ && stQ.length) stQ = []; } catch (e) {}
+    try { const q = localStorage.getItem(ST_QUEUE); if (q !== null && q !== '[]') localStorage.setItem(ST_QUEUE, '[]'); } catch (e) {}
+  };
+  const stMark = () => { try { if (S && S.st && S.st.d) localStorage.setItem(ST_TAINT, S.st.d); } catch (e) {} };
+  if (first && (CFG.oneCell || CFG.monLoop)) {
+    const realStEv = window.stEv, realStSend = window.stSend;
+    if (typeof realStEv === 'function') {
+      window.stEv = (t, a) => {
+        if (window.__awOne || window.__awNoStat) { stMark(); return; }
+        let bad = null;
+        try { bad = localStorage.getItem(ST_TAINT); } catch (e) {}
+        if (t === 'day' && a && bad && a.d === bad) return;
+        return realStEv(t, a);
+      };
+    }
+    if (typeof realStSend === 'function') window.stSend = () => { if (window.__awOne || window.__awNoStat) { stClear(); return; } return realStSend(); };
+  }
+
   const ONE_KEY = 'awtools.onecell';
   let oneCellToggle = null;
   if (first && CFG.oneCell) {
@@ -2093,9 +2127,13 @@ javascript:(function awTools() {
     const realLink = window.linkRule;
     if (typeof realLink === 'function') window.linkRule = () => window.__awOne ? 'all' : realLink();
     /* 單格模式開啟時不上傳排行榜。
-     * 遊戲每次存檔和每次離開無限之塔都會呼叫 lbSend()，它用 S.lb.sent（已上傳的最高層數）判斷要不要上傳。
-     * 這裡除了直接擋掉，還把 S.lb.sent 補到目前的最高層數，這樣單格模式打出來的層數
-     * 之後也不會被上傳（包含關掉開關、或沒點書籤的時候），要等正常玩法打到更高層才會再上傳。 */
+     * 遊戲每次存檔和每次離開無限之塔都會呼叫 lbSend()。它在下面三個條件都成立時才「不」上傳：
+     * 最高層數沒超過 S.lb.sent（已上傳的層數）、角色名稱等於 S.lb.sn、S.lb.ss 是 1（伺服器已經收過構築快照）。
+     * 遊戲 v0.2.578 起上傳時會附上構築快照（裝備、技能拼圖位置、天賦，v0.2.722 再加上角色面板數值），
+     * 單格模式的寶石會疊在一起，傳上去一看就知道。
+     * 這裡除了直接擋掉，還把這三個欄位補成「已經傳過了」，這樣單格模式打出來的層數和構築
+     * 之後也不會被上傳（包含關掉開關、或沒點書籤的時候），要等正常玩法打到更高層才會再上傳。
+     * 只補 ss 而不補的話，舊存檔沒有 ss，一關掉開關遊戲就會把單格模式的層數連同快照傳上去。 */
     const realLbSend = window.lbSend;
     const lbMask = () => {
       try {
@@ -2103,34 +2141,11 @@ javascript:(function awTools() {
         if (S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
         S.lb.sn = S.name;
         S.lb.sb = S.tal.asc || '';
+        S.lb.ss = 1;
       } catch (e) {}
     };
     if (typeof realLbSend === 'function') window.lbSend = () => { if (window.__awOne) { lbMask(); return; } return realLbSend(); };
-    /* 單格模式開啟時也不送「匿名遊玩統計」（遊戲 v0.2.457 加入）。
-     * 遊戲用 stEv() 把事件（打 Boss 花幾秒、無限之塔到幾層、每日擊殺數…）先排進佇列，
-     * 佇列放在記憶體的 stQ 和瀏覽器的 autowanderer.stq，之後由 stSend() 一次送出。
-     * 這裡的處理：
-     *   - 開著單格模式時，stEv() 不記錄、stSend() 不送出，並把佇列清空
-     *   - 「每日統計」是隔天才結算前一天的總數，所以開過單格模式的那一天會記下來（awtools.stday），
-     *     那一天的每日統計就算之後關掉開關也不送
-     * 清空佇列只動 autowanderer.stq 這一個項目，不會碰存檔（autowanderer.v1）。 */
-    const ST_QUEUE = 'autowanderer.stq', ST_TAINT = 'awtools.stday';
-    const realStEv = window.stEv, realStSend = window.stSend;
-    const stClear = () => {
-      try { if (typeof stQ !== 'undefined') stQ = []; } catch (e) {}
-      try { if (localStorage.getItem(ST_QUEUE) !== null) localStorage.setItem(ST_QUEUE, '[]'); } catch (e) {}
-    };
-    const stMark = () => { try { if (S && S.st && S.st.d) localStorage.setItem(ST_TAINT, S.st.d); } catch (e) {} };
-    if (typeof realStEv === 'function') {
-      window.stEv = (t, a) => {
-        if (window.__awOne || window.__awNoStat) { stMark(); return; }
-        let bad = null;
-        try { bad = localStorage.getItem(ST_TAINT); } catch (e) {}
-        if (t === 'day' && a && bad && a.d === bad) return;
-        return realStEv(t, a);
-      };
-    }
-    if (typeof realStSend === 'function') window.stSend = () => { if (window.__awOne || window.__awNoStat) { stClear(); return; } return realStSend(); };
+    /* 匿名遊玩統計的攔截在上面（和自動刷神話共用） */
     setInterval(() => { if (window.__awOne) stMark(); }, 60000);
     /* 寶石圖示有快取，切換後要清掉才會重畫 */
     const redraw = () => {
@@ -2296,7 +2311,7 @@ javascript:(function awTools() {
       '掉出神話獨特時才會保留進度（用掉 ' + MONARCH.mk + ' 個印記），然後繼續刷到達標或印記不夠為止。\n\n' +
       '機率：每次打贏 0.1% 掉神話獨特，共 ' + keys + ' 種（其中 1 種是石板），所以平均要打約 1000 場才有一件，指定石板約 ' + (1000 * keys) + ' 場。\n\n' +
       '注意：\n・讀回存檔時，這一場拿到的其他東西（神話裝備、奇蹟石、材料）都會消失\n・進行中請不要自己操作角色或切換地圖\n' +
-      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計，也不會上傳雲端存檔；結束後才恢復\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份', [
+      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計、排行榜和雲端存檔（進行中遊戲會顯示沒登入 Google），結束後自動恢復\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份', [
       { label: '新拿到的「神話石板」至少幾塊才算達標（不指定石板就填 0）', value: '1', type: 'number' },
       { label: '新拿到的「神話獨特」（裝備和石板合計）至少幾件才算達標', value: '2', type: 'number' },
       { label: '每打幾場才讀一次檔（1 = 每場都讀，最省印記；數字越大越省時間，但掉出神話時那一批打掉的印記不會回來）\n你現在有 ' + S.tw.mk + ' 個印記，最多可以填 ' + maxBatch, value: String(Math.min(CFG.monLoopBatch, maxBatch)), type: 'number' }
@@ -2338,15 +2353,22 @@ javascript:(function awTools() {
      *   - 匿名遊玩統計：第 10 項包過的 stEv()／stSend() 看到 __awNoStat 就不記錄、不送出。
      *     但每次重新載入時，遊戲會在小工具回來之前先記一筆「開始遊玩」，所以這裡每一輪都把待送佇列清空，
      *     結束的那一刻再清一次，才恢復正常記錄。只動 autowanderer.stq，不碰存檔。
-     *   - Google 雲端存檔：進行中不上傳（不然作者那邊會看到存檔反覆回到同一個狀態），
-     *     結束後遊戲下一次存檔就會把最後的進度傳上去。 */
-    const statWipe = () => {
-      try { if (typeof stQ !== 'undefined' && stQ && stQ.length) stQ = []; } catch (e) {}
-      try { const q = localStorage.getItem('autowanderer.stq'); if (q !== null && q !== '[]') localStorage.setItem('autowanderer.stq', '[]'); } catch (e) {}
-    };
-    const realGcUpload = window.gcUpload;
-    if (typeof realGcUpload === 'function') {
-      window.gcUpload = function () { if (window.__awNoStat) return Promise.resolve(false); return realGcUpload.apply(this, arguments); };
+     *   - 排行榜：進行中 lbSend() 直接不送。
+     *   - Google 雲端存檔：進行中不上傳（不然作者那邊會看到存檔反覆回到同一個狀態），做法在第 18 項。 */
+    const statWipe = stClear;
+    /* 小工具一裝上就馬上判斷，不等第一次計時器（計時器 0.7 秒才跑第一次，遊戲啟動時記的事件會比它早） */
+    {
+      const L0 = loopGet();
+      window.__awNoStat = !!(L0 && L0.on);
+      if (window.__awNoStat) statWipe();
+    }
+    const loopLbSend = window.lbSend;
+    if (typeof loopLbSend === 'function') {
+      window.lbSend = function () {
+        const L = loopGet();
+        if (window.__awNoStat || (L && L.on)) return;
+        return loopLbSend.apply(this, arguments);
+      };
     }
     let phase = 'start', at = 0, startTry = 0, wasOn = false;
     const stop = msg => { loopSet(null); statWipe(); window.__awNoStat = false; wasOn = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
@@ -2415,6 +2437,60 @@ javascript:(function awTools() {
         }
         next();
       }
+    }, 700);
+  }
+
+  /* ===== 18. 不上傳雲端存檔 =====
+   * 兩種情況不把存檔傳到 Google 雲端存檔：
+   *   - 小工具設定開了「不上傳雲端存檔」（CFG.noCloud）
+   *   - 自動刷神話進行中（不然作者那邊會看到存檔反覆回到同一個狀態）
+   * 單格模式不擋雲端（玩家可能跨裝置玩），只擋排行榜和統計。
+   * 光把 gcUpload() 包起來不夠：遊戲每次開網頁、重新載入（自動刷神話每次讀檔都會）一啟動就存一次檔，
+   * 存檔時發現「這次開網頁還沒上傳過」就馬上上傳，這時小工具常常還沒回來（實測離線版晚了約 0.2 秒）。
+   * 所以要擋的期間，把遊戲記在 autowanderer.cloud 的 Google 登入憑證先收起來（放到 awtools.gctok），
+   * 遊戲重新載入時讀不到憑證，就當成沒登入，不會上傳、也不會去問雲端。不用擋了再放回去。
+   * 中途關掉網頁的話，下次點書籤時（不用擋）也會自動放回去。
+   * 擋的期間在遊戲裡重新登入 Google 也沒關係：計時器會再把新的憑證收起來。 */
+  const GC_STASH = 'awtools.gctok', GC_NAG_LS = 'autowanderer.gcNag';
+  const gcStash = () => {
+    try {
+      if (typeof GC === 'undefined' || !GC.tok) return;
+      const o = { tok: GC.tok, acc: GC.acc };
+      /* 遊戲看到沒登入，可能會跳一次「重新綁定 Google」的提醒，先標成看過，放回時再拿掉
+       * （擋的期間重新登入、又收一次憑證時，沿用上一次的標記） */
+      let old = null;
+      try { old = JSON.parse(localStorage.getItem(GC_STASH)); } catch (e) {}
+      if (old && old.nag) o.nag = 1;
+      else if (localStorage.getItem(GC_NAG_LS) === null) { o.nag = 1; localStorage.setItem(GC_NAG_LS, '1'); }
+      localStorage.setItem(GC_STASH, JSON.stringify(o));
+      GC.tok = '';
+      gcPut();
+    } catch (e) {}
+  };
+  const gcUnstash = () => {
+    try {
+      const raw = localStorage.getItem(GC_STASH);
+      if (!raw || typeof GC === 'undefined') return;
+      const o = JSON.parse(raw) || {};
+      /* 使用者中途自己重新登入過的話，留著新的憑證 */
+      if (o.tok && !GC.tok) { GC.tok = o.tok; GC.acc = o.acc || String(o.tok).split('.')[0]; gcPut(); }
+      if (o.nag) localStorage.removeItem(GC_NAG_LS);
+      localStorage.removeItem(GC_STASH);
+    } catch (e) {}
+  };
+  const cloudOff = () => { const L = loopGet(); return CFG.noCloud || !!(L && L.on); };
+  if (first) {
+    /* 小工具一裝上就馬上處理，不等計時器 */
+    if (cloudOff()) gcStash(); else gcUnstash();
+    const realGcUpload = window.gcUpload;
+    if (typeof realGcUpload === 'function') {
+      window.gcUpload = function () { if (cloudOff()) return Promise.resolve(false); return realGcUpload.apply(this, arguments); };
+    }
+    /* 被遊戲鎖住的分頁（TAB.gone，例如另一個分頁開了遊戲）不動憑證：
+     * 那邊的設定和進度可能是舊的，實測會把正在玩的分頁收起來的憑證又放回去 */
+    every(() => {
+      try { if (typeof TAB !== 'undefined' && TAB.gone) return; } catch (e) {}
+      if (cloudOff()) gcStash(); else gcUnstash();
     }, 700);
   }
 
@@ -2600,7 +2676,8 @@ javascript:(function awTools() {
       ['host', '常駐模式', '遊戲重新載入後小工具自動回來。關掉的話，每次重新載入都要再點一次書籤'],
       ['keepAlive', '背景運行', '分頁在背景或被蓋住時遊戲照常跑，不會變成離線收益'],
       ['bgGrabMs', '背景時每幾毫秒收一次掉落物', '0 = 不收，等回到畫面才撿'],
-      ['noUpdate', '禁止遊戲自動更新', '有新版時不會自己重新整理，要更新請用遊戲選單裡的更新按鈕']
+      ['noUpdate', '禁止遊戲自動更新', '有新版時不會自己重新整理，要更新請用遊戲選單裡的更新按鈕'],
+      ['noCloud', '不上傳雲端存檔', '開啟期間遊戲會顯示沒登入 Google、不會上傳也不會讀雲端存檔；關掉後自動恢復登入。自動刷神話進行中不管這項都不上傳']
     ]],
     ['畫面顯示', [
       ['bossBar', 'BOSS 血條', '打 BOSS 時在畫面最上方顯示名稱、生命、護盾、剩餘時間'],
@@ -2710,6 +2787,9 @@ javascript:(function awTools() {
         }
         if (diff.host === false && !await uiConfirm('你關掉了常駐模式。\n\n關掉之後，遊戲每次重新載入（包含等一下這一次）小工具都會消失，要再點一次書籤；自動刷神話和置頂視窗也會不能用。\n\n確定要關掉嗎？')) return;
         try { localStorage.setItem(CFG_KEY, JSON.stringify(diff)); } catch (err) { uiAlert('瀏覽器的儲存空間不夠，設定沒有存成功。'); return; }
+        /* 「不上傳雲端存檔」馬上生效，不等重新載入：不然重新載入時遊戲一啟動就會先傳一次 */
+        CFG.noCloud = diff.noCloud === true;
+        if (cloudOff()) gcStash(); else gcUnstash();
         reloadAsk();
       }
     });
