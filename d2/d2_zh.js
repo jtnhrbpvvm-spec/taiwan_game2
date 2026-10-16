@@ -1,0 +1,1027 @@
+void (function D2ZH() {
+if (window.__D2ZH) {
+const I = window.D2I18N;
+if (I) I.setLanguage(I.language === 'zh-Hant' ? 'en' : 'zh-Hant');
+return;
+}
+if (!document.getElementById('d2-files')) {
+alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個書籤。');
+return;
+}
+window.__D2ZH = true;
+const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
+const D2ZH_STATE = new WeakMap();
+const D2ZH_CTX = CanvasRenderingContext2D.prototype;
+const D2ZH_PUT = D2ZH_CTX.putImageData;
+const D2ZH_DRAW = D2ZH_CTX.drawImage;
+const D2ZH_FONT = '"Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif';
+const D2ZH_PUNCT = { 8208: 45, 8211: 45, 8212: 45, 8216: 39, 8217: 39, 8220: 34, 8221: 34, 8230: 46 };
+const D2ZH_CJK = /[㐀-鿿]/u;
+let d2zhBusy = false;
+function d2zhLang() {
+return window.D2I18N ? window.D2I18N.language : 'en';
+}
+function d2zhIsText(c) {
+return c instanceof HTMLCanvasElement && c.classList.contains('d2-text') && !c.classList.contains('d2-local-font');
+}
+function d2zhWidth(font, line) {
+let w = 0;
+for (const ch of line) {
+let code = ch.charCodeAt(0);
+code = D2ZH_PUNCT[code] || code;
+w += font.adv[code < 256 && font.adv[code] ? code : 63] || 0;
+}
+return w;
+}
+function d2zhAnalyze(img, src) {
+const { width: W, height: H, data } = img;
+const counts = new Map();
+let black = 0, opaque = 0;
+for (let i = 0; i < data.length; i += 4) {
+if (!data[i + 3]) continue;
+opaque++;
+const r = data[i], g = data[i + 1], b = data[i + 2];
+if (!r && !g && !b) { black++; continue; }
+const k = (r << 16) | (g << 8) | b;
+counts.set(k, (counts.get(k) || 0) + 1);
+}
+let color = [232, 223, 204], best = 0;
+for (const [k, n] of counts) if (n > best) { best = n; color = [k >> 16, (k >> 8) & 255, k & 255]; }
+const looksShadow = opaque > 0 && black >= opaque * 0.15 ? 1 : 0;
+const lines = src.split('\n');
+let pick = null;
+for (const name in D2_FONTS) {
+const f = D2_FONTS[name];
+for (const s of [looksShadow, 1 - looksShadow]) {
+const h = H - s;
+if (h < f.h || (h - f.h) % f.lh) continue;
+const k = (h - f.h) / f.lh + 1;
+const natural = Math.max(...lines.map(l => d2zhWidth(f, l)));
+const exact = k === lines.length && natural + s === W;
+const wrapped = k > lines.length && natural + s > W;
+const score = (exact ? 4 : 0) + (wrapped ? 2 : 0) + (s === looksShadow ? 1 : 0);
+if (!pick || score > pick.score) pick = { f, s, k, score };
+}
+}
+if (!pick) pick = { f: { h: H, lh: Math.round(H * 1.25) }, s: looksShadow, k: lines.length };
+let align = 'center';
+if (pick.k > 1) {
+let left = true, right = true, ragged = false;
+for (let line = 0; line < pick.k; line++) {
+const y0 = line * pick.f.lh, y1 = Math.min(H, y0 + pick.f.h);
+let min = W, max = -1;
+for (let y = y0; y < y1; y++) for (let x = 0; x < W; x++) {
+if (data[(y * W + x) * 4 + 3]) { if (x < min) min = x; if (x > max) max = x; }
+}
+if (max < 0) continue;
+if (min > 1) left = false;
+if (max < W - 2 - pick.s) right = false;
+if (min > 2 || max < W - 3 - pick.s) ragged = true;
+}
+if (ragged) align = left ? 'left' : right ? 'right' : 'center';
+}
+return {
+src, en: img, w: W, h: H, lang: 'en',
+size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align,
+maxWidth: pick.k > lines.length ? W - pick.s : 0,
+};
+}
+function d2zhWrap(ctx, text, maxWidth) {
+if (!maxWidth || ctx.measureText(text).width <= maxWidth) return [text];
+const out = [];
+let line = '';
+for (const token of text.includes(' ') ? text.split(/(?<=\s)/u) : Array.from(text)) {
+const next = line + token;
+if (line && ctx.measureText(next).width > maxWidth) {
+out.push(line.trimEnd());
+line = token.trimStart();
+if (ctx.measureText(line).width > maxWidth) {
+let part = '';
+for (const ch of Array.from(line)) {
+if (part && ctx.measureText(part + ch).width > maxWidth) { out.push(part); part = ch; }
+else part += ch;
+}
+line = part;
+}
+} else line = next;
+}
+if (line) out.push(line.trimEnd());
+return out;
+}
+function d2zhPaint(c, st) {
+const lang = d2zhLang();
+st.lang = lang;
+d2zhBusy = true;
+try {
+const ctx = c.getContext('2d');
+if (!ctx) return;
+const cjk = D2ZH_CJK.test(st.src);
+if (!cjk && (lang !== 'zh-Hant' || !window.D2I18N.shouldUseLocalFont(st.src))) {
+if (c.width !== st.w || c.height !== st.h) { c.width = st.w; c.height = st.h; }
+D2ZH_PUT.call(ctx, st.en, 0, 0);
+return;
+}
+const text = cjk ? st.src : window.D2I18N.translate(st.src);
+const size = Math.max(10, st.size), lh = Math.max(size + 2, st.lh), s = st.shadow;
+const font = `${size}px ${D2ZH_FONT}`;
+ctx.font = font;
+const lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth));
+const widths = lines.map(l => ctx.measureText(l).width);
+c.width = Math.max(1, Math.ceil(Math.max(0, ...widths)) + s);
+c.height = Math.max(1, Math.ceil(size + (lines.length - 1) * lh + s));
+ctx.font = font;
+ctx.textBaseline = 'middle';
+const fill = `rgb(${st.color[0]}, ${st.color[1]}, ${st.color[2]})`;
+lines.forEach((line, i) => {
+const w = widths[i];
+const x = st.align === 'left' ? 0 : st.align === 'right' ? c.width - w - s : (c.width - w - s) / 2;
+const y = size / 2 + i * lh;
+if (s) { ctx.fillStyle = '#000'; ctx.fillText(line, x + 1, y + 1); }
+ctx.fillStyle = fill;
+ctx.fillText(line, x, y);
+});
+c.setAttribute('aria-label', text);
+} finally {
+d2zhBusy = false;
+}
+}
+function d2zhCapture(c, img, src) {
+const st = d2zhAnalyze(img, src);
+D2ZH_STATE.set(c, st);
+if (d2zhLang() === 'zh-Hant' || D2ZH_CJK.test(src)) d2zhPaint(c, st);
+return st;
+}
+function d2zhAdopt(c) {
+if (!c.width || !c.height || !c.textContent) return null;
+const ctx = c.getContext('2d');
+if (!ctx) return null;
+const st = d2zhAnalyze(ctx.getImageData(0, 0, c.width, c.height), c.textContent);
+D2ZH_STATE.set(c, st);
+return st;
+}
+function d2zhMergeParts(box) {
+const kids = [...box.children].filter(c => D2ZH_STATE.has(c));
+const states = kids.map(c => D2ZH_STATE.get(c));
+kids.forEach((c, k) => {
+const st = states[k];
+if (st.orig === undefined) st.orig = st.src;
+if (st.src !== st.orig || c.style.display === 'none') { st.src = st.orig; st.lang = null; c.style.display = ''; }
+});
+if (d2zhLang() === 'zh-Hant' && window.__d2zhKnown) {
+for (let i = 0; i < kids.length; i++) {
+for (let n = Math.min(4, kids.length - i); n >= 2; n--) {
+const group = states.slice(i, i + n);
+const color = group[0].color.join();
+if (group.some(st => st.color.join() !== color)) continue;
+const last = group[n - 1].orig;
+const tail = /[:,.;!?]$/.test(last) ? last.slice(-1) : '';
+const phrase = group.map(st => st.orig).join(' ');
+const name = tail ? phrase.slice(0, -1) : phrase;
+if (!window.__d2zhKnown(name)) continue;
+group[0].src = phrase;
+group[0].lang = null;
+kids.slice(i + 1, i + n).forEach(c => { c.style.display = 'none'; });
+i += n - 1;
+break;
+}
+}
+}
+kids.forEach((c, k) => { if (states[k].lang !== d2zhLang()) d2zhPaint(c, states[k]); });
+}
+function d2zhMergeAll(root) {
+if (!(root instanceof Element)) return;
+if (root.classList.contains('d2-parts')) d2zhMergeParts(root);
+for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
+}
+function d2zhInstallHook() {
+D2ZH_CTX.putImageData = function (img, dx, dy) {
+const r = D2ZH_PUT.apply(this, arguments);
+const c = this.canvas;
+if (!d2zhBusy && arguments.length === 3 && dx === 0 && dy === 0 && d2zhIsText(c)
+&& img.width === c.width && img.height === c.height) {
+try { d2zhCapture(c, img, c.textContent || ''); } catch (e) { console.warn('[D2 中文]', e); }
+}
+return r;
+};
+D2ZH_CTX.drawImage = function (img) {
+if (!d2zhBusy && img instanceof HTMLCanvasElement && img.classList.contains('d2-text')) {
+try {
+const st = D2ZH_STATE.get(img) || (d2zhIsText(img) ? d2zhAdopt(img) : null);
+if (st && st.lang !== d2zhLang()) d2zhPaint(img, st);
+} catch (e) { console.warn('[D2 中文]', e); }
+}
+return D2ZH_DRAW.apply(this, arguments);
+};
+window.addEventListener('d2-language-changed', () => {
+for (const c of document.querySelectorAll('canvas.d2-text')) {
+const st = D2ZH_STATE.get(c);
+if (st && st.lang !== d2zhLang()) d2zhPaint(c, st);
+}
+d2zhMergeAll(document.body);
+});
+new MutationObserver(records => {
+for (const r of records) for (const node of r.addedNodes) d2zhMergeAll(node);
+}).observe(document.body, { subtree: true, childList: true });
+for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) d2zhAdopt(c);
+}
+d2zhInstallHook();
+const D2ZH_EXTRA = {"labels":{"Cap":"帽子","Skull Cap":"骷髏帽","Helm":"頭盔","Full Helm":"全盔","Great Helm":"卓越頭盔","Mask":"面具","Crown":"皇冠","Bone Helm":"骨盔","War Hat":"戰帽","Sallet":"輕便頭盔","Casque":"無頰頭盔","Basinet":"圓頂盔","Winged Helm":"翼盔","Grim Helm":"陰森頭盔","Grand Crown":"巨皇冠","Death Mask":"死亡面具","Shako":"軍帽","Hydraskull":"九頭蛇頭蓋骨圓帽","Armet":"活動頭盔","Giant Conch":"巨型海螺","Spired Helm":"螺旋頭盔","Corona":"頭冠","Demonhead":"惡魔頭顱","Bone Visage":"骨面","Circlet":"頭飾","Coronet":"寶冠","Tiara":"三重冠","Diadem":"權冠","Wolf Head":"狼頭","Hawk Helm":"飛鷹頭盔","Antlers":"鹿角","Falcon Mask":"獵鷹面具","Spirit Mask":"靈魂狼頭面具","Alpha Helm":"阿爾發頭盔","Griffon Headdress":"獅鷲獸頭帶","Hunter's Guise":"獵人的偽裝","Sacred Feathers":"神聖羽毛頭帶","Totemic Mask":"圖騰面具狼盔","Blood Spirit":"血腥之靈","Sun Spirit":"太陽之靈","Earth Spirit":"大地之靈","Sky Spirit":"天空之靈","Dream Spirit":"幽夢之靈","Jawbone Cap":"顎骨帽","Fanged Helm":"尖牙盔","Horned Helm":"角盔","Assault Helmet":"突擊頭盔","Avenger Guard":"復仇者之盔","Jawbone Visor":"顎骨面甲","Lion Helm":"獅頭尖盔","Rage Mask":"狂怒面具","Savage Helmet":"野蠻頭盔","Slayer Guard":"殺手防護面甲","Carnage Helm":"屠殺頭盔","Fury Visor":"暴怒面甲","Destroyer Helm":"毀滅者頭盔","Conqueror Crown":"征服者皇冠面甲","Guardian Crown":"守護者皇冠","Quilted Armor":"布甲","Leather Armor":"皮甲","Hard Leather Armor":"硬皮甲","Studded Leather":"鑲嵌甲","Ring Mail":"環甲","Scale Mail":"鱗甲","Chain Mail":"鎖子甲","Breast Plate":"胸甲","Splint Mail":"板甲","Plate Mail":"板甲","Field Plate":"實戰鎧甲","Gothic Plate":"哥德鎧甲","Full Plate Mail":"全身鎧甲","Ancient Armor":"古代盔甲","Light Plate":"輕型裝甲","Ghost Armor":"鬼魂戰甲","Serpentskin Armor":"海蛇皮甲","Demonhide Armor":"惡魔皮甲","Trellised Armor":"攀繞戰甲","Linked Mail":"連環甲","Tigulated Mail":"鱗片甲","Mesh Armor":"織網戰甲","Cuirass":"胸鎧","Russet Armor":"羅瑟戰甲","Templar Coat":"聖殿外衣","Sharktooth Armor":"鯊齒戰甲","Embossed Plate":"浮雕鎧甲","Chaos Armor":"混沌盔甲","Ornate Plate":"華麗鎧甲","Mage Plate":"法師鎧甲","Dusk Shroud":"灰暮壽衣","Wyrmhide":"龍皮甲","Scarab Husk":"聖甲蟲殼","Wire Fleece":"線羊毛皮甲","Diamond Mail":"鑽石甲","Loricated Mail":"鎖片甲","Boneweave":"骸骨鏈甲","Great Hauberk":"巨型鎖甲","Balrog Skin":"炎魔皮板甲","Hellforge Plate":"地獄熔爐鎧甲","Kraken Shell":"海妖殼甲","Lacquered Plate":"漆鎧","Shadow Plate":"暗影鎧甲","Sacred Armor":"神聖盔甲","Archon Plate":"執政官鎧甲","Buckler":"圓盾","Small Shield":"小盾牌","Large Shield":"大盾牌","Kite Shield":"輕盾","Tower Shield":"塔盾","Gothic Shield":"哥德盾牌","Bone Shield":"白骨盾牌","Spiked Shield":"尖刺盾","Defender":"防禦者盾","Round Shield":"圓型盾","Scutum":"長方盾","Dragon Shield":"龍盾","Pavise":"大型立盾","Ancient Shield":"古代之盾","Grim Shield":"冷酷之盾","Barbed Shield":"倒鉤盾","Heater":"加熱盾","Luna":"月盾","Hyperion":"亥伯龍盾","Monarch":"統治者大盾","Aegis":"神盾","Ward":"保護盾牌","Troll Nest":"洞穴巨魔巢穴骨盾","Blade Barrier":"刀刃屏障","Targe":"小盾","Rondache":"圓盾牌","Heraldic Shield":"紋章盾","Aerin Shield":"艾林盾","Crown Shield":"皇冠盾","Akaran Targe":"阿卡蘭輕圓盾","Akaran Rondache":"阿卡蘭圓盾","Protector Shield":"保護者之盾","Gilded Shield":"飾金盾牌","Royal Shield":"皇家盾","Sacred Targe":"神聖小盾","Sacred Rondache":"神聖輕圓盾","Kurast Shield":"庫拉斯特盾","Zakarum Shield":"撒卡蘭姆盾牌","Vortex Shield":"旋風盾","Preserved Head":"保存頭顱","Zombie Head":"殭屍頭顱","Unraveller Head":"解縛者頭顱","Gargoyle Head":"石像鬼頭顱","Demon Head":"惡魔之首","Mummified Trophy":"木乃伊獎章","Fetish Trophy":"妖人獎章","Sexton Trophy":"助祭獎章","Cantor Trophy":"領唱者印記","Hierophant Trophy":"祭司印記","Minion Skull":"僕從骷髏","Hellspawn Skull":"地獄之子骷髏","Overseer Skull":"督軍骷髏","Succubus Skull":"女妖之骨","Bloodlord Skull":"血王之骨","Leather Gloves":"皮手套","Heavy Gloves":"重手套","Chain Gloves":"鎖鍊手套","Light Gauntlets":"輕型鐵手套","Gauntlets":"鐵手套","Demonhide Gloves":"魔皮手套","Sharkskin Gloves":"鯊魚皮套","Heavy Bracers":"重型手鐲","Battle Gauntlets":"戰場手套","War Gauntlets":"巨戰手套","Bramble Mitts":"荊棘連指手套","Vampirebone Gloves":"吸血鬼骸骨手套","Vambraces":"吸血鬼手套","Crusader Gauntlets":"十字軍鐵手套","Ogre Gauntlets":"食人魔鐵手套","Boots":"靴子","Heavy Boots":"重靴","Chain Boots":"鎖鍊靴","Light Plated Boots":"輕型金屬靴","Greaves":"護脛","Demonhide Boots":"魔皮靴","Sharkskin Boots":"鯊皮之靴","Mesh Boots":"織網之靴","Battle Boots":"戰場之靴","War Boots":"巨戰之靴","Wyrmhide Boots":"龍皮靴","Scarabshell Boots":"聖甲蟲殼靴","Boneweave Boots":"骸骨靴","Mirrored Boots":"鏡面靴","Myrmidon Greaves":"極速靴","Sash":"飾帶","Light Belt":"輕扣帶","Belt":"腰帶","Heavy Belt":"重扣帶","Plated Belt":"金屬扣帶","Demonhide Sash":"魔皮勳帶","Sharkskin Belt":"鯊皮腰帶","Mesh Belt":"織網腰帶","Battle Belt":"戰場腰帶","War Belt":"巨戰腰帶","Spiderweb Sash":"蛛網腰帶","Vampirefang Belt":"吸血鬼燎牙腰帶","Mithril Coil":"秘銀腰帶","Troll Belt":"洞穴巨魔腰帶","Colossus Girdle":"巨神腰帶","Hand Axe":"手斧","Axe":"斧","Double Axe":"雙刃斧","Military Pick":"軍用鎬","War Axe":"巨戰斧","Large Axe":"巨斧","Broad Axe":"闊斧","Battle Axe":"戰鬥斧","Great Axe":"卓越之斧","Giant Axe":"大斧","Hatchet":"小斧","Cleaver":"切肉斧","Twin Axe":"強化雙斧","Crowbill":"鴉喙斧","Naga":"納卡","Military Axe":"軍斧","Bearded Axe":"鬚斧","Tabar":"戰鬥斧","Gothic Axe":"哥德之斧","Ancient Axe":"古代之斧","Tomahawk":"戰鉞","Small Crescent":"小新月斧","Ettin Axe":"雙頭斧","War Spike":"戰刺","Berserker Axe":"狂戰士斧","Feral Axe":"猛禽斧","Silver-edged Axe":"銀刃斧","Decapitator":"斬首斧","Champion Axe":"豪傑斧","Glorious Axe":"榮光之斧","Wand":"法杖","Yew Wand":"紫杉之杖","Bone Wand":"骨杖","Grim Wand":"殘酷之杖","Burnt Wand":"燒焦之杖","Petrified Wand":"淨化之杖","Tomb Wand":"古墓之杖","Grave Wand":"墓地之杖","Polished Wand":"拋光魔杖","Ghost Wand":"鬼魂法杖","Lich Wand":"巫妖法杖","Unearthed Wand":"破隱法杖","Club":"木棒","Spiked Club":"尖刺棍棒","Mace":"釘頭錘","Morning Star":"流星鎚","Flail":"連枷","War Hammer":"巨戰鐵鎚","Maul":"撞槌","Great Maul":"巨槌","Cudgel":"棍棒","Barbed Club":"倒鉤棍","Flanged Mace":"凸緣釘頭錘","Jagged Star":"鋸齒流星鎚","Knout":"鐵皮鞭","Battle Hammer":"戰鬥鐵鎚","War Club":"戰棍","Martel de Fer":"鐵錘","Truncheon":"戰儀杖","Tyrant Club":"暴君棍","Reinforced Mace":"強化釘頭錘","Devil Star":"惡魔流星錘","Scourge":"天罰之錘","Legendary Mallet":"傳說之鎚","Ogre Maul":"食人魔大槌","Thunder Maul":"雷霆大槌","Scepter":"權杖","Grand Scepter":"雄偉權杖","War Scepter":"巨戰權杖","Rune Scepter":"符文權杖","Holy Water Sprinkler":"聖水噴杖","Divine Scepter":"神屬權杖","Mighty Scepter":"強威權杖","Seraph Rod":"熾天使之杖","Caduceus":"神使之杖","Short Sword":"短劍","Scimitar":"彎刀","Sabre":"軍刀","Falchion":"彎劍","Crystal Sword":"水晶劍","Broad Sword":"闊劍","Long Sword":"長劍","War Sword":"巨戰之劍","Two-Handed Sword":"雙手劍","Claymore":"雙刃大刀","Giant Sword":"大劍","Bastard Sword":"雜種劍","Flamberge":"焰形劍","Great Sword":"卓越之劍","Gladius":"羅馬短劍","Cutlass":"微彎劍","Shamshir":"波斯彎刀","Tulwar":"印度彎刀","Dimensional Blade":"空間之刃","Battle Sword":"戰鬥劍","Rune Sword":"符文劍","Ancient Sword":"古代之劍","Espandon":"斬鐵劍","Dacian Falx":"雙刃鐮","Tusk Sword":"長牙劍","Gothic Sword":"哥德劍","Zweihander":"雙手巨劍","Executioner Sword":"死刑之劍","Falcata":"短劍","Ataghan":"土耳其劍","Elegant Blade":"優雅之刃","Hydra Edge":"九頭蛇之刃","Phase Blade":"幻化之刃","Conquest Sword":"征服之劍","Cryptic Sword":"神秘之劍","Mythical Sword":"秘儀之劍","Legend Sword":"傳奇之劍","Highland Blade":"高地之刃","Balrog Blade":"炎魔之刃","Champion Sword":"冠軍之劍","Colossus Sword":"巨神之劍","Colossus Blade":"巨神之刃","Dagger":"匕首","Dirk":"短刀","Kris":"波刃短劍","Blade":"短刀","Poignard":"銳匕","Rondel":"圓盤匕首","Cinquedeas":"五指劍","Stiletto":"細劍","Bone Knife":"骸骨小刀","Mithril Point":"秘銀尖刺","Fanged Knife":"尖牙刀","Legend Spike":"傳說尖刺","Throwing Knife":"飛刀","Throwing Axe":"飛斧","Balanced Knife":"平衡飛刀","Balanced Axe":"平衡斧","Battle Dart":"戰鬥飛鏢","Francisca":"法蘭飛斧","War Dart":"戰爭飛鏢","Hurlbat":"短戰戟","Flying Knife":"飛刀","Flying Axe":"飛斧","Winged Knife":"翼形刀","Winged Axe":"翼斧","Javelin":"標槍","Pilum":"短鏢槍","Short Spear":"短矛","Glaive":"大長刀","Throwing Spear":"飛矛","War Javelin":"戰爭標槍","Great Pilum":"卓越標槍","Simbilan":"銳矛","Spiculum":"尖頭標槍","Harpoon":"魚叉","Hyperion Javelin":"亥伯龍標槍","Stygian Pilum":"冥河標槍","Balrog Spear":"炎魔長矛","Ghost Glaive":"鬼魂尖槍","Winged Harpoon":"翼魚叉","Spear":"長矛","Trident":"三叉戟","Brandistock":"藏刃矛","Spetum":"三刃矛","Pike":"矛","War Spear":"巨戰長矛","Fuscina":"海神叉","War Fork":"戰叉","Yari":"日本槍","Lance":"長槍","Hyperion Spear":"亥伯龍之矛","Stygian Pike":"冥河長槍","Mancatcher":"捕人叉","Ghost Spear":"幽靈長矛","War Pike":"戰槍","Bardiche":"大砍刀","Voulge":"鉤鐮","Scythe":"鐮刀","Poleaxe":"長柄戰斧","Halberd":"長戟","War Scythe":"戰爭鐮刀","Lochaber Axe":"羅佳伯斧","Bill":"鉤刀","Battle Scythe":"戰鬥鐮刀","Partizan":"闊頭槍","Bec-de-Corbin":"雙鋒戰戟","Grim Scythe":"陰森鐮刀","Ogre Axe":"食人魔之斧","Colossus Voulge":"巨神鉤鐮","Thresher":"打穀者","Cryptic Axe":"神秘之斧","Great Poleaxe":"巨長斧","Giant Thresher":"巨型打穀者","Short Staff":"短棍","Long Staff":"長棍","Gnarled Staff":"多節棍","Battle Staff":"戰鬥法杖","War Staff":"巨戰法杖","Jo Staff":"喬木棒","Quarterstaff":"長棍","Cedar Staff":"杉木棍","Gothic Staff":"哥德之棍","Rune Staff":"符文之棍","Walking Stick":"手杖","Stalagmite":"鐘乳石之杖","Elder Staff":"長老之杖","Shillelagh":"樹皮之杖","Archon Staff":"執政官之杖","Short Bow":"短弓","Hunter's Bow":"獵弓","Long Bow":"長弓","Composite Bow":"組合弓","Short Battle Bow":"短戰鬥弓","Long Battle Bow":"長戰鬥弓","Short War Bow":"短巨戰弓","Long War Bow":"長巨戰弓","Edge Bow":"鋒銳之弓","Razor Bow":"剃刀之弓","Cedar Bow":"杉木弓","Double Bow":"雙弓","Short Siege Bow":"短攻城弓","Large Siege Bow":"長攻城弓","Rune Bow":"符文之弓","Gothic Bow":"哥德弓","Spider Bow":"蜘蛛弓","Blade Bow":"刀鋒弓","Shadow Bow":"陰影弓","Great Bow":"巨弓","Diamond Bow":"鑽石弓","Crusader Bow":"十字軍弓","Ward Bow":"庇護之弓","Hydra Bow":"九頭蛇弓","Light Crossbow":"輕十字弓","Crossbow":"十字弓","Heavy Crossbow":"重十字弓","Repeating Crossbow":"連發十字弓","Arbalest":"石弓","Siege Crossbow":"攻城十字弓","Ballista":"弩弓","Chu-Ko-Nu":"諸葛連弩","Pellet Bow":"彈丸弓","Gorgon Crossbow":"蛇髮女妖十字弓","Colossus Crossbow":"巨神十字弓","Demon Crossbow":"惡魔十字弓","Katar":"拳劍","Wrist Blade":"腕刃","Hatchet Hands":"斧手","Cestus":"腰刀","Claws":"爪","Blade Talons":"刃爪","Scissors Katar":"剪咬刃","Quhab":"格鬥刃","Wrist Spike":"腕刺","Fascia":"格鬥爪","Hand Scythe":"手鐮","Greater Claws":"巨爪","Greater Talons":"巨鷹爪","Scissors Quhab":"剪刃庫哈布","Suwayyah":"近身刃","Wrist Sword":"腕劍","War Fist":"戰拳","Battle Cestus":"鬥腰刀","Feral Claws":"猛禽爪","Runic Talons":"符紋爪","Scissors Suwayyah":"近身剪","Eagle Orb":"鷹之法珠","Sacred Globe":"神聖法球","Smoked Sphere":"煙霧法珠","Clasped Orb":"扣環法珠","Jared's Stone":"傑瑞德之石","Glowing Orb":"發光法珠","Crystalline Globe":"水晶法球","Cloudy Sphere":"雲霧法珠","Sparkling Ball":"閃耀水晶球","Swirling Crystal":"渦流水晶","Heavenly Stone":"天堂之石","Eldritch Orb":"怪異之球","Demon Heart":"惡魔之心","Vortex Orb":"漩渦球","Dimensional Shard":"次元碎片","Stag Bow":"男性之弓","Reflex Bow":"反射之弓","Maiden Spear":"少女之矛","Maiden Pike":"少女長槍","Maiden Javelin":"女士標槍","Ashwood Bow":"灰木之弓","Ceremonial Bow":"祭典之弓","Ceremonial Spear":"儀式之矛","Ceremonial Pike":"祭典之長矛","Ceremonial Javelin":"祭典之 標 槍","Matriarchal Bow":"女族長之弓","Grand Matron Bow":"大院長之弓","Matriarchal Spear":"女族長之矛","Matriarchal Pike":"族長長槍","Matriarchal Javelin":"女族長之 標 槍","Rogue's Bow":"蘿格之弓","Valkyrie Wing":"女神之翼","Undead Crown":"不死皇冠","Arch-Angel's Wing":"大天使之翼","Healing Potion":"治療藥水","Mana Potion":"法力藥水","Rejuvenation Potion":"回復藥水","Full Rejuvenation Potion":"全面回復藥水","Scroll of Town Portal":"城鎮傳送卷軸","Tome of Town Portal":"城鎮傳送之書","Gold":"金幣","Small Charm":"小護身符","Chipped":"碎裂的","Flawed":"瑕疵的","Flawless":"無瑕的","Perfect":"完美的","Amethyst":"紫寶石","Topaz":"黃寶石","Sapphire":"蔚藍","Emerald":"祖母綠","Ruby":"紅寶石","Diamond":"鑽石","Skull":"骷髏","Azurewrath":"蒼怒","Bladebone":"刃骨","Bloodfist":"血拳","Bloodrise":"血湧","Boneflame":"骨焰","Bonehew":"砍骨","Boneshade":"骨影","Brainhew":"碎腦","Crushflange":"碎骨錘","Culwen's Point":"庫爾溫的尖端","Deathbit":"死亡之刺","Deathspade":"死亡之鏟","Axe of Fechmar":"費屈瑪之斧","Felloak":"倒橡","Frostburn":"霜燒","Ghostflame":"鬼焰","Goldwrap":"金色包裹","Gorefoot":"血足","Gravenspine":"墳脊","Greyform":"灰形","Griswold's Edge":"格里斯瓦得的銳利","Hellcast":"地獄鑄","Hellclap":"地獄霹靂","Hellplague":"地獄瘟疫","Hellrack":"地獄架","Hotspur":"馬刺","Howltusk":"嚎牙","Iceblink":"冰眨","Ironstone":"鐵石","Lightsabre":"光劍","Magefist":"法師之拳","Nagelring":"納格戒指","Nightsmoke":"夜煙","Ormus' Robes":"奧瑪斯的長袍","Pluckeye":"挖眼","Rakescar":"耙疤","Ravenlore":"鴉之傳說","Razortail":"剃刀之尾","Rockfleece":"岩羊毛","Rusthandle":"鏽柄","Saracen's Chance":"薩拉森的機會","Shadowfang":"影牙","Snakecord":"蛇索","Soulflay":"剝魂","Spineripper":"裂脊","Stealskull":"竊顱","Steelclash":"鋼擊","Steelrend":"裂鋼","Stoneraven":"石鴉","Stormeye":"風暴之眼","Stormguild":"風暴之會","Stormspike":"風暴之刺","Stormstrike":"風暴之擊","Stormtree":"風暴之樹","Tearhaunch":"撕腿","Thunderstroke":"雷擊","Toothrow":"齒列","Twitchthroe":"抽搐","Witherstring":"枯弦","Wizardspike":"巫師之刺","Woestave":"悲哀之杖","Wolfhowl":"狼嚎","Blastbark":"爆樹皮","Beetleburst":"甲蟲爆裂","Bladebuckle":"刃扣","Metalgrid":"金屬網格","Leadcrow":"鉛鴉","Hellmouth":"地獄之口","Maelstrom":"大漩渦","Lacerator":"撕裂者","Widowmaker":"寡婦製造者","Chance Guards":"運氣守護","Hand of Blessed Light":"祝福之光之手","Amber":"琥珀","Arcing":"彎曲","Azure":"天青","Bahamut's":"巴哈姆特的","Beryl":"海藍","Blessed":"祝福的","Boreal":"北風","Bronze":"青銅","Brutal":"野蠻的","Buzzing":"嗡鳴的","Chromatic":"彩色的","Cobalt":"鈷","Coral":"珊瑚","Corosive":"腐蝕的","Crimson":"棗紅","Cruel":"殘酷的","Deadly":"致命的","Dragon's":"龍的","Drake's":"飛龍的","Ember":"餘燼的","Envenomed":"淬毒的","Felicitous":"幸運的","Ferocious":"殘暴的","Fine":"精良","Flaming":"燃燒","Fortuitous":"偶然的","Garnet":"深紅","Glimmering":"微光的","Glorious":"光榮的","Glowing":"發光","Godly":"如神的","Grandmaster's":"大宗師的","Great Wyrm's":"巨龍的","Hibernal":"冬季的","Holy":"神聖的","Iron":"鐵","Jade":"翠綠","Jagged":"鋸齒","King's":"國王的","Knight's":"騎士的","Lapis":"天藍","Lizard's":"蜥蜴","Lord's":"領主的","Massive":"巨大的","Master's":"大師","Merciless":"無情的","Meteoric":"流星的","Mnemonic":"記憶的","Ocher":"赭色的","Pestilent":"瘟疫","Platinum":"白金","Prismatic":"稜鏡的","Rainbow":"彩虹的","Russet":"赤褐","Saintly":"聖潔的","Savage":"凶猛的","Scintillating":"閃爍的","Scorching":"灼熱的","Septic":"腐敗","Serpent's":"海蛇","Sharp":"尖銳","Shimmering":"閃耀","Shivering":"顫抖","Shocking":"震撼","Silver":"白銀的","Smoking":"煙霧","Smoldering":"悶燒","Snake's":"蛇","Snowflake":"雪花的","Soldier's":"士兵的","Static":"靜態","Steel":"鋼","Strange":"奇異的","Strong":"強壯的","Sturdy":"堅固的","Tangerine":"紅柑","Toxic":"劇毒","Vicious":"惡毒的","Viridian":"銘綠","Warrior's":"戰士的","Weird":"怪異的","Wyrm's":"巨龍的","of Chance":"機運之","of Dexterity":"敏捷之","of Energy":"精力之","of Fire":"火焰之","of Health":"健康之","of Life":"生命之","of Life Everlasting":"永生之","of Lightning":"閃電之","of Skill":"技巧之","of Speed":"速度之","of Strength":"力量之","Gloom":"陰鬱","Gray":"灰色","Dire":"恐怖","Black":"黑色","Shadow":"暗影","Haze":"迷霧","Wind":"疾風","Storm":"風暴","Warp":"扭曲","Night":"暗夜","Moon":"月亮","Star":"星辰","Pit":"深坑","Flame":"火焰","Ice":"寒冰","Seethe":"沸騰","Ash":"灰燼","Stone":"岩石","Rust":"鐵鏽","Mold":"黴菌","Blight":"枯萎","Plague":"瘟疫","Rot":"腐爛","Ooze":"軟泥","Puke":"嘔吐","Snot":"鼻涕","Bile":"膽汁","Blood":"鮮血","Pulse":"脈動","Gut":"腸","Gore":"血腥","Flesh":"血肉","Bone":"骨","Spine":"脊椎","Mind":"心智","Spirit":"靈魂","Soul":"魂","Wrath":"憤怒","Grief":"悲傷","Foul":"污穢","Vile":"邪惡","Sin":"罪","Chaos":"混沌","Dread":"恐懼","Doom":"末日","Bane":"災禍","Death":"死亡","Viper":"毒蛇","Dragon":"龍","Devil":"惡魔","Touch":"之觸","Spell":"咒語","Feast":"盛宴","Wound":"創傷","Grin":"獰笑","Maim":"致殘","Hack":"劈砍","Bite":"之咬","Rend":"撕裂","Burn":"灼燒","Ripper":"撕裂者","Kill":"殺戮","Call":"呼喚","Vex":"煩擾","Web":"之網","Killer":"殺手","Razor":"剃刀","Drinker":"飲者","Shifter":"變形者","Crawler":"爬行者","Dancer":"舞者","Bender":"扭曲者","Weaver":"編織者","Eater":"吞噬者","Widow":"寡婦","Maggot":"蛆","Spawn":"之子","Wight":"屍妖","Grumble":"咕噥","Growler":"咆哮者","Snarl":"咆哮","Wolf":"狼","Crow":"烏鴉","Hawk":"鷹","Cloud":"雲","Bang":"轟","Head":"頭","Brow":"眉","Eye":"之眼","Maw":"巨口","Tongue":"舌","Fang":"尖牙","Horn":"號角","Thorn":"荊棘","Claw":"爪","Fist":"拳","Heart":"之心","Shank":"脛","Skin":"之皮","Wing":"之翼","Pox":"痘","Fester":"潰爛","Blister":"水泡","Pus":"膿","Slime":"黏液","Drool":"口水","Froth":"泡沫","Sludge":"淤泥","Poison":"毒","Break":"破碎","Shard":"碎片","Thirst":"之渴","Lust":"慾望","Beast":"野獸","Eagle":"鷹","Ghoul":"食屍鬼","Grim":"陰森","Rune":"符文","Wraith":"幽魂","Pain":"痛苦","Havoc":"浩劫","Gale":"狂風","Brimstone":"硫磺","Vengeance":"復仇","Badge":"徽章","Band":"指環","Beads":"念珠","Branch":"枝","Buckle":"扣環","Carapace":"甲殼","Clasp":"扣","Clutches":"爪握","Coat":"外衣","Coil":"盤繞","Collar":"項圈","Cord":"繩","Cowl":"兜帽","Crack":"裂痕","Crest":"頂飾","Cry":"哭號","Dart":"飛鏢","Edge":"之刃","Emblem":"紋章","Finger":"指","Fletch":"箭羽","Flight":"飛翔","Gnarl":"節瘤","Goad":"刺棒","Gorget":"護頸","Grip":"握","Guard":"守衛","Gutter":"溝","Gyre":"旋轉","Hand":"之手","Hew":"砍","Hide":"皮","Hold":"掌握","Hood":"兜帽","Jack":"夾克","Knell":"喪鐘","Knot":"結","Knuckle":"指節","Lash":"鞭","Lock":"鎖","Loop":"環","Mallet":"木槌","Mangler":"絞肉者","Mantle":"披風","Mark":"印記","Nails":"之釘","Necklace":"項鍊","Needle":"針","Nock":"箭扣","Noose":"絞索","Pelt":"毛皮","Prod":"戳刺","Quarrel":"弩箭","Quill":"羽刺","Road":"之路","Saw":"鋸","Scalpel":"手術刀","Scarab":"聖甲蟲","Scratch":"抓痕","Shroud":"裹屍布","Slippers":"拖鞋","Smasher":"粉碎者","Song":"之歌","Sphere":"球","Spike":"尖刺","Spiral":"螺旋","Spire":"尖塔","Splitter":"劈裂者","Spur":"馬刺","Stake":"木樁","Stalk":"莖","Stinger":"螫刺","Strap":"皮帶","Suit":"套裝","Sunder":"分裂","Talisman":"護符","Torc":"金屬項圈","Tower":"高塔","Track":"足跡","Trample":"踐踏","Turn":"轉折","Veil":"面紗","Visage":"面容","Wrack":"毀滅","Chant":"頌歌","Blazer":"烈焰","Abaddon":"亞巴頓","Abominable":"可憎雪人","Abyss Knight":"深淵騎士","Afflicted":"受折磨者","Apparition":"幻影","Arach":"阿拉克蛛","Arcane":"秘法","Assailant":"襲擊者","Axe Dweller":"斧居者","Balrog":"炎魔","Barracks":"兵營","Bishibosh":"比西博什","Black Archer":"黑暗弓箭手","Black Lancer":"黑暗槍兵","Black Locusts":"黑蝗蟲","Black Raptor":"黑猛禽","Black Raptor Nest":"黑猛禽巢","Black Rogue":"黑暗羅格","Black Soul":"黑魂","Blaze Ripper":"烈焰撕裂者","Blood Boss":"血頭目","Blood Bringer":"帶血者","Blood Clan":"血族","Blood Diver":"血潛者","Blood Hawk Nest":"血鷹巢","Blood Lord":"血王","Blood Maggot":"血蛆","Blood Maggot Egg":"血蛆卵","Blood Maggot Young":"幼血蛆","Blood Temptress":"血之誘惑者","Blood Wing":"血翼","Blunderbore":"笨熊巨人","Bog Creature":"沼澤生物","Bone Archer":"骷髏弓箭手","Bone Ash":"骨灰","Bone Mage":"骷髏法師","Bone Scarab":"骨甲蟲","Bone Warrior":"骷髏戰士","Bonebreaker":"碎骨者","Bramble Hulk":"荊棘巨人","Brute":"野獸人","Burning Dead":"燃燒亡者","Burning Dead Archer":"燃燒亡者弓箭手","Burning Dead Mage":"燃燒亡者法師","Burning Soul":"燃燒之魂","Cadaver":"屍體","Cantor":"吟唱者","Carrion Bird":"腐肉鳥","Carver":"雕刻者","Carver Shaman":"雕刻者薩滿","Cave Leaper":"洞穴跳躍者","Claw Viper":"利爪蝮蛇","Cliff Lurker":"懸崖潛伏者","Cloud Stalker":"雲中追蹤者","Coldcrow":"寒鴉","Corpse Spitter":"屍體噴吐者","Corpsefire":"屍火","Corpulent":"肥胖者","Council Member":"議會成員","Crush Beast":"粉碎獸","Crusher":"粉碎者","Damned":"被詛咒者","Dark Archer":"黑暗弓箭手","Dark Familiar":"黑暗使魔","Dark Hunter":"黑暗獵手","Dark Lancer":"黑暗槍兵","Dark Lord":"黑暗領主","Dark One":"黑暗者","Dark Ranger":"黑暗遊俠","Dark Shaman":"黑暗薩滿","Dark Shape":"黑暗之形","Dark Spearwoman":"黑暗女槍兵","Dark Stalker":"黑暗追蹤者","Darkwing":"暗翼","Death Beetle":"死亡甲蟲","Death Berserker":"死亡狂戰士","Death Brawler":"死亡鬥士","Death Brigadier":"死亡准將","Death Clan":"死亡氏族","Death Lord":"死亡領主","Death Mauler":"死亡重擊者","Death Slasher":"死亡斬擊者","Decayed":"腐朽者","Defiled Warrior":"褻瀆戰士","Demon Gremlin":"惡魔小鬼","Demon Imp":"惡魔小惡魔","Demon Rascal":"惡魔搗蛋鬼","Demon Sprite":"惡魔精靈","Demon Trickster":"惡魔騙子","Desert Wing":"沙漠之翼","Devilkin":"小惡魔","Devilkin Shaman":"小惡魔薩滿","Devourer":"吞噬者","Devourer Egg":"吞噬者卵","Devourer Young":"幼吞噬者","Disfigured":"毀容者","Doom Ape":"末日猿","Doom Caster":"末日施法者","Doom Knight":"末日騎士","Dried Corpse":"乾屍","Drowned Carcass":"溺斃的屍骸","Dune Beast":"沙丘獸","Dung Soldier":"糞甲蟲戰士","Embalmed":"防腐屍","Enslaved":"被奴役者","Faithful":"信徒","Fallen":"沉淪魔","Fallen Shaman":"沉淪魔巫師","Fangskin":"牙皮","Feeder":"進食者","Fetid Defiler":"惡臭褻瀆者","Fetish":"妖人","Fetish Shaman":"妖人薩滿","Fiend":"惡魔","Fire Boar":"火焰野豬","Flame Spider":"火焰蜘蛛","Flamespike the Crawler":"爬行者焰刺","Flayer":"剝皮者","Flayer Shaman":"剝皮者薩滿","Flesh Archer":"血肉弓箭手","Flesh Beast":"血肉獸","Flesh Hunter":"血肉獵手","Flesh Spawner":"血肉產卵者","Foul Crow":"污穢烏鴉","Foul Crow Nest":"污穢烏鴉巢","Frenzied Ice Spawn":"狂暴冰之子","Frozen Creeper":"冰凍爬行者","Frozen Scourge":"冰凍天譴","Frozen Terror":"冰凍恐懼","Frozenstein":"冰凍怪","Gargantuan Beast":"巨型野獸","Ghost":"鬼魂","Ghoul Lord":"食屍鬼領主","Giant Lamprey":"巨型七鰓鰻","Giant Lamprey Egg":"巨型七鰓鰻卵","Giant Lamprey Young":"幼巨型七鰓鰻","Gloam":"暮光","Gloombat":"陰鬱蝙蝠","Grotesque":"怪誕者","Grotesque Wyrm":"怪誕巨蟲","Guardian":"守衛者","Gull":"海鷗","Greater Hell Spawn":"大地獄之子","Heirophant":"祭司長","Hell Bovine":"地獄牛","Hell Buzzard":"地獄禿鷹","Hell Cat":"地獄貓","Hell Clan":"地獄氏族","Hell Lord":"地獄領主","Hell Slinger":"地獄投石者","Hell Spawn":"地獄之子","Hell Swarm":"地獄蟲群","Hell Temptress":"地獄誘惑者","Hell Whip":"地獄之鞭","Hell Witch":"地獄女巫","Hell's Belle":"地獄美人","Hollow One":"空洞者","Homunculus":"人造人","Horadrim Ancient":"赫拉迪姆先祖","Horror":"恐怖骷髏","Horror Archer":"恐怖弓箭手","Horror Mage":"恐怖法師","Humongous":"龐然巨人","Hungry Dead":"飢餓亡者","Huntress":"女獵手","Ice Boar":"冰霜野豬","Ice Spawn":"冰之子","Infidel":"異教徒","Invader":"入侵者","Itchies":"癢蟲","Jungle Hunter":"叢林獵手","Korlic":"科力克","Lasher":"鞭打者","Leaper":"跳躍者","Leviathan":"利維坦","Madawc":"馬道克","Marauder":"掠奪者","Mauler":"重擊者","Maw Fiend":"巨口惡魔","Minion of Destruction":"毀滅之僕","Misshapen":"畸形者","Moon Clan":"月之氏族","Moon Lord":"月之領主","Night Clan":"夜之氏族","Night Lord":"夜之領主","Night Marauder":"夜之掠奪者","Night Slinger":"夜之投石者","Night Tiger":"夜虎","Oblivion Knight":"遺忘騎士","Overlord":"霸主","Overseer":"督軍","Pindleskin":"暴躁外皮","Pit Lord":"深坑領主","Pit Viper":"深坑毒蛇","Pitspawn Fouldog":"深坑污犬","Plague Bearer":"疫病帶原者","Poison Spinner":"毒紡者","Preserved Dead":"保存的亡者","Prowling Dead":"徘徊亡者","Putrid Defiler":"腐爛褻瀆者","Radament":"拉達曼特","Rakanishu":"拉卡尼休","Rancid Defiler":"腐臭褻瀆者","Rat Man":"鼠人","Razor Spine":"剃刀脊","Reanimated Horde":"復甦部眾","Returned":"歸來者","Returned Archer":"歸來弓箭手","Returned Mage":"歸來法師","Riftwraith the Cannibal":"食人者裂隙幽魂","Rock Worm":"岩蟲","Rock Worm Egg":"岩蟲卵","Rock Worm Young":"幼岩蟲","Rot Walker":"腐行者","Saber Cat":"劍齒貓","Salamander":"火蜥蜴","Sand Leaper":"沙地跳躍者","Sand Maggot":"沙蛆","Sand Maggot Egg":"沙蛆卵","Sand Maggot Queen":"沙蛆女王","Sand Maggot Young":"幼沙蛆","Sand Raider":"沙漠掠奪者","Serpent Magus":"巨蛇法師","Sexton":"教堂司事","Siege Beast":"攻城獸","Siren":"海妖","Skeleton":"骷髏","Skeleton Archer":"骷髏弓箭手","Slayer":"殺戮者","Slime Prince":"黏液王子","Slinger":"投石者","Snow Drifter":"雪中漂泊者","Soul Killer":"靈魂殺手","Soul Killer Shaman":"靈魂殺手薩滿","Spear Cat":"標槍貓","Specter":"幽靈","Spider Magus":"蜘蛛法師","Spike Fiend":"尖刺惡魔","Steel Scarab":"鋼鐵甲蟲","Storm Caster":"風暴施法者","Strangler":"絞殺者","Stygian Dog":"冥河犬","Stygian Doll":"冥河玩偶","Stygian Fury":"冥河狂怒","Stygian Hag":"冥河女巫","Stygian Harlot":"冥河娼婦","Succubus":"魅魔","Sucker":"吸血者","Swamp Dweller":"沼澤居民","Taintbreeder":"污染繁殖者","Tainted":"受污染者","Talic":"塔力克","Temple Guard":"神殿守衛","The Banished":"被放逐者","The Tormentor":"折磨者","Thorn Beast":"荊棘獸","Thorned Hulk":"荊棘巨人","Thrasher":"鞭打者","Tomb Creeper":"墓穴爬行者","Tomb Viper":"墓穴毒蛇","Tree Lurker":"樹林潛伏者","Undead Flayer":"不死剝皮者","Undead Scavenger":"不死食腐者","Undead Soul Killer":"不死靈魂殺手","Undead Stygian Doll":"不死冥河玩偶","Unholy Corpse":"邪惡屍體","Unraveler":"解縛者","Urdar":"烏達","Venom Lord":"毒液領主","Vile Archer":"邪惡弓箭手","Vile Hunter":"邪惡獵手","Vile Lancer":"邪惡槍兵","Vile Temptress":"邪惡誘惑者","Vile Witch":"邪惡女巫","Vinvear Molech":"文維爾·莫洛克","Wailing Beast":"哀嚎獸","Warped One":"扭曲者","Warped Shaman":"扭曲薩滿","Winged Nightmare":"有翼夢魘","Wretched Defiler":"可悲褻瀆者","Yeti":"雪人","Zakarumite":"撒卡蘭姆信徒","Zealot":"狂熱者","Zombie":"殭屍","Goatman":"山羊人","Quill Rat":"刺鼠","Corrupt Rogue":"墮落羅格","Megademon":"巨型惡魔","Regurgitator":"反芻者","Succubus Witch":"魅魔女巫","Minion":"僕從","Ancient Tunnels":"古代通道","Arachnid Lair":"蜘蛛巢穴","Burial Grounds":"墓地","Canyon of the Magi":"眾法師之谷","Catacombs Level 1":"地下墓穴第 1 層","Catacombs Level 2":"地下墓穴第 2 層","Catacombs Level 3":"地下墓穴第 3 層","Cathedral":"大教堂","Causeway":"堤道","Cave Level 1":"洞穴第 1 層","Cave Level 2":"洞穴第 2 層","Claw Viper Temple Level 1":"利爪蝮蛇神殿第 1 層","Claw Viper Temple Level 2":"利爪蝮蛇神殿第 2 層","Crypt":"地穴","Desert":"沙漠","Disused Fane":"廢棄神廟","Disused Reliquary":"廢棄聖骨箱","Drifter Cavern":"漂流者洞穴","Durance":"囚牢","Durance of Hate Level 1":"憎恨囚牢第 1 層","Durance of Hate Level 2":"憎恨囚牢第 2 層","Flayer Dungeon Level 1":"剝皮者地牢第 1 層","Flayer Dungeon Level 2":"剝皮者地牢第 2 層","Flayer Dungeon Level 3":"剝皮者地牢第 3 層","Forgotten Reliquary":"被遺忘的聖骨箱","Forgotten Sands":"被遺忘的沙地","Forgotten Temple":"被遺忘的神殿","Frozen Abyss":"冰凍深淵","Furnace of Pain":"痛苦熔爐","Halls of Anguish":"苦惱大廳","Halls of Pain":"痛苦大廳","Halls of the Dead Level 1":"死亡大廳第 1 層","Halls of the Dead Level 2":"死亡大廳第 2 層","Halls of the Dead Level 3":"死亡大廳第 3 層","Harem Level 2":"後宮第 2 層","Hole Level 1":"地洞第 1 層","Hole Level 2":"地洞第 2 層","Icy Cellar":"冰冷地窖","Infernal Pit":"地獄深坑","Inner Cloister":"內修道院","Jail Level 1":"監獄第 1 層","Jail Level 2":"監獄第 2 層","Jail Level 3":"監獄第 3 層","Kurast":"庫拉斯特","Maggot Lair Level 1":"蛆蟲巢穴第 1 層","Maggot Lair Level 2":"蛆蟲巢穴第 2 層","Maggot Lair Level 3":"蛆蟲巢穴第 3 層","Matron's Den":"女族長之巢","Mausoleum":"陵墓","Monastery":"修道院","Moo Moo Farm":"哞哞農場","Nihlathak Temple":"尼拉塞克神殿","Outer Cloister":"外修道院","Palace Cellar Level 1":"宮殿地窖第 1 層","Palace Cellar Level 2":"宮殿地窖第 2 層","Palace Cellar Level 3":"宮殿地窖第 3 層","Pit Level 1":"地坑第 1 層","Pit Level 2":"地坑第 2 層","Pit of Acheron":"冥河之坑","Ruined Fane":"毀壞的神廟","Ruined Temple":"毀壞的神殿","Sewers Level 1":"下水道第 1 層","Sewers Level 2":"下水道第 2 層","Sewers Level 3":"下水道第 3 層","Spider Cavern":"蜘蛛洞穴","Stony Tomb Level 1":"石墓第 1 層","Stony Tomb Level 2":"石墓第 2 層","Swampy Pit Level 1":"沼澤地坑第 1 層","Swampy Pit Level 2":"沼澤地坑第 2 層","Swampy Pit Level 3":"沼澤地坑第 3 層","Tal Rasha's Chamber":"塔拉夏之室","The Ancients' Way":"先祖之路","The Chaos Sanctuary":"混沌避難所","Tomb":"古墓","Tower Cellar Level 1":"高塔地窖第 1 層","Tower Cellar Level 2":"高塔地窖第 2 層","Tower Cellar Level 3":"高塔地窖第 3 層","Tower Cellar Level 4":"高塔地窖第 4 層","Tower Cellar Level 5":"高塔地窖第 5 層","Tristram":"崔斯特姆","Underground Passage Level 1":"地下通道第 1 層","Underground Passage Level 2":"地下通道第 2 層","Worldstone Keep Level 1":"世界之石要塞第 1 層","Worldstone Keep Level 2":"世界之石要塞第 2 層","Worldstone Keep Level 3":"世界之石要塞第 3 層","Blood Moor":"鮮血荒地","Cold Plains":"冰冷之原","Stony Field":"石塊曠野","Dark Wood":"黑暗森林","Black Marsh":"黑色荒地","Tamoe Highland":"泰摩高地","Rocky Waste":"岩石荒地","Dry Hills":"乾燥高地","Far Oasis":"遙遠綠洲","Lost City":"遺忘之城","Valley of Snakes":"蛇谷","Absorbs Fire Damage":"吸收火焰傷害","Attacker Takes Damage of":"攻擊者受到傷害","Attacker Takes Lightning Damage of":"攻擊者受到閃電傷害","Better Chance of Getting Magic Items":"尋獲魔法物品機率提高","Bonus to Attack Rating":"攻擊準確率加成","Chance of Crushing Blow":"壓碎性打擊機率","Chance of Open Wounds":"撕裂傷口機率","Cold Absorb":"冰寒吸收","Fire Absorb":"火焰吸收","Lightning Absorb":"閃電吸收","Damage Reduced by":"傷害減少","Damage Taken Goes To Mana":"受到的傷害轉為法力","Damage to Demons":"對惡魔的傷害","Damage to Undead":"對不死生物的傷害","Defense vs. Missile":"對飛射物防禦","Drain Life":"吸取生命","Enhanced Maximum Damage":"增強最大傷害","Enhanced Minimum Damage":"增強最小傷害","Extra Gold from Monsters":"從怪物身上獲得額外金幣","Freezes target":"冰凍目標","Half Freeze Duration":"冰凍時間減半","Heal Stamina Plus":"耐力恢復加成","Hit Causes Monster to Flee":"擊中使怪物逃跑","Increase Maximum Mana":"提高法力上限","Increased Chance of Blocking":"提高格擋機率","Increased Stack Size":"提高堆疊數量","Life after each Demon Kill":"每殺死一隻惡魔恢復生命","Life after each Kill":"每次擊殺恢復生命","Magic Damage Reduced by":"魔法傷害減少","Maximum Stamina":"耐力上限","Piercing Attack":"穿透攻擊","Poison Length Reduced by":"中毒時間減少","Regenerate Mana":"法力恢復","Replenishes quantity":"補充數量","Slower Stamina Drain":"耐力消耗減緩","Slows Target by":"目標緩速","Target Defense":"目標防禦","to Amazon Skill Levels":"亞馬遜技能等級","to Attack Rating":"攻擊準確率","to Attack Rating against Demons":"對惡魔的攻擊準確率","to Attack Rating against Undead":"對不死生物的攻擊準確率","to Cold Skill Damage":"冰寒技能傷害","to Dexterity":"敏捷","to Enemy Fire Resistance":"敵人火焰抗性","to Enemy Lightning Resistance":"敵人閃電抗性","to Enemy Poison Resistance":"敵人毒素抗性","to Energy":"精力","to Fire Skill Damage":"火焰技能傷害","to Fire Skills":"火焰技能","to Life":"生命","to Light Radius":"照亮範圍","to Lightning Skill Damage":"閃電技能傷害","to Mana":"法力","to Mana after each Kill":"每次擊殺恢復法力","to Maximum Cold Damage":"最大冰寒傷害","to Maximum Damage":"最大傷害","to Maximum Fire Damage":"最大火焰傷害","to Maximum Fire Resist":"最大火焰抗性","to Maximum Lightning Damage":"最大閃電傷害","to Maximum Lightning Resist":"最大閃電抗性","to Maximum Poison Damage":"最大毒素傷害","to Maximum Poison Resist":"最大毒素抗性","to Minimum Cold Damage":"最小冰寒傷害","to Minimum Damage":"最小傷害","to Minimum Fire Damage":"最小火焰傷害","to Minimum Lightning Damage":"最小閃電傷害","to Minimum Poison Damage":"最小毒素傷害","to Monster Defense Per Hit":"每次擊中降低怪物防禦","to Strength":"力量","to Vitality":"體力","(Based on Character Level)":"（依角色等級）","Repairs %d durability per second":"每秒修復 %d 耐久度","Act I":"第一幕","ACT I":"第一幕","Act II":"第二幕","ACT II":"第二幕","Act III":"第三幕","ACT III":"第三幕","Act IV":"第四幕","ACT IV":"第四幕","Act V":"第五幕","ACT V":"第五幕","casts":"施放","cast":"施放","chills":"冰冷","chill":"冰冷","crawls":"爬行","crawl":"爬行","explodes":"爆炸","explode":"爆炸","hunts down its":"追擊","hunt down their":"追擊","it hits":"命中處","they hit":"命中處","it passes":"經過處","they pass":"經過處","pecks":"啄擊","peck":"啄擊","pierces":"穿透","pierce":"穿透","spirals":"盤旋","spiral":"盤旋","a bolt":"彈矢","a spark":"一道火花","an arrow":"箭矢","a fire arrow":"一支火焰箭","a magic arrow":"一支魔法箭","a hammer":"戰鎚","a javelin":"標槍","a kick":"一次踢擊","a skeleton":"一具骷髏","a swift blow":"一次快速攻擊","a twister":"一道扭曲旋風","a web":"一張網","a monster":"一隻怪物","Evolves":"進化","into":"為","also":"還","needs:":"需要：","Spells":"法術","Chain":"連鎖","Frozen":"冰封","Glacial":"冰河","Cold Spells":"冰寒法術","Lightning Spells":"閃電法術","Fire Spells":"火焰法術","Exit":"離開","EXIT":"離開","OK":"確定","Back":"返回","BACK":"返回","CANCEL":"取消","CONTINUE":"繼續","COPIED":"已複製","Copied":"已複製","Export":"匯出","Import":"匯入","Replace":"取代","UPDATES":"更新","LINK":"連結","OFF":"關","ON":"開","MUSIC":"音樂","SOUND":"音效","MUTE":"靜音","PREVIOUS HERO":"上一位英雄","INVENTORY":"物品欄","Inventory":"物品欄","Stash":"儲物箱","Shared Stash":"共用儲物箱","Skills":"技能","Passives":"被動技能","Upgrades":"升級","Items":"物品","Experience":"經驗值","Requirements":"需求","Repair":"修理","Sell":"出售","Buy":"購買","Reroll":"重抽","Skip":"略過","Banish":"放逐","Maxed":"已達上限","Choose":"選擇","Click":"點擊","Tap":"點一下","Enter":"Enter","Space":"空白鍵","Boss":"首領","Champion":"精英","Regular":"一般","Survivor":"倖存者","Strength":"力量","Dexterity":"敏捷","Vitality":"體力","Energy":"精力","Weapon":"武器","Armor":"盔甲","Shield":"盾牌","Gloves":"手套","Ring":"戒指","Amulet":"護身符","Damage":"傷害","Attack":"攻擊","Knockback":"擊退","Masteries":"專精","Warcries":"戰嚎","Curses":"詛咒","Traps":"陷阱","Barrel":"木桶","Urn":"甕","Brazier":"火盆","Corpse":"屍體","One hit":"一擊","Coming soon":"即將推出","Build complete":"建置完成","Not learned":"尚未習得","New skill":"新技能","New passive":"新被動技能","Empty skill slot":"空的技能欄","Empty passive slot":"空的被動欄","Skill Tree":"技能樹","Everything is maxed":"全部都已達上限","Nothing sold to buy back":"沒有可回購的物品","Put an item down on this panel":"把物品放到這個面板上","Shift-click an item, or put it down here":"Shift＋點擊物品，或放到這裡","Click a ware to buy it":"點擊貨品即可購買","Tap again for every skill":"再點一次檢視所有技能","Tap again to drop":"再點一次丟棄","Tap an item, then tap it again":"點選物品後再點一次","You do not have enough gold":"你的金幣不足","Your inventory is full":"你的物品欄已滿","Your inventory is full (C to make room)":"你的物品欄已滿（按 C 整理空間）","Your inventory is full (tap Character to make room)":"你的物品欄已滿（點「角色」整理空間）","Your stash is full":"你的儲物箱已滿","Slay the act boss to reach the next act":"擊敗本幕首領才能前往下一幕","Pick a card to banish it for this run":"選一張卡片，本輪將它放逐","Pick with 1–3 or click":"按 1～3 或點擊選擇","Arrows or drag to adjust - Esc to go back":"方向鍵或拖曳調整 - Esc 返回","Enter: play again - T: Charsi's wares - Esc: main menu":"Enter：再玩一次 - T：恰西的貨品 - Esc：主選單","← → to choose · Enter to continue · N for a new run":"← → 選擇 · Enter 繼續 · N 開始新的一輪","← → to choose · Enter to play":"← → 選擇 · Enter 開始遊戲","Charsi's wares (B)":"恰西的貨品（B）","Charsi's wares (G)":"恰西的貨品（G）","Making the code…":"正在產生代碼…","The highest level a hero can reach":"英雄能達到的最高等級","Taken: ":"已取得：",": stash it":"：放進儲物箱",": stash it at Charsi's":"：到恰西那裡放進儲物箱",", needs:":"，需要："," - ready to evolve":" - 可以進化","A hit, and a second:":"一擊，再一擊：","Heals 30 Life":"恢復 30 生命","Restores all Life":"恢復全部生命","Restores all life":"恢復全部生命","Regenerate 1 life per second":"每秒恢復 1 生命","Wirt's Leg + Tome of Town Portal":"維特之腳 ＋ 城鎮傳送之書","This browser's gold, upgrades and gear give way to the code's. Export them first to keep a copy.":"此瀏覽器的金幣、升級與裝備會被代碼內容取代。請先匯出保留一份。","Unofficial fan project. Not affiliated with or endorsed by Blizzard Entertainment. Diablo® is a trademark of Blizzard Entertainment, Inc.":"非官方粉絲作品，與 Blizzard Entertainment 無關，亦未獲其認可。Diablo® 為 Blizzard Entertainment, Inc. 的商標。","Unofficial fan project. Not affiliated with or endorsed by Blizzard Entertainment.":"非官方粉絲作品，與 Blizzard Entertainment 無關，亦未獲其認可。","Diablo® is a trademark of Blizzard Entertainment, Inc.":"Diablo® 為 Blizzard Entertainment, Inc. 的商標。","Blizzard Entertainment":"Blizzard Entertainment","Blizzard Entertainment, Inc":"Blizzard Entertainment, Inc","Diablo®":"Diablo®","Diablo®, Diablo II®, Lord of Destruction® and Blizzard Entertainment® are trademarks or registered trademarks of Blizzard Entertainment, Inc. in the U.S. and/or other countries. All Diablo II game content (graphics, sounds, music, fonts, text and data) is © Blizzard Entertainment, Inc. and remains their property.":"Diablo®、Diablo II®、Lord of Destruction® 與 Blizzard Entertainment® 為 Blizzard Entertainment, Inc. 在美國及／或其他國家的商標或註冊商標。所有 Diablo II 遊戲內容（圖像、音效、音樂、字型、文字與資料）版權歸 Blizzard Entertainment, Inc. 所有。","If you represent Blizzard Entertainment and want anything changed or removed, contact the maintainer through the repository and it will be addressed promptly, including taking the project down.":"若您代表 Blizzard Entertainment 並希望修改或移除任何內容，請透過程式庫聯絡維護者，我們會儘速處理，包括下架本專案。","This notice describes the project’s intent and policies. It is not legal advice.":"本聲明說明本專案的目的與政策，並非法律意見。","No Blizzard files are distributed":"不散布任何 Blizzard 的檔案","Bring your own Diablo II: nothing is downloaded from Blizzard, and the app holds no Blizzard file. On first launch it finds your Diablo II and Lord of Destruction and extracts their art and sound once, in about a minute and a half. From then on it plays offline.":"請使用你自己的 Diablo II：程式不會從 Blizzard 下載任何東西，也不含任何 Blizzard 檔案。第一次啟動時會找到你的 Diablo II 與毀滅之王，花約一分半鐘擷取一次圖像與音效，之後即可離線遊玩。","Diablo II and Lord of Destruction, patched to 1.14, installed\nmacOS on Apple silicon, or Windows 10 or 11 (x64)\nAbout 1.5 GB of free disk space":"已安裝 Diablo II 與毀滅之王，並更新至 1.14\nApple 晶片的 macOS，或 Windows 10／11（x64）\n約 1.5 GB 可用磁碟空間","If it can’t find Diablo II, point it at the folder that holds d2data.mpq.":"如果找不到 Diablo II，請指定含有 d2data.mpq 的資料夾。","Run the installer. It isn’t signed, so SmartScreen warns about it: click More info, then Run anyway. This build is new and not yet tested on a real PC.":"執行安裝程式。程式沒有數位簽章，SmartScreen 會跳出警告：請按「其他資訊」再按「仍要執行」。此版本是新版，尚未在實體電腦上測試過。","Made by framara - @framara on X":"製作：framara - X 上的 @framara","D2 SURVIVORS":"D2 SURVIVORS","Slain Monsters Rest in Peace":"被殺的怪物安息","on attack":"攻擊時","Armor Shrine":"護甲神殿","Combat Shrine":"戰鬥神殿","Experience Shrine":"經驗神殿","Exploding Shrine":"爆炸神殿","Fire Shrine":"火焰神殿","Gem Shrine":"寶石神殿","Monster Shrine":"怪物神殿","Refilling Shrine":"補充神殿","Skill Shrine":"技能神殿","Mana Recharge Shrine":"法力充能神殿","Stamina Shrine":"耐力神殿","Resist Fire Shrine":"火焰抗性神殿","Resist Cold Shrine":"冰寒抗性神殿","Resist Lightning Shrine":"閃電抗性神殿","Resist Poison Shrine":"毒素抗性神殿","Poison Shrine":"毒素神殿","Portal Shrine":"傳送門神殿","Shrine":"神殿","You feel more skillful.":"你覺得技巧更純熟了。","You feel ready for battle.":"你覺得已經準備好戰鬥了。","You feel refreshed.":"你覺得精神煥發。","Your experience teaches you well.":"你的經驗讓你學到很多。","Your skin hardens.":"你的皮膚變硬了。","A circle of flame...":"一圈火焰……","A fiery death...":"火熱的死亡……","A marvelous gem...":"一顆神奇的寶石……","Death's advocate approaches.":"死亡的代言人逼近了。","Bow and\nCrossbow\nSkills":"弓與\n十字弓\n技能","Javelin\nand Spear\nSkills":"標槍與\n長矛\n技能","Passive\nand Magic\nSkills":"被動與\n魔法\n技能","Poison\nand Bone\nSpells":"毒素與\n白骨\n法術","Poison and Bone Spells":"毒素與白骨法術","Close Mini Panel":"關閉迷你面板","Open Mini Panel":"開啟迷你面板","Game Menu (Esc)":"遊戲選單（Esc）","Message Log":"訊息紀錄","Party Screen":"隊伍畫面","Quest Log":"任務紀錄","Skilled with the spear and the bow, she is a very versatile fighter.":"擅長使用長矛與弓，是一位非常全能的戰士。","Schooled in the Martial Arts, her mind and body are deadly weapons.":"受過武學訓練，她的心靈與身體都是致命的武器。","Summoning undead minions and cursing his enemies are his specialties.":"召喚不死僕從與詛咒敵人是他的專長。","He is unequaled in close-quarters combat and mastery of weapons.":"他在近身肉搏與武器運用上無人能及。","He is a natural party leader, holy man, and blessed warrior.":"他是天生的隊伍領袖、聖職者，也是受祝福的戰士。","She has mastered the elemental magicks -- fire, lightning, and ice.":"她精通元素魔法——火焰、閃電與冰霜。","Commanding the forces of nature, he summons wild beasts and raging storms to his side.":"他號令自然之力，召喚野獸與狂暴的風暴相助。","the Axe":"斧頭","the Cold":"冰冷者","the Hammer":"戰鎚","Dragonscale":"龍鱗","Festering Appendages":"潰爛附肢","Gorebelly":"血腹","Magma Torquer":"熔岩扭轉者","Tarnhelm":"隱身盔","Charsi":"恰西","Amazon":"亞馬遜","Assassin":"刺客","Barbarian":"野蠻人","Druid":"德魯伊","Necromancer":"死靈法師","Paladin":"聖騎士","Sorceress":"女巫","(Amazon Only)":"（亞馬遜專用）","(Assassin Only)":"（刺客專用）","(Barbarian Only)":"（野蠻人專用）","(Druid Only)":"（德魯伊專用）","(Necromancer Only)":"（死靈法師專用）","(Paladin Only)":"（聖騎士專用）","(Sorceress Only)":"（女巫專用）","Bows, javelins and a warrior’s reflexes":"弓、標槍與戰士的反應","Bone, poison, curses and the raised dead":"白骨、毒素、詛咒與復甦的亡者","Elemental storms, summoned beasts and shape shifting":"元素風暴、召喚野獸與變形","Fire, cold and lightning":"火焰、冰寒與閃電","Holy auras, combat skills and the Blessed Hammer":"神聖靈氣、戰鬥技能與祝福之錘","Weapon masteries, war cries and Whirlwind":"武器專精、戰嚎與旋風斬","Bow and Crossbow Skills":"弓與十字弓技能","Passive and Magic Skills":"被動與魔法技能","Javelin and Spear Skills":"標槍與長矛技能","Fire Skills":"火焰技能","Cold Skills":"冰寒技能","Combat Skills":"戰鬥技能","Elemental Skills":"元素技能","Poison and Bone Skills":"毒素與白骨技能","Shape Shifting Skills":"變形技能","Summoning Skills":"召喚技能","Damage Reduced":"傷害減少","Maximum Damage":"最大傷害","Minimum Damage":"最小傷害","Spells, auras and summons don't use it":"法術、靈氣與召喚物不會用到","More damage from every skill: gear's +% Damage and shrines":"提高所有技能傷害：裝備的 +% 傷害與神殿","More damage from weapon skills (arrows, javelins, blows, throws): the weapon's damage, Dexterity, gear's +% Attack Damage":"提高武器技能傷害（箭矢、標槍、近戰、投擲）：武器傷害、敏捷、裝備的 +% 攻擊傷害","More gold from what monsters drop":"怪物掉落更多金幣","Every blow lands here: Attack Rating is critical strike chance instead":"此處攻擊必定命中：攻擊準確率改為致命一擊機率","Chance of a critical strike: double damage":"致命一擊機率：雙倍傷害","Chance a physical hit makes the monster bleed for 8 seconds":"物理命中使怪物流血 8 秒的機率","Physical hits heal you by a share of their damage, less from monsters D2 drains less":"物理命中依傷害比例治療你；在 D2 中吸取較少的怪物效果也較低","Raises each armour's own Damage Reduction: counted in Damage Reduced":"提高每件護甲自身的傷害減免：計入傷害減少","Added to every weapon blow: its average goes to Attack Damage":"加到每次武器攻擊：平均值計入攻擊傷害","Added to every weapon blow: its share of the average goes to Attack Damage":"加到每次武器攻擊：其平均值比例計入攻擊傷害","Adds 0.4% Attack Damage a percent":"每 1% 增加 0.4% 攻擊傷害","Each point past the class's: +0.2% critical strike chance, +0.6% Attack Damage":"超過職業初始值的每一點：+0.2% 致命一擊機率、+0.6% 攻擊傷害","Each point past the class's: +1% physical damage":"超過職業初始值的每一點：+1% 物理傷害","No mana here: Faster Cast Rate, a quarter of a percent a point":"這裡沒有法力：改為快速施法率，每點 0.25%","No mana here: Faster Cast Rate, as what fighting pours in":"這裡沒有法力：改為快速施法率，隨戰鬥累積","No mana here: each point past the class's is +1% fire, cold, lightning, poison and magic damage":"這裡沒有法力：超過職業初始值的每一點為 +1% 火焰、冰寒、閃電、毒素與魔法傷害","Come back at half life\nonce more per run, per rank":"以一半生命復活\n每級每輪多一次","One more level-up banish per run, per rank":"每級每輪多一次升級放逐","One more level-up reroll per run, per rank":"每級每輪多一次升級重抽","One more level-up skip per run, per rank":"每級每輪多一次升級略過","+0.5 life per second per rank":"每級每秒 +0.5 生命","+1% chance of a critical strike, +3% Attack Damage":"+1% 致命一擊機率、+3% 攻擊傷害","+10% better chance of magic items per rank":"每級 +10% 尋獲魔法物品機率","+10% cold damage":"+10% 冰寒傷害","+10% fire damage":"+10% 火焰傷害","+10% gold per rank":"每級 +10% 金幣","+10% lightning damage":"+10% 閃電傷害","+10% magic damage (Teeth, Bone Spear, Bone Spirit)":"+10% 魔法傷害（骨牙、骨矛、骨魂）","+10% movement speed":"+10% 移動速度","+10% poison damage":"+10% 毒素傷害","+20 maximum life":"+20 生命上限","+20 to 40 maximum life, by class":"+20～40 生命上限，依職業而定","+5 points":"+5 點","+5% fire, cold, lightning, poison and magic damage":"+5% 火焰、冰寒、閃電、毒素與魔法傷害","+5% physical damage":"+5% 物理傷害","+7% movement speed and 4% shorter cooldowns":"+7% 移動速度，冷卻時間縮短 4%","+8% movement speed":"+8% 移動速度","2% less damage taken per rank":"每級受到的傷害減少 2%","Skills recharge 8% faster":"技能冷卻快 8%","Take 7% less damage":"受到的傷害減少 7%","Take 8% less damage":"受到的傷害減少 8%","You take 30% less damage and have 35% more life, renewed every 12s":"受到的傷害減少 30%、生命增加 35%，每 12 秒重新生效","Every few seconds a double of you appears nearby, drawing monsters (more often, for longer)":"每隔幾秒在附近出現你的分身吸引怪物（更頻繁、更持久）","Battle Orders, and +1 to all your skills":"戰鬥命令，並使所有技能 +1","Aura: +10% magic damage (Blessed Hammer, Holy Bolt, Holy Shield)":"靈氣：+10% 魔法傷害（祝福之槌、聖光彈、神聖之盾）","Aura: +10% physical damage (Zeal, Smite, Charge)":"靈氣：+10% 物理傷害（熱誠、重擊、衝鋒）","Aura: burns every monster around you each second":"靈氣：每秒灼燒你周圍的所有怪物","Aura: lightning jolts every monster around you each second":"靈氣：每秒以閃電電擊你周圍的所有怪物","Aura: monsters around you are slowed by half and chilled each second":"靈氣：你周圍的怪物每秒被緩速一半並冰冷","Aura: monsters around you take 10% more damage from everything, +5% a level":"靈氣：你周圍的怪物受到的所有傷害增加 10%，每級 +5%","Aura: skills recharge 5% faster, +4% physical damage":"靈氣：技能冷卻快 5%，+4% 物理傷害","Aura: take 6% less damage":"靈氣：受到的傷害減少 6%","2 bolts that jump between up to 8 monsters, 45 damage each":"2 道在最多 8 隻怪物間跳躍的彈矢，各 45 傷害","2 molten boulders roll through all in their path, 95 damage, knockback, leaving fire":"2 顆熔岩巨石輾過路徑上的一切，95 傷害並擊退，留下火焰","3 fire balls at the nearest monsters, bursting on impact for 55 damage around":"向最近的怪物發射 3 顆火球，命中時爆炸對周圍造成 55 傷害","6 axes thrown at the monsters around you, 55 damage each, passing through 3":"向周圍怪物投擲 6 把斧頭，各 55 傷害，可穿透 3 隻","6 blades thrown at the monsters around you, 36 damage each, passing through one":"向周圍怪物投擲 6 把刀刃，各 36 傷害，可穿透 1 隻","6 frenzied blows over the monsters in a wide reach (every other at a boss), 26 damage each":"對大範圍內的怪物狂亂攻擊 6 次（每隔一次打首領），各 26 傷害","A blast of the mind over the nearest pack, 90 damage and a 2s stun to all in it":"對最近的怪物群釋放心靈衝擊，90 傷害並暈眩 2 秒","A focused blow at the toughest monster in reach, 200 damage, splashing 60 to those beside it":"集中攻擊範圍內最強的怪物，200 傷害，對旁邊的怪物濺射 60","A wall of fire across the path ahead that burns for 4s":"在前方路徑上築起火牆，燃燒 4 秒","An orb that sprays chilling ice shards in every direction, 22 damage each":"向四面八方噴射冰冷碎片的法球，每片 22 傷害","Blades spin around you, 32 damage to all beside you 3 times a second, and fly off at monsters for 28":"刀刃環繞你旋轉，每秒 3 次對身旁所有怪物造成 32 傷害，並飛向怪物造成 28 傷害","Charge 3 times along your path, 60 damage in the way, a holy burst at each stop":"沿路徑衝鋒 3 次，對路上怪物造成 60 傷害，每次停下時神聖爆發","Leap where you run (at a foe when still) and strike: 320 damage, 100 around":"往奔跑方向跳躍（靜止時跳向敵人）並攻擊：320 傷害，周圍 100","Lightning keeps striking monsters around you, 70 damage":"閃電持續打擊你周圍的怪物，70 傷害","Meteors crash onto 3 monsters, 90 damage, and leave the ground burning":"隕石砸向 3 隻怪物，90 傷害，並使地面燃燒","The Hammerdin: 4 blessed hammers at once, whirling faster and wider, 40 damage to all they pass":"錘丁：一次 4 把祝福之槌，旋轉得更快更廣，對經過的怪物造成 40 傷害","a bash":"猛擊","a blade":"刀刃","a bolt from the sky":"天降彈矢","a bolt or blow back":"彈矢或反擊","a burst of fire, cold or lightning":"火焰、冰寒或閃電爆發","a cut or a thrown blade":"斬擊或飛刃","a fire ball":"火球","a kick or its fire":"踢擊或其火焰","a mage's bolt":"法師的彈矢","a meteor":"隕石","a monster around you":"你周圍的怪物","a monster in it":"其中的怪物","a monster in the blast":"爆炸中的怪物","a monster in the ring":"環內的怪物","a monster it lands among":"落點處的怪物","a second of a bite's poison":"撕咬毒素的一秒","a second of its poison":"其毒素的一秒","a spear":"長矛","a spear thrust":"長矛刺擊","a thrust at each monster around":"刺擊周圍每隻怪物","a tick of a fire":"火焰每次造成傷害時","a tornado":"龍捲風","an arrow or its blast":"箭矢或其爆炸","an arrow or its burst":"箭矢或其爆發","an axe":"斧頭","to Life (Based on Character Level)":"生命（依角色等級）","to Mana (Based on Character Level)":"法力（依角色等級）","Magic Arrow":"魔法箭","Fire Arrow":"火焰箭","Inner Sight":"內視","Critical Strike":"致命攻擊","Jab":"搓刺","Cold Arrow":"冰箭","Multiple Shot":"多重箭","Dodge":"閃躲","Power Strike":"威力一擊","Poison Javelin":"毒槍","Exploding Arrow":"爆裂箭","Slow Missiles":"慢速箭","Avoid":"躲避","Impale":"刺爆","Lightning Bolt":"閃電球","Ice Arrow":"急凍箭","Guided Arrow":"導引箭","Penetrate":"刺入","Charged Strike":"衝能一擊","Plague Javelin":"瘟疫標槍","Strafe":"掃射","Immolation Arrow":"犧牲之箭","Dopplezon":"分身","Decoy":"誘餌","Evade":"迴避","Fend":"擊退","Freezing Arrow":"凍結之箭","Valkyrie":"女武神","Pierce":"穿刺","Lightning Strike":"閃電攻擊","Lightning Fury":"閃電之怒","Fire Bolt":"火彈","Warmth":"溫暖","Charged Bolt":"衝能彈","Ice Bolt":"冰彈","Frozen Armor":"冰封裝甲","Inferno":"地獄火","Static Field":"靜態立場","Telekinesis":"心靈傳動","Frost Nova":"霜之新星","Ice Blast":"冰風暴","Blaze":"火焰之路","Fire Ball":"火球","Nova":"新星","Lightning":"閃電","Shiver Armor":"碎 冰甲","Fire Wall":"火牆","Enchant":"附魔","Chain Lightning":"連鎖閃電","Teleport":"傳送","Glacial Spike":"冰尖柱","Meteor":"隕石","Thunder Storm":"雷雲風暴","Energy Shield":"能量護盾","Blizzard":"暴風雪","Chilling Armor":"寒冰裝甲","Fire Mastery":"支配火燄","Hydra":"九頭蛇","Lightning Mastery":"支配閃電","Frozen Orb":"冰封球","Cold Mastery":"支配冰冷","Amplify Damage":"傷害加深","Teeth":"牙","Bone Armor":"白骨裝甲","Skeleton Mastery":"支配骷髏","Raise Skeleton":"復甦骷髏","Dim Vision":"微暗靈視","Weaken":"虛弱","Poison Dagger":"淬 毒匕首","Corpse Explosion":"屍體爆炸","Clay Golem":"黏 土石模","Iron Maiden":"攻擊反噬","Terror":"恐懼","Bone Wall":"骨牆","Golem Mastery":"支配石魔","Raise Skeletal Mage":"復甦骷髏法師","Confuse":"混亂","Life Tap":"偷取生命","Poison Explosion":"毒爆","Bone Spear":"骨矛","Blood Golem":"鮮血石魔","Attract":"吸引","Decrepify":"衰老","Bone Prison":"骨牢","Summon Resist":"召喚反抗","Iron Golem":"鋼鐵石魔","Lower Resist":"降低抵抗","Poison Nova":"劇毒新星","Bone Spirit":"白骨之魂","Fire Golem":"火焰石魔","Revive":"復活","Bash":"猛擊","Sword Mastery":"支配長劍","Axe Mastery":"支配斧頭","Mace Mastery":"支配釘頭錘","Howl":"嚎叫","Find Potion":"找尋葯劑","Leap":"跳躍","Double Swing":"雙手揮擊","Pole Arm Mastery":"長柄武器專精","Throwing Mastery":"支配飛擲","Spear Mastery":"支配長矛","Taunt":"嘲弄","Shout":"吶喊","Stun":"擊暈","Double Throw":"雙手投擲","Increased Stamina":"增加耐力","Find Item":"找尋物品","Leap Attack":"跳躍攻擊","Concentrate":"專心","Iron Skin":"鐵布衫","Battle Cry":"戰嗥","Frenzy":"狂亂","Increased Speed":"加速","Battle Orders":"戰鬥體制","Grim Ward":"殘酷嚇阻","Whirlwind":"旋風斬","Berserk":"狂戰士","Natural Resistance":"自然抵抗","War Cry":"戰鬥狂嗥","Battle Command":"戰鬥指揮","Sacrifice":"犧牲","Smite":"重擊","Might":"威能","Prayer":"祈禱","Resist Fire":"抗火","Holy Bolt":"聖光彈","Holy Fire":"聖火","Thorns":"荊棘","Defiance":"反抗","Resist Cold":"抗冰冷","Zeal":"熱誠","Charge":"衝鋒","Blessed Aim":"祝福瞄準","Cleansing":"淨化","Resist Lightning":"抵抗閃電","Blessed Hammer":"祝福之鎚","Concentration":"專注","Holy Freeze":"神聖冰凍","Vigor":"活力","Conversion":"轉化","Holy Shield":"神聖之盾","Holy Shock":"神聖衝擊","Sanctuary":"庇護所","Meditation":"冥想","Fist of the Heavens":"天堂之拳","Fanaticism":"狂熱","Conviction":"信念","Redemption":"救贖","Salvation":"救援","Raven":"烏鴉","Poison Creeper":"猛毒花藤","Werewolf":"狼人","Lycanthropy":"變狼術","Firestorm":"火風暴","Oak Sage":"橡木智者","Summon Spirit Wolf":"召喚鬼狼","Werebear":"熊人","Molten Boulder":"熔 漿巨岩","Arctic Blast":"極地風暴","Carrion Vine":"食屍藤","Feral Rage":"野性狂暴","Fissure":"火山裂隙","Cyclone Armor":"颶風裝甲","Heart of Wolverine":"狼獾之心","Summon Dire Wolf":"召喚狂狼","Summon Fenris":"召喚芬里爾","Rabies":"狂犬病","Fire Claws":"火焰之爪","Twister":"扭曲旋風","Solar Creeper":"太陽藤","Hunger":"飢餓","Shock Wave":"震波","Volcano":"火山","Tornado":"龍捲風","Spirit of Barbs":"荊棘之靈","Summon Grizzly":"召喚灰熊","Fury":"狂怒","Armageddon":"末日浩劫","Hurricane":"颶風","Cycle of Life":"生命循環","Claw Mastery":"支配利爪","Psychic Hammer":"心靈戰錘","Tiger Strike":"猛虎擊","Dragon Talon":"龍爪","Fire Blast":"火焰爆震","Burst of Speed":"速度爆發","Fists of Fire":"火焰之拳","Dragon Claw":"雙龍爪","Charged Bolt Sentry":"電能守衛","Wake of Fire":"火焰復甦","Wake of Fire Sentry":"火焰復甦守衛","Weapon Block":"武器格檔","Cloak of Shadows":"魔影斗篷","Cobra Strike":"眼鏡蛇攻擊","Blade Fury":"刃之怒","Fade":"消逝","Shadow Warrior":"影子戰士","Claws of Thunder":"雷電爪","Dragon Tail":"神龍擺尾","Lightning Sentry":"雷光守衛","Wake of Inferno":"復甦獄火","Mind Blast":"心靈爆震","Blades of Ice":"寒冰刃","Dragon Flight":"飛龍在天","Death Sentry":"亡者守衛","Blade Shield":"刀刃之盾","Blade Sentinel":"刃之守衛","Venom":"毒牙","Shadow Master":"支配影子","Phoenix Strike":"鳳凰攻擊","Aura Enchanted":"靈氣附魔","Cold Enchanted":"冰寒強化","Fire Enchanted":"火焰強化","Magic Resistant":"魔法抗性","Mana Burn":"燃燒法力","Teleportation":"瞬間移動","Cursed":"被詛咒","Possessed":"被附身","Fire Trauma":"火焰創傷","Fire Eye":"火眼","Prevent Monster Heal":"阻止怪物恢復","Replenish Life":"補充生命","Fires Explosive Arrows or Bolts":"射出爆裂箭或彈矢","Fires Magic Arrows":"射出魔法箭","Horror Arctic Blast":"恐怖極地寒風","Baal Inferno":"巴爾地獄火","Catacombs Level 4":"地下墓穴第 4 層","Durance of Hate Level 3":"憎恨囚牢第 3 層","Duriel's Lair":"督瑞爾之巢","Nihlathak's Temple":"尼拉塞克神殿","The Secret Cow Level":"秘密奶牛關","The Countess":"女伯爵","The Summoner":"召喚者","assassin upkeep":"刺客維持","barbarian upkeep":"野蠻人維持","druid upkeep":"德魯伊維持","sorceress upkeep":"女巫維持","Acrobat's":"特技","Alma Negra":"阿爾瑪 尼格拉","Arachnid Mesh":"蜘蛛之網","Arioc's Needle":"愛理歐克之針","Arkaine's Valor":"阿凱尼的榮耀","Arm of King Leoric":"李奧瑞克王的武器","Arreat's Face":"亞瑞特的面容","Astreon's Iron Ward":"愛斯特龍之鐵的保護區","Bane Ash":"禍根之灰","Baranar's Star":"巴拉那之星","Bartuc's Cut-Throat":"巴特克的猛擊","Biggin's Bonnet":"畢格因的軟帽","Blackhand Key":"黑手之鑰","Blinkbat's Form":"眨眼蝙蝠的外觀","Blood Crescent":"血紅新月","Blood Raven's Charge":"血鳥的襲擊","Bul-Kathos' Wedding Band":"布爾凱索之戒","Buriza-Do Kyanon":"布里撒 多 凱南","Burning":"燃燒","Bverrit Keep":"貝弗提的紀念","Captain's":"隊長","Carin Shard":"凱恩碎片","Cerebus' Bite":"地獄之吻","Chilling":"寒意","Crown of Ages":"年紀之冠","Crown of Thieves":"盜賊皇冠","Darkforce Spawn":"魔力肇生","Death Cleaver":"死亡之刀","Death's Web":"死亡之網","Demonhorn's Edge":"惡魔號角的邊緣","Dimoak's Hew":"迪馬克之劈砍","Dwarf Star":"矮人之星","Entrapping":"誘騙","Eschuta's Temper":"艾斯屈塔的脾氣","Expert's":"專家","Fanatic":"狂信者","Fletcher's":"製箭者","Fungal":"黴菌","Gargoyle's Bite":"石像鬼之噬","Gerke's Sanctuary":"基爾克的聖堂","Gloom's Trap":"陰影陷阱","Gore Rider":"蝕肉騎士","Graverobber's":"盜墓者","Griffon's Eye":"格利風之眼","Halaberd's Reign":"海拉柏得的國度","Harlequin Crest":"諧角之冠","Harpoonist's":"魚叉手","Hawk Branded":"老鷹烙印","Herald of Zakarum":"撒卡蘭姆使者","Hexing":"詛咒","Highlord's Wrath":"大君之怒","Husoldal Evo":"胡索丹 依弗","Iron Pelt":"擲鐵","Jade Talon":"碧玉爪","Jalal's Mane":"加爾的長髮","Kinemil's Awl":"金麥爾的錐子","Kira's Guardian":"奇拉的守護","Knell Striker":"敲擊喪鐘者","Langer Briser":"蘭格 布里瑟","Lidless Wall":"警戒之牆","Life":"生命","Lion Branded":"獅子烙印","Lycander's Aim":"雷山德的指標","Lycander's Flank":"雷山德的側腹","Mara's Kaleidoscope":"馬拉的萬花筒","Medusa's Gaze":"梅杜莎的凝視","Mentalist's":"心智","Nature's":"自然","Nature's Peace":"大自然的和平","Nightwing's Veil":"夜翼面紗","Nosferatu's Coil":"吸血聖王之圈","Passion":"熱情","Pelta Lunata":"新月小盾","Preserver's":"保護者","Que-Hegan's Wisdom":"魁黑剛的智慧","Radament's Sphere":"達羅門特之球體","Raven Claw":"渡鳥之爪","Raven Frost":"烏鴉之霜","Rixot's Keen":"瑞克撒特的輓歌","Rose Branded":"玫瑰烙印","Seraph's Hymn":"熾天使之韻","Shadow Dancer":"影舞者","Shadow Killer":"影殺者","Shock Web":"雷電網","Shogukusha's":"將軍","Skin of the Vipermagi":"蛇魔法師之皮","Skullder's Ire":"詩寇蒂的憤怒","Sounding":"鳴響","Sparking":"火光","Sparking Mail":"火花之甲","Spectral Shard":"妖怪碎片","Spire of Honor":"榮耀的尖塔","Spire of Lazarus":"拉撒羅斯之螺旋","Spirit Keeper":"靈魂看守者","Spirit Ward":"魂系結界","Spiritual":"精神","Steel Pillar":"鐵柱","Suicide Branch":"自殺支系","The Cat's Eye":"貓眼","The Chieftain":"族長","The Dragon Chang":"張龍","The Eye of Etlich":"艾利屈之眼","The Face of Horror":"恐懼之臉","The Fetid Sprinkler":"惡臭散佈者","The Gladiator's Bane":"鬥士的禍根","The Gnasher":"牙齒","The Hand of Broc":"柏克之手","the Impaler":"穿刺者","The Iron Jang Bong":"鐵檢棒","The Meat Scraper":"刮肉者","The Oculus":"眼球","The Patriarch":"族長","The Rising Sun":"旭日東昇","The Salamander":"火精靈","The Scalper":"圓鑿","The Tannr Gorerod":"坦之血杖","The Ward":"囚房","Thundergod's Vigor":"雷神之力","Titan's Revenge":"泰坦的復仇","Torch of Iro":"衣洛的火炬","Trainer's":"訓練師","Treads of Cthon":"凱松的征服","Umbral Disk":"陰影圓盤","Ume's Lament":"烏米的慟哭","Veil of Steel":"鋼鐵面紗","Verdungo's Hearty Cord":"維爾登戈的心結","Volcanic":"火山","War Traveler":"戰爭旅者","Wisp Projector":"鬼火投射者","Zakarum's Hand":"撒卡蘭姆之手"},"patterns":[["Holy Shield at its height for good, +{}% Chance to Block, smiting back; a holy blast every 4s throws monsters back, 50 damage","神聖之盾永遠維持最強，+{1}% 格擋機率並反擊；每 4 秒神聖爆發擊退怪物，50 傷害"],["A heavy blow at the toughest monster in reach, {} damage; each costs you {}% of your life, held back below {}% life","重擊範圍內最強的怪物，{1} 傷害；每次消耗你 {2}% 生命，生命低於 {3}% 時暫停"],["A sentry fires lightning 5 times, {} damage, and blows up a corpse near it each time for {} plus {}% of its life","守衛發射 5 次閃電，{1} 傷害，每次並引爆附近屍體造成 {2} 加上屍體生命的 {3}%"],["A Tome of Town Portal, transmuted with Wirt's Leg\nin the Horadric Cube: a portal to {}\nopens after Mephisto {}","城鎮傳送之書與維特之腳\n放進赫拉迪克方塊合成：通往{1}的傳送門\n會在擊敗墨菲斯托後開啟{2}"],["A trap near the nearest pack breathes fire at monsters 10 times, 5 flames of {} damage to all in their path","最近怪物群附近的陷阱向怪物噴火 10 次，每次 5 道火焰，對路徑上所有敵人造成 {1} 傷害"],["Bless your shield for {}s: +{}% Chance to Block, +{}% Defense; smite what you block for {}, and Smite hits harder","祝福你的盾牌 {1} 秒：+{2}% 格擋機率、+{3}% 防禦；格擋時重擊對方 {4}，重擊威力更強"],["A grizzly, {} damage a swipe, and the pack +{}% damage; with 3 dire wolves, 5 spirit wolves and {} ravens","一隻灰熊，每次揮擊 {1} 傷害，獸群傷害 +{2}%；另有 3 隻恐狼、5 隻狼靈與 {3} 隻烏鴉"],["Heart of Wolverine: +{}% damage to your blows and your summons', +{}% Attack Rating; Oak Sage's +{}% life","狼獾之心：你與召喚物的攻擊傷害 +{1}%、攻擊準確率 +{2}%；橡木智者 +{3}% 生命"],["Curse, {}s: monsters within {} of the nearest turn on each other with their own blows (not act bosses)","詛咒 {1} 秒：最近目標 {2} 範圍內的怪物會互相攻擊（幕首領除外）"],["A thrust at the toughest monster in reach, 120 damage; lightning chains on through {} more, 110 each","刺擊範圍內最強的怪物，120 傷害；閃電再連鎖 {1} 隻，各 110"],["The Worldstone is safe. You cleared all five acts{} in {}, at level {#}, having slain {#} monsters. +{#} gold.{}","世界之石已安全。你以 {2} 通過了全部五幕{1}，等級 {3}，共擊殺 {4} 隻怪物。+{5} 金幣。{6}"],["A charged thrust at the toughest monster in reach, 100 damage; {} bolts crackle on from it, 50 each","對範圍內最強的怪物充能刺擊，100 傷害；並迸出 {1} 道電彈，各 50"],["A solar creeper eats corpses: each speeds recharge {}% for {}s, up to {}%; the vine and {} creepers stay","日光藤吞食屍體：每具使技能冷卻加快 {1}%，持續 {2} 秒，最多 {3}%；藤蔓與 {4} 株毒藤會留下"],["Curse, {}s: monsters within {} of a target, ranged first, only see you beside them (not act bosses)","詛咒 {1} 秒：目標 {2} 範圍內的怪物（優先遠程）只看得到身邊的你（幕首領除外）"],["Blow up a corpse near monsters: {} damage plus {}% of its life, radius {}. Its own dead don't blow up","引爆怪物附近的屍體：{1} 傷害加上屍體生命的 {2}%，範圍 {3}。它造成的屍體不會連鎖引爆"],["Ice shards rain on the nearest pack for 2.4s, 24 shards of {} damage each, chilling what they hit","冰碎片落在最近的怪物群 2.4 秒，共 24 片，各 {1} 傷害並冰冷"],["When monsters crowd you, those around you flee in terror for {}s (bosses less, act bosses never)","被怪物包圍時，周圍的怪物會恐懼逃跑 {1} 秒（首領較短，幕首領不受影響）"],["A kick at the toughest in reach, {} damage, exploding in fire for {} around, releasing all charges","踢擊範圍內最強的敵人，{1} 傷害，爆炸對周圍造成 {2} 火焰傷害，釋放所有蓄能"],["Curse the toughest of the nearest pack, {}s: those within {} turn on it, passing on when it falls","詛咒最近怪物群中最強的一隻，{1} 秒：{2} 範圍內的怪物會攻擊它，它倒下後轉移"],["A blow at the toughest monster in reach: {} fire, cold and lightning each, half to those beside","攻擊範圍內最強的怪物：火焰、冰寒、閃電各 {1}，旁邊的怪物受一半"],["A golem of iron, {} life, {} damage, with a Thorns aura: what strikes it takes back {}% of the blow","鋼鐵石魔，{1} 生命，{2} 傷害，帶有荊棘靈氣：攻擊它的敵人承受 {3}% 反傷"],["{} javelins trailing poison that burst into a spreading cloud, 240 poison over {}s to all within {}","{1} 支拖曳毒素的標槍，爆出擴散毒雲，{3} 範圍內所有敵人 {2} 秒內受到 240 毒素傷害"],["Near a crowd or boss, blind all around you {}s: they take {}% more damage (act bosses unblinded)","靠近怪物群或首領時，使周圍敵人目盲 {1} 秒：受到的傷害增加 {2}%（幕首領不會目盲）"],["Werebear for {}s near monsters: 25% less damage taken, +{}% life, splashing blows of {}; no spells","靠近怪物時變身熊人 {1} 秒：受到的傷害減少 25%、+{2}% 生命，濺射攻擊 {3}；無法施法"],["Spirit of Barbs: monsters that strike you take back {}% of the damage, plus Wolverine's boons","荊棘之靈：攻擊你的怪物承受 {1}% 的反傷，並獲得狼獾之心的增益"],["Aura: +{}% chance of a critical strike (double damage) with Zeal, Smite, Charge and Sacrifice","靈氣：熱誠、重擊、衝鋒與犧牲 +{1}% 致命一擊機率（雙倍傷害）"],["Plant a totem among the nearest pack, and howl: for {}s monsters within {} of it flee in terror","在最近的怪物群中插下圖騰並嚎叫：{1} 秒內 {2} 範圍內的怪物恐懼逃跑"],["The strongest monster near you fights for you for {}s, harder; up to {}, no champions or bosses","你附近最強的怪物為你作戰 {1} 秒並更強；最多 {2} 隻，精英與首領除外"],["Up to 3 dire wolves, {} damage a bite, and the pack +{}% life; with 5 spirit wolves and {} ravens","最多 3 隻恐狼，每次撕咬 {1} 傷害，獸群生命 +{2}%；另有 5 隻狼靈與 {3} 隻烏鴉"],["Monsters near her take {}% more damage (except those with an immunity, which it can't break)","她附近的怪物受到的傷害增加 {1}%（無法破除免疫）"],["Summons take {}% less damage from monsters whose blows carry fire, cold, lightning or poison","召喚物受到帶有火焰、冰寒、閃電或毒素的怪物攻擊時，傷害減少 {1}%"],["A sentry near the nearest pack fires lightning through monsters in line 10 times, {} damage","最近怪物群附近的守衛發射 10 次貫穿直線怪物的閃電，{1} 傷害"],["A carrion vine eats corpses near you, each healing {} life + {}% of maximum; {} poison creepers","腐屍藤吞食你附近的屍體，每具恢復 {1} 生命 + 上限的 {2}%；{3} 株毒藤"],["Two blows in a wide reach, 45 damage each; hits speed your swings and steps, up to {} times","大範圍攻擊兩次，各 45 傷害；命中會加快揮擊與移動，最多疊加 {1} 次"],["The toughest monster nearby charges you for {}s, blows {}% weaker (act bosses only weakened)","附近最強的怪物向你衝來 {1} 秒，攻擊減弱 {2}%（幕首領只會被削弱）"],["Claws at the toughest in reach, {} damage; every fourth blow drains {} more, healing {}% of it","爪擊範圍內最強的敵人，{1} 傷害；每第四擊額外吸取 {2}，並恢復其中 {3}%"],["Curse, {}s: monsters within {} of a target slow by half, deal {}% less damage and take {}% more","詛咒 {1} 秒：目標 {2} 範圍內的怪物緩速一半，造成的傷害減少 {3}%、受到的傷害增加 {4}%"],["Curse, {}s: monsters within {} of the nearest take back {}% of their blows on you and summons","詛咒 {1} 秒：最近目標 {2} 範圍內的怪物攻擊你與召喚物時承受 {3}% 反傷"],["A jet of flame at the nearest monster within {}: {} flames, {} damage each to all in its path","向 {1} 範圍內最近的怪物噴出火焰：{2} 道火焰，對路徑上所有敵人各造成 {3} 傷害"],["Aura: +{}% cold resistance, and +{}% to its maximum (75%) a level; chill wears off {}% faster","靈氣：+{1}% 冰寒抗性，每級 +{2}% 抗性上限（75%）；冰冷效果消退快 {3}%"],["Aura: monsters close to you are hurt and thrown out, {} damage twice a second, +{} a level","靈氣：靠近你的怪物受到傷害並被彈開，每秒兩次 {1} 傷害，每級 +{2}"],["Bash the toughest monster in reach with your shield, {} damage, knocked back and stunned","用盾牌猛擊範圍內最強的怪物，{1} 傷害，擊退並暈眩"],["2 spikes at the nearest monsters burst for {} damage, freezing all in the burst for 1.5s","向最近的怪物射出 2 根冰刺，爆炸造成 {1} 傷害並冰凍範圍內敵人 1.5 秒"],["Claws at the toughest in reach, {} damage; every fourth blow releases 3 charges, +{}% each","爪擊範圍內最強的敵人，{1} 傷害；每第四擊釋放 3 層蓄能，每層 +{2}%"],["Claws at the toughest in reach, {} damage; every fourth blow bursts in fire, {} around it","爪擊範圍內最強的敵人，{1} 傷害；每第四擊爆出火焰，對周圍造成 {2}"],["Wereform blows add 32 poison over {}s; a bitten monster that dies passes it to {} near it","變身後的攻擊附加 {1} 秒 32 毒素傷害；被咬的怪物死亡時傳染給附近 {2}"],["Slain monsters have a {}% chance to leave gold (champions {}%), and now and then an item","被殺的怪物有 {1}% 機率掉落金幣（精英 {2}%），偶爾掉落物品"],["A golem of fire, {} life, {} damage, with a Holy Fire aura that burns everything near it","火焰石魔，{1} 生命，{2} 傷害，帶有灼燒周圍一切的聖火靈氣"],["A three-headed hydra near the nearest pack for {}s, spitting fire bolts, {} damage each","在最近的怪物群附近召喚三頭九頭蛇 {1} 秒，噴出火彈，各 {2} 傷害"],["{} arrows that burst into freezing ice, 90 damage around what they hit and a 3s chill","{1} 支爆出冰霜的箭，對命中處周圍造成 90 傷害並冰冷 3 秒"],["Werebear for {}s: blows of {}, each {} more a charge up to 13 (the last stuns); no spells","變身熊人 {1} 秒：攻擊 {2}，每層蓄能多 {3}，最多 13 層（最後一擊暈眩）；無法施法"],["{} trailing poison clouds, {} damage and {} poison over {}s to every monster in the clouds","拖曳毒雲的{1}，對雲中每隻怪物造成 {2} 傷害並在 {4} 秒內造成 {3} 毒素傷害"],["Thrown axes deal {}% more damage and have +{}% chance to fly on through what they hit","投擲的斧頭傷害增加 {1}%，並有 +{2}% 機率穿透目標"],["Curse, {}s: damage you and summons deal monsters within {} of the nearest heals you {}%","詛咒 {1} 秒：你與召喚物對最近目標 {2} 範圍內怪物造成的傷害，會恢復你 {3}%"],["A blow at the toughest monster in reach, {} damage, stunning it for {}s (bosses less)","攻擊範圍內最強的怪物，{1} 傷害，暈眩 {2} 秒（首領較短）"],["Claws, 36 damage; every fourth blow shatters ice, {} damage around and a long chill","爪擊，36 傷害；每第四擊震碎寒冰，對周圍造成 {1} 傷害並長時間冰冷"],["Maul as a werebear for {}s; every {}rd swing a stomp, {} damage within {} yards, stunning","以熊人形態重擊 {1} 秒；每第 {2} 次揮擊會踐踏，{4} 碼內 {3} 傷害並暈眩"],["Curse, {}s: monsters within {} of the nearest flee and don't attack (not act bosses)","詛咒 {1} 秒：最近目標 {2} 範圍內的怪物逃跑且不攻擊（幕首領除外）"],["A trap near the nearest pack sends out 5 waves of fire, {} damage to all they pass","最近怪物群附近的陷阱發出 5 波火焰，對經過的一切造成 {1} 傷害"],["When monsters close in, blink on ahead where they're fewest; ready again after {}s","怪物逼近時瞬移到前方怪物最少處；{1} 秒後可再次使用"],["Your shadow fights beside you, {} damage a blow, {} life; every third blow is a kick","你的影子在身旁作戰，每次攻擊 {1} 傷害，{2} 生命；每第三擊是踢擊"],["A spear thrust charged with lightning at the toughest monster in reach, {} damage","對範圍內最強的怪物發出帶電刺擊，{1} 傷害"],["A spinning blade shuttles between you and the nearest pack for {}s, {} damage a cut","旋轉的刀刃在你與最近的怪物群之間來回 {1} 秒，每次斬擊 {2} 傷害"],["An army: up to {} skeletons, and slain monsters rise to fight for you (up to {}, {}s)","大軍：最多 {1} 具骷髏，被殺的怪物會復活為你作戰（最多 {2} 隻，{3} 秒）"],["Blink to the toughest monster ahead and kick it, {} damage, releasing all charges","瞬移到前方最強的怪物並踢擊，{1} 傷害，釋放所有蓄能"],["For {}s burning rocks fall around you, the toughest monsters most, 90 damage each","{1} 秒內燃燒岩石落在你周圍（最強的怪物最多），各 90 傷害"],["A sentry near the nearest pack fires 5 bursts of 5 charged bolts, {} damage each","最近怪物群附近的守衛發射 5 輪、每輪 5 道充能彈，各 {1} 傷害"],["For {}s a storm rages within {} yards: 45 cold damage 2.5 times a second, chilling","{1} 秒內，{2} 碼範圍內颳起風暴：每秒 2.5 次 45 冰寒傷害並冰冷"],["The ground erupts under the nearest pack for {}s, across {} yards, {} damage a burst","最近的怪物群下方地面爆發 {1} 秒，範圍 {2} 碼，每次爆發 {3} 傷害"],["Two blasts of cold in a fan before you, {} damage each, chilling what they touch","向前方扇形噴出兩道寒氣，各 {1} 傷害並冰冷"],["{} fire trails, {} yards, at the nearest monster, burning {} damage 4 times a second","向最近的怪物放出 {1} 道 {2} 碼的火焰路徑，每秒 4 次造成 {3} 傷害"],["Claws, 32 damage; every fourth blow a thunder nova, {} damage, and charged bolts","爪擊，32 傷害；每第四擊發出雷霆新星，{1} 傷害，並放出充能彈"],["A rapid volley of {} arrows spread over the monsters around you, 40 damage each","對周圍怪物快速連射 {1} 支箭，各 40 傷害"],["A volcano under the nearest pack for {}s, raining burning rocks, 65 damage each","在最近的怪物群下方召喚火山 {1} 秒，降下燃燒岩石，各 65 傷害"],["Dash through the monsters in your path, {} damage to each and a blow at the end","衝過路徑上的怪物，各造成 {1} 傷害，最後再攻擊一次"],["Leap the way you run (at a pack when still); the landing knocks back, {} damage","往奔跑方向跳躍（靜止時跳向怪物群）；落地時擊退，{1} 傷害"],["Two claw blows at the toughest in reach, {} damage each, releasing all charges","對範圍內最強的敵人揮爪兩次，各 {1} 傷害，釋放所有蓄能"],["Werewolf for {}s near monsters: +{}% life, claws of {} every {}s, +{}% crit; no spells","靠近怪物時變身狼人 {1} 秒：+{2}% 生命，每 {4} 秒爪擊 {3}，+{5}% 致命一擊；無法施法"],["Aura: monsters that strike you in melee take back {}% of the blow, +{}% a level","靈氣：近戰攻擊你的怪物承受 {1}% 的反傷，每級 +{2}%"],["A crushing blow at the toughest monster in reach, {} damage, knocking it back","對範圍內最強的怪物壓碎性打擊，{1} 傷害並擊退"],["A golem of clay holds the horde back and slows what it hits, {} life, {} damage","黏土石魔擋住怪物群並緩速被擊中的目標，{1} 生命，{2} 傷害"],["A spear thrust at every monster around you in turn (up to {}), 60 damage each","依序刺擊你周圍的每隻怪物（最多 {1} 隻），各 60 傷害"],["A golem of blood, {} life, {} damage; every blow it lands heals you for {}% of it","血石魔，{1} 生命，{2} 傷害；它的每次攻擊會以傷害的 {3}% 治療你"],["Wereforms last {}s longer, {}s more a level, and give +{}% more life, +{}% a level","變身持續時間延長 {1} 秒（每級再加 {2} 秒），並增加 +{3}% 生命（每級 +{4}%）"],["A corpse by the nearest monster bursts into poison: {} over {}s to all within {}","最近怪物旁的屍體爆出毒素：{3} 範圍內所有怪物 {2} 秒內受到 {1}"],["A heavy spear thrust at the toughest monster in reach, {} damage, {} to a boss","對範圍內最強的怪物重重刺擊，{1} 傷害，對首領 {2}"],["3 tornadoes wander the horde, {} damage and a stun to each monster they pass","3 道龍捲風在怪物群中遊蕩，對經過的怪物造成 {1} 傷害並暈眩"],["Werewolf for {}s: a flurry of {} blows at all in reach, {} damage each, every {}s","變身狼人 {1} 秒：每 {4} 秒對範圍內所有敵人連續攻擊 {2} 次，各 {3} 傷害"],["A bomb thrown at the nearest monster, bursting for {} fire damage around it","向最近的怪物投擲炸彈，爆炸對周圍造成 {1} 火焰傷害"],["Bone walls cage the {} near you for {}s, bosses too (act bosses half as long)","白骨之牆將你附近的{1}囚禁 {2} 秒，首領也會（幕首領時間減半）"],["You fell in {} after {}, at level {#}, having slain {#} monsters. +{#} gold (best: {}).","你在{1}倒下，歷時 {2}，等級 {3}，共擊殺 {4} 隻怪物。+{5} 金幣（最佳：{6}）。"],["Whirl {} yards through the horde, {} damage to each monster 5 times a second","在怪物群中旋轉 {1} 碼，每秒 5 次對每隻怪物造成 {2} 傷害"],["{} javelins that burst into lightning forking to {} monsters, 70 damage each","{1} 支爆出閃電的標槍，分岔擊中 {2} 隻怪物，各 70 傷害"],["Frozen Armor for {}s: melee attackers get a {}s chill; {}% of their blows miss","冰封裝甲 {1} 秒：近戰攻擊者被冰冷 {2} 秒；他們的攻擊有 {3}% 落空"],["You have {} gold · What a hero sells stays here until that hero's next run","你有 {1} 金幣 · 英雄出售的物品會留在這裡，直到該英雄開始下一輪"],["Aura: monsters slain near you heal you {} life, {}% of the time, +{}% a level","靈氣：在你附近被殺的怪物有 {2}% 機率為你恢復 {1} 生命，每級 +{3}%"],["A ring of poison out to 230: 180 poison over {}s to everything it touches","向外擴散至 230 的毒環：碰到的一切 {1} 秒內受到 180 毒素傷害"],["{} arrows that explode for 90 damage and leave the ground burning for 3s","{1} 支爆炸的箭，造成 90 傷害並使地面燃燒 3 秒"],["Aura: +{}% fire, cold and lightning resistance; chill wears off {}% faster","靈氣：+{1}% 火焰、冰寒與閃電抗性；冰冷效果消退快 {2}%"],["A ring of frost out to {} range, {} damage, chilling all it touches for {}s","向外擴散至 {1} 距離的冰霜環，{2} 傷害，冰冷碰到的一切 {3} 秒"],["{} bone spirits, each hunting down one of the nearest monsters, {} damage","{1} 道骨魂，各自追擊一隻最近的怪物，{2} 傷害"],["Spirits' boons and vines' meals are {}% stronger, creepers' poison too","靈體的增益與藤蔓的吞食效果強 {1}%，藤蔓的毒素也是"],["+{}% chance for her attacks (and the Valkyrie's) to deal double damage","她（與女武神）的攻擊 +{1}% 機率造成雙倍傷害"],["Up to 5 spirit wolves fight beside you, {} damage a bite; and {} ravens","最多 5 隻狼靈在你身旁作戰，每次撕咬 {1} 傷害；另有 {2} 隻烏鴉"],["Monsters within {} lose {}% of their life (a third of that for elites)","{1} 範圍內的怪物失去 {2}% 生命（精英為三分之一）"],["Aura: +{}% lightning resistance, and +{}% to its maximum (75%) a level","靈氣：+{1}% 閃電抗性，每級 +{2}% 抗性上限（75%）"],["{} quick spear thrusts at the nearest monster in reach, {} damage each","對範圍內最近的怪物快速刺擊 {1} 次，各 {2} 傷害"],["+{}% chance for arrows and javelins to fly on through what they hit","箭矢與標槍 +{1}% 機率穿透目標"],["{} at the toughest in reach, {} damage; the last releases all charges","對範圍內最強的敵人{1}，{2} 傷害；最後一擊釋放所有蓄能"],["{} that seek monsters, {} damage and a stun to each they pass through","追蹤怪物的{1}，對經過的每隻怪物造成 {2} 傷害並暈眩"],["{} spears of bone that pierce every monster in their path, {} damage","{1} 支貫穿路徑上所有怪物的骨矛，{2} 傷害"],["{} of sparks over the nearest pack for {}s, {} damage 4 times a second","{1}火花籠罩最近的怪物群 {2} 秒，每秒 4 次 {3} 傷害"],["Hurts every monster around you for {} damage and stuns them for {}s","對你周圍所有怪物造成 {1} 傷害並暈眩 {2} 秒"],["Ravens, wolves, the grizzly and creepers get +{}% life and damage","烏鴉、狼、灰熊與藤蔓獲得 +{1}% 生命與傷害"],["+{}% chance to sidestep a monster's hit while you're on the move","移動時 +{1}% 機率閃開怪物的攻擊"],["Aura: +{}% fire resistance, and +{}% to its maximum (75%) a level","靈氣：+{1}% 火焰抗性，每級 +{2}% 抗性上限（75%）"],["{} guided arrows that hunt through 6 monsters each, 65 damage","{1} 支導引箭，各追擊穿過 6 隻怪物，65 傷害"],["Monsters around you, bosses too, take {}% more damage for {}s","你周圍的怪物（包括首領）受到的傷害增加 {1}%，持續 {2} 秒"],["Curse, {}s: monsters within {} of a target deal {}% less damage","詛咒 {1} 秒：目標 {2} 範圍內的怪物造成的傷害減少 {3}%"],["Curse, {}s: monsters within {} of a target take {}% more damage","詛咒 {1} 秒：目標 {2} 範圍內的怪物受到的傷害增加 {3}%"],["+{}% physical damage; as a werewolf, {}% faster run (up to {}%)","+{1}% 物理傷害；狼人形態跑速快 {2}%（最多 {3}%）"],["Aura: +{}% movement speed, up to +{}%; Charge reaches further","靈氣：+{1}% 移動速度，最多 +{2}%；衝鋒距離更遠"],["Slain monsters have a {}% chance to leave a healing potion","被殺的怪物有 {1}% 機率掉落治療藥水"],["Leave a trail of fire behind you for {}s, {} damage per tick","在身後留下火焰路徑 {1} 秒，每次 {2} 傷害"],["Take 4% less damage; poison and chill wear off {}% faster","受到的傷害減少 4%；中毒與冰冷消退快 {1}%"],["Take 6% less damage; poison and chill wear off {}% faster","受到的傷害減少 6%；中毒與冰冷消退快 {1}%"],["A Valkyrie fights at your side, {} damage a spear thrust","女武神在你身旁作戰，每次刺擊 {1} 傷害"],["Two swift blows at the monsters in reach, {} damage each","對範圍內的怪物快速攻擊兩次，各 {1} 傷害"],["{} arrows that freeze what they hit solid for {}s, {} damage","{1} 支箭，將命中目標冰凍 {2} 秒，{3} 傷害"],["+{}% physical damage and +{}% chance of a critical strike","+{1}% 物理傷害與 +{2}% 致命一擊機率"],["{} of holy light that {} {}, {} damage (double to the undead)","{1}聖光，{2}{3}，{4} 傷害（對不死生物加倍）"],["Your claws and blades poison, {} damage a second for {}s","你的爪與刀刃附帶毒素，每秒 {1} 傷害，持續 {2} 秒"],["A fan of {} teeth at the nearest monster, {} damage each","向最近的怪物扇形射出 {1} 顆骨牙，各 {2} 傷害"],["{} of lightning through every monster in line, {} damage","{1}閃電貫穿直線上所有怪物，{2} 傷害"],["Skeletons, mages and revives get +{}% life and damage","骷髏、骷髏法師與復活怪物獲得 +{1}% 生命與傷害"],["Your fire skills burn {}% harder, the Hydra's bolts {}%","你的火焰技能傷害提高 {1}%，九頭蛇的火彈提高 {2}%"],["A blow of the mind at {}, {} damage, knocking them back","對{1}發出心靈衝擊，{2} 傷害並擊退"],["Werewolf and werebear blows heal {}% of their damage","狼人與熊人的攻擊會恢復傷害的 {1}%"],["+{}% chance to block a monster's hit with your claws","+{1}% 機率用爪格擋怪物的攻擊"],["+{}% chance to sidestep a monster's missile entirely","+{1}% 機率完全閃開怪物的飛射物"],["Absorbs Lightning Damage (+{} per Character Level)","吸收閃電傷害（每角色等級 +{1}）"],["{} that jump between up to {} monsters, {} damage each","{1}，在最多 {2} 隻怪物間跳躍，各 {3} 傷害"],["{} {} fire, cold, lightning or poison bolts, {} damage","{1}{2}火焰、冰寒、閃電或毒素彈，{3} 傷害"],["+{}% chance to sidestep a monster's hit entirely","+{1}% 機率完全閃開怪物的攻擊"],["Transmuted: a portal to {}\nopens after Mephisto {}","已合成：通往{1}的傳送門\n會在擊敗墨菲斯托後開啟{2}"],["Stab {} within reach, {} damage and {} poison over {}s","刺擊範圍內的{1}，{2} 傷害並在 {4} 秒內造成 {3} 毒素傷害"],["{} {} after monsters, {} poison over {}s a bite, {} life","{1}{2}怪物，每次撕咬在 {4} 秒內造成 {3} 毒素傷害，{5} 生命"],["{}% chance of a critical strike: double damage","{1}% 致命一擊機率：雙倍傷害"],["The cow portal will open after Mephisto, on {}","奶牛關傳送門會在擊敗墨菲斯托後開啟（{1}）"],["Only the {} can use that: stash it at Charsi's","只有{1}能使用：到恰西那裡放進儲物箱"],["Absorbs Cold Damage (+{} per Character Level)","吸收冰寒傷害（每角色等級 +{1}）"],["Absorbs Fire Damage (+{} per Character Level)","吸收火焰傷害（每角色等級 +{1}）"],["Each point past the class's: +{} maximum life","超過職業初始值的每一點：+{1} 生命上限"],["+{}% fire damage; wereform claws burn with it","+{1}% 火焰傷害；變身後的爪擊也會帶火焰"],["No room for that with the {} or in the stash","{1}身上和儲物箱都沒有空間"],["A ring of lightning out to {} range, {} damage","向外擴散至 {1} 距離的閃電環，{2} 傷害"],["{} from the class, {} from level-ups and gear","職業 {1}，升級與裝備 {2}"],["You cleared all five acts{} in {}, at level {#}.","你以 {2} 通過了全部五幕{1}，等級 {3}。"],["The Oak Sage follows you: +{}% maximum life","橡木智者跟隨你：+{1}% 生命上限"],["Aura: poison and chill wear off {}% faster","靈氣：中毒與冰冷效果消退快 {1}%"],["a javelin, or its burst's poison over {}s","標槍，或其爆炸毒素（{1} 秒）"],["Up to {} fight beside you, {} life, {} damage","最多{1}在你身旁作戰，{2} 生命，{3} 傷害"],["{}% Better Chance of Getting Magic Items","尋獲魔法物品機率提高 {1}%"],["Your {} one level higher, past their max","你的{1}提高一級，可超過上限"],["+{}% cold damage and take 5% less damage","+{1}% 冰寒傷害，受到的傷害減少 5%"],["{}% Chance to cast level {} {} when you Die","死亡時有 {1}% 機率施放等級 {2} 的{3}"],["Every skill recharges in {} of its time","所有技能冷卻時間變為原本的 {1}"],["{}% Chance to cast level {} {} on striking","擊中時有 {1}% 機率施放等級 {2} 的{3}"],["{}% Chance to cast level {} {} when struck","被擊中時有 {1}% 機率施放等級 {2} 的{3}"],["+{}% per level of {} skills and passives","{2}技能與被動每級 +{1}%"],["Throw an axe from each hand, {} damage{}","雙手各投擲一把斧頭，{1} 傷害{2}"],["Attacker Takes Lightning Damage of {}","攻擊者受到 {1} 閃電傷害"],["{} at monsters in reach, {} damage each","對範圍內的怪物{1}，各 {2} 傷害"],["{} that crackle forward, {} damage each","向前劈啪竄出的{1}，各 {2} 傷害"],["{} {} at monsters, {} damage, {} times each","{1}向怪物{2}，{3} 傷害，各 {4} 次"],["Adds {}-{} Poison Damage over {} Seconds","增加 {1}-{2} 毒素傷害，持續 {3} 秒"],["{}% Chance to cast level {} {} on attack","攻擊時有 {1}% 機率施放等級 {2} 的{3}"],["Build {} is ready: see the main menu","版本 {1} 已就緒：請到主選單查看"],["{} that pierces {} and chills, {} damage","{1}，穿透 {2} 隻並冰冷，{3} 傷害"],["Aura: heal {} life a second, up to {}","靈氣：每秒恢復 {1} 生命，最多 {2}"],["{} at the nearest monsters, {} damage","向最近的怪物發射{1}，{2} 傷害"],["{} {} out around you, {} damage to all {}","{1}向你周圍{2}，對所有{4}造成 {3} 傷害"],["{} at the nearest monster, {} damage","向最近的怪物發射{1}，{2} 傷害"],["Only the {} can use that: stash it","只有{1}能使用：放進儲物箱"],["Levels gear adds to every {} skill","裝備增加的等級套用到每個{1}技能"],["{} that pierce {} and chill, {} damage","{1}，穿透 {2} 隻並冰冷，{3} 傷害"],["+{}% Attack Rating against Demons","+{1}% 對惡魔的攻擊準確率"],["+{}% Attack Rating against Undead","+{1}% 對不死生物的攻擊準確率"],["Ready: a chest evolves it into {}","就緒：寶箱會將它進化為{1}"],["You fell in {} after {}, at level {#}.","你在{1}倒下，歷時 {2}，等級 {3}。"],["Monsters' missiles fly {}% slower","怪物的飛射物速度減慢 {1}%"],["a javelin, or its poison over {}s","標槍，或其毒素（{1} 秒）"],["{} that {} for {} damage around what {}","{1}，在{4}{2}，造成 {3} 範圍傷害"],["{}% Increased Chance of Blocking","格擋機率提高 {1}%"],["Her attacks deal {}% more damage","她的攻擊造成的傷害增加 {1}%"],["Aura: skills recharge {}% faster","靈氣：技能冷卻快 {1}%"],["A fan of {} arrows, {} damage each","扇形射出 {1} 支箭，各 {2} 傷害"],["+{} Poison Damage over {} Seconds","+{1} 毒素傷害，持續 {2} 秒"],["Ready: a chest evolves {} into {}","就緒：寶箱會將{1}進化為{2}"],["Hit Causes Monster to Flee {}%","擊中使怪物逃跑 {1}%"],["For {}s you take {}% less damage","{1} 秒內受到的傷害減少 {2}%"],["{} comes when the bar runs out","量條用完時{1}就會出現"],["Missile Damage Reduced by {}%","飛射物傷害減少 {1}%"],["Level {} when the globe fills","球體填滿時升到等級 {1}"],["Evolves {} into {}, also needs:","將{1}進化為{2}，還需要："],["A portal to Act {} has opened","通往第 {1} 幕的傳送門已開啟"],["{}% Extra Gold from Monsters","從怪物身上多獲得 {1}% 金幣"],["Level {} {} Aura When Equipped","裝備時獲得等級 {1} 的{2}靈氣"],["Poison Length Reduced by {}%","中毒時間減少 {1}%"],["+{}% Bonus to Attack Rating","+{1}% 攻擊準確率加成"],["+{}% Increased Attack Speed","+{1}% 提高攻擊速度"],["{}% Chance of Crushing Blow","{1}% 機率造成壓碎性打擊"],["{}% Deadly Strike per Level","每級 {1}% 致命攻擊"],["Attacker Takes Damage of {}","攻擊者受到 {1} 傷害"],["Level {} now and {} at level {}","目前等級 {1}，在等級 {3} 時為 {2}"],["Next {} at character level {}","角色等級 {2} 時獲得下一個{1}"],["The portal takes you in {}…","傳送門將在 {1} 後帶你離開…"],["{}% Chance to cast level {} {} {}","{4}有 {1}% 機率施放等級 {2} 的{3}"],["Magic Damage Reduced by {}","魔法傷害減少 {1}"],["Base Damage Reduction: {}%","基礎傷害減免：{1}%"],["Skills recharge {}% faster","技能冷卻快 {1}%"],["Press {} or click to drink","按 {1} 或點擊飲用"],["{}% Chance of Open Wounds","{1}% 機率造成撕裂傷口"],["{} Receives Bonuses From:","{1} 從以下技能獲得加成："],["+{}% damage per level of {}","{2}每級 +{1}% 傷害"],["+{}% per level of {} skills","{2}技能每級 +{1}%"],["A portal to {} has opened","通往{1}的傳送門已開啟"],["+{} Life after each Kill","每次擊殺 +{1} 生命"],["+{}% Faster Hit Recovery","+{1}% 快速打擊恢復"],["{}: {} at character level {}","{1}：角色等級 {3} 時 {2}"],["+5 starting {} per rank\n{}","每級起始 {1} +5\n{2}"],["Only the {} can use that{}","只有{1}能使用{2}"],["{}% Life Stolen Per Hit","擊中偷取 {1}% 生命"],["{}% Mana Stolen Per Hit","擊中偷取 {1}% 法力"],["One-Hand Damage: {} to {}","單手傷害：{1} 至 {2}"],["Two-Hand Damage: {} to {}","雙手傷害：{1} 至 {2}"],["+{}% Faster Block Rate","+{1}% 快速格擋率"],["Synergies: +{}% damage","協同加成：+{1}% 傷害"],["in your next run on {}","在你下一輪的{1}難度"],["+{} to Life per Level","每級 +{1} 生命"],["+{} to Mana per Level","每級 +{1} 法力"],["+{}% Damage to Demons","+{1}% 對惡魔的傷害"],["+{}% Damage to Undead","+{1}% 對不死生物的傷害"],["+{}% Enhanced Defense","+{1}% 增強防禦"],["+{}% Faster Cast Rate","+{1}% 快速施法率"],["Level {} {} ({}/{} Charges)","等級 {1} {2}（{3}/{4} 次）"],["Lightning Resist +{}%","閃電抗性 +{1}%"],["Damage Reduced by {}%","傷害減少 {1}%"],["Evolves from {} with {}","由{1}搭配{2}進化而來"],["Another run as the {}","以{1}再玩一輪"],["Slay Baal on {} first","請先在{1}難度擊敗巴爾"],["The {} is coming soon","{1}即將推出"],["+{} to {} Skill Levels","+{1} {2}技能等級"],["+{} Lightning Absorb","+{1} 閃電吸收"],["+{}% Enhanced Damage","+{1}% 增強傷害"],["+{}% Faster Run/Walk","+{1}% 快速跑步／行走"],["Lightning Absorb {}%","閃電吸收 {1}%"],["Damage Reduced by {}","傷害減少 {1}"],["{} shorter cooldowns","冷卻時間縮短 {1}"],["The portal to Act {}","通往第 {1} 幕的傳送門"],["Less {} damage taken{}","受到的{1}傷害減少{2}"],["{} · Level {#} · {#} kills","{1} · 等級 {2} · {3} 擊殺"],["-{}% Target Defense","-{1}% 目標防禦"],["{}% Piercing Attack","{1}% 穿透攻擊"],["All Resistances +{}","所有抗性 +{1}"],["Slows Target by {}%","目標緩速 {1}%"],["Attack Damage: +{}%","攻擊傷害：+{1}%"],["{#} Damage per Level","每級 {1} 傷害"],["{} is open to the {}.","{1}已向{2}開放。"],["+{} Average Damage","+{1} 平均傷害"],["+{}% Attack Damage","+{1}% 攻擊傷害"],["+{}% Pickup Radius","+{1}% 拾取範圍"],["Poison Resist +{}%","毒素抗性 +{1}%"],["Freezes Target +{}","冰凍目標 +{1}"],["Replenish Life +{}","補充生命 +{1}"],["Required Level: {}","需要等級：{1}"],["+{}% per level of {}","{2}每級 +{1}%"],["Monsters slain: {}","擊殺怪物：{1}"],["Up to {#} skeletons","最多 {1} 具骷髏"],["+{} to All Skills","+{1} 所有技能"],["+{}% maximum life","+{1}% 生命上限"],["{}% Deadly Strike","{1}% 致命攻擊"],["Base Damage: +{}%","基礎傷害：+{1}%"],["Sells for {} gold","售價 {1} 金幣"],["Sold {} for {} gold","以 {2} 金幣賣出{1}"],["Experience: {} / {}","經驗值：{1} / {2}"],["{} evolved into {}!","{1}已進化為{2}！"],["Build {} is ready","版本 {1} 已就緒"],["Adds {}-{} {} Damage","增加 {1}-{2} {3}傷害"],["+{} magic damage","+{1} 魔法傷害"],["Cold Resist +{}%","冰寒抗性 +{1}%"],["Fire Resist +{}%","火焰抗性 +{1}%"],["{} over {} seconds","{1}，持續 {2} 秒"],["You have {} gold","你有 {1} 金幣"],["Evolves into {}:","進化為{1}："],["{#} hits a second","每秒 {1} 次"],["{#} charged bolts","{1} 道充能彈"],[" (+{} from gear)","（裝備 +{1}）"],["Adds {}-{} Damage","增加 {1}-{2} 傷害"],["+{} Cold Absorb","+{1} 冰寒吸收"],["+{} Fire Absorb","+{1} 火焰吸收"],["Cold Absorb {}%","冰寒吸收 {1}%"],["Fire Absorb {}%","火焰吸收 {1}%"],["Now +{}% damage","目前 +{1}% 傷害"],["Loading the {}…","正在載入{1}…"],["{} on Nightmare","{1}（惡夢）"],[" on Nightmare","（惡夢）"],["{#} magic arrows","{1} 支魔法箭"],["Evolved from {}","由{1}進化而來"],["+{} to {} Skills","+{1} {2}技能"],["Sold by the {}","由{1}出售"],["Per second: {}","每秒：{1}"],["Keeps level {}","保留等級 {1}"],["{}: {} at level {}","{1}：等級 {3} 時 {2}"],["Back to the {}","回到{1}"],["{#} fire arrows","{1} 支火焰箭"],["{#} magic arrow","{1} 支魔法箭"],["{#} swift blows","{1} 次快速攻擊"],["when you Die","死亡時"],["{#} {} per Level","每級 {1} {2}"],["Best time: {}","最佳紀錄：{1}"],["Passives {}/6","被動技能 {1}/6"],["from level {}","從等級 {1} 起"],["{} approaches","{1}逼近了"],["{#} fire bolts","{1} 道火彈"],["{#} fire balls","{1} 顆火球"],["{#} fire arrow","{1} 支火焰箭"],["{#} swift blow","{1} 次快速攻擊"],["when struck","被擊中時"],["on striking","擊中時"],["{#} per Level","每級 {1}"],["{#} per level","每級 {1}"],["and {} more.","還有 {1} 個。"],["{#} ice bolts","{1} 道冰彈"],["{#} skeletons","{1} 具骷髏"],["Level {#} to {#}","等級 {1} → {2}"],["+{#} {} Damage","+{1} {2}傷害"],["+{}% Damage","+{1}% 傷害"],["If worn: {}","裝備時：{1}"],["Level {} / {}","等級 {1} / {2}"],["Life: {} / {}","生命：{1} / {2}"],["Skills {}/6","技能 {1}/6"],["Replaces {}","取代{1}"],["{} has come","{1}來了"],["{#} javelins","{1} 支標槍"],["{#} monsters","{1} 隻怪物"],["{#} javelins","{1} 支標槍"],["{#} monsters","{1} 隻怪物"],["{#} skeleton","{1} 具骷髏"],["{#} twisters","{1} 道扭曲旋風"],["Saved in {}","儲存於{1}"],["Rank {} / {}","等級 {1} / {2}"],["Act {}: {}. {}","第 {1} 幕：{2}。{3}"],["{} weakens","{1}變弱了"],["{#} Regular","{1} 一般"],["{#} hammers","{1} 把戰鎚"],["{#} meteors","{1} 顆隕石"],["{} on Hell","{1}（地獄）"],[" on Hell","（地獄）"],["{#} hammers","{1} 把祝福之槌"],["{#} javelin","{1} 支標槍"],["{#} monster","{1} 隻怪物"],["{#} twister","{1} 道扭曲旋風"],["{} Level {#}","{1}第 {2} 層"],["{} upkeep","{1}維持"],["{#} arrows","{1} 支箭"],["{#} spears","{1} 支矛"],["{#} blades","{1} 把刀刃"],["{#} arrows","{1} 支箭"],["{#} hammer","{1} 把祝福之槌"],["{#} sparks","{1} 道火花"],["+{#}% to {}","+{1}% {2}"],["+{} gold","+{1} 金幣"],["Cost: {}","價格：{1}"],["Level {#}","等級 {1}"],["level {#}","等級 {1}"],["Up to {#}","最多 {1}"],["New {} {}/{}","新{1} {2}/{3}"],["Drop {}?","丟棄{1}？"],["Act {}: {}","第 {1} 幕：{2}"],["{} (Esc)","{1}（Esc）"],["{#} bolts","{1} 道彈矢"],["{#} kills","{1} 擊殺"],["{#} arrow","{1} 支箭"],["{#} bolts","{1} 道彈矢"],["{#} kicks","{1} 次踢擊"],["{#} spark","{1} 道火花"],["Up to {}","最多 {1}"],["max {#}/{#},","上限 {1}/{2}，"],["max {#}/{#}.","上限 {1}/{2}。"],["+{#} to {}","+{1} {2}"],["-{#} to {}","-{1} {2}"],["{#}% to {}","{1}% {2}"],["{#} gold","{1} 金幣"],["best {}","最佳 {1}"],["{} trap","{1}陷阱"],["{#} of 3","{1} / 3"],["{}: OFF","{1}：關"],["{#} axes","{1} 把斧頭"],["{#} bolt","{1} 道彈矢"],["{#} kick","{1} 次踢擊"],["{#} webs","{1} 張網"],["max {#}/{#}","上限 {1}/{2}"],["ACT {#}","第 {1} 幕"],["Act {#}","第 {1} 幕"],["{#} web","{1} 張網"]]};
+/* Traditional Chinese layer for the local D2 Survivors copy. */
+(function () {
+'use strict';
+const STORAGE_KEY = 'd2-survivors-language';
+const FONT_STACK = '"Cinzel", "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif';
+const labels = {
+'Level Up': '升級',
+'LEVEL UP': '升級',
+'Paused': '已暫停',
+'OPTIONS': '選項',
+'Options': '選項',
+'SAVE AND EXIT GAME': '儲存並離開遊戲',
+'Save and exit game': '儲存並離開遊戲',
+'RETURN TO GAME': '返回遊戲',
+'Return to game (Esc)': '返回遊戲（Esc）',
+'Previous menu (Esc)': '返回上一個選單（Esc）',
+'Sound': '音效',
+'Music': '音樂',
+'Mute': '靜音',
+'Play again (Enter)': '再玩一次（Enter）',
+'PLAY AGAIN': '再玩一次',
+"CHARSI'S WARES": '恰西的貨品',
+"Charsi's Wares": '恰西的貨品',
+"Charsi's wares": '恰西的貨品',
+'Visit Charsi (T)': '拜訪恰西（T）',
+'MAIN MENU': '主選單',
+'Main menu': '主選單',
+'Main menu (Esc)': '主選單（Esc）',
+'Main menu (Enter)': '主選單（Enter）',
+'Inventory (I)': '物品欄（I）',
+'Buy back (B)': '回購（B）',
+'Buy Back': '回購',
+'Gamble (G)': '賭博（G）',
+'New Run': '新的一輪',
+'NEW RUN': '新的一輪',
+'New run': '新的一輪',
+'New Run (Enter)': '開始新的一輪（Enter）',
+'Start a new run (Enter)': '開始新的一輪（Enter）',
+'Automap': '自動地圖',
+'Character': '角色',
+'Pause': '暫停',
+'Close': '關閉',
+'Close (Esc)': '關閉（Esc）',
+'Drop': '丟棄',
+'Leave': '離開',
+'Continue': '繼續',
+'Continue (Enter)': '繼續（Enter）',
+'Choose class': '選擇職業',
+'Choose Class': '選擇職業',
+'NEXT HERO': '下一位英雄',
+'Previous hero': '上一位英雄',
+'Next hero': '下一位英雄',
+'Cancel (Esc)': '取消（Esc）',
+'Cancel': '取消',
+'Transfer save': '轉移存檔',
+'Transfer Save': '轉移存檔',
+'TRANSFER SAVE': '轉移存檔',
+'Copy code': '複製代碼',
+'COPY DIAGNOSTICS': '複製診斷資訊',
+'Save imported.': '存檔已匯入。',
+'Save too large': '存檔太大',
+'Click or press any key': '點擊或按下任意按鍵',
+'Click or press any key to continue': '點擊或按下任意按鍵以繼續',
+'Click to pick up · Right-click to equip · Shift-click to sell · Esc to close': '左鍵拾取 · 右鍵裝備 · Shift＋左鍵出售 · Esc 關閉',
+'Click to pick up · Ctrl-click to move across · Right-click to equip': '左鍵拾取 · Ctrl＋左鍵移動 · 右鍵裝備',
+'Tap to pick up an item, tap again to put it down · Hold to equip or take off': '點一下拾取物品，再點一下放下 · 長按以裝備或卸下',
+'Tap to pick up an item, tap the stash or inventory to put it down': '點一下拾取物品，再點儲物箱或物品欄放下',
+'Tap an item to see it': '點選物品查看',
+'Tap a ware to see it': '點選貨品查看',
+'Tap a ware to buy it': '點選貨品購買',
+'Tap an item to see it': '點選物品查看',
+'Tap again to buy': '再點一次購買',
+'Tap again to buy it back': '再點一次回購',
+'Tap again to gamble': '再點一次賭博',
+'Click an item to buy it back': '點擊物品即可回購',
+'Click an item to gamble': '點擊物品即可賭博',
+'Tap a card to pick it': '點選卡片以選擇',
+'Tap to continue': '點一下繼續',
+'Click for every skill (T)': '按 T 檢視所有技能',
+'A code from another browser replaces this browser\'s save.': '來自另一個瀏覽器的代碼會取代此瀏覽器的存檔。',
+'The Smith': '鐵匠',
+'Baal has been slain': '巴爾已被擊殺',
+'Unofficial fan project, not affiliated with or endorsed by Blizzard Entertainment. Diablo® is a trademark of Blizzard Entertainment, Inc.': '非官方粉絲作品，與 Blizzard Entertainment 無關，亦未獲其認可或背書。Diablo® 為 Blizzard Entertainment, Inc. 的商標。',
+'Unofficial fan project, not affiliated with or endorsed by Blizzard Entertainment. Diablo® is a trademark of Blizzard Entertainment, Inc': '非官方粉絲作品，與 Blizzard Entertainment 無關，亦未獲其認可或背書。Diablo® 為 Blizzard Entertainment, Inc. 的商標。',
+'The Secret of the Vizjerei': '維茲傑雷的祕密',
+'A Vampire Survivors-style tribute to Diablo II: Lord of Destruction': '向《暗黑破壞神 II：毀滅之王》致敬的倖存者類型遊戲',
+'D2 Survivors in its own window, offline': '在獨立視窗中遊玩 D2 Survivors',
+'Better chance that items dropped are magic, rare or unique': '提高掉落物品為魔法、稀有或獨特品質的機率',
+'Life now, and its maximum': '目前生命值與生命上限',
+'Life regained every second': '每秒恢復的生命值',
+'Gold banked for Charsi': '恰西保管的金幣',
+'At most 75%, more with +% to Maximum Resist': '最高 75%；提高抗性上限可再增加',
+'Blocking with a shield goes by it too': '使用盾牌格擋時也會套用',
+'A level past a skill\'s maximum still adds to it, as in D2': '技能超過最高等級後仍會繼續增加效果，如同 D2',
+'Carry your gold, Charsi\'s upgrades and gear to D2 Survivors in another browser or on another device.': '將金幣、恰西的升級與裝備轉移到其他瀏覽器或裝置上的 D2 Survivors。',
+'Best time': '最佳紀錄',
+'Coming soon': '即將推出',
+'Could not resume the saved run': '無法繼續已儲存的遊戲進度',
+'No one can use that': '沒有角色能使用此物品',
+'No room to swap that': '沒有空間交換此物品',
+'Nothing of yours needs repair': '你的裝備不需要修理',
+'You gambled': '你購得賭博物品',
+'You have died': '你已死亡',
+'You have no room for that': '沒有空間放置此物品',
+'Your class can\'t use this': '你的職業無法使用此物品',
+'What a hero sells stays here': '英雄出售的物品會留在這裡',
+'The portal is open already': '傳送門已經開啟',
+'Replace Your Save?': '要取代目前的存檔嗎？',
+'Paste a save code first.': '請先貼上存檔代碼。',
+'Paste a save code here': '在此貼上存檔代碼',
+'Select the code and copy it': '選取代碼並複製',
+'That code comes from a newer version of D2 Survivors. Reload this page to update, then try again.': '此代碼來自較新版本的 D2 Survivors。請重新載入頁面更新後再試一次。',
+'That code holds gear this version of D2 Survivors doesn\'t know. Reload this page to update, then try again.': '此代碼包含目前版本不支援的裝備。請重新載入頁面更新後再試一次。',
+'That code is damaged. Copy all of it again and paste it here.': '此代碼已損毀。請重新完整複製後再貼上。',
+'That code doesn\'t hold a save D2 Survivors can use.': '此代碼不包含 D2 Survivors 可讀取的存檔。',
+'That isn\'t a D2 Survivors save code.': '這不是 D2 Survivors 的存檔代碼。',
+'That\'s too long to be a save code.': '此內容過長，無法作為存檔代碼。',
+'This browser can\'t make a save code.': '此瀏覽器無法產生存檔代碼。',
+'SINGLE PLAYER': '單人遊戲',
+'Sound on': '音效開啟',
+'Sound off': '音效關閉',
+'PREVIOUS MENU': '返回上一個選單',
+'RESTART TO UPDATE': '重新啟動以套用更新',
+'CREDITS / LEGAL': '製作人員／法律聲明',
+'D2 Survivors diagnostics': 'D2 Survivors 診斷資訊',
+'D2 Survivors is open in another tab': 'D2 Survivors 已在另一個分頁中開啟',
+'D2 Survivors is an unofficial, free fan project. It is not affiliated with, endorsed, sponsored or approved by Blizzard Entertainment, Inc.': 'D2 Survivors 是免費的非官方粉絲作品，與 Blizzard Entertainment, Inc. 無關，亦未獲其認可、贊助或核准。',
+'Diminishing for rares and uniques, as in D2': '如同 D2，對稀有與獨特物品的效果會遞減。',
+'Golems get +25% life, +10% damage and +8% speed': '石魔獲得 +25% 生命、+10% 傷害與 +8% 速度',
+'Half as much Faster Cast Rate: attacks here recharge as spells do': '此處快速施法率效果減半：攻擊的冷卻速度比照法術。',
+'How much faster the hero runs': '英雄跑步速度的提升幅度',
+'Its dose added to every weapon blow: its average goes to Attack Damage': '此效果會加到每次武器攻擊；平均值計入攻擊傷害。',
+'Its hits come as monsters strike you': '怪物攻擊你時觸發命中效果。',
+'Less damage from every hit taken': '每次受到攻擊時減少傷害',
+'Pick things up from 40% farther away': '拾取物品的距離增加 40%',
+'Tap a ware, then tap it again': '點選一件貨品，再點一次以確認',
+'Tap again to pick it': '再點一次即可拾取',
+'The Ancients awaken': '先祖甦醒了',
+'The Worldstone is safe.': '世界之石已安全。',
+'You don\'t have Wirt\'s Leg': '你沒有維特之腳',
+'travel: cow portal': '傳送：奶牛關入口',
+'WINDOWS (BETA)': 'Windows（測試版）',
+'COPY FAILED': '複製失敗',
+'Select Hero Class': '選擇英雄職業',
+'TIP THE DEV': '贊助開發者',
+'Every hero can reach it': '每位英雄都能達到此處',
+'The display was lost': '顯示畫面已中斷',
+'The display was lost: reload notice shown': '顯示畫面已中斷：已顯示重新載入提示',
+'This browser': '此瀏覽器',
+'The code': '代碼',
+'The Cow King': '奶牛之王',
+'No errors or warnings.': '沒有錯誤或警告。',
+'none in play yet': '目前尚無遊戲資料',
+'no best time': '暫無最佳紀錄',
+'Software rendering: update your graphics driver': '目前使用軟體繪圖，請更新顯示卡驅動程式',
+'On a Mac': '在 Mac 上',
+'An error occurred': '發生錯誤',
+'Campfire (Enter)': '營火（Enter）',
+'Build complete': '建置完成',
+'Drag a slider to adjust': '拖曳滑桿調整',
+'First launch on Windows (beta)': 'Windows 首次啟動（測試版）',
+'Lord of Destruction': '毀滅之王',
+'DESKTOP APP': '桌面版應用程式',
+'Last errors and warnings:': '最近的錯誤與警告：',
+'Taken:': '已取得：',
+'Open the .dmg and drag D2 Survivors into Applications. It keeps itself up to date.': '打開 .dmg，將 D2 Survivors 拖入「應用程式」資料夾。程式會自動保持更新。',
+'display lost': '畫面中斷',
+'display lost: reload notice shown': '畫面中斷：已顯示重新載入提示',
+'display reloading': '正在重新載入畫面',
+'display restored': '畫面已恢復',
+'display resumable': '遊戲進度可繼續',
+'no WebGL context': '沒有可用的 WebGL 繪圖環境',
+'No available renderer for the current environment': '目前環境沒有可用的繪圖方式',
+'D2\'s Exocet didn\'t build': 'D2 Exocet 標題無法正確載入',
+'thorns (gear)': '荊棘（裝備效果）',
+'Lion Branded': '獅印之',
+'until that hero\'s next run': '直到該英雄開始下一輪遊戲為止'
+};
+const vocabulary = [
+['Maximum Life', '生命上限'], ['maximum life', '生命上限'], ['Maximum Mana', '法力上限'],
+['Attack Damage', '攻擊傷害'], ['Physical Damage', '物理傷害'], ['Fire Damage', '火焰傷害'],
+['Cold Damage', '冰寒傷害'], ['Lightning Damage', '閃電傷害'], ['Poison Damage', '毒素傷害'],
+['Magic Damage', '魔法傷害'], ['Area Damage', '範圍傷害'], ['Attack Rating', '攻擊準確率'],
+['Enhanced Damage', '增強傷害'], ['Enhanced Defense', '增強防禦'], ['Critical Strike', '致命攻擊'],
+['Faster Cast Rate', '快速施法率'], ['Faster Hit Recovery', '快速打擊恢復'],
+['Faster Block Rate', '快速格擋率'], ['Life Stolen Per Hit', '擊中偷取生命'],
+['Mana Stolen Per Hit', '擊中偷取法力'], ['Magic Find', '尋獲魔法物品機率'],
+['Gold Find', '尋獲金幣機率'], ['Chance to Block', '格擋機率'], ['Damage Taken', '受到的傷害'],
+['damage taken', '受到的傷害'], ['life per second', '每秒生命值'], ['per second', '每秒'],
+['per rank', '每級'], ['per level', '每級'], ['per kill', '每次擊殺'], ['on kill', '擊殺時'],
+['when struck', '受到攻擊時'], ['on striking', '攻擊時'], ['when equipped', '裝備時'],
+['while equipped', '裝備時'], ['chance of', '機率'], ['chance to', '機率'],
+['movement speed', '移動速度'], ['attack speed', '攻擊速度'], ['cooldowns', '冷卻時間'],
+['cooldown', '冷卻時間'], ['critical strike', '致命攻擊'], ['crit', '暴擊'],
+['maximum life', '生命上限'], ['maximum mana', '法力上限'], ['life regeneration', '生命恢復'],
+['mana regeneration', '法力恢復'], ['life stolen', '偷取生命'], ['mana stolen', '偷取法力'],
+['resistance', '抗性'], ['resistances', '抗性'], ['resist', '抗性'], ['damage', '傷害'],
+['defense', '防禦'], ['armor', '護甲'], ['block', '格擋'], ['strength', '力量'],
+['dexterity', '敏捷'], ['vitality', '體力'], ['energy', '精力'], ['experience', '經驗值'],
+['gold', '金幣'], ['kills', '擊殺'], ['kill', '擊殺'], ['level', '等級'], ['life', '生命'],
+['mana', '法力'], ['health', '生命'], ['fire', '火焰'], ['cold', '冰寒'],
+['lightning', '閃電'], ['poison', '毒素'], ['physical', '物理'], ['magic', '魔法'],
+['normal', '普通'], ['nightmare', '惡夢'], ['hell', '地獄'], ['unique', '獨特'],
+['rare', '稀有'], ['magic item', '魔法物品'], ['items', '物品'], ['item', '物品'],
+['monsters', '怪物'], ['monster', '怪物'], ['bosses', '首領'], ['boss', '首領'],
+['skills', '技能'], ['skill', '技能'], ['passives', '被動技能'], ['passive', '被動技能'],
+['attributes', '屬性'], ['attribute', '屬性'], ['weapon', '武器'], ['shield', '盾牌'],
+['helmet', '頭盔'], ['helm', '頭盔'], ['body armor', '盔甲'], ['boots', '靴子'],
+['gloves', '手套'], ['belt', '腰帶'], ['ring', '戒指'], ['amulet', '護身符'],
+['inventory', '物品欄'], ['stash', '儲物箱'], ['equip', '裝備'], ['equipped', '已裝備'],
+['unequip', '卸下'], ['sell', '出售'], ['buy', '購買'], ['buy back', '回購'],
+['gamble', '賭博'], ['gold per rank', '每級金幣'], ['points', '點數'], ['point', '點數'],
+['chance', '機率'], ['duration', '持續時間'], ['seconds', '秒'], ['second', '秒'],
+['radius', '範圍'], ['area', '範圍'], ['range', '距離'], ['speed', '速度'],
+['summon', '召喚'], ['summons', '召喚物'], ['pierce', '穿透'], ['knockback', '擊退'],
+['stun', '暈眩'], ['burns', '燃燒'], ['burn', '燃燒'], ['chilled', '冰冷'],
+['slowed', '緩速'], ['damage per second', '每秒傷害'], ['more damage', '額外傷害'],
+['less damage', '減少傷害'], ['all skills', '所有技能'], ['to all skills', '所有技能'],
+['per hit', '每次命中'], ['per strike', '每次攻擊'], ['per projectile', '每枚飛射物'],
+['chance of a critical strike', '致命攻擊機率'], ['critical damage', '致命傷害'],
+['cold resistance', '冰寒抗性'], ['fire resistance', '火焰抗性'],
+['lightning resistance', '閃電抗性'], ['poison resistance', '毒素抗性'],
+['cold resist', '冰寒抗性'], ['fire resist', '火焰抗性'],
+['lightning resist', '閃電抗性'], ['poison resist', '毒素抗性'],
+['all resistances', '所有抗性'], ['all resist', '所有抗性'],
+['open wounds', '撕裂傷口'], ['crushing blow', '壓碎性打擊'], ['deadly strike', '致命攻擊'],
+['life tap', '生命偷取詛咒'], ['amplify damage', '傷害加深'], ['decrepify', '衰老'],
+['aura', '靈氣'], ['holy', '神聖'], ['summoned', '召喚的'], ['undead', '不死生物'],
+['elite', '精英'], ['champion', '冠軍怪物'], ['frenzy', '狂亂'], ['blessed', '祝福'],
+['attack', '攻擊'], ['attacks', '攻擊'], ['cast', '施放'], ['casts', '施放'],
+['throw', '投擲'], ['thrown', '投擲'], ['arrow', '箭矢'], ['arrows', '箭矢'],
+['bolt', '彈矢'], ['bolts', '彈矢'], ['blade', '刀刃'], ['blades', '刀刃'],
+['hammer', '戰鎚'], ['spear', '長矛'], ['javelin', '標槍'], ['axe', '斧'],
+['sword', '劍'], ['staff', '法杖'], ['wand', '魔杖'], ['bow', '弓'],
+['orb', '法珠'], ['skull', '頭骨'], ['ring', '戒指'], ['amulet', '護身符'],
+['amazon', '亞馬遜'], ['assassin', '刺客'], ['barbarian', '野蠻人'],
+['druid', '德魯伊'], ['necromancer', '死靈法師'], ['paladin', '聖騎士'],
+['sorceress', '女巫'], ['act', '幕'], ['level up', '升級'], ['paused', '已暫停'],
+['options', '選項'], ['main menu', '主選單'], ['new run', '新的一輪'],
+['play again', '再玩一次'], ['return to game', '返回遊戲'], ['save and exit game', '儲存並離開遊戲'],
+['character', '角色'], ['automap', '自動地圖'], ['close', '關閉'], ['drop', '丟棄'],
+['reroll', '重抽'], ['skip', '略過'], ['banish', '放逐'], ['maxed', '已達上限'],
+['learned', '已習得'], ['evolved', '已進化'], ['next level', '下一級'], ['level ', '等級 ']
+];
+const names = [
+['Andariel', '安達莉爾'], ['Duriel', '督瑞爾'], ['Mephisto', '墨菲斯托'],
+['Diablo', '迪亞布羅'], ['Baal', '巴爾'], ['Blood Raven', '血鴉'],
+['The Smith', '鐵匠'], ['Countess', '女伯爵'], ['Summoner', '召喚者'],
+['Nihlathak', '尼拉塞克'], ['Izual', '衣卒爾'], ['Hephasto', '海法斯特'],
+['Rakanishu', '拉卡尼休'], ['Griswold', '格瑞斯華爾德'], ['Charsi', '恰西'],
+['Akara', '阿卡拉'], ['Kashya', '卡夏'], ['Warriv', '瓦瑞夫'], ['Gheed', '基德'],
+['Deckard Cain', '迪卡·凱恩'], ['Fara', '法拉'], ['Drognan', '卓格南'],
+['Ormus', '奧瑪斯'], ['Asheara', '艾席拉'], ['Jamella', '潔梅拉'],
+['Halbu', '哈爾布'], ['Malah', '瑪拉'], ['Anya', '安雅'],
+['Rogue Encampment', '羅格營地'], ['Blood Moor', '鮮血荒地'], ['Cold Plains', '冰冷之原'],
+['Stony Field', '石塊曠野'], ['Dark Wood', '黑暗森林'], ['Black Marsh', '黑色荒地'],
+['Catacombs', '地下墓穴'], ['Lut Gholein', '魯·高因'], ['Rocky Waste', '岩石荒地'],
+['Dry Hills', '乾燥高地'], ['Far Oasis', '遙遠綠洲'], ['Lost City', '遺忘之城'],
+['Arcane Sanctuary', '秘法聖所'], ['Kurast Docks', '庫拉斯特港口'],
+['Spider Forest', '蜘蛛森林'], ['Great Marsh', '龐大濕地'], ['Flayer Jungle', '剝皮叢林'],
+['Lower Kurast', '庫拉斯特下層'], ['Upper Kurast', '庫拉斯特上層'],
+['Travincal', '崔凡克'], ['Pandemonium Fortress', '混沌避難所'],
+['Den of Evil', '邪惡洞窟'], ['Normal', '普通'], ['Nightmare', '惡夢'], ['Hell', '地獄'],
+['Magic Arrow', '魔法箭'], ['Fire Arrow', '火焰箭'], ['Cold Arrow', '冰箭'],
+['Multiple Shot', '多重箭'], ['Exploding Arrow', '爆裂箭'], ['Guided Arrow', '導引箭'],
+['Strafe', '掃射'], ['Valkyrie', '女武神'], ['Lightning Fury', '閃電之怒'],
+['Fire Blast', '火焰爆震'], ['Wake of Fire', '火焰復甦'], ['Blade Fury', '刀刃之怒'],
+['Lightning Sentry', '閃電守衛'], ['Death Sentry', '亡者守衛'], ['Dragon Talon', '龍爪'],
+['Bash', '猛擊'], ['Double Swing', '雙手揮擊'], ['Frenzy', '狂亂'], ['Whirlwind', '旋風'],
+['Leap Attack', '跳躍攻擊'], ['Battle Orders', '戰鬥命令'], ['Battle Cry', '戰鬥吶喊'],
+['Berserk', '狂戰士'], ['Firestorm', '火風暴'], ['Molten Boulder', '熔岩巨石'],
+['Fissure', '火山裂隙'], ['Volcano', '火山爆'], ['Armageddon', '毀天滅地'],
+['Tornado', '龍捲風'], ['Hurricane', '颶風'], ['Cyclone Armor', '旋風裝甲'],
+['Bone Spear', '骨矛'], ['Bone Spirit', '骨魂'], ['Corpse Explosion', '屍體爆炸'],
+['Raise Skeleton', '復甦骷髏'], ['Poison Nova', '毒爆'], ['Clay Golem', '黏土石魔'],
+['Iron Golem', '鋼鐵石魔'], ['Blessed Hammer', '祝福之槌'], ['Holy Bolt', '聖光彈'],
+['Fist of the Heavens', '天堂之拳'], ['Zeal', '熱誠'], ['Holy Fire', '聖火'],
+['Holy Freeze', '神聖冰凍'], ['Holy Shock', '神聖電擊'], ['Fanaticism', '狂熱'],
+['Fire Bolt', '火彈'], ['Fire Ball', '火球'], ['Meteor', '隕石'], ['Frozen Orb', '冰封球'],
+['Blizzard', '暴風雪'], ['Chain Lightning', '連鎖閃電'], ['Charged Bolt', '充能彈'],
+['Teleport', '傳送'], ['Static Field', '靜態力場'], ['Hydra', '九頭海蛇'],
+['Short Sword', '短劍'], ['Long Sword', '長劍'], ['Broad Sword', '闊劍'],
+['Crystal Sword', '水晶劍'], ['Phase Blade', '幻化之刃'], ['Berserker Axe', '狂戰士斧'],
+['War Pike', '戰槍'], ['Colossus Blade', '巨神之刃'], ['Ring Mail', '環甲'],
+['Chain Mail', '鎖子甲'], ['Archon Plate', '執政官鎧甲'], ['Monarch', '統治者大盾'],
+['El Rune', '艾爾符文'], ['Eld Rune', '艾德符文'], ['Tir Rune', '特爾符文'],
+['Nef Rune', '內夫符文'], ['Eth Rune', '艾斯符文'], ['Ith Rune', '伊司符文'],
+['Tal Rune', '塔爾符文'], ['Ral Rune', '拉爾符文'], ['Ort Rune', '歐特符文'],
+['Thul Rune', '書爾符文'], ['Amn Rune', '安姆符文'], ['Sol Rune', '索爾符文'],
+['Shael Rune', '夏符文'], ['Dol Rune', '多爾符文'], ['Hel Rune', '海爾符文'],
+['Io Rune', '伊歐符文'], ['Lum Rune', '盧姆符文'], ['Ko Rune', '科符文'],
+['Fal Rune', '法爾符文'], ['Lem Rune', '藍姆符文'], ['Pul Rune', '普爾符文'],
+['Um Rune', '烏姆符文'], ['Mal Rune', '馬爾符文'], ['Ist Rune', '伊斯特符文'],
+['Gul Rune', '古爾符文'], ['Vex Rune', '伐克斯符文'], ['Ohm Rune', '歐姆符文'],
+['Lo Rune', '羅符文'], ['Sur Rune', '瑟符文'], ['Ber Rune', '貝符文'],
+['Jah Rune', '喬符文'], ['Cham Rune', '查姆符文'], ['Zod Rune', '薩德符文']
+];
+const extraNames = [
+['Achmel the Cursed', '詛咒者亞克姆'], ['Ancient Kaa the Soulless', '無魂者古代卡'],
+['Bartuc the Bloody', '血腥巴特克'], ['Battlemaid Sarina', '戰鬥女僕莎蓮娜'],
+['Bremm Sparkfist', '電拳布瑞姆'], ['Coldworm the Burrower', '掘地者寒蟲'],
+['Colenzo the Annihilator', '毀滅者科倫索'], ['Eldritch the Rectifier', '懲戒者艾德瑞奇'],
+['Eyeback the Unleashed', '解放者眼背'], ['Geleb Flamefinger', '火指吉列布'],
+['Grand Vizier of Chaos', '混沌大臣'], ['Hephasto the Armorer', '盔甲匠海法斯特'],
+['Ismail Vilehand', '邪惡之手伊斯梅爾'], ['Korlic the Protector', '守護者科力克'],
+['Lister the Tormentor', '折磨者利斯特'], ['Lord De Seis', '西希之王'],
+['Madawc the Guardian', '守衛者馬道克'], ['Maffer Dragonhand', '龍手馬弗'],
+['Shenk the Overseer', '督軍申克'], ['Snapchip Shatter', '碎片粉碎者'],
+['Sszark the Burning', '燃燒者斯札克'], ['Talic the Defender', '防禦者塔力克'],
+['Toorc Icefist', '冰拳圖克'], ['Ventar the Unholy', '邪惡者文特'],
+['Witch Doctor Endugu', '巫醫恩杜古'], ['Wyand Voidbringer', '虛空使者懷安'],
+['Arreat Plateau', '亞瑞特高原'], ['Arreat Summit', '亞瑞特山頂'],
+['Arreat\'s Face', '亞瑞特之面'], ['Bloody Foothills', '血腥丘陵'],
+['Chaos Sanctuary', '混沌避難所'], ['City of the Damned', '苦痛之城'],
+['Claw Viper Temple', '利爪蝮蛇神殿'], ['Crystalline Passage', '水晶通道'],
+['Durance of Hate', '憎恨囚牢'], ['Frigid Highlands', '冰凍高地'],
+['Frozen River', '冰凍之河'], ['Frozen Tundra', '冰凍苔原'],
+['Glacial Trail', '冰河路徑'], ['Halls of Vaught', '瓦特大廳'],
+['Kurast Bazaar', '庫拉斯特市集'], ['Kurast Causeway', '庫拉斯特堤道'],
+['Monastery Gate', '修道院大門'], ['Outer Steppes', '外側草原'],
+['Plains of Despair', '絕望平原'], ['River of Flame', '火焰之河'],
+['Tal Rasha\'s Tomb', '塔拉夏古墓'], ['Tamoe Highland', '泰摩高地'],
+['Throne of Destruction', '毀滅王座'], ['Valley of Snakes', '蛇谷'],
+['Worldstone Chamber', '世界之石大殿'], ['Worldstone Keep', '世界之石要塞'],
+['Akaran Rondache', '阿卡蘭圓盾'], ['Akaran Targe', '阿卡蘭輕圓盾'],
+['Avenger Guard', '復仇者頭盔'], ['Balrog Skin', '巴爾洛格之皮'],
+['Battle Cestus', '戰鬥拳刃'], ['Battle Dart', '戰鬥飛鏢'],
+['Battle Gauntlets', '戰鬥手套'], ['Cantor Trophy', '吟唱者獎章'],
+['Ceremonial Pike', '儀式長矛'], ['Cloudy Sphere', '雲霧法珠'],
+['Colossus Crossbow', '巨神十字弓'], ['Colossus Girdle', '巨神腰帶'],
+['Conqueror Crown', '征服者皇冠'], ['Crusader Gauntlets', '十字軍手套'],
+['Crystalline Globe', '水晶法球'], ['Dacian Falx', '達契亞長刀'],
+['Demon Head', '惡魔頭骨'], ['Demon Heart', '惡魔之心'],
+['Demonhide Sash', '惡魔皮腰帶'], ['Dimensional Shard', '次元碎片'],
+['Divine Scepter', '神聖權杖'], ['Dusk Shroud', '灰暮罩衣'],
+['Falcon Mask', '獵鷹面具'], ['Feral Claws', '狂暴之爪'],
+['Fetish Trophy', '妖人獎章'], ['Field Plate', '戰場鎧甲'],
+['Flanged Mace', '凸緣錘'], ['Flying Knife', '飛刀'], ['Fury Visor', '狂怒面甲'],
+['Gargoyle Head', '石像鬼頭骨'], ['Ghost Glaive', '幽靈戰戟'],
+['Glorious Axe', '榮耀之斧'], ['Glowing Orb', '發光法珠'],
+['Gnarled Staff', '扭曲法杖'], ['Grand Crown', '巨型皇冠'],
+['Grand Scepter', '巨型權杖'], ['Great Pilum', '巨型標槍'],
+['Great Poleaxe', '巨型長柄斧'], ['Greater Claws', '巨型爪'],
+['Greater Talons', '巨型利爪'], ['Griffon Headdress', '獅鷲頭飾'],
+['Grim Ward', '陰森圖騰'], ['Guardian Crown', '守護者皇冠'],
+['Hand Scythe', '手鐮'], ['Harlequin Crest', '諧角之冠'],
+['Hatchet Hands', '手斧爪'], ['Heavy Bracers', '重型護腕'],
+['Heavy Crossbow', '重型十字弓'], ['Hierophant Trophy', '祭司長獎章'],
+['Hunter\'s Guise', '獵人的偽裝'], ['Jade Talon', '翡翠爪'],
+['Jagged Star', '鋸齒之星'], ['Jawbone Cap', '顎骨頭盔'],
+['Jawbone Visor', '顎骨面甲'], ['Kraken Shell', '海妖殼甲'],
+['Legend Spike', '傳奇尖刺'], ['Legendary Mallet', '傳奇巨槌'],
+['Light Crossbow', '輕型十字弓'], ['Light Gauntlets', '輕型鐵手套'],
+['Light Plate', '輕型鎧甲'], ['Lion Helm', '獅首頭盔'],
+['Lochaber Axe', '洛哈伯斧'], ['Mithril Coil', '秘銀腰帶'],
+['Myrmidon Greaves', '米特律之靴'], ['Ogre Gauntlets', '食人魔鐵手套'],
+['Sacred Feathers', '神聖羽飾'], ['Sacred Globe', '神聖法球'],
+['Sacred Rondache', '神聖圓盾'], ['Sacred Targe', '神聖輕圓盾'],
+['Scissors Katar', '剪刃卡塔爾'], ['Scissors Quhab', '剪刃庫哈布'],
+['Scissors Suwayyah', '剪刃蘇瓦雅'], ['Seraph Rod', '熾天使之杖'],
+['Sexton Trophy', '助祭獎章'], ['Smoked Sphere', '煙霧法珠'],
+['Sparkling Ball', '閃耀水晶球'], ['Spectral Shard', '幽靈碎片'],
+['Stygian Pilum', '冥河標槍'], ['Swirling Crystal', '旋渦水晶'],
+['Totemic Mask', '圖騰面具'], ['Troll Nest', '巨魔巢穴盾'],
+['Umbral Disk', '暗影圓盤'], ['War Fist', '戰拳'],
+['War Gauntlets', '戰鬥鐵手套'], ['War Hat', '戰帽'],
+['Winged Harpoon', '翼形魚叉'], ['Wire Fleece', '線毛甲'],
+['Wrist Spike', '腕刺'], ['Zombie Head', '殭屍頭骨'],
+['Alma Negra', '阿瑪·內格拉'], ['Arachnid Mesh', '蜘蛛網腰帶'],
+['Arioc\'s Needle', '艾瑞歐克之針'], ['Arkaine\'s Valor', '阿凱尼的榮耀'],
+['Arm of King Leoric', '李奧瑞克王之臂'], ['Astreon\'s Iron Ward', '阿斯特龍的鐵守衛'],
+['Bane Ash', '痛苦烏木'], ['Baranar\'s Star', '巴拉那之星'],
+['Bartuc\'s Cut-Throat', '巴特克的屠殺之刃'], ['Biggin\'s Bonnet', '比格因的軟帽'],
+['Blackhand Key', '黑手之匙'], ['Blinkbat\'s Form', '蝙蝠之形'],
+['Blood Crescent', '血月'], ['Blood Raven\'s Charge', '血鴉之爪'],
+['Bonesaw Breaker', '碎骨鋸'], ['Bul-Kathos\' Wedding Band', '布爾凱索的婚戒'],
+['Buriza-Do Kyanon', '布理撒多凱南'], ['Bverrit Keep', '貝弗提的堡壘'],
+['Carin Shard', '凱恩碎片'], ['Cerebus\' Bite', '刻耳柏洛斯之咬'],
+['Crown of Ages', '年紀之冠'], ['Crown of Thieves', '竊盜之王皇冠'],
+['Death Cleaver', '死神之擊'], ['Death\'s Fathom', '死亡深度'],
+['Death\'s Web', '死亡之網'], ['Dimoak\'s Hew', '迪莫克之劈'],
+['Dwarf Star', '矮人之星'], ['Eschuta\'s Temper', '艾斯屈塔的脾氣'],
+['Gargoyle\'s Bite', '石像鬼之咬'], ['Gerke\'s Sanctuary', '吉永的庇護'],
+['Gloom\'s Trap', '陰影陷阱'], ['Gore Rider', '蝕肉騎士'],
+['Griffon\'s Eye', '獅鷲之眼'], ['Halaberd\'s Reign', '哈拉伯德的統治'],
+['Heaven\'s Light', '天堂之光'], ['Highlord\'s Wrath', '大君之怒'],
+['Husoldal Evo', '胡索達爾艾沃'], ['Icehawk Riftwing', '冰鷹裂翼'],
+['Jalal\'s Mane', '加爾的長髮'], ['Jared\'s Stone', '傑瑞德之石'],
+['Kinemil\'s Awl', '基米爾的錐子'], ['Kira\'s Guardian', '奇拉的守護'],
+['Knell Striker', '喪鐘敲擊者'], ['Langer Briser', '蘭格布萊瑟'],
+['Lidless Wall', '無眼之牆'], ['Lycander\'s Aim', '萊坎德的準星'],
+['Lycander\'s Flank', '萊坎德的側翼'], ['Mara\'s Kaleidoscope', '馬拉的萬花筒'],
+['Manald Heal', '瑪納德的治療'], ['Medusa\'s Gaze', '美杜莎之凝視'],
+['Nature\'s Peace', '自然之和平'], ['Nightwing\'s Veil', '夜翼面紗'],
+['Nosferatu\'s Coil', '諾斯費拉圖的線圈'], ['Pelta Lunata', '佩爾塔月牙'],
+['Que-Hegan\'s Wisdom', '魁黑剛的智慧'], ['Radament\'s Sphere', '拉達曼特之球'],
+['Raven Claw', '渡鴉之爪'], ['Raven Frost', '烏鴉之霜'],
+['Rixot\'s Keen', '瑞克撒特的銳利'], ['Seraph\'s Hymn', '熾天使的頌歌'],
+['Shadow Dancer', '影舞者'], ['Shadow Killer', '影殺者'],
+['Skin of the Vipermagi', '蛇魔法師之皮'], ['Skullder\'s Ire', '斯寇德的憤怒'],
+['Spiderweb Sash', '蜘蛛網腰帶'], ['Spire of Honor', '榮耀尖塔'],
+['Spire of Lazarus', '拉撒路尖塔'], ['Suicide Branch', '自殺枝芽'],
+['The Cat\'s Eye', '貓眼'], ['The Chieftain', '酋長'], ['The Eye of Etlich', '艾利屈之眼'],
+['The Face of Horror', '恐懼之臉'], ['The Gladiator\'s Bane', '鬥士的禍根'],
+['The Hand of Broc', '布洛克之手'], ['The Oculus', '眼球'],
+['The Stone of Jordan', '喬丹之石'], ['Thundergod\'s Vigor', '雷神之力'],
+['Titan\'s Revenge', '泰坦的復仇'], ['Treads of Cthon', '克松之足'],
+['Ume\'s Lament', '烏姆之哀嘆'], ['Verdungo\'s Hearty Cord', '維爾登戈的強健之索'],
+['Wirt\'s Leg', '維特之腳'], ['Wisp Projector', '鬼火投射器'],
+['Arctic Blast', '寒冰氣流'], ['Battle Command', '戰鬥指揮'],
+['Charged Strike', '充能一擊'], ['Claw Mastery', '爪類精通'],
+['Claws of Thunder', '雷電爪'], ['Cloak of Shadows', '暗影斗篷'],
+['Cobra Strike', '眼鏡蛇攻擊'], ['Defensive Auras', '防禦靈氣'],
+['Dragon Claw', '龍爪'], ['Dragon Flight', '飛龍在天'], ['Dragon Tail', '神龍擺尾'],
+['Faster Run/Walk', '高速跑步／行走'], ['Feral Rage', '狂怒'],
+['Find Potion', '尋找藥水'], ['Frost Nova', '霜之新星'], ['Golem Mastery', '石魔精通'],
+['Heart of Wolverine', '狼獾之心'], ['Holy Shield', '神聖之盾'],
+['Ice Blast', '冰彈'], ['Increased Attack Speed', '提高攻擊速度'],
+['Increased Speed', '加速'], ['Increased Stamina', '提高耐力'],
+['Inferno Sentry', '地獄火守衛'], ['Inner Sight', '內視'],
+['Iron Maiden', '攻擊反噬'], ['Iron Skin', '鋼鐵之膚'], ['Mace Mastery', '錘類精通'],
+['Martial Arts', '武學'], ['Mind Blast', '心靈爆震'], ['Multiple Shots', '多重射擊'],
+['Oak Sage', '橡木智者'], ['Offensive Auras', '攻擊靈氣'],
+['Phoenix Strike', '鳳凰擊'], ['Pole Arm Mastery', '長柄武器精通'],
+['Power Strike', '威力一擊'], ['Raise Skeletal Mage', '復甦骷髏法師'],
+['Royal Strike', '皇家一擊'], ['Shadow Disciplines', '暗影修行'],
+['Shadow Master', '影子大師'], ['Shadow Warrior', '影子戰士'],
+['Shape Shifting', '變形'], ['Shock Field', '電能場'], ['Shock Wave', '震波'],
+['Shock Web', '電網'], ['Skeleton Mastery', '骷髏精通'], ['Slow Missiles', '緩速飛射'],
+['Solar Creeper', '太陽藤蔓'], ['Spirit of Barbs', '荊棘靈'],
+['Throwing Mastery', '投擲精通'], ['Thunder Storm', '雷暴'],
+['Tiger Strike', '虎擊'], ['Wake of Inferno', '地獄火復甦'], ['War Cry', '戰嗥'],
+['Cannot Be Frozen', '無法冰凍'], ['Extra Fast', '特別快速'],
+['Extra Strong', '特別強壯'], ['Hit Blinds Target', '擊中使目標目盲'],
+['Immune to Cold', '冰寒免疫'], ['Immune to Fire', '火焰免疫'],
+['Immune to Lightning', '閃電免疫'], ['Immune to Magic', '魔法免疫'],
+['Immune to Physical', '物理免疫'], ['Immune to Poison', '毒素免疫'],
+['Ignore Target\'s Defense', '無視目標防禦'], ['Lightning Enchanted', '閃電強化'],
+['Lightning Mastery', '閃電支配'], ['Lightning Skills', '閃電技能'],
+['Lower Resist', '降低抗性'], ['Martial arts, traps and shadow disciplines', '武學、陷阱與暗影修行'],
+['of the Apprentice', '學徒之'], ['of the Bat', '蝙蝠之'], ['of the Colosuss', '巨像之'],
+['of the Elephant', '猛獁之'], ['of the Fox', '狐狸之'], ['of the Giant', '巨人之'],
+['of the Glacier', '冰河之'], ['of the Icicle', '冰柱之'], ['of the Jackal', '豺狼之'],
+['of the Kraken', '海妖之'], ['of the Lamprey', '七鰓鰻之'], ['of the Leech', '水蛭之'],
+['of the Locust', '蝗蟲之'], ['of the Magus', '大法師之'], ['of the Mammoth', '猛獁之'],
+['of the Mind', '心智之'], ['of the Ox', '公牛之'], ['of the Sentinel', '守衛之'],
+['of the Squid', '烏賊之'], ['of the Sun', '太陽之'], ['of the Tiger', '猛虎之'],
+['of the Titan', '泰坦之'], ['of the Vampire', '吸血鬼之'], ['of the Whale', '巨鯨之'],
+['of the Wolf', '狼之'], ['of the Wraith', '幽靈之'], ['of Absorption', '吸收之'],
+['of Acceleration', '加速之'], ['of Accuracy', '準確之'], ['of Alacrity', '敏捷之'],
+['of Amelioration', '改善之'], ['of Anthrax', '劇毒之'], ['of Attraction', '吸引之'],
+['of Blight', '枯萎之'], ['of Blocking', '格擋之'], ['of Brilliance', '光輝之'],
+['of Burning', '燃燒之'], ['of Butchery', '屠戮之'], ['of Carnage', '屠殺之'],
+['of Craftsmanship', '工藝之'], ['of Defiance', '抗禦之'], ['of Deflecting', '偏斜之'],
+['of Enlightenment', '啟迪之'], ['of Evisceration', '剖腹之'], ['of Excellence', '卓越之'],
+['of Flame', '烈焰之'], ['of Fortune', '財運之'], ['of Frost', '冰霜之'],
+['of Gore', '血腥之'], ['of Greed', '貪婪之'], ['of Guarding', '守護之'],
+['of Haste', '急速之'], ['of Incineration', '焚化之'], ['of Light', '光明之'],
+['of Luck', '幸運之'], ['of Maiming', '致殘之'], ['of Might', '威力之'],
+['of Negation', '消除之'], ['of Nirvana', '涅槃之'], ['of Pacing', '步伐之'],
+['of Perfection', '完美之'], ['of Pestilence', '瘟疫之'], ['of Precision', '精準之'],
+['of Protection', '防護之'], ['of Quickness', '迅捷之'], ['of Radiance', '光芒之'],
+['of Regeneration', '再生之'], ['of Regrowth', '復甦之'], ['of Remedy', '療癒之'],
+['of Revivification', '復活之'], ['of Shock', '電擊之'], ['of Slaughter', '屠殺之'],
+['of Slaying', '屠戮之'], ['of Sorcery', '巫術之'], ['of Spikes', '尖刺之'],
+['of Storms', '風暴之'], ['of Swiftness', '迅速之'], ['of Swords', '劍術之'],
+['of Thorns', '荊棘之'], ['of Thunder', '雷霆之'], ['of Transcendence', '超凡之'],
+['of Traveling', '旅行之'], ['of Venom', '毒液之'], ['of Warding', '防衛之'],
+['of Wealth', '財富之'], ['of Winter', '寒冬之'], ['of Wizardry', '法術之'],
+['of Worth', '價值之'],
+['Ancients\' Way', '先祖之路'], ['Blood Golem', '血肉石魔'],
+['Blood Hawk', '血鷹'], ['Blood Spirit', '血靈'], ['Bloodwitch the Wild', '野性血巫'],
+['Bone Knife', '骨刀'], ['Bone Prison', '骨牢'], ['Bone Wall', '骨牆'],
+['Bramble Mitts', '荊棘手套'], ['Carrion Vine', '屍體藤蔓'], ['Corrupt Rogue', '墮落羅格'],
+['Creeping Feature', '爬行異物'], ['Dac Farren', '達克·法倫'], ['Dark Elder', '黑暗長老'],
+['Darkforce Spawn', '黑暗力量之卵'], ['Death Mask', '死亡面具'],
+['Demonhorn\'s Edge', '惡魔號角之刃'], ['Devil Star', '惡魔之星'],
+['Dim Vision', '微暗視力'], ['Dream Spirit', '夢境之靈'], ['Earth Spirit', '大地之靈'],
+['Firelizard\'s Talons', '火蜥蜴之爪'], ['Full Rejuvenation Potion', '全面回復藥水'],
+['Glacial Spike', '冰尖柱'], ['Great Wyrm\'s', '巨龍之'], ['Hawk Branded', '鷹印之'],
+['Healing Potion', '治療藥水'], ['Heavenly Stone', '天堂之石'],
+['Herald of Zakarum', '撒卡蘭姆使者'], ['Infector of Souls', '靈魂傳染者'],
+['Iron Pelt', '鐵皮'], ['Mage Plate', '法師鎧甲'], ['Maiden Pike', '少女長矛'],
+['Matriarchal Pike', '族長長矛'], ['Mighty Scepter', '強威權杖'],
+['Morning Star', '晨星'], ['Mummified Trophy', '木乃伊獎章'],
+['Plague Poppy', '瘟疫罌粟'], ['Preserved Head', '保存頭顱'], ['Quill Rat', '刺鼠'],
+['Rage Mask', '狂怒面具'], ['Reinforced Mace', '強化釘錘'],
+['Rose Branded', '玫瑰印記之'], ['Rune Scepter', '符文權杖'],
+['Runic Talons', '符文利爪'], ['Scroll of Town Portal', '城鎮傳送卷軸'],
+['Sharptooth Slayer', '鋒齒殺手'], ['Sky Spirit', '天空之靈'],
+['Slayer Guard', '屠殺者守衛'], ['Small Charm', '小型護身符'],
+['Small Crescent', '小型新月斧'], ['Sparking Mail', '電光鎧甲'],
+['Spectral Hit', '幽靈打擊'], ['Spirit Keeper', '靈魂守護者'],
+['Spirit Mask', '靈魂面具'], ['Spirit Ward', '靈魂守衛'], ['Splint Mail', '板甲'],
+['Steel Pillar', '鋼鐵之柱'], ['Stone Skin', '石膚'], ['Studded Leather', '鑲嵌皮甲'],
+['Sun Spirit', '太陽之靈'], ['The Dragon Chang', '長龍'],
+['The Fetid Sprinkler', '惡臭灑水器'], ['The General\'s Tan Do Li Ga', '將軍的譚多里加'],
+['The Gnasher', '咬骨'], ['The Harrowing', '恐懼'], ['The Howler', '嚎叫者'],
+['The Hungry', '飢餓者'], ['The Hunter', '獵人'], ['The Impaler', '穿刺者'],
+['The Infernal Gate', '地獄之門'], ['The Iron Jang Bong', '鐵長棍'],
+['The Mahim-Oak Curio', '馬希姆橡木古物'], ['The Mauler', '重擊者'],
+['The Meat Scraper', '剝肉者'], ['The Patriarch', '族長'], ['The Redeemer', '救贖者'],
+['The Rising Sun', '旭日'], ['The Salamander', '火蜥蜴'], ['The Scalper', '剝頭皮者'],
+['The Sightless Eye', '無眼者'], ['The Tannr Gorerod', '坦恩戈瑞德'],
+['The Ward', '守護者'], ['Thresh Socket', '碎顱者'], ['Throwing Knife', '投擲飛刀'],
+['Torch of Iro', '伊羅火炬'], ['Treehead WoodFist', '木拳樹頭'],
+['Unraveller Head', '解縛者頭顱'], ['Veil of Steel', '鋼鐵面紗'],
+['Walking Stick', '手杖'], ['War Scepter', '戰鬥權杖'], ['War Traveler', '戰爭旅者'],
+['Wolf Head', '狼頭'], ['Zakarum\'s Hand', '撒卡蘭姆之手'],
+['of Anima', '靈性之'], ['of Atlus', '巨人之'], ['of Measure', '衡量之'],
+['of Memory', '記憶之'], ['of Performance', '精湛之'], ['of Quality', '品質之'],
+['of Razors', '利刃之'], ['of Readiness', '備戰之'],
+['a blow', '攻擊'], ['a blow back', '擊退'], ['a blow of the mind', '精神衝擊'],
+['a blow, on the dash or at its end', '衝刺途中或結束時發動攻擊'], ['a bomb', '炸彈'],
+['a boulder', '巨石'], ['a burst', '爆裂'], ['a claw', '爪擊'], ['a claw blow', '爪擊'],
+['a cut', '斬擊'], ['a dire wolf\'s bite', '恐狼撕咬'], ['a flame', '火焰'],
+['a gust', '疾風'], ['a hit of his spin', '旋轉攻擊命中時'], ['a kick', '踢擊'],
+['a paw', '揮爪'], ['a raven\'s peck', '烏鴉啄擊'], ['a rock', '岩石'],
+['a shard', '碎片'], ['a skeleton\'s blow', '骷髏重擊'], ['a smite at what it blocks', '格擋時施展重擊'],
+['a spark', '火花'], ['a spike', '尖刺'], ['a spirit', '靈體'],
+['a spirit wolf\'s bite', '幽靈狼撕咬'], ['a spit', '噴吐'],
+['a stomp or a blow', '踐踏或重擊'], ['a strike', '打擊'], ['a thrust', '刺擊'],
+['a tick of a flame', '火焰每次造成傷害時'], ['a tick of a web', '蛛網每次造成傷害時'],
+['a tick of the wall', '牆壁每次造成傷害時'], ['a tooth', '尖牙'], ['a twister', '旋風'],
+['a wave', '波動'], ['the Dark', '暗黑者'], ['the Dead', '亡者'],
+['the Destroyer', '毀滅者'], ['the Flayer', '剝皮者'], ['the golem\'s blow', '石魔重擊'],
+['the Grim', '陰森者'], ['the grizzly\'s swipe', '灰熊揮擊'], ['the Jagged', '鋸齒者'],
+['the landing or the strike', '落地或攻擊時'], ['the Mad', '狂亂者'], ['the Quick', '迅捷者'],
+['the Shade', '暗影者'], ['the Sharp', '銳利者'], ['the Slasher', '斬擊者'],
+['the Slayer', '殺戮者'], ['the Tainted', '污染者'], ['the Unclean', '污穢者'],
+['the Unholy', '邪惡者'], ['the Witch', '女巫'], ['the Wraith', '幽魂'],
+['wake of destruction', '毀滅之焰']
+];
+const d2zhKnown = new Set([...Object.keys(labels), ...[...names, ...extraNames, ...vocabulary].map(e => e[0])].map(s => s.toLowerCase()));
+for (const [en, zh] of Object.entries(D2ZH_EXTRA.labels)) if (!d2zhKnown.has(en.toLowerCase())) labels[en] = zh;
+const d2zhPatterns = D2ZH_EXTRA.patterns.map(([en, zh]) => [new RegExp('^' + en.split(/(\{#?\})/).map(part =>
+part === '{}' ? '(.+?)' : part === '{#}' ? '([-+]?\\d[\\d.,]*)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('') + '$', 'i'), zh]);
+window.__d2zhKnown = s => lookup.has(String(s).toLowerCase());
+function d2zhPattern(source) {
+for (const [re, zh] of d2zhPatterns) {
+const m = re.exec(source);
+if (m) return zh.replace(/\{(\d)\}/g, (_, i) => translate(m[i]));
+}
+const m = /^(.+) (of (?:the )?[A-Z][\w']*(?: [A-Z][\w']*)?)$/.exec(source);
+if (m && lookup.has(m[2].toLowerCase())) return translate(m[2]) + translate(m[1]);
+return null;
+}
+const lookup = new Map();
+for (const [english, chinese] of [...Object.entries(labels), ...names, ...extraNames]) {
+lookup.set(english.toLowerCase(), chinese);
+}
+const wordMap = new Map();
+const wordEntries = [...Object.entries(labels), ...extraNames, ...names, ...vocabulary];
+for (const [english, chinese] of wordEntries) wordMap.set(english.toLowerCase(), chinese);
+const wordAlternatives = wordEntries
+.map(([english]) => english)
+.sort((a, b) => b.length - a.length)
+.map(english => english.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+.join('|');
+const wordPattern = new RegExp(`(^|[^A-Za-z])(${wordAlternatives})(?=$|[^A-Za-z])`, 'gi');
+const translatedTexts = new Map();
+function translate(value) {
+const source = String(value ?? '');
+if (language !== 'zh-Hant' || !source) return source;
+const direct = lookup.get(source.toLowerCase());
+if (direct) return direct;
+if (translatedTexts.has(source)) return translatedTexts.get(source);
+const d2zhViaPattern = d2zhPattern(source);
+if (d2zhViaPattern !== null) { translatedTexts.set(source, d2zhViaPattern); return d2zhViaPattern; }
+const result = source.replace(wordPattern, (_match, lead, word) => lead + wordMap.get(word.toLowerCase())).replace(/([㐀-鿿])\s+(?=[㐀-鿿])/gu, '$1');
+if (translatedTexts.size >= 12000) translatedTexts.delete(translatedTexts.keys().next().value);
+translatedTexts.set(source, result);
+return result;
+}
+function shouldUseLocalFont(value) {
+return language === 'zh-Hant' && /[\u3400-\u9fff]/u.test(translate(value));
+}
+function cacheLanguage(value) {
+const source = String(value ?? '');
+return language === 'zh-Hant' && translate(source) !== source ? language : 'en';
+}
+function colorValue(value) {
+if (Array.isArray(value) && value.length >= 3) {
+return `rgb(${Math.max(0, Math.min(255, value[0]))}, ${Math.max(0, Math.min(255, value[1]))}, ${Math.max(0, Math.min(255, value[2]))})`;
+}
+return typeof value === 'string' ? value : '#e8dfcc';
+}
+function wrapLine(context, text, maxWidth) {
+if (!maxWidth || context.measureText(text).width <= maxWidth) return [text];
+const result = [];
+for (const sourceLine of text.split('\n')) {
+const tokens = sourceLine.includes(' ') ? sourceLine.split(/(?<=\s)/u) : Array.from(sourceLine);
+let line = '';
+for (const token of tokens) {
+const next = line + token;
+if (line && context.measureText(next).width > maxWidth) {
+result.push(line.trimEnd());
+line = token.trimStart();
+if (context.measureText(line).width > maxWidth) {
+let part = '';
+for (const char of Array.from(line)) {
+if (part && context.measureText(part + char).width > maxWidth) {
+result.push(part);
+part = char;
+} else part += char;
+}
+line = part;
+}
+} else line = next;
+}
+if (line || !sourceLine) result.push(line.trimEnd());
+}
+return result;
+}
+function renderBitmapText(bitmapFont, source, options) {
+options = options || {};
+const text = translate(source);
+const size = Math.max(10, Math.round(Number(bitmapFont?.info?.height || bitmapFont?.lineHeight || 16)));
+const lineHeight = Math.max(size + 2, Math.round(Number(bitmapFont?.lineHeight || size * 1.24)));
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+if (!context) return canvas;
+context.font = `${size}px ${FONT_STACK}`;
+context.textBaseline = 'middle';
+const maxWidth = Number(options.maxWidth) > 0 ? Number(options.maxWidth) : 0;
+const lines = text.split('\n').flatMap(line => wrapLine(context, line, maxWidth));
+const widths = lines.map(line => context.measureText(line).width);
+const shadow = options.shadow ? 2 : 0;
+canvas.width = Math.max(1, Math.ceil(Math.max(0, ...widths)) + shadow);
+canvas.height = Math.max(1, Math.ceil(size + (lines.length - 1) * lineHeight + shadow));
+context.font = `${size}px ${FONT_STACK}`;
+context.textBaseline = 'middle';
+context.fillStyle = colorValue(options.color);
+const align = options.align || 'center';
+lines.forEach((line, index) => {
+const width = context.measureText(line).width;
+const x = align === 'left' ? 0 : align === 'right' ? canvas.width - width - shadow : (canvas.width - width - shadow) / 2;
+const y = size / 2 + index * lineHeight;
+if (options.shadow) {
+context.fillStyle = '#000';
+context.fillText(line, x + 1, y + 1);
+context.fillStyle = colorValue(options.color);
+}
+context.fillText(line, x, y, maxWidth || undefined);
+});
+canvas.className = 'd2-text d2-local-font';
+canvas.setAttribute('aria-label', text);
+return canvas;
+}
+let language = 'zh-Hant';
+try {
+const saved = localStorage.getItem(STORAGE_KEY);
+if (saved === 'en' || saved === 'zh-Hant') language = saved;
+} catch (_) { /* Storage can be disabled; Traditional Chinese remains the default. */ }
+const textRecords = new WeakMap();
+const attributeRecords = new WeakMap();
+let switcher;
+function shouldSkipText(node) {
+return !node.parentElement || !!node.parentElement.closest('#d2-language-switch');
+}
+function processTextNode(node) {
+if (shouldSkipText(node)) return;
+const current = node.nodeValue;
+let record = textRecords.get(node);
+if (!record) {
+record = { source: current, last: null };
+textRecords.set(node, record);
+} else if (current !== record.last) {
+record.source = current;
+}
+const translated = translate(record.source);
+record.last = translated;
+if (node.nodeValue !== translated) node.nodeValue = translated;
+}
+function processAttributes(element) {
+if (element.id === 'd2-language-switch' || element.closest?.('#d2-language-switch')) return;
+const keys = ['title', 'aria-label', 'placeholder', 'alt'];
+let records = attributeRecords.get(element);
+if (!records) {
+records = new Map();
+attributeRecords.set(element, records);
+}
+for (const key of keys) {
+if (!element.hasAttribute(key)) continue;
+const current = element.getAttribute(key);
+let record = records.get(key);
+if (!record) record = { source: current, last: null };
+else if (current !== record.last) record.source = current;
+const next = translate(record.source);
+record.last = next;
+records.set(key, record);
+if (current !== next) element.setAttribute(key, next);
+}
+}
+function scan(root) {
+if (!root) return;
+if (root.nodeType === Node.TEXT_NODE) {
+processTextNode(root);
+return;
+}
+if (root.nodeType === Node.ELEMENT_NODE) processAttributes(root);
+const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+let node;
+while ((node = walker.nextNode())) processTextNode(node);
+if (root.querySelectorAll) root.querySelectorAll('*').forEach(processAttributes);
+}
+function applyLanguage() {
+document.documentElement.lang = language === 'zh-Hant' ? 'zh-Hant' : 'en';
+if (document.body) {
+document.body.classList.toggle('d2zh-hant', language === 'zh-Hant');
+scan(document.body);
+}
+if (switcher) {
+switcher.querySelectorAll('button[data-language]').forEach(button => {
+const active = button.dataset.language === language;
+button.setAttribute('aria-pressed', String(active));
+button.classList.toggle('active', active);
+});
+}
+window.dispatchEvent(new CustomEvent('d2-language-changed', { detail: { language } }));
+}
+function setLanguage(next) {
+if (next !== 'en' && next !== 'zh-Hant') return;
+language = next;
+try { localStorage.setItem(STORAGE_KEY, language); } catch (_) { /* In-memory switching still works. */ }
+applyLanguage();
+}
+function addSwitcher() {
+if (!document.body || document.getElementById('d2-language-switch')) return;
+const style = document.createElement('style');
+style.textContent = `
+:root { --d2-local-fonts: ${FONT_STACK}; }
+body.d2zh-hant button, body.d2zh-hant .overlay, body.d2zh-hant .hint,
+body.d2zh-hant .legal, body.d2zh-hant #hud, body.d2zh-hant #touch,
+body.d2zh-hant #character, body.d2zh-hant #tooltip, body.d2zh-hant .panel {
+font-family: var(--d2-local-fonts) !important;
+}
+#d2-language-switch {
+position: fixed; z-index: 2147483647;
+top: calc(8px + env(safe-area-inset-top, 0px));
+right: calc(10px + env(safe-area-inset-right, 0px));
+display: flex; gap: 2px; padding: 3px;
+border: 1px solid #8f743e; border-radius: 7px;
+background: rgba(10, 8, 6, .94); box-shadow: 0 2px 10px #0009;
+font: 12px/1.1 ${FONT_STACK}; pointer-events: auto;
+}
+#d2-language-switch button {
+min-height: 28px; padding: 4px 8px; border: 0; border-radius: 4px;
+color: #d8d0c0; background: transparent; cursor: pointer;
+font: inherit; letter-spacing: .01em;
+}
+#d2-language-switch button.active { color: #17120b; background: #c7a45f; font-weight: 700; }
+#d2-language-switch button:focus-visible { outline: 2px solid #f0d896; outline-offset: 1px; }
+`;
+document.head.appendChild(style);
+switcher = document.createElement('div');
+switcher.id = 'd2-language-switch';
+switcher.setAttribute('role', 'group');
+switcher.setAttribute('aria-label', 'Language / 語言');
+for (const [locale, title] of [['en', 'English'], ['zh-Hant', '繁體中文']]) {
+const button = document.createElement('button');
+button.type = 'button';
+button.dataset.language = locale;
+button.textContent = title;
+button.addEventListener('click', event => {
+event.preventDefault();
+event.stopPropagation();
+setLanguage(locale);
+});
+switcher.appendChild(button);
+}
+document.body.appendChild(switcher);
+window.addEventListener('pointerdown', event => {
+if (event.target instanceof Element && event.target.closest('#d2-language-switch')) event.stopImmediatePropagation();
+}, true);
+applyLanguage();
+new MutationObserver(records => {
+for (const record of records) {
+if (record.type === 'characterData') processTextNode(record.target);
+else {
+if (record.target.nodeType === Node.ELEMENT_NODE) processAttributes(record.target);
+record.addedNodes.forEach(node => scan(node));
+}
+}
+}).observe(document.body, { subtree: true, childList: true, characterData: true });
+}
+window.D2I18N = {
+get active() { return language === 'zh-Hant'; },
+get language() { return language; },
+translate,
+shouldUseLocalFont,
+cacheLanguage,
+renderBitmapText,
+setLanguage
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addSwitcher, { once: true });
+else addSwitcher();
+})();
+})();
