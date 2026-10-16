@@ -36,6 +36,7 @@
   h1 { margin: 0; font-size: 30px; letter-spacing: 2px; color: var(--gold2);
     text-shadow: 0 2px 0 #000, 0 0 18px rgba(255,120,40,.35); }
   .sub { margin: 6px 0 0; color: var(--muted); }
+  .play-link { font-size: 30px; font-weight: bold; letter-spacing: 2px; }
   .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 16px; }
   .chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; color: var(--cream);
     background: rgba(199,164,95,.1); border: 1px solid var(--line); }
@@ -210,7 +211,7 @@
   <header class="hero">
     <div class="emblem">中</div>
     <h1>D2 繁體中文</h1>
-    <p class="sub">給 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">D2 Survivors（d2survivors.lol）</a> 用的中文化書籤</p>
+    <p class="sub"><a class="play-link" href="https://d2survivors.lol/" target="_blank" rel="noopener">暗黑2倖存者這邊玩</a></p>
     <div class="chips">
       <span class="chip">選單介面</span><span class="chip">技能說明</span><span class="chip">裝備名稱</span>
       <span class="chip">物品屬性</span><span class="chip">怪物與地區</span><span class="chip">中英切換</span>
@@ -272,11 +273,12 @@
 
     <div class="tabs-grid">
       <div class="tab-card"><b>選單與介面</b><div>主選單、英雄選擇、職業介紹、物品欄、恰西的商店、儲物箱、暫停與結算畫面。</div></div>
-      <div class="tab-card"><b>技能與升級</b><div>七個職業全部技能名稱、升級卡片的技能說明、進化條件、技能樹分頁。</div></div>
+      <div class="tab-card"><b>技能與升級</b><div>七個職業全部技能名稱、升級卡片的技能說明、進化條件、技能樹分頁。會造成傷害的技能名稱後面標<b>（物理）</b>或<b>（魔法）</b>。</div></div>
       <div class="tab-card"><b>裝備與屬性</b><div>全部底材、暗金裝備、魔法詞綴（例如「狐狸之短劍」），以及「+15 力量」這類屬性文字。</div></div>
       <div class="tab-card"><b>怪物與地區</b><div>怪物、超級獨特怪、首領、各幕地區與地城樓層、神殿名稱與效果。</div></div>
     </div>
 
+    <div class="note-box"><b>（物理）（魔法）怎麼看：</b>（物理）技能吃<b>力量</b>（每點 +物理傷害）；（魔法）技能包含火焰、冰寒、閃電、毒素、魔法，吃<b>精力</b>（每點 +元素與魔法傷害）。升級時選屬性、挑裝備就照這個方向。</div>
     <div class="note-box">譯名以台灣玩家熟悉的版本為主，參考經典攻略站「易牙居」的中英對照。</div>
     <div class="note-box warn">書籤是從網路載入翻譯程式，第一次使用需要連上網路。</div>
   </section>
@@ -290,12 +292,12 @@
       <div class="sc-title">升級</div>
       <div class="sc-cards">
         <div class="sc-card"><span class="sc-key">1</span><span class="sc-icon">🔥</span>
-          <div><span class="sc-name">火彈</span><br>等級 1 → 2<br>向最近的怪物發射 1 道彈矢，25 傷害<br>
-            <span class="sc-gold">進化 為 火球：</span><span class="sc-red">上限 2/8，從等級 12 起</span></div></div>
+          <div><span class="sc-name">火彈（魔法）</span><br>等級 1 → 2<br>向最近的怪物發射 1 道彈矢，25 傷害<br>
+            <span class="sc-gold">進化 為 火球（魔法）：</span><span class="sc-red">上限 2/8，從等級 12 起</span></div></div>
         <div class="sc-card"><span class="sc-key">2</span><span class="sc-icon">👢</span>
           <div><span class="sc-name">高速跑步／行走</span><br>新被動技能 1/6<br>+10% 移動速度</div></div>
         <div class="sc-card"><span class="sc-key">3</span><span class="sc-icon">❄</span>
-          <div><span class="sc-name">冰封裝甲</span><br>新技能 1/6<br>
+          <div><span class="sc-name">冰封裝甲（魔法）</span><br>新技能 1/6<br>
             <span class="sc-gold">進化 冰封裝甲 為 碎冰甲，還 需要：</span><span class="sc-red">上限 0/8</span></div></div>
       </div>
       <div class="sc-buttons"><span>重抽 (R) · 2</span><span>略過 (X) · 2</span><span>放逐 (B) · 2</span></div>
@@ -324,7 +326,7 @@
     </details>
     <details>
       <summary>中文字的字型？</summary>
-      <p>遊戲原本的點陣字型只有英文，中文改用電腦內建的字型（Windows 是微軟正黑體）顯示；英文和數字維持遊戲原本的字型。</p>
+      <p>遊戲原本的點陣字型只有英文，中文改用電腦內建的字型（Windows 是微軟正黑體）顯示，並加上黑色描邊、調亮顏色，在任何背景上都看得清楚；英文和數字維持遊戲原本的字型。</p>
     </details>
     <details>
       <summary>會不會動到存檔、上傳我的資料？</summary>
