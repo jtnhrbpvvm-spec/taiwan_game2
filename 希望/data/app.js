@@ -101,7 +101,7 @@
 
   // ---------- 功能總覽卡片 ----------
   var CAPABILITIES = [
-    { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉）、名聲。" },
+    { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉／三轉）、名聲。" },
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
     // 遊戲已內建存檔排序，存檔位置先隱藏
@@ -284,7 +284,9 @@
   }
 
   // ---------- 物品能力預覽方塊（背包/倉庫/裝備欄位共用）----------
-  var STAT_LABELS = { atk: "攻擊", def: "防禦", magic: "魔法", atkSpeed: "攻速", crit: "必殺", eva: "迴避", moveSpeed: "移速" };
+  // maxHp／maxAp：10-16 新增的裝備屬性（三轉裝備、武器外形）
+  var STAT_LABELS = { atk: "攻擊", def: "防禦", magic: "魔法", atkSpeed: "攻速", crit: "必殺", hit: "命中", eva: "迴避", moveSpeed: "移速",
+    maxHp: "HP 上限", maxAp: "AP 上限", dmgDealtPct: "增加傷害%", dmgTakenPct: "減少傷害%" };
   var ATTR_LABELS = { str: "力量", agi: "敏捷", int: "智力", sta: "體力", wis: "精神", luck: "幸運" };
 
   function renderItemPreview(boxId, itemId) {
@@ -607,11 +609,13 @@
       ));
     }
 
-    // 職業：存檔 v34 起只存一個 currentJob（一轉或二轉的職業 id），一轉職業由二轉的 from 反推（遊戲 Qf()）；
+    // 職業：存檔 v34 起只存一個 currentJob（一轉、二轉或三轉的職業 id），一轉職業由二轉的 from 反推（遊戲 yh()）；
+    // 三轉（10-16 新增）也是直接存在 currentJob，from 是二轉（遊戲 vh()），離線版實測確認。
     // 舊的 job／secondJob／advanceStep 欄位遊戲早就不讀了。沒有 currentJob 代表還是初心者。
     var jobOptions = JOBS.map(function (j) {
       var fromName = j.from ? (JOB_NAME[j.from] || j.from) : "";
-      return { value: j.id, label: (j.tier === 2 ? "【二轉】" + j.name + "・從 " + fromName : "【一轉】" + j.name) + " (" + j.id + ")" };
+      var tag = j.tier === 3 ? "【三轉】" : j.tier === 2 ? "【二轉】" : "【一轉】";
+      return { value: j.id, label: tag + j.name + (j.from ? "・從 " + fromName : "") + " (" + j.id + ")" };
     });
     var jobField = fieldSelect("職業 currentJob", jobOptions,
       function () { return currentJobOf(c); },
@@ -625,7 +629,9 @@
     var firstJobId = firstJobOf(currentJobOf(c));
     jobField.appendChild(el("div", {
       style: "font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;",
-      text: "選二轉職業時，一轉職業自動是它的來源職業（目前一轉：" + (JOB_NAME[firstJobId] || firstJobId) + "）。" +
+      text: "選二轉／三轉職業時，前面幾轉自動是它的來源職業（目前一轉：" + (JOB_NAME[firstJobId] || firstJobId) +
+        (secondJobOf(currentJobOf(c)) ? "、二轉：" + (JOB_NAME[secondJobOf(currentJobOf(c))] || secondJobOf(currentJobOf(c))) : "") + "）。" +
+        "三轉要 Lv300（遊戲轉三轉會重置屬性點、不會清技能；一轉／二轉才會清技能）。" +
         "遊戲在轉職時會清空技能欄與已學技能，這裡直接改不會，技能請到「已學技能」自己調整。"
     }));
     wrap.appendChild(jobField);
@@ -739,19 +745,15 @@
       // 選單已經建立過選項，只需要重新綁定 onPick（因為每次 render 都會重建，但選項不用重建）
     } else {
       $job.dataset.wired = "1";
-      var primaryGroup = el("optgroup", {});
-      primaryGroup.label = "一轉";
-      JOBS.filter(function (j) { return j.tier !== 2; }).forEach(function (j) {
-        primaryGroup.appendChild(el("option", { value: j.id, text: j.name }));
+      // 三轉的 equipBit 是 update_data.py 照來源二轉填的（三轉沒有自己的裝備位元）
+      [[1, "一轉"], [2, "二轉"], [3, "三轉"]].forEach(function (def) {
+        var list = JOBS.filter(function (j) { return (j.tier || 1) === def[0]; });
+        if (!list.length) return;
+        var group = el("optgroup", {});
+        group.label = def[1];
+        list.forEach(function (j) { group.appendChild(el("option", { value: j.id, text: j.name })); });
+        $job.appendChild(group);
       });
-      $job.appendChild(primaryGroup);
-
-      var secondGroup = el("optgroup", {});
-      secondGroup.label = "二轉";
-      JOBS.filter(function (j) { return j.tier === 2; }).forEach(function (j) {
-        secondGroup.appendChild(el("option", { value: j.id, text: j.name }));
-      });
-      $job.appendChild(secondGroup);
 
       Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
         var opt = el("option", { value: slotKey, text: EQUIP_SLOTS[slotKey] });
@@ -897,16 +899,26 @@
     var job = JOBS.find(function (j) { return j.id === jobId; });
     return job ? job.equipBit : null;
   }
+  function jobDef(jobId) { return JOBS.find(function (x) { return x.id === jobId; }); }
   // 存檔 v34 起職業只存 currentJob；沒有的話是初心者（jobs.json startingJob）
   function currentJobOf(c) { return c.currentJob || "novice"; }
-  function firstJobOf(jobId) {
-    var j = JOBS.find(function (x) { return x.id === jobId; });
-    return j && j.from ? j.from : jobId;
+  // 三轉（10-16 新增，tier 3）的 from 是二轉，二轉的 from 才是一轉（遊戲 yh()／_h()）
+  function secondJobOf(jobId) {
+    var j = jobDef(jobId);
+    if (!j) return null;
+    if (j.tier === 3) return j.from;
+    return j.tier === 2 ? j.id : null;
   }
-  // 遊戲 equipBits：一轉職業的位元，加上二轉職業的位元（有二轉、而且不同位元時）
+  function firstJobOf(jobId) {
+    var second = secondJobOf(jobId);
+    if (!second) return jobId;
+    var s = jobDef(second);
+    return s && s.from ? s.from : jobId;
+  }
+  // 遊戲 equipBits：一轉職業的位元，加上二轉職業的位元（有二轉、而且不同位元時）；三轉沒有自己的位元，看它的二轉
   function equipBitsOf(c) {
-    var cur = currentJobOf(c), first = firstJobOf(cur);
-    var bits = [], b1 = getEquipBitForJob(first), b2 = cur !== first ? getEquipBitForJob(cur) : null;
+    var cur = currentJobOf(c), first = firstJobOf(cur), second = secondJobOf(cur);
+    var bits = [], b1 = getEquipBitForJob(first), b2 = second ? getEquipBitForJob(second) : null;
     if (b1 != null) bits.push(b1);
     if (b2 != null && b2 !== b1) bits.push(b2);
     return bits;
@@ -1201,6 +1213,20 @@
     c.skills = c.skills.filter(function (pair) { return pair[0] !== skillId; });
   }
 
+  // 技能的 tree：1 一轉本職、2／3 二轉分支（SECOND_JOBS 的 branch）、4／5 三轉分支（THIRD_JOBS 的 tree，10-16 新增）
+  var SKILL_TREE_NAME = {};
+  (window.SECOND_JOBS || []).forEach(function (j) {
+    SKILL_TREE_NAME[j.from + ":" + j.branch] = "二轉・" + j.name;
+  });
+  (window.THIRD_JOBS || []).forEach(function (j) {
+    var second = (window.SECOND_JOBS || []).find(function (s) { return s.id === j.from; });
+    if (second) SKILL_TREE_NAME[second.from + ":" + j.tree] = "三轉・" + j.name;
+  });
+  function skillTreeLabel(jobId, tree) {
+    if (!tree || tree === 1) return "";
+    return SKILL_TREE_NAME[jobId + ":" + tree] || (tree >= 4 ? "三轉" : "二轉");
+  }
+
   function renderSkillsPanel(c) {
     var wrap = document.getElementById("skillList");
     var $search = document.getElementById("skillSearch");
@@ -1242,6 +1268,8 @@
 
           card.appendChild(cb);
           card.appendChild(el("span", { text: s.name }));
+          var treeLabel = skillTreeLabel(jobId, s.tree);
+          if (treeLabel) card.appendChild(el("span", { class: "dur", text: "（" + treeLabel + "）" }));
           card.appendChild(lvInput);
           card.appendChild(el("span", { class: "dur", text: "/" + s.maxLv }));
           grid.appendChild(card);
@@ -3557,41 +3585,69 @@
   // ---------- 鑑定（跟發條強化是完全不同的系統，公式反推自遊戲原始程式碼）----------
   // 種類編號照遊戲「現行」的 c_（存檔 v28 起重新編號：舊 3防 4攻速 5必殺 6命中 7迴避 → 新 3命中 4迴避 5防禦 6必殺 7攻速）。
   // 以前用舊編號，修改器寫進存檔的鑑定在遊戲裡會變成別的屬性（例如攻速變迴避）。
-  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%" };
-  var APPR_FF = { // 遊戲 l_：[種類, 權重]
+  // 10-16 改版：整套規則換了（bundle tm／om／fm／gm()／ym()／rollItemAppraisal()）：
+  //   ① 每件裝備有自己的屬性池（equipment.json aprPool → APR_POOLS），沒有的才照部位用預設池 APPR_DEFAULT_POOLS
+  //   ② 先照 APPR_COUNT 抽「出幾條」，再從池子裡不重複挑那麼多種（不再是每種各自擲機率，也跟等級、精煉無關）
+  //   ③ 每條的檔位照 APPR_MF（0 檔機率都是 0，挑中就一定有數值），數值＝檔位 × 權重 ÷ 5
+  //   ④ 細心鑑定（技能 352／354）有 30%／70% 再多抽一輪，種類合併
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%", 13: "增加傷害%", 14: "減少傷害%" };
+  var APPR_DEFAULT_POOLS = { // 遊戲 tm：[種類, 權重]
     weapon: [[1, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
-    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [12, 5]],
     armor: [[5, 25], [7, 10], [4, 5], [11, 5], [12, 5]],
     shoes: [[5, 25], [7, 10], [4, 5], [8, 15], [11, 5], [12, 5]],
     accessory: [[1, 5], [2, 5], [5, 5], [7, 5], [3, 5], [4, 5], [6, 5], [8, 5], [11, 5], [12, 5]]
   };
+  var APR_POOLS = window.APR_POOLS || [];
   var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
-  var APPR_MF = {
-    basic: [110000, 150000, 200000, 250000, 230000, 30000, 20000, 10000],
-    advanced: [85000, 125000, 180000, 250000, 280000, 41000, 26000, 13000],
-    superior: [60000, 100000, 160000, 250000, 320000, 59000, 34000, 17000],
+  var APPR_MF = { // 遊戲 om（百萬分比）
+    basic: [130000, 240000, 0, 310000, 270000, 20000, 20000, 10000],
+    advanced: [103659, 152439, 0, 304878, 341463, 50000, 31707, 15854],
+    superior: [71429, 119048, 0, 297619, 380952, 70238, 40476, 20238],
     reroll: [130000, 240000, 0, 310000, 270000, 20000, 20000, 10000]
+  };
+  var APPR_COUNT = { // 遊戲 fm：抽到 0、1、2… 條的機率（百萬分比）
+    accessory: [180000, 300000, 250000, 200000, 50000, 20000],
+    gear: [300000, 340000, 200000, 100000, 30000, 5000, 5000, 5000, 5000, 5000, 5000]
   };
   var APPR_SKILL_IDS = { basic: 101, advanced: 323, superior: 324, meticulous: 352, superMeticulous: 354 };
   var APPR_EXTRA_CHANCE = { meticulous: 0.3, superMeticulous: 0.7 };
-  var APPR_THRESH = { base: 0.1, perLv: 0.0008, perRefine: 0.02, cap: 0.5 };
 
   function apprKindName(kind) { return APPR_KIND_NAMES[kind] || ("種類#" + kind); }
 
+  // 遊戲 gm()：apr 21 一律算飾品；武器看裝備自己的 magicJob 旗標分魔法武器
   function apprCategory(item) {
     var slot = item.slot;
-    // 遊戲原始碼用的是裝備自己的 magicJob 旗標判斷是不是魔法武器，我們資料裡沒有這個欄位，
-    // 用「這件武器本身有沒有魔法力數值」當替代判斷依據（絕大多數情況會一致）。
-    var isMagicWeapon = (item.magic || 0) > 0;
-    if (slot === "weapon") return isMagicWeapon ? "magicWeapon" : "weapon";
+    if (item.apr === 21) return "accessory";
+    if (slot === "weapon") return item.magicJob ? "magicWeapon" : "weapon";
     if (slot === "feet") return "shoes";
     if (slot === "head" || slot === "body" || slot === "legs" || slot === "shield") return "armor";
     return "accessory";
   }
-
-  function apprThreshold(minLv, refine) {
-    var n = APPR_THRESH.base + (minLv || 0) * APPR_THRESH.perLv + (refine || 0) * APPR_THRESH.perRefine;
-    return Math.min(APPR_THRESH.cap, n);
+  // 這件裝備的屬性池（遊戲 appraisalProfile()：有 aprPool 用自己的，沒有用部位預設池）
+  function apprPool(item) {
+    if (item.aprPool != null && APR_POOLS[item.aprPool]) return APR_POOLS[item.aprPool];
+    return APPR_DEFAULT_POOLS[apprCategory(item)] || [];
+  }
+  // 遊戲 mm()：照 APPR_COUNT 抽條數
+  function apprRollCount(item) {
+    var table = APPR_COUNT[apprCategory(item) === "accessory" ? "accessory" : "gear"];
+    var r = Math.random() * 1000000;
+    for (var i = 0; i < table.length; i++) {
+      r -= table[i];
+      if (r < 0) return i;
+    }
+    return table.length - 1;
+  }
+  // 遊戲 hm()：從池子裡不重複挑 n 種
+  function apprPickKinds(pool, n) {
+    var kinds = pool.map(function (p) { return p[0]; });
+    var k = Math.min(n, kinds.length);
+    for (var i = 0; i < k; i++) {
+      var j = i + Math.floor(Math.random() * (kinds.length - i));
+      var t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t;
+    }
+    return kinds.slice(0, k);
   }
 
   function apprSkillLevel(c, skillId) {
@@ -3619,16 +3675,15 @@
   }
   function apprValueRange(weight) { return { min: -2 * weight / 5, max: 5 * weight / 5 }; }
 
+  // 照遊戲 ym()：抽條數 → 挑種類（細心鑑定成功再抽一輪合併）→ 照池子順序每條抽檔位
   function performAppraisal(c, item, stack) {
-    var category = apprCategory(item);
-    var candidates = APPR_FF[category] || [];
-    var n = apprThreshold(item.minLv, stack.refine);
+    var candidates = apprPool(item);
     var tierName = apprRollTierName(c);
     var extraChance = apprExtraChance(c);
-    var passes = 1 + (extraChance > 0 && Math.random() < extraChance ? 1 : 0);
     var selected = {};
-    for (var p = 0; p < passes; p++) {
-      candidates.forEach(function (pair) { if (Math.random() < n) selected[pair[0]] = true; });
+    apprPickKinds(candidates, apprRollCount(item)).forEach(function (k) { selected[k] = true; });
+    if (extraChance > 0 && Math.random() < extraChance) {
+      apprPickKinds(candidates, apprRollCount(item)).forEach(function (k) { selected[k] = true; });
     }
     var result = [];
     candidates.forEach(function (pair) {
@@ -3646,7 +3701,8 @@
     var $manualBtn = document.getElementById("apprModeManualBtn");
 
     function equipStacks() {
-      return c.stacks.filter(function (s) { var it = ITEMS[String(s.itemId)]; return it && it.slot; });
+      // 遊戲 appraisalProfile()：裝備要有 apr 才能鑑定（舊資料檔沒有 apr 欄位時不擋）
+      return c.stacks.filter(function (s) { var it = ITEMS[String(s.itemId)]; return it && it.slot && (it.apr != null || !APR_POOLS.length); });
     }
 
     function applyResult(stack, result) {
@@ -3765,8 +3821,7 @@
         if (!stackId) return;
         var stack = c.stacks.find(function (s) { return s.id === Number(stackId); });
         var item = ITEMS[String(stack.itemId)];
-        var category = apprCategory(item);
-        var candidates = APPR_FF[category] || [];
+        var candidates = apprPool(item);
 
         // 同一種類不可能在真正的鑑定結果裡重複出現（遊戲用集合去選種類），這裡也用同樣的邏輯擋掉重複選項
         function usedKinds(excludeIdx) {

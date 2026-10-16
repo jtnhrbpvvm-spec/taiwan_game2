@@ -142,16 +142,18 @@
   // 遊戲 dropMultiplier() = 等級差衰減（鐵匠／匠師免除） × (1 + 掉落率加成%)
   // 掉落率加成目前只有初心者技能〔乞討〕（skills.json #230，Lv110 可學，每級 +3%，Lv10 = +30%），
   // 另外還有 standingBuffs 的 dropRate（查詢頁無法得知玩家身上有什麼狀態，沒算進來）。
+  // 10-16 新增：裝備圖鑑的「鐵匠線」加成 dexBonus.stats.dropRate（收集鐵匠線圖鑑裝備的比例 × 5%，取整數，最多 +5%），跟〔乞討〕相加。
   var DROP_BEG_SKILL_LEVELS = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];
+  var DROP_DEX_MAX = 5;
   function dropLevelPart(mon) {
     if (dropCalcState.level == null || dropCalcState.blacksmith) return 1;
     return dropLevelMultiplier(dropCalcState.level, mon.lv);
   }
-  function dropBegBonusPct() { return dropCalcState.beg > 0 ? DROP_BEG_SKILL_LEVELS[dropCalcState.beg - 1] || 0 : 0; }
+  function dropBegBonusPct() { return (dropCalcState.beg > 0 ? DROP_BEG_SKILL_LEVELS[dropCalcState.beg - 1] || 0 : 0) + (dropCalcState.dex || 0); }
   function playerDropMultiplier(mon) {
     return dropLevelPart(mon) * (1 + dropBegBonusPct() / 100);
   }
-  // 有輸入等級、或有選〔乞討〕時，掉落表才多一欄「換算後機率」
+  // 有輸入等級、或有選〔乞討〕／圖鑑加成時，掉落表才多一欄「換算後機率」
   function dropAdjActive() { return dropCalcState.level != null || dropBegBonusPct() > 0; }
   // 換算後機率的說明文字；decayMons = 這頁會被等級差衰減的怪物數（用來提醒「勾鐵匠也不會變」的情況）
   function dropAdjNote(decayMons) {
@@ -159,14 +161,16 @@
     if (dropCalcState.level != null) {
       if (dropCalcState.blacksmith) {
         parts.push(decayMons > 0
-          ? "鐵匠／匠師不受等級差衰減（二轉爆破士會失去這個效果）。"
+          ? "鐵匠／匠師／神匠不受等級差衰減（二轉爆破士、三轉毀滅者會失去這個效果）。"
           : "已勾鐵匠，但這頁的怪物跟你 Lv" + dropCalcState.level + " 的等級差都不到 30 級，本來就沒有衰減，所以數字不會變。");
       } else {
         parts.push("依你輸入的 Lv" + dropCalcState.level + " 套用等級差衰減" +
           (decayMons > 0 ? "" : "（這頁的怪物等級差都不到 30 級，沒有衰減）") + "。");
       }
     }
-    if (dropBegBonusPct() > 0) parts.push("〔乞討〕Lv" + dropCalcState.beg + "：掉落率 ×" + (100 + dropBegBonusPct()) + "%。");
+    if (dropBegBonusPct() > 0) parts.push((dropCalcState.beg > 0 ? "〔乞討〕Lv" + dropCalcState.beg : "") +
+      (dropCalcState.beg > 0 && dropCalcState.dex ? "＋" : "") + (dropCalcState.dex ? "裝備圖鑑 +" + dropCalcState.dex + "%" : "") +
+      "：掉落率 ×" + (100 + dropBegBonusPct()) + "%。");
     return parts.length ? "換算後機率：" + parts.join("") : "";
   }
   // 機率（0~1）轉成顯示文字／樣式，沿用原本 pct()/rateClass() 的格式
@@ -181,17 +185,22 @@
   function dropGroupTags(groups) {
     return groups.map(function (g) { return '<span class="group-tag">' + (DROP_GROUP_LABEL[g] || ("組" + g)) + '</span>'; }).join("");
   }
-  // blacksmith：遊戲 dropMultiplier() 是 isBlacksmith && secondJob.id !== "bomber" 才免除等級差衰減（一轉鐵匠、二轉匠師適用，爆破士不適用）
-  var dropCalcState = { level: null, blacksmith: false, beg: 0 };
+  // blacksmith：遊戲 dropMultiplier() 是 isBlacksmith && secondJob.id !== "bomber" 才免除等級差衰減（一轉鐵匠、二轉匠師、三轉神匠適用；爆破士和從它轉的三轉毀滅者不適用）
+  var dropCalcState = { level: null, blacksmith: false, beg: 0, dex: 0 };
 
   function dropCalcBar() {
     var html = '<div style="display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:6px;">';
     html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">' +
-      '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠／匠師（二轉爆破士不適用）</label>';
+      '<input type="checkbox" id="dropCalcBlacksmith"' + (dropCalcState.blacksmith ? " checked" : "") + '> 是否為鐵匠／匠師／神匠（爆破士、毀滅者不適用）</label>';
     html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);">〔乞討〕' +
       '<select id="dropCalcBeg" style="background:var(--ink-2);color:var(--text);border:1px solid var(--line-hi);border-radius:6px;padding:3px 6px;font-size:12.5px;">' +
       '<option value="0">沒學</option>' + DROP_BEG_SKILL_LEVELS.map(function (v, i) {
         return '<option value="' + (i + 1) + '"' + (dropCalcState.beg === i + 1 ? ' selected' : '') + '>Lv' + (i + 1) + '（+' + v + '%）</option>';
+      }).join('') + '</select></label>';
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);" title="裝備圖鑑「鐵匠」那一條的收集獎勵：收集比例 × 5%（取整數）">裝備圖鑑（鐵匠線）' +
+      '<select id="dropCalcDex" style="background:var(--ink-2);color:var(--text);border:1px solid var(--line-hi);border-radius:6px;padding:3px 6px;font-size:12.5px;">' +
+      Array.apply(null, Array(DROP_DEX_MAX + 1)).map(function (_x, v) {
+        return '<option value="' + v + '"' + (dropCalcState.dex === v ? ' selected' : '') + '>+' + v + '%</option>';
       }).join('') + '</select></label>';
     // 最常見的誤會：以為勾鐵匠會「提升」掉落率，其實只是「不被等級差打折」——勾了鐵匠才顯示這段說明
     if (dropCalcState.blacksmith) {
@@ -216,6 +225,8 @@
     }
     if ($bs) $bs.addEventListener("change", function () { dropCalcState.blacksmith = $bs.checked; rerender(); });
     if ($beg) $beg.addEventListener("change", function () { dropCalcState.beg = Number($beg.value) || 0; rerender(); });
+    var $dex = detailTarget().querySelector("#dropCalcDex");
+    if ($dex) $dex.addEventListener("change", function () { dropCalcState.dex = Number($dex.value) || 0; rerender(); });
   }
   // ---------- 快速查看（彈出視窗）----------
   // 在詳細頁／彈窗裡點物品、怪物、副本連結時，不換掉主畫面，改在彈出視窗裡顯示，關掉就回到原本在看的內容。
@@ -247,64 +258,85 @@
   // ---------- 鐵匠鑑定（跟齒輪強化是不同系統，公式反推自遊戲原始程式碼）----------
   // 種類編號照遊戲「現行」的 c_（存檔 v28 起重新編號：舊 3防 4攻速 5必殺 6命中 7迴避 → 新 3命中 4迴避 5防禦 6必殺 7攻速）。
   // 以前用舊編號，修改器寫進存檔的鑑定在遊戲裡會變成別的屬性（例如攻速變迴避）。
-  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%" };
-  var APPR_FF = { // 遊戲 l_：[種類, 權重]
+  // 10-16 改版：鑑定規則整個換了（bundle tm／om／fm／gm()／ym()）：
+  //   ① 每件裝備有自己的屬性池（equipment.json aprPool → APR_POOLS），沒有的才照部位用預設池 APPR_DEFAULT_POOLS
+  //   ② 不再是「每種屬性各自擲機率」，改成先照 APPR_COUNT 抽「出幾條」，再從池子裡不重複挑那麼多種
+  //   ③ 每條的檔位照 APPR_PPM（基礎鑑定 0 檔機率是 0，抽到就一定有數值），數值＝檔位 × 權重 ÷ 5
+  //   ④ 細心鑑定（技能 352／354）有 30%／70% 再多抽一輪，兩輪的種類合併
+  var APPR_KIND_NAMES = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺", 7: "攻擊速度", 8: "移動速度", 11: "HP%", 12: "AP%", 13: "增加傷害%", 14: "減少傷害%" };
+  var APPR_DEFAULT_POOLS = { // 遊戲 tm：[種類, 權重]
     weapon: [[1, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
-    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [11, 5]],
+    magicWeapon: [[1, 25], [2, 25], [7, 10], [3, 10], [6, 10], [12, 5]],
     armor: [[5, 25], [7, 10], [4, 5], [11, 5], [12, 5]],
     shoes: [[5, 25], [7, 10], [4, 5], [8, 15], [11, 5], [12, 5]],
     accessory: [[1, 5], [2, 5], [5, 5], [7, 5], [3, 5], [4, 5], [6, 5], [8, 5], [11, 5], [12, 5]]
   };
-  var APPR_PF = [-2, -1, 0, 1, 2, 3, 4, 5];
-  var APPR_MF = {
-    basic: [110000, 150000, 200000, 250000, 230000, 30000, 20000, 10000],
-    advanced: [85000, 125000, 180000, 250000, 280000, 41000, 26000, 13000],
-    superior: [60000, 100000, 160000, 250000, 320000, 59000, 34000, 17000]
+  var APR_POOLS = window.APR_POOLS || [];
+  var APPR_GRADES = [-2, -1, 0, 1, 2, 3, 4, 5];
+  var APPR_PPM = { // 遊戲 om：各檔位的機率（百萬分比）
+    basic: [130000, 240000, 0, 310000, 270000, 20000, 20000, 10000],
+    advanced: [103659, 152439, 0, 304878, 341463, 50000, 31707, 15854],
+    superior: [71429, 119048, 0, 297619, 380952, 70238, 40476, 20238]
   };
-  var APPR_EXTRA_CHANCE = { meticulous: 0.3, superMeticulous: 0.7 };
-  var APPR_THRESH = { base: 0.1, perLv: 0.0008, perRefine: 0.02, cap: 0.5 };
+  var APPR_PPM_LABEL = { basic: "一般鑑定", advanced: "高級鑑定（技能 323）", superior: "高級道具鑑定（技能 324）" };
+  var APPR_COUNT = { // 遊戲 fm：抽到 0、1、2… 條的機率（百萬分比），飾品池跟其他裝備不同
+    accessory: [180000, 300000, 250000, 200000, 50000, 20000],
+    gear: [300000, 340000, 200000, 100000, 30000, 5000, 5000, 5000, 5000, 5000, 5000]
+  };
 
   function apprKindName(kind) { return APPR_KIND_NAMES[kind] || ("種類#" + kind); }
-  function apprCategory(item) {
-    var slot = item.equip ? item.equip.slot : null;
-    var magic = item.equip ? (item.equip.magic || 0) : 0;
-    var isMagicWeapon = magic > 0;
-    if (slot === "weapon") return isMagicWeapon ? "magicWeapon" : "weapon";
-    if (slot === "feet") return "shoes";
-    if (slot === "head" || slot === "body" || slot === "legs" || slot === "shield") return "armor";
+  // 遊戲 gm()：apr 21 一律算飾品；武器看 magicJob 旗標分魔法武器
+  function apprPart(eq) {
+    if (eq.apr === 21) return "accessory";
+    if (eq.slot === "weapon") return eq.magicJob ? "magicWeapon" : "weapon";
+    if (eq.slot === "feet") return "shoes";
+    if (eq.slot === "head" || eq.slot === "body" || eq.slot === "legs" || eq.slot === "shield") return "armor";
     return "accessory";
   }
-  function apprThreshold(minLv, refine) {
-    var n = APPR_THRESH.base + (minLv || 0) * APPR_THRESH.perLv + (refine || 0) * APPR_THRESH.perRefine;
-    return Math.min(APPR_THRESH.cap, n);
+  function apprPoolOf(eq) {
+    if (eq.aprPool != null && APR_POOLS[eq.aprPool]) return APR_POOLS[eq.aprPool];
+    return APPR_DEFAULT_POOLS[apprPart(eq)] || [];
   }
-  function apprRollTierValue(tierName) {
-    var weights = APPR_MF[tierName];
-    var r = Math.random() * 1000000;
-    for (var i = 0; i < weights.length; i++) {
-      r -= weights[i];
-      if (r < 0) return APPR_PF[i];
-    }
-    return APPR_PF[APPR_PF.length - 1];
-  }
-  function apprValueRange(weight) { return { min: -2 * weight / 5, max: 5 * weight / 5 }; }
-  function performAppraisalTrial(item, minLv, refine, tierName, extraChance) {
-    var category = apprCategory(item);
-    var candidates = APPR_FF[category] || [];
-    var n = apprThreshold(minLv, refine);
-    var passes = 1 + (extraChance > 0 && Math.random() < extraChance ? 1 : 0);
-    var selected = {};
-    for (var p = 0; p < passes; p++) {
-      candidates.forEach(function (pair) { if (Math.random() < n) selected[pair[0]] = true; });
-    }
-    var result = [];
-    candidates.forEach(function (pair) {
-      var kind = pair[0], weight = pair[1];
-      if (!selected[kind]) return;
-      var tier = apprRollTierValue(tierName);
-      if (tier !== 0) result.push({ kind: kind, value: tier * weight / 5 });
+  // 抽到幾條的機率：遊戲 mm() 照 APPR_COUNT 抽 n，hm() 再取 min(n, 池子大小)，所以超過池子大小的機率都併到最後一格
+  function apprCountChances(eq) {
+    var pool = apprPoolOf(eq);
+    var table = APPR_COUNT[apprPart(eq) === "accessory" ? "accessory" : "gear"];
+    var out = [];
+    table.forEach(function (ppm, n) {
+      var k = Math.min(n, pool.length);
+      out[k] = (out[k] || 0) + ppm / 1e6;
     });
-    return { category: category, threshold: n, result: result };
+    return out;
+  }
+  function apprSectionHtml(eq) {
+    if (eq.apr == null) return '';
+    var pool = apprPoolOf(eq);
+    if (!pool.length) return '';
+    var html = '<details class="fold-section"><summary class="section-title">鑑定屬性池<span class="fold-hint">點擊展開</span></summary>';
+    html += '<div class="empty-note" style="padding:0 0 8px;">到鐵匠（鑑定師）鑑定未鑑定的裝備時，會從下面這些屬性裡<b>不重複</b>挑幾條。' +
+      (eq.aprPool != null ? '這件裝備有<b>自己的屬性池</b>（10-16 改版新增）。' : '這件裝備用「' + escapeHtml(apprPart(eq)) + '」部位的預設屬性池。') +
+      '<br>出幾條的機率：' + apprCountChances(eq).map(function (p, n) {
+        return p > 0 ? n + ' 條 ' + (Math.round(p * 1000) / 10) + '%' : '';
+      }).filter(Boolean).join('、') + '。細心鑑定（技能 352／354）有 30%／70% 再多抽一輪、種類合併。</div>';
+    html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>屬性</th>' +
+      APPR_GRADES.filter(function (g) { return g !== 0; }).map(function (g) { return '<th>' + (g > 0 ? '+' : '') + g + ' 檔</th>'; }).join('') + '</tr></thead><tbody>';
+    pool.forEach(function (pair) {
+      html += '<tr><td>' + escapeHtml(apprKindName(pair[0])) + '</td>' +
+        APPR_GRADES.filter(function (g) { return g !== 0; }).map(function (g) {
+          var v = g * pair[1] / 5;
+          return '<td><span class="rate' + (v < 0 ? ' low" style="color:var(--red,#c0392b);' : '') + '">' + (v > 0 ? '+' : '') + v + '</span></td>';
+        }).join('') + '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="overflow-x:auto;margin-top:8px;"><table class="dtable"><thead><tr><th>檔位機率</th>' +
+      APPR_GRADES.filter(function (g) { return g !== 0; }).map(function (g) { return '<th>' + (g > 0 ? '+' : '') + g + '</th>'; }).join('') + '</tr></thead><tbody>';
+    Object.keys(APPR_PPM).forEach(function (k) {
+      html += '<tr><td>' + APPR_PPM_LABEL[k] + '</td>' + APPR_PPM[k].filter(function (_p, i) { return APPR_GRADES[i] !== 0; }).map(function (p) {
+        return '<td>' + (Math.round(p / 100) / 100) + '%</td>';
+      }).join('') + '</tr>';
+    });
+    html += '</tbody></table></div></details>';
+    return html;
   }
 
   var TOWNS = window.TOWNS || {};
@@ -339,16 +371,72 @@
       '<span class="rate">' + fmtNum(points * rate) + ' 金幣</span>' +
       '<div style="font-size:11.5px;color:var(--text-faint);">' + fmtNum(points) + ' 點 × 1 點＝' + fmtNum(rate) + '</div>';
   }
+  // 名品館道具的用途（10-16 新增的 use 欄位，bundle 各面板）
+  var MALL_USE_NOTE = {
+    "weapon-shape": "武器外形卷軸：在強化面板對身上一把武器使用，複製那把武器的外型，得到限時的「武器外形」裝備（穿在武器外形欄）",
+    "marco-stone": "瑪可的魔法石：瑪可套裝用來洗套裝屬性（強化面板「瑪可」）",
+    "marco-suit": "瑪可套裝：可以用瑪可的魔法石洗出額外屬性的一件式套裝",
+    "wind-inherit": "發條屬性繼承卷軸：在強化面板「繼承」頁，把一件飾品類裝備的發條屬性搬到另一件上（原本那件會消耗掉）",
+    "advanced-stall": "進階擺攤：在城鎮開攤位賣東西，每張可以擺一段時間",
+    "pet-evolve-leaf": "進化的樹葉：在寵物面板使用（寵物進化用）"
+  };
+  function mallItemName(id) { var it = (window.ITEMS || {})[String(id)]; return it ? it.name : '#' + id; }
+  // 寵物圖鑑獎勵（10-16 新增，bundle claimPetDex()／exchangePetDexAura()）：
+  //   每個寵物家族（一階寵物 root 往上進化的所有 6 階以下寵物）收集進度每滿 10% 算一段，
+  //   領第 N 段給 leaves[N-1] ×leavesPerStep；第 10 段（100%）另外給這個家族的光環，之後還能用 auraSouls 個寵物之魂再換一個。
+  function petDexRewardHtml(id) {
+    var R = window.PET_DEX_REWARDS;
+    if (!R) return '';
+    var lines = [];
+    var step = (R.leaves || []).indexOf(Number(id));
+    if (step >= 0) lines.push('寵物圖鑑：任一個寵物家族收集到 <b>' + ((step + 1) * 10) + '%</b>（第 ' + (step + 1) + ' 段）時領取，每個家族各給一次 ×' + (R.leavesPerStep || 1) + '。');
+    (R.auras || []).forEach(function (a) {
+      if (String(a.aura) !== String(id)) return;
+      lines.push('寵物圖鑑：<span class="name-link" data-goto-item="' + a.root + '">' + escapeHtml(mallItemName(a.root)) + '</span> 這個家族收集到 <b>100%</b> 時給一個；' +
+        '領過之後還能用 ' + (R.auraSouls || 0) + ' 個<span class="name-link" data-goto-item="' + window.PET_SOUL_ID + '">' + escapeHtml(mallItemName(window.PET_SOUL_ID)) + '</span>再換一個。');
+    });
+    if (!lines.length) return '';
+    return '<div class="section-title">寵物圖鑑獎勵</div><div class="empty-note" style="padding:0 0 8px;">' + lines.join('<br>') +
+      '<br><span style="font-size:11.5px;color:var(--text-faint);">收集進度＝這個家族（從一階往上進化／冶煉的 6 階以下寵物）擁有過幾種 ÷ 總種數。</span></div>';
+  }
+  // 「用了會得到這個物品」的名品館道具（武器外形卷軸 → 武器外形），物品頁反查用
+  var MALL_PRODUCT_FROM = {};
+  Object.keys(MALL_INDEX.items).forEach(function (mid) {
+    var m = MALL_INDEX.items[mid];
+    if (m.product != null) (MALL_PRODUCT_FROM[String(m.product)] = MALL_PRODUCT_FROM[String(m.product)] || []).push(mid);
+    (m.extras || []).forEach(function (ex) {
+      (MALL_PRODUCT_FROM[String(ex.itemId)] = MALL_PRODUCT_FROM[String(ex.itemId)] || []).push(mid);
+    });
+  });
   function mallSectionHtml(id) {
     var m = MALL_INDEX.items[String(id)];
-    if (!m) return '';
-    return '<div class="section-title">名品館</div>' +
-      '<table class="dtable"><thead><tr><th>NPC</th><th>價格</th><th>分類</th></tr></thead><tbody><tr>' +
-      '<td><span class="name-link" style="cursor:default;">黑市商人</span></td>' +
-      '<td data-mall-points="' + m.points + '">' + mallNowHtml(m.points) + '</td>' +
-      '<td>' + escapeHtml(m.category || "-") + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>' +
-      '</tr></tbody></table>' +
-      '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">1 點折合多少金幣每個整點換一次（' + fmtNum(20000) + '～' + fmtNum(50000) + '），價格會自動跟著更新。</div>';
+    var html = '';
+    if (m) {
+      var notes = [];
+      if (m.use && MALL_USE_NOTE[m.use]) notes.push(MALL_USE_NOTE[m.use] + '。');
+      if (m.product != null) notes.push('用了會得到 <span class="name-link" data-goto-item="' + m.product + '">' + escapeHtml(mallItemName(m.product)) + '</span>。');
+      if (m.durationMs) notes.push('期限 ' + potionDurationText(m.durationMs) + '（時間到會消失）。');
+      if ((m.extras || []).length) notes.push('買了附贈：' + m.extras.map(function (ex) {
+        return '<span class="name-link" data-goto-item="' + ex.itemId + '">' + escapeHtml(mallItemName(ex.itemId)) + '</span> ×' + ex.count;
+      }).join('、') + '。');
+      html += '<div class="section-title">名品館</div>' +
+        '<table class="dtable"><thead><tr><th>NPC</th><th>價格</th><th>分類</th></tr></thead><tbody><tr>' +
+        '<td><span class="name-link" style="cursor:default;">黑市商人</span></td>' +
+        '<td data-mall-points="' + m.points + '">' + mallNowHtml(m.points) + '</td>' +
+        '<td>' + escapeHtml(m.category || "-") + (m.pack ? '<span class="group-tag">一次 ' + m.pack + ' 個</span>' : '') + '</td>' +
+        '</tr></tbody></table>' +
+        (notes.length ? '<div class="empty-note" style="padding:6px 0 0;">' + notes.join('<br>') + '</div>' : '') +
+        '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">1 點折合多少金幣每個整點換一次（' + fmtNum(20000) + '～' + fmtNum(50000) + '），價格會自動跟著更新。</div>';
+    }
+    var from = MALL_PRODUCT_FROM[String(id)] || [];
+    if (from.length) {
+      html += '<div class="section-title">名品館道具換得</div><div class="empty-note" style="padding:0 0 8px;">' + from.map(function (mid) {
+        var fm = MALL_INDEX.items[mid];
+        return '<span class="name-link" data-goto-item="' + mid + '">' + escapeHtml(mallItemName(mid)) + '</span>' +
+          (fm.product != null && String(fm.product) === String(id) ? '（使用後得到' + (fm.durationMs ? '，限時 ' + potionDurationText(fm.durationMs) : '') + '）' : '（購買附贈）');
+      }).join('<br>') + '</div>';
+    }
+    return html;
   }
   // 限時加成道具（藥水／符咒／福袋）的效果：MALL_INDEX.potions = {物品id: {stat, amount, durationMs, maxLv?}}，文字照遊戲 dS()
   var POTION_STAT_LABEL = { exp: "經驗值", drop: "道具掉落率", atk: "攻擊力", mag: "魔法力", hit: "命中", aspd: "攻擊速度" };
@@ -1246,7 +1334,7 @@
     add("✉️", "書信任務", "任務總覽・怪物掉的書信交給 NPC 換名聲／金幣", questKw.concat(["書信"]), "questtab", "letter", F);
     add("📜", "委託任務", "任務總覽・各城鎮委託處的委託", questKw.concat(["委託"]), "questtab", "commission", F);
     add("🗺️", "藍圖任務", "任務總覽・等級到了就能進行的任務", questKw.concat(["藍圖"]), "questtab", "blueprint", F);
-    if (JOB_ADVANCE && JOB_ADVANCE.jobs.length) add("🎓", "轉職", "任務總覽・一轉／二轉的條件與 NPC", questKw.concat(["職業", "一轉", "二轉"]), "questtab", "job", F);
+    if (JOB_ADVANCE && JOB_ADVANCE.jobs.length) add("🎓", "轉職", "任務總覽・一轉／二轉／三轉的條件與 NPC", questKw.concat(["職業", "一轉", "二轉", "三轉"]), "questtab", "job", F);
     var smithKw = ["鐵匠", "鐵匠相關"];
     add("🔮", "發條強化", "鐵匠相關・發條強化屬性表", smithKw.concat(["強化", "發條"]), "smith", "enchant", F);
     add("🔥", "找雷分解", "鐵匠相關・鎔解費用與鎔解石機率", smithKw.concat(["分解", "鎔解", "熔解"]), "smith", "smelt", F);
@@ -1578,6 +1666,7 @@
           if (ch === "marble") metaParts.push("大富翁");
           else if (ch === "costume") metaParts.push("時裝（布布）");
           else if (ch === "aura") metaParts.push("光環（祭司）");
+          else if (ch === "petdex") metaParts.push("寵物圖鑑獎勵");
         });
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
           '<span class="rname">' + itemIconHtml(it.id, 32) + escapeHtml(it.name) + '</span>' +
@@ -1891,6 +1980,8 @@
       lines.push(t + skillNeedText(jobId, b));
     });
     if (s.selfBuffsOneOf) lines.push('（上面的自身增益每次只會隨機出現其中一種）');
+    // castOneOf（10-16 新增）：bundle 每次施放 50% 給上面的施放狀態、50% 改成治療，兩者不會同時出現
+    if (s.castOneOf) lines.push('（每次施放 50% 給上面的施放狀態、50% 改成治療，兩種只會出現一種）');
     (s.debuffs || []).forEach(function (d) {
       var pl = d.perLevel || {};
       var t = '🔴 減益：<b>' + escapeHtml(skillStatusName({ kind: d.kind, stat: d.stat, debuff: true })) + '</b>';
@@ -1908,7 +1999,7 @@
     });
     if (s.debuffsOneOf) lines.push('（上面的減益每次只會隨機出現其中一種）');
     (s.extraDamage || []).forEach(function (x) {
-      lines.push('💥 追加傷害：威力 ' + skillPerLevelText(x.pct, skillPct) + '，機率 ' + skillPerLevelText(x.chancePct, skillPct) +
+      lines.push('💥 追加傷害：威力 ' + skillPerLevelText(x.pct, skillPct) + '，機率 ' + skillPerLevelText(x.chancePct != null ? x.chancePct : x.fixedChancePct, skillPct) +
         (x.noBoss ? '（對 Boss 無效）' : '') + skillNeedText(jobId, x));
     });
     if (s.doubleDamage) lines.push('💥 傷害加倍：機率 ' + skillPerLevelText(s.doubleDamage.chancePct, skillPct) +
@@ -1960,6 +2051,8 @@
     ["durMs", "持續"], ["area", "目標數"], ["range", "射程"], ["crit", "必殺加成"], ["hate", "仇恨"], ["stagger", "破綻值"]
   ];
   function skillListKey(jobId, tree) { return jobId + (tree ? ':' + tree : ''); }
+  // 技能分頁 tree：1 一轉本職、2／3 二轉分支、4／5 三轉分支（10-16 新增）
+  function skillTreeTier(tree) { var t = Number(tree); return t >= 4 ? "三轉" : t >= 2 ? "二轉" : ""; }
   function showSkillBrowser(key) {
     withSkillIndex(function () {
       currentDetail = null;
@@ -1978,7 +2071,7 @@
         SKILL_INDEX.jobs.map(function (j) { return tabBtn("data-skill-list", j.id, j.name, j.id === job.id); }).join("") + '</div>';
       if (trees.length > 1) {
         html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabBtn("data-skill-list", job.id, "全部", !tree) +
-          trees.map(function (t) { return tabBtn("data-skill-list", skillListKey(job.id, t), (t === "1" ? "" : "二轉・") + job.trees[t], t === tree); }).join("") + '</div>';
+          trees.map(function (t) { return tabBtn("data-skill-list", skillListKey(job.id, t), (t === "1" ? "" : skillTreeTier(t) + "・") + job.trees[t], t === tree); }).join("") + '</div>';
       }
       var list = all.filter(function (s) { return !tree || String(s.tree) === tree; }).slice().sort(function (a, b) {
         return a.tree - b.tree || (a.reqLv || 0) - (b.reqLv || 0) || a.id - b.id;
@@ -1991,7 +2084,7 @@
         var sp = 0;
         for (var i = 0; i < s.n; i++) sp += skillLvVal(s, "pts", i) || 0;
         html += '<tr class="clickable" data-goto-skill="' + job.id + ':' + s.id + '"><td>' + skillIconHtml(s.id, 28) + '<span class="name-link">' + escapeHtml(s.name) + '</span>' +
-          (trees.length > 1 && !tree && String(s.tree) !== "1" ? ' <span class="group-tag">' + escapeHtml(job.trees[String(s.tree)] || "二轉") + '</span>' : '') + '</td>' +
+          (trees.length > 1 && !tree && String(s.tree) !== "1" ? ' <span class="group-tag">' + escapeHtml(job.trees[String(s.tree)] || skillTreeTier(s.tree)) + '</span>' : '') + '</td>' +
           '<td>' + (SKILL_KIND_LABEL[s.kind] || s.kind) + (s.element && s.element !== "none" ? '・' + (SKILL_ELEMENT_LABEL[s.element] || s.element) : '') + '</td>' +
           '<td>Lv' + (s.reqLv || 1) + '</td><td>' + s.n + ' 級</td><td>' + sp + '</td></tr>';
       });
@@ -2009,7 +2102,7 @@
       var html = backButtonHtml();
       html += '<div class="detail-title">' + skillIconHtml(s.id, 48) + escapeHtml(s.name) + '</div>';
       html += '<div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><span class="name-link" data-skill-list="' + skillListKey(jobId, String(s.tree)) + '">' +
-        escapeHtml(job.name) + (String(s.tree) !== "1" ? '・二轉 ' + escapeHtml(job.trees[String(s.tree)] || "") : '') + '</span></div>';
+        escapeHtml(job.name) + (String(s.tree) !== "1" ? '・' + skillTreeTier(s.tree) + ' ' + escapeHtml(job.trees[String(s.tree)] || "") : '') + '</span></div>';
       if (s.desc) html += '<div class="empty-note" style="padding:0 0 12px;font-style:italic;">' + escapeHtml(s.desc) + '</div>';
       var badges = ['類型 ' + (SKILL_KIND_LABEL[s.kind] || s.kind), '需求等級 ' + (s.reqLv || 1), '最高 ' + s.n + ' 級'];
       if (s.element && s.element !== "none") badges.push('屬性 ' + (SKILL_ELEMENT_LABEL[s.element] || s.element));
@@ -3232,6 +3325,8 @@
         eqStat("攻擊", eq.atk) + eqStat("防禦", eq.def) + eqStat("魔法", eq.magic) +
         eqStat("攻速", eq.atkSpeed) + eqStat("必殺", eq.crit) + eqStat("命中", eq.hit) + eqStat("迴避", eq.eva) +
         eqStat("移速", eq.moveSpeed) +
+        // 10-16 新增：裝備直接加 HP／AP 上限（三轉裝備、武器外形）
+        eqStat("HP 上限", eq.maxHp) + eqStat("AP 上限", eq.maxAp) +
         eqStatPct("增加傷害", eq.dmgDealtPct) + eqStatPct("減少傷害", eq.dmgTakenPct) +
         (eq.attrs ? attrStats(eq.attrs) : "") +
         '</div></div>';
@@ -3244,6 +3339,7 @@
         : '✅ 這個部位可以洗發條（要先裝備起來，強化面板只列身上穿的裝備）。');
       html += '<div class="empty-note" style="padding:6px 0 0;">' + notes.map(escapeHtml).join('<br>') + '</div>';
       html += refineTableHtml(eq);
+      html += apprSectionHtml(eq);
       html += fusionSectionHtml(id, eq);
     }
 
@@ -3265,6 +3361,7 @@
       html += '</tbody></table>';
     }
     html += mallSectionHtml(id);
+    html += petDexRewardHtml(id);
 
     var radixEntries = (RADIX_INDEX[id] || []).slice();
     if (radixEntries.length) {
@@ -4669,28 +4766,20 @@
   var $filterSlot = document.getElementById("filterSlot");
   var $filterResult = document.getElementById("filterResult");
 
-  var primaryJobs = JOBS.filter(function (j) { return j.tier !== 2; });
-  var secondJobsList = JOBS.filter(function (j) { return j.tier === 2; });
-
-  var primaryGroup = document.createElement("optgroup");
-  primaryGroup.label = "一轉";
-  primaryJobs.forEach(function (j) {
-    var opt = document.createElement("option");
-    opt.value = j.id;
-    opt.textContent = j.name;
-    primaryGroup.appendChild(opt);
+  // 三轉（10-16 新增）沒有自己的裝備位元，update_data.py 給的 equipBit 就是來源二轉的位元（遊戲 equipBits 只看一轉＋二轉）
+  [[1, "一轉"], [2, "二轉"], [3, "三轉"]].forEach(function (def) {
+    var list = JOBS.filter(function (j) { return (j.tier || 1) === def[0]; });
+    if (!list.length) return;
+    var group = document.createElement("optgroup");
+    group.label = def[1];
+    list.forEach(function (j) {
+      var opt = document.createElement("option");
+      opt.value = j.id;
+      opt.textContent = j.name;
+      group.appendChild(opt);
+    });
+    $filterJob.appendChild(group);
   });
-  $filterJob.appendChild(primaryGroup);
-
-  var secondGroup = document.createElement("optgroup");
-  secondGroup.label = "二轉";
-  secondJobsList.forEach(function (j) {
-    var opt = document.createElement("option");
-    opt.value = j.id;
-    opt.textContent = j.name;
-    secondGroup.appendChild(opt);
-  });
-  $filterJob.appendChild(secondGroup);
 
   Object.keys(EQUIP_SLOTS).forEach(function (slotKey) {
     var opt = document.createElement("option");
@@ -4969,17 +5058,18 @@
     var jobName = {};
     (window.JOBS || []).forEach(function (j) { jobName[j.id] = j.name; });
     html += '<div class="empty-note" style="padding:0 0 10px;">到城鎮找對應的 NPC 談話就能轉職，不用跑劇情。一轉：初心者 Lv' + (JOB_ADVANCE.advanceLevel || 10) +
-      ' 以上；二轉：從對應的一轉職業、等級／名聲／金幣都要夠（二轉付過一次錢，之後重轉就不用再付）。二轉時技能與屬性點會重置。</div>';
-    [1, 2].forEach(function (tier) {
+      ' 以上；二轉：從對應的一轉職業、等級／名聲／金幣都要夠（二轉付過一次錢，之後重轉就不用再付）。二轉時技能與屬性點會重置。' +
+      '<br>三轉（10-16 新增）：從對應的二轉職業、等級夠就能轉，不收錢；三轉會<b>重置屬性點</b>，但<b>不會</b>清掉技能，轉完多出三轉專屬技能分頁。</div>';
+    [1, 2, 3].forEach(function (tier) {
       var list = JOB_ADVANCE.jobs.filter(function (j) { return j.tier === tier; });
       if (!list.length) return;
-      html += '<div class="section-title">' + (tier === 1 ? '一轉' : '二轉') + ' <span class="count">(' + list.length + ')</span></div>';
-      html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>職業</th>' + (tier === 2 ? '<th>從</th>' : '') +
+      html += '<div class="section-title">' + ["", "一轉", "二轉", "三轉"][tier] + ' <span class="count">(' + list.length + ')</span></div>';
+      html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>職業</th>' + (tier >= 2 ? '<th>從</th>' : '') +
         '<th>找誰</th><th>地點</th><th>等級</th>' + (tier === 2 ? '<th>名聲</th><th>金幣</th>' : '') + '</tr></thead><tbody>';
       list.forEach(function (j) {
         var req = j.req || {};
         html += '<tr><td><b>' + escapeHtml(j.name) + '</b>' + (j.desc ? '<br><span style="font-size:12px;color:var(--text-faint);">' + escapeHtml(j.desc) + '</span>' : '') + '</td>' +
-          (tier === 2 ? '<td>' + escapeHtml(jobName[j.from] || j.from || "") + '</td>' : '') +
+          (tier >= 2 ? '<td>' + escapeHtml(jobName[j.from] || j.from || "") + '</td>' : '') +
           '<td>' + escapeHtml(j.npc) + '</td><td>' + escapeHtml((j.towns || []).map(townName).join("／") || "-") + '</td>' +
           '<td>Lv' + (req.level || 0) + '</td>' +
           (tier === 2 ? '<td>' + bigNumHtml(req.fame || 0) + '</td><td>' + bigNumHtml(req.gold || 0) + '</td>' : '') + '</tr>';
@@ -5856,7 +5946,7 @@
     drop: "打怪掉落", box: "開箱", shop: "商店", gamble: "擲十八啦", fusion: "合成", forge: "鍛造", radix: "拉迪克斯",
     hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
     alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換",
-    marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）"
+    marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）", petdex: "寵物圖鑑獎勵"
   };
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
@@ -6382,27 +6472,31 @@
 
   // ---------- 寵物鑑定（2026-09 新系統，規則照遊戲 bundle 的 appraisePet／petAppraisalInput／O_／E_／A_）----------
   //   新收養的寵物都是「未鑑定」；到寵物鑑定師付「寵物賣價」的金幣鑑定一次，出戰中的那隻不能鑑定
-  //   每一種屬性各自擲一次：出現機率 = 10% + (階級-1)×3%；出現了再抽倍率 k（下表），數值 = k × 權重 ÷ 5，k=0 等於沒出現
+  //   10-16 改版（bundle _m(rng, "pet", "pet")）：先照 PET_APPR_COUNT 抽「出幾條」（跟階級無關），再從下面 12 種不重複挑那麼多種，
+  //   每條再抽檔位 k（PET_APPR_ROLL，沒有 0 檔），數值 = k × 權重 ÷ 5
   //   只有「出戰中」那隻的鑑定屬性會加到角色身上；進化成 6 階的寵物，鑑定會清掉、變回未鑑定
   //   種類編號照遊戲現行的 c_：1攻 2魔 3命中 4迴避 5防禦 6必殺 7攻速 8移速 11 HP% 12 AP% 13增傷 14減傷
-  var PET_APPR_KINDS = [[1, 25], [2, 25], [5, 25], [8, 15], [7, 10], [3, 10], [4, 10], [6, 10], [11, 10], [12, 10], [13, 5], [14, 5]];
+  //   （10-16 起攻速權重 15、移速 10，跟之前對調）
+  var PET_APPR_KINDS = [[1, 25], [2, 25], [5, 25], [7, 15], [8, 10], [3, 10], [4, 10], [6, 10], [11, 10], [12, 10], [13, 5], [14, 5]];
   var PET_APPR_KIND_NAME = { 1: "攻擊力", 2: "魔法力", 3: "命中率", 4: "迴避率", 5: "防禦力", 6: "必殺技", 7: "攻擊速度", 8: "移動速度", 11: "HP", 12: "AP", 13: "增加傷害", 14: "減少傷害" };
   var PET_APPR_PCT_KINDS = { 11: 1, 12: 1, 13: 1, 14: 1 };
-  var PET_APPR_ROLL = [[-2, 12], [-1, 17], [1, 25.5], [2, 21], [3, 1], [4, 0.5]]; // [倍率 k, 機率%]；另外 23% 抽到 0＝這條沒出現
+  var PET_APPR_ROLL = [[-2, 15], [-1, 29], [1, 29.5], [2, 25], [3, 1], [4, 0.5]]; // [倍率 k, 機率%]（遊戲 om.pet）
+  var PET_APPR_COUNT = [330000, 354000, 180000, 80000, 20000, 6000, 6000, 5000, 5000, 4000, 4000, 3000, 3000]; // 抽到 0～12 條（遊戲 fm.pet，百萬分比）
   var PET_APPRAISERS = "雪山礦村、獅子城的「寵物鑑定師‧瑪亞」，努瓦村的「寵物鑑定師瑪麗」";
-  function petApprChance(tier) { return 0.1 + Math.max(0, tier - 1) * 0.03; }
   function petApprValueText(kind, v) { return (v > 0 ? "+" : "") + v + (PET_APPR_PCT_KINDS[kind] ? "%" : ""); }
   function petAppraisalHtml(petId, p) {
-    var chance = petApprChance(p.tier || 1);
     var item = ITEMS[String(petId)];
     var fee = item ? item.sell : null;
-    var expect = PET_APPR_KINDS.length * chance * 0.77;
+    var expect = PET_APPR_COUNT.reduce(function (s, ppm, n) { return s + Math.min(n, PET_APPR_KINDS.length) * ppm / 1e6; }, 0);
+    // 每一種屬性被挑中的機率 = Σ P(n 條) × n / 12（不重複均勻挑）
+    var chance = expect / PET_APPR_KINDS.length;
     var html = '<details class="fold-section" open><summary class="section-title">寵物鑑定<span class="fold-hint">點擊收合</span></summary>';
     html += '<div class="equip-box" style="margin-bottom:10px;font-size:13px;line-height:1.8;">' +
       '<div>鑑定地點：' + PET_APPRAISERS + '。</div>' +
       '<div>費用：<b>' + (fee != null ? fmtNum(fee) + '</b> 金幣（等於這隻寵物的賣價）' : '</b>這隻寵物的賣價') + '，每隻只能鑑定一次。</div>' +
-      '<div>每一種屬性各自有 <b>' + Math.round(chance * 1000) / 10 + '%</b> 機率出現（' + (p.tier || 1) + ' 階；1 階 10%、每高一階 +3%），' +
-      '平均每隻會鑑定出約 <b>' + Math.round(expect * 10) / 10 + '</b> 條；也可能一條都沒有。</div>' +
+      '<div>出幾條（跟階級無關）：' + PET_APPR_COUNT.slice(0, 5).map(function (ppm, n) { return n + ' 條 ' + (ppm / 1e4) + '%'; }).join('、') +
+      '、5 條以上合計 ' + (Math.round(PET_APPR_COUNT.slice(5).reduce(function (s, x) { return s + x; }, 0) / 100) / 100) + '%；' +
+      '平均每隻約 <b>' + Math.round(expect * 100) / 100 + '</b> 條。</div>' +
       '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">' +
       '・新收養的寵物都是「未鑑定」；<b>出戰中的那隻不能鑑定</b>，要先換另一隻出戰。<br>' +
       '・只有<b>出戰中</b>那隻的鑑定屬性會加到角色身上。<br>' +
@@ -6419,12 +6513,12 @@
           var v = r[0] * w / 5;
           return '<td><span class="rate' + (v < 0 ? ' low" style="color:var(--red,#c0392b);' : '') + '">' + petApprValueText(kind, v) + '</span></td>';
         }).join('') +
-        '<td>' + Math.round(chance * 77 * 10) / 10 + '%</td></tr>';
+        '<td>' + Math.round(chance * 1000) / 10 + '%</td></tr>';
     });
     html += '</tbody></table></div>';
     html += '<div style="font-size:11.5px;color:var(--text-faint);margin:6px 0 16px;">' +
-      '表頭的 % 是「這條屬性出現時」落在哪一檔的機率；另外有 23% 會抽到 0 檔，等於這條沒出現，所以「出現率」＝階級機率 × 77%。' +
-      '+3、+4 檔非常少見（合計 1.5%）。</div>';
+      '表頭的 % 是「這條屬性出現時」落在哪一檔的機率（10-16 改版後沒有 0 檔，挑中就一定有數值）；' +
+      '「出現率」＝平均條數 ÷ 12 種。+3、+4 檔非常少見（合計 1.5%）。</div>';
     html += '</details>';
     return html;
   }
@@ -6731,6 +6825,20 @@
       if (req.secondJob) reqs.push("<b>已經二轉</b>");
       if (req.party) reqs.push("<b>隊伍裡至少要有 1 名隊友</b>");
       html += '<div class="equip-box" style="margin-top:12px;font-size:13px;line-height:1.8;">🚪 進場條件：除了等級，還要' + reqs.join("、而且") + '，不然進不去。</div>';
+    }
+
+    // 限時（10-16 新增）：副本時間上限 = min(一般上限, timeLimitMs)（bundle Hv()）；
+    // clearBonus：通關時花的時間 < withinMs 就多給那一檔的道具，由快到慢只給第一個符合的（bundle Uv()）
+    if (dg.timeLimitMs || (dg.clearBonus && dg.clearBonus.length)) {
+      var minText = function (ms) { return Math.round(ms / 60000) + ' 分鐘'; };
+      html += '<div class="equip-box" style="margin-top:12px;font-size:13px;line-height:1.8;">';
+      if (dg.timeLimitMs) html += '⏱️ 限時：這個副本最多只能待 <b>' + minText(dg.timeLimitMs) + '</b>。';
+      if (dg.clearBonus && dg.clearBonus.length) {
+        html += (dg.timeLimitMs ? '<br>' : '') + '🏁 限時通關獎勵（只給最快符合的那一檔）：' + dg.clearBonus.map(function (b) {
+          return '<br>・<b>' + minText(b.withinMs) + '內</b>通關：' + (b.items || []).map(function (r) { return itemChip(r[0]) + ' ×' + r[1]; }).join(' ');
+        }).join('');
+      }
+      html += '</div>';
     }
 
     // 每層減益（賢者之塔Another）：每層固定的增減傷；累計名聲不到該層門檻時，再疊上名聲懲罰（遊戲 vg()／副本「減益」視窗）
