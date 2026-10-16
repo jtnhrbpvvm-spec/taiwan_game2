@@ -132,10 +132,6 @@
   .game .logo { font: bold 18px Georgia, serif; color: #ff9a3a; text-shadow: 0 0 10px #f50; letter-spacing: 2px; }
   .game .menu-zh { display: grid; gap: 4px; margin-top: 8px; }
   .game .menu-zh span { padding: 3px 18px; border: 1px solid #6b5a3a; background: #2a2620; color: #e8e2d0; font-size: 10px; text-align: center; }
-  .lang-mini { position: absolute; right: 8px; top: 8px; display: flex; gap: 1px; padding: 2px; border-radius: 5px;
-    border: 1px solid #8f743e; background: rgba(10,8,6,.94); font-size: 8px; }
-  .lang-mini span { padding: 2px 4px; border-radius: 3px; color: #d8d0c0; }
-  .lang-mini span.on { background: var(--gold); color: #17120b; font-weight: bold; }
   .ring { position: absolute; border: 3px solid #ffd400; border-radius: 999px; pointer-events: none;
     box-shadow: 0 0 0 4px rgba(255,212,0,.25); animation: ring 1.4s ease-in-out infinite; }
   @keyframes ring { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
@@ -172,10 +168,6 @@
   .showcase { position: relative; padding: 14px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
     background: radial-gradient(300px 200px at 70% 20%, rgba(70,40,20,.5), transparent), linear-gradient(180deg, #1c1712, #0e0b08); }
   .sc-title { text-align: center; font: bold 20px Georgia, "Microsoft JhengHei", serif; color: #d9c79a; letter-spacing: 6px; margin-bottom: 8px; }
-  .sc-lang { position: absolute; right: 10px; top: 10px; display: flex; gap: 2px; padding: 3px; border-radius: 7px;
-    border: 1px solid #8f743e; background: rgba(10,8,6,.94); font-size: 11px; }
-  .sc-lang span { padding: 3px 7px; border-radius: 4px; color: #d8d0c0; }
-  .sc-lang span.on { background: var(--gold); color: #17120b; font-weight: bold; }
   .sc-cards { display: grid; gap: 8px; }
   .sc-card { display: grid; grid-template-columns: 22px 44px 1fr; gap: 8px; align-items: center; padding: 8px 10px;
     background: rgba(0,0,0,.55); border: 1px solid #5a4a2a; border-radius: 3px; text-align: center; font-size: 13px; line-height: 1.5; }
@@ -267,7 +259,7 @@
     <h2>🎮 使用方式</h2>
     <div class="flow">
       <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">d2survivors.lol</a>，點書籤「D2 繁體中文」。<div class="hint">手機 Android：在網址列輸入「D2」，點下方出現的書籤（從書籤清單點不會執行）。</div></div></div>
-      <div class="flow-step"><div class="num">2</div><div>遊戲文字馬上變成繁體中文，畫面右上角會出現 <b>English／繁體中文</b> 切換鈕，選擇會記住。</div></div>
+      <div class="flow-step"><div class="num">2</div><div>遊戲文字馬上變成繁體中文。遊戲的<b>「選項」</b>選單裡（音效、音樂下面）會多一排 <b>語言：English／繁體中文</b> 切換鈕，選擇會記住。</div></div>
       <div class="flow-step"><div class="num">3</div><div>再點一次書籤也可以中英切換。<b>重新整理頁面後</b>要再點一次書籤。</div></div>
     </div>
 
@@ -288,7 +280,6 @@
     <h2>🖼️ 成品展示</h2>
     <div class="hint" style="margin-bottom:12px">示意圖：中文化後的升級畫面與遊戲狀態列。</div>
     <div class="showcase" aria-label="中文化後的升級畫面示意">
-      <div class="sc-lang"><span>English</span><span class="on">繁體中文</span></div>
       <div class="sc-title">升級</div>
       <div class="sc-cards">
         <div class="sc-card"><span class="sc-key">1</span><span class="sc-icon">🔥</span>
@@ -322,7 +313,7 @@
     </details>
     <details>
       <summary>想看原本的英文？</summary>
-      <p>按右上角的「English」，或再點一次書籤。中英可以隨時切換，選擇會記住。</p>
+      <p>打開遊戲的「選項」選單，在「語言」那排按「English」，或再點一次書籤。中英可以隨時切換，選擇會記住。</p>
     </details>
     <details>
       <summary>中文字的字型？</summary>
@@ -377,7 +368,7 @@
       <div class="mini-code">${codeShort}</div>
     </div>`;
   const gameZh = `
-    <div class="game"><div class="lang-mini"><span>EN</span><span class="on">繁中</span></div>
+    <div class="game">
       <div style="text-align:center"><div class="logo">D2 SURVIVORS</div>
         <div class="menu-zh"><span>單人遊戲</span><span>恰西的貨品</span><span>選項</span><span>離開</span></div></div></div>`;
   const STEPS = {
@@ -407,7 +398,7 @@
           <label style="margin-top:8px">網址</label>
           <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
         </div>` },
-      { cap: '在遊戲頁面點書籤', desc: '打開 d2survivors.lol，點「📖」→「D2 繁體中文」，遊戲就變成中文，右上角出現中英切換鈕。', html: `
+      { cap: '在遊戲頁面點書籤', desc: '打開 d2survivors.lol，點「📖」→「D2 繁體中文」，遊戲就變成中文，中英切換鈕在遊戲的「選項」選單裡。', html: `
         <div class="bar" style="background:#111"></div><div class="url" style="background:#333;color:#ccc">d2survivors.lol</div>
         <div style="margin-top:6px;flex:1;display:flex">${gameZh}</div>
         <div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span style="position:relative">📖<span class="tap" style="left:-3px;top:-3px"></span></span><span>⧉</span></div>` },

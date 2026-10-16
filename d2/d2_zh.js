@@ -973,6 +973,43 @@ language = next;
 try { localStorage.setItem(STORAGE_KEY, language); } catch (_) { /* In-memory switching still works. */ }
 applyLanguage();
 }
+// The switcher lives in the game's Options menu, right below the Sound / Music controls.
+const SETTING_HINT = /sound|music|mute|volume|音效|音樂|靜音|音量/i;
+const SETTING_PATTERN = /^(sound|music|mute|volume)(?![a-z])|^(音效|音樂|靜音|音量)/i;
+function isVisible(element) {
+return element.getClientRects().length > 0;
+}
+function settingRow(hit) {
+let row = hit.closest('button, [role="button"], label, li') || hit.closest('.d2-parts') || hit;
+while (row.parentElement && row.parentElement !== document.body && row.parentElement.children.length < 2) row = row.parentElement;
+return row;
+}
+function findSettingRow() {
+let last = null;
+for (const element of document.body.querySelectorAll('canvas.d2-text, button, label, span, div, li')) {
+if (element.closest('#d2-language-switch')) continue;
+if (element.tagName !== 'CANVAS' && element.children.length) continue;
+const text = (element.getAttribute('aria-label') || element.textContent || '').trim();
+if (!text || text.length > 24 || !SETTING_PATTERN.test(text) || !isVisible(element)) continue;
+const row = settingRow(element);
+if (row === document.body || row.contains(switcher)) continue;
+if (!last || (last.parentElement === row.parentElement
+&& (last.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING))) last = row;
+}
+return last;
+}
+function placeSwitcher() {
+if (!switcher) return;
+const row = findSettingRow();
+if (!row) return;
+if (row.nextElementSibling !== switcher) row.after(switcher);
+}
+let placePending = false;
+function schedulePlaceSwitcher() {
+if (placePending) return;
+placePending = true;
+requestAnimationFrame(() => { placePending = false; placeSwitcher(); });
+}
 function addSwitcher() {
 if (!document.body || document.getElementById('d2-language-switch')) return;
 const style = document.createElement('style');
@@ -984,16 +1021,15 @@ body.d2zh-hant #character, body.d2zh-hant #tooltip, body.d2zh-hant .panel {
 font-family: var(--d2-local-fonts) !important;
 }
 #d2-language-switch {
-position: fixed; z-index: 2147483647;
-top: calc(8px + env(safe-area-inset-top, 0px));
-right: calc(10px + env(safe-area-inset-right, 0px));
-display: flex; gap: 2px; padding: 3px;
+display: flex; align-items: center; justify-content: center; gap: 6px;
+margin: 8px auto; padding: 3px 3px 3px 10px; width: max-content; max-width: 100%;
 border: 1px solid #8f743e; border-radius: 7px;
 background: rgba(10, 8, 6, .94); box-shadow: 0 2px 10px #0009;
-font: 12px/1.1 ${FONT_STACK}; pointer-events: auto;
+font: 14px/1.1 ${FONT_STACK}; pointer-events: auto;
 }
+#d2-language-switch .d2-language-label { color: #c7a45f; margin-right: 4px; white-space: nowrap; }
 #d2-language-switch button {
-min-height: 28px; padding: 4px 8px; border: 0; border-radius: 4px;
+min-height: 28px; padding: 4px 10px; border: 0; border-radius: 4px;
 color: #d8d0c0; background: transparent; cursor: pointer;
 font: inherit; letter-spacing: .01em;
 }
@@ -1005,6 +1041,10 @@ switcher = document.createElement('div');
 switcher.id = 'd2-language-switch';
 switcher.setAttribute('role', 'group');
 switcher.setAttribute('aria-label', 'Language / 語言');
+const label = document.createElement('span');
+label.className = 'd2-language-label';
+label.textContent = '語言 Language';
+switcher.appendChild(label);
 for (const [locale, title] of [['en', 'English'], ['zh-Hant', '繁體中文']]) {
 const button = document.createElement('button');
 button.type = 'button';
@@ -1017,17 +1057,23 @@ setLanguage(locale);
 });
 switcher.appendChild(button);
 }
-document.body.appendChild(switcher);
 window.addEventListener('pointerdown', event => {
 if (event.target instanceof Element && event.target.closest('#d2-language-switch')) event.stopImmediatePropagation();
 }, true);
+// Menus may open by toggling classes, which the observer below does not see.
+window.addEventListener('click', schedulePlaceSwitcher, true);
+window.addEventListener('keyup', schedulePlaceSwitcher, true);
 applyLanguage();
+placeSwitcher();
 new MutationObserver(records => {
 for (const record of records) {
 if (record.type === 'characterData') processTextNode(record.target);
 else {
 if (record.target.nodeType === Node.ELEMENT_NODE) processAttributes(record.target);
 record.addedNodes.forEach(node => scan(node));
+if (!placePending) record.addedNodes.forEach(node => {
+if (node.nodeType === Node.ELEMENT_NODE && SETTING_HINT.test(node.textContent || '')) schedulePlaceSwitcher();
+});
 }
 }
 }).observe(document.body, { subtree: true, childList: true, characterData: true });
