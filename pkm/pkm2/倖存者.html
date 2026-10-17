@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>寶可夢倖存者｜繁中書籤教學</title>
+<meta name="description" content="PokéSurvivor（pokesurvivor.com）繁體中文化書籤：一鍵把寶可夢倖存者的介面、招式與寶可夢名稱翻成繁體中文，電腦與手機都能用。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fff6e0; --paper2: #fdeec8; --ink: #2a1f1a; --muted: #6e5d50;
+    --red: #e03c31; --red2: #b52a21; --yellow: #ffcb3b; --blue: #3a6fd8; --mint: #4fbf8c;
+    --lcd: #c8e6a0; --lcd-ink: #24401c; --lcd-dark: #8fbf6a;
+    --pixel: "DotGothic16", "Microsoft JhengHei", "PingFang TC", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink);
+    font: 15px/1.75 "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(rgba(42,31,26,.07) 1px, transparent 1.2px);
+    background-size: 14px 14px;
+    padding: 0 16px 72px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  a { color: var(--blue); font-weight: bold; }
+
+  /* ── 標題 ── */
+  .hero { text-align: center; padding: 40px 0 24px; }
+  .emblem {
+    width: 84px; height: 84px; margin: 0 auto 16px; display: grid; place-items: center;
+    font: 40px var(--pixel); color: #fff; background: var(--red);
+    border: 4px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--ink);
+    transform: rotate(-4deg);
+  }
+  .emblem small { display: block; font-size: 11px; line-height: 1; margin-top: -6px; letter-spacing: 2px; color: var(--yellow); }
+  h1 { margin: 0; font: 32px/1.3 var(--pixel); letter-spacing: 2px; color: var(--ink); }
+  h1 span { color: var(--red); }
+  .sub { margin: 8px 0 0; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+  .chip { font-size: 12px; padding: 2px 10px; border-radius: 6px; font-weight: bold;
+    background: #fff; border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .chip:nth-child(3n+1) { background: var(--yellow); }
+  .chip:nth-child(3n+2) { background: #ffd9d3; }
+  .chip:nth-child(3n) { background: #d5f2e4; }
+  .toc { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
+  .toc a { font-size: 13px; text-decoration: none; padding: 5px 12px; border-radius: 8px; color: var(--ink);
+    background: #fff; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transition: transform .1s, box-shadow .1s; }
+  .toc a:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+  .toc a:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ── 卡片 ── */
+  .card {
+    position: relative; margin-bottom: 26px; padding: 0 20px 22px; background: #fff;
+    border: 3px solid var(--ink); border-radius: 14px; box-shadow: 6px 6px 0 var(--ink);
+  }
+  .card h2 {
+    margin: 0 -20px 16px; padding: 10px 20px; font: 19px/1.4 var(--pixel); color: #fff;
+    background: var(--red); border-bottom: 3px solid var(--ink); border-radius: 10px 10px 0 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card.blue h2 { background: var(--blue); }
+  .card.mint h2 { background: var(--mint); }
+  .card.yellow h2 { background: var(--yellow); color: var(--ink); }
+  .tag { margin-left: auto; font: bold 11px "Microsoft JhengHei", sans-serif; padding: 1px 9px; border-radius: 999px;
+    color: var(--ink); background: #fff; border: 2px solid var(--ink); }
+  .hint { font-size: 14px; color: var(--muted); }
+  .hint b, li b { color: var(--ink); }
+  kbd { font: 12px ui-monospace, Consolas, monospace; padding: 1px 6px; border-radius: 4px;
+    background: #fff; border: 2px solid var(--ink); border-bottom-width: 3px; color: var(--ink); }
+  code { font: 13px ui-monospace, Consolas, monospace; background: var(--paper2); padding: 1px 6px; border-radius: 4px; }
+  ol, ul { margin: 8px 0 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  /* ── 按鈕 ── */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    min-height: 54px; padding: 8px 14px; border-radius: 12px; font: 18px var(--pixel);
+    text-decoration: none; cursor: pointer; user-select: none; border: 3px solid var(--ink);
+    transition: transform .08s, box-shadow .08s; }
+  .btn-drag { cursor: grab; color: #fff; background: var(--red); box-shadow: 5px 5px 0 var(--ink); }
+  .btn-drag:hover { background: #ec4a3f; }
+  .btn-drag:active { cursor: grabbing; transform: translate(3px,3px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn-copy { color: var(--ink); background: var(--yellow); box-shadow: 4px 4px 0 var(--ink); font-size: 16px; min-height: 48px; }
+  .btn-copy:active { transform: translate(3px,3px); box-shadow: 1px 1px 0 var(--ink); }
+  textarea { width: 100%; height: 80px; margin-top: 12px; resize: none; padding: 10px 12px;
+    background: var(--lcd); color: var(--lcd-ink); border: 3px solid var(--ink); border-radius: 10px;
+    box-shadow: inset 3px 3px 0 var(--lcd-dark); font: 12px/1.5 ui-monospace, Consolas, monospace; }
+
+  /* ── 分頁切換（iOS / Android）── */
+  .switch { display: flex; gap: 8px; margin: 0 0 16px; }
+  .switch button { flex: 1; padding: 8px; border-radius: 10px; cursor: pointer; font: bold 14px "Microsoft JhengHei", sans-serif;
+    color: var(--ink); background: #fff; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+  .switch button.on { color: #fff; background: var(--blue); transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ── 手機示意圖 ── */
+  .demo { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 600px) { .demo { grid-template-columns: 1fr; justify-items: center; } }
+  .phone { position: relative; width: 240px; height: 440px; border-radius: 32px; padding: 10px;
+    background: var(--blue); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); }
+  .phone::before { content: ""; position: absolute; left: 50%; top: 15px; width: 70px; height: 16px;
+    transform: translateX(-50%); border-radius: 999px; background: var(--ink); z-index: 3; }
+  .screens { position: relative; width: 100%; height: 100%; border-radius: 22px; overflow: hidden; background: #f4f4f6;
+    border: 2px solid var(--ink); }
+  .scr { position: absolute; inset: 0; opacity: 0; transition: opacity .35s; display: flex; flex-direction: column;
+    color: #222; font-size: 11px; }
+  .scr.on { opacity: 1; }
+  .bar { height: 30px; flex: none; }
+  .url { margin: 0 10px; padding: 5px 10px; border-radius: 9px; background: #e3e3e8; color: #555;
+    font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .page { flex: 1; padding: 10px; display: grid; align-content: start; gap: 6px; }
+  .page.paper { background: var(--paper); color: var(--ink); }
+  .mini-btn { padding: 6px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 10px; }
+  .mini-code { background: var(--lcd); color: var(--lcd-ink); font: 8px/1.4 ui-monospace, monospace; padding: 6px;
+    border-radius: 5px; word-break: break-all; border: 1px solid var(--ink); }
+  .toolbar { flex: none; display: flex; justify-content: space-around; align-items: center; height: 42px;
+    background: #fafafa; border-top: 1px solid #ddd; font-size: 16px; color: #2563eb; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #ececf1; border-radius: 16px 16px 0 0;
+    padding: 10px; box-shadow: 0 -8px 20px rgba(0,0,0,.25); display: grid; gap: 6px; }
+  .sheet-row { background: #fff; border-radius: 9px; padding: 8px 10px; display: flex; justify-content: space-between; }
+  .form { padding: 10px; display: grid; gap: 4px; }
+  .form label { font-size: 9px; color: #6b7280; }
+  .field { border-bottom: 2px solid #c7c7cc; padding: 4px 0; font-size: 11px; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis; }
+  .field.focus { border-color: #2563eb; color: #111; }
+  .navbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px;
+    font-size: 11px; background: #f8f8f8; border-bottom: 1px solid #ddd; }
+  .navbar b { font-size: 12px; }
+  .blue-t { color: #2563eb; }
+  .snack { position: absolute; left: 8px; right: 8px; bottom: 50px; padding: 8px 10px; border-radius: 8px;
+    background: #323232; color: #fff; display: flex; justify-content: space-between; font-size: 10px; }
+  .menu { position: absolute; right: 6px; top: 34px; width: 140px; background: #fff; border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.25); padding: 4px 0; }
+  .menu div { padding: 6px 10px; }
+  .menu .icons { display: flex; justify-content: space-around; border-bottom: 1px solid #eee; font-size: 14px; }
+  .suggest { background: #fff; border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; gap: 8px; align-items: center; }
+  .mini-game { flex: 1; position: relative; background: #f3f1ea; padding: 8px; display: grid; gap: 6px; align-content: start; }
+  .mini-game .blk { background: #fff; border: 1px solid #cfcabd; border-radius: 4px; padding: 4px 6px; font-size: 9px; }
+  .mini-game .blk b { display: block; background: #4a6fa5; color: #fff; margin: -4px -6px 4px; padding: 2px 6px; border-radius: 3px 3px 0 0; }
+  .mini-toast { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); white-space: nowrap;
+    background: rgba(30,30,30,.9); color: #fff; padding: 4px 9px; border-radius: 5px; font-size: 9px; }
+  .ring { position: absolute; border: 3px solid var(--red); border-radius: 999px; pointer-events: none;
+    box-shadow: 0 0 0 4px rgba(224,60,49,.22); animation: ring 1.4s ease-in-out infinite; }
+  @keyframes ring { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .tap { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: rgba(224,60,49,.5);
+    border: 2px solid #fff; animation: tap 1.4s ease-in-out infinite; pointer-events: none; }
+  @keyframes tap { 0%,100% { transform: scale(.8); opacity: .9; } 50% { transform: scale(1.2); opacity: .5; } }
+
+  .steps-side { min-width: 0; }
+  .badge { display: inline-block; padding: 1px 10px; border-radius: 6px; font: 13px var(--pixel);
+    color: #fff; background: var(--ink); }
+  .cap { margin: 10px 0 4px; font: 19px var(--pixel); color: var(--ink); }
+  .cap-desc { color: var(--muted); font-size: 14px; min-height: 3.4em; }
+  .ctrl { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .ctrl button.nav { width: 38px; height: 38px; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold;
+    color: var(--ink); background: var(--yellow); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+  .ctrl button.nav:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 10px; height: 10px; border-radius: 3px; background: #e2d6bd; border: 2px solid var(--ink); cursor: pointer; transition: all .2s; }
+  .dots span.on { width: 24px; background: var(--red); }
+
+  /* ── 使用流程 ── */
+  .flow { display: grid; gap: 12px; }
+  .flow-step { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
+  .num { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font: 18px var(--pixel);
+    color: var(--ink); background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .tabs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 16px; }
+  .tab-card { padding: 12px; border-radius: 10px; background: var(--paper); border: 2px solid var(--ink); }
+  .tab-card b { font-family: var(--pixel); font-weight: normal; font-size: 16px; color: var(--red); }
+  .tab-card div { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .note-box { margin-top: 16px; padding: 10px 14px; border-radius: 10px; font-size: 14px;
+    background: #e3eeff; border: 2px dashed var(--blue); }
+  .note-box.warn { background: #ffe9e5; border-color: var(--red); }
+  .lcd { display: block; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--lcd); color: var(--lcd-ink);
+    border: 2px solid var(--ink); font: 13px/1.5 ui-monospace, Consolas, monospace; word-break: break-all; }
+
+  /* ── 成品展示：遊戲畫面示意 ── */
+  .showcase { position: relative; border-radius: 10px; overflow: hidden; border: 3px solid var(--ink);
+    background: #e9e6dd; font-size: 12px; }
+  .sc-top { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 10px; background: #2f3b52; color: #fff; font-size: 11px; }
+  .sc-top b { color: var(--yellow); font-weight: normal; }
+  .sc-grid { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 8px; padding: 10px; }
+  @media (max-width: 560px) { .sc-grid { grid-template-columns: 1fr; } }
+  .sc-box { background: #fff; border: 1px solid #c9c3b4; border-radius: 6px; overflow: hidden; }
+  .sc-box > b { display: block; padding: 3px 8px; background: #4a6fa5; color: #fff; font-weight: normal; }
+  .sc-box > div { padding: 6px 8px; display: grid; gap: 3px; }
+  .sc-row { display: flex; justify-content: space-between; gap: 6px; }
+  .sc-row span:last-child { color: #777; }
+  .sc-battle { text-align: center; padding: 8px !important; }
+  .sc-hp { height: 8px; border-radius: 4px; background: #ddd; overflow: hidden; margin: 6px 0; }
+  .sc-hp i { display: block; height: 100%; width: 62%; background: var(--mint); }
+  .blob { width: 64px; height: 52px; margin: 6px auto 0; position: relative; background: #9ad0f5;
+    border: 3px solid var(--ink); border-radius: 50% 50% 44% 44% / 60% 60% 40% 40%; animation: bob 1.6s ease-in-out infinite; }
+  .blob::before, .blob::after { content: ""; position: absolute; top: 18px; width: 7px; height: 9px; border-radius: 50%; background: var(--ink); }
+  .blob::before { left: 18px; } .blob::after { right: 18px; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  .sc-btn { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 4px; background: #4a6fa5; color: #fff; }
+  .sc-toast { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); white-space: nowrap;
+    background: rgba(30,30,30,.9); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px;
+    animation: toastIn 4s ease-in-out infinite; }
+  @keyframes toastIn { 0%,8% { opacity: 0; transform: translate(-50%, 8px); } 14%,70% { opacity: 1; transform: translate(-50%, 0); } 80%,100% { opacity: 0; } }
+  .compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 14px; }
+  .compare div { padding: 8px 10px; border-radius: 8px; border: 2px solid var(--ink); font-size: 13px; background: var(--paper); }
+  .compare .arrow { border: 0; background: none; font: 20px var(--pixel); color: var(--red); padding: 0; }
+
+  /* ── 問答 ── */
+  details { border-top: 2px dashed #e2d6bd; padding: 10px 0; }
+  details:first-of-type { border-top: 0; }
+  summary { cursor: pointer; font-weight: bold; color: var(--ink); }
+  summary::marker { color: var(--red); }
+  details p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
+
+  .toast { position: fixed; left: 50%; bottom: 26px; z-index: 99; transform: translate(-50%, 20px);
+    padding: 10px 20px; border-radius: 10px; font: 15px var(--pixel); pointer-events: none;
+    color: var(--ink); background: var(--yellow); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+    opacity: 0; transition: all .25s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .sc-arena { position: relative; height: 150px; background: #5d8a4a; overflow: hidden; }
+  .sc-arena .blob { position: absolute; left: 50%; top: 50px; margin: 0 0 0 -32px; background: #ffd34d; }
+  .foe { position: absolute; width: 22px; height: 18px; border-radius: 50%; background: #b58ad6; border: 2px solid var(--ink); }
+  .dmg { position: absolute; font: 13px var(--pixel); color: #fff; text-shadow: 1px 1px 0 var(--ink); animation: bob 1.2s ease-in-out infinite; }
+  .sc-moves { display: flex; gap: 6px; justify-content: center; padding: 8px; background: #2f3b52; flex-wrap: wrap; }
+  .sc-moves span { padding: 2px 8px; border-radius: 4px; background: #fff; border: 1px solid var(--ink); font-size: 11px; }
+  .sc-moves span.on { background: var(--yellow); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="emblem"><div>倖<small>PS</small></div></div>
+    <h1>寶可夢<span>倖存者</span>書籤</h1>
+    <p class="sub">把 <a href="https://pokesurvivor.com/" target="_blank" rel="noopener">PokéSurvivor（pokesurvivor.com）</a> 一鍵翻成繁體中文</p>
+    <div class="chips">
+      <span class="chip">官方繁中寶可夢名</span><span class="chip">招式・道具・天氣</span><span class="chip">任務・成就・扭蛋</span>
+      <span class="chip">遊戲畫面文字也翻</span><span class="chip">電腦＋手機</span><span class="chip">保留原站帳號存檔</span>
+    </div>
+    <nav class="toc">
+      <a href="#pc">💻 電腦安裝</a><a href="#mobile">📱 手機安裝</a><a href="#use">🎮 使用方式</a>
+      <a href="#show">🖼️ 成品展示</a><a href="#faq">❓ 常見問題</a>
+    </nav>
+  </header>
+
+  <!-- 電腦 -->
+  <section class="card" id="pc">
+    <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
+    <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列">★ 拖我到書籤列（寶可夢倖存者）</a>
+    <ol class="hint">
+      <li>按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>（Mac：<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>）叫出書籤列。</li>
+      <li>用滑鼠<b>按住</b>上面的紅色按鈕，<b>拖曳</b>到書籤列上放開（直接點按鈕不會安裝）。</li>
+      <li>打開 <a href="https://pokesurvivor.com/" target="_blank" rel="noopener">遊戲頁面</a>，點一下書籤列上的「寶可夢倖存者」。</li>
+    </ol>
+  </section>
+
+  <!-- 手機 -->
+  <section class="card blue" id="mobile">
+    <h2>📱 手機（iPhone / Android）<span class="tag">貼上安裝</span></h2>
+
+    <div class="switch" role="tablist">
+      <button class="on" data-os="ios" role="tab">iPhone（Safari）</button>
+      <button data-os="android" role="tab">Android（Chrome）</button>
+    </div>
+
+    <div class="demo">
+      <div class="phone"><div class="screens" id="screens"></div></div>
+      <div class="steps-side">
+        <span class="badge" id="badge">STEP 1/5</span>
+        <div class="cap" id="cap"></div>
+        <div class="cap-desc" id="cap-desc"></div>
+        <div class="ctrl">
+          <button class="nav" id="prev" aria-label="上一步">‹</button>
+          <div class="dots" id="dots"></div>
+          <button class="nav" id="next" aria-label="下一步">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;font-weight:bold">書籤程式碼（第 1 步要複製的）</div>
+    <button class="btn btn-copy" id="copy-btn" style="margin-top:8px">📋 複製書籤程式碼</button>
+    <textarea id="code-box" readonly></textarea>
+    <div class="note-box">建議把書籤名稱取成 <b>寶可夢倖存者</b>，Android 之後在網址列打「倖存者」就找得到。</div>
+  </section>
+
+  <!-- 使用方式 -->
+  <section class="card mint" id="use">
+    <h2>🎮 使用方式</h2>
+    <div class="flow">
+      <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://pokesurvivor.com/" target="_blank" rel="noopener">pokesurvivor.com</a> 遊戲頁面（登入前、登入後都可以）。</div></div>
+      <div class="flow-step"><div class="num">2</div><div>點書籤「寶可夢倖存者」。畫面上方出現「<b>PokéSurvivor 繁體中文化已啟用</b>」就成功了。<div class="hint">手機 Android：在網址列輸入「倖存者」，點下方出現的書籤（從書籤清單點不會執行）。</div></div></div>
+      <div class="flow-step"><div class="num">3</div><div>之後選單、升級卡牌、戰鬥中的提示都會自動翻譯，不用再按。<b>重新整理或重新開啟遊戲後</b>要再點一次書籤。</div></div>
+    </div>
+
+    <div class="tabs-grid">
+      <div class="tab-card"><b>寶可夢名稱</b><div>九個地區、近千隻寶可夢，使用官方繁體中文名稱（資料來自 PokeAPI）。</div></div>
+      <div class="tab-card"><b>招式與道具</b><div>招式、招式說明與進化效果、攜帶道具、天氣、地圖名稱。</div></div>
+      <div class="tab-card"><b>介面與活動</b><div>任務、成就、稱號、扭蛋、排行榜、好友、多人房間、設定、更新公告。</div></div>
+      <div class="tab-card"><b>遊戲畫面文字</b><div>畫在遊戲畫面上的提示（野生寶可夢出現、裂隙、阿爾宙斯的審判）也會翻成中文。</div></div>
+    </div>
+
+    <div class="note-box">遊戲語言選 <b>English</b> 或 <b>Español</b> 都可以，字典兩種原文都有收錄。</div>
+    <div class="note-box warn">遊戲更新後新增的文字可能暫時還是原文，這是字典還沒收錄，不是書籤壞掉。</div>
+  </section>
+
+  <!-- 成品展示 -->
+  <section class="card yellow" id="show">
+    <h2>🖼️ 成品展示</h2>
+    <div class="hint" style="margin-bottom:12px">示意圖：啟用後的戰鬥畫面與啟用提示。</div>
+    <div class="showcase" aria-label="翻譯後遊戲畫面示意">
+      <div class="sc-top"><span>等級 <b>14</b></span><span>擊敗 <b>327</b></span><span>金幣 <b>1,280</b></span><span>永恆草原 · 08:42</span></div>
+      <div class="sc-arena">
+        <div class="blob"></div>
+        <div class="foe" style="left:14%;top:30px"></div><div class="foe" style="left:24%;top:100px"></div>
+        <div class="foe" style="right:16%;top:44px"></div><div class="foe" style="right:26%;top:108px"></div>
+        <div class="dmg" style="right:20%;top:20px">32</div>
+        <div class="sc-toast">野生的 皮卡丘 出現了！</div>
+      </div>
+      <div class="sc-moves"><span class="on">1 噴射火焰</span><span>2 飛葉快刀</span><span>3 十萬伏特</span><span>4 劍舞</span></div>
+    </div>
+    <div class="compare">
+      <div>Flamethrower · Razor Leaf · Thunderbolt</div><div class="arrow">→</div><div>噴射火焰・飛葉快刀・十萬伏特</div>
+    </div>
+  </section>
+
+  <!-- 常見問題 -->
+  <section class="card" id="faq">
+    <h2>❓ 常見問題</h2>
+    <details>
+      <summary>點了書籤沒有反應？</summary>
+      <p>確認是在 pokesurvivor.com 的遊戲頁面上點。Android Chrome 要從<b>網址列</b>輸入書籤名稱再點建議項目，從書籤清單點不會執行。iPhone 請確認網址欄位是整段 <code>javascript:</code> 開頭的程式碼，前面沒有多出空白或 https://。</p>
+    </details>
+    <details>
+      <summary>在 pokesurvivor.org 的攻略網站上玩，遊戲沒有變中文？</summary>
+      <p>攻略網站裡嵌入的遊戲屬於另一個網域，書籤翻不到。請點畫面下方提示的「開啟遊戲」，到 pokesurvivor.com 後再點一次書籤。</p>
+    </details>
+    <details>
+      <summary>跳出「已經在執行中」？</summary>
+      <p>代表這個分頁已經翻譯過了，不用再按。如果你有裝 Greasy Fork 的「PokéSurvivor 繁體中文補丁」腳本，也會出現這個提示，兩者擇一使用即可。</p>
+    </details>
+    <details>
+      <summary>需要自己更新嗎？</summary>
+      <p>不用。書籤每次點都會載入最新版本，裝一次就好。</p>
+    </details>
+    <details>
+      <summary>想暫時看回原文？</summary>
+      <p>直接重新整理頁面就會回到原文，想要中文再點一次書籤即可。</p>
+    </details>
+    <details>
+      <summary>會影響帳號、存檔或排行榜嗎？</summary>
+      <p>不會。書籤只會改變畫面上顯示的文字，不讀取帳號密碼、不修改存檔，也不會把任何資料傳出去。</p>
+    </details>
+  </section>
+
+  <footer>非官方玩家工具，與 PokéSurvivor 作者及 The Pokémon Company 無關。<br>翻譯改編自 Greasy Fork「PokéSurvivor 繁體中文補丁」（MIT 授權），寶可夢名稱資料來自 PokeAPI。</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const code = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/pkm/pkm2/pkm1.js?v=%27+Date.now())";
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // 電腦：拖曳安裝
+  const dragBtn = document.getElementById('drag-btn');
+  dragBtn.setAttribute('href', code);
+  dragBtn.addEventListener('click', (e) => { e.preventDefault(); toast('請用「拖曳」的方式拖到書籤列'); });
+
+  // 手機：複製程式碼
+  const box = document.getElementById('code-box');
+  box.value = code;
+  box.addEventListener('click', () => { box.select(); box.setSelectionRange(0, 99999); });
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    box.select(); box.setSelectionRange(0, 99999);
+    const done = () => toast('已複製書籤程式碼');
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, () => { document.execCommand('copy'); done(); });
+    else { document.execCommand('copy'); done(); }
+  });
+
+  // ── 手機步驟示意（每一步都是用 HTML 畫的小手機畫面）──
+  const codeShort = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/pkm/pkm2/pkm1.js?v=…";
+  const tutorialPage = `
+    <div class="bar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
+    <div class="page paper">
+      <div style="text-align:center;font-weight:bold;color:var(--red)">★ 寶可夢倖存者書籤</div>
+      <div class="mini-btn" style="background:var(--yellow);border:1px solid var(--ink);position:relative">📋 複製書籤程式碼
+        <div class="ring" style="inset:-5px"></div></div>
+      <div class="mini-code">${codeShort}</div>
+    </div>`;
+  const gameScreen = (extra) => `
+    <div class="mini-game">
+      <div class="blk"><b>選擇卡牌</b>噴射火焰 · 傷害 +40%</div>
+      <div class="blk"><b>升到 5 級！</b>選擇獎勵 · 文柚果</div>
+      <div class="blk"><b>永恆草原</b>野生的 皮卡丘 出現了！</div>
+      ${extra || ''}
+    </div>`;
+  const STEPS = {
+    ios: [
+      { cap: '複製書籤程式碼', desc: '在這一頁按「📋 複製書籤程式碼」。', html: tutorialPage + `<div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span>📖</span><span>⧉</span></div>` },
+      { cap: '分享 → 加入書籤', desc: '點 Safari 下方的「分享 ⬆︎」，選「加入書籤」，名稱取成「寶可夢倖存者」後儲存。', html: `
+        <div class="bar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
+        <div class="page paper" style="opacity:.5"></div>
+        <div class="sheet">
+          <div class="sheet-row"><span>拷貝</span><span>⧉</span></div>
+          <div class="sheet-row" style="position:relative"><b>加入書籤</b><span>📖</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
+          <div class="sheet-row"><span>加入到主畫面</span><span>⊕</span></div>
+        </div>` },
+      { cap: '打開書籤 → 編輯', desc: '點下方「📖」打開書籤清單，按右下角「編輯」，再點剛剛的「寶可夢倖存者」。', html: `
+        <div class="bar"></div>
+        <div class="navbar"><span></span><b>書籤</b><span class="blue-t">完成</span></div>
+        <div class="page" style="background:#fff">
+          <div class="sheet-row" style="background:#f4f4f6">⭐ 我的最愛</div>
+          <div class="sheet-row" style="background:#f4f4f6;position:relative">★ 寶可夢倖存者<span class="blue-t">›</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
+        </div>
+        <div class="toolbar" style="justify-content:flex-end;padding-right:14px;font-size:12px"><span class="blue-t" style="position:relative">編輯<span class="tap" style="left:4px;top:-2px"></span></span></div>` },
+      { cap: '網址換成程式碼 → 完成', desc: '把網址欄位整個清空，貼上剛剛複製的程式碼，按「完成」。', html: `
+        <div class="bar"></div>
+        <div class="navbar"><span class="blue-t">‹ 書籤</span><b>編輯書籤</b><span class="blue-t">完成</span></div>
+        <div class="form" style="background:#fff;flex:1">
+          <label>名稱</label><div class="field">寶可夢倖存者</div>
+          <label style="margin-top:8px">網址</label>
+          <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
+        </div>` },
+      { cap: '在遊戲頁面點書籤', desc: '打開 pokesurvivor.com 遊戲頁面，點「📖」→「寶可夢倖存者」，畫面就會變成中文。', html: `
+        <div class="bar" style="background:#2f3b52"></div><div class="url" style="background:#3c4964;color:#ddd">pokesurvivor.com</div>
+        <div style="height:6px;background:#2f3b52"></div>
+        ${gameScreen('<div class="mini-toast">繁體中文化已啟用</div>')}
+        <div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span style="position:relative">📖<span class="tap" style="left:-3px;top:-3px"></span></span><span>⧉</span></div>` },
+    ],
+    android: [
+      { cap: '複製書籤程式碼', desc: '在這一頁按「📋 複製書籤程式碼」。', html: tutorialPage },
+      { cap: '⋮ → ☆ 加入書籤', desc: '點 Chrome 右上角「⋮」，再點上排的「☆」，把這一頁加入書籤。', html: `
+        <div class="bar"></div><div class="url" style="margin-right:30px">jtnhrbpvvm-spec.github.io</div>
+        <div class="page paper" style="opacity:.6"></div>
+        <div class="menu"><div class="icons"><span>→</span><span style="position:relative">☆<span class="tap" style="left:-5px;top:-3px"></span></span><span>⬇</span><span>ⓘ</span><span>⟳</span></div>
+          <div>新分頁</div><div>書籤</div><div>記錄</div></div>` },
+      { cap: '點「編輯」', desc: '下方會跳出「已加入書籤」，點右邊的「編輯」。（錯過的話：⋮ → 書籤 → 長按它 → 編輯）', html: tutorialPage + `
+        <div class="snack"><span>已加入書籤</span><span style="color:#8ab4f8;font-weight:bold;position:relative">編輯<span class="tap" style="left:2px;top:-4px"></span></span></div>` },
+      { cap: '名稱與網址 → 儲存', desc: '名稱改成「寶可夢倖存者」，網址整個換成剛剛複製的程式碼，按左上「←」儲存。', html: `
+        <div class="bar"></div>
+        <div class="navbar" style="justify-content:flex-start;gap:10px;background:#fff"><span>←</span><b>編輯書籤</b></div>
+        <div class="form" style="background:#fff;flex:1">
+          <label>名稱</label><div class="field focus">寶可夢倖存者</div>
+          <label style="margin-top:8px">URL</label>
+          <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
+        </div>` },
+      { cap: '在遊戲頁面從網址列啟動', desc: '打開 pokesurvivor.com 遊戲頁面，點網址列輸入「倖存者」，點下方出現的「寶可夢倖存者」書籤。（從書籤清單點不會執行）', html: `
+        <div class="bar" style="background:#2f3b52"></div>
+        <div class="url" style="background:#fff;color:#111;border:2px solid #2563eb">倖存者|</div>
+        <div class="suggest" style="margin-top:6px;position:relative">☆ <div><b>寶可夢倖存者</b><div style="color:#888;font-size:9px">javascript:import(…</div></div><div class="ring" style="inset:-2px;border-radius:6px"></div></div>
+        ${gameScreen()}` },
+    ],
+  };
+
+  const screens = document.getElementById('screens');
+  const dots = document.getElementById('dots');
+  const badge = document.getElementById('badge');
+  const cap = document.getElementById('cap');
+  const capDesc = document.getElementById('cap-desc');
+  let os = 'ios', idx = 0, timer = null, resume = null;
+
+  function build() {
+    const steps = STEPS[os];
+    screens.innerHTML = steps.map((s) => `<div class="scr">${s.html}</div>`).join('');
+    dots.innerHTML = steps.map(() => '<span></span>').join('');
+    [...dots.children].forEach((d, i) => d.addEventListener('click', () => { idx = i; render(); pause(); }));
+    render();
+  }
+  function render() {
+    const steps = STEPS[os];
+    [...screens.children].forEach((el, i) => el.classList.toggle('on', i === idx));
+    [...dots.children].forEach((el, i) => el.classList.toggle('on', i === idx));
+    badge.textContent = `STEP ${idx + 1}/${steps.length}`;
+    cap.textContent = steps[idx].cap;
+    capDesc.textContent = steps[idx].desc;
+  }
+  const go = (d) => { const n = STEPS[os].length; idx = (idx + d + n) % n; render(); };
+  const start = () => { stop(); timer = setInterval(() => go(1), 3500); };
+  const stop = () => { clearInterval(timer); timer = null; };
+  const pause = () => { stop(); clearTimeout(resume); resume = setTimeout(start, 8000); };
+
+  document.getElementById('prev').addEventListener('click', () => { go(-1); pause(); });
+  document.getElementById('next').addEventListener('click', () => { go(1); pause(); });
+  document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.switch button').forEach((x) => x.classList.toggle('on', x === b));
+    os = b.dataset.os; idx = 0; build(); pause();
+  }));
+  let sx = null;
+  screens.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  screens.addEventListener('touchend', (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 40) { go(dx > 0 ? -1 : 1); pause(); }
+    sx = null;
+  });
+  screens.addEventListener('mouseenter', stop);
+  screens.addEventListener('mouseleave', () => { clearTimeout(resume); start(); });
+  if (/Android/i.test(navigator.userAgent)) document.querySelector('.switch [data-os="android"]').click();
+  build(); start();
+</script>
+</body>
+</html>

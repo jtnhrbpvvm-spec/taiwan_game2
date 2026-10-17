@@ -53,6 +53,14 @@
   .toc a:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
   .toc a:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
 
+  /* ── 置頂：倖存者版連結 ── */
+  .survivor-link { display: block; margin: 20px 0 0; padding: 14px 16px; text-align: center; text-decoration: none;
+    font: 26px/1.4 var(--pixel); color: #fff; background: var(--blue);
+    border: 3px solid var(--ink); border-radius: 14px; box-shadow: 6px 6px 0 var(--ink); transition: transform .08s, box-shadow .08s; }
+  .survivor-link:hover { background: #4a7fe6; }
+  .survivor-link:active { transform: translate(3px,3px); box-shadow: 3px 3px 0 var(--ink); }
+  @media (max-width: 480px) { .survivor-link { font-size: 21px; } }
+
   /* ── 卡片 ── */
   .card {
     position: relative; margin-bottom: 26px; padding: 0 20px 22px; background: #fff;
@@ -224,6 +232,8 @@
 </head>
 <body>
 <div class="wrap">
+
+  <a class="survivor-link" href="倖存者.html">⚔️ 寶可夢倖存者版書籤點我 ›</a>
 
   <header class="hero">
     <div class="emblem"><div>繁<small>PKM</small></div></div>
