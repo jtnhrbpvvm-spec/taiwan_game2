@@ -339,6 +339,12 @@ function createPetWindow() {
     webPreferences: { preload: path.join(__dirname, "pet-preload.js") },
   });
   petWin.setAlwaysOnTop(true, "screen-saver");
+  // 「顯示桌面」（工作列最右下角、Win+D）有時會把桌寵也一起縮小。桌寵沒有工作列按鈕，縮小了就點不回來，
+  // 所以一被縮小就馬上放回去
+  petWin.on("minimize", () => {
+    petWin.restore();
+    petWin.setAlwaysOnTop(true, "screen-saver");
+  });
   petWin.setIgnoreMouseEvents(true, { forward: true });
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
@@ -361,15 +367,25 @@ function setClickThrough(on) {
   petWin.webContents.send("pet:click-through", on);
 }
 
+/** 桌寵現在看不看得到（被「顯示桌寵」藏起來、或被系統縮小都算看不到）。 */
+const petShown = () => !!petWin && petWin.isVisible() && !petWin.isMinimized();
+
+/** 把桌寵叫出來，但不搶走使用者正在用的視窗的焦點。 */
+function showPet() {
+  if (petWin.isMinimized()) petWin.restore();
+  petWin.showInactive();
+  petWin.setAlwaysOnTop(true, "screen-saver");
+}
+
 /** 桌寵被藏起來或開著專注模式時，一律恢復成看得到、點得到。 */
 function restorePet() {
-  if (!petWin.isVisible()) petWin.showInactive();
+  if (!petShown()) showPet();
   if (clickThrough) setClickThrough(false);
 }
 
 /** 專注模式的快捷鍵。桌寵被藏起來時按它是先把桌寵叫回來，不然會變成怎麼按都看不到效果。 */
 function toggleClickThrough() {
-  if (!petWin.isVisible()) restorePet();
+  if (!petShown()) restorePet();
   else setClickThrough(!clickThrough);
 }
 
@@ -377,7 +393,7 @@ function toggleClickThrough() {
 function openSizer(petIndex = 0) {
   // 拉條要用滑鼠操作，專注模式開著的話先關掉；桌寵被藏起來的話先叫出來
   if (clickThrough) setClickThrough(false);
-  if (!petWin.isVisible()) petWin.showInactive();
+  if (!petShown()) showPet();
   petWin.webContents.send("pet:open-sizer", petIndex);
 }
 
@@ -667,7 +683,7 @@ function sayNext() {
   }
   sayBusy = true;
   // 桌寵被藏起來的話改用系統通知，不然提醒就白講了
-  if (petWin?.isVisible()) {
+  if (petShown()) {
     petWin.webContents.send("pet:say", next.text);
     next.onShow?.();
   } else if (Notification.isSupported()) new Notification({ title: "放置希望桌寵", body: next.text }).show();
@@ -698,7 +714,7 @@ const askWaiting = new Map(); // 問題編號 → 收到回答時要呼叫的函
  * 桌寵被使用者藏起來的時候不硬叫出來，直接當作「不要」。
  */
 function ask(text, yes, no) {
-  if (!petWin?.isVisible()) return Promise.resolve(false);
+  if (!petShown()) return Promise.resolve(false);
   return new Promise((resolve) => {
     const id = ++askSeq;
     askWaiting.set(id, resolve);
@@ -800,7 +816,7 @@ function schedulePetCallTomorrow() {
 
 function petCall() {
   if (settings.petCall === today()) return schedulePetCallTomorrow();
-  if (!petWin?.isVisible() || clickThrough) return schedulePetCall(PET_CALL_RETRY_MS);
+  if (!petShown() || clickThrough) return schedulePetCall(PET_CALL_RETRY_MS);
   settings.petCall = today();
   saveSettings();
   say(PET_CALL_TEXT, () => (petCallUntil = Date.now() + PET_CALL_WINDOW_MS));
@@ -877,7 +893,7 @@ function buildMenu(petIndex = 0) {
         showItem("normalShow", "loot", "顯示物品取得"),
       ],
     },
-    { label: "顯示桌寵", type: "checkbox", checked: petWin.isVisible(), click: () => (petWin.isVisible() ? petWin.hide() : petWin.showInactive()) },
+    { label: "顯示桌寵", type: "checkbox", checked: petShown(), click: () => (petShown() ? petWin.hide() : showPet()) },
     // 只有一隻時是單純的開關；有好幾隻時展開成「這一隻」和「全部」
     many
       ? {
