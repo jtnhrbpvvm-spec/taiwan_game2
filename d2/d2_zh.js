@@ -77,6 +77,12 @@ if (!pick || score > pick.score) pick = { f, s, k, score };
 }
 }
 if (!pick) pick = { f: { h: H, lh: Math.round(H * 1.25) }, s: looksShadow, k: lines.length };
+// 第一行英文實際有筆畫的高度（大字型的字框比字母高很多，中文要照這個高度縮小）
+let inkTop = -1, inkBottom = -1;
+for (let y = 0; y < Math.min(H, pick.f.h); y++) {
+for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3]) { if (inkTop < 0) inkTop = y; inkBottom = y; break; }
+}
+const ink = inkTop < 0 ? 0 : inkBottom - inkTop + 1 - pick.s;
 let align = 'center';
 if (pick.k > 1) {
 let left = true, right = true, ragged = false;
@@ -95,7 +101,7 @@ if (ragged) align = left ? 'left' : right ? 'right' : 'center';
 }
 return {
 src, en: img, w: W, h: H, lang: 'en',
-size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align,
+size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align, ink,
 maxWidth: pick.k > lines.length ? W - pick.s : 0,
 };
 }
@@ -150,6 +156,8 @@ return;
 }
 let text = cjk ? st.src : window.D2I18N.translate(st.src);
 let size = Math.max(10, st.size);
+// 大字型（選單用的 font24 以上）：中文高度對齊英文字母實際高度，不要用整個字框高度
+if (st.size >= 24 && st.ink > 0) size = Math.max(14, Math.min(size, Math.round(st.ink * 1.1)));
 let font = `bold ${size}px ${D2ZH_FONT}`;
 ctx.font = font;
 // 原文分成好幾行的短標籤（例如技能樹分頁 "Defensive\nAuras"）：中文也照行數拆開，太寬就縮小字，不要超出原本的框
