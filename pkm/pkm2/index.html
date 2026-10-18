@@ -241,7 +241,7 @@
     <p class="sub">把 <a href="https://www.pokeclicker.com/" target="_blank" rel="noopener">PokéClicker（pokeclicker.com）</a> 一鍵翻成繁體中文</p>
     <div class="chips">
       <span class="chip">台灣用語</span><span class="chip">官方繁中寶可夢名</span><span class="chip">道具・樹果・任務</span>
-      <span class="chip">自動跟著畫面翻譯</span><span class="chip">電腦＋手機</span><span class="chip">免安裝擴充功能</span>
+      <span class="chip">自動跟著畫面翻譯</span><span class="chip">電腦＋手機</span><span class="chip">免安裝擴充功能</span><span class="chip">自動點擊攻擊</span>
     </div>
     <nav class="toc">
       <a href="#pc">💻 電腦安裝</a><a href="#mobile">📱 手機安裝</a><a href="#use">🎮 使用方式</a>
@@ -303,6 +303,16 @@
       <div class="tab-card"><b>介面與道具</b><div>選單、商店、圖鑑、培育、農場、地下礦場、任務、成就、設定等介面文字。</div></div>
       <div class="tab-card"><b>台灣用語</b><div>以鍋巴漢化的字典為基礎，簡轉繁並換成台灣慣用詞，地區名用官方譯名（關都、城都、豐緣…）。</div></div>
       <div class="tab-card"><b>自動更新</b><div>書籤每次都會載入最新版字典，翻譯有補充時不用重新安裝。</div></div>
+      <div class="tab-card"><b>自動點擊</b><div>戰鬥畫面上方多了「▶ 開始自動點擊」按鈕，按下後寶可夢會自動攻擊（每秒 20 下，遊戲允許的上限），再按一次停止。</div></div>
+    </div>
+
+    <div class="note-box">
+      <b>⚔ 自動點擊怎麼用：</b>
+      <ol style="margin-top:4px">
+        <li>點書籤後，中間戰鬥區塊的最上方會出現綠色按鈕「<b>▶ 開始自動點擊</b>」。</li>
+        <li>按下去變成紅色「<b>■ 停止自動點擊</b>」就開始自動攻擊；道路、道館、迷宮戰鬥、對戰開拓區都有效。</li>
+        <li>迷宮裡只會在戰鬥中自動攻擊，不會幫你移動或開寶箱。開關狀態會記住，下次點書籤會照上次的設定。</li>
+      </ol>
     </div>
 
     <div class="note-box">遊戲設定裡的<b>語言請維持 English</b>，字典是用英文原文對照翻譯的。</div>
@@ -322,7 +332,7 @@
           <div class="sc-row"><span>傑尼龜</span><span>Lv 47</span></div>
           <div class="sc-row"><span>皮卡丘</span><span>Lv 61</span></div>
         </div></div>
-        <div class="sc-box"><b>野生寶可夢</b><div class="sc-battle">
+        <div class="sc-box"><div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:4px;border-bottom:1px solid #ddd;font-size:11px"><span style="background:#d9534f;color:#fff;padding:1px 8px;border-radius:4px">■ 停止自動點擊</span><span style="color:#777">自動攻擊中（每秒 20 下）</span></div><b>野生寶可夢</b><div class="sc-battle">
           <div>野生的 <b style="color:var(--red)">小拉達</b> 出現了！</div>
           <div class="blob"></div>
           <div class="sc-hp"><i></i></div>
@@ -337,7 +347,7 @@
         </div></div>
       </div>
       <div style="height:34px"></div>
-      <div class="sc-toast">PokéClicker 繁體中文化已啟用 v1.0.0</div>
+      <div class="sc-toast">PokéClicker 繁體中文化已啟用 v1.3.0</div>
     </div>
     <div class="compare">
       <div>Hatchery · Pokédex · Underground</div><div class="arrow">→</div><div>培育列表・圖鑑・地下礦場</div>
@@ -354,6 +364,14 @@
     <details>
       <summary>跳出「已經在執行中」？</summary>
       <p>代表這個分頁已經翻譯過了，不用再按。重新整理頁面之後才需要再點一次。</p>
+    </details>
+    <details>
+      <summary>自動點擊按鈕按了沒反應？</summary>
+      <p>剛開新存檔時，遊戲的新手教學會在畫面上蓋一層半透明的導覽，擋住按鈕。先按教學提示框裡的「Done」關掉導覽，再按一次按鈕就可以了。</p>
+    </details>
+    <details>
+      <summary>自動點擊為什麼不是每秒剛好 20 下？</summary>
+      <p>遊戲本身限制每秒最多 20 次點擊攻擊，而且只有在畫面上有寶可夢時才算數。打倒一隻後下一隻出現前會有一點空檔，所以實際次數會少一些，這是正常的。</p>
     </details>
     <details>
       <summary>需要自己更新嗎？</summary>
