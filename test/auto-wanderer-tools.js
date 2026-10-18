@@ -36,7 +36,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V29';
+  const VERSION = 'V30';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -528,20 +528,30 @@ javascript:(function awTools() {
       const C = (M.mn + M.mx) / 2, G0 = 1 + M.crit / 100 * (M.critm / 100 - 1);
       const fixedHit = n('fixedHit');
       const mom = STK.mom.max + n('momMax');
-      let basic = fixedHit ? M.aps : C * M.dmgMul * M.aps * G0 * (has('dance') ? (1 + .05 * mom) * (1 + mom * n('momDmg')) : 1);
+      /* 遊戲設定「不普攻」（S.set.nob）時普攻和普攻上的毒都是 0 */
+      const noBasic = !!(S.set && S.set.nob);
+      /* 重拳出擊：普攻換成砸拳，另乘一個倍率（遊戲裡先除掉一般暴擊再乘上砸拳自己的暴擊） */
+      const pm = n('punch') && typeof punchMods === 'function' ? punchMods() : null;
+      const fist = pm ? uv('fist', 0, U.fist) / 100 * (1 + pm.dmg) * (1 + PUNCH.x * pm.extra) * (1 + Math.min(100, M.critRaw + pm.crit) / 100 * ((M.critm + pm.critm) / 100 - 1)) / G0 : 1;
+      let basic = noBasic ? 0 : fixedHit ? M.aps : fist * C * M.dmgMul * M.aps * G0 *
+        (has('dance') ? (1 + .05 * mom) * (n('actFromMove') ? 1 + .03 * mom : 1) * (1 + mom * n('momDmg')) : 1);
       const p = M.psnHit;
       const stackUnit = C * M.dmgMul * G0 * PSN_K * M.psn * (1 + n('psnRate'));
-      let basicStacks = p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
+      let basicStacks = noBasic ? 0 : p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
       const king = fix && U.kingr && acts.filter(g => !SKILLS[g.id].aura).length === 1;
+      /* 召喚物的暴擊：沒有 minCrit 天賦時只吃輔助寶石的暴擊，基礎暴傷 150% */
+      const minCritF = s => 1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm) / 100 - 1);
       let T = 0;
       const rows = [];
       for (const g of acts) {
         const a = SKILLS[g.id], s = gemMods(g);
         if (a.sus) { if (a.sdps) T += a.sdps(M, s) * M.skillMul * critF2(M, s); continue; }
+        if (g.id === 'guard') {
+          T += C * M.minMul * GSP.k * (1 + .6 * s.extra) / GSP.atk * M.minRate * (GSP.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * minCritF(s);
+          continue;
+        }
         if (g.id === 'summon') {
-          /* v0.2.487 起召喚物攻速改成讀 M.minAs 和 M.minAsX（萬軍統御把自己的攻速加成分給召喚物）；舊版沒有這兩個欄位 */
-          T += C * M.minMul * MIN.k / MIN.atk * (1 + (M.minAs != null ? M.minAs + (M.minAsX || 0) : n('minAs'))) * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) *
-            (1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm) / 100 - 1));
+          T += C * M.minMul * MIN.k * (1 + .6 * s.extra) / MIN.atk * M.minRate * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) * minCritF(s);
           continue;
         }
         const plain = !s.trig && !n('endb') && !n('oath');
@@ -564,6 +574,7 @@ javascript:(function awTools() {
         if (fixedHit) break;
         const a = r.a, s = r.s, e = r.e * slow;
         const mul = (s.trig && !n('trigFull') ? TRIG.k : 1) * (1 + s.dmg) * (a.tg.includes('proj') ? 1 + n('projDmg') : 1) * (a.tg.includes('spell') ? 1 + n('spell') : 1) *
+          HIT_MUL.reduce((t, h) => h.estSk ? t * h.estSk(M, n, a) : t, 1) *
           (king && !a.tg.includes('minion') ? 1 + uv('kingr', 0, U.kingr) / 100 : 1);
         const unit = C * (a.tg.includes('minion') ? M.minMul : M.skillMul) * critF2(M, s);
         if (fix && r.g.id === 'varrow') {
@@ -579,15 +590,17 @@ javascript:(function awTools() {
         basic *= k;
         basicStacks = Math.min(basicStacks * k, Math.max(0, M.psnMax - skillStacks));
       }
-      T += basic + (fixedHit ? 0 : stackUnit * basicStacks);
+      T += basic + stackUnit * basicStacks;
       const cdOfGem = g => SKILLS[g.id].cd * (1 - gemMods(g).cd) * (1 - M.cdr / 100);
       const gChain = acts.find(g => g.id === 'chain');
       if (gChain) { const al = M.ail * (1 + gemMods(gChain).ail); T *= 1 + AIL.shk.v * al * Math.min(1, AIL.shk.t * al / cdOfGem(gChain)); }
       const gVul = acts.find(g => g.id === 'cvul');
       if (gVul) T *= 1 + CRS.vu.v * M.crs * Math.min(1, CRS.vu.t / cdOfGem(gVul));
+      /* 詛咒之戒：易傷詛咒變成光環，放在盤上（不一定要啟用）就一直有效 */
+      else if (n('crsRing') && placed().some(t => t.id === 'cvul')) T *= 1 + CRS.vu.v * M.crs;
       const gTnt = acts.find(g => g.id === 'taunt');
       if (gTnt && n('tntVul')) T *= 1 + n('tntVul') * Math.min(1, (TNT_T + n('tntT')) / cdOfGem(gTnt));
-      if (n('psnVul') && (p.length || has('varrow'))) T *= 1 + n('psnVul');
+      if (n('psnVul') && (p.length || acts.some(g => SKILLS[g.id].tg.includes('psn')))) T *= 1 + n('psnVul');
       if (!fixedHit && has('frenzy')) T *= 1.35 + n('frz');
       for (const h of HIT_MUL) if (h.est) T *= h.est(M, n);
       return T;
@@ -1434,7 +1447,8 @@ javascript:(function awTools() {
   };
 
   /* ===== 5. 物品管理 =====
-   * 分頁列出裝備、石板、符文、技能寶石，可用關鍵字與數值比較搜尋，再批次分解／鎖定／解鎖。
+   * 分頁列出裝備、石板、符文、技能寶石，可用關鍵字與數值比較搜尋，再批次分解／鎖定／解鎖；
+   * 可切換看「身上」或「共用倉庫」，批次存入或取出。
    * 每種物品在 KINDS 裡有一組設定（怎麼列出、怎麼顯示、什麼情況不能分解、怎麼分解），
    * 要加新種類或改顯示內容，改 KINDS 就好。
    * 分解的做法都照遊戲自己的按鈕：裝備呼叫 salvage()，石板加 slateAsh()，符文加 runeAsh()，
@@ -1557,8 +1571,38 @@ javascript:(function awTools() {
       }
     };
 
+    /* ----- 共用倉庫（遊戲 v0.2.730 起）-----
+     * 倉庫存在 STASH_KEY，stLoad() 讀出 { it: [{ s: 倉庫編號, k: 'bag'/'slates'/'runes'/'gems', o: 物品本身 }…] }。
+     * 切到「倉庫」時清單改列倉庫的物品：每件複製一份、把 u 換成倉庫編號 s（不同角色的物品 u 可能重複），
+     * 原本的倉庫紀錄放在 __e。顯示和搜尋沿用 KINDS 的設定，只換掉列出、狀態、保護和分解。
+     * 改倉庫一律透過遊戲的 stDo(異動, 改倉庫的函式)：它會寫回倉庫、記異動紀錄（S.sx）、套用到角色並存檔，
+     * 戰鬥中（挑戰 BOSS 等）會拒絕。分解倉庫物品得到的灰燼放在異動的 ash 欄位，由遊戲加到角色身上。
+     * 存入用 stPut()、取出用 stTake()，和遊戲倉庫頁的按鈕一樣（職業限定、身上空間不足都由遊戲判斷）。 */
+    const hasStash = typeof stLoad === 'function' && typeof stDo === 'function' && typeof stPut === 'function' && typeof stTake === 'function';
+    const ST_OF = { equip: 'bag', slate: 'slates', rune: 'runes', gem: 'gems' };
+    let src = 'me';
+    const stashKind = k => {
+      const base = KINDS[k], sk = ST_OF[k];
+      return Object.assign({}, base, {
+        all: () => stLoad().it.filter(e => e.k === sk).map(e => Object.assign({}, e.o, { u: e.s, __e: e })),
+        tags: it => ['倉庫', it.lk ? '已鎖定' : '未鎖定'].concat(typeof stCan === 'function' && !stCan(it.__e) ? ['其他職業限定'] : []),
+        prot: it => it.lk ? '已鎖定' : it.my ? '神話獨特' : k === 'gem' && !it.sh ? '一般寶石不能分解' : '',
+        remove: list => {
+          const ids = new Set(list.map(it => it.u)), ash = list.reduce((n, it) => n + base.ash(it), 0);
+          return stDo({ ash: ash }, s => { s.it = s.it.filter(e => !ids.has(e.s)); }) ? list.length : 0;
+        },
+        equip: false
+      });
+    };
+    const kindOf = k => (src === 'stash' ? stashKind(k) : KINDS[k]);
+    /* 倉庫物品的鎖定／解鎖：改倉庫裡那份物品的 lk */
+    const stashLock = (list, on) => {
+      const ids = new Set(list.map(it => it.u));
+      return stDo({}, s => { for (const e of s.it) if (ids.has(e.s)) { if (on) e.o.lk = 1; else delete e.o.lk; } });
+    };
+
     let kind = 'equip';
-    let K = KINDS[kind];
+    let K = kindOf(kind);
     const sel = new Set();
     let kw = '';
     let sort = 'rar';
@@ -1616,7 +1660,7 @@ javascript:(function awTools() {
     root.innerHTML =
       '<div style="background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(760px,96vw);max-height:94%;display:flex;flex-direction:column">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
-          '<b style="font-size:15px;white-space:nowrap">物品管理</b><span data-r="tabs"></span><span style="flex:1"></span>' +
+          '<b style="font-size:15px;white-space:nowrap">物品管理</b><span data-r="src"></span><span data-r="tabs"></span><span style="flex:1"></span>' +
           '<button data-a="rules" style="' + BTN + '">拾取規則</button>' +
           '<button data-a="close" style="' + BTN + '">關閉</button>' +
         '</div>' +
@@ -1637,16 +1681,20 @@ javascript:(function awTools() {
       '</div>';
     document.body.appendChild(root);
     const q = k => root.querySelector('[data-r="' + k + '"]');
-    const elList = q('list'), elSum = q('sum'), elKw = q('kw'), elTabs = q('tabs'), elBar = q('bar');
+    const elList = q('list'), elSum = q('sum'), elKw = q('kw'), elTabs = q('tabs'), elBar = q('bar'), elSrc = q('src');
 
     const draw = () => {
+      const on = 'background:#ffd84a;color:#2a2118;font-weight:bold';
+      elSrc.innerHTML = hasStash ? [['me', '身上'], ['stash', '倉庫']].map(([v, t]) =>
+        '<button data-a="src" data-v="' + v + '" style="' + BTN + ';' + (v === src ? on : '') + '">' + t + '</button>').join('') + '<span style="margin:0 4px;color:#6a5a4a">|</span>' : '';
       elTabs.innerHTML = Object.keys(KINDS).map(k =>
         '<button data-a="tab" data-v="' + k + '" style="' + BTN + ';margin-left:3px;' +
-        (k === kind ? 'background:#ffd84a;color:#2a2118;font-weight:bold' : '') + '">' + KINDS[k].label + ' ' + KINDS[k].all().length + '</button>').join('');
+        (k === kind ? on : '') + '">' + KINDS[k].label + ' ' + kindOf(k).all().length + '</button>').join('');
       elBar.innerHTML =
         '<button data-a="all" style="' + BTN + '">全選搜尋結果</button>' +
         '<button data-a="none" style="' + BTN + '">取消全選</button>' +
         '<span style="flex:1"></span>' +
+        (hasStash ? (src === 'stash' ? '<button data-a="take" style="' + BTN + '">取出到身上</button>' : '<button data-a="put" style="' + BTN + '">存入倉庫</button>') : '') +
         (K.lock ? '<button data-a="lock" style="' + BTN + '">鎖定選取</button><button data-a="unlock" style="' + BTN + '">解鎖選取</button>' : '') +
         '<button data-a="salv" style="' + BTN + ';background:#c8323c;color:#fff;border:1px solid #000;font-weight:bold">分解選取</button>';
 
@@ -1770,11 +1818,26 @@ javascript:(function awTools() {
       const picked = () => K.all().filter(it => sel.has(it.u));
       if (a === 'close') { close(); return; }
       if (a === 'rules') { editRules(); return; }
-      if (a === 'tab') { kind = b.dataset.v; K = KINDS[kind]; sel.clear(); draw(); return; }
+      if (a === 'tab') { kind = b.dataset.v; K = kindOf(kind); sel.clear(); draw(); return; }
+      if (a === 'src') { src = b.dataset.v; K = kindOf(kind); sel.clear(); draw(); return; }
       if (a === 'all') { for (const it of shown()) sel.add(it.u); draw(); return; }
       if (a === 'none') { sel.clear(); draw(); return; }
-      if (a === 'lock') { for (const it of picked()) it.lk = 1; done(); return; }
-      if (a === 'unlock') { for (const it of picked()) delete it.lk; done(); return; }
+      const STASH_BUSY = '現在不能動倉庫（挑戰 BOSS 等戰鬥中，或這個分頁已經被其他分頁接手）。';
+      if (a === 'lock' || a === 'unlock') {
+        if (src === 'stash') { if (!stashLock(picked(), a === 'lock')) uiAlert(STASH_BUSY); draw(); return; }
+        for (const it of picked()) { if (a === 'lock') it.lk = 1; else delete it.lk; }
+        done(); return;
+      }
+      if (a === 'put' || a === 'take') {
+        const list = picked();
+        if (!list.length) { uiAlert('請先勾選要' + (a === 'put' ? '存入' : '取出') + '的物品'); return; }
+        const n = a === 'put' ? stPut(ST_OF[kind], list.map(it => it.u)) : stTake(list.map(it => it.u));
+        sel.clear(); ui.render(); draw();
+        if (n) toast('已' + (a === 'put' ? '存入倉庫 ' : '取出 ') + n + ' 件' + (n < list.length ? '（' + (list.length - n) + ' 件沒辦法' + (a === 'put' ? '存入' : '取出') + '）' : ''), 'lvl');
+        else uiAlert(a === 'put' ? '沒有存入任何物品。裝備中、使用中的石板、配置中的寶石、已放入插槽的符文不能存入；戰鬥中也不能動倉庫。'
+          : '沒有取出任何物品。其他職業限定的物品不能取出；身上空間不足或戰鬥中也不能取出。');
+        return;
+      }
       if (a === 'equip') { equipItem(b.dataset.u); saveNow(); ui.render(); draw(); return; }
       if (a === 'salv') {
         const list = picked().filter(it => !K.prot(it));
@@ -1785,7 +1848,8 @@ javascript:(function awTools() {
         const n = K.remove(list);
         sel.clear();
         done();
-        toast('已分解 ' + n + ' 件，獲得 ' + ash + ' 符文灰燼', 'lvl');
+        if (n) toast('已分解 ' + n + ' 件，獲得 ' + ash + ' 符文灰燼', 'lvl');
+        else uiAlert(src === 'stash' ? STASH_BUSY : '沒有分解任何物品。');
       }
     });
 
