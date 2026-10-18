@@ -1333,17 +1333,46 @@ else addSwitcher();
 d2edInstall();
 // ====== 遊戲手把 ======
 // 遊戲本身吃鍵盤和滑鼠，所以把手把轉成鍵盤／滑鼠事件：
-// 左搖桿／十字鍵＝方向鍵＋WASD、A＝Enter、B／START＝Esc、X／Y／RB＝1／2／3、LB＝R（重抽），
-// 右搖桿移動畫面上的游標，RT／R3＝左鍵、LT＝右鍵（選單、背包、商店用）。
+// 左搖桿／十字鍵＝方向鍵＋WASD、A＝Enter（游標顯示時＝左鍵）、B／START＝Esc、X＝R（重抽）、Y＝X（略過），
+// LB／RB／LT／RT＝1／2／3／4（喝腰帶藥水；升級時 1～3 選卡），
+// 右搖桿移動畫面上的游標，R3＝左鍵、L3＝右鍵（選單、背包、商店用）。
+// 震動可在 🎮 手把面板開關：開＝受傷時手把震動；關＝擋掉遊戲所有震動（含手機震動）。
 function d2padInstall() {
 const DEAD = 0.25;
 const B = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, SELECT: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const KEYS = {
 ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39],
 KeyW: ['w', 87], KeyA: ['a', 65], KeyS: ['s', 83], KeyD: ['d', 68],
-Enter: ['Enter', 13], Escape: ['Escape', 27], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], KeyR: ['r', 82]
+Enter: ['Enter', 13], Escape: ['Escape', 27], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit4: ['4', 52], KeyR: ['r', 82], KeyX: ['x', 88]
 };
-const PRESS = { [B.A]: 'Enter', [B.B]: 'Escape', [B.START]: 'Escape', [B.X]: 'Digit1', [B.Y]: 'Digit2', [B.RB]: 'Digit3', [B.LB]: 'KeyR' };
+const PRESS = { [B.B]: 'Escape', [B.START]: 'Escape', [B.X]: 'KeyR', [B.Y]: 'KeyX',
+[B.LB]: 'Digit1', [B.RB]: 'Digit2', [B.LT]: 'Digit3', [B.RT]: 'Digit4' };
+
+// 震動設定（記在瀏覽器裡）
+const RUMBLE_KEY = 'd2pad.rumble';
+const rumble = {
+get on() { try { return localStorage.getItem(RUMBLE_KEY) !== 'off'; } catch (_) { return true; } },
+set on(v) { try { localStorage.setItem(RUMBLE_KEY, v ? 'on' : 'off'); } catch (_) { /* 無痕模式 */ } }
+};
+let rumbleUntil = 0;
+function shake(strength, ms) {
+if (!rumble.on) return;
+const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected);
+if (!pad) return;
+const s = Math.max(0.1, Math.min(1, strength));
+try {
+if (pad.vibrationActuator && pad.vibrationActuator.playEffect) pad.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: s, weakMagnitude: Math.min(1, s + 0.2) });
+else if (pad.hapticActuators && pad.hapticActuators[0]) pad.hapticActuators[0].pulse(s, ms);
+} catch (_) { /* 手把不支援震動 */ }
+}
+// 遊戲若呼叫 navigator.vibrate：震動開＝轉給手把（並保留原本的手機震動），關＝整個擋掉。
+const rawVibrate = navigator.vibrate ? navigator.vibrate.bind(navigator) : null;
+navigator.vibrate = function (pattern) {
+if (!rumble.on) return true;
+const total = [].concat(pattern || 0).reduce((a, n, i) => a + (i % 2 ? 0 : Number(n) || 0), 0);
+if (total > 0) shake(0.6, Math.min(1000, total));
+return rawVibrate ? rawVibrate(pattern) : true;
+};
 function send(type, code) {
 const [key, keyCode] = KEYS[code];
 const ev = new KeyboardEvent(type, { code, key, bubbles: true, cancelable: true });
@@ -1372,7 +1401,7 @@ const cur = document.createElement('div');
 cur.id = 'd2pad-cursor';
 cur.innerHTML = '<svg viewBox="0 0 22 22" width="22" height="22"><path d="M2 2 L2 18 L7 13 L11 20 L14 18.5 L10 12 L17 12 Z" fill="#f0c94a" stroke="#17120b" stroke-width="1.5"/></svg>';
 document.body.append(cur);
-let mx = innerWidth / 2, my = innerHeight / 2, curShown = 0;
+let mx = innerWidth / 2, my = innerHeight / 2, curShown = -Infinity, aClick = false;
 function mouse(type, button = 0, buttons = 0) {
 const target = document.elementFromPoint(mx, my) || document.body;
 const init = { bubbles: true, cancelable: true, clientX: mx, clientY: my, screenX: mx, screenY: my, button, buttons, view: window };
@@ -1390,8 +1419,8 @@ setTimeout(() => { el.style.opacity = '0'; }, 2200);
 setTimeout(() => el.remove(), 2800);
 }
 
-const padCheck = d2padCheck(toast);
-let prev = [], last = 0, announced = false;
+const padCheck = d2padCheck(toast, rumble, shake);
+let prev = [], last = 0, announced = false, lastLife = null, lastPlayer = null, lastHit = 0;
 function poll(now) {
 requestAnimationFrame(poll);
 const dt = Math.min(50, now - (last || now)); last = now;
@@ -1417,20 +1446,32 @@ if (Math.hypot(ax, ay) >= DEAD) { x = ax > 0.38 ? 1 : ax < -0.38 ? -1 : 0; y = a
 hold('ArrowLeft', x < 0); hold('KeyA', x < 0); hold('ArrowRight', x > 0); hold('KeyD', x > 0);
 hold('ArrowUp', y < 0); hold('KeyW', y < 0); hold('ArrowDown', y > 0); hold('KeyS', y > 0);
 for (const [i, code] of Object.entries(PRESS)) if (hit(+i)) tap(code);
+// A：游標顯示時當左鍵（點選單、背包），否則是 Enter
+const cursorOn = now - curShown < 4000;
+if (hit(B.A)) { if (cursorOn) { aClick = true; mouseDown(0); curShown = now; } else tap('Enter'); }
+if (up(B.A) && aClick) { aClick = false; mouseUp(0); }
+// 受傷震動：生命值變少就震一下，扣越多震越強
+const pl = D2ED.player;
+if (pl && typeof pl.life === 'number') {
+if (pl === lastPlayer && lastLife !== null && pl.life < lastLife - 0.5 && now - lastHit > 150) {
+lastHit = now;
+shake(0.25 + (lastLife - pl.life) / Math.max(1, pl.maxLife || 100) * 2, 140);
+}
+lastPlayer = pl; lastLife = pl.life;
+}
 // 右搖桿：游標
 const rx = pad.axes[2] || 0, ry = pad.axes[3] || 0, rm = Math.hypot(rx, ry);
 if (rm >= DEAD) {
 const speed = 0.9 * Math.min(1, (rm - DEAD) / (1 - DEAD)) ** 1.6 * dt;
 mx = Math.max(0, Math.min(innerWidth - 1, mx + rx / rm * speed * Math.max(1, innerWidth / 900)));
 my = Math.max(0, Math.min(innerHeight - 1, my + ry / rm * speed * Math.max(1, innerWidth / 900)));
-mouse('pointermove', 0, btn(B.RT) || btn(B.R3) ? 1 : 0); mouse('mousemove', 0, btn(B.RT) || btn(B.R3) ? 1 : 0);
+mouse('pointermove', 0, btn(B.R3) || aClick ? 1 : 0); mouse('mousemove', 0, btn(B.R3) || aClick ? 1 : 0);
 curShown = now;
 }
-const clickHeld = btn(B.RT) || btn(B.R3), clickWas = prev[B.RT] || prev[B.R3];
-if (clickHeld && !clickWas) { mouseDown(0); curShown = now; }
-if (!clickHeld && clickWas) mouseUp(0);
-if (hit(B.LT)) { mouseDown(2); curShown = now; }
-if (up(B.LT)) mouseUp(2);
+if (hit(B.R3)) { mouseDown(0); curShown = now; }
+if (up(B.R3)) mouseUp(0);
+if (hit(B.L3)) { mouseDown(2); curShown = now; }
+if (up(B.L3)) mouseUp(2);
 cur.style.display = now - curShown < 4000 ? 'block' : 'none';
 cur.style.transform = `translate(${mx}px, ${my}px)`;
 prev = pad.buttons.map(b => b.pressed);
@@ -1442,7 +1483,7 @@ requestAnimationFrame(poll);
 }
 // 手把狀態按鈕：在遊戲「選項」選單（書籤修改旁）出現 🎮，綠點＝已連接、紅點＝未連接。
 // 點開檢查面板；沒連接時提示重新連接，並持續等待，偵測到就顯示成功。
-function d2padCheck(toast) {
+function d2padCheck(toast, rumble, shake) {
 const css = document.createElement('style');
 css.textContent = `#d2pad-btn { position: fixed; z-index: 2147483646; display: none; align-items: center; gap: 6px; padding: 5px 12px;
 border: 1px solid #8f743e; border-radius: 6px; background: rgba(10,8,6,.94); color: #f3e3b0; cursor: pointer;
@@ -1457,6 +1498,8 @@ background: #17120b; color: #e8e2d0; font: 14px/1.6 "Microsoft JhengHei", system
 #d2pad-dlg .st.on { background: #1e3a24; color: #a8efb8; }
 #d2pad-dlg .st.off { background: #4a1e18; color: #ffc4b8; }
 #d2pad-dlg ol { margin: 10px 0 0; padding-left: 20px; color: #bfb39a; }
+#d2pad-dlg .rumble { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid #3a2c18; }
+#d2pad-dlg .rumble button { min-width: 56px; }
 #d2pad-dlg .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 #d2pad-dlg button { padding: 5px 14px; border: 1px solid #8f743e; border-radius: 4px; font: inherit; cursor: pointer; background: #2c2014; color: #f3e3b0; }
 #d2pad-dlg button.main { background: #c7a45f; color: #17120b; font-weight: bold; }`;
@@ -1474,6 +1517,9 @@ const st = dlg.querySelector('.st');
 st.className = 'st ' + (current ? 'on' : 'off');
 st.textContent = current ? '✔ 已連接：' + name(current) : (lost ? '✖ 手把已斷線，請重新連接' : '✖ 沒有偵測到手把，請重新連接');
 dlg.querySelector('ol').hidden = !!current;
+const rb = dlg.querySelector('[data-a=rumble]');
+rb.textContent = rumble.on ? '開' : '關';
+rb.className = rumble.on ? 'main' : '';
 }
 function close() { if (dlg) dlg.remove(); dlg = null; }
 function open(disconnected) {
@@ -1486,11 +1532,13 @@ dlg.innerHTML = `<div><h3>🎮 遊戲手把</h3><div class="st"></div>
 <ol><li>用 USB 線或藍牙連接手把（手機請到「設定 → 藍牙」配對）。</li>
 <li>連好後<b>按一下手把上的任何鍵</b>，瀏覽器才會讓網頁讀到手把。</li>
 <li>偵測到之後這裡會自動變成「已連接」。</li></ol>
+<div class="rumble"><span>手把震動（受傷時）</span><button type="button" data-a="rumble"></button></div>
 <div class="row"><button type="button" data-a="retry">重新偵測</button><button type="button" class="main" data-a="close">關閉</button></div></div>`;
 dlg.addEventListener('click', e => {
 const b = e.target.closest('button'), a = b && b.dataset.a;
 if (a === 'close' || e.target === dlg) close();
 else if (a === 'retry') { current = find(); render(); }
+else if (a === 'rumble') { rumble.on = !rumble.on; render(); if (rumble.on) shake(0.7, 250); }
 });
 document.body.append(dlg);
 render();
