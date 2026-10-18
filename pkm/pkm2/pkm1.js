@@ -3984,15 +3984,23 @@
       else cursor.click();
     }
 
+    const padCheck = makePadCheck();
     let prev = [], navDir = '', navNext = 0, announced = false;
     function poll(now) {
       requestAnimationFrame(poll);
       const pad = [...(navigator.getGamepads?.() || [])].find(p => p && p.connected);
+      padCheck.update(pad, !!(topScreen() || document.querySelector('#tap-start:not(.hidden)')));
       if (!pad) { if (heldKeys.size) releaseAll(); stick = [0, 0]; prev = []; return; }
       if (!announced) { announced = true; flash('已偵測到遊戲手把'); }
       hookAxis();
       const btn = i => !!pad.buttons[i]?.pressed;
       const hit = i => btn(i) && !prev[i];
+      if (padCheck.isOpen()) {
+        releaseAll(); stick = [0, 0];
+        if (hit(BTN.A) || hit(BTN.B)) padCheck.close();
+        prev = pad.buttons.map(b => b.pressed);
+        return;
+      }
       let ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
       const mag = Math.hypot(ax, ay);
       if (mag < DEAD) ax = ay = 0;
@@ -4038,6 +4046,79 @@
     }
     addEventListener('blur', releaseAll);
     addEventListener('gamepadconnected', e => flash(`已連接遊戲手把：${e.gamepad.id.replace(/\s*\(.*$/, '')}`));
+    addEventListener('gamepaddisconnected', () => {
+      if (![...(navigator.getGamepads?.() || [])].some(p => p && p.connected)) padCheck.open(true);
+    });
     requestAnimationFrame(poll);
+  }
+
+  // 手把狀態按鈕：選單畫面左下角的 🎮，綠點＝已連接、紅點＝未連接。
+  // 點開檢查面板；沒連接時提示連接方式，並持續等待，偵測到就顯示成功。
+  function makePadCheck() {
+    const css = document.createElement('style');
+    css.textContent = `#pszh-pad-btn { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      z-index: 2147483646; display: none; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid #5b83d6; border-radius: 999px;
+      background: rgba(23,36,62,.92); color: #fff; font: 13px/1.2 "Microsoft JhengHei", system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 8px #0008; }
+    #pszh-pad-btn i { width: 9px; height: 9px; border-radius: 50%; background: #e5534b; box-shadow: 0 0 6px currentColor; }
+    #pszh-pad-btn.on i { background: #4fd18b; }
+    #pszh-pad-dlg { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; background: rgba(0,0,0,.55); }
+    #pszh-pad-dlg > div { width: min(360px, calc(100vw - 32px)); padding: 18px; border-radius: 12px; background: #17243e; color: #fff;
+      border: 1px solid #5b83d6; box-shadow: 0 6px 24px #000a; font: 14px/1.6 "Microsoft JhengHei", system-ui, sans-serif; }
+    #pszh-pad-dlg h3 { margin: 0 0 8px; font-size: 18px; }
+    #pszh-pad-dlg .st { padding: 8px 10px; border-radius: 8px; font-weight: bold; }
+    #pszh-pad-dlg .st.on { background: #1d4d36; color: #9ff0c4; }
+    #pszh-pad-dlg .st.off { background: #5a2323; color: #ffc9c4; }
+    #pszh-pad-dlg ol { margin: 10px 0 0; padding-left: 20px; color: #c9d6f2; }
+    #pszh-pad-dlg .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    #pszh-pad-dlg button { padding: 6px 14px; border: 0; border-radius: 6px; font: inherit; cursor: pointer; background: #2e4572; color: #fff; }
+    #pszh-pad-dlg button.main { background: #ffcb3b; color: #17243e; font-weight: bold; }`;
+    document.head.append(css);
+    const btn = document.createElement('button');
+    btn.id = 'pszh-pad-btn'; btn.type = 'button'; btn.dataset.pszhControl = '';
+    btn.innerHTML = '<i></i><span>🎮 手把</span>';
+    btn.title = '檢查遊戲手把連線';
+    document.body.append(btn);
+    let dlg = null, current = null, lost = false;
+    const name = pad => pad.id.replace(/\s*\(.*$/, '') || '遊戲手把';
+    function render() {
+      if (!dlg) return;
+      const st = dlg.querySelector('.st'), help = dlg.querySelector('ol');
+      st.className = 'st ' + (current ? 'on' : 'off');
+      st.textContent = current ? `✔ 已連接：${name(current)}` : lost ? '✖ 手把已斷線，請重新連接' : '✖ 沒有偵測到手把，請重新連接';
+      help.hidden = !!current;
+    }
+    function open(disconnected) {
+      dlg?.remove();
+      lost = !!disconnected;
+      current = [...(navigator.getGamepads?.() || [])].find(p => p && p.connected) || null;
+      dlg = document.createElement('div');
+      dlg.id = 'pszh-pad-dlg'; dlg.dataset.pszhControl = '';
+      dlg.innerHTML = `<div><h3>🎮 遊戲手把</h3><div class="st"></div>
+        <ol><li>用 USB 線或藍牙連接手把（手機請到「設定 → 藍牙」配對）。</li>
+        <li>連好後<b>按一下手把上的任何鍵</b>，瀏覽器才會讓網頁讀到手把。</li>
+        <li>偵測到之後這裡會自動變成「已連接」。</li></ol>
+        <div class="row"><button type="button" data-a="retry">重新偵測</button><button type="button" class="main" data-a="close">關閉</button></div></div>`;
+      dlg.addEventListener('click', e => {
+        const a = e.target.closest('button')?.dataset.a;
+        if (a === 'close' || e.target === dlg) { dlg.remove(); dlg = null; }
+        else if (a === 'retry') { current = [...(navigator.getGamepads?.() || [])].find(p => p && p.connected) || null; render(); }
+      });
+      document.body.append(dlg);
+      render();
+    }
+    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); open(false); });
+    return {
+      isOpen: () => !!dlg,
+      open,
+      close() { dlg?.remove(); dlg = null; },
+      update(pad, inMenu) {
+        const was = !!current;
+        current = pad || null;
+        btn.classList.toggle('on', !!pad);
+        btn.style.display = inMenu || dlg ? 'flex' : 'none';
+        if (pad) lost = false;
+        if (was !== !!pad) { render(); if (pad && dlg) flash(`已連接遊戲手把：${name(pad)}`); }
+      }
+    };
   }
 })();
