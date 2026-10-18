@@ -1390,12 +1390,20 @@ setTimeout(() => { el.style.opacity = '0'; }, 2200);
 setTimeout(() => el.remove(), 2800);
 }
 
+const padCheck = d2padCheck(toast);
 let prev = [], last = 0, announced = false;
 function poll(now) {
 requestAnimationFrame(poll);
 const dt = Math.min(50, now - (last || now)); last = now;
 const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected);
+padCheck.update(pad);
 if (!pad) { if (held.size) releaseAll(); prev = []; return; }
+if (padCheck.isOpen()) {
+releaseAll();
+if ((pad.buttons[B.A] && pad.buttons[B.A].pressed && !prev[B.A]) || (pad.buttons[B.B] && pad.buttons[B.B].pressed && !prev[B.B])) padCheck.close();
+prev = pad.buttons.map(b => b.pressed);
+return;
+}
 if (!announced) { announced = true; toast('已偵測到遊戲手把'); }
 const btn = i => !!(pad.buttons[i] && pad.buttons[i].pressed);
 const hit = i => btn(i) && !prev[i];
@@ -1429,7 +1437,94 @@ prev = pad.buttons.map(b => b.pressed);
 }
 addEventListener('blur', releaseAll);
 addEventListener('gamepadconnected', e => toast('已連接遊戲手把：' + e.gamepad.id.replace(/\s*\(.*$/, '')));
+addEventListener('gamepaddisconnected', () => { if (![...(navigator.getGamepads ? navigator.getGamepads() : [])].some(p => p && p.connected)) padCheck.open(true); });
 requestAnimationFrame(poll);
+}
+// 手把狀態按鈕：在遊戲「選項」選單（書籤修改旁）出現 🎮，綠點＝已連接、紅點＝未連接。
+// 點開檢查面板；沒連接時提示重新連接，並持續等待，偵測到就顯示成功。
+function d2padCheck(toast) {
+const css = document.createElement('style');
+css.textContent = `#d2pad-btn { position: fixed; z-index: 2147483646; display: none; align-items: center; gap: 6px; padding: 5px 12px;
+border: 1px solid #8f743e; border-radius: 6px; background: rgba(10,8,6,.94); color: #f3e3b0; cursor: pointer;
+font: 13px/1.2 "Microsoft JhengHei", system-ui, sans-serif; box-shadow: 0 2px 10px #0009; }
+#d2pad-btn i { width: 9px; height: 9px; border-radius: 50%; background: #e5534b; }
+#d2pad-btn.on i { background: #6fd18b; }
+#d2pad-dlg { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; background: rgba(0,0,0,.6); }
+#d2pad-dlg > div { width: min(360px, calc(100vw - 32px)); padding: 18px; border: 1px solid #8f743e; border-radius: 10px;
+background: #17120b; color: #e8e2d0; font: 14px/1.6 "Microsoft JhengHei", system-ui, sans-serif; box-shadow: 0 6px 24px #000c; }
+#d2pad-dlg h3 { margin: 0 0 8px; color: #c7a45f; font-size: 18px; }
+#d2pad-dlg .st { padding: 8px 10px; border-radius: 6px; font-weight: bold; }
+#d2pad-dlg .st.on { background: #1e3a24; color: #a8efb8; }
+#d2pad-dlg .st.off { background: #4a1e18; color: #ffc4b8; }
+#d2pad-dlg ol { margin: 10px 0 0; padding-left: 20px; color: #bfb39a; }
+#d2pad-dlg .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+#d2pad-dlg button { padding: 5px 14px; border: 1px solid #8f743e; border-radius: 4px; font: inherit; cursor: pointer; background: #2c2014; color: #f3e3b0; }
+#d2pad-dlg button.main { background: #c7a45f; color: #17120b; font-weight: bold; }`;
+document.head.append(css);
+const btn = document.createElement('button');
+btn.id = 'd2pad-btn'; btn.type = 'button'; btn.title = '檢查遊戲手把連線';
+btn.innerHTML = '<i></i><span>🎮 手把</span>';
+document.body.append(btn);
+let dlg = null, current = null, lost = false;
+const name = pad => pad.id.replace(/\s*\(.*$/, '') || '遊戲手把';
+const find = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected) || null;
+function render() {
+if (!dlg) return;
+const st = dlg.querySelector('.st');
+st.className = 'st ' + (current ? 'on' : 'off');
+st.textContent = current ? '✔ 已連接：' + name(current) : (lost ? '✖ 手把已斷線，請重新連接' : '✖ 沒有偵測到手把，請重新連接');
+dlg.querySelector('ol').hidden = !!current;
+}
+function close() { if (dlg) dlg.remove(); dlg = null; }
+function open(disconnected) {
+close();
+lost = !!disconnected;
+current = find();
+dlg = document.createElement('div');
+dlg.id = 'd2pad-dlg';
+dlg.innerHTML = `<div><h3>🎮 遊戲手把</h3><div class="st"></div>
+<ol><li>用 USB 線或藍牙連接手把（手機請到「設定 → 藍牙」配對）。</li>
+<li>連好後<b>按一下手把上的任何鍵</b>，瀏覽器才會讓網頁讀到手把。</li>
+<li>偵測到之後這裡會自動變成「已連接」。</li></ol>
+<div class="row"><button type="button" data-a="retry">重新偵測</button><button type="button" class="main" data-a="close">關閉</button></div></div>`;
+dlg.addEventListener('click', e => {
+const b = e.target.closest('button'), a = b && b.dataset.a;
+if (a === 'close' || e.target === dlg) close();
+else if (a === 'retry') { current = find(); render(); }
+});
+document.body.append(dlg);
+render();
+}
+// 遊戲的畫布會搶滑鼠事件，按鈕與面板上的操作不要傳給遊戲。
+for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) {
+window.addEventListener(type, e => {
+if (e.target instanceof Element && (e.target.closest('#d2pad-btn') || e.target.closest('#d2pad-dlg'))) e.stopImmediatePropagation();
+}, true);
+}
+btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); open(false); });
+(function place() {
+const ed = document.getElementById('d2ed-btn');
+const show = ed && ed.style.display === 'block';
+btn.style.display = show ? 'flex' : 'none';
+if (show) {
+const r = ed.getBoundingClientRect();
+btn.style.left = Math.round(r.left) + 'px';
+btn.style.top = Math.round(r.top - (btn.offsetHeight || 30) - 8) + 'px';
+}
+requestAnimationFrame(place);
+})();
+return {
+isOpen: () => !!dlg,
+close,
+open,
+update(pad) {
+const was = !!current;
+current = pad || null;
+btn.classList.toggle('on', !!pad);
+if (pad) lost = false;
+if (was !== !!pad) { render(); if (pad && dlg) toast('已連接遊戲手把：' + name(pad)); }
+}
+};
 }
 d2padInstall();
 })();
