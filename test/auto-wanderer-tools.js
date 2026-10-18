@@ -2,7 +2,7 @@ javascript:(function awTools() {
   /*
    * 自走勇者 Auto Wanderer 小工具（書籤版）
    *   1. 背景運行：分頁切到背景時遊戲照常跑，不會變成離線收益
-   *   2. BOSS 血條：打 BOSS 時在畫面最上方顯示名稱／生命／護盾／剩餘時間
+   *   2. BOSS 血條（預設關閉）：打 BOSS 時在畫面最上方顯示名稱／生命／護盾／剩餘時間
    *   3. 技能冷卻：技能拼圖上每顆主動技能寶石顯示實際冷卻秒數
    *   4. 配置模擬：用存檔裡持有的寶石試排技能盤、即時算 DPS，
    *      按「確定並套用」把配置寫回指定的構築分頁
@@ -36,12 +36,12 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V27';
+  const VERSION = 'V29';
 
   /* ===== 設定 ===== */
   const CFG = {
     keepAlive: true,        /* 背景運行 */
-    bossBar: true,          /* BOSS 血條 */
+    bossBar: false,         /* BOSS 血條（遊戲本身已有血條和倒數，含塔王層；這個多了名稱和生命數字，預設關閉） */
     tickMs: 100,            /* 背景時每幾毫秒推動一次遊戲迴圈 */
     bgGrabMs: 2000,         /* 背景時每幾毫秒把地上的掉落物收起來一次（0 = 不收，等回到畫面才撿） */
     barTop: 2,              /* 血條距離畫面頂端（px） */
@@ -71,6 +71,7 @@ javascript:(function awTools() {
     noLimit: true,          /* 物品持有無上限（背包、石板、符文） */
     itemMax: 99999,         /* 背包和符文的新上限；想保留一個上限就改小 */
     slateMax: 999999,       /* 石板的新上限 */
+    stashMax: 2000,         /* 共用倉庫的新上限（遊戲原本 500）；倉庫整個存在瀏覽器一格裡，太大會存不進去 */
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
@@ -1857,9 +1858,20 @@ javascript:(function awTools() {
    *     也不會被比較舊的雲端存檔蓋回去。
    *   - 還原前會先把目前的進度自動備份一份，還原錯了可以再還原回來。
    * 瀏覽器裡的備份只留最新的幾份（CFG.backupKeep），清除瀏覽器資料時會一起消失，重要的請下載成檔案。
+   * 共用倉庫（遊戲 v0.2.730 起）另外存在 STASH_KEY（autowanderer.stash），裡面有倉庫物品、離線角色的灰燼／材料，
+   * 以及配合存檔序號 S.sx 的異動紀錄。備份時一起存一份（瀏覽器備份放在 stash 欄位，下載的檔案放在 awStash 欄位，
+   * 配裝程式讀檔時會忽略它），還原時另外問要不要連倉庫一起還原。
    */
   const BK_KEY = 'awtools.backups';
   const EXTRA_BAK = 'autowanderer.v1.bak-claude';
+  const STASH_LS = typeof STASH_KEY === 'string' ? STASH_KEY : 'autowanderer.stash';
+  const stashRaw = () => { try { return localStorage.getItem(STASH_LS); } catch (e) { return null; } };
+  const stashN = raw => { try { const o = JSON.parse(raw); return o && Array.isArray(o.it) ? o.it.length : 0; } catch (e) { return 0; } };
+  /* 下載用的文字：存檔本身，有倉庫的話多一個 awStash 欄位 */
+  const bkFile = (data, stash) => {
+    if (!stash) return data;
+    try { const o = JSON.parse(data); o.awStash = JSON.parse(stash); return JSON.stringify(o); } catch (e) { return data; }
+  };
   const bkList = () => { try { return JSON.parse(localStorage.getItem(BK_KEY)) || []; } catch (e) { return []; } };
   const bkSave = list => {
     try { localStorage.setItem(BK_KEY, JSON.stringify(list)); return true; }
@@ -1873,7 +1885,10 @@ javascript:(function awTools() {
   const backupNow = label => {
     if (typeof S === 'undefined' || !S) return false;
     const list = bkList();
-    list.unshift({ t: Date.now(), label: label || '手動備份', name: S.name || '', lvl: S.lvl, data: JSON.stringify(S) });
+    const e = { t: Date.now(), label: label || '手動備份', name: S.name || '', lvl: S.lvl, data: JSON.stringify(S) };
+    const st = stashRaw();
+    if (st) e.stash = st;
+    list.unshift(e);
     return bkSave(list.slice(0, CFG.backupKeep));
   };
   const bkDownload = (text, name, lvl, t) => {
@@ -1886,17 +1901,31 @@ javascript:(function awTools() {
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
   /* 用一份備份文字還原存檔，成功的話頁面會重新整理 */
-  const restoreSave = async (text, when) => {
+  /* stash：瀏覽器備份裡的倉庫文字；從檔案還原時改讀檔案裡的 awStash 欄位 */
+  const restoreSave = async (text, when, stash) => {
     let o = null;
     try { o = JSON.parse(text); } catch (e) {}
     if (!o || !o.cls || !Array.isArray(o.gems) || !Array.isArray(o.bag)) { uiAlert('這不是有效的自走勇者存檔。'); return; }
+    if (o.awStash) { if (!stash && typeof o.awStash === 'object') stash = JSON.stringify(o.awStash); delete o.awStash; }
     if (!await uiConfirm('要還原成這份存檔嗎？\n\n角色：' + (o.name || '（未命名）') + '　LV' + o.lvl + (when ? '\n備份時間：' + when : '') +
       '\n\n目前的進度會被覆蓋（還原前會先自動備份一份），頁面會重新整理。')) return;
+    let withStash = false;
+    if (stash && stash !== stashRaw()) {
+      withStash = await uiConfirm('這份備份裡也有共用倉庫（' + stashN(stash) + ' 件，現在倉庫有 ' + stashN(stashRaw()) + ' 件）。\n\n' +
+        '要連倉庫一起還原嗎？\n・按「確定」（建議）：倉庫也回到備份時的樣子，和這個角色對得起來；但其他角色在備份之後存進倉庫的東西會不見\n' +
+        '・按「取消」：只還原這個角色，倉庫維持現在的樣子；備份之後從倉庫拿到這個角色身上的東西會不見，存進倉庫的則會變成兩份');
+    }
     if (!backupNow('還原前自動備份') && !await uiConfirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
     o.t = Date.now();
     TAB.gone = true;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); }
-    catch (e) { TAB.gone = false; uiAlert('寫入存檔失敗，沒有還原。'); return; }
+    const oldStash = stashRaw();
+    try {
+      if (withStash) localStorage.setItem(STASH_LS, stash);
+      localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+    } catch (e) {
+      try { if (withStash && oldStash !== null) localStorage.setItem(STASH_LS, oldStash); } catch (e2) {}
+      TAB.gone = false; uiAlert('寫入存檔失敗，沒有還原。'); return;
+    }
     location.reload();
   };
 
@@ -1920,7 +1949,8 @@ javascript:(function awTools() {
         '<div data-r="list"></div>' +
         '<div style="color:#a89a84;font-size:12px;margin-top:8px">' +
           '瀏覽器裡最多保留 ' + CFG.backupKeep + ' 份，超過會刪掉最舊的；清除瀏覽器資料時也會一起消失，重要的備份請下載成檔案。<br>' +
-          '還原會覆蓋目前的進度並重新整理頁面；還原前會先自動備份目前的進度。' +
+          '還原會覆蓋目前的進度並重新整理頁面；還原前會先自動備份目前的進度。<br>' +
+          '備份和下載的檔案會連共用倉庫一起存；還原時可以選擇要不要連倉庫一起還原。' +
         '</div>' +
       '</div>';
     document.body.appendChild(root);
@@ -1931,7 +1961,8 @@ javascript:(function awTools() {
       elList.innerHTML = list.length ? list.map((b, i) =>
         '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-bottom:1px solid #3a3026;background:#1a1410">' +
           '<div style="flex:1"><b>' + bkStamp(b.t) + '</b> <small style="color:#a89a84">' + String(b.label).replace(/</g, '&lt;') + '</small><br>' +
-          '<small style="color:#c8bca8">' + String(b.name || '（未命名）').replace(/</g, '&lt;') + '　LV' + b.lvl + '　' + Math.round(b.data.length / 1024) + ' KB</small></div>' +
+          '<small style="color:#c8bca8">' + String(b.name || '（未命名）').replace(/</g, '&lt;') + '　LV' + b.lvl + '　' + Math.round((b.data.length + (b.stash ? b.stash.length : 0)) / 1024) + ' KB' +
+            (b.stash ? '　含倉庫 ' + stashN(b.stash) + ' 件' : '') + '</small></div>' +
           '<button data-a="restore" data-i="' + i + '" style="' + BTN + '">還原</button>' +
           '<button data-a="dl" data-i="' + i + '" style="' + BTN + '">下載</button>' +
           '<button data-a="del" data-i="' + i + '" style="' + BTN + '">刪除</button>' +
@@ -1961,13 +1992,13 @@ javascript:(function awTools() {
       const a = b.dataset.a, list = bkList(), it = list[+b.dataset.i];
       if (a === 'close') { close(); return; }
       if (a === 'save') { saveNow(); if (backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
-      if (a === 'dlNow') { saveNow(); bkDownload(JSON.stringify(S), S.name, S.lvl, Date.now()); return; }
+      if (a === 'dlNow') { saveNow(); bkDownload(bkFile(JSON.stringify(S), stashRaw()), S.name, S.lvl, Date.now()); return; }
       if (a === 'xDel') { if (await uiConfirm('刪除這份臨時備份？')) { try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
       if (a === 'xRestore') { let x = null; try { x = localStorage.getItem(EXTRA_BAK); } catch (err) {} if (x) restoreSave(x, '臨時備份'); return; }
       if (!it) return;
-      if (a === 'dl') { bkDownload(it.data, it.name, it.lvl, it.t); return; }
+      if (a === 'dl') { bkDownload(bkFile(it.data, it.stash), it.name, it.lvl, it.t); return; }
       if (a === 'del') { if (await uiConfirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
-      if (a === 'restore') { restoreSave(it.data, bkStamp(it.t)); }
+      if (a === 'restore') { restoreSave(it.data, bkStamp(it.t), it.stash); }
     });
     draw();
   };
@@ -2012,7 +2043,7 @@ javascript:(function awTools() {
   };
 
   if (first && (CFG.noLimit || CFG.uqKeepHi)) {
-    const N = String(CFG.itemMax), NS = String(CFG.slateMax);
+    const N = String(CFG.itemMax), NS = String(CFG.slateMax), NT = String(CFG.stashMax);
     const RULES = [];
     if (CFG.noLimit) {
       RULES.push(
@@ -2026,8 +2057,22 @@ javascript:(function awTools() {
         [/\$\{S\.runes\.length\}\/(?:5000|1000)/g, '${S.runes.length}/' + N],
         [/\bSLATE_MAX\b/g, NS],
         [/S\.slates\.length>=(?:5e3|500)\b/g, 'S.slates.length>=' + NS],
-        [/\$\{S\.slates\.length\}\/(?:5000|500)\b/g, '${S.slates.length}/' + NS]
+        [/\$\{S\.slates\.length\}\/(?:5000|500)\b/g, '${S.slates.length}/' + NS],
+        /* 共用倉庫（v0.2.730 起）：存入的上限 500 直接寫數字，有「目前件數 stCnt()」和「倉庫物件 .it.length」
+         * 兩種寫法，另外還有顯示用的「x/500」和提示文字 */
+        [/(stCnt\(\)(?:\+[\w.]+)?)(>=|<=|>)500\b/g, '$1$2' + NT],
+        [/(\.it\.length(?:\+[\w.]+)?)(>=|<=|>)500\b/g, '$1$2' + NT],
+        [/(\.it\.length\}\/)500\b/g, '$1' + NT],
+        [/上限 500）/g, '上限 ' + NT + '）']
       );
+      /* 從倉庫取出時看的是常數物件 ST_CAP（角色身上每類最多幾件），它不是函式改不到原始碼，直接改裡面的數字 */
+      try {
+        if (typeof ST_CAP === 'object' && ST_CAP) { ST_CAP.bag = +N; ST_CAP.runes = +N; ST_CAP.slates = +NS; }
+      } catch (e) {}
+      /* 倉庫說明（HELP.stash）裡的「最多 500 件」也跟著改 */
+      try {
+        for (const r of (HELP.stash && HELP.stash[1]) || []) if (r[0] === '上限') r[1] = '最多 ' + NT + ' 件（小工具改的）。';
+      } catch (e) {}
     }
     /* 獨特裝備依階級決定留不留（階級：0 一般、1 高階、2 終局、3 守護者、4 終焉）。
      * 遊戲的保留規則只能設「是不是獨特」，分不出階級，所以把撿裝備時問「要不要自動分解」的那一步
@@ -2680,7 +2725,7 @@ javascript:(function awTools() {
       ['noCloud', '不上傳雲端存檔', '開啟期間遊戲會顯示沒登入 Google、不會上傳也不會讀雲端存檔；關掉後自動恢復登入。自動刷神話進行中不管這項都不上傳']
     ]],
     ['畫面顯示', [
-      ['bossBar', 'BOSS 血條', '打 BOSS 時在畫面最上方顯示名稱、生命、護盾、剩餘時間'],
+      ['bossBar', 'BOSS 血條', '遊戲本身已有血條（只有紅條和倒數）；打開後在畫面最上方另外顯示 BOSS 名稱、生命數字和百分比'],
       ['barHeight', '血條高度（px）'], ['barFont', '血條文字大小（px）'], ['barTop', '血條離頂端的距離（px）'], ['barSide', '血條左右留白（px）'],
       ['hpColor', '血條生命顏色'], ['shieldColor', '血條護盾顏色'],
       ['skillCd', '技能盤上顯示冷卻秒數'], ['trayCd', '未放置的寶石也顯示冷卻秒數'],
@@ -2693,8 +2738,9 @@ javascript:(function awTools() {
       ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現']
     ]],
     ['物品上限', [
-      ['noLimit', '物品持有無上限', '背包、石板、符文'],
+      ['noLimit', '物品持有無上限', '背包、石板、符文、共用倉庫'],
       ['itemMax', '背包和符文的上限'], ['slateMax', '石板的上限'],
+      ['stashMax', '共用倉庫的上限', '遊戲原本 500；倉庫存在瀏覽器裡，太大可能存不進去（遊戲會提示「儲存空間不足」）'],
       ['uqKeepHi', '獨特裝備這個階級以上一律保留', '0 一般、1 高階、2 終局、3 守護者、4 終焉；填 0 關閉這個功能'],
       ['saveWarnKB', '存檔超過幾 KB 就提醒']
     ]],
