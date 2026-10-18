@@ -2082,6 +2082,44 @@
         renderWarehouseBattlePets(c);
       };
     }
+    renderBpetDex();
+  }
+
+  // ---------- 戰寵圖鑑（v108 新增）----------
+  // 存檔最外層 collection.battlePets = [{kind, grade}]（每個種類 0~4 階各一筆，照 kind、grade 排序），
+  // collection.bpetGear = [戰寵裝備 itemId]（排序）。bundle collectBattlePet()/collectGear()；目前只有圖鑑顯示，沒有加成。
+  function renderBpetDex() {
+    var box = document.getElementById("bpetDexBox");
+    if (!box) return;
+    box.innerHTML = "";
+    if (saveVersion() < 108) {
+      box.appendChild(el("div", { class: "note", text: "這個存檔是 v" + saveVersion() + "，還沒有戰寵圖鑑欄位（v108 起才有）。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var col = saveData.collection || (saveData.collection = { pets: [], gear: [] });
+    if (!Array.isArray(col.battlePets)) col.battlePets = [];
+    if (!Array.isArray(col.bpetGear)) col.bpetGear = [];
+    var kinds = BATTLE_PET_INFO.kinds || [];
+    var gearAll = (BATTLE_PET_INFO.gear || []).map(function (g) { return g.id; });
+    var petTotal = kinds.reduce(function (s, k) { return s + ((k.stages || []).length || 5); }, 0);
+    box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+      text: "戰寵型態已收集 " + col.battlePets.length + " / " + petTotal + "、戰寵裝備已收集 " + col.bpetGear.length + " / " + gearAll.length + "（目前圖鑑只有顯示，沒有能力加成）" }));
+    var btn = el("button", { class: "btn btn-accent btn-sm", text: "📖 戰寵圖鑑全部補齊" });
+    btn.addEventListener("click", function () {
+      var pets = [];
+      kinds.forEach(function (k) {
+        var n = (k.stages || []).length || 5;
+        for (var g = 0; g < n; g++) pets.push({ kind: k.kind, grade: g });
+      });
+      pets.sort(function (a, b) { return a.kind - b.kind || a.grade - b.grade; });
+      col.battlePets = pets;
+      var gearSet = {};
+      col.bpetGear.concat(gearAll).forEach(function (id) { gearSet[id] = true; });
+      col.bpetGear = Object.keys(gearSet).map(Number).sort(function (a, b) { return a - b; });
+      toast("戰寵圖鑑已補齊", "ok");
+      renderBpetDex();
+    });
+    box.appendChild(btn);
   }
 
   function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem, what) {
@@ -2676,17 +2714,36 @@
 
   // ---------- 技能寶石（存檔 gems，v69 新增；資料 data/gems.js）----------
   // 存檔格式（bundle Vu()/startGemEnchant()/unlockGemSlot()/setGemSlot()）：
-  //   gems.owned  = [{uid, itemId, cells:[{symbol:"sun"|"moon"|"star"|"comet", ok:true/false}], seed}]
+  //   gems.owned  = [{uid, itemId, cells, seed}]，cells 在 v106 以前是 [{symbol:"sun"|"moon"|"star"|"comet", ok}]，v107 起是字串（見 gemCells()）
   //   gems.slots  = [{skillId, gemUid}]（開了幾格就有幾筆，最多 GEMS.slots.length 格）
   //   gems.nextUid
   // 寶石數值 = base + 成功格子的 sun/moon/star/comet 值；技能的 gem 種類要跟寶石 type 一樣，同技能不能兩顆同 attr。
   var GEMS = window.GEMS || null;
   var GEM_TYPE_LABEL = { attack: "攻擊", heal: "恢復", support: "輔助" };
   var GEM_SYMBOLS = [["sun", "☀ 太陽"], ["moon", "☾ 月亮"], ["star", "★ 星星"], ["comet", "☄ 彗星"]];
+  // v107 起 cells 改存成字串，一格一個字母：s=太陽 m=月亮 t=星星 c=彗星，大寫＝成功、小寫＝失敗
+  // （bundle Cte()/wte()，例 "SSmT"）。修改器內部一律用 [{symbol, ok}] 陣列，寫回時照存檔版本轉格式。
+  var GEM_CELL_CHAR = { sun: "s", moon: "m", star: "t", comet: "c" };
+  var GEM_CHAR_CELL = { s: "sun", m: "moon", t: "star", c: "comet" };
+  function gemCells(g) {
+    if (typeof g.cells === "string") {
+      return g.cells.split("").map(function (ch) {
+        return { symbol: GEM_CHAR_CELL[ch.toLowerCase()] || "sun", ok: ch !== ch.toLowerCase() };
+      });
+    }
+    return Array.isArray(g.cells) ? g.cells : [];
+  }
+  function setGemCells(g, cells) {
+    if (saveVersion() >= 107 || typeof g.cells === "string") {
+      g.cells = cells.map(function (x) { var ch = GEM_CELL_CHAR[x.symbol]; return x.ok ? ch.toUpperCase() : ch; }).join("");
+    } else {
+      g.cells = cells;
+    }
+  }
   function gemValue(g) {
     var d = GEMS && GEMS.defs[String(g.itemId)];
     if (!d) return "?";
-    return (g.cells || []).reduce(function (s, cell) { return s + (cell.ok ? (d[cell.symbol] || 0) : 0); }, d.base || 0);
+    return gemCells(g).reduce(function (s, cell) { return s + (cell.ok ? (d[cell.symbol] || 0) : 0); }, d.base || 0);
   }
   function allSkillsById() {
     var out = {};
@@ -2783,13 +2840,13 @@
       head.appendChild(del);
       card.appendChild(head);
       var cellsRow = el("div", { style: "display:flex;flex-wrap:wrap;gap:6px;" });
-      if (!Array.isArray(g.cells)) g.cells = [];
+      var cells = gemCells(g);
       for (var i = 0; i < cellsMax; i++) {
         (function (i) {
-          var cell = g.cells[i];
+          var cell = cells[i];
           var sel = el("select", { style: "width:auto;" });
           sel.appendChild(el("option", { value: "", text: (i + 1) + ". 未強化" }));
-          var failsBefore = g.cells.slice(0, i).filter(function (x) { return !x.ok; }).length;
+          var failsBefore = cells.slice(0, i).filter(function (x) { return !x.ok; }).length;
           var cometOk = failsBefore >= ((GEMS.enchant && GEMS.enchant.cometAfterFails) || cellsMax);
           GEM_SYMBOLS.forEach(function (sym) {
             if (sym[0] === "comet" && !cometOk && !(cell && cell.symbol === "comet")) return;  // 遊戲：累計失敗夠多格才能選彗星，而且必成功
@@ -2801,10 +2858,11 @@
               sel.appendChild(o);
             });
           });
-          sel.disabled = i > g.cells.length;  // 只能一格一格往後填，遊戲的 cells 是依序的陣列
+          sel.disabled = i > cells.length;  // 只能一格一格往後填，遊戲的 cells 是依序的
           sel.addEventListener("change", function () {
-            if (!sel.value) { g.cells = g.cells.slice(0, i); }
-            else { var p = sel.value.split(":"); g.cells[i] = { symbol: p[0], ok: p[1] === "1" }; }
+            var next = cells.slice(0, i);
+            if (sel.value) { var p = sel.value.split(":"); next.push({ symbol: p[0], ok: p[1] === "1" }); next = next.concat(cells.slice(i + 1)); }
+            setGemCells(g, next);
             renderGems(c);
           });
           cellsRow.appendChild(sel);
@@ -2817,8 +2875,9 @@
       // 彗星要累計失敗 cometAfterFails 格才能選，所以「最高」是每格都選數值最大的太陽／月亮／星星並成功
       var maxBtn = el("button", { class: "btn btn-sm", text: "⚡ 全部填滿（" + cellsMax + " 格都選數值最高的並成功）" });
       maxBtn.addEventListener("click", function () {
-        g.cells = [];
-        for (var k = 0; k < cellsMax; k++) g.cells.push({ symbol: best, ok: true });
+        var full = [];
+        for (var k = 0; k < cellsMax; k++) full.push({ symbol: best, ok: true });
+        setGemCells(g, full);
         renderGems(c);
       });
       quick.appendChild(maxBtn);
@@ -2835,7 +2894,7 @@
     var addGem = el("button", { class: "btn btn-sm btn-accent", text: "➕ 新增寶石" });
     addGem.addEventListener("click", function () {
       if (!gemPick.value) { toast("請先選寶石種類", "warn"); return; }
-      var newGem = { uid: gems.nextUid, itemId: Number(gemPick.value), cells: [], seed: Math.floor(Math.random() * 4294967295) };
+      var newGem = { uid: gems.nextUid, itemId: Number(gemPick.value), cells: saveVersion() >= 107 ? "" : [], seed: Math.floor(Math.random() * 4294967295) };
       if (saveVersion() >= 85) newGem.locked = false; // v85 起每顆寶石都有 locked（上鎖），遊戲升級存檔時也是全部補 false
       gems.owned.push(newGem);
       gems.nextUid++;
