@@ -3813,7 +3813,7 @@
     if (box && !box.querySelector('#pszh-status')) {
       const p = document.createElement('p');
       p.id = 'pszh-status'; p.className = 'pszh-note'; p.dataset.pszhControl = '';
-      p.textContent = `繁體中文化書籤 v${VERSION} 已啟用。遊戲更新由原站提供；新文字可能暫時保留原文。重新整理頁面即可還原；每次重新開啟遊戲都要再點一次書籤。支援遊戲手把：左搖桿／十字鍵移動，A／B／X／Y 切換招式 1～4，LB／RB 上一個／下一個招式，START 暫停；選單中十字鍵移動游標、A 確定、B 返回。`;
+      p.textContent = `繁體中文化書籤 v${VERSION} 已啟用。遊戲更新由原站提供；新文字可能暫時保留原文。重新整理頁面即可還原；每次重新開啟遊戲都要再點一次書籤。支援遊戲手把：左搖桿／十字鍵移動，A／B／X／Y 切換招式 1～4，LB／RB 上一個／下一個招式，START 暫停；選單中十字鍵移動游標、A 確定、B 返回。扭蛋會跳過拉霸動畫直接出結果。`;
       box.prepend(p);
     }
     const login = document.querySelector('#login-mode');
@@ -3849,6 +3849,38 @@
     setTimeout(() => toast.remove(), ms + 600);
   }
   flash(`PokéSurvivor 繁體中文化 v${VERSION} 已啟用（支援遊戲手把）`);
+
+  // ====== 扭蛋：點抽獎直接出結果 ======
+  // 抽獎結果在動畫開始前就已決定並存檔（G.Gacha.pull → G.DB.commit），拉霸只是表演。
+  // 拉霸動畫跑在 performance.now／requestAnimationFrame／setTimeout 上，
+  // 所以只在拉霸播放時（#pull-fx 顯示、「繼續」鈕還沒出現）把時間快轉，一瞬間跑完。
+  if (gameHost) installFastGacha();
+  function installFastGacha() {
+    const fx = document.getElementById('pull-fx'), done = document.getElementById('pull-close');
+    if (!fx || !done) return;
+    const SPEED = 80;
+    const realNow = performance.now.bind(performance);
+    const realRAF = window.requestAnimationFrame.bind(window);
+    const realTimeout = window.setTimeout.bind(window);
+    let active = false, last = realNow(), extra = 0;
+    // 時鐘保持遞增，快轉結束後也不會倒退。
+    const now = () => {
+      const n = realNow();
+      if (active) extra += (n - last) * (SPEED - 1);
+      last = n;
+      return n + extra;
+    };
+    performance.now = now;
+    window.requestAnimationFrame = cb => realRAF(() => cb(now()));
+    window.setTimeout = (fn, ms, ...args) => realTimeout(fn, active ? (Number(ms) || 0) / SPEED : ms, ...args);
+    const update = () => {
+      now();
+      active = !fx.classList.contains('hidden') && done.classList.contains('hidden');
+    };
+    new MutationObserver(update).observe(fx, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(update).observe(done, { attributes: true, attributeFilter: ['class'] });
+    update();
+  }
 
   // ====== 遊戲手把 ======
   // 遊戲只讀鍵盤：G.Input 監聽 window 的 keydown/keyup，看 e.code。
