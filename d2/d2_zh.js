@@ -1331,4 +1331,105 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else addSwitcher();
 })();
 d2edInstall();
+// ====== 遊戲手把 ======
+// 遊戲本身吃鍵盤和滑鼠，所以把手把轉成鍵盤／滑鼠事件：
+// 左搖桿／十字鍵＝方向鍵＋WASD、A＝Enter、B／START＝Esc、X／Y／RB＝1／2／3、LB＝R（重抽），
+// 右搖桿移動畫面上的游標，RT／R3＝左鍵、LT＝右鍵（選單、背包、商店用）。
+function d2padInstall() {
+const DEAD = 0.25;
+const B = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, SELECT: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const KEYS = {
+ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39],
+KeyW: ['w', 87], KeyA: ['a', 65], KeyS: ['s', 83], KeyD: ['d', 68],
+Enter: ['Enter', 13], Escape: ['Escape', 27], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], KeyR: ['r', 82]
+};
+const PRESS = { [B.A]: 'Enter', [B.B]: 'Escape', [B.START]: 'Escape', [B.X]: 'Digit1', [B.Y]: 'Digit2', [B.RB]: 'Digit3', [B.LB]: 'KeyR' };
+function send(type, code) {
+const [key, keyCode] = KEYS[code];
+const ev = new KeyboardEvent(type, { code, key, bubbles: true, cancelable: true });
+Object.defineProperty(ev, 'keyCode', { get: () => keyCode });
+Object.defineProperty(ev, 'which', { get: () => keyCode });
+const t = document.activeElement && document.activeElement !== document.body ? document.activeElement : document.body;
+t.dispatchEvent(ev);
+}
+const held = new Set();
+function hold(code, on) {
+if (on === held.has(code)) return;
+if (on) { held.add(code); send('keydown', code); } else { held.delete(code); send('keyup', code); }
+}
+const releaseAll = () => { for (const c of [...held]) hold(c, false); };
+const tap = code => { send('keydown', code); send('keyup', code); };
+
+// 虛擬滑鼠游標
+const style = document.createElement('style');
+style.textContent = `#d2pad-cursor { position: fixed; z-index: 2147483647; left: 0; top: 0; width: 22px; height: 22px; margin: -2px 0 0 -2px;
+pointer-events: none; display: none; filter: drop-shadow(0 0 2px #000); }
+#d2pad-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 2147483647; padding: 6px 14px;
+border: 1px solid #8f743e; border-radius: 6px; background: rgba(10,8,6,.94); color: #f3e3b0;
+font: 14px/1.5 "Microsoft JhengHei", system-ui, sans-serif; pointer-events: none; transition: opacity .4s; }`;
+document.head.append(style);
+const cur = document.createElement('div');
+cur.id = 'd2pad-cursor';
+cur.innerHTML = '<svg viewBox="0 0 22 22" width="22" height="22"><path d="M2 2 L2 18 L7 13 L11 20 L14 18.5 L10 12 L17 12 Z" fill="#f0c94a" stroke="#17120b" stroke-width="1.5"/></svg>';
+document.body.append(cur);
+let mx = innerWidth / 2, my = innerHeight / 2, curShown = 0;
+function mouse(type, button = 0, buttons = 0) {
+const target = document.elementFromPoint(mx, my) || document.body;
+const init = { bubbles: true, cancelable: true, clientX: mx, clientY: my, screenX: mx, screenY: my, button, buttons, view: window };
+if (type.startsWith('pointer')) target.dispatchEvent(new PointerEvent(type, { ...init, pointerId: 91, pointerType: 'mouse', isPrimary: true }));
+else target.dispatchEvent(new MouseEvent(type, init));
+}
+const mouseDown = btn => { mouse('pointerdown', btn, btn ? 2 : 1); mouse('mousedown', btn, btn ? 2 : 1); };
+const mouseUp = btn => { mouse('pointerup', btn); mouse('mouseup', btn); mouse(btn ? 'contextmenu' : 'click', btn); };
+function toast(text) {
+document.getElementById('d2pad-toast')?.remove();
+const el = document.createElement('div');
+el.id = 'd2pad-toast'; el.textContent = text;
+document.body.append(el);
+setTimeout(() => { el.style.opacity = '0'; }, 2200);
+setTimeout(() => el.remove(), 2800);
+}
+
+let prev = [], last = 0, announced = false;
+function poll(now) {
+requestAnimationFrame(poll);
+const dt = Math.min(50, now - (last || now)); last = now;
+const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected);
+if (!pad) { if (held.size) releaseAll(); prev = []; return; }
+if (!announced) { announced = true; toast('已偵測到遊戲手把'); }
+const btn = i => !!(pad.buttons[i] && pad.buttons[i].pressed);
+const hit = i => btn(i) && !prev[i];
+const up = i => !btn(i) && prev[i];
+// 移動：十字鍵優先，否則左搖桿（八方向）
+let x = btn(B.RIGHT) - btn(B.LEFT), y = btn(B.DOWN) - btn(B.UP);
+if (!x && !y) {
+const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+if (Math.hypot(ax, ay) >= DEAD) { x = ax > 0.38 ? 1 : ax < -0.38 ? -1 : 0; y = ay > 0.38 ? 1 : ay < -0.38 ? -1 : 0; }
+}
+hold('ArrowLeft', x < 0); hold('KeyA', x < 0); hold('ArrowRight', x > 0); hold('KeyD', x > 0);
+hold('ArrowUp', y < 0); hold('KeyW', y < 0); hold('ArrowDown', y > 0); hold('KeyS', y > 0);
+for (const [i, code] of Object.entries(PRESS)) if (hit(+i)) tap(code);
+// 右搖桿：游標
+const rx = pad.axes[2] || 0, ry = pad.axes[3] || 0, rm = Math.hypot(rx, ry);
+if (rm >= DEAD) {
+const speed = 0.9 * Math.min(1, (rm - DEAD) / (1 - DEAD)) ** 1.6 * dt;
+mx = Math.max(0, Math.min(innerWidth - 1, mx + rx / rm * speed * Math.max(1, innerWidth / 900)));
+my = Math.max(0, Math.min(innerHeight - 1, my + ry / rm * speed * Math.max(1, innerWidth / 900)));
+mouse('pointermove', 0, btn(B.RT) || btn(B.R3) ? 1 : 0); mouse('mousemove', 0, btn(B.RT) || btn(B.R3) ? 1 : 0);
+curShown = now;
+}
+const clickHeld = btn(B.RT) || btn(B.R3), clickWas = prev[B.RT] || prev[B.R3];
+if (clickHeld && !clickWas) { mouseDown(0); curShown = now; }
+if (!clickHeld && clickWas) mouseUp(0);
+if (hit(B.LT)) { mouseDown(2); curShown = now; }
+if (up(B.LT)) mouseUp(2);
+cur.style.display = now - curShown < 4000 ? 'block' : 'none';
+cur.style.transform = `translate(${mx}px, ${my}px)`;
+prev = pad.buttons.map(b => b.pressed);
+}
+addEventListener('blur', releaseAll);
+addEventListener('gamepadconnected', e => toast('已連接遊戲手把：' + e.gamepad.id.replace(/\s*\(.*$/, '')));
+requestAnimationFrame(poll);
+}
+d2padInstall();
 })();
