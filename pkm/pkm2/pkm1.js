@@ -3813,7 +3813,7 @@
     if (box && !box.querySelector('#pszh-status')) {
       const p = document.createElement('p');
       p.id = 'pszh-status'; p.className = 'pszh-note'; p.dataset.pszhControl = '';
-      p.textContent = `繁體中文化書籤 v${VERSION} 已啟用。遊戲更新由原站提供；新文字可能暫時保留原文。重新整理頁面即可還原；每次重新開啟遊戲都要再點一次書籤。`;
+      p.textContent = `繁體中文化書籤 v${VERSION} 已啟用。遊戲更新由原站提供；新文字可能暫時保留原文。重新整理頁面即可還原；每次重新開啟遊戲都要再點一次書籤。支援遊戲手把：左搖桿／十字鍵移動，A／B／X／Y 切換招式 1～4，LB／RB 上一個／下一個招式，START 暫停；選單中十字鍵移動游標、A 確定、B 返回。`;
       box.prepend(p);
     }
     const login = document.querySelector('#login-mode');
@@ -3839,10 +3839,173 @@
   showStatus();
 
   // 書籤點下去後給一個看得到的回饋。
-  const toast = document.createElement('div');
-  toast.id = 'pszh-toast'; toast.dataset.pszhControl = '';
-  toast.textContent = `PokéSurvivor 繁體中文化 v${VERSION} 已啟用`;
-  document.body.append(toast);
-  setTimeout(() => { toast.style.opacity = '0'; }, 2200);
-  setTimeout(() => toast.remove(), 2800);
+  function flash(text, ms = 2200) {
+    document.querySelector('#pszh-toast')?.remove();
+    const toast = document.createElement('div');
+    toast.id = 'pszh-toast'; toast.dataset.pszhControl = '';
+    toast.textContent = text;
+    document.body.append(toast);
+    setTimeout(() => { toast.style.opacity = '0'; }, ms);
+    setTimeout(() => toast.remove(), ms + 600);
+  }
+  flash(`PokéSurvivor 繁體中文化 v${VERSION} 已啟用（支援遊戲手把）`);
+
+  // ====== 遊戲手把 ======
+  // 遊戲只讀鍵盤：G.Input 監聽 window 的 keydown/keyup，看 e.code。
+  // 所以把手把按鍵轉成鍵盤事件；移動再額外接上類比搖桿的力道。
+  // 選單（section.scr 畫面）裡用十字鍵／搖桿移動游標，A 確定、B 返回。
+  if (gameHost) installGamepad();
+  function installGamepad() {
+    const DEAD = 0.25;
+    const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, SELECT: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+    const IN_GAME = { [BTN.A]: 'Digit1', [BTN.B]: 'Digit2', [BTN.X]: 'Digit3', [BTN.Y]: 'Digit4',
+      [BTN.LB]: 'KeyQ', [BTN.LT]: 'KeyQ', [BTN.RB]: 'KeyE', [BTN.RT]: 'KeyE', [BTN.START]: 'Escape', [BTN.SELECT]: 'Escape' };
+    const keyName = code => code.startsWith('Key') ? code.slice(3).toLowerCase()
+      : code.startsWith('Digit') ? code.slice(5) : code === 'Space' ? ' ' : code;
+    const send = (type, code) => window.dispatchEvent(new KeyboardEvent(type, { code, key: keyName(code), bubbles: true, cancelable: true }));
+    const tap = code => { send('keydown', code); send('keyup', code); };
+    const heldKeys = new Set();
+    function hold(code, on) {
+      if (on === heldKeys.has(code)) return;
+      if (on) { heldKeys.add(code); send('keydown', code); } else { heldKeys.delete(code); send('keyup', code); }
+    }
+    const releaseAll = () => { for (const code of [...heldKeys]) hold(code, false); };
+
+    // 類比移動：G.Input.axis() 在手把有輸入時改回傳搖桿向量（可以慢慢走）。
+    let stick = [0, 0];
+    function hookAxis() {
+      const input = window.G?.Input;
+      if (!input?.axis || input.axis.__pszhPad) return;
+      const original = input.axis;
+      const axis = function (...args) {
+        const touch = window.G?.Touch?.vector?.();
+        if ((stick[0] || stick[1]) && !(touch && (touch[0] || touch[1]))) return stick.slice();
+        return original.apply(this, args);
+      };
+      axis.__pszhPad = true;
+      input.axis = axis;
+    }
+
+    const padStyle = document.createElement('style');
+    padStyle.textContent = '.pszh-pad-focus { outline: 3px solid #ffcb3b !important; outline-offset: 2px; box-shadow: 0 0 0 6px rgba(255,203,59,.35) !important; }';
+    document.head.append(padStyle);
+
+    // 目前最上層的選單畫面（遊戲中沒有任何畫面開著）。
+    function topScreen() {
+      let top = null, topZ = -Infinity;
+      for (const s of document.querySelectorAll('section.scr:not(.hidden)')) {
+        if (!s.getClientRects().length) continue;
+        const z = parseInt(getComputedStyle(s).zIndex, 10) || 0;
+        if (z >= topZ) { top = s; topZ = z; }
+      }
+      return top;
+    }
+    const CLICKABLE = 'button, a[href], select, input:not([type="hidden"]), [role="button"], .card, .btn, [onclick]';
+    function candidates(screen) {
+      const all = [...screen.querySelectorAll(CLICKABLE)].filter(el => {
+        if (el.disabled || el.closest('[data-pszh-control]')) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+      });
+      // 卡片裡面的小元件交給外層卡片處理。
+      return all.filter(el => !all.some(other => other !== el && other.contains(el)));
+    }
+    let cursor = null;
+    function setCursor(el) {
+      cursor?.classList.remove('pszh-pad-focus');
+      cursor = el;
+      if (!el) return;
+      el.classList.add('pszh-pad-focus');
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+    function moveCursor(screen, dx, dy) {
+      const list = candidates(screen);
+      if (!list.length) return setCursor(null);
+      if (!cursor || !list.includes(cursor)) return setCursor(list[0]);
+      // 滑桿：左右調整數值。
+      if (dx && cursor.matches('input[type="range"]')) {
+        dx > 0 ? cursor.stepUp() : cursor.stepDown();
+        cursor.dispatchEvent(new Event('input', { bubbles: true }));
+        cursor.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      const c = cursor.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+      let best = null, bestScore = Infinity;
+      for (const el of list) {
+        if (el === cursor) continue;
+        const r = el.getBoundingClientRect();
+        const ex = r.left + r.width / 2 - cx, ey = r.top + r.height / 2 - cy;
+        const along = ex * dx + ey * dy;
+        if (along <= 4) continue;
+        const score = along + Math.abs(ex * dy - ey * dx) * 2.5;
+        if (score < bestScore) { best = el; bestScore = score; }
+      }
+      if (best) setCursor(best);
+    }
+    function activate(screen) {
+      const list = candidates(screen);
+      if (!cursor || !list.includes(cursor)) return setCursor(list[0] || null);
+      if (cursor.matches('select')) {
+        cursor.selectedIndex = (cursor.selectedIndex + 1) % cursor.options.length;
+        cursor.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (cursor.matches('input:not([type="checkbox"]):not([type="radio"]):not([type="range"])')) cursor.focus();
+      else cursor.click();
+    }
+
+    let prev = [], navDir = '', navNext = 0, announced = false;
+    function poll(now) {
+      requestAnimationFrame(poll);
+      const pad = [...(navigator.getGamepads?.() || [])].find(p => p && p.connected);
+      if (!pad) { if (heldKeys.size) releaseAll(); stick = [0, 0]; prev = []; return; }
+      if (!announced) { announced = true; flash('已偵測到遊戲手把'); }
+      hookAxis();
+      const btn = i => !!pad.buttons[i]?.pressed;
+      const hit = i => btn(i) && !prev[i];
+      let ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+      const mag = Math.hypot(ax, ay);
+      if (mag < DEAD) ax = ay = 0;
+      const px = btn(BTN.RIGHT) - btn(BTN.LEFT), py = btn(BTN.DOWN) - btn(BTN.UP);
+
+      const startOverlay = document.querySelector('#tap-start:not(.hidden)');
+      const screen = topScreen();
+      if (startOverlay) {
+        if (pad.buttons.some((b, i) => b.pressed && !prev[i])) tap('Enter');
+      } else if (screen) {
+        // 選單模式：不移動角色。
+        stick = [0, 0]; releaseAll();
+        if (cursor && (!cursor.isConnected || !screen.contains(cursor) || !cursor.getClientRects().length)) setCursor(null);
+        // 新畫面打開時直接選好第一個按鈕，A 一按就能用。
+        if (!cursor) setCursor(candidates(screen)[0] || null);
+        let dx = px, dy = py;
+        if (!dx && !dy && mag >= 0.5) {
+          if (Math.abs(ax) > Math.abs(ay)) dx = Math.sign(ax); else dy = Math.sign(ay);
+        }
+        const dir = dx || dy ? dx + ',' + dy : '';
+        if (dir && (dir !== navDir || now >= navNext)) {
+          navNext = now + (dir !== navDir ? 350 : 120);
+          moveCursor(screen, dx, dy);
+        }
+        navDir = dir;
+        if (hit(BTN.A)) activate(screen);
+        if (hit(BTN.B) || hit(BTN.START) || hit(BTN.SELECT)) tap('Escape');
+        if (hit(BTN.Y) && screen.id === 'scr-levelup') tap('KeyR');
+      } else {
+        // 遊戲模式。
+        if (cursor) setCursor(null);
+        navDir = '';
+        let vx = px, vy = py, k = 1;
+        if (vx || vy) k = 1 / Math.hypot(vx, vy);
+        else if (mag >= DEAD) { vx = ax; vy = ay; k = Math.min(1, (mag - DEAD) / (1 - DEAD)) / mag; }
+        stick = [vx * k, vy * k];
+        // 若讀不到 G.Input，就用 WASD 走八方向。
+        hold('KeyA', stick[0] < -0.35); hold('KeyD', stick[0] > 0.35);
+        hold('KeyW', stick[1] < -0.35); hold('KeyS', stick[1] > 0.35);
+        for (const [i, code] of Object.entries(IN_GAME)) if (hit(+i)) tap(code);
+      }
+      prev = pad.buttons.map(b => b.pressed);
+    }
+    addEventListener('blur', releaseAll);
+    addEventListener('gamepadconnected', e => flash(`已連接遊戲手把：${e.gamepad.id.replace(/\s*\(.*$/, '')}`));
+    requestAnimationFrame(poll);
+  }
 })();
