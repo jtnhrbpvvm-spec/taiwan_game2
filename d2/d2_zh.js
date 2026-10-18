@@ -121,6 +121,20 @@ line = part;
 if (line) out.push(line.trimEnd());
 return out;
 }
+// 把一行中文拆成 n 行：挑最寬那行最窄的斷點，「和」之後、「技能／法術／靈氣…」之前優先
+function d2zhSplit(ctx, text, n) {
+const chars = Array.from(text);
+if (n < 2 || chars.length < 3) return text;
+const tail = /^(技能|法術|靈氣|精通|藝術|修行)$/;
+let best = null;
+for (let i = 1; i < chars.length; i++) {
+const a = chars.slice(0, i).join(''), b = chars.slice(i).join('');
+let cost = Math.max(ctx.measureText(a).width, ctx.measureText(b).width);
+if (chars[i - 1] === '和' || chars[i - 1] === '與' || tail.test(b)) cost -= ctx.measureText('一').width * 1.2;
+if (!best || cost < best.cost) best = { cost, text: a + '\n' + (n > 2 ? d2zhSplit(ctx, b, n - 1) : b) };
+}
+return best.text;
+}
 function d2zhPaint(c, st) {
 const lang = d2zhLang();
 st.lang = lang;
@@ -134,14 +148,25 @@ if (c.width !== st.w || c.height !== st.h) { c.width = st.w; c.height = st.h; }
 D2ZH_PUT.call(ctx, st.en, 0, 0);
 return;
 }
-const text = cjk ? st.src : window.D2I18N.translate(st.src);
-const size = Math.max(10, st.size), lh = Math.max(size + 2, st.lh), s = st.shadow;
+let text = cjk ? st.src : window.D2I18N.translate(st.src);
+let size = Math.max(10, st.size);
+let font = `bold ${size}px ${D2ZH_FONT}`;
+ctx.font = font;
+// 原文分成好幾行的短標籤（例如技能樹分頁 "Defensive\nAuras"）：中文也照行數拆開，太寬就縮小字，不要超出原本的框
+const boxed = !cjk && st.src.includes('\n') && D2ZH_CJK.test(text);
+if (boxed && !text.includes('\n')) text = d2zhSplit(ctx, text, st.src.split('\n').length);
+let lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth));
+let widths = lines.map(l => ctx.measureText(l).width);
+const widest = Math.max(0, ...widths);
+if (boxed && widest > st.w) {
+size = Math.max(10, Math.floor(size * st.w / widest));
+font = `bold ${size}px ${D2ZH_FONT}`;
+ctx.font = font;
+widths = lines.map(l => ctx.measureText(l).width);
+}
+const lh = Math.max(size + 2, st.lh), s = st.shadow;
 const stroke = size < 16 ? 1.5 : Math.max(2, Math.round(size / 9));
 const pad = Math.ceil(stroke / 2);
-const font = `bold ${size}px ${D2ZH_FONT}`;
-ctx.font = font;
-const lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth));
-const widths = lines.map(l => ctx.measureText(l).width);
 c.width = Math.max(1, Math.ceil(Math.max(0, ...widths)) + s + pad * 2);
 c.height = Math.max(1, Math.ceil(size + (lines.length - 1) * lh + s + pad * 2));
 ctx.font = font;
@@ -708,7 +733,34 @@ const labels = {
 'D2\'s Exocet didn\'t build': 'D2 Exocet 標題無法正確載入',
 'thorns (gear)': '荊棘（裝備效果）',
 'Lion Branded': '獅印之',
-'until that hero\'s next run': '直到該英雄開始下一輪遊戲為止'
+'until that hero\'s next run': '直到該英雄開始下一輪遊戲為止',
+'CONTROLLER': '手把',
+'RUMBLE': '震動',
+'STICK DEAD ZONE': '搖桿死區',
+'PRESS A BUTTON': '請按下按鍵',
+'RESET TO DEFAULTS': '恢復預設值',
+'BELT 1': '腰帶 1',
+'BELT 2': '腰帶 2',
+'BELT 3': '腰帶 3',
+'BELT 4': '腰帶 4',
+'INTERACT': '互動',
+'SKILL LIST': '技能列表',
+'GAME MENU': '遊戲選單',
+'PICK SKILL LEFT': '選擇左邊技能',
+'PICK SKILL RIGHT': '選擇右邊技能',
+'REST SKILL': '休息技能',
+'D-pad Up': '十字鍵上',
+'D-pad Down': '十字鍵下',
+'D-pad Left': '十字鍵左',
+'D-pad Right': '十字鍵右',
+'ON': '開',
+'OFF': '關',
+'AUTO STATS': '自動配點',
+'END THE RUN': '結束這一輪',
+'GAME FILES': '遊戲檔案',
+'UPDATES': '更新',
+'NEWS': '最新消息',
+'REPORT': '回報問題'
 };
 const vocabulary = [
 ['Maximum Life', '生命上限'], ['maximum life', '生命上限'], ['Maximum Mana', '法力上限'],
@@ -1099,6 +1151,11 @@ if (language !== 'zh-Hant' || !source) return source;
 const direct = lookup.get(source.toLowerCase());
 if (direct) return D2ZH_EXTRA.skillTags[source] ? direct + '（' + D2ZH_EXTRA.skillTags[source] + '）' : direct;
 if (translatedTexts.has(source)) return translatedTexts.get(source);
+// 遊戲把短標籤拆成兩行（例如技能樹分頁 "Combat\nSkills"）：先當成一整句查
+if (/\s/.test(source.trim())) {
+const flat = lookup.get(source.replace(/\s+/g, ' ').trim().toLowerCase());
+if (flat) return flat;
+}
 const d2zhViaPattern = d2zhPattern(source);
 if (d2zhViaPattern !== null) { translatedTexts.set(source, d2zhViaPattern); return d2zhViaPattern; }
 const result = source.replace(wordPattern, (_match, lead, word) => lead + wordMap.get(word.toLowerCase())).replace(/([㐀-鿿])\s+(?=[㐀-鿿])/gu, '$1');
@@ -1190,7 +1247,7 @@ const textRecords = new WeakMap();
 const attributeRecords = new WeakMap();
 let switcher;
 function shouldSkipText(node) {
-return !node.parentElement || !!node.parentElement.closest('#d2-language-switch');
+return !node.parentElement || !!node.parentElement.closest('#d2-language-switch, .d2pad-key');
 }
 function processTextNode(node) {
 if (shouldSkipText(node)) return;
@@ -1331,85 +1388,15 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else addSwitcher();
 })();
 d2edInstall();
-// ====== 遊戲手把 ======
-// 遊戲本身吃鍵盤和滑鼠，所以把手把轉成鍵盤／滑鼠事件：
-// 左搖桿／十字鍵＝方向鍵＋WASD、A＝Enter（游標顯示時＝左鍵）、B／START＝Esc、X＝R（重抽）、Y＝X（略過），
-// LB／RB／LT／RT＝1／2／3／4（喝腰帶藥水；升級時 1～3 選卡），
-// 右搖桿移動畫面上的游標，R3＝左鍵、L3＝右鍵（選單、背包、商店用）。
-// 震動可在 🎮 手把面板開關：開＝受傷時手把震動；關＝擋掉遊戲所有震動（含手機震動）。
+// ====== 遊戲手把（只偵測連線） ======
+// 遊戲已內建手把操作，按鍵配置與震動請在遊戲「選項 → 手把」調整；書籤不再模擬按鍵，只顯示連線狀態：
+// 偵測到手把時在畫面上方提示，遊戲「選項」選單出現 🎮 狀態按鈕，手把斷線時自動跳出提醒。
 function d2padInstall() {
-const DEAD = 0.25;
-const B = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, SELECT: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
-const KEYS = {
-ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40], ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39],
-KeyW: ['w', 87], KeyA: ['a', 65], KeyS: ['s', 83], KeyD: ['d', 68],
-Enter: ['Enter', 13], Escape: ['Escape', 27], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit4: ['4', 52], KeyR: ['r', 82], KeyX: ['x', 88]
-};
-const PRESS = { [B.B]: 'Escape', [B.START]: 'Escape', [B.X]: 'KeyR', [B.Y]: 'KeyX',
-[B.LB]: 'Digit1', [B.RB]: 'Digit2', [B.LT]: 'Digit3', [B.RT]: 'Digit4' };
-
-// 震動設定（記在瀏覽器裡）
-const RUMBLE_KEY = 'd2pad.rumble';
-const rumble = {
-get on() { try { return localStorage.getItem(RUMBLE_KEY) !== 'off'; } catch (_) { return true; } },
-set on(v) { try { localStorage.setItem(RUMBLE_KEY, v ? 'on' : 'off'); } catch (_) { /* 無痕模式 */ } }
-};
-let rumbleUntil = 0;
-function shake(strength, ms) {
-if (!rumble.on) return;
-const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected);
-if (!pad) return;
-const s = Math.max(0.1, Math.min(1, strength));
-try {
-if (pad.vibrationActuator && pad.vibrationActuator.playEffect) pad.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: s, weakMagnitude: Math.min(1, s + 0.2) });
-else if (pad.hapticActuators && pad.hapticActuators[0]) pad.hapticActuators[0].pulse(s, ms);
-} catch (_) { /* 手把不支援震動 */ }
-}
-// 遊戲若呼叫 navigator.vibrate：震動開＝轉給手把（並保留原本的手機震動），關＝整個擋掉。
-const rawVibrate = navigator.vibrate ? navigator.vibrate.bind(navigator) : null;
-navigator.vibrate = function (pattern) {
-if (!rumble.on) return true;
-const total = [].concat(pattern || 0).reduce((a, n, i) => a + (i % 2 ? 0 : Number(n) || 0), 0);
-if (total > 0) shake(0.6, Math.min(1000, total));
-return rawVibrate ? rawVibrate(pattern) : true;
-};
-function send(type, code) {
-const [key, keyCode] = KEYS[code];
-const ev = new KeyboardEvent(type, { code, key, bubbles: true, cancelable: true });
-Object.defineProperty(ev, 'keyCode', { get: () => keyCode });
-Object.defineProperty(ev, 'which', { get: () => keyCode });
-const t = document.activeElement && document.activeElement !== document.body ? document.activeElement : document.body;
-t.dispatchEvent(ev);
-}
-const held = new Set();
-function hold(code, on) {
-if (on === held.has(code)) return;
-if (on) { held.add(code); send('keydown', code); } else { held.delete(code); send('keyup', code); }
-}
-const releaseAll = () => { for (const c of [...held]) hold(c, false); };
-const tap = code => { send('keydown', code); send('keyup', code); };
-
-// 虛擬滑鼠游標
 const style = document.createElement('style');
-style.textContent = `#d2pad-cursor { position: fixed; z-index: 2147483647; left: 0; top: 0; width: 22px; height: 22px; margin: -2px 0 0 -2px;
-pointer-events: none; display: none; filter: drop-shadow(0 0 2px #000); }
-#d2pad-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 2147483647; padding: 6px 14px;
+style.textContent = `#d2pad-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 2147483647; padding: 6px 14px;
 border: 1px solid #8f743e; border-radius: 6px; background: rgba(10,8,6,.94); color: #f3e3b0;
 font: 14px/1.5 "Microsoft JhengHei", system-ui, sans-serif; pointer-events: none; transition: opacity .4s; }`;
 document.head.append(style);
-const cur = document.createElement('div');
-cur.id = 'd2pad-cursor';
-cur.innerHTML = '<svg viewBox="0 0 22 22" width="22" height="22"><path d="M2 2 L2 18 L7 13 L11 20 L14 18.5 L10 12 L17 12 Z" fill="#f0c94a" stroke="#17120b" stroke-width="1.5"/></svg>';
-document.body.append(cur);
-let mx = innerWidth / 2, my = innerHeight / 2, curShown = -Infinity, aClick = false;
-function mouse(type, button = 0, buttons = 0) {
-const target = document.elementFromPoint(mx, my) || document.body;
-const init = { bubbles: true, cancelable: true, clientX: mx, clientY: my, screenX: mx, screenY: my, button, buttons, view: window };
-if (type.startsWith('pointer')) target.dispatchEvent(new PointerEvent(type, { ...init, pointerId: 91, pointerType: 'mouse', isPrimary: true }));
-else target.dispatchEvent(new MouseEvent(type, init));
-}
-const mouseDown = btn => { mouse('pointerdown', btn, btn ? 2 : 1); mouse('mousedown', btn, btn ? 2 : 1); };
-const mouseUp = btn => { mouse('pointerup', btn); mouse('mouseup', btn); mouse(btn ? 'contextmenu' : 'click', btn); };
 function toast(text) {
 document.getElementById('d2pad-toast')?.remove();
 const el = document.createElement('div');
@@ -1418,72 +1405,62 @@ document.body.append(el);
 setTimeout(() => { el.style.opacity = '0'; }, 2200);
 setTimeout(() => el.remove(), 2800);
 }
-
-const padCheck = d2padCheck(toast, rumble, shake);
-let prev = [], last = 0, announced = false, lastLife = null, lastPlayer = null, lastHit = 0;
-function poll(now) {
+const find = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected) || null;
+const padCheck = d2padCheck(toast, find);
+// 腰帶按鍵：有手把時在腰帶 1～4 格左上角標出遊戲綁定的手把按鍵（讀遊戲的手把設定，玩家在遊戲裡改綁也會跟著變）
+const BELT_DEFAULT = [14, 12, 15, 13]; // 遊戲預設：十字鍵 左／上／右／下
+const PAD_NAMES = {
+xbox: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'View', 'Menu', 'LS', 'RS', '↑', '↓', '←', '→'],
+playstation: ['✕', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'Create', 'Options', 'L3', 'R3', '↑', '↓', '←', '→'],
+switch: ['B', 'A', 'Y', 'X', 'L', 'R', 'ZL', 'ZR', '−', '+', 'LS', 'RS', '↑', '↓', '←', '→']
+};
+const padKind = id => /054c|playstation|dualshock|dualsense/i.test(id) ? 'playstation' : /057e|nintendo|pro controller|joy-con/i.test(id) ? 'switch' : 'xbox';
+function beltButtons() {
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem('d2s:pad') || 'null'); } catch (_) { /* 沒有設定就用預設 */ }
+return BELT_DEFAULT.map((d, i) => {
+const v = saved && saved.bindings && saved.bindings['potion' + (i + 1)];
+return Number.isInteger(v) && v >= 0 && v < 16 ? v : d;
+});
+}
+style.textContent += `#belt-slots .d2pad-key { position: absolute; left: 1px; top: 0; z-index: 2; pointer-events: none;
+font: bold 10px/1.1 Arial, sans-serif; color: #f3e3b0; text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000, 0 0 3px #000; }`;
+let beltAt = 0, beltSig = '';
+function updateBelt(pad, now) {
+if (now - beltAt < 300) return;
+beltAt = now;
+const slots = document.querySelectorAll('#belt-slots .belt-slot');
+const names = pad ? PAD_NAMES[padKind(pad.id)] : null;
+const keys = names ? beltButtons().map(b => names[b]) : [];
+const sig = slots.length + '|' + keys.join(',');
+if (sig === beltSig && [...slots].every(s => !!s.querySelector('.d2pad-key') === !!names)) return;
+beltSig = sig;
+slots.forEach((slot, i) => {
+let el = slot.querySelector('.d2pad-key');
+if (!names || !keys[i]) { el?.remove(); return; }
+if (!el) { el = document.createElement('span'); el.className = 'd2pad-key'; slot.append(el); }
+el.textContent = keys[i];
+});
+}
+let announced = false, prev = [];
+(function poll(now) {
 requestAnimationFrame(poll);
-const dt = Math.min(50, now - (last || now)); last = now;
-const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected);
+const pad = find();
 padCheck.update(pad);
-if (!pad) { if (held.size) releaseAll(); prev = []; return; }
-if (padCheck.isOpen()) {
-releaseAll();
-if ((pad.buttons[B.A] && pad.buttons[B.A].pressed && !prev[B.A]) || (pad.buttons[B.B] && pad.buttons[B.B].pressed && !prev[B.B])) padCheck.close();
-prev = pad.buttons.map(b => b.pressed);
-return;
-}
+updateBelt(pad, now || 0);
+if (!pad) { prev = []; return; }
 if (!announced) { announced = true; toast('已偵測到遊戲手把'); }
-const btn = i => !!(pad.buttons[i] && pad.buttons[i].pressed);
-const hit = i => btn(i) && !prev[i];
-const up = i => !btn(i) && prev[i];
-// 移動：十字鍵優先，否則左搖桿（八方向）
-let x = btn(B.RIGHT) - btn(B.LEFT), y = btn(B.DOWN) - btn(B.UP);
-if (!x && !y) {
-const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
-if (Math.hypot(ax, ay) >= DEAD) { x = ax > 0.38 ? 1 : ax < -0.38 ? -1 : 0; y = ay > 0.38 ? 1 : ay < -0.38 ? -1 : 0; }
-}
-hold('ArrowLeft', x < 0); hold('KeyA', x < 0); hold('ArrowRight', x > 0); hold('KeyD', x > 0);
-hold('ArrowUp', y < 0); hold('KeyW', y < 0); hold('ArrowDown', y > 0); hold('KeyS', y > 0);
-for (const [i, code] of Object.entries(PRESS)) if (hit(+i)) tap(code);
-// A：游標顯示時當左鍵（點選單、背包），否則是 Enter
-const cursorOn = now - curShown < 4000;
-if (hit(B.A)) { if (cursorOn) { aClick = true; mouseDown(0); curShown = now; } else tap('Enter'); }
-if (up(B.A) && aClick) { aClick = false; mouseUp(0); }
-// 受傷震動：生命值變少就震一下，扣越多震越強
-const pl = D2ED.player;
-if (pl && typeof pl.life === 'number') {
-if (pl === lastPlayer && lastLife !== null && pl.life < lastLife - 0.5 && now - lastHit > 150) {
-lastHit = now;
-shake(0.25 + (lastLife - pl.life) / Math.max(1, pl.maxLife || 100) * 2, 140);
-}
-lastPlayer = pl; lastLife = pl.life;
-}
-// 右搖桿：游標
-const rx = pad.axes[2] || 0, ry = pad.axes[3] || 0, rm = Math.hypot(rx, ry);
-if (rm >= DEAD) {
-const speed = 0.9 * Math.min(1, (rm - DEAD) / (1 - DEAD)) ** 1.6 * dt;
-mx = Math.max(0, Math.min(innerWidth - 1, mx + rx / rm * speed * Math.max(1, innerWidth / 900)));
-my = Math.max(0, Math.min(innerHeight - 1, my + ry / rm * speed * Math.max(1, innerWidth / 900)));
-mouse('pointermove', 0, btn(B.R3) || aClick ? 1 : 0); mouse('mousemove', 0, btn(B.R3) || aClick ? 1 : 0);
-curShown = now;
-}
-if (hit(B.R3)) { mouseDown(0); curShown = now; }
-if (up(B.R3)) mouseUp(0);
-if (hit(B.L3)) { mouseDown(2); curShown = now; }
-if (up(B.L3)) mouseUp(2);
-cur.style.display = now - curShown < 4000 ? 'block' : 'none';
-cur.style.transform = `translate(${mx}px, ${my}px)`;
+// 面板開著時按 A 或 B 關閉面板
+const hit = i => !!(pad.buttons[i] && pad.buttons[i].pressed) && !prev[i];
+if (padCheck.isOpen() && (hit(0) || hit(1))) padCheck.close();
 prev = pad.buttons.map(b => b.pressed);
-}
-addEventListener('blur', releaseAll);
+})();
 addEventListener('gamepadconnected', e => toast('已連接遊戲手把：' + e.gamepad.id.replace(/\s*\(.*$/, '')));
-addEventListener('gamepaddisconnected', () => { if (![...(navigator.getGamepads ? navigator.getGamepads() : [])].some(p => p && p.connected)) padCheck.open(true); });
-requestAnimationFrame(poll);
+addEventListener('gamepaddisconnected', () => { if (!find()) padCheck.open(true); });
 }
 // 手把狀態按鈕：在遊戲「選項」選單（書籤修改旁）出現 🎮，綠點＝已連接、紅點＝未連接。
 // 點開檢查面板；沒連接時提示重新連接，並持續等待，偵測到就顯示成功。
-function d2padCheck(toast, rumble, shake) {
+function d2padCheck(toast, find) {
 const css = document.createElement('style');
 css.textContent = `#d2pad-btn { position: fixed; z-index: 2147483646; display: none; align-items: center; gap: 6px; padding: 5px 12px;
 border: 1px solid #8f743e; border-radius: 6px; background: rgba(10,8,6,.94); color: #f3e3b0; cursor: pointer;
@@ -1498,8 +1475,7 @@ background: #17120b; color: #e8e2d0; font: 14px/1.6 "Microsoft JhengHei", system
 #d2pad-dlg .st.on { background: #1e3a24; color: #a8efb8; }
 #d2pad-dlg .st.off { background: #4a1e18; color: #ffc4b8; }
 #d2pad-dlg ol { margin: 10px 0 0; padding-left: 20px; color: #bfb39a; }
-#d2pad-dlg .rumble { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid #3a2c18; }
-#d2pad-dlg .rumble button { min-width: 56px; }
+#d2pad-dlg .note { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #3a2c18; color: #bfb39a; font-size: 13px; }
 #d2pad-dlg .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 #d2pad-dlg button { padding: 5px 14px; border: 1px solid #8f743e; border-radius: 4px; font: inherit; cursor: pointer; background: #2c2014; color: #f3e3b0; }
 #d2pad-dlg button.main { background: #c7a45f; color: #17120b; font-weight: bold; }`;
@@ -1510,16 +1486,12 @@ btn.innerHTML = '<i></i><span>🎮 手把</span>';
 document.body.append(btn);
 let dlg = null, current = null, lost = false;
 const name = pad => pad.id.replace(/\s*\(.*$/, '') || '遊戲手把';
-const find = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(p => p && p.connected) || null;
 function render() {
 if (!dlg) return;
 const st = dlg.querySelector('.st');
 st.className = 'st ' + (current ? 'on' : 'off');
 st.textContent = current ? '✔ 已連接：' + name(current) : (lost ? '✖ 手把已斷線，請重新連接' : '✖ 沒有偵測到手把，請重新連接');
 dlg.querySelector('ol').hidden = !!current;
-const rb = dlg.querySelector('[data-a=rumble]');
-rb.textContent = rumble.on ? '開' : '關';
-rb.className = rumble.on ? 'main' : '';
 }
 function close() { if (dlg) dlg.remove(); dlg = null; }
 function open(disconnected) {
@@ -1532,13 +1504,12 @@ dlg.innerHTML = `<div><h3>🎮 遊戲手把</h3><div class="st"></div>
 <ol><li>用 USB 線或藍牙連接手把（手機請到「設定 → 藍牙」配對）。</li>
 <li>連好後<b>按一下手把上的任何鍵</b>，瀏覽器才會讓網頁讀到手把。</li>
 <li>偵測到之後這裡會自動變成「已連接」。</li></ol>
-<div class="rumble"><span>手把震動（受傷時）</span><button type="button" data-a="rumble"></button></div>
+<p class="note">按鍵配置、搖桿死區和震動開關，請到遊戲的「選項 → 手把」調整。</p>
 <div class="row"><button type="button" data-a="retry">重新偵測</button><button type="button" class="main" data-a="close">關閉</button></div></div>`;
 dlg.addEventListener('click', e => {
 const b = e.target.closest('button'), a = b && b.dataset.a;
 if (a === 'close' || e.target === dlg) close();
 else if (a === 'retry') { current = find(); render(); }
-else if (a === 'rumble') { rumble.on = !rumble.on; render(); if (rumble.on) shake(0.7, 250); }
 });
 document.body.append(dlg);
 render();
