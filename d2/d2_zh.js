@@ -153,8 +153,12 @@ let size = Math.max(10, st.size);
 let font = `bold ${size}px ${D2ZH_FONT}`;
 ctx.font = font;
 // 原文分成好幾行的短標籤（例如技能樹分頁 "Defensive\nAuras"）：中文也照行數拆開，太寬就縮小字，不要超出原本的框
-const boxed = !cjk && st.src.includes('\n') && D2ZH_CJK.test(text);
-if (boxed && !text.includes('\n')) text = d2zhSplit(ctx, text, st.src.split('\n').length);
+const inTab = !!c.closest('.tree-tab');
+const boxed = !cjk && (st.src.includes('\n') || inTab) && D2ZH_CJK.test(text);
+if (boxed && !text.includes('\n')) {
+const rows = Math.max(st.src.split('\n').length, inTab && ctx.measureText(text).width > st.w ? 2 : 1);
+text = d2zhSplit(ctx, text, rows);
+}
 let lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth));
 let widths = lines.map(l => ctx.measureText(l).width);
 const widest = Math.max(0, ...widths);
@@ -760,7 +764,15 @@ const labels = {
 'GAME FILES': '遊戲檔案',
 'UPDATES': '更新',
 'NEWS': '最新消息',
-'REPORT': '回報問題'
+'REPORT': '回報問題',
+'Pick': '選擇',
+'Pick up': '拿起',
+'Put back': '放回',
+'Put down': '放下',
+'Select': '選擇',
+'START': '開始',
+'LANGUAGE': '遊戲語言',
+'Unofficial fan project, not affiliated with Blizzard Entertainment. Diablo II® is a trademark of Blizzard Entertainment, Inc.': '非官方粉絲作品，與 Blizzard Entertainment 無關。Diablo II® 為 Blizzard Entertainment, Inc. 的商標。'
 };
 const vocabulary = [
 ['Maximum Life', '生命上限'], ['maximum life', '生命上限'], ['Maximum Mana', '法力上限'],
@@ -1117,6 +1129,78 @@ const extraNames = [
 ['the Unholy', '邪惡者'], ['the Witch', '女巫'], ['the Wraith', '幽魂'],
 ['wake of destruction', '毀滅之焰']
 ];
+// 易牙居譯名（技能、技能樹分頁、獨特物品、底材）：優先於上面所有譯名。
+// 從易牙居備份的「中文 English」對照抽出，只列跟原本譯名不同的；同一詞易牙居有多種寫法時取最常用的。
+const iyaNames = {
+// 技能樹分頁
+'Bow and Crossbow Skills': '弓和十字弓技能', 'Passive and Magic Skills': '被動和魔法技能', 'Javelin and Spear Skills': '標槍和長矛技能',
+'Fire Spells': '火焰法術技能', 'Lightning Spells': '閃電法術技能', 'Cold Spells': '冰凍法術技能',
+'Curses': '詛咒技能', 'Poison and Bone Spells': '毒素和白骨技能', 'Summoning Spells': '召喚技能',
+'Offensive Auras': '攻擊性靈氣技能', 'Defensive Auras': '防禦性靈氣技能',
+'Combat Masteries': '戰鬥專家技能', 'Warcries': '吶喊技能',
+'Summoning': '召喚技能', 'Shape Shifting': '外型變形技能', 'Elemental': '元素技能',
+'Traps': '陷阱技能', 'Shadow Disciplines': '影子訓練技能', 'Martial Arts': '武學藝術技能',
+// 技能
+'Strafe': '砲轟', 'Charged Strike': '衝能一擊', 'Pierce': '穿刺', 'Dodge': '閃避', 'Slow Missiles': '慢速箭',
+'Charged Bolt': '衝能彈', 'Blaze': '熾烈之徑', 'Static Field': '靜態立場', 'Inferno': '地獄之火', 'Hydra': '九頭火蛇',
+'Ice Blast': '冰風暴', 'Thunder Storm': '雷雲風暴', 'Shiver Armor': '碎冰甲', 'Lightning Mastery': '支配閃電',
+'Warmth': '暖氣', 'Enchant': '強化', 'Poison Dagger': '淬毒匕首', 'Weaken': '削弱', 'Dim Vision': '微暗靈視',
+'Life Tap': '偷取生命', 'Bone Spirit': '白骨之魂', 'Poison Nova': '劇毒新星', 'Confuse': '迷亂', 'Revive': '重生',
+'Blood Golem': '鮮血石魔', 'Lower Resist': '降低抵抗', 'Skeleton Mastery': '支配骷髏', 'Golem Mastery': '支配石魔',
+'Shock Web': '雷電網', 'Fists of Fire': '焰拳', 'Cloak of Shadows': '魔影斗篷', 'Lightning Sentry': '雷光守衛',
+'Blade Fury': '刃之怒', 'Phoenix Strike': '鳳凰攻擊', 'Dragon Claw': '雙龍爪', 'Shadow Master': '支配影子',
+'Claw Mastery': '支配利爪', 'Burst of Speed': '加速', 'Fade': '能量消解', 'Bash': '重擊', 'Stun': '擊暈',
+'Whirlwind': '炫風', 'Howl': '狂嗥', 'Shout': '大叫', 'Battle Cry': '戰嗥', 'War Cry': '戰鬥狂嗥',
+'Grim Ward': '殘酷嚇阻', 'Battle Orders': '戰鬥體制', 'Mace Mastery': '支配釘頭錘', 'Throwing Mastery': '支配飛擲',
+'Iron Skin': '鐵布衫', 'Increased Stamina': '增加耐力', 'Find Potion': '找尋葯劑', 'Blessed Hammer': '祝福之鎚',
+'Zeal': '白熱', 'Charge': '突擊', 'Conversion': '轉換', 'Might': '力量', 'Holy Shock': '神聖衝擊', 'Thorns': '針刺',
+'Vigor': '精力', 'Salvation': '救助', 'Meditation': '冥思', 'Arctic Blast': '極地風暴', 'Fissure': '火山爆',
+'Twister': '鎌鼬風', 'Werewolf': '狼人變化', 'Werebear': '熊人變化', 'Molten Boulder': '熔漿巨岩', 'Volcano': '火山',
+'Hurricane': '暴風', 'Carrion Vine': '食屍藤', 'Solar Creeper': '太陽藤', 'Spirit of Barbs': '棘靈',
+'Lycanthropy': '變形術', 'Feral Rage': '野性狂暴', 'Fire Claws': '焰爪', 'Cyclone Armor': '颶風裝甲',
+// 獨特物品
+'Pelta Lunata': '新月小盾', 'Biggin\'s Bonnet': '畢格因的軟帽', 'Hotspur': '熱靴刺', 'The Hand of Broc': '柏克之手',
+'Nagelring': '拿各的戒指', 'Greyform': '薄暮外觀', 'Gorefoot': '血腳', 'Umbral Disk': '陰影圓盤',
+'Blinkbat\'s Form': '眨眼蝙蝠的外觀', 'Stormguild': '暴風公會', 'Treads of Cthon': '凱松的征服', 'Tarnhelm': '塔因頭盔',
+'Manald Heal': '瑪那得的治療', 'Sparking Mail': '火花之甲', 'Steelclash': '作響的金屬', 'The Mahim-Oak Curio': '瑪哈姆橡木古董',
+'Goldwrap': '金色包袱', 'Stealskull': '偷取骷髏', 'Lidless Wall': '警戒之牆', 'Bul-Kathos\' Wedding Band': '布爾凱索之戒',
+'The Rising Sun': '旭日東昇', 'Seraph\'s Hymn': '熾天使之韻', 'Nature\'s Peace': '大自然的和平', 'Wisp Projector': '鬼火投射者',
+'Arachnid Mesh': '蜘蛛之網', 'Griffon\'s Eye': '格利風之眼', 'Bane Ash': '禍根之灰', 'Spire of Lazarus': '拉撒羅斯之螺旋',
+'The Salamander': '火精靈', 'The Iron Jang Bong': '鐵檢棒', 'Pluckeye': '勇氣之眼', 'Witherstring': '凋謝之戒',
+'Raven Claw': '渡鳥之爪', 'Stormstrike': '暴風之擊', 'Hellclap': '作響的地獄', 'Blastbark': '爆裂的吠叫',
+'Lycander\'s Aim': '雷山德的指標', 'Lycander\'s Flank': '雷山德的側腹', 'Stoneraven': '石烏鴉', 'Blood Raven\'s Charge': '血鳥的襲擊',
+'Torch of Iro': '衣洛的火炬', 'Maelstrom': '漩渦', 'Gravenspine': '墓穴之脊', 'Ume\'s Lament': '烏米的慟哭',
+'Blackhand Key': '黑手之鑰', 'Homunculus': '侏儒', 'Suicide Branch': '自殺支系', 'Arm of King Leoric': '李奧瑞克王的武器',
+'Darkforce Spawn': '魔力肇生', 'Boneshade': '白骨陰影', 'Felloak': '兇猛橡樹', 'Knell Striker': '敲擊喪鐘者',
+'Crushflange': '壓碎的凸邊', 'Bloodrise': '血昇', 'Rusthandle': '腐蝕的把手', 'The General\'s Tan Do Li Ga': '坦-杜-裡-嘎-將軍',
+'Stormeye': '暴風眼', 'The Fetid Sprinkler': '惡臭散佈者', 'Astreon\'s Iron Ward': '愛斯特龍之鐵的保護區', 'The Redeemer': '懺悔者',
+'Alma Negra': '阿爾瑪 尼格拉', 'Rixot\'s Keen': '瑞克撒特的輓歌', 'The Gnasher': '牙齒', 'Blood Crescent': '血紅新月',
+'Shadowfang': '影之牙', 'Bladebone': '肩胛骨', 'Soulflay': '剝皮靈魂', 'The Chieftain': '族長', 'Kinemil\'s Awl': '金麥爾的錐子',
+'Brainhew': '腦袋', 'Rakescar': '火鉤之傷', 'Humongous': '巨大無比', 'Arreat\'s Face': '亞瑞特的面容', 'The Scalper': '圓鑿',
+'Lightsabre': '光之軍刀', 'Death Cleaver': '死亡之刀', 'Azurewrath': '青色忿怒', 'Demonhorn\'s Edge': '惡魔號角的邊緣',
+'Halaberd\'s Reign': '海拉柏得的國度', 'Ravenlore': '烏鴉之王', 'Cerebus\' Bite': '地獄之吻', 'Spirit Keeper': '靈魂看守者',
+'Bartuc\'s Cut-Throat': '巴特克的猛擊', 'Jade Talon': '碧玉爪', 'Twitchthroe': '抽動的掙扎', 'Iceblink': '冰雪眨眼',
+'Rockfleece': '石之毛', 'Iron Pelt': '擲鐵', 'Skullder\'s Ire': '詩寇蒂的憤怒', 'Toothrow': '排齒', 'Leviathan': '海王利維亞桑',
+'Howltusk': '怒號長牙', 'Crown of Thieves': '盜賊皇冠', 'Bverrit Keep': '貝弗提的紀念', 'The Ward': '囚房',
+'Gerke\'s Sanctuary': '基爾克的聖堂', 'Radament\'s Sphere': '達羅門特之球體', 'Spirit Ward': '魂系結界', 'Medusa\'s Gaze': '梅杜莎的凝視',
+'Frostburn': '霜燃', 'Hellmouth': '地獄之嘴', 'Steelrend': '碎鋼', 'Bladebuckle': '鋒利扣帶', 'Nosferatu\'s Coil': '吸血聖王之圈',
+'Verdungo\'s Hearty Cord': '維爾登戈的心結', 'Tearhaunch': '淚之臀', 'Leadcrow': '引導烏鴉', 'Hellcast': '投擲地獄',
+'Langer Briser': '蘭格 布里瑟', 'Buriza-Do Kyanon': '布里撒-多 凱南', 'Hellrack': '地獄拷問', 'The Dragon Chang': '張龍',
+'The Tannr Gorerod': '坦之血杖', 'Spire of Honor': '榮耀的尖塔', 'Steel Pillar': '鐵柱', 'Arioc\'s Needle': '愛理歐克之針',
+'Gargoyle\'s Bite': '石像鬼之噬', 'Dimoak\'s Hew': '迪馬克之劈砍', 'Woestave': '煩惱詩集', 'The Meat Scraper': '刮肉者',
+'Husoldal Evo': '胡索丹 依弗', 'Bonehew': '破骨', 'Spectral Shard': '妖怪碎片', 'Spineripper': '裂脊者',
+'Stormspike': '暴風尖刺', 'Deathbit': '死亡碎片', 'Ghostflame': '鬼火焰',
+// 底材（Belt、Boots、Blade 也是介面常用字，保留「腰帶／靴子／刀刃」）
+'Slayer Guard': '殺手防護面甲', 'Fury Visor': '暴怒面甲', 'Conqueror Crown': '征服者皇冠面甲', 'Totemic Mask': '圖騰面具狼盔',
+'Blood Spirit': '血腥之靈', 'Dusk Shroud': '灰暮壽衣', 'Ceremonial Javelin': '祭典之標槍', 'Matriarchal Javelin': '女族長之標槍',
+'Ceremonial Pike': '祭典之長矛', 'Grand Scepter': '雄偉權杖', 'War Scepter': '巨戰權杖', 'Divine Scepter': '神屬權杖',
+'Morning Star': '流星鎚', 'Devil Star': '惡魔流星錘', 'Greater Talons': '巨鷹爪', 'Battle Cestus': '鬥腰刀', 'Feral Claws': '猛禽爪',
+'Hierophant Trophy': '祭司印記', 'Sacred Rondache': '神聖輕圓盾', 'Spiderweb Sash': '蛛網腰帶', 'Light Crossbow': '輕十字弓',
+'Heavy Crossbow': '重十字弓', 'Winged Harpoon': '翼魚叉', 'Stiletto': '小劍', 'Bone Knife': '骸骨小刀', 'Legend Spike': '傳說尖刺',
+'Lochaber Axe': '羅佳伯斧', 'Studded Leather': '鑲嵌甲', 'Field Plate': '實戰鎧甲', 'Wire Fleece': '線羊毛皮甲',
+'Balrog Skin': '炎魔皮板甲', 'Grand Crown': '巨皇冠', 'Pavise': '大盾', 'Aegis': '塔盾', 'War Gauntlets': '巨戰手套',
+'Myrmidon Greaves': '極速靴'
+};
 const d2zhKnown = new Set([...Object.keys(labels), ...[...names, ...extraNames, ...vocabulary].map(e => e[0])].map(s => s.toLowerCase()));
 for (const [en, zh] of Object.entries(D2ZH_EXTRA.labels)) if (!d2zhKnown.has(en.toLowerCase())) labels[en] = zh;
 const d2zhPatterns = D2ZH_EXTRA.patterns.map(([en, zh]) => [new RegExp('^' + en.split(/(\{#?\})/).map(part =>
@@ -1138,6 +1222,17 @@ lookup.set(english.toLowerCase(), chinese);
 const wordMap = new Map();
 const wordEntries = [...Object.entries(labels), ...extraNames, ...names, ...vocabulary];
 for (const [english, chinese] of wordEntries) wordMap.set(english.toLowerCase(), chinese);
+// 易牙居譯名放最後蓋過舊譯名；句子裡的單字（stun、charge、thorns…）若是一般用語就維持原本的翻譯
+const genericWords = new Set(vocabulary.map(([english]) => english.toLowerCase()));
+const iyaFlat = new Map(Object.entries(iyaNames).map(([english, chinese]) => [english.toLowerCase(), chinese]));
+for (const key of [...lookup.keys()]) {
+// 舊表裡分行的寫法（例如 "bow and\ncrossbow\nskills"）也換成易牙居譯名
+if (/\n/.test(key) && iyaFlat.has(key.replace(/\s+/g, ' '))) lookup.delete(key);
+}
+for (const [english, chinese] of Object.entries(iyaNames)) {
+lookup.set(english.toLowerCase(), chinese);
+if (!genericWords.has(english.toLowerCase())) { wordMap.set(english.toLowerCase(), chinese); wordEntries.push([english, chinese]); }
+}
 const wordAlternatives = wordEntries
 .map(([english]) => english)
 .sort((a, b) => b.length - a.length)
