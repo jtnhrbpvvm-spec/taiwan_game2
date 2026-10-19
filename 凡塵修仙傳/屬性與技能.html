@@ -244,7 +244,7 @@ a:hover{text-decoration-thickness:2px}
 <h2>每回合怎麼出手</h2>
 <div class="box">
 <ul>
-<li>每回合有 <b>40%</b> 會放技能：從你會的「宗門技能＋靈寶閣武學」裡隨機抽一招。靈力夠就施放，<b>靈力不夠就改成普通攻擊</b>。</li>
+<li>每回合有 <b>40%</b> 會放技能：從<b>技能格裡</b>的仙法、宗門技能、靈寶閣武學隨機抽一招（沒放進技能格的不會施放）。靈力夠就施放，<b>靈力不夠就改成普通攻擊</b>。</li>
 <li>其餘回合是<b>普通攻擊</b>（物理攻擊 ×100%，打第一隻）。這時才會判定連擊。</li>
 <li>技能傷害＝對應的攻擊力 × 技能威力 ×（1 ＋ 技能傷害加成）。技能傷害加成來自裝備特效「法爆」、符修被動（每階 +2%）、金靈星君加持（+20%）、煉共鳴（+10%）等。</li>
 <li>裝備特效「聚靈」會降低技能消耗的靈力。</li>
@@ -343,7 +343,7 @@ a:hover{text-decoration-thickness:2px}
 </div>
 
 <div id="p-skill" hidden>
-<div class="sub">威力是對應攻擊力的倍率；耗靈是畫面上顯示的數字。宗門技能（要先放進技能格）、靈寶閣武學要靠每回合 40% 的技能判定抽到才會施放；職業、神器、夥伴的招式是自動發動，表中的機率是每回合的發動率。</div>
+<div class="sub">威力是對應攻擊力的倍率；耗靈是畫面上顯示的數字。宗門技能、靈寶閣武學（都要先放進技能格）要靠每回合 40% 的技能判定抽到才會施放；職業、神器、夥伴的招式是自動發動，表中的機率是每回合的發動率。</div>
 <div class="ctl"><label>搜尋<input class="wide" id="q" placeholder="技能、宗門、夥伴名稱…"></label></div>
 <div class="chips" id="fSrc"></div>
 <div class="chips" id="fType"></div>
@@ -352,7 +352,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="empty" id="skEmpty" hidden>找不到符合的技能</div>
 
 <h2>仙法（武學密典）</h2>
-<div class="sub"><b>下品、中品、上品仙法</b>各用自己的武學秘典碎片合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的該品階仙法；下品碎片來自奇遇與機緣，中品碎片是人界和靈界的野外妖獸掉的，上品碎片只有靈界野外妖獸會掉。<b>絕學</b>用絕學武學秘典碎片合成，碎片只有靈界的仙魔戰場會掉。主動仙法和<b>宗門技能都要放進技能格</b>才會施放（基本 3 格，每 100 級多 1 格），放進去後和靈寶閣武學一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招與 20 招絕學；完整清單、碎片來源與光環合計見<a href="仙法一覽.html">仙法一覽</a>。</div>
+<div class="sub"><b>下品、中品、上品仙法</b>各用自己的武學秘典碎片合成：集滿 100 片，在武學密典按合成，隨機學會一招還沒學過的該品階仙法；下品碎片來自奇遇與機緣，中品碎片是人界和靈界的野外妖獸掉的，上品碎片只有靈界野外妖獸會掉。<b>絕學</b>用絕學武學秘典碎片合成，碎片只有靈界的仙魔戰場會掉。主動仙法、<b>宗門技能和靈寶閣武學都要放進技能格</b>才會施放（基本 3 格，每 100 級多 1 格），放進去的招式一起參加每回合 40% 的技能判定；光環學會就永久生效。上方技能表已列出下品、中品、上品共 180 招與 20 招絕學；完整清單、碎片來源與光環合計見<a href="仙法一覽.html">仙法一覽</a>。</div>
 <div class="tw"><table><thead><tr><th>屬性</th><th>正邪</th><th>類型</th><th>攻擊招附帶</th><th>光環（下品／中品／上品）</th></tr></thead><tbody id="spBody"></tbody></table></div>
 <div class="sub" style="margin-top:6px">邪道魔功傷害 ×1.25，但每次施放會反噬自己的氣血（下品 3%、中品 5%、上品 8%、絕學 12%，不會因此死亡）。無屬性的法則絕學一律算術法。</div>
 <div class="tw" style="margin-top:8px"><table><thead><tr><th>品階</th><th class="num">單體威力</th><th class="num">群體威力</th><th class="num">牽制威力</th><th class="num">增益</th><th class="num">守護</th><th class="num">補血</th><th class="num">耗靈</th></tr></thead><tbody id="sgBody"></tbody></table></div>
@@ -414,7 +414,7 @@ function calc(){
     out.push(["追加攻擊",`每回合 ${+(p*100).toFixed(1)}% 觸發`,name,"p",total,key])});
   $("cSkills").innerHTML=`<div class="tw"><table><thead><tr><th>來源</th><th>技能</th><th>類型</th><th class="num">平均傷害</th></tr></thead><tbody>${out.map(x=>
     `<tr><td class="nw">${x[0]}${x[1]?`<br><span class="sub">${esc(x[1])}</span>`:""}</td><td><b>${esc(x[2])}</b></td><td><span class="tag ${TYPE[x[3]][1]}">${TYPE[x[3]][0]}</span></td><td class="num">${x[5]?`<button type="button" class="dnum" data-k="${x[5]}">${cb(x[4])}</button>`:"—"}</td></tr>`).join("")}</tbody></table></div>
-  <div class="sub" style="margin-top:6px"><b>點數字會跳出這一招的計算明細。</b>數字是放一次的<b>平均總傷害</b>：已經把命中率、敵人的減傷或魔抗、暴擊、屬性觸發（金重擊、雷擊等）、屬性秘典、種族剋制照機率攤進去；燒傷與中毒是「整段總傷害 ÷ 持續回合」再乘觸發率；全體招式是 ${N} 隻加起來。普通攻擊含連擊、橫掃和物攻套裝的「之怒」；追擊、風擊另外列在最下面，數字是每回合平均多打的量。實際每一下有 ±10% 浮動。對象、敵人數和各種效果在上方「戰鬥中才有的效果」調整。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法；宗門技能和仙法只列已放進技能格的。${A.fx["疾風"]?`<br>你有裝備特效「疾風」${+(A.fx["疾風"]*100).toFixed(1)}%：每回合有這個機率整個再出手一次，沒有另外列，等於每回合的出手次數 ×${+(1+A.fx["疾風"]).toFixed(3)}。`:""}</div>`;
+  <div class="sub" style="margin-top:6px"><b>點數字會跳出這一招的計算明細。</b>數字是放一次的<b>平均總傷害</b>：已經把命中率、敵人的減傷或魔抗、暴擊、屬性觸發（金重擊、雷擊等）、屬性秘典、種族剋制照機率攤進去；燒傷與中毒是「整段總傷害 ÷ 持續回合」再乘觸發率；全體招式是 ${N} 隻加起來。普通攻擊含連擊、橫掃和物攻套裝的「之怒」；追擊、風擊另外列在最下面，數字是每回合平均多打的量。實際每一下有 ±10% 浮動。對象、敵人數和各種效果在上方「戰鬥中才有的效果」調整。「技能傷害加成」只套用在宗門技能、靈寶閣武學和仙法；宗門技能、靈寶閣武學和仙法只列已放進技能格的。${A.fx["疾風"]?`<br>你有裝備特效「疾風」${+(A.fx["疾風"]*100).toFixed(1)}%：每回合有這個機率整個再出手一次，沒有另外列，等於每回合的出手次數 ×${+(1+A.fx["疾風"]).toFixed(3)}。`:""}</div>`;
 }
 function detailHtml(raw,h,o,cb){
   const row=(l,v,n)=>`<div class="ddl"><span>${l}${n?`<small>${n}</small>`:""}</span><b>${v}</b></div>`,big=x=>"<span class='dv'>"+cb(x)+"</span>";
@@ -491,7 +491,11 @@ document.querySelectorAll("#p-calc input,#p-calc select").forEach(e=>e.oninput=c
 const S=[];
 // 宗門技能要放進技能格才施放；新學會、還沒放過的會自動放進空格，自己卸下的不會被放回去
 function sectIdsOf(p){const o={};[1,2,3].forEach(t=>{const n=(p.sectSkills||{})[t];if(n)S.filter(x=>x[0]==="宗門技能"&&x[1]===n).forEach(x=>o["sect:"+x[2]]=x)});return o}
-function effSlots(p,slotN){const sr=sectIdsOf(p),got=p.spells||[],ok=id=>!!(sr[id]||(SPELL[id]&&!SPELL[id].aura&&got.includes(id))),slots=(p.spellSlots||[]).slice(),seen=p.sectSkillSeen||[];
+// 靈寶閣武學（2026-10-15 起）也要放進技能格才施放，格子裡記成 "lb:"＋招式名；自動放格的規則和宗門技能相同（宗門技能先放）
+function lbIdsOf(p){const o={};(p.learnedSkills||[]).forEach(sk=>{if(sk&&sk.name)o["lb:"+sk.name]=S.find(x=>x[0]==="靈寶閣武學"&&x[2]===sk.name)||["靈寶閣武學","已下架",sk.name,sk.type==="buff"?"s":sk.dmgType==="mag"?"m":"p",sk.type==="aoe"?"全體":sk.type==="buff"?"自身":"單體",sk.type==="buff"?null:sk.mult,sk.mpCost,null,sk.type==="buff"?`攻擊力 ×${sk.mult}，持續 ${sk.duration} 回合`:""]});return o}
+const slotRowsOf=p=>Object.assign(sectIdsOf(p),lbIdsOf(p));
+const lbSkillOf=(p,id)=>typeof id==="string"&&id.startsWith("lb:")?(p.learnedSkills||[]).find(sk=>sk&&"lb:"+sk.name===id)||null:null;
+function effSlots(p,slotN){const sr=slotRowsOf(p),got=p.spells||[],ok=id=>!!(sr[id]||(SPELL[id]&&!SPELL[id].aura&&got.includes(id))),slots=(p.spellSlots||[]).slice(),seen=p.sectSkillSeen||[];
   Object.keys(sr).forEach(id=>{if(seen.includes(id)||slots.slice(0,slotN).includes(id))return;for(let i=0;i<slotN;i++)if(!ok(slots[i])){slots[i]=id;return}});
   return Array.from({length:slotN},(_,i)=>ok(slots[i])?slots[i]:null)}
 const sect=(tier,list)=>list.forEach(([o,n,t,g,mp])=>S.push(["宗門技能",o,n,t,g,{1:1.5,2:2,3:3}[tier],mp,null,""]));
@@ -802,12 +806,11 @@ function analyze(p){
   const burst=burstFrom.reduce((a,x)=>a+x[1],0);fxMp=Math.min(.4,fxMp);
   // 會的技能
   const mine=[];
-  (p.learnedSkills||[]).forEach(sk=>{mine.push(S.find(x=>x[0]==="靈寶閣武學"&&x[2]===sk.name)||["靈寶閣武學","",sk.name,sk.type==="buff"?"s":sk.dmgType==="mag"?"m":"p",sk.type==="aoe"?"全體":sk.type==="buff"?"自身":"單體",sk.type==="buff"?null:sk.mult,sk.mpCost,null,sk.type==="buff"?`攻擊力 ×${sk.mult}，持續 ${sk.duration} 回合`:""])});
   if(prof)S.filter(x=>x[0]==="職業技能"&&x[1].startsWith(prof[0])&&rank>=parseInt(x[1].replace(/\D+/g,""))).forEach(x=>mine.push(x));
   const art=eqs["神器"]&&ART_OWNER[eqs["神器"].lingbaoId];if(art)S.filter(x=>x[0]==="神器技能"&&x[1]===art).forEach(x=>mine.push(x));
   team.forEach(id=>S.filter(x=>x[0]==="夥伴絕學"&&x[1]===PARTNER[id][0]).forEach(x=>mine.push(x)));
-  const slotN=3+Math.floor(lv/100),sectRow=sectIdsOf(p);
-  const slotIds=effSlots(p,slotN).filter(Boolean),slotted=slotIds.filter(id=>SPELL[id]);
+  const slotN=3+Math.floor(lv/100),sectRow=slotRowsOf(p);
+  const slotIds=effSlots(p,slotN).filter(Boolean),slotted=slotIds.filter(id=>SPELL[id]),lbSlotted=slotIds.map(id=>lbSkillOf(p,id)).filter(Boolean);
   slotIds.forEach(id=>mine.push(sectRow[id]||SPELL[id].row));
   // 輔助狀態：[類型, 來源, 實際效果]
   const pc1=v=>(v>=0?"+":"−")+ +(Math.abs(v)*100).toFixed(2)+"%";
@@ -825,11 +828,11 @@ function analyze(p){
   if(p.weakened)aid.push(["負面","虛弱（渡劫失敗）","物理攻擊、術法攻擊、氣血上限、靈力上限 ×0.7，修回 10 階解除"]);
   (p.beasts||[]).filter(b=>b.alive&&b.active!==false).forEach(b=>(b.skills||[]).forEach(id=>{const k=BEAST_BUFF[id];if(k)aid.push(["暫時",`${BEAST_NAME[b.id]||"靈寵"}・${k[0]}`,`${k[4]}，持續 ${k[2]} 回合`])}));
   slotted.forEach(id=>{const x=SPELL[id];if(x.buff)aid.push(["暫時","仙法・"+x.name,`物理攻擊、術法攻擊各 ${pc1(x.buff-1)}（進增益），持續 ${x.turns} 回合`]);if(x.shield)aid.push(["暫時","仙法・"+x.name,`你受到的傷害 −${Math.round(x.shield*100)}%，持續 ${x.turns} 回合`])});
-  (p.learnedSkills||[]).forEach(sk=>{if(sk.type==="buff")aid.push(["暫時","禁術・"+sk.name,`物理攻擊、術法攻擊各 ${pc1(sk.mult-1)}（進增益），持續 ${sk.duration} 回合`])});
+  lbSlotted.forEach(sk=>{if(sk.type==="buff")aid.push(["暫時","禁術・"+sk.name,`物理攻擊、術法攻擊各 ${pc1(sk.mult-1)}（進增益），持續 ${sk.duration} 回合`])});
   // 戰鬥中才有的效果（試算區可以勾選要不要算）：同一種效果取最高的那個
   const bsk=[];(p.beasts||[]).filter(b=>b.alive&&b.active!==false).forEach(b=>(b.skills||[]).forEach(id=>bsk.push([BEAST_NAME[b.id]||b.name||"靈寵",id])));
   const bestFx=k=>bsk.reduce((m,[n,id])=>{const f=PET_FX[id];return f&&f[1][k]&&(!m||f[1][k]>m[1])?[`${n}「${f[0]}」`,f[1][k]]:m},null);
-  const selfB=[];(p.learnedSkills||[]).forEach(sk=>{if(sk.type==="buff"&&sk.mult>1)selfB.push([`禁術「${sk.name}」`,sk.mult-1])});slotted.forEach(id=>{const x=SPELL[id];if(x.buff>1)selfB.push([`仙法「${x.name}」`,x.buff-1])});
+  const selfB=[];lbSlotted.forEach(sk=>{if(sk.type==="buff"&&sk.mult>1)selfB.push([`禁術「${sk.name}」`,sk.mult-1])});slotted.forEach(id=>{const x=SPELL[id];if(x.buff>1)selfB.push([`仙法「${x.name}」`,x.buff-1])});
   let fxBeast=0;SLOTS.forEach(k=>{const eq=eqs[k],d=gdef(eq),m=eq&&({"紫色":1,"橙色":1.5,"白金":2})[eq.quality];if(d&&m&&d.fx==="獸魂")fxBeast+=.1*m});
   const beastDmg=1+Math.min(.6,fxBeast)+tot("fx:獸魂");
   const auraAll={};learned.forEach(id=>{const au2=SPELL[id].aura;if(au2)for(const k in au2)auraAll[k]=(auraAll[k]||0)+au2[k]});
@@ -1043,9 +1046,9 @@ function renderSetup(){
   const beastOn=id=>(b.beasts||[]).some(x=>x.id===id&&x.alive&&x.active!==false),beastLabel=id=>BEAST_NAME[id]||((b.beasts||[]).find(x=>x.id===id)||{}).name||id,beastFull=beastIds(b).filter(beastOn).length>=BEAST_MAX;
   const ptOpts=[["","（無）"]].concat(Object.keys(PARTNER).map(id=>[id,PARTNER[id][0]+(effText(PARTNER[id][1])?`（${effText(PARTNER[id][1])}）`:"")]));
   const phyOpts=[["","（未測）"]].concat(Object.keys(PHYS).map(id=>{const x=PHYS[id],sp=x[2]||{},t=[effText(x[1]),sp.weapon&&`裝備${sp.weapon}時該武器攻擊 +15%、技能傷害 +10%`,sp.elem&&`本命五行為${sp.elem}時攻擊 +8%`].filter(Boolean).join("、");return [id,x[0]+(t?`（${t}）`:"")]}));
-  const slotN=Math.min(10,3+Math.floor((b.level||1)/100)),slots=effSlots(b,3+Math.floor((b.level||1)/100)),sectRow=sectIdsOf(b);
+  const slotN=Math.min(10,3+Math.floor((b.level||1)/100)),slots=effSlots(b,3+Math.floor((b.level||1)/100)),sectRow=slotRowsOf(b);
   shownSect=Object.keys(sectRow);
-  const spOpts=[["","（空）"]].concat(Object.keys(sectRow).map(id=>{const r=sectRow[id];return [id,`🏯${r[2]}（${r[1]}・${TYPE[r[3]][0]} ×${r[5]}）`]}),ACTIVE_IDS.map(id=>{const r=SPELL[id].row;return [id,`${r[2]}（${r[1]}・${TYPE[r[3]][0]}${r[5]?" ×"+r[5]:""}）`]}));
+  const spOpts=[["","（空）"]].concat(Object.keys(sectRow).map(id=>{const r=sectRow[id];return [id,`${id.startsWith("lb:")?"💎":"🏯"}${r[2]}（${r[1]}・${TYPE[r[3]][0]}${r[5]?" ×"+r[5]:""}）`]}),ACTIVE_IDS.map(id=>{const r=SPELL[id].row;return [id,`${r[2]}（${r[1]}・${TYPE[r[3]][0]}${r[5]?" ×"+r[5]:""}）`]}));
   const titles=b.titles||[],fires=b.fireCollection||{},spells=b.spells||[],learned=(b.learnedSkills||[]).map(x=>x.name);
   $("setupBox").innerHTML=
   sec("sect","宗門與職業",`${(b.sect&&b.sect.name)||"無宗門"}・${b.profession&&PROF[b.profession]?PROF[b.profession][0]+" "+rank+" 階":"未選職業"}`,
@@ -1071,9 +1074,9 @@ function renderSetup(){
     <div class="sub" style="margin-top:8px">天下異火（每種收錄一次即永久生效）</div>
     <div class="cks">${Object.keys(FIRE).map(id=>chk("f_"+id,fires[id]>0,`${FIRE_NAME[id]}（${effText(FIRE[id])}）`)).join("")}</div>`)+
   sec("skill","武學與仙法",`靈寶閣武學 ${LB_SKILLS.filter(x=>learned.includes(x[2])).length}・光環 ${spells.filter(id=>AURA_IDS.includes(id)).length}`,
-    `<div class="sub">靈寶閣武學</div><div class="cks">${LB_SKILLS.map(x=>chk("lb_"+x[2],learned.includes(x[2]),`${x[2]}（${x[1]}・${TYPE[x[3]][0]}${x[4]} ×${x[5]}）`)).join("")}</div>
+    `<div class="sub">靈寶閣武學（兌換過的；要放進下方技能格才會施放）</div><div class="cks">${LB_SKILLS.map(x=>chk("lb_"+x[2],learned.includes(x[2]),`${x[2]}（${x[1]}・${TYPE[x[3]][0]}${x[4]} ×${x[5]}）`)).join("")}</div>
     <div class="sub" style="margin-top:8px">下品仙法光環（學會就永久生效）</div><div class="cks">${AURA_IDS.map(id=>chk("a_"+id,spells.includes(id),`${SPELL[id].name}（${SPELL[id].row[8].replace("光環：","")}）`)).join("")}</div>
-    <div class="sub" style="margin-top:8px">技能格（基本 3 格，每 100 級多 1 格；宗門技能和主動仙法都要放進來才會施放，這裡最多列 10 格）</div><div class="ctl">${Array.from({length:slotN},(_,i)=>`<label>第 ${i+1} 格${sel("sp"+i,spOpts,slots[i]||"")}</label>`).join("")}</div>`)+
+    <div class="sub" style="margin-top:8px">技能格（基本 3 格，每 100 級多 1 格；宗門技能、靈寶閣武學和主動仙法都要放進來才會施放，這裡最多列 10 格）</div><div class="ctl">${Array.from({length:slotN},(_,i)=>`<label>第 ${i+1} 格${sel("sp"+i,spOpts,slots[i]||"")}</label>`).join("")}</div>`)+
   sec("etc","其他",`${b.weakened?"虛弱中":"無虛弱"}`,
     `<div class="ctl"><label>轉世保留的氣血上限${num("reinc",Math.round(((b.reincarnateBonus||{}).nv2Hp||0)*100))}</label>${chk("weak",!!b.weakened,"虛弱（渡劫失敗，攻擊、氣血、靈力上限 ×0.7）")}</div>`);
 }
@@ -1313,8 +1316,8 @@ function stDefaults(a){
 //   裝備特效、屬性觸發、種族剋制、技能格裡會放的招式、神器／職業技能、夥伴絕學、出戰靈寵的技能
 function stInput(a,P){
   const A=a.ex,p=a.p,CB=DMG.EX.cb,F=n=>A.fx[n]||0,bond=id=>(((p.partnerBond||{})[id]||{}).pts||0)>=1500;
-  const slots=effSlots(p,a.slotN).slice(0,a.slotN).filter(Boolean).map(id=>id.startsWith(CB.prefix)?CB.sect[id.slice(CB.prefix.length)]:CB.spell[id]).filter(Boolean);
-  const skills=(p.learnedSkills||[]).filter(x=>x&&x.type).concat(slots);
+  const slots=effSlots(p,a.slotN).slice(0,a.slotN).filter(Boolean).map(id=>id.startsWith(CB.prefix)?CB.sect[id.slice(CB.prefix.length)]:lbSkillOf(p,id)||CB.spell[id]).filter(x=>x&&x.type);
+  const skills=slots;
   const art=(a.eqs["神器"]&&CB.art[a.eqs["神器"].lingbaoId])||null,prof=((p.profession&&CB.prof[p.profession])||[]).filter(x=>a.rank>=x.rank).sort((x,y)=>y.rank-x.rank);
   const partners=a.team.filter(id=>CB.partner[id]).map(id=>({sk:CB.partner[id],chance:CB.partner[id].chance+(bond(id)?CB.par.lv5:0)}));
   const beasts=(p.beasts||[]).filter(b=>b&&b.alive&&b.active!==false).slice(0,CB.pet.max).map(b=>(b.skills||[]).map(id=>CB.beast[id]).filter(Boolean));

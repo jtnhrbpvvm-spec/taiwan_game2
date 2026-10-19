@@ -44,9 +44,10 @@ function __build(o){
     const act = some(spellList.filter(s => s.active), 9), au = some(spellList.filter(s => !s.active), 4);
     player.spells = act.concat(au).map(s => s.id);
     const sects = {}; sectData.forEach(c => { if (chance(0.7)) sects[c.tier] = pick(c.items).name; }); player.sectSkills = sects;
-    const sectIds = getLearnedSectSkills().map(e => e.id); player.sectSkillSeen = sectIds.slice();
-    player.spellSlots = some(act.map(s => s.id).concat(sectIds), getSpellSlotCount());
     player.learnedSkills = some(lingbaoShopItems.filter(i => i.type === 'skill'), pick([0, 1, 2])).map(i => Object.assign({}, i.skillData));
+    // 2026-10-15 起靈寶閣武學也要放技能格（"lb:" 招式名）
+    const sectIds = getLearnedSectSkills().concat(getLearnedLingbaoSkills()).map(e => e.id); player.sectSkillSeen = sectIds.slice();
+    player.spellSlots = some(act.map(s => s.id).concat(sectIds), getSpellSlotCount());
     // 神器、職業、夥伴、靈寵
     if (chance(0.7)) { const slot = Object.keys(equipTypes).find(k => equipTypes[k] === 'artifact'), it = pick(lingbaoShopItems.filter(i => i.type === 'equip' && i.itemData.category === 'artifact'));
       player.equipment[slot] = { id: "a1", name: it.itemData.name, category: it.itemData.category, quality: it.itemData.quality, element: it.itemData.element, stats: Object.assign({}, it.itemData.stats), lingbaoId: it.id }; }
