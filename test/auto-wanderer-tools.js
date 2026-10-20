@@ -22,7 +22,8 @@ javascript:(function awTools() {
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *  18. 不上傳雲端存檔：小工具設定裡的選項（預設關閉）；自動刷神話進行中也一律不上傳
-   *  19. 商人選變異：在商人買技能寶石時跳出視窗，選要原本的形狀或哪一種變異形狀（能力相同）
+   *  19. 商人選變異：在商人買技能寶石時跳出視窗，選要原本的形狀或哪一種變異形狀（能力相同）；
+   *      商人的「主動技能」也賣自己職業的傳說技能寶石、「輔助技能」也賣穿梭寶石（價格固定，不能自己調整）
    *  20. 指定萃取、指定灌注：煉金的萃取／灌注視窗裡，每條詞綴旁有按鈕，指定萃取這條、或指定用哪顆符文取代這條
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
@@ -38,7 +39,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V33';
+  const VERSION = 'V35';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -90,6 +91,8 @@ javascript:(function awTools() {
     monLoopLootMs: 2500,    /* 自動刷神話：打贏後等幾毫秒讓掉落物落地，再收起來檢查 */
     monLoopBatch: 1,        /* 自動刷神話：「每打幾場才讀一次檔」的預設值（開始時還可以再改） */
     shopMut: true,          /* 商人買技能寶石時先選形狀（原形狀或任一種合法的變異形狀） */
+    legShop: true,          /* 商人的「主動技能」也賣自己職業的傳說技能寶石（價格固定，見第 19 項的 LEG_PRICE） */
+    sxShop: true,           /* 商人的「輔助技能」也賣穿梭寶石（其他職業的輔助寶石；價格固定，見第 19 項的 SX_PRICE） */
     afPick: true,           /* 萃取、灌注視窗的每條詞綴旁加上按鈕：指定萃取這條、指定用哪顆符文取代這條 */
     noCloud: false,         /* 不上傳 Google 雲端存檔（開啟期間遊戲會顯示沒登入 Google，關掉後自動恢復） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
@@ -2734,19 +2737,21 @@ javascript:(function awTools() {
     const minus = n > 1 ? uniq(base.map((_, i) => base.filter((p, j) => j !== i)).filter(polyConn)) : [];
     return [['原本的形狀（' + n + ' 格）', [null]], ['同格數換形狀（' + n + ' 格）', same], ['多 1 格（' + (n + 1) + ' 格）', plus], ['少 1 格（' + (n - 1) + ' 格）', minus]].filter(g => g[1].length);
   };
-  /* 已經持有幾顆這個形狀（穿梭寶石不算） */
-  const shapeOwned = (id, sh) => {
+  /* 已經持有幾顆這個形狀；sx 為真時只算穿梭寶石，否則只算一般寶石 */
+  const shapeOwned = (id, sh, sx) => {
     const k = polyKey(sh || SKILLS[id].shape);
-    return S.gems.filter(g => g.id === id && !g.sx && polyKey(g.sh || SKILLS[id].shape) === k).length;
+    return S.gems.filter(g => g.id === id && !g.sx === !sx && polyKey(g.sh || SKILLS[id].shape) === k).length;
   };
-  const shapeIcon = (id, sh, px) => {
-    try { const a = gemArt(id, 0, 4, sh || undefined); return '<span style="display:inline-block;width:' + (a.W * px) + 'px;height:' + (a.H * px) + 'px">' + a.svg.replace('<svg', '<svg style="display:block;width:100%;height:100%"') + '</span>'; }
+  const shapeIcon = (id, sh, px, sx) => {
+    try { const a = gemArt(id, 0, 4, sh || undefined, sx ? 1 : undefined); return '<span style="display:inline-block;width:' + (a.W * px) + 'px;height:' + (a.H * px) + 'px">' + a.svg.replace('<svg', '<svg style="display:block;width:100%;height:100%"') + '</span>'; }
     catch (e) { return ''; }
   };
-  const openShopMut = (id, price) => {
+  /* sx 為真：賣的是穿梭寶石（和遊戲掉落的一樣帶 sx:1，外框銀白，可連結自己職業的主動寶石） */
+  const openShopMut = (id, price, sx) => {
     const sk = SKILLS[id];
     if (!sk) return false;
-    const groups = mutChoices(id);
+    /* 傳說寶石、穿梭寶石遊戲都不會讓它變異（掉落和合成都沒有變異的），所以只賣原本的形狀 */
+    const groups = sk.leg || sx ? [['原本的形狀（' + sk.shape.length + ' 格）', [null]]] : mutChoices(id);
     const flat = [];
     for (const g of groups) for (const sh of g[1]) flat.push(sh);
     let pick = 0;
@@ -2754,19 +2759,22 @@ javascript:(function awTools() {
     const draw = () => {
       let i = 0;
       box.innerHTML =
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">購買 ' + escH(sk.n) + '</b><span style="color:#a89a84">選擇形狀（能力都相同）</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">購買 ' + escH(sk.n) + (sx ? '（穿梭）' : sk.leg ? '（傳說）' : '') + '</b>' +
+          (groups.length > 1 || groups[0][1].length > 1 ? '<span style="color:#a89a84">選擇形狀（能力都相同）</span>' : '') +
           '<span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
         groups.map(g => '<div style="margin:6px 0 2px;color:#ffd84a">' + g[0] + '</div><div style="display:flex;flex-wrap:wrap;gap:4px">' +
           g[1].map(sh => {
-            const k = i++, own = shapeOwned(id, sh);
+            const k = i++, own = shapeOwned(id, sh, sx);
             return '<button data-a="pick" data-i="' + k + '" title="已持有 ' + own + ' 顆" style="cursor:pointer;padding:4px;min-width:52px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:' + (k === pick ? '#5a4a20' : '#1a1410') + ';border:2px solid ' + (k === pick ? '#ffd84a' : '#3a3026') + ';color:#f0e6d2">' +
-              shapeIcon(id, sh, 2) + '<small style="color:#a89a84">' + (own ? '持有 ' + own : '&nbsp;') + '</small></button>';
+              shapeIcon(id, sh, 2, sx) + '<small style="color:#a89a84">' + (own ? '持有 ' + own : '&nbsp;') + '</small></button>';
           }).join('') + '</div>').join('') +
         '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">' +
           '<span>數量</span><input data-r="n" type="number" min="1" value="1" style="width:70px;padding:3px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
           '<span>單價 ' + fmt(price) + ' 灰燼・你有 ' + fmt(S.ash) + '</span><span style="flex:1"></span>' +
           '<button data-a="buy" style="' + AW_GO + '">購買</button></div>' +
-        (flat[pick] ? '<div style="color:#ffb070;font-size:12px;margin-top:6px">變異寶石本來只能靠掉落或合成取得，買變異形狀是小工具直接把寶石加進存檔，修改【可能】被作者封鎖。</div>' : '');
+        (sx ? '<div style="color:#ffb070;font-size:12px;margin-top:6px">穿梭寶石是其他職業的輔助寶石，可連結你職業的主動寶石；本來只能從 90 級以上的菁英、Boss（或石板詞綴）極少量掉落，商人賣穿梭寶石是小工具加的，修改【可能】被作者封鎖。</div>' :
+          sk.leg ? '<div style="color:#ffb070;font-size:12px;margin-top:6px">傳說寶石本來只能從 90 級以上的菁英、Boss 掉落，商人賣傳說寶石是小工具加的，修改【可能】被作者封鎖。</div>' :
+          flat[pick] ? '<div style="color:#ffb070;font-size:12px;margin-top:6px">變異寶石本來只能靠掉落或合成取得，買變異形狀是小工具直接把寶石加進存檔，修改【可能】被作者封鎖。</div>' : '');
     };
     box.addEventListener('click', e => {
       const b = e.target.closest('button[data-a]');
@@ -2781,13 +2789,14 @@ javascript:(function awTools() {
         const sh = flat[pick];
         for (let k = 0; k < can; k++) {
           S.ash -= price;
-          if (sh) S.gems.push({ u: uid(), id: id, x: -1, y: -1, rot: 0, sh: sh.map(p => p.slice()) });
+          if (sx) S.gems.push({ u: uid(), id: id, x: -1, y: -1, rot: 0, sx: 1 });
+          else if (sh) S.gems.push({ u: uid(), id: id, x: -1, y: -1, rot: 0, sh: sh.map(p => p.slice()) });
           else giveGem(id);
         }
         try { ui.badge('skill', 1); } catch (err) {}
         markDirty();
         try { ui.render(); } catch (err) {}
-        toast('購買成功：' + sk.n + (sh ? '（變異 ' + sh.length + ' 格）' : '') + ' ×' + can + (can < n ? '（灰燼只夠買 ' + can + ' 顆）' : ''), 'lvl');
+        toast('購買成功：' + sk.n + (sx ? '（穿梭）' : sh ? '（變異 ' + sh.length + ' 格）' : '') + ' ×' + can + (can < n ? '（灰燼只夠買 ' + can + ' 顆）' : ''), 'lvl');
         draw();
       }
     });
@@ -2803,6 +2812,57 @@ javascript:(function awTools() {
       e.stopPropagation(); e.preventDefault();
       openShopMut(id, price);
     }, true);
+  }
+  /* 商人加賣的寶石：
+   *   - 「主動技能」最前面：自己職業的傳說技能寶石（SKILLS 裡有 leg 的；遊戲新增傳說寶石會自動出現）
+   *   - 「輔助技能」最前面：穿梭寶石，也就是其他職業的輔助寶石（遊戲的 sxPool(職業)；和掉落的一樣帶 sx:1）
+   * 價格是故意設高的固定值，寫死在這裡，不放進小工具設定（設定會存在瀏覽器裡，玩家改得到）。
+   * 按鈕不用遊戲的購買按鈕（data-act="buy" 會照按鈕上寫的 data-c 扣灰燼，改網頁就能改價格），
+   * 而是自己的按鈕，按下去一律用這裡的價格，開購買視窗（數量、灰燼不夠時只買得起的份）。
+   * 商品的樣子照抄遊戲商人的格式（.ware）。遊戲每次重畫商人頁面都會把格子換掉，所以每隔一下檢查一次，不見了就再加。 */
+  const LEG_PRICE = 1000000, SX_PRICE = 1000000;
+  if (first && (CFG.legShop || CFG.sxShop)) {
+    const exWare = (id, sx) => {
+      const sk = SKILLS[id], price = sx ? SX_PRICE : LEG_PRICE, ok = S.ash >= price, col = sx ? '#e8f0ff' : '#e8b030';
+      let art = '';
+      try { const a = gemArt(id, 0, 5, undefined, sx ? 1 : undefined), k = Math.max(1, Math.min(3, Math.floor(56 / Math.max(a.W, a.H)))); art = '<span class="shape" style="width:' + (a.W * k) + 'px;height:' + (a.H * k) + 'px">' + a.svg + '</span>'; } catch (e) {}
+      let tip = sk.d || '';
+      try { tip = tagText(sk) + (sk.cd ? '・冷卻 ' + sk.cd + ' 秒' : '') + '・' + sk.d; } catch (e) {}
+      const own = S.gems.filter(g => g.id === id && !g.sx === !sx).length;
+      const sub = sx ? '穿梭・' + (sk.cls && CLASS[sk.cls] ? CLASS[sk.cls].n : '其他職業') + '的輔助' : '傳說';
+      return '<div class="ware awExWare" style="box-shadow:0 0 0 2px ' + col + ' inset">' +
+        '<div class="wwell">' + art + (own ? '<span class="own px">×' + own + '</span>' : '') + '</div>' +
+        '<div class="wn"><span class="tip" tabindex="0" data-tip="' + escH(tip) + '">' + escH(sk.n) + '</span></div>' +
+        '<div class="ws"><span style="color:' + col + '">' + sub + '</span></div>' +
+        '<button class="btn sm awExBuy ' + (ok ? 'primary' : '') + '" data-id="' + id + '" data-sx="' + (sx ? 1 : 0) + '" ' + (ok ? '' : 'disabled') + ' aria-label="' + price + ' 灰燼購買">' +
+          '<img class="ashI" src="' + shopIcon('ash') + '" alt="灰燼"><span class="px">' + fmt(price) + '</span></button></div>';
+    };
+    document.addEventListener('click', e => {
+      const b = e.target && e.target.closest && e.target.closest('.awExBuy');
+      if (!b) return;
+      e.stopPropagation(); e.preventDefault();
+      if (b.disabled) return;
+      const id = b.dataset.id, sx = b.dataset.sx === '1';
+      if (typeof SKILLS === 'undefined' || !SKILLS[id]) return;
+      if (sx ? !CFG.sxShop || !sxPool(S.cls).includes(id) : !CFG.legShop || !SKILLS[id].leg || SKILLS[id].cls !== S.cls) return;
+      openShopMut(id, sx ? SX_PRICE : LEG_PRICE, sx);
+    }, true);
+    setInterval(() => {
+      try {
+        if (typeof S === 'undefined' || !S || ui.tab !== 'more' || ui.moreView !== 'shop') return;
+        const v = ui.shopV || 'pot';
+        const grid = document.querySelector('#panel .shopG');
+        if (!grid) return;
+        let list = [];
+        if (v === 'act' && CFG.legShop) list = Object.keys(SKILLS).filter(k => SKILLS[k].leg && SKILLS[k].cls === S.cls).map(k => [k, false]);
+        if (v === 'sup' && CFG.sxShop && typeof sxPool === 'function') list = sxPool(S.cls).filter(k => SKILLS[k]).map(k => [k, true]);
+        const sig = v + '|' + list.map(([k, sx]) => k + ':' + S.gems.filter(g => g.id === k && !g.sx === !sx).length).join(',') + '|' + (S.ash >= LEG_PRICE ? 1 : 0) + (S.ash >= SX_PRICE ? 1 : 0);
+        if (grid.dataset.awEx === sig && (!list.length || grid.querySelector('.awExWare'))) return;
+        grid.querySelectorAll('.awExWare').forEach(el => el.remove());
+        grid.insertAdjacentHTML('afterbegin', list.map(([k, sx]) => exWare(k, sx)).join(''));
+        grid.dataset.awEx = sig;
+      } catch (e) {}
+    }, CFG.btnRefreshMs);
   }
 
   /* ===== 20. 指定萃取、指定灌注 =====
@@ -3274,7 +3334,7 @@ javascript:(function awTools() {
       ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
       ['cards', '卡片進度', '地圖分頁'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
       ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現'],
-      ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
+      ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['legShop', '商人賣傳說技能寶石', '選單 → 商人 → 主動技能'], ['sxShop', '商人賣穿梭寶石', '選單 → 商人 → 輔助技能'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
     ]],
     ['物品上限', [
       ['noLimit', '物品持有無上限', '背包、石板、符文、共用倉庫'],
@@ -3296,8 +3356,7 @@ javascript:(function awTools() {
     ]],
     ['其他', [
       ['autoBackup', '套用匯入的計畫、解鎖神器前自動備份'], ['backupKeep', '瀏覽器裡最多保留幾份備份'],
-      ['planCell', '配置模擬的格子大小（px）'], ['gemPrice', '商店一顆技能寶石的灰燼價格', '匯入代碼自動補買時用'],
-      ['tickMs', '背景時每幾毫秒推動一次遊戲', '太小會吃資源，太大遊戲會變慢'],
+      ['planCell', '配置模擬的格子大小（px）'], ['gemPrice', '商店一顆技能寶石的灰燼價格', '匯入代碼自動補買時用'],      ['tickMs', '背景時每幾毫秒推動一次遊戲', '太小會吃資源，太大遊戲會變慢'],
       ['barRefreshMs', '血條更新間隔（毫秒）'], ['cdRefreshMs', '冷卻文字更新間隔（毫秒）'], ['hpRefreshMs', '生命明細更新間隔（毫秒）'], ['btnRefreshMs', '檢查按鈕是否還在的間隔（毫秒）']
     ]]
   ];
