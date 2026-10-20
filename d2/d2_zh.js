@@ -665,7 +665,11 @@ text: {
 'to Barbarian Skill Levels': '野蠻人技能等級', 'to Necromancer Skill Levels': '死靈法師技能等級', 'to Paladin Skill Levels': '聖騎士技能等級', 'to Sorceress Skill Levels': '女巫技能等級',
 'to Enemy Cold Resistance': '敵人冰寒抗性', 'to Maximum Magic Damage': '最大魔法傷害', 'to Minimum Magic Damage': '最小魔法傷害', 'to Experience Gained': '獲得經驗值',
 '+# to Bow and Crossbow Skills': '+{0} 弓和十字弓技能', '+# to Combat Skills': '+{0} 戰鬥技能', '+# to Javelin and Spear Skills': '+{0} 標槍和長矛技能',
-'+# to Passive and Magic Skills': '+{0} 被動和魔法技能', '+# to Poison and Bone Skills': '+{0} 毒素和骨系技能', '+#% to Maximum Cold Resist': '+{0}% 最大冰寒抗性',
+'+# to Passive and Magic Skills': '+{0} 被動和魔法技能', '+#% to Maximum Cold Resist': '+{0}% 最大冰寒抗性',
+// 死靈法師技能樹（照易牙居技能頁：召喚技能／毒素和白骨技能／詛咒技能）
+'Poison and Bone Skills': '毒素和白骨技能', '+# to Poison and Bone Skills': '+{0} 毒素和白骨技能',
+'Summoning Skills': '召喚技能', '+# to Summoning Skills': '+{0} 召喚技能', 'Curses': '詛咒技能', '+# to Curses': '+{0} 詛咒技能',
+'Shape Shifting Skills': '外形變形技能', '+# to Shape Shifting Skills': '+{0} 外形變形技能', '+# to Elemental Skills': '+{0} 元素技能',
 '+* to * (* Only)': '+{0} {1}（限{2}）', '*% Chance to cast level * * when you Kill an Enemy': '擊殺敵人時有 {0}% 機率施放等級 {1} 的{2}',
 '*% Chance to cast level * * when you Level-Up': '升級時有 {0}% 機率施放等級 {1} 的{2}',
 '+#% better chance of magic items per rank': '每級尋獲魔法物品機率 +{0}%', 'Come back at half life once more per run, per rank': '每級：每一輪多一次以一半生命復活',
@@ -932,7 +936,7 @@ iya: {
 'Snowflake': '雪白', 'Soldier\'s': '士兵', 'Soul Drainer': '吸魂者', 'Soul Harvest': '靈魂採集者', 'Spearmaiden\'s': '女矛手', 'Spellsteel': '鋼鐵魔咒',
 'Spetum': '大戰戟', 'Spike Thorn': '尖刺根源', 'Spiked Club': '狼牙棒', 'Spiked Shield': '尖刺盾牌', 'Spirit Forge': '靈魂鎔爐', 'Steel Carapace': '鋼鐵鎧甲',
 'Steeldriver': '鐵製大槌', 'Steelgoad': '鐵刺棒', 'Stone Crusher': '碎石者', 'Stormchaser': '風暴追逐者', 'Stormlash': '暴風之結', 'Stormrider': '暴風騎士',
-'Stormshield': '暴風之盾', 'Stormspire': '暴風尖塔', 'Stoutnail': '堅硬的指甲', 'String of Ears': '長串之耳', 'Sturdy': '結實', 'Summoner\'s': '照喚者',
+'Stormshield': '暴風之盾', 'Stormspire': '暴風尖塔', 'Stoutnail': '堅硬的指甲', 'String of Ears': '長串之耳', 'Sturdy': '結實', 'Summoner\'s': '召喚者',
 'Sureshrill Frost': '尖嘯冰霜', 'Swirling Crystal': '渦流水晶', 'Swordback Hold': '劍背之架', 'Templar Coat': '聖堂武士外袍', 'Templar\'s Might': '聖堂武士的力量',
 'Terra\'s': '祭司', 'The Atlantean': '亞特拉斯', 'The Battlebranch': '戰鬥支系', 'The Cranium Basher': '碎腦錘', 'The Diggler': '迪格勒',
 'The Gavel Of Pain': '痛苦木槌', 'The Grim Reaper': '冷酷開膛手', 'The Jade Tan Do': '坦社之玉', 'The Minotaur': '牛頭怪', 'The Spirit Shroud': '靈魂帷幕',
@@ -1591,10 +1595,15 @@ for (const [en, zh] of Object.entries(D2ZH_EXTRA.labels)) if (!d2zhKnown.has(en.
 const d2zhPatterns = D2ZH_EXTRA.patterns.map(([en, zh]) => [new RegExp('^' + en.split(/(\{#?\})/).map(part =>
 part === '{}' ? '(.+?)' : part === '{#}' ? '([-+]?\\d[\\d.,]*)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('') + '$', 'i'), zh]);
 window.__d2zhKnown = s => lookup.has(String(s).toLowerCase());
+// 技能名稱放在句子裡時不要帶「（魔法）」這類元素標記（例如「+3 骨矛（限死靈法師）」「牙每級 +7%」）
+function d2zhPlain(value) {
+const text = translate(value);
+return D2ZH_EXTRA.skillTags[value] ? text.replace(/（[^）]*）$/, '') : text;
+}
 function d2zhPattern(source) {
 for (const [re, zh] of d2zhPatterns) {
 const m = re.exec(source);
-if (m) return zh.replace(/\{(\d)\}/g, (_, i) => translate(m[i]));
+if (m) return zh.replace(/\{(\d)\}/g, (_, i) => d2zhPlain(m[i]));
 }
 const m = /^(.+) (of (?:the )?[A-Z][\w']*(?: [A-Z][\w']*)?)$/.exec(source);
 if (m && lookup.has(m[2].toLowerCase())) return translate(m[2]) + translate(m[1]);
@@ -1649,7 +1658,7 @@ const m = w.re.exec(text);
 if (!m) continue;
 return w.chinese.replace(/\{(\d+)\}/g, (_, i) => {
 const v = (m[+i + 1] || '').trim();
-return w.kinds[i] === '#' ? v : translate(v.replace(/^the\s+/i, ''));
+return w.kinds[i] === '#' ? v : d2zhPlain(v.replace(/^the\s+/i, ''));
 });
 }
 if (depth > 2) return null;
