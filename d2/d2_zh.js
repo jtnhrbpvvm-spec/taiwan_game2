@@ -494,12 +494,61 @@ box.append(d2edEl('p', { class: 'd2ed-note' }, '恰西賣的永久升級，每�
 d2edEl('div', { class: 'd2ed-row' },
 d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: apply }, '儲存並重新載入'),
 d2edEl('button', { type: 'button', onclick: fill }, '全部填滿')),
-d2edEl('p', { class: 'd2ed-note' }, '儲存後頁面會重新載入，要再點一次書籤才會恢復中文。'));
+d2edEl('p', { class: 'd2ed-note' }, window.__D2ZH_DESKTOP ? '儲存後遊戲會重新載入，中文會自動恢復。' : '儲存後頁面會重新載入，要再點一次書籤才會恢復中文。'));
+return box;
+}
+// 電腦安裝版：從作者（我們）的 GitHub 更新中文化。頁面不能上網，由 d2zh-inject.cjs（主程序）下載，
+// 這裡用 console.log('__D2ZH__:update') 通知它，下載完它會呼叫 window.__d2zhUpdateDone(結果)。
+function d2edUpdateSection() {
+const desk = window.__D2ZH_DESKTOP;
+if (!desk) return null;
+const box = d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '中文化更新（電腦版）'));
+if (typeof desk !== 'object' || !desk.updater) {
+box.append(d2edEl('p', { class: 'd2ed-note' }, '這個版本還不能在遊戲裡更新：請重新下載「D2倖存者中文化.zip」，執行一次「建立桌面捷徑.cmd」或「安裝中文版.cmd」。'));
+return box;
+}
+const when = t => t ? new Date(t).toLocaleString('zh-TW', { hour12: false }) : '—';
+const loaded = desk.fileTime || 0;   // 這個頁面正在用的翻譯檔時間（注入時記下的）
+// 新的翻譯檔是在這個頁面載入之後才下載的，才需要重新載入
+const needReload = r => !!r && r.changed.includes('d2_zh.js') && loaded < r.at;
+const status = d2edEl('p', { class: 'd2ed-note d2ed-update-status' });
+const describe = r => {
+if (!r) return `目前翻譯檔：${when(loaded)}`;
+if (r.errors.length && !r.changed.length) return `更新失敗（${r.errors[0]}）。請確認網路連線後再試一次。`;
+if (!needReload(r) && r.applies !== 'restart') return `已經是最新版（${when(r.at)} 檢查）。`;
+if (!needReload(r)) return '已下載新版安裝程式，下次開遊戲時生效。';
+if (r.applies === 'restart') return '已下載新版！翻譯按「重新載入」就會套用；安裝程式的部分在下次開遊戲時生效。';
+return '已下載新版翻譯！按「重新載入」就會套用。';
+};
+const reload = d2edEl('button', { type: 'button', class: 'd2ed-main', style: 'display:none', onclick: () => {
+if (!document.body.classList.contains('no-run') && !confirm('遊戲中重新載入，這一局沒存到的進度會不見。確定要重新載入嗎？\n（建議先「儲存並離開遊戲」，在主選單再按）')) return;
+location.reload();
+} }, '重新載入');
+const show = r => {
+status.textContent = describe(r);
+reload.style.display = needReload(r) ? '' : 'none';
+};
+const check = d2edEl('button', { type: 'button', onclick: () => {
+check.disabled = true;
+status.textContent = '正在從 GitHub 檢查更新…';
+window.__d2zhUpdateDone = result => {
+check.disabled = false;
+// 之前（例如開遊戲時的背景檢查）已經下載、這次沒再變的，也要算進「需要重新載入」
+if (needReload(desk.lastCheck) && !result.changed.includes('d2_zh.js')) result.changed.push('d2_zh.js');
+desk.lastCheck = result;
+show(result);
+};
+console.log('__D2ZH__:update');
+} }, '檢查更新');
+// 開遊戲時背景已經自動下載過新版、這個頁面還沒用到：直接提示可以重新載入
+show(needReload(desk.lastCheck) ? desk.lastCheck : null);
+box.append(d2edEl('p', { class: 'd2ed-note' }, '翻譯和修改功能會從 GitHub 下載最新版。每次開遊戲也會在背景自動檢查。'),
+status, d2edEl('div', { class: 'd2ed-row' }, check, reload));
 return box;
 }
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
-body.replaceChildren(d2edRunSection(), d2edSaveSection());
+body.replaceChildren(...[d2edRunSection(), d2edSaveSection(), d2edUpdateSection()].filter(Boolean));
 }
 function d2edOpen() {
 if (D2ED.panel) return;
@@ -2111,4 +2160,91 @@ if (was !== !!pad) { render(); if (pad && dlg) toast('已連接遊戲手把：' 
 };
 }
 d2padInstall();
+// ====== 技能進化提示補全 ======
+// 遊戲規則：技能練滿＋持有某個被動（＋角色等級）→ 寶箱把技能進化成新技能（遊戲自己的設定，build 20261020）。
+// 遊戲只在「技能」那一邊一定寫出要哪個被動；「被動」那一邊：
+//   ・升級卡片只寫一個技能（同職業幾個技能共用一個被動時，其他的不提）
+//   ・技能樹的被動說明框完全不提
+// 還沒學的技能，技能樹說明框也不提要搭配哪個被動。這裡在卡片和說明框最後補一行。
+function d2evoInstall() {
+const EVO = {
+amazon: [["Cold Arrow", "Dodge", "Ice Arrow"], ["Exploding Arrow", "Decoy", "Immolation Arrow"], ["Multiple Shot", "Critical Strike", "Strafe"], ["Guided Arrow", "Pierce", "Widowmaker"], ["Jab", "Evade", "Fend"], ["Power Strike", "Inner Sight", "Charged Strike"], ["Poison Javelin", "Avoid", "Plague Javelin"], ["Ice Arrow", "Slow Missiles", "Freezing Arrow"], ["Lightning Bolt", "Penetrate", "Lightning Fury"], ["Charged Strike", "Penetrate", "Lightning Strike"]],
+sorceress: [["Fire Bolt", "Warmth", "Fire Ball"], ["Charged Bolt", "Energy Shield", "Chain Lightning"], ["Nova", "Lightning Mastery", "Thunder Storm"], ["Fire Ball", "Enchant", "Meteor"], ["Ice Bolt", "Cold Mastery", "Frozen Orb"], ["Shiver Armor", "Cold Mastery", "Chilling Armor"], ["Ice Blast", "Faster Cast Rate", "Glacial Spike"], ["Glacial Spike", "Replenish Life", "Blizzard"], ["Blaze", "Faster Run/Walk", "Fire Wall"], ["Frozen Armor", "Vitality", "Shiver Armor"]],
+necromancer: [["Poison Dagger", "Faster Cast Rate", "Poison Explosion"], ["Amplify Damage", "Faster Run/Walk", "Decrepify"], ["Confuse", "Vitality", "Attract"], ["Clay Golem", "Golem Mastery", "Blood Golem"], ["Iron Golem", "Golem Mastery", "Fire Golem"], ["Teeth", "Bone Wall", "Bone Spear"], ["Dim Vision", "Telekinesis", "Confuse"], ["Raise Skeleton", "Skeleton Mastery", "Revive"], ["Bone Spear", "Bone Armor", "Bone Spirit"], ["Poison Explosion", "Lower Resist", "Poison Nova"], ["Blood Golem", "Summon Resist", "Iron Golem"]],
+assassin: [["Fire Blast", "Faster Cast Rate", "Wake of Fire"], ["Charged Bolt Sentry", "Faster Cast Rate", "Lightning Sentry"], ["Lightning Sentry", "Faster Cast Rate", "Death Sentry"], ["Dragon Talon", "Faster Run/Walk", "Dragon Claw"], ["Blade Fury", "Vitality", "Blade Shield"], ["Blade Sentinel", "Burst of Speed", "Blade Fury"], ["Dragon Tail", "Burst of Speed", "Dragon Flight"], ["Fists of Fire", "Claw Mastery", "Claws of Thunder"], ["Dragon Claw", "Claw Mastery", "Dragon Tail"], ["Psychic Hammer", "Fade", "Mind Blast"], ["Wake of Fire", "Fade", "Wake of Inferno"], ["Shadow Warrior", "Weapon Block", "Shadow Master"], ["Claws of Thunder", "Weapon Block", "Blades of Ice"], ["Tiger Strike", "Venom", "Phoenix Strike"]],
+barbarian: [["Leap", "Faster Run/Walk", "Leap Attack"], ["Shout", "Vitality", "Battle Orders"], ["Double Swing", "Increased Speed", "Frenzy"], ["Bash", "Axe Mastery", "Concentrate"], ["Double Throw", "Throwing Mastery", "Lacerator"], ["Concentrate", "Iron Skin", "Berserk"], ["Battle Orders", "Find Item", "Battle Command"]],
+druid: [["Fissure", "Faster Cast Rate", "Volcano"], ["Carrion Vine", "Faster Cast Rate", "Solar Creeper"], ["Twister", "Faster Run/Walk", "Tornado"], ["Summon Dire Wolf", "Vitality", "Summon Grizzly"], ["Poison Creeper", "Replenish Life", "Carrion Vine"], ["Heart of Wolverine", "Replenish Life", "Spirit of Barbs"], ["Firestorm", "Cyclone Armor", "Molten Boulder"], ["Tornado", "Cyclone Armor", "Hurricane"], ["Raven", "Ravenlore", "Summon Spirit Wolf"], ["Summon Spirit Wolf", "Ravenlore", "Summon Dire Wolf"], ["Werebear", "Lycanthropy", "Maul"], ["Maul", "Lycanthropy", "Shock Wave"], ["Oak Sage", "Spirit Keeper", "Heart of Wolverine"], ["Werewolf", "Feral Rage", "Fury"], ["Volcano", "Fire Claws", "Armageddon"]],
+paladin: [["Blessed Hammer", "Concentration", "Zakarum's Hand"], ["Holy Bolt", "Holy Shock", "Fist of the Heavens"], ["Zeal", "Might", "Passion"], ["Charge", "Vigor", "Herald of Zakarum"], ["Holy Shield", "Defiance", "Exile"]]
+};
+const classOf = new Map(), passives = new Set();
+for (const [cls, rows] of Object.entries(EVO)) for (const [skill, passive] of rows) { classOf.set(skill, cls); passives.add(passive); }
+const zh = () => d2zhLang() === 'zh-Hant';
+const name = s => zh() ? window.D2I18N.translate(s).replace(/（[^）]*）$/, '') : s;
+// 卡片或說明框每一行的英文原文：中文模式下畫布的 textContent 會被翻成中文，所以用 D2ZH_STATE 記下的原文；分段的行把每段接起來
+const original = c => { const st = D2ZH_STATE.get(c); return st ? (st.orig ?? st.src) : c.textContent; };
+const lineTexts = box => [...box.children].filter(el => !el.classList.contains('d2zh-evo'))
+.map(el => (el.tagName === 'CANVAS' ? [el] : [...el.querySelectorAll('canvas')]).map(original).join(' ').replace(/\s+/g, ' ').trim())
+.filter(Boolean);
+function rowsFor(passive, text) {
+const all = Object.entries(EVO).flatMap(([cls, rows]) => rows.filter(r => r[1] === passive).map(r => [cls, ...r]));
+let cls = window.__D2ED && D2ED.player && D2ED.player.cls;
+if (!cls) { const seen = all.find(([, skill]) => text.includes(skill)); cls = seen && seen[0]; }   // 沒抓到人物：用卡片上已出現的技能判斷職業
+return cls ? all.filter(r => r[0] === cls) : all;
+}
+function hintFor(box) {
+const lines = lineTexts(box);
+if (lines.length < 2) return null;
+const [first, second] = lines[0].includes(' - ') ? lines[0].split(' - ') : [lines[0], lines[1]];
+const text = lines.join(' ');
+// 被動：升級卡片（New passive／Level a to b）或技能樹說明框（Level a / b、Required Level）
+if (passives.has(first) && /^(New passive|Level \d+ (to|\/) \d+|Required Level:)/.test(second)) {
+const rows = rowsFor(first, text);
+const missing = rows.filter(([, skill, , into]) => !text.includes(`${skill} into ${into}`));
+if (!missing.length) return null;
+const also = missing.length < rows.length;   // 遊戲自己已經寫了其中一個
+return zh()
+? `此被動${also ? '也' : '可'}讓：${missing.map(([, s, , c]) => `${name(s)} → ${name(c)}`).join('、')}（技能練滿後由寶箱進化）`
+: `${also ? 'Also evolves' : 'Evolves'}: ${missing.map(([, s, , c]) => `${s} → ${c}`).join(', ')} (skill at max, from a chest)`;
+}
+// 還沒學的技能（技能樹說明框）：遊戲沒寫要搭配哪個被動
+if (classOf.has(first) && /^Required Level:/.test(second)) {
+const row = EVO[classOf.get(first)].find(r => r[0] === first);
+if (text.includes(`into ${row[2]}`)) return null;
+return zh() ? `進化：練滿＋被動「${name(row[1])}」→ ${name(row[2])}` : `Evolves into ${row[2]}: at max, with ${row[1]}`;
+}
+return null;
+}
+function augment(box) {
+const old = box.querySelector(':scope > .d2zh-evo');
+let hint = null;
+try { hint = hintFor(box); } catch (e) { console.warn('[D2 中文] 進化提示', e); }
+if (!hint) { old?.remove(); return; }
+if (old && old.textContent === hint) return;
+const el = old || document.createElement('div');
+el.className = 'd2zh-evo';
+el.textContent = hint;
+// 字的大小照這個框裡第一行字型畫布的高度
+const ref = box.querySelector('canvas');
+const h = ref ? ref.offsetHeight : 16;
+// 不要把說明框撐寬：最寬只到框裡原本最寬的那一行，超過就換行
+const widest = Math.max(200, ...[...box.children].filter(c => c !== el).map(c => c.offsetWidth));
+el.style.cssText = `font: bold ${Math.max(11, Math.round(h * 0.8))}px ${D2ZH_FONT}; line-height: 1.35; color: #e0bd6a; max-width: ${widest}px; align-self: center;` +
+' text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000; margin-top: 2px; white-space: normal; text-align: center; pointer-events: none;';
+if (!old) box.append(el);
+}
+const boxes = () => document.querySelectorAll('#hoverbox, .d2-choice > .lines');
+let queued = false;
+const run = () => { queued = false; boxes().forEach(augment); };
+const schedule = () => { if (!queued) { queued = true; setTimeout(run, 0); } };
+new MutationObserver(records => {
+for (const r of records) {
+if ([...r.addedNodes, ...r.removedNodes].every(n => n.nodeType === 1 && n.classList.contains('d2zh-evo'))) continue;
+const t = r.target;
+if (t.nodeType === 1 && (t.matches('#hoverbox, .d2-choice > .lines, .d2-choice') || t.closest('#hoverbox, .d2-choice'))) { schedule(); return; }
+for (const n of r.addedNodes) if (n.nodeType === 1 && (n.matches('#hoverbox, .d2-choice') || n.querySelector?.('.d2-choice'))) { schedule(); return; }
+}
+}).observe(document.body, { subtree: true, childList: true });
+window.addEventListener('d2-language-changed', schedule);
+}
+d2evoInstall();
 })();
