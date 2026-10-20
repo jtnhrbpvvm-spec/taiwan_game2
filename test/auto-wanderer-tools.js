@@ -36,7 +36,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V30';
+  const VERSION = 'V32';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -1915,7 +1915,7 @@ javascript:(function awTools() {
   }
 
   /* ===== 7. 存檔備份 =====
-   * 備份：把整個存檔物件 S 轉成文字，存一份在瀏覽器（localStorage 的 awtools.backups），也可以下載成檔案。
+   * 備份：把整個存檔物件 S 轉成文字，存一份在瀏覽器（IndexedDB 的 awtools 資料庫），也可以下載成檔案。
    * 還原：把備份寫回遊戲的存檔位置（SAVE_KEY），再重新整理頁面讓遊戲重新載入。
    *   - 寫回前把 TAB.gone 設為 true，遊戲離開頁面時的自動存檔就不會把備份蓋掉。
    *   - 把備份裡的時間改成現在，這樣重新載入時不會被當成離線很久而發放離線收益，
@@ -1925,6 +1925,14 @@ javascript:(function awTools() {
    * 共用倉庫（遊戲 v0.2.730 起）另外存在 STASH_KEY（autowanderer.stash），裡面有倉庫物品、離線角色的灰燼／材料，
    * 以及配合存檔序號 S.sx 的異動紀錄。備份時一起存一份（瀏覽器備份放在 stash 欄位，下載的檔案放在 awStash 欄位，
    * 配裝程式讀檔時會忽略它），還原時另外問要不要連倉庫一起還原。
+   *
+   * 為什麼用 IndexedDB：localStorage 整個網站只有約 5 MB，而且和遊戲自己的存檔共用。
+   * 以前備份放在 localStorage，存檔一大、備份一多就把空間吃光，連遊戲本身都存不進去（遊戲會跳「存檔失敗：儲存空間不足」）。
+   * IndexedDB 的空間依硬碟大小而定（通常是好幾 GB），不會和遊戲搶。
+   * 舊版留在 localStorage 的備份、自動刷神話的起點、臨時備份，第一次用到時會自動搬過來並從 localStorage 刪掉。
+   *
+   * 遊戲 v0.2.9xx 起存檔改成「先壓縮再寫入」（lsZip，非同步），寫回存檔時也照它的方式壓縮，
+   * 並把它的寫入序號 lsSeq 加一，讓遊戲還沒寫完的那次自動存檔作廢，不會在重新整理前把還原的存檔蓋掉。
    */
   const BK_KEY = 'awtools.backups';
   const EXTRA_BAK = 'autowanderer.v1.bak-claude';
@@ -1936,24 +1944,129 @@ javascript:(function awTools() {
     if (!stash) return data;
     try { const o = JSON.parse(data); o.awStash = JSON.parse(stash); return JSON.stringify(o); } catch (e) { return data; }
   };
-  const bkList = () => { try { return JSON.parse(localStorage.getItem(BK_KEY)) || []; } catch (e) { return []; } };
-  const bkSave = list => {
-    try { localStorage.setItem(BK_KEY, JSON.stringify(list)); return true; }
-    catch (e) { uiAlert('瀏覽器的儲存空間不夠，備份沒有存成功。請先刪掉舊的備份，或改用下載成檔案。'); return false; }
+  /* IndexedDB：一個鍵值表（awtools / kv）。
+   * 每份備份各存一筆（鍵是 'bk:' + 備份時間），另外一筆 'bkidx' 只放清單要顯示的資料（時間、標籤、角色、等級、大小、倉庫件數）。
+   * 不把所有備份放在同一筆：存檔很大時（物品無上限、背包上萬件），整份清單會超過瀏覽器單筆資料的上限（實測約 100 MB）而整個寫不進去。
+   * 存檔內容用 gzip 壓縮後才存（實測 10 MB 的存檔剩 1～2 MB），讀的時候再解開。 */
+  let idbP = null;
+  const idbOpen = () => idbP || (idbP = new Promise((res, rej) => {
+    const r = indexedDB.open('awtools', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => { idbP = null; rej(r.error); };
+  }));
+  const idbDo = (mode, fn) => idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('kv', mode), q = fn(tx.objectStore('kv'));
+    tx.oncomplete = () => res(q && q.result);
+    tx.onerror = tx.onabort = () => rej(tx.error);
+  }));
+  const idbGet = k => idbDo('readonly', s => s.get(k)).catch(() => undefined);
+  const idbSet = (k, v) => idbDo('readwrite', s => s.put(v, k)).then(() => true, () => false);
+  const idbDel = k => idbDo('readwrite', s => s.delete(k)).then(() => true, () => false);
+  /* 請瀏覽器把這個網站的資料標成「不要自動清掉」（不保證會答應，沒答應也照樣能用） */
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
+  /* 壓縮成 { gz: 位元組 }；瀏覽器不支援壓縮時就存原本的文字。解開時兩種都認 */
+  const zPipe = (data, ts) => new Response(new Blob([data]).stream().pipeThrough(ts)).arrayBuffer();
+  const pack = async str => {
+    if (typeof CompressionStream !== 'function') return str;
+    try { return { gz: new Uint8Array(await zPipe(str, new CompressionStream('gzip'))) }; } catch (e) { return str; }
+  };
+  const unpack = async v => {
+    if (v == null) return null;
+    if (typeof v === 'string') return v;
+    try { return v.gz ? new TextDecoder().decode(await zPipe(v.gz, new DecompressionStream('gzip'))) : null; } catch (e) { return null; }
+  };
+  /* 把舊版放在 localStorage 的東西壓縮後搬進 IndexedDB，搬成功才從 localStorage 刪掉 */
+  const lsMove = async (lsKey, idbKey) => {
+    let raw = null;
+    try { raw = localStorage.getItem(lsKey); } catch (e) {}
+    if (raw === null) return;
+    if (await idbSet(idbKey, await pack(raw))) { try { localStorage.removeItem(lsKey); } catch (e) {} }
+  };
+  const bkMeta = (t, label, name, lvl, data, stash) =>
+    ({ t: t, label: label, name: name, lvl: lvl, kb: Math.round((data.length + (stash ? stash.length : 0)) / 1024), st: stash ? stashN(stash) : -1 });
+  const bkIdx = async () => { const l = await idbGet('bkidx'); return Array.isArray(l) ? l : []; };
+  /* 新增一份備份（rec 是已經壓縮好的 { data, stash }），並刪掉超過 CFG.backupKeep 份的舊備份。
+   * 資料、清單、刪舊備份在同一個交易裡做，要嘛全部成功、要嘛全部沒做，不會只寫一半 */
+  const bkAdd = async (meta, rec) => {
+    const list = await bkIdx();
+    while (list.some(x => x.t === meta.t)) meta.t++;
+    list.push(meta);
+    list.sort((a, b) => b.t - a.t);
+    const drop = list.splice(Math.max(1, CFG.backupKeep));
+    return idbDo('readwrite', s => {
+      s.put(rec, 'bk:' + meta.t);
+      for (const d of drop) s.delete('bk:' + d.t);
+      s.put(list, 'bkidx');
+    }).then(() => true, () => false);
+  };
+  /* 讀出一份備份的內容（解壓縮後的文字） */
+  const bkLoad = async t => {
+    const rec = await idbGet('bk:' + t);
+    return rec ? { data: await unpack(rec.data), stash: await unpack(rec.stash) } : null;
+  };
+  /* 舊格式的備份清單（整份清單放在同一筆的陣列）逐份轉成新格式，全部轉完才算成功 */
+  const bkImport = async old => {
+    for (const o of old) {
+      if (!o || typeof o.data !== 'string') continue;
+      if ((await bkIdx()).some(x => x.t === o.t)) continue;
+      const rec = { data: await pack(o.data) };
+      if (o.stash) rec.stash = await pack(o.stash);
+      if (!await bkAdd(bkMeta(o.t, o.label || '備份', o.name || '', o.lvl, o.data, o.stash), rec)) return false;
+    }
+    return true;
+  };
+  /* 搬家：localStorage 的 awtools.backups（V30 以前），以及 IndexedDB 裡整份放在 backups 的清單（V31 測試版）。
+   * 舊清單如果已經壞掉（不是有效的 JSON），裡面的東西本來就讀不出來，一樣刪掉，把空間還給遊戲 */
+  let bkMoved = null;
+  const bkMigrate = () => bkMoved || (bkMoved = (async () => {
+    let raw = null;
+    try { raw = localStorage.getItem(BK_KEY); } catch (e) {}
+    if (raw !== null) {
+      let old = [];
+      try { old = JSON.parse(raw); } catch (e) {}
+      if (await bkImport(Array.isArray(old) ? old : [])) { try { localStorage.removeItem(BK_KEY); } catch (e) {} }
+    }
+    const v31 = await idbGet('backups');
+    if (v31 !== undefined && (!Array.isArray(v31) || await bkImport(v31))) await idbDel('backups');
+    await lsMove(EXTRA_BAK, 'extra');
+    await lsMove('awtools.monbase', 'monbase');
+  })());
+  /* 臨時備份（請 Claude 直接改存檔時留下的）可能之後又被寫進 localStorage，每次讀之前都先搬一次 */
+  const extraGet = async () => { await lsMove(EXTRA_BAK, 'extra'); return unpack(await idbGet('extra')); };
+  const bkList = async () => { await bkMigrate(); return bkIdx(); };
+  /* 備份的新增和刪除都排隊一個一個做，同時進行時清單才不會互相蓋掉 */
+  let bkQueue = Promise.resolve();
+  const bkRun = fn => (bkQueue = bkQueue.catch(() => {}).then(fn));
+  const bkDel = t => bkRun(async () => {
+    const list = (await bkIdx()).filter(x => x.t !== t);
+    return idbDo('readwrite', s => { s.delete('bk:' + t); s.put(list, 'bkidx'); }).then(() => true, () => false);
+  });
+  /* 照遊戲的方式寫回存檔：能壓縮就壓縮，並讓遊戲還在進行中的自動存檔作廢。呼叫前要先把 TAB.gone 設成 true */
+  const putSave = async o => {
+    let v = JSON.stringify(o);
+    try { if (typeof lsZip === 'function') v = await lsZip(v); } catch (e) {}
+    try { if (typeof lsSeq === 'object' && lsSeq) lsSeq[SAVE_KEY] = (lsSeq[SAVE_KEY] || 0) + 1; } catch (e) {}
+    localStorage.setItem(SAVE_KEY, v);
   };
   const bkStamp = t => {
     const d = new Date(t), z = n => String(n).padStart(2, '0');
     return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds());
   };
-  /* 把目前的進度備份到瀏覽器裡，回傳是否成功 */
+  /* 把目前的進度備份到瀏覽器裡，回傳 Promise（是否成功）。
+   * 存檔內容在呼叫的當下就先抓好，之後才非同步寫入，所以呼叫完馬上改存檔也不會影響這份備份 */
   const backupNow = label => {
-    if (typeof S === 'undefined' || !S) return false;
-    const list = bkList();
-    const e = { t: Date.now(), label: label || '手動備份', name: S.name || '', lvl: S.lvl, data: JSON.stringify(S) };
-    const st = stashRaw();
-    if (st) e.stash = st;
-    list.unshift(e);
-    return bkSave(list.slice(0, CFG.backupKeep));
+    if (typeof S === 'undefined' || !S) return Promise.resolve(false);
+    const data = JSON.stringify(S), stash = stashRaw();
+    const meta = bkMeta(Date.now(), label || '手動備份', S.name || '', S.lvl, data, stash);
+    return bkRun(async () => {
+      await bkMigrate();
+      const rec = { data: await pack(data) };
+      if (stash) rec.stash = await pack(stash);
+      if (await bkAdd(meta, rec)) return true;
+      uiAlert('備份沒有存成功（瀏覽器拒絕寫入）。請改用下載成檔案。');
+      return false;
+    });
   };
   const bkDownload = (text, name, lvl, t) => {
     const a = document.createElement('a');
@@ -1979,16 +2092,16 @@ javascript:(function awTools() {
         '要連倉庫一起還原嗎？\n・按「確定」（建議）：倉庫也回到備份時的樣子，和這個角色對得起來；但其他角色在備份之後存進倉庫的東西會不見\n' +
         '・按「取消」：只還原這個角色，倉庫維持現在的樣子；備份之後從倉庫拿到這個角色身上的東西會不見，存進倉庫的則會變成兩份');
     }
-    if (!backupNow('還原前自動備份') && !await uiConfirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
+    if (!await backupNow('還原前自動備份') && !await uiConfirm('目前的進度沒有備份成功，仍然要還原嗎？')) return;
     o.t = Date.now();
     TAB.gone = true;
     const oldStash = stashRaw();
     try {
       if (withStash) localStorage.setItem(STASH_LS, stash);
-      localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+      await putSave(o);
     } catch (e) {
       try { if (withStash && oldStash !== null) localStorage.setItem(STASH_LS, oldStash); } catch (e2) {}
-      TAB.gone = false; uiAlert('寫入存檔失敗，沒有還原。'); return;
+      TAB.gone = false; uiAlert('寫入存檔失敗（瀏覽器給遊戲存檔的空間不夠），沒有還原，目前的進度也沒有被改動。'); return;
     }
     location.reload();
   };
@@ -2020,20 +2133,21 @@ javascript:(function awTools() {
     document.body.appendChild(root);
     const elList = root.querySelector('[data-r="list"]');
 
-    const draw = () => {
-      const list = bkList();
+    let shown = [];
+    const draw = async () => {
+      const list = await bkList();
+      const extra = await extraGet();
+      shown = list;
       elList.innerHTML = list.length ? list.map((b, i) =>
         '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-bottom:1px solid #3a3026;background:#1a1410">' +
           '<div style="flex:1"><b>' + bkStamp(b.t) + '</b> <small style="color:#a89a84">' + String(b.label).replace(/</g, '&lt;') + '</small><br>' +
-          '<small style="color:#c8bca8">' + String(b.name || '（未命名）').replace(/</g, '&lt;') + '　LV' + b.lvl + '　' + Math.round((b.data.length + (b.stash ? b.stash.length : 0)) / 1024) + ' KB' +
-            (b.stash ? '　含倉庫 ' + stashN(b.stash) + ' 件' : '') + '</small></div>' +
+          '<small style="color:#c8bca8">' + String(b.name || '（未命名）').replace(/</g, '&lt;') + '　LV' + b.lvl + '　' + b.kb + ' KB' +
+            (b.st >= 0 ? '　含倉庫 ' + b.st + ' 件' : '') + '</small></div>' +
           '<button data-a="restore" data-i="' + i + '" style="' + BTN + '">還原</button>' +
           '<button data-a="dl" data-i="' + i + '" style="' + BTN + '">下載</button>' +
           '<button data-a="del" data-i="' + i + '" style="' + BTN + '">刪除</button>' +
         '</div>').join('') : '<div style="padding:10px;color:#a89a84;background:#1a1410">瀏覽器裡還沒有備份</div>';
       /* 書籤以外留下的臨時備份（例如請 Claude 直接改存檔時，它在修改前留的那一份），列出來讓使用者自己刪 */
-      let extra = null;
-      try { extra = localStorage.getItem(EXTRA_BAK); } catch (e) {}
       if (extra) {
         elList.innerHTML += '<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;margin-top:6px;border:1px dashed #6a5a4a;background:#1a1410">' +
           '<div style="flex:1"><b>臨時備份</b> <small style="color:#a89a84">Claude 修改存檔前留下的</small><br><small style="color:#c8bca8">' + Math.round(extra.length / 1024) + ' KB</small></div>' +
@@ -2053,16 +2167,19 @@ javascript:(function awTools() {
     });
     root.addEventListener('click', async e => {
       const b = e.target.closest('button[data-a]'); if (!b) return;
-      const a = b.dataset.a, list = bkList(), it = list[+b.dataset.i];
+      const a = b.dataset.a, it = shown[+b.dataset.i];
       if (a === 'close') { close(); return; }
-      if (a === 'save') { saveNow(); if (backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
+      if (a === 'save') { saveNow(); if (await backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
       if (a === 'dlNow') { saveNow(); bkDownload(bkFile(JSON.stringify(S), stashRaw()), S.name, S.lvl, Date.now()); return; }
-      if (a === 'xDel') { if (await uiConfirm('刪除這份臨時備份？')) { try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
-      if (a === 'xRestore') { let x = null; try { x = localStorage.getItem(EXTRA_BAK); } catch (err) {} if (x) restoreSave(x, '臨時備份'); return; }
+      if (a === 'xDel') { if (await uiConfirm('刪除這份臨時備份？')) { await idbDel('extra'); try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
+      if (a === 'xRestore') { const x = await extraGet(); if (x) restoreSave(x, '臨時備份'); return; }
       if (!it) return;
-      if (a === 'dl') { bkDownload(bkFile(it.data, it.stash), it.name, it.lvl, it.t); return; }
-      if (a === 'del') { if (await uiConfirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { list.splice(+b.dataset.i, 1); bkSave(list); draw(); } return; }
-      if (a === 'restore') { restoreSave(it.data, bkStamp(it.t), it.stash); }
+      /* 用時間認備份（畫面上的順序可能已經跟資料庫不同，例如剛好跑了一次自動備份） */
+      if (a === 'del') { if (await uiConfirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { await bkDel(it.t); draw(); } return; }
+      const rec = await bkLoad(it.t);
+      if (!rec || !rec.data) { uiAlert('這份備份讀不出來（可能已經被刪掉或損壞）。'); draw(); return; }
+      if (a === 'dl') { bkDownload(bkFile(rec.data, rec.stash), it.name, it.lvl, it.t); return; }
+      if (a === 'restore') { restoreSave(rec.data, bkStamp(it.t), rec.stash); }
     });
     draw();
   };
@@ -2389,22 +2506,28 @@ javascript:(function awTools() {
    * 進度記在瀏覽器的 awtools.monloop，重新載入後（要開常駐模式，小工具才會自己回來）會接著跑。
    * 進行中不記錄、不上傳匿名遊玩統計。讀回起點時，起點之後拿到的其他東西（神話裝備、材料、經驗）都會消失。
    */
-  const LOOP_KEY = 'awtools.monloop', BASE_KEY = 'awtools.monbase';
+  /* 起點放在 IndexedDB 的 monbase（舊版在 localStorage 的 awtools.monbase，第一次用到時搬過來）；
+   * 進度 monloop 很小，而且小工具一裝上就要同步讀，所以留在 localStorage */
+  const LOOP_KEY = 'awtools.monloop';
   const loopGet = () => { try { return JSON.parse(localStorage.getItem(LOOP_KEY)) || null; } catch (e) { return null; } };
   const loopSet = o => { try { if (o) localStorage.setItem(LOOP_KEY, JSON.stringify(o)); else localStorage.removeItem(LOOP_KEY); } catch (e) {} };
   const mythCount = () => ({ sl: S.slates.filter(t => t.my).length, uq: S.bag.filter(t => t.my).length });
-  /* 把目前進度存成起點；回傳是否成功 */
-  const baseWrite = () => {
-    try { saveNow(); localStorage.setItem(BASE_KEY, JSON.stringify(S)); return true; } catch (e) { return false; }
+  /* 把目前進度存成起點；回傳 Promise（是否成功）。存檔內容在呼叫當下就抓好 */
+  const baseWrite = async () => {
+    let data;
+    try { saveNow(); data = JSON.stringify(S); } catch (e) { return false; }
+    await bkMigrate();
+    return idbSet('monbase', await pack(data));
   };
-  /* 把起點寫回存檔並重新載入。不經過「存檔備份」，所以不會產生自動備份、也不會擠掉原有的備份 */
-  const baseRestore = () => {
+  /* 把起點寫回存檔並重新載入，回傳 Promise（是否成功）。不經過「存檔備份」，所以不會產生自動備份、也不會擠掉原有的備份 */
+  const baseRestore = async () => {
+    await bkMigrate();
     let o = null;
-    try { o = JSON.parse(localStorage.getItem(BASE_KEY)); } catch (e) {}
+    try { o = JSON.parse(await unpack(await idbGet('monbase'))); } catch (e) {}
     if (!o || !o.cls || !Array.isArray(o.bag) || !Array.isArray(o.gems)) return false;
     o.t = Date.now();
     TAB.gone = true;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch (e) { TAB.gone = false; return false; }
+    try { await putSave(o); } catch (e) { TAB.gone = false; return false; }
     location.reload();
     return true;
   };
@@ -2432,7 +2555,7 @@ javascript:(function awTools() {
     /* 填設定的時候遊戲還在跑，狀況可能變了，開始前再確認一次 */
     if (loopGet() || !canMonarch() || G.boss || G.tw || G.dead) { uiAlert('目前的狀況沒辦法開始（正在挑戰中，或印記不夠），請稍後再試。'); return; }
     try { saveNow(); backupNow('自動刷神話前自動備份'); } catch (e) {}
-    if (!baseWrite()) { uiAlert('瀏覽器的儲存空間不夠，起點存不進去，沒有開始。請先到「存檔備份」刪掉一些舊備份。'); return; }
+    if (!await baseWrite()) { uiAlert('起點存不進去（瀏覽器拒絕寫入），沒有開始。'); return; }
     const c = mythCount();
     loopSet({ on: 1, goalSl: goalSl, goalAll: goalAll, gotSl: 0, gotAll: 0, baseM: S.gd.m || 0, seenM: S.gd.m || 0, baseSl: c.sl, baseUq: c.uq, tries: 0, batch: batch, done: 0, t0: Date.now() });
     try { toast('自動刷神話開始', 'lvl'); } catch (e) {}
@@ -2499,7 +2622,7 @@ javascript:(function awTools() {
       /* 讀回起點：這一批從頭算起 */
       const reload = () => {
         L.done = 0; L.seenM = L.baseM; loopSet(L); phase = 'wait';
-        if (!baseRestore()) stop('讀不到起點存檔，自動刷神話已停止');
+        baseRestore().then(ok => { if (!ok) stop('讀不到起點存檔，自動刷神話已停止'); });
       };
       /* 一場打完（沒掉神話）之後：這一批打滿了、或印記不夠再打，就讀回起點；否則接著打下一場 */
       const next = () => {
@@ -2536,12 +2659,15 @@ javascript:(function awTools() {
         if (nSl + nUq > 0) {
           /* 掉了：把現在的進度存成新的起點，這一批已經用掉的印記就不拿回來了 */
           L.gotSl += nSl; L.gotAll += nSl + nUq;
-          const saved = baseWrite();
           L.baseM = m; L.seenM = m; L.done = 0; L.baseSl = c.sl; L.baseUq = c.uq;
           if (L.gotSl >= L.goalSl && L.gotAll >= L.goalAll) { stop('自動刷神話達標：神話石板 ' + L.gotSl + ' 塊、合計 ' + L.gotAll + ' 件，共打了 ' + L.tries + ' 場'); return; }
-          if (!saved) { stop('拿到神話獨特了，但瀏覽器儲存空間不夠、起點更新失敗，為了不弄丟它已停止'); return; }
-          loopSet(L); phase = 'start'; at = now + 1500;
-          try { toast('拿到神話獨特！已更新起點，繼續刷', 'lvl', 1); } catch (e) {}
+          /* 起點寫完之前先停在 wait，不然下一輪讀回的會是舊起點，剛拿到的神話就沒了 */
+          phase = 'wait';
+          baseWrite().then(saved => {
+            if (!saved) { stop('拿到神話獨特了，但起點更新失敗，為了不弄丟它已停止'); return; }
+            loopSet(L); phase = 'start'; at = Date.now() + 1500;
+            try { toast('拿到神話獨特！已更新起點，繼續刷', 'lvl', 1); } catch (e) {}
+          });
           return;
         }
         next();
