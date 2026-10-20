@@ -4,7 +4,8 @@ const I = window.D2I18N;
 if (I) I.setLanguage(I.language === 'zh-Hant' ? 'en' : 'zh-Hant');
 return;
 }
-if (!document.getElementById('d2-files')) {
+// 桌面版（安裝版）由 desktop/d2zh-inject.cjs 注入，會先設 __D2ZH_DESKTOP；頁面上沒有 #d2-files
+if (!document.getElementById('d2-files') && !window.__D2ZH_DESKTOP) {
 alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個書籤。');
 return;
 }

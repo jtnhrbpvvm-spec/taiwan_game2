@@ -74,6 +74,18 @@
     background: linear-gradient(180deg, #ffe08a, #c7a45f 60%, #8f743e);
     box-shadow: 0 4px 0 #5e4709, 0 8px 20px -6px rgba(240,201,74,.5); }
   .btn-drag:active { cursor: grabbing; transform: translateY(2px); box-shadow: 0 2px 0 #5e4709; }
+  .btn-dl { color: #1b1406; border: 1px solid #ffe08a;
+    background: linear-gradient(180deg, #ffe08a, #c7a45f 60%, #8f743e);
+    box-shadow: 0 4px 0 #5e4709, 0 8px 20px -6px rgba(240,201,74,.5); }
+  .btn-dl:active { transform: translateY(2px); box-shadow: 0 2px 0 #5e4709; }
+  .app-note { display: grid; grid-template-columns: 1fr 220px; gap: 14px; align-items: center; }
+  .app-note figure { margin: 0; text-align: center; }
+  .app-note img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); }
+  .app-note figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
+  @media (max-width: 600px) { .app-note { grid-template-columns: 1fr; } .app-note figure { max-width: 280px; margin: 0 auto; } }
+  .file-list { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin-top: 12px; font-size: 13px; }
+  .file-list code { color: var(--gold2); white-space: nowrap; }
+  .file-list span { color: var(--muted); }
   .btn-copy { color: var(--cream); background: #2c2014; border: 1px solid var(--gold); }
   .btn-copy:hover { background: #3a2a14; }
   textarea { width: 100%; height: 74px; margin-top: 10px; resize: none; padding: 10px;
@@ -209,20 +221,51 @@
       <span class="chip">物品屬性</span><span class="chip">怪物與地區</span><span class="chip">中英切換</span>
     </div>
     <nav class="toc">
-      <a href="#pc">💻 電腦安裝</a><a href="#mobile">📱 手機安裝</a><a href="#use">🎮 使用方式</a><a href="#pad">🕹️ 遊戲手把</a>
+      <a href="#pc">💻 電腦安裝</a><a href="#desktop">🖥️ 電腦版遊戲</a><a href="#mobile">📱 手機安裝</a><a href="#use">🎮 使用方式</a><a href="#pad">🕹️ 遊戲手把</a>
       <a href="#show">🖼️ 成品展示</a><a href="#faq">❓ 常見問題</a>
     </nav>
   </header>
 
   <!-- 電腦 -->
   <section class="card" id="pc">
-    <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
+    <h2>💻 電腦瀏覽器（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
     <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列">中 拖我到書籤列（D2 繁體中文）</a>
     <ol class="hint">
       <li>按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>（Mac：<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>）叫出書籤列。</li>
       <li>用滑鼠<b>按住</b>上面的金色按鈕，<b>拖曳</b>到書籤列上放開（直接點按鈕不會安裝）。</li>
       <li>打開 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">遊戲頁面</a>，點一下書籤列上的「D2 繁體中文」。</li>
     </ol>
+    <div class="note-box">用的是作者出的<b>電腦安裝版</b>（D2 Survivors.exe）？書籤在安裝版裡不能用，請看下一段「電腦版遊戲」。</div>
+  </section>
+
+  <!-- 電腦安裝版 -->
+  <section class="card" id="desktop">
+    <h2>🖥️ 電腦版遊戲（D2 Survivors.exe）<span class="tag">Windows 專用</span></h2>
+    <div class="note-box warn app-note" style="margin-top:0">
+      <div><b>這是電腦安裝版專用的檔案。</b>只給從 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">d2survivors.lol</a> 下載、安裝在 Windows 上的遊戲（D2 Survivors.exe）用。在瀏覽器或手機上玩，請用上面的書籤。</div>
+      <figure>
+        <img src="desktop/get-desktop-app.png" width="568" height="199" alt="d2survivors.lol 網站上的 GET DESKTOP APP（for Windows）按鈕">
+        <figcaption>作者網站上的這個按鈕下載的就是電腦版</figcaption>
+      </figure>
+    </div>
+    <p></p>
+    <a class="btn btn-dl" href="desktop/D2倖存者中文化.zip" download="D2倖存者中文化.zip">⬇ 下載 D2倖存者中文化.zip</a>
+
+    <div class="flow" style="margin-top:16px">
+      <div class="flow-step"><div class="num">1</div><div><b>下載並解壓縮</b><div class="hint">下載上面的 zip，在檔案上按右鍵 →「解壓縮全部」。<b>一定要先解壓縮</b>，不能直接在壓縮檔裡點兩下。</div></div></div>
+      <div class="flow-step"><div class="num">2</div><div><b>連按兩下「建立桌面捷徑.cmd」</b><div class="hint">桌面會出現「<b>D2 Survivors 中文版</b>」圖示，之後都用它開遊戲。</div></div></div>
+      <div class="flow-step"><div class="num">3</div><div><b>用桌面圖示開遊戲，跳出確認時按「是」</b><div class="hint">第一次開（以及每次遊戲自動更新後）會跳出一次「使用者帳戶控制」視窗，按「是」就會套用中文，接著遊戲就是中文。</div></div></div>
+    </div>
+
+    <div class="file-list">
+      <code>建立桌面捷徑.cmd</code><span>推薦：在桌面放「D2 Survivors 中文版」，用它開遊戲就是中文，遊戲更新後也會自動重新套用。</span>
+      <code>安裝中文版.cmd</code><span>另一種方式：先關掉遊戲再執行，馬上套用中文，之後用原本的捷徑開也是中文（也會放桌面圖示）。</span>
+      <code>移除中文版.cmd</code><span>不想要了：遊戲恢復原本的英文版，桌面圖示也會刪掉。</span>
+      <code>使用說明.txt</code><span>離線版的完整說明。</span>
+    </div>
+
+    <div class="note-box">跟書籤版功能一樣：遊戲「選項」選單裡有 <b>語言</b>（English／繁體中文）切換和 <b>書籤修改</b> 按鈕。翻譯每次開遊戲會在背景自動更新，下次開遊戲生效。</div>
+    <div class="note-box warn">出現藍色的「Windows 已保護您的電腦」：按「<b>其他資訊</b>」→「<b>仍要執行</b>」。或在下載的 zip 上按右鍵 →「內容」→ 勾選「<b>解除封鎖</b>」→ 確定，再解壓縮。</div>
   </section>
 
   <!-- 手機 -->
@@ -345,6 +388,14 @@
     <details>
       <summary>書籤修改怎麼用？</summary>
       <p>打開遊戲的「選項」選單，按右邊的「書籤修改」。<b>遊戲中</b>（Esc 暫停 → 選項）可以加減力量／敏捷／體力／精力（效果跟升級時選屬性一樣），或直接改生命、移動速度、傷害倍率、技能冷卻、受到傷害等數值，按「套用」立即生效；這些只對這一局有效，「儲存並離開」後再繼續會回到原本的數值。進遊戲後要先打到第一隻怪物才抓得到人物資料。<b>主選單</b>的選項裡則可以改金幣和恰西賣的永久升級，按「儲存並重新載入」後生效，之後要再點一次書籤。</p>
+    </details>
+    <details>
+      <summary>電腦版遊戲更新後又變英文？</summary>
+      <p>遊戲自動更新會換掉被修改的檔案，所以中文會不見。用桌面的「D2 Survivors 中文版」圖示開遊戲，會自動重新套用（跳出一次確認，按「是」）。用遊戲原本的捷徑開則會維持英文，直到下次用中文版圖示開。</p>
+    </details>
+    <details>
+      <summary>電腦版遊戲的中文化做了什麼？</summary>
+      <p>在遊戲資料夾 <code>resources\app.asar</code> 裡的啟動程式加一行，讓遊戲開啟時載入 <code>%APPDATA%\D2SurvivorsZH</code> 裡的翻譯程式（跟書籤同一份）。所以需要一次系統管理員權限。不會改存檔、不會上傳資料；執行「移除中文版.cmd」就會完全還原。遊戲裝在別的地方或還是英文，請附上 <code>%APPDATA%\D2SurvivorsZH\last-run.log</code> 回報。</p>
     </details>
     <details>
       <summary>會不會動到存檔、上傳我的資料？</summary>
