@@ -22,6 +22,8 @@ javascript:(function awTools() {
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
    *  18. 不上傳雲端存檔：小工具設定裡的選項（預設關閉）；自動刷神話進行中也一律不上傳
+   *  19. 商人選變異：在商人買技能寶石時跳出視窗，選要原本的形狀或哪一種變異形狀（能力相同）
+   *  20. 指定萃取、指定灌注：煉金的萃取／灌注視窗裡，每條詞綴旁有按鈕，指定萃取這條、或指定用哪顆符文取代這條
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -36,7 +38,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V32';
+  const VERSION = 'V33';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -87,6 +89,8 @@ javascript:(function awTools() {
     monLoop: true,          /* 無限君主加上「自動刷神話」按鈕（沒掉神話獨特就自動讀回挑戰前的存檔） */
     monLoopLootMs: 2500,    /* 自動刷神話：打贏後等幾毫秒讓掉落物落地，再收起來檢查 */
     monLoopBatch: 1,        /* 自動刷神話：「每打幾場才讀一次檔」的預設值（開始時還可以再改） */
+    shopMut: true,          /* 商人買技能寶石時先選形狀（原形狀或任一種合法的變異形狀） */
+    afPick: true,           /* 萃取、灌注視窗的每條詞綴旁加上按鈕：指定萃取這條、指定用哪顆符文取代這條 */
     noCloud: false,         /* 不上傳 Google 雲端存檔（開啟期間遊戲會顯示沒登入 Google，關掉後自動恢復） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
@@ -2675,6 +2679,350 @@ javascript:(function awTools() {
     }, 700);
   }
 
+  /* ===== 19、20 共用：小視窗 =====
+   * 和存檔備份一樣蓋一層全螢幕的底，內容自己畫。回傳 { root, box, close }。 */
+  const awSheet = (id, width) => {
+    const old = document.querySelector('#' + id);
+    if (old) old.remove();
+    const root = document.createElement('div');
+    root.id = id;
+    root.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;font:13px/1.5 sans-serif;color:#f0e6d2';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#2a2118;border:2px solid #6a5a4a;border-radius:6px;padding:12px;box-sizing:border-box;width:min(' + width + 'px,96vw);max-height:94%;overflow:auto';
+    root.appendChild(box);
+    const close = () => root.remove();
+    root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); }, true);
+    root.addEventListener('click', e => { e.stopPropagation(); if (e.target === root) close(); });
+    document.body.appendChild(root);
+    return { root: root, box: box, close: close };
+  };
+  const escH = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const AW_BTN = 'padding:2px 8px;cursor:pointer';
+  const AW_GO = 'padding:4px 14px;cursor:pointer;font-weight:bold;background:#ffd84a;color:#2a2118;border:1px solid #000';
+
+  /* ===== 19. 商人選變異 =====
+   * 遊戲的商人只賣原本形狀的寶石（購買按鈕 data-act="buy"、data-k="gem:寶石代號"、data-c=價格，按下去呼叫 giveGem）。
+   * 這裡在按鈕被遊戲處理之前攔下來，改成跳出視窗讓玩家選形狀：
+   *   - 原本的形狀
+   *   - 遊戲變異規則（mutShape）可能變出來的所有形狀：同格數換一個形狀、多 1 格（最多 MUT.max 格）、少 1 格（要連在一起）
+   * 形狀用遊戲的 polyKey 判斷是不是同一種（只算旋轉，鏡像算不同形狀，和遊戲一樣），座標也照 mutShape 的方式擺正。
+   * 買變異形狀時寶石帶 sh（形狀），能力和原本的寶石完全相同，價格照商人的價格。
+   * 注意：變異寶石本來只能靠掉落或合成取得，這是直接把寶石加進存檔，修改【可能】被作者封鎖。 */
+  const shapeNorm = c => { const o = c.slice().sort((p, q) => p[1] - q[1] || p[0] - q[0])[0]; return c.map(([x, y]) => [x - o[0], y - o[1]]); };
+  /* 在形狀旁邊多長一格的所有結果 */
+  const shapeGrow = c => {
+    const has = new Set(c.map(p => p + '')), out = [];
+    for (const [x, y] of c) for (const n of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) if (!has.has(n + '')) { has.add(n + ''); out.push([...c, n]); }
+    return out;
+  };
+  /* 某個格數的所有形狀（以 polyKey 去重），回傳 Map(polyKey → 形狀) */
+  const shapeAll = n => {
+    let lv = new Map([[polyKey([[0, 0]]), [[0, 0]]]]);
+    for (let k = 1; k < n; k++) {
+      const nx = new Map();
+      for (const c of lv.values()) for (const g of shapeGrow(c)) { const key = polyKey(g); if (!nx.has(key)) nx.set(key, shapeNorm(g)); }
+      lv = nx;
+    }
+    return lv;
+  };
+  /* 某顆寶石可以選的形狀，分成四組：[標題, [形狀或 null（null 代表原本的形狀）]] */
+  const mutChoices = id => {
+    const base = SKILLS[id].shape, n = base.length, bk = polyKey(base), max = typeof MUT === 'object' && MUT.max ? MUT.max : 6;
+    const same = [...shapeAll(n).entries()].filter(([k]) => k !== bk).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(e => e[1]);
+    const uniq = list => { const m = new Map(); for (const c of list) { const k = polyKey(c); if (!m.has(k)) m.set(k, shapeNorm(c)); } return [...m.values()]; };
+    const plus = n < max ? uniq(shapeGrow(base)) : [];
+    const minus = n > 1 ? uniq(base.map((_, i) => base.filter((p, j) => j !== i)).filter(polyConn)) : [];
+    return [['原本的形狀（' + n + ' 格）', [null]], ['同格數換形狀（' + n + ' 格）', same], ['多 1 格（' + (n + 1) + ' 格）', plus], ['少 1 格（' + (n - 1) + ' 格）', minus]].filter(g => g[1].length);
+  };
+  /* 已經持有幾顆這個形狀（穿梭寶石不算） */
+  const shapeOwned = (id, sh) => {
+    const k = polyKey(sh || SKILLS[id].shape);
+    return S.gems.filter(g => g.id === id && !g.sx && polyKey(g.sh || SKILLS[id].shape) === k).length;
+  };
+  const shapeIcon = (id, sh, px) => {
+    try { const a = gemArt(id, 0, 4, sh || undefined); return '<span style="display:inline-block;width:' + (a.W * px) + 'px;height:' + (a.H * px) + 'px">' + a.svg.replace('<svg', '<svg style="display:block;width:100%;height:100%"') + '</span>'; }
+    catch (e) { return ''; }
+  };
+  const openShopMut = (id, price) => {
+    const sk = SKILLS[id];
+    if (!sk) return false;
+    const groups = mutChoices(id);
+    const flat = [];
+    for (const g of groups) for (const sh of g[1]) flat.push(sh);
+    let pick = 0;
+    const { box, close } = awSheet('awShopMut', 600);
+    const draw = () => {
+      let i = 0;
+      box.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">購買 ' + escH(sk.n) + '</b><span style="color:#a89a84">選擇形狀（能力都相同）</span>' +
+          '<span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
+        groups.map(g => '<div style="margin:6px 0 2px;color:#ffd84a">' + g[0] + '</div><div style="display:flex;flex-wrap:wrap;gap:4px">' +
+          g[1].map(sh => {
+            const k = i++, own = shapeOwned(id, sh);
+            return '<button data-a="pick" data-i="' + k + '" title="已持有 ' + own + ' 顆" style="cursor:pointer;padding:4px;min-width:52px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:' + (k === pick ? '#5a4a20' : '#1a1410') + ';border:2px solid ' + (k === pick ? '#ffd84a' : '#3a3026') + ';color:#f0e6d2">' +
+              shapeIcon(id, sh, 2) + '<small style="color:#a89a84">' + (own ? '持有 ' + own : '&nbsp;') + '</small></button>';
+          }).join('') + '</div>').join('') +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+          '<span>數量</span><input data-r="n" type="number" min="1" value="1" style="width:70px;padding:3px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
+          '<span>單價 ' + fmt(price) + ' 灰燼・你有 ' + fmt(S.ash) + '</span><span style="flex:1"></span>' +
+          '<button data-a="buy" style="' + AW_GO + '">購買</button></div>' +
+        (flat[pick] ? '<div style="color:#ffb070;font-size:12px;margin-top:6px">變異寶石本來只能靠掉落或合成取得，買變異形狀是小工具直接把寶石加進存檔，修改【可能】被作者封鎖。</div>' : '');
+    };
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button[data-a]');
+      if (!b) return;
+      const a = b.dataset.a;
+      if (a === 'close') { close(); return; }
+      if (a === 'pick') { pick = +b.dataset.i; const n = box.querySelector('[data-r="n"]').value; draw(); box.querySelector('[data-r="n"]').value = n; return; }
+      if (a === 'buy') {
+        const n = Math.max(1, Math.floor(+box.querySelector('[data-r="n"]').value || 1));
+        const can = Math.min(n, Math.floor(S.ash / price));
+        if (can < 1) { uiAlert('灰燼不夠（需要 ' + fmt(price) + '，你有 ' + fmt(S.ash) + '）。'); return; }
+        const sh = flat[pick];
+        for (let k = 0; k < can; k++) {
+          S.ash -= price;
+          if (sh) S.gems.push({ u: uid(), id: id, x: -1, y: -1, rot: 0, sh: sh.map(p => p.slice()) });
+          else giveGem(id);
+        }
+        try { ui.badge('skill', 1); } catch (err) {}
+        markDirty();
+        try { ui.render(); } catch (err) {}
+        toast('購買成功：' + sk.n + (sh ? '（變異 ' + sh.length + ' 格）' : '') + ' ×' + can + (can < n ? '（灰燼只夠買 ' + can + ' 顆）' : ''), 'lvl');
+        draw();
+      }
+    });
+    draw();
+    return true;
+  };
+  if (first && CFG.shopMut) {
+    document.addEventListener('click', e => {
+      const b = e.target && e.target.closest && e.target.closest('[data-act="buy"]');
+      if (!b || b.disabled || !/^gem:/.test(b.dataset.k || '')) return;
+      const id = b.dataset.k.slice(4), price = +b.dataset.c;
+      if (typeof SKILLS === 'undefined' || !SKILLS[id] || !(price >= 0)) return;
+      e.stopPropagation(); e.preventDefault();
+      openShopMut(id, price);
+    }, true);
+  }
+
+  /* ===== 20. 指定萃取、指定灌注 =====
+   * 遊戲的萃取（xtrOne）會依詞綴權重隨機取出一條；灌注（doInfuse）會隨機挑一條詞綴被符文取代。
+   * 這裡在萃取、灌注視窗的每條詞綴旁加按鈕，讓玩家指定那一條。做法是把遊戲的這兩個函式改一小段：
+   *   - xtrOne：隨機挑詞綴的 pickW(裝備.af, …) 前面先看 __awXtrAf（指定第幾條），有指定就用那條
+   *   - doInfuse：「可以被取代的詞綴清單」infLines(…) 在有指定 __awInfLine 時換成只有那一條
+   * 其餘全部照遊戲自己的程式跑：扣萃取石／灌注石和灰燼、成功率、升階機率、取出獨特效果的機率、保護石、奇蹟、
+   * 同一件裝備的隨機序列（rngItem），結果視窗也是遊戲自己的。指定完就清掉，批次萃取等其他地方不受影響。
+   * 萃取的機率（遊戲常數 XTR、PROT_KEEP）：
+   *   成功率 Lv1 50%、Lv2 以上 100%；失敗時裝備一樣會消失、拿不到符文（保護石有機會保留裝備）
+   *   升階（取出的符文高一階，數值照原本在區間裡的位置換算）只有 Lv4 有，25%；奇蹟狀態加 Lv4 必定升階；T0 不能再升
+   *   獨特裝備用 Lv3、Lv4 時有 5% 改成取出獨特效果（不是指定的詞綴）；奇蹟狀態的獨特裝備必定取出獨特效果
+   * 注意：這是改變遊戲的隨機規則，修改【可能】被作者封鎖。 */
+  if (first && CFG.afPick) {
+    const patchOne = (name, re, to) => {
+      const f = window[name];
+      if (typeof f !== 'function') return false;
+      const src = Function.prototype.toString.call(f), out = src.replace(re, to);
+      if (out === src) return false;
+      try { window[name] = (0, eval)('(' + out + ')'); return true; } catch (e) { return false; }
+    };
+    window.__awAfPatch = {
+      xtr: patchOne('xtrOne', /pickW\((\w+)\.af,(\w+)=>AFFIX\[\2\.a\]\.w\)/, '(window.__awXtrAf!=null&&$1.af[window.__awXtrAf]||pickW($1.af,$2=>AFFIX[$2.a].w))'),
+      inf: patchOne('doInfuse', /(\w+)=infLines\((\w+),(\w+),!!\2\.mir\)/, '$1=(window.__awInfLine!=null&&window.__awInfLine<$2.af.length?[window.__awInfLine]:infLines($2,$3,!!$2.mir))')
+    };
+    const afText = a => { try { return AFFIX[a.a].f(a.v); } catch (e) { return a.a; } };
+    const pct = v => (Math.round(v * 10) / 10) + '%';
+    /* 目前萃取／灌注視窗裡的那件裝備 */
+    const axItem = () => { try { const md = ui.alchMd(); return ui.alchAll(md).find(t => t.u === ui.alchSel) || null; } catch (e) { return null; } };
+    /* 換算升階後的數值：照原本在區間裡的位置（和遊戲 xtrOne 一樣） */
+    const upValue = a => {
+      const [r, c] = tierRange(a.a, a.t), d = c > r ? (a.v - r) / (c - r) : 1, [f, p] = tierRange(a.a, a.t - 1);
+      return Math.round(f + d * (p - f));
+    };
+    /* 執行完遊戲的動作後重畫畫面，並把遊戲記下的結果（ui.alchRes）用小視窗講清楚。
+     * 萃取完裝備通常會消失，遊戲的萃取視窗會直接關掉，不另外說明的話玩家看不到拿到什麼 */
+    const showGameResult = before => {
+      try { ui.render(); } catch (e) {}
+      try { ui.axOpen(); } catch (e) {}
+      const r = ui.alchRes;
+      if (!r || r === before) { uiAlert('沒有執行（材料、灰燼不夠，或裝備狀態不符合）。'); return; }
+      const lines = [r.msg || ''];
+      if (r.k === 'x') {
+        for (const g of r.got || []) { try { lines.push('獲得：' + (g.uq ? '獨特 ' : 'T' + g.t + ' ') + runeDesc(g)); } catch (e) {} }
+        for (const n of r.notes || []) lines.push(n);
+      } else if (r.k === 'i') {
+        if (r.old) lines.push('取代：T' + r.old.t + ' ' + afText(r.old));
+        if (r.nw) lines.push('變成：T' + r.nw.t + ' ' + afText(r.nw));
+        if (r.uq) { try { lines.push('獲得獨特效果：' + UNIQUE[r.uq].n); } catch (e) {} }
+        if (r.mir) lines.push('奇蹟生效');
+      }
+      uiAlert(lines.filter(Boolean).join('\n'));
+    };
+
+    const openXtrPick = j => {
+      const t = axItem();
+      if (!t || !t.af[j]) return;
+      const a = t.af[j], uqHas = uqKey(t) && !t.my, mir = !!t.mir, cost = ALCH_ASH.x(t.ilvl);
+      const stones = ['x1', 'x2', 'x3', 'x4'];
+      let st = stones.find(k => S.mat[k] > 0 && k === ui.alchOpt.x) || stones.slice().reverse().find(k => S.mat[k] > 0) || null;
+      let prot = ui.alchOpt.p && S.mat[ui.alchOpt.p] > 0 ? ui.alchOpt.p : '';
+      const { box, close } = awSheet('awXtrPick', 520);
+      const draw = () => {
+        const lv = st ? MATS[st].l : 0, ok = XTR.ok[lv] || 0;
+        const upP = a.t >= 1 ? (mir && lv === 4 ? 100 : XTR.up[lv] || 0) : 0;
+        const uqP = uqHas ? (mir ? 100 : XTR.uq[lv] || 0) : 0;
+        const getP = ok * (1 - uqP / 100);
+        const runesFull = S.runes.length >= Math.max(5000, (CFG.noLimit ? CFG.itemMax : 0));
+        box.innerHTML =
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">指定萃取</b><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
+          '<div style="background:#1a1410;padding:6px 8px;border-radius:4px">' + escH(itemName(t)) + '<br><b style="color:#7dffc8">T' + a.t + '　' + escH(afText(a)) + '</b></div>' +
+          '<div style="margin:8px 0 2px;color:#ffd84a">萃取石</div>' +
+          stones.map(k => {
+            const l = MATS[k].l, has = S.mat[k] || 0;
+            const desc = ['成功率 ' + XTR.ok[l] + '%'];
+            if (XTR.up[l] || (mir && l === 4)) desc.push(a.t >= 1 ? ((mir && l === 4) ? '奇蹟：必定升階' : XTR.up[l] + '% 升階') : '已是 T0，不會升階');
+            if (uqHas && (XTR.uq[l] || mir)) desc.push((mir ? '100' : XTR.uq[l]) + '% 改取出獨特效果');
+            return '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (st === k ? '#3a3020' : '#1a1410') + ';cursor:' + (has ? 'pointer' : 'not-allowed') + ';opacity:' + (has ? 1 : 0.45) + '">' +
+              '<input type="radio" name="awxs" data-a="st" data-k="' + k + '" ' + (st === k ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+              '<b>Lv' + l + '</b><span style="flex:1">' + desc.join('・') + '</span><span>X' + has + '</span></label>';
+          }).join('') +
+          '<div style="margin:8px 0 2px;color:#ffd84a">保護石（失敗或萃取後保留裝備）</div>' +
+          [['', '不用', '', 1], ['p1', MATS.p1.n, '保留 ' + PROT_KEEP.p1 + '%', S.mat.p1 || 0], ['p2', MATS.p2.n, '保留 ' + PROT_KEEP.p2 + '%', S.mat.p2 || 0]].map(([k, n, d, has]) =>
+            '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (prot === k ? '#3a3020' : '#1a1410') + ';opacity:' + (has ? 1 : 0.45) + '">' +
+              '<input type="radio" name="awxp" data-a="pr" data-k="' + k + '" ' + (prot === k ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+              '<span style="flex:1">' + n + (d ? '・' + d : '') + '</span>' + (k ? '<span>X' + has + '</span>' : '') + '</label>').join('') +
+          (st ? '<div style="background:#1a1410;padding:6px 8px;border-radius:4px;margin-top:8px;font-size:12px;line-height:1.7">' +
+            '取出這條：<b style="color:#7dffc8">' + pct(getP * (1 - upP / 100)) + '</b>　T' + a.t + ' ' + escH(afText(a)) + '<br>' +
+            (upP ? '取出並升階：<b style="color:#ffd84a">' + pct(getP * upP / 100) + '</b>　T' + (a.t - 1) + ' ' + escH(afText({ a: a.a, v: upValue(a) })) + '<br>' : '') +
+            (uqP ? '改取出獨特效果：<b style="color:#ffb070">' + pct(ok * uqP / 100) + '</b><br>' : '') +
+            (ok < 100 ? '失敗（裝備消失、沒有符文）：<b style="color:#ff5a6a">' + pct(100 - ok) + '</b><br>' : '') +
+            (prot ? '不論成功失敗，' + PROT_KEEP[prot] + '% 機率保留裝備' : '萃取後裝備會消失') +
+          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有萃取石，可到「合成」製作。</div>') +
+          (mir ? '<div style="color:#e8f0ff;font-size:12px;margin-top:4px">這件裝備有奇蹟狀態，這次萃取會用掉。</div>' : '') +
+          (runesFull ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">符文石已滿，不能萃取。</div>' : '') +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span>消耗 ' + fmt(cost) + ' 灰燼（你有 ' + fmt(S.ash) + '）</span><span style="flex:1"></span>' +
+            '<button data-a="go" style="' + AW_GO + '" ' + (st && S.ash >= cost && !runesFull && !t.lk ? '' : 'disabled') + '>萃取這條</button></div>' +
+          (t.lk ? '<div style="color:#ff5a6a;font-size:12px">裝備已鎖定，請先解鎖。</div>' : '') +
+          '<div style="color:#a89a84;font-size:12px;margin-top:6px">指定詞綴是小工具改變遊戲的隨機規則，修改【可能】被作者封鎖。</div>';
+      };
+      box.addEventListener('change', e => {
+        const r = e.target;
+        if (r.dataset.a === 'st') { st = r.dataset.k; draw(); }
+        if (r.dataset.a === 'pr') { prot = r.dataset.k; draw(); }
+      });
+      box.addEventListener('click', e => {
+        const b = e.target.closest('button[data-a]');
+        if (!b) return;
+        if (b.dataset.a === 'close') { close(); return; }
+        if (b.dataset.a !== 'go') return;
+        const t2 = axItem();
+        if (t2 !== t || t.af[j] !== a) { uiAlert('裝備已經變了，請重新開啟。'); close(); return; }
+        ui.alchOpt.x = st;
+        ui.alchOpt.p = prot || 0;
+        ui.mirPick = false;
+        const before = ui.alchRes;
+        window.__awXtrAf = j;
+        try { doAlch(); } catch (err) {} finally { window.__awXtrAf = null; }
+        close();
+        showGameResult(before);
+      });
+      draw();
+    };
+
+    const openInfPick = j => {
+      const t = axItem();
+      if (!t || !t.af[j]) return;
+      const a = t.af[j], cost = ALCH_ASH.i(t.ilvl);
+      const all = S.runes.filter(r => !isStaged(r.u) && (r.uq ? uqInfFit(t, r) : AFFIX[r.a] && AFFIX[r.a].s.includes(t.slot))).sort(runeByTier);
+      let sel = null, q = '';
+      /* 遊戲的符文說明（runeDesc）不含階級，前面補上 T 幾或「獨特」，清單和搜尋都用這個 */
+      const runeLabel = x => { let d = ''; try { d = runeDesc(x); } catch (e) {} return (x.uq ? '獨特 ' : 'T' + x.t + ' ') + d; };
+      const { box, close } = awSheet('awInfPick', 560);
+      const LIMIT = 300;
+      const draw = () => {
+        const r = all.find(x => x.u === sel) || null;
+        const stone = r ? (r.uq ? 'i4' : infStone(t)) : null;
+        const dv = r && !r.uq && AFFIX[r.a].dv != null && t.af.some((x, k) => k !== j && AFFIX[x.a].dv != null);
+        const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const list = all.filter(x => { const s = runeLabel(x).toLowerCase(); return words.every(w => s.indexOf(w) >= 0); });
+        box.innerHTML =
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">指定灌注</b><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
+          '<div style="background:#1a1410;padding:6px 8px;border-radius:4px">' + escH(itemName(t)) + '<br>要被取代：<b style="color:#ff9a8a">T' + a.t + '　' + escH(afText(a)) + '</b></div>' +
+          '<div style="display:flex;gap:6px;align-items:center;margin:8px 0 4px"><span style="color:#ffd84a">選擇符文石</span><span style="color:#a89a84">（' + list.length + ' / ' + all.length + ' 顆可灌注到這個部位）</span></div>' +
+          '<input data-r="q" placeholder="搜尋，例如：暴擊 T1" value="' + escH(q) + '" style="width:100%;box-sizing:border-box;padding:4px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
+          '<div data-r="list" style="max-height:min(320px,40vh);overflow:auto;margin-top:4px;border:1px solid #3a3026">' +
+            (list.length ? list.slice(0, LIMIT).map(x =>
+              '<button data-a="sel" data-u="' + x.u + '" style="display:block;width:100%;text-align:left;cursor:pointer;padding:3px 6px;border:0;border-bottom:1px solid #3a3026;background:' + (x.u === sel ? '#5a4a20' : '#1a1410') + ';color:#f0e6d2">' +
+              escH(runeLabel(x)) + '</button>').join('') + (list.length > LIMIT ? '<div style="padding:4px 6px;color:#a89a84">還有 ' + (list.length - LIMIT) + ' 顆，請用搜尋縮小範圍</div>' : '')
+            : '<div style="padding:6px;color:#a89a84">沒有符合的符文石。</div>') +
+          '</div>' +
+          (r ? '<div style="background:#1a1410;padding:6px 8px;border-radius:4px;margin-top:8px;font-size:12px;line-height:1.7">' +
+              'T' + a.t + ' ' + escH(afText(a)) + '　→　<b style="color:#7dffc8">' + escH(runeLabel(r)) + '</b><br>' +
+              '必定取代這一條（遊戲原本是隨機挑一條）' +
+              (r.uq ? '<br>獨特效果符文：這條詞綴會被拿掉，裝備獲得獨特效果' : '') +
+            '</div>' : '') +
+          (dv ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">一件裝備最多一條神眷詞綴。</div>' : '') +
+          (r && !stone ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">' + (t.uq ? '獨特裝備需要灌注石 Lv2 以上。' : '沒有灌注石，可到「合成」製作。') + '</div>' : '') +
+          (r && r.uq && !(S.mat.i4 > 0) ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">獨特效果需要灌注石 Lv4。</div>' : '') +
+          (t.mir ? '<div style="color:#e8f0ff;font-size:12px;margin-top:4px">這件裝備有奇蹟狀態，這次灌注會用掉（指定取代時奇蹟沒有額外效果）。</div>' : '') +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span>' + (stone ? '消耗 ' + MATS[stone].n + '（X' + (S.mat[stone] || 0) + '）、' : '') + fmt(cost) + ' 灰燼（你有 ' + fmt(S.ash) + '）</span><span style="flex:1"></span>' +
+            '<button data-a="go" style="' + AW_GO + '" ' + (r && stone && S.mat[stone] > 0 && S.ash >= cost && !dv ? '' : 'disabled') + '>灌注到這條</button></div>' +
+          '<div style="color:#a89a84;font-size:12px;margin-top:6px">指定詞綴是小工具改變遊戲的隨機規則，修改【可能】被作者封鎖。</div>';
+      };
+      box.addEventListener('input', e => {
+        if (e.target.dataset.r !== 'q') return;
+        q = e.target.value;
+        const pos = e.target.selectionStart;
+        draw();
+        const inp = box.querySelector('[data-r="q"]');
+        inp.focus(); try { inp.setSelectionRange(pos, pos); } catch (err) {}
+      });
+      box.addEventListener('click', e => {
+        const b = e.target.closest('button[data-a]');
+        if (!b) return;
+        const act = b.dataset.a;
+        if (act === 'close') { close(); return; }
+        if (act === 'sel') { const sc = box.querySelector('[data-r="list"]').scrollTop; sel = +b.dataset.u; draw(); box.querySelector('[data-r="list"]').scrollTop = sc; return; }
+        if (act !== 'go') return;
+        const t2 = axItem();
+        if (t2 !== t || t.af[j] !== a) { uiAlert('裝備已經變了，請重新開啟。'); close(); return; }
+        ui.infR = sel;
+        ui.sealJ = null;
+        ui.sealPick = false;
+        ui.mirPick = false;
+        const before = ui.alchRes;
+        window.__awInfLine = j;
+        try { doInfuse(); } catch (err) {} finally { window.__awInfLine = null; }
+        close();
+        showGameResult(before);
+      });
+      draw();
+    };
+
+    /* 在萃取、灌注視窗的詞綴列旁加按鈕。詞綴列是 #sheet.axs 裡的 .affix，前面幾列依序對應裝備的 af（後面的獨特效果列不加） */
+    const addAfBtns = () => {
+      const sheet = document.querySelector('#sheet.axs');
+      if (!sheet || sheet.querySelector('.awAfBtn') || document.querySelector('#awXtrPick,#awInfPick')) return;
+      let md;
+      try { md = ui.alchMd(); } catch (e) { return; }
+      if (md !== 'x' && md !== 'i') return;
+      const t = axItem();
+      if (!t || !t.af || !t.af.length) return;
+      if (md === 'x' ? !canAlch(t) : !canInfuse(t)) return;
+      if (!window.__awAfPatch || !window.__awAfPatch[md === 'x' ? 'xtr' : 'inf']) return;
+      const rows = [...sheet.querySelectorAll('.affix')].filter(r => !r.querySelector('.tag') || !/獨特/.test(r.querySelector('.tag').textContent));
+      rows.slice(0, t.af.length).forEach((row, j) => {
+        const b = document.createElement('button');
+        b.className = 'awAfBtn';
+        b.textContent = md === 'x' ? '萃取這條' : '灌注這條';
+        b.title = md === 'x' ? '指定萃取這一條詞綴，可選萃取石並看升階機率' : '指定用哪一顆符文石取代這一條詞綴';
+        b.style.cssText = 'margin-left:6px;padding:0 6px;font-size:11px;line-height:18px;cursor:pointer;background:#ffd84a;color:#2a2118;border:1px solid #000;border-radius:3px;flex:none;white-space:nowrap';
+        b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); if (md === 'x') openXtrPick(j); else openInfPick(j); }, true);
+        row.appendChild(b);
+      });
+    };
+    setInterval(() => { try { addAfBtns(); } catch (e) {} }, CFG.btnRefreshMs);
+  }
+
   /* ===== 18. 不上傳雲端存檔 =====
    * 兩種情況不把存檔傳到 Google 雲端存檔：
    *   - 小工具設定開了「不上傳雲端存檔」（CFG.noCloud）
@@ -2925,7 +3273,8 @@ javascript:(function awTools() {
     ['功能按鈕', [
       ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
       ['cards', '卡片進度', '地圖分頁'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
-      ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現']
+      ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現'],
+      ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
     ]],
     ['物品上限', [
       ['noLimit', '物品持有無上限', '背包、石板、符文、共用倉庫'],
