@@ -1,5 +1,6 @@
 // D2 Survivors 安裝版（桌面版）繁體中文：由 app.asar 裡 main.cjs 第一行載入（install.ps1 加上去的）。
-// 遊戲頁面（app://game/）每次載入完成，就把 d2_zh.js（跟書籤同一份）注入頁面。
+// 遊戲頁面（app://game/）和設定頁（app://setup/：找 Diablo II、解壓縮、遊戲改版後更新檔案）
+// 每次載入完成，就把 d2_zh.js（跟書籤同一份）注入頁面。
 // 遊戲本身會擋掉頁面的網路連線，所以中文檔放在這個資料夾；啟動時在背景向 GitHub Pages 抓新版，下次開遊戲生效。
 'use strict';
 const { app } = require('electron');
@@ -42,7 +43,7 @@ app.whenReady().then(refresh);
 
 app.on('web-contents-created', (_event, contents) => {
   contents.on('did-finish-load', () => {
-    if (!contents.getURL().startsWith('app://game/')) return;
+    if (!/^app:\/\/(game|setup)\//.test(contents.getURL())) return;
     let code;
     try { code = fs.readFileSync(LOCAL, 'utf8'); } catch (e) { log(`inject: ${e.message}`); return; }
     contents.executeJavaScript(`window.__D2ZH_DESKTOP = true;\n${code}\n;0`, true)

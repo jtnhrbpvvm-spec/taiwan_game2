@@ -836,7 +836,19 @@ text: {
 'The game now uses your own files': '遊戲現在使用你自己的檔案', 'Your own Diablo II files': '你自己的 Diablo II 檔案', 'Play with your own Diablo II': '用你自己的 Diablo II 玩',
 'Play with your own Diablo II files: faster, no download.': '用你自己的 Diablo II 檔案玩：更快，不用下載。', 'D2 Survivors now needs your own Diablo II files': 'D2 Survivors 現在需要你自己的 Diablo II 檔案',
 'Your Diablo II: Resurrected files don’t match each other.': '你的 Diablo II: Resurrected 檔案彼此不相符。', 'That folder won’t do': '這個資料夾不行',
-'Extract': '解壓縮', 'Change folder': '更換資料夾', 'Opening the archives': '正在開啟封存檔', 'Extracting': '解壓縮中', 'Ready': '完成', 'The extraction stopped': '解壓縮中斷了',
+'Extract': '解壓縮', 'Change folder': '更換資料夾', 'Opening the archives': '正在開啟封存檔', 'Extracting': '解壓縮中', 'The extraction stopped': '解壓縮中斷了',
+// 安裝版的設定頁（app://setup/：找 Diablo II、解壓縮、遊戲改版後更新檔案）
+'Ready': '準備完成', 'Done in *': '花了 {0} 完成', '# of #': '{0}／{1}', 'Getting ready': '準備中', 'Copied': '已複製', 'Automap': '自動地圖',
+// 原本完成後只寫一行小字、沒提示要按按鈕：加上提示
+'Your game files are in place, and stay on this computer.': '✔ 遊戲檔案已經下載完成，會一直留在這台電腦上。請按下方的「開始遊戲」按鈕進入遊戲。',
+'Where is Diablo II?': 'Diablo II 在哪裡？', 'It isn’t a Diablo II install.': '這不是 Diablo II 的安裝資料夾。', 'Locate Diablo II…': '選擇 Diablo II 資料夾…',
+'Extract the game files again': '重新解壓縮遊戲檔案', 'Updating game files…': '正在更新遊戲檔案…（遊戲改版，完成後會自動開始）',
+'Copying your game files. This takes a minute or so, once.': '正在複製你的遊戲檔案，只需要一次，大約一分鐘。',
+'This version reads some of your game files differently, so those are copied again. The game starts once they’re in place.': '遊戲改版了，新版讀取部分檔案的方式不同，所以會重新複製這些檔案。完成後遊戲會自動開始，請稍候。',
+'Some of the game files are missing. Extract them again to play.': '缺少部分遊戲檔案，請按「解壓縮」重新複製才能玩。',
+'This version of D2 Survivors reads the game files differently. Extract them again to play.': '遊戲改版了：這個版本讀取遊戲檔案的方式不同，請按「解壓縮」重新複製才能玩。',
+'This version of D2 Survivors reads some of the game files differently. Extract them again to play.': '遊戲改版了：這個版本讀取部分遊戲檔案的方式不同，請按「解壓縮」重新複製才能玩。',
+'The art and sound are copied again, from this install or another, over the ones the game has now.': '會從這個或另一個安裝資料夾重新複製圖像和音效，覆蓋目前的檔案。',
 'Try again': '再試一次', 'The game plays with them.': '遊戲會使用這些檔案。', 'Play with my files': '用我的檔案玩', 'Extract again…': '重新解壓縮…', 'How it works': '運作方式',
 'Copy details': '複製詳細資訊', 'Choose another folder…': '選擇其他資料夾…', 'Reading Diablo II…': '正在讀取 Diablo II…', 'A few seconds': '幾秒鐘', 'Diablo II found': '找到 Diablo II',
 'Diablo II: Resurrected found': '找到 Diablo II: Resurrected', 'Your game files': '你的遊戲檔案', 'Update your game files': '更新你的遊戲檔案', 'Update game files': '更新遊戲檔案',
@@ -1666,8 +1678,14 @@ if (depth > 2) return null;
 // 遊戲常把好幾句用「 · 」或「 - 」接起來，或在前後加數字（例如 "-12% to Enemy Cold Resistance"）
 for (const sep of [' · ', ' - ']) {
 if (!text.includes(sep)) continue;
-const pieces = text.split(sep), done = pieces.map(p => d2zhFix(p, depth + 1));
+const pieces = text.split(sep).map(p => p.trim()), done = pieces.map(p => d2zhFix(p, depth + 1));
 if (done.some(p => p !== null)) return pieces.map((p, i) => done[i] ?? translate(p)).join(sep);
+}
+// 用逗號列出的名稱（例如解壓縮進度「Units, floor tiles」）：每一段都認得才翻
+if (text.includes(', ')) {
+const whole = s => { const t = translate(s); return /[㐀-鿿]/u.test(t) && !/[A-Za-z]{3,}/.test(t) ? t : null; };
+const pieces = text.split(', '), done = pieces.map(p => d2zhFix(p, depth + 1) ?? whole(p));
+if (done.every(p => p !== null)) return done.join('、');
 }
 const lead = /^([-+]?\d[\d.,]*%?)\s+(.+)$/s.exec(text);
 if (lead) { const rest = d2zhFix(lead[2], depth + 1); if (rest !== null) return lead[1] + ' ' + rest; }
