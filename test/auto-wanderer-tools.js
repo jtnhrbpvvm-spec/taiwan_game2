@@ -39,7 +39,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V35';
+  const VERSION = 'V36';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2823,17 +2823,18 @@ javascript:(function awTools() {
   const LEG_PRICE = 1000000, SX_PRICE = 1000000;
   if (first && (CFG.legShop || CFG.sxShop)) {
     const exWare = (id, sx) => {
-      const sk = SKILLS[id], price = sx ? SX_PRICE : LEG_PRICE, ok = S.ash >= price, col = sx ? '#e8f0ff' : '#e8b030';
+      /* 商人格子是淺色底，字要用深一點的顏色：外框用亮色，文字用同色系的深色 */
+      const sk = SKILLS[id], price = sx ? SX_PRICE : LEG_PRICE, ok = S.ash >= price, col = sx ? '#8a9ab8' : '#e8b030', txt = sx ? '#3a4a6a' : '#9a6400';
       let art = '';
       try { const a = gemArt(id, 0, 5, undefined, sx ? 1 : undefined), k = Math.max(1, Math.min(3, Math.floor(56 / Math.max(a.W, a.H)))); art = '<span class="shape" style="width:' + (a.W * k) + 'px;height:' + (a.H * k) + 'px">' + a.svg + '</span>'; } catch (e) {}
       let tip = sk.d || '';
       try { tip = tagText(sk) + (sk.cd ? '・冷卻 ' + sk.cd + ' 秒' : '') + '・' + sk.d; } catch (e) {}
       const own = S.gems.filter(g => g.id === id && !g.sx === !sx).length;
-      const sub = sx ? '穿梭・' + (sk.cls && CLASS[sk.cls] ? CLASS[sk.cls].n : '其他職業') + '的輔助' : '傳說';
+      const sub = sx ? '穿梭・' + (sk.cls && CLASS[sk.cls] ? CLASS[sk.cls].n : '其他職業') : '傳說';
       return '<div class="ware awExWare" style="box-shadow:0 0 0 2px ' + col + ' inset">' +
         '<div class="wwell">' + art + (own ? '<span class="own px">×' + own + '</span>' : '') + '</div>' +
         '<div class="wn"><span class="tip" tabindex="0" data-tip="' + escH(tip) + '">' + escH(sk.n) + '</span></div>' +
-        '<div class="ws"><span style="color:' + col + '">' + sub + '</span></div>' +
+        '<div class="ws"><span style="color:' + txt + ';font-weight:bold">' + sub + '</span></div>' +
         '<button class="btn sm awExBuy ' + (ok ? 'primary' : '') + '" data-id="' + id + '" data-sx="' + (sx ? 1 : 0) + '" ' + (ok ? '' : 'disabled') + ' aria-label="' + price + ' 灰燼購買">' +
           '<img class="ashI" src="' + shopIcon('ash') + '" alt="灰燼"><span class="px">' + fmt(price) + '</span></button></div>';
     };
