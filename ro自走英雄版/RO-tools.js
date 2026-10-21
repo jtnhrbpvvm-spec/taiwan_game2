@@ -50,7 +50,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V3';
+  const VERSION = 'V4';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -270,6 +270,23 @@ javascript:(function awTools() {
   const uiConfirm = msg => dlgShow({ kind: 'confirm', msg: String(msg) });
   const uiForm = (msg, fields) => dlgShow({ kind: 'form', msg: String(msg), fields: fields });
   const uiPrompt = (msg, def, multiline) => uiForm(msg, [{ value: def, multiline: !!multiline }]).then(v => (v ? v[0] : null));
+
+  /* 小工具視窗裡的按鈕配色。
+   * 流浪仙境的按鈕樣式是淺黃底、白字，小工具視窗裡沒有自己寫顏色的按鈕會吃到它，字幾乎看不到（重新讀取、清空、取消…）。
+   * 這裡統一給深底淺字；有自己寫顏色的按鈕（黃底深字的「確定」「套用」、選中的構築分頁、寶石按鈕）寫在按鈕上的樣式優先，不受影響。 */
+  if (!document.querySelector('#awBtnCss')) {
+    const ids = ['awDlg', 'awPlan', 'awItems', 'awBackup', 'awCards', 'awCfg', 'awShopMut', 'awXtrPick', 'awInfPick', 'awRef', 'awEarn', 'awLoopBar'];
+    const sel = s => ids.map(id => '#' + id + ' ' + s).join(',');
+    const st = document.createElement('style');
+    st.id = 'awBtnCss';
+    /* 配置模擬的技能盤格子（data-x）也是按鈕，要沿用遊戲的已解鎖／未解鎖樣式，不能改 */
+    st.textContent = sel('button:not([data-x])') + '{background:#3a3026;color:#f0e6d2;border:1px solid #8a7a5a;border-radius:4px;text-shadow:none;box-shadow:none;font-family:sans-serif}' +
+      sel('button:hover:not(:disabled):not([data-x])') + '{filter:brightness(1.2)}' +
+      sel('button:disabled') + '{opacity:.45;cursor:default}' +
+      sel('select') + ',' + sel('input:not([type=checkbox]):not([type=radio]):not([type=color])') + '{background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a}' +
+      sel('select option') + '{background:#1a1410;color:#f0e6d2}';
+    (document.head || document.documentElement).appendChild(st);
+  }
 
   /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
