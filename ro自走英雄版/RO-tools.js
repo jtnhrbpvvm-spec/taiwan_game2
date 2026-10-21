@@ -50,7 +50,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V4';
+  const VERSION = 'V5';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -3019,16 +3019,37 @@ javascript:(function awTools() {
       if (sx ? !CFG.sxShop || !sxList().includes(id) : !CFG.legShop || !SKILLS[id].leg || SKILLS[id].cls !== S.cls) return;
       openShopMut(id, sx ? SX_PRICE : LEG_PRICE, sx);
     }, true);
+    const exList = v => {
+      if (v === 'act' && CFG.legShop) return Object.keys(SKILLS).filter(k => SKILLS[k].leg && SKILLS[k].cls === S.cls).map(k => [k, false]);
+      if (v === 'sup' && CFG.sxShop) return sxList().filter(k => SKILLS[k]).map(k => [k, true]);
+      return [];
+    };
+    const exSig = (v, list) => v + '|' + list.map(([k, sx]) => k + ':' + S.gems.filter(g => g.id === k && !g.sx === !sx).length).join(',') + '|' + (S.ash >= LEG_PRICE ? 1 : 0) + (S.ash >= SX_PRICE ? 1 : 0);
+    /* 遊戲重畫商人頁面（打怪時 Zeny、掉落一直變，常常重畫）會把加上去的格子洗掉，計時器補回來之前會閃一下不見。
+     * 所以直接包住產生商人頁面的 ui.m_shop()，在遊戲產生的內容裡就先放好；下面的計時器只是包不到時的後備 */
+    try {
+      const realShop = ui.m_shop;
+      if (typeof realShop === 'function') {
+        ui.m_shop = function () {
+          const html = realShop.apply(this, arguments);
+          try {
+            if (typeof html !== 'string' || typeof S === 'undefined' || !S) return html;
+            const v = this.shopV || 'pot', list = exList(v), at = html.indexOf('<div class="shopG">');
+            if (!list.length || at < 0) return html;
+            const open = '<div class="shopG" data-aw-ex="' + escH(exSig(v, list)) + '">';
+            return html.slice(0, at) + open + list.map(([k, sx]) => exWare(k, sx)).join('') + html.slice(at + '<div class="shopG">'.length);
+          } catch (e) { return html; }
+        };
+      }
+    } catch (e) {}
     setInterval(() => {
       try {
         if (typeof S === 'undefined' || !S || ui.tab !== 'more' || ui.moreView !== 'shop') return;
         const v = ui.shopV || 'pot';
         const grid = document.querySelector('#panel .shopG');
         if (!grid) return;
-        let list = [];
-        if (v === 'act' && CFG.legShop) list = Object.keys(SKILLS).filter(k => SKILLS[k].leg && SKILLS[k].cls === S.cls).map(k => [k, false]);
-        if (v === 'sup' && CFG.sxShop) list = sxList().filter(k => SKILLS[k]).map(k => [k, true]);
-        const sig = v + '|' + list.map(([k, sx]) => k + ':' + S.gems.filter(g => g.id === k && !g.sx === !sx).length).join(',') + '|' + (S.ash >= LEG_PRICE ? 1 : 0) + (S.ash >= SX_PRICE ? 1 : 0);
+        const list = exList(v);
+        const sig = exSig(v, list);
         if (grid.dataset.awEx === sig && (!list.length || grid.querySelector('.awExWare'))) return;
         grid.querySelectorAll('.awExWare').forEach(el => el.remove());
         grid.insertAdjacentHTML('afterbegin', list.map(([k, sx]) => exWare(k, sx)).join(''));
@@ -4203,10 +4224,15 @@ javascript:(function awTools() {
         if (typeof real !== 'function') return;
         ui[name] = function () {
           const html = String(real.apply(this, arguments));
-          if (/<h2[\s>]/.test(html)) return html;
           const items = list();
           for (const it of items) btnFns[it[0]] = it[2];
-          return items.length ? '<div class="awBar" style="' + BAR_CSS + '">' + items.map(it => '<button class="btn sm ' + it[0] + '" style="margin-left:8px">' + it[1] + '</button>').join('') + '</div>' + html : html;
+          if (!items.length) return html;
+          const btns = items.map(it => '<button class="btn sm ' + it[0] + '" style="margin-left:8px">' + it[1] + '</button>').join('');
+          /* 有標題（例如選單裡的商人、倉庫頁）就放在標題的結尾前面，和計時器補的位置一樣；
+           * 直接寫進內容裡，遊戲重畫（打怪時很常）時按鈕才不會閃一下不見 */
+          const h2 = html.search(/<h2[\s>]/);
+          if (h2 >= 0) { const end = html.indexOf('</h2>', h2); return end < 0 ? html : html.slice(0, end) + btns + html.slice(end); }
+          return '<div class="awBar" style="' + BAR_CSS + '">' + btns + '</div>' + html;
         };
       } catch (e) {}
     };
