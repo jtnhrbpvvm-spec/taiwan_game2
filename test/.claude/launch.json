@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["C:\\Users\\a2095\\Desktop\\爬蟲\\auto-wanderer-tool\\aw_crawler.py", "--serve", "--no-browser"],
       "port": 8378
+    },
+    {
+      "name": "xj-offline",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\a2095\\Desktop\\爬蟲\\xianjing-tool\\xj_crawler.py", "--serve", "--no-browser"],
+      "port": 8379
     }
   ]
 }

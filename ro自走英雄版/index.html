@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>流浪仙境小工具</title>
+<style>
+  :root{
+    --bg:#0e0b16; --panel:#18132a; --border:rgba(255,255,255,.08);
+    --accent:#b07aff; --accent2:#FACC15; --text:#efe9f7; --muted:#a59cb8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:
+      radial-gradient(600px 300px at 50% -10%, rgba(176,122,255,.16), transparent),
+      var(--bg);
+    color:var(--text); font-family:"Microsoft JhengHei","Segoe UI",Arial,sans-serif;
+    padding:32px 16px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 6px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 28px;line-height:1.7;}
+  .sub a{color:#d4b8ff;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:20px; margin-bottom:18px; box-shadow:0 10px 30px -12px rgba(0,0,0,.5);
+  }
+  .card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+  .tag{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(176,122,255,.15);
+       border:1px solid rgba(176,122,255,.3);color:#d4b8ff;margin-left:auto;white-space:nowrap;}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    height:46px;border-radius:12px;font-weight:bold;font-size:14px;
+    text-decoration:none;cursor:grab;user-select:none;border:1px solid var(--border);
+  }
+  .btn-drag{background:linear-gradient(180deg,#fff,#e9e2f5);color:#0e0b16;}
+  .btn-copy{background:rgba(255,255,255,.06);color:var(--text);cursor:pointer;font-family:inherit;}
+  .hint{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px;}
+  textarea{
+    width:100%; height:80px; resize:none; margin-top:10px;
+    background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:10px;
+    color:var(--muted); font-size:10.5px; padding:10px; font-family:monospace;
+  }
+  ol,ul{margin:8px 0 0; padding-left:20px; font-size:13px; color:var(--muted); line-height:1.9;}
+  b.hl{color:var(--text);}
+  .feat{display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px;}
+  .feat div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.6;}
+  .feat small{display:block;color:var(--muted);font-size:12px;}
+  .where{font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.3);color:#fde68a;margin-left:6px;white-space:nowrap;}
+  .warn{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);}
+  .warn h2{color:#fca5a5;}
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:#fff; color:#0e0b16; padding:10px 18px; border-radius:999px;
+    font-weight:bold; font-size:13px; opacity:0; transition:all .25s; pointer-events:none; z-index:99;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .carousel-label{
+    text-align:center; font-size:12px; color:var(--muted); margin-top:14px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .carousel-label .dot{width:6px; height:6px; border-radius:999px; background:#b07aff;}
+  .carousel{
+    position:relative; margin:8px auto 0; max-width:260px; aspect-ratio:9/16; max-height:420px;
+    border-radius:16px; overflow:hidden; border:3px solid #3b3352;
+    background:#140f22; box-shadow:0 16px 32px -10px rgba(0,0,0,.6);
+    user-select:none;
+  }
+  .carousel img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0; transition:opacity .35s;
+  }
+  .carousel img.active{opacity:1;}
+  .carousel .cap{
+    position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(to top, rgba(0,0,0,.85), transparent);
+    padding:26px 12px 10px; display:flex; align-items:center; gap:8px;
+  }
+  .carousel .step-badge{
+    background:#FACC15; color:#0e0b16; font-weight:bold; font-size:11px;
+    padding:2px 8px; border-radius:999px;
+  }
+  .carousel .cap-text{color:#fff; font-size:13px; font-weight:bold;}
+  .carousel .nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:32px; height:32px; border-radius:999px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(0,0,0,.5); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px;
+  }
+  .carousel .nav.prev{left:8px;} .carousel .nav.next{right:8px;}
+  .dots{display:flex; justify-content:center; gap:6px; margin-top:10px;}
+  .dots span{width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.2); cursor:pointer; transition:all .2s;}
+  .dots span.active{width:20px; background:#b07aff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>✧ 流浪仙境小工具</h1>
+  <p class="sub">給 <a href="https://xianjingro.netlify.app/" target="_blank" rel="noopener">流浪仙境 Ragnarok Wanderer</a> 用的書籤工具（從自走勇者小工具改來）。先把下面的書籤加進瀏覽器，之後打開遊戲頁面點一下書籤，所有功能就會啟用。</p>
+
+  <div class="card">
+    <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
+    <a id="drag-btn" class="btn btn-drag" href="#" draggable="true">👉 拖我到書籤列（流浪仙境小工具）</a>
+    <div class="hint">找不到書籤列？先按 <b>Ctrl+Shift+B</b>（Mac：⌘+Shift+B）顯示書籤列，再拖曳。</div>
+  </div>
+
+  <div class="card">
+    <h2>📱 手機（iPhone / Android）<span class="tag">貼上安裝</span></h2>
+
+    <div class="carousel-label"><span class="dot"></span>教學畫面（iOS）</div>
+    <div class="carousel" id="carousel-ios">
+      <img src="../希望/ios1.jpg" class="active" alt="iOS 步驟 1">
+      <img src="../希望/ios2.jpg" alt="iOS 步驟 2">
+      <img src="../希望/ios3.jpg" alt="iOS 步驟 3">
+      <img src="../希望/ios4.jpg" alt="iOS 步驟 4">
+      <div class="nav prev" id="nav-prev-ios">‹</div>
+      <div class="nav next" id="nav-next-ios">›</div>
+      <div class="cap">
+        <span class="step-badge" id="step-badge-ios">STEP 1/4</span>
+        <span class="cap-text" id="cap-text-ios">點下方複製書籤程式碼</span>
+      </div>
+    </div>
+    <div class="dots" id="dots-ios">
+      <span class="active"></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="carousel-label" style="margin-top:22px;"><span class="dot" style="background:#34D399;"></span>教學畫面（Android）</div>
+    <div class="carousel" id="carousel-android">
+      <img src="../希望/安卓1.jpeg" class="active" alt="Android 步驟 1">
+      <img src="../希望/安卓2.jpeg" alt="Android 步驟 2">
+      <div class="nav prev" id="nav-prev-android">‹</div>
+      <div class="nav next" id="nav-next-android">›</div>
+      <div class="cap">
+        <span class="step-badge" id="step-badge-android" style="background:#34D399;">STEP 1/2</span>
+        <span class="cap-text" id="cap-text-android">Android 教學 1</span>
+      </div>
+    </div>
+    <div class="dots" id="dots-android">
+      <span class="active"></span><span></span>
+    </div>
+
+    <ol style="margin-top:14px;">
+      <li>先在瀏覽器中任意加入一個書籤（例如把目前頁面加入書籤）</li>
+      <li>編輯這個書籤，把「網址」欄位整個換成下面的程式碼，名稱可以改成「流浪仙境小工具」</li>
+      <li>儲存，之後在遊戲頁面點這個書籤即可（手機要在網址列輸入書籤名稱，再點選它）</li>
+    </ol>
+
+    <div class="hint" style="margin-top:16px;font-weight:bold;color:var(--text);">書籤程式碼</div>
+    <button class="btn btn-copy" id="copy-btn" style="width:100%;margin-top:8px;">📋 複製書籤程式碼</button>
+    <textarea readonly id="code-box"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>▶️ 怎麼使用<span class="tag">每次開遊戲</span></h2>
+    <ol>
+      <li>打開 <b class="hl">xianjingro.netlify.app</b>，進入遊戲畫面</li>
+      <li>點一下剛剛加入的書籤，畫面下方出現提示就代表啟用了</li>
+      <li>小工具會加上幾個按鈕（位置見下方「功能一覽」），點按鈕使用</li>
+      <li>遊戲自己重新整理（還原備份）時小工具會自動回來；但<b class="hl">自己按 F5 重新整理</b>後要再點一次書籤</li>
+    </ol>
+    <div class="hint">書籤每次都會載入最新版，不用重新安裝。目前版本號顯示在「小工具設定」和「配置模擬」視窗標題旁。</div>
+  </div>
+
+  <div class="card">
+    <h2>🔋 節能模式<span class="tag">戰鬥畫面左下角</span></h2>
+    <ol>
+      <li>啟用小工具後，戰鬥畫面<b class="hl">左下角（地圖名稱上面）</b>會出現「🔋 節能模式：關」</li>
+      <li>點一下就切換開／關，馬上生效，不用重新載入；下次點書籤會記得上次的設定</li>
+    </ol>
+    <div class="hint">
+      開啟後畫面更新次數降低（預設每秒 15 次）、不產生粒子特效和傷害數字，電腦或手機比較不會卡、比較省電。
+      只影響畫面，不影響遊戲速度和戰鬥結果。開著單格模式時會自動啟用。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ 小工具設定<span class="tag">選單分頁</span></h2>
+    <ol>
+      <li>到遊戲的 <b class="hl">「選單」</b> 分頁，點 <b class="hl">「小工具設定」</b></li>
+      <li>勾選或修改想要的項目，按 <b class="hl">「儲存」</b></li>
+      <li>依提示重新載入遊戲，設定就會生效（小工具會自己回來）</li>
+    </ol>
+    <div class="hint">
+      綠色字的項目代表改過；按「全部恢復預設」可以還原。節能模式每秒更新幾次也在這裡調整（「省資源」分組）。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧰 功能一覽</h2>
+    <div class="feat">
+      <div>🌙 背景運行<small>分頁切到背景或被蓋住時遊戲照常跑，不會變成離線收益；背景時也不畫畫面以節省資源。</small></div>
+      <div>❤️ BOSS 血條<span class="where">小工具設定</span><small>預設關閉（遊戲本身已有血條）。打開後在畫面最上方另外顯示 BOSS 名稱、生命數字、百分比和剩餘時間；名稱和遊戲上方的挑戰按鈕一致（武鬥場層數、MVP、魔王、守護者、試煉）。</small></div>
+      <div>🌌 天賦樹大視窗<span class="where">角色分頁「開啟共用天賦樹」下方</span><small>全螢幕的共用天賦樹：單指拖曳、雙指或滾輪縮放、＋／−按鈕，手機也看得清楚。可以搜尋天賦（例如「暴擊」「範圍」「力量」，符合的會畫粉紅圈），點節點投入、沿最短路徑點過去、退回，並即時預估套用後的 DPS 和最大生命。素質（力量、體質…）就是靠天賦樹的素質節點分配的，在這裡一起看。</small></div>
+      <div>🔨 精煉計算、自動精煉<span class="where">煉金分頁</span><small>選裝備和目標精煉值，列出每一級的成功率、素材、Zeny，算出平均要花多少（還有一半機率、九成機率的花費），並比對你的持有量。按「自動精煉」就會代替你一直按精煉，到目標、材料不夠或按停止就停；可選擇使用祝福保護、傳說的魔力礦石。</small></div>
+      <div>📈 收益統計<span class="where">地圖分頁</span><small>每小時賺多少 Zeny、經驗、擊殺、卡片、裝備（最近 10 分鐘／這次開始以來），以及照目前速度還要多久升級。</small></div>
+      <div>⏱️ 技能冷卻<span class="where">技能分頁</span><small>技能盤上每顆主動技能寶石、以及還沒放上去的寶石，顯示實際冷卻秒數。</small></div>
+      <div>🧩 配置模擬<span class="where">技能分頁</span><small>用持有的寶石試排技能盤、即時算 DPS，確定後寫回指定的構築分頁；也能把一個構築的技能組或裝備複製到另一個構築。（裝備建議遊戲背包已經有，小工具不另外做。）</small></div>
+      <div>🎒 物品管理<span class="where">背包分頁</span><small>列出身上或共用倉庫的裝備、技能寶石，用關鍵字和數值搜尋（例如「精煉&gt;=7」「品質&gt;=90」「力量&gt;5」），批次分解／鎖定／解鎖／存入／取出。裝備會列出精煉、品質和鑲嵌的卡片，寶石會寫出變異內容。</small></div>
+      <div>📊 生命明細<span class="where">角色分頁</span><small>「最大生命」下面顯示算式和各項來源（職業、裝備、RO 素質…）。</small></div>
+      <div>💾 存檔備份<span class="where">選單分頁</span><small>備份到瀏覽器或下載成檔案（連共用倉庫一起），可以還原，也可選擇要不要連倉庫一起還原。備份存在瀏覽器的 IndexedDB，不佔遊戲存檔的空間。</small></div>
+      <div>📦 物品持有無上限<small>背包上限（5000）拿掉，共用倉庫上限從 500 提高到 2000（可在設定調整）；獨特裝備可只保留指定階級以上。</small></div>
+      <div>🚫 禁止自動更新<small>遊戲出新版時只顯示提示，不會倒數、停止自動挑戰或自己重新整理；要更新時自己重新整理頁面，再點一次書籤。</small></div>
+      <div>🃏 卡片進度<span class="where">地圖分頁</span><small>列出每張地圖的蒐藏階數、擊殺數、還差多少，並估計還要幾分鐘。</small></div>
+      <div>📌 置頂視窗<span class="where">選單分頁</span><small>把遊戲搬進永遠在最上層的小視窗（只有電腦版 Chrome／Edge 會出現）。</small></div>
+      <div>🔲 單格模式<span class="where">技能分頁</span><small>開啟後每顆技能寶石只佔一格、輔助寶石不用相鄰就生效。</small></div>
+      <div>🙈 不上傳排行榜<small>點了書籤之後，無限武鬥場的成績和構築一律不上傳線上排行（打完武鬥場遊戲會提示「上傳失敗：小工具已封鎖排行上傳」）；排行頁照樣可以看別人的成績。</small></div>
+      <div>🔋 節能模式<span class="where">戰鬥畫面左下角</span><small>降低畫面更新、關掉粒子和傷害數字，見上方說明。</small></div>
+      <div>🔷 商人選變異<span class="where">選單 → 商人</span><small>買技能寶石時先選形狀：原本的形狀，或遊戲變異規則會出現的「多 1 格」「少 1 格」，能力相同、價格照商人。「輔助技能」最前面另外賣穿梭寶石（其他職業的輔助寶石，可連結自己職業的主動寶石；清單和遊戲掉落的一樣），100 萬 Zeny（固定價格）。</small></div>
+    </div>
+    <div class="hint">
+      自走勇者版有、這裡沒有的功能：解鎖三神器、無限君主連續挑戰、自動刷神話、不上傳雲端存檔、商人賣傳說寶石、指定萃取／灌注——
+      流浪仙境已經把神器、無限君主、傳說寶石、符文石與萃取／灌注拿掉，也沒有雲端存檔。
+    </div>
+  </div>
+
+  <div class="card warn">
+    <h2>⚠️ 注意事項</h2>
+    <ul>
+      <li>單格模式、商人選變異、商人賣穿梭寶石會直接修改遊戲規則或存檔，<b class="hl">可能被作者封鎖</b>，使用前請先備份存檔</li>
+      <li>點了書籤之後一律不上傳線上排行；但<b class="hl">自己按 F5 後忘了再點書籤</b>的那段期間擋不到，打的武鬥場還是會上傳</li>
+      <li>使用任何會改存檔的功能前，建議先到「選單 → 存檔備份」下載一份備份</li>
+      <li>本工具為私人製作，與遊戲作者無關；遊戲改版後部分功能可能暫時失效</li>
+    </ul>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const code = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/ro%E8%87%AA%E8%B5%B0%E8%8B%B1%E9%9B%84%E7%89%88/RO-tools.js?v=%27+Date.now())";
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+  const dragBtn = document.getElementById('drag-btn');
+  dragBtn.setAttribute('href', code);
+  dragBtn.addEventListener('click', e=>{ e.preventDefault(); toast('請用「拖曳」的方式拖到書籤列'); });
+  const box = document.getElementById('code-box');
+  box.value = code;
+  box.addEventListener('click', function(){ this.select(); this.setSelectionRange(0, 99999); });
+  document.getElementById('copy-btn').addEventListener('click', function(){
+    box.select(); box.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(code).then(()=>toast('已複製')).catch(()=>{ document.execCommand('copy'); toast('已複製'); });
+  });
+  function initCarousel({carouselId, prevId, nextId, dotsId, badgeId, capId, captions, autoplayMs}){
+    const carousel = document.getElementById(carouselId);
+    const imgs = carousel.querySelectorAll('img');
+    const dots = document.querySelectorAll('#'+dotsId+' span');
+    const badge = document.getElementById(badgeId);
+    const capText = document.getElementById(capId);
+    let idx=0;
+    function render(){
+      imgs.forEach((img,i)=>img.classList.toggle('active', i===idx));
+      dots.forEach((d,i)=>d.classList.toggle('active', i===idx));
+      badge.textContent='STEP '+(idx+1)+'/'+imgs.length;
+      capText.textContent=captions[idx];
+    }
+    function go(delta){ idx=(idx+delta+imgs.length)%imgs.length; render(); }
+    const PAUSE=5000; let auto=null, resume=null, hovering=false;
+    function start(){ stop(); auto=setInterval(()=>go(1), autoplayMs); }
+    function stop(){ if(auto){clearInterval(auto); auto=null;} }
+    function pauseThenResume(ms){ stop(); if(resume) clearTimeout(resume); resume=setTimeout(()=>{ if(!hovering) start(); }, ms); }
+    function manual(d){ go(d); pauseThenResume(PAUSE); }
+    document.getElementById(prevId).addEventListener('click', ()=>manual(-1));
+    document.getElementById(nextId).addEventListener('click', ()=>manual(1));
+    dots.forEach((d,i)=>d.addEventListener('click', ()=>{ idx=i; render(); pauseThenResume(PAUSE); }));
+    let startX=null;
+    carousel.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; });
+    carousel.addEventListener('touchend', e=>{
+      if(startX===null) return;
+      const dx=e.changedTouches[0].clientX-startX;
+      if(Math.abs(dx)>50) manual(dx>0?-1:1);
+      startX=null;
+    });
+    carousel.addEventListener('mouseenter', ()=>{ hovering=true; if(resume){clearTimeout(resume); resume=null;} stop(); });
+    carousel.addEventListener('mouseleave', ()=>{ hovering=false; start(); });
+    render(); start();
+  }
+  initCarousel({
+    carouselId:'carousel-ios', prevId:'nav-prev-ios', nextId:'nav-next-ios',
+    dotsId:'dots-ios', badgeId:'step-badge-ios', capId:'cap-text-ios',
+    captions:['點下方複製書籤程式碼','點「加入書籤」','點「編輯書籤」','貼上程式碼並儲存'], autoplayMs:2000
+  });
+  initCarousel({
+    carouselId:'carousel-android', prevId:'nav-prev-android', nextId:'nav-next-android',
+    dotsId:'dots-android', badgeId:'step-badge-android', capId:'cap-text-android',
+    captions:['Android 教學 1','Android 教學 2'], autoplayMs:2500
+  });
+</script>
+</body>
+</html>
