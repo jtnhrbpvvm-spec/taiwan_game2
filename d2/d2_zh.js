@@ -675,7 +675,7 @@ text: {
 'Nothing new since your last visit': '上次來訪後沒有新內容', 'Since your last visit': '自上次來訪以來', 'Your hero is saved': '你的英雄已儲存',
 'Press the button for it': '請按下要設定的按鍵', 'Button *': '按鍵 {0}', 'Circle': '○', 'Cross': '✕', 'Square': '□', 'Triangle': '△', 'Minus': '−', 'Plus': '＋',
 'Units': '單位', 'Floor tiles': '地板', 'Missiles': '投射物', 'Heroes': '英雄', 'Gear': '裝備', 'Interface': '介面', 'Scenery': '場景', 'Title and menus': '標題與選單',
-'Sounds and music': '音效與音樂', 'and': '和', 'or': '或', 'Demon': '惡魔', 'max */*': '最多 {0}/{1}', 'Build *': '版本 {0}',
+'Sounds and music': '音效與音樂', 'and': '和', 'or': '或', 'Demon': '惡魔', 'max #/#': '最多 {0}/{1}', 'Build *': '版本 {0}',
 'Harrogath': '哈洛加斯', 'Harem Level 1': '後宮第 1 層', 'Hratli': '赫拉特利', 'Larzuk': '拉蘇克', 'Patriarch': '族長', 'Matriarch': '女族長',
 'toughest monster': '最強的怪物', '# toughest monsters': '{0} 隻最強的怪物', 'monster level #': '怪物等級 {0}', 'One blow took more than half your life': '一擊就打掉你超過一半的生命',
 // 恐懼層、營火、一輪的結算
@@ -1004,6 +1004,10 @@ text: {
 'With a blunt weapon: +#% physical damage and +#% chance of a critical strike': '使用鈍器時：物理傷害 +{0}%，致命攻擊機率 +{1}%',
 'With a polearm: +#% physical damage and +#% chance of a critical strike': '使用長柄武器時：物理傷害 +{0}%，致命攻擊機率 +{1}%',
 'With a spear or javelin: +#% physical damage and +#% chance of a critical strike': '使用長矛或標槍時：物理傷害 +{0}%，致命攻擊機率 +{1}%',
+// 進化條件（升級卡片與技能樹）：遊戲另外還有縮短版（Into …, needs:），技能名稱含 of 時不要被逗號規則切開
+'Evolves * into *, also needs:': '把{0}進化為{1}，還需要：', 'Evolves * into *, also needs: *': '把{0}進化為{1}，還需要：{2}',
+'* into *, needs:': '{0} → {1}，需要：', '* into *, needs: *': '{0} → {1}，需要：{2}', 'Into *, needs:': '進化為{0}，需要：', 'Into *, needs: *': '進化為{0}，需要：{1}',
+'Evolves into *: *': '進化為{0}：{1}',
 'Melee Damage Reduced by *%': '近戰傷害減少 {0}%', 'Physical hits only': '只對物理攻擊有效', '#% Reanimate as:': '{0}% 機率復活為：', 'when you Kill an Enemy': '擊殺敵人時',
 // 新的獨特物品（易牙居有的放在下面 iya 區）
 'Bonesnap': '碎骨', 'The Centurion': '百夫長', 'Hawkmail': '鷹甲', 'Boneflesh': '骨肉',
@@ -1784,6 +1788,9 @@ const v = (m[+i + 1] || '').trim();
 return w.kinds[i] === '#' ? v : d2zhPlain(v.replace(/^the\s+/i, ''));
 });
 }
+// 名稱後面接標點（進化條件逐項列出：「max 3/8,」「Pierce,」）：照名稱翻，不要落到一般單字（pierce＝穿透）
+const tailMark = /^(.+?)\s*([,:;])$/s.exec(text);
+if (tailMark && (lookup.has(tailMark[1].toLowerCase()) || fixExact.has(fixNorm(tailMark[1])))) return d2zhPlain(tailMark[1]) + tailMark[2];
 if (depth > 2) return null;
 // 遊戲常把好幾句用「 · 」或「 - 」接起來，或在前後加數字（例如 "-12% to Enemy Cold Resistance"）
 for (const sep of [' · ', ' - ']) {
