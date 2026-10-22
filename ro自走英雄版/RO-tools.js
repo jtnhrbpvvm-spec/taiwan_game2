@@ -50,7 +50,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V5';
+  const VERSION = 'V6';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -146,6 +146,8 @@ javascript:(function awTools() {
   let inHost = false;
   try { inHost = window !== window.top && !!window.top.__awHost; } catch (e) {}
   if (CFG.host && !inHost && window === window.top) {
+    /* 這次是使用者自己點的書籤：框架裡那份看到這個記號才跳出排行榜警告（框架自己重新載入時不跳） */
+    window.__awAsk = 1;
     const runIn = w => {
       try {
         const d = w.document;
@@ -291,6 +293,12 @@ javascript:(function awTools() {
   /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
   window.__awTools = 1;
+
+  /* 點書籤時的警告視窗（使用者 2026-10-22 要求）。
+   * 常駐模式下，遊戲自己重新整理後小工具會自動重新放進框架，那時候不跳；只有使用者點書籤（外層留下 __awAsk）才跳 */
+  let askNow = !inHost;
+  try { if (inHost && window.top.__awAsk) { window.top.__awAsk = 0; askNow = true; } } catch (e) {}
+  if (askNow) uiAlert('本書簽有封鎖上傳排行榜\n開始單格技能模式請不要試著上榜\n作者有封鎖該ip遊玩的權力!');
 
   /* ===== 1. 背景運行 =====
    * 遊戲主迴圈靠 requestAnimationFrame 驅動，分頁在背景時瀏覽器不會呼叫它，
