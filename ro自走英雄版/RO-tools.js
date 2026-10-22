@@ -35,7 +35,8 @@ javascript:(function awTools() {
    *   - 商人：穿梭寶石用遊戲的 v5SxPool；變異形狀只有多 1 格、少 1 格（和遊戲的變異規則相同）
    *   - 遊戲的程式是排版過的（有空白），改寫遊戲函式的規則都容許空白；遊戲修補檔包過的函式不重建
    *   - 配置模擬拿掉「建議配裝」（遊戲背包已經有裝備建議）；BOSS 血條的名稱照遊戲上方挑戰按鈕的規則
-   *  21. 精煉計算、自動精煉（煉金分頁）  22. 天賦樹大視窗（角色分頁）  23. 收益統計（地圖分頁）——只有流浪仙境版有
+   *  21. 精煉計算、自動精煉（煉金分頁）  22. 天賦樹搜尋（遊戲的共用天賦樹裡）  23. 收益統計（地圖分頁）
+   *  24. 地圖掉落清單（地圖分頁每張地圖下方）——只有流浪仙境版有
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -50,7 +51,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V6';
+  const VERSION = 'V7';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -92,7 +93,8 @@ javascript:(function awTools() {
     cards: true,            /* 地圖分頁加上「卡片進度」按鈕 */
     refCalc: true,          /* 煉金分頁加上「精煉計算」按鈕（到目標精煉值的期望花費、自動精煉） */
     refAutoMs: 150,         /* 自動精煉每次之間等幾毫秒 */
-    treeBig: true,          /* 角色分頁的「開啟共用天賦樹」旁加上「天賦樹大視窗」（可縮放、搜尋、預覽 DPS） */
+    treeFind: true,         /* 遊戲的共用天賦樹標題列加上搜尋框（符合的節點畫粉紅圈，點結果移過去） */
+    dropList: true,         /* 地圖分頁每張地圖卡片下方加「掉落清單」（這張地圖會掉什麼、機率多少） */
     earn: true,             /* 地圖分頁加上「收益統計」按鈕（每小時 Zeny、經驗、卡片、裝備） */
     eco: true,              /* 省資源（下面幾項的總開關） */
     bgNoDraw: true,         /* 分頁在背景或被蓋住時不畫畫面（看不到，省下繪圖的資源） */
@@ -277,7 +279,7 @@ javascript:(function awTools() {
    * 流浪仙境的按鈕樣式是淺黃底、白字，小工具視窗裡沒有自己寫顏色的按鈕會吃到它，字幾乎看不到（重新讀取、清空、取消…）。
    * 這裡統一給深底淺字；有自己寫顏色的按鈕（黃底深字的「確定」「套用」、選中的構築分頁、寶石按鈕）寫在按鈕上的樣式優先，不受影響。 */
   if (!document.querySelector('#awBtnCss')) {
-    const ids = ['awDlg', 'awPlan', 'awItems', 'awBackup', 'awCards', 'awCfg', 'awShopMut', 'awXtrPick', 'awInfPick', 'awRef', 'awEarn', 'awLoopBar'];
+    const ids = ['awDlg', 'awPlan', 'awItems', 'awBackup', 'awCards', 'awCfg', 'awShopMut', 'awXtrPick', 'awInfPick', 'awRef', 'awEarn', 'awLoopBar', 'awDrops'];
     const sel = s => ids.map(id => '#' + id + ' ' + s).join(',');
     const st = document.createElement('style');
     st.id = 'awBtnCss';
@@ -3713,280 +3715,110 @@ javascript:(function awTools() {
     draw();
   };
 
-  /* ===== 22. 天賦樹大視窗（流浪仙境） =====
-   * 遊戲的共用天賦樹在手機上很小（星圖和說明欄擠在一起，也不能雙指縮放），這裡另開一個全螢幕的視窗：
-   *   - 星圖用遊戲自己的 roTreeSvg() 畫（外觀、顏色、已點亮、可投入、路徑提示都和遊戲一樣），
-   *     畫之前把遊戲的草稿變數 roTreeDraft／roTreeSelected／roTreeHint 換成這個視窗的
-   *   - 縮放、移動自己做：單指拖曳、雙指縮放、滑鼠滾輪、＋／−按鈕，範圍從整張看得到到 400%
-   *   - 點節點顯示說明，可以投入、沿最短路徑點到這裡、退回（規則用遊戲的 roTreeBlock／roTreePathTo／roTreeValid）
-   *   - 搜尋：名稱、效果、取向、素質（例如「暴擊」「範圍」「力量」），符合的節點畫粉紅色外圈，點結果會移過去
-   *   - 預覽：把草稿暫時套到角色上用遊戲的 calc() 算 DPS 和最大生命，跟目前配置比較（算完立刻換回來，不會存檔）
-   *   - 套用並儲存：和遊戲的「套用並儲存」做一樣的事（戰鬥中不能套用）
-   * 沒按套用就關掉的話，草稿不會留下（和遊戲一樣）。 */
-  const openTreeBig = () => {
-    if (typeof S === 'undefined' || !S || typeof roTreeSvg !== 'function' || typeof RO_TREE_NODES === 'undefined') { uiAlert('請先進入遊戲（這個功能只有流浪仙境有）'); return; }
-    if (document.querySelector('#awTree')) return;
-    try { roTreeEnsure(); } catch (e) {}
-    if (!document.querySelector('#awTreeCss')) {
+  /* ===== 22. 天賦樹搜尋（流浪仙境） =====
+   * 在遊戲自己的共用天賦樹（v1.0.6 起可以雙指縮放、放大到 1000%，v1.0.15 起有模擬器）的標題列加一個搜尋框，
+   * 取代以前自己做的「天賦樹大視窗」（遊戲的天賦樹已經有縮放、模擬器，大視窗只剩搜尋比較多，所以拿掉）：
+   *   - 搜尋名稱、效果、取向、素質（例如「暴擊」「範圍」「力量」），符合的節點在星圖上畫粉紅色外圈
+   *   - 點搜尋框時列出結果（素質節點太多，只算數量不列出），點結果就選取那個節點並移到畫面中間
+   *   - 職業獨特天賦只找目前職業的，點了切到「職業獨特」頁
+   * 做法：包一層 roTreeRender（遊戲每次重畫天賦樹都會叫它，模擬器、唯讀星圖也是），重畫完把搜尋框放進標題列、外圈畫進星圖；
+   * 打字時只改外圈和結果清單，不重畫整個天賦樹。關掉天賦樹再打開，上次的搜尋字還在。 */
+  if (first && CFG.treeFind && typeof roTreeRender === 'function' && typeof RO_TREE_NODES === 'object') {
+    if (!document.querySelector('#awTFCss')) {
       const st = document.createElement('style');
-      st.id = 'awTreeCss';
-      st.textContent = '#awTree{position:fixed;inset:0;z-index:99990;display:flex;flex-direction:column;background:#0e0b16;color:#f0e6d2;font:13px/1.5 sans-serif}' +
-        '#awTree button{padding:4px 10px;cursor:pointer;background:#3a3026;color:#f0e6d2;border:1px solid #8a7a5a;border-radius:4px;font:13px/1.4 sans-serif}' +
-        '#awTree button:disabled{opacity:.4;cursor:default}' +
-        '#awTree button[data-a="apply"]:not(:disabled){background:#ffd84a;color:#2a2118;border-color:#000;font-weight:bold}' +
-        '#awTree .awTH{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#2a2118;border-bottom:1px solid #6a5a4a}' +
-        '#awTree .awTK{display:flex;gap:4px;overflow-x:auto;padding:4px 8px;background:#1a1410;border-bottom:1px solid #3a3026;white-space:nowrap}' +
-        '#awTree .awTK button{flex:none}' +
-        '#awTree .awTB{flex:1;display:flex;min-height:0}' +
-        '#awTree .awTM{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;user-select:none;cursor:grab;background:radial-gradient(ellipse at center,#fffdf6,#e5eef2)}' +
-        '#awTree .awTM svg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;overflow:visible}' +
-        '#awTree .awTD{width:330px;overflow:auto;background:#2a2118;border-left:1px solid #6a5a4a;padding:8px;box-sizing:border-box}' +
-        '#awTree .awHit{fill:none;stroke:#ff2d87;stroke-width:5;pointer-events:none}' +
-        '#awTree .awTS span{display:inline-block;min-width:4.5em;margin:0 6px 2px 0}' +
-        '@media (max-width:760px){#awTree .awTB{flex-direction:column}#awTree .awTD{width:auto;max-height:44%;border-left:0;border-top:2px solid #6a5a4a}}';
+      st.id = 'awTFCss';
+      st.textContent = '#awTF{position:relative;flex:1 1 180px;max-width:340px;margin:0 10px;align-self:center}' +
+        '#awTF input{width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid #c9b07a;border-radius:6px;background:#fffdf6;color:#3a2a18;font:13px/1.4 sans-serif}' +
+        '#awTF .awTFL{display:none;position:absolute;top:100%;left:0;right:0;z-index:20;margin-top:2px;max-height:min(50vh,360px);overflow:auto;background:#fffdf6;border:1px solid #c9b07a;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.25);color:#3a2a18;font:13px/1.4 sans-serif;text-align:left}' +
+        '#awTF.open .awTFL{display:block}' +
+        '#awTF .awTFL button{display:block;width:100%;text-align:left;padding:5px 8px;border:0;border-bottom:1px solid #eadfc4;border-radius:0;background:none;color:inherit;cursor:pointer;font:inherit;box-shadow:none;text-shadow:none}' +
+        '#awTF .awTFL button:hover{background:#f6ecd2}' +
+        '#awTF .awTFL small{color:#8a7a5a}' +
+        '#awTF .awTFN{padding:5px 8px;color:#8a7a5a}' +
+        '#sheet .awHit{fill:none;stroke:#ff2d87;stroke-width:5;pointer-events:none}';
       document.head.appendChild(st);
     }
-    const C = RO_TREE_C, W = C * 2, HIDE = n => n.kind === 'unique';
-    let draft = Object.assign({}, S.roTree.ranks), sel = null, kw = '', hits = [];
-    const cam = { x: 0, y: 0, z: 1 };
-    let fitZ = 0.2;
-    const root = document.createElement('div');
-    root.id = 'awTree';
-    root.innerHTML =
-      '<div class="awTH"><b style="font-size:15px">共用天賦樹</b><span data-r="pts" style="color:#c8bca8"></span><span style="flex:1"></span>' +
-        '<input data-r="kw" placeholder="搜尋：名稱、效果（例如 暴擊、範圍、力量）" style="flex:1 1 200px;min-width:150px;padding:4px 6px;background:#1a1410;color:#f0e6d2;border:1px solid #6a5a4a">' +
-        '<button data-a="zo">−</button><span data-r="zl" style="min-width:3.2em;text-align:center"></span><button data-a="zi">＋</button>' +
-        '<button data-a="fit">全覽</button><button data-a="close">關閉</button></div>' +
-      '<div class="awTK" data-r="hits" style="display:none"></div>' +
-      '<div class="awTB"><div class="awTM" data-r="map"></div><div class="awTD" data-r="det"></div></div>';
-    document.body.appendChild(root);
-    const q = k => root.querySelector('[data-r="' + k + '"]');
-    const map = q('map'), det = q('det'), elPts = q('pts'), elZl = q('zl'), elHits = q('hits'), elKw = q('kw');
-    let svgEl = null;
-    const zMin = () => fitZ * 0.6, zMax = () => 4;
-    const clampZ = z => Math.max(zMin(), Math.min(zMax(), z));
-    const paint = () => {
-      if (svgEl) svgEl.style.transform = 'translate(' + cam.x + 'px,' + cam.y + 'px) scale(' + cam.z + ')';
-      elZl.textContent = Math.round(cam.z * 100) + '%';
-    };
-    const fit = () => {
-      const r = map.getBoundingClientRect();
-      fitZ = Math.max(0.02, Math.min(r.width, r.height) / W * 0.96);
-      cam.z = fitZ; cam.x = (r.width - W * cam.z) / 2; cam.y = (r.height - W * cam.z) / 2;
-      paint();
-    };
-    const zoomAt = (z, px, py) => { const z1 = clampZ(z), k = z1 / cam.z; cam.x = px - (px - cam.x) * k; cam.y = py - (py - cam.y) * k; cam.z = z1; paint(); };
-    const centerOn = id => {
-      const n = RO_TREE_NODES[id];
-      if (!n || !n.where) return;
-      const r = map.getBoundingClientRect();
-      cam.z = clampZ(Math.max(cam.z, 1));
-      cam.x = r.width / 2 - (C + n.where.x) * cam.z;
-      cam.y = r.height / 2 - (C + n.where.y) * cam.z;
-      paint();
-    };
-    const blockOf = n => (draft[n.id] ? '' : roTreeBlock(n, draft));
-    const routeOf = n => {
-      if (!n || draft[n.id] || HIDE(n)) return null;
-      const bl = blockOf(n);
-      return bl && !/點不足|名額|兩個|Lv\.|僅限|尚未開放/.test(bl) ? roTreePathTo(n.id, draft) : null;
-    };
-    const drawMap = () => {
-      const n = sel ? RO_TREE_NODES[sel] : null;
-      roTreeDraft = draft; roTreeSelected = sel; roTreeHint = new Set(routeOf(n) || []);
-      map.innerHTML = roTreeSvg();
-      svgEl = map.querySelector('svg');
-      if (!svgEl) return;
-      svgEl.removeAttribute('style');
-      svgEl.setAttribute('width', W); svgEl.setAttribute('height', W);
-      for (const id of hits) {
-        const h = RO_TREE_NODES[id];
-        if (!h || !h.where) continue;
-        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', C + h.where.x); c.setAttribute('cy', C + h.where.y);
-        c.setAttribute('r', (typeof roTreeR === 'function' ? roTreeR(h) : 14) + 8);
-        c.setAttribute('class', 'awHit');
-        svgEl.appendChild(c);
-      }
-      paint();
-    };
-    /* 草稿套到角色上算一次（算完立刻還原，不存檔） */
-    const simulate = r => {
-      const keepR = S.roTree.ranks, keepSt = S.roStats, keepSp = S.roSpent;
-      try { S.roTree.ranks = Object.assign({}, r); roTreeStateCache.delete(S); roTreeEnsure(); return calc(); }
-      catch (e) { return null; }
-      finally {
-        S.roTree.ranks = keepR; S.roStats = keepSt; S.roSpent = keepSp;
-        try { roTreeStateCache.set(S, { ranks: keepR, budget: roTreeBudget() }); } catch (e) {}
-        /* calc() 會順便更新技能加成的暫存（ROSK），用原本的配置再算一次，戰鬥才不會吃到草稿的加成 */
-        try { calc(); } catch (e) {}
-      }
-    };
-    let base = simulate(S.roTree.ranks);
-    const pctTxt = (a, b) => { if (!a || !b) return ''; const d = (b / a - 1) * 100; return ' <b style="color:' + (d >= 0 ? '#7dffc8' : '#ff5a6a') + '">' + (d >= 0 ? '+' : '') + d.toFixed(1) + '%</b>'; };
-    const drawDet = () => {
-      const used = roTreeUsed(draft), budget = roTreeBudget(), ults = roTreeUltimates(draft);
-      elPts.innerHTML = '剩餘 <b style="color:#ffd84a">' + (budget - used) + '</b> / ' + budget + ' 點・終極 <b style="color:#ffd84a">' + ults + '</b> / 2';
-      const n = sel ? RO_TREE_NODES[sel] : null;
-      let h = '';
-      if (n) {
-        const on = !!draft[n.id], bl = on ? '' : blockOf(n), route = routeOf(n);
-        const rc = route ? route.reduce((s, id) => s + RO_TREE_NODES[id].cost, 0) : 0;
-        const R = RO_TREE_ROUTES[n.kind === 'attribute' ? n.stat : n.route];
-        const cat = typeof RO_TREE_CAT === 'object' && RO_TREE_NODE_CAT[n.id] ? RO_TREE_CAT[RO_TREE_NODE_CAT[n.id]] : null;
-        h += '<small style="color:' + (R ? R.color : '#a89a84') + '">' + (R ? escH(R.name) + '路線・' : '') + escH(RO_KIND_NAME[n.kind] || '') + (cat ? '・' + escH(cat[0]) : '') + '</small>' +
-          '<div style="font-size:15px;font-weight:bold">' + escH(n.name) + '</div><div>' + escH(n.desc || '') + '</div>' +
-          '<div style="color:#c8bca8">' + (on ? '已投入' : '未投入') + '・' + n.cost + ' 點' + (n.level ? '・Lv.' + n.level + ' 開放' : '') + '</div>' +
-          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' +
-            '<button data-a="add"' + (on || bl ? ' disabled' : '') + '>投入 ' + n.cost + ' 點</button>' +
-            (route ? '<button data-a="path"' + (used + rc <= budget && !(n.kind === 'ultimate' && ults >= 2) ? '' : ' disabled') + '>沿最短路徑點到這裡（' + route.length + ' 個・' + rc + ' 點）</button>' : '') +
-            '<button data-a="rm"' + (on ? '' : ' disabled') + '>退回</button></div>' +
-          (bl ? '<div style="color:#ffb070;font-size:12px">' + escH(bl) + '</div>' : '') + '<hr style="border:0;border-top:1px solid #3a3026">';
-      } else {
-        h += '<div style="color:#a89a84;font-size:12px">點星圖上的節點看說明、投入或退回。單指拖曳移動、雙指或滾輪縮放。</div><hr style="border:0;border-top:1px solid #3a3026">';
-      }
-      const totals = [...roClass[S.cls].stats];
-      for (const [id, v] of Object.entries(draft)) { const x = RO_TREE_NODES[id]; if (x && x.stat != null) totals[x.stat] += x.gain * v; }
-      h += '<b>草稿的素質</b><div class="awTS">' + roStats.map(([k, label], i) => '<span>' + escH(label) + ' <b>' + totals[i] + '</b></span>').join('') + '</div>';
-      const ultN = Object.values(RO_TREE_NODES).filter(x => x.kind === 'ultimate' && draft[x.id]).map(x => x.name);
-      h += '<b>終極天賦</b><div>' + (ultN.length ? ultN.map(escH).join(' ／ ') : '尚未選擇') + '</div>';
-      /* 「目前」每次重算：遊戲一直在跑（升級、裝備改變），開視窗時算的會過時 */
-      base = simulate(S.roTree.ranks);
-      const m = simulate(draft);
-      if (base && m) {
-        h += '<div style="background:#1a1410;border-radius:4px;padding:6px;margin-top:6px"><b>套用後預估</b>（目前 → 草稿）<br>' +
-          'DPS ' + fmt(Math.round(base.dps)) + ' → <b>' + fmt(Math.round(m.dps)) + '</b>' + pctTxt(base.dps, m.dps) + '<br>' +
-          '最大生命 ' + fmt(Math.round(base.maxhp)) + ' → <b>' + fmt(Math.round(m.maxhp)) + '</b>' + pctTxt(base.maxhp, m.maxhp) + '</div>';
-      }
-      const fight = typeof inFight === 'function' && inFight();
-      h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button data-a="reset">重置草稿</button><button data-a="revert">還原目前配置</button>' +
-        '<button data-a="apply"' + (fight ? ' disabled' : '') + '>' + (fight ? '戰鬥結束後才能套用' : '套用並儲存') + '</button></div>' +
-        '<div style="color:#a89a84;font-size:12px;margin-top:4px">沒按套用就關掉，草稿不會留下。</div>';
-      det.innerHTML = h;
-    };
-    const redraw = () => { drawMap(); drawDet(); };
-    const select = id => { sel = id; redraw(); };
-    const search = () => {
+    let kw = '';
+    const catOf = n => (typeof RO_TREE_CAT === 'object' && RO_TREE_NODE_CAT[n.id] && RO_TREE_CAT[RO_TREE_NODE_CAT[n.id]] ? RO_TREE_CAT[RO_TREE_NODE_CAT[n.id]][0] : '');
+    const findHits = () => {
       const k = kw.trim().toLowerCase();
-      hits = [];
-      if (k) {
-        for (const n of Object.values(RO_TREE_NODES)) {
-          if (HIDE(n)) continue;
-          const cat = typeof RO_TREE_CAT === 'object' && RO_TREE_NODE_CAT[n.id] ? RO_TREE_CAT[RO_TREE_NODE_CAT[n.id]][0] : '';
-          const t = (n.name + ' ' + (n.desc || '') + ' ' + cat + ' ' + (RO_KIND_NAME[n.kind] || '') + (n.stat != null && roStats[n.stat] ? ' ' + roStats[n.stat][0] + ' ' + roStats[n.stat][1] : '')).toLowerCase();
-          if (t.includes(k)) hits.push(n.id);
+      if (!k) return [];
+      return Object.values(RO_TREE_NODES).filter(n => {
+        if (n.kind === 'unique' && n.cls !== S.cls) return false;
+        const t = (n.name + ' ' + (n.desc || '') + ' ' + catOf(n) + ' ' + (RO_KIND_NAME[n.kind] || '') +
+          (n.stat != null && roStats[n.stat] ? ' ' + roStats[n.stat][0] + ' ' + roStats[n.stat][1] : '') +
+          (n.kind === 'unique' && SKILLS[n.skill] ? ' ' + SKILLS[n.skill].n : '')).toLowerCase();
+        return t.includes(k);
+      });
+    };
+    /* 星圖上的粉紅外圈和結果清單；open 是 true／false 時順便打開／收起清單 */
+    const paint = open => {
+      const sh = document.querySelector('#sheet.ro-tree-sheet'), box = sh && sh.querySelector('#awTF');
+      if (!box) return;
+      const hits = findHits(), svg = sh.querySelector('.tree-map svg');
+      if (svg) {
+        svg.querySelectorAll('.awHit').forEach(e => e.remove());
+        for (const n of hits) {
+          if (n.kind === 'unique' || !n.where) continue;
+          const p = roTreePoint(n), c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+          c.setAttribute('r', (typeof roTreeR === 'function' ? roTreeR(n) : 14) + 8);
+          c.setAttribute('class', 'awHit');
+          svg.appendChild(c);
         }
       }
-      const big = hits.filter(id => RO_TREE_NODES[id].kind !== 'attribute');
-      const attr = hits.length - big.length;
-      elHits.style.display = k ? 'flex' : 'none';
-      elHits.innerHTML = '<span style="color:#a89a84;flex:none">找到 ' + big.length + ' 個' + (attr ? '＋素質節點 ' + attr + ' 個' : '') + '</span>' +
-        big.slice(0, 60).map(id => '<button data-a="go" data-id="' + id + '">' + escH(RO_TREE_NODES[id].name) + (draft[id] ? ' ✓' : '') + '</button>').join('');
-      drawMap();
+      const big = hits.filter(n => n.kind !== 'attribute'), attr = hits.length - big.length, r = roTreeDraft || {};
+      box.querySelector('.awTFL').innerHTML = !kw.trim() ? '<div class="awTFN">輸入名稱或效果，例如：暴擊、範圍、力量</div>' :
+        '<div class="awTFN">找到 ' + big.length + ' 個' + (attr ? '＋素質節點 ' + attr + ' 個（只在星圖上畫圈）' : '') + '</div>' +
+        big.slice(0, 80).map(n => '<button data-id="' + escH(n.id) + '">' + (r[n.id] ? '✓ ' : '') + escH(n.name) +
+          ' <small>' + escH(RO_KIND_NAME[n.kind] || '') + (catOf(n) ? '・' + escH(catOf(n)) : '') + '</small></button>').join('');
+      if (open != null) box.classList.toggle('open', open);
     };
-    /* 手勢：單指拖曳、雙指縮放；沒移動就放開算點擊 */
-    const ptrs = new Map();
-    let gest = null, moved = false;
-    const startGest = () => {
-      const p = [...ptrs.values()];
-      if (p.length >= 2) gest = { pinch: true, d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, m: { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 }, cam: Object.assign({}, cam) };
-      else if (p.length === 1) gest = { pinch: false, p: Object.assign({}, p[0]), cam: Object.assign({}, cam) };
-      else gest = null;
+    /* 選取節點並移到畫面中間（置中用遊戲 v1.0.6 的 v96CenterOn） */
+    const go = id => {
+      const n = RO_TREE_NODES[id];
+      if (!n) return;
+      roTreeSelected = id;
+      roTreeView = n.kind === 'unique' ? 'unique' : 'tree';
+      roTreeRender();
+      if (n.kind !== 'unique' && typeof v96CenterOn === 'function') { try { v96CenterOn(id); } catch (e) {} }
     };
-    map.addEventListener('pointerdown', e => {
-      if (e.button !== 0 && e.pointerType === 'mouse') return;
-      try { map.setPointerCapture(e.pointerId); } catch (err) {}
-      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (ptrs.size === 1) moved = false; else moved = true;
-      startGest();
-      e.preventDefault();
-    });
-    map.addEventListener('pointermove', e => {
-      if (!ptrs.has(e.pointerId) || !gest) return;
-      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const p = [...ptrs.values()], r = map.getBoundingClientRect();
-      if (gest.pinch && p.length >= 2) {
-        const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, m = { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
-        const z = clampZ(gest.cam.z * d / gest.d), k = z / gest.cam.z, mx = gest.m.x - r.left, my = gest.m.y - r.top;
-        cam.z = z; cam.x = mx - (mx - gest.cam.x) * k + (m.x - gest.m.x); cam.y = my - (my - gest.cam.y) * k + (m.y - gest.m.y);
-        moved = true; paint();
-      } else if (!gest.pinch) {
-        const dx = p[0].x - gest.p.x, dy = p[0].y - gest.p.y;
-        if (!moved && Math.hypot(dx, dy) < 6) return;
-        moved = true; map.style.cursor = 'grabbing';
-        cam.x = gest.cam.x + dx; cam.y = gest.cam.y + dy; paint();
+    const mount = () => {
+      const sh = document.querySelector('#sheet.ro-tree-sheet'), head = sh && sh.querySelector('.tree-header');
+      if (!head || head.querySelector('#awTF')) return;
+      const box = document.createElement('div');
+      box.id = 'awTF';
+      box.innerHTML = '<input type="search" placeholder="🔍 搜尋天賦（名稱、效果）" autocomplete="off"><div class="awTFL"></div>';
+      head.insertBefore(box, head.querySelector('[data-act="close"]'));
+      const inp = box.querySelector('input');
+      inp.value = kw;
+      let t = 0;
+      inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { kw = inp.value; paint(true); }, 150); });
+      inp.addEventListener('focus', () => paint(true));
+      inp.addEventListener('blur', () => setTimeout(() => box.classList.remove('open'), 200));
+      /* 打字時不要觸發遊戲的快捷鍵；Esc 清掉搜尋（不會關掉天賦樹） */
+      for (const ev of ['keydown', 'keyup', 'keypress']) {
+        inp.addEventListener(ev, e => {
+          e.stopPropagation();
+          if (ev === 'keydown' && e.key === 'Escape') { e.preventDefault(); inp.value = kw = ''; paint(false); inp.blur(); }
+        });
       }
-    });
-    const endPtr = e => {
-      if (!ptrs.has(e.pointerId)) return;
-      const tap = !moved && ptrs.size === 1 && e.type === 'pointerup';
-      ptrs.delete(e.pointerId);
-      map.style.cursor = '';
-      if (tap) {
-        const el = document.elementFromPoint(e.clientX, e.clientY), g = el && el.closest && el.closest('[data-ro-node]');
-        if (g && RO_TREE_NODES[g.dataset.roNode]) select(g.dataset.roNode);
-      }
-      startGest();
+      /* 按結果時先不要讓搜尋框失去焦點，不然清單會先收起來 */
+      box.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
+      box.addEventListener('click', e => {
+        e.stopPropagation();
+        const b = e.target.closest('button[data-id]');
+        if (b) go(b.dataset.id);
+      });
+      paint(false);
     };
-    map.addEventListener('pointerup', endPtr);
-    map.addEventListener('pointercancel', endPtr);
-    map.addEventListener('wheel', e => {
-      e.preventDefault();
-      const r = map.getBoundingClientRect();
-      zoomAt(cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX - r.left, e.clientY - r.top);
-    }, { passive: false });
-    const close = () => { window.removeEventListener('resize', onResize); root.remove(); };
-    const onResize = () => { const keepZ = cam.z; const r0 = fitZ; fit(); if (keepZ > r0) { const r = map.getBoundingClientRect(); zoomAt(keepZ, r.width / 2, r.height / 2); } };
-    window.addEventListener('resize', onResize);
-    let kwT = 0;
-    elKw.addEventListener('input', () => { clearTimeout(kwT); kwT = setTimeout(() => { kw = elKw.value; search(); }, 200); });
-    root.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape' && e.target !== elKw) close(); }, true);
-    root.addEventListener('click', e => {
-      const b = e.target.closest('button[data-a]');
-      if (!b) return;
-      const a = b.dataset.a, n = sel ? RO_TREE_NODES[sel] : null, r = map.getBoundingClientRect();
-      if (a === 'close') { close(); return; }
-      if (a === 'zi') { zoomAt(cam.z * 1.3, r.width / 2, r.height / 2); return; }
-      if (a === 'zo') { zoomAt(cam.z / 1.3, r.width / 2, r.height / 2); return; }
-      if (a === 'fit') { fit(); return; }
-      if (a === 'go') { select(b.dataset.id); centerOn(b.dataset.id); search(); return; }
-      if (a === 'add' && n && !blockOf(n)) draft[n.id] = 1;
-      if (a === 'path' && n) {
-        const path = roTreePathTo(n.id, draft);
-        if (path) {
-          const next = Object.assign({}, draft);
-          for (const id of path) next[id] = 1;
-          if (roTreeValid(next)) draft = next; else toast('天賦點不足或超過終極名額', 'bad');
-        }
-      }
-      if (a === 'rm' && n) {
-        const next = Object.assign({}, draft);
-        delete next[n.id];
-        if (roTreeValid(next)) draft = next; else { toast('先退回依賴這個節點的後續天賦', 'bad'); return; }
-      }
-      if (a === 'reset') draft = {};
-      if (a === 'revert') draft = Object.assign({}, S.roTree.ranks);
-      if (a === 'apply') {
-        if ((typeof inFight === 'function' && inFight()) || !roTreeValid(draft)) { toast('目前配置無法套用', 'bad'); return; }
-        const hp0 = S.hp;
-        S.roTree.ranks = Object.assign({}, draft);
-        S.roTree.migrated = false;
-        roTreeEnsure();
-        recalc();
-        S.hp = Math.min(hp0, PS.maxhp);
-        markDirty();
-        saveNow();
-        try { ui.render(); } catch (err) {}
-        toast('共用天賦已套用並儲存', 'lvl');
-        draft = Object.assign({}, S.roTree.ranks);
-        base = simulate(S.roTree.ranks);
-      }
-      redraw();
-      if (kw) search();
-    });
-    redraw();
-    fit();
-  };
+    const realRender = roTreeRender;
+    roTreeRender = function () {
+      const r = realRender.apply(this, arguments);
+      try { mount(); } catch (e) {}
+      return r;
+    };
+  }
 
   /* ===== 23. 收益統計（流浪仙境） =====
    * 地圖分頁的「收益統計」按鈕。小工具裝上之後每 5 秒記一次 Zeny、經驗、擊殺數，
@@ -4060,6 +3892,148 @@ javascript:(function awTools() {
     draw();
   };
 
+  /* ===== 24. 地圖掉落清單（流浪仙境） =====
+   * 地圖分頁每張地圖卡片下方加「📦 掉落清單」，點了列出在這張地圖打一般怪、菁英、頭目各會掉什麼、機率多少：
+   *   - 裝備：掉落機率、稀有度比例；每件 0.5% 改成隨機獨特裝備；頭目另外 15% 掉獨特裝備（都從依等級決定的獨特裝備池平均抽）
+   *   - 卡片：掉卡機率、各階級的比例，以及每一階可能出現的卡片（抽到那一階後平均分配）
+   *   - 素材：精煉素材、魔力礦石、鐵匠的祝福等（解鎖煉金後才會掉）
+   *   - 變異寶石、穿梭寶石、神工匠的祝福（Lv90 以上的頭目）
+   * 機率盡量直接拿遊戲當下的數值算（V5_DROP、v5DropTiers、UQ_P、RO_MUT、V5_SX、V77_BLESS、V87…），作者改數值會跟著變。
+   * 素材和一般怪／菁英的裝備件數被很多修補檔層層包住（ro-v62、v63、v64、v97 都改過 rollMats），
+   * 這兩項直接呼叫遊戲的 rollMats／rollKillDrops 抽很多次來統計（這兩個函式只擲骰子、不改存檔），所以會有一點點誤差。
+   * 抽的時候暫時把 S.map 換成要看的地圖、假裝已解鎖煉金、不在武鬥場／魔王戰／試煉，抽完馬上換回來（同一段程式裡做完，遊戲不會看到）。
+   * 只算一般模式：深淵（掉落加成、信物）、活動地圖、魔王、武鬥場、MVP 武道場另有規則，不在這個清單裡；
+   * 天賦或卡片的「額外掉落」（dropX）也沒算進去。
+   * 規則出處（遊戲 v1.1.7）：engine.js killMob（頭目 2 件裝備＋15% 地圖獨特）、ro-progression rollKillDrops（一般怪 5%、菁英 35%＋8%）、
+   * makeItem（稀有度權重，Lv83 以上傳奇加權 legF）、ro-v5 v5OnKill／v5DropTiers（卡片）、ro-v87（Lv78 以後新地圖頭目 3% 隨機傳說卡）、
+   * ro-v77（Lv90 以上頭目 3% 神工匠的祝福，直接進背包）、ro-mutation rollMut、ro-v5 rollSx、ro-v4 roBossUnique／roUqPool（獨特裝備池）。 */
+  const DROP_BOSS_UQ = 0.15;
+  const DROP_RW = { mob: [45, 35, 16, 4], elite: [30, 40, 24, 6], boss: [0, 35, 45, 20] };
+  const dropPct = p => {
+    const v = p * 100;
+    return (v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v >= 0.1 ? v.toFixed(2) : v >= 0.001 ? v.toFixed(3) : v.toPrecision(2)) + '%';
+  };
+  /* 用遊戲的函式抽 N 次：回傳平均每隻掉幾件裝備（一般怪、菁英）、每種素材平均幾個 */
+  const dropSim = (mi, kind, N) => {
+    const M = MAPS[mi], lo = M.lv[0], hi = M.lv[1];
+    const keep = { map: S.map, alch: S.alchOn, arena: G.arena, tw: G.tw, guard: G.guard, trial: G.trial };
+    const out = { gear: 0, mats: {} };
+    try {
+      S.map = mi; S.alchOn = 1; G.arena = null; G.tw = null; G.guard = null; G.trial = null;
+      for (let i = 0; i < N; i++) {
+        const L = kind === 'boss' ? hi : lo + Math.floor(RAND() * (hi - lo + 1));
+        if (kind !== 'boss') out.gear += rollKillDrops(kind === 'elite').length;
+        for (const k of rollMats(L, kind === 'boss', kind === 'elite')) out.mats[k] = (out.mats[k] || 0) + 1;
+        /* engine 的 dropMats：Lv83 以上的一般怪另外有機會掉高純度鋁 */
+        if (kind === 'mob' && L >= 83 && typeof I4_P === 'number' && RAND() < I4_P) out.mats.i4 = (out.mats.i4 || 0) + 1;
+      }
+    } catch (e) {
+    } finally {
+      S.map = keep.map; S.alchOn = keep.alch; G.arena = keep.arena; G.tw = keep.tw; G.guard = keep.guard; G.trial = keep.trial;
+    }
+    out.gear /= N;
+    for (const k of Object.keys(out.mats)) out.mats[k] /= N;
+    return out;
+  };
+  const dropTiers = (mi, kind) => {
+    const keep = S.map;
+    try { S.map = mi; return v5DropTiers(kind); } catch (e) { return []; } finally { S.map = keep; }
+  };
+  const openDrops = mi => {
+    if (typeof S === 'undefined' || !S || typeof MAPS === 'undefined' || !MAPS[mi]) { uiAlert('請先進入遊戲'); return; }
+    const M = MAPS[mi], lv = M.lv || [1, 1];
+    const { box, close } = awSheet('awDrops', 640);
+    box.innerHTML = '<div style="color:#a89a84">計算中…</div>';
+    setTimeout(() => {
+      const mul = typeof V5 === 'object' && V5.dropMul ? V5.dropMul : 1;
+      const tierN = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].n : t + ' 階');
+      const tierC = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].c : '#ccc');
+      const rarN = r => { try { return rarLabel({ rar: r }); } catch (e) { return ['普通', '魔法', '稀有', '傳奇'][r]; } };
+      const matN = k => (MATS[k] ? MATS[k].n : k);
+      const usedTiers = new Set();
+      /* 獨特裝備池：遊戲 ro-v4 把頭目的 15% 和每件 0.5% 的隨機獨特都改成從 roUqPool('map', 等級) 平均抽
+       * （Lv60 以上加入高階、Lv83 以上加入終局獨特）；這裡用地圖最高等級，也就是頭目的等級 */
+      let uqPool = [];
+      try { uqPool = roUqPool('map', lv[1]).filter(k => UNIQUE[k]); } catch (e) {}
+      const row = (name, val, note) => '<tr style="border-top:1px solid #3a3026"><td style="padding:3px 6px 3px 0">' + name + '</td><td style="text-align:right;white-space:nowrap;padding:3px 0"><b>' + val + '</b></td>' +
+        '<td style="color:#a89a84;font-size:12px;padding:3px 0 3px 8px">' + (note || '') + '</td></tr>';
+      const block = (kind, title) => {
+        const N = kind === 'boss' ? 30000 : 120000;
+        const sim = dropSim(mi, kind, N);
+        let h = '<h3 style="margin:12px 0 4px;color:#ffd84a;font-size:14px">' + title + '</h3><table style="width:100%;border-collapse:collapse">';
+        /* 裝備（傳奇的權重照地圖最高等級加權） */
+        const rw = DROP_RW[kind].slice();
+        rw[3] *= typeof legF === 'function' ? legF(lv[1]) : 1;
+        const sum = rw.reduce((a, b) => a + b, 0);
+        const rarTxt = rw.map((w, r) => (w ? rarN(r) + ' ' + dropPct(w / sum) : '')).filter(Boolean).join('・');
+        const uqp = typeof UQ_P === 'number' ? UQ_P : 0.005;
+        if (kind === 'boss') {
+          h += row('裝備', '2 件', rarTxt + '；每件 ' + dropPct(uqp) + ' 改成隨機獨特');
+          if (uqPool.length) h += row('獨特裝備', dropPct(DROP_BOSS_UQ), '從下面的獨特裝備池平均抽 1 件（每件 ' + dropPct(DROP_BOSS_UQ / uqPool.length) + '）');
+        } else {
+          h += row('裝備', '平均 ' + sim.gear.toFixed(3) + ' 件', (kind === 'elite' ? '第 1 件 ' : '') + rarTxt + '；每件 ' + dropPct(uqp) + ' 改成隨機獨特' + (kind === 'elite' ? '（第 2 件照一般怪的比例）' : ''));
+        }
+        /* 卡片 */
+        if (typeof V5_DROP === 'object') {
+          const p = kind === 'boss' ? V5_DROP.boss * mul : V5_DROP.mob * (kind === 'elite' ? V5_DROP.elite : 1) * mul;
+          const ts = dropTiers(mi, kind), ws = ts.reduce((a, r) => a + r[1], 0) || 1;
+          ts.forEach(r => usedTiers.add(r[0]));
+          h += row('卡片', dropPct(p), ts.map(r => '<span style="color:' + tierC(r[0]) + '">' + escH(tierN(r[0])) + '</span> ' + dropPct(r[1] / ws)).join('・'));
+          if (kind === 'boss' && typeof V87 === 'object' && mi >= V87.from && mi < MAP_N) {
+            usedTiers.add(5);
+            h += row('隨機' + escH(tierN(5)) + '卡片', dropPct(V87.p * mul), 'Lv78 以後的新地圖頭目另外掉落');
+          }
+        }
+        /* 素材 */
+        const mk = Object.keys(sim.mats).sort((a, b) => sim.mats[b] - sim.mats[a]);
+        for (const k of mk) {
+          const v = sim.mats[k];
+          h += row(escH(matN(k)), kind === 'boss' ? (v >= 1 ? '平均 ' + v.toFixed(2) + ' 個' : '約 ' + dropPct(v)) : '約 ' + dropPct(v), kind === 'boss' ? '' : '每 1000 隻約 ' + (v * 1000).toFixed(v * 1000 >= 10 ? 0 : 1) + ' 個');
+        }
+        if (!mk.length) h += row('素材', '—', '這種怪不掉素材');
+        /* 寶石、祝福 */
+        if (typeof RO_MUT === 'object' && typeof MUT === 'object') h += row('變異技能寶石', dropPct(RO_MUT.base * (kind === 'boss' ? MUT.b : kind === 'elite' ? MUT.e : 1)), '');
+        if (typeof V5_SX === 'object') {
+          let n = 0;
+          try { n = v5SxPool(S.cls).length; } catch (e) {}
+          if (n) h += row('穿梭寶石', dropPct(kind === 'boss' ? V5_SX.b : kind === 'elite' ? V5_SX.e : V5_SX.n), '目前職業可用的 ' + n + ' 種隨機');
+        }
+        if (kind === 'boss' && typeof V77_BLESS === 'object' && lv[1] >= V77_BLESS.lv) h += row(escH(matN('p2')), dropPct(V77_BLESS.p), '直接進背包');
+        return h + '</table>';
+      };
+      const mons = (M.m || []).map(t => (MON[t] ? MON[t].n : t));
+      let html = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:16px">' + escH(M.n) + ' 掉落清單</b>' +
+        '<span style="color:#a89a84">LV' + lv[0] + '–' + lv[1] + '</span><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
+        '<div style="margin-top:4px">怪物：' + mons.map(escH).join('、') + '（每種都可能是菁英）・頭目：' + escH(M.boss || '') + '</div>';
+      if (!S.alchOn) html += '<div style="color:#ffb070;margin-top:4px">你還沒解鎖煉金：下面的素材要解鎖煉金後才會掉（目前打怪不會掉）。</div>';
+      html += block('mob', '一般怪（每隻）') + block('elite', '菁英（每隻）') + block('boss', '頭目 ' + escH(M.boss || '') + '（每次擊敗）');
+      if (uqPool.length) {
+        html += '<h3 style="margin:14px 0 4px;color:#ffd84a;font-size:14px">獨特裝備池</h3><details><summary style="cursor:pointer">' + uqPool.length + ' 件（頭目的 15% 和每件裝備 ' + dropPct(typeof UQ_P === 'number' ? UQ_P : 0.005) + ' 的隨機獨特都從這裡平均抽）</summary>' +
+          '<div style="font-size:12px;line-height:1.8;padding:2px 0 4px 12px">' + uqPool.map(k => escH(UNIQUE[k].n) + (SLOT_NAME && SLOT_NAME[UNIQUE[k].slot] ? '<span style="color:#a89a84">（' + escH(SLOT_NAME[UNIQUE[k].slot]) + '）</span>' : '')).join('、') +
+          (lv[0] < 83 ? '<div style="color:#a89a84">一般怪和菁英掉的隨機獨特照怪物自己的等級抽：Lv60 以下沒有高階獨特、Lv83 以下沒有終局獨特，所以低等的怪可抽的會比這裡少。</div>' : '') + '</div></details>';
+      }
+      /* 卡片池：這張地圖可能掉的階級，每階列出卡片 */
+      const tiers = [...usedTiers].sort((a, b) => a - b);
+      if (tiers.length && typeof V5_CARDS !== 'undefined') {
+        html += '<h3 style="margin:14px 0 4px;color:#ffd84a;font-size:14px">卡片池</h3><div style="color:#a89a84;font-size:12px">抽到某一階之後，在那一階的卡片裡平均抽一張。✓ 是已經拿過的卡。</div>';
+        const seen = (S.v5 && S.v5.seen) || {};
+        for (const t of tiers) {
+          const pool = V5_CARDS.filter(c => c.t === t && !c.ex);
+          html += '<details style="margin-top:4px"><summary style="cursor:pointer"><span style="color:' + tierC(t) + '">' + escH(tierN(t)) + '</span>卡片 ' + pool.length + ' 張' +
+            (pool.length ? '（每張 ' + dropPct(1 / pool.length) + '）' : '') + '</summary><div style="font-size:12px;line-height:1.8;padding:2px 0 4px 12px">' +
+            pool.map(c => (seen[c.id] ? '✓' : '') + escH(c.n)).join('、') + '</div></details>';
+        }
+      }
+      html += '<div style="color:#a89a84;font-size:12px;margin-top:10px">只算一般模式。深淵（掉落加成、信物）、活動地圖、魔王、武鬥場、MVP 武道場另有規則；天賦或卡片的額外掉落沒算進去。' +
+        '素材和一般怪、菁英的裝備件數是用遊戲的掉落函式實際抽很多次統計的，每次打開數字會有一點點不同。</div>';
+      box.innerHTML = html;
+    }, 30);
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button[data-a]');
+      if (b && b.dataset.a === 'close') close();
+    });
+  };
+
   /* ===== 17. 小工具設定 =====
    * 選單分頁的按鈕。把檔案開頭 CFG 的每個項目列出來讓使用者在遊戲裡改，不用改檔案。
    * 改過的項目（只存和預設值不同的）記在瀏覽器的 awtools.cfg，下次載入時蓋到 CFG 上。
@@ -4087,7 +4061,7 @@ javascript:(function awTools() {
     ['功能按鈕', [
       ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
       ['cards', '卡片進度', '地圖分頁'], ['earn', '收益統計', '地圖分頁'], ['refCalc', '精煉計算、自動精煉', '煉金分頁'],
-      ['treeBig', '天賦樹大視窗', '角色分頁「開啟共用天賦樹」旁、選單的共用天賦樹頁'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
+      ['treeFind', '天賦樹搜尋', '遊戲的共用天賦樹標題列'], ['dropList', '地圖掉落清單', '地圖分頁每張地圖下方'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
       ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現'],
       ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['legShop', '商人賣傳說技能寶石', '選單 → 商人 → 主動技能'], ['sxShop', '商人賣穿梭寶石', '選單 → 商人 → 輔助技能'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
     ]],
@@ -4283,6 +4257,18 @@ javascript:(function awTools() {
       const t = html.indexOf('class="row tools"');
       return insertAt(html, t < 0 ? -1 : html.indexOf('</div>', t), btnHtml([['awBtnItems', '物品管理', openItems]], ''));
     });
+    /* 地圖分頁：每張地圖卡片（data-act="map" 的按鈕，裡面沒有別的按鈕，所以第一個 </button> 就是卡片的結尾）
+     * 後面接一個「掉落清單」按鈕（第 24 項），按鈕帶地圖編號，點擊在下面另外處理（btnFns 的功能不帶參數） */
+    if (CFG.dropList) {
+      wrapHtml('p_map', html => html.replace(/<button class="mcard[^"]*" data-act="map" data-i="(\d+)"[\s\S]*?<\/button>/g, (card, i) =>
+        (+i < MAP_N ? card + '<button class="btn sm awDropBtn" data-aw-drop="' + i + '" style="width:100%;margin-top:3px;font-size:12px">📦 掉落清單</button>' : card)));
+      document.addEventListener('click', e => {
+        const b = e.target && e.target.closest && e.target.closest('[data-aw-drop]');
+        if (!b) return;
+        e.stopPropagation(); e.preventDefault();
+        openDrops(+b.dataset.awDrop);
+      }, true);
+    }
     try { ui.render(); } catch (e) {}
     /* 按鈕要掛在哪裡：分頁有標題（h2）就掛在標題旁；
      * v0.2.458 之後「地圖」和「選單」分頁沒有標題了，就在分頁最上面自己放一列（awBar）來裝按鈕 */
@@ -4310,18 +4296,6 @@ javascript:(function awTools() {
       if (CFG.earn && ui.tab === 'map') addBtn(barOf(panel), 'awBtnEarn', '收益統計', openEarn, '8px');
       /* 煉金分頁（流浪仙境）：精煉計算 */
       if (CFG.refCalc && ui.tab === 'alch' && typeof v5Refine === 'function' && panel.textContent.indexOf('精煉') >= 0) addBtn(barOf(panel), 'awBtnRef', '精煉計算', openRefCalc, '8px');
-      /* 遊戲的「開啟共用天賦樹」按鈕（角色分頁、選單的共用天賦樹頁）旁邊加上大視窗 */
-      if (CFG.treeBig && typeof roTreeSvg === 'function') {
-        const ob = panel.querySelector('[data-ro-tree-open]');
-        if (ob && !panel.querySelector('.awBtnTree')) {
-          const b = document.createElement('button');
-          b.className = 'btn awBtnTree';
-          b.textContent = '🔍 天賦樹大視窗（可縮放、搜尋）';
-          b.style.cssText = 'display:block;width:100%;margin-top:6px';
-          btnFns.awBtnTree = openTreeBig;
-          ob.insertAdjacentElement('afterend', b);
-        }
-      }
       if (CFG.arts && ui.tab === 'more') addBtn(barOf(panel), 'awBtnArts', '解鎖三神器', unlockArts, '8px');
       if (CFG.pin && pinOk() && ui.tab === 'more') addBtn(barOf(panel), 'awBtnPin', pinnedNow() ? '取消置頂' : '置頂視窗', pinToggle, '8px');
       if (ui.tab === 'more') addBtn(barOf(panel), 'awBtnCfg', '小工具設定', openSettings, '8px');
