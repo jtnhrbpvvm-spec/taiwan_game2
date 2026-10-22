@@ -17,7 +17,7 @@ javascript:(function awTools() {
    *  12. 無限君主連續挑戰：地圖分頁無限君主旁的勾選框，打贏後自動再挑戰
    *  13. 自動刷神話：無限君主旁的按鈕，沒掉神話獨特就自動讀回挑戰前的存檔再打
    *  14. 置頂視窗：選單分頁的按鈕，把遊戲搬進永遠在最上層的小視窗
-   *  15. 省資源：背景時不畫畫面；節能模式（戰鬥畫面左下角的開關，單格模式開著時也會啟用）降低畫面更新次數、不產生粒子和傷害數字
+   *  15. 省資源：背景時不畫畫面；節能模式（畫面上可拖曳、可收起的「🔋 節能」小按鈕，單格模式開著時也會啟用）降低畫面更新次數、不產生粒子和傷害數字
    *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
@@ -36,7 +36,7 @@ javascript:(function awTools() {
    *   - 遊戲的程式是排版過的（有空白），改寫遊戲函式的規則都容許空白；遊戲修補檔包過的函式不重建
    *   - 配置模擬拿掉「建議配裝」（遊戲背包已經有裝備建議）；BOSS 血條的名稱照遊戲上方挑戰按鈕的規則
    *  21. 精煉計算、自動精煉（煉金分頁）  22. 天賦樹搜尋（遊戲的共用天賦樹裡）  23. 收益統計（地圖分頁）
-   *  24. 地圖掉落清單（地圖分頁每張地圖下方）——只有流浪仙境版有
+   *  24. 地圖掉落清單（點戰鬥畫面左下角的地圖名稱）——只有流浪仙境版有
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -51,7 +51,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V7';
+  const VERSION = 'V9';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -94,11 +94,11 @@ javascript:(function awTools() {
     refCalc: true,          /* 煉金分頁加上「精煉計算」按鈕（到目標精煉值的期望花費、自動精煉） */
     refAutoMs: 150,         /* 自動精煉每次之間等幾毫秒 */
     treeFind: true,         /* 遊戲的共用天賦樹標題列加上搜尋框（符合的節點畫粉紅圈，點結果移過去） */
-    dropList: true,         /* 地圖分頁每張地圖卡片下方加「掉落清單」（這張地圖會掉什麼、機率多少） */
+    dropList: true,         /* 點戰鬥畫面左下角的地圖名稱，開啟目前地圖的掉落清單（會掉什麼、機率多少） */
     earn: true,             /* 地圖分頁加上「收益統計」按鈕（每小時 Zeny、經驗、卡片、裝備） */
     eco: true,              /* 省資源（下面幾項的總開關） */
     bgNoDraw: true,         /* 分頁在背景或被蓋住時不畫畫面（看不到，省下繪圖的資源） */
-    ecoBtn: true,           /* 戰鬥畫面左下角加上「節能模式」開關（降低畫面更新次數、不產生粒子和傷害數字） */
+    ecoBtn: true,           /* 畫面上加一顆可拖曳、可收起的「節能模式」小按鈕（降低畫面更新次數、不產生粒子和傷害數字） */
     ecoFps: 15,             /* 節能模式時，畫面每秒更新幾次（0 = 不限制）；遊戲運算速度不受影響 */
     arts: true,             /* 選單分頁加上「解鎖三神器」按鈕 */
     pin: true,              /* 選單分頁加上「置頂視窗」按鈕（把遊戲搬進永遠在最上層的小視窗；要開常駐模式） */
@@ -279,7 +279,7 @@ javascript:(function awTools() {
    * 流浪仙境的按鈕樣式是淺黃底、白字，小工具視窗裡沒有自己寫顏色的按鈕會吃到它，字幾乎看不到（重新讀取、清空、取消…）。
    * 這裡統一給深底淺字；有自己寫顏色的按鈕（黃底深字的「確定」「套用」、選中的構築分頁、寶石按鈕）寫在按鈕上的樣式優先，不受影響。 */
   if (!document.querySelector('#awBtnCss')) {
-    const ids = ['awDlg', 'awPlan', 'awItems', 'awBackup', 'awCards', 'awCfg', 'awShopMut', 'awXtrPick', 'awInfPick', 'awRef', 'awEarn', 'awLoopBar', 'awDrops'];
+    const ids = ['awDlg', 'awPlan', 'awItems', 'awBackup', 'awCards', 'awCfg', 'awShopMut', 'awXtrPick', 'awInfPick', 'awRef', 'awEarn', 'awLoopBar'];
     const sel = s => ids.map(id => '#' + id + ' ' + s).join(',');
     const st = document.createElement('style');
     st.id = 'awBtnCss';
@@ -3374,7 +3374,7 @@ javascript:(function awTools() {
    *   - 分頁在背景（或被蓋住）時完全不畫：反正看不到（bgNoDraw，不管有沒有開單格模式都生效）
    *   - 節能模式時，畫面更新降到每秒 ecoFps 次（遊戲本身的運算速度不變，只是畫得比較少次）
    *   - 節能模式時，不產生粒子、拖尾和傷害數字
-   * 節能模式：戰鬥畫面左下角（地圖名稱上面）的開關，點一下就切換、馬上生效，狀態記在瀏覽器的 awtools.eco。
+   * 節能模式：畫面上可以拖曳的「🔋 節能」小按鈕，點一下就切換、馬上生效，狀態記在瀏覽器的 awtools.eco；按 × 可以收起按鈕。
    * 單格模式開著時不管開關怎麼設都會啟用。
    * 做法是把遊戲的 draw()（畫場景）、eliteTags()（菁英頭上的標籤）、burst()、streak()、num() 各包一層。
    * 有些粒子是遊戲直接塞進 G.parts 的，包不到，所以畫之前順手清掉。
@@ -3384,41 +3384,96 @@ javascript:(function awTools() {
   try { ecoUser = localStorage.getItem(ECO_KEY) === '1'; } catch (e) {}
   if (first && CFG.eco) {
     const ecoOn = () => ecoUser || !!window.__awOne;
-    /* 開關沿用遊戲畫面上標籤（chip）的樣式，放進左下角那一排（#lstack）的最上面。
-     * 關閉時用黃色、開啟時用綠色，比較顯眼。那一排本身不接收點擊（pointer-events:none），所以按鈕自己要打開；
+    /* 開關是一顆浮在畫面上的小按鈕（以前放在左下角那一排標籤裡，吃到遊戲標籤的半透明樣式，看不清楚）：
+     *   - 深色底、白字，右邊的「開／關」用綠底／灰底，一眼看得出狀態
+     *   - 按住拖曳可以移動，位置記在瀏覽器的 awtools.ecopos（下次還在同一個地方）；沒拖動就放開才算點擊（切換節能）
+     *   - 右邊的 × 把按鈕整個收起來，節能模式維持原狀；下次點書籤（包含重新載入後小工具自己回來）、
+     *     或是打開單格模式時才會再出現。收起來的狀態只記在記憶體，不存檔
      * 點擊要擋住往外傳，不然會被當成點了戰鬥畫面。 */
     if (CFG.ecoBtn) {
+      const ECO_POS = 'awtools.ecopos';
+      let ecoHidden = false, lastOne = !!window.__awOne;
+      window.__awEcoShow = () => { ecoHidden = false; };
       const ecoLabel = b => {
-        const on = ecoOn();
-        const txt = '🔋 節能模式：' + (on ? '開' : '關') + (on && !ecoUser ? '（單格模式）' : '');
-        if (b.textContent !== txt) b.textContent = txt;
-        b.style.color = on ? '#7dffc8' : '#ffd84a';
-        b.style.borderColor = on ? '#7dffc8' : '#ffd84a';
+        const on = ecoOn(), forced = on && !ecoUser;
+        const st = b.querySelector('.awEcoSt');
+        const txt = on ? '開' : '關';
+        if (st.textContent !== txt) st.textContent = txt;
+        st.style.background = on ? '#1f9d63' : '#5a5048';
+        b.title = (forced ? '單格模式開著時一定會節能。' : '') + '點一下切換節能模式（降低畫面更新次數、不產生粒子和傷害數字，只影響畫面，不影響戰鬥結果）；按住拖曳可以移動；× 收起按鈕';
+      };
+      const ecoPlace = b => {
+        let p = null;
+        try { p = JSON.parse(localStorage.getItem(ECO_POS)); } catch (e) {}
+        const w = window.innerWidth, h = window.innerHeight, bw = b.offsetWidth || 110, bh = b.offsetHeight || 26;
+        const x = p && isFinite(p.x) ? p.x : 8, y = p && isFinite(p.y) ? p.y : h - bh - 140;
+        b.style.left = Math.max(0, Math.min(w - bw, x)) + 'px';
+        b.style.top = Math.max(0, Math.min(h - bh, y)) + 'px';
+      };
+      const ecoMake = () => {
+        const b = document.createElement('div');
+        b.className = 'awEcoBtn';
+        /* z-index 比遊戲的對話框背景（#sheetBg 是 20）低，對話框打開時會蓋住按鈕 */
+        b.style.cssText = 'position:fixed;z-index:15;display:flex;align-items:center;gap:6px;padding:3px 4px 3px 8px;border-radius:14px;' +
+          'background:rgba(16,12,10,.92);border:1px solid #c9b07a;box-shadow:0 2px 6px rgba(0,0,0,.45);color:#fff;font:bold 12px/1.4 sans-serif;' +
+          'cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;white-space:nowrap';
+        b.innerHTML = '<span>🔋 節能</span><span class="awEcoSt" style="padding:0 7px;border-radius:9px;color:#fff"></span>' +
+          '<span class="awEcoX" title="收起按鈕（下次點書籤或打開單格模式時再出現）" style="padding:0 5px;color:#c8bca8;cursor:pointer;font-size:14px;line-height:1">×</span>';
+        let drag = null;
+        b.addEventListener('pointerdown', e => {
+          if (e.button !== 0 && e.pointerType === 'mouse') return;
+          e.stopPropagation();
+          /* 按住後指標會綁在按鈕上（setPointerCapture），放開時的 target 一律是按鈕本身，所以按下時就先記住是不是按在 × 上 */
+          drag = { id: e.pointerId, x: e.clientX, y: e.clientY, l: b.offsetLeft, t: b.offsetTop, moved: false, onX: !!e.target.closest('.awEcoX') };
+          try { b.setPointerCapture(e.pointerId); } catch (err) {}
+        });
+        b.addEventListener('pointermove', e => {
+          if (!drag || drag.id !== e.pointerId) return;
+          const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+          if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+          drag.moved = true;
+          b.style.cursor = 'grabbing';
+          b.style.left = Math.max(0, Math.min(window.innerWidth - b.offsetWidth, drag.l + dx)) + 'px';
+          b.style.top = Math.max(0, Math.min(window.innerHeight - b.offsetHeight, drag.t + dy)) + 'px';
+        });
+        const end = e => {
+          if (!drag || drag.id !== e.pointerId) return;
+          const d = drag;
+          drag = null;
+          b.style.cursor = 'grab';
+          e.stopPropagation();
+          if (d.moved) { try { localStorage.setItem(ECO_POS, JSON.stringify({ x: b.offsetLeft, y: b.offsetTop })); } catch (err) {} return; }
+          if (e.type !== 'pointerup') return;
+          if (d.onX) { ecoHidden = true; b.remove(); try { toast('節能按鈕已收起：下次點書籤或打開單格模式時再出現', 'lvl'); } catch (err) {} return; }
+          if (window.__awOne && ecoUser) { ecoUser = false; }
+          else if (window.__awOne) { try { toast('單格模式開著時一定會節能，關掉單格模式才能關閉', 'lvl'); } catch (err) {} return; }
+          else ecoUser = !ecoUser;
+          try { if (ecoUser) localStorage.setItem(ECO_KEY, '1'); else localStorage.removeItem(ECO_KEY); } catch (err) {}
+          ecoLabel(b);
+          try { toast('節能模式已' + (ecoUser ? '開啟' : '關閉'), 'lvl'); } catch (err) {}
+        };
+        b.addEventListener('pointerup', end);
+        b.addEventListener('pointercancel', end);
+        b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
+        return b;
       };
       every(() => {
-        const stack = document.querySelector('#lstack');
-        if (!stack) return;
-        let b = stack.querySelector('.awEcoBtn');
+        /* 單格模式從關變開：收起來的按鈕再出現 */
+        const one = !!window.__awOne;
+        if (one && !lastOne) ecoHidden = false;
+        lastOne = one;
+        let b = document.querySelector('.awEcoBtn');
+        if (ecoHidden || typeof S === 'undefined' || !S) { if (b) b.remove(); return; }
         if (!b) {
-          b = document.createElement('button');
-          b.className = 'chip awEcoBtn';
-          b.title = '降低畫面更新次數、不產生粒子和傷害數字，比較不會卡；只影響畫面，不影響戰鬥結果';
-          /* 遊戲用 zoom:var(--uz) 依螢幕大小放大這一排標籤，這裡跟著用，大小才會一致 */
-          b.style.cssText = 'pointer-events:auto;cursor:pointer;zoom:var(--uz,1);padding:1px 6px;border-width:1px;background:rgba(20,14,28,.8)';
-          b.addEventListener('click', e => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (window.__awOne && ecoUser) { ecoUser = false; }
-            else if (window.__awOne) { try { toast('單格模式開著時一定會節能，關掉單格模式才能關閉', 'lvl'); } catch (err) {} return; }
-            else ecoUser = !ecoUser;
-            try { if (ecoUser) localStorage.setItem(ECO_KEY, '1'); else localStorage.removeItem(ECO_KEY); } catch (err) {}
-            ecoLabel(b);
-            try { toast('節能模式已' + (ecoUser ? '開啟' : '關閉'), 'lvl'); } catch (err) {}
-          });
-          stack.insertBefore(b, stack.firstChild);
+          b = ecoMake();
+          document.body.appendChild(b);
+          ecoLabel(b);
+          ecoPlace(b);
         }
         ecoLabel(b);
       }, 500);
+      /* 視窗變小時把按鈕拉回畫面裡 */
+      window.addEventListener('resize', () => { const b = document.querySelector('.awEcoBtn'); if (b) ecoPlace(b); });
     }
     let lastDraw = 0, skipped = false;
     const realDraw = window.draw, realTags = window.eliteTags;
@@ -3893,7 +3948,7 @@ javascript:(function awTools() {
   };
 
   /* ===== 24. 地圖掉落清單（流浪仙境） =====
-   * 地圖分頁每張地圖卡片下方加「📦 掉落清單」，點了列出在這張地圖打一般怪、菁英、頭目各會掉什麼、機率多少：
+   * 點戰鬥畫面左下角的地圖名稱（下面有一行小字「點此查看本地圖掉落」），列出在目前地圖打一般怪、菁英、頭目各會掉什麼、機率多少：
    *   - 裝備：掉落機率、稀有度比例；每件 0.5% 改成隨機獨特裝備；頭目另外 15% 掉獨特裝備（都從依等級決定的獨特裝備池平均抽）
    *   - 卡片：掉卡機率、各階級的比例，以及每一階可能出現的卡片（抽到那一階後平均分配）
    *   - 素材：精煉素材、魔力礦石、鐵匠的祝福等（解鎖煉金後才會掉）
@@ -3939,15 +3994,44 @@ javascript:(function awTools() {
     const keep = S.map;
     try { S.map = mi; return v5DropTiers(kind); } catch (e) { return []; } finally { S.map = keep; }
   };
+  /* 掉落清單的樣式：用遊戲自己的對話框（#sheet，和點素材、說明跳出來的是同一個），配色照遊戲的 CSS 變數，看起來和遊戲一樣 */
+  const DROP_CSS = '#sheet.awDrop{width:min(620px,94vw);max-width:94vw;max-height:88vh;overflow:auto;box-sizing:border-box}' +
+    '#sheet.awDrop .awDH{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
+    '#sheet.awDrop .awDH h2{margin:0}' +
+    '#sheet.awDrop .awDLv{color:var(--muted)}' +
+    '#sheet.awDrop .awDS{margin-top:12px;background:var(--paper-hi,#fff);border:1px solid var(--paper-dk,#ccd5df);border-radius:6px;overflow:hidden}' +
+    '#sheet.awDrop .awDS>h3{margin:0;padding:6px 10px;font-size:14px;color:#416a89;background:var(--cell,#dce5ed);border-bottom:1px solid var(--paper-dk,#ccd5df)}' +
+    '#sheet.awDrop table{width:100%;border-collapse:collapse}' +
+    '#sheet.awDrop td{padding:5px 10px;border-top:1px solid #e8eef3;vertical-align:top}' +
+    '#sheet.awDrop tr:first-child td{border-top:0}' +
+    '#sheet.awDrop td.v{text-align:right;white-space:nowrap;font-weight:bold;color:var(--ember,#497da2)}' +
+    '#sheet.awDrop td .n{color:var(--muted);font-size:12px;line-height:1.5}' +
+    '#sheet.awDrop details{padding:6px 10px;border-top:1px solid #e8eef3}' +
+    '#sheet.awDrop .awDS>details:first-of-type{border-top:0}' +
+    '#sheet.awDrop summary{cursor:pointer;color:var(--text)}' +
+    '#sheet.awDrop .awDL{font-size:12px;line-height:1.9;padding:4px 0 2px 14px;color:var(--text)}' +
+    '#sheet.awDrop .awDL .own{color:#2f9a3a}' +
+    '#sheet.awDrop .awDWarn{margin:6px 0 0;padding:6px 10px;border-radius:6px;background:#fff4e0;color:#a5651a;border:1px solid #f0d2a0}' +
+    '#sheet.awDrop .awDF{display:flex;justify-content:flex-end;margin-top:12px}';
   const openDrops = mi => {
-    if (typeof S === 'undefined' || !S || typeof MAPS === 'undefined' || !MAPS[mi]) { uiAlert('請先進入遊戲'); return; }
+    const sh = document.querySelector('#sheet'), bg = document.querySelector('#sheetBg');
+    if (typeof S === 'undefined' || !S || typeof MAPS === 'undefined' || !MAPS[mi] || !sh || !bg) { uiAlert('請先進入遊戲'); return; }
+    if (!document.querySelector('#awDropCss')) {
+      const st = document.createElement('style');
+      st.id = 'awDropCss';
+      st.textContent = DROP_CSS;
+      document.head.appendChild(st);
+    }
     const M = MAPS[mi], lv = M.lv || [1, 1];
-    const { box, close } = awSheet('awDrops', 640);
-    box.innerHTML = '<div style="color:#a89a84">計算中…</div>';
+    sh.className = 'awDrop';
+    sh.innerHTML = '<h2>' + escH(M.n) + ' 掉落清單</h2><p class="note">計算中…</p>';
+    bg.hidden = false;
     setTimeout(() => {
+      if (!sh.classList.contains('awDrop') || bg.hidden) return;
       const mul = typeof V5 === 'object' && V5.dropMul ? V5.dropMul : 1;
       const tierN = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].n : t + ' 階');
-      const tierC = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].c : '#ccc');
+      const tierC = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].c : 'inherit');
+      const tierS = t => '<b style="color:' + tierC(t) + '">' + escH(tierN(t)) + '</b>';
       const rarN = r => { try { return rarLabel({ rar: r }); } catch (e) { return ['普通', '魔法', '稀有', '傳奇'][r]; } };
       const matN = k => (MATS[k] ? MATS[k].n : k);
       const usedTiers = new Set();
@@ -3955,12 +4039,12 @@ javascript:(function awTools() {
        * （Lv60 以上加入高階、Lv83 以上加入終局獨特）；這裡用地圖最高等級，也就是頭目的等級 */
       let uqPool = [];
       try { uqPool = roUqPool('map', lv[1]).filter(k => UNIQUE[k]); } catch (e) {}
-      const row = (name, val, note) => '<tr style="border-top:1px solid #3a3026"><td style="padding:3px 6px 3px 0">' + name + '</td><td style="text-align:right;white-space:nowrap;padding:3px 0"><b>' + val + '</b></td>' +
-        '<td style="color:#a89a84;font-size:12px;padding:3px 0 3px 8px">' + (note || '') + '</td></tr>';
+      /* 一列：左邊名稱（下面一行小字說明），右邊數字；手機上也不會擠成三欄 */
+      const row = (name, val, note) => '<tr><td>' + name + (note ? '<div class="n">' + note + '</div>' : '') + '</td><td class="v">' + val + '</td></tr>';
       const block = (kind, title) => {
         const N = kind === 'boss' ? 30000 : 120000;
         const sim = dropSim(mi, kind, N);
-        let h = '<h3 style="margin:12px 0 4px;color:#ffd84a;font-size:14px">' + title + '</h3><table style="width:100%;border-collapse:collapse">';
+        let h = '<div class="awDS"><h3>' + title + '</h3><table>';
         /* 裝備（傳奇的權重照地圖最高等級加權） */
         const rw = DROP_RW[kind].slice();
         rw[3] *= typeof legF === 'function' ? legF(lv[1]) : 1;
@@ -3978,10 +4062,10 @@ javascript:(function awTools() {
           const p = kind === 'boss' ? V5_DROP.boss * mul : V5_DROP.mob * (kind === 'elite' ? V5_DROP.elite : 1) * mul;
           const ts = dropTiers(mi, kind), ws = ts.reduce((a, r) => a + r[1], 0) || 1;
           ts.forEach(r => usedTiers.add(r[0]));
-          h += row('卡片', dropPct(p), ts.map(r => '<span style="color:' + tierC(r[0]) + '">' + escH(tierN(r[0])) + '</span> ' + dropPct(r[1] / ws)).join('・'));
+          h += row('卡片', dropPct(p), ts.map(r => tierS(r[0]) + ' ' + dropPct(r[1] / ws)).join('・'));
           if (kind === 'boss' && typeof V87 === 'object' && mi >= V87.from && mi < MAP_N) {
             usedTiers.add(5);
-            h += row('隨機' + escH(tierN(5)) + '卡片', dropPct(V87.p * mul), 'Lv78 以後的新地圖頭目另外掉落');
+            h += row('隨機' + tierS(5) + '卡片', dropPct(V87.p * mul), 'Lv78 以後的新地圖頭目另外掉落');
           }
         }
         /* 素材 */
@@ -3999,40 +4083,70 @@ javascript:(function awTools() {
           if (n) h += row('穿梭寶石', dropPct(kind === 'boss' ? V5_SX.b : kind === 'elite' ? V5_SX.e : V5_SX.n), '目前職業可用的 ' + n + ' 種隨機');
         }
         if (kind === 'boss' && typeof V77_BLESS === 'object' && lv[1] >= V77_BLESS.lv) h += row(escH(matN('p2')), dropPct(V77_BLESS.p), '直接進背包');
-        return h + '</table>';
+        return h + '</table></div>';
       };
       const mons = (M.m || []).map(t => (MON[t] ? MON[t].n : t));
-      let html = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:16px">' + escH(M.n) + ' 掉落清單</b>' +
-        '<span style="color:#a89a84">LV' + lv[0] + '–' + lv[1] + '</span><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
-        '<div style="margin-top:4px">怪物：' + mons.map(escH).join('、') + '（每種都可能是菁英）・頭目：' + escH(M.boss || '') + '</div>';
-      if (!S.alchOn) html += '<div style="color:#ffb070;margin-top:4px">你還沒解鎖煉金：下面的素材要解鎖煉金後才會掉（目前打怪不會掉）。</div>';
+      let html = '<div class="awDH"><h2>' + escH(M.n) + ' 掉落清單</h2><span class="awDLv">LV' + lv[0] + '–' + lv[1] + '</span></div>' +
+        '<p class="note" style="margin:4px 0 0">怪物：' + mons.map(escH).join('、') + '（每種都可能是菁英）・頭目：' + escH(M.boss || '') + '</p>';
+      if (!S.alchOn) html += '<div class="awDWarn">你還沒解鎖煉金：下面的素材要解鎖煉金後才會掉（目前打怪不會掉）。</div>';
       html += block('mob', '一般怪（每隻）') + block('elite', '菁英（每隻）') + block('boss', '頭目 ' + escH(M.boss || '') + '（每次擊敗）');
-      if (uqPool.length) {
-        html += '<h3 style="margin:14px 0 4px;color:#ffd84a;font-size:14px">獨特裝備池</h3><details><summary style="cursor:pointer">' + uqPool.length + ' 件（頭目的 15% 和每件裝備 ' + dropPct(typeof UQ_P === 'number' ? UQ_P : 0.005) + ' 的隨機獨特都從這裡平均抽）</summary>' +
-          '<div style="font-size:12px;line-height:1.8;padding:2px 0 4px 12px">' + uqPool.map(k => escH(UNIQUE[k].n) + (SLOT_NAME && SLOT_NAME[UNIQUE[k].slot] ? '<span style="color:#a89a84">（' + escH(SLOT_NAME[UNIQUE[k].slot]) + '）</span>' : '')).join('、') +
-          (lv[0] < 83 ? '<div style="color:#a89a84">一般怪和菁英掉的隨機獨特照怪物自己的等級抽：Lv60 以下沒有高階獨特、Lv83 以下沒有終局獨特，所以低等的怪可抽的會比這裡少。</div>' : '') + '</div></details>';
-      }
-      /* 卡片池：這張地圖可能掉的階級，每階列出卡片 */
+      /* 獨特裝備池、卡片池：放在同一個區塊，各自可以展開 */
       const tiers = [...usedTiers].sort((a, b) => a - b);
+      let pools = '';
+      if (uqPool.length) {
+        pools += '<details><summary>獨特裝備池 ' + uqPool.length + ' 件<span class="note">（頭目的 15% 和每件裝備 ' + dropPct(typeof UQ_P === 'number' ? UQ_P : 0.005) + ' 的隨機獨特都從這裡平均抽）</span></summary><div class="awDL">' +
+          uqPool.map(k => escH(UNIQUE[k].n) + (typeof SLOT_NAME === 'object' && SLOT_NAME[UNIQUE[k].slot] ? '<span class="note">（' + escH(SLOT_NAME[UNIQUE[k].slot]) + '）</span>' : '')).join('、') +
+          (lv[0] < 83 ? '<div class="note">一般怪和菁英掉的隨機獨特照怪物自己的等級抽：Lv60 以下沒有高階獨特、Lv83 以下沒有終局獨特，所以低等的怪可抽的會比這裡少。</div>' : '') + '</div></details>';
+      }
       if (tiers.length && typeof V5_CARDS !== 'undefined') {
-        html += '<h3 style="margin:14px 0 4px;color:#ffd84a;font-size:14px">卡片池</h3><div style="color:#a89a84;font-size:12px">抽到某一階之後，在那一階的卡片裡平均抽一張。✓ 是已經拿過的卡。</div>';
         const seen = (S.v5 && S.v5.seen) || {};
         for (const t of tiers) {
           const pool = V5_CARDS.filter(c => c.t === t && !c.ex);
-          html += '<details style="margin-top:4px"><summary style="cursor:pointer"><span style="color:' + tierC(t) + '">' + escH(tierN(t)) + '</span>卡片 ' + pool.length + ' 張' +
-            (pool.length ? '（每張 ' + dropPct(1 / pool.length) + '）' : '') + '</summary><div style="font-size:12px;line-height:1.8;padding:2px 0 4px 12px">' +
-            pool.map(c => (seen[c.id] ? '✓' : '') + escH(c.n)).join('、') + '</div></details>';
+          pools += '<details><summary>' + tierS(t) + '卡片 ' + pool.length + ' 張' + (pool.length ? '<span class="note">（抽到這一階時每張 ' + dropPct(1 / pool.length) + '）</span>' : '') + '</summary><div class="awDL">' +
+            pool.map(c => (seen[c.id] ? '<span class="own">✓' + escH(c.n) + '</span>' : escH(c.n))).join('、') + '</div></details>';
         }
       }
-      html += '<div style="color:#a89a84;font-size:12px;margin-top:10px">只算一般模式。深淵（掉落加成、信物）、活動地圖、魔王、武鬥場、MVP 武道場另有規則；天賦或卡片的額外掉落沒算進去。' +
-        '素材和一般怪、菁英的裝備件數是用遊戲的掉落函式實際抽很多次統計的，每次打開數字會有一點點不同。</div>';
-      box.innerHTML = html;
+      if (pools) html += '<div class="awDS"><h3>獨特裝備池、卡片池<span class="note" style="font-weight:normal;font-size:12px">　點開看內容，綠色 ✓ 是已經拿過的卡</span></h3>' + pools + '</div>';
+      html += '<p class="note" style="font-size:12px;margin:10px 0 0">只算一般模式。深淵（掉落加成、信物）、活動地圖、魔王、武鬥場、MVP 武道場另有規則；天賦或卡片的額外掉落沒算進去。' +
+        '素材和一般怪、菁英的裝備件數是用遊戲的掉落函式實際抽很多次統計的，每次打開數字會有一點點不同。</p>' +
+        '<div class="awDF"><button class="btn primary" data-act="close">知道了</button></div>';
+      sh.innerHTML = html;
     }, 30);
-    box.addEventListener('click', e => {
-      const b = e.target.closest('button[data-a]');
-      if (b && b.dataset.a === 'close') close();
-    });
   };
+  /* 入口：戰鬥畫面左下角的地圖名稱（#mapChip）整塊都可以點，下面多一行小字「點此查看本地圖掉落」。
+   * 遊戲每次更新畫面都會重寫 #mapChip 的內容，所以小字用 CSS 的 ::after 加（跟著 class 走，內容被重寫也不會不見），
+   * 點擊掛在 #mapChip 本身（元素不會換掉，只換內容）。左下角那一排本來不接收點擊，這塊要另外打開。
+   * 只在一般地圖顯示：城鎮、活動地圖、武鬥場、魔王戰、試煉、轉職試煉時拿掉。 */
+  if (first && CFG.dropList) {
+    const st = document.createElement('style');
+    st.textContent = '#mapChip.awDropOn{pointer-events:auto;cursor:pointer}' +
+      '#mapChip.awDropOn::after{content:"點此查看本地圖掉落";display:block;font-size:.78em;line-height:1.4;color:var(--ember,#497da2);font-weight:normal}' +
+      '#mapChip.awDropOn:hover{filter:brightness(1.05)}';
+    document.head.appendChild(st);
+    const dropOk = () => {
+      try {
+        if (typeof S === 'undefined' || !S || !(S.map >= 0 && S.map < MAP_N)) return false;
+        if (G.arena || G.tw || G.guard != null || G.trial != null || G.trn) return false;
+        if (typeof v113Town === 'function' && v113Town()) return false;
+        if (typeof ssMap === 'function' && ssMap()) return false;
+        return true;
+      } catch (e) { return false; }
+    };
+    every(() => {
+      const c = document.querySelector('#mapChip');
+      if (!c) return;
+      const on = dropOk();
+      if (c.classList.contains('awDropOn') !== on) c.classList.toggle('awDropOn', on);
+      if (on) c.title = '點此查看本地圖掉落';
+      else if (c.title) c.title = '';
+    }, 500);
+    document.addEventListener('click', e => {
+      const c = e.target && e.target.closest && e.target.closest('#mapChip.awDropOn');
+      if (!c || !dropOk()) return;
+      e.stopPropagation(); e.preventDefault();
+      openDrops(S.map);
+    }, true);
+  }
 
   /* ===== 17. 小工具設定 =====
    * 選單分頁的按鈕。把檔案開頭 CFG 的每個項目列出來讓使用者在遊戲裡改，不用改檔案。
@@ -4061,7 +4175,7 @@ javascript:(function awTools() {
     ['功能按鈕', [
       ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
       ['cards', '卡片進度', '地圖分頁'], ['earn', '收益統計', '地圖分頁'], ['refCalc', '精煉計算、自動精煉', '煉金分頁'],
-      ['treeFind', '天賦樹搜尋', '遊戲的共用天賦樹標題列'], ['dropList', '地圖掉落清單', '地圖分頁每張地圖下方'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
+      ['treeFind', '天賦樹搜尋', '遊戲的共用天賦樹標題列'], ['dropList', '地圖掉落清單', '點戰鬥畫面左下角的地圖名稱'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
       ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現'],
       ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['legShop', '商人賣傳說技能寶石', '選單 → 商人 → 主動技能'], ['sxShop', '商人賣穿梭寶石', '選單 → 商人 → 輔助技能'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
     ]],
@@ -4075,7 +4189,7 @@ javascript:(function awTools() {
     ['省資源', [
       ['eco', '省資源', '下面幾項的總開關'],
       ['bgNoDraw', '背景時不畫畫面'],
-      ['ecoBtn', '節能模式開關', '戰鬥畫面左下角，點一下切換；關掉這項就不顯示開關'],
+      ['ecoBtn', '節能模式開關', '畫面上的「🔋 節能」小按鈕：點一下切換、按住拖曳移動、× 暫時收起（下次點書籤或打開單格模式再出現）；關掉這項就完全不顯示'],
       ['ecoFps', '節能模式時畫面每秒更新幾次', '0 = 不限制；只影響畫面，不影響遊戲速度']
     ]],
     ['無限君主', [
@@ -4257,18 +4371,6 @@ javascript:(function awTools() {
       const t = html.indexOf('class="row tools"');
       return insertAt(html, t < 0 ? -1 : html.indexOf('</div>', t), btnHtml([['awBtnItems', '物品管理', openItems]], ''));
     });
-    /* 地圖分頁：每張地圖卡片（data-act="map" 的按鈕，裡面沒有別的按鈕，所以第一個 </button> 就是卡片的結尾）
-     * 後面接一個「掉落清單」按鈕（第 24 項），按鈕帶地圖編號，點擊在下面另外處理（btnFns 的功能不帶參數） */
-    if (CFG.dropList) {
-      wrapHtml('p_map', html => html.replace(/<button class="mcard[^"]*" data-act="map" data-i="(\d+)"[\s\S]*?<\/button>/g, (card, i) =>
-        (+i < MAP_N ? card + '<button class="btn sm awDropBtn" data-aw-drop="' + i + '" style="width:100%;margin-top:3px;font-size:12px">📦 掉落清單</button>' : card)));
-      document.addEventListener('click', e => {
-        const b = e.target && e.target.closest && e.target.closest('[data-aw-drop]');
-        if (!b) return;
-        e.stopPropagation(); e.preventDefault();
-        openDrops(+b.dataset.awDrop);
-      }, true);
-    }
     try { ui.render(); } catch (e) {}
     /* 按鈕要掛在哪裡：分頁有標題（h2）就掛在標題旁；
      * v0.2.458 之後「地圖」和「選單」分頁沒有標題了，就在分頁最上面自己放一列（awBar）來裝按鈕 */
@@ -4319,5 +4421,7 @@ javascript:(function awTools() {
     }, CFG.btnRefreshMs);
   }
 
+  /* 再點一次書籤：收起來的節能按鈕（第 15 項）再出現 */
+  if (!first) { try { if (window.__awEcoShow) window.__awEcoShow(); } catch (e) {} }
   if (!first) { try { toast('小工具已經啟用：配置模擬在「技能」分頁，物品管理在「背包」分頁的保留規則旁邊', 'lvl'); } catch (e) {} }
 })();
