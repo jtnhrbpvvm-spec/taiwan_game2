@@ -32,6 +32,7 @@ javascript:(function awTools() {
    *   - 物品持有無上限：遊戲包過的撿裝備 takeItem 改從外層處理（見第 8 項）
    *   - 禁止自動更新：改擋流浪仙境自己的更新檢查（v63／v64／v91）
    *   - 使用書籤時一律不上傳排行榜（無限武鬥場的線上排行 /api/rank，以及引擎原本的 lbSend），不只單格模式
+   *   - 使用書籤時不能在聊天室發言（/api/chat），只能看訊息
    *   - 商人：穿梭寶石用遊戲的 v5SxPool；變異形狀只有多 1 格、少 1 格（和遊戲的變異規則相同）
    *   - 遊戲的程式是排版過的（有空白），改寫遊戲函式的規則都容許空白；遊戲修補檔包過的函式不重建
    *   - 配置模擬拿掉「建議配裝」（遊戲背包已經有裝備建議）；BOSS 血條的名稱照遊戲上方挑戰按鈕的規則
@@ -51,7 +52,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V11';
+  const VERSION = 'V12';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2524,6 +2525,12 @@ javascript:(function awTools() {
           if (method !== 'GET' && method !== 'HEAD' && /\/api\/rank\b/.test(String(url || ''))) {
             return Promise.resolve(new Response(JSON.stringify({ ok: false, error: '小工具已封鎖排行上傳' }), { status: 200, headers: { 'content-type': 'application/json' } }));
           }
+          /* 聊天室發言（op: "say"）也在這一層擋（見下面「封鎖聊天室發言」），回給遊戲 err: "tool" */
+          if (method === 'POST' && /\/api\/chat\b/.test(String(url || ''))) {
+            let op = '';
+            try { op = JSON.parse(String((init && init.body) || '{}')).op || ''; } catch (e) {}
+            if (op === 'say') return Promise.resolve(new Response(JSON.stringify({ err: 'tool' }), { status: 200, headers: { 'content-type': 'application/json' } }));
+          }
         } catch (e) {}
         return realFetch.apply(this, arguments);
       };
@@ -2533,6 +2540,28 @@ javascript:(function awTools() {
       const realBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator);
       if (realBeacon) navigator.sendBeacon = (url, data) => /\/api\/rank\b/.test(String(url || '')) ? true : realBeacon(url, data);
     } catch (e) {}
+  }
+
+  /* ===== 封鎖聊天室發言（使用者 2026-10-22 要求：使用書籤時不能在聊天室交流）=====
+   * 遊戲 v1.1.1 的聊天室（ro-v114）：發言要綁定 Google、而且有無限武鬥場（Lv.50 開放）的線上排行紀錄。
+   * 小工具裝上之後一律不能發言，聊天內容照樣看得到：
+   *   - 輸入框（v114InputHtml，聊天分頁和戰鬥畫面的小聊天框共用）換成一行說明，沒有地方可以打字
+   *   - 送出（v114Send）直接回「不能發言」
+   *   - 保險：往 /api/chat 送的發言（op: "say"）在上面的 fetch 攔截擋掉，伺服器收不到
+   * 沒點書籤的時候擋不到（例如自己按 F5 後忘了再點）。 */
+  if (first) {
+    const CHAT_NO = '使用小工具（書籤）時不能在聊天室發言，只能看訊息。';
+    try { if (typeof V114_ERR === 'object' && V114_ERR) V114_ERR.tool = CHAT_NO; } catch (e) {}
+    if (typeof window.v114InputHtml === 'function') window.v114InputHtml = () => '<div class="v114gate"><span>' + CHAT_NO + '</span></div>';
+    if (typeof window.v114Send === 'function') {
+      window.v114Send = async () => {
+        try { v114Info(CHAT_NO); } catch (e) {}
+        return false;
+      };
+    }
+    /* 聊天分頁或小聊天框已經畫好的話，重畫一次把輸入框換掉 */
+    try { if (typeof v114Paint === 'function') v114Paint(true); } catch (e) {}
+    try { if (typeof ui === 'object' && ui.tab === 'chat') ui.render(); } catch (e) {}
   }
 
   const ONE_KEY = 'awtools.onecell';
