@@ -51,7 +51,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V9';
+  const VERSION = 'V10';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -221,7 +221,7 @@ javascript:(function awTools() {
     const box = document.createElement('div');
     box.style.cssText = 'background:#2a2118;border:2px solid #ffd84a;border-radius:6px;padding:14px;box-sizing:border-box;width:min(520px,94vw);max-height:92%;display:flex;flex-direction:column;gap:10px';
     const msg = document.createElement('div');
-    msg.style.cssText = 'white-space:pre-wrap;overflow:auto;word-break:break-word;min-height:1.6em';
+    msg.style.cssText = 'white-space:pre-wrap;overflow:auto;word-break:break-word;min-height:1.6em' + (opt.center ? ';text-align:center' : '');
     msg.textContent = opt.msg;
     box.appendChild(msg);
     const inputs = [];
@@ -243,7 +243,7 @@ javascript:(function awTools() {
       inputs.push(el);
     }
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-shrink:0';
+    row.style.cssText = 'display:flex;gap:8px;justify-content:' + (opt.center ? 'center' : 'flex-end') + ';flex-shrink:0';
     const done = v => { root.remove(); dlgBusy = false; job.resolve(v); dlgNext(); };
     const ok = () => done(opt.kind === 'alert' ? undefined : opt.kind === 'confirm' ? true : inputs.map(i => i.value));
     const cancel = () => done(opt.kind === 'alert' ? undefined : opt.kind === 'confirm' ? false : null);
@@ -270,7 +270,7 @@ javascript:(function awTools() {
     try { (inputs[0] || okBtn).focus(); if (inputs[0]) inputs[0].select(); } catch (e) {}
   };
   const dlgShow = opt => new Promise(resolve => { dlgQueue.push({ opt: opt, resolve: resolve }); dlgNext(); });
-  const uiAlert = msg => dlgShow({ kind: 'alert', msg: String(msg) });
+  const uiAlert = (msg, center) => dlgShow({ kind: 'alert', msg: String(msg), center: !!center });
   const uiConfirm = msg => dlgShow({ kind: 'confirm', msg: String(msg) });
   const uiForm = (msg, fields) => dlgShow({ kind: 'form', msg: String(msg), fields: fields });
   const uiPrompt = (msg, def, multiline) => uiForm(msg, [{ value: def, multiline: !!multiline }]).then(v => (v ? v[0] : null));
@@ -300,7 +300,7 @@ javascript:(function awTools() {
    * 常駐模式下，遊戲自己重新整理後小工具會自動重新放進框架，那時候不跳；只有使用者點書籤（外層留下 __awAsk）才跳 */
   let askNow = !inHost;
   try { if (inHost && window.top.__awAsk) { window.top.__awAsk = 0; askNow = true; } } catch (e) {}
-  if (askNow) uiAlert('本書簽有封鎖上傳排行榜\n開始單格技能模式請不要試著上榜\n作者有封鎖該ip遊玩的權力!');
+  if (askNow) uiAlert('本書簽有封鎖上傳排行榜\n開始單格技能模式請不要試著上榜\n作者有封鎖該ip遊玩的權力!', true);
 
   /* ===== 1. 背景運行 =====
    * 遊戲主迴圈靠 requestAnimationFrame 驅動，分頁在背景時瀏覽器不會呼叫它，
