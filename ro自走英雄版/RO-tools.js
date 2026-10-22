@@ -52,7 +52,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V12';
+  const VERSION = 'V13';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -302,6 +302,14 @@ javascript:(function awTools() {
   let askNow = !inHost;
   try { if (inHost && window.top.__awAsk) { window.top.__awAsk = 0; askNow = true; } } catch (e) {}
   if (askNow) uiAlert('本書簽有封鎖上傳排行榜\n開始單格技能模式請不要試著上榜\n作者有封鎖該ip遊玩的權力!', true);
+  /* 點書籤時，目前角色已被遊戲標記為存檔被修改過（S.zx，遊戲 v1.1.5 的存檔驗證）就再跳一次提醒（使用者 2026-10-23 要求）。
+   * 還在選角色畫面（S 還沒載入）的話，等角色載入後再檢查一次；最多等 10 分鐘 */
+  if (askNow) {
+    const zxCheck = () => { try { if (typeof S !== 'undefined' && S) { if (S.zx) uiAlert('此角色已被標註 無法進行雲端存檔', true); return true; } } catch (e) {} return false; };
+    if (!zxCheck()) {
+      const t0 = Date.now(), tm = setInterval(() => { if (zxCheck() || Date.now() - t0 > 600000) clearInterval(tm); }, 1000);
+    }
+  }
 
   /* ===== 1. 背景運行 =====
    * 遊戲主迴圈靠 requestAnimationFrame 驅動，分頁在背景時瀏覽器不會呼叫它，
@@ -2170,12 +2178,17 @@ javascript:(function awTools() {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
+  /* 備份、下載、還原前的警示（使用者 2026-10-23 要求）。
+   * 遊戲 v1.1.5 起存檔附驗證碼：書籤的還原是直接寫回存檔、沒有驗證碼，角色會被遊戲標記（S.zx）；
+   * v1.2.3 起綁定 Google 的雲端角色每次都從雲端載入、伺服器會檢查等級與 Zeny 的增加速度，書籤的備份還原對它沒有用，也可能被判定異常 */
+  const bkWarn = () => uiAlert('使用此功能請不要綁定帳號', true);
   /* 用一份備份文字還原存檔，成功的話頁面會重新整理 */
   /* stash：瀏覽器備份裡的倉庫文字；從檔案還原時改讀檔案裡的 awStash 欄位 */
   const restoreSave = async (text, when, stash) => {
     let o = null;
     try { o = JSON.parse(text); } catch (e) {}
     if (!o || !o.cls || !Array.isArray(o.gems) || !Array.isArray(o.bag)) { uiAlert('這不是有效的流浪仙境存檔。'); return; }
+    await bkWarn();
     if (o.awStash) { if (!stash && typeof o.awStash === 'object') stash = JSON.stringify(o.awStash); delete o.awStash; }
     if (!await uiConfirm('要還原成這份存檔嗎？\n\n角色：' + (o.name || '（未命名）') + '　LV' + o.lvl + (when ? '\n備份時間：' + when : '') +
       '\n\n目前的進度會被覆蓋（還原前會先自動備份一份），頁面會重新整理。')) return;
@@ -2262,8 +2275,8 @@ javascript:(function awTools() {
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const a = b.dataset.a, it = shown[+b.dataset.i];
       if (a === 'close') { close(); return; }
-      if (a === 'save') { saveNow(); if (await backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
-      if (a === 'dlNow') { saveNow(); bkDownload(bkFile(JSON.stringify(S), stashRaw()), S.name, S.lvl, Date.now()); return; }
+      if (a === 'save') { await bkWarn(); saveNow(); if (await backupNow('手動備份')) toast('已備份目前進度', 'lvl'); draw(); return; }
+      if (a === 'dlNow') { await bkWarn(); saveNow(); bkDownload(bkFile(JSON.stringify(S), stashRaw()), S.name, S.lvl, Date.now()); return; }
       if (a === 'xDel') { if (await uiConfirm('刪除這份臨時備份？')) { await idbDel('extra'); try { localStorage.removeItem(EXTRA_BAK); } catch (err) {} draw(); } return; }
       if (a === 'xRestore') { const x = await extraGet(); if (x) restoreSave(x, '臨時備份'); return; }
       if (!it) return;
@@ -2271,7 +2284,7 @@ javascript:(function awTools() {
       if (a === 'del') { if (await uiConfirm('刪除 ' + bkStamp(it.t) + ' 的備份？')) { await bkDel(it.t); draw(); } return; }
       const rec = await bkLoad(it.t);
       if (!rec || !rec.data) { uiAlert('這份備份讀不出來（可能已經被刪掉或損壞）。'); draw(); return; }
-      if (a === 'dl') { bkDownload(bkFile(rec.data, rec.stash), it.name, it.lvl, it.t); return; }
+      if (a === 'dl') { await bkWarn(); bkDownload(bkFile(rec.data, rec.stash), it.name, it.lvl, it.t); return; }
       if (a === 'restore') { restoreSave(rec.data, bkStamp(it.t), rec.stash); }
     });
     draw();
