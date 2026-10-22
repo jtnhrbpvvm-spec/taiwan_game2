@@ -66,7 +66,7 @@ const lines = src.split('\n');
 let pick = null;
 for (const name in D2_FONTS) {
 const f = D2_FONTS[name];
-for (const s of [looksShadow, 1 - looksShadow]) {
+for (const s of [looksShadow, 1 - looksShadow, 2]) {   // 大字型的陰影偏移 2px（例如營地提示 font24）
 const h = H - s;
 if (h < f.h || (h - f.h) % f.lh) continue;
 const k = (h - f.h) / f.lh + 1;
@@ -77,7 +77,8 @@ const score = (exact ? 4 : 0) + (wrapped ? 2 : 0) + (s === looksShadow ? 1 : 0);
 if (!pick || score > pick.score) pick = { f, s, k, score };
 }
 }
-if (!pick) pick = { f: { h: H, lh: Math.round(H * 1.25) }, s: looksShadow, k: lines.length };
+// 認不出字型：至少在原本的寬度內換行，不要整行超出畫面
+if (!pick) pick = { f: { h: H, lh: Math.round(H * 1.25) }, s: looksShadow, k: lines.length, guess: true };
 // 第一行英文實際有筆畫的高度（大字型的字框比字母高很多，中文要照這個高度縮小）
 let inkTop = -1, inkBottom = -1;
 for (let y = 0; y < Math.min(H, pick.f.h); y++) {
@@ -103,7 +104,7 @@ if (ragged) align = left ? 'left' : right ? 'right' : 'center';
 return {
 src, en: img, w: W, h: H, lang: 'en',
 size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align, ink,
-maxWidth: pick.k > lines.length ? W - pick.s : 0,
+maxWidth: pick.k > lines.length || pick.guess ? W - pick.s : 0,
 };
 }
 function d2zhWrap(ctx, text, maxWidth) {
@@ -2307,4 +2308,40 @@ for (const n of r.addedNodes) if (n.nodeType === 1 && (n.matches('#hoverbox, .d2
 window.addEventListener('d2-language-changed', schedule);
 }
 d2evoInstall();
+// ====== 說明框不要超出視窗 ======
+// 遊戲在說明框出現時，用當下的高度決定位置（框在圖示上方時是「底邊對齊」）；之後中文合併字詞、補上「進化：…」那一行，
+// 框變高就往上長，最上面的技能名稱被視窗切掉。框的大小或位置一變，就把它推回視窗裡。
+function d2fitInstall() {
+const MARGIN = 4;
+const own = new WeakMap();   // 每個框：遊戲自己設的位置（base）和這裡改過的值（mine）
+const fit = box => {
+if (box.classList.contains('hidden') || !box.style.top) return;
+const o = own.get(box) || {};
+if (box.style.top !== o.mine) o.base = parseFloat(box.style.top);   // 遊戲重新定位了
+own.set(box, o);
+const r = box.getBoundingClientRect();
+if (!r.height) return;
+// 照遊戲原本的位置算，框變矮時就回到原位
+const shift = parseFloat(box.style.top) - o.base, top = r.top - shift, bottom = r.bottom - shift;
+let dy = 0;
+if (top < MARGIN || r.height > innerHeight - MARGIN * 2) dy = MARGIN - top;   // 放不下時至少讓最上面的名稱看得到
+else if (bottom > innerHeight - MARGIN) dy = innerHeight - MARGIN - bottom;
+if (Math.abs(dy - shift) < 0.5) return;
+o.mine = `${o.base + dy}px`;
+box.style.top = o.mine;
+o.mine = box.style.top;   // 瀏覽器可能改寫數字格式
+};
+const watched = new WeakSet();
+const watch = () => {
+for (const box of document.querySelectorAll('#hoverbox, #tooltip')) {
+if (watched.has(box)) continue;
+watched.add(box);
+new ResizeObserver(() => fit(box)).observe(box);
+new MutationObserver(() => fit(box)).observe(box, { attributes: true, attributeFilter: ['style', 'class'] });
+}
+};
+watch();
+new MutationObserver(watch).observe(document.body, { childList: true });
+}
+d2fitInstall();
 })();
