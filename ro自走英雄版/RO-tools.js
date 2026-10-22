@@ -52,7 +52,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V13';
+  const VERSION = 'V14';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -303,9 +303,10 @@ javascript:(function awTools() {
   try { if (inHost && window.top.__awAsk) { window.top.__awAsk = 0; askNow = true; } } catch (e) {}
   if (askNow) uiAlert('本書簽有封鎖上傳排行榜\n開始單格技能模式請不要試著上榜\n作者有封鎖該ip遊玩的權力!', true);
   /* 點書籤時，目前角色已被遊戲標記為存檔被修改過（S.zx，遊戲 v1.1.5 的存檔驗證）就再跳一次提醒（使用者 2026-10-23 要求）。
+   * 遊戲只用這個標記擋線上排行上傳和聊天室（ro-v118 的 v118Bad），雲端存檔不檢查它（標記會跟著存檔一起上傳）。
    * 還在選角色畫面（S 還沒載入）的話，等角色載入後再檢查一次；最多等 10 分鐘 */
   if (askNow) {
-    const zxCheck = () => { try { if (typeof S !== 'undefined' && S) { if (S.zx) uiAlert('此角色已被標註 無法進行雲端存檔', true); return true; } } catch (e) {} return false; };
+    const zxCheck = () => { try { if (typeof S !== 'undefined' && S) { if (S.zx) uiAlert('此角色已被標註 無法上傳排行榜、無法在聊天室發言', true); return true; } } catch (e) {} return false; };
     if (!zxCheck()) {
       const t0 = Date.now(), tm = setInterval(() => { if (zxCheck() || Date.now() - t0 > 600000) clearInterval(tm); }, 1000);
     }
