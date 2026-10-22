@@ -735,6 +735,13 @@ text: {
 'Repairs # durability per second': '每秒修復 {0} 耐久度', 'Pick things up from #% farther away': '拾取範圍增加 {0}%', '(#/# Charges)': '（{0}/{1} 次充能）', '(+* from gear)': '（裝備 +{0}）',
 'to Barbarian Skill Levels': '野蠻人技能等級', 'to Necromancer Skill Levels': '死靈法師技能等級', 'to Paladin Skill Levels': '聖騎士技能等級', 'to Sorceress Skill Levels': '女巫技能等級',
 'to Enemy Cold Resistance': '敵人冰寒抗性', 'to Maximum Magic Damage': '最大魔法傷害', 'to Minimum Magic Damage': '最小魔法傷害', 'to Experience Gained': '獲得經驗值',
+// 物品屬性：最小／最大傷害、照亮範圍、最大抗性、敵人抗性（照易牙居的說法）
+'# to Light Radius': '{0} 照亮範圍', 'to Light Radius': '照亮範圍', 'to Minimum Damage': '最小傷害值', 'to Maximum Damage': '最大傷害值',
+'to Minimum Fire Damage': '最小火焰傷害', 'to Maximum Fire Damage': '最大火焰傷害', 'to Minimum Cold Damage': '最小冰寒傷害', 'to Maximum Cold Damage': '最大冰寒傷害',
+'to Minimum Lightning Damage': '最小閃電傷害', 'to Maximum Lightning Damage': '最大閃電傷害', 'to Minimum Poison Damage': '最小毒素傷害', 'to Maximum Poison Damage': '最大毒素傷害',
+'to Maximum Fire Resist': '最大火焰抗性', 'to Maximum Cold Resist': '最大冰寒抗性', 'to Maximum Lightning Resist': '最大閃電抗性', 'to Maximum Poison Resist': '最大毒素抗性',
+'to Enemy Fire Resistance': '敵人火焰抗性', 'to Enemy Lightning Resistance': '敵人閃電抗性', 'to Enemy Poison Resistance': '敵人毒素抗性',
+'Bone walls cage the # toughest monsters': '骨牆困住 {0} 隻最強的怪物',
 '+# to Bow and Crossbow Skills': '+{0} 弓和十字弓技能', '+# to Combat Skills': '+{0} 戰鬥技能', '+# to Javelin and Spear Skills': '+{0} 標槍和長矛技能',
 '+# to Passive and Magic Skills': '+{0} 被動和魔法技能', '+#% to Maximum Cold Resist': '+{0}% 最大冰寒抗性',
 // 死靈法師技能樹（照易牙居技能頁：召喚技能／毒素和白骨技能／詛咒技能）

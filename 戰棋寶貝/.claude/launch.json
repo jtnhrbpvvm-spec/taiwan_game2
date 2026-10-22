@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kt-offline",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\a2095\\Desktop\\爬蟲\\kanto-tactics-tool\\kt-crawl\\v34.1_B9K547_f\\_offline_server.py"],
+      "env": { "OFFLINE_NO_BROWSER": "1" },
+      "port": 8379
+    }
+  ]
+}

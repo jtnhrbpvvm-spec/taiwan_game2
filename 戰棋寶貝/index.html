@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>關東戰術 繁體中文書籤</title>
+<style>
+  body{margin:0;background:#141a33;color:#eef;font:16px/1.7 system-ui,"Microsoft JhengHei",sans-serif}
+  main{max-width:760px;margin:0 auto;padding:24px 16px 60px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:28px 0 8px;color:#ffd75e}
+  .card{background:#1f2747;border-radius:12px;padding:16px 18px;margin:12px 0}
+  button{font:inherit;font-weight:700;background:#ffd75e;color:#141a33;border:0;border-radius:10px;padding:10px 20px;cursor:pointer}
+  ol{padding-left:22px} li{margin:4px 0}
+  code{background:#0c1024;padding:1px 6px;border-radius:5px}
+  .muted{color:#aab}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#ffd75e;color:#141a33;padding:8px 18px;border-radius:10px;font-weight:700;opacity:0;transition:opacity .3s}
+  a{color:#8cf}
+</style>
+</head>
+<body>
+<main>
+  <h1>關東戰術 繁體中文書籤</h1>
+  <div class="muted">Kanto Tactics · <span id="ver">V1</span></div>
+
+  <div class="card">
+    遊戲本身有簡體中文，這個書籤會把畫面上的字即時換成<b>台灣正體中文</b>（含台灣慣用詞），
+    中文字型也換成 Noto Sans TC，繁體字不會缺字或字體混雜。<br>
+    遊戲網址：<a href="https://einoow.com/playables/kanto-tactics/" target="_blank" rel="noopener">einoow.com/playables/kanto-tactics/</a>
+  </div>
+
+  <h2>安裝（電腦 Chrome / Edge）</h2>
+  <div class="card">
+    <ol>
+      <li>按下面的按鈕複製書籤內容。</li>
+      <li>在書籤列按右鍵 →「新增網頁」，名稱隨意（例如「關東繁中」），<b>網址欄整段貼上</b>，儲存。</li>
+      <li>打開遊戲，等畫面出來後點這個書籤，上方出現「繁體中文已啟用」就成功了。</li>
+    </ol>
+    <button id="copy">複製書籤</button>
+    <p class="muted">遊戲網站不准從外部載入程式，所以書籤是整份程式直接放在網址欄裡；書籤更新時要重新複製一次。</p>
+  </div>
+
+  <h2>手機（Chrome）</h2>
+  <div class="card">
+    <ol>
+      <li>用上面的按鈕複製，隨便把一個網頁加入書籤，再編輯它，把網址整段換成貼上的內容。</li>
+      <li>打開遊戲後，在網址列打書籤名稱，點下拉清單裡的那個書籤（直接從書籤清單點不會執行）。</li>
+    </ol>
+  </div>
+
+  <h2>功能</h2>
+  <div class="card">
+    <ul>
+      <li>自動把遊戲語言切到中文，再把簡體換成繁體（介面、寶可夢、招式、特性、提示、更新紀錄）</li>
+      <li>canvas 畫的字、跳出的對話框也會換</li>
+      <li>重新整理頁面後要再點一次書籤</li>
+    </ul>
+  </div>
+</main>
+<div id="toast">已複製</div>
+<script>
+  function toast(t){var e=document.getElementById('toast');e.textContent=t;e.style.opacity=1;setTimeout(function(){e.style.opacity=0},1600)}
+  document.getElementById('copy').onclick=function(){
+    fetch('kt-zh.js?v='+Date.now()).then(function(r){return r.text()}).then(function(code){
+      code=code.replace(/\r?\n\s*/g,' ');
+      return navigator.clipboard.writeText(code);
+    }).then(function(){toast('已複製，貼到書籤網址欄')}).catch(function(){toast('複製失敗，請重試')});
+  };
+  fetch('kt-zh.js?v='+Date.now()).then(function(r){return r.text()}).then(function(t){var m=t.match(/VERSION = '([^']+)'/);if(m)document.getElementById('ver').textContent=m[1]});
+</script>
+</body>
+</html>
