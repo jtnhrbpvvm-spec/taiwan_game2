@@ -20,11 +20,13 @@ javascript:(function awTools() {
    *  15. 省資源：背景時不畫畫面；節能模式（戰鬥畫面左下角的開關，單格模式開著時也會啟用）降低畫面更新次數、不產生粒子和傷害數字
    *  16. 卡片進度：地圖分頁的按鈕，列出每張地圖怪物卡片的階數、擊殺數和還差多少
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
-   *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效
-   *  18. 不上傳雲端存檔：小工具設定裡的選項（預設關閉）
+   *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效；
+   *      用小工具時一律不上傳排行榜（開啟書籤時會先跳出提醒）
+   *  18. 不上傳雲端存檔：用小工具時一律不上傳 Google 雲端存檔（遊戲會顯示沒登入 Google）
    *  19. 商人選變異：在商人買技能寶石時跳出視窗，選要原本的形狀或哪一種變異形狀（能力相同）；
    *      商人的「主動技能」也賣自己職業的傳說技能寶石、「輔助技能」也賣穿梭寶石（價格固定，不能自己調整）
-   *  20. 指定萃取、指定灌注：煉金的萃取／灌注視窗裡，每條詞綴旁有按鈕，指定萃取這條、或指定用哪顆符文取代這條
+   *  20. 指定萃取、指定灌注：煉金的萃取／灌注視窗裡，每條詞綴旁有按鈕，指定萃取這條、或指定用哪顆符文取代這條；
+   *      萃取視窗的獨特效果旁也有按鈕，指定取出獨特效果（萃取石 Lv3 以上，神話裝備不行）
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -39,7 +41,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V37';
+  const VERSION = 'V41';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -94,7 +96,6 @@ javascript:(function awTools() {
     legShop: true,          /* 商人的「主動技能」也賣自己職業的傳說技能寶石（價格固定，見第 19 項的 LEG_PRICE） */
     sxShop: true,           /* 商人的「輔助技能」也賣穿梭寶石（其他職業的輔助寶石；價格固定，見第 19 項的 SX_PRICE） */
     afPick: true,           /* 萃取、灌注視窗的每條詞綴旁加上按鈕：指定萃取這條、指定用哪顆符文取代這條 */
-    noCloud: false,         /* 不上傳 Google 雲端存檔（開啟期間遊戲會顯示沒登入 Google，關掉後自動恢復） */
     host: true              /* 常駐模式：遊戲重新整理（更新、還原備份）後自動重新啟用小工具 */
   };
   /* 上面是預設值。在遊戲裡的「小工具設定」（第 17 項）改過的項目存在瀏覽器的 awtools.cfg，
@@ -130,6 +131,8 @@ javascript:(function awTools() {
         s.remove();
       } catch (e) {}
     };
+    /* 這裡一定是使用者自己點了書籤，標記一下，框架裡的小工具看到才跳排行榜提醒（遊戲自己重新載入時不跳） */
+    window.__awWarn = 1;
     /* 已經是常駐模式：再點一次書籤就轉給框架裡的那一份處理（它會提示已經啟用） */
     if (window.__awHost) { runIn(window.__awHost.contentWindow); return; }
     if (!window.__awTools) {
@@ -249,6 +252,16 @@ javascript:(function awTools() {
   /* 所有功能只在第一次點書籤時安裝 */
   const first = !window.__awTools;
   window.__awTools = 1;
+
+  /* 使用者點書籤時先跳出提醒（和作者講好的內容；單格模式開啟時也會再提醒一次）。
+   * 常駐模式下，遊戲自己重新載入（更新、還原備份、自動刷神話每場讀檔）時小工具也會重新放進框架，那種時候不跳：
+   * 只有外層頁面標了 __awWarn（第 0 項，點書籤時才會標）才跳，跳完就清掉。沒開常駐模式時，點一次書籤跳一次 */
+  {
+    let warn = false;
+    if (inHost) { try { warn = !!window.top.__awWarn; window.top.__awWarn = 0; } catch (e) {} }
+    else warn = first;
+    if (warn) uiAlert('使用單格技能或是其他功能，請不要試著上排行榜，會被封鎖 IP。\n\n本書籤內建不上傳排行榜，請讓正常遊玩的玩家有良好的競爭環境。');
+  }
 
   /* ===== 1. 背景運行 =====
    * 遊戲主迴圈靠 requestAnimationFrame 驅動，分頁在背景時瀏覽器不會呼叫它，
@@ -2305,8 +2318,16 @@ javascript:(function awTools() {
     try { Object.defineProperty(upd, 'tried', { get: () => true, set: () => {}, configurable: true }); } catch (e) {}
     window.updNow = () => {};
   }
-  /* ===== 10. 單格模式 =====
-   * 技能分頁標題旁的開關。開啟後：
+  /* ===== 10. 單格模式、不上傳排行榜 =====
+   * 排行榜：小工具裝上之後一律不上傳（和作者講好：用小工具的玩家不上排行榜，上了會被封鎖 IP）。
+   * 遊戲每次存檔和每次離開無限之塔都會呼叫 lbSend()。它在下面三個條件都成立時才「不」上傳：
+   * 最高層數沒超過 S.lb.sent（已上傳的層數）、角色名稱等於 S.lb.sn、S.lb.ss 是 1（伺服器已經收過構築快照）。
+   * 遊戲 v0.2.578 起上傳時會附上構築快照（裝備、技能拼圖位置、天賦，v0.2.722 再加上角色面板數值）。
+   * 這裡除了直接擋掉，還把這三個欄位補成「已經傳過了」，這樣用小工具時打出來的層數和構築
+   * 之後沒點書籤時也不會被上傳，要等不用小工具打到更高層才會再上傳。
+   * 只補 ss 而不補的話，舊存檔沒有 ss，沒點書籤時遊戲就會把層數連同快照傳上去。
+   *
+   * 單格模式：技能分頁標題旁的開關。開啟後：
    *   - 每顆技能寶石（包含變異寶石）在技能盤上只佔一格
    *   - 輔助寶石不用相鄰，放在盤上就對所有符合條件的主動技能生效
    * 做法：遊戲用 gemShape() 取寶石形狀、用 linkRule() 決定連結方式（遊戲本來就有「全部連結」的 all 規則），
@@ -2347,6 +2368,20 @@ javascript:(function awTools() {
     if (typeof realStSend === 'function') window.stSend = () => { if (window.__awOne || window.__awNoStat) { stClear(); return; } return realStSend(); };
   }
 
+  const lbMask = () => {
+    try {
+      if (!S || !S.lb || !S.tw) return;
+      if (S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
+      S.lb.sn = S.name;
+      S.lb.sb = S.tal.asc || '';
+      S.lb.ss = 1;
+    } catch (e) {}
+  };
+  if (first) {
+    if (typeof window.lbSend === 'function') window.lbSend = () => { lbMask(); };
+    lbMask();
+  }
+
   const ONE_KEY = 'awtools.onecell';
   let oneCellToggle = null;
   if (first && CFG.oneCell) {
@@ -2359,26 +2394,6 @@ javascript:(function awTools() {
     ]);
     const realLink = window.linkRule;
     if (typeof realLink === 'function') window.linkRule = () => window.__awOne ? 'all' : realLink();
-    /* 單格模式開啟時不上傳排行榜。
-     * 遊戲每次存檔和每次離開無限之塔都會呼叫 lbSend()。它在下面三個條件都成立時才「不」上傳：
-     * 最高層數沒超過 S.lb.sent（已上傳的層數）、角色名稱等於 S.lb.sn、S.lb.ss 是 1（伺服器已經收過構築快照）。
-     * 遊戲 v0.2.578 起上傳時會附上構築快照（裝備、技能拼圖位置、天賦，v0.2.722 再加上角色面板數值），
-     * 單格模式的寶石會疊在一起，傳上去一看就知道。
-     * 這裡除了直接擋掉，還把這三個欄位補成「已經傳過了」，這樣單格模式打出來的層數和構築
-     * 之後也不會被上傳（包含關掉開關、或沒點書籤的時候），要等正常玩法打到更高層才會再上傳。
-     * 只補 ss 而不補的話，舊存檔沒有 ss，一關掉開關遊戲就會把單格模式的層數連同快照傳上去。 */
-    const realLbSend = window.lbSend;
-    const lbMask = () => {
-      try {
-        if (!S || !S.lb || !S.tw) return;
-        if (S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
-        S.lb.sn = S.name;
-        S.lb.sb = S.tal.asc || '';
-        S.lb.ss = 1;
-      } catch (e) {}
-    };
-    if (typeof realLbSend === 'function') window.lbSend = () => { if (window.__awOne) { lbMask(); return; } return realLbSend(); };
-    /* 匿名遊玩統計的攔截在上面（和自動刷神話共用） */
     setInterval(() => { if (window.__awOne) stMark(); }, 60000);
     /* 寶石圖示有快取，切換後要清掉才會重畫 */
     const redraw = () => {
@@ -2397,7 +2412,7 @@ javascript:(function awTools() {
     oneCellToggle = async () => {
       if (!window.__awOne) {
         if (!await uiConfirm('【單格模式】\n\n開啟後每顆技能寶石只佔一格，輔助寶石不用相鄰就會生效。\n\n' +
-          '這是直接修改遊戲規則，傷害會遠高於正常玩法，修改【可能】被作者封鎖。開啟期間不會上傳排行榜和匿名遊玩統計，但雲端存檔仍看得到異常的數值。\n\n' +
+          '這是直接修改遊戲規則，傷害會遠高於正常玩法。小工具一律不上傳排行榜，請不要自己想辦法上排行榜（會被封鎖 IP）。\n\n' +
           '可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n' +
           '另外：沒有點書籤時遊戲會照原本的形狀計算；之後關閉這個開關，放不下的寶石會退回寶石欄。\n\n確定要開啟嗎？')) return;
         window.__awOne = true;
@@ -2434,7 +2449,7 @@ javascript:(function awTools() {
     if (!miss.length) { toast('神器都已經有了', 'lvl'); return; }
     const names = miss.map(k => ARTS[k].n).join('、');
     if (!await uiConfirm('【解鎖三神器】\n\n會把還沒有的神器直接加進存檔（1 級）：\n' + names + '\n\n' +
-      '這是直接修改存檔，修改【可能】被作者封鎖（雲端存檔看得到）。\n可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n確定要解鎖嗎？')) return;
+      '這是直接修改存檔，修改【可能】被作者封鎖（用小工具時不上傳雲端存檔，但之後不用小工具、重新綁定 Google 時就會傳上去）。\n可能導致遊戲存檔或遊戲出問題，請備份存檔後再試。\n\n確定要解鎖嗎？')) return;
     if (CFG.autoBackup) { try { saveNow(); backupNow('解鎖神器前自動備份'); } catch (e) {} }
     if (!S.art) S.art = { on: '', has: {} };
     if (!S.art.has) S.art.has = {};
@@ -2550,7 +2565,7 @@ javascript:(function awTools() {
       '掉出神話獨特時才會保留進度（用掉 ' + MONARCH.mk + ' 個印記），然後繼續刷到達標或印記不夠為止。\n\n' +
       '機率：每次打贏 0.1% 掉神話獨特，共 ' + keys + ' 種（其中 1 種是石板），所以平均要打約 1000 場才有一件，指定石板約 ' + (1000 * keys) + ' 場。\n\n' +
       '注意：\n・讀回存檔時，這一場拿到的其他東西（神話裝備、奇蹟石、材料）都會消失\n・進行中請不要自己操作角色或切換地圖\n' +
-      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計和排行榜，結束後自動恢復；雲端存檔照常上傳\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份', [
+      '・要開著常駐模式，重新載入後才會自動接著跑\n・進行中不會記錄或上傳遊玩統計，結束後自動恢復（排行榜和雲端存檔用小工具時一律不上傳）\n・這是反覆讀檔，修改【可能】被作者封鎖；可能導致存檔出問題，開始前會先自動備份一份', [
       { label: '新拿到的「神話石板」至少幾塊才算達標（不指定石板就填 0）', value: '1', type: 'number' },
       { label: '新拿到的「神話獨特」（裝備和石板合計）至少幾件才算達標', value: '2', type: 'number' },
       { label: '每打幾場才讀一次檔（1 = 每場都讀，最省印記；數字越大越省時間，但掉出神話時那一批打掉的印記不會回來）\n你現在有 ' + S.tw.mk + ' 個印記，最多可以填 ' + maxBatch, value: String(Math.min(CFG.monLoopBatch, maxBatch)), type: 'number' }
@@ -2592,23 +2607,13 @@ javascript:(function awTools() {
      *   - 匿名遊玩統計：第 10 項包過的 stEv()／stSend() 看到 __awNoStat 就不記錄、不送出。
      *     但每次重新載入時，遊戲會在小工具回來之前先記一筆「開始遊玩」，所以這裡每一輪都把待送佇列清空，
      *     結束的那一刻再清一次，才恢復正常記錄。只動 autowanderer.stq，不碰存檔。
-     *   - 排行榜：進行中 lbSend() 直接不送。
-     *   - Google 雲端存檔照常上傳。讀回起點時把存檔時間改成現在，遊戲重新載入後不會被雲端那份蓋回去；
-     *     雲端的版本基準（GC.base）不在存檔裡，讀檔不會讓遊戲跳出「雲端有另一份存檔」。 */
+     *   - 排行榜、Google 雲端存檔：小工具裝上之後本來就一律不上傳（第 10、18 項）。 */
     const statWipe = stClear;
     /* 小工具一裝上就馬上判斷，不等第一次計時器（計時器 0.7 秒才跑第一次，遊戲啟動時記的事件會比它早） */
     {
       const L0 = loopGet();
       window.__awNoStat = !!(L0 && L0.on);
       if (window.__awNoStat) statWipe();
-    }
-    const loopLbSend = window.lbSend;
-    if (typeof loopLbSend === 'function') {
-      window.lbSend = function () {
-        const L = loopGet();
-        if (window.__awNoStat || (L && L.on)) return;
-        return loopLbSend.apply(this, arguments);
-      };
     }
     let phase = 'start', at = 0, startTry = 0, wasOn = false;
     const stop = msg => { loopSet(null); statWipe(); window.__awNoStat = false; wasOn = false; drawBar(null); if (msg) { try { toast(msg, 'lvl', 1); } catch (e) {} } };
@@ -2891,6 +2896,19 @@ javascript:(function awTools() {
       xtr: patchOne('xtrOne', /pickW\((\w+)\.af,(\w+)=>AFFIX\[\2\.a\]\.w\)/, '(window.__awXtrAf!=null&&$1.af[window.__awXtrAf]||pickW($1.af,$2=>AFFIX[$2.a].w))'),
       inf: patchOne('doInfuse', /(\w+)=infLines\((\w+),(\w+),!!\2\.mir\)/, '$1=(window.__awInfLine!=null&&window.__awInfLine<$2.af.length?[window.__awInfLine]:infLines($2,$3,!!$2.mir))')
     };
+    /* 指定萃取獨特效果：xtrOne 裡「改取出獨特效果」那次擲骰（XTR.uq，Lv3、Lv4 才有 5%）在有指定 __awXtrUq 時必定成立，
+     * 有好幾個獨特效果時（本身的、灌注進去的）取出指定的那個。成功率那次擲骰照舊。
+     * 神話裝備遊戲本身就不能取出獨特效果（!t.my），這裡不動那個條件。兩段都改到才算成功 */
+    {
+      const f = window.xtrOne;
+      const src = typeof f === 'function' ? Function.prototype.toString.call(f) : '';
+      const out = src
+        .replace(/100\*RAND\(\)<XTR\.uq\[(\w+)\]/, '(window.__awXtrUq!=null||100*RAND()<XTR.uq[$1])')
+        .replace(/uq:(\w+)\.length>1\?\1\[ri\(0,\1\.length-1\)\]:\1\[0\]/, 'uq:(window.__awXtrUq!=null&&$1.includes(window.__awXtrUq)?window.__awXtrUq:$1.length>1?$1[ri(0,$1.length-1)]:$1[0])');
+      const n = (out.match(/__awXtrUq/g) || []).length;
+      window.__awAfPatch.xtrUq = false;
+      if (n >= 3) { try { window.xtrOne = (0, eval)('(' + out + ')'); window.__awAfPatch.xtrUq = true; } catch (e) {} }
+    }
     const afText = a => { try { return AFFIX[a.a].f(a.v); } catch (e) { return a.a; } };
     const pct = v => (Math.round(v * 10) / 10) + '%';
     /* 目前萃取／灌注視窗裡的那件裝備 */
@@ -2990,6 +3008,73 @@ javascript:(function awTools() {
       draw();
     };
 
+    /* 指定萃取獨特效果（第 k 個，順序同 uqKeys：本身的、灌注進去的…）。
+     * 照遊戲規則只有萃取石 Lv3、Lv4 能取出獨特效果（遊戲是 5% 機率，這裡指定就必定取出），神話裝備不行 */
+    const openXtrUqPick = k => {
+      const t = axItem();
+      if (!t || t.my) return;
+      const key = uqKeys(t)[k];
+      if (!key) return;
+      const cost = ALCH_ASH.x(t.ilvl);
+      const stones = ['x1', 'x2', 'x3', 'x4'].filter(s => XTR.uq[MATS[s].l] > 0);
+      let st = stones.find(s => S.mat[s] > 0 && s === ui.alchOpt.x) || stones.slice().reverse().find(s => S.mat[s] > 0) || null;
+      let prot = ui.alchOpt.p && S.mat[ui.alchOpt.p] > 0 ? ui.alchOpt.p : '';
+      let txt = key;
+      try { txt = UNIQUE[key].n + '：' + uqText(key, t.cm || 1); } catch (e) {}
+      const { box, close } = awSheet('awXtrPick', 520);
+      const draw = () => {
+        const ok = st ? XTR.ok[MATS[st].l] || 0 : 0;
+        const runesFull = S.runes.length >= Math.max(1e4, (CFG.noLimit ? CFG.itemMax : 0));
+        box.innerHTML =
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">指定萃取獨特效果</b><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
+          '<div style="background:#1a1410;padding:6px 8px;border-radius:4px">' + escH(itemName(t)) + '<br><b style="color:#ffb070">獨特　' + escH(txt) + '</b></div>' +
+          '<div style="margin:8px 0 2px;color:#ffd84a">萃取石（遊戲規定 Lv3 以上才能取出獨特效果）</div>' +
+          stones.map(s => {
+            const l = MATS[s].l, has = S.mat[s] || 0;
+            return '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (st === s ? '#3a3020' : '#1a1410') + ';cursor:' + (has ? 'pointer' : 'not-allowed') + ';opacity:' + (has ? 1 : 0.45) + '">' +
+              '<input type="radio" name="awxs" data-a="st" data-k="' + s + '" ' + (st === s ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+              '<b>Lv' + l + '</b><span style="flex:1">成功率 ' + XTR.ok[l] + '%</span><span>X' + has + '</span></label>';
+          }).join('') +
+          '<div style="margin:8px 0 2px;color:#ffd84a">保護石（失敗或萃取後保留裝備）</div>' +
+          [['', '不用', '', 1], ['p1', MATS.p1.n, '保留 ' + PROT_KEEP.p1 + '%', S.mat.p1 || 0], ['p2', MATS.p2.n, '保留 ' + PROT_KEEP.p2 + '%', S.mat.p2 || 0]].map(([p, n, d, has]) =>
+            '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (prot === p ? '#3a3020' : '#1a1410') + ';opacity:' + (has ? 1 : 0.45) + '">' +
+              '<input type="radio" name="awxp" data-a="pr" data-k="' + p + '" ' + (prot === p ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+              '<span style="flex:1">' + n + (d ? '・' + d : '') + '</span>' + (p ? '<span>X' + has + '</span>' : '') + '</label>').join('') +
+          (st ? '<div style="background:#1a1410;padding:6px 8px;border-radius:4px;margin-top:8px;font-size:12px;line-height:1.7">' +
+            '取出這個獨特效果：<b style="color:#ffb070">' + pct(ok) + '</b><br>' +
+            (ok < 100 ? '失敗（裝備消失、沒有符文）：<b style="color:#ff5a6a">' + pct(100 - ok) + '</b><br>' : '') +
+            (prot ? '不論成功失敗，' + PROT_KEEP[prot] + '% 機率保留裝備' : '萃取後裝備會消失') +
+          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有 Lv3 以上的萃取石，可到「合成」製作。</div>') +
+          (t.mir ? '<div style="color:#e8f0ff;font-size:12px;margin-top:4px">這件裝備有奇蹟狀態，這次萃取會用掉。</div>' : '') +
+          (runesFull ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">符文石已滿，不能萃取。</div>' : '') +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span>消耗 ' + fmt(cost) + ' 灰燼（你有 ' + fmt(S.ash) + '）</span><span style="flex:1"></span>' +
+            '<button data-a="go" style="' + AW_GO + '" ' + (st && S.ash >= cost && !runesFull && !t.lk ? '' : 'disabled') + '>萃取這個</button></div>' +
+          (t.lk ? '<div style="color:#ff5a6a;font-size:12px">裝備已鎖定，請先解鎖。</div>' : '') +
+          '<div style="color:#a89a84;font-size:12px;margin-top:6px">指定取出獨特效果是小工具改變遊戲的隨機規則（遊戲原本只有 5%），修改【可能】被作者封鎖。</div>';
+      };
+      box.addEventListener('change', e => {
+        const r = e.target;
+        if (r.dataset.a === 'st') { st = r.dataset.k; draw(); }
+        if (r.dataset.a === 'pr') { prot = r.dataset.k; draw(); }
+      });
+      box.addEventListener('click', e => {
+        const b = e.target.closest('button[data-a]');
+        if (!b) return;
+        if (b.dataset.a === 'close') { close(); return; }
+        if (b.dataset.a !== 'go') return;
+        if (axItem() !== t || uqKeys(t)[k] !== key) { uiAlert('裝備已經變了，請重新開啟。'); close(); return; }
+        ui.alchOpt.x = st;
+        ui.alchOpt.p = prot || 0;
+        ui.mirPick = false;
+        const before = ui.alchRes;
+        window.__awXtrUq = key;
+        try { doAlch(); } catch (err) {} finally { window.__awXtrUq = null; }
+        close();
+        showGameResult(before);
+      });
+      draw();
+    };
+
     const openInfPick = j => {
       const t = axItem();
       if (!t || !t.af[j]) return;
@@ -3060,7 +3145,8 @@ javascript:(function awTools() {
       draw();
     };
 
-    /* 在萃取、灌注視窗的詞綴列旁加按鈕。詞綴列是 #sheet.axs 裡的 .affix，前面幾列依序對應裝備的 af（後面的獨特效果列不加） */
+    /* 在萃取、灌注視窗的詞綴列旁加按鈕。詞綴列是 #sheet.axs 裡的 .affix，前面幾列依序對應裝備的 af；
+     * 萃取視窗後面標著「獨特」的列依序對應 uqKeys()，加「萃取這個」（神話裝備不加） */
     const addAfBtns = () => {
       const sheet = document.querySelector('#sheet.axs');
       if (!sheet || sheet.querySelector('.awAfBtn') || document.querySelector('#awXtrPick,#awInfPick')) return;
@@ -3071,36 +3157,44 @@ javascript:(function awTools() {
       if (!t || !t.af || !t.af.length) return;
       if (md === 'x' ? !canAlch(t) : !canInfuse(t)) return;
       if (!window.__awAfPatch || !window.__awAfPatch[md === 'x' ? 'xtr' : 'inf']) return;
-      const rows = [...sheet.querySelectorAll('.affix')].filter(r => !r.querySelector('.tag') || !/獨特/.test(r.querySelector('.tag').textContent));
-      rows.slice(0, t.af.length).forEach((row, j) => {
+      const all = [...sheet.querySelectorAll('.affix')];
+      const isUq = r => r.querySelector('.tag') && /獨特/.test(r.querySelector('.tag').textContent);
+      const addBtn = (row, label, title, fn) => {
         const b = document.createElement('button');
         b.className = 'awAfBtn';
-        b.textContent = md === 'x' ? '萃取這條' : '灌注這條';
-        b.title = md === 'x' ? '指定萃取這一條詞綴，可選萃取石並看升階機率' : '指定用哪一顆符文石取代這一條詞綴';
+        b.textContent = label;
+        b.title = title;
         b.style.cssText = 'margin-left:6px;padding:0 6px;font-size:11px;line-height:18px;cursor:pointer;background:#ffd84a;color:#2a2118;border:1px solid #000;border-radius:3px;flex:none;white-space:nowrap';
-        b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); if (md === 'x') openXtrPick(j); else openInfPick(j); }, true);
+        b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); fn(); }, true);
         row.appendChild(b);
+      };
+      all.filter(r => !isUq(r)).slice(0, t.af.length).forEach((row, j) => {
+        if (md === 'x') addBtn(row, '萃取這條', '指定萃取這一條詞綴，可選萃取石並看升階機率', () => openXtrPick(j));
+        else addBtn(row, '灌注這條', '指定用哪一顆符文石取代這一條詞綴', () => openInfPick(j));
       });
+      if (md === 'x' && !t.my && window.__awAfPatch.xtrUq) {
+        all.filter(isUq).slice(0, uqKeys(t).length).forEach((row, k) =>
+          addBtn(row, '萃取這個', '指定取出這個獨特效果（萃取石 Lv3 以上）', () => openXtrUqPick(k)));
+      }
     };
     setInterval(() => { try { addAfBtns(); } catch (e) {} }, CFG.btnRefreshMs);
   }
 
   /* ===== 18. 不上傳雲端存檔 =====
-   * 小工具設定開了「不上傳雲端存檔」（CFG.noCloud）時，不把存檔傳到 Google 雲端存檔。
-   * 單格模式、自動刷神話都不擋雲端，只擋排行榜（和統計）。
+   * 小工具裝上之後一律不把存檔傳到 Google 雲端存檔（玩家回報作者會查上傳的存檔並封鎖）。
    * 光把 gcUpload() 包起來不夠：遊戲每次開網頁、重新載入一啟動就存一次檔，
    * 存檔時發現「這次開網頁還沒上傳過」就馬上上傳，這時小工具常常還沒回來（實測離線版晚了約 0.2 秒）。
-   * 所以要擋的期間，把遊戲記在 autowanderer.cloud 的 Google 登入憑證先收起來（放到 awtools.gctok），
-   * 遊戲重新載入時讀不到憑證，就當成沒登入，不會上傳、也不會去問雲端。不用擋了再放回去。
-   * 中途關掉網頁的話，下次點書籤時（不用擋）也會自動放回去。
-   * 擋的期間在遊戲裡重新登入 Google 也沒關係：計時器會再把新的憑證收起來。 */
+   * 所以把遊戲記在 autowanderer.cloud 的 Google 登入憑證收起來（放到 awtools.gctok），
+   * 遊戲重新載入時讀不到憑證，就當成沒登入，不會上傳、也不會去問雲端。
+   * 在遊戲裡重新登入 Google 也沒關係：計時器會再把新的憑證收起來。
+   * 以前「不上傳雲端存檔」是設定裡的選項，關掉時會把憑證放回去；現在不再放回，要用雲端得自己重新綁定 Google。 */
   const GC_STASH = 'awtools.gctok', GC_NAG_LS = 'autowanderer.gcNag';
   const gcStash = () => {
     try {
       if (typeof GC === 'undefined' || !GC.tok) return;
       const o = { tok: GC.tok, acc: GC.acc };
-      /* 遊戲看到沒登入，可能會跳一次「重新綁定 Google」的提醒，先標成看過，放回時再拿掉
-       * （擋的期間重新登入、又收一次憑證時，沿用上一次的標記） */
+      /* 遊戲看到沒登入，可能會跳一次「重新綁定 Google」的提醒，先標成看過
+       * （重新登入、又收一次憑證時，沿用上一次的標記） */
       let old = null;
       try { old = JSON.parse(localStorage.getItem(GC_STASH)); } catch (e) {}
       if (old && old.nag) o.nag = 1;
@@ -3110,30 +3204,14 @@ javascript:(function awTools() {
       gcPut();
     } catch (e) {}
   };
-  const gcUnstash = () => {
-    try {
-      const raw = localStorage.getItem(GC_STASH);
-      if (!raw || typeof GC === 'undefined') return;
-      const o = JSON.parse(raw) || {};
-      /* 使用者中途自己重新登入過的話，留著新的憑證 */
-      if (o.tok && !GC.tok) { GC.tok = o.tok; GC.acc = o.acc || String(o.tok).split('.')[0]; gcPut(); }
-      if (o.nag) localStorage.removeItem(GC_NAG_LS);
-      localStorage.removeItem(GC_STASH);
-    } catch (e) {}
-  };
-  const cloudOff = () => CFG.noCloud;
   if (first) {
     /* 小工具一裝上就馬上處理，不等計時器 */
-    if (cloudOff()) gcStash(); else gcUnstash();
-    const realGcUpload = window.gcUpload;
-    if (typeof realGcUpload === 'function') {
-      window.gcUpload = function () { if (cloudOff()) return Promise.resolve(false); return realGcUpload.apply(this, arguments); };
-    }
-    /* 被遊戲鎖住的分頁（TAB.gone，例如另一個分頁開了遊戲）不動憑證：
-     * 那邊的設定和進度可能是舊的，實測會把正在玩的分頁收起來的憑證又放回去 */
+    gcStash();
+    if (typeof window.gcUpload === 'function') window.gcUpload = () => Promise.resolve(false);
+    /* 被遊戲鎖住的分頁（TAB.gone，例如另一個分頁開了遊戲）不動憑證 */
     every(() => {
       try { if (typeof TAB !== 'undefined' && TAB.gone) return; } catch (e) {}
-      if (cloudOff()) gcStash(); else gcUnstash();
+      gcStash();
     }, 700);
   }
 
@@ -3319,8 +3397,7 @@ javascript:(function awTools() {
       ['host', '常駐模式', '遊戲重新載入後小工具自動回來。關掉的話，每次重新載入都要再點一次書籤'],
       ['keepAlive', '背景運行', '分頁在背景或被蓋住時遊戲照常跑，不會變成離線收益'],
       ['bgGrabMs', '背景時每幾毫秒收一次掉落物', '0 = 不收，等回到畫面才撿'],
-      ['noUpdate', '禁止遊戲自動更新', '有新版時不會自己重新整理，要更新請用遊戲選單裡的更新按鈕'],
-      ['noCloud', '不上傳雲端存檔', '開啟期間遊戲會顯示沒登入 Google、不會上傳也不會讀雲端存檔；關掉後自動恢復登入。']
+      ['noUpdate', '禁止遊戲自動更新', '有新版時不會自己重新整理，要更新請用遊戲選單裡的更新按鈕']
     ]],
     ['畫面顯示', [
       ['bossBar', 'BOSS 血條', '遊戲本身已有血條（只有紅條和倒數）；打開後在畫面最上方另外顯示 BOSS 名稱、生命數字和百分比'],
@@ -3431,9 +3508,6 @@ javascript:(function awTools() {
         }
         if (diff.host === false && !await uiConfirm('你關掉了常駐模式。\n\n關掉之後，遊戲每次重新載入（包含等一下這一次）小工具都會消失，要再點一次書籤；自動刷神話和置頂視窗也會不能用。\n\n確定要關掉嗎？')) return;
         try { localStorage.setItem(CFG_KEY, JSON.stringify(diff)); } catch (err) { uiAlert('瀏覽器的儲存空間不夠，設定沒有存成功。'); return; }
-        /* 「不上傳雲端存檔」馬上生效，不等重新載入：不然重新載入時遊戲一啟動就會先傳一次 */
-        CFG.noCloud = diff.noCloud === true;
-        if (cloudOff()) gcStash(); else gcUnstash();
         reloadAsk();
       }
     });
