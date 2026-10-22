@@ -51,7 +51,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V10';
+  const VERSION = 'V11';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2540,14 +2540,31 @@ javascript:(function awTools() {
   if (first && CFG.oneCell) {
     window.__awOne = false;
     window.__awShape = g => window.__awOne ? [[0, 0]] : (g.sh || SKILLS[g.id].shape);
+    /* 合成（gfOpen）、分解（gsOpen）、倉庫（m_stash）的清單也會呼叫 gemShape()，但只用來寫「幾格」和照格數排序，
+     * 這些是盤面以外的地方，照使用者要求顯示原本的形狀，所以改完再換回原本的 */
+    const keepUi = {};
+    for (const k of ['gfOpen', 'gsOpen', 'm_stash']) { try { if (typeof ui[k] === 'function') keepUi[k] = ui[k]; } catch (e) {} }
     window.__awOnePatched = patchAll([
       [/\bgemShape\(/g, '__awShape('],
       /* gemArt() 畫寶石圖示時直接讀形狀，也要跟著變成一格 */
       [/\((\w+)\s*\|\|\s*(\w+)\.shape\)\.map/g, '(window.__awOne?[[0,0]]:($1||$2.shape)).map']
-    ]);
-    /* 流浪仙境自己重寫了 gemArt()（上面的改寫碰不到），它的第 4 個參數就是形狀，直接傳一格進去 */
+    ]).filter(n => !(n.slice(0, 3) === 'ui.' && keepUi[n.slice(3)]));
+    for (const k of Object.keys(keepUi)) ui[k] = keepUi[k];
+    /* 流浪仙境自己重寫了 gemArt()（上面的改寫碰不到），它的第 4 個參數就是形狀。
+     * 只有畫在技能盤上的寶石改成一格（使用者要求：商店、未放置的寶石、合成、倉庫照樣顯示原本的形狀，方便看是哪一顆）：
+     * 盤上的寶石圖是 gemOverlay() 畫的（配置模擬的盤面也是），拖曳中跟著游標的那顆是 dragPaint() 畫的，
+     * 這兩個函式執行期間才傳一格進去。 */
+    let boardArt = 0;
+    for (const name of ['gemOverlay', 'dragPaint']) {
+      const real = window[name];
+      if (typeof real !== 'function') continue;
+      window[name] = function () {
+        boardArt++;
+        try { return real.apply(this, arguments); } finally { boardArt--; }
+      };
+    }
     const realArt = window.gemArt;
-    if (typeof realArt === 'function') window.gemArt = function (id, rot, size, shape, sx) { return realArt.call(this, id, rot, size, window.__awOne ? [[0, 0]] : shape, sx); };
+    if (typeof realArt === 'function') window.gemArt = function (id, rot, size, shape, sx) { return realArt.call(this, id, rot, size, window.__awOne && boardArt ? [[0, 0]] : shape, sx); };
     const realLink = window.linkRule;
     if (typeof realLink === 'function') window.linkRule = () => window.__awOne ? 'all' : realLink();
     /* 排行榜的攔截在上面（使用書籤時一律不上傳，不只單格模式）；匿名遊玩統計的攔截也在上面（和自動刷神話共用） */
