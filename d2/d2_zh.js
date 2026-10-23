@@ -2467,6 +2467,34 @@ for (const n of r.addedNodes) if (n.nodeType === 1 && (n.matches('#hoverbox, .d2
 window.addEventListener('d2-language-changed', schedule);
 }
 d2evoInstall();
+// ====== 生命血球上方：可重生次數 ======
+// 恰西賣的「復活」每級每輪多一次半血復活（最多 2 級）：遊戲把剩下的次數放在 player.revives，上限是存檔的 ranks.resurrect。
+// 遊戲每幀重畫 #life-label 的內容，所以另外放一個元素疊在它上面，位置跟著它（直向手機也會換位置）。
+function d2revivesInstall() {
+const el = document.createElement('div');
+el.id = 'd2zh-revives';
+el.style.cssText = `position: absolute; display: none; white-space: nowrap; pointer-events: none; font: bold 15px ${D2ZH_FONT}; color: #e8dfcc;` +
+' text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000, 1px 1px #000;';
+let shown = '', bought = 0, readAt = -Infinity;
+setInterval(() => {
+const label = document.getElementById('life-label'), p = D2ED.player;
+let text = '';
+if (label && p && typeof p.revives === 'number' && d2edInRun() && label.offsetParent) {
+// 存檔很大，不要每次都解析：幾秒讀一次就夠（只有在恰西買了才會變）
+if (performance.now() - readAt > 5000) { bought = (d2edReadSave().ranks || {}).resurrect || 0; readAt = performance.now(); }
+const max = Math.max(bought, p.revives);
+if (max > 0) text = `${d2zhLang() === 'zh-Hant' ? '可重生次數：' : 'Resurrections: '}${p.revives}/${max}`;
+}
+if (!text) { if (shown) { el.style.display = 'none'; shown = ''; } return; }
+if (el.parentNode !== label.parentNode) label.parentNode.append(el);
+if (text !== shown) { el.textContent = text; shown = text; }
+el.style.display = '';
+el.style.left = `${label.offsetLeft}px`;
+el.style.top = `${label.offsetTop - el.offsetHeight - 2}px`;
+el.style.color = p.revives > 0 ? '#e8dfcc' : '#ff5c5c';
+}, 250);
+}
+d2revivesInstall();
 // ====== 說明框不要超出視窗 ======
 // 遊戲在說明框出現時，用當下的高度決定位置（框在圖示上方時是「底邊對齊」）；之後中文合併字詞、補上「進化：…」那一行，
 // 框變高就往上長，最上面的技能名稱被視窗切掉。框的大小或位置一變，就把它推回視窗裡。
