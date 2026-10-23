@@ -110,27 +110,34 @@ size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align, ink,
 maxWidth: pick.k > lines.length || pick.guess ? W - pick.s : 0,
 };
 }
-function d2zhWrap(ctx, text, maxWidth) {
-if (!maxWidth || ctx.measureText(text).width <= maxWidth) return [text];
+// 換行的最小單位：中文每個字一段、英文和數字整個字一段（「4 個」這種數字連單位不拆開）；句尾標點黏前一個字、左括號黏後一個字，行首不會出現「，」「）」
+const D2ZH_TOKEN = /[（「『【〔(]*(?:[+\-]?\d[\d.,%]*\s[一-鿿]|[⺀-鿿豈-﫿　-〿！-｠]|[^\s⺀-鿿豈-﫿　-〿！-｠]+)[，。；：、！？）」』】〕,.;:!?)]*\s*/gu;
+function d2zhWrapAt(ctx, tokens, maxWidth) {
 const out = [];
 let line = '';
-for (const token of text.includes(' ') ? text.split(/(?<=\s)/u) : Array.from(text)) {
+for (const token of tokens) {
 const next = line + token;
-if (line && ctx.measureText(next).width > maxWidth) {
-out.push(line.trimEnd());
-line = token.trimStart();
-if (ctx.measureText(line).width > maxWidth) {
-let part = '';
-for (const ch of Array.from(line)) {
-if (part && ctx.measureText(part + ch).width > maxWidth) { out.push(part); part = ch; }
-else part += ch;
+if (line && ctx.measureText(next.trimEnd()).width > maxWidth) { out.push(line.trimEnd()); line = token; }
+else line = next;
 }
-line = part;
-}
-} else line = next;
-}
-if (line) out.push(line.trimEnd());
+if (line.trim()) out.push(line.trimEnd());
 return out;
+}
+// balance：行數不變，把每行寬度拉平（跟遊戲說明框的 balance 一樣），不會變成一長行配最後一兩個字
+function d2zhWrap(ctx, text, maxWidth, balance) {
+if (!maxWidth || ctx.measureText(text).width <= maxWidth) return [text];
+let tokens = text.match(D2ZH_TOKEN) || [];
+if (tokens.join('') !== text) tokens = Array.from(text);
+// 單一段比整行還寬（很長的英文字）：只好拆成字母
+tokens = tokens.flatMap(t => ctx.measureText(t.trimEnd()).width > maxWidth ? Array.from(t) : [t]);
+const out = d2zhWrapAt(ctx, tokens, maxWidth);
+if (!balance || out.length < 2) return out;
+let lo = 0, hi = maxWidth;
+while (hi - lo > 1) {
+const mid = (lo + hi) / 2;
+if (d2zhWrapAt(ctx, tokens, mid).length <= out.length) hi = mid; else lo = mid;
+}
+return d2zhWrapAt(ctx, tokens, hi);
 }
 // 把一行中文拆成 n 行：挑最寬那行最窄的斷點，「和」之後、「技能／法術／靈氣…」之前優先
 function d2zhSplit(ctx, text, n) {
@@ -172,7 +179,7 @@ if (boxed && !text.includes('\n')) {
 const rows = Math.max(st.src.split('\n').length, inTab && ctx.measureText(text).width > st.w ? 2 : 1);
 text = d2zhSplit(ctx, text, rows);
 }
-let lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth));
+let lines = text.split('\n').flatMap(l => d2zhWrap(ctx, l, st.maxWidth, st.align === 'center'));
 let widths = lines.map(l => ctx.measureText(l).width);
 const widest = Math.max(0, ...widths);
 if (boxed && widest > st.w) {
@@ -1138,8 +1145,8 @@ text: {
 'CONTINUE starts Act * over at level *; you\'re level * now. Your items and gold are kept.': '「繼續」會從第 {0} 幕重新開始，等級 {1}；你現在是等級 {2}。物品和金幣會保留。',
 'CONTINUE starts Terror tier * over at level *; you\'re level * now. Your items and gold are kept.': '「繼續」會從恐懼第 {0} 層重新開始，等級 {1}；你現在是等級 {2}。物品和金幣會保留。',
 'Your save is back': '你的存檔回來了', 'This computer\'s storage came up empty. The app\'s own copy of your save was there, and your heroes are back from it.': '這台電腦的儲存空間是空的。應用程式另外保留了一份你的存檔，已從那份存檔把你的英雄找回來。',
-'Slay Mephisto holding only skills of one tree, at least * of them.': '擊殺墨菲斯托時，主動技能全部來自同一個技能樹，而且至少 {0} 個（被動不算；混到別的樹就不成立）。', 'Slay Baal holding only skills of one tree, at least * of them.': '擊殺巴爾時，主動技能全部來自同一個技能樹，而且至少 {0} 個（被動不算；混到別的樹就不成立）。',
-'Slay Mephisto holding at least * skills, and only auras of one tree.': '擊殺墨菲斯托時至少擁有 {0} 個主動技能，而且靈氣只來自同一個技能樹（攻擊靈氣或防禦靈氣擇一）。', 'Slay Baal holding at least * skills, and only auras of one tree.': '擊殺巴爾時至少擁有 {0} 個主動技能，而且靈氣只來自同一個技能樹（攻擊靈氣或防禦靈氣擇一）。',
+'Slay Mephisto holding only skills of one tree, at least * of them.': '擊殺墨菲斯托時，主動技能至少 {0} 個，而且全部來自同一個技能樹（被動不算）。', 'Slay Baal holding only skills of one tree, at least * of them.': '擊殺巴爾時，主動技能至少 {0} 個，而且全部來自同一個技能樹（被動不算）。',
+'Slay Mephisto holding at least * skills, and only auras of one tree.': '擊殺墨菲斯托時，主動技能至少 {0} 個，而且靈氣全部來自同一個技能樹（攻擊或防禦靈氣擇一）。', 'Slay Baal holding at least * skills, and only auras of one tree.': '擊殺巴爾時，主動技能至少 {0} 個，而且靈氣全部來自同一個技能樹（攻擊或防禦靈氣擇一）。',
 '* held: * of *': '{0}：已有 {1} / {2} 個', 'Skills from * trees': '主動技能來自 {0} 個技能樹（只能有一個）', 'Auras from * trees': '靈氣來自 {0} 個技能樹（只能有一個）', 'an undead monster in it': '範圍內每隻不死怪物', 'Evolution': '進化',
 'Ends your saved run (*, *) · free': '會結束你已儲存的這一輪（{0}，{1}）· 免費', 'Ends your saved run (*, *)': '會結束你已儲存的這一輪（{0}，{1}）', 'This ends your saved run in *.': '這會結束你在{0}已儲存的這一輪。',
 'Re-draft or start over after your first Baal kill': '第一次擊殺巴爾後才能重新抽選或重新開始',
