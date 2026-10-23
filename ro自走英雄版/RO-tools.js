@@ -31,13 +31,14 @@ javascript:(function awTools() {
    *   - 物品管理：沒有石板、符文分頁；裝備多顯示精煉、品質、卡片；寶石名稱寫出變異內容；沒放上盤面的寶石都能分解
    *   - 物品持有無上限：遊戲包過的撿裝備 takeItem 改從外層處理（見第 8 項）
    *   - 禁止自動更新：改擋流浪仙境自己的更新檢查（v63／v64／v91）
-   *   - 使用書籤時一律不上傳排行榜（無限武鬥場的線上排行 /api/rank，以及引擎原本的 lbSend），不只單格模式
+   *   - 使用書籤時一律不上傳排行榜（無限武鬥場的線上排行 /api/rank、組隊副本的隊伍排行 /api/party，以及引擎原本的 lbSend），不只單格模式
    *   - 使用書籤時不能在聊天室發言（/api/chat），只能看訊息
    *   - 商人：穿梭寶石用遊戲的 v5SxPool；變異形狀只有多 1 格、少 1 格（和遊戲的變異規則相同）
    *   - 遊戲的程式是排版過的（有空白），改寫遊戲函式的規則都容許空白；遊戲修補檔包過的函式不重建
    *   - 配置模擬拿掉「建議配裝」（遊戲背包已經有裝備建議）；BOSS 血條的名稱照遊戲上方挑戰按鈕的規則
    *  21. 精煉計算、自動精煉（煉金分頁）  22. 天賦樹搜尋（遊戲的共用天賦樹裡）  23. 收益統計（地圖分頁）
-   *  24. 地圖掉落清單（點戰鬥畫面左下角的地圖名稱）——只有流浪仙境版有
+   *  24. 地圖掉落清單（點戰鬥畫面左下角的地圖名稱；組隊副本卡片下方）  25. 冷卻提醒（組隊副本、天氣占卜）
+   *  26. 寵物比較（吉芬寵物飼育員）——只有流浪仙境版有
    *
    * 點一次書籤就全部啟用。配置模擬的按鈕在「技能」分頁標題旁，
    * 物品管理的按鈕在「背包」分頁的工具列（保留規則旁邊），
@@ -52,7 +53,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V14';
+  const VERSION = 'V17';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -95,7 +96,10 @@ javascript:(function awTools() {
     refCalc: true,          /* 煉金分頁加上「精煉計算」按鈕（到目標精煉值的期望花費、自動精煉） */
     refAutoMs: 150,         /* 自動精煉每次之間等幾毫秒 */
     treeFind: true,         /* 遊戲的共用天賦樹標題列加上搜尋框（符合的節點畫粉紅圈，點結果移過去） */
-    dropList: true,         /* 點戰鬥畫面左下角的地圖名稱，開啟目前地圖的掉落清單（會掉什麼、機率多少） */
+    dropList: true,         /* 點戰鬥畫面左下角的地圖名稱，開啟目前地圖的掉落清單（會掉什麼、機率多少）；組隊副本卡片也有副本的掉落清單 */
+    cdNote: true,           /* 組隊副本冷卻結束、可以占卜天氣時跳提示 */
+    petCmp: true,           /* 寵物頁加上「寵物比較」（每隻出戰時的 DPS、生命） */
+    offhandCmp: true,       /* 物品管理：副手欄的裝備標示種類、是否生效，並算出換上後的 DPS、生命變化 */
     earn: true,             /* 地圖分頁加上「收益統計」按鈕（每小時 Zeny、經驗、卡片、裝備） */
     eco: true,              /* 省資源（下面幾項的總開關） */
     bgNoDraw: true,         /* 分頁在背景或被蓋住時不畫畫面（看不到，省下繪圖的資源） */
@@ -542,7 +546,8 @@ javascript:(function awTools() {
     const N = 6;
     /* 窄螢幕（手機）時把格子縮小到整個技能盤放得進畫面；43 是外框、內距和技能盤邊框的寬度 */
     const CELL = Math.max(28, Math.min(CFG.planCell, Math.floor((window.innerWidth * 0.96 - 43) / N)));
-    const clone = (g, x, y, rot) => { const c = { u: g.u, id: g.id, x: x, y: y, rot: rot || 0 }; if (g.sh) c.sh = g.sh; return c; };
+    /* 整顆寶石照抄（變異 mu、穿梭 sx 等都要帶著，遊戲的 calc() 會用到：變異的傷害 ±、冷卻 ±），只換位置和方向 */
+    const clone = (g, x, y, rot) => Object.assign({}, g, { x: x, y: y, rot: rot || 0 });
     let realOpen = openSet();
     let page = S.gp;
     let src = -1;
@@ -839,6 +844,8 @@ javascript:(function awTools() {
         : '<span style="color:#a89a84">手上沒有寶石</span>';
       fitArt(elHeld);
     };
+    /* 變異寶石的說明（遊戲的 roMutText：格數、效果／傷害 ±、冷卻 ±、詛咒、被動、失敗變異） */
+    const mutTxt = g => { try { return g && (g.mu || g.sh) && typeof roMutText === 'function' ? String(roMutText(g) || '') : ''; } catch (e) { return ''; } };
     /* 右側數據：總 DPS，以及每顆寶石「拿掉它會少多少」的貢獻 */
     const drawStat = () => {
       const total = dpsOf(gems);
@@ -861,12 +868,26 @@ javascript:(function awTools() {
         const pct = total ? r.d / total * 100 : 0;
         const cd = cdOf(r.g);
         const links = sk.act && !sk.aura ? linksOf(r.g) : [];
+        const mt = mutTxt(r.g);
         h += '<div style="display:flex;gap:6px;border-bottom:1px solid #3a3026;padding:2px 0">' +
           '<span style="flex:1"><b style="color:' + sk.col + '">' + sk.n + '</b>' + (cd ? ' <small style="color:#a89a84">' + cd + '</small>' : '') +
-          (links.length ? '<br><small style="color:#a89a84">← ' + links.join('、') + '</small>' : '') + '</span>' +
+          (links.length ? '<br><small style="color:#a89a84">← ' + links.join('、') + '</small>' : '') +
+          (mt ? '<br><small style="color:#c8a0ff">' + escH(mt) + '</small>' : '') + '</span>' +
           '<span style="text-align:right;font-family:monospace">' + fmt(Math.round(r.d)) + '<br><small style="color:#a89a84">' + pct.toFixed(1) + '%</small></span></div>';
       }
       if (!rows.length) h += '<div style="color:#a89a84">尚未放置寶石</div>';
+      /* 遊戲 v1.2.11 起，沒有傷害的技能變異後會附加詛咒（實際打怪時才施加），面板 DPS 沒算這部分。
+       * 脆弱：敵人受到的傷害 +CRS.vu.v（乘上天賦的詛咒效果 PS.crs）。這裡只給「脆弱一直掛著」時的上限估計；
+       * 失敗變異（反噬、消耗生命）寫在每顆寶石底下的紫色小字 */
+      try {
+        const vuG = gems.filter(g => typeof v1211Crs === 'function' && v1211Crs(g).includes('vu'));
+        if (vuG.length && typeof CRS === 'object' && CRS.vu) {
+          const k = 1 + CRS.vu.v * ((typeof PS === 'object' && PS.crs) || 1);
+          h += '<div style="margin-top:6px;padding:6px;border:1px dashed #8a6ac8;border-radius:4px;font-size:12px">' +
+            '變異附加「脆弱」：' + vuG.map(g => escH(SKILLS[g.id].n)).join('、') + '<br>脆弱期間敵人受到的傷害 ×' + k.toFixed(2) +
+            '；脆弱一直掛著時 DPS 上限約 <b style="color:#c8a0ff;font-family:monospace">' + fmt(Math.round(total * k)) + '</b>（實際看詛咒的持續時間）</div>';
+        }
+      } catch (e) {}
       elStat.innerHTML = h;
     };
 
@@ -879,8 +900,8 @@ javascript:(function awTools() {
         groups.get(k).push(g);
       }
       const btn = list => {
-        const g = list[0], sk = SKILLS[g.id];
-        return '<button data-a="pick" data-u="' + g.u + '" title="' + String(sk.d || '').replace(/"/g, '&quot;') + '" style="margin:2px;padding:2px 6px;border:1px solid ' + sk.col + ';background:#1a1410;color:#f0e6d2;cursor:pointer">' +
+        const g = list[0], sk = SKILLS[g.id], mt = mutTxt(g);
+        return '<button data-a="pick" data-u="' + g.u + '" title="' + String((sk.d || '') + (mt ? '\n變異：' + mt : '')).replace(/"/g, '&quot;') + '" style="margin:2px;padding:2px 6px;border:1px solid ' + sk.col + ';background:#1a1410;color:#f0e6d2;cursor:pointer">' +
           icon(g, 0) + ' ' + sk.n + (g.sh ? '（變異）' : '') + (list.length > 1 ? ' ×' + list.length : '') + '</button>';
       };
       const all = [...groups.values()];
@@ -1556,18 +1577,61 @@ javascript:(function awTools() {
     const afText = a => { try { return (a.t != null ? 'T' + a.t + ' ' : '') + AFFIX[a.a].f(a.v); } catch (e) { return ''; } };
     const uqLine = it => { try { return '獨特：' + uqText(it.uq, it.cm || 1); } catch (e) { return ''; } };
 
+    /* 副手（遊戲 v1.2.19）：雙手流派可以在副手欄（slot 'shield'）裝箭筒、左手短劍、騎士徽章、工匠護手，裝備上的 oh 是適用的職業。
+     * 只有職業對、而且拿著雙手武器時才生效（遊戲的 v1219On）。這裡標出是盾牌還是哪一種副手、對目前角色有沒有用，
+     * 並把它暫時放進副手欄用遊戲的 calc() 算 DPS 和最大生命，和目前的副手比較（算完立刻換回來，同一件只算一次） */
+    const ohCache = new Map();
+    let ohBase = null;
+    const ohKind = it => (it.oh && typeof V1219_OH === 'object' && V1219_OH[it.oh] ? V1219_OH[it.oh].n : '');
+    const ohCmp = it => {
+      if (!CFG.offhandCmp || it.slot !== 'shield' || typeof calc !== 'function') return '';
+      const cur = S.equip.shield;
+      if (cur === it) return '';
+      try { if (typeof canWear === 'function' && !canWear(it)) return '目前還穿不上（等級或職業不符），不能比較'; } catch (e) {}
+      const key = it.u + '|' + (cur ? cur.u : 0) + '|' + (S.equip.weapon ? S.equip.weapon.u : 0);
+      if (ohCache.has(key)) return ohCache.get(key);
+      let txt = '';
+      try {
+        if (!ohBase || ohBase.key !== (cur ? cur.u : 0) + '|' + (S.equip.weapon ? S.equip.weapon.u : 0)) {
+          const b = calc();
+          ohBase = { key: (cur ? cur.u : 0) + '|' + (S.equip.weapon ? S.equip.weapon.u : 0), dps: b.dps, hp: b.maxhp };
+        }
+        S.equip.shield = it;
+        const r = calc();
+        const p = (a, b) => (b ? (a / b - 1) * 100 : 0), sg = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+        txt = '換上副手欄：DPS ' + sg(p(r.dps, ohBase.dps)) + '・最大生命 ' + sg(p(r.maxhp, ohBase.hp));
+      } catch (e) {
+      } finally {
+        if (cur) S.equip.shield = cur; else delete S.equip.shield;
+        try { calc(); } catch (e) {}
+      }
+      ohCache.set(key, txt);
+      return txt;
+    };
+    const ohNote = it => {
+      if (it.slot !== 'shield') return '';
+      if (!it.oh) return '盾牌';
+      const k = ohKind(it) || '副手';
+      if (it.oh !== S.cls) return k + '（其他職業用，對目前角色沒有效果）';
+      let on = true;
+      try { if (typeof v1219TwoHandBranch === 'function') on = v1219TwoHandBranch(); } catch (e) {}
+      return k + (on ? '（拿雙手武器時生效）' : '（目前不是雙手流派或沒拿雙手武器，不會生效）');
+    };
     const KINDS = {
       equip: {
         label: '裝備',
         all: () => [...SLOTS.map(s => S.equip[s]).filter(Boolean), ...S.bag],
         name: it => itemName(it),
         color: it => rarColor(it),
-        meta: it => rarLabel(it) + '・' + (SLOT_NAME[it.slot] || '') + '・LV' + it.ilvl,
-        tags: it => [isWorn(it) ? '裝備中' : '背包', it.lk ? '已鎖定' : '未鎖定'],
+        meta: it => rarLabel(it) + '・' + (SLOT_NAME[it.slot] || '') + (ohKind(it) ? '（' + ohKind(it) + '）' : '') + '・LV' + it.ilvl,
+        tags: it => [isWorn(it) ? '裝備中' : '背包', it.lk ? '已鎖定' : '未鎖定'].concat(it.slot === 'shield' ? [it.oh ? (it.oh === S.cls ? '副手・本職業' : '副手・其他職業') : '盾牌'] : []),
         /* 流浪仙境的裝備另外有基底素質 bx（[{ k 詞綴代號, v 數值 }]），一起當成詞綴，搜尋數值時也比得到 */
         af: it => [...(it.bx || []).map(x => ({ a: x.k, v: x.v })), ...(it.af || [])],
         lines: it => {
           const out = [];
+          if (ohNote(it)) out.push(ohNote(it));
+          const oc = ohCmp(it);
+          if (oc) out.push(oc);
           if (it.wd) out.push('傷害 ' + it.wd[0] + '-' + it.wd[1] + '・攻速 ' + it.wd[2] + '・暴擊 ' + it.wd[3] + '%');
           if (it.arm) out.push('護甲 ' + it.arm);
           if (it.eva) out.push('閃避 ' + it.eva);
@@ -2456,6 +2520,10 @@ javascript:(function awTools() {
     };
     if (typeof window.v63UpdGo === 'function') window.v63UpdGo = async () => updHold();
     if (typeof window.v63UpdTick === 'function') window.v63UpdTick = () => { try { if (v63Upd.found) updHold(); } catch (e) {} };
+    /* v1.3.1（ro-v131）把 v64UpdStep 換成新的倒數：發現新版 30 秒後會先結束目前的挑戰（頭目算失敗、武鬥場直接離開）再更新。
+     * 它看到 v64Upd.going 就不動，平常已經擋得住；這裡再包一層保險：發現新版就只顯示提示，不倒數、不結束挑戰 */
+    const realStep = window.v64UpdStep;
+    if (typeof realStep === 'function') window.v64UpdStep = function () { try { if (v63Upd.found) { updHold(); return; } } catch (e) {} return realStep.apply(this, arguments); };
     const realCheck = window.v63UpdCheck;
     if (typeof realCheck === 'function') {
       window.v63UpdCheck = async function () {
@@ -2536,7 +2604,8 @@ javascript:(function awTools() {
         try {
           const url = typeof input === 'string' ? input : input && input.url;
           const method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
-          if (method !== 'GET' && method !== 'HEAD' && /\/api\/rank\b/.test(String(url || ''))) {
+          /* /api/party 是 v1.2.13 組隊副本的隊伍排行（v1213RkSend），回傳格式和 /api/rank 相同 */
+          if (method !== 'GET' && method !== 'HEAD' && /\/api\/(rank|party)\b/.test(String(url || ''))) {
             return Promise.resolve(new Response(JSON.stringify({ ok: false, error: '小工具已封鎖排行上傳' }), { status: 200, headers: { 'content-type': 'application/json' } }));
           }
           /* 聊天室發言（op: "say"）也在這一層擋（見下面「封鎖聊天室發言」），回給遊戲 err: "tool" */
@@ -2552,7 +2621,7 @@ javascript:(function awTools() {
     /* 保險：sendBeacon 也擋（遊戲現在沒用它傳排行，但之後改版可能會） */
     try {
       const realBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator);
-      if (realBeacon) navigator.sendBeacon = (url, data) => /\/api\/rank\b/.test(String(url || '')) ? true : realBeacon(url, data);
+      if (realBeacon) navigator.sendBeacon = (url, data) => /\/api\/(rank|party)\b/.test(String(url || '')) ? true : realBeacon(url, data);
     } catch (e) {}
   }
 
@@ -3037,8 +3106,36 @@ javascript:(function awTools() {
     draw();
     return true;
   };
+  /* 商人頁的開關（使用者 2026-10-23 要求）：「主動技能」「輔助技能」頁的分頁列下面加一個勾選框「購買時選擇變異形狀」，
+   * 預設關閉，關著時照遊戲原本的方式購買；勾起來才會跳出選形狀的視窗。狀態記在瀏覽器的 awtools.shopmut */
+  const SHOPMUT_KEY = 'awtools.shopmut';
+  let shopMutOn = false;
+  try { shopMutOn = localStorage.getItem(SHOPMUT_KEY) === '1'; } catch (e) {}
   if (first && CFG.shopMut) {
+    try {
+      const realShop = ui.m_shop;
+      if (typeof realShop === 'function') {
+        ui.m_shop = function () {
+          const h = String(realShop.apply(this, arguments));
+          if (this.shopV !== 'act' && this.shopV !== 'sup') return h;
+          const tgl = '<label class="chk awShopMutTgl" style="display:inline-flex;align-items:center;gap:4px;margin:0 0 6px;cursor:pointer"><input type="checkbox" class="awShopMutCb"' + (shopMutOn ? ' checked' : '') +
+            '><span>購買時選擇變異形狀<span class="note" style="margin:0 0 0 4px">（小工具；能力相同，只改形狀）</span></span></label>';
+          const i = h.indexOf('<div class="seg"');
+          const j = i < 0 ? -1 : h.indexOf('</div>', i);
+          return j < 0 ? tgl + h : h.slice(0, j + 6) + tgl + h.slice(j + 6);
+        };
+      }
+    } catch (e) {}
+    document.addEventListener('change', e => {
+      const cb = e.target && e.target.closest && e.target.closest('.awShopMutCb');
+      if (!cb) return;
+      e.stopPropagation();
+      shopMutOn = !!cb.checked;
+      try { if (shopMutOn) localStorage.setItem(SHOPMUT_KEY, '1'); else localStorage.removeItem(SHOPMUT_KEY); } catch (err) {}
+      try { toast('購買時選擇變異形狀：' + (shopMutOn ? '開' : '關'), 'lvl'); } catch (err) {}
+    }, true);
     document.addEventListener('click', e => {
+      if (!shopMutOn) return;
       const b = e.target && e.target.closest && e.target.closest('[data-act="buy"]');
       if (!b || b.disabled || !/^gem:/.test(b.dataset.k || '')) return;
       const id = b.dataset.k.slice(4), price = +b.dataset.c;
@@ -3062,6 +3159,11 @@ javascript:(function awTools() {
     try { if (typeof sxPool === 'function') return sxPool(S.cls); } catch (e) {}
     return [];
   };
+  /* 穿梭寶石的開關（使用者 2026-10-23 要求）：遊戲的商人本來不賣穿梭寶石，所以在「輔助技能」頁加一個勾選框「販售穿梭寶石」，
+   * 預設關閉；勾起來才把穿梭寶石放進商品裡、才能買。狀態記在瀏覽器的 awtools.shopsx */
+  const SHOPSX_KEY = 'awtools.shopsx';
+  let shopSxOn = false;
+  try { shopSxOn = localStorage.getItem(SHOPSX_KEY) === '1'; } catch (e) {}
   if (first && (CFG.legShop || CFG.sxShop)) {
     const exWare = (id, sx) => {
       /* 商人格子是淺色底，字要用深一點的顏色：外框用亮色，文字用同色系的深色 */
@@ -3086,12 +3188,21 @@ javascript:(function awTools() {
       if (b.disabled) return;
       const id = b.dataset.id, sx = b.dataset.sx === '1';
       if (typeof SKILLS === 'undefined' || !SKILLS[id]) return;
-      if (sx ? !CFG.sxShop || !sxList().includes(id) : !CFG.legShop || !SKILLS[id].leg || SKILLS[id].cls !== S.cls) return;
+      if (sx ? !CFG.sxShop || !shopSxOn || !sxList().includes(id) : !CFG.legShop || !SKILLS[id].leg || SKILLS[id].cls !== S.cls) return;
       openShopMut(id, sx ? SX_PRICE : LEG_PRICE, sx);
+    }, true);
+    document.addEventListener('change', e => {
+      const cb = e.target && e.target.closest && e.target.closest('.awShopSxCb');
+      if (!cb) return;
+      e.stopPropagation();
+      shopSxOn = !!cb.checked;
+      try { if (shopSxOn) localStorage.setItem(SHOPSX_KEY, '1'); else localStorage.removeItem(SHOPSX_KEY); } catch (err) {}
+      try { toast('販售穿梭寶石：' + (shopSxOn ? '開' : '關'), 'lvl'); } catch (err) {}
+      try { ui.render(); } catch (err) {}
     }, true);
     const exList = v => {
       if (v === 'act' && CFG.legShop) return Object.keys(SKILLS).filter(k => SKILLS[k].leg && SKILLS[k].cls === S.cls).map(k => [k, false]);
-      if (v === 'sup' && CFG.sxShop) return sxList().filter(k => SKILLS[k]).map(k => [k, true]);
+      if (v === 'sup' && CFG.sxShop && shopSxOn) return sxList().filter(k => SKILLS[k]).map(k => [k, true]);
       return [];
     };
     const exSig = (v, list) => v + '|' + list.map(([k, sx]) => k + ':' + S.gems.filter(g => g.id === k && !g.sx === !sx).length).join(',') + '|' + (S.ash >= LEG_PRICE ? 1 : 0) + (S.ash >= SX_PRICE ? 1 : 0);
@@ -3104,10 +3215,19 @@ javascript:(function awTools() {
           const html = realShop.apply(this, arguments);
           try {
             if (typeof html !== 'string' || typeof S === 'undefined' || !S) return html;
-            const v = this.shopV || 'pot', list = exList(v), at = html.indexOf('<div class="shopG">');
-            if (!list.length || at < 0) return html;
+            const v = this.shopV || 'pot', list = exList(v);
+            /* 「輔助技能」頁：分頁列下面放「販售穿梭寶石」的勾選框 */
+            let h = html;
+            if (v === 'sup' && CFG.sxShop) {
+              const tgl = '<label class="chk awShopSxTgl" style="display:inline-flex;align-items:center;gap:4px;margin:0 12px 6px 0;cursor:pointer"><input type="checkbox" class="awShopSxCb"' + (shopSxOn ? ' checked' : '') +
+                '><span>販售穿梭寶石<span class="note" style="margin:0 0 0 4px">（小工具；其他職業的輔助，每顆 ' + fmt(SX_PRICE) + ' Zeny）</span></span></label>';
+              const si = h.indexOf('<div class="seg"'), sj = si < 0 ? -1 : h.indexOf('</div>', si);
+              h = sj < 0 ? tgl + h : h.slice(0, sj + 6) + tgl + h.slice(sj + 6);
+            }
+            const at = h.indexOf('<div class="shopG">');
+            if (!list.length || at < 0) return h;
             const open = '<div class="shopG" data-aw-ex="' + escH(exSig(v, list)) + '">';
-            return html.slice(0, at) + open + list.map(([k, sx]) => exWare(k, sx)).join('') + html.slice(at + '<div class="shopG">'.length);
+            return h.slice(0, at) + open + list.map(([k, sx]) => exWare(k, sx)).join('') + h.slice(at + '<div class="shopG">'.length);
           } catch (e) { return html; }
         };
       }
@@ -4088,7 +4208,10 @@ javascript:(function awTools() {
     bg.hidden = false;
     setTimeout(() => {
       if (!sh.classList.contains('awDrop') || bg.hidden) return;
-      const mul = typeof V5 === 'object' && V5.dropMul ? V5.dropMul : 1;
+      /* 天氣（v1.2.2）：櫻花的卡片掉落率 +20% 是在每次擊殺時暫時乘上 V5.dropMul，平常讀不到，這裡照遊戲的 V125_WX 自己乘 */
+      let wxCard = 0, wxName = '';
+      try { if (typeof V125 === 'object' && typeof V125_WX === 'object' && V125_WX[V125.cur] && V125_WX[V125.cur].card) { wxCard = V125_WX[V125.cur].card; wxName = V125_WX[V125.cur].n; } } catch (e) {}
+      const mul = (typeof V5 === 'object' && V5.dropMul ? V5.dropMul : 1) * (1 + wxCard);
       const tierN = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].n : t + ' 階');
       const tierC = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].c : 'inherit');
       const tierS = t => '<b style="color:' + tierC(t) + '">' + escH(tierN(t)) + '</b>';
@@ -4148,6 +4271,7 @@ javascript:(function awTools() {
       const mons = (M.m || []).map(t => (MON[t] ? MON[t].n : t));
       let html = '<div class="awDH"><h2>' + escH(M.n) + ' 掉落清單</h2><span class="awDLv">LV' + lv[0] + '–' + lv[1] + '</span></div>' +
         '<p class="note" style="margin:4px 0 0">怪物：' + mons.map(escH).join('、') + '（每種都可能是菁英）・頭目：' + escH(M.boss || '') + '</p>';
+      if (wxCard) html += '<p class="note" style="margin:4px 0 0;color:#d6457f">目前天氣「' + escH(wxName) + '」：卡片掉落率 +' + Math.round(wxCard * 100) + '%，下面的卡片機率已經算進去（天氣結束後就沒有）。</p>';
       if (!S.alchOn) html += '<div class="awDWarn">你還沒解鎖煉金：下面的素材要解鎖煉金後才會掉（目前打怪不會掉）。</div>';
       html += block('mob', '一般怪（每隻）') + block('elite', '菁英（每隻）') + block('boss', '頭目 ' + escH(M.boss || '') + '（每次擊敗）');
       /* 獨特裝備池、卡片池：放在同一個區塊，各自可以展開 */
@@ -4172,6 +4296,47 @@ javascript:(function awTools() {
         '<div class="awDF"><button class="btn primary" data-act="close">知道了</button></div>';
       sh.innerHTML = html;
     }, 30);
+  };
+  /* 組隊副本（v1.2.13）的掉落：每通關一層各自擲骰（V1213.cfg.rw），獎勵放進隊長背包。
+   * 神話卡從神話卡片池平均抽；變異技能寶石是隊長職業的；皮膚美容券是每個角色第一次以隊長身分通關第 skinFloor 層才給。
+   * 天氣的卡片加成不影響組隊副本（這裡的擲骰沒有經過 V5.dropMul）。 */
+  const openPartyDrops = () => {
+    const sh = document.querySelector('#sheet'), bg = document.querySelector('#sheetBg');
+    if (typeof V1213 !== 'object' || !V1213.cfg || !V1213.cfg.rw || !sh || !bg) { uiAlert('這個版本的遊戲沒有組隊副本'); return; }
+    if (!document.querySelector('#awDropCss')) {
+      const st = document.createElement('style');
+      st.id = 'awDropCss';
+      st.textContent = DROP_CSS;
+      document.head.appendChild(st);
+    }
+    const rw = V1213.cfg.rw, F = [1, 5, 10, 20];
+    const tierN = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].n : t + ' 階');
+    const tierC = t => (typeof V5_TIER !== 'undefined' && V5_TIER[t] ? V5_TIER[t].c : 'inherit');
+    const items = [
+      ['card', '<b style="color:' + tierC(6) + '">' + escH(tierN(6)) + '</b>卡片', '從下面的卡片池平均抽 1 張'],
+      ['myth', 'Lv130 主宰裝備', '任何部位'],
+      ['ring', '羈絆之戒', '組隊獨特戒指，3～6 孔'],
+      ['pet', '寵物扭蛋券', '整個帳號共用，到吉芬的寵物飼育員使用'],
+      ['gem', '變異技能寶石', '隊長職業的技能']
+    ].filter(x => rw[x[0]] > 0);
+    const atLeast = (p, n) => 1 - Math.pow(1 - p, n);
+    let html = '<div class="awDH"><h2>組隊副本 掉落清單</h2></div>' +
+      '<p class="note" style="margin:4px 0 0">每通關一層，每種獎勵各自擲一次；獎勵放進隊長（目前角色）的背包。下表右邊是每層的機率，小字是一路打到第 N 層「至少拿到 1 個」的機率。</p>' +
+      '<div class="awDS"><h3>每通關一層</h3><table>' +
+      items.map(x => '<tr><td>' + x[1] + '<div class="n">' + escH(x[2]) + '；' + F.slice(1).map(n => '到第 ' + n + ' 層 ' + dropPct(atLeast(rw[x[0]], n))).join('・') + '</div></td><td class="v">' + dropPct(rw[x[0]]) + '</td></tr>').join('') +
+      (V1213.cfg.skinFloor ? '<tr><td>皮膚美容券<div class="n">每個角色第一次以隊長身分通關第 ' + V1213.cfg.skinFloor + ' 層時給 1 張</div></td><td class="v">一次</td></tr>' : '') +
+      '</table></div>';
+    if (typeof V5_CARDS !== 'undefined') {
+      const seen = (S && S.v5 && S.v5.seen) || {}, pool = V5_CARDS.filter(c => c.t === 6 && !c.ex);
+      html += '<div class="awDS"><h3>卡片池<span class="note" style="font-weight:normal;font-size:12px">　綠色 ✓ 是已經拿過的卡</span></h3><details><summary>' +
+        '<b style="color:' + tierC(6) + '">' + escH(tierN(6)) + '</b>卡片 ' + pool.length + ' 張' + (pool.length ? '<span class="note">（掉卡時每張 ' + dropPct(1 / pool.length) + '）</span>' : '') + '</summary><div class="awDL">' +
+        pool.map(c => (seen[c.id] ? '<span class="own">✓' + escH(c.n) + '</span>' : escH(c.n))).join('、') + '</div></details></div>';
+    }
+    html += '<p class="note" style="font-size:12px;margin:10px 0 0">副本裡的怪物不會掉一般的裝備、卡片和素材；天氣的卡片加成也不影響這裡。入場後整個帳號冷卻 ' + Math.round((V1213.cfg.cdMs || 0) / 3600e3) + ' 小時。</p>' +
+      '<div class="awDF"><button class="btn primary" data-act="close">知道了</button></div>';
+    sh.className = 'awDrop';
+    sh.innerHTML = html;
+    bg.hidden = false;
   };
   /* 入口：戰鬥畫面左下角的地圖名稱（#mapChip）整塊都可以點，下面多一行小字「點此查看本地圖掉落」。
    * 遊戲每次更新畫面都會重寫 #mapChip 的內容，所以小字用 CSS 的 ::after 加（跟著 class 走，內容被重寫也不會不見），
@@ -4206,6 +4371,131 @@ javascript:(function awTools() {
       e.stopPropagation(); e.preventDefault();
       openDrops(S.map);
     }, true);
+    /* 組隊副本卡片（地圖 → 挑戰，v1213Card 產生）最下面加一行「點此查看組隊副本掉落」 */
+    if (typeof window.v1213Card === 'function') {
+      const realCard = window.v1213Card;
+      window.v1213Card = function () {
+        const h = realCard.apply(this, arguments);
+        if (typeof h !== 'string') return h;
+        const add = '<div class="awPartyDrop" style="margin-top:6px;text-align:center;font-size:12px;color:var(--ember,#497da2);cursor:pointer;text-decoration:underline">📦 點此查看組隊副本掉落</div>';
+        const i = h.lastIndexOf('</');
+        return i > 0 ? h.slice(0, i) + add + h.slice(i) : h + add;
+      };
+      document.addEventListener('click', e => {
+        const c = e.target && e.target.closest && e.target.closest('.awPartyDrop');
+        if (!c) return;
+        e.stopPropagation(); e.preventDefault();
+        openPartyDrops();
+      }, true);
+    }
+  }
+
+  /* ===== 25. 冷卻提醒（流浪仙境） =====
+   * 兩種現實時間的冷卻，好了就跳一次提示（遊戲的提示框，會停留到點掉）：
+   *   - 組隊副本（v1.2.13）：入場後整個帳號冷卻 2 小時，結束時間存在共用倉庫的 v1213.cd（v1213Acct().cd）
+   *   - 天氣占卜（v1.2.2）：天氣持續 4 小時，結束後就能再到朱諾找占卜師（S.v125wx，v125Left() 是剩餘毫秒）。
+   *     遊戲開著時天氣結束，遊戲自己會提示，這裡就不重複；只補「關著遊戲時結束」和「還沒占卜過」的情況
+   * 每種冷卻只提示一次：提示過的記在瀏覽器的 awtools.notes（組隊副本記結束時間，天氣記 角色:這次天氣的開始時間）。 */
+  const NOTE_KEY = 'awtools.notes';
+  if (first && CFG.cdNote) {
+    const wxLive = {};
+    const noteTick = () => {
+      if (typeof S === 'undefined' || !S) return;
+      let n = {};
+      try { n = JSON.parse(localStorage.getItem(NOTE_KEY)) || {}; } catch (e) {}
+      n.wx = n.wx || {};
+      let dirty = false;
+      try {
+        if (typeof v1213Acct === 'function') {
+          const cd = +v1213Acct().cd || 0;
+          if (cd > 0 && Date.now() >= cd && n.party !== cd) {
+            n.party = cd; dirty = true;
+            toast('組隊副本的冷卻結束了，可以再挑戰（地圖 → 挑戰 → 組隊副本）', 'lvl', 1);
+          }
+        }
+      } catch (e) {}
+      try {
+        if (typeof v125Left === 'function') {
+          const key = S.cid + ':' + (S.v125wx && S.v125wx.t ? S.v125wx.t : 0);
+          if (v125Left() > 0) wxLive[S.cid] = 1;
+          else if (n.wx[S.cid] !== key) {
+            n.wx[S.cid] = key; dirty = true;
+            if (!wxLive[S.cid]) toast('可以占卜天氣了：到朱諾找占卜師（占卜後 4 小時天氣加成）', 'lvl', 1);
+          }
+        }
+      } catch (e) {}
+      if (dirty) { try { localStorage.setItem(NOTE_KEY, JSON.stringify(n)); } catch (e) {} }
+    };
+    setTimeout(noteTick, 5000);
+    every(noteTick, 30000);
+  }
+
+  /* ===== 26. 寵物比較（流浪仙境 v1.2.15） =====
+   * 吉芬寵物飼育員的寵物頁加上「寵物比較」：把圖鑑裡每一隻已擁有的寵物輪流當成出戰寵物，
+   * 用遊戲的 calc() 算 DPS 和最大生命，和「不帶寵物」比較；算完立刻換回原本的出戰寵物（不存檔、不跳提示）。
+   * 寵物能力（v1215Mods：★1 的數值 ×（1 + 0.2 ×（星等 − 1）），最高 ★3）照遊戲的公式列出。
+   * 只比數值；移動速度、中毒傷害這類面板 DPS 沒算到的效果，看能力欄自己判斷。 */
+  const openPetCmp = () => {
+    const sh = document.querySelector('#sheet'), bg = document.querySelector('#sheetBg');
+    if (typeof S === 'undefined' || !S || typeof V1215_BY !== 'object' || typeof v1215Acct !== 'function' || !sh || !bg) { uiAlert('請先進入遊戲（寵物是流浪仙境 v1.2.15 起才有）'); return; }
+    if (!document.querySelector('#awDropCss')) {
+      const st = document.createElement('style');
+      st.id = 'awDropCss';
+      st.textContent = DROP_CSS;
+      document.head.appendChild(st);
+    }
+    let own = [];
+    try { own = Object.keys(v1215Acct().own || {}).filter(k => V1215_BY[k] && v1215Star(k) > 0); } catch (e) {}
+    const keep = S.v1215pet, res = [];
+    try {
+      for (const k of [null, ...own]) {
+        S.v1215pet = k;
+        const r = calc();
+        res.push({ k, dps: r ? r.dps : 0, hp: r ? r.maxhp : 0 });
+      }
+    } catch (e) {
+    } finally {
+      S.v1215pet = keep;
+      try { calc(); } catch (e) {}
+    }
+    const base = res[0] || { dps: 0, hp: 0 };
+    const pct = (a, b) => (b ? ((a / b - 1) * 100) : 0);
+    const sgn = v => '<span style="color:' + (v > 0.05 ? '#2f9a3a' : v < -0.05 ? '#c8323c' : 'var(--muted)') + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%</span>';
+    const rows = res.slice(1).sort((a, b) => b.dps - a.dps);
+    let html = '<div class="awDH"><h2>寵物比較</h2><span class="awDLv">已擁有 ' + own.length + ' 隻</span></div>' +
+      '<p class="note" style="margin:4px 0 0">每隻都當成出戰寵物，用遊戲的戰力計算和「不帶寵物」比較（目前裝備、天賦、技能盤不變）。DPS 由高到低排列。</p>';
+    if (!rows.length) html += '<div class="awDWarn">圖鑑裡還沒有寵物：組隊副本每層 5% 掉落寵物扭蛋券，到吉芬的寵物飼育員扭蛋。</div>';
+    else {
+      html += '<div class="awDS"><h3>不帶寵物：DPS ' + fmt(Math.round(base.dps)) + '・最大生命 ' + fmt(Math.round(base.hp)) + '</h3><table>' +
+        rows.map(r => {
+          const p = V1215_BY[r.k], star = v1215Star(r.k), T = (typeof V1215_TIER !== 'undefined' && V1215_TIER[p.r]) || { n: '', c: 'inherit' };
+          let mods = '';
+          try { mods = v1215ModTxt(v1215Mods(r.k, star)); } catch (e) {}
+          return '<tr><td><b style="color:' + T.c + '">' + escH(p.n) + '</b> ' + '★'.repeat(star) + (r.k === keep ? ' <span class="note">（出戰中）</span>' : '') +
+            '<div class="n">' + escH(T.n) + '・' + escH(mods) + '</div></td>' +
+            '<td class="v">DPS ' + sgn(pct(r.dps, base.dps)) + '<div class="n">生命 ' + sgn(pct(r.hp, base.hp)) + '</div></td></tr>';
+        }).join('') + '</table></div>';
+    }
+    html += '<p class="note" style="font-size:12px;margin:10px 0 0">移動速度、中毒傷害、抗性等不會反映在面板 DPS 上，請看能力欄。換出戰寵物請在寵物頁點選。</p>' +
+      '<div class="awDF"><button class="btn primary" data-act="close">知道了</button></div>';
+    sh.className = 'awDrop';
+    sh.innerHTML = html;
+    bg.hidden = false;
+  };
+  if (first && CFG.petCmp && typeof window.v1215Page === 'function') {
+    const realPage = window.v1215Page;
+    window.v1215Page = function () {
+      const h = realPage.apply(this, arguments);
+      return typeof h === 'string' ? h + '<div class="row" style="justify-content:center;margin-top:8px"><button class="btn awBtnPetCmp">📊 寵物比較（每隻出戰時的 DPS／生命）</button></div>' : h;
+    };
+    /* 吉芬寵物飼育員的視窗（ro-v1218）用名字呼叫 v1215Page()，上面就包到了；選單的寵物頁 ui.m_v1215 存的是原本的函式，要另外換 */
+    try { if (ui.m_v1215 === realPage) ui.m_v1215 = window.v1215Page; } catch (e) {}
+    document.addEventListener('click', e => {
+      const b = e.target && e.target.closest && e.target.closest('.awBtnPetCmp');
+      if (!b) return;
+      e.stopPropagation(); e.preventDefault();
+      openPetCmp();
+    }, true);
   }
 
   /* ===== 17. 小工具設定 =====
@@ -4235,9 +4525,9 @@ javascript:(function awTools() {
     ['功能按鈕', [
       ['planner', '配置模擬', '技能分頁'], ['oneCell', '單格模式開關', '技能分頁'], ['items', '物品管理', '背包分頁'],
       ['cards', '卡片進度', '地圖分頁'], ['earn', '收益統計', '地圖分頁'], ['refCalc', '精煉計算、自動精煉', '煉金分頁'],
-      ['treeFind', '天賦樹搜尋', '遊戲的共用天賦樹標題列'], ['dropList', '地圖掉落清單', '點戰鬥畫面左下角的地圖名稱'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
+      ['treeFind', '天賦樹搜尋', '遊戲的共用天賦樹標題列'], ['dropList', '地圖掉落清單', '點戰鬥畫面左下角的地圖名稱；組隊副本卡片下方'], ['cdNote', '冷卻提醒', '組隊副本冷卻結束、可以占卜天氣時跳提示'], ['petCmp', '寵物比較', '吉芬寵物飼育員的寵物頁'], ['offhandCmp', '副手比較', '物品管理的裝備清單'], ['monAuto', '無限君主「打贏後自動接著打」', '地圖分頁'], ['monLoop', '自動刷神話', '地圖分頁'],
       ['backup', '存檔備份', '選單分頁'], ['arts', '解鎖三神器', '選單分頁'], ['pin', '置頂視窗', '選單分頁；只有電腦版 Chrome／Edge 會出現'],
-      ['shopMut', '商人買寶石時選變異形狀', '選單 → 商人'], ['legShop', '商人賣傳說技能寶石', '選單 → 商人 → 主動技能'], ['sxShop', '商人賣穿梭寶石', '選單 → 商人 → 輔助技能'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
+      ['shopMut', '商人買寶石時選變異形狀', '商人「主動技能」「輔助技能」頁的勾選框，勾起來才會選形狀'], ['legShop', '商人賣傳說技能寶石', '選單 → 商人 → 主動技能'], ['sxShop', '商人賣穿梭寶石', '商人「輔助技能」頁的勾選框「販售穿梭寶石」，勾起來才會出現；關掉這項連勾選框都不顯示'], ['afPick', '指定萃取、指定灌注', '煉金的萃取、灌注視窗']
     ]],
     ['物品上限', [
       ['noLimit', '物品持有無上限', '背包、共用倉庫'],
