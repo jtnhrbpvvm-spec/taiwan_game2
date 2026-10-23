@@ -527,6 +527,26 @@
   var ALCHEMY_BOMBS = window.ALCHEMY_BOMBS || {};
   var DUNGEON_BY_ID = window.DUNGEON_BY_ID || {};
   var MONSTER_TO_DUNGEONS = window.MONSTER_TO_DUNGEONS || {};
+  // 10-23 改版新增（update_data.py build_hunt_systems → 希望/huntIndex.js）
+  var MONSTER_DEX = window.MONSTER_DEX || {};          // 怪物id → [銀牌擊殺數, 金牌擊殺數]
+  var MONSTER_DEX_BONUS = window.MONSTER_DEX_BONUS || { bronze: 0, silver: 1, gold: 5 };
+  var WARDROBE = window.WARDROBE || { series: [], npc: {} };
+  var MARKET = window.MARKET || { buy: {}, sell: {}, npc: {} };
+  var DUNGEON_DROPS = window.DUNGEON_DROPS || {};      // 副本地圖id → [[物品, 機率ppm]]
+  var WARDROBE_BY_ITEM = {}, WARDROBE_BY_MONSTER = {}, DUNGEON_DROPS_BY_ITEM = {};
+  WARDROBE.series.forEach(function (s) {
+    var total = s.items.reduce(function (sum, r) { return sum + (r[1] > 0 ? r[1] : 0); }, 0);
+    s.total = total;
+    (WARDROBE_BY_MONSTER[s.monster] = WARDROBE_BY_MONSTER[s.monster] || []).push(s);
+    s.items.forEach(function (r) {
+      if (r[1] > 0) (WARDROBE_BY_ITEM[r[0]] = WARDROBE_BY_ITEM[r[0]] || []).push({ series: s, pct: r[1] * 100 / total });
+    });
+  });
+  Object.keys(DUNGEON_DROPS).forEach(function (mapId) {
+    DUNGEON_DROPS[mapId].forEach(function (r) {
+      (DUNGEON_DROPS_BY_ITEM[r[0]] = DUNGEON_DROPS_BY_ITEM[r[0]] || []).push({ map: mapId, r: r[1] });
+    });
+  });
   var BOX_BY_ID = window.BOX_BY_ID || {};
   var ITEM_TO_BOXES = window.ITEM_TO_BOXES || {};
   var DUNGEON_TO_BOXES = window.DUNGEON_TO_BOXES || {};
@@ -584,7 +604,9 @@
     var craftList = BPET_CRAFT_SOURCE_ALL && BPET_CRAFT_SOURCE_ALL[String(iid)] ? BPET_CRAFT_SOURCE_ALL[String(iid)] : (craftSrc ? [craftSrc] : []);
     craftList.forEach(function (cs) {
       var matsHtml = (cs.mats || []).map(function (m) { return itemChip(m[0], m[1]); }).join("");
+      var keysHtml = (cs.keys || []).map(function (k) { return itemChip(k); }).join("");
       lines.push("取得方式：" + (cs.npc ? "找 <b>" + escapeHtml(cs.npc) + "</b> " : "") + "用 " + itemChip(cs.bookId) + " 製作，材料：" + matsHtml +
+        (keysHtml ? "，身上要帶 " + keysHtml + "（不會消耗）" : "") +
         "，花費 " + fmtNum(cs.gold) + " 金幣，成功率 " + cs.ratePct + "%");
     });
     (LETTER_SOURCE[String(iid)] || []).forEach(function (ls) {
@@ -2953,7 +2975,22 @@
     var cap = (FUSION && FUSION.cap) || 90;
     return Math.min(cap, (base + Math.max(0, pt) * fusionPtFactor(lv)) * (1 + Math.max(0, bonusPct) / 100));
   }
-  // 輔G裝備的 PT（遊戲 cg）：+5 以上才有，看裝備等級、階級、精煉；最後無條件捨去到 0.5
+  // 10-23 改版起每件裝備自己有輔G基礎值（FUSION.aux，遊戲 ym()／dm()）：+5 以上才有，× 精煉倍率，無條件捨去到 0.5
+  var FUSION_AUX = (FUSION && FUSION.aux) || null;
+  function fusionAuxPt(base, refine) {
+    var r = FUSION_REFINE_MULT[refine];
+    if (r === undefined || refine < 5 || !(base > 0)) return 0;
+    return Math.floor(base * r * 2) / 2;
+  }
+  // 裝備頁：這件拿去當別人的輔G值多少 PT
+  function fusionAuxRowHtml(id) {
+    var base = FUSION_AUX && FUSION_AUX[id];
+    if (!base) return '';
+    return '<div class="empty-note" style="padding:6px 0 0;">🧩 當 G 化／變異合成的輔 G：' + [5, 6, 7, 8, 9, 10, 11, 12].map(function (r) {
+      return '+' + r + ' <b>' + fusionAuxPt(base, r) + '</b>';
+    }).join('・') + ' PT（+4 以下不能放）</div>';
+  }
+  // 輔G裝備的 PT（舊版遊戲 cg，10-18 以前）：+5 以上才有，看裝備等級、階級、精煉；最後無條件捨去到 0.5
   function fusionGearPt(tier, lv, refine) {
     var r = FUSION_REFINE_MULT[refine];
     if (r === undefined || refine < 5 || !(lv > 0)) return 0;
@@ -3020,7 +3057,8 @@
       var skill = FUSION.slotSkill && FUSION.slotSkill[fusionSlotGroup(eq.slot)];
       html += '<div class="empty-note" style="padding:0 0 10px;line-height:1.8;">在村莊鐵匠組合長的「G 化」分頁製作，<b>只有鐵匠職業</b>做得了，' +
         '要先學〔' + escapeHtml(skill ? skill.name : "合成") + '〕。失敗的話<b>整件裝備消失</b>；成功會變成目標裝備，但精煉值歸零。' +
-        '成功率最高 ' + FUSION.cap + '%，可以放「輔 G」（精煉材料，或 +5 以上的非配件裝備）往上加，下面有試算。</div>';
+        '成功率最高 ' + FUSION.cap + '%，可以放「輔 G」（' + (FUSION_AUX ? '水晶、鑽石、各色寶石、鎔解石這類指定材料' : '精煉材料') +
+        '，或 +5 以上的非配件裝備）往上加，下面有試算。</div>';
       // 類型分頁（G 化／命中型／必殺型／攻速型）：一次只顯示一種的書單，下面試算的「種類」也會跟著切
       if (kinds.length > 1) {
         html += '<div class="fusion-kind-tabs" data-fusion-tabs="' + id + '">' + kinds.map(function (k, i) {
@@ -3123,7 +3161,12 @@
           auxState.map(function (a, i) {
             var html = '<div class="fusion-aux-row" data-slot="' + i + '"><span class="fusion-aux-no">' + (i + 1) + '</span>' +
               '<select data-a="pick"><option value="">（空）</option>' + gemOptions + '<option value="gear">裝備（自己填）</option></select>';
-            if (a.type === "gear") {
+            if (a.type === "gear" && FUSION_AUX) {
+              html += '<label class="fusion-aux-lv" title="每件裝備的物品頁都有寫它當輔G的基礎值">輔G值<input type="number" data-a="base" min="0" step="0.5" value="' + (a.base || 0) + '"></label>' +
+                '<select data-a="refine">' + [5, 6, 7, 8, 9, 10, 11, 12].map(function (r) {
+                  return '<option value="' + r + '"' + ((a.refine || 5) === r ? ' selected' : '') + '>+' + r + '</option>';
+                }).join('') + '</select>';
+            } else if (a.type === "gear") {
               html += '<select data-a="tier">' + Object.keys(FUSION_TIER_LABEL).map(function (k) {
                 return '<option value="' + k + '"' + (a.tier === k ? ' selected' : '') + '>' + FUSION_TIER_LABEL[k] + '</option>';
               }).join('') + '</select>' +
@@ -3140,15 +3183,18 @@
           var pick = row.querySelector('[data-a="pick"]');
           pick.value = a.type === "gem" ? "gem:" + a.gemId : a.type === "gear" ? "gear" : "";
           pick.addEventListener("change", function () {
-            if (pick.value === "gear") { a.type = "gear"; a.tier = a.tier || "n"; a.lv = a.lv || lv || 1; a.refine = a.refine || 7; }
+            if (pick.value === "gear") {
+              a.type = "gear"; a.tier = a.tier || "n"; a.lv = a.lv || lv || 1; a.refine = a.refine || 7;
+              if (a.base == null) a.base = (FUSION_AUX && FUSION_AUX[box.getAttribute("data-fusion-sim")]) || 10; // 預設拿這件自己的值
+            }
             else if (pick.value) { a.type = "gem"; a.gemId = Number(pick.value.slice(4)); }
             else a.type = "";
             renderAux();
           });
-          ["tier", "lv", "refine"].forEach(function (f) {
+          ["tier", "lv", "base", "refine"].forEach(function (f) {
             var el = row.querySelector('[data-a="' + f + '"]');
             if (!el) return;
-            el.addEventListener(f === "lv" ? "input" : "change", function () {
+            el.addEventListener(f === "lv" || f === "base" ? "input" : "change", function () {
               a[f] = f === "tier" ? el.value : Number(el.value) || 0;
               compute();
             });
@@ -3161,7 +3207,7 @@
           var g = FUSION.gems.find(function (x) { return x.id === a.gemId; });
           return g ? g.pt : 0;
         }
-        if (a.type === "gear") return fusionGearPt(a.tier, a.lv, a.refine);
+        if (a.type === "gear") return FUSION_AUX ? fusionAuxPt(a.base, a.refine) : fusionGearPt(a.tier, a.lv, a.refine);
         return 0;
       }
       function compute() {
@@ -3237,6 +3283,7 @@
     html += '<div class="price-row">' +
       '<span>販售價 <b>' + fmtNum(item.sell) + '</b></span>' +
       '<span>購買價 <b>' + fmtNum(item.buy) + '</b></span>' +
+      (MARKET.buy[id] != null ? '<span>大盤商收購 <b>' + fmtNum(MARKET.buy[id]) + '</b></span>' : '') +
       '</div>';
 
     html += refineGuardHtml(id);
@@ -3338,6 +3385,7 @@
         ? '⚠️ 這個部位不能洗發條：發條強化只能用在 ' + windSlotNames() + '，其他部位在強化面板會顯示「這個部位不能洗發條」，沒有按鈕。'
         : '✅ 這個部位可以洗發條（要先裝備起來，強化面板只列身上穿的裝備）。');
       html += '<div class="empty-note" style="padding:6px 0 0;">' + notes.map(escapeHtml).join('<br>') + '</div>';
+      html += fusionAuxRowHtml(id);
       html += refineTableHtml(eq);
       html += apprSectionHtml(eq);
       html += fusionSectionHtml(id, eq);
@@ -3361,6 +3409,7 @@
       html += '</tbody></table>';
     }
     html += mallSectionHtml(id);
+    html += marketSectionHtml(id);
     html += petDexRewardHtml(id);
 
     var radixEntries = (RADIX_INDEX[id] || []).slice();
@@ -3534,6 +3583,8 @@
     }
 
     html += exchangeSectionHtml(id);
+    html += wardrobeSectionHtml(id);
+    html += dungeonDropSectionHtml(id);
     html += extraSourcesHtml(id);
     html += gemSectionHtml(id);
     html += stoneSectionHtml(id);
@@ -3557,7 +3608,8 @@
     html += '<div class="section-title">會掉落此物品的怪物 <span class="count">(' + dropMonsterCount(id) + ')</span></div>';
 
     if (!drops.length) {
-      html += '<div class="empty-note">目前資料中沒有任何怪物掉落這個物品（可能來自商店、任務、製作或活動）。</div>';
+      html += '<div class="empty-note">' + (DUNGEON_DROPS_BY_ITEM[id] ? '怪物本身的掉落表沒有這個物品，是在上面「副本名聲材料」那幾張副本地圖打怪才會掉。'
+        : '目前資料中沒有任何怪物掉落這個物品（可能來自商店、任務、製作或活動）。') + '</div>';
     } else {
       html += dropCalcBar();
       var showAdj = dropAdjActive();
@@ -3641,6 +3693,65 @@
     html += exchangeTableHtml('可拿去跟 NPC 兌換', EXCHANGE_BY_GIVE[id] || []);
     if (html) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">「升級」「拆解」要交的是那件裝備本身（精煉值要夠、不能是鎖定或穿在身上的）；有 Lv 標示的要角色等級到了才能換；「限換一次」是每個角色只能換一次。</div>';
     return html;
+  }
+
+  // ---------- 10-23 改版：大盤商、時裝設計師、副本名聲材料（資料：希望/huntIndex.js）----------
+  function npcTownsText(npc) {
+    return ((npc && npc.towns) || []).map(townName).join("／");
+  }
+  function marketSectionHtml(id) {
+    var sell = MARKET.sell[id], buy = MARKET.buy[id];
+    if (sell == null && buy == null) return '';
+    var who = '〔' + escapeHtml(MARKET.npc.name || "大盤商") + '〕（' + escapeHtml(npcTownsText(MARKET.npc)) + '）';
+    var html = '<div class="section-title">大盤商</div><div style="font-size:13px;line-height:1.9;">';
+    if (sell != null) html += '可以跟 ' + who + ' 買，每個 <b class="rate">' + fmtNum(sell) + '</b> 金幣。<br>';
+    if (buy != null) html += '賣給 ' + who + ' 每個 <b class="rate">' + fmtNum(buy) + '</b> 金幣（取代一般的販售價 ' + fmtNum((ITEMS[id] || {}).sell || 0) + '）。';
+    return html + '</div>';
+  }
+  function wardrobeSectionHtml(id) {
+    var rows = WARDROBE_BY_ITEM[id] || [];
+    if (!rows.length) return '';
+    var html = '<div class="section-title">時裝設計師 <span class="count">(' + rows.length + ')</span></div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">找〔' + escapeHtml(WARDROBE.npc.name || "時裝設計師") + '〕（' + escapeHtml(npcTownsText(WARDROBE.npc)) +
+      '）抽：系列綁定的怪每殺滿指定數量就能抽一次，從系列裡照權重抽一件。擊殺數跟怪物圖鑑共用，已經殺過的也算。</div>';
+    html += '<table class="dtable"><thead><tr><th>系列</th><th>綁定的怪</th><th>每抽一次要殺</th><th>抽到這件</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var mon = MONSTERS[String(r.series.monster)];
+      html += '<tr><td>' + escapeHtml(r.series.name) + '</td>' +
+        '<td>' + (mon ? '<span class="name-link" data-goto-monster="' + r.series.monster + '">' + escapeHtml(mon.name) + '</span> <span class="lv-tag">Lv.' + mon.lv + '</span>' : '#' + r.series.monster) + '</td>' +
+        '<td>' + fmtNum(r.series.kills) + ' 隻</td>' +
+        '<td><span class="rate' + (r.pct < 1 ? ' low' : '') + '">' + boxPctText(r.pct) + '</span></td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+  function dungeonDropSectionHtml(id) {
+    var rows = DUNGEON_DROPS_BY_ITEM[id] || [];
+    if (!rows.length) return '';
+    var html = '<div class="section-title">副本名聲材料 <span class="count">(' + rows.length + ' 張地圖)</span></div>';
+    html += '<div class="empty-note" style="padding:0 0 10px;">在這幾張副本地圖打倒任何怪物，每隻都會各自擲一次（機率會乘上等級差等掉落倍率）：</div>';
+    html += '<table class="dtable"><thead><tr><th>副本地圖</th><th>每隻怪的機率</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += '<tr><td><span class="name-link" data-open-map="' + r.map + '">' + escapeHtml(mapName(r.map)) + '</span></td>' +
+        '<td><span class="' + rateClass(r.r) + '">' + pct(r.r) + '</span></td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+  // 怪物頁：圖鑑銀牌／金牌、綁這隻怪的時裝設計師系列
+  function monsterDexHtml(id) {
+    var dex = MONSTER_DEX[id];
+    var series = WARDROBE_BY_MONSTER[id] || [];
+    if (!dex && !series.length) return '';
+    var html = '<div class="section-title">怪物圖鑑／時裝設計師</div><div style="font-size:13px;line-height:1.9;">';
+    if (dex) {
+      html += '怪物圖鑑：殺 1 隻 <b>銅牌</b>、累計 <b>' + fmtNum(dex[0]) + '</b> 隻 <b>銀牌</b>（這隻怪掉落 +' + MONSTER_DEX_BONUS.silver + '%）、' +
+        '累計 <b>' + fmtNum(dex[1]) + '</b> 隻 <b>金牌</b>（掉落 +' + MONSTER_DEX_BONUS.gold + '%）。<br>';
+    }
+    series.forEach(function (s) {
+      html += '時裝設計師〈' + escapeHtml(s.name) + '〉：每殺 <b>' + fmtNum(s.kills) + '</b> 隻抽一次，可能抽到 ' +
+        s.items.filter(function (r) { return r[1] > 0; }).slice(0, 6).map(function (r) { return itemChip(r[0]); }).join('') +
+        (s.items.length > 6 ? ' 等 ' + s.items.length + ' 件' : '') + '<br>';
+    });
+    return html + '</div>';
   }
 
   // ---------- 其他 2026-09-28 新增的取得方式（擲十八啦、黃金臭襪子、每日任務獎勵道具）----------
@@ -4573,6 +4684,7 @@
     // 變身／召喚：自己會變成什麼、以及是由誰變身／召喚出來的
     html += monsterVariantsHtml(mon);
     html += monsterGroggyHtml(mon);
+    html += monsterDexHtml(id);
 
     var originHtml = monsterOriginsHtml(id);
     if (monsterReactions(id).length || originHtml) {
@@ -5946,7 +6058,8 @@
     drop: "打怪掉落", box: "開箱", shop: "商店", gamble: "擲十八啦", fusion: "合成", forge: "鍛造", radix: "拉迪克斯",
     hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
     alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換",
-    marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）", petdex: "寵物圖鑑獎勵"
+    marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）", petdex: "寵物圖鑑獎勵",
+    wardrobe: "時裝設計師", bpetdex: "戰寵裝備圖鑑"
   };
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
@@ -7162,6 +7275,11 @@
       html += '<div class="equip-box" style="margin-bottom:14px;font-size:13px;">這張地圖是副本：' +
         dungeonsHere.map(function (did) { return '<span class="name-link" data-open-dungeon="' + did + '">' + escapeHtml(DUNGEON_BY_ID[did].name) + '</span>'; }).join("、") +
         '（副本頁有首領、區域配置和寶箱）</div>';
+    }
+    if (DUNGEON_DROPS[mid]) {
+      html += '<div class="equip-box" style="margin-bottom:14px;font-size:13px;line-height:1.9;">名聲材料：在這張地圖打倒任何怪物，每隻都會各自擲 ' +
+        DUNGEON_DROPS[mid].map(function (r) { return itemChip(r[0], null, '<span class="' + rateClass(r[1]) + '">' + pct(r[1]) + '</span>'); }).join(' ') +
+        '（不在下面的掉落表裡）</div>';
     }
 
     html += '<div class="stat-grid">' +

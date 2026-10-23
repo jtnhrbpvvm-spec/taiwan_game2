@@ -474,6 +474,7 @@
     renderBattlePet(c);
     renderPotions(c);
     renderTagLists(c);
+    renderMonsterDex();
     renderSpot(c);
     renderIndividuality(c);
     renderQuests(c);
@@ -2085,9 +2086,31 @@
     renderBpetDex();
   }
 
-  // ---------- 戰寵圖鑑（v108 新增）----------
-  // 存檔最外層 collection.battlePets = [{kind, grade}]（每個種類 0~4 階各一筆，照 kind、grade 排序），
-  // collection.bpetGear = [戰寵裝備 itemId]（排序）。bundle collectBattlePet()/collectGear()；目前只有圖鑑顯示，沒有加成。
+  // ---------- 戰寵圖鑑（v108 新增，v116 改格式）----------
+  // 存檔最外層 collection.battlePets：
+  //   v108~v115 [{kind, grade}]（每個種類 0~4 階各一筆）
+  //   v116 起   [{kind, grade, growth}]：0 階 growth 是 null，1~4 階每種天賦（growthTypes 的 id，A/AA/AAA/S）各一筆，
+  //             遊戲用 `${kind}:${grade}:${growth ?? "-"}` 比對，所以 1 階以上沒帶 growth 的舊格式不算收集到。
+  //             排序照 kind、grade、growth（null 當 -1，bundle Kh）。4 階四種天賦都收齊，那個種類的忠誠累積 100% → 200%（bundle Xh，遊戲圖鑑顯示「忠誠 +100%」）。
+  //             2026-10-23 進離線版實測：補齊後遊戲戰寵圖鑑顯示 68 / 68、四隻都「忠誠 +100%」。
+  // collection.bpetGear = [戰寵裝備 itemId]（排序）。bundle collectBattlePet()/collectGear()。
+  function bpetDexEntries() {
+    var kinds = BATTLE_PET_INFO.kinds || [];
+    var growths = (BATTLE_PET_INFO.growthTypes || []).map(function (g) { return g.id; });
+    var withGrowth = saveVersion() >= 116;
+    var pets = [];
+    kinds.forEach(function (k) {
+      var n = (k.stages || []).length || 5;
+      for (var g = 0; g < n; g++) {
+        if (!withGrowth) pets.push({ kind: k.kind, grade: g });
+        else if (g === 0) pets.push({ kind: k.kind, grade: 0, growth: null });
+        else growths.forEach(function (gr) { pets.push({ kind: k.kind, grade: g, growth: gr }); });
+      }
+    });
+    return pets.sort(function (a, b) {
+      return a.kind - b.kind || a.grade - b.grade || (a.growth == null ? -1 : a.growth) - (b.growth == null ? -1 : b.growth);
+    });
+  }
   function renderBpetDex() {
     var box = document.getElementById("bpetDexBox");
     if (!box) return;
@@ -2099,20 +2122,22 @@
     var col = saveData.collection || (saveData.collection = { pets: [], gear: [] });
     if (!Array.isArray(col.battlePets)) col.battlePets = [];
     if (!Array.isArray(col.bpetGear)) col.bpetGear = [];
-    var kinds = BATTLE_PET_INFO.kinds || [];
     var gearAll = (BATTLE_PET_INFO.gear || []).map(function (g) { return g.id; });
-    var petTotal = kinds.reduce(function (s, k) { return s + ((k.stages || []).length || 5); }, 0);
+    var allPets = bpetDexEntries();
+    var key = function (p) { return p.kind + ":" + p.grade + ":" + (p.growth == null ? "-" : p.growth); };
+    var have = {};
+    col.battlePets.forEach(function (p) { have[key(p)] = true; });
+    var got = allPets.filter(function (p) { return have[key(p)]; }).length;
     box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
-      text: "戰寵型態已收集 " + col.battlePets.length + " / " + petTotal + "、戰寵裝備已收集 " + col.bpetGear.length + " / " + gearAll.length + "（目前圖鑑只有顯示，沒有能力加成）" }));
+      text: "戰寵型態已收集 " + got + " / " + allPets.length + "、戰寵裝備已收集 " + col.bpetGear.length + " / " + gearAll.length +
+        (saveVersion() >= 116 ? "（v116 起每階要分天賦 A／AA／AAA／S 各收一次；終級型態四種天賦收齊，那種戰寵「忠誠 +100%」）" : "（這個版本的圖鑑只有顯示，沒有能力加成）") }));
+    if (saveVersion() >= 115) {
+      box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+        text: "戰寵裝備圖鑑獎勵已領到第 " + (saveData.collection.bpetGearDexClaimed || 0) + " 段（bpetGearDexClaimed，精靈石要在遊戲裡按領取；補齊裝備後回遊戲就能一路領）。" }));
+    }
     var btn = el("button", { class: "btn btn-accent btn-sm", text: "📖 戰寵圖鑑全部補齊" });
     btn.addEventListener("click", function () {
-      var pets = [];
-      kinds.forEach(function (k) {
-        var n = (k.stages || []).length || 5;
-        for (var g = 0; g < n; g++) pets.push({ kind: k.kind, grade: g });
-      });
-      pets.sort(function (a, b) { return a.kind - b.kind || a.grade - b.grade; });
-      col.battlePets = pets;
+      col.battlePets = bpetDexEntries();
       var gearSet = {};
       col.bpetGear.concat(gearAll).forEach(function (id) { gearSet[id] = true; });
       col.bpetGear = Object.keys(gearSet).map(Number).sort(function (a, b) { return a - b; });
@@ -2120,6 +2145,64 @@
       renderBpetDex();
     });
     box.appendChild(btn);
+  }
+
+  // ---------- 怪物圖鑑・時裝設計師（v110／v117 新增）----------
+  // 存檔最外層 collection.monsterKills = {怪物id: 累計擊殺數}：殺 1 隻銅牌、到 MONSTER_DEX[id][0] 銀牌（這隻怪掉落 +1%）、
+  //   到 MONSTER_DEX[id][1] 金牌（+5%）（bundle QD()／$D）；同名同等級的怪遊戲讀檔時會併到同一個 id（twinHead）。
+  //   collection.monsterDexNew = [剛升牌、還沒看過的怪物id]（圖鑑頁的 NEW 標記，看過就清掉）。
+  // collection.wardrobeDraws = {系列id: 已抽次數}：時裝設計師的系列綁一隻怪，可抽次數 = floor(那隻怪的擊殺數 / kills) − 已抽次數（bundle rC()），
+  //   所以改擊殺數也會順便多出抽獎次數。
+  function renderMonsterDex() {
+    var box = document.getElementById("monsterDexBox");
+    if (!box) return;
+    box.innerHTML = "";
+    var dex = window.MONSTER_DEX || {};
+    var series = window.WARDROBE_SERIES || [];
+    if (saveVersion() < 110) {
+      box.appendChild(el("div", { class: "note", text: "這個存檔是 v" + saveVersion() + "，還沒有怪物圖鑑欄位（v110 起才有）。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var col = saveData.collection || (saveData.collection = { pets: [], gear: [] });
+    if (!col.monsterKills || typeof col.monsterKills !== "object") col.monsterKills = {};
+    var kills = col.monsterKills;
+    var ids = Object.keys(dex);
+    var count = { gold: 0, silver: 0, bronze: 0 };
+    ids.forEach(function (id) {
+      var k = kills[id] || 0;
+      if (k >= dex[id][1]) count.gold++;
+      else if (k >= dex[id][0]) count.silver++;
+      else if (k >= 1) count.bronze++;
+    });
+    box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+      text: "圖鑑共 " + ids.length + " 隻：金牌 " + count.gold + "、銀牌 " + count.silver + "、銅牌 " + count.bronze + "、未登錄 " + (ids.length - count.gold - count.silver - count.bronze) +
+        "。銀牌讓那隻怪掉落 +1%、金牌 +5%。" }));
+    var wardrobeOn = saveVersion() >= 117 && series.length;
+    var draws = wardrobeOn ? (col.wardrobeDraws && typeof col.wardrobeDraws === "object" ? col.wardrobeDraws : (col.wardrobeDraws = {})) : null;
+    var freeDraws = function (s) { return Math.max(0, Math.floor((kills[s.monster] || 0) / s.kills) - (draws[s.id] || 0)); };
+    if (wardrobeOn) {
+      var total = series.reduce(function (sum, s) { return sum + freeDraws(s); }, 0);
+      box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+        text: "時裝設計師：" + series.length + " 個系列，目前還能抽 " + total + " 次（可抽次數 = 綁定怪物的擊殺數 ÷ 每抽要殺的數量 − 已抽次數，所以改擊殺數也會多出抽獎次數）。" }));
+    }
+    var row = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;" });
+    var goldBtn = el("button", { class: "btn btn-accent btn-sm", text: "🏅 怪物圖鑑全部金牌" });
+    goldBtn.addEventListener("click", function () {
+      ids.forEach(function (id) { if ((kills[id] || 0) < dex[id][1]) kills[id] = dex[id][1]; });
+      toast("怪物圖鑑已全部金牌" + (wardrobeOn ? "（時裝設計師的抽獎次數也跟著變多，不要的話按旁邊的歸零）" : ""), "ok");
+      renderMonsterDex();
+    });
+    row.appendChild(goldBtn);
+    if (wardrobeOn) {
+      var zeroBtn = el("button", { class: "btn btn-sm", text: "🎟️ 時裝設計師可抽次數歸零" });
+      zeroBtn.addEventListener("click", function () {
+        series.forEach(function (s) { draws[s.id] = Math.floor((kills[s.monster] || 0) / s.kills); });
+        toast("時裝設計師的可抽次數已歸零（擊殺數不變）", "ok");
+        renderMonsterDex();
+      });
+      row.appendChild(zeroBtn);
+    }
+    box.appendChild(row);
   }
 
   function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem, what) {
