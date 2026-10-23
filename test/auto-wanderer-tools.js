@@ -22,7 +22,8 @@ javascript:(function awTools() {
    *  17. 小工具設定：選單分頁的按鈕，在遊戲裡改下面這些設定，不用改檔案
    *  10. 單格模式：技能分頁的開關，開啟後寶石只佔一格、輔助寶石不用相鄰就生效；
    *      用小工具時一律不上傳排行榜（開啟書籤時會先跳出提醒）
-   *  18. 不上傳雲端存檔：用小工具時一律不上傳 Google 雲端存檔（遊戲會顯示沒登入 Google）
+   *  18. 不上傳雲端存檔：用小工具時一律不上傳 Google 雲端存檔（遊戲會顯示沒登入 Google）；
+   *      泰坦來襲照樣帶登入憑證，可以參加每日挑戰
    *  19. 商人選變異：在商人買技能寶石時跳出視窗，選要原本的形狀或哪一種變異形狀（能力相同）；
    *      商人的「主動技能」也賣自己職業的傳說技能寶石、「輔助技能」也賣穿梭寶石（價格固定，不能自己調整）
    *  20. 指定萃取、指定灌注：煉金的萃取／灌注視窗裡，每條詞綴旁有按鈕，指定萃取這條、或指定用哪顆符文取代這條；
@@ -41,7 +42,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V41';
+  const VERSION = 'V43';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2231,7 +2232,11 @@ javascript:(function awTools() {
     }
     if (typeof ui !== 'undefined') {
       for (const name of Object.keys(ui)) {
-        const f = ui[name];
+        /* 跳過 getter／setter：遊戲 v0.2.1074 起 ui.alchOpt 是 getter，會去讀 S.set，
+         * 還沒進入角色（S 是 null）時一讀就出錯，整個小工具會在這裡中斷（提醒視窗跳了、按鈕卻都沒出現） */
+        const desc = Object.getOwnPropertyDescriptor(ui, name);
+        if (!desc || desc.get || desc.set) continue;
+        const f = desc.value;
         if (typeof f !== 'function') continue;
         const src = srcOf(f), out = patchSrc(src);
         if (out === src) continue;
@@ -3208,6 +3213,23 @@ javascript:(function awTools() {
     /* 小工具一裝上就馬上處理，不等計時器 */
     gcStash();
     if (typeof window.gcUpload === 'function') window.gcUpload = () => Promise.resolve(false);
+    /* 泰坦來襲（rdSend 回報貢獻、rdBuy 商店購買）要帶 Google 登入憑證，伺服器才收（沒登入不能打每日挑戰）。
+     * 這兩個函式組請求標頭是同步的，所以只在它們執行的那一下把收起來的憑證暫時放回 GC.tok，執行完馬上拿掉；
+     * 不呼叫 gcPut()，瀏覽器裡記的登入狀態不變，雲端存檔照樣不會上傳。
+     * 注意：遊戲啟動那次存檔會先呼叫 rdSend()，那時小工具還沒回來，如果剛好有還沒送出的每日挑戰點數會被遊戲清掉。 */
+    const withTok = name => {
+      const f = window[name];
+      if (typeof f !== 'function') return;
+      window[name] = function () {
+        let tok = '';
+        try { tok = (JSON.parse(localStorage.getItem(GC_STASH)) || {}).tok || ''; } catch (e) {}
+        if (!tok || GC.tok) return f.apply(this, arguments);
+        GC.tok = tok;
+        try { return f.apply(this, arguments); } finally { GC.tok = ''; }
+      };
+    };
+    withTok('rdSend');
+    withTok('rdBuy');
     /* 被遊戲鎖住的分頁（TAB.gone，例如另一個分頁開了遊戲）不動憑證 */
     every(() => {
       try { if (typeof TAB !== 'undefined' && TAB.gone) return; } catch (e) {}
