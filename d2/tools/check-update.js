@@ -5,7 +5,7 @@
 //   https://d2survivors.lol/download/latest.yml  桌面版自動更新用的版本資訊（electron-updater generic）
 //   https://d2survivors.lol/changelog.json       更新紀錄（書籤不翻這些行）
 //   https://d2survivors.lol/play/                網頁版遊戲；它載入的 ko-*.js 是完整的「英文 → 韓文」字串表
-//   keepSave-*.js                                技能資料，用來比對書籤的進化表（EVO）
+//   技能資料（含 evolution:{passive: 的檔，20261024 起在 itemArt-*.js，之前在 keepSave-*.js），用來比對書籤的進化表（EVO）
 // 每次檢查會把字串表存在 tools/cache/，下次用來標出「這次新增」的字串。
 'use strict';
 const fs = require('fs');
@@ -41,7 +41,9 @@ async function findAssets() {
     for (const m of text.matchAll(/[/"'`]([\w.-]+-([\w-]{8})\.js)/g)) if (/[A-Z0-9_]/.test(m[2])) add(m[1]);
   }
   const pick = re => [...seen.keys()].find(n => re.test(n));
-  return { names: [...seen.keys()], text: seen, ko: pick(/^ko-/), keepSave: pick(/^keepSave-/) };
+  // 技能資料所在的檔案會隨改版搬家：看內容找，不看檔名
+  const skills = [...seen.keys()].find(n => !/^ko-/.test(n) && seen.get(n)?.includes('evolution:{passive:'));
+  return { names: [...seen.keys()], text: seen, ko: pick(/^ko-/), keepSave: skills };
 }
 
 // 在假的瀏覽器環境裡執行 d2_zh.js，拿出 D2I18N.translate
@@ -98,9 +100,10 @@ function untranslated(zh) {
 }
 
 // 書籤的進化表（EVO）和遊戲的技能資料比對
-function checkEvolutions(keepSave, source) {
+function checkEvolutions(keepSave, source, allText = keepSave) {
   const names = {};
-  for (const m of keepSave.matchAll(/(\w+):\{name:`([^`]+)`/g)) if (!(m[1] in names)) names[m[1]] = m[2];
+  // 被動的名稱可能在別的檔（例如共用被動 frw、fcr），所以名稱從所有檔案找
+  for (const m of allText.matchAll(/(\w+):\{name:`([^`]+)`/g)) if (!(m[1] in names)) names[m[1]] = m[2];
   const heads = [...keepSave.matchAll(/(\w+):\{name:`([^`]+)`/g)].map(m => ({ at: m.index, name: m[2] }));
   const game = [];
   for (const m of keepSave.matchAll(/evolution:\{passive:`(\w+)`,into:`(\w+)`[^}]*\}/g)) {
@@ -160,7 +163,7 @@ async function main() {
   for (const r of unique) console.log(`  ${r.isNew ? '＋' : '　'} ${r.en}\n      現在：${r.zh}\n      韓文：${r.kr}`);
 
   if (assets.keepSave) {
-    const evo = checkEvolutions(assets.text.get(assets.keepSave), source);
+    const evo = checkEvolutions(assets.text.get(assets.keepSave), source, [...assets.text.values()].filter(Boolean).join('\n'));
     console.log(`\n== 進化表：遊戲 ${evo.count} 組 ==`);
     if (!evo.missing.length && !evo.extra.length) console.log('  書籤的 EVO 表和遊戲一致');
     for (const r of evo.missing) console.log(`  遊戲有、書籤沒有：${r}`);
