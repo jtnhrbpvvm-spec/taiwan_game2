@@ -201,7 +201,9 @@
   summary { cursor: pointer; font-weight: bold; color: var(--cream); }
   details p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
 
-  footer { text-align: center; color: #6f6054; font-size: 12px; margin-top: 30px; }
+  footer { text-align: center; color: #6f6054; font-size: 12px; margin-top: 30px; line-height: 1.7; }
+  footer p { margin: 0 0 10px; }
+  footer b { color: #8f7c62; }
 
   .toast { position: fixed; left: 50%; bottom: 26px; z-index: 99; transform: translate(-50%, 20px);
     padding: 10px 20px; border-radius: 999px; font-weight: bold; font-size: 14px; pointer-events: none;
@@ -405,7 +407,10 @@
     </details>
   </section>
 
-  <footer>非官方玩家翻譯，與遊戲作者及暴雪娛樂無關。Diablo® 為 Blizzard Entertainment, Inc. 的商標。</footer>
+  <footer>
+    <p><b>聲明</b>　這是玩家自製的非官方中文化，與 D2 Survivors 作者及 Blizzard Entertainment 皆無關，也未獲其授權或背書。本工具免費提供，只修改玩家自己電腦上顯示的文字，不包含也不散布遊戲本身的程式、圖片、音效或字型。部分譯名參考台灣攻略站「易牙居」的中英對照，謹此致謝。Diablo® 為 Blizzard Entertainment, Inc. 的商標，遊戲內容的權利屬於各自的權利人。如果權利人認為本工具不妥，請透過 <a href="https://github.com/jtnhrbpvvm-spec/taiwan_game2" target="_blank" rel="noopener">GitHub</a> 聯絡我們，我們會立即修正或下架。</p>
+    <p lang="en"><b>Disclaimer</b>　This is an unofficial, fan-made Traditional Chinese translation. It is not affiliated with, authorized, or endorsed by the author of D2 Survivors or by Blizzard Entertainment. It is free, and it only changes the text shown on the player's own computer; it does not include or distribute any of the game's code, art, sound, or fonts. Some item names follow the English–Chinese glossary of the Taiwanese fan site 易牙居 (Iya), with thanks. Diablo® is a trademark of Blizzard Entertainment, Inc.; all game content belongs to its respective owners. If you hold rights and object to this tool, please contact us on <a href="https://github.com/jtnhrbpvvm-spec/taiwan_game2" target="_blank" rel="noopener">GitHub</a> and we will change or remove it promptly.</p>
+  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
