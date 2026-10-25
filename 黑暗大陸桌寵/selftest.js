@@ -98,6 +98,17 @@ async function run(t) {
     check("收入：拿到／賣出", book.obtained["治癒藥水"] === 3 && book.obtained["箭"] === 1500 && book.sold["【精良】短劍"].gold === 1234 && book.soldGold === 1234, JSON.stringify(book.obtained));
     t.openIncome();
     await sleep(1500);
+    const town = await t.getIncomeWin().webContents.executeJavaScript(`document.getElementById("zone").textContent`);
+    check("收入總覽：在村莊時說明出發後會顯示地圖", /村莊/.test(town), town.slice(0, 60));
+    // 在收入總覽視窗裡畫迷霧古林（存檔每 3 秒會蓋回真的位置，所以直接叫畫圖的函式）：要列出怪物分布、稀有首領、可獲得物品
+    const zoneText = await t.getIncomeWin().webContents.executeJavaScript(`(() => {
+      const box = document.getElementById("zone");
+      box.dataset.key = "test";
+      box.innerHTML = zoneGuideHtml({ type: "zone", id: "elvenForest" });
+      return box.textContent;
+    })()`);
+    check("收入總覽：目前地圖的怪物、稀有首領、可獲得物品", /迷霧古林/.test(zoneText) && /古老樹精/.test(zoneText) && /可獲得的物品/.test(zoneText) && /水晶魔杖/.test(zoneText), zoneText.replace(/\s+/g, " ").slice(0, 120));
+    await t.getIncomeWin().webContents.executeJavaScript(`document.getElementById("zone").scrollIntoView()`);
     await shot(t.getIncomeWin(), "income");
 
     // ── 變身 ──

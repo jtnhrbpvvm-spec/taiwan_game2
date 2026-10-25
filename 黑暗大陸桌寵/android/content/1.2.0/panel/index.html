@@ -58,6 +58,19 @@
       table.list td, table.list th { padding: 4px 4px; text-align: right; border-bottom: 1px solid #2f281f; }
       table.list td:first-child, table.list th:first-child { text-align: left; }
       table.list th { font-weight: normal; color: var(--muted); font-size: 12px; }
+      /* 目前地圖（zones.js 的 zoneGuideHtml） */
+      #zone .zg-head { margin: 0 0 4px; font-size: 15px; color: #f3d9a0; }
+      #zone .zg-head a { float: right; font-size: 13px; color: var(--gold); text-decoration: none; }
+      #zone .tagz { font-size: 12px; color: #1b120a; background: #c9973f; border-radius: 4px; padding: 0 6px; }
+      #zone .dim { margin: 4px 0; font-size: 12px; }
+      #zone .zg-sub { margin: 10px 0 4px; color: var(--gold); font-weight: bold; }
+      #zone table.zg-t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+      #zone table.zg-t td, #zone table.zg-t th { padding: 4px 3px; text-align: right; border-bottom: 1px solid #2f281f; }
+      #zone table.zg-t td:first-child, #zone table.zg-t th:first-child { text-align: left; }
+      #zone table.zg-t th { font-weight: normal; color: var(--muted); font-size: 12px; }
+      #zone table.zg-t small { margin-left: 4px; color: var(--muted); font-size: 11px; }
+      #zone tr.rare td:first-child { color: #ffb36a; }
+      #zone td.from { color: var(--muted); font-size: 12px; }
       #follow { width: 100%; text-align: left; }
       .acct { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #2f281f; }
       .acct:last-child { border-bottom: 0; }
@@ -188,6 +201,10 @@
           <div class="stats" id="income-stats"></div>
         </div>
         <div class="card">
+          <h2>目前地圖</h2>
+          <div id="zone"></div>
+        </div>
+        <div class="card">
           <h2 id="income-got-title">拿到的東西</h2>
           <div id="income-got"></div>
         </div>
@@ -265,6 +282,8 @@
       </div>
     </div>
 
+    <!-- 地圖資料（從黑暗大陸攻略整理的，電腦版 tools/gen-zones.js 產生；放在內容的最上層，跟著小檔案更新走） -->
+    <script src="../zones.js"></script>
     <script>
       // 設定畫面。跟桌寵服務之間靠 window.Android（MainActivity.Bridge）溝通。
       const $ = (id) => document.getElementById(id);
@@ -541,7 +560,21 @@
         $("income-got").innerHTML = listHtml(["物品", "數量"], got.map(([name, n]) => [name, "×" + num(n)]));
         $("income-sold-title").textContent = `自動賣出（${sold.length} 種）`;
         $("income-sold").innerHTML = listHtml(["物品", "數量", "賣得"], sold.map(([name, s]) => [name, "×" + num(s.n), num(s.gold)]));
+        // 目前地圖：位置變了才重畫（每 3 秒更新一次，不要讓捲動位置一直跳）
+        const key = incomePet + ":" + JSON.stringify(p.here || null);
+        if ($("zone").dataset.key !== key) {
+          $("zone").dataset.key = key;
+          $("zone").innerHTML = !window.zoneGuideHtml ? '<p class="dim" style="margin: 0">沒有地圖資料。</p>'
+            : p.here ? zoneGuideHtml(p.here) : '<p class="dim" style="margin: 0">還沒進入遊戲，讀不到角色在哪。</p>';
+        }
       }
+      // 「看攻略」用手機的瀏覽器開
+      $("zone").addEventListener("click", (e) => {
+        const link = e.target.closest("[data-guide]");
+        if (!link) return;
+        e.preventDefault();
+        Android.action("guide:" + link.dataset.guide);
+      });
       $("income-chips").addEventListener("click", (e) => {
         const i = e.target.dataset.income;
         if (i === undefined) return;

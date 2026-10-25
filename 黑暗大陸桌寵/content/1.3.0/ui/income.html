@@ -29,6 +29,18 @@
       th { font-weight: normal; color: #b39a72; font-size: 12px; }
       .empty { color: #8a765a; padding: 4px 0; }
       .note { margin-top: 14px; color: #8a765a; font-size: 12px; }
+      /* 目前地圖（zones.js 的 zoneGuideHtml） */
+      #zone { margin: 4px 0 6px; padding: 10px 12px; background: #261d17; border: 1px solid #4a3a28; border-radius: 6px; }
+      #zone .zg-head { margin: 0 0 4px; font-size: 15px; color: #f3d9a0; }
+      #zone .zg-head a { float: right; font-size: 13px; color: #d9a54a; text-decoration: none; }
+      #zone .zg-head a:hover { text-decoration: underline; }
+      #zone .tagz { font-size: 12px; color: #1b120a; background: #c9973f; border-radius: 4px; padding: 0 6px; }
+      #zone .dim { margin: 4px 0; color: #8a765a; font-size: 12px; }
+      #zone .zg-sub { margin: 10px 0 4px; color: #d9a54a; font-weight: bold; }
+      #zone table.zg-t { font-size: 13px; }
+      #zone table.zg-t small { margin-left: 6px; color: #b39a72; font-size: 11px; }
+      #zone tr.rare td:first-child { color: #ffb36a; }
+      #zone td.from { color: #b39a72; font-size: 12px; }
     </style>
   </head>
   <body>
@@ -36,11 +48,18 @@
     <p class="since" id="since"></p>
     <div class="tabs" id="tabs" hidden></div>
     <div id="view"></div>
+    <div id="zone-wrap">
+      <h2>目前地圖</h2>
+      <div id="zone"></div>
+    </div>
+    <div id="lists"></div>
     <p class="note">
       只記這次打開桌寵以來的，下次打開會重新開始。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
       拿到和賣出的東西照遊戲左下角訊息框的「掉落紀錄」，遊戲視窗藏著時桌寵會幫忙把它打開來抄。
       金幣淨增減＝存檔金幣的差，包含打怪掉的錢、自動賣出所得，也扣掉買東西、傳送等花費。
     </p>
+    <!-- 地圖資料（從黑暗大陸攻略整理的，tools/gen-zones.js 產生） -->
+    <script src="../zones.js"></script>
     <script src="income.js"></script>
   </body>
 </html>

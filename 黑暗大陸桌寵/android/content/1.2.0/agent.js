@@ -210,6 +210,8 @@
     if (lastSave && lastSave.id === s.id && lastSave.t !== s.t) out.events = diffEvents(lastSave, s);
     lastSave = s;
     Object.assign(out, { hasSave: true, name: s.name, cls: s.cls, level: s.level, morph: s.morph,
+      // 收入總覽的「目前地圖」用：存檔的 loc（{ type, id, floor }）；標題畫面時不給
+      loc: out.screen && out.screen !== "screen-game" ? null : s.loc,
       // 收入總覽用：每次存檔的時間、角色、總經驗、金幣、擊殺、死亡
       save: { id: s.id, t: s.t, totalExp: s.totalExp, gold: s.gold, kills: s.kills, deaths: s.deaths } }, describePlace(s, out.screen));
     return JSON.stringify(out);

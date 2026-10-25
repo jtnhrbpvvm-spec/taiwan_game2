@@ -877,6 +877,11 @@ async function pollGame(g) {
 
 // ── 收入總覽 ──────────────────────────────────────────────
 
+// 收入總覽「目前地圖」的攻略連結：用瀏覽器開（只開攻略網站）
+ipcMain.on("income:open-guide", (_e, url) => {
+  if (typeof url === "string" && url.startsWith("https://jtnhrbpvvm-spec.github.io/taiwan_game2/")) shell.openExternal(url);
+});
+
 function openIncome() {
   incomeWin = openPanel(incomeWin, "income.html", {
     width: 560,
@@ -888,7 +893,8 @@ function openIncome() {
 }
 
 ipcMain.handle("income:get", () => ({
-  pets: income.summary(settings.petCount, games.map(accountLabel)),
+  // here：每隻現在在哪（存檔的 loc；標題畫面時是 null），收入總覽畫「目前地圖」用
+  pets: income.summary(settings.petCount, games.map(accountLabel)).map((p, i) => ({ ...p, here: games[i]?.lastState?.place === "標題畫面" ? null : games[i]?.lastRaw?.loc ?? null })),
   classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
 }));
 

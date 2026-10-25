@@ -52,12 +52,31 @@ function render() {
       stat("死亡", num(p.deaths), p.deaths > 0 ? "minus" : ""),
       stat("每小時經驗", minutes >= 1 ? num((p.exp / minutes) * 60) : "—"),
     ),
+  );
+  // 目前地圖（#zone-wrap）排在數字下面、清單上面
+  document.getElementById("lists").replaceChildren(
     el("h2", { textContent: `拿到的東西（${obtained.length} 種）` }),
     table(["物品", "數量"], obtained.map(([name, n]) => [name, `×${num(n)}`])),
     el("h2", { textContent: `自動賣出（${sold.length} 種）` }),
     table(["物品", "數量", "賣得"], sold.map(([name, s]) => [name, `×${num(s.n)}`, num(s.gold)])),
   );
+  // 目前地圖：位置變了才重畫（每 3 秒更新一次，不要讓捲動位置一直跳）
+  const key = `${current}:${JSON.stringify(p.here)}`;
+  if (zoneBox.dataset.key !== key) {
+    zoneBox.dataset.key = key;
+    zoneBox.innerHTML = !window.zoneGuideHtml ? '<p class="dim">沒有地圖資料。</p>'
+      : p.here ? window.zoneGuideHtml(p.here) : '<p class="dim">還沒進入遊戲，讀不到角色在哪。</p>';
+  }
 }
+
+// 目前地圖的怪物分布、可獲得物品（資料來自黑暗大陸攻略）；「看攻略」用瀏覽器開
+const zoneBox = document.getElementById("zone");
+zoneBox.addEventListener("click", (e) => {
+  const link = e.target.closest("[data-guide]");
+  if (!link) return;
+  e.preventDefault();
+  window.incomeApi.openGuide(link.dataset.guide);
+});
 
 async function refresh() {
   data = await window.incomeApi.get();
