@@ -176,8 +176,18 @@ async function run(t) {
     const gameMenu = t.buildMenu(0).items.map((i) => i.label);
     const spoken = await speechOn();
     check("遊戲有更新時跳提醒、選單出現套用更新", gameMenu.some((l) => l?.startsWith("⬆ 套用遊戲更新")) && /黑暗大陸更新了/.test(spoken || ""), `${spoken}`);
+    // 桌寵靠在螢幕最右邊：對話框被推回畫面裡，尖角要對到桌寵
+    const tail = await t.petWin.webContents.executeJavaScript(`(async () => {
+      pet.x = innerWidth - 40; pet.action = "idle"; pet.idleLeftMs = 60000;
+      await new Promise((r) => setTimeout(r, 300));
+      const box = speech.getBoundingClientRect(), r = bodyRect(pet);
+      const tailX = box.left + parseFloat(getComputedStyle(speech, "::after").left);
+      return { tailX: Math.round(tailX), petX: Math.round((r.l + r.r) / 2), boxRight: Math.round(box.right), width: innerWidth };
+    })()`);
+    check("桌寵靠右邊時對話框尖角對到桌寵", Math.abs(tail.tailX - tail.petX) <= 18 && tail.boxRight <= tail.width, JSON.stringify(tail));
     await shot(t.petWin, "update-say");
-    check("選單有檢查更新", gameMenu.some((l) => l?.startsWith("檢查更新（桌寵 v")));
+    check("選單有檢查更新", gameMenu.some((l) => l?.startsWith("檢查更新（")));
+    check("從外殼啟動", !!global.petShell?.contentVersion, JSON.stringify({ shell: global.petShell?.shellVersion, content: global.petShell?.contentVersion }));
     // 勿擾（專注模式）：不跳對話，解除後才補講
     t.setClickThrough(true);
     await sleep(500);
@@ -209,7 +219,7 @@ async function run(t) {
     t.getHelp().close();
   } catch (e) {
     const where = await t.inGame(g0, `[document.querySelector(".screen.active")?.id, document.getElementById("dialog-layer")?.innerText?.slice(0, 200)].join(" | ")`);
-    check("測試中斷", false, `${e.message}（第一隻遊戲畫面：${where}）`);
+    check("測試中斷", false, `${e.message}（第一隻遊戲畫面：${where}）\n${e.stack}`);
     if (!g0.win.isDestroyed()) {
       g0.win.show();
       await sleep(1000);

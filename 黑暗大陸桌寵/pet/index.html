@@ -26,7 +26,8 @@
       }
       #speech.on { opacity: 1; }
       #speech::after {
-        content: ""; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 12px; margin-left: -7px;
+        /* --tail：桌寵在框裡的水平位置（pet.js placeAbove），桌寵靠邊時尖角才會對到牠 */
+        content: ""; position: absolute; left: var(--tail, 50%); bottom: -8px; width: 12px; height: 12px; margin-left: -7px;
         background: rgba(30, 22, 16, 0.96); border: solid #c9973f; border-width: 0 2px 2px 0; rotate: 45deg;
       }
       /* 調整大小的拉條面板：右鍵選單叫出來，浮在桌寵頭上 */

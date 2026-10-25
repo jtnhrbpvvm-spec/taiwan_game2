@@ -268,10 +268,15 @@ function placePanels() {
   if (sizerPet?.sprite) placeAbove(sizer, bodyRect(sizerPet));
 }
 
-/** 把提示框／面板擺在桌寵頭上，水平置中，不超出視窗。 */
+/**
+ * 把提示框／面板擺在桌寵頭上，水平置中，不超出視窗。
+ * 桌寵靠近螢幕左右邊緣時框會被推回畫面裡、不再正對桌寵，所以對話框的尖角（--tail）改指向桌寵的實際位置。
+ */
 function placeAbove(el, rect, gap = 8) {
-  const x = clamp((rect.l + rect.r) / 2 - el.offsetWidth / 2, 8, window.innerWidth - el.offsetWidth - 8);
+  const center = (rect.l + rect.r) / 2;
+  const x = clamp(center - el.offsetWidth / 2, 8, window.innerWidth - el.offsetWidth - 8);
   el.style.transform = `translate(${x}px, ${Math.max(4, rect.t - el.offsetHeight - gap)}px)`;
+  el.style.setProperty("--tail", `${clamp(center - x, 16, el.offsetWidth - 16)}px`);
 }
 
 // ── 更新提醒 ──────────────────────────────────────────────

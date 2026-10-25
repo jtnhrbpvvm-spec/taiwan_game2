@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>帳號管理</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 14px 18px 20px; font: 14px/1.6 "Microsoft JhengHei", sans-serif; color: #e9dcc0; background: #1d1612; }
+      h2 { margin: 14px 0 6px; font-size: 15px; color: #d9a54a; border-bottom: 1px solid #4a3a28; padding-bottom: 2px; }
+      h2:first-child { margin-top: 0; }
+      .row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #2f251d; }
+      .row .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .row .who small { color: #b39a72; margin-left: 6px; }
+      .row b { width: 4.5em; }
+      select, input { font: inherit; color: inherit; background: #2b211a; border: 1px solid #5a4630; border-radius: 6px; padding: 4px 8px; }
+      select { flex: 1; }
+      button { font: inherit; font-size: 13px; color: inherit; background: #2b211a; border: 1px solid #5a4630; border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+      button:hover { border-color: #d9a54a; }
+      button.primary { background: #c9973f; border-color: #c9973f; color: #1b120a; }
+      button.danger:hover { border-color: #d0533f; color: #f19a8a; }
+      form { display: grid; grid-template-columns: 4em 1fr; gap: 6px 8px; align-items: center; }
+      form .btns { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+      #msg { grid-column: 1 / -1; min-height: 1.4em; font-size: 13px; color: #9fd28a; }
+      #msg.bad { color: #f19a8a; }
+      .note { color: #b39a72; font-size: 13px; }
+      .warn { color: #f0b860; font-size: 13px; }
+      .empty { color: #8a765a; padding: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <h2>每隻桌寵用哪個帳號</h2>
+    <div id="pets"></div>
+    <p class="note">選了就會自動登入並繼續冒險。同一個帳號只能給一隻用（遊戲同一個帳號只能在一個地方上線）。要更多隻，對桌寵按右鍵改「桌寵數量」。</p>
+
+    <h2>帳號清單</h2>
+    <div id="list"></div>
+
+    <h2 id="form-title">新增帳號</h2>
+    <form id="form" autocomplete="off">
+      <label for="label">名稱</label><input id="label" placeholder="自己認得出來就好，例如：主帳、法師小號（可不填）" />
+      <label for="email">Email</label><input id="email" type="text" inputmode="email" placeholder="you@example.com" />
+      <label for="password">密碼</label><input id="password" type="password" placeholder="遊戲帳號的密碼" />
+      <div id="msg"></div>
+      <div class="btns"><button id="cancel" type="button" hidden>取消修改</button><button class="primary" type="submit">儲存</button></div>
+    </form>
+
+    <h2>帳號檔</h2>
+    <p class="note" id="enc"></p>
+    <p><button id="folder" type="button">打開帳號檔所在的資料夾</button></p>
+    <script src="accounts.js"></script>
+  </body>
+</html>

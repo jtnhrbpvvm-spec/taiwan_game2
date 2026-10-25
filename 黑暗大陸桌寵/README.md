@@ -6,7 +6,7 @@
 
 ## 使用
 
-- 安裝：執行 `dist/dark-continent-pet-setup-1.0.0.exe`（`npm run dist` 產生）。
+- 安裝：執行 `dark-continent-pet-setup-<版本>.exe`（`npm run release` 產生，放在本資料夾最上層）。
 - 第一次：對桌寵按右鍵 →「帳號管理…」加入遊戲帳號（Email＋密碼）並指定給桌寵，桌寵會自動登入、按「繼續冒險」。
 - **多帳號**：「桌寵數量」幾隻就有幾個獨立的遊戲在背景跑（各自的 session partition，登入、存檔互不影響），每隻掛一個帳號；
   右鍵「帳號（第 N 隻）」點一下就換帳號、自動登入。同一個帳號只能給一隻用。
@@ -26,20 +26,31 @@ npm install
 npm start            # 開發版直接跑
 npm run selftest     # 用暫存資料夾建一個訪客角色，自動檢查讀存檔、自動繼續、多隻獨立遊戲、帳號檔加密、選單、外觀、說明（不會真的登入）
 npm run dist         # 打包安裝檔到 dist/
-npm run release      # 打包＋把 latest.yml、安裝檔、blockmap 複製到本資料夾最上層（發佈用）
+npm run release      # 打包＋把 latest.yml、安裝檔、blockmap 複製到本資料夾最上層＋發布小檔案內容 content/（發佈用）
+npm run release:content  # 只發布小檔案內容（只改了內容、沒改外殼時用，不用打包）
 npm run names        # 遊戲加了新地圖／道具／職業圖後，重新產生 names.json
 ```
 
+## 外殼＋內容（小檔案更新，1.2.0 起）
+
+做法照放置希望桌寵：程式分兩層，平常的更新只下載有變動的小檔案（約 170 KB），不用重新下載 80 MB 的安裝檔（使用者 2026-10-26 指定）。
+
+- **外殼**＝`boot.js`、`shell/`、`update-source.json`、Electron 本體，跟著安裝檔走，很少改。`boot.js` 決定這次跑哪一份內容（安裝檔內建的，或下載回來比較新的）。
+- **內容**＝其他全部（`main.js`、`pet/`、`ui/`、`names.json`…）＝`package.json` 的 `build.files` 扣掉外殼的檔案。下載回來的放在 `%APPDATA%\黑暗大陸桌寵\content\<版本>\`。
+- **退回**：新下載的內容頭幾次啟動算試用，`main.js` 開好視窗會呼叫 `petShell.markHealthy()`；啟動時直接出錯或連續兩次沒回報就記成壞的（`content\state.json` 的 `bad`），自動退回上一份。2026-10-26 實測：故意壞掉的 9.9.10 被記成壞的、刪掉，桌寵自己重開回到 9.9.9。
+- **什麼時候要整包更新**：改到外殼、或 `package.json` 的套件時，`boot.js` 的 `SHELL_API` 加 1，跑完整的 `npm run release`；舊外殼看到清單要的號碼比自己大，就改下載完整安裝檔。小檔案下載失敗時也會退回完整安裝檔。
+- 1.1.0 以前裝的沒有外殼，要先整包更新到 1.2.0 一次，之後才是小檔案更新。
+
 ## 發佈新版（自動更新）
 
-1. `package.json` 的 `version` 加一（例如 1.0.0 → 1.0.1）。版本號沒變，已安裝的桌寵不會更新。
-2. `npm run release`：打包，並把 `latest.yml`、`dark-continent-pet-setup-版本.exe`、`.blockmap` 放到本資料夾最上層（舊版安裝檔會刪掉）。
-3. commit 這三個檔案（和改過的程式），推到 taiwan_game2 的 `main`。
+1. `package.json` 的 `version` 加一（例如 1.2.0 → 1.2.1）。版本號沒變，已安裝的桌寵不會更新。
+2. 只改了內容：`npm run release:content`，產生 `content/manifest.json`＋`content/<版本>/`。
+   改到外殼：`boot.js` 的 `SHELL_API` 加 1，`npm run release`（打包＋安裝檔三個檔＋`content/`）。
+3. commit 改過的檔案，推到 taiwan_game2 的 `main`。
 
-已安裝的桌寵打開時、之後每 30 分鐘，會從
-`https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/黑暗大陸桌寵/latest.yml` 檢查（網址在 `package.json` 的 `build.publish`）。
-檢查時網址會加時間標記（`?noCache=時間`），避開 GitHub 約 5 分鐘的快取，推上去後玩家下一次檢查就拿得到。
-找到新版會在背景下載，下載好桌寵提醒，右鍵「立即更新桌寵」或下次結束時自動安裝。
+已安裝的桌寵打開後 10 秒、之後每 30 分鐘，先看 `…/黑暗大陸桌寵/content/manifest.json`（加時間標記 `?t=時間`，避開 GitHub 約 5 分鐘的快取），
+有比較新的內容就只下載那些小檔案（逐一核對 SHA-256）；需要新外殼或小檔案失敗時才看 `latest.yml` 下載完整安裝檔（electron-updater，也會加 `?noCache=時間`）。
+下載好桌寵提醒，右鍵「立即更新桌寵」重新啟動；不按的話下次打開桌寵自動換上（安裝檔則是下次結束時自動安裝）。
 
 同一個 30 分鐘檢查也會看線上遊戲的版本號（`data/game.js?v=…`，一樣加時間標記），跟遊戲視窗載入的不一樣就提醒「黑暗大陸更新了」，右鍵「套用遊戲更新」重新載入全部遊戲。
 勿擾（專注模式）時不跳提醒，解除後補講；桌寵被藏起來時改用系統通知。
@@ -51,7 +62,9 @@ npm run names        # 遊戲加了新地圖／道具／職業圖後，重新產
 | `main.js` | 主程式：每隻桌寵一個遊戲視窗、桌寵視窗、右鍵選單、系統匣、快捷鍵、讀存檔比出經驗／金幣／掉寶事件、自動登入與自動繼續冒險 |
 | `accounts.js`、`accounts-preload.js`、`ui/accounts.*` | 帳號檔（加密存密碼）與帳號管理視窗 |
 | `income.js`、`income-preload.js`、`ui/income.*` | 收入總覽（這次啟動以來；啟動時清掉 `income-*.json` 重記）。拿到／賣出的東西來自遊戲「掉落紀錄」訊息框（`main.js` 的 `LOOT_COLLECTOR`，遊戲藏著時會幫忙打開） |
-| `updates.js`、`tools/release.js` | 桌寵自動更新（electron-updater）與遊戲版本檢查；發佈新版的複製腳本（也會改教學網頁的下載按鈕） |
+| `boot.js`、`shell/content-store.js`、`shell/updates.js`、`update-source.json` | 外殼：選這次跑哪份內容、壞版退回、小檔案更新（必要時改下載完整安裝檔） |
+| `updates.js` | 遊戲版本檢查；桌寵自己的更新交給外殼（`global.petShell.updates`） |
+| `tools/release.js`、`tools/publish-content.js` | 發佈：安裝檔三個檔（也會改教學網頁的下載按鈕）、小檔案內容 `content/` |
 | `index.html` | 給玩家看的下載與教學網頁（風格配合遊戲；封面、職業動作圖直接用遊戲站上的）。GitHub Pages 網址：`https://jtnhrbpvvm-spec.github.io/taiwan_game2/黑暗大陸桌寵/` |
 | `save-reader.js` | 解開遊戲加密的本機存檔（照抄遊戲 `guard.js` 的解法，只讀） |
 | `names.json` | 職業動作圖、變身外觀（`morphs`／`morphForms`／`defaultMorph`，變身時桌寵跟著變）、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |

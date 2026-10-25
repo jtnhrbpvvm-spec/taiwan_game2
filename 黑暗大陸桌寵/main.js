@@ -30,7 +30,8 @@ const LOGIN_TIMEOUT_MS = 30000; // 按了登入這麼久還沒登入成功就當
 const NO_SAVE_WAIT_MS = 15000; // 登入後等雲端角色下載這麼久，還是沒有角色才把遊戲叫出來讓使用者建角色
 const SELFTEST = process.argv.includes("--selftest");
 // 自我測試用全新的暫存資料夾：不碰平常的設定、帳號和遊戲存檔
-if (SELFTEST) app.setPath("userData", path.join(app.getPath("temp"), `dark-pet-selftest-${Date.now()}`));
+// （從外殼 boot.js 啟動的話外殼已經換好了，這裡只管直接跑 main.js 的情況）
+if (SELFTEST && !global.petShell) app.setPath("userData", path.join(app.getPath("temp"), `dark-pet-selftest-${Date.now()}`));
 
 // 視窗被蓋住／藏起來時 Chromium 會把分頁當成背景分頁放慢計時器，掛機會變慢，全部關掉
 app.commandLine.appendSwitch("disable-renderer-backgrounding");
@@ -921,7 +922,10 @@ app.whenReady().then(async () => {
     saveSettings();
   }
   setInterval(() => games.forEach(pollGame), POLL_MS);
-  updates.start({ notify: say, gameUrl: GAME_URL, loadedGameVersions: () => games.map((g) => g.version), reloadGames: () => games.forEach(loadGame) });
+  updates.start({ notify: say, floater: (text) => petWin?.webContents.send("pet:notice", 0, text), gameUrl: GAME_URL,
+    loadedGameVersions: () => games.map((g) => g.version), reloadGames: () => games.forEach(loadGame) });
+  // 走到這裡代表視窗都開好了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用，不然會被退回上一份）
+  global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
     openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
     income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin,

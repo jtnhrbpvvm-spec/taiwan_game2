@@ -1,16 +1,17 @@
 {
   "name": "dark-continent-desktop-pet",
   "productName": "黑暗大陸桌寵",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "黑暗大陸桌寵：遊戲在背景掛機，桌面上留一隻角色走來走去",
-  "main": "main.js",
+  "main": "boot.js",
   "private": true,
   "scripts": {
     "start": "electron .",
     "selftest": "electron . --selftest",
     "names": "node tools/gen-names.js ../../idle-lineage-class/-username-.github.io-/屠龍勇者",
     "dist": "electron-builder --win nsis --publish never",
-    "release": "npm run dist && node tools/release.js"
+    "release": "npm run dist && node tools/release.js && node tools/publish-content.js",
+    "release:content": "node tools/publish-content.js"
   },
   "devDependencies": {
     "electron": "33.2.1",
@@ -25,6 +26,9 @@
       "buildResources": "build"
     },
     "files": [
+      "boot.js",
+      "shell/**",
+      "update-source.json",
       "main.js",
       "save-reader.js",
       "accounts.js",
