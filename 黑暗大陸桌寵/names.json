@@ -1,5 +1,5 @@
 {
- "version": "20261025aq",
+ "version": "20261026c",
  "classes": {
   "royal": {
    "name": "王族",
@@ -614,6 +614,784 @@
    }
   }
  },
+ "morphs": {
+  "ivoryArchmage": {
+   "name": "象牙塔高階秘術師",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/ivory-archmage-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/ivory-archmage-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/ivory-archmage-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "adenGlorySwordsman": {
+   "name": "亞丁榮耀劍士",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/aden-glory-swordsman-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/aden-glory-swordsman-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/aden-glory-swordsman-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "steelBerserker": {
+   "name": "鋼鐵狂戰士",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/steel-berserker-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/steel-berserker-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/steel-berserker-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "shadowPirateGunner": {
+   "name": "暗影海盜雙槍客",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/shadow-pirate-gunner-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/shadow-pirate-gunner-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/shadow-pirate-gunner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "silentCaveAssassin": {
+   "name": "沉默洞穴刺客",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/silent-cave-assassin-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/silent-cave-assassin-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/silent-cave-assassin-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "frostNetherEmperor": {
+   "name": "霜獄幽冥魔皇",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/frost-nether-emperor-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/frost-nether-emperor-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/frost-nether-emperor-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "infernalThunderEmperor": {
+   "name": "煉獄雷霆魔皇",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/infernal-thunder-emperor-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/infernal-thunder-emperor-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/infernal-thunder-emperor-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "wolfRanger": {
+   "name": "巡守妖魔神射",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     128,
+     200
+    ],
+    "walk": {
+     "src": "images/sprites/morph/wolf-ranger-v1/walk.png",
+     "cellW": 256,
+     "cellH": 240,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/wolf-ranger-v1/attack.png",
+     "cellW": 256,
+     "cellH": 240,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/wolf-ranger-v1/cast.png",
+     "cellW": 256,
+     "cellH": 240,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "moonRanger": {
+   "name": "月光精靈巡林者",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     160,
+     200
+    ],
+    "walk": {
+     "src": "images/sprites/morph/moon-ranger-v1/walk.png",
+     "cellW": 320,
+     "cellH": 240,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/moon-ranger-v1/attack-v2.png",
+     "cellW": 320,
+     "cellH": 240,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/moon-ranger-v1/cast.png",
+     "cellW": 320,
+     "cellH": 240,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "hellfireArcher": {
+   "name": "冥火骷髏神射",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     160,
+     240
+    ],
+    "walk": {
+     "src": "images/sprites/morph/hellfire-archer-v1/walk.png",
+     "cellW": 320,
+     "cellH": 280,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/hellfire-archer-v1/attack-v2.png",
+     "cellW": 320,
+     "cellH": 280,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/hellfire-archer-v1/cast.png",
+     "cellW": 320,
+     "cellH": 280,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "skyValkyrie": {
+   "name": "蒼穹女武神・艾爾",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/sky-valkyrie-v2/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 160
+    },
+    "attack": {
+     "src": "images/sprites/morph/sky-valkyrie-v2/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/sky-valkyrie-v2/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "dwarfGunner": {
+   "name": "矮人蒸氣火銃兵",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/dwarf-gunner-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/dwarf-gunner-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/dwarf-gunner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "brudikaShadow": {
+   "name": "布魯迪卡之影",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/brudika-shadow-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/brudika-shadow-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/brudika-shadow-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "flameDeathKnight": {
+   "name": "烈焰死亡騎士",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/flame-death-knight-v1/walk-v2.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 8
+     },
+     "ms": 65
+    },
+    "attack": {
+     "src": "images/sprites/morph/flame-death-knight-v1/attack-v2.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 80
+    },
+    "cast": {
+     "src": "images/sprites/morph/flame-death-knight-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "riftDragon": {
+   "name": "裂空魔龍爪皇",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/rift-dragon-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/rift-dragon-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/rift-dragon-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  }
+ },
+ "morphForms": {
+  "m31": {
+   "name": "煉獄雷霆魔皇",
+   "sprite": "infernalThunderEmperor"
+  },
+  "m32": {
+   "name": "霜獄幽冥魔皇",
+   "sprite": "frostNetherEmperor"
+  },
+  "m01": {
+   "name": "巡守妖魔神射",
+   "sprite": "wolfRanger"
+  },
+  "m02": {
+   "name": "月光精靈巡林者",
+   "sprite": "moonRanger"
+  },
+  "m03": {
+   "name": "冥火骷髏神射",
+   "sprite": "hellfireArcher"
+  },
+  "m04": {
+   "name": "蒼穹女武神・艾爾",
+   "sprite": "skyValkyrie"
+  },
+  "m05": {
+   "name": "矮人蒸氣火銃兵",
+   "sprite": "dwarfGunner"
+  },
+  "m06": {
+   "name": "暗影海盜雙槍客",
+   "sprite": "shadowPirateGunner"
+  },
+  "m07": {
+   "name": "魔導審判狙擊手",
+   "sprite": null
+  },
+  "m08": {
+   "name": "沉默洞穴刺客",
+   "sprite": "silentCaveAssassin"
+  },
+  "m09": {
+   "name": "赤影暗殺者",
+   "sprite": null
+  },
+  "m10": {
+   "name": "布魯迪卡之影",
+   "sprite": "brudikaShadow"
+  },
+  "m11": {
+   "name": "深淵雙刃魔神",
+   "sprite": null
+  },
+  "m12": {
+   "name": "鋼鐵狂戰士",
+   "sprite": "steelBerserker"
+  },
+  "m13": {
+   "name": "冥皇處刑者",
+   "sprite": null
+  },
+  "m14": {
+   "name": "煉獄魔劍尊・巴拉卡",
+   "sprite": null
+  },
+  "m15": {
+   "name": "亞丁榮耀劍士",
+   "sprite": "adenGlorySwordsman"
+  },
+  "m16": {
+   "name": "烈焰死亡騎士",
+   "sprite": "flameDeathKnight"
+  },
+  "m17": {
+   "name": "雷霆黑騎士統領",
+   "sprite": null
+  },
+  "m18": {
+   "name": "神聖裁決劍聖",
+   "sprite": null
+  },
+  "m19": {
+   "name": "象牙塔高階秘術師",
+   "sprite": "ivoryArchmage"
+  },
+  "m20": {
+   "name": "深淵羊魔・巴風特使徒",
+   "sprite": null
+  },
+  "m21": {
+   "name": "大魔導士・巴列斯真身",
+   "sprite": null
+  },
+  "m22": {
+   "name": "修羅破戒僧",
+   "sprite": null
+  },
+  "m23": {
+   "name": "熔岩碎骨鬥士",
+   "sprite": null
+  },
+  "m24": {
+   "name": "霸天雷神拳皇",
+   "sprite": null
+  },
+  "m25": {
+   "name": "荒野血狼狂戰",
+   "sprite": null
+  },
+  "m26": {
+   "name": "暗夜血族撕裂者",
+   "sprite": null
+  },
+  "m27": {
+   "name": "裂空魔龍爪皇",
+   "sprite": "riftDragon"
+  },
+  "m28": {
+   "name": "風木鐵壁重裝兵",
+   "sprite": null
+  },
+  "m29": {
+   "name": "薔薇聖殿十字軍",
+   "sprite": null
+  },
+  "m30": {
+   "name": "不滅黃金守護神・宙斯盾",
+   "sprite": null
+  }
+ },
+ "defaultMorph": "wolfRanger",
  "towns": {
   "talking": "低語港",
   "gludio": "灰燼村",
@@ -784,6 +1562,7 @@
   "drakeFang": "地龍之牙",
   "pirateTreasure": "海賊的寶箱",
   "wyvernWing": "飛龍之翼",
+  "magicCrystal": "魔法結晶",
   "frostCrystal": "寒冰結晶",
   "ifritFlame": "伊弗利特之焰",
   "forgottenRelic": "遺忘的聖物",

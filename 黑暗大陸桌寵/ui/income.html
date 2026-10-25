@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>收入總覽</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 14px 16px 20px; font: 14px/1.6 "Microsoft JhengHei", sans-serif; color: #e9dcc0; background: #1d1612; }
+      h1 { margin: 0; font-size: 18px; color: #f1c26a; }
+      .since { margin: 2px 0 10px; color: #b39a72; font-size: 13px; }
+      .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+      .tabs[hidden] { display: none; }
+      .tabs button { flex: 1; font: inherit; padding: 6px 0; color: #b39a72; background: #2b211a; border: 1px solid #5a4630; border-radius: 6px; cursor: pointer; }
+      .tabs button.on { color: #f1c26a; border-color: #c9973f; box-shadow: 0 0 0 1px #c9973f inset; }
+      .who { margin: 0 0 8px; font-weight: bold; color: #f3d9a0; }
+      .who small { color: #b39a72; font-weight: normal; margin-left: 6px; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .stat { padding: 8px 10px; background: #261d17; border: 1px solid #4a3a28; border-radius: 6px; }
+      .stat i { display: block; font-style: normal; font-size: 12px; color: #b39a72; }
+      .stat b { font-size: 17px; font-variant-numeric: tabular-nums; }
+      .plus { color: #9fd28a; }
+      .minus { color: #f19a8a; }
+      .gold { color: #ffe27a; }
+      h2 { margin: 16px 0 6px; font-size: 15px; color: #d9a54a; border-bottom: 1px solid #4a3a28; padding-bottom: 2px; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      td, th { padding: 4px 6px; text-align: right; border-bottom: 1px solid #2f251d; }
+      td:first-child, th:first-child { text-align: left; }
+      th { font-weight: normal; color: #b39a72; font-size: 12px; }
+      .empty { color: #8a765a; padding: 4px 0; }
+      .note { margin-top: 14px; color: #8a765a; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>收入總覽</h1>
+    <p class="since" id="since"></p>
+    <div class="tabs" id="tabs" hidden></div>
+    <div id="view"></div>
+    <p class="note">
+      只記這次打開桌寵以來的，下次打開會重新開始。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
+      拿到和賣出的東西照遊戲左下角訊息框的「掉落紀錄」，遊戲視窗藏著時桌寵會幫忙把它打開來抄。
+      金幣淨增減＝存檔金幣的差，包含打怪掉的錢、自動賣出所得，也扣掉買東西、傳送等花費。
+    </p>
+    <script src="income.js"></script>
+  </body>
+</html>

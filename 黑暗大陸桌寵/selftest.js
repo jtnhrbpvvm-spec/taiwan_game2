@@ -69,6 +69,48 @@ async function run(t) {
     await waitFor("自動繼續冒險", async () => (await screenOf(t, g0)) === "screen-game", 40000);
     check("重新載入後自動繼續冒險", true);
     t.settings().autoContinue = false;
+
+    // ── 收入總覽 ──
+    // 遊戲的訊息框函式在線上（混淆）版也叫得到
+    const fns = await t.inGame(g0, `[typeof toggleLogDrawer, typeof setLogPopTab].join(",")`);
+    check("線上版叫得到訊息框函式", fns === "function,function", fns);
+    // 藏著的時候讀一次狀態：訊息框要被打開、切到掉落紀錄
+    await sleep(3500);
+    const drawer = await t.inGame(g0, `[document.getElementById("log-pop")?.classList.contains("open"), document.getElementById("lp-tab-loot")?.classList.contains("on"), !document.getElementById("hunt-loot")?.classList.contains("hidden")].join(",")`);
+    check("遊戲藏著時掉落紀錄自動打開", drawer === "true,true,true", drawer);
+    // 拆字、只算新出現的：先放兩行，再放「舊的 + 三行新的」
+    const fake = (lines) => `(() => { document.getElementById("hunt-loot").innerHTML = ${JSON.stringify(lines)}.map((l) => '<div class="log-line">' + l + '</div>').join(""); return window.__petLoot.take(false); })()`;
+    const a = ["🎁 獲得 治癒藥水 ×3", "🪙 自動賣出 【精良】短劍 ×1（+1,234）"];
+    const got1 = await t.inGame(g0, fake(a));
+    const got2 = await t.inGame(g0, fake([...a, "🌙 離線撿到：箭 ×1,500、紅色藥水 ×2", "📜 獲得任務道具「古老徽章」 ×1（1/5）", "🗺️ 獲得 【稀有】異界地圖 T3 ×1"]));
+    check("掉落紀錄拆成拿到／賣出", got1.length === 2 && got1[1].kind === "sold" && got1[1].gold === 1234 && got1[1].name === "【精良】短劍", JSON.stringify(got1));
+    check("只算新出現的行", got2.length === 4 && got2[0].n === 1500 && got2[2].name === "古老徽章" && got2[3].name === "【稀有】異界地圖 T3", JSON.stringify(got2));
+    await t.inGame(g0, `(() => { window.__petLoot.take(false); setLogPopTab("loot"); })()`); // 讓遊戲把假的行蓋回去
+
+    // 存檔比對：跨過升級的經驗要換算成總經驗
+    const base = { id: "x", name: "測", cls: "elf", level: 9, totalExp: t.totalExp(9, 3000), gold: 1000, kills: 10, deaths: 0 };
+    t.income.recordSave(9, base);
+    t.income.recordSave(9, { ...base, level: 10, totalExp: t.totalExp(10, 100), gold: 1500, kills: 25, deaths: 1 });
+    t.income.recordLoot(9, [...got1, ...got2]);
+    const book = t.income.summary(10, [])[9];
+    const expGain = 10 ** 4 - 9 ** 4 - 3000 + 100; // 9 級升 10 級要 (10⁴−9⁴)＝3439
+    check("收入：經驗跨升級、金幣、打怪數", book.exp === expGain && book.levels === 1 && book.gold === 500 && book.kills === 15 && book.deaths === 1, JSON.stringify({ exp: book.exp, expGain, gold: book.gold, kills: book.kills }));
+    check("收入：拿到／賣出", book.obtained["治癒藥水"] === 3 && book.obtained["箭"] === 1500 && book.sold["【精良】短劍"].gold === 1234 && book.soldGold === 1234, JSON.stringify(book.obtained));
+    t.openIncome();
+    await sleep(1500);
+    await shot(t.getIncomeWin(), "income");
+
+    // ── 變身 ──
+    const morphed = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m19", until: 5000 } } } });
+    const generic = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m22", until: 5000 } } } });
+    const expired = t.summarize(0, { t: 9000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m19", until: 5000 } } } });
+    check("讀出變身外觀（專屬圖／統一外觀／過期）", morphed.morph === "ivoryArchmage" && generic.morph === "wolfRanger" && expired.morph === null, `${morphed.morph}／${generic.morph}／${expired.morph}`);
+    t.games[0].lastRaw = { ...t.games[0].lastRaw, morph: "ivoryArchmage" };
+    t.sendPets();
+    await sleep(3000);
+    await shot(t.petWin, "pet-morph");
+    t.games[0].lastRaw = { ...t.games[0].lastRaw, morph: null };
+
     g0.win.show();
     await sleep(1500);
     await shot(g0.win, "game");
@@ -158,7 +200,8 @@ async function run(t) {
     await waitFor("外觀縮圖", () => t.getPicker().webContents.executeJavaScript(`[...document.querySelectorAll(".card canvas")].every((c) => c.getContext("2d").getImageData(0, 0, c.width, c.height).data.some((v, i) => i % 4 === 3 && v > 0))`), 60000).catch(() => {});
     await shot(t.getPicker(), "picker");
     const cards = await t.getPicker().webContents.executeJavaScript(`document.querySelectorAll(".card").length`);
-    check("外觀清單有 12 個職業", cards === 12, String(cards));
+    const morphLooks = Object.keys(require("./names.json").morphs).length;
+    check(`外觀清單有 12 個職業＋${morphLooks} 種變身`, cards === 12 + morphLooks, String(cards));
     t.getPicker().close();
     t.openHelp();
     await sleep(1000);

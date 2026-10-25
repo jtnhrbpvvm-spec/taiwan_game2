@@ -1,4 +1,4 @@
-// 選擇桌寵外觀：列出遊戲裡 12 個職業的人物，點一下桌面上的桌寵就立刻換。
+// 選擇桌寵外觀：列出遊戲裡 12 個職業的人物和有專屬圖的變身外觀，點一下桌面上的桌寵就立刻換。
 // 縮圖是走路圖面向前方那列的中間一格（跟桌寵站著時一樣）。
 const list = document.getElementById("list");
 const follow = document.getElementById("follow");
@@ -40,7 +40,9 @@ function render() {
       canvas.width = canvas.height = THUMB * 2;
       const name = document.createElement("span");
       name.textContent = e.name;
-      card.append(canvas, name);
+      const group = document.createElement("small");
+      group.textContent = e.group ?? "";
+      card.append(canvas, name, group);
       drawThumb(card);
       return card;
     })

@@ -8,6 +8,7 @@
       /* 顏色照遊戲本體（屠龍勇者/index.html 的 :root）：深棕黑底、金色字、暗紅點綴 */
       :root { --bg: #12100c; --panel: #1f1b15; --panel2: #2c261d; --line: #3d3427; --frame: #8a6a3a; --text: #efe6d2; --muted: #9d927d; --gold: #e8c066; --accent: #a8432e; --warn: #e0a64a; --bad: #e0605a; color-scheme: dark; }
       * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
       html, body { margin: 0; height: 100%; }
       body { display: flex; flex-direction: column; font: 15px/1.6 sans-serif; color: var(--text); background: var(--bg); }
       header { padding: 12px 16px 0; background: linear-gradient(#2a1d14, var(--panel)); border-bottom: 1px solid var(--frame); }
@@ -44,7 +45,19 @@
       .pick { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); font: inherit; color: inherit; overflow: hidden; }
       .pick .thumb { width: 72px; height: 72px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
       .pick .thumb i { flex: none; background-repeat: no-repeat; filter: var(--pet-filter, none); }
-      .pick span { font-size: 12px; }
+      .pick span { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pick small { color: var(--muted); font-size: 10px; }
+      .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .stat { padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; }
+      .stat i { display: block; font-style: normal; font-size: 12px; color: var(--muted); }
+      .stat b { font-size: 17px; font-variant-numeric: tabular-nums; }
+      .plus { color: #9fd28a; }
+      .minus { color: var(--bad); }
+      .goldc { color: #ffe27a; }
+      table.list { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+      table.list td, table.list th { padding: 4px 4px; text-align: right; border-bottom: 1px solid #2f281f; }
+      table.list td:first-child, table.list th:first-child { text-align: left; }
+      table.list th { font-weight: normal; color: var(--muted); font-size: 12px; }
       #follow { width: 100%; text-align: left; }
       .acct { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #2f281f; }
       .acct:last-child { border-bottom: 0; }
@@ -71,6 +84,7 @@
       <nav>
         <button data-tab="settings">設定</button>
         <button data-tab="pets">桌寵</button>
+        <button data-tab="income">收入</button>
         <button data-tab="accounts">帳號</button>
         <button data-tab="help">說明</button>
       </nav>
@@ -121,6 +135,7 @@
           <label class="row"><span>顯示桌寵<small>關掉只是把桌寵藏起來，遊戲照常掛機</small></span><input type="checkbox" data-key="showPet" /></label>
           <div class="row"><span>大小 <b id="size-value"></b><input id="size" type="range" min="50" max="200" step="5" /></span></div>
           <label class="row"><span>打開時自動登入並繼續冒險<small>每隻自動登入牠的帳號、按標題畫面的「繼續冒險」</small></span><input type="checkbox" data-key="autoContinue" /></label>
+          <label class="row"><span>變身時桌寵跟著變<small>角色用變形卷軸變身時，桌寵也換成變身的樣子（自己選了外觀的照自己選的）</small></span><input type="checkbox" data-key="followMorph" /></label>
         </div>
         <div class="card">
           <h2>頭上飄字</h2>
@@ -152,7 +167,7 @@
         </div>
         <div class="card">
           <h2>外觀</h2>
-          <button class="act" id="follow">跟著角色的職業<small style="display: block; color: var(--muted)">預設。換角色玩，桌寵也跟著換</small></button>
+          <button class="act" id="follow">跟著角色<small style="display: block; color: var(--muted)">預設。換角色玩、變身，桌寵也跟著換</small></button>
           <div style="margin-top: 10px">
             <div class="row"><span>色相 <b id="color-hue-value"></b><input id="color-hue" type="range" min="0" max="360" /></span></div>
             <div class="row"><span>鮮豔度 <b id="color-sat-value"></b><input id="color-sat" type="range" min="0" max="200" /></span></div>
@@ -162,6 +177,29 @@
           <p class="dim" id="looks-empty">桌寵啟動後才讀得到職業清單。</p>
           <div id="list"></div>
         </div>
+      </section>
+
+      <!-- ── 收入總覽：這次打開桌寵以來 ── -->
+      <section id="tab-income">
+        <div class="chips" id="income-chips"></div>
+        <div class="card">
+          <h2 id="income-who">收入總覽</h2>
+          <p class="dim" id="income-since" style="margin: 0 0 8px"></p>
+          <div class="stats" id="income-stats"></div>
+        </div>
+        <div class="card">
+          <h2 id="income-got-title">拿到的東西</h2>
+          <div id="income-got"></div>
+        </div>
+        <div class="card">
+          <h2 id="income-sold-title">自動賣出</h2>
+          <div id="income-sold"></div>
+        </div>
+        <p class="dim">
+          只記這次打開桌寵以來的，下次打開會重新開始。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
+          拿到和賣出的東西照遊戲左下角訊息框的「掉落紀錄」，遊戲藏著時桌寵會幫忙把它打開來抄（打開遊戲時看到它開著是這個原因）。
+          金幣淨增減＝存檔金幣的差，包含打怪掉的錢、自動賣出所得，也扣掉買東西、傳送等花費。
+        </p>
       </section>
 
       <!-- ── 帳號 ── -->
@@ -192,6 +230,8 @@
             <tr><td>點桌寵</td><td>打開那一隻的遊戲。按上方的「收起」或返回鍵收回去</td></tr>
             <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
             <tr><td>長按桌寵</td><td>打開這個設定畫面</td></tr>
+            <tr><td>收入分頁</td><td>這次打開以來每隻賺了多少：經驗、金幣、打怪數、拿到和自動賣出的東西。下次打開重新記</td></tr>
+            <tr><td>變身</td><td>角色用變形卷軸變身時，桌寵也跟著變（設定裡可以關掉）；「桌寵」分頁也能選變身外觀固定</td></tr>
             <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
           </table>
         </div>
@@ -243,6 +283,7 @@
         for (const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.tab === name);
         for (const s of document.querySelectorAll("section")) s.classList.toggle("on", s.id === "tab-" + name);
         if (name === "pets") renderPets();
+        if (name === "income") renderIncome();
         if (name === "accounts") renderAccounts();
       }
       document.querySelector("nav").addEventListener("click", (e) => e.target.dataset.tab && showTab(e.target.dataset.tab));
@@ -342,10 +383,13 @@
         if (!fromRefresh || classes.length === 0) {
           classes = JSON.parse(Android.classes());
           $("looks-empty").hidden = classes.length > 0;
-          // 縮圖：走路圖面向前方那一列的中間一格，縮放到 72px 高
+          // 縮圖：走路圖面向前方那一列的中間一格，縮放到 72px 高。
+          // 變身圖的格子比較大、腳底不在格子底部（foot），照角色身高 160 縮放、把腳底對齊縮圖底邊
           $("list").innerHTML = classes.map((c) => {
-            const w = c.walk, mid = Math.floor((w.frames.down || 1) / 2), zoom = Math.min(72 / w.cellH, 72 / w.cellW);
-            return `<button class="pick" data-model="${c.model}"><div class="thumb"><i style="width:${w.cellW}px;height:${w.cellH}px;zoom:${zoom};background-image:url(${GAME_URL}${w.src});background-position:-${mid * w.cellW}px 0"></i></div><span>${escapeHtml(c.name)}</span></button>`;
+            const w = c.walk, mid = Math.floor((w.frames.down || 1) / 2);
+            const zoom = c.foot ? 72 / 200 : Math.min(72 / w.cellH, 72 / w.cellW);
+            const below = c.foot ? w.cellH - c.foot[1] : 0;
+            return `<button class="pick" data-model="${c.model}"><div class="thumb"><i style="width:${w.cellW}px;height:${w.cellH}px;zoom:${zoom};margin-bottom:-${below}px;background-image:url(${GAME_URL}${w.src});background-position:-${mid * w.cellW}px 0"></i></div><span>${escapeHtml(c.name)}</span><small>${escapeHtml(c.group || "")}</small></button>`;
           }).join("");
         }
         $("follow").classList.toggle("chosen", !pet().petModel);
@@ -457,6 +501,54 @@
         renderAccounts();
       });
       $("f-cancel").addEventListener("click", () => { resetForm(); formMsg(""); });
+
+      // ── 收入總覽 ──
+      let incomePet = 0;
+      const num = (n) => Math.round(n).toLocaleString("zh-TW");
+      const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + num(Math.abs(n));
+      const clock = (ms) => new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
+      const statHtml = (label, value, cls) => `<div class="stat"><i>${label}</i><b class="${cls || ""}">${value}</b></div>`;
+      const listHtml = (head, rows) => rows.length
+        ? `<table class="list"><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</table>`
+        : '<p class="dim" style="margin: 0">還沒有</p>';
+      function renderIncome() {
+        const pets = JSON.parse(Android.income());
+        if (pets.length === 0) {
+          $("income-who").textContent = "收入總覽";
+          $("income-since").textContent = "桌寵啟動後才有紀錄。";
+          $("income-stats").innerHTML = $("income-got").innerHTML = $("income-sold").innerHTML = "";
+          return;
+        }
+        if (incomePet >= pets.length) incomePet = 0;
+        $("income-chips").hidden = pets.length < 2;
+        $("income-chips").innerHTML = pets.map((p, i) => `<button class="act ${i === incomePet ? "chosen" : ""}" data-income="${i}">第 ${i + 1} 隻</button>`).join("");
+        const p = pets[incomePet];
+        const c = p.character;
+        const minutes = Math.max(0, Math.floor((Date.now() - p.startedAt) / 60000));
+        $("income-who").textContent = (c ? `Lv.${c.level} ${c.name}` : "還沒讀到角色") + `・${p.account}`;
+        $("income-since").textContent = `從 ${clock(p.startedAt)} 到現在（${Math.floor(minutes / 60)} 小時 ${minutes % 60} 分）`;
+        $("income-stats").innerHTML = [
+          statHtml("經驗", signed(p.exp) + (p.levels ? `（升 ${p.levels} 級）` : ""), p.exp > 0 ? "plus" : ""),
+          statHtml("金幣淨增減", signed(p.gold), p.gold > 0 ? "goldc" : p.gold < 0 ? "minus" : ""),
+          statHtml("自動賣出所得", signed(p.soldGold), p.soldGold > 0 ? "goldc" : ""),
+          statHtml("打怪數", num(p.kills)),
+          statHtml("死亡", num(p.deaths), p.deaths > 0 ? "minus" : ""),
+          statHtml("每小時經驗", minutes >= 1 ? num((p.exp / minutes) * 60) : "—"),
+        ].join("");
+        const got = Object.entries(p.obtained).sort((a, b) => b[1] - a[1]);
+        const sold = Object.entries(p.sold).sort((a, b) => b[1].gold - a[1].gold);
+        $("income-got-title").textContent = `拿到的東西（${got.length} 種）`;
+        $("income-got").innerHTML = listHtml(["物品", "數量"], got.map(([name, n]) => [name, "×" + num(n)]));
+        $("income-sold-title").textContent = `自動賣出（${sold.length} 種）`;
+        $("income-sold").innerHTML = listHtml(["物品", "數量", "賣得"], sold.map(([name, s]) => [name, "×" + num(s.n), num(s.gold)]));
+      }
+      $("income-chips").addEventListener("click", (e) => {
+        const i = e.target.dataset.income;
+        if (i === undefined) return;
+        incomePet = Number(i);
+        renderIncome();
+      });
+      setInterval(() => tab === "income" && renderIncome(), 3000);
 
       window.__updateProgress = (text) => ($("update-progress").textContent = text);
       window.__checkResult = (text) => ($("check-result").textContent = text);

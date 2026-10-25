@@ -14,7 +14,8 @@
       #list { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; align-content: start; }
       .card { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border: 1px solid #5a4630; border-radius: 10px; background: #2b211a; cursor: pointer; font: inherit; color: inherit; }
       .card canvas { width: 80px; height: 80px; }
-      .card span { font-size: 13px; }
+      .card span { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .card small { color: #b39a72; font-size: 11px; }
       .card:hover, #follow:hover { border-color: #d9a54a; }
       .on { border-color: #d9a54a !important; box-shadow: 0 0 0 2px #d9a54a inset; }
       /* 整隻調色：三條拉條，下面清單的縮圖會跟著變色當預覽 */
@@ -28,7 +29,7 @@
   </head>
   <body>
     <header>
-      <button id="follow" type="button">跟著目前角色的職業<small>預設。換角色玩，桌寵也跟著換</small></button>
+      <button id="follow" type="button">跟著目前角色<small>預設。換角色玩、變身，桌寵也跟著換</small></button>
       <fieldset id="color">
         <legend>顏色（整隻一起變，換了外觀也會留著）</legend>
         <label for="color-hue">色相</label><input id="color-hue" type="range" /><output id="color-hue-value"></output>

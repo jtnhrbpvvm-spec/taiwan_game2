@@ -57,6 +57,33 @@
     }
   }
 
+  // 遊戲的經驗表（遊戲 config.js 的 expToNext）：存檔的 exp 是「這一級裡的經驗」，跨過升級時要換算成總經驗才能相減（收入總覽用）
+  const EXP_TABLE_LOW = [0, 125, 175, 200, 250, 546];
+  const EXP_TABLE_HIGH = { 45: 729360, 46: 1508416, 47: 3495263, 48: 9912189 };
+  function expToNext(lv) {
+    if (lv < EXP_TABLE_LOW.length) return EXP_TABLE_LOW[lv];
+    if (lv <= 44) return Math.pow(lv + 1, 4) - Math.pow(lv, 4);
+    return EXP_TABLE_HIGH[lv] || 36065092;
+  }
+  function totalExp(level, exp) {
+    let sum = exp;
+    for (let lv = 1; lv < level; lv++) sum += expToNext(lv);
+    return sum;
+  }
+
+  /**
+   * 變身中的話回傳用哪一套變身圖（names.json 的 morphs 的 key），不然 null。跟遊戲 ui-scene.js 的 playerMorph 一樣：
+   * 變身對象有專屬圖用專屬圖，沒有就用變形卷軸的統一外觀。遊戲每一下都會清掉過期的增益，所以存檔裡有就是還在變身。
+   */
+  function morphOf(p, savedAt) {
+    const b = p.buffs && p.buffs.morph;
+    if (!b || (savedAt && b.until && b.until <= savedAt)) return null;
+    const n = names();
+    const form = n.morphForms && n.morphForms[b.form];
+    const key = (form && form.sprite) || n.defaultMorph;
+    return n.morphs && n.morphs[key] ? key : null;
+  }
+
   /** 目前角色欄位的存檔 → 桌寵要的摘要。 */
   function readSave() {
     try {
@@ -66,11 +93,56 @@
       if (!p || typeof p.lv !== "number") return undefined;
       const bag = {};
       for (const it of p.inv || []) if (it && it.id) bag[it.id] = (bag[it.id] || 0) + (Number(it.n) || 1);
-      return { id: slot + ":" + (p.created || p.name), t: data.t, name: p.name, cls: p.cls, level: p.lv, exp: Number(p.exp) || 0,
-        gold: Number(p.gold) || 0, loc: p.loc || {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
+      const exp = Number(p.exp) || 0;
+      return { id: slot + ":" + (p.created || p.name), t: data.t, name: p.name, cls: p.cls, level: p.lv, exp, totalExp: totalExp(p.lv, exp),
+        gold: Number(p.gold) || 0, kills: Number(p.kills) || 0, deaths: Number(p.deaths) || 0, morph: morphOf(p, data.t),
+        loc: p.loc || {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
     } catch (e) {
       return undefined;
     }
+  }
+
+  // ── 掉落紀錄（收入總覽的「拿到／賣出的東西」）────────────
+  // 遊戲沒有把「自動賣出了什麼」存進存檔，只寫在左下角訊息框的「掉落紀錄」分頁（最近 120 行），而且那個分頁開著才會畫出來。
+  // 遊戲藏著的時候幫忙把訊息框打開、切到掉落紀錄（按遊戲自己的按鈕函式，跟玩家點一樣），每次讀狀態時把新出現的那幾行抄下來。
+  // 遊戲每次重畫都是整份最近 120 行，用「舊的結尾＝新的開頭」對齊，只拿後面多出來的。跟電腦版 main.js 的 LOOT_COLLECTOR 一樣
+  let lootPrev = [];
+  const lootQueue = [];
+  const count = (s) => Number(String(s).replace(/,/g, "")) || 0;
+  function parseLoot(line) {
+    let m;
+    if ((m = line.match(/^🪙 自動賣出 (.+) ×([\d,]+)（\+([\d,]+)）/))) return [{ kind: "sold", name: m[1], n: count(m[2]), gold: count(m[3]) }];
+    if ((m = line.match(/^🎁 獲得 (.+) ×([\d,]+)$/))) return [{ kind: "got", name: m[1], n: count(m[2]) }];
+    if ((m = line.match(/^🗺️ \S+ (.+) ×([\d,]+)$/))) return [{ kind: "got", name: m[1], n: count(m[2]) }];
+    if ((m = line.match(/^📜 獲得任務道具「(.+)」 ×([\d,]+)/))) return [{ kind: "got", name: m[1], n: count(m[2]) }];
+    if ((m = line.match(/^🌙 離線撿到：(.+)$/))) return m[1].split("、").map((part) => part.match(/^(.+) ×([\d,]+)$/)).filter(Boolean).map((x) => ({ kind: "got", name: x[1], n: count(x[2]) }));
+    return [];
+  }
+  function syncLoot() {
+    const box = document.getElementById("hunt-loot");
+    if (!box) return;
+    const lines = [...box.querySelectorAll(".log-line")].map((e) => e.textContent);
+    let add = lines;
+    for (let o = 0; o < lootPrev.length; o++) {
+      const tail = lootPrev.slice(o);
+      if (tail.length <= lines.length && tail.every((v, i) => v === lines[i])) { add = lines.slice(tail.length); break; }
+    }
+    if (lines.length === lootPrev.length && lines.every((v, i) => v === lootPrev[i])) add = [];
+    lootPrev = lines;
+    for (const line of add) lootQueue.push(...parseLoot(line));
+  }
+  /** hidden：遊戲藏著，可以幫忙打開掉落紀錄。回傳這次新抄到的。 */
+  function takeLoot(hidden) {
+    try {
+      const active = document.querySelector(".screen.active");
+      if (hidden && active && active.id === "screen-game") {
+        const pop = document.getElementById("log-pop");
+        if (!(pop && pop.classList.contains("open")) && typeof toggleLogDrawer === "function") toggleLogDrawer();
+        if (typeof setLogPopTab === "function") setLogPopTab("loot"); // 也會讓遊戲馬上重畫一次掉落紀錄
+      }
+      syncLoot();
+    } catch (e) {}
+    return lootQueue.splice(0);
   }
 
   /** 角色現在人在哪、在做什麼。 */
@@ -116,8 +188,10 @@
 
   let lastSave;
 
-  function tick() {
+  /** options.hidden：遊戲視窗藏著（收入總覽要幫忙打開掉落紀錄）。 */
+  function tick(options) {
     const out = { now: Date.now(), hasSave: false, events: [] };
+    out.loot = takeLoot(!!(options && options.hidden));
     const active = document.querySelector(".screen.active");
     out.screen = active ? active.id : "";
     out.cloud = shown("btn-cloud") ? document.getElementById("btn-cloud").textContent : "";
@@ -135,7 +209,9 @@
     // 換角色之後第一筆只當基準，不然整個背包都會被當成「剛撿到」
     if (lastSave && lastSave.id === s.id && lastSave.t !== s.t) out.events = diffEvents(lastSave, s);
     lastSave = s;
-    Object.assign(out, { hasSave: true, name: s.name, cls: s.cls, level: s.level }, describePlace(s, out.screen));
+    Object.assign(out, { hasSave: true, name: s.name, cls: s.cls, level: s.level, morph: s.morph,
+      // 收入總覽用：每次存檔的時間、角色、總經驗、金幣、擊殺、死亡
+      save: { id: s.id, t: s.t, totalExp: s.totalExp, gold: s.gold, kills: s.kills, deaths: s.deaths } }, describePlace(s, out.screen));
     return JSON.stringify(out);
   }
 
@@ -228,5 +304,6 @@
     if (select) openPicker(select);
   }, true);
 
-  window.__petAgent = { tick, login, pressContinue };
+  // 測試用：直接拆一行掉落紀錄（不碰遊戲畫面）
+  window.__petAgent = { tick, login, pressContinue, parseLoot };
 })();

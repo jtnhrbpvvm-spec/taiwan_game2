@@ -103,7 +103,10 @@ function loadSheet(model) {
       if (!got?.actions?.walk) return undefined;
       const actions = {};
       for (const [name, a] of Object.entries(got.actions)) actions[name] = { ...a, image: await createImageBitmap(new Blob([a.image])) };
-      return { charH: got.charH, actions, box: measureBody(actions.walk) };
+      const box = measureBody(actions.walk);
+      // 變身圖的腳底不在格子底部，在 foot 那一點（例如 384×320 的格子腳底在 y 270）；職業圖腳底貼格子底部，用量出來的
+      if (got.foot) box.gap = actions.walk.cellH - got.foot[1];
+      return { charH: got.charH, actions, box };
     })());
   }
   return sheets.get(model);
@@ -129,11 +132,14 @@ async function loadModel(p, model) {
   pruneSheets();
 }
 
-/** 照使用者設定的大小重算縮放。畫布取所有動作裡最大的格子，每個動作都貼著畫布底部中間畫。 */
+/**
+ * 照使用者設定的大小重算縮放。畫布取所有動作裡最大的格子，每個動作都貼著畫布底部中間畫。
+ * 縮放照遊戲的算法：角色身高 charH（職業圖 113、變身圖 160）畫成固定高度，所以變身後的大小比例跟遊戲裡一樣。
+ */
 function applySize(p) {
   if (!p.sprite) return;
   const s = p.sprite;
-  s.scale = (DEFAULT_HEIGHT * sizePercent) / 100 / (s.box.top - s.box.gap);
+  s.scale = (DEFAULT_HEIGHT * sizePercent) / 100 / (s.charH || s.box.top - s.box.gap);
   const all = Object.values(s.actions);
   s.w = Math.max(...all.map((a) => a.cellW)) * s.scale;
   s.h = Math.max(...all.map((a) => a.cellH)) * s.scale;

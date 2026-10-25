@@ -50,10 +50,11 @@ npm run names        # 遊戲加了新地圖／道具／職業圖後，重新產
 |---|---|
 | `main.js` | 主程式：每隻桌寵一個遊戲視窗、桌寵視窗、右鍵選單、系統匣、快捷鍵、讀存檔比出經驗／金幣／掉寶事件、自動登入與自動繼續冒險 |
 | `accounts.js`、`accounts-preload.js`、`ui/accounts.*` | 帳號檔（加密存密碼）與帳號管理視窗 |
+| `income.js`、`income-preload.js`、`ui/income.*` | 收入總覽（這次啟動以來；啟動時清掉 `income-*.json` 重記）。拿到／賣出的東西來自遊戲「掉落紀錄」訊息框（`main.js` 的 `LOOT_COLLECTOR`，遊戲藏著時會幫忙打開） |
 | `updates.js`、`tools/release.js` | 桌寵自動更新（electron-updater）與遊戲版本檢查；發佈新版的複製腳本（也會改教學網頁的下載按鈕） |
 | `index.html` | 給玩家看的下載與教學網頁（風格配合遊戲；封面、職業動作圖直接用遊戲站上的）。GitHub Pages 網址：`https://jtnhrbpvvm-spec.github.io/taiwan_game2/黑暗大陸桌寵/` |
 | `save-reader.js` | 解開遊戲加密的本機存檔（照抄遊戲 `guard.js` 的解法，只讀） |
-| `names.json` | 職業動作圖、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |
+| `names.json` | 職業動作圖、變身外觀（`morphs`／`morphForms`／`defaultMorph`，變身時桌寵跟著變）、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |
 | `game-preload.js` | 讓遊戲以為一直在前景，藏起來也照常掛機 |
 | `pet/` | 桌寵畫面：走動、站著、拖曳、跳、進帳時揮一下／升級時施法、頭上飄字、調整大小 |
 | `ui/` | 操作說明、選擇外觀（12 職業＋調色） |

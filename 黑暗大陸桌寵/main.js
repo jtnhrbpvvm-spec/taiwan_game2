@@ -12,6 +12,7 @@ const path = require("path");
 const { parseSave } = require("./save-reader");
 const accounts = require("./accounts");
 const updates = require("./updates");
+const income = require("./income");
 const names = require("./names.json");
 
 const GAME_URL = "https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/";
@@ -45,13 +46,16 @@ let clickThrough = false; // 專注模式：桌寵完全不吃滑鼠
 let helpWin;
 let pickerWin;
 let accountsWin;
+let incomeWin;
 let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
 // 使用者設定。petCount＝桌面上幾隻桌寵；
 // petAccounts[i]＝第 i 隻用哪個帳號（accounts.json 的 id），null＝不登入（訪客，存檔只在這隻自己的遊戲視窗裡）；
-// petModels[i]＝第 i 隻自己選的職業外觀，沒選（null）就跟著牠那個角色的職業
+// petModels[i]＝第 i 隻自己選的外觀（職業 key，或變身外觀「morph:MORPHS 的 key」），沒選（null）就跟著牠那個角色（變身中就是變身的樣子）
 let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], helpSeen: false, stayPets: [],
   // 打開桌寵時自動登入、自動按標題畫面的「繼續冒險」，進上次玩的角色
   autoContinue: true,
+  // 角色用變形卷軸變身時，桌寵也換成變身的樣子（自己選了外觀的那幾隻照自己選的）
+  followMorph: true,
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { exp: false, loot: false },
   // 一般模式下桌寵頭上要飄哪些字
@@ -400,13 +404,23 @@ function openPicker(petIndex = 0) {
 
 /**
  * 每一隻桌寵現在該長什麼樣（陣列長度＝桌寵數量）：
- * 使用者幫那一隻選的優先，沒選就跟著那一隻自己的角色職業。
+ * 使用者幫那一隻選的優先；沒選的話角色變身中就是變身的樣子（可以在選單關掉），不然跟著角色職業。
  */
 function resolveModels() {
   return Array.from({ length: settings.petCount }, (_, i) => {
-    const cls = games[i]?.lastRaw?.cls;
-    return settings.petModels[i] ?? (names.classes[cls]?.sprite ? cls : DEFAULT_MODEL);
+    const raw = games[i]?.lastRaw;
+    const picked = settings.petModels[i];
+    if (picked && spriteDef(picked)) return picked;
+    if (settings.followMorph && raw?.morph) return `morph:${raw.morph}`;
+    return names.classes[raw?.cls]?.sprite ? raw.cls : DEFAULT_MODEL;
   });
+}
+
+/** 外觀 key → 動作圖規格：職業 key 用 classes，「morph:xxx」用變身外觀 morphs。 */
+function spriteDef(model) {
+  if (typeof model !== "string") return null;
+  const sprite = model.startsWith("morph:") ? names.morphs?.[model.slice(6)]?.sprite : names.classes[model]?.sprite;
+  return sprite?.walk ? sprite : null;
 }
 
 // 每隻桌寵可以整隻調色：hue＝色相轉幾度、sat＝鮮豔度 %、light＝亮度 %。[最小, 最大, 預設]
@@ -565,7 +579,18 @@ function buildMenu(petIndex = 0) {
     { label: many ? "調整大小…（全部一起）" : "調整大小…", click: () => openSizer(petIndex) },
     { label: many ? `選擇這隻桌寵的外觀…（第 ${petIndex + 1} 隻）` : "選擇桌寵外觀…", click: () => openPicker(petIndex) },
     { label: "帳號管理…", click: openAccounts },
+    { label: "收入總覽…（這次啟動以來）", click: openIncome },
     { type: "separator" },
+    {
+      label: "變身時桌寵跟著變",
+      type: "checkbox",
+      checked: settings.followMorph,
+      click: (item) => {
+        settings.followMorph = item.checked;
+        saveSettings();
+        sendPets();
+      },
+    },
     {
       label: "開啟時自動登入並繼續冒險",
       type: "checkbox",
@@ -625,15 +650,16 @@ const PET_ACTIONS = ["walk", "attack", "cast"];
 
 // walkOnly：選外觀視窗的縮圖只要走路圖，不用等另外兩張下載
 ipcMain.handle("pet:sprite", async (_e, model, walkOnly) => {
-  const sprite = names.classes[model]?.sprite;
-  if (!sprite?.walk) return null;
+  const sprite = spriteDef(model);
+  if (!sprite) return null;
   try {
     const actions = {};
     await Promise.all((walkOnly ? ["walk"] : PET_ACTIONS).filter((a) => sprite[a]).map(async (a) => {
       const def = sprite[a];
       actions[a] = { cellW: def.cellW, cellH: def.cellH, frames: def.frames, ms: def.ms, image: await cachedBytes(def.src, SPRITE_KEEP_MS) };
     }));
-    return { charH: sprite.charH, actions };
+    // foot：變身圖的腳底在格子裡的位置（職業圖沒有，腳底貼格子底部）
+    return { charH: sprite.charH, foot: sprite.foot ?? null, actions };
   } catch (e) {
     console.error(`動作圖 ${model} 載入失敗：`, e.message);
     return null;
@@ -641,7 +667,10 @@ ipcMain.handle("pet:sprite", async (_e, model, walkOnly) => {
 });
 ipcMain.on("pet:interactive", (_e, on) => petWin?.setIgnoreMouseEvents(!on, { forward: true }));
 ipcMain.handle("picker:list", () => ({
-  entries: Object.entries(names.classes).filter(([, c]) => c.sprite?.walk).map(([model, c]) => ({ model, name: c.name })),
+  entries: [
+    ...Object.entries(names.classes).filter(([, c]) => c.sprite?.walk).map(([model, c]) => ({ model, name: c.name, group: "職業" })),
+    ...Object.entries(names.morphs ?? {}).filter(([, m]) => m.sprite?.walk).map(([key, m]) => ({ model: `morph:${key}`, name: m.name, group: "變身" })),
+  ],
   current: settings.petModels[pickerTarget] ?? null,
   color: settings.petColors[pickerTarget] ?? null,
   colorRange: COLOR_RANGE,
@@ -649,7 +678,7 @@ ipcMain.handle("picker:list", () => ({
 }));
 ipcMain.on("picker:choose", (_e, model) => {
   const models = Array.from({ length: MAX_PETS }, (_, i) => settings.petModels[i] ?? null);
-  models[pickerTarget] = typeof model === "string" && names.classes[model] ? model : null;
+  models[pickerTarget] = spriteDef(model) ? model : null;
   settings.petModels = models;
   saveSettings();
   sendPets();
@@ -692,8 +721,57 @@ ipcMain.on("accounts:open-folder", () => shell.showItemInFolder(accounts.file())
 // 線上版是混淆過的，player 不在 window 上；改讀遊戲自己每 20 秒寫一次的本機存檔（加密的，save-reader.js 解開）。
 // 所以事件是一批一批來的，不是每一刀都有。標題畫面上的按鈕狀態也一起讀，自動登入、自動繼續冒險要用。
 
-const READ_STATE = `(() => {
+// ── 掉落紀錄（收入總覽的「拿到／賣出的東西」）──────────────
+// 遊戲沒有把「自動賣出了什麼」存進存檔，只寫在左下角訊息框的「掉落紀錄」分頁（最近 120 行），而且那個分頁開著才會畫出來。
+// 所以遊戲視窗藏著的時候，桌寵幫忙把訊息框打開、切到掉落紀錄（按遊戲自己的按鈕函式 toggleLogDrawer／setLogPopTab，
+// 跟玩家點一樣），每次讀狀態時把新出現的那幾行抄下來、拆成 { kind, name, n, gold }（使用者 2026-10-26 選的做法）。
+// 叫出遊戲時看到訊息框開著是這個原因，自己關掉也沒關係，下次藏起來會再打開。
+// 遊戲每次重畫都是整份最近 120 行，用「舊的結尾＝新的開頭」對齊，只拿後面多出來的。
+const LOOT_COLLECTOR = `(() => {
+  if (window.__petLoot) return;
+  let prev = [];
+  const queue = [];
+  const num = (s) => Number(String(s).replace(/,/g, "")) || 0;
+  function parse(line) {
+    let m;
+    if ((m = line.match(/^🪙 自動賣出 (.+) ×([\\d,]+)（\\+([\\d,]+)）/))) return [{ kind: "sold", name: m[1], n: num(m[2]), gold: num(m[3]) }];
+    if ((m = line.match(/^🎁 獲得 (.+) ×([\\d,]+)$/))) return [{ kind: "got", name: m[1], n: num(m[2]) }];
+    if ((m = line.match(/^🗺️ \\S+ (.+) ×([\\d,]+)$/))) return [{ kind: "got", name: m[1], n: num(m[2]) }];
+    if ((m = line.match(/^📜 獲得任務道具「(.+)」 ×([\\d,]+)/))) return [{ kind: "got", name: m[1], n: num(m[2]) }];
+    if ((m = line.match(/^🌙 離線撿到：(.+)$/))) return m[1].split("、").map((part) => part.match(/^(.+) ×([\\d,]+)$/)).filter(Boolean).map((x) => ({ kind: "got", name: x[1], n: num(x[2]) }));
+    return [];
+  }
+  function sync() {
+    const box = document.getElementById("hunt-loot");
+    if (!box) return;
+    const lines = [...box.querySelectorAll(".log-line")].map((e) => e.textContent);
+    let add = lines;
+    for (let o = 0; o < prev.length; o++) {
+      const tail = prev.slice(o);
+      if (tail.length <= lines.length && tail.every((v, i) => v === lines[i])) { add = lines.slice(tail.length); break; }
+    }
+    if (lines.length === prev.length && lines.every((v, i) => v === prev[i])) add = [];
+    prev = lines;
+    for (const line of add) queue.push(...parse(line));
+  }
+  window.__petLoot = {
+    // hidden：遊戲視窗藏著，可以幫忙打開掉落紀錄
+    take(hidden) {
+      try {
+        if (hidden && document.querySelector(".screen.active")?.id === "screen-game") {
+          if (!document.getElementById("log-pop")?.classList.contains("open") && typeof toggleLogDrawer === "function") toggleLogDrawer();
+          if (typeof setLogPopTab === "function") setLogPopTab("loot"); // 也會讓遊戲馬上重畫一次掉落紀錄
+        }
+        sync();
+      } catch (e) {}
+      return queue.splice(0);
+    },
+  };
+})()`;
+
+const READ_STATE = (hidden) => `(() => {
   try {
+    ${LOOT_COLLECTOR};
     const slot = parseInt(localStorage.getItem(${JSON.stringify(SLOT_KEY)}), 10) || 0;
     const shown = (id) => { const el = document.getElementById(id); return !!el && !el.classList.contains("hidden"); };
     return {
@@ -704,9 +782,35 @@ const READ_STATE = `(() => {
       cloudMsg: document.getElementById("cloud-msg")?.textContent ?? "",
       dialog: !!document.getElementById("dialog-layer")?.classList.contains("active"),
       canContinue: shown("btn-continue"),
+      loot: window.__petLoot.take(${hidden ? "true" : "false"}),
     };
   } catch { return null; }
 })()`;
+
+// 遊戲的經驗表（遊戲 config.js 的 expToNext）：存檔的 exp 是「這一級裡的經驗」，跨過升級時要換算成總經驗才能相減
+const EXP_TABLE_LOW = [0, 125, 175, 200, 250, 546];
+const EXP_TABLE_HIGH = { 45: 729360, 46: 1508416, 47: 3495263, 48: 9912189 };
+function expToNext(lv) {
+  if (lv < EXP_TABLE_LOW.length) return EXP_TABLE_LOW[lv];
+  if (lv <= 44) return (lv + 1) ** 4 - lv ** 4;
+  return EXP_TABLE_HIGH[lv] || 36065092;
+}
+function totalExp(level, exp) {
+  let sum = exp;
+  for (let lv = 1; lv < level; lv++) sum += expToNext(lv);
+  return sum;
+}
+
+/**
+ * 變身中的話回傳用哪一套變身圖（names.morphs 的 key），不然 null。跟遊戲 ui-scene.js 的 playerMorph 一樣：
+ * 變身對象有專屬圖用專屬圖，沒有就用變形卷軸的統一外觀。遊戲每一下都會清掉過期的增益，所以存檔裡有就是還在變身。
+ */
+function morphOf(p, savedAt) {
+  const b = p.buffs?.morph;
+  if (!b || (savedAt && b.until && b.until <= savedAt)) return null;
+  const key = names.morphForms?.[b.form]?.sprite || names.defaultMorph;
+  return names.morphs?.[key] ? key : null;
+}
 
 /** 存檔物件 → 桌寵要的摘要。 */
 function summarize(slot, data) {
@@ -714,8 +818,10 @@ function summarize(slot, data) {
   if (!p || typeof p.lv !== "number") return null;
   const bag = {};
   for (const it of p.inv ?? []) if (it?.id) bag[it.id] = (bag[it.id] ?? 0) + (Number(it.n) || 1);
-  return { id: `${slot}:${p.created ?? p.name}`, t: data.t, name: p.name, cls: p.cls, level: p.lv, exp: Number(p.exp) || 0,
-    gold: Number(p.gold) || 0, loc: p.loc ?? {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
+  const exp = Number(p.exp) || 0;
+  return { id: `${slot}:${p.created ?? p.name}`, t: data.t, name: p.name, cls: p.cls, level: p.lv, exp, totalExp: totalExp(p.lv, exp),
+    gold: Number(p.gold) || 0, kills: Number(p.kills) || 0, deaths: Number(p.deaths) || 0, morph: morphOf(p, data.t),
+    loc: p.loc ?? {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
 }
 
 /** 角色現在人在哪、在做什麼。 */
@@ -745,9 +851,10 @@ function diffEvents(prev, next) {
 }
 
 async function pollGame(g) {
-  const r = await inGame(g, READ_STATE);
+  const r = await inGame(g, READ_STATE(!g.win.isVisible()));
   if (!r || g.win.isDestroyed()) return;
   await autoContinue(g, r);
+  income.recordLoot(g.index, r.loot);
   const s = summarize(r.slot, parseSave(r.raw));
   if (!s) {
     if (!g.lastState) sendState(g);
@@ -758,13 +865,31 @@ async function pollGame(g) {
     const events = diffEvents(g.lastRaw, s);
     if (events.length) petWin?.webContents.send("pet:events", g.index, events);
   }
-  const changedClass = g.lastRaw?.cls !== s.cls;
+  if (!g.lastRaw || g.lastRaw.t !== s.t || g.lastRaw.id !== s.id) income.recordSave(g.index, s);
+  const changedLook = g.lastRaw?.cls !== s.cls || g.lastRaw?.morph !== s.morph;
   g.lastRaw = s;
   const { bag, loc, ...rest } = s;
   g.lastState = { ...rest, account: accountLabel(g), ...describePlace(s, r.screen) };
   sendState(g);
-  if (changedClass) sendPets();
+  if (changedLook) sendPets();
 }
+
+// ── 收入總覽 ──────────────────────────────────────────────
+
+function openIncome() {
+  incomeWin = openPanel(incomeWin, "income.html", {
+    width: 560,
+    height: 720,
+    resizable: true,
+    title: "收入總覽",
+    webPreferences: { preload: path.join(__dirname, "income-preload.js") },
+  });
+}
+
+ipcMain.handle("income:get", () => ({
+  pets: income.summary(settings.petCount, games.map(accountLabel)),
+  classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
+}));
 
 // ── 啟動 ──────────────────────────────────────────────────
 
@@ -783,6 +908,7 @@ async function createTray() {
 app.whenReady().then(async () => {
   loadSettings();
   accounts.load();
+  income.start(app.getPath("userData")); // 收入總覽每次啟動從頭記，蓋掉上一次的
   createPetWindow();
   syncGames();
   createTray();
@@ -798,6 +924,7 @@ app.whenReady().then(async () => {
   updates.start({ notify: say, gameUrl: GAME_URL, loadedGameVersions: () => games.map((g) => g.version), reloadGames: () => games.forEach(loadGame) });
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
     openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
+    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin,
     quit: () => app.quit() });
 });
 

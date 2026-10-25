@@ -126,14 +126,14 @@
           <p class="sub">遊戲在背景照常掛機，畫面上留<b>你的角色</b>走來走去。<br />一隻桌寵一個帳號，可以同時掛好幾個帳號。</p>
           <div id="dl-pc">
           <!-- DOWNLOAD:START 這一段由 tools/release.js 在每次發佈時自動改寫，不要手動改 -->
-          <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/dark-continent-pet-setup-1.0.0.exe" download>下載安裝檔</a>
-          <p class="meta">版本 1.0.0・約 79 MB・Windows 10／11（64 位元）</p>
+          <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/dark-continent-pet-setup-1.1.0.exe" download>下載安裝檔</a>
+          <p class="meta">版本 1.1.0・約 79 MB・Windows 10／11（64 位元）</p>
           <!-- DOWNLOAD:END -->
           </div>
           <div id="dl-android">
           <!-- ANDROID:START 這一段由安卓專案的 tools/publish.js 在每次發布 APK 時自動改寫，不要手動改 -->
-          <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/android/dark-pet-android-1.0.0.apk" download>下載安卓版</a>
-          <p class="meta">版本 1.0.0・約 1.6 MB・Android 8 以上</p>
+          <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/android/dark-pet-android-1.1.0.apk" download>下載安卓版</a>
+          <p class="meta">版本 1.1.0・約 1.6 MB・Android 8 以上</p>
           <!-- ANDROID:END -->
           </div>
           <p class="meta" id="ios-note" hidden><span class="warn">iPhone 和 iPad 目前不支援。</span>桌寵只有 Windows 電腦版和安卓手機版。</p>
@@ -158,6 +158,8 @@
           <div><b>進帳看得到</b><span>經驗、金幣、掉寶從那隻桌寵頭上飄出來，升級時會跳起來施法。</span></div>
           <div><b>自動更新</b><span>桌寵自己會下載新版；遊戲改版時也會提醒你套用。</span></div>
           <div><b>勿擾模式</b><span>專注模式下桌寵變半透明、不擋滑鼠，也不跳提醒。</span></div>
+          <div><b>收入總覽</b><span>這次打開以來每隻賺了多少：經驗、金幣、打怪數、拿到和自動賣出的東西。</span></div>
+          <div><b>跟著變身</b><span>角色讀變形卷軸變身時，桌寵也換成變身的樣子；也能選變身外觀固定。</span></div>
         </div>
       </section>
 
@@ -228,8 +230,10 @@
           <tr><td>原地不走動</td><td>桌寵留在原地，只會踏步或揮擊。有好幾隻時可以選「這一隻」或「全部」</td></tr>
           <tr><td>桌寵數量</td><td>1～10 隻，每隻是一個獨立的遊戲、一個帳號</td></tr>
           <tr><td>調整大小…</td><td>用拉條把桌寵調大調小（50%～200%），全部一起變</td></tr>
-          <tr><td>選擇桌寵外觀…</td><td>預設跟著那隻角色的職業，也可以從 12 個職業裡挑一個固定，還能整隻調色</td></tr>
+          <tr><td>選擇桌寵外觀…</td><td>預設跟著那隻角色（職業、變身），也可以從 12 個職業和變身外觀裡挑一個固定，還能整隻調色</td></tr>
           <tr><td>帳號管理…</td><td>新增、修改、刪除帳號，指定每隻用哪個帳號</td></tr>
+          <tr><td>收入總覽…</td><td>這次打開桌寵以來每隻的經驗、金幣淨增減、自動賣出所得、打怪數、拿到和賣出的東西。下次打開重新記</td></tr>
+          <tr><td>變身時桌寵跟著變</td><td>角色變身時桌寵也換成變身的樣子（自己選了外觀的照自己選的）</td></tr>
           <tr><td>開啟時自動登入並繼續冒險</td><td>打開桌寵時自動登入各隻的帳號、按「繼續冒險」</td></tr>
           <tr><td>開機自動啟動</td><td>開機後自己在背景開始掛機</td></tr>
           <tr><td>重新載入遊戲</td><td>遊戲畫面怪怪的時候用</td></tr>
@@ -254,6 +258,8 @@
 
       <section>
         <h2>常見問題</h2>
+        <h3>打開遊戲時左下角的訊息框一直開著</h3>
+        <p>這是收入總覽要用的：遊戲只把「自動賣出了什麼」寫在訊息框的「掉落紀錄」裡，遊戲藏著時桌寵會把它打開來抄。可以自己關掉，下次藏起來時桌寵會再打開。</p>
         <h3>登入失敗</h3>
         <p>桌寵頭上會飄出原因，那隻的遊戲視窗也會自己打開。通常是密碼打錯：到「帳號管理…」按那個帳號的「修改」重新輸入密碼。也確認同一個帳號沒有在別的地方上線。</p>
         <h3>開了專注模式之後點不到桌寵</h3>
@@ -280,6 +286,8 @@
           <div><b>進帳看得到</b><span>經驗、金幣、掉寶從那隻桌寵頭上飄出來，升級時會施法。</span></div>
           <div><b>自動更新</b><span>小更新自己下載；有新版 App 或遊戲改版時桌寵會提醒你。</span></div>
           <div><b>勿擾模式</b><span>專注模式下桌寵半透明、點不到，也不跳提醒。</span></div>
+          <div><b>收入總覽</b><span>設定的「收入」分頁：這次打開以來每隻的經驗、金幣、打怪數、拿到和賣出的東西。</span></div>
+          <div><b>跟著變身</b><span>角色變身時桌寵也換成變身的樣子；也能選變身外觀固定。</span></div>
         </div>
       </section>
 
@@ -317,7 +325,7 @@
         <table>
           <tr><td>點桌寵</td><td>打開那一隻的遊戲，按上方的「收起」或返回鍵收回去</td></tr>
           <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
-          <tr><td>長按桌寵</td><td>打開設定：帳號、桌寵數量、外觀、飄字、專注模式、更新</td></tr>
+          <tr><td>長按桌寵</td><td>打開設定：帳號、桌寵數量、外觀、收入總覽、飄字、專注模式、更新</td></tr>
           <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
         </table>
         <h3>更新</h3>
