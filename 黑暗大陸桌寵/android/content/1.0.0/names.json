@@ -1,0 +1,1080 @@
+{
+ "version": "20261025aq",
+ "classes": {
+  "royal": {
+   "name": "王族",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/royal-walk.png",
+     "cellW": 114,
+     "cellH": 121,
+     "frames": {
+      "down": 6,
+      "right": 5,
+      "up": 6
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/royal-attack.png",
+     "cellW": 134,
+     "cellH": 114,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 8
+     },
+     "ms": 60
+    },
+    "cast": {
+     "src": "images/sprites/royal-cast.png",
+     "cellW": 208,
+     "cellH": 115,
+     "frames": {
+      "down": 8,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/royal-hit.png",
+     "cellW": 172,
+     "cellH": 117,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 130
+    }
+   }
+  },
+  "knight": {
+   "name": "騎士",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/knight-walk.png",
+     "cellW": 134,
+     "cellH": 122,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 6
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/knight-attack.png",
+     "cellW": 194,
+     "cellH": 136,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 110
+    },
+    "cast": {
+     "src": "images/sprites/knight-cast.png",
+     "cellW": 156,
+     "cellH": 136,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 140
+    },
+    "hit": {
+     "src": "images/sprites/knight-hit.png",
+     "cellW": 148,
+     "cellH": 125,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "mage": {
+   "name": "法師",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/mage-walk.png",
+     "cellW": 121,
+     "cellH": 127,
+     "frames": {
+      "down": 5,
+      "right": 5,
+      "up": 5
+     },
+     "ms": 120
+    },
+    "attack": {
+     "src": "images/sprites/mage-attack.png",
+     "cellW": 132,
+     "cellH": 127,
+     "frames": {
+      "down": 3,
+      "right": 4,
+      "up": 7
+     },
+     "ms": 80
+    },
+    "cast": {
+     "src": "images/sprites/mage-cast.png",
+     "cellW": 130,
+     "cellH": 126,
+     "frames": {
+      "down": 3,
+      "right": 8,
+      "up": 8
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/mage-hit.png",
+     "cellW": 127,
+     "cellH": 123,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "elf": {
+   "name": "妖精",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/elf-walk.png",
+     "cellW": 98,
+     "cellH": 116,
+     "frames": {
+      "down": 3,
+      "right": 2,
+      "up": 3
+     },
+     "ms": 150
+    },
+    "attack": {
+     "src": "images/sprites/elf-attack.png",
+     "cellW": 146,
+     "cellH": 127,
+     "frames": {
+      "down": 6,
+      "right": 5,
+      "up": 4
+     },
+     "ms": 60
+    },
+    "cast": {
+     "src": "images/sprites/elf-cast.png",
+     "cellW": 206,
+     "cellH": 152,
+     "frames": {
+      "down": 5,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/elf-hit.png",
+     "cellW": 116,
+     "cellH": 121,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 2
+     },
+     "ms": 90
+    }
+   }
+  },
+  "darkelf": {
+   "name": "黑暗妖精",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/darkelf-walk.png",
+     "cellW": 152,
+     "cellH": 117,
+     "frames": {
+      "down": 8,
+      "right": 7,
+      "up": 7
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/darkelf-attack.png",
+     "cellW": 252,
+     "cellH": 155,
+     "frames": {
+      "down": 7,
+      "right": 7,
+      "up": 5
+     },
+     "ms": 55
+    },
+    "cast": {
+     "src": "images/sprites/darkelf-cast.png",
+     "cellW": 206,
+     "cellH": 112,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 100
+    },
+    "hit": {
+     "src": "images/sprites/darkelf-hit.png",
+     "cellW": 154,
+     "cellH": 130,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "shura": {
+   "name": "修羅",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/shura-walk.png",
+     "cellW": 188,
+     "cellH": 130,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 2
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/shura-attack.png",
+     "cellW": 282,
+     "cellH": 125,
+     "frames": {
+      "down": 9,
+      "right": 9,
+      "up": 9
+     },
+     "ms": 55
+    },
+    "cast": {
+     "src": "images/sprites/shura-cast.png",
+     "cellW": 214,
+     "cellH": 116,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 110
+    },
+    "hit": {
+     "src": "images/sprites/shura-hit.png",
+     "cellW": 162,
+     "cellH": 120,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "warrior": {
+   "name": "戰士",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/warrior-walk.png",
+     "cellW": 102,
+     "cellH": 131,
+     "frames": {
+      "down": 5,
+      "right": 5,
+      "up": 5
+     },
+     "ms": 120
+    },
+    "attack": {
+     "src": "images/sprites/warrior-attack.png",
+     "cellW": 173,
+     "cellH": 142,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 70
+    },
+    "cast": {
+     "src": "images/sprites/warrior-cast.png",
+     "cellW": 195,
+     "cellH": 174,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/warrior-hit.png",
+     "cellW": 125,
+     "cellH": 138,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "gunner": {
+   "name": "槍手",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/gunner-walk.png",
+     "cellW": 108,
+     "cellH": 119,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/gunner-attack.png",
+     "cellW": 154,
+     "cellH": 129,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 8
+     },
+     "ms": 50
+    },
+    "cast": {
+     "src": "images/sprites/gunner-cast.png",
+     "cellW": 156,
+     "cellH": 142,
+     "frames": {
+      "down": 5,
+      "right": 6,
+      "up": 5
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/gunner-hit.png",
+     "cellW": 130,
+     "cellH": 120,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "magicfighter": {
+   "name": "魔鬥士",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/magicfighter-walk.png",
+     "cellW": 68,
+     "cellH": 127,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/magicfighter-attack.png",
+     "cellW": 198,
+     "cellH": 142,
+     "frames": {
+      "down": 10,
+      "right": 9,
+      "up": 10
+     },
+     "ms": 50
+    },
+    "cast": {
+     "src": "images/sprites/magicfighter-cast.png",
+     "cellW": 148,
+     "cellH": 147,
+     "frames": {
+      "down": 3,
+      "right": 5,
+      "up": 6
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/magicfighter-hit.png",
+     "cellW": 108,
+     "cellH": 128,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "paladin": {
+   "name": "聖騎士",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/paladin-walk.png",
+     "cellW": 144,
+     "cellH": 126,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 120
+    },
+    "attack": {
+     "src": "images/sprites/paladin-attack.png",
+     "cellW": 140,
+     "cellH": 143,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 5
+     },
+     "ms": 60
+    },
+    "cast": {
+     "src": "images/sprites/paladin-cast.png",
+     "cellW": 152,
+     "cellH": 161,
+     "frames": {
+      "down": 5,
+      "right": 5,
+      "up": 8
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/paladin-hit.png",
+     "cellW": 238,
+     "cellH": 131,
+     "frames": {
+      "down": 3,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 110
+    }
+   }
+  },
+  "angel": {
+   "name": "天使",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/angel-walk.png",
+     "cellW": 108,
+     "cellH": 148,
+     "frames": {
+      "down": 5,
+      "right": 5,
+      "up": 5
+     },
+     "ms": 120
+    },
+    "attack": {
+     "src": "images/sprites/angel-attack.png",
+     "cellW": 204,
+     "cellH": 153,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 8
+     },
+     "ms": 60
+    },
+    "cast": {
+     "src": "images/sprites/angel-cast.png",
+     "cellW": 148,
+     "cellH": 149,
+     "frames": {
+      "down": 5,
+      "right": 5,
+      "up": 4
+     },
+     "ms": 90
+    },
+    "hit": {
+     "src": "images/sprites/angel-hit.png",
+     "cellW": 192,
+     "cellH": 128,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  },
+  "demon": {
+   "name": "惡魔",
+   "sprite": {
+    "drawH": 48,
+    "charH": 113,
+    "walk": {
+     "src": "images/sprites/demon-walk.png",
+     "cellW": 146,
+     "cellH": 124,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 6
+     },
+     "ms": 110
+    },
+    "attack": {
+     "src": "images/sprites/demon-attack.png",
+     "cellW": 184,
+     "cellH": 145,
+     "frames": {
+      "down": 8,
+      "right": 8,
+      "up": 5
+     },
+     "ms": 60
+    },
+    "cast": {
+     "src": "images/sprites/demon-cast.png",
+     "cellW": 130,
+     "cellH": 144,
+     "frames": {
+      "down": 6,
+      "right": 6,
+      "up": 5
+     },
+     "ms": 80
+    },
+    "hit": {
+     "src": "images/sprites/demon-hit.png",
+     "cellW": 194,
+     "cellH": 124,
+     "frames": {
+      "down": 3,
+      "right": 3,
+      "up": 3
+     },
+     "ms": 90
+    }
+   }
+  }
+ },
+ "towns": {
+  "talking": "低語港",
+  "gludio": "灰燼村",
+  "giran": "暗金城",
+  "aden": "永夜王都"
+ },
+ "zones": {
+  "island": "低語海岸",
+  "islandDungeon": "低語墓窟",
+  "elvenForest": "迷霧古林",
+  "gludio1": "腐朽礦坑・上層",
+  "sleepingCave": "沉眠龍窟",
+  "pirateIsle": "沉船海灣",
+  "gludio2": "腐朽礦坑・深層",
+  "ivory": "暮光法師塔",
+  "dragonValley": "焦骨峽谷",
+  "venomNest": "毒霧巢穴",
+  "pyramid": "黃沙王陵",
+  "orenSnow": "永凍荒原",
+  "fireCave": "熔火煉獄",
+  "forgottenIsle": "紫霧遺跡",
+  "giantTomb": "泰坦墓穴",
+  "tower": "永夜之塔",
+  "lairAntharas": "格爾莫斯的巢穴",
+  "lairFafurion": "瑟拉恩的巢穴",
+  "lairLindvior": "維斯塔爾的巢穴",
+  "lairValakas": "莫爾加斯的巢穴"
+ },
+ "items": {
+  "dagger": "匕首",
+  "silverDagger": "銀匕首",
+  "darkDagger": "暗影匕首",
+  "shortSword": "短劍",
+  "longSword": "長劍",
+  "silverSword": "銀長劍",
+  "katana": "武士刀",
+  "tsurugi": "瑟魯基之劍",
+  "dragonSlayer": "屠龍劍",
+  "twoHandSword": "雙手劍",
+  "dkFlameSword": "死亡騎士的烈炎之劍",
+  "handAxe": "手斧",
+  "battleAxe": "巨斧",
+  "demonAxe": "惡魔之斧",
+  "spear": "長矛",
+  "trident": "三叉戟",
+  "mace": "釘錘",
+  "warHammer": "戰錘",
+  "holyMace": "聖光之錘",
+  "shortBow": "短弓",
+  "longBow": "長弓",
+  "elvenBow": "精靈之弓",
+  "windBow": "風之弓",
+  "matchlock": "火繩槍",
+  "rifle": "來福槍",
+  "magicSniper": "魔導狙擊槍",
+  "oakWand": "橡木魔杖",
+  "crystalWand": "水晶魔杖",
+  "manaWand": "瑪那魔杖",
+  "iceQueenStaff": "冰之女王魔杖",
+  "claw": "鋼爪",
+  "darkClaw": "暗黑鋼爪",
+  "dualBlade": "雙刀",
+  "reaperScythe": "收割者鐮刀",
+  "boneScythe": "骨鐮",
+  "abyssScythe": "深淵鐮刀",
+  "darkDual": "暗黑雙刀",
+  "leatherCap": "皮帽",
+  "ironHelm": "鋼盔",
+  "knightHelm": "騎士頭盔",
+  "magicHelm": "魔法頭盔",
+  "leatherArmor": "皮甲",
+  "scaleMail": "鱗甲",
+  "chainMail": "鍊甲",
+  "plateMail": "板甲",
+  "mageRobe": "法師長袍",
+  "elvenMail": "精靈鍊甲",
+  "dragonScaleMail": "龍鱗鎧",
+  "woodShield": "木盾",
+  "ironShield": "鋼盾",
+  "knightShield": "騎士盾",
+  "tshirt": "T恤",
+  "cloak": "斗篷",
+  "protectCloak": "保護者斗篷",
+  "mrCloak": "抗魔斗篷",
+  "leatherGloves": "皮手套",
+  "powerGloves": "力量手套",
+  "leatherBoots": "皮靴",
+  "ironBoots": "鋼靴",
+  "hasteBoots": "速度之靴",
+  "duskWarHelm": "暮鋼戰盔",
+  "abyssGuardMail": "深淵守衛戰甲",
+  "moonveilCloak": "月影秘法披風",
+  "dawnBastionShield": "黎明壁壘之盾",
+  "frostMirrorShield": "霜鏡法盾",
+  "runeSilkTunic": "符文絲織內衣",
+  "titanWeaveTunic": "泰坦紋戰衣",
+  "bloodOathGauntlets": "血誓護手",
+  "astralWeaveGloves": "星紋秘法手套",
+  "galeStalkerBoots": "疾風獵行靴",
+  "stoneWardBoots": "磐岩守護戰靴",
+  "eclipseDual": "蝕月雙刃",
+  "rakshasaClaw": "羅剎滅魂爪",
+  "starfallGun": "星隕魔導槍",
+  "thunderRuneSword": "雷霆符文劍",
+  "dawnJudgmentHammer": "黎明裁決之錘",
+  "seraphSpear": "熾天使之矛",
+  "infernalSoulScythe": "煉獄噬魂鐮",
+  "dragonWardHelm": "龍裔戰盔",
+  "dragonWingCloak": "龍翼守護披風",
+  "dragonHeartTunic": "龍紋護心衣",
+  "dragonFangGloves": "龍牙護手",
+  "dragonWardBoots": "龍裔重靴",
+  "starwindCrown": "星風法冠",
+  "starwindRobe": "星風法袍",
+  "starwindCloak": "星風披風",
+  "starwindShield": "星風法盾",
+  "starwindTunic": "星風符文內衣",
+  "starwindGloves": "星風手套",
+  "mrAmulet": "抗魔項鍊",
+  "strAmulet": "力量項鍊",
+  "strRing": "力量戒指",
+  "dexRing": "敏捷戒指",
+  "conRing": "體質戒指",
+  "intRing": "智力戒指",
+  "protectRing": "守護戒指",
+  "belt": "皮帶",
+  "titanBelt": "泰坦腰帶",
+  "redPotion": "治癒藥水",
+  "orangePotion": "強力治癒藥水",
+  "whitePotion": "終極治癒藥水",
+  "ancientPotion": "古代終極治癒藥水",
+  "greenPotion": "自我加速藥水",
+  "bravePotion": "勇敢藥水",
+  "elvenWafer": "精靈餅乾",
+  "wisdomPotion": "慎重藥水",
+  "bluePotion": "藍色藥水",
+  "homeScroll": "回家卷軸",
+  "teleScroll": "瞬間移動卷軸",
+  "reviveScroll": "復活卷軸",
+  "polyScroll": "變形卷軸",
+  "weaponScroll": "對武器施法的卷軸",
+  "armorScroll": "對盔甲施法的卷軸",
+  "bWeaponScroll": "祝福的對武器施法的卷軸",
+  "bArmorScroll": "祝福的對盔甲施法的卷軸",
+  "cWeaponScroll": "詛咒的對武器施法的卷軸",
+  "cArmorScroll": "詛咒的對盔甲施法的卷軸",
+  "arrow": "箭",
+  "silverArrow": "銀箭",
+  "bullet": "子彈",
+  "silverBullet": "銀子彈",
+  "elixir": "萬能藥",
+  "baphometHorn": "巴風特之角",
+  "demonHeart": "惡魔之心",
+  "spiderVenom": "蛛后毒囊",
+  "osirisSeal": "歐西里斯的封印",
+  "towerSoul": "永夜之魂",
+  "towerBullHorn": "巨大牛人之角",
+  "towerBansheeTear": "黑暗女妖之淚",
+  "towerFlameCore": "炎魔之影核心",
+  "towerIceCrown": "冰之女王冠冕碎片",
+  "towerLichCrystal": "巫妖王命匣碎片",
+  "towerFallenFeather": "墮落大天使之羽",
+  "towerChaosCore": "混沌之主核心",
+  "towerAbyssEye": "深淵領主之眼",
+  "towerDeathShard": "死神鐮刃碎片",
+  "towerKingSeal": "冥法軍王之印",
+  "treantHeart": "古樹之心",
+  "drakeFang": "地龍之牙",
+  "pirateTreasure": "海賊的寶箱",
+  "wyvernWing": "飛龍之翼",
+  "frostCrystal": "寒冰結晶",
+  "ifritFlame": "伊弗利特之焰",
+  "forgottenRelic": "遺忘的聖物",
+  "giantSoul": "巨人之魂",
+  "antharasScale": "地龍之鱗",
+  "fafurionScale": "水龍之鱗",
+  "lindviorScale": "風龍之鱗",
+  "valakasScale": "火龍之鱗",
+  "doll_skeleton-knight": "骷髏小騎士",
+  "doll_frost-dragon": "冰霜幼龍",
+  "doll_forest-sprite": "森林小精靈",
+  "doll_lava-hound": "熔岩魔犬",
+  "doll_forest-deer": "森靈幼鹿",
+  "doll_star-fox": "星辰靈狐",
+  "doll_mushroom-rabbit": "蘑菇燈兔",
+  "doll_tidal-dragon": "潮汐幼龍",
+  "doll_snow-owl": "霜羽貓頭鷹",
+  "doll_flower-rabbit": "花翼仙兔",
+  "doll_steam-squirrel": "蒸氣松鼠",
+  "doll_golden-griffin": "黃金獅鷲",
+  "doll_crystal-turtle": "紫晶靈龜",
+  "doll_white-tiger": "白虎",
+  "doll_azure-dragon": "青龍",
+  "doll_vermillion-bird": "朱雀",
+  "doll_golden-dragon": "金龍",
+  "doll_phoenix": "鳳凰",
+  "doll_black-tortoise": "玄武",
+  "doll_qilin": "麒麟",
+  "doll_little-demon": "饕餮",
+  "book_energyBolt": "一級魔法書（光箭）",
+  "book_heal1": "一級魔法書（初級治癒術）",
+  "book_mShield": "一級魔法書（保護罩）",
+  "book_holyWeapon": "一級魔法書（神聖武器）",
+  "book_iceDagger": "二級魔法書（冰箭）",
+  "book_windCutter": "二級魔法書（風刃）",
+  "book_armorBless": "二級魔法書（鎧甲護持）",
+  "book_meditate": "二級魔法書（冥想術）",
+  "book_heal2": "三級魔法書（中級治癒術）",
+  "book_fireArrow": "三級魔法書（火焰箭）",
+  "book_auroraBolt": "三級魔法書（極光雷電）",
+  "book_enchantDex": "三級魔法書（敏捷術）",
+  "book_fireball": "四級魔法書（火球術）",
+  "book_haste": "四級魔法書（加速術）",
+  "book_vampKiss": "四級魔法書（吸血鬼之吻）",
+  "book_enchantStr": "四級魔法書（力量術）",
+  "book_lightning": "五級魔法書（極道落雷）",
+  "book_frostBreath": "五級魔法書（寒冰氣息）",
+  "book_berserkSpell": "五級魔法書（狂暴術）",
+  "book_heal3": "六級魔法書（高級治癒術）",
+  "book_blaze": "六級魔法書（烈炎術）",
+  "book_iceLance": "六級魔法書（冰矛）",
+  "book_bodyBless": "六級魔法書（體魄強健術）",
+  "book_blizzard": "七級魔法書（冰雪暴）",
+  "book_tornado": "七級魔法書（龍捲風）",
+  "book_mageBarrier": "七級魔法書（魔法屏障）",
+  "book_fullHeal": "八級魔法書（全部治癒術）",
+  "book_thunderStorm": "八級魔法書（雷電風暴）",
+  "book_holyBarrier": "八級魔法書（聖結界）",
+  "book_meteor": "九級魔法書（流星雨）",
+  "book_disintegrate": "九級魔法書（究極光裂術）",
+  "book_absBarrier": "九級魔法書（絕對屏障）",
+  "book_mageInferno": "十級魔法書（煉獄）",
+  "book_darkStar": "十級魔法書（黑闇之星）",
+  "book_royalAim": "技能書（精準目標）",
+  "book_royalStrike": "技能書（王者之劍）",
+  "book_royalMorale": "技能書（激勵士氣）",
+  "book_royalIron": "技能書（鋼鐵士氣）",
+  "book_royalAura": "技能書（王者光環）",
+  "book_royalImpact": "技能書（衝擊士氣）",
+  "book_royalWrath": "技能書（王者之怒）",
+  "book_royalDecree": "技能書（王命）",
+  "book_knightBash": "技能書（猛擊）",
+  "book_knightStun": "技能書（衝擊之暈）",
+  "book_knightCharge": "技能書（衝鋒斬）",
+  "book_knightSolid": "技能書（增幅防禦）",
+  "book_knightWill": "技能書（不屈意志）",
+  "book_knightCounter": "技能書（反擊屏障）",
+  "book_knightVow": "技能書（騎士誓約）",
+  "book_knightGuard": "技能書（堅固防護）",
+  "book_knightShield": "技能書（盾擊）",
+  "book_knightWrath": "技能書（騎士之怒）",
+  "book_knightVerdict": "技能書（聖劍裁決）",
+  "book_mageFocus": "技能書（魔力集中）",
+  "book_mageMind": "技能書（魔力精通）",
+  "book_elfShot": "精靈水晶（精靈之箭）",
+  "book_elfWind": "精靈水晶（風之神射）",
+  "book_elfEarth": "精靈水晶（大地屏障）",
+  "book_elfBless": "精靈水晶（精靈祝福）",
+  "book_elfTriple": "精靈水晶（三重矢）",
+  "book_elfSpring": "精靈水晶（生命之泉）",
+  "book_elfStorm": "精靈水晶（暴風神射）",
+  "book_elfFire": "精靈水晶（烈炎之魂）",
+  "book_elfPierce": "精靈水晶（穿透之箭）",
+  "book_elfRain": "精靈水晶（箭雨）",
+  "book_deStab": "黑暗精靈水晶（背刺）",
+  "book_deShadow": "黑暗精靈水晶（暗影閃避）",
+  "book_dePoison": "黑暗精靈水晶（劇毒之刃）",
+  "book_deBurn": "黑暗精靈水晶（燃燒鬥志）",
+  "book_deFang": "黑暗精靈水晶（暗影之牙）",
+  "book_deBody": "黑暗精靈水晶（暗影之軀）",
+  "book_deDouble": "黑暗精靈水晶（雙重破壞）",
+  "book_deStorm": "黑暗精靈水晶（暗影風暴）",
+  "book_deAssassin": "黑暗精靈水晶（暗殺）",
+  "book_deArmor": "黑暗精靈水晶（暗影鎧甲）",
+  "book_deNightmare": "黑暗精靈水晶（夜魘）",
+  "book_shuraPalm": "技能書（爆裂掌）",
+  "book_shuraCombo": "技能書（連擊）",
+  "book_shuraIron": "技能書（金剛體）",
+  "book_shuraBreak": "技能書（破甲）",
+  "book_shuraWhirl": "技能書（旋風腿）",
+  "book_shuraRage": "技能書（狂暴）",
+  "book_shuraBlood": "技能書（血戰）",
+  "book_shuraThousand": "技能書（千手破）",
+  "book_shuraFist": "技能書（羅剎拳）",
+  "book_shuraWrath": "技能書（修羅之怒）",
+  "book_shuraAsura": "技能書（阿修羅）",
+  "book_warStrike": "技能書（重擊）",
+  "book_warSmash": "技能書（粉碎）",
+  "book_warLeap": "技能書（躍擊）",
+  "book_warTough": "技能書（堅韌）",
+  "book_warIron": "技能書（鋼鐵之軀）",
+  "book_warBerserk": "技能書（狂怒）",
+  "book_warWhirl": "技能書（旋風斬）",
+  "book_warTitan": "技能書（泰坦之力）",
+  "book_warExecute": "技能書（處決）",
+  "book_warCry": "技能書（戰吼）",
+  "book_warQuake": "技能書（大地崩裂）",
+  "book_gunQuick": "技能書（快速射擊）",
+  "book_gunAim": "技能書（精準射擊）",
+  "book_gunBlast": "技能書（爆裂彈）",
+  "book_gunFlash": "技能書（閃光彈）",
+  "book_gunRapid": "技能書（連射）",
+  "book_gunSteady": "技能書（穩定姿態）",
+  "book_gunSnipe": "技能書（狙擊）",
+  "book_gunPierce": "技能書（穿甲彈）",
+  "book_gunBarrage": "技能書（彈幕）",
+  "book_gunRocket": "技能書（火箭砲）",
+  "book_gunBullet": "技能書（子彈時間）",
+  "book_mfSlash": "技能書（魔刃）",
+  "book_mfEnchant": "技能書（魔力附加）",
+  "book_mfThunder": "技能書（雷電斬）",
+  "book_mfFlame": "技能書（火焰斬）",
+  "book_mfShield": "技能書（法力護盾）",
+  "book_mfFocus": "技能書（魔力凝聚）",
+  "book_mfBurst": "技能書（元素爆發）",
+  "book_mfStorm": "技能書（雷霆風暴）",
+  "book_mfAvatar": "技能書（魔劍化身）",
+  "book_mfCollapse": "技能書（天崩）",
+  "book_palStrike": "技能書（聖光打擊）",
+  "book_palShield": "技能書（聖盾）",
+  "book_palHammer": "技能書（制裁之錘）",
+  "book_palAura": "技能書（虔誠光環）",
+  "book_palBless": "技能書（神聖祝福）",
+  "book_palRighteous": "技能書（正義之怒）",
+  "book_palJudge": "技能書（審判之光）",
+  "book_palDivine": "技能書（神聖審判）",
+  "book_angelAegis": "技能書（神聖護盾）",
+  "book_angelWings": "技能書（天使之翼）",
+  "book_angelJudge": "技能書（審判之光）",
+  "book_angelGrace": "技能書（神恩）",
+  "book_angelRay": "技能書（神聖射線）",
+  "book_angelWrath": "技能書（天罰）",
+  "book_angelSeraph": "技能書（熾天使降臨）",
+  "book_angelSanct": "技能書（聖域）",
+  "book_demonSlash": "技能書（暗影斬）",
+  "book_demonPact": "技能書（深淵契約）",
+  "book_demonSkin": "技能書（魔化皮膚）",
+  "book_demonFear": "技能書（恐懼之眼）",
+  "book_demonBloodlust": "技能書（狂血）",
+  "book_demonHellfire": "技能書（地獄火）",
+  "book_demonDrain": "技能書（生命汲取）",
+  "book_demonLord": "技能書（魔王覺醒）",
+  "book_demonDoom": "技能書（末日）",
+  "royalCloak": "王族斗篷",
+  "royalSword": "王者之劍",
+  "royalAmulet": "王族項鍊",
+  "royalKingSword": "君主之劍",
+  "knightCloak": "紅騎士斗篷",
+  "knightSword": "紅騎士之劍",
+  "knightRing": "騎士之戒",
+  "knightOathSword": "誓約之劍",
+  "mageCloak": "法師斗篷",
+  "mageStaff": "智慧之杖",
+  "mageAmulet": "魔力項鍊",
+  "mageArchStaff": "大賢者之杖",
+  "elfCloak": "精靈斗篷",
+  "elfBow": "妖精女王之弓",
+  "elfRing": "森林之戒",
+  "elfWorldBow": "世界樹之弓",
+  "darkCloak": "暗影斗篷",
+  "darkElfClaw": "淬毒鋼爪",
+  "darkRing": "暗殺者之戒",
+  "darkDualBlades": "夜影雙刀",
+  "shuraBelt": "修羅腰帶",
+  "shuraClaw": "鬼刃之爪",
+  "shuraRing": "戰神之戒",
+  "shuraDualBlades": "阿修羅雙刀",
+  "warCloak": "戰士斗篷",
+  "warAxe": "遠古戰斧",
+  "warAmulet": "狂戰士項鍊",
+  "warTitanAxe": "泰坦巨斧",
+  "gunCloak": "槍手斗篷",
+  "gunRifle": "精工火槍",
+  "gunRing": "鷹眼之戒",
+  "gunDragonGun": "屠龍之槍",
+  "mfCloak": "魔鬥斗篷",
+  "mfSword": "符文之劍",
+  "mfAmulet": "元素項鍊",
+  "mfHolySword": "魔導聖劍",
+  "palCloak": "聖騎士斗篷",
+  "palHammer": "光明之錘",
+  "palAmulet": "聖徽",
+  "palJudgeHammer": "審判之錘",
+  "angelCloak": "天使羽衣",
+  "angelStaff": "聖光之杖",
+  "angelAmulet": "光環",
+  "angelSpear": "熾天使之槍",
+  "demonCloak": "深淵披風",
+  "demonScythe": "魂之鐮",
+  "demonRing": "惡魔之戒",
+  "demonDeathScythe": "冥界之鐮",
+  "q_royal_0": "王族紋章碎片",
+  "q_royal_2": "諸侯誓約書",
+  "q_knight_0": "骷髏的頭骨",
+  "q_knight_2": "父親的戰記殘頁",
+  "q_mage_0": "魔力結晶",
+  "q_mage_2": "封印石碎片",
+  "q_elf_0": "被污染的樹液",
+  "q_elf_2": "世界樹種子",
+  "q_darkelf_0": "情報捲軸",
+  "q_darkelf_2": "教團成員名冊",
+  "q_shura_2": "戰魂結晶",
+  "q_warrior_0": "妖魔的獠牙",
+  "q_warrior_2": "部落圖騰碎片",
+  "q_gunner_0": "硫磺石",
+  "q_gunner_2": "堅硬的鱗片",
+  "q_magicfighter_0": "符文石",
+  "q_magicfighter_2": "劍聖手記",
+  "q_paladin_0": "不死者的灰燼",
+  "q_paladin_2": "聖殿遺物",
+  "q_angel_0": "天使的羽毛",
+  "q_angel_2": "天界之門碎片",
+  "q_demon_0": "迷途的靈魂",
+  "q_demon_2": "血之契約書",
+  "pirateCannon": "海賊王的火砲",
+  "wyvernSpear": "飛龍之矛",
+  "ifritClaw": "伊弗利特之爪",
+  "earthRender": "大地裂斧",
+  "tidalStaff": "潮汐之杖",
+  "galeBow": "颶風之弓",
+  "infernoBlade": "熾焰魔劍",
+  "wolfAmulet": "狼王牙項鍊",
+  "pirateRing": "海賊王的戒指",
+  "frostShield": "寒冰之盾",
+  "wyvernHelm": "飛龍頭盔",
+  "flameGloves": "炎魔手套",
+  "archmageHat": "大賢者頭冠",
+  "phoenixMail": "不死鳥之鎧",
+  "shadowCloak": "夜影斗篷",
+  "giantBelt": "巨人王腰帶",
+  "angelRing": "天使之戒",
+  "abyssAmulet": "深淵之眼",
+  "earthGuard": "大地守護者之盾",
+  "tideHeart": "潮汐之心",
+  "galeBoots": "風神之靴",
+  "dragonHeartRing": "火龍之心",
+  "soul_spiderVenom": "劇毒侵蝕封魂石",
+  "soul_treantHeart": "古樹荊棘封魂石",
+  "soul_drakeFang": "裂地岩刺封魂石",
+  "soul_baphometHorn": "地獄火柱封魂石",
+  "soul_pirateTreasure": "幽靈砲擊封魂石",
+  "soul_demonHeart": "噬魂黑炎封魂石",
+  "soul_wyvernWing": "疾風連刃封魂石",
+  "soul_osirisSeal": "冥界封咒封魂石",
+  "soul_frostCrystal": "冰王碎晶封魂石",
+  "soul_ifritFlame": "煉獄火域封魂石",
+  "soul_forgottenRelic": "遺忘烙印封魂石",
+  "soul_giantSoul": "巨人崩擊封魂石",
+  "soul_antharasScale": "地龍震怒封魂石",
+  "soul_fafurionScale": "水龍海嘯封魂石",
+  "soul_lindviorScale": "風龍風暴封魂石",
+  "soul_valakasScale": "火龍吐息封魂石",
+  "soul_towerBullHorn": "蠻牛震擊封魂石",
+  "soul_towerBansheeTear": "女妖哀嚎封魂石",
+  "soul_towerFlameCore": "炎魔爆燃封魂石",
+  "soul_towerIceCrown": "冰后寒獄封魂石",
+  "soul_towerLichCrystal": "死亡纏繞封魂石",
+  "soul_towerFallenFeather": "墮天裁決封魂石",
+  "soul_towerChaosCore": "混沌裂爆封魂石",
+  "soul_towerAbyssEye": "深淵侵蝕封魂石",
+  "soul_towerDeathShard": "死神收割封魂石",
+  "soul_towerKingSeal": "冥王追擊封魂石"
+ }
+}

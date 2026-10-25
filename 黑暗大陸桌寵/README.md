@@ -14,6 +14,11 @@
   手動編輯可以寫 `"password": "明文"`，下次啟動自動轉成加密。換電腦或換 Windows 使用者後要重新輸入密碼。
 - 操作說明在右鍵選單「操作說明」。
 
+## 安卓版
+
+`android/` 是安卓版的發佈檔（APK、`app.json`、內容更新 `content/`），由安卓專案的 `tools/publish.js` 產生。
+原始碼不在這個倉庫：`C:\Users\a2095\Desktop\dark_pet_android`（說明在那邊的 `開發紀錄.md`）。最多 3 隻（建議 2 隻），第 3 隻要玩家確認。
+
 ## 開發
 
 ```

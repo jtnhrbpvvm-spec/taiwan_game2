@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>黑暗大陸桌寵</title>
+    <style>
+      /* 顏色照遊戲本體（屠龍勇者/index.html 的 :root）：深棕黑底、金色字、暗紅點綴 */
+      :root { --bg: #12100c; --panel: #1f1b15; --panel2: #2c261d; --line: #3d3427; --frame: #8a6a3a; --text: #efe6d2; --muted: #9d927d; --gold: #e8c066; --accent: #a8432e; --warn: #e0a64a; --bad: #e0605a; color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body { display: flex; flex-direction: column; font: 15px/1.6 sans-serif; color: var(--text); background: var(--bg); }
+      header { padding: 12px 16px 0; background: linear-gradient(#2a1d14, var(--panel)); border-bottom: 1px solid var(--frame); }
+      header h1 { margin: 0; font-size: 19px; color: var(--gold); letter-spacing: 0.05em; font-family: serif; }
+      #status { margin: 2px 0 8px; font-size: 12px; color: var(--muted); white-space: pre-line; }
+      nav { display: flex; gap: 4px; }
+      nav button { flex: 1; font: inherit; padding: 8px 0; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--panel2); color: var(--muted); }
+      nav button.on { background: var(--bg); color: var(--gold); font-weight: bold; border-color: var(--frame); }
+      main { flex: 1; overflow-y: auto; padding: 12px; }
+      section { display: none; }
+      section.on { display: block; }
+      .card { margin-bottom: 12px; padding: 12px 14px; background: linear-gradient(var(--panel), #19150f); border: 1px solid var(--line); border-radius: 8px; }
+      h2 { margin: 0 0 6px; font-size: 15px; color: var(--gold); }
+      .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #2f281f; }
+      .row:last-child { border-bottom: 0; }
+      .row > span { flex: 1; }
+      .row small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+      input[type="checkbox"] { width: 22px; height: 22px; accent-color: #c9973f; }
+      input[type="range"] { width: 100%; accent-color: #c9973f; }
+      button.act { font: inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: inherit; }
+      button.primary { border-color: var(--gold); background: linear-gradient(#c25a3c, #8a2d1f); color: #fff4dc; }
+      button.danger { border-color: #7a2d22; color: var(--bad); }
+      .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .buttons button { flex: 1 1 40%; }
+      .warn { color: var(--warn); font-weight: bold; }
+      .dim { color: var(--muted); font-size: 13px; }
+      select, input[type="text"], input[type="email"], input[type="password"] { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); color: inherit; }
+      .count { display: flex; gap: 6px; margin-top: 6px; }
+      .count button { flex: 1; }
+      .chosen { border-color: var(--gold) !important; box-shadow: 0 0 0 2px var(--gold) inset; color: var(--gold); }
+      .chips { display: flex; gap: 6px; margin-bottom: 10px; }
+      .chips button { flex: 1; }
+      #list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+      .pick { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); font: inherit; color: inherit; overflow: hidden; }
+      .pick .thumb { width: 72px; height: 72px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+      .pick .thumb i { flex: none; background-repeat: no-repeat; filter: var(--pet-filter, none); }
+      .pick span { font-size: 12px; }
+      #follow { width: 100%; text-align: left; }
+      .acct { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #2f281f; }
+      .acct:last-child { border-bottom: 0; }
+      .acct > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .acct small { display: block; color: var(--muted); font-size: 12px; }
+      .acct button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); color: inherit; }
+      form { display: grid; gap: 8px; }
+      #form-msg { min-height: 1.4em; font-size: 13px; color: #9fd28a; margin: 0; }
+      #form-msg.bad { color: var(--bad); }
+      .help td:first-child { width: 6.5em; font-weight: bold; white-space: nowrap; color: #f3d9a0; }
+      .help td { text-align: left; vertical-align: top; font-size: 14px; padding: 4px 0; }
+      /* 確認視窗（開第 3 隻前的說明） */
+      #modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, 0.6); z-index: 9; }
+      #modal.on { display: flex; }
+      #modal .box { max-width: 420px; padding: 16px 18px; background: var(--panel); border: 2px solid var(--frame); border-radius: 10px; }
+      #modal h2 { font-size: 17px; }
+      #modal .buttons { margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>黑暗大陸桌寵</h1>
+      <p id="status"></p>
+      <nav>
+        <button data-tab="settings">設定</button>
+        <button data-tab="pets">桌寵</button>
+        <button data-tab="accounts">帳號</button>
+        <button data-tab="help">說明</button>
+      </nav>
+    </header>
+    <main>
+      <!-- ── 設定 ── -->
+      <section id="tab-settings">
+        <div class="card" id="permission" hidden>
+          <h2>需要一個權限</h2>
+          <p>桌寵要顯示在其他 App 上面，請開啟「顯示在其他應用程式上層」（有些手機叫「浮動視窗」「懸浮視窗」）。按下面的按鈕會帶你到設定頁，把開關打開後回到這裡。</p>
+          <button class="act primary" data-action="start">前往開啟權限</button>
+          <h2 style="margin-top: 16px">出現「應用程式存取權已遭拒絕」的話</h2>
+          <p>這是安卓對「不是從商店安裝的 App」多加的一道保護，要先手動解除一次：</p>
+          <ol style="margin: 6px 0; padding-left: 1.4em">
+            <li>先按「關閉」。</li>
+            <li>按下面的「打開應用程式資訊」。</li>
+            <li>按畫面右上角的「⋮」（三個點），選「允許受限制的設定」，照手機的指示驗證。</li>
+            <li>回到這裡，再按一次上面的「前往開啟權限」。</li>
+          </ol>
+          <button class="act" data-action="appInfo">打開應用程式資訊</button>
+          <p class="dim">找不到「⋮」的話：到手機的「設定 → 應用程式 → 黑暗大陸桌寵」，在那個畫面的右上角。要先看過一次「已遭拒絕」的訊息，那個選項才會出現。</p>
+        </div>
+        <div class="card" id="update" hidden>
+          <h2>桌寵有新版 <span id="update-version"></span></h2>
+          <p>按下面的按鈕下載，下載完會跳出系統的安裝畫面，再按一次「更新」。<b>裝完請按「開啟」，桌寵才會回來</b>（按到「完成」的話，自己再點一次桌寵的圖示就好）。帳號和設定都會保留。</p>
+          <button class="act primary" data-action="installUpdate">下載並安裝</button>
+          <p class="dim" id="update-progress"></p>
+        </div>
+        <div class="card" id="game-update" hidden>
+          <h2>黑暗大陸更新了 <span id="game-update-version"></span></h2>
+          <p>按下面的按鈕把全部遊戲重新載入成新版（會自動登入、繼續冒險）。建議套用，舊版遊戲有可能沒辦法上傳雲端進度。</p>
+          <button class="act primary" data-action="applyGameUpdate">套用遊戲更新</button>
+        </div>
+        <div class="card">
+          <div class="buttons" id="game-buttons"></div>
+          <div class="buttons" style="margin-top: 8px">
+            <button class="act" data-action="start" id="start">啟動桌寵</button>
+            <button class="act danger" data-action="stop">結束桌寵</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>桌寵數量（每隻一個帳號）</h2>
+          <div class="count" id="count"></div>
+          <p class="dim" id="count-note" style="margin: 6px 0 0">每隻是一個獨立的遊戲，可以掛不同帳號。建議最多 2 隻。</p>
+        </div>
+        <div class="card">
+          <h2>桌寵</h2>
+          <label class="row"><span>顯示桌寵<small>關掉只是把桌寵藏起來，遊戲照常掛機</small></span><input type="checkbox" data-key="showPet" /></label>
+          <div class="row"><span>大小 <b id="size-value"></b><input id="size" type="range" min="50" max="200" step="5" /></span></div>
+          <label class="row"><span>打開時自動登入並繼續冒險<small>每隻自動登入牠的帳號、按標題畫面的「繼續冒險」</small></span><input type="checkbox" data-key="autoContinue" /></label>
+        </div>
+        <div class="card">
+          <h2>頭上飄字</h2>
+          <p class="dim" style="margin: 0">一般模式下，桌寵頭上要顯示（可複選）：</p>
+          <label class="row"><span>經驗值、升級</span><input type="checkbox" data-key="normalExp" /></label>
+          <label class="row"><span>金幣、物品取得</span><input type="checkbox" data-key="normalLoot" /></label>
+        </div>
+        <div class="card">
+          <h2>專注（勿擾）模式</h2>
+          <label class="row"><span>開啟專注模式<small>桌寵變半透明、點不到，頭上不飄字，也不跳更新提醒（解除後才補講）。要關掉從通知列的「設定」回到這裡</small></span><input type="checkbox" data-key="focus" /></label>
+          <p class="dim" style="margin: 8px 0 0">專注模式下，桌寵頭上還要顯示（可複選）：</p>
+          <label class="row"><span>經驗值、升級</span><input type="checkbox" data-key="focusExp" /></label>
+          <label class="row"><span>金幣、物品取得</span><input type="checkbox" data-key="focusLoot" /></label>
+        </div>
+        <div class="card">
+          <button class="act" data-action="checkUpdate">檢查更新</button>
+          <p class="dim" id="check-result">桌寵每 30 分鐘會自己檢查一次遊戲和桌寵有沒有新版，想馬上確認可以按這裡。</p>
+        </div>
+        <p class="dim" id="version"></p>
+      </section>
+
+      <!-- ── 桌寵：每隻的帳號、外觀 ── -->
+      <section id="tab-pets">
+        <div class="chips" id="chips"></div>
+        <div class="card">
+          <h2>帳號</h2>
+          <select id="pet-account"></select>
+          <p class="dim" style="margin: 6px 0 0">選了就會自動登入並繼續冒險。同一個帳號只能給一隻用。帳號在「帳號」分頁新增。</p>
+        </div>
+        <div class="card">
+          <h2>外觀</h2>
+          <button class="act" id="follow">跟著角色的職業<small style="display: block; color: var(--muted)">預設。換角色玩，桌寵也跟著換</small></button>
+          <div style="margin-top: 10px">
+            <div class="row"><span>色相 <b id="color-hue-value"></b><input id="color-hue" type="range" min="0" max="360" /></span></div>
+            <div class="row"><span>鮮豔度 <b id="color-sat-value"></b><input id="color-sat" type="range" min="0" max="200" /></span></div>
+            <div class="row"><span>亮度 <b id="color-light-value"></b><input id="color-light" type="range" min="50" max="150" /></span></div>
+            <button class="act" id="color-reset">恢復原色</button>
+          </div>
+          <p class="dim" id="looks-empty">桌寵啟動後才讀得到職業清單。</p>
+          <div id="list"></div>
+        </div>
+      </section>
+
+      <!-- ── 帳號 ── -->
+      <section id="tab-accounts">
+        <div class="card">
+          <h2>帳號清單</h2>
+          <div id="accounts"></div>
+        </div>
+        <div class="card">
+          <h2 id="form-title">新增帳號</h2>
+          <form id="form" autocomplete="off">
+            <input id="f-label" type="text" placeholder="名稱（自己認得出來就好，可不填）" />
+            <input id="f-email" type="email" placeholder="遊戲帳號的 Email" />
+            <input id="f-pass" type="password" placeholder="遊戲帳號的密碼" />
+            <p id="form-msg"></p>
+            <div class="buttons"><button class="act" type="button" id="f-cancel" hidden>取消修改</button><button class="act primary" type="submit">儲存</button></div>
+          </form>
+          <p class="dim">密碼用手機內建的安全金鑰加密，只存在這支手機的這個 App 裡。解除安裝後要重新輸入。</p>
+        </div>
+      </section>
+
+      <!-- ── 說明 ── -->
+      <section id="tab-help">
+        <div class="card">
+          <h2>怎麼用</h2>
+          <p>遊戲會在背景繼續掛機，畫面上留你角色職業的小人。同一個帳號不要同時在瀏覽器或電腦版上玩，會互相踢掉。</p>
+          <table class="help">
+            <tr><td>點桌寵</td><td>打開那一隻的遊戲。按上方的「收起」或返回鍵收回去</td></tr>
+            <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
+            <tr><td>長按桌寵</td><td>打開這個設定畫面</td></tr>
+            <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h2>第一次使用</h2>
+          <p>到「帳號」分頁加入遊戲帳號（Email、密碼），再到「桌寵」分頁選這隻要用的帳號。桌寵會自動登入、下載雲端角色、按「繼續冒險」。</p>
+          <p class="dim">不登入也能玩：帳號選「訪客」，存檔只在這隻桌寵自己的遊戲裡。</p>
+        </div>
+        <div class="card">
+          <h2>好幾個帳號</h2>
+          <p>「設定」分頁的「桌寵數量」選幾隻，就有幾個獨立的遊戲同時在背景跑，每隻掛一個帳號。</p>
+          <p class="warn">手機效能有限，建議 2 隻、最多 3 隻。開太多的話遊戲可能被系統放慢，變成離線收益的狀態。</p>
+        </div>
+        <div class="card">
+          <h2>要注意的事</h2>
+          <p>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</p>
+          <p>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。遇到掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal">
+      <div class="box">
+        <h2>要開第 3 隻嗎？</h2>
+        <p>每隻桌寵都是一個完整的遊戲在背景跑。<b>手機效能有限，開太多的話遊戲可能被系統放慢，變成離線收益的狀態</b>（掛機效率變差、要扣鑽石結算）。</p>
+        <p>建議 <b>2 隻</b>，最多 3 隻不同帳號。手機比較舊、或發現掛機變慢的話，請改回 2 隻。</p>
+        <div class="buttons">
+          <button class="act" id="modal-no">先不要</button>
+          <button class="act primary" id="modal-yes">我了解，開 3 隻</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 設定畫面。跟桌寵服務之間靠 window.Android（MainActivity.Bridge）溝通。
+      const $ = (id) => document.getElementById(id);
+      const GAME_URL = "https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/";
+      const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+      let settings;
+      let status;
+      let accounts = [];
+      let current = 0; // 「桌寵」分頁正在看第幾隻
+
+      // ── 分頁 ──
+      let tab = "settings";
+      function showTab(name) {
+        tab = name;
+        for (const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.tab === name);
+        for (const s of document.querySelectorAll("section")) s.classList.toggle("on", s.id === "tab-" + name);
+        if (name === "pets") renderPets();
+        if (name === "accounts") renderAccounts();
+      }
+      document.querySelector("nav").addEventListener("click", (e) => e.target.dataset.tab && showTab(e.target.dataset.tab));
+      /** 長按桌寵進來時：直接看那一隻。 */
+      window.selectPet = (index) => {
+        current = index;
+        showTab("pets");
+      };
+
+      // ── 設定 ──
+      function refresh() {
+        settings = JSON.parse(Android.settings());
+        status = JSON.parse(Android.status());
+        accounts = JSON.parse(Android.accounts());
+        for (const box of document.querySelectorAll("input[data-key]")) box.checked = !!settings[box.dataset.key];
+        $("size").value = settings.sizePercent;
+        $("size-value").textContent = settings.sizePercent + "%";
+        $("permission").hidden = status.overlay;
+        $("start").hidden = status.running;
+        $("status").textContent = status.running ? status.status : status.overlay ? "桌寵沒有在執行" : "還沒有權限";
+        $("version").textContent = "版本 " + status.version + (status.contentVersion && status.contentVersion !== status.version ? "（內容 " + status.contentVersion + "）" : "");
+        $("update").hidden = !status.appUpdate;
+        $("update-version").textContent = status.appUpdate || "";
+        $("game-update").hidden = !status.gameUpdate;
+        $("game-update-version").textContent = status.gameUpdate ? "v" + status.gameUpdate : "";
+        // 每隻一顆「顯示遊戲」
+        const pets = status.pets || [];
+        $("game-buttons").innerHTML = pets.map((p) => `<button class="act primary" data-action="toggleGame:${p.index}">${status.shownGame === p.index ? "收起" : "顯示"}${pets.length > 1 ? `第 ${p.index + 1} 隻（${escapeHtml(p.account)}）的` : ""}遊戲</button>`).join("");
+        // 桌寵數量
+        const max = status.multiProfile === false ? 1 : settings.maxPets;
+        $("count").innerHTML = Array.from({ length: settings.maxPets }, (_, i) => `<button class="act ${settings.petCount === i + 1 ? "chosen" : ""}" data-count="${i + 1}" ${i + 1 > max ? "disabled" : ""}>${i + 1} 隻</button>`).join("");
+        $("count-note").innerHTML = status.multiProfile === false
+          ? '<span class="warn">這支手機的 Android System WebView 版本太舊，只能掛 1 個帳號。到 Play 商店更新「Android System WebView」後就能開更多隻。</span>'
+          : `每隻是一個獨立的遊戲，可以掛不同帳號。建議最多 ${settings.recommendedPets} 隻。`;
+        if (tab === "pets") renderPets(true);
+      }
+      document.addEventListener("change", (e) => {
+        const key = e.target.dataset && e.target.dataset.key;
+        if (key) Android.set(key, String(e.target.checked));
+      });
+      $("size").addEventListener("input", () => {
+        $("size-value").textContent = $("size").value + "%";
+        Android.set("sizePercent", $("size").value);
+      });
+      document.addEventListener("click", (e) => {
+        const action = e.target.dataset && e.target.dataset.action;
+        if (!action) return;
+        Android.action(action);
+        setTimeout(refresh, 600);
+      });
+
+      // 桌寵數量：超過建議的數量（第 3 隻）先跳說明，玩家確認了才開
+      function setCount(n) {
+        Android.set("petCount", String(n));
+        setTimeout(refresh, 400);
+      }
+      $("count").addEventListener("click", (e) => {
+        const n = Number(e.target.dataset.count);
+        if (!n || n === settings.petCount) return;
+        if (n > settings.recommendedPets) {
+          $("modal").dataset.count = n;
+          $("modal").classList.add("on");
+        } else setCount(n);
+      });
+      $("modal-no").addEventListener("click", () => $("modal").classList.remove("on"));
+      $("modal-yes").addEventListener("click", () => {
+        $("modal").classList.remove("on");
+        setCount(Number($("modal").dataset.count));
+      });
+
+      // ── 桌寵：每隻的帳號、外觀 ──
+      const COLOR_KEYS = ["hue", "sat", "light"];
+      const COLOR_NORMAL = { hue: 0, sat: 100, light: 100 };
+      let classes = [];
+      let draggingColor = false;
+      const pet = () => settings.pets[current];
+
+      function renderPets(fromRefresh) {
+        if (current >= settings.petCount) current = 0;
+        $("chips").hidden = settings.petCount < 2;
+        $("chips").innerHTML = Array.from({ length: settings.petCount }, (_, i) => `<button class="act ${i === current ? "chosen" : ""}" data-pet="${i}">第 ${i + 1} 隻</button>`).join("");
+        const sel = $("pet-account");
+        if (document.activeElement !== sel) {
+          const usedBy = (id) => settings.pets.findIndex((p, i) => p.account === id && i !== current && i < settings.petCount);
+          sel.innerHTML = `<option value="">訪客（不登入）</option>` + accounts.map((a) => {
+            const other = usedBy(a.id);
+            return `<option value="${a.id}">${escapeHtml(a.label || a.email)}${a.label ? `（${escapeHtml(a.email)}）` : ""}${other >= 0 ? `　← 第 ${other + 1} 隻在用` : ""}</option>`;
+          }).join("");
+          sel.value = accounts.some((a) => a.id === pet().account) ? pet().account : "";
+        }
+        // 調色拉條：拖的時候不要被定時重新整理拉回去
+        if (!draggingColor) {
+          const parts = String(pet().petColor).split(",").map(Number);
+          COLOR_KEYS.forEach((key, i) => ($("color-" + key).value = parts.length === 3 && Number.isFinite(parts[i]) ? parts[i] : COLOR_NORMAL[key]));
+          showColor();
+        }
+        if (!fromRefresh || classes.length === 0) {
+          classes = JSON.parse(Android.classes());
+          $("looks-empty").hidden = classes.length > 0;
+          // 縮圖：走路圖面向前方那一列的中間一格，縮放到 72px 高
+          $("list").innerHTML = classes.map((c) => {
+            const w = c.walk, mid = Math.floor((w.frames.down || 1) / 2), zoom = Math.min(72 / w.cellH, 72 / w.cellW);
+            return `<button class="pick" data-model="${c.model}"><div class="thumb"><i style="width:${w.cellW}px;height:${w.cellH}px;zoom:${zoom};background-image:url(${GAME_URL}${w.src});background-position:-${mid * w.cellW}px 0"></i></div><span>${escapeHtml(c.name)}</span></button>`;
+          }).join("");
+        }
+        $("follow").classList.toggle("chosen", !pet().petModel);
+        for (const card of $("list").children) card.classList.toggle("chosen", card.dataset.model === pet().petModel);
+      }
+      $("chips").addEventListener("click", (e) => {
+        const i = e.target.dataset.pet;
+        if (i === undefined) return;
+        current = Number(i);
+        renderPets();
+      });
+      $("pet-account").addEventListener("change", () => {
+        Android.useAccount(current, $("pet-account").value);
+        $("pet-account").blur();
+        setTimeout(refresh, 600);
+      });
+      function choose(model) {
+        Android.set("petModel_" + current, model);
+        pet().petModel = model;
+        renderPets(true);
+      }
+      $("list").addEventListener("click", (e) => {
+        const card = e.target.closest(".pick");
+        if (card) choose(card.dataset.model);
+      });
+      $("follow").addEventListener("click", () => choose(""));
+      function showColor() {
+        const c = {};
+        for (const key of COLOR_KEYS) c[key] = Number($("color-" + key).value);
+        $("color-hue-value").textContent = c.hue + "°";
+        $("color-sat-value").textContent = c.sat + "%";
+        $("color-light-value").textContent = c.light + "%";
+        const changed = COLOR_KEYS.some((key) => c[key] !== COLOR_NORMAL[key]);
+        $("list").style.setProperty("--pet-filter", changed ? `hue-rotate(${c.hue}deg) saturate(${c.sat}%) brightness(${c.light}%)` : "none");
+        return changed ? `${c.hue},${c.sat},${c.light}` : "";
+      }
+      for (const key of COLOR_KEYS) {
+        const input = $("color-" + key);
+        input.addEventListener("input", () => {
+          draggingColor = true;
+          const value = showColor();
+          pet().petColor = value;
+          Android.set("petColor_" + current, value);
+        });
+        input.addEventListener("change", () => (draggingColor = false));
+      }
+      $("color-reset").addEventListener("click", () => {
+        for (const key of COLOR_KEYS) $("color-" + key).value = COLOR_NORMAL[key];
+        pet().petColor = showColor();
+        Android.set("petColor_" + current, "");
+      });
+
+      // ── 帳號 ──
+      let editing = "";
+      function renderAccounts() {
+        accounts = JSON.parse(Android.accounts());
+        const usedBy = (id) => settings.pets.findIndex((p, i) => p.account === id && i < settings.petCount);
+        $("accounts").innerHTML = accounts.length
+          ? accounts.map((a) => {
+              const used = usedBy(a.id);
+              const note = [a.label && a.email, used >= 0 && `第 ${used + 1} 隻在用`, !a.hasPass && "沒有密碼"].filter(Boolean).join("・");
+              return `<div class="acct"><span>${escapeHtml(a.label || a.email)}<small>${escapeHtml(note)}</small></span><button data-edit="${a.id}">修改</button><button data-del="${a.id}">刪除</button></div>`;
+            }).join("")
+          : '<p class="dim" style="margin: 0">還沒有帳號，用下面的表單新增。</p>';
+      }
+      function formMsg(text, bad) {
+        $("form-msg").textContent = text;
+        $("form-msg").classList.toggle("bad", !!bad);
+      }
+      function resetForm() {
+        editing = "";
+        $("form").reset();
+        $("f-pass").placeholder = "遊戲帳號的密碼";
+        $("form-title").textContent = "新增帳號";
+        $("f-cancel").hidden = true;
+      }
+      $("accounts").addEventListener("click", (e) => {
+        const edit = e.target.dataset.edit, del = e.target.dataset.del;
+        if (edit) {
+          const a = accounts.find((x) => x.id === edit);
+          editing = a.id;
+          $("f-label").value = a.label;
+          $("f-email").value = a.email;
+          $("f-pass").value = "";
+          $("f-pass").placeholder = "留空＝不改密碼";
+          $("form-title").textContent = "修改帳號：" + (a.label || a.email);
+          $("f-cancel").hidden = false;
+          formMsg("");
+        } else if (del) {
+          // 按兩下才刪（第一下變成「確定刪除？」）
+          if (e.target.dataset.sure !== "1") {
+            e.target.dataset.sure = "1";
+            e.target.textContent = "確定刪除？";
+            setTimeout(() => { e.target.dataset.sure = ""; e.target.textContent = "刪除"; }, 3000);
+            return;
+          }
+          Android.removeAccount(del);
+          if (editing === del) resetForm();
+          setTimeout(() => { refresh(); renderAccounts(); }, 400);
+        }
+      });
+      $("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const error = Android.saveAccount(editing, $("f-label").value, $("f-email").value, $("f-pass").value);
+        if (error) return formMsg(error, true);
+        formMsg(editing ? "已修改" : "已新增，到「桌寵」分頁選這隻要用的帳號");
+        resetForm();
+        refresh();
+        renderAccounts();
+      });
+      $("f-cancel").addEventListener("click", () => { resetForm(); formMsg(""); });
+
+      window.__updateProgress = (text) => ($("update-progress").textContent = text);
+      window.__checkResult = (text) => ($("check-result").textContent = text);
+      // 桌寵有沒有在跑、有沒有新版，都可能在這個畫面開著的時候才變，定時更新一下
+      setInterval(() => (tab === "settings" || tab === "pets") && refresh(), 3000);
+
+      showTab("settings");
+      refresh();
+      // 告訴外殼這一份設定畫面有正常載入（下載回來的新版如果壞掉，外殼等不到這一聲就會換回內建的）
+      if (Android.ready) Android.ready();
+    </script>
+  </body>
+</html>

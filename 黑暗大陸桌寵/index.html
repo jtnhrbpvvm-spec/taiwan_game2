@@ -123,21 +123,32 @@
         <img class="cover" src="https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/images/cover.jpg" alt="黑暗大陸封面" />
         <div>
           <h1>黑暗大陸桌寵</h1>
-          <p class="sub">遊戲在背景照常掛機，桌面上留<b>你的角色</b>走來走去。<br />一隻桌寵一個帳號，最多同時掛 10 個。</p>
+          <p class="sub">遊戲在背景照常掛機，畫面上留<b>你的角色</b>走來走去。<br />一隻桌寵一個帳號，可以同時掛好幾個帳號。</p>
+          <div id="dl-pc">
           <!-- DOWNLOAD:START 這一段由 tools/release.js 在每次發佈時自動改寫，不要手動改 -->
           <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/dark-continent-pet-setup-1.0.0.exe" download>下載安裝檔</a>
           <p class="meta">版本 1.0.0・約 79 MB・Windows 10／11（64 位元）</p>
           <!-- DOWNLOAD:END -->
+          </div>
+          <div id="dl-android">
+          <!-- ANDROID:START 這一段由安卓專案的 tools/publish.js 在每次發布 APK 時自動改寫，不要手動改 -->
+          <a class="button" href="https://github.com/jtnhrbpvvm-spec/taiwan_game2/raw/refs/heads/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/android/dark-pet-android-1.0.0.apk" download>下載安卓版</a>
+          <p class="meta">版本 1.0.0・約 1.6 MB・Android 8 以上</p>
+          <!-- ANDROID:END -->
+          </div>
+          <p class="meta" id="ios-note" hidden><span class="warn">iPhone 和 iPad 目前不支援。</span>桌寵只有 Windows 電腦版和安卓手機版。</p>
         </div>
       </div>
 
       <div class="desk" aria-hidden="true">
-        <span class="hint">桌面底部示意</span>
+        <span class="hint" id="desk-hint">桌面底部示意</span>
         <div class="walker" style="--src: url(https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/images/sprites/knight-walk.png); --w: 134px; --h: 122px; --n: 8; --ms: 0.88s; --dur: 26s; --delay: -4s"><i></i></div>
         <div class="walker back" style="--src: url(https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/images/sprites/mage-walk.png); --w: 121px; --h: 127px; --n: 5; --ms: 0.6s; --dur: 32s; --delay: -12s"><i></i></div>
         <div class="walker" style="--src: url(https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/images/sprites/royal-walk.png); --w: 114px; --h: 121px; --n: 5; --ms: 0.55s; --dur: 30s; --delay: -20s"><i></i></div>
       </div>
 
+      <!-- 電腦跟手機各看各的：下面的程式會依照裝置只留其中一塊。沒有開 JavaScript 的話兩塊都會顯示。 -->
+      <div id="view-pc">
       <section>
         <h2>能做什麼</h2>
         <div class="feature">
@@ -257,7 +268,104 @@
         <p>每隻桌寵都是一個完整的遊戲在跑。右鍵 →「桌寵數量」減少幾隻，多出來的遊戲會馬上關掉。</p>
       </section>
 
+      </div>
+
+      <div id="view-mobile">
+      <section>
+        <h2>安卓版能做什麼</h2>
+        <div class="feature">
+          <div><b>背景掛機</b><span>遊戲在背景照常打怪，螢幕關掉、開別的 App 也繼續；點桌寵把遊戲叫出來。</span></div>
+          <div><b>好幾個帳號</b><span>每隻桌寵是一個獨立的遊戲，掛不同帳號。建議 2 隻、最多 3 隻。</span></div>
+          <div><b>一鍵登入</b><span>帳號密碼加密存在手機裡，選好帳號就自動登入、繼續冒險。</span></div>
+          <div><b>進帳看得到</b><span>經驗、金幣、掉寶從那隻桌寵頭上飄出來，升級時會施法。</span></div>
+          <div><b>自動更新</b><span>小更新自己下載；有新版 App 或遊戲改版時桌寵會提醒你。</span></div>
+          <div><b>勿擾模式</b><span>專注模式下桌寵半透明、點不到，也不跳提醒。</span></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>安裝</h2>
+        <ol>
+          <li>按上面的「下載安卓版」，下載完點開那個 APK 檔。</li>
+          <li>手機會問要不要允許「安裝未知來源的應用程式」，選允許，再按安裝。</li>
+          <li>打開 App，照畫面指示開啟「顯示在其他應用程式上層」的權限（有些手機叫「浮動視窗」「懸浮視窗」），桌寵就會出現。</li>
+        </ol>
+        <h3>開權限時出現「應用程式存取權已遭拒絕」</h3>
+        <p>這是安卓對「不是從商店安裝的 App」多加的一道保護，新款手機都會遇到。要先手動解除一次：</p>
+        <ol>
+          <li>先按「關閉」。</li>
+          <li>回到桌寵的畫面，按「打開應用程式資訊」（或到手機的「設定 → 應用程式 → 黑暗大陸桌寵」）。</li>
+          <li>按畫面右上角的「⋮」（三個點），選「允許受限制的設定」，照手機的指示驗證。</li>
+          <li>回到桌寵，再按一次「前往開啟權限」，這次就可以把開關打開了。</li>
+        </ol>
+        <p class="note">要先看過一次「已遭拒絕」的訊息，「允許受限制的設定」那個選項才會出現。</p>
+      </section>
+
+      <section>
+        <h2>第一次使用</h2>
+        <ol>
+          <li>長按桌寵打開設定，到「帳號」分頁填入遊戲帳號的 Email 和密碼，按「儲存」。</li>
+          <li>到「桌寵」分頁選這隻要用的帳號。桌寵會自動登入、下載雲端角色、按「繼續冒險」開始掛機。</li>
+          <li>要掛第 2 個帳號：「設定」分頁的「桌寵數量」選 2 隻，再到「桌寵」分頁切到第 2 隻選帳號。</li>
+        </ol>
+        <p><span class="warn">手機效能有限，建議 2 隻、最多 3 隻。</span>開太多的話遊戲可能被系統放慢，變成離線收益的狀態（掛機效率變差、要扣鑽石結算）。選第 3 隻時會先跳說明，按「我了解」才會開。</p>
+        <p class="note">沒有帳號也能玩：帳號選「訪客」，存檔只在那隻桌寵自己的遊戲裡。</p>
+      </section>
+
+      <section>
+        <h2>怎麼操作</h2>
+        <table>
+          <tr><td>點桌寵</td><td>打開那一隻的遊戲，按上方的「收起」或返回鍵收回去</td></tr>
+          <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
+          <tr><td>長按桌寵</td><td>打開設定：帳號、桌寵數量、外觀、飄字、專注模式、更新</td></tr>
+          <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
+        </table>
+        <h3>更新</h3>
+        <ul>
+          <li>桌寵每 30 分鐘檢查一次遊戲和桌寵有沒有新版。小更新自己下載，下次啟動生效。</li>
+          <li>App 有新版時桌寵會提醒，長按桌寵到設定裡按「下載並安裝」，裝完記得按「開啟」。</li>
+          <li>遊戲改版時桌寵會提醒，到設定裡按「套用遊戲更新」重新載入。</li>
+          <li>專注（勿擾）模式時不跳提醒，解除後才補講。</li>
+        </ul>
+        <h3>裝之前先知道</h3>
+        <ul>
+          <li><span class="warn">同一個帳號不要同時在瀏覽器或電腦版上玩</span>，會互相踢掉。</li>
+          <li>為了讓螢幕關掉後繼續掛機，手機不會進入深度待機，會比平常耗電。</li>
+          <li>有些品牌的手機（小米、OPPO、vivo、三星等）會自動關掉背景的 App。掛機中斷的話，到手機設定把這個 App 的電池用量改成「不受限制」，並允許自動啟動。</li>
+          <li>安卓版目前只在模擬器上測過，遇到問題請告訴作者。</li>
+        </ul>
+      </section>
+      </div>
+
+      <p id="switch" class="note" style="text-align: center; margin-top: 22px" hidden><a href="#" id="switch-link"></a></p>
+
       <footer>黑暗大陸桌寵・遊戲圖片取自黑暗大陸線上版</footer>
     </main>
+    <script>
+      // 依照裝置只顯示一種版本的下載和說明：手機、平板看安卓版，其他看電腦版。
+      // 判斷錯了或想看另一種，頁面最下面有連結可以切換；網址加 ?view=pc 或 ?view=mobile 也可以直接指定。
+      (() => {
+        const ua = navigator.userAgent;
+        const isIos = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1); // 新的 iPad 會自稱是 Mac
+        const asked = new URLSearchParams(location.search).get("view");
+        let view = asked === "pc" || asked === "mobile" ? asked : /Android|Mobile/i.test(ua) || isIos ? "mobile" : "pc";
+        const $ = (id) => document.getElementById(id);
+        const show = () => {
+          $("view-pc").hidden = $("dl-pc").hidden = view !== "pc";
+          $("view-mobile").hidden = $("dl-android").hidden = view !== "mobile";
+          $("ios-note").hidden = !isIos;
+          $("desk-hint").textContent = view === "pc" ? "桌面底部示意" : "手機畫面示意";
+          $("switch-link").textContent = view === "pc" ? "改看安卓手機版的下載和說明" : "改看電腦版的下載和說明";
+          $("switch").hidden = false;
+        };
+        $("switch-link").addEventListener("click", (e) => {
+          e.preventDefault();
+          view = view === "pc" ? "mobile" : "pc";
+          show();
+          window.scrollTo(0, 0);
+        });
+        show();
+      })();
+    </script>
   </body>
 </html>
