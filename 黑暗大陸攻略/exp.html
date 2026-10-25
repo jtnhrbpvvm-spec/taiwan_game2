@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>經驗表與離線收益｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸 1～99 級升級經驗與累計經驗、65 級起狩獵經驗遞減、死亡經驗懲罰、練功速度參考與離線掛機收益規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="exp">
+<main>
+    <h1>📈 經驗表與離線收益</h1>
+    <p class="lead">採用<b>天堂 1 原版經驗表</b>（經驗倍率 ×<span id="er"></span>）。怪物經驗 ＝ 等級² ＋ 1（首領另有倍率）。最高 Lv.<span id="ml"></span>。</p>
+    <div class="toc"><a href="#speed">練功速度</a><a href="#table">經驗表</a><a href="#offline">離線收益</a></div>
+    <div class="box tip" id="speed"><b>練功速度參考</b>（遊戲作者實測，單人 24 小時不停掛機）：Lv.10 約 0.6 小時、Lv.20 約 3 小時、Lv.30 約 7 小時、Lv.37 約 12 小時；
+        估算 Lv.45 約 13 小時、Lv.49 約 34 小時、Lv.60 約 15 天、Lv.70 約 27 天。四大龍與第 4 章任務（Lv.60）是長期目標。</div>
+
+    <h2 id="table">經驗表</h2>
+    <p>「狩獵經驗」是 65 級起打怪經驗的遞減倍率；「死亡損失」是死亡時扣掉本級所需經驗的比例。</p>
+    <div class="filters"><label class="dim">跳到等級 <input type="number" id="go" min="1" max="99" style="width:80px"></label></div>
+    <div id="list"></div>
+
+    <h2 id="offline">離線收益</h2>
+    <ul>
+        <li>要<b>登入帳號</b>，而且只有<b>最後離線的那個角色</b>會結算。</li>
+        <li>離開時要在狩獵地圖且正在掛機（村莊、步行中、龍穴不算）；離開滿 <b id="omin"></b> 才結算。</li>
+        <li>有效時間 ＝ min(離開時間, <b id="omax"></b>) × <b id="orate"></b>，再受補給限制（藥水、彈藥、瞬移卷軸撐多久取最短）。</li>
+        <li>遊戲用你目前的裝備快轉模擬 <span id="osm"></span> 量測效率，依比例給經驗、金幣、擊殺數並扣掉消耗品。</li>
+        <li>可撿到藥水、白色（普通）地圖與普通裝備；其他掉落與任務進度不給。異界地圖最多把剩下的怪打完，首領要上線打。</li>
+        <li>模擬中陣亡：只結算到陣亡為止，照死亡規則扣經驗並回村。補給用完：有回家卷軸就回村。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#er').textContent = C.EXP_RATE; $('#ml').textContent = C.MAX_LEVEL;
+$('#omin').textContent = sec(C.OFFLINE_MIN_MS); $('#omax').textContent = Math.round(C.OFFLINE_MAX_MS / 3600000) + ' 小時';
+$('#orate').textContent = pct(C.OFFLINE_RATE); $('#osm').textContent = sec(C.OFFLINE_SAMPLE_MS);
+let total = 0;
+const rows = W.expTable.map(r => { const o = { ...r, total }; total += r.next; return o; });
+const frac = r => r >= 1 ? '×1' : `<span style="color:var(--red)">×1/${Math.round(1 / r)}</span>`;
+renderTable($('#list'), [
+    { label: 'Lv', num: true, html: r => `<span id="lv${r.lv}">${r.lv}</span>` },
+    { label: '升下一級', num: true, html: r => r.lv >= C.MAX_LEVEL ? '—' : fmt(r.next) },
+    { label: '到達此級累計', num: true, html: r => fmt(r.total) },
+    { label: '同級怪經驗', num: true, html: r => fmt(r.lv * r.lv + 1) },
+    { label: '約幾隻同級怪', num: true, html: r => r.lv >= C.MAX_LEVEL ? '—' : fmt(r.next / ((r.lv * r.lv + 1) * r.rate)) },
+    { label: '狩獵經驗', num: true, html: r => frac(r.rate) },
+    { label: '死亡損失', num: true, html: r => pct(r.death) },
+], rows);
+$('#go').onchange = e => { const el = document.getElementById('lv' + e.target.value); if (el) el.scrollIntoView({ block: 'center' }); };
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>數值公式與戰鬥規則｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸能力計算：命中、傷害加成、SP、防禦、魔防、攻擊間隔、施法間隔、回血回魔、負重、爆擊閃避，以及多怪戰鬥、首領大招、自動補給、死亡規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="mechanics">
+<main>
+    <h1>📐 數值公式與戰鬥規則</h1>
+    <div class="toc"><a href="#stats">能力計算</a><a href="#speed">攻擊速度</a><a href="#combat">戰鬥</a><a href="#pack">多怪戰鬥</a><a href="#support">自動補給與回家</a><a href="#death">死亡</a></div>
+
+    <h2 id="stats">能力計算</h2>
+    <div class="tw"><table>
+        <thead><tr><th>數值</th><th>公式</th></tr></thead>
+        <tbody>
+            <tr><td>近戰命中</td><td>等級 ＋（力量−8）÷3 ＋（敏捷−8）÷4 ＋ 武器命中 ＋ 增益</td></tr>
+            <tr><td>遠程命中</td><td>等級 ＋（敏捷−8）÷2 ＋ …</td></tr>
+            <tr><td>傷害加成</td><td>（力量−10）÷2（遠程用敏捷）＋ 等級÷4 ＋ 武器強化值 ＋ 增益 ＋ SP × 職業係數</td></tr>
+            <tr><td>SP（魔攻）</td><td>等級 ÷ 職業 SP 係數 ＋ max(0, 智力−11) ＋ 裝備／增益</td></tr>
+            <tr><td>防禦</td><td>畫面顯示的「防禦」＝ 10 − AC。AC ＝ 10 −（敏捷−9）÷3 − 等級÷10 − 防具 − 防具強化 − 增益（防禦越高越好）</td></tr>
+            <tr><td>魔防 MR</td><td>職業 MR ＋（精神−10）× 2 ＋ 裝備</td></tr>
+            <tr><td>HP／MP 成長</td><td>每升一級：職業範圍 ＋ 體質（精神）加成（（值−10）÷2），升級時 HP／MP 補滿</td></tr>
+            <tr><td>回血（每 5 秒）</td><td>1 ＋ 等級÷8 ＋ max(0, 體質−12) ＋ 增益；村莊 ×3；負重超過 <span id="wn"></span> 不回</td></tr>
+            <tr><td>回魔（每 5 秒）</td><td>1 ＋ 等級÷12 ＋（精神−10）× 職業回魔係數 ＋ 增益；村莊 ×3；負重 <span id="wm"></span> 以上不回</td></tr>
+            <tr><td>負重上限</td><td>1200 ＋（力量＋體質）× 80 ＋ 等級 × 20 ＋ 腰帶等裝備</td></tr>
+            <tr><td>爆擊</td><td>5% ＋ 武器 ＋ 增益，爆擊傷害 ×1.5</td></tr>
+            <tr><td>閃避</td><td>（敏捷−12）× 1% ＋ 增益，最多 50%</td></tr>
+            <tr><td>吸血</td><td>造成傷害 × 吸血比例轉為 HP（物理、魔法都算）</td></tr>
+        </tbody></table></div>
+
+    <h2 id="speed">攻擊速度</h2>
+    <p><b>攻擊間隔</b> ＝ 武器速度 × 職業動作係數 ÷ 加速（綠水／加速術／速度之靴 <span id="hm"></span>）÷ 二段加速（勇敢藥水 <span id="bm"></span>；妖精、槍手的精靈餅乾 <span id="wf"></span>）÷（1 ＋ 其他攻速），最快 <span id="am"></span>。</p>
+    <ul>
+        <li>「其他攻速」來自變身、技能、詞綴、共鳴，全部相加後再除；詞綴與職業技能每項最多 5%，變身與共鳴觸發不受限。</li>
+        <li><b>施法間隔</b>（攻擊魔法）＝ <span id="cb"></span> − 綠水 0.3 秒 − 慎重藥水 0.3 秒，最快 <span id="cm"></span>，與武器無關。</li>
+        <li>雙刀另有 25% 連擊；弓、槍射程 8 格（中間不能有牆）。施法職業不能喝勇水。</li>
+    </ul>
+    <h3>各職業武器攻擊間隔（不喝水，毫秒）</h3>
+    <div id="speed-table"></div>
+
+    <h2 id="combat">戰鬥</h2>
+    <ul>
+        <li>掛機流程：尋怪（0.6～1.6 秒）→ 戰鬥 → 擊倒 → 掉落 → 檢查回家條件 → 再尋怪。</li>
+        <li><b>命中率</b> ＝ 70% ＋（命中 −（10 − 目標 AC））× 2%，限制 5%～95%（怪物打你也一樣）。</li>
+        <li><b>物理傷害</b> ＝ 1～武器骰（小型／大型怪分開）＋ 傷害加成 ＋ 彈藥；銀武器、銀彈打不死系 +1～10；屠龍劍打龍 ×1.5。</li>
+        <li><b>魔法傷害</b> ＝ 技能傷害 ＋ SP × 係數，<b>必中</b>，再 ×（1 − 怪物魔防÷200）。怪物魔法無視防禦、受你的魔防減免。</li>
+        <li>你的 AC 低於 0 時，怪物傷害再減 0～（−AC÷5），之後扣減傷。</li>
+        <li>近戰要在目標旁 1 格（含斜角）；遠程、攻擊魔法要在射程內且看得到。治癒與增益不限距離。</li>
+        <li>目標 5 秒沒打到會自動換打得到的怪；身邊有怪而目標太遠時，先打身邊的。</li>
+        <li>喝水延遲：手動、自動都是 <span id="pd"></span>。</li>
+        <li>野外、地監只出「不超過你等級 +3」的怪。</li>
+    </ul>
+
+    <h2 id="pack">多怪戰鬥與首領大招</h2>
+    <ul>
+        <li>一次圍上來 1～6 隻，機率權重 <span id="pw"></span>；龍穴 1 隻、永夜之塔最多 3 隻。首領、龍、任務首領單獨出現。</li>
+        <li>群越大每隻越弱：HP／經驗／金幣 ÷（1＋0.2×(隻數−1)）、傷害 ÷（1＋0.3×(隻數−1)）。非目標的怪出手慢 ×<span id="ss"></span>。</li>
+        <li>戰鬥中每 <span id="jm"></span> 有 <span id="jp"></span> 機率再加入一隻（沒有首領、未滿上限時）。</li>
+        <li>範圍技能打全部圍上來的怪；分散型多發攻擊每發打不同隻。</li>
+        <li><b>首領大招</b>：首領／龍每 <span id="tc"></span> 蓄力 <span id="tl"></span>，以你當下位置畫半徑 1.5 格紅圈，時間到還在圈內吃 ×<span id="tmul"></span> 重擊。畫面沒開時依設定「首領大招自動閃避」開 60%、關 20% 躲開。</li>
+    </ul>
+
+    <h2 id="support">自動補給與自動回家</h2>
+    <ul>
+        <li>快捷欄的道具格往下拉開自動：治癒藥水（HP 低於設定時挑最不浪費的一瓶）、綠水／勇水／藍水（效果沒了就喝）、瞬移卷軸（HP 低於設定時瞬移脫離）。</li>
+        <li>自動回家：治癒藥水用完、彈藥用完、負重超過設定 → 有回家卷軸就回村；沒有卷軸只提示一次。</li>
+        <li>技能放在快捷欄並開自動才會施放，格子順序＝優先順序。</li>
+    </ul>
+
+    <h2 id="death">死亡</h2>
+    <ul>
+        <li>損失本級所需經驗的一部分（不降級，最多扣到本級 0）：1～44 級 10%、45 級 9%、46 級 8%、47 級 7%、48 級 6%、49 級以上 5%。</li>
+        <li>身上有 <a data-item="reviveScroll">復活卷軸</a> 會自動使用、不損失經驗。</li>
+        <li>清除增益，HP／MP 剩 30%，回到地圖所屬的村莊；異界地圖會關閉。</li>
+        <li>團隊副本、世界首領中倒下不扣經驗。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+const set = (id, v) => { $('#' + id).textContent = v; };
+set('wn', pct(C.WEIGHT_NO_REGEN)); set('wm', pct(C.WEIGHT_NO_MP_REGEN));
+set('hm', '÷' + C.HASTE_MUL); set('bm', '÷' + C.BRAVE_MUL); set('wf', '÷' + C.WAFER_MUL); set('am', sec(C.ATK_MIN_MS));
+set('cb', sec(C.CAST_BASE_MS)); set('cm', sec(C.CAST_MIN_MS)); set('pd', sec(C.POTION_CD_MS));
+set('pw', C.PACK_WEIGHTS.join('／')); set('ss', C.MOB_SIDE_SLOW); set('jm', sec(C.MOB_JOIN_MS)); set('jp', pct(C.MOB_JOIN_P));
+set('tc', C.TELE_CD.map(x => x / 1000).join('～') + ' 秒'); set('tl', sec(C.TELE_MS)); set('tmul', C.TELE_MUL);
+const wts = Object.keys(W.weaponTypes).filter(w => w !== 'fist');
+const ids = Object.keys(W.classes);
+renderTable($('#speed-table'), [
+    { label: '職業', html: id => `${W.classes[id].icon} ${W.classes[id].name} <small class="dim">×${W.classes[id].atkK.k}</small>` },
+    ...wts.map(w => ({ label: W.weaponTypes[w].name, num: true, html: id => { const v = W.classes[id].weaponMs[w]; return v ? v : '<span class="mute">—</span>'; } })),
+], ids);
+$('#speed-table').insertAdjacentHTML('beforeend', `<p class="dim">武器基本速度：${wts.map(w => `${W.weaponTypes[w].name} ${W.weaponTypes[w].spd}`).join('、')}。職業名稱旁是動作係數（越大越慢）。</p>`);
+</script>
+</body>
+</html>

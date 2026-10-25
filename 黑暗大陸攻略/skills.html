@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技能與魔法｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸共用魔法 1～10 級與十二職業技能：學習等級、MP、冷卻、效果、魔法書取得方式與快捷欄自動施放規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="skills">
+<main>
+    <h1>✨ 技能與魔法</h1>
+    <p class="lead">技能分兩種：<b>共用魔法</b>（1～10 級，各職業能學到的最高級數不同）與<b>職業技能</b>。全部都要用<b>魔法書／技能書</b>學（Lv.1 就能學的創角時自動學會），被動技能學會就生效。</p>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">📖 魔法書哪裡來</h3>
+            <ul>
+                <li>商店：魔法只賣 1～<span id="mt"></span> 級（價格 <span id="mp"></span> 金幣）；職業技能每個職業只賣<b>第一本</b>。</li>
+                <li>其他書只能打怪掉：一般怪 <b id="b1"></b>、首領 <b id="b2"></b>，掉「學習等級 ≤ 怪物等級 +5」的書，<b>任何職業的書都會掉</b>，用不到的可以賣或上交易所。</li>
+                <li>學習條件：職業學得會、等級夠、還沒學過。</li>
+            </ul></div>
+        <div class="box"><h3 style="margin-top:0">⌨️ 快捷欄與自動施放</h3>
+            <ul>
+                <li>技能放進快捷欄、<b>往下拉</b>開啟自動（暖黃光框）才會自動施放；格子順序＝優先順序。</li>
+                <li>每次放技能有 <b id="gcd"></b> 公共冷卻，每招另有自己的冷卻（沒寫的治癒 4 秒、增益 10 秒）。</li>
+                <li>自動優先：治癒（HP 低於設定）→ 增益（效果結束）→ 共鳴裝備 → 攻擊技能 → 普攻。</li>
+            </ul></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div id="intro"></div>
+    <div id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#mt').textContent = C.MAGIC_SHOP_MAX_TIER;
+$('#mp').textContent = C.MAGIC_BOOK_PRICE.slice(1).map(fmt).join('／');
+$('#b1').textContent = pct(C.BOOK_DROP_P); $('#b2').textContent = pct(C.BOOK_BOSS_P);
+$('#gcd').textContent = sec(C.SKILL_GCD_MS);
+const ids = Object.keys(W.classes);
+const MAGIC = Object.values(W.skills).filter(s => s.kind === 'magic').sort((a, b) => a.tier - b.tier);
+let cur = W.classes[location.hash.slice(1)] ? location.hash.slice(1) : 'magic';
+
+function needLv(cls, id) { const r = W.classSkills[cls].find(x => x.id === id); return r ? r.lv : 0; }
+function bookCell(id) {
+    const b = W.items['book_' + id];
+    if (!b) return '<small class="dim">自動學會</small>';
+    return b.price ? `<small>商店 ${fmt(b.price)}</small>` : '<small class="dim">怪物掉落</small>';
+}
+function effectText(s) {
+    const n = [];
+    if (s.mult) n.push(`×${s.mult}${s.hits ? `・${s.hits}連擊` : ''}`);
+    if (s.dmg) n.push(`${range(s.dmg)}+SP×${s.spK || 1}`);
+    if (s.heal) n.push(`回復 ${range(s.heal)}+SP×${s.spK || 1}`);
+    if (s.stun) n.push(`暈 ${s.stun}秒`);
+    if (s.fx) n.push(fxText(s.fx));
+    return `<small>${esc(n.join('，'))}</small>`;
+}
+function draw() {
+    renderTabs($('#tabs'), [['magic', '🔮 共用魔法']].concat(ids.map(id => [id, `${W.classes[id].icon} ${W.classes[id].name}`])), cur, v => { cur = v; $('#list')._sort = null; history.replaceState(null, '', '#' + v); draw(); });
+    if (cur === 'magic') {
+        $('#intro').innerHTML = `<p>共 ${MAGIC.length} 招。右邊各欄是該職業<b>學這招需要的等級</b>（— 表示學不了）。</p>`;
+        renderTable($('#list'), [
+            { label: '級', num: true, v: s => s.tier, html: s => W.magicTierNames[s.tier] },
+            { label: '魔法', v: s => s.name, html: s => skillLink(s.id) },
+            { label: '類型', html: s => skillMetaHtml(s) },
+            { label: '效果', html: s => `${esc(s.desc)}<br>${effectText(s)}` },
+            { label: '書', html: s => bookCell(s.id), cls: 'hide-sm' },
+        ].concat(ids.filter(c => W.classes[c].magic.max).map(c => ({ label: W.classes[c].icon, num: true, v: s => needLv(c, s.id) || 999, html: s => needLv(c, s.id) || '<span class="mute">—</span>', cls: 'hide-sm' }))), MAGIC, { sortCol: 0, sortDir: 1 });
+        return;
+    }
+    const c = W.classes[cur];
+    const list = W.classSkills[cur].map(x => ({ ...W.skills[x.id], need: x.lv }));
+    $('#intro').innerHTML = `<p>${c.icon} <b>${c.name}</b>可學 ${list.length} 招（職業技能 ${list.filter(s => s.kind === 'class').length}、魔法 ${list.filter(s => s.kind === 'magic').length}，魔法最高 ${c.magic.max} 級）。<a href="classes.html#${cur}">→ 職業介紹</a></p>`;
+    renderTable($('#list'), [
+        { label: '學習 Lv', num: true, v: s => s.need, html: s => s.need },
+        { label: '技能', v: s => s.name, html: s => skillLink(s.id) + (s.kind === 'magic' ? ` <small class="dim">${W.magicTierNames[s.tier]}級魔法</small>` : '') },
+        { label: '類型', html: s => skillMetaHtml(s) },
+        { label: '效果', html: s => `${esc(s.desc)}<br>${effectText(s)}` },
+        { label: '書', html: s => bookCell(s.id), cls: 'hide-sm' },
+    ], list, { sortCol: 0, sortDir: 1 });
+}
+draw();
+</script>
+</body>
+</html>

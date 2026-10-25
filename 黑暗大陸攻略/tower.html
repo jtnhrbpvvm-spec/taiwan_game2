@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>永夜之塔｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸永夜之塔 1～100F：逐層解鎖規則、各樓層怪物等級與數值、十位守關首領、專屬材料與掉落。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="tower">
+<main>
+    <h1>🏛️ 永夜之塔</h1>
+    <p class="lead">從永夜王都傳送（世界地圖選永夜之塔時可以直接選樓層）。共 100 層，每 10 層換一種主題怪，10、20…100F 有<b>守關首領</b>。怪物等級 ＝ 60 ＋ 樓層 × 0.45，一層最多 3 隻一起出現。</p>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">逐層解鎖</h3>
+            <ul>
+                <li>一般樓層：在該層擊殺滿 <b id="fk"></b> 隻，才能上下一層。</li>
+                <li>首領樓層（10、20…）：守關首領活著時那層只出首領，<b>打倒就能上樓</b>。</li>
+                <li>擊殺數會一直累積，離開、下線、死亡都不會歸零。</li>
+            </ul></div>
+        <div class="box"><h3 style="margin-top:0">守關首領</h3>
+            <ul>
+                <li>打倒後 <b id="rh"></b> 小時復活（真實時間），復活前那層只出一般塔怪。</li>
+                <li>每隻首領必有專屬材料（<b id="bm"></b>），可用來做 <a href="forge.html#boss">BOSS 附魔</a>。</li>
+                <li>職業任務第 4 章在塔裡進行，要選<b>非首領樓層</b>。</li>
+            </ul></div>
+    </div>
+
+    <h2>各樓層怪物</h2>
+    <p>一般塔怪：HP ×1.15、經驗 ×1.3；第 1、5、9 組（1～10F、41～50F、81～90F）是不死系，第 2、4、6…組會放黑暗魔法；約 40% 是大型。</p>
+    <div id="floors"></div>
+
+    <h2>十位守關首領</h2>
+    <div id="bosses"></div>
+
+    <h2>塔內一般掉落（每隻怪）</h2>
+    <div id="drops"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const T = W.tower;
+$('#fk').textContent = fmt(T.floorKills); $('#rh').textContent = T.respawnH; $('#bm').textContent = '掉率 ' + pct(W.consts.BOSS_MATERIAL_DROP_P);
+renderTable($('#floors'), [
+    { label: '樓層', html: f => `${f.floor}F` },
+    { label: '主題怪', html: f => { const g = Math.min(9, Math.floor((f.floor - 1) / 10)); return `${T.icons[g]} ${T.themes[g].map(esc).join('／')}`; } },
+    { label: 'Lv', num: true, html: f => f.lv },
+    { label: 'HP', num: true, html: f => fmt(f.hp) },
+    { label: '防禦', num: true, html: f => 10 - f.ac },
+    { label: '攻擊', num: true, html: f => range(f.dmg) },
+    { label: '魔法', html: f => f.magic ? `<small>${esc(f.magic.name)} ${pct(f.magic.p)} ${range(f.magic.dmg)}</small>` : '' },
+    { label: '經驗', num: true, html: f => fmt(f.exp) },
+], T.floors);
+const bossRows = T.floors.filter(f => f.boss);
+renderTable($('#bosses'), [
+    { label: '樓層', html: f => `<b>${f.floor}F</b>` },
+    { label: '首領', html: f => `${f.boss.icon} <b class="g-legend">${esc(f.boss.name.replace(/（.*）/, ''))}</b>` },
+    { label: 'Lv', num: true, html: f => f.boss.lv },
+    { label: 'HP', num: true, html: f => fmt(f.boss.hp) },
+    { label: '攻擊／魔法', html: f => `${range(f.boss.dmg)}<br><small>${esc(f.boss.magic.name)} ${pct(f.boss.magic.p)} ${range(f.boss.magic.dmg)}</small>` },
+    { label: '經驗', num: true, html: f => fmt(f.boss.exp) },
+    { label: '掉落', html: f => `<small>${f.boss.drops.map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small>` },
+], bossRows);
+renderTable($('#drops'), [
+    { label: '道具', html: d => itemLink(d.id, d.n) },
+    { label: '機率', num: true, html: d => pct(d.p) },
+], ZONE.tower.drops || []);
+</script>
+</body>
+</html>

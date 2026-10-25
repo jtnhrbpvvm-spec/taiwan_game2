@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>品質、詞綴與通貨｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸暗黑式刷寶：魔法、稀有、傳說品質機率，19 種詞綴與數值上限，傳說與覺醒特殊詞綴，9 種製作通貨用法與掉落權重。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="affix">
+<main>
+    <h1>💠 品質、詞綴與製作通貨</h1>
+    <p class="lead">怪物掉的武器、防具會隨機擲<b>品質</b>與<b>詞綴</b>（像暗黑破壞神／POE）。商店、鍛造、任務獎勵的裝備都是普通品質，但可以用製作通貨改造。</p>
+    <div class="toc"><a href="#quality">品質機率</a><a href="#affix">詞綴一覽</a><a href="#legend">傳說詞綴</a><a href="#special">覺醒特殊詞綴</a><a href="#currency">製作通貨</a><a href="#filter">戰利品過濾</a></div>
+
+    <h2 id="quality">品質機率</h2>
+    <div class="tw"><table>
+        <thead><tr><th>品質</th><th>詞綴條數</th><th class="num">一般怪</th><th class="num">首領</th><th class="num">命運石</th><th class="num">回收價倍率</th></tr></thead>
+        <tbody>
+            <tr><td>普通</td><td>0</td><td class="num">40%</td><td class="num">50%</td><td class="num">—</td><td class="num">×1</td></tr>
+            <tr><td class="q-magic">魔法</td><td id="qm"></td><td class="num">10%</td><td class="num">15%</td><td class="num">75%</td><td class="num" id="sm"></td></tr>
+            <tr><td class="q-rare">稀有</td><td id="qr"></td><td class="num">5%</td><td class="num">8%</td><td class="num">21%</td><td class="num" id="sr"></td></tr>
+            <tr><td class="q-legend">傳說</td><td>4＋1 條傳說詞綴</td><td class="num">1%</td><td class="num">2%</td><td class="num">4%</td><td class="num" id="sl"></td></tr>
+            <tr><td class="dim">裝備消失、改掉 1 個通貨</td><td>—</td><td class="num">44%</td><td class="num">25%</td><td class="num">—</td><td class="num">—</td></tr>
+        </tbody></table></div>
+    <p>名稱：魔法＝第一條詞綴的前綴（例「銳利的長劍」）；稀有＝「「<span id="rn"></span>」長劍」這類隨機名；傳說＝「傳說・稱號 名稱」。
+        <b>物品等級</b>＝掉落怪物的等級，決定詞綴數值上限。賣價＝基本回收價 × 品質倍率＋詞綴數 × 物品等級 × 10。</p>
+
+    <h2 id="affix">詞綴一覽（19 種）</h2>
+    <p>右邊是各物品等級時的<b>數值上限</b>（實際在下限～上限之間隨機）。「部位」空白表示所有部位都可能出現。</p>
+    <div id="affix-list"></div>
+
+    <h2 id="legend">傳說詞綴</h2>
+    <p>傳說品質額外多一條，數值是一般上限的 2～2.5 倍，並決定稱號：</p>
+    <div id="legend-list"></div>
+
+    <h2 id="special">覺醒特殊詞綴</h2>
+    <p>只能用 <a data-item="curAwaken">💠 命運的覺醒石</a> 加在<b>物品等級 <span id="sil"></span> 以上</b>的裝備（商店貨沒有物品等級，不能用），每件最多一條、任何部位都行、已有就換掉。其他通貨重洗時會保留。</p>
+    <div id="special-list"></div>
+
+    <h2 id="currency">製作通貨</h2>
+    <p>每隻怪 <b id="cp"></b>、首領 <b id="cb"></b>（1～3 顆）會掉通貨，種類依權重抽（權重越大越常見）。在村莊<b>鍛造 NPC →「🔮 裝備改造」</b>使用；地圖用「🗺️ 地圖打造」（見 <a href="rift.html">異界地圖</a>）。通貨不佔負重。</p>
+    <div id="cur-list"></div>
+    <div class="box tip"><b>改造流程範例：</b>普通裝備 →（點化石）魔法 →（重鑄石重洗到想要的詞綴）→（晉升石）稀有＋1 條 →（神諭石）再加詞綴到最多 6 條 →（淬鍊石）重擲數值。
+        傳說裝備只能用淬鍊石（數值重擲）與覺醒石。</div>
+
+    <h2 id="filter">戰利品過濾</h2>
+    <p>設定頁可選撿到裝備時的處理（被過濾的直接換成金幣，不佔背包）：</p>
+    <ol id="filters"></ol>
+    <p>另外可勾「保留特殊詞綴」（有勾選詞綴的裝備不過濾）與「保留共鳴裝備」（預設開）。村莊回收頁也有一鍵賣出普通／魔法以下（已強化的不賣）。</p>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const Q = W.quality;
+$('#qm').textContent = Q.magic.n.join('～') + ' 條'; $('#qr').textContent = Q.rare.n.join('～') + ' 條';
+$('#sm').textContent = '×' + Q.magic.sell; $('#sr').textContent = '×' + Q.rare.sell; $('#sl').textContent = '×' + Q.legend.sell;
+$('#rn').textContent = W.rareNames[0]; $('#sil').textContent = W.consts.SPECIAL_AFFIX_IL;
+$('#cp').textContent = pct(W.consts.CURRENCY_DROP_P); $('#cb').textContent = pct(W.consts.CURRENCY_BOSS_P);
+const av = (a, v) => a.pct ? pct(v) : Math.round(v * 10) / 10;
+const slotNames = s => s ? s.map(k => W.slots[k] || (k === 'ring' ? '戒指' : k)).join('、') : '';
+renderTable($('#affix-list'), [
+    { label: '詞綴', html: ([, a]) => `<b>${esc(a.name)}</b>` },
+    { label: '前綴', html: ([, a]) => `<small>${esc(a.pre)}</small>` },
+    { label: '下限', num: true, html: ([, a]) => av(a, a.min) },
+    ...[20, 40, 60, 80, 99].map((il, i) => ({ label: `iLv ${il}`, num: true, html: ([, a]) => av(a, a.cap ? Math.min(a.cap, a.max[i]) : a.max[i]) })),
+    { label: '部位', html: ([, a]) => `<small>${slotNames(a.slots)}${a.cap ? `<br>每條最多 ${pct(a.cap)}` : ''}</small>` },
+], Object.entries(W.affixes));
+renderTable($('#legend-list'), [
+    { label: '稱號', html: l => `<b class="q-legend">傳說・${esc(l.title)}</b>` },
+    { label: '詞綴', html: l => esc(W.affixes[l.k].name) },
+    { label: '倍率', num: true, html: l => '×' + l.mul },
+    { label: '說明', html: l => l.k === 'spdMul' ? '<small>身上幾件疾風都只算最高一條</small>' : '' },
+], W.legendAffixes);
+renderTable($('#special-list'), [
+    { label: '特殊詞綴', html: ([, a]) => `<b class="q-special">💠 ${esc(a.name)}</b>` },
+    { label: '下限', num: true, html: ([, a]) => av(a, a.min) },
+    ...[70, 80, 90, 100, 110].map((il, i) => ({ label: `iLv ${il}`, num: true, html: ([, a]) => av(a, a.max[i]) })),
+], Object.entries(W.specialAffixes));
+const totalW = Object.values(W.currency).reduce((a, c) => a + c.w, 0);
+renderTable($('#cur-list'), [
+    { label: '通貨', html: ([id]) => itemLink(id) },
+    { label: '裝備用法', html: ([id, c]) => esc(c.desc) },
+    { label: '地圖用法', html: ([id]) => `<small>${esc(W.mapCurrency[id] || '不能用在地圖')}</small>`, cls: 'hide-sm' },
+    { label: '權重', num: true, v: ([, c]) => c.w, html: ([, c]) => c.w },
+    { label: '約佔', num: true, v: ([, c]) => c.w, html: ([, c]) => pct(c.w / totalW) + (c.minLv ? `<br><small>Lv.${c.minLv}+ 怪</small>` : '') },
+    { label: '回收', num: true, html: ([id]) => fmt(W.items[id].sellPrice) },
+], Object.entries(W.currency));
+$('#filters').innerHTML = W.lootFilters.map(t => `<li>${esc(t)}</li>`).join('');
+</script>
+</body>
+</html>

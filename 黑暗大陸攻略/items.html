@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>道具圖鑑｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸全部武器、防具、飾品、藥水、卷軸、材料、通貨與魔法書，附屬性、價格與取得方式。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="items">
+<main>
+    <h1>🎒 道具圖鑑</h1>
+    <p class="lead">遊戲裡全部道具。點一列看詳細屬性、共鳴技能與<b>取得方式</b>（商店、哪隻怪掉、掉落機率、鍛造配方）。
+        品級顏色同遊戲圖鑑：<span class="g-normal">一般</span>（商店有賣）、<span class="g-high">高級</span>、<span class="g-rare">稀有</span>、<span class="g-hero">英雄</span>、<span class="g-legend">傳說</span>（依回收價分級）。</p>
+    <div class="tabs" id="cats"></div>
+    <div class="filters">
+        <input type="search" id="q" placeholder="搜尋名稱…" aria-label="搜尋名稱">
+        <select id="sub" aria-label="種類"></select>
+        <select id="cls" aria-label="職業"><option value="">全部職業</option></select>
+        <select id="grade" aria-label="品級"><option value="">全部品級</option></select>
+        <label class="dim"><input type="checkbox" id="resOnly"> 只看共鳴 🌟</label>
+        <span class="count" id="count"></span>
+    </div>
+    <div id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const CATS = [['all', '全部'], ['weapon', '⚔️ 武器'], ['armor', '🛡️ 防具'], ['acc', '💍 飾品'], ['use', '🧪 消耗品'], ['material', '💎 材料'],
+    ['currency', '🔹 通貨'], ['book', '📖 魔法書'], ['map', '🗺️ 異界地圖'], ['doll', '🧸 娃娃'], ['quest', '🔖 任務道具']];
+const ARMOR_SLOTS = ['helm', 'armor', 'shield', 'tshirt', 'cloak', 'gloves', 'boots'];
+const st = { cat: 'all', q: '', sub: '', cls: '', grade: '', res: false };
+const catOf = d => d.cat === 'armor' ? (ACC_SLOTS.includes(d.slot) ? 'acc' : 'armor') : ['potion', 'scroll', 'ammo', 'elixir'].includes(d.cat) ? 'use' : d.cat;
+const subOf = d => d.cat === 'weapon' ? d.type : d.cat === 'armor' ? d.slot : d.cat;
+const subName = (d) => d.cat === 'weapon' ? (W.weaponTypes[d.type] || {}).name : d.cat === 'armor' ? (W.slots[d.slot] || '戒指') : W.catNames[d.cat] || d.cat;
+const ALL = Object.entries(W.items).map(([id, d]) => ({ id, d, cat: catOf(d) }));
+const GORDER = { normal: 1, high: 2, rare: 3, hero: 4, legend: 5 };
+
+$('#cls').innerHTML += Object.entries(W.classes).map(([id, c]) => `<option value="${id}">${c.icon} ${c.name}</option>`).join('');
+$('#grade').innerHTML += Object.entries(GRADE_NAME).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+
+function subOptions() {
+    const seen = {};
+    ALL.filter(x => st.cat === 'all' || x.cat === st.cat).forEach(x => { seen[subOf(x.d)] = subName(x.d); });
+    $('#sub').innerHTML = '<option value="">全部種類</option>' + Object.entries(seen).map(([k, v]) => `<option value="${k}"${k === st.sub ? ' selected' : ''}>${esc(v)}</option>`).join('');
+}
+function draw() {
+    renderTabs($('#cats'), CATS, st.cat, v => { st.cat = v; st.sub = ''; subOptions(); draw(); });
+    const q = st.q.toLowerCase();
+    const rows = ALL.filter(x => (st.cat === 'all' || x.cat === st.cat) && (!st.sub || subOf(x.d) === st.sub)
+        && (!st.cls || (x.d.classes ? x.d.classes.includes(st.cls) : (x.d.cat === 'weapon' ? W.classes[st.cls].weapons.includes(x.d.type) : true)))
+        && (!st.grade || x.d.grade === st.grade) && (!st.res || x.d.res)
+        && (!q || x.d.name.toLowerCase().includes(q) || (subName(x.d) || '').includes(q)));
+    $('#count').textContent = `共 ${rows.length} 件`;
+    const showGear = ['weapon', 'armor', 'acc'].includes(st.cat);
+    const cols = [
+        { label: '名稱', v: r => r.d.name, html: r => itemLink(r.id) },
+        { label: '種類', v: r => subName(r.d) || '', html: r => esc(subName(r.d) || '') },
+        { label: '品級', v: r => GORDER[r.d.grade] || 0, html: r => r.d.grade ? `<span class="${itemCls(r.id)}">${GRADE_NAME[r.d.grade]}</span>` : '' },
+    ];
+    if (showGear || st.cat === 'all') cols.push({ label: '主要屬性', html: r => gearBrief(r.d) });
+    else cols.push({ label: '說明', html: r => esc(r.d.desc || (r.d.heal ? `回復 HP ${range(r.d.heal)}` : r.d.buff && W.buffDefs[r.d.buff] ? `${W.buffDefs[r.d.buff].name} ${r.d.sec ? sec(r.d.sec * 1000) : ''}` : '')) });
+    cols.push({ label: '限定', html: r => r.d.classes ? r.d.classes.map(c => W.classes[c].icon).join('') : '', cls: 'hide-sm' });
+    cols.push({ label: '商店價', num: true, v: r => r.d.price || 0, html: r => r.d.price ? fmt(r.d.price) : '—', cls: 'hide-sm' });
+    cols.push({ label: '回收價', num: true, v: r => r.d.sellPrice, html: r => fmt(r.d.sellPrice) });
+    renderTable($('#list'), cols, rows, { rowAttr: r => `class="click" data-item="${r.id}"` });
+}
+function gearBrief(d) {
+    const s = [];
+    if (d.cat === 'weapon') s.push(`傷害 ${d.dmg[0]}／${d.dmg[1]}`);
+    if (d.ac) s.push(`防禦 +${d.ac}`);
+    for (const k of ['hit', 'sp', 'mr', 'crit', 'reduce', 'hp', 'mp', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'lifesteal', 'dodge', 'weight']) if (typeof d[k] === 'number') s.push(`${STAT_LABEL[k]} ${statVal(k, d[k])}`);
+    if (d.cat === 'weapon' || d.cat === 'armor') { if (d.dmg && d.cat === 'armor') s.push(`傷害 +${d.dmg}`); }
+    else if (d.heal) s.push(`回復 ${range(d.heal)}`);
+    return `<small>${esc(s.join('、'))}</small>`;
+}
+$('#q').addEventListener('input', e => { if (e.isComposing) return; st.q = e.target.value.trim(); draw(); });
+$('#q').addEventListener('compositionend', e => { st.q = e.target.value.trim(); draw(); });
+$('#sub').onchange = e => { st.sub = e.target.value; draw(); };
+$('#cls').onchange = e => { st.cls = e.target.value; draw(); };
+$('#grade').onchange = e => { st.grade = e.target.value; draw(); };
+$('#resOnly').onchange = e => { st.res = e.target.checked; draw(); };
+subOptions(); draw();
+// 從別頁連過來（items.html#道具id）直接打開
+if (location.hash && W.items[location.hash.slice(1)]) openItem(location.hash.slice(1));
+</script>
+</body>
+</html>

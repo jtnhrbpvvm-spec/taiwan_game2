@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>黑暗大陸攻略百科</title>
+<meta name="description" content="《黑暗大陸》（天堂風格自動掛機 RPG）攻略與百科：職業、技能、道具、怪物、地圖、任務、衝裝、共鳴裝備、異界地圖、永夜之塔與四大龍。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; margin: 16px 0 10px; }
+    .hero img { width: 100%; border-radius: 14px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .hero h1 { font-size: 40px; margin: 0 0 6px; }
+    .nums { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .nums div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; text-align: center; }
+    .nums b { display: block; font-size: 22px; color: var(--gold2); font-family: var(--serif); }
+    .nums small { font-size: 12px; }
+    .pg .ico-big { float: right; }
+    @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .hero h1 { font-size: 30px; } }
+</style>
+</head>
+<body data-page="index">
+<main>
+    <section class="hero">
+        <div>
+            <h1>黑暗大陸 攻略百科</h1>
+            <p class="lead">《黑暗大陸》是天堂 1 風格的網頁自動掛機 RPG：十二種職業、魔法書學技能、衝裝、暗黑式隨機詞綴、共鳴裝備、異界地圖、百層永夜之塔與四大龍。
+                這裡整理了新手攻略與完整的資料百科，數值都直接從遊戲原始碼擷取。</p>
+            <div class="nums" id="nums"></div>
+            <p><a class="btn" href="guide.html">🧭 從新手攻略開始</a>　<a class="btn" href="https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/" target="_blank" rel="noopener">▶ 開始遊戲</a>　<a class="btn" id="pet-btn" target="_blank" rel="noopener">🐾 黑暗大陸桌寵</a></p>
+        </div>
+        <img id="cover" alt="十二職業">
+    </section>
+
+    <h2>攻略</h2>
+    <div class="grid" id="g-guide"></div>
+    <h2>百科資料</h2>
+    <div class="grid" id="g-data"></div>
+    <h2>裝備養成</h2>
+    <div class="grid" id="g-gear"></div>
+    <h2>中後期內容</h2>
+    <div class="grid" id="g-end"></div>
+    <h2>規則與系統</h2>
+    <div class="grid" id="g-sys"></div>
+
+    <h2>工具</h2>
+    <div class="grid"><a class="card pg" id="pet-card" target="_blank" rel="noopener"><span class="ico-big">🐾</span><h3>黑暗大陸桌寵</h3>
+        <small>Windows 桌寵：遊戲在背景照常掛機，桌面底部留一隻你職業的小人走來走去，支援多帳號、自動登入。點此前往下載與教學。</small></a></div>
+
+    <div class="box info">小技巧：上方搜尋框可以直接搜尋任何道具、怪物、技能或地圖；點道具名稱、怪物名稱會跳出詳細說明（含掉落機率與取得方式）。</div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const DESC = {
+    guide: '創角配點、各等級去哪練功、必買道具、設定與賺錢方法。',
+    classes: '十二職業的能力、武器、成長、故事與適合的玩法。',
+    skills: '共用魔法 1～10 級與各職業技能，含學習等級與魔法書。',
+    items: '全部武器、防具、飾品、消耗品與材料，附取得方式。',
+    monsters: '所有怪物的血量、攻擊、經驗、出沒地點與掉落。',
+    zones: '村莊、商店、各狩獵地區的等級、怪物與掉落。',
+    quests: '十二職業各 4 章任務：條件、地點、首領與獎勵。',
+    enchant: '安定值、成功率、祝福／詛咒卷軸與衝裝建議。',
+    affix: '魔法／稀有／傳說品質、19 種詞綴與 9 種製作通貨。',
+    resonance: '帶專屬技能的共鳴武器與防具，觸發方式與取得。',
+    forge: '鍛造配方一覽與 26 種 BOSS 附魔。',
+    rift: '異界地圖 T1～T15、地圖詞綴、排程與通關獎勵。',
+    tower: '永夜之塔 100 層：逐層解鎖、守關首領與專屬材料。',
+    dragons: '四大龍巢穴、團隊副本與世界首領。',
+    dolls: '21 款魔法娃娃的能力與召喚規則。',
+    morph: '變形卷軸 30 種變身對象與武器限制。',
+    mechanics: '命中、傷害、防禦、攻速、負重等計算公式與戰鬥規則。',
+    exp: '1～99 級經驗表、高等級經驗遞減、死亡懲罰與離線收益。',
+    online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、排行榜。',
+};
+const GROUPS = { 'g-guide': ['guide', 'classes', 'quests'], 'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
+    'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph'], 'g-sys': ['mechanics', 'exp', 'online'] };
+const P = Object.fromEntries(PAGES.map(p => [p[0], p]));
+for (const [el, list] of Object.entries(GROUPS))
+    $('#' + el).innerHTML = list.map(id => `<a class="card pg" href="${id}.html"><span class="ico-big">${P[id][2]}</span><h3>${P[id][1]}</h3><small>${DESC[id]}</small></a>`).join('');
+const cnt = (o, f) => Object.values(o).filter(f || (() => true)).length;
+$('#nums').innerHTML = [
+    [cnt(W.classes), '職業'], [cnt(W.skills), '技能魔法'], [cnt(W.items, d => d.cat !== 'book' && d.cat !== 'quest'), '道具裝備'],
+    [cnt(W.monsters), '怪物'], [W.zones.length, '狩獵地區'], [cnt(W.resonance), '共鳴裝備'],
+].map(([n, t]) => `<div><b>${n}</b><small>${t}</small></div>`).join('');
+$('#pet-btn').href = PET_URL; $('#pet-card').href = PET_URL;
+$('#cover').src =img('images/classes/all.jpg?v=2');
+</script>
+</body>
+</html>

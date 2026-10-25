@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>四大龍與首領｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸四大龍巢穴（格爾莫斯、瑟拉恩、維斯塔爾、莫爾加斯）、屠龍勇者稱號、團隊副本與世界首領規則與獎勵。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="dragons">
+<main>
+    <h1>🐉 四大龍、團隊副本與世界首領</h1>
+    <div class="toc"><a href="#lairs">四大龍巢穴</a><a href="#bosses">各地稀有首領</a><a href="#raid">團隊副本</a><a href="#wb">世界首領</a></div>
+
+    <h2 id="lairs">四大龍巢穴</h2>
+    <p class="lead">從永夜王都傳送，依序挑戰（要先討伐前一隻）。龍穴一次只會有龍一隻，討伐後巢穴封閉 6 小時（真實時間）。<b>四隻全部討伐</b>獲得稱號「屠龍勇者」。</p>
+    <div class="box warn">龍每 7～11 秒會蓄力 1.6 秒放<b>龍之吐息</b>（紅圈，×<span id="tm"></span> 傷害），畫面開著時角色會自動閃避（可在設定關掉）；畫面沒開時有 60%／20% 機率躲開。單人打龍很難，建議組隊打團隊副本。</div>
+    <div class="grid" id="lair-list"></div>
+
+    <h2 id="bosses">各地稀有首領</h2>
+    <p>野外與地監每次尋怪有一點點機率出現稀有首領，牠們是 <a href="forge.html">BOSS 附魔</a> 材料與許多共鳴裝備的來源。</p>
+    <div id="boss-list"></div>
+
+    <h2 id="raid">團隊副本（需登入）</h2>
+    <p>最多 8 人組隊打龍。建立隊伍會得到 6 碼房號，朋友輸入房號或從公開列表加入（遊戲版本要相同），每人在村莊按「準備」上傳角色，隊長按開始。
+        戰鬥在隊長的瀏覽器模擬，大家一起看重播（2 倍速），結束各自領獎。</p>
+    <div id="raid-list"></div>
+    <ul>
+        <li>首領 HP 再乘「0.6 ＋ 0.4 × 人數」（1 人 ×1、8 人 ×3.8）。4 分鐘後狂暴（傷害 ×1.5、攻速 ×1.33），6 分鐘打不倒算失敗。</li>
+        <li>首領每 8 秒依「最大 HP × 職業權重」挑目標：騎士、聖騎士、戰士 ×3，法師 ×0.5。每 9～13 秒放全體吐息。</li>
+        <li>有治癒魔法的職業會自動補血量低的隊友。<b>團隊副本死亡不扣經驗</b>。</li>
+        <li>獎勵（勝利）：經驗、金幣依人數分配（人越多總量越多、每人越少），每人各擲一次首領掉落；四大龍算一次討伐（可解鎖下一隻龍穴與稱號）。同血盟 2 人以上經驗、金幣 ×1.1。只有勝利才進冷卻。</li>
+        <li>不論輸贏都會扣掉戰鬥中用掉的藥水與彈藥。</li>
+    </ul>
+
+    <h2 id="wb">世界首領（需登入）</h2>
+    <p>全伺服器共用一條血的首領，<b>每個帳號每天 3 次挑戰</b>（台灣時間零點重置）。每次用目前角色模擬 60 秒戰鬥，把傷害打到伺服器上。首領被打倒（或 48 小時到）30 分鐘後換下一隻。</p>
+    <div id="wb-list"></div>
+    <ul>
+        <li>挑戰的首領等級＝你的等級 +3、傷害 ×1.3、防禦 −10，25% 機率放範圍魔法；倒下就結束、不扣經驗。</li>
+        <li>獎勵（首領結束後領取）：占比 ＝ 你的傷害 ÷ 總傷害；經驗 ＝ 升級所需經驗 ×（3% ＋ 30% × 占比）、金幣 ＝ 20,000 ＋ 300,000 × 占比（時間到沒打倒 ×0.3）。</li>
+        <li>打倒時額外：第 1 名萬能藥、第 2～3 名祝福的對武器施法的卷軸、最後一擊祝福的對盔甲施法的卷軸。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#tm').textContent = W.consts.TELE_MUL;
+const lairs = W.zones.filter(z => z.type === 'dragon');
+$('#lair-list').innerHTML = lairs.map(z => {
+    const m = W.monsters[z.boss];
+    return `<div class="card"><h3>${z.icon} ${esc(z.name)}</h3>
+        <p>${monLink(z.boss)} <span class="tag gold">Lv.${m.lv}</span></p>
+        <div class="stats"><span>HP <b>${fmt(m.hp)}</b></span><span>防禦 <b>${10 - m.ac}</b></span><span>攻擊 <b>${range(m.dmg)}</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span></div>
+        ${m.magic ? `<p class="dim">${esc(m.magic.name)}：${pct(m.magic.p)}、${range(m.magic.dmg)}</p>` : ''}
+        <p><span class="tag red">需要 Lv.${z.reqLv}</span><span class="tag">傳送 ${fmt(z.fee)}</span><span class="tag">冷卻 ${z.cdH} 小時</span>${z.prev ? `<span class="tag">先討伐 ${esc(W.monsters[z.prev].name)}</span>` : ''}</p>
+        <div class="msec"><h4>掉落</h4><small>${m.drops.map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small></div></div>`;
+}).join('');
+const rares = W.zones.filter(z => z.rare).map(z => ({ z, id: z.rare.id, m: W.monsters[z.rare.id], p: z.rare.p }));
+renderTable($('#boss-list'), [
+    { label: '首領', v: r => r.m.name, html: r => monLink(r.id) },
+    { label: 'Lv', num: true, v: r => r.m.lv, html: r => r.m.lv },
+    { label: '地點', html: r => zoneLink(r.z.id) },
+    { label: '出現率', num: true, html: r => pct(r.p) },
+    { label: 'HP', num: true, v: r => r.m.hp, html: r => fmt(r.m.hp) },
+    { label: '經驗', num: true, v: r => r.m.exp, html: r => fmt(r.m.exp), cls: 'hide-sm' },
+    { label: '重要掉落', html: r => `<small>${r.m.drops.filter(d => W.items[d.id] && (W.items[d.id].res || W.bossEnchants[d.id])).map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small>` },
+], rares, { sortCol: 1, sortDir: 1, rowAttr: r => `class="click" data-mon="${r.id}"` });
+renderTable($('#raid-list'), [
+    { label: '副本', html: r => monLink(r.boss) },
+    { label: '地點', html: r => zoneLink(r.zone) },
+    { label: '需求 Lv', num: true, html: r => r.reqLv },
+    { label: '冷卻', num: true, html: r => r.cdH + ' 小時' },
+    { label: 'HP 倍率', num: true, html: r => '×' + r.hpMul },
+    { label: '傷害倍率', num: true, html: r => '×' + r.dmgMul },
+    { label: '獎勵倍率', num: true, html: r => '×' + r.reward },
+    { label: '說明', html: r => `<small>${esc(r.desc)}</small>` },
+], W.raids);
+const WB_NAME = { drake: '🐲 遠古地龍・格蘭卡', balrog: '🔥 炎魔・巴洛格', frost: '🐉 冰霜巨龍・希琳', lich: '💀 不死君王・莫德', roc: '🦅 風暴巨鷹・奧拉' };
+renderTable($('#wb-list'), [
+    { label: '輪替順序', html: ([k]) => `<b>${WB_NAME[k] || k}</b>` },
+    { label: '種族', html: ([, w]) => w.tags.map(t => TAG_NAME[t] || t).join('、') || '—' },
+    { label: '大型', html: ([, w]) => w.large ? '✔' : '—' },
+    { label: '招式', html: ([, w]) => esc(w.magic) },
+], Object.entries(W.wbKinds));
+</script>
+</body>
+</html>

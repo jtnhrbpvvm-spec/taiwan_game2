@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地圖與村莊｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸四座村莊與商店、各狩獵地區的建議等級、傳送費、怪物、稀有首領與掉落。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .zone { scroll-margin-top: 80px; }
+    .zone .hd { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+    .zone .hd h3 { margin: 0; font-size: 19px; }
+    .mons { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0; }
+    .drops { columns: 2; column-gap: 24px; font-size: 14px; margin: 4px 0; }
+    .drops div { break-inside: avoid; }
+    @media (max-width: 760px) { .drops { columns: 1; } }
+</style>
+</head>
+<body data-page="zones">
+<main>
+    <h1>🗺️ 地圖與村莊</h1>
+    <p class="lead">黑暗大陸有四座村莊與 <span id="nz"></span> 個狩獵地區。野外、地監只會出現「不超過你等級 +3」的怪物；每個地區都會回到所屬村莊。</p>
+    <div class="toc" id="toc"></div>
+
+    <h2 id="towns">村莊與商店</h2>
+    <p>村莊間傳送：每差一級 <b id="fee"></b> 金幣。村莊等級越高，商店賣的東西越多（高等村莊也賣低等村莊的全部商品）。下面列出<b>每座村莊新增</b>的商品。
+        彈藥一次買 100 個；魔法書只會列出你職業學得會的。</p>
+    <div class="grid" id="town-list"></div>
+
+    <h2 id="fields">狩獵地區（依建議等級）</h2>
+    <div id="zone-list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#fee').textContent = fmt(W.consts.TOWN_TRAVEL_FEE);
+const hunt = W.zones.filter(z => z.type === 'field' || z.type === 'dungeon').sort((a, b) => a.lv[0] - b.lv[0]);
+const special = W.zones.filter(z => z.type === 'tower' || z.type === 'dragon');
+$('#nz').textContent = hunt.length;
+$('#toc').innerHTML = `<a href="#towns">🏘️ 村莊</a>` + hunt.concat(special).map(z => `<a href="#${z.id}">${z.icon} ${esc(z.name)}</a>`).join('');
+
+// 村莊
+$('#town-list').innerHTML = Object.entries(W.towns).sort((a, b) => a[1].tier - b[1].tier).map(([tid, t]) => {
+    const news = W.shopByTier[t.tier].filter(id => W.items[id].tier === t.tier);
+    const by = {};
+    news.forEach(id => { const c = W.items[id].cat; (by[c] = by[c] || []).push(id); });
+    const zs = W.zones.filter(z => z.town === tid);
+    return `<div class="card zone" id="town-${tid}"><h3>${t.icon} ${esc(t.name)} <span class="tag gold">村莊等級 ${t.tier}</span></h3>
+        <p class="dim">回到這裡的地區：${zs.map(z => zoneLink(z.id)).join('、') || '—'}</p>
+        ${Object.entries(by).map(([c, ids]) => `<div class="msec"><h4>${CAT_EMO[c] || ''} ${esc(W.catNames[c] || c)}${c === 'book' ? `（${ids.length} 本）` : ''}</h4>${c === 'book'
+            ? `<small>${ids.map(id => itemLink(id)).join('、')}</small>`
+            : ids.map(id => `${itemLink(id)} <small class="dim">${W.items[id].cat === 'ammo' ? fmt(W.items[id].price * 100) + '／100' : fmt(W.items[id].price)}</small>`).join('<br>')}</div>`).join('')}</div>`;
+}).join('');
+
+// 狩獵地區
+function zoneCard(z) {
+    const mons = (z.mons || []).map(id => W.monsters[id]).filter(Boolean);
+    const drops = (z.drops || []).slice().sort((a, b) => b.p - a.p);
+    const boss = z.boss && W.monsters[z.boss];
+    return `<div class="card zone" id="${z.id}" style="margin-bottom:14px">
+        <div class="hd"><h3>${z.icon} ${esc(z.name)}</h3><span class="tag gold">Lv.${z.lv[0]}～${z.lv[1]}</span><span class="tag">${ZONE_TYPE[z.type]}</span>
+            <span class="tag">回 ${esc(townName(z.town))}</span><span class="tag">傳送 ${fmt(z.fee)} 金幣</span>${z.reqLv ? `<span class="tag red">需要 Lv.${z.reqLv}</span>` : ''}${z.cdH ? `<span class="tag red">討伐後封閉 ${z.cdH} 小時</span>` : ''}</div>
+        <p class="dim">${esc(z.desc || '')}${z.prev ? ` 需先討伐 ${monLink(z.prev)}。` : ''}${z.type === 'tower' ? ' 詳見 <a href="tower.html">永夜之塔</a>。' : ''}${z.type === 'dragon' ? ' 詳見 <a href="dragons.html">四龍首領</a>。' : ''}</p>
+        ${mons.length ? `<div class="msec"><h4>出現怪物</h4><div class="mons">${(z.mons || []).map(id => `${monLink(id)} <small class="dim">Lv.${W.monsters[id].lv}</small>`).join('')}</div></div>` : ''}
+        ${z.rare ? `<div class="msec"><h4>稀有首領（每次尋怪 ${pct(z.rare.p)}）</h4>${monLink(z.rare.id)} <small class="dim">Lv.${W.monsters[z.rare.id].lv}・HP ${fmt(W.monsters[z.rare.id].hp)}</small></div>` : ''}
+        ${boss ? `<div class="msec"><h4>巢穴首領</h4>${monLink(z.boss)} <small class="dim">Lv.${boss.lv}・HP ${fmt(boss.hp)}・經驗 ${fmt(boss.exp)}</small></div>` : ''}
+        ${drops.length ? `<div class="msec"><h4>地區掉落（每隻怪）</h4><div class="drops">${drops.map(d => `<div>${itemLink(d.id, d.n)} <b>${pct(d.p)}</b></div>`).join('')}</div></div>` : ''}
+    </div>`;
+}
+$('#zone-list').innerHTML = hunt.map(zoneCard).join('') + '<h2 id="special">高塔與龍穴</h2>' + special.map(zoneCard).join('');
+if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 50); }
+</script>
+</body>
+</html>

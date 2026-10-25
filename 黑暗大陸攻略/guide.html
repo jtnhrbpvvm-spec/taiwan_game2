@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新手攻略｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸新手到後期攻略：選職業、配點、快捷欄自動設定、各等級練功地圖、該買哪些藥水卷軸、裝備成長路線、賺錢方法與常見問題。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .step { counter-increment: st; position: relative; padding-left: 44px; }
+    .step::before { content: counter(st); position: absolute; left: 0; top: 2px; width: 30px; height: 30px; border-radius: 50%; background: var(--blood); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .steps { counter-reset: st; }
+    .route td:first-child { white-space: nowrap; }
+</style>
+</head>
+<body data-page="guide">
+<main>
+    <h1>🧭 新手攻略</h1>
+    <p class="lead">《黑暗大陸》是會自己打怪的掛機遊戲，玩家的工作是：<b>選好地圖、帶夠藥水、設定好自動、換更好的裝備</b>。這篇照順序說明從創角到後期該做什麼。</p>
+    <div class="toc"><a href="#start">1. 創角</a><a href="#setup">2. 必做設定</a><a href="#route">3. 練功路線</a><a href="#shop">4. 該買什麼</a><a href="#gear">5. 裝備成長</a><a href="#quest">6. 任務時程</a><a href="#money">7. 賺錢</a><a href="#late">8. 中後期</a><a href="#faq">9. 常見問題</a></div>
+
+    <h2 id="start">1. 創角：選職業與配點</h2>
+    <div class="cols2">
+        <div>
+            <h3>新手推薦</h3>
+            <ul>
+                <li><b>好上手</b>：<a href="classes.html#knight">騎士</a>、<a href="classes.html#warrior">戰士</a>——HP 高、近戰普攻就很穩，不太需要管技能。</li>
+                <li><b>喜歡遠程</b>：<a href="classes.html#elf">妖精</a>、<a href="classes.html#gunner">槍手</a>——射程 8 格，但要一直買箭／子彈，彈藥用完會自動回家。</li>
+                <li><b>喜歡魔法</b>：<a href="classes.html#mage">法師</a>——後期範圍魔法最強，但前期 HP 很低、很吃藍水。</li>
+                <li><b>想賺錢</b>：<a href="classes.html#royal">王族</a>——魅力超過 10 每點打怪金幣 +3%，也是唯一能建立血盟的職業。</li>
+                <li><b>攻速派</b>：<a href="classes.html#darkelf">黑暗妖精</a>、<a href="classes.html#shura">修羅</a>——雙刀／鋼爪攻擊最快。</li>
+            </ul>
+        </div>
+        <div>
+            <h3>配點原則</h3>
+            <ul>
+                <li>總點數 <b id="ct"></b>、單項最多 <b id="cm"></b>。<b>力量</b>加近戰命中與傷害、<b>敏捷</b>加遠程命中傷害與閃避、<b>體質</b>加 HP 與回血、<b>智力</b>加 SP（魔法傷害）、<b>精神</b>加 MP、魔防與回魔、<b>魅力</b>只有王族有用。</li>
+                <li>近戰：力量拉滿 → 體質 → 敏捷。遠程：敏捷拉滿 → 體質。法師／天使：智力拉滿 → 精神。</li>
+                <li>每個職業的參考配點在 <a href="classes.html">職業</a> 頁。Lv.<span id="bl"></span> 以後每級再給 1 點。</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2 id="setup">2. 進遊戲先做的設定</h2>
+    <div class="steps">
+        <div class="step"><h3>快捷欄放藥水、開自動</h3><p>快捷欄的格子<b>按住往下拉</b>就會開啟自動（暖黃光框）。至少把<b>治癒藥水、綠水（自我加速藥水）、瞬間移動卷軸</b>放進去並開自動；施法職業再放藍水。設定頁調整「HP 低於幾 % 喝水」「HP 低於幾 % 瞬移」。</p></div>
+        <div class="step"><h3>技能放進快捷欄</h3><p>技能<b>放進快捷欄並開自動</b>才會自己放，格子越前面越優先。學了新的魔法書會自動放進空格。每招之間有 1 秒公共冷卻。</p></div>
+        <div class="step"><h3>自動回家條件</h3><p>帶幾張<b>回家卷軸</b>。藥水用完、彈藥用完、負重超過設定時會自動回村補給（沒有卷軸只會提示）。</p></div>
+        <div class="step"><h3>戰利品過濾</h3><p>前期建議「普通裝備自動賣出」，中期改「魔法以下自動賣出」，背包不會被塞滿、負重也不會超過（負重超過 <span id="wn"></span> 不回血、<span id="wm"></span> 不回魔）。記得勾「保留共鳴裝備」。</p></div>
+    </div>
+
+    <h2 id="route">3. 練功路線</h2>
+    <p>野外、地監只會出「不超過你等級 +3」的怪，所以<b>等級到建議範圍下限就可以去</b>。打得很吃力（藥水消耗太快、常常死）就退回上一張地圖。</p>
+    <div id="route"></div>
+    <div class="box tip">死亡會扣本級經驗 5～10%（有復活卷軸不扣），而且回城會讓異界地圖消失、任務首領重置。<b>寧可打慢一點也不要一直死。</b></div>
+
+    <h2 id="shop">4. 該買什麼</h2>
+    <h3>治癒藥水</h3>
+    <p>HP 越高就換越大瓶，自動喝水會挑「不浪費」的那瓶。高等村莊才買得到大瓶的。</p>
+    <div id="potions"></div>
+    <h3>增益與卷軸</h3>
+    <div id="buffs"></div>
+    <ul>
+        <li><b>綠水</b>人人必備（攻速 ÷1.33）；近戰職業再加<b>勇敢藥水</b>、妖精／槍手用<b>精靈餅乾</b>、法師／魔鬥士／天使用<b>慎重藥水</b>。</li>
+        <li><b>瞬間移動卷軸</b>：HP 危險時自動脫離戰鬥，保命用，一定要帶。</li>
+        <li><b>復活卷軸</b>：打首領、塔、龍之前帶一張，死亡不扣經驗。</li>
+        <li>魔法書：商店只賣 1～3 級魔法與每職業第一本技能書，其他要打怪掉或在交易所買。</li>
+    </ul>
+
+    <h2 id="gear">5. 裝備成長路線</h2>
+    <ol>
+        <li><b>商店裝</b>：每到新村莊，把武器、盔甲換成該村莊商店最好的（<a href="zones.html#towns">各村莊商店</a>）。</li>
+        <li><b>衝到安定值</b>：安定值以內 100% 成功，放心衝（<a href="enchant.html">衝裝</a>）。超過安定值失敗會蒸發。</li>
+        <li><b>刷詞綴裝</b>：怪物掉的裝備會有魔法／稀有／傳說品質，比同名商店裝強很多（<a href="affix.html">詞綴通貨</a>）。</li>
+        <li><b>打稀有首領</b>：各地區的稀有首領掉高級武器、共鳴裝備與 BOSS 材料（<a href="dragons.html#bosses">稀有首領一覽</a>）。</li>
+        <li><b>共鳴裝備</b>：自帶不耗 MP 的技能，職業對上效果 ×1.3（<a href="resonance.html">共鳴裝備</a>）。</li>
+        <li><b>後期</b>：BOSS 附魔、鍛造神話裝備、用通貨把傳說裝洗到完美（<a href="forge.html">鍛造附魔</a>）。</li>
+    </ol>
+
+    <h2 id="quest">6. 職業任務時程</h2>
+    <p>Lv.15、30、45、60 各有一章職業任務，獎勵是職業限定的斗篷、武器、飾品與<b>傳說共鳴武器</b>，一定要做。任何村莊都能接（<a href="quests.html">職業任務</a>）。</p>
+    <div id="qtable"></div>
+
+    <h2 id="money">7. 賺錢方法</h2>
+    <ul>
+        <li><b>王族</b>：魅力堆高打怪金幣多。</li>
+        <li><b>賣裝</b>：稀有、傳說品質裝備賣價是基本價的 3 倍、8 倍；好的詞綴裝放<a href="online.html#market">交易所</a>給其他玩家。</li>
+        <li><b>首領材料</b>：BOSS 材料掉率只有 0.1%，在交易所與<a href="online.html#auction">鑽石拍賣場</a>很值錢。</li>
+        <li><b>異界地圖</b>：地圖詞綴的獎勵加成會同時提高金幣與掉落（<a href="rift.html">異界地圖</a>）。</li>
+        <li><b>省錢</b>：自動喝水挑對的藥水、負重別滿；村莊傳送每差一級 200 金幣，練功地點選離村莊近的。</li>
+    </ul>
+
+    <h2 id="late">8. 中後期目標</h2>
+    <ul>
+        <li><b>Lv.45～60</b>：<a href="zones.html#pyramid">黃沙王陵</a>、<a href="zones.html#orenSnow">永凍荒原</a>、<a href="zones.html#fireCave">熔火煉獄</a>；開始刷<a href="rift.html">異界地圖</a>。</li>
+        <li><b>Lv.60 以上</b>：<a href="tower.html">永夜之塔</a>逐層往上（每層 1,000 隻）；挑戰<a href="dragons.html">四大龍</a>，或和朋友組<a href="dragons.html#raid">團隊副本</a>（地龍 Lv.25、格爾莫斯 Lv.55 就能組隊打）。</li>
+        <li>每天打 3 次<a href="dragons.html#wb">世界首領</a>，領經驗、金幣與萬能藥。</li>
+        <li>收集<a href="dolls.html">魔法娃娃</a>與<a href="morph.html">變身</a>加成。</li>
+        <li>升級越來越慢：65 級起打怪經驗開始遞減（<a href="exp.html">經驗表</a>）。</li>
+    </ul>
+
+    <h2 id="faq">9. 常見問題</h2>
+    <dl>
+        <dt><b>角色站著不打怪？</b></dt><dd>近戰要走到怪旁邊，遠程要看得到目標（中間有牆不能射）。5 秒沒打到會自動換目標。也可能是藥水／彈藥用完準備回家。</dd>
+        <dt><b>HP、MP 不會自己回？</b></dt><dd>負重超過 <span id="wn2"></span> 不回血、<span id="wm2"></span> 以上不回魔，把背包清一清或存倉庫。</dd>
+        <dt><b>技能都不放？</b></dt><dd>技能要放在快捷欄並<b>往下拉開自動</b>；MP 不夠或技能冷卻中也不會放。</dd>
+        <dt><b>離線收益沒拿到？</b></dt><dd>要登入、要是最後離線的那個角色、離開時正在狩獵地圖掛機、離開滿 30 分鐘（<a href="exp.html#offline">規則</a>）。</dd>
+        <dt><b>首領紅圈怎麼躲？</b></dt><dd>首領蓄力時腳下出現紅圈，走出去就好；設定可開「首領大招自動閃避」。</dd>
+        <dt><b>想邊用電腦邊掛機？</b></dt><dd>可以用我們做的 <a id="pet-link" target="_blank" rel="noopener">🐾 黑暗大陸桌寵</a>（Windows）：遊戲藏在背景照常掛機，桌面上留一隻你職業的小人走來走去，支援多帳號。</dd>
+        <dt><b>學不了魔法書？</b></dt><dd>每個職業能學的魔法級數不同，等級也要夠（<a href="skills.html">技能魔法</a>）。</dd>
+    </dl>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#pet-link').href = PET_URL;
+$('#ct').textContent = C.CREATE_TOTAL; $('#cm').textContent = C.CREATE_STAT_MAX; $('#bl').textContent = C.BONUS_STAT_LEVEL;
+['wn', 'wn2'].forEach(id => $('#' + id).textContent = pct(C.WEIGHT_NO_REGEN));
+['wm', 'wm2'].forEach(id => $('#' + id).textContent = pct(C.WEIGHT_NO_MP_REGEN));
+// 練功路線：野外＋地監依建議等級
+const hunt = W.zones.filter(z => (z.type === 'field' || z.type === 'dungeon')).sort((a, b) => a.lv[0] - b.lv[0]);
+renderTable($('#route'), [
+    { label: '建議等級', html: z => `Lv.${z.lv[0]}～${z.lv[1]}` },
+    { label: '地區', html: z => zoneLink(z.id) + ` <small class="dim">${ZONE_TYPE[z.type]}</small>` },
+    { label: '主要怪物', html: z => `<small>${(z.mons || []).slice(0, 5).map(id => W.monsters[id].name).join('、')}</small>`, cls: 'hide-sm' },
+    { label: '稀有首領', html: z => z.rare ? monLink(z.rare.id) : '' },
+    { label: '補給村莊', html: z => `${esc(townName(z.town))}<br><small class="dim">傳送 ${fmt(z.fee)}</small>` },
+], hunt);
+const shopTown = id => { const s = (W.sources[id] || []).find(x => x.type === 'shop'); return s ? townName(s.town) : '—'; };
+const pots = Object.entries(W.items).filter(([, d]) => d.cat === 'potion' && d.heal).sort((a, b) => a[1].heal[0] - b[1].heal[0]);
+renderTable($('#potions'), [
+    { label: '藥水', html: ([id]) => itemLink(id) },
+    { label: '回復', num: true, html: ([, d]) => range(d.heal) },
+    { label: '價格', num: true, html: ([, d]) => fmt(d.price) },
+    { label: '每金幣回復', num: true, html: ([, d]) => Math.round((d.heal[0] + d.heal[1]) / 2 / d.price * 100) / 100 },
+    { label: '開始販售', html: ([id]) => esc(shopTown(id)) },
+], pots);
+const buffs = Object.entries(W.items).filter(([, d]) => (d.cat === 'potion' && d.buff) || (d.cat === 'scroll' && d.price));
+renderTable($('#buffs'), [
+    { label: '道具', html: ([id]) => itemLink(id) },
+    { label: '效果', html: ([, d]) => esc(d.desc || (d.buff && W.buffDefs[d.buff] ? `${W.buffDefs[d.buff].name} ${sec(d.sec * 1000)}${fxList(W.buffDefs[d.buff].fx).length ? '（' + fxText(W.buffDefs[d.buff].fx) + '）' : ''}` : '')) },
+    { label: '限定', html: ([, d]) => d.classes ? d.classes.map(c => W.classes[c].icon).join('') : '' },
+    { label: '價格', num: true, html: ([, d]) => fmt(d.price) },
+    { label: '開始販售', html: ([id]) => esc(shopTown(id)) },
+], buffs);
+const Q = W.quests.knight;
+$('#qtable').innerHTML = `<div class="tw"><table><thead><tr><th>章</th><th class="num">等級</th><th>內容（以騎士為例）</th><th>獎勵</th></tr></thead><tbody>${Q.map((q, i) =>
+    `<tr><td>${i + 1}</td><td class="num">${q.lv}</td><td>「${esc(q.title)}」—${q.goal.type === 'boss' ? `擊倒 ${q.goal.after} 隻後討伐 ${esc(q.goal.boss.name)}` : q.goal.type === 'kill' ? `擊倒 ${q.goal.n} 隻` : `收集 ${esc(q.goal.itemName)} ×${q.goal.n}`}（${zoneLink(q.goal.zone)}）</td>
+    <td>${itemLink(q.reward.item)}＋${fmt(q.reward.gold)} 金幣${q.reward.elixir ? '＋萬能藥' : ''}</td></tr>`).join('')}</tbody></table></div>`;
+</script>
+</body>
+</html>

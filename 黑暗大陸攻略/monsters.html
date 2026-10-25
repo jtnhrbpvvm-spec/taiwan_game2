@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>怪物圖鑑｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸全部怪物的等級、血量、防禦、攻擊、魔法、經驗、金幣、出沒地點與掉落。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="monsters">
+<main>
+    <h1>👹 怪物圖鑑</h1>
+    <p class="lead">數值是遊戲實際計算後的結果（已含血量倍率與傷害 ×<span id="dm"></span> 加強）。「防禦」越高越難打中；「魔防」會減少你的魔法傷害（傷害 ×(1 − 魔防/200)）。
+        點一列看掉落表。</p>
+    <div class="box tip">多隻怪一起圍上來時每隻會變弱：HP／經驗／金幣 ÷(1＋0.2×(隻數−1))、傷害 ÷(1＋0.3×(隻數−1))，所以表上是<b>單隻出現</b>時的數值。</div>
+    <div class="filters">
+        <input type="search" id="q" placeholder="搜尋怪物…" aria-label="搜尋怪物">
+        <select id="zone" aria-label="地區"><option value="">全部地區</option></select>
+        <select id="tag" aria-label="種族"><option value="">全部種族</option></select>
+        <label class="dim"><input type="checkbox" id="bossOnly"> 只看首領</label>
+        <span class="count" id="count"></span>
+    </div>
+    <div id="list"></div>
+
+    <h2 id="common">所有怪物的共通掉落</h2>
+    <p>除了各怪物的專屬掉落與地區掉落，每隻怪物都會依等級擲以下道具：</p>
+    <div id="common-list"></div>
+    <ul>
+        <li>製作通貨：每隻 <b id="c1"></b>、首領 <b id="c2"></b>（見 <a href="affix.html">詞綴通貨</a>）。</li>
+        <li>魔法書：一般怪 <b id="c3"></b>、首領 <b id="c4"></b>，掉商店沒賣的高級書（見 <a href="skills.html">技能魔法</a>）。</li>
+        <li>隨機裝備：一般怪 <b id="c5"></b>、首領 50%，可能帶魔法／稀有／傳說詞綴。</li>
+        <li>異界地圖：一般地圖每隻 <b id="c6"></b>（見 <a href="rift.html">異界地圖</a>）。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#dm').textContent = C.MON_DMG_MUL;
+const st = { q: '', zone: '', tag: '', boss: false };
+const ALL = Object.entries(W.monsters).map(([id, m]) => ({ id, m }));
+$('#zone').innerHTML += W.zones.filter(z => z.mons || z.rare || z.boss).map(z => `<option value="${z.id}">${z.icon} ${z.name}（Lv.${z.lv[0]}～${z.lv[1]}）</option>`).join('');
+$('#tag').innerHTML += ['undead', 'human', 'demon', 'holy', 'large', 'dragon'].map(k => `<option value="${k}">${TAG_NAME[k]}</option>`).join('');
+function draw() {
+    const q = st.q.toLowerCase();
+    const rows = ALL.filter(({ m }) => (!q || m.name.toLowerCase().includes(q))
+        && (!st.zone || m.zones.includes(st.zone) || m.rareIn.some(r => r.zone === st.zone))
+        && (!st.tag || m[st.tag]) && (!st.boss || m.boss));
+    $('#count').textContent = `共 ${rows.length} 種`;
+    renderTable($('#list'), [
+        { label: '怪物', v: r => r.m.name, html: r => `${monLink(r.id)}` },
+        { label: 'Lv', num: true, k: 'lv', v: r => r.m.lv, html: r => r.m.lv },
+        { label: 'HP', num: true, v: r => r.m.hp, html: r => fmt(r.m.hp) },
+        { label: '防禦', num: true, v: r => 10 - r.m.ac, html: r => 10 - r.m.ac },
+        { label: '攻擊', num: true, v: r => r.m.dmg[1], html: r => range(r.m.dmg) },
+        { label: '魔法', html: r => r.m.magic ? `<small>${esc(r.m.magic.name)} ${pct(r.m.magic.p)}<br>${range(r.m.magic.dmg)}</small>` : '', cls: 'hide-sm' },
+        { label: '魔防', num: true, v: r => r.m.mr, html: r => r.m.mr, cls: 'hide-sm' },
+        { label: '經驗', num: true, v: r => r.m.exp, html: r => fmt(r.m.exp) },
+        { label: '特性', html: r => monTags(r.m), cls: 'hide-sm' },
+        { label: '出沒', html: r => `<small>${r.m.zones.map(zoneName).concat(r.m.rareIn.map(x => zoneName(x.zone) + (x.lair ? '' : '（稀有）'))).join('、')}</small>` },
+    ], rows, { sortCol: 1, sortDir: 1, rowAttr: r => `class="click" data-mon="${r.id}"` });
+}
+$('#q').addEventListener('input', e => { if (e.isComposing) return; st.q = e.target.value.trim(); draw(); });
+$('#q').addEventListener('compositionend', e => { st.q = e.target.value.trim(); draw(); });
+$('#zone').onchange = e => { st.zone = e.target.value; draw(); };
+$('#tag').onchange = e => { st.tag = e.target.value; draw(); };
+$('#bossOnly').onchange = e => { st.boss = e.target.checked; draw(); };
+draw();
+renderTable($('#common-list'), [
+    { label: '道具', html: r => itemLink(r.id, r.n) },
+    { label: '機率（每隻）', num: true, html: r => pct(r.p) },
+    { label: '怪物等級', html: r => r.minLv ? `Lv.${r.minLv} 以上` : r.maxLv ? `Lv.${r.maxLv} 以下` : '全部' },
+], W.commonDrops);
+$('#c1').textContent = pct(C.CURRENCY_DROP_P); $('#c2').textContent = pct(C.CURRENCY_BOSS_P);
+$('#c3').textContent = pct(C.BOOK_DROP_P); $('#c4').textContent = pct(C.BOOK_BOSS_P);
+$('#c5').textContent = pct(C.RANDOM_EQUIP_P); $('#c6').textContent = pct(C.MAP_DROP_P);
+if (location.hash && W.monsters[location.hash.slice(1)]) openMon(location.hash.slice(1));
+</script>
+</body>
+</html>

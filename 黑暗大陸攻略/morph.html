@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>變形卷軸｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸變形卷軸：藍變、紅變、紫變、金變四階需求等級，十系變身對象的能力加成與武器限制。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .mf { display: flex; gap: 10px; align-items: center; }
+    .spr { width: 64px; height: 54px; flex: none; background-repeat: no-repeat; border-radius: 8px; background-color: #0a0807; border: 1px solid var(--line); }
+    .mf h3 { margin: 0; font-size: 16px; }
+</style>
+</head>
+<body data-page="morph">
+<main>
+    <h1>🎭 變形卷軸</h1>
+    <p class="lead">使用 <a data-item="polyScroll">變形卷軸</a> 會跳出變身選單，選一個對象變身 30 分鐘（死亡解除），等級越高能變越強的對象。等級不夠或武器不符時不會扣卷軸。快捷欄可設自動，會沿用上次選的對象。</p>
+    <div class="box warn">目前變形卷軸<b>商店暫停販售</b>。變身的攻速加成最高 +<span id="sm"></span>，不受每項 5% 攻速上限限制。</div>
+    <h2>四個階級</h2>
+    <div id="tiers"></div>
+    <h2>系別與武器限制</h2>
+    <p>弓手系、槍手系一定要拿對應武器；單手劍系、法杖系、劍盾系不能拿雙手武器。變身中換成不符合的武器，效果會暫停（換回來恢復）。</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="grid" id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#sm').textContent = pct(W.consts.MORPH_SPD_MAX);
+const TI = W.morphTiers, GR = W.morphGroups;
+renderTable($('#tiers'), [
+    { label: '階級', html: ([, t]) => `<b style="color:${t.color}">${esc(t.name)}・${esc(t.grade)}</b>` },
+    { label: '需求等級', num: true, html: ([, t]) => 'Lv.' + t.lv },
+    { label: '基礎加成', html: ([, t]) => `命中 +${t.hit}、傷害 +${t.dmg}、攻速 +${pct(t.spd)}` },
+    { label: '數量', num: true, html: ([k]) => W.morphForms.filter(f => f.tier === k).length },
+], Object.entries(TI));
+let cur = 'all';
+function spr(f) {
+    const s = W.morphSprites[f.sprite];
+    if (!s) return '<span class="spr ic emo" style="display:inline-flex">🎭</span>';
+    const k = 54 / s.cellH, cols = Math.max(...Object.values(s.frames));
+    return `<span class="spr" style="background-image:url('${esc(img(s.src))}');background-size:${Math.round(s.cellW * cols * k)}px auto;background-position:${Math.round((64 - s.cellW * k) / 2)}px 0"></span>`;
+}
+function draw() {
+    renderTabs($('#tabs'), [['all', '全部']].concat(Object.entries(GR).filter(([k]) => W.morphForms.some(f => f.group === k)).map(([k, g]) => [k, esc(g.name)])), cur, v => { cur = v; draw(); });
+    const list = W.morphForms.filter(f => cur === 'all' || f.group === cur).sort((a, b) => a.lv - b.lv || a.id.localeCompare(b.id));
+    $('#list').innerHTML = list.map(f => {
+        const t = TI[f.tier], g = GR[f.group];
+        return `<div class="card"><div class="mf">${spr(f)}<div><h3 style="color:${t.color}">${esc(f.name)}</h3>
+            <span class="tag" style="color:${t.color}">${esc(t.name)} Lv.${f.lv}</span><span class="tag">${esc(g.name)}</span></div></div>
+            <p style="margin:8px 0 0">${esc(f.desc)}</p><small class="dim">${g.need ? '需要' : '建議'}武器：${esc(g.weapon)}${g.oneHand ? '（雙手武器不可）' : ''}</small></div>`;
+    }).join('');
+}
+draw();
+</script>
+</body>
+</html>

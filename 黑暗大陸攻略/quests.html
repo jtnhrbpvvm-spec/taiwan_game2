@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職業任務｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸十二職業各 4 章職業任務：接取等級、目標、地點、任務首領數值、獎勵裝備與職業稱號。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .qs { scroll-margin-top: 80px; }
+    .ch { border-left: 3px solid var(--line2); padding: 4px 0 4px 14px; margin: 12px 0; }
+    .ch h3 { margin: 0 0 4px; }
+    .say { font-family: var(--serif); color: var(--dim); font-size: 14px; }
+</style>
+</head>
+<body data-page="quests">
+<main>
+    <h1>📜 職業任務</h1>
+    <p class="lead">每個職業有 4 章任務，依序解鎖。在<b>任何村莊</b>都能找到任務 NPC 接任務與回報；進度只在指定地圖累積。四章全部完成會得到<b>職業稱號</b>。</p>
+    <div class="tw"><table>
+        <thead><tr><th>章</th><th class="num">等級</th><th>目標</th><th>一般地點</th><th>獎勵</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td class="num">15</td><td>收集任務道具 ×10（掉率 30%；修羅是擊倒 100 隻）</td><td>低語墓窟／腐朽礦坑・上層</td><td>職業斗篷（修羅為腰帶）＋3,000 金幣</td></tr>
+            <tr><td>2</td><td class="num">30</td><td>擊倒 20 隻後引出任務首領並討伐</td><td>腐朽礦坑・深層</td><td>職業武器＋10,000 金幣</td></tr>
+            <tr><td>3</td><td class="num">45</td><td>收集任務道具 ×8（掉率 20%）</td><td>暮光法師塔／黃沙王陵</td><td>職業飾品＋30,000 金幣</td></tr>
+            <tr><td>4</td><td class="num">60</td><td>擊倒 30 隻後引出任務首領並討伐</td><td>永夜之塔（非首領樓層）</td><td>職業傳說武器（共鳴）＋80,000 金幣＋萬能藥</td></tr>
+        </tbody></table></div>
+    <div class="box warn"><b>首領戰注意：</b>藥水用完回城會讓任務首領<b>重置</b>，要帶足藥水。第 4 章在永夜之塔時，10 的倍數樓層（守關首領還活著）不會累積進度，要選一般樓層。</div>
+    <div class="toc" id="toc"></div>
+    <div id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const ids = Object.keys(W.classes);
+$('#toc').innerHTML = ids.map(id => `<a href="#${id}">${W.classes[id].icon} ${W.classes[id].name}</a>`).join('');
+function goalHtml(g) {
+    if (g.type === 'collect') return `在 ${zoneLink(g.zone)} 收集「${esc(g.itemName)}」×${g.n}（每隻怪 ${pct(g.p)}）`;
+    if (g.type === 'kill') return `在 ${zoneLink(g.zone)} 擊倒 ${g.n} 隻怪物`;
+    const s = g.stats || {};
+    return `在 ${zoneLink(g.zone)} 擊倒 ${g.after} 隻後，任務首領出現：<br><b>${g.boss.icon} ${esc(g.boss.name)}</b>
+        <div class="stats" style="margin-top:4px"><span>Lv <b>${s.lv}</b></span><span>HP <b>${fmt(s.hp)}</b></span><span>防禦 <b>${10 - s.ac}</b></span><span>攻擊 <b>${range(s.dmg)}</b></span>
+        ${s.magic ? `<span>${esc(s.magic.name)} <b>${pct(s.magic.p)}・${range(s.magic.dmg)}</b></span>` : ''}<span>經驗 <b>${fmt(s.exp)}</b></span>
+        ${(g.boss.tags || []).map(t => `<span>${TAG_NAME[t] || t}</span>`).join('')}${g.boss.undead ? '<span>不死</span>' : ''}</div>`;
+}
+$('#list').innerHTML = ids.map(id => {
+    const c = W.classes[id], st = c.story || {};
+    return `<section class="card qs" id="${id}" style="margin:16px 0"><h2 style="margin-top:0">${c.icon} ${esc(c.name)}・${esc(st.title || '')}</h2>
+        <p class="dim">任務 NPC：${esc(st.npc || '')}</p>
+        ${W.quests[id].map((q, i) => `<div class="ch"><h3>第 ${i + 1} 章「${esc(q.title)}」 <span class="tag gold">Lv.${q.lv}</span></h3>
+            <p>${goalHtml(q.goal)}</p>
+            <p class="say">${esc(q.intro)}</p>
+            <p>🎁 獎勵：${q.reward.item ? itemLink(q.reward.item) : ''}${q.reward.gold ? `＋${fmt(q.reward.gold)} 金幣` : ''}${q.reward.elixir ? `＋${itemLink('elixir')} ×${q.reward.elixir}` : ''}</p>
+            <details><summary class="dim">完成後劇情</summary><p class="say">${esc(q.outro)}</p></details></div>`).join('')}
+    </section>`;
+}).join('');
+if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 50); }
+</script>
+</body>
+</html>

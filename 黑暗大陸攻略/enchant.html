@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>衝裝｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸武器、防具強化（衝裝）：安定值、每段成功率、累積機率、祝福與詛咒卷軸、衝裝建議。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="enchant">
+<main>
+    <h1>🔨 衝裝（強化）</h1>
+    <p class="lead">對武器／盔甲施法的卷軸可以把裝備 +1。武器每 +1 傷害 +1，防具每 +1 防禦 +1，最高 +<span id="max"></span>。</p>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">規則</h3>
+            <ul>
+                <li><b>強化值低於安定值：必定成功</b>（祝福卷軸一次 +1～3）。</li>
+                <li><b>到達安定值以上</b>：成功率 = 0.5 ÷（超出安定值的層數 + 1.25），失敗時裝備<b>蒸發消失</b>。</li>
+                <li>詛咒卷軸：強化值 −1。</li>
+                <li>飾品（項鍊、戒指、腰帶等安定值 −1 的）不能強化。</li>
+                <li>衝裝會保留品質、詞綴與共鳴技能。</li>
+            </ul></div>
+        <div class="box warn"><h3 style="margin-top:0">衝裝建議（攻略整理）</h3>
+            <ul>
+                <li>安定值以內放心衝，<b>超過安定值後每一下都可能失去裝備</b>。</li>
+                <li>先拿便宜的同款裝備練手，傳說／共鳴裝備衝過安定值前三思。</li>
+                <li>祝福卷軸在安定值以下一次跳 1～3，留給「離安定值還差很多」時用最划算。</li>
+                <li>武器、盔甲卷軸商店都不賣，只能靠怪物掉落（Lv.8 以上怪物，盔甲卷軸較常見）。</li>
+            </ul></div>
+    </div>
+
+    <h2>卷軸</h2>
+    <div id="scrolls"></div>
+
+    <h2>各安定值的成功率</h2>
+    <p>「這一下」＝從目前強化值 +1 的成功率；「累積」＝從安定值開始連續衝到這個強化值都沒失敗的機率。</p>
+    <div class="tabs" id="tabs"></div>
+    <div id="rate"></div>
+
+    <h2>常見裝備的安定值</h2>
+    <div id="safe"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#max').textContent = W.consts.ENCHANT_MAX;
+const scrolls = Object.entries(W.items).filter(([, d]) => d.scroll === 'enchant');
+renderTable($('#scrolls'), [
+    { label: '卷軸', html: ([id]) => itemLink(id) },
+    { label: '對象', html: ([, d]) => d.target === 'weapon' ? '武器' : '防具' },
+    { label: '效果', html: ([, d]) => esc(d.desc) },
+    { label: '取得', html: ([id]) => `<small>${(W.sources[id] || []).map(s => sourceText(s, id)).join('<br>')}</small>` },
+], scrolls);
+const tables = W.enchantTable;
+let cur = String(tables[tables.length - 1].safe);
+function draw() {
+    renderTabs($('#tabs'), tables.map(t => [String(t.safe), `安定值 +${t.safe}`]), cur, v => { cur = v; draw(); });
+    const t = tables.find(x => String(x.safe) === cur);
+    let acc = 1;
+    const rows = t.rates.map((r, cur) => { if (cur >= t.safe) acc *= r; return { cur, r, acc: cur >= t.safe ? acc : 1 }; });
+    renderTable($('#rate'), [
+        { label: '目前', html: r => `+${r.cur} → +${r.cur + 1}` },
+        { label: '這一下', num: true, html: r => r.r >= 1 ? '<span style="color:var(--green)">100%</span>' : pct(r.r) },
+        { label: '累積（從安定值起）', num: true, html: r => r.cur < t.safe ? '—' : pct(r.acc) },
+        { label: '', html: r => `<div class="bar" style="width:160px"><i style="width:${Math.round(r.acc * 100)}%"></i></div>`, cls: 'hide-sm' },
+    ], rows);
+}
+draw();
+const gear = Object.entries(W.items).filter(([, d]) => (d.cat === 'weapon' || d.cat === 'armor') && d.safe != null);
+const bySafe = {};
+gear.forEach(([id, d]) => (bySafe[d.safe] = bySafe[d.safe] || []).push(id));
+$('#safe').innerHTML = Object.keys(bySafe).sort((a, b) => b - a).map(s => `<div class="msec"><h4>${s < 0 ? '不能強化' : `安定值 +${s}`}（${bySafe[s].length} 件）</h4><small>${bySafe[s].slice(0, 60).map(id => itemLink(id)).join('、')}${bySafe[s].length > 60 ? '…' : ''}</small></div>`).join('');
+</script>
+</body>
+</html>

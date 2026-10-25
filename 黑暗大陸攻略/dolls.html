@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>魔法娃娃｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸 21 款魔法娃娃：品質 T0～T4、基本能力、被動特色、召喚與魔法結晶續召規則、取得方式。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .doll { display: flex; gap: 12px; align-items: flex-start; }
+    .doll img { width: 72px; height: 72px; object-fit: contain; image-rendering: auto; background: #0a0807; border: 1px solid var(--line); border-radius: 10px; flex: none; }
+    .doll h3 { margin: 0 0 4px; }
+</style>
+</head>
+<body data-page="dolls">
+<main>
+    <h1>🧸 魔法娃娃</h1>
+    <p class="lead">人物身上有一格娃娃欄，裝備一隻娃娃會跟著你走，提供<b>兩項基本能力＋一項被動特色</b>。只算身上那一隻，背包裡的不疊加。</p>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">召喚費用</h3>
+            <ul>
+                <li>裝上娃娃要先付 <b id="c1"></b> 個 <a data-item="magicCrystal">魔法結晶</a>，之後每 <b id="c2"></b>自動再扣 <span id="c3"></span> 個續召。</li>
+                <li>結晶不夠時娃娃收回背包、能力失效（掛機照常）。已付的時間換娃娃、重新登入都不會重扣。</li>
+                <li>魔法結晶：在<b>娃娃商人露米</b>分解<b>傳說品質</b>裝備，每件 <b id="c4"></b> 個。</li>
+            </ul></div>
+        <div class="box"><h3 style="margin-top:0">取得</h3>
+            <ul>
+                <li>娃娃商人只賣 <b class="doll-T4">T4</b> 五款，每隻 <b id="c5"></b> 鑽（目前限 GM 購買）。</li>
+                <li>其他品質目前沒有一般取得方式。</li>
+                <li>品質顏色：<span class="doll-T0">T0 七彩</span>、<span class="doll-T1">T1 紅</span>、<span class="doll-T2">T2 黃</span>、<span class="doll-T3">T3 紫</span>、<span class="doll-T4">T4 藍</span>。</li>
+            </ul></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="grid" id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#c1').textContent = C.DOLL_SUMMON_COST; $('#c2').textContent = sec(C.DOLL_SUMMON_MS); $('#c3').textContent = C.DOLL_SUMMON_COST;
+$('#c4').textContent = C.DOLL_DISMANTLE_CRYSTALS; $('#c5').textContent = C.DOLL_SHOP_PRICE;
+const ORDER = ['T0', 'T1', 'T2', 'T3', 'T4'];
+let cur = 'all';
+function draw() {
+    renderTabs($('#tabs'), [['all', '全部']].concat(ORDER.map(q => [q, `<span class="doll-${q}">${q}</span>`])), cur, v => { cur = v; draw(); });
+    const list = Object.entries(W.dolls).filter(([, d]) => cur === 'all' || d.quality === cur).sort((a, b) => ORDER.indexOf(a[1].quality) - ORDER.indexOf(b[1].quality));
+    $('#list').innerHTML = list.map(([id, d]) => {
+        const a = W.dollAbilities[id] || {};
+        return `<div class="card doll"><img src="${esc(img(d.art))}" alt="" loading="lazy"><div>
+            <h3><a class="doll-${d.quality}" data-item="doll_${id}">${esc(d.name)}</a> <span class="tag">${d.quality}</span></h3>
+            <div class="stats">${fxList(a.fx).map(x => `<span>${esc(x)}</span>`).join('')}</div>
+            <p style="margin:6px 0 0"><b>${esc(a.name || '')}</b>：${esc(a.desc || '')}</p></div></div>`;
+    }).join('');
+}
+draw();
+</script>
+</body>
+</html>

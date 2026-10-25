@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>異界地圖｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸 POE 式異界地圖 T1～T15：對應地區、地圖詞綴與獎勵加成、異界首領、通關獎勵、地圖改造與五格排程。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="rift">
+<main>
+    <h1>🌀 異界地圖</h1>
+    <p class="lead">異界地圖是「一次性的強化版地區」：放進村莊的<b>異界裝置</b>開啟，傳送到對應地區掛機，打完規定數量的怪物後出現<b>異界首領</b>，打倒就通關並拿到更高階的地圖。地圖上的詞綴讓怪物變強，但也提高經驗、金幣與<b>所有掉落機率</b>。</p>
+    <div class="toc"><a href="#flow">流程</a><a href="#tiers">T1～T15</a><a href="#mods">地圖詞綴</a><a href="#craft">地圖改造</a><a href="#queue">地圖排程</a></div>
+
+    <h2 id="flow">流程與規則</h2>
+    <ol>
+        <li><b>取得地圖</b>：一般地圖每隻怪 <b id="d1"></b> 掉地圖（階級＝怪物等級對應的最高階），異界裡每隻 <b id="d2"></b>（同階 ±1）。掉落品質：普通 50%／魔法 35%／稀有 15%。</li>
+        <li><b>開啟</b>：村莊「地圖」頁的「🌀 異界裝置」或背包地圖「開啟」。怪物數量 ＝ 200～300 ×（1 ＋ 數量詞綴，最多 ×<span id="qm"></span>）。</li>
+        <li><b>打完</b>：剩餘數量歸零後出現「異界首領・名稱」（該地區稀有首領 HP ×2，沒有的話用最強怪 HP ×8）。中途瞬移或停止，首領血量會保留。</li>
+        <li><b>通關獎勵</b>：1 張地圖（同階 55%／高 1 階 35%／高 2 階 10%），再 50% 多一張同階或低一階；異界首領 <b id="rb"></b> 掉一件共鳴裝備。然後回村。</li>
+    </ol>
+    <div class="box warn"><b>地圖會消失</b>：死亡、步行回村等中途回城都會關掉這張地圖。用<b>回家卷軸</b>回村會留下一次性的傳送門，補給完可以回去繼續。離線掛機最多把剩下的怪打完，首領要上線才能打。</div>
+
+    <h2 id="tiers">各階地圖</h2>
+    <div id="tier-list"></div>
+
+    <h2 id="mods">地圖詞綴</h2>
+    <p>魔法地圖 1～2 條、稀有地圖 3～4 條（神諭石最多加到 6 條）。獎勵加成全部相加，套用在經驗、金幣與所有掉落機率。</p>
+    <div id="mod-list"></div>
+
+    <h2 id="craft">地圖改造</h2>
+    <p>村莊鍛造 NPC →「🗺️ 地圖打造」，用製作通貨改地圖（淬鍊石、覺醒石不能用在地圖）：</p>
+    <div id="cur-list"></div>
+
+    <h2 id="queue">五格地圖排程</h2>
+    <ul>
+        <li>最多 5 種地圖排隊，每格指定同種地圖（同階、同品質、同詞綴）與張數，第 1 格全部刷完才到第 2 格。</li>
+        <li>通關正常回村後自動開下一張；開圖前會檢查治癒藥水、負重、彈藥，不夠就暫停、不扣地圖。</li>
+        <li>死亡或放棄會中斷排程（已用掉的地圖不退）；入口在 PC 底部 📋、手機右側選單與異界裝置。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts;
+$('#d1').textContent = pct(C.MAP_DROP_P); $('#d2').textContent = pct(C.MAP_DROP_IN_MAP_P); $('#qm').textContent = C.MAP_QTY_MAX; $('#rb').textContent = pct(C.RES_MAP_BOSS_P);
+renderTable($('#tier-list'), [
+    { label: '地圖', html: t => itemLink('map' + t.t) },
+    { label: '對應地區', html: t => zoneLink(t.zone) },
+    { label: '地區等級', html: t => `Lv.${ZONE[t.zone].lv[0]}～${ZONE[t.zone].lv[1]}` },
+    { label: '強化', html: t => t.scale > 1 ? `<span class="tag red">HP／傷害／經驗 ×${t.scale}</span>` : '' },
+    { label: '共鳴掉落上限', html: t => `<span class="res-${t.resTier}">${W.resTiers[t.resTier].name}</span>` },
+    { label: '回收價', num: true, html: t => fmt(W.items['map' + t.t].sellPrice) },
+], W.mapTiers);
+renderTable($('#mod-list'), [
+    { label: '詞綴', html: ([, m]) => `${m.icon} <b>${esc(m.name)}</b>` },
+    { label: '效果', html: ([, m]) => esc(m.desc) },
+    { label: '獎勵加成', num: true, html: ([, m]) => '+' + pct(m.bonus) },
+    { label: '數量', num: true, html: ([, m]) => m.qty ? '+' + pct(m.qty) : '' },
+], Object.entries(W.mapMods));
+renderTable($('#cur-list'), [
+    { label: '通貨', html: ([id]) => itemLink(id) },
+    { label: '用在地圖', html: ([, d]) => esc(d) },
+], Object.entries(W.mapCurrency));
+</script>
+</body>
+</html>

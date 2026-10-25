@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鍛造與 BOSS 附魔｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸鍛造配方一覽（材料、手續費、成品）與 26 種 BOSS 附魔技能、費用、封魂石規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="forge">
+<main>
+    <h1>⚒️ 鍛造與 BOSS 附魔</h1>
+    <p class="lead">村莊的<b>鍛造 NPC</b> 有四個功能：🔨 裝備鍛造（配方）、🔮 裝備改造（製作通貨，見 <a href="affix.html">詞綴通貨</a>）、🗺️ 地圖打造（見 <a href="rift.html">異界地圖</a>）、BOSS 附魔。</p>
+    <div class="toc"><a href="#recipes">鍛造配方</a><a href="#boss">BOSS 附魔</a><a href="#soul">封魂與裝回</a></div>
+
+    <h2 id="recipes">鍛造配方</h2>
+    <p>材料多半是各地稀有首領、永夜之塔首領與四大龍的專屬掉落（首領材料掉率固定 <b id="bm"></b>，每次 1 個），點材料名稱可以看哪裡掉。</p>
+    <div id="recipe-list"></div>
+
+    <h2 id="boss">BOSS 附魔（<span id="nb"></span> 種）</h2>
+    <p>用首領材料替<b>武器</b>附加一招戰鬥技能：每把武器只能有一種、消耗對應材料 ×1、<b>100% 成功</b>，所有職業都能用。
+        普攻命中、攻擊魔法或物理技能命中時依機率觸發，各附魔共用一個冷卻（換武器不重置）。</p>
+    <div class="box info"><b>B（基礎值）</b>＝等級 ＋ max（武器小／大型平均骰值＋傷害加成，SP × 3），最低 1。物理附魔會被怪物防禦減一點，魔法附魔受魔防減免；附魔不會爆擊、吸血，也不吃職業剋制。
+        範圍型以當下位置半徑 2.5 格、最多 5 個目標；首領免疫定身與暈眩，緩速等減益效果減半。</div>
+    <div id="boss-list"></div>
+
+    <h2 id="soul">封魂與裝回</h2>
+    <ul>
+        <li><b>覆蓋</b>：武器已有附魔時再附魔，原本的會消失（會先提示）。</li>
+        <li><b>封魂</b>：消耗 <a data-item="towerSoul">永夜之魂</a> ×1 ＋ <b id="sc1"></b> 金幣，把武器上的附魔取下變成「技能名封魂石」。</li>
+        <li><b>裝回</b>：消耗封魂石 ×1 ＋ <b id="sc2"></b> 金幣，裝到任一把武器上。強化值、詞綴、共鳴都保留。</li>
+        <li>附魔武器可以交易、存倉庫（整個道具連附魔一起移動）；一鍵賣出會跳過附魔武器。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#bm').textContent = pct(W.consts.BOSS_MATERIAL_DROP_P);
+$('#sc1').textContent = fmt(W.consts.BOSS_ENCHANT_SOUL_COST); $('#sc2').textContent = fmt(W.consts.BOSS_ENCHANT_SOUL_COST);
+renderTable($('#recipe-list'), [
+    { label: '成品', v: r => W.items[r.out].name, html: r => itemLink(r.out) + `<br><small class="dim">${esc(itemTypeText(W.items[r.out]))}</small>` },
+    { label: '材料', html: r => Object.entries(r.need).map(([id, n]) => itemLink(id, n)).join('<br>') },
+    { label: '手續費', num: true, v: r => r.gold, html: r => fmt(r.gold) },
+    { label: '成品屬性', html: r => itemStatsHtml(W.items[r.out]), cls: 'hide-sm' },
+], W.recipes, { rowAttr: r => `class="click" data-item="${r.out}"` });
+const BE = Object.entries(W.bossEnchants);
+$('#nb').textContent = BE.length;
+const matSrc = id => { const s = (W.sources[id] || []).find(x => x.type === 'mon' || x.type === 'tower'); return s ? (s.type === 'mon' ? monLink(s.mon) : `永夜之塔 ${s.floor}F`) : ''; };
+renderTable($('#boss-list'), [
+    { label: '材料', v: ([id]) => W.items[id].name, html: ([id]) => itemLink(id) + `<br><small class="dim">${matSrc(id)}</small>` },
+    { label: '附魔技能', html: ([, b]) => `<b>${esc(b.name)}</b>` },
+    { label: '機率', num: true, v: ([, b]) => b.p, html: ([, b]) => pct(b.p) },
+    { label: '冷卻', num: true, v: ([, b]) => b.cd, html: ([, b]) => b.cd + ' 秒' },
+    { label: '類型', html: ([, b]) => b.kind === 'magic' ? '<span class="tag blue">魔法</span>' : '<span class="tag red">物理</span>' },
+    { label: '效果', html: ([id]) => `<small>${esc(W.bossEnchantText[id] || '')}</small>` },
+    { label: '費用', num: true, v: ([, b]) => b.cost, html: ([, b]) => fmt(b.cost) },
+], BE, { sortCol: 6, sortDir: 1 });
+</script>
+</body>
+</html>

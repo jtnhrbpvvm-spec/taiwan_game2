@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職業｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸十二職業：初始能力、HP／MP 成長、魔防、可用武器與攻速、魔法等級、職業技能、背景故事與配點建議。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .cls { scroll-margin-top: 80px; display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin: 18px 0; }
+    .cls .art { width: 100%; border-radius: 10px; border: 1px solid var(--line); aspect-ratio: 960/536; object-fit: cover; background: #000; }
+    .cls h2 { margin-top: 0; border: 0; }
+    .statrow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; text-align: center; margin: 8px 0; }
+    .statrow div { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 0; font-size: 13px; }
+    .statrow b { display: block; font-size: 17px; color: var(--gold2); }
+    .story { font-family: var(--serif); color: var(--dim); border-left: 3px solid var(--blood); padding-left: 12px; }
+    @media (max-width: 860px) { .cls { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-page="classes">
+<main>
+    <h1>⚔️ 職業</h1>
+    <p class="lead">創角時能力值總共 <b id="ct"></b> 點、單項最多 <b id="cm"></b>，每個職業有最低值。Lv.<span id="bl"></span> 起每升一級多 1 點能力（單項上限 <span id="sc"></span>），萬能藥每瓶永久 +1（最多 <span id="em"></span> 瓶）。</p>
+    <div class="toc" id="toc"></div>
+    <h2>職業比較</h2>
+    <div id="cmp"></div>
+    <div class="box info">攻擊間隔＝武器速度 × 職業動作係數，表上是<b>不喝水</b>時該職業最快的武器。綠水（加速）÷1.33、勇水類 ÷1.33（妖精、槍手的精靈餅乾 ÷1.15），最快 0.2 秒。詳見 <a href="mechanics.html#speed">數值公式</a>。</div>
+    <div id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const C = W.consts, K = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+$('#ct').textContent = C.CREATE_TOTAL; $('#cm').textContent = C.CREATE_STAT_MAX; $('#bl').textContent = C.BONUS_STAT_LEVEL;
+$('#sc').textContent = C.STAT_CAP; $('#em').textContent = C.ELIXIR_MAX;
+
+// 玩法說明與參考配點優先順序（攻略作者整理，非遊戲資料）
+const TIPS = {
+    royal: ['支援型近戰，魅力超過 10 每點打怪金幣 +3%，最適合賺錢。能用匕首、單手劍、弓與盾，有士氣類增益與王族專屬技能；Lv.15 起才能建立血盟。', ['str', 'cha', 'con', 'dex']],
+    knight: ['HP 成長僅次於戰士的坦克，單手劍＋盾或雙手武器都行。技能偏向防禦、暈眩與反擊，團隊副本中首領最常挑騎士打（坦克權重 ×3）。', ['str', 'con', 'dex', 'wis']],
+    mage: ['唯一能學到 10 級魔法的職業，流星雨、煉獄、黑闇之星等範圍魔法威力最大。HP 最低，要靠魔法屏障、絕對屏障與藍水、慎重藥水補魔。', ['int', 'wis', 'con', 'dex']],
+    elf: ['弓箭遠程（射程 8 格），要帶箭。精靈水晶技能有三重矢、箭雨等多發技能；可學到 6 級魔法。用精靈餅乾而不是勇水。', ['dex', 'con', 'str', 'wis']],
+    darkelf: ['雙刀／鋼爪攻速最快（動作係數 0.95），雙刀有 25% 連擊。技能有暗殺、劇毒與高閃避，可學到 3 級魔法。', ['str', 'dex', 'con', 'wis']],
+    shura: ['雙刀／鋼爪的拳腳格鬥家，動作係數 0.95 與黑妖並列最快。只能學 1 級魔法，靠職業技能（千手破、阿修羅）與低血狂暴。', ['str', 'con', 'dex', 'wis']],
+    warrior: ['雙手斧、雙手劍的重擊手，技能有旋風斬、處決、大地崩裂等大傷害招式。HP 成長是全職業最高，泰坦腰帶等共鳴防具適合他。', ['str', 'con', 'dex', 'wis']],
+    gunner: ['火槍遠程（射程 8 格），要帶子彈。槍單發傷害高但慢，也能用弓；技能有穿甲彈、火箭砲、子彈時間。用精靈餅乾。', ['dex', 'con', 'str', 'wis']],
+    magicfighter: ['魔劍士，單手劍、魔杖、矛都能用，物理技能＋6 級魔法，可喝慎重藥水。魔劍化身、天崩是後期主力。', ['str', 'int', 'con', 'wis']],
+    paladin: ['聖騎士，單手劍／鈍器＋盾，有神聖系技能與治癒，可學 6 級魔法。銀製武器、神聖技能打不死系特別有效。', ['str', 'wis', 'con', 'int']],
+    angel: ['神聖魔法＋治癒，對惡魔與不死系傷害 ×1.3，可學 8 級魔法，能用慎重藥水。適合黃沙王陵、泰坦墓穴等不死系多的地區。', ['int', 'wis', 'con', 'dex']],
+    demon: ['鐮刀／鋼爪近戰，天生吸血，HP 低於 50% 時傷害與攻速上升；對人型與神聖系 ×1.3，可喝勇水。海賊、黑暗妖精等人型怪是好目標。', ['str', 'con', 'dex', 'wis']],
+};
+function suggestStats(id) {
+    const c = W.classes[id], s = { ...c.base };
+    let left = C.CREATE_TOTAL - K.reduce((a, k) => a + s[k], 0);
+    for (const k of TIPS[id][1]) { const add = Math.min(left, C.CREATE_STAT_MAX - s[k]); s[k] += add; left -= add; }
+    for (const k of K) { if (left <= 0) break; const add = Math.min(left, C.CREATE_STAT_MAX - s[k]); s[k] += add; left -= add; }
+    return s;
+}
+const fastest = c => Object.entries(c.weaponMs).sort((a, b) => a[1] - b[1])[0];
+const ids = Object.keys(W.classes);
+$('#toc').innerHTML = ids.map(id => `<a href="#${id}">${W.classes[id].icon} ${W.classes[id].name}</a>`).join('');
+renderTable($('#cmp'), [
+    { label: '職業', v: r => r.c.name, html: r => `<a href="#${r.id}">${r.c.icon} ${r.c.name}</a>` },
+    { label: '升級 HP', num: true, v: r => r.c.hp[1], html: r => range(r.c.hp) },
+    { label: '升級 MP', num: true, v: r => r.c.mp[1], html: r => range(r.c.mp) },
+    { label: '魔防', num: true, v: r => r.c.mr, html: r => r.c.mr },
+    { label: '魔法上限', num: true, v: r => r.c.magic.max, html: r => `${r.c.magic.max} 級` },
+    { label: '盾', html: r => r.c.shield ? '✔' : '—' },
+    { label: '最快武器', v: r => fastest(r.c)[1], html: r => { const f = fastest(r.c); return `${W.weaponTypes[f[0]].name} <small class="dim">${f[1]}ms</small>`; } },
+    { label: '特性', html: r => [r.c.ammo ? '<span class="tag">需要彈藥</span>' : '', r.c.slayer ? `<span class="tag gold">剋${esc(r.c.slayer.label)} ×${r.c.slayer.mult}</span>` : '', r.id === 'royal' ? '<span class="tag gold">魅力加金幣</span>' : '', r.id === 'demon' ? '<span class="tag red">吸血</span>' : ''].join('') },
+], ids.map(id => ({ id, c: W.classes[id] })));
+
+$('#list').innerHTML = ids.map(id => {
+    const c = W.classes[id], sg = suggestStats(id), story = c.story || {};
+    const sk = W.classSkills[id].filter(x => W.skills[x.id].kind === 'class');
+    return `<section class="cls card" id="${id}">
+        <div><img class="art" src="${esc(img(c.art))}" alt="${esc(c.name)}" loading="lazy">
+            <div class="msec"><h4>初始能力（最低值）</h4><div class="statrow">${K.map(k => `<div>${W.statNames[k]}<b>${c.base[k]}</b></div>`).join('')}</div></div>
+            <div class="msec"><h4>參考配點 <small class="dim">（攻略建議）</small></h4><div class="statrow">${K.map(k => `<div>${W.statNames[k]}<b>${sg[k]}</b></div>`).join('')}</div></div>
+        </div>
+        <div><h2>${c.icon} ${esc(c.name)}</h2>
+            <p>${esc(c.desc)}</p>
+            <div class="box tip">${esc(TIPS[id][0])}</div>
+            <dl class="kv">
+                <dt>出生</dt><dd>HP ${c.startHp}、MP ${c.startMp}、金幣 2,000</dd>
+                <dt>升級成長</dt><dd>HP +${range(c.hp)}、MP +${range(c.mp)}（再加體質／精神加成）</dd>
+                <dt>魔防 MR</dt><dd>${c.mr}（每點精神超過 10 再 +2）</dd>
+                <dt>SP 成長</dt><dd>每 ${c.spDiv} 級 +1（智力超過 11 每點 +1）</dd>
+                <dt>可用武器</dt><dd>${Object.entries(c.weaponMs).map(([w, ms]) => `${W.weaponTypes[w].name} <small class="dim">${ms}ms</small>`).join('、')}${c.shield ? '，可用盾' : '，不能用盾'}</dd>
+                <dt>起始裝備</dt><dd>${c.start.map(i => itemLink(i)).join('、')}</dd>
+                <dt>魔法</dt><dd>最高 ${c.magic.max} 級：${c.magic.lv.map((lv, i) => `${W.magicTierNames[i + 1]}級 Lv.${lv}`).join('、')}</dd>
+                ${c.slayer ? `<dt>種族剋制</dt><dd>對${esc(c.slayer.label)}傷害 ×${c.slayer.mult}</dd>` : ''}
+            </dl>
+            <div class="msec"><h4>職業技能（${sk.length} 招）<a href="skills.html#${id}" style="font-weight:400"> → 全部技能與魔法</a></h4>
+                ${sk.map(x => `${skillLink(x.id)} <small class="dim">Lv.${x.lv}</small>`).join('　')}</div>
+            ${story.story ? `<div class="msec"><h4>背景故事・${esc(story.title || '')}（任務 NPC：${esc(story.npc)}）</h4><p class="story">${esc(story.story)}</p><a href="quests.html#${id}">→ ${esc(c.name)}的職業任務</a></div>` : ''}
+        </div></section>`;
+}).join('');
+if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 50); }
+</script>
+</body>
+</html>

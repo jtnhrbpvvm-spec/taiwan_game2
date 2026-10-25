@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>共鳴裝備｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸共鳴武器與防具：每件綁一招專屬技能，五種觸發方式、職業共鳴加成、稀有到神話四階與取得方式。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="resonance">
+<main>
+    <h1>🌟 共鳴裝備</h1>
+    <p class="lead">共鳴裝備身上綁著一招<b>專屬技能</b>，裝備時自動施放、<b>不耗 MP</b>，也不吃技能公共冷卻。全身每一件共鳴裝備各自計算，可以同時穿好幾件。
+        「職業共鳴」的職業使用時，傷害與治療 ×<span id="bonus"></span>、增益時間 ×<span id="bonus2"></span>。</p>
+    <div class="grid sm" id="trig"></div>
+    <div class="filters">
+        <div class="tabs" id="tier"></div>
+        <select id="part" aria-label="部位"><option value="">全部部位</option><option value="weapon">武器</option><option value="armor">防具／飾品</option></select>
+        <select id="cls" aria-label="職業"><option value="">全部職業</option></select>
+        <select id="tg" aria-label="觸發"><option value="">全部觸發</option></select>
+        <span class="count" id="count"></span>
+    </div>
+    <div id="list"></div>
+    <div class="box info">取得：既有稀有裝備（首領掉落、永夜之塔首領、鍛造）、各地區稀有首領 5%、四大龍 6%、<b>異界首領 <span id="mb"></span></b>（T1～5 最多稀有、T6～10 英雄、T11～14 傳說、T15 神話）、
+        第 4 章職業任務的傳說武器。共鳴裝備不會出現在隨機裝備掉落，也不會被戰利品過濾賣掉。</div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+$('#bonus').textContent = W.consts.RES_CLASS_BONUS; $('#bonus2').textContent = W.consts.RES_CLASS_BONUS; $('#mb').textContent = pct(W.consts.RES_MAP_BOSS_P);
+const TRIG_DESC = { cd: '冷卻好了就自動施放（在職業攻擊技能之前）。', proc: '每次攻擊命中（或施法）時有機率觸發。', charge: '每次攻擊累積 1 點，滿了爆發。', hurt: '被怪物打中時有機率觸發（防具常見）。', lowhp: 'HP 低於門檻且冷卻好時觸發，用來保命。' };
+$('#trig').innerHTML = Object.entries(W.resTriggers).map(([k, v]) => `<div class="card"><h3>${esc(v)}</h3><small>${TRIG_DESC[k] || ''}</small></div>`).join('');
+const st = { tier: '0', part: '', cls: '', tg: '' };
+$('#cls').innerHTML += Object.entries(W.classes).map(([id, c]) => `<option value="${id}">${c.icon} ${c.name}</option>`).join('');
+$('#tg').innerHTML += Object.entries(W.resTriggers).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+const ALL = Object.entries(W.resonance).map(([id, r]) => ({ id, r, d: W.items[id] })).filter(x => x.d);
+function draw() {
+    renderTabs($('#tier'), [['0', '全部']].concat(Object.entries(W.resTiers).map(([k, t]) => [k, `<span class="res-${k}">${t.name}</span>`])), st.tier, v => { st.tier = v; draw(); });
+    const rows = ALL.filter(x => (st.tier === '0' || String(x.r.tier) === st.tier) && (!st.part || x.d.cat === st.part) && (!st.cls || (x.r.cls || []).includes(st.cls)) && (!st.tg || x.r.trigger === st.tg));
+    $('#count').textContent = `共 ${rows.length} 件`;
+    renderTable($('#list'), [
+        { label: '裝備', v: x => x.d.name, html: x => itemLink(x.id) + `<br><small class="dim">${esc(itemTypeText(x.d))}</small>` },
+        { label: '階級', num: true, v: x => x.r.tier, html: x => `<span class="res-${x.r.tier}">${W.resTiers[x.r.tier].name.replace('共鳴', '')}</span>` },
+        { label: '共鳴技能', html: x => `${W.resImg[x.id] ? `<img class="ic" src="${esc(img(W.resImg[x.id]))}" alt="" loading="lazy"> ` : ''}<b>${esc(x.r.name)}</b><br><small>${esc(x.r.desc)}</small>` },
+        { label: '觸發', v: x => x.r.trigger, html: x => `<span class="tag">${W.resTriggers[x.r.trigger]}</span><br><small>${x.r.p ? pct(x.r.p) : ''}${x.r.n ? `累積 ${x.r.n}` : ''}${x.r.cd ? ` 冷卻 ${x.r.cd}s` : ''}${x.r.pct ? ` HP&lt;${pct(x.r.pct)}` : ''}</small>` },
+        { label: '職業共鳴', html: x => (x.r.cls || []).map(c => W.classes[c].icon).join('') || '<small class="dim">無</small>' },
+        { label: '取得', html: x => `<small>${(W.sources[x.id] || []).slice(0, 3).map(s => sourceText(s, x.id)).join('<br>')}</small>`, cls: 'hide-sm' },
+    ], rows, { sortCol: 1, sortDir: 1, rowAttr: x => `class="click" data-item="${x.id}"` });
+}
+$('#part').onchange = e => { st.part = e.target.value; draw(); };
+$('#cls').onchange = e => { st.cls = e.target.value; draw(); };
+$('#tg').onchange = e => { st.tg = e.target.value; draw(); };
+draw();
+</script>
+</body>
+</html>
