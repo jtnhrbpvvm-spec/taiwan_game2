@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob:; style-src 'self' 'unsafe-inline'" />
+    <title>黑暗大陸桌寵</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; }
+      /* 桌寵：可以有好幾隻，每隻一張畫布，由 pet.js 加進來 */
+      .pet { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 0.2s; }
+      body.focus .pet { opacity: 0.5; }
+      #bubble {
+        position: absolute; left: 0; top: 0; padding: 4px 10px; border-radius: 8px;
+        font: 13px/1.4 "Microsoft JhengHei", sans-serif; color: #f1e2bf; white-space: nowrap;
+        background: rgba(24, 18, 14, 0.92); border: 1px solid #8a6a3a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+        opacity: 0; transition: opacity 0.15s; pointer-events: none; z-index: 2;
+      }
+      #bubble.on { opacity: 1; }
+      #bubble small { display: block; font-size: 12px; color: #bfa77a; }
+      /* 更新提醒的對話框：比滑鼠移上去的提示框大、有尖角，停 15 秒 */
+      #speech {
+        position: absolute; left: 0; top: 0; padding: 8px 14px; border-radius: 12px; z-index: 4;
+        font: bold 14px/1.4 "Microsoft JhengHei", sans-serif; color: #f6e7c4; white-space: nowrap;
+        background: rgba(30, 22, 16, 0.96); border: 2px solid #c9973f; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+        opacity: 0; transition: opacity 0.25s; pointer-events: none;
+      }
+      #speech.on { opacity: 1; }
+      #speech::after {
+        content: ""; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 12px; margin-left: -7px;
+        background: rgba(30, 22, 16, 0.96); border: solid #c9973f; border-width: 0 2px 2px 0; rotate: 45deg;
+      }
+      /* 調整大小的拉條面板：右鍵選單叫出來，浮在桌寵頭上 */
+      #sizer {
+        position: absolute; left: 0; top: 0; display: none; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px;
+        font: 13px/1.4 "Microsoft JhengHei", sans-serif; color: #f1e2bf; white-space: nowrap; z-index: 3;
+        background: rgba(24, 18, 14, 0.95); border: 1px solid #8a6a3a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+      }
+      #sizer.on { display: flex; }
+      #sizer input { width: 150px; accent-color: #c9973f; }
+      #sizer output { width: 3em; text-align: right; font-variant-numeric: tabular-nums; }
+      #sizer button { font: inherit; color: #1b120a; background: #c9973f; border: 0; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+      /* 從桌寵頭上往上飄的字：經驗、金幣、掉寶、升級、提示 */
+      .floater {
+        position: absolute; left: 0; top: 0;
+        font: bold 14px/1 "Microsoft JhengHei", sans-serif; color: #fff; white-space: nowrap; pointer-events: none;
+        text-shadow: 0 0 3px #1a0f06, 0 1px 2px #1a0f06, 0 0 6px #1a0f06;
+        animation: float-up 2.2s linear forwards;
+      }
+      .floater.exp { color: #b9f2a1; }
+      .floater.gold { color: #ffe27a; }
+      .floater.loot { color: #f3d7ff; }
+      .floater.levelup { color: #ffd34d; font-size: 20px; }
+      .floater.hint { font-size: 13px; font-weight: normal; animation-duration: 5s; }
+      @keyframes float-up {
+        from { opacity: 0; translate: 0 8px; }
+        15% { opacity: 1; }
+        70% { opacity: 1; }
+        to { opacity: 0; translate: 0 -130px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bubble"></div>
+    <div id="speech"></div>
+    <div id="sizer">
+      <span>大小</span>
+      <input id="sizer-range" type="range" step="5" />
+      <output id="sizer-value"></output>
+      <button id="sizer-done" type="button">完成</button>
+    </div>
+    <script src="pet.js"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "name": "dark-continent-desktop-pet",
+  "productName": "黑暗大陸桌寵",
+  "version": "1.0.0",
+  "description": "黑暗大陸桌寵：遊戲在背景掛機，桌面上留一隻角色走來走去",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "selftest": "electron . --selftest",
+    "names": "node tools/gen-names.js ../../idle-lineage-class/-username-.github.io-/屠龍勇者",
+    "dist": "electron-builder --win nsis --publish never",
+    "release": "npm run dist && node tools/release.js"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.darkcontinent.desktoppet",
+    "productName": "黑暗大陸桌寵",
+    "artifactName": "dark-continent-pet-setup-${version}.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "save-reader.js",
+      "accounts.js",
+      "updates.js",
+      "selftest.js",
+      "names.json",
+      "*-preload.js",
+      "pet/**",
+      "ui/**"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/main/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "黑暗大陸桌寵"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  }
+}
