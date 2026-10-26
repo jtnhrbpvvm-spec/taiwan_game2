@@ -203,6 +203,26 @@ async function run(t) {
     check("遊戲視窗藏起來時靜音、停在螢幕外（只露幾個像素）", g0.win.webContents.isAudioMuted() && parked.x + parked.width <= 4 && parked.y + parked.height <= 4 && shownBounds.x >= 0, JSON.stringify({ shownBounds, parked }));
     check("開關遊戲視窗大小、位置不會跑掉", again.width === shownBounds.width && again.height === shownBounds.height && again.x === shownBounds.x && again.y === shownBounds.y, JSON.stringify({ shownBounds, again }));
 
+    // 遊戲設定的四種畫面尺寸：遊戲視窗跟著換大小（手機 9:16、PC 16:9 遊戲區剛好那個比例；全螢幕＝網頁全螢幕）
+    const pickMode = (mode) => t.inGame(g0, `(() => { localStorage.setItem("dragonSlayer_display", "${mode}"); if (typeof setDisplayMode === "function") setDisplayMode("${mode}"); })()`);
+    t.showGame(g0, true);
+    const sizes = {};
+    for (const mode of ["phone", "pc", "full", "auto"]) {
+      await pickMode(mode);
+      await sleep(2500);
+      const c = g0.win.getContentBounds();
+      sizes[mode] = { w: c.width, h: c.height, outer: g0.win.getBounds(), full: g0.win.isFullScreen(), inner: await t.inGame(g0, `innerWidth + "x" + innerHeight`) };
+    }
+    t.showGame(g0, false);
+    await sleep(1500);
+    const parkedAfter = g0.win.getBounds();
+    const ratio = (s) => s.w / s.h;
+    check("畫面尺寸：手機 9:16", Math.abs(ratio(sizes.phone) - 9 / 16) < 0.01, JSON.stringify(sizes.phone));
+    check("畫面尺寸：PC 16:9 變成橫的", Math.abs(ratio(sizes.pc) - 2000 / 1116) < 0.01 && sizes.pc.w > 900, JSON.stringify(sizes.pc));
+    check("畫面尺寸：全螢幕", sizes.full.full, JSON.stringify(sizes.full));
+    check("畫面尺寸：換回自動尺寸恢復原本大小、退出全螢幕", !sizes.auto.full && sizes.auto.outer.width === shownBounds.width && sizes.auto.outer.height === shownBounds.height, JSON.stringify(sizes.auto));
+    check("畫面尺寸：藏起來時一樣停在螢幕外", parkedAfter.x + parkedAfter.width <= 4 && parkedAfter.y + parkedAfter.height <= 4, JSON.stringify(parkedAfter));
+
     // 兩隻桌寵：第二隻是另一個遊戲視窗、另一份登入資料，看不到第一隻的角色
     t.setPetCount(2);
     const g1 = t.games[1];

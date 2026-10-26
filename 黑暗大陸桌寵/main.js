@@ -24,8 +24,13 @@ const CLICK_THROUGH_KEY = "Control+Alt+P";
 const MAX_LOOT_SHOWN = 4; // 一次存檔之間撿到很多種東西時，桌寵頭上最多冒幾個
 const POLL_MS = 3000;
 const PET_STRIP_HEIGHT = 320; // 要放得下拉到最大的桌寵＋頭上的提示框
-const GAME_WIDTH = 480; // 遊戲視窗大小（藏起來時大小不變，遊戲才不用一直重排版面）
+const GAME_WIDTH = 480; // 「自動尺寸」「全螢幕」時的遊戲視窗大小（藏起來時大小不變，遊戲才不用一直重排版面）
 const GAME_HEIGHT = 860;
+// 遊戲設定 →「🖥️ 畫面尺寸」存在遊戲自己的 localStorage（遊戲 ui-frame.js 的 DISPLAY_KEY），桌寵照它調整遊戲視窗大小，見 gameSize
+const DISPLAY_KEY = "dragonSlayer_display";
+const DISPLAY_POLL_MS = 1000; // 遊戲叫出來時多久看一次畫面尺寸有沒有換
+const PC_GAME_WIDTH = 1280; // 「PC 16:9」遊戲區寬度（螢幕放不下就縮小）
+const PC_RATIO = 1116 / 2000; // 遊戲 PC 外框的高寬比（ui-frame.js 的 PC_H / PC_W）
 const DEFAULT_MODEL = "knight"; // 還沒有角色時先放騎士
 const MAX_PETS = 10; // 桌面上最多同時幾隻桌寵（＝最多同時掛幾個帳號）
 const LOGIN_TIMEOUT_MS = 30000; // 按了登入這麼久還沒登入成功就當作失敗
@@ -105,7 +110,7 @@ const accountLabel = (g) => (g.accountId ? accounts.nameOf(g.accountId) : "訪�
 function createGame(index) {
   const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds: undefined,
     lastRaw: undefined, lastState: undefined, continued: false, noSaveSince: 0, login: { state: "idle", at: 0 },
-    retryTimer: undefined, failures: 0 };
+    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 } };
   g.win = new BrowserWindow({
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
@@ -120,7 +125,11 @@ function createGame(index) {
     },
   });
   g.win.webContents.setAudioMuted(true);
+  // 視窗邊框＋標題列多大：手機 9:16、PC 16:9 要讓「遊戲區」剛好是那個比例
+  const outer = g.win.getBounds(), inner = g.win.getContentBounds();
+  g.frame = { dw: outer.width - inner.width, dh: outer.height - inner.height };
   parkGame(g);
+  g.displayTimer = setInterval(() => g.shown && syncDisplayMode(g), DISPLAY_POLL_MS);
   // 關視窗＝藏起來，遊戲繼續跑；真的要關從桌寵右鍵或系統匣「結束」
   g.win.on("close", (e) => {
     if (quitting || g.closing) return;
@@ -145,6 +154,7 @@ function createGame(index) {
     g.login = { state: "idle", at: 0 };
     g.version = await inGame(g, `document.querySelector('script[src*="data/game.js?v="], script[src*="data/config.js?v="]')?.src.match(/v=([\\w.-]+)/)?.[1]`);
     setGameHidden(g);
+    syncDisplayMode(g);
   });
   loadGame(g);
   return g;
@@ -152,6 +162,7 @@ function createGame(index) {
 
 function destroyGame(g) {
   clearTimeout(g.retryTimer);
+  clearInterval(g.displayTimer);
   g.closing = true;
   if (!g.win.isDestroyed()) g.win.destroy();
 }
@@ -173,13 +184,88 @@ function syncGames() {
  * 遊戲在背景時大地圖不會掉東西（使用者回報），所以要讓它跟真的開在畫面上一模一樣。安卓版也是用同樣的方法（1 像素懸浮視窗）。
  */
 function parkGame(g) {
+  // 全螢幕中的視窗搬不動，先退出全螢幕再停到螢幕外
+  if (g.win.isFullScreen()) {
+    leaveFullScreen(g);
+    setTimeout(() => !g.shown && !g.win.isDestroyed() && parkGame(g), 800);
+    return;
+  }
   const area = screen.getPrimaryDisplay().workArea;
+  const { width, height } = gameSize(g);
   g.win.setSkipTaskbar(true);
   g.win.setIgnoreMouseEvents(true);
   g.win.setFocusable(false);
   g.win.setOpacity(0.01);
-  g.win.setBounds({ x: area.x - GAME_WIDTH + 1, y: area.y - GAME_HEIGHT + 1, width: GAME_WIDTH, height: GAME_HEIGHT });
+  g.win.setBounds({ x: area.x - width + 1, y: area.y - height + 1, width, height });
   if (!g.win.isVisible()) g.win.showInactive();
+}
+
+/**
+ * 遊戲視窗（含邊框）該多大，照這隻遊戲自己的「🖥️ 畫面尺寸」設定（g.mode，見 syncDisplayMode）：
+ *   auto 自動尺寸、full 全螢幕 → 原本的直式 480×860（全螢幕是叫出來時再整個放大，見 placeShownGame）
+ *   phone 手機 9:16 → 遊戲區剛好 9:16，不留黑邊
+ *   pc    PC 16:9 → 橫式，遊戲區寬 1280（螢幕放不下就縮小），比例跟遊戲 PC 外框一樣
+ */
+function gameSize(g) {
+  const area = screen.getPrimaryDisplay().workArea;
+  const { dw, dh } = g.frame;
+  const maxW = area.width - dw - 40, maxH = area.height - dh - 40; // 四周留一點邊
+  let w, h;
+  if (g.mode === "phone") {
+    h = Math.min(GAME_HEIGHT - dh, maxH);
+    w = Math.round((h * 9) / 16);
+  } else if (g.mode === "pc") {
+    w = Math.min(PC_GAME_WIDTH, maxW);
+    h = Math.round(w * PC_RATIO);
+    if (h > maxH) {
+      h = maxH;
+      w = Math.round(h / PC_RATIO);
+    }
+  } else return { width: GAME_WIDTH, height: GAME_HEIGHT };
+  return { width: w + dw, height: h + dh };
+}
+
+/** 叫出來的遊戲視窗擺到上次的位置（第一次放螢幕中間），大小照畫面尺寸；換成比較大的尺寸時往內推，不跑出螢幕。 */
+function placeShownGame(g) {
+  if (g.win.isFullScreen()) return;
+  const area = screen.getPrimaryDisplay().workArea;
+  // 只記位置、大小每次重算（螢幕縮放比例會讓 getBounds 多 1～2 像素，記整個的話每開關一次就變大一點）
+  const { width, height } = gameSize(g);
+  const at = g.bounds ?? { x: area.x + Math.round((area.width - width) / 2), y: area.y + Math.round((area.height - height) / 2) };
+  const x = Math.max(area.x, Math.min(at.x, area.x + area.width - width));
+  const y = Math.max(area.y, Math.min(at.y, area.y + area.height - height));
+  g.win.setBounds({ x, y, width, height });
+}
+
+/** 「全螢幕」跟在瀏覽器裡一樣用網頁全螢幕（按 Esc 可以退出，退出後還是原本的視窗大小）。要在視窗顯示之後才叫。 */
+function enterFullScreen(g) {
+  if (g.mode !== "full" || g.win.isFullScreen()) return;
+  g.win.webContents.executeJavaScript("document.documentElement.requestFullscreen().catch(() => {})", true).catch(() => {});
+}
+
+function leaveFullScreen(g) {
+  inGame(g, "document.fullscreenElement && document.exitFullscreen().catch(() => {})");
+  g.win.setFullScreen(false);
+}
+
+/**
+ * 讀這隻遊戲現在的畫面尺寸設定（遊戲載入完、叫出來時每秒一次），換了就照新的尺寸重擺遊戲視窗。
+ * 每隻的遊戲各有自己的 localStorage，所以每隻可以用不同的畫面尺寸。
+ */
+async function syncDisplayMode(g) {
+  const saved = await inGame(g, `localStorage.getItem(${JSON.stringify(DISPLAY_KEY)})`);
+  const mode = ["phone", "pc", "full"].includes(saved) ? saved : "auto";
+  if (g.win.isDestroyed() || mode === g.mode) return;
+  g.mode = mode;
+  if (!g.shown) return parkGame(g);
+  // 從全螢幕換成別的：遊戲自己會退出網頁全螢幕，等視窗真的退出來再調大小
+  if (g.win.isFullScreen() && mode !== "full") {
+    g.win.once("leave-full-screen", () => g.shown && placeShownGame(g));
+    leaveFullScreen(g);
+    return;
+  }
+  placeShownGame(g);
+  enterFullScreen(g);
 }
 
 function showGame(g, on) {
@@ -190,20 +276,20 @@ function showGame(g, on) {
   }
   g.shown = on;
   if (on) {
-    // 叫出來：放回上次的位置（第一次放螢幕中間），恢復成一般視窗
-    const area = screen.getPrimaryDisplay().workArea;
-    // 只記位置、大小一律用固定值（螢幕縮放比例會讓 getBounds 多 1～2 像素，記整個的話每開關一次就變大一點）
-    const at = g.bounds ?? { x: area.x + Math.round((area.width - GAME_WIDTH) / 2), y: area.y + Math.round((area.height - GAME_HEIGHT) / 2) };
-    g.win.setBounds({ x: at.x, y: at.y, width: GAME_WIDTH, height: GAME_HEIGHT });
+    // 叫出來：恢復成一般視窗
+    placeShownGame(g);
     g.win.setOpacity(1);
     g.win.setIgnoreMouseEvents(false);
     g.win.setFocusable(true);
     g.win.setSkipTaskbar(false);
     g.win.show();
     g.win.focus();
+    enterFullScreen(g);
   } else {
-    const { x, y } = g.win.getBounds();
-    g.bounds = { x, y };
+    if (!g.win.isFullScreen()) {
+      const { x, y } = g.win.getBounds();
+      g.bounds = { x, y };
+    }
     parkGame(g);
   }
   // 遊戲以為自己一直看得見（見 game-preload.js），藏起來時背景音樂不會自己停，這裡幫它靜音
