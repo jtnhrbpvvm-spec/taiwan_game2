@@ -3,7 +3,7 @@
 // 每次載入完成，就把 d2_zh.js（跟書籤同一份）注入頁面。
 // 更新：遊戲會擋掉頁面的網路連線，所以由這裡（主程序）向 GitHub Pages 下載新版：
 //   ・每次開遊戲在背景自動檢查（資料夾裡有 no-auto-update 檔就不自動）
-//   ・「書籤修改」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
+//   ・「中文化」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
 'use strict';
 const { app } = require('electron');
 const fs = require('fs');

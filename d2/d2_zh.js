@@ -10,8 +10,8 @@ alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個�
 return;
 }
 window.__D2ZH = true;
-// 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V13';
+// 中文化版本號：每次發布更新加一（顯示在「中文化」面板標題旁）
+const D2ZH_VERSION = 'V14';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -296,99 +296,11 @@ for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) 
 }
 const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null };
 const D2ED_SAVE_KEY = 'd2-survivors/save/v1';
-const D2ED_ELEMENTS = ['fire', 'cold', 'lightning', 'poison', 'magic'];
-const D2ED_LIFE_PER_VIT = { amazon: 6, assassin: 6, barbarian: 8, druid: 4, necromancer: 4, paladin: 6, sorceress: 4 };
-// 恰西的永久升級（build 20261025.1）：[存檔鍵, 名稱, 上限, 可否超過上限]
-// 可超過上限的項目，超過的級數存在 extraRanks（1～999），第 n 級超額只有 0.2/√n 級的效果（遊戲的遞減公式）。
-// 不能超過的（重抽、略過、放逐、復活）遊戲讀檔時會砍回上限。
-const D2ED_EXTRA_MAX = 999;
-const D2ED_RANKS = [
-['strength', '力量（每級起始 +5）', 10, true], ['dexterity', '敏捷（每級起始 +5）', 10, true],
-['vitality', '體力（每級起始 +5）', 10, true], ['energy', '精力（每級起始 +5）', 10, true],
-['goldFind', '尋獲金幣（每級 +10%）', 10, true], ['magicFind', '尋獲魔法物品（每級 +10%）', 10, true],
-['damageReduced', '傷害減少（每級 2%）', 5, true], ['replenish', '補充生命（每級每秒 +0.25）', 5, true],
-['frw', '跑步／行走速度（每級 +5%）', 5, true], ['fcr', '施法速度（每級 +4%）', 5, true],
-['sellPrice', '出售價格（每級 +10%）', 5, true], ['potions', '藥水治療量（每級 +10%）', 5, true],
-['experience', '經驗值獲得（每級 +2%）', 5, true],
-['firePierce', '火焰穿透（每級敵人抗性 -2%）', 5, true], ['coldPierce', '冰寒穿透（每級敵人抗性 -2%）', 5, true],
-['lightningPierce', '閃電穿透（每級敵人抗性 -2%）', 5, true], ['poisonPierce', '毒素穿透（每級敵人抗性 -2%）', 5, true],
-['physicalPierce', '物理穿透（每級敵人抗性 -2%）', 5, true],
-['mercLife', '傭兵生命（每級 +6%）', 5, true], ['mercResist', '傭兵抗性（每級 +5）', 5, true],
-['mercDefense', '傭兵防禦（每級 +10%）', 5, true],
-['rerolls', '重抽次數', 3, false], ['skips', '略過次數', 3, false], ['banishes', '放逐次數', 3, false], ['resurrect', '復活次數', 2, false],
-];
-// 超過上限 n 級實際等於幾級（遊戲公式：第 k 級超額 = 0.2/√k 級）
-function d2edExtraWorth(n) {
-let s = 0;
-for (let k = 1; k <= n; k++) s += 0.2 / Math.sqrt(k);
-return s;
-}
-const D2ED_FIELDS = [
-['life', '目前生命', '', 0], ['maxLife', '生命上限', '', 0], ['regen', '每秒恢復生命', '', 1],
-['speed', '移動速度', '一開始是 150', 0], ['pickupRadius', '拾取範圍', '一開始是 70', 0],
-['might', '傷害倍率', '所有技能，1 = 原本', 2], ['weaponDamage', '攻擊傷害倍率', '武器技能，1 = 原本', 2],
-['castSpeed', '技能冷卻倍率', '越小越快，0.5 = 冷卻減半', 2], ['damageTaken', '受到傷害倍率', '0 = 無敵', 2],
-['crit', '致命一擊機率', '0.25 = 25%', 2], ['allSkills', '所有技能等級', '+N 級', 0],
-['magicFind', '尋獲魔法物品', '%', 0], ['goldGain', '金幣獲得倍率', '1 = 原本', 2],
-['mastery.physical', '物理加成', '力量每 5 點 +0.05', 2], ['mastery.fire', '火焰加成', '', 2],
-['mastery.cold', '冰寒加成', '', 2], ['mastery.lightning', '閃電加成', '', 2],
-['mastery.poison', '毒素加成', '', 2], ['mastery.magic', '魔法加成', '', 2],
-];
 function d2edInRun() {
 return !!D2ED.player && !document.body.classList.contains('no-run');
 }
-function d2edGet(path) {
-const p = D2ED.player;
-if (path === 'crit') return D2ED.extras ? D2ED.extras.crit : NaN;
-const [a, b] = path.split('.');
-return b ? p[a][b] : p[a];
-}
-function d2edSet(path, v) {
-const p = D2ED.player;
-if (path === 'crit') { if (D2ED.extras) D2ED.extras.crit = v; return; }
-const [a, b] = path.split('.');
-if (b) p[a][b] = v; else p[a] = v;
-}
-function d2edAttribute(attr, n) {
-const p = D2ED.player;
-// 跟遊戲的屬性效果一樣（build 20261020：力量加 strDamage、敏捷加 dexDamage，不再乘 weaponDamage）
-if (attr === 'strength') {
-p.mastery.physical += 0.05 * n;
-p.strDamage = (p.strDamage || 0) + 0.05 * n;
-} else if (attr === 'dexterity') {
-if (D2ED.extras) D2ED.extras.crit += 0.01 * n;
-p.dexDamage = (p.dexDamage || 0) + 0.03 * n;
-p.dexterity = (p.dexterity || 0) + 5 * n;
-} else if (attr === 'vitality') {
-const life = (D2ED_LIFE_PER_VIT[p.cls] || 6) * 5 * n;
-p.maxLife = Math.max(1, p.maxLife + life);
-p.life = Math.max(1, Math.min(p.maxLife, p.life + life));
-} else if (attr === 'energy') for (const el of D2ED_ELEMENTS) p.mastery[el] += 0.05 * n;
-const added = D2ED.added.get(p) || {};
-added[attr] = (added[attr] || 0) + 5 * n;
-D2ED.added.set(p, added);
-}
 function d2edReadSave() {
 try { return JSON.parse(localStorage.getItem(D2ED_SAVE_KEY) || '{}') || {}; } catch (_) { return {}; }
-}
-function d2edWriteSaveAndReload(gold, ranks) {
-const write = () => {
-const save = d2edReadSave();
-save.gold = gold;
-save.ranks = save.ranks || {};
-const extra = { ...(save.extraRanks || {}) };
-for (const [k, max] of D2ED_RANKS.map(r => [r[0], r[2]])) {
-if (!(k in ranks)) continue;
-const v = ranks[k];
-if (v > 0) save.ranks[k] = Math.min(v, max); else delete save.ranks[k];
-if (v > max) extra[k] = v - max; else delete extra[k];
-}
-if (Object.keys(extra).length) save.extraRanks = extra; else delete save.extraRanks;
-try { localStorage.setItem(D2ED_SAVE_KEY, JSON.stringify(save)); } catch (e) { alert('存檔寫入失敗：' + e); }
-};
-write();
-addEventListener('pagehide', write);
-location.reload();
 }
 function d2edOnTextDraw(ctx, img, args, isMenu) {
 const now = performance.now();
@@ -461,95 +373,6 @@ t.textContent = msg;
 clearTimeout(t._h);
 t._h = setTimeout(() => { t.textContent = ''; }, 2500);
 }
-function d2edRunSection() {
-const box = d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '本局人物'));
-if (!d2edInRun()) {
-box.append(d2edEl('p', { class: 'd2ed-note' },
-D2ED.player ? '目前不在遊戲中。進入遊戲後，按 Esc 暫停 → 選項 → 書籤修改。'
-: '還沒抓到人物資料：進入遊戲、打到第一隻怪物後就會出現（書籤要在進遊戲前或遊戲中按過一次）。'));
-return box;
-}
-const p = D2ED.player;
-const added = D2ED.added.get(p) || {};
-const attrs = d2edEl('div', { class: 'd2ed-attrs' });
-for (const [k, name] of [['strength', '力量'], ['dexterity', '敏捷'], ['vitality', '體力'], ['energy', '精力']]) {
-const count = d2edEl('span', { class: 'd2ed-count' }, added[k] ? (added[k] > 0 ? '+' : '') + added[k] : '0');
-const btn = (label, n) => d2edEl('button', { type: 'button', onclick: () => { d2edAttribute(k, n); d2edRender(); } }, label);
-attrs.append(d2edEl('div', { class: 'd2ed-attr' }, d2edEl('b', {}, name), btn('－5', -1), count, btn('＋5', 1)));
-}
-box.append(d2edEl('p', { class: 'd2ed-note' }, '屬性加減效果跟升級時選屬性一樣（中間是這次用書籤加減的點數）。'), attrs);
-const grid = d2edEl('div', { class: 'd2ed-grid' });
-const inputs = [];
-for (const [path, name, hint, digits] of D2ED_FIELDS) {
-const input = d2edEl('input', { type: 'number', step: digits ? String(1 / 10 ** digits) : '1', value: d2edRound(d2edGet(path), digits) });
-inputs.push([path, input]);
-grid.append(d2edEl('label', {}, d2edEl('span', {}, name, hint ? d2edEl('small', {}, hint) : ''), input));
-}
-const apply = () => {
-let n = 0;
-for (const [path, input] of inputs) {
-const v = Number(input.value);
-if (input.value === '' || !Number.isFinite(v)) continue;
-if (Math.abs(v - d2edGet(path)) > 1e-9) { d2edSet(path, v); n++; }
-}
-if (p.life > p.maxLife) p.life = p.maxLife;
-d2edRender();
-d2edToast(n ? `已套用 ${n} 項` : '沒有變更');
-};
-box.append(grid, d2edEl('div', { class: 'd2ed-row' },
-d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: apply }, '套用'),
-d2edEl('button', { type: 'button', onclick: () => { p.life = p.maxLife; d2edRender(); d2edToast('生命已補滿'); } }, '生命補滿')),
-d2edEl('p', { class: 'd2ed-note' }, '只對這一局有效：「儲存並離開」後再繼續，會回到原本的數值。'));
-return box;
-}
-function d2edSaveSection() {
-const box = d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '永久升級（存檔）'));
-if (!document.body.classList.contains('no-run')) {
-box.append(d2edEl('p', { class: 'd2ed-note' }, '遊戲中不能改存檔（遊戲會蓋回去）。請「儲存並離開遊戲」，在主選單的 選項 → 書籤修改 修改。'));
-return box;
-}
-const save = d2edReadSave();
-const ranks = save.ranks || {}, extraRanks = save.extraRanks || {};
-const grid = d2edEl('div', { class: 'd2ed-grid' });
-const gold = d2edEl('input', { type: 'number', min: '0', step: '1', value: String(save.gold || 0) });
-grid.append(d2edEl('label', {}, d2edEl('span', {}, '金幣'), gold));
-const inputs = [];
-for (const [key, name, max, endless] of D2ED_RANKS) {
-const top = endless ? max + D2ED_EXTRA_MAX : max;
-const now = (ranks[key] || 0) + (endless && ranks[key] >= max ? extraRanks[key] || 0 : 0);
-const input = d2edEl('input', { type: 'number', min: '0', max: String(top), step: '1', value: String(now) });
-const hint = d2edEl('small', {});
-// 可超過上限的項目：顯示超過後實際等於幾級，讓玩家知道會縮水
-const showHint = () => {
-const v = Math.max(0, Math.floor(Number(input.value) || 0));
-hint.textContent = !endless ? `0～${max}（不能超過）`
-: v > max ? `上限 ${max}，超過會遞減：實際約 ${d2edRound(max + d2edExtraWorth(Math.min(v, top) - max), 2)} 級`
-: `上限 ${max}，可再加到 ${top}（效果遞減）`;
-};
-input.addEventListener('input', showHint);
-showHint();
-inputs.push([key, top, input]);
-grid.append(d2edEl('label', {}, d2edEl('span', {}, name, hint), input));
-}
-const fill = () => {
-for (const [key, , input] of inputs) {
-input.value = String(D2ED_RANKS.find(r => r[0] === key)[2]);
-input.dispatchEvent(new Event('input'));
-}
-};
-const apply = () => {
-const out = {};
-for (const [key, top, input] of inputs) out[key] = Math.max(0, Math.min(top, Math.floor(Number(input.value) || 0)));
-const g = Math.max(0, Math.floor(Number(gold.value) || 0));
-if (confirm('要儲存並重新載入遊戲嗎？')) d2edWriteSaveAndReload(g, out);
-};
-box.append(d2edEl('p', { class: 'd2ed-note' }, '恰西賣的永久升級，每個英雄都適用。大部分項目可以超過上限（最多再加 999 級），但超過的部分效果會遞減；重抽、略過、放逐、復活不能超過上限。'), grid,
-d2edEl('div', { class: 'd2ed-row' },
-d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: apply }, '儲存並重新載入'),
-d2edEl('button', { type: 'button', onclick: fill }, '全部填滿')),
-d2edEl('p', { class: 'd2ed-note' }, window.__D2ZH_DESKTOP ? '儲存後遊戲會重新載入，中文會自動恢復。' : '儲存後頁面會重新載入，要再點一次書籤才會恢復中文。'));
-return box;
-}
 // 電腦安裝版：從作者（我們）的 GitHub 更新中文化。頁面不能上網，由 d2zh-inject.cjs（主程序）下載，
 // 這裡用 console.log('__D2ZH__:update') 通知它，下載完它會呼叫 window.__d2zhUpdateDone(結果)。
 function d2edUpdateSection() {
@@ -596,108 +419,25 @@ console.log('__D2ZH__:update');
 } }, '檢查更新');
 // 開遊戲時背景已經自動下載過新版、這個頁面還沒用到：直接提示可以重新載入
 show(needReload(desk.lastCheck) ? (desk.lastCheck || { at: Date.now(), changed: ['d2_zh.js'], errors: [], applies: 'reload' }) : null);
-box.append(d2edEl('p', { class: 'd2ed-note' }, '翻譯和修改功能會從 GitHub 下載最新版。每次開遊戲也會在背景自動檢查。'),
+box.append(d2edEl('p', { class: 'd2ed-note' }, '翻譯會從 GitHub 下載最新版。每次開遊戲也會在背景自動檢查。'),
 status, d2edEl('div', { class: 'd2ed-row' }, check, reload));
 return box;
 }
-// ====== 修改功能的開關 ======
-// 遊戲有排行榜，修改過的紀錄會被拒收。修改功能預設藏起來：玩家確認後，把存檔的 leaderboard.off 設成 true
-// （等於遊戲排行榜書裡的「傳送我的紀錄：關」），之後遊戲每次寫存檔都維持關閉。
-// 遊戲中啟用時不重新載入，遊戲記憶體裡的存檔還是「傳送：開」，所以另外擋住排行榜上傳：
-// 等待傳送的紀錄（localStorage d2s:leaderboard-queue）不讓它寫入，直接送往 /api/leaderboard/ 的 POST 也擋掉。
-const D2ED_UNLOCK_KEY = 'd2zh:editUnlocked';
-const D2ED_LB_QUEUE_KEY = 'd2s:leaderboard-queue';
-function d2edUnlocked() {
-try { return localStorage.getItem(D2ED_UNLOCK_KEY) === '1'; } catch (_) { return false; }
-}
-function d2edKeepLeaderboardOff() {
-const rawSet = Storage.prototype.setItem;
-Storage.prototype.setItem = function (key, value) {
-if (this === window.localStorage && key === D2ED_SAVE_KEY && d2edUnlocked()) {
-try {
-const save = JSON.parse(value);
-if (save && typeof save === 'object' && !(save.leaderboard && save.leaderboard.off)) {
-save.leaderboard = { ...save.leaderboard, off: true };
-value = JSON.stringify(save);
-}
-} catch (_) { /* 不是 JSON 就照原樣寫 */ }
-}
-if (this === window.localStorage && key === D2ED_LB_QUEUE_KEY && d2edUnlocked()) {
-this.removeItem(key);
-return;
-}
-return rawSet.call(this, key, value);
-};
-const isLeaderboardPost = (url, init) => /\/api\/leaderboard\//.test(String(url && url.url || url)) && /^post$/i.test((init && init.method) || (url && url.method) || 'GET');
-const rawFetch = window.fetch;
-window.fetch = function (url, init) {
-if (d2edUnlocked() && isLeaderboardPost(url, init)) return Promise.resolve(new Response('', { status: 403 }));
-return rawFetch.apply(this, arguments);
-};
-// 電腦版經由 d2app.leaderboard(方法, 路徑, 內容) 送出；物件被鎖住就改不了，至少上面的佇列還擋得住紀錄
-try {
-const app = window.d2app, raw = app && app.leaderboard;
-if (typeof raw === 'function') {
-app.leaderboard = function (method, path) {
-if (d2edUnlocked() && /^post$/i.test(method)) return Promise.resolve({ status: 403, body: null });
-return raw.apply(this, arguments);
-};
-}
-} catch (_) { /* contextBridge 的物件唯讀 */ }
-}
-function d2edLockSection() {
-return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '修改功能'),
-d2edEl('p', { class: 'd2ed-note' }, '遊戲中可以修改這一局的人物；在主選單可以修改恰西的永久升級。修改後遊戲的排行榜會拒收你的紀錄。'),
-d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: d2edConfirmUnlock }, '啟用修改功能')));
-}
-function d2edConfirmUnlock() {
-const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
-if (!card || card.querySelector('.d2ed-modal')) return;
-const inMenu = document.body.classList.contains('no-run');
-const modal = d2edEl('div', { class: 'd2ed-modal' });
-const close = () => modal.remove();
-const ok = () => {
-try { localStorage.setItem(D2ED_UNLOCK_KEY, '1'); } catch (e) { alert('無法啟用：' + e); return; }
-// 遊戲中：不重新載入，直接打開修改頁面（排行榜上傳由 d2edKeepLeaderboardOff 擋住，遊戲下次存檔就會寫成關閉）
-if (!inMenu) { d2edRender(); return; }
-try {
-const write = () => { const save = d2edReadSave(); save.leaderboard = { ...save.leaderboard, off: true }; localStorage.setItem(D2ED_SAVE_KEY, JSON.stringify(save)); };
-write();
-addEventListener('pagehide', write);   // 遊戲關頁前若再寫一次存檔，這裡最後再蓋回關閉
-} catch (e) { alert('存檔寫入失敗：' + e); return; }
-location.reload();
-};
-modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'alertdialog', 'aria-label': '確認啟用修改功能' },
-d2edEl('b', {}, '修改後無法上排行榜！確認使用嗎？'),
-d2edEl('ul', {},
-d2edEl('li', {}, '會自動關閉遊戲的「傳送我的紀錄」（排行榜上傳），之後維持關閉。'),
-d2edEl('li', {}, '已經在排行榜上的紀錄不受影響。'),
-d2edEl('li', {}, !inMenu ? '確認後馬上可以修改這一局的人物（不用離開遊戲）。'
-: window.__D2ZH_DESKTOP ? '確認後遊戲會重新載入，中文會自動恢復。' : '確認後頁面會重新載入，要再點一次書籤才會恢復中文。')),
-d2edEl('div', { class: 'd2ed-row' },
-d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: ok }, '確認'),
-d2edEl('button', { type: 'button', onclick: close }, '取消'))));
-card.append(modal);
-}
-function d2edLockAgainSection() {
-const relock = () => { try { localStorage.removeItem(D2ED_UNLOCK_KEY); } catch (_) { /* 無痕視窗 */ } d2edRender(); };
-return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '停用修改功能'),
-d2edEl('p', { class: 'd2ed-note' }, '隱藏修改功能，書籤不再強制關閉排行榜上傳。要恢復上傳，請到營地儲物箱旁的排行榜書自行開啟「傳送我的紀錄」（改過的存檔仍可能被排行榜拒收）。'),
-d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: relock }, '停用修改功能')));
+function d2edInfoSection() {
+return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '繁體中文化'),
+d2edEl('p', { class: 'd2ed-note' }, '遊戲文字、技能說明、裝備、怪物、地區都會顯示成繁體中文。選項選單裡的「語言」可以切換 English／繁體中文。'),
+d2edEl('p', { class: 'd2ed-note' }, window.__D2ZH_DESKTOP ? '電腦版每次開遊戲都會自動套用中文。' : '重新整理頁面後，要再點一次書籤才會恢復中文。'));
 }
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
-// 遊戲中改這一局的人物；在主選單（不在一局裡）改恰西的永久升級
-const inRun = !document.body.classList.contains('no-run');
-const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edLockAgainSection(), d2edUpdateSection()] : [d2edLockSection(), d2edUpdateSection()];
-body.replaceChildren(...sections.filter(Boolean));
+body.replaceChildren(...[d2edInfoSection(), d2edUpdateSection()].filter(Boolean));
 }
 function d2edOpen() {
 if (D2ED.panel) return;
 const close = () => { D2ED.panel.remove(); D2ED.panel = null; };
 D2ED.panel = d2edEl('div', { id: 'd2ed-overlay', onclick: e => { if (e.target.id === 'd2ed-overlay') close(); } },
-d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '書籤修改' },
-d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '書籤修改'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
+d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '中文化' },
+d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '中文化'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
 d2edEl('button', { type: 'button', onclick: () => { close(); d2zhNewsOpen(true); } }, '更新說明'),
 d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label': '關閉' }, '×')),
 d2edEl('div', { class: 'd2ed-body' })));
@@ -706,17 +446,14 @@ document.body.append(D2ED.panel);
 d2edRender();
 }
 // ====== 中文化更新說明 ======
-// 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
+// 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「中文化」面板的「更新說明」可以重看。
 // 新版本加在最前面。
 const D2ZH_NEWS = [
-{ ver: 'V13', date: '2026-10-26', game: '遊戲 20261025.1', items: [
-'「書籤修改」的永久升級跟上恰西的新項目：跑步／行走速度、施法速度、出售價格、藥水治療量、經驗值、五種穿透、傭兵生命／抗性／防禦',
-'永久升級可以改到上限以上（最多再加 999 級，跟遊戲一樣超過的部分效果遞減，旁邊會顯示實際約幾級）；重抽、略過、放逐、復活仍不能超過上限',
-'補充生命的說明更正為每級每秒 +0.25',
-'「書籤修改」分成兩種：遊戲中直接改這一局的人物，在主選單改恰西的永久升級；遊戲中也能直接啟用修改功能，不用先離開遊戲'] },
+{ ver: 'V14', date: '2026-10-26', game: '遊戲 20261025.1', items: [
+'這個版本只做繁體中文化：拿掉「書籤修改」（改人物屬性、金幣、永久升級），也不再關閉排行榜上傳',
+'選項選單裡的按鈕改名為「中文化」，裡面有版本、更新說明和電腦版的「檢查更新」'] },
 { ver: 'V12', date: '2026-10-26', game: '遊戲 20261025.1', items: [
-'維特的腳說明改寫：放在身上（不須裝備），第一章打倒格瑞斯華爾德會開奶牛關，恐懼層必出奶牛關',
-'「書籤修改」的修改功能預設隱藏：按「啟用修改功能」並確認後，會自動關閉遊戲的排行榜上傳（修改過的紀錄排行榜不收），才會出現修改頁面'] },
+'維特的腳說明改寫：放在身上（不須裝備），第一章打倒格瑞斯華爾德會開奶牛關，恐懼層必出奶牛關'] },
 { ver: 'V11', date: '2026-10-25', game: '遊戲 20261025.1', items: [
 '套裝物品：32 套、127 件套裝與套裝名稱，譯名採用易牙居（修正少數明顯錯譯，例如「米拉伯佳的雪茄」改成「王權」）',
 '護身符：小型／大型／超大型護身符、吉黑得的運氣、護身符欄（H）和護身符詞綴',
@@ -724,7 +461,7 @@ const D2ZH_NEWS = [
 '傭兵技能說明（寫明對他自己還是對英雄有效）、排行榜的驗證訊息',
 '補上漏翻的物品屬性：對不死生物／惡魔的攻擊準確率、依角色等級的最大元素傷害、生命上限增加 %',
 '新增這個「更新說明」視窗，之後每次更新都會列在這裡',
-'書籤的按鈕（書籤修改、手把、語言切換）改用遊戲的 D2 石質按鈕圖，跟遊戲畫面一致'] },
+'書籤的按鈕（中文化、手把、語言切換）改用遊戲的 D2 石質按鈕圖，跟遊戲畫面一致'] },
 { ver: 'V10', date: '2026-10-24', game: '遊戲 20261024.1／.2', items: [
 '技能改造（Skill Modifiers）：所有改造的名稱和說明、改造點數、赫拉迪克法典',
 '遊戲重寫的所有技能、被動說明',
@@ -762,9 +499,8 @@ document.body.append(box);
 }
 function d2edInstall() {
 window.__D2ED = D2ED; // 除錯用（在主控台看抓到的人物、選單位置）
-d2edKeepLeaderboardOff();
 // 電腦版：開遊戲時的背景檢查做完會呼叫這裡（d2zh-inject.cjs）。下載到比這個頁面新的翻譯檔時：
-// 剛開遊戲、還在選單（不在一局裡）就直接重新載入用新版；否則記下來，「書籤修改」面板會出現「重新載入」按鈕。
+// 剛開遊戲、還在選單（不在一局裡）就直接重新載入用新版；否則記下來，「中文化」面板會出現「重新載入」按鈕。
 window.__d2zhAutoChecked = result => {
 const desk = window.__D2ZH_DESKTOP;
 if (!desk || typeof desk !== 'object') return;
@@ -813,28 +549,13 @@ background: linear-gradient(180deg, #221a12, #120d08); border: 2px solid #8f743e
 #d2ed-overlay .d2ed-body { overflow: auto; padding: 4px 14px 14px; }
 #d2ed-overlay h3 { margin: 12px 0 4px; color: #c7a45f; font-size: 16px; }
 #d2ed-overlay .d2ed-note { margin: 4px 0; color: #a39a82; font-size: 12px; }
-#d2ed-overlay .d2ed-attrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px; margin: 6px 0; }
-#d2ed-overlay .d2ed-attr { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba(0,0,0,.35); border: 1px solid #2e2216; border-radius: 6px; }
-#d2ed-overlay .d2ed-attr b { flex: 1; color: #f3e3b0; }
-#d2ed-overlay .d2ed-count { min-width: 3em; text-align: center; color: #9fd38a; }
-#d2ed-overlay .d2ed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 12px; margin: 6px 0; }
-#d2ed-overlay label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-#d2ed-overlay label span { display: flex; flex-direction: column; }
-#d2ed-overlay small { color: #7d7462; font-size: 11px; }
-#d2ed-overlay input { width: 96px; padding: 4px 6px; color: #f3e3b0; background: #000; border: 1px solid #5a4a2a; border-radius: 4px; font: 14px ui-monospace, Consolas, monospace; }
 #d2ed-overlay button:not(.d2ed-x) { padding: 4px 12px; cursor: pointer; color: #f3e3b0; background: #2c2014; border: 1px solid #8f743e; border-radius: 4px; font: inherit; }
 #d2ed-overlay button.d2ed-main { color: #17120b; background: #c7a45f; font-weight: bold; }
 #d2ed-overlay .d2ed-row { display: flex; gap: 8px; margin-top: 8px; }
-#d2ed-overlay .d2ed-card { position: relative; }
-#d2ed-overlay .d2ed-modal { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.75); border-radius: 6px; }
-#d2ed-overlay .d2ed-modal-box { width: min(420px, 100%); padding: 16px 18px; background: linear-gradient(180deg, #2a1610, #140a06); border: 2px solid #b8402e; border-radius: 8px; box-shadow: 0 8px 30px #000; }
-#d2ed-overlay .d2ed-modal-box b { display: block; margin-bottom: 8px; color: #ff8a66; font-size: 18px; }
-#d2ed-overlay .d2ed-modal-box ul { margin: 6px 0; padding-left: 20px; color: #d8d0c0; }
-#d2ed-overlay .d2ed-warn { margin: 8px 0 0; color: #ffb080; font-size: 13px; }
 #d2ed-overlay button:disabled { opacity: .45; cursor: not-allowed; }
 `;
 document.head.append(style);
-D2ED.button = d2edEl('button', { id: 'd2ed-btn', type: 'button', onclick: e => { e.preventDefault(); e.stopPropagation(); d2edOpen(); } }, '書籤修改');
+D2ED.button = d2edEl('button', { id: 'd2ed-btn', type: 'button', onclick: e => { e.preventDefault(); e.stopPropagation(); d2edOpen(); } }, '中文化');
 document.body.append(D2ED.button);
 for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) {
 window.addEventListener(type, e => {
@@ -2834,7 +2555,7 @@ prev = pad.buttons.map(b => b.pressed);
 addEventListener('gamepadconnected', e => toast('已連接遊戲手把：' + e.gamepad.id.replace(/\s*\(.*$/, '')));
 addEventListener('gamepaddisconnected', () => { if (!find()) padCheck.open(true); });
 }
-// 手把狀態按鈕：在遊戲「選項」選單（書籤修改旁）出現 🎮，綠點＝已連接、紅點＝未連接。
+// 手把狀態按鈕：在遊戲「選項」選單（「中文化」按鈕旁）出現 🎮，綠點＝已連接、紅點＝未連接。
 // 點開檢查面板；沒連接時提示重新連接，並持續等待，偵測到就顯示成功。
 function d2padCheck(toast, find) {
 const css = document.createElement('style');
