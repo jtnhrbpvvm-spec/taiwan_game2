@@ -52,6 +52,23 @@
       .floater.loot { color: #f3d7ff; }
       .floater.levelup { color: #ffd34d; font-size: 20px; }
       .floater.hint { font-size: 13px; font-weight: normal; animation-duration: 5s; }
+      /* 角色在村莊時睡覺：頭上斜斜排著小、中、大三個 Z，一個接一個冒出來、往右上飄、淡掉（pet.js setSleeping） */
+      .zzz { position: absolute; left: 0; top: 0; width: 46px; height: 50px; pointer-events: none; z-index: 1; }
+      body.focus .zzz { opacity: 0.5; }
+      .zzz span {
+        position: absolute; font: bold 12px/1 "Comic Sans MS", "Microsoft JhengHei", sans-serif; color: #dfe8ff; opacity: 0;
+        text-shadow: 0 0 3px #10162a, 0 1px 2px #10162a, 0 0 6px #10162a;
+        animation: zzz 2.4s ease-out infinite;
+      }
+      .zzz span:nth-child(1) { left: 0; bottom: 0; }
+      .zzz span:nth-child(2) { left: 12px; bottom: 14px; font-size: 17px; animation-delay: 0.8s; }
+      .zzz span:nth-child(3) { left: 26px; bottom: 30px; font-size: 23px; animation-delay: 1.6s; }
+      @keyframes zzz {
+        from { opacity: 0; translate: -3px 5px; }
+        25% { opacity: 1; }
+        70% { opacity: 1; }
+        to { opacity: 0; translate: 4px -6px; }
+      }
       @keyframes float-up {
         from { opacity: 0; translate: 0 8px; }
         15% { opacity: 1; }

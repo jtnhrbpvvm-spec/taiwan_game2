@@ -986,7 +986,8 @@ function summarize(slot, data) {
 function describePlace(s, screenId) {
   if (screenId && screenId !== "screen-game") return { place: "標題畫面", doing: "等待進入遊戲" };
   const { type, id, floor } = s.loc;
-  if (type === "town") return { place: names.towns[id] ?? "村莊", doing: "休息中" };
+  // 在村莊：桌寵睡覺（頭上冒 Z、完全不動），見 pet.js 的 sleeping
+  if (type === "town") return { place: names.towns[id] ?? "村莊", doing: "休息中", sleeping: true };
   let place = names.zones[id] ?? `地圖 #${id ?? "?"}`;
   if (floor) place += ` ${floor}F`;
   if (s.mapRun) place = `異界地圖（${place}）`;

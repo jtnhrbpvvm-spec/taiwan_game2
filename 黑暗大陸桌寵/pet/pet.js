@@ -47,7 +47,26 @@ function createPet(index) {
     action: "idle", actionMs: 0, targetX: 0, idleLeftMs: first ? 3000 : rand(500, 4000),
     hopMs: 0, lift: first ? 0 : DROP_IN_HEIGHT, fallSpeed: 0,
     info: undefined, // 滑鼠移上去要顯示的內容（主程式送來的這隻的帳號、角色狀態）
+    sleeping: false, // 角色在村莊：站著睡覺、頭上冒 Z，不走、不踏步、不揮擊（還是可以拖著移動）
+    zzz: undefined, // 睡覺時頭上的大中小三個 Z（.zzz 元素）
   };
+}
+
+/** 睡覺：停在站著那一格，頭上冒出大中小三個 Z；醒來把 Z 收掉。 */
+function setSleeping(p, on) {
+  if (on === p.sleeping) return;
+  p.sleeping = on;
+  if (on) {
+    rest(p);
+    p.hopMs = 0;
+    p.zzz = document.createElement("div");
+    p.zzz.className = "zzz";
+    p.zzz.innerHTML = "<span>Z</span><span>Z</span><span>Z</span>";
+    document.body.append(p.zzz);
+  } else {
+    p.zzz?.remove();
+    p.zzz = undefined;
+  }
 }
 
 const pet = createPet(0); // 第一隻
@@ -165,7 +184,7 @@ function rest(p) {
 
 /** 揮一下（被點到、或遊戲裡有進帳）。cast＝升級時改成施法。 */
 function swing(p, name = "attack") {
-  if (drag?.pet === p || p.lift > 0 || !p.sprite) return;
+  if (drag?.pet === p || p.lift > 0 || !p.sprite || p.sleeping) return;
   p.action = "idle"; // 連續觸發時從頭再播一次
   setAction(p, p.sprite.actions[name] ? name : "attack");
 }
@@ -190,6 +209,10 @@ function think(p, dt) {
       p.hopMs = HOP_MS / 2; // 落地彈一小下
       rest(p);
     }
+    return;
+  }
+  if (p.sleeping) {
+    if (p.action !== "idle") rest(p);
     return;
   }
   if (p.action === "attack" || p.action === "cast") {
@@ -266,6 +289,14 @@ function placePanels() {
   if (pet.sprite && speaking) placeAbove(speech, bodyRect(pet), 12);
   if (hovered?.sprite && !drag) placeAbove(bubble, bodyRect(hovered));
   if (sizerPet?.sprite) placeAbove(sizer, bodyRect(sizerPet));
+  for (const p of pets) if (p.zzz && p.sprite) placeZzz(p);
+}
+
+/** Z 擺在頭頂偏右（像漫畫裡睡覺冒出來的那樣），不超出視窗。 */
+function placeZzz(p) {
+  const rect = bodyRect(p);
+  const x = clamp(rect.r - p.zzz.offsetWidth * 0.35, 4, window.innerWidth - p.zzz.offsetWidth - 4);
+  p.zzz.style.transform = `translate(${x}px, ${Math.max(4, rect.t - p.zzz.offsetHeight + 6)}px)`;
 }
 
 /**
@@ -291,7 +322,7 @@ function say(text) {
   speech.textContent = text;
   speaking = true;
   speech.classList.add("on");
-  pet.hopMs = HOP_MS; // 跳一下引起注意
+  if (!pet.sleeping) pet.hopMs = HOP_MS; // 跳一下引起注意（睡著就不跳）
   clearTimeout(speechTimer);
   speechTimer = setTimeout(hideSpeech, SPEECH_MS);
 }
@@ -355,7 +386,7 @@ function playEvents(index, events) {
       else if (e.kind === "loot") spawnFloater("loot", `${e.name} ×${e.n}`, p);
       else if (e.kind === "levelup") {
         spawnFloater("levelup", `LEVEL UP！Lv.${e.level}`, p);
-        p.hopMs = HOP_MS;
+        if (!p.sleeping) p.hopMs = HOP_MS;
       }
     }, i * FLOATER_GAP_MS);
   });
@@ -418,7 +449,7 @@ function endDrag() {
   const p = drag.pet ?? pet;
   drag = undefined;
   updateCursor();
-  if (!wasClick) return;
+  if (!wasClick || p.sleeping) return;
   p.hopMs = HOP_MS;
   swing(p);
 }
@@ -479,11 +510,13 @@ window.petApi.onState((index, state) => {
   const p = pets[index];
   if (!p) return;
   p.info = state;
+  setSleeping(p, !!state?.sleeping);
   if (hovered === p) showInfo(p);
 });
 
 function removePet(p) {
   p.canvas.remove();
+  p.zzz?.remove();
   if (drag?.pet === p) drag = undefined;
   if (hovered === p) {
     setHovering(false);
@@ -499,6 +532,7 @@ window.petApi.onPets((models) => {
   while (pets.length < models.length) {
     const p = createPet(pets.length);
     p.info = pendingInfo[p.index];
+    setSleeping(p, !!p.info?.sleeping);
     pets.push(p);
   }
   applyStay(); // 新加進來的也要套上牠的設定

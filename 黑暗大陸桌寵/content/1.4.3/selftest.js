@@ -190,6 +190,21 @@ async function run(t) {
     await shot(t.petWin, "pet-morph");
     t.games[0].lastRaw = { ...t.games[0].lastRaw, morph: null };
 
+    // 角色在村莊（測試角色在低語港）：桌寵睡覺，頭上有大中小三個 Z，不走、不揮擊
+    const petSnap = () => t.petWin.webContents.executeJavaScript(`({ x: pets[0].x, action: pets[0].action, sleeping: pets[0].sleeping, z: pets[0].zzz ? pets[0].zzz.querySelectorAll("span").length : 0 })`);
+    await waitFor("桌寵睡覺", async () => (await petSnap()).sleeping, 15000);
+    await t.petWin.webContents.executeJavaScript(`swing(pets[0])`);
+    const sleep1 = await petSnap();
+    await sleep(6000);
+    const sleep2 = await petSnap();
+    await shot(t.petWin, "pet-sleep");
+    check("村莊時桌寵睡覺：三個 Z、完全不動", sleep1.z === 3 && sleep1.action === "idle" && sleep2.action === "idle" && sleep1.x === sleep2.x, JSON.stringify([sleep1, sleep2]));
+    // 出村莊就醒來
+    t.petWin.webContents.send("pet:state", 0, { ...t.games[0].lastState, sleeping: false });
+    await sleep(300);
+    const awake = await petSnap();
+    check("離開村莊醒來、Z 收掉", !awake.sleeping && awake.z === 0, JSON.stringify(awake));
+
     t.showGame(g0, true);
     await sleep(1500);
     await shot(g0.win, "game");
