@@ -163,6 +163,22 @@ function createGame(index) {
   g.win.on("focus", () => {
     if (!g.shown && g.keepTaskbar && Date.now() - g.parkedAt > 500) showGame(g, true);
   });
+  // 遊戲網頁的程序當掉（掛很久記憶體不夠、顯示卡驅動出錯…）：視窗會變成整片白、遊戲也停了，重新載入
+  g.win.webContents.on("render-process-gone", (_e, d) => {
+    if (g.closing || quitting) return;
+    logGame(g, `遊戲網頁當掉（${d.reason}，代碼 ${d.exitCode}），重新載入`);
+    setTimeout(() => !g.win.isDestroyed() && loadGame(g), 1000);
+  });
+  // 卡住沒回應（白畫面、按不動）超過 HANG_RELOAD_MS 也重新載入；先把卡住的程序結束掉，再由上面的 render-process-gone 重載
+  g.win.webContents.on("unresponsive", () => {
+    clearTimeout(g.hangTimer);
+    g.hangTimer = setTimeout(() => {
+      if (g.win.isDestroyed()) return;
+      logGame(g, `遊戲網頁卡住 ${HANG_RELOAD_MS / 1000} 秒沒回應，重新載入`);
+      g.win.webContents.forcefullyCrashRenderer();
+    }, HANG_RELOAD_MS);
+  });
+  g.win.webContents.on("responsive", () => clearTimeout(g.hangTimer));
   // 遊戲會把標題改成遊戲名稱，蓋回來才分得出是哪一隻、哪個帳號
   g.win.on("page-title-updated", (e) => e.preventDefault());
   g.win.webContents.setWindowOpenHandler(({ url }) => {
@@ -184,6 +200,7 @@ function createGame(index) {
 
 function destroyGame(g) {
   clearTimeout(g.retryTimer);
+  clearTimeout(g.hangTimer);
   clearInterval(g.displayTimer);
   g.closing = true;
   if (!g.win.isDestroyed()) g.win.destroy();
@@ -301,6 +318,12 @@ function showGame(g, on) {
   }
   g.shown = on;
   if (on) {
+    // 叫出來時遊戲沒在跑（網頁當掉、或沒網路載入失敗正在等重試）：畫面會是整片白，馬上重新載入
+    const wc = g.win.webContents;
+    if (wc.isCrashed() || (!g.loading && !wc.getURL().startsWith(GAME_URL))) {
+      logGame(g, `叫出遊戲時畫面沒在跑（${wc.isCrashed() ? "網頁當掉" : `網址 ${wc.getURL() || "空白"}`}），重新載入`);
+      loadGame(g);
+    }
     // 叫出來：恢復成一般視窗
     placeShownGame(g);
     g.win.setOpacity(1);
@@ -353,21 +376,40 @@ function openGame(g, keepTaskbar) {
 const inGame = (g, code) => (g.win.isDestroyed() ? Promise.resolve(undefined) : g.win.webContents.executeJavaScript(code).catch(() => undefined));
 
 const GAME_RETRY_MS = 30000;
+const HANG_RELOAD_MS = 20000;
+const GAME_LOG_MAX = 200 * 1024;
+
+/**
+ * 遊戲視窗出狀況（載入失敗、網頁當掉、卡住）記到 %APPDATA%\黑暗大陸桌寵\game-log.txt，玩家回報白畫面時可以請他傳這個檔。
+ * 超過 GAME_LOG_MAX 就只留後半段。
+ */
+function logGame(g, text) {
+  const line = `${new Date().toLocaleString("zh-TW", { hour12: false })} 第 ${g.index + 1} 隻：${text}\n`;
+  console.error(line.trim());
+  try {
+    const file = path.join(app.getPath("userData"), "game-log.txt");
+    if (fs.existsSync(file) && fs.statSync(file).size > GAME_LOG_MAX) fs.writeFileSync(file, fs.readFileSync(file, "utf8").slice(-GAME_LOG_MAX / 2));
+    fs.appendFileSync(file, line);
+  } catch {}
+}
 
 /** 載入遊戲，失敗（沒網路、遊戲站暫時連不上）就每隔一段時間再試，直到成功。 */
 async function loadGame(g) {
   clearTimeout(g.retryTimer);
   g.lastRaw = undefined;
+  g.loading = true;
   try {
     await g.win.loadURL(GAME_URL);
   } catch (e) {
+    g.loading = false;
     if (g.win.isDestroyed()) return;
-    console.error(`第 ${g.index + 1} 隻的遊戲載入失敗，${GAME_RETRY_MS / 1000} 秒後再試：`, e.message);
+    logGame(g, `遊戲載入失敗，${g.failures === 0 ? 1 : GAME_RETRY_MS / 1000} 秒後再試：${e.message}`);
     // 上次不正常結束有可能把遊戲的離線快取弄壞，把快取清掉讓它重新下載；存檔在 localStorage，不在清除範圍內
     await g.win.webContents.session.clearStorageData({ storages: ["serviceworkers", "cachestorage"] }).catch(() => {});
     g.retryTimer = setTimeout(() => loadGame(g), g.failures++ === 0 ? 1000 : GAME_RETRY_MS);
     return;
   }
+  g.loading = false;
   g.failures = 0;
 }
 

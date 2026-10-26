@@ -218,6 +218,20 @@ async function run(t) {
     check("遊戲視窗藏起來時靜音、停在螢幕外（只露幾個像素）", g0.win.webContents.isAudioMuted() && parked.x + parked.width <= 4 && parked.y + parked.height <= 4 && shownBounds.x >= 0, JSON.stringify({ shownBounds, parked }));
     check("開關遊戲視窗大小、位置不會跑掉", again.width === shownBounds.width && again.height === shownBounds.height && again.x === shownBounds.x && again.y === shownBounds.y, JSON.stringify({ shownBounds, again }));
 
+    // 遊戲網頁當掉（白畫面）：自動重新載入，並記到 game-log.txt
+    g0.win.webContents.forcefullyCrashRenderer();
+    await sleep(500);
+    const crashed = g0.win.webContents.isCrashed();
+    await waitFor("當掉後重新載入", async () => !g0.win.webContents.isCrashed() && (await screenOf(t, g0)), 60000);
+    const log = fs.readFileSync(path.join(app.getPath("userData"), "game-log.txt"), "utf8");
+    check("遊戲網頁當掉自動重新載入、記到 game-log.txt", crashed && (await screenOf(t, g0)) && log.includes("遊戲網頁當掉"), `${await screenOf(t, g0)}／${log.trim().split("\n").pop()}`);
+    // 叫出遊戲時網頁不是遊戲（載入失敗停在空白頁）：馬上重新載入
+    await g0.win.loadURL("about:blank");
+    t.showGame(g0, true);
+    const blankFixed = await waitFor("叫出時重新載入", () => screenOf(t, g0), 60000).catch(() => null);
+    t.showGame(g0, false);
+    check("叫出遊戲時是空白頁就重新載入", !!blankFixed, String(blankFixed));
+
     // 遊戲設定的四種畫面尺寸：遊戲視窗跟著換大小（手機 9:16、PC 16:9 遊戲區剛好那個比例；全螢幕＝網頁全螢幕）
     const pickMode = (mode) => t.inGame(g0, `(() => { localStorage.setItem("dragonSlayer_display", "${mode}"); if (typeof setDisplayMode === "function") setDisplayMode("${mode}"); })()`);
     t.showGame(g0, true);
