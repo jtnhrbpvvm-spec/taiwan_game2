@@ -70,7 +70,8 @@ npm run zones        # 黑暗大陸攻略重新產生資料後（../黑暗大陸
 | `index.html` | 給玩家看的下載與教學網頁（風格配合遊戲；封面、職業動作圖直接用遊戲站上的）。GitHub Pages 網址：`https://jtnhrbpvvm-spec.github.io/taiwan_game2/黑暗大陸桌寵/` |
 | `save-reader.js` | 解開遊戲加密的本機存檔（照抄遊戲 `guard.js` 的解法，只讀） |
 | `names.json` | 職業動作圖、變身外觀（`morphs`／`morphForms`／`defaultMorph`，變身時桌寵跟著變）、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |
-| `game-preload.js` | 讓遊戲以為一直在前景，藏起來也照常掛機 |
+| `game-preload.js` | 讓遊戲永遠以為自己開在畫面上（`document.hidden` 一律 false）。**不能**回報「在背景」：遊戲在背景時大地圖的 `sceneUpdate` 停掉、不走過去找怪，節奏跟看著時不同，實際不會掉寶（使用者 2026-10-26 回報）。**節約效能模式**（`main.js` 的 `setGameHidden`／`setPowerSave`）只把藏著的遊戲 `devicePixelRatio` 回報成 0.5，地圖畫布少畫很多像素，邏輯照常；不改遊戲程式、不碰防改檔（存檔簽章、記憶體數值） |
+| `main.js` 的 `parkGame`／`showGame` | 遊戲視窗「藏起來」＝停在螢幕外只露 1～2 像素、幾乎透明、不在工作列、滑鼠穿過，但仍是顯示中的視窗。沒顯示（hide／show:false）的視窗遊戲畫面迴圈一秒只跑 1～2 次（2026-10-26 實測；顯示中 165 次），找怪節奏會不對；安卓版也是 1 像素懸浮視窗 |
 | `pet/` | 桌寵畫面：走動、站著、拖曳、跳、進帳時揮一下／升級時施法、頭上飄字、調整大小 |
 | `ui/` | 操作說明、選擇外觀（12 職業＋調色） |
 | `selftest.js` | 自我測試 |

@@ -70,6 +70,47 @@ async function run(t) {
     check("重新載入後自動繼續冒險", true);
     t.settings().autoContinue = false;
 
+    // ── 節約效能模式 ──
+    // 不管開不開，遊戲一律回報看得見（回報在背景的話大地圖不找怪、不掉寶）；開著時只有藏著的遊戲解析度降低（devicePixelRatio 0.5）
+    const vis = () => t.inGame(g0, `JSON.stringify({ hidden: document.hidden, dpr: devicePixelRatio })`);
+    // getAppMetrics 的 CPU 是「上一次呼叫到這一次」的平均，先叫一次當起點
+    const cpu = async (ms) => {
+      const pids = { game: g0.win.webContents.getOSProcessId(), pet: t.petWin.webContents.getOSProcessId() };
+      app.getAppMetrics();
+      await sleep(ms);
+      const m = app.getAppMetrics();
+      const of = (pid) => m.find((x) => x.pid === pid)?.cpu?.percentCPUUsage ?? -1;
+      const gpu = m.filter((x) => x.type === "GPU").reduce((s, x) => s + x.cpu.percentCPUUsage, 0);
+      return `遊戲 ${of(pids.game).toFixed(1)}%・桌寵 ${of(pids.pet).toFixed(1)}%・GPU ${gpu.toFixed(1)}%`;
+    };
+    const visOff = await vis();
+    const cpuOff = await cpu(6000);
+    t.setPowerSave(true);
+    await sleep(500);
+    const visOnHidden = await vis();
+    const cpuOn = await cpu(6000);
+    // 計時器沒被節流：1.5 秒的計時器要準時到（被節流的背景分頁會拖到 1 秒一次以上，遊戲主迴圈就會變慢）
+    const gameTicking = await t.inGame(g0, `(async () => { const s1 = Date.now(); let n = 0; const id = setInterval(() => n++, 100); await new Promise((r) => setTimeout(r, 1500)); clearInterval(id); return { ms: Date.now() - s1, ticks: n }; })()`);
+    // 藏著的遊戲畫面迴圈要全速跑（沒顯示的視窗一秒只有 1～2 次，大地圖找怪的節奏會跟看著時不一樣）
+    const rafHidden = await t.inGame(g0, `(async () => { let n = 0; const s = Date.now(); const f = () => { n++; if (Date.now() - s < 2000) requestAnimationFrame(f); }; requestAnimationFrame(f); await new Promise((r) => setTimeout(r, 2100)); return n / 2; })()`);
+    check("藏著的遊戲畫面迴圈照常跑（每秒 30 次以上）", rafHidden >= 30, `${rafHidden} 次／秒`);
+    t.showGame(g0, true);
+    await sleep(500);
+    const visShown = await vis();
+    t.showGame(g0, false);
+    await sleep(500);
+    const visHiddenAgain = await vis();
+    t.setPowerSave(false);
+    await sleep(300);
+    const visAfterOff = await vis();
+    const [off, onHidden, shown, hiddenAgain, afterOff] = [visOff, visOnHidden, visShown, visHiddenAgain, visAfterOff].map((v) => JSON.parse(v));
+    check("節約效能模式：遊戲永遠回報看得見", [off, onHidden, shown, hiddenAgain, afterOff].every((v) => v.hidden === false), JSON.stringify([off, onHidden, shown, hiddenAgain, afterOff]));
+    check("節約效能模式：只有藏著時解析度降低，叫出來／關掉就恢復", onHidden.dpr === 0.5 && hiddenAgain.dpr === 0.5 && off.dpr > 0.5 && shown.dpr === off.dpr && afterOff.dpr === off.dpr,
+      `一般 ${off.dpr}／藏著 ${onHidden.dpr}／叫出來 ${shown.dpr}／關掉 ${afterOff.dpr}`);
+    check("節約效能模式：遊戲計時器照常跑（100ms 的計時器 1.5 秒內跑 13 次以上）", gameTicking?.ms < 1800 && gameTicking?.ticks >= 13, JSON.stringify(gameTicking));
+    console.log(`       CPU 一般：${cpuOff}`);
+    console.log(`       CPU 節約效能：${cpuOn}`);
+
     // ── 收入總覽 ──
     // 遊戲的訊息框函式在線上（混淆）版也叫得到
     const fns = await t.inGame(g0, `[typeof toggleLogDrawer, typeof setLogPopTab].join(",")`);
@@ -122,11 +163,18 @@ async function run(t) {
     await shot(t.petWin, "pet-morph");
     t.games[0].lastRaw = { ...t.games[0].lastRaw, morph: null };
 
-    g0.win.show();
+    t.showGame(g0, true);
     await sleep(1500);
     await shot(g0.win, "game");
-    g0.win.hide();
-    check("遊戲視窗藏起來時靜音", g0.win.webContents.isAudioMuted());
+    const shownBounds = g0.win.getBounds();
+    t.showGame(g0, false);
+    const parked = g0.win.getBounds();
+    // 再開關一次：大小不能一直變大（螢幕縮放的進位）
+    t.showGame(g0, true);
+    const again = g0.win.getBounds();
+    t.showGame(g0, false);
+    check("遊戲視窗藏起來時靜音、停在螢幕外（只露幾個像素）", g0.win.webContents.isAudioMuted() && parked.x + parked.width <= 4 && parked.y + parked.height <= 4 && shownBounds.x >= 0, JSON.stringify({ shownBounds, parked }));
+    check("開關遊戲視窗大小、位置不會跑掉", again.width === shownBounds.width && again.height === shownBounds.height && again.x === shownBounds.x && again.y === shownBounds.y, JSON.stringify({ shownBounds, again }));
 
     // 兩隻桌寵：第二隻是另一個遊戲視窗、另一份登入資料，看不到第一隻的角色
     t.setPetCount(2);

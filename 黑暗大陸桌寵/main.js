@@ -24,6 +24,8 @@ const CLICK_THROUGH_KEY = "Control+Alt+P";
 const MAX_LOOT_SHOWN = 4; // 一次存檔之間撿到很多種東西時，桌寵頭上最多冒幾個
 const POLL_MS = 3000;
 const PET_STRIP_HEIGHT = 320; // 要放得下拉到最大的桌寵＋頭上的提示框
+const GAME_WIDTH = 480; // 遊戲視窗大小（藏起來時大小不變，遊戲才不用一直重排版面）
+const GAME_HEIGHT = 860;
 const DEFAULT_MODEL = "knight"; // 還沒有角色時先放騎士
 const MAX_PETS = 10; // 桌面上最多同時幾隻桌寵（＝最多同時掛幾個帳號）
 const LOGIN_TIMEOUT_MS = 30000; // 按了登入這麼久還沒登入成功就當作失敗
@@ -57,6 +59,8 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   autoContinue: true,
   // 角色用變形卷軸變身時，桌寵也換成變身的樣子（自己選了外觀的那幾隻照自己選的）
   followMorph: true,
+  // 節約效能模式：遊戲視窗藏著時降低遊戲畫面解析度（邏輯、掉寶照常），桌寵動畫也放慢。見 game-preload.js
+  powerSave: false,
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { exp: false, loot: false },
   // 一般模式下桌寵頭上要飄哪些字
@@ -99,13 +103,14 @@ const partitionOf = (i) => (accountOf(i) ? `persist:acct-${accountOf(i)}` : `per
 const accountLabel = (g) => (g.accountId ? accounts.nameOf(g.accountId) : "訪客（不登入）");
 
 function createGame(index) {
-  const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined,
+  const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds: undefined,
     lastRaw: undefined, lastState: undefined, continued: false, noSaveSince: 0, login: { state: "idle", at: 0 },
     retryTimer: undefined, failures: 0 };
   g.win = new BrowserWindow({
-    width: 480,
-    height: 860,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     show: false,
+    skipTaskbar: true,
     title: `黑暗大陸（第 ${index + 1} 隻・${accountLabel(g)}）`,
     autoHideMenuBar: true,
     webPreferences: {
@@ -115,10 +120,16 @@ function createGame(index) {
     },
   });
   g.win.webContents.setAudioMuted(true);
+  parkGame(g);
   // 關視窗＝藏起來，遊戲繼續跑；真的要關從桌寵右鍵或系統匣「結束」
   g.win.on("close", (e) => {
     if (quitting || g.closing) return;
     e.preventDefault();
+    showGame(g, false);
+  });
+  // 縮到最小化的話 Chromium 會把畫面停掉（跟沒顯示一樣），當成藏起來：放回螢幕外繼續跑
+  g.win.on("minimize", () => {
+    g.win.restore();
     showGame(g, false);
   });
   // 遊戲會把標題改成遊戲名稱，蓋回來才分得出是哪一隻、哪個帳號
@@ -133,6 +144,7 @@ function createGame(index) {
     g.noSaveSince = 0;
     g.login = { state: "idle", at: 0 };
     g.version = await inGame(g, `document.querySelector('script[src*="data/game.js?v="], script[src*="data/config.js?v="]')?.src.match(/v=([\\w.-]+)/)?.[1]`);
+    setGameHidden(g);
   });
   loadGame(g);
   return g;
@@ -154,17 +166,69 @@ function syncGames() {
   }
 }
 
-function showGame(g, on) {
-  if (!g || g.win.isDestroyed()) return;
-  if (on) {
-    g.win.show();
-    g.win.focus();
-  } else g.win.hide();
-  // 遊戲以為自己一直看得見（見 game-preload.js），藏起來時背景音樂不會自己停，這裡幫它靜音
-  g.win.webContents.setAudioMuted(!on);
+/**
+ * 「藏起來」＝把遊戲視窗停在螢幕外面（只留 1 像素在角落）、幾乎透明、不在工作列、滑鼠穿過去，但它還是「顯示中」的視窗。
+ * 不能用 hide()／show:false：沒顯示的視窗 Chromium 不畫畫面，遊戲的地圖迴圈（requestAnimationFrame）一秒只跑 1～2 次
+ * （2026-10-26 實測，顯示中是 165 次），大地圖找怪、走過去打的節奏就跟玩家看著時不一樣——
+ * 遊戲在背景時大地圖不會掉東西（使用者回報），所以要讓它跟真的開在畫面上一模一樣。安卓版也是用同樣的方法（1 像素懸浮視窗）。
+ */
+function parkGame(g) {
+  const area = screen.getPrimaryDisplay().workArea;
+  g.win.setSkipTaskbar(true);
+  g.win.setIgnoreMouseEvents(true);
+  g.win.setFocusable(false);
+  g.win.setOpacity(0.01);
+  g.win.setBounds({ x: area.x - GAME_WIDTH + 1, y: area.y - GAME_HEIGHT + 1, width: GAME_WIDTH, height: GAME_HEIGHT });
+  if (!g.win.isVisible()) g.win.showInactive();
 }
 
-const toggleGame = (g = games[0]) => g && showGame(g, !g.win.isVisible());
+function showGame(g, on) {
+  if (!g || g.win.isDestroyed()) return;
+  if (on === g.shown) {
+    if (on) g.win.focus();
+    return;
+  }
+  g.shown = on;
+  if (on) {
+    // 叫出來：放回上次的位置（第一次放螢幕中間），恢復成一般視窗
+    const area = screen.getPrimaryDisplay().workArea;
+    // 只記位置、大小一律用固定值（螢幕縮放比例會讓 getBounds 多 1～2 像素，記整個的話每開關一次就變大一點）
+    const at = g.bounds ?? { x: area.x + Math.round((area.width - GAME_WIDTH) / 2), y: area.y + Math.round((area.height - GAME_HEIGHT) / 2) };
+    g.win.setBounds({ x: at.x, y: at.y, width: GAME_WIDTH, height: GAME_HEIGHT });
+    g.win.setOpacity(1);
+    g.win.setIgnoreMouseEvents(false);
+    g.win.setFocusable(true);
+    g.win.setSkipTaskbar(false);
+    g.win.show();
+    g.win.focus();
+  } else {
+    const { x, y } = g.win.getBounds();
+    g.bounds = { x, y };
+    parkGame(g);
+  }
+  // 遊戲以為自己一直看得見（見 game-preload.js），藏起來時背景音樂不會自己停，這裡幫它靜音
+  g.win.webContents.setAudioMuted(!on);
+  setGameHidden(g);
+}
+
+/**
+ * 節約效能模式：遊戲視窗藏著時把遊戲的畫面解析度降低（地圖畫布要畫的像素少很多），叫出來或關掉這個模式時恢復。
+ * 遊戲一律以為自己看得見（回報在背景的話大地圖不會找怪、不會掉東西），邏輯完全照常。見 game-preload.js。
+ */
+function setGameHidden(g) {
+  if (!g || g.win.isDestroyed()) return;
+  const lowRes = settings.powerSave && !g.shown;
+  inGame(g, `window.__petLowRes ? __petLowRes(${lowRes}) : null`);
+}
+
+function setPowerSave(on) {
+  settings.powerSave = on;
+  saveSettings();
+  games.forEach(setGameHidden);
+  petWin?.webContents.send("pet:power-save", on);
+}
+
+const toggleGame = (g = games[0]) => g && showGame(g, !g.shown);
 
 const inGame = (g, code) => (g.win.isDestroyed() ? Promise.resolve(undefined) : g.win.webContents.executeJavaScript(code).catch(() => undefined));
 
@@ -303,6 +367,7 @@ function createPetWindow() {
     sendStay();
     petWin.webContents.send("pet:focus-show", settings.focusShow);
     petWin.webContents.send("pet:normal-show", settings.normalShow);
+    petWin.webContents.send("pet:power-save", settings.powerSave);
     games.forEach(sendState);
   });
 }
@@ -536,7 +601,7 @@ function buildMenu(petIndex = 0) {
   return Menu.buildFromTemplate([
     ...updateItems,
     ...(updateItems.length ? [{ type: "separator" }] : []),
-    { label: `${g?.win.isVisible() ? "隱藏" : "顯示"}${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) },
+    { label: `${g?.shown ? "隱藏" : "顯示"}${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) },
     accountMenu(petIndex),
     { type: "separator" },
     {
@@ -582,6 +647,12 @@ function buildMenu(petIndex = 0) {
     { label: "帳號管理…", click: openAccounts },
     { label: "收入總覽…（這次啟動以來）", click: openIncome },
     { type: "separator" },
+    {
+      label: "節約效能模式（遊戲藏著時降低畫面解析度，照常掛機掉寶）",
+      type: "checkbox",
+      checked: settings.powerSave,
+      click: (item) => setPowerSave(item.checked),
+    },
     {
       label: "變身時桌寵跟著變",
       type: "checkbox",
@@ -852,7 +923,7 @@ function diffEvents(prev, next) {
 }
 
 async function pollGame(g) {
-  const r = await inGame(g, READ_STATE(!g.win.isVisible()));
+  const r = await inGame(g, READ_STATE(!g.shown));
   if (!r || g.win.isDestroyed()) return;
   await autoContinue(g, r);
   income.recordLoot(g.index, r.loot);
@@ -934,7 +1005,7 @@ app.whenReady().then(async () => {
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
     openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
-    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin,
+    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame,
     quit: () => app.quit() });
 });
 

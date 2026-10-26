@@ -301,9 +301,15 @@ function hideSpeech() {
   speech.classList.remove("on");
 }
 
+// 節約效能模式：每秒畫 12 次就好（人物圖一格本來就 50～150 毫秒），不用跟著螢幕每秒 60 次
+const POWER_SAVE_FRAME_MS = 83;
+let powerSave = false;
+window.petApi.onPowerSave((on) => (powerSave = !!on));
+const nextFrame = () => (powerSave ? setTimeout(() => frame(performance.now()), POWER_SAVE_FRAME_MS) : requestAnimationFrame(frame));
+
 let lastTime = performance.now();
 function frame(now) {
-  const dt = Math.min(100, now - lastTime);
+  const dt = Math.min(powerSave ? 200 : 100, now - lastTime);
   lastTime = now;
   for (const p of pets) {
     if (!p.sprite) continue;
@@ -313,7 +319,7 @@ function frame(now) {
     draw(p);
   }
   placePanels();
-  requestAnimationFrame(frame);
+  nextFrame();
 }
 requestAnimationFrame(frame);
 

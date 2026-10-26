@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "shell": 1,
   "files": [
     {
@@ -14,8 +14,8 @@
     },
     {
       "path": "game-preload.js",
-      "sha256": "7ebc2a699e4c5cf6ef08b40553f9d5556e04c6e54f7cee910388fb8ff2f6b752",
-      "size": 737
+      "sha256": "a87e8e983c5d8c0ba83e9aae07b3de4ca381c8f31f7b26cb6c4958184e9c9678",
+      "size": 1626
     },
     {
       "path": "income-preload.js",
@@ -29,8 +29,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "ed8e58402f0ce709d6bde5588a4ac0c146936ce6edd8e09643a465b8626219e1",
-      "size": 44335
+      "sha256": "1b8fa971959a2c75f5359aa4decd679d830eab2bfebfe177163f031b9321bfc1",
+      "size": 47752
     },
     {
       "path": "names.json",
@@ -39,8 +39,8 @@
     },
     {
       "path": "pet-preload.js",
-      "sha256": "d6c5de56f2afca63cae110bd7eb655235a87fe4eae936a41d42819c89916fbd8",
-      "size": 1716
+      "sha256": "57dcdf8e4d9740bbb18683ed8e83396786ad7a4d6f172733d807632182e895b6",
+      "size": 1838
     },
     {
       "path": "pet/index.html",
@@ -49,8 +49,8 @@
     },
     {
       "path": "pet/pet.js",
-      "sha256": "3d1562de93d041b9fa3b9972d62caea2856ebc1f81223b33d61352f22717584f",
-      "size": 24037
+      "sha256": "fa206ea0205e7e3bcecc05b882a782742c4deace5a4300c3695de9d33c052117",
+      "size": 24410
     },
     {
       "path": "picker-preload.js",
@@ -64,8 +64,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "82e56110b29e23fd992137f45e458ca82ba983a94046f3c2d5f475c5acce2e15",
-      "size": 17051
+      "sha256": "eb83131542f9401f8f66f2bc768c7246554b6dba24c733e13ebb6e6de4604643",
+      "size": 21020
     },
     {
       "path": "ui/accounts.html",
@@ -79,8 +79,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "b7d4c015c19ded1d256c4df685435dec5036a6e3ed2e1f4947d4f864a8c687cd",
-      "size": 6957
+      "sha256": "3d04d1786f899098c92c36d1a01badabcf238e010ec0168cede9ceda1c08685d",
+      "size": 7469
     },
     {
       "path": "ui/income.html",

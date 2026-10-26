@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("petApi", {
   // 更新提醒：第一隻頭上跳出對話框（勿擾時主程式不會送）
   onSay: (cb) => ipcRenderer.on("pet:say", (_e, text) => cb(text)),
   onClickThrough: (cb) => ipcRenderer.on("pet:click-through", (_e, on) => cb(on)),
+  // 節約效能模式：桌寵動畫放慢
+  onPowerSave: (cb) => ipcRenderer.on("pet:power-save", (_e, on) => cb(on)),
   onOpenSizer: (cb) => ipcRenderer.on("pet:open-sizer", (_e, index) => cb(index)),
   setInteractive: (on) => ipcRenderer.send("pet:interactive", on),
   // index＝第幾隻桌寵的遊戲視窗
