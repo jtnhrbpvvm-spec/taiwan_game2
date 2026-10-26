@@ -11,7 +11,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V13';
+const D2ZH_VERSION = 'V14';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -685,11 +685,55 @@ return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '停用修改�
 d2edEl('p', { class: 'd2ed-note' }, '隱藏修改功能，書籤不再強制關閉排行榜上傳。要恢復上傳，請到營地儲物箱旁的排行榜書自行開啟「傳送我的紀錄」（改過的存檔仍可能被排行榜拒收）。'),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: relock }, '停用修改功能')));
 }
+// ====== 效能模式 ======
+// 遊戲每格都用 devicePixelRatio 決定畫面解析度（build 20261026：render scale 的 tick），把它壓到 0.5 就改用低解析度渲染，最省顯示卡。
+// 另外把遊戲「影像選項 → 技能特效」（localStorage d2s:skill-effects，0～1）調到 0；遊戲只在開頁時讀一次，重新載入後才生效。
+const D2ED_PERF_KEY = 'd2zh:perf';
+const D2ED_PERF_DPR = 0.5;
+const D2ED_FX_KEY = 'd2s:skill-effects';
+const D2ED_FX_BACKUP_KEY = 'd2zh:perfSkillEffects';
+function d2edPerfOn() {
+try { return localStorage.getItem(D2ED_PERF_KEY) === '1'; } catch (_) { return false; }
+}
+// window.devicePixelRatio 是 window 自己的屬性：記下原本的寫法，關閉時整個放回去
+const D2ED_DPR_DESC = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+function d2edPerfApplyDpr() {
+try {
+if (d2edPerfOn()) Object.defineProperty(window, 'devicePixelRatio', { configurable: true, enumerable: true, get: () => D2ED_PERF_DPR, set() {} });
+else if (D2ED_DPR_DESC) Object.defineProperty(window, 'devicePixelRatio', D2ED_DPR_DESC);
+else delete window.devicePixelRatio;   // 原本在 Window.prototype 上：刪掉自己蓋的就會回到原本的值
+} catch (e) { console.warn('[D2 中文] 效能模式', e); }
+}
+function d2edPerfSet(on) {
+try {
+if (on) {
+const fx = localStorage.getItem(D2ED_FX_KEY);
+localStorage.setItem(D2ED_FX_BACKUP_KEY, fx === null ? '' : fx);
+localStorage.setItem(D2ED_FX_KEY, '0');
+localStorage.setItem(D2ED_PERF_KEY, '1');
+} else {
+const fx = localStorage.getItem(D2ED_FX_BACKUP_KEY);
+if (fx) localStorage.setItem(D2ED_FX_KEY, fx); else localStorage.removeItem(D2ED_FX_KEY);
+localStorage.removeItem(D2ED_FX_BACKUP_KEY);
+localStorage.removeItem(D2ED_PERF_KEY);
+}
+} catch (e) { alert('無法儲存設定：' + e); return; }
+d2edPerfApplyDpr();
+}
+function d2edPerfSection() {
+const on = d2edPerfOn();
+const toggle = () => { d2edPerfSet(!on); d2edRender(); d2edToast(on ? '效能模式已關閉' : '效能模式已開啟'); };
+return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '效能模式'),
+d2edEl('p', { class: 'd2ed-note' }, '電腦或手機跑不動時開啟：畫面改用低解析度（會比較模糊），技能特效調到最淡。'),
+d2edEl('p', { class: 'd2ed-note' }, '解析度馬上生效；技能特效要重新載入遊戲後才會變淡（也可以在 選項 → 影像選項 → 技能特效 自己調）。'),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉效能模式' : '開啟效能模式'),
+d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
+}
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
 // 遊戲中改這一局的人物；在主選單（不在一局裡）改恰西的永久升級
 const inRun = !document.body.classList.contains('no-run');
-const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edLockAgainSection(), d2edUpdateSection()] : [d2edLockSection(), d2edUpdateSection()];
+const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edPerfSection(), d2edLockAgainSection(), d2edUpdateSection()] : [d2edLockSection(), d2edPerfSection(), d2edUpdateSection()];
 body.replaceChildren(...sections.filter(Boolean));
 }
 function d2edOpen() {
@@ -709,6 +753,12 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。
 const D2ZH_NEWS = [
+{ ver: 'V14', date: '2026-10-26', game: '遊戲 20261026.2', items: [
+'新增「效能模式」（選項 → 書籤修改）：開啟後畫面改用低解析度、技能特效調到最淡，電腦或手機跑不動時使用',
+'恐懼層九波怪物、跳層開放、波數顯示，以及恐懼層重新開始的說明',
+'隱藏任務「破碎之光」的碎片文字、泰瑞爾之翼和泰瑞爾的台詞',
+'物品過濾的「保留」、獨特物品收藏標示、屬性範圍（STAT RANGES）、儲物箱搜尋',
+'赦免徽記、阿卡拉重新抽選歸還典籍、排行榜的驗證原因、德魯伊變身說明'] },
 { ver: 'V13', date: '2026-10-26', game: '遊戲 20261025.1', items: [
 '「書籤修改」的永久升級跟上恰西的新項目：跑步／行走速度、施法速度、出售價格、藥水治療量、經驗值、五種穿透、傭兵生命／抗性／防禦',
 '永久升級可以改到上限以上（最多再加 999 級，跟遊戲一樣超過的部分效果遞減，旁邊會顯示實際約幾級）；重抽、略過、放逐、復活仍不能超過上限',
@@ -763,6 +813,7 @@ document.body.append(box);
 function d2edInstall() {
 window.__D2ED = D2ED; // 除錯用（在主控台看抓到的人物、選單位置）
 d2edKeepLeaderboardOff();
+d2edPerfApplyDpr();
 // 電腦版：開遊戲時的背景檢查做完會呼叫這裡（d2zh-inject.cjs）。下載到比這個頁面新的翻譯檔時：
 // 剛開遊戲、還在選單（不在一局裡）就直接重新載入用新版；否則記下來，「書籤修改」面板會出現「重新載入」按鈕。
 window.__d2zhAutoChecked = result => {
@@ -883,6 +934,63 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 2026-10-26 遊戲改版（build 20261026.1／.2）新增的字串
+// 恐懼層波數、跳層
+'Cleared in *': '{0} 內通關', 'Terror * is open.': '恐懼第 {0} 層已開放。', 'Terror * is open, * tiers ahead.': '恐懼第 {0} 層已開放，跳過 {1} 層。',
+'A replay opens no tier. Terror * stays open.': '重玩不會開放新的層。恐懼第 {0} 層維持開放。', '+* under *': '{1} 內 +{0}', '+1 slower': '較慢 +1',
+'All five acts in *': '五幕全部在 {0} 內完成', 'Terror starts again': '恐懼層重新開始',
+'Terror tiers now come in nine waves of monsters, then the boss. Every hero climbs again from tier 1, and the Terror leaderboard starts empty. Your heroes keep their levels, builds and gear.': '恐懼層現在是九波怪物，最後才是首領。每位英雄都從第 1 層重新攀升，恐懼層排行榜也清空重來。英雄的等級、技能配置和裝備都會保留。',
+'Wave # of # · # left': '第 {0}／{1} 波 · 剩 {2} 隻',
+// 物品過濾、收藏
+'KEEP': '保留', 'Leaves magic items except charms on the floor, unnamed': '護身符以外的魔法物品留在地上，不顯示名稱',
+'Sells magic items except charms as you pick them up': '撿起護身符以外的魔法物品時直接賣掉', 'Sells magic and rare items except charms as you pick them up': '撿起護身符以外的魔法和稀有物品時直接賣掉',
+'Sells what isn\'t for your class, except charms': '賣掉不是你職業用的物品（護身符除外）', 'Keeps only charms and the rares your class can use': '只保留護身符和你職業能用的稀有物品',
+'Magic charms. At KEEP no other line hides or sells them': '魔法護身符。設成「保留」時，其他規則不會隱藏或賣掉它們',
+'KEEP wins over HIDDEN and SELL. Otherwise the strictest line wins': '「保留」優先於「隱藏」和「出售」。其他情況以最嚴格的規則為準',
+'IN MY COLLECTION': '已收藏', 'A second copy may roll better than the one kept': '第二件的數值可能比收藏的那件更好',
+'Not in your collection': '尚未收藏', 'In your collection': '已收藏', 'Magic and rare items of this kind': '這類的魔法和稀有物品',
+'It never hides or sells new uniques, quest items or what you drop. Charsi\'s Buy Back keeps what\'s sold': '不會隱藏或賣掉新的獨特物品、任務道具或你自己丟下的東西。賣掉的物品可以在恰西的「回購」買回來',
+'STAT RANGES': '屬性範圍', 'Shows roll ranges, as Alt does': '顯示屬性可能的數值範圍，跟按住 Alt 一樣', 'Search the stash': '搜尋儲物箱',
+// 排行榜驗證
+'Akara\'s re-draft gives back a legit hero\'s, free': '在阿卡拉免費重新抽選，會還原成合規英雄的點數',
+'Sent without its climb history': '傳送時沒有附帶攀升紀錄', 'The tier below was never recorded': '下面一層從來沒有紀錄', 'Climb history edited': '攀升紀錄被修改過',
+'Play time doesn\'t match the climb': '遊玩時間跟攀升紀錄對不上', 'Clear times don\'t match the climb': '通關時間跟攀升紀錄對不上',
+'Far stronger than any other of its class': '遠比同職業的其他紀錄強', 'Wears an item her save couldn\'t have had then': '穿著當時存檔裡不可能有的物品',
+'Loaded from a save made before a death': '從死亡前的存檔讀取', 'Not ranked: climb not verified': '不列入排名：攀升未經驗證',
+'Wearing a not legit item': '穿著不合規的物品', 'Too many stat points': '屬性點數太多', 'Too many skill points': '技能點數太多',
+'An earlier hero is not legit': '先前的英雄不合規', 'Another hero is not legit': '另一位英雄不合規', 'Save edited outside the game': '存檔在遊戲外被修改過',
+'Runs not sent to the leaderboard': '紀錄不會傳送到排行榜',
+// 遊戲檔案、存檔
+'Missing from your files: *': '你的檔案裡沒有：{0}', 'Extract again from a Diablo II with Lord of Destruction\'s files (d2exp.mpq)': '請從有毀滅之王檔案（d2exp.mpq）的暗黑破壞神 II 重新擷取',
+'An older version played your save for a while and could not keep everything on your items or Charsi\'s wares. It was kept aside, and is back now.': '舊版遊戲曾經讀過你的存檔一段時間，沒辦法保留物品和恰西貨品上的所有內容。那些內容先另外保存起來，現在已經恢復了。',
+'The *\'s art didn\'t load. Try again in a moment': '{0}的圖像沒有載入。請稍後再試一次',
+// 德魯伊變身
+'A werewolf with +#% life, you claw # every #s, +#% Critical Strike.': '變成狼人，+{0}% 生命，每 {2} 秒爪擊 {1}，+{3}% 致命一擊。',
+'A werebear with +#% life, you take #% less physical damage, splashing #.': '變成熊人，+{0}% 生命，受到的物理傷害減少 {1}%，濺射 {2}。',
+'As a werewolf, you strike all in reach # times every #s for # each.': '以狼人形態每 {1} 秒攻擊範圍內所有目標 {0} 次，每次 {2}。',
+'As a werebear you hit for # plus # a charge, up to #. Full charges stun.': '以熊人形態攻擊 {0}，每層充能多 {1}，最多 {2} 層。充能滿時會暈眩。',
+'You Maul as a werebear, every #rd swing stomping the blow out to all within # yards, stunning.': '以熊人形態槌擊，每第 {0} 次揮擊踐踏地面，把這一擊傳給 {1} 碼內所有怪物並暈眩。',
+'Your wereforms have +#% more life, +#% a level.': '變身形態生命 +{0}%，每級再 +{1}%。', 'Your wereforms have +#% more life.': '變身形態生命 +{0}%。',
+// 隱藏任務「破碎之光」
+'The Shattered Light': '破碎之光', 'Tyrael\'s Wings': '泰瑞爾之翼', 'Tyrael': '泰瑞爾', 'Shards found: * of 10': '已找到碎片：{0}／10',
+'A shard of light found. Others lie scattered across the world, off the beaten path.': '找到一塊光之碎片。其他碎片散落在世界各地，人跡罕至的地方。',
+'Bring the Shattered Light to the Worldstone Chamber, and defeat the Lord of Destruction there.': '把破碎之光帶到世界之石大殿，在那裡打敗毀滅之王。',
+'A shard of pale light, warm as a living thing. It hums of something vast, and broken. There are others; you can feel them, far across Sanctuary.': '一塊蒼白的光之碎片，溫暖得像活物。它低鳴著某種巨大而破碎的東西。還有其他碎片，你能感覺到它們，遠在庇護所的另一端。',
+'The two shards sing to each other, faintly.': '兩塊碎片微弱地互相吟唱。',
+'Three. The light within them stirs, restless, as if it remembers a shape.': '三塊。其中的光不安地翻動，彷彿記得某個形體。',
+'Four shards. In their glow, for a moment, you glimpse a mountain crowned in fire.': '四塊碎片。在它們的光芒中，你一瞬間瞥見一座頂著烈焰之冠的山。',
+'Half the light is gathered. It grows heavier in your hands, longing for its home.': '光已聚集了一半。它在你手中越來越沉，渴望回到它的歸處。',
+'The shards whisper of Arreat, of a stone that held the world\'s heart.': '碎片低語著亞瑞特，低語著那塊曾承載世界之心的石頭。',
+'Seven. Something watches from beyond the Heavens.': '七塊。有什麼東西正從天堂之外注視著。',
+'The light burns brighter in the dark places. It does not fear them.': '光在黑暗之處燃得更亮。它不畏懼黑暗。',
+'Nine. One shard more; the others tremble at its absence.': '九塊。還差一塊；其他碎片因它的缺席而顫動。',
+'The ten shards blaze as one. They would return to the place where the world\'s heart was broken.': '十塊碎片合而為一地燃燒。它們想回到世界之心破碎的地方。',
+'You have gathered what was scattered, nephalem. This light was mine before it was the world\'s. Wear it, and let the darkness see you coming.': '奈非天，你把散落的東西聚集起來了。這道光在屬於世界之前，原本屬於我。戴上它，讓黑暗看見你的到來。',
+// 阿卡拉重新抽選、赦免徽記
+'Cain\'s Tomes and Books come back to read again': '凱恩的典籍和技能之書會還給你，可以再讀一次', 'Each paid re-draft costs * more, up to * gold': '每次付費重新抽選貴 {0}，最多 {1} 金幣',
+'A free re-draft, Tomes and Books too, in a run or the camp': '免費重新抽選一次（連典籍和技能之書也還給你），一局中或營地都能用',
+'Open the character screen (C) in a run or the camp to use it': '在一局中或營地打開角色畫面（C）使用', 'Tap Character in a run or the camp to use it': '在一局中或營地點一下「角色」使用',
+'Use it after your first Baal kill': '第一次打倒巴爾之後才能使用', 'Use it in your hero\'s own run or in the camp': '在這位英雄自己的一局中或營地使用',
 // 選單、按鈕
 'PLAY': '開始遊戲', 'Play': '開始遊戲', 'RESUME': '繼續遊戲', 'SAVES': '存檔', 'Your saves': '你的存檔', 'SAVE AND EXIT': '儲存並離開',
 'EXIT ANYWAY': '仍要離開', 'VIDEO OPTIONS': '影像選項', 'SHOW ITEMS': '顯示物品', 'SHOW ITEMS: *': '顯示物品：{0}', 'SKILL EFFECTS': '技能特效',
