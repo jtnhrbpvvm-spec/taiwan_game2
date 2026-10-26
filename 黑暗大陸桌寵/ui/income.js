@@ -69,8 +69,10 @@ function render() {
   }
 }
 
-// 目前地圖的怪物分布、可獲得物品（資料來自黑暗大陸攻略）；「看攻略」用瀏覽器開
+// 目前地圖的怪物分布、可獲得物品（資料來自黑暗大陸攻略）；「看攻略」和說明視窗裡的攻略連結用瀏覽器開
+// 點物品／怪物／書名跳出的說明視窗由 zones.js 自己處理
 const zoneBox = document.getElementById("zone");
+window.zoneGuideOpenUrl = (url) => window.incomeApi.openGuide(url);
 zoneBox.addEventListener("click", (e) => {
   const link = e.target.closest("[data-guide]");
   if (!link) return;

@@ -62,7 +62,7 @@ npm run zones        # 黑暗大陸攻略重新產生資料後（../黑暗大陸
 |---|---|
 | `main.js` | 主程式：每隻桌寵一個遊戲視窗、桌寵視窗、右鍵選單、系統匣、快捷鍵、讀存檔比出經驗／金幣／掉寶事件、自動登入與自動繼續冒險 |
 | `accounts.js`、`accounts-preload.js`、`ui/accounts.*` | 帳號檔（加密存密碼）與帳號管理視窗 |
-| `zones.js`、`tools/gen-zones.js`、`tools/zone-guide-helper.js` | 收入總覽「目前地圖」：每張地圖的等級、怪物分布（Lv／HP／經驗、稀有首領）、可獲得物品（機率、來源）＋「看攻略」連結。資料來自 `../黑暗大陸攻略/data/wiki-data.js`；電腦版、安卓版設定畫面都用 `../zones.js` 載入（安卓版的內容更新也帶這個檔） |
+| `zones.js`、`tools/gen-zones.js`、`tools/zone-guide-helper.js` | 收入總覽「目前地圖」：每張地圖的等級、怪物分布（Lv／HP／經驗、稀有首領）、可獲得物品（機率、來源）、可掉的魔法書／技能書（每隻怪的掉書率與書單）＋「看攻略」連結。點物品／怪物／書名跳出跟攻略網一樣的說明視窗：程式是攻略 `assets/wiki.js` 標「桌寵共用」那段原樣抄進來（`window.GUIDE_WIKI`），資料是攻略資料的一部分（`ZONE_GUIDE.wiki`）；說明視窗裡的攻略網頁連結用瀏覽器開。資料來自 `../黑暗大陸攻略/data/wiki-data.js`；電腦版、安卓版設定畫面都用 `../zones.js` 載入（安卓版的內容更新也帶這個檔） |
 | `income.js`、`income-preload.js`、`ui/income.*` | 收入總覽（這次啟動以來；啟動時清掉 `income-*.json` 重記）。拿到／賣出的東西來自遊戲「掉落紀錄」訊息框（`main.js` 的 `LOOT_COLLECTOR`，遊戲藏著時會幫忙打開） |
 | `boot.js`、`shell/content-store.js`、`shell/updates.js`、`update-source.json` | 外殼：選這次跑哪份內容、壞版退回、小檔案更新（必要時改下載完整安裝檔） |
 | `updates.js` | 遊戲版本檢查；桌寵自己的更新交給外殼（`global.petShell.updates`） |

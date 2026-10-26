@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "shell": 1,
   "files": [
     {
@@ -64,8 +64,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "eb83131542f9401f8f66f2bc768c7246554b6dba24c733e13ebb6e6de4604643",
-      "size": 21020
+      "sha256": "4d1767787880e9c0806c72e6f7c2cce55b7b983d3310801736b531c85fe362fb",
+      "size": 22922
     },
     {
       "path": "ui/accounts.html",
@@ -84,13 +84,13 @@
     },
     {
       "path": "ui/income.html",
-      "sha256": "c57b89283a9efe2bb4f96db660a98a4178c99374d37d0850ece5a5be559335c4",
-      "size": 3852
+      "sha256": "55d983994ed65613fdf88fe58ea8815733fe8a0a6ae6a88b845d463356e9dcfe",
+      "size": 3901
     },
     {
       "path": "ui/income.js",
-      "sha256": "8515d05f7ee23cf44ca15b03cfdace5b64e3945c1739a558fefee324da734de9",
-      "size": 4171
+      "sha256": "c4b206db382e36a51a92e95c7e4a7603c5dd9bcf3fc4dc4c47776baaa1ca057d",
+      "size": 4349
     },
     {
       "path": "ui/picker.html",
@@ -109,8 +109,8 @@
     },
     {
       "path": "zones.js",
-      "sha256": "fe7db03e5a8397bcea427e938713797449dca7a3b445a59f2d97ff59d78b89fd",
-      "size": 28316
+      "sha256": "de90830218ed3f919acbf753a87009ab77173830ac65d7ccd940845a24c509c0",
+      "size": 300541
     }
   ]
 }

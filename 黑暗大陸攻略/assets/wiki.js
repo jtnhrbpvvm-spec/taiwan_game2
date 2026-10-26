@@ -13,8 +13,10 @@ const PAGES = [
 // 我們做的桌寵：遊戲在背景掛機、桌面上留一隻角色
 const PET_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E9%BB%91%E6%9A%97%E5%A4%A7%E9%99%B8%E6%A1%8C%E5%AF%B5/';
 
+// ═══ 桌寵共用：開始 ═══（黑暗大陸桌寵 tools/gen-zones.js 會把這兩行之間整段抄進 zones.js，給收入總覽的說明視窗用；
+//    這段只能用 W 與這段裡自己的東西，不要碰頁面上的元素）
 // ───────── 基本工具 ─────────
-const $ = (s, el = document) => el.querySelector(s);
+const $ =(s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => n == null ? '—' : Math.round(n).toLocaleString('en-US');
@@ -246,6 +248,7 @@ function skillDetailHtml(id) {
         <div class="msec"><h4>可學職業</h4>${who.join('、') || '—'}</div>
         ${W.items[book] ? `<div class="msec"><h4>學習方式</h4>${itemLink(book)}<ul class="src">${(W.sources[book] || []).map(x => `<li>${sourceText(x, book)}</li>`).join('') || '<li>創角時自動學會</li>'}</ul></div>` : '<div class="msec"><h4>學習方式</h4>創角時自動學會</div>'}`;
 }
+// ═══ 桌寵共用：結束 ═══
 
 // ───────── 彈出視窗 ─────────
 function openModal(html) {

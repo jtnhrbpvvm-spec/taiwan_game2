@@ -149,6 +149,33 @@ async function run(t) {
       return box.textContent;
     })()`);
     check("收入總覽：目前地圖的怪物、稀有首領、可獲得物品", /迷霧古林/.test(zoneText) && /古老樹精/.test(zoneText) && /可獲得的物品/.test(zoneText) && /水晶魔杖/.test(zoneText), zoneText.replace(/\s+/g, " ").slice(0, 120));
+    // 這張地圖可掉的技能書；點物品／書名跳出跟攻略網一樣的說明視窗
+    const popup = await t.getIncomeWin().webContents.executeJavaScript(`(() => {
+      const r = { books: /可掉的魔法書／技能書/.test(document.getElementById("zone").textContent), folded: !document.querySelector("#zone .zg-items").open };
+      document.querySelector("#zone .zg-items").open = true;
+      document.querySelector("#zone .zg-t [data-item]").click();
+      r.item = document.querySelector(".gw-modal.on .gw-body")?.textContent || "";
+      document.querySelector("#zone .zg-books [data-item]").click();
+      r.book = document.querySelector(".gw-modal.on .gw-body")?.textContent || "";
+      document.querySelector(".gw-x").click();
+      r.closed = !document.querySelector(".gw-modal.on");
+      return r;
+    })()`);
+    check("收入總覽：目前地圖可掉的技能書", popup.books);
+    check("收入總覽：可獲得的物品預設收起", popup.folded);
+    check("收入總覽：點物品／書名跳出說明視窗", /取得方式/.test(popup.item) && /學會技能/.test(popup.book) && popup.closed, popup.item.slice(0, 60));
+    // 物品圖示從遊戲網站載入（income.html 的 CSP img-src 要放行）
+    const icons = await t.getIncomeWin().webContents.executeJavaScript(`new Promise((ok) => {
+      const imgs = [...document.querySelectorAll("#zone .zg-t img")].slice(0, 5);
+      imgs.forEach((i) => (i.loading = "eager"));
+      const t0 = Date.now();
+      (function wait() {
+        const done = imgs.filter((i) => i.complete);
+        if (done.length === imgs.length || Date.now() - t0 > 8000) ok({ n: imgs.length, loaded: imgs.filter((i) => i.naturalWidth > 0).length });
+        else setTimeout(wait, 200);
+      })();
+    })`);
+    check("收入總覽：物品圖示載得出來", icons.n > 0 && icons.loaded === icons.n, JSON.stringify(icons));
     await t.getIncomeWin().webContents.executeJavaScript(`document.getElementById("zone").scrollIntoView()`);
     await shot(t.getIncomeWin(), "income");
 
