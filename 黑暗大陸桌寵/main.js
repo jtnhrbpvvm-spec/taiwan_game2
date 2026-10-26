@@ -69,7 +69,9 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   // 專注模式下桌寵頭上還要飄哪些字。預設全關，專注模式就是完全安靜
   focusShow: { exp: false, loot: false },
   // 一般模式下桌寵頭上要飄哪些字
-  normalShow: { exp: true, loot: true } };
+  normalShow: { exp: true, loot: true },
+  // gameWindows[i]＝第 i 隻的遊戲視窗上次怎麼開：keepTaskbar（右鍵「保持狀態列」）、x／y（叫出來時的位置）。下次打開桌寵照上次的
+  gameWindows: [] };
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -77,7 +79,7 @@ function loadSettings() {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
     settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow },
       normalShow: { ...settings.normalShow, ...saved.normalShow } };
-    for (const key of ["petAccounts", "petModels", "petColors", "stayPets"]) if (!Array.isArray(settings[key])) settings[key] = [];
+    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows"]) if (!Array.isArray(settings[key])) settings[key] = [];
     settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
 }
@@ -107,10 +109,25 @@ const partitionOf = (i) => (accountOf(i) ? `persist:acct-${accountOf(i)}` : `per
 
 const accountLabel = (g) => (g.accountId ? accounts.nameOf(g.accountId) : "訪客（不登入）");
 
+/** 第 i 隻上次的遊戲視窗選項（見 settings.gameWindows）。位置不對（舊設定、手改壞）就當沒記。 */
+function savedGameWindow(index) {
+  const w = settings.gameWindows[index] ?? {};
+  const bounds = Number.isFinite(w.x) && Number.isFinite(w.y) ? { x: w.x, y: w.y } : undefined;
+  return { keepTaskbar: !!w.keepTaskbar, bounds };
+}
+
+function rememberGameWindow(g) {
+  const list = Array.from({ length: MAX_PETS }, (_, i) => settings.gameWindows[i] ?? null);
+  list[g.index] = { keepTaskbar: g.keepTaskbar, ...g.bounds };
+  settings.gameWindows = list;
+  saveSettings();
+}
+
 function createGame(index) {
-  const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds: undefined,
+  const { keepTaskbar, bounds } = savedGameWindow(index);
+  const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds,
     lastRaw: undefined, lastState: undefined, continued: false, noSaveSince: 0, login: { state: "idle", at: 0 },
-    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 }, keepTaskbar: false, parkedAt: 0 };
+    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 }, keepTaskbar, parkedAt: 0 };
   g.win = new BrowserWindow({
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
@@ -297,6 +314,7 @@ function showGame(g, on) {
     if (!g.win.isFullScreen()) {
       const { x, y } = g.win.getBounds();
       g.bounds = { x, y };
+      rememberGameWindow(g);
     }
     parkGame(g);
   }
@@ -328,6 +346,7 @@ const toggleGame = (g = games[0]) => g && showGame(g, !g.shown);
 function openGame(g, keepTaskbar) {
   if (!g || g.win.isDestroyed()) return;
   g.keepTaskbar = keepTaskbar;
+  rememberGameWindow(g);
   showGame(g, true);
 }
 
