@@ -110,7 +110,7 @@ const accountLabel = (g) => (g.accountId ? accounts.nameOf(g.accountId) : "訪�
 function createGame(index) {
   const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds: undefined,
     lastRaw: undefined, lastState: undefined, continued: false, noSaveSince: 0, login: { state: "idle", at: 0 },
-    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 } };
+    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 }, keepTaskbar: false, parkedAt: 0 };
   g.win = new BrowserWindow({
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
@@ -140,6 +140,11 @@ function createGame(index) {
   g.win.on("minimize", () => {
     g.win.restore();
     showGame(g, false);
+  });
+  // 「保持狀態列」藏起來的遊戲：在工作列上點它的按鈕（視窗拿到焦點）就叫出來。
+  // 剛藏起來那一下 restore()／切換焦點可能也會送 focus，略過
+  g.win.on("focus", () => {
+    if (!g.shown && g.keepTaskbar && Date.now() - g.parkedAt > 500) showGame(g, true);
   });
   // 遊戲會把標題改成遊戲名稱，蓋回來才分得出是哪一隻、哪個帳號
   g.win.on("page-title-updated", (e) => e.preventDefault());
@@ -192,9 +197,12 @@ function parkGame(g) {
   }
   const area = screen.getPrimaryDisplay().workArea;
   const { width, height } = gameSize(g);
-  g.win.setSkipTaskbar(true);
+  g.parkedAt = Date.now();
+  // 「保持狀態列」：工作列上留著按鈕（看起來像縮小到工作列），要能拿焦點，點按鈕才叫得出來（見 createGame 的 focus）。
+  // 不能真的最小化：最小化的視窗 Chromium 不畫畫面，跟沒顯示一樣，找怪節奏會不對
+  g.win.setSkipTaskbar(!g.keepTaskbar);
   g.win.setIgnoreMouseEvents(true);
-  g.win.setFocusable(false);
+  g.win.setFocusable(g.keepTaskbar);
   g.win.setOpacity(0.01);
   g.win.setBounds({ x: area.x - width + 1, y: area.y - height + 1, width, height });
   if (!g.win.isVisible()) g.win.showInactive();
@@ -315,6 +323,13 @@ function setPowerSave(on) {
 }
 
 const toggleGame = (g = games[0]) => g && showGame(g, !g.shown);
+
+/** 從右鍵選單叫出遊戲：keepTaskbar＝這次之後關掉（藏起來）時工作列上留著按鈕，點一下就叫回來；一般的「顯示遊戲視窗」恢復成完全藏起來。 */
+function openGame(g, keepTaskbar) {
+  if (!g || g.win.isDestroyed()) return;
+  g.keepTaskbar = keepTaskbar;
+  showGame(g, true);
+}
 
 const inGame = (g, code) => (g.win.isDestroyed() ? Promise.resolve(undefined) : g.win.webContents.executeJavaScript(code).catch(() => undefined));
 
@@ -687,7 +702,11 @@ function buildMenu(petIndex = 0) {
   return Menu.buildFromTemplate([
     ...updateItems,
     ...(updateItems.length ? [{ type: "separator" }] : []),
-    { label: `${g?.shown ? "隱藏" : "顯示"}${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) },
+    g?.shown
+      ? { label: `隱藏${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) }
+      : { label: `顯示${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => openGame(g, false) },
+    // 關掉遊戲視窗時只縮到工作列（底部狀態列），點工作列按鈕就叫回來
+    ...(g?.shown ? [] : [{ label: `顯示${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗（保持狀態列）`, click: () => openGame(g, true) }]),
     accountMenu(petIndex),
     { type: "separator" },
     {
