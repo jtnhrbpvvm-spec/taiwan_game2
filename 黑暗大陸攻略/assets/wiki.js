@@ -145,7 +145,8 @@ function sourceText(s, id) {
         case 'common': return `🎲 所有怪物共通掉落 <b>${pct(s.p)}</b>${s.minLv ? `（Lv.${s.minLv} 以上怪物）` : ''}${s.maxLv ? `（Lv.${s.maxLv} 以下怪物）` : ''}`;
         case 'recipe': { const r = W.recipes[s.idx]; return `⚒️ 鍛造：${Object.entries(r.need).map(([k, n]) => itemLink(k, n)).join('＋')}＋${fmt(r.gold)} 金幣`; }
         case 'quest': return `📜 ${classLink(s.cls)}職業任務第 ${s.ch + 1} 章獎勵`;
-        case 'book': return `📖 怪物掉落（一般怪 ${pct(W.consts.BOOK_DROP_P)}、首領 ${pct(W.consts.BOOK_BOSS_P)}；怪物等級要到學習等級 −5 以上）`;
+        case 'book': { const b = W.bookDrops.find(x => x.id === id), lv = b ? Math.max(1, b.lv - 5) : 1;
+            return `📖 <a href="monsters.html#books">Lv.${lv} 以上的怪物</a>掉落（一般怪 ${pct(W.consts.BOOK_DROP_P)}、首領 ${pct(W.consts.BOOK_BOSS_P)} 掉一本書，從可掉的書裡平均抽；Lv.${lv} 怪物可掉 ${bookPool(lv).length} 本，一般怪指定這本約 ${pct(W.consts.BOOK_DROP_P / bookPool(lv).length)}，等級越高可掉的書越多）`; }
         case 'currency': { const c = W.currency[id]; return `🎲 怪物掉落通貨（每隻 ${pct(W.consts.CURRENCY_DROP_P)}、首領 ${pct(W.consts.CURRENCY_BOSS_P)}），掉落權重 ${c ? c.w : '?'}${c && c.minLv ? `，只有 Lv.${c.minLv} 以上怪物會掉` : ''}`; }
         case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵`;
         case 'mapboss': return `🌀 異界首領 ${pct(W.consts.RES_MAP_BOSS_P)} 掉一件共鳴裝備（${W.resTiers[d.res.tier].name}需 T${[0, 1, 6, 11, 15][d.res.tier]} 以上地圖）`;
@@ -179,6 +180,25 @@ function itemDetailHtml(id) {
 }
 
 // ───────── 怪物顯示 ─────────
+// 怪物掉書（遊戲 spellbook.js rollBookDrop）：一般怪／首領機率不同；掉了就從「最低學習等級 ≤ 怪物等級 +5」的掉落書平均抽一本
+const bookDropP = m => m.boss ? W.consts.BOOK_BOSS_P : W.consts.BOOK_DROP_P;
+const bookPool = lv => W.bookDrops.filter(b => b.lv <= lv + 5);
+// 書單分組：魔法依級數、職業技能依職業；連結只顯示技能名稱
+function bookGroupsHtml(pool) {
+    const g = {};
+    for (const b of pool) {
+        const d = W.items[b.id], s = W.skills[d.skill];
+        const k = s.kind === 'magic' ? 'a' + String(s.tier).padStart(2, '0') : 'b' + String(Object.keys(W.classes).indexOf(d.classes[0])).padStart(2, '0');
+        (g[k] = g[k] || { name: s.kind === 'magic' ? `${W.magicTierNames[s.tier]}級魔法書` : `${className(d.classes[0])}技能書`, ids: [] }).ids.push(b.id);
+    }
+    return Object.keys(g).sort().map(k => `<div class="bookg"><b>${esc(g[k].name)}</b> <small class="dim">${g[k].ids.length} 本</small>：${g[k].ids.map(id => `<a class="il" data-item="${esc(id)}">${itemIcon(id)}${esc(W.skills[W.items[id].skill].name)}</a>`).join('')}</div>`).join('');
+}
+function monBookHtml(m) {
+    const pool = bookPool(m.lv), p = bookDropP(m);
+    if (!pool.length) return '<span class="dim">等級太低，不會掉書</span>';
+    return `每隻 <b>${pct(p)}</b>（${m.boss ? '首領' : '一般怪'}）掉一本，從 <b>${pool.length}</b> 本裡平均抽，指定一本約 <b>${pct(p / pool.length)}</b>。
+        <details><summary>Lv.${m.lv} 可以拿到的書（學習等級 Lv.${m.lv + 5} 以內）</summary>${bookGroupsHtml(pool)}</details>`;
+}
 function monTags(m) {
     return ['boss', 'dragon', 'large', 'undead', 'human', 'demon', 'holy'].filter(k => m[k]).map(k => `<span class="tag${k === 'boss' || k === 'dragon' ? ' red' : ''}">${TAG_NAME[k]}</span>`).join('');
 }
@@ -193,6 +213,7 @@ function monDetailHtml(id) {
         ${m.boss ? `<p class="dim">首領／龍會每 7～11 秒蓄力放大招（紅圈，×${W.consts.TELE_MUL} 傷害），走出紅圈就能閃開。</p>` : ''}
         <div class="msec"><h4>出沒地點</h4>${where.length ? where.join('、') : '<span class="dim">特殊出現</span>'}</div>
         <div class="msec"><h4>專屬掉落</h4>${m.drops.length ? `<ul class="src">${m.drops.map(d => `<li>${itemLink(d.id, d.n)}　<b>${pct(d.p)}</b></li>`).join('')}</ul>` : '<span class="dim">只有共通掉落與地區掉落</span>'}</div>
+        <div class="msec"><h4>📖 魔法書／技能書</h4>${monBookHtml(m)}</div>
         <div class="msec"><a href="monsters.html#${esc(id)}">在怪物圖鑑查看 →</a></div>`;
 }
 

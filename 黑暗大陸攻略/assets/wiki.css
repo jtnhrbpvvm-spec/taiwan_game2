@@ -165,6 +165,9 @@ input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px
 .msec { margin-top: 12px; }
 .msec h4 { margin: 0 0 4px; color: var(--gold); font-size: 14px; }
 .src li { font-size: 14px; }
+details > summary { cursor: pointer; color: var(--gold); margin: 6px 0; }
+.bookg { font-size: 14px; margin: 4px 0; line-height: 1.9; }
+.bookg .il { margin-right: 10px; white-space: nowrap; }
 
 @media (max-width: 760px) {
     body { font-size: 14px; }

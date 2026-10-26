@@ -29,10 +29,17 @@
     <div id="common-list"></div>
     <ul>
         <li>製作通貨：每隻 <b id="c1"></b>、首領 <b id="c2"></b>（見 <a href="affix.html">詞綴通貨</a>）。</li>
-        <li>魔法書：一般怪 <b id="c3"></b>、首領 <b id="c4"></b>，掉商店沒賣的高級書（見 <a href="skills.html">技能魔法</a>）。</li>
+        <li>魔法書：一般怪 <b id="c3"></b>、首領 <b id="c4"></b>，掉商店沒賣的高級書（見<a href="#books">下方各等級書單</a>）。</li>
         <li>隨機裝備：一般怪 <b id="c5"></b>、首領 50%，可能帶魔法／稀有／傳說詞綴。</li>
         <li>異界地圖：一般地圖每隻 <b id="c6"></b>（見 <a href="rift.html">異界地圖</a>）。</li>
     </ul>
+
+    <h2 id="books">📖 各等級可掉的魔法書／技能書</h2>
+    <p>掉不掉書看<b>怪物種類</b>：一般怪每隻 <b class="bp1"></b>、首領每隻 <b class="bp2"></b>。
+        掉了就從「最低學習等級 ≤ 怪物等級 +5」的書裡<b>平均抽一本</b>，任何職業的書都會掉（學不了的可以賣或上交易所）。
+        所以怪物等級越高可掉的書越多，但指定一本的機率會被稀釋。商店有賣的書（1～3 級魔法、每職業第一本技能書）不會掉。</p>
+    <div class="box tip">表上「怪物等級」是開始能掉這些書的最低怪物等級；異界地圖會把怪物等級往上加，可掉的書也跟著變多。點怪物可以看牠可掉的完整書單。</div>
+    <div id="book-list"></div>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>
@@ -58,6 +65,7 @@ function draw() {
         { label: '魔法', html: r => r.m.magic ? `<small>${esc(r.m.magic.name)} ${pct(r.m.magic.p)}<br>${range(r.m.magic.dmg)}</small>` : '', cls: 'hide-sm' },
         { label: '魔防', num: true, v: r => r.m.mr, html: r => r.m.mr, cls: 'hide-sm' },
         { label: '經驗', num: true, v: r => r.m.exp, html: r => fmt(r.m.exp) },
+        { label: '掉書', num: true, v: r => bookPool(r.m.lv).length, html: r => { const n = bookPool(r.m.lv).length; return n ? `<small>${pct(bookDropP(r.m))}・${n} 本</small>` : '<small class="dim">—</small>'; }, cls: 'hide-sm' },
         { label: '特性', html: r => monTags(r.m), cls: 'hide-sm' },
         { label: '出沒', html: r => `<small>${r.m.zones.map(zoneName).concat(r.m.rareIn.map(x => zoneName(x.zone) + (x.lair ? '' : '（稀有）'))).join('、')}</small>` },
     ], rows, { sortCol: 1, sortDir: 1, rowAttr: r => `class="click" data-mon="${r.id}"` });
@@ -76,6 +84,21 @@ renderTable($('#common-list'), [
 $('#c1').textContent = pct(C.CURRENCY_DROP_P); $('#c2').textContent = pct(C.CURRENCY_BOSS_P);
 $('#c3').textContent = pct(C.BOOK_DROP_P); $('#c4').textContent = pct(C.BOOK_BOSS_P);
 $('#c5').textContent = pct(C.RANDOM_EQUIP_P); $('#c6').textContent = pct(C.MAP_DROP_P);
+$$('.bp1').forEach(e => e.textContent = pct(C.BOOK_DROP_P)); $$('.bp2').forEach(e => e.textContent = pct(C.BOOK_BOSS_P));
+// 依「開始能掉的怪物等級」分組（學習等級 −5）
+const BOOK_ROWS = [];
+for (const b of W.bookDrops) {
+    const lv = Math.max(1, b.lv - 5), last = BOOK_ROWS[BOOK_ROWS.length - 1];
+    if (last && last.lv === lv) last.ids.push(b); else BOOK_ROWS.push({ lv, ids: [b] });
+}
+BOOK_ROWS.forEach(r => { r.n = bookPool(r.lv).length; });
+renderTable($('#book-list'), [
+    { label: '怪物等級', num: true, k: 'lv', html: r => `Lv.${r.lv}+` },
+    { label: '新增可掉的書', html: r => bookGroupsHtml(r.ids) },
+    { label: '累計本數', num: true, k: 'n', html: r => r.n },
+    { label: '一般怪指定一本', num: true, v: r => -r.n, html: r => pct(C.BOOK_DROP_P / r.n) },
+    { label: '首領指定一本', num: true, v: r => -r.n, html: r => pct(C.BOOK_BOSS_P / r.n), cls: 'hide-sm' },
+], BOOK_ROWS, { sortCol: 0, sortDir: 1 });
 if (location.hash && W.monsters[location.hash.slice(1)]) openMon(location.hash.slice(1));
 </script>
 </body>

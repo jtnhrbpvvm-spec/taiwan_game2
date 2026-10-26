@@ -135,7 +135,10 @@ for (const z of ZONES) {
 const zones = ZONES.map(z => plain(pick(z, ['id', 'name', 'icon', 'type', 'lv', 'town', 'fee', 'mons', 'drops', 'desc', 'rare', 'noMap', 'boss', 'reqLv', 'cdH', 'prev'])));
 const towns = plain(G('TOWNS'));
 const shopByTier = {};
-for (const t of [1, 2, 3, 4]) shopByTier[t] = Object.keys(ITEMS).filter(id => id !== 'polyScroll' && ITEMS[id].price && ITEMS[id].tier <= t);
+for (const t of [1, 2, 3, 4]) shopByTier[t] = Object.keys(ITEMS).filter(id => ITEMS[id].price && ITEMS[id].tier <= t);
+// 怪物掉落的書（同 spellbook.js rollBookDrop：商店沒賣的書，最低學習等級 ≤ 怪物等級 +5 才會掉）
+const bookDrops = Object.keys(ITEMS).filter(id => ITEMS[id].cat === 'book' && !ITEMS[id].price)
+    .map(id => ({ id, lv: G('bookMinLv')(ITEMS[id]) })).sort((a, b) => a.lv - b.lv);
 
 // ── 永夜之塔 ──
 const makeTowerMonster = G('makeTowerMonster');
@@ -224,7 +227,7 @@ const data = {
     statNames: plain(C('STAT_NAMES')), catNames: plain(C('CAT_NAMES')), slots: plain(C('SLOTS')), weaponTypes: plain(C('WEAPON_TYPES')),
     buffDefs: plain(C('BUFF_DEFS')),
     classes, skills, classSkills, magicTierNames: plain(C('MAGIC_TIER_NAMES')),
-    items, sources, recipes: plain(C('RECIPES')), commonDrops: plain(C('COMMON_DROPS')),
+    items, sources, bookDrops, recipes: plain(C('RECIPES')), commonDrops: plain(C('COMMON_DROPS')),
     monsters, monsterTags: plain(C('MONSTER_TAGS')), zones, towns, shopByTier, tower,
     quests,
     resonance: plain(C('RESONANCE')), resImg: Object.fromEntries(Object.entries(RES_IMG).map(([k, v]) => [k, `images/icons/sk/${v}.jpg?v=1`])),
