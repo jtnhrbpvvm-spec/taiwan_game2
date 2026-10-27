@@ -36,21 +36,54 @@ function Find-Game {
         $dir = (Get-Content -LiteralPath $remembered -Encoding UTF8 -TotalCount 1).Trim()
         if ($dir -and (Test-Path (Join-Path $dir 'resources\app.asar'))) { return $dir }
     }
-    $candidates = @(
-        (Join-Path $env:ProgramFiles 'D2 Survivors'),
-        (Join-Path $env:LOCALAPPDATA 'Programs\D2 Survivors')
-    )
+    # 安裝程式（electron-builder）把真正的安裝位置記在 HKLM／HKCU\SOFTWARE\<解除安裝項目名稱> 的 InstallLocation；
+    # 解除安裝項目本身沒有 InstallLocation，只能從 DisplayIcon／UninstallString 取資料夾
+    $candidates = @()
     foreach ($root in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
                       'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall') {
         if (-not (Test-Path $root)) { continue }
         foreach ($key in Get-ChildItem $root -ErrorAction SilentlyContinue) {
             $p = Get-ItemProperty $key.PSPath -ErrorAction SilentlyContinue
-            if ($p.DisplayName -like 'D2 Survivors*' -and $p.InstallLocation) { $candidates = @($p.InstallLocation.Trim('"')) + $candidates }
+            if ($p.DisplayName -notlike 'D2 Survivors*') { continue }
+            foreach ($hive in 'HKLM', 'HKCU') {
+                $loc = (Get-ItemProperty "${hive}:\SOFTWARE\$($key.PSChildName)" -ErrorAction SilentlyContinue).InstallLocation
+                if ($loc) { $candidates += $loc.Trim('"') }
+            }
+            if ($p.InstallLocation) { $candidates += $p.InstallLocation.Trim('"') }
+            foreach ($cmd in $p.DisplayIcon, $p.UninstallString) {
+                if ($cmd -match '^\s*"([^"]+)"' -or $cmd -match '^\s*(.+?\.exe)') { $candidates += Split-Path $Matches[1] -Parent }
+            }
         }
     }
+    $candidates += @(
+        (Join-Path $env:ProgramFiles 'D2 Survivors'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\D2 Survivors')
+    )
+    if (${env:ProgramFiles(x86)}) { $candidates += Join-Path ${env:ProgramFiles(x86)} 'D2 Survivors' }
     foreach ($dir in $candidates) {
-        if ($dir -and (Test-Path (Join-Path $dir 'resources\app.asar')) -and (Test-Path (Join-Path $dir 'D2 Survivors.exe'))) { return $dir }
+        if ($dir -and (Test-GameDir $dir)) { return $dir }
     }
+    return $null
+}
+
+function Test-GameDir([string]$dir) {
+    return ((Test-Path (Join-Path $dir 'resources\app.asar')) -and (Test-Path (Join-Path $dir 'D2 Survivors.exe')))
+}
+
+# 自動找不到時讓玩家自己選遊戲資料夾（選到 resources 子資料夾也接受）
+function Select-GameDir {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dlg = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dlg.Description = '找不到 D2 Survivors 的安裝位置，請選擇遊戲資料夾（裡面有「D2 Survivors.exe」的那個）'
+    $dlg.ShowNewFolderButton = $false
+    try {
+        while ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            foreach ($dir in $dlg.SelectedPath, (Split-Path $dlg.SelectedPath -Parent)) {
+                if ($dir -and (Test-GameDir $dir)) { return $dir }
+            }
+            Say "這個資料夾裡沒有「D2 Survivors.exe」和「resources\app.asar」，請再選一次。`n`n$($dlg.SelectedPath)"
+        }
+    } finally { $dlg.Dispose() }
     return $null
 }
 
@@ -198,6 +231,7 @@ try {
     if ($UnpatchAsar) { [void](Unpatch-Asar $UnpatchAsar); exit 0 }
 
     $game = Find-Game
+    if (-not $game -and -not $Quiet) { $game = Select-GameDir }
     if (-not $game) { Say '找不到 D2 Survivors 安裝版。請先從 d2survivors.lol 下載安裝遊戲，再執行這個檔案。'; exit 1 }
     $asarPath = Join-Path $game 'resources\app.asar'
     $exe = Join-Path $game 'D2 Survivors.exe'
