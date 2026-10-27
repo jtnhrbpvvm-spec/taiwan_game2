@@ -5,7 +5,7 @@
 // 截圖存在暫存資料夾的 shots/，結果印在主控台，最後自己結束。
 const fs = require("fs");
 const path = require("path");
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, session } = require("electron");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const screenOf = (t, g) => t.inGame(g, `document.querySelector(".screen.active")?.id`);
@@ -291,6 +291,26 @@ async function run(t) {
     t.setPetAccount(0, added.id);
     check("同一個帳號只給一隻用", t.settings().petAccounts[0] === added.id && t.settings().petAccounts[1] === null);
     t.setPetAccount(0, null);
+
+    // 兩隻同時自動登入：登入請求在本機就擋掉（假帳號，不會送到遊戲伺服器），兩隻都要真的填好按下「登入」
+    const loginTry = {};
+    const second = t.accounts.list().find((a) => a.email === "hand@example.invalid");
+    for (const a of [added, second]) {
+      session.fromPartition(`persist:acct-${a.id}`).webRequest.onBeforeRequest({ urls: ["*://*/auth/v1/*"] }, (d, cb) => {
+        if (/\/auth\/v1\/token/.test(d.url) && d.method === "POST") loginTry[a.id] = (loginTry[a.id] || 0) + 1;
+        cb({ cancel: true });
+      });
+    }
+    const autoWas = t.settings().autoContinue;
+    t.settings().autoContinue = true;
+    t.setPetAccount(0, second.id);
+    t.setPetAccount(1, added.id);
+    await waitFor("兩隻都按了登入", () => loginTry[added.id] && loginTry[second.id], 90000).catch(() => {});
+    check("兩隻同時自動登入都有填好按下登入（請求在本機擋掉）", !!(loginTry[added.id] && loginTry[second.id]),
+      JSON.stringify({ first: loginTry[second.id] ?? 0, second: loginTry[added.id] ?? 0, states: t.games.map((g) => g.login.state) }));
+    t.settings().autoContinue = autoWas;
+    t.setPetAccount(0, null);
+    t.setPetAccount(1, added.id);
 
     t.openAccounts();
     await sleep(1500);

@@ -442,7 +442,7 @@ const PRESS_CONTINUE = `(() => {
 /** 登入失敗：告訴使用者是哪一隻、為什麼，把那隻的遊戲叫出來讓使用者自己處理。 */
 function loginFailed(g, why) {
   g.login = { state: "failed", at: Date.now() };
-  console.error(`第 ${g.index + 1} 隻登入 ${accountLabel(g)} 失敗：${why}`);
+  logGame(g, `自動登入 ${accountLabel(g)} 失敗：${why}`);
   petWin?.webContents.send("pet:notice", g.index, `${accountLabel(g)} 登入失敗：${why}`);
   showGame(g, true);
 }
