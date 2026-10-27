@@ -646,6 +646,64 @@
     }
     wrap.appendChild(fieldNumber("名聲(目前) fame.current", function () { return c.fame.current; }, function (v) { c.fame.current = v; }));
     wrap.appendChild(fieldNumber("名聲(累計) fame.total", function () { return c.fame.total; }, function (v) { c.fame.total = v; }));
+    renderBasicV127(c, wrap);
+  }
+
+  // 2026-10-27 改版（存檔 v118～v127）新增、不是期間限定的角色欄位（節慶／特賣／釣魚活動的領取紀錄刻意不做）：
+  //   marble = {pos, laps, rolls}  哈比兔大富翁的位置、圈數、累計擲骰次數（v118 起；每擲滿 150 顆送特殊寶石箱，rolls 除 150 的餘數決定還差幾顆）
+  //   couple = {partnerId, points, carryMs}  情侶（v119 起）：partnerId 是同存檔另一個「不同性別」角色的 id，兩邊要互相指著
+  //            （遊戲存檔時 Kk() 會把單方面的配對清掉）；points 0～3650，情侶在隊上每 24 分鐘 +1，carryMs 是還沒滿 24 分鐘的累計毫秒
+  //   goldKeep  一鍵存倉時身上保留的金幣（v122 起，遊戲 depositMany()）
+  var COUPLE_POINT_CAP = 3650;
+  function renderBasicV127(c, wrap) {
+    if (c.marble && typeof c.marble === "object") {
+      wrap.appendChild(fieldNumber("大富翁位置 marble.pos（0＝起點）", function () { return c.marble.pos || 0; }, function (v) { c.marble.pos = Math.max(0, Math.floor(v)); }));
+      wrap.appendChild(fieldNumber("大富翁圈數 marble.laps（越多寶箱開時裝機率越高）", function () { return c.marble.laps || 0; }, function (v) { c.marble.laps = Math.max(0, Math.floor(v)); }));
+      if ("rolls" in c.marble || saveVersion() >= 118) {
+        wrap.appendChild(fieldNumber("大富翁累計擲骰 marble.rolls（每滿 150 顆送一次；改成 149 下一顆就送）",
+          function () { return c.marble.rolls || 0; }, function (v) { c.marble.rolls = Math.max(0, Math.floor(v)); }));
+      }
+    }
+    if ("goldKeep" in c || saveVersion() >= 122) {
+      wrap.appendChild(fieldNumber("一鍵存倉時身上保留的金幣 goldKeep", function () { return c.goldKeep || 0; }, function (v) { c.goldKeep = Math.max(0, Math.floor(v)); }));
+    }
+    if (c.couple && typeof c.couple === "object") {
+      var others = saveData.characters.filter(function (o) { return o !== c; });
+      var opts = [{ value: "", label: "（沒有情侶）" }].concat(others.map(function (o) {
+        var ok = o.sex == null || c.sex == null || o.sex !== c.sex;
+        return { value: String(o.id), label: o.name + "　Lv." + o.level + (ok ? "" : "（同性別，遊戲不能配）") };
+      }));
+      wrap.appendChild(fieldSelect("情侶 couple.partnerId", opts,
+        function () { return c.couple.partnerId == null ? "" : String(c.couple.partnerId); },
+        function (v) { setCouplePartner(c, v === "" ? null : others.filter(function (o) { return String(o.id) === v; })[0] || null); renderBasic(c); }));
+      var pts = fieldNumber("情侶點數 couple.points（0～" + COUPLE_POINT_CAP + "，可以去遊戲換玫瑰花）",
+        function () { return c.couple.points || 0; },
+        function (v) { c.couple.points = Math.max(0, Math.min(COUPLE_POINT_CAP, Math.floor(v))); if (c.couple.points >= COUPLE_POINT_CAP) c.couple.carryMs = 0; });
+      var maxBtn = el("button", { class: "btn", text: "點數補滿", style: "margin-top:6px;" });
+      maxBtn.addEventListener("click", function () {
+        if (c.couple.partnerId == null) { toast("要先選情侶，遊戲才會讓你領玫瑰花", "warn"); }
+        c.couple.points = COUPLE_POINT_CAP; c.couple.carryMs = 0; renderBasic(c);
+      });
+      pts.appendChild(maxBtn);
+      wrap.appendChild(pts);
+    }
+  }
+  // 配對要兩邊一起改：原本的舊情侶（兩邊各自的）清成單身，新的兩人互相指著；點數只有換人時才歸零（遊戲 pickCouple()／breakUpCouple()）
+  function setCouplePartner(c, partner) {
+    function single(x) { x.couple = { partnerId: null, points: 0, carryMs: 0 }; }
+    var oldId = c.couple.partnerId;
+    if (partner && oldId != null && String(oldId) === String(partner.id)) return;
+    saveData.characters.forEach(function (o) {
+      if (!o.couple || o === c) return;
+      // 原本跟 c 配的人、原本跟新情侶配的人，都變單身
+      if (o.couple.partnerId != null && (String(o.couple.partnerId) === String(c.id) || (partner && String(o.couple.partnerId) === String(partner.id)))) single(o);
+    });
+    single(c);
+    if (!partner) return;
+    if (!partner.couple) partner.couple = {};
+    single(partner);
+    c.couple.partnerId = partner.id;
+    partner.couple.partnerId = c.id;
   }
 
   function renderAttrs(c) {

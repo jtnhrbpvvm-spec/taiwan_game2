@@ -439,7 +439,13 @@
     return html;
   }
   // 限時加成道具（藥水／符咒／福袋）的效果：MALL_INDEX.potions = {物品id: {stat, amount, durationMs, maxLv?}}，文字照遊戲 dS()
-  var POTION_STAT_LABEL = { exp: "經驗值", drop: "道具掉落率", atk: "攻擊力", mag: "魔法力", hit: "命中", aspd: "攻擊速度" };
+  var POTION_STAT_LABEL = { exp: "經驗值", drop: "道具掉落率", atk: "攻擊力", mag: "魔法力", hit: "命中", aspd: "攻擊速度", def: "防禦力", eva: "迴避" };
+  // 情侶道具（10-27 新增，stat 開頭是 couple）：情侶要在隊上才有效果，文字照遊戲 cw()
+  var COUPLE_POTION_TEXT = {
+    coupleExp: function (n) { return '經驗值 +' + n + '%'; }, coupleMove: function (n) { return '兩人移動速度 +' + n; },
+    coupleAspd: function (n) { return '兩人攻擊速度 +' + n; }, coupleGuard: function (n) { return '替情侶擋 ' + n + '% 傷害'; },
+    coupleShare: function (n) { return '喝藥分情侶 ' + n + '%'; }
+  };
   function potionDurationText(ms) {
     var min = Math.round(ms / 60000);
     if (min >= 1440 && min % 1440 === 0) return (min / 1440) + ' 天';
@@ -453,9 +459,12 @@
   function potionEffectText(p) {
     if (p.stat === "fishHook") return '釣魚一竿釣 ' + (p.baits || 1) + ' 樣';
     if (p.stat === "fishExp") return '釣魚得經驗';
-    if (p.stat === "morph") {
-      if (!p.bonus || !p.bonus.length) return '變身（沒有加成）';
-      return '變身，' + p.bonus.map(function (b) {
+    if (COUPLE_POTION_TEXT[p.stat]) return COUPLE_POTION_TEXT[p.stat](p.amount);
+    if (p.stat === "maxHp") return 'HP 上限 +' + fmtNum(p.amount);
+    if (p.stat === "morph" || p.stat === "petMorph") {
+      var head = p.stat === "petMorph" ? '寵物幻化' : '變身';
+      if (!p.bonus || !p.bonus.length) return head + '（沒有加成）';
+      return head + '，' + p.bonus.map(function (b) {
         var k = (window.ENCHANT_KINDS || []).filter(function (x) { return x.kind === b.kind; })[0];
         return (k ? k.name : '#' + b.kind) + ' +' + b.value + (POTION_PCT_KINDS[b.kind] ? '%' : '');
       }).join('、');
@@ -480,6 +489,8 @@
     var timed = p.stat === "exp" || p.stat === "drop" || fishing;
     var extra = '';
     if (p.stat === "fishHook") extra += '<br>每一竿同時用 ' + (p.baits || 1) + ' 個魚餌、釣上 ' + (p.baits || 1) + ' 樣東西（魚餌不夠就有幾個用幾個）。';
+    if (COUPLE_POTION_TEXT[p.stat]) extra += '<br>⚠️ 要<b>情侶在隊上</b>才有效果' + (window.EVENTS && EVENTS.couple ? sysGuideLinkHtml("couple", "看情侶系統說明") : '。');
+    if (p.stat === "petMorph") extra += '<br>⚠️ 要<b>帶著寵物</b>才能用。';
     if (p.stat === "fishExp" && FISHING_EXP && FISHING_EXP.exp.length) {
       // 等級自己輸入、經驗值自動算（唯讀）；預設帶上方「你目前的等級」，沒填就空著
       var myLv = Number((document.getElementById("globalDropLevel") || {}).value) || 0;
@@ -1071,7 +1082,8 @@
   }
 
   // 光環／時裝強化／哈比兔大富翁（2026-10-10 新增的系統）：沒有對應的資料檔就不顯示
-  [["gems", "💎 技能寶石", window.GEMS], ["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE]].forEach(function (def) {
+  [["gems", "💎 技能寶石", window.GEMS], ["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE],
+    ["events", "🎉 節慶活動・特賣", window.EVENTS], ["couple", "💞 情侶", window.EVENTS && window.EVENTS.couple]].forEach(function (def) {
     if (!def[2]) return;
     var chip = document.createElement("span");
     chip.className = "hint-chip";
@@ -1185,6 +1197,8 @@
     else if (kind === "aura") showAuraGuide();
     else if (kind === "costume") showCostumeGuide();
     else if (kind === "marble") showMarbleGuide();
+    else if (kind === "events") showEventGuide();
+    else if (kind === "couple") showCoupleGuide();
   }
   // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
   // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
@@ -1368,6 +1382,8 @@
     if (window.AURA) add("✨", "光環", "精煉、G 化、靈魂結晶的機率與能力", ["光環", "靈魂", "結晶", "G化", "祭司"], "aura", "", F);
     if (window.COSTUME) add("👗", "時裝強化", "強化成功率、加成、繼承、分解、合成", ["時裝", "套裝", "線團", "伊索德", "布布"], "costume", "", F);
     if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開時裝的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
+    if (window.EVENTS) add("🎉", "節慶活動・特賣", "每年的節慶活動、釣魚活動、旅行商人限時特賣", ["活動", "節慶", "代幣", "特賣", "旅行商人", "釣魚活動", "萬聖節", "聖誕"], "events", "", F);
+    if (window.EVENTS && window.EVENTS.couple) add("💞", "情侶", "情侶點數、玫瑰花商店、情人節／七夕", ["情侶", "玫瑰", "結婚", "情人節", "七夕"], "couple", "", F);
 
     dungeonIds.forEach(function (did) {
       var dg = DUNGEON_BY_ID[did];
@@ -1689,6 +1705,9 @@
           else if (ch === "costume") metaParts.push("時裝（布布）");
           else if (ch === "aura") metaParts.push("光環（祭司）");
           else if (ch === "petdex") metaParts.push("寵物圖鑑獎勵");
+          else if (ch === "festival") metaParts.push("節慶活動");
+          else if (ch === "sale") metaParts.push("限時特賣");
+          else if (ch === "couple") metaParts.push("情侶商店");
         });
         html += '<li class="result-item" data-type="item" data-id="' + it.id + '">' +
           '<span class="rname">' + itemIconHtml(it.id, 32) + escapeHtml(it.name) + '</span>' +
@@ -2795,12 +2814,14 @@
   // ---------- 防爆道具（艾彼雷歐系列，名品館賣）----------
   // 資料抄自遊戲 refine.json（2026-09-22 版）的 steps（失敗類型）與 guards，判斷規則照遊戲 bundle 的 yd()／xd()／Cd()：
   //   step n ＝ 從 +n 衝 +n+1；failKind 0＝只損失材料、1＝掉階、2＝碎掉、3＝一般裝備掉階／G 裝碎掉
-  //   guard.when "destroy"＝這一階失敗會碎掉時才能用；"last-drop"＝這一階失敗掉階、下一階起會碎掉時才能用
+  //   guard.when "destroy"＝這一階失敗會碎掉、而且目前精煉 ≥ toLevel 時才能用；"last-drop"＝這一階失敗掉階、下一階起會碎掉時才能用；
+  //             "loss"（10-27 新增）＝目前精煉 ≥ fromLevel、這一階失敗會掉階或碎掉時就能用（bundle zf()）
   //   guard.target "special"＝只給特殊道具（合成出來的變異裝備及其 G 版）用，"plain"＝只給其他裝備用
-  //   失敗時先擲 keepPct%：中了就退回 +toLevel，沒中就照這一階原本的失敗（碎掉或掉階）
+  //   失敗時先擲 keepPct%：中了就退回 +toLevel（"same"＝留在原本的精煉值），沒中就照這一階原本的失敗（碎掉或掉階）
   //   noStones＝不能跟鎔解石一起用
+  // 10-27 起 guards 由 update_data.py 從 refine.json 帶進 SMITH.guards，舊資料檔沒有時用下面這三筆
   var REFINE_FAIL_KIND = [0, 0, 0, 0, 0, 0, 1, 3, 2, 2, 2, 2]; // index ＝ step 0～11
-  var REFINE_GUARDS = [
+  var REFINE_GUARDS = ((window.SMITH || {}).guards) || [
     { id: 8028, when: "last-drop", target: "plain", keepPct: 100, toLevel: 5, noStones: true },
     { id: 8027, when: "destroy", target: "plain", keepPct: 70, toLevel: 7, noStones: false },
     { id: 12362, when: "destroy", target: "special", keepPct: 80, toLevel: 6, noStones: false }
@@ -2812,7 +2833,8 @@
   function guardUsableAt(g, step, gGear, special) {
     if ((g.target === "special") !== special || REFINE_FAIL_KIND[step] === undefined) return false;
     var kind = refineFailKind(step, gGear);
-    if (g.when === "destroy") return kind === "destroy";
+    if (g.when === "destroy") return kind === "destroy" && (g.toLevel === "same" || step >= g.toLevel);
+    if (g.when === "loss") return kind !== "none" && step >= (g.fromLevel || 0);
     return kind === "drop" && REFINE_FAIL_KIND[step + 1] !== undefined && refineFailKind(step + 1, gGear) === "destroy";
   }
   // 能用的「目標精煉值」範圍，例如 "+9 ~ +12"
@@ -2834,18 +2856,23 @@
       if (n) where.push('一般裝備（N 裝）衝 <b>' + n + '</b>');
       if (gz) where.push('G 化／變異裝備（G 裝）衝 <b>' + gz + '</b>');
     }
-    var effect = g.keepPct >= 100
-      ? '失敗時 <b>100%</b> 退回 <b>+' + g.toLevel + '</b>' +
+    var toText = g.toLevel === "same" ? '<b>留在原本的精煉值</b>' : '退回 <b>+' + g.toLevel + '</b>';
+    var effect = g.when === "loss"
+      ? '失敗時 <b>' + g.keepPct + '%</b> ' + toText + '，不碎、不掉階。'
+      : g.keepPct >= 100
+      ? '失敗時 <b>100%</b> ' + toText +
         (g.when === "destroy" ? '，裝備不會碎掉。' : '（沒用的話這一階失敗會掉更多階）。')
-      : '失敗時 <b>' + g.keepPct + '%</b> 機率退回 <b>+' + g.toLevel + '</b>，其餘 ' + (100 - g.keepPct) + '% 照樣' +
+      : '失敗時 <b>' + g.keepPct + '%</b> 機率' + toText + '，其餘 ' + (100 - g.keepPct) + '% 照樣' +
         (g.when === "destroy" ? '<b>碎掉</b>' : '掉階') + '。';
+    var from = MALL_INDEX.items[String(id)] ? '找村莊的「黑市商人」開名品館購買。'
+      : (MARBLE && MARBLE.bonus && MARBLE.bonus.item === Number(id)) ? '哈比兔大富翁每擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆氣球送 1 個。' : '';
     var html = '<div style="background:rgba(201,162,75,.12);border:1px solid var(--gold);border-radius:4px;padding:12px 14px;margin-bottom:18px;">' +
       '<div style="color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:6px;">🛡️ 防爆道具（精煉失敗保護）</div>' +
       '<div style="font-size:13px;color:var(--text);line-height:1.75;">' +
       '<div>適用範圍：' + (where.length ? where.join('、') : '（目前沒有能用的精煉階段）') + '</div>' +
       '<div>防爆效果：' + effect + '</div>' +
       '<div>鎔解石：' + (g.noStones ? '<b>不能</b>一起使用' : '可以一起使用') + '</div>' +
-      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">用法：精煉時在「防爆」那欄勾選，一次消耗 1 個（成功或失敗都會用掉）。找村莊的「黑市商人」開名品館購買。</div>' +
+      '<div style="color:var(--text-faint);font-size:12px;margin-top:4px;">用法：精煉時在「防爆」那欄勾選，一次消耗 1 個（成功或失敗都會用掉）。' + from + '</div>' +
       '</div></div>';
     return html;
   }
@@ -3420,7 +3447,8 @@
       radixEntries.forEach(function (s) {
         html += '<tr>' +
           '<td><span class="name-link" style="cursor:default;">' + escapeHtml(s.npc) + '</span>' +
-          (s.group ? '<br><span class="group-tag" title="這一區只有穿得上成品的職業才看得到">' + escapeHtml(s.group) + '</span>' : '') + '</td>' +
+          (s.group ? '<br><span class="group-tag" title="這一區只有穿得上成品的職業才看得到">' + escapeHtml(s.group) + '</span>' : '') +
+          (s.menu ? '<br><span class="group-tag" title="拉迪克斯商店的分頁">' + escapeHtml(s.menu) + '</span>' : '') + '</td>' +
           '<td>' + escapeHtml(townName(s.t)) + '</td>' +
           '<td><span class="rate">' + fmtNum(s.price) + ' ' + escapeHtml(tokenName) + '</span></td>' +
           '</tr>';
@@ -3585,7 +3613,9 @@
     html += exchangeSectionHtml(id);
     html += wardrobeSectionHtml(id);
     html += dungeonDropSectionHtml(id);
+    html += bossRewardSectionHtml(id);
     html += extraSourcesHtml(id);
+    html += eventSectionHtml(id);
     html += gemSectionHtml(id);
     html += stoneSectionHtml(id);
     html += sysSectionHtml(id);
@@ -3735,6 +3765,28 @@
         '<td><span class="' + rateClass(r.r) + '">' + pct(r.r) + '</span></td></tr>';
     });
     return html + '</tbody></table>';
+  }
+  // 物品頁：副本首領打倒必得的獎勵（dungeonIndex 的 bossRewards）
+  function bossRewardSectionHtml(id) {
+    var rows = [];
+    Object.keys(DUNGEON_BY_ID).forEach(function (did) {
+      var dg = DUNGEON_BY_ID[did];
+      (dg.islands || []).forEach(function (isl) {
+        (isl.bossRewards || []).forEach(function (b) {
+          b.rewards.forEach(function (r) { if (String(r[0]) === String(id)) rows.push({ dg: dg, did: did, room: isl.name || isl.key, b: b, n: r[1] }); });
+        });
+      });
+    });
+    if (!rows.length) return '';
+    var html = '<div class="section-title">副本首領獎勵 <span class="count">(' + rows.length + ')</span></div>' +
+      '<table class="dtable"><thead><tr><th>首領</th><th>副本</th><th>數量</th></tr></thead><tbody>';
+    rows.forEach(function (x) {
+      var mon = MONSTERS[String(x.b.id)];
+      html += '<tr><td><span class="name-link" data-goto-monster="' + x.b.id + '">' + escapeHtml(mon ? mon.name : "無資料") + '</span></td>' +
+        '<td><span class="name-link" data-open-dungeon="' + x.did + '">' + escapeHtml(x.dg.name) + '</span>' + (x.room ? '<br><span style="font-size:11.5px;color:var(--text-faint);">' + escapeHtml(x.room) + '</span>' : '') + '</td>' +
+        '<td>×' + x.n + '</td></tr>';
+    });
+    return html + '</tbody></table><div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">打倒首領一定拿到，不吃掉落率。</div>';
   }
   // 怪物頁：圖鑑銀牌／金牌、綁這隻怪的時裝設計師系列
   function monsterDexHtml(id) {
@@ -4344,11 +4396,13 @@
       '・對象是「時裝」：裝備欄的分離型（帽子／上衣／下褲／鞋子）和一件式套裝。時裝不能用一般的精煉和發條，只能在這裡強化。<br>' +
       '・<b>強化</b>：最高 +' + maxStep + '，吃「' + crystal + '」＋金幣；可以另外放「閃亮線團」提高成功率。失敗不會爆，但從 +' +
       (COSTUME.smelt.filter(function (x) { return x.failDrop === 0; }).length) + ' 往上衝開始，失敗會掉階。<br>' +
+      (COSTUME.cloth ? '・會掉階的那幾階可以勾「' + escapeHtml(stoneItemName(COSTUME.cloth)) + '」：每次用「會掉幾階」個，失敗就<b>不掉階</b>（成功失敗都會扣）。<br>' : '') +
       '・強化加的是<b>攻擊／魔法／防禦</b>（三項同一個數字）和<b>增傷 %</b>，等級越高的時裝加越多（見下面的加成表）。' +
       '</div>';
 
     html += '<div class="section-title">相關道具（點進去看取得方式）</div>';
-    html += sysChipRow([COSTUME.crystal, COSTUME.powder].concat(COSTUME.threads.map(function (t) { return t[0]; })).concat([COSTUME.exBox.item, cp.box]));
+    html += sysChipRow([COSTUME.crystal, COSTUME.powder].concat(COSTUME.threads.map(function (t) { return t[0]; })).concat([COSTUME.exBox.item, cp.box])
+      .concat(COSTUME.cloth ? [COSTUME.cloth] : []));
     if (MARBLE) html += sysGuideLinkHtml("marble", "時裝本體可以從哈比兔大富翁的寶箱開出，看大富翁說明");
 
     html += '<div class="section-title">強化：成功率與花費</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>強化</th><th>成功率</th><th>' +
@@ -4438,8 +4492,11 @@
       '・<b>圈數越多，綠／藍寶箱開出時裝的機率越高</b>：' +
       MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' ×' + m; }).join('、') + '。位置和圈數每個角色各自記錄，<b>不會重置</b>。<br>' +
       '・遊戲裡可以選「連擲」次數，也可以勾氣球不夠時自動用金幣買。' +
+      (MARBLE.bonus ? '<br>・<b>每擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆氣球</b>額外送 1 個「' + escapeHtml(stoneItemName(MARBLE.bonus.item)) +
+        '」（擲骰次數每個角色各自累計，不會重置）。' : '') +
       '</div>';
 
+    if (MARBLE.bonus) html += '<div class="section-title">擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆的獎勵</div>' + sysChipRow([MARBLE.bonus.item]);
     html += '<div class="section-title">氣球怎麼來</div>' + sysChipRow([MARBLE.balloon, MARBLE.leaked]);
     if (mall) {
       html += '<table class="dtable" style="margin-top:8px;"><thead><tr><th>道具</th><th>名品館價格</th></tr></thead><tbody>' +
@@ -4495,6 +4552,268 @@
     if (COSTUME) html += sysGuideLinkHtml("costume", "時裝拿到之後怎麼強化，看時裝強化說明");
     $detail.innerHTML = html;
   }
+
+  // ---------- 節慶活動／釣魚活動／限時特賣／情侶（2026-10-27 新增，資料 EVENTS 來自 festival.json／couple.json）----------
+  // 日期一律照台灣時間（bundle tw = 8 小時）：rw() 某年某月某日 0 點、iw() 節慶檔期（until 那天不算）、
+  // uw() 釣魚活動 = 每月最後一個星期四起 7 天、pw() 特賣 = from 那天起 7 天
+  var EVENTS = window.EVENTS || null;
+  var EV_DAY = 864e5, EV_TZ = 288e5;
+  function evDayStart(y, md) { return Date.UTC(y, md[0] - 1, md[1]) - EV_TZ; }
+  function evMd(ms) { var d = new Date(ms + EV_TZ); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate(); }
+  function evYear(ms) { return new Date(ms + EV_TZ).getUTCFullYear(); }
+  function festivalSpan(fe, y) {
+    var w = fe.window;
+    if (w.lunar) {
+      var md = ((EVENTS.lunar[w.lunar] || {}).dates || {})[String(y)];
+      if (!md) return null;
+      var day = evDayStart(y, md);
+      return { from: day - w.before * EV_DAY, until: day + w.after * EV_DAY };
+    }
+    var wrap = w.until[0] < w.from[0] || (w.until[0] === w.from[0] && w.until[1] <= w.from[1]);
+    return { from: evDayStart(y, w.from), until: evDayStart(wrap ? y + 1 : y, w.until) };
+  }
+  // 現在這一期（進行中）或下一期；農曆節日的日期表沒有的年份就跳過
+  function festivalNextSpan(fe, now) {
+    var y = evYear(now);
+    for (var yy = y - 1; yy <= y + 5; yy++) {
+      var s = festivalSpan(fe, yy);
+      if (s && now < s.until) return s;
+    }
+    return null;
+  }
+  function festivalWhenText(fe) {
+    var w = fe.window;
+    if (w.lunar) {
+      var label = (EVENTS.lunar[w.lunar] || {}).label || w.lunar;
+      return '每年' + label + '前 ' + w.before + ' 天～後 ' + (w.after - 1) + ' 天（跟著農曆走）';
+    }
+    var last = new Date(Date.UTC(2001, w.until[0] - 1, w.until[1] - 1));
+    return '每年 ' + w.from[0] + '/' + w.from[1] + '～' + (last.getUTCMonth() + 1) + '/' + last.getUTCDate();
+  }
+  function saleNextSpan(s, now) {
+    var y = evYear(now);
+    for (var yy = y - 1; yy <= y + 1; yy++) {
+      var from = evDayStart(yy, s.from), until = from + EVENTS.saleDays * EV_DAY;
+      if (now < until) return { from: from, until: until };
+    }
+    return null;
+  }
+  function fishEventNextSpan(now) {
+    var d = new Date(now + EV_TZ), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1;
+    for (var i = -1; i <= 1; i++) {
+      var yy = y, mm = m + i;
+      if (mm < 1) { mm += 12; yy--; } else if (mm > 12) { mm -= 12; yy++; }
+      var lastDay = new Date(Date.UTC(yy, mm, 0)), back = (lastDay.getUTCDay() - 4 + 7) % 7;
+      var from = Date.UTC(yy, mm - 1, lastDay.getUTCDate() - back) - EV_TZ, until = from + EVENTS.fishEventDays * EV_DAY;
+      if (now < until) return { from: from, until: until };
+    }
+    return null;
+  }
+  // 「進行中（到 11/20）」或「下一期 10/30～11/20」
+  function evSpanBadge(span, now) {
+    if (!span) return '';
+    if (now >= span.from) return '<span class="group-tag" style="border-color:var(--gold);color:var(--gold-hi);">進行中・到 ' + evMd(span.until - EV_DAY) + '</span>';
+    return '<span class="group-tag">下一期 ' + (evYear(span.from) !== evYear(Date.now()) ? evYear(span.from) + '/' : '') + evMd(span.from) + '～' + evMd(span.until - EV_DAY) + '</span>';
+  }
+  function evTownName(t) { return (EVENTS.towns || {})[String(t)] || townName(t); }
+  function evGivesHtml(gives) { return gives.map(function (g) { return itemChip(g[0], g[1] > 1 ? g[1] : null); }).join(''); }
+  function festivalOfferLimit(o) { return o.once ? '每角色限 1 次' : o.limit ? '每角色限 ' + o.limit + ' 次' : '不限次數'; }
+
+  function showEventGuide() {
+    currentDetail = null;
+    if (!EVENTS || !EVENTS.festivals) { $detail.innerHTML = sysOldDataHtml("🎉 節慶活動"); return; }
+    var now = Date.now();
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">🎉 節慶活動・釣魚活動・限時特賣</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・<b>節慶活動</b>每年固定檔期，期間在<b>野外</b>（副本不算）每打倒一隻怪，都有機率另外掉一個活動代幣（不吃掉落率）。<br>' +
+      '・有些活動會讓野外重生的怪有機率換成活動怪（挑等級最接近你打的那隻），活動怪<b>不吃等級差的掉寶懲罰</b>。<br>' +
+      '・代幣拿去找活動 NPC 換時裝、禮物箱；標「請求信」的兌換每個活動每天只能換 ' + EVENTS.lettersPerDay + ' 次。活動 NPC 還有用金幣買的「活動特別商店」，每天限購。<br>' +
+      '・<b>活動結束時，身上和倉庫裡的代幣、兌換材料、沒有次數限制的兌換品會被收回</b>，記得在結束前用掉。<br>' +
+      '・日期都是台灣時間，從那天 0 點開始。' +
+      '</div>';
+
+    html += '<div class="section-title">節慶活動 <span class="count">(' + EVENTS.festivals.length + ')</span></div>';
+    EVENTS.festivals.forEach(function (fe) {
+      var span = festivalNextSpan(fe, now), active = span && now >= span.from;
+      html += '<details class="equip-box" style="padding:10px 14px;margin-bottom:8px;"' + (active ? ' open' : '') + '>' +
+        '<summary style="cursor:pointer;"><span style="font-weight:700;">' + escapeHtml(fe.name) + '</span> ' + evSpanBadge(span, now) +
+        '<span style="font-size:12px;color:var(--text-faint);margin-left:8px;">' + escapeHtml(festivalWhenText(fe)) + '</span></summary>' +
+        '<div style="margin-top:10px;font-size:13px;line-height:1.9;">' +
+        'NPC：<b>' + escapeHtml(fe.npc) + '</b>（' + escapeHtml(evTownName(fe.townId)) + '）<br>' +
+        '代幣：' + itemChip(fe.tokenId) + '野外每隻怪 <span class="rate">' + fe.dropPct + '%</span>';
+      if ((fe.monsters || []).length) {
+        html += '<br>活動怪（野外重生時 <span class="rate">' + fe.monsterPct + '%</span> 換成其中等級最接近的）：<div class="map-chip-row" style="margin-top:4px;">' +
+          fe.monsters.map(function (mid) {
+            var mon = MONSTERS[String(mid)];
+            return '<span class="map-chip" data-goto-monster="' + mid + '">' + monsterIconHtml(mid, 20) + escapeHtml(mon ? mon.name + ' Lv' + mon.lv : '#' + mid) + '</span>';
+          }).join('') + '</div>';
+      }
+      html += '</div><div class="empty-note" style="padding:8px 0 4px;">兌換：</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>換到</th><th>花費</th><th>限制</th></tr></thead><tbody>';
+      fe.offers.forEach(function (o) {
+        var cost = [];
+        if (o.tokens) cost.push(itemChip(fe.tokenId, o.tokens));
+        (o.costs || []).forEach(function (c) { cost.push(itemChip(c[0], c[1])); });
+        html += '<tr><td><div class="map-chip-row">' + evGivesHtml(o.gives) + '</div></td><td><div class="map-chip-row">' + cost.join('') + '</div>' +
+          (o.letter ? '<span class="group-tag">請求信・每天 ' + EVENTS.lettersPerDay + ' 次</span>' : '') + '</td><td>' + festivalOfferLimit(o) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      if ((fe.shop || []).length) {
+        html += '<div class="empty-note" style="padding:8px 0 4px;">活動特別商店（金幣）：</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>物品</th><th>價格</th><th>每天限購</th></tr></thead><tbody>';
+        fe.shop.forEach(function (s) { html += itemLinkRow(s.itemId, '<td>' + bigNumHtml(s.price) + '</td><td>' + s.perDay + ' 個</td>'); });
+        html += '</tbody></table></div>';
+      }
+      html += '</details>';
+    });
+
+    var fish = EVENTS.fishEvent;
+    if (fish && (fish.tiers || []).length) {
+      var fspan = fishEventNextSpan(now);
+      html += '<div class="section-title">釣魚活動：' + escapeHtml(fish.name) + ' ' + evSpanBadge(fspan, now) + '</div>' +
+        '<div style="font-size:13px;line-height:1.9;">每個月<b>最後一個星期四起 ' + EVENTS.fishEventDays + ' 天</b>。活動期間每釣一竿有 <span class="rate">' + fish.pct + '%</span> 多釣到一個' +
+        itemChip(fish.tokenId) + '，身上（含倉庫）集滿數量就能領獎，每期每一段領一次。活動週以外代幣會被收回。</div>' +
+        '<table class="dtable" style="margin-top:6px;"><thead><tr><th>集滿</th><th>獎勵</th></tr></thead><tbody>' +
+        fish.tiers.map(function (t) { return '<tr><td>' + t.count + ' 個</td><td><div class="map-chip-row">' + evGivesHtml(t.gives) + '</div></td></tr>'; }).join('') +
+        '</tbody></table>';
+    }
+
+    if ((EVENTS.sales || []).length) {
+      html += '<div class="section-title">限時特賣 <span class="count">(' + EVENTS.sales.length + ')</span></div>' +
+        '<div style="font-size:13px;line-height:1.9;margin-bottom:6px;">每年固定日期起 <b>' + EVENTS.saleDays + ' 天</b>，' + escapeHtml(EVENTS.saleNpc) +
+        '會出現在城鎮賣禮包。價格用名品館點數計算（1 點折合多少金幣每個整點換一次），每期每種禮包限購。</div>';
+      EVENTS.sales.forEach(function (s) {
+        var span = saleNextSpan(s, now), last = new Date(Date.UTC(2001, s.from[0] - 1, s.from[1] + EVENTS.saleDays - 1));
+        html += '<details class="equip-box" style="padding:10px 14px;margin-bottom:8px;"' + (span && now >= span.from ? ' open' : '') + '>' +
+          '<summary style="cursor:pointer;"><span style="font-weight:700;">' + escapeHtml(s.name) + '</span> ' + evSpanBadge(span, now) +
+          '<span style="font-size:12px;color:var(--text-faint);margin-left:8px;">每年 ' + s.from[0] + '/' + s.from[1] + '～' + (last.getUTCMonth() + 1) + '/' + last.getUTCDate() +
+          '・' + escapeHtml(evTownName(s.townId)) + '</span></summary>' +
+          '<div style="overflow-x:auto;margin-top:8px;"><table class="dtable"><thead><tr><th>禮包</th><th>內容</th><th>價格</th><th>每期限購</th></tr></thead><tbody>';
+        s.packs.forEach(function (p) {
+          html += '<tr><td><b>' + escapeHtml(p.name) + '</b></td><td><div class="map-chip-row">' + evGivesHtml(p.gives) + '</div></td>' +
+            '<td data-mall-points="' + p.points + '">' + mallNowHtml(p.points) + '</td><td>' + p.limit + ' 個</td></tr>';
+        });
+        html += '</tbody></table></div></details>';
+      });
+    }
+    if (EVENTS.couple) html += sysGuideLinkHtml("couple", "情侶系統（玫瑰花商店、情人節／七夕活動）另有說明頁");
+    $detail.innerHTML = html;
+  }
+
+  // 情侶點數換玫瑰：floor(點數 × coefficient[等級] 取到小數兩位)（bundle Ow()）
+  function coupleRoses(points, lv) {
+    var c = EVENTS.couple.coefficient, r = c[Math.min(lv, c.length - 1)] || 0;
+    return Math.floor((points * Math.round(r * 100) + 50) / 100);
+  }
+  function showCoupleGuide() {
+    currentDetail = null;
+    var cp = EVENTS && EVENTS.couple;
+    if (!cp) { $detail.innerHTML = sysOldDataHtml("💞 情侶"); return; }
+    var rose = escapeHtml(stoneItemName(cp.rose)), hours = cp.cap * cp.minutesPerPoint / 60;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">💞 情侶</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・同一個存檔裡兩個<b>不同性別</b>的角色可以配成情侶（一個角色只能有一個情侶，可以分手）。<br>' +
+      '・情侶<b>在隊上</b>時，每 ' + cp.minutesPerPoint + ' 分鐘 +1 情侶點數，最多 ' + fmtNum(cp.cap) + ' 點（約 ' + Math.round(hours / 24 * 10) / 10 + ' 天集滿）。<br>' +
+      '・點數可以隨時換成「' + rose + '」：數量＝點數 × 角色等級的係數（下表），換完點數歸零。' +
+      cp.events.map(function (e) { return e.name + '期間 ×' + e.roseMult; }).join('、') + '。<br>' +
+      '・' + rose + '拿去情侶商店買東西；情侶道具（名品館賣）要情侶在隊上才有效果。' +
+      '</div>';
+
+    var lvs = [1, 50, 100, 150, 200, 250, 300].filter(function (lv) { return lv < cp.coefficient.length + 50; });
+    html += '<div class="section-title">玫瑰花係數（點數集滿 ' + fmtNum(cp.cap) + ' 點能換幾朵）</div><table class="dtable"><thead><tr><th>角色等級</th><th>係數</th><th>滿點換</th>' +
+      cp.events.map(function (e) { return '<th>' + escapeHtml(e.name) + ' ×' + e.roseMult + '</th>'; }).join('') + '</tr></thead><tbody>';
+    lvs.forEach(function (lv) {
+      var c = cp.coefficient[Math.min(lv, cp.coefficient.length - 1)], n = coupleRoses(cp.cap, lv);
+      html += '<tr><td>Lv' + lv + (lv >= cp.coefficient.length - 1 ? ' 以上' : '') + '</td><td>×' + c + '</td><td>' + fmtNum(n) + ' 朵</td>' +
+        cp.events.map(function (e) { return '<td>' + fmtNum(Math.round(n * e.roseMult)) + ' 朵</td>'; }).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+
+    var cats = [];
+    cp.shop.forEach(function (s) { if (cats.indexOf(s.category) === -1) cats.push(s.category); });
+    html += '<div class="section-title">情侶商店 <span class="count">(' + cp.shop.length + ')</span></div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>物品</th><th>' + rose + '</th><th>分類</th></tr></thead><tbody>';
+    cats.forEach(function (cat) {
+      cp.shop.filter(function (s) { return s.category === cat; }).forEach(function (s) {
+        html += itemLinkRow(s.id, '<td>' + fmtNum(s.price) + '</td><td>' + escapeHtml(cat) + '</td>');
+      });
+    });
+    html += '</tbody></table></div>';
+    cp.events.forEach(function (e) {
+      html += '<div class="section-title">' + escapeHtml(e.name) + '限定貨架 <span class="count">（' +
+        (e.lunar ? '農曆' + escapeHtml(((EVENTS.lunar[e.lunar] || {}).label) || e.name) : e.date[0] + '/' + e.date[1]) + ' 前後幾天）</span></div>' +
+        '<table class="dtable"><thead><tr><th>物品</th><th>' + rose + '</th></tr></thead><tbody>' +
+        e.shelf.map(function (s) { return itemLinkRow(s.id, '<td>' + fmtNum(s.price) + '</td>'); }).join('') + '</tbody></table>';
+    });
+
+    var potions = Object.keys(MALL_INDEX.potions || {}).filter(function (id) { return COUPLE_POTION_TEXT[MALL_INDEX.potions[id].stat]; });
+    if (potions.length) {
+      html += '<div class="section-title">情侶道具 <span class="count">(' + potions.length + ')</span></div><table class="dtable"><thead><tr><th>道具</th><th>效果</th><th>持續</th></tr></thead><tbody>';
+      potions.forEach(function (id) {
+        var p = MALL_INDEX.potions[id];
+        html += itemLinkRow(id, '<td>' + escapeHtml(potionEffectText(p)) + '</td><td>' + potionDurationText(p.durationMs) + '</td>');
+      });
+      html += '</tbody></table>' + sysNote('要情侶在隊上才有效果。名品館或情侶商店買得到的，點進去看價格。');
+    }
+    $detail.innerHTML = html;
+  }
+
+  // 物品頁：跟節慶活動／釣魚活動／特賣／情侶有關的物品
+  function eventSectionHtml(id) {
+    if (!EVENTS) return '';
+    var num = Number(id), lines = [], now = Date.now();
+    (EVENTS.festivals || []).forEach(function (fe) {
+      var tag = '〈' + escapeHtml(fe.name) + '〉（' + escapeHtml(festivalWhenText(fe)) + '）';
+      if (fe.tokenId === num) {
+        lines.push('節慶活動' + tag + '的代幣：活動期間在野外每打倒一隻怪有 <span class="rate">' + fe.dropPct + '%</span> 掉 1 個，拿去找<b>' +
+          escapeHtml(fe.npc) + '</b>（' + escapeHtml(evTownName(fe.townId)) + '）兌換。<b>活動結束會被收回。</b>');
+      }
+      fe.offers.forEach(function (o) {
+        var cost = (o.tokens ? [itemChip(fe.tokenId, o.tokens)] : []).concat((o.costs || []).map(function (c) { return itemChip(c[0], c[1]); }));
+        if (o.gives.some(function (g) { return g[0] === num; })) {
+          lines.push('節慶活動' + tag + '：找<b>' + escapeHtml(fe.npc) + '</b>用 ' + cost.join('') + (o.letter ? '（請求信，每天 ' + EVENTS.lettersPerDay + ' 次）' : '') +
+            ' 換' + (o.gives.length > 1 ? '（一起給：' + evGivesHtml(o.gives) + '）' : '') + '，' + festivalOfferLimit(o) + '。');
+        }
+        if ((o.costs || []).some(function (c) { return c[0] === num; })) {
+          lines.push('用途：節慶活動' + tag + '找<b>' + escapeHtml(fe.npc) + '</b>兌換 ' + evGivesHtml(o.gives) + ' 要用到。');
+        }
+      });
+      (fe.shop || []).forEach(function (s) {
+        if (s.itemId === num) lines.push('節慶活動' + tag + '的活動特別商店：' + bigNumHtml(s.price) + ' 金幣，每天限購 ' + s.perDay + ' 個。');
+      });
+    });
+    var fish = EVENTS.fishEvent;
+    if (fish && (fish.tiers || []).length) {
+      if (fish.tokenId === num) lines.push('釣魚活動〈' + escapeHtml(fish.name) + '〉（每月最後一個星期四起 ' + EVENTS.fishEventDays + ' 天）：每釣一竿 <span class="rate">' + fish.pct + '%</span> 多釣到 1 個，集滿 ' +
+        fish.tiers.map(function (t) { return t.count; }).join('／') + ' 個各領一次獎。活動週以外會被收回。');
+      fish.tiers.forEach(function (t) {
+        if (t.gives.some(function (g) { return g[0] === num; })) lines.push('釣魚活動〈' + escapeHtml(fish.name) + '〉：活動期間集滿 ' + t.count + ' 個' + itemChip(fish.tokenId) + '領取（每期一次）。');
+      });
+    }
+    (EVENTS.sales || []).forEach(function (s) {
+      s.packs.forEach(function (p) {
+        if (p.gives.some(function (g) { return g[0] === num; })) {
+          lines.push('限時特賣〈' + escapeHtml(s.name) + '〉（每年 ' + s.from[0] + '/' + s.from[1] + ' 起 ' + EVENTS.saleDays + ' 天，' + escapeHtml(EVENTS.saleNpc) + '・' + escapeHtml(evTownName(s.townId)) +
+            '）：「' + escapeHtml(p.name) + '」<span data-mall-points="' + p.points + '">' + mallNowHtml(p.points) + '</span>，每期限購 ' + p.limit + ' 個，內容 ' + evGivesHtml(p.gives) + '。');
+        }
+      });
+    });
+    var cp = EVENTS.couple, nEvent = lines.length;
+    if (cp) {
+      if (cp.rose === num) { lines.push('情侶點數換來的（情侶在隊上每 ' + cp.minutesPerPoint + ' 分鐘 +1 點），用來買情侶商店的東西。'); }
+      cp.shop.forEach(function (s) {
+        if (s.id === num) { lines.push('情侶商店（' + escapeHtml(s.category) + '）：' + itemChip(cp.rose, s.price) + '。'); }
+      });
+      cp.events.forEach(function (e) {
+        e.shelf.forEach(function (s) {
+          if (s.id === num) { lines.push('情侶商店的' + escapeHtml(e.name) + '限定貨架（只在' + escapeHtml(e.name) + '前後幾天出現）：' + itemChip(cp.rose, s.price) + '。'); }
+        });
+      });
+    }
+    if (!lines.length) return '';
+    var nCouple = lines.length - nEvent;
+    return '<div class="section-title">' + (nEvent && nCouple ? '節慶活動・特賣・情侶' : nCouple ? '情侶' : '節慶活動・特賣') + '</div>' +
+      '<div style="font-size:13px;line-height:2;">' + lines.join('<br>') + '</div>' +
+      (nEvent ? sysGuideLinkHtml("events", "看節慶活動・特賣完整說明") : '') +
+      (nCouple ? sysGuideLinkHtml("couple", "看情侶系統說明") : '');
+  }
   // 物品頁：三個系統的關鍵道具下面放一個連到說明頁的連結
   function sysSectionHtml(id) {
     var num = Number(id), html = '';
@@ -4522,7 +4841,7 @@
       }
     }
     if (COSTUME && COSTUME.smelt) {
-      var cids = [COSTUME.crystal, COSTUME.powder, COSTUME.exBox.item, COSTUME.compose.box].concat(COSTUME.threads.map(function (t) { return t[0]; }));
+      var cids = [COSTUME.crystal, COSTUME.powder, COSTUME.exBox.item, COSTUME.compose.box, COSTUME.cloth].concat(COSTUME.threads.map(function (t) { return t[0]; }));
       var isCostume = COSTUME.grades.some(function (g) { return g.items.indexOf(num) >= 0; });
       if (has(cids) || isCostume) {
         var cp = COSTUME.compose, npcText = sysNpcText(COSTUME.npc), cNote = '';
@@ -4541,6 +4860,8 @@
         } else if (num === COSTUME.powder) {
           cNote = '取得方式：' + (MARBLE ? '哈比兔大富翁的格子和寶箱；' : '') + '時裝合成失敗時補 ' + cp.fail.min + '~' + cp.fail.max + ' 個。' +
             COSTUME.powderPerCrystal + ' 個可以找' + npcText + '換成 1 個' + itemChip(COSTUME.crystal) + '。';
+        } else if (num === COSTUME.cloth) {
+          cNote = '用途：找' + npcText + '<b>強化</b>時裝時勾選，這一階失敗就不掉階；每次用的數量＝這一階失敗會掉幾階（成功失敗都會扣）。';
         } else if (!isCostume) {
           var out = COSTUME.spin.outs.filter(function (o) { return o[0] === num; })[0];
           var total = COSTUME.spin.outs.reduce(function (a, o) { return a + o[1]; }, 0) || 1;
@@ -4558,9 +4879,11 @@
       var squareKinds = [];
       Object.keys(MARBLE.squares).forEach(function (k) { if (MARBLE.squares[k].some(function (x) { return x.item === num; })) squareKinds.push(k); });
       Object.keys(MARBLE.boxes).forEach(function (k) { if (MARBLE.boxes[k].others.some(function (x) { return x.item === num; })) squareKinds.push(k); });
-      if (has([MARBLE.balloon, MARBLE.leaked]) || isPrize || squareKinds.length) {
+      var isBonus = !!MARBLE.bonus && MARBLE.bonus.item === num;
+      if (has([MARBLE.balloon, MARBLE.leaked]) || isPrize || squareKinds.length || isBonus) {
         var mNote = '';
-        if (isPrize) mNote = '取得方式：哈比兔大富翁的綠／藍／紅寶箱有機率開出時裝，開到時從 ' + MARBLE.costumes.length + ' 件裡平均抽一件。';
+        if (isBonus) mNote = '取得方式：哈比兔大富翁每擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆氣球送 1 個。';
+        else if (isPrize) mNote = '取得方式：哈比兔大富翁的綠／藍／紅寶箱有機率開出時裝，開到時從 ' + MARBLE.costumes.length + ' 件裡平均抽一件。';
         else if (num === MARBLE.leaked) mNote = '取得方式：玩哈比兔大富翁，每經過起點一次拿 1 個。';
         else if (squareKinds.length) mNote = '取得方式：哈比兔大富翁停在「' + squareKinds.map(marbleSquareName).join('」「') + '」格有機會拿到。';
         html += '<div class="section-title">哈比兔大富翁</div>' + (mNote ? '<div style="font-size:13px;line-height:1.9;">' + mNote + '</div>' : '') +
@@ -6059,7 +6382,7 @@
     hero: "英雄神話", fishing: "釣魚", exchange: "NPC 兌換", cook: "料理", mission: "藍圖任務", gem: "寶石合成",
     alchemy: "煉金", smelt: "鎔解", melt: "熔解", craft: "製作", pet: "寵物", start: "初始道具", daily: "每日任務", decompose: "分解", convert: "轉換",
     marble: "哈比兔大富翁", costume: "時裝（布布）", aura: "光環（祭司）", petdex: "寵物圖鑑獎勵",
-    wardrobe: "時裝設計師", bpetdex: "戰寵裝備圖鑑"
+    wardrobe: "時裝設計師", bpetdex: "戰寵裝備圖鑑", festival: "節慶活動", sale: "限時特賣", couple: "情侶商店"
   };
   function petObtainKinds(petId) {
     var kinds = ((ITEM_OBTAIN || {})[String(petId)] || []).slice();
@@ -7114,6 +7437,28 @@
         html += '</div></details>';
       });
       if (emptyCount) html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">另有 ' + emptyCount + ' 個沒有怪物的區域（入口、通道等）未列出。</div>';
+    }
+
+    // 首領直接給的獎勵（update_data.py 的 bossRewards）；partyRolls（10-27 新增）的首領不照一般掉落表掉，
+    // 改成隊伍每人各從「普通掉落組」抽一次（bundle rewardKill()／bossTableRolls()）
+    var bossRewardRows = [];
+    rooms.forEach(function (isl) {
+      (isl.bossRewards || []).forEach(function (b) { bossRewardRows.push({ room: isl.name || isl.key, b: b }); });
+    });
+    if (bossRewardRows.length) {
+      html += '<div class="section-title">首領獎勵 <span class="count">(' + bossRewardRows.length + ')</span></div>' +
+        '<table class="dtable"><thead><tr><th>首領</th><th>區域</th><th>打倒必得</th></tr></thead><tbody>';
+      bossRewardRows.forEach(function (x) {
+        var mon = MONSTERS[String(x.b.id)];
+        html += '<tr><td><span class="name-link" data-goto-monster="' + x.b.id + '">' + monsterIconHtml(x.b.id, 20) + escapeHtml(mon ? mon.name : "無資料") + '</span>' +
+          (x.b.partyRolls ? '<br><span class="group-tag" title="這隻首領不照一般掉落表掉，改成隊伍每人各從普通掉落組抽一次">隊伍每人抽一次</span>' : '') + '</td>' +
+          '<td>' + escapeHtml(x.room || "") + '</td><td><div class="map-chip-row">' +
+          x.b.rewards.map(function (r) { return itemChip(r[0], r[1]); }).join("") + '</div></td></tr>';
+      });
+      html += '</tbody></table>';
+      if (bossRewardRows.some(function (x) { return x.b.partyRolls; })) {
+        html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">標「隊伍每人抽一次」的首領：一般掉落表不算，改成隊伍裡每個人各從牠的普通掉落組抽一次。</div>';
+      }
     }
 
     // 掉落總表
