@@ -56,7 +56,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "slot","inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "stones", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "stones", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -104,8 +104,6 @@
     { panel: "basic", icon: "👤", title: "基本資料", desc: "名稱、等級、經驗、金錢、HP、職業（一轉／二轉／三轉）、名聲。" },
     { panel: "attrs", icon: "📊", title: "屬性點數", desc: "力量 / 敏捷 / 智力 / 體力 / 精神 / 幸運六圍。" },
     { panel: "equip", icon: "🛡️", title: "裝備欄位", desc: "設定各裝備欄位指向背包裡的哪一疊物品。" },
-    // 遊戲已內建存檔排序，存檔位置先隱藏
-    // { panel: "slot", icon: "🔀", title: "存檔位置", desc: "把兩個角色在遊戲選角畫面上的格子互換（例如第 1 格 ↔ 第 6 格）。" },
     { panel: "inventory", icon: "🎒", title: "背包", desc: "新增 / 刪除 / 修改背包物品與數量，支援搜尋。" },
     { panel: "enchant", icon: "🔮", title: "發條強化", desc: "編輯裝備的發條強化屬性，數值旁邊附機率表算出的範圍參考。" },
     { panel: "appraisal", icon: "🔨", title: "鑑定", desc: "無限抽抽樂試手氣，或自己輸入數值（鎖定合法範圍）。" },
@@ -170,12 +168,204 @@
     if (e.target.files.length) handleFile(e.target.files[0]);
   });
 
+  // ---------- 壓縮存檔還原（2026-10-27 改版起遊戲存檔有 packed 欄位）----------
+  // 照遊戲 Sk() 還原，修改器內部一律用還原後的格式；匯出時再照遊戲 Cte() 壓回去（見下面的 packSave()）：
+  //   stacks       [id, itemId, count(, refine)] 陣列 → 物件；{…, run: n} → 連號 id 的 n 筆一樣的東西（tk()）
+  //   pets         [uid, id, grow, exp, seed, evolveTries, 未鑑定?1:0, apprTries, …kind,value,unit] → 物件（sk()），
+  //                其他寵物、offlineHistory、dungeonHistory 缺的欄位從 packed.blanks 補回預設值（gk()）
+  //   gems.owned   [uid, itemId, cells, seed, 旗標(1 鎖定、2 開過)] → 物件（fk()）；倉庫的 gems 也是
+  //   seenItems    差值 → 累加回原本的物品 id（bte()）
+  //   allyBook     snapshot 是字串（角色 id）→ 換回那個角色的 snapshot（Ste()）
+  // 沒還原的話裝備欄（loadout 存 stack id）對不到背包、技能寶石也讀不到，玩家 10-27 回報「穿著時裝顯示沒裝備、寶石全是問號」就是這個。
+  function unpackStacks(list) {
+    var out = [];
+    list.forEach(function (s) {
+      if (Array.isArray(s)) {
+        var o = { id: s[0], itemId: s[1], count: s[2] };
+        if (s.length > 3) o.refine = s[3];
+        out.push(o);
+        return;
+      }
+      if (s && typeof s.run === "number") {
+        var base = {};
+        Object.keys(s).forEach(function (k) { if (k !== "run") base[k] = s[k]; });
+        for (var i = 0; i < s.run; i++) {
+          var copy = JSON.parse(JSON.stringify(base));
+          copy.id = base.id + i;
+          out.push(copy);
+        }
+        return;
+      }
+      out.push(s);
+    });
+    return out;
+  }
+  function fillBlanks(obj, blanks) {
+    var o = {};
+    Object.keys(obj).forEach(function (k) { o[k] = obj[k]; });
+    Object.keys(blanks || {}).forEach(function (k) { if (!(k in o)) o[k] = JSON.parse(JSON.stringify(blanks[k])); });
+    return o;
+  }
+  function unpackPet(p, blanks) {
+    if (!Array.isArray(p)) return fillBlanks(p, blanks);
+    var appraisal = [];
+    for (var i = 8; i < p.length; i += 3) appraisal.push({ kind: p[i], value: p[i + 1], unit: p[i + 2] });
+    return { uid: p[0], id: p[1], grow: p[2], exp: p[3], seed: p[4], evolveTries: p[5], unidentified: p[6] === 1, appraisal: appraisal, apprTries: p[7] };
+  }
+  function unpackGem(g) {
+    if (!Array.isArray(g)) return g;
+    return { uid: g[0], itemId: g[1], cells: g[2], seed: g[3], locked: (g[4] & 1) !== 0, opened: (g[4] & 2) !== 0 };
+  }
+  function unpackSave(save) {
+    if (!save || !save.packed) return save;
+    loadedPacked = true;
+    var blanks = save.packed.blanks || {};
+    delete save.packed;
+    var chars = Array.isArray(save.characters) ? save.characters : [];
+    var snaps = {};
+    chars.forEach(function (c) { if (c.snapshot && typeof c.id === "string") snaps[c.id] = c.snapshot; });
+    chars.forEach(function (c) {
+      if (Array.isArray(c.stacks)) c.stacks = unpackStacks(c.stacks);
+      if (Array.isArray(c.pets)) c.pets = c.pets.map(function (p) { return unpackPet(p, blanks.pets); });
+      if (Array.isArray(c.offlineHistory)) c.offlineHistory = c.offlineHistory.map(function (h) { return fillBlanks(h, blanks.offline); });
+      if (Array.isArray(c.dungeonHistory)) c.dungeonHistory = c.dungeonHistory.map(function (h) { return fillBlanks(h, blanks.dungeon); });
+      if (Array.isArray(c.seenItems)) { var sum = 0; c.seenItems = c.seenItems.map(function (d) { return (sum += d); }); }
+      if (Array.isArray(c.allyBook)) c.allyBook = c.allyBook.map(function (a) {
+        if (typeof a.snapshot !== "string") return a;
+        var o = fillBlanks(a, {});
+        o.snapshot = snaps[a.snapshot] ? JSON.parse(JSON.stringify(snaps[a.snapshot])) : undefined;
+        return o;
+      });
+      if (c.gems && Array.isArray(c.gems.owned)) c.gems.owned = c.gems.owned.map(unpackGem);
+    });
+    var wh = save.warehouse;
+    if (wh) {
+      if (Array.isArray(wh.stacks)) wh.stacks = unpackStacks(wh.stacks);
+      if (Array.isArray(wh.pets)) wh.pets = wh.pets.map(function (p) { return unpackPet(p, blanks.pets); });
+      if (Array.isArray(wh.gems)) wh.gems = wh.gems.map(unpackGem);
+    }
+    return save;
+  }
+
+  // ---------- 壓縮存檔（照遊戲 Cte()，匯出／轉移碼用）----------
+  // 跟遊戲自己存出來的一模一樣，檔案小很多；遊戲讀檔時 Sk() 會解開。只壓 v127 以上、或載入時本來就是壓縮的存檔
+  // （舊版遊戲不認得 packed）。規則：
+  //   stacks   只有 id/itemId/count 的 → [id, itemId, count]；只有這三個加 refine 的 → [id, itemId, count, refine]；
+  //            id 連號、除了 id 以外完全一樣的好幾筆（不是只有那三個欄位的）→ 第一筆加 run: 筆數（$O()）
+  //   pets     欄位剛好是 uid/id/grow/exp/seed/evolveTries/unidentified/apprTries/appraisal 的 → 陣列（ok()）；
+  //            其他的寵物、offlineHistory、dungeonHistory：跟 blanks 一樣的欄位拿掉（hk()）。blanks 是所有角色＋倉庫裡
+  //            每個欄位最常見的「空值」（0、false、null、""、[]、{}，mk()）
+  //   gems     欄位剛好是 uid/itemId/cells/seed/locked/opened 的 → [uid, itemId, cells, seed, 旗標]（dk()）
+  //   seenItems 由小到大排序後存差值（yte()）
+  //   allyBook snapshot 跟那個角色自己的 snapshot 完全一樣時，只存角色 id（xte()）
+  var PACK_EMPTY_JSON = ["0", "false", "null", '""', "[]", "{}"];
+  var PACK_PET_KEYS = ["uid", "id", "grow", "exp", "seed", "evolveTries", "unidentified", "apprTries", "appraisal"];
+  var PACK_GEM_KEYS = ["uid", "itemId", "cells", "seed", "locked", "opened"];
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null || Array.isArray(a) !== Array.isArray(b)) return false;
+    var ka = Object.keys(a), kb = Object.keys(b);
+    return ka.length === kb.length && ka.every(function (k) { return k in b && deepEqual(a[k], b[k]); });
+  }
+  function hasOnlyKeys(o, keys) { return Object.keys(o).every(function (k) { return keys.indexOf(k) >= 0; }); }
+  function hasExactKeys(o, keys) { return Object.keys(o).length === keys.length && keys.every(function (k) { return k in o; }); }
+  function withoutId(s) { var o = {}; Object.keys(s).forEach(function (k) { if (k !== "id") o[k] = s[k]; }); return o; }
+  function packStacks(list) {
+    var groups = [];
+    list.forEach(function (s) {
+      var g = groups[groups.length - 1];
+      if (g && !hasOnlyKeys(s, ["id", "itemId", "count"]) && s.id === g.first.id + g.n && deepEqual(withoutId(s), withoutId(g.first))) g.n++;
+      else groups.push({ first: s, n: 1 });
+    });
+    return groups.map(function (g) {
+      var s = g.first;
+      if (g.n > 1) { var o = {}; Object.keys(s).forEach(function (k) { o[k] = s[k]; }); o.run = g.n; return o; }
+      if (hasOnlyKeys(s, ["id", "itemId", "count"])) return [s.id, s.itemId, s.count];
+      if (hasOnlyKeys(s, ["id", "itemId", "count", "refine"]) && "refine" in s) return [s.id, s.itemId, s.count, s.refine];
+      return s;
+    });
+  }
+  function packBlanks(list) {
+    if (!list.length) return {};
+    var out = {};
+    Object.keys(list[0]).forEach(function (k) {
+      if (!list.every(function (x) { return k in x; })) return;
+      var counts = [];   // [JSON, 次數]，照第一次出現的順序（同次數時取先出現的，跟遊戲的 Map＋穩定排序一樣）
+      list.forEach(function (x) {
+        var j = JSON.stringify(x[k]);
+        if (PACK_EMPTY_JSON.indexOf(j) < 0) return;
+        var hit = counts.filter(function (c) { return c[0] === j; })[0];
+        if (hit) hit[1]++; else counts.push([j, 1]);
+      });
+      var best = counts.slice().sort(function (a, b) { return b[1] - a[1]; })[0];
+      if (best) out[k] = JSON.parse(best[0]);
+    });
+    return out;
+  }
+  function stripBlanks(obj, blanks) {
+    var o = {};
+    Object.keys(obj).forEach(function (k) { if (!(k in blanks) || JSON.stringify(obj[k]) !== JSON.stringify(blanks[k])) o[k] = obj[k]; });
+    return o;
+  }
+  function packPet(p, blanks) {
+    if (hasExactKeys(p, PACK_PET_KEYS) && Array.isArray(p.appraisal) &&
+        p.appraisal.every(function (a) { return hasExactKeys(a, ["kind", "value", "unit"]); })) {
+      var arr = [p.uid, p.id, p.grow, p.exp, p.seed, p.evolveTries, p.unidentified ? 1 : 0, p.apprTries];
+      p.appraisal.forEach(function (a) { arr.push(a.kind, a.value, a.unit); });
+      return arr;
+    }
+    return stripBlanks(p, blanks);
+  }
+  function packGem(g) {
+    return hasExactKeys(g, PACK_GEM_KEYS) ? [g.uid, g.itemId, g.cells, g.seed, (g.locked ? 1 : 0) | (g.opened ? 2 : 0)] : g;
+  }
+  function listOf(x) { return Array.isArray(x) ? x : []; }
+  function packSave(src) {
+    var save = JSON.parse(JSON.stringify(src));   // 不動到修改器正在編輯的那份
+    var chars = listOf(save.characters), wh = save.warehouse;
+    var blanks = {
+      pets: packBlanks([].concat.apply([], chars.map(function (c) { return listOf(c.pets); })).concat(listOf(wh && wh.pets))),
+      offline: packBlanks([].concat.apply([], chars.map(function (c) { return listOf(c.offlineHistory); }))),
+      dungeon: packBlanks([].concat.apply([], chars.map(function (c) { return listOf(c.dungeonHistory); })))
+    };
+    var snaps = {};
+    chars.forEach(function (c) { if (c.snapshot && typeof c.id === "string") snaps[c.id] = c.snapshot; });
+    chars.forEach(function (c) {
+      if (Array.isArray(c.stacks)) c.stacks = packStacks(c.stacks);
+      if (Array.isArray(c.pets)) c.pets = c.pets.map(function (p) { return packPet(p, blanks.pets); });
+      if (Array.isArray(c.offlineHistory)) c.offlineHistory = c.offlineHistory.map(function (h) { return stripBlanks(h, blanks.offline); });
+      if (Array.isArray(c.dungeonHistory)) c.dungeonHistory = c.dungeonHistory.map(function (h) { return stripBlanks(h, blanks.dungeon); });
+      if (Array.isArray(c.seenItems)) {
+        var sorted = c.seenItems.slice().sort(function (a, b) { return a - b; });
+        c.seenItems = sorted.map(function (v, i) { return i === 0 ? v : v - sorted[i - 1]; });
+      }
+      if (Array.isArray(c.allyBook)) c.allyBook = c.allyBook.map(function (a) {
+        var sid = a.snapshot && a.snapshot.sourceId;
+        if (typeof sid === "string" && snaps[sid] && deepEqual(a.snapshot, snaps[sid])) { var o = fillBlanks(a, {}); o.snapshot = sid; return o; }
+        return a;
+      });
+      if (c.gems && Array.isArray(c.gems.owned)) c.gems.owned = c.gems.owned.map(packGem);
+    });
+    if (wh) {
+      if (Array.isArray(wh.stacks)) wh.stacks = packStacks(wh.stacks);
+      if (Array.isArray(wh.pets)) wh.pets = wh.pets.map(function (p) { return packPet(p, blanks.pets); });
+      if (Array.isArray(wh.gems)) wh.gems = wh.gems.map(packGem);
+    }
+    save.packed = { blanks: blanks };
+    return save;
+  }
+  var loadedPacked = false;   // 載入的存檔本來就是壓縮的
+  function exportPayload() {
+    return JSON.stringify(loadedPacked || saveVersion() >= 127 ? packSave(saveData) : saveData);
+  }
+
   function handleFile(file) {
     originalFileName = file.name || originalFileName;
     var reader = new FileReader();
     reader.onload = function (e) {
       try {
-        var data = JSON.parse(e.target.result);
+        loadedPacked = false;
+        var data = unpackSave(JSON.parse(e.target.result));
         if (!data || !Array.isArray(data.characters)) {
           throw new Error("找不到 characters 陣列，這可能不是 idle-seal 的存檔檔案。");
         }
@@ -462,7 +652,6 @@
     renderCharSelect();
     var c = saveData.characters[currentCharIndex];
     renderBasic(c);
-    renderSlot(c);
     renderAttrs(c);
     renderStacks(c);
     renderLoadout(c);
@@ -487,111 +676,6 @@
     renderWarehouse();
     renderRawFields(c);
     if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
-  }
-
-  // ---------- 存檔位置（選角畫面的格子順序）----------
-  // 遊戲選角畫面的排法（bundle 選角元件）：[...characters].sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))，
-  // 也就是照「建立時間」由舊到新，同時間再比 id；存檔裡 characters 陣列的順序完全不影響。
-  // 2026-10-07 實測：只調換陣列順序，遊戲畫面沒有任何變化；互換建立時間後，Lv300 的角色從第 1 格換到第 6 格，
-  // 進入角色正常（等級、金幣、每日任務都在），遊戲重新存檔後順序也維持。
-  // createdAt 另外的用途：每日任務抽卡、個性化展現的亂數種子（之後抽到的結果會不同，不會壞檔）。
-  function slotOrder() {
-    return saveData.characters.slice().sort(function (a, b) {
-      return (a.createdAt || 0) - (b.createdAt || 0) || String(a.id).localeCompare(String(b.id));
-    });
-  }
-  // 互換兩個角色的格子：把「目前各格的建立時間」原樣留在格子上，換的是誰坐在哪一格。
-  // 有角色建立時間一樣（舊版修改器複製出來的）時，順序本來是靠 id 排的，換了也不保證照我們要的排，
-  // 所以遇到一樣的就往後 +1 毫秒，讓每一格的時間都不同。
-  function swapSlots(idA, idB) {
-    var order = slotOrder();
-    var times = order.map(function (c) { return c.createdAt || 0; });
-    var ia = -1, ib = -1;
-    order.forEach(function (c, i) { if (c.id === idA) ia = i; if (c.id === idB) ib = i; });
-    if (ia < 0 || ib < 0 || ia === ib) return false;
-    var tmp = order[ia]; order[ia] = order[ib]; order[ib] = tmp;
-    for (var k = 1; k < times.length; k++) {
-      if (times[k] <= times[k - 1]) times[k] = times[k - 1] + 1;
-    }
-    order.forEach(function (c, k) { c.createdAt = times[k]; });
-    // 遊戲裡「離開」分頁的角色清單沒有排序，是直接照存檔 characters 陣列的順序畫的（bundle ExitTab：[...characters]），
-    // 所以陣列也要排成跟格子一樣的順序，不然選角畫面換了、離開那邊還是舊的。
-    // 陣列順序動了，「目前編輯的角色」是用陣列位置記的，要跟著改，上方的角色選單也要重畫。
-    var editing = saveData.characters[currentCharIndex];
-    saveData.characters = order;
-    currentCharIndex = Math.max(0, order.indexOf(editing));
-    renderCharSelect();
-    return true;
-  }
-  var slotPickA = null, slotPickB = null;   // 兩個下拉選單目前選的角色 id（重畫時保留）
-  var slotForChar = null;                   // 上面的選擇是替哪個「目前編輯的角色」記的；換角色就重設回預設
-  function renderSlot(c) {
-    var wrap = document.getElementById("slotBody");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    if (slotForChar !== c.id) { slotForChar = c.id; slotPickA = null; slotPickB = null; }
-    var order = slotOrder();
-    if (order.length < 2) {
-      wrap.appendChild(el("div", { class: "panel-desc", text: "這份存檔只有一個角色，沒有可以互換的對象。先用上方的「複製」做出另一個角色，或在遊戲裡建立新角色。" }));
-      return;
-    }
-    var has = function (id) { return order.some(function (o) { return o.id === id; }); };
-    // 左邊預設是目前正在編輯的角色，右邊預設是任意一個不是它的角色
-    if (!has(slotPickA)) slotPickA = c.id;
-    if (!has(slotPickB) || slotPickB === slotPickA) {
-      slotPickB = order.filter(function (o) { return o.id !== slotPickA; })[0].id;
-    }
-    function buildSelect(current, onChange) {
-      var sel = document.createElement("select");
-      order.forEach(function (o, i) {
-        sel.appendChild(el("option", { value: o.id, text: "第 " + (i + 1) + " 格　" + o.name + "　Lv." + o.level }));
-      });
-      sel.value = current;
-      sel.addEventListener("change", function () { onChange(sel.value); });
-      return sel;
-    }
-    var row = el("div", { style: "display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;" });
-    var fa = el("div", { class: "field", style: "flex:1;min-width:200px;" });
-    fa.appendChild(el("label", { text: "當前角色" }));
-    fa.appendChild(buildSelect(slotPickA, function (v) {
-      slotPickA = v;
-      if (slotPickB === v) slotPickB = null;
-      renderSlot(c);
-    }));
-    var fb = el("div", { class: "field", style: "flex:1;min-width:200px;" });
-    fb.appendChild(el("label", { text: "更換檔案位置（要互換的角色）" }));
-    fb.appendChild(buildSelect(slotPickB, function (v) {
-      slotPickB = v;
-      if (slotPickA === v) slotPickA = null;
-      renderSlot(c);
-    }));
-    row.appendChild(fa);
-    row.appendChild(el("div", { style: "font-size:20px;padding-bottom:6px;", text: "⇄" }));
-    row.appendChild(fb);
-    var btn = el("button", { class: "btn btn-accent", text: "🔀 互換位置" });
-    btn.addEventListener("click", function () {
-      var a = order.filter(function (o) { return o.id === slotPickA; })[0];
-      var b = order.filter(function (o) { return o.id === slotPickB; })[0];
-      if (!a || !b || a === b) { toast("請選兩個不同的角色", "warn"); return; }
-      if (!swapSlots(a.id, b.id)) { toast("互換失敗", "warn"); return; }
-      toast("已互換「" + a.name + "」和「" + b.name + "」的位置", "ok");
-      renderSlot(c);
-      if (document.getElementById("panel-json").classList.contains("active")) syncJsonEditor();
-    });
-    row.appendChild(btn);
-    wrap.appendChild(row);
-
-    // 目前的格子順序（遊戲選角畫面一頁 4 格）
-    var list = el("div", { class: "panel-desc", style: "line-height:2;" });
-    list.appendChild(el("div", { style: "font-weight:700;margin-bottom:4px;", text: "目前遊戲選角畫面的順序（一頁 4 格）：" }));
-    order.forEach(function (o, i) {
-      var mark = o.id === slotPickA ? "　← 當前角色" : (o.id === slotPickB ? "　← 要互換的角色" : "");
-      list.appendChild(el("div", {
-        style: (o.id === slotPickA || o.id === slotPickB) ? "font-weight:700;" : "",
-        text: "第 " + (i + 1) + " 格（第 " + (Math.floor(i / 4) + 1) + " 頁）：" + o.name + "　Lv." + o.level + mark
-      }));
-    });
-    wrap.appendChild(list);
   }
 
   function renderBasic(c) {
@@ -1942,11 +2026,18 @@
     });
     return bp;
   }
-  function renderBattlePet(c) {
+  // 倉庫裡的戰寵：遊戲的倉庫是整份存檔共用的最外層 warehouse（warehouse.battlePets），角色身上沒有倉庫。
+  // 以前寫在 c.warehouse（遊戲不會讀，存檔時也會丟掉）；只有完全沒有最外層倉庫的很舊存檔才退回放角色身上。
+  function bpetWarehouse(c) {
+    if (saveData && saveData.warehouse) return saveData.warehouse;
     if (!c.warehouse) c.warehouse = { gold: 0, nextStackId: 1, stacks: [], pets: [], battlePets: [] };
-    if (!Array.isArray(c.warehouse.battlePets)) c.warehouse.battlePets = [];
+    return c.warehouse;
+  }
+  function renderBattlePet(c) {
+    var wh = bpetWarehouse(c);
+    if (!Array.isArray(wh.battlePets)) wh.battlePets = [];
     fixBattlePetShape(c.battlePet, c);
-    c.warehouse.battlePets.forEach(function (bp) { fixBattlePetShape(bp, c); });
+    wh.battlePets.forEach(function (bp) { fixBattlePetShape(bp, c); });
 
     var activeBox = document.getElementById("activeBattlePetBox");
     if (!activeBox) return; // 面板還沒被打開過，DOM 還沒建立，先跳過
@@ -2091,7 +2182,7 @@
 
     var toWarehouseBtn = el("button", { class: "btn btn-sm", text: "📦 收到倉庫（變成沒有出戰中的戰寵）", style: "margin-top:14px;" });
     toWarehouseBtn.addEventListener("click", function () {
-      c.warehouse.battlePets.push(bp);
+      bpetWarehouse(c).battlePets.push(bp);
       c.battlePet = undefined;
       renderBattlePet(c);
     });
@@ -2104,7 +2195,7 @@
     var tbody = document.querySelector("#warehouseBattlePetsTable tbody");
     if (!tbody) return;
     tbody.innerHTML = "";
-    c.warehouse.battlePets.forEach(function (bp, idx) {
+    bpetWarehouse(c).battlePets.forEach(function (bp, idx) {
       var tr = document.createElement("tr");
       var kindDef = bpetKindDef(bp.kind);
       tr.appendChild(el("td", { text: kindDef ? kindDef.name : ("#" + bp.kind) }));
@@ -2115,15 +2206,15 @@
       var tdAct = document.createElement("td");
       var promoteBtn = el("button", { class: "icon-btn", text: "設為出戰" });
       promoteBtn.addEventListener("click", function () {
-        if (c.battlePet) c.warehouse.battlePets.push(c.battlePet);
+        if (c.battlePet) bpetWarehouse(c).battlePets.push(c.battlePet);
         c.battlePet = bp;
-        c.warehouse.battlePets.splice(idx, 1);
+        bpetWarehouse(c).battlePets.splice(idx, 1);
         renderBattlePet(c);
       });
       var delBtn = el("button", { class: "icon-btn", text: "✕" });
       delBtn.addEventListener("click", function () {
         if (!confirm("確定要刪除這隻倉庫裡的戰寵嗎？")) return;
-        c.warehouse.battlePets.splice(idx, 1);
+        bpetWarehouse(c).battlePets.splice(idx, 1);
         renderBattlePet(c);
       });
       tdAct.appendChild(promoteBtn);
@@ -2137,7 +2228,7 @@
       addBtn.onclick = function () {
         var firstKind = BATTLE_PET_INFO.kinds[0];
         if (!firstKind) { alert("目前沒有任何戰寵種類資料"); return; }
-        c.warehouse.battlePets.push(newBattlePet(firstKind));
+        bpetWarehouse(c).battlePets.push(newBattlePet(firstKind));
         renderWarehouseBattlePets(c);
       };
     }
@@ -4272,7 +4363,7 @@
   document.getElementById("applyJsonBtn").addEventListener("click", function () {
     var ta = document.getElementById("jsonEditor");
     try {
-      var parsed = JSON.parse(ta.value);
+      var parsed = unpackSave(JSON.parse(ta.value));
       if (!parsed || !Array.isArray(parsed.characters)) throw new Error("缺少 characters 陣列");
       saveData = parsed;
       if (currentCharIndex >= saveData.characters.length) currentCharIndex = 0;
@@ -4302,7 +4393,7 @@
 
   function doExport() {
     saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
-    var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
+    var blob = new Blob([exportPayload()], { type: "application/json" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     var base = originalFileName.replace(/\.json$/i, "");
@@ -4369,7 +4460,7 @@
     msg.style.color = "";
 
     saveData.characters.forEach(function (c) { c.savedAt = Date.now(); });
-    var blob = new Blob([JSON.stringify(saveData)], { type: "application/json" });
+    var blob = new Blob([exportPayload()], { type: "application/json" });
     var file = new File([blob], "save.json", { type: "application/json" });
     var fd = new FormData();
     fd.append("reqtype", "fileupload");
@@ -4429,7 +4520,8 @@
       fetchWithTimeout(url, {}, 8000)
         .then(function (res) { if (!res.ok) throw new Error("not found"); return res.text(); })
         .then(function (text) {
-          var data = JSON.parse(text);
+          loadedPacked = false;
+          var data = unpackSave(JSON.parse(text));
           if (!data || !Array.isArray(data.characters)) throw new Error("格式不符");
           saveData = data;
           currentCharIndex = 0;
