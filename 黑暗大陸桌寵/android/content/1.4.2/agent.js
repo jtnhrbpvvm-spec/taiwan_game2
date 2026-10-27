@@ -7,6 +7,31 @@
 (() => {
   if (window.__petAgent) return;
 
+  // 關掉螢幕時 requestAnimationFrame 會整個停住，遊戲的地圖迴圈（找怪、打怪、掉寶）跟著停。
+  // 每次 requestAnimationFrame 另外排一個 50ms 的計時器，畫面更新沒來就由計時器代跑那一格（一秒約 20 格）。
+  // 新版 APK 在遊戲之前就裝好（GameService 的 ALWAYS_VISIBLE_JS），這裡是給還沒更新 APK 的：探子進來時遊戲已經在跑，下一格起生效。
+  if (!window.__petRafGuard) {
+    window.__petRafGuard = true;
+    const realRaf = window.requestAnimationFrame.bind(window), realCancel = window.cancelAnimationFrame.bind(window);
+    const pending = new Map();
+    let nextId = 1;
+    const drop = (id) => {
+      const p = pending.get(id);
+      if (!p) return undefined;
+      pending.delete(id);
+      realCancel(p.raf);
+      clearTimeout(p.timer);
+      return p;
+    };
+    window.requestAnimationFrame = (cb) => {
+      const id = nextId++;
+      const run = (t) => drop(id) && cb(t);
+      pending.set(id, { raf: realRaf(run), timer: setTimeout(() => run(performance.now()), 50) });
+      return id;
+    };
+    window.cancelAnimationFrame = (id) => void drop(id);
+  }
+
   // 遊戲的存檔 key（遊戲 config.js 的 SAVE_KEY／SLOT_KEY；save.js 的 slotKey）
   const SAVE_KEY = "dragonSlayer_save_v2";
   const SLOT_KEY = "dragonSlayer_slot";
