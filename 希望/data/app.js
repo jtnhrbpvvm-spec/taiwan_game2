@@ -665,6 +665,8 @@
     renderPotions(c);
     renderTagLists(c);
     renderMonsterDex();
+    renderDexUnlock();
+    renderProphecy(c);
     renderSpot(c);
     renderIndividuality(c);
     renderQuests(c);
@@ -2394,6 +2396,338 @@
       row.appendChild(zeroBtn);
     }
     box.appendChild(row);
+  }
+
+  // ---------- 圖鑑解鎖（怪物圖鑑逐隻改擊殺數）----------
+  // 欄位同上面的 renderMonsterDex：collection.monsterKills = {怪物id: 擊殺數}，0 就刪掉那個 key（遊戲讀不到等於 0）。
+  var dexUnlockFilter = "";
+  function dexMedal(k, th) {
+    if (k >= th[1]) return { text: "金牌", color: "#d4a017" };
+    if (k >= th[0]) return { text: "銀牌", color: "#9aa4ad" };
+    if (k >= 1) return { text: "銅牌", color: "#b87333" };
+    return { text: "未達成", color: "var(--text3)" };
+  }
+  function renderDexUnlock() {
+    var box = document.getElementById("dexUnlockBox");
+    if (!box || !saveData) return;
+    box.innerHTML = "";
+    if (saveVersion() < 110) {
+      box.appendChild(el("div", { class: "note", text: "這個存檔是 v" + saveVersion() + "，還沒有怪物圖鑑欄位（v110 起才有）。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var dex = window.MONSTER_DEX || {};
+    var ids = Object.keys(dex);
+    var col = saveData.collection || (saveData.collection = { pets: [], gear: [] });
+    if (!col.monsterKills || typeof col.monsterKills !== "object") col.monsterKills = {};
+    function setKills(id, v) {
+      v = Math.max(0, Math.floor(v || 0));
+      if (v) col.monsterKills[id] = v; else delete col.monsterKills[id];
+    }
+
+    var summary = el("div", { class: "note", style: "margin-bottom:10px;" });
+    function updateSummary() {
+      var n = { gold: 0, silver: 0, bronze: 0 };
+      ids.forEach(function (id) {
+        var t = dexMedal(col.monsterKills[id] || 0, dex[id]).text;
+        if (t === "金牌") n.gold++; else if (t === "銀牌") n.silver++; else if (t === "銅牌") n.bronze++;
+      });
+      summary.textContent = "圖鑑共 " + ids.length + " 隻：金牌 " + n.gold + "、銀牌 " + n.silver + "、銅牌 " + n.bronze +
+        "、未達成 " + (ids.length - n.gold - n.silver - n.bronze) + "。";
+    }
+    function afterBulk(msg) {
+      toast(msg, "ok");
+      renderDexUnlock();
+      renderMonsterDex();
+    }
+
+    var bar = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;" });
+    var allInput = el("input", { type: "number", min: "0", value: "", placeholder: "達成數字", style: "width:120px;" });
+    var applyBtn = el("button", { class: "btn btn-sm", text: "套用到全部" });
+    applyBtn.addEventListener("click", function () {
+      if (allInput.value === "" || isNaN(allInput.valueAsNumber)) { toast("先在左邊輸入要套用的數字", "warn"); return; }
+      var v = allInput.valueAsNumber;
+      ids.forEach(function (id) { setKills(id, v); });
+      afterBulk("全部怪物的擊殺數都改成 " + Math.max(0, Math.floor(v)));
+    });
+    var fullBtn = el("button", { class: "btn btn-accent btn-sm", text: "🏅 一鍵全滿" });
+    fullBtn.addEventListener("click", function () {
+      ids.forEach(function (id) { if ((col.monsterKills[id] || 0) < dex[id][1]) setKills(id, dex[id][1]); });
+      afterBulk("全部怪物都到金牌了");
+    });
+    var zeroBtn = el("button", { class: "btn btn-sm", text: "🧹 一鍵歸零" });
+    zeroBtn.addEventListener("click", function () {
+      if (!confirm("確定要把全部怪物的擊殺數歸零（全部變成未達成）嗎？")) return;
+      ids.forEach(function (id) { delete col.monsterKills[id]; });
+      col.monsterDexNew = [];
+      afterBulk("怪物圖鑑已全部歸零");
+    });
+    bar.appendChild(allInput);
+    bar.appendChild(applyBtn);
+    bar.appendChild(fullBtn);
+    bar.appendChild(zeroBtn);
+    box.appendChild(bar);
+
+    var search = el("input", { type: "text", placeholder: "搜尋怪物名稱…", value: dexUnlockFilter, style: "width:100%;max-width:320px;margin-bottom:10px;" });
+    box.appendChild(search);
+    box.appendChild(summary);
+    updateSummary();
+
+    var grid = el("div", { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;" });
+    var cards = [];
+    ids.forEach(function (id) {
+      var th = dex[id];
+      var name = monsterName(id);
+      var card = el("div", { style: "border:1px solid var(--border);border-radius:8px;padding:8px;" });
+      var inp = el("input", { type: "number", min: "0", value: String(col.monsterKills[id] || 0), style: "width:100%;margin-bottom:4px;" });
+      var medal = el("span", { style: "font-size:12px;font-weight:700;" });
+      function paintMedal() {
+        var m = dexMedal(col.monsterKills[id] || 0, th);
+        medal.textContent = m.text;
+        medal.style.color = m.color;
+      }
+      inp.addEventListener("input", function () {
+        setKills(id, inp.valueAsNumber);
+        paintMedal();
+        updateSummary();
+      });
+      inp.addEventListener("change", function () { renderMonsterDex(); });
+      paintMedal();
+      card.appendChild(inp);
+      var line = el("div", { style: "display:flex;justify-content:space-between;gap:4px;font-size:12.5px;" });
+      line.appendChild(el("span", { text: name }));
+      line.appendChild(medal);
+      card.appendChild(line);
+      card.appendChild(el("div", { style: "font-size:11.5px;color:var(--text3);", text: "銀 " + th[0] + "／金 " + th[1] }));
+      grid.appendChild(card);
+      cards.push({ el: card, name: name });
+    });
+    function applyFilter() {
+      var q = dexUnlockFilter.trim();
+      cards.forEach(function (x) { x.el.style.display = !q || x.name.indexOf(q) >= 0 ? "" : "none"; });
+    }
+    search.addEventListener("input", function () { dexUnlockFilter = search.value; applyFilter(); });
+    applyFilter();
+    box.appendChild(grid);
+  }
+
+  // ---------- 預言館（寶箱開出順序、寵物進化結果）----------
+  // 遊戲的亂數器（bundle class _f）：給同一個種子就會產生同一串數字。
+  function GameRng(seed) { this.s = seed >>> 0; }
+  GameRng.prototype.next = function () {
+    this.s = (this.s + 1831565813) >>> 0;
+    var e = Math.imul(this.s ^ (this.s >>> 15), 1 | this.s);
+    e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+    return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+  };
+  GameRng.prototype.nextInt = function (n) { return Math.floor(this.next() * n); };
+  // bundle FD()（FNV-1a）＋ ID()：由 種子／用途字串／編號／第幾次 組出這一次的亂數種子
+  function fnv1a(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function gambleSeedOf(base, key, n, tries) {
+    return (Math.imul(n >>> 0, 2654435761) ^ Math.imul(tries >>> 0, 2246822519) ^ Math.imul(base >>> 0, 3266489917) ^ fnv1a(key)) >>> 0;
+  }
+
+  // 開寶箱（bundle runBoxPlan → Xb/Yb）：每開一箱用 gambleSeedOf(warehouse.gambleSeed, "box", 箱子id, 這種箱子已開過幾次) 新開一個亂數器，
+  //   抽 draws 次：先照組權重 nextInt(總權重) 選一組，再 nextInt(1,000,000) 照組內機率選物品，落在機率之外就是這抽沒東西。
+  //   已開過幾次存在最外層 warehouse.gambleTries["box:箱子id"]（整份存檔共用，不分角色）。
+  function boxOpenOnce(box, seed) {
+    var rng = new GameRng(seed);
+    var out = [];
+    for (var d = 0; d < box.draws; d++) {
+      var total = box.tiers.reduce(function (s, t) { return s + t[0]; }, 0);
+      var r = rng.nextInt(total);
+      var tier = null;
+      for (var i = 0; i < box.tiers.length; i++) {
+        if (r < box.tiers[i][0]) { tier = box.tiers[i]; break; }
+        r -= box.tiers[i][0];
+      }
+      var n = rng.nextInt(1000000);
+      var got = null;
+      for (var j = 0; tier && j < tier[1].length; j++) {
+        if (n < tier[1][j][1]) { got = tier[1][j][0]; break; }
+        n -= tier[1][j][1];
+      }
+      out.push(got);
+    }
+    return out;
+  }
+
+  // 寵物進化（bundle rollOneEvolve → bg()）：
+  //   成功與否：GameRng((Sg ^ 2246822507)).next()×100 < 成功率，Sg = seed ^ id×2654435761 ^ evolveTries×40503
+  //   變成哪一隻：GameRng(Sg(evolveTries 當 0)).next() × max(100, 目標機率加總)，照 targets 順序扣——跟失敗幾次無關，
+  //   所以同一隻寵物（同 seed、同 id）每一份配方會變成誰是固定的。進化後新寵物沿用 seed、evolveTries 歸零（cg()）。
+  //   成功率（ig()）：配方有 rates 的放 1 種材料、成功率是那種材料的 rate；沒有的放 ng~tg 種、每種 10%。
+  function petSg(seed, id, tries) {
+    return (seed ^ Math.imul(id, 2654435761) ^ Math.imul(tries, 40503)) >>> 0;
+  }
+  function petEvolveTarget(seed, id, recipe) {
+    var sum = recipe.targets.reduce(function (s, t) { return s + t.rate; }, 0);
+    var r = new GameRng(petSg(seed, id, 0)).next() * Math.max(100, sum);
+    for (var i = 0; i < recipe.targets.length; i++) {
+      r -= recipe.targets[i].rate;
+      if (r < 0) return recipe.targets[i].to;
+    }
+    var last = recipe.targets[recipe.targets.length - 1];
+    return last ? last.to : null;
+  }
+  function petEvolveRoll(seed, id, tries) {
+    return new GameRng((petSg(seed, id, tries) ^ 2246822507) >>> 0).next() * 100;
+  }
+  // 這一次擲出 roll，要成功需要放多少材料（回傳說明文字）
+  function petNeedText(recipe, roll) {
+    if (recipe.rates) {
+      var ok = recipe.mats.filter(function (m, i) { return (recipe.rates[i] || 0) > roll; });
+      return ok.length ? "放 " + ok.map(itemName).join(" 或 ") + " 會成功" : "放什麼都失敗";
+    }
+    var minN = Math.min(5, recipe.mats.length), maxN = Math.min(10, recipe.mats.length);
+    var need = Math.max(minN, Math.floor(roll / 10) + 1);
+    return need > maxN ? "放滿 " + maxN + " 種也失敗" : "放 " + need + " 種以上材料會成功";
+  }
+
+  var prophecyMode = "box", prophecyBoxId = null, prophecyCount = 30, prophecyPetKey = null;
+  function prophecyBoxStock(c) {
+    var boxes = window.BOXES || {};
+    var have = {};
+    function add(stacks, where) {
+      (stacks || []).forEach(function (s) {
+        if (!boxes[String(s.itemId)]) return;
+        var h = have[s.itemId] || (have[s.itemId] = { char: 0, wh: 0 });
+        h[where] += s.count || 0;
+      });
+    }
+    add(c.stacks, "char");
+    add(saveData.warehouse && saveData.warehouse.stacks, "wh");
+    return have;
+  }
+  function renderProphecy(c) {
+    var box = document.getElementById("prophecyBox");
+    if (!box || !saveData) return;
+    box.innerHTML = "";
+    document.getElementById("prophecyBoxBtn").className = "btn" + (prophecyMode === "box" ? " btn-accent" : "");
+    document.getElementById("prophecyPetBtn").className = "btn" + (prophecyMode === "pet" ? " btn-accent" : "");
+    if (prophecyMode === "box") renderProphecyBoxes(c, box); else renderProphecyPets(c, box);
+  }
+  function renderProphecyBoxes(c, box) {
+    var wh = saveData.warehouse || {};
+    if (typeof wh.gambleSeed !== "number") {
+      box.appendChild(el("div", { class: "note", text: "這個存檔沒有 warehouse.gambleSeed（太舊的版本），算不出來。先用新版遊戲開過一次再匯出。" }));
+      return;
+    }
+    var have = prophecyBoxStock(c);
+    var ids = Object.keys(have).map(Number).sort(function (a, b) { return a - b; });
+    if (!ids.length) {
+      box.appendChild(el("div", { class: "note", text: "這個角色的背包和倉庫裡都沒有寶箱。" }));
+      return;
+    }
+    if (ids.indexOf(prophecyBoxId) < 0) prophecyBoxId = ids[0];
+    var tries = wh.gambleTries && typeof wh.gambleTries === "object" ? wh.gambleTries : {};
+
+    var bar = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;" });
+    var sel = el("select", { style: "flex:1;min-width:220px;" });
+    ids.forEach(function (id) {
+      var h = have[id];
+      var opt = el("option", { value: String(id), text: itemName(id) + "（背包 " + h.char + (h.wh ? "、倉庫 " + h.wh : "") + "）" });
+      if (id === prophecyBoxId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function () { prophecyBoxId = Number(sel.value); renderProphecy(c); });
+    bar.appendChild(sel);
+    bar.appendChild(el("span", { text: "顯示前" }));
+    var cnt = el("input", { type: "number", min: "1", max: "5000", value: String(prophecyCount), style: "width:80px;" });
+    cnt.addEventListener("change", function () {
+      prophecyCount = Math.max(1, Math.min(5000, Math.floor(cnt.valueAsNumber || 1)));
+      renderProphecy(c);
+    });
+    bar.appendChild(cnt);
+    bar.appendChild(el("span", { text: "樣" }));
+    box.appendChild(bar);
+
+    var def = window.BOXES[String(prophecyBoxId)];
+    var opened = tries["box:" + prophecyBoxId] || 0;
+    box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+      text: "這種箱子整份存檔已經開過 " + opened + " 次（warehouse.gambleTries），下面從下一次開始照順序列出；每開一箱抽 " + def.draws +
+        " 樣。換角色開、一次開很多箱、用「全部開」都一樣照這個順序。開別種箱子不會影響這種箱子的順序。" }));
+
+    var table = el("table", { class: "etable" });
+    var thead = el("tr");
+    ["#", "第幾箱", "開出的物品"].forEach(function (h) { thead.appendChild(el("th", { text: h })); });
+    table.appendChild(thead);
+    var shown = 0;
+    for (var k = 0; shown < prophecyCount; k++) {
+      var got = boxOpenOnce(def, gambleSeedOf(wh.gambleSeed, "box", prophecyBoxId, opened + k));
+      for (var d = 0; d < got.length && shown < prophecyCount; d++) {
+        shown++;
+        var tr = el("tr");
+        tr.appendChild(el("td", { text: String(shown) }));
+        tr.appendChild(el("td", { text: d === 0 ? "第 " + (k + 1) + " 箱" : "" }));
+        tr.appendChild(el("td", got[d] == null ? { text: "（這抽沒東西）", style: "color:var(--text3);" } : { text: itemName(got[d]) }));
+        table.appendChild(tr);
+      }
+    }
+    box.appendChild(table);
+  }
+  function renderProphecyPets(c, box) {
+    var list = [];
+    (c.pets || []).forEach(function (p) { list.push({ key: "c" + p.uid, pet: p, where: "身上" }); });
+    ((saveData.warehouse && saveData.warehouse.pets) || []).forEach(function (p) { list.push({ key: "w" + p.uid, pet: p, where: "倉庫" }); });
+    list = list.filter(function (x) { return x.pet && PETS[String(x.pet.id)]; });
+    if (!list.length) {
+      box.appendChild(el("div", { class: "note", text: "這個角色身上和倉庫裡都沒有寵物。" }));
+      return;
+    }
+    if (!list.some(function (x) { return x.key === prophecyPetKey; })) prophecyPetKey = list[0].key;
+    var sel = el("select", { style: "width:100%;max-width:420px;margin-bottom:10px;" });
+    list.forEach(function (x) {
+      var d = PETS[String(x.pet.id)];
+      var opt = el("option", { value: x.key, text: d.name + "（" + d.tier + " 階・+" + (x.pet.grow || 0) + "・" + x.where + "）" });
+      if (x.key === prophecyPetKey) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function () { prophecyPetKey = sel.value; renderProphecy(c); });
+    box.appendChild(sel);
+
+    var pet = list.find(function (x) { return x.key === prophecyPetKey; }).pet;
+    var seed = pet.seed >>> 0;
+    box.appendChild(el("div", { class: "note", style: "margin-bottom:10px;",
+      text: "每一份配方會進化成哪一隻是固定的（跟失敗幾次無關），進化後種子沿用，所以整條路線都能先算出來。" +
+        "成功與否看「第幾次嘗試」擲出的數字，下面列出接下來幾次各要放多少材料才會成功。4 階失敗經驗歸零、5 階以上失敗連成長也歸零。" }));
+
+    var TRIES_SHOWN = 5;
+    function stageBlock(id, startTries, depth, seen) {
+      var d = PETS[String(id)];
+      var wrap = el("div", { style: "margin-left:" + (depth ? 18 : 0) + "px;border-left:" + (depth ? "2px solid var(--border)" : "none") + ";padding-left:" + (depth ? 10 : 0) + "px;margin-bottom:6px;" });
+      if (!d) { wrap.appendChild(el("div", { text: "寵物#" + id })); return wrap; }
+      var evolve = d.evolve || [];
+      if (!evolve.length) {
+        wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);",
+          text: d.name + "（" + d.tier + " 階）沒有一般進化了" + (d.tier >= 6 ? "；之後的 7 階進化／寵物冶煉用的是別的亂數，這裡算不到。" : "。") }));
+        return wrap;
+      }
+      evolve.forEach(function (recipe, ri) {
+        var to = petEvolveTarget(seed, id, recipe);
+        var toDef = PETS[String(to)] || { name: "寵物#" + to, tier: "?" };
+        var head = el("div", { style: "margin-top:6px;" });
+        head.appendChild(el("b", { text: d.name + " → " + toDef.name }));
+        head.appendChild(el("span", { style: "font-size:12px;color:var(--text3);",
+          text: "　（配方 " + (ri + 1) + "／" + evolve.length + "、" + toDef.tier + " 階；機率表：" +
+            recipe.targets.map(function (t) { return (PETS[String(t.to)] || {}).name + " " + t.rate + "%"; }).join("、") + "）" }));
+        wrap.appendChild(head);
+        var lines = el("div", { style: "font-size:12.5px;" });
+        for (var k = 0; k < TRIES_SHOWN; k++) {
+          var t = startTries + k;
+          var roll = petEvolveRoll(seed, id, t);
+          lines.appendChild(el("div", { text: (depth === 0 && k === 0 ? "下一次" : "第 " + (k + 1) + " 次") +
+            "（evolveTries=" + t + "，擲出 " + roll.toFixed(1) + "）：" + petNeedText(recipe, roll) }));
+        }
+        wrap.appendChild(lines);
+        if (seen.indexOf(to) < 0) wrap.appendChild(stageBlock(to, 0, depth + 1, seen.concat([to])));
+      });
+      return wrap;
+    }
+    box.appendChild(stageBlock(pet.id, pet.evolveTries || 0, 0, [pet.id]));
   }
 
   function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem, what) {
@@ -4401,6 +4735,13 @@
     } catch (err) {
       toast("格式化失敗：JSON 語法錯誤", "err");
     }
+  });
+  ["box", "pet"].forEach(function (mode) {
+    document.getElementById(mode === "box" ? "prophecyBoxBtn" : "prophecyPetBtn").addEventListener("click", function () {
+      prophecyMode = mode;
+      if (saveData) renderProphecy(saveData.characters[currentCharIndex]);
+      else toast("請先載入存檔", "warn");
+    });
   });
   document.getElementById("applyJsonBtn").addEventListener("click", function () {
     var ta = document.getElementById("jsonEditor");

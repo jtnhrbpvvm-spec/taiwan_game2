@@ -330,7 +330,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V53</span>
+  <span class="bar-title">🧭 希望存檔修改器v54</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -405,6 +405,8 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <div class="nav-section">進階</div>
     <div class="nav-item" data-panel="advanced">🔧 進階欄位<span class="badge">推測</span></div>
     <div class="nav-item" data-panel="sellkeep">🛒 自動販賣保留清單</div>
+    <div class="nav-item" data-panel="prophecy">🔮 預言館</div>
+    <div class="nav-item" data-panel="dexunlock">📚 圖鑑解鎖</div>
 
     <div class="nav-section">工具</div>
     <div class="nav-item" data-panel="questlines">🗺️ 主線任務攻略</div>
@@ -809,6 +811,30 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
       <div id="sellKeepField"></div>
     </div>
 
+    <!-- ══ 預言館 ══ -->
+    <div class="panel" id="panel-prophecy">
+      <div class="panel-title">🔮 預言館</div>
+      <div class="panel-desc">
+        遊戲的開寶箱和寵物進化都不是真的隨機，而是用存檔裡的種子算出來的，所以結果事先就決定好了。
+        這裡照遊戲原始程式碼的算法，直接把結果算給你看，<b>不會改動存檔</b>。
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="btn" id="prophecyBoxBtn">🎁 寶箱</button>
+        <button class="btn" id="prophecyPetBtn">🐾 寵物</button>
+      </div>
+      <div id="prophecyBox"></div>
+    </div>
+
+    <!-- ══ 圖鑑解鎖 ══ -->
+    <div class="panel" id="panel-dexunlock">
+      <div class="panel-title">📚 圖鑑解鎖</div>
+      <div class="panel-desc">
+        怪物圖鑑（存檔最外層 <code>collection.monsterKills</code>，整份存檔共用）：每隻怪的「達成數字」就是累計擊殺數，
+        殺 1 隻銅牌、到銀牌門檻掉落 +1%、到金牌門檻掉落 +5%。時裝設計師的抽獎次數也是看擊殺數算的，改了會跟著變。
+      </div>
+      <div id="dexUnlockBox"></div>
+    </div>
+
     <!-- ══ 主線任務攻略 ══ -->
     <div class="panel" id="panel-questlines">
       <div class="panel-title">🗺️ 主線任務攻略</div>
@@ -877,6 +903,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <script src="data/enchant.js"></script>
 <script src="data/questLines.js"></script>
 <script src="data/monsterDex.js"></script>
-<script src="data/app.js?v=53"></script>
+<script src="data/boxes.js"></script>
+<script src="data/app.js?v=54"></script>
 </body>
 </html>
