@@ -805,7 +805,8 @@
     stacks.forEach(function (stack, idx) {
       var tr = document.createElement("tr");
       var itemDef = ITEMS[String(stack.itemId)];
-      var isEquip = !!(itemDef && itemDef.slot);
+      // 戰寵裝備在 ITEMS 裡沒有 slot，要另外認（遊戲一樣讀 stack.refine）
+      var isEquip = !!(itemDef && itemDef.slot) || !!bpetGearById(stack.itemId);
 
       var tdItem = document.createElement("td");
       var nameSpan = el("span", {
@@ -1986,18 +1987,36 @@
     if (entry == null) return null;
     return typeof entry === "number" ? entry : entry.itemId;
   }
-  // 換裝備時沿用原本那一格的 id，沒有的話跟角色要一個新的 stack id，避免跟背包的 id 撞號
+  // 換裝備時沿用原本那一格的 id 和精煉值，沒有的話跟角色要一個新的 stack id，避免跟背包的 id 撞號
   function bpetMakeGearEntry(c, itemId, prevEntry) {
     var id = prevEntry && typeof prevEntry === "object" && prevEntry.id != null ? prevEntry.id : (c.nextStackId = (c.nextStackId || 1) + 1) - 1;
-    return { id: id, itemId: itemId };
+    var entry = { id: id, itemId: itemId };
+    if (prevEntry && typeof prevEntry === "object" && prevEntry.refine) entry.refine = prevEntry.refine;
+    return entry;
   }
   var BPET_GEAR_STATS = [
     ["atk", "攻"], ["def", "防"], ["hp", "HP"], ["ap", "AP"],
     ["dmgDealtPct", "增傷%"], ["dmgTakenPct", "減傷%"],
   ];
-  function bpetGearStatText(g) {
+  // 精煉加成照遊戲 mp()：攻/防 = floor(refineGain × 倍率表[+N])（Hf()），增傷/減傷% 本身有才加（Gf()），HP/AP 不吃精煉
+  var BPET_REFINE_MULT = [0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30];
+  var BPET_REFINE_PCT = [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  function bpetGearWithRefine(g, refine) {
+    var r = Math.max(0, Math.min(12, Math.floor(refine || 0)));
+    if (!r) return g;
+    var gain = g.refineGain || {};
+    var out = {};
+    BPET_GEAR_STATS.forEach(function (pair) { out[pair[0]] = g[pair[0]] || 0; });
+    out.atk += Math.floor((gain.atk || 0) * BPET_REFINE_MULT[r]);
+    out.def += Math.floor((gain.def || 0) * BPET_REFINE_MULT[r]);
+    if (g.dmgDealtPct > 0) out.dmgDealtPct += BPET_REFINE_PCT[r];
+    if (g.dmgTakenPct > 0) out.dmgTakenPct += BPET_REFINE_PCT[r];
+    return out;
+  }
+  function bpetGearStatText(g, refine) {
+    var s = bpetGearWithRefine(g, refine);
     return BPET_GEAR_STATS.map(function (pair) {
-      var v = g[pair[0]];
+      var v = s[pair[0]];
       return v ? pair[1] + (v > 0 ? "+" : "") + v : "";
     }).filter(Boolean).join("・");
   }
@@ -2158,13 +2177,35 @@
         else bp.gear[idx] = bpetMakeGearEntry(c, Number(sel.value), bp.gear[idx]);
         renderBattlePet(c);
       });
-      field.appendChild(sel);
-
       var chosen = currentId != null ? bpetGearById(currentId) : null;
+      var worn = bp.gear[idx];
+      if (worn && typeof worn === "object") {
+        // 精煉值存在這一格的 refine（遊戲穿上時從背包 stack 帶過來，沒精煉過就沒有這個欄位）
+        var row = el("div", { style: "display:flex;gap:6px;align-items:center;" });
+        sel.style.flex = "1";
+        row.appendChild(sel);
+        var refineSel = el("select", { style: "width:64px;" });
+        for (var rv = 0; rv <= 12; rv++) {
+          var rOpt = el("option", { value: String(rv), text: "+" + rv });
+          if ((worn.refine || 0) === rv) rOpt.selected = true;
+          refineSel.appendChild(rOpt);
+        }
+        refineSel.addEventListener("change", function () {
+          var v = Number(refineSel.value);
+          if (v) worn.refine = v; else delete worn.refine;
+          renderBattlePet(c);
+        });
+        row.appendChild(refineSel);
+        field.appendChild(row);
+      } else {
+        field.appendChild(sel);
+      }
+
       if (chosen) {
         field.appendChild(el("div", {
           class: "note",
-          text: "能力：" + (bpetGearStatText(chosen) || "無加成") + "　需求：" + bpetGearReqText(chosen),
+          text: "能力" + (worn && worn.refine ? "（含 +" + worn.refine + " 精煉）" : "") + "：" +
+            (bpetGearStatText(chosen, worn && worn.refine) || "無加成") + "　需求：" + bpetGearReqText(chosen),
           style: "margin-top:4px;",
         }));
         var block = bpetGearBlock(chosen, bp);
