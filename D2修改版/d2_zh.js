@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V16';
+const D2ZH_VERSION = 'V17';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -763,6 +763,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。
 const D2ZH_NEWS = [
+{ ver: 'V17', date: '2026-10-27', game: '遊戲 20261027.2', items: [
+'專家模式（Hardcore）：營火旁的黑暗流浪者、死亡警告、墓地、毀滅者／征服者稱號、專家模式排行榜與天梯',
+'排行榜的不排名原因、「傳送我的紀錄」關閉或連不上時的提示',
+'物品過濾「只撿更好的」、腰帶自動喝藥水說明、技能冷卻秒數與命中次數',
+'存檔代碼來自較新版本時的提示、阿卡拉可重新開始、護身符要放進護身符欄才有效果'] },
 { ver: 'V16', date: '2026-10-27', game: '遊戲 20261026.4', items: [
 '選項 → 書籤修改：可以修改這一局的人物和恰西的永久升級。預設鎖住，確認關閉排行榜上傳後才能使用',
 '恐懼層的波數（剩餘精英）、首領 10 分鐘時限和時間到的提示',
@@ -950,6 +955,68 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 20261027.1：物品過濾、腰帶、存檔代碼版本、技能冷卻與命中次數、護身符、阿卡拉重新開始
+'BETTER ONLY': '只撿更好的', 'Picks up a copy that rolls higher than yours on any stat, and sells the rest': '任何一項數值比你收藏的那件高就撿起來，其餘的賣掉',
+'A potion picked up at full life goes into the belt; below it, it\'s drunk at once': '生命全滿時撿到的藥水會放進腰帶；生命沒滿時會立刻喝掉',
+'No Potions in the Belt: none can be drunk in this tier': '腰帶不能放藥水：這一層不能喝藥水',
+'Clear a tier with No Potions in the Belt among its affixes (from tier *).': '通關一個帶有「腰帶不能放藥水」詞綴的層（第 {0} 層起才會出現）。',
+'An item in Diablo II, not a skill: gear\'s +skills don\'t raise it': '在暗黑破壞神 II 裡是物品而不是技能：裝備的 +技能不會提升它',
+'Poisons the monster a weapon blow hits for its length: a stronger poison replaces it, a second never adds': '武器擊中的怪物會在持續時間內中毒：較強的毒會取代原本的毒，第二次中毒不會疊加',
+'In all': '合計', 'In all:': '合計：', 'Shift-click or hold: all points': 'Shift＋點擊或長按：全部點數', 'Search by name or set': '依名稱或套裝搜尋',
+'That code comes from a newer version of D2 Survivors. Update the app, then try again.': '這段代碼來自較新版本的 D2 Survivors。請更新應用程式後再試一次。',
+'That code holds gear this version of D2 Survivors doesn\'t know. Update the app, then try again.': '這段代碼裡有這個版本的 D2 Survivors 不認得的裝備。請更新應用程式後再試一次。',
+'That code comes from build *, newer than this one (*). Update the app, then try again.': '這段代碼來自版本 {0}，比目前的版本（{1}）新。請更新應用程式後再試一次。',
+'That code comes from build *, newer than this one (*). Reload this page to update, then try again.': '這段代碼來自版本 {0}，比目前的版本（{1}）新。請重新整理頁面更新後再試一次。',
+'This code comes from build *, newer than this app. Update the app first: what this build doesn\'t know is left out.': '這段代碼來自版本 {0}，比這個應用程式新。請先更新應用程式：這個版本不認得的內容會被略過。',
+'This code comes from build *, newer than this page. Reload the page first: what this build doesn\'t know is left out.': '這段代碼來自版本 {0}，比這個頁面新。請先重新整理頁面：這個版本不認得的內容會被略過。',
+'Learned again, beside *': '再次習得（與{0}並存）', '* won\'t come back as a new skill': '{0}不會再以新技能出現',
+'Hold * evolved skills, from any of your trees, as an act boss falls.': '幕首領倒下時擁有 {0} 個已進化技能（任何技能樹都可以）。',
+'An * kept aside by an older version is back now: your hero, or retired at Akara.': '之前被舊版本另外保存的{0}回來了：成為你的英雄，或在阿卡拉那裡退役。',
+'Recharge: * seconds': '冷卻：{0} 秒', '* hits a cast': '每次施放命中 {0} 次',
+'Gives nothing until it lies in the Charms Window': '放進護身符欄之前沒有任何效果',
+'Gear\'s mana, Damage Taken Goes To Mana too, is Faster Cast Rate here: there\'s no mana pool to fill': '這裡裝備的法力（包含受到的傷害轉為法力）會變成快速施法率：沒有法力值可以補充',
+'Akara can start her over at level 1': '阿卡拉可以讓她從等級 1 重新開始', 'Akara can start him over at level 1': '阿卡拉可以讓他從等級 1 重新開始',
+'Evolved: Revive\'s skeletons take this option': '已進化：重生的骷髏也套用這個改造',
+// 20261027.2：專家模式（Hardcore）
+'Hardcore': '專家模式', 'Softcore': '一般模式', 'Dark Wanderer': '黑暗流浪者', 'Destroyer': '毀滅者', 'Conqueror': '征服者',
+'Hardcore needs this browser to keep its save.': '專家模式需要這個瀏覽器能保存存檔。', 'Hardcore needs this browser to keep its save': '專家模式需要這個瀏覽器能保存存檔',
+'Its storage is turned off or full, or it can\'t keep the game to one tab. Softcore opens instead, and your Hardcore heroes stay as they were.': '瀏覽器的儲存空間被關閉或已滿，或無法讓遊戲只在一個分頁執行。改為開啟一般模式，你的專家模式英雄維持原狀。',
+'Safari deletes this site\'s data after 7 days without a visit, and your Hardcore heroes with it. Add the game to your Home Screen, or play Hardcore in the desktop app.': 'Safari 會刪除 7 天沒造訪的網站資料，你的專家模式英雄也會一起被刪除。請把遊戲加到主畫面，或在電腦版應用程式玩專家模式。',
+'Hardcore saves stay where they\'re played: they can\'t be exported or imported.': '專家模式的存檔只留在遊玩的地方：不能匯出或匯入。',
+'That code says it\'s a Hardcore save. Hardcore saves stay where they\'re played: they can\'t be exported or imported.': '這段代碼是專家模式的存檔。專家模式的存檔只留在遊玩的地方：不能匯出或匯入。',
+'Every living Hardcore hero dies, with all she wears and carries, and every item, gold piece, Charsi\'s rank, Terror tier and best time is deleted. Your fallen are remembered, and your Softcore save stays as it is.': '所有活著的專家模式英雄都會死亡，連同身上穿戴和攜帶的一切；所有物品、金幣、恰西的等級、恐懼層和最佳紀錄都會刪除。陣亡的英雄會被紀念，一般模式的存檔維持原狀。',
+'Your deeds of valor will be remembered': '你的英勇事蹟將永遠被銘記', 'Not in Hardcore': '專家模式不販售',
+'Your level-* * rests for good. A new one starts at level 1.': '你等級 {0} 的{1}永遠安息了。新的英雄從等級 1 開始。',
+'Hardcore: a hero who dies is dead for good,': '專家模式：英雄死亡就永遠死去，', 'with all she wears and carries.': '連同身上穿戴和攜帶的一切。',
+'Your Softcore heroes, gold and stash stay as they are.': '一般模式的英雄、金幣和儲物箱維持原狀。', 'Nothing crosses between the two.': '兩種模式之間不互通。',
+'Click again to go': '再點擊一次前往', 'Tap again to go': '再點一下前往',
+'The Dark Wanderer by the bonfire leads to Hardcore': '營火旁的黑暗流浪者會帶你前往專家模式', 'The Dark Wanderer by the bonfire leads back to Softcore': '營火旁的黑暗流浪者會帶你回到一般模式',
+'Fell in *, *': '倒在{0}，{1}', 'Slain by *': '被{0}殺死', 'Laid to rest by START OVER': '因「重新開始」而安息', 'Fell': '陣亡', 'Dead': '死亡',
+'In Hardcore it stays with her: a new hero starts clean': '專家模式中這會一直跟著她：新的英雄從頭開始',
+'She lived in a save edited outside the game': '她所在的存檔曾在遊戲外被修改', 'She lived in a save copied back over a newer one': '她所在的存檔曾被舊存檔蓋回去',
+'Save copied back': '存檔被舊存檔蓋回', 'Her save was copied back over a newer one': '她的存檔曾被舊存檔蓋回去',
+'Hardcore runs don\'t start on a test page': '專家模式不能在測試頁面開始',
+'The leaderboard can\'t be reached. Played now, your * won\'t be ranked again.': '連不上排行榜。現在遊玩的話，你的{0}將不會再列入排名。',
+'Send my runs is off. Played now, your * won\'t be ranked again.': '「傳送我的紀錄」已關閉。現在遊玩的話，你的{0}將不會再列入排名。',
+'The leaderboard can\'t be reached: played now, your * won\'t be ranked again': '連不上排行榜：現在遊玩的話，你的{0}將不會再列入排名',
+'Send my runs is off: played now, your * won\'t be ranked again': '「傳送我的紀錄」已關閉：現在遊玩的話，你的{0}將不會再列入排名',
+'Turn Send my runs on before she plays': '請在她遊玩前打開「傳送我的紀錄」', 'Play once the leaderboard can be reached': '請等連上排行榜再玩',
+'A run of hers went unseen by the leaderboard': '她有一局沒被排行榜看到', 'Her life record was changed outside the game': '她的生涯紀錄曾在遊戲外被修改',
+'Played after her death': '死亡後還被遊玩', 'Played unseen by the leaderboard': '在排行榜沒看到的情況下遊玩',
+'A Hardcore hero who plays now won\'t be ranked again': '現在遊玩的專家模式英雄將不會再列入排名',
+'The leaderboard holds her life changed or ended': '排行榜認定她的生涯已被改動或已結束', 'Not ranked by the leaderboard': '不列入排行榜排名',
+'Each run of yours goes to the leaderboard as it starts and ends': '每一局開始和結束時都會傳送到排行榜',
+'In Hardcore, each run\'s start, its acts and its end too, under your hero\'s key': '專家模式還會用英雄的金鑰傳送每一局的開始、各幕和結束',
+'She won\'t be ranked again. Tap again': '她將不會再列入排名。再點一下', 'She won\'t be ranked again. Click again': '她將不會再列入排名。再點擊一次',
+'Ladder': '天梯', 'Not ranked': '不排名', 'Unranked runs': '不排名的紀錄', 'Unranked heroes': '不排名的英雄', 'Possibly odd': '可能異常',
+'Not ranked: her life or climb not seen whole': '不排名：沒看到她完整的生涯或爬層', 'Her life or her climb wasn\'t seen whole: not ranked': '沒看到她完整的生涯或爬層：不排名',
+'Her level is past what her seen acts give': '她的等級超過已看到的遊玩能得到的', 'Deepest: Terror *': '最深：恐懼第 {0} 層',
+'No clear yet to open': '還沒有可以打開的通關紀錄', 'The leaderboard didn\'t see every run of theirs': '排行榜沒看到他們的每一局',
+'No living hero yet': '還沒有活著的英雄', 'No hero yet': '還沒有英雄', 'The first Hardcore run comes here': '第一筆專家模式紀錄會出現在這裡',
+'Living only': '只看活著的', 'Show the dead too': '也顯示陣亡的', 'Show the living alone': '只顯示活著的',
+'Your runs don\'t rank': '你的紀錄不會列入排名', 'Your runs won\'t rank': '你的紀錄將不會列入排名', 'Your runs rank': '你的紀錄會列入排名',
+'Your * ranks while the leaderboard sees her every run': '只要排行榜看到每一局，你的{0}就會列入排名',
+'Each run checks in as it starts and out as it ends': '每一局開始時登記、結束時回報',
 // 2026-10-26 遊戲改版（build 20261026.1／.2）新增的字串
 // 恐懼層波數、跳層
 'Cleared in *': '{0} 內通關', 'Terror * is open.': '恐懼第 {0} 層已開放。', 'Terror * is open, * tiers ahead.': '恐懼第 {0} 層已開放，跳過 {1} 層。',
