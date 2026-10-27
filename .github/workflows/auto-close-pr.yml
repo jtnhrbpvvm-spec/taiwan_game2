@@ -1,0 +1,25 @@
+name: Auto close external PRs
+
+# 自動關閉非擁有者／協作者發出的 Pull Request
+# 使用 pull_request_target 並且不 checkout 對方程式碼，因此不會執行外部程式
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    if: >-
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close PR
+        run: gh pr close "$PR" --repo "$REPO" --comment "本專案不接受外部貢獻，此 PR 已自動關閉，感謝！"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
