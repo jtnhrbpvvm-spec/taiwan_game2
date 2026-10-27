@@ -1,4 +1,5 @@
-void (function D2ZH() {
+void (function D2ZH() { // ⚠ 你現在看到的是書籤的原始碼，不能直接用。請複製這個網址貼到網址列，到教學頁面照步驟安裝書籤：https://ppt.cc/fmpTcx
+// （第一行必須以「void (function D2ZH()」開頭，電腦版下載更新時會檢查，所以提示寫在同一行後面）
 if (window.__D2ZH) {
 const I = window.D2I18N;
 if (I) I.setLanguage(I.language === 'zh-Hant' ? 'en' : 'zh-Hant');
