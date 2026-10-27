@@ -2587,7 +2587,124 @@
     return need > maxN ? "放滿 " + maxN + " 種也失敗" : "放 " + need + " 種以上材料會成功";
   }
 
+  // 寵物冶煉（bundle petSmelt → GT()）：只有 7 階有 smelt。r = petSg(seed, id, evolveTries)，
+  //   GameRng(r ^ 668265263).next()×10000 照 smelt.to 的萬分比扣，扣到負就成功（id 換掉、grow/exp/evolveTries 歸零，seed 不變）；
+  //   都沒中就失敗：GameRng(r ^ 374761393).next()×失敗權重總和，照 PET_SMELT_FAIL 扣出掉到 +幾，evolveTries +1。
+  function petSmeltRoll(seed, id, tries, smelt) {
+    var r = petSg(seed, id, tries);
+    var a = new GameRng((r ^ 668265263) >>> 0).next() * 10000;
+    for (var i = 0; i < smelt.to.length; i++) {
+      a -= smelt.to[i].rate;
+      if (a < 0) return { to: smelt.to[i].to };
+    }
+    var fail = window.PET_SMELT_FAIL || [];
+    var o = new GameRng((r ^ 374761393) >>> 0).next() * fail.reduce(function (s, w) { return s + w; }, 0);
+    for (var g = 0; g < fail.length; g++) {
+      o -= fail[g];
+      if (o < 0) return { grow: g };
+    }
+    return { grow: Math.max(0, fail.length - 1) };
+  }
+
+  // 7 階進化（寵物大師，bundle petMasterEvolve → Kh()/Wh()/Gh()）：拿 5 隻 +9 100% 的 6 階寵物＋每種位置最多 1 顆石頭。
+  //   種子 = Kh(5 隻的 seed)（排序後連乘），新寵物沿用這個種子；結果 = GameRng(種子).next() 照「機率表依寵物 id 排序」扣，
+  //   扣不到就是失敗（5 隻都沒了）。機率表由 5 隻的稀有度點數（決定普通/稀有/超稀有）、種族點數、攻/魔/綜合點數算出來。
+  var MASTER_FAMILIES = ["seed", "piya", "bird", "sky", "dragon", "mand", "fox"];
+  var MASTER_RARITIES = ["normal", "rare", "super"];
+  var MASTER_KINDS = ["atk", "mag", "mix"];
+  var MASTER_BIG = { dragon: true, mand: true, fox: true };
+  var MASTER_FAMILY_PTS = {
+    seed: { normal: 80, rare: 100, super: 120 }, piya: { normal: 60, rare: 80, super: 100 }, bird: { normal: 40, rare: 60, super: 80 },
+    sky: { normal: null, rare: 60, super: 80 }, dragon: { normal: null, rare: 10, super: 20 }, mand: { normal: null, rare: 10, super: 20 },
+    fox: { normal: null, rare: 10, super: 20 },
+  };
+  var MASTER_CUT = { normal: 100, rare: 200, super: 400 };
+  var MASTER_STONE_RARITY = { small: 30, large: 60 }, MASTER_STONE_KIND = { small: 50, large: 100 };
+  var MASTER_STONE_FAMILY = {
+    seed: { small: 30, large: 60 }, piya: { small: 25, large: 50 }, bird: { small: 20, large: 40 }, sky: { small: 20, large: 40 },
+    dragon: { small: 5, large: 10 }, mand: { small: 5, large: 10 }, fox: { small: 5, large: 10 },
+  };
+  var MASTER_FAMILY_NAME = { seed: "種子", piya: "咕咕", bird: "鳥蛋", sky: "天蛋", dragon: "黑龍", mand: "曼德拉", fox: "三尾狐" };
+  var MASTER_RARITY_NAME = { normal: "一般", rare: "稀有", super: "超稀有" };
+  var MASTER_KIND_NAME = { atk: "攻擊", mag: "魔法", mix: "綜合" };
+  function masterRarity(m) { return m.rarity === "normal" && MASTER_FAMILY_PTS[m.family].normal === null ? "rare" : m.rarity; }
+  function masterRarityPts(m) {
+    var t = masterRarity(m);
+    return MASTER_BIG[m.family] ? (t === "super" ? 80 : 50) : (t === "super" ? 50 : t === "rare" ? 40 : 20);
+  }
+  function masterKindOf(d) {
+    if (d.master && d.master.kind) return d.master.kind;
+    var atk = d.stats.atk || 0, mag = d.stats.mag || 0;
+    if (mag === 0 && atk > 0) return "atk";
+    if (atk === 0 && mag > 0) return "mag";
+    if (d.master && masterRarity(d.master) === "normal") return "mix";
+    return atk > mag ? "atk" : mag > atk ? "mag" : "mix";
+  }
+  function masterStoneValue(st) {
+    return st.slot === "rarity" ? MASTER_STONE_RARITY[st.size] : st.slot === "kind" ? MASTER_STONE_KIND[st.size] : MASTER_STONE_FAMILY[st.family][st.size];
+  }
+  function masterOdds(inputs, stones) {
+    var family = {}, kind = { atk: 0, mag: 0, mix: 0 }, rarity = 0;
+    MASTER_FAMILIES.forEach(function (f) { family[f] = 0; });
+    inputs.forEach(function (d) {
+      if (!d.master) return;
+      rarity += masterRarityPts(d.master);
+      family[d.master.family] += MASTER_FAMILY_PTS[d.master.family][masterRarity(d.master)] || 0;
+      var k = masterKindOf(d);
+      MASTER_KINDS.forEach(function (x) { kind[x] += x === k ? 20 : 2; });
+    });
+    stones.forEach(function (st) {
+      var v = masterStoneValue(st);
+      if (st.slot === "rarity") rarity += v; else if (st.slot === "kind") kind[st.kind] += v; else family[st.family] += v;
+    });
+    var lerp = function (a, b) { return Math.min(1, Math.max(0, (rarity - a) / (b - a))); };
+    var tier;
+    if (rarity >= MASTER_CUT.rare) { var e1 = lerp(MASTER_CUT.rare, MASTER_CUT.super); tier = { fail: 0, normal: 0, rare: 1 - e1, super: e1 }; }
+    else if (rarity >= MASTER_CUT.normal) { var e2 = lerp(MASTER_CUT.normal, MASTER_CUT.rare); tier = { fail: 0, normal: 1 - e2, rare: e2, super: 0 }; }
+    else { var e3 = lerp(0, MASTER_CUT.normal); tier = { fail: 1 - e3, normal: e3, rare: 0, super: 0 }; }
+    var share = function (obj, keys) {
+      var n = keys.reduce(function (s, k) { return s + obj[k]; }, 0);
+      return keys.map(function (k) { return [k, n > 0 ? obj[k] / n : 1 / keys.length]; });
+    };
+    var outputs = Object.keys(PETS).map(function (id) { return { id: Number(id), d: PETS[id] }; })
+      .filter(function (x) { return x.d.master && x.d.master.kind; });
+    var pick = function (r, f, k) {
+      return outputs.filter(function (x) {
+        return masterRarity(x.d.master) === r && x.d.master.family === f && (k === undefined || x.d.master.kind === k);
+      });
+    };
+    var fail = tier.fail, odds = {};
+    MASTER_RARITIES.forEach(function (r) {
+      if (!(tier[r] > 0)) return;
+      share(family, MASTER_FAMILIES).forEach(function (fp) {
+        if (!(fp[1] > 0)) return;
+        if (!pick(r, fp[0]).length) { fail += tier[r] * fp[1]; return; }
+        var kinds = MASTER_KINDS.filter(function (k) { return pick(r, fp[0], k).length > 0; });
+        share(kind, kinds).forEach(function (kp) {
+          if (!(kp[1] > 0)) return;
+          var list = pick(r, fp[0], kp[0]);
+          list.forEach(function (x) { odds[x.id] = (odds[x.id] || 0) + tier[r] * fp[1] * kp[1] / list.length; });
+        });
+      });
+    });
+    return { fail: fail, odds: odds, rarity: rarity, family: family, kind: kind };
+  }
+  function masterSeed(seeds) {
+    return seeds.slice().sort(function (a, b) { return a - b; })
+      .reduce(function (acc, s) { return (Math.imul(acc ^ s, 2654435761) + 1) >>> 0; }, 2135587861);
+  }
+  function masterResult(odds, seed) {
+    var a = new GameRng(seed).next();
+    var ids = Object.keys(odds).map(Number).sort(function (x, y) { return x - y; });
+    for (var i = 0; i < ids.length; i++) {
+      a -= odds[ids[i]];
+      if (a < 0) return ids[i];
+    }
+    return null;
+  }
+
   var prophecyMode = "box", prophecyBoxId = null, prophecyCount = 30, prophecyPetKey = null;
+  var masterPickUids = [], masterStonePick = {};
   function prophecyBoxStock(c) {
     var boxes = window.BOXES || {};
     var have = {};
@@ -2696,14 +2813,41 @@
         "成功與否看「第幾次嘗試」擲出的數字，下面列出接下來幾次各要放多少材料才會成功。4 階失敗經驗歸零、5 階以上失敗連成長也歸零。" }));
 
     var TRIES_SHOWN = 5;
+    // 冶煉：列出接下來幾次的結果（成功變成誰／失敗掉到 +幾）
+    function smeltBlock(id, d, startTries, seedOverride) {
+      var sd = seedOverride != null ? seedOverride : seed;
+      var sm = d.smelt;
+      var wrap = el("div", { style: "font-size:12.5px;margin-top:4px;" });
+      wrap.appendChild(el("b", { text: d.name + " 冶煉（寵物冶煉家）" }));
+      wrap.appendChild(el("span", { style: "font-size:12px;color:var(--text3);",
+        text: "　本體要 +" + sm.grow + "，吃掉 " + sm.needs.map(function (n) { return petName(n.id) + " +" + n.grow + " 以上"; }).join("、") +
+          "＋寵物之魂 " + sm.soul + "＋" + Number(sm.gold).toLocaleString() + " 金；機率：" +
+          sm.to.map(function (t) { return petName(t.to) + " " + (t.rate / 100) + "%"; }).join("、") }));
+      for (var k = 0; k < TRIES_SHOWN; k++) {
+        var res = petSmeltRoll(sd, id, startTries + k, sm);
+        wrap.appendChild(el("div", {
+          style: res.to ? "color:var(--accent2);font-weight:700;" : "",
+          text: "第 " + (k + 1) + " 次（evolveTries=" + (startTries + k) + "）：" +
+            (res.to ? "成功 → " + petName(res.to) : "失敗，本體掉到 +" + res.grow + "（吃掉的寵物、魂、金幣都沒了）"),
+        }));
+        if (res.to) break; // 成功就變成別隻了，後面的次數用不到
+      }
+      return wrap;
+    }
     function stageBlock(id, startTries, depth, seen) {
       var d = PETS[String(id)];
       var wrap = el("div", { style: "margin-left:" + (depth ? 18 : 0) + "px;border-left:" + (depth ? "2px solid var(--border)" : "none") + ";padding-left:" + (depth ? 10 : 0) + "px;margin-bottom:6px;" });
       if (!d) { wrap.appendChild(el("div", { text: "寵物#" + id })); return wrap; }
       var evolve = d.evolve || [];
       if (!evolve.length) {
-        wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);",
-          text: d.name + "（" + d.tier + " 階）沒有一般進化了" + (d.tier >= 6 ? "；之後的 7 階進化／寵物冶煉用的是別的亂數，這裡算不到。" : "。") }));
+        if (d.smelt) {
+          wrap.appendChild(smeltBlock(id, d, startTries));
+        } else if (d.tier === 6 && d.master) {
+          wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);",
+            text: d.name + "（6 階）要到寵物大師用 5 隻 +9 100% 的 6 階寵物合成 7 階，結果看是哪 5 隻，請用下面「7 階進化（寵物大師）」試算。" }));
+        } else {
+          wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);", text: d.name + "（" + d.tier + " 階）沒有進化了。" }));
+        }
         return wrap;
       }
       evolve.forEach(function (recipe, ri) {
@@ -2728,6 +2872,87 @@
       return wrap;
     }
     box.appendChild(stageBlock(pet.id, pet.evolveTries || 0, 0, [pet.id]));
+    box.appendChild(renderMasterProphecy(c, smeltBlock));
+  }
+
+  // 7 階進化試算：遊戲只吃身上（不含倉庫）、不是出戰中的 6 階 +9 100% 寵物
+  function renderMasterProphecy(c, smeltBlock) {
+    var wrap = el("div", { style: "margin-top:22px;" });
+    wrap.appendChild(el("div", { class: "section-title", text: "7 階進化（寵物大師）" }));
+    wrap.appendChild(el("div", { class: "note", style: "margin-bottom:8px;",
+      text: "勾 5 隻身上的 6 階寵物、選要不要加石頭，就能算出寵物大師會給你哪一隻 7 階（或失敗 5 隻全沒）。" +
+        "結果只看這 5 隻的種子和組合，跟勾的順序無關；換掉任何 1 隻或石頭結果就可能不同。打 ⚠ 的是還沒 +9 100% 或正在出戰，遊戲裡還不能放。" }));
+    var cand = (c.pets || []).filter(function (p) { var d = PETS[String(p.id)]; return d && d.tier === 6 && d.master; });
+    masterPickUids = masterPickUids.filter(function (u) { return cand.some(function (p) { return p.uid === u; }); });
+    if (!cand.length) {
+      wrap.appendChild(el("div", { class: "note", text: "身上沒有 6 階的寵物。" }));
+      return wrap;
+    }
+    var list = el("div", { style: "display:flex;flex-direction:column;gap:4px;margin-bottom:10px;" });
+    cand.forEach(function (p) {
+      var d = PETS[String(p.id)];
+      var lbl = el("label", { style: "display:flex;gap:6px;align-items:center;font-weight:400;font-size:13px;" });
+      var cb = el("input", { type: "checkbox", style: "width:auto;" });
+      cb.checked = masterPickUids.indexOf(p.uid) >= 0;
+      cb.disabled = !cb.checked && masterPickUids.length >= 5;
+      cb.addEventListener("change", function () {
+        if (cb.checked) masterPickUids.push(p.uid);
+        else masterPickUids = masterPickUids.filter(function (u) { return u !== p.uid; });
+        renderProphecy(c);
+      });
+      var notReady = (p.grow || 0) < 9 || c.activePetUid === p.uid;
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode((notReady ? "⚠ " : "") + d.name + " +" + (p.grow || 0) + "（" +
+        MASTER_FAMILY_NAME[d.master.family] + "・" + MASTER_RARITY_NAME[masterRarity(d.master)] + "・" + MASTER_KIND_NAME[masterKindOf(d)] + "）"));
+      list.appendChild(lbl);
+    });
+    wrap.appendChild(list);
+
+    var stones = window.PET_MASTER_STONES || [];
+    var slotName = { rarity: "稀有度石", kind: "屬性石", family: "種族石" };
+    var stoneRow = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" });
+    ["rarity", "kind", "family"].forEach(function (slot) {
+      var opts = stones.filter(function (s) { return s.slot === slot; });
+      if (!opts.length) return;
+      var sel = el("select");
+      sel.appendChild(el("option", { value: "", text: slotName[slot] + "：不加" }));
+      opts.forEach(function (s) {
+        var o = el("option", { value: String(s.id), text: itemName(s.id) });
+        if (masterStonePick[slot] === s.id) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () {
+        if (sel.value) masterStonePick[slot] = Number(sel.value); else delete masterStonePick[slot];
+        renderProphecy(c);
+      });
+      stoneRow.appendChild(sel);
+    });
+    wrap.appendChild(stoneRow);
+
+    if (masterPickUids.length < 5) {
+      wrap.appendChild(el("div", { class: "note", text: "已勾 " + masterPickUids.length + " / 5 隻。" }));
+      return wrap;
+    }
+    var picked = masterPickUids.map(function (u) { return cand.find(function (p) { return p.uid === u; }); });
+    var pickedStones = Object.keys(masterStonePick).map(function (slot) {
+      return stones.find(function (s) { return s.id === masterStonePick[slot]; });
+    }).filter(Boolean);
+    var res = masterOdds(picked.map(function (p) { return PETS[String(p.id)]; }), pickedStones);
+    var seed7 = masterSeed(picked.map(function (p) { return p.seed >>> 0; }));
+    var got = masterResult(res.odds, seed7);
+    wrap.appendChild(el("div", {
+      style: "font-size:15px;font-weight:700;margin-bottom:6px;color:" + (got ? "var(--accent2)" : "#d9534f") + ";",
+      text: got ? "結果：會進化成 " + petName(got) : "結果：失敗（5 隻寵物都不會回來）",
+    }));
+    var top = Object.keys(res.odds).map(function (id) { return [Number(id), res.odds[id]]; })
+      .filter(function (x) { return x[1] > 0; }).sort(function (a, b) { return b[1] - a[1] || a[0] - b[0]; });
+    wrap.appendChild(el("div", { style: "font-size:12.5px;color:var(--text3);margin-bottom:6px;",
+      text: "稀有度點數 " + res.rarity + "；失敗機率 " + (res.fail * 100).toFixed(1) + "%；機率表：" +
+        top.map(function (x) { return petName(x[0]) + " " + (x[1] * 100).toFixed(1) + "%"; }).join("、") }));
+    if (got && PETS[String(got)] && PETS[String(got)].smelt) {
+      wrap.appendChild(smeltBlock(got, PETS[String(got)], 0, seed7));
+    }
+    return wrap;
   }
 
   function potionPercentRow(label, getPct, setPct, currentItemId, onPickItem, what) {
