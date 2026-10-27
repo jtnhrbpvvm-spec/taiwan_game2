@@ -381,6 +381,7 @@
         toast("存檔載入成功", "ok");
         renderAll();
         showPanel("basic");
+        if (window.wishSetNavCollapsed) window.wishSetNavCollapsed(false);   // 載入後自動展開功能列
       } catch (err) {
         toast("讀取失敗：" + err.message, "err");
       }
@@ -4577,6 +4578,7 @@
           msg.textContent = "已成功載入轉移碼存檔。";
           toast("已載入轉移碼存檔", "ok");
           showPanel("basic");
+          if (window.wishSetNavCollapsed) window.wishSetNavCollapsed(false);   // 載入後自動展開功能列
           btn.disabled = false;
         })
         .catch(function () { tryExt(i + 1); });

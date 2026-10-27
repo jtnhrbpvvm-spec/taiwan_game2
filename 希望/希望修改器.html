@@ -330,7 +330,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V52</span>
+  <span class="bar-title">🧭 希望存檔修改器V53</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -344,7 +344,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
   </div>
   <span id="loadStatus" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
   <div class="bar-toggles">
-    <button class="btn btn-sm" id="navToggle" type="button" title="顯示／隱藏左邊功能列" aria-controls="sidebar">☰ 點我展開功能列</button>
+    <button class="btn btn-sm" id="navToggle" type="button" title="顯示／隱藏左邊功能列" aria-controls="sidebar">☰ 顯示功能列</button>
     <button class="btn btn-sm" id="themeToggle" type="button">🎨 切換風格</button>
   </div>
 </div>
@@ -420,8 +420,9 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
       function setCollapsed(v) {
         body.classList.toggle("nav-collapsed", v);
         btn.setAttribute("aria-expanded", String(!v));
-        btn.textContent = v ? "☰ 點我展開功能列" : "☰ 點我收起功能列";
+        btn.textContent = v ? "☰ 顯示功能列" : "☰ 隱藏功能列";
       }
+      window.wishSetNavCollapsed = setCollapsed;   // app.js 載入存檔後會呼叫，讓功能列自動展開
       var saved = null;
       try { saved = localStorage.getItem("wishNavCollapsed"); } catch (e) { /* 讀不到就用預設 */ }
       setCollapsed(mq.matches || saved === "1");
@@ -876,6 +877,6 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <script src="data/enchant.js"></script>
 <script src="data/questLines.js"></script>
 <script src="data/monsterDex.js"></script>
-<script src="data/app.js?v=52"></script>
+<script src="data/app.js?v=53"></script>
 </body>
 </html>
