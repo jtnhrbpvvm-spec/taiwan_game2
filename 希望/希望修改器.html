@@ -50,7 +50,18 @@ body{
 .nav-item.active{background:var(--bg3);color:#fff;border-left-color:var(--accent);}
 .nav-item .badge{margin-left:auto;font-size:10px;background:var(--bg4);color:var(--text3);padding:1px 6px;border-radius:9px;}
 
-#content{flex:1;padding:22px 26px;overflow-y:auto;position:relative;background:var(--bg);}
+/* 左邊功能列可以收起來（上方 ☰ 按鈕）；手機上預設收起，打開時蓋在內容上面，不擠壓內容 */
+body.nav-collapsed #sidebar{display:none;}
+#navToggle{font-size:16px;line-height:1;padding:6px 10px;}
+
+#content{flex:1;min-width:0;padding:22px 26px;overflow-y:auto;position:relative;background:var(--bg);}
+select{max-width:100%;min-width:0;}
+@media (max-width:768px){
+  #main{position:relative;}
+  #sidebar{position:absolute;top:0;bottom:0;left:0;z-index:100;width:200px;box-shadow:4px 0 16px rgba(0,0,0,.25);}
+  #content{padding:12px;}
+  html:not([data-theme="classic"]) .panel.active{padding:14px 12px;}
+}
 .panel{display:none;}
 .panel.active{display:block;max-width:880px;}
 
@@ -299,6 +310,10 @@ html:not([data-theme="classic"]) #sidebar::-webkit-scrollbar,
 html:not([data-theme="classic"]) #content::-webkit-scrollbar{width:9px;}
 html:not([data-theme="classic"]) #sidebar::-webkit-scrollbar-thumb,
 html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:var(--border-hi); border-radius:5px;}
+/* 手機上功能列是蓋在內容上面的，要用不透明底色，不然底下的字會透出來 */
+@media (max-width:768px){
+  html:not([data-theme="classic"]) #sidebar{background:var(--bg2);}
+}
 </style>
 <script>
   // 在畫面畫出來之前套用上次選的風格（跟物品查詢頁共用同一個設定）
@@ -315,7 +330,8 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器V42</span>
+  <button class="btn btn-sm" id="navToggle" type="button" title="顯示／隱藏左邊功能列" aria-controls="sidebar">☰</button>
+  <span class="bar-title">🧭 希望存檔修改器V51</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -393,6 +409,32 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <div class="nav-item" data-panel="transfer">🔁 轉移碼</div>
     <div class="nav-item" data-panel="json">{ } JSON 編輯器</div>
   </div>
+  <script>
+    // 功能列開關：電腦版記住上次的選擇；手機版每次都先收起，點了功能或點內容區就自動收回去
+    (function () {
+      var mq = window.matchMedia("(max-width:768px)");
+      var body = document.body;
+      var btn = document.getElementById("navToggle");
+      function setCollapsed(v) {
+        body.classList.toggle("nav-collapsed", v);
+        btn.setAttribute("aria-expanded", String(!v));
+      }
+      var saved = null;
+      try { saved = localStorage.getItem("wishNavCollapsed"); } catch (e) { /* 讀不到就用預設 */ }
+      setCollapsed(mq.matches || saved === "1");
+      btn.addEventListener("click", function () {
+        var v = !body.classList.contains("nav-collapsed");
+        setCollapsed(v);
+        if (!mq.matches) try { localStorage.setItem("wishNavCollapsed", v ? "1" : "0"); } catch (e) { /* 存不了就只在這次有效 */ }
+      });
+      document.getElementById("sidebar").addEventListener("click", function (e) {
+        if (mq.matches && e.target.closest(".nav-item")) setCollapsed(true);
+      });
+      document.getElementById("main").addEventListener("click", function (e) {
+        if (mq.matches && !body.classList.contains("nav-collapsed") && !e.target.closest("#sidebar")) setCollapsed(true);
+      });
+    })();
+  </script>
 
   <div id="content">
 
@@ -831,6 +873,6 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <script src="data/enchant.js"></script>
 <script src="data/questLines.js"></script>
 <script src="data/monsterDex.js"></script>
-<script src="data/app.js?v=50"></script>
+<script src="data/app.js?v=51"></script>
 </body>
 </html>
