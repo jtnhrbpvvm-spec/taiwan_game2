@@ -1,5 +1,5 @@
 {
-  "version": "1.4.6",
+  "version": "1.4.7",
   "shell": 1,
   "files": [
     {
@@ -14,8 +14,8 @@
     },
     {
       "path": "game-preload.js",
-      "sha256": "a87e8e983c5d8c0ba83e9aae07b3de4ca381c8f31f7b26cb6c4958184e9c9678",
-      "size": 1626
+      "sha256": "f1cb62b67557a782fbbd69c555286824c242f10abc2815701bef284ebe1664ab",
+      "size": 2734
     },
     {
       "path": "income-preload.js",
@@ -29,8 +29,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "c9be2c9a3487e7f0b70532dc880c3c267c4cf6c6c563f9e50bf6c79a672e15fe",
-      "size": 56460
+      "sha256": "e98ea16ca04b1bbb2af701f154f242f45e72e0c82835fa8de85a87709f6cd6b9",
+      "size": 56441
     },
     {
       "path": "names.json",
@@ -64,8 +64,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "c051b3b92337b9c960338a4aa00529011ed8e3cae25f649ee5519154b8d91918",
-      "size": 26625
+      "sha256": "ae9cccc86f28b9e1dc3558b226117529a0868d1a8060ee1d36830d826e8ea218",
+      "size": 27868
     },
     {
       "path": "ui/accounts.html",
