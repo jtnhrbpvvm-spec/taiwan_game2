@@ -1,5 +1,5 @@
 {
-  "version": "1.4.8",
+  "version": "1.4.9",
   "shell": 1,
   "files": [
     {
@@ -24,8 +24,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "31e3e39adb96d5649620725711c96ec6d05d2f2b9a83a03efa0492974b2b1a48",
-      "size": 56643
+      "sha256": "2ab17e5b7235812a1875e94414722143799828a721271fc3de8e1874a0edfe4e",
+      "size": 57014
     },
     {
       "path": "mall.js",

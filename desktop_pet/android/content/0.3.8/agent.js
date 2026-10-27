@@ -139,7 +139,13 @@
       const c = file.characters.find((x) => x.id === file.lastPlayedId);
       if (!c) return undefined;
       const bag = {};
-      for (const s of c.stacks || []) bag[s.itemId] = (bag[s.itemId] || 0) + (s.count == null ? 1 : s.count);
+      // 遊戲 10-27 起存檔會壓縮（packed）：一般物品存成 [id, itemId, count(, refine)]，
+      // 連號、內容一樣的好幾件存成一筆加 run（件數），要乘回去（遊戲 tk()）
+      for (const s of c.stacks || []) {
+        const itemId = Array.isArray(s) ? s[1] : s.itemId;
+        const count = Array.isArray(s) ? s[2] : (s.count == null ? 1 : s.count) * (typeof s.run === "number" ? s.run : 1);
+        bag[itemId] = (bag[itemId] || 0) + count;
+      }
       return c && { c, bag };
     } catch (e) {
       return undefined;

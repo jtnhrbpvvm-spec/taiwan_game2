@@ -1111,7 +1111,13 @@ const READ_STATE = `(() => {
     const c = file.characters.find((x) => x.id === file.lastPlayedId);
     if (!c) return null;
     const bag = {};
-    for (const s of c.stacks ?? []) bag[s.itemId] = (bag[s.itemId] ?? 0) + (s.count ?? 1);
+    // 遊戲 10-27 起存檔會壓縮（packed）：一般物品存成 [id, itemId, count(, refine)]，
+    // 連號、內容一樣的好幾件存成一筆加 run（件數），要乘回去（遊戲 tk()）
+    for (const s of c.stacks ?? []) {
+      const itemId = Array.isArray(s) ? s[1] : s.itemId;
+      const count = Array.isArray(s) ? s[2] : (s.count ?? 1) * (typeof s.run === "number" ? s.run : 1);
+      bag[itemId] = (bag[itemId] ?? 0) + count;
+    }
     return { id: c.id, name: c.name, level: c.level, exp: c.exp, gold: c.gold, elapsedMs: c.elapsedMs, savedAt: c.savedAt,
       inVillage: !!c.inVillage, townId: c.townId, mapId: c.spot?.mapId, targetId: c.spot?.targetId, gmDuelWindow: c.gmDuelWindow,
       fishingMapId: c.fishing?.mapId, dungeonId: c.dungeon?.run?.dungeonId, bag, hidden: document.hidden, income: readIncome(),
