@@ -52,7 +52,7 @@ body{
 
 /* 左邊功能列可以收起來（上方 ☰ 按鈕）；手機上預設收起，打開時蓋在內容上面，不擠壓內容 */
 body.nav-collapsed #sidebar{display:none;}
-#navToggle{font-size:16px;line-height:1;padding:6px 10px;}
+.bar-toggles{display:flex;gap:8px;flex-wrap:wrap;}
 
 #content{flex:1;min-width:0;padding:22px 26px;overflow-y:auto;position:relative;background:var(--bg);}
 select{max-width:100%;min-width:0;}
@@ -330,8 +330,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <button class="btn btn-sm" id="navToggle" type="button" title="顯示／隱藏左邊功能列" aria-controls="sidebar">☰</button>
-  <span class="bar-title">🧭 希望存檔修改器V51</span>
+  <span class="bar-title">🧭 希望存檔修改器V52</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -344,7 +343,10 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <button class="btn btn-sm" id="defaultCharBtn" disabled title="設為預設載入角色">★</button>
   </div>
   <span id="loadStatus" style="margin-left:auto;font-size:12px;color:var(--text3);"></span>
-  <button class="btn btn-sm" id="themeToggle" type="button">🎨 切換風格</button>
+  <div class="bar-toggles">
+    <button class="btn btn-sm" id="navToggle" type="button" title="顯示／隱藏左邊功能列" aria-controls="sidebar">☰ 點我展開功能列</button>
+    <button class="btn btn-sm" id="themeToggle" type="button">🎨 切換風格</button>
+  </div>
 </div>
 <script>
   // 風格切換：遊戲風格（預設）⇄ 舊版深色風格
@@ -418,6 +420,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
       function setCollapsed(v) {
         body.classList.toggle("nav-collapsed", v);
         btn.setAttribute("aria-expanded", String(!v));
+        btn.textContent = v ? "☰ 點我展開功能列" : "☰ 點我收起功能列";
       }
       var saved = null;
       try { saved = localStorage.getItem("wishNavCollapsed"); } catch (e) { /* 讀不到就用預設 */ }
@@ -873,6 +876,6 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <script src="data/enchant.js"></script>
 <script src="data/questLines.js"></script>
 <script src="data/monsterDex.js"></script>
-<script src="data/app.js?v=51"></script>
+<script src="data/app.js?v=52"></script>
 </body>
 </html>
