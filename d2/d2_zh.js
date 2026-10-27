@@ -237,7 +237,16 @@ if (st.orig === undefined) st.orig = st.src;
 if (st.src !== st.orig || c.style.display === 'none') { st.src = st.orig; st.lang = null; c.style.display = ''; }
 });
 if (d2zhLang() === 'zh-Hant' && window.__d2zhKnown) {
-for (let i = 0; i < kids.length; i++) {
+// 技能進化的標題（「Into Impale:」「Cold Arrow into Freezing Arrow, needs:」）也是一個字一格：整段同色的標題合成一句翻
+let start = 0;
+while (start + 1 < states.length && states[start + 1].color.join() === states[0].color.join()) start++;
+const head = states.slice(0, start + 1).map(st => st.orig).join(' ');
+if (start > 0 && window.__d2zhHead && window.__d2zhHead(head)) {
+states[0].src = head;
+states[0].lang = null;
+kids.slice(1, start + 1).forEach(c => { c.style.display = 'none'; });
+} else start = -1;
+for (let i = start + 1; i < kids.length; i++) {
 for (let n = Math.min(4, kids.length - i); n >= 2; n--) {
 const group = states.slice(i, i + n);
 const color = group[0].color.join();
@@ -757,7 +766,8 @@ const D2ZH_NEWS = [
 '選項 → 書籤修改：可以修改這一局的人物和恰西的永久升級。預設鎖住，確認關閉排行榜上傳後才能使用',
 '恐懼層的波數（剩餘精英）、首領 10 分鐘時限和時間到的提示',
 '改寫的技能改造說明（一半傷害轉為其他元素、能打免疫怪物等 85 項）',
-'快速施法率的總和、上限和超過上限的說明，裝備擊殺觸發技能的冷卻時間'] },
+'快速施法率的總和、上限和超過上限的說明，裝備擊殺觸發技能的冷卻時間',
+'升級選技能時的進化條件改成通順的一句（例如「進化為刺爆：滿級 1/8、閃避、等級 24」）'] },
 { ver: 'V14', date: '2026-10-26', game: '遊戲 20261026.2', items: [
 '新增「效能模式」（選項 → 書籤修改）：開啟後畫面改用低解析度、技能特效調到最淡，電腦或手機跑不動時使用',
 '恐懼層九波怪物、跳層開放、波數顯示，以及恐懼層重新開始的說明',
@@ -1122,7 +1132,7 @@ text: {
 'Nothing new since your last visit': '上次來訪後沒有新內容', 'Since your last visit': '自上次來訪以來', 'Your hero is saved': '你的英雄已儲存',
 'Press the button for it': '請按下要設定的按鍵', 'Button *': '按鍵 {0}', 'Circle': '○', 'Cross': '✕', 'Square': '□', 'Triangle': '△', 'Minus': '−', 'Plus': '＋',
 'Units': '單位', 'Floor tiles': '地板', 'Missiles': '投射物', 'Heroes': '英雄', 'Gear': '裝備', 'Interface': '介面', 'Scenery': '場景', 'Title and menus': '標題與選單',
-'Sounds and music': '音效與音樂', 'and': '和', 'or': '或', 'Demon': '惡魔', 'max #/#': '最多 {0}/{1}', 'Build *': '版本 {0}',
+'Sounds and music': '音效與音樂', 'and': '和', 'or': '或', 'Demon': '惡魔', 'max #/#': '滿級 {0}/{1}', 'max #/#,': '滿級 {0}/{1}、', 'Into *:': '進化為{0}：', 'Build *': '版本 {0}',
 'Harrogath': '哈洛加斯', 'Harem Level 1': '後宮第 1 層', 'Hratli': '赫拉特利', 'Larzuk': '拉蘇克', 'Patriarch': '族長', 'Matriarch': '女族長',
 'toughest monster': '最強的怪物', '# toughest monsters': '{0} 隻最強的怪物', 'monster level #': '怪物等級 {0}', 'One blow took more than half your life': '一擊就打掉你超過一半的生命',
 // 恐懼層、營火、一輪的結算
@@ -1356,7 +1366,7 @@ text: {
 'Keeps your level * and gear · * gold': '保留你的等級 {0} 和裝備 · {1} 金幣', 'Your level-* * starts over and keeps the golden glow for good.': '你等級 {0} 的{1}重新開始，並永久保留金色光芒。',
 'Your level-* * starts over at level 1; she\'s kept at Akara.': '你等級 {0} 的{1}從等級 1 重新開始；原本的她由阿卡拉保管。', 'Earlier heroes (*)': '以前的英雄（{0}）',
 'Level * · * · swap her in': '等級 {0} · {1} · 換她上場', 'Your level-* * is kept at Akara.': '你等級 {0} 的{1}由阿卡拉保管。',
-'Evolve * into *': '把{0}進化成{1}', 'Done': '完成', 'Done*': '完成{0}', 'max */*': '最多 {0}/{1}',
+'Evolve * into *': '把{0}進化成{1}', 'Done': '完成', 'Done*': '完成{0}',
 'A blow at up to # monsters in reach: # fire, cold and lightning each, half to those beside': '攻擊範圍內最多 {0} 隻怪物：火焰、冰寒與閃電各 {1}，旁邊的怪物受到一半',
 'A heavy blow at the toughest monster in reach, # damage, for #% of your life (none below #%)': '對範圍內最強的怪物沉重一擊，{0} 傷害，消耗你 {1}% 的生命（生命低於 {2}% 時不消耗）',
 'A heavy blow at the toughest monster in reach, # damage, sweeping #% of it through those beside; each costs you #% of your life, held back below #% life': '對範圍內最強的怪物沉重一擊，{0} 傷害，對旁邊的怪物造成 {1}% 掃擊；每擊消耗你 {2}% 的生命，生命低於 {3}% 時停手',
@@ -2700,7 +2710,7 @@ return w.kinds[i] === '#' ? v : d2zhPlain(v.replace(/^the\s+/i, ''));
 }
 // 名稱後面接標點（進化條件逐項列出：「max 3/8,」「Pierce,」）：照名稱翻，不要落到一般單字（pierce＝穿透）
 const tailMark = /^(.+?)\s*([,:;])$/s.exec(text);
-if (tailMark && (lookup.has(tailMark[1].toLowerCase()) || fixExact.has(fixNorm(tailMark[1])))) return d2zhPlain(tailMark[1]) + tailMark[2];
+if (tailMark && (lookup.has(tailMark[1].toLowerCase()) || fixExact.has(fixNorm(tailMark[1])))) return d2zhPlain(tailMark[1]) + ({ ',': '、', ':': '：', ';': '；' })[tailMark[2]];
 if (depth > 2) return null;
 // 遊戲常把好幾句用「 · 」或「 - 」接起來，或在前後加數字（例如 "-12% to Enemy Cold Resistance"）
 for (const sep of [' · ', ' - ']) {
@@ -2719,6 +2729,7 @@ if (lead) { const rest = d2zhFix(lead[2], depth + 1); if (rest !== null) return 
 return null;
 }
 window.__d2zhKnown = s => lookup.has(String(s).toLowerCase()) || fixExact.has(fixNorm(s));
+window.__d2zhHead = s => /^(Into .+:|.+ into .+, needs:|Evolves from .+:|A chest now evolves .+)$/s.test(s) && d2zhFix(s) !== null;
 // 有分層的地圖區域名稱（字典裡有 "Catacombs Level 1" 就記下 "catacombs"）
 const d2zhAreas = new Set([...lookup.keys()].map(k => /^(.+) level \d+$/.exec(k)?.[1]).filter(Boolean));
 const wordAlternatives = wordEntries
