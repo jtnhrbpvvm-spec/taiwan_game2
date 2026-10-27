@@ -3,7 +3,7 @@
 // 每次載入完成，就把 d2_zh.js（跟書籤同一份）注入頁面。
 // 更新：遊戲會擋掉頁面的網路連線，所以由這裡（主程序）向 GitHub Pages 下載新版：
 //   ・每次開遊戲在背景自動檢查（資料夾裡有 no-auto-update 檔就不自動）
-//   ・「中文化」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
+//   ・「書籤修改」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
 'use strict';
 const { app } = require('electron');
 const fs = require('fs');
@@ -12,7 +12,7 @@ const https = require('https');
 
 const DIR = __dirname;
 const TEST_BASE = process.env.D2ZH_UPDATE_BASE;   // 環境變數只給測試用
-const PAGES = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/d2/';
+const PAGES = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/';
 // GitHub Pages 的 CDN 會快取 10 分鐘（而且不看 ?v= 參數），剛推送的新版要等一陣子才拿得到。
 // 所以先問 GitHub 最新一次提交的編號，直接從那次提交下載（網址每次提交都不同，不會拿到舊的）；問不到才用 Pages。
 const REPO = 'jtnhrbpvvm-spec/taiwan_game2';
@@ -50,7 +50,7 @@ async function sourceBase() {
   if (TEST_BASE) return { base: TEST_BASE, from: 'test' };
   try {
     const sha = (await download(`https://api.github.com/repos/${REPO}/commits/main`, { Accept: 'application/vnd.github.sha' })).toString('utf8').trim();
-    if (/^[0-9a-f]{40}$/.test(sha)) return { base: `https://raw.githubusercontent.com/${REPO}/${sha}/d2/`, from: sha.slice(0, 7) };
+    if (/^[0-9a-f]{40}$/.test(sha)) return { base: `https://raw.githubusercontent.com/${REPO}/${sha}/D2%E4%BF%AE%E6%94%B9%E7%89%88/`, from: sha.slice(0, 7) };
   } catch (e) {
     log(`commit lookup: ${e.message}`);
   }
