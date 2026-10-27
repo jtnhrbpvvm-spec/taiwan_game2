@@ -32,6 +32,23 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col p-2">
 
+    <!-- 版本公告 -->
+    <div id="version-notice-modal" class="fixed inset-0 flex items-center justify-center modal-overlay" style="z-index: 100;">
+        <div class="panel-border p-6 max-w-xl w-full rounded-md mx-4 text-lg">
+            <h2 class="text-2xl c-warn mb-4 text-center font-bold border-b border-gray-700 pb-2">版本公告</h2>
+            <div class="space-y-4 mb-6">
+                <p>此版本為以前巴哈姆特 <a href="https://forum.gamer.com.tw/Co.php?bsn=84452&amp;sn=36355#Commendlist_36355" target="_blank" rel="noopener" class="c-info underline">秋玥</a> 製作的最初版，目前已不更新。</p>
+                <p>最新版本為 <a href="https://shines871.github.io/idle-lineage-class/" target="_blank" rel="noopener" class="c-info underline break-all">https://shines871.github.io/idle-lineage-class/</a> <span class="c-warn">『最終版本不再更新』</span></p>
+                <p>另外還有加掛版本 <span class="c-success">【有各種便利功能】</span> <a href="https://pp771007.github.io/idle-lineage-class/" target="_blank" rel="noopener" class="c-info underline break-all">https://pp771007.github.io/idle-lineage-class/</a> <span class="c-warn">『同上最終版本』</span></p>
+                <p>或是您可以繼續遊玩舊版。</p>
+                <p class="border-t border-gray-700 pt-4">如果你是想找 <a href="https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/" class="c-info underline">D2倖存者繁體中文化</a> 不小心來到這裡，請點 <a href="https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/" class="c-info underline break-all">https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/</a></p>
+            </div>
+            <div class="text-center">
+                <button class="btn-ui py-2 px-8 text-lg c-success" onclick="document.getElementById('version-notice-modal').remove()">確認</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 創角畫面 -->
     <div id="char-creation-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay block">
         <div class="panel-border p-8 max-w-lg w-full rounded-md">
