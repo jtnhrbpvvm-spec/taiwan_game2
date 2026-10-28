@@ -769,15 +769,34 @@ document.addEventListener('visibilitychange', apply);
 setInterval(() => { if (document.hidden) apply(); }, 1000);   // 背景時遊戲若自己 resume，再壓回去
 D2ED.bgMuteApply = apply;
 })();
+const D2ED_BGMUTE_LIMIT = '只蓋住一部分，或只是點到別的視窗、遊戲還看得到時，瀏覽器不會把遊戲當成在背景，所以不會靜音。';
+function d2edBgMuteSet(on) {
+try { localStorage.setItem(D2ED_BGMUTE_KEY, on ? '1' : '0'); } catch (e) { alert('無法儲存設定：' + e); return; }
+D2ED.bgMuteApply?.();
+d2edRender(); d2edToast(on ? '背景靜音已開啟' : '背景靜音已關閉');
+}
+// 手動開啟時提醒什麼情況才會靜音
+function d2edConfirmBgMute() {
+const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
+if (!card || card.querySelector('.d2ed-modal')) return;
+const modal = d2edEl('div', { class: 'd2ed-modal' });
+const close = () => modal.remove();
+modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'alertdialog', 'aria-label': '確認開啟背景靜音' },
+d2edEl('b', {}, '開啟背景靜音？'),
+d2edEl('ul', {},
+d2edEl('li', {}, '遊戲換到其他分頁、被其他視窗「完全」蓋住，或縮小到工具列時會立刻靜音，遊戲照常執行；回到遊戲就恢復聲音。'),
+d2edEl('li', {}, D2ED_BGMUTE_LIMIT)),
+d2edEl('div', { class: 'd2ed-row' },
+d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: () => { close(); d2edBgMuteSet(true); } }, '確認'),
+d2edEl('button', { type: 'button', onclick: close }, '取消'))));
+card.append(modal);
+}
 function d2edBgMuteSection() {
 const on = d2edBgMuteOn();
-const toggle = () => {
-try { localStorage.setItem(D2ED_BGMUTE_KEY, on ? '0' : '1'); } catch (e) { alert('無法儲存設定：' + e); return; }
-D2ED.bgMuteApply?.();
-d2edRender(); d2edToast(on ? '背景靜音已關閉' : '背景靜音已開啟');
-};
+const toggle = () => { if (on) d2edBgMuteSet(false); else d2edConfirmBgMute(); };
 return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '背景靜音'),
 d2edEl('p', { class: 'd2ed-note' }, '遊戲換到其他分頁、被其他視窗完全蓋住或縮小到工具列時立刻靜音，遊戲照常執行；回到遊戲就恢復聲音。'),
+d2edEl('p', { class: 'd2ed-note' }, D2ED_BGMUTE_LIMIT),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉背景靜音' : '開啟背景靜音'),
 d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
 }
@@ -845,7 +864,8 @@ d2edRender();
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
 { ver: 'V27', date: '2026-10-28', game: '遊戲 20261028.1', items: [
-'新增「背景靜音」（選項 → 書籤修改，預設開啟）：遊戲換到其他分頁、被其他視窗完全蓋住或縮小到工具列時立刻靜音，遊戲照常執行，回來就恢復聲音'] },
+'新增「背景靜音」（選項 → 書籤修改，預設開啟）：遊戲換到其他分頁、被其他視窗完全蓋住或縮小到工具列時立刻靜音，遊戲照常執行，回來就恢復聲音',
+'注意：背景靜音要遊戲視窗被「完全」蓋住才會生效；只蓋住一部分，或只是點到別的視窗、遊戲還看得到時，瀏覽器不會把遊戲當成在背景，所以不會靜音'] },
 { ver: 'V26', date: '2026-10-28', game: '遊戲 20261028.1', items: [
 '配合遊戲更新：排行榜的不合規說明（紅框裝備、屬性／技能點數太多、存檔在遊戲外被修改）、阿卡拉重新抽選與重新開始、專家模式刪除警告等 75 句翻譯',
 '碎片感應改成進入地圖 15 秒後開始偵測（原本 30 秒）'] },
