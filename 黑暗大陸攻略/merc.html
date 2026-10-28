@@ -36,14 +36,19 @@
             <ul>
                 <li>裝備 8 格：<span id="slots"></span>（沒有項鍊、戒指、腰帶）。任何武器都能拿，不受職業限制；雙手武器不能配盾。遠程武器不吃你的彈藥。</li>
                 <li>裝備的基本屬性與詞綴會算進傭兵能力；共鳴與 BOSS 附魔目前不會觸發。</li>
-                <li>技能 4 格，鑲<a href="#runes">傭兵符石</a>，同一種不能重複。格子順序＝優先順序，傭兵每秒最多放一招，治療／回魔類會等到低血／低魔才用。</li>
+                <li><b>攻防主要靠裝備</b>：等級只小幅加攻防（見下方<a href="#classes">六職業</a>公式），武器平均傷害＋強化、裝備詞綴另外加；<b>魔杖每強化 +1 再加 1 魔攻</b>。傭兵管理裡可展開「基礎／裝備／增益」來源表。</li>
+                <li>技能 4 格，鑲<a href="#runes">傭兵符石</a>，同一種不能重複。每秒最多放一招，治療／回魔類會等到低血／低魔才用。</li>
+                <li>出招優先順序：<b>救命治療</b>（任一方 HP 低於 40%）→ <b>淨化</b> → 一般治療 → <b>射程內至少 2 隻怪的群攻</b> → 其他；同類才看格子順序。</li>
+                <li>射程：近戰 1 格、弓／槍 8 格、攻擊魔法與召喚物 4 格，牆擋住打不到。傭兵會自己走到射程內，但不會追離你 9 格以上的怪；射程外不扣魔、不進冷卻。</li>
                 <li>交付裝備、換符石、出戰／收回都要在村莊。</li>
             </ul></div>
         <div class="box"><h3 style="margin-top:0">成長、死亡、復活</h3>
             <ul>
                 <li>你擊殺怪物時傭兵另外得經驗，<b>不會分走你的經驗</b>；升級所需 ＝ 100 ＋ 等級² × 30，等級不會超過你。</li>
-                <li>每升一級 HP +18、MP +8、物理／魔法攻擊 +2、防禦／魔防 +1（可在下方<a href="#classes">六職業</a>輸入等級查看）。</li>
-                <li>怪物每次攻擊有 25% 改打傭兵（挑釁時 65%）；首領紅圈也會打到傭兵。</li>
+                <li>每升一級 HP +18、MP +8；物攻每 5 級 +1、魔攻每 4 級 +1、防禦每 10 級 +1、魔防每 5 級 +1（可在下方<a href="#classes">六職業</a>輸入等級查看）。</li>
+                <li><b>共用你的補血藥水</b>：沿用你快捷欄的自動補血開關、HP 門檻與藥水種類，傭兵 HP 低於門檻就喝，每瓶扣你背包 1 瓶（只補傭兵，不吃娃娃藥水加成）。藥水要多帶。</li>
+                <li>怪物每次攻擊有 25% 改打傭兵（挑釁時 65%）。首領紅圈<b>你和傭兵各自判斷、各自閃避</b>（設定「首領大招自動閃避」），傷害照雙方實際位置分開算：你躲開但傭兵在圈內，傭兵照樣吃傷害。</li>
+                <li>傭兵 HP／MP 顯示在底部紅色生命球右側，下面是已配置的符石圖示、召喚物剩餘時間、增益與護盾值。</li>
                 <li><b>陣亡＝身上裝備和 4 格符石永久消失</b>（你的背包、倉庫不受影響）。可以到團長處復活（每級 <span id="rc"></span> 金幣，保留等級），或重接試煉換一位新的。</li>
                 <li>離線收益、團隊副本、世界首領時傭兵不參戰。</li>
             </ul></div>
@@ -63,7 +68,15 @@
     <div id="rank-list"></div>
 
     <h2 id="runes">傭兵符石（<span id="rn"></span> 種）</h2>
-    <p>符石<b>不能購買</b>，取得方式遊戲尚未開放；已經有的可以自由鑲上、拆回背包。召喚物最多 2 隻；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
+    <p>符石<b>不能購買</b>，可堆疊，可以自由鑲上、拆回背包；背包的「傭兵符石」收納頁不佔負重。召喚物最多 2 隻；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
+    <div class="box"><h3 style="margin-top:0">怎麼拿符石</h3>
+        <ul>
+            <li><b>基本符石</b>（每系前 4 種，共 <span id="rb"></span> 種）：<a href="rift.html">黃色稀有異界地圖</a>的一般怪 <b id="rbp"></b> 掉一顆，從基本池平均抽。</li>
+            <li><b>特殊符石</b>（其餘 <span id="rs"></span> 種）：黃色稀有異界地圖的<b>首領 <span class="rsp"></span></b>；<a href="dragons.html">團隊副本</a>勝利<b>每位參加者各 <span class="rsp"></span></b>。</li>
+            <li>機率固定，不吃地圖詞綴或副本獎勵倍率。白／藍地圖、財寶圖、一般狩獵地、永夜之塔、龍穴、世界首領、離線收益都<b>不掉</b>符石。</li>
+            <li>想刷特殊符石：用<a href="affix.html">通貨</a>把地圖點成黃色稀有再開，首領一定要打（排程別勾「怪物清空後不打首領」）。</li>
+        </ul></div>
+    <div class="box warn">毒系／冰系怪物的魔法打中會上狀態：<b>巨大蜘蛛、毒霧獵蛛 → 中毒 6 秒</b>（每秒受該次傷害 12%，最低留 1 HP，不會毒死）；<b>鬼魂、冰之魔女、冰之巨人王 → 緩速 4 秒</b>（攻擊與施法間隔 ×1.2，走路不變）。傭兵鑲「淨化之光」符石可替你解除、鑲「淨身」可解自己身上的；回村也會清掉。</div>
     <div class="tabs" id="tabs"></div>
     <div id="rune-list"></div>
 </main>
@@ -74,6 +87,8 @@ const M = W.merc;
 $('#qk').textContent = fmt(W.consts.MERC_QUEST_KILLS); $('#rc').textContent = fmt(W.consts.MERC_REVIVE_COST);
 $('#slots').textContent = M.slots.map(s => W.slots[s] || s).join('、');
 $('#rn').textContent = Object.keys(M.runes).length;
+$('#rb').textContent = M.drops.basic.length; $('#rs').textContent = M.drops.special.length;
+$('#rbp').textContent = pct(M.drops.normalP); document.querySelectorAll('.rsp').forEach(e => e.textContent = pct(M.drops.bossP));
 // 同遊戲 mercStats（data/mercenary.js）不含裝備／增益的部分
 const LV_MAX = W.consts.MAX_LEVEL;
 $('#lv').max = LV_MAX;
@@ -81,7 +96,7 @@ function drawCls(lv) {
     $('#lvt').textContent = 'Lv.' + lv;
     $('#cls').innerHTML = Object.entries(M.classes).map(([id, c]) => `<div class="card merc"><img src="${esc(img(M.art[id]))}" alt="" loading="lazy"><div>
     <h3>${esc(c.person)}・${esc(c.name)}</h3><span class="tag">${esc(c.sex)}・${esc(c.age)}</span>
-    <div class="stats"><span>HP <b>${fmt(c.hp + (lv - 1) * 18)}</b></span><span>MP <b>${fmt(c.mp + (lv - 1) * 8)}</b></span><span>物攻 <b>${c.atk + lv * 2}</b></span><span>魔攻 <b>${c.magic + lv * 2}</b></span><span>防禦 <b>${c.def + lv}</b></span><span>魔防 <b>${10 + lv}</b></span><span>每秒回魔 <b>${c.regen}</b></span></div></div></div>`).join('');
+    <div class="stats"><span>HP <b>${fmt(c.hp + (lv - 1) * 18)}</b></span><span>MP <b>${fmt(c.mp + (lv - 1) * 8)}</b></span><span>物攻 <b>${c.atk + Math.floor((lv - 1) / 5)}</b></span><span>魔攻 <b>${c.magic + Math.floor((lv - 1) / 4)}</b></span><span>防禦 <b>${c.def + Math.floor((lv - 1) / 10)}</b></span><span>魔防 <b>${10 + Math.floor((lv - 1) / 5)}</b></span><span>每秒回魔 <b>${c.regen}</b></span></div></div></div>`).join('');
 }
 $('#lvf').addEventListener('submit', e => {
     e.preventDefault();

@@ -154,7 +154,10 @@ function sourceText(s, id) {
             (d.tier >= 8 ? `；T8 以上掉圖有 ${pct(W.consts.TREASURE_MAP_DROP_P)} 是<a href="rift.html#treasure">未鑑定傳奇財寶地圖</a>` : '');
         case 'mapboss': return `🌀 異界首領 ${pct(W.consts.RES_MAP_BOSS_P)} 掉一件共鳴裝備（${W.resTiers[d.res.tier].name}需 T${[0, 1, 6, 11, 15][d.res.tier]} 以上地圖）`;
         case 'soul': return `🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×5、${fmt(W.consts.BOSS_ENCHANT_SOUL_COST)} 金幣）`;
-        case 'mercRune': return '🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>；不能購買，取得方式遊戲尚未開放';
+        case 'mercRune': { const dr = W.merc.drops, basic = dr && dr.basic.includes(id);
+            return `🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>，不能購買。` + (!dr ? '' : basic
+                ? `<b>基本符石</b>：<a href="rift.html">黃色稀有異界地圖</a>的一般怪 <b>${pct(dr.normalP)}</b>`
+                : `<b>特殊符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>`); }
         case 'doll': return W.dolls[d.doll] && W.dolls[d.doll].quality === 'T4' ? `🧸 娃娃商人露米（${W.consts.DOLL_SHOP_PRICE} 鑽，目前限 GM 購買）` : '🧸 目前只有 GM 發放';
         case 'questitem': return '📜 接了職業任務後，指定地圖的怪物掉落';
         case 'dismantle': return `🧸 娃娃商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）`;

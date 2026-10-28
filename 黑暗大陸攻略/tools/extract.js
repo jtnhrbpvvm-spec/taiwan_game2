@@ -248,6 +248,7 @@ const data = {
         classes: plain(C('MERC_CLASSES')), slots: plain(C('MERC_SLOTS')), groups: plain(C('MERC_GROUPS')), ranks: plain(C('MERC_RANKS')),
         art: Object.fromEntries(Object.entries(C('MERC_MODELS')).map(([k, m]) => [k, m.art])),
         runes: Object.fromEntries(Object.entries(C('MERC_RUNES')).map(([k, r]) => [k, { ...plain(r), text: C('mercRuneText')(k) }])),
+        drops: plain(C('MERC_RUNE_DROPS')),
     },
     expTable, enchantTable,
 };
