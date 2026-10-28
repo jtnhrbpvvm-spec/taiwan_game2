@@ -864,7 +864,8 @@ d2edRender();
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
 { ver: 'V28', date: '2026-10-28', game: '遊戲 20261028.1', items: [
-'手機開技能頁時，技能選單的圖示縮小一半，避免四排還是擋到技能樹'] },
+'開著技能樹時，技能選單改回原本的兩排並縮小到 50%，避免擋到技能樹',
+'技能選單旁新增 ＋／－ 按鈕可調整圖示大小（最大 200%，最小可完全關閉）；每次打開技能樹（按 T 或點按鈕）都會重設為 50%'] },
 { ver: 'V27', date: '2026-10-28', game: '遊戲 20261028.1', items: [
 '新增「背景靜音」（選項 → 書籤修改，預設開啟）：遊戲換到其他分頁、被其他視窗完全蓋住或縮小到工具列時立刻靜音，遊戲照常執行，回來就恢復聲音',
 '注意：背景靜音要遊戲視窗被「完全」蓋住才會生效；只蓋住一部分，或只是點到別的視窗、遊戲還看得到時，瀏覽器不會把遊戲當成在背景，所以不會靜音'] },
@@ -3612,56 +3613,66 @@ watch();
 new MutationObserver(watch).observe(document.body, { childList: true });
 }
 d2fitInstall();
-// ====== 技能選單改成四排 ======
-// 點技能按鈕跳出的選單（#skill-popup）原本是「被動一排、主動一排」，各 8 格排很寬，手機橫放開著技能樹時會蓋住技能樹。
-// 改成主動兩排在上、被動兩排在下（每排格數＝一半，無條件進位），選單只剩一半寬，左邊的空間就放得下。
-// 遊戲 renderPopup 的子元素順序固定是 [提示?, 被動排, 主動排]，所以最後一個 .slot-row 是主動。
+// ====== 技能選單大小 ======
+// 點技能按鈕跳出的選單（#skill-popup）是「被動一排、主動一排」，各 8 格排很寬，開著技能樹時會蓋住技能樹。
+// 技能樹開著時用 transform 縮放選單（不影響遊戲算的位置；往選單靠螢幕邊的那個下角縮），旁邊放 ＋／－ 按鈕讓玩家自己調：
+// 0（完全關閉）～200%，每次打開技能樹（按 T 或點按鈕）都重設為 50%。技能樹關著時選單維持原尺寸。
 function d2skillPopupInstall() {
-const style = document.createElement('style');
-const P = '#skill-popup';
-let cols = `${P} > .slot-row { grid-template-columns: repeat(3, auto) !important; }`;
-for (const n of [4, 5, 6, 7]) cols += `\n${P} > .slot-row:has(> :nth-child(${n * 2 - 1})) { grid-template-columns: repeat(${n}, auto) !important; }`;
-style.textContent = `${P} > .slot-row { display: grid !important; gap: 1px; }
-${P} > .tree-ask { order: 0; }
-${P} > .slot-row:last-child { order: 1; }
-${P} > .slot-row:nth-last-child(2) { order: 2; margin-top: 3px; }
-${P} > .slot-row { justify-content: end; }
-html:not(.portrait) body:has(#skill-tree:not(.hidden)) ${P} > .slot-row { justify-content: start; }
-${cols}
-${P}.d2zh-2row > .slot-row { grid-template-columns: none !important; grid-auto-flow: column; }`;
-document.head.append(style);
-// 四排比較高：直向手機技能樹在上、選單在下，螢幕比例不同時選單頂端會壓到技能樹底部。
-// 技能樹開著時量一次，必要時用 transform 縮小（不影響遊戲算的位置；直向往右下角縮，橫向往左下角縮）。
-// 直向矮螢幕（例如 375×667）技能樹下面只剩一點高度，四排縮到一半還是會壓到，這時改回主動一排、被動一排（d2zh-2row）。
-// 手機（直向或橫向手機版面）開著技能樹時一律縮成一半（base），有些手機四排原尺寸還是會擋到；放不下時再往下縮，最小到 base 的一半。
-let scaled = 1;
-setInterval(() => {
+const STEPS = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], RESET = 2;
+let level = RESET, treeWasOpen = false, applied = '';
+const ctl = document.createElement('div');
+ctl.id = 'd2zh-skillzoom';
+ctl.style.cssText = 'position:fixed;z-index:99990;display:none;gap:3px;align-items:center;pointer-events:auto;font:12px/1 ' + D2ZH_FONT + ';color:#e8d9b0';
+const btn = (txt, d) => {
+const b = document.createElement('button');
+b.textContent = txt;
+b.style.cssText = 'width:26px;height:26px;padding:0;border:1px solid #8a7444;border-radius:4px;background:rgba(20,16,10,.85);color:#f0dca8;font:bold 16px/1 sans-serif;cursor:pointer';
+b.addEventListener('click', () => { level = Math.max(0, Math.min(STEPS.length - 1, level + d)); update(); });
+return b;
+};
+const label = document.createElement('span');
+label.style.cssText = 'min-width:30px;text-align:center;text-shadow:0 0 3px #000,0 0 3px #000';
+const plus = btn('＋', 1), minus = btn('－', -1);
+ctl.append(plus, label, minus);
+// 別讓點按鈕的事件傳到遊戲（遊戲點選單外面會把選單關掉）
+for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click']) ctl.addEventListener(ev, e => e.stopPropagation());
+document.body.append(ctl);
+function update() {
 const popup = document.getElementById('skill-popup');
-const tree = document.querySelector('#skill-tree:not(.hidden) .tree');
-const html = document.documentElement.classList;
-const portrait = html.contains('portrait');
-const base = portrait || html.contains('sideways-phone') ? 0.5 : 1;
-let s = 1, two = false;
-if (popup && !popup.classList.contains('hidden') && tree && popup.offsetParent) {
-const r = popup.getBoundingClientRect(), t = tree.getBoundingClientRect();
-const w = r.width / scaled, h = r.height / scaled;
-const left = r.left, bottom = r.bottom, right = scaled === 1 ? r.right : r.left + w;
-two = popup.classList.contains('d2zh-2row');
-if (portrait) {
-const fit = (W, H) => Math.min(1, (bottom - t.bottom - 4) / H, (r.right - 4) / W);
-// 優先四排；四排在 base 大小放不下才換兩排
-const four = two ? fit(w / 2, h * 2) : fit(w, h), pair = two ? fit(w, h) : fit(w * 2, h / 2);
-two = four < base * 0.75 && pair > four;
-s = two ? pair : four;
-} else if (right > t.left - 4) s = (t.left - 4 - left) / w;
-s = Math.max(base * 0.5, Math.min(base, s, (bottom - 4) / h));
-popup.style.transformOrigin = portrait ? '100% 100%' : '0 100%';
+const treeOpen = !!document.querySelector('#skill-tree:not(.hidden) .tree');
+if (treeOpen && !treeWasOpen) level = RESET;
+treeWasOpen = treeOpen;
+const show = !!(popup && treeOpen && !popup.classList.contains('hidden') && popup.offsetParent);
+const s = treeOpen ? STEPS[level] : 1;
+if (popup) {
+const want = s === 1 ? '' : `scale(${s})`;
+if (applied !== want || popup.style.transform !== want) {
+// 縮放原點：選單（原尺寸）在畫面右半邊就往右下角縮，否則往左下角縮；要先拿掉縮放再量，不然放大後會誤判
+popup.style.transform = '';
+const r = popup.getBoundingClientRect();
+popup.style.transformOrigin = (r.left + r.right) / 2 > innerWidth / 2 ? '100% 100%' : '0 100%';
+popup.style.transform = want;
+popup.style.visibility = s === 0 ? 'hidden' : '';
+applied = want;
 }
-if (popup && popup.classList.contains('d2zh-2row') !== (two && portrait)) popup.classList.toggle('d2zh-2row', two && portrait);
-if (Math.abs(s - scaled) < 0.01) return;
-scaled = s;
-if (popup) popup.style.transform = s === 1 ? '' : `scale(${s})`;
-}, 200);
+}
+ctl.style.display = show ? 'flex' : 'none';
+if (!show) return;
+label.textContent = s === 0 ? '關' : Math.round(s * 100) + '%';
+plus.disabled = level === STEPS.length - 1; minus.disabled = level === 0;
+plus.style.opacity = plus.disabled ? .4 : 1; minus.style.opacity = minus.disabled ? .4 : 1;
+// 按鈕放在縮放原點旁邊，選單變大變小時按鈕不會跑掉：直向放在原點下方橫排，其他放在原點外側直排
+const r = popup.getBoundingClientRect(), right = popup.style.transformOrigin.startsWith('100%');
+const x = right ? r.right : r.left, portrait = document.documentElement.classList.contains('portrait');
+ctl.style.flexDirection = portrait ? 'row' : 'column';
+const cw = ctl.offsetWidth, ch = ctl.offsetHeight;
+let left = portrait ? (right ? x - cw : x) : (right ? x + 4 : x - cw - 4);
+let top = portrait ? r.bottom + 4 : r.bottom - ch;
+left = Math.max(2, Math.min(innerWidth - cw - 2, left));
+top = Math.max(2, Math.min(innerHeight - ch - 2, top));
+ctl.style.left = left + 'px'; ctl.style.top = top + 'px';
+}
+setInterval(update, 200);
 }
 d2skillPopupInstall();
 // ====== 小地圖：任務道具醒目標記 ======
