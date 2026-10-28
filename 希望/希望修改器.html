@@ -330,7 +330,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器v55</span>
+  <span class="bar-title">🧭 希望存檔修改器v56</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -831,7 +831,9 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
       <div class="panel-desc">
         怪物圖鑑（存檔最外層 <code>collection.monsterKills</code>，整份存檔共用）：每隻怪的「達成數字」就是累計擊殺數，
         殺 1 隻銅牌、到銀牌門檻掉落 +1%、到金牌門檻掉落 +5%。時裝設計師的抽獎次數也是看擊殺數算的，改了會跟著變。
+        裝備圖鑑（<code>collection.gear</code>，整份存檔共用）：拿過的裝備 id 清單，XG 裝備收越多、職業線加成越高。
       </div>
+      <div id="gearDexBox" style="margin-bottom:14px;"></div>
       <div id="dexUnlockBox"></div>
     </div>
 
@@ -885,25 +887,25 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
   </div>
 </div>
 
-<script src="data/items.js"></script>
-<script src="data/equipSlots.js"></script>
-<script src="data/jobs.js"></script>
-<script src="data/jobs2.js"></script>
-<script src="data/maps.js"></script>
-<script src="data/skills.js"></script>
-<script src="data/pets.js"></script>
-<script src="data/battlePets.js"></script>
-<script src="data/individuality.js"></script>
-<script src="data/quests.js"></script>
-<script src="data/missions.js"></script>
-<script src="data/daily.js"></script>
-<script src="data/gems.js"></script>
-<script src="data/stones.js"></script>
-<script src="data/aura.js"></script>
-<script src="data/enchant.js"></script>
-<script src="data/questLines.js"></script>
-<script src="data/monsterDex.js"></script>
-<script src="data/boxes.js"></script>
-<script src="data/app.js?v=55"></script>
+<script src="data/items.js?v=56"></script>
+<script src="data/equipSlots.js?v=56"></script>
+<script src="data/jobs.js?v=56"></script>
+<script src="data/jobs2.js?v=56"></script>
+<script src="data/maps.js?v=56"></script>
+<script src="data/skills.js?v=56"></script>
+<script src="data/pets.js?v=56"></script>
+<script src="data/battlePets.js?v=56"></script>
+<script src="data/individuality.js?v=56"></script>
+<script src="data/quests.js?v=56"></script>
+<script src="data/missions.js?v=56"></script>
+<script src="data/daily.js?v=56"></script>
+<script src="data/gems.js?v=56"></script>
+<script src="data/stones.js?v=56"></script>
+<script src="data/aura.js?v=56"></script>
+<script src="data/enchant.js?v=56"></script>
+<script src="data/questLines.js?v=56"></script>
+<script src="data/monsterDex.js?v=56"></script>
+<script src="data/boxes.js?v=56"></script>
+<script src="data/app.js?v=56"></script>
 </body>
 </html>

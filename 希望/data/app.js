@@ -665,6 +665,7 @@
     renderPotions(c);
     renderTagLists(c);
     renderMonsterDex();
+    renderGearDex();
     renderDexUnlock();
     renderProphecy(c);
     renderSpot(c);
@@ -2384,6 +2385,7 @@
       ids.forEach(function (id) { if ((kills[id] || 0) < dex[id][1]) kills[id] = dex[id][1]; });
       toast("怪物圖鑑已全部金牌" + (wardrobeOn ? "（時裝設計師的抽獎次數也跟著變多，不要的話按旁邊的歸零）" : ""), "ok");
       renderMonsterDex();
+      renderDexUnlock();
     });
     row.appendChild(goldBtn);
     if (wardrobeOn) {
@@ -2401,6 +2403,37 @@
   // ---------- 圖鑑解鎖（怪物圖鑑逐隻改擊殺數）----------
   // 欄位同上面的 renderMonsterDex：collection.monsterKills = {怪物id: 擊殺數}，0 就刪掉那個 key（遊戲讀不到等於 0）。
   var dexUnlockFilter = "";
+  // 裝備圖鑑：存檔最外層 collection.gear = [裝備 itemId]，遊戲讀檔只留 equipment.json 有的 id（bundle collectedGear），
+  //   背包出現過的裝備會自動加進來（collectGear()）。加成只看 XG 裝備（各職業線收集比例、每 100 件一段增傷／副本增傷／減傷），
+  //   所以全滿就是把所有裝備 id 都放進去。
+  function renderGearDex() {
+    var box = document.getElementById("gearDexBox");
+    if (!box || !saveData) return;
+    box.innerHTML = "";
+    var col = saveData.collection || (saveData.collection = { pets: [], gear: [] });
+    if (!Array.isArray(col.gear)) col.gear = [];
+    var all = Object.keys(window.ITEMS || {}).filter(function (id) { return ITEMS[id].slot; }).map(Number);
+    var have = new Set(col.gear);
+    var n = all.filter(function (id) { return have.has(id); }).length;
+    box.appendChild(el("div", { class: "note", style: "margin-bottom:8px;", text: "裝備圖鑑：已收集 " + n + " / " + all.length + " 件。" }));
+    var row = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;" });
+    var fullBtn = el("button", { class: "btn btn-accent btn-sm", text: "🛡️ 裝備圖鑑一鍵全滿" });
+    fullBtn.addEventListener("click", function () {
+      all.forEach(function (id) { if (!have.has(id)) { col.gear.push(id); have.add(id); } });
+      toast("裝備圖鑑已全部收集", "ok");
+      renderGearDex();
+    });
+    var zeroBtn = el("button", { class: "btn btn-sm", text: "🧹 裝備圖鑑清空" });
+    zeroBtn.addEventListener("click", function () {
+      if (!confirm("確定要清空裝備圖鑑嗎？（背包裡有的裝備回遊戲後會自動再收進來）")) return;
+      col.gear = [];
+      toast("裝備圖鑑已清空", "ok");
+      renderGearDex();
+    });
+    row.appendChild(fullBtn);
+    row.appendChild(zeroBtn);
+    box.appendChild(row);
+  }
   function dexMedal(k, th) {
     if (k >= th[1]) return { text: "金牌", color: "#d4a017" };
     if (k >= th[0]) return { text: "銀牌", color: "#9aa4ad" };
