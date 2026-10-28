@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V28';
+const D2ZH_VERSION = 'V29';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -863,6 +863,9 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V29', date: '2026-10-29', game: '遊戲 20261028.1', items: [
+'技能選單旁的 ＋／－ 前面新增「鎖定比例」：按下後記住目前大小，之後打開技能樹（包括重新開遊戲）都用這個大小；鎖定時按鈕金框發光、顯示「已鎖定」，再按一次解開',
+'＋／－ 按鈕改成和技能格相同的樣式'] },
 { ver: 'V28', date: '2026-10-28', game: '遊戲 20261028.1', items: [
 '開著技能樹時，技能選單改回原本的兩排並縮小到 50%，避免擋到技能樹',
 '技能選單旁新增 ＋／－ 按鈕可調整圖示大小（最大 200%，最小可完全關閉）；每次打開技能樹（按 T 或點按鈕）都會重設為 50%'] },
@@ -3617,30 +3620,48 @@ d2fitInstall();
 // 點技能按鈕跳出的選單（#skill-popup）是「被動一排、主動一排」，各 8 格排很寬，開著技能樹時會蓋住技能樹。
 // 技能樹開著時用 transform 縮放選單（不影響遊戲算的位置；往選單靠螢幕邊的那個下角縮），旁邊放 ＋／－ 按鈕讓玩家自己調：
 // 0（完全關閉）～200%，每次打開技能樹（按 T 或點按鈕）都重設為 50%。技能樹關著時選單維持原尺寸。
+// 最前面的「鎖定比例」按下後記住當下大小（localStorage d2zh:skillZoomLock＝STEPS 的索引），之後打開技能樹都用這個大小，鎖定中 ＋／－ 不能按。
 function d2skillPopupInstall() {
-const STEPS = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], RESET = 2;
-let level = RESET, treeWasOpen = false, applied = '';
+const STEPS = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], RESET = 2, LOCK_KEY = 'd2zh:skillZoomLock';
+let locked = null;
+try { const v = localStorage.getItem(LOCK_KEY); if (v !== null && STEPS[+v] !== undefined) locked = +v; } catch (_) {}
+let level = locked ?? RESET, treeWasOpen = false, applied = '';
 const ctl = document.createElement('div');
 ctl.id = 'd2zh-skillzoom';
-ctl.style.cssText = 'position:fixed;z-index:99990;display:none;gap:3px;align-items:center;pointer-events:auto;font:12px/1 ' + D2ZH_FONT + ';color:#e8d9b0';
+ctl.style.cssText = 'position:fixed;z-index:99990;display:none;gap:3px;pointer-events:auto;font:12px/1 ' + D2ZH_FONT + ';color:#c7b377';
+// 外觀照技能選單的格子（.slot）：半透明黑底、深棕框、內圈暗金邊，文字用暗金色
+const SLOT = 'padding:0;background:rgba(0,0,0,.55);border:1px solid #3a3020;box-shadow:inset 0 0 0 2px rgba(110,96,70,.7);text-shadow:1px 1px 0 #000;cursor:pointer;';
 const btn = (txt, d) => {
 const b = document.createElement('button');
 b.textContent = txt;
-b.style.cssText = 'width:26px;height:26px;padding:0;border:1px solid #8a7444;border-radius:4px;background:rgba(20,16,10,.85);color:#f0dca8;font:bold 16px/1 sans-serif;cursor:pointer';
-b.addEventListener('click', () => { level = Math.max(0, Math.min(STEPS.length - 1, level + d)); update(); });
+b.style.cssText = SLOT + 'width:26px;height:26px;color:#c7b377;font:bold 16px/1 sans-serif';
+b.addEventListener('click', () => { if (locked !== null) return; level = Math.max(0, Math.min(STEPS.length - 1, level + d)); update(); });
 return b;
 };
 const label = document.createElement('span');
-label.style.cssText = 'min-width:30px;text-align:center;text-shadow:0 0 3px #000,0 0 3px #000';
+label.style.cssText = 'min-width:30px;text-align:center;white-space:nowrap;text-shadow:1px 1px 0 #000,0 0 3px #000';
 const plus = btn('＋', 1), minus = btn('－', -1);
-ctl.append(plus, label, minus);
+// 鎖頭圖示：闔上（鎖定）／打開（解開，左腳抬起）
+const padlock = (shut, size) => `<svg viewBox="0 0 16 18" width="${size}" height="${size * 1.125}" style="display:block;flex:none"><path d="${shut ? 'M4 8V5a4 4 0 0 1 8 0v3' : 'M12 8V5a4 4 0 0 0-8 0v0.5'}" fill="none" stroke="currentColor" stroke-width="2"/><rect x="2" y="8" width="12" height="9" rx="1.5" fill="currentColor"/><rect x="7" y="11" width="2" height="3.5" fill="#000" opacity=".6"/></svg>`;
+// 直立長方形的鎖定鈕，高度跟右邊 ＋、－ 那一欄一樣；鎖定時金框發光、鎖頭闔上、字改「已鎖定」
+const lock = document.createElement('button');
+lock.style.cssText = SLOT + 'width:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:bold 11px/1 ' + D2ZH_FONT;
+lock.addEventListener('click', () => {
+locked = locked === null ? level : null;
+try { if (locked === null) localStorage.removeItem(LOCK_KEY); else localStorage.setItem(LOCK_KEY, String(locked)); } catch (_) {}
+update();
+});
+const stack = document.createElement('div');
+stack.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px';
+stack.append(plus, label, minus);
+ctl.append(lock, stack);
 // 別讓點按鈕的事件傳到遊戲（遊戲點選單外面會把選單關掉）
 for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click']) ctl.addEventListener(ev, e => e.stopPropagation());
 document.body.append(ctl);
 function update() {
 const popup = document.getElementById('skill-popup');
 const treeOpen = !!document.querySelector('#skill-tree:not(.hidden) .tree');
-if (treeOpen && !treeWasOpen) level = RESET;
+if (treeOpen && !treeWasOpen) level = locked ?? RESET;
 treeWasOpen = treeOpen;
 const show = !!(popup && treeOpen && !popup.classList.contains('hidden') && popup.offsetParent);
 const s = treeOpen ? STEPS[level] : 1;
@@ -3658,16 +3679,26 @@ applied = want;
 }
 ctl.style.display = show ? 'flex' : 'none';
 if (!show) return;
-label.textContent = s === 0 ? '關' : Math.round(s * 100) + '%';
-plus.disabled = level === STEPS.length - 1; minus.disabled = level === 0;
+const isLocked = locked !== null;
+label.innerHTML = (isLocked ? `<span style="display:inline-block;vertical-align:-1px;margin-right:1px;color:#f0c850">${padlock(true, 8)}</span>` : '') + (s === 0 ? '關' : Math.round(s * 100) + '%');
+if (lock.dataset.on !== String(isLocked)) {
+lock.dataset.on = String(isLocked);
+lock.innerHTML = padlock(isLocked, 13) + `<span style="writing-mode:vertical-rl;letter-spacing:1px">${isLocked ? '已鎖定' : '鎖定比例'}</span>`;
+lock.title = isLocked ? '已鎖定：之後打開技能樹都用這個大小，再按一次解開' : '鎖定目前大小，之後打開技能樹都用這個大小';
+lock.style.color = isLocked ? '#f0c850' : '#8a8070';
+lock.style.background = isLocked ? 'rgba(70,48,8,.8)' : 'rgba(0,0,0,.55)';
+lock.style.borderColor = isLocked ? '#c9a23a' : '#3a3020';
+lock.style.boxShadow = isLocked ? 'inset 0 0 0 2px rgba(201,162,58,.8),0 0 6px rgba(255,200,80,.65)' : 'inset 0 0 0 2px rgba(110,96,70,.7)';
+}
+plus.disabled = locked !== null || level === STEPS.length - 1; minus.disabled = locked !== null || level === 0;
 plus.style.opacity = plus.disabled ? .4 : 1; minus.style.opacity = minus.disabled ? .4 : 1;
-// 按鈕放在縮放原點旁邊，選單變大變小時按鈕不會跑掉：直向放在原點下方橫排，其他放在原點外側直排
+// 按鈕放在縮放原點外側，選單變大變小時按鈕不會跑掉；外側放不下（直向窄螢幕）就放在原點下方
 const r = popup.getBoundingClientRect(), right = popup.style.transformOrigin.startsWith('100%');
-const x = right ? r.right : r.left, portrait = document.documentElement.classList.contains('portrait');
-ctl.style.flexDirection = portrait ? 'row' : 'column';
+const x = right ? r.right : r.left;
 const cw = ctl.offsetWidth, ch = ctl.offsetHeight;
-let left = portrait ? (right ? x - cw : x) : (right ? x + 4 : x - cw - 4);
-let top = portrait ? r.bottom + 4 : r.bottom - ch;
+const side = right ? x + 4 + cw <= innerWidth - 2 : x - cw - 4 >= 2;
+let left = side ? (right ? x + 4 : x - cw - 4) : (right ? x - cw : x);
+let top = side ? r.bottom - ch : r.bottom + 4;
 left = Math.max(2, Math.min(innerWidth - cw - 2, left));
 top = Math.max(2, Math.min(innerHeight - ch - 2, top));
 ctl.style.left = left + 'px'; ctl.style.top = top + 'px';
