@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V21';
+const D2ZH_VERSION = 'V22';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -764,6 +764,26 @@ const inRun = !document.body.classList.contains('no-run');
 const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edPerfSection(), d2edShardSection(), d2edLockAgainSection(), d2edUpdateSection()] : [d2edLockSection(), d2edPerfSection(), d2edShardSection(), d2edUpdateSection()];
 body.replaceChildren(...sections.filter(Boolean));
 }
+// ====== 問題回報（Google 表單，不需登入、不收集信箱） ======
+// 用「預先填入」連結帶入書籤版本和遊戲版本（entry 編號是這份表單各題的代號）
+const D2ZH_REPORT_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeHqwwgP7b3KU3nbM_oUorpG0V4Ue0NFvsDxs-SkVKkwZiZxA/viewform';
+const D2ZH_REPORT_ENTRY = { bookmark: 'entry.2138449509', game: 'entry.1834001059' };
+// 遊戲版本：正在跑的版本寫在 moved-*.js（`Build 20261027.4 ·bf1a451d`）；讀不到就用網站上的 build.json（最新版）
+let d2zhGameBuild = '';
+(async () => {
+try {
+const src = performance.getEntriesByType('resource').map(e => e.name).find(n => /\/moved-[\w-]+\.js(\?|$)/.test(n));
+if (src) d2zhGameBuild = (await (await fetch(src)).text()).match(/`Build ([^`]+)`/)?.[1] || '';
+if (!d2zhGameBuild) d2zhGameBuild = String((await (await fetch(new URL('../build.json', document.baseURI), { cache: 'no-store' })).json())?.build || '').trim();
+} catch (_) { /* 讀不到就讓玩家自己填 */ }
+})();
+function d2zhReportOpen() {
+const url = new URL(D2ZH_REPORT_FORM);
+url.searchParams.set('usp', 'pp_url');
+url.searchParams.set(D2ZH_REPORT_ENTRY.bookmark, D2ZH_VERSION);
+if (d2zhGameBuild) url.searchParams.set(D2ZH_REPORT_ENTRY.game, d2zhGameBuild);
+window.open(url.href, '_blank', 'noopener');
+}
 function d2edOpen() {
 if (D2ED.panel) return;
 const close = () => { D2ED.panel.remove(); D2ED.panel = null; };
@@ -771,6 +791,7 @@ D2ED.panel = d2edEl('div', { id: 'd2ed-overlay', onclick: e => { if (e.target.id
 d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '書籤修改' },
 d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '書籤修改'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
 d2edEl('button', { type: 'button', onclick: () => { close(); d2zhNewsOpen(true); } }, '更新說明'),
+d2edEl('button', { type: 'button', title: '開啟問題回報表單（不需登入，會自動帶入版本）', onclick: d2zhReportOpen }, '問題回報'),
 d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label': '關閉' }, '×')),
 d2edEl('div', { class: 'd2ed-body' })));
 D2ED.panel.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); });
@@ -779,8 +800,15 @@ d2edRender();
 }
 // ====== 中文化更新說明 ======
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
-// 新版本加在最前面。
+// 新版本加在最前面。note：作者的話（照原本分行顯示）；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V22', date: '2026-10-28', game: '遊戲 20261027.4', note: [
+'發現許多人有在分享書籤\n歡迎大家任意使用\n不過『嚴禁』收費歐！',
+'也請不要直接複製文字到你的網站中\n畢竟書籤設置有點小複雜\n只有文字實在不好理解\n如果你能提供更好的教學讓玩家快速上手沒關係\n不然我連結中有影片可以觀看',
+'總之～　希望大家好好享受遊戲拉'], items: [
+'新增問題回報表單（書籤修改 → 問題回報）：有時候遊戲更新，翻譯可能沒有那麼即時，不過我發現後會用最快速度幫忙大家的！',
+'小地圖碎片提示：「碎片感應」開啟時，小地圖上碎片的大概位置會有光點閃爍，越靠近閃得越快',
+'翻譯優化'], report: true },
 { ver: 'V21', date: '2026-10-28', game: '遊戲 20261027.4', items: [
 '碎片提示：「碎片感應」開啟時，碎片出現的那一刻畫面上會淡淡浮出一句話，邊緣光暈也會先亮一下；面板會顯示這一幕有沒有碎片',
 '翻譯優化'] },
@@ -857,7 +885,9 @@ d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label'
 d2edEl('div', { class: 'd2ed-body' },
 ...list.map(n => d2edEl('section', { class: 'd2ed-sec' },
 d2edEl('h3', {}, `${n.ver}　${n.date}`), d2edEl('p', { class: 'd2ed-note' }, `對應${n.game}`),
-d2edEl('ul', { style: 'margin: 4px 0 8px; padding-left: 20px;' }, ...n.items.map(t => d2edEl('li', {}, t))))),
+...(n.note || []).map(t => d2edEl('p', { style: 'margin: 6px 0; white-space: pre-line; line-height: 1.6;' }, t)),
+d2edEl('ul', { style: 'margin: 4px 0 8px; padding-left: 20px;' }, ...n.items.map(t => d2edEl('li', {}, t))),
+n.report ? d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: d2zhReportOpen }, '問題回報')) : null)),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: close }, '知道了')))));
 box.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); });
 document.body.append(box);
@@ -2040,7 +2070,7 @@ text: {
 'Tal Rasha\'s Horadric Crest': '塔.拉夏的赫拉迪克紋章', 'Griswold\'s Valor': '格瑞斯華爾德的勇氣', 'Griswold\'s Honor': '格瑞斯華爾德的榮耀', 'Trang-Oul\'s Guise': '塔格奧之外裝', 'Trang-Oul\'s Scales': '塔格奧之鱗', 'Trang-Oul\'s Wing': '塔格奧之翼', 'Trang-Oul\'s Claws': '塔格奧之手', 'Trang-Oul\'s Girth': '塔格奧之束帶', 'M\'avina\'s True Sight': '馬維娜的真實之眼', 'M\'avina\'s Embrace': '馬維娜的擁抱', 'M\'avina\'s Icy Clutch': '馬維娜的冰握', 'M\'avina\'s Tenet': '馬維娜的教義',
 'M\'avina\'s Caster': '馬維娜的施展', 'Telling of Beads': '述說之珠', 'Laying of Hands': '按手禮', 'Dark Adherent': '黑暗信徒', 'Credendum': '信條', 'Dangoon\'s Teaching': '丹弓的教導', 'Taebaek\'s Glory': '泰比克的光榮', 'Haemosu\'s Adamant': '黑摩蘇的堅決', 'Ondal\'s Almighty': '安戴爾的全靈', 'Guillaume\'s Face': '吉永的臉', 'Wilhelm\'s Pride': '威廉的自尊', 'Magnus\' Skin': '馬格納斯之皮', 'Whitstan\'s Guard': '惠斯坦的武裝', 'Hwanin\'s Splendor': '華寧的光輝',
 'Hwanin\'s Refuge': '華寧的保護', 'Hwanin\'s Blessing': '華寧的祝福', 'Hwanin\'s Justice': '華寧的正義', 'Sazabi\'s Cobalt Redeemer': '沙撒璧的懺悔之鈷', 'Sazabi\'s Ghost Liberator': '沙撒璧的鬼魂釋放者', 'Sazabi\'s Mental Sheath': '沙撒璧的精神之鞘', 'Bul-Kathos\' Sacred Charge': '布爾凱索的神聖代價', 'Bul-Kathos\' Tribal Guardian': '布爾凱索的部族守護', 'Cow King\'s Horns': '牛魔王之角', 'Cow King\'s Hide': '牛魔王之皮', 'Cow King\'s Hooves': '牛魔王之蹄',
-'Trang-Oul\'s Avatar': '塔格奧的化身', 'Naj\'s Light Plate': '娜吉的輕型鎧甲', 'Naj\'s Circlet': '娜吉的頭飾', 'Naj\'s Puzzler': '娜吉解謎杖', 'Sander\'s Paragon': '山德的模範',
+'Trang-Oul\'s Avatar': '塔格奧的化身', 'Naj\'s Light Plate': '娜吉的輕型鎧甲', 'Naj\'s Circlet': '娜吉的頭飾', 'Death\'s Hand': '死亡之手', 'Death\'s Guard': '死亡守衛', 'Death\'s Touch': '死亡之觸', 'Griswold\'s Heart': '格瑞斯華爾德之心', 'Griswold\'s Redemption': '格瑞斯華爾德的救贖','Naj\'s Puzzler': '娜吉解謎杖', 'Sander\'s Paragon': '山德的模範',
 'Sander\'s Riprap': '山德的碎石', 'Sander\'s Taboo': '山德的禁忌', 'Sander\'s Superstition': '山德的迷信', 'Hsarus\' Defense': '哈斯拉柏的防禦', 'Burly': '魁梧', 'Lucky': '好運', 'of Good Luck': '幸運之', 'of Inertia': '慣性之', 'of Sustenance': '維生之', 'of Vita': '活力之', 'Rugged': '凹凸', 'Stalwart': '健壯', 'Stout': '堅固', 'The Necromancer\'s summons strike harder too': '死靈法師的召喚物也會打得更重', '# stat points to place on the character screen': '{0} 屬性點數可在角色畫面分配',
 '# stat points to place on the character screen (C)': '{0} 屬性點數可在角色畫面（C）分配', 'Charms (H)': '護符（H）', '# Skill Modifier Points on skills no longer drafted are free again': '沒抽到的技能上的 {0} 點技能改造點數已釋放', 'To take a tree, tap one of its skills or its tab twice': '要選技能樹，點一下它的技能，或在分頁上點兩下', 'To take a tree, click one of its skills or its tab twice': '要選技能樹，點擊它的技能，或在分頁上點擊兩下', 'Click to take this tree': '點擊選擇這個技能樹',
 'Tap again to take this tree': '再點一下選擇這個技能樹', '# creeper crawls after monsters, each bite poisoning # over #s.': '{0} 株藤蔓爬向怪物，每次咬擊在 {2} 秒內造成 {1} 毒素。', 'Up to # creepers crawl after monsters, each bite poisoning # over #s.': '最多 {0} 株藤蔓爬向怪物，每次咬擊在 {2} 秒內造成 {1} 毒素。', '* * after monsters, each bite poisoning # over #s.': '{0}追著怪物，每次咬擊在 {3} 秒內造成 {2} 毒素。', 'Uniques': '獨特物品',
@@ -3614,6 +3644,57 @@ if (!glow.isConnected && document.body) document.body.append(glow);
 glow.style.opacity = String(show);
 }
 }, 100);
+// 小地圖（Tab）上碎片的大略位置：一團柔光閃爍，越近閃得越快；不在小地圖範圍內就貼在邊緣指方向
+// 小地圖的結構（build 20261027.4，Game-*.js 的 OC）：app.stage 底下的 view = [map, hero, clip]，map = [celLayer, lineLayer, marks, glints]
+// hero 永遠在小地圖中心；map 的位置 = 中心 - 英雄座標 × 縮放，所以縮放 = (hero - map) / 英雄座標
+let mapDot = null, phase = 0, lastTick = performance.now();
+const findAutomap = stage => (stage?.children || []).find(c => {
+const k = c.children;
+return k && k.length >= 3 && k[0].children?.length === 4 && k[1].constructor === k[0].children[2].constructor && k[2].constructor === k[1].constructor;
+});
+setInterval(() => {
+const now = performance.now(), dt = Math.min(0.2, (now - lastTick) / 1000);
+lastTick = now;
+let visible = false;
+try {
+const world = D2ED.world, spot = state.spot;
+if (!d2edShardOn() || !world || !world.player || !state.plan || !spot || document.body.classList.contains('no-run') || world.farm || world.tristram) return;
+const view = findAutomap(world.stage);
+if (!view || !view.visible) return;
+const [map, hero, clip] = view.children;
+const pl = world.player;
+const sx = Math.abs(pl.x) > Math.abs(pl.y) ? (hero.position.x - map.position.x) / pl.x : (hero.position.y - map.position.y) / pl.y;
+if (!(sx > 0) || !isFinite(sx)) return;
+if (!mapDot || mapDot.destroyed) {
+mapDot = new hero.constructor();
+mapDot.eventMode = 'none';
+}
+if (mapDot.parent !== view) view.addChild(mapDot);   // 放在最後，前三個 [map, hero, clip] 的順序不變
+// 小地圖的範圍：角落模式有 clip 遮罩，全畫面模式就是整個畫面（英雄在正中央）
+const b = map.mask ? clip.getBounds() : { x: 0, y: 0, width: hero.position.x * 2, height: hero.position.y * 2 };
+const pad = 7;
+let x = hero.position.x + (spot.x - pl.x) * sx, y = hero.position.y + (spot.y - pl.y) * sx;
+const minX = b.x + pad, maxX = b.x + b.width - pad, minY = b.y + pad, maxY = b.y + b.height - pad;
+if (x < minX || x > maxX || y < minY || y > maxY) {   // 超出範圍：沿著英雄→碎片的方向貼到邊上
+const ox = hero.position.x, oy = hero.position.y, dx = x - ox, dy = y - oy;
+const t = Math.min(dx > 0 ? (maxX - ox) / dx : dx < 0 ? (minX - ox) / dx : Infinity, dy > 0 ? (maxY - oy) / dy : dy < 0 ? (minY - oy) / dy : Infinity);
+x = ox + dx * t; y = oy + dy * t;
+}
+const far = Math.hypot((spot.x - pl.x) / 800, (spot.y - pl.y) / 600);
+const near = Math.max(0, Math.min(1, (5.5 - far) / 4.5));
+phase += dt * (0.6 + 2.6 * near);                      // 遠：0.6 下／秒，近：3.2 下／秒
+const wave = (1 + Math.cos(phase * Math.PI * 2)) / 2;
+const k = map.scale.x || 1;
+mapDot.clear()
+.circle(x, y, 8 * k).fill({ color: 0xffe9b0, alpha: 0.18 * wave })
+.circle(x, y, 4.5 * k).fill({ color: 0xfff2cc, alpha: 0.45 * wave })
+.circle(x, y, 2 * k).fill({ color: 0xffffff, alpha: 0.25 + 0.75 * wave });
+visible = true;
+} catch (e) { /* 遊戲結構改了就不畫，不影響遊戲 */ }
+finally {
+if (mapDot && !mapDot.destroyed) mapDot.visible = visible;
+}
+}, 33);
 }
 d2shardInstall();
 })();
