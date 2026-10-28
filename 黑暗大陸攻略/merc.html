@@ -42,14 +42,19 @@
         <div class="box"><h3 style="margin-top:0">成長、死亡、復活</h3>
             <ul>
                 <li>你擊殺怪物時傭兵另外得經驗，<b>不會分走你的經驗</b>；升級所需 ＝ 100 ＋ 等級² × 30，等級不會超過你。</li>
-                <li>每升一級 HP +18、MP +8、物理／魔法攻擊 +2。</li>
+                <li>每升一級 HP +18、MP +8、物理／魔法攻擊 +2、防禦／魔防 +1（可在下方<a href="#classes">六職業</a>輸入等級查看）。</li>
                 <li>怪物每次攻擊有 25% 改打傭兵（挑釁時 65%）；首領紅圈也會打到傭兵。</li>
                 <li><b>陣亡＝身上裝備和 4 格符石永久消失</b>（你的背包、倉庫不受影響）。可以到團長處復活（每級 <span id="rc"></span> 金幣，保留等級），或重接試煉換一位新的。</li>
                 <li>離線收益、團隊副本、世界首領時傭兵不參戰。</li>
             </ul></div>
     </div>
 
-    <h2 id="classes">六職業傭兵（Lv.1 基礎值）</h2>
+    <h2 id="classes">六職業傭兵（<span id="lvt">Lv.1</span> 基礎值）</h2>
+    <form id="lvf" novalidate style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px">
+        <label>傭兵等級 <input type="number" id="lv" value="1" min="1" style="width:6em"></label>
+        <button type="submit" class="btn">確認</button>
+        <small class="dim">未含裝備加成與符石增益</small>
+    </form>
     <div class="grid" id="cls"></div>
     <p class="dim">契靈師召喚物效果 ×1.2；祈願使治療 ×1.2；荒野行者基礎閃避 8%。</p>
 
@@ -69,9 +74,21 @@ const M = W.merc;
 $('#qk').textContent = fmt(W.consts.MERC_QUEST_KILLS); $('#rc').textContent = fmt(W.consts.MERC_REVIVE_COST);
 $('#slots').textContent = M.slots.map(s => W.slots[s] || s).join('、');
 $('#rn').textContent = Object.keys(M.runes).length;
-$('#cls').innerHTML = Object.entries(M.classes).map(([id, c]) => `<div class="card merc"><img src="${esc(img(M.art[id]))}" alt="" loading="lazy"><div>
+// 同遊戲 mercStats（data/mercenary.js）不含裝備／增益的部分
+const LV_MAX = W.consts.MAX_LEVEL;
+$('#lv').max = LV_MAX;
+function drawCls(lv) {
+    $('#lvt').textContent = 'Lv.' + lv;
+    $('#cls').innerHTML = Object.entries(M.classes).map(([id, c]) => `<div class="card merc"><img src="${esc(img(M.art[id]))}" alt="" loading="lazy"><div>
     <h3>${esc(c.person)}・${esc(c.name)}</h3><span class="tag">${esc(c.sex)}・${esc(c.age)}</span>
-    <div class="stats"><span>HP <b>${c.hp}</b></span><span>MP <b>${c.mp}</b></span><span>物攻 <b>${c.atk}</b></span><span>魔攻 <b>${c.magic}</b></span><span>防禦 <b>${c.def}</b></span><span>每秒回魔 <b>${c.regen}</b></span></div></div></div>`).join('');
+    <div class="stats"><span>HP <b>${fmt(c.hp + (lv - 1) * 18)}</b></span><span>MP <b>${fmt(c.mp + (lv - 1) * 8)}</b></span><span>物攻 <b>${c.atk + lv * 2}</b></span><span>魔攻 <b>${c.magic + lv * 2}</b></span><span>防禦 <b>${c.def + lv}</b></span><span>魔防 <b>${10 + lv}</b></span><span>每秒回魔 <b>${c.regen}</b></span></div></div></div>`).join('');
+}
+$('#lvf').addEventListener('submit', e => {
+    e.preventDefault();
+    const lv = Math.min(LV_MAX, Math.max(1, Math.floor(+$('#lv').value) || 1));
+    $('#lv').value = lv; drawCls(lv);
+});
+drawCls(1);
 const nextMin = i => M.ranks[i + 1] ? M.ranks[i + 1].min - 1 : null;
 renderTable($('#rank-list'), [
     { label: '階級', html: r => `<b class="rank-${r.id}" style="${['sss', 'legend'].includes(r.id) ? '' : 'color:' + r.color}">${esc(r.name)}</b>` },
