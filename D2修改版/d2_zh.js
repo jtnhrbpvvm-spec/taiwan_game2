@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V25';
+const D2ZH_VERSION = 'V26';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -802,6 +802,9 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V26', date: '2026-10-28', game: '遊戲 20261028.1', items: [
+'配合遊戲更新：排行榜的不合規說明（紅框裝備、屬性／技能點數太多、存檔在遊戲外被修改）、阿卡拉重新抽選與重新開始、專家模式刪除警告等 75 句翻譯',
+'碎片感應改成進入地圖 15 秒後開始偵測（原本 30 秒）'] },
 { ver: 'V25', date: '2026-10-28', game: '遊戲 20261027.4', items: [
 '碎片感應改成進入地圖 30 秒後才開始偵測，避免恐懼層開局先閃一下第一幕造成誤判；這 30 秒內出現的碎片也會照實際位置提示'] },
 { ver: 'V24', date: '2026-10-28', game: '遊戲 20261027.4', items: [
@@ -2114,7 +2117,65 @@ text: {
 'Pompeii\'s Wrath': '龐貝之怒', 'The Gavel of Pain': '痛苦之槌',
 'Blade of Ali Baba': '阿里巴巴之刃', 'Blackbog\'s Sharp': '黑沼之鋒', 'Skin of the Flayed One': '剝皮者之皮',
 'Guardian Angel': '守護天使',
-'Crescent Moon': '新月', 'Steel Shade': '鋼影', 'Tyrael\'s Might': '泰瑞爾的力量', 'Rune Master': '符文大師', 'Carrion Wind': '腐肉之風'
+'Crescent Moon': '新月', 'Steel Shade': '鋼影', 'Tyrael\'s Might': '泰瑞爾的力量', 'Rune Master': '符文大師', 'Carrion Wind': '腐肉之風',
+// 20261028.1：英雄不再稱「她」、排行榜的合規檢查、營地提示、傭兵靈氣說明
+'Of every hit, whatever its element: the Werebear\'s Thick Hide': '不論元素，每次攻擊都適用：熊人變化的厚皮',
+'Pick a card to banish it until this run ends or goes on past Baal': '選一張卡放逐，直到這一局結束或打完巴爾繼續前進',
+'Weapon skills and a few other skills can critically strike: a skill\'s hover shows its chance': '武器技能和少數其他技能可以致命攻擊：技能說明會顯示機率',
+'Click the waypoint to start a run, or a hero by the fire to play that hero': '點擊傳送點開始一局，或點擊營火旁的英雄改玩那位英雄',
+'Tap the waypoint to start a run, or a hero by the fire to play that hero': '點一下傳送點開始一局，或點一下營火旁的英雄改玩那位英雄',
+'Your * is not one this version can start, so the class starts at level 1 for now. The saved hero is kept aside, untouched, and comes back once a version can read it.': '這個版本無法開始你的{0}，所以這個職業暫時從等級 1 開始。存檔裡的英雄原封不動另外保存，等有版本能讀取時就會回來。',
+'Your * is not one this version can start, and storage would not keep a copy aside. Send a REPORT, please.': '這個版本無法開始你的{0}，儲存空間也無法另外保存一份。請送出「回報問題」。',
+'A retired * is not one this version can read, so Akara does not list that hero for now. The hero is kept aside, untouched, and comes back once a version can read it.': '這個版本無法讀取已退役的{0}，所以阿卡拉暫時不會列出這位英雄。英雄原封不動另外保存，等有版本能讀取時就會回來。',
+'A retired * is not one this version can read, and storage would not keep a copy aside. Send a REPORT, please.': '這個版本無法讀取已退役的{0}，儲存空間也無法另外保存一份。請送出「回報問題」。',
+'Lost: what you gained since Baal last fell. Your * is level * again.': '失去：上次擊敗巴爾之後得到的一切。你的{0}回到等級 {1}。',
+'Keeps the golden glow': '保留金色光芒', 'Level * · * · swap this hero in': '等級 {0} · {1} · 換這位英雄上場',
+'Nightmare, Hell and Terror close until your hero beats Baal on each again.': '惡夢、地獄和恐懼層會關閉，直到你的英雄在各難度再次擊敗巴爾。',
+'Nightmare and Hell close until your hero beats Baal on each again.': '惡夢和地獄會關閉，直到你的英雄在各難度再次擊敗巴爾。',
+'Nightmare closes until your hero beats Normal\'s Baal again.': '惡夢會關閉，直到你的英雄再次擊敗普通難度的巴爾。',
+'A run sends your hero\'s class, level, build, gear and stats, and your name': '每一局會傳送英雄的職業、等級、配點、裝備、屬性和你的名字',
+'More stat points than D2 gives at the hero\'s level': '屬性點數比暗黑二在這個等級給的還多',
+'Gear this hero can\'t wear': '這位英雄不能穿的裝備', 'Skills this hero can\'t have': '這位英雄不能有的技能',
+'This hero\'s skill tree': '這位英雄的技能樹', 'This hero\'s skill tree (T)': '這位英雄的技能樹 (T)',
+'This hero\'s mercenary': '這位英雄的傭兵', 'This hero\'s mercenary (O)': '這位英雄的傭兵 (O)',
+'Your mercenary\'s * is not legit': '傭兵的{0}不合規', 'Your * is not legit': '你穿的{0}不合規',
+'Take off the red-bordered item': '脫下紅框的物品', '* stat points, where D2 gives * at level *': '屬性點數 {0}，暗黑二在等級 {2} 最多給 {1}',
+'A re-draft at Akara makes this hero legit': '在阿卡拉重新抽選，這位英雄就會合規', 'A free re-draft at Akara makes this hero legit': '在阿卡拉免費重新抽選，這位英雄就會合規',
+'More skill and passive levels than play gives': '技能和被動技能等級比正常遊玩能得到的還多',
+'Swap the earlier hero back in, then re-draft at Akara': '把之前的英雄換回來，再到阿卡拉重新抽選',
+'Re-draft your * at Akara, or take off the red-bordered gear': '到阿卡拉重新抽選你的{0}，或脫下紅框的裝備',
+'This save was changed outside the game': '這個存檔在遊戲外被修改過',
+'Your level-* * starts over at level 1. A copy is kept at Akara.': '你等級 {0} 的{1}從等級 1 重新開始。原本的複本由阿卡拉保管。',
+'Your hero goes back to level *. Click again': '你的英雄會回到等級 {0}。再點擊一次', 'Your hero goes back to level *. Tap again': '你的英雄會回到等級 {0}。再點一下',
+'This hero\'s save was imported': '這位英雄的存檔是匯入的',
+'Adds #-# fire damage to the hero\'s attacks, not to spells': '英雄的攻擊（不含法術）增加 {0}-{1} 火焰傷害', 'Adds fire damage to the hero\'s attacks, not to spells': '英雄的攻擊（不含法術）增加火焰傷害',
+'Heals the hero # life a second while near him': '英雄在他附近時，每秒回復 {0} 生命',
+'Adds Defense to the hero while near him, so physical hits deal less damage': '英雄在他附近時增加防禦，讓物理攻擊造成的傷害降低',
+'Gives the hero +#% chance of a critical strike (double damage) while near him': '英雄在他附近時，+{0}% 致命攻擊機率（雙倍傷害）',
+'Monsters that strike the hero in melee while near him take back #% of the blow': '英雄在他附近時，近戰攻擊英雄的怪物會受到 {0}% 的反傷',
+'Adds +#% physical damage to the hero while near him': '英雄在他附近時，+{0}% 物理傷害',
+'The * in your Charms window is not legit': '護符欄裡的{0}不合規', 'Take the red-bordered charm out of the Charms window': '把紅框的護符從護符欄拿出來',
+'Sent without its climb record': '傳送時沒有附上爬層紀錄', 'Climb record changed outside the game': '爬層紀錄在遊戲外被修改過',
+'Cleared faster than the tiers can be played': '通關速度比實際能打完的還快', 'Wears an item the save couldn\'t have had yet': '穿著存檔當時還不可能有的物品',
+'Played from an older copy of the save': '用較舊的存檔複本遊玩', 'Not ranked on this tier': '這一層不排名', 'This hero\'s runs don\'t rank': '這位英雄的紀錄不排名',
+'Akara can start this hero over at level 1': '阿卡拉可以讓這位英雄從等級 1 重新開始',
+'Every living Hardcore hero dies, with everything worn and carried, and every item, gold piece, Charsi\'s rank, Terror tier and best time is deleted. Your fallen are remembered, and your Softcore save stays as it is.': '所有活著的專家模式英雄都會死亡，連同身上穿戴和攜帶的一切；所有物品、金幣、恰西的等級、恐懼層和最佳紀錄都會刪除。陣亡的英雄會被紀念，一般模式的存檔維持原狀。',
+'with everything worn and carried.': '連同身上穿戴和攜帶的一切。',
+'This hero can never rank again, but a new Hardcore hero can': '這位英雄再也不能排名，但新的專家模式英雄可以',
+'This hero was played from an older copy of the save': '這位英雄是用較舊的存檔複本遊玩的', 'A run started without reaching the leaderboard': '有一局開始時沒有連上排行榜',
+'This hero\'s save was changed outside the game': '這位英雄的存檔在遊戲外被修改過', 'Played after this hero died': '在這位英雄死亡後還繼續遊玩',
+'A run never reached the leaderboard': '有一局沒有傳到排行榜',
+'A run started offline or with Send my runs off, so the leaderboard missed it': '有一局是離線或關閉「傳送我的紀錄」時開始的，排行榜沒有收到',
+'The leaderboard knows this hero died, so this copy never ranks': '排行榜知道這位英雄已經死亡，所以這份複本永遠不會排名',
+'Already dead on the leaderboard': '排行榜上已經死亡',
+'This hero will never rank again. Tap again': '這位英雄再也不會排名。再點一下', 'This hero will never rank again. Click again': '這位英雄再也不會排名。再點擊一次',
+'Each one\'s mark says why': '每個標記會說明原因', 'A higher level than the runs the leaderboard saw can give': '等級比排行榜看到的紀錄能達到的還高',
+'Send my runs is off, and a run now means your * never ranks again': '「傳送我的紀錄」已關閉，現在遊玩的話，你的{0}將再也不會排名',
+'Turn Send my runs on before you play': '遊玩前請開啟「傳送我的紀錄」',
+'The leaderboard can\'t be reached, and a run now means your * never ranks again': '連不上排行榜，現在遊玩的話，你的{0}將再也不會排名',
+'Your * ranks as long as the leaderboard sees every run': '只要排行榜收到每一局，你的{0}就會排名',
+'Each run tells the leaderboard as it starts and as it ends': '每一局開始和結束時都會通知排行榜',
+'Balance changed: click to restart, or your Terror runs stop counting': '平衡已改動：點擊重新啟動，否則恐懼層紀錄不會計入'
 },
 // 易牙居（iya-backup）譯名：物品、套裝、底材、魔法前後綴，比對網站後統一；優先於上面兩區
 iya: {
@@ -3645,9 +3706,9 @@ clearTimeout(whisperTimer);
 whisperTimer = setTimeout(() => { whisper.style.opacity = '0'; }, 3500);
 };
 const FLASH = 4000;   // 出現時光暈先亮起，再花幾秒退回平常的亮度
-// 進入地圖後先等 30 秒才判斷（恐懼層開局會先閃一下第一幕再跳到選的那一幕，剛進來讀到的不一定準）。
+// 進入地圖後先等 15 秒才判斷（恐懼層開局會先閃一下第一幕再跳到選的那一幕，剛進來讀到的不一定準）。
 // 等待時只記錄英雄位置，計畫算出來後，用遊戲「進入這一幕 at 秒」那一刻的位置算碎片在哪。
-const SETTLE = 30000;
+const SETTLE = 15000;
 let state = { key: '', plan: null, spot: null, count: 0, checkedAt: 0, enteredAt: 0, log: [], ready: false };
 // 給「書籤修改」面板顯示目前狀態（不透露方向），方便判斷為什麼沒有光暈
 D2ED.shardStatus = () => {
