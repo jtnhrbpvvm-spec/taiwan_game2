@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V20';
+const D2ZH_VERSION = 'V21';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -458,7 +458,7 @@ if (k === 'style') e.style.cssText = v;
 else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
 else e.setAttribute(k, v);
 }
-for (const k of kids) e.append(k);
+for (const k of kids) if (k != null) e.append(k);
 return e;
 }
 function d2edRound(v, digits) {
@@ -754,7 +754,8 @@ d2edRender(); d2edToast(on ? '碎片感應已關閉' : '碎片感應已開啟');
 return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '碎片感應'),
 d2edEl('p', { class: 'd2ed-note' }, '隱藏任務「破碎之光」：碎片出現後，畫面邊緣朝它的方向會有微弱的光暈，越接近越亮，看得到碎片時就消失。'),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉碎片感應' : '開啟碎片感應'),
-d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
+d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')),
+on && D2ED.shardStatus ? d2edEl('p', { class: 'd2ed-note' }, '狀態：' + D2ED.shardStatus()) : null);
 }
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
@@ -780,6 +781,9 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。
 const D2ZH_NEWS = [
+{ ver: 'V21', date: '2026-10-28', game: '遊戲 20261027.4', items: [
+'碎片提示：「碎片感應」開啟時，碎片出現的那一刻畫面上會淡淡浮出一句話，邊緣光暈也會先亮一下；面板會顯示這一幕有沒有碎片',
+'翻譯優化'] },
 { ver: 'V20', date: '2026-10-28', game: '遊戲 20261027.4', items: [
 '翻譯優化：護身符（Charm）改稱小型／中型／大型護符，避免跟項鍊（護身符）混淆',
 '地上的護符會閃爍，比較不會漏撿',
@@ -1169,6 +1173,9 @@ text: {
 'Adds +#% Faster Cast Rate: half as much, in the same total': '快速施法率 +{0}%：效果一半，計入同一個總和', 'Skills and attacks share that one speed and one cap': '技能和攻擊共用同一個速度和同一個上限',
 'Adds +#% mana regeneration as Faster Cast Rate': '法力恢復 +{0}%，等同快速施法率', '*: skills recharge *% faster for you now': '{0}：目前技能冷卻快 {1}%', '*: nothing for you now, at your cast rate cap': '{0}：已達施法速度上限，目前沒有效果',
 '*% Chance to cast level * * when you Kill an Enemy (*s cooldown)': '擊殺敵人時有 {0}% 機率施放等級 {1} 的{2}（冷卻 {3} 秒）',
+'*% Chance to cast level * * when struck (*s cooldown)': '被擊中時有 {0}% 機率施放等級 {1} 的{2}（冷卻 {3} 秒）',
+'*% Chance to cast level * * on striking (*s cooldown)': '擊中時有 {0}% 機率施放等級 {1} 的{2}（冷卻 {3} 秒）',
+'*% Chance to cast level * * on attack (*s cooldown)': '攻擊時有 {0}% 機率施放等級 {1} 的{2}（冷卻 {3} 秒）',
 // 物品過濾、收藏
 'KEEP': '保留', 'Leaves magic items except charms on the floor, unnamed': '護符以外的魔法物品留在地上，不顯示名稱',
 'Sells magic items except charms as you pick them up': '撿起護符以外的魔法物品時直接賣掉', 'Sells magic and rare items except charms as you pick them up': '撿起護符以外的魔法和稀有物品時直接賣掉',
@@ -2032,7 +2039,8 @@ text: {
 'Immortal King\'s Will': '不朽之王的意志', 'Immortal King\'s Soul Cage': '不朽之王的靈魂牢籠', 'Immortal King\'s Detail': '不朽之王的瑣事', 'Immortal King\'s Forge': '不朽之王的融爐', 'Immortal King\'s Pillar': '不朽之王之柱', 'Immortal King\'s Stone Crusher': '不朽之王的碎魂者', 'Tal Rasha\'s Fine-Spun Cloth': '塔.拉夏的纖細衣服', 'Tal Rasha\'s Adjudication': '塔.拉夏的判決', 'Tal Rasha\'s Lidless Eye': '塔.拉夏的無瞼之眼', 'Tal Rasha\'s Guardianship': '塔.拉夏的守護',
 'Tal Rasha\'s Horadric Crest': '塔.拉夏的赫拉迪克紋章', 'Griswold\'s Valor': '格瑞斯華爾德的勇氣', 'Griswold\'s Honor': '格瑞斯華爾德的榮耀', 'Trang-Oul\'s Guise': '塔格奧之外裝', 'Trang-Oul\'s Scales': '塔格奧之鱗', 'Trang-Oul\'s Wing': '塔格奧之翼', 'Trang-Oul\'s Claws': '塔格奧之手', 'Trang-Oul\'s Girth': '塔格奧之束帶', 'M\'avina\'s True Sight': '馬維娜的真實之眼', 'M\'avina\'s Embrace': '馬維娜的擁抱', 'M\'avina\'s Icy Clutch': '馬維娜的冰握', 'M\'avina\'s Tenet': '馬維娜的教義',
 'M\'avina\'s Caster': '馬維娜的施展', 'Telling of Beads': '述說之珠', 'Laying of Hands': '按手禮', 'Dark Adherent': '黑暗信徒', 'Credendum': '信條', 'Dangoon\'s Teaching': '丹弓的教導', 'Taebaek\'s Glory': '泰比克的光榮', 'Haemosu\'s Adamant': '黑摩蘇的堅決', 'Ondal\'s Almighty': '安戴爾的全靈', 'Guillaume\'s Face': '吉永的臉', 'Wilhelm\'s Pride': '威廉的自尊', 'Magnus\' Skin': '馬格納斯之皮', 'Whitstan\'s Guard': '惠斯坦的武裝', 'Hwanin\'s Splendor': '華寧的光輝',
-'Hwanin\'s Refuge': '華寧的保護', 'Hwanin\'s Blessing': '華寧的祝福', 'Hwanin\'s Justice': '華寧的正義', 'Sazabi\'s Cobalt Redeemer': '沙撒璧的懺悔之鈷', 'Sazabi\'s Ghost Liberator': '沙撒璧的鬼魂釋放者', 'Sazabi\'s Mental Sheath': '沙撒璧的精神之鞘', 'Bul-Kathos\' Sacred Charge': '布爾凱索的神聖代價', 'Bul-Kathos\' Tribal Guardian': '布爾凱索的部族守護', 'Cow King\'s Horns': '牛魔王之角', 'Cow King\'s Hooves': '牛魔王之蹄', 'Naj\'s Puzzler': '娜吉解謎杖', 'Sander\'s Paragon': '山德的模範',
+'Hwanin\'s Refuge': '華寧的保護', 'Hwanin\'s Blessing': '華寧的祝福', 'Hwanin\'s Justice': '華寧的正義', 'Sazabi\'s Cobalt Redeemer': '沙撒璧的懺悔之鈷', 'Sazabi\'s Ghost Liberator': '沙撒璧的鬼魂釋放者', 'Sazabi\'s Mental Sheath': '沙撒璧的精神之鞘', 'Bul-Kathos\' Sacred Charge': '布爾凱索的神聖代價', 'Bul-Kathos\' Tribal Guardian': '布爾凱索的部族守護', 'Cow King\'s Horns': '牛魔王之角', 'Cow King\'s Hide': '牛魔王之皮', 'Cow King\'s Hooves': '牛魔王之蹄',
+'Trang-Oul\'s Avatar': '塔格奧的化身', 'Naj\'s Light Plate': '娜吉的輕型鎧甲', 'Naj\'s Circlet': '娜吉的頭飾', 'Naj\'s Puzzler': '娜吉解謎杖', 'Sander\'s Paragon': '山德的模範',
 'Sander\'s Riprap': '山德的碎石', 'Sander\'s Taboo': '山德的禁忌', 'Sander\'s Superstition': '山德的迷信', 'Hsarus\' Defense': '哈斯拉柏的防禦', 'Burly': '魁梧', 'Lucky': '好運', 'of Good Luck': '幸運之', 'of Inertia': '慣性之', 'of Sustenance': '維生之', 'of Vita': '活力之', 'Rugged': '凹凸', 'Stalwart': '健壯', 'Stout': '堅固', 'The Necromancer\'s summons strike harder too': '死靈法師的召喚物也會打得更重', '# stat points to place on the character screen': '{0} 屬性點數可在角色畫面分配',
 '# stat points to place on the character screen (C)': '{0} 屬性點數可在角色畫面（C）分配', 'Charms (H)': '護符（H）', '# Skill Modifier Points on skills no longer drafted are free again': '沒抽到的技能上的 {0} 點技能改造點數已釋放', 'To take a tree, tap one of its skills or its tab twice': '要選技能樹，點一下它的技能，或在分頁上點兩下', 'To take a tree, click one of its skills or its tab twice': '要選技能樹，點擊它的技能，或在分頁上點擊兩下', 'Click to take this tree': '點擊選擇這個技能樹',
 'Tap again to take this tree': '再點一下選擇這個技能樹', '# creeper crawls after monsters, each bite poisoning # over #s.': '{0} 株藤蔓爬向怪物，每次咬擊在 {2} 秒內造成 {1} 毒素。', 'Up to # creepers crawl after monsters, each bite poisoning # over #s.': '最多 {0} 株藤蔓爬向怪物，每次咬擊在 {2} 秒內造成 {1} 毒素。', '* * after monsters, each bite poisoning # over #s.': '{0}追著怪物，每次咬擊在 {3} 秒內造成 {2} 毒素。', 'Uniques': '獨特物品',
@@ -3522,7 +3530,37 @@ const glow = document.createElement('div');
 glow.id = 'd2zh-shard-sense';
 glow.style.cssText = 'position:fixed;z-index:2147483000;pointer-events:none;border-radius:50%;opacity:0;transition:opacity 1.5s;'
 + 'background:radial-gradient(circle,rgba(255,246,214,.9) 0,rgba(255,236,180,.35) 35%,rgba(255,230,170,0) 70%);mix-blend-mode:screen;';
+// 碎片出現那一刻：畫面上方淡淡浮出一句話，幾秒後消失（遊戲本身這時沒有任何提示）
+const whisper = document.createElement('div');
+whisper.id = 'd2zh-shard-whisper';
+whisper.textContent = '遠方似乎有什麼在微微發光……';
+whisper.style.cssText = `position:fixed;z-index:2147483001;pointer-events:none;opacity:0;transition:opacity 1.2s;transform:translateX(-50%);white-space:nowrap;`
++ `font:20px ${D2ZH_FONT};letter-spacing:2px;color:#efe4c2;text-shadow:0 0 6px rgba(255,236,180,.8),1px 1px 0 #000,-1px -1px 0 #000;`;
+let whisperTimer = 0;
+const murmur = rc => {
+if (!whisper.isConnected && document.body) document.body.append(whisper);
+whisper.style.left = (rc.left + rc.width / 2) + 'px';
+whisper.style.top = (rc.top + rc.height * 0.26) + 'px';
+whisper.style.opacity = '0.85';
+clearTimeout(whisperTimer);
+whisperTimer = setTimeout(() => { whisper.style.opacity = '0'; }, 3500);
+};
+const FLASH = 4000;   // 出現時光暈先亮起，再花幾秒退回平常的亮度
 let state = { key: '', plan: null, spot: null, count: 0, checkedAt: 0 };
+// 給「書籤修改」面板顯示目前狀態（不透露方向），方便判斷為什麼沒有光暈
+D2ED.shardStatus = () => {
+const world = D2ED.world;
+if (document.body.classList.contains('no-run') || !world || !world.player) return '不在遊戲中';
+if (world.farm || world.tristram) return '這裡不會出現碎片';
+const n = found();
+if (n === null) return '讀不到存檔';
+if (n >= 10) return '十塊碎片都找到了';
+const key = `${world.light}:${world.act}:${world.difficulty}:${world.terror?.tier ?? 0}`;
+if (key === state.key && n > state.count) return `已找到 ${n} 塊：這一幕的碎片已經撿到了`;
+if (!plan(world, n)) return `已找到 ${n} 塊：這一幕沒有碎片`;
+if (key === state.key && state.spot) return `已找到 ${n} 塊：這一幕的碎片已經出現`;
+return `已找到 ${n} 塊：這一幕的碎片還沒出現`;
+};
 setInterval(() => {
 let show = 0;
 try {
@@ -3545,6 +3583,7 @@ const pl = world.player;
 if (!state.spot) {
 if (world.time - world.actStart < p.at) return;
 state.spot = { x: pl.x + Math.cos(p.angle) * p.screens * 800, y: pl.y + Math.sin(p.angle) * p.screens * 600 };
+state.spawnAt = now;
 }
 const dx = state.spot.x - pl.x, dy = state.spot.y - pl.y;
 const far = Math.hypot(dx / 800, dy / 600);   // 跟遊戲一樣以「畫面」為單位
@@ -3564,6 +3603,11 @@ glow.style.top = (cy + uy * t - size / 2) + 'px';
 const near = Math.max(0, Math.min(1, (5.5 - far) / 4.5));   // 5.5 個畫面外最淡，1 個畫面內最亮
 const breathe = (Math.sin(now / 1000 * 1.6 * Math.PI) + 1) / 2;
 show = (0.10 + 0.30 * near) * (0.65 + 0.35 * breathe);
+const since = now - (state.spawnAt ?? -Infinity);
+if (since < FLASH) {
+if (!state.murmured) { state.murmured = true; murmur(rc); }
+show = Math.max(show, 0.75 * (1 - since / FLASH));
+}
 } catch (e) { /* 遊戲結構改了就不提示，不影響遊戲 */ }
 finally {
 if (!glow.isConnected && document.body) document.body.append(glow);
