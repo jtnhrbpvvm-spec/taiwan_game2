@@ -62,20 +62,21 @@ const DESC = {
     zones: '村莊、商店、各狩獵地區的等級、怪物與掉落。',
     quests: '十二職業各 4 章任務：條件、地點、首領與獎勵。',
     enchant: '安定值、成功率、祝福／詛咒卷軸與衝裝建議。',
-    affix: '魔法／稀有／傳說品質、19 種詞綴與 9 種製作通貨。',
+    affix: '魔法／稀有／傳說品質、物爆魔爆等詞綴與製作通貨。',
     resonance: '帶專屬技能的共鳴武器與防具，觸發方式與取得。',
     forge: '鍛造配方一覽與 26 種 BOSS 附魔。',
-    rift: '異界地圖 T1～T15、地圖詞綴、排程與通關獎勵。',
+    rift: '異界地圖 T1～T15、地圖詞綴、傳奇財寶地圖、六格排程。',
     tower: '永夜之塔 100 層：逐層解鎖、守關首領與專屬材料。',
     dragons: '四大龍巢穴、團隊副本與世界首領。',
     dolls: '21 款魔法娃娃的能力與召喚規則。',
-    morph: '變形卷軸 30 種變身對象與武器限制。',
+    morph: '變形卷軸 32 種變身對象與武器限制。',
+    merc: '傭兵團試煉取得、六職業傭兵、50 種符石技能與死亡規則。',
     mechanics: '命中、傷害、防禦、攻速、負重等計算公式與戰鬥規則。',
     exp: '1～99 級經驗表、高等級經驗遞減、死亡懲罰與離線收益。',
     online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、排行榜。',
 };
 const GROUPS = { 'g-guide': ['guide', 'classes', 'quests'], 'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
-    'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph'], 'g-sys': ['mechanics', 'exp', 'online'] };
+    'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph', 'merc'], 'g-sys': ['mechanics', 'exp', 'online'] };
 const P = Object.fromEntries(PAGES.map(p => [p[0], p]));
 for (const [el, list] of Object.entries(GROUPS))
     $('#' + el).innerHTML = list.map(id => `<a class="card pg" href="${id}.html"><span class="ico-big">${P[id][2]}</span><h3>${P[id][1]}</h3><small>${DESC[id]}</small></a>`).join('');

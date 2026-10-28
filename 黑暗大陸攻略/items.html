@@ -29,7 +29,7 @@
 <script src="assets/wiki.js"></script>
 <script>
 const CATS = [['all', '全部'], ['weapon', '⚔️ 武器'], ['armor', '🛡️ 防具'], ['acc', '💍 飾品'], ['use', '🧪 消耗品'], ['material', '💎 材料'],
-    ['currency', '🔹 通貨'], ['book', '📖 魔法書'], ['map', '🗺️ 異界地圖'], ['doll', '🧸 娃娃'], ['quest', '🔖 任務道具']];
+    ['currency', '🔹 通貨'], ['book', '📖 魔法書'], ['map', '🗺️ 異界地圖'], ['doll', '🧸 娃娃'], ['mercRune', '🔷 傭兵符石'], ['quest', '🔖 任務道具']];
 const ARMOR_SLOTS = ['helm', 'armor', 'shield', 'tshirt', 'cloak', 'gloves', 'boots'];
 const st = { cat: 'all', q: '', sub: '', cls: '', grade: '', res: false };
 const catOf = d => d.cat === 'armor' ? (ACC_SLOTS.includes(d.slot) ? 'acc' : 'armor') : ['potion', 'scroll', 'ammo', 'elixir'].includes(d.cat) ? 'use' : d.cat;

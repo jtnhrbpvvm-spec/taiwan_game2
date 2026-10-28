@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>傭兵｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸傭兵系統：傭兵團試煉取得、六職業傭兵能力、8 格裝備、4 格符石技能、50 種傭兵符石、等級階級、死亡與復活規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .merc { display: flex; gap: 12px; align-items: flex-start; }
+    .merc img { width: 84px; height: 84px; object-fit: contain; background: #0a0807; border: 1px solid var(--line); border-radius: 10px; flex: none; }
+    .merc h3 { margin: 0 0 4px; }
+    .rank-sss { color: #ffd15a; text-shadow: 0 0 6px #ff3030; }
+    .rank-legend { background: linear-gradient(90deg, #ff8a8a, #ffd15a, #8affc1, #8ac8ff, #e08aff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="merc">
+<main>
+    <h1>🤝 傭兵</h1>
+    <p class="lead">傭兵會跟著你一起掛機打怪、放技能、幫你擋傷害。同一時間<b>只能有一名傭兵出戰</b>，跟<a href="dolls.html">魔法娃娃</a>互不影響、可以同時帶。管理入口：各村莊的<b>傭兵團長</b>，或人物畫面的傭兵欄。</p>
+    <div class="toc"><a href="#get">取得</a><a href="#rules">規則</a><a href="#classes">六職業</a><a href="#ranks">階級</a><a href="#runes">符石技能</a></div>
+
+    <h2 id="get">取得：傭兵團試煉</h2>
+    <ul>
+        <li>傭兵<b>不能用金幣買</b>。到村莊找傭兵團長接「傭兵團試煉」，之後擊殺<b>任意怪物 <span id="qk"></span> 隻</b>（一般狩獵、首領、異界都算；離線收益、團隊副本、世界首領不算）。</li>
+        <li>完成後回團長處領取，<b>六職業隨機一位、機率相同</b>，新傭兵 Lv.1、沒有技能、沒有裝備。</li>
+        <li>已經有活著的傭兵時看不到試煉；傭兵陣亡或放棄後才能再接，每次重接都從 0 開始算。</li>
+        <li><b>放棄傭兵</b>（在村莊）：活傭兵身上的裝備和符石都退回背包，但等級沒了。</li>
+    </ul>
+
+    <h2 id="rules">基本規則</h2>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">裝備與技能</h3>
+            <ul>
+                <li>裝備 8 格：<span id="slots"></span>（沒有項鍊、戒指、腰帶）。任何武器都能拿，不受職業限制；雙手武器不能配盾。遠程武器不吃你的彈藥。</li>
+                <li>裝備的基本屬性與詞綴會算進傭兵能力；共鳴與 BOSS 附魔目前不會觸發。</li>
+                <li>技能 4 格，鑲<a href="#runes">傭兵符石</a>，同一種不能重複。格子順序＝優先順序，傭兵每秒最多放一招，治療／回魔類會等到低血／低魔才用。</li>
+                <li>交付裝備、換符石、出戰／收回都要在村莊。</li>
+            </ul></div>
+        <div class="box"><h3 style="margin-top:0">成長、死亡、復活</h3>
+            <ul>
+                <li>你擊殺怪物時傭兵另外得經驗，<b>不會分走你的經驗</b>；升級所需 ＝ 100 ＋ 等級² × 30，等級不會超過你。</li>
+                <li>每升一級 HP +18、MP +8、物理／魔法攻擊 +2。</li>
+                <li>怪物每次攻擊有 25% 改打傭兵（挑釁時 65%）；首領紅圈也會打到傭兵。</li>
+                <li><b>陣亡＝身上裝備和 4 格符石永久消失</b>（你的背包、倉庫不受影響）。可以到團長處復活（每級 <span id="rc"></span> 金幣，保留等級），或重接試煉換一位新的。</li>
+                <li>離線收益、團隊副本、世界首領時傭兵不參戰。</li>
+            </ul></div>
+    </div>
+
+    <h2 id="classes">六職業傭兵（Lv.1 基礎值）</h2>
+    <div class="grid" id="cls"></div>
+    <p class="dim">契靈師召喚物效果 ×1.2；祈願使治療 ×1.2；荒野行者基礎閃避 8%。</p>
+
+    <h2 id="ranks">等級階級</h2>
+    <p>只是顯示用的稱號與顏色，不影響能力：</p>
+    <div id="rank-list"></div>
+
+    <h2 id="runes">傭兵符石（<span id="rn"></span> 種）</h2>
+    <p>符石<b>不能購買</b>，取得方式遊戲尚未開放；已經有的可以自由鑲上、拆回背包。召喚物最多 2 隻；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
+    <div class="tabs" id="tabs"></div>
+    <div id="rune-list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const M = W.merc;
+$('#qk').textContent = fmt(W.consts.MERC_QUEST_KILLS); $('#rc').textContent = fmt(W.consts.MERC_REVIVE_COST);
+$('#slots').textContent = M.slots.map(s => W.slots[s] || s).join('、');
+$('#rn').textContent = Object.keys(M.runes).length;
+$('#cls').innerHTML = Object.entries(M.classes).map(([id, c]) => `<div class="card merc"><img src="${esc(img(M.art[id]))}" alt="" loading="lazy"><div>
+    <h3>${esc(c.person)}・${esc(c.name)}</h3><span class="tag">${esc(c.sex)}・${esc(c.age)}</span>
+    <div class="stats"><span>HP <b>${c.hp}</b></span><span>MP <b>${c.mp}</b></span><span>物攻 <b>${c.atk}</b></span><span>魔攻 <b>${c.magic}</b></span><span>防禦 <b>${c.def}</b></span><span>每秒回魔 <b>${c.regen}</b></span></div></div></div>`).join('');
+const nextMin = i => M.ranks[i + 1] ? M.ranks[i + 1].min - 1 : null;
+renderTable($('#rank-list'), [
+    { label: '階級', html: r => `<b class="rank-${r.id}" style="${['sss', 'legend'].includes(r.id) ? '' : 'color:' + r.color}">${esc(r.name)}</b>` },
+    { label: '傭兵等級', html: (r, i) => { const k = M.ranks.indexOf(r), n = nextMin(k); return n ? `Lv.${r.min}～${n}` : `Lv.${r.min} 以上`; } },
+], M.ranks);
+let cur = 'all';
+function draw() {
+    renderTabs($('#tabs'), [['all', '全部']].concat(Object.entries(M.groups)), cur, v => { cur = v; draw(); });
+    const rows = Object.values(M.runes).filter(r => cur === 'all' || r.group === cur);
+    renderTable($('#rune-list'), [
+        { label: '符石', html: r => itemLink('mercRune_' + r.id) },
+        { label: '分類', html: r => esc(M.groups[r.group]) },
+        { label: 'MP', num: true, html: r => r.mp },
+        { label: '冷卻', num: true, html: r => r.cd + ' 秒' },
+        { label: '效果', html: r => esc(r.text.split('｜').filter((x, i) => i === 1 || /效果|倍率|持續/.test(x)).join('，')) },
+    ], rows);
+}
+draw();
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ const PAGES = [
     ['items', '道具圖鑑', '🎒'], ['monsters', '怪物圖鑑', '👹'], ['zones', '地圖村莊', '🗺️'], ['quests', '職業任務', '📜'],
     ['enchant', '衝裝', '🔨'], ['affix', '詞綴通貨', '💠'], ['resonance', '共鳴裝備', '🌟'], ['forge', '鍛造附魔', '⚒️'],
     ['rift', '異界地圖', '🌀'], ['tower', '永夜之塔', '🏛️'], ['dragons', '四龍首領', '🐉'], ['dolls', '魔法娃娃', '🧸'],
-    ['morph', '變身', '🎭'], ['mechanics', '數值公式', '📐'], ['exp', '經驗離線', '📈'], ['online', '線上功能', '🌐'],
+    ['morph', '變身', '🎭'], ['merc', '傭兵', '🤝'], ['mechanics', '數值公式', '📐'], ['exp', '經驗離線', '📈'], ['online', '線上功能', '🌐'],
 ];
 
 // 我們做的桌寵：遊戲在背景掛機、桌面上留一隻角色
@@ -39,18 +39,18 @@ const townName = id => (W.towns[id] && W.towns[id].name) || id;
 const className = id => (W.classes[id] && W.classes[id].name) || id;
 const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', dragon: '龍穴' };
 const SKILL_TYPE = { spell: '攻擊魔法', heal: '治癒', buff: '增益', strike: '物理技能', passive: '被動' };
-const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸' };
+const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷' };
 const GRADE_NAME = { normal: '一般', high: '高級', rare: '稀有', hero: '英雄', legend: '傳說' };
 const TAG_NAME = { human: '人型', demon: '惡魔', holy: '神聖', undead: '不死', large: '大型', boss: '首領', dragon: '龍族' };
 const ACC_SLOTS = ['amulet', 'ring', 'belt'];
 
 // 能力名稱（道具、技能、詞綴共用）
 const STAT_LABEL = Object.assign({}, W.statNames, {
-    hit: '命中', dmg: '傷害', sp: 'SP', mr: '魔防', crit: '爆擊', dodge: '閃避', reduce: '減傷', lifesteal: '吸血', hp: 'HP', mp: 'MP',
+    hit: '命中', dmg: '傷害', sp: 'SP', mr: '魔防', crit: '物爆率', magicCrit: '魔爆率', critDmg: '物爆傷害', magicCritDmg: '魔爆傷害', dodge: '閃避', reduce: '減傷', lifesteal: '吸血', hp: 'HP', mp: 'MP',
     hpRegen: '回血', mpRegen: '回魔', weight: '負重上限', spdMul: '攻速', double: '連擊', absorb: '傷害吸收', counter: '反擊', ac: '防禦',
     allStat: '全能力', bossDmg: '首領增傷', expPct: '經驗', goldPct: '金幣', thorns: '反傷', haste: '加速', brave: '勇敢', wise: '慎重',
 });
-const PCT_KEYS = ['crit', 'dodge', 'lifesteal', 'spdMul', 'double', 'counter', 'absorb', 'bossDmg', 'expPct', 'goldPct', 'thorns'];
+const PCT_KEYS = ['crit', 'magicCrit', 'critDmg', 'magicCritDmg', 'dodge', 'lifesteal', 'spdMul', 'double', 'counter', 'absorb', 'bossDmg', 'expPct', 'goldPct', 'thorns'];
 function statVal(k, v) {
     if (v === true) return '';
     if (PCT_KEYS.includes(k) && Math.abs(v) < 1) return (v > 0 ? '+' : '') + Math.round(v * 1000) / 10 + '%';
@@ -116,7 +116,7 @@ function itemStatsHtml(d) {
         if (wt && wt.range) s.push(`射程 <b>${wt.range} 格</b>`);
     }
     if (d.ac) s.push(`防禦 <b>+${d.ac}</b>`);
-    for (const k of ['hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'lifesteal', 'hp', 'mp', 'hpRegen', 'mpRegen', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'weight']) {
+    for (const k of ['hit', 'dmg', 'sp', 'mr', 'crit', 'magicCrit', 'critDmg', 'magicCritDmg', 'dodge', 'reduce', 'lifesteal', 'hp', 'mp', 'hpRegen', 'mpRegen', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'weight']) {
         if (k === 'dmg' && d.cat === 'weapon') continue;
         if (d[k] != null && typeof d[k] === 'number') s.push(`${STAT_LABEL[k]} <b>${statVal(k, d[k])}</b>`);
     }
@@ -150,9 +150,11 @@ function sourceText(s, id) {
         case 'book': { const b = W.bookDrops.find(x => x.id === id), lv = b ? Math.max(1, b.lv - 5) : 1;
             return `📖 <a href="monsters.html#books">Lv.${lv} 以上的怪物</a>掉落（一般怪 ${pct(W.consts.BOOK_DROP_P)}、首領 ${pct(W.consts.BOOK_BOSS_P)} 掉一本書，從可掉的書裡平均抽；Lv.${lv} 怪物可掉 ${bookPool(lv).length} 本，一般怪指定這本約 ${pct(W.consts.BOOK_DROP_P / bookPool(lv).length)}，等級越高可掉的書越多）`; }
         case 'currency': { const c = W.currency[id]; return `🎲 怪物掉落通貨（每隻 ${pct(W.consts.CURRENCY_DROP_P)}、首領 ${pct(W.consts.CURRENCY_BOSS_P)}），掉落權重 ${c ? c.w : '?'}${c && c.minLv ? `，只有 Lv.${c.minLv} 以上怪物會掉` : ''}`; }
-        case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵`;
+        case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵` +
+            (d.tier >= 8 ? `；T8 以上掉圖有 ${pct(W.consts.TREASURE_MAP_DROP_P)} 是<a href="rift.html#treasure">未鑑定傳奇財寶地圖</a>` : '');
         case 'mapboss': return `🌀 異界首領 ${pct(W.consts.RES_MAP_BOSS_P)} 掉一件共鳴裝備（${W.resTiers[d.res.tier].name}需 T${[0, 1, 6, 11, 15][d.res.tier]} 以上地圖）`;
-        case 'soul': return '🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×1、500,000 金幣）';
+        case 'soul': return `🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×5、${fmt(W.consts.BOSS_ENCHANT_SOUL_COST)} 金幣）`;
+        case 'mercRune': return '🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>；不能購買，取得方式遊戲尚未開放';
         case 'doll': return W.dolls[d.doll] && W.dolls[d.doll].quality === 'T4' ? `🧸 娃娃商人露米（${W.consts.DOLL_SHOP_PRICE} 鑽，目前限 GM 購買）` : '🧸 目前只有 GM 發放';
         case 'questitem': return '📜 接了職業任務後，指定地圖的怪物掉落';
         case 'dismantle': return `🧸 娃娃商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）`;
@@ -175,6 +177,7 @@ function itemDetailHtml(id) {
         ${d.res ? `<div class="msec box"><h4>🌟 共鳴技能</h4>${resText(d.res)}</div>` : ''}
         ${book ? `<div class="msec"><h4>學會技能</h4>${skillLink(d.skill)}　<small>${esc(book.desc)}</small><br><small>${Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === d.skill); return r ? `${className(c)} Lv.${r.lv}` : ''; }).filter(Boolean).join('、')}</small></div>` : ''}
         ${doll ? `<div class="msec box"><h4>娃娃能力</h4>基本：${esc(doll.base)}<br>被動「${esc(doll.name)}」：${esc(doll.desc)}<br><small>召喚要 ${W.consts.DOLL_SUMMON_COST} 個魔法結晶，每 ${sec(W.consts.DOLL_SUMMON_MS)}自動再扣 ${W.consts.DOLL_SUMMON_COST} 個。</small></div>` : ''}
+        ${d.cat === 'mercRune' && W.merc.runes[d.rune] ? `<div class="msec box"><h4>🤝 傭兵技能：${esc(W.merc.runes[d.rune].name)}</h4>${esc(W.merc.runes[d.rune].text)}</div>` : ''}
         ${be ? `<div class="msec box"><h4>🔮 BOSS 附魔：${esc(be.name)}</h4>${esc(W.bossEnchantText[id] || '')}<br><small>觸發 ${pct(be.p)}、冷卻 ${be.cd} 秒、${be.kind === 'magic' ? '魔法' : '物理'}傷害；附魔費用 ${fmt(be.cost)} 金幣</small></div>` : ''}
         <div class="msec"><h4>價格</h4>${d.price ? `商店 ${fmt(d.price)} 金幣${d.cat === 'ammo' ? '（每 100 個 ' + fmt(d.price * 100) + '）' : ''}　` : ''}回收 ${fmt(d.sellPrice)} 金幣</div>
         <div class="msec"><h4>取得方式</h4>${src.length ? `<ul class="src">${src.map(s => `<li>${sourceText(s, id)}</li>`).join('')}</ul>` : '<span class="dim">尚無一般取得管道</span>'}</div>

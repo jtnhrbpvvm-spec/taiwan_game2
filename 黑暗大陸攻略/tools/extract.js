@@ -11,7 +11,7 @@ const OUT = path.join(ROOT, 'data', 'wiki-data.js');
 const IMG_BASE = 'https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/';
 
 // 只載入「資料＋規則」的檔案；介面、連線的檔案不需要
-const FILES = 'config classes skills items spellbook monsters zones quests resonance boss-enchant doll-abilities player enchant affix craft maps combat town icons'.split(' ');
+const FILES = 'config classes skills items spellbook monsters zones quests resonance boss-enchant doll-abilities mercenary player enchant affix craft maps combat town icons'.split(' ');
 
 // 瀏覽器物件用假的代替（載入時只會碰到一點點）
 const stub = new Proxy(function () {}, {
@@ -58,6 +58,7 @@ const sliceLine = (file, name) => {
 };
 src += '\n;' + sliceConst('raid', 'RAIDS') + '\n;' + sliceConst('wb', 'WB_KINDS');
 src += '\n;' + sliceLine('doll-shop', 'DOLL_SHOP_PRICE') + '\n;' + sliceLine('doll-shop', 'DOLL_DISMANTLE_CRYSTALS');
+src += '\n;' + sliceLine('map-queue', 'MAP_QUEUE_MAX');
 src += `\n;__G = { gameNow: () => gameNow };`;
 vm.runInContext(src, ctx, { filename: 'game.js' });
 const G = name => vm.runInContext(name, ctx);
@@ -179,6 +180,7 @@ for (const id in ITEMS) {
     if (d.soulEnchant) addSrc(id, { type: 'soul' });
     if (d.cat === 'doll') addSrc(id, { type: 'doll' });
     if (d.cat === 'quest') addSrc(id, { type: 'questitem' });
+    if (d.cat === 'mercRune') addSrc(id, { type: 'mercRune' });
     // 暗黑式隨機裝備（affix.js randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定、非共鳴）
     if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res) {
         const minLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
@@ -222,7 +224,8 @@ const data = {
         'RES_MAP_BOSS_P', 'RES_CLASS_BONUS', 'BOSS_MATERIAL_DROP_P', 'PACK_WEIGHTS', 'TELE_MS', 'TELE_MUL', 'SKILL_GCD_MS', 'SKILL_DEFAULT_CD', 'MON_DMG_MUL',
         'MOB_JOIN_MS', 'MOB_JOIN_P', 'MOB_SIDE_SLOW', 'DOLL_SUMMON_COST', 'DOLL_SUMMON_MS', 'DOLL_DISMANTLE_CRYSTALS', 'DOLL_SHOP_PRICE','BOSS_ENCHANT_SOUL_COST',
         'MORPH_SPD_MAX', 'HASTE_MUL', 'BRAVE_MUL', 'WAFER_MUL', 'ATK_MIN_MS', 'CAST_BASE_MS', 'CAST_MIN_MS', 'CAST_POTION_MS', 'MAGIC_BOOK_PRICE',
-        'MAGIC_SHOP_MAX_TIER', 'MAX_SLOTS', 'SPECIAL_AFFIX_IL', 'MAP_QTY_MAX', 'MAP_TIERS', 'TELE_CD']
+        'MAGIC_SHOP_MAX_TIER', 'MAX_SLOTS', 'SPECIAL_AFFIX_IL', 'MAP_QTY_MAX', 'MAP_TIERS', 'TELE_CD',
+        'MAP_QUEUE_MAX', 'TREASURE_MAP_DROP_P', 'SHOP_EQUIP_IL', 'BAR_N', 'MERC_REVIVE_COST', 'MERC_QUEST_KILLS']
         .map(n => [n, plain(C(n))])),
     statNames: plain(C('STAT_NAMES')), catNames: plain(C('CAT_NAMES')), slots: plain(C('SLOTS')), weaponTypes: plain(C('WEAPON_TYPES')),
     buffDefs: plain(C('BUFF_DEFS')),
@@ -241,6 +244,11 @@ const data = {
     morphForms: plain(C('MORPH_FORMS')),
     morphSprites: Object.fromEntries(Object.entries(C('MORPHS')).map(([k, m]) => [k, pick(plain(m.walk), ['src', 'cellW', 'cellH', 'frames'])])), morphTiers: plain(C('MORPH_TIERS')), morphGroups: plain(C('MORPH_GROUPS')),
     raids: plain(C('RAIDS')), wbKinds: plain(C('WB_KINDS')),
+    merc: {
+        classes: plain(C('MERC_CLASSES')), slots: plain(C('MERC_SLOTS')), groups: plain(C('MERC_GROUPS')), ranks: plain(C('MERC_RANKS')),
+        art: Object.fromEntries(Object.entries(C('MERC_MODELS')).map(([k, m]) => [k, m.art])),
+        runes: Object.fromEntries(Object.entries(C('MERC_RUNES')).map(([k, r]) => [k, { ...plain(r), text: C('mercRuneText')(k) }])),
+    },
     expTable, enchantTable,
 };
 

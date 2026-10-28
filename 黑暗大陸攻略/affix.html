@@ -26,9 +26,10 @@
             <tr><td class="dim">裝備消失、改掉 1 個通貨</td><td>—</td><td class="num">44%</td><td class="num">25%</td><td class="num">—</td><td class="num">—</td></tr>
         </tbody></table></div>
     <p>名稱：魔法＝第一條詞綴的前綴（例「銳利的長劍」）；稀有＝「「<span id="rn"></span>」長劍」這類隨機名；傳說＝「傳說・稱號 名稱」。
-        <b>物品等級</b>＝掉落怪物的等級，決定詞綴數值上限。賣價＝基本回收價 × 品質倍率＋詞綴數 × 物品等級 × 10。</p>
+        <b>物品等級</b>＝掉落怪物的等級，決定詞綴數值上限；<b>村莊商店新買的裝備固定物品等級 <span id="shil"></span></b>（點化、重鑄等改造後也一直是 <span class="shil2"></span>，不會跟著角色升級）。交易所會顯示每件裝備的「基底等級」＝物品等級，舊的商店貨沒有記錄就顯示「未記錄」。賣價＝基本回收價 × 品質倍率＋詞綴數 × 物品等級 × 10。</p>
 
-    <h2 id="affix">詞綴一覽（19 種）</h2>
+    <h2 id="affix">詞綴一覽（<span id="an"></span> 種）</h2>
+    <div class="box tip"><b>物爆／魔爆</b>：原本的「爆擊」改名<b>物爆率</b>（只影響物理攻擊，基礎 5%），另有<b>魔爆率</b>（只影響魔法傷害，基礎 0%）與<b>物爆傷害</b>／<b>魔爆傷害</b>（爆擊倍率基礎 150%，每件裝備的加成直接相加，例如 +10% → 160%）。這四種詞綴只出現在武器、手套、戒指、項鍊。詳見 <a href="mechanics.html#crit">數值公式</a>。</div>
     <p>右邊是各物品等級時的<b>數值上限</b>（實際在下限～上限之間隨機）。「部位」空白表示所有部位都可能出現。</p>
     <div id="affix-list"></div>
 
@@ -37,7 +38,7 @@
     <div id="legend-list"></div>
 
     <h2 id="special">覺醒特殊詞綴</h2>
-    <p>只能用 <a data-item="curAwaken">💠 命運的覺醒石</a> 加在<b>物品等級 <span id="sil"></span> 以上</b>的裝備（商店貨沒有物品等級，不能用），每件最多一條、任何部位都行、已有就換掉。其他通貨重洗時會保留。</p>
+    <p>只能用 <a data-item="curAwaken">💠 命運的覺醒石</a> 加在<b>物品等級 <span id="sil"></span> 以上</b>的裝備（商店新貨固定物品等級 <span class="shil2"></span>，不能用），每件最多一條、任何部位都行、已有就換掉。其他通貨重洗時會保留。</p>
     <div id="special-list"></div>
 
     <h2 id="currency">製作通貨</h2>
@@ -58,6 +59,7 @@ const Q = W.quality;
 $('#qm').textContent = Q.magic.n.join('～') + ' 條'; $('#qr').textContent = Q.rare.n.join('～') + ' 條';
 $('#sm').textContent = '×' + Q.magic.sell; $('#sr').textContent = '×' + Q.rare.sell; $('#sl').textContent = '×' + Q.legend.sell;
 $('#rn').textContent = W.rareNames[0]; $('#sil').textContent = W.consts.SPECIAL_AFFIX_IL;
+$('#shil').textContent = W.consts.SHOP_EQUIP_IL; $$('.shil2').forEach(e => e.textContent = W.consts.SHOP_EQUIP_IL); $('#an').textContent = Object.keys(W.affixes).length;
 $('#cp').textContent = pct(W.consts.CURRENCY_DROP_P); $('#cb').textContent = pct(W.consts.CURRENCY_BOSS_P);
 const av = (a, v) => a.pct ? pct(v) : Math.round(v * 10) / 10;
 const slotNames = s => s ? s.map(k => W.slots[k] || (k === 'ring' ? '戒指' : k)).join('、') : '';

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.7",
+  "version": "1.4.8",
   "shell": 1,
   "files": [
     {
@@ -34,8 +34,8 @@
     },
     {
       "path": "names.json",
-      "sha256": "c035adc026c7db239e27a94456e2608ba4d41f137ec4dfe9e71333348164ecc6",
-      "size": 43124
+      "sha256": "65da78fee31be5108f06f8e9f87d80485364b222a3c3463433c918bcb8f008e1",
+      "size": 49553
     },
     {
       "path": "pet-preload.js",
@@ -64,7 +64,7 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "ae9cccc86f28b9e1dc3558b226117529a0868d1a8060ee1d36830d826e8ea218",
+      "sha256": "339822fa616dbd2a1a908e1c4f51c08d8159d5e421780a9ec391618cdaaf5829",
       "size": 27868
     },
     {
@@ -109,8 +109,8 @@
     },
     {
       "path": "zones.js",
-      "sha256": "de90830218ed3f919acbf753a87009ab77173830ac65d7ccd940845a24c509c0",
-      "size": 300541
+      "sha256": "dde33a02a81187bbd58e229c2af9a5d50591bc0b6c8da8a4080c349441d0fab6",
+      "size": 325497
     }
   ]
 }

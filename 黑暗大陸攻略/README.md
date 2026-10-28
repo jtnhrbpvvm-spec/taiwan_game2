@@ -23,6 +23,7 @@
 | `dragons.html` | 四大龍、稀有首領、團隊副本、世界首領 |
 | `dolls.html` | 魔法娃娃 |
 | `morph.html` | 變形卷軸 |
+| `merc.html` | 傭兵（傭兵團試煉、六職業、符石技能、階級、死亡復活） |
 | `mechanics.html` | 數值公式與戰鬥規則 |
 | `exp.html` | 經驗表、離線收益 |
 | `online.html` | 線上功能（雲端、鑽石、倉庫、交易所、拍賣、血盟、排行榜） |

@@ -15,8 +15,8 @@ if (!gameDir) {
   process.exit(1);
 }
 
-// 只載到 boss-enchant 為止：後面的檔案是玩家、戰鬥、畫面，桌寵用不到，而且會碰到 document
-const FILES = ["config", "classes", "skills", "items", "spellbook", "monsters", "zones", "quests", "resonance", "boss-enchant"];
+// 只載資料檔：boss-enchant 以前＋mercenary（傭兵符石）、affix／craft（通貨）、maps（異界地圖）；其他是戰鬥、畫面，桌寵用不到，而且會碰到 document
+const FILES = ["config", "classes", "skills", "items", "spellbook", "monsters", "zones", "quests", "resonance", "boss-enchant", "doll-abilities", "mercenary", "player", "enchant", "affix", "craft", "maps"];
 
 const noop = () => {};
 const storage = { getItem: () => null, setItem: noop, removeItem: noop, key: () => null, length: 0 };

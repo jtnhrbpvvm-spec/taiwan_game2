@@ -1,5 +1,5 @@
 {
- "version": "20261026c",
+ "version": "20261027u",
  "classes": {
   "royal": {
    "name": "王族",
@@ -615,6 +615,135 @@
   }
  },
  "morphs": {
+  "windwoodIronwall": {
+   "name": "風木鐵壁重裝兵",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/windwood-ironwall-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/windwood-ironwall-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/windwood-ironwall-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "wildBloodWolf": {
+   "name": "荒野血狼狂戰",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/wild-blood-wolf-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/wild-blood-wolf-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/wild-blood-wolf-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "shuraMonk": {
+   "name": "修羅破戒僧",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/shura-monk-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/shura-monk-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/shura-monk-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
   "ivoryArchmage": {
    "name": "象牙塔高階秘術師",
    "sprite": {
@@ -776,6 +905,49 @@
     },
     "cast": {
      "src": "images/sprites/morph/shadow-pirate-gunner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "crimsonShadowAssassin": {
+   "name": "赤影暗殺者",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/crimson-shadow-assassin-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/crimson-shadow-assassin-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/crimson-shadow-assassin-v1/cast.png",
      "cellW": 384,
      "cellH": 320,
      "frames": {
@@ -1304,7 +1476,7 @@
   },
   "m09": {
    "name": "赤影暗殺者",
-   "sprite": null
+   "sprite": "crimsonShadowAssassin"
   },
   "m10": {
    "name": "布魯迪卡之影",
@@ -1356,7 +1528,7 @@
   },
   "m22": {
    "name": "修羅破戒僧",
-   "sprite": null
+   "sprite": "shuraMonk"
   },
   "m23": {
    "name": "熔岩碎骨鬥士",
@@ -1368,7 +1540,7 @@
   },
   "m25": {
    "name": "荒野血狼狂戰",
-   "sprite": null
+   "sprite": "wildBloodWolf"
   },
   "m26": {
    "name": "暗夜血族撕裂者",
@@ -1380,7 +1552,7 @@
   },
   "m28": {
    "name": "風木鐵壁重裝兵",
-   "sprite": null
+   "sprite": "windwoodIronwall"
   },
   "m29": {
    "name": "薔薇聖殿十字軍",
@@ -1854,6 +2026,80 @@
   "soul_towerChaosCore": "混沌裂爆封魂石",
   "soul_towerAbyssEye": "深淵侵蝕封魂石",
   "soul_towerDeathShard": "死神收割封魂石",
-  "soul_towerKingSeal": "冥王追擊封魂石"
+  "soul_towerKingSeal": "冥王追擊封魂石",
+  "mercRune_wolf": "傭兵符石・靈狼契約",
+  "mercRune_golem": "傭兵符石・石衛契約",
+  "mercRune_butterfly": "傭兵符石・靈蝶契約",
+  "mercRune_hawk": "傭兵符石・風鷹契約",
+  "mercRune_flameSpirit": "傭兵符石・火靈契約",
+  "mercRune_iceSpirit": "傭兵符石・冰靈契約",
+  "mercRune_thunderSpirit": "傭兵符石・雷靈契約",
+  "mercRune_treeSpirit": "傭兵符石・樹靈契約",
+  "mercRune_swarm": "傭兵符石・蟲群契約",
+  "mercRune_cover": "傭兵符石・護衛",
+  "mercRune_shield": "傭兵符石・堅壁護盾",
+  "mercRune_taunt": "傭兵符石・挑釁",
+  "mercRune_iron": "傭兵符石・鋼鐵壁壘",
+  "mercRune_ward": "傭兵符石・魔法結界",
+  "mercRune_thorn": "傭兵符石・荊棘守護",
+  "mercRune_sacrifice": "傭兵符石・挺身保護",
+  "mercRune_barrier": "傭兵符石・團隊屏障",
+  "mercRune_heal": "傭兵符石・急救之光",
+  "mercRune_renew": "傭兵符石・回春祝福",
+  "mercRune_mend": "傭兵符石・共鳴療癒",
+  "mercRune_haste": "傭兵符石・進軍鼓舞",
+  "mercRune_might": "傭兵符石・力量祝福",
+  "mercRune_focus": "傭兵符石・專注祝福",
+  "mercRune_mana": "傭兵符石・魔力贈禮",
+  "mercRune_purify": "傭兵符石・淨化之光",
+  "mercRune_rally": "傭兵符石・戰地整備",
+  "mercRune_heavy": "傭兵符石・重擊",
+  "mercRune_sweep": "傭兵符石・橫掃",
+  "mercRune_pierce": "傭兵符石・破甲刺擊",
+  "mercRune_flurry": "傭兵符石・連環突擊",
+  "mercRune_execute": "傭兵符石・終結斬",
+  "mercRune_bleed": "傭兵符石・撕裂",
+  "mercRune_bash": "傭兵符石・震盪擊",
+  "mercRune_siphon": "傭兵符石・汲血斬",
+  "mercRune_selfHeal": "傭兵符石・自我療癒",
+  "mercRune_evasion": "傭兵符石・靈巧步伐",
+  "mercRune_meditate": "傭兵符石・冥想",
+  "mercRune_cleanse": "傭兵符石・淨身",
+  "mercRune_fortify": "傭兵符石・生命強韌",
+  "mercRune_recover": "傭兵符石・自然復甦",
+  "mercRune_lastStand": "傭兵符石・背水一戰",
+  "mercRune_balance": "傭兵符石・生命轉魔",
+  "mercRune_firebolt": "傭兵符石・火焰彈",
+  "mercRune_frost": "傭兵符石・冰霜束縛",
+  "mercRune_lightning": "傭兵符石・雷電衝擊",
+  "mercRune_nova": "傭兵符石・烈焰新星",
+  "mercRune_poison": "傭兵符石・腐蝕毒霧",
+  "mercRune_chain": "傭兵符石・連鎖雷光",
+  "mercRune_silence": "傭兵符石・衰弱咒印",
+  "mercRune_star": "傭兵符石・星辰墜落",
+  "curAug": "點化石",
+  "curAlt": "重鑄石",
+  "curTemper": "淬鍊石",
+  "curRegal": "晉升石",
+  "curChaos": "混沌石",
+  "curAnnul": "剝離石",
+  "curChance": "命運石",
+  "curOracle": "神諭石",
+  "curAwaken": "命運的覺醒石",
+  "map1": "異界地圖 T1",
+  "map2": "異界地圖 T2",
+  "map3": "異界地圖 T3",
+  "map4": "異界地圖 T4",
+  "map5": "異界地圖 T5",
+  "map6": "異界地圖 T6",
+  "map7": "異界地圖 T7",
+  "map8": "異界地圖 T8",
+  "map9": "異界地圖 T9",
+  "map10": "異界地圖 T10",
+  "map11": "異界地圖 T11",
+  "map12": "異界地圖 T12",
+  "map13": "異界地圖 T13",
+  "map14": "異界地圖 T14",
+  "map15": "異界地圖 T15"
  }
 }

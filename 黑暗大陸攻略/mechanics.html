@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>數值公式與戰鬥規則｜黑暗大陸攻略百科</title>
-<meta name="description" content="黑暗大陸能力計算：命中、傷害加成、SP、防禦、魔防、攻擊間隔、施法間隔、回血回魔、負重、爆擊閃避，以及多怪戰鬥、首領大招、自動補給、死亡規則。">
+<meta name="description" content="黑暗大陸能力計算：命中、傷害加成、SP、防禦、魔防、攻擊間隔、施法間隔、回血回魔、負重、物爆魔爆、閃避、畫面範圍技能、彈藥欄，以及多怪戰鬥、首領大招、自動補給、死亡規則。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -28,7 +28,8 @@
             <tr><td>回血（每 5 秒）</td><td>1 ＋ 等級÷8 ＋ max(0, 體質−12) ＋ 增益；村莊 ×3；負重超過 <span id="wn"></span> 不回</td></tr>
             <tr><td>回魔（每 5 秒）</td><td>1 ＋ 等級÷12 ＋（精神−10）× 職業回魔係數 ＋ 增益；村莊 ×3；負重 <span id="wm"></span> 以上不回</td></tr>
             <tr><td>負重上限</td><td>1200 ＋（力量＋體質）× 80 ＋ 等級 × 20 ＋ 腰帶等裝備</td></tr>
-            <tr><td>爆擊</td><td>5% ＋ 武器 ＋ 增益，爆擊傷害 ×1.5</td></tr>
+            <tr id="crit"><td>物爆率</td><td>5% ＋ 裝備詞綴 ＋ 變身／增益，只影響<b>物理攻擊</b>；物爆傷害 ＝ 150% ＋ 所有「物爆傷害」詞綴相加</td></tr>
+            <tr><td>魔爆率</td><td>0% ＋ 裝備詞綴，只影響<b>魔法傷害</b>（純法術與技能附帶的魔法傷害都算，含畫面範圍、離線、副本）；魔爆傷害 ＝ 150% ＋ 所有「魔爆傷害」詞綴相加。物理段、魔法段各自判定</td></tr>
             <tr><td>閃避</td><td>（敏捷−12）× 1% ＋ 增益，最多 50%</td></tr>
             <tr><td>吸血</td><td>造成傷害 × 吸血比例轉為 HP（物理、魔法都算）</td></tr>
         </tbody></table></div>
@@ -61,15 +62,17 @@
         <li>一次圍上來 1～6 隻，機率權重 <span id="pw"></span>；龍穴 1 隻、永夜之塔最多 3 隻。首領、龍、任務首領單獨出現。</li>
         <li>群越大每隻越弱：HP／經驗／金幣 ÷（1＋0.2×(隻數−1)）、傷害 ÷（1＋0.3×(隻數−1)）。非目標的怪出手慢 ×<span id="ss"></span>。</li>
         <li>戰鬥中每 <span id="jm"></span> 有 <span id="jp"></span> 機率再加入一隻（沒有首領、未滿上限時）。</li>
-        <li>範圍技能打全部圍上來的怪；分散型多發攻擊每發打不同隻。</li>
+        <li>範圍技能打全部圍上來的怪；分散型多發攻擊每發打不同隻（妖精三重矢已改成 3 箭都打同一隻）。</li>
+        <li><b>畫面範圍技能</b>：砲擊、星隕轟擊、<a data-skill="blizzard">冰雪暴</a>、<a data-skill="thunderStorm">雷電風暴</a>、<a data-skill="meteor">流星雨</a>打<b>目前地圖畫面內所有活著的怪</b>，連還沒參戰的也打（受傷沒死的會加入戰鬥），但不打鏡頭外的怪。可以一次拉進超過一般上限的怪。沒有地圖畫面時（離線、副本）只打參戰的怪。</li>
         <li><b>首領大招</b>：首領／龍每 <span id="tc"></span> 蓄力 <span id="tl"></span>，以你當下位置畫半徑 1.5 格紅圈，時間到還在圈內吃 ×<span id="tmul"></span> 重擊。畫面沒開時依設定「首領大招自動閃避」開 60%、關 20% 躲開。</li>
     </ul>
 
     <h2 id="support">自動補給與自動回家</h2>
     <ul>
         <li>快捷欄的道具格往下拉開自動：治癒藥水（HP 低於設定時挑最不浪費的一瓶）、綠水／勇水／藍水（效果沒了就喝）、瞬移卷軸（HP 低於設定時瞬移脫離）。</li>
+        <li><b>彈藥欄</b>：人物裝備的武器右邊有一格消耗品，弓選箭／銀箭、槍選子彈／銀子彈（其他武器不能用）。只會用選定的那種，不再自動換銀彈打不死系。正式掛機時剩 1 發就自動花錢買同種 1000 發（箭 100／銀箭 400／子彈 400／銀子彈 1000 金幣），不用回村；錢不夠就不買，用完照下面的規則回家。</li>
         <li>自動回家：治癒藥水用完、彈藥用完、負重超過設定 → 有回家卷軸就回村；沒有卷軸只提示一次。</li>
-        <li>技能放在快捷欄並開自動才會施放，格子順序＝優先順序。</li>
+        <li>技能放在快捷欄並開自動才會施放，格子順序＝優先順序。快捷欄共 <span id="bn"></span> 格：原本 24 格之外，第一排旁邊的小箭頭可以展開另外 8 格（收起來仍會自動施放）。</li>
     </ul>
 
     <h2 id="death">死亡</h2>
@@ -89,6 +92,7 @@ set('wn', pct(C.WEIGHT_NO_REGEN)); set('wm', pct(C.WEIGHT_NO_MP_REGEN));
 set('hm', '÷' + C.HASTE_MUL); set('bm', '÷' + C.BRAVE_MUL); set('wf', '÷' + C.WAFER_MUL); set('am', sec(C.ATK_MIN_MS));
 set('cb', sec(C.CAST_BASE_MS)); set('cm', sec(C.CAST_MIN_MS)); set('pd', sec(C.POTION_CD_MS));
 set('pw', C.PACK_WEIGHTS.join('／')); set('ss', C.MOB_SIDE_SLOW); set('jm', sec(C.MOB_JOIN_MS)); set('jp', pct(C.MOB_JOIN_P));
+set('bn', C.BAR_N);
 set('tc', C.TELE_CD.map(x => x / 1000).join('～') + ' 秒'); set('tl', sec(C.TELE_MS)); set('tmul', C.TELE_MUL);
 const wts = Object.keys(W.weaponTypes).filter(w => w !== 'fist');
 const ids = Object.keys(W.classes);

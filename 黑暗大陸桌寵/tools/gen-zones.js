@@ -46,7 +46,7 @@ const tower = (W.tower?.floors || []).map((f) => ({ floor: f.floor, lv: f.lv, hp
 
 // 物品／怪物／技能說明視窗（跟攻略網一樣）：攻略 wiki.js「桌寵共用」那段程式＋它用到的攻略資料
 const WIKI_KEYS = ["meta", "consts", "statNames", "catNames", "slots", "weaponTypes", "buffDefs", "skills", "classSkills", "magicTierNames", "items", "sources",
-  "bookDrops", "recipes", "monsters", "zones", "towns", "currency", "resTiers", "resTriggers", "bossEnchants", "bossEnchantText", "dolls", "dollAbilities"];
+  "bookDrops", "recipes", "monsters", "zones", "towns", "currency", "resTiers", "resTriggers", "bossEnchants", "bossEnchantText", "dolls", "dollAbilities", "merc"];
 const wiki = Object.fromEntries(WIKI_KEYS.map((k) => [k, W[k]]));
 wiki.classes = Object.fromEntries(Object.entries(W.classes).map(([id, c]) => [id, { name: c.name, icon: c.icon }]));
 wiki.zones = W.zones.map((z) => ({ id: z.id, name: z.name, icon: z.icon }));

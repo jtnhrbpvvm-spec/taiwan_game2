@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.4.3",
   "shell": 1,
   "files": [
     {
@@ -14,13 +14,13 @@
     },
     {
       "path": "names.json",
-      "sha256": "c035adc026c7db239e27a94456e2608ba4d41f137ec4dfe9e71333348164ecc6",
-      "size": 43124
+      "sha256": "65da78fee31be5108f06f8e9f87d80485364b222a3c3463433c918bcb8f008e1",
+      "size": 49553
     },
     {
       "path": "zones.js",
-      "sha256": "fe7db03e5a8397bcea427e938713797449dca7a3b445a59f2d97ff59d78b89fd",
-      "size": 28316
+      "sha256": "dde33a02a81187bbd58e229c2af9a5d50591bc0b6c8da8a4080c349441d0fab6",
+      "size": 325497
     }
   ]
 }

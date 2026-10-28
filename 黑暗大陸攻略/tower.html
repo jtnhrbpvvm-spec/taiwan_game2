@@ -19,6 +19,7 @@
                 <li>一般樓層：在該層擊殺滿 <b id="fk"></b> 隻，才能上下一層。</li>
                 <li>首領樓層（10、20…）：守關首領活著時那層只出首領，<b>打倒就能上樓</b>。</li>
                 <li>擊殺數會一直累積，離開、下線、死亡都不會歸零。</li>
+                <li><b>自動上樓</b>：塔內操作列（或世界地圖的塔資訊）可選「停留本層」（預設）或「滿額自動上樓」。選自動時，一般層滿 <span class="fk2"></span> 隻、首領層打倒首領後自動上一層繼續掛機，一次只上一層，100F 不再動。離線收益不會換樓層。</li>
             </ul></div>
         <div class="box"><h3 style="margin-top:0">守關首領</h3>
             <ul>
@@ -42,7 +43,7 @@
 <script src="assets/wiki.js"></script>
 <script>
 const T = W.tower;
-$('#fk').textContent = fmt(T.floorKills); $('#rh').textContent = T.respawnH; $('#bm').textContent = '掉率 ' + pct(W.consts.BOSS_MATERIAL_DROP_P);
+$('#fk').textContent = fmt(T.floorKills); $$('.fk2').forEach(e => e.textContent = fmt(T.floorKills)); $('#rh').textContent = T.respawnH; $('#bm').textContent = '掉率 ' + pct(W.consts.BOSS_MATERIAL_DROP_P);
 renderTable($('#floors'), [
     { label: '樓層', html: f => `${f.floor}F` },
     { label: '主題怪', html: f => { const g = Math.min(9, Math.floor((f.floor - 1) / 10)); return `${T.icons[g]} ${T.themes[g].map(esc).join('／')}`; } },
