@@ -42,7 +42,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V43';
+  const VERSION = 'V44';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -77,7 +77,7 @@ javascript:(function awTools() {
     noLimit: true,          /* 物品持有無上限（背包、石板、符文） */
     itemMax: 99999,         /* 背包和符文的新上限；想保留一個上限就改小 */
     slateMax: 999999,       /* 石板的新上限 */
-    stashMax: 2000,         /* 共用倉庫的新上限（遊戲原本 500）；倉庫整個存在瀏覽器一格裡，太大會存不進去 */
+    stashMax: 2000,         /* 共用倉庫的新上限（遊戲原本 500，v0.3.x 起 2000）；倉庫整個存在瀏覽器一格裡，太大會存不進去 */
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
@@ -557,26 +557,33 @@ javascript:(function awTools() {
       let basic = noBasic ? 0 : fixedHit ? M.aps : fist * C * M.dmgMul * M.aps * G0 *
         (has('dance') ? (1 + .05 * mom) * (n('actFromMove') ? 1 + .03 * mom : 1) * (1 + mom * n('momDmg')) : 1);
       const p = M.psnHit;
-      const stackUnit = C * M.dmgMul * G0 * PSN_K * M.psn * (1 + n('psnRate'));
+      /* 中毒：psnR 是中毒傷害加成（psnAs 天賦會依攻速改它），agF 是 dotAg 天賦的暴傷倍率；舊版遊戲沒有這兩個欄位 */
+      const psnR = M.psnR != null ? M.psnR : n('psnRate'), agF = M.agF || 1;
+      const stackUnit = C * M.dmgMul * G0 * agF * PSN_K * M.psn * (1 + psnR);
       let basicStacks = noBasic ? 0 : p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
       const king = fix && U.kingr && acts.filter(g => !SKILLS[g.id].aura).length === 1;
-      /* 召喚物的暴擊：沒有 minCrit 天賦時只吃輔助寶石的暴擊，基礎暴傷 150% */
-      const minCritF = s => 1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm) / 100 - 1);
+      /* 召喚師「軍勢」：每隻召喚物（以全數在場計算）讓所有召喚物傷害 +minArmy */
+      const army = acts.filter(g => g.id === 'summon' || g.id === 'guard').reduce((t, g) => t + (g.id === 'summon' ? MIN.n : GSP.n) + M.minion + gemMods(g).minion, 0);
+      const H = 1 + n('minArmy') * army;
+      /* 召喚物的暴擊：沒有 minCrit 天賦時只吃輔助寶石的暴擊，基礎暴傷 150%；星圖「獸性」另加 minCritC／minCritM */
+      const minCritF = s => 1 + Math.min(95, (n('minCrit') ? M.crit : 0) + s.crit + n('minCritC')) / 100 * (((n('minCrit') ? M.critm : 150) + s.critm + n('minCritM')) / 100 - 1);
+      /* 額外擊中：xhitOn 的技能，hx 輔助的「多重打擊」從 extra 改算到 xhit，每次 ×XH.k */
+      const xk = typeof XH === 'object' && XH ? XH.k : 0;
       let T = 0;
       const rows = [];
       for (const g of acts) {
         const a = SKILLS[g.id], s = gemMods(g);
         if (a.sus) { if (a.sdps) T += a.sdps(M, s) * M.skillMul * critF2(M, s); continue; }
         if (g.id === 'guard') {
-          T += C * M.minMul * GSP.k * (1 + .6 * s.extra) / GSP.atk * M.minRate * (GSP.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * minCritF(s);
+          T += C * M.minMul * GSP.k * (1 + .6 * s.extra) / GSP.atk * M.minRate * (GSP.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * H * minCritF(s);
           continue;
         }
         if (g.id === 'summon') {
-          T += C * M.minMul * MIN.k * (1 + .6 * s.extra) / MIN.atk * M.minRate * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * (1 + n('spell')) * minCritF(s);
+          T += C * M.minMul * MIN.k * (1 + .6 * s.extra) / MIN.atk * M.minRate * (MIN.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * H * (1 + n('spell')) * minCritF(s);
           continue;
         }
         const plain = !s.trig && !n('endb') && !n('oath');
-        let e = s.trig ? Math.max(TRIG.cd * (1 - n('trigCd')), 1 / (1.5 * M.aps * M.crit / 100 + .01))
+        let e = s.trig ? Math.max(TRIG.cd, 1 / (1.5 * M.aps * M.crit / 100 + .01))
           : n('endb') ? uv('endb', 0, U.endb) * acts.filter(t => !SKILLS[t.id].sus).length / M.aps
           : n('oath') ? OATH.cd : a.cd * (1 - s.cd) * (1 - M.cdr / 100);
         if (king && plain) e *= 1 - n('kingCd');
@@ -597,14 +604,21 @@ javascript:(function awTools() {
         const mul = (s.trig && !n('trigFull') ? TRIG.k : 1) * (1 + s.dmg) * (a.tg.includes('proj') ? 1 + n('projDmg') : 1) * (a.tg.includes('spell') ? 1 + n('spell') : 1) *
           HIT_MUL.reduce((t, h) => h.estSk ? t * h.estSk(M, n, a) : t, 1) *
           (king && !a.tg.includes('minion') ? 1 + uv('kingr', 0, U.kingr) / 100 : 1);
-        const unit = C * (a.tg.includes('minion') ? M.minMul : M.skillMul) * critF2(M, s);
+        const mn = a.tg.includes('minion');
+        const unit = C * (mn ? M.minMul * H : M.skillMul) * critF2(M, mn ? Object.assign({}, s, { crit: s.crit + n('minCritC'), critm: s.critm + n('minCritM') }) : s);
+        const xm = 1 + .6 * s.extra + xk * (s.xhit || 0);
         if (fix && r.g.id === 'varrow') {
           const hps = (1 + s.extra) / e, nst = Math.min(M.psnMax + s.pstk, PSN_T * hps);
           skillStacks = Math.max(skillStacks, nst);
-          T += unit * mul * a.hit * ((1 + .6 * s.extra) / e + (1 + .6 * s.extra) / (1 + s.extra) * PSN_K * M.psn * (1 + n('psnRate')) * nst);
+          T += unit * mul * a.hit * (xm / e + xm / (1 + s.extra) * PSN_K * M.psn * (1 + psnR) * agF * nst);
         } else {
-          T += unit * mul * (a.est ? a.est(s, M, e) : a.hit || 0) * (1 + .6 * s.extra) / e;
+          T += unit * mul * (a.est ? a.est(s, M, e) : a.hit || 0) * xm / e;
         }
+      }
+      /* 詛咒連結「厄運」：引爆的傷害（遊戲的 doomEst，自己算詛咒的施放間隔，不受施放動畫排擠） */
+      if (typeof doomEst === 'function') for (const g of acts) {
+        const a = SKILLS[g.id], s = gemMods(g);
+        if (a.crs && s.doom) T += C * M.skillMul * G0 * doomEst(M, s, a);
       }
       if (fix) {
         const k = Math.max(0, 1 - castRate * ATK_LOCK);
@@ -2258,18 +2272,18 @@ javascript:(function awTools() {
         /* 符文上限在程式裡是直接寫數字的（v0.2.555 以前 1e3，之後 5e3），有三種寫法：單獨比較、
          * 加上「這一批要萃取的數量」再比較（批次萃取和它的提示文字）、以及「還剩幾格」的上限減掉目前數量。
          * 石板也一樣（以前 500，之後 5e3）。新舊寫法都認，遊戲再改數字時只要補在這裡。 */
-        [/(S\.runes\.length(?:\+[\w.]+)?)>=(?:1e3|5e3)/g, '$1>=' + N],
-        [/(?:1e3|5e3)-S\.runes\.length/g, N + '-S.runes.length'],
-        [/\$\{S\.runes\.length\}\/(?:5000|1000)/g, '${S.runes.length}/' + N],
+        [/(S\.runes\.length(?:\+[\w.]+)?)>=(?:1e3|5e3|1e4)/g, '$1>=' + N],
+        [/(?:1e3|5e3|1e4)-S\.runes\.length/g, N + '-S.runes.length'],
+        [/\$\{S\.runes\.length\}\/(?:5000|1000|10000)/g, '${S.runes.length}/' + N],
         [/\bSLATE_MAX\b/g, NS],
         [/S\.slates\.length>=(?:5e3|500)\b/g, 'S.slates.length>=' + NS],
         [/\$\{S\.slates\.length\}\/(?:5000|500)\b/g, '${S.slates.length}/' + NS],
-        /* 共用倉庫（v0.2.730 起）：存入的上限 500 直接寫數字，有「目前件數 stCnt()」和「倉庫物件 .it.length」
-         * 兩種寫法，另外還有顯示用的「x/500」和提示文字 */
-        [/(stCnt\(\)(?:\+[\w.]+)?)(>=|<=|>)500\b/g, '$1$2' + NT],
-        [/(\.it\.length(?:\+[\w.]+)?)(>=|<=|>)500\b/g, '$1$2' + NT],
-        [/(\.it\.length\}\/)500\b/g, '$1' + NT],
-        [/上限 500）/g, '上限 ' + NT + '）']
+        /* 共用倉庫（v0.2.730 起）：存入的上限直接寫數字（以前 500，v0.3.x 起 2e3），有「目前件數 stCnt()」和「倉庫物件 .it.length」
+         * 兩種寫法，另外還有顯示用的「x/2000」和提示文字 */
+        [/(stCnt\(\)(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3)\b/g, '$1$2' + NT],
+        [/(\.it\.length(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3)\b/g, '$1$2' + NT],
+        [/(\.it\.length\}\/)(?:500|2000)\b/g, '$1' + NT],
+        [/上限 (?:500|2000)）/g, '上限 ' + NT + '）']
       );
       /* 從倉庫取出時看的是常數物件 ST_CAP（角色身上每類最多幾件），它不是函式改不到原始碼，直接改裡面的數字 */
       try {
@@ -2375,15 +2389,29 @@ javascript:(function awTools() {
 
   const lbMask = () => {
     try {
-      if (!S || !S.lb || !S.tw) return;
-      if (S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
+      if (!S || !S.lb) return;
+      if (S.tw && S.tw.best > (S.lb.sent || 0)) S.lb.sent = S.tw.best;
       S.lb.sn = S.name;
       S.lb.sb = S.tal.asc || '';
       S.lb.ss = 1;
+      /* 遊戲另外比對隱藏設定（hd）和上次上傳時的隱藏設定（sh），不同就會整份重傳 */
+      S.lb.sh = S.lb.hd ? 1 : 0;
+    } catch (e) {}
+    /* 聖域排行榜（scLbSend，上傳神聖值、擊殺數和構築快照）：S.lb.sc 記的是上次上傳的內容，
+     * h 最高神聖值、k 擊殺數、n 名稱、hd 隱藏設定、t 時間；補成目前的數值就等於「已經傳過了」。
+     * S.sc.hs 是創下紀錄當下的構築快照，等著下次上傳，也清掉。
+     * 擋不住的：之後不點書籤時擊殺數變多，遊戲還是會上傳，附帶的最高神聖值是用小工具時打的。 */
+    try {
+      if (!S || !S.lb || !S.sc) return;
+      const o = S.lb.sc || {};
+      S.lb.sc = { h: Math.max(o.h || 0, Math.round(S.sc.hb || 0)), k: Math.max(o.k || 0, Math.round(S.sc.kn || 0)),
+        n: S.name, t: Date.now(), ss: o.ss || 0, hd: S.lb.hd ? 1 : 0 };
+      S.sc.hs = null;
     } catch (e) {}
   };
   if (first) {
     if (typeof window.lbSend === 'function') window.lbSend = () => { lbMask(); };
+    if (typeof window.scLbSend === 'function') window.scLbSend = () => { lbMask(); };
     lbMask();
   }
 
@@ -2833,6 +2861,8 @@ javascript:(function awTools() {
    * 商品的樣子照抄遊戲商人的格式（.ware）。遊戲每次重畫商人頁面都會把格子換掉，所以每隔一下檢查一次，不見了就再加。 */
   const LEG_PRICE = 1000000, SX_PRICE = 1000000;
   if (first && (CFG.legShop || CFG.sxShop)) {
+    /* 這個職業能掉的傳說寶石：遊戲的 legIds()（v0.3.133 起有不限職業的火焰龍捲風，沒有 cls） */
+    const legPool = () => typeof legIds === 'function' ? legIds() : Object.keys(SKILLS).filter(k => SKILLS[k].leg && (!SKILLS[k].cls || SKILLS[k].cls === S.cls));
     const exWare = (id, sx) => {
       /* 商人格子是淺色底，字要用深一點的顏色：外框用亮色，文字用同色系的深色 */
       const sk = SKILLS[id], price = sx ? SX_PRICE : LEG_PRICE, ok = S.ash >= price, col = sx ? '#8a9ab8' : '#e8b030', txt = sx ? '#3a4a6a' : '#9a6400';
@@ -2856,7 +2886,7 @@ javascript:(function awTools() {
       if (b.disabled) return;
       const id = b.dataset.id, sx = b.dataset.sx === '1';
       if (typeof SKILLS === 'undefined' || !SKILLS[id]) return;
-      if (sx ? !CFG.sxShop || !sxPool(S.cls).includes(id) : !CFG.legShop || !SKILLS[id].leg || SKILLS[id].cls !== S.cls) return;
+      if (sx ? !CFG.sxShop || !sxPool(S.cls).includes(id) : !CFG.legShop || !legPool().includes(id)) return;
       openShopMut(id, sx ? SX_PRICE : LEG_PRICE, sx);
     }, true);
     setInterval(() => {
@@ -2866,7 +2896,7 @@ javascript:(function awTools() {
         const grid = document.querySelector('#panel .shopG');
         if (!grid) return;
         let list = [];
-        if (v === 'act' && CFG.legShop) list = Object.keys(SKILLS).filter(k => SKILLS[k].leg && SKILLS[k].cls === S.cls).map(k => [k, false]);
+        if (v === 'act' && CFG.legShop) list = legPool().map(k => [k, false]);
         if (v === 'sup' && CFG.sxShop && typeof sxPool === 'function') list = sxPool(S.cls).filter(k => SKILLS[k]).map(k => [k, true]);
         const sig = v + '|' + list.map(([k, sx]) => k + ':' + S.gems.filter(g => g.id === k && !g.sx === !sx).length).join(',') + '|' + (S.ash >= LEG_PRICE ? 1 : 0) + (S.ash >= SX_PRICE ? 1 : 0);
         if (grid.dataset.awEx === sig && (!list.length || grid.querySelector('.awExWare'))) return;
@@ -2956,7 +2986,7 @@ javascript:(function awTools() {
         const upP = a.t >= 1 ? (mir && lv === 4 ? 100 : XTR.up[lv] || 0) : 0;
         const uqP = uqHas ? (mir ? 100 : XTR.uq[lv] || 0) : 0;
         const getP = ok * (1 - uqP / 100);
-        const runesFull = S.runes.length >= Math.max(5000, (CFG.noLimit ? CFG.itemMax : 0));
+        const runesFull = S.runes.length >= Math.max(10000,(CFG.noLimit ? CFG.itemMax : 0));
         box.innerHTML =
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:15px">指定萃取</b><span style="flex:1"></span><button data-a="close" style="' + AW_BTN + '">關閉</button></div>' +
           '<div style="background:#1a1410;padding:6px 8px;border-radius:4px">' + escH(itemName(t)) + '<br><b style="color:#7dffc8">T' + a.t + '　' + escH(afText(a)) + '</b></div>' +
@@ -3617,7 +3647,8 @@ javascript:(function awTools() {
       const t = html.indexOf('class="row tools"');
       return insertAt(html, t < 0 ? -1 : html.indexOf('</div>', t), btnHtml([['awBtnItems', '物品管理', openItems]], ''));
     });
-    try { ui.render(); } catch (e) {}
+    /* 還沒進角色（S 是 null）時遊戲的畫面會出錯（v0.3.94 起遊戲自己接住並在主控台印錯誤），不用重畫 */
+    try { if (typeof S !== 'undefined' && S) ui.render(); } catch (e) {}
     /* 按鈕要掛在哪裡：分頁有標題（h2）就掛在標題旁；
      * v0.2.458 之後「地圖」和「選單」分頁沒有標題了，就在分頁最上面自己放一列（awBar）來裝按鈕 */
     const barOf = panel => {
