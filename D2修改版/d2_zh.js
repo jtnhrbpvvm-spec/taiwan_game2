@@ -695,7 +695,7 @@ return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '停用修改�
 d2edEl('p', { class: 'd2ed-note' }, '隱藏修改功能，書籤不再強制關閉排行榜上傳。要恢復上傳，請到營地儲物箱旁的排行榜書自行開啟「傳送我的紀錄」（改過的存檔仍可能被排行榜拒收）。'),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: relock }, '停用修改功能')));
 }
-// ====== 效能模式 ======
+// ====== 低效能模式 ======
 // 遊戲每格都用 devicePixelRatio 決定畫面解析度（build 20261026：render scale 的 tick），把它壓到 0.5 就改用低解析度渲染，最省顯示卡。
 // 另外把遊戲「影像選項 → 技能特效」（localStorage d2s:skill-effects，0～1）調到 0；遊戲只在開頁時讀一次，重新載入後才生效。
 const D2ED_PERF_KEY = 'd2zh:perf';
@@ -712,7 +712,7 @@ try {
 if (d2edPerfOn()) Object.defineProperty(window, 'devicePixelRatio', { configurable: true, enumerable: true, get: () => D2ED_PERF_DPR, set() {} });
 else if (D2ED_DPR_DESC) Object.defineProperty(window, 'devicePixelRatio', D2ED_DPR_DESC);
 else delete window.devicePixelRatio;   // 原本在 Window.prototype 上：刪掉自己蓋的就會回到原本的值
-} catch (e) { console.warn('[D2 中文] 效能模式', e); }
+} catch (e) { console.warn('[D2 中文] 低效能模式', e); }
 }
 function d2edPerfSet(on) {
 try {
@@ -732,11 +732,11 @@ d2edPerfApplyDpr();
 }
 function d2edPerfSection() {
 const on = d2edPerfOn();
-const toggle = () => { d2edPerfSet(!on); d2edRender(); d2edToast(on ? '效能模式已關閉' : '效能模式已開啟'); };
-return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '效能模式'),
+const toggle = () => { d2edPerfSet(!on); d2edRender(); d2edToast(on ? '低效能模式已關閉' : '低效能模式已開啟'); };
+return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '低效能模式'),
 d2edEl('p', { class: 'd2ed-note' }, '電腦或手機跑不動時開啟：畫面改用低解析度（會比較模糊），技能特效調到最淡。'),
 d2edEl('p', { class: 'd2ed-note' }, '解析度馬上生效；技能特效要重新載入遊戲後才會變淡（也可以在 選項 → 影像選項 → 技能特效 自己調）。'),
-d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉效能模式' : '開啟效能模式'),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉低效能模式' : '開啟低效能模式'),
 d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
 }
 // ====== 碎片感應 ======
@@ -800,10 +800,13 @@ d2edRender();
 }
 // ====== 中文化更新說明 ======
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
-// 新版本加在最前面。note：作者的話（照原本分行顯示）；report：最後加「問題回報」按鈕。
+// 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
-{ ver: 'V23', date: '2026-10-28', game: '遊戲 20261027.4', items: [
-'技能選單改成四排（主動兩排在上、被動兩排在下），手機開著技能樹選技能時不會再擋住技能樹；直向小螢幕放不下時會自動縮小或改成兩排'] },
+{ ver: 'V23', date: '2026-10-28', game: '遊戲 20261027.4', note: [
+'有收到玩家回報玩到一半閃退的問題\n請至 選項 → 書籤修改 → 開啟低效能模式\n開啟低效能模式後，可以大幅降低顯示動畫，或許可以緩解'], perf: true, items: [
+'技能選單改成四排（主動兩排在上、被動兩排在下），手機開著技能樹選技能時不會再擋住技能樹；直向小螢幕放不下時會自動縮小或改成兩排',
+'開寶箱拿到「+1 技能」時的「第幾次（最多 3 次）」翻譯',
+'「效能模式」改名為「低效能模式」'] },
 { ver: 'V22', date: '2026-10-28', game: '遊戲 20261027.4', note: [
 '發現許多人有在分享書籤\n歡迎大家任意使用\n不過『嚴禁』收費歐！',
 '也請不要直接複製文字到你的網站中\n畢竟書籤設置有點小複雜\n只有文字實在不好理解\n如果你能提供更好的教學讓玩家快速上手沒關係\n不然我連結中有影片可以觀看',
@@ -836,7 +839,7 @@ const D2ZH_NEWS = [
 '快速施法率的總和、上限和超過上限的說明，裝備擊殺觸發技能的冷卻時間',
 '升級選技能時的進化條件改成通順的一句（例如「進化為刺爆：滿級 1/8、閃避、等級 24」）'] },
 { ver: 'V14', date: '2026-10-26', game: '遊戲 20261026.2', items: [
-'新增「效能模式」（選項 → 書籤修改）：開啟後畫面改用低解析度、技能特效調到最淡，電腦或手機跑不動時使用',
+'新增「低效能模式」（選項 → 書籤修改）：開啟後畫面改用低解析度、技能特效調到最淡，電腦或手機跑不動時使用',
 '恐懼層九波怪物、跳層開放、波數顯示，以及恐懼層重新開始的說明',
 '隱藏任務「破碎之光」的碎片文字、泰瑞爾之翼和泰瑞爾的台詞',
 '物品過濾的「保留」、獨特物品收藏標示、屬性範圍（STAT RANGES）、儲物箱搜尋',
@@ -871,6 +874,15 @@ const D2ZH_NEWS = [
 ];
 const D2ZH_NEWS_KEY = 'd2zh:newsSeen';
 const d2zhVerNum = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
+// 更新說明裡的「開啟低效能模式」：按下直接開啟（解析度馬上變低；技能特效要重新載入才變淡），已開啟就只顯示狀態
+function d2zhNewsPerfButton() {
+const note = d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' });
+const btn = d2edEl('button', { type: 'button', class: 'd2ed-main' }, '開啟低效能模式');
+const shown = () => { btn.disabled = true; btn.className = ''; btn.textContent = '低效能模式已開啟'; note.textContent = '技能特效重新載入遊戲後才會變淡'; };
+btn.onclick = () => { d2edPerfSet(true); if (d2edPerfOn()) shown(); };
+if (d2edPerfOn()) shown();
+return d2edEl('div', { class: 'd2ed-row' }, btn, note);
+}
 function d2zhNewsOpen(all) {
 if (D2ED.panel || document.getElementById('d2ed-overlay')) return;
 let seen = 0;
@@ -888,6 +900,7 @@ d2edEl('div', { class: 'd2ed-body' },
 ...list.map(n => d2edEl('section', { class: 'd2ed-sec' },
 d2edEl('h3', {}, `${n.ver}　${n.date}`), d2edEl('p', { class: 'd2ed-note' }, `對應${n.game}`),
 ...(n.note || []).map(t => d2edEl('p', { style: 'margin: 6px 0; white-space: pre-line; line-height: 1.6;' }, t)),
+n.perf ? d2zhNewsPerfButton() : null,
 d2edEl('ul', { style: 'margin: 4px 0 8px; padding-left: 20px;' }, ...n.items.map(t => d2edEl('li', {}, t))),
 n.report ? d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: d2zhReportOpen }, '問題回報')) : null)),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: close }, '知道了')))));
@@ -1969,7 +1982,7 @@ text: {
 'Strikes the toughest monster in reach with a heavy blow for # damage, sweeping #% through the monsters beside it. Each blow costs #% of your life, none below #%.': '對攻擊範圍內最強的怪物重擊，造成 {0} 傷害，並對旁邊的怪物橫掃 {1}%。每擊消耗 {2}% 生命，低於 {3}% 時不消耗。', 'A chest now evolves * into *': '現在寶箱會把{0}進化為{1}', 'A chest now evolves it into *': '現在寶箱會把它進化為{0}',
 'All your * go up one level, even past their maximum': '所有{0}的等級 +1，可以超過等級上限',
 // 技能樹 +1 卡片的副標（這一系最多加 3 次）
-'# of 3': '第 {0} 次（最多 3 次）', 'Tap another option to switch to it, or the one on to turn it off': '點一下其他選項切換過去，點已開啟的選項則關閉', 'Click another option to switch to it, or the one on to turn it off': '點擊其他選項切換過去，點已開啟的選項則關閉', 'No points are free. Turn off another skill\'s option to free one.': '沒有可用點數。關掉其他技能的改造來空出一點。', '* every * seconds': '每 {1} 秒{0}',
+'# of 3': '第 {0} 次（最多 3 次）', '+# to * # of 3': '+{0} {1}（第 {2} 次，最多 3 次）', 'Tapanother option to switch to it, or the one on to turn it off': '點一下其他選項切換過去，點已開啟的選項則關閉', 'Click another option to switch to it, or the one on to turn it off': '點擊其他選項切換過去，點已開啟的選項則關閉', 'No points are free. Turn off another skill\'s option to free one.': '沒有可用點數。關掉其他技能的改造來空出一點。', '* every * seconds': '每 {1} 秒{0}',
 '#% chance of a critical strike, which deals double damage': '{0}% 機率致命一擊，造成雙倍傷害', 'Each skill\'s hit, and its damage a second:': '每個技能的單次傷害和每秒傷害：', 'It casts 1.7 times as often, but each ring deals 55% of its damage.': '施放頻率 1.7 倍，但每圈只造成 55% 的傷害。', 'Only physical hits are reduced': '只減少物理攻擊', 'Raises the cast rate cap by the same amount': '施法速度上限也提高同樣的量',
 'Adds to all four, up to his maximum': '四種抗性都加，最多到他的上限', 'Raises his own Defense, not his gear\'s': '提高傭兵本身的防禦，不含裝備', 'Only a fifth of it works on an immune monster': '對免疫的怪物只有五分之一的效果', 'Your level-* * starts over at level 1. A copy of her is kept at Akara.': '你等級 {0} 的{1}從等級 1 重新開始。阿卡拉會保留她的一份副本。', 'Its gift is already yours, so it does nothing': '這份獎勵你已經拿過了，所以沒有作用',
 'Cain didn\'t give you this one, so it does nothing': '這不是凱恩給你的，所以沒有作用', 'Open the character screen (C) in a run or the camp to read it': '在遊戲中或營地開啟角色畫面（C）來閱讀', 'This ends your saved run. Click again': '這會結束你已儲存的這一輪。再點擊一次', 'This ends your saved run. Tap again': '這會結束你已儲存的這一輪。再點一下', 'This counts as a death. Click again': '這會算作死亡。再點擊一次', 'This counts as a death. Tap again': '這會算作死亡。再點一下',
