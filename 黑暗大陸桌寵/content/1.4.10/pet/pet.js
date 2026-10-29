@@ -332,14 +332,22 @@ function hideSpeech() {
   speech.classList.remove("on");
 }
 
-// 節約效能模式：每秒畫 12 次就好（人物圖一格本來就 50～150 毫秒），不用跟著螢幕每秒 60 次
+// 節約效能模式：每秒畫 12 次就好（人物圖一格本來就 50～150 毫秒），不用每秒 60 次
 const POWER_SAVE_FRAME_MS = 83;
 let powerSave = false;
 window.petApi.onPowerSave((on) => (powerSave = !!on));
 const nextFrame = () => (powerSave ? setTimeout(() => frame(performance.now()), POWER_SAVE_FRAME_MS) : requestAnimationFrame(frame));
 
+// 一般模式每秒最多畫 60 次：高更新率螢幕（144Hz 等）上不用跟著每秒畫 144 次。照固定節拍往後排，落後太多就從現在重新算
+const FRAME_MS = 1000 / 60;
+let nextAt = -Infinity;
+
 let lastTime = performance.now();
 function frame(now) {
+  if (!powerSave) {
+    if (now < nextAt - 1) return requestAnimationFrame(frame);
+    nextAt = now - nextAt > FRAME_MS ? now + FRAME_MS : nextAt + FRAME_MS;
+  }
   const dt = Math.min(powerSave ? 200 : 100, now - lastTime);
   lastTime = now;
   for (const p of pets) {

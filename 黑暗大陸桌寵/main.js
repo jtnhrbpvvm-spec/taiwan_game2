@@ -72,7 +72,9 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   // 一般模式下桌寵頭上要飄哪些字
   normalShow: { exp: true, loot: true },
   // gameWindows[i]＝第 i 隻的遊戲視窗上次怎麼開：keepTaskbar（右鍵「保持狀態列」）、x／y（叫出來時的位置）。下次打開桌寵照上次的
-  gameWindows: [] };
+  gameWindows: [],
+  // 右鍵選單的「回報效能異常」打開了沒（操作說明標題連點 20 下，見 ui/help.js）
+  reportUnlocked: false };
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -606,7 +608,8 @@ function openPanel(current, file, options) {
 }
 
 function openHelp() {
-  helpWin = openPanel(helpWin, "help.html", { width: 480, height: 620, title: "黑暗大陸桌寵・操作說明" });
+  helpWin = openPanel(helpWin, "help.html", { width: 480, height: 620, title: "黑暗大陸桌寵・操作說明",
+    webPreferences: { preload: path.join(__dirname, "help-preload.js") } });
 }
 
 function openAccounts() {
@@ -845,7 +848,8 @@ function buildMenu(petIndex = 0) {
           click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) }]
       : []),
     { label: many ? `重新載入第 ${petIndex + 1} 隻的遊戲` : "重新載入遊戲", click: () => g && loadGame(g) },
-    { label: "回報效能異常（CPU 偏高）…", click: reportPerformance },
+    // 平常藏起來，操作說明的標題連點 20 下才出現（見 ui/help.js）
+    ...(settings.reportUnlocked ? [{ label: "回報效能異常（CPU 偏高）…", click: reportPerformance }] : []),
     { label: "操作說明", click: openHelp },
     updates.checkItem(),
     { type: "separator" },
@@ -1143,6 +1147,13 @@ ipcMain.handle("income:get", () => ({
 
 const diagnosticsContext = () => ({ games, petWin, settings, clickThrough });
 const reportPerformance = () => diagnostics.start(diagnosticsContext(), (text) => petWin?.webContents.send("pet:notice", 0, text));
+
+// 選單項目平常藏起來（玩家用不到），開發者請玩家回報時才叫他打開：操作說明的標題連點 20 下。說明裡不寫
+ipcMain.on("help:unlock", () => {
+  settings.reportUnlocked = true;
+  saveSettings();
+  petWin?.webContents.send("pet:notice", 0, "右鍵選單已經多出「回報效能異常」");
+});
 
 // ── 啟動 ──────────────────────────────────────────────────
 

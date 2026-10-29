@@ -118,6 +118,8 @@ async function run(t) {
       && perfGame.framesPerSec > 0 && perfGame.callbacksPerSec >= perfGame.framesPerSec && perf.system.cores > 0 && perf.pet.rafFps > 0,
       JSON.stringify({ summary: perf.summary, game: { fps: perfGame.framesPerSec, cb: perfGame.callbacksPerSec, timer: perfGame.timerFramesPerSec }, pet: perf.pet.rafFps }));
     check("效能報告：不含帳號、Email、密碼", !/@|passEnc|password/i.test(JSON.stringify(perf)));
+    // 高更新率螢幕上也不超過每秒 60 格（這台電腦是 60Hz 的話只能確認沒超過）
+    check("遊戲畫面每秒最多 60 格", perfGame.framesPerSec <= 62 && perfGame.framesPerSec >= 40, `${perfGame.framesPerSec} 格／秒（螢幕 ${perf.system.displays.map((d) => d.hz).join("、")}Hz）`);
     console.log(`       ${t.diagnostics.describe(perf).replace(/\n+/g, "／")}`);
 
     // ── 收入總覽 ──
@@ -380,6 +382,17 @@ async function run(t) {
     t.openHelp();
     await sleep(1000);
     await shot(t.getHelp(), "help");
+    // 回報效能異常平常藏起來，說明的標題連點 20 下才出現（點 19 下不算）
+    const hasReport = () => t.buildMenu(0).items.some((i) => i.label?.startsWith("回報效能異常"));
+    const hiddenBefore = !hasReport();
+    const tap = (n) => t.getHelp().webContents.executeJavaScript(`for (let i = 0; i < ${n}; i++) document.querySelector("h1").click()`);
+    await tap(19);
+    await sleep(300);
+    const after19 = hasReport();
+    await sleep(1700); // 間隔太久重新數
+    await tap(20);
+    await sleep(300);
+    check("回報效能異常：平常藏起來、說明標題連點 20 下才出現", hiddenBefore && !after19 && hasReport() && t.settings().reportUnlocked === true, `${hiddenBefore}／${after19}／${hasReport()}`);
     t.getHelp().close();
   } catch (e) {
     const where = await t.inGame(g0, `[document.querySelector(".screen.active")?.id, document.getElementById("dialog-layer")?.innerText?.slice(0, 200)].join(" | ")`);
