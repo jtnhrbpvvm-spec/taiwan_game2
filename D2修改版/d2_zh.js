@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V32';
+const D2ZH_VERSION = 'V33';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -304,7 +304,7 @@ for (const r of records) for (const node of r.addedNodes) d2zhMergeAll(node);
 }).observe(document.body, { subtree: true, childList: true });
 for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) d2zhAdopt(c);
 }
-const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null };
+const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), changed: new WeakMap(), kept: new WeakSet(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null };
 const D2ED_SAVE_KEY = 'd2-survivors/save/v1';
 const D2ED_ELEMENTS = ['fire', 'cold', 'lightning', 'poison', 'magic'];
 const D2ED_LIFE_PER_VIT = { amazon: 6, assassin: 6, barbarian: 8, druid: 4, necromancer: 4, paladin: 6, sorceress: 4 };
@@ -378,14 +378,67 @@ const added = D2ED.added.get(p) || {};
 added[attr] = (added[attr] || 0) + 5 * n;
 D2ED.added.set(p, added);
 }
+// ====== 記住本局人物的修改 ======
+// 本局人物的修改只改遊戲記憶體裡的人物，換一局、儲存並離開再繼續、重新開遊戲都會回到原本的數值。
+// 勾選「記住」後，修改過的欄位（絕對值）和屬性加減點數存在 localStorage，之後每抓到新的人物就自動套用一次。
+const D2ED_KEEP_KEY = 'd2zh:runKeep';
+const D2ED_KEEP_SKIP = new Set(['life']);   // 目前生命每局不同，不記
+function d2edKeepRead() {
+try { const v = JSON.parse(localStorage.getItem(D2ED_KEEP_KEY)); return v && typeof v === 'object' ? { fields: v.fields || {}, attrs: v.attrs || {} } : null; } catch (_) { return null; }
+}
+function d2edKeepWrite(keep) {
+try { keep ? localStorage.setItem(D2ED_KEEP_KEY, JSON.stringify(keep)) : localStorage.removeItem(D2ED_KEEP_KEY); } catch (e) { alert('無法儲存設定：' + e); }
+}
+// 這個人物用書籤改過的欄位（path → 值），勾選「記住」時一起存起來
+function d2edChanged(p) {
+let c = D2ED.changed.get(p);
+if (!c) D2ED.changed.set(p, c = {});
+return c;
+}
+function d2edKeepApply(p) {
+const keep = d2edKeepRead();
+if (!keep || D2ED.player !== p || D2ED.kept.has(p) || !d2edUnlocked() || !d2edInRun()) return;
+D2ED.kept.add(p);
+for (const [path] of D2ED_FIELDS) {
+const v = keep.fields[path];
+if (typeof v === 'number' && Number.isFinite(v)) { d2edSet(path, v); d2edChanged(p)[path] = v; }
+}
+if (typeof keep.fields.maxLife === 'number') p.life = p.maxLife;
+for (const [attr, points] of Object.entries(keep.attrs)) {
+const n = Math.trunc(points / 5);
+if (n && ['strength', 'dexterity', 'vitality', 'energy'].includes(attr)) d2edAttribute(attr, n);
+}
+if (D2ED.panel) d2edRender();
+}
+// 遊戲建立新人物後還會照裝備、等級重算數值，等一下再套用
+function d2edKeepSchedule(p) {
+if (D2ED.kept.has(p)) return;
+setTimeout(() => d2edKeepApply(p), 1500);
+}
 function d2edReadSave() {
 try { return JSON.parse(localStorage.getItem(D2ED_SAVE_KEY) || '{}') || {}; } catch (_) { return {}; }
+}
+// 重抽、略過、放逐、復活的次數是開局時照恰西等級給的，存在每個職業「進行中那一局」的存檔（heroes.職業.run）裡，
+// 繼續那一局時遊戲直接讀回舊次數，在主選單改恰西不會反映（玩家回報：儲存並離開再繼續就改不動，刪存檔才正常）。
+// 所以改這四項時，把等級的差值也加到每一局的存檔裡（遊戲上限 99）。
+const D2ED_RUN_COUNTS = [['rerolls', 'build'], ['skips', 'build'], ['banishes', 'build'], ['resurrect', 'hero', 'revives']];
+function d2edSyncRunCounts(save, oldRanks, newRanks) {
+for (const hero of Object.values(save.heroes || {})) {
+const run = hero && hero.run;
+if (!run || typeof run !== 'object') continue;
+for (const [rank, part, field = rank] of D2ED_RUN_COUNTS) {
+const box = run[part], diff = (newRanks[rank] || 0) - (oldRanks[rank] || 0);
+if (!diff || !box || typeof box[field] !== 'number') continue;
+box[field] = Math.max(0, Math.min(99, box[field] + diff));
+}
+}
 }
 function d2edWriteSaveAndReload(gold, ranks) {
 const write = () => {
 const save = d2edReadSave();
 save.gold = gold;
 save.ranks = save.ranks || {};
+d2edSyncRunCounts(save, save.ranks, ranks);
 const extra = { ...(save.extraRanks || {}) };
 for (const [k, max] of D2ED_RANKS.map(r => [r[0], r[2]])) {
 if (!(k in ranks)) continue;
@@ -481,10 +534,17 @@ return box;
 }
 const p = D2ED.player;
 const added = D2ED.added.get(p) || {};
+// 勾了「記住」：每次修改後把這個人物目前的修改存起來
+const remember = () => {
+if (!d2edKeepRead()) return;
+const fields = {};
+for (const [path, v] of Object.entries(d2edChanged(p))) if (!D2ED_KEEP_SKIP.has(path)) fields[path] = v;
+d2edKeepWrite({ fields, attrs: { ...(D2ED.added.get(p) || {}) } });
+};
 const attrs = d2edEl('div', { class: 'd2ed-attrs' });
 for (const [k, name] of [['strength', '力量'], ['dexterity', '敏捷'], ['vitality', '體力'], ['energy', '精力']]) {
 const count = d2edEl('span', { class: 'd2ed-count' }, added[k] ? (added[k] > 0 ? '+' : '') + added[k] : '0');
-const btn = (label, n) => d2edEl('button', { type: 'button', onclick: () => { d2edAttribute(k, n); d2edRender(); } }, label);
+const btn = (label, n) => d2edEl('button', { type: 'button', onclick: () => { d2edAttribute(k, n); remember(); d2edRender(); } }, label);
 attrs.append(d2edEl('div', { class: 'd2ed-attr' }, d2edEl('b', {}, name), btn('－5', -1), count, btn('＋5', 1)));
 }
 box.append(d2edEl('p', { class: 'd2ed-note' }, '屬性加減效果跟升級時選屬性一樣（中間是這次用書籤加減的點數）。'), attrs);
@@ -492,6 +552,7 @@ const grid = d2edEl('div', { class: 'd2ed-grid' });
 const inputs = [];
 for (const [path, name, hint, digits] of D2ED_FIELDS) {
 const input = d2edEl('input', { type: 'number', step: digits ? String(1 / 10 ** digits) : '1', value: d2edRound(d2edGet(path), digits) });
+input.dataset.shown = input.value;   // 顯示的是四捨五入的值：沒動過的欄位不要拿它蓋回去
 inputs.push([path, input]);
 grid.append(d2edEl('label', {}, d2edEl('span', {}, name, hint ? d2edEl('small', {}, hint) : ''), input));
 }
@@ -499,17 +560,31 @@ const apply = () => {
 let n = 0;
 for (const [path, input] of inputs) {
 const v = Number(input.value);
-if (input.value === '' || !Number.isFinite(v)) continue;
-if (Math.abs(v - d2edGet(path)) > 1e-9) { d2edSet(path, v); n++; }
+if (input.value === '' || !Number.isFinite(v) || input.value === input.dataset.shown) continue;
+if (Math.abs(v - d2edGet(path)) > 1e-9) { d2edSet(path, v); d2edChanged(p)[path] = v; n++; }
 }
 if (p.life > p.maxLife) p.life = p.maxLife;
+remember();
 d2edRender();
 d2edToast(n ? `已套用 ${n} 項` : '沒有變更');
 };
+const keep = d2edKeepRead();
+const keepBox = d2edEl('input', { type: 'checkbox' });
+keepBox.checked = !!keep;
+keepBox.addEventListener('change', () => {
+if (keepBox.checked) { d2edKeepWrite({ fields: {}, attrs: {} }); remember(); D2ED.kept.add(p); }
+else d2edKeepWrite(null);
+d2edRender();
+d2edToast(keepBox.checked ? '已記住目前的修改' : '已取消記住');
+});
+const keepCount = keep ? Object.keys(keep.fields).length + Object.values(keep.attrs).filter(Boolean).length : 0;
 box.append(grid, d2edEl('div', { class: 'd2ed-row' },
 d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: apply }, '套用'),
 d2edEl('button', { type: 'button', onclick: () => { p.life = p.maxLife; d2edRender(); d2edToast('生命已補滿'); } }, '生命補滿')),
-d2edEl('p', { class: 'd2ed-note' }, '只對這一局有效：「儲存並離開」後再繼續，會回到原本的數值。'));
+d2edEl('label', { class: 'd2ed-keep' }, keepBox, '記住這些修改，下次開遊戲、換一局或繼續存檔時自動套用'),
+d2edEl('p', { class: 'd2ed-note' }, keep
+? `已記住 ${keepCount} 項（每個職業都會套用；之後的修改也會一起記住）。取消勾選就不再自動套用。`
+: '沒勾選時只對這一局有效：「儲存並離開」後再繼續，會回到原本的數值。'));
 return box;
 }
 function d2edSaveSection() {
@@ -863,6 +938,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V33', date: '2026-10-29', game: '遊戲 20261029.1', items: [
+'修正：在主選單改恰西的重抽、略過、放逐、復活次數後，「儲存並離開」過的那一局繼續時次數沒變（以前要刪存檔才會生效）。現在儲存時會一起改到每個職業進行中的那一局',
+'書籤修改的「本局人物」新增「記住這些修改」勾選框：勾選後改過的數值和屬性點會記在瀏覽器裡，下次開遊戲、換一局或繼續存檔時自動套用（每個職業都適用），取消勾選就停止',
+'修正：按「套用」時，沒改過的欄位（例如每秒恢復生命 1.25 顯示成 1.3）也會被四捨五入後的數字蓋掉',
+'配合遊戲更新：角色畫面金幣說明「恰西保管的金幣；在一局中也包含這局目前撿到的金幣」；舊版選角畫面野蠻人介紹的翻譯修正'] },
 { ver: 'V32', date: '2026-10-29', game: '遊戲 20261028.2', items: [
 '角色畫面快速施法率說明：超過上限那行改成「其中 +43% 超過上限，目前已達 60% 上限」，直接標出目前的上限（已含恰西等級）'] },
 { ver: 'V31', date: '2026-10-29', game: '遊戲 20261028.2', items: [
@@ -1012,6 +1092,7 @@ const rawGet = WeakMap.prototype.get;
 WeakMap.prototype.get = function (key) {
 const v = rawGet.call(this, key);
 if (v && key && typeof key === 'object' && key.mastery && key.cls && key.weaponDamage !== undefined && typeof v.crit === 'number') {
+if (D2ED.player !== key) d2edKeepSchedule(key);
 D2ED.player = key;
 D2ED.extras = v;
 }
@@ -1045,6 +1126,8 @@ background: linear-gradient(180deg, #221a12, #120d08); border: 2px solid #8f743e
 #d2ed-overlay .d2ed-body { overflow: auto; padding: 4px 14px 14px; }
 #d2ed-overlay h3 { margin: 12px 0 4px; color: #c7a45f; font-size: 16px; }
 #d2ed-overlay .d2ed-note { margin: 4px 0; color: #a39a82; font-size: 12px; }
+#d2ed-overlay .d2ed-keep { display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin: 8px 0 0; color: #e8dcc0; font-size: 13px; cursor: pointer; }
+#d2ed-overlay .d2ed-keep input { flex: none; width: 16px; height: 16px; margin: 0; padding: 0; accent-color: #c7a45f; cursor: pointer; }
 #d2ed-overlay .d2ed-attrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px; margin: 6px 0; }
 #d2ed-overlay .d2ed-attr { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba(0,0,0,.35); border: 1px solid #2e2216; border-radius: 6px; }
 #d2ed-overlay .d2ed-attr b { flex: 1; color: #f3e3b0; }
@@ -1115,6 +1198,8 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 字典裡有這句，但會先被「* of *」規則搶走翻成「第…筆，共…筆」（?campfire 舊版選角畫面的野蠻人介紹）
+'He is unequaled in close-quarters combat and mastery of weapons.': '他在近身肉搏與武器運用上無人能及。',
 // 20261027.1：物品過濾、腰帶、存檔代碼版本、技能冷卻與命中次數、護身符、阿卡拉重新開始
 'BETTER ONLY': '只撿更好的', 'Picks up a copy that rolls higher than yours on any stat, and sells the rest': '任何一項數值比你收藏的那件高就撿起來，其餘的賣掉',
 'A potion picked up at full life goes into the belt; below it, it\'s drunk at once': '生命全滿時撿到的藥水會放進腰帶；生命沒滿時會立刻喝掉',
@@ -2459,6 +2544,7 @@ const labels = {
 'Life now, and its maximum': '目前生命值與生命上限',
 'Life regained every second': '每秒恢復的生命值',
 'Gold banked for Charsi': '恰西保管的金幣',
+'Gold banked for Charsi, and in a run the gold found so far': '恰西保管的金幣；在一局中也包含這局目前撿到的金幣',
 'At most 75%, more with +% to Maximum Resist': '最高 75%；提高抗性上限可再增加',
 'Blocking with a shield goes by it too': '使用盾牌格擋時也會套用',
 'A level past a skill\'s maximum still adds to it, as in D2': '技能超過最高等級後仍會繼續增加效果，如同 D2',
