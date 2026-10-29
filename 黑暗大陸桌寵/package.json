@@ -35,6 +35,7 @@
       "accounts.js",
       "updates.js",
       "income.js",
+      "diagnostics.js",
       "selftest.js",
       "names.json",
       "zones.js",

@@ -111,6 +111,15 @@ async function run(t) {
     console.log(`       CPU 一般：${cpuOff}`);
     console.log(`       CPU 節約效能：${cpuOn}`);
 
+    // ── 回報效能異常（只收集、不上傳）──
+    const perf = await t.diagnostics.collect(t.diagnosticsContext(), 4000);
+    const perfGame = perf.games[0];
+    check("效能報告：讀到各程序 CPU、遊戲畫面格數、電腦規格", perf.processes.some((p) => p.name === "第 1 隻的遊戲") && perf.processes.some((p) => p.name === "桌寵畫面")
+      && perfGame.framesPerSec > 0 && perfGame.callbacksPerSec >= perfGame.framesPerSec && perf.system.cores > 0 && perf.pet.rafFps > 0,
+      JSON.stringify({ summary: perf.summary, game: { fps: perfGame.framesPerSec, cb: perfGame.callbacksPerSec, timer: perfGame.timerFramesPerSec }, pet: perf.pet.rafFps }));
+    check("效能報告：不含帳號、Email、密碼", !/@|passEnc|password/i.test(JSON.stringify(perf)));
+    console.log(`       ${t.diagnostics.describe(perf).replace(/\n+/g, "／")}`);
+
     // ── 收入總覽 ──
     // 遊戲的訊息框函式在線上（混淆）版也叫得到
     const fns = await t.inGame(g0, `[typeof toggleLogDrawer, typeof setLogPopTab].join(",")`);
