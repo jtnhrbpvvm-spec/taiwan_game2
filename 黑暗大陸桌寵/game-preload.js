@@ -11,7 +11,7 @@
 // （使用者 2026-10-27 回報螢幕保護程式一開桌寵就凍結）。所以每次 requestAnimationFrame 都另外排一個 RAF_STALL_MS 的計時器，
 // 畫面更新沒來就由計時器代跑那一格（一秒約 20 格）；平常畫面更新幾毫秒就到，計時器不會用到。
 //
-// 畫面每秒最多 60 格（MAX_FPS），高更新率螢幕上不跟著每秒畫 144 格。
+// 畫面每秒最多幾格可以設定（預設 60，見 __petMaxFps），高更新率螢幕上不跟著每秒畫 144 格。
 const { webFrame } = require("electron");
 
 webFrame.executeJavaScript(`(() => {
@@ -38,18 +38,19 @@ webFrame.executeJavaScript(`(() => {
     clearTimeout(p.timer);
     return p;
   };
-  // 每秒最多畫 MAX_FPS 格：高更新率螢幕（144Hz 等）上遊戲會跟著每秒畫 144 格，開好幾隻時 CPU、GPU 很吃重
+  // 每秒最多畫幾格（預設 60，0＝不限制；右鍵「節約效能模式 › 畫面更新率」由 main.js 的 setGameFps 用 __petMaxFps 設定）：
+  // 高更新率螢幕（144Hz 等）上遊戲會跟著每秒畫 144 格，開好幾隻時 CPU、GPU 很吃重
   // （2026-10-29 玩家回報：4 隻 PC 16:9 視窗都開著，整個桌寵佔 26% CPU）。太早來的畫面更新先跳過、等下一次；
   // 遊戲照經過的時間算移動、戰鬥，格數少一點節奏不變。同一格裡的每個回呼一起放行或一起等。
-  const MAX_FPS = 60;
-  const FRAME_MS = 1000 / MAX_FPS;
+  let frameMs = 1000 / 60;
   let allowedFrame = -1, nextAt = -Infinity;
+  Object.defineProperty(window, "__petMaxFps", { value: (fps) => ((frameMs = fps > 0 ? 1000 / fps : 0), (nextAt = -Infinity)) });
   const frameAllowed = (t) => {
-    if (t === allowedFrame) return true;
+    if (!frameMs || t === allowedFrame) return true;
     if (t < nextAt - 1) return false;
     allowedFrame = t;
-    // 照固定的節拍往後排（75～240Hz 平均下來都是每秒 60 格）；落後太多（卡頓、畫面停過）就從現在重新算
-    nextAt = t - nextAt > FRAME_MS ? t + FRAME_MS : nextAt + FRAME_MS;
+    // 照固定的節拍往後排（例如 144Hz 限 60 格，平均下來就是每秒 60 格）；落後太多（卡頓、畫面停過）就從現在重新算
+    nextAt = t - nextAt > frameMs ? t + frameMs : nextAt + frameMs;
     return true;
   };
   window.requestAnimationFrame = (cb) => {

@@ -138,7 +138,7 @@ async function collect(ctx, sampleMs = SAMPLE_MS) {
     })),
     pet: { rafFps: await petFps, shown: !!petWin?.isVisible(), clickThrough: !!ctx.clickThrough },
     settings: { petCount: settings.petCount, powerSave: settings.powerSave, followMorph: settings.followMorph, autoContinue: settings.autoContinue,
-      stayPets: settings.stayPets.filter(Boolean).length, normalShow: settings.normalShow, focusShow: settings.focusShow },
+      stayPets: settings.stayPets.filter(Boolean).length, petFps: settings.petFps.slice(0, settings.petCount), fpsApplyAll: settings.fpsApplyAll, normalShow: settings.normalShow, focusShow: settings.focusShow },
     system: {
       os: `${os.type()} ${os.release()}`, arch: os.arch(), cpuModel: os.cpus()[0]?.model?.trim() ?? "", cores,
       memGB: round(os.totalmem() / 1073741824), freeMemGB: round(os.freemem() / 1073741824), uptimeH: round(os.uptime() / 3600),

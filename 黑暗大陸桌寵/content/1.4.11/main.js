@@ -74,7 +74,11 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   // gameWindows[i]＝第 i 隻的遊戲視窗上次怎麼開：keepTaskbar（右鍵「保持狀態列」）、x／y（叫出來時的位置）。下次打開桌寵照上次的
   gameWindows: [],
   // 右鍵選單的「回報效能異常」打開了沒（操作說明標題連點 20 下，見 ui/help.js）
-  reportUnlocked: false };
+  reportUnlocked: false,
+  // petFps[i]＝第 i 隻的畫面每秒最多幾格（FPS_CHOICES，0＝不限制，沒設＝DEFAULT_FPS）；
+  // fpsApplyAll＝右鍵選更新率時全部桌寵一起換（不勾＝只換按右鍵的那一隻）
+  petFps: [],
+  fpsApplyAll: false };
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -82,7 +86,7 @@ function loadSettings() {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
     settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow },
       normalShow: { ...settings.normalShow, ...saved.normalShow } };
-    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows"]) if (!Array.isArray(settings[key])) settings[key] = [];
+    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows", "petFps"]) if (!Array.isArray(settings[key])) settings[key] = [];
     settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
 }
@@ -195,6 +199,7 @@ function createGame(index) {
     g.login = { state: "idle", at: 0 };
     g.version = await inGame(g, `document.querySelector('script[src*="data/game.js?v="], script[src*="data/config.js?v="]')?.src.match(/v=([\\w.-]+)/)?.[1]`);
     setGameHidden(g);
+    setGameFps(g);
     syncDisplayMode(g);
   });
   loadGame(g);
@@ -366,6 +371,30 @@ function setPowerSave(on) {
   petWin?.webContents.send("pet:power-save", on);
 }
 
+// 畫面更新率（右鍵「節約效能模式 › 畫面更新率」）：遊戲畫面每秒最多畫幾格，越快越吃 CPU。0＝不限制（跟著螢幕更新率）。
+// 遊戲那邊見 game-preload.js 的 __petMaxFps；桌寵動畫全部畫在同一個視窗，照所有桌寵裡最快的那個
+const FPS_CHOICES = [48, 55, 60, 120, 144, 0];
+const DEFAULT_FPS = 60;
+const fpsOf = (i) => (FPS_CHOICES.includes(settings.petFps[i]) ? settings.petFps[i] : DEFAULT_FPS);
+
+function setGameFps(g) {
+  if (!g || g.win.isDestroyed()) return;
+  inGame(g, `window.__petMaxFps ? __petMaxFps(${fpsOf(g.index)}) : null`);
+}
+
+function sendPetFps() {
+  const list = Array.from({ length: settings.petCount }, (_, i) => fpsOf(i));
+  petWin?.webContents.send("pet:max-fps", list.includes(0) ? 0 : Math.max(...list));
+}
+
+/** 換畫面更新率：勾了「套用到全部桌寵」就全部一起換（之後才加進來的也是），不然只換第 petIndex 隻。 */
+function setPetFps(fps, petIndex) {
+  settings.petFps = Array.from({ length: MAX_PETS }, (_, i) => (settings.fpsApplyAll || i === petIndex ? fps : settings.petFps[i] ?? null));
+  saveSettings();
+  games.forEach(setGameFps);
+  sendPetFps();
+}
+
 const toggleGame = (g = games[0]) => g && showGame(g, !g.shown);
 
 /** 從右鍵選單叫出遊戲：keepTaskbar＝這次之後關掉（藏起來）時工作列上留著按鈕，點一下就叫回來；一般的「顯示遊戲視窗」恢復成完全藏起來。 */
@@ -533,6 +562,7 @@ function createPetWindow() {
     petWin.webContents.send("pet:focus-show", settings.focusShow);
     petWin.webContents.send("pet:normal-show", settings.normalShow);
     petWin.webContents.send("pet:power-save", settings.powerSave);
+    sendPetFps();
     games.forEach(sendState);
   });
 }
@@ -689,6 +719,7 @@ function setPetCount(count) {
   syncGames();
   sendStay(); // 先送，新加進來的桌寵一出現就套上牠的設定
   sendPets();
+  sendPetFps();
   games.forEach(sendState);
   // 正在幫牠挑外觀的那一隻被收掉了，視窗跟著關
   if (pickerTarget >= count && pickerWin && !pickerWin.isDestroyed()) pickerWin.close();
@@ -818,10 +849,33 @@ function buildMenu(petIndex = 0) {
     { label: "收入總覽…（這次啟動以來）", click: openIncome },
     { type: "separator" },
     {
-      label: "節約效能模式（遊戲藏著時降低畫面解析度，照常掛機掉寶）",
-      type: "checkbox",
-      checked: settings.powerSave,
-      click: (item) => setPowerSave(item.checked),
+      label: "節約效能模式",
+      submenu: [
+        { label: `畫面更新率${many ? `（第 ${petIndex + 1} 隻）` : ""}：越快越吃 CPU，請斟酌切換`, enabled: false },
+        ...FPS_CHOICES.map((fps) => ({
+          label: fps ? `${fps}Hz${fps === DEFAULT_FPS ? "（預設）" : ""}` : "不限制（跟著螢幕更新率）",
+          type: "radio",
+          checked: fpsOf(petIndex) === fps,
+          click: () => setPetFps(fps, petIndex),
+        })),
+        { type: "separator" },
+        {
+          label: "套用到全部桌寵（不勾＝只改這一隻）",
+          type: "checkbox",
+          checked: settings.fpsApplyAll,
+          click: (item) => {
+            settings.fpsApplyAll = item.checked;
+            saveSettings();
+          },
+        },
+        { type: "separator" },
+        {
+          label: "節約效能模式（遊戲藏著時降低畫面解析度，照常掛機掉寶）",
+          type: "checkbox",
+          checked: settings.powerSave,
+          click: (item) => setPowerSave(item.checked),
+        },
+      ],
     },
     {
       label: "變身時桌寵跟著變",
@@ -1191,7 +1245,7 @@ app.whenReady().then(async () => {
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
     openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
-    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame, diagnostics, diagnosticsContext,
+    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame, diagnostics, diagnosticsContext, setPetFps,
     quit: () => app.quit() });
 });
 

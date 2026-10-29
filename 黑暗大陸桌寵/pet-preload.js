@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld("petApi", {
   onClickThrough: (cb) => ipcRenderer.on("pet:click-through", (_e, on) => cb(on)),
   // 節約效能模式：桌寵動畫放慢
   onPowerSave: (cb) => ipcRenderer.on("pet:power-save", (_e, on) => cb(on)),
+  // 桌寵動畫每秒最多幾格（0＝不限制）
+  onMaxFps: (cb) => ipcRenderer.on("pet:max-fps", (_e, fps) => cb(fps)),
   onOpenSizer: (cb) => ipcRenderer.on("pet:open-sizer", (_e, index) => cb(index)),
   setInteractive: (on) => ipcRenderer.send("pet:interactive", on),
   // index＝第幾隻桌寵的遊戲視窗

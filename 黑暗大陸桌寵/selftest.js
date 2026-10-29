@@ -120,6 +120,22 @@ async function run(t) {
     check("效能報告：不含帳號、Email、密碼", !/@|passEnc|password/i.test(JSON.stringify(perf)));
     // 高更新率螢幕上也不超過每秒 60 格（這台電腦是 60Hz 的話只能確認沒超過）
     check("遊戲畫面每秒最多 60 格", perfGame.framesPerSec <= 62 && perfGame.framesPerSec >= 40, `${perfGame.framesPerSec} 格／秒（螢幕 ${perf.system.displays.map((d) => d.hz).join("、")}Hz）`);
+    // 畫面更新率換成 48Hz：遊戲真的變成每秒約 48 格；換回預設 60
+    const gameFps = async () => {
+      const a = await t.inGame(g0, "({ ...__petFrameStats(), at: performance.now() })");
+      await sleep(3000);
+      const b = await t.inGame(g0, "({ ...__petFrameStats(), at: performance.now() })");
+      return Math.round(((b.frames - a.frames) * 10000) / (b.at - a.at)) / 10;
+    };
+    t.setPetFps(48, 0);
+    await sleep(300);
+    const fps48 = await gameFps();
+    t.setPetFps(60, 0);
+    check("畫面更新率：選 48Hz 遊戲每秒約 48 格", fps48 >= 45 && fps48 <= 50, `${fps48} 格／秒`);
+    const rateMenu = t.buildMenu(0).items.find((i) => i.label === "節約效能模式")?.submenu?.items.map((i) => i.label) ?? [];
+    check("畫面更新率：選單有 48／55／60／120／144／不限制、套用全部、節約效能模式",
+      ["48Hz", "55Hz", "60Hz（預設）", "120Hz", "144Hz", "不限制（跟著螢幕更新率）", "套用到全部桌寵（不勾＝只改這一隻）"].every((l) => rateMenu.includes(l)) && rateMenu.some((l) => l.startsWith("節約效能模式（")) && /越快越吃 CPU/.test(rateMenu[0]),
+      rateMenu.join("、"));
     console.log(`       ${t.diagnostics.describe(perf).replace(/\n+/g, "／")}`);
 
     // ── 收入總覽 ──
@@ -266,7 +282,19 @@ async function run(t) {
     // 兩隻桌寵：第二隻是另一個遊戲視窗、另一份登入資料，看不到第一隻的角色
     t.setPetCount(2);
     const g1 = t.games[1];
-    check("第二隻有自己的遊戲視窗", t.games.length === 2 && g1.win !== g0.win && g1.partition !== g0.partition, `${g0.partition} / ${g1.partition}`);
+    // 畫面更新率：不勾「套用到全部」只改那一隻；勾了全部一起換；沒設的是預設 60
+    const fpsBefore = t.settings().petFps[1] ?? null;
+    t.setPetFps(120, 0);
+    const onlyFirst = [t.settings().petFps[0], t.settings().petFps[1] ?? null];
+    t.settings().fpsApplyAll = true;
+    t.setPetFps(55, 1);
+    const allPets = [t.settings().petFps[0], t.settings().petFps[1]];
+    t.settings().fpsApplyAll = false;
+    t.setPetFps(60, 0);
+    t.setPetFps(60, 1);
+    check("畫面更新率：不勾只改這一隻、勾了全部一起換", fpsBefore === null && onlyFirst[0] === 120 && onlyFirst[1] === null && allPets[0] === 55 && allPets[1] === 55,
+      JSON.stringify({ fpsBefore, onlyFirst, allPets }));
+    check("第二隻有自己的遊戲視窗",t.games.length === 2 && g1.win !== g0.win && g1.partition !== g0.partition, `${g0.partition} / ${g1.partition}`);
     await waitFor("第二隻的標題畫面", async () => (await screenOf(t, g1)) === "screen-title");
     const otherSave = await t.inGame(g1, `Object.keys(localStorage).filter((k) => k.startsWith("dragonSlayer_save")).length`);
     check("第二隻的存檔跟第一隻分開", otherSave === 0, `第二隻有 ${otherSave} 個存檔`);

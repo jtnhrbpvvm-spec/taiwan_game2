@@ -1,5 +1,5 @@
 {
-  "version": "1.4.10",
+  "version": "1.4.11",
   "shell": 1,
   "files": [
     {
@@ -14,13 +14,13 @@
     },
     {
       "path": "diagnostics.js",
-      "sha256": "dff4f3082b17bfe900bfe11c239b6bf6c7b016733288385371d2f979309b2cf9",
-      "size": 11883
+      "sha256": "c324b0698df45d4e788cd9bd32eba6c6402de46ecdda0c0c93f89e046a21aa9c",
+      "size": 11971
     },
     {
       "path": "game-preload.js",
-      "sha256": "326be002ba610ebe00bc850967d897b47446ba092276458112c39009a875f1b6",
-      "size": 4394
+      "sha256": "402caa2623aec963a7264531b198717a5d5287e41891c16514e884b4914cd9b1",
+      "size": 4682
     },
     {
       "path": "help-preload.js",
@@ -39,8 +39,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "0e3243c89357018ee9a38d6d811938d0bd2c355d04455618d6ac58fe541cbea1",
-      "size": 57803
+      "sha256": "a51f2d0994eb6ab8bf0652a2b7428a90680c06352f65de342a9d7acd7c07c4c1",
+      "size": 60199
     },
     {
       "path": "names.json",
@@ -49,8 +49,8 @@
     },
     {
       "path": "pet-preload.js",
-      "sha256": "57dcdf8e4d9740bbb18683ed8e83396786ad7a4d6f172733d807632182e895b6",
-      "size": 1838
+      "sha256": "88809603b146b9e410c034b459a64653368b38dfe989c058598c706de75a4824",
+      "size": 1966
     },
     {
       "path": "pet/index.html",
@@ -59,8 +59,8 @@
     },
     {
       "path": "pet/pet.js",
-      "sha256": "d70735034c18b3be6d2ece58cc2c475b40e0d89c07da9a5cec54aa11d9ab71f2",
-      "size": 26101
+      "sha256": "861fc6e7ff1b04031ec03fe06f8cfa6758e0286e19215042d62c5e980624c7b9",
+      "size": 26316
     },
     {
       "path": "picker-preload.js",
@@ -74,8 +74,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "9f6033eef0aeb2e7b501c9e59fb72c3feacec5f13dcb94c549ffc4ee64551a35",
-      "size": 29836
+      "sha256": "70b549b1dfc14982d128229635c50c823a75c5beebe1599e261bf744288354ed",
+      "size": 31773
     },
     {
       "path": "ui/accounts.html",
@@ -89,8 +89,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "be3adc4c02fef71f1e814abaf15d73d2c1ef30fdef429ea5dcac577756c7eb6b",
-      "size": 7857
+      "sha256": "09434b16fa0cce1f2d0e54a3d500e8fcb0d2f859dd994709926baf55f7638edc",
+      "size": 8270
     },
     {
       "path": "ui/help.js",
