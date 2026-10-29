@@ -27,6 +27,12 @@
     <h2>職業比較</h2>
     <div id="cmp"></div>
     <div class="box info">攻擊間隔＝武器速度 × 職業動作係數，表上是<b>不喝水</b>時該職業最快的武器。綠水（加速）÷1.33、勇水類 ÷1.33（妖精、槍手的精靈餅乾 ÷1.15），最快 0.2 秒。詳見 <a href="mechanics.html#speed">數值公式</a>。</div>
+    <h2 id="atkk">職業動作係數</h2>
+    <p>不同職業揮同一種武器的速度不一樣：<b>攻擊間隔＝武器基本速度 × 動作係數</b>，係數越大越慢（1.0＝與騎士相同）。部分職業拿專精武器時改用較快的係數。</p>
+    <div id="atkk-table"></div>
+    <h2 id="weapon-cls">武器可用職業</h2>
+    <p class="dim">職業不能用的武器種類無法裝備；全部職業都能用的寫「全職」。</p>
+    <div id="wcls-table"></div>
     <div id="list"></div>
 </main>
 <script src="data/wiki-data.js"></script>
@@ -72,6 +78,20 @@ renderTable($('#cmp'), [
     { label: '特性', html: r => [r.c.ammo ? '<span class="tag">需要彈藥</span>' : '', r.c.slayer ? `<span class="tag gold">剋${esc(r.c.slayer.label)} ×${r.c.slayer.mult}</span>` : '', r.id === 'royal' ? '<span class="tag gold">魅力加金幣</span>' : '', r.id === 'demon' ? '<span class="tag red">吸血</span>' : ''].join('') },
 ], ids.map(id => ({ id, c: W.classes[id] })));
 
+const kText = c => `×${c.atkK.k}`;
+const kSpecial = c => c.atkK.weapons ? Object.entries(c.atkK.weapons).map(([w, k]) => `${W.weaponTypes[w].name} ×${k}`).join('、') : '—';
+renderTable($('#atkk-table'), [
+    { label: '職業', v: r => r.c.name, html: r => `<a href="#${r.id}">${r.c.icon} ${r.c.name}</a>` },
+    { label: '動作係數', num: true, v: r => r.c.atkK.k, html: r => kText(r.c) },
+    { label: '專精武器係數', html: r => kSpecial(r.c) },
+    { label: '可用武器（不喝水攻擊間隔）', html: r => Object.entries(r.c.weaponMs).map(([w, ms]) => `${W.weaponTypes[w].name} <small class="dim">${ms}ms</small>`).join('、') },
+], ids.map(id => ({ id, c: W.classes[id] })), { sortCol: 1 });
+renderTable($('#wcls-table'), [
+    { label: '武器', v: r => r.w.name, html: r => `${r.w.name}${r.w.two ? ' <small class="dim">（雙手）</small>' : ''}` },
+    { label: '基本速度', num: true, v: r => r.w.spd, html: r => `${r.w.spd}ms` },
+    { label: '可用職業', html: r => weaponClassText(r.id) },
+], Object.keys(W.weaponTypes).filter(w => w !== 'fist').map(id => ({ id, w: W.weaponTypes[id] })));
+
 $('#list').innerHTML = ids.map(id => {
     const c = W.classes[id], sg = suggestStats(id), story = c.story || {};
     const sk = W.classSkills[id].filter(x => W.skills[x.id].kind === 'class');
@@ -88,6 +108,7 @@ $('#list').innerHTML = ids.map(id => {
                 <dt>升級成長</dt><dd>HP +${range(c.hp)}、MP +${range(c.mp)}（再加體質／精神加成）</dd>
                 <dt>魔防 MR</dt><dd>${c.mr}（每點精神超過 10 再 +2）</dd>
                 <dt>SP 成長</dt><dd>每 ${c.spDiv} 級 +1（智力超過 11 每點 +1）</dd>
+                <dt>動作係數</dt><dd>${kText(c)}${c.atkK.weapons ? `（${kSpecial(c)}）` : ''}　<small class="dim">越大越慢，<a href="#atkk">對照表</a></small></dd>
                 <dt>可用武器</dt><dd>${Object.entries(c.weaponMs).map(([w, ms]) => `${W.weaponTypes[w].name} <small class="dim">${ms}ms</small>`).join('、')}${c.shield ? '，可用盾' : '，不能用盾'}</dd>
                 <dt>起始裝備</dt><dd>${c.start.map(i => itemLink(i)).join('、')}</dd>
                 <dt>魔法</dt><dd>最高 ${c.magic.max} 級：${c.magic.lv.map((lv, i) => `${W.magicTierNames[i + 1]}級 Lv.${lv}`).join('、')}</dd>

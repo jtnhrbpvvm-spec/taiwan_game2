@@ -37,6 +37,16 @@ const ZONE = Object.fromEntries(W.zones.map(z => [z.id, z]));
 const zoneName = id => (ZONE[id] && ZONE[id].name) || id;
 const townName = id => (W.towns[id] && W.towns[id].name) || id;
 const className = id => (W.classes[id] && W.classes[id].name) || id;
+// 可用職業（HTML）：全部職業寫「全職」、只有一職寫職業名、多職寫「多職可用」，滑鼠移過去／點一下跳小視窗列出職業（.ctip，見頁面專用段）
+function classUseHtml(ok) {
+    if (!ok.length) return '無';
+    if (ok.length === Object.keys(W.classes).length) return '全職';
+    if (ok.length === 1) return esc(className(ok[0]));
+    const list = esc(ok.map(className).join('、'));
+    return `<abbr class="ctip" tabindex="0" title="${list}" data-cls="${list}">多職可用</abbr>`;
+}
+const weaponClassIds = type => Object.keys(W.classes).filter(id => (W.classes[id].weapons || []).includes(type));
+const weaponClassText = type => classUseHtml(weaponClassIds(type));
 const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', dragon: '龍穴' };
 const SKILL_TYPE = { spell: '攻擊魔法', heal: '治癒', buff: '增益', strike: '物理技能', passive: '被動' };
 const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷' };
@@ -114,7 +124,8 @@ function itemStatsHtml(d) {
         const wt = W.weaponTypes[d.type];
         if (wt) s.push(`攻擊間隔 <b>${wt.spd}ms</b>`);
         if (wt && wt.range) s.push(`射程 <b>${wt.range} 格</b>`);
-    }
+        s.push(`可用職業 <b>${d.classes ? classUseHtml(d.classes) : weaponClassText(d.type)}</b>`);
+    } else if (d.classes && d.classes.length) s.push(`可用職業 <b>${classUseHtml(d.classes)}</b>`);
     if (d.ac) s.push(`防禦 <b>+${d.ac}</b>`);
     for (const k of ['hit', 'dmg', 'sp', 'mr', 'crit', 'magicCrit', 'critDmg', 'magicCritDmg', 'dodge', 'reduce', 'lifesteal', 'hp', 'mp', 'hpRegen', 'mpRegen', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'weight']) {
         if (k === 'dmg' && d.cat === 'weapon') continue;
@@ -282,7 +293,30 @@ document.addEventListener('click', e => {
     else if (a.dataset.mon) openMon(a.dataset.mon);
     else openSkill(a.dataset.skill);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); hideCtip(); } });
+
+// ───────── 「多職可用」小視窗 ─────────
+// 滑鼠移過去顯示、手機點一下切換；用 fixed 定位，表格捲動框不會把它切掉
+let ctipPop = null, ctipOn = null;
+function showCtip(el) {
+    if (!ctipPop) { ctipPop = document.createElement('div'); ctipPop.className = 'ctip-pop'; document.body.appendChild(ctipPop); }
+    el.removeAttribute('title');   // 有自己的小視窗就不要瀏覽器原生提示
+    ctipPop.innerHTML = `<b>可用職業</b><br>${el.dataset.cls}`;
+    ctipPop.classList.add('on');
+    const r = el.getBoundingClientRect(), pw = ctipPop.offsetWidth, ph = ctipPop.offsetHeight;
+    ctipPop.style.left = Math.max(8, Math.min(innerWidth - pw - 8, r.left + r.width / 2 - pw / 2)) + 'px';
+    ctipPop.style.top = (r.top - ph - 6 >= 8 ? r.top - ph - 6 : r.bottom + 6) + 'px';
+    ctipOn = el;
+}
+function hideCtip() { if (ctipPop) ctipPop.classList.remove('on'); ctipOn = null; }
+document.addEventListener('mouseover', e => { const t = e.target.closest('.ctip'); if (t) showCtip(t); });
+document.addEventListener('mouseout', e => { const t = e.target.closest('.ctip'); if (t && !t.contains(e.relatedTarget)) hideCtip(); });
+document.addEventListener('click', e => {
+    const t = e.target.closest('.ctip');
+    if (t) { e.preventDefault(); e.stopPropagation(); showCtip(t); }
+    else hideCtip();
+}, true);
+addEventListener('scroll', hideCtip, true);
 
 // ───────── 可排序表格 ─────────
 // cols：[{ label, k?（排序用欄位）, v?(row)（排序值）, html(row), num? }]；rows：資料陣列

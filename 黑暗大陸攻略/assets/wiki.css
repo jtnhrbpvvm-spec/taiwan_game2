@@ -150,6 +150,11 @@ input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px
 .stats { display: flex; flex-wrap: wrap; gap: 4px 6px; }
 .stats span { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; font-size: 13px; white-space: nowrap; }
 .stats span b { color: var(--gold2); font-weight: 600; }
+.ctip { text-decoration: none; border-bottom: 1px dotted currentColor; cursor: help; }
+.ctip-pop { position: fixed; z-index: 200; display: none; max-width: min(280px, calc(100vw - 16px)); padding: 6px 10px; font-size: 13px; line-height: 1.6;
+    background: var(--panel2); color: var(--text, #eee); border: 1px solid var(--line2); border-radius: 6px; box-shadow: var(--shadow); pointer-events: none; }
+.ctip-pop.on { display: block; }
+.ctip-pop b { color: var(--gold2); }
 .bar { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--blood), var(--gold)); }
 .portrait { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: #000; }
