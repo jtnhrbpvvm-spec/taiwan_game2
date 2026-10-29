@@ -1,16 +1,16 @@
 {
-  "version": "1.4.3",
+  "version": "1.5.0",
   "shell": 1,
   "files": [
     {
       "path": "agent.js",
-      "sha256": "e0550bcd25ba08baf3df9742254d7a9f0f40fac17bba72063f872a15bd265727",
-      "size": 16792
+      "sha256": "10e4d76d36e6fae966e7ef3256d3f4598bf6d6b802eccd369ac1d8fa24a80d66",
+      "size": 19044
     },
     {
       "path": "panel/index.html",
-      "sha256": "0636fa7eeb25134a2979bdffe489c03dd38da4d963bfded08f8a31a8540a0d80",
-      "size": 37401
+      "sha256": "5aabfc29b8c05a9bdcf12153a8810b6174e0608f2d9baedda80a6878298dff50",
+      "size": 42159
     },
     {
       "path": "names.json",

@@ -38,6 +38,7 @@
       select, input[type="text"], input[type="email"], input[type="password"] { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); color: inherit; }
       .count { display: flex; gap: 6px; margin-top: 6px; }
       .count button { flex: 1; }
+      .fps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 4px; }
       .chosen { border-color: var(--gold) !important; box-shadow: 0 0 0 2px var(--gold) inset; color: var(--gold); }
       .chips { display: flex; gap: 6px; margin-bottom: 10px; }
       .chips button { flex: 1; }
@@ -148,8 +149,19 @@
           <label class="row"><span>顯示桌寵<small>關掉只是把桌寵藏起來，遊戲照常掛機</small></span><input type="checkbox" data-key="showPet" /></label>
           <div class="row"><span>大小 <b id="size-value"></b><input id="size" type="range" min="50" max="200" step="5" /></span></div>
           <label class="row"><span>打開時自動登入並繼續冒險<small>每隻自動登入牠的帳號、按標題畫面的「繼續冒險」</small></span><input type="checkbox" data-key="autoContinue" /></label>
-          <label class="row"><span>節約效能模式<small>遊戲藏著時降低遊戲畫面的解析度（看不到的畫面不用畫那麼細），打怪、掉寶照常；桌寵動畫放慢。省電、手機比較不燙</small></span><input type="checkbox" data-key="powerSave" /></label>
           <label class="row"><span>變身時桌寵跟著變<small>角色用變形卷軸變身時，桌寵也換成變身的樣子（自己選了外觀的照自己選的）</small></span><input type="checkbox" data-key="followMorph" /></label>
+        </div>
+        <div class="card">
+          <h2>節約效能模式</h2>
+          <!-- 畫面更新率：舊版 App 不認得這些設定，拿到這份內容時整段藏起來（refresh 裡看 settings.fpsChoices） -->
+          <div id="fps-rate">
+            <p class="warn" style="margin: 0">畫面更新率：越快越吃電、手機越燙，請斟酌切換</p>
+            <p class="dim" style="margin: 2px 0 8px">遊戲畫面每秒最多畫幾格，預設 60Hz。打怪、掉寶不受影響；超過手機螢幕本身的更新率時照螢幕的。</p>
+            <div class="chips" id="fps-pets"></div>
+            <div class="fps" id="fps"></div>
+            <label class="row"><span>套用到全部桌寵<small>勾了之後選更新率，全部桌寵一起換；不勾只換上面選的那一隻</small></span><input type="checkbox" data-key="fpsApplyAll" /></label>
+          </div>
+          <label class="row"><span>節約效能模式<small>遊戲藏著時降低遊戲畫面的解析度（看不到的畫面不用畫那麼細），打怪、掉寶照常；桌寵動畫放慢。省電、手機比較不燙</small></span><input type="checkbox" data-key="powerSave" /></label>
         </div>
         <div class="card">
           <h2>頭上飄字</h2>
@@ -167,6 +179,15 @@
         <div class="card">
           <button class="act" data-action="checkUpdate">檢查更新</button>
           <p class="dim" id="check-result">桌寵每 30 分鐘會自己檢查一次遊戲和桌寵有沒有新版，想馬上確認可以按這裡。</p>
+        </div>
+        <!-- 平常藏起來：說明分頁時連點標題 20 下才出現（開發者請玩家回報時再告訴他），說明裡不寫 -->
+        <div class="card" id="perf" hidden>
+          <h2>回報效能異常</h2>
+          <p class="dim" id="perf-text" style="white-space: pre-line">收集 15 秒的效能資料（CPU、畫面更新次數、手機規格、桌寵設定），看過再決定要不要上傳給開發者。不含帳號、Email、密碼、存檔。</p>
+          <div class="buttons">
+            <button class="act" data-action="perfCollect" id="perf-collect">開始收集</button>
+            <button class="act primary" data-action="perfUpload" id="perf-upload" hidden>上傳給開發者</button>
+          </div>
         </div>
         <p class="dim" id="version"></p>
       </section>
@@ -338,8 +359,62 @@
         $("count-note").innerHTML = status.multiProfile === false
           ? '<span class="warn">這支手機的 Android System WebView 版本太舊，只能掛 1 個帳號。到 Play 商店更新「Android System WebView」後就能開更多隻。</span>'
           : `每隻是一個獨立的遊戲，可以掛不同帳號。建議最多 ${settings.recommendedPets} 隻。`;
+        renderFps();
+        $("perf").hidden = !settings.reportUnlocked;
         if (tab === "pets") renderPets(true);
       }
+
+      // ── 畫面更新率（節約效能模式那張卡片）──
+      let fpsPet = 0; // 正在幫第幾隻選
+      function renderFps() {
+        $("fps-rate").hidden = !settings.fpsChoices;
+        if (!settings.fpsChoices) return;
+        if (fpsPet >= settings.petCount) fpsPet = 0;
+        $("fps-pets").hidden = settings.petCount < 2;
+        $("fps-pets").innerHTML = Array.from({ length: settings.petCount }, (_, i) => `<button class="act ${i === fpsPet ? "chosen" : ""}" data-fps-pet="${i}">第 ${i + 1} 隻</button>`).join("");
+        const mine = settings.pets[fpsPet].petFps;
+        $("fps").innerHTML = settings.fpsChoices.map((fps) => `<button class="act ${fps === mine ? "chosen" : ""}" data-fps="${fps}">${fps ? fps + "Hz" : "不限制"}${fps === settings.defaultFps ? "<small style=\"display: block; font-size: 11px; color: var(--muted)\">預設</small>" : ""}</button>`).join("");
+      }
+      $("fps-pets").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-fps-pet]");
+        if (!b) return;
+        fpsPet = Number(b.dataset.fpsPet);
+        renderFps();
+      });
+      $("fps").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-fps]");
+        if (!b) return;
+        Android.set("petFps_" + fpsPet, b.dataset.fps);
+        setTimeout(refresh, 200);
+      });
+
+      // ── 回報效能異常（藏起來的卡片）──
+      // 說明分頁時連點標題 20 下（每下間隔 1.5 秒內）打開，跟電腦版操作說明的做法一樣
+      let taps = 0, lastTap = 0;
+      document.querySelector("header h1").addEventListener("click", () => {
+        if (tab !== "help") return;
+        const now = Date.now();
+        taps = now - lastTap > 1500 ? 1 : taps + 1;
+        lastTap = now;
+        if (taps !== 20) return;
+        Android.set("reportUnlocked", "true");
+        refresh();
+        if (!settings.reportUnlocked) return; // 舊版 App 沒有這個功能
+        showTab("settings");
+        $("perf").scrollIntoView({ block: "center" });
+      });
+      window.__perfResult = (state, text) => {
+        $("perf-collect").disabled = state === "collecting" || state === "uploading";
+        $("perf-upload").hidden = state !== "ready";
+        $("perf-collect").textContent = state === "ready" || state === "done" ? "重新收集" : "開始收集";
+        $("perf-text").textContent = {
+          collecting: "收集中，約 15 秒，請照平常的樣子放著…",
+          ready: text + "\n\n上傳的內容：App 的 CPU、畫面更新次數、手機規格（型號、晶片、記憶體、螢幕、溫度、電量）、桌寵設定。不含帳號、Email、密碼、存檔。",
+          uploading: "上傳中…",
+          done: "上傳完成，回報編號：" + text + "\n編號已經複製起來了，回報問題時把這個編號告訴開發者。",
+          error: text,
+        }[state];
+      };
       document.addEventListener("change", (e) => {
         const key = e.target.dataset && e.target.dataset.key;
         if (key) Android.set(key, String(e.target.checked));

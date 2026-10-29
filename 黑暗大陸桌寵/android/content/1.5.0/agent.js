@@ -32,6 +32,46 @@
     window.cancelAnimationFrame = (id) => void drop(id);
   }
 
+  // 畫面每秒最多畫幾格（預設 60，0＝不限制；設定「節約效能模式 › 畫面更新率」由 GameService.setGameFps 用 __petMaxFps 設定）。
+  // 高更新率的手機、平板（90／120／144Hz）上遊戲會跟著螢幕每秒畫那麼多格，很吃電、很燙（跟電腦版 1.4.10 同一套，
+  // 電腦版玩家回報 144Hz 螢幕開 4 隻佔 26% CPU）。太早來的畫面更新先跳過、等下一次；遊戲照經過的時間算移動、戰鬥，節奏不變。
+  // 包在上面那層（關螢幕補格）外面，所以舊 APK 只拿到這份內容也有效。__petFrameStats 給回報效能異常用：frames＝畫了幾格、callbacks＝畫面迴圈被叫幾次
+  if (!window.__petMaxFps) {
+    const innerRaf = window.requestAnimationFrame, innerCancel = window.cancelAnimationFrame;
+    const stats = { frames: 0, callbacks: 0 };
+    let frameMs = 1000 / 60, allowedFrame = -1, nextAt = -Infinity, lastFrame = -1;
+    Object.defineProperty(window, "__petMaxFps", { value: (fps) => ((frameMs = fps > 0 ? 1000 / fps : 0), (nextAt = -Infinity)) });
+    Object.defineProperty(window, "__petFrameStats", { value: () => ({ frames: stats.frames, callbacks: stats.callbacks }) });
+    const frameAllowed = (t) => {
+      if (!frameMs || t === allowedFrame) return true;
+      if (t < nextAt - 1) return false;
+      allowedFrame = t;
+      // 照固定的節拍往後排（例如 120Hz 限 60 格，平均下來就是每秒 60 格）；落後太多（卡頓、關螢幕）就從現在重新算
+      nextAt = t - nextAt > frameMs ? t + frameMs : nextAt + frameMs;
+      return true;
+    };
+    const waiting = new Map();
+    let nextId = 1;
+    window.requestAnimationFrame = (cb) => {
+      const id = nextId++;
+      const run = (t) => {
+        if (!waiting.has(id)) return;
+        if (!frameAllowed(t)) return void waiting.set(id, innerRaf(run));
+        waiting.delete(id);
+        stats.callbacks++;
+        if (t !== lastFrame) (stats.frames++, (lastFrame = t));
+        cb(t);
+      };
+      waiting.set(id, innerRaf(run));
+      return id;
+    };
+    window.cancelAnimationFrame = (id) => {
+      if (!waiting.has(id)) return;
+      innerCancel(waiting.get(id));
+      waiting.delete(id);
+    };
+  }
+
   // 遊戲的存檔 key（遊戲 config.js 的 SAVE_KEY／SLOT_KEY；save.js 的 slotKey）
   const SAVE_KEY = "dragonSlayer_save_v2";
   const SLOT_KEY = "dragonSlayer_slot";
