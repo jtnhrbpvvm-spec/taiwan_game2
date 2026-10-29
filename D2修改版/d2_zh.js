@@ -410,6 +410,17 @@ if (n && ['strength', 'dexterity', 'vitality', 'energy'].includes(attr)) d2edAtt
 }
 if (D2ED.panel) d2edRender();
 }
+// 勾選「記住」時提醒：目前生命不會記
+function d2edKeepNotice() {
+const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
+if (!card || card.querySelector('.d2ed-modal')) return;
+const modal = d2edEl('div', { class: 'd2ed-modal' });
+modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'alertdialog', 'aria-label': '記住修改的說明' },
+d2edEl('b', {}, '已記住這些修改'),
+d2edEl('ul', {}, d2edEl('li', {}, '「目前生命」不會記，因為每一局都不一樣。')),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: () => modal.remove() }, '知道了'))));
+card.append(modal);
+}
 // 遊戲建立新人物後還會照裝備、等級重算數值，等一下再套用
 function d2edKeepSchedule(p) {
 if (D2ED.kept.has(p)) return;
@@ -576,6 +587,7 @@ if (keepBox.checked) { d2edKeepWrite({ fields: {}, attrs: {} }); remember(); D2E
 else d2edKeepWrite(null);
 d2edRender();
 d2edToast(keepBox.checked ? '已記住目前的修改' : '已取消記住');
+if (keepBox.checked) d2edKeepNotice();
 });
 const keepCount = keep ? Object.keys(keep.fields).length + Object.values(keep.attrs).filter(Boolean).length : 0;
 box.append(grid, d2edEl('div', { class: 'd2ed-row' },
