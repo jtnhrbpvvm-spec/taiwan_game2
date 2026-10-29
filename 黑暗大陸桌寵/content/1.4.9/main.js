@@ -13,6 +13,7 @@ const { parseSave } = require("./save-reader");
 const accounts = require("./accounts");
 const updates = require("./updates");
 const income = require("./income");
+const diagnostics = require("./diagnostics");
 const names = require("./names.json");
 
 const GAME_URL = "https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/";
@@ -844,6 +845,7 @@ function buildMenu(petIndex = 0) {
           click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) }]
       : []),
     { label: many ? `重新載入第 ${petIndex + 1} 隻的遊戲` : "重新載入遊戲", click: () => g && loadGame(g) },
+    { label: "回報效能異常（CPU 偏高）…", click: reportPerformance },
     { label: "操作說明", click: openHelp },
     updates.checkItem(),
     { type: "separator" },
@@ -1136,6 +1138,12 @@ ipcMain.handle("income:get", () => ({
   classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
 }));
 
+// ── 回報效能異常 ──────────────────────────────────────────
+// 玩家回報桌寵一直佔很高 CPU 時，請他按這個：收集 15 秒效能資料，看過摘要後上傳（見 diagnostics.js、report-worker/）
+
+const diagnosticsContext = () => ({ games, petWin, settings, clickThrough });
+const reportPerformance = () => diagnostics.start(diagnosticsContext(), (text) => petWin?.webContents.send("pet:notice", 0, text));
+
 // ── 啟動 ──────────────────────────────────────────────────
 
 async function createTray() {
@@ -1172,7 +1180,7 @@ app.whenReady().then(async () => {
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
     openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
-    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame,
+    income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame, diagnostics, diagnosticsContext,
     quit: () => app.quit() });
 });
 

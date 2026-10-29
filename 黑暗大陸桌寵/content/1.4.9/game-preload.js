@@ -24,6 +24,10 @@ webFrame.executeJavaScript(`(() => {
   const realRaf = window.requestAnimationFrame.bind(window), realCancel = window.cancelAnimationFrame.bind(window);
   const pending = new Map();
   let nextId = 1;
+  // 回報效能異常用（diagnostics.js）：frames＝真的畫面更新幾格、callbacks＝畫面迴圈被叫幾次、timer＝計時器代跑幾格（累計）
+  const stats = { frames: 0, callbacks: 0, timer: 0 };
+  let lastFrame = -1;
+  Object.defineProperty(window, "__petFrameStats", { value: () => ({ ...stats }) });
   const drop = (id) => {
     const p = pending.get(id);
     if (!p) return undefined;
@@ -34,8 +38,14 @@ webFrame.executeJavaScript(`(() => {
   };
   window.requestAnimationFrame = (cb) => {
     const id = nextId++;
-    const run = (t) => drop(id) && cb(t);
-    pending.set(id, { raf: realRaf(run), timer: setTimeout(() => run(performance.now()), RAF_STALL_MS) });
+    const run = (t, viaTimer) => {
+      if (!drop(id)) return;
+      stats.callbacks++;
+      if (viaTimer) stats.timer++;
+      else if (t !== lastFrame) (stats.frames++, (lastFrame = t));
+      cb(t);
+    };
+    pending.set(id, { raf: realRaf((t) => run(t)), timer: setTimeout(() => run(performance.now(), true), RAF_STALL_MS) });
     return id;
   };
   window.cancelAnimationFrame = (id) => void drop(id);

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.8",
+  "version": "1.4.9",
   "shell": 1,
   "files": [
     {
@@ -13,9 +13,14 @@
       "size": 4021
     },
     {
+      "path": "diagnostics.js",
+      "sha256": "dff4f3082b17bfe900bfe11c239b6bf6c7b016733288385371d2f979309b2cf9",
+      "size": 11883
+    },
+    {
       "path": "game-preload.js",
-      "sha256": "f1cb62b67557a782fbbd69c555286824c242f10abc2815701bef284ebe1664ab",
-      "size": 2734
+      "sha256": "29ea7b392cff790687ea410c0c4dccf7b21cc644abc291f4ba0674b8a3c3af0e",
+      "size": 3247
     },
     {
       "path": "income-preload.js",
@@ -29,8 +34,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "e98ea16ca04b1bbb2af701f154f242f45e72e0c82835fa8de85a87709f6cd6b9",
-      "size": 56441
+      "sha256": "bf58b16a0f8e27f492c32461cb1dde3176e2b652c80bfdb3f08da14644a02d51",
+      "size": 57126
     },
     {
       "path": "names.json",
@@ -64,8 +69,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "339822fa616dbd2a1a908e1c4f51c08d8159d5e421780a9ec391618cdaaf5829",
-      "size": 27868
+      "sha256": "124daeed55b1c790d23a95ccf9923fa9896e8139b2e3e22840f7f841fbcfa750",
+      "size": 28752
     },
     {
       "path": "ui/accounts.html",
