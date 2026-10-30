@@ -1377,6 +1377,8 @@
     if (SMITH.hardDecompose) add("💔", "強硬分解", "鐵匠相關・艾希頓裝備換凝結之魂", smithKw.concat(["分解"]), "smith", "decompose", F);
     if (SMITH.ashtonConvert) add("💠", "艾希頓轉換", "鐵匠相關・艾希頓裝備換成結晶", smithKw.concat(["艾希頓"]), "smith", "convert", F);
     if (SMITH.sageTickets) add("📜", "賢者合成券", "鐵匠相關・裝備升一階的條件與花費", smithKw.concat(["賢者", "合成"]), "smith", "sage", F);
+    if (SMITH.equipFusions) add("🧬", "裝備融合", "鐵匠相關・+12 裝備融合成拉麥爾裝備、次元守護者戒指融合", smithKw.concat(["融合", "拉麥爾", "怨念"]), "smith", "equipfuse", F);
+    if (SMITH.liberations) add("🔓", "解放", "鐵匠相關・用解封卷把裝備換成解放版", smithKw.concat(["解放", "解封", "解封卷"]), "smith", "liberate", F);
     if (STONES) add("💠", "鑲嵌石", "強化花費、成功率、能力機率與材料來源", ["鑲嵌", "石頭"], "stones", "", F);
     if (GEMS) add("💎", "技能寶石", "位置解鎖、附魔機率與數值、合成機率", ["技能寶石", "寶石", "附魔", "彗星", "原石"], "gems", "", F);
     if (window.AURA) add("✨", "光環", "精煉、G 化、靈魂結晶的機率與能力", ["光環", "靈魂", "結晶", "G化", "祭司"], "aura", "", F);
@@ -2220,6 +2222,8 @@
     if (SMITH.hardDecompose) tabs.push(["decompose", "💔 強硬分解"]);
     if (SMITH.ashtonConvert) tabs.push(["convert", "💠 艾希頓轉換"]);
     if (SMITH.sageTickets) tabs.push(["sage", "📜 賢者合成券"]);
+    if (SMITH.equipFusions) tabs.push(["equipfuse", "🧬 裝備融合"]);
+    if (SMITH.liberations) tabs.push(["liberate", "🔓 解放"]);
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">' + tabs.map(function (t) {
       var on = t[0] === active;
       return '<button type="button" data-smith-tab="' + t[0] + '" style="padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;' +
@@ -2233,6 +2237,8 @@
     else if (smithLastTab === "decompose" && SMITH.hardDecompose) showHardDecomposePage();
     else if (smithLastTab === "convert" && SMITH.ashtonConvert) showAshtonConvertPage();
     else if (smithLastTab === "sage" && SMITH.sageTickets) showSageTicketPage();
+    else if (smithLastTab === "equipfuse" && SMITH.equipFusions) showEquipFusionPage();
+    else if (smithLastTab === "liberate" && SMITH.liberations) showLiberationPage();
     else { smithLastTab = "enchant"; showEnchantTable(); }
   }
   function smithNpcText(npcs) {
@@ -2550,6 +2556,83 @@
     $detail.innerHTML = html;
   }
 
+  function smithItemName(id) { return escapeHtml(ITEMS[id] ? ITEMS[id].name : "#" + id); }
+  function smithMatsHtml(mats) {
+    return '<div class="map-chip-row">' + (mats || []).map(function (m) {
+      return itemChip(m[0], null, '<span style="color:var(--text-faint);font-size:11.5px;">×' + fmtNum(m[1]) + '</span>');
+    }).join("") + '</div>';
+  }
+
+  // 裝備融合（2026-10-30 新增）：規則照遊戲 equipFuseInput()／equipFuse()
+  function showEquipFusionPage() {
+    currentDetail = null;
+    var ef = SMITH.equipFusions, rows = ef.rows || [];
+    var html = backButtonHtml() + smithTabsHtml("equipfuse");
+    html += '<h2 style="margin-top:0;">🧬 裝備融合 <span class="count">(' + rows.length + ' 件裝備)</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・地點：' + smithNpcText(ef.npcs) + '（要人在村莊裡）。<br>' +
+      '・把下面清單裡的裝備交出去，加上材料和金幣，裝備就<b>直接變成</b>融合後的裝備，<b>必定成功</b>。<br>' +
+      '・有精煉門檻的要先精煉到指定等級（多數是 <b>+12</b>）。<br>' +
+      '・融合後<b>精煉歸零</b>，原本的<b>發條屬性、鑑定結果、成長經驗都會清掉</b>。' +
+      '</div>';
+    // 依主要材料（第一個材料，通常是「不完整的…」）分組
+    var groups = {}, order = [];
+    rows.forEach(function (r) {
+      var k = String((r.mats && r.mats[0] && r.mats[0][0]) || 0);
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(r);
+    });
+    html += '<div class="section-title">可以融合的裝備</div>';
+    order.forEach(function (k, gi) {
+      var list = groups[k];
+      html += '<details' + (gi === 0 ? ' open' : '') + '><summary style="cursor:pointer;font-size:13px;margin-bottom:6px;"><b>' + smithItemName(Number(k)) + '</b> 系列（' + list.length + ' 件）</summary>';
+      html += '<div style="overflow-x:auto;margin-bottom:12px;"><table class="dtable" style="min-width:640px;"><thead><tr><th>原本</th><th>融合後</th><th>精煉</th><th>材料</th><th>金幣</th></tr></thead><tbody>';
+      list.forEach(function (r) {
+        html += '<tr><td><span class="name-link" data-goto-item="' + r.source + '">' + smithItemName(r.source) + '</span></td>' +
+          '<td><span class="name-link" data-goto-item="' + r.product + '">' + smithItemName(r.product) + '</span></td>' +
+          '<td>' + (r.refine > 0 ? '+' + r.refine + ' 以上' : '不限') + '</td><td>' + smithMatsHtml(r.mats) + '</td><td>' + goldHtml(r.gold) + '</td></tr>';
+      });
+      html += '</tbody></table></div></details>';
+    });
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">點裝備名稱可以看那件裝備的詳細資料。</div>';
+    $detail.innerHTML = html;
+  }
+
+  // 解放（2026-10-30 新增）：規則照遊戲 liberate()
+  function showLiberationPage() {
+    currentDetail = null;
+    var rows = SMITH.liberations.rows || [];
+    var html = backButtonHtml() + smithTabsHtml("liberate");
+    html += '<h2 style="margin-top:0;">🔓 解放 <span class="count">(' + rows.length + ' 件裝備)</span></h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・不用找 NPC，在背包裡對裝備使用，每件用掉 <b>1 張解封卷</b>，裝備直接變成「解放的…」版本，<b>必定成功</b>。<br>' +
+      '・<b>精煉值保留</b>，不會歸零。<br>' +
+      '・<b>穿在身上的不能解放</b>，要先脫下來。<br>' +
+      '・解封卷是名品館道具，身上沒有時可以勾選自動購買。' +
+      '</div>';
+    var groups = {}, order = [];
+    rows.forEach(function (r) {
+      var k = String(r.scroll);
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(r);
+    });
+    html += '<div class="section-title">要用哪一種解封卷</div><div class="map-chip-row">' + order.map(function (k) {
+      return itemChip(Number(k), null, '<span style="color:var(--text-faint);font-size:11.5px;">' + groups[k].length + ' 件</span>');
+    }).join("") + '</div>';
+    order.forEach(function (k) {
+      var list = groups[k];
+      html += '<div class="section-title">用 ' + smithItemName(Number(k)) + ' <span class="count">(' + list.length + ' 件)</span></div>';
+      html += '<details><summary style="cursor:pointer;font-size:13px;margin-bottom:6px;">展開清單</summary>';
+      html += '<div style="overflow-x:auto;margin-bottom:12px;"><table class="dtable"><thead><tr><th>原本</th><th>解放後</th></tr></thead><tbody>';
+      list.forEach(function (r) {
+        html += '<tr><td><span class="name-link" data-goto-item="' + r.from + '">' + smithItemName(r.from) + '</span></td>' +
+          '<td><span class="name-link" data-goto-item="' + r.to + '">' + smithItemName(r.to) + '</span></td></tr>';
+      });
+      html += '</tbody></table></div></details>';
+    });
+    $detail.innerHTML = html;
+  }
+
   // 物品頁上的鐵匠分解提示：艾希頓裝備可以強硬分解／凝結之魂怎麼來／鎔解石怎麼來／艾希頓轉換／賢者合成券
   function smithItemNoteHtml(id) {
     var lines = [], tab = null;
@@ -2591,6 +2674,54 @@
       });
       if (lines.length > before && !tab) tab = "sage";
     }
+    var ef = SMITH.equipFusions;
+    if (ef) {
+      var efBefore = lines.length;
+      (ef.rows || []).forEach(function (r) {
+        var cost = smithMatsHtml(r.mats) + '＋ ' + goldHtml(r.gold);
+        if (String(r.source) === String(id)) {
+          lines.push('🧬 可以<b>融合</b>成 ' + itemChip(r.product) + '（' + smithNpcText(ef.npcs) + '）' + (r.refine > 0 ? '：要精煉 +' + r.refine + ' 以上，' : '：') +
+            '另外要 ' + cost + '必定成功，精煉歸零、發條屬性清掉。');
+        }
+        if (String(r.product) === String(id)) {
+          lines.push('🧬 取得方式：' + itemChip(r.source) + (r.refine > 0 ? '（+' + r.refine + ' 以上）' : '') + '拿去<b>融合</b>（' + smithNpcText(ef.npcs) + '），另外要 ' + cost);
+        }
+      });
+      var matUse = (ef.rows || []).filter(function (r) { return (r.mats || []).some(function (m) { return String(m[0]) === String(id); }); });
+      if (matUse.length) lines.push('🧬 用途：<b>裝備融合</b>的材料（' + matUse.length + ' 件裝備會用到）。');
+      if (lines.length > efBefore && !tab) tab = "equipfuse";
+    }
+    var lib = SMITH.liberations;
+    if (lib) {
+      var libBefore = lines.length, libScrollN = 0;
+      (lib.rows || []).forEach(function (r) {
+        if (String(r.from) === String(id)) {
+          lines.push('🔓 可以<b>解放</b>成 ' + itemChip(r.to) + '：在背包對它用 1 張 ' + itemChip(r.scroll) + '，必定成功、精煉保留（穿在身上的不行）。');
+        }
+        if (String(r.to) === String(id)) {
+          lines.push('🔓 取得方式：' + itemChip(r.from) + ' 用 ' + itemChip(r.scroll) + ' <b>解放</b>而來，精煉保留。');
+        }
+        if (String(r.scroll) === String(id)) libScrollN++;
+      });
+      if (libScrollN) lines.push('🔓 用途：把裝備<b>解放</b>成「解放的…」版本，一件用 1 張，共 ' + libScrollN + ' 件裝備可以用。');
+      if (lines.length > libBefore && !tab) tab = "liberate";
+    }
+    var nov = SMITH.novice;
+    if (nov && (nov.items || []).some(function (x) { return String(x) === String(id); })) {
+      var novMats = [];
+      (nov.steps || []).forEach(function (st) {
+        var last = novMats[novMats.length - 1];
+        if (last && last.material === st.material) last.to = st.step + 1;
+        else novMats.push({ material: st.material, from: st.step, to: st.step + 1 });
+      });
+      lines.push('🔰 這是新手裝備，精煉用新手專用的材料（成功率跟一般裝備一樣）：' + novMats.map(function (m) {
+        return '+' + m.from + '→+' + m.to + ' ' + itemChip(m.material);
+      }).join('、') + '。');
+    }
+    if (nov && (nov.steps || []).some(function (st) { return String(st.material) === String(id); }) &&
+        REFINE_STEP_MATERIAL.indexOf(Number(id)) < 0) {
+      lines.push('🔰 用途：新手裝備（初心者報紙、初級者武器等 ' + (nov.items || []).length + ' 件）的精煉材料。');
+    }
     var hd = SMITH.hardDecompose;
     if (hd) {
       var row = (hd.rows || []).filter(function (r) { return String(r.item) === String(id); })[0];
@@ -2607,9 +2738,9 @@
       lines.push('🔥 取得方式：把 +' + (sm.minRefine || 3) + ' 以上的裝備拿去<b>找雷分解（鎔解）</b>（' + smithNpcText(sm.npcs) + '），裝備等級、精煉越高越容易出高級的。');
     }
     if (!lines.length) return "";
-    if (!tab) tab = lines.some(function (l) { return l.indexOf("🔥") === 0; }) ? "smelt" : "decompose";
+    if (!tab) tab = lines.some(function (l) { return l.indexOf("🔥") === 0; }) ? "smelt" : SMITH.hardDecompose && lines.some(function (l) { return l.indexOf("💔") === 0; }) ? "decompose" : null;
     return '<div class="equip-box" style="font-size:13px;line-height:1.9;margin-bottom:14px;">' + lines.join("<br>") +
-      ' <span class="name-link" data-goto-smith="' + tab + '">看完整說明 →</span></div>';
+      (tab ? ' <span class="name-link" data-goto-smith="' + tab + '">看完整說明 →</span>' : '') + '</div>';
   }
 
   function showEnchantTable(gradeIdx, winderOpen) {

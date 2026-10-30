@@ -6,4 +6,4 @@
 1. `希望修改器.html` 頂部標題：`<span class="bar-title">🧭 希望存檔修改器VNN</span>` 的 `VNN`
 2. `希望修改器.html` 最底下：所有 `<script src="data/*.js?v=NN"></script>` 的 `?v=NN`（快取破壞用，沒改的話手機會一直吃舊版 app.js 和舊資料檔；跑過 update_data.py 也要 +1）
 
-目前版本：**56**
+目前版本：**57**
