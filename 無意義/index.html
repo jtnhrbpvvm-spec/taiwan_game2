@@ -17,17 +17,16 @@
 <button id="gen">生成</button>
 <table id="grid"></table>
 <script>
-const ROWS = 10, TARGET = 15, MIN = -30, MAX = 45;
+const ROWS = 10, TARGET = 15, MIN = 1, MAX = 14;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
-// 產生 10 排，每排 3 格加總 15，全部 30 格數字都不重複
+// 產生 10 排，每排 3 格加總 15，同一排三格數字不重複，皆為 1～14 的正整數
 function generate() {
-  const used = new Set(), rows = [];
+  const rows = [];
   while (rows.length < ROWS) {
     const a = rand(MIN, MAX), b = rand(MIN, MAX), c = TARGET - a - b;
     const row = [a, b, c];
-    if (c < MIN || c > MAX || new Set(row).size < 3 || row.some(n => used.has(n))) continue;
-    row.forEach(n => used.add(n));
+    if (c < MIN || c > MAX || new Set(row).size < 3) continue;
     rows.push(row);
   }
   return rows;
