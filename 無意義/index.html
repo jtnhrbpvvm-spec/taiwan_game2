@@ -20,13 +20,13 @@
 const ROWS = 10, TARGET = 15, MIN = 1, MAX = 14;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
-// 產生 10 排，每排 3 格加總 15，同一排三格數字不重複，皆為 1～14 的正整數
+// 產生 10 排，每排 3 格加總 15，同一排三格數字不重複，皆為 1～14 的正整數，且任兩格相加不等於 10
 function generate() {
   const rows = [];
   while (rows.length < ROWS) {
     const a = rand(MIN, MAX), b = rand(MIN, MAX), c = TARGET - a - b;
     const row = [a, b, c];
-    if (c < MIN || c > MAX || new Set(row).size < 3) continue;
+    if (c < MIN || c > MAX || new Set(row).size < 3 || a + b === 10 || a + c === 10 || b + c === 10) continue;
     rows.push(row);
   }
   return rows;
