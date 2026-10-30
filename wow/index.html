@@ -271,6 +271,16 @@
         </div>
       </div>
     </div>
+    <div class="note-box" id="ios-video">🎬 iPhone 安裝教學影片
+      <iframe src="https://www.youtube-nocookie.com/embed/K5HKXdDIZn0" title="iPhone 安裝教學影片" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen
+        style="display:block;width:100%;aspect-ratio:16/9;margin:10px auto 0;border:0;border-radius:8px"></iframe>
+    </div>
+    <div class="note-box" id="android-video" hidden>🎬 Android 安裝教學影片
+      <iframe src="https://www.youtube-nocookie.com/embed/Fbp4VEXWac0" title="Android 安裝教學影片" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen
+        style="display:block;width:100%;aspect-ratio:16/9;margin:10px auto 0;border:0;border-radius:8px"></iframe>
+    </div>
 
     <div class="hint" style="margin-top:18px;font-weight:bold;color:var(--cream)">書籤程式碼（第 1 步要複製的）</div>
     <button class="btn btn-copy" id="copy-btn" style="margin-top:8px">📋 複製書籤程式碼</button>
@@ -505,6 +515,8 @@
   document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => {
     document.querySelectorAll('.switch button').forEach((x) => x.classList.toggle('on', x === b));
     os = b.dataset.os; idx = 0; build(); pause();
+    document.getElementById('android-video').hidden = os !== 'android';
+    document.getElementById('ios-video').hidden = os !== 'ios';
   }));
   let sx = null;
   screens.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
