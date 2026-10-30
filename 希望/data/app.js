@@ -746,7 +746,7 @@
   function renderBasicV127(c, wrap) {
     if (c.marble && typeof c.marble === "object") {
       wrap.appendChild(fieldNumber("大富翁位置 marble.pos（0＝起點）", function () { return c.marble.pos || 0; }, function (v) { c.marble.pos = Math.max(0, Math.floor(v)); }));
-      wrap.appendChild(fieldNumber("大富翁圈數 marble.laps（越多寶箱開時裝機率越高）", function () { return c.marble.laps || 0; }, function (v) { c.marble.laps = Math.max(0, Math.floor(v)); }));
+      wrap.appendChild(fieldNumber("大富翁圈數 marble.laps（越多綠／藍寶箱開大獎機率越高）", function () { return c.marble.laps || 0; }, function (v) { c.marble.laps = Math.max(0, Math.floor(v)); }));
       if ("rolls" in c.marble || saveVersion() >= 118) {
         wrap.appendChild(fieldNumber("大富翁累計擲骰 marble.rolls（每滿 150 顆送一次；改成 149 下一顆就送）",
           function () { return c.marble.rolls || 0; }, function (v) { c.marble.rolls = Math.max(0, Math.floor(v)); }));
@@ -804,6 +804,20 @@
   }
 
   // ---------- 物品清單表格（背包 / 倉庫共用）----------
+  // 一鍵解放／一鍵融合（2026-10-30 遊戲新增的兩個系統，資料 data/smith.js 由 update_data.py 產生）：
+  //   解放 liberate()：itemId 換成解放版，其他（精煉、發條、鑑定）都保留
+  //   融合 equipFuse()：itemId 換成融合後的裝備，精煉歸零，發條屬性／鑑定／成長經驗清掉，
+  //        融合後的裝備可以鑑定的話標成未鑑定（跟遊戲一樣）。修改器不扣材料、金幣，也不檢查精煉門檻。
+  var smithMaps = null;
+  function getSmithMaps() {
+    if (smithMaps) return smithMaps;
+    var es = window.EDITOR_SMITH || {}, lib = {}, fuse = {};
+    (es.liberations || []).forEach(function (r) { lib[r[0]] = r[1]; });
+    (es.equipFusions || []).forEach(function (r) { fuse[r[0]] = { product: r[1], appraisable: r[2] === 1 }; });
+    smithMaps = { lib: lib, fuse: fuse };
+    return smithMaps;
+  }
+  function itemNameOf(id) { var d = ITEMS[String(id)]; return d ? d.name : "#" + id; }
   function renderStackTable($tbody, stacks, previewBoxId) {
     $tbody.innerHTML = "";
     stacks.forEach(function (stack, idx) {
@@ -878,6 +892,32 @@
         renderStackTable($tbody, stacks, previewBoxId);
       });
       tdAct.appendChild(delBtn);
+      var sm = getSmithMaps(), libTo = sm.lib[stack.itemId], fuseTo = sm.fuse[stack.itemId];
+      if (libTo) {
+        var libBtn = el("button", { class: "icon-btn", text: "🔓", title: "解放成「" + itemNameOf(libTo) + "」（精煉保留）", style: "margin-left:4px;" });
+        libBtn.addEventListener("click", function () {
+          var from = itemNameOf(stack.itemId);
+          stack.itemId = libTo;
+          renderStackTable($tbody, stacks, previewBoxId);
+          toast(from + " 解放成 " + itemNameOf(libTo), "ok");
+        });
+        tdAct.appendChild(libBtn);
+      }
+      if (fuseTo) {
+        var fuseBtn = el("button", { class: "icon-btn", text: "🧬", title: "融合成「" + itemNameOf(fuseTo.product) + "」（精煉歸零、發條屬性和鑑定清掉）", style: "margin-left:4px;" });
+        fuseBtn.addEventListener("click", function () {
+          var from = itemNameOf(stack.itemId);
+          if (!confirm(from + " 融合成 " + itemNameOf(fuseTo.product) + "？\n跟遊戲一樣：精煉歸零，發條屬性、鑑定結果、成長經驗會清掉。")) return;
+          stack.itemId = fuseTo.product;
+          stack.refine = 0;
+          stack.refineTries = 0;
+          delete stack.options; delete stack.pendingPrev; delete stack.appraisal; delete stack.growthExp;
+          if (fuseTo.appraisable) stack.unidentified = true; else delete stack.unidentified;
+          renderStackTable($tbody, stacks, previewBoxId);
+          toast(from + " 融合成 " + itemNameOf(fuseTo.product), "ok");
+        });
+        tdAct.appendChild(fuseBtn);
+      }
       tr.appendChild(tdAct);
 
       $tbody.appendChild(tr);
