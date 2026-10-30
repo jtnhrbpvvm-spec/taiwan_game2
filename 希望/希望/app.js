@@ -1381,7 +1381,7 @@
     if (GEMS) add("💎", "技能寶石", "位置解鎖、附魔機率與數值、合成機率", ["技能寶石", "寶石", "附魔", "彗星", "原石"], "gems", "", F);
     if (window.AURA) add("✨", "光環", "精煉、G 化、靈魂結晶的機率與能力", ["光環", "靈魂", "結晶", "G化", "祭司"], "aura", "", F);
     if (window.COSTUME) add("👗", "時裝強化", "強化成功率、加成、繼承、分解、合成", ["時裝", "套裝", "線團", "伊索德", "布布"], "costume", "", F);
-    if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開時裝的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
+    if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開大獎的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
     if (window.EVENTS) add("🎉", "節慶活動・特賣", "每年的節慶活動、釣魚活動、特賣會商人限時特賣", ["活動", "節慶", "代幣", "特賣", "特賣會商人", "旅行商人", "釣魚活動", "萬聖節", "聖誕"], "events", "", F);
     if (window.EVENTS && window.EVENTS.couple) add("💞", "情侶", "情侶點數、玫瑰花商店、情人節／七夕", ["情侶", "玫瑰", "結婚", "情人節", "七夕"], "couple", "", F);
 
@@ -4403,7 +4403,7 @@
     html += '<div class="section-title">相關道具（點進去看取得方式）</div>';
     html += sysChipRow([COSTUME.crystal, COSTUME.powder].concat(COSTUME.threads.map(function (t) { return t[0]; })).concat([COSTUME.exBox.item, cp.box])
       .concat(COSTUME.cloth ? [COSTUME.cloth] : []));
-    if (MARBLE) html += sysGuideLinkHtml("marble", "時裝本體可以從哈比兔大富翁的寶箱開出，看大富翁說明");
+    if (MARBLE && !MARBLE.jackpots) html += sysGuideLinkHtml("marble", "時裝本體可以從哈比兔大富翁的寶箱開出，看大富翁說明");
 
     html += '<div class="section-title">強化：成功率與花費</div><div style="overflow-x:auto;"><table class="dtable" style="white-space:nowrap;"><thead><tr><th>強化</th><th>成功率</th><th>' +
       crystal + '</th><th>金幣</th><th>失敗</th>' +
@@ -4467,8 +4467,23 @@
   // ----- 🎲 哈比兔大富翁 -----
   var MARBLE_SQUARE = {
     start: ["🏁", "起點"], gold: ["🪙", "金幣"], gem: ["💎", "寶石"], item: ["🧧", "符咒／福袋"], feed: ["🍖", "寵物食物"],
-    sparkle: ["✨", "結晶粉末"], green: ["🟩", "綠寶箱"], blue: ["🟦", "藍寶箱"], red: ["🟥", "紅寶箱"], more: ["🎲", "再擲一次"]
+    sparkle: ["✨", "結晶粉末"], green: ["🟩", "綠寶箱"], blue: ["🟦", "藍寶箱"], red: ["🟥", "紅寶箱"], more: ["🎲", "再擲一次"],
+    coupon: ["🎟️", "商城禮卷"], box: ["🎁", "寶箱"]
   };
+  // 2026-10-29 遊戲改版：寶箱獎品從時裝（costumes／costumePct）改成大獎（jackpots／jackpotPct），
+  // 棋盤上的綠／藍／紅寶箱格合併成「寶箱」格，停到時照 boxSlot 的權重抽是哪一種寶箱。新舊資料格式都支援。
+  var MARBLE_PRIZES = MARBLE ? (MARBLE.jackpots || MARBLE.costumes || []) : [];
+  var MARBLE_PRIZE_WORD = MARBLE && MARBLE.jackpots ? '大獎' : '時裝';
+  function marblePrizePct(b) { return b.jackpotPct != null ? b.jackpotPct : (b.costumePct || 0); }
+  // 每擲一次停在各種寶箱的機率（格子比例；新版「寶箱」格再照 boxSlot 權重分給三種寶箱）
+  function marbleBoxShare(count, len) {
+    var share = {}, slot = MARBLE.boxSlot, slotTotal = 0;
+    if (slot && count.box) Object.keys(slot).forEach(function (k) { slotTotal += slot[k]; });
+    Object.keys(MARBLE.boxes).forEach(function (k) {
+      share[k] = (count[k] || 0) / len + (slotTotal ? count.box / len * (slot[k] || 0) / slotTotal : 0);
+    });
+    return share;
+  }
   function marbleSquareName(k) { return MARBLE_SQUARE[k] ? MARBLE_SQUARE[k][0] + ' ' + MARBLE_SQUARE[k][1] : k; }
   function marblePrizeListHtml(list) {
     var total = list.reduce(function (a, x) { return a + x.weight; }, 0) || 1;
@@ -4489,7 +4504,7 @@
       '・每擲一次骰子消耗 1 顆「' + balloon + '」，擲 1～' + MARBLE.dice + ' 點，在一圈 ' + board.length + ' 格的棋盤上前進，停在哪一格就拿那一格的獎勵。<br>' +
       '・停在「再擲一次」會免費再擲，不多花氣球。<br>' +
       '・每經過起點一次算完成一圈，並拿到 1 個「' + leaked + '」，可以找' + sysNpcText(MARBLE.exchangeNpc) + '換回氣球。<br>' +
-      '・<b>圈數越多，綠／藍寶箱開出時裝的機率越高</b>：' +
+      '・<b>圈數越多，綠／藍寶箱開出' + MARBLE_PRIZE_WORD + '的機率越高</b>：' +
       MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' ×' + m; }).join('、') + '。位置和圈數每個角色各自記錄，<b>不會重置</b>。<br>' +
       '・遊戲裡可以選「連擲」次數，也可以勾氣球不夠時自動用金幣買。' +
       (MARBLE.bonus ? '<br>・<b>每擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆氣球</b>額外送 1 個「' + escapeHtml(stoneItemName(MARBLE.bonus.item)) +
@@ -4508,17 +4523,31 @@
       board.map(function (k, i) { return '<span class="map-chip" style="cursor:default;" title="第 ' + (i + 1) + ' 格">' + (i + 1) + '. ' + marbleSquareName(k) + '</span>'; }).join('') + '</div>';
 
     html += '<div class="section-title">每一種格子的獎勵</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>格子</th><th>格數</th><th>獎勵</th></tr></thead><tbody>';
-    var order = ["gold", "gem", "item", "feed", "sparkle", "green", "blue", "red", "more", "start"];
+    var order = ["gold", "coupon", "gem", "item", "feed", "sparkle", "box", "green", "blue", "red", "more", "start"];
     order.filter(function (k) { return count[k]; }).forEach(function (k) {
       var body;
-      if (k === "gold") {
+      if (k === "box") {
+        var slot = MARBLE.boxSlot || {}, slotTotal = Object.keys(slot).reduce(function (a, x) { return a + slot[x]; }, 0) || 1;
+        body = '停到時抽一種寶箱：' + Object.keys(slot).map(function (x) {
+          return marbleSquareName(x) + ' <span class="rate">' + sysPct(slot[x] / slotTotal * 100) + '</span>';
+        }).join('、') + '。<br>' + Object.keys(MARBLE.boxes).map(function (x) {
+          var b = MARBLE.boxes[x], pct = marblePrizePct(b);
+          var t = '<div style="margin-top:6px;"><b>' + marbleSquareName(x) + '</b>　' + MARBLE_PRIZE_WORD + '：' + (b.lapScaled
+            ? MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' <span class="rate' + (pct * m < 50 ? ' low' : '') + '">' + sysPct(Math.min(100, pct * m)) + '</span>'; }).join('、')
+            : '<span class="rate">' + sysPct(pct) + '</span>（不受圈數影響）') + '</div>';
+          if (b.ashton && b.ashton.loots.length) t += '<div style="margin-top:4px;">沒開到' + MARBLE_PRIZE_WORD + '時，<span class="rate low">' + sysPct(b.ashton.pct) + '</span> 拿下面其中一樣：</div><div class="map-chip-row" style="margin-top:4px;">' + marblePrizeListHtml(b.ashton.loots) + '</div>';
+          if (b.others.length) t += '<div style="margin-top:4px;">其他情況拿下面其中一樣：</div><div class="map-chip-row" style="margin-top:4px;">' + marblePrizeListHtml(b.others) + '</div>';
+          return t;
+        }).join('');
+      } else if (k === "gold") {
         body = '金幣＝氣球當下的名品館價格 × ' + Math.round(MARBLE.gold.min * 100) + '%～' + Math.round(MARBLE.gold.max * 100) + '%（平均抽）';
       } else if (MARBLE.boxes[k]) {
         var b = MARBLE.boxes[k];
-        body = '<b>時裝</b>：' + (b.lapScaled
-          ? MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' <span class="rate' + (b.costumePct * m < 50 ? ' low' : '') + '">' + sysPct(b.costumePct * m) + '</span>'; }).join('、')
-          : '<span class="rate">' + sysPct(b.costumePct) + '</span>（不受圈數影響）');
-        if (b.others.length) body += '<div style="margin-top:6px;">沒開到時裝就拿下面其中一樣：</div><div class="map-chip-row" style="margin-top:4px;">' + marblePrizeListHtml(b.others) + '</div>';
+        var bp = marblePrizePct(b);
+        body = '<b>' + MARBLE_PRIZE_WORD + '</b>：' + (b.lapScaled
+          ? MARBLE.lapMult.map(function (m, i) { return marbleLapText(i) + ' <span class="rate' + (bp * m < 50 ? ' low' : '') + '">' + sysPct(bp * m) + '</span>'; }).join('、')
+          : '<span class="rate">' + sysPct(bp) + '</span>（不受圈數影響）');
+        if (b.others.length) body += '<div style="margin-top:6px;">沒開到' + MARBLE_PRIZE_WORD + '就拿下面其中一樣：</div><div class="map-chip-row" style="margin-top:4px;">' + marblePrizeListHtml(b.others) + '</div>';
       } else if (MARBLE.squares[k]) {
         body = '<div class="map-chip-row">' + marblePrizeListHtml(MARBLE.squares[k]) + '</div>';
       } else {
@@ -4530,14 +4559,15 @@
     html += '</tbody></table></div>';
     html += sysNote('「格數」下面的百分比是那種格子佔棋盤的比例，可以當成每擲一次停在上面的大概機率。物品後面的百分比是那一格裡抽中它的機率。');
 
-    // 每顆氣球開出時裝的機率（估算）：各寶箱格數 ÷ 總格數 × 那種寶箱的時裝機率；停在「再擲一次」等於多一次機會
+    // 每顆氣球開出大獎（舊版：時裝）的機率（估算）：停在各種寶箱的機率 × 那種寶箱的機率；停在「再擲一次」等於多一次機會
     var moreBonus = 1 / (1 - (count.more || 0) / board.length);
-    html += '<div class="section-title">每顆氣球開出時裝的機率（估算）</div><table class="dtable"><thead><tr><th>圈數</th><th>每顆氣球</th><th>平均幾顆開一件</th></tr></thead><tbody>';
+    var boxShare = marbleBoxShare(count, board.length);
+    html += '<div class="section-title">每顆氣球開出' + MARBLE_PRIZE_WORD + '的機率（估算）</div><table class="dtable"><thead><tr><th>圈數</th><th>每顆氣球</th><th>平均幾顆開一件</th></tr></thead><tbody>';
     MARBLE.lapMult.forEach(function (m, i) {
       var p = 0;
       Object.keys(MARBLE.boxes).forEach(function (k) {
         var b = MARBLE.boxes[k];
-        p += (count[k] || 0) / board.length * Math.min(100, b.costumePct * (b.lapScaled ? m : 1)) / 100;
+        p += boxShare[k] * Math.min(100, marblePrizePct(b) * (b.lapScaled ? m : 1)) / 100;
       });
       p *= moreBonus;
       html += '<tr><td><b>' + marbleLapText(i) + '</b></td><td><span class="rate">' + sysPct(p * 100) + '</span></td><td>約 ' + (Math.round(10 / p) / 10) + ' 顆</td></tr>';
@@ -4546,10 +4576,12 @@
     html += sysNote('用「每一格被停到的機會差不多」估算的，實際會有一點出入。一圈 ' + board.length + ' 格、平均一次走 ' + ((MARBLE.dice + 1) / 2) + ' 格，大約 ' +
       Math.round(board.length / ((MARBLE.dice + 1) / 2)) + ' 顆氣球走完一圈。');
 
-    html += '<div class="section-title">寶箱會開出的時裝 <span class="count">(' + MARBLE.costumes.length + ')</span></div>';
-    html += '<div class="empty-note" style="padding:0 0 10px;">開到時裝時從下面平均抽一件（每件 ' + sysPct(100 / MARBLE.costumes.length) + '），三種寶箱的清單都一樣。</div>';
-    html += sysChipRow(MARBLE.costumes);
-    if (COSTUME) html += sysGuideLinkHtml("costume", "時裝拿到之後怎麼強化，看時裝強化說明");
+    if (MARBLE_PRIZES.length) {
+      html += '<div class="section-title">寶箱會開出的' + MARBLE_PRIZE_WORD + ' <span class="count">(' + MARBLE_PRIZES.length + ')</span></div>';
+      html += '<div class="empty-note" style="padding:0 0 10px;">開到' + MARBLE_PRIZE_WORD + '時從下面平均抽一件（每件 ' + sysPct(100 / MARBLE_PRIZES.length) + '），三種寶箱的清單都一樣。</div>';
+      html += sysChipRow(MARBLE_PRIZES);
+    }
+    if (COSTUME && !MARBLE.jackpots) html += sysGuideLinkHtml("costume", "時裝拿到之後怎麼強化，看時裝強化說明");
     $detail.innerHTML = html;
   }
 
@@ -4875,15 +4907,18 @@
       }
     }
     if (MARBLE && MARBLE.board) {
-      var isPrize = has(MARBLE.costumes);
+      var isPrize = has(MARBLE_PRIZES);
       var squareKinds = [];
       Object.keys(MARBLE.squares).forEach(function (k) { if (MARBLE.squares[k].some(function (x) { return x.item === num; })) squareKinds.push(k); });
-      Object.keys(MARBLE.boxes).forEach(function (k) { if (MARBLE.boxes[k].others.some(function (x) { return x.item === num; })) squareKinds.push(k); });
+      Object.keys(MARBLE.boxes).forEach(function (k) {
+        var bx = MARBLE.boxes[k];
+        if (bx.others.concat(bx.ashton ? bx.ashton.loots : []).some(function (x) { return x.item === num; })) squareKinds.push(k);
+      });
       var isBonus = !!MARBLE.bonus && MARBLE.bonus.item === num;
       if (has([MARBLE.balloon, MARBLE.leaked]) || isPrize || squareKinds.length || isBonus) {
         var mNote = '';
         if (isBonus) mNote = '取得方式：哈比兔大富翁每擲滿 ' + fmtNum(MARBLE.bonus.every) + ' 顆氣球送 1 個。';
-        else if (isPrize) mNote = '取得方式：哈比兔大富翁的綠／藍／紅寶箱有機率開出時裝，開到時從 ' + MARBLE.costumes.length + ' 件裡平均抽一件。';
+        else if (isPrize) mNote = '取得方式：哈比兔大富翁的綠／藍／紅寶箱有機率開出' + MARBLE_PRIZE_WORD + '，開到時從 ' + MARBLE_PRIZES.length + ' 件裡平均抽一件。';
         else if (num === MARBLE.leaked) mNote = '取得方式：玩哈比兔大富翁，每經過起點一次拿 1 個。';
         else if (squareKinds.length) mNote = '取得方式：哈比兔大富翁停在「' + squareKinds.map(marbleSquareName).join('」「') + '」格有機會拿到。';
         html += '<div class="section-title">哈比兔大富翁</div>' + (mNote ? '<div style="font-size:13px;line-height:1.9;">' + mNote + '</div>' : '') +
