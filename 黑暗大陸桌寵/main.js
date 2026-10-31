@@ -126,7 +126,27 @@ const SOLO_NOTE = "勾選此項目可讓你本隻桌寵獨立 其他桌寵不管
 function setSolo(petIndex, on) {
   settings.soloPets = Array.from({ length: MAX_PETS }, (_, i) => (i === petIndex ? on : isSolo(i)));
   saveSettings();
+  if (games[petIndex]) setTaskbarGroup(games[petIndex], true);
   if (on) dialog.showMessageBox({ type: "info", title: "獨立視窗", message: "獨立視窗", detail: SOLO_NOTE, buttons: ["確定"] });
+}
+
+/**
+ * 工作列分組（只有 Windows）：同一個程式的視窗 Windows 會合併成一個工作列按鈕（照視窗的 App ID），
+ * 對那個按鈕「最小化所有視窗」會整組一起縮小（玩家回報開 A、B 兩隻，縮小 A 時 B 也跟著縮小）。
+ * 獨立視窗的遊戲換成自己的 App ID，工作列上單獨一個按鈕，不跟別隻合併；取消勾選換回共用的（安裝檔的 appId）。
+ * changed：從選單切換的，視窗已經在工作列上的話拿掉再放回去，讓工作列重新照新的 ID 分組。
+ */
+const SHARED_APP_ID = "com.darkcontinent.desktoppet";
+function setTaskbarGroup(g, changed = false) {
+  if (process.platform !== "win32" || g.win.isDestroyed()) return;
+  if (!isSolo(g.index) && !changed) return; // 沒勾過的照原本的樣子，不去動它
+  g.win.setAppDetails(isSolo(g.index)
+    ? { appId: `${SHARED_APP_ID}.game${g.index + 1}`, appIconPath: process.execPath, appIconIndex: 0 }
+    : { appId: SHARED_APP_ID, appIconPath: process.execPath, appIconIndex: 0 });
+  if (changed && g.win.isVisible() && (g.shown || g.keepTaskbar)) {
+    g.win.setSkipTaskbar(true);
+    g.win.setSkipTaskbar(false);
+  }
 }
 
 /**
@@ -193,6 +213,7 @@ function createGame(index) {
     },
   });
   g.win.webContents.setAudioMuted(true);
+  setTaskbarGroup(g); // 獨立視窗的遊戲在工作列上單獨一個按鈕
   // 視窗邊框＋標題列多大：手機 9:16、PC 16:9 要讓「遊戲區」剛好是那個比例
   const outer = g.win.getBounds(), inner = g.win.getContentBounds();
   g.frame = { dw: outer.width - inner.width, dh: outer.height - inner.height };

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.13",
+  "version": "1.4.14",
   "shell": 1,
   "files": [
     {
@@ -39,8 +39,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "bf854fc0eed562d225f9f27e53d9ac9b878022f0399232566de38697cc74646a",
-      "size": 64248
+      "sha256": "2c6aac3c663c9190618791d6c5495d0959f8bbc999187a33d28a592519d6e97b",
+      "size": 65582
     },
     {
       "path": "names.json",
@@ -89,8 +89,8 @@
     },
     {
       "path": "ui/help.html",
-      "sha256": "db0d3ed13a63367ac5e46feea4614adbbd2bb055bfe8243b322f3ef30871f756",
-      "size": 8802
+      "sha256": "4045d702c04ccb66631e3b9dec03b699bc0d31f9357795589d84b36b2ca90534",
+      "size": 8949
     },
     {
       "path": "ui/help.js",
