@@ -1170,6 +1170,7 @@ const close = () => { D2ED.panel.remove(); D2ED.panel = null; };
 D2ED.panel = d2edEl('div', { id: 'd2ed-overlay', onclick: e => { if (e.target.id === 'd2ed-overlay') close(); } },
 d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '書籤修改' },
 d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '書籤修改'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
+d2edEl('button', { type: 'button', title: '看玩家回報的回覆', onclick: d2zhReplyOpen }, '回報內容'),
 d2edEl('button', { type: 'button', onclick: () => { close(); d2zhNewsOpen(true); } }, '更新說明'),
 d2edEl('button', { type: 'button', title: '開啟問題回報表單（不需登入，會自動帶入版本）', onclick: d2zhReportOpen }, '問題回報'),
 d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label': '關閉' }, '×')),
@@ -1184,7 +1185,7 @@ d2edRender();
 const D2ZH_NEWS = [
 { ver: 'V40', date: '2026-10-31', game: '遊戲 20261030.2', items: [
 '修正：手機上物品過濾的護身符、護符選項被「手把」「書籤修改」「語言」按鈕擋住不能改；這些按鈕現在會避開選單文字',
-'更新說明最上面新增「回報內容」，可以看到問題回報的回覆',
+'更新說明和書籤修改面板的頂部新增「回報內容」按鈕，點開可以看問題回報的回覆',
 '修正：影像選項的開關（天氣、數值範圍等）開啟時只翻譯一半'] },
 { ver: 'V39', date: '2026-10-31', game: '遊戲 20261030.2', items: [
 '配合遊戲更新翻譯新增的文字：影像選項的「天氣」開關與說明、Ctrl＋點擊屬性 ＋ 一次加 5 點的提示',
@@ -1315,15 +1316,25 @@ btn.onclick = () => { d2edPerfSet(true); if (d2edPerfOn()) shown(); };
 if (d2edPerfOn()) shown();
 return d2edEl('div', { class: 'd2ed-row' }, btn, note);
 }
-// 回報內容：開面板時才讀 GitHub 上的 回應.txt，照檔案原本的分行顯示；改檔案不用升版本（Pages 快取約 10 分鐘）
+// 回報內容：更新說明和書籤修改頂部的按鈕，點了才跳窗並讀 GitHub 上的 回應.txt，照檔案原本的分行顯示；改檔案不用升版本（Pages 快取約 10 分鐘）
 const D2ZH_REPLY_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/%E5%9B%9E%E6%87%89.txt';
-function d2zhReplySection() {
-const body = d2edEl('div', { style: 'margin: 6px 0 8px; max-height: 40vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6;' }, '讀取中…');
+function d2zhReplyOpen(e) {
+const card = e.target.closest('.d2ed-card');
+if (!card || card.querySelector('.d2ed-modal')) return;
+const modal = d2edEl('div', { class: 'd2ed-modal', style: 'grid-template-rows: minmax(0, 1fr)', onclick: ev => { if (ev.target === modal) close(); } });   // 列高固定，內容太長才會在視窗裡捲動
+const close = () => modal.remove();
+const body = d2edEl('div', { style: 'margin: 6px 0 12px; min-height: 0; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; color: #e8e2d0;' }, '讀取中…');
+const done = d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: close }, '關閉');
+modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'dialog', 'aria-label': '玩家回報內容', style: 'display: flex; flex-direction: column; max-height: 100%; border-color: #8f743e; background: linear-gradient(180deg, #221a10, #120d07);' },
+d2edEl('b', { style: 'color: #f0c94a' }, '玩家回報內容'), body,
+d2edEl('div', { class: 'd2ed-row', style: 'flex: none' }, done)));
+modal.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.stopPropagation(); close(); } });
+card.append(modal);
+done.focus();
 fetch(D2ZH_REPLY_URL, { cache: 'no-cache' })
 .then(r => r.ok ? r.text() : r.status === 404 ? '' : Promise.reject(new Error(r.status)))
 .then(t => { body.textContent = t.trim() || '目前沒有回報內容'; })
 .catch(() => { body.textContent = '回報內容讀取失敗，請確認網路連線後再開一次'; });
-return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '回報內容'), body);
 }
 function d2zhNewsOpen(all) {
 if (D2ED.panel || document.getElementById('d2ed-overlay')) return;
@@ -1337,9 +1348,9 @@ const close = () => { markSeen(); box.remove(); };
 box = d2edEl('div', { id: 'd2ed-overlay', onclick: e => { if (e.target.id === 'd2ed-overlay') close(); } },
 d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '中文化更新說明' },
 d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '中文化更新說明'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
+d2edEl('button', { type: 'button', title: '看玩家回報的回覆', onclick: d2zhReplyOpen }, '回報內容'),
 d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label': '關閉' }, '×')),
 d2edEl('div', { class: 'd2ed-body' },
-d2zhReplySection(),
 ...list.map(n => d2edEl('section', { class: 'd2ed-sec' },
 d2edEl('h3', {}, `${n.ver}　${n.date}`), d2edEl('p', { class: 'd2ed-note' }, `對應${n.game}`),
 ...(n.note || []).map(t => d2edEl('p', { style: 'margin: 6px 0; white-space: pre-line; line-height: 1.6;' }, t)),
@@ -1398,8 +1409,9 @@ font: bold 18px ${D2ZH_FONT}; letter-spacing: 1px; white-space: nowrap; }
 background: rgba(0,0,0,.6); font: 14px/1.5 ${D2ZH_FONT}; color: #e8e2d0; }
 #d2ed-overlay .d2ed-card { width: min(560px, 100%); max-height: calc(100vh - 24px); display: flex; flex-direction: column;
 background: linear-gradient(180deg, #221a12, #120d08); border: 2px solid #8f743e; border-radius: 8px; box-shadow: 0 10px 40px #000; }
-#d2ed-overlay .d2ed-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #4a3418; }
-#d2ed-overlay .d2ed-head b { color: #f0c94a; font-size: 18px; }
+#d2ed-overlay .d2ed-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 14px; border-bottom: 1px solid #4a3418; }
+#d2ed-overlay .d2ed-head b { color: #f0c94a; font-size: 18px; white-space: nowrap; }
+#d2ed-overlay .d2ed-head button { white-space: nowrap; }
 #d2ed-overlay .d2ed-ver { padding: 0 6px; border: 1px solid #8f743e; border-radius: 4px; color: #c7a45f; font-size: 12px; line-height: 18px; }
 #d2ed-overlay .d2ed-msg { flex: 1; color: #9fd38a; font-size: 13px; }
 #d2ed-overlay .d2ed-x { background: none; border: 0; color: #d8d0c0; font-size: 24px; line-height: 1; cursor: pointer; }
