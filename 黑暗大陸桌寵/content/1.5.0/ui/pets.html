@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>選擇要開的桌寵</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 14px 18px 20px; font: 14px/1.6 "Microsoft JhengHei", sans-serif; color: #e9dcc0; background: #1d1612; }
+      h2 { margin: 14px 0 6px; font-size: 15px; color: #d9a54a; border-bottom: 1px solid #4a3a28; padding-bottom: 2px; }
+      h2:first-child { margin-top: 0; }
+      label.row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid #2f251d; cursor: pointer; }
+      label.row:hover { background: #261d17; }
+      label.row.off { opacity: 0.45; cursor: not-allowed; }
+      label.row input { width: 17px; height: 17px; accent-color: #c9973f; flex: none; }
+      label.row .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      label.row .who small { color: #b39a72; margin-left: 6px; }
+      label.row .tag { flex: none; font-size: 12px; color: #1b120a; background: #9fd28a; border-radius: 4px; padding: 0 6px; }
+      label.row .tag.stop { background: #f19a8a; }
+      label.row .tag.new { background: #f1c26a; }
+      input { font: inherit; color: inherit; background: #2b211a; border: 1px solid #5a4630; border-radius: 6px; padding: 4px 8px; }
+      button { font: inherit; font-size: 13px; color: inherit; background: #2b211a; border: 1px solid #5a4630; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+      button:hover:not(:disabled) { border-color: #d9a54a; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button.primary { background: #c9973f; border-color: #c9973f; color: #1b120a; font-weight: bold; }
+      form { display: grid; grid-template-columns: 4em 1fr; gap: 6px 8px; align-items: center; }
+      form .btns { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+      .msg { min-height: 1.4em; font-size: 13px; color: #9fd28a; }
+      .msg.bad { color: #f19a8a; }
+      #form-msg { grid-column: 1 / -1; }
+      .count { margin: 8px 0 0; color: #f3d9a0; }
+      .note { color: #b39a72; font-size: 13px; margin: 6px 0; }
+      .warn { color: #f0b860; font-size: 13px; margin: 6px 0; }
+      .empty { color: #8a765a; padding: 6px 0; }
+      .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <h2>要開哪些帳號（勾幾個就開幾隻）</h2>
+    <div id="list"></div>
+    <p class="count" id="count"></p>
+    <p class="note">每隻桌寵是一個獨立的程式，各自登入勾選的帳號。取消勾選開著的那隻，按確認後牠會結束。</p>
+    <p class="warn" id="auto-off" hidden>「開啟時自動登入並繼續冒險」目前關著，新開的桌寵不會自動登入（右鍵選單可以打開）。</p>
+
+    <h2>新增帳號</h2>
+    <form id="form" autocomplete="off">
+      <label for="label">名稱</label><input id="label" placeholder="自己認得出來就好，例如：主帳、法師小號（可不填）" />
+      <label for="email">Email</label><input id="email" type="text" inputmode="email" placeholder="you@example.com" />
+      <label for="password">密碼</label><input id="password" type="password" placeholder="遊戲帳號的密碼" />
+      <div id="form-msg" class="msg"></div>
+      <div class="btns"><button type="submit">新增並勾選</button></div>
+    </form>
+    <p class="note">修改、刪除帳號請用右鍵選單「帳號管理…」。</p>
+
+    <div class="msg" id="msg"></div>
+    <div class="actions">
+      <button id="cancel" type="button">取消</button>
+      <button id="ok" class="primary" type="button">確認</button>
+    </div>
+    <script src="pets.js"></script>
+  </body>
+</html>

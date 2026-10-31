@@ -1,8 +1,8 @@
-version: 1.4.0
+version: 1.5.0
 files:
-  - url: dark-continent-pet-setup-1.4.0.exe
-    sha512: saIarWtAvNHviv6QxcXtGU7vGPQP6+Kvr/1r8OvGgHkus9DX1e/8vLaSuY44qczzt2u3IOCXyA/sGNtUXdJlDQ==
-    size: 82413631
-path: dark-continent-pet-setup-1.4.0.exe
-sha512: saIarWtAvNHviv6QxcXtGU7vGPQP6+Kvr/1r8OvGgHkus9DX1e/8vLaSuY44qczzt2u3IOCXyA/sGNtUXdJlDQ==
-releaseDate: '2026-10-26T00:08:37.360Z'
+  - url: dark-continent-pet-setup-1.5.0.exe
+    sha512: IhKngYslWFMcj8P4OV0yJjUX1EmJ1re3+ZlaXDm5mXMua00Q4LP1zXy0C4QyLZ3XahcLN/MsumacabzHZ5/K6g==
+    size: 82476454
+path: dark-continent-pet-setup-1.5.0.exe
+sha512: IhKngYslWFMcj8P4OV0yJjUX1EmJ1re3+ZlaXDm5mXMua00Q4LP1zXy0C4QyLZ3XahcLN/MsumacabzHZ5/K6g==
+releaseDate: '2026-10-31T13:31:55.921Z'
