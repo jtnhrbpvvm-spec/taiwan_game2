@@ -17,12 +17,14 @@
   #grid td.time { width: 72px; color: #666; font-size: 16px; }
   th { min-width: 96px; }
   #msg { margin-top: 16px; color: #888; }
+  #setKey { margin-top: 8px; font-size: 14px; color: #3b6ef5; background: none; padding: 4px; display: none; }
 </style>
 </head>
 <body>
 <button id="gen">生成</button><button id="weather">天氣</button>
 <table id="grid"></table>
 <div id="msg"></div>
+<button id="setKey">設定 / 更換氣象署金鑰</button>
 <script>
 const ROWS = 11, LIMIT_ROWS = 5, FIRST_MAX = 7, NO_TEN_ROWS = 8, TARGET = 15, MIN = 1, MAX = 14;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -47,6 +49,7 @@ const grid = document.getElementById('grid'), msg = document.getElementById('msg
 
 document.getElementById('gen').onclick = () => {
   msg.textContent = '';
+  document.getElementById('setKey').style.display = 'none';
   grid.innerHTML = generate()
     .map((r, i) => `<tr${i >= NO_TEN_ROWS ? ' class="free"' : ''}>${r.map(n => `<td>${n}</td>`).join('')}<td class="sum">= ${r[0] + r[1] + r[2]}</td></tr>`)
     .join('');
@@ -56,6 +59,30 @@ document.getElementById('gen').onclick = () => {
 const WEATHER_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/weather-data/weather.json';
 const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
 const pad = n => String(n).padStart(2, '0');
+
+// 按下天氣時用金鑰即時抓最新一筆；金鑰只存在這台裝置的瀏覽器，不會進 GitHub
+const KEY_STORE = 'cwaKey';
+const loadKey = () => { try { return localStorage.getItem(KEY_STORE); } catch { return null; } };
+const saveKey = k => { try { localStorage.setItem(KEY_STORE, k); } catch { /* 無痕模式存不了，只用這一次 */ } return k; };
+const askKey = () => saveKey((prompt('輸入氣象署金鑰（只存在這台裝置的瀏覽器）。不想用請按取消。') || '').trim());
+document.getElementById('setKey').onclick = () => { askKey(); document.getElementById('weather').click(); };
+
+async function fetchLatest(data, id) {
+  const key = loadKey() ?? askKey();
+  if (!key) return '（未設定金鑰，只顯示排程存的資料）';
+  try {
+    const res = await fetch('https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001'
+      + `?Authorization=${encodeURIComponent(key)}&StationId=${id}&WeatherElement=AirTemperature`);
+    if (!res.ok) throw new Error(res.status === 401 ? '金鑰不正確' : res.status);
+    const s = (await res.json())?.records?.Station?.[0];
+    const t = Number(s?.WeatherElement?.AirTemperature), time = s?.ObsTime?.DateTime;
+    if (!time || !Number.isFinite(t) || t < -90) throw new Error('沒有最新資料');
+    data.records[time] = { [id]: t };
+    return `（已即時抓到 ${time.slice(11, 16)} 的最新資料）`;
+  } catch (e) {
+    return `（即時抓取失敗：${e.message}，顯示排程存的資料）`;
+  }
+}
 
 document.getElementById('weather').onclick = async () => {
   grid.innerHTML = '';
@@ -70,6 +97,7 @@ document.getElementById('weather').onclick = async () => {
     return;
   }
   const id = Object.keys(data.stations)[0];
+  const latestNote = await fetchLatest(data, id);
   const now = Date.now(), today = taipeiDate(now), yesterday = taipeiDate(now - 86400000);
   const nowHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Taipei', hour: '2-digit', hourCycle: 'h23' }).format(now));
   // 今天尚未到的時段留空，已過但沒資料的顯示 —
@@ -80,7 +108,8 @@ document.getElementById('weather').onclick = async () => {
   grid.innerHTML = `<tr><th>時間</th><th>昨天<br>${yesterday}</th><th>今天<br>${today}</th></tr>`
     + Array.from({ length: 24 }, (_, h) =>
       `<tr><td class="time">${pad(h)}:00</td>${cell(yesterday, h, false)}${cell(today, h, h > nowHour)}</tr>`).join('');
-  msg.textContent = `${data.stations[id]}測站，單位 °C，資料來源：中央氣象署；— 表示該小時沒有紀錄`;
+  msg.textContent = `${data.stations[id]}測站，單位 °C，資料來源：中央氣象署；— 表示該小時沒有紀錄${latestNote}`;
+  document.getElementById('setKey').style.display = 'inline-block';
 };
 </script>
 </body>
