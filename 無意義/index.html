@@ -52,7 +52,7 @@ document.getElementById('gen').onclick = () => {
     .join('');
 };
 
-// 天氣：由 GitHub Actions 每小時存到 weather-data 分支的石門區逐時氣溫
+// 天氣：由 GitHub Actions 每小時存到 weather-data 分支的白沙灣逐時氣溫
 const WEATHER_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/weather-data/weather.json';
 const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
 const pad = n => String(n).padStart(2, '0');

@@ -1,4 +1,4 @@
-name: 石門區逐時氣溫紀錄
+name: 白沙灣逐時氣溫紀錄
 
 # 每 30 分鐘向氣象署抓一次最新逐時氣溫，存到 weather-data 分支的 weather.json
 # 金鑰放在 Secrets 的 Weather，不會出現在倉庫或網頁裡

@@ -1,9 +1,9 @@
-// 抓石門區測站最新逐時氣溫，併入 weather.json，只保留最近 3 天
+// 抓白沙灣測站最新逐時氣溫，併入 weather.json，只保留最近 3 天
 // 用法：CWA_KEY=金鑰 node weather.js weather.json
 const fs = require('fs');
 
 const file = process.argv[2];
-const STATIONS = ['C0AI20', 'C0AJ40', 'C2A920']; // 白沙灣、石門、富貴角
+const STATIONS = ['C0AI20']; // 白沙灣
 const KEEP_MS = 3 * 86400000;
 
 async function main() {
@@ -17,6 +17,10 @@ async function main() {
   if (!Array.isArray(stations) || !stations.length) throw new Error('氣象署 API 沒有回傳任何測站資料');
 
   const data = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { stations: {}, records: {} };
+  // 移除已不再抓的測站
+  const keep = obj => Object.fromEntries(Object.entries(obj).filter(([id]) => STATIONS.includes(id)));
+  data.stations = keep(data.stations);
+  for (const time in data.records) data.records[time] = keep(data.records[time]);
   for (const s of stations) {
     const time = s.ObsTime?.DateTime; // 例：2026-10-31T10:00:00+08:00
     const t = Number(s.WeatherElement?.AirTemperature);
