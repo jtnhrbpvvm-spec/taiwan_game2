@@ -72,6 +72,7 @@ let clickThrough = false; // 專注模式：桌寵完全不吃滑鼠
 let helpWin;
 let pickerWin;
 let accountsWin;
+let petsWin; // 選擇要開的桌寵
 let incomeWin;
 let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
 // 使用者設定（所有桌寵共用一個檔，陣列的第 i 格是第 i 隻的）。openPets＝上次開著的是哪幾隻（啟動器照這個開）；
@@ -719,6 +720,22 @@ function openAccounts() {
   });
 }
 
+function openPetsWin() {
+  petsWin = openPanel(petsWin, "pets.html", {
+    width: 480,
+    height: 640,
+    resizable: true,
+    title: "選擇要開的桌寵",
+    webPreferences: { preload: path.join(__dirname, "pets-preload.js") },
+  });
+}
+
+ipcMain.handle("pets:get", async () => {
+  await refreshAlive();
+  return { accounts: accounts.list(), pets: alive.map((i) => ({ index: i, account: accountOf(i) })), max: MAX_PETS, autoContinue: settings.autoContinue };
+});
+ipcMain.handle("pets:apply", (_e, choice) => applyPetChoice(choice));
+
 /** 幫第 petIndex 隻桌寵挑外觀。視窗已經開著、這次換了一隻的話，重新載入讓它標出那一隻目前選的。 */
 function openPicker(petIndex = 0) {
   const retarget = pickerWin && !pickerWin.isDestroyed() && pickerTarget !== petIndex;
@@ -802,15 +819,67 @@ function spawnPet(index) {
   spawn(process.execPath, args, { detached: true, stdio: "ignore" }).unref();
 }
 
-/** 右鍵「新增一隻桌寵」：補上最小的空號（中間結束掉的那隻優先，牠原本的帳號、外觀都還在），最多 MAX_PETS 隻。 */
-async function addPet() {
+const freeSlots = () => Array.from({ length: MAX_PETS }, (_, i) => i).filter((i) => !alive.includes(i) && !starting.has(i));
+
+/**
+ * 「選擇要開的桌寵」按確認（ui/pets.*）：勾幾個帳號就開幾隻、各自登入那個帳號。
+ * choice＝{ accounts:[要開的帳號 id], guests:[要留著的訪客是第幾隻], newGuest：再開一隻訪客 }。
+ * 已經開著、還勾著的不動；新勾的帳號開一隻新的（優先用上次掛這個帳號的編號，牠的外觀等設定還在，沒有就用最小的空號）；
+ * 取消勾選的那隻結束（下次打開也不開）。
+ */
+async function applyPetChoice(choice) {
   await refreshAlive();
-  const free = Array.from({ length: MAX_PETS }, (_, i) => i).find((i) => !alive.includes(i) && !starting.has(i));
-  if (free === undefined) return petWin?.webContents.send("pet:notice", ME, `已經開了 ${MAX_PETS} 隻，最多就是 ${MAX_PETS} 隻`);
-  changeSettings((s) => (s.openPets = [...new Set([...s.openPets, free])].sort((a, b) => a - b)));
-  starting.set(free, Date.now());
-  spawnPet(free);
-  petWin?.webContents.send("pet:notice", ME, `第 ${free + 1} 隻出發了！`);
+  const wantAccounts = [...new Set(Array.isArray(choice?.accounts) ? choice.accounts : [])].filter((id) => accounts.find(id));
+  const keepGuests = (Array.isArray(choice?.guests) ? choice.guests : []).filter((i) => alive.includes(i) && !accountOf(i));
+  const total = wantAccounts.length + keepGuests.length + (choice?.newGuest ? 1 : 0);
+  if (total === 0) return { error: "至少要勾一隻" };
+  if (total > MAX_PETS) return { error: `最多 ${MAX_PETS} 隻` };
+
+  const keep = alive.filter((i) => (accountOf(i) ? wantAccounts.includes(accountOf(i)) : keepGuests.includes(i)));
+  const stop = alive.filter((i) => !keep.includes(i));
+  const newAccounts = wantAccounts.filter((id) => !keep.some((i) => accountOf(i) === id));
+  const need = newAccounts.length + (choice?.newGuest ? 1 : 0);
+  const others = stop.filter((i) => i !== ME);
+  // 空號不夠（例如 10 隻全開著、換掉幾隻）：先讓要結束的結束，等牠們的編號空出來
+  if (freeSlots().length < need) {
+    await Promise.all(others.map((i) => peers.request(i, { type: "quit" })));
+    for (let tries = 0; tries < 30 && others.some((i) => alive.includes(i)); tries++) {
+      await new Promise((r) => setTimeout(r, 500));
+      await refreshAlive();
+    }
+    if (freeSlots().length < need) {
+      return { error: stop.includes(ME) && freeSlots().length + 1 >= need
+        ? `已經開滿 ${MAX_PETS} 隻：要把這隻換成別的帳號，請到別隻桌寵按右鍵操作（這隻要先結束才空得出位置）`
+        : "有桌寵還沒結束，請稍等一下再按一次確認" };
+    }
+  }
+
+  // 分配編號：上次掛這個帳號的那個編號優先；訪客優先用上次就是訪客的編號（訪客的存檔照編號放）
+  const free = freeSlots().filter((i) => i !== ME);
+  const take = (prefer) => {
+    const i = free.find(prefer) ?? free[0];
+    free.splice(free.indexOf(i), 1);
+    return i;
+  };
+  const plan = newAccounts.map((id) => [take((i) => settings.petAccounts[i] === id), id]);
+  if (choice?.newGuest) plan.push([take((i) => !settings.petAccounts[i]), null]);
+
+  changeSettings((s) => {
+    const list = Array.from({ length: MAX_PETS }, (_, i) => s.petAccounts[i] ?? null);
+    for (const [slot, id] of plan) {
+      if (id) list.forEach((other, i) => other === id && (list[i] = null)); // 同一個帳號只給一隻
+      list[slot] = id;
+    }
+    s.petAccounts = list;
+    s.openPets = [...keep, ...plan.map(([slot]) => slot)].sort((a, b) => a - b);
+  });
+  await Promise.all(others.map((i) => peers.request(i, { type: "quit" })));
+  for (const [slot] of plan) {
+    starting.set(slot, Date.now());
+    spawnPet(slot);
+  }
+  if (stop.includes(ME)) setTimeout(() => app.quit(), 1500); // 這隻也被取消了：等視窗顯示完結果再結束
+  return { ok: true, started: plan.length, stopped: stop.length };
 }
 
 /** 右鍵「結束這隻」：只關這個程式。還有別隻在跑的話，下次打開就不再開這隻；最後一隻結束時照舊記著，下次打開還是牠。 */
@@ -989,11 +1058,9 @@ function buildMenu() {
             { label: "全部桌寵", type: "checkbox", checked: allStay(), click: (item) => setStay(item.checked) },
           ],
         }
-      : { label: "原地不走動", type: "checkbox", checked: stays(0), click: (item) => setStay(item.checked) },
-    // 每隻是獨立的程式（每隻一個帳號），新增的補上最小的空號，最多 MAX_PETS 隻
-    alive.length >= MAX_PETS
-      ? { label: `新增一隻桌寵（已達上限 ${MAX_PETS} 隻）`, enabled: false }
-      : { label: `新增一隻桌寵（目前 ${alive.length} 隻，最多 ${MAX_PETS} 隻）`, click: addPet },
+      : { label: "原地不走動", type: "checkbox", checked: stays(petIndex), click: (item) => setStay(item.checked) },
+    // 每隻是獨立的程式（每隻一個帳號）：在視窗裡勾帳號決定開哪幾隻，最多 MAX_PETS 隻
+    { label: `選擇要開的桌寵…（目前 ${alive.length} 隻，最多 ${MAX_PETS} 隻）`, click: openPetsWin },
     { label: many ? "調整大小…（全部一起）" : "調整大小…", click: () => openSizer(petIndex) },
     { label: many ? `選擇這隻桌寵的外觀…（第 ${petIndex + 1} 隻）` : "選擇桌寵外觀…", click: () => openPicker(petIndex) },
     { label: "帳號管理…", click: openAccounts },
@@ -1437,13 +1504,13 @@ app.whenReady().then(async () => {
   // 走到這裡代表視窗都開好了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用，不然會被退回上一份）
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
-    openAccounts, getAccountsWin: () => accountsWin, accounts, setPetAccount, setStay, settings: () => settings, changeSettings, updates, say, setClickThrough,
+    openAccounts, getAccountsWin: () => accountsWin, openPetsWin, getPetsWin: () => petsWin, accounts, setPetAccount, setStay, settings: () => settings, changeSettings, updates, say, setClickThrough,
     income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame, diagnostics, diagnosticsContext, setPetFps,
     quit: () => app.quit() });
 });
 
 // 測試用（設了 DARK_PET_TEST 才有）：從外面（node --inspect）按右鍵選單的功能，測好幾個程式之間的行為
-if (process.env.DARK_PET_TEST) global.petTest = { ME, addPet, endSelf, quitAll, buildMenu, refreshAlive, alive: () => alive, settings: () => settings,
+if (process.env.DARK_PET_TEST) global.petTest = { ME, applyPetChoice, openPetsWin, petsWin: () => petsWin, endSelf, quitAll, buildMenu, refreshAlive, alive: () => alive, settings: () => settings,
   setPetAccount, setStay, changeSettings, games, income, petWin: () => petWin };
 
 app.on("before-quit", () => (quitting = true));

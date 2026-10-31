@@ -322,7 +322,7 @@ async function run(t) {
     check("換帳號後用該帳號自己的登入資料", t.games[0].partition === `persist:acct-${added.id}` && t.games[0] !== g0
       && t.games[0].win.webContents.session.storagePath?.endsWith(`acct-${added.id}`), t.games[0].win.webContents.session.storagePath);
     const labels = t.buildMenu().items.map((i) => i.label).filter(Boolean);
-    check("右鍵選單有帳號、新增一隻、沒有說話／撫摸功能", labels.some((l) => l.startsWith("帳號（第 1 隻）：測試帳號")) && labels.some((l) => l.startsWith("新增一隻桌寵（目前 1 隻"))
+    check("右鍵選單有帳號、選擇要開的桌寵、沒有說話／撫摸功能", labels.some((l) => l.startsWith("帳號（第 1 隻）：測試帳號")) && labels.some((l) => l.startsWith("選擇要開的桌寵…（目前 1 隻"))
       && !labels.some((l) => /說話|摸|黑店|GM|書籤|收益|存檔管理|桌寵數量/.test(l)), labels.join("、"));
     t.setPetAccount(1, added.id);
     check("同一個帳號只給一隻用", t.settings().petAccounts[1] === added.id && t.settings().petAccounts[0] === null);
@@ -350,6 +350,14 @@ async function run(t) {
     const rows = await t.getAccountsWin().webContents.executeJavaScript(`document.querySelectorAll("#pets select").length + "/" + document.querySelectorAll("#list .row").length`);
     check("帳號管理視窗列出開著的 1 隻桌寵、2 個帳號", rows === "1/2", rows);
     t.getAccountsWin().close();
+
+    // 選擇要開的桌寵：每個帳號一個勾選框＋訪客，開著的那隻（測試帳號）勾著
+    t.openPetsWin();
+    await sleep(1500);
+    await shot(t.getPetsWin(), "pets");
+    const picks = await t.getPetsWin().webContents.executeJavaScript(`[...document.querySelectorAll("#list input")].map((b) => (b.checked ? 1 : 0)).join("") + "/" + document.getElementById("ok").textContent`);
+    check("選擇要開的桌寵：2 個帳號＋訪客、開著的那隻勾著", picks === "100/確認（開 1 隻）", picks);
+    t.getPetsWin().close();
 
     // 遊戲更新：記下載入的版本，線上版本號不一樣時提醒並出現「套用遊戲更新」
     const online = await t.updates.fetchGameVersion();
