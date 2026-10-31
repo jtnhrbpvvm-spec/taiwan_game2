@@ -80,6 +80,16 @@ zoneBox.addEventListener("click", (e) => {
   window.incomeApi.openGuide(link.dataset.guide);
 });
 
+// 重置：目前這頁（這隻）的統計歸零，從現在重新記
+document.getElementById("reset").addEventListener("click", async () => {
+  if (!data?.pets?.length) return;
+  const p = data.pets[current];
+  const who = data.pets.length > 1 ? `第 ${current + 1} 隻（${p.account}）` : "";
+  if (!confirm(`確定要把${who}的收入統計歸零，從現在重新記嗎？`)) return;
+  await window.incomeApi.reset(p.index);
+  refresh();
+});
+
 async function refresh() {
   data = await window.incomeApi.get();
   if (data?.pets?.length) render();

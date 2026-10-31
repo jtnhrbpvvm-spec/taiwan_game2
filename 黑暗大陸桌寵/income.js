@@ -74,6 +74,13 @@ function recordLoot(index, entries) {
   save(index);
 }
 
+/** 收入總覽的「重置」：第 index 隻從現在重新記。留著上一筆存檔當基準，下一次存檔才不會把之前的差距算進來。 */
+function reset(index) {
+  const last = book(index).last;
+  books.set(index, { ...blank(), character: books.get(index).character, last });
+  save(index);
+}
+
 /** 給收入總覽視窗用：labels[i]＝第 i 隻的帳號名稱。 */
 function summary(count, labels) {
   return Array.from({ length: count }, (_, i) => {
@@ -82,4 +89,4 @@ function summary(count, labels) {
   });
 }
 
-module.exports = { start, recordSave, recordLoot, summary };
+module.exports = { start, recordSave, recordLoot, reset, summary };

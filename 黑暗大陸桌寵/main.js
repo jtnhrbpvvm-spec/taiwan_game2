@@ -1196,6 +1196,10 @@ ipcMain.handle("income:get", () => ({
   classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
 }));
 
+ipcMain.handle("income:reset", (_e, index) => {
+  if (Number.isInteger(index) && index >= 0 && index < settings.petCount) income.reset(index);
+});
+
 // ── 回報效能異常 ──────────────────────────────────────────
 // 玩家回報桌寵一直佔很高 CPU 時，請他按這個：收集 15 秒效能資料，看過摘要後上傳（見 diagnostics.js、report-worker/）
 

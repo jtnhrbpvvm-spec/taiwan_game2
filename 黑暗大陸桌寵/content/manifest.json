@@ -1,5 +1,5 @@
 {
-  "version": "1.4.11",
+  "version": "1.4.12",
   "shell": 1,
   "files": [
     {
@@ -29,18 +29,18 @@
     },
     {
       "path": "income-preload.js",
-      "sha256": "a973fa1a7f38ae79662c72e0477973cedfb50d25eb0d89244eec984eaab9cd7e",
-      "size": 539
+      "sha256": "01edc64d186d135983ae2a21dc2398874bb37db26ba08a3da63f1d376f8f9936",
+      "size": 663
     },
     {
       "path": "income.js",
-      "sha256": "cbcc96fc4d10cdcdb6344933be575306cb95603c3d49cb2e35e6d53bfa4960ed",
-      "size": 3372
+      "sha256": "3a37da837911fdaddbaaa6cafe0537c005f12aa15441b74466c36bb8c089c1aa",
+      "size": 3694
     },
     {
       "path": "main.js",
-      "sha256": "a51f2d0994eb6ab8bf0652a2b7428a90680c06352f65de342a9d7acd7c07c4c1",
-      "size": 60199
+      "sha256": "1ef0e754c4eb4049a549f66a7eb33a36eb7294fffe2e4a9fe7e950b2e57676c8",
+      "size": 60347
     },
     {
       "path": "names.json",
@@ -99,13 +99,13 @@
     },
     {
       "path": "ui/income.html",
-      "sha256": "55d983994ed65613fdf88fe58ea8815733fe8a0a6ae6a88b845d463356e9dcfe",
-      "size": 3901
+      "sha256": "7384dab6845b4a61bd00c751871216476d6a15da35d2e96d98a1b00f4442b2cc",
+      "size": 4445
     },
     {
       "path": "ui/income.js",
-      "sha256": "c4b206db382e36a51a92e95c7e4a7603c5dd9bcf3fc4dc4c47776baaa1ca057d",
-      "size": 4349
+      "sha256": "6289d876550c9790efe1d8bcab28d0fbab269f28089d72b3b6348829bbeb3616",
+      "size": 4801
     },
     {
       "path": "ui/picker.html",

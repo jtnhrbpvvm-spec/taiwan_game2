@@ -8,6 +8,9 @@
       * { box-sizing: border-box; }
       body { margin: 0; padding: 14px 16px 20px; font: 14px/1.6 "Microsoft JhengHei", sans-serif; color: #e9dcc0; background: #1d1612; }
       h1 { margin: 0; font-size: 18px; color: #f1c26a; }
+      .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      #reset { font: inherit; font-size: 13px; padding: 3px 12px; color: #f19a8a; background: #2b211a; border: 1px solid #6a3a30; border-radius: 6px; cursor: pointer; }
+      #reset:hover { background: #3a2620; border-color: #b0574a; }
       .since { margin: 2px 0 10px; color: #b39a72; font-size: 13px; }
       .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
       .tabs[hidden] { display: none; }
@@ -44,7 +47,10 @@
     </style>
   </head>
   <body>
-    <h1>收入總覽</h1>
+    <div class="head">
+      <h1>收入總覽</h1>
+      <button type="button" id="reset" title="把這隻的統計歸零，從現在重新記">重置</button>
+    </div>
     <p class="since" id="since"></p>
     <div class="tabs" id="tabs" hidden></div>
     <div id="view"></div>
@@ -54,7 +60,7 @@
     </div>
     <div id="lists"></div>
     <p class="note">
-      只記這次打開桌寵以來的，下次打開會重新開始。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
+      只記這次打開桌寵以來的，下次打開會重新開始；按右上角「重置」也可以讓目前這隻從現在重新記。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
       拿到和賣出的東西照遊戲左下角訊息框的「掉落紀錄」，遊戲視窗藏著時桌寵會幫忙把它打開來抄。
       金幣淨增減＝存檔金幣的差，包含打怪掉的錢、自動賣出所得，也扣掉買東西、傳送等花費。
     </p>
