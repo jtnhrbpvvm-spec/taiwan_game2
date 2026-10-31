@@ -1,7 +1,7 @@
 {
   "name": "dark-continent-desktop-pet",
   "productName": "黑暗大陸桌寵",
-  "version": "1.4.12",
+  "version": "1.4.13",
   "description": "黑暗大陸桌寵：遊戲在背景掛機，桌面上留一隻角色走來走去",
   "main": "boot.js",
   "private": true,

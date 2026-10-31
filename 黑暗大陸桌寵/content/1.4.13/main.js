@@ -6,7 +6,7 @@
 //
 //   games[i] = 第 i 隻桌寵的遊戲視窗，平常不顯示；對那隻點兩下叫出來操作，再點兩下藏回去
 //   petWin   = 貼在工作區底部的透明長條，上面畫所有桌寵；滑鼠不在桌寵身上時整條都是穿透的
-const { app, BrowserWindow, Menu, Notification, Tray, globalShortcut, ipcMain, nativeImage, net, screen, shell } = require("electron");
+const { app, BrowserWindow, Menu, dialog, Notification, Tray, globalShortcut, ipcMain, nativeImage, net, screen, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { parseSave } = require("./save-reader");
@@ -78,7 +78,9 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   // petFps[i]＝第 i 隻的畫面每秒最多幾格（FPS_CHOICES，0＝不限制，沒設＝DEFAULT_FPS）；
   // fpsApplyAll＝右鍵選更新率時全部桌寵一起換（不勾＝只換按右鍵的那一隻）
   petFps: [],
-  fpsApplyAll: false };
+  fpsApplyAll: false,
+  // soloPets[i]＝第 i 隻勾了右鍵「獨立視窗」：別隻按「結束」、改數量都不會收掉牠（見 endFrom）
+  soloPets: [] };
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -86,7 +88,7 @@ function loadSettings() {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
     settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow },
       normalShow: { ...settings.normalShow, ...saved.normalShow } };
-    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows", "petFps"]) if (!Array.isArray(settings[key])) settings[key] = [];
+    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows", "petFps", "soloPets"]) if (!Array.isArray(settings[key])) settings[key] = [];
     settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
 }
@@ -100,11 +102,53 @@ function saveSettings() {
 }
 
 if (!app.requestSingleInstanceLock()) app.quit();
-// 桌寵已經在跑的時候再點一次捷徑：當成「救回來」的按鈕，把桌寵叫出來、解除專注模式、打開第一隻的遊戲視窗
+// 桌寵已經在跑的時候再點一次捷徑：當成「救回來」的按鈕，把桌寵叫出來、解除專注模式、打開第一隻的遊戲視窗。
+// 被「結束」收掉的那幾隻（旁邊還有獨立視窗的桌寵在跑，程式沒關）也一起叫回來
 app.on("second-instance", () => {
+  if (ended.size) {
+    ended.clear();
+    refreshPets();
+  }
   restorePet();
-  showGame(games[0], true);
+  showGame(liveGames()[0], true);
 });
+
+// ── 獨立視窗 ──────────────────────────────────────────────
+// 右鍵「獨立視窗」勾了的那隻，別隻按「結束」、改桌寵數量都不會影響牠，照常掛機。
+// 所以「結束」不一定整個程式關掉：只收掉那幾隻（遊戲視窗關掉、桌面上不畫），記在 ended；全部都結束了才真的關掉程式。
+// ended 只算這次啟動，下次打開桌寵（或再點一次捷徑）全部回來。
+const ended = new Set();
+const isSolo = (i) => !!settings.soloPets[i];
+const liveIndexes = () => Array.from({ length: settings.petCount }, (_, i) => i).filter((i) => !ended.has(i));
+const liveGames = () => games.filter(Boolean);
+const SOLO_NOTE = "勾選此項目可讓你本隻桌寵獨立 其他桌寵不管是關閉視窗 退出 都不會影響到這隻桌寵";
+
+function setSolo(petIndex, on) {
+  settings.soloPets = Array.from({ length: MAX_PETS }, (_, i) => (i === petIndex ? on : isSolo(i)));
+  saveSettings();
+  if (on) dialog.showMessageBox({ type: "info", title: "獨立視窗", message: "獨立視窗", detail: SOLO_NOTE, buttons: ["確定"] });
+}
+
+/**
+ * 右鍵「結束」。沒有勾獨立視窗的桌寵在跑時跟以前一樣，整個程式關掉。
+ * 有的話：對獨立的那隻按＝只結束牠自己；對別隻按＝結束全部沒勾獨立的，獨立的照常掛機。
+ */
+function endFrom(petIndex) {
+  const live = liveIndexes();
+  const targets = isSolo(petIndex) ? [petIndex] : live.filter((i) => !isSolo(i));
+  if (targets.length >= live.length) return app.quit();
+  targets.forEach((i) => ended.add(i));
+  refreshPets();
+}
+
+/** 桌寵數量或結束了哪幾隻有變：遊戲視窗、桌面上的桌寵跟著更新。 */
+function refreshPets() {
+  syncGames();
+  sendStay(); // 先送，新加進來的桌寵一出現就套上牠的設定
+  sendPets();
+  sendPetFps();
+  liveGames().forEach(sendState);
+}
 
 // ── 遊戲視窗（每隻桌寵一個）─────────────────────────────────
 
@@ -216,8 +260,17 @@ function destroyGame(g) {
 
 /** 遊戲視窗數量跟著桌寵數量；帳號換了的那幾隻換一個新的遊戲視窗（不同的登入資料）。 */
 function syncGames() {
-  while (games.length > settings.petCount) destroyGame(games.pop());
+  while (games.length > settings.petCount) {
+    const g = games.pop();
+    if (g) destroyGame(g);
+  }
   for (let i = 0; i < settings.petCount; i++) {
+    // 這次啟動已經結束的（見 endFrom）：不開遊戲視窗
+    if (ended.has(i)) {
+      if (games[i]) destroyGame(games[i]);
+      games[i] = null;
+      continue;
+    }
     if (games[i] && games[i].partition === partitionOf(i)) continue;
     if (games[i]) destroyGame(games[i]);
     games[i] = createGame(i);
@@ -367,7 +420,7 @@ function setGameHidden(g) {
 function setPowerSave(on) {
   settings.powerSave = on;
   saveSettings();
-  games.forEach(setGameHidden);
+  liveGames().forEach(setGameHidden);
   petWin?.webContents.send("pet:power-save", on);
 }
 
@@ -391,11 +444,11 @@ function sendPetFps() {
 function setPetFps(fps, petIndex) {
   settings.petFps = Array.from({ length: MAX_PETS }, (_, i) => (settings.fpsApplyAll || i === petIndex ? fps : settings.petFps[i] ?? null));
   saveSettings();
-  games.forEach(setGameFps);
+  liveGames().forEach(setGameFps);
   sendPetFps();
 }
 
-const toggleGame = (g = games[0]) => g && showGame(g, !g.shown);
+const toggleGame = (g = liveGames()[0]) => g && showGame(g, !g.shown);
 
 /** 從右鍵選單叫出遊戲：keepTaskbar＝這次之後關掉（藏起來）時工作列上留著按鈕，點一下就叫回來；一般的「顯示遊戲視窗」恢復成完全藏起來。 */
 function openGame(g, keepTaskbar) {
@@ -563,7 +616,7 @@ function createPetWindow() {
     petWin.webContents.send("pet:normal-show", settings.normalShow);
     petWin.webContents.send("pet:power-save", settings.powerSave);
     sendPetFps();
-    games.forEach(sendState);
+    liveGames().forEach(sendState);
   });
 }
 
@@ -670,6 +723,7 @@ function openPicker(petIndex = 0) {
  */
 function resolveModels() {
   return Array.from({ length: settings.petCount }, (_, i) => {
+    if (ended.has(i)) return null; // 已經結束的那隻：桌面上不畫（pet.js）
     const raw = games[i]?.lastRaw;
     const picked = settings.petModels[i];
     if (picked && spriteDef(picked)) return picked;
@@ -714,13 +768,16 @@ function sendState(g) {
 }
 
 function setPetCount(count) {
+  // 勾了獨立視窗的不會被收掉：數量最少留到最後一隻還在跑的獨立桌寵
+  const keep = Math.max(0, ...liveIndexes().filter(isSolo).map((i) => i + 1));
+  if (count < keep) {
+    petWin?.webContents.send("pet:notice", keep - 1, `第 ${keep} 隻是獨立視窗，最少要留 ${keep} 隻（要減少請先取消牠的「獨立視窗」）`);
+    count = keep;
+  }
   settings.petCount = count;
   saveSettings();
-  syncGames();
-  sendStay(); // 先送，新加進來的桌寵一出現就套上牠的設定
-  sendPets();
-  sendPetFps();
-  games.forEach(sendState);
+  for (const i of ended) if (i >= count) ended.delete(i);
+  refreshPets();
   // 正在幫牠挑外觀的那一隻被收掉了，視窗跟著關
   if (pickerTarget >= count && pickerWin && !pickerWin.isDestroyed()) pickerWin.close();
 }
@@ -737,7 +794,7 @@ function setPetAccount(petIndex, accountId) {
   saveSettings();
   syncGames();
   sendPets();
-  games.forEach(sendState);
+  liveGames().forEach(sendState);
   accountsWin?.isDestroyed() === false && accountsWin.webContents.send("accounts:changed");
 }
 
@@ -790,14 +847,17 @@ function accountMenu(petIndex) {
 }
 
 /** petIndex＝這次是對第幾隻桌寵按的右鍵（從系統匣開的話當作第一隻）。 */
-function buildMenu(petIndex = 0) {
-  if (!(petIndex >= 0 && petIndex < settings.petCount)) petIndex = 0;
+function buildMenu(petIndex = 0, fromTray = false) {
+  if (!(petIndex >= 0 && petIndex < settings.petCount) || ended.has(petIndex)) petIndex = liveIndexes()[0] ?? 0;
   const g = games[petIndex];
   const many = settings.petCount > 1;
+  const anySolo = liveIndexes().some(isSolo);
   const updateItems = updates.menuItems();
   return Menu.buildFromTemplate([
     ...updateItems,
     ...(updateItems.length ? [{ type: "separator" }] : []),
+    // 獨立視窗：別隻按「結束」、改數量都不影響這隻（見 endFrom）
+    { label: `獨立視窗${many ? `（第 ${petIndex + 1} 隻）` : ""}`, type: "checkbox", checked: isSolo(petIndex), click: (item) => setSolo(petIndex, item.checked) },
     g?.shown
       ? { label: `隱藏${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) }
       : { label: `顯示${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => openGame(g, false) },
@@ -907,7 +967,10 @@ function buildMenu(petIndex = 0) {
     { label: "操作說明", click: openHelp },
     updates.checkItem(),
     { type: "separator" },
-    { label: "結束", click: () => app.quit() },
+    // 系統匣的「結束」一律整個關掉；有獨立視窗的桌寵時，對桌寵按的「結束」只收掉一部分（見 endFrom）
+    fromTray || !anySolo
+      ? { label: anySolo ? "結束（全部桌寵，含獨立視窗）" : "結束", click: () => app.quit() }
+      : { label: isSolo(petIndex) ? `結束這隻（第 ${petIndex + 1} 隻・獨立視窗）` : "結束（獨立視窗的桌寵繼續掛機）", click: () => endFrom(petIndex) },
   ]);
 }
 
@@ -1002,7 +1065,7 @@ ipcMain.handle("accounts:get", () => ({
 ipcMain.handle("accounts:save", (_e, account) => {
   const r = accounts.save(account ?? {});
   // 改了正在用的帳號的密碼：那隻重新登入一次
-  if (r.id && account?.password) games.filter((g) => g.accountId === r.id && g.login.state === "failed").forEach(loadGame);
+  if (r.id && account?.password) liveGames().filter((g) => g.accountId === r.id && g.login.state === "failed").forEach(loadGame);
   return r;
 });
 ipcMain.handle("accounts:remove", (_e, id) => {
@@ -1192,7 +1255,7 @@ function openIncome() {
 
 ipcMain.handle("income:get", () => ({
   // here：每隻現在在哪（存檔的 loc；標題畫面時是 null），收入總覽畫「目前地圖」用
-  pets: income.summary(settings.petCount, games.map(accountLabel)).map((p, i) => ({ ...p, here: games[i]?.lastState?.place === "標題畫面" ? null : games[i]?.lastRaw?.loc ?? null })),
+  pets: income.summary(settings.petCount, Array.from({ length: settings.petCount }, (_, i) => (games[i] ? accountLabel(games[i]) : "已結束"))).map((p, i) => ({ ...p, here: games[i]?.lastState?.place === "標題畫面" ? null : games[i]?.lastRaw?.loc ?? null })),
   classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
 }));
 
@@ -1203,7 +1266,7 @@ ipcMain.handle("income:reset", (_e, index) => {
 // ── 回報效能異常 ──────────────────────────────────────────
 // 玩家回報桌寵一直佔很高 CPU 時，請他按這個：收集 15 秒效能資料，看過摘要後上傳（見 diagnostics.js、report-worker/）
 
-const diagnosticsContext = () => ({ games, petWin, settings, clickThrough });
+const diagnosticsContext = () => ({ games: liveGames(), petWin, settings, clickThrough });
 const reportPerformance = () => diagnostics.start(diagnosticsContext(), (text) => petWin?.webContents.send("pet:notice", 0, text));
 
 // 選單項目平常藏起來（玩家用不到），開發者請玩家回報時才叫他打開：操作說明的標題連點 20 下。說明裡不寫
@@ -1221,7 +1284,7 @@ async function createTray() {
     tray = new Tray(icon);
     tray.setToolTip("黑暗大陸桌寵");
     tray.on("click", () => toggleGame());
-    tray.on("right-click", () => tray.popUpContextMenu(buildMenu()));
+    tray.on("right-click", () => tray.popUpContextMenu(buildMenu(undefined, true)));
   } catch (e) {
     console.error("系統匣圖示建立失敗（不影響使用）：", e.message);
   }
@@ -1242,9 +1305,9 @@ app.whenReady().then(async () => {
     settings.helpSeen = true;
     saveSettings();
   }
-  setInterval(() => games.forEach(pollGame), POLL_MS);
+  setInterval(() => liveGames().forEach(pollGame), POLL_MS);
   updates.start({ notify: say, floater: (text) => petWin?.webContents.send("pet:notice", 0, text), gameUrl: GAME_URL,
-    loadedGameVersions: () => games.map((g) => g.version), reloadGames: () => games.forEach(loadGame) });
+    loadedGameVersions: () => liveGames().map((g) => g.version), reloadGames: () => liveGames().forEach(loadGame) });
   // 走到這裡代表視窗都開好了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用，不然會被退回上一份）
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,

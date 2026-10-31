@@ -49,6 +49,7 @@ function createPet(index) {
     info: undefined, // 滑鼠移上去要顯示的內容（主程式送來的這隻的帳號、角色狀態）
     sleeping: false, // 角色在村莊：站著睡覺、頭上冒 Z，不走、不踏步、不揮擊（還是可以拖著移動）
     zzz: undefined, // 睡覺時頭上的大中小三個 Z（.zzz 元素）
+    ended: false, // 這隻被右鍵「結束」收掉了（旁邊還有獨立視窗的桌寵在跑）：不畫、不吃滑鼠
   };
 }
 
@@ -284,12 +285,15 @@ function draw(p) {
   p.ctx.drawImage(a.image, i * a.cellW, ROW[dir] * a.cellH, a.cellW, a.cellH, (p.canvas.width - dw) / 2, p.canvas.height - dh, dw, dh);
 }
 
+/** 更新提醒的對話框跟著的那隻：第一隻，第一隻被結束了就換還在的第一隻。 */
+const speaker = () => pets.find((p) => !p.ended) ?? pet;
+
 /** 更新提醒的對話框跟著第一隻；滑鼠移上去的提示框、調整大小的面板跟著那一隻。 */
 function placePanels() {
-  if (pet.sprite && speaking) placeAbove(speech, bodyRect(pet), 12);
+  if (speaker().sprite && speaking) placeAbove(speech, bodyRect(speaker()), 12);
   if (hovered?.sprite && !drag) placeAbove(bubble, bodyRect(hovered));
   if (sizerPet?.sprite) placeAbove(sizer, bodyRect(sizerPet));
-  for (const p of pets) if (p.zzz && p.sprite) placeZzz(p);
+  for (const p of pets) if (p.zzz && p.sprite && !p.ended) placeZzz(p);
 }
 
 /** Z 擺在頭頂偏右（像漫畫裡睡覺冒出來的那樣），不超出視窗。 */
@@ -322,7 +326,7 @@ function say(text) {
   speech.textContent = text;
   speaking = true;
   speech.classList.add("on");
-  if (!pet.sleeping) pet.hopMs = HOP_MS; // 跳一下引起注意（睡著就不跳）
+  if (!speaker().sleeping) speaker().hopMs = HOP_MS; // 跳一下引起注意（睡著就不跳）
   clearTimeout(speechTimer);
   speechTimer = setTimeout(hideSpeech, SPEECH_MS);
 }
@@ -353,7 +357,7 @@ function frame(now) {
   const dt = Math.min(powerSave ? 200 : 100, now - lastTime);
   lastTime = now;
   for (const p of pets) {
-    if (!p.sprite) continue;
+    if (!p.sprite || p.ended) continue;
     p.actionMs += dt;
     p.hopMs = Math.max(0, p.hopMs - dt);
     think(p, dt);
@@ -443,7 +447,7 @@ const inside = (r, e) => e.clientX >= r.l && e.clientX <= r.r && e.clientY >= r.
 
 /** 游標底下的那一隻；疊在一起時取畫在最上層的。 */
 function petAt(e) {
-  for (let i = pets.length - 1; i >= 0; i--) if (pets[i].sprite && inside(bodyRect(pets[i]), e)) return pets[i];
+  for (let i = pets.length - 1; i >= 0; i--) if (pets[i].sprite && !pets[i].ended && inside(bodyRect(pets[i]), e)) return pets[i];
   return undefined;
 }
 
@@ -535,6 +539,20 @@ function removePet(p) {
   if (sizerPet === p) closeSizer();
 }
 
+function setEnded(p, on) {
+  if (on === p.ended) return;
+  p.ended = on;
+  p.canvas.style.display = on ? "none" : "";
+  if (p.zzz) p.zzz.style.display = on ? "none" : "";
+  if (!on) return;
+  if (drag?.pet === p) drag = undefined;
+  if (hovered === p) {
+    setHovering(false);
+    setInteractive(false);
+  }
+  if (sizerPet === p) closeSizer();
+}
+
 // 主程式送來每一隻該長什麼樣（陣列長度＝桌寵數量）：多的收掉、少的補上、外觀不一樣的換掉
 window.petApi.onPets((models) => {
   if (!Array.isArray(models) || models.length === 0) return;
@@ -547,10 +565,12 @@ window.petApi.onPets((models) => {
   }
   applyStay(); // 新加進來的也要套上牠的設定
   applyColors();
-  pets.forEach((p, i) => loadModel(p, models[i]));
+  // null＝這隻被「結束」收掉了（main.js 的 endFrom）：藏起來，叫回來時再出現
+  pets.forEach((p, i) => setEnded(p, models[i] === null));
+  pets.forEach((p, i) => models[i] !== null && loadModel(p, models[i]));
 });
 window.petApi.onEvents(playEvents);
-window.petApi.onNotice((index, text) => spawnFloater("hint", text, pets[index] ?? pet));
+window.petApi.onNotice((index, text) => spawnFloater("hint", text, pets[index] && !pets[index].ended ? pets[index] : speaker()));
 window.petApi.onSay(say);
 window.petApi.onFocusShow((show) => (focusShow = show));
 window.petApi.onNormalShow((show) => (normalShow = show));
