@@ -42,7 +42,6 @@ let readyContent; // 已經下載好、重開就會換上的內容版本
 let readyInstaller; // 已經下載好、重開就會裝的安裝檔版本
 let told; // 已經講過的版本，同一版不重複講
 let fullUpdater; // electron-updater，用到才載入
-let canCheck = () => true; // 好幾隻桌寵（好幾個程式）同時在跑時，只讓一隻背景檢查、下載（內容給的）
 
 function init(options) {
   shellApi = options.shellApi;
@@ -56,9 +55,8 @@ function restart() {
 
 /** 已經有新版等著換上的話，回傳右鍵選單最上面那一項；沒有回傳 null。 */
 function readyItem() {
-  // kind：內容要知道是哪一種，才能叫別隻桌寵一起重開（小檔案）或先結束（安裝檔）
-  if (readyInstaller) return { kind: "installer", label: `⬆ 立即更新桌寵到 v${readyInstaller}（重新啟動）`, click: () => fullUpdater.quitAndInstall(false, true) };
-  if (readyContent) return { kind: "content", label: `⬆ 立即更新桌寵到 v${readyContent}（重新啟動）`, click: restart };
+  if (readyInstaller) return { label: `⬆ 立即更新桌寵到 v${readyInstaller}（重新啟動）`, click: () => fullUpdater.quitAndInstall(false, true) };
+  if (readyContent) return { label: `⬆ 立即更新桌寵到 v${readyContent}（重新啟動）`, click: restart };
   return null;
 }
 
@@ -116,13 +114,11 @@ async function download(manifest) {
 function announce(version, small) {
   if (told === version) return;
   told = version;
-  ui.say(small
-    ? `桌寵新版 v${version} 下載好了（只有小檔案）！右鍵選單「立即更新桌寵」，或下次打開桌寵時自動換上`
-    : `桌寵新版 v${version} 下載好了！右鍵選單「立即更新桌寵」就會安裝`);
+  ui.say(`桌寵新版 v${version} ${small ? "下載好了（只有小檔案）" : "下載好了"}！右鍵選單「立即更新桌寵」，或下次打開桌寵時自動換上`);
 }
 
 async function check(byUser = false) {
-  if (!enabled || busy || (!byUser && !canCheck())) return;
+  if (!enabled || busy) return;
   busy = true;
   manual = byUser;
   try {
@@ -170,8 +166,7 @@ function checkInstaller() {
     // latest.yml 會自動加 ?noCache=時間（沒有 Authorization 標頭時），再加 no-cache 標頭；不要加 Authorization，會把時間標記關掉
     fullUpdater.requestHeaders = { "Cache-Control": "no-cache", Pragma: "no-cache" };
     fullUpdater.autoDownload = true;
-    // 不在結束時偷偷安裝：好幾隻桌寵各是一個程式，只結束其中一隻時裝下去會把別隻也關掉。要按「立即更新桌寵」
-    fullUpdater.autoInstallOnAppQuit = false;
+    fullUpdater.autoInstallOnAppQuit = true; // 不按「立即更新」的話，下次結束程式時順便裝
     fullUpdater.on("update-available", (info) => ui.notify(`發現桌寵新版 v${info.version}，下載完整安裝檔中…`));
     fullUpdater.on("update-not-available", () => manual && ui.say(`桌寵已經是最新版（v${contentVersion}）`));
     fullUpdater.on("error", (e) => {
@@ -188,7 +183,6 @@ function checkInstaller() {
 
 function start(handlers) {
   ui = handlers;
-  if (handlers.canCheck) canCheck = handlers.canCheck;
   if (!enabled) return;
   setTimeout(check, 10000);
   setInterval(check, CHECK_EVERY_MS);

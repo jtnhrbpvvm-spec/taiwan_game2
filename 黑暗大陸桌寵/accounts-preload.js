@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("accountsApi", {
-  // { accounts:[{id,label,email,hasPass}], pets:[開著的是第幾隻（0 起算）], petAccounts:[第 i 隻的帳號 id|null], encrypted }；不會送出密碼
+  // { accounts:[{id,label,email,hasPass}], petCount, petAccounts:[id|null], encrypted }；不會送出密碼
   get: () => ipcRenderer.invoke("accounts:get"),
   // { id?, label, email, password? }：password 留空＝沿用原本的；回傳 { id } 或 { error }
   save: (account) => ipcRenderer.invoke("accounts:save", account),

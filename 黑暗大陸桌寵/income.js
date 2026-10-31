@@ -1,6 +1,5 @@
 // 收入總覽：記「這次打開桌寵以來」每一隻（每個帳號）賺了多少——經驗、金幣、打怪數、拿到哪些東西、自動賣掉哪些東西。
 // 下次打開桌寵時從頭記（start() 把上一次的檔案蓋掉），使用者 2026-10-26 指定。
-// 每隻桌寵是獨立的程式，各記各的、各寫各的 income-<第幾隻>.json；收入總覽看別隻時讀牠的檔（peek）。
 //
 // 資料來源：
 //   - 經驗、金幣、擊殺、死亡：比對前後兩次存檔（main.js 的 summarize）；經驗跨過升級時照遊戲的經驗表換算成總經驗再相減
@@ -14,14 +13,14 @@ const books = new Map(); // 第幾隻 → 紀錄
 
 function blank() {
   return { startedAt: Date.now(), updatedAt: Date.now(), character: null, exp: 0, levels: 0, gold: 0, kills: 0, deaths: 0,
-    soldGold: 0, obtained: {}, sold: {}, here: null, last: null };
+    soldGold: 0, obtained: {}, sold: {}, last: null };
 }
 
-/** 第 index 隻的程式啟動時呼叫：清掉牠上一次的紀錄檔，從頭記（別隻的不動，牠們還在記）。 */
-function start(folder, index) {
+/** 啟動時呼叫：清掉上一次的紀錄檔，從頭記。 */
+function start(folder) {
   dir = folder;
   fs.mkdirSync(dir, { recursive: true });
-  fs.rmSync(path.join(dir, `income-${index}.json`), { force: true });
+  for (const f of fs.readdirSync(dir)) if (/^income-\d+\.json$/.test(f)) fs.rmSync(path.join(dir, f), { force: true });
   books.clear();
 }
 
@@ -82,28 +81,12 @@ function reset(index) {
   save(index);
 }
 
-/** 角色現在在哪（存檔的 loc，標題畫面時 null），收入總覽畫「目前地圖」用。有變才寫檔。 */
-function setHere(index, here) {
-  const b = book(index);
-  if (JSON.stringify(b.here) === JSON.stringify(here ?? null)) return;
-  b.here = here ?? null;
-  save(index);
+/** 給收入總覽視窗用：labels[i]＝第 i 隻的帳號名稱。 */
+function summary(count, labels) {
+  return Array.from({ length: count }, (_, i) => {
+    const { last, ...data } = book(i);
+    return { index: i, account: labels[i], ...data };
+  });
 }
 
-/** 這個程式自己記的那隻。 */
-function snapshot(index) {
-  const { last, ...data } = book(index);
-  return data;
-}
-
-/** 別隻（別的程式）記的：讀牠寫的檔，還沒有就回傳一份空的。 */
-function peek(index) {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(dir, `income-${index}.json`), "utf8"));
-  } catch {
-    const { last, ...data } = blank();
-    return data;
-  }
-}
-
-module.exports = { start, recordSave, recordLoot, reset, setHere, snapshot, peek };
+module.exports = { start, recordSave, recordLoot, reset, summary };

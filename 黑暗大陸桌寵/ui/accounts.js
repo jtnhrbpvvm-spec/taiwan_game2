@@ -19,9 +19,7 @@ function el(tag, props = {}, ...children) {
 
 function render() {
   petsBox.replaceChildren(
-    // 現在開著的那幾隻（每隻是獨立的程式，編號可能不連續）
-    ...data.pets.map((i) => {
-      const current = data.petAccounts[i];
+    ...data.petAccounts.map((current, i) => {
       const select = el("select", {}, el("option", { value: "", textContent: "訪客（不登入）" }),
         ...data.accounts.map((a) => el("option", { value: a.id, textContent: nameOf(a) })));
       select.value = current ?? "";

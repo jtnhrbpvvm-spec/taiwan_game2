@@ -88,12 +88,8 @@ function cleanup(keepVersion, fallbackVersion) {
   }
 }
 
-/**
- * 決定這次啟動要跑哪一份內容。回傳 { dir, version, bundled }。
- * count＝這次打開要不要算進試用次數、順便清掉用不到的舊版（只有啟動器算；桌寵本體照著挑同一份，不改狀態，
- * 試用中出錯時一樣能記成壞的退回去）。
- */
-function choose({ bundledDir, bundledVersion, shellApi, count = true }) {
+/** 決定這次啟動要跑哪一份內容。回傳 { dir, version, bundled }。 */
+function choose({ bundledDir, bundledVersion, shellApi }) {
   loadState();
   const bundled = { dir: bundledDir, version: bundledVersion, bundled: true };
   let pick = bundled;
@@ -104,17 +100,13 @@ function choose({ bundledDir, bundledVersion, shellApi, count = true }) {
       fallback = candidate.version;
       break;
     }
-    if (count && state.trying?.version === candidate.version && state.trying.boots >= MAX_UNCONFIRMED_BOOTS) {
+    if (state.trying?.version === candidate.version && state.trying.boots >= MAX_UNCONFIRMED_BOOTS) {
       // 試了幾次都沒有正常跑起來
       state.bad.push(candidate.version);
       state.trying = undefined;
       continue;
     }
     pick = { dir: dirOf(candidate.version), version: candidate.version, bundled: false };
-  }
-  if (!count) {
-    trial = !pick.bundled && state.trying?.version === pick.version && !state.trying.healthy;
-    return pick;
   }
   if (pick.bundled) state.trying = undefined;
   else if (state.trying?.version === pick.version) {
