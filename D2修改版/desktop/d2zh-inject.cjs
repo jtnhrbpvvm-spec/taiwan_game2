@@ -4,6 +4,7 @@
 // 更新：遊戲會擋掉頁面的網路連線，所以由這裡（主程序）向 GitHub Pages 下載新版：
 //   ・每次開遊戲在背景自動檢查（資料夾裡有 no-auto-update 檔就不自動）
 //   ・「書籤修改」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
+//   ・「回報內容」視窗同理：console.log('__D2ZH__:replies') → 這裡下載 回應.txt → 回傳給頁面
 'use strict';
 const { app } = require('electron');
 const fs = require('fs');
@@ -91,7 +92,7 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 開遊戲時背景檢查。通常注入完才下載好，所以做完要告訴遊戲頁面（剛開遊戲還在選單就會自動重新載入用新版）
@@ -119,7 +120,17 @@ app.on('web-contents-created', (_event, contents) => {
   // 面板的「檢查更新」按鈕（Electron 35 以後事件參數是一個物件，舊版是 (event, level, message)）
   contents.on('console-message', (event, _level, message) => {
     const text = typeof message === 'string' ? message : event && event.message;
-    if (text !== '__D2ZH__:update' || !/^app:\/\/game\//.test(contents.getURL())) return;
+    if (!/^app:\/\/game\//.test(contents.getURL())) return;
+    // 面板的「回報內容」：頁面連不了網路，由這裡下載 回應.txt 回傳
+    if (text === '__D2ZH__:replies') {
+      download(`${TEST_BASE || PAGES}%E5%9B%9E%E6%87%89.txt`)
+        .then(body => ({ ok: true, text: body.toString('utf8').replace(/^﻿/, '') }))
+        .catch(e => { log(`replies: ${e.message}`); return { ok: false }; })
+        .then(result => contents.executeJavaScript(`window.__d2zhRepliesDone && window.__d2zhRepliesDone(${JSON.stringify(result)});0`, true))
+        .catch(e => log(`replies notify: ${e && e.message}`));
+      return;
+    }
+    if (text !== '__D2ZH__:update') return;
     checkForUpdates('button')
       .then(result => contents.executeJavaScript(`window.__d2zhUpdateDone && window.__d2zhUpdateDone(${JSON.stringify({ ...result, info: info() })});0`, true))
       .catch(e => log(`update button: ${e && e.message}`));
