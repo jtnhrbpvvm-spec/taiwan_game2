@@ -18,18 +18,20 @@
 <button id="gen">生成</button>
 <table id="grid"></table>
 <script>
-const ROWS = 11, FREE_ROW = 10, TARGET = 15, MIN = 1, MAX = 14;
+const ROWS = 11, LIMIT_ROWS = 5, FIRST_MAX = 7, NO_TEN_ROWS = 8, TARGET = 15, MIN = 1, MAX = 14;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
 // 產生 11 排，每排 3 格加總 15，同一排三格數字不重複，皆為 1～14 的正整數
-// 前 10 排任兩格相加不等於 10；第 11 排不受此限
+// 前 5 排第一格不超過 7；前 8 排任兩格相加不等於 10；不同排不能是同一組數字（換順序也算）
 function generate() {
-  const rows = [];
+  const rows = [], usedSets = new Set();
   while (rows.length < ROWS) {
     const a = rand(MIN, MAX), b = rand(MIN, MAX), c = TARGET - a - b;
-    const row = [a, b, c];
-    if (c < MIN || c > MAX || new Set(row).size < 3) continue;
-    if (rows.length < FREE_ROW && (a + b === 10 || a + c === 10 || b + c === 10)) continue;
+    const row = [a, b, c], key = [...row].sort((x, y) => x - y).join();
+    if (c < MIN || c > MAX || new Set(row).size < 3 || usedSets.has(key)) continue;
+    if (rows.length < LIMIT_ROWS && a > FIRST_MAX) continue;
+    if (rows.length < NO_TEN_ROWS && (a + b === 10 || a + c === 10 || b + c === 10)) continue;
+    usedSets.add(key);
     rows.push(row);
   }
   return rows;
@@ -37,7 +39,7 @@ function generate() {
 
 document.getElementById('gen').onclick = () => {
   document.getElementById('grid').innerHTML = generate()
-    .map((r, i) => `<tr${i === FREE_ROW ? ' class="free"' : ''}>${r.map(n => `<td>${n}</td>`).join('')}<td class="sum">= ${r[0] + r[1] + r[2]}</td></tr>`)
+    .map((r, i) => `<tr${i >= NO_TEN_ROWS ? ' class="free"' : ''}>${r.map(n => `<td>${n}</td>`).join('')}<td class="sum">= ${r[0] + r[1] + r[2]}</td></tr>`)
     .join('');
 };
 </script>
