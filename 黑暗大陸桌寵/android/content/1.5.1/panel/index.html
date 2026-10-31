@@ -218,7 +218,10 @@
       <section id="tab-income">
         <div class="chips" id="income-chips"></div>
         <div class="card">
-          <h2 id="income-who">收入總覽</h2>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <h2 id="income-who">收入總覽</h2>
+            <button class="act danger" id="income-reset" style="padding: 5px 12px; font-size: 13px">重置</button>
+          </div>
           <p class="dim" id="income-since" style="margin: 0 0 8px"></p>
           <div class="stats" id="income-stats"></div>
         </div>
@@ -235,7 +238,7 @@
           <div id="income-sold"></div>
         </div>
         <p class="dim">
-          只記這次打開桌寵以來的，下次打開會重新開始。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
+          只記這次打開桌寵以來的，下次打開會重新開始；按「重置」（要按兩下確認）也可以讓目前這隻從現在重新記。經驗、金幣、打怪數照遊戲存檔（約 20 秒存一次）；
           拿到和賣出的東西照遊戲左下角訊息框的「掉落紀錄」，遊戲藏著時桌寵會幫忙把它打開來抄（打開遊戲時看到它開著是這個原因）。
           金幣淨增減＝存檔金幣的差，包含打怪掉的錢、自動賣出所得，也扣掉買東西、傳送等花費。
         </p>
@@ -269,7 +272,7 @@
             <tr><td>點桌寵</td><td>打開那一隻的遊戲。按上方的「收起」或返回鍵收回去</td></tr>
             <tr><td>按住拖曳</td><td>把桌寵移到別的位置</td></tr>
             <tr><td>長按桌寵</td><td>打開這個設定畫面</td></tr>
-            <tr><td>收入分頁</td><td>這次打開以來每隻賺了多少：經驗、金幣、打怪數、拿到和自動賣出的東西。下次打開重新記</td></tr>
+            <tr><td>收入分頁</td><td>這次打開以來每隻賺了多少：經驗、金幣、打怪數、拿到和自動賣出的東西。下次打開重新記；按「重置」可以讓目前這隻從現在重新記</td></tr>
             <tr><td>變身</td><td>角色用變形卷軸變身時，桌寵也跟著變（設定裡可以關掉）；「桌寵」分頁也能選變身外觀固定</td></tr>
             <tr><td>通知列</td><td>顯示遊戲、設定、結束</td></tr>
           </table>
@@ -606,8 +609,44 @@
       const listHtml = (head, rows) => rows.length
         ? `<table class="list"><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</table>`
         : '<p class="dim" style="margin: 0">還沒有</p>';
+      // 重置：App 裡的紀錄不動，記下按的當下的數字當基準，之後顯示的都扣掉它。
+      // 存在 localStorage（第幾隻 → 基準）；桌寵重新啟動後 startedAt 會變，舊基準就不用了
+      let incomeBase = {};
+      try { incomeBase = JSON.parse(localStorage.getItem("incomeBase") || "{}"); } catch {}
+      const saveBase = () => { try { localStorage.setItem("incomeBase", JSON.stringify(incomeBase)); } catch {} };
+      function sinceBase(p, i) {
+        const b = incomeBase[i];
+        if (!b || b.startedAt !== p.startedAt) return p;
+        const obtained = {};
+        for (const [name, n] of Object.entries(p.obtained)) if (n - (b.obtained[name] || 0) > 0) obtained[name] = n - (b.obtained[name] || 0);
+        const sold = {};
+        for (const [name, s] of Object.entries(p.sold)) {
+          const was = b.sold[name] || { n: 0, gold: 0 };
+          if (s.n - was.n > 0) sold[name] = { n: s.n - was.n, gold: s.gold - was.gold };
+        }
+        return { ...p, startedAt: b.at, exp: p.exp - b.exp, levels: p.levels - b.levels, gold: p.gold - b.gold, kills: p.kills - b.kills,
+          deaths: p.deaths - b.deaths, soldGold: p.soldGold - b.soldGold, obtained, sold };
+      }
+      let resetArmed = 0;
+      $("income-reset").addEventListener("click", () => {
+        // 按兩下才算：第一下按鈕變成「再按一次確定」，3 秒內再按才重置
+        if (Date.now() - resetArmed > 3000) {
+          resetArmed = Date.now();
+          $("income-reset").textContent = "再按一次確定";
+          setTimeout(() => { if (Date.now() - resetArmed >= 3000) $("income-reset").textContent = "重置"; }, 3100);
+          return;
+        }
+        resetArmed = 0;
+        $("income-reset").textContent = "重置";
+        const p = JSON.parse(Android.income())[incomePet];
+        if (!p) return;
+        incomeBase[incomePet] = { at: Date.now(), startedAt: p.startedAt, exp: p.exp, levels: p.levels, gold: p.gold, kills: p.kills,
+          deaths: p.deaths, soldGold: p.soldGold, obtained: { ...p.obtained }, sold: JSON.parse(JSON.stringify(p.sold)) };
+        saveBase();
+        renderIncome();
+      });
       function renderIncome() {
-        const pets = JSON.parse(Android.income());
+        const pets = JSON.parse(Android.income()).map(sinceBase);
         if (pets.length === 0) {
           $("income-who").textContent = "收入總覽";
           $("income-since").textContent = "桌寵啟動後才有紀錄。";
