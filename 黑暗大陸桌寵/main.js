@@ -1,12 +1,20 @@
 // 黑暗大陸桌寵：遊戲本體在藏起來的視窗裡照常掛機，桌面上只留會走動的角色。
 // 做法照「放置希望桌寵」（desktop_pet），拿掉說話、撫摸，以及只有放置希望才有的功能（黑店、線上GM、書籤工具、收益）。
 //
-// 每一隻桌寵各有一個自己的遊戲視窗，登入狀態、存檔各自獨立（不同的 session partition），
+// 每一隻桌寵是一個獨立的程式（使用者 2026-10-31 指定：別隻縮小、關閉、結束、當掉都不影響這隻）：
+//   - 不帶參數打開（桌面捷徑、開機自動啟動）＝啟動器：把上次開著的那幾隻（settings.openPets）各開成一個程式，然後自己結束；
+//     全部都已經在跑的話，當成「救回來」的按鈕（見 launch）
+//   - 帶 --pet=N 的＝第 N 隻桌寵本體（ME＝N-1）。每個編號同時只能有一個程式、最多 10 隻，靠 peers.js 的具名管道擋住，
+//     桌寵之間也用它傳話（專注模式、結束全部、收入總覽看別隻…）
+//   - 設定檔 pet-settings.json 大家共用：改的時候先重讀再寫（changeSettings），別隻改了這邊照著更新（watchSettings）
+//
+// 每一隻桌寵有自己的遊戲視窗，登入狀態、存檔各自獨立（照帳號分的資料夾，見 sessionOf），
 // 所以每隻可以掛不同的帳號：右鍵選單「帳號」點一下就自動登入那個帳號、按「繼續冒險」開始掛機。帳號存在 accounts.json（accounts.js）。
 //
-//   games[i] = 第 i 隻桌寵的遊戲視窗，平常不顯示；對那隻點兩下叫出來操作，再點兩下藏回去
-//   petWin   = 貼在工作區底部的透明長條，上面畫所有桌寵；滑鼠不在桌寵身上時整條都是穿透的
-const { app, BrowserWindow, Menu, dialog, Notification, Tray, globalShortcut, ipcMain, nativeImage, net, screen, shell } = require("electron");
+//   games[ME] = 這隻桌寵的遊戲視窗，平常不顯示；對牠點兩下叫出來操作，再點兩下藏回去（陣列其他位置是空的）
+//   petWin    = 貼在工作區底部的透明長條，上面畫這隻桌寵；滑鼠不在桌寵身上時整條都是穿透的
+const { app, BrowserWindow, Menu, Notification, Tray, globalShortcut, ipcMain, nativeImage, net, screen, session, shell } = require("electron");
+const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const { parseSave } = require("./save-reader");
@@ -14,6 +22,7 @@ const accounts = require("./accounts");
 const updates = require("./updates");
 const income = require("./income");
 const diagnostics = require("./diagnostics");
+const peers = require("./peers");
 const names = require("./names.json");
 
 const GAME_URL = "https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/";
@@ -41,6 +50,14 @@ const SELFTEST = process.argv.includes("--selftest");
 // （從外殼 boot.js 啟動的話外殼已經換好了，這裡只管直接跑 main.js 的情況）
 if (SELFTEST && !global.petShell) app.setPath("userData", path.join(app.getPath("temp"), `dark-pet-selftest-${Date.now()}`));
 
+// 這個程式是第幾隻桌寵（0 起算）；-1＝啟動器（見開頭說明）。自我測試沒帶的話當第 1 隻
+const PET_ARG = process.argv.find((a) => /^--pet=\d+$/.test(a));
+const ME = PET_ARG ? Number(PET_ARG.slice(6)) - 1 : SELFTEST ? 0 : -1;
+const LAUNCHER = ME < 0;
+// 每個程式各自的瀏覽器資料（快取、桌寵視窗自己的 localStorage）分開放，同一個資料夾不能兩個程式同時開。
+// 遊戲的登入資料、存檔不在這裡，見 sessionOf
+app.setPath("sessionData", path.join(app.getPath("userData"), "pets", LAUNCHER ? "launcher" : String(ME + 1)));
+
 // 視窗被蓋住／藏起來時 Chromium 會把分頁當成背景分頁放慢計時器，掛機會變慢，全部關掉
 app.commandLine.appendSwitch("disable-renderer-backgrounding");
 app.commandLine.appendSwitch("disable-background-timer-throttling");
@@ -57,7 +74,8 @@ let pickerWin;
 let accountsWin;
 let incomeWin;
 let pickerTarget = 0; // 選外觀視窗現在是在幫第幾隻桌寵挑
-// 使用者設定。petCount＝桌面上幾隻桌寵；
+// 使用者設定（所有桌寵共用一個檔，陣列的第 i 格是第 i 隻的）。openPets＝上次開著的是哪幾隻（啟動器照這個開）；
+// petCount＝舊版（同一個程式裡開好幾隻）的桌寵數量，只用來換算成 openPets；
 // petAccounts[i]＝第 i 隻用哪個帳號（accounts.json 的 id），null＝不登入（訪客，存檔只在這隻自己的遊戲視窗裡）；
 // petModels[i]＝第 i 隻自己選的外觀（職業 key，或變身外觀「morph:MORPHS 的 key」），沒選（null）就跟著牠那個角色（變身中就是變身的樣子）
 let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], helpSeen: false, stayPets: [],
@@ -79,8 +97,9 @@ let settings = { petCount: 1, petAccounts: [], petModels: [], petColors: [], hel
   // fpsApplyAll＝右鍵選更新率時全部桌寵一起換（不勾＝只換按右鍵的那一隻）
   petFps: [],
   fpsApplyAll: false,
-  // soloPets[i]＝第 i 隻勾了右鍵「獨立視窗」：別隻按「結束」、改數量都不會收掉牠（見 endFrom）
-  soloPets: [] };
+  openPets: undefined,
+  // 桌寵大小（%），全部桌寵一起；沒設過就用各自桌寵視窗記的
+  petSize: undefined };
 const settingsFile = () => path.join(app.getPath("userData"), "pet-settings.json");
 
 function loadSettings() {
@@ -88,9 +107,12 @@ function loadSettings() {
     const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
     settings = { ...settings, ...saved, focusShow: { ...settings.focusShow, ...saved.focusShow },
       normalShow: { ...settings.normalShow, ...saved.normalShow } };
-    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows", "petFps", "soloPets"]) if (!Array.isArray(settings[key])) settings[key] = [];
+    for (const key of ["petAccounts", "petModels", "petColors", "stayPets", "gameWindows", "petFps"]) if (!Array.isArray(settings[key])) settings[key] = [];
     settings.petCount = Math.min(MAX_PETS, Math.max(1, Math.floor(Number(settings.petCount)) || 1));
   } catch {}
+  // 舊版只有數量：第 1～petCount 隻
+  const open = Array.isArray(settings.openPets) ? settings.openPets.filter((i) => Number.isInteger(i) && i >= 0 && i < MAX_PETS) : [];
+  settings.openPets = open.length ? [...new Set(open)].sort((a, b) => a - b) : Array.from({ length: settings.petCount }, (_, i) => i);
 }
 
 function saveSettings() {
@@ -101,73 +123,47 @@ function saveSettings() {
   }
 }
 
-if (!app.requestSingleInstanceLock()) app.quit();
-// 桌寵已經在跑的時候再點一次捷徑：當成「救回來」的按鈕，把桌寵叫出來、解除專注模式、打開第一隻的遊戲視窗。
-// 被「結束」收掉的那幾隻（旁邊還有獨立視窗的桌寵在跑，程式沒關）也一起叫回來
-app.on("second-instance", () => {
-  if (ended.size) {
-    ended.clear();
-    refreshPets();
-  }
-  restorePet();
-  showGame(liveGames()[0], true);
-});
-
-// ── 獨立視窗 ──────────────────────────────────────────────
-// 右鍵「獨立視窗」勾了的那隻，別隻按「結束」、改桌寵數量都不會影響牠，照常掛機。
-// 所以「結束」不一定整個程式關掉：只收掉那幾隻（遊戲視窗關掉、桌面上不畫），記在 ended；全部都結束了才真的關掉程式。
-// ended 只算這次啟動，下次打開桌寵（或再點一次捷徑）全部回來。
-const ended = new Set();
-const isSolo = (i) => !!settings.soloPets[i];
-const liveIndexes = () => Array.from({ length: settings.petCount }, (_, i) => i).filter((i) => !ended.has(i));
-const liveGames = () => games.filter(Boolean);
-const SOLO_NOTE = "勾選此項目可讓你本隻桌寵獨立 其他桌寵不管是關閉視窗 退出 都不會影響到這隻桌寵";
-
-function setSolo(petIndex, on) {
-  settings.soloPets = Array.from({ length: MAX_PETS }, (_, i) => (i === petIndex ? on : isSolo(i)));
+/** 改設定：別隻可能剛改過，先重讀檔案、改完馬上寫回去，才不會把別隻改的蓋掉。 */
+function changeSettings(change) {
+  loadSettings();
+  change(settings);
   saveSettings();
-  if (games[petIndex]) setTaskbarGroup(games[petIndex], true);
-  if (on) dialog.showMessageBox({ type: "info", title: "獨立視窗", message: "獨立視窗", detail: SOLO_NOTE, buttons: ["確定"] });
 }
 
-/**
- * 工作列分組（只有 Windows）：同一個程式的視窗 Windows 會合併成一個工作列按鈕（照視窗的 App ID），
- * 對那個按鈕「最小化所有視窗」會整組一起縮小（玩家回報開 A、B 兩隻，縮小 A 時 B 也跟著縮小）。
- * 獨立視窗的遊戲換成自己的 App ID，工作列上單獨一個按鈕，不跟別隻合併；取消勾選換回共用的（安裝檔的 appId）。
- * changed：從選單切換的，視窗已經在工作列上的話拿掉再放回去，讓工作列重新照新的 ID 分組。
- */
-const SHARED_APP_ID = "com.darkcontinent.desktoppet";
-function setTaskbarGroup(g, changed = false) {
-  if (process.platform !== "win32" || g.win.isDestroyed()) return;
-  if (!isSolo(g.index) && !changed) return; // 沒勾過的照原本的樣子，不去動它
-  g.win.setAppDetails(isSolo(g.index)
-    ? { appId: `${SHARED_APP_ID}.game${g.index + 1}`, appIconPath: process.execPath, appIconIndex: 0 }
-    : { appId: SHARED_APP_ID, appIconPath: process.execPath, appIconIndex: 0 });
-  if (changed && g.win.isVisible() && (g.shown || g.keepTaskbar)) {
-    g.win.setSkipTaskbar(true);
-    g.win.setSkipTaskbar(false);
+/** 別隻（或這隻）改了設定檔：重讀，照新的設定更新這隻。 */
+function watchSettings() {
+  fs.watchFile(settingsFile(), { interval: 700 }, () => {
+    loadSettings();
+    applySettings();
+  });
+}
+
+function applySettings() {
+  const g = games[ME];
+  // 這隻的帳號被換掉了（別隻搶走、或帳號管理視窗改的）：整個程式重開，舊帳號的資料夾才會放掉，別隻才用得到
+  if (g && g.partition !== partitionOf(ME)) {
+    if (!SELFTEST) return relaunchSelf();
+    destroyGame(g); // 自我測試只有一個程式，直接換一個遊戲視窗
+    games[ME] = createGame(ME);
+    sendState(games[ME]);
   }
-}
-
-/**
- * 右鍵「結束」。沒有勾獨立視窗的桌寵在跑時跟以前一樣，整個程式關掉。
- * 有的話：對獨立的那隻按＝只結束牠自己；對別隻按＝結束全部沒勾獨立的，獨立的照常掛機。
- */
-function endFrom(petIndex) {
-  const live = liveIndexes();
-  const targets = isSolo(petIndex) ? [petIndex] : live.filter((i) => !isSolo(i));
-  if (targets.length >= live.length) return app.quit();
-  targets.forEach((i) => ended.add(i));
-  refreshPets();
-}
-
-/** 桌寵數量或結束了哪幾隻有變：遊戲視窗、桌面上的桌寵跟著更新。 */
-function refreshPets() {
-  syncGames();
-  sendStay(); // 先送，新加進來的桌寵一出現就套上牠的設定
+  sendStay();
   sendPets();
   sendPetFps();
-  liveGames().forEach(sendState);
+  setGameFps(g);
+  setGameHidden(g);
+  petWin?.webContents.send("pet:focus-show", settings.focusShow);
+  petWin?.webContents.send("pet:normal-show", settings.normalShow);
+  petWin?.webContents.send("pet:power-save", settings.powerSave);
+  if (settings.petSize) petWin?.webContents.send("pet:size", settings.petSize);
+  if (accountsWin && !accountsWin.isDestroyed()) accountsWin.webContents.send("accounts:changed");
+}
+
+/** 這隻重開（帳號換了、或「立即更新桌寵」）：照原本的參數再開一次，自己正常結束（遊戲存檔才會好好寫進去）。 */
+function relaunchSelf() {
+  if (quitting) return;
+  app.relaunch();
+  app.quit();
 }
 
 // ── 遊戲視窗（每隻桌寵一個）─────────────────────────────────
@@ -177,6 +173,13 @@ const accountOf = (i) => (accounts.find(settings.petAccounts[i]) ? settings.petA
 
 /** 登入資料、存檔放哪：有帳號的照帳號分（換給別隻用也帶著走），訪客照第幾隻分。 */
 const partitionOf = (i) => (accountOf(i) ? `persist:acct-${accountOf(i)}` : `persist:guest-${i}`);
+
+/**
+ * 遊戲視窗的 session：就放在舊版（同一個程式開好幾隻）的 partition 資料夾（使用者資料夾/Partitions/acct-…），
+ * 所以從舊版更新過來不用重新登入、存檔也都在。每個程式自己的 sessionData 不同，不能直接用 partition 名稱，要指定路徑。
+ * 同一個資料夾同時只能一個程式開，所以同一個帳號只能一隻用（setPetAccount），換帳號時整個程式重開（applySettings）。
+ */
+const sessionOf = (i) => session.fromPath(path.join(app.getPath("userData"), "Partitions", partitionOf(i).replace(/^persist:/, "")));
 
 const accountLabel = (g) => (g.accountId ? accounts.nameOf(g.accountId) : "訪客（不登入）");
 
@@ -188,10 +191,11 @@ function savedGameWindow(index) {
 }
 
 function rememberGameWindow(g) {
-  const list = Array.from({ length: MAX_PETS }, (_, i) => settings.gameWindows[i] ?? null);
-  list[g.index] = { keepTaskbar: g.keepTaskbar, ...g.bounds };
-  settings.gameWindows = list;
-  saveSettings();
+  changeSettings((s) => {
+    const list = Array.from({ length: MAX_PETS }, (_, i) => s.gameWindows[i] ?? null);
+    list[g.index] = { keepTaskbar: g.keepTaskbar, ...g.bounds };
+    s.gameWindows = list;
+  });
 }
 
 function createGame(index) {
@@ -207,13 +211,14 @@ function createGame(index) {
     title: `黑暗大陸（第 ${index + 1} 隻・${accountLabel(g)}）`,
     autoHideMenuBar: true,
     webPreferences: {
-      partition: g.partition,
+      session: sessionOf(index),
       backgroundThrottling: false,
       preload: path.join(__dirname, "game-preload.js"),
     },
   });
   g.win.webContents.setAudioMuted(true);
-  setTaskbarGroup(g); // 獨立視窗的遊戲在工作列上單獨一個按鈕
+  // 工作列上每隻自己一個按鈕（同一個程式的視窗 Windows 會照 App ID 合併成一組，對那組「最小化所有視窗」會一起縮小）
+  if (process.platform === "win32") g.win.setAppDetails({ appId: `com.darkcontinent.desktoppet.pet${index + 1}`, appIconPath: process.execPath, appIconIndex: 0 });
   // 視窗邊框＋標題列多大：手機 9:16、PC 16:9 要讓「遊戲區」剛好是那個比例
   const outer = g.win.getBounds(), inner = g.win.getContentBounds();
   g.frame = { dw: outer.width - inner.width, dh: outer.height - inner.height };
@@ -279,23 +284,12 @@ function destroyGame(g) {
   if (!g.win.isDestroyed()) g.win.destroy();
 }
 
-/** 遊戲視窗數量跟著桌寵數量；帳號換了的那幾隻換一個新的遊戲視窗（不同的登入資料）。 */
+/** 這個程式只開這隻（ME）的遊戲視窗。 */
+const liveGames = () => games.filter(Boolean);
+
 function syncGames() {
-  while (games.length > settings.petCount) {
-    const g = games.pop();
-    if (g) destroyGame(g);
-  }
-  for (let i = 0; i < settings.petCount; i++) {
-    // 這次啟動已經結束的（見 endFrom）：不開遊戲視窗
-    if (ended.has(i)) {
-      if (games[i]) destroyGame(games[i]);
-      games[i] = null;
-      continue;
-    }
-    if (games[i] && games[i].partition === partitionOf(i)) continue;
-    if (games[i]) destroyGame(games[i]);
-    games[i] = createGame(i);
-  }
+  if (games[ME]) return;
+  games[ME] = createGame(ME);
 }
 
 /**
@@ -439,8 +433,7 @@ function setGameHidden(g) {
 }
 
 function setPowerSave(on) {
-  settings.powerSave = on;
-  saveSettings();
+  changeSettings((s) => (s.powerSave = on));
   liveGames().forEach(setGameHidden);
   petWin?.webContents.send("pet:power-save", on);
 }
@@ -456,20 +449,16 @@ function setGameFps(g) {
   inGame(g, `window.__petMaxFps ? __petMaxFps(${fpsOf(g.index)}) : null`);
 }
 
-function sendPetFps() {
-  const list = Array.from({ length: settings.petCount }, (_, i) => fpsOf(i));
-  petWin?.webContents.send("pet:max-fps", list.includes(0) ? 0 : Math.max(...list));
-}
+const sendPetFps = () => petWin?.webContents.send("pet:max-fps", fpsOf(ME));
 
 /** 換畫面更新率：勾了「套用到全部桌寵」就全部一起換（之後才加進來的也是），不然只換第 petIndex 隻。 */
 function setPetFps(fps, petIndex) {
-  settings.petFps = Array.from({ length: MAX_PETS }, (_, i) => (settings.fpsApplyAll || i === petIndex ? fps : settings.petFps[i] ?? null));
-  saveSettings();
+  changeSettings((s) => (s.petFps = Array.from({ length: MAX_PETS }, (_, i) => (s.fpsApplyAll || i === petIndex ? fps : s.petFps[i] ?? null))));
   liveGames().forEach(setGameFps);
   sendPetFps();
 }
 
-const toggleGame = (g = liveGames()[0]) => g && showGame(g, !g.shown);
+const toggleGame = (g = games[ME]) => g && showGame(g, !g.shown);
 
 /** 從右鍵選單叫出遊戲：keepTaskbar＝這次之後關掉（藏起來）時工作列上留著按鈕，點一下就叫回來；一般的「顯示遊戲視窗」恢復成完全藏起來。 */
 function openGame(g, keepTaskbar) {
@@ -637,16 +626,21 @@ function createPetWindow() {
     petWin.webContents.send("pet:normal-show", settings.normalShow);
     petWin.webContents.send("pet:power-save", settings.powerSave);
     sendPetFps();
+    if (settings.petSize) petWin.webContents.send("pet:size", settings.petSize);
     liveGames().forEach(sendState);
   });
 }
 
 /** petIndex＝對第幾隻桌寵按的右鍵。 */
-function popupMenu(petIndex) {
-  buildMenu(petIndex).popup({ window: petWin });
+/** 先問一下現在活著幾隻（選單上的「第幾隻」「新增一隻」要用），再跳出選單。 */
+async function popupMenu() {
+  await refreshAlive();
+  buildMenu().popup({ window: petWin });
 }
 
-function setClickThrough(on) {
+/** 專注模式是全部桌寵一起的：這隻切換時也叫別隻一起切（tell＝false 是別隻叫的，不用再轉告）。 */
+function setClickThrough(on, tell = true) {
+  if (tell) for (const i of alive) if (i !== ME) peers.request(i, { type: "click-through", on });
   clickThrough = on;
   if (on) petWin.setIgnoreMouseEvents(true, { forward: true });
   petWin.webContents.send("pet:click-through", on);
@@ -691,7 +685,7 @@ function toggleClickThrough() {
   else setClickThrough(!clickThrough);
 }
 
-/** 大小是全部桌寵共用的；拉條開在被按右鍵的那一隻頭上。 */
+/** 大小是全部桌寵共用的（拉的時候存進設定，別隻跟著變，見 pet:size）；拉條開在這隻頭上。 */
 function openSizer(petIndex = 0) {
   if (clickThrough) setClickThrough(false);
   if (!petShown()) showPet();
@@ -739,12 +733,12 @@ function openPicker(petIndex = 0) {
 }
 
 /**
- * 每一隻桌寵現在該長什麼樣（陣列長度＝桌寵數量）：
+ * 這個桌寵視窗裡每個位置該長什麼樣（只有這隻 ME 有，別隻的位置是 null）：
  * 使用者幫那一隻選的優先；沒選的話角色變身中就是變身的樣子（可以在選單關掉），不然跟著角色職業。
  */
 function resolveModels() {
-  return Array.from({ length: settings.petCount }, (_, i) => {
-    if (ended.has(i)) return null; // 已經結束的那隻：桌面上不畫（pet.js）
+  return Array.from({ length: ME + 1 }, (_, i) => {
+    if (i !== ME) return null; // 別隻是別的程式畫的，這個視窗不畫（pet.js）
     const raw = games[i]?.lastRaw;
     const picked = settings.petModels[i];
     if (picked && spriteDef(picked)) return picked;
@@ -775,7 +769,7 @@ function cleanColor(color) {
   return changed ? out : null;
 }
 
-const sendColors = () => petWin?.webContents.send("pet:colors", Array.from({ length: settings.petCount }, (_, i) => settings.petColors[i] ?? null));
+const sendColors = () => petWin?.webContents.send("pet:colors", Array.from({ length: ME + 1 }, (_, i) => settings.petColors[i] ?? null));
 
 function sendPets() {
   sendColors(); // 先送，新加進來的桌寵一出現就是調好的顏色
@@ -788,19 +782,106 @@ function sendState(g) {
   petWin?.webContents.send("pet:state", g.index, state);
 }
 
-function setPetCount(count) {
-  // 勾了獨立視窗的不會被收掉：數量最少留到最後一隻還在跑的獨立桌寵
-  const keep = Math.max(0, ...liveIndexes().filter(isSolo).map((i) => i + 1));
-  if (count < keep) {
-    petWin?.webContents.send("pet:notice", keep - 1, `第 ${keep} 隻是獨立視窗，最少要留 ${keep} 隻（要減少請先取消牠的「獨立視窗」）`);
-    count = keep;
+// ── 每隻一個程式：開新的、結束 ────────────────────────────
+
+let alive = []; // 現在活著的是哪幾隻（含這隻），每幾秒問一次（refreshAlive）
+// 剛開、還在啟動中的那幾隻（編號 → 開的時間）：連按好幾次「新增」時，還沒開好的不能再被挑一次
+const starting = new Map();
+const STARTING_MS = 30000;
+
+async function refreshAlive() {
+  const list = await peers.scan(MAX_PETS);
+  alive = [...new Set([...list, ...(LAUNCHER ? [] : [ME])])].sort((a, b) => a - b);
+  for (const [i, at] of starting) if (alive.includes(i) || Date.now() - at > STARTING_MS) starting.delete(i); // 開好了（或開不起來）
+  return alive;
+}
+
+/** 開第 index 隻：同一個程式帶 --pet=N 再開一次（開發版要多帶程式資料夾）。 */
+function spawnPet(index) {
+  const args = [...(process.defaultApp ? [app.getAppPath()] : []), ...process.argv.filter((a) => a === "--no-sandbox"), `--pet=${index + 1}`];
+  spawn(process.execPath, args, { detached: true, stdio: "ignore" }).unref();
+}
+
+/** 右鍵「新增一隻桌寵」：補上最小的空號（中間結束掉的那隻優先，牠原本的帳號、外觀都還在），最多 MAX_PETS 隻。 */
+async function addPet() {
+  await refreshAlive();
+  const free = Array.from({ length: MAX_PETS }, (_, i) => i).find((i) => !alive.includes(i) && !starting.has(i));
+  if (free === undefined) return petWin?.webContents.send("pet:notice", ME, `已經開了 ${MAX_PETS} 隻，最多就是 ${MAX_PETS} 隻`);
+  changeSettings((s) => (s.openPets = [...new Set([...s.openPets, free])].sort((a, b) => a - b)));
+  starting.set(free, Date.now());
+  spawnPet(free);
+  petWin?.webContents.send("pet:notice", ME, `第 ${free + 1} 隻出發了！`);
+}
+
+/** 右鍵「結束這隻」：只關這個程式。還有別隻在跑的話，下次打開就不再開這隻；最後一隻結束時照舊記著，下次打開還是牠。 */
+async function endSelf() {
+  await refreshAlive();
+  if (alive.some((i) => i !== ME)) changeSettings((s) => (s.openPets = s.openPets.filter((i) => i !== ME)));
+  app.quit();
+}
+
+/** 右鍵「結束全部桌寵」：叫別隻都結束，自己也結束。下次打開還是這幾隻。 */
+async function quitAll() {
+  await refreshAlive();
+  await Promise.all(alive.filter((i) => i !== ME).map((i) => peers.request(i, { type: "quit" })));
+  app.quit();
+}
+
+/** 別隻（或啟動器）傳來的話，見 peers.js。 */
+function onPeerMessage(msg) {
+  switch (msg?.type) {
+    case "ping":
+      return { ok: true, index: ME, pid: process.pid };
+    case "info": // 這隻現在開著哪個帳號的資料夾（見 waitAccountFree）
+      return { ok: true, account: games[ME]?.accountId ?? null };
+    case "restore": // 再點一次捷徑：救回來
+      restorePet();
+      if (msg.showGame) showGame(games[ME], true);
+      return;
+    case "click-through":
+      setClickThrough(!!msg.on, false);
+      return;
+    case "reload-game":
+      if (games[ME]) loadGame(games[ME]);
+      return;
+    case "income-reset":
+      income.reset(ME);
+      return;
+    case "quit":
+      setTimeout(() => app.quit(), 100); // 先回覆再結束
+      return;
+    case "relaunch":
+      setTimeout(relaunchSelf, 100);
+      return;
   }
-  settings.petCount = count;
-  saveSettings();
-  for (const i of ended) if (i >= count) ended.delete(i);
-  refreshPets();
-  // 正在幫牠挑外觀的那一隻被收掉了，視窗跟著關
-  if (pickerTarget >= count && pickerWin && !pickerWin.isDestroyed()) pickerWin.close();
+  return { ok: false };
+}
+
+/**
+ * 啟動器：把上次開著的那幾隻開起來。全部都已經在跑的話，當成「救回來」的按鈕：
+ * 每隻都叫出來、解除專注模式，最前面那隻的遊戲視窗打開（跟以前再點一次捷徑一樣）。
+ */
+async function launch() {
+  await refreshAlive();
+  const missing = settings.openPets.filter((i) => !alive.includes(i));
+  if (missing.length) missing.forEach(spawnPet);
+  else if (alive.length) await Promise.all(alive.map((i) => peers.request(i, { type: "restore", showGame: i === alive[0] })));
+  else spawnPet(0);
+}
+
+/**
+ * 同一個帳號的資料夾同時只能一個程式開。帳號剛從別隻換過來時，那隻可能還沒重開完，等牠放掉（最多 20 秒）。
+ * 帳號只會在設定檔裡指給一隻，所以這裡只是等時間差。
+ */
+async function waitAccountFree() {
+  const mine = accountOf(ME);
+  if (!mine) return;
+  for (let tries = 0; tries < 40; tries++) {
+    await refreshAlive();
+    const replies = await Promise.all(alive.filter((i) => i !== ME).map((i) => peers.request(i, { type: "info" })));
+    if (!replies.some((r) => r?.account === mine)) return;
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 /**
@@ -808,15 +889,14 @@ function setPetCount(count) {
  * 同一個帳號不能兩隻同時用（遊戲同一個帳號只能在一個地方上線），原本用這個帳號的那隻改回訪客。
  */
 function setPetAccount(petIndex, accountId) {
-  const list = Array.from({ length: MAX_PETS }, (_, i) => settings.petAccounts[i] ?? null);
-  if (accountId) list.forEach((id, i) => id === accountId && i !== petIndex && (list[i] = null));
-  list[petIndex] = accountId;
-  settings.petAccounts = list;
-  saveSettings();
-  syncGames();
-  sendPets();
-  liveGames().forEach(sendState);
-  accountsWin?.isDestroyed() === false && accountsWin.webContents.send("accounts:changed");
+  changeSettings((s) => {
+    const list = Array.from({ length: MAX_PETS }, (_, i) => s.petAccounts[i] ?? null);
+    if (accountId) list.forEach((id, i) => id === accountId && i !== petIndex && (list[i] = null));
+    list[petIndex] = accountId;
+    s.petAccounts = list;
+  });
+  // 帳號有變的那幾隻（這隻、或被搶走帳號的別隻）自己看到設定檔變了會重開，見 applySettings
+  applySettings();
 }
 
 /** 飄字子選單裡的一個勾選項。group＝"focusShow"（專注模式）或 "normalShow"（一般模式），key＝哪一類飄字。 */
@@ -826,28 +906,26 @@ function showItem(group, key, label) {
     type: "checkbox",
     checked: !!settings[group][key],
     click: (item) => {
-      settings[group] = { ...settings[group], [key]: item.checked };
-      saveSettings();
+      changeSettings((s) => (s[group] = { ...s[group], [key]: item.checked }));
       petWin.webContents.send(group === "focusShow" ? "pet:focus-show" : "pet:normal-show", settings[group]);
     },
   };
 }
 
 const stays = (petIndex) => !!settings.stayPets[petIndex];
-const allStay = () => Array.from({ length: settings.petCount }, (_, i) => stays(i)).every(Boolean);
-const sendStay = () => petWin?.webContents.send("pet:stay", Array.from({ length: settings.petCount }, (_, i) => stays(i)));
+const allStay = () => alive.every(stays);
+const sendStay = () => petWin?.webContents.send("pet:stay", Array.from({ length: ME + 1 }, (_, i) => stays(i)));
 
 /** 原地不走動。有給 petIndex 就只改那一隻；沒給就是全部（連之後才加進來的也一起）。 */
 function setStay(on, petIndex) {
-  settings.stayPets = Array.from({ length: MAX_PETS }, (_, i) => (petIndex === undefined || i === petIndex ? on : stays(i)));
-  saveSettings();
+  changeSettings((s) => (s.stayPets = Array.from({ length: MAX_PETS }, (_, i) => (petIndex === undefined || i === petIndex ? on : !!s.stayPets[i]))));
   sendStay();
 }
 
 /** 「帳號」子選單：點一個帳號就讓這隻登入那個帳號。別隻正在用的帳號後面註明是第幾隻（點了會搶過來）。 */
 function accountMenu(petIndex) {
   const mine = accountOf(petIndex);
-  const usedBy = (id) => settings.petAccounts.findIndex((a, i) => a === id && i !== petIndex && i < settings.petCount);
+  const usedBy = (id) => settings.petAccounts.findIndex((a, i) => a === id && i !== petIndex && alive.includes(i));
   return {
     label: `帳號（第 ${petIndex + 1} 隻）：${mine ? accounts.nameOf(mine) : "訪客"}`,
     submenu: [
@@ -868,17 +946,14 @@ function accountMenu(petIndex) {
 }
 
 /** petIndex＝這次是對第幾隻桌寵按的右鍵（從系統匣開的話當作第一隻）。 */
-function buildMenu(petIndex = 0, fromTray = false) {
-  if (!(petIndex >= 0 && petIndex < settings.petCount) || ended.has(petIndex)) petIndex = liveIndexes()[0] ?? 0;
+function buildMenu() {
+  const petIndex = ME;
   const g = games[petIndex];
-  const many = settings.petCount > 1;
-  const anySolo = liveIndexes().some(isSolo);
+  const many = alive.length > 1;
   const updateItems = updates.menuItems();
   return Menu.buildFromTemplate([
     ...updateItems,
     ...(updateItems.length ? [{ type: "separator" }] : []),
-    // 獨立視窗：別隻按「結束」、改數量都不影響這隻（見 endFrom）
-    { label: `獨立視窗${many ? `（第 ${petIndex + 1} 隻）` : ""}`, type: "checkbox", checked: isSolo(petIndex), click: (item) => setSolo(petIndex, item.checked) },
     g?.shown
       ? { label: `隱藏${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => toggleGame(g) }
       : { label: `顯示${many ? `第 ${petIndex + 1} 隻的` : ""}遊戲視窗`, accelerator: petIndex === 0 ? TOGGLE_KEY : undefined, click: () => openGame(g, false) },
@@ -915,15 +990,10 @@ function buildMenu(petIndex = 0, fromTray = false) {
           ],
         }
       : { label: "原地不走動", type: "checkbox", checked: stays(0), click: (item) => setStay(item.checked) },
-    {
-      label: "桌寵數量（每隻一個帳號）",
-      submenu: Array.from({ length: MAX_PETS }, (_, i) => ({
-        label: `${i + 1} 隻`,
-        type: "radio",
-        checked: settings.petCount === i + 1,
-        click: () => setPetCount(i + 1),
-      })),
-    },
+    // 每隻是獨立的程式（每隻一個帳號），新增的補上最小的空號，最多 MAX_PETS 隻
+    alive.length >= MAX_PETS
+      ? { label: `新增一隻桌寵（已達上限 ${MAX_PETS} 隻）`, enabled: false }
+      : { label: `新增一隻桌寵（目前 ${alive.length} 隻，最多 ${MAX_PETS} 隻）`, click: addPet },
     { label: many ? "調整大小…（全部一起）" : "調整大小…", click: () => openSizer(petIndex) },
     { label: many ? `選擇這隻桌寵的外觀…（第 ${petIndex + 1} 隻）` : "選擇桌寵外觀…", click: () => openPicker(petIndex) },
     { label: "帳號管理…", click: openAccounts },
@@ -944,10 +1014,7 @@ function buildMenu(petIndex = 0, fromTray = false) {
           label: "套用到全部桌寵（不勾＝只改這一隻）",
           type: "checkbox",
           checked: settings.fpsApplyAll,
-          click: (item) => {
-            settings.fpsApplyAll = item.checked;
-            saveSettings();
-          },
+          click: (item) => changeSettings((s) => (s.fpsApplyAll = item.checked)),
         },
         { type: "separator" },
         {
@@ -963,8 +1030,7 @@ function buildMenu(petIndex = 0, fromTray = false) {
       type: "checkbox",
       checked: settings.followMorph,
       click: (item) => {
-        settings.followMorph = item.checked;
-        saveSettings();
+        changeSettings((s) => (s.followMorph = item.checked));
         sendPets();
       },
     },
@@ -972,10 +1038,7 @@ function buildMenu(petIndex = 0, fromTray = false) {
       label: "開啟時自動登入並繼續冒險",
       type: "checkbox",
       checked: settings.autoContinue,
-      click: (item) => {
-        settings.autoContinue = item.checked;
-        saveSettings();
-      },
+      click: (item) => changeSettings((s) => (s.autoContinue = item.checked)),
     },
     // 開機自動啟動只有安裝版有意義（開發版登記的會是 electron.exe 本身）
     ...(app.isPackaged
@@ -988,10 +1051,9 @@ function buildMenu(petIndex = 0, fromTray = false) {
     { label: "操作說明", click: openHelp },
     updates.checkItem(),
     { type: "separator" },
-    // 系統匣的「結束」一律整個關掉；有獨立視窗的桌寵時，對桌寵按的「結束」只收掉一部分（見 endFrom）
-    fromTray || !anySolo
-      ? { label: anySolo ? "結束（全部桌寵，含獨立視窗）" : "結束", click: () => app.quit() }
-      : { label: isSolo(petIndex) ? `結束這隻（第 ${petIndex + 1} 隻・獨立視窗）` : "結束（獨立視窗的桌寵繼續掛機）", click: () => endFrom(petIndex) },
+    // 每隻是獨立的程式：「結束這隻」只關這隻，別隻照常掛機
+    { label: many ? `結束這隻（第 ${petIndex + 1} 隻）` : "結束", click: endSelf },
+    ...(many ? [{ label: `結束全部桌寵（${alive.length} 隻）`, click: quitAll }] : []),
   ]);
 }
 
@@ -1056,31 +1118,40 @@ ipcMain.handle("picker:list", () => ({
   current: settings.petModels[pickerTarget] ?? null,
   color: settings.petColors[pickerTarget] ?? null,
   colorRange: COLOR_RANGE,
-  title: settings.petCount > 1 ? `選擇桌寵外觀（第 ${pickerTarget + 1} 隻）` : "選擇桌寵外觀",
+  title: alive.length > 1 ? `選擇桌寵外觀（第 ${pickerTarget + 1} 隻）` : "選擇桌寵外觀",
 }));
 ipcMain.on("picker:choose", (_e, model) => {
-  const models = Array.from({ length: MAX_PETS }, (_, i) => settings.petModels[i] ?? null);
-  models[pickerTarget] = spriteDef(model) ? model : null;
-  settings.petModels = models;
-  saveSettings();
+  changeSettings((s) => {
+    const models = Array.from({ length: MAX_PETS }, (_, i) => s.petModels[i] ?? null);
+    models[pickerTarget] = spriteDef(model) ? model : null;
+    s.petModels = models;
+  });
   sendPets();
 });
 // 拉條拖動的過程一直送過來，桌寵馬上跟著變；放開（save）才寫進設定檔
 ipcMain.on("picker:color", (_e, color, save) => {
-  const colors = Array.from({ length: MAX_PETS }, (_, i) => settings.petColors[i] ?? null);
-  colors[pickerTarget] = cleanColor(color);
-  settings.petColors = colors;
-  if (save) saveSettings();
+  const set = (s) => {
+    const colors = Array.from({ length: MAX_PETS }, (_, i) => s.petColors[i] ?? null);
+    colors[pickerTarget] = cleanColor(color);
+    s.petColors = colors;
+  };
+  if (save) changeSettings(set);
+  else set(settings);
   sendColors();
 });
 ipcMain.on("pet:toggle-game", (_e, index) => toggleGame(games[index]));
-ipcMain.on("pet:menu", (_e, index) => popupMenu(index));
+ipcMain.on("pet:menu", () => popupMenu());
+// 調整大小：拉的時候這隻馬上變，放開（save）才存進設定，別隻看到設定變了跟著變
+ipcMain.on("pet:size", (_e, percent, save) => {
+  const value = Math.round(Number(percent));
+  if (save && Number.isFinite(value)) changeSettings((s) => (s.petSize = value));
+});
 
 // 帳號管理視窗
 ipcMain.handle("accounts:get", () => ({
   accounts: accounts.list(),
-  petCount: settings.petCount,
-  petAccounts: Array.from({ length: settings.petCount }, (_, i) => accountOf(i)),
+  pets: alive,
+  petAccounts: Array.from({ length: MAX_PETS }, (_, i) => (alive.includes(i) ? accountOf(i) : null)),
   encrypted: accounts.canEncrypt(),
 }));
 ipcMain.handle("accounts:save", (_e, account) => {
@@ -1091,11 +1162,11 @@ ipcMain.handle("accounts:save", (_e, account) => {
 });
 ipcMain.handle("accounts:remove", (_e, id) => {
   accounts.remove(id);
-  settings.petAccounts.forEach((a, i) => a === id && i < settings.petCount && setPetAccount(i, null));
+  settings.petAccounts.forEach((a, i) => a === id && setPetAccount(i, null));
   return true;
 });
 ipcMain.on("accounts:assign", (_e, petIndex, id) => {
-  if (petIndex >= 0 && petIndex < settings.petCount) setPetAccount(petIndex, id && accounts.find(id) ? id : null);
+  if (alive.includes(petIndex)) setPetAccount(petIndex, id && accounts.find(id) ? id : null);
 });
 ipcMain.on("accounts:open-folder", () => shell.showItemInFolder(accounts.file()));
 
@@ -1254,6 +1325,7 @@ async function pollGame(g) {
   const { bag, loc, ...rest } = s;
   g.lastState = { ...rest, account: accountLabel(g), ...describePlace(s, r.screen) };
   sendState(g);
+  income.setHere(g.index, g.lastState.place === "標題畫面" ? null : s.loc ?? null);
   if (changedLook) sendPets();
 }
 
@@ -1276,25 +1348,26 @@ function openIncome() {
 
 ipcMain.handle("income:get", () => ({
   // here：每隻現在在哪（存檔的 loc；標題畫面時是 null），收入總覽畫「目前地圖」用
-  pets: income.summary(settings.petCount, Array.from({ length: settings.petCount }, (_, i) => (games[i] ? accountLabel(games[i]) : "已結束"))).map((p, i) => ({ ...p, here: games[i]?.lastState?.place === "標題畫面" ? null : games[i]?.lastRaw?.loc ?? null })),
+  // 活著的每一隻：這隻用自己記的，別隻讀牠們寫的檔（income.js）
+  pets: alive.map((i) => ({ index: i, account: accountOf(i) ? accounts.nameOf(accountOf(i)) : "訪客（不登入）", ...(i === ME ? income.snapshot(i) : income.peek(i)) })),
   classes: Object.fromEntries(Object.entries(names.classes).map(([k, c]) => [k, c.name])),
 }));
 
 ipcMain.handle("income:reset", (_e, index) => {
-  if (Number.isInteger(index) && index >= 0 && index < settings.petCount) income.reset(index);
+  if (index === ME) income.reset(ME);
+  else if (alive.includes(index)) return peers.request(index, { type: "income-reset" });
 });
 
 // ── 回報效能異常 ──────────────────────────────────────────
 // 玩家回報桌寵一直佔很高 CPU 時，請他按這個：收集 15 秒效能資料，看過摘要後上傳（見 diagnostics.js、report-worker/）
 
 const diagnosticsContext = () => ({ games: liveGames(), petWin, settings, clickThrough });
-const reportPerformance = () => diagnostics.start(diagnosticsContext(), (text) => petWin?.webContents.send("pet:notice", 0, text));
+const reportPerformance = () => diagnostics.start(diagnosticsContext(), (text) => petWin?.webContents.send("pet:notice", ME, text));
 
 // 選單項目平常藏起來（玩家用不到），開發者請玩家回報時才叫他打開：操作說明的標題連點 20 下。說明裡不寫
 ipcMain.on("help:unlock", () => {
-  settings.reportUnlocked = true;
-  saveSettings();
-  petWin?.webContents.send("pet:notice", 0, "右鍵選單已經多出「回報效能異常」");
+  changeSettings((s) => (s.reportUnlocked = true));
+  petWin?.webContents.send("pet:notice", ME, "右鍵選單已經多出「回報效能異常」");
 });
 
 // ── 啟動 ──────────────────────────────────────────────────
@@ -1303,9 +1376,9 @@ async function createTray() {
   try {
     const icon = nativeImage.createFromBuffer(await cachedBytes("images/icon-192.png")).resize({ width: 16, height: 16 });
     tray = new Tray(icon);
-    tray.setToolTip("黑暗大陸桌寵");
+    tray.setToolTip(`黑暗大陸桌寵（第 ${ME + 1} 隻）`);
     tray.on("click", () => toggleGame());
-    tray.on("right-click", () => tray.popUpContextMenu(buildMenu(undefined, true)));
+    tray.on("right-click", () => tray.popUpContextMenu(buildMenu()));
   } catch (e) {
     console.error("系統匣圖示建立失敗（不影響使用）：", e.message);
   }
@@ -1313,29 +1386,65 @@ async function createTray() {
 
 app.whenReady().then(async () => {
   loadSettings();
+  peers.init(app.getPath("userData"));
+  if (LAUNCHER) {
+    changeSettings(() => {}); // 舊版的 petCount 換算成 openPets 寫回去
+    await launch();
+    app.quit();
+    return;
+  }
+  // 佔下這隻的編號；已經有程式在當這隻了（例如連點兩下新增）：叫牠出來，自己結束
+  if (ME >= MAX_PETS || !(await peers.listen(ME, onPeerMessage))) {
+    if (ME < MAX_PETS) await peers.request(ME, { type: "restore", showGame: true });
+    app.quit();
+    return;
+  }
+  if (!settings.openPets.includes(ME)) changeSettings((s) => (s.openPets = [...new Set([...s.openPets, ME])].sort((a, b) => a - b)));
   accounts.load();
-  income.start(app.getPath("userData")); // 收入總覽每次啟動從頭記，蓋掉上一次的
+  income.start(app.getPath("userData"), ME); // 收入總覽每次啟動從頭記，蓋掉這隻上一次的
+  await refreshAlive();
+  setInterval(refreshAlive, 5000);
   createPetWindow();
-  syncGames();
   createTray();
-  if (!globalShortcut.register(TOGGLE_KEY, () => toggleGame())) console.error(`快捷鍵 ${TOGGLE_KEY} 被別的程式佔用了`);
-  if (!globalShortcut.register(CLICK_THROUGH_KEY, toggleClickThrough)) console.error(`快捷鍵 ${CLICK_THROUGH_KEY} 被別的程式佔用了`);
+  watchSettings();
+  // 快捷鍵整台電腦只能有一個程式佔用：顯示遊戲視窗是第 1 隻的；專注模式誰佔到都行（會叫全部一起切），
+  // 佔著的那隻結束後別隻補上
+  const grabKeys = () => {
+    if (ME === 0 && !globalShortcut.isRegistered(TOGGLE_KEY)) globalShortcut.register(TOGGLE_KEY, () => toggleGame());
+    if (!globalShortcut.isRegistered(CLICK_THROUGH_KEY)) globalShortcut.register(CLICK_THROUGH_KEY, toggleClickThrough);
+  };
+  grabKeys();
+  setInterval(grabKeys, 5000);
   // 第一次開：先告訴使用者怎麼操作（之後從右鍵選單「操作說明」再看）
   if (!settings.helpSeen && !SELFTEST) {
     openHelp();
-    settings.helpSeen = true;
-    saveSettings();
+    changeSettings((s) => (s.helpSeen = true));
   }
+  await waitAccountFree(); // 帳號剛從別隻換過來的話，等那隻放掉
+  syncGames();
   setInterval(() => liveGames().forEach(pollGame), POLL_MS);
-  updates.start({ notify: say, floater: (text) => petWin?.webContents.send("pet:notice", 0, text), gameUrl: GAME_URL,
-    loadedGameVersions: () => liveGames().map((g) => g.version), reloadGames: () => liveGames().forEach(loadGame) });
+  updates.start({ notify: say, floater: (text) => petWin?.webContents.send("pet:notice", ME, text), gameUrl: GAME_URL,
+    loadedGameVersions: () => liveGames().map((g) => g.version),
+    // 套用遊戲更新：這隻重新載入，也叫別隻一起
+    reloadGames: () => {
+      liveGames().forEach(loadGame);
+      for (const i of alive) if (i !== ME) peers.request(i, { type: "reload-game" });
+    },
+    // 桌寵自己的更新只讓最前面那隻檢查、下載（大家共用同一個下載資料夾）；立即更新時叫別隻一起重開／結束
+    canCheck: () => ME === alive[0],
+    others: () => alive.filter((i) => i !== ME),
+    tell: (i, msg) => peers.request(i, msg) });
   // 走到這裡代表視窗都開好了：告訴外殼這份內容是能跑的（新下載的內容靠這個通過試用，不然會被退回上一份）
   global.petShell?.markHealthy();
   if (SELFTEST) require("./selftest").run({ games, petWin, inGame, diffEvents, buildMenu, openPicker, getPicker: () => pickerWin, openHelp, getHelp: () => helpWin,
-    openAccounts, getAccountsWin: () => accountsWin, accounts, setPetCount, setPetAccount, setStay, settings: () => settings, updates, say, setClickThrough,
+    openAccounts, getAccountsWin: () => accountsWin, accounts, setPetAccount, setStay, settings: () => settings, changeSettings, updates, say, setClickThrough,
     income, totalExp, summarize, sendPets, openIncome, getIncomeWin: () => incomeWin, setPowerSave, showGame, diagnostics, diagnosticsContext, setPetFps,
     quit: () => app.quit() });
 });
+
+// 測試用（設了 DARK_PET_TEST 才有）：從外面（node --inspect）按右鍵選單的功能，測好幾個程式之間的行為
+if (process.env.DARK_PET_TEST) global.petTest = { ME, addPet, endSelf, quitAll, buildMenu, refreshAlive, alive: () => alive, settings: () => settings,
+  setPetAccount, setStay, changeSettings, games, income, petWin: () => petWin };
 
 app.on("before-quit", () => (quitting = true));
 app.on("will-quit", () => globalShortcut.unregisterAll());

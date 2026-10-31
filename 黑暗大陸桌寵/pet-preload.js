@@ -22,9 +22,12 @@ contextBridge.exposeInMainWorld("petApi", {
   // 桌寵動畫每秒最多幾格（0＝不限制）
   onMaxFps: (cb) => ipcRenderer.on("pet:max-fps", (_e, fps) => cb(fps)),
   onOpenSizer: (cb) => ipcRenderer.on("pet:open-sizer", (_e, index) => cb(index)),
+  // 桌寵大小（全部桌寵一起，別隻改了也會送過來）；setSize(percent, true)＝放開拉條，存進設定
+  onSize: (cb) => ipcRenderer.on("pet:size", (_e, percent) => cb(percent)),
+  setSize: (percent, save) => ipcRenderer.send("pet:size", percent, save),
   setInteractive: (on) => ipcRenderer.send("pet:interactive", on),
   // index＝第幾隻桌寵的遊戲視窗
   toggleGame: (index) => ipcRenderer.send("pet:toggle-game", index),
-  // index＝對第幾隻桌寵按的右鍵
+  // 開這隻的右鍵選單（每隻是獨立的程式，index 只是沿用）
   showMenu: (index) => ipcRenderer.send("pet:menu", index),
 });

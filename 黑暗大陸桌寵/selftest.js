@@ -1,7 +1,8 @@
 // 自我測試：npm run selftest（electron . --selftest）。
 // 用一個全新的暫存資料夾（main.js 開頭改 userData），不會碰到平常用的桌寵設定、帳號和遊戲存檔。
 // 不會真的登入任何帳號（不送出帳號密碼到遊戲伺服器）：登入只檢查表單找不找得到，帳號檔只測本機加密。
-// 在線上版遊戲建一個訪客角色 → 確認桌寵讀得到存檔 → 重新載入確認自動繼續冒險 → 兩隻桌寵兩個獨立的遊戲 → 選單、外觀、帳號、說明視窗。
+// 在線上版遊戲建一個訪客角色 → 確認桌寵讀得到存檔 → 重新載入確認自動繼續冒險 → 換帳號 → 選單、外觀、帳號、說明視窗。
+// 每隻桌寵是獨立的程式，這裡只跑第 1 隻；好幾隻同時開（啟動器、新增、結束、傳話）要實際開好幾個程式測。
 // 截圖存在暫存資料夾的 shots/，結果印在主控台，最後自己結束。
 const fs = require("fs");
 const path = require("path");
@@ -32,7 +33,7 @@ async function run(t) {
   const g0 = t.games[0];
   try {
     // 測試中不要自動把沒有角色的遊戲視窗叫出來
-    t.settings().autoContinue = false;
+    t.changeSettings((s) => (s.autoContinue = false));
     await waitFor("標題畫面", async () => (await screenOf(t, g0)) === "screen-title");
     check("遊戲載入到標題畫面", true);
 
@@ -63,12 +64,12 @@ async function run(t) {
     check("升級事件", up.length === 1 && up[0].kind === "levelup" && up[0].level === 6);
 
     // 重新載入：要自動按「繼續冒險」
-    t.settings().autoContinue = true;
+    t.changeSettings((s) => (s.autoContinue = true));
     g0.win.reload();
     await sleep(2000);
     await waitFor("自動繼續冒險", async () => (await screenOf(t, g0)) === "screen-game", 40000);
     check("重新載入後自動繼續冒險", true);
-    t.settings().autoContinue = false;
+    t.changeSettings((s) => (s.autoContinue = false));
 
     // ── 節約效能模式 ──
     // 不管開不開，遊戲一律回報看得見（回報在背景的話大地圖不找怪、不掉寶）；開著時只有藏著的遊戲解析度降低（devicePixelRatio 0.5）
@@ -117,7 +118,7 @@ async function run(t) {
     check("效能報告：讀到各程序 CPU、遊戲畫面格數、電腦規格", perf.processes.some((p) => p.name === "第 1 隻的遊戲") && perf.processes.some((p) => p.name === "桌寵畫面")
       && perfGame.framesPerSec > 0 && perfGame.callbacksPerSec >= perfGame.framesPerSec && perf.system.cores > 0 && perf.pet.rafFps > 0,
       JSON.stringify({ summary: perf.summary, game: { fps: perfGame.framesPerSec, cb: perfGame.callbacksPerSec, timer: perfGame.timerFramesPerSec }, pet: perf.pet.rafFps }));
-    check("效能報告：不含帳號、Email、密碼", !/@|passEnc|password/i.test(JSON.stringify(perf)));
+    check("效能報告：不含帳號、Email、密碼", !/@|passEnc|password/i.test(JSON.stringify(perf)), JSON.stringify(perf).match(/.{0,60}(@|passEnc|password).{0,60}/i)?.[0] ?? "");
     // 高更新率螢幕上也不超過每秒 60 格（這台電腦是 60Hz 的話只能確認沒超過）
     check("遊戲畫面每秒最多 60 格", perfGame.framesPerSec <= 62 && perfGame.framesPerSec >= 40, `${perfGame.framesPerSec} 格／秒（螢幕 ${perf.system.displays.map((d) => d.hz).join("、")}Hz）`);
     // 畫面更新率換成 48Hz：遊戲真的變成每秒約 48 格；換回預設 60
@@ -132,7 +133,7 @@ async function run(t) {
     const fps48 = await gameFps();
     t.setPetFps(60, 0);
     check("畫面更新率：選 48Hz 遊戲每秒約 48 格", fps48 >= 45 && fps48 <= 50, `${fps48} 格／秒`);
-    const rateMenu = t.buildMenu(0).items.find((i) => i.label === "節約效能模式")?.submenu?.items.map((i) => i.label) ?? [];
+    const rateMenu = t.buildMenu().items.find((i) => i.label === "節約效能模式")?.submenu?.items.map((i) => i.label) ?? [];
     check("畫面更新率：選單有 48／55／60／120／144／不限制、套用全部、節約效能模式",
       ["48Hz", "55Hz", "60Hz（預設）", "120Hz", "144Hz", "不限制（跟著螢幕更新率）", "套用到全部桌寵（不勾＝只改這一隻）"].every((l) => rateMenu.includes(l)) && rateMenu.some((l) => l.startsWith("節約效能模式（")) && /越快越吃 CPU/.test(rateMenu[0]),
       rateMenu.join("、"));
@@ -160,7 +161,7 @@ async function run(t) {
     t.income.recordSave(9, base);
     t.income.recordSave(9, { ...base, level: 10, totalExp: t.totalExp(10, 100), gold: 1500, kills: 25, deaths: 1 });
     t.income.recordLoot(9, [...got1, ...got2]);
-    const book = t.income.summary(10, [])[9];
+    const book = t.income.snapshot(9);
     const expGain = 10 ** 4 - 9 ** 4 - 3000 + 100; // 9 級升 10 級要 (10⁴−9⁴)＝3439
     check("收入：經驗跨升級、金幣、打怪數", book.exp === expGain && book.levels === 1 && book.gold === 500 && book.kills === 15 && book.deaths === 1, JSON.stringify({ exp: book.exp, expGain, gold: book.gold, kills: book.kills }));
     check("收入：拿到／賣出", book.obtained["治癒藥水"] === 3 && book.obtained["箭"] === 1500 && book.sold["【精良】短劍"].gold === 1234 && book.soldGold === 1234, JSON.stringify(book.obtained));
@@ -279,29 +280,22 @@ async function run(t) {
     check("畫面尺寸：換回自動尺寸恢復原本大小、退出全螢幕", !sizes.auto.full && sizes.auto.outer.width === shownBounds.width && sizes.auto.outer.height === shownBounds.height, JSON.stringify(sizes.auto));
     check("畫面尺寸：藏起來時一樣停在螢幕外", parkedAfter.x + parkedAfter.width <= 4 && parkedAfter.y + parkedAfter.height <= 4, JSON.stringify(parkedAfter));
 
-    // 兩隻桌寵：第二隻是另一個遊戲視窗、另一份登入資料，看不到第一隻的角色
-    t.setPetCount(2);
-    const g1 = t.games[1];
     // 畫面更新率：不勾「套用到全部」只改那一隻；勾了全部一起換；沒設的是預設 60
     const fpsBefore = t.settings().petFps[1] ?? null;
     t.setPetFps(120, 0);
     const onlyFirst = [t.settings().petFps[0], t.settings().petFps[1] ?? null];
-    t.settings().fpsApplyAll = true;
+    t.changeSettings((s) => (s.fpsApplyAll = true));
     t.setPetFps(55, 1);
     const allPets = [t.settings().petFps[0], t.settings().petFps[1]];
-    t.settings().fpsApplyAll = false;
+    t.changeSettings((s) => (s.fpsApplyAll = false));
     t.setPetFps(60, 0);
     t.setPetFps(60, 1);
     check("畫面更新率：不勾只改這一隻、勾了全部一起換", fpsBefore === null && onlyFirst[0] === 120 && onlyFirst[1] === null && allPets[0] === 55 && allPets[1] === 55,
       JSON.stringify({ fpsBefore, onlyFirst, allPets }));
-    check("第二隻有自己的遊戲視窗",t.games.length === 2 && g1.win !== g0.win && g1.partition !== g0.partition, `${g0.partition} / ${g1.partition}`);
-    await waitFor("第二隻的標題畫面", async () => (await screenOf(t, g1)) === "screen-title");
-    const otherSave = await t.inGame(g1, `Object.keys(localStorage).filter((k) => k.startsWith("dragonSlayer_save")).length`);
-    check("第二隻的存檔跟第一隻分開", otherSave === 0, `第二隻有 ${otherSave} 個存檔`);
 
     // 登入表單找得到（只打開、檢查、按取消，不送出）
-    await waitFor("雲端連線", () => t.inGame(g1, `(() => { const b = document.getElementById("btn-cloud"); return !!b && !b.classList.contains("hidden") && !b.textContent.includes("連線中"); })()`), 30000);
-    const form = await t.inGame(g1, `(() => {
+    await waitFor("雲端連線", () => t.inGame(g0, `(() => { const b = document.getElementById("btn-cloud"); return !!b && !b.classList.contains("hidden") && !b.textContent.includes("連線中"); })()`), 30000);
+    const form = await t.inGame(g0, `(() => {
       document.getElementById("btn-cloud").click();
       const ok = !!document.getElementById("cloud-email") && !!document.getElementById("cloud-pass")
         && [...document.querySelectorAll("#dialog-layer .dialog-btns button")].some((b) => b.textContent.trim() === "登入");
@@ -313,7 +307,7 @@ async function run(t) {
     // 帳號檔：新增的密碼要加密、手寫的明文要自動轉成加密
     const added = t.accounts.save({ label: "測試帳號", email: "pet-selftest@example.invalid", password: "not-a-real-password" });
     const text1 = fs.readFileSync(t.accounts.file(), "utf8");
-    check("新增帳號：檔案裡沒有明文密碼、讀得回來", !!added.id && !text1.includes("not-a-real-password") && t.accounts.password(added.id) === "not-a-real-password");
+    check("新增帳號：檔案裡沒有明文密碼、讀得回來", !!added.id && !text1.includes("not-a-real-password") && t.accounts.password(added.id) === "not-a-real-password", `能加密：${t.accounts.canEncrypt()}`);
     const list = JSON.parse(text1);
     list.push({ label: "手寫", email: "hand@example.invalid", password: "hand-written-pass" });
     fs.writeFileSync(t.accounts.file(), JSON.stringify(list));
@@ -322,40 +316,39 @@ async function run(t) {
     const hand = t.accounts.list().find((a) => a.email === "hand@example.invalid");
     check("手寫明文密碼自動轉成加密", !!hand && !text2.includes("hand-written-pass") && t.accounts.password(hand.id) === "hand-written-pass");
 
-    // 換帳號＝換一個遊戲視窗（自動登入已在上面關掉，這裡不會真的去登入）
-    t.setPetAccount(1, added.id);
-    check("第二隻換帳號後用該帳號自己的登入資料", t.games[1].partition === `persist:acct-${added.id}` && t.games[1] !== g1);
-    const labels = t.buildMenu(1).items.map((i) => i.label).filter(Boolean);
-    check("右鍵選單有帳號、沒有說話／撫摸功能", labels.some((l) => l.startsWith("帳號（第 2 隻）：測試帳號")) && !labels.some((l) => /說話|摸|黑店|GM|書籤|收益|存檔管理/.test(l)), labels.join("、"));
+    // 換帳號＝換一個遊戲視窗（自動登入已在上面關掉，這裡不會真的去登入）。平常是整個程式重開，自我測試時直接換
     t.setPetAccount(0, added.id);
-    check("同一個帳號只給一隻用", t.settings().petAccounts[0] === added.id && t.settings().petAccounts[1] === null);
-    t.setPetAccount(0, null);
+    await sleep(500);
+    check("換帳號後用該帳號自己的登入資料", t.games[0].partition === `persist:acct-${added.id}` && t.games[0] !== g0
+      && t.games[0].win.webContents.session.storagePath?.endsWith(`acct-${added.id}`), t.games[0].win.webContents.session.storagePath);
+    const labels = t.buildMenu().items.map((i) => i.label).filter(Boolean);
+    check("右鍵選單有帳號、新增一隻、沒有說話／撫摸功能", labels.some((l) => l.startsWith("帳號（第 1 隻）：測試帳號")) && labels.some((l) => l.startsWith("新增一隻桌寵（目前 1 隻"))
+      && !labels.some((l) => /說話|摸|黑店|GM|書籤|收益|存檔管理|桌寵數量/.test(l)), labels.join("、"));
+    t.setPetAccount(1, added.id);
+    check("同一個帳號只給一隻用", t.settings().petAccounts[1] === added.id && t.settings().petAccounts[0] === null);
 
-    // 兩隻同時自動登入：登入請求在本機就擋掉（假帳號，不會送到遊戲伺服器），兩隻都要真的填好按下「登入」
-    const loginTry = {};
+    // 自動登入：登入請求在本機擋掉（假帳號，不會送到遊戲伺服器），要真的填好按下「登入」
+    let loginTry = 0;
     const second = t.accounts.list().find((a) => a.email === "hand@example.invalid");
-    for (const a of [added, second]) {
-      session.fromPartition(`persist:acct-${a.id}`).webRequest.onBeforeRequest({ urls: ["*://*/auth/v1/*"] }, (d, cb) => {
-        if (/\/auth\/v1\/token/.test(d.url) && d.method === "POST") loginTry[a.id] = (loginTry[a.id] || 0) + 1;
-        cb({ cancel: true });
-      });
-    }
     const autoWas = t.settings().autoContinue;
-    t.settings().autoContinue = true;
+    t.changeSettings((s) => (s.autoContinue = true));
     t.setPetAccount(0, second.id);
-    t.setPetAccount(1, added.id);
-    await waitFor("兩隻都按了登入", () => loginTry[added.id] && loginTry[second.id], 90000).catch(() => {});
-    check("兩隻同時自動登入都有填好按下登入（請求在本機擋掉）", !!(loginTry[added.id] && loginTry[second.id]),
-      JSON.stringify({ first: loginTry[second.id] ?? 0, second: loginTry[added.id] ?? 0, states: t.games.map((g) => g.login.state) }));
-    t.settings().autoContinue = autoWas;
-    t.setPetAccount(0, null);
-    t.setPetAccount(1, added.id);
+    await sleep(500);
+    t.games[0].win.webContents.session.webRequest.onBeforeRequest({ urls: ["*://*/auth/v1/*"] }, (d, cb) => {
+      if (/\/auth\/v1\/token/.test(d.url) && d.method === "POST") loginTry++;
+      cb({ cancel: true });
+    });
+    await waitFor("按了登入", () => loginTry, 90000).catch(() => {});
+    check("自動登入有填好按下登入（請求在本機擋掉）", loginTry > 0, JSON.stringify({ loginTry, state: t.games[0].login.state }));
+    t.changeSettings((s) => (s.autoContinue = autoWas));
+    t.setPetAccount(1, null);
+    t.setPetAccount(0, added.id);
 
     t.openAccounts();
     await sleep(1500);
     await shot(t.getAccountsWin(), "accounts");
     const rows = await t.getAccountsWin().webContents.executeJavaScript(`document.querySelectorAll("#pets select").length + "/" + document.querySelectorAll("#list .row").length`);
-    check("帳號管理視窗列出 2 隻桌寵、2 個帳號", rows === "2/2", rows);
+    check("帳號管理視窗列出開著的 1 隻桌寵、2 個帳號", rows === "1/2", rows);
     t.getAccountsWin().close();
 
     // 遊戲更新：記下載入的版本，線上版本號不一樣時提醒並出現「套用遊戲更新」
@@ -367,7 +360,7 @@ async function run(t) {
     g0now.version = "舊版測試";
     await t.updates.checkGame();
     await sleep(500);
-    const gameMenu = t.buildMenu(0).items.map((i) => i.label);
+    const gameMenu = t.buildMenu().items.map((i) => i.label);
     const spoken = await speechOn();
     check("遊戲有更新時跳提醒、選單出現套用更新", gameMenu.some((l) => l?.startsWith("⬆ 套用遊戲更新")) && /黑暗大陸更新了/.test(spoken || ""), `${spoken}`);
     // 桌寵靠在螢幕最右邊：對話框被推回畫面裡，尖角要對到桌寵
@@ -393,13 +386,6 @@ async function run(t) {
     const after = await speechOn();
     check("勿擾時不跳對話、解除後補講", !during && after === "勿擾測試", `勿擾中：${during}／解除後：${after}`);
 
-    t.setPetCount(3);
-    t.setStay(true, 1);
-    await sleep(3000);
-    await shot(t.petWin, "pets3");
-    check("三隻桌寵三個遊戲", (await t.petWin.webContents.executeJavaScript(`document.querySelectorAll("canvas.pet").length`)) === 3 && t.games.length === 3);
-    t.setPetCount(1);
-    check("減少桌寵時關掉多的遊戲", t.games.length === 1 && BrowserWindow.getAllWindows().filter((w) => w.webContents.session.storagePath?.includes("Partitions")).length === 1);
     t.openPicker(0);
     await waitFor("外觀縮圖", () => t.getPicker().webContents.executeJavaScript(`[...document.querySelectorAll(".card canvas")].every((c) => c.getContext("2d").getImageData(0, 0, c.width, c.height).data.some((v, i) => i % 4 === 3 && v > 0))`), 60000).catch(() => {});
     await shot(t.getPicker(), "picker");
@@ -411,7 +397,7 @@ async function run(t) {
     await sleep(1000);
     await shot(t.getHelp(), "help");
     // 回報效能異常平常藏起來，說明的標題連點 20 下才出現（點 19 下不算）
-    const hasReport = () => t.buildMenu(0).items.some((i) => i.label?.startsWith("回報效能異常"));
+    const hasReport = () => t.buildMenu().items.some((i) => i.label?.startsWith("回報效能異常"));
     const hiddenBefore = !hasReport();
     const tap = (n) => t.getHelp().webContents.executeJavaScript(`for (let i = 0; i < ${n}; i++) document.querySelector("h1").click()`);
     await tap(19);
