@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
+  "version": "1.5.2",
   "shell": 1,
   "files": [
     {
@@ -9,8 +9,8 @@
     },
     {
       "path": "panel/index.html",
-      "sha256": "4ef91586a0f5d6802428ec85395669ef12d257f854c488fd87c2f852cfd694b4",
-      "size": 44734
+      "sha256": "b7c0a0cbe684dc5556974e5994162f8ea9ed60f204bb0c1a7ceb1e1aa2ec4e35",
+      "size": 45094
     },
     {
       "path": "names.json",

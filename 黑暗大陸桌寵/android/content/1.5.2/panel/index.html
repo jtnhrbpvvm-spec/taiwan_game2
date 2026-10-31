@@ -609,7 +609,7 @@
       const listHtml = (head, rows) => rows.length
         ? `<table class="list"><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}</table>`
         : '<p class="dim" style="margin: 0">還沒有</p>';
-      // 重置：App 裡的紀錄不動，記下按的當下的數字當基準，之後顯示的都扣掉它。
+      // 重置（舊 APK 用）：App 裡的紀錄不動，記下按的當下的數字當基準，之後顯示的都扣掉它。
       // 存在 localStorage（第幾隻 → 基準）；桌寵重新啟動後 startedAt 會變，舊基準就不用了
       let incomeBase = {};
       try { incomeBase = JSON.parse(localStorage.getItem("incomeBase") || "{}"); } catch {}
@@ -638,6 +638,14 @@
         }
         resetArmed = 0;
         $("income-reset").textContent = "重置";
+        // APK 1.5.2 起由 App 真的歸零；舊 APK 只拿到內容更新時沒有這個介面，走下面扣基準的做法
+        if (typeof Android.incomeReset === "function") {
+          Android.incomeReset(incomePet);
+          delete incomeBase[incomePet];
+          saveBase();
+          renderIncome();
+          return;
+        }
         const p = JSON.parse(Android.income())[incomePet];
         if (!p) return;
         incomeBase[incomePet] = { at: Date.now(), startedAt: p.startedAt, exp: p.exp, levels: p.levels, gold: p.gold, kills: p.kills,
