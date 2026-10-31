@@ -1,0 +1,41 @@
+name: 石門區逐時氣溫紀錄
+
+# 每 30 分鐘向氣象署抓一次最新逐時氣溫，存到 weather-data 分支的 weather.json
+# 金鑰放在 Secrets 的 Weather，不會出現在倉庫或網頁裡
+on:
+  schedule:
+    - cron: '20,50 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: weather
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin weather-data; then
+            git worktree add data FETCH_HEAD
+          else
+            git worktree add --orphan -b weather-data data
+          fi
+
+      - name: Fetch temperature
+        run: node .github/scripts/weather.js data/weather.json
+        env:
+          CWA_KEY: ${{ secrets.Weather }}
+
+      - name: Save
+        working-directory: data
+        run: |
+          git add weather.json
+          git commit -q -m "更新石門區逐時氣溫" || exit 0
+          git push origin HEAD:weather-data

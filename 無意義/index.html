@@ -12,11 +12,17 @@
   td { width: 64px; height: 44px; border: 1px solid #ccc; background: #fff; font-size: 20px; }
   tr.free td:not(.sum) { background: #fff6d6; }
   td.sum { border: 0; background: none; color: #888; font-size: 16px; width: 56px; }
+  #weather { margin-left: 8px; background: #2a9d6f; }
+  th { padding: 6px 8px; font-size: 16px; }
+  tr.day th { background: #e4e8f2; text-align: left; }
+  #grid td.time { width: 72px; color: #666; font-size: 16px; }
+  #msg { margin-top: 16px; color: #888; }
 </style>
 </head>
 <body>
-<button id="gen">生成</button>
+<button id="gen">生成</button><button id="weather">天氣</button>
 <table id="grid"></table>
+<div id="msg"></div>
 <script>
 const ROWS = 11, LIMIT_ROWS = 5, FIRST_MAX = 7, NO_TEN_ROWS = 8, TARGET = 15, MIN = 1, MAX = 14;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -37,10 +43,43 @@ function generate() {
   return rows;
 }
 
+const grid = document.getElementById('grid'), msg = document.getElementById('msg');
+
 document.getElementById('gen').onclick = () => {
-  document.getElementById('grid').innerHTML = generate()
+  msg.textContent = '';
+  grid.innerHTML = generate()
     .map((r, i) => `<tr${i >= NO_TEN_ROWS ? ' class="free"' : ''}>${r.map(n => `<td>${n}</td>`).join('')}<td class="sum">= ${r[0] + r[1] + r[2]}</td></tr>`)
     .join('');
+};
+
+// 天氣：由 GitHub Actions 每小時存到 weather-data 分支的石門區逐時氣溫
+const WEATHER_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/weather-data/weather.json';
+const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
+const pad = n => String(n).padStart(2, '0');
+
+document.getElementById('weather').onclick = async () => {
+  grid.innerHTML = '';
+  msg.textContent = '讀取中…';
+  let data;
+  try {
+    const res = await fetch(`${WEATHER_URL}?t=${Date.now()}`);
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+  } catch (e) {
+    msg.textContent = `讀不到氣溫資料（${e.message}），可能排程還沒開始記錄`;
+    return;
+  }
+  const ids = Object.keys(data.stations);
+  const now = Date.now(), today = taipeiDate(now), yesterday = taipeiDate(now - 86400000);
+  const nowHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Taipei', hour: '2-digit', hourCycle: 'h23' }).format(now));
+  const section = (label, date, hours) => `<tr class="day"><th colspan="${ids.length + 1}">${label} ${date}</th></tr>`
+    + Array.from({ length: hours }, (_, h) => {
+      const rec = data.records[`${date}T${pad(h)}:00:00+08:00`] || {};
+      return `<tr><td class="time">${pad(h)}:00</td>${ids.map(id => `<td>${id in rec ? rec[id].toFixed(1) : '—'}</td>`).join('')}</tr>`;
+    }).join('');
+  grid.innerHTML = `<tr><th>時間</th>${ids.map(id => `<th>${data.stations[id]}</th>`).join('')}</tr>`
+    + section('昨天', yesterday, 24) + section('今天', today, nowHour + 1);
+  msg.textContent = '單位 °C，資料來源：中央氣象署；— 表示該小時沒有紀錄';
 };
 </script>
 </body>
