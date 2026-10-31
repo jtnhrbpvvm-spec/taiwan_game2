@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V39';
+const D2ZH_VERSION = 'V40';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -304,7 +304,7 @@ for (const r of records) for (const node of r.addedNodes) d2zhMergeAll(node);
 }).observe(document.body, { subtree: true, childList: true });
 for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) d2zhAdopt(c);
 }
-const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), changed: new WeakMap(), kept: new WeakSet(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null };
+const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), changed: new WeakMap(), kept: new WeakSet(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null, frame: 0 };
 const D2ED_SAVE_KEY = 'd2-survivors/save/v1';
 const D2ED_ELEMENTS = ['fire', 'cold', 'lightning', 'poison', 'magic'];
 // 各職業的初始屬性（keepSave-*.js 的 Pr）：角色畫面顯示的是這個加 build.attributes
@@ -537,39 +537,98 @@ location.reload();
 }
 function d2edOnTextDraw(ctx, img, args, isMenu) {
 const now = performance.now();
-if (isMenu) d2edOnMenuDraw(ctx, img, args, now);
+const box = d2edTextBox(ctx, img, args);
+if (box) {
+// 記下這一格畫的所有文字位置：按鈕要避開（手機的物品過濾選單很滿，右欄最後的護身符／護符會被蓋住）
+if (D2ED.textFrame !== D2ED.frame) { D2ED.textFrame = D2ED.frame; D2ED.textRects = []; D2ED.textHasMenu = false; }
+D2ED.textRects.push(box);
+if (isMenu) D2ED.textHasMenu = true;
+}
+if (isMenu) {
+if (box) { D2ED.menuAt = now; D2ED.menuRect = box; }
+}
 else if (now - D2ED.menuAt > 100) D2ED.otherAt = now;
 }
-function d2edOnMenuDraw(ctx, img, args, now) {
+function d2edTextBox(ctx, img, args) {
+const canvas = ctx.canvas;
+if (D2ED.boxCanvas !== canvas || D2ED.boxFrame !== D2ED.frame) { D2ED.boxCanvas = canvas; D2ED.boxFrame = D2ED.frame; D2ED.boxRect = canvas.getBoundingClientRect(); }
+const rect = D2ED.boxRect;
+if (!rect.width || !canvas.width) return null;   // 畫到畫面外的暫存畫布
 const t = ctx.getTransform();
-const x = args[1], y = args[2];
-const w = args.length >= 5 ? args[3] : img.width, h = args.length >= 5 ? args[4] : img.height;
-const canvas = ctx.canvas, rect = canvas.getBoundingClientRect();
+const full = args.length >= 9;
+const x = full ? args[5] : args[1], y = full ? args[6] : args[2];
+const w = full ? args[7] : args.length >= 5 ? args[3] : img.width, h = full ? args[8] : args.length >= 5 ? args[4] : img.height;
 const sx = rect.width / canvas.width, sy = rect.height / canvas.height;
 const px = (X, Y) => [rect.left + (t.a * X + t.c * Y + t.e) * sx, rect.top + (t.b * X + t.d * Y + t.f) * sy];
 const [l, top] = px(x, y), [r, bottom] = px(x + w, y + h);
-D2ED.menuAt = now;
-D2ED.menuRect = { left: l, top, right: r, bottom, canvas: rect };
+return { left: l, top, right: r, bottom, canvas: rect };
+}
+// 排手把、書籤修改、語言三個按鈕：先試原本的位置（返回上一個選單右邊），蓋到文字就沿畫面右緣、左緣由上往下找空位。
+function d2edLayoutButtons(m, h, pad) {
+const b = D2ED.button, sw = D2ED.switcher, texts = D2ED.menuTexts || [];
+const c = m.canvas, minX = 0, maxX = innerWidth, minY = 0, maxY = innerHeight;   // 整個視窗都能放（選單畫布可能只佔中間）
+const size = (e, w0, h0) => ({ e, w: e.offsetWidth || w0, h: e.offsetHeight || h0 });
+const hits = (s, list) => list.some(r => s.x < r.right + 4 && s.x + s.w > r.left - 4 && s.y < r.bottom + 4 && s.y + s.h > r.top - 4);
+const box = s => ({ left: s.x, right: s.x + s.w, top: s.y, bottom: s.y + s.h });
+const fits = spots => spots.every((s, i) => s.x >= minX && s.x + s.w <= maxX && s.y >= minY && s.y + s.h <= maxY && !hits(s, texts) && !hits(s, spots.slice(0, i).map(box)));
+const apply = spots => {
+for (const s of spots) { s.e.style.left = Math.round(s.x) + 'px'; s.e.style.top = Math.round(s.y) + 'px'; }
+D2ED.spots = spots;
+};
+if (sw) { sw.style.display = 'flex'; sw.style.flexDirection = ''; }
+D2ED.swHidden = false;
+const edSize = size(b, 140, h), padSize = pad ? size(pad, 90, 30) : null;
+let swSize = sw ? size(sw, 180, 32) : null;
+const width = Math.max(edSize.w, swSize ? swSize.w : 0);
+const roomRight = c.right - m.right - 16;
+const left = roomRight >= width ? m.right + 16 : Math.max(c.left + 8, c.right - width - 12);
+const top = roomRight >= width ? (m.top + m.bottom) / 2 - h / 2 : m.top - h - 8;
+const usual = [{ ...edSize, x: left, y: top }];
+if (padSize) usual.push({ ...padSize, x: left, y: top - padSize.h - 8 });
+if (swSize) usual.push({ ...swSize, x: Math.max(left, c.right - swSize.w - 12), y: Math.min(top + h + h * 0.9, c.bottom - swSize.h - 4) });
+if (fits(usual)) { D2ED.swColumn = false; apply(usual); return; }
+// 剛才的位置還空著就不動，免得選項說明一變按鈕就跳來跳去
+if (sw && D2ED.swColumn) { sw.style.flexDirection = 'column'; swSize = size(sw, 100, 90); }
+const old = (D2ED.spots || []).map(s => ({ ...size(s.e, s.w, s.h), x: s.x, y: s.y }));
+if (old.length && old.length === usual.length && fits(old)) { apply(old); return; }
+const spots = [];
+const find = item => {
+for (const x of [maxX - item.w - 8, minX + 8]) {
+for (let y = minY + 8; y + item.h <= maxY - 4; y += 4) {
+const s = { ...item, x, y };
+if (fits([...spots, s])) { spots.push(s); return true; }
+}
+}
+return false;
+};
+if (!find(edSize)) spots.push({ ...edSize, x: maxX - edSize.w - 8, y: minY + 8 });   // 書籤修改一定要按得到
+if (padSize) find(padSize);
+if (sw) {
+sw.style.flexDirection = '';
+swSize = size(sw, 180, 32);
+D2ED.swColumn = false;
+if (!find(swSize)) {
+sw.style.flexDirection = 'column';
+D2ED.swColumn = true;
+if (!find(size(sw, 100, 90))) { D2ED.swHidden = true; sw.style.display = 'none'; }   // 真的放不下：語言按鈕不擋選項
+}
+}
+apply(spots);
 }
 function d2edPlaceButton() {
+D2ED.frame++;
 const b = D2ED.button, sw = D2ED.switcher;
 const show = D2ED.menuRect && D2ED.menuAt >= D2ED.otherAt && performance.now() - D2ED.menuAt < 4000 && !D2ED.panel;
 b.style.display = show ? 'block' : 'none';
-if (sw) sw.style.display = show ? 'flex' : 'none';
+if (sw) sw.style.display = show && !D2ED.swHidden ? 'flex' : 'none';
+if (D2ED.textHasMenu) D2ED.menuTexts = D2ED.textRects;   // 有畫到返回上一個選單才算完整的選單畫面
 if (show) {
 const m = D2ED.menuRect, h = Math.max(30, Math.min(48, (m.bottom - m.top) * 0.9));
 b.style.fontSize = Math.round(h * 0.5) + 'px';
 b.style.height = Math.round(h) + 'px';
-const width = Math.max(b.offsetWidth || 140, sw ? sw.offsetWidth : 0);
-const roomRight = m.canvas.right - m.right - 16;
-const left = roomRight >= width ? m.right + 16 : Math.max(m.canvas.left + 8, m.canvas.right - width - 12);
-const top = roomRight >= width ? (m.top + m.bottom) / 2 - h / 2 : m.top - h - 8;
-b.style.left = Math.round(left) + 'px';
-b.style.top = Math.round(top) + 'px';
-if (sw) {
-sw.style.left = Math.round(Math.max(left, m.canvas.right - (sw.offsetWidth || 180) - 12)) + 'px';
-sw.style.top = Math.round(Math.min(top + h + h * 0.9, m.canvas.bottom - (sw.offsetHeight || 32) - 4)) + 'px';
-}
+const pad = document.getElementById('d2pad-btn');
+const key = [innerWidth, innerHeight, Math.round(h), ...(D2ED.menuTexts || []).map(r => [r.left, r.top, r.right, r.bottom].map(Math.round))].join();
+if (key !== D2ED.placeKey || !!pad !== D2ED.placePad) { D2ED.placeKey = key; D2ED.placePad = !!pad; d2edLayoutButtons(m, h, pad); }
 }
 requestAnimationFrame(d2edPlaceButton);
 }
@@ -1123,6 +1182,10 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V40', date: '2026-10-31', game: '遊戲 20261030.2', items: [
+'修正：手機上物品過濾的護身符、護符選項被「手把」「書籤修改」「語言」按鈕擋住不能改；這些按鈕現在會避開選單文字',
+'更新說明最上面新增「回報內容」，可以看到問題回報的回覆',
+'修正：影像選項的開關（天氣、數值範圍等）開啟時只翻譯一半'] },
 { ver: 'V39', date: '2026-10-31', game: '遊戲 20261030.2', items: [
 '配合遊戲更新翻譯新增的文字：影像選項的「天氣」開關與說明、Ctrl＋點擊屬性 ＋ 一次加 5 點的提示',
 '修正：吉黑得的運氣（大型護符）「所有商人價格降低」那一行沒有翻譯',
@@ -1252,6 +1315,16 @@ btn.onclick = () => { d2edPerfSet(true); if (d2edPerfOn()) shown(); };
 if (d2edPerfOn()) shown();
 return d2edEl('div', { class: 'd2ed-row' }, btn, note);
 }
+// 回報內容：開面板時才讀 GitHub 上的 回應.txt，照檔案原本的分行顯示；改檔案不用升版本（Pages 快取約 10 分鐘）
+const D2ZH_REPLY_URL = 'https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/%E5%9B%9E%E6%87%89.txt';
+function d2zhReplySection() {
+const body = d2edEl('div', { style: 'margin: 6px 0 8px; max-height: 40vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6;' }, '讀取中…');
+fetch(D2ZH_REPLY_URL, { cache: 'no-cache' })
+.then(r => r.ok ? r.text() : r.status === 404 ? '' : Promise.reject(new Error(r.status)))
+.then(t => { body.textContent = t.trim() || '目前沒有回報內容'; })
+.catch(() => { body.textContent = '回報內容讀取失敗，請確認網路連線後再開一次'; });
+return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '回報內容'), body);
+}
 function d2zhNewsOpen(all) {
 if (D2ED.panel || document.getElementById('d2ed-overlay')) return;
 let seen = 0;
@@ -1266,6 +1339,7 @@ d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '中文化更�
 d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '中文化更新說明'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION), d2edEl('span', { class: 'd2ed-msg' }),
 d2edEl('button', { type: 'button', class: 'd2ed-x', onclick: close, 'aria-label': '關閉' }, '×')),
 d2edEl('div', { class: 'd2ed-body' },
+d2zhReplySection(),
 ...list.map(n => d2edEl('section', { class: 'd2ed-sec' },
 d2edEl('h3', {}, `${n.ver}　${n.date}`), d2edEl('p', { class: 'd2ed-note' }, `對應${n.game}`),
 ...(n.note || []).map(t => d2edEl('p', { style: 'margin: 6px 0; white-space: pre-line; line-height: 1.6;' }, t)),
@@ -1420,6 +1494,8 @@ suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter
 text: {
 // 遊戲 20261030.2：影像選項的天氣開關、屬性 ＋ 的提示（寫死在 saveTransfer-*.js、screens-*.js）
 'WEATHER': '天氣', 'Rain and snow, as in Diablo II': '和暗黑破壞神 II 一樣會下雨、下雪',
+// 選項開關：韓文表只有「*: OFF」，開的時候要自己補（STAT RANGES、WEATHER、AUTO STATS 開啟時才不會只翻半句）
+'*: ON': '{0}：開',
 'Ctrl-click: 5 points': 'Ctrl＋點擊：加 5 點', '5 points': '加 5 點', 'All points': '全部點數',
 // 吉黑得的運氣：物品用 D2 原始屬性表顯示時這行沒有數字（itemArt-*.js 的 s8），字典只有帶 % 的那句
 'Reduces all Vendor Prices': '所有商人價格降低',
@@ -3866,12 +3942,7 @@ btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); op
 (function place() {
 const ed = document.getElementById('d2ed-btn');
 const show = ed && ed.style.display === 'block';
-btn.style.display = show ? 'flex' : 'none';
-if (show) {
-const r = ed.getBoundingClientRect();
-btn.style.left = Math.round(r.left) + 'px';
-btn.style.top = Math.round(r.top - (btn.offsetHeight || 30) - 8) + 'px';
-}
+btn.style.display = show ? 'flex' : 'none';   // 位置由 d2edLayoutButtons 跟書籤修改一起排
 requestAnimationFrame(place);
 })();
 return {
