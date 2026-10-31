@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V41';
+const D2ZH_VERSION = 'V42';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -161,13 +161,13 @@ d2zhBusy = true;
 try {
 const ctx = c.getContext('2d');
 if (!ctx) return;
-const cjk = D2ZH_CJK.test(st.src);
+const cjk = D2ZH_CJK.test(st.src) || st.src.includes('\u200b');
 if (!cjk && (lang !== 'zh-Hant' || !window.D2I18N.shouldUseLocalFont(st.src))) {
 if (c.width !== st.w || c.height !== st.h) { c.width = st.w; c.height = st.h; }
 D2ZH_PUT.call(ctx, st.en, 0, 0);
 return;
 }
-let text = cjk ? st.src : window.D2I18N.translate(st.src);
+let text = cjk ? st.src.replace(/\u200b ?/g, '').replace(/\u00a0/g, ' ') : window.D2I18N.translate(st.src);
 let size = Math.max(10, st.size);
 // 大字型（選單用的 font24 以上）：中文高度對齊英文字母實際高度，不要用整個字框高度
 if (st.size >= 24 && st.ink > 0) size = Math.max(14, Math.min(size, Math.round(st.ink * 1.1)));
@@ -272,7 +272,240 @@ if (!(root instanceof Element)) return;
 if (root.classList.contains('d2-parts')) d2zhMergeParts(root);
 for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 }
+// ====== 遊戲「最新消息」（changelog.json）======
+// 遊戲用 font.balance → wrapLines 的 split(' ') 斷行，換行後才畫成一格一格，逐行翻會英中夾雜。
+// 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
+// 新句子加在最前面（遊戲只顯示最近 14 天）
+const D2ZH_CHANGELOG = {
+"Heroes restarted from level 99 wear their golden glow round the campfire too": "從 99 級重新開始的英雄，在營火旁也會帶著金色光芒",
+"Runewords land with Diablo II's rune drop sound": "符文之語掉落時會發出暗黑破壞神 II 的符文掉落音效",
+"Braziers and torches light the floor around them, and shrines light up as you use them": "火盆和火把會照亮周圍的地面，神殿使用時也會亮起來",
+"Unique monsters carry a light around them, and so do a few others like Fallen Shamans": "獨特怪物身上會帶著光，沉淪魔巫師等少數怪物也是",
+"Each area has its own light, darker in Act IV's City of the Damned and in dungeons like the Catacombs, as in Diablo II": "每個區域都有自己的光線，第四幕的苦痛之城和地下墓穴等地城比較暗，和暗黑破壞神 II 一樣",
+"Rain falls over Act I and Act III and snow over Act V, in storms that come and go as in Diablo II": "第一幕和第三幕會下雨、第五幕會下雪，風暴來來去去，和暗黑破壞神 II 一樣",
+"Rain is heard as it falls, louder as a storm builds": "下雨時聽得到雨聲，風暴越大聲音越大",
+"VIDEO OPTIONS has a WEATHER switch that turns the rain and snow off": "影像選項新增「天氣」開關，可以關掉雨雪",
+"The wilds of Acts I, II and V lie on one ground with Diablo II's own puddles, tree stands, stones and dunes": "第一、二、五幕的野外鋪上同一片地面，有暗黑破壞神 II 原本的水窪、樹叢、石頭和沙丘",
+"Diablo II's dirt paths wind across Act I's wilds and the Secret Cow Level, joining the camps and cottages": "暗黑破壞神 II 的泥土小徑穿過第一幕野外和秘密母牛關，連接營地和小屋",
+"The outdoors turn through Diablo II's day and night, a white day, a mauve dusk, a blue night and an orange dawn, 25 minutes a day": "戶外有暗黑破壞神 II 的日夜變化：白天、淡紫色黃昏、藍色夜晚、橘色黎明，一天 25 分鐘",
+"Nights are lighter than Diablo II's so a horde stays in sight, and dungeons, Act IV and the camp keep their own light": "夜晚比暗黑破壞神 II 亮一些，才看得清怪物群；地城、第四幕和營地維持各自的光線",
+"Worldstone Shards stand out in a crowded fight under a beam of silver light, with Diablo II's gleam twinkling on them": "世界之石碎片在混戰中也很顯眼：上方有銀色光柱，還有暗黑破壞神 II 的閃光",
+"Ctrl-click a stat's + to spend 5 stat points at once, or press X on it with a controller": "Ctrl＋點擊屬性的 ＋ 一次加 5 點，手把則是在上面按 X",
+"Monsters, missiles and objects are heard from where they are, from the left or the right and fainter farther off, as in Diablo II": "怪物、飛行物和物件的聲音會從實際位置傳來，分左右、越遠越小聲，和暗黑破壞神 II 一樣",
+"Monsters call out now and then as they start to walk, and swarms hum as they come near, as in Diablo II": "怪物開始走動時偶爾會叫，蟲群靠近時會發出嗡嗡聲，和暗黑破壞神 II 一樣",
+"Braziers and torches crackle as you pass them": "經過火盆和火把時會聽到劈啪聲",
+"A Fallen screams as it flees": "沉淪魔逃跑時會尖叫",
+"Each area plays its own Diablo II music, from the Catacombs and the Tomb to Kurast and the Worldstone Keep": "每個區域播放自己的暗黑破壞神 II 音樂，從地下墓穴、古墓到庫拉斯特和世界之石要塞",
+"The outdoors sound of night from dusk to dawn, with Diablo II's crickets and howls": "戶外從黃昏到黎明都是夜晚的聲音，有暗黑破壞神 II 的蟋蟀聲和嚎叫聲",
+"Your hero's footsteps are heard as in Diablo II, on dirt, stone, sand, snow or wood, heavier for the Barbarian": "英雄的腳步聲和暗黑破壞神 II 一樣，泥土、石頭、沙地、雪地、木頭各有不同，野蠻人比較重",
+"Monsters flash with the fire, cold or lightning of the blow that makes them flinch or kills them, as in Diablo II": "怪物被打退或打死時，會閃現該次攻擊的火焰、冰寒或閃電效果，和暗黑破壞神 II 一樣",
+"Monsters standing in a fire burn, and a Crushing Blow or thorns shows on the monster it strikes": "站在火裡的怪物會燃燒，壓碎性打擊和反傷會顯示在被打中的怪物身上",
+"Monsters bleed as they're hit, some green, and skeletons and ghosts not at all, as in Diablo II": "怪物被打中會流血，有些是綠色的，骷髏和鬼魂則不會流血，和暗黑破壞神 II 一樣",
+"One in five monsters that die chilled or frozen shatters into ice, and Cold Enchanted uniques always do, as in Diablo II": "受冰寒或被冰凍而死的怪物有五分之一會碎成冰塊，冰寒強化的獨特怪物一定會，和暗黑破壞神 II 一樣",
+"A shattered monster's corpse is still there for corpse skills, though no body is drawn": "碎掉的怪物不會畫出屍體，但屍體還在，屍體類技能仍然可用",
+"Undead Fetishes fall to bones, Doom Knights burn, frog demons burst and vultures shed feathers as they die, as in Diablo II": "不死妖人會散成白骨、末日騎士會燃燒、蛙魔會爆開、禿鷹會掉羽毛，和暗黑破壞神 II 一樣",
+"A Fetish Shaman leaves a Fetish's body as it dies, as in Diablo II": "妖人薩滿死亡時會留下妖人的屍體，和暗黑破壞神 II 一樣",
+"A pack's drops lie apart round the bodies, never on scenery or each other, so their names no longer pile up, as in Diablo II": "一群怪物的掉落物會散落在屍體周圍，不會落在場景物件上或互相重疊，名稱不再疊在一起，和暗黑破壞神 II 一樣",
+"Diablo II's camps, cottages and ruins stand with their own torches, fires, chests and urns, and Act V's swinging heads": "暗黑破壞神 II 的營地、小屋和廢墟都有了自己的火把、火堆、寶箱和甕，第五幕還有搖晃的頭顱",
+"The Cairn Stones rise on Diablo II's own stone circle": "石塊陣立在暗黑破壞神 II 原本的石圈上",
+"Cocoons and evil urns let four small spiders loose as you kick them open, as in Diablo II": "蟲繭和邪惡之甕踢開時會跑出四隻小蜘蛛，和暗黑破壞神 II 一樣",
+"Chests lie on the field in Acts I, II, III and V at Diablo II's chances, kicked open as you walk into them": "第一、二、三、五幕的場地上會有寶箱，機率和暗黑破壞神 II 相同，走過去就會踢開",
+"Wells stand in Act III's jungle and Kurast and Act V's wilds, giving back half your life and mana and curing poison and curses": "第三幕叢林、庫拉斯特和第五幕野外有水井，可回復一半生命和法力，並解除中毒和詛咒",
+"Hurricane is drawn as in Diablo II, a thick storm of wind, rocks and branches circling the Druid": "暴風的畫面和暗黑破壞神 II 一樣，是環繞德魯伊的濃密風暴，夾帶石頭和樹枝",
+"Trees and rocks in the wilds block the way as in Diablo II, with a way always left through the Dark Wood": "野外的樹木和岩石會擋路，和暗黑破壞神 II 一樣，黑暗森林一定留有通道",
+"A runeword never drops with only its runes' lines, and one that did gets its own back": "符文之語不會再掉落只有符文屬性的版本，已經掉到的也會補回自身屬性",
+"Bows, crossbows and Phase Blades are never ethereal, as in Diablo II": "弓、十字弓和相位劍不會是無形的，和暗黑破壞神 II 一樣",
+"Closing the blacksmith's window by the act's red portal no longer sends you through it a second later": "在該幕紅色傳送門旁關閉鐵匠視窗，不會再過一秒就被傳送過去",
+"In a big fight the nearest monsters and your own sounds keep their voices, where the newest sounds used to be cut whatever they were": "大混戰時最近的怪物和你自己的聲音會保留，以前是不管什麼聲音，最新的都會被切掉",
+"A run's page on the website shows your hero's Charsi ranks of Magic Find and Gold Find": "網站上的單局頁面會顯示英雄在恰西升級的尋獲魔法物品和尋獲金幣等級",
+"Attract's Lure raises its totem by a pack a little way off, no longer by the monster beside you, so it draws the pack away from you": "吸引的引誘改成把圖騰立在稍遠的怪物群旁，不再立在你身邊的怪物旁，所以能把怪物群從你身邊引開",
+"Right-clicking a charm into the Charms window opens it, so the charm no longer seems to vanish": "右鍵把護符放進護符欄時會打開護符欄，護符不會再像是憑空消失",
+"A Barbarian with a dagger or a javelin in either hand is drawn holding it, not a hand axe, once the next update re-extracts your game files": "野蠻人任一手拿匕首或標槍時，會畫出手上實際的武器而不是手斧（要等下次更新重新解壓縮遊戲檔案）",
+"Turning down Skill Effects in Video Options no longer fades your hero's golden glow": "調低影像選項的技能特效，不會再讓英雄的金色光芒變淡",
+"A run you start on Nightmare or Hell with your kept hero starts its clock at 0:00, not at all the time your hero has played": "保留的英雄開新的惡夢或地獄局時，計時從 0:00 開始，不再是英雄的總遊玩時間",
+"In the camp and in an item's preview, the character screen and skill hovers count gear's auras, Dream's Holy Shock among them": "在營地和物品預覽中，角色畫面和技能說明框會計入裝備的光環，包括夢境的神聖衝擊",
+"Flat fire, cold and lightning damage on charms and gear no longer lowers a critical-strike build's damage": "護符和裝備上的固定火焰、冰寒、閃電傷害，不會再降低致命攻擊流派的傷害",
+"Kashya's and Akara's menus stay on the screen, so a long hire list no longer hides the Rogue Scout past its top": "卡夏和阿卡拉的選單會留在畫面內，傭兵清單很長時不會再把羅格斥候擋在最上方外面",
+"The loot filter's BETTER ONLY picks up a second copy whose chance to cast or charges roll a higher skill level": "物品過濾的「只撿更好的」會撿起觸發機率或充能骰出較高技能等級的第二件",
+"The skill icons at the top left no longer run under the timer when your mercenary and several summons are out": "傭兵和多個召喚物同時出現時，左上角的技能圖示不會再跑到計時器底下",
+"Starting Nightmare anew after Akara's re-draft no longer asks you to fill Hell's 10 skill and 10 passive slots": "阿卡拉重新抽選後重新開始惡夢，不會再要求填滿地獄的 10 個技能格和 10 個被動格",
+"With 8 skill slots, your slots beside the skill tree no longer cover its bottom-left skills and their modifiers": "有 8 個技能格時，技能樹旁的技能格不會再蓋住左下方的技能和改造",
+"Hardcore Terror runs in gear a fallen hero found no longer show as unverified on the ladder": "穿著已死英雄找到的裝備跑專家模式恐懼層，在天梯上不會再顯示未驗證",
+"Reduces all Vendor Prices on worn gear, Edge's among it, now takes its share off Charsi's and Gheed's prices": "裝備上的「所有商人價格降低」（包括邊緣）現在會實際降低恰西和基德的價格",
+"On the Ladder's Find tab, the count under the players found or a player's runs matches the rows on the page": "天梯的搜尋分頁上，找到的玩家或玩家單局數量，和頁面上的列數一致",
+"Each heal a High Council member gives himself is half the last, so one who runs off to heal can always be worn down": "最高議會成員每次治療自己的量是上一次的一半，所以跑去治療的一定磨得死",
+"Gear's +N to a skill gives N levels on every class, so Trang-Oul's +18 Fire Ball is level 18 instead of 1": "裝備的 ＋N 技能對所有職業都給 N 級，所以 Trang-Oul 的 ＋18 火球是 18 級而不是 1 級",
+"Items for any class no longer hold your own class's skill to +3, so Dragonscale's +10 Hydra gives a Sorceress 10": "全職業物品不會再把你本職業的技能限制在 ＋3，所以龍鱗的 ＋10 九頭火蛇對女巫就是 10 級",
+"Spells your gear casts grow with their levels as your own do, faster for casters than for a Barbarian, Amazon or Paladin": "裝備施放的法術會跟你自己的法術一樣隨等級成長，施法職業比野蠻人、亞馬遜、聖騎士成長快",
+"Attack skills from gear, like Chaos's Whirlwind, hit as hard as the same levels learned, no longer harder": "來自裝備的攻擊技能（例如混沌的炫風）傷害和同等級學會的技能相同，不再比較高",
+"The leaderboard no longer refuses a run whose Magic Find or Gold Find reads higher than your Charsi ranks and gear explain": "尋獲魔法物品或尋獲金幣高於恰西等級和裝備可解釋的數值時，排行榜不再拒收該局",
+"The stash's Collect button sits in one gold frame instead of over three empty sockets": "儲物箱的「收集」按鈕改放在一個金色框內，不再蓋著三個空鑲孔",
+"A run on the Ladder shows its mercenary's Charsi wares rounded, as the game does, not with long decimals": "天梯上的單局會把傭兵的恰西升級四捨五入顯示，和遊戲一樣，不再有一長串小數",
+"Knockback stops what a monster was doing as it pushes it back": "擊退會在推開怪物時打斷牠正在做的動作",
+"Knockback pushes monsters farther sideways and less far up or down the screen": "擊退把怪物往左右推得比較遠，往畫面上下推得比較近",
+"Knockback pushes small monsters like Fallen on every hit, and never moves Izual, the Ancients or nests, as in Diablo II": "擊退每次命中都會推動沉淪魔等小型怪物，且絕不會推動衣卒爾、遠古之靈和巢穴，和暗黑破壞神 II 一樣",
+"A Hardcore run's start that can't reach the leaderboard is sent again once it can, and no longer leaves the hero unranked": "專家模式單局開局時若連不上排行榜，連得上時會重新送出，英雄不再因此沒有排名",
+"A resistance's hover on the character screen shows how far it goes past its cap, and your Absorb of that element": "角色畫面上抗性的說明框會顯示超過上限多少，以及你對該元素的吸收",
+"Once your Terror tiers are open, the waypoint's Act V tab has a Training Ground, with dummies that never attack, to measure your damage": "開啟恐懼層後，傳送點的第五幕分頁會有訓練場，裡面有不會攻擊的假人，可以測傷害",
+"In the Training Ground, Larzuk sets 1 to 50 dummies or a boss, changes what they're immune to, and opens your stash to try other gear": "訓練場裡拉蘇克可以設定 1～50 個假人或一隻頭目、更改免疫類型，還能開儲物箱試別的裝備",
+"Gear's +N to one of your class's skills gives you that skill even before you learn it, as in Diablo II": "裝備的 ＋N 本職業技能，即使還沒學也能使用該技能，和暗黑破壞神 II 一樣",
+"The skills your gear casts, like Enigma's Teleport, show in a row under your passives, and a right-click rests one as it rests your own": "裝備施放的技能（例如謎團的傳送）顯示在被動技能下方一排，右鍵可以暫停，跟自己的技能一樣",
+"The desktop app no longer stops at the Items step while setting up some Diablo II copies": "電腦版在設定某些暗黑破壞神 II 版本時，不會再卡在物品步驟",
+"Akara's re-draft offers +1 to your skill trees again, drawn like any other card, so the tree levels your hero had can go back on the trees": "阿卡拉重新抽選又會出現技能樹 ＋1，抽法跟其他卡片一樣，英雄原本的技能樹等級可以加回去",
+"A Barbarian's Increased Stamina adds its share of a Vitality pick right away, so his life no longer changes after a reload": "野蠻人的增加耐力會立刻計入選體力時的加成，生命不會再因重新載入而改變",
+"A run the leaderboard refuses is sent again for two days, so a wrong refusal no longer loses it": "被排行榜拒收的單局兩天內會重新送出，誤判不會再害你失去紀錄",
+"Monsters your mercenary kills drop items with your Magic Find added to his, as in Diablo II, and favour your class's items": "傭兵擊殺的怪物掉落時，會把你的尋獲魔法物品機率加到他的上面，和暗黑破壞神 II 一樣，也偏向掉你職業的物品",
+"Wolfhowl and other gear with Werewolf or Werebear keep your hero in that form, where it turned back at once": "狼嚎和其他附狼人或熊人變化的裝備會讓英雄維持變身，以前會立刻變回來",
+"Teleport from gear (Enigma's) blinks every hero but the Sorceress into the pack nearby, no longer away from the monsters she fights": "裝備的傳送（謎團）讓女巫以外的英雄閃現到附近的怪物群裡，不再躲開正在戰鬥的怪物",
+"On a phone, the stash's Collect button now asks first, and only a second tap puts the items in": "手機上儲物箱的「收集」按鈕會先詢問，再按一次才放入物品",
+"After Collect, the Uniques tab opens on what went in, so the shared tabs it emptied no longer look like lost items": "收集之後，獨特物品分頁會打開到放入的物品，被清空的共用分頁不會再看起來像是物品不見",
+"Standing still anywhere in a red portal takes your hero through after a second, where only its very foot counted": "站在紅色傳送門範圍內任何位置不動，一秒後就會傳送，以前只有門腳才算",
+"Walking into a red portal and out again tells you once how to go through": "走進紅色傳送門又走出來時，會提示一次怎麼通過",
+"With a weapon in each hand, the other weapon's leech, crushing blow and deadly strike no longer add to every blow, as in Diablo II": "雙持武器時，另一把武器的吸血、壓碎性打擊和致命攻擊不會再加到每一擊，和暗黑破壞神 II 一樣",
+"With a weapon in each hand, each weapon's attack speed counts at half": "雙持武器時，每把武器的攻擊速度算一半",
+"Whirlwind with a weapon in each hand now strikes with both on every hit": "雙持武器使用炫風時，現在每次命中都會用兩把武器攻擊",
+"On a phone a Stash or Inventory button moves the item in your hand across in one tap, with the stash open": "手機上開著儲物箱時，按「儲物箱」或「物品欄」按鈕一下就能把手上的物品移過去",
+"Until you first take the camp's waypoint, it pulses under an arrow, and a trail on the ground and an arrow at the screen's edge lead to it": "第一次使用營地傳送點之前，它會在箭頭下閃爍，地上的軌跡和畫面邊緣的箭頭會帶你過去",
+"The stash's Collect button puts every unique, set item and runeword your collection lacks into the Uniques tab, from any tab": "儲物箱的「收集」按鈕會把任何分頁裡收藏還缺的獨特物品、套裝物品和符文之語放進獨特物品分頁",
+"A kept card on the Uniques tab offers a Swap when a better roll of it lies in your inventory or stash, both boxes side by side": "獨特物品分頁保留的卡片，在物品欄或儲物箱有更好的同款時會出現「交換」，兩個說明框並排比較",
+"Typing unique, set, runeword, rare or magic in the stash's searches finds the items of that rarity": "在儲物箱搜尋打 unique、set、runeword、rare 或 magic，可以找到該稀有度的物品",
+"The skill tree marks each skill you banished with a red X, and its hover says it's banished for this hero": "技能樹會用紅色 X 標記你放逐的技能，說明框也會註明這個英雄已放逐",
+"The wiki has a Runewords page with every runeword, its runes and properties, and how runewords drop": "維基新增符文之語頁面，列出所有符文之語、符文、屬性和掉落方式",
+"The desktop app finishes extracting Diablo II: Resurrected on a PC short of memory, where its extractor ran out and stopped part way": "電腦版在記憶體不足的電腦上也能解壓縮完暗黑破壞神 II 獄火重生，以前解壓縮程式會用光記憶體停在半路",
+"The desktop app says so when you pick a Diablo III or IV folder, and asks for Diablo II's, where it stopped with the wrong advice": "選到暗黑破壞神 III 或 IV 資料夾時，電腦版會明說並要求選暗黑破壞神 II 的，以前會給錯誤建議後停止",
+"The desktop app says plainly when Diablo II: Resurrected is still updating in Battle.net, or the drive it's on can't be read": "暗黑破壞神 II 獄火重生還在 Battle.net 更新或所在硬碟讀不到時，電腦版會直接說明",
+"The desktop app extracts a Diablo II: Resurrected install whose Battle.net files don't name their build, where setup stopped at once": "Battle.net 檔案沒有標明版本的暗黑破壞神 II 獄火重生，電腦版也能解壓縮，以前設定會立刻停止",
+"Under a Holy Freeze with Cannot Be Frozen your hero no longer turns blue, and the slow's hover says it's an aura's, not a freeze": "在神聖冰凍下有「無法冰凍」時，英雄不會再變藍，緩速的說明框也會註明是光環而不是冰凍",
+"The AUTO STATS hint in Options says it spends 3 points on damage for each on Vitality": "選項裡自動配點的提示會說明：每配 1 點體力，配 3 點到傷害",
+"On a phone the sound and music play with its ring/silent switch on silent, as a video's do": "手機的響鈴／靜音開關切到靜音時，音效和音樂仍會播放，和影片一樣",
+"Sound the phone stops mid-run comes back on your next tap, key or controller press, where a phone stayed silent entering Tristram": "手機在遊戲中停掉的聲音，下次點擊、按鍵或按手把時會恢復，以前進崔斯特姆時手機會一直沒聲音",
+"Level-up cards fade in and take no tap, click or press for their first 1.2 seconds, so a tap meant for the run no longer picks one": "升級卡片會淡入，前 1.2 秒不接受點擊或按鍵，原本要點遊戲的動作不會再誤選卡片",
+"A Terror tier's boss no longer waits forever on a last wave whose monsters can't come in": "恐懼層的頭目不會再一直等最後一波進不來的怪物",
+"In a Terror tier's last wave a monster that stays out of sight, running or keeping its distance, is brought into view": "恐懼層最後一波中，躲在畫面外（逃跑或保持距離）的怪物會被帶進視野",
+"Without your graphics card in use, Options says to turn on graphics acceleration in Chrome or Edge, where it said to update the driver": "沒有使用顯示卡時，選項會提示開啟 Chrome 或 Edge 的圖形加速，以前是叫你更新驅動程式",
+"Every piece of a set drops by its own rarity, so Tal Rasha's armor no longer comes far more often than her helm, belt or orb": "套裝的每一件都按自己的稀有度掉落，塔拉夏的盔甲不會再比頭盔、腰帶、法球常見得多",
+"On a small phone held upright the skill tree stands above your skill slots, so its third tab and a Book of Skill work again": "小手機直立時，技能樹會在技能格上方，第三個分頁和技能之書又能用了",
+"On a phone held sideways the LOOT FILTER's lines stand in two columns, larger to tap and clear of the control panel": "手機橫向時，物品過濾分成兩欄，字比較大好點，也不會被控制面板擋住",
+"On a phone held upright a Terror tier's affixes step aside while an elite's bar shows, so the bar no longer covers the field": "手機直立時，菁英血條出現期間恐懼層詞綴會讓開，血條不再蓋住場地",
+"A red portal takes you only when you click or tap it, use the pad's interact, or stand in it a second as its ring fills": "紅色傳送門只有在你點擊、按手把互動，或站在裡面一秒讓光圈填滿時才會傳送",
+"On a slow connection an act's monster and hero art no longer fails to load as the act starts, and what fails is asked for again": "連線慢時，該幕開始時怪物和英雄圖不會再載入失敗，失敗的也會重新要求",
+"Monsters whose art can't load come as stand-ins rather than not at all, so the waves and the act boss still arrive": "圖載不到的怪物會用替代圖出現，不會直接消失，波次和該幕頭目還是會來",
+"A second copy's box now says \"You have kept one already\", so it's never mistaken for the kept one headed \"In your collection\"": "第二件的說明框現在寫「你已經保留一件了」，不會跟標題為「在你的收藏中」的保留品搞混",
+"On a phone a tap on the belt drinks while another finger steers, where it drank only with the hero standing still": "手機上點腰帶喝藥時，另一隻手指可以繼續操控移動，以前英雄要站著不動才喝得到",
+"Enchant from gear such as Lava Gout adds its fire to any class's attacks, and Venom from gear its poison, as in Diablo II": "熔岩角羊等裝備的強化會把火焰加到任何職業的攻擊，裝備的毒牙也會加毒，和暗黑破壞神 II 一樣",
+"A mercenary's Medusa's Gaze curses the monster that strikes him with Lower Resist, and his gear's Enchant and Venom go on his blows": "傭兵的梅杜莎的凝視會用降低抵抗詛咒打他的怪物，他裝備的強化和毒牙也會加到他的攻擊",
+"An evolution you banish in Akara's re-draft stays banished until your next Baal, so no chest evolves that skill anyway": "在阿卡拉重新抽選時放逐的進化技能，到下次擊敗巴爾前都維持放逐，寶箱不會照樣進化",
+"Dragon Flight's kick explodes in Dragon Tail's fire around what it kicks, where it dealt far less than the Dragon Tail it evolves from": "飛龍在天的踢擊會在目標周圍爆出神龍擺尾的火焰，以前傷害遠低於進化前的神龍擺尾",
+"The HUD's labels and the menus' words come back with a display that went black, where they stayed blank": "螢幕黑掉又恢復後，介面標籤和選單文字也會回來，以前會留白",
+"A run whose display came back after going black waits for your tap to go on, where it sat paused with no menu or no sound": "螢幕黑掉又恢復的單局會等你點一下才繼續，以前會停在沒有選單或沒有聲音的暫停狀態",
+"While the display is lost, the black screen says it's waiting for the display to come back": "螢幕斷線期間，黑畫面會顯示正在等待畫面恢復",
+"A runeword drops on any base it fits, each as likely, where a few strong bases took most of them and early Hell had one or two for each": "符文之語會以相同機率掉在任何符合的底材上，以前少數強力底材佔了大部分，地獄前期每種只有一兩個",
+"High runewords such as Enigma and Call to Arms drop only on bases near the best of their kind, and low ones on any base": "謎團、戰爭召喚等高階符文之語只掉在同類最好的底材附近，低階的可以掉在任何底材上",
+"A mercenary's Treachery casts Fade on him, as in Diablo II, and his gear's Bone Armor, Cyclone Armor and Slow Missiles work too": "傭兵的背信會對他施放能量消解，和暗黑破壞神 II 一樣，他裝備的白骨裝甲、颶風裝甲和慢速箭也有效",
+"The Refilling Shrine fills your mana as well as your life, as in Diablo II, so Energy Shield's mana too": "補充神殿會補滿法力和生命，和暗黑破壞神 II 一樣，能量護盾的法力也會補",
+"If the browser can't start the sound at your first key or click, the next one tries again, where it stayed silent until a reload": "如果瀏覽器在第一次按鍵或點擊時無法開始播放聲音，下一次會再試，以前要重新載入才有聲音",
+"Runewords drop again when the game runs on Diablo II: Resurrected's files, and the Uniques tab pictures each on its own base": "以暗黑破壞神 II 獄火重生檔案執行時，符文之語又會掉落了，獨特物品分頁會把每個畫在各自的底材上",
+"Fortitude gives 1 to 1.5 Life per level and Leaf 2 Defense per level, where both gave none, and ones you've found are fixed": "剛毅每級給 1～1.5 生命、葉子每級給 2 防禦，以前都沒有效果，已經找到的也會修正",
+"Griswold's Valor absorbs cold damage based on your level instead of none": "格瑞斯華爾德的勇氣現在依你的等級吸收冰寒傷害，以前沒有效果",
+"Items in the stash and shops outside the camp read their per-level lines at your hero's level instead of level 1": "營地外儲物箱和商店裡的物品，每級加成的屬性會用英雄的等級顯示，不再用 1 級",
+"A caster's skill learned again beside its own evolutions gains their synergies, as Poison Dagger from Poison Explosion and Poison Nova": "施法職業再次學會已進化的原技能時，也會獲得它們的協同加成，例如淬毒匕首從毒爆和劇毒新星獲得加成",
+"Famine's Enhanced Damage range reads 320-370% with stat ranges shown, where it left out Ohm's 50%": "顯示數值範圍時，飢荒的增強傷害範圍顯示為 320-370%，以前少算 Ohm 的 50%",
+"In a run the inventory's gold box counts the run's gold too, so picked up gold and the LOOT FILTER's sales show there at once": "遊戲中物品欄的金幣框也會計入本局金幣，撿到的金幣和物品過濾的賣出會立刻顯示",
+"A Full Rejuvenation Potion restores all your mana as well as your life, as in Diablo II, so Energy Shield's mana too": "全面回復藥水會回滿法力和生命，和暗黑破壞神 II 一樣，能量護盾的法力也會補",
+"Runewords drop already made, all 78 of Diablo II's, with no runes, sockets or white bases to gather": "符文之語掉落時已經做好，暗黑破壞神 II 全部 78 個都有，不用收集符文、鑲孔或白色底材",
+"Each comes on a base of its kind with the sockets its runes need, the good bases most often, and now and then ethereal": "每個都會掉在適合的底材上並有符文需要的鑲孔，好底材最常見，偶爾會是無形的",
+"The top runes' runewords, Enigma, Grief and Infinity among them, drop only in Terror": "高階符文的符文之語（包括謎團、悔恨、無限）只在恐懼層掉落",
+"The stash's Uniques tab keeps one of each runeword on a rune stone of its own": "儲物箱的獨特物品分頁每種符文之語保留一個，放在專屬的符文石上",
+"Gear that gives another class's skill, like Enigma's Teleport, now casts it at a level your +all skills raise": "給其他職業技能的裝備（例如謎團的傳送），現在施放等級會受 ＋全部技能提高",
+"Meteor falls on the thickest packs in reach instead of on random monsters": "隕石會落在範圍內最密集的怪物群上，不再隨機落在怪物身上",
+"Phoenix Strike's blow and its meteor, lightning and ice deal 50% more damage": "鳳凰攻擊的打擊及其隕石、閃電、冰寒傷害提高 50%",
+"Find a player by name on the website's Ladder and in the camp's book, on its new Find tab": "可以在網站天梯和營地的書裡，用新的搜尋分頁依名稱找玩家",
+"Energy Shield never spends more than 400 mana on one hit, so it keeps taking its share of the hardest hits in Hell and Terror": "能量護盾單次攻擊最多消耗 400 法力，所以在地獄和恐懼層的重擊下仍會持續承擔它的比例",
+"Bone Armor's bone takes half of every hit of any element until it breaks, and grows back whole in 30 seconds": "白骨裝甲的骨頭會承受任何元素每次攻擊的一半，直到破裂，30 秒後完整長回來",
+"Sorceresses, Necromancers, Druids and Assassins get half of their Faster Cast Rate past the cap, so skills recharge up to 60% faster": "女巫、死靈法師、德魯伊和刺客的快速施法率超過上限後還有一半效果，技能最多可加快 60% 充能",
+"Charsi's Faster Cast Rate ranks raise that limit too, to 67% faster with all five": "恰西的快速施法率等級也會提高這個上限，五級全滿可加快 67%",
+"The character screen's Faster Cast Rate hover says where half begins and where your cast rate stops": "角色畫面的快速施法率說明框會顯示從哪裡開始減半，以及施法速度到哪裡為止",
+"Items' +skills raise the Sorceress's, Necromancer's, Druid's and Assassin's spells, traps and summons more than before": "物品的 ＋技能對女巫、死靈法師、德魯伊和刺客的法術、陷阱和召喚提升比以前多",
+"Lightning deals 25% more damage and Chain Lightning 50% more": "閃電傷害提高 25%，連鎖閃電提高 50%",
+"Frozen Orb recharges in 1 second instead of 1.8, as in Diablo II": "冰封球充能時間從 1.8 秒改成 1 秒，和暗黑破壞神 II 一樣",
+"Frozen Orb gains three times as much from Ice Bolt": "冰封球從冰彈獲得的加成變成三倍",
+"Bone Spear and Bone Spirit gain much more from Teeth, Bone Prison and each other": "骨矛和白骨之魂從牙、骨牢和彼此獲得的加成大幅提高",
+"Fury deals 50% more damage": "狂怒傷害提高 50%",
+"Blade Fury and Blade Shield deal 50% more damage": "刃之怒和刀刃之盾傷害提高 50%",
+"Death Sentry, Charged Bolt Sentry and Wake of Inferno fire more with the Assassin's other traps learned, as in Diablo II": "亡者守衛、電能守衛和復甦獄火學會刺客的其他陷阱後會發射更多次，和暗黑破壞神 II 一樣",
+"The Assassin's traps deal 50% more damage": "刺客的陷阱傷害提高 50%",
+"The Desert Mercenary's aura now reaches your summons near him too, as in Diablo II": "沙漠傭兵的光環現在也會影響他附近的召喚物，和暗黑破壞神 II 一樣",
+"His Defiance hardens your summons, his Prayer heals them and his Thorns strikes back at what hits them": "他的反抗會強化你的召喚物，祈禱會治療牠們，針刺會反擊攻擊牠們的敵人",
+"Death Sentry's corpse explosions grow with +skills and synergies, as its lightning does": "亡者守衛的屍爆會隨 ＋技能和協同加成成長，跟它的閃電一樣",
+"An evolved skill now counts as its base maxed in the synergies of the Sorceress's, Necromancer's, Druid's and Assassin's skills": "進化後的技能現在算作原技能滿級，計入女巫、死靈法師、德魯伊和刺客技能的協同加成",
+"Claws of Thunder and Blades of Ice gain 80% from Phoenix Strike instead of 4%, and Shock Wave 50% from Maul instead of 3%": "雷電爪和寒冰刃從鳳凰攻擊獲得 80% 加成（原本 4%），震波從撞槌獲得 50%（原本 3%）",
+"The Assassin's claws and kicks strike a physical-immune monster when the charges they release can hurt it": "刺客的爪擊和踢擊在釋放的充能能傷害物理免疫怪物時，也能打中牠們",
+"Dragon Tail's card and character screen count its fire around its target, so it no longer reads below Dragon Claw": "神龍擺尾的卡片和角色畫面會計入目標周圍的火焰，數值不會再低於雙龍爪",
+"Critical strikes and Deadly Strike double a hit's physical damage alone, as in Diablo II, not the fire, cold or lightning added to it": "致命攻擊技能和裝備的致命攻擊都只讓物理傷害加倍，不含附加的火焰、冰寒或閃電，和暗黑破壞神 II 一樣",
+"Spells of fire, cold, lightning or magic never critically strike, the Druid's fire spells and the Sorceress's Ice Blast included": "火焰、冰寒、閃電或魔法法術絕不會造成致命攻擊，包括德魯伊的火焰法術和女巫的冰風暴",
+"The Valkyrie critically strikes only from the Amazon's Critical Strike, not from your items' Deadly Strike or Attack Rating": "女武神的致命攻擊只來自亞馬遜的致命攻擊技能，不來自你物品的致命攻擊或攻擊準確率",
+"Super uniques that rise to your level, like Rakanishu, cast their Enchanted bolts, novas and blasts at their own level": "會升到你等級的超級獨特怪物（例如拉卡尼休）施放強化彈、新星和爆炸時使用自己的等級",
+"Lightning Enchanted monsters let out charged bolts only when hit, as in Diablo II, not from fire or poison on the ground under them": "閃電強化的怪物只有被打中才會放出充能彈，和暗黑破壞神 II 一樣，地上的火或毒不會觸發",
+"Elite mods no longer add resistance to an element the monster is already immune to, so -% to Enemy Resistance can break it": "菁英詞綴不會再對怪物已免疫的元素增加抗性，所以 -% 敵人抗性可以破除",
+"The site has a wiki that explains the whole game, from every skill at every level to items, quests, mercenaries and the Terror tiers": "網站新增維基，說明整個遊戲，從每個技能每個等級到物品、任務、傭兵和恐懼層",
+"The site's header is simpler, with one gold Play button, Wiki, Ladder and FAQ as plain links, and a menu on phones": "網站頁首簡化：一個金色的開始遊戲按鈕，維基、天梯和常見問題改成一般連結，手機上有選單",
+"The leaderboards are now called the Ladder, on the website and on the camp's book, and Hardcore's tab of heroes by level is By level": "排行榜現在在網站和營地的書上都叫天梯，專家模式依等級排列的英雄分頁叫「依等級」",
+"Dexterity from Lam Esen's Tome now raises your shield's chance to block, as Dexterity from gear does": "蘭姆·艾森之書給的敏捷現在會提高盾牌格擋機率，跟裝備給的敏捷一樣",
+"The Amazon's freezes let an act boss stand free a while before freezing him again, as every other class's freezes do": "亞馬遜的冰凍會讓該幕頭目自由一段時間才能再次冰凍，和其他職業相同",
+"The leaderboard's messages say in plain words why a hero doesn't rank, and what you can do about it": "排行榜訊息會用白話說明英雄為什麼不列入排名，以及你可以怎麼做",
+"The leaderboard and the Ladder page no longer call every hero \"her\"": "排行榜和天梯頁面不再把所有英雄都稱為「她」",
+"Holy Freeze no longer slows cold immune monsters, and slows those that resist cold for less, as every other chill does": "神聖冰凍不再緩速免疫冰寒的怪物，對抗冰寒的怪物緩速較少，和其他冰寒效果一樣",
+"Gear's +skills now raise Shiver and Chilling Armor's miss chance up to 75%, the Carrion Vine's healing and the Solar Creeper's speed-up": "裝備的 ＋技能現在會提高碎冰甲和寒冰裝甲的落空機率（最高 75%）、食屍藤的治療和太陽藤的加速",
+"The Amazon's spear thrusts and the Barbarian's blows aim past monsters immune to them, and Taunt calls out physical immunes too": "亞馬遜的矛刺和野蠻人的攻擊會略過對其免疫的怪物，嘲弄也會叫物理免疫的怪物過來",
+"Vengeance's skill tree hover says Salvation raises its fire, cold and lightning damage, not fire alone": "復仇的技能樹說明框會註明救助提高的是火焰、冰寒和閃電傷害，不只是火焰",
+"The Paladin's Resist auras keep the maximum resistance from his own levels when an item's or the mercenary's is as high or higher": "聖騎士的抗性光環在物品或傭兵的最大抗性相同或更高時，仍保留自身等級的最大抗性",
+"Weapon Block's card no longer says it needs claws, as it blocks with any weapon": "武器格檔的卡片不再說需要爪，因為任何武器都能格檔",
+"Burst of Speed, Increased Speed and Vigor say how far gear's +skills take them, up to +70%, +50% and +53% movement speed": "刺客的加速、野蠻人的加速和精力會說明裝備的 ＋技能最多能提高多少，移動速度分別達 ＋70%、＋50%、＋53%",
+"The stats panel's Damage Taken hover names Thick Hide, the one skill that lowers it, where it named Energy Shield": "屬性面板受到的傷害說明框改為列出唯一能降低它的厚皮，以前寫的是能量護盾",
+"The level-up's banish hint says a banished card stays out until the run ends or goes on past Baal": "升級時的放逐提示會說明，被放逐的卡片在本局結束或打完巴爾繼續前都不會出現",
+"The critical strike hover says weapon skills and a few other skills can critically strike, not only spells": "致命攻擊的說明框會寫武器技能和少數其他技能也能造成致命攻擊，不只是法術",
+"The High Council engages you as in Diablo II, nearly always once you're close, and heals nothing while it fights you": "最高議會和暗黑破壞神 II 一樣，幾乎只要你靠近就會開打，戰鬥中不會治療",
+"The Smith has a quarter of the life he had, sized like Blood Raven and Griswold as was always meant": "鐵匠生命變成原本的四分之一，大小比照血鴉和格瑞斯華爾德，這才是原本的設計",
+"A Desert Mercenary with Prayer heals you from the day you hire him, where he had no aura until level 41": "帶祈禱的沙漠傭兵從雇用當天就會治療你，以前要到 41 級才有光環",
+"In Korean, Charsi's Dexterity rank and Buy Back's seller lines are translated, and the Cow Level and Charsi's ranks have one name each": "韓文版翻譯了恰西的敏捷等級和回購的賣家說明，母牛關和恰西等級也統一成一個名稱",
+"The desktop app now tells you when a balance change is out, and that your Terror runs stop counting until you restart to update": "電腦版會通知你平衡性更新已推出，也會提醒重開更新前恐懼層的紀錄不會計入",
+"Installing the Windows app by hand while something holds its files open no longer leaves your runs refused by the leaderboards": "在有東西佔用檔案時手動安裝 Windows 版，不會再害你的單局被排行榜拒收",
+"Zakarum priests heal only Zealots and other priests, never themselves or other monsters, as in Diablo II": "撒卡蘭姆祭司只會治療狂熱者和其他祭司，不會治療自己或其他怪物，和暗黑破壞神 II 一樣",
+"In Terror tiers the monsters left no longer jump back up while a wave comes in": "恐懼層中，波次進來時剩下的怪物不會再跳回來",
+"Fire Arrow, Berserk, Vengeance and other elemental attacks now roll gear's Crushing Blow, Life Stolen and chance to cast on striking": "火焰箭、狂戰士、復仇和其他元素攻擊現在會判定裝備的壓碎性打擊、吸血和打擊時觸發機率",
+"Monsters caged by Bone Prison, act bosses aside, no longer shoot or cast from inside it": "被骨牢關住的怪物（該幕頭目除外）不會再從裡面射擊或施法",
+"Akara, the waypoint, the death screen, the FAQ and the wiki no longer call every hero \"her\"": "阿卡拉、傳送點、死亡畫面、常見問題和維基不再把所有英雄都稱為「她」",
+"A Hardcore hero is no longer unranked as played offline when the leaderboard server was too busy to answer": "排行榜伺服器太忙沒回應時，專家模式英雄不會再被當成離線遊玩而沒有排名"
+};
+// 一個詞一格（瀏覽器沒有 Intl.Segmenter 就一字一格），讓遊戲照寬度斷行；標點黏前一格。每格尾端的 \u200b 讓 d2zhPaint 認得出遊戲加的空白，原文的空白用 \u00a0 保留。
+function d2zhNewsUnits(zh) {
+const parts = typeof Intl.Segmenter === 'function' ? Array.from(new Intl.Segmenter('zh-Hant', { granularity: 'word' }).segment(zh), s => s.segment) : Array.from(zh);
+const units = [];
+let open = '', ascii = false, space = false;
+for (const s of parts) {
+const last = units.length - 1;
+if (!s.trim()) { if (last >= 0) units[last] += '\u00a0'; space = true; continue; }
+const isAscii = /^[\x21-\x7e]+$/.test(s);
+if (/^[，。、；：）」]+$/.test(s) && last >= 0) units[last] += s;
+else if (/^[（「＋]+$/.test(s)) open += s;
+else if (isAscii && ascii && !space && !open && last >= 0) units[last] += s;
+else { units.push(open + s); open = ''; }
+ascii = isAscii; space = false;
+}
+return units.join('\u0001').replace(/\u6697\u0001\u9ed1\u0001\u7834\u58de\u0001\u795e/g, '\u6697\u9ed1\u7834\u58de\u795e').split('\u0001').map(u => u + '\u200b');
+}
+function d2zhNewsInstall() {
+const rawSplit = String.prototype.split;
+String.prototype.split = function (sep, limit) {
+if (sep === ' ' && this.length > 15 && d2zhLang() === 'zh-Hant') {
+const zh = D2ZH_CHANGELOG[this];
+if (typeof zh === 'string') return d2zhNewsUnits(zh);
+}
+return rawSplit.call(this, sep, limit);
+};
+}
 function d2zhInstallHook() {
+d2zhNewsInstall();
 D2ZH_CTX.putImageData = function (img, dx, dy) {
 const r = D2ZH_PUT.apply(this, arguments);
 const c = this.canvas;
@@ -1183,6 +1416,8 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V42', date: '2026-10-31', game: '遊戲 20261030.2', items: [
+'翻譯遊戲主選單「最新消息」裡作者的更新公告（先翻 10/28 之後的內容，舊的之後補）'] },
 { ver: 'V41', date: '2026-10-31', game: '遊戲 20261030.2', items: [
 '修正：電腦安裝版的「回報內容」讀取失敗（第一次更新後要重開遊戲一次才會生效）'] },
 { ver: 'V40', date: '2026-10-31', game: '遊戲 20261030.2', items: [
