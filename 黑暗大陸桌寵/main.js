@@ -14,7 +14,7 @@
 //   games[ME] = 這隻桌寵的遊戲視窗，平常不顯示；對牠點兩下叫出來操作，再點兩下藏回去（陣列其他位置是空的）
 //   petWin    = 貼在工作區底部的透明長條，上面畫這隻桌寵；滑鼠不在桌寵身上時整條都是穿透的
 const { app, BrowserWindow, Menu, Notification, Tray, globalShortcut, ipcMain, nativeImage, net, screen, session, shell } = require("electron");
-const { spawn } = require("child_process");
+const { execFile, spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const { parseSave } = require("./save-reader");
@@ -169,6 +169,30 @@ function relaunchSelf() {
 
 // ── 遊戲視窗（每隻桌寵一個）─────────────────────────────────
 
+const TASKBAR_EDGE = 60; // 工作列自動隱藏時，滑鼠離螢幕邊多近算在工作列上
+const GIVE_AWAY_MS = 2000; // 藏著的遊戲多久才讓一次焦點
+const WM_ACTIVATEAPP = 0x1c;
+let explorerThreads = new Set();
+
+/** 重新問一次檔案總管（工作列）有哪些執行緒。Electron 沒有這個功能，問 PowerShell。問不到回傳 null。 */
+function readExplorerThreads() {
+  return new Promise((resolve) => {
+    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", '(Get-Process explorer).Threads.Id -join ","'], { windowsHide: true, timeout: 5000 }, (err, out) => {
+      const ids = String(out ?? "").trim().split(",").map(Number).filter(Boolean);
+      if (err || !ids.length) return resolve(null);
+      explorerThreads = new Set(ids);
+      resolve(explorerThreads);
+    });
+  });
+}
+
+/** 讓出焦點的執行緒是不是工作列。清單裡沒有就重問一次（檔案總管重開過、新開的執行緒）；問不到就當作是，至少點按鈕叫得出來。 */
+async function isTaskbarThread(thread) {
+  if (explorerThreads.has(thread)) return true;
+  const fresh = await readExplorerThreads();
+  return fresh ? fresh.has(thread) : true;
+}
+
 /** 第 i 隻現在用的帳號 id（帳號被刪掉了就當作沒有）。 */
 const accountOf = (i) => (accounts.find(settings.petAccounts[i]) ? settings.petAccounts[i] : null);
 
@@ -199,11 +223,20 @@ function rememberGameWindow(g) {
   });
 }
 
+/** 滑鼠是不是在工作列上：工作區外面就是工作列。自動隱藏的工作列不佔工作區，改看有沒有貼著下、左、右邊。 */
+function cursorOnTaskbar() {
+  const p = screen.getCursorScreenPoint();
+  const { workArea: w, bounds: b } = screen.getDisplayNearestPoint(p);
+  if (p.x < w.x || p.x >= w.x + w.width || p.y < w.y || p.y >= w.y + w.height) return true;
+  if (w.width !== b.width || w.height !== b.height) return false;
+  return p.y >= b.y + b.height - TASKBAR_EDGE || p.x < b.x + TASKBAR_EDGE || p.x >= b.x + b.width - TASKBAR_EDGE;
+}
+
 function createGame(index) {
   const { keepTaskbar, bounds } = savedGameWindow(index);
   const g = { index, accountId: accountOf(index), partition: partitionOf(index), win: undefined, shown: false, bounds,
     lastRaw: undefined, lastState: undefined, continued: false, noSaveSince: 0, login: { state: "idle", at: 0 },
-    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 }, keepTaskbar, parkedAt: 0 };
+    retryTimer: undefined, failures: 0, mode: "auto", frame: { dw: 0, dh: 0 }, keepTaskbar, parkedAt: 0, gaveAwayAt: 0, activatedFrom: 0, hasFocus: false };
   g.win = new BrowserWindow({
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
@@ -233,14 +266,37 @@ function createGame(index) {
   });
   // 縮到最小化的話 Chromium 會把畫面停掉（跟沒顯示一樣），當成藏起來：放回螢幕外繼續跑
   g.win.on("minimize", () => {
+    // 藏著的遊戲握著焦點時點它的工作列按鈕，Windows 當成要縮小它：其實是想叫出來
+    const clicked = !g.shown && g.keepTaskbar && g.hasFocus && cursorOnTaskbar();
     g.win.restore();
-    showGame(g, false);
+    showGame(g, clicked);
   });
   // 「保持狀態列」藏起來的遊戲：在工作列上點它的按鈕（視窗拿到焦點）就叫出來。
-  // 剛藏起來那一下 restore()／切換焦點可能也會送 focus，略過
-  g.win.on("focus", () => {
-    if (!g.shown && g.keepTaskbar && Date.now() - g.parkedAt > 500) showGame(g, true);
+  // 剛藏起來那一下 restore()／切換焦點可能也會送 focus，略過。
+  // 別的視窗縮小時，Windows 也會把焦點交給下一個視窗，可能就是藏著的這個（玩家回報縮小 B 時 A 跳出來）。
+  // 分辨方法（2026-11-01 實測）：WM_ACTIVATEAPP 會講焦點是誰讓出來的。點這隻的工作列按鈕＝工作列（檔案總管）的執行緒，
+  // 別的視窗縮小＝那個程式的執行緒，連點工作列按鈕縮小別的程式也一樣。不是點按鈕就不叫出來，把焦點讓開，鍵盤才不會打到藏著的遊戲
+  if (process.platform === "win32") {
+    readExplorerThreads();
+    g.win.hookWindowMessage(WM_ACTIVATEAPP, (wParam, lParam) => {
+      if (wParam.readUInt32LE(0)) g.activatedFrom = lParam.readUInt32LE(0);
+    });
+  }
+  g.win.on("focus", async () => {
+    g.hasFocus = true;
+    const from = g.activatedFrom;
+    g.activatedFrom = 0;
+    if (g.shown || !g.keepTaskbar || Date.now() - g.parkedAt <= 500) return;
+    if (from && cursorOnTaskbar() && (await isTaskbarThread(from))) {
+      if (!g.win.isDestroyed()) showGame(g, true);
+      return;
+    }
+    // 焦點會給下一個視窗，兩隻藏著的遊戲會互相丟來丟去：隔一段時間才讓一次，丟回來就留著（點工作列按鈕照樣叫得出來，見 minimize）
+    if (Date.now() - g.gaveAwayAt < GIVE_AWAY_MS) return;
+    g.gaveAwayAt = Date.now();
+    setTimeout(() => !g.win.isDestroyed() && !g.shown && g.win.blur(), 0); // 還在處理 focus 時 blur 沒有效果，等這一輪結束
   });
+  g.win.on("blur", () => (g.hasFocus = false));
   // 遊戲網頁的程序當掉（掛很久記憶體不夠、顯示卡驅動出錯…）：視窗會變成整片白、遊戲也停了，重新載入
   g.win.webContents.on("render-process-gone", (_e, d) => {
     if (g.closing || quitting) return;
@@ -405,7 +461,9 @@ function showGame(g, on) {
     placeShownGame(g);
     g.win.setOpacity(1);
     g.win.setIgnoreMouseEvents(false);
-    g.win.setFocusable(true);
+    // setFocusable 在 Windows 會順便把焦點丟給下一個視窗（Electron 的行為）：「保持狀態列」藏著時本來就能拿焦點，不要再呼叫，
+    // 不然點工作列叫出來的遊戲拿不到前景，下一個視窗如果是別隻藏著的遊戲還會被連帶叫出來
+    if (!g.win.isFocusable()) g.win.setFocusable(true);
     g.win.setSkipTaskbar(false);
     g.win.show();
     g.win.focus();

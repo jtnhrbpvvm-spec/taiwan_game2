@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0",
+  "version": "1.5.1",
   "shell": 2,
   "files": [
     {
@@ -39,8 +39,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "86eb1039cb9fa802a3e389f933d759221241c35ed7928385eb9b03384e3a9806",
-      "size": 75111
+      "sha256": "3624c5c3241e434bfbcbfc41730dc4f083af1753aeb1f6c6792665fbfbe4311c",
+      "size": 78895
     },
     {
       "path": "names.json",
