@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>數值公式與戰鬥規則｜黑暗大陸攻略百科</title>
-<meta name="description" content="黑暗大陸能力計算：命中、傷害加成、SP、防禦、魔防、攻擊間隔、施法間隔、回血回魔、負重、物爆魔爆、閃避、畫面範圍技能、彈藥欄，以及多怪戰鬥、首領大招、自動補給、死亡規則。">
+<meta name="description" content="黑暗大陸能力計算：命中、傷害加成、SP、防禦、魔防、攻擊間隔、施法間隔、回血回魔、負重、物爆魔爆、閃避、畫面範圍技能、彈藥欄，以及多怪戰鬥、首領大招、10 種異常狀態、自動補給、死亡規則。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -12,7 +12,7 @@
 <body data-page="mechanics">
 <main>
     <h1>📐 數值公式與戰鬥規則</h1>
-    <div class="toc"><a href="#stats">能力計算</a><a href="#speed">攻擊速度</a><a href="#combat">戰鬥</a><a href="#pack">多怪戰鬥</a><a href="#support">自動補給與回家</a><a href="#death">死亡</a></div>
+    <div class="toc"><a href="#stats">能力計算</a><a href="#speed">攻擊速度</a><a href="#combat">戰鬥</a><a href="#pack">多怪戰鬥</a><a href="#afflict">異常狀態</a><a href="#support">自動補給與回家</a><a href="#death">死亡</a></div>
 
     <h2 id="stats">能力計算</h2>
     <div class="tw"><table>
@@ -65,8 +65,17 @@
         <li>範圍技能打全部圍上來的怪；分散型多發攻擊每發打不同隻（妖精三重矢已改成 3 箭都打同一隻）。</li>
         <li><b>畫面範圍技能</b>：砲擊、星隕轟擊、<a data-skill="blizzard">冰雪暴</a>、<a data-skill="thunderStorm">雷電風暴</a>、<a data-skill="meteor">流星雨</a>打<b>目前地圖畫面內所有活著的怪</b>，連還沒參戰的也打（受傷沒死的會加入戰鬥），但不打鏡頭外的怪。可以一次拉進超過一般上限的怪。沒有地圖畫面時（離線、副本）只打參戰的怪。</li>
         <li><b>首領大招</b>：首領／龍每 <span id="tc"></span> 蓄力 <span id="tl"></span>，以你當下位置畫半徑 1.5 格紅圈，時間到還在圈內吃 ×<span id="tmul"></span> 重擊。畫面沒開時依設定「首領大招自動閃避」開 60%、關 20% 躲開。畫面開著時你和<a href="merc.html">傭兵</a>各自尋路出圈、各自按實際位置結算（你的附魔吸收盾只保護你）；路被擋會重找，沒路就原地吃傷害。</li>
-        <li><b>怪物異常狀態</b>：巨大蜘蛛、毒霧獵蛛的魔法命中附加<b>中毒 6 秒</b>（每秒該次傷害 12%，最少 1，毒不死）；鬼魂、冰之魔女、冰之巨人王附加<b>緩速 4 秒</b>（攻擊與施法間隔 ×1.2，走速不變）。重複命中只刷新時間；被閃避或全被盾擋不會上。回村、死亡清除，傭兵符石「淨化之光」／「淨身」可解。</li>
     </ul>
+
+    <h2 id="afflict">異常狀態</h2>
+    <ul>
+        <li>怪物打中而且真的扣到血才會附加：大多是<b>魔法</b>打中才有機會，下表標「普攻」的怪普攻打中也會（機率較低）。被閃避或全被盾擋不會上。</li>
+        <li><b>機率</b>：沒有特別標示時，持續傷害類 <span id="ap-d"></span>、控制類 <span id="ap-c"></span>、其他 <span id="ap-o"></span>。</li>
+        <li><b>魔防減免</b>：機率與持續時間都 ×（1 − 魔防÷300），魔防 150 封頂（−50%）。玩家和傭兵都會中。</li>
+        <li><b>解除</b>：只靠時間到、回村（含死亡回村）或傭兵符石「淨化之光」／「淨身」，沒有解藥。離線收益、團隊副本、世界首領不會附加。</li>
+        <li>控制中不會重新計時；標「免疫」的狀態解除後那段時間不會再中同一種，不會被一直定住。</li>
+    </ul>
+    <div id="afflict-list"></div>
 
     <h2 id="support">自動補給與自動回家</h2>
     <ul>
@@ -102,6 +111,33 @@ renderTable($('#speed-table'), [
     ...wts.map(w => ({ label: W.weaponTypes[w].name, num: true, html: id => { const v = W.classes[id].weaponMs[w]; return v ? v : '<span class="mute">—</span>'; } })),
 ], ids);
 $('#speed-table').insertAdjacentHTML('beforeend', `<p class="dim">武器基本速度：${wts.map(w => `${W.weaponTypes[w].name} ${W.weaponTypes[w].spd}`).join('、')}。職業名稱旁是動作係數（越大越慢）。</p>`);
+// 異常狀態：數值讀 W.afflicts，說明文字依遊戲 afflict.js 整理
+const A = W.afflicts, P100 = v => Math.round(v * 1000) / 10 + '%';
+set('ap-d', pct(A.defaultP.dot)); set('ap-c', pct(A.defaultP.control)); set('ap-o', pct(A.defaultP.other));
+const AFFLICT_TEXT = {
+    poison: d => `每秒扣附加那一下傷害的 ${P100(d.k)}，最低留 1 HP，不會毒死`,
+    burn: d => `每秒扣附加那一下傷害的 ${P100(d.k)}，<b>會燒死</b>；藥水、治癒魔法、自然回復效果 −${P100(d.antiheal)}`,
+    bleed: d => `每秒扣最大 HP 的 ${P100(d.k)}，最低留 1 HP`,
+    slow: () => '攻擊、施法間隔 ×1.2，走路不變',
+    freeze: () => '不能出手、喝水、手動施法；被打到會提早解凍',
+    paralyze: d => `每次出手 ${P100(d.skip)} 機率動不了`,
+    silence: () => '魔法與技能都不能放，普攻和共鳴照常',
+    curse: d => `AC +${d.ac}（防禦變差）、魔防 −${d.mr}（只算玩家）`,
+    blind: d => `命中 −${d.hit}，約 −30% 命中率（只算玩家）`,
+    petrify: d => `不能行動，期間受到的傷害 ×${d.taken}`,
+};
+const afflictWho = kind => {
+    const list = A.mons.filter(m => m.kind === kind), note = m => `<small class="dim">${m.on === 'hit' ? '普攻 ' : ''}${pct(m.p)}</small>`;
+    const normal = list.filter(m => m.id).map(m => `${monLink(m.id)} ${note(m)}`), tower = list.filter(m => !m.id).map(m => `${esc(m.name)} ${note(m)}`);
+    return normal.join('、') + (tower.length ? `<br><small class="dim">永夜之塔：</small>${tower.join('、')}` : '');
+};
+renderTable($('#afflict-list'), [
+    { label: '狀態', html: ([, d]) => `${d.emoji} <b>${esc(d.name)}</b>` },
+    { label: '效果', html: ([k, d]) => AFFLICT_TEXT[k](d) },
+    { label: '時間', num: true, html: ([, d]) => `${d.ms / 1000} 秒${d.bossMs ? `<br><small class="dim">首領 ${d.bossMs / 1000} 秒</small>` : ''}` },
+    { label: '免疫', num: true, html: ([, d]) => d.imm ? `${d.imm / 1000} 秒` : '<span class="mute">—</span>' },
+    { label: '會附加的怪物（魔法打中的機率）', html: ([k]) => afflictWho(k) },
+], Object.entries(A.defs));
 </script>
 </body>
 </html>

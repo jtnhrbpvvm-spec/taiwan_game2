@@ -32,6 +32,13 @@
                 <li>品質顏色：<span class="doll-T0">T0 七彩</span>、<span class="doll-T1">T1 紅</span>、<span class="doll-T2">T2 黃</span>、<span class="doll-T3">T3 紫</span>、<span class="doll-T4">T4 藍</span>。</li>
             </ul></div>
     </div>
+    <div class="box tip"><h3 style="margin-top:0">🧸 自動購買藥水（全部 <span id="b-n"></span> 款娃娃共通）</h3>
+        <ul>
+            <li>娃娃有裝備且召喚有效時，每 <b id="b-t"></b>檢查一次，不用回村就會補到設定的數量，價格是<b>商店價 ×<span id="b-r"></span></b>。金幣或負重不夠時只買得起的部分。</li>
+            <li>保持數量在設定頁「🧸 娃娃自動購買藥水」調整，0＝不買。預設：綠水 <b id="b-g"></b>、勇水類 <b id="b-v"></b>、古代終極治癒藥水 <b id="b-h"></b>、藍水 <b id="b-l"></b>、變形卷軸 <b id="b-p"></b>。</li>
+            <li>勇水類依職業：王族、騎士、黑暗妖精、修羅、戰士、聖騎士、惡魔買勇敢藥水；妖精、槍手買精靈餅乾；法師、魔鬥士、天使買慎重藥水。</li>
+            <li>只負責買，要不要喝照快捷欄的自動格。離線收益與模擬戰鬥不會買。</li>
+        </ul></div>
     <div class="tabs" id="tabs"></div>
     <div class="grid" id="list"></div>
 </main>
@@ -39,6 +46,8 @@
 <script src="assets/wiki.js"></script>
 <script>
 const C = W.consts;
+$('#b-n').textContent = Object.keys(W.dolls).length; $('#b-t').textContent = sec(C.DOLL_BUY_CHECK_MS); $('#b-r').textContent = C.DOLL_BUY_RATE;
+$('#b-g').textContent = W.dollBuy.dollBuyGreen; $('#b-v').textContent = W.dollBuy.dollBuyBrave; $('#b-h').textContent = W.dollBuy.dollBuyHeal; $('#b-l').textContent = W.dollBuy.dollBuyBlue; $('#b-p').textContent = W.dollBuy.dollBuyPoly;
 $('#c1').textContent = C.DOLL_SUMMON_COST; $('#c2').textContent = sec(C.DOLL_SUMMON_MS); $('#c3').textContent = C.DOLL_SUMMON_COST;
 $('#c4').textContent = C.DOLL_DISMANTLE_CRYSTALS; $('#c5').textContent = C.DOLL_SHOP_PRICE;
 const ORDER = ['T0', 'T1', 'T2', 'T3', 'T4'];

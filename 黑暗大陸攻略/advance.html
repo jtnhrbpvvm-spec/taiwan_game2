@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>二轉｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸二轉：Lv.60 第 5～7 章任務流程、十二職業 36 個分支的核心被動、專屬技能、成長與飾品，技能書取得與命運重塑石。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .adv-cls { scroll-margin-top: 80px; }
+    .adv { scroll-margin-top: 80px; display: flex; flex-direction: column; gap: 8px; }
+    .adv-art { width: 100%; aspect-ratio: 1; object-fit: contain; background: #0a0807; border: 1px solid var(--line); border-radius: 10px; }
+    .adv h3 { margin: 0; font-size: 20px; }
+    .adv .msec { margin: 0; }
+    .adv .sk { margin: 0 0 6px; }
+    .adv .sk small { display: block; }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="advance">
+<main>
+    <h1>🔱 二轉</h1>
+    <p class="lead">完成第 4 章職業任務後，<b>Lv.<span class="lv1"></span></b> 可以接第 5～7 章二轉任務。每個職業有<b>三種分支任選其一</b>，二轉後得到新職業名稱、核心被動、兩招專屬技能（Lv.<span class="lv1"></span>／Lv.<span class="lv2"></span>）與專屬飾品。</p>
+    <div class="toc"><a href="#flow">流程</a><a href="#books">技能書</a><a href="#reshape">換分支</a><span id="toc"></span></div>
+
+    <h2 id="flow">任務流程</h2>
+    <p>到任何村莊的<b>二轉導師</b>（名牌與外觀是你職業的導師）查看狀態、接受與回報第 5～7 章、選擇分支，也可以用任務頁。各職業的首領數值見<a href="quests.html">職業任務</a>。</p>
+    <div class="tw"><table>
+        <thead><tr><th>章</th><th class="num">等級</th><th>要做的事</th><th>獎勵</th></tr></thead>
+        <tbody>
+            <tr><td>5「超越之證」</td><td class="num">60</td><td>打倒任何地圖的首領收集 5 枚職業之證（每隻 <span id="pf"></span>，世界首領、團隊副本不算）</td><td>50,000 金幣</td></tr>
+            <tr><td>6「試煉之影」</td><td class="num">60</td><td>接任務時選分支，完成前可以免費改選。<b>不能帶傭兵和娃娃</b>，到<a href="zones.html#fireCave">熔火煉獄</a>擊倒 30 隻後打倒試煉之影；在這裡被打死不扣經驗</td><td>完成二轉（學會核心被動）＋第 1 招技能書＋100,000 金幣</td></tr>
+            <tr><td>7「進階的考驗」</td><td class="num">70</td><td>到<a href="tower.html">永夜之塔</a>擊倒 40 隻後打倒職業專屬首領</td><td>第 2 招技能書＋專屬飾品＋200,000 金幣</td></tr>
+        </tbody></table></div>
+    <ul>
+        <li>二轉後名牌顏色和腳下光效換成分支顏色，人物狀態、人物選單與選擇畫面顯示分支立繪；地圖上的人物模型不變。</li>
+        <li>下方的成長加成是二轉後每次升級多得的 HP／MP 比例。</li>
+    </ul>
+
+    <h2 id="books">二轉技能書</h2>
+    <ul>
+        <li>第一本由第 6、7 章任務給。之後只能<b>打怪掉落，不能用金幣買</b>：一般怪 <span id="b1"></span>、首領 <span id="b2"></span> 掉一本書，併入一般技能書一起抽（第 1 招 Lv.55 以上怪物、第 2 招 Lv.65 以上怪物）。</li>
+        <li>任何職業分支的書都會掉，用不到的可以賣或上交易所。回收價：第 1 招 <span id="s1"></span>、第 2 招 <span id="s2"></span> 金幣。</li>
+        <li>學習限<b>目前分支</b>；第 2 招要完成第 7 章才能學。</li>
+    </ul>
+
+    <h2 id="reshape">換分支：命運重塑石</h2>
+    <ul>
+        <li><a data-item="advReshape">命運重塑石</a>由 Lv.<span id="rl"></span> 以上首領 <b id="rp"></b> 掉落，二轉完成後在背包使用，重新選擇分支。</li>
+        <li>舊分支的三招會失效，<b>技能書不退</b>；新分支的技能書要打怪或從交易所取得，核心被動換分支時自動學會。</li>
+    </ul>
+
+    <h2>各職業分支</h2>
+    <div id="list"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const A = W.adv, C = W.consts, ids = Object.keys(A.branches);
+$$('.lv1').forEach(e => e.textContent = A.skill1Lv); $$('.lv2').forEach(e => e.textContent = A.skill2Lv);
+$('#pf').textContent = pct(A.proofP); $('#rl').textContent = A.reshapeLv; $('#rp').textContent = pct(A.reshapeP);
+$('#b1').textContent = pct(C.BOOK_DROP_P); $('#b2').textContent = pct(C.BOOK_BOSS_P);
+const first = A.branches[ids[0]][0];
+$('#s1').textContent = fmt(W.items['book_' + first.skill1].sellPrice); $('#s2').textContent = fmt(W.items['book_' + first.skill2].sellPrice);
+$('#toc').innerHTML = ids.map(id => `<a href="#${id}">${W.classes[id].icon} ${esc(W.classes[id].name)}</a>`).join('');
+$('#toc').style.display = 'contents';
+const growText = b => [b.growHp ? `HP +${Math.round(b.growHp * 100)}%` : '', b.growMp ? `MP +${Math.round(b.growMp * 100)}%` : ''].filter(Boolean).map(t => `<span class="tag">成長 ${t}</span>`).join('');
+function skillRow(id) {
+    const s = W.skills[id];
+    return `<p class="sk">${skillLink(id)} <span class="tag gold">Lv.${s.lv}</span>${s.mp ? `<span class="tag">MP ${s.mp}</span>` : ''}${s.cd ? `<span class="tag">冷卻 ${s.cd} 秒</span>` : ''}<small>${esc(s.desc)}</small></p>`;
+}
+$('#list').innerHTML = ids.map(id => {
+    const c = W.classes[id];
+    return `<section class="adv-cls" id="${id}"><h2>${c.icon} ${esc(c.name)} <a href="classes.html#${id}" style="font-size:14px;font-weight:400">→ 職業介紹</a></h2>
+        <div class="grid">${A.branches[id].map(b => `<article class="card adv" id="${b.id}">
+            <img class="adv-art" src="${esc(img(b.art))}" alt="${esc(b.name)}" loading="lazy" onerror="this.remove()">
+            <div><h3 style="color:${b.color}">${esc(b.name)}</h3>${growText(b)}</div>
+            <div class="msec"><h4>核心被動</h4><p class="sk">${skillLink(b.passive)}<small>${esc(W.skills[b.passive].desc.replace(/^二轉被動：/, ''))}</small></p></div>
+            <div class="msec"><h4>專屬技能</h4>${skillRow(b.skill1)}${skillRow(b.skill2)}</div>
+            <div class="msec"><h4>專屬飾品</h4>${itemLink(b.acc)}</div>
+        </article>`).join('')}</div></section>`;
+}).join('');
+if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) setTimeout(() => el.scrollIntoView(), 50); }
+</script>
+</body>
+</html>

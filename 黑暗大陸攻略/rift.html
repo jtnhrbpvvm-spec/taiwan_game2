@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>異界地圖｜黑暗大陸攻略百科</title>
-<meta name="description" content="黑暗大陸 POE 式異界地圖 T1～T15：對應地區、地圖詞綴與獎勵加成、異界首領、通關獎勵、傳奇財寶地圖、地圖改造與六格排程。">
+<meta name="description" content="黑暗大陸 POE 式異界地圖 T1～T15：對應地區、地圖詞綴與獎勵加成、異界首領、通關獎勵、鑑定、傳奇財寶地圖、地圖改造、六格排程與自動打造。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -13,11 +13,12 @@
 <main>
     <h1>🌀 異界地圖</h1>
     <p class="lead">異界地圖是「一次性的強化版地區」：放進村莊的<b>異界裝置</b>開啟，傳送到對應地區掛機，打完規定數量的怪物後出現<b>異界首領</b>，打倒就通關並拿到更高階的地圖。地圖上的詞綴讓怪物變強，但也提高經驗、金幣與<b>所有掉落機率</b>。</p>
-    <div class="toc"><a href="#flow">流程</a><a href="#tiers">T1～T15</a><a href="#mods">地圖詞綴</a><a href="#craft">地圖改造</a><a href="#treasure">傳奇財寶地圖</a><a href="#queue">地圖排程</a></div>
+    <div class="toc"><a href="#flow">流程</a><a href="#tiers">T1～T15</a><a href="#mods">地圖詞綴</a><a href="#craft">地圖改造</a><a href="#treasure">傳奇財寶地圖</a><a href="#queue">地圖排程</a><a href="#autocraft">自動打造</a></div>
 
     <h2 id="flow">流程與規則</h2>
     <ol>
-        <li><b>取得地圖</b>：一般地圖每隻怪 <b id="d1"></b> 掉地圖（階級＝怪物等級對應的最高階），異界裡每隻 <b id="d2"></b>（同階 ±1）。掉落品質：普通 50%／魔法 35%／稀有 15%。</li>
+        <li><b>取得地圖</b>：一般地圖每隻怪 <b id="d1"></b> 掉地圖（階級＝怪物等級對應的最高階），異界裡每隻 <b id="d2"></b>（同階 ±1）。</li>
+        <li><b>鑑定</b>：打怪、通關獎勵、離線收益拿到的地圖<b>一律未鑑定</b>，看不出品質，不能開啟也不能用通貨。到任一村莊的 🔍 <b>鑑定台</b>（村裡的水晶亭子）<b>免費</b>鑑定，可以「全部鑑定」；也可以直接放進<a href="#queue">排程</a>，輪到時自動鑑定。鑑定時才決定品質：普通 50%／魔法 35%／稀有 15%。背包的地圖收納頁有「未鑑定」篩選。</li>
         <li><b>開啟</b>：村莊「地圖」頁的「🌀 異界裝置」或背包地圖「開啟」。怪物數量 ＝ 200～300 ×（1 ＋ 數量詞綴，最多 ×<span id="qm"></span>）。</li>
         <li><b>打完</b>：剩餘數量歸零後出現「異界首領・名稱」（該地區稀有首領 HP ×2，沒有的話用最強怪 HP ×8）。中途瞬移或停止，首領血量會保留。</li>
         <li><b>通關獎勵</b>：1 張地圖（同階 55%／高 1 階 35%／高 2 階 10%），再 50% 多一張同階或低一階；異界首領 <b id="rb"></b> 掉一件共鳴裝備。然後回村。</li>
@@ -37,25 +38,34 @@
 
     <h2 id="treasure">💰 傳奇財寶地圖</h2>
     <ul>
-        <li><b>取得</b>：T8～T15 的地圖掉落時，有 <b id="tp"></b> 會變成「傳奇財寶地圖 Tn（未鑑定）」。T7 以下不會出現，舊的白／魔法／稀有圖也不會轉成傳奇。</li>
-        <li><b>鑑定</b>：未鑑定的圖不能開啟、也不能放進排程。到任一村莊的 🔍 <b>鑑定台</b>（村裡的水晶亭子）<b>免費</b>鑑定，從地圖詞綴隨機抽 <b>6 條不重複</b>的詞綴，鑑定後就固定，不能重鑑。</li>
+        <li><b>取得</b>：T8～T15 掉落的未鑑定地圖有 <b id="tp"></b> 其實是傳奇財寶地圖，掉落時就決定了，但<b>鑑定前完全看不出來</b>。T7 以下不會出現，離線收益拿到的也不會是，舊的白／魔法／稀有圖不會轉成傳奇。</li>
+        <li><b>鑑定</b>：和一般地圖一樣到 🔍 鑑定台免費鑑定，從地圖詞綴隨機抽 <b>6 條不重複</b>的詞綴，鑑定後就固定，不能重鑑。</li>
         <li><b>不能改造</b>：鑑定前後都不能用任何通貨（含剝離、淬鍊、覺醒）。</li>
         <li><b>只掉通貨</b>：財寶地圖裡的怪物<b>不掉裝備、書、材料、地圖</b>，只掉製作通貨：一般怪通貨機率 ×3、數量 ×2（每次 2 顆）；首領通貨機率 ×3（最高 100%）、數量 2／4／6 顆。通關也不給額外地圖。擊殺的經驗、金幣照一般規則，6 條詞綴的獎勵加成也照算。</li>
     </ul>
 
     <h2 id="queue">六格地圖排程</h2>
     <ul>
-        <li>最多 <b id="qn"></b> 種地圖排隊（畫面兩欄三列：1／2、3／4、5／6），每格指定同種地圖（同階、同品質、同詞綴）與張數，第 1 格全部刷完才到第 2 格。未鑑定的財寶地圖不能排。</li>
+        <li>最多 <b id="qn"></b> 種地圖排隊（畫面兩欄三列：1／2、3／4、5／6），每格指定同種地圖（同階、同品質、同詞綴）與張數，第 1 格全部刷完才到第 2 格。<b>未鑑定地圖也能排</b>：同階合成一種，輪到時在村莊鑑定那一張（一次一張，不會整疊洗掉），鑑定出財寶圖就照財寶圖開。設定前、執行中、暫停或完成後都能按「詳情」查看地圖屬性。</li>
         <li>通關正常回村後自動開下一張；開圖前會檢查治癒藥水、負重、彈藥，不夠就暫停、不扣地圖。</li>
         <li>勾選「👹 怪物清空後不打首領」：排程的地圖清完怪就直接回村開下一張，<b>沒有通關獎勵</b>（狀態顯示「略過首領 N 次」）。適合只想刷怪物掉落、不想花時間打首領時用；手動開的地圖不受影響。</li>
         <li>死亡或放棄會中斷排程（已用掉的地圖不退）；入口在 PC 底部 📋、手機右側選單與異界裝置。</li>
+    </ul>
+
+    <h2 id="autocraft">⚒️ 自動打造地圖</h2>
+    <p>在排程畫面啟用（預設關閉），<b>全部排程共用一份設定</b>。每次輪到一張地圖才處理那一張：未鑑定的先鑑定，再照設定用通貨洗詞綴。傳奇財寶地圖不改造。</p>
+    <ul>
+        <li><b>不要的詞綴</b>：勾選後，地圖出現這些詞綴就重洗，魔法地圖用<a data-item="curAlt">重鑄石</a>、稀有地圖用<a data-item="curChaos">混沌石</a>，洗到乾淨或用到上限為止。</li>
+        <li><b>升級</b>（可選）：普通地圖用<a data-item="curAug">點化石</a>升魔法、魔法地圖用<a data-item="curRegal">晉升石</a>升稀有。</li>
+        <li><b>每張最多用幾顆</b>（0～99，預設 <span id="mc-max"></span>）、<b>每種通貨保留幾顆不用</b>（預設 <span id="mc-keep"></span>），通貨會真的扣掉。</li>
+        <li><b>用到上限仍有不要的詞綴</b>：預設略過這張（從排程拿掉、留在背包，已經鑑定和洗過的結果會保留，排程顯示「詞綴不合略過 N 張」）；取消勾選就照樣開圖。</li>
     </ul>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>
 <script>
 const C = W.consts;
-$('#d1').textContent = pct(C.MAP_DROP_P); $('#d2').textContent = pct(C.MAP_DROP_IN_MAP_P); $('#qm').textContent = C.MAP_QTY_MAX; $('#rb').textContent = pct(C.RES_MAP_BOSS_P); $('#tp').textContent = pct(C.TREASURE_MAP_DROP_P); $('#qn').textContent = C.MAP_QUEUE_MAX;
+$('#d1').textContent = pct(C.MAP_DROP_P); $('#d2').textContent = pct(C.MAP_DROP_IN_MAP_P); $('#qm').textContent = C.MAP_QTY_MAX; $('#rb').textContent = pct(C.RES_MAP_BOSS_P); $('#tp').textContent = pct(C.TREASURE_MAP_DROP_P); $('#qn').textContent = C.MAP_QUEUE_MAX; $('#mc-max').textContent = W.mapCraftDefault.max; $('#mc-keep').textContent = W.mapCraftDefault.keep;
 renderTable($('#tier-list'), [
     { label: '地圖', html: t => itemLink('map' + t.t) },
     { label: '對應地區', html: t => zoneLink(t.zone) },

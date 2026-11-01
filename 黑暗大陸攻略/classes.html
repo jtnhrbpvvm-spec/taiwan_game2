@@ -116,6 +116,8 @@ $('#list').innerHTML = ids.map(id => {
             </dl>
             <div class="msec"><h4>職業技能（${sk.length} 招）<a href="skills.html#${id}" style="font-weight:400"> → 全部技能與魔法</a></h4>
                 ${sk.map(x => `${skillLink(x.id)} <small class="dim">Lv.${x.lv}</small>`).join('　')}</div>
+            <div class="msec"><h4>二轉分支 <small class="dim">（Lv.${W.adv.skill1Lv} 起三選一）</small></h4>
+                ${W.adv.branches[id].map(b => `<a href="advance.html#${b.id}" style="color:${b.color}">${esc(b.name)}</a>`).join('　')}</div>
             ${story.story ? `<div class="msec"><h4>背景故事・${esc(story.title || '')}（任務 NPC：${esc(story.npc)}）</h4><p class="story">${esc(story.story)}</p><a href="quests.html#${id}">→ ${esc(c.name)}的職業任務</a></div>` : ''}
         </div></section>`;
 }).join('');

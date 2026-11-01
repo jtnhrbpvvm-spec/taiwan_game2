@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>命運星盤｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸命運星盤：325 節點天賦盤、100 點來源與 10 個試煉、天賦石退點、六大星群與核心、38 款天賦寶珠的效果與掉率。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="talent">
+<main>
+    <h1>🌌 命運星盤</h1>
+    <p class="lead">命運星盤是每個角色各自的天賦盤：從中央的命運之核出發，沿路線花點數點亮節點，並在孔位鑲嵌寶珠。入口在<b>技能頁</b>。</p>
+    <div class="toc"><a href="#points">點數</a><a href="#rules">配點規則</a><a href="#regions">六大星群</a><a href="#jewels">天賦寶珠</a><a href="#drops">掉率</a></div>
+    <div class="box warn">正式配點要登入並完成雲端同步。如果畫面顯示「尚未開放」或維護提示，代表伺服器那邊還沒準備好，可以先用「配點試玩」規劃路線；試玩的點數、測試石和角色完全分開，不會影響存檔。</div>
+
+    <h2 id="points">點數來源（最多 <span id="total"></span> 點）</h2>
+    <ul>
+        <li><b>等級</b>：Lv.<span id="ul"></span> 起每級 1 點，Lv.<span id="ml"></span> 共 <span id="lp"></span> 點。舊角色會依目前等級補點。</li>
+        <li><b>試煉</b>：首次打倒下列階級的<a href="rift.html">異界地圖</a>首領，各 1 點，共 <span id="tp"></span> 點。每個角色各算一次，以前的擊殺不追溯；未滿 Lv.<span class="ul2"></span> 暫時不計入可用點數。</li>
+    </ul>
+    <p>試煉階級：<span id="trials"></span></p>
+
+    <h2 id="rules">配點規則</h2>
+    <ul>
+        <li>主盤共 <b id="nn"></b> 個節點：基礎 <span id="n-small"></span>、專精 <span id="n-notable"></span>、核心 <span id="n-core"></span>、寶珠孔 <span id="n-socket"></span>，加上免費的命運之核。每個節點、孔位都花 <b>1 點</b>，要連得上已點亮的路線。</li>
+        <li><b>退點</b>：每退 1 點消耗 1 顆<a data-item="talentStone">天賦石</a>，失敗不扣。命運之核不能退；孔內有寶珠或退了會切斷後面路線的節點也不能退。真實角色沒有免費清空。</li>
+        <li>加成算在角色身上；傭兵類加成給出戰的傭兵，魔法娃娃不吃傭兵核心。</li>
+    </ul>
+
+    <h2 id="regions">六大星群</h2>
+    <p>每個星群有 1 個核心，<b>強力效果都帶代價</b>。不同主題的核心可以同時生效；同主題的核心（主盤和大型星團的）<b>只有一個生效</b>。</p>
+    <div id="region-list"></div>
+
+    <h2 id="jewels">天賦寶珠（<span id="jn"></span> 款）</h2>
+    <p>寶珠只能鑲在對應種類的孔，要先點亮孔位。每顆獨立不堆疊，放在背包的「寶珠倉庫」（固定 3 欄、可篩選一般／轉化／星團）。拆下一般、轉化寶珠免費；星團要先退掉長出來的分支。</p>
+    <div class="tabs" id="tabs"></div>
+    <div id="jewel-intro"></div>
+    <div id="jewel-list"></div>
+
+    <h2 id="drops">掉率</h2>
+    <p>異界地圖依階級 T1→T15 線性增加；一般地圖依怪物等級換算成階級。<b>不吃地圖掉寶詞綴</b>。試煉是首次打倒試煉首領時另外抽一次。</p>
+    <div id="drop-list"></div>
+    <p>掉到寶珠時的種類：一般 <span id="p-n"></span>、轉化 <span id="p-r"></span>、星團 <span id="p-c"></span>。一般寶珠魔法 <span id="q-m"></span>、稀有 <span id="q-r"></span>；星團小型 <span id="s-s"></span>、中型 <span id="s-m"></span>、大型 <span id="s-l"></span>；同類別內各款平均抽。</p>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const T = W.talent, R = T.rules, D = T.drops;
+const set = (id, v) => { $('#' + id).textContent = v; };
+set('total', R.totalPoints); set('ul', R.unlockLevel); set('ml', R.maxLevel); set('lp', R.levelPoints); set('tp', R.trialPoints);
+$$('.ul2').forEach(e => e.textContent = R.unlockLevel);
+$('#trials').innerHTML = T.trialTiers.map(t => `<span class="tag gold">T${t}</span>`).join('');
+set('nn', T.nodes); set('n-small', T.nodeCount.small); set('n-notable', T.nodeCount.notable); set('n-core', T.nodeCount.core); set('n-socket', T.nodeCount.socket);
+set('jn', T.jewels.length);
+const modText = m => `${esc(m[0])} +${m[1]}${esc(m[2] || '')}`;
+renderTable($('#region-list'), [
+    { label: '星群', html: r => `<b style="color:${r.color}">${esc(r.name)}</b><br><small class="dim">${esc(r.desc)}</small>` },
+    { label: '核心', html: r => `<b>${esc(r.core)}</b><br>${esc(r.coreText)}` },
+    { label: '基礎節點', html: r => `<small>${r.small.map(modText).join('<br>')}</small>` },
+    { label: '專精節點', html: r => `<small>${r.notable.map(n => `<b>${esc(n.name)}</b>：${n.mods.map(modText).join('、')}`).join('<br>')}</small>` },
+], T.regions);
+
+const TYPES = [['normal', '一般'], ['radius', '轉化'], ['cluster', '星團']];
+const jewelItem = j => 'talentJewel_' + j.id;
+let cur = 'normal';
+function drawJewels() {
+    renderTabs($('#tabs'), TYPES.map(([k, n]) => [k, `${T.socketTypes[k].mark} ${n}（${T.jewels.filter(j => j.type === k).length}）`]), cur, v => { cur = v; $('#jewel-list')._sort = null; drawJewels(); });
+    const list = T.jewels.filter(j => j.type === cur);
+    if (cur === 'normal') {
+        $('#jewel-intro').innerHTML = '<p>魔法 2 條、稀有 3 條詞綴，可以跨星群使用。主盤有 12 個一般寶珠孔。</p>';
+        renderTable($('#jewel-list'), [
+            { label: '寶珠', html: j => itemLink(jewelItem(j)) },
+            { label: '詞綴', html: j => j.mods.map(modText).join('、') },
+        ], list);
+    } else if (cur === 'radius') {
+        $('#jewel-intro').innerHTML = '<p>轉化孔位附近<b>已配置的基礎節點</b>，不改核心、專精或其他孔位；同一節點最多接受一種轉化。主盤有 6 個轉化孔。</p>';
+        renderTable($('#jewel-list'), [
+            { label: '寶珠', html: j => itemLink(jewelItem(j)) },
+            { label: '效果', html: j => esc(j.text) },
+        ], list);
+    } else {
+        $('#jewel-intro').innerHTML = `<p>鑲入後長出額外分支，每個節點仍要花 1 點；星團不能再插星團。主盤有 6 個星團孔。大小：${T.clusterSizes.map(s => `${esc(s.name)} ${s.small} 基礎＋${s.notable} 專精${s.core ? '＋1 核心' : ''}`).join('、')}。</p>`;
+        renderTable($('#jewel-list'), [
+            { label: '主題', html: f => `<b style="color:${f.color}">${esc(f.name)}</b><br>${T.clusterSizes.map(s => itemLink(`talentJewel_cluster-${f.id}-${s.id}`)).join(' ')}` },
+            { label: '基礎節點', html: f => `<small>${f.small.map(modText).join('<br>')}</small>` },
+            { label: '專精節點', html: f => `<small>${f.notable.map(n => `<b>${esc(n.name)}</b>：${n.mods.map(modText).join('、')}`).join('<br>')}</small>` },
+            { label: '核心（大型）', html: f => `<b>${esc(f.core.name)}</b><br><small>${esc(f.core.text)}</small>` },
+        ], T.clusters);
+    }
+}
+drawJewels();
+
+const lerp = (a, t) => a[0] + (a[1] - a[0]) * (t - 1) / 14;
+const TIERS = [1, 5, 10, 15];
+renderTable($('#drop-list'), [
+    { label: '來源', html: r => r.name },
+    ...TIERS.map(t => ({ label: `T${t}`, num: true, html: r => pct(lerp(r.a, t)) })),
+], [
+    { name: '💠 寶珠・一般怪', a: D.jewel.normal }, { name: '💠 寶珠・首領', a: D.jewel.boss }, { name: '💠 寶珠・首次試煉', a: D.jewel.trial },
+    { name: '🪨 天賦石・一般怪', a: D.stone.normal }, { name: '🪨 天賦石・首領', a: D.stone.boss }, { name: '🪨 天賦石・首次試煉', a: D.stone.trial },
+]);
+set('p-n', pct(D.pool.normal)); set('p-r', pct(D.pool.radius)); set('p-c', pct(D.pool.cluster));
+set('q-m', pct(D.normalQuality.magic)); set('q-r', pct(D.normalQuality.rare));
+set('s-s', pct(D.clusterSize.small)); set('s-m', pct(D.clusterSize.medium)); set('s-l', pct(D.clusterSize.large));
+</script>
+</body>
+</html>

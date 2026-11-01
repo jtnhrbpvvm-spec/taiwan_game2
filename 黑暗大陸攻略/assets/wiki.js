@@ -4,6 +4,7 @@ const W = window.WIKI;
 
 const PAGES = [
     ['index', '首頁', '🏠'], ['guide', '新手攻略', '🧭'], ['classes', '職業', '⚔️'], ['skills', '技能魔法', '✨'],
+    ['advance', '二轉', '🔱'], ['talent', '命運星盤', '🌌'],
     ['items', '道具圖鑑', '🎒'], ['monsters', '怪物圖鑑', '👹'], ['zones', '地圖村莊', '🗺️'], ['quests', '職業任務', '📜'],
     ['enchant', '衝裝', '🔨'], ['affix', '詞綴通貨', '💠'], ['resonance', '共鳴裝備', '🌟'], ['forge', '鍛造附魔', '⚒️'],
     ['rift', '異界地圖', '🌀'], ['tower', '永夜之塔', '🏛️'], ['dragons', '四龍首領', '🐉'], ['dolls', '魔法娃娃', '🧸'],
@@ -49,7 +50,7 @@ const weaponClassIds = type => Object.keys(W.classes).filter(id => (W.classes[id
 const weaponClassText = type => classUseHtml(weaponClassIds(type));
 const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', dragon: '龍穴' };
 const SKILL_TYPE = { spell: '攻擊魔法', heal: '治癒', buff: '增益', strike: '物理技能', passive: '被動' };
-const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷' };
+const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷', talentJewel: '💠' };
 const GRADE_NAME = { normal: '一般', high: '高級', rare: '稀有', hero: '英雄', legend: '傳說' };
 const TAG_NAME = { human: '人型', demon: '惡魔', holy: '神聖', undead: '不死', large: '大型', boss: '首領', dragon: '龍族' };
 const ACC_SLOTS = ['amulet', 'ring', 'belt'];
@@ -161,8 +162,8 @@ function sourceText(s, id) {
         case 'book': { const b = W.bookDrops.find(x => x.id === id), lv = b ? Math.max(1, b.lv - 5) : 1;
             return `📖 <a href="monsters.html#books">Lv.${lv} 以上的怪物</a>掉落（一般怪 ${pct(W.consts.BOOK_DROP_P)}、首領 ${pct(W.consts.BOOK_BOSS_P)} 掉一本書，從可掉的書裡平均抽；Lv.${lv} 怪物可掉 ${bookPool(lv).length} 本，一般怪指定這本約 ${pct(W.consts.BOOK_DROP_P / bookPool(lv).length)}，等級越高可掉的書越多）`; }
         case 'currency': { const c = W.currency[id]; return `🎲 怪物掉落通貨（每隻 ${pct(W.consts.CURRENCY_DROP_P)}、首領 ${pct(W.consts.CURRENCY_BOSS_P)}），掉落權重 ${c ? c.w : '?'}${c && c.minLv ? `，只有 Lv.${c.minLv} 以上怪物會掉` : ''}`; }
-        case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵` +
-            (d.tier >= 8 ? `；T8 以上掉圖有 ${pct(W.consts.TREASURE_MAP_DROP_P)} 是<a href="rift.html#treasure">未鑑定傳奇財寶地圖</a>` : '');
+        case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵；拿到時都是<a href="rift.html#flow">未鑑定</a>，鑑定才知道品質` +
+            (d.tier >= 8 ? `；T8 以上有 ${pct(W.consts.TREASURE_MAP_DROP_P)} 鑑定後是<a href="rift.html#treasure">傳奇財寶地圖</a>` : '');
         case 'mapboss': return `🌀 異界首領 ${pct(W.consts.RES_MAP_BOSS_P)} 掉一件共鳴裝備（${W.resTiers[d.res.tier].name}需 T${[0, 1, 6, 11, 15][d.res.tier]} 以上地圖）`;
         case 'soul': return `🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×5、${fmt(W.consts.BOSS_ENCHANT_SOUL_COST)} 金幣）`;
         case 'mercRune': { const dr = W.merc.drops, basic = dr && dr.basic.includes(id);
@@ -171,6 +172,12 @@ function sourceText(s, id) {
                 : `<b>特殊符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>`); }
         case 'doll': return W.dolls[d.doll] && W.dolls[d.doll].quality === 'T4' ? `🧸 娃娃商人露米（${W.consts.DOLL_SHOP_PRICE} 鑽，目前限 GM 購買）` : '🧸 目前只有 GM 發放';
         case 'questitem': return '📜 接了職業任務後，指定地圖的怪物掉落';
+        // 桌寵的資料沒帶 W.adv／W.talent（gen-zones.js 的 WIKI_KEYS），要留不看數值的寫法
+        case 'advProof': return `🔱 接了<a href="advance.html#flow">二轉第 5 章</a>後，任何地圖的首領${W.adv ? ` ${pct(W.adv.proofP)}` : ''} 掉落（世界首領、團隊副本不算）`;
+        case 'advQuest': return `🔱 ${classLink(s.cls)}<a href="advance.html#flow">二轉</a>第 ${s.ch + 1} 章任務獎勵（第一次）`;
+        case 'advReshape': return `🔱 ${W.adv ? `Lv.${W.adv.reshapeLv} 以上首領 ${pct(W.adv.reshapeP)}` : '高等首領極稀有'} 掉落，用來<a href="advance.html#reshape">重選二轉分支</a>`;
+        case 'talent': { const r = W.talent && W.talent.drops[id === 'talentStone' ? 'stone' : 'jewel'], t = a => `${pct(a[0])}→${pct(a[1])}`;
+            return r ? `🌌 地圖越高階越容易掉（T1→T15）：一般怪 ${t(r.normal)}、首領 ${t(r.boss)}、首次<a href="talent.html#points">星盤試煉</a> ${t(r.trial)}` : '🌌 怪物掉落，地圖越高階越容易掉'; }
         case 'dismantle': return `🧸 娃娃商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）`;
         case 'random': return `🎲 隨機裝備掉落（Lv.${s.minLv} 以上怪物；一般怪 ${pct(W.consts.RANDOM_EQUIP_P)}、首領 50%，可能帶品質詞綴）`;
     }
@@ -189,7 +196,7 @@ function itemDetailHtml(id) {
         ${d.desc && !doll ? `<p>${esc(d.desc)}</p>` : ''}
         ${d.classes ? `<div class="msec"><h4>限定職業</h4>${d.classes.map(classLink).join('、')}</div>` : ''}
         ${d.res ? `<div class="msec box"><h4>🌟 共鳴技能</h4>${resText(d.res)}</div>` : ''}
-        ${book ? `<div class="msec"><h4>學會技能</h4>${skillLink(d.skill)}　<small>${esc(book.desc)}</small><br><small>${Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === d.skill); return r ? `${className(c)} Lv.${r.lv}` : ''; }).filter(Boolean).join('、')}</small></div>` : ''}
+        ${book ? `<div class="msec"><h4>學會技能</h4>${skillLink(d.skill)}　<small>${esc(book.desc)}</small><br><small>${advWho(book) ? `${className(book.cls)}・${esc(advWho(book).name)}（目前分支才能學）Lv.${book.lv}` : Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === d.skill); return r ? `${className(c)} Lv.${r.lv}` : ''; }).filter(Boolean).join('、')}</small></div>` : ''}
         ${doll ? `<div class="msec box"><h4>娃娃能力</h4>基本：${esc(doll.base)}<br>被動「${esc(doll.name)}」：${esc(doll.desc)}<br><small>召喚要 ${W.consts.DOLL_SUMMON_COST} 個魔法結晶，每 ${sec(W.consts.DOLL_SUMMON_MS)}自動再扣 ${W.consts.DOLL_SUMMON_COST} 個。</small></div>` : ''}
         ${d.cat === 'mercRune' && W.merc.runes[d.rune] ? `<div class="msec box"><h4>🤝 傭兵技能：${esc(W.merc.runes[d.rune].name)}</h4>${esc(W.merc.runes[d.rune].text)}</div>` : ''}
         ${be ? `<div class="msec box"><h4>🔮 BOSS 附魔：${esc(be.name)}</h4>${esc(W.bossEnchantText[id] || '')}<br><small>觸發 ${pct(be.p)}、冷卻 ${be.cd} 秒、${be.kind === 'magic' ? '魔法' : '物理'}傷害；附魔費用 ${fmt(be.cost)} 金幣</small></div>` : ''}
@@ -207,8 +214,8 @@ function bookGroupsHtml(pool) {
     const g = {};
     for (const b of pool) {
         const d = W.items[b.id], s = W.skills[d.skill];
-        const k = s.kind === 'magic' ? 'a' + String(s.tier).padStart(2, '0') : 'b' + String(Object.keys(W.classes).indexOf(d.classes[0])).padStart(2, '0');
-        (g[k] = g[k] || { name: s.kind === 'magic' ? `${W.magicTierNames[s.tier]}級魔法書` : `${className(d.classes[0])}技能書`, ids: [] }).ids.push(b.id);
+        const k = s.kind === 'magic' ? 'a' + String(s.tier).padStart(2, '0') : (s.kind === 'adv' ? 'c' : 'b') + String(Object.keys(W.classes).indexOf(d.classes[0])).padStart(2, '0');
+        (g[k] = g[k] || { name: s.kind === 'magic' ? `${W.magicTierNames[s.tier]}級魔法書` : `${className(d.classes[0])}${s.kind === 'adv' ? '二轉' : ''}技能書`, ids: [] }).ids.push(b.id);
     }
     return Object.keys(g).sort().map(k => `<div class="bookg"><b>${esc(g[k].name)}</b> <small class="dim">${g[k].ids.length} 本</small>：${g[k].ids.map(id => `<a class="il" data-item="${esc(id)}">${itemIcon(id)}${esc(W.skills[W.items[id].skill].name)}</a>`).join('')}</div>`).join('');
 }
@@ -230,6 +237,7 @@ function monDetailHtml(id) {
         <span>攻擊間隔 <b>${m.spd}ms</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span><span>金幣 <b>${range(m.gold)}</b></span></div>
         ${m.magic ? `<p>魔法「${esc(m.magic.name)}」：${pct(m.magic.p)} 機率，傷害 ${range(m.magic.dmg)}（無視防禦、受魔防減免）</p>` : ''}
         ${m.boss ? `<p class="dim">首領／龍會每 7～11 秒蓄力放大招（紅圈，×${W.consts.TELE_MUL} 傷害），走出紅圈就能閃開。</p>` : ''}
+        ${m.afflict && W.afflicts ? `<p>異常狀態：${W.afflicts.defs[m.afflict.kind].emoji} <a href="mechanics.html#afflict">${esc(W.afflicts.defs[m.afflict.kind].name)}</a>（${m.afflict.on === 'hit' ? '普攻' : '魔法'}打中 ${pct(m.afflict.p)}，受魔防減免）</p>` : ''}
         <div class="msec"><h4>出沒地點</h4>${where.length ? where.join('、') : '<span class="dim">特殊出現</span>'}</div>
         <div class="msec"><h4>專屬掉落</h4>${m.drops.length ? `<ul class="src">${m.drops.map(d => `<li>${itemLink(d.id, d.n)}　<b>${pct(d.p)}</b></li>`).join('')}</ul>` : '<span class="dim">只有共通掉落與地區掉落</span>'}</div>
         <div class="msec"><h4>📖 魔法書／技能書</h4>${monBookHtml(m)}</div>
@@ -237,6 +245,10 @@ function monDetailHtml(id) {
 }
 
 // ───────── 技能顯示 ─────────
+// 二轉技能所屬的分支（不是二轉技能回傳 null）
+function advWho(s) {
+    return s && s.kind === 'adv' && W.adv ? W.adv.branches[s.cls].find(b => b.id === s.branch) : null;
+}
 function skillMetaHtml(s) {
     const t = [`<span class="tag ${s.type === 'passive' ? 'purple' : s.type === 'buff' ? 'green' : s.type === 'heal' ? 'cyan' : 'red'}">${SKILL_TYPE[s.type] || s.type}</span>`];
     if (s.kind === 'magic') t.push(`<span class="tag blue">${W.magicTierNames[s.tier]}級魔法</span>`);
@@ -250,7 +262,8 @@ function skillMetaHtml(s) {
 function skillDetailHtml(id) {
     const s = W.skills[id];
     if (!s) return '找不到這個技能';
-    const who = Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === id); return r ? `${classLink(c)} Lv.${r.lv}` : ''; }).filter(Boolean);
+    const adv = advWho(s);
+    const who = adv ? [`${classLink(s.cls)}・<a href="advance.html#${esc(adv.id)}">${esc(adv.name)}</a> Lv.${s.lv}`] : Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === id); return r ? `${classLink(c)} Lv.${r.lv}` : ''; }).filter(Boolean);
     const book = 'book_' + id;
     const nums = [];
     if (s.mult) nums.push(`傷害倍率 ×${s.mult}${s.hits ? `，${s.hits} 連擊` : ''}`);
@@ -263,7 +276,7 @@ function skillDetailHtml(id) {
     return `<div class="mhead">${s.img ? `<img class="ic lg" src="${esc(img(s.img))}" alt="">` : '<span class="ic lg emo">✨</span>'}<div><h3>${esc(s.name)}</h3>${skillMetaHtml(s)}</div></div>
         <p>${esc(s.desc)}</p>${nums.length ? `<div class="stats">${nums.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
         <div class="msec"><h4>可學職業</h4>${who.join('、') || '—'}</div>
-        ${W.items[book] ? `<div class="msec"><h4>學習方式</h4>${itemLink(book)}<ul class="src">${(W.sources[book] || []).map(x => `<li>${sourceText(x, book)}</li>`).join('') || '<li>創角時自動學會</li>'}</ul></div>` : '<div class="msec"><h4>學習方式</h4>創角時自動學會</div>'}`;
+        ${W.items[book] ? `<div class="msec"><h4>學習方式</h4>${itemLink(book)}<ul class="src">${(W.sources[book] || []).map(x => `<li>${sourceText(x, book)}</li>`).join('') || '<li>創角時自動學會</li>'}</ul></div>` : `<div class="msec"><h4>學習方式</h4>${adv ? '完成二轉第 6 章、成為這個分支時自動學會' : '創角時自動學會'}</div>`}`;
 }
 // ═══ 桌寵共用：結束 ═══
 

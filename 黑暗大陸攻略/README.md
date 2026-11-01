@@ -13,7 +13,9 @@
 | `items.html` | 道具圖鑑（可篩選、搜尋，點開看取得方式） |
 | `monsters.html` | 怪物圖鑑與共通掉落 |
 | `zones.html` | 村莊商店與各狩獵地區 |
-| `quests.html` | 職業任務 4 章 |
+| `quests.html` | 職業任務 7 章（第 5～7 章是二轉） |
+| `advance.html` | 二轉（流程、36 分支、命運重塑石） |
+| `talent.html` | 命運星盤（點數、配點規則、六大核心、38 寶珠、掉率） |
 | `enchant.html` | 衝裝成功率 |
 | `affix.html` | 品質、詞綴、製作通貨 |
 | `resonance.html` | 共鳴裝備 |
@@ -36,9 +38,10 @@
 node tools/extract.js
 ```
 
-腳本會載入遊戲的 `data/*.js`（只讀，不改遊戲），把職業、技能、道具、怪物（用遊戲的公式算出實際數值）、地區、任務、共鳴、詞綴、通貨、娃娃、變身、經驗表等寫進 `data/wiki-data.js`。
+腳本會載入遊戲的 `data/*.js`（只讀，不改遊戲），把職業、技能、二轉、命運星盤、異常狀態、道具、怪物（用遊戲的公式算出實際數值）、地區、任務、共鳴、詞綴、通貨、娃娃、變身、經驗表等寫進 `data/wiki-data.js`。
 遊戲資料夾預設是 `../../idle-lineage-class/-username-.github.io-/屠龍勇者`，放在別處時把路徑當參數傳入。
 
 - 頁面上的數值大多直接讀 `wiki-data.js`，重跑就會更新。
 - 文字說明（攻略、規則）是依遊戲的 `ARCHITECTURE.md` 整理的，遊戲改規則時要手動改對應頁面。
+- 星盤寶珠與天賦石的掉率只寫在遊戲後端，`extract.js` 裡是手抄的（`talent.drops`），改版時要對照遊戲的 `tools/talent-system.sql`。
 - 圖片直接引用遊戲線上版網址（`IMG_BASE`，在 `tools/extract.js`），不複製圖檔；圖片版權屬遊戲作者。

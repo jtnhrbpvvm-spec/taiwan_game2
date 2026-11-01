@@ -12,7 +12,7 @@
 <body data-page="skills">
 <main>
     <h1>✨ 技能與魔法</h1>
-    <p class="lead">技能分兩種：<b>共用魔法</b>（1～10 級，各職業能學到的最高級數不同）與<b>職業技能</b>。全部都要用<b>魔法書／技能書</b>學（Lv.1 就能學的創角時自動學會），被動技能學會就生效。</p>
+    <p class="lead">技能分兩種：<b>共用魔法</b>（1～10 級，各職業能學到的最高級數不同）與<b>職業技能</b>。全部都要用<b>魔法書／技能書</b>學（Lv.1 就能學的創角時自動學會），被動技能學會就生效。職業技能最晚 Lv.55 就能學；Lv.60 起的分支專屬技能見<a href="advance.html">二轉</a>。</p>
     <div class="cols2">
         <div class="box"><h3 style="margin-top:0">📖 魔法書哪裡來</h3>
             <ul>
@@ -73,7 +73,7 @@ function draw() {
     }
     const c = W.classes[cur];
     const list = W.classSkills[cur].map(x => ({ ...W.skills[x.id], need: x.lv }));
-    $('#intro').innerHTML = `<p>${c.icon} <b>${c.name}</b>可學 ${list.length} 招（職業技能 ${list.filter(s => s.kind === 'class').length}、魔法 ${list.filter(s => s.kind === 'magic').length}，魔法最高 ${c.magic.max} 級）。<a href="classes.html#${cur}">→ 職業介紹</a></p>`;
+    $('#intro').innerHTML = `<p>${c.icon} <b>${c.name}</b>可學 ${list.length} 招（職業技能 ${list.filter(s => s.kind === 'class').length}、魔法 ${list.filter(s => s.kind === 'magic').length}，魔法最高 ${c.magic.max} 級）。<a href="classes.html#${cur}">→ 職業介紹</a>　<a href="advance.html#${cur}">→ 二轉分支</a></p>`;
     renderTable($('#list'), [
         { label: '學習 Lv', num: true, v: s => s.need, html: s => s.need },
         { label: '技能', v: s => s.name, html: s => skillLink(s.id) + (s.kind === 'magic' ? ` <small class="dim">${W.magicTierNames[s.tier]}級魔法</small>` : '') },

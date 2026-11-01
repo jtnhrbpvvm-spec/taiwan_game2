@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>黑暗大陸攻略百科</title>
-<meta name="description" content="《黑暗大陸》（天堂風格自動掛機 RPG）攻略與百科：職業、技能、道具、怪物、地圖、任務、衝裝、共鳴裝備、異界地圖、永夜之塔與四大龍。">
+<meta name="description" content="《黑暗大陸》（天堂風格自動掛機 RPG）攻略與百科：職業、二轉、命運星盤、技能、道具、怪物、地圖、任務、衝裝、共鳴裝備、異界地圖、永夜之塔與四大龍。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <style>
@@ -25,7 +25,7 @@
     <section class="hero">
         <div>
             <h1>黑暗大陸 攻略百科</h1>
-            <p class="lead">《黑暗大陸》是天堂 1 風格的網頁自動掛機 RPG：十二種職業、魔法書學技能、衝裝、暗黑式隨機詞綴、共鳴裝備、異界地圖、百層永夜之塔與四大龍。
+            <p class="lead">《黑暗大陸》是天堂 1 風格的網頁自動掛機 RPG：十二種職業與 36 個二轉分支、命運星盤、魔法書學技能、衝裝、暗黑式隨機詞綴、共鳴裝備、異界地圖、百層永夜之塔與四大龍。
                 這裡整理了新手攻略與完整的資料百科，數值都直接從遊戲原始碼擷取。</p>
             <div class="nums" id="nums"></div>
             <p><a class="btn" href="guide.html">🧭 從新手攻略開始</a>　<a class="btn" href="https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/" target="_blank" rel="noopener">▶ 開始遊戲</a>　<a class="btn" id="pet-btn" target="_blank" rel="noopener">🐾 黑暗大陸桌寵</a></p>
@@ -60,7 +60,9 @@ const DESC = {
     items: '全部武器、防具、飾品、消耗品與材料，附取得方式。',
     monsters: '所有怪物的血量、攻擊、經驗、出沒地點與掉落。',
     zones: '村莊、商店、各狩獵地區的等級、怪物與掉落。',
-    quests: '十二職業各 4 章任務：條件、地點、首領與獎勵。',
+    quests: '十二職業各 7 章任務：條件、地點、首領與獎勵。',
+    advance: 'Lv.60 二轉：36 個分支的核心被動、專屬技能與重選方式。',
+    talent: '325 節點天賦盤：點數來源、六大核心、38 款寶珠與掉率。',
     enchant: '安定值、成功率、祝福／詛咒卷軸與衝裝建議。',
     affix: '魔法／稀有／傳說品質、物爆魔爆等詞綴與製作通貨。',
     resonance: '帶專屬技能的共鳴武器與防具，觸發方式與取得。',
@@ -69,13 +71,13 @@ const DESC = {
     tower: '永夜之塔 100 層：逐層解鎖、守關首領與專屬材料。',
     dragons: '四大龍巢穴、團隊副本與世界首領。',
     dolls: '21 款魔法娃娃的能力與召喚規則。',
-    morph: '變形卷軸 32 種變身對象與武器限制。',
+    morph: '變形卷軸 36 種變身對象與武器限制。',
     merc: '傭兵團試煉取得、六職業傭兵、50 種符石技能與死亡規則。',
     mechanics: '命中、傷害、防禦、攻速、負重等計算公式與戰鬥規則。',
     exp: '1～99 級經驗表、高等級經驗遞減、死亡懲罰與離線收益。',
     online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、排行榜。',
 };
-const GROUPS = { 'g-guide': ['guide', 'classes', 'quests'], 'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
+const GROUPS = { 'g-guide': ['guide', 'classes', 'quests', 'advance', 'talent'],'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
     'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph', 'merc'], 'g-sys': ['mechanics', 'exp', 'online'] };
 const P = Object.fromEntries(PAGES.map(p => [p[0], p]));
 for (const [el, list] of Object.entries(GROUPS))
