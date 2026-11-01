@@ -2,7 +2,7 @@
 // 部署方式見對話說明；金鑰（選用）放在 Worker 的 Secret「CWA_KEY」，不會出現在網頁
 // 回傳格式與 weather-data 分支的 weather.json 相同：{ stations, records }
 const STATION = 'C0AI20', NAME = '白沙灣';
-const DAY = 86400000;
+const DAY = 86400000, HOUR = 3600000;
 const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
 const taipeiHour = ms => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Taipei', hour: '2-digit', hourCycle: 'h23' }).format(ms);
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json; charset=utf-8' };
@@ -26,7 +26,7 @@ async function fromCodis(add) {
       stn_type: 'auto_C0', more: '', start: `${date}T00:00:00`, end: `${date}T23:59:59` });
     const res = await fetch('https://codis.cwa.gov.tw/api/station', { method: 'POST', body });
     if (!res.ok) throw new Error(`回應 ${res.status}`);
-    for (const r of (await res.json()).data?.[0]?.dts ?? []) add(Date.parse(`${r.DataTime}+08:00`), r.AirTemperature?.Instantaneous);
+    for (const r of (await res.json()).data?.[0]?.dts ?? []) add(Math.round(Date.parse(`${r.DataTime}+08:00`) / HOUR) * HOUR, r.AirTemperature?.Instantaneous);
   }
 }
 

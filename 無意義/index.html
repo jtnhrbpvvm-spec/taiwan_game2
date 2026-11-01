@@ -54,7 +54,7 @@ document.getElementById('gen').onclick = () => {
 
 // 天氣：GitHub Actions 定時存的資料（weather-data 分支）＋ Cloudflare Worker 即時抓的資料，兩者合併
 const WEATHER_URL = 'https://raw.githubusercontent.com/jtnhrbpvvm-spec/taiwan_game2/weather-data/weather.json';
-const LIVE_URL = ''; // Cloudflare Worker 網址，部署後填入；空白則只用 GitHub 的資料
+const LIVE_URL = 'https://baishawan.s8gh6n2fyj.workers.dev/'; // Cloudflare Worker，按下時即時抓資料
 const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
 const pad = n => String(n).padStart(2, '0');
 
