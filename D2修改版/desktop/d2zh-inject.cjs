@@ -6,7 +6,7 @@
 //   ・「書籤修改」面板的「檢查更新」按鈕：頁面 console.log('__D2ZH__:update') → 這裡下載 → 把結果回傳給頁面
 //   ・「回報內容」視窗同理：console.log('__D2ZH__:replies') → 這裡下載 回應.txt → 回傳給頁面
 'use strict';
-const { app } = require('electron');
+const { app, protocol } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -92,7 +92,47 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+}
+
+// 書籤修改面板用到遊戲的物品函式。網頁版它們分在不同檔案、有匯出；電腦版全打包在 moved-*.js，只有內部用的就不匯出，頁面拿不到。
+// 所以遊戲註冊 app:// 時包一層，回傳那個檔案時在最後補上匯出（名稱每次改版都會變，用內容認）。
+const EXPORT_PATTERNS = [
+  /function ([\w$]+)\(\)\{return ([\w$]+)&&\{uniques:\2\.uniques,bases:\2\.bases/g,
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{let [\w$]+=[\w$]+\?\.runewords\?\.\[[\w$]+\];if\(![^;]{0,60}\)return null;let [\w$]+=[\w$]+\.flatMap/g,
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+\)\{if\(![\w$]+\(\)\)return [\w$]+\([\w$]+,[\w$]+,[\w$]+\);let [^}]{0,80}\.roll=\[1,/g,
+  /[,;\s]([\w$]+)=\[[\w$]+\(`Ancients' Pledge`,/g,
+];
+function addExports(text) {
+  const names = new Set();
+  for (const re of EXPORT_PATTERNS) for (const m of text.matchAll(re)) names.add(m[1]);
+  const lines = /function ([\w$]+)\([^)]*\)\{/g;
+  const at = text.indexOf('strModEnhancedDamage');
+  if (at >= 0) { const m = lines.exec(text.slice(text.lastIndexOf('function ', at), at)); if (m) names.add(m[1]); }
+  if (!names.size) return null;
+  return `${text}\nexport{${[...names].map((name, i) => `${name} as __d2zh${i}`).join(',')}};\n`;
+}
+try {
+  const handle = protocol.handle;
+  protocol.handle = function (scheme, handler) {
+    return handle.call(protocol, scheme, async request => {
+      const response = await handler(request);
+      try {
+        if (scheme !== 'app' || !/^app:\/\/game\/assets\/[^/]+\.js$/.test(request.url) || /\/ko-/.test(request.url) || !response.ok) return response;
+        const text = await response.clone().text();
+        const patched = text.includes('strModEnhancedDamage') ? addExports(text) : null;
+        if (!patched) return response;
+        const headers = new Headers(response.headers);
+        headers.delete('content-length');
+        return new Response(patched, { status: response.status, headers });
+      } catch (e) {
+        log(`exports: ${e && e.message}`);
+        return response;
+      }
+    });
+  };
+} catch (e) {
+  log(`exports setup: ${e && e.message}`);
 }
 
 // 開遊戲時背景檢查。通常注入完才下載好，所以做完要告訴遊戲頁面（剛開遊戲還在選單就會自動重新載入用新版）
