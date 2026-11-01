@@ -19,6 +19,7 @@ javascript:(function awTools() {
    *   - 收益統計：每小時的 Zeny、經驗、擊殺、裝備、卡片，以及還要多久升級
    *   - 自動精煉：在煉金工坊選好裝備，代替你一直按精煉，到目標或材料不夠就停
    *   - 冷卻提醒：組隊副本的冷卻結束時提示一次
+   *   - 配裝配技能推薦：從背包的裝備和持有的技能寶石找預估 DPS 最高的組合，看過結果再按套用，可以復原
    *   - 置頂視窗：把遊戲搬進永遠在最上層的小視窗（電腦版 Chrome／Edge）
    *   - 使用書籤時一律不上傳排行榜（POST /api/rank）、不能在聊天室發言（POST /api/chat）
    *   - 修改功能開著時不能使用協力（POST /api/coop/create、join 和協力的 WebSocket），見 modsOn
@@ -42,7 +43,7 @@ javascript:(function awTools() {
    */
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在面板標題旁 */
-  const VERSION = 'V23';
+  const VERSION = 'V24';
 
   const CFG_KEY = 'xjtools.cfg';
   const NOTE_KEY = 'xjtools.notes';
@@ -386,6 +387,11 @@ javascript:(function awTools() {
       '#xjRisk button{font:inherit;color:#fff;background:#2c4a7c;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 14px;cursor:pointer}',
       '#xjRisk button.go{background:#a8552a}',
       '#xjCards .it{margin:4px 0;padding-top:4px;border-top:1px dashed rgba(255,255,255,.2)}',
+      '#xjAdv label{display:inline-block;margin-right:8px}',
+      '#xjAdv .row{margin:4px 0}',
+      '#xjAdv .res{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.2)}',
+      '#xjAdv .gold{color:#ffd97a}',
+      '#xjAdv svg.board{display:block;width:200px;height:200px;margin:4px 0}',
       '.xjCd{position:absolute;right:1px;top:0;font-size:10px;line-height:1.2;color:#ffe9a8;text-shadow:0 0 2px #000,0 0 2px #000;pointer-events:none}'
     ].join('');
     document.head.appendChild(st);
@@ -673,6 +679,290 @@ javascript:(function awTools() {
     };
   };
 
+  /* ===== 配裝、配技能推薦 =====
+   * 比較的數字是遊戲自己的預估 DPS 和生存（背包「建議更換」用的同一套）。把角色淺複製一份，換上別的裝備或排法再算，
+   * 算的時候不會動到存檔；要按「套用」才會真的換。單格模式開著時形狀和連結會照單格規則算。
+   *   - 裝備：一個部位一個部位試，同部位每一件都換上去算，留分數最高的；整輪最多做兩次。雙手武器和盾牌的衝突用遊戲的穿裝函式處理。
+   *   - 技能盤：模擬退火。從目前的排法出發，每一步隨機放上、拿下、移動或替換一顆，變好就接受，變差也有機率接受，
+   *     越到後面機率越低；全程記住最好的一份。
+   *   - 裝備和技能盤會互相影響，兩個都要算時做「裝備、技能盤、裝備」。
+   * 分數 = DPS，生存低於底線時大幅扣分；再加一點點生存和寶石數的比重，傷害相同時挑比較耐打、寶石比較少的。
+   * 預估 DPS 只算技能傷害和普攻，沒有傷害的技能會被當成沒用，所以預設留在盤上（keep）。
+   * 卡片不列入：鑲卡要到鐵匠、花素材，而且可能失敗。 */
+  const advisor = (O, src) => {
+    const ev = window.__XJ.eval;
+    const est = /dps:([\w$]+)\(\w+,\w+\.char\),surv:([\w$]+)\(\w+,([\w$]+)\[\w+\.char\.cls\],\w+\)/.exec(src);
+    const find = re => { const m = re.exec(src); if (!m) throw new Error('找不到 ' + re); return ev(m[1]); };
+    if (!est) throw new Error('找不到預估 DPS');
+    const dpsOf = ev(est[1]), survOf = ev(est[2]), classes = ev(est[3]);
+    const equipFn = find(/new Set\(\w+\.bag\.map\(\w+=>\w+\.uid\)\),\w+=([\w$]+)\(\w+,\w+\.uid\)/);
+    const fitFn = find(/function ([\w$]+)\(\w,\w\)\{\s*let \w=[\w$]+\(\w,\w\.uid\);\s*if\(!\w\)return`nogem`/);
+    const drawFn = find(/([\w$]+)\(\w+,\{linked:\w+,held:/);
+    const skillsFn = find(/\w+=this\.fake\(\w+\),\w+=new Map\(\w+\.gems\.map\(\w+=>\[\w+\.uid,\w+\]\)\),\w+=([\w$]+)\(\w+\)/);
+    const gemName = find(/function ([\w$]+)\(\w\)\{\s*let \w=[\w$]+\(\w\.id\);\s*if\(\w\.sx&&\(\w\+=`（穿梭）`/);
+    const itemName = find(/獲得 \$\{([\w$]+)\(e\)\}（\$\{[\w$]+\(e\)\}）/);
+    const slotNames = find(/<small>\$\{([\w$]+)\[\w\]\}<\/small>\$\{\w\?`<span class="eq-nm">/);
+    if (![dpsOf, survOf, equipFn, fitFn, drawFn, skillsFn, gemName, itemName].every(f => typeof f === 'function') || !classes[O.game.char.cls] || !slotNames.weapon) throw new Error('找不到比較用的函式');
+    if (typeof O.panels.bag.base !== 'function') throw new Error('找不到背包面板');
+
+    const slots = Object.keys(slotNames);
+    const opt = { gear: true, gems: true, keep: true, surv: 100, secs: 6, slots: {} };
+    for (const sl of slots) opt.slots[sl] = true;
+    let run = 0, busy = false, msg = '', res = null, undo = null;
+    const esc = t => String(t).replace(/[&<>"]/g, ch => '&#' + ch.charCodeAt(0) + ';');
+    const num = v => Math.round(v).toLocaleString();
+    const box = () => document.getElementById('xjAdv');
+
+    /* 每產生一次值就是算完一步，值是目前進度的文字；call 的人決定什麼時候把控制權還給瀏覽器 */
+    const solve = function* () {
+      const c = O.game.char;
+      const mob = O.panels.bag.base().mobLv;
+      const measure = n => {
+        const d = O.game.deriveFor(n);
+        return { d: d, dps: dpsOf(d, n), surv: survOf(d, classes[n.cls], mob) };
+      };
+      let s = Object.assign({}, c, { equip: Object.assign({}, c.equip), bag: [], board: c.board.map(b => Object.assign({}, b)) });
+      const before = measure(s);
+      const floor = before.surv * opt.surv / 100;
+      const score = m => {
+        let v = (m.dps + 1e-6) * Math.pow(m.surv / before.surv, 0.02);
+        if (m.surv < floor) v *= Math.pow(m.surv / floor, 8);
+        return v;
+      };
+
+      const gearPass = function* () {
+        const pool = {};
+        let total = 0, done = 0;
+        for (const sl of slots) {
+          if (!opt.slots[sl]) continue;
+          pool[sl] = c.bag.concat(Object.values(c.equip)).filter(t => t.slot === sl);
+          total += pool[sl].length;
+        }
+        for (let pass = 0; pass < 2; pass++) {
+          let changed = false;
+          for (const sl of Object.keys(pool)) {
+            let best = null, bestV = score(measure(s));
+            for (const t of pool[sl]) {
+              done++;
+              if (s.equip[sl] === t) continue;
+              const n = Object.assign({}, s, { equip: Object.assign({}, s.equip), bag: [t] });
+              if (equipFn(n, t.uid)) continue;
+              n.bag = [];
+              const v = score(measure(n));
+              if (v > bestV * (1 + 1e-6)) { bestV = v; best = n; }
+              yield '比較裝備… ' + Math.min(99, Math.round(done / (total * 2) * 100)) + '%';
+            }
+            if (best) { s = best; changed = true; }
+          }
+          if (!changed) break;
+        }
+      };
+
+      const boardPass = function* () {
+        const rnd = n => Math.floor(Math.random() * n);
+        const keep = new Set();
+        if (opt.keep) for (const k of skillsFn(s, before.d.mods)) if (!(k.def.mult > 0)) keep.add(k.uid);
+        const value = b => score(measure(Object.assign({}, s, { board: b }))) * (1 - 0.0005 * b.length);
+        const fits = (b, g) => fitFn(Object.assign({}, s, { board: b }), g) === null;
+        /* 形狀旋轉後錨點可能在盤面外，所以範圍比 0～5 大一點；放不下的很快就會被排除 */
+        const at = uid => ({ uid: uid, rot: rnd(4), ox: rnd(10) - 2, oy: rnd(10) - 2 });
+        let cur = s.board, curV = value(cur), best = cur, bestV = curV;
+        const t0 = Date.now(), total = opt.secs * 1000;
+        const step = T => {
+          const free = c.gems.filter(g => !cur.some(b => b.uid === g.uid));
+          const movable = cur.filter(b => !keep.has(b.uid));
+          const next = cur.slice();
+          const r = Math.random();
+          if (r < 0.4 || !cur.length) {
+            if (!free.length) return;
+            const g = at(free[rnd(free.length)].uid);
+            if (!fits(next, g)) return;
+            next.push(g);
+          } else if (r < 0.55) {
+            if (!movable.length) return;
+            next.splice(next.indexOf(movable[rnd(movable.length)]), 1);
+          } else if (r < 0.85) {
+            const i = rnd(next.length), g = at(next[i].uid);
+            next.splice(i, 1);
+            if (!fits(next, g)) return;
+            next.push(g);
+          } else {
+            if (!free.length || !movable.length) return;
+            const old = movable[rnd(movable.length)];
+            const g = { uid: free[rnd(free.length)].uid, rot: rnd(4), ox: old.ox, oy: old.oy };
+            next.splice(next.indexOf(old), 1);
+            if (!fits(next, g)) return;
+            next.push(g);
+          }
+          const v = value(next);
+          if (v >= curV || Math.random() < Math.exp((v - curV) / (Math.max(curV, 1e-9) * T))) {
+            cur = next; curV = v;
+            if (v > bestV) { best = next; bestV = v; }
+          }
+        };
+        while (Date.now() - t0 < total) {
+          const frac = (Date.now() - t0) / total;
+          step(0.08 * Math.pow(0.01, frac));
+          yield '排技能盤… ' + Math.round(frac * 100) + '%';
+        }
+        /* 收尾：拿掉也不影響分數的寶石就拿掉 */
+        for (const b of best.slice()) {
+          if (keep.has(b.uid)) continue;
+          const rest = best.filter(o => o !== b);
+          const v = value(rest);
+          if (v >= bestV) { best = rest; bestV = v; }
+        }
+        s = Object.assign({}, s, { board: best });
+      };
+
+      if (opt.gear) yield* gearPass();
+      if (opt.gems) yield* boardPass();
+      if (opt.gear && opt.gems) yield* gearPass();
+
+      const after = measure(s);
+      const key = b => b.uid + ':' + b.rot + ':' + b.ox + ':' + b.oy;
+      const list = b => b.map(key).sort().join();
+      const gemOf = uid => c.gems.find(g => g.uid === uid);
+      const had = new Set(c.board.map(b => b.uid)), has = new Set(s.board.map(b => b.uid));
+      const skills = skillsFn(s, after.d.mods);
+      const linked = new Set();
+      for (const k of skills) for (const u of k.supports) linked.add(u);
+      return {
+        char: c, before: before, after: after,
+        eq: Object.fromEntries(slots.filter(sl => s.equip[sl]).map(sl => [sl, s.equip[sl].uid])),
+        board: s.board.map(b => Object.assign({}, b)),
+        gear: slots.filter(sl => (s.equip[sl] && s.equip[sl].uid) !== (c.equip[sl] && c.equip[sl].uid))
+          .map(sl => slotNames[sl] + '：' + (c.equip[sl] ? itemName(c.equip[sl]) : '（空）') + ' → ' + (s.equip[sl] ? itemName(s.equip[sl]) : '（空）')),
+        boardChanged: list(s.board) !== list(c.board),
+        put: [...has].filter(u => !had.has(u)).map(u => gemName(gemOf(u))),
+        off: [...had].filter(u => !has.has(u) && gemOf(u)).map(u => gemName(gemOf(u))),
+        links: skills.map(k => k.def.name + (k.supports.length ? ' ← ' + k.supports.map(u => gemName(gemOf(u))).join('、') : '')),
+        svg: opt.gems ? drawFn(s, { linked: linked }) + '</svg>' : ''
+      };
+    };
+
+    /* 把角色改成指定的裝備和排法。武器排在部位最前面，雙手武器和盾牌的衝突會先處理掉 */
+    const applyTo = t => {
+      const c = O.game.char;
+      const fails = [];
+      for (const sl of slots) {
+        const want = t.eq[sl], cur = c.equip[sl];
+        if ((cur && cur.uid) === want) continue;
+        if (want === undefined) {
+          c.bag.push(cur);
+          delete c.equip[sl];
+          continue;
+        }
+        const err = equipFn(c, want);
+        if (err) fails.push(slotNames[sl] + '：' + err);
+      }
+      const test = Object.assign({}, c, { board: [] });
+      for (const b of t.board) {
+        if (fitFn(test, b) === null) test.board.push(Object.assign({}, b));
+        else fails.push('有寶石放不下');
+      }
+      O.panels.board.reset();
+      c.board = test.board;
+      O.panels.board.apply();
+      O.panels.bag.apply();
+      O.panels.host.save();
+      return fails;
+    };
+
+    const fill = () => {
+      const el = box();
+      if (!el) return;
+      const check = (key, name) => '<label><input type="checkbox" data-adv="' + key + '"' + (opt[key] ? ' checked' : '') + '> ' + name + '</label>';
+      let h = '<div class="row">' + check('gear', '配裝備') + check('gems', '配技能') + '</div>' +
+        '<div class="row"><small>可以換的部位</small><br>' + slots.map(sl => '<label><input type="checkbox" data-advslot="' + sl + '"' + (opt.slots[sl] ? ' checked' : '') + '> ' + esc(slotNames[sl]) + '</label>').join('') + '</div>' +
+        '<div class="row">生存不低於目前的 <select data-adv="surv">' + [100, 90, 80, 50, 0].map(v => '<option value="' + v + '"' + (opt.surv === v ? ' selected' : '') + '>' + (v ? v + '％' : '不限') + '</option>').join('') + '</select></div>' +
+        '<div class="row">' + check('keep', '盤上沒有傷害的技能不要拿掉') + '</div>' +
+        '<div class="row">技能盤計算時間 <select data-adv="secs">' + [3, 6, 15, 30].map(v => '<option value="' + v + '"' + (opt.secs === v ? ' selected' : '') + '>' + v + ' 秒</option>').join('') + '</select></div>' +
+        (busy ? '<button id="xjAdvStop">停止</button>' : '<button id="xjAdvGo">開始計算</button>') +
+        (undo && !busy ? '<button id="xjAdvUndo">復原成套用前</button>' : '') +
+        '<br><small id="xjAdvMsg">' + esc(msg) + '</small>';
+      if (res) {
+        const pct = (res.after.dps / Math.max(res.before.dps, 1e-9) - 1) * 100;
+        const row = (name, a, b) => '<tr><td>' + name + '</td><td>' + num(a) + '</td><td>' + num(b) + '</td></tr>';
+        h += '<div class="res">' +
+          '<table><tr><th></th><th>目前</th><th>推薦</th></tr>' +
+          row('預估 DPS', res.before.dps, res.after.dps) +
+          row('生命', res.before.d.maxHp, res.after.d.maxHp) +
+          row('護甲', res.before.d.armor, res.after.d.armor) +
+          row('閃避', res.before.d.eva, res.after.d.eva) + '</table>' +
+          '<div class="gold">DPS ' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '％</div>';
+        if (!res.gear.length && !res.boardChanged) h += '<small>目前的組合已經是找到最好的，沒有要換的。</small>';
+        else {
+          if (res.gear.length) h += '<small>' + res.gear.map(esc).join('<br>') + '</small><br>';
+          if (res.put.length) h += '<small>放上：' + esc(res.put.join('、')) + '</small><br>';
+          if (res.off.length) h += '<small>拿下：' + esc(res.off.join('、')) + '</small><br>';
+          if (res.boardChanged) h += res.svg + '<small>' + res.links.map(esc).join('<br>') + '</small><br>';
+          h += '<button id="xjAdvUse">套用</button>';
+        }
+        h += '</div>';
+      }
+      el.innerHTML = h + '<small>數字是遊戲自己的單體預估，不含範圍傷害、擊中或擊殺時觸發的效果，帶這類效果的部位建議取消勾選。每次結果可能略有不同。</small>';
+    };
+    const read = () => {
+      const el = box();
+      if (!el) return;
+      el.querySelectorAll('[data-advslot]').forEach(b => { opt.slots[b.dataset.advslot] = b.checked; });
+      el.querySelectorAll('[data-adv]').forEach(b => { opt[b.dataset.adv] = b.type === 'checkbox' ? b.checked : Number(b.value); });
+    };
+    const start = () => {
+      read();
+      if (!opt.gear && !opt.gems) { msg = '「配裝備」和「配技能」至少要勾一個'; fill(); return; }
+      const my = ++run;
+      const it = solve();
+      busy = true; res = null; msg = '計算中…';
+      fill();
+      const loop = () => {
+        if (my !== run) return;
+        let r;
+        try {
+          const end = Date.now() + 30;
+          do { r = it.next(); } while (!r.done && Date.now() < end);
+        } catch (e) {
+          console.warn('[小工具] 配裝推薦計算失敗', e);
+          busy = false; msg = '計算失敗，沒有做任何變更';
+          fill();
+          return;
+        }
+        if (r.done) {
+          busy = false; res = r.value; msg = '';
+          fill();
+          return;
+        }
+        msg = r.value;
+        const m = document.getElementById('xjAdvMsg');
+        if (m) m.textContent = msg;
+        setTimeout(loop, 0);
+      };
+      setTimeout(loop, 0);
+    };
+    const click = t => {
+      if (t.id === 'xjAdvGo') start();
+      if (t.id === 'xjAdvStop') { run++; busy = false; msg = '已停止，沒有做任何變更'; fill(); }
+      if (t.id === 'xjAdvUse' && res) {
+        const c = O.game.char;
+        if (res.char !== c) { res = null; msg = '角色換了，請重新計算'; fill(); return; }
+        undo = { char: c, eq: Object.fromEntries(slots.filter(sl => c.equip[sl]).map(sl => [sl, c.equip[sl].uid])), board: c.board.map(b => Object.assign({}, b)) };
+        const fails = applyTo(res);
+        res = null;
+        msg = fails.length ? '已套用，但有些沒成功（可能在計算時裝備變了）：' + fails.join('；') : '已套用';
+        fill();
+      }
+      if (t.id === 'xjAdvUndo' && undo) {
+        if (undo.char !== O.game.char) { undo = null; msg = '角色換了，不能復原'; fill(); return; }
+        const fails = applyTo(undo);
+        undo = null;
+        msg = fails.length ? '復原時有些沒成功：' + fails.join('；') : '已復原';
+        fill();
+      }
+    };
+    return { fill: fill, read: read, click: click };
+  };
+
   /* ===== 開關放在該功能的視窗裡 =====
    * 遊戲會一直重畫視窗內容，所以包產生內容的函式，勾選框才會跟著畫出來，打勾的狀態看 cfg。
    * 取消開啟時要把勾選框改回來；這段期間視窗可能重畫過，舊的勾選框就算改了也沒差。 */
@@ -705,7 +995,7 @@ javascript:(function awTools() {
   };
 
   /* ===== 面板 ===== */
-  const installPanel = (O, earn, refine, cards, wx) => {
+  const installPanel = (O, earn, refine, cards, wx, adv) => {
     const panel = document.createElement('div');
     panel.id = 'xjPanel';
     panel.hidden = true;
@@ -739,17 +1029,20 @@ javascript:(function awTools() {
         opt('cdNote', '組隊副本冷卻提醒') +
         (earn ? '<h4>收益統計</h4><div id="xjEarn"></div>' : '') +
         (refine ? '<h4>自動精煉</h4><small>在煉金工坊選好裝備和保護選項，視窗開著</small><br>目標 <select id="xjRefTgt">' + tgt + '</select> <button id="xjRefGo"></button><br><small id="xjRefMsg"></small>' : '') +
+        (adv ? '<h4>配裝配技能推薦</h4><div id="xjAdv"></div>' : '') +
         (wx ? '<h4>自訂天氣</h4><select id="xjWx"><option value="">沒有天氣</option>' + wx.list.map(w => '<option value="' + w.id + '"' + (wx.current() === w ? ' selected' : '') + '>' + w.name + '</option>').join('') + '</select> <button id="xjWxGo">套用</button><br><small id="xjWxNow"></small>' : '') +
         (cards ? '<h4>取出卡片 <button id="xjCardsReload">重新整理</button></h4><div id="xjCards"></div>' : '<br><small>取出卡片跟這一版遊戲對不上，已停用</small>') +
         (canPin ? '<h4>其他</h4><button id="xjPin">置頂視窗</button>' : '');
       live();
       const cardBox = panel.querySelector('#xjCards');
       if (cardBox && cards) cards.fill(cardBox);
+      if (adv) adv.fill();
     };
     panel.addEventListener('change', e => {
       const t = e.target;
       if (t.dataset && t.dataset.cfg) { cfg[t.dataset.cfg] = t.checked; saveCfg(); }
       if (t.id === 'xjRefTgt' && refine) refine.target = Number(t.value);
+      if (adv && t.closest('#xjAdv')) adv.read();
     });
     panel.addEventListener('click', e => {
       if (e.target.classList.contains('xjClose')) { panel.hidden = true; return; }
@@ -761,6 +1054,7 @@ javascript:(function awTools() {
         wx.apply(panel.querySelector('#xjWx').value);
         live();
       }
+      if (adv && e.target.closest('#xjAdv')) adv.click(e.target);
       const cardBox = panel.querySelector('#xjCards');
       if (e.target.id === 'xjCardsReload' && cards && cardBox) cards.fill(cardBox);
       if (e.target.dataset && e.target.dataset.xjcardItem && cards && cardBox) cards.take(Number(e.target.dataset.xjcardItem), Number(e.target.dataset.xjcardSlot), cardBox);
@@ -887,7 +1181,8 @@ javascript:(function awTools() {
       const refine = O.panels ? safely('自動精煉', () => refineCtl(O, src)) : null;
       const cards = O.panels ? safely('取出卡片', () => cardTool(O, src)) : null;
       const wx = O.panels ? safely('自訂天氣', () => wxTool(O, src)) : null;
-      safely('面板', () => installPanel(O, earn, refine, cards, wx));
+      const adv = O.panels ? safely('配裝配技能推薦', () => advisor(O, src)) : null;
+      safely('面板', () => installPanel(O, earn, refine, cards, wx, adv));
       if (O.panels && O.windows) safely('單格模式、精煉失敗不退階', () => installToggles(O));
       safely('BOSS 血條', () => installBossBar(O));
       safely('技能冷卻', () => installSkillCd(O));
