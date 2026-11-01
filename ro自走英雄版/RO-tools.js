@@ -10,7 +10,7 @@ javascript:(function awTools() {
    * 遊戲自己重新整理時只會重新載入框架，框架載入完成又會再做一次第 3 步，所以小工具會自己回來。
    * 按瀏覽器的重新整理（F5）是重新載入外層頁面，要再點一次書籤。
    *
-   * 功能（右上角的 🔧 按鈕打開面板，可以開關）：
+   * 功能（遊戲「選單」視窗標題列的「修改」按鈕打開面板，可以開關）：
    *   - 背景運行：分頁在背景時遊戲照常跑，不會變成離線收益；背景時不畫畫面
    *   - 節能模式：降低畫面更新次數、不畫傷害數字和受擊特效；只影響畫面，不改存檔裡的設定
    *   - 禁止自動更新：遊戲出新版時只提示，不會倒數或自己重新整理
@@ -23,10 +23,13 @@ javascript:(function awTools() {
    *   - 使用書籤時一律不上傳排行榜（POST /api/rank）、不能在聊天室發言（POST /api/chat）
    *   - 修改功能開著時不能使用協力（POST /api/coop/create、join 和協力的 WebSocket），見 modsOn
    *
-   * 會修改遊戲的功能（使用前都會跳出風險提示，讓使用者自己評估，見 confirmRisk）：
-   *   - 單格模式：每顆技能寶石只佔一格、輔助寶石不用相鄰就生效
-   *   - 精煉失敗不退階：精煉失敗時精煉值不變（遊戲的精煉本來就不會讓裝備消失，只有 +6 以上失敗會退一階）
-   *   - 隨時取出卡片：在小工具面板把裝備上的卡片取出，不用回城鎮、不花素材、一定成功
+   * 會修改遊戲的功能：
+   *   - 單格模式（技能盤視窗的勾選框）：每顆技能寶石只佔一格、輔助寶石不用相鄰就生效；開啟前有風險提示（confirmRisk）
+   *   - 精煉失敗不退階（煉金工坊精煉分頁的勾選框）：失敗時精煉值不變（遊戲的精煉本來就不會讓裝備消失，只有 +6 以上失敗會退一階）；
+   *     開啟前有風險提示
+   *   - 隨時取出卡片（「修改」面板）：把裝備上的卡片取出，不用回城鎮、不花素材、一定成功
+   *   - 自訂天氣（「修改」面板）：直接換成指定的天氣，重新計時 4 小時；也可以清除
+   * 「不上榜」這類訊息只在開啟前兩項時提示，其他地方不要出現。
    *
    * 遊戲的名稱每次打包都會換（X、Q 這些），所以這裡不寫死名稱：
    * 用不會換的方法名稱、元素 id 找 class，再用 instanceof 確認，見 findObjects。
@@ -39,7 +42,7 @@ javascript:(function awTools() {
    */
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在面板標題旁 */
-  const VERSION = 'V21';
+  const VERSION = 'V23';
 
   const CFG_KEY = 'xjtools.cfg';
   const NOTE_KEY = 'xjtools.notes';
@@ -53,9 +56,7 @@ javascript:(function awTools() {
     skillCd: true,      /* 技能列顯示實際冷卻 */
     cdNote: true,       /* 冷卻提醒 */
     oneCell: false,     /* 單格模式（會修改遊戲，開啟前有提示） */
-    noDown: false,      /* 精煉失敗不退階（會修改遊戲，開啟前有提示） */
-    btnX: 8,           /* 🔧 按鈕距離右邊（px） */
-    btnY: 8             /* 🔧 按鈕距離上面（px） */
+    noDown: false       /* 精煉失敗不退階（會修改遊戲，開啟前有提示） */
   };
   const loadCfg = () => {
     try { return Object.assign({}, CFG_DEF, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); }
@@ -194,9 +195,9 @@ javascript:(function awTools() {
 
   /* 協力：修改功能開著時不能進房間，改過的角色才不會跟其他玩家一起玩。
    * 開房間、加入、斷線重連都走 /api/coop/create、join（下面的 fetch 擋），連線本身是 WebSocket。
-   * 隨時取出卡片是一次性的動作，取過之後這次載入遊戲都算有用。 */
-  const COOP_MSG = '修改功能開著時不能使用協力：請到小工具面板關閉（取出過卡片要重新載入遊戲）';
-  const modsOn = () => !!(window.__xjOne || window.__xjNoDown || window.__xjCardUsed);
+   * 隨時取出卡片、自訂天氣是一次性的動作，用過之後這次載入遊戲都算有用。 */
+  const COOP_MSG = '修改功能開著時不能使用協力：請把單格模式、精煉失敗不退階關閉（取出過卡片、改過天氣要重新載入遊戲）';
+  const modsOn = () => !!(window.__xjOne || window.__xjNoDown || window.__xjCardUsed || window.__xjWxUsed);
   const coopSockets = new Set();
   const RealWS = window.WebSocket;
   window.WebSocket = new Proxy(RealWS, {
@@ -221,15 +222,11 @@ javascript:(function awTools() {
   /* 排行榜、聊天室、協力、版本檢查都走 fetch */
   const realFetch = window.fetch.bind(window);
   const denied = msg => new Response(JSON.stringify({ msg: msg }), { status: 403, headers: { 'content-type': 'application/json' } });
-  let rankNoted = false;
   window.fetch = async function (input, init) {
     const url = String(input && input.url || input);
     const method = String(init && init.method || input && input.method || 'GET').toUpperCase();
     const path = url.replace(/^https?:\/\/[^/]+/, '').split('?')[0];
-    if (method === 'POST' && path === '/api/rank') {
-      if (!rankNoted) { rankNoted = true; toast('小工具已封鎖排行上傳'); }
-      return denied('小工具已封鎖排行上傳');
-    }
+    if (method === 'POST' && path === '/api/rank') return denied('');
     if (method === 'POST' && path === '/api/chat') return denied('使用小工具時不能在聊天室發言');
     if (method === 'POST' && /^\/api\/coop\/(create|join)$/.test(path) && modsOn()) return denied(COOP_MSG);
     if (/(^|\/)version\.json/.test(url) && cfg.noUpdate) {
@@ -360,7 +357,9 @@ javascript:(function awTools() {
   const installStyle = () => {
     const st = document.createElement('style');
     st.textContent = [
-      '#xjBtn{position:fixed;z-index:2147483000;width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(22,41,74,.85);color:#fff;font-size:16px;cursor:pointer;padding:0;touch-action:none}',
+      '.xjToggle{display:block;margin:0 0 8px;cursor:pointer;font-size:13px}',
+      '.xjToggle small{opacity:.75}',
+      '#xjPanel .xjClose{margin-left:auto;background:none;border:0;font-size:18px;line-height:1;padding:0 4px}',
       '#xjPanel{position:fixed;z-index:2147483001;top:48px;right:8px;width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 64px);overflow:auto;background:#16294a;color:#eef2f8;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:12px 14px;font:13px/1.7 "Noto Sans TC",sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.45)}',
       '#xjPanel h3{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:8px}',
       '#xjPanel h4{margin:12px 0 4px;font-size:13px;color:#ffd97a}',
@@ -418,7 +417,8 @@ javascript:(function awTools() {
       const w = el ? parseFloat(el.style.width) : NaN;
       return Number.isFinite(w) ? w : 0;
     };
-    let lastZeny = O.game.char.zeny, lastPct = pctNow(), lastLv = O.game.char.lv, lastId = O.game.char.id;
+    /* lastPct 第一筆才記：剛啟動時經驗條還沒畫，讀到的是 0，會把現有的經驗算成賺到的 */
+    let lastZeny = O.game.char.zeny, lastPct = null, lastLv = O.game.char.lv, lastId = O.game.char.id;
     const realDrain = O.game.drainEvents;
     O.game.drainEvents = function () {
       const list = realDrain.apply(this, arguments);
@@ -436,6 +436,7 @@ javascript:(function awTools() {
       if (c.zeny > lastZeny) sum.zeny += c.zeny - lastZeny;
       lastZeny = c.zeny;
       const p = pctNow();
+      if (lastPct === null) lastPct = p;
       sum.pct += (c.lv - lastLv) * 100 + p - lastPct;
       lastPct = p;
       lastLv = c.lv;
@@ -579,8 +580,7 @@ javascript:(function awTools() {
 
   /* ===== 隨時取出卡片 =====
    * 遊戲的「拆卸」要到城鎮的鐵匠、花魔力礦石和 Zeny、失敗時卡片消失；這裡直接取出，一定成功，不花東西。
-   * 卡片名稱和「把卡片加回去」的函式用遊戲自己的（加回去時會處理持有上限、圖鑑紀錄），名稱每次打包都會換，從主程式文字找。
-   * 風險提示每次載入遊戲只跳一次，不然連續取幾張要按很多次。 */
+   * 卡片名稱和「把卡片加回去」的函式用遊戲自己的（加回去時會處理持有上限、圖鑑紀錄），名稱每次打包都會換，從主程式文字找。 */
   const cardTool = (O, src) => {
     const ev = window.__XJ.eval;
     const nameMatch = /let n=([\w$]+)\[a\],i=[\w$]+\(t,e,o,this\.opts\)/.exec(src);
@@ -595,7 +595,6 @@ javascript:(function awTools() {
       return it.base || ('裝備 ' + it.uid);
     };
     if (typeof addCard !== 'function' || !table) throw new Error('找不到卡片的函式');
-    let warned = false;
     const items = () => O.panels.forge.all().filter(it => it && it.cards && it.cards.some(Boolean));
     const fill = box => {
       box.textContent = '';
@@ -625,18 +624,11 @@ javascript:(function awTools() {
         box.appendChild(row);
       }
     };
-    const take = async (uid, slot, box) => {
+    const take = (uid, slot, box) => {
       const it = O.panels.forge.all().find(i => i && i.uid === uid);
       const id = it && it.cards[slot];
       if (!id) { fill(box); return; }
       if (inCoop()) return;
-      if (!warned) {
-        const ok = await confirmRisk('取出裝備上的卡片', ['卡片會直接回到卡片欄，不用回城鎮、不花素材和 Zeny，一定成功；插槽會變成空的。這次載入遊戲之後再取出就不會再提示。', RISK_SAVE, '取出之後，這次載入遊戲都不能使用協力，重新載入後恢復。']);
-        if (!ok || inCoop()) return;
-        warned = true;
-      }
-      /* 提示等待的期間裝備可能變了，再確認一次 */
-      if (it.cards[slot] !== id) { fill(box); return; }
       window.__xjCardUsed = true;
       it.cards[slot] = null;
       addCard(O.game.char, id);
@@ -649,16 +641,71 @@ javascript:(function awTools() {
     return { fill: fill, take: take };
   };
 
-  /* ===== 面板 ===== */
-  const installPanel = (O, earn, refine, cards) => {
-    const btn = document.createElement('button');
-    btn.id = 'xjBtn';
-    btn.textContent = '🔧';
-    btn.title = '流浪仙境小工具';
-    btn.style.right = cfg.btnX + 'px';
-    btn.style.top = cfg.btnY + 'px';
-    document.body.appendChild(btn);
+  /* ===== 自訂天氣 =====
+   * 存檔裡的天氣只有 char.wx = {k: 種類, t: 開始時間}，時間用遊戲的 clock，這樣剩餘時間的計算都照遊戲自己的。
+   * 天氣表從「隨機挑一種天氣」的函式找；這種寫法不只天氣用，所以再看內容是不是天氣（有 color 和 lines）。 */
+  const wxTool = (O, src) => {
+    let list = null;
+    const re = /=e=>e\.weighted\(([\w$]+),e=>e\.w\)/g;
+    let m;
+    while (!list && (m = re.exec(src))) {
+      let v = null;
+      try { v = window.__XJ.eval(m[1]); } catch (e) {}
+      if (Array.isArray(v) && v.length && v.every(w => w && w.id && w.name && w.color && Array.isArray(w.lines))) list = v;
+    }
+    if (!list) throw new Error('找不到天氣表');
+    return {
+      list: list,
+      current: () => O.game.wx || null,
+      apply: id => {
+        if (inCoop()) return false;
+        const c = O.game.char;
+        const w = list.find(x => x.id === id);
+        if (!w && id) return false;
+        window.__xjWxUsed = true;
+        c.wx = w ? { k: w.id, t: O.game.clock } : null;
+        O.game.refresh();
+        O.panels.host.save();
+        O.panels.host.changed();
+        toast(w ? '天氣已改成' + w.name + '（持續 4 小時）' : '天氣已清除');
+        return true;
+      }
+    };
+  };
 
+  /* ===== 開關放在該功能的視窗裡 =====
+   * 遊戲會一直重畫視窗內容，所以包產生內容的函式，勾選框才會跟著畫出來，打勾的狀態看 cfg。
+   * 取消開啟時要把勾選框改回來；這段期間視窗可能重畫過，舊的勾選框就算改了也沒差。 */
+  const installToggles = O => {
+    const label = (attr, on, name, note) => '<label class="xjToggle"><input type="checkbox" ' + attr + (on ? ' checked' : '') + '> ' + name + ' <small>' + note + '</small></label>';
+    if (window.__xjOneOk) {
+      const realBoard = O.panels.board.html;
+      O.panels.board.html = function () {
+        return label('data-xjone', cfg.oneCell, '單格模式', '寶石佔一格、輔助不用相鄰') + realBoard.apply(this, arguments);
+      };
+    }
+    if (window.__xjNoDownOk) {
+      const realRefine = O.panels.forge.refineHtml;
+      O.panels.forge.refineHtml = function () {
+        return label('data-xjnodown', cfg.noDown, '精煉失敗不退階', '失敗時精煉值不變') + realRefine.apply(this, arguments);
+      };
+    }
+    document.addEventListener('change', e => {
+      const t = e.target;
+      if (!t.dataset) return;
+      if (t.dataset.xjone !== undefined) {
+        e.stopPropagation();
+        setOneCell(O, t.checked).then(done => { if (!done) t.checked = cfg.oneCell; });
+      } else if (t.dataset.xjnodown !== undefined) {
+        e.stopPropagation();
+        setNoDown(O, t.checked).then(done => { if (!done) t.checked = cfg.noDown; });
+      }
+    }, true);
+    for (const id of ['board', 'forge']) if (O.windows.isOpen(id)) O.windows.render(id);
+  };
+
+  /* ===== 面板 ===== */
+  const installPanel = (O, earn, refine, cards, wx) => {
     const panel = document.createElement('div');
     panel.id = 'xjPanel';
     panel.hidden = true;
@@ -671,14 +718,18 @@ javascript:(function awTools() {
       if (r) r.textContent = refine ? refine.msg : '';
       const g = panel.querySelector('#xjRefGo');
       if (g && refine) g.textContent = refine.on ? '停止' : '開始自動精煉';
+      const n = panel.querySelector('#xjWxNow');
+      if (n && wx) {
+        const w = wx.current();
+        n.textContent = '目前：' + (w ? w.name + '（' + w.lines.join('、') + '）' : '沒有天氣');
+      }
     };
     const render = () => {
       const opt = (key, name, note) => '<label><input type="checkbox" data-cfg="' + key + '"' + (cfg[key] ? ' checked' : '') + '> ' + name + (note ? ' <small>' + note + '</small>' : '') + '</label>';
       const canPin = 'documentPictureInPicture' in window.top;
       let tgt = '';
       for (let i = 1; i <= (window.__xjRefMax || 15); i++) tgt += '<option value="' + i + '"' + (refine && refine.target === i ? ' selected' : '') + '>+' + i + '</option>';
-      panel.innerHTML = '<h3>🔧 流浪仙境小工具 <small>' + VERSION + '</small></h3>' +
-        '<small>使用小工具時不上傳排行榜、不能在聊天室發言。</small>' +
+      panel.innerHTML = '<h3>修改 <small>' + VERSION + '</small><button class="xjClose" aria-label="關閉">×</button></h3>' +
         '<h4>設定</h4>' +
         opt('keepAlive', '背景運行', '切到背景時照常跑') +
         opt('eco', '節能模式', '只影響畫面') +
@@ -688,9 +739,7 @@ javascript:(function awTools() {
         opt('cdNote', '組隊副本冷卻提醒') +
         (earn ? '<h4>收益統計</h4><div id="xjEarn"></div>' : '') +
         (refine ? '<h4>自動精煉</h4><small>在煉金工坊選好裝備和保護選項，視窗開著</small><br>目標 <select id="xjRefTgt">' + tgt + '</select> <button id="xjRefGo"></button><br><small id="xjRefMsg"></small>' : '') +
-        '<h4>修改遊戲</h4><small>可能無法上榜、被封鎖發言，使用前會再提示；開著時不能使用協力</small>' +
-        (window.__xjOneOk && O.panels ? '<label><input type="checkbox" id="xjOne"' + (cfg.oneCell ? ' checked' : '') + '> 單格模式 <small>寶石佔一格、輔助不用相鄰</small></label>' : '<br><small>單格模式跟這一版遊戲對不上，已停用</small>') +
-        (window.__xjNoDownOk && O.panels ? '<label><input type="checkbox" id="xjNoDown"' + (cfg.noDown ? ' checked' : '') + '> 精煉失敗不退階</label>' : '<br><small>精煉失敗不退階跟這一版遊戲對不上，已停用</small>') +
+        (wx ? '<h4>自訂天氣</h4><select id="xjWx"><option value="">沒有天氣</option>' + wx.list.map(w => '<option value="' + w.id + '"' + (wx.current() === w ? ' selected' : '') + '>' + w.name + '</option>').join('') + '</select> <button id="xjWxGo">套用</button><br><small id="xjWxNow"></small>' : '') +
         (cards ? '<h4>取出卡片 <button id="xjCardsReload">重新整理</button></h4><div id="xjCards"></div>' : '<br><small>取出卡片跟這一版遊戲對不上，已停用</small>') +
         (canPin ? '<h4>其他</h4><button id="xjPin">置頂視窗</button>' : '');
       live();
@@ -701,12 +750,15 @@ javascript:(function awTools() {
       const t = e.target;
       if (t.dataset && t.dataset.cfg) { cfg[t.dataset.cfg] = t.checked; saveCfg(); }
       if (t.id === 'xjRefTgt' && refine) refine.target = Number(t.value);
-      if (t.id === 'xjOne') setOneCell(O, t.checked).then(done => { if (!done) t.checked = cfg.oneCell; });
-      if (t.id === 'xjNoDown') setNoDown(O, t.checked).then(done => { if (!done) t.checked = cfg.noDown; });
     });
     panel.addEventListener('click', e => {
+      if (e.target.classList.contains('xjClose')) { panel.hidden = true; return; }
       if (e.target.id === 'xjRefGo' && refine) {
         if (refine.on) refine.stop('已停止'); else refine.start();
+        live();
+      }
+      if (e.target.id === 'xjWxGo' && wx) {
+        wx.apply(panel.querySelector('#xjWx').value);
         live();
       }
       const cardBox = panel.querySelector('#xjCards');
@@ -716,32 +768,24 @@ javascript:(function awTools() {
         window.top.__xjPin().then(r => { if (r === 'nosupport') toast('這個瀏覽器不支援置頂視窗'); }).catch(() => toast('置頂視窗開不起來'));
       }
     });
-    /* 按鈕可以拖曳；沒有拖動才算點擊 */
-    let drag = null;
-    btn.addEventListener('pointerdown', e => {
-      drag = { x: e.clientX, y: e.clientY, moved: false, r: cfg.btnX, t: cfg.btnY };
-      btn.setPointerCapture(e.pointerId);
-    });
-    btn.addEventListener('pointermove', e => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
-      if (!drag.moved) return;
-      cfg.btnX = Math.max(0, Math.min(window.innerWidth - 32, drag.r - dx));
-      cfg.btnY = Math.max(0, Math.min(window.innerHeight - 32, drag.t + dy));
-      btn.style.right = cfg.btnX + 'px';
-      btn.style.top = cfg.btnY + 'px';
-    });
-    btn.addEventListener('pointerup', () => {
-      if (!drag) return;
-      const moved = drag.moved;
-      drag = null;
-      if (moved) { saveCfg(); return; }
+    /* 「修改」按鈕放在選單視窗的標題列，「說明」旁邊。標題列遊戲只建立一次，不會被重畫。
+     * 樣式沿用「說明」鈕；遊戲是在視窗上統一處理點擊，所以這裡不讓點擊傳上去，才不會被當成按說明。 */
+    const title = document.getElementById('win-title-opts');
+    const tools = title && title.parentNode.querySelector('.win-tools');
+    if (!tools) throw new Error('找不到選單視窗的標題列');
+    const help = tools.querySelector('.win-help-btn');
+    const btn = document.createElement('button');
+    btn.id = 'xjBtn';
+    btn.className = 'win-help-btn';
+    btn.textContent = '修改';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
       panel.hidden = !panel.hidden;
       if (!panel.hidden) render();
     });
+    tools.insertBefore(btn, help || tools.firstChild);
     setInterval(() => { if (!panel.hidden) live(); }, 1000);
-    window.__xjShow = () => { panel.hidden = false; render(); toast('小工具已經啟用'); };
+    window.__xjShow = () => { panel.hidden = false; render(); };
   };
 
   /* ===== BOSS 血條 ===== */
@@ -842,13 +886,15 @@ javascript:(function awTools() {
       const earn = safely('收益統計', () => earnStart(O));
       const refine = O.panels ? safely('自動精煉', () => refineCtl(O, src)) : null;
       const cards = O.panels ? safely('取出卡片', () => cardTool(O, src)) : null;
-      safely('面板', () => installPanel(O, earn, refine, cards));
+      const wx = O.panels ? safely('自訂天氣', () => wxTool(O, src)) : null;
+      safely('面板', () => installPanel(O, earn, refine, cards, wx));
+      if (O.panels && O.windows) safely('單格模式、精煉失敗不退階', () => installToggles(O));
       safely('BOSS 血條', () => installBossBar(O));
       safely('技能冷卻', () => installSkillCd(O));
       safely('冷卻提醒', () => installCdNote(O));
-      toast('小工具 ' + VERSION + ' 已啟用：右上角 🔧 打開面板（使用時不上傳排行榜、不能發言）');
-      if (window.__xjOne) toast('單格模式開啟中，可以在小工具面板關閉');
-      if (window.__xjNoDown) toast('精煉失敗不退階開啟中，可以在小工具面板關閉');
+      toast('小工具 ' + VERSION + ' 已啟用：功能在「選單」視窗標題列的「修改」');
+      if (window.__xjOne) toast('單格模式開啟中，可以在技能盤關閉');
+      if (window.__xjNoDown) toast('精煉失敗不退階開啟中，可以在煉金工坊的精煉分頁關閉');
     }, 500);
   }).catch(e => {
     console.error('[小工具] 啟動失敗', e);
