@@ -9,7 +9,7 @@ const fs = require('fs');
 const file = process.argv[2];
 const STATION = 'C0AI20', NAME = '白沙灣';
 const KEEP_MS = 3 * 86400000;
-const DAY = 86400000;
+const DAY = 86400000, HOUR = 3600000;
 const taipeiDate = ms => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(ms); // YYYY-MM-DD
 const key = (date, hh) => `${date}T${hh}:00:00+08:00`;
 
@@ -19,9 +19,9 @@ async function fromCodis(add) {
       stn_type: 'auto_C0', more: '', start: `${date}T00:00:00`, end: `${date}T23:59:59` });
     const res = await fetch('https://codis.cwa.gov.tw/api/station', { method: 'POST', body });
     if (!res.ok) throw new Error(`回應 ${res.status}`);
-    // DataTime 例：2026-10-30T01:00:00，最後一筆是隔天 00:00
+    // DataTime 例：2026-10-30T01:00:00，最後一筆是 23:59（代表隔天 00:00），所以取最接近的整點
     for (const r of (await res.json()).data?.[0]?.dts ?? []) {
-      add(Date.parse(`${r.DataTime}+08:00`), r.AirTemperature?.Instantaneous);
+      add(Math.round(Date.parse(`${r.DataTime}+08:00`) / HOUR) * HOUR, r.AirTemperature?.Instantaneous);
     }
   }
 }
