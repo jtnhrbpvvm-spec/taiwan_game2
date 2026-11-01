@@ -10,6 +10,7 @@
   --border:#2e3250; --accent:#5c6bc0; --accent2:#7986cb;
   --text:#e8eaf6; --text2:#9fa8da; --text3:#555a7a;
   --dark:#8b5cf6; --dark2:#a78bfa;   /* 暗黑版專用點綴 */
+  --seal:#14b8a6; --seal2:#5eead4;   /* 次元封印專用點綴 */
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
 html,body{ height:100%; }
@@ -37,10 +38,10 @@ body{
 .title .accent{ color:var(--accent2); }
 .subtitle{ margin-top:10px; font-size:14px; color:var(--text2); }
 
-/* 兩顆入口按鈕 */
+/* 入口按鈕 */
 .gate{
   display:flex; gap:26px; flex-wrap:wrap; justify-content:center;
-  width:100%; max-width:760px;
+  width:100%; max-width:1020px;
 }
 .portal-btn{
   --c:var(--accent); --c2:var(--accent2);
@@ -79,11 +80,15 @@ body{
 }
 .portal-btn:hover .name, .portal-btn:focus-visible .name{ color:#fff; }
 
-/* 加掛版：靛藍（沿用工具主色）；暗黑版：暗紫 */
+/* 加掛版：靛藍（沿用工具主色）；暗黑版：暗紫；次元封印：青綠 */
 .portal-btn.addon{ --c:var(--accent);  --c2:var(--accent2); }
 .portal-btn.dark {
   --c:var(--dark); --c2:var(--dark2);
   background:linear-gradient(180deg, #191723, #121019);
+}
+.portal-btn.seal {
+  --c:var(--seal); --c2:var(--seal2);
+  background:linear-gradient(180deg, #16252a, #10191d);
 }
 
 .foot{ font-size:12px; color:var(--text3); text-align:center; }
@@ -121,6 +126,14 @@ body{
       <span class="icon" aria-hidden="true">🌑</span>
       <span class="name">暗黑版</span>
       <span class="hint">暗黑版存檔工具</span>
+      <span class="go">開啟 &rarr;</span>
+    </a>
+
+    <a class="portal-btn seal"
+       href="https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E5%AD%98%E6%AA%94%E4%BF%AE%E6%94%B9_%E6%AC%A1%E5%85%83%E5%B0%81%E5%8D%B0.html">
+      <span class="icon" aria-hidden="true">🌀</span>
+      <span class="name">次元封印</span>
+      <span class="hint">次元封印存檔工具</span>
       <span class="go">開啟 &rarr;</span>
     </a>
   </nav>
