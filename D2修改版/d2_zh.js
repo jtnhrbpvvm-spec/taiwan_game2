@@ -12,7 +12,7 @@ return;
 }
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V42';
+const D2ZH_VERSION = 'V43';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -1023,7 +1023,8 @@ sync();
 nameBox.addEventListener('keydown', e => e.stopPropagation());   // 別讓遊戲吃掉打字的按鍵
 box.append(grid, d2edEl('div', { class: 'd2ed-row' },
 d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: apply }, '套用'),
-d2edEl('button', { type: 'button', onclick: () => { p.life = p.maxLife; d2edRender(); d2edToast('生命已補滿'); } }, '生命補滿')),
+d2edEl('button', { type: 'button', onclick: () => { p.life = p.maxLife; d2edRender(); d2edToast('生命已補滿'); } }, '生命補滿'),
+d2edEl('button', { type: 'button', onclick: d2ecConfirm }, '裝備創造')),
 d2edEl('div', { class: 'd2ed-keeprow' },
 d2edEl('label', { class: 'd2ed-keep' }, keepBox, '記住這些修改，下次開遊戲、換一局或繼續存檔時自動套用'),
 d2edEl('div', { class: 'd2ed-presets' },
@@ -1370,6 +1371,352 @@ d2edEl('p', { class: 'd2ed-note' }, '開啟後，技能樹開著時技能選單�
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉技能格調整大小' : '開啟技能格調整大小'),
 d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
 }
+// ====== 裝備創造（只在遊戲中出現）：獨特、套裝、符文之語，能力數值由玩家在上下限內指定 ======
+// 遊戲的物品表、產生與驗證函式都在已載入的模組裡，但匯出名稱每次改版都會變，所以用函式內容認。
+// 表裡的每一列（props）依序對應物品 stats 的欄位，規則照遊戲 B6：func 15／16／11／19 和有 par 的 17 是固定值，其他在 min～max 骰一個數。
+const D2EC = { api: null, overlay: null, sel: null, cat: 'head' };
+const D2EC_GRID = { columns: 10, rows: 4 };
+const D2EC_FIXED_FUNCS = new Set([15, 16, 11, 19]);
+const D2EC_RARITY = { unique: '獨特', set: '套裝', runeword: '符文之語' };
+// 營地裡下面 WeakMap 的攔截抓不到世界（裝備放進物品欄要用 world.carry），但遊戲每秒都會讀 world.tristram（沒進崔斯特姆時這個欄位不存在），
+// 所以跟 unspent 一樣在 Object.prototype 放不列舉的 getter 認出它；寫入時改成物件自己的欄位。
+function d2ecWorldInstall() {
+if (Object.prototype.hasOwnProperty('tristram')) return;
+Object.defineProperty(Object.prototype, 'tristram', {
+configurable: true, enumerable: false,
+get() { if (this && Array.isArray(this.pickups) && typeof this.carry === 'function') D2ED.world = this; return undefined; },
+set(v) { Object.defineProperty(this, 'tristram', { value: v, writable: true, enumerable: true, configurable: true }); },
+});
+}
+function d2ecTr(s) {
+try { return (window.D2I18N && window.D2I18N.translate(s)) || s; } catch (_) { return s; }
+}
+async function d2ecLoad() {
+if (D2EC.api && D2EC.api.ready) return D2EC.api;
+const urls = [...new Set(performance.getEntriesByType('resource').map(e => e.name))].filter(n => /\/assets\/[^/]+\.js(\?|$)/.test(n) && !/\/ko-/.test(n));
+const exportsAll = [];
+for (const url of urls) {
+try { exportsAll.push(...Object.values(await import(url))); } catch (_) { /* 這個檔案不能載入就跳過 */ }
+}
+const fns = exportsAll.filter(v => typeof v === 'function').map(f => [f, Function.prototype.toString.call(f)]);
+const find = test => (fns.find(([f, src]) => test(src, f)) || [])[0];
+const api = D2EC.api = {
+tables: find(s => /uniques:\w+\.uniques,bases:\w+\.bases/.test(s)),
+normalize: find(s => s.includes("Wirt's Leg") && s.includes('`quest`') && s.includes('stats:')),
+lines: find(s => s.includes('strModEnhancedDamage') && s.includes('priority')),
+runewordStats: find((s, f) => f.length === 4 && /\.runewords\?\.\[/.test(s) && /\.runes\[/.test(s) && s.includes('flatMap') && !s.includes('reduce')),
+size: find(s => /\.size\?\?\[1,1\]/.test(s)),
+baseInfo: find(s => /itype:\w+\.itype/.test(s) && s.includes('bothHands')),
+isType: find((s, f) => f.length === 2 && s.includes('.equiv')),
+makers: fns.filter(([f, s]) => f.length === 3 && /\.roll=\[1,/.test(s)).map(([f]) => f),
+cats: exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].uniques) && v[0].label),
+make: {},
+};
+const runewords = exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].runes) && Array.isArray(v[0].types));
+const bestBase = find((s, f) => f.length === 1 && /Math\.max\(\w+\.lvl,41\)/.test(s));
+if (!api.tables || !api.normalize || !api.lines || !api.runewordStats || !api.size || !api.baseInfo || !api.isType || !api.cats || !runewords || !bestBase || !api.tables()) return null;
+// 分類表是遊戲倉庫在用的物件，複製一份再加欄位
+api.cats = api.cats.map(c => ({ ...c, uniques: c.uniques.map(d => ({ ...d })) }));
+api.all = api.cats.flatMap(c => c.uniques);
+for (const rarity of ['unique', 'set']) {
+const def = api.all.find(d => d.rarity === rarity);
+api.make[rarity] = api.makers.find(f => { try { return f(def, def.lvl, 99).rarity === rarity; } catch (_) { return false; } });
+if (!api.make[rarity]) return null;
+}
+// 符文之語可以做在很多底材上：遊戲沒有匯出底材表，用 itype 認類型，從獨特和套裝的底材查裝備欄位
+api.typeOfItype = {};
+for (const d of api.all) {
+if (d.rarity === 'runeword') continue;
+const info = api.baseInfo({ base: d.base });
+if (info) api.typeOfItype[info.itype] = d.type;
+}
+for (const d of api.all) {
+if (d.rarity !== 'runeword') continue;
+const row = runewords.find(x => x.name === d.name);
+d.types = row ? row.types : [];
+d.excluded = row && row.excluded;
+// 分類表在表格載入前就建好，符文之語的預設底材不可靠，這裡重新問一次
+d.base = bestBase(d.name) || d2ecRunewordBases(d)[0] || d.base;
+d.type = api.typeOfItype[(api.baseInfo({ base: d.base }) || {}).itype] || d.type;
+}
+for (const d of api.all) {
+d.zh = d2ecTr(d.name);
+d.hay = [d.name, d.zh, d.base, d2ecTr(d.base), d.set || '', d.set ? d2ecTr(d.set) : '', D2EC_RARITY[d.rarity], ...(d.runes || [])].join(' ').toLowerCase();
+}
+api.ready = true;
+return api;
+}
+function d2ecRunewordBases(def) {
+const { api } = D2EC;
+const t = api.tables();
+const list = Object.keys(t.bases).filter(name => {
+const info = api.baseInfo({ base: name });
+if (!info || !api.typeOfItype[info.itype]) return false;
+const sockets = t.bases[name].sockets;
+if (!sockets || sockets[sockets.length - 1] < def.runes.length) return false;
+return def.types.some(x => api.isType(info.itype, x)) && !(def.excluded || []).some(x => api.isType(info.itype, x));
+});
+return list.includes(def.base) ? list : [def.base, ...list];
+}
+function d2ecBaseItem(def, base) {
+const { api } = D2EC;
+if (def.rarity !== 'runeword') {
+const item = api.make[def.rarity](def, def.lvl, 99);
+delete item.roll;   // 有 roll 的物品讀檔時會照種子重骰
+return item;
+}
+const type = api.typeOfItype[(api.baseInfo({ base }) || {}).itype] || def.type;
+const slot = type === 'weapon' ? 'weapon' : type === 'shield' ? 'shield' : 'helm';
+const stats = api.runewordStats(def.name, def.runes, slot, 99);
+const item = { id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36), base, type, rarity: 'runeword', name: def.name, level: def.lvl, mods: [], stats: stats || [] };
+const range = api.tables().bases[base].defense;
+if (range) item.defense = item.stats.some(s => s.stat === 'item_armor_percent') ? range[1] + 1 : range[1];
+return item;
+}
+// 把物品表的每一列整理成 [{ tag, stats, rows:[可調整的列], fixed:[固定的 stat] }]，stats 是對應到物品上的那個陣列
+function d2ecGroups(def, base, item) {
+const t = D2EC.api.tables();
+const groups = [];
+const walk = (tag, rows, stats, at) => {
+const g = { tag, at, rows: [], fixed: [] };
+let i = 0;
+for (const row of rows) {
+const lo = row.min, hi = Math.max(row.min, row.max);
+const idxs = [], slots = [];
+for (const { stat, func } of row.stats) {
+if (!stats[i] || stats[i].stat !== stat) throw new Error('物品表和物品對不起來：' + stat);
+idxs.push(i);
+if (!D2EC_FIXED_FUNCS.has(func) && !(func === 17 && row.par)) slots.push({ i, field: func === 12 ? 'param' : 'value' });
+i++;
+}
+if (hi > lo && slots.length) g.rows.push({ lo, hi, idxs, slots, def: Math.trunc((lo + hi) / 2) });
+else g.fixed.push(...idxs.map(k => stats[k]));
+}
+groups.push(g);
+};
+if (def.rarity === 'unique') walk('', t.uniques[def.name].props, item.stats, 'stats');
+else if (def.rarity === 'set') {
+const row = t.setItems[def.name];
+walk('', row.props, item.stats, 'stats');
+(row.bonus || []).forEach((rows, n) => walk(`套裝加成 ${n + 1}`, rows, item.bonus[n], n));
+} else {
+const slot = item.type === 'weapon' ? 'weapon' : item.type === 'shield' ? 'shield' : 'helm';
+walk('', [...t.runewords[def.name].props, ...def.runes.flatMap(r => (t.runes[r] || {})[slot] || [])], item.stats, 'stats');
+}
+return groups;
+}
+function d2ecLineTexts(stats) {
+const level = (D2ED.player && D2ED.player.level) || 1;
+let lines = [];
+try { lines = D2EC.api.lines(stats, level) || []; } catch (_) { /* 顯示不出來就用下面的欄位名稱 */ }
+return lines.map(x => d2ecTr(x.text));
+}
+function d2ecRowText(row, stats, v) {
+const part = row.idxs.map(i => ({ ...stats[i] }));
+for (const s of row.slots) part[row.idxs.indexOf(s.i)][s.field] = v;
+return d2ecLineTexts(part).join('、');
+}
+function d2ecIconUrl(rarity, name, base) {
+const art = D2ED.world && D2ED.world.art && D2ED.world.art.items;
+if (!art) return '';
+const one = x => (Array.isArray(x) ? x[0] : x);
+const icon = (rarity === 'unique' && one((art.uniqueIcons || {})[name])) || (rarity === 'set' && one((art.setIcons || {})[name])) || one((art.icons || {})[base]);
+return (icon && icon.url) || '';
+}
+function d2ecIcon(rarity, name, base) {
+const url = d2ecIconUrl(rarity, name, base);
+return url ? d2edEl('img', { src: url, alt: '', draggable: 'false' }) : null;
+}
+function d2ecNotice(msg) {
+const box = D2EC.overlay;
+if (!box) return;
+const modal = d2edEl('div', { class: 'd2ec-modal' });
+modal.append(d2edEl('div', { class: 'd2ec-modal-box', role: 'alertdialog' },
+d2edEl('p', {}, msg),
+d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: () => modal.remove() }, '確定')));
+box.append(modal);
+}
+function d2ecInventory() {
+const box = D2EC.overlay && D2EC.overlay.querySelector('.d2ec-inv');
+if (!box) return;
+const cls = D2ED.player && D2ED.player.cls;
+const items = (d2edReadSave().inventoryByClass || {})[cls] || [];
+const { size } = D2EC.api;
+let used = 0;
+const info = d2edEl('span', { class: 'd2ec-invinfo' });
+const grid = d2edEl('div', { class: 'd2ec-grid' });
+for (const item of items) {
+if (!item.at) continue;
+const [w, h] = size(item);
+used += w * h;
+const name = d2ecTr(item.name);
+const show = () => { info.textContent = name; };
+const cell = d2edEl('div', { class: 'd2ec-item d2ec-r-' + item.rarity, title: name, style: `grid-column:${item.at.x + 1}/span ${w};grid-row:${item.at.y + 1}/span ${h}`, onmouseenter: show, onclick: show },
+d2ecIcon(item.rarity, item.name, item.base));
+if (!cell.firstChild) cell.textContent = name;
+grid.append(cell);
+}
+const total = D2EC_GRID.columns * D2EC_GRID.rows;
+box.replaceChildren(d2edEl('div', { class: 'd2ec-invhead' }, d2edEl('b', {}, `${d2ecTr(cls ? cls[0].toUpperCase() + cls.slice(1) : '')} 物品欄`), d2edEl('span', {}, `已用 ${used} / ${total} 格`), info), grid);
+}
+function d2ecCreate() {
+const sel = D2EC.sel;
+if (!sel) return;
+const world = D2ED.world;
+if (!world || typeof world.carry !== 'function') { d2ecNotice('還沒抓到遊戲世界，請進入地圖後再試一次。'); return; }
+const item = d2ecBaseItem(sel.def, sel.base);
+for (const g of sel.groups) {
+const stats = g.at === 'stats' ? item.stats : item.bonus[g.at];
+for (const row of g.rows) if (row.read) for (const s of row.slots) stats[s.i][s.field] = row.read();
+}
+if (sel.defense) item.defense = sel.defense.read();
+const ready = D2EC.api.normalize(JSON.parse(JSON.stringify(item)));
+if (!ready) { d2ecNotice('遊戲不接受這件裝備的資料，沒有建立。'); return; }
+if (!world.carry(ready)) { d2ecNotice('物品欄已滿，請整理背包。'); return; }
+d2ecInventory();
+const msg = D2EC.overlay.querySelector('.d2ec-msg');
+msg.textContent = `已放入物品欄：${sel.def.zh}`;
+clearTimeout(msg._h);
+msg._h = setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+function d2ecNumberRow(label, lo, hi, def, onValue) {
+const text = d2edEl('span', { class: 'd2ec-label' }, label(def));
+const input = d2edEl('input', { type: 'number', min: String(lo), max: String(hi), step: '1', value: String(def) });
+const read = () => {
+const v = Math.trunc(Number(input.value));
+return input.value === '' || !Number.isFinite(v) ? def : Math.min(hi, Math.max(lo, v));
+};
+input.addEventListener('input', () => { text.textContent = label(read()); });
+input.addEventListener('change', () => { input.value = String(read()); text.textContent = label(read()); });
+onValue(read);
+return d2edEl('label', { class: 'd2ec-row' }, text, d2edEl('span', { class: 'd2ec-range' }, `${lo} ～ ${hi}`), input);
+}
+function d2ecSelect(def, base = def.base) {
+const box = D2EC.overlay.querySelector('.d2ec-editor');
+let item, groups;
+try {
+item = d2ecBaseItem(def, base);
+groups = d2ecGroups(def, base, item);
+} catch (e) {
+box.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '這件裝備讀不到能力資料，可能是遊戲更新了。'));
+return;
+}
+const sel = D2EC.sel = { def, base, groups };
+for (const b of D2EC.overlay.querySelectorAll('.d2ec-result')) b.classList.toggle('on', b._def === def);
+const baseLine = def.rarity === 'runeword'
+? d2edEl('label', { class: 'd2ec-row' }, d2edEl('span', { class: 'd2ec-label' }, '底材'),
+d2edEl('select', { onchange: e => d2ecSelect(def, e.target.value) }, ...d2ecRunewordBases(def).map(name => {
+const o = d2edEl('option', { value: name }, d2ecTr(name));
+if (name === base) o.selected = true;
+return o;
+})))
+: d2edEl('p', { class: 'd2ec-base' }, d2ecTr(base));
+const head = d2edEl('div', { class: 'd2ec-title d2ec-r-' + def.rarity }, d2ecIcon(def.rarity, def.name, base), d2edEl('div', {}, d2edEl('b', {}, def.zh), d2edEl('small', {}, `${D2EC_RARITY[def.rarity]}${def.set ? '・' + d2ecTr(def.set) : ''}${def.runes ? '・' + def.runes.map(r => d2ecTr(r + ' Rune').replace(/符文$/, '')).join('・') : ''}`)));
+const body = d2edEl('div', {});
+const range = D2EC.api.tables().bases[base] && D2EC.api.tables().bases[base].defense;
+if (range && item.defense !== undefined && !item.stats.some(s => s.stat === 'item_armor_percent') && range[1] > range[0]) {
+const lo = range[0], hi = range[1];
+body.append(d2ecNumberRow(v => `底材防禦 ${v}`, lo, hi, Math.trunc((lo + hi) / 2), read => { sel.defense = { read }; }));
+} else if (item.defense !== undefined) body.append(d2edEl('p', { class: 'd2ec-fixed' }, `底材防禦 ${item.defense}`));
+for (const g of groups) {
+const stats = g.at === 'stats' ? item.stats : item.bonus[g.at];
+if (g.tag) body.append(d2edEl('h4', {}, g.tag));
+for (const row of g.rows) {
+// 插槽、耐久度這類遊戲不顯示也沒有作用的能力不列出來，照骰出來的值
+if (d2ecLineTexts(row.idxs.map(i => ({ ...stats[i] }))).length) body.append(d2ecNumberRow(v => d2ecRowText(row, stats, v), row.lo, row.hi, row.def, read => { row.read = read; }));
+}
+for (const line of d2ecLineTexts(g.fixed.map(s => ({ ...s })))) body.append(d2edEl('p', { class: 'd2ec-fixed' }, line));
+}
+box.replaceChildren(head, baseLine, body, d2edEl('div', { class: 'd2ec-actions' },
+d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: d2ecCreate }, '確定'), d2edEl('span', { class: 'd2ec-msg' })));
+}
+function d2ecSearch() {
+const { overlay, api } = D2EC;
+const list = overlay.querySelector('.d2ec-results');
+const words = overlay.querySelector('.d2ec-search').value.toLowerCase().split(/\s+/).filter(Boolean);
+if (!words.length) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '輸入裝備名稱、底材或套裝關鍵字，或按「自行挑選」。')); return; }
+const found = api.all.filter(d => words.every(w => d.hay.includes(w)));
+if (!found.length) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '找不到符合的裝備。')); return; }
+list.replaceChildren(...found.map(def => {
+const b = d2edEl('button', { type: 'button', class: 'd2ec-result d2ec-r-' + def.rarity, onclick: () => d2ecSelect(def) }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh, d2edEl('small', {}, `${D2EC_RARITY[def.rarity]}・${d2ecTr(def.base)}`)));
+b._def = def;
+b.classList.toggle('on', !!D2EC.sel && D2EC.sel.def === def);
+return b;
+}));
+if (found.length === 1 && !(D2EC.sel && D2EC.sel.def === found[0])) d2ecSelect(found[0]);
+}
+// 自行挑選：跟倉庫「獨特物品」分頁一樣的分類和清單，點一件就填進搜尋並開始建立
+function d2ecPicker() {
+const { overlay, api } = D2EC;
+if (overlay.querySelector('.d2ec-picker')) return;
+const kept = new Set((d2edReadSave().uniques || []).map(x => x.name));
+const tabs = d2edEl('div', { class: 'd2ec-tabs' });
+const slots = d2edEl('div', { class: 'd2ec-slots' });
+const picker = d2edEl('div', { class: 'd2ec-picker' });
+const show = () => {
+const cat = api.cats.find(c => c.id === D2EC.cat) || api.cats[0];
+for (const t of tabs.children) t.classList.toggle('on', t._id === cat.id);
+slots.replaceChildren(...cat.uniques.map(def => d2edEl('button', { type: 'button', class: `d2ec-slot d2ec-r-${def.rarity}${kept.has(def.name) ? ' kept' : ''}`, onclick: () => {
+picker.remove();
+overlay.querySelector('.d2ec-search').value = def.zh;
+D2EC.sel = null;
+d2ecSearch();
+d2ecSelect(def);
+} }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh), d2edEl('small', {}, d2ecTr(def.base)))));
+slots.scrollTop = 0;
+};
+for (const c of api.cats) {
+const t = d2edEl('button', { type: 'button', onclick: () => { D2EC.cat = c.id; show(); } }, d2ecTr(c.label));
+t._id = c.id;
+tabs.append(t);
+}
+picker.append(d2edEl('div', { class: 'd2ec-head' }, d2edEl('b', {}, '獨特物品'), d2edEl('span', { class: 'd2ec-grow' }), d2edEl('button', { type: 'button', class: 'd2ec-x', 'aria-label': '關閉', onclick: () => picker.remove() }, '×')), tabs, slots);
+overlay.append(picker);
+show();
+}
+function d2ecClose() {
+if (!D2EC.overlay) return;
+D2EC.overlay.remove();
+D2EC.overlay = null;
+D2EC.sel = null;
+}
+async function d2ecShow() {
+if (D2EC.overlay) return;
+const search = d2edEl('input', { type: 'search', class: 'd2ec-search', placeholder: '搜尋裝備，例如：謎團', autocomplete: 'off', spellcheck: 'false', 'aria-label': '搜尋裝備' });
+const results = d2edEl('div', { class: 'd2ec-results' }, d2edEl('p', { class: 'd2ec-hint' }, '讀取裝備資料中…'));
+const overlay = D2EC.overlay = d2edEl('div', { id: 'd2ec-overlay', role: 'dialog', 'aria-label': '裝備創造' },
+d2edEl('div', { class: 'd2ec-head' }, d2edEl('b', {}, '裝備創造'), search,
+d2edEl('button', { type: 'button', class: 'd2ec-pick', onclick: () => { if (D2EC.api && D2EC.api.ready) d2ecPicker(); } }, '自行挑選'),
+d2edEl('button', { type: 'button', class: 'd2ec-x', 'aria-label': '關閉', onclick: d2ecClose }, '×')),
+d2edEl('div', { class: 'd2ec-main' }, results, d2edEl('div', { class: 'd2ec-editor' })),
+d2edEl('div', { class: 'd2ec-inv' }));
+for (const type of ['keydown', 'keyup', 'keypress']) overlay.addEventListener(type, e => {
+e.stopPropagation();
+if (type !== 'keydown' || e.key !== 'Escape') return;
+const top = overlay.querySelector('.d2ec-modal') || overlay.querySelector('.d2ec-picker');
+if (top) top.remove(); else d2ecClose();
+});
+document.body.append(overlay);
+const api = await d2ecLoad();
+if (D2EC.overlay !== overlay) return;
+if (!api) { results.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '讀不到遊戲的裝備資料，可能是資料還沒載入，或遊戲更新了。')); return; }
+search.addEventListener('input', d2ecSearch);
+d2ecSearch();
+d2ecInventory();
+search.focus();
+}
+function d2ecConfirm() {
+const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
+if (!card || card.querySelector('.d2ed-modal')) return;
+const modal = d2edEl('div', { class: 'd2ed-modal' });
+const close = () => modal.remove();
+modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'alertdialog', 'aria-label': '裝備創造提醒' },
+d2edEl('p', { style: 'margin: 6px 0; color: #d8d0c0' }, '請小心使用此功能，會影響遊戲終局體驗！建議適度使用以免沒東西可玩。'),
+d2edEl('div', { class: 'd2ed-row' },
+d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: () => { close(); d2ecShow(); } }, '確定'),
+d2edEl('button', { type: 'button', onclick: close }, '取消'))));
+card.append(modal);
+}
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
 // 遊戲中改這一局的人物；在主選單（不在一局裡）改恰西的永久升級
@@ -1416,6 +1763,8 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V43', date: '2026-11-01', game: '遊戲 20261030.2', items: [
+'功能優化'] },
 { ver: 'V42', date: '2026-10-31', game: '遊戲 20261030.2', items: [
 '翻譯遊戲主選單「最新消息」裡作者的更新公告（先翻 10/28 之後的內容，舊的之後補）'] },
 { ver: 'V41', date: '2026-10-31', game: '遊戲 20261030.2', items: [
@@ -1612,7 +1961,9 @@ document.body.append(box);
 }
 function d2edInstall() {
 window.__D2ED = D2ED; // 除錯用（在主控台看抓到的人物、選單位置）
+D2ED.ec = { load: d2ecLoad, baseItem: d2ecBaseItem, groups: d2ecGroups, bases: d2ecRunewordBases, lines: d2ecLineTexts };
 d2edBuildInstall();
+d2ecWorldInstall();
 d2edKeepLeaderboardOff();
 d2edPerfApplyDpr();
 // 電腦版：開遊戲時的背景檢查做完會呼叫這裡（d2zh-inject.cjs）。下載到比這個頁面新的翻譯檔時：
@@ -1696,13 +2047,71 @@ background: linear-gradient(180deg, #221a12, #120d08); border: 2px solid #8f743e
 #d2ed-overlay .d2ed-modal-box ul { margin: 6px 0; padding-left: 20px; color: #d8d0c0; }
 #d2ed-overlay .d2ed-warn { margin: 8px 0 0; color: #ffb080; font-size: 13px; }
 #d2ed-overlay button:disabled { opacity: .45; cursor: not-allowed; }
+#d2ec-overlay { position: fixed; inset: 0; z-index: 2147483647; display: flex; flex-direction: column; background: #120d08; font: 14px/1.4 ${D2ZH_FONT}; color: #e8e2d0; }
+#d2ec-overlay button { padding: 4px 12px; cursor: pointer; color: #f3e3b0; background: #2c2014; border: 1px solid #8f743e; border-radius: 4px; font: inherit; }
+#d2ec-overlay input, #d2ec-overlay select { padding: 4px 6px; color: #f3e3b0; background: #000; border: 1px solid #5a4a2a; border-radius: 4px; font: 14px ${D2ZH_FONT}; }
+#d2ec-overlay .d2ec-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #4a3418; }
+#d2ec-overlay .d2ec-head b { color: #f0c94a; font-size: 17px; white-space: nowrap; }
+#d2ec-overlay .d2ec-search { flex: 1; min-width: 0; font-size: 15px; }
+#d2ec-overlay .d2ec-pick { flex: none; white-space: nowrap; }
+#d2ec-overlay .d2ec-grow { flex: 1; }
+#d2ec-overlay button.d2ec-x { flex: none; padding: 0 6px; background: none; border: 0; color: #d8d0c0; font-size: 26px; line-height: 1; }
+#d2ec-overlay .d2ec-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(180px, 2fr) 5fr; }
+#d2ec-overlay .d2ec-results { overflow-y: auto; padding: 6px; border-right: 1px solid #4a3418; }
+#d2ec-overlay .d2ec-editor { overflow-y: auto; padding: 8px 14px; }
+#d2ec-overlay .d2ec-hint { margin: 8px 4px; color: #a39a82; }
+#d2ec-overlay button.d2ec-result { display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 4px; padding: 3px 6px; text-align: left; background: rgba(0,0,0,.35); border-color: #2e2216; }
+#d2ec-overlay button.d2ec-result.on { border-color: #f0c94a; background: rgba(150,120,50,.24); }
+#d2ec-overlay .d2ec-result img { flex: none; width: 28px; height: 28px; object-fit: contain; image-rendering: pixelated; }
+#d2ec-overlay .d2ec-result span { min-width: 0; }
+#d2ec-overlay small { display: block; color: #a89a7c; font-size: 12px; }
+#d2ec-overlay .d2ec-r-unique, #d2ec-overlay .d2ec-r-runeword { color: #d9c27e; }
+#d2ec-overlay .d2ec-r-set { color: #4bd04b; }
+#d2ec-overlay .d2ec-r-rare { color: #ffe86a; }
+#d2ec-overlay .d2ec-r-magic { color: #8f9cff; }
+#d2ec-overlay .d2ec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+#d2ec-overlay .d2ec-title img { max-height: 64px; image-rendering: pixelated; }
+#d2ec-overlay .d2ec-title b { font-size: 18px; }
+#d2ec-overlay .d2ec-base { margin: 2px 0 6px; color: #d8d0c0; }
+#d2ec-overlay h4 { margin: 10px 0 2px; color: #4bd04b; font-size: 13px; font-weight: normal; }
+#d2ec-overlay .d2ec-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; border-bottom: 1px solid #2e2216; }
+#d2ec-overlay .d2ec-label { flex: 1; min-width: 0; color: #8f9cff; }
+#d2ec-overlay .d2ec-range { flex: none; color: #a89a7c; font-size: 12px; white-space: nowrap; }
+#d2ec-overlay .d2ec-row input { flex: none; width: 76px; font-family: ui-monospace, Consolas, monospace; }
+#d2ec-overlay .d2ec-row select { flex: 1; min-width: 0; max-width: 60%; }
+#d2ec-overlay .d2ec-fixed { margin: 0; padding: 3px 0; color: #8f9cff; }
+#d2ec-overlay .d2ec-actions { position: sticky; bottom: -8px; display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 6px 0 8px; background: #120d08; }
+#d2ec-overlay button.d2ec-ok { padding: 5px 28px; color: #17120b; background: #c7a45f; font-weight: bold; }
+#d2ec-overlay .d2ec-msg { color: #9fd38a; }
+#d2ec-overlay .d2ec-inv { flex: none; padding: 6px 12px 8px; border-top: 1px solid #4a3418; background: #0b0805; --d2ec-cell: min(34px, 7.4vh, calc((100vw - 24px) / 10)); }
+#d2ec-overlay .d2ec-invhead { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; font-size: 13px; color: #a89a7c; }
+#d2ec-overlay .d2ec-invhead b { color: #c7a45f; font-weight: normal; }
+#d2ec-overlay .d2ec-invinfo { color: #e8e2d0; }
+#d2ec-overlay .d2ec-grid { display: grid; grid-template-columns: repeat(10, var(--d2ec-cell)); grid-template-rows: repeat(4, var(--d2ec-cell)); width: max-content; background-color: #000;
+background-image: linear-gradient(#2e2216 1px, transparent 1px), linear-gradient(90deg, #2e2216 1px, transparent 1px); background-size: var(--d2ec-cell) var(--d2ec-cell); outline: 1px solid #4a3418; }
+#d2ec-overlay .d2ec-item { display: grid; place-items: center; overflow: hidden; background: rgba(90,90,180,.22); font-size: 10px; line-height: 1.1; text-align: center; }
+#d2ec-overlay .d2ec-item img { max-width: 100%; max-height: 100%; image-rendering: pixelated; pointer-events: none; }
+#d2ec-overlay .d2ec-picker { position: absolute; inset: 0; display: flex; flex-direction: column; background: #120d08; }
+#d2ec-overlay .d2ec-tabs { flex: none; display: flex; flex-wrap: wrap; gap: 3px; padding: 6px 12px; border-bottom: 1px solid #4a3418; }
+#d2ec-overlay .d2ec-tabs button { padding: 2px 7px; font-size: 13px; }
+#d2ec-overlay .d2ec-tabs button.on { color: #17120b; background: #c7a45f; }
+#d2ec-overlay .d2ec-slots { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); grid-auto-rows: 118px; gap: 4px; padding: 8px 12px; }
+#d2ec-overlay button.d2ec-slot { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; overflow: hidden; background: rgba(0,0,0,.55); border-color: transparent; text-align: center; }
+#d2ec-overlay button.d2ec-slot:hover { border-color: #7a6a3a; }
+#d2ec-overlay button.d2ec-slot.kept { background: rgba(150,120,50,.24); }
+#d2ec-overlay .d2ec-slot img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+#d2ec-overlay .d2ec-slot span { flex: none; font-size: 13px; line-height: 1.15; }
+#d2ec-overlay .d2ec-modal { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.75); }
+#d2ec-overlay .d2ec-modal-box { width: min(380px, 100%); padding: 16px 18px; background: linear-gradient(180deg, #2a1610, #140a06); border: 2px solid #b8402e; border-radius: 8px; }
+#d2ec-overlay .d2ec-modal-box p { margin: 0 0 12px; }
+@media (max-width: 620px) { #d2ec-overlay .d2ec-main { grid-template-columns: 1fr; grid-template-rows: minmax(70px, 2fr) 5fr; } #d2ec-overlay .d2ec-results { border-right: 0; border-bottom: 1px solid #4a3418; } }
 `;
 document.head.append(style);
 D2ED.button = d2edEl('button', { id: 'd2ed-btn', type: 'button', onclick: e => { e.preventDefault(); e.stopPropagation(); d2edOpen(); } }, '書籤修改');
 document.body.append(D2ED.button);
 for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) {
 window.addEventListener(type, e => {
-if (e.target instanceof Element && (e.target.closest('#d2ed-btn') || e.target.closest('#d2ed-overlay'))) {
+if (e.target instanceof Element && (e.target.closest('#d2ed-btn') || e.target.closest('#d2ed-overlay') || e.target.closest('#d2ec-overlay'))) {
 if (type === 'click') return;
 e.stopImmediatePropagation();
 }
