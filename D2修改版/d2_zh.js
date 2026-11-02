@@ -1,18 +1,34 @@
 void (function D2ZH() { // ⚠ 你現在看到的是書籤的原始碼，不能直接用。請複製這個網址貼到網址列，到教學頁面照步驟安裝書籤：https://ppt.cc/fmpTcx
 // （第一行必須以「void (function D2ZH()」開頭，電腦版下載更新時會檢查，所以提示寫在同一行後面）
-if (window.__D2ZH) {
-const I = window.D2I18N;
-if (I) I.setLanguage(I.language === 'zh-Hant' ? 'en' : 'zh-Hant');
-return;
-}
+if (window.__D2ZH) return;
 // 桌面版（安裝版）由 desktop/d2zh-inject.cjs 注入，會先設 __D2ZH_DESKTOP；頁面上沒有 #d2-files
 if (!document.getElementById('d2-files') && !window.__D2ZH_DESKTOP) {
 alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個書籤。');
 return;
 }
+// 翻譯是對著英文字串做的，遊戲是韓文時蓋不上去。不是自己在電腦版選韓文的話，就換回英文底（畫面仍是繁中）再重新載入
+// 網頁版按書籤就是要中文，所以不看記住的選擇；韓文要用書籤的語言按鈕切換，電腦版才會記住
+{
+let gameKo = false, chosenKo = false;
+try {
+const saved = localStorage.getItem('d2s:lang');
+gameKo = saved === 'ko' || (saved === null && (navigator.languages || [navigator.language]).some(l => /^ko\b/i.test(l)));
+chosenKo = !!window.__D2ZH_DESKTOP && localStorage.getItem('d2-survivors-language') === 'ko';
+if (gameKo && !chosenKo) {
+localStorage.setItem('d2s:lang', 'en');
+localStorage.setItem('d2-survivors-language', 'zh-Hant');
+if (localStorage.getItem('d2s:lang') === 'en') {
+if (!window.__D2ZH_DESKTOP) alert('遊戲目前是韓文，已經幫你換回繁體中文。\n頁面會重新載入，載入後請再點一次書籤。');
+location.reload();
+return;
+}
+}
+if (chosenKo && !gameKo) localStorage.setItem('d2-survivors-language', 'zh-Hant');
+} catch (_) { /* Storage can be disabled. */ }
+}
 window.__D2ZH = true;
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V46';
+const D2ZH_VERSION = 'V47';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -277,6 +293,68 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+"Terror tiers past tier 40 add +1% Magic Find a tier, down from +2%": "恐懼層第 40 層之後，每層尋獲魔法物品 +1%（原本 +2%）",
+"Each hero has a second weapon set, as in Diablo II, and W swaps between them": "每位英雄都有第二組武器，和暗黑破壞神 II 一樣，按 W 切換",
+"The inventory's I and II tabs swap weapon sets, and so does a tap on the new I / II button on phones and tablets": "物品欄的 I、II 分頁可以切換武器組，手機和平板也可以點新的 I／II 按鈕切換",
+"Only the weapon set in your hands counts, so the other set gives no stats, skills or auras": "只有拿在手上的武器組有效，另一組不提供屬性、技能和光環",
+"A controller swaps weapons with the left stick's click, which Options, CONTROLLER can change": "手把按下左搖桿切換武器，可以在 選項 → 手把 更改",
+"Options has a KEYBOARD page that shows every key and lets you rebind it, with two keys for each action": "選項新增「鍵盤」頁面，可以查看並更改所有按鍵，每個動作可設兩個鍵",
+"Your hero walks with the mouse and the arrow keys, and W, A, S and D no longer move, as in Diablo II": "英雄改用滑鼠和方向鍵移動，W、A、S、D 不再是移動，和暗黑破壞神 II 一樣",
+"MOVE WITH WASD on the KEYBOARD page puts walking back on W, A, S and D": "「鍵盤」頁面的「用 WASD 移動」可以把移動改回 W、A、S、D",
+"Every hint and hover that names a key names the one you bound": "所有提到按鍵的提示和說明框，都會顯示你設定的按鍵",
+"Terror tiers past tier 40 add +1% gold a tier, down from +2%": "恐懼層第 40 層之後，每層金幣 +1%（原本 +2%）",
+"Items found past Terror tier 100 sell for no more than tier 100's": "恐懼層第 100 層之後找到的物品，售價不會超過第 100 層的物品",
+"On phones and tablets the game holds its art in about a third less memory, so it crashes less at Duriel and Diablo": "手機和平板上，遊戲圖片佔用的記憶體減少約三分之一，打都瑞爾和迪亞布羅時比較不會當掉",
+"With Samsung Internet's dark mode on, the life and mana globes and the items' pictures are no longer drawn white": "開啟 Samsung Internet 的深色模式時，生命球、法力球和物品圖片不會再變成白色",
+"The screen no longer garbles after the display comes back from a lost graphics connection": "顯示卡連線中斷又恢復後，畫面不會再變成亂碼",
+"On Windows, extracting the game files again no longer stops at the end with \"D2 Survivors couldn’t save its copy of the game files\"": "Windows 上重新解壓縮遊戲檔案時，最後不會再因為「D2 Survivors 無法儲存遊戲檔案副本」而中斷",
+"The Dark Wanderer walks away facing where he goes, no longer sideways": "黑暗流浪者離開時會面向前進方向，不再側著走",
+"In older Chrome on a scaled Windows screen, an item put down in the inventory or stash lands under the cursor again": "舊版 Chrome 在有縮放的 Windows 螢幕上，物品放進物品欄或儲物箱時又會落在游標下方",
+"On Windows, one graphics crash as the desktop app starts no longer leaves it on slower Direct3D 11 until the next update": "Windows 上桌面版啟動時發生一次顯示錯誤，不會再一直用較慢的 Direct3D 11 到下次更新",
+"Items in the inventory no longer show only their names for the whole session after one piece of item art fails to load": "有一張物品圖片載入失敗時，物品欄不會再整段時間都只顯示物品名稱",
+"Back from Tristram or the Secret Cow Level, the items you left on Act I's floor are still there": "從崔斯特姆或秘密母牛關回來後，留在第一幕地上的物品還會在",
+"Bul-Kathos' Sacred Charge, Famine and Naj's Circlet no longer read as not legit when moved between Diablo II's and Resurrected's files": "布爾凱索的神聖代價、飢荒和娜吉的頭飾，在暗黑破壞神 II 和獄火重生的檔案之間轉移時，不會再被判定為不合規",
+"Akara's re-draft keeps the modifier on Raise Skeleton once it has evolved into Revive, rather than freeing it every time": "復甦骷髏進化成重生後，阿卡拉重新抽選會保留它的改造，不再每次都釋放",
+"An evolution you banish in Akara's re-draft stays banished until your next re-draft, rather than ending at Baal": "在阿卡拉重新抽選時放逐的進化技能，會維持放逐到下次重新抽選，不再到巴爾就結束",
+"The loot filter warns in red on CHARMS when MAGIC ITEMS would sell or hide your magic charms, and KEEP on CHARMS keeps them": "「魔法物品」會出售或隱藏魔法護符時，物品過濾的「護符」會顯示紅色警告，把「護符」設為「保留」就會留下",
+"A runeword on a class's own base keeps that base's property, like a Paladin shield's resistances or an Amazon bow's +skills, as in Diablo II": "符文之語做在職業專屬底材上，會保留底材的屬性，例如聖騎士盾牌的抗性、亞馬遜弓的 +技能，和暗黑破壞神 II 一樣",
+"Runewords you already own on a class's own base gain that base's property when your save loads": "你已經擁有的職業專屬底材符文之語，在讀取存檔時會補上底材的屬性",
+"On phones, a pinch on the level-up cards no longer zooms the game in and leaves it zoomed after your pick": "手機上在升級卡片用兩指縮放，不會再放大遊戲，選完後也不會維持放大",
+"Taking off Wolfhowl or Beast ends the werewolf or werebear form, its look and its bonuses, as in Diablo II": "卸下狼嚎或野獸會結束狼人或熊人形態，外觀和加成都會消失，和暗黑破壞神 II 一樣",
+"The NEWS page scrolls smoothly again, where its long list of changes made it lag": "「最新消息」頁面又能順暢捲動，之前更新項目太長造成卡頓",
+"With a gamepad, tapping Y twice to open your inventory no longer sells an item, and Y never sells the gear you wear": "使用手把時，連按兩下 Y 打開物品欄不會再賣掉物品，Y 也絕不會賣掉身上的裝備",
+"Call to Arms no longer makes heroes of other classes yell with the Barbarian's voice as it casts its shouts": "戰爭召喚施放吶喊技能時，其他職業的英雄不會再發出野蠻人的聲音",
+"Act I's stone crosses stand one at a time, no longer packed into overlapping clumps": "第一幕的石十字架會分開擺放，不再重疊擠成一團",
+"On tablets held sideways, a monster's enchantments under its life bar no longer run into the run's rows at the top right": "平板橫放時，怪物生命條下方的詞綴不會再和右上角的本局資訊重疊",
+"Wraith Flight, Ethereal Edge, Ghostflame and Shadow Killer say Ethereal on their item box, as they always were": "死靈夜翔、永恆邊界、鬼火焰和影殺者的說明框會標示無形的，它們本來就是無形的",
+"Trang-Oul's Claws give their missing +25% to Poison Skill Damage, worn alone or with the set, as in Diablo II": "塔格奧之手補上缺少的毒素技能傷害 +25%，單穿或穿套裝都有，和暗黑破壞神 II 一樣",
+"Civerb's Cudgel gives its missing +1 Maximum Damage per character level, as in Diablo II": "希弗柏的短棍補上缺少的每角色等級 +1 最大傷害，和暗黑破壞神 II 一樣",
+"The Ancients hold the Arreat Summit while you're on it, as in Diablo II, rather than walking off before Rite of Passage is done": "你在亞瑞特山頂時，遠古之靈會留在山頂，和暗黑破壞神 II 一樣，不會在成年禮完成前走掉",
+"The mana globe no longer stays empty while it reads full, after a run where Energy Shield spent your mana": "在能量護盾耗掉法力的一局之後，法力球不會再明明顯示全滿卻是空的",
+"Skills your items cast were your own fully evolved skills, with their extra bonuses, so some items gave far more than they should": "裝備施放的技能以前是用你自己完整進化的技能，連額外加成都有，所以有些裝備給的效果遠超過應有的數值",
+"Most skills an item gives are now that skill alone at the item's level, with none of your skill modifiers or evolutions, as in Diablo II": "現在裝備給的技能大多是該技能本身、用裝備的等級，不含你的技能改造和進化，和暗黑破壞神 II 一樣",
+"Wisp Projector was the biggest case, as its Heart of Wolverine and Spirit of Barbs added Oak Sage's life, about +125% on any hero": "鬼火投射者是最明顯的例子，它的狼獾之心和棘靈會加上橡木智者的生命，任何英雄都多約 +125%",
+"If your hero leaned on such an item, expect less life or damage now, since it gives only what the item gives in Diablo II": "如果你的英雄很依賴這類裝備，生命或傷害會變少，因為現在只給暗黑破壞神 II 裡該裝備給的效果",
+"Call to Arms' Battle Orders gives Diablo II's life at its level, and its Battle Command +1 to all skills alone": "戰爭召喚的戰鬥體制照暗黑破壞神 II 依等級給生命，戰鬥指揮只給所有技能 +1",
+"Revive, Spirit Wolf, Dire Wolf and Grizzly cast by items raise only their own monster or beast": "裝備施放的重生、靈狼、恐狼和灰熊，只會召喚各自的怪物或野獸",
+"Static Field no longer kills monsters in Normal, where it leaves them at 1 life, as in Diablo II": "靜態立場在普通難度不會再殺死怪物，只會留下 1 點生命，和暗黑破壞神 II 一樣",
+"A hero reset at Akara or with a Token of Absolution re-drafts before the Training Ground, where it used to arrive with no skills": "在阿卡拉或用赦免徽記重置的英雄，會先重新抽選才進訓練場，以前會沒有技能就進去",
+"With STAT RANGES on, items for sale in the stores read in Korean again, with each range after its line in grey": "開啟「屬性範圍」時，商店販售的物品又會顯示韓文，每行後面用灰字標示範圍",
+"Fire, cold and lightning damage charms no longer lower your weapon skills' damage on monsters that resist those elements": "火焰、冰寒、閃電傷害護符，打有抗性的怪物時不會再降低武器技能的傷害",
+"Fire Arrow's and Cold Arrow's hovers no longer show more damage before their first shot than after it": "火焰箭和冰箭的說明框，不會再在第一次射擊前顯示比射擊後更高的傷害",
+"A charm right-clicked at the stash after switching heroes no longer opens the previous hero's Charms window": "換英雄後在儲物箱右鍵點護符，不會再打開上一位英雄的護符欄",
+"Dragon Flight now takes you to its target while Whirlwind from Chaos spins you, instead of Whirlwind pulling you back": "混沌的炫風旋轉時，飛龍在天現在會帶你到目標，不再被炫風拉回去",
+"When the desktop app's setup is stopped as it starts copying the game files, it says an antivirus may be the cause and what to do": "桌面版安裝在開始複製遊戲檔案時被停止，會提示可能是防毒軟體造成，並說明怎麼處理",
+"One Terror tier the Ladder couldn't count no longer keeps every later run of your hero off it for good": "有一層恐懼層無法計入排行榜時，不會再讓這位英雄之後的紀錄永遠上不了榜",
+"REPORT sends a contact typed as its box shows it, like @name (X), where it refused it before": "「回報」現在接受照輸入框範例填寫的聯絡方式，例如 @name (X)，以前會被拒絕",
+"A charm moved at a vendor no longer leaves the store over the character and mercenary screens in later runs": "在商人那裡移動護符後，之後幾局商店不會再蓋在角色和傭兵畫面上",
+"Gheed's gamble offers normal bases and, as in Diablo II, some exceptional or elite ones, so their uniques can be gambled": "吉黑得的賭博會出現普通底材，也和暗黑破壞神 II 一樣有部分擴展和精華底材，所以賭得到它們的獨特物品",
+"Scepters, staves, wands, orbs and other classes' items are no longer gambled, as in Diablo II": "權杖、法杖、魔杖、法珠和其他職業的物品不再出現在賭博，和暗黑破壞神 II 一樣",
+"Ethereal Edge, Stormshield, The Grandfather and the other indestructible items say Indestructible on their item box, as in Diablo II": "永恆邊界、暴風之盾、祖父等不可破壞的物品，說明框會標示「不可破壞」，和暗黑破壞神 II 一樣",
+"On the website, one damaged backup copy no longer stops the browser from keeping new backups of your save": "網頁版上有一份備份損毀時，瀏覽器不會再因此無法保留新的存檔備份",
+"Potions bought from Akara now go into your belt when you continue a saved run, not only in a new run": "向阿卡拉買的藥水，繼續已儲存的一局時也會放進腰帶，不再只有新的一局才會",
+"Shieldmaidens bring each fallen Valkyrie back on the skill's next cast, where all three had to fall before any returned": "盾女會在下次施放技能時帶回每一位倒下的女武神，以前要三位都倒下才會回來",
+"The hero select no longer asks for Lord of Destruction's files when the Amazon, Sorceress, Necromancer, Paladin or Barbarian is missing": "缺少亞馬遜、女巫、死靈法師、聖騎士或野蠻人時，選角畫面不會再要求毀滅之王的檔案",
 "The Terror leaderboard starts over with this balance update, and your heroes keep every Terror tier they've unlocked": "這次平衡更新重置恐懼層排行榜，英雄已解鎖的恐懼層都會保留",
 "The Amazon's Valkyrie gives your hero +6% to all resistances at level 1, up to +40% at level 8": "亞馬遜的女武神 1 級給英雄所有抗性 +6%，8 級最高 +40%",
 "Defense now makes monsters' blows and arrows miss you more often the higher it is, instead of cutting their damage, as in Diablo II": "防禦越高，怪物的攻擊和箭矢越容易打不中你，不再是減少傷害，和暗黑破壞神 II 一樣",
@@ -612,7 +690,7 @@ if (!d2zhBusy && img instanceof HTMLCanvasElement && img.classList.contains('d2-
 try {
 const st = D2ZH_STATE.get(img) || (d2zhIsText(img) ? d2zhAdopt(img) : null);
 if (st && st.lang !== d2zhLang()) d2zhPaint(img, st);
-if (st) d2edOnTextDraw(this, img, arguments, st.src === 'PREVIOUS MENU');
+if (st) d2edOnTextDraw(this, img, arguments, st.src === 'PREVIOUS MENU' || st.src === "이전 메뉴");
 } catch (e) { console.warn('[D2 中文]', e); }
 }
 return D2ZH_DRAW.apply(this, arguments);
@@ -1872,6 +1950,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V47', date: '2026-11-02', game: '遊戲 20261102.1', items: [
+'配合遊戲更新翻譯新增的文字：第二組武器與切換提示、選項裡新的「鍵盤」頁面（所有動作、方向鍵與數字鍵名稱）、按鍵提示會跟著你設定的按鍵顯示、阿卡拉重新抽選的放逐說明、物品過濾的護符警告、裝備施放的技能說明、「不可破壞」、線上檔案版結束的說明',
+'翻譯遊戲主選單「最新消息」裡這次改版的更新公告',
+'修正：不小心把遊戲語言按成韓文後回不來。現在按書籤就會自動換回繁體中文，遊戲選項的「遊戲語言」也不會再變成韓文',
+'語言按鈕改成「繁體中文／韓文」（拿掉 English），選韓文前會先確認'] },
 { ver: 'V46', date: '2026-11-01', game: '遊戲 20261101.1', items: [
 '修正電腦版「背景靜音」沒有作用：現在切到其他視窗或縮小到工具列時就會靜音，回到遊戲恢復（網頁版不變）'] },
 { ver: 'V45', date: '2026-11-01', game: '遊戲 20261101.1', items: [
@@ -2278,6 +2361,81 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 2026-11 遊戲 20261102.1：第二組武器、鍵盤設定；提示裡的按鍵可以自訂，所以用 * 代入
+"The hosted version is no longer available": "線上檔案版已不再提供",
+"D2 Survivors now plays from your own Diablo II or Diablo II: Resurrected files, in this browser or in the desktop app.": "D2 Survivors 現在要用你自己的 Diablo II 或 Diablo II：獄火重生檔案來玩，可以在這個瀏覽器或桌面版遊玩。",
+"Your Softcore heroes are safe in this browser. Download your save to import it in the desktop app or another browser.": "你的一般模式英雄安全地存在這個瀏覽器裡。下載存檔後，可以匯入桌面版或其他瀏覽器。",
+"DOWNLOAD MY SAVE": "下載我的存檔",
+"COPY AS A CODE": "複製成代碼",
+"MAGIC ITEMS hides magic charms too. Set CHARMS to KEEP to keep them": "「魔法物品」也會隱藏魔法護符。要留下護符，請把「護符」設為「保留」",
+"MAGIC ITEMS sells magic charms too. Set CHARMS to KEEP to keep them": "「魔法物品」也會出售魔法護符。要留下護符，請把「護符」設為「保留」",
+"Gives +# to all your skills.": "所有技能 +{0}。",
+"Up to # slain monsters rise for #s to fight for you.": "最多 {0} 隻被殺死的怪物復活 {1} 秒，為你戰鬥。",
+"Up to # spirit wolves fight beside you, each sweeping bite dealing #.": "最多 {0} 隻靈狼在你身邊戰鬥，每次橫掃撕咬造成 {1} 傷害。",
+"Up to # dire wolves fight beside you, each sweeping bite dealing #.": "最多 {0} 隻恐狼在你身邊戰鬥，每次橫掃撕咬造成 {1} 傷害。",
+"A grizzly fights beside you, each splashing swipe dealing #.": "一隻灰熊在你身邊戰鬥，每次範圍揮擊造成 {0} 傷害。",
+"It adds +#% damage to your and your summons' blows and +#% Attack Rating.": "你和召喚物的攻擊傷害 +{0}%，攻擊準確率 +{1}%。",
+"Monsters whose blows land on you take #% of the damage back.": "打中你的怪物會受到 {0}% 的反彈傷害。",
+"Repair Diablo II and extract again (d2char.mpq and d2data.mpq hold these heroes)": "修復 Diablo II 後再解壓縮一次（這些英雄在 d2char.mpq 和 d2data.mpq 裡）",
+"Repair Diablo II and Lord of Destruction and extract again (d2char.mpq, d2data.mpq, d2exp.mpq)": "修復 Diablo II 和毀滅之王後再解壓縮一次（d2char.mpq、d2data.mpq、d2exp.mpq）",
+"Pick a card to banish it: an evolution until your next re-draft, any other for this re-draft": "選一張卡片放逐：進化會放逐到下次重新抽選，其他卡片只在這次重新抽選有效",
+"Banished until your next re-draft": "已放逐，直到下次重新抽選",
+"Banished until this run ends or goes on past Baal": "已放逐，直到這一局結束或打過巴爾繼續玩",
+"The part of D2 Survivors that copies the game files was stopped as it started.": "D2 Survivors 複製遊戲檔案的程式一啟動就被停止了。",
+"An antivirus may be stopping it: allow D2 Survivors in it, then try again.": "可能是防毒軟體擋住了：請在防毒軟體裡允許 D2 Survivors，再試一次。",
+"Or play in your browser at d2survivors.lol, which needs no copy of the game files.": "或到 d2survivors.lol 用瀏覽器玩，不需要複製遊戲檔案。",
+"Indestructible": "不可破壞",
+"KEYBOARD": "鍵盤",
+"MOVE UP": "向上移動",
+"MOVE DOWN": "向下移動",
+"MOVE LEFT": "向左移動",
+"MOVE RIGHT": "向右移動",
+"CHARACTER SCREEN": "角色畫面",
+"CLEAR SCREEN": "關閉畫面",
+"CARD #": "卡片 {0}",
+"MOVE WITH WASD": "用 WASD 移動",
+"PRESS A KEY": "請按鍵",
+"Press the key for it - Esc to cancel": "請按下要設定的鍵 - Esc 取消",
+"Taken from *": "這個鍵原本是「{0}」，已改到這裡",
+"Moves with W, A, S and D as well as the arrows": "除了方向鍵，也能用 W、A、S、D 移動",
+"Moves with W, A, S and D as well as the arrows, and swaps weapons with E": "除了方向鍵，也能用 W、A、S、D 移動，並改用 E 切換武器",
+"Tap a key, then press the new one": "點一下按鍵，再按新的鍵",
+"Enter to change a key, Delete to clear it - Esc to go back": "Enter 更改按鍵，Delete 清除按鍵 - Esc 返回",
+"Lines in red have no key": "紅色的項目沒有設定按鍵",
+"Esc always opens the game menu and goes back": "Esc 一律是開啟遊戲選單和返回",
+"Up Arrow": "上方向鍵",
+"Down Arrow": "下方向鍵",
+"Left Arrow": "左方向鍵",
+"Right Arrow": "右方向鍵",
+"Numpad *": "數字鍵 {0}",
+"Caps Lock": "Caps Lock",
+"Click for the skill tree": "點擊開啟技能樹",
+"Click for the skill tree (*)": "點擊開啟技能樹（{0}）",
+"Pick with * or click": "按 {0} 或點擊選擇",
+"Pick with a click": "點擊選擇",
+"Click to drink": "點擊飲用",
+"Press * or click to drink": "按 {0} 或點擊飲用",
+"Names every item, as * does": "顯示所有物品名稱，跟按住 {0} 一樣",
+"Names every item on the floor": "顯示地上所有物品的名稱",
+"Shows roll ranges, as * does": "顯示屬性可能的數值範圍，跟按住 {0} 一樣",
+"Shows roll ranges in item boxes": "在物品說明框顯示屬性可能的數值範圍",
+"Damage a second, by skill*": "各技能每秒傷害{0}",
+"Spend it in the skill tree*": "到技能樹{0}使用",
+"Open the character screen* in a run or the camp to read it": "在遊戲中或營地開啟角色畫面{0}來閱讀",
+"Open the character screen* in a run or the camp to use it": "在一局中或營地打開角色畫面{0}使用",
+"* stat points to place on the character screen*": "{0} 屬性點數可在角色畫面{1}分配",
+"Moved to the Charms window*": "已移到護符欄{0}",
+"+1 Skill Modifier Point. Click a skill in the skill tree*": "+1 技能改造點數。到技能樹{0}點擊技能",
+"Your hero moves with the arrow keys now. For W, A, S and D, choose MOVE WITH WASD in Options, KEYBOARD": "英雄現在改用方向鍵移動。要用 W、A、S、D，請到 選項 → 鍵盤 選「用 WASD 移動」",
+"W swaps weapons now. To move with W, A, S and D, choose MOVE WITH WASD in Options, KEYBOARD": "W 現在是切換武器。要用 W、A、S、D 移動，請到 選項 → 鍵盤 選「用 WASD 移動」",
+"SWAP WEAPONS": "切換武器",
+"Swap weapons": "切換武器",
+"Swap weapons (*)": "切換武器（{0}）",
+"Weapon set I": "武器組 I",
+"Weapon set II": "武器組 II",
+"Charms (*)": "護符（{0}）",
+"This hero's skill tree (*)": "這位英雄的技能樹（{0}）",
+"This hero's mercenary (*)": "這位英雄的傭兵（{0}）",
 // 遊戲 20261101.1：防禦改成閃避、法力藥水、耐力回復生命、技能說明改寫（技能說明裡的數字有些寫死，例如 56、40%、1.5）
 'Iron Maiden and the Iron Golem\'s Thorns send back Diablo II\'s share of a blow, and a revived monster strikes as hard as it hit you': '攻擊反噬和鋼鐵石魔的針刺會照暗黑破壞神 II 的比例反彈傷害，重生的怪物打得和牠打你時一樣重',
 'The Assassin\'s Claw Mastery gives Diablo II\'s damage, about twice what it gave': '刺客的支配利爪提供暗黑破壞神 II 的傷害加成，約為之前的兩倍',
@@ -3850,7 +4008,7 @@ const labels = {
 'Put down': '放下',
 'Select': '選擇',
 'START': '開始',
-'LANGUAGE': '遊戲語言',
+'LANGUAGE': '遊戲語言', 'LANGUAGE: ENGLISH': '遊戲語言：繁體中文', 'LANGUAGE: 한국어': '遊戲語言：繁體中文',
 'Unofficial fan project, not affiliated with Blizzard Entertainment. Diablo II® is a trademark of Blizzard Entertainment, Inc.': '非官方粉絲作品，與 Blizzard Entertainment 無關。Diablo II® 為 Blizzard Entertainment, Inc. 的商標。'
 };
 const vocabulary = [
@@ -4501,8 +4659,10 @@ return canvas;
 }
 let language = 'zh-Hant';
 try {
+// 'en' 是「不翻譯、照遊戲原文」：現在只有選韓文才會用到（存成 'ko'，開頭已確認遊戲真的是韓文）；舊版存的 'en' 回到繁中
 const saved = localStorage.getItem(STORAGE_KEY);
-if (saved === 'en' || saved === 'zh-Hant') language = saved;
+if (saved === 'ko' && window.__D2ZH_DESKTOP) language = 'en';
+else if (saved === 'en') localStorage.setItem(STORAGE_KEY, language);
 } catch (_) { /* Storage can be disabled; Traditional Chinese remains the default. */ }
 const textRecords = new WeakMap();
 const attributeRecords = new WeakMap();
@@ -4557,26 +4717,42 @@ while ((node = walker.nextNode())) processTextNode(node);
 if (root.querySelectorAll) root.querySelectorAll('*').forEach(processAttributes);
 }
 function applyLanguage() {
-document.documentElement.lang = language === 'zh-Hant' ? 'zh-Hant' : 'en';
+document.documentElement.lang = language === 'zh-Hant' ? 'zh-Hant' : 'ko';
 if (document.body) {
 document.body.classList.toggle('d2zh-hant', language === 'zh-Hant');
 scan(document.body);
 }
 if (switcher) {
 switcher.querySelectorAll('button[data-language]').forEach(button => {
-const active = button.dataset.language === language;
+const active = button.dataset.language === (language === 'zh-Hant' ? 'zh-Hant' : 'ko');
 button.setAttribute('aria-pressed', String(active));
 button.classList.toggle('active', active);
 });
 }
 window.dispatchEvent(new CustomEvent('d2-language-changed', { detail: { language } }));
 }
+// 切換都要重新載入，遊戲只在開頁時載入韓文字串表
+const setItemRaw = window.Storage ? Storage.prototype.setItem : null;
 function setLanguage(next) {
-if (next !== 'en' && next !== 'zh-Hant') return;
-language = next;
-try { localStorage.setItem(STORAGE_KEY, language); } catch (_) { /* In-memory switching still works. */ }
-applyLanguage();
+if (next !== 'ko' && next !== 'zh-Hant') return;
+if (next === (language === 'zh-Hant' ? 'zh-Hant' : 'ko')) return;
+const desk = window.__D2ZH_DESKTOP;
+if (next === 'ko' && !confirm('要換成遊戲原本的韓文嗎？\n\n換回繁體中文的方法：' + (desk ? '到「選項」選單按語言的「繁體中文」。' : '再點一次書籤。'))) return;
+try {
+setItemRaw.call(localStorage, STORAGE_KEY, next);
+setItemRaw.call(localStorage, 'd2s:lang', next === 'ko' ? 'ko' : 'en');
+} catch (_) { return; }
+location.reload();
 }
+// 遊戲自己的語言選項：繁中時擋下來（遊戲存不了就不會切換、也不會重新載入），玩家不會再不小心變成韓文；
+// 韓文時選回英文就是要回繁中
+if (setItemRaw) Storage.prototype.setItem = function (key, value) {
+if (this === localStorage && key === 'd2s:lang') {
+if (language === 'zh-Hant') throw new Error('d2zh: language is fixed');
+if (value !== 'ko') setItemRaw.call(this, STORAGE_KEY, 'zh-Hant');
+}
+return setItemRaw.call(this, key, value);
+};
 function addSwitcher() {
 if (!document.body || document.getElementById('d2-language-switch')) return;
 const style = document.createElement('style');
@@ -4607,7 +4783,7 @@ switcher = document.createElement('div');
 switcher.id = 'd2-language-switch';
 switcher.setAttribute('role', 'group');
 switcher.setAttribute('aria-label', 'Language / 語言');
-for (const [locale, title] of [['en', 'English'], ['zh-Hant', '繁體中文']]) {
+for (const [locale, title] of [['zh-Hant', '繁體中文'], ['ko', '韓文']]) {
 const button = document.createElement('button');
 button.type = 'button';
 button.dataset.language = locale;
