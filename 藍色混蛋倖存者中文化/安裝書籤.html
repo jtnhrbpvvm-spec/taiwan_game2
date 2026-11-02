@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050f20">
+<title>藍色混蛋倖存者 繁體中文書籤</title>
+<style>
+  :root {
+    --bg: #050f20; --bg2: #071b32; --line: #3383a8; --cyan: #29bfff; --ice: #7fd8ff; --text: #c5eaff; --dim: #9fd3f0;
+    --gold: #ffd866; --red: #ff9a8a; --blue: #0a4fd0; --blue2: #1680ff;
+    --cut: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; color: var(--text); font: 15px/1.75 "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+    background:
+      linear-gradient(#29bfff14 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(90deg, #29bfff14 1px, transparent 1px) 0 0 / 40px 40px,
+      radial-gradient(1000px 500px at 50% -80px, #0b3d91 0, transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  main { max-width: 800px; margin: 0 auto; padding: 28px 16px 56px; }
+  a { color: var(--ice); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  /* 標題：遊戲 LOGO 的斜體金屬字 */
+  .logo { text-align: center; margin-bottom: 26px; }
+  .logo .x { display: block; font: italic 900 clamp(32px, 8vw, 56px)/1.05 "Arial Black", Impact, "Microsoft JhengHei", sans-serif; letter-spacing: -.01em;
+    background: linear-gradient(#e8f6ff 0 42%, #5cb6ff 52%, #0d57c9 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 0 #021a44) drop-shadow(0 0 14px #29bfff66); }
+  .logo .x b { font-size: 1.32em; font-weight: 900; background: linear-gradient(#fff4a8, #ffb400 55%, #d07500); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .logo .s { display: block; margin-top: 2px; font: italic 900 clamp(20px, 5vw, 32px)/1.1 "Arial Black", Impact, sans-serif; letter-spacing: .03em;
+    background: linear-gradient(#ffe36b, #ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 #4a1a00); }
+  .logo p { margin: 12px 0 0; color: var(--dim); }
+
+  /* 面板：遊戲視窗的切角青色外框 + 標題列 */
+  .panel { --c: var(--line); position: relative; margin: 0 0 20px; padding: 2px; background: var(--c);
+    clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); }
+  .panel > .in { background: linear-gradient(#08223ff5, #051427f5); padding: 0 18px 16px;
+    clip-path: polygon(calc(var(--cut) - 1px) 0, calc(100% - var(--cut) + 1px) 0, 100% calc(var(--cut) - 1px), 100% calc(100% - var(--cut) + 1px), calc(100% - var(--cut) + 1px) 100%, calc(var(--cut) - 1px) 100%, 0 calc(100% - var(--cut) + 1px), 0 calc(var(--cut) - 1px)); }
+  .panel h2 { display: flex; align-items: center; gap: 10px; margin: 0 -18px 14px; padding: 8px 18px; color: #e6f6ff; font-size: 18px; font-weight: 800; letter-spacing: .04em;
+    background: linear-gradient(90deg, #0c3f86, #08315f 55%, transparent); border-bottom: 1px solid var(--cyan); }
+  .panel h2::before { content: "X"; display: inline-grid; place-items: center; width: 26px; height: 22px; color: #fff; font: italic 900 18px/1 "Arial Black", Impact, sans-serif;
+    background: linear-gradient(#3aa0ff, #0a4fd0); clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); }
+
+  /* 書籤按鈕：遊戲選單選中狀態（亮藍底、金色端蓋） */
+  .install { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0 4px; }
+  .bm { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-width: min(420px, 100%); padding: 13px 44px;
+    color: #fff; font-size: 20px; font-weight: 800; letter-spacing: .08em; text-decoration: none; cursor: grab; user-select: none;
+    background: linear-gradient(#2d9bff, var(--blue) 55%, #0a3da8); border: 2px solid #9fe3ff;
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+    text-shadow: 0 1px 2px #03235a; }
+  .bmwrap { position: relative; display: inline-flex; padding: 3px 6px; max-width: 100%; }
+  .bmwrap::before, .bmwrap::after { content: ""; position: absolute; top: 0; bottom: 0; width: 18px; background: linear-gradient(#fff0a8, #e6a100); }
+  .bmwrap::before { left: 0; clip-path: polygon(0 50%, 100% 0, 60% 50%, 100% 100%); }
+  .bmwrap::after { right: 0; clip-path: polygon(100% 50%, 0 0, 40% 50%, 0 100%); }
+  .bm:hover { background: linear-gradient(#55b3ff, var(--blue2) 55%, #0c49c0); }
+  .bm:active { cursor: grabbing; }
+  .bm i { font-style: normal; width: 0; height: 0; border-left: 12px solid #fff; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+  .hint { color: var(--gold); font-size: 13px; text-align: center; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 22px; color: #e6f6ff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer;
+    background: linear-gradient(#0c3365, #071f42); border: 1px solid var(--cyan);
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); }
+  .btn:hover { background: linear-gradient(#124a90, #0a2e60); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+  /* 步驟：像設定列的切角列 */
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; }
+  ol.steps > li { counter-increment: s; position: relative; margin: 8px 0; padding: 8px 12px 8px 50px; background: #0a2a4f99; border: 1px solid #1e5f86;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 12px; top: 9px; width: 26px; height: 24px; display: grid; place-items: center;
+    color: var(--bg); font-weight: 900; background: linear-gradient(#bdeeff, var(--cyan)); clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%); }
+  ul.plain { margin: 0; padding: 0 0 0 1.2em; }
+  ul.plain li { margin: 5px 0; }
+  ul.plain li::marker { color: var(--cyan); }
+  b, strong { color: #fff; }
+  .gold { color: var(--gold); font-weight: 700; }
+  kbd, code { display: inline-block; padding: 0 7px; font: 700 13px/1.6 Consolas, "Microsoft JhengHei", monospace; color: #e6f6ff; background: #031024; border: 1px solid var(--line); border-radius: 3px; }
+  code { font-weight: 400; word-break: break-all; }
+
+  /* 能量條分隔 */
+  .energy { display: flex; gap: 2px; height: 12px; padding: 2px; margin: 0 0 20px; background: #020a18; border: 1px solid var(--cyan); }
+  .energy i { flex: 1; background: linear-gradient(#bdeeff, var(--cyan) 60%, #0d7bc2); }
+  .energy i:nth-last-child(-n+4) { background: #0b2a4a; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+  td { padding: 4px 12px; background: #0a2a4f99; border-top: 1px solid #1e5f86; border-bottom: 1px solid #1e5f86; }
+  td:first-child { width: 42%; font-weight: 700; border-left: 1px solid #1e5f86; }
+  td:last-child { text-align: center; border-right: 1px solid #1e5f86; background: #061c38; }
+  details { margin: 6px 0; background: #0a2a4f99; border: 1px solid #1e5f86; }
+  summary { padding: 8px 12px; cursor: pointer; font-weight: 700; color: #e6f6ff; }
+  summary::marker { color: var(--cyan); }
+  details > div { padding: 0 14px 10px; }
+  .foot { color: #6f9cc0; font-size: 12px; text-align: center; }
+  @media (max-width: 520px) {
+    .panel > .in { padding: 0 12px 14px; }
+    .panel h2 { margin: 0 -12px 12px; padding: 8px 12px; }
+    .bm { font-size: 17px; padding: 12px 30px; }
+    td:first-child { width: 38%; }
+  }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body>
+<main>
+  <header class="logo">
+    <span class="x">MEGA MAN <b>X</b></span>
+    <span class="s">SURVIVORS</span>
+    <p>藍色混蛋倖存者・繁體中文化書籤</p>
+  </header>
+
+  <div class="energy" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <section class="panel"><div class="in">
+    <h2>安裝書籤</h2>
+    <div class="install">
+      <span class="bmwrap"><a class="bm" id="bm" href="javascript:import(&#x27;https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E8%97%8D%E8%89%B2%E6%B7%B7%E8%9B%8B%E5%80%96%E5%AD%98%E8%80%85%E4%B8%AD%E6%96%87%E5%8C%96/rxs_zh.js?v=%27+Date.now())" onclick="return false" title="拖到書籤列"><i></i>藍色混蛋 繁體中文</a></span>
+      <div class="hint">▲ 把這顆按鈕「拖曳」到書籤列（直接點不會有作用）</div>
+    </div>
+    <ol class="steps">
+      <li>按 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> 打開瀏覽器的書籤列。</li>
+      <li>把上面的按鈕<b>拖曳</b>到書籤列上，就完成了。</li>
+      <li>或是：Chrome 設定 → 匯入書籤和設定 → 選「書籤 HTML 檔案」→ 選同一個資料夾裡的 <code>書籤匯入檔.html</code>。</li>
+    </ol>
+    <details>
+      <summary>手機怎麼裝？（複製網址）</summary>
+      <div>
+        <ol class="steps">
+          <li>按下面的按鈕複製書籤內容。</li>
+          <li>隨便把一個網頁加入書籤，再編輯那個書籤，把「網址」整個換成剛剛複製的內容，名稱改成「藍色混蛋 繁體中文」。</li>
+          <li>打開遊戲頁面後，在網址列輸入書籤名稱，從清單點它（手機瀏覽器從書籤選單點，有時不會執行）。</li>
+        </ol>
+        <div class="row"><button class="btn" id="copy" type="button">複製書籤內容</button></div>
+      </div>
+    </details>
+  </div></section>
+
+  <section class="panel"><div class="in">
+    <h2>開始遊戲</h2>
+    <ol class="steps">
+      <li>打開遊戲頁面，等它載入。</li>
+      <li>點書籤，遊戲會<b>自動重新載入一次</b>（要再下載遊戲資料，約幾十秒，載入畫面會顯示進度）。</li>
+      <li>點一下畫面，選單就是繁體中文了。</li>
+      <li>之後每次打開或重新整理遊戲頁面，都要再點一次書籤。</li>
+    </ol>
+    <div class="row" style="margin-top:12px"><a class="btn" href="https://gaho727.github.io/rockmanx-survivors/" target="_blank" rel="noopener">開啟遊戲 ▶</a></div>
+  </div></section>
+
+  <section class="panel"><div class="in">
+    <h2>操作說明</h2>
+    <table>
+      <tr><td>移動</td><td>WASD／方向鍵</td></tr>
+      <tr><td>衝刺</td><td>Space／Shift／J</td></tr>
+      <tr><td>攻擊</td><td>自動發射</td></tr>
+      <tr><td>GIGA 攻擊</td><td>E／K</td></tr>
+      <tr><td>升級選卡</td><td>1・2・3／←→ + Enter／點擊</td></tr>
+      <tr><td>重抽卡片</td><td>R</td></tr>
+      <tr><td>暫停</td><td>Esc／P</td></tr>
+      <tr><td>協同提示</td><td>Tab</td></tr>
+      <tr><td>靜音</td><td>M</td></tr>
+    </table>
+  </div></section>
+
+  <section class="panel"><div class="in">
+    <h2>注意事項</h2>
+    <ul class="plain">
+      <li><span class="gold">畫面變成韓文？</span>沒點書籤時遊戲會是韓文，因為存檔的語言被設成「繁中模式」。點一次書籤就回到中文。想看原版英文，到 設定 → 遊戲 → 變更語言。</li>
+      <li>遊戲內 設定 → 遊戲 → 變更語言 可以切換 <b>繁體中文／English</b>。</li>
+      <li>進度存檔不會動到，只改了存檔裡的語言設定，也不會上傳任何資料。</li>
+      <li>計時器、<code>Dash [Space]</code>、<code>LEVEL UP</code> 這類 HUD 文字和美術字，是遊戲的點陣字或圖片，維持英文。</li>
+      <li>只支援<b>網頁版</b>，下載版 <code>RockmanXSurvivors.exe</code> 不能用書籤。</li>
+      <li>遊戲更新後，如果按書籤跳出錯誤、或出現方塊和空白，代表要等中文化更新。</li>
+      <li>非官方粉絲作品的非官方翻譯。原作 © CAPCOM，遊戲由 Reborn 製作，字型使用 Noto Sans TC（SIL OFL）。</li>
+    </ul>
+  </div></section>
+
+  <p class="foot">Rockman X Survivors 繁體中文化</p>
+</main>
+<script>
+document.getElementById('copy').addEventListener('click', function () {
+  var b = this, code = document.getElementById('bm').getAttribute('href');
+  function done(ok) { b.textContent = ok ? '已複製！' : '複製失敗，請長按上面的按鈕複製連結'; setTimeout(function () { b.textContent = '複製書籤內容'; }, 2500); }
+  if (navigator.clipboard) navigator.clipboard.writeText(code).then(function () { done(true); }, function () { done(false); });
+  else done(false);
+});
+</script>
+</body>
+</html>
