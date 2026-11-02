@@ -30,6 +30,7 @@ javascript:(function awTools() {
    *     開啟前有風險提示
    *   - 隨時取出卡片（「修改」面板）：把裝備上的卡片取出，不用回城鎮、不花素材、一定成功
    *   - 自訂天氣（「修改」面板）：直接換成指定的天氣，重新計時 4 小時；也可以清除
+   *   - 購買時選擇變異（商人的技能寶石）：點購買先選一般、變異或多重變異和數值；有附加能力時再跳視窗選
    * 「不上榜」這類訊息只在開啟前兩項時提示，其他地方不要出現。
    *
    * 遊戲的名稱每次打包都會換（X、Q 這些），所以這裡不寫死名稱：
@@ -43,7 +44,7 @@ javascript:(function awTools() {
    */
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在面板標題旁 */
-  const VERSION = 'V24';
+  const VERSION = 'V25';
 
   const CFG_KEY = 'xjtools.cfg';
   const NOTE_KEY = 'xjtools.notes';
@@ -196,9 +197,9 @@ javascript:(function awTools() {
 
   /* 協力：修改功能開著時不能進房間，改過的角色才不會跟其他玩家一起玩。
    * 開房間、加入、斷線重連都走 /api/coop/create、join（下面的 fetch 擋），連線本身是 WebSocket。
-   * 隨時取出卡片、自訂天氣是一次性的動作，用過之後這次載入遊戲都算有用。 */
-  const COOP_MSG = '修改功能開著時不能使用協力：請把單格模式、精煉失敗不退階關閉（取出過卡片、改過天氣要重新載入遊戲）';
-  const modsOn = () => !!(window.__xjOne || window.__xjNoDown || window.__xjCardUsed || window.__xjWxUsed);
+   * 隨時取出卡片、自訂天氣、買變異寶石是一次性的動作，用過之後這次載入遊戲都算有用。 */
+  const COOP_MSG = '修改功能開著時不能使用協力：請把單格模式、精煉失敗不退階關閉（取出過卡片、改過天氣、買過變異寶石要重新載入遊戲）';
+  const modsOn = () => !!(window.__xjOne || window.__xjNoDown || window.__xjCardUsed || window.__xjWxUsed || window.__xjGemUsed);
   const coopSockets = new Set();
   const RealWS = window.WebSocket;
   window.WebSocket = new Proxy(RealWS, {
@@ -386,6 +387,30 @@ javascript:(function awTools() {
       '#xjRisk .btns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}',
       '#xjRisk button{font:inherit;color:#fff;background:#2c4a7c;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 14px;cursor:pointer}',
       '#xjRisk button.go{background:#a8552a}',
+      '.xjPick{position:fixed;inset:0;z-index:2147483003;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}',
+      '.xjPick>div{width:min(440px,100%);max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;background:#16294a;color:#eef2f8;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:14px 16px;font:14px/1.6 "Noto Sans TC",sans-serif}',
+      '.xjPick h3{margin:0 0 6px;font-size:16px;color:#ffd97a;display:flex;align-items:center;gap:6px}',
+      '.xjPick h3 img{width:24px;height:24px}',
+      '.xjPick h4{margin:12px 0 4px;font-size:13px;color:#ffd97a}',
+      '.xjPick small{color:#aebbd0;font-weight:normal}',
+      '.xjPick button{font:inherit;color:#fff;background:#2c4a7c;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 14px;cursor:pointer}',
+      '.xjPick button:disabled{opacity:.5;cursor:default}',
+      '.xjPick button.go{background:#a8552a}',
+      '.xjPick .xjX{margin-left:auto;background:none;border:0;font-size:18px;line-height:1;padding:0 4px}',
+      '.xjPick .rows{display:flex;flex-direction:column;gap:6px;margin-top:6px}',
+      '.xjPick .row{text-align:left;padding:6px 10px}',
+      '.xjPick .row b{display:block}',
+      '.xjPick .row small{display:block}',
+      '.xjPick .num{display:block;margin:2px 0}',
+      '.xjPick input[type=number]{width:64px;font:inherit}',
+      '.xjPick .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}',
+      '.xjPick .chip{display:flex;align-items:center;gap:4px;padding:2px 8px;font-size:12px}',
+      '.xjPick .chip.on{background:#a8552a}',
+      '.xjPick .shape-ico rect{fill:#dbe7ff}',
+      '.xjPick .opts label{display:block;cursor:pointer}',
+      '.xjPick .opts .pas{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.2)}',
+      '.xjPick .prev{margin:8px 0 0;color:#ffd97a;font-size:13px}',
+      '.xjPick .btns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}',
       '#xjCards .it{margin:4px 0;padding-top:4px;border-top:1px dashed rgba(255,255,255,.2)}',
       '#xjAdv label{display:inline-block;margin-right:8px}',
       '#xjAdv .row{margin:4px 0}',
@@ -676,6 +701,259 @@ javascript:(function awTools() {
         toast(w ? '天氣已改成' + w.name + '（持續 4 小時）' : '天氣已清除');
         return true;
       }
+    };
+  };
+
+  /* ===== 商人賣的技能寶石：購買時選擇變異 =====
+   * 點「購買」先跳視窗選一般、變異或多重變異；有附加能力可選的，再跳第二個視窗選。
+   * 價錢和能不能買都照遊戲自己的購買流程（呼叫原本的 click），買到之後才把變異寫到新寶石上。
+   * 能選的東西跟遊戲掉落的變異相同（見遊戲裡產生變異的函式），數值也在遊戲的範圍內，存檔讀回來不會被改掉：
+   *   - 傷害技能：變異可以多 1 種元素或失去原本的元素；多重變異多 2 種元素
+   *   - 沒傷害的技能：變異可以有 1 種詛咒；多重變異 2 種詛咒，大多數可以再加「被動：常駐生效」
+   *   - 輔助：只有變異，有標籤限制的可以選「泛用」
+   *   - 被動寶石沒有變異，照舊直接買
+   * 遊戲的變異可能帶「失敗」的代價（反噬、扣生命），這裡不提供。形狀只能和遊戲一樣多一格或少一格。 */
+  const gemShop = (O, src) => {
+    const ev = window.__XJ.eval;
+    const find = re => {
+      const m = re.exec(src);
+      if (!m) throw new Error('找不到變異寶石的資料');
+      return m.slice(1).map(n => ev(n));
+    };
+    const [, skills, noDmg, sups] = find(/function ([\w$]+)\(e\)\{return ([\w$]+)\[e\]\?([\w$]+)\.has\(e\)\?`nodmg`:`dmg`:([\w$]+)\[e\]\?`support`:`other`\}/);
+    const [noPas, N] = find(/!([\w$]+)\.has\(t\)&&e\.chance\(([\w$]+)\.passive\)/);
+    const [elName] = find(/失去\$\{([\w$]+)\[n\]\}/);
+    const [curseName] = find(/詛咒：\$\{r\.cs\.map\(e=>([\w$]+)\[e\]\?\?e\)/);
+    const [shapeIcon, shapeOf, gemIcon] = find(/title="寶石形狀">\$\{([\w$]+)\(([\w$]+)\(t\),0\)\}<\/span>\$\{([\w$]+)\(t,`gem-li-ic`\)\}/);
+    const [gemName] = find(/購買寶石：\$\{([\w$]+)\(n\.sgem\)\}/);
+    const [describe] = find(/let n=([\w$]+)\(e\);t\+=`（\$\{e\.mu\?\.m/);
+    const fns = [shapeIcon, shapeOf, gemIcon, gemName, describe];
+    const tables = [skills, sups, elName, curseName];
+    if (fns.some(f => typeof f !== 'function') || tables.some(t => !t || typeof t !== 'object') || !noDmg || !noDmg.has || !noPas || !noPas.has) throw new Error('找不到變異寶石的資料');
+    const shop = O.panels.shop;
+    const realClick = shop.click;
+    const range = key => (N && N[key]) || 50;
+    const maxCells = () => (N && N.maxCells) || 6;
+    const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+
+    /* 形狀：字串 "x,y" 的陣列，正規化方式跟遊戲一樣（由上而下、由左而右排序，第一格當原點） */
+    const toCells = sh => sh.map(c => { const p = c.split(',').map(Number); return { x: p[0], y: p[1] }; });
+    const toShape = cells => {
+      const t = cells.slice().sort((a, b) => a.y - b.y || a.x - b.x);
+      return t.map(c => (c.x - t[0].x) + ',' + (c.y - t[0].y));
+    };
+    const linked = cells => {
+      if (!cells.length) return false;
+      const all = new Set(cells.map(c => c.x + ',' + c.y));
+      const seen = new Set([cells[0].x + ',' + cells[0].y]);
+      const todo = [cells[0]];
+      while (todo.length) {
+        const c = todo.pop();
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+          const k = (c.x + dx) + ',' + (c.y + dy);
+          if (all.has(k) && !seen.has(k)) { seen.add(k); todo.push({ x: c.x + dx, y: c.y + dy }); }
+        }
+      }
+      return seen.size === all.size;
+    };
+    /* 旋轉後相同的算同一種，寶石放上盤面時本來就能轉 */
+    const shapeKey = sh => {
+      let best = '';
+      let cells = toCells(sh);
+      for (let i = 0; i < 4; i++) {
+        const k = toShape(cells).slice().sort().join('|');
+        if (!best || k < best) best = k;
+        cells = cells.map(c => ({ x: -c.y, y: c.x }));
+      }
+      return best;
+    };
+    const shapeChoices = id => {
+      const base = [...shapeOf(id)];
+      const cells = toCells(base);
+      const out = [base];
+      const seen = new Set([shapeKey(base)]);
+      const add = sh => { const k = shapeKey(sh); if (!seen.has(k)) { seen.add(k); out.push(sh); } };
+      if (cells.length > 1) cells.forEach(c => { const rest = cells.filter(o => o !== c); if (linked(rest)) add(toShape(rest)); });
+      if (cells.length < maxCells()) {
+        const raw = new Set(cells.map(c => c.x + ',' + c.y));
+        cells.forEach(c => [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([dx, dy]) => {
+          const k = (c.x + dx) + ',' + (c.y + dy);
+          if (!raw.has(k)) add(toShape(cells.concat([{ x: c.x + dx, y: c.y + dy }])));
+        }));
+      }
+      return out;
+    };
+
+    /* 這顆寶石、這種變異可以選的附加能力。沒得選時回傳 fixed（直接買，內容固定） */
+    const addons = (id, multi) => {
+      if (sups[id]) return sups[id].req ? { pick: 1, opts: [{ label: '不附加', val: {} }, { label: '泛用：不限標籤', val: { free: 1 } }] } : { fixed: {} };
+      if (noDmg.has(id)) {
+        const cs = Object.keys(curseName);
+        if (!multi) return { pick: 1, opts: [{ label: '不附加', val: {} }].concat(cs.map(c => ({ label: '詛咒：' + curseName[c], val: { cs: [c] } }))) };
+        return { pick: 2, field: 'cs', opts: cs.map(c => ({ label: '詛咒：' + curseName[c], key: c })), pas: !noPas.has(id) };
+      }
+      const own = elName[skills[id].ail] ? skills[id].ail : null;
+      const others = Object.keys(elName).filter(e => e !== own);
+      if (multi) {
+        if (own) return { fixed: { el: [own].concat(others) } };
+        return { pick: 2, field: 'el', opts: others.map(e => ({ label: '+' + elName[e], key: e })) };
+      }
+      const opts = [{ label: '不附加', val: {} }].concat(others.map(e => ({ label: '+' + elName[e], val: { el: own ? [own, e] : [e] } })));
+      if (own) opts.push({ label: '失去' + elName[own], val: { el: [] } });
+      return { pick: 1, opts: opts };
+    };
+
+    /* 屬性順序跟遊戲一樣，掉落的寶石數值相同時才會疊在一起 */
+    const makeMu = (id, st, multi, add) => {
+      const mu = { d: st.d / 100 };
+      if (multi) mu.m = 1;
+      if (skills[id] && skills[id].cd > 0) mu.cd = st.cd / 100;
+      for (const k of ['el', 'free', 'cs', 'pas']) if (add[k] !== undefined) mu[k] = add[k];
+      return mu;
+    };
+
+    /* 跳出來的視窗，可以疊兩層；Esc、點外面、× 只關最上面那層 */
+    const stack = [];
+    const onKey = e => {
+      if (e.key !== 'Escape' || !stack.length) return;
+      e.stopPropagation();
+      e.preventDefault();
+      stack[stack.length - 1]();
+    };
+    const popup = (title, html) => {
+      const box = document.createElement('div');
+      box.className = 'xjPick';
+      box.innerHTML = '<div><h3>' + title + '<button class="xjX" aria-label="關閉">×</button></h3>' + html + '</div>';
+      const close = () => {
+        const i = stack.indexOf(close);
+        if (i >= 0) stack.splice(i, 1);
+        box.remove();
+        if (!stack.length) document.removeEventListener('keydown', onKey, true);
+      };
+      if (!stack.length) document.addEventListener('keydown', onKey, true);
+      stack.push(close);
+      /* 在輸入框打字時不要觸發遊戲的快捷鍵 */
+      box.addEventListener('keydown', e => e.stopPropagation());
+      box.addEventListener('click', e => { if (e.target === box || e.target.closest('.xjX')) close(); });
+      document.body.appendChild(box);
+      return { box: box, close: close };
+    };
+    const closeAll = () => { while (stack.length) stack[stack.length - 1](); };
+
+    const buy = (id, mu, sh) => {
+      if (mu && inCoop()) return;
+      const c = O.game.char;
+      const before = c.gems.length;
+      realClick.call(shop, { closest: () => ({ dataset: { sgem: id } }) });
+      closeAll();
+      if (!mu || c.gems.length <= before) return;
+      window.__xjGemUsed = true;
+      const gem = c.gems[c.gems.length - 1];
+      gem.mu = mu;
+      gem.sh = sh;
+      gem.nw = 1;
+      O.panels.host.save();
+      O.panels.host.changed();
+      toast((mu.m ? '多重變異' : '變異') + '：' + (describe(gem) || '數值不變'));
+    };
+
+    const openAddon = (id, st, multi, spec) => {
+      const list = spec.opts.map((o, i) => '<label><input type="' + (spec.pick === 1 ? 'radio' : 'checkbox') + '" name="xjAddon" value="' + i + '"' + (spec.pick === 1 && i === 0 ? ' checked' : '') + '> ' + esc(o.label) + '</label>').join('');
+      const pas = spec.pas ? '<label class="pas"><input type="checkbox" data-pas> 被動：常駐生效</label>' : '';
+      const head = esc(gemName(id)) + '・' + (multi ? '多重變異' : '變異');
+      const w = popup('選擇附加能力', '<small>' + head + (spec.pick === 2 ? '：選 2 個' : '：選 1 個') + '</small><div class="opts">' + list + pas + '</div><p class="prev"></p><div class="btns"><button data-back>上一步</button><button class="go" data-ok>購買 200 Zeny</button></div>');
+      const picked = [];
+      const current = () => {
+        if (spec.pick === 1) return spec.opts[Number(w.box.querySelector('[name=xjAddon]:checked').value)].val;
+        const add = {};
+        if (picked.length === 2) add[spec.field] = picked.map(i => spec.opts[i].key);
+        const p = w.box.querySelector('[data-pas]');
+        if (p && p.checked) add.pas = 1;
+        return add;
+      };
+      const update = () => {
+        const add = current();
+        const ok = spec.pick === 1 || picked.length === 2;
+        w.box.querySelector('[data-ok]').disabled = !ok;
+        w.box.querySelector('.prev').textContent = ok ? (describe({ id: id, mu: makeMu(id, st, multi, add), sh: st.sh }) || '數值不變') : '還要選 ' + (2 - picked.length) + ' 個';
+      };
+      w.box.addEventListener('change', e => {
+        if (spec.pick === 2 && e.target.name === 'xjAddon') {
+          const i = Number(e.target.value);
+          if (e.target.checked) {
+            picked.push(i);
+            /* 超過 2 個時取消最早選的 */
+            if (picked.length > 2) w.box.querySelector('[name=xjAddon][value="' + picked.shift() + '"]').checked = false;
+          } else picked.splice(picked.indexOf(i), 1);
+        }
+        update();
+      });
+      w.box.addEventListener('click', e => {
+        if (e.target.closest('[data-back]')) w.close();
+        else if (e.target.closest('[data-ok]')) buy(id, makeMu(id, st, multi, current()), st.sh);
+      });
+      update();
+    };
+
+    const open = id => {
+      const isDmg = !!skills[id] && !noDmg.has(id);
+      const hasCd = !!skills[id] && skills[id].cd > 0;
+      const dMax = sups[id] ? range('supRange') : isDmg ? range('dmgRange') : range('effRange');
+      const cdMax = range('cdRange');
+      const shapes = shapeChoices(id);
+      const st = { d: dMax, cd: hasCd ? -cdMax : 0, sh: shapes[0] };
+      const num = (key, name, min, max, val) => '<label class="num">' + name + ' <input type="number" data-num="' + key + '" min="' + min + '" max="' + max + '" step="1" value="' + val + '">％ <small>' + min + '～+' + max + '</small></label>';
+      const chips = shapes.map((sh, i) => '<button class="chip' + (i ? '' : ' on') + '" data-shape="' + i + '" title="' + sh.length + ' 格"><span class="shape-ico">' + shapeIcon(sh, 0) + '</span>' + sh.length + ' 格</button>').join('');
+      const row = (kind, name) => '<button class="row" data-kind="' + kind + '"><b>' + name + '</b><small></small></button>';
+      const w = popup(gemIcon(id, 'gem-li-ic') + esc(gemName(id)) + ' <small>200 Zeny</small>',
+        '<h4>變異的數值和形狀</h4>' + num('d', isDmg ? '傷害' : '效果', -dMax, dMax, st.d) + (hasCd ? num('cd', '冷卻時間', -cdMax, cdMax, st.cd) : '') +
+        '<div class="chips">' + chips + '</div>' +
+        '<h4>選要買的樣子</h4><div class="rows">' + row('plain', '一般') + row('mut', '變異') + (skills[id] ? row('multi', '多重變異') : '') + '</div>');
+      const update = () => {
+        w.box.querySelector('[data-kind=plain] small').textContent = '和原本商店賣的一樣，沒有變異';
+        for (const [kind, multi] of [['mut', false], ['multi', true]]) {
+          const el = w.box.querySelector('[data-kind=' + kind + '] small');
+          if (!el) continue;
+          const spec = addons(id, multi);
+          const text = describe({ id: id, mu: makeMu(id, st, multi, spec.fixed || {}), sh: st.sh });
+          el.textContent = (text || '數值不變') + (spec.fixed ? '' : '；接著選附加能力');
+        }
+      };
+      w.box.addEventListener('input', e => {
+        const key = e.target.dataset && e.target.dataset.num;
+        if (!key) return;
+        const max = key === 'd' ? dMax : cdMax;
+        const v = Math.round(Number(e.target.value));
+        st[key] = Number.isFinite(v) ? Math.max(-max, Math.min(max, v)) : 0;
+        update();
+      });
+      w.box.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.num) e.target.value = st[e.target.dataset.num]; });
+      w.box.addEventListener('click', e => {
+        const chip = e.target.closest('[data-shape]');
+        if (chip) {
+          st.sh = shapes[Number(chip.dataset.shape)];
+          w.box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === chip));
+          update();
+          return;
+        }
+        const b = e.target.closest('[data-kind]');
+        if (!b) return;
+        if (b.dataset.kind === 'plain') { buy(id); return; }
+        const multi = b.dataset.kind === 'multi';
+        const spec = addons(id, multi);
+        if (spec.fixed) buy(id, makeMu(id, st, multi, spec.fixed), st.sh);
+        else openAddon(id, st, multi, spec);
+      });
+      update();
+    };
+
+    shop.click = function (el) {
+      const b = el.closest('[data-sgem]');
+      if (b && (skills[b.dataset.sgem] || sups[b.dataset.sgem])) {
+        open(b.dataset.sgem);
+        return true;
+      }
+      return realClick.apply(this, arguments);
     };
   };
 
@@ -1182,6 +1460,7 @@ javascript:(function awTools() {
       const cards = O.panels ? safely('取出卡片', () => cardTool(O, src)) : null;
       const wx = O.panels ? safely('自訂天氣', () => wxTool(O, src)) : null;
       const adv = O.panels ? safely('配裝配技能推薦', () => advisor(O, src)) : null;
+      if (O.panels) safely('購買時選擇變異', () => gemShop(O, src));
       safely('面板', () => installPanel(O, earn, refine, cards, wx, adv));
       if (O.panels && O.windows) safely('單格模式、精煉失敗不退階', () => installToggles(O));
       safely('BOSS 血條', () => installBossBar(O));
