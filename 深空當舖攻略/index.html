@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深空當舖攻略</title>
+<meta name="description" content="《深空當舖：可能是偷的》（Probably Stolen）賺錢流派攻略：正式版與試玩版分開整理。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B8%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .hero { text-align: center; padding: 40px 0 10px; }
+  .hero h1 { font-size: 34px; margin: 0 0 6px; }
+  .hero p { color: var(--muted); margin: 0; }
+  .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 30px 0; }
+  .vcard { display: block; background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 24px; text-decoration: none; color: var(--ink); transition: border-color .15s, transform .15s; }
+  .vcard:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .vcard .big { font-size: 44px; line-height: 1; }
+  .vcard h2 { margin: 10px 0 4px; font-size: 24px; }
+  .vcard .n { color: var(--accent); font-weight: bold; }
+  .vcard p { color: var(--muted); font-size: 15px; margin: 8px 0 0; }
+  .vcard ul { font-size: 14px; color: var(--muted); padding-left: 20px; margin: 10px 0 0; }
+  .go { display: inline-block; margin-top: 14px; font-weight: bold; color: var(--accent); }
+  @media (max-width: 700px) { .choose { grid-template-columns: 1fr; } .hero h1 { font-size: 26px; } }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top" style="justify-content:flex-end"><button id="theme" type="button" aria-label="切換深淺色">🌓 深淺色</button></header>
+  <section class="hero">
+    <h1>🛸 深空當舖攻略</h1>
+    <p>《深空當舖：可能是偷的》Probably Stolen ‧ 賺錢流派整理</p>
+  </section>
+  <div class="choose">
+    <a class="vcard" href="release.html">
+      <div class="big">✅</div>
+      <h2>正式版攻略</h2>
+      <div>1.0（2026/10/28 發售後）‧ <span class="n" id="n-release">…</span> 個流派</div>
+      <p>現在玩的版本請看這邊。</p>
+      <ul>
+        <li>房租、買斷、王爾德人脈網升級表</li>
+        <li>賣水、釀酒、化學、販賣機等完整流派</li>
+        <li>含中文與英語玩家攻略（繁中整理）</li>
+      </ul>
+      <span class="go">進入正式版 →</span>
+    </a>
+    <a class="vcard" href="demo.html">
+      <div class="big">🧪</div>
+      <h2>試玩版攻略</h2>
+      <div>Demo / Update 049 ‧ <span class="n" id="n-demo">…</span> 個流派</div>
+      <p>試玩版時期的攻略，數值可能和正式版不同。</p>
+      <ul>
+        <li>釀酒品質計分公式、估價表</li>
+        <li>試玩版賣水路線、改造體識別</li>
+        <li>機器與模組數據、困難開局特性</li>
+      </ul>
+      <span class="go">進入試玩版 →</span>
+    </a>
+  </div>
+  <p class="foot">資料整理自網路玩家攻略，以遊戲內為準。新增流派方法見資料夾內 <code>記憶檔.md</code>。</p>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('ps-theme'); if (saved) root.dataset.theme = saved; } catch (e) {}
+  document.getElementById('theme').onclick = function () {
+    var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('ps-theme', root.dataset.theme); } catch (e) {}
+  };
+  // 依序讀兩個 manifest，顯示流派數
+  var vers = ['release', 'demo'];
+  (function next(i) {
+    if (i >= vers.length) return;
+    window.PS_MANIFEST = null;
+    var s = document.createElement('script');
+    s.src = 'strategies/' + vers[i] + '/manifest.js';
+    s.onload = function () { document.getElementById('n-' + vers[i]).textContent = (window.PS_MANIFEST || []).length; next(i + 1); };
+    s.onerror = function () { next(i + 1); };
+    document.body.appendChild(s);
+  })(0);
+})();
+</script>
+</body>
+</html>
