@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深空當舖攻略</title>
+<meta name="description" content="《深空當舖：可能是偷的》（Probably Stolen）各種賺錢流派攻略整理。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B8%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f5f3ee; --panel: #ffffff; --ink: #1d1f24; --muted: #646a75; --line: #dedad1;
+  --accent: #0f7b6c; --accent-soft: #e0f1ee; --warn-bg: #fff6dc; --warn-line: #e8c55a;
+  --bad: #b5432f; --good: #2f7d32;
+  --g-基礎: #6b6f78; --g-買賣: #2563a8; --g-生產: #2f7d32; --g-灰色: #a3670d; --g-黑色: #8a2a4a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b; --panel: #1b1f27; --ink: #e7e9ee; --muted: #9aa1ad; --line: #2c323d;
+    --accent: #3cc2ad; --accent-soft: #163631; --warn-bg: #2e2814; --warn-line: #8a7426;
+    --bad: #e2775f; --good: #6cc070;
+    --g-基礎: #9aa1ad; --g-買賣: #6aa6ea; --g-生產: #6cc070; --g-灰色: #e0a548; --g-黑色: #e07aa0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1b1f27; --ink: #e7e9ee; --muted: #9aa1ad; --line: #2c323d;
+  --accent: #3cc2ad; --accent-soft: #163631; --warn-bg: #2e2814; --warn-line: #8a7426;
+  --bad: #e2775f; --good: #6cc070;
+  --g-基礎: #9aa1ad; --g-買賣: #6aa6ea; --g-生產: #6cc070; --g-灰色: #e0a548; --g-黑色: #e07aa0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.7 system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+a { color: var(--accent); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+header.top { display: flex; align-items: center; gap: 12px; padding: 18px 0 8px; flex-wrap: wrap; }
+header.top h1 { font-size: 26px; margin: 0; flex: 1; min-width: 220px; }
+header.top h1 a { color: inherit; text-decoration: none; }
+header.top small { display: block; font-size: 13px; color: var(--muted); font-weight: normal; }
+button, .btn { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; text-decoration: none; }
+button:hover, .btn:hover { border-color: var(--accent); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 18px; }
+.controls input { flex: 1; min-width: 180px; font: inherit; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.chip { border-radius: 999px; padding: 4px 12px; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; text-align: left; color: inherit; text-decoration: none; }
+.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card h3 { margin: 0; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; flex: 1; }
+.grp { align-self: flex-start; display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; }
+.bars { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; font-size: 12px; color: var(--muted); align-items: center; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.bar.risk i { background: var(--bad); }
+h2 { font-size: 20px; margin: 30px 0 10px; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); white-space: nowrap; }
+th[data-k] { cursor: pointer; }
+.tbl { overflow-x: auto; border-radius: 10px; }
+.dots { letter-spacing: 1px; white-space: nowrap; }
+.detail { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+.detail h1 { margin: 6px 0 4px; font-size: 26px; }
+.detail .lead { color: var(--muted); margin: 0 0 12px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; margin: 10px 0; }
+.meta .bars { min-width: 230px; }
+.unlock { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+.toc a { font-size: 13px; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; color: var(--ink); }
+.sec h2 { border-bottom: 2px solid var(--accent); padding-bottom: 2px; scroll-margin-top: 10px; }
+.note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 8px 12px; border-radius: 6px; margin: 10px 0; font-size: 14px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { font-size: 12px; padding: 1px 8px; background: var(--accent-soft); border-radius: 999px; color: var(--ink); cursor: pointer; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.two ul { margin: 0; }
+.good h2 { color: var(--good); border-color: var(--good); }
+.bad h2 { color: var(--bad); border-color: var(--bad); }
+.src li { font-size: 14px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.foot { margin-top: 30px; font-size: 13px; color: var(--muted); }
+.empty { color: var(--muted); padding: 20px 0; }
+@media (max-width: 700px) {
+  .two { grid-template-columns: 1fr; }
+  .detail { padding: 16px; }
+  header.top h1 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1><a href="#">🛸 深空當舖攻略<small>《深空當舖：可能是偷的》Probably Stolen ‧ 賺錢流派整理</small></a></h1>
+    <button id="theme" type="button" aria-label="切換深淺色">🌓 深淺色</button>
+  </header>
+  <main id="app"><p class="empty">載入中…</p></main>
+  <p class="foot">資料整理自網路玩家攻略（每篇底部附來源），部分是試玩版數值，正式版可能不同，以遊戲內為準。新增流派方法見資料夾內 <code>記憶檔.md</code>。</p>
+</div>
+
+<script src="strategies/manifest.js"></script>
+<script>
+(function () {
+  var S = window.PS_STRATEGIES = window.PS_STRATEGIES || [];
+  var GROUPS = ['基礎', '買賣', '生產', '灰色', '黑色'];
+  var STAT_LABEL = { capital: '起手資金', difficulty: '上手難度', risk: '風險', speed: '回本速度' };
+  var state = { group: '全部', q: '', sortKey: 'order', sortDir: 1 };
+  var app = document.getElementById('app');
+
+  // 主題切換（記住選擇；localStorage 不能用時照樣運作）
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('ps-theme'); if (saved) root.dataset.theme = saved; } catch (e) {}
+  document.getElementById('theme').onclick = function () {
+    var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('ps-theme', root.dataset.theme); } catch (e) {}
+  };
+
+  // 依 manifest 依序載入每個流派檔
+  var list = window.PS_MANIFEST || [];
+  var left = list.length;
+  if (!left) start();
+  list.forEach(function (f) {
+    var s = document.createElement('script');
+    s.src = 'strategies/' + f;
+    s.async = false;
+    s.onload = function () { if (--left === 0) start(); };
+    s.onerror = function () { console.warn('載入失敗：' + f); if (--left === 0) start(); };
+    document.body.appendChild(s);
+  });
+
+  function start() {
+    S.sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    addEventListener('hashchange', route);
+    route();
+  }
+
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function arr(x) { return x == null ? [] : Array.isArray(x) ? x : [x]; }
+  function gcolor(g) { return 'var(--g-' + g + ', var(--muted))'; }
+  function dots(n, risk) { n = n || 0; return '<span class="dots" style="color:' + (risk ? 'var(--bad)' : 'var(--accent)') + '">' + '●'.repeat(n) + '<span style="opacity:.25">' + '●'.repeat(5 - n) + '</span></span>'; }
+  function bars(st) {
+    st = st || {};
+    return '<div class="bars">' + Object.keys(STAT_LABEL).map(function (k) {
+      return '<span>' + STAT_LABEL[k] + '</span><div class="bar' + (k === 'risk' ? ' risk' : '') + '"><i style="width:' + ((st[k] || 0) * 20) + '%"></i></div>';
+    }).join('') + '</div>';
+  }
+
+  function route() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var s = S.filter(function (x) { return x.id === id; })[0];
+    if (s) renderDetail(s); else renderHome();
+    if (!s || !id) document.title = '深空當舖攻略';
+  }
+
+  function textOf(s) { return JSON.stringify(s).toLowerCase(); }
+
+  function filtered() {
+    var q = state.q.trim().toLowerCase();
+    return S.filter(function (s) {
+      return (state.group === '全部' || s.group === state.group) && (!q || textOf(s).indexOf(q) >= 0);
+    });
+  }
+
+  function renderHome() {
+    var groups = ['全部'].concat(GROUPS.filter(function (g) { return S.some(function (s) { return s.group === g; }); }));
+    app.innerHTML =
+      '<p>收錄 <b>' + S.length + '</b> 個流派。新手建議路線：<a href="#basics">共通基礎</a> → <a href="#trading">倒賣</a>＋<a href="#scavenge">拾荒</a> 撐過第一週 → 主力 <a href="#water">賣水</a> → 副業 <a href="#wine">釀酒</a> / <a href="#rats">養鼠</a>。</p>' +
+      '<div class="controls"><input id="q" type="search" placeholder="搜尋流派、物品、關鍵字（例：濾芯、魚子醬、房租）" value="' + esc(state.q) + '">' +
+      groups.map(function (g) { return '<button type="button" class="chip' + (g === state.group ? ' on' : '') + '" data-g="' + g + '">' + g + '</button>'; }).join('') + '</div>' +
+      '<div class="grid" id="cards"></div>' +
+      '<h2>流派比較</h2><p style="font-size:14px;color:var(--muted);margin-top:0">●越多＝越高。回本速度越高越快。點欄位標題排序。</p>' +
+      '<div class="tbl" id="cmp"></div>';
+    var q = document.getElementById('q');
+    q.oninput = function () { state.q = q.value; drawList(); };
+    app.querySelectorAll('[data-g]').forEach(function (b) {
+      b.onclick = function () { state.group = b.dataset.g; renderHome(); };
+    });
+    drawList();
+  }
+
+  function drawList() {
+    var items = filtered();
+    document.getElementById('cards').innerHTML = items.length ? items.map(function (s) {
+      return '<a class="card" href="#' + encodeURIComponent(s.id) + '">' +
+        '<span class="grp" style="color:' + gcolor(s.group) + '">' + esc(s.group) + '</span>' +
+        '<h3>' + s.icon + ' ' + esc(s.name) + '</h3><p>' + s.tagline + '</p>' + bars(s.stats) + '</a>';
+    }).join('') : '<p class="empty">找不到符合的流派。</p>';
+
+    var cols = [['name', '流派'], ['group', '分類'], ['capital', '資金'], ['difficulty', '難度'], ['risk', '風險'], ['speed', '回本'], ['unlock', '解鎖']];
+    var rows = items.slice().sort(function (a, b) {
+      var k = state.sortKey;
+      var va = k in STAT_LABEL ? (a.stats || {})[k] || 0 : k === 'order' ? a.order : String(a[k] || '');
+      var vb = k in STAT_LABEL ? (b.stats || {})[k] || 0 : k === 'order' ? b.order : String(b[k] || '');
+      return (va > vb ? 1 : va < vb ? -1 : 0) * state.sortDir;
+    });
+    document.getElementById('cmp').innerHTML = '<table><thead><tr>' + cols.map(function (c) {
+      return '<th data-k="' + c[0] + '">' + c[1] + (state.sortKey === c[0] ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '') + '</th>';
+    }).join('') + '</tr></thead><tbody>' + rows.map(function (s) {
+      var st = s.stats || {};
+      return '<tr><td><a href="#' + encodeURIComponent(s.id) + '">' + s.icon + ' ' + esc(s.name) + '</a></td><td style="color:' + gcolor(s.group) + '">' + esc(s.group) + '</td>' +
+        '<td>' + dots(st.capital) + '</td><td>' + dots(st.difficulty) + '</td><td>' + dots(st.risk, true) + '</td><td>' + dots(st.speed) + '</td><td>' + (s.unlock || '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+    document.querySelectorAll('#cmp th[data-k]').forEach(function (th) {
+      th.onclick = function () {
+        var k = th.dataset.k;
+        state.sortDir = state.sortKey === k ? -state.sortDir : 1;
+        state.sortKey = k;
+        drawList();
+      };
+    });
+  }
+
+  function renderSection(sec, i) {
+    var h = '<section class="sec"><h2 id="sec-' + i + '">' + esc(sec.title || '') + '</h2>';
+    arr(sec.p).forEach(function (t) { h += '<p>' + t + '</p>'; });
+    if (sec.steps) h += '<ol>' + sec.steps.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>';
+    if (sec.list) h += '<ul>' + sec.list.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
+    if (sec.table) {
+      h += '<div class="tbl"><table><thead><tr>' + sec.table.head.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        sec.table.rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+    }
+    arr(sec.note).forEach(function (t) { h += '<div class="note">💡 ' + t + '</div>'; });
+    return h + '</section>';
+  }
+
+  function renderDetail(s) {
+    document.title = s.name + '｜深空當舖攻略';
+    var idx = S.indexOf(s), prev = S[idx - 1], next = S[idx + 1];
+    var secs = s.sections || [];
+    app.innerHTML = '<p><a href="#">← 回到流派總覽</a></p><article class="detail">' +
+      '<span class="grp" style="color:' + gcolor(s.group) + '">' + esc(s.group) + '</span>' +
+      '<h1>' + s.icon + ' ' + esc(s.name) + '</h1><p class="lead">' + s.tagline + '</p>' +
+      '<div class="meta">' + bars(s.stats) + '<div class="unlock" style="flex:1;min-width:220px"><b>解鎖：</b>' + (s.unlock || '—') + '</div></div>' +
+      '<div class="tags">' + arr(s.tags).map(function (t) { return '<span class="tag" data-t="' + esc(t) + '">#' + esc(t) + '</span>'; }).join('') + '</div>' +
+      '<nav class="toc">' + secs.map(function (x, i) { return '<a href="javascript:void 0" data-sec="' + i + '">' + esc(x.title) + '</a>'; }).join('') + '</nav>' +
+      secs.map(renderSection).join('') +
+      '<div class="two">' +
+      (s.tips && s.tips.length ? '<section class="sec good"><h2>✅ 小技巧</h2><ul>' + s.tips.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul></section>' : '<div></div>') +
+      (s.pitfalls && s.pitfalls.length ? '<section class="sec bad"><h2>⚠️ 常見地雷</h2><ul>' + s.pitfalls.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul></section>' : '<div></div>') +
+      '</div>' +
+      (s.sources && s.sources.length ? '<section class="sec src"><h2>📚 資料來源</h2><ul>' + s.sources.map(function (x) { return '<li><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title) + '</a></li>'; }).join('') + '</ul></section>' : '') +
+      '<p style="font-size:13px;color:var(--muted)">最後更新：' + esc(s.updated || '—') + '</p>' +
+      '</article><div class="nav">' +
+      (prev ? '<a class="btn" href="#' + encodeURIComponent(prev.id) + '">← ' + prev.icon + ' ' + esc(prev.name) + '</a>' : '<span></span>') +
+      (next ? '<a class="btn" href="#' + encodeURIComponent(next.id) + '">' + next.icon + ' ' + esc(next.name) + ' →</a>' : '<span></span>') + '</div>';
+    app.querySelectorAll('[data-sec]').forEach(function (a) {
+      a.onclick = function () { document.getElementById('sec-' + a.dataset.sec).scrollIntoView({ behavior: 'smooth' }); };
+    });
+    app.querySelectorAll('[data-t]').forEach(function (t) {
+      t.onclick = function () { state.q = t.dataset.t; state.group = '全部'; location.hash = ''; };
+    });
+    scrollTo(0, 0);
+  }
+})();
+</script>
+</body>
+</html>
