@@ -8,7 +8,7 @@ const PAGES = [
     ['items', '道具圖鑑', '🎒'], ['monsters', '怪物圖鑑', '👹'], ['zones', '地圖村莊', '🗺️'], ['quests', '職業任務', '📜'],
     ['enchant', '衝裝', '🔨'], ['affix', '詞綴通貨', '💠'], ['resonance', '共鳴裝備', '🌟'], ['forge', '鍛造附魔', '⚒️'],
     ['rift', '異界地圖', '🌀'], ['tower', '永夜之塔', '🏛️'], ['dragons', '四龍首領', '🐉'], ['dolls', '魔法娃娃', '🧸'],
-    ['morph', '變身', '🎭'], ['merc', '傭兵', '🤝'], ['mechanics', '數值公式', '📐'], ['exp', '經驗離線', '📈'], ['online', '線上功能', '🌐'],
+    ['morph', '變身', '🎭'], ['merc', '傭兵', '🤝'], ['mechanics', '數值公式', '📐'], ['exp', '經驗離線', '📈'], ['online', '線上功能', '🌐'], ['updates', '更新紀錄', '📰'],
 ];
 
 // 我們做的桌寵：遊戲在背景掛機、桌面上留一隻角色
@@ -160,6 +160,7 @@ function sourceText(s, id) {
         case 'recipe': { const r = W.recipes[s.idx]; return `⚒️ 鍛造：${Object.entries(r.need).map(([k, n]) => itemLink(k, n)).join('＋')}＋${fmt(r.gold)} 金幣`; }
         case 'quest': return `📜 ${classLink(s.cls)}職業任務第 ${s.ch + 1} 章獎勵`;
         case 'book': { const b = W.bookDrops.find(x => x.id === id), lv = b ? Math.max(1, b.lv - 5) : 1;
+            if (d.advBook) return `📖 <a href="monsters.html#books">Lv.${lv} 以上的首領</a>掉落（首領 ${pct(W.consts.BOOK_BOSS_P)} 掉一本書，從可掉的書裡平均抽；Lv.${lv} 首領可掉 ${bookPool(lv, true).length} 本，指定這本約 ${pct(W.consts.BOOK_BOSS_P / bookPool(lv, true).length)}）。一般怪不掉二轉技能書`;
             return `📖 <a href="monsters.html#books">Lv.${lv} 以上的怪物</a>掉落（一般怪 ${pct(W.consts.BOOK_DROP_P)}、首領 ${pct(W.consts.BOOK_BOSS_P)} 掉一本書，從可掉的書裡平均抽；Lv.${lv} 怪物可掉 ${bookPool(lv).length} 本，一般怪指定這本約 ${pct(W.consts.BOOK_DROP_P / bookPool(lv).length)}，等級越高可掉的書越多）`; }
         case 'currency': { const c = W.currency[id]; return `🎲 怪物掉落通貨（每隻 ${pct(W.consts.CURRENCY_DROP_P)}、首領 ${pct(W.consts.CURRENCY_BOSS_P)}），掉落權重 ${c ? c.w : '?'}${c && c.minLv ? `，只有 Lv.${c.minLv} 以上怪物會掉` : ''}`; }
         case 'mapdrop': return `🌀 怪物掉落（一般地圖每隻 ${pct(W.consts.MAP_DROP_P)}、異界內 ${pct(W.consts.MAP_DROP_IN_MAP_P)}），異界通關獎勵；拿到時都是<a href="rift.html#flow">未鑑定</a>，鑑定才知道品質` +
@@ -168,16 +169,16 @@ function sourceText(s, id) {
         case 'soul': return `🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×5、${fmt(W.consts.BOSS_ENCHANT_SOUL_COST)} 金幣）`;
         case 'mercRune': { const dr = W.merc.drops, basic = dr && dr.basic.includes(id);
             return `🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>，不能購買。` + (!dr ? '' : basic
-                ? `<b>基本符石</b>：<a href="rift.html">黃色稀有異界地圖</a>的一般怪 <b>${pct(dr.normalP)}</b>`
+                ? `<b>基本符石</b>：目前<b>沒有掉落來源</b>（2026-11-02 起一般怪不掉符石），只能從交易所或共用倉庫取得`
                 : `<b>特殊符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>`); }
-        case 'doll': return W.dolls[d.doll] && W.dolls[d.doll].quality === 'T4' ? `🧸 娃娃商人露米（${W.consts.DOLL_SHOP_PRICE} 鑽，目前限 GM 購買）` : '🧸 目前只有 GM 發放';
+        case 'doll': return '🧸 （尚未開放）';
         case 'questitem': return '📜 接了職業任務後，指定地圖的怪物掉落';
         // 桌寵的資料沒帶 W.adv／W.talent（gen-zones.js 的 WIKI_KEYS），要留不看數值的寫法
         case 'advProof': return `🔱 接了<a href="advance.html#flow">二轉第 5 章</a>後，任何地圖的首領${W.adv ? ` ${pct(W.adv.proofP)}` : ''} 掉落（世界首領、團隊副本不算）`;
         case 'advQuest': return `🔱 ${classLink(s.cls)}<a href="advance.html#flow">二轉</a>第 ${s.ch + 1} 章任務獎勵（第一次）`;
         case 'advReshape': return `🔱 ${W.adv ? `Lv.${W.adv.reshapeLv} 以上首領 ${pct(W.adv.reshapeP)}` : '高等首領極稀有'} 掉落，用來<a href="advance.html#reshape">重選二轉分支</a>`;
         case 'talent': { const r = W.talent && W.talent.drops[id === 'talentStone' ? 'stone' : 'jewel'], t = a => `${pct(a[0])}→${pct(a[1])}`;
-            return r ? `🌌 地圖越高階越容易掉（T1→T15）：一般怪 ${t(r.normal)}、首領 ${t(r.boss)}、首次<a href="talent.html#points">星盤試煉</a> ${t(r.trial)}` : '🌌 怪物掉落，地圖越高階越容易掉'; }
+            return r ? `🌌 地圖越高階越容易掉（T1→T15）：${r.normal ? `一般怪 ${t(r.normal)}、` : ''}首領 ${t(r.boss)}、首次<a href="talent.html#points">星盤試煉</a> ${t(r.trial)}${r.normal ? '' : '（一般怪不掉）'}` : `🌌 ${id === 'talentStone' ? '怪物' : '首領'}掉落，地圖越高階越容易掉`; }
         case 'dismantle': return `🧸 娃娃商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）`;
         case 'random': return `🎲 隨機裝備掉落（Lv.${s.minLv} 以上怪物；一般怪 ${pct(W.consts.RANDOM_EQUIP_P)}、首領 50%，可能帶品質詞綴）`;
     }
@@ -206,9 +207,9 @@ function itemDetailHtml(id) {
 }
 
 // ───────── 怪物顯示 ─────────
-// 怪物掉書（遊戲 spellbook.js rollBookDrop）：一般怪／首領機率不同；掉了就從「最低學習等級 ≤ 怪物等級 +5」的掉落書平均抽一本
+// 怪物掉書（遊戲 spellbook.js rollBookDrop）：一般怪／首領機率不同；掉了就從「最低學習等級 ≤ 怪物等級 +5」的掉落書平均抽一本；二轉技能書只有首領掉
 const bookDropP = m => m.boss ? W.consts.BOOK_BOSS_P : W.consts.BOOK_DROP_P;
-const bookPool = lv => W.bookDrops.filter(b => b.lv <= lv + 5);
+const bookPool = (lv, boss) => W.bookDrops.filter(b => b.lv <= lv + 5 && (boss || !W.items[b.id].advBook));
 // 書單分組：魔法依級數、職業技能依職業；連結只顯示技能名稱
 function bookGroupsHtml(pool) {
     const g = {};
@@ -220,7 +221,7 @@ function bookGroupsHtml(pool) {
     return Object.keys(g).sort().map(k => `<div class="bookg"><b>${esc(g[k].name)}</b> <small class="dim">${g[k].ids.length} 本</small>：${g[k].ids.map(id => `<a class="il" data-item="${esc(id)}">${itemIcon(id)}${esc(W.skills[W.items[id].skill].name)}</a>`).join('')}</div>`).join('');
 }
 function monBookHtml(m) {
-    const pool = bookPool(m.lv), p = bookDropP(m);
+    const pool = bookPool(m.lv, m.boss), p = bookDropP(m);
     if (!pool.length) return '<span class="dim">等級太低，不會掉書</span>';
     return `每隻 <b>${pct(p)}</b>（${m.boss ? '首領' : '一般怪'}）掉一本，從 <b>${pool.length}</b> 本裡平均抽，指定一本約 <b>${pct(p / pool.length)}</b>。
         <details><summary>Lv.${m.lv} 可以拿到的書（學習等級 Lv.${m.lv + 5} 以內）</summary>${bookGroupsHtml(pool)}</details>`;
@@ -231,7 +232,7 @@ function monTags(m) {
 function monDetailHtml(id) {
     const m = W.monsters[id];
     if (!m) return '找不到這隻怪物';
-    const where = m.zones.map(zoneLink).concat(m.rareIn.map(r => `${zoneLink(r.zone)}（${r.lair ? '巢穴首領' : '稀有出現 ' + pct(r.p)}）`));
+    const where = m.zones.map(zoneLink).concat(m.rareIn.map(r => `${zoneLink(r.zone)}（${r.lair ? '巢穴首領' : '約每 60～90 分鐘定時出現'}）`));
     return `<div class="mhead">${monIcon(id, true)}<div><h3>${esc(m.name)}</h3><span class="tag gold">Lv.${m.lv}</span>${monTags(m)}</div></div>
         <div class="stats"><span>HP <b>${fmt(m.hp)}</b></span><span>防禦 <b>${10 - m.ac}</b></span><span>命中 <b>${m.hit}</b></span><span>攻擊 <b>${range(m.dmg)}</b></span>
         <span>攻擊間隔 <b>${m.spd}ms</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span><span>金幣 <b>${range(m.gold)}</b></span></div>

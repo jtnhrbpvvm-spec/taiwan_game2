@@ -22,13 +22,14 @@
 | `forge.html` | 鍛造配方、BOSS 附魔 |
 | `rift.html` | 異界地圖 |
 | `tower.html` | 永夜之塔 |
-| `dragons.html` | 四大龍、稀有首領、團隊副本、世界首領 |
+| `dragons.html` | 四大龍、首領計時、稀有首領、團隊副本、世界首領 |
 | `dolls.html` | 魔法娃娃 |
 | `morph.html` | 變形卷軸 |
-| `merc.html` | 傭兵（傭兵團試煉、六職業、符石技能、階級、死亡復活） |
+| `merc.html` | 傭兵（招募與名冊、六職業、符石技能、階級、死亡復活、傭兵公會） |
 | `mechanics.html` | 數值公式與戰鬥規則 |
 | `exp.html` | 經驗表、離線收益 |
-| `online.html` | 線上功能（雲端、鑽石、倉庫、交易所、拍賣、血盟、排行榜） |
+| `online.html` | 線上功能（雲端、鑽石、倉庫、交易所、拍賣、血盟、稱號、排行榜） |
+| `updates.html` | 更新紀錄（遊戲 `GAME_UPDATES`，重跑 extract 就更新） |
 
 共用檔：`assets/wiki.css`（樣式）、`assets/wiki.js`（導覽列、全站搜尋、道具／怪物／技能彈出說明、可排序表格）、`data/wiki-data.js`（自動產生的遊戲資料）。
 
@@ -44,4 +45,5 @@ node tools/extract.js
 - 頁面上的數值大多直接讀 `wiki-data.js`，重跑就會更新。
 - 文字說明（攻略、規則）是依遊戲的 `ARCHITECTURE.md` 整理的，遊戲改規則時要手動改對應頁面。
 - 星盤寶珠與天賦石的掉率只寫在遊戲後端，`extract.js` 裡是手抄的（`talent.drops`），改版時要對照遊戲的 `tools/talent-system.sql`。
+- 野外首領 60～90 分鐘、鑽石每日上限也只寫在後端（`tools/boss-timer.sql`、`tools/vault.sql`），頁面上是手寫的。
 - 圖片直接引用遊戲線上版網址（`IMG_BASE`，在 `tools/extract.js`），不複製圖檔；圖片版權屬遊戲作者。

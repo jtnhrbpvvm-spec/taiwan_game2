@@ -209,9 +209,12 @@ async function run(t) {
 
     // ── 變身 ──
     const morphed = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m19", until: 5000 } } } });
-    const generic = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m23", until: 5000 } } } });
+    // 遊戲 20261102b 起 36 款都有專屬圖（m23＝熔岩骨拳），統一外觀改用不在清單裡的對象測
+    const own = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m23", until: 5000 } } } });
+    const generic = t.summarize(0, { t: 1000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m999", until: 5000 } } } });
     const expired = t.summarize(0, { t: 9000, player: { lv: 20, exp: 0, cls: "elf", name: "x", buffs: { morph: { id: "polyScroll", form: "m19", until: 5000 } } } });
-    check("讀出變身外觀（專屬圖／統一外觀／過期）", morphed.morph === "ivoryArchmage" && generic.morph === "wolfRanger" && expired.morph === null, `${morphed.morph}／${generic.morph}／${expired.morph}`);
+    check("讀出變身外觀（專屬圖／新專屬圖／統一外觀／過期）", morphed.morph === "ivoryArchmage" && own.morph === "lavaBoneBrawler" && generic.morph === "wolfRanger" && expired.morph === null,
+      `${morphed.morph}／${own.morph}／${generic.morph}／${expired.morph}`);
     t.games[0].lastRaw = { ...t.games[0].lastRaw, morph: "ivoryArchmage" };
     t.sendPets();
     await sleep(3000);

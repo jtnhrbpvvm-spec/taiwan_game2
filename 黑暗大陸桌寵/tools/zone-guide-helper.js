@@ -34,24 +34,23 @@
 
   /**
    * 這張地圖可掉的魔法書／技能書（遊戲 spellbook.js rollBookDrop）：一般怪／首領機率不同，
-   * 掉了就從「最低學習等級 ≤ 怪物等級 +5」的書平均抽一本。mons＝[{ name, lv, boss }]
+   * 掉了就從「最低學習等級 ≤ 怪物等級 +5」的書平均抽一本，二轉技能書只有首領掉。mons＝[{ name, lv, boss }]
    */
   function booksHtml(mons) {
     if (!GW || !GW.W.bookDrops || !mons.length) return "";
     const C = GW.W.consts;
-    const top = Math.max(...mons.map((m) => m.lv));
-    const pool = GW.bookPool(top);
+    const pool = [...new Map(mons.flatMap((m) => GW.bookPool(m.lv, m.boss)).map((b) => [b.id, b])).values()];
     const per = mons
-      .map((m) => ({ m, n: GW.bookPool(m.lv).length }))
+      .map((m) => ({ m, n: GW.bookPool(m.lv, m.boss).length }))
       .filter((x) => x.n)
       .map(({ m, n }) => `<tr${m.boss ? ' class="rare"' : ""}><td>${esc(m.name)}</td><td>Lv.${m.lv}</td><td>${pct(GW.bookDropP(m))}</td><td>${n} 本</td><td>${GW.pct(GW.bookDropP(m) / n)}</td></tr>`)
       .join("");
     const head = `<p class="zg-sub">這張地圖可掉的魔法書／技能書（${pool.length} 本）</p>`;
     if (!pool.length) return `${head}<p class="dim">怪物等級太低，這張地圖不會掉書。</p>`;
     return `${head}
-      <p class="dim">一般怪每隻 ${pct(C.BOOK_DROP_P)}、首領每隻 ${pct(C.BOOK_BOSS_P)} 掉一本，從「學習等級 ≤ 怪物等級 +5」的書裡平均抽；任何職業的書都會掉。</p>
+      <p class="dim">一般怪每隻 ${pct(C.BOOK_DROP_P)}、首領每隻 ${pct(C.BOOK_BOSS_P)} 掉一本，從「學習等級 ≤ 怪物等級 +5」的書裡平均抽；任何職業的書都會掉，二轉技能書只有首領掉。</p>
       <table class="zg-t"><tr><th>怪物</th><th>等級</th><th>掉書</th><th>可掉</th><th>指定一本</th></tr>${per}</table>
-      <details class="zg-books"><summary>看書單（Lv.${top} 可以拿到的 ${pool.length} 本，點書名看說明）</summary>${GW.bookGroupsHtml(pool)}</details>`;
+      <details class="zg-books"><summary>看書單（這張地圖可以拿到的 ${pool.length} 本，點書名看說明）</summary>${GW.bookGroupsHtml(pool)}</details>`;
   }
 
   /**
@@ -85,7 +84,7 @@
     }
     const rare = zone.rare && G.monsters[zone.rare.id];
     if (rare) {
-      rows += `<tr class="rare"><td>★ ${monA(zone.rare.id, rare)}<small>稀有 ${pct(zone.rare.p)}</small></td><td>Lv.${rare.lv}</td><td>${num(rare.hp)}</td><td>${num(rare.exp)}</td></tr>`;
+      rows += `<tr class="rare"><td>★ ${monA(zone.rare.id, rare)}<small>約每 60～90 分鐘定時出現</small></td><td>Lv.${rare.lv}</td><td>${num(rare.hp)}</td><td>${num(rare.exp)}</td></tr>`;
       monIds.push(zone.rare.id);
     }
     const boss = zone.boss && G.monsters[zone.boss];

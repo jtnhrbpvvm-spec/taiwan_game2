@@ -1,5 +1,5 @@
 {
- "version": "20261027u",
+ "version": "20261103c",
  "classes": {
   "royal": {
    "name": "王族",
@@ -615,6 +615,479 @@
   }
  },
  "morphs": {
+  "infernalBladeSovereign": {
+   "name": "煉獄魔劍尊・巴拉卡",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/infernal-blade-sovereign-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/infernal-blade-sovereign-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/infernal-blade-sovereign-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "thunderBlackCommander": {
+   "name": "雷霆黑騎士統領",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/thunder-black-commander-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/thunder-black-commander-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/thunder-black-commander-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "sacredJudgmentSwordSaint": {
+   "name": "神聖裁決劍聖",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/sacred-judgment-sword-saint-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/sacred-judgment-sword-saint-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/sacred-judgment-sword-saint-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "lavaBoneBrawler": {
+   "name": "熔岩碎骨鬥士",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/lava-bone-brawler-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/lava-bone-brawler-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/lava-bone-brawler-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "thunderFistEmperor": {
+   "name": "霸天雷神拳皇",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/thunder-fist-emperor-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/thunder-fist-emperor-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/thunder-fist-emperor-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "nightBloodRipper": {
+   "name": "暗夜血族撕裂者",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     224,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/night-blood-ripper-v1/walk.png",
+     "cellW": 448,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/night-blood-ripper-v1/attack.png",
+     "cellW": 448,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/night-blood-ripper-v1/cast.png",
+     "cellW": 448,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "roseTempleCrusader": {
+   "name": "薔薇聖殿十字軍",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/rose-temple-crusader-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/rose-temple-crusader-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/rose-temple-crusader-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "immortalGoldenGuardian": {
+   "name": "不滅黃金守護神・宙斯盾",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/immortal-golden-guardian-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/immortal-golden-guardian-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/immortal-golden-guardian-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "violetArchmage": {
+   "name": "大魔導士・巴列斯真身",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/violet-archmage-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/violet-archmage-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/violet-archmage-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "netherExecutioner": {
+   "name": "冥皇處刑者",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/nether-executioner-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/nether-executioner-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/nether-executioner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "arcaneJudgmentSniper": {
+   "name": "魔導審判狙擊手",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/arcane-judgment-sniper-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/arcane-judgment-sniper-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/arcane-judgment-sniper-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
   "windwoodIronwall": {
    "name": "風木鐵壁重裝兵",
    "sprite": {
@@ -905,6 +1378,264 @@
     },
     "cast": {
      "src": "images/sprites/morph/shadow-pirate-gunner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "azureGraveWarden": {
+   "name": "蒼骨巡墓者",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/azure-grave-warden-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/azure-grave-warden-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/azure-grave-warden-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "crimsonMoonReaper": {
+   "name": "緋月收魂姬",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/crimson-moon-reaper-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/crimson-moon-reaper-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/crimson-moon-reaper-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "voidSoulExecutioner": {
+   "name": "虛空斷魂使",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/void-soul-executioner-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/void-soul-executioner-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/void-soul-executioner-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "underworldEndSovereign": {
+   "name": "冥界終焉君主",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/underworld-end-sovereign-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/underworld-end-sovereign-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/underworld-end-sovereign-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "abyssGoatEnvoy": {
+   "name": "深淵羊魔・巴風特使徒",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/abyss-goat-envoy-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/abyss-goat-envoy-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/abyss-goat-envoy-v1/cast.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 2,
+      "right": 2,
+      "up": 2
+     },
+     "ms": 220
+    }
+   }
+  },
+  "abyssDualDemon": {
+   "name": "深淵雙刃魔神",
+   "sprite": {
+    "charH": 160,
+    "foot": [
+     192,
+     270
+    ],
+    "walk": {
+     "src": "images/sprites/morph/abyss-dual-demon-v1/walk.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 130
+    },
+    "attack": {
+     "src": "images/sprites/morph/abyss-dual-demon-v1/attack.png",
+     "cellW": 384,
+     "cellH": 320,
+     "frames": {
+      "down": 4,
+      "right": 4,
+      "up": 4
+     },
+     "ms": 140
+    },
+    "cast": {
+     "src": "images/sprites/morph/abyss-dual-demon-v1/cast.png",
      "cellW": 384,
      "cellH": 320,
      "frames": {
@@ -1434,6 +2165,22 @@
   }
  },
  "morphForms": {
+  "m33": {
+   "name": "蒼骨巡墓者",
+   "sprite": "azureGraveWarden"
+  },
+  "m34": {
+   "name": "緋月收魂姬",
+   "sprite": "crimsonMoonReaper"
+  },
+  "m35": {
+   "name": "虛空斷魂使",
+   "sprite": "voidSoulExecutioner"
+  },
+  "m36": {
+   "name": "冥界終焉君主",
+   "sprite": "underworldEndSovereign"
+  },
   "m31": {
    "name": "煉獄雷霆魔皇",
    "sprite": "infernalThunderEmperor"
@@ -1468,7 +2215,7 @@
   },
   "m07": {
    "name": "魔導審判狙擊手",
-   "sprite": null
+   "sprite": "arcaneJudgmentSniper"
   },
   "m08": {
    "name": "沉默洞穴刺客",
@@ -1484,7 +2231,7 @@
   },
   "m11": {
    "name": "深淵雙刃魔神",
-   "sprite": null
+   "sprite": "abyssDualDemon"
   },
   "m12": {
    "name": "鋼鐵狂戰士",
@@ -1492,11 +2239,11 @@
   },
   "m13": {
    "name": "冥皇處刑者",
-   "sprite": null
+   "sprite": "netherExecutioner"
   },
   "m14": {
    "name": "煉獄魔劍尊・巴拉卡",
-   "sprite": null
+   "sprite": "infernalBladeSovereign"
   },
   "m15": {
    "name": "亞丁榮耀劍士",
@@ -1508,11 +2255,11 @@
   },
   "m17": {
    "name": "雷霆黑騎士統領",
-   "sprite": null
+   "sprite": "thunderBlackCommander"
   },
   "m18": {
    "name": "神聖裁決劍聖",
-   "sprite": null
+   "sprite": "sacredJudgmentSwordSaint"
   },
   "m19": {
    "name": "象牙塔高階秘術師",
@@ -1520,11 +2267,11 @@
   },
   "m20": {
    "name": "深淵羊魔・巴風特使徒",
-   "sprite": null
+   "sprite": "abyssGoatEnvoy"
   },
   "m21": {
    "name": "大魔導士・巴列斯真身",
-   "sprite": null
+   "sprite": "violetArchmage"
   },
   "m22": {
    "name": "修羅破戒僧",
@@ -1532,11 +2279,11 @@
   },
   "m23": {
    "name": "熔岩碎骨鬥士",
-   "sprite": null
+   "sprite": "lavaBoneBrawler"
   },
   "m24": {
    "name": "霸天雷神拳皇",
-   "sprite": null
+   "sprite": "thunderFistEmperor"
   },
   "m25": {
    "name": "荒野血狼狂戰",
@@ -1544,7 +2291,7 @@
   },
   "m26": {
    "name": "暗夜血族撕裂者",
-   "sprite": null
+   "sprite": "nightBloodRipper"
   },
   "m27": {
    "name": "裂空魔龍爪皇",
@@ -1556,11 +2303,11 @@
   },
   "m29": {
    "name": "薔薇聖殿十字軍",
-   "sprite": null
+   "sprite": "roseTempleCrusader"
   },
   "m30": {
    "name": "不滅黃金守護神・宙斯盾",
-   "sprite": null
+   "sprite": "immortalGoldenGuardian"
   }
  },
  "defaultMorph": "wolfRanger",

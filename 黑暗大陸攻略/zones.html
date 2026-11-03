@@ -64,7 +64,7 @@ function zoneCard(z) {
             <span class="tag">回 ${esc(townName(z.town))}</span><span class="tag">傳送 ${fmt(z.fee)} 金幣</span>${z.reqLv ? `<span class="tag red">需要 Lv.${z.reqLv}</span>` : ''}${z.cdH ? `<span class="tag red">討伐後封閉 ${z.cdH} 小時</span>` : ''}</div>
         <p class="dim">${esc(z.desc || '')}${z.prev ? ` 需先討伐 ${monLink(z.prev)}。` : ''}${z.type === 'tower' ? ' 詳見 <a href="tower.html">永夜之塔</a>。' : ''}${z.type === 'dragon' ? ' 詳見 <a href="dragons.html">四龍首領</a>。' : ''}</p>
         ${mons.length ? `<div class="msec"><h4>出現怪物</h4><div class="mons">${(z.mons || []).map(id => `${monLink(id)} <small class="dim">Lv.${W.monsters[id].lv}</small>`).join('')}</div></div>` : ''}
-        ${z.rare ? `<div class="msec"><h4>稀有首領（每次尋怪 ${pct(z.rare.p)}）</h4>${monLink(z.rare.id)} <small class="dim">Lv.${W.monsters[z.rare.id].lv}・HP ${fmt(W.monsters[z.rare.id].hp)}</small></div>` : ''}
+        ${z.rare ? `<div class="msec"><h4>稀有首領（<a href="dragons.html#timer">約每 60～90 分鐘定時出現</a>）</h4>${monLink(z.rare.id)} <small class="dim">Lv.${W.monsters[z.rare.id].lv}・HP ${fmt(W.monsters[z.rare.id].hp)}</small></div>` : ''}
         ${boss ? `<div class="msec"><h4>巢穴首領</h4>${monLink(z.boss)} <small class="dim">Lv.${boss.lv}・HP ${fmt(boss.hp)}・經驗 ${fmt(boss.exp)}</small></div>` : ''}
         ${drops.length ? `<div class="msec"><h4>地區掉落（每隻怪）</h4><div class="drops">${drops.map(d => `<div>${itemLink(d.id, d.n)} <b>${pct(d.p)}</b></div>`).join('')}</div></div>` : ''}
     </div>`;

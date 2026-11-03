@@ -11,7 +11,7 @@ const OUT = path.join(ROOT, 'data', 'wiki-data.js');
 const IMG_BASE = 'https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/';
 
 // 只載入「資料＋規則」的檔案；介面、連線的檔案不需要
-const FILES = 'config classes skills items spellbook monsters zones quests advance resonance boss-enchant doll-abilities mercenary afflict player enchant affix craft maps combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons'.split(' ');
+const FILES = 'config classes skills items spellbook monsters zones quests advance resonance boss-enchant doll-abilities mercenary afflict player enchant affix craft maps combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons guild-core'.split(' ');
 
 // 瀏覽器物件用假的代替（載入時只會碰到一點點）
 const stub = new Proxy(function () {}, {
@@ -61,6 +61,8 @@ let src = FILES.map(f => (f === 'talent-jewels' ? sliceLine('ui-panels', 'CAT_OR
 src += '\n;' + sliceConst('raid', 'RAIDS') + '\n;' + sliceConst('wb', 'WB_KINDS');
 src += '\n;' + sliceLine('doll-shop', 'DOLL_SHOP_PRICE') + '\n;' + sliceLine('doll-shop', 'DOLL_DISMANTLE_CRYSTALS');
 src += '\n;' + sliceLine('map-queue', 'MAP_QUEUE_MAX') + '\n;' + sliceLine('map-queue', 'MAP_CRAFT_DEFAULT');
+src += '\n;' + sliceConst('guild', 'GUILD_ROLE_NAMES') + '\n;' + sliceConst('guild', 'GUILD_PORTRAITS') + '\n;' + sliceConst('titles', 'TITLES');
+src += '\n;' + sliceConst('scene-art', 'SCENE_QUEST_ART') + '\n;' + sliceConst('scene-art', 'SCENE_QUEST_SPRITES') + '\n;' + sliceConst('ui-create', 'GAME_UPDATES');
 src += `\n;__G = { gameNow: () => gameNow };`;
 vm.runInContext(src, ctx, { filename: 'game.js' });
 const G = name => vm.runInContext(name, ctx);
@@ -240,7 +242,8 @@ const talent = {
     }),
     socketTypes: plain(G('TALENT_SOCKET_TYPES')), jewels: plain(G('TALENT_JEWEL_CATALOG')), clusters: plain(TALENT_CLUSTER_FAMILIES), clusterSizes: plain(G('TALENT_CLUSTER_SIZES')),
     // 掉率只寫在後端（tools/talent-system.sql 的 talent_loot_items，codex.js 也是這組）：T1→T15 線性增加
-    drops: { jewel: { normal: [0.0002, 0.003], boss: [0.01, 0.05], trial: [0.02, 0.1] }, stone: { normal: [0.0005, 0.005], boss: [0.02, 0.1], trial: [0.05, 0.2] },
+    // 2026-11-02 起寶珠只有首領掉（遊戲第 274 節），天賦石小怪照掉
+    drops: { jewel: { boss: [0.01, 0.05], trial: [0.02, 0.1] }, stone: { normal: [0.0005, 0.005], boss: [0.02, 0.1], trial: [0.05, 0.2] },
         pool: { normal: 0.7, radius: 0.1, cluster: 0.2 }, normalQuality: { magic: 0.7, rare: 0.3 }, clusterSize: { small: 0.6, medium: 0.3, large: 0.1 } },
 };
 
@@ -251,6 +254,22 @@ for (const qs of Object.values(quests)) for (const q of qs) {
     const b = G('buildMonster')('questBoss', q.goal.boss);
     q.goal.stats = pick(plain(b), ['lv', 'hp', 'ac', 'hit', 'dmg', 'exp', 'gold', 'mr', 'magic']);
 }
+
+// 任務首領外型（scene-art.js）：有立繪的給圖；職業試煉之影沿用該職業的立繪，頁面加暗影濾鏡
+const QUEST_ART = G('SCENE_QUEST_ART'), QUEST_SPRITES = G('SCENE_QUEST_SPRITES');
+const artPortrait = s => s.src.replace(/\.png$/, '-portrait.png');
+const questArt = Object.fromEntries(Object.entries(QUEST_ART).map(([name, key]) => {
+    const s = QUEST_SPRITES[key];
+    return [name, s.shadow ? { shadow: s.actor } : { art: artPortrait(s) }];
+}));
+if (monsters.valakas && QUEST_SPRITES.valakas) monsters.valakas.art = artPortrait(QUEST_SPRITES.valakas);
+
+// 傭兵公會（guild-core.js、guild.js）：只收名冊與任務名稱，任務路線還沒開放
+const GC = G('GuildCore');
+const guild = {
+    roles: plain(G('GUILD_ROLE_NAMES')), portraits: plain(G('GUILD_PORTRAITS')), members: plain(GC.MEMBERS), initial: plain(GC.INITIAL),
+    missions: Object.values(GC.MISSIONS).map(m => m.name), restMin: GC.REST_MS / 60000,
+};
 
 // ── 經驗表 ──
 const expTable = [];
@@ -309,6 +328,7 @@ const data = {
     dollBuy: pick(plain(C('DEFAULT_SETTINGS')), ['dollBuyGreen', 'dollBuyBrave', 'dollBuyHeal', 'dollBuyBlue', 'dollBuyPoly']),
     mapCraftDefault: plain(C('MAP_CRAFT_DEFAULT')),
     afflicts, adv, talent,
+    questArt, guild, titles: plain(C('TITLES')), updates: plain(C('GAME_UPDATES')),
     expTable, enchantTable,
 };
 

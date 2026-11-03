@@ -22,7 +22,7 @@
 <main>
     <h1>🔱 二轉</h1>
     <p class="lead">完成第 4 章職業任務後，<b>Lv.<span class="lv1"></span></b> 可以接第 5～7 章二轉任務。每個職業有<b>三種分支任選其一</b>，二轉後得到新職業名稱、核心被動、兩招專屬技能（Lv.<span class="lv1"></span>／Lv.<span class="lv2"></span>）與專屬飾品。</p>
-    <div class="toc"><a href="#flow">流程</a><a href="#books">技能書</a><a href="#reshape">換分支</a><span id="toc"></span></div>
+    <div class="toc"><a href="#flow">流程</a><a href="#books">技能書</a><a href="#reshape">換分支</a><a href="#summon">召喚物傷害</a><span id="toc"></span></div>
 
     <h2 id="flow">任務流程</h2>
     <p>到任何村莊的<b>二轉導師</b>（名牌與外觀是你職業的導師）查看狀態、接受與回報第 5～7 章、選擇分支，也可以用任務頁。各職業的首領數值見<a href="quests.html">職業任務</a>。</p>
@@ -40,7 +40,7 @@
 
     <h2 id="books">二轉技能書</h2>
     <ul>
-        <li>第一本由第 6、7 章任務給。之後只能<b>打怪掉落，不能用金幣買</b>：一般怪 <span id="b1"></span>、首領 <span id="b2"></span> 掉一本書，併入一般技能書一起抽（第 1 招 Lv.55 以上怪物、第 2 招 Lv.65 以上怪物）。</li>
+        <li>第一本由第 6、7 章任務給。之後只能<b>打首領掉落（一般怪不掉），不能用金幣買</b>：首領 <span id="b2"></span> 掉一本書，併入一般技能書一起抽（第 1 招 Lv.55 以上首領、第 2 招 Lv.65 以上首領）。</li>
         <li>任何職業分支的書都會掉，用不到的可以賣或上交易所。回收價：第 1 招 <span id="s1"></span>、第 2 招 <span id="s2"></span> 金幣。</li>
         <li>學習限<b>目前分支</b>；第 2 招要完成第 7 章才能學。</li>
     </ul>
@@ -48,8 +48,19 @@
     <h2 id="reshape">換分支：命運重塑石</h2>
     <ul>
         <li><a data-item="advReshape">命運重塑石</a>由 Lv.<span id="rl"></span> 以上首領 <b id="rp"></b> 掉落，二轉完成後在背包使用，重新選擇分支。</li>
-        <li>舊分支的三招會失效，<b>技能書不退</b>；新分支的技能書要打怪或從交易所取得，核心被動換分支時自動學會。</li>
+        <li>舊分支的三招會失效，<b>技能書不退</b>；新分支的技能書要打首領或從交易所取得，核心被動換分支時自動學會。</li>
     </ul>
+
+    <h2 id="summon">召喚物傷害怎麼算</h2>
+    <p>二轉的召喚物用<b>你自己的能力</b>算傷害，分成物理型和魔法型：</p>
+    <div id="summon-list"></div>
+    <ul>
+        <li><b>物理型</b>（王族・人皇「近衛召喚」）：每隻 ＝（武器平均骰＋傷害加成）× 倍率。傷害加成就是角色的物理傷害加成（力量、等級／4、武器強化、裝備與增益的傷害，例如王旗 +2、激勵士氣），<b>跟 SP 無關</b>。
+            會吃屠殺、首領傷害加成與目標易傷；不會物爆，也不扣怪物防禦。</li>
+        <li><b>魔法型</b>（精靈王、小惡魔、元素精靈）：每次 ＝ 固定傷害＋<b>SP × 係數</b>，再受怪物魔防減免，會吃首領傷害加成，也會魔爆。</li>
+    </ul>
+    <div class="box info"><b>人皇的「我為人皇」不會加到近衛上。</b>傭兵全能力 +15%（物攻、魔攻、防禦、魔防、HP、MP）只套用在<a href="merc.html">傭兵</a>身上；激勵／鋼鐵／衝擊士氣與王命也會加給傭兵。
+        傭兵的<a href="merc.html#summon">符石召喚物</a>是用傭兵的魔攻算傷害，所以人皇的 +15% <b>會間接加到傭兵召喚物</b>上。</div>
 
     <h2>各職業分支</h2>
     <div id="list"></div>
@@ -60,9 +71,18 @@
 const A = W.adv, C = W.consts, ids = Object.keys(A.branches);
 $$('.lv1').forEach(e => e.textContent = A.skill1Lv); $$('.lv2').forEach(e => e.textContent = A.skill2Lv);
 $('#pf').textContent = pct(A.proofP); $('#rl').textContent = A.reshapeLv; $('#rp').textContent = pct(A.reshapeP);
-$('#b1').textContent = pct(C.BOOK_DROP_P); $('#b2').textContent = pct(C.BOOK_BOSS_P);
+$('#b2').textContent = pct(C.BOOK_BOSS_P);
 const first = A.branches[ids[0]][0];
 $('#s1').textContent = fmt(W.items['book_' + first.skill1].sellPrice); $('#s2').textContent = fmt(W.items['book_' + first.skill2].sellPrice);
+// 召喚物（advance.js advSummonTick：物理＝advPhysBase × phys；魔法＝advMag(n)：30n～50n＋SP×1.5n）
+const SUMMON_BRANCH = Object.fromEntries(Object.values(A.branches).flat().map(b => [b.skill2, b]));
+renderTable($('#summon-list'), [
+    { label: '技能', html: ([id, s]) => `${skillLink(id)}<br><small class="dim">${esc(SUMMON_BRANCH[id] ? className(Object.keys(A.branches).find(c => A.branches[c].includes(SUMMON_BRANCH[id]))) + '・' + SUMMON_BRANCH[id].name : '')}</small>` },
+    { label: '數量', num: true, html: ([, s]) => s.adv.summon.n },
+    { label: '攻擊間隔', num: true, html: ([, s]) => s.adv.summon.every / 1000 + ' 秒' },
+    { label: '目標', html: ([, s]) => s.adv.summon.aoe ? '範圍（全部敵人）' : '單體' },
+    { label: '每隻每次傷害', html: ([, s]) => { const x = s.adv.summon; return x.mag ? `${Math.round(30 * x.mag)}～${Math.round(50 * x.mag)} ＋ SP × ${Math.round(1.5 * x.mag * 100) / 100}（魔法）` : `（武器平均骰＋傷害加成）× ${x.phys}（物理）`; } },
+], Object.entries(W.skills).filter(([, s]) => s.adv && s.adv.summon));
 $('#toc').innerHTML = ids.map(id => `<a href="#${id}">${W.classes[id].icon} ${esc(W.classes[id].name)}</a>`).join('');
 $('#toc').style.display = 'contents';
 const growText = b => [b.growHp ? `HP +${Math.round(b.growHp * 100)}%` : '', b.growMp ? `MP +${Math.round(b.growMp * 100)}%` : ''].filter(Boolean).map(t => `<span class="tag">成長 ${t}</span>`).join('');

@@ -60,7 +60,7 @@ const DESC = {
     items: '全部武器、防具、飾品、消耗品與材料，附取得方式。',
     monsters: '所有怪物的血量、攻擊、經驗、出沒地點與掉落。',
     zones: '村莊、商店、各狩獵地區的等級、怪物與掉落。',
-    quests: '十二職業各 7 章任務：條件、地點、首領與獎勵。',
+    quests: '十二職業各 7 章任務：條件、地點、首領外型與獎勵。',
     advance: 'Lv.60 二轉：36 個分支的核心被動、專屬技能與重選方式。',
     talent: '325 節點天賦盤：點數來源、六大核心、38 款寶珠與掉率。',
     enchant: '安定值、成功率、祝福／詛咒卷軸與衝裝建議。',
@@ -69,16 +69,17 @@ const DESC = {
     forge: '鍛造配方一覽與 26 種 BOSS 附魔。',
     rift: '異界地圖 T1～T15、地圖詞綴、傳奇財寶地圖、六格排程。',
     tower: '永夜之塔 100 層：逐層解鎖、守關首領與專屬材料。',
-    dragons: '四大龍巢穴、團隊副本與世界首領。',
+    dragons: '四大龍巢穴、首領計時、團隊副本與世界首領。',
     dolls: '21 款魔法娃娃的能力與召喚規則。',
     morph: '變形卷軸 36 種變身對象與武器限制。',
-    merc: '傭兵團試煉取得、六職業傭兵、50 種符石技能與死亡規則。',
+    merc: '傭兵招募與名冊、六職業、50 種符石技能、死亡規則與傭兵公會。',
     mechanics: '命中、傷害、防禦、攻速、負重等計算公式與戰鬥規則。',
     exp: '1～99 級經驗表、高等級經驗遞減、死亡懲罰與離線收益。',
-    online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、排行榜。',
+    online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、稱號、排行榜。',
+    updates: '依日期整理的遊戲更新內容，可搜尋關鍵字。',
 };
 const GROUPS = { 'g-guide': ['guide', 'classes', 'quests', 'advance', 'talent'],'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
-    'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph', 'merc'], 'g-sys': ['mechanics', 'exp', 'online'] };
+    'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph', 'merc'], 'g-sys': ['mechanics', 'exp', 'online', 'updates'] };
 const P = Object.fromEntries(PAGES.map(p => [p[0], p]));
 for (const [el, list] of Object.entries(GROUPS))
     $('#' + el).innerHTML = list.map(id => `<a class="card pg" href="${id}.html"><span class="ico-big">${P[id][2]}</span><h3>${P[id][1]}</h3><small>${DESC[id]}</small></a>`).join('');

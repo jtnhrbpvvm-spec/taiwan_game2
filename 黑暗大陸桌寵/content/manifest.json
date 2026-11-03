@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
+  "version": "1.5.2",
   "shell": 2,
   "files": [
     {
@@ -44,8 +44,8 @@
     },
     {
       "path": "names.json",
-      "sha256": "65da78fee31be5108f06f8e9f87d80485364b222a3c3463433c918bcb8f008e1",
-      "size": 49553
+      "sha256": "225f11e4955eeb9f2709afeab0e56ec1ddf67e5ed9d15070d705e4cd4e177299",
+      "size": 63676
     },
     {
       "path": "peers.js",
@@ -84,8 +84,8 @@
     },
     {
       "path": "selftest.js",
-      "sha256": "1bac005924530ee3c67efc8baa7a106a4c6dd71b12b43ec9fc3d81d0e7908c4a",
-      "size": 31554
+      "sha256": "b497d7c3eaf5f7ed2285eae1f8092eb09cfe7f66594863e619af7813612a3e50",
+      "size": 31910
     },
     {
       "path": "ui/accounts.html",
@@ -144,8 +144,8 @@
     },
     {
       "path": "zones.js",
-      "sha256": "dde33a02a81187bbd58e229c2af9a5d50591bc0b6c8da8a4080c349441d0fab6",
-      "size": 325497
+      "sha256": "b8bfcf1b2a3eae4ece9ee9312cf1b14d6ca1190d7897f0b0949d2341f8fc8831",
+      "size": 413869
     }
   ]
 }

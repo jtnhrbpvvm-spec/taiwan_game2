@@ -13,27 +13,29 @@
 <main>
     <h1>🌐 線上功能</h1>
     <p class="lead">登入帳號後才能使用的功能。角色存檔放在雲端，換手機、電腦都能接著玩；大部分交易類功能要<b>在村莊</b>才能操作。</p>
-    <div class="toc"><a href="#account">帳號與角色</a><a href="#dia">鑽石</a><a href="#vault">共用倉庫</a><a href="#market">交易所</a><a href="#auction">拍賣場</a><a href="#clan">血盟</a><a href="#rank">排行榜</a><a href="#chat">聊天</a><a href="#party">組隊玩法</a></div>
+    <div class="toc"><a href="#account">帳號與角色</a><a href="#dia">鑽石</a><a href="#vault">共用倉庫</a><a href="#market">交易所</a><a href="#auction">拍賣場</a><a href="#clan">血盟</a><a href="#title">稱號</a><a href="#rank">排行榜</a><a href="#chat">聊天</a><a href="#party">組隊玩法</a></div>
 
     <h2 id="account">帳號、雲端存檔與多角色</h2>
     <ul>
         <li>每個帳號最多 <b id="slots"></b> 個角色欄位，在「人物選單」切換。一隻角色只能屬於一個帳號。</li>
         <li>存檔只保留雲端存檔（已移除本機存檔按鈕），遊戲會自動上傳。</li>
         <li>離線收益只給<b>最後離線的角色</b>（見 <a href="exp.html#offline">經驗離線</a>）。</li>
-        <li>有新版本時畫面會出現「🔄 有新的更新檔」，點了才更新；點版本號可以看更新內容。</li>
+        <li><b>同一個網路（IP）最多 3 個帳號同時在線</b>，滿了第 4 個帳號無法登入，強制登入也一樣。家人共用網路、手機行動網路可能會算在一起。</li>
+        <li>有新版本時畫面會出現「🔄 有新的更新檔」，點了才更新；點版本號可以看更新內容，也可以看本站的<a href="updates.html">更新紀錄</a>。</li>
     </ul>
 
     <h2 id="dia">💎 鑽石</h2>
     <ul>
         <li>每日登入 +5（台北時間換日）。</li>
-        <li>打怪掉落：一般怪 0.1% 掉 1 顆（每天最多 10 顆）、首領／龍必給 3 顆（每天最多 15 顆）。離線模擬不掉。</li>
-        <li>用途：鑽石拍賣場競標、娃娃商店。</li>
+        <li>打怪掉落：<b>只有首領／龍會掉</b>，每隻給 3 顆（每天最多 15 顆）；一般怪不掉。離線模擬不掉。</li>
+        <li>用途：鑽石拍賣場競標、娃娃商店（尚未開放）。</li>
     </ul>
 
     <h2 id="vault">🏦 帳號共用倉庫</h2>
     <ul>
         <li>倉庫 NPC 可切換「角色倉庫」與「帳號共用倉庫」。共用倉庫 200 格，可以存金幣，同帳號的角色共用。</li>
         <li>每次存入或取出收 100 金幣手續費。相同道具會合併成一列，可輸入數量。</li>
+        <li><a href="merc.html#runes">傭兵符石</a>也能存，可以整疊或指定數量，同帳號其他角色取出後會合併；已鑲嵌的要先拆回背包。</li>
     </ul>
 
     <h2 id="market">🏪 交易所（金幣寄賣）</h2>
@@ -59,6 +61,12 @@
         <li>團隊副本裡同血盟 2 人以上，經驗與金幣 ×1.1。</li>
     </ul>
 
+    <h2 id="title">🔥 帳號稱號</h2>
+    <ul>
+        <li><b id="t-keeper"></b>：帳號<b>第一次向娃娃商人購買娃娃</b>就獲得，同帳號所有角色自動配戴（<a href="dolls.html">娃娃</a>尚未開放）。</li>
+        <li>以七彩火焰字顯示在角色頭頂、團隊副本戰鬥畫面、角色裝備與人物選單。稱號跟著帳號走，換帳號就不會顯示。</li>
+    </ul>
+
     <h2 id="rank">🏆 排行榜</h2>
     <p>五種榜：<b>等級</b>（可依職業篩選）、<b>屠龍</b>（四大龍討伐次數）、<b>永夜之塔</b>（最高打倒的守關首領樓層）、<b>擊殺數</b>、<b>血盟</b>（人數與平均等級）。顯示前 50 名與你自己的名次。</p>
 
@@ -75,6 +83,7 @@
 <script src="assets/wiki.js"></script>
 <script>
 $('#slots').textContent = W.consts.MAX_SLOTS;
+$('#t-keeper').textContent = W.titles.serverKeeper.name;
 </script>
 </body>
 </html>

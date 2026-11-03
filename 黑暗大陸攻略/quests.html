@@ -12,6 +12,10 @@
     .ch { border-left: 3px solid var(--line2); padding: 4px 0 4px 14px; margin: 12px 0; }
     .ch h3 { margin: 0 0 4px; }
     .say { font-family: var(--serif); color: var(--dim); font-size: 14px; }
+    .qb { display: flex; gap: 12px; align-items: flex-start; margin-top: 6px; }
+    .qb img { width: 96px; height: 120px; object-fit: contain; flex: none; background: #0a0807; border: 1px solid var(--line); border-radius: 8px; }
+    .qb img.shadow { filter: brightness(.35) saturate(.3); box-shadow: 0 0 6px #8a5cff; }
+    .qb > div { flex: 1; min-width: 0; }
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </head>
@@ -30,6 +34,7 @@
             <tr><td>6</td><td class="num">60</td><td>選二轉分支，不帶傭兵與娃娃，擊倒 30 隻後討伐試煉之影</td><td>熔火煉獄</td><td>完成二轉（學會核心被動）＋第 1 招技能書＋100,000 金幣</td></tr>
             <tr><td>7</td><td class="num">70</td><td>擊倒 40 隻後引出任務首領並討伐</td><td>永夜之塔（非首領樓層）</td><td>第 2 招技能書＋分支專屬飾品＋200,000 金幣</td></tr>
         </tbody></table></div>
+    <p>36 位職業任務首領都有專屬外型，12 個職業的「試煉之影」則是該職業的暗影造型，圖片列在下方各章節。</p>
     <div class="box warn"><b>首領戰注意：</b>藥水用完回城會讓任務首領<b>重置</b>，要帶足藥水。第 4 章在永夜之塔時，10 的倍數樓層（守關首領還活著）不會累積進度，要選一般樓層。</div>
     <div class="toc" id="toc"></div>
     <div id="list"></div>
@@ -44,10 +49,16 @@ function goalHtml(g) {
     if (g.type === 'kill') return `在 ${zoneLink(g.zone)} 擊倒 ${g.n} 隻怪物`;
     if (g.type === 'bossCollect') return `打倒任何地圖的首領收集「${esc(g.itemName)}」×${g.n}（每隻首領 ${pct(g.p)}，世界首領、團隊副本不算）`;
     const s = g.stats || {};
-    return `在 ${zoneLink(g.zone)} 擊倒 ${g.after} 隻後，任務首領出現：<br><b>${g.boss.icon} ${esc(g.boss.name)}</b>
+    return `在 ${zoneLink(g.zone)} 擊倒 ${g.after} 隻後，任務首領出現：<div class="qb">${bossArt(g.boss.name)}<div><b>${g.boss.icon} ${esc(g.boss.name)}</b>
         <div class="stats" style="margin-top:4px"><span>Lv <b>${s.lv}</b></span><span>HP <b>${fmt(s.hp)}</b></span><span>防禦 <b>${10 - s.ac}</b></span><span>攻擊 <b>${range(s.dmg)}</b></span>
         ${s.magic ? `<span>${esc(s.magic.name)} <b>${pct(s.magic.p)}・${range(s.magic.dmg)}</b></span>` : ''}<span>經驗 <b>${fmt(s.exp)}</b></span>
-        ${(g.boss.tags || []).map(t => `<span>${TAG_NAME[t] || t}</span>`).join('')}${g.boss.undead ? '<span>不死</span>' : ''}</div>`;
+        ${(g.boss.tags || []).map(t => `<span>${TAG_NAME[t] || t}</span>`).join('')}${g.boss.undead ? '<span>不死</span>' : ''}</div></div></div>`;
+}
+// 任務首領立繪；職業試煉之影用該職業立繪加暗影
+function bossArt(name) {
+    const a = W.questArt[name] || W.questArt[name.replace(/\s*[（(].*$/, '')];
+    if (!a) return '';
+    return a.shadow ? `<img class="shadow" src="${esc(img(W.classes[a.shadow].hero))}" alt="${esc(name)}" loading="lazy">` : `<img src="${esc(img(a.art))}" alt="${esc(name)}" loading="lazy">`;
 }
 function rewardHtml(r) {
     return [r.item ? itemLink(r.item) : '', r.advDone ? '完成二轉（學會核心被動）、第 1 招技能書' : '', r.advFinal ? '第 2 招技能書、分支專屬飾品' : '',

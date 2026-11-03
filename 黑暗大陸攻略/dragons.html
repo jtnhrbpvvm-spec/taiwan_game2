@@ -12,15 +12,28 @@
 <body data-page="dragons">
 <main>
     <h1>🐉 四大龍、團隊副本與世界首領</h1>
-    <div class="toc"><a href="#lairs">四大龍巢穴</a><a href="#bosses">各地稀有首領</a><a href="#raid">團隊副本</a><a href="#wb">世界首領</a></div>
+    <div class="toc"><a href="#lairs">四大龍巢穴</a><a href="#timer">首領計時</a><a href="#bosses">各地稀有首領</a><a href="#raid">團隊副本</a><a href="#wb">世界首領</a></div>
 
     <h2 id="lairs">四大龍巢穴</h2>
     <p class="lead">從永夜王都傳送，依序挑戰（要先討伐前一隻）。龍穴一次只會有龍一隻，討伐後巢穴封閉 6 小時（真實時間）。<b>四隻全部討伐</b>獲得稱號「屠龍勇者」。</p>
     <div class="box warn">龍每 7～11 秒會蓄力 1.6 秒放<b>龍之吐息</b>（紅圈，×<span id="tm"></span> 傷害），畫面開著時角色會自動閃避（可在設定關掉）；畫面沒開時有 60%／20% 機率躲開。單人打龍很難，建議組隊打團隊副本。</div>
     <div class="grid" id="lair-list"></div>
 
+    <h2 id="timer">⏱️ 首領計時</h2>
+    <p>右側選單的「⏱️ 首領計時」，或<b>小地圖右下方的 ⏱️ 按鈕</b>（再點一次關閉），可以一次看各首領的倒數。登入遊玩時，時間以伺服器為準。</p>
+    <div class="tw"><table>
+        <thead><tr><th>首領</th><th>規則</th><th>時間</th></tr></thead>
+        <tbody>
+            <tr><td>野外／地監稀有首領</td><td>每個帳號每張地圖各自計時，換角色不會重算。第一次在該圖遇怪才開始計時（不會立刻出現），<b>「首領出現倒數」歸零後，下一次遇怪就是首領</b>，同時開始下一輪。</td><td>每輪隨機 60～90 分鐘</td></tr>
+            <tr><td>四大龍巢穴</td><td>討伐後巢穴封閉；分頁也會顯示等級不足或前一隻龍未討伐。</td><td>6 小時</td></tr>
+            <tr><td>團隊副本</td><td>每個角色、每個副本各自冷卻，只有勝利才進冷卻；冷卻中不能按「準備」。</td><td>見<a href="#raid">副本表</a></td></tr>
+            <tr><td>永夜之塔守關首領</td><td>每個角色、每層各自計算。還沒通關過的首領不受限。</td><td>打倒後 6 小時</td></tr>
+            <tr><td>異界地圖首領</td><td>不計時，清完怪就出現。</td><td>—</td></tr>
+        </tbody></table></div>
+    <div class="box info">倒數是「距離下次出現」，不是打倒後的復活時間。伺服器忙碌或連不上時，會先打小怪，大約 30 秒後再問一次首領，所以首領可能晚一點才出現。如果分頁顯示「隨機出現」，代表線上掉寶暫時沒啟用，野外首領會改回隨機機率。</div>
+
     <h2 id="bosses">各地稀有首領</h2>
-    <p>野外與地監每次尋怪有一點點機率出現稀有首領，牠們是 <a href="forge.html">BOSS 附魔</a> 材料與許多共鳴裝備的來源。</p>
+    <p>野外與地監的稀有首領改為<a href="#timer">定時出現</a>，牠們是 <a href="forge.html">BOSS 附魔</a> 材料與許多共鳴裝備的來源，也是鑽石、二轉技能書、特殊符石（僅黃色稀有異界地圖）與天賦寶珠的來源。</p>
     <div id="boss-list"></div>
 
     <h2 id="raid">團隊副本（需登入）</h2>
@@ -52,18 +65,18 @@ const lairs = W.zones.filter(z => z.type === 'dragon');
 $('#lair-list').innerHTML = lairs.map(z => {
     const m = W.monsters[z.boss];
     return `<div class="card"><h3>${z.icon} ${esc(z.name)}</h3>
+        ${m.art ? `<img src="${esc(img(m.art))}" alt="${esc(m.name)}" loading="lazy" style="display:block;width:100%;max-height:200px;object-fit:contain;background:#0a0807;border:1px solid var(--line);border-radius:8px;margin-bottom:8px">` : ''}
         <p>${monLink(z.boss)} <span class="tag gold">Lv.${m.lv}</span></p>
         <div class="stats"><span>HP <b>${fmt(m.hp)}</b></span><span>防禦 <b>${10 - m.ac}</b></span><span>攻擊 <b>${range(m.dmg)}</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span></div>
         ${m.magic ? `<p class="dim">${esc(m.magic.name)}：${pct(m.magic.p)}、${range(m.magic.dmg)}</p>` : ''}
         <p><span class="tag red">需要 Lv.${z.reqLv}</span><span class="tag">傳送 ${fmt(z.fee)}</span><span class="tag">冷卻 ${z.cdH} 小時</span>${z.prev ? `<span class="tag">先討伐 ${esc(W.monsters[z.prev].name)}</span>` : ''}</p>
         <div class="msec"><h4>掉落</h4><small>${m.drops.map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small></div></div>`;
 }).join('');
-const rares = W.zones.filter(z => z.rare).map(z => ({ z, id: z.rare.id, m: W.monsters[z.rare.id], p: z.rare.p }));
+const rares = W.zones.filter(z => z.rare).map(z => ({ z, id: z.rare.id, m: W.monsters[z.rare.id] }));
 renderTable($('#boss-list'), [
     { label: '首領', v: r => r.m.name, html: r => monLink(r.id) },
     { label: 'Lv', num: true, v: r => r.m.lv, html: r => r.m.lv },
     { label: '地點', html: r => zoneLink(r.z.id) },
-    { label: '出現率', num: true, html: r => pct(r.p) },
     { label: 'HP', num: true, v: r => r.m.hp, html: r => fmt(r.m.hp) },
     { label: '經驗', num: true, v: r => r.m.exp, html: r => fmt(r.m.exp), cls: 'hide-sm' },
     { label: '重要掉落', html: r => `<small>${r.m.drops.filter(d => W.items[d.id] && (W.items[d.id].res || W.bossEnchants[d.id])).map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small>` },

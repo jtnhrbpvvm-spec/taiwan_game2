@@ -19,15 +19,23 @@
 <body data-page="merc">
 <main>
     <h1>🤝 傭兵</h1>
-    <p class="lead">傭兵會跟著你一起掛機打怪、放技能、幫你擋傷害。同一時間<b>只能有一名傭兵出戰</b>，跟<a href="dolls.html">魔法娃娃</a>互不影響、可以同時帶。管理入口：各村莊的<b>傭兵團長</b>，或人物畫面的傭兵欄。</p>
-    <div class="toc"><a href="#get">取得</a><a href="#rules">規則</a><a href="#classes">六職業</a><a href="#ranks">階級</a><a href="#runes">符石技能</a></div>
+    <p class="lead">傭兵會跟著你一起掛機打怪、放技能、幫你擋傷害。可以招募很多位放進名冊，但同一時間<b>只能有一名傭兵跟隨出戰</b>，跟<a href="dolls.html">魔法娃娃</a>互不影響、可以同時帶。管理入口：各村莊的<b>傭兵團長</b>，或人物畫面的傭兵欄。</p>
+    <div class="toc"><a href="#get">取得</a><a href="#roster">名冊與換人</a><a href="#rules">規則</a><a href="#classes">六職業</a><a href="#ranks">階級</a><a href="#runes">符石技能</a><a href="#guild">傭兵公會</a></div>
 
     <h2 id="get">取得：傭兵團試煉</h2>
     <ul>
         <li>傭兵<b>不能用金幣買</b>。到村莊找傭兵團長接「傭兵團試煉」，之後擊殺<b>任意怪物 <span id="qk"></span> 隻</b>（一般狩獵、首領、異界都算；離線收益、團隊副本、世界首領不算）。</li>
         <li>完成後回團長處領取，<b>六職業隨機一位、機率相同</b>，新傭兵 Lv.1、沒有技能、沒有裝備。</li>
-        <li>已經有活著的傭兵時看不到試煉；傭兵陣亡或放棄後才能再接，每次重接都從 0 開始算。</li>
+        <li><b>可以重複招募</b>：已有傭兵也能接，領完可以再接下一輪（一次只算一輪，不會自動接）。傭兵死亡、復活或放棄都<b>不會取消</b>目前的招募進度。</li>
         <li><b>放棄傭兵</b>（在村莊）：活傭兵身上的裝備和符石都退回背包，但等級沒了。</li>
+    </ul>
+
+    <h2 id="roster">名冊與換人</h2>
+    <ul>
+        <li>招募到的傭兵都留在名冊裡：目前管理的一位，加上其他<b>候補</b>。新傭兵會進候補，不會取代或自動換掉現在的傭兵。同職業可以有多位，各自保留等級、裝備與符石。</li>
+        <li><b>換人（在村莊）</b>：先「收回」出戰中的傭兵 → 在名冊選擇要管理的候補 → 再按「派出」。選擇管理不等於出戰，出戰中不能切換。</li>
+        <li>換人後，舊傭兵的增益、召喚物與異常狀態都會清掉，不會帶給新傭兵；技能冷卻各自保留。</li>
+        <li>裝備、符石、復活與放棄的按鈕都是針對<b>目前管理</b>的那一位。</li>
     </ul>
 
     <h2 id="rules">基本規則</h2>
@@ -50,7 +58,7 @@
                 <li><b>共用你的補血藥水</b>：沿用你快捷欄的自動補血開關、HP 門檻與藥水種類，傭兵 HP 低於門檻就喝，每瓶扣你背包 1 瓶（只補傭兵，不吃娃娃藥水加成）。藥水要多帶。</li>
                 <li>怪物每次攻擊有 25% 改打傭兵（壁壘衛士 40%、挑釁時 65%）。首領紅圈<b>你和傭兵各自判斷、各自閃避</b>（設定「首領大招自動閃避」），傷害照雙方實際位置分開算：你躲開但傭兵在圈內，傭兵照樣吃傷害。</li>
                 <li>傭兵 HP／MP 顯示在底部紅色生命球右側，下面是已配置的符石圖示、召喚物剩餘時間、增益與護盾值。</li>
-                <li><b>陣亡＝身上裝備和 4 格符石永久消失</b>（你的背包、倉庫不受影響）。可以到團長處復活（每級 <span id="rc"></span> 金幣，保留等級），或重接試煉換一位新的。</li>
+                <li><b>陣亡不會失去裝備和符石</b>，全部留在傭兵身上。到團長處復活（每級 <span id="rc"></span> 金幣，要在村莊），保留等級與經驗，HP／MP 全滿、狀態為待命。</li>
                 <li>離線收益、團隊副本、世界首領時傭兵不參戰。</li>
             </ul></div>
     </div>
@@ -68,17 +76,38 @@
     <div id="rank-list"></div>
 
     <h2 id="runes">傭兵符石（<span id="rn"></span> 種）</h2>
-    <p>符石<b>不能購買</b>，可堆疊，可以自由鑲上、拆回背包；背包的「傭兵符石」收納頁不佔負重。召喚物最多 2 隻（契靈師 3 隻）；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
+    <p>符石<b>不能向 NPC 購買</b>，可堆疊，可以自由鑲上、拆回背包；背包的「傭兵符石」收納頁不佔負重。可以上交易所，也可以存進<a href="online.html#vault">帳號共用倉庫</a>給同帳號的其他角色（已鑲嵌的要先拆回背包）。召喚物最多 2 隻（契靈師 3 隻）；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
     <div class="box"><h3 style="margin-top:0">怎麼拿符石</h3>
         <ul>
-            <li><b>基本符石</b>（每系前 4 種，共 <span id="rb"></span> 種）：<a href="rift.html">黃色稀有異界地圖</a>的一般怪 <b id="rbp"></b> 掉一顆，從基本池平均抽。</li>
+            <li><b>基本符石</b>（每系前 4 種，共 <span id="rb"></span> 種）：<b>目前沒有掉落來源</b>（2026-11-02 起一般怪不掉符石），只能從交易所或共用倉庫取得。</li>
             <li><b>特殊符石</b>（其餘 <span id="rs"></span> 種）：黃色稀有異界地圖的<b>首領 <span class="rsp"></span></b>；<a href="dragons.html">團隊副本</a>勝利<b>每位參加者各 <span class="rsp"></span></b>。</li>
             <li>機率固定，不吃地圖詞綴或副本獎勵倍率。白／藍地圖、財寶圖、一般狩獵地、永夜之塔、龍穴、世界首領、離線收益都<b>不掉</b>符石。</li>
             <li>想刷特殊符石：用<a href="affix.html">通貨</a>把地圖點成黃色稀有再開，首領一定要打（排程別勾「怪物清空後不打首領」）。</li>
         </ul></div>
+    <div class="box" id="summon"><h3 style="margin-top:0">召喚物傷害怎麼算</h3>
+        <ul>
+            <li>召喚物（靈狼、石衛、火靈等契約符石）每 2 秒出手一次，每次 ＝ <b>傭兵的魔攻 × 符石的能力倍率</b>（契靈師再 ×1.5）。治療型（靈蝶、樹靈）用同樣算法回血。</li>
+            <li>用的是<b>傭兵自己的魔攻</b>，不是你的 SP，也不是你的總傷害。傭兵魔攻 ＝ 職業基礎＋等級加成＋<b>傭兵裝備的 SP × 3</b>＋魔杖強化值，所以要讓召喚物變強，給傭兵穿有 SP 的裝備。</li>
+            <li>算魔法傷害：會受怪物魔防減免（秘法使另外無視 30% 魔防），也吃命運星盤的「出戰傭兵傷害」「傭兵召喚物傷害」。</li>
+            <li>王族二轉<b>人皇</b>的「我為人皇」讓傭兵魔攻 +15%，所以召喚物傷害也跟著 +15%。</li>
+        </ul></div>
     <div class="box warn">怪物會讓你和傭兵中<a href="mechanics.html#afflict">異常狀態</a>（中毒、燒傷、冰凍、麻痺等 10 種）。傭兵鑲「淨化之光」符石可替你解除、鑲「淨身」可解自己身上的；回村也會清掉。</div>
     <div class="tabs" id="tabs"></div>
     <div id="rune-list"></div>
+
+    <h2 id="guild">🏛️ 傭兵公會（整備中）</h2>
+    <p>跟上面的個人傭兵是<b>兩個獨立系統</b>：公會夥伴只參加公會任務，不會跟著你在一般地圖打怪。入口在四座村莊的<b>公會接待員</b>，或左側選單的「傭兵公會」，要在村莊才能整理。</p>
+    <div class="box warn"><b>目前只開放名冊與編隊。</b>公會任務路線還在整備中，暫時不能出發、也沒有獎勵；任務冊上的項目都標示「路線整備中」。</div>
+    <ul>
+        <li><b>編隊</b>：每場選派三位不同的夥伴，選滿三位才能保存；取消變更不會動到已保存的編隊。</li>
+        <li><b>初始夥伴</b>：依你的基礎職業給三位（見下表），二轉換分支不會換人。其他夥伴要完成公會招募任務才會加入。</li>
+    </ul>
+    <h3>夥伴名冊</h3>
+    <div class="grid" id="guild-members"></div>
+    <h3>各職業的初始夥伴</h3>
+    <div id="guild-initial"></div>
+    <h3>任務冊（<span id="guild-mn"></span> 項，路線整備中）</h3>
+    <p id="guild-missions"></p>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>
@@ -90,7 +119,7 @@ $('#mpt').textContent = MP_SEC; $('#mpk').textContent = W.consts.MERC_GEAR_MP_RE
 $('#slots').textContent = M.slots.map(s => W.slots[s] || s).join('、');
 $('#rn').textContent = Object.keys(M.runes).length;
 $('#rb').textContent = M.drops.basic.length; $('#rs').textContent = M.drops.special.length;
-$('#rbp').textContent = pct(M.drops.normalP); document.querySelectorAll('.rsp').forEach(e => e.textContent = pct(M.drops.bossP));
+document.querySelectorAll('.rsp').forEach(e => e.textContent = pct(M.drops.bossP));
 // 同遊戲 mercStats（data/mercenary.js）不含裝備／增益的部分
 const LV_MAX = W.consts.MAX_LEVEL;
 $('#lv').max = LV_MAX;
@@ -125,6 +154,16 @@ function draw() {
     ], rows);
 }
 draw();
+const GD = W.guild;
+$('#guild-members').innerHTML = Object.entries(GD.members).map(([id, m]) => `<div class="card merc"><img src="${esc(img(GD.portraits[id]))}" alt="" loading="lazy"><div><h3>${esc(m.name)}</h3><span class="tag">${esc(GD.roles[m.role])}</span></div></div>`).join('');
+const initGroups = {};
+for (const [cls, ids] of Object.entries(GD.initial)) (initGroups[ids.join()] = initGroups[ids.join()] || { ids, cls: [] }).cls.push(cls);
+renderTable($('#guild-initial'), [
+    { label: '基礎職業', html: g => g.cls.map(id => `${W.classes[id].icon} ${esc(className(id))}`).join('、') },
+    { label: '初始三位夥伴', html: g => g.ids.map(id => `${esc(GD.members[id].name)}<small class="dim">（${esc(GD.roles[GD.members[id].role])}）</small>`).join('、') },
+], Object.values(initGroups));
+$('#guild-mn').textContent = GD.missions.length;
+$('#guild-missions').textContent = GD.missions.join('、');
 </script>
 </body>
 </html>
