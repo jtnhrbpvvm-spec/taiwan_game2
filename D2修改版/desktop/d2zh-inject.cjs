@@ -142,7 +142,20 @@ try {
 }
 
 // 開遊戲時背景檢查。通常注入完才下載好，所以做完要告訴遊戲頁面（剛開遊戲還在選單就會自動重新載入用新版）
+// 使用次數統計：每次開遊戲記一次到 GoatCounter（和網站同一個帳號，匿名）。連不上就算了，不影響遊戲
+function countLaunch() {
+  try {
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/電腦版/D2修改版') + '&t=' + encodeURIComponent('電腦版：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    const req = https.get(url, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 D2ZH-Desktop', 'Accept-Language': 'zh-TW,zh;q=0.9' } }, res => res.resume());
+    req.on('timeout', () => req.destroy());
+    req.on('error', e => log(`count: ${e.message}`));
+  } catch (e) {
+    log(`count: ${e && e.message}`);
+  }
+}
+
 app.whenReady().then(() => {
+  countLaunch();
   if (!info().autoUpdate) return;
   checkForUpdates('auto').then(result => {
     const { webContents } = require('electron');

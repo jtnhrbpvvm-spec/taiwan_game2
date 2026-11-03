@@ -17,6 +17,8 @@
 
   var top = window;
   if (top.__ktZh) { top.__ktZh.toast('繁體中文已經在運作（' + VERSION + '）'); return; }
+  // 使用次數統計（GoatCounter，和網站同一個帳號；匿名，只記「這個工具被執行一次」。網站擋掉也不影響工具）
+  try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/戰棋寶貝') + '&t=' + encodeURIComponent('書籤：戰棋寶貝') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 
   /* ---------- 簡轉繁 ---------- */
   var parts = D.split('|');

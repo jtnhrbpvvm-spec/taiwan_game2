@@ -6,6 +6,8 @@
 // ==========================================================================
 (function () {
   "use strict";
+  // 使用次數統計（GoatCounter，和網站同一個帳號；匿名，只記「這個工具被執行一次」。網站擋掉也不影響工具）
+  try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/希望') + '&t=' + encodeURIComponent('書籤：希望') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 
   var STYLE_ID = "iw-enhance-style";
   var CLOCKWORK_ID = 26731; // 實習生的發條（預設用的發條；2026-09-22 改版後可以在視窗裡改選其他發條）

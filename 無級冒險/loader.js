@@ -11,6 +11,8 @@
   const old = document.getElementById(ID);
   if (old) { old.remove(); if (window.game && window.game.setPaused) window.game.setPaused(false, 'wjt'); return; }
   if (!/wuji-adventure/.test(location.host)) { alert('請先打開「無級冒險」的網頁，再點這個書籤。'); return; }
+  // 使用次數統計（GoatCounter，和網站同一個帳號；匿名，只記「這個工具被執行一次」。網站擋掉也不影響工具）
+  try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/無級冒險') + '&t=' + encodeURIComponent('書籤：無級冒險') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 
   const LS = localStorage;
   const GLOBAL = ['audio-v1', 'fps-v1', 'lastSlot-v1'];

@@ -931,6 +931,8 @@ async function main() {
   }
   if (window.__RXSZH) { toast('繁體中文化 <b>' + RXSZH_VERSION + '</b> 已經套用'); return; }
   window.__RXSZH = RXSZH_VERSION;
+  // 使用次數統計（GoatCounter，和網站同一個帳號；匿名，只記「這個工具被執行一次」。網站擋掉也不影響工具）
+  try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/藍色混蛋倖存者中文化') + '&t=' + encodeURIComponent('書籤：藍色混蛋倖存者中文化') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
   try {
     const fontPromise = fetch(FONT_URL).then(r => {
       if (!r.ok) throw new Error('字型下載失敗 ' + r.status);
