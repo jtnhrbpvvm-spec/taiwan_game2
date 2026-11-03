@@ -1,6 +1,7 @@
 /*
  * 流派範本（不會被載入，manifest 裡沒有它）。
- * 複製成 NN-英文名.js，改內容，再加進 manifest.js。
+ * 複製到 strategies/release/（正式版）或 strategies/demo/（試玩版），
+ * 改名成 NN-英文名.js，改內容，再把檔名加進同資料夾的 manifest.js。
  *
  * sections 的每一段可以用這些欄位（都可省略）：
  *   p:     '一段文字'  或  ['好幾段', '文字']
