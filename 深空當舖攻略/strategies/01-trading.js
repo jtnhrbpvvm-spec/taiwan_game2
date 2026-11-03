@@ -48,6 +48,31 @@ window.PS_STRATEGIES.push({
     {
       title: '數字參考',
       list: ['某玩家第 1 天結束餘額 596，第 4 天 777。', '自動販賣機（房東選項）晚上自動賣貨，但每週房租 +150。']
+    },
+    {
+      title: '🌐 英語玩家攻略補充：批發與殺價實例',
+      list: [
+        '廢料商整堆 64 收 → 賣修理工 92，賺 28。',
+        '6 份泥煤 15% 折扣 128 收 → Mark Up 難度價值 174。',
+        '第 8 天導師教「殺價」後：需求折扣 -10%，169 壓到 153，代價是一點陣營聲望。',
+        '其他加成來源：香水、冰箱（[冰鎮] +20%、[冷凍]/[冰涼] +25%，酒和水容器不能放）。'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：小偷贓物「熱度」',
+      table: {
+        head: ['基礎價值', '熱度', '小偷給的折扣'],
+        rows: [['≤ 17', '0%', '—'], ['≤ 49', '25%', '10%'], ['≤ 84', '50%', '15%'], ['≤ 139', '75%', '20%'], ['≥ 140', '100%', '25%']]
+      },
+      note: '熱度每晚下降：一般物品 -18；違禁品依等級（低→極高）-16 / -14 / -12 / -10。熱度降下來之前把贓物藏好。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：站內事件（先囤貨，事件時在櫃台賣）',
+      table: {
+        head: ['事件', '加價'],
+        rows: [['誰把燈關了？（停電）', '能源電池 +50%、武器 +25%、彈藥 +25%'], ['下層區暴動', '食物 +30%、武器 +50%、彈藥 +50%']]
+      },
+      note: '「可疑客人」有時會提前透露事件。'
     }
   ],
   tips: [
@@ -61,10 +86,12 @@ window.PS_STRATEGIES.push({
     '扣掉實際進價才算利潤，別只看賣價。'
   ],
   sources: [
+    { title: '[EN] AllThings.How：How to Make Money Fast', url: 'https://allthings.how/probably-stolen-make-money/' },
+    { title: '[EN] Steam 指南：From Nothing, The Hard Way', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3831133096' },
     { title: 'OutputLag：How to Make Money and Start From $0', url: 'https://outputlag.com/guides/probably-stolen-how-to-make-money-and-start-from-0-guide/' },
     { title: 'GamerBlurb：How to Make Money', url: 'https://gamerblurb.com/guides/probably-stolen-how-to-make-money' },
     { title: 'Stage1st 討論串', url: 'https://stage1st.com/2b/thread-2288723-1-1.html' },
     { title: '3DM 遊戲資料頁', url: 'https://www.3dmgame.com/games/probablystolen/' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

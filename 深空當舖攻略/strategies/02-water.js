@@ -91,6 +91,70 @@ window.PS_STRATEGIES.push({
         '把幽靈水當基礎水賣，累計約 <b>2.5L</b> 後會被控「危害罪」。',
         '用老鼠糞便調整污染物比例再淨化（Stage1st 玩家方法），太繁瑣，多數人認為不如直接升級收集器。'
       ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：淨水工具一覽',
+      table: {
+        head: ['工具', '作用'],
+        rows: [
+          ['淨水錠', '清除全部微生物、化學污染降到 0.71%；每錠處理 80ml 污染物（先化學後微生物）'],
+          ['紫外燈', '清除全部微生物，可省淨水錠但不能取代'],
+          ['海德拉淨水器', '平均移除所有污染物，最多到基礎水；適合處理幽靈水'],
+          ['淨水器（Water Purifier）', '過夜慢慢降低所有污染；最適合重度污染。退休商人 345 / 博士 375'],
+          ['加熱板（化學）', '60～100°C 移除微生物和有機物，超過會把水煮乾'],
+          ['棉花布', '只移除攪拌產生的可溶物，主要給化學用']
+        ]
+      },
+      note: '<b>重金屬和化學污染物濾芯濾不掉</b>，會讓水卡在基礎水。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：鏽水 → 優質水（中階流程）',
+      steps: [
+        '淨水錠軟化：2L 瓶放 1 顆、6L 桶放 2 顆（可先照紫外燈）。',
+        '放進通電的淨水器過夜：2L 約 1～2 晚、6L 約 3 晚。實測 6L：95.50% → 97.00% → 98.15% → <b>99.00%</b>。',
+        '倒過濾水壺。',
+        '測試確認是優質水；還是基礎水就再加一顆錠或多跑一晚。'
+      ],
+      note: '鏽水水龍頭在這份指南記為 550（favor＋credits），和中文攻略的 350 不同，以遊戲內為準。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：稀釋技巧',
+      list: [
+        '超過 99.00% 的部分<b>不會多賣錢</b>，可以拿來稀釋。',
+        '例：1L 99.50% ＋ 1L 98.50% ＝ 2L 99.00%（兩公升都算優質水）。',
+        '純水是最好的稀釋來源；水分收集器的優質水也能拿來稀釋，省一兩天。'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：吸引上層區囤水商',
+      list: [
+        '展示總價值超過約 300（另一說 350）才有機率出現囤水商；一整桶 6L 優質水就夠。',
+        '<b>前兩週不會出現</b>。',
+        '店面美觀和折扣會提高他們預算；美觀拉滿 900 預算翻倍（+100%）。',
+        '上層區聲望 20 時囤水商給 15% 小費。',
+        '囤水商一定帶空的 6L 桶來賣，是 6L 桶的主要來源。',
+        '把一瓶「泉水」上架：第三週艾蓮諾會來典當；泉水留著能吸引高級水商。'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：純水與 Bug',
+      list: [
+        '品質 ≥100% 的淨水器可做純水：103% 品質淨水器一晚把 6L 99.00% 變 99.90%。',
+        '<b>Bug</b>：容器沒裝滿時 99.90% 可能被顯示成優質水（污染值有四捨五入、體積沒有）。裝滿容器（100ml 倍數），或用更純的水稀釋。',
+        '蒸發器每晚可抽出 300ml 水和酒精；模組品質 100% 時完全回收。',
+        '水分收集器被削弱（每天 850ml、耗電 6、擁有越多台產量越低），這份指南作者直接說「<b>不要買</b>」。中文攻略仍推薦高品質收集器量產，兩派意見不同。'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：其他淨化法與風險',
+      list: [
+        '溝渠吳郭魚：12L 水箱＋5 顆淨水錠＋6 隻成魚，第 3 晚到優質水。',
+        '水蘆葦（Hydroweed）：6L 鏽水＋2 錠，第 2 晚到優質水。',
+        '把王爾德的兩個水龍頭都買齊＝無限鏽水。',
+        'AquaScan 在日用品過剩事件時向博士買比較便宜；化學家的成分光譜儀功能相同。',
+        '錯標水：這份指南說約賣 100L 錯標水後才有後果（另一份說幽靈水當基礎水約 2.5L 就被控），以遊戲內為準。',
+        '賣水機（Vending Fountain，1200 favor）：夜間自動賣水。玩家提醒販賣機只賣標準價，水已經賣得掉的話不一定划算。'
+      ]
     }
   ],
   tips: [
@@ -105,6 +169,9 @@ window.PS_STRATEGIES.push({
     '2026 年改版重做過淨水器，舊攻略的淨水錠流程可能不適用。'
   ],
   sources: [
+    { title: '[EN] Steam 指南：Water Trading Made Easy（Owlie）', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3828856121' },
+    { title: '[EN] Steam 指南：Machinery and You', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3805839811' },
+    { title: '[EN] Steam 討論區', url: 'https://steamcommunity.com/app/4348910/discussions/' },
     { title: '18183：新手卖水玩法详解', url: 'https://m.18183.com/gonglue/202608/0ct1j7a5.html' },
     { title: 'GamerBlurb：How to Make Money（水等級表）', url: 'https://gamerblurb.com/guides/probably-stolen-how-to-make-money' },
     { title: 'Bonus Action：All Trades（每公升價格）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
@@ -112,5 +179,5 @@ window.PS_STRATEGIES.push({
     { title: 'Destructoid：How to do water trading', url: 'https://www.destructoid.com/how-to-do-water-trading-in-probably-stolen/' },
     { title: 'Stage1st 討論串', url: 'https://stage1st.com/2b/thread-2288723-1-1.html' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

@@ -52,6 +52,55 @@ window.PS_STRATEGIES.push({
         '不急著賣，放著陳化，等上層區客人或預算高的客人。',
         '想自產莓果：搭配水耕流（1 顆布倫莓種子 → 6 顆，每顆基礎價值 14）。'
       ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：品質計分公式（Discord 社群實測）',
+      p: '從 0 分開始，依下列加減，總分決定等級：',
+      table: {
+        head: ['項目', '分數'],
+        rows: [
+          ['莓果：小顆', '+2'], ['莓果：標準', '+1'], ['莓果：過熟 / 未熟', '0'], ['莓果：發霉', '-1'], ['用 2 顆莓果', '再 +1'],
+          ['任何酵母（普通、生物反應器、超級）', '+1（不論數量）'],
+          ['水：純水 / 優質水', '+1'], ['水：基礎水', '0'], ['水：幽靈水', '-1'], ['水：鏽水', '-2'], ['水：溝渠水', '-3']
+        ]
+      },
+      note: '這份指南說「純水 +1，遊戲內手冊寫錯了」，和中文攻略「純水不能發酵」相反，以實際測試為準。莓果放著不會變熟、變爛或發霉。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：等級、售價與陳化',
+      table: {
+        head: ['分數', '等級', '售價', '每日增值'],
+        rows: [
+          ['0', '難以下嚥 Undrinkable', '賣不掉', '—'],
+          ['1', '水桶釀 Bucket brew', '85（-15%）', '+2.55'],
+          ['2', '家釀 Homebrew', '100', '+3'],
+          ['3～4', '量產酒 Production', '125（+25%）', '+3.75'],
+          ['5', '珍藏 Reserve', '150（+50%）', '+4.5'],
+          ['6', '大師年份 Master Vintage', '175（+75%）', '+5.25']
+        ]
+      },
+      note: '最佳配方：2 顆小莓果（+2 +1）＋酵母（+1）＋優質水（+1）＝ 5～6 分。酒可以無限陳化。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：陰暗莓酒（Gloomberry，違禁品）',
+      list: [
+        '只要放合成酵母，不論莓果和水都做出陰暗莓酒：基礎 44、+70% ＝ 74，<b>不會陳化</b>。',
+        '把最爛的料（溝渠水＋合成酵母）變成約 80 的利潤。溝渠水來源：溝渠水水龍頭，或把老鼠糞便放進水瓶。'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：材料來源',
+      table: {
+        head: ['來源', '莓果', '酒瓶'],
+        rows: [
+          ['退休釀酒師', '每週五 8 顆', '每週五 4 個'],
+          ['水耕農夫（王爾德賣家推薦）', '每次 5～6 顆，不限一週一次', '—'],
+          ['自己水耕', '每次收成 6 顆，品質看收成時植物健康', '—'],
+          ['補給跑腿', '—', '每週日 3 個（較貴）'],
+          ['拾荒將軍', '—', '每次 0～2 個；展示櫃放拾荒代幣可叫他來'],
+          ['廢品商', '—', '每次 0～3 個（只會隨機出現）']
+        ]
+      }
     }
   ],
   tips: [
@@ -64,10 +113,11 @@ window.PS_STRATEGIES.push({
     '陳化機不吃還在發酵的瓶子。'
   ],
   sources: [
+    { title: '[EN] Steam 指南：Winemaking and You', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3805647354' },
     { title: 'probablystolen.top：釀酒攻略', url: 'https://probablystolen.top/zh-TW/guides/winemaking/' },
     { title: 'ShowGamer：Winemaking 配方表', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' },
     { title: 'Bonus Action：All Trades（每晚 +3、50～75%）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: 'AllThings.How：How to make wine', url: 'https://allthings.how/probably-stolen-how-to-make-wine/' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

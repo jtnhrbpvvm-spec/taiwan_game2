@@ -16,5 +16,7 @@ window.PS_MANIFEST = [
   '10-fence.js',
   '11-appraisal.js',
   '12-bounty.js',
-  '13-scavenge.js'
+  '13-scavenge.js',
+  '14-vending.js',
+  '15-machines.js'
 ];

@@ -51,15 +51,29 @@ window.PS_STRATEGIES.push({
           ['成色通則', '—', '輕微磨損 -15、嚴重磨損 -30']
         ]
       }
+    },
+    {
+      title: '🌐 英語玩家攻略補充：估價公會評分與收入',
+      table: {
+        head: ['誤差', '評等'],
+        rows: [['≤ 5%', 'Perfect（完美）'], ['≤ 10%', 'Excellent'], ['≤ 15%', 'Good'], ['≤ 25%', 'Mediocre'], ['> 25%', 'Awful']]
+      },
+      list: [
+        '服務費 20（初級）～ 100（大師）；完美評等多拿 15～25%。',
+        '實例：第 14 天 4 次完美的義肢手估價賺 214。',
+        '困難模式通關玩家認為鑑定認證是「很強的白賺錢來源」，<b>越早拿、越早升級越好</b>。'
+      ]
     }
   ],
   tips: ['買到假貨沒關係，只要付的是假貨價。', '社群有自動鑑定 Mod 可以省時間。'],
   pitfalls: ['用真品價買到假貨是最大的虧。', '假食物券會被銷毀。', '沒有確定瑕疵就指控 = 白扣聲望。'],
   sources: [
+    { title: '[EN] AllThings.How：How to Make Money Fast', url: 'https://allthings.how/probably-stolen-make-money/' },
+    { title: '[EN] Steam 指南：From Nothing, The Hard Way', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3831133096' },
     { title: 'probablystolen.top：鑑定、成色、貼假標、估價', url: 'https://probablystolen.top/zh-TW/guides/appraisal-and-counterfeits/' },
     { title: 'OutputLag：Counterfeit cigarette arbitrage', url: 'https://outputlag.com/guides/probably-stolen-how-to-make-money-and-start-from-0-guide/' },
     { title: 'ShowGamer：Authentication and Appraisal', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' },
     { title: 'Stage1st 討論串', url: 'https://stage1st.com/2b/thread-2288723-1-1.html' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

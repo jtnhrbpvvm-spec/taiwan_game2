@@ -37,14 +37,34 @@ window.PS_STRATEGIES.push({
       title: '副業：能源電池充電',
       steps: ['買充電器＋可重複用的能源電池。', '低價收沒電的電池，充好電。', '等需求上升（尤其是<b>停電事件</b>）再賣。'],
       note: '先留足自己機器要用的電。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：熔爐細節',
+      list: [
+        '熔爐售價 200，每天耗電 8。',
+        '廢料處理模組：6 個廢品 → 4 個廢金屬。',
+        '助焊劑讓純度升一階；品質 ≥ +100%（爆破模組 +200%）時助焊劑不會消耗。',
+        '品質每 100% 純度升一階；性能沒影響；效率每 12.5% 省 1 電。使用爆破模組時第一個 +100% 品質被忽略。',
+        '模組最佳化計算器（社群）：<a href="https://hoydoy.github.io/probably-stolen-module-optimization" target="_blank" rel="noopener">hoydoy.github.io</a>'
+      ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：電池套利',
+      list: [
+        '充電器 150：每天充 3 電（王爾德升級後 6）。PowerBloc 200：替相鄰電池充 2 電（升級後 4）。兩者都要先繳電費。',
+        '低價收沒電的電池充好賣；停電事件時能源電池 <b>+50%</b>。',
+        '「電線盜接」（300 favor）電費全免，做充電生意更賺。'
+      ]
     }
   ],
   tips: ['成本最低的生產線，非常適合跟拾荒流搭配。', '開批前先算礦石價、電費和買家預算。'],
   pitfalls: ['2 廢金屬做出來的錠價值反而較低，最好混礦石。'],
   sources: [
+    { title: '[EN] Steam 指南：Machinery and You', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3805839811' },
+    { title: '[EN] Steam 指南：From Nothing, The Hard Way', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3831133096' },
     { title: 'Bonus Action：All Trades（熔煉加成）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: 'ShowGamer：Metal Ingot Production / Energy Cell', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' },
     { title: 'OutputLag：Furnace smelting', url: 'https://outputlag.com/guides/probably-stolen-how-to-make-money-and-start-from-0-guide/' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

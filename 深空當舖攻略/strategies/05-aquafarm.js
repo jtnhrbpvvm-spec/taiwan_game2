@@ -30,14 +30,27 @@ window.PS_STRATEGIES.push({
     {
       title: '升級',
       list: ['水產養殖 II：資料不一致（1,200 或 500），以遊戲內為準。']
+    },
+    {
+      title: '🌐 英語玩家攻略補充：補充',
+      list: [
+        '魚子醬要用<b>手術工具</b>處理鱘魚。',
+        '1.0 版：水質、飼料、環境會影響最後養出的魚種；繁殖是機率性的，有些魚缸會比較久。',
+        '<b>溝渠吳郭魚</b>能清水：12L 水箱＋5 錠＋6 隻成魚，第 3 晚把鏽水淨化到優質水（上限是優質水）。',
+        '化學流用途：溝渠吳郭魚能除去試劑中的重金屬，是唯一不靠實驗室的方法。',
+        '開發者形容養魚步調慢、照顧少、比養鼠更適合新手。'
+      ]
     }
   ],
   tips: ['不要過度擁擠。', '留足種魚給下一代。', '水源可以接賣水流的設備。'],
   pitfalls: ['設備和成長前期吃很多資源，現金流不穩時不要開。', '水、電、飼料任一斷掉都會出問題。'],
   sources: [
+    { title: '[EN] Probably Stolen Wiki（社群）', url: 'https://probablystolenwiki.com/guides' },
+    { title: '[EN] Steam 指南：Water Trading Made Easy（Owlie）', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3828856121' },
+    { title: '[EN] Steam 指南：The Complete Chemist Guide（lpinch）', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3830313918' },
     { title: 'Bonus Action：All Trades（魚價）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: 'ShowGamer：Fish Farming and Caviar', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' },
     { title: 'probablystolenguides.com：赚钱路线对比', url: 'https://probablystolenguides.com/zh/guides/money-making/' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

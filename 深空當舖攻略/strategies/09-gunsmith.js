@@ -30,13 +30,21 @@ window.PS_STRATEGIES.push({
     {
       title: '賺錢重點',
       list: ['接「給我最好的」訂單：市價 +50%。', '看日曆的武器需求高峰事件。']
+    },
+    {
+      title: '🌐 英語玩家攻略補充：補充',
+      list: [
+        '停電事件武器 +25%、彈藥 +25%；下層區暴動武器 +50%、彈藥 +50% —— 事前囤貨。',
+        '許可證要先拿到，武器才可以合法賣。'
+      ]
     }
   ],
   tips: ['先靠舉報通緝犯等方式累積保安聲望。'],
   pitfalls: ['武器佔倉位，保安檢查時可能惹麻煩。', '許可證等級不夠的武器不要囤。'],
   sources: [
+    { title: '[EN] AllThings.How：How to Make Money Fast', url: 'https://allthings.how/probably-stolen-make-money/' },
     { title: 'Bonus Action：All Trades（許可證）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: 'ShowGamer：Weapon Trading and Manufacturing', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

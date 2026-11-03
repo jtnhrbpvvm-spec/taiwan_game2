@@ -36,15 +36,36 @@ window.PS_STRATEGIES.push({
         '049 版移除了改造體相關的聲望懲罰。'
       ],
       note: '沒把握不要開槍：誤殺普通客人懲罰很重，可能直接結束。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：通緝犯賞金表',
+      table: {
+        head: ['通緝犯', '賞金'],
+        rows: [
+          ['Lou（路）', '1,500'], ['The Butcher（屠夫）', '450'], ['Li Bei Wen', '400'],
+          ['James Bailey / Odin Haraldsson / Leroy', '各 300'], ['Juan / John Smith', '各 125'], ['Arthur Lafleur', '100']
+        ]
+      },
+      note: '開局特性「模範市民 Model Citizen」賞金 +50%，還會累積保安聲望；保安聲望 100 時可以不用再買保險。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：改造體獵人開局',
+      list: [
+        '開局特性「改造體威脅 Aug Menace」：改造體從第一天就出現，每殺一隻有獎勵。',
+        '困難模式玩家殺了 10 隻以上、只漏一兩隻、從沒誤殺平民，是開局主要收入。',
+        '漏掉的話可以向傑克遜博士買改造體掃描器（200，每次 25 電）。'
+      ]
     }
   ],
   tips: ['保安聲望是軍火流許可證的門檻，賞金流可以順便鋪路。'],
   pitfalls: ['看到一個怪行為就開槍／報警。'],
   sources: [
+    { title: '[EN] AllThings.How：How to Make Money Fast', url: 'https://allthings.how/probably-stolen-make-money/' },
+    { title: '[EN] Steam 指南：From Nothing, The Hard Way', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3831133096' },
     { title: 'probablystolen.top：改造體識別', url: 'https://probablystolen.top/zh-TW/guides/augs-and-detection/' },
     { title: 'probablystolen.top：困難模式與一貧如洗', url: 'https://probablystolen.top/zh-TW/guides/hard-mode-and-rock-bottom/' },
     { title: 'OutputLag：Wanted-suspect bounties', url: 'https://outputlag.com/guides/probably-stolen-how-to-make-money-and-start-from-0-guide/' },
     { title: 'Stage1st 討論串', url: 'https://stage1st.com/2b/thread-2288723-1-1.html' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

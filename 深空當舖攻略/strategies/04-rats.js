@@ -40,6 +40,16 @@ window.PS_STRATEGIES.push({
         '用利器（玻璃刀、廚刀、切肉刀）取肉。',
         '清潔機器人的焚化爐可以燒掉累積的糞便。'
       ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：補充',
+      list: [
+        '英文 Wiki 價格（舊版）：小塊生肉 60、肉塊 30、小肉塊 15。',
+        '肉可以餵給其他老鼠，但玩家說回報很差。',
+        '發霉莓果做出的「水桶釀」酒很適合拿來當老鼠飼料。',
+        '老鼠糞便放進水瓶可得溝渠水，給陰暗莓酒或海德拉合成水用。',
+        '開發者說養魚比養鼠步調慢、照顧少、更適合新手。'
+      ]
     }
   ],
   tips: [
@@ -53,9 +63,11 @@ window.PS_STRATEGIES.push({
     '活體是庫存不是收入，賣出前都在吃飼料。'
   ],
   sources: [
+    { title: '[EN] Probably Stolen Wiki（社群）', url: 'https://probablystolenwiki.com/guides' },
+    { title: '[EN] Steam 指南：Winemaking and You', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3805647354' },
     { title: 'probablystolen.top：老鼠攻略', url: 'https://probablystolen.top/zh-TW/guides/rat-husbandry/' },
     { title: 'Bonus Action：All Trades（鼠肉價格）', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: '巴哈姆特：酒、水、肉筆記', url: 'https://home.gamer.com.tw/artwork.php?sn=6407827' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });

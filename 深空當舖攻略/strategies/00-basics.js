@@ -89,6 +89,47 @@ window.PS_STRATEGIES.push({
         '清廉潔白：一次贓物／違禁品都沒賣就通關。',
         '從零開始的成功：一貧如洗開局通關（困難再一個）。'
       ]
+    },
+    {
+      title: '🌐 英語玩家攻略補充：難度與零售加成',
+      table: {
+        head: ['難度', '零售加成', '說明'],
+        rows: [
+          ['Price Gouge（哄抬）', '+20%', '最簡單'],
+          ['Mark Up（加價，普通）', '+15%', '例：泥煤基礎 25 → 約 29；廢金屬 10 → 約 12'],
+          ['Thin Margins（薄利）', '無', '只能靠「買得便宜」賺；房租每週 +10%，沒有第一週寬限'],
+          ['Red Ink（赤字）', '無', '最難']
+        ]
+      },
+      note: '賺錢公式：用低於基礎價收貨，用「基礎價＋難度加成」賣出。早期<b>利潤率比量重要</b>。'
+    },
+    {
+      title: '🌐 英語玩家攻略補充：王爾德人脈網升級（Mark Up 難度，花費為人情點 favor）',
+      p: '第 7 天收到喬·王爾德的名片後，打 <b>8376</b> 開通。',
+      table: {
+        head: ['升級', '分頁', 'Favor', '效果'],
+        rows: [
+          ['買家推薦服務', 'Referral', '200', '每晚推薦買家，客流增加'],
+          ['電線盜接 Power Line Hijack', 'Service', '300', '<b>電費全免</b>（每晚電費很傷）'],
+          ['市集委託 Marketplace Requests', 'Service', '250', '商店委託，通常高於市價（例：3 天內交 3 份醫療用品給 100）'],
+          ['販賣機 / 賣水機', 'Store', '1200 / 1200', '夜間自動銷售（見販賣機流）'],
+          ['展示櫃擴充 I / II', 'Store', '200 / 500', '展示櫃變大'],
+          ['傑克遜投資 I / II', 'Supplier', '400 / 650', '博士的預算和庫存提升'],
+          ['週一特別進貨', 'Supplier', '1250', '特殊貨品'],
+          ['王爾德背書 I / II / III', 'Endorsement', '2500 / 5000 / 10000', '每級客人預算 <b>+25%</b>（買下店面後才開）'],
+          ['超科技走私客', 'Referral', '2500', '每晚超科技物品（買下店面後才開）']
+        ]
+      }
+    },
+    {
+      title: '🌐 英語玩家攻略補充：其他收入與支出',
+      list: [
+        '電話供應商：透過王爾德引薦後，快遞以 <b>8 折</b>賣貨。引薦費：紅魔釀酒廠 200、下層區化學家 250、GP 礦業 250、上層區藥師 300。',
+        '商人「全部賣掉」會套 -15% 清倉折扣（例：14 件只賣 274），只在繳不出房租時用。',
+        '喬治奧借款（第 43 天）：借你現金的 1/4 或 1/2，在房租不夠的那天或 25 天內還你 <b>4 倍</b>。',
+        '支出：房租、每晚電費、檢查罰款、放在外面櫃台的東西會被偷、化學品過熱報廢。',
+        '拾荒每次有 10% 輕傷、2.25% 重傷機率。'
+      ]
     }
   ],
   tips: [
@@ -103,11 +144,14 @@ window.PS_STRATEGIES.push({
     '彩票是隨機消費，不要動用房租和維修預備金。'
   ],
   sources: [
+    { title: '[EN] AllThings.How：How to Make Money Fast', url: 'https://allthings.how/probably-stolen-make-money/' },
+    { title: '[EN] Steam 指南：From Nothing, The Hard Way', url: 'https://steamcommunity.com/sharedfiles/filedetails/?id=3831133096' },
+    { title: '[EN] Probably Stolen Wiki（社群）', url: 'https://probablystolenwiki.com/guides' },
     { title: 'T-Pose Gaming：Probably Stolen Guide', url: 'https://tposegaming.com/probably-stolen-guide/' },
     { title: 'ShowGamer：Probably Stolen Walkthrough', url: 'https://showgamer.com/en/prohozhdeniya-igr/6896-prohozhdenie-probably-stolen-vse-gaydy-i-glavy-igry' },
     { title: 'Bonus Action：All Trades & How to Unlock', url: 'https://bonus-action.com/guides/all-trades-how-to-unlock-them-in-probably-stolen/' },
     { title: '游民星空：新手入门攻略', url: 'https://www.gamersky.com/handbook/202610/2238297.shtml' },
     { title: 'probablystolenguides.com：赚钱路线对比', url: 'https://probablystolenguides.com/zh/guides/money-making/' }
   ],
-  updated: '2026-11-03'
+  updated: '2026-11-03（含英語攻略）'
 });
