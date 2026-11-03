@@ -2064,6 +2064,14 @@
       return v ? pair[1] + (v > 0 ? "+" : "") + v : "";
     }).filter(Boolean).join("・");
   }
+  // 2026-11 改版：戰寵裝備 slot 0～2 可以當 G 化的輔G（遊戲 pg()／cg()／Jm()，戰寵裝備等級類別一律 1）
+  //   PT = (aux × 2 ＋ 精煉加成) ÷ 2，精煉加成 +5 0、+6 ⌊0.2a⌋、+7 ⌊0.4a⌋、+8 a、+9 2a … +12 5a；+4 以下不能當輔G
+  var BPET_AUX_ADD = { 5: 0, 6: 0.2, 7: 0.4, 8: 1, 9: 2, 10: 3, 11: 4, 12: 5 };
+  function bpetGearAuxPt(g, refine) {
+    var a = g.aux || 0, add = BPET_AUX_ADD[refine];
+    if (!(a > 0) || g.slot > 2 || add === undefined) return 0;
+    return (a * 2 + (add < 1 ? Math.trunc(a * add) : a * add)) / 2;
+  }
   function bpetGearReqText(g) {
     return "Lv" + (g.lv || 0) + (g.loyalty ? "・忠誠" + g.loyalty : "");
   }
@@ -2259,6 +2267,32 @@
             text: "⚠ 以目前的戰寵" + block + "，遊戲裡這件穿不上去（存檔還是會照寫，但進遊戲不會生效）。",
             style: "margin-top:2px;color:#d98c3f;",
           }));
+        }
+        if (chosen.aux > 0 && chosen.slot <= 2) {
+          var curRefine = (worn && worn.refine) || 0;
+          field.appendChild(el("div", {
+            class: "note",
+            text: "🧩 拿去當 G 化輔G：" + (curRefine >= 5 ? "目前 +" + curRefine + " = " + bpetGearAuxPt(chosen, curRefine) + " PT；" : "要 +5 以上才能放；") +
+              "+12 = " + bpetGearAuxPt(chosen, 12) + " PT（輔G值 " + chosen.aux + "）",
+            style: "margin-top:2px;",
+          }));
+        }
+        // 戰寵裝備 G 化（2026-11 遊戲新增，戰寵頁裝備欄做）：成功時換成 g、精煉和精煉次數清掉、growTries +1（遊戲 fuseBattlePetGear()）
+        var gTo = chosen.g != null && chosen.g !== chosen.id ? bpetGearById(chosen.g) : null;
+        if (gTo && worn && typeof worn === "object") {
+          var fuseBtn = el("button", { class: "btn btn-sm", text: "🧬 G 化成「" + gTo.name + "」", style: "margin-top:4px;" });
+          fuseBtn.title = "跟遊戲 G 化成功一樣：換成 G 版、精煉歸零。修改器不扣書、材料、金幣，也不看成功率。";
+          fuseBtn.addEventListener("click", function () {
+            if (!confirm(chosen.name + " G 化成 " + gTo.name + "？\n跟遊戲成功時一樣：精煉歸零。")) return;
+            var next = {};
+            Object.keys(worn).forEach(function (k) { if (k !== "refine" && k !== "refineTries") next[k] = worn[k]; });
+            next.itemId = gTo.id;
+            next.growTries = (worn.growTries || 0) + 1;
+            bp.gear[idx] = next;
+            renderBattlePet(c);
+            toast(chosen.name + " G 化成 " + gTo.name, "ok");
+          });
+          field.appendChild(fuseBtn);
         }
       }
       gearGrid.appendChild(field);

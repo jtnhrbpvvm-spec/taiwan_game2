@@ -2046,7 +2046,10 @@
         (x.noBoss ? '（對 Boss 無效）' : '') + skillNeedText(jobId, x));
     });
     if (s.doubleDamage) lines.push('💥 傷害加倍：機率 ' + skillPerLevelText(s.doubleDamage.chancePct, skillPct) +
-      (s.doubleDamage.noCritStack ? '（必殺時不會再加倍）' : '') + skillNeedText(jobId, s.doubleDamage));
+      (s.doubleDamage.noCritStack ? '（必殺時不會再加倍）' : '') +
+      // 2026-11-03 改版：noCritStack 換成 secondHit——觸發時不是同一下 ×2，而是再補打一下同樣傷害（必殺也算、有濺射）
+      (s.doubleDamage.secondHit ? '（觸發時再補打一下同樣傷害）' : '') + skillNeedText(jobId, s.doubleDamage));
+    if (s.dashesToTarget) lines.push('🏃 施放時會衝到目標身邊');
     if (s.critMultiplier != null && s.critMultiplier !== 2) lines.push('💥 必殺時傷害 ×' + s.critMultiplier + '（一般技能是 ×2）');
     if (s.superCrit) lines.push('💥 超級必殺：機率 ' + skillPerLevelText(s.superCrit.chancePct, skillPct));
     if (s.lifestealPct) lines.push('🩸 吸血：造成傷害的 ' + skillPerLevelText(s.lifestealPct, skillPct) + ' 補回自己 HP');
@@ -3135,18 +3138,45 @@
   }
   // 10-23 改版起每件裝備自己有輔G基礎值（FUSION.aux，遊戲 ym()／dm()）：+5 以上才有，× 精煉倍率，無條件捨去到 0.5
   var FUSION_AUX = (FUSION && FUSION.aux) || null;
-  function fusionAuxPt(base, refine) {
+  // 2026-11 改版（FUSION.rateMult 有值）：輔G值、成功率整套換公式，戰寵裝備也能 G 化／當輔G
+  var FUSION_V2 = !!(FUSION && FUSION.rateMult);
+  var FUSION_GCLASS_MULT = { 0: 1, 1: 2, 2: 4 };                       // 遊戲 Wm
+  var FUSION_REFINE_ADD = { 5: 0, 6: 0.2, 7: 0.4, 8: 1, 9: 2, 10: 3, 11: 4, 12: 5 }; // 遊戲 Km（+6、+7 要無條件捨去）
+  var FUSION_BPET = {};
+  ((FUSION && FUSION.bpetGear) || []).forEach(function (gid) { FUSION_BPET[gid] = true; });
+  var FUSION_SPECIAL = {};
+  ((FUSION && FUSION.special) || []).forEach(function (sid) { FUSION_SPECIAL[sid] = true; });
+  function fusionGClass(id) {
+    var g = FUSION && FUSION.gClass && FUSION.gClass[id];
+    return g == null ? 1 : g;
+  }
+  // 裝備當輔G的 PT（新版遊戲 cg()／Jm()）：(aux × 等級類別倍率 + 精煉加成) ÷ 2；舊版：aux × 精煉倍率，捨去到 0.5
+  function fusionAuxPt(base, refine, gClass) {
+    if (refine < 5 || refine > 12 || !(base > 0)) return 0;
+    if (FUSION_V2) {
+      var add = FUSION_REFINE_ADD[refine];
+      var bonus = add < 1 ? Math.trunc(base * add) : base * add;
+      return (base * FUSION_GCLASS_MULT[gClass == null ? 1 : gClass] + bonus) / 2;
+    }
     var r = FUSION_REFINE_MULT[refine];
-    if (r === undefined || refine < 5 || !(base > 0)) return 0;
     return Math.floor(base * r * 2) / 2;
+  }
+  // 被 G 化那件「每 +100% 成功率要幾 PT」（遊戲 ug()／rh()）；Infinity＝這個精煉不能放輔G
+  function fusionNeedPt(id, refine) {
+    var need = (FUSION && FUSION.auxNeed && FUSION.auxNeed[id]) || 0;
+    var gc = fusionGClass(id);
+    var over = refine - 7;
+    var a = need + (over >= 1 ? 5 + (over - 1) * (gc === 2 ? 10 : 15) : 0);
+    return a > 0 ? 5000 / a : Infinity;
   }
   // 裝備頁：這件拿去當別人的輔G值多少 PT
   function fusionAuxRowHtml(id) {
     var base = FUSION_AUX && FUSION_AUX[id];
     if (!base) return '';
+    var gc = fusionGClass(id);
     return '<div class="empty-note" style="padding:6px 0 0;">🧩 當 G 化／變異合成的輔 G：' + [5, 6, 7, 8, 9, 10, 11, 12].map(function (r) {
-      return '+' + r + ' <b>' + fusionAuxPt(base, r) + '</b>';
-    }).join('・') + ' PT（+4 以下不能放）</div>';
+      return '+' + r + ' <b>' + fusionAuxPt(base, r, gc) + '</b>';
+    }).join('・') + ' PT（+4 以下不能放' + (FUSION_V2 ? '；輔G值 ' + base + '、等級類別 ' + gc : '') + '）</div>';
   }
   // 輔G裝備的 PT（舊版遊戲 cg，10-18 以前）：+5 以上才有，看裝備等級、階級、精煉；最後無條件捨去到 0.5
   function fusionGearPt(tier, lv, refine) {
@@ -3164,9 +3194,13 @@
     return "accessory";
   }
   // 遊戲 wv：同種類、equipLvCap >= 裝備等級的書都能用；排序是成功率高的在前，同成功率卷數小的在前
-  function fusionBooksFor(kind, minLv) {
+  // 新版另外看書的 accepts（一般／特殊裝備／戰寵裝備）跟 excludes（遊戲 Sh()）
+  function fusionAccepts(id) { return FUSION_BPET[id] ? "battlePet" : FUSION_SPECIAL[id] ? "special" : "equip"; }
+  function fusionBooksFor(kind, minLv, id) {
+    var acc = id == null ? null : fusionAccepts(Number(id));
     return ((FUSION && FUSION.books) || []).filter(function (b) {
-      return b.kind === kind && b.equipLvCap >= minLv;
+      return b.kind === kind && b.equipLvCap >= minLv &&
+        (acc == null || (b.accepts || "equip") === acc) && !(b.excludes && b.excludes.indexOf(Number(id)) !== -1);
     }).sort(function (a, b) { return b.rate - a.rate || (a.vol == null ? 99 : a.vol) - (b.vol == null ? 99 : b.vol) || a.item - b.item; });
   }
   var fusionSourceIndex = null; // 目標裝備 id → [{from, kind}]，第一次用到才建
@@ -3213,10 +3247,20 @@
     }
     if (kinds.length && !t.noFuse) {
       var skill = FUSION.slotSkill && FUSION.slotSkill[fusionSlotGroup(eq.slot)];
-      html += '<div class="empty-note" style="padding:0 0 10px;line-height:1.8;">在村莊鐵匠組合長的「G 化」分頁製作，<b>只有鐵匠職業</b>做得了，' +
-        '要先學〔' + escapeHtml(skill ? skill.name : "合成") + '〕。失敗的話<b>整件裝備消失</b>；成功會變成目標裝備，但精煉值歸零。' +
-        '成功率最高 ' + FUSION.cap + '%，可以放「輔 G」（' + (FUSION_AUX ? '水晶、鑽石、各色寶石、鎔解石這類指定材料' : '精煉材料') +
-        '，或 +5 以上的非配件裝備）往上加，下面有試算。</div>';
+      if (FUSION_V2) {
+        html += '<div class="empty-note" style="padding:0 0 10px;line-height:1.8;">' +
+          (FUSION_BPET[id] ? '戰寵裝備要<b>穿在出戰中的戰寵身上</b>，在戰寵頁的裝備欄 G 化。' : '') +
+          '兩種做法：①自己（或隊上）的<b>鐵匠</b>做，要學〔' + escapeHtml(skill ? skill.name : "合成") + '〕，有技能成功率加成；' +
+          '②到村莊找「<b>鐵匠組合長施密特</b>」代工，不用是鐵匠、不看技能和力量，但<b>費用 ×' + FUSION.npcFeeMult + '</b>、沒有技能加成。' +
+          '失敗的話<b>整件裝備消失</b>；成功會變成目標裝備，但精煉值歸零。' +
+          '可以放「輔 G」（指定的寶石材料，或 +5 以上的非配件裝備' + (FUSION.bpetGear ? '、戰寵的頭／身體／武器裝備' : '') + '）提高成功率，' +
+          '這件精煉越高、輔 G 越有效；成功率最高 ' + FUSION.cap + '%，下面有試算。</div>';
+      } else {
+        html += '<div class="empty-note" style="padding:0 0 10px;line-height:1.8;">在村莊鐵匠組合長的「G 化」分頁製作，<b>只有鐵匠職業</b>做得了，' +
+          '要先學〔' + escapeHtml(skill ? skill.name : "合成") + '〕。失敗的話<b>整件裝備消失</b>；成功會變成目標裝備，但精煉值歸零。' +
+          '成功率最高 ' + FUSION.cap + '%，可以放「輔 G」（' + (FUSION_AUX ? '水晶、鑽石、各色寶石、鎔解石這類指定材料' : '精煉材料') +
+          '，或 +5 以上的非配件裝備）往上加，下面有試算。</div>';
+      }
       // 類型分頁（G 化／命中型／必殺型／攻速型）：一次只顯示一種的書單，下面試算的「種類」也會跟著切
       if (kinds.length > 1) {
         html += '<div class="fusion-kind-tabs" data-fusion-tabs="' + id + '">' + kinds.map(function (k, i) {
@@ -3224,7 +3268,7 @@
         }).join('') + '</div>';
       }
       kinds.forEach(function (k, idx) {
-        var books = fusionBooksFor(k, eq.minLv);
+        var books = fusionBooksFor(k, eq.minLv, id);
         html += '<div class="equip-box" data-fusion-kind="' + k + '"' + (idx === 0 ? '' : ' style="display:none;"') + '>' +
           '<div class="row1"><span><span class="slot">' + FUSION_KIND_LABEL[k] + '</span>　成品：' + itemChip(t[k]) + '</span>' +
           '<span class="badge">' + books.length + ' 本書可用</span></div>';
@@ -3243,7 +3287,7 @@
             '<td><span class="rate">' + b.rate + '%</span></td>' +
             '<td>+' + b.refine + '</td>' +
             '<td>' + b.auxSlots + '</td>' +
-            '<td>' + (b.gold ? bigNumHtml(b.gold) : '免費') + '</td>' +
+            '<td>' + (b.gold ? bigNumHtml(b.gold) + (FUSION_V2 ? '<br><span class="fusion-req" title="找鐵匠組合長施密特代工">施密特 ' + bigNumHtml(Math.ceil(b.gold * FUSION.npcFeeMult)) + '</span>' : '') : '免費') + '</td>' +
             '</tr>' +
             '<tr class="fusion-mats-row"><td colspan="5">' +
             '<span class="fusion-req">需求：' + escapeHtml(req.join('・')) + '</span>' +
@@ -3264,10 +3308,13 @@
   function fusionSimHtml(id, eq, kinds) {
     var html = '<div class="equip-box fusion-sim" data-fusion-sim="' + id + '" data-lv="' + eq.minLv + '">' +
       '<div class="row1"><span class="slot">🧮 成功率試算</span>' +
-      '<span class="badge">這件 Lv' + eq.minLv + '：每 1 PT ≈ +' + fusionPtFactor(eq.minLv).toFixed(2) + '%</span></div>' +
+      (FUSION_V2 ? '<span class="badge" data-f="need-badge"></span></div>'
+        : '<span class="badge">這件 Lv' + eq.minLv + '：每 1 PT ≈ +' + fusionPtFactor(eq.minLv).toFixed(2) + '%</span></div>') +
       '<div class="fusion-sim-grid">' +
       '<label>種類<select data-f="kind">' + kinds.map(function (k) { return '<option value="' + k + '">' + FUSION_KIND_LABEL[k] + '</option>'; }).join('') + '</select></label>' +
       '<label>融合書<select data-f="book"></select></label>' +
+      (FUSION_V2 ? '<label>這件目前精煉<select data-f="refine"></select></label>' +
+        '<label>誰來做<select data-f="via"><option value="smith">鐵匠（有技能加成）</option><option value="npc">施密特代工（費用 ×' + FUSION.npcFeeMult + '）</option></select></label>' : '') +
       '<label><span data-f="skill-name"></span><select data-f="skill"></select></label>' +
       '</div>' +
       '<div data-f="aux" style="margin-top:10px;"></div>' +
@@ -3280,8 +3327,12 @@
     if (!FUSION || !root) return;
     root.querySelectorAll("[data-fusion-sim]").forEach(function (box) {
       var lv = Number(box.getAttribute("data-lv")) || 0;
+      var selfId = box.getAttribute("data-fusion-sim");
       var $kind = box.querySelector('[data-f="kind"]');
       var $book = box.querySelector('[data-f="book"]');
+      var $refine = box.querySelector('[data-f="refine"]');
+      var $via = box.querySelector('[data-f="via"]');
+      var $needBadge = box.querySelector('[data-f="need-badge"]');
       var $skill = box.querySelector('[data-f="skill"]');
       var $skillName = box.querySelector('[data-f="skill-name"]');
       var $aux = box.querySelector('[data-f="aux"]');
@@ -3293,11 +3344,23 @@
       var auxState = []; // 每一格：{type:"", "gem", "gear", gemId, tier, lv, refine}
 
       function currentBook() {
-        var books = fusionBooksFor($kind.value, lv);
+        var books = fusionBooksFor($kind.value, lv, selfId);
         return books.find(function (b) { return String(b.item) === $book.value; }) || books[0];
       }
+      // 精煉選單：書要求的精煉 ～ +12（精煉越高，同樣的輔G加越多）
+      function fillRefine() {
+        if (!$refine) return;
+        var book = currentBook();
+        var min = book ? book.refine : 0;
+        var prev = Number($refine.value) || min;
+        var html = '';
+        for (var r = min; r <= 12; r++) html += '<option value="' + r + '">+' + r + '</option>';
+        $refine.innerHTML = html;
+        $refine.value = String(Math.max(min, Math.min(12, prev)));
+      }
+      function curNeedPt() { return $refine ? fusionNeedPt(selfId, Number($refine.value) || 0) : Infinity; }
       function fillBooks() {
-        var books = fusionBooksFor($kind.value, lv);
+        var books = fusionBooksFor($kind.value, lv, selfId);
         $book.innerHTML = books.map(function (b) {
           var it = ITEMS[b.item];
           return '<option value="' + b.item + '">' + escapeHtml(it ? it.name : ('#' + b.item)) + '（基礎 ' + b.rate + '%・' + b.auxSlots + ' 格）</option>';
@@ -3312,15 +3375,22 @@
       }
       function renderAux() {
         var book = currentBook();
-        var slots = book ? book.auxSlots : 0;
+        fillRefine();
+        var noAux = FUSION_V2 && !isFinite(curNeedPt());
+        var slots = book && !noAux ? book.auxSlots : 0;
         auxState.length = Math.min(auxState.length, slots);
         while (auxState.length < slots) auxState.push({ type: "" });
-        $aux.innerHTML = '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:6px;">輔 G（這本書有 ' + slots + ' 格；配件不能當輔 G，裝備要 +5 以上）</div>' +
+        $aux.innerHTML = '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:6px;">' +
+          (noAux ? '這件在這個精煉值不能放輔 G（遊戲資料裡它的輔G門檻是 0），精煉到 +8 以上才能放。'
+            : '輔 G（這本書有 ' + slots + ' 格；配件不能當輔 G，裝備要 +5 以上' + (FUSION_V2 ? '；裝備的輔G值看它物品頁「當輔 G」那一行，等級類別也寫在那' : '') + '）') + '</div>' +
           auxState.map(function (a, i) {
             var html = '<div class="fusion-aux-row" data-slot="' + i + '"><span class="fusion-aux-no">' + (i + 1) + '</span>' +
               '<select data-a="pick"><option value="">（空）</option>' + gemOptions + '<option value="gear">裝備（自己填）</option></select>';
             if (a.type === "gear" && FUSION_AUX) {
               html += '<label class="fusion-aux-lv" title="每件裝備的物品頁都有寫它當輔G的基礎值">輔G值<input type="number" data-a="base" min="0" step="0.5" value="' + (a.base || 0) + '"></label>' +
+                (FUSION_V2 ? '<select data-a="gClass" title="裝備的等級類別（物品頁有寫），輔G值 ×1／×2／×4">' + [0, 1, 2].map(function (g) {
+                  return '<option value="' + g + '"' + ((a.gClass == null ? 1 : a.gClass) === g ? ' selected' : '') + '>類別 ' + g + '（×' + FUSION_GCLASS_MULT[g] + '）</option>';
+                }).join('') + '</select>' : '') +
                 '<select data-a="refine">' + [5, 6, 7, 8, 9, 10, 11, 12].map(function (r) {
                   return '<option value="' + r + '"' + ((a.refine || 5) === r ? ' selected' : '') + '>+' + r + '</option>';
                 }).join('') + '</select>';
@@ -3343,13 +3413,16 @@
           pick.addEventListener("change", function () {
             if (pick.value === "gear") {
               a.type = "gear"; a.tier = a.tier || "n"; a.lv = a.lv || lv || 1; a.refine = a.refine || 7;
-              if (a.base == null) a.base = (FUSION_AUX && FUSION_AUX[box.getAttribute("data-fusion-sim")]) || 10; // 預設拿這件自己的值
+              if (a.base == null) {
+                a.base = (FUSION_AUX && FUSION_AUX[selfId]) || 10; // 預設拿這件自己的值
+                a.gClass = fusionGClass(selfId);
+              }
             }
             else if (pick.value) { a.type = "gem"; a.gemId = Number(pick.value.slice(4)); }
             else a.type = "";
             renderAux();
           });
-          ["tier", "lv", "base", "refine"].forEach(function (f) {
+          ["tier", "lv", "base", "refine", "gClass"].forEach(function (f) {
             var el = row.querySelector('[data-a="' + f + '"]');
             if (!el) return;
             el.addEventListener(f === "lv" || f === "base" ? "input" : "change", function () {
@@ -3365,7 +3438,7 @@
           var g = FUSION.gems.find(function (x) { return x.id === a.gemId; });
           return g ? g.pt : 0;
         }
-        if (a.type === "gear") return FUSION_AUX ? fusionAuxPt(a.base, a.refine) : fusionGearPt(a.tier, a.lv, a.refine);
+        if (a.type === "gear") return FUSION_AUX ? fusionAuxPt(a.base, a.refine, a.gClass) : fusionGearPt(a.tier, a.lv, a.refine);
         return 0;
       }
       function compute() {
@@ -3374,6 +3447,7 @@
         var sk = fusionBonusSkill($kind.value);
         var skLv = Number($skill.value) || 0;
         var bonus = skLv > 0 ? (sk.levels[skLv - 1] || 0) : 0;
+        if (FUSION_V2) return computeV2(book, $via && $via.value === "npc" ? 0 : bonus);
         var pt = 0;
         auxState.forEach(function (a, i) {
           var p = auxPt(a);
@@ -3391,6 +3465,32 @@
           (bonus ? ' × (1 ＋ ' + bonus + '%)' : '') + (capped ? '，超過上限以 ' + FUSION.cap + '% 計' : '') + '</span>' +
           (!capped && needPt > 0 ? '<span class="fusion-formula">要到 ' + FUSION.cap + '% 還差約 ' + (Math.ceil(needPt * 10) / 10) + ' PT</span>' : '');
       }
+      // 新版（遊戲 Ah()）：min(90, (基礎% ＋ PT × 100 ÷ 需求PT) × (1 ＋ 技能%) × 0.9)
+      function computeV2(book, bonus) {
+        var needPt = curNeedPt();
+        var pt = 0;
+        auxState.forEach(function (a, i) {
+          var p = auxPt(a);
+          pt += p;
+          var el = $aux.querySelector('[data-slot="' + i + '"] [data-a="pt"]');
+          if (el) el.textContent = a.type ? (Math.round(p * 100) / 100) + ' PT' : '';
+        });
+        if ($needBadge) $needBadge.textContent = isFinite(needPt) ? '這個精煉：每 ' + (Math.round(needPt * 100) / 100) + ' PT ＝ 基礎 +100%' : '這個精煉不能放輔 G';
+        if ($skill) $skill.disabled = !!($via && $via.value === "npc");
+        var mult = FUSION.rateMult, cap = FUSION.cap;
+        var perPt = isFinite(needPt) ? 100 / needPt : 0;
+        var raw = (book.rate + pt * perPt) * (1 + bonus / 100) * mult;
+        var rate = Math.min(cap, raw);
+        var morePt = perPt > 0 ? Math.max(0, (cap / mult / (1 + bonus / 100) - book.rate) / perPt - pt) : 0;
+        var fee = $via && $via.value === "npc" ? Math.ceil(book.gold * FUSION.npcFeeMult) : book.gold;
+        $result.innerHTML = '成功率 <b class="fusion-rate">' + (Math.round(rate * 10) / 10) + '%</b>' +
+          '<span class="fusion-formula">＝（基礎 ' + book.rate + '%' + (perPt ? ' ＋ 輔G ' + (Math.round(pt * 100) / 100) + ' PT × ' + perPt.toFixed(3) + '%' : '') + '）' +
+          (bonus ? ' × (1 ＋ ' + bonus + '%)' : '') + ' × ' + mult + (raw > cap ? '，超過上限以 ' + cap + '% 計' : '') + '</span>' +
+          (raw <= cap && morePt > 0 ? '<span class="fusion-formula">要到 ' + cap + '% 還差約 ' + (Math.ceil(morePt * 10) / 10) + ' PT</span>' : '') +
+          '<span class="fusion-formula">費用 ' + fmtNum(fee) + '</span>';
+      }
+      if ($refine) $refine.addEventListener("change", renderAux);
+      if ($via) $via.addEventListener("change", compute);
       // 上面的類型分頁跟試算的「種類」互相同步
       var section = box.closest("details") || root;
       function showKind(k) {
@@ -3547,6 +3647,18 @@
       html += refineTableHtml(eq);
       html += apprSectionHtml(eq);
       html += fusionSectionHtml(id, eq);
+    } else if (FUSION_BPET[id]) {
+      // 2026-11 改版：戰寵裝備可以 G 化（戰寵專用的融合書），頭／身體／武器也能拿去當輔 G
+      var bg = (BATTLE_PET_INFO.gear || []).find(function (g) { return String(g.id) === id; });
+      if (bg) {
+        html += '<div class="equip-box"><div class="row1"><span class="slot">戰寵裝備・' +
+          escapeHtml((BATTLE_PET_INFO.gearSlots || [])[bg.slot] || ('部位 ' + bg.slot)) + '</span>' +
+          '<span class="badge">需求等級 ' + bg.lv + (bg.loyalty ? '・忠誠 ' + bg.loyalty : '') + '</span></div>' +
+          '<div class="equip-stat-grid">' + eqStat("攻擊", bg.atk) + eqStat("防禦", bg.def) + eqStat("HP", bg.hp) + eqStat("AP", bg.ap) +
+          eqStatPct("增加傷害", bg.dmgDealtPct) + eqStatPct("減少傷害", bg.dmgTakenPct) + '</div></div>';
+        html += fusionAuxRowHtml(id);
+        html += fusionSectionHtml(id, { minLv: bg.lv, slot: "body" }); // 戰寵裝備 G 化用防具合成技能（遊戲 Mh("body")）
+      }
     }
 
     var shopEntries = (SHOP_INDEX[id] || []).slice().sort(function (a, b) { return a.price - b.price; });
