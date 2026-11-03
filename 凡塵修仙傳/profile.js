@@ -49,11 +49,14 @@
       st.textContent = "#pfFlagX{position:absolute;top:4px;right:6px;width:32px;height:32px;border:1px solid rgba(255,255,255,.6);border-radius:6px;background:transparent;color:#fff;font-size:18px;line-height:1;cursor:pointer}#pfFlagX:hover{background:rgba(255,255,255,.18)}"
         + "#pfFlag{position:sticky;top:0;z-index:50;background:#b91c1c;color:#fff;padding:8px 46px 8px 14px;font-size:14px;line-height:1.7;text-align:center}"
         + "#pfFlag b{font-size:15px;animation:pfBlink 1s steps(1) infinite}#pfFlag a{color:#fff;text-decoration:underline}#pfFlag small{font-size:13px;opacity:.95}"
+        + "#pfFlag a.pfSig{display:inline-block;margin:2px 0 0 6px;padding:1px 10px;border:1px solid #fff;border-radius:6px;text-decoration:none;font-weight:bold;white-space:nowrap}#pfFlag a.pfSig:hover{background:rgba(255,255,255,.18)}"
         + "@keyframes pfBlink{50%{color:#fde047}}@media (prefers-reduced-motion:reduce){#pfFlag b{animation:none}}";
       document.head.appendChild(st);
     }
     if (!bar) { bar = document.createElement("div"); bar.id = "pfFlag"; bar.setAttribute("role", "alert"); bar.setAttribute("data-noitm", ""); document.body.insertAdjacentElement("afterbegin", bar); }
     const k = flagKind(ig.reason);
+    // 和簽章（驗證碼）有關的標記：旁邊放教學按鈕，教玩家回遊戲重新匯出帶驗證碼的代碼
+    const sigBtn = /簽章/.test(ig.reason || "") && !/%E5%AD%98%E6%AA%94%E9%A9%97%E8%AD%89|存檔驗證碼教學/.test(location.pathname) ?` <a class="pfSig" href="存檔驗證碼教學.html">📖 如何取得驗證碼</a>` : "";
     // 遊戲已放寬：2026/10/5 17:00（台灣時間）前的標記、以及舊門檻（低於 60 倍）下判的「修煉進度過快」，更新遊戲後會自動解除
     const lifted = ig.at < Date.UTC(2026, 9, 5, 9) || (/^修煉進度過快/.test(ig.reason || "") && ((ig.speedMax || 10) < 60 || ig.at < Date.UTC(2026, 9, 14, 16)));
     bar.style.background = lifted ? "#166534" : "";
@@ -64,7 +67,7 @@
         + `<button id="pfFlagX" type="button" aria-label="關閉提醒" title="關閉提醒">✕</button>`
       : `<b>⚠️ 這份存檔已被判定「存檔驗證異常」：${esc(k[0])}</b><br>`
       + `<small>${esc(k[1])}${ig.reason ? `遊戲記錄的原因：「${esc(ig.reason)}」。` : ""}<br>`
-      + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a></small>`
+      + `此存檔<u>無法進排行榜、無法使用寄售（拍賣）上架與出價</u>，也不能參加世界 Boss；單機遊玩不受影響。 <a href="常見問題.html#flagged">詳細說明</a>${sigBtn}</small>`
       + `<button id="pfFlagX" type="button" aria-label="關閉提醒" title="關閉提醒">✕</button>`;
     document.getElementById("pfFlagX").onclick = () => {
       try { sessionStorage.setItem(KEY + "_flagHide", String(window.PROFILE_AT)); } catch (e) {}

@@ -27,7 +27,9 @@
             </ul></div>
         <div class="box"><h3 style="margin-top:0">取得</h3>
             <ul>
-                <li>T4 以上全部娃娃（尚未開放）。</li>
+                <li><b>T4 娃娃</b>：登入帳號後向<b>娃娃商人露米</b>購買，每隻 <b>500 <a href="online.html#dia">鑽石</a></b>，一次買一隻。買到的娃娃放進<a href="online.html#vault">帳號共用倉庫</a>，要自己去倉庫取出（照收取出手續費）；倉庫滿了不會扣鑽石。</li>
+                <li>第一次買娃娃還會得到帳號稱號<a href="online.html#title">「伺服器育養員」</a>。</li>
+                <li>T0～T3 娃娃（尚未開放）。</li>
                 <li>品質顏色：<span class="doll-T0">T0 七彩</span>、<span class="doll-T1">T1 紅</span>、<span class="doll-T2">T2 黃</span>、<span class="doll-T3">T3 紫</span>、<span class="doll-T4">T4 藍</span>。</li>
             </ul></div>
     </div>
@@ -56,7 +58,7 @@ function draw() {
     $('#list').innerHTML = list.map(([id, d]) => {
         const a = W.dollAbilities[id] || {};
         return `<div class="card doll"><img src="${esc(img(d.art))}" alt="" loading="lazy"><div>
-            <h3><a class="doll-${d.quality}" data-item="doll_${id}">${esc(d.name)}</a> <span class="tag">${d.quality}</span><small class="dim">（尚未開放）</small></h3>
+            <h3><a class="doll-${d.quality}" data-item="doll_${id}">${esc(d.name)}</a> <span class="tag">${d.quality}</span><small class="dim">${d.quality === 'T4' ? '（露米商店 500 鑽）' : '（尚未開放）'}</small></h3>
             <div class="stats">${fxList(a.fx).map(x => `<span>${esc(x)}</span>`).join('')}</div>
             <p style="margin:6px 0 0"><b>${esc(a.name || '')}</b>：${esc(a.desc || '')}</p></div></div>`;
     }).join('');

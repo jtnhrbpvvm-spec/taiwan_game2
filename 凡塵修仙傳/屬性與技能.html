@@ -39,6 +39,9 @@ td.nw{white-space:nowrap}
 .btn.ghost{border-color:var(--line);font-weight:normal}
 #saveMsg{font-size:13px;color:var(--mute);align-self:center}
 #saveMsg.err{color:var(--warn)}
+#saveSig{margin-top:8px;padding:8px 12px;border:1px solid var(--warn);border-radius:8px;font-size:13px;line-height:1.7}
+#saveSig b{color:var(--warn)}
+#saveSig a{display:inline-block;margin-left:6px;padding:1px 10px;border:1px solid var(--link);border-radius:6px;text-decoration:none;font-weight:bold;white-space:nowrap}
 #saveOut h3{font-size:15px;margin:16px 0 6px}
 #saveOut .tw{margin-bottom:6px}
 #saveOut td,#saveOut th{font-size:13.5px;padding:6px 10px}
@@ -139,6 +142,7 @@ a:hover{text-decoration-thickness:2px}
 <div class="sub">代碼只在你自己的瀏覽器裡計算，不會上傳到任何地方，也不會改動你的存檔。讀取後，攻略站的其他頁面也會標出你的進度（已結識的夥伴、已達成的稱號、鎮魔塔層數等）；資料只暫存在這個分頁，關掉分頁或按「清除」就會消失。</div>
 <textarea id="saveCode" placeholder="把存檔代碼貼在這裡（FS2: 開頭的一長串）" spellcheck="false"></textarea>
 <div class="ctl" style="margin-bottom:0"><button class="btn" id="saveLoad">讀取存檔</button><button class="btn ghost" id="saveClear">清除</button><button class="btn ghost" id="shareBtn" type="button">🔗 分享配裝</button><span id="saveMsg"></span></div>
+<div id="saveSig" hidden>⚠️ <b>這份存檔代碼沒有驗證碼。</b>試算照常可以用，但<b>不要拿它匯入遊戲</b>，否則存檔會被標記「存檔驗證異常」（不能上排行榜、寄售、打世界 Boss）。<a href="存檔驗證碼教學.html">📖 如何取得驗證碼</a></div>
 <div class="box" id="shareBox" hidden style="margin-bottom:0">
 <b>分享連結</b><div class="sub">別人打開這條連結，就會看到你現在的境界、等級、配裝和「戰鬥中才有的效果」設定（含道號）；不會動到對方自己讀過的存檔。<b>連結裡不含存檔代碼</b>，也不含靈石、背包、倉庫裝備等其他存檔內容，別人沒辦法用它還原或匯入你的存檔。</div>
 <div class="ctl" style="margin:8px 0 0"><input id="shareUrl" readonly style="flex:1;min-width:200px" aria-label="分享連結"><button class="btn" id="shareCopy" type="button">複製</button><button class="btn ghost" id="shareShort" type="button">產生短網址</button><button class="btn ghost" id="shareSys" type="button" hidden>用手機分享</button></div>
@@ -1463,11 +1467,15 @@ function loadPlayer(p){
   $("cRealm").value=p.realmIndex||0;$("cStage").value=p.stage||1;$("cLv").value=p.level||1;
   rebuild();setBase("讀取存檔時的配置");
 }
+// 遊戲「開啟攻略試算」帶過來的代碼本來就不帶驗證碼（只給試算用），不提醒
+let gameCode="";   // 從遊戲網址帶進來的代碼；欄位內容還是它時（重按讀取也一樣）都不提醒
 $("saveLoad").onclick=async()=>{
   const m=$("saveMsg");m.className="";m.textContent="讀取中…";
+  const fromGame=!!gameCode&&$("saveCode").value.trim()===gameCode;$("saveSig").hidden=true;
   try{
     const p=await decodeSave($("saveCode").value);
     if(!p||typeof p!=="object"||typeof p.realmIndex!=="number")throw new Error("這不是遊戲的存檔代碼");
+    $("saveSig").hidden=!!(p._sig||p._cut||fromGame);
     loadPlayer(p);
     if(window.saveProfile){   // 其他頁面沒有裝備名冊，先把裝備名稱、套裝、資質名稱附上再暫存
       Object.values(p.equipment||{}).forEach(eq=>{const d=gdef(eq);if(d){eq._n=d.name;eq._set=d.set}else if(eq&&LB[eq.lingbaoId])eq._n=LB[eq.lingbaoId].n});
@@ -1611,10 +1619,10 @@ function readHash(){
   const m=location.hash.match(/^#save=(.+)$/);if(!m)return;
   try{$("saveCode").value=decodeURIComponent(m[1])}catch(e){return}
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
-  $("saveLoad").click();$("saveBox").scrollIntoView();
+  gameCode=$("saveCode").value.trim();$("saveLoad").click();$("saveBox").scrollIntoView();
 }
 addEventListener("hashchange",readHash);
-$("saveClear").onclick=()=>{$("saveCode").value="";$("saveOut").innerHTML="";$("saveMsg").className="";$("saveMsg").textContent="";
+$("saveClear").onclick=()=>{$("saveCode").value="";$("saveSig").hidden=true;$("saveOut").innerHTML="";$("saveMsg").className="";$("saveMsg").textContent="";
   $("cRealm").value=0;$("cStage").value=1;$("cLv").value=1;build=blankBuild();buildLoaded=false;gearSel="劍";if(window.clearProfile)clearProfile();rebuild();setBase("")};
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));

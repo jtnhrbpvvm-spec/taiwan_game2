@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>存檔驗證碼教學</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1f2328;--mute:#6b7280;--line:#e5e7eb;--head:#f1f2f4;--acc:#a78bfa;--warn:#dc2626;--ok:#15803d;--gate:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111318;--card:#1a1d24;--fg:#e5e7eb;--mute:#9ca3af;--line:#2d323c;--head:#232730;--warn:#f87171;--ok:#4ade80;--gate:#fbbf24}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1050px;margin:0 auto;padding:20px 16px}
+.back{color:var(--mute);font-size:13px;text-decoration:none}
+h1{font-size:22px;margin:4px 0}
+h2{font-size:17px;margin:24px 0 8px}
+.sub{color:var(--mute);font-size:13px;line-height:1.7}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;line-height:1.8}
+.box b{color:var(--acct)}
+.box ul,.box ol{margin:4px 0;padding-left:20px}
+.box.warn{border-color:var(--warn)}
+.box.warn>b:first-child{color:var(--warn)}
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin:12px 0}
+.step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:8px}
+.step h3{margin:0;font-size:15px}
+.step h3 span{display:inline-block;min-width:24px;height:24px;line-height:24px;border-radius:12px;background:var(--acct);color:var(--card);text-align:center;margin-right:6px;font-size:13px}
+.step img{width:100%;height:auto;border-radius:6px;border:1px solid var(--line);background:#000}
+:root{--link:#6d28d9;--acct:#6d28d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#c4b5fd;--acct:#c4b5fd}}
+a{color:var(--link);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+</style><script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head><body><div class="wrap">
+<a class="back" href="index.html">← 回攻略首頁</a>
+<h1>🔏 存檔驗證碼教學</h1>
+<div class="sub">存檔代碼沒有驗證碼時，怎麼回遊戲重新取得一份帶驗證碼的代碼。</div>
+
+<div class="box">
+<b>驗證碼是什麼：</b>
+<ul>
+<li>遊戲用「📤 匯出存檔代碼」產生的代碼，裡面會帶一段<b>驗證碼</b>（簽章），證明這份代碼是遊戲自己產生、沒有被改過。</li>
+<li>把<b>沒有驗證碼</b>的代碼匯入遊戲，存檔會被標記成「存檔驗證異常」（原因「存檔代碼沒有簽章」），之後<b>不能上排行榜、不能寄售與出價、不能打世界 Boss</b>。</li>
+<li>驗證碼只有遊戲本身能產生，攻略站沒辦法替你加上。要拿到帶驗證碼的代碼，請照下面的步驟回遊戲重新匯出。</li>
+</ul>
+</div>
+
+<div class="box">
+<b>哪些代碼沒有驗證碼：</b>
+<ul>
+<li>遊戲裡按「📊 開啟攻略試算」直接帶過來的代碼：只給試算用，<b>不帶驗證碼，不要拿去匯入遊戲</b>。</li>
+<li>2026/10/6 以前匯出的舊代碼。</li>
+<li>被手動修改過、或複製時少了一段的代碼。</li>
+</ul>
+</div>
+
+<h2>重新取得帶驗證碼的存檔代碼</h2>
+<div class="steps">
+<div class="step"><h3><span>1</span>打開「系統」</h3>
+<div>在遊戲的洞府畫面，按右下角的「⚙️ <b>系統</b>」（丹藥堂上方的齒輪）。</div>
+<img src="img/save-sig-1.jpg" width="563" height="1218" loading="lazy" alt="洞府畫面右下角的系統齒輪按鈕">
+</div>
+<div class="step"><h3><span>2</span>展開「存檔管理」</h3>
+<div>在「命運與系統」視窗裡按「💾 <b>存檔管理</b>」，下面會展開存檔相關的按鈕。</div>
+<img src="img/save-sig-2.png" width="563" height="480" loading="lazy" alt="命運與系統視窗的存檔管理按鈕">
+</div>
+<div class="step"><h3><span>3</span>按「匯出存檔代碼」</h3>
+<div>按「📤 <b>匯出存檔代碼</b>」。注意<b>不是</b>「📊 開啟攻略試算」：那個帶出去的代碼沒有驗證碼。</div>
+<img src="img/save-sig-3.png" width="563" height="910" loading="lazy" alt="存檔管理展開後的匯出存檔代碼按鈕">
+</div>
+<div class="step"><h3><span>4</span>複製代碼</h3>
+<div>按「📋 <b>複製代碼</b>」，把整段代碼貼到安全的地方保存（例如傳給自己的 LINE），或按「💾 下載存檔檔案」。這份代碼就帶有驗證碼。</div>
+<img src="img/save-sig-4.png" width="563" height="640" loading="lazy" alt="匯出存檔代碼視窗的複製代碼按鈕">
+</div>
+</div>
+
+<div class="box">
+<b>之後：</b>
+<ul>
+<li>換裝置、重灌時，用這份代碼在新的地方「📥 匯入存檔代碼」，就不會被標記。</li>
+<li>想在攻略試算，把這份代碼貼到 <a href="屬性與技能.html">屬性與技能</a> 的讀取存檔欄即可，攻略頁不會再顯示「沒有驗證碼」的提醒。</li>
+<li>以前存的舊代碼請不要再拿來匯入，一律用最新匯出的代碼。</li>
+</ul>
+</div>
+
+<div class="box warn">
+<b>已經被標記「存檔驗證異常」的存檔：</b>
+<ul>
+<li>標記記錄在存檔裡，<b>重新匯出也不會消失</b>，照上面的步驟只能避免之後再被標記。</li>
+<li>各種標記的原因與已經自動解除的情況，請看 <a href="常見問題.html#flagged">常見問題：存檔驗證異常</a>；其他情況只能向遊戲作者反映。</li>
+<li>不要用來路不明的「補驗證碼」工具：只有遊戲自己匯出的代碼才可靠。</li>
+</ul>
+</div>
+</div>
+<script src="profile.js"></script>
+<script src="site.js"></script>
+</body></html>
