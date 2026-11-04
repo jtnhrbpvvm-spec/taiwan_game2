@@ -14,7 +14,7 @@
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; min-height: 100vh; color: var(--text);
+    margin: 0; min-height: 100vh; color: #e8e2d0; background: #0d0a08; color: var(--text);
     font: 15px/1.7 "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
     background:
       radial-gradient(700px 360px at 50% -120px, rgba(220,90,20,.22), transparent 70%),
@@ -209,11 +209,27 @@
     padding: 10px 20px; border-radius: 999px; font-weight: bold; font-size: 14px; pointer-events: none;
     color: #1b1406; background: var(--gold2); box-shadow: 0 6px 20px #000a; opacity: 0; transition: all .25s; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ── IE 提示：IE 不認得 @supports，所以只有 IE 會顯示這個框 ── */
+  .ie-warn { margin: 20px 0 0; padding: 16px 18px; border: 2px solid #ff6b5b; border-radius: 8px;
+    background: #2a1410; color: #f3e3b0; font-size: 16px; line-height: 1.8; }
+  .ie-warn b { color: #ff8a66; }
+  .ie-warn a { color: #f0c94a; font-weight: bold; }
+  @supports (display: grid) { .ie-warn { display: none; } }
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </head>
 <body>
 <div class="wrap">
+
+  <div class="ie-warn">
+    <b>⚠ 你正在用 Internet Explorer（IE）開這一頁。</b><br>
+    IE 已經停止支援，<b>遊戲和中文化書籤都無法在 IE 執行</b>，這一頁在 IE 也會顯示不正常。<br>
+    請改用 <b>Microsoft Edge</b> 或 <b>Google Chrome</b> 開啟本頁：<br>
+    ・<a href="microsoft-edge:https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2%E4%BF%AE%E6%94%B9%E7%89%88/">點這裡用 Edge 開啟本頁</a>（Windows 10／11 內建）<br>
+    ・或複製網址到 Edge／Chrome：https://jtnhrbpvvm-spec.github.io/taiwan_game2/D2修改版/<br>
+    ・沒有 Chrome：<a href="https://www.google.com/chrome/" target="_blank" rel="noopener">下載 Google Chrome</a>
+  </div>
 
   <header class="hero">
     <div class="emblem">中</div>
