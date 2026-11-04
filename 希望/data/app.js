@@ -3847,11 +3847,131 @@
 
   // ---------- 鑲嵌石（2026-10-08 改版新增）----------
   // 存檔 stones：四顆石頭各一筆 { attrs:[{kind,value}], changes }，changes 是「還剩幾次變更」。
-  // 這個面板只顯示目前的能力，唯一會動到存檔的是把變更次數補回上限。
+  // 平常只顯示目前的能力、把變更次數補回上限；按「完全修改」並確認後，才能在遊戲規則內改階數和每一階的能力：
+  //   第 i 階的能力只能從 stepGroups[石頭][i-1] 那一組選（種類對不到遊戲 Fd() 會直接丟錯），數值在 kinds[種類].range 內，
+  //   最多 stepGroups[石頭].length 階。超出規則的一律壓回去（種類不合法 → 該組第一種、數值拉到最大）。
   var STONES = window.STONES || null;
+  var stoneFullEdit = false;
   function stoneAttrText(a) {
     var k = (STONES.kinds || {})[String(a.kind)];
     return (k ? k.name : "能力 #" + a.kind) + " " + (a.value > 0 ? "+" : "") + a.value + (k && k.pct ? "%" : "");
+  }
+  function stoneRulesReady() {
+    return !!(STONES && Array.isArray(STONES.stepGroups) && STONES.groups && STONES.kinds);
+  }
+  function stoneStepKinds(stoneIdx, step) { // step 從 1 開始
+    var g = ((STONES.stepGroups || [])[stoneIdx] || [])[step - 1];
+    return g === undefined ? [] : ((STONES.groups || {})[String(g)] || []);
+  }
+  function stoneKindRange(kind) {
+    var k = (STONES.kinds || {})[String(kind)];
+    return k && k.range ? k.range : [1, 1];
+  }
+  // 把一顆石頭壓回規則內，回傳修正了幾處
+  function clampStone(s, stoneIdx) {
+    var fixes = 0;
+    var maxStep = ((STONES.stepGroups || [])[stoneIdx] || []).length;
+    if (!Array.isArray(s.attrs)) { s.attrs = []; fixes++; }
+    if (s.attrs.length > maxStep) { s.attrs = s.attrs.slice(0, maxStep); fixes++; }
+    s.attrs = s.attrs.map(function (a, i) {
+      var allowed = stoneStepKinds(stoneIdx, i + 1);
+      var kind = a && Number(a.kind), value = a && Number(a.value);
+      if (allowed.indexOf(kind) < 0) { fixes++; kind = allowed[0]; value = stoneKindRange(kind)[1]; }
+      var r = stoneKindRange(kind);
+      if (!isFinite(value)) { fixes++; value = r[1]; }
+      var v = Math.floor(value);
+      if (v > r[1]) v = r[1];
+      if (v < r[0]) v = r[0];
+      if (v !== value) fixes++;
+      return { kind: kind, value: v };
+    });
+    var cap = STONES.changeCap || 300;
+    var ch = Math.floor(Number(s.changes));
+    if (!isFinite(ch) || ch < 0) { s.changes = 0; fixes++; } else if (ch > cap) { s.changes = cap; fixes++; } else if (ch !== s.changes) { s.changes = ch; fixes++; }
+    return fixes;
+  }
+  function renderStoneFullEdit(c, wrap) {
+    var maxAll = el("button", { class: "btn", text: "⬆️ 四顆全部 +12、數值拉滿（稀有階放稀有能力）" });
+    maxAll.addEventListener("click", function () {
+      c.stones.forEach(function (s, idx) {
+        var groups = (STONES.stepGroups || [])[idx] || [];
+        s.attrs = groups.map(function (_g, i) {
+          var kinds = stoneStepKinds(idx, i + 1);
+          var base = stoneStepKinds(idx, 1);
+          // 稀有階（這階的能力組比第 1 階多出來的種類）放稀有能力，其他階保留原本的種類
+          var rare = kinds.filter(function (k) { return base.indexOf(k) < 0; })[0];
+          var cur = s.attrs[i] && kinds.indexOf(Number(s.attrs[i].kind)) >= 0 ? Number(s.attrs[i].kind) : kinds[0];
+          var kind = rare !== undefined ? rare : cur;
+          return { kind: kind, value: stoneKindRange(kind)[1] };
+        });
+      });
+      renderStones(c);
+      toast("四顆石頭都做到 +12、數值拉到最大", "ok");
+    });
+    wrap.appendChild(maxAll);
+
+    c.stones.forEach(function (s, idx) {
+      var name = (STONES.names || [])[idx] || ("第 " + (idx + 1) + " 顆");
+      var maxStep = ((STONES.stepGroups || [])[idx] || []).length;
+      wrap.appendChild(el("div", { class: "section-title", text: name + " +" + s.attrs.length }));
+      var lvOpts = [];
+      for (var n = 0; n <= maxStep; n++) lvOpts.push({ value: String(n), label: "+" + n });
+      wrap.appendChild(fieldSelect("階數（0～" + maxStep + "）", lvOpts, function () { return String(s.attrs.length); }, function (v) {
+        var want = Math.max(0, Math.min(maxStep, parseInt(v, 10) || 0));
+        if (want < s.attrs.length) s.attrs = s.attrs.slice(0, want);
+        while (s.attrs.length < want) {
+          var k0 = stoneStepKinds(idx, s.attrs.length + 1)[0];
+          s.attrs.push({ kind: k0, value: stoneKindRange(k0)[1] });
+        }
+        renderStones(c);
+      }));
+      if (!s.attrs.length) return;
+      var table = el("table", { class: "etable" });
+      table.innerHTML = "<thead><tr><th style=\"width:60px;\">階</th><th>能力</th><th style=\"width:150px;\">數值</th></tr></thead>";
+      var tb = el("tbody");
+      s.attrs.forEach(function (a, i) {
+        var kinds = stoneStepKinds(idx, i + 1);
+        var sel = el("select");
+        kinds.forEach(function (k) {
+          var info = STONES.kinds[String(k)] || {};
+          var r = stoneKindRange(k);
+          var opt = el("option", { value: String(k), text: (info.name || "#" + k) + "（" + r[0] + "～" + r[1] + (info.pct ? "%" : "") + "）" });
+          if (k === Number(a.kind)) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener("change", function () {
+          var k = Number(sel.value);
+          var r = stoneKindRange(k);
+          s.attrs[i] = { kind: k, value: Math.min(r[1], Math.max(r[0], a.value)) };
+          renderStones(c);
+        });
+        var r = stoneKindRange(a.kind);
+        var input = el("input", { type: "number", min: String(r[0]), max: String(r[1]), step: "1", style: "width:70px;" });
+        input.value = a.value;
+        input.addEventListener("change", function () {
+          var v = Math.floor(input.valueAsNumber);
+          if (!isFinite(v) || v > r[1]) v = r[1];
+          if (v < r[0]) v = r[0];
+          if (String(v) !== input.value) toast("超出規則，已壓回 " + v, "warn");
+          s.attrs[i].value = v;
+          input.value = v;
+        });
+        var maxBtn = el("button", { class: "btn btn-sm", text: "最大" });
+        maxBtn.addEventListener("click", function () { s.attrs[i].value = r[1]; input.value = r[1]; });
+        var valCell = el("td", null, [input, maxBtn]);
+        tb.appendChild(el("tr", null, [el("td", { text: "+" + (i + 1) }), el("td", null, [sel]), valCell]));
+      });
+      table.appendChild(tb);
+      wrap.appendChild(table);
+      var row = el("div", { style: "display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13px;" });
+      row.appendChild(el("span", { text: "變更次數　" + (s.changes || 0) + " / " + (STONES.changeCap || 300) }));
+      var btn = el("button", { class: "btn btn-sm", text: "補滿" });
+      btn.disabled = (s.changes || 0) >= (STONES.changeCap || 300);
+      btn.addEventListener("click", function () { s.changes = STONES.changeCap || 300; renderStones(c); });
+      row.appendChild(btn);
+      wrap.appendChild(row);
+    });
+    wrap.appendChild(el("div", { class: "note", style: "margin-top:8px;", text: "只能選遊戲裡那一階本來就抽得到的能力，數值也限制在遊戲的範圍內；輸入超過的會自動壓回最大值。+3／+6／+9／+12 這四階才抽得到稀有能力。" }));
   }
   function renderStones(c) {
     var wrap = document.getElementById("stonePanelBody");
@@ -3861,6 +3981,23 @@
     if (!Array.isArray(c.stones) || !c.stones.length) {
       wrap.appendChild(el("div", { class: "panel-desc", text: "這個存檔還沒有鑲嵌石（舊版格式）。先用新版遊戲開過一次再匯出。" }));
       return;
+    }
+    if (stoneFullEdit && stoneRulesReady()) {
+      var fixed = 0;
+      c.stones.forEach(function (s, idx) { fixed += clampStone(s, idx); });
+      if (fixed) toast("有 " + fixed + " 處超出遊戲規則，已壓回規則內", "warn");
+      wrap.appendChild(el("div", { class: "panel-desc", style: "color:var(--danger, #c0392b);", text: "⚠️ 完全修改已開啟（重新整理頁面就會關閉）。" }));
+      renderStoneFullEdit(c, wrap);
+      return;
+    }
+    var fullBtn = null;
+    if (stoneRulesReady()) {
+      fullBtn = el("button", { class: "btn", style: "margin-left:8px;", text: "⚠️ 完全修改" });
+      fullBtn.addEventListener("click", function () {
+        if (!confirm("⚠️ 完全修改\n\n這會極度減少遊戲樂趣，請謹慎使用。\n\n按「確定」後可以在遊戲規則內自行編輯四顆石頭的階數和能力，超出規則的設定會直接壓回最大值。")) return;
+        stoneFullEdit = true;
+        renderStones(c);
+      });
     }
     var cap = STONES.changeCap || 300;
     var isFull = function (s) { return (s.changes || 0) >= cap; };
@@ -3874,6 +4011,7 @@
       toast("四顆石頭的變更次數都補回 " + cap + " 次", "ok");
     });
     wrap.appendChild(allBtn);
+    if (fullBtn) wrap.appendChild(fullBtn);
 
     c.stones.forEach(function (s, idx) {
       var attrs = Array.isArray(s.attrs) ? s.attrs : [];

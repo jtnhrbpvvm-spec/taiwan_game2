@@ -850,18 +850,34 @@
     // taken 跟裝備的「減少傷害」同一個欄位：負的代表受到的傷害變多
     if (p.taken) parts.push("受到的傷害 " + (p.taken < 0 ? "+" + (-p.taken) : "-" + p.taken) + "%");
     if (p.dealt) parts.push("造成的傷害 " + (p.dealt > 0 ? "+" : "") + p.dealt + "%");
+    if (p.dropPct) parts.push("掉落率 " + (p.dropPct > 0 ? "+" : "") + p.dropPct + "%");
     return parts.join("；");
   }
+  // 地圖固定減益（maps.json debuff，遊戲 fieldDebuff，11-04 新增）：待在這張圖就一直有，跟名聲無關
+  var MAP_DEBUFF = window.MAP_DEBUFF || {};
   function ruinPenaltyWarningHtml(mapIds) {
-    var hits = (mapIds || []).filter(function (mid) { return MAP_PENALTY[String(mid)]; });
+    var hits = (mapIds || []).filter(function (mid) { return MAP_PENALTY[String(mid)] || MAP_DEBUFF[String(mid)]; });
     if (!hits.length) return "";
     var p = MAP_PENALTY[String(hits[0])];
-    return '<div class="ruin-warn">' +
-      '<div class="ruin-warn-title">⚠️ 廢墟地圖：累計名聲不到 ' + fmtNum(p.fame) + '，能力值會被扣 90%！</div>' +
-      '<div class="ruin-warn-body">這隻怪物出現在〔' + escapeHtml(hits.map(mapName).join("、")) + '〕。' +
-      '角色的<b>累計名聲</b>低於 ' + fmtNum(p.fame) + ' 時，待在這' + (hits.length > 1 ? '些' : '張') + '地圖會：' +
-      escapeHtml(penaltyEffectText(p)) + '。名聲夠了就不會被扣。</div>' +
-      '</div>';
+    var d = MAP_DEBUFF[String(hits[0])];
+    var where = '〔' + escapeHtml(hits.map(mapName).join("、")) + '〕';
+    var these = hits.length > 1 ? '些' : '張';
+    var statPct = p && p.stats ? (p.stats.atk || 0) : 0;
+    var html = '<div class="ruin-warn">';
+    if (p) {
+      html += '<div class="ruin-warn-title">⚠️ 廢墟地圖：累計名聲不到 ' + fmtNum(p.fame) + '，能力值' + (statPct ? '會被扣 ' + (-statPct) + '%' : '會下降') +
+        (p.dropPct ? '、掉落率 ' + p.dropPct + '%' : '') + '！</div>' +
+        '<div class="ruin-warn-body">這隻怪物出現在' + where + '。' +
+        '角色的<b>累計名聲</b>低於 ' + fmtNum(p.fame) + ' 時，待在這' + these + '地圖會：' +
+        escapeHtml(penaltyEffectText(p)) + '。名聲夠了就不會被扣。';
+    } else {
+      html += '<div class="ruin-warn-title">⚠️ 這' + these + '地圖有固定減益</div><div class="ruin-warn-body">這隻怪物出現在' + where + '。';
+    }
+    if (d && (d.taken || d.dealt)) {
+      html += (p ? '<br>' : '') + '另外，不管名聲夠不夠，待在這' + these + '地圖一定會有固定減益：' +
+        escapeHtml(penaltyEffectText({ taken: d.taken, dealt: d.dealt })) + '。';
+    }
+    return html + '</div></div>';
   }
   function townName(id) {
     var t = TOWNS[String(id)];
@@ -1083,7 +1099,8 @@
 
   // 光環／時裝強化／哈比兔大富翁（2026-10-10 新增的系統）：沒有對應的資料檔就不顯示
   [["gems", "💎 技能寶石", window.GEMS], ["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE],
-    ["events", "🎉 節慶活動・特賣", window.EVENTS], ["couple", "💞 情侶", window.EVENTS && window.EVENTS.couple]].forEach(function (def) {
+    ["events", "🎉 節慶活動・特賣", window.EVENTS], ["couple", "💞 情侶", window.EVENTS && window.EVENTS.couple],
+    ["lotto", "🎱 大樂透", window.EVENTS && window.EVENTS.lotto], ["cp", "⚔️ 戰力", window.COMBAT_POWER]].forEach(function (def) {
     if (!def[2]) return;
     var chip = document.createElement("span");
     chip.className = "hint-chip";
@@ -1199,6 +1216,8 @@
     else if (kind === "marble") showMarbleGuide();
     else if (kind === "events") showEventGuide();
     else if (kind === "couple") showCoupleGuide();
+    else if (kind === "lotto") showLottoGuide();
+    else if (kind === "cp") showCombatPowerGuide();
   }
   // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
   // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
@@ -1386,6 +1405,8 @@
     if (window.MARBLE) add("🎲", "哈比兔大富翁", "棋盤、每格獎勵、寶箱開大獎的機率", ["大富翁", "氣球", "骰子", "哈比兔"], "marble", "", F);
     if (window.EVENTS) add("🎉", "節慶活動・特賣", "每年的節慶活動、釣魚活動、特賣會商人限時特賣", ["活動", "節慶", "代幣", "特賣", "特賣會商人", "旅行商人", "釣魚活動", "萬聖節", "聖誕"], "events", "", F);
     if (window.EVENTS && window.EVENTS.couple) add("💞", "情侶", "情侶點數、玫瑰花商店、情人節／七夕", ["情侶", "玫瑰", "結婚", "情人節", "七夕"], "couple", "", F);
+    if (window.EVENTS && window.EVENTS.lotto) add("🎱", "大樂透", "下注規則、開獎時間、獎金表", ["樂透", "彩券", "大樂透", "開獎"], "lotto", "", F);
+    if (window.COMBAT_POWER) add("⚔️", "戰力", "戰力怎麼算、職業權重、戰力增益門檻", ["戰力", "戰鬥力", "戰力增益"], "cp", "", F);
 
     dungeonIds.forEach(function (did) {
       var dg = DUNGEON_BY_ID[did];
@@ -4978,6 +4999,76 @@
     var c = EVENTS.couple.coefficient, r = c[Math.min(lv, c.length - 1)] || 0;
     return Math.floor((points * Math.round(r * 100) + 50) / 100);
   }
+  // 大樂透（11-04 新增，eventIndex.js EVENTS.lotto）：只寫玩家看得到的規則和獎金表
+  function showLottoGuide() {
+    currentDetail = null;
+    var lt = EVENTS && EVENTS.lotto;
+    if (!lt) { $detail.innerHTML = sysOldDataHtml("🎱 大樂透"); return; }
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">🎱 ' + escapeHtml(lt.name) + '</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・<b>二轉之後</b>開放，在「日誌 → 活動」分頁打開。<br>' +
+      '・從 1～' + lt.max + ' 選 ' + lt.pick + ' 個號碼（可以按「電腦選號」）下注，<b>不用錢</b>；每個角色每期只能下一注。<br>' +
+      '・每天一期（台灣時間）：<b>' + lt.closeAt + ' 截止</b>、<b>' + lt.drawAt + ' 開獎</b>。' + lt.closeAt + ' 以後下注算隔天那一期。<br>' +
+      '・開獎會開出 ' + lt.pick + ' 個號碼＋1 個特別號。開獎後要回大樂透畫面看開獎、按確認才會領到獎金；<b>沒對獎之前不能下下一期</b>。<br>' +
+      '・下注和開獎都要連得上網路。' +
+      '</div>';
+    html += '<div class="section-title">獎金</div><table class="dtable"><thead><tr><th>獎項</th><th>中幾個號碼</th><th>獎金（金幣）</th></tr></thead><tbody>';
+    lt.prizes.slice().sort(function (a, b) { return b.gold - a.gold; }).forEach(function (p) {
+      html += '<tr><td>' + escapeHtml(p.name) + '</td><td>' + p.hits + ' 個' + (p.special ? '＋特別號' : '') + '</td><td>' + fmtNum(p.gold) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div style="font-size:11.5px;color:var(--text-faint);margin-top:6px;">只看最好的那一個獎，不會重複領。特別號只用在有寫「＋特別號」的獎項。</div>';
+    $detail.innerHTML = html;
+  }
+
+  // 戰力（11-04 新增，jobs.js COMBAT_POWER）：戰力 = Σ 能力 × 職業權重；基本戰力到門檻有增益
+  var CP_STAT_LABEL = { atk: "攻擊", mag: "魔法", def: "防禦", hit: "命中", eva: "迴避", crit: "必殺", atkSpeed: "攻速", moveSpeed: "移速",
+    maxHp: "HP 上限", maxAp: "AP 上限", dmgDealtPct: "增加傷害%", dmgTakenPct: "減少傷害%", dungeonDmgPct: "[副本]增加傷害%" };
+  function showCombatPowerGuide() {
+    currentDetail = null;
+    var cp = window.COMBAT_POWER;
+    if (!cp) { $detail.innerHTML = sysOldDataHtml("⚔️ 戰力"); return; }
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">⚔️ 戰力</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・戰力＝每項能力 × 職業權重，全部加起來（四捨五入）。角色畫面看得到。<br>' +
+      '・<b>基本戰力</b>只算屬性點、裝備、時裝、套裝、精煉、發條、鑑定、靈魂結晶、瑪可、個性、鑲嵌石、圖鑑、寵物、戰寵；' +
+      '<b>不算</b>輔助技能、料理、藥水，也不算戰力增益本身。<br>' +
+      '・基本戰力到達門檻就有「戰力增益」，只套用達到的最高一檔。' +
+      '</div>';
+    if ((cp.buffs || []).length) {
+      html += '<div class="section-title">戰力增益</div><table class="dtable"><thead><tr><th>基本戰力</th><th>攻擊力・魔法力</th><th>命中・迴避</th><th>移動速度</th><th>掉落率</th></tr></thead><tbody>';
+      cp.buffs.slice().sort(function (a, b) { return a.minCp - b.minCp; }).forEach(function (b) {
+        var f = function (v, pct) { return v ? '+' + fmtNum(v) + (pct ? '%' : '') : '—'; };
+        html += '<tr><td>' + fmtNum(b.minCp) + ' 以上</td><td>' + (b.atk === b.mag ? f(b.atk) : f(b.atk) + '／' + f(b.mag)) + '</td><td>' +
+          (b.hit === b.eva ? f(b.hit) : f(b.hit) + '／' + f(b.eva)) + '</td><td>' + f(b.moveSpeed) + '</td><td>' + f(b.dropPct, true) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    // 權重：大部分欄位每個職業都一樣，只把有差的欄位列成表
+    var w = cp.weights || {};
+    var ids = Object.keys(w);
+    var keys = Object.keys(CP_STAT_LABEL).filter(function (k) { return ids.some(function (id) { return w[id][k] !== undefined; }); });
+    var diffKeys = keys.filter(function (k) { return ids.some(function (id) { return w[id][k] !== w[ids[0]][k]; }); });
+    var sameKeys = keys.filter(function (k) { return diffKeys.indexOf(k) < 0; });
+    if (ids.length) {
+      html += '<div class="section-title">職業權重 <span class="count">(' + ids.length + ')</span></div>';
+      if (sameKeys.length) {
+        html += '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:6px;">每個職業都一樣：' +
+          sameKeys.map(function (k) { return CP_STAT_LABEL[k] + ' ×' + w[ids[0]][k]; }).join('、') + '</div>';
+      }
+      var jobName = {}, jobOrder = {};
+      (window.JOBS || []).forEach(function (j, i) { jobName[j.id] = j.name; jobOrder[j.id] = i; });
+      ids.sort(function (a, b) { return (jobOrder[a] === undefined ? 999 : jobOrder[a]) - (jobOrder[b] === undefined ? 999 : jobOrder[b]); });
+      html += '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>職業</th>' +
+        diffKeys.map(function (k) { return '<th>' + CP_STAT_LABEL[k] + '</th>'; }).join('') + '</tr></thead><tbody>';
+      ids.forEach(function (id) {
+        html += '<tr><td>' + escapeHtml(jobName[id] || id) + '</td>' + diffKeys.map(function (k) { return '<td>×' + w[id][k] + '</td>'; }).join('') + '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    $detail.innerHTML = html;
+  }
+
   function showCoupleGuide() {
     currentDetail = null;
     var cp = EVENTS && EVENTS.couple;
