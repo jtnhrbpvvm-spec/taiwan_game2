@@ -92,7 +92,7 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 2, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 3, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 書籤修改面板用到遊戲的物品函式。網頁版它們分在不同檔案、有匯出；電腦版全打包在 moved-*.js，只有內部用的就不匯出，頁面拿不到。
@@ -100,7 +100,7 @@ function info() {
 const EXPORT_PATTERNS = [
   /function ([\w$]+)\(\)\{return ([\w$]+)&&\{uniques:\2\.uniques,bases:\2\.bases/g,
   /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{let [\w$]+=[\w$]+\?\.runewords\?\.\[[\w$]+\];if\(![^;]{0,60}\)return null;let [\w$]+=[\w$]+\.flatMap/g,
-  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+\)\{if\(![\w$]+\(\)\)return [\w$]+\([\w$]+,[\w$]+,[\w$]+\);let [^}]{0,80}\.roll=\[1,/g,
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+\)\{if\(![\w$]+\(\)\)return [\w$]+\([\w$]+,[\w$]+,[\w$]+\);let [^}]{0,80}\.roll=\[\d,/g,   // 20261103 起 roll 版本從 1 變 2
   /[,;\s]([\w$]+)=\[[\w$]+\(`Ancients' Pledge`,/g,
   // 20261102.2 起電腦版把物品程式併進 saveTransfer-*.js，下面這些也不再匯出
   /function ([\w$]+)\([\w$]+\)\{(?:(?!function ).){0,120}?\.size\?\?\[1,1\]/g,

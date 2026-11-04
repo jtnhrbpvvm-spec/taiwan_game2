@@ -80,7 +80,9 @@ function loadTranslator() {
   };
   win.CanvasRenderingContext2D.prototype = { putImageData() {}, drawImage() {}, fillText() {} };
   win.window = win; win.self = win; win.globalThis = win;
-  const source = fs.readFileSync(path.join(ROOT, 'd2_zh.js'), 'utf8');
+  // d2/d2_zh.js 現在只是轉接檔，翻譯本體在 D2修改版/d2_zh.js
+  const main = path.join(ROOT, '..', 'D2修改版', 'd2_zh.js');
+  const source = fs.readFileSync(fs.existsSync(main) ? main : path.join(ROOT, 'd2_zh.js'), 'utf8');
   try { vm.runInContext(source, vm.createContext(win), { filename: 'd2_zh.js' }); }
   catch (e) { if (!win.D2I18N) throw e; }
   return { translate: win.D2I18N.translate, source };

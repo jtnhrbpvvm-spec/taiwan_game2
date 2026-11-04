@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V50';
+const D2ZH_VERSION = 'V51';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -297,6 +297,47 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261103.2
+"The wiki's Items page lists every jewel affix, with what each can roll and the item level it starts from": "百科的物品頁列出所有珠寶詞綴，以及每個詞綴的數值範圍和最低出現的物品等級",
+"Put a jewel down on a filled socket to replace the jewel there, which comes back to your hand": "把珠寶放到已鑲嵌的凹槽上，就會換掉原本的珠寶，換下來的會回到你手上",
+"Power Strike, Charged Strike and Lightning Strike now hurt lightning immunes, their thrust adding your weapon's damage as in Diablo II": "威力一擊、衝能一擊和閃電攻擊現在能傷害閃電免疫的怪物，刺擊會加上武器傷害，和暗黑破壞神 II 一樣",
+"The desktop app's setup asks you to update or repair Diablo II when its monster tables are broken, rather than draw monsters as circles": "暗黑破壞神 II 的怪物資料損壞時，電腦版設定會請你更新或修復遊戲，不再把怪物畫成圓圈",
+"The desktop app's setup no longer stops at Sounds and music when one of the files it just wrote has gone missing": "剛寫入的檔案不見時，電腦版設定不會再停在「音效和音樂」步驟",
+"A controller no longer drives the game while another window has the focus, so it can be used in another game with the desktop app open": "其他視窗在前景時，手把不會再操作這個遊戲，所以開著電腦版也能用手把玩別的遊戲",
+"Charged Strike's skill box says 8 hits a cast, its thrust and all 7 bolts, where it said 2": "衝能一擊的技能說明改成每次施放打 8 下（刺擊加 7 道電光），以前寫 2 下",
+"Two items with the same aura, such as two Phoenixes, now add their levels past 20 as in Diablo II": "兩件有相同光環的物品（例如兩把鳳凰）等級會相加並超過 20 級，和暗黑破壞神 II 一樣",
+"Right-clicking a jewel no longer wears it in a hidden slot, and a jewel lost that way comes back in your personal stash tab": "右鍵點珠寶不會再把它裝進看不見的欄位，這樣不見的珠寶會回到你的個人儲物箱分頁",
+// 20261103.1
+"The loot filter has a HORADRIC CODEX line, to hide or sell the books once your heroes have read all ten": "物品過濾新增「赫拉迪克法典」項目，英雄都讀完十本後可以隱藏或出售",
+"Jewels drop a little more often than charms, with Diablo II's jewel affixes and new caster rows for skill damage and enemy resistance": "珠寶的掉落率比護符稍高，有暗黑破壞神 II 的珠寶詞綴，另外新增施法者用的技能傷害和降低敵人抗性詞綴",
+"A Terror tier's boss can drop Larzuk's Essence, likelier with Magic Find, which stacks to 20 and gives an item sockets": "恐懼層的首領會掉落拉蘇克的精華（尋獲魔法物品越高越容易掉），最多疊 20 個，可以幫物品打凹槽",
+"Uniques and set items with sockets of their own in Diablo II, such as Rune Master and Crown of Ages, have them, the ones you already own too": "暗黑破壞神 II 中本身有凹槽的獨特和套裝物品（例如符文大師、年紀之冠）現在也有凹槽，已經擁有的也一樣",
+"Class items roll Diablo II's random +skills, like a Barbarian helm's +3 to Battle Orders, and runewords made in them keep them": "職業專屬物品會照暗黑破壞神 II 隨機出現 +技能（例如野蠻人頭盔的戰鬥體制 +3），做成符文之語也會保留",
+"In Terror, Damage Reduced goes up to 75% and resistances up to 87.5%, or 97.5% with +% to Maximum Resist, at every tier": "恐懼層每一層的傷害減少上限都是 75%，抗性上限 87.5%，有最大抗性加成時可達 97.5%",
+"In Terror, each point of Vitality gives twice its life": "恐懼層裡每點體力給的生命加倍",
+"In Terror, Dodge, Avoid and Evade reach 82.5% and 87.5%, and Energy Shield takes up to 97.5% of a hit": "恐懼層裡閃避、躲避和迴避可達 82.5% 和 87.5%，能量護盾最多吸收每次攻擊的 97.5%",
+"The Ladder now ranks the Terror tiers alone, and the Normal, Nightmare and Hell boards are gone": "天梯現在只排名恐懼層，普通、惡夢、地獄的排行榜取消了",
+"High-level item spells hit harder, Death's Chain Lightning 2.3 times as hard, and low-level ones match D2": "物品施放的高等級法術傷害提高（死亡的連鎖閃電變成 2.3 倍），低等級的和 D2 一致",
+"An item in hand that can't go back to its place when you close a window or press Esc says which bag or stash tab it went to": "關閉視窗或按 Esc 時，手上的物品放不回原位，會告訴你放到哪個背包或儲物箱分頁",
+"Call to Arms' Battle Orders, Oak Sage, the Druid's forms and Increase Maximum Life now count your gear's +Life, often 3-4 times the life": "戰爭召喚的戰鬥體制、橡木智者、德魯伊的變身和增加生命上限現在會計入裝備的 +生命，通常是 3～4 倍的生命",
+"Items' +skills raise the Druid's Lycanthropy and Oak Sage life one level each past their maximum, as in D2": "物品的 +技能會讓德魯伊的變形術和橡木智者生命超過上限繼續提高，每級一級，和 D2 一樣",
+"Call to Arms' Battle Orders now lasts 30 seconds and 10 more a level, so it stays up after you swap back, as in D2": "戰爭召喚的戰鬥體制現在持續 30 秒，每級再加 10 秒，切換回武器後仍然有效，和 D2 一樣",
+"Call to Arms' Battle Command and Battle Cry also last as long as in D2, and Battle Command's +1 to all skills now runs out": "戰爭召喚的戰鬥指揮和戰嗥持續時間也和 D2 一樣，戰鬥指揮的所有技能 +1 現在會到期",
+"Weapon swap (W, or a click on the other set's tab) works with the stash or a vendor's window open, as in Diablo II": "開著儲物箱或商人視窗時也能切換武器（W，或點另一組的分頁），和暗黑破壞神 II 一樣",
+"A runeword you already own in a class item gains the +skills its base rolled as your save loads": "已經擁有、做在職業專屬物品上的符文之語，讀檔時會加上底材骰出的 +技能",
+"Curses, chills and freezes from items last as long as D2's, and Static Field from items takes 25% at every level": "物品造成的詛咒、冰冷和冰凍持續時間和 D2 一樣，物品施放的靜態立場每一級都削減 25%",
+"Feral Rage from an item works only as a werewolf, as in D2, and Myth's Howl casts whenever it fires": "物品給的野性狂暴只有變成狼人時有效，和 D2 一樣；神話的嚎叫每次觸發都會施放",
+"Six Evolutions also counts the skill an evolved skill came from, so a Barbarian's Berserk counts its Concentrate too": "六次進化也會計算進化前的技能，所以野蠻人的狂戰士也會算到專心",
+"Your hero's life no longer gets stuck reading NaN, which also kept your hero from dying": "英雄的生命不會再卡在顯示 NaN（這也會讓英雄死不了）",
+"Fires Explosive Arrows and Fires Magic Arrows change only your plain attack's arrow, as in Diablo II, not every arrow of every bow skill": "射出爆炸箭和射出魔法箭只改變普通攻擊的箭，和暗黑破壞神 II 一樣，不會改變每個弓技能的每支箭",
+"Improved security for leaderboard runs": "加強排行榜紀錄的安全性",
+"Leaderboard runs are no longer lost after a long server outage or a reload in Hardcore": "伺服器長時間中斷或在專家模式重新整理後，排行榜紀錄不會再遺失",
+"PREVIOUS MENU stays on screen on Options' KEYBOARD page, so a phone held upright can leave it without scrolling to the bottom": "選項的「鍵盤」頁面裡，「返回上一個選單」會固定在畫面上，直拿手機時不用捲到最下面才能離開",
+"Terror clears no longer go unverified after your device's clock corrects itself": "裝置時鐘自動校正後，恐懼層通關紀錄不會再變成未驗證",
+"W no longer swaps to an empty weapon set in a run, the camp or by the stash, which left your hero empty-handed as if the weapon were lost": "在遊戲中、營地或儲物箱旁，W 不會再切換到空的武器組，以前會讓英雄空手，好像武器不見了",
+"After Hell's Baal the camp's waypoint opens on the act with a Terror tier, and its notice points to the waypoint instead of the old campfire": "打倒地獄的巴爾後，營地的傳送點會開在有恐懼層的那一幕，提示也改成指向傳送點，不再是以前的營火",
+"START OVER also clears your runs waiting for the leaderboard, so the new save starts with none waiting or refused": "「重新開始」也會清除等待上傳排行榜的紀錄，新存檔不會有等待或被拒收的紀錄",
+// 20261102.2
 "Runs the leaderboard refused no longer hold up your new runs, which are now sent first": "被排行榜拒收的紀錄不會再卡住新紀錄，新紀錄會優先傳送",
 "Runs from before a Terror reset are dropped at once instead of waiting for days": "恐懼層重置之前的紀錄會立刻丟棄，不再等上好幾天",
 "The leaderboard's You tab counts the runs it refused apart from those waiting to be sent": "排行榜的「你」分頁會把被拒收的紀錄和等待傳送的紀錄分開計算",
@@ -1589,9 +1630,10 @@ if (D2EC.api && D2EC.api.ready) return D2EC.api;
 // 電腦版（app://）的 performance 可能沒有資源紀錄，所以也看頁面上的 script 和 modulepreload
 const urls = [...new Set([...performance.getEntriesByType('resource').map(e => e.name), ...[...document.querySelectorAll('script[src]')].map(e => e.src), ...[...document.querySelectorAll('link[rel=modulepreload]')].map(e => e.href)])].filter(n => /\/assets\/[^/]+\.js(\?|$)/.test(n) && !/\/ko-/.test(n));
 const exportsAll = [];
-for (const url of urls) {
-try { exportsAll.push(...Object.values(await import(url))); } catch (_) { /* 這個檔案不能載入就跳過 */ }
-}
+// 遊戲入口檔（20261103 起）有頂層 await，遊戲開著時 import 永遠不會完成：每個檔最多等 3 秒，同時載入
+const mods = await Promise.all(urls.map(url => Promise.race([import(url), new Promise((_, no) => setTimeout(no, 3000))])
+.catch(() => null)));   // 這個檔案不能載入就跳過
+for (const m of mods) if (m) exportsAll.push(...Object.values(m));
 const fns = exportsAll.filter(v => typeof v === 'function').map(f => [f, Function.prototype.toString.call(f)]);
 const find = test => (fns.find(([f, src]) => test(src, f)) || [])[0];
 const api = D2EC.api = {
@@ -1602,7 +1644,7 @@ runewordStats: find((s, f) => f.length === 4 && /\.runewords\?\.\[/.test(s) && /
 size: find(s => /\.size\?\?\[1,1\]/.test(s)),
 baseInfo: find(s => /itype:\w+\.itype/.test(s) && s.includes('bothHands')),
 isType: find((s, f) => f.length === 2 && s.includes('.equiv')),
-makers: fns.filter(([f, s]) => f.length === 3 && /\.roll=\[1,/.test(s)).map(([f]) => f),
+makers: fns.filter(([f, s]) => f.length === 3 && /\.roll=\[\d,/.test(s)).map(([f]) => f),   // 20261103 起 roll 版本從 1 變 2
 cats: exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].uniques) && v[0].label),
 make: {},
 };
@@ -1871,7 +1913,7 @@ show();
 // 電腦版的裝備函式要靠新版主程序（d2zh-inject.cjs）補匯出，主程序更新後要重開遊戲才生效
 function d2ecFailText() {
 const desk = window.__D2ZH_DESKTOP;
-return desk && (desk.ecExports || 0) < 2 ? '電腦版剛更新，請完全關閉遊戲再重開一次，就能使用裝備創造。' : '讀不到遊戲的裝備資料，可能是資料還沒載入，或遊戲更新了。';
+return desk && (desk.ecExports || 0) < 3 ? '電腦版剛更新，請完全關閉遊戲再重開一次，就能使用裝備創造。' : '讀不到遊戲的裝備資料，可能是資料還沒載入，或遊戲更新了。';
 }
 function d2ecClose() {
 if (!D2EC.overlay) return;
@@ -1963,6 +2005,10 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V51', date: '2026-11-04', game: '遊戲 20261103.2', items: [
+'功能優化（電腦版更新後要完全關閉遊戲再重開一次才會生效）',
+'配合遊戲更新翻譯新增的文字：珠寶與珠寶詞綴、拉蘇克的精華與打凹槽、物品過濾的赫拉迪克法典與珠寶項目、恐懼層的抗性／傷害減少／體力說明、裝備施放的技能說明、物品放不回原位時的提示、新版本提示',
+'翻譯遊戲主選單「最新消息」裡這次改版的更新公告'] },
 { ver: 'V50', date: '2026-11-04', game: '遊戲 20261103.2', items: [
 '碎片感應新增倒數：進入地圖 5 秒後，藍色魔力球裡會顯示「距離碎片出現 1:01」倒數（照遊戲時間，選技能時也會暫停），碎片出現後改成「碎片已出現!」；這一幕沒有碎片、已經撿到或十塊都找到就不顯示',
 '碎片感應修正：在營地裡不再被當成第一幕而誤判',
@@ -2374,7 +2420,12 @@ words: {
 'of Grace and Power': '優雅與力量之', 'of Icebolt': '冰彈之', 'of Joyfulness': '喜悅之', 'of Power': '力量之', 'of Stability': '穩定之',
 'of the Cobra': '眼鏡蛇之', 'of the Efreeti': '火精之', 'of the Elements': '元素之', 'of the Phoenix': '鳳凰之', 'of the Yeti': '雪人之',
 'creeper': '爬行者', 'kick': '踢擊', 'skeletal mage': '骷髏法師', 'spark': '電花', 'swift blow': '迅捷一擊', 'wearwolf': '狼人',
-'dire wolves': '恐狼', 'spirit wolves': '靈狼', 'ravens': '烏鴉', 'tier': '層'
+'dire wolves': '恐狼', 'spirit wolves': '靈狼', 'ravens': '烏鴉', 'tier': '層',
+// 20261103.1 珠寶與 D2 珠寶詞綴
+'Jewel': '珠寶', 'Brown': '棕色之', 'Chestnut': '栗色之', 'Maroon': '褐紅之', 'Nickel': '鎳之', 'Tin': '錫之', 'Argent': '銀白之', 'Bright': '明亮之',
+'Rimed': '霜覆之', 'Thundering': '雷鳴之', 'Corroding': '腐蝕之',
+'of Malice': '惡意之', 'of Fervor': '熱忱之', 'of Ire': '怒氣之', 'of Wrath': '憤怒之', 'of Daring': '大膽之', 'of Truth': '真理之', 'of Honor': '榮譽之',
+'of Avarice': '貪財之', 'of Prosperity': '繁榮之', 'of Knowledge': '知識之', 'of Hope': '希望之', 'of Virility': '雄健之', 'of Vigor': '精力之', 'of Spirit': '靈魂之'
 },
 // 稀有物品名稱（20261024.1 起照 D2 的兩組字表組成「前字 後字」）：譯名取自易牙居，明顯錯的改掉
 rare: {
@@ -2382,6 +2433,56 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 2026-11 遊戲 20261103.1／.2：珠寶、拉蘇克的精華、恐懼層上限、物品施放的技能說明
+"The camp's waypoint now lists Terror tier 1 for your level-* *, under the act it starts in: one act of Hell at monster level *. Clear it to open the next.": "營地的傳送點現在會為你的 {0} 級{1}列出恐懼層 1，放在它開始的那一幕底下：一幕怪物等級 {2} 的地獄。通關後開啟下一層。",
+"a blow or a burst of fire, cold or lightning": "每次攻擊或火焰、冰寒、閃電爆發",
+"A new build is ready: click to reload, or your Terror runs won't rank": "新版本已就緒：點擊重新載入，否則你的恐懼層紀錄不會列入排名",
+"A new build is ready: tap to reload, or your Terror runs won't rank": "新版本已就緒：點一下重新載入，否則你的恐懼層紀錄不會列入排名",
+"Update ready: click to restart, or your Terror runs won't rank": "更新已就緒：點擊重新啟動，否則你的恐懼層紀錄不會列入排名",
+"Gives +# to all your skills for # seconds.": "{1} 秒內所有技能 +{0}。",
+"Not seen as it was played": "遊玩過程未經確認",
+"Restores all Life and Mana": "完全回復生命和法力",
+"Dummies: *": "木樁：{0}",
+"Next: *": "下一個：{0}",
+"Immune to *": "{0}免疫",
+"You have #% more life for # seconds.": "{1} 秒內生命增加 {0}%。",
+"At most 75% in Terror, 50% elsewhere as in D2; fire, cold, lightning, magic and poison go by resistances": "恐懼層最多 75%，其他地方和 D2 一樣最多 50%；火焰、冰寒、閃電、魔法和毒素傷害看抗性",
+"At most 50%, as in D2, and 75% in Terror; fire, cold, lightning, magic and poison go by resistances": "和 D2 一樣最多 50%，恐懼層最多 75%；火焰、冰寒、閃電、魔法和毒素傷害看抗性",
+"Each point past the class's: +# maximum life in Terror, +# elsewhere": "超過職業初始值的每一點：恐懼層生命上限 +{0}，其他地方 +{1}",
+"In Terror, twice as much": "恐懼層加倍",
+"At most #% in Terror, more with +% to Maximum Resist": "恐懼層最多 {0}%，有最大抗性加成時更高",
+"For #s, a monster that shoots you takes a # ice bolt, and #% of blows and missiles miss you.": "{0} 秒內，射擊你的怪物會受到 {1} 傷害的冰彈反擊，近戰和遠程攻擊有 {2}% 會落空。",
+"For #s, a monster that shoots you takes a # ice bolt that chills it for #s, and #% of blows and missiles miss you.": "{0} 秒內，射擊你的怪物會受到 {1} 傷害的冰彈反擊並被冰冷 {2} 秒，近戰和遠程攻擊有 {3}% 會落空。",
+"Strikes the toughest monster in reach for # magic damage. You take #% more physical damage for # seconds after.": "攻擊範圍內最強的怪物，造成 {0} 魔法傷害。之後 {2} 秒內你受到的物理傷害增加 {1}%。",
+"Leaps where you run, or into a pack when still. The landing knocks back.": "往你奔跑的方向跳躍，站著不動時跳進怪物群中。落地時擊退怪物。",
+"As a werebear you hit for # plus # a charge, up to #. Each charged blow stuns, #s at one charge.": "變成熊人後攻擊造成 {0} 傷害，每層充能再加 {1}，最多 {2} 層。每次充能攻擊都會擊暈，1 層充能時 {3} 秒。",
+"A bone spear pierces every monster in its path for # damage.": "一支骨矛貫穿路徑上所有怪物，造成 {0} 傷害。",
+"A bone spirit tracks down one of the nearest monsters for # damage.": "一個白骨之魂追蹤最近的一隻怪物，造成 {0} 傷害。",
+"Fires a bolt of holy light at the undead for # damage.": "對不死生物射出一道聖光彈，造成 {0} 傷害。",
+"Lightning strikes the toughest monster for #, as holy bolts burst out for # each to the undead.": "閃電打中最強的怪物，造成 {0} 傷害，同時迸出聖光彈，對不死生物各造成 {1} 傷害。",
+"Lightning strikes the toughest monster and one more for #, as holy bolts burst out for # each to the undead.": "閃電打中最強的怪物和另一隻，造成 {0} 傷害，同時迸出聖光彈，對不死生物各造成 {1} 傷害。",
+"Monsters around you lose #% of their life, elites and bosses too.": "你周圍的怪物失去 {0}% 生命，菁英和首領也一樣。",
+"Monsters within # lose #% of their life, elites and bosses too.": "{0} 範圍內的怪物失去 {1}% 生命，菁英和首領也一樣。",
+"Fires a fire ball at the nearest monster that bursts on impact for # damage.": "對最近的怪物射出一顆火球，命中時爆炸，造成 {0} 傷害。",
+"A meteor crashes onto monsters nearby for # damage and leaves the ground burning.": "一顆隕石砸向附近的怪物，造成 {0} 傷害，並讓地面燃燒。",
+"A bolt jumps between up to # monsters for # damage each.": "一道閃電在最多 {0} 隻怪物間跳躍，各造成 {1} 傷害。",
+"Fires an ice spike that bursts for # damage and freezes all in the burst for # seconds.": "射出一根寒冰尖刺，爆炸造成 {0} 傷害，並把爆炸範圍內的怪物冰凍 {1} 秒。",
+"Blinds all but act bosses within # of you for #s, their Defense #% lower.": "讓你周圍 {0} 內除了幕首領以外的怪物目盲 {1} 秒，牠們的防禦降低 {2}%。",
+"Your other weapon set is empty. Fill it from your character screen": "你的另一組武器是空的。請在角色畫面裝上武器",
+"It never hides or sells new uniques, other quest items or what you drop. Charsi's Buy Back keeps what's sold": "不會隱藏或出售新的獨特物品、其他任務物品或你自己丟下的物品。賣掉的東西可以在恰西的回購找回",
+"Set it to SELL once every hero has read all ten": "每位英雄都讀完十本後，可以設成「出售」",
+"Larzuk's Essence": "拉蘇克的精華",
+"Quantity:": "數量：",
+"Choose the item to which you wish to add sockets.": "選擇你要加上凹槽的物品。",
+"That item has sockets already": "這件物品已經有凹槽了",
+"That item can't hold sockets": "這件物品不能打凹槽",
+"JEWELS": "珠寶",
+"Magic and rare jewels. At KEEP no other line hides or sells them": "魔法和稀有珠寶。設成「保留」時，其他項目都不會隱藏或出售它們",
+"Sockets and jewels": "凹槽與珠寶",
+"* went to your inventory": "{0}已放進物品欄",
+"* went to the Charms window": "{0}已放進護符視窗",
+"* went to the stash, tab *": "{0}已放進儲物箱第 {1} 頁",
+"No room anywhere for *: it shows up once there's room": "沒有地方放 {0}：有空位時就會出現",
 // 2026-11 遊戲 20261102.2：排行榜拒收的紀錄
 "1 run refused by the leaderboard": "1 筆紀錄被排行榜拒收",
 "* runs refused by the leaderboard": "{0} 筆紀錄被排行榜拒收",
