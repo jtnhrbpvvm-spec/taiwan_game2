@@ -103,8 +103,10 @@ function untranslated(zh) {
 function checkEvolutions(keepSave, source, allText = keepSave) {
   const names = {};
   // 被動的名稱可能在別的檔（例如共用被動 frw、fcr），所以名稱從所有檔案找
-  for (const m of allText.matchAll(/(\w+):\{name:`([^`]+)`/g)) if (!(m[1] in names)) names[m[1]] = m[2];
-  const heads = [...keepSave.matchAll(/(\w+):\{name:`([^`]+)`/g)].map(m => ({ at: m.index, name: m[2] }));
+  // 20261105.1 起技能寫成 xxx:{growth:…,name:`…`}，name 前面可能有 growth
+  const HEAD = /(\w+):\{(?:growth:[^`]{0,40}(?:`[^`]*`[^`]{0,20})?,)?name:`([^`]+)`/g;
+  for (const m of allText.matchAll(HEAD)) if (!(m[1] in names)) names[m[1]] = m[2];
+  const heads = [...keepSave.matchAll(HEAD)].map(m => ({ at: m.index, name: m[2] }));
   const game = [];
   for (const m of keepSave.matchAll(/evolution:\{passive:`(\w+)`,into:`(\w+)`[^}]*\}/g)) {
     const head = heads.filter(h => h.at < m.index).pop();
