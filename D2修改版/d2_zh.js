@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V52';
+const D2ZH_VERSION = 'V53';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -297,6 +297,44 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261104.2
+"A Hardcore hero who clears many tiers in a row is no longer marked as played from an older copy of the save": "專家模式英雄連續通過很多層時，不會再被誤標成用舊的存檔遊玩",
+"The ubers are fought at your open Terror tier up to Terror 100, so a hero past it fights them at 100": "超級首領照你目前開放的恐懼層出戰，最高到恐懼 100，超過 100 層的英雄一律打 100 層的超級首領",
+// 20261104.1
+"Selling a Stone of Jordan with your Terror tiers open calls the Diablo Clone into your next tier, and he drops Annihilus": "開放恐懼層後把喬丹之石賣給商人，會在你的下一層召來迪亞布羅分身，打倒他會掉落毀滅",
+"The Hellfire Torch and Annihilus, Diablo II's uber charms, join the Uniques tab, and the Torch casts its Firestorm": "暗黑破壞神 II 的超級護符地獄火炬和毀滅加入獨特物品分頁，地獄火炬也會施放火風暴",
+"In Terror tiers the Countess, the Summoner and Nihlathak drop Diablo II's three keys, likelier the deeper the tier": "恐懼層的女伯爵、召喚者和尼拉塞克會掉落暗黑破壞神 II 的三種鑰匙，層數越深越容易掉",
+"Jewels on the floor get a blue asterisk on the automap, as charms get their orange ring": "地上的珠寶在自動地圖上會顯示藍色星號，就像護符有橘色圓圈一樣",
+"With one of each key, a Terror offer opens Matron's Den, the Forgotten Sands or the Furnace of Pain, whose uber drops his organ": "三種鑰匙各有一把時，恐懼層的選項會開放女族長之巢、被遺忘的沙地或痛苦熔爐，打倒裡面的超級首領會掉落器官",
+"Every stash tab is two rows taller, 10 by 12, and the items already stored stay where they lie": "每個儲物箱分頁都多兩排，變成 10×12，已經放著的物品位置不變",
+"With Mephisto's Brain, Diablo's Horn and Baal's Eye, a Terror offer opens Uber Tristram, whose three Prime Evils drop the Hellfire Torch": "集齊墨菲斯托之腦、迪亞布羅之角和巴爾之眼時，恐懼層的選項會開放超級崔斯特姆，打倒裡面的三大魔王會掉落地獄火炬",
+"Crowded fights full of missiles and glowing spells take a fifth of the drawing steps they did, easing the load on the graphics card": "滿是飛行物和發光法術的混戰，繪圖步驟減少到原本的五分之一，減輕顯示卡負擔",
+"On a phone or tablet, a second tap on a skill now always opens its modifiers, as do second taps on the mercenary's choices and other buttons": "在手機或平板上，再點一次技能一定會打開技能改造；傭兵的選項和其他按鈕再點一次也一樣",
+"Magic Absorb on Oath, Spirit and Crescent Moon shows its number, as in Diablo II": "誓約、精神和新月的魔法吸收會顯示數值，和暗黑破壞神 II 一樣",
+"Monsters no longer keep attacking an unseen spot where a monster from Conversion stood after it turned back or fell": "被轉換的怪物恢復原狀或倒下後，其他怪物不會再一直攻擊牠原本站的空位",
+"The stash's search now marks the Uniques tab when a unique it keeps matches, so one search tells you it's there": "儲物箱搜尋時，獨特物品分頁裡有符合的物品就會標示該分頁，搜一次就知道在那裡",
+"The red portal no longer blinks while Blessed Hammers or other glowing missiles fill the screen around it": "周圍滿是祝福之鎚或其他發光飛行物時，紅色傳送門不會再閃爍",
+"W on a Ladder hero's screen no longer swaps your own weapons and opens your own screen over theirs": "看天梯英雄的畫面時按 W，不會再切換你自己的武器並把你的畫面蓋在上面",
+"With the Dark Reader extension on, the control panel, globes and menu backgrounds draw again": "開著 Dark Reader 擴充功能時，控制面板、生命球／法力球和選單背景會正常顯示了",
+"XP gems, gold, potions, barrels and chests that failed to load at start now load once the connection is back": "開局時沒載入成功的經驗寶石、金幣、藥水、木桶和寶箱，網路恢復後會重新載入",
+"Wirt's Leg is used up only when your hero walks into the cow portal, so a portal left unused no longer costs the leg": "只有英雄走進奶牛傳送門時才會用掉維特之腳，開了傳送門沒進去就不會消耗",
+"A flight stick's throttle resting at its end no longer walks the hero once one of its buttons is pressed": "飛行搖桿的油門停在底端時，按下搖桿上的按鈕後英雄不會再自己走動",
+"On a phone held upright, the inventory's I / II weapon tabs no longer show over the stash": "手機直立時，物品欄的 I / II 武器分頁不會再蓋在儲物箱上",
+"Battle Orders, the Barbarian's or Call to Arms', raises maximum mana as well as life, so a Sorceress's Energy Shield holds more": "戰鬥體制（野蠻人的或戰爭召喚的）會同時提高生命和法力上限，所以女巫的能量護盾能吸收更多",
+"On phones, the inventory, character and belt windows no longer stay small after the phone is turned": "手機轉向後，物品欄、角色和腰帶視窗不會再一直維持縮小",
+"An item the Charms window won't take now lights its cells red when held over it, not green": "護符欄放不進去的物品拿到上面時，格子會變紅色而不是綠色",
+"Curses your gear casts when struck, such as Brand's Amplify Damage, land on the monster that hit you, as in Diablo II": "裝備在被擊中時施放的詛咒（例如烙印的傷害加深）會落在打你的怪物身上，和暗黑破壞神 II 一樣",
+"Curses your gear casts on striking land on the monster you hit, not the nearest one": "裝備在攻擊時施放的詛咒會落在你打中的怪物身上，而不是最近的那隻",
+"Moving Larzuk's Essence onto an item swaps the two and no longer spends one, and only right-click or a long press uses it": "把拉蘇克的精華移到物品上只會互換位置，不會再消耗一個；只有右鍵或長按才會使用",
+"A runeword shows its runes in its sockets when you point at it, where its sockets looked empty but took no jewel": "指著符文之語時凹槽會顯示它的符文；以前凹槽看起來是空的，卻放不進珠寶",
+"Fortitude now drops as body armour half the time, and Spirit as a shield half the time": "剛毅現在有一半機率掉成盔甲，精神有一半機率掉成盾牌",
+"A jewel put into gear your hero wears counts at once, where it waited for the next change of gear": "鑲進身上裝備的珠寶會立刻生效，以前要等到下次換裝備",
+"Knockback from arrows and thrown weapons shoves a monster less each time it is hit again quickly, so it stays in reach": "箭和投擲武器的擊退，短時間內連續打中同一隻怪物時會越推越短，讓牠留在攻擊範圍內",
+"Attract's Lure totem is a pillar of bone that rises and crumbles, no longer a flat pale bar": "吸引的引誘圖騰變成會升起又崩解的骨柱，不再是一條扁平的淡色長條",
+"The gamble offers orbs, staves, wands and scepters again, each to the classes that wield them, so a Sorceress is offered weapons": "賭博又會出現法珠、法杖、魔杖和權杖，只給會用的職業，所以女巫也會看到武器",
+"A Barbarian's own Battle Orders cast while he wears Call to Arms lasts as long as the item's, so it stays up after the swap": "野蠻人拿著戰爭召喚時施放自己的戰鬥體制，持續時間和物品的一樣，切換武器後仍然有效",
+"Jewels and charms you keep no longer vanish from the floor when many hidden magic items fall after them": "之後掉了很多被隱藏的魔法物品時，地上會保留的珠寶和護符不會再消失",
+"A Redemption aura from an item such as Phoenix now heals your hero when monsters die nearby, whatever your class": "物品給的救贖光環（例如鳳凰）現在附近怪物死亡時會治療英雄，不分職業",
 // 20261103.2
 "The wiki's Items page lists every jewel affix, with what each can roll and the item level it starts from": "百科的物品頁列出所有珠寶詞綴，以及每個詞綴的數值範圍和最低出現的物品等級",
 "Put a jewel down on a filled socket to replace the jewel there, which comes back to your hand": "把珠寶放到已鑲嵌的凹槽上，就會換掉原本的珠寶，換下來的會回到你手上",
@@ -2048,6 +2086,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V53', date: '2026-11-05', game: '遊戲 20261104.2', items: [
+'配合遊戲更新翻譯新增的文字：三種鑰匙（恐懼之鑰／憎恨之鑰／毀滅之鑰）與三個器官（墨菲斯托之腦／迪亞布羅之角／巴爾之眼）、超級首領的地圖（女族長之巢、被遺忘的沙地、痛苦熔爐、超級崔斯特姆）、地獄火炬、毀滅、迪亞布羅分身與賣出喬丹之石的提示、戰鬥體制的新說明',
+'翻譯遊戲主選單「最新消息」裡這次改版的更新公告',
+'【地獄火炬取得方式】① 鑰匙：在恐懼層打倒女伯爵（掉恐懼之鑰）、召喚者（掉憎恨之鑰）、尼拉塞克（掉毀滅之鑰），基本機率約 10%、13%、11%，層數越深越高：機率乘上（1＋層數×2%），例如恐懼 50 層是兩倍，約 20%、26%、23%。② 器官：三種鑰匙各一把時，營地傳送點的恐懼層選項會出現女族長之巢／被遺忘的沙地／痛苦熔爐其中一個，每次用掉三種鑰匙各一把，打倒裡面的超級首領必掉器官：莉莉絲→迪亞布羅之角、督瑞爾→巴爾之眼、衣卒爾→墨菲斯托之腦（三個都打過之前不會重複，要集齊需要三組鑰匙）。③ 超級崔斯特姆：三個器官集齊後，恐懼層選項會出現「超級崔斯特姆」，打倒裡面同時出現的墨菲斯托、迪亞布羅、巴爾三大魔王，最後一隻倒下時必掉地獄火炬（另附一面英雄旗幟）。超級首領最高只到恐懼 100 層的強度',
+'【毀滅取得方式】開放恐懼層後把喬丹之石賣給商人，畫面會出現「迪亞布羅降臨人世」，下一層會出現迪亞布羅分身，打倒他必掉毀滅'] },
 { ver: 'V52', date: '2026-11-04', game: '遊戲 20261103.2', items: [
 '功能優化（電腦版若還需要重開遊戲，會自動存檔並關閉遊戲，請再從桌面重新打開；重開後還是不行，會改成說明怎麼手動更新）'] },
 { ver: 'V51', date: '2026-11-04', game: '遊戲 20261103.2', items: [
@@ -2478,6 +2521,25 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 遊戲 20261104.1／.2：迪亞布羅分身、三種鑰匙與器官、超級首領、地獄火炬與毀滅
+"* Stones of Jordan Sold to Merchants": "已有 {0} 個喬丹之石賣給商人",
+"Diablo Walks the Earth": "迪亞布羅降臨人世",
+"Keys": "鑰匙", "Organs": "器官",
+"Key of Terror": "恐懼之鑰", "Key of Hate": "憎恨之鑰", "Key of Destruction": "毀滅之鑰",
+"Mephisto's Brain": "墨菲斯托之腦", "Diablo's Horn": "迪亞布羅之角", "Baal's Eye": "巴爾之眼",
+"Key of Terror: #": "恐懼之鑰：{0}", "Key of Hate: #": "憎恨之鑰：{0}", "Key of Destruction: #": "毀滅之鑰：{0}",
+"Mephisto's Brain: #": "墨菲斯托之腦：{0}", "Diablo's Horn: #": "迪亞布羅之角：{0}", "Baal's Eye: #": "巴爾之眼：{0}",
+"Keys # · # · #": "鑰匙 {0} · {1} · {2}", "Organs # · # · #": "器官 {0} · {1} · {2}",
+"Lilith": "莉莉絲", "Uber Tristram": "超級崔斯特姆", "Diablo Clone": "迪亞布羅分身",
+"Takes a Key of Terror, a Key of Hate and a Key of Destruction": "需要恐懼之鑰、憎恨之鑰和毀滅之鑰各一把",
+"Takes Mephisto's Brain, Diablo's Horn and Baal's Eye": "需要墨菲斯托之腦、迪亞布羅之角和巴爾之眼各一個",
+"Terror * stays open.": "恐懼第 {0} 層維持開放。",
+"an evil force": "一股邪惡力量",
+"Hellfire Torch": "地獄火炬", "Annihilus": "毀滅",
+"Standard of Heroes": "英雄旗幟",
+"Wears or used an uber item the leaderboard never saw found": "穿戴或使用過排行榜沒看到掉落過程的超級物品",
+"You have #% more life and mana, renewed every # seconds.": "生命和法力增加 {0}%，每 {1} 秒重新施放。",
+"You have #% more life and mana for # seconds.": "{1} 秒內生命和法力增加 {0}%。",
 // 2026-11 遊戲 20261103.1／.2：珠寶、拉蘇克的精華、恐懼層上限、物品施放的技能說明
 "The camp's waypoint now lists Terror tier 1 for your level-* *, under the act it starts in: one act of Hell at monster level *. Clear it to open the next.": "營地的傳送點現在會為你的 {0} 級{1}列出恐懼層 1，放在它開始的那一幕底下：一幕怪物等級 {2} 的地獄。通關後開啟下一層。",
 "a blow or a burst of fire, cold or lightning": "每次攻擊或火焰、冰寒、閃電爆發",
