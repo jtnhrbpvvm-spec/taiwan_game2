@@ -2567,6 +2567,7 @@ suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter
 },
 text: {
 // 遊戲 20261105.1：恰西的鐵砧（淬鍊／清除／地獄熔爐／升級）、燃燒的恐懼精華、鑰匙說明、武器技能新說明
+"Quantity: #": "數量：{0}",
 "Keep in the Charms Window to Gain Bonus (*)": "放在護符欄（{0}）才有效果",
 "Gives nothing until it lies in the Charms Window": "放進護符欄之前沒有任何效果",
 "Gives nothing until it lies in the Charms Window (*)": "放進護符欄（{0}）之前沒有任何效果",
