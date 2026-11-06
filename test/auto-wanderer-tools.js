@@ -42,7 +42,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V45';
+  const VERSION = 'V46';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -2373,10 +2373,8 @@ javascript:(function awTools() {
    * 所以只要其中一個有開就裝上（之前放在單格模式裡面，關掉單格模式時自動刷神話就擋不到統計）。
    * 遊戲用 stEv() 把事件（打 Boss 花幾秒、無限之塔到幾層、每日擊殺數…）先排進佇列，
    * 佇列放在記憶體的 stQ 和瀏覽器的 autowanderer.stq，之後由 stSend() 一次送出。
-   * 這裡的處理：
-   *   - 開著單格模式（__awOne）或自動刷神話進行中（__awNoStat）時，stEv() 不記錄、stSend() 不送出，並把佇列清空
-   *   - 「每日統計」是隔天才結算前一天的總數，所以開過單格模式的那一天會記下來（awtools.stday），
-   *     那一天的每日統計就算之後關掉開關也不送
+   * 這裡的處理（V46 起一律套用，不管有沒有開單格模式）：stEv() 不記錄、stSend() 不送出，並把佇列清空。
+   * awtools.stday（開過單格模式的日期）還是會記，但現在用不到了
    * 清空佇列只動 autowanderer.stq 這一個項目，不會碰存檔（autowanderer.v1）。
    * 注意：遊戲啟動時用 setInterval(stSend, 60 秒) 拿走的是原本的 stSend，換不掉；
    * 但它只會送佇列裡的東西，佇列在這裡被擋住、清空，所以送不出東西。 */
@@ -2386,18 +2384,13 @@ javascript:(function awTools() {
     try { const q = localStorage.getItem(ST_QUEUE); if (q !== null && q !== '[]') localStorage.setItem(ST_QUEUE, '[]'); } catch (e) {}
   };
   const stMark = () => { try { if (S && S.st && S.st.d) localStorage.setItem(ST_TAINT, S.st.d); } catch (e) {} };
-  if (first && (CFG.oneCell || CFG.monLoop)) {
-    const realStEv = window.stEv, realStSend = window.stSend;
-    if (typeof realStEv === 'function') {
-      window.stEv = (t, a) => {
-        if (window.__awOne || window.__awNoStat) { stMark(); return; }
-        let bad = null;
-        try { bad = localStorage.getItem(ST_TAINT); } catch (e) {}
-        if (t === 'day' && a && bad && a.d === bad) return;
-        return realStEv(t, a);
-      };
-    }
-    if (typeof realStSend === 'function') window.stSend = () => { if (window.__awOne || window.__awNoStat) { stClear(); return; } return realStSend(); };
+  /* V46 起（使用者 2026-11-06 要求）：統計一律不記錄、不送出，不再只看單格模式／自動刷神話。
+   * 遊戲啟動時記下的事件（例如 stEv('on')）在書籤載入前就進了佇列，原本的 stSend 每 60 秒會送，所以裝上時先清空佇列。 */
+  if (first) {
+    if (typeof window.stEv === 'function') window.stEv = () => {};
+    if (typeof window.stSend === 'function') window.stSend = () => { stClear(); };
+    stClear();
+    setInterval(stClear, 20000);
   }
 
   const lbMask = () => {
