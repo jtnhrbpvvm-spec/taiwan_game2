@@ -92,7 +92,7 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 3, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 4, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 書籤修改面板用到遊戲的物品函式。網頁版它們分在不同檔案、有匯出；電腦版全打包在 moved-*.js，只有內部用的就不匯出，頁面拿不到。
@@ -108,6 +108,9 @@ const EXPORT_PATTERNS = [
   /function ([\w$]+)\([\w$]+\)\{(?:(?!function ).){0,120}?Math\.max\([\w$]+\.lvl,41\)/g,
   /[,;\s]([\w$]+)=[\w$]+\(\),[\w$]+=\1\.flatMap\([\w$]+=>[\w$]+\.uniques\)/g,
   /function ([\w$]+)\([\w$]+\)\{(?:(?!function ).){0,120}?itype:[\w$]+\.itype(?:(?!function ).){0,120}?bothHands/g,
+  // V56：掉落產生器（隨機稀有度、稀有），裝備創造用來收集符文之語底材的隨機職業技能和自帶屬性
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{let [\w$]+=[\w$]+\.get\([\w$]+\.base\),[\w$]+=Math\.random\(\),[\w$]+=[\w$]+<[\d.e-]+\?`unique`/g,
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{return [\w$]+\([\w$]+\.get\([\w$]+\.base\),`rare`,/g,
 ];
 function addExports(text) {
   const names = new Set();

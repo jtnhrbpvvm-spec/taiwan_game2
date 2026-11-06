@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V55';
+const D2ZH_VERSION = 'V56';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -1693,7 +1693,8 @@ return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '碎片感應')
 d2edEl('p', { class: 'd2ed-note' }, '隱藏任務「破碎之光」：碎片出現後，畫面邊緣朝它的方向會有微弱的光暈，越接近越亮，看得到碎片時就消失。'),
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉碎片感應' : '開啟碎片感應'),
 d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')),
-on && D2ED.shardStatus ? d2edEl('p', { class: 'd2ed-note' }, '狀態：' + D2ED.shardStatus()) : null);
+on && D2ED.shardStatus ? d2edEl('p', { class: 'd2ed-note' }, '狀態：' + D2ED.shardStatus()) : null,
+d2edEl('p', { class: 'd2ed-note' }, `已找到 ${d2shardCount() ?? '?'}／10 塊。` + d2shardNextText(d2shardCount())));
 }
 // ====== 技能格調整大小（預設關閉） ======
 const D2ED_SKILLZOOM_KEY = 'd2zh:skillZoom';
@@ -1753,6 +1754,8 @@ isType: find((s, f) => f.length === 2 && s.includes('.equiv')),
 makers: fns.filter(([f, s]) => f.length === 3 && /\.roll=\[\d,/.test(s)).map(([f]) => f),   // 20261103 起 roll 版本從 1 變 2
 cats: exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].uniques) && v[0].label),
 make: {},
+// 掉落產生器（物品表、等級、…）：用來收集底材可能出現的隨機職業技能（staff）和底材自帶屬性（auto）。找不到就不提供這兩個選項
+rollers: fns.filter(([f, s]) => f.length === 4 && (/\?`rare`:`magic`/.test(s) || /\.get\(\w+\.base\),`rare`,/.test(s))).map(([f]) => f),
 };
 const runewords = exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].runes) && Array.isArray(v[0].types));
 const bestBase = find((s, f) => f.length === 1 && /Math\.max\(\w+\.lvl,41\)/.test(s));
@@ -1800,6 +1803,33 @@ return def.types.some(x => api.isType(info.itype, x)) && !(def.excluded || []).s
 });
 return list.includes(def.base) ? list : [def.base, ...list];
 }
+// 符文之語做在職業底材上時，遊戲會照底材加「隨機職業技能」（最多 3 個，各 1～3 級，staff）和「底材自帶屬性」（一組，auto），
+// 這兩張表沒有匯出，所以用遊戲的掉落產生器對同一種底材產生一批物品，收集出現過的項目和數值範圍（每種底材只收一次）
+const D2EC_BASEMODS = new Map();
+function d2ecBaseMods(base) {
+if (D2EC_BASEMODS.has(base)) return D2EC_BASEMODS.get(base);
+const staff = new Map(), auto = new Map();
+for (const roll of D2EC.api.rollers || []) {
+for (let n = 0; n < 700; n++) {
+let item;
+try { item = roll({ base }, 1 + (n % 99), 99, undefined); } catch (_) { break; }
+const mods = (item && item.mods) || [];
+for (const m of mods) if (m.staff && typeof m.stat === 'string') staff.set(m.stat, Math.max(staff.get(m.stat) || 0, m.value));
+const row = mods.filter(m => m.auto && typeof m.stat === 'string');
+if (!row.length) continue;
+const key = row.map(m => m.stat).join('|');
+// 同一組裡各項的範圍可能不同（例如攻擊準確率和增強傷害），各自記錄；same：這一組每次都同一個數值（例如所有抗性）
+// mods 留完整的一份當樣板（毒素傷害還有 length 欄位，少了遊戲不收）
+const r = auto.get(key) || { stats: row.map(m => m.stat), mods: row.map(m => ({ ...m })), lo: row.map(() => Infinity), hi: row.map(() => -Infinity), same: true };
+row.forEach((m, k) => { r.lo[k] = Math.min(r.lo[k], m.value); r.hi[k] = Math.max(r.hi[k], m.value); });
+if (row.some(m => m.value !== row[0].value)) r.same = false;
+auto.set(key, r);
+}
+}
+const out = { staff: [...staff.keys()].sort(), auto: [...auto.values()] };
+D2EC_BASEMODS.set(base, out);
+return out;
+}
 function d2ecBaseItem(def, base) {
 const { api } = D2EC;
 if (def.rarity !== 'runeword') {
@@ -1828,7 +1858,8 @@ const idxs = [], slots = [];
 for (const { stat, func } of row.stats) {
 if (!stats[i] || stats[i].stat !== stat) throw new Error('物品表和物品對不起來：' + stat);
 idxs.push(i);
-if (!D2EC_FIXED_FUNCS.has(func) && !(func === 17 && row.par)) slots.push({ i, field: func === 12 ? 'param' : 'value' });
+// func 12：骰的是技能編號；func 36（例如地獄火炬的隨機職業技能）：骰的是職業 0～6，技能等級是固定的 val。兩種都寫進 param
+if (!D2EC_FIXED_FUNCS.has(func) && !(func === 17 && row.par)) slots.push({ i, field: func === 12 || func === 36 ? 'param' : 'value' });
 i++;
 }
 if (hi > lo && slots.length) g.rows.push({ lo, hi, idxs, slots, def: Math.trunc((lo + hi) / 2) });
@@ -1912,6 +1943,15 @@ const stats = g.at === 'stats' ? item.stats : item.bonus[g.at];
 for (const row of g.rows) if (row.read) for (const s of row.slots) stats[s.i][s.field] = row.read();
 }
 if (sel.defense) item.defense = sel.defense.read();
+if (sel.ethereal && sel.ethereal()) {   // 跟遊戲做無形符文之語一樣：防禦 ×1.5 取整數，武器傷害由遊戲照 ethereal 自己算
+item.ethereal = true;
+if (item.defense !== undefined) item.defense = Math.floor(item.defense * 3 / 2);
+}
+if (sel.def.rarity === 'runeword') {
+const staff = (sel.staff || []).map(f => f()).filter(Boolean).filter((m, i, a) => a.findIndex(x => x.stat === m.stat) === i);
+item.mods = [...(sel.auto ? sel.auto() : []), ...staff];
+}
+if (sel.sockets) { const n = sel.sockets(); if (n > 0) item.sockets = n; }
 const ready = D2EC.api.normalize(JSON.parse(JSON.stringify(item)));
 if (!ready) { d2ecNotice('遊戲不接受這件裝備的資料，沒有建立。'); return; }
 if (!world.carry(ready)) { d2ecNotice('物品欄已滿，請整理背包。'); return; }
@@ -1932,6 +1972,71 @@ input.addEventListener('input', () => { text.textContent = label(read()); });
 input.addEventListener('change', () => { input.value = String(read()); text.textContent = label(read()); });
 onValue(read);
 return d2edEl('label', { class: 'd2ec-row' }, text, d2edEl('span', { class: 'd2ec-range' }, `${lo} ～ ${hi}`), input);
+}
+// 底材附加能力（mods）的名稱：遊戲的說明文字函式只吃物品表格式（stats），這幾種 mods 自己對照
+const D2EC_MOD_ZH = { life: '生命', mana: '法力', fireResist: '火焰抗性', coldResist: '冰寒抗性', lightningResist: '閃電抗性', poisonResist: '毒素抗性', attackRatingPoints: '攻擊準確率', enhancedDamage: '增強傷害 %', poisonMinDamage: '最小毒素傷害', poisonMaxDamage: '最大毒素傷害' };
+const D2EC_CLASSES = ['Amazon', 'Sorceress', 'Necromancer', 'Paladin', 'Barbarian', 'Druid', 'Assassin'];
+function d2ecModName(stat) {
+if (D2EC_MOD_ZH[stat]) return D2EC_MOD_ZH[stat];
+let m = /^skilltab(\d+)$/.exec(stat);
+if (m) { const n = Number(m[1]); return `${d2ecTr(D2EC_CLASSES[Math.floor(n / 3)] || '')}技能（第 ${n % 3 + 1} 類）`; }
+m = /^skill:(\w+)$/.exec(stat);
+if (m) return d2ecTr(m[1].replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase())).replace(/（[^）]*）$/, '');   // 拿掉技能名稱後的元素標記
+return d2ecTr(stat);
+}
+// 無形、洞數、符文之語底材的隨機職業技能和自帶屬性。遊戲讀檔規則：無形只收符文之語（而且底材要有耐久度）；
+// 洞數只收獨特和套裝（上限照底材，本身有「插槽」能力的由那一列決定）；符文之語的 mods 只留 auto（一組）和 staff（最多 3 個）
+function d2ecExtras(def, base, item, sel) {
+const out = [];
+const row = D2EC.api.tables().bases[base] || {};
+if (def.rarity === 'runeword') {
+if (!row.noDurability) {
+const cb = d2edEl('input', { type: 'checkbox' });
+sel.ethereal = () => cb.checked;
+out.push(d2edEl('label', { class: 'd2ec-row' }, d2edEl('span', { class: 'd2ec-label' }, '無形（防禦和武器傷害 ×1.5，無法修理）'), cb));
+}
+const bm = d2ecBaseMods(base);
+if (bm.staff.length) {
+out.push(d2edEl('h4', {}, '底材隨機職業技能（最多 3 個）'));
+const opts = bm.staff.map(s => [s, d2ecModName(s)]).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+sel.staff = [];
+for (let k = 0; k < 3; k++) {
+const pick = d2edEl('select', {}, d2edEl('option', { value: '' }, '（無）'), ...opts.map(([v, t]) => d2edEl('option', { value: v }, t)));
+const lv = d2edEl('input', { type: 'number', min: '1', max: '3', step: '1', value: '3' });
+lv.addEventListener('change', () => { lv.value = String(Math.min(3, Math.max(1, Math.trunc(Number(lv.value)) || 1))); });
+sel.staff.push(() => pick.value ? { stat: pick.value, value: Math.min(3, Math.max(1, Math.trunc(Number(lv.value)) || 1)), staff: true } : null);
+out.push(d2edEl('label', { class: 'd2ec-row' }, pick, d2edEl('span', { class: 'd2ec-range' }, '+1 ～ 3 級'), lv));
+}
+}
+if (bm.auto.length) {
+out.push(d2edEl('h4', {}, '底材自帶屬性'));
+const vals = d2edEl('div', {});
+const pick = d2edEl('select', {}, d2edEl('option', { value: '' }, '（無）'), ...bm.auto.map((r, k) => d2edEl('option', { value: String(k) }, r.stats.map(d2ecModName).join('、'))));
+const build = () => {
+const r = bm.auto[pick.value];
+vals.replaceChildren();
+sel.auto = null;
+if (!r) return;
+const reads = [];
+if (r.same) {
+const lo = Math.min(...r.lo), hi = Math.max(...r.hi);
+vals.append(d2ecNumberRow(v => `${r.stats.map(d2ecModName).join('、')} ${v}`, lo, hi, hi, read => { for (const _ of r.stats) reads.push(read); }));
+} else r.stats.forEach((s, k) => vals.append(d2ecNumberRow(v => `${d2ecModName(s)} ${v}`, r.lo[k], r.hi[k], r.hi[k], read => reads.push(read))));
+sel.auto = () => {
+const mods = r.mods.map((m, k) => ({ ...m, value: reads[k](), auto: true }));
+const min = mods.find(m => m.stat === 'poisonMinDamage'), max = mods.find(m => m.stat === 'poisonMaxDamage');
+if (min && max && max.value < min.value) max.value = min.value;
+return mods;
+};
+};
+pick.addEventListener('change', build);
+out.push(d2edEl('label', { class: 'd2ec-row' }, pick), vals);
+}
+} else {
+const sockets = Array.isArray(row.sockets) ? (row.sockets[2] ?? row.sockets[row.sockets.length - 1]) : 0;
+if (sockets > 0 && !item.stats.some(s => s.stat === 'item_numsockets')) out.push(d2ecNumberRow(v => v ? `洞數 ${v}` : '洞數 0（不打洞）', 0, sockets, 0, read => { sel.sockets = read; }));
+}
+return out;
 }
 function d2ecSelect(def, base = def.base) {
 const box = D2EC.overlay.querySelector('.d2ec-editor');
@@ -1960,6 +2065,7 @@ if (range && item.defense !== undefined && !item.stats.some(s => s.stat === 'ite
 const lo = range[0], hi = range[1];
 body.append(d2ecNumberRow(v => `底材防禦 ${v}`, lo, hi, Math.trunc((lo + hi) / 2), read => { sel.defense = { read }; }));
 } else if (item.defense !== undefined) body.append(d2edEl('p', { class: 'd2ec-fixed' }, `底材防禦 ${item.defense}`));
+body.append(...d2ecExtras(def, base, item, sel));
 for (const g of groups) {
 const stats = g.at === 'stats' ? item.stats : item.bonus[g.at];
 if (g.tag) body.append(d2edEl('h4', {}, g.tag));
@@ -2154,6 +2260,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V56', date: '2026-11-06', game: '遊戲 20261105.3', items: [
+'任務欄「破碎之光」會寫出下一塊碎片出現在哪裡：第 1 塊在第一幕、第 2～5 塊各在第二～五幕（任何難度）、第 6～10 塊在惡夢或地獄難度的任何一幕且有怪物守護；恐懼層的任何一幕都會出現碎片。書籤修改的「碎片感應」也會顯示已找到幾塊和下一塊的位置',
+'修正碎片感應：恐懼層「儲存並離開」後按「繼續」重開同一層時，常被誤判成「碎片在書籤開始偵測前就出現了」，結果魔力球顯示碎片已出現、畫面邊緣卻沒有引導光暈。現在重開這一幕會重新偵測',
+'碎片感應新增「重新偵測位置」：中途才點書籤、或中途才打開碎片感應而錯過碎片出現的那一刻時，不再放棄這一幕，會在英雄移動時重新找出碎片的正確位置（約 3 秒），找到後照常顯示引導光暈；偵測中魔力球顯示「碎片已出現　偵測位置中」。另修正中途關掉再打開碎片感應時光暈會指錯方向',
+'功能優化'] },
 { ver: 'V55', date: '2026-11-06', game: '遊戲 20261105.3', items: [
 '配合遊戲更新翻譯新增的文字：角色畫面新增的三頁數值（速度門檻、敵人抗性、反傷、遠程／近戰傷害減少等）、箭筒、物品過濾的「隱藏並出售」與「無形必撿」、淬鍊上限與地獄熔爐限一次、恐懼層結束畫面的重玩、儲物箱的單手／雙手武器',
 '修正翻譯錯誤：「隱藏並出售」原本顯示成「皮 AND 出售」、恰西退回精華的提示原本顯示成「恰西歸來者」',
@@ -2391,7 +2502,7 @@ document.body.append(box);
 }
 function d2edInstall() {
 window.__D2ED = D2ED; // 除錯用（在主控台看抓到的人物、選單位置）
-D2ED.ec = { load: d2ecLoad, baseItem: d2ecBaseItem, groups: d2ecGroups, bases: d2ecRunewordBases, lines: d2ecLineTexts };
+D2ED.ec = { load: d2ecLoad, baseItem: d2ecBaseItem, groups: d2ecGroups, bases: d2ecRunewordBases, lines: d2ecLineTexts, baseMods: d2ecBaseMods, show: d2ecShow, select: d2ecSelect, create: d2ecCreate };
 d2edBuildInstall();
 d2ecWorldInstall();
 d2edKeepLeaderboardOff();
@@ -5050,6 +5161,10 @@ const fcrCap = /^Your cap: ([\d.]+%) shorter/.exec(source);
 if (fcrCap) d2zhFcrCap = fcrCap[1];
 const fcrPast = /^\+(\d+)% of it is past your cap and does nothing now$/.exec(source.trim());
 if (fcrPast && d2zhFcrCap) return `其中 +${fcrPast[1]}% 超過上限，目前已達 ${d2zhFcrCap} 上限`;
+// 任務欄「破碎之光」的說明：接上下一塊碎片在哪裡出現（照存檔的塊數，不存進快取）
+if (source.trim() === 'A shard of light found. Others lie scattered across the world, off the beaten path.') {
+return '找到一塊光之碎片。' + d2shardNextText(d2shardCount(), true);   // 任務欄的框不大，用精簡版
+}
 if (translatedTexts.has(source)) return translatedTexts.get(source);
 const fixed = /[A-Za-z]/.test(source) ? d2zhFix(source) : null;
 if (fixed !== null) { translatedTexts.set(source, fixed); return fixed; }
@@ -5861,6 +5976,30 @@ d2charmBlinkInstall();
 // 跟遊戲算碎片的方式一樣（build 20261027.4，keepSave-*.js 的 gc／cc／uc／_c）：
 // 每一幕最多一塊，下一塊是「已找到 + 1」。第 1 塊在第一幕，第 2～5 塊在第二～五幕，第 6～10 塊在惡夢／地獄任何一幕；恐懼層每層都可能有。
 // 用 world.light（這一局的種子）、幕、恐懼層、塊數、難度算出亂數：進入這一幕 at 秒後，碎片出現在「當下英雄位置」往 angle 方向 screens 個畫面（800×600）遠。
+// 已找到幾塊（讀存檔，兩秒內重複問用上次的值；讀不到回 null）
+let d2shardCountCache = { at: -Infinity, n: null };
+function d2shardCount() {
+const now = performance.now();
+if (now - d2shardCountCache.at < 2000) return d2shardCountCache.n;
+let n = null;
+try {
+const hc = /hard/i.test(localStorage.getItem('d2-survivors/mode/v1') || '');
+const save = JSON.parse(localStorage.getItem(hc ? 'd2-survivors/hc/v1' : 'd2-survivors/save/v1') || '{}');
+n = save?.light?.shards ?? 0;
+} catch (_) { /* 讀不到就不提示 */ }
+d2shardCountCache = { at: now, n };
+return n;
+}
+// 下一塊碎片在哪裡出現（照遊戲 saveTransfer 的 lx／sx：第 1 塊第一幕、第 2～5 塊第二～五幕、第 6～10 塊惡夢以上任何一幕且有怪物守護；恐懼層每一幕都可能）
+function d2shardNextText(n, short = false) {
+if (n === null || n === undefined) return '';
+if (n >= 10) return '十塊碎片都找到了。';
+const r = Math.max(0, Math.floor(n)) + 1;
+const where = r <= 5 ? `第${'一二三四五'[r - 1]}幕（任何難度）` : '惡夢或地獄難度的任何一幕';
+if (short) return `下一塊（第 ${r} 塊）在${where}${r >= 6 ? '，有怪物守護' : ''}。備註：恐懼層任何一幕都會出現碎片。`;
+const extra = r === 1 ? '，位置離你很近（約 1.5 個畫面）' : r >= 6 ? '，離你 3～5 個畫面，接近時會有怪物守護' : '，離你 3～5 個畫面';
+return `下一塊是第 ${r} 塊，會出現在${where}，進入那一幕後 25～200 秒（遊戲時間）出現${extra}。備註：恐懼層的任何一幕都會出現碎片。`;
+}
 function d2shardInstall() {
 const mix = (...v) => { let t = 2166136261; for (const n of v) { t ^= n >>> 0; t = Math.imul(t, 16777619); t ^= t >>> 13; t = Math.imul(t, 1540483477); t ^= t >>> 15; } return t >>> 0; };
 const rng = seed => { let t = seed >>> 0; return () => { t = t + 1831565813 >>> 0; let e = t; e = Math.imul(e ^ e >>> 15, e | 1); e ^= e + Math.imul(e ^ e >>> 7, e | 61); return ((e ^ e >>> 14) >>> 0) / 2 ** 32; }; };
@@ -5905,6 +6044,51 @@ const FLASH = 4000;   // 出現時光暈先亮起，再花幾秒退回平常的�
 // 等待時只記錄英雄位置，計畫算出來後，用遊戲「進入這一幕 at 秒」那一刻的位置算碎片在哪。
 const SETTLE = 15000;
 let state = { key: '', plan: null, spot: null, count: 0, checkedAt: 0, enteredAt: 0, log: [], ready: false };
+// 重新偵測位置：遊戲的碎片程式（Game-*.js 的 Lw.update）在碎片出現後每一格都算 Md(英雄, 碎片)＝Math.hypot((英雄x−碎片x)/800, (英雄y−碎片y)/600)。
+// 短暫包住 Math.hypot，把每次兩個參數的呼叫用當下英雄位置反推成「被量的那一點」：碎片那一點每格都一樣、英雄走動也不變，
+// 其他量測（怪物、技能）不是這個比例或會跟著動。量 3～10 秒取次數最多又不隨英雄移動的點，量完立刻還原 Math.hypot；找不到 10 秒後再試。
+const rawHypot = Math.hypot;
+let probe = null, probeRetryAt = 0;
+const shardProbe = now => {
+if (!probe) {
+if (now < probeRetryAt) return null;
+probe = { start: now, counts: new Map() };
+Math.hypot = function (a, b) {
+const r = rawHypot.apply(Math, arguments);
+const pb = probe;
+if (pb && arguments.length === 2) {
+try {
+const pl = D2ED.world && D2ED.world.player;
+if (pl && Number.isFinite(a) && Number.isFinite(b)) {
+const x = pl.x - a * 800, y = pl.y - b * 600;
+const k = Math.round(x / 4) + ',' + Math.round(y / 4);
+const c = pb.counts.get(k);
+if (c) {
+c.n++; c.x = x; c.y = y;
+const mx = pl.x - c.px, my = pl.y - c.py, m2 = mx * mx + my * my;
+if (m2 > c.moved) c.moved = m2;
+} else if (pb.counts.size < 20000) pb.counts.set(k, { n: 1, x, y, px: pl.x, py: pl.y, moved: 0 });
+}
+} catch (_) { /* 只是觀察，出錯就略過 */ }
+}
+return r;
+};
+return null;
+}
+const age = now - probe.start;
+if (age < 3000) return null;
+const pl = D2ED.world && D2ED.world.player;
+const near = c => pl && rawHypot((c.x - pl.x) / 800, (c.y - pl.y) / 600) < 12;
+const list = [...probe.counts.values()].filter(c => c.n >= 20 && c.moved >= 30 * 30 && near(c)).sort((a, b) => b.n - a.n);
+const best = list[0];
+// 英雄完全沒動時分不出來，再多量一會兒（最多 10 秒）
+if (!best && age < 10000) return null;
+Math.hypot = rawHypot;
+probe = null;
+if (!best) { probeRetryAt = now + 10000; return null; }
+return { x: best.x, y: best.y };
+};
+D2ED.shardDebug = () => ({ spot: state.spot, missed: !!state.missed, ready: state.ready, probing: !!probe });   // 測試用：看書籤算出的碎片位置
 // 給「書籤修改」面板顯示目前狀態（不透露方向），方便判斷為什麼沒有光暈
 D2ED.shardStatus = () => {
 const world = D2ED.world;
@@ -5917,7 +6101,7 @@ const key = `${world.light}:${world.act}:${world.difficulty}:${world.terror?.tie
 if (key === state.key && !state.ready) return `已找到 ${n} 塊：剛進入這一幕，${Math.max(1, Math.ceil((SETTLE - (performance.now() - state.enteredAt)) / 1000))} 秒後開始偵測`;
 if (key === state.key && n > state.count) return `已找到 ${n} 塊：這一幕的碎片已經撿到了`;
 if (!plan(world, n)) return `已找到 ${n} 塊：這一幕沒有碎片`;
-if (key === state.key && state.missed) return `已找到 ${n} 塊：這一幕的碎片在書籤開始偵測前就出現了，無法判斷位置，下一幕會正常提示`;
+if (key === state.key && state.missed) return `已找到 ${n} 塊：這一幕的碎片在書籤開始偵測前就出現了，正在重新偵測位置（英雄要移動才量得出來）`;
 if (key === state.key && state.spot) return `已找到 ${n} 塊：這一幕的碎片已經出現`;
 return `已找到 ${n} 塊：這一幕的碎片還沒出現`;
 };
@@ -5925,19 +6109,35 @@ setInterval(() => {
 let show = 0;
 try {
 const world = D2ED.world;
+// 重新偵測進行中卻已經不需要了（換了一幕、撿到了、關掉碎片感應、離開遊戲）：馬上還原 Math.hypot
+if (probe && (!d2edShardOn() || !state.missed || !world || document.body.classList.contains('no-run') || (d2shardCount() ?? 0) > state.count)) { Math.hypot = rawHypot; probe = null; }
+// 關掉碎片感應就忘掉這一幕：中途再打開時重新偵測（以前會沿用關掉前的紀錄，用「現在的位置」推算而指錯方向）
+if (!d2edShardOn()) state.key = '';
 if (!d2edShardOn() || !world || !world.player || document.body.classList.contains('no-run') || world.farm || world.tristram || document.body.classList.contains('in-camp')) return;
 const key = `${world.light}:${world.act}:${world.difficulty}:${world.terror?.tier ?? 0}`;
 const now = performance.now();
 const pl = world.player;
-if (key !== state.key) state = { key, plan: null, spot: null, count: found(), checkedAt: now, enteredAt: now, log: [], ready: false };
+const elapsed = world.time - world.actStart;
+// 「進入這一幕經過的時間」往回跳＝遊戲重新開始了這一幕。恐懼層按「繼續」會用同一個種子、同一幕、同一層重開，
+// 識別值跟上一局一模一樣，剛換局的那一下還會讀到上一局停住的時間（例如 80 秒），以前就被誤判成「開始偵測前就出現了」而整幕沒有光暈（玩家回報 V54）
+if (key !== state.key || elapsed < state.lastE - 3) state = { key, plan: null, spot: null, count: found(), checkedAt: now, enteredAt: now, log: [], ready: false };
+state.lastE = elapsed;
 if (!state.ready) {
-state.log.push({ e: world.time - world.actStart, x: pl.x, y: pl.y });
+state.log.push({ e: elapsed, x: pl.x, y: pl.y });
 if (now - state.enteredAt < SETTLE) return;
 state.ready = true;
 state.plan = state.count === null ? null : plan(world, state.count);
 // 開始偵測時這一幕已經過了碎片出現的時間（玩到一半才點書籤、重新整理、讀檔繼續、中途才打開碎片感應）：
 // 遊戲是用「出現那一刻」的英雄位置算碎片，書籤沒看到那一刻，用現在的位置推算會指錯地方，所以這一幕不提示
-if (state.plan && state.log.length && state.log[0].e >= state.plan.at) { state.plan = null; state.missed = true; }
+if (state.plan && state.log.length && state.log[0].e >= state.plan.at) { state.missedPlan = state.plan; state.plan = null; state.missed = true; }
+}
+// 錯過了也不放棄：從遊戲自己的距離量測反推碎片真正的位置（見下面 shardProbe），找到就照常顯示光暈
+if (state.missed && state.missedPlan && elapsed >= state.missedPlan.at && (d2shardCount() ?? 0) <= state.count) {
+const spot = shardProbe(now);
+if (spot) {
+state.plan = state.missedPlan; state.missedPlan = null; state.missed = false;
+state.spot = spot; state.spawnAt = now; state.log = [];
+}
 }
 const p = state.plan;
 if (!p) return;
@@ -6005,6 +6205,7 @@ if (p) {
 const zh = d2zhLang() === 'zh-Hant';
 const left = Math.ceil(p.at - (world.time - world.actStart));
 if (left > 0) text = `${zh ? '距離碎片出現' : 'Shard appears in'}\n${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+else if (state.missed) text = zh ? '碎片已出現\n偵測位置中' : 'Shard is out\nlocating…';   // 沒看到出現那一刻，正在用 shardProbe 重新找位置
 else text = zh ? '碎片已出現!' : 'Shard is out!';
 ready = true;
 }
