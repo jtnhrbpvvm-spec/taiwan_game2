@@ -1718,7 +1718,38 @@ d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前
 const D2EC = { api: null, overlay: null, sel: null, cat: 'head' };
 const D2EC_GRID = { columns: 10, rows: 4 };
 const D2EC_FIXED_FUNCS = new Set([15, 16, 11, 19]);
-const D2EC_RARITY = { unique: '獨特', set: '套裝', runeword: '符文之語' };
+const D2EC_RARITY = { unique: '獨特', set: '套裝', runeword: '符文之語', misc: '道具', base: '底材' };
+// 鑰匙和器官是任務物品（base＝代碼），放進物品欄時遊戲自己登記到存檔 pandemonium（itemArt 的 Kv，物品欄金幣旁的數量就是看這裡），一把一個 id；
+// 精華是一般物品，一疊最多 99 個，carry 會自動疊在一起
+const D2EC_MISC = [
+{ name: 'Key of Terror', base: 'pk1', kind: 'quest', max: 50 }, { name: 'Key of Hate', base: 'pk2', kind: 'quest', max: 50 }, { name: 'Key of Destruction', base: 'pk3', kind: 'quest', max: 50 },
+{ name: 'Mephisto\'s Brain', base: 'mbr', kind: 'quest', max: 50 }, { name: 'Diablo\'s Horn', base: 'dhn', kind: 'quest', max: 50 }, { name: 'Baal\'s Eye', base: 'bey', kind: 'quest', max: 50 },
+{ name: 'Burning Essence of Terror', base: 'Burning Essence of Terror', kind: 'essence', max: 99 },
+];
+const d2ecBaseLabel = def => def.rarity === 'misc' ? (def.kind === 'essence' ? '精華' : '鑰匙／器官') : def.rarity === 'base' ? '無能力底材' : d2ecTr(def.base);
+// 「底材」分頁只列這些部位（戒指、護身符、護符、珠寶不會有普通品質）
+const D2EC_PLAIN_TYPES = ['weapon', 'shield', 'head', 'body', 'gloves', 'belt', 'boots'];
+// 普通品質的底材：用遊戲的掉落產生器做一件同底材的物品，只留底材本身的固有能力（implicit，例如武器傷害），拿掉詞綴和底材附加能力
+function d2ecPlainItem(base) {
+let src = null;
+for (const roll of D2EC.api.rollers || []) {
+for (let i = 0; i < 40 && !src; i++) {
+let it;
+try { it = roll({ base }, 99, 99, undefined); } catch (_) { break; }
+if (it && it.base === base && (it.rarity === 'magic' || it.rarity === 'rare')) src = it;
+}
+if (src) break;
+}
+const id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+const type = src ? src.type : undefined;
+const mods = src ? (src.mods || []).filter(m => m.implicit && !m.auto && !m.staff).map(m => ({ ...m })) : [];
+return { id, base, type, rarity: 'normal', name: base, level: 1, mods };
+}
+function d2ecMiscItem(def, count) {
+const id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+if (def.kind === 'quest') return { id, base: def.base, type: 'quest', rarity: 'unique', name: def.name, level: 0, mods: [] };
+return { id, base: def.base, type: 'essence', rarity: 'normal', name: def.name, level: 85, mods: [], ...(count > 1 && { count }) };
+}
 // 營地裡下面 WeakMap 的攔截抓不到世界（裝備放進物品欄要用 world.carry），但遊戲每秒都會讀 world.tristram（沒進崔斯特姆時這個欄位不存在），
 // 所以跟 unspent 一樣在 Object.prototype 放不列舉的 getter 認出它；寫入時改成物件自己的欄位。
 function d2ecWorldInstall() {
@@ -1762,6 +1793,23 @@ const bestBase = find((s, f) => f.length === 1 && /Math\.max\(\w+\.lvl,41\)/.tes
 if (!api.tables || !api.normalize || !api.lines || !api.runewordStats || !api.size || !api.baseInfo || !api.isType || !api.cats || !runewords || !bestBase || !api.tables()) return null;
 // 分類表是遊戲倉庫在用的物件，複製一份再加欄位
 api.cats = api.cats.map(c => ({ ...c, uniques: c.uniques.map(d => ({ ...d })) }));
+// 三把鑰匙、三個器官、燃燒的恐懼精華放在「護符」分頁最後（遊戲倉庫沒有這幾樣）
+const misc = D2EC_MISC.map(m => ({ ...m, rarity: 'misc', lvl: 0 }));
+const charmCat = api.cats.find(c => c.id === 'charm');
+if (charmCat) charmCat.uniques.push(...misc); else api.cats.push({ id: 'misc', label: 'Charms', uniques: misc });
+// 「底材」分頁：沒有任何能力的普通裝備，給玩家自己打洞或拿去做符文之語（放在護符分頁後面）
+const tbl = api.tables();
+const typeOf = {};
+for (const d of api.cats.flatMap(c => c.uniques)) {
+if (d.rarity !== 'unique' && d.rarity !== 'set') continue;
+const info = api.baseInfo({ base: d.base });
+if (info) typeOf[info.itype] = d.type;
+}
+const plain = Object.keys(tbl.bases).filter(name => {
+const info = api.baseInfo({ base: name });
+return info && D2EC_PLAIN_TYPES.includes(typeOf[info.itype]);
+}).map(name => ({ name, base: name, rarity: 'base', type: typeOf[api.baseInfo({ base: name }).itype], lvl: 0 }));
+if (plain.length) api.cats.splice(charmCat ? api.cats.indexOf(charmCat) + 1 : api.cats.length, 0, { id: 'bases', label: '底材', uniques: plain });
 api.all = api.cats.flatMap(c => c.uniques);
 for (const rarity of ['unique', 'set']) {
 const def = api.all.find(d => d.rarity === rarity);
@@ -1771,7 +1819,7 @@ if (!api.make[rarity]) return null;
 // 符文之語可以做在很多底材上：遊戲沒有匯出底材表，用 itype 認類型，從獨特和套裝的底材查裝備欄位
 api.typeOfItype = {};
 for (const d of api.all) {
-if (d.rarity === 'runeword') continue;
+if (d.rarity === 'runeword' || d.rarity === 'misc') continue;
 const info = api.baseInfo({ base: d.base });
 if (info) api.typeOfItype[info.itype] = d.type;
 }
@@ -1937,6 +1985,39 @@ const sel = D2EC.sel;
 if (!sel) return;
 const world = D2ED.world;
 if (!world || typeof world.carry !== 'function') { d2ecNotice('還沒抓到遊戲世界，請進入地圖後再試一次。'); return; }
+if (sel.plain) {
+const item = d2ecPlainItem(sel.base);
+if (!item.type) item.type = sel.def.type;   // 沒有掉落產生器（舊版電腦版主程序）時用分類表的部位
+if (sel.defense) item.defense = sel.defense.read(); else if (sel.fixedDefense !== undefined) item.defense = sel.fixedDefense;
+if (sel.sockets) { const n = sel.sockets(); if (n > 0) item.sockets = n; }
+const ready = item.type ? D2EC.api.normalize(JSON.parse(JSON.stringify(item))) : null;
+if (!ready) { d2ecNotice('遊戲不接受這件底材的資料，沒有建立。'); return; }
+if (!world.carry(ready)) { d2ecNotice('物品欄已滿，請整理背包。'); return; }
+d2ecInventory();
+const msg = D2EC.overlay.querySelector('.d2ec-msg');
+msg.textContent = `已放入物品欄：${d2ecTr(sel.base)}${ready.sockets ? `（${ready.sockets} 洞）` : ''}`;
+clearTimeout(msg._h);
+msg._h = setTimeout(() => { msg.textContent = ''; }, 3000);
+return;
+}
+if (sel.misc) {
+const count = sel.count ? sel.count() : 1;
+const items = sel.def.kind === 'quest' ? Array.from({ length: count }, () => d2ecMiscItem(sel.def, 1)) : [d2ecMiscItem(sel.def, count)];
+let done = 0;
+for (const it of items) {
+const ready = D2EC.api.normalize(JSON.parse(JSON.stringify(it)));
+if (!ready) { d2ecNotice('遊戲不接受這個道具的資料，沒有建立。'); break; }
+if (!world.carry(ready)) { d2ecNotice('物品欄已滿，請整理背包。'); break; }
+done++;
+}
+if (!done) return;
+d2ecInventory();
+const msg = D2EC.overlay.querySelector('.d2ec-msg');
+msg.textContent = `已放入物品欄：${sel.def.zh} ×${sel.def.kind === 'quest' ? done : count}`;
+clearTimeout(msg._h);
+msg._h = setTimeout(() => { msg.textContent = ''; }, 3000);
+return;
+}
 const item = d2ecBaseItem(sel.def, sel.base);
 for (const g of sel.groups) {
 const stats = g.at === 'stats' ? item.stats : item.bonus[g.at];
@@ -2040,6 +2121,34 @@ return out;
 }
 function d2ecSelect(def, base = def.base) {
 const box = D2EC.overlay.querySelector('.d2ec-editor');
+if (def.rarity === 'base') {   // 無能力底材：只調防禦和洞數
+const sel = D2EC.sel = { def, base: def.base, plain: true };
+for (const b of D2EC.overlay.querySelectorAll('.d2ec-result')) b.classList.toggle('on', b._def === def);
+const row = D2EC.api.tables().bases[def.base] || {};
+const head = d2edEl('div', { class: 'd2ec-title' }, d2ecIcon('base', def.name, def.base), d2edEl('div', {}, d2edEl('b', {}, d2ecTr(def.base)), d2edEl('small', {}, '底材・普通品質')));
+const body = d2edEl('div', {},
+d2edEl('p', { class: 'd2ec-fixed' }, '僅為底材：不帶任何能力（沒有魔法、稀有、獨特屬性），只有底材本身的基本數值。可以調整防禦和洞數，拿去鑲嵌寶石、珠寶或符文之語。'),
+d2edEl('p', { class: 'd2ec-fixed' }, '無形：遊戲規定只有符文之語可以是無形，底材設成無形讀檔時會被遊戲刪除，所以這裡不提供。要無形請直接建立符文之語並勾選無形。'));
+const range = row.defense;
+if (range && range[1] > range[0]) body.append(d2ecNumberRow(v => `底材防禦 ${v}`, range[0], range[1], range[1], read => { sel.defense = { read }; }));
+else if (range) sel.fixedDefense = range[1];
+const sockets = Array.isArray(row.sockets) ? (row.sockets[2] ?? row.sockets[row.sockets.length - 1]) : 0;
+if (sockets > 0) body.append(d2ecNumberRow(v => v ? `洞數 ${v}` : '洞數 0（不打洞）', 0, sockets, sockets, read => { sel.sockets = read; }));
+else body.append(d2edEl('p', { class: 'd2ec-fixed' }, '這種底材不能打洞'));
+box.replaceChildren(head, body, d2edEl('div', { class: 'd2ec-actions' },
+d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: d2ecCreate }, '確定'), d2edEl('span', { class: 'd2ec-msg' })));
+return;
+}
+if (def.rarity === 'misc') {   // 鑰匙、器官、精華：只選數量
+const sel = D2EC.sel = { def, misc: true };
+for (const b of D2EC.overlay.querySelectorAll('.d2ec-result')) b.classList.toggle('on', b._def === def);
+const head = d2edEl('div', { class: 'd2ec-title d2ec-r-unique' }, d2ecIcon('misc', def.name, def.base), d2edEl('div', {}, d2edEl('b', {}, def.zh), d2edEl('small', {}, `道具・${d2ecBaseLabel(def)}`)));
+const note = def.kind === 'quest' ? '每一個都會算進物品欄金幣旁邊的數量（每次最多 ' + def.max + ' 個）' : '一疊最多 99 個，會自動疊到物品欄裡現有的精華上';
+box.replaceChildren(head, d2edEl('p', { class: 'd2ec-fixed' }, note),
+d2ecNumberRow(v => `數量 ${v}`, 1, def.max, 1, read => { sel.count = read; }),
+d2edEl('div', { class: 'd2ec-actions' }, d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: d2ecCreate }, '確定'), d2edEl('span', { class: 'd2ec-msg' })));
+return;
+}
 let item, groups;
 try {
 item = d2ecBaseItem(def, base);
@@ -2086,7 +2195,7 @@ if (!words.length) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '�
 const found = api.all.filter(d => words.every(w => d.hay.includes(w)));
 if (!found.length) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '找不到符合的裝備。')); return; }
 list.replaceChildren(...found.map(def => {
-const b = d2edEl('button', { type: 'button', class: 'd2ec-result d2ec-r-' + def.rarity, onclick: () => d2ecSelect(def) }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh, d2edEl('small', {}, `${D2EC_RARITY[def.rarity]}・${d2ecTr(def.base)}`)));
+const b = d2edEl('button', { type: 'button', class: 'd2ec-result d2ec-r-' + def.rarity, onclick: () => d2ecSelect(def) }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh, d2edEl('small', {}, `${D2EC_RARITY[def.rarity]}・${d2ecBaseLabel(def)}`)));
 b._def = def;
 b.classList.toggle('on', !!D2EC.sel && D2EC.sel.def === def);
 return b;
@@ -2110,7 +2219,7 @@ overlay.querySelector('.d2ec-search').value = def.zh;
 D2EC.sel = null;
 d2ecSearch();
 d2ecSelect(def);
-} }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh), d2edEl('small', {}, d2ecTr(def.base)))));
+} }, d2ecIcon(def.rarity, def.name, def.base), d2edEl('span', {}, def.zh), d2edEl('small', {}, d2ecBaseLabel(def)))));
 slots.scrollTop = 0;
 };
 for (const c of api.cats) {
