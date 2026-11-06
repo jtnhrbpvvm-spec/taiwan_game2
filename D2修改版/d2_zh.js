@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V54';
+const D2ZH_VERSION = 'V55';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -297,6 +297,33 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261105.3
+"Magic and rare quivers drop with a bow's affixes, Arrows to wear beside a bow and Bolts beside a crossbow": "會掉落帶有弓類詞綴的魔法和稀有箭筒：箭矢配弓、彈矢配十字弓",
+"Terror's end screens replay the same tier in one press (R), and a tier's portal waits for you rather than taking you past its loot": "恐懼層的結束畫面按一下（R）就能重玩同一層，而且該層的傳送門會等你，不會把你帶走而錯過掉落物",
+"The character screen has three more pages of stats behind arrows at its bottom left, breakpoints and resistances before the cap among them": "角色畫面左下角新增箭頭，可以翻到另外三頁數值，包括速度門檻和上限前的抗性",
+"The Uniques tab keeps a runeword once on each kind of base it comes on, so Spirit on a sword and Spirit on a shield are both kept": "獨特物品分頁的符文之語改成每種可用的底材各收藏一件，例如劍上的精神和盾牌上的精神都會保留",
+"Larzuk's training ground adds a physical-immune dummy, the Death Berserker, for physical builds to measure against": "拉蘇克的訓練場新增物理免疫的木樁「死亡狂戰士」，讓物理型角色測試傷害",
+"A new loot filter action, HIDE AND SELL, sells what you walk onto or click without ever showing it on the floor": "物品過濾新增「隱藏並出售」：走過去或點擊時直接賣掉，完全不會顯示在地上",
+"The loot filter's new ETHEREAL ONLY switch picks up ethereal uniques and runewords while their line hides or sells the rest": "物品過濾新增「無形必撿」開關：一律撿起無形的獨特物品和符文之語，其他的照該行設定隱藏或出售",
+"Gear, charms, jewels and essences are picked up from a few yards farther, so walking up beside one takes it": "裝備、護符、珠寶和精華的拾取距離加大幾碼，走到旁邊就會撿起",
+"Gem shrines also drop a jewel for your sockets, rare one time in four, beside their experience": "寶石神殿除了經驗值，還會掉一顆可以鑲嵌的珠寶，每四次有一次是稀有珠寶",
+"Magic items can no longer be tempered, and a tempered one goes back to how it rolled, its essences returned to your inventory": "魔法物品不能再淬鍊，已經淬鍊過的會回復成原本的數值，用掉的精華退回物品欄",
+"Loading an older save after three or more Forge tries on an item now locks that item against further tries": "對一件物品使用熔爐三次以上後再讀取較舊的存檔，這件物品會被鎖住，不能再使用熔爐",
+"An item's box in the inventory no longer covers the character sheet's stats, so you can read what the item would change while you hover it": "物品欄的物品說明框不會再擋住角色畫面的數值，滑鼠移到物品上時可以看到它會改變哪些數值",
+"The High Council's members no longer walk off before they're slain, which left The High Council quest one member short": "最高議會的成員不會在被打倒前走掉，以前會讓「最高議會」任務少一個成員",
+"The Secret Cow Level's moos stop once the herd is gone, where they went on and piled up after the Cow King fell": "秘密奶牛關的牛群消滅後哞叫聲會停止，以前奶牛之王倒下後還會一直叫、越疊越多",
+"A Forge item changed on another device or copy of your save is brought up to date as each run starts, so its runs reach the Ladder": "在其他裝置或另一份存檔改過的熔爐物品，每局開始時會同步成最新狀態，這樣那一局才能上天梯",
+// 20261105.2
+"Telekinesis now has 5 levels like every passive, and its 5th reaches as far as its 3rd did": "心靈傳動改成和其他被動技能一樣有 5 級，第 5 級的距離等於以前的第 3 級",
+"The map marks a Burning Essence of Terror or Larzuk's Essence on the ground with a small red triangle": "地圖會用紅色小三角形標出地上的燃燒的恐懼精華或拉蘇克的精華",
+"Temper now stops at 10 tempers an item, and only the Hellforge raises one past 10": "每件物品最多淬鍊 10 次，只有地獄熔爐能超過 10 次",
+"An item tempered past 10 is cut back to 10, or to 20 if it had 20 or more, each line keeping its share": "淬鍊超過 10 次的物品會降回 10 次（原本 20 次以上的降回 20 次），各行屬性照比例保留",
+"The Hellforge now works once per item, and an item cut back to 20 counts as having used it": "地獄熔爐每件物品只能用一次，降回 20 次的物品視為已經用過",
+"Terror drops other than the boss's bring a Burning Essence of Terror about a quarter as often": "恐懼層首領以外的掉落，附帶燃燒的恐懼精華的機率降為原本的約四分之一",
+"An Annihilus, organ or Hellfire Torch from an uber you had to fight more than once no longer keeps your runs off the Ladder": "從打了不只一次的超級首領拿到的毀滅、器官或地獄火炬，不會再讓你的單局上不了天梯",
+"Uber Tristram clears faster than 1:30 now reach the Ladder instead of being refused and piling up unsent": "1 分 30 秒內通過超級崔斯特姆的紀錄現在能上天梯，不會再被拒收、堆著送不出去",
+"A re-draft offers Telekinesis again to a fully built hero of any class, so Dim Vision can evolve into Confuse": "任何職業練滿的英雄重新抽選時都會再出現心靈傳動，讓微暗靈視可以進化成迷亂",
+"Charsi's Upgrade on an item already on its elite base says so and names the base, where it said no stronger base existed": "對已經是精英底材的物品使用恰西的升級，會說明並寫出底材名稱，以前會說沒有更強的底材",
 // 20261105.1
 "In the desktop app, Video Options has a Full Screen line to switch between full screen and a window": "電腦版的影像選項新增「全螢幕」，可以切換全螢幕和視窗",
 "Click Charsi in the camp to Temper, Clean, Hellforge or Upgrade your items with Burning Essences of Terror": "在營地點恰西，可以用燃燒的恐懼精華替物品淬鍊、清除、送進地獄熔爐或升級",
@@ -2127,6 +2154,10 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V55', date: '2026-11-06', game: '遊戲 20261105.3', items: [
+'配合遊戲更新翻譯新增的文字：角色畫面新增的三頁數值（速度門檻、敵人抗性、反傷、遠程／近戰傷害減少等）、箭筒、物品過濾的「隱藏並出售」與「無形必撿」、淬鍊上限與地獄熔爐限一次、恐懼層結束畫面的重玩、儲物箱的單手／雙手武器',
+'修正翻譯錯誤：「隱藏並出售」原本顯示成「皮 AND 出售」、恰西退回精華的提示原本顯示成「恰西歸來者」',
+'翻譯遊戲主選單「最新消息」裡這次改版的更新公告'] },
 { ver: 'V54', date: '2026-11-05', game: '遊戲 20261105.1', items: [
 '配合遊戲更新翻譯新增的文字：恰西的鐵砧（淬鍊、清除、地獄熔爐、升級）、燃燒的恐懼精華、鑰匙說明與首領出現的提示、武器技能的新說明、電腦版的全螢幕選項',
 '翻譯遊戲主選單「最新消息」裡這次改版的更新公告',
@@ -2566,6 +2597,72 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 遊戲 20261105.2／.3：箭筒、物品過濾「隱藏並出售」「無形必撿」、淬鍊上限、恐懼層重玩、角色畫面多 3 頁數值、獨特物品分頁的符文之語底材
+"QUIVERS": "箭筒",
+"HIDE AND SELL": "隱藏並出售",
+"ETHEREAL ONLY": "無形必撿",
+"At ON, ethereal copies are always picked up and the line above acts on the rest": "開啟時一律撿起無形的物品，上面那一行的設定只套用在其他物品",
+"Not shown on the floor. Sold when you walk onto it or click where it lies": "不會顯示在地上。走過去或點擊它所在的位置就會直接賣掉",
+"Once: double or lose all tempers": "限一次：淬鍊全部加倍或全部失去",
+"Already on its elite base: *": "已經是精英底材：{0}",
+"Up to 10 tempers an item": "每件物品最多淬鍊 10 次",
+"Temper stops at 10: use the Hellforge": "淬鍊最多 10 次：請改用地獄熔爐",
+"Temper stops at 10": "淬鍊最多 10 次",
+"This item has used its Hellforge": "這件物品已經用過地獄熔爐",
+"Once per item": "每件物品限一次",
+"Magic items can't be tempered": "魔法物品不能淬鍊",
+"Charsi returned a Burning Essence of Terror": "恰西退回了 1 個燃燒的恐懼精華",
+"Charsi returned # Burning Essences of Terror": "恰西退回了 {0} 個燃燒的恐懼精華",
+"This item is locked: an older save was loaded": "這件物品已鎖住：曾讀取較舊的存檔",
+"Bases # / #": "底材 {0} / {1}",
+"One-Hand Weapons": "單手武器",
+"Two-Hand Weapons": "雙手武器",
+"REPLAY TERROR #": "重玩恐懼第 {0} 層",
+"Enter: next tier - R: replay * - T: Charsi's wares - Esc: end the run": "Enter：下一層 - R：重玩{0} - T：恰西的貨品 - Esc：結束這一輪",
+"Enter: replay * - T: Charsi's wares - Esc: end the run": "Enter：重玩{0} - T：恰西的貨品 - Esc：結束這一輪",
+"Enter: replay * - T: Charsi's wares - Esc: main menu": "Enter：重玩{0} - T：恰西的貨品 - Esc：主選單",
+"Enter: * - R: replay * - T: Charsi's wares - Esc: main menu": "Enter：{0} - R：重玩{1} - T：恰西的貨品 - Esc：主選單",
+"Enter: * - T: Charsi's wares - Esc: main menu": "Enter：{0} - T：恰西的貨品 - Esc：主選單",
+"Enter: * - T: Charsi's wares - Esc: end the run": "Enter：{0} - T：恰西的貨品 - Esc：結束這一輪",
+"Previous Page: *": "上一頁：{0}",
+"Next Page: *": "下一頁：{0}",
+"Offense": "攻擊",
+"Finds and Breakpoints": "尋獲與速度門檻",
+"Finds": "尋獲",
+"Casting": "施法",
+"Hits": "擊中效果",
+"Hit Recovery": "打擊恢復",
+"Frames": "影格",
+"Breakpoints: *": "門檻：{0}",
+"Next: *% for * frames": "下一個：{0}% 時 {1} 影格",
+"At the last breakpoint": "已達最後一個門檻",
+"Faster Cast Rate has no breakpoints here:": "這個遊戲的快速施法率沒有門檻：",
+"every point shortens cooldowns": "每一點都會縮短冷卻時間",
+"* of their time": "原本時間的 {0}",
+"Enemy Resistances": "敵人抗性",
+"Enemy Resistances but Magic": "敵人抗性（魔法除外）",
+"Enemy * Resistance": "敵人{0}抗性",
+"Enemy Fire Resistance": "敵人火焰抗性",
+"Enemy Cold Resistance": "敵人冰寒抗性",
+"Enemy Lightning Resistance": "敵人閃電抗性",
+"Enemy Poison Resistance": "敵人毒素抗性",
+"Enemy Magic Resistance": "敵人魔法抗性",
+"Enemy Physical Resistance": "敵人物理抗性",
+"Slows Target": "目標緩速",
+"Attacker Takes * Damage": "攻擊者受到{0}傷害",
+"Attacker Takes Fire Damage": "攻擊者受到火焰傷害",
+"Attacker Takes Cold Damage": "攻擊者受到冰寒傷害",
+"Attacker Takes Lightning Damage": "攻擊者受到閃電傷害",
+"Attacker Takes Poison Damage": "攻擊者受到毒素傷害",
+"Attacker Takes Magic Damage": "攻擊者受到魔法傷害",
+"Missile Damage Reduced": "遠程傷害減少",
+"Melee Damage Reduced": "近戰傷害減少",
+"* (* running)": "{0}（跑步時 {1}）",
+"*% / max *% / *% in all": "{0}% / 上限 {1}% / 總計 {2}%",
+"*% / max *%": "{0}% / 上限 {1}%",
+"Curse Length Reduced by": "詛咒時間減少",
+"Experience Gained": "獲得經驗值",
+"Light Radius": "照亮範圍",
 // 遊戲 20261105.1：恰西的鐵砧（淬鍊／清除／地獄熔爐／升級）、燃燒的恐懼精華、鑰匙說明、武器技能新說明
 "Quantity: #": "數量：{0}",
 "Keep in the Charms Window to Gain Bonus (*)": "放在護符欄（{0}）才有效果",
