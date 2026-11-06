@@ -42,7 +42,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V44';
+  const VERSION = 'V45';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -77,7 +77,7 @@ javascript:(function awTools() {
     noLimit: true,          /* 物品持有無上限（背包、石板、符文） */
     itemMax: 99999,         /* 背包和符文的新上限；想保留一個上限就改小 */
     slateMax: 999999,       /* 石板的新上限 */
-    stashMax: 2000,         /* 共用倉庫的新上限（遊戲原本 500，v0.3.x 起 2000）；倉庫整個存在瀏覽器一格裡，太大會存不進去 */
+    stashMax: 10000,        /* 共用倉庫的新上限（遊戲 v0.3.240 起本身就是 10000，設得比 10000 小會當成 10000）；倉庫整個存在瀏覽器一格裡，太大會存不進去 */
     uqKeepHi: 2,            /* 獨特裝備這個階級以上一律保留（0 一般、1 高階、2 終局、3 守護者、4 終焉）；設 0 關閉 */
     saveWarnKB: 800,        /* 存檔超過這個大小（KB）就跳警告 */
     noUpdate: true,         /* 禁止遊戲自動更新（自動重新整理） */
@@ -551,16 +551,23 @@ javascript:(function awTools() {
       const mom = STK.mom.max + n('momMax');
       /* 遊戲設定「不普攻」（S.set.nob）時普攻和普攻上的毒都是 0 */
       const noBasic = !!(S.set && S.set.nob);
+      /* 聖鑄詞「僕從」（遊戲 v0.3.279 起，tal('svt')）：普攻歸零，技能改由僕從施放、算召喚物傷害：
+       * 每次 × svtK × (1 + 召喚物數量 minion) × 軍勢 (1 + minArmy × 同一個數) × 召喚物暴擊 W()；召喚類技能（tg 有 minion）不算。
+       * 血池、永恆旋風這種持續技能（sus）用僕從的生命 svtMax() 算，血池不乘 svtK。 */
+      const F = !!n('svt'), svq = 1 + (M.minion || 0), svK = n('svtK'), svJ = 1 + n('minArmy') * svq;
+      const svW = s => n('minCrit') ? critF2(M, Object.assign({}, s, { crit: s.crit + n('minCritC'), critm: s.critm + n('minCritM') }))
+        : 1 + Math.min(100, s.crit + n('minCritC')) / 100 * ((150 + s.critm + n('minCritM')) / 100 - 1);
       /* 重拳出擊：普攻換成砸拳，另乘一個倍率（遊戲裡先除掉一般暴擊再乘上砸拳自己的暴擊） */
       const pm = n('punch') && typeof punchMods === 'function' ? punchMods() : null;
       const fist = pm ? uv('fist', 0, U.fist) / 100 * (1 + pm.dmg) * (1 + PUNCH.x * pm.extra) * (1 + Math.min(100, M.critRaw + pm.crit) / 100 * ((M.critm + pm.critm) / 100 - 1)) / G0 : 1;
-      let basic = noBasic ? 0 : fixedHit ? M.aps : fist * C * M.dmgMul * M.aps * G0 *
+      let basic = noBasic || F ? 0 : fixedHit ? M.aps : fist * C * M.dmgMul * M.aps * G0 *
         (has('dance') ? (1 + .05 * mom) * (n('actFromMove') ? 1 + .03 * mom : 1) * (1 + mom * n('momDmg')) : 1);
       const p = M.psnHit;
-      /* 中毒：psnR 是中毒傷害加成（psnAs 天賦會依攻速改它），agF 是 dotAg 天賦的暴傷倍率；舊版遊戲沒有這兩個欄位 */
-      const psnR = M.psnR != null ? M.psnR : n('psnRate'), agF = M.agF || 1;
+      /* 中毒：psnR 是中毒傷害加成（psnAs 天賦會依攻速改它；v0.3.411 起另有 psnRe＝再乘上劍舞氣勢的版本，遊戲算中毒用這個），
+       * agF 是 dotAg 天賦的暴傷倍率；舊版遊戲沒有這些欄位 */
+      const psnR = M.psnRe != null ? M.psnRe : M.psnR != null ? M.psnR : n('psnRate'), agF = M.agF || 1;
       const stackUnit = C * M.dmgMul * G0 * agF * PSN_K * M.psn * (1 + psnR);
-      let basicStacks = noBasic ? 0 : p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
+      let basicStacks = noBasic || F ? 0 : p.some(t => t >= 1) ? 1 : n('psnHit') ? Math.min(M.psnMax, M.aps * n('psnHit') * PSN_T) : 0;
       const king = fix && U.kingr && acts.filter(g => !SKILLS[g.id].aura).length === 1;
       /* 召喚師「軍勢」：每隻召喚物（以全數在場計算）讓所有召喚物傷害 +minArmy */
       const army = acts.filter(g => g.id === 'summon' || g.id === 'guard').reduce((t, g) => t + (g.id === 'summon' ? MIN.n : GSP.n) + M.minion + gemMods(g).minion, 0);
@@ -573,7 +580,12 @@ javascript:(function awTools() {
       const rows = [];
       for (const g of acts) {
         const a = SKILLS[g.id], s = gemMods(g);
-        if (a.sus) { if (a.sdps) T += a.sdps(M, s) * M.skillMul * critF2(M, s); continue; }
+        if (a.sus) {
+          if (a.sdps) T += F ? a.sdps(g.id === 'bpool' && typeof svtMax === 'function' ? Object.assign({}, M, { maxhp: svtMax(M.maxhp, n) }) : M, s) * (g.id === 'bpool' ? 1 : svK) * svq * M.minMul * svJ * svW(s)
+            : a.sdps(M, s) * M.skillMul * critF2(M, s);
+          continue;
+        }
+        if (F && a.tg.includes('minion')) continue;
         if (g.id === 'guard') {
           T += C * M.minMul * GSP.k * (1 + .6 * s.extra) / GSP.atk * M.minRate * (GSP.n + M.minion + s.minion) * (1 + s.dmg) * (1 + n('minDmg')) * H * minCritF(s);
           continue;
@@ -591,7 +603,7 @@ javascript:(function awTools() {
       }
       /* 施放動畫的排擠：所有技能佔用的時間加起來超過 1，就一起等比例變慢 */
       let slow = 1, castRate = 0;
-      if (fix) {
+      if (fix && !F) {
         let util = 0;
         for (const r of rows) util += (ANIM_LOCK + EXTRA_GAP * r.s.extra) / r.e;
         slow = Math.max(1, util);
@@ -607,6 +619,7 @@ javascript:(function awTools() {
         const mn = a.tg.includes('minion');
         const unit = C * (mn ? M.minMul * H : M.skillMul) * critF2(M, mn ? Object.assign({}, s, { crit: s.crit + n('minCritC'), critm: s.critm + n('minCritM') }) : s);
         const xm = 1 + .6 * s.extra + xk * (s.xhit || 0);
+        if (F) { T += C * M.minMul * svK * svq * svJ * svW(s) * mul * (a.est ? a.est(s, M, e) : a.hit || 0) * xm / e; continue; }
         if (fix && r.g.id === 'varrow') {
           const hps = (1 + s.extra) / e, nst = Math.min(M.psnMax + s.pstk, PSN_T * hps);
           skillStacks = Math.max(skillStacks, nst);
@@ -618,7 +631,7 @@ javascript:(function awTools() {
       /* 詛咒連結「厄運」：引爆的傷害（遊戲的 doomEst，自己算詛咒的施放間隔，不受施放動畫排擠） */
       if (typeof doomEst === 'function') for (const g of acts) {
         const a = SKILLS[g.id], s = gemMods(g);
-        if (a.crs && s.doom) T += C * M.skillMul * G0 * doomEst(M, s, a);
+        if (a.crs && s.doom) T += C * (F ? M.minMul * svJ * svW(s) : M.skillMul * G0) * doomEst(M, s, a);
       }
       if (fix) {
         const k = Math.max(0, 1 - castRate * ATK_LOCK);
@@ -2263,7 +2276,7 @@ javascript:(function awTools() {
   };
 
   if (first && (CFG.noLimit || CFG.uqKeepHi)) {
-    const N = String(CFG.itemMax), NS = String(CFG.slateMax), NT = String(CFG.stashMax);
+    const N = String(CFG.itemMax), NS = String(CFG.slateMax), NT = String(Math.max(+CFG.stashMax || 0, 1e4));
     const RULES = [];
     if (CFG.noLimit) {
       RULES.push(
@@ -2278,12 +2291,12 @@ javascript:(function awTools() {
         [/\bSLATE_MAX\b/g, NS],
         [/S\.slates\.length>=(?:5e3|500)\b/g, 'S.slates.length>=' + NS],
         [/\$\{S\.slates\.length\}\/(?:5000|500)\b/g, '${S.slates.length}/' + NS],
-        /* 共用倉庫（v0.2.730 起）：存入的上限直接寫數字（以前 500，v0.3.x 起 2e3），有「目前件數 stCnt()」和「倉庫物件 .it.length」
+        /* 共用倉庫（v0.2.730 起）：存入的上限直接寫數字（以前 500，v0.3.x 起 2e3，v0.3.240 起 1e4），有「目前件數 stCnt()」和「倉庫物件 .it.length」
          * 兩種寫法，另外還有顯示用的「x/2000」和提示文字 */
-        [/(stCnt\(\)(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3)\b/g, '$1$2' + NT],
-        [/(\.it\.length(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3)\b/g, '$1$2' + NT],
-        [/(\.it\.length\}\/)(?:500|2000)\b/g, '$1' + NT],
-        [/上限 (?:500|2000)）/g, '上限 ' + NT + '）']
+        [/(stCnt\(\)(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3|1e4)\b/g, '$1$2' + NT],
+        [/(\.it\.length(?:\+[\w.]+)?)(>=|<=|>)(?:500|2e3|1e4)\b/g, '$1$2' + NT],
+        [/(\.it\.length\}\/)(?:500|2000|10000)\b/g, '$1' + NT],
+        [/上限 (?:500|2000|10000)）/g, '上限 ' + NT + '）']
       );
       /* 從倉庫取出時看的是常數物件 ST_CAP（角色身上每類最多幾件），它不是函式改不到原始碼，直接改裡面的數字 */
       try {
@@ -2408,10 +2421,29 @@ javascript:(function awTools() {
         n: S.name, t: Date.now(), ss: o.ss || 0, hd: S.lb.hd ? 1 : 0 };
       S.sc.hs = null;
     } catch (e) {}
+    /* 巔峰之塔排行榜（遊戲 v0.3.469 起，ptLbSend 上傳到 api/peak，每次存檔都會呼叫）：
+     * 打破自己紀錄時 ptRec() 會把層數＋構築快照存成 S.pt.lb.r1（每期）／r2（無限制）等著上傳，
+     * 上傳失敗或遊戲關掉時會留在存檔裡，之後開遊戲自動補傳（v0.3.476）。這裡把等著上傳的紀錄刪掉。
+     * 另外換稱號（t1／t2）或改隱藏設定（h1／h2）時，遊戲會用「目前的構築快照」重傳已上傳過的層數，
+     * 所以也補成目前的值，等於「已經傳過了」。s1／s2（已上傳的層數）不動，那是沒用小工具時傳的。 */
+    try {
+      if (!S || !S.pt || !S.pt.lb) return;
+      const L = S.pt.lb, tt = S.title || '', hd = S.pt.pub ? 0 : 1;
+      let ch = false;
+      for (const k of [1, 2]) {
+        if (L['r' + k]) { delete L['r' + k]; ch = true; }
+        if (L['t' + k] !== tt) { L['t' + k] = tt; ch = true; }
+        if (L['h' + k] !== hd) { L['h' + k] = hd; ch = true; }
+      }
+      if (ch && typeof markDirty === 'function') markDirty();
+    } catch (e) {}
   };
   if (first) {
     if (typeof window.lbSend === 'function') window.lbSend = () => { lbMask(); };
     if (typeof window.scLbSend === 'function') window.scLbSend = () => { lbMask(); };
+    /* 巔峰之塔：上傳換成空的；ptRec（記下等著上傳的紀錄）也換成空的，就不會有紀錄留在存檔裡 */
+    if (typeof window.ptLbSend === 'function') window.ptLbSend = () => { lbMask(); };
+    if (typeof window.ptRec === 'function') window.ptRec = () => {};
     lbMask();
   }
 
@@ -2953,6 +2985,15 @@ javascript:(function awTools() {
       const [r, c] = tierRange(a.a, a.t), d = c > r ? (a.v - r) / (c - r) : 1, [f, p] = tierRange(a.a, a.t - 1);
       return Math.round(f + d * (p - f));
     };
+    /* 遊戲 v0.3.380 起萃取可勾「萃取石不足時，以灰燼合成」（存在 S.set.xac，和遊戲萃取視窗是同一個勾選）。
+     * 勾了之後持有 0 顆的萃取石也能選，doAlch 會先呼叫 xMake 用灰燼合成（含 4 顆合 1 顆升級），灰燼不夠就不萃取。
+     * xEst(石頭) 是遊戲自己估的「每顆約需多少灰燼」。 */
+    const xacOn = () => { try { return !!(S.set && S.set.xac); } catch (e) { return false; } };
+    const xacHas = typeof xMake === 'function';
+    const xacEst = k => { try { return typeof xEst === 'function' ? xEst(k) : 0; } catch (e) { return 0; } };
+    const xacHtml = st => xacHas ? '<label style="display:flex;gap:6px;align-items:center;margin-top:6px;cursor:pointer"><input type="checkbox" data-a="xac" ' + (xacOn() ? 'checked' : '') + '><span>萃取石不足時，以灰燼合成</span></label>' +
+      (xacOn() && st ? '<div style="color:#a89a84;font-size:12px">' + MATS[st].n + ' 每顆約 ' + fmt(xacEst(st)) + ' 灰燼' + (S.mat[st] > 0 ? '' : '・持有 0，萃取時會先合成') + '</div>' : '') : '';
+    const xacSet = on => { try { S.set.xac = on ? 1 : 0; markDirty(); } catch (e) {} };
     /* 執行完遊戲的動作後重畫畫面，並把遊戲記下的結果（ui.alchRes）用小視窗講清楚。
      * 萃取完裝備通常會消失，遊戲的萃取視窗會直接關掉，不另外說明的話玩家看不到拿到什麼 */
     const showGameResult = before => {
@@ -2978,7 +3019,7 @@ javascript:(function awTools() {
       if (!t || !t.af[j]) return;
       const a = t.af[j], uqHas = uqKey(t) && !t.my, mir = !!t.mir, cost = ALCH_ASH.x(t.ilvl);
       const stones = ['x1', 'x2', 'x3', 'x4'];
-      let st = stones.find(k => S.mat[k] > 0 && k === ui.alchOpt.x) || stones.slice().reverse().find(k => S.mat[k] > 0) || null;
+      let st = stones.find(k => S.mat[k] > 0 && k === ui.alchOpt.x) || stones.slice().reverse().find(k => S.mat[k] > 0) || (xacOn() ? (stones.includes(ui.alchOpt.x) ? ui.alchOpt.x : stones[stones.length - 1]) : null);
       let prot = ui.alchOpt.p && S.mat[ui.alchOpt.p] > 0 ? ui.alchOpt.p : '';
       const { box, close } = awSheet('awXtrPick', 520);
       const draw = () => {
@@ -2996,10 +3037,11 @@ javascript:(function awTools() {
             const desc = ['成功率 ' + XTR.ok[l] + '%'];
             if (XTR.up[l] || (mir && l === 4)) desc.push(a.t >= 1 ? ((mir && l === 4) ? '奇蹟：必定升階' : XTR.up[l] + '% 升階') : '已是 T0，不會升階');
             if (uqHas && (XTR.uq[l] || mir)) desc.push((mir ? '100' : XTR.uq[l]) + '% 改取出獨特效果');
-            return '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (st === k ? '#3a3020' : '#1a1410') + ';cursor:' + (has ? 'pointer' : 'not-allowed') + ';opacity:' + (has ? 1 : 0.45) + '">' +
-              '<input type="radio" name="awxs" data-a="st" data-k="' + k + '" ' + (st === k ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+            const can = has || xacOn();
+            return '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (st === k ? '#3a3020' : '#1a1410') + ';cursor:' + (can ? 'pointer' : 'not-allowed') + ';opacity:' + (can ? 1 : 0.45) + '">' +
+              '<input type="radio" name="awxs" data-a="st" data-k="' + k + '" ' + (st === k ? 'checked' : '') + ' ' + (can ? '' : 'disabled') + '>' +
               '<b>Lv' + l + '</b><span style="flex:1">' + desc.join('・') + '</span><span>X' + has + '</span></label>';
-          }).join('') +
+          }).join('') + xacHtml(st) +
           '<div style="margin:8px 0 2px;color:#ffd84a">保護石（失敗或萃取後保留裝備）</div>' +
           [['', '不用', '', 1], ['p1', MATS.p1.n, '保留 ' + PROT_KEEP.p1 + '%', S.mat.p1 || 0], ['p2', MATS.p2.n, '保留 ' + PROT_KEEP.p2 + '%', S.mat.p2 || 0]].map(([k, n, d, has]) =>
             '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (prot === k ? '#3a3020' : '#1a1410') + ';opacity:' + (has ? 1 : 0.45) + '">' +
@@ -3011,7 +3053,7 @@ javascript:(function awTools() {
             (uqP ? '改取出獨特效果：<b style="color:#ffb070">' + pct(ok * uqP / 100) + '</b><br>' : '') +
             (ok < 100 ? '失敗（裝備消失、沒有符文）：<b style="color:#ff5a6a">' + pct(100 - ok) + '</b><br>' : '') +
             (prot ? '不論成功失敗，' + PROT_KEEP[prot] + '% 機率保留裝備' : '萃取後裝備會消失') +
-          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有萃取石，可到「合成」製作。</div>') +
+          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有萃取石，可到「合成」製作，或勾選上面的「以灰燼合成」。</div>') +
           (mir ? '<div style="color:#e8f0ff;font-size:12px;margin-top:4px">這件裝備有奇蹟狀態，這次萃取會用掉。</div>' : '') +
           (runesFull ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">符文石已滿，不能萃取。</div>' : '') +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span>消耗 ' + fmt(cost) + ' 灰燼（你有 ' + fmt(S.ash) + '）</span><span style="flex:1"></span>' +
@@ -3023,6 +3065,13 @@ javascript:(function awTools() {
         const r = e.target;
         if (r.dataset.a === 'st') { st = r.dataset.k; draw(); }
         if (r.dataset.a === 'pr') { prot = r.dataset.k; draw(); }
+        if (r.dataset.a === 'xac') {
+          xacSet(r.checked);
+          /* 關掉時，選的萃取石若一顆都沒有就換成持有的最高階；打開時還沒選就先選最高階的 */
+          if (!r.checked && st && !(S.mat[st] > 0)) st = stones.slice().reverse().find(k => S.mat[k] > 0) || null;
+          if (r.checked && !st) st = stones[stones.length - 1] || null;
+          draw();
+        }
       });
       box.addEventListener('click', e => {
         const b = e.target.closest('button[data-a]');
@@ -3052,7 +3101,7 @@ javascript:(function awTools() {
       if (!key) return;
       const cost = ALCH_ASH.x(t.ilvl);
       const stones = ['x1', 'x2', 'x3', 'x4'].filter(s => XTR.uq[MATS[s].l] > 0);
-      let st = stones.find(s => S.mat[s] > 0 && s === ui.alchOpt.x) || stones.slice().reverse().find(s => S.mat[s] > 0) || null;
+      let st = stones.find(s => S.mat[s] > 0 && s === ui.alchOpt.x) || stones.slice().reverse().find(s => S.mat[s] > 0) || (xacOn() ? (stones.includes(ui.alchOpt.x) ? ui.alchOpt.x : stones[stones.length - 1]) : null);
       let prot = ui.alchOpt.p && S.mat[ui.alchOpt.p] > 0 ? ui.alchOpt.p : '';
       let txt = key;
       try { txt = UNIQUE[key].n + '：' + uqText(key, t.cm || 1); } catch (e) {}
@@ -3067,9 +3116,9 @@ javascript:(function awTools() {
           stones.map(s => {
             const l = MATS[s].l, has = S.mat[s] || 0;
             return '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (st === s ? '#3a3020' : '#1a1410') + ';cursor:' + (has ? 'pointer' : 'not-allowed') + ';opacity:' + (has ? 1 : 0.45) + '">' +
-              '<input type="radio" name="awxs" data-a="st" data-k="' + s + '" ' + (st === s ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + '>' +
+              '<input type="radio" name="awxs" data-a="st" data-k="' + s + '" ' + (st === s ? 'checked' : '') + ' ' + (has || xacOn() ? '' : 'disabled') + '>' +
               '<b>Lv' + l + '</b><span style="flex:1">成功率 ' + XTR.ok[l] + '%</span><span>X' + has + '</span></label>';
-          }).join('') +
+          }).join('') + xacHtml(st) +
           '<div style="margin:8px 0 2px;color:#ffd84a">保護石（失敗或萃取後保留裝備）</div>' +
           [['', '不用', '', 1], ['p1', MATS.p1.n, '保留 ' + PROT_KEEP.p1 + '%', S.mat.p1 || 0], ['p2', MATS.p2.n, '保留 ' + PROT_KEEP.p2 + '%', S.mat.p2 || 0]].map(([p, n, d, has]) =>
             '<label style="display:flex;gap:6px;align-items:center;padding:3px 6px;margin:2px 0;background:' + (prot === p ? '#3a3020' : '#1a1410') + ';opacity:' + (has ? 1 : 0.45) + '">' +
@@ -3079,7 +3128,7 @@ javascript:(function awTools() {
             '取出這個獨特效果：<b style="color:#ffb070">' + pct(ok) + '</b><br>' +
             (ok < 100 ? '失敗（裝備消失、沒有符文）：<b style="color:#ff5a6a">' + pct(100 - ok) + '</b><br>' : '') +
             (prot ? '不論成功失敗，' + PROT_KEEP[prot] + '% 機率保留裝備' : '萃取後裝備會消失') +
-          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有 Lv3 以上的萃取石，可到「合成」製作。</div>') +
+          '</div>' : '<div style="color:#ff5a6a;margin-top:8px">沒有 Lv3 以上的萃取石，可到「合成」製作，或勾選上面的「以灰燼合成」。</div>') +
           (t.mir ? '<div style="color:#e8f0ff;font-size:12px;margin-top:4px">這件裝備有奇蹟狀態，這次萃取會用掉。</div>' : '') +
           (runesFull ? '<div style="color:#ff5a6a;font-size:12px;margin-top:4px">符文石已滿，不能萃取。</div>' : '') +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span>消耗 ' + fmt(cost) + ' 灰燼（你有 ' + fmt(S.ash) + '）</span><span style="flex:1"></span>' +
@@ -3091,6 +3140,13 @@ javascript:(function awTools() {
         const r = e.target;
         if (r.dataset.a === 'st') { st = r.dataset.k; draw(); }
         if (r.dataset.a === 'pr') { prot = r.dataset.k; draw(); }
+        if (r.dataset.a === 'xac') {
+          xacSet(r.checked);
+          /* 關掉時，選的萃取石若一顆都沒有就換成持有的最高階；打開時還沒選就先選最高階的 */
+          if (!r.checked && st && !(S.mat[st] > 0)) st = stones.slice().reverse().find(k => S.mat[k] > 0) || null;
+          if (r.checked && !st) st = stones[stones.length - 1] || null;
+          draw();
+        }
       });
       box.addEventListener('click', e => {
         const b = e.target.closest('button[data-a]');
@@ -3424,6 +3480,37 @@ javascript:(function awTools() {
           '<div style="font-size:12px">擊殺 <b>' + fmt(k) + '</b>' + (next ? ' / ' + fmt(next) + (tier >= max ? '（外觀特效）' : '') + '　還差 <b>' + fmt(next - k) + '</b>' + eta : '　外觀特效已解鎖') + '</div>' +
           '<div style="font-size:12px;color:#a89a84">' + mons + '</div></div>';
       });
+      /* 聖域卡牌（遊戲 v0.3.272 起）：SC_CARD 每張是 { k: 怪物代號或 'comp'／'u1', a: 加成詞綴, v: 三階數值, it: 物品名（羅盤卡、聖輝石卡）, n: 自己的門檻 }。
+       * 四種沐光者卡看聖域地圖那隻怪的擊殺數，門檻 SC_CARD_N，十萬隻變閃卡（SC_LOOK）解鎖拖尾；
+       * 羅盤卡、聖輝石卡看累計獲得幾個，門檻寫在 n，集滿第 3 階就是閃卡。
+       * scCardN(i) 是目前數量、scCardT(i) 是階數、scCardF(i) 是把數值轉成加成文字的函式，都是遊戲自己的。 */
+      try {
+        if (typeof SC_CARD !== 'undefined' && Array.isArray(SC_CARD) && typeof scCardN === 'function' &&
+            ((typeof scOpen === 'function' && scOpen()) || SC_CARD.some((c, i) => scCardN(i) > 0))) {
+          const LOOK = typeof SC_LOOK === 'number' ? SC_LOOK : 1e5;
+          h += '<div style="padding:6px 8px;background:#3a3026;font-weight:bold">聖域卡牌</div>';
+          SC_CARD.forEach((c, i) => {
+            count++;
+            const th = c.n || SC_CARD_N, max = th.length, k = scCardN(i), tier = scCardT(i);
+            if (tier >= max) full++;
+            const f = scCardF(i);
+            const val = n => (typeof f === 'function' ? f(c.v[n]) : (c.a || c.k) + ' ' + c.v[n]);
+            const look = c.it ? 0 : LOOK;
+            const next = tier < max ? th[tier] : (look && k < look ? look : 0);
+            const base = tier < max ? (tier > 0 ? th[tier - 1] : 0) : th[max - 1];
+            const pct = next ? Math.max(0, Math.min(100, (k - base) / (next - base) * 100)) : 100;
+            const name = c.it ? c.it + '卡' : (MON[c.k] ? MON[c.k].n : c.k);
+            const unit = c.it ? '累計獲得' : '擊殺';
+            h += '<div style="padding:6px 8px;border-bottom:1px solid #3a3026">' +
+              '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b>' + esc(name) + '</b>' +
+              '<span style="flex:1"></span><span style="color:' + (tier >= max ? '#ffd84a' : '#f0e6d2') + '">' + (tier >= max ? '已滿階' : tier + ' / ' + max + ' 階') + '</span></div>' +
+              '<div style="font-size:12px">目前加成：' + (tier > 0 ? '<b style="color:#7dffc8">' + esc(val(tier - 1)) + '</b>' : '<span style="color:#a89a84">還沒有</span>') +
+              (tier < max ? '　下一階：' + esc(val(tier)) : '') + '</div>' +
+              '<div style="height:8px;background:#0e0b08;border:1px solid #6a5a4a;margin:3px 0"><div style="height:100%;width:' + pct.toFixed(1) + '%;background:' + (tier >= max ? '#ffd84a' : '#7dffc8') + '"></div></div>' +
+              '<div style="font-size:12px">' + unit + ' <b>' + fmt(k) + '</b>' + (next ? ' / ' + fmt(next) + (tier >= max ? '（閃卡、拖尾）' : '') + '　還差 <b>' + fmt(next - k) + '</b>' : (c.it ? '　已是閃卡' : '　閃卡、拖尾已解鎖')) + '</div></div>';
+          });
+        }
+      } catch (e) {}
       const top = elList.scrollTop;
       elList.innerHTML = h || '<div style="padding:10px;color:#a89a84">沒有卡片資料</div>';
       elList.scrollTop = top;
@@ -3468,7 +3555,7 @@ javascript:(function awTools() {
     ['物品上限', [
       ['noLimit', '物品持有無上限', '背包、石板、符文、共用倉庫'],
       ['itemMax', '背包和符文的上限'], ['slateMax', '石板的上限'],
-      ['stashMax', '共用倉庫的上限', '遊戲原本 500；倉庫存在瀏覽器裡，太大可能存不進去（遊戲會提示「儲存空間不足」）'],
+      ['stashMax', '共用倉庫的上限', '遊戲本身 10000，比這個小的設定不會生效；倉庫存在瀏覽器裡，太大可能存不進去（遊戲會提示「儲存空間不足」）'],
       ['uqKeepHi', '獨特裝備這個階級以上一律保留', '0 一般、1 高階、2 終局、3 守護者、4 終焉；填 0 關閉這個功能'],
       ['saveWarnKB', '存檔超過幾 KB 就提醒']
     ]],
