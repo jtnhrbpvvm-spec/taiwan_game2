@@ -847,3 +847,4 @@
 @Prontera	普隆德拉
 @Job	職業
 @Endless Tower	無盡之塔
+@1st job	一轉

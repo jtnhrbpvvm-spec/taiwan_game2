@@ -6,7 +6,7 @@
    中文表用西文原文當鍵；沒翻到的字退回遊戲自己的英文。
    怪物、物品、卡片、技能名是遊戲直接顯示的英文原名，不經過翻譯函式，另外在畫面文字（DOM、canvas）換成台版譯名。
    設定存檔時把 lang 存回原本的語言，沒點書籤時遊戲不會變成西文。 */
-const VERSION = 'V3';
+const VERSION = 'V4';
 /*ZH*/const ZH = {"ui":{},"names":{},"news":{}};/*END*/
 (() => {
   const W = window;
@@ -306,8 +306,98 @@ const VERSION = 'V3';
     setTimeout(() => d.remove(), 2800);
   }
 
+  /* ---------- 天賦頁（talents.html）：遊戲原本開新分頁，新分頁沒有書籤就變回英文。
+     中文模式下改成遊戲內跳窗（同網域 iframe），再把這支書籤載入 iframe 裡切成中文 ---------- */
+  const SELF = import.meta.url;
+  const isTalentsHref = h => /(^|\/)talents\.html([#?]|$)/.test(h || '');
+  function closeTalents() {
+    const ov = document.getElementById('rozh-talents');
+    if (ov) ov.remove();
+  }
+  function openTalents(href) {
+    closeTalents();
+    const ov = document.createElement('div');
+    ov.id = 'rozh-talents';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(20,28,56,.6);display:flex;align-items:center;justify-content:center;padding:2vh 2vw';
+    const box = document.createElement('div');
+    box.style.cssText = 'position:relative;width:min(1220px,100%);height:100%;border-radius:14px;overflow:hidden;box-shadow:0 18px 50px #0008;background:#8fa8de';
+    const fr = document.createElement('iframe');
+    fr.style.cssText = 'width:100%;height:100%;border:0;display:block';
+    fr.title = '天賦';
+    const x = document.createElement('button');
+    x.textContent = '✕';
+    x.title = '關閉';
+    x.style.cssText = 'position:absolute;top:10px;right:12px;z-index:1;width:34px;height:34px;border-radius:50%;border:2px solid #fff;background:#3a5bb4;color:#fff;font:900 17px/1 sans-serif;cursor:pointer;box-shadow:0 2px 8px #0006';
+    x.onclick = closeTalents;
+    ov.addEventListener('pointerdown', e => { if (e.target === ov) closeTalents(); });
+    for (const ev of ['pointerdown', 'touchstart', 'mousedown', 'wheel', 'keydown']) ov.addEventListener(ev, e => e.stopPropagation());
+    fr.addEventListener('load', () => {
+      try {
+        const w = fr.contentWindow, d = fr.contentDocument;
+        w.addEventListener('keydown', e => { if (e.key === 'Escape') closeTalents(); });
+        if (w.__roZh || d.querySelector('script[data-rozh]')) return;
+        const s = d.createElement('script');
+        s.type = 'module'; s.src = SELF; s.dataset.rozh = '1';
+        d.head.appendChild(s);
+      } catch (e) { /* 不同網域就算了 */ }
+    });
+    fr.src = href;
+    box.append(fr, x);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    fr.focus();
+  }
+  addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('rozh-talents')) { e.stopPropagation(); closeTalents(); } }, true);
+  document.addEventListener('click', e => {
+    if (!isZh() || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const a = e.target.closest && e.target.closest('a[href]');
+    if (!a || !isTalentsHref(a.getAttribute('href'))) return;
+    e.preventDefault(); e.stopPropagation();
+    openTalents(a.href);
+  }, true);
+  const origOpen = W.open;
+  W.open = function (url) {
+    if (isZh() && isTalentsHref(String(url || ''))) { openTalents(new URL(url, location.href).href); return null; }
+    return origOpen.apply(this, arguments);
+  };
+
+  /* 在天賦頁裡：加「中文」按鈕並切過去；「開始遊戲／回到遊戲」在跳窗裡就是關閉跳窗 */
+  const talentsLang = () => document.querySelector('header .lang [data-l]') && document.querySelector('header .lang');
+  let host = null;
+  try { if (W !== W.top && W.parent.__roZh && W.parent.location.origin === location.origin) host = W.parent.__roZh; } catch (e) { /* 不是遊戲內跳窗 */ }
+  if (host) {
+    const st = document.createElement('style');
+    st.textContent = 'header{padding-right:58px!important}';   /* 留位置給跳窗的關閉鈕 */
+    document.head.appendChild(st);
+    document.addEventListener('click', e => {
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      const h = a.getAttribute('href');
+      if (h === './' || h === '/' || h === 'index.html' || h === './index.html') { e.preventDefault(); e.stopPropagation(); host.closeTalents(); }
+      else if (!isTalentsHref(h) && !h.startsWith('#')) a.target = '_blank';   /* 其他連結開新分頁，不要把跳窗換掉 */
+    }, true);
+  }
+  function talentsZh(again) {
+    const box = talentsLang();
+    let b = box.querySelector('[data-l="zh"]');
+    if (!b) {
+      b = document.createElement('button');
+      b.dataset.l = 'zh';
+      b.textContent = '中文';
+      box.appendChild(b);
+    }
+    /* 天賦頁讀完圖示清單才掛上點擊事件，等職業列表出現再點 */
+    const jobs = document.getElementById('jobs');
+    if (jobs && !jobs.children.length) {
+      if (++tries < 150) return void setTimeout(talentsZh, 200, again);
+    }
+    if (!isZh()) b.click();
+    if (isZh()) { walk(document.body); if (again && !host) toast('繁體中文已啟用（' + VERSION + '）'); }
+  }
+
   let tries = 0;
   function activate(again) {
+    if (talentsLang()) return talentsZh(again);
     if (isZh()) { onLang(); if (again) toast('繁體中文已啟用（' + VERSION + '）'); return; }
     const li = splashItem();
     if (!li) {
@@ -322,6 +412,6 @@ const VERSION = 'V3';
 
   mo.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
   addOptButton(document.body);
-  W.__roZh = { VERSION, activate, tn, dict, ZH, maintMsg };
+  W.__roZh = { VERSION, activate, tn, dict, ZH, maintMsg, openTalents, closeTalents };
   activate(true);
 })();
