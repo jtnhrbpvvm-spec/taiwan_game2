@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>開孔與寶石｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸裝備開孔、串聯、技能寶石與 13 種輔助寶石：各部位孔數上限、掉落機率、寶石升級經驗、開孔石與連結石、可鑲的技能。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="gems">
+<main>
+    <h1>🔶 開孔與寶石</h1>
+    <p class="lead">2026-11-07 新增（類似 POE）。裝備上有<b>孔</b>，相鄰的孔可能<b>串聯</b>。在同一串裡放一顆<b>技能寶石</b>＋幾顆<b>輔助寶石</b>，那個技能就會被強化。技能照常學、照常施放，寶石只是額外加成。</p>
+    <div class="toc"><a href="#socket">孔與串聯</a><a href="#how">怎麼鑲</a><a href="#skill">技能寶石</a><a href="#support">輔助寶石</a><a href="#level">寶石升級</a><a href="#stone">開孔石／連結石</a></div>
+
+    <h2 id="socket">孔與串聯</h2>
+    <div class="tw"><table>
+        <thead><tr><th>部位</th><th class="num">最多孔數</th></tr></thead>
+        <tbody id="max"></tbody></table></div>
+    <ul>
+        <li><b>新掉落</b>的裝備才會隨機帶孔（舊裝備、商店貨沒有孔，可以用開孔石開）。品質越高孔越多：普通 0～1、魔法 1～2、稀有 2～3、傳說／<a href="uniques.html">傳奇</a> 2～4，之後每次 25% 再多一孔（不超過上限）。</li>
+        <li>串聯：相鄰兩孔各自判定，普通 35%、魔法 45%、稀有 55%、傳說／傳奇 65%。道具視窗裡孔與孔之間有連線的就是串在一起。</li>
+        <li>孔、串聯、鑲的寶石都跟著那件裝備走，算進防改檔簽章；可以交易。</li>
+    </ul>
+
+    <h2 id="how">怎麼鑲</h2>
+    <ol>
+        <li>打開裝備的道具視窗，按「🔷 鑲嵌」。</li>
+        <li>選一個空孔放<b>技能寶石</b>（從已學會的技能直接產生，不用材料）。</li>
+        <li>跟它<b>串聯</b>的其他孔放<b>輔助寶石</b>（背包裡的）。沒串在一起的不會生效。</li>
+        <li>同一個技能在身上多件裝備都有輔助時，同種輔助取最高等級的那顆。</li>
+    </ol>
+    <div class="box tip">拆下技能寶石免費（它直接消失）；拆下輔助寶石要付 <b>寶石等級 × <span id="ug"></span> 金幣</b>，寶石保留等級與經驗。開孔石、連結石要孔裡全部清空才能用。</div>
+
+    <h2 id="skill">技能寶石：哪些技能能鑲</h2>
+    <ul>
+        <li><b>普通攻擊</b>（所有職業）。</li>
+        <li>已學會的<b>物理技能</b>與<b>攻擊魔法</b>。</li>
+        <li><b>二轉持續傷害技能</b>（2026-11-07 加入）：炎獄降臨、天雷審判、毒霧領域、轟炸支援、槍舞、元素領域、神聖領域、天國之門、近衛召喚、精靈王降臨、惡魔召喚。
+            對這些技能有效的輔助：附加元素、元素集中、範圍擴大（單體／隨機落雷改成打全部）、多重打擊與殘忍（物理類）、連鎖（單體類）、吸血、耗魔降低、冷卻縮減；<b>暴擊強化與異常強化無效</b>。</li>
+        <li>治癒、增益、被動技能不能做成技能寶石。</li>
+    </ul>
+
+    <h2 id="support">輔助寶石（<span id="sn"></span> 種）</h2>
+    <p>怪物掉落：一般怪 <b id="dp"></b>、首領 <b id="bp"></b>，掉到時從 <span class="sn2"></span> 種平均抽一顆（精英召喚／分裂的小怪不掉）。可以交易、存共用倉庫；背包裡同種同等級的會疊成一列（×N），鑲嵌時用經驗最高的那顆。</p>
+    <div id="sup"></div>
+    <div class="box info"><b>元素類</b>（附加火焰／冰冷／閃電、元素集中、異常強化）的效果看<a href="elements.html">元素系統</a>；<b>殘忍</b>會讓這個技能完全沒有元素傷害（轉換、附加都無效），不要跟元素類放同一串。</div>
+
+    <h2 id="level">寶石升級</h2>
+    <ul>
+        <li>輔助寶石<b>鑲在身上的裝備</b>時，每擊殺一隻怪得到該怪經驗的 <b id="es"></b>（玩家經驗不變）；最高 <b id="ml"></b> 級。背包裡的不會升級。</li>
+        <li>升下一級需要 1,500 × 目前等級² 經驗，1→<span class="ml2"></span> 級合計約 <b id="tot"></b>。</li>
+    </ul>
+    <details><summary>各等級所需經驗</summary><div id="exp"></div></details>
+
+    <h2 id="stone">開孔石、連結石</h2>
+    <div id="stones"></div>
+    <ul>
+        <li>開孔石：孔數重擲成 1～上限，孔越多越難（上限 6 時，1 孔權重 6、6 孔權重 1）。</li>
+        <li>連結石：每兩孔各 50% 串聯。</li>
+        <li>可以在<a href="forge.html">鍛造.兌換師-青嵐</a>的「♻️ 通貨兌換」用<b>混沌石</b>換：混沌石 ×1 → 開孔石 ×2、混沌石 ×1 → 連結石 ×3（單向，見<a href="affix.html#exchange">通貨兌換</a>）。</li>
+        <li>傳奇裝備不能用其他通貨，但可以用開孔石、連結石。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const G = W.gems;
+const MAXN = { twohand: '雙手武器', sword: '單手武器', armor: '盔甲', helm: '頭盔、T恤、斗篷、手套、長靴、盾牌', ring: '戒指、項鍊、腰帶' };
+$('#max').innerHTML = Object.entries(G.maxSockets).map(([k, n]) => `<tr><td>${MAXN[k]}</td><td class="num">${n || '沒有孔'}</td></tr>`).join('');
+$('#ug').textContent = fmt(G.unsocketGold);
+$('#sn').textContent = G.support.length; $$('.sn2').forEach(e => e.textContent = G.support.length);
+$('#dp').textContent = pct(G.dropP); $('#bp').textContent = pct(G.bossP);
+$('#es').textContent = pct(G.expShare); $('#ml').textContent = G.maxLv; $$('.ml2').forEach(e => e.textContent = G.maxLv);
+$('#tot').textContent = fmt(G.expNeed.reduce((a, b) => a + b, 0));
+renderTable($('#sup'), [
+    { label: '寶石', html: g => `${g.icon} ${itemLink(g.id)}` },
+    { label: 'Lv.1', html: g => `<small>${esc(g.lv1)}</small>` },
+    { label: 'Lv.10', html: g => `<small>${esc(g.lv10)}</small>`, cls: 'hide-sm' },
+    { label: 'Lv.20', html: g => `<small>${esc(g.lv20)}</small>` },
+], G.support);
+renderTable($('#exp'), [
+    { label: '等級', html: r => `Lv.${r.lv} → ${r.lv + 1}` },
+    { label: '所需經驗', num: true, html: r => fmt(r.need) },
+    { label: '累計', num: true, html: r => fmt(r.sum) },
+], G.expNeed.map((need, i, a) => ({ lv: i + 1, need, sum: a.slice(0, i + 1).reduce((x, y) => x + y, 0) })));
+renderTable($('#stones'), [
+    { label: '通貨', html: id => itemLink(id) },
+    { label: '用法', html: id => `<small>${esc(W.currency[id].desc)}</small>` },
+    { label: '掉落', html: id => `<small>權重 ${W.currency[id].w}，Lv.${W.currency[id].minLv}+ 怪</small>` },
+], ['curSocket', 'curLink']);
+</script>
+</body>
+</html>

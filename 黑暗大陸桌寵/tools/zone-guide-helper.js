@@ -142,6 +142,7 @@
 .gw-modal .tag.purple { color: #c08bff; border-color: #4e2f6e; } .gw-modal .tag.cyan { color: #4fd6c8; border-color: #24575a; }
 .zg .g-normal, .gw-modal .g-normal { color: #e8e8e8; } .zg .g-high, .gw-modal .g-high { color: #6fdc6f; } .zg .g-rare, .gw-modal .g-rare { color: #5aa0ff; }
 .zg .g-hero, .gw-modal .g-hero { color: #c87bff; } .zg .g-legend, .gw-modal .g-legend { color: #ff9a3c; }
+.zg .g-unique, .gw-modal .g-unique { color: #e8b04a; font-weight: 700; } .gw-modal .tag.g-unique { border-color: #6a5020; }
 .gw-modal .res-1 { color: #5aa0ff; } .gw-modal .res-2 { color: #c87bff; } .gw-modal .res-3 { color: #ff9a3c; } .gw-modal .res-4 { color: #ff5a5a; }
 .zg .doll-T1, .gw-modal .doll-T1 { color: #ff6a6a; } .zg .doll-T2, .gw-modal .doll-T2 { color: #ffd84a; } .zg .doll-T3, .gw-modal .doll-T3 { color: #c08bff; } .zg .doll-T4, .gw-modal .doll-T4 { color: #6aa8ff; }
 `;

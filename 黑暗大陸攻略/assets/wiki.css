@@ -142,6 +142,7 @@ input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px
 .il .ic { width: 22px; height: 22px; }
 .g-normal { color: var(--g-normal); } .g-high { color: var(--g-high); } .g-rare { color: var(--g-rare); } .g-hero { color: var(--g-hero); } .g-legend { color: var(--g-legend); }
 .res-1 { color: #5aa0ff; } .res-2 { color: #c87bff; } .res-3 { color: #ff9a3c; } .res-4 { color: #ff5a5a; text-shadow: 0 0 8px rgba(255, 90, 90, .5); }
+.g-unique { color: #e8b04a; font-weight: 700; } .tag.g-unique { border-color: #6a5020; }
 .q-magic { color: #6aa8ff; } .q-rare { color: #ffd84a; } .q-legend { color: #ff9a3c; } .q-special { color: var(--cyan); }
 .doll-T0 { background: linear-gradient(90deg, #ff6a6a, #ffd56a, #6aff9a, #6aa8ff, #c08bff); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
 .doll-T1 { color: #ff6a6a; } .doll-T2 { color: #ffd84a; } .doll-T3 { color: #c08bff; } .doll-T4 { color: #6aa8ff; }

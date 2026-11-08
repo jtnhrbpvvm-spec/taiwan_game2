@@ -46,9 +46,10 @@ const tower = (W.tower?.floors || []).map((f) => ({ floor: f.floor, lv: f.lv, hp
 
 // 物品／怪物／技能說明視窗（跟攻略網一樣）：攻略 wiki.js「桌寵共用」那段程式＋它用到的攻略資料
 const WIKI_KEYS = ["meta", "consts", "statNames", "catNames", "slots", "weaponTypes", "buffDefs", "skills", "classSkills", "magicTierNames", "items", "sources",
-  "bookDrops", "recipes", "monsters", "zones", "towns", "currency", "resTiers", "resTriggers", "bossEnchants", "bossEnchantText", "dolls", "dollAbilities", "merc"];
+  "bookDrops", "recipes", "monsters", "zones", "towns", "currency", "resTiers", "resTriggers", "bossEnchants", "bossEnchantText", "dolls", "dollAbilities", "merc", "uniques", "gems"];
 const wiki = Object.fromEntries(WIKI_KEYS.map((k) => [k, W[k]]));
-wiki.classes = Object.fromEntries(Object.entries(W.classes).map(([id, c]) => [id, { name: c.name, icon: c.icon }]));
+// weapons：說明視窗的「可用職業」要用（2026-11-08 補上，之前桌寵的武器都顯示「可用職業 無」）
+wiki.classes = Object.fromEntries(Object.entries(W.classes).map(([id, c]) => [id, { name: c.name, icon: c.icon, weapons: c.weapons || [] }]));
 wiki.zones = W.zones.map((z) => ({ id: z.id, name: z.name, icon: z.icon }));
 if (!W.bookDrops) throw new Error("攻略資料沒有 bookDrops，先重跑攻略的 tools/extract.js");
 const wikiJs = fs.readFileSync(path.join(GUIDE, "assets", "wiki.js"), "utf8");

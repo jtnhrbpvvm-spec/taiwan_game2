@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>品質、詞綴與通貨｜黑暗大陸攻略百科</title>
-<meta name="description" content="黑暗大陸暗黑式刷寶：魔法、稀有、傳說品質機率，19 種詞綴與數值上限，傳說與覺醒特殊詞綴，9 種製作通貨用法與掉落權重。">
+<meta name="description" content="黑暗大陸暗黑式刷寶：魔法、稀有、傳說品質機率，詞綴與數值上限（含火焰／冰冷／閃電元素詞綴），傳說與覺醒特殊詞綴，製作通貨用法、掉落權重與通貨兌換。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -13,7 +13,8 @@
 <main>
     <h1>💠 品質、詞綴與製作通貨</h1>
     <p class="lead">怪物掉的武器、防具會隨機擲<b>品質</b>與<b>詞綴</b>（像暗黑破壞神／POE）。商店、鍛造、任務獎勵的裝備都是普通品質，但可以用製作通貨改造。</p>
-    <div class="toc"><a href="#quality">品質機率</a><a href="#affix">詞綴一覽</a><a href="#legend">傳說詞綴</a><a href="#special">覺醒特殊詞綴</a><a href="#currency">製作通貨</a><a href="#filter">戰利品過濾</a></div>
+    <div class="toc"><a href="#quality">品質機率</a><a href="#affix">詞綴一覽</a><a href="#legend">傳說詞綴</a><a href="#special">覺醒特殊詞綴</a><a href="#currency">製作通貨</a><a href="#exchange">通貨兌換</a><a href="#filter">戰利品過濾</a></div>
+    <div class="box info">固定詞綴的<a href="uniques.html">🏵️ 傳奇裝備</a>、裝備的<a href="gems.html">🔶 孔與寶石</a>、<a href="elements.html">🔥 元素傷害</a>各有專頁。</div>
 
     <h2 id="quality">品質機率</h2>
     <div class="tw"><table>
@@ -29,7 +30,8 @@
         <b>物品等級</b>＝掉落怪物的等級，決定詞綴數值上限；<b>村莊商店新買的裝備固定物品等級 <span id="shil"></span></b>（點化、重鑄等改造後也一直是 <span class="shil2"></span>，不會跟著角色升級）。交易所會顯示每件裝備的「基底等級」＝物品等級，舊的商店貨沒有記錄就顯示「未記錄」。賣價＝基本回收價 × 品質倍率＋詞綴數 × 物品等級 × 10。</p>
 
     <h2 id="affix">詞綴一覽（<span id="an"></span> 種）</h2>
-    <div class="box tip"><b>物爆／魔爆</b>：原本的「爆擊」改名<b>物爆率</b>（只影響物理攻擊，基礎 5%），另有<b>魔爆率</b>（只影響魔法傷害，基礎 0%）與<b>物爆傷害</b>／<b>魔爆傷害</b>（爆擊倍率基礎 150%，每件裝備的加成直接相加，例如 +10% → 160%）。這四種詞綴只出現在武器、手套、戒指、項鍊。詳見 <a href="mechanics.html#crit">數值公式</a>。</div>
+    <div class="box tip"><b>物爆／魔爆</b>：原本的「爆擊」改名<b>物爆率</b>（只影響物理攻擊，基礎 5%），另有<b>魔爆率</b>（只影響魔法傷害，基礎 0%）與<b>物爆傷害</b>／<b>魔爆傷害</b>（爆擊倍率基礎 150%，每件裝備的加成直接相加，例如 +10% → 160%）。這四種詞綴只出現在武器、手套、戒指、項鍊。詳見 <a href="mechanics.html#crit">數值公式</a>。<br>
+        <b>元素詞綴</b>（2026-11-07）：火焰／冰冷／閃電傷害 %、附加火焰／冰冷／閃電傷害（加在物理攻擊每一下）。另外<a data-item="curElement">元素石</a>可在武器加 1 條「物理傷害 20～50% 轉為某元素」，這條不在下表、其他通貨重洗也會保留。怎麼算見 <a href="elements.html">元素與精英</a>。</div>
     <p>右邊是各物品等級時的<b>數值上限</b>（實際在下限～上限之間隨機）。「部位」空白表示所有部位都可能出現。</p>
     <div id="affix-list"></div>
 
@@ -42,10 +44,14 @@
     <div id="special-list"></div>
 
     <h2 id="currency">製作通貨</h2>
-    <p>每隻怪 <b id="cp"></b>、首領 <b id="cb"></b>（1～3 顆）會掉通貨，種類依權重抽（權重越大越常見）。在村莊<b>鍛造 NPC →「🔮 裝備改造」</b>使用；地圖用「🗺️ 地圖打造」（見 <a href="rift.html">異界地圖</a>）。通貨不佔負重。</p>
+    <p>每隻怪 <b id="cp"></b>、首領 <b id="cb"></b>（1～3 顆）會掉通貨，種類依權重抽（權重越大越常見）。在村莊<b>鍛造.兌換師-青嵐 →「🔮 裝備改造」</b>使用；地圖用「🗺️ 地圖打造」（見 <a href="rift.html">異界地圖</a>）。通貨不佔負重。</p>
     <div id="cur-list"></div>
     <div class="box tip"><b>改造流程範例：</b>普通裝備 →（點化石）魔法 →（重鑄石重洗到想要的詞綴）→（晉升石）稀有＋1 條 →（神諭石）再加詞綴到最多 6 條 →（淬鍊石）重擲數值。
-        傳說裝備只能用淬鍊石（數值重擲）與覺醒石。</div>
+        傳說裝備只能用淬鍊石（數值重擲）與覺醒石。<a href="uniques.html">傳奇裝備</a>只能用開孔石、連結石。</div>
+
+    <h2 id="exchange">♻️ 通貨兌換</h2>
+    <p>村莊的<b>鍛造.兌換師-青嵐</b>（點名牌直接打開）→「♻️ 通貨兌換」。<b>合成</b>：多顆低階換 1 顆高一階；<b>拆解</b>：高階 1 顆拆成低一階 1 顆（拆了再合一定虧，不能刷）。命運的覺醒石、元素石不能合成或拆解。</p>
+    <div id="ex-list"></div>
 
     <h2 id="filter">戰利品過濾</h2>
     <p>設定頁可選撿到裝備時的處理（被過濾的直接換成金幣，不佔背包）：</p>
@@ -90,6 +96,10 @@ renderTable($('#cur-list'), [
     { label: '約佔', num: true, v: ([, c]) => c.w, html: ([, c]) => pct(c.w / totalW) + (c.minLv ? `<br><small>Lv.${c.minLv}+ 怪</small>` : '') },
     { label: '回收', num: true, html: ([id]) => fmt(W.items[id].sellPrice) },
 ], Object.entries(W.currency));
+renderTable($('#ex-list'), [
+    { label: '合成', html: ([lo, hi, cost, oneWay, gain = 1]) => `${itemLink(lo)} ×${cost} → ${itemLink(hi)} ×${gain}` },
+    { label: '拆解', html: ([lo, hi, , oneWay]) => oneWay ? '<span class="dim">單向，不能拆回</span>' : `${itemLink(hi)} ×1 → ${itemLink(lo)} ×1` },
+], W.currencyLadder);
 $('#filters').innerHTML = W.lootFilters.map(t => `<li>${esc(t)}</li>`).join('');
 </script>
 </body>

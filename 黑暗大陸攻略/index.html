@@ -25,7 +25,7 @@
     <section class="hero">
         <div>
             <h1>黑暗大陸 攻略百科</h1>
-            <p class="lead">《黑暗大陸》是天堂 1 風格的網頁自動掛機 RPG：十二種職業與 36 個二轉分支、命運星盤、魔法書學技能、衝裝、暗黑式隨機詞綴、共鳴裝備、異界地圖、百層永夜之塔與四大龍。
+            <p class="lead">《黑暗大陸》是天堂 1 風格的網頁自動掛機 RPG：十二種職業與 36 個二轉分支、命運星盤、魔法書學技能、衝裝、暗黑式隨機詞綴、傳奇裝備、開孔寶石、元素、共鳴裝備、異界地圖、百層永夜之塔與四大龍。
                 這裡整理了新手攻略與完整的資料百科，數值都直接從遊戲原始碼擷取。</p>
             <div class="nums" id="nums"></div>
             <p><a class="btn" href="guide.html">🧭 從新手攻略開始</a>　<a class="btn" href="https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/" target="_blank" rel="noopener">▶ 開始遊戲</a>　<a class="btn" id="pet-btn" target="_blank" rel="noopener">🐾 黑暗大陸桌寵</a></p>
@@ -64,7 +64,10 @@ const DESC = {
     advance: 'Lv.60 二轉：36 個分支的核心被動、專屬技能與重選方式。',
     talent: '325 節點天賦盤：點數來源、六大核心、38 款寶珠與掉率。',
     enchant: '安定值、成功率、祝福／詛咒卷軸與衝裝建議。',
-    affix: '魔法／稀有／傳說品質、物爆魔爆等詞綴與製作通貨。',
+    affix: '魔法／稀有／傳說品質、元素等詞綴、製作通貨與通貨兌換。',
+    uniques: '26 件固定詞綴、帶改變玩法特效的傳奇裝備與掉落地圖。',
+    gems: '裝備開孔、串聯、技能寶石與 13 種輔助寶石的效果與升級。',
+    elements: '火焰／冰冷／閃電、元素異常、怪物抗性一覽與精英怪詞條。',
     resonance: '帶專屬技能的共鳴武器與防具，觸發方式與取得。',
     forge: '鍛造配方一覽與 26 種 BOSS 附魔。',
     rift: '異界地圖 T1～T15、地圖詞綴、傳奇財寶地圖、六格排程。',
@@ -72,13 +75,13 @@ const DESC = {
     dragons: '四大龍巢穴、首領計時、團隊副本與世界首領。',
     dolls: '21 款魔法娃娃的能力與召喚規則。',
     morph: '變形卷軸 36 種變身對象與武器限制。',
-    merc: '傭兵招募與名冊、六職業、50 種符石技能、死亡規則與傭兵公會。',
+    merc: '傭兵招募與名冊、六職業、50 種符石技能、死亡規則與傭兵公會 12 項任務。',
     mechanics: '命中、傷害、防禦、攻速、負重等計算公式與戰鬥規則。',
     exp: '1～99 級經驗表、高等級經驗遞減、死亡懲罰與離線收益。',
-    online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石、稱號、排行榜。',
+    online: '雲端存檔、血盟、交易所、拍賣、共用倉庫、鑽石商人、稱號、排行榜。',
     updates: '依日期整理的遊戲更新內容，可搜尋關鍵字。',
 };
-const GROUPS = { 'g-guide': ['guide', 'classes', 'quests', 'advance', 'talent'],'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'resonance', 'forge'],
+const GROUPS = { 'g-guide': ['guide', 'classes', 'quests', 'advance', 'talent'],'g-data': ['items', 'monsters', 'zones', 'skills'], 'g-gear': ['enchant', 'affix', 'uniques', 'gems', 'elements', 'resonance', 'forge'],
     'g-end': ['rift', 'tower', 'dragons', 'dolls', 'morph', 'merc'], 'g-sys': ['mechanics', 'exp', 'online', 'updates'] };
 const P = Object.fromEntries(PAGES.map(p => [p[0], p]));
 for (const [el, list] of Object.entries(GROUPS))

@@ -6,7 +6,8 @@ const PAGES = [
     ['index', '首頁', '🏠'], ['guide', '新手攻略', '🧭'], ['classes', '職業', '⚔️'], ['skills', '技能魔法', '✨'],
     ['advance', '二轉', '🔱'], ['talent', '命運星盤', '🌌'],
     ['items', '道具圖鑑', '🎒'], ['monsters', '怪物圖鑑', '👹'], ['zones', '地圖村莊', '🗺️'], ['quests', '職業任務', '📜'],
-    ['enchant', '衝裝', '🔨'], ['affix', '詞綴通貨', '💠'], ['resonance', '共鳴裝備', '🌟'], ['forge', '鍛造附魔', '⚒️'],
+    ['enchant', '衝裝', '🔨'], ['affix', '詞綴通貨', '💠'], ['uniques', '傳奇裝備', '🏵️'], ['gems', '開孔寶石', '🔶'], ['elements', '元素精英', '🔥'],
+    ['resonance', '共鳴裝備', '🌟'], ['forge', '鍛造附魔', '⚒️'],
     ['rift', '異界地圖', '🌀'], ['tower', '永夜之塔', '🏛️'], ['dragons', '四龍首領', '🐉'], ['dolls', '魔法娃娃', '🧸'],
     ['morph', '變身', '🎭'], ['merc', '傭兵', '🤝'], ['mechanics', '數值公式', '📐'], ['exp', '經驗離線', '📈'], ['online', '線上功能', '🌐'], ['updates', '更新紀錄', '📰'],
 ];
@@ -50,8 +51,14 @@ const weaponClassIds = type => Object.keys(W.classes).filter(id => (W.classes[id
 const weaponClassText = type => classUseHtml(weaponClassIds(type));
 const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', dragon: '龍穴' };
 const SKILL_TYPE = { spell: '攻擊魔法', heal: '治癒', buff: '增益', strike: '物理技能', passive: '被動' };
-const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷', talentJewel: '💠' };
-const GRADE_NAME = { normal: '一般', high: '高級', rare: '稀有', hero: '英雄', legend: '傳說' };
+const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷', talentJewel: '💠', gem: '🔶' };
+// 元素（桌寵的資料可能沒帶 W.elements，留預設）
+const ELEM_ICON = { fire: '🔥', ice: '❄️', light: '⚡' };
+function elemResHtml(r) {
+    if (!r) return '';
+    return Object.keys(ELEM_ICON).filter(e => r[e]).map(e => `<span class="tag ${r[e] > 0 ? '' : 'red'}">${ELEM_ICON[e]} ${r[e] > 0 ? '抗' : '弱'} ${Math.round(Math.abs(r[e]) * 100)}%</span>`).join('');
+}
+const GRADE_NAME = { normal: '一般', high: '高級', rare: '稀有', hero: '英雄', legend: '傳說', unique: '傳奇' };
 const TAG_NAME = { human: '人型', demon: '惡魔', holy: '神聖', undead: '不死', large: '大型', boss: '首領', dragon: '龍族' };
 const ACC_SLOTS = ['amulet', 'ring', 'belt'];
 
@@ -60,8 +67,11 @@ const STAT_LABEL = Object.assign({}, W.statNames, {
     hit: '命中', dmg: '傷害', sp: 'SP', mr: '魔防', crit: '物爆率', magicCrit: '魔爆率', critDmg: '物爆傷害', magicCritDmg: '魔爆傷害', dodge: '閃避', reduce: '減傷', lifesteal: '吸血', hp: 'HP', mp: 'MP',
     hpRegen: '回血', mpRegen: '回魔', weight: '負重上限', spdMul: '攻速', double: '連擊', absorb: '傷害吸收', counter: '反擊', ac: '防禦',
     allStat: '全能力', bossDmg: '首領增傷', expPct: '經驗', goldPct: '金幣', thorns: '反傷', haste: '加速', brave: '勇敢', wise: '慎重',
+    fireInc: '火焰傷害', iceInc: '冰冷傷害', lightInc: '閃電傷害', addFire: '附加火焰', addIce: '附加冰冷', addLight: '附加閃電',
+    convFire: '物理轉火焰', convIce: '物理轉冰冷', convLight: '物理轉閃電', ailment: '元素異常機率', physLess: '物理傷害減少',
 });
-const PCT_KEYS = ['crit', 'magicCrit', 'critDmg', 'magicCritDmg', 'dodge', 'lifesteal', 'spdMul', 'double', 'counter', 'absorb', 'bossDmg', 'expPct', 'goldPct', 'thorns'];
+const PCT_KEYS = ['crit', 'magicCrit', 'critDmg', 'magicCritDmg', 'dodge', 'lifesteal', 'spdMul', 'double', 'counter', 'absorb', 'bossDmg', 'expPct', 'goldPct', 'thorns',
+    'fireInc', 'iceInc', 'lightInc', 'convFire', 'convIce', 'convLight', 'ailment', 'physLess'];
 function statVal(k, v) {
     if (v === true) return '';
     if (PCT_KEYS.includes(k) && Math.abs(v) < 1) return (v > 0 ? '+' : '') + Math.round(v * 1000) / 10 + '%';
@@ -77,6 +87,7 @@ function itemCls(id) {
     const d = W.items[id];
     if (!d) return '';
     if (d.cat === 'doll' && W.dolls[d.doll]) return 'doll-' + W.dolls[d.doll].quality;
+    if (d.unique) return 'g-unique';
     return d.grade ? 'g-' + d.grade : '';
 }
 function itemIcon(id, lg) {
@@ -168,10 +179,15 @@ function sourceText(s, id) {
         case 'mapboss': return `🌀 異界首領 ${pct(W.consts.RES_MAP_BOSS_P)} 掉一件共鳴裝備（${W.resTiers[d.res.tier].name}需 T${[0, 1, 6, 11, 15][d.res.tier]} 以上地圖）`;
         case 'soul': return `🔮 鍛造師「BOSS 附魔」把武器上的附魔封存（消耗永夜之魂 ×5、${fmt(W.consts.BOSS_ENCHANT_SOUL_COST)} 金幣）`;
         case 'mercRune': { const dr = W.merc.drops, basic = dr && dr.basic.includes(id);
-            return `🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>，不能購買。` + (!dr ? '' : basic
-                ? `<b>基本符石</b>：目前<b>沒有掉落來源</b>（2026-11-02 起一般怪不掉符石），只能從交易所或共用倉庫取得`
-                : `<b>特殊符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>`); }
-        case 'doll': return '🧸 （尚未開放）';
+            // 2026-11-03 起基本、特殊符石都由首領掉（各 bossP）
+            return `🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>，不能購買。` + (!dr ? '' :
+                `<b>${basic ? '基本' : '特殊'}符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html#raid">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>（基本、特殊各自判定）`); }
+        case 'doll': { const dl = W.dolls[d.doll];
+            return dl && dl.quality === 'T4' ? `🧸 鑽石商人露米販售（登入帳號，每隻 ${fmt(W.consts.DOLL_SHOP_PRICE)} 鑽石，送進帳號共用倉庫）` : '🧸 （尚未開放）'; }
+        case 'unique': { const u = W.uniques;
+            return `🌟 只有<a href="rift.html">稀有（黃色）異界地圖</a> T11～T15 的異界首領會掉${u ? `（${Object.entries(u.dropP).map(([t, p]) => `T${t} ${pct(p)}`).join('、')}）` : ''}，可交易。<a href="uniques.html">傳奇裝備一覽</a>`; }
+        case 'gem': { const g = W.gems;
+            return `🔶 怪物掉落${g ? `（一般怪 ${pct(g.dropP)}、首領 ${pct(g.bossP)}，13 種平均抽）` : ''}，鑲在裝備孔裡強化串聯的技能。<a href="gems.html">開孔與寶石</a>`; }
         case 'questitem': return '📜 接了職業任務後，指定地圖的怪物掉落';
         // 桌寵的資料沒帶 W.adv／W.talent（gen-zones.js 的 WIKI_KEYS），要留不看數值的寫法
         case 'advProof': return `🔱 接了<a href="advance.html#flow">二轉第 5 章</a>後，任何地圖的首領${W.adv ? ` ${pct(W.adv.proofP)}` : ''} 掉落（世界首領、團隊副本不算）`;
@@ -179,7 +195,7 @@ function sourceText(s, id) {
         case 'advReshape': return `🔱 ${W.adv ? `Lv.${W.adv.reshapeLv} 以上首領 ${pct(W.adv.reshapeP)}` : '高等首領極稀有'} 掉落，用來<a href="advance.html#reshape">重選二轉分支</a>`;
         case 'talent': { const r = W.talent && W.talent.drops[id === 'talentStone' ? 'stone' : 'jewel'], t = a => `${pct(a[0])}→${pct(a[1])}`;
             return r ? `🌌 地圖越高階越容易掉（T1→T15）：${r.normal ? `一般怪 ${t(r.normal)}、` : ''}首領 ${t(r.boss)}、首次<a href="talent.html#points">星盤試煉</a> ${t(r.trial)}${r.normal ? '' : '（一般怪不掉）'}` : `🌌 ${id === 'talentStone' ? '怪物' : '首領'}掉落，地圖越高階越容易掉`; }
-        case 'dismantle': return `🧸 娃娃商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）`;
+        case 'dismantle': return `🧸 鑽石商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）；鑽石商人也賣魔法結晶包（50 鑽石 1,000 個）`;
         case 'random': return `🎲 隨機裝備掉落（Lv.${s.minLv} 以上怪物；一般怪 ${pct(W.consts.RANDOM_EQUIP_P)}、首領 50%，可能帶品質詞綴）`;
     }
     return esc(s.type);
@@ -192,9 +208,11 @@ function itemDetailHtml(id) {
     const doll = d.cat === 'doll' && W.dollAbilities[d.doll];
     const src = (W.sources[id] || []);
     return `<div class="mhead">${itemIcon(id, true)}<div><h3 class="${itemCls(id)}">${esc(d.name)}</h3>
-        <span class="tag">${esc(itemTypeText(d))}</span>${d.grade ? `<span class="tag ${itemCls(id)}">${GRADE_NAME[d.grade]}</span>` : ''}${d.res ? `<span class="tag res-${d.res.tier}">🌟 ${W.resTiers[d.res.tier].name}</span>` : ''}</div></div>
+        <span class="tag">${esc(itemTypeText(d))}</span>${d.unique ? `<span class="tag g-unique">傳奇 Lv.${d.reqLv || 60}+</span>` : ''}${d.grade && !d.unique ?`<span class="tag ${itemCls(id)}">${GRADE_NAME[d.grade]}</span>` : ''}${d.res ? `<span class="tag res-${d.res.tier}">🌟 ${W.resTiers[d.res.tier].name}</span>` : ''}</div></div>
         ${itemStatsHtml(d)}
-        ${d.desc && !doll ? `<p>${esc(d.desc)}</p>` : ''}
+        ${d.unique && d.uqFx ? `<div class="msec box"><h4>🌟 傳奇效果</h4>${esc(fxText(d.uqFx))}<br><b>${esc(String(d.desc || '').replace(/^【傳奇】/, ''))}</b><br><small>不能用通貨改造（開孔石、連結石可以），可以強化與交易。</small></div>` : ''}
+        ${d.desc && !doll && !d.unique ? `<p>${esc(d.desc)}</p>` : ''}
+        ${d.cat === 'gem' && W.gems ? (g => g ? `<div class="msec box"><h4>${g.icon} 各等級效果</h4>Lv.1：${esc(g.lv1)}<br>Lv.10：${esc(g.lv10)}<br>Lv.20：${esc(g.lv20)}</div>` : '')(W.gems.support.find(x => x.id === id)) : ''}
         ${d.classes ? `<div class="msec"><h4>限定職業</h4>${d.classes.map(classLink).join('、')}</div>` : ''}
         ${d.res ? `<div class="msec box"><h4>🌟 共鳴技能</h4>${resText(d.res)}</div>` : ''}
         ${book ? `<div class="msec"><h4>學會技能</h4>${skillLink(d.skill)}　<small>${esc(book.desc)}</small><br><small>${advWho(book) ? `${className(book.cls)}・${esc(advWho(book).name)}（目前分支才能學）Lv.${book.lv}` : Object.keys(W.classes).map(c => { const r = W.classSkills[c].find(x => x.id === d.skill); return r ? `${className(c)} Lv.${r.lv}` : ''; }).filter(Boolean).join('、')}</small></div>` : ''}
@@ -233,7 +251,7 @@ function monDetailHtml(id) {
     const m = W.monsters[id];
     if (!m) return '找不到這隻怪物';
     const where = m.zones.map(zoneLink).concat(m.rareIn.map(r => `${zoneLink(r.zone)}（${r.lair ? '巢穴首領' : '約每 60～90 分鐘定時出現'}）`));
-    return `<div class="mhead">${monIcon(id, true)}<div><h3>${esc(m.name)}</h3><span class="tag gold">Lv.${m.lv}</span>${monTags(m)}</div></div>
+    return `<div class="mhead">${monIcon(id, true)}<div><h3>${esc(m.name)}</h3><span class="tag gold">Lv.${m.lv}</span>${monTags(m)}${elemResHtml(m.elemRes)}</div></div>
         <div class="stats"><span>HP <b>${fmt(m.hp)}</b></span><span>防禦 <b>${10 - m.ac}</b></span><span>命中 <b>${m.hit}</b></span><span>攻擊 <b>${range(m.dmg)}</b></span>
         <span>攻擊間隔 <b>${m.spd}ms</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span><span>金幣 <b>${range(m.gold)}</b></span></div>
         ${m.magic ? `<p>魔法「${esc(m.magic.name)}」：${pct(m.magic.p)} 機率，傷害 ${range(m.magic.dmg)}（無視防禦、受魔防減免）</p>` : ''}

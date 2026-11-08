@@ -36,6 +36,7 @@
         <li><b>換人（在村莊）</b>：先「收回」出戰中的傭兵 → 在名冊選擇要管理的候補 → 再按「派出」。選擇管理不等於出戰，出戰中不能切換。</li>
         <li>換人後，舊傭兵的增益、召喚物與異常狀態都會清掉，不會帶給新傭兵；技能冷卻各自保留。</li>
         <li>裝備、符石、復活與放棄的按鈕都是針對<b>目前管理</b>的那一位。</li>
+        <li><b>二轉人皇可同時帶兩名傭兵</b>（2026-11-03）：在傭兵團把名冊中的另一位「設為第二名」再派出即可。其他職業同時只能一名出戰。</li>
     </ul>
 
     <h2 id="rules">基本規則</h2>
@@ -79,8 +80,7 @@
     <p>符石<b>不能向 NPC 購買</b>，可堆疊，可以自由鑲上、拆回背包；背包的「傭兵符石」收納頁不佔負重。可以上交易所，也可以存進<a href="online.html#vault">帳號共用倉庫</a>給同帳號的其他角色（已鑲嵌的要先拆回背包）。召喚物最多 2 隻（契靈師 3 隻）；範圍技能最多打 3 隻目前戰鬥中的怪（不是全畫面）。</p>
     <div class="box"><h3 style="margin-top:0">怎麼拿符石</h3>
         <ul>
-            <li><b>基本符石</b>（每系前 4 種，共 <span id="rb"></span> 種）：<b>目前沒有掉落來源</b>（2026-11-02 起一般怪不掉符石），只能從交易所或共用倉庫取得。</li>
-            <li><b>特殊符石</b>（其餘 <span id="rs"></span> 種）：黃色稀有異界地圖的<b>首領 <span class="rsp"></span></b>；<a href="dragons.html">團隊副本</a>勝利<b>每位參加者各 <span class="rsp"></span></b>。</li>
+            <li><b>基本符石</b>（每系前 4 種，共 <span id="rb"></span> 種）與<b>特殊符石</b>（其餘 <span id="rs"></span> 種）都由首領掉（2026-11-03 起）：黃色稀有異界地圖的<b>首領</b>、<a href="dragons.html#raid">團隊副本</a>勝利的<b>每位參加者</b>，基本、特殊<b>各 <span class="rsp"></span></b>（分開判定，可能同時拿到）。一般怪不掉符石。</li>
             <li>機率固定，不吃地圖詞綴或副本獎勵倍率。白／藍地圖、財寶圖、一般狩獵地、永夜之塔、龍穴、世界首領、離線收益都<b>不掉</b>符石。</li>
             <li>想刷特殊符石：用<a href="affix.html">通貨</a>把地圖點成黃色稀有再開，首領一定要打（排程別勾「怪物清空後不打首領」）。</li>
         </ul></div>
@@ -95,19 +95,27 @@
     <div class="tabs" id="tabs"></div>
     <div id="rune-list"></div>
 
-    <h2 id="guild">🏛️ 傭兵公會（整備中）</h2>
+    <h2 id="guild">🏛️ 傭兵公會</h2>
     <p>跟上面的個人傭兵是<b>兩個獨立系統</b>：公會夥伴只參加公會任務，不會跟著你在一般地圖打怪。入口在四座村莊的<b>公會接待員</b>，或左側選單的「傭兵公會」，要在村莊才能整理。</p>
-    <div class="box warn"><b>目前只開放名冊與編隊。</b>公會任務路線還在整備中，暫時不能出發、也沒有獎勵；任務冊上的項目都標示「路線整備中」。</div>
     <ul>
         <li><b>編隊</b>：每場選派三位不同的夥伴，選滿三位才能保存；取消變更不會動到已保存的編隊。</li>
         <li><b>初始夥伴</b>：依你的基礎職業給三位（見下表），二轉換分支不會換人。其他夥伴要完成公會招募任務才會加入。</li>
+        <li><b>地區探索</b>（2026-11-04）：保存編隊後可帶隊到低語海島、熔火群山、沉船群島共 17 處場景步行往返，隨時可回公會；探索<b>沒有任務獎勵</b>。</li>
+    </ul>
+    <h3 id="guild-mission">公會任務（2026-11-04 全面開放）</h3>
+    <ul>
+        <li>任務冊有 <b>12 項普通任務</b>：採集、清剿、封印、獵龍、取旗、十分鐘防衛、村民／運輸車護送等（見下方任務冊）。</li>
+        <li><b>每週計入任務冊</b>：討伐探索類 4 次、防衛／護送類 2 次。冊內完成：討伐 聲望 100／代幣 10／培養徽章 20；防衛／護送 聲望 150／代幣 15／培養徽章 30；達成可選目標代幣再 +20%。</li>
+        <li>同任務重打或超過每週次數：沒有聲望，代幣與徽章只有 25%。</li>
+        <li>操作：點敵人名牌集火；隊伍可集合、守點、撤退；停在倒地夥伴（或礦工）旁 3 秒救援。任務可暫停保存、之後續玩。</li>
+        <li><b>交付</b>：完成後地圖出現<b>金色交付點</b>，成果回公會（可批次）交付，由伺服器確認後發獎；要在原本的裝置交付。</li>
     </ul>
     <h3>夥伴名冊</h3>
     <div class="grid" id="guild-members"></div>
     <h3>各職業的初始夥伴</h3>
     <div id="guild-initial"></div>
-    <h3>任務冊（<span id="guild-mn"></span> 項，路線整備中）</h3>
-    <p id="guild-missions"></p>
+    <h3>任務冊（<span id="guild-mn"></span> 項）</h3>
+    <div id="guild-missions"></div>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>
@@ -162,8 +170,14 @@ renderTable($('#guild-initial'), [
     { label: '基礎職業', html: g => g.cls.map(id => `${W.classes[id].icon} ${esc(className(id))}`).join('、') },
     { label: '初始三位夥伴', html: g => g.ids.map(id => `${esc(GD.members[id].name)}<small class="dim">（${esc(GD.roles[GD.members[id].role])}）</small>`).join('、') },
 ], Object.values(initGroups));
-$('#guild-mn').textContent = GD.missions.length;
-$('#guild-missions').textContent = GD.missions.join('、');
+const GM = GD.missionDefs || GD.missions.map(name => ({ name }));
+$('#guild-mn').textContent = GM.length;
+const DEF_KIND = ['defense', 'refugees', 'cart'];
+renderTable($('#guild-missions'), [
+    { label: '任務', html: m => `<b>${esc(m.name)}</b>` },
+    { label: '類型', v: m => DEF_KIND.includes(m.kind) ? 1 : 0, html: m => m.kind ? (DEF_KIND.includes(m.kind) ? '<span class="tag gold">防衛／護送</span>' : '<span class="tag">討伐探索</span>') : '' },
+    { label: '內容', html: m => `<small>${esc(m.brief || '')}</small>` },
+], GM);
 </script>
 </body>
 </html>

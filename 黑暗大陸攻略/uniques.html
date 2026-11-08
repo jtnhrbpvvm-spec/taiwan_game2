@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>傳奇裝備｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸 26 件傳奇裝備：固定詞綴與改變玩法的特殊效果、轉換類元素傳奇、掉落地圖與機率、裝備限制。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<style>
+    .uq h3 { margin: 0 0 4px; }
+    .uq .sp { margin: 6px 0 0; color: var(--gold2); }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="uniques">
+<main>
+    <h1>🏵️ 傳奇裝備</h1>
+    <p class="lead">2026-11-07 新增。傳奇裝備有<b>固定的名稱與能力</b>，外加一條<b>改變玩法的特殊效果</b>（通常有好有壞），跟隨機品質的「傳說」裝備不同。目前共 <b id="n"></b> 件。</p>
+    <div class="toc"><a href="#rule">取得與限制</a><a href="#list">一覽</a><a href="#tips">搭配建議</a></div>
+
+    <h2 id="rule">取得與限制</h2>
+    <ul>
+        <li><b>只有一個來源</b>：<a href="rift.html">稀有（黃色）異界地圖</a> T11～T15 的<b>異界首領</b>，機率 <span id="dp"></span>。白／藍地圖、傳奇財寶圖、一般野外、塔、龍、副本都不掉。</li>
+        <li>要 <b>Lv.<span id="lv"></span></b> 才能裝備。可以強化（安定值照表）、可以上交易所。</li>
+        <li><b>不能用通貨改造</b>（點化、混沌、淬鍊、覺醒、元素石都不行），但可以用<a href="gems.html">開孔石、連結石</a>重擲孔數與串聯；掉落時孔數比照傳說品質（2～4 孔起）。</li>
+        <li>名稱顯示為<span class="g-unique">金色</span>。</li>
+    </ul>
+
+    <h2 id="list">一覽</h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="grid" id="list-box"></div>
+
+    <h2 id="tips">搭配建議</h2>
+    <ul>
+        <li><b>轉換類</b>（熔爐之心、霜脈、雷霆之握、冰火同源、風暴之眼、元素使徒）配合<a href="elements.html">元素系統</a>：先看怪物的抗性與弱點，再選要轉成哪種元素。冰火同源＋熔爐之心、風暴之眼＋雷霆之握這類「轉換→再轉換」可以把傷害集中到同一種元素吃滿增傷。</li>
+        <li><b>獵魂者之索</b>只對<a href="elements.html#elite">精英怪</a>有效，而 2026-11-07 起精英只出現在帶「精英」詞綴的異界地圖。</li>
+        <li><b>傭兵之誓</b>適合靠<a href="merc.html">傭兵</a>輸出的玩法（二轉人皇可帶兩名傭兵）。</li>
+        <li>缺點很重的（血契之刃不能喝治癒藥水、殉道者的長靴不自然回血、狂戰之顱治療 −50%）建議先確認自動喝水、傭兵治療的設定。</li>
+    </ul>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const U = W.uniques;
+$('#n').textContent = U.list.length; $('#lv').textContent = U.reqLv;
+$('#dp').textContent = Object.entries(U.dropP).map(([t, p]) => `T${t} ${pct(p)}`).join('、');
+const CONV = ['convFire', 'convIce', 'convLight', 'iceToFire', 'fireToLight'];
+const kindOf = u => Object.keys(u.fx).some(k => CONV.includes(k) || /Inc$/.test(k)) ? 'elem' : u.cat;
+let cur = 'all';
+function baseText(u) {
+    const d = W.items[u.id];
+    const t = [esc(itemTypeText(d))];
+    if (u.dmg) t.push(`傷害 ${u.dmg[0]}／${u.dmg[1]}`);
+    if (u.hit) t.push(`命中 +${u.hit}`);
+    if (u.ac) t.push(`防禦 +${u.ac}`);
+    if (u.mr) t.push(`魔防 +${u.mr}`);
+    if (u.weight) t.push(`負重 +${u.weight}`);
+    t.push(u.safe < 0 ? '不能強化' : `安定 +${u.safe}`);
+    return t.map(x => `<span>${x}</span>`).join('');
+}
+function draw() {
+    renderTabs($('#tabs'), [['all', '全部'], ['weapon', '武器'], ['armor', '防具／飾品'], ['elem', '轉換類（元素）']], cur, v => { cur = v; draw(); });
+    $('#list-box').innerHTML = U.list.filter(u => cur === 'all' || kindOf(u) === cur || (cur !== 'elem' && kindOf(u) !== 'elem' && u.cat === cur)).map(u => `
+        <div class="card uq"><div class="mhead">${itemIcon(u.id, true)}<div><h3><a class="g-unique" data-item="${esc(u.id)}">${esc(u.name)}</a></h3>
+            <small class="dim">底材：${W.items[u.base] ? itemLink(u.base) : esc(u.base)}</small></div></div>
+            <div class="stats">${baseText(u)}</div>
+            <div class="stats">${fxList(u.fx).map(x => `<span>${esc(x)}</span>`).join('') || ''}</div>
+            <p class="sp">★ ${esc(u.special)}</p></div>`).join('');
+}
+draw();
+</script>
+</body>
+</html>

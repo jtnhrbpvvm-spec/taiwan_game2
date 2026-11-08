@@ -11,7 +11,8 @@ const OUT = path.join(ROOT, 'data', 'wiki-data.js');
 const IMG_BASE = 'https://k559610142-art.github.io/-username-.github.io-/%E5%B1%A0%E9%BE%8D%E5%8B%87%E8%80%85/';
 
 // 只載入「資料＋規則」的檔案；介面、連線的檔案不需要
-const FILES = 'config classes skills items spellbook monsters zones quests advance resonance boss-enchant doll-abilities mercenary afflict player enchant affix craft maps combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons guild-core'.split(' ');
+// 順序照遊戲 index.html（2026-11-08 加 uniques 傳奇裝備、elite 精英詞條、elements 元素、gems 開孔寶石）
+const FILES = 'config classes skills items spellbook monsters zones quests advance resonance uniques boss-enchant doll-abilities mercenary afflict player enchant affix craft maps elite elements gems combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons guild-core guild-missions'.split(' ');
 
 // 瀏覽器物件用假的代替（載入時只會碰到一點點）
 const stub = new Proxy(function () {}, {
@@ -199,12 +200,52 @@ for (const id in ITEMS) {
     if (d.cat === 'quest') addSrc(id, { type: /^q_\w+_4$/.test(id) ? 'advProof' : 'questitem' });
     if (d.cat === 'mercRune') addSrc(id, { type: 'mercRune' });
     // 暗黑式隨機裝備（affix.js randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定、非共鳴）
-    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res) {
+    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res && !d.unique) {
         const minLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
         if (minLv <= 105) addSrc(id, { type: 'random', minLv });
     }
 }
 addSrc('magicCrystal', { type: 'dismantle' });
+for (const id of G('UNIQUE_IDS')) addSrc(id, { type: 'unique' });
+for (const id of G('SUPPORT_GEM_IDS')) addSrc(id, { type: 'gem' });
+
+// ── 傳奇裝備（uniques.js）──
+const uniques = {
+    reqLv: G('UNIQUE_REQ_LV'), dropP: plain(G('UNIQUE_DROP_P')),
+    list: G('UNIQUE_DEFS').map(u => ({ id: 'uq_' + u.key, ...plain(pick(u, ['key', 'name', 'base', 'cat', 'type', 'slot', 'dmg', 'hit', 'ac', 'mr', 'weight', 'safe', 'wt', 'fx', 'special'])) })),
+};
+for (const u of uniques.list) {
+    items[u.id].unique = true; items[u.id].grade = 'unique';   // 圖鑑品級另列「傳奇」
+    if (ITEM_IMG[u.base]) items[u.id].img = `images/icons/items/${ITEM_IMG[u.base]}.png?v=1`;   // 遊戲沿用底材的圖示
+}
+
+// ── 精英詞條（elite.js）──
+const elite = {
+    affixes: plain(G('ELITE_AFFIXES')), expPerAffix: G('ELITE_EXP_PER_AFFIX'), minionExp: G('ELITE_MINION_EXP'), minionMax: G('ELITE_MINION_MAX'),
+    shieldMs: G('ELITE_SHIELD_MS'), shieldK: G('ELITE_SHIELD_K'), summonMs: G('ELITE_SUMMON_MS'), blinkMs: G('ELITE_BLINK_MS'), afflictP: G('ELITE_AFFLICT_P'), fieldP: G('ELITE_FIELD_P'),
+};
+
+// ── 元素（elements.js）：每隻怪的抗性用遊戲的 monElemRes 算 ──
+const monElemRes = G('monElemRes');
+for (const [id, m] of Object.entries(monsters)) {
+    const r = monElemRes({ id, undead: m.undead, dragon: m.dragon });
+    if (r.fire || r.ice || r.light) m.elemRes = plain(r);
+}
+const elements = {
+    defs: plain(G('ELEMENTS')), tagRes: plain(G('ELEM_TAG_RES')), ailmentP: G('ELEM_AILMENT_P'),
+    igniteK: G('IGNITE_K'), igniteMs: G('IGNITE_MS'), chillMs: G('CHILL_MS'), freezeK: G('FREEZE_K'), freezeMs: G('FREEZE_MS'), shockMs: G('SHOCK_MS'), shockMul: G('SHOCK_MUL'),
+    resMin: G('ELEM_RES_MIN'), resMax: G('ELEM_RES_MAX'),
+};
+
+// ── 開孔與寶石（gems.js）──
+const SUPPORT_GEMS = G('SUPPORT_GEMS');
+const gems = {
+    maxLv: G('GEM_MAX_LV'), expShare: G('GEM_EXP_SHARE'), unsocketGold: G('GEM_UNSOCKET_GOLD'), dropP: G('GEM_DROP_P'), bossP: G('GEM_BOSS_P'),
+    expNeed: Array.from({ length: G('GEM_MAX_LV') - 1 }, (_, i) => G('gemExpNeed')(i + 1)),
+    support: Object.entries(SUPPORT_GEMS).map(([k, g]) => ({ id: 'gem_' + k, key: k, name: g.name, icon: g.icon, lv1: g.desc(1), lv10: g.desc(10), lv20: g.desc(20) })),
+    maxSockets: Object.fromEntries(['twohand', 'sword', 'armor', 'helm', 'ring'].map(k => [k, G('gemMaxSockets')(k === 'twohand' ? { cat: 'weapon', type: 'twohand' } : k === 'sword' ? { cat: 'weapon', type: 'sword' } : { cat: 'armor', slot: k })])),
+};
+for (const g of gems.support) items[g.id].desc = g.lv1 + '（Lv.1）';
 
 // ── 二轉（advance.js）──
 const ADV_GROW = G('ADV_GROW'), bookIdOf = G('bookIdOf');
@@ -269,6 +310,8 @@ const GC = G('GuildCore');
 const guild = {
     roles: plain(G('GUILD_ROLE_NAMES')), portraits: plain(G('GUILD_PORTRAITS')), members: plain(GC.MEMBERS), initial: plain(GC.INITIAL),
     missions: Object.values(GC.MISSIONS).map(m => m.name), restMin: GC.REST_MS / 60000,
+    // 2026-11-04 起 12 項普通任務開放（guild-missions.js）
+    missionDefs: Object.values(G('GuildMissions').defs).map(d => pick(plain(d), ['id', 'name', 'kind', 'brief', 'limit', 'start'])),
 };
 
 // ── 經驗表 ──
@@ -311,7 +354,7 @@ const data = {
     resonance: plain(C('RESONANCE')), resImg: Object.fromEntries(Object.entries(RES_IMG).map(([k, v]) => [k, `images/icons/sk/${v}.jpg?v=1`])),
     resTiers: plain(C('RES_TIERS')), resTriggers: plain(C('RES_TRIGGER_NAMES')),
     affixes, specialAffixes, legendAffixes: plain(C('LEGEND_AFFIXES')), quality: plain(C('QUALITY')), rareNames: plain(C('RARE_NAMES')), lootFilters: plain(C('LOOT_FILTERS')),
-    currency: plain(C('CURRENCY')), mapMods: plain(C('MAP_MODS')),
+    currency: plain(C('CURRENCY')), currencyLadder: plain(C('CURRENCY_LADDER')), uniques, elite, elements, gems, mapMods: plain(C('MAP_MODS')),
     mapCurrency: Object.fromEntries(Object.entries(C('MAP_CURRENCY')).map(([k, v]) => [k, v.desc])),
     mapTiers: Array.from({ length: C('MAP_TIERS') }, (_, i) => ({ t: i + 1, zone: C('mapZoneFor')(i + 1).id, scale: C('mapTierScale')(i + 1), resTier: C('resMaxTierForMap')(i + 1) })),
     bossEnchants: plain(C('BOSS_ENCHANTS')), bossEnchantText: plain(C('BOSS_ENCHANT_TEXT')),

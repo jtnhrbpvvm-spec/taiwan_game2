@@ -29,14 +29,14 @@
 <script src="assets/wiki.js"></script>
 <script>
 const CATS = [['all', '全部'], ['weapon', '⚔️ 武器'], ['armor', '🛡️ 防具'], ['acc', '💍 飾品'], ['use', '🧪 消耗品'], ['material', '💎 材料'],
-    ['currency', '🔹 通貨'], ['book', '📖 魔法書'], ['map', '🗺️ 異界地圖'], ['doll', '🧸 娃娃'], ['mercRune', '🔷 傭兵符石'], ['talentJewel', '💠 天賦寶珠'], ['quest', '🔖 任務道具']];
+    ['currency', '🔹 通貨'], ['book', '📖 魔法書'], ['map', '🗺️ 異界地圖'], ['doll', '🧸 娃娃'], ['mercRune', '🔷 傭兵符石'], ['talentJewel', '💠 天賦寶珠'], ['gem', '🔶 輔助寶石'], ['quest', '🔖 任務道具']];
 const ARMOR_SLOTS = ['helm', 'armor', 'shield', 'tshirt', 'cloak', 'gloves', 'boots'];
 const st = { cat: 'all', q: '', sub: '', cls: '', grade: '', res: false };
 const catOf = d => d.cat === 'armor' ? (ACC_SLOTS.includes(d.slot) ? 'acc' : 'armor') : ['potion', 'scroll', 'ammo', 'elixir'].includes(d.cat) ? 'use' : d.cat;
 const subOf = d => d.cat === 'weapon' ? d.type : d.cat === 'armor' ? d.slot : d.cat;
 const subName = (d) => d.cat === 'weapon' ? (W.weaponTypes[d.type] || {}).name : d.cat === 'armor' ? (W.slots[d.slot] || '戒指') : W.catNames[d.cat] || d.cat;
 const ALL = Object.entries(W.items).map(([id, d]) => ({ id, d, cat: catOf(d) }));
-const GORDER = { normal: 1, high: 2, rare: 3, hero: 4, legend: 5 };
+const GORDER = { normal: 1, high: 2, rare: 3, hero: 4, legend: 5, unique: 6 };
 
 $('#cls').innerHTML += Object.entries(W.classes).map(([id, c]) => `<option value="${id}">${c.icon} ${c.name}</option>`).join('');
 $('#grade').innerHTML += Object.entries(GRADE_NAME).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>元素與精英｜黑暗大陸攻略百科</title>
+<meta name="description" content="黑暗大陸元素系統（火焰、冰冷、閃電）：元素技能、點燃／冰緩／感電、怪物抗性與弱點一覽、元素詞綴與元素石；精英怪 12 種特殊詞條與出現規則。">
+<link rel="stylesheet" href="assets/wiki.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body data-page="elements">
+<main>
+    <h1>🔥 元素與精英</h1>
+    <p class="lead">2026-11-06～07 新增。<b>元素</b>（火焰🔥、冰冷❄️、閃電⚡）讓傷害有屬性相剋；<b>精英怪</b>帶特殊詞條，只出現在異界地圖。</p>
+    <div class="toc"><a href="#elem">元素傷害來源</a><a href="#calc">計算方式</a><a href="#ailment">元素異常</a><a href="#res">怪物抗性</a><a href="#skills">元素技能</a><a href="#elite">精英詞條</a></div>
+
+    <h2 id="elem">元素傷害來源</h2>
+    <ul>
+        <li><b>魔法與技能</b>：依名稱帶元素——名稱有「雷、電」＝閃電；「冰、霜、雪、凍、寒」＝冰冷；「火、炎、焰、爆裂、熔、隕石、煉獄」＝火焰（例：火球術、冰矛、極光雷電）。二轉的隕石術＝火、絕對零度＝冰、連鎖閃電＝電，三元素斬每次隨機。聖、暗屬性照舊算一般魔法。</li>
+        <li><b>裝備詞綴</b>（<a href="affix.html#affix">詞綴一覽</a>）：火焰／冰冷／閃電傷害 %（武器、手套、戒指、項鍊、頭盔）、附加火焰／冰冷／閃電傷害（武器、手套、戒指、項鍊，加在物理攻擊每一下，±20%）。</li>
+        <li><b>元素石</b> <a data-item="curElement">🜂</a>：在武器上加 1 條「物理傷害 20～50% 轉為火焰／冰冷／閃電」（每件最多 1 條，已有就重洗那條；傳奇不能用）。Lv.50 以上的怪物才會掉。</li>
+        <li><b><a href="uniques.html">轉換類傳奇</a></b>：熔爐之心、霜脈、雷霆之握、冰火同源、風暴之眼、元素使徒。</li>
+        <li><b><a href="gems.html">輔助寶石</a></b>：附加火焰／冰冷／閃電、元素集中、異常強化。</li>
+    </ul>
+
+    <h2 id="calc">計算方式</h2>
+    <ul>
+        <li>某元素對怪物的倍率＝（1＋你的該元素增傷）×（1－怪物該元素抗性）。抗性範圍 <span id="rr"></span>（負的就是弱點，多吃傷害）。</li>
+        <li>物理攻擊：先算完爆擊，再把「轉換」的比例拆成元素（轉換加起來超過 100% 會等比例縮），剩下的維持物理；附加傷害另外加上去。冰轉火、火轉雷會連鎖（冰→火→雷）。</li>
+        <li>魔法：整發傷害吃該元素倍率。</li>
+        <li>目標名牌會顯示「抗🔥 弱❄️」，打出的傷害會標出各元素的部分。</li>
+        <li>玩家這邊<b>沒有元素抗性</b>，怪物的魔法照舊看魔防（MR）。</li>
+    </ul>
+
+    <h2 id="ailment">元素異常</h2>
+    <p>每次造成某元素傷害，有 <b id="ap"></b> 機率（＋裝備／寶石的「元素異常機率」）觸發對應異常：</p>
+    <div class="tw"><table>
+        <thead><tr><th>元素</th><th>異常</th><th>效果</th></tr></thead>
+        <tbody>
+            <tr><td>🔥 火焰</td><td><b>點燃</b></td><td id="ig"></td></tr>
+            <tr><td>❄️ 冰冷</td><td><b>冰緩</b>／冰凍</td><td id="ch"></td></tr>
+            <tr><td>⚡ 閃電</td><td><b>感電</b></td><td id="sh"></td></tr>
+        </tbody></table></div>
+    <p class="dim">這是你打怪物的元素異常；怪物打你的燒傷、冰凍、麻痺等見 <a href="mechanics.html#afflict">異常狀態</a>。</p>
+
+    <h2 id="res">怪物抗性與弱點</h2>
+    <p>依怪物種類決定：</p>
+    <div class="tw"><table><thead><tr><th>種類</th><th>抗性</th></tr></thead><tbody id="tags"></tbody></table></div>
+    <p>四大龍與部分世界首領各自抗自己的元素（取代龍族全抗）。下面是有抗性或弱點的怪物（點名稱看詳細）：</p>
+    <div class="filters"><select id="ef" aria-label="篩選元素"><option value="">全部</option><option value="fire-">弱火🔥</option><option value="ice-">弱冰❄️</option><option value="light-">弱電⚡</option><option value="fire+">抗火🔥</option><option value="ice+">抗冰❄️</option><option value="light+">抗電⚡</option></select></div>
+    <div id="mons"></div>
+
+    <h2 id="skills">帶元素的技能</h2>
+    <div id="sk"></div>
+
+    <h2 id="elite">精英怪特殊詞條</h2>
+    <ul>
+        <li><b>只出現在帶「精英」詞綴的<a href="rift.html">異界地圖</a></b>（2026-11-07 起一般野外、地監不再出現精英）。</li>
+        <li>詞條數：T1～T5 帶 1 條、T6～T10 帶 1～2 條、T11～T15 帶 2～3 條。名牌顏色：1 條<span style="color:#ffd34d">金</span>、2 條<span style="color:#ffa040">橘</span>、3 條<span style="color:#ff6ad5">粉紫</span>，名牌上寫出詞條，觸發時頭上飄字。</li>
+        <li>每條詞條經驗 <b>+<span id="xe"></span></b>（疊在精英原本的加成上），掉寶不變。</li>
+        <li>精英「召喚」「分裂」出來的小怪：不掉寶、沒金幣、不算異界剩餘怪物數，經驗只有一般怪的 <span id="mx"></span>。</li>
+        <li>離線收益模擬不會出現特殊詞條。</li>
+        <li>傳奇腰帶<a data-item="uq_soulhunter">獵魂者之索</a>：擊殺精英後 20 秒內獲得牠的詞條效果。</li>
+    </ul>
+    <div id="eaf"></div>
+</main>
+<script src="data/wiki-data.js"></script>
+<script src="assets/wiki.js"></script>
+<script>
+const E = W.elements, EL = W.elite;
+$('#rr').textContent = `${pct(E.resMin)}～${pct(E.resMax)}`;
+$('#ap').textContent = pct(E.ailmentP);
+$('#ig').textContent = `每秒造成那次火焰傷害的 ${pct(E.igniteK)}，持續 ${sec(E.igniteMs)}（重複觸發取較高的那個、刷新時間）`;
+$('#ch').textContent = `怪物攻速 −30%，持續 ${sec(E.chillMs)}；一次冰冷傷害 ≥ 怪物最大 HP ${pct(E.freezeK)} 時，非首領直接冰凍 ${sec(E.freezeMs)}`;
+$('#sh').textContent = `受到你的傷害 ×${E.shockMul}（+${pct(E.shockMul - 1)}），持續 ${sec(E.shockMs)}`;
+const TAGN = { fire: '火系（地獄犬、火精靈、熔岩魔像、伊弗利特、惡魔…）', ice: '冰系（雪狼、雪怪、冰魔像、冰之魔女…）', storm: '雷／風／飛行系（哈比、飛龍、浮眼…）', water: '水棲（巨蟹、海盜、拉米亞…）', nature: '植物、蟲、野獸（樹人、蜘蛛、螞蟻、狼、蝙蝠…）', undead: '不死系', dragon: '龍族' };
+$('#tags').innerHTML = Object.entries(E.tagRes).map(([t, r]) => `<tr><td>${TAGN[t] || t}</td><td>${elemResHtml(r)}</td></tr>`).join('');
+const rows = Object.entries(W.monsters).filter(([, m]) => m.elemRes).map(([id, m]) => ({ id, ...m }));
+function drawMons() {
+    const f = $('#ef').value, e = f.slice(0, -1), up = f.endsWith('+');
+    renderTable($('#mons'), [
+        { label: '怪物', v: r => r.name, html: r => monLink(r.id) },
+        { label: 'Lv', num: true, k: 'lv', html: r => r.lv },
+        ...['fire', 'ice', 'light'].map(x => ({ label: ELEM_ICON[x], num: true, v: r => r.elemRes[x] || 0, html: r => r.elemRes[x] ? `<span class="${r.elemRes[x] > 0 ? '' : 'q-rare'}">${r.elemRes[x] > 0 ? '+' : ''}${Math.round(r.elemRes[x] * 100)}%</span>` : '<span class="dim">0</span>' })),
+    ], rows.filter(r => !f || (up ? r.elemRes[e] > 0 : r.elemRes[e] < 0)), { sortCol: 1 });
+}
+$('#ef').onchange = drawMons; drawMons();
+// 技能元素（同遊戲 elements.js skillElem）
+const ADV_E = { fire: 'fire', ice: 'ice', storm: 'light', light: 'light', elem: 'rand' };
+function skElem(s) {
+    if (s.elem) return ADV_E[s.elem] || null;
+    const n = s.name;
+    if (/雷|電/.test(n)) return 'light';
+    if (/冰|霜|雪|凍|寒/.test(n)) return 'ice';
+    if (/火|炎|焰|爆裂|熔|隕石|煉獄/.test(n)) return 'fire';
+    return null;
+}
+const ESK = Object.values(W.skills).filter(s => (s.type === 'spell' || s.type === 'strike' || s.kind === 'adv') && skElem(s));
+renderTable($('#sk'), [
+    { label: '元素', v: s => skElem(s), html: s => skElem(s) === 'rand' ? '🔥❄️⚡ 隨機' : ELEM_ICON[skElem(s)] + ' ' + E.defs[skElem(s)].name },
+    { label: '技能', v: s => s.name, html: s => skillLink(s.id) },
+    { label: '類型', html: s => SKILL_TYPE[s.type] || s.type },
+], ESK, { sortCol: 0 });
+$('#xe').textContent = pct(EL.expPerAffix); $('#mx').textContent = pct(EL.minionExp);
+renderTable($('#eaf'), [
+    { label: '詞條', html: ([, a]) => `<b>${esc(a.name)}</b>` },
+    { label: '效果', html: ([, a]) => esc(a.desc) },
+], Object.entries(EL.affixes));
+</script>
+</body>
+</html>

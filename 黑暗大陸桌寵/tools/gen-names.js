@@ -15,8 +15,11 @@ if (!gameDir) {
   process.exit(1);
 }
 
-// 只載資料檔：boss-enchant 以前＋mercenary（傭兵符石）、affix／craft（通貨）、maps（異界地圖）；其他是戰鬥、畫面，桌寵用不到，而且會碰到 document
-const FILES = ["config", "classes", "skills", "items", "spellbook", "monsters", "zones", "quests", "resonance", "boss-enchant", "doll-abilities", "mercenary", "player", "enchant", "affix", "craft", "maps"];
+// 只載資料檔（順序照遊戲 index.html）：boss-enchant 以前＋advance（二轉技能書、證印、命運重塑石）、uniques（傳奇裝備 uq_*）、mercenary（傭兵符石）、
+// affix／craft（通貨）、maps（異界地圖）、gems（輔助寶石 gem_*）、talent-*（天賦寶珠、天賦石）；其他是戰鬥、畫面，桌寵用不到，而且會碰到 document
+// 2026-11-08：原本少了 advance／uniques／gems／talent，那些道具撿到時桌寵不飄名字
+const FILES = ["config", "classes", "skills", "items", "spellbook", "monsters", "zones", "quests", "advance", "resonance", "uniques", "boss-enchant", "doll-abilities", "mercenary", "player", "enchant", "affix", "craft", "maps", "gems",
+  "talent-jewels", "talent", "talent-tree", "talent-layout", "talent-planner", "talent-live"];
 
 const noop = () => {};
 const storage = { getItem: () => null, setItem: noop, removeItem: noop, key: () => null, length: 0 };
@@ -25,11 +28,16 @@ const sandbox = {
   localStorage: storage, sessionStorage: storage,
   document: { addEventListener: noop, getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] },
   navigator: { userAgent: "" }, location: { search: "", hostname: "" },
+  TABS: {}, PANEL_FNS: {},   // talent.js 載入時會寫進畫面的分頁表（ui-panels 沒載入）
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
 
-const code = FILES.map((f) => fs.readFileSync(path.join(gameDir, "data", `${f}.js`), "utf8")).join("\n;\n");
+const read = (f) => fs.readFileSync(path.join(gameDir, "data", `${f}.js`), "utf8");
+// talent-live 載入時會用到 ui-panels 的 CAT_ORDER（ui-panels 整個載入會碰到畫面），只抄那一行
+const catOrder = read("ui-panels").match(/^const CAT_ORDER = [^\n]*;/m);
+if (!catOrder) throw new Error("ui-panels.js 找不到 CAT_ORDER");
+const code = FILES.map((f) => (f === "talent-jewels" ? catOrder[0] + "\n" : "") + read(f)).join("\n;\n");
 // 頂層 const 不會掛到 sandbox 上，最後把要的東西整理好再交出來
 vm.runInContext(`${code}
 ;globalThis.__out = {

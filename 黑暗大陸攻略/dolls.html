@@ -23,11 +23,14 @@
             <ul>
                 <li>裝上娃娃要先付 <b id="c1"></b> 個 <a data-item="magicCrystal">魔法結晶</a>，之後每 <b id="c2"></b>自動再扣 <span id="c3"></span> 個續召。</li>
                 <li>結晶不夠時娃娃收回背包、能力失效（掛機照常）。已付的時間換娃娃、重新登入都不會重扣。</li>
-                <li>魔法結晶：在<b>娃娃商人露米</b>分解<b>傳說品質</b>裝備，每件 <b id="c4"></b> 個。</li>
+                <li>魔法結晶取得：
+                    <ul><li><b>一般商店</b>直接買，每顆 <b id="c5"></b> 金幣（一次召喚＝<span id="c6"></span> 金幣）。</li>
+                        <li><b>鑽石商人露米</b>的「魔法結晶包（10 小時）」：<b>50 <a href="online.html#dia">鑽石</a> → 1,000 個</b>，放進帳號共用倉庫。</li>
+                        <li>在鑽石商人分解<b>傳說品質</b>裝備，每件 <b id="c4"></b> 個。</li></ul></li>
             </ul></div>
         <div class="box"><h3 style="margin-top:0">取得</h3>
             <ul>
-                <li><b>T4 娃娃</b>：登入帳號後向<b>娃娃商人露米</b>購買，每隻 <b>500 <a href="online.html#dia">鑽石</a></b>，一次買一隻。買到的娃娃放進<a href="online.html#vault">帳號共用倉庫</a>，要自己去倉庫取出（照收取出手續費）；倉庫滿了不會扣鑽石。</li>
+                <li><b>T4 娃娃</b>：登入帳號後向<b>鑽石商人露米</b>（原「娃娃商人」，2026-11-03 改名）購買，每隻 <b>500 <a href="online.html#dia">鑽石</a></b>，一次買一隻。買到的娃娃放進<a href="online.html#vault">帳號共用倉庫</a>，要自己去倉庫取出（照收取出手續費）；倉庫滿了不會扣鑽石。</li>
                 <li>第一次買娃娃還會得到帳號稱號<a href="online.html#title">「伺服器育養員」</a>。</li>
                 <li>T0～T3 娃娃（尚未開放）。</li>
                 <li>品質顏色：<span class="doll-T0">T0 七彩</span>、<span class="doll-T1">T1 紅</span>、<span class="doll-T2">T2 黃</span>、<span class="doll-T3">T3 紫</span>、<span class="doll-T4">T4 藍</span>。</li>
@@ -50,7 +53,9 @@ const C = W.consts;
 $('#b-n').textContent = Object.keys(W.dolls).length; $('#b-t').textContent = sec(C.DOLL_BUY_CHECK_MS); $('#b-r').textContent = C.DOLL_BUY_RATE;
 $('#b-g').textContent = W.dollBuy.dollBuyGreen; $('#b-v').textContent = W.dollBuy.dollBuyBrave; $('#b-h').textContent = W.dollBuy.dollBuyHeal; $('#b-l').textContent = W.dollBuy.dollBuyBlue; $('#b-p').textContent = W.dollBuy.dollBuyPoly;
 $('#c1').textContent = C.DOLL_SUMMON_COST; $('#c2').textContent = sec(C.DOLL_SUMMON_MS); $('#c3').textContent = C.DOLL_SUMMON_COST;
-$('#c4').textContent = C.DOLL_DISMANTLE_CRYSTALS;const ORDER = ['T0', 'T1', 'T2', 'T3', 'T4'];
+$('#c4').textContent = C.DOLL_DISMANTLE_CRYSTALS;
+$('#c5').textContent = fmt(W.items.magicCrystal.price); $('#c6').textContent = fmt(W.items.magicCrystal.price * C.DOLL_SUMMON_COST);
+const ORDER = ['T0', 'T1', 'T2', 'T3', 'T4'];
 let cur = 'all';
 function draw() {
     renderTabs($('#tabs'), [['all', '全部']].concat(ORDER.map(q => [q, `<span class="doll-${q}">${q}</span>`])), cur, v => { cur = v; draw(); });
@@ -58,7 +63,7 @@ function draw() {
     $('#list').innerHTML = list.map(([id, d]) => {
         const a = W.dollAbilities[id] || {};
         return `<div class="card doll"><img src="${esc(img(d.art))}" alt="" loading="lazy"><div>
-            <h3><a class="doll-${d.quality}" data-item="doll_${id}">${esc(d.name)}</a> <span class="tag">${d.quality}</span><small class="dim">${d.quality === 'T4' ? '（露米商店 500 鑽）' : '（尚未開放）'}</small></h3>
+            <h3><a class="doll-${d.quality}" data-item="doll_${id}">${esc(d.name)}</a> <span class="tag">${d.quality}</span><small class="dim">${d.quality === 'T4' ? '（鑽石商人 500 鑽）' : '（尚未開放）'}</small></h3>
             <div class="stats">${fxList(a.fx).map(x => `<span>${esc(x)}</span>`).join('')}</div>
             <p style="margin:6px 0 0"><b>${esc(a.name || '')}</b>：${esc(a.desc || '')}</p></div></div>`;
     }).join('');
