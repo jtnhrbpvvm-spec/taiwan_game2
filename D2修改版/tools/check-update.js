@@ -72,17 +72,23 @@ function loadTranslator() {
     Node: { TEXT_NODE: 3, ELEMENT_NODE: 1 }, NodeFilter: { SHOW_TEXT: 4 },
     MutationObserver: function () { return { observe() {}, disconnect() {} }; },
     ResizeObserver: function () { return { observe() {}, disconnect() {} }; },
+    Storage: function () {}, fetch: () => Promise.reject(new Error('offline')), Response: function () {},
     CustomEvent: function () {}, Element: function () {}, HTMLElement: function () {},
     addEventListener() {}, removeEventListener() {}, dispatchEvent() {},
     setTimeout: () => 0, setInterval: () => 0, clearTimeout() {}, clearInterval() {},
     requestAnimationFrame: () => 0, performance: { now: () => 0 },
     alert: m => { throw new Error('alert: ' + m); }, getComputedStyle: () => any, matchMedia: () => any,
   };
+  win.Storage.prototype = { setItem() {}, getItem() { return null; }, removeItem() {} };
   win.CanvasRenderingContext2D.prototype = { putImageData() {}, drawImage() {}, fillText() {} };
   win.window = win; win.self = win; win.globalThis = win;
   const source = fs.readFileSync(path.join(ROOT, 'd2_zh.js'), 'utf8');
   try { vm.runInContext(source, vm.createContext(win), { filename: 'd2_zh.js' }); }
-  catch (e) { if (!win.D2I18N) throw e; }
+  catch (e) {
+    if (!win.D2I18N) throw e;
+    // 書籤後半段沒跑完的話，有些翻譯會用到還沒初始化的變數；先警告，再看是不是這裡的假環境少了什麼
+    console.warn(`  （警告：書籤在檢查環境裡沒有完整跑完：${e.message}）`);
+  }
   return { translate: win.D2I18N.translate, source };
 }
 
