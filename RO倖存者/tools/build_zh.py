@@ -6,6 +6,7 @@ build_zh.py —— 把翻譯檔合成書籤 ro-zh.js
 資料來源：最新一次爬蟲的 i18n.json（…\爬蟲\ro-survivors-tool\rs-crawl\<版本>\src\i18n.json）
 翻譯檔：tools\zh\*.txt，每行一筆，用 Tab 分隔：
     編號<Tab>中文            介面字串（編號對應 tools\ids.json 裡的西文原文）
+    N編號<Tab>中文           遊戲公告（最新消息）的一段，保留 ** 和 ` 標記；編號一定要有 N
     @英文名稱<Tab>中文        怪物、物品、卡片、技能、職業名稱
   # 開頭是註解。字串裡的換行寫成 \n。
   {n}、{0}、<b> 這類標記要原樣保留，對不上的會列出來、不會放進書籤。
@@ -57,17 +58,27 @@ def main():
         src_en.setdefault(k, k)
     names = set(data["names"]) | set(data["items"].values()) | set(data["cards"].values())
 
+    # 遊戲公告：鍵是英文純文字（去掉 ** 和 `），編號用 N 開頭，ids.json 裡存成 "news:英文"
+    news_md = {}
+    for u in data.get("news", []):
+        news_md.setdefault(u["key"], u["md"])
+
     ids = load_json(IDS, {})
-    nxt = max([int(v) for v in ids.values()] + [0]) + 1
+    nxt = max([int(v) for v in ids.values() if v.isdigit()] + [0]) + 1
     for k in src_en:
         if k not in ids:
             ids[k] = str(nxt)
             nxt += 1
+    nn = max([int(v[1:]) for v in ids.values() if v.startswith("N")] + [0]) + 1
+    for k in news_md:
+        if "news:" + k not in ids:
+            ids["news:" + k] = "N" + str(nn)
+            nn += 1
     with open(IDS, "w", encoding="utf-8", newline="\n") as f:
         json.dump(ids, f, ensure_ascii=False, indent=0)
     by_id = {v: k for k, v in ids.items()}
 
-    ui, nm, bad, dup = {}, {}, [], 0
+    ui, nm, news, bad, dup = {}, {}, {}, [], 0
     for path in sorted(glob.glob(os.path.join(HERE, "zh", "*.txt"))):
         with open(path, "r", encoding="utf-8-sig") as f:
             for no, line in enumerate(f, 1):
@@ -88,6 +99,13 @@ def main():
                 if k is None:
                     bad.append(f"{os.path.basename(path)}:{no} 編號 {key} 不存在")
                     continue
+                if k.startswith("news:"):
+                    ref = news_md.get(k[5:], k[5:])
+                    if ref.count("`") != zh.count("`") or ref.count("**") != zh.count("**"):
+                        bad.append(f"{os.path.basename(path)}:{no} 公告的 ` 或 ** 數量不一致 #{key}")
+                        continue
+                    news[k[5:]] = zh
+                    continue
                 ref = src_en.get(k, k)
                 if sorted(TOKEN.findall(ref)) != sorted(TOKEN.findall(zh)) and sorted(TOKEN.findall(k)) != sorted(TOKEN.findall(zh)):
                     bad.append(f"{os.path.basename(path)}:{no} 標記不一致 #{key}：{ref!r} → {zh!r}")
@@ -101,7 +119,8 @@ def main():
     used_nm = dict(nm)
     with open(SRC, "r", encoding="utf-8") as f:
         code = f.read()
-    blob = json.dumps({"ui": used_ui, "names": used_nm}, ensure_ascii=False, separators=(",", ":"))
+    # 舊公告留著（遊戲有時只改字，舊版本的翻譯還是可能用到）
+    blob = json.dumps({"ui": used_ui, "names": used_nm, "news": news}, ensure_ascii=False, separators=(",", ":"))
     blob = blob.replace("</", "<\\/")
     code, n = re.subn(r"^/\*ZH\*/.*?/\*END\*/", lambda m: "/*ZH*/const ZH = " + blob + ";/*END*/", code, flags=re.S | re.M)
     if n != 1:
@@ -111,8 +130,10 @@ def main():
 
     miss_ui = [k for k in src_en if k not in used_ui]
     miss_nm = sorted(n for n in names if n not in used_nm)
+    miss_news = [k for k in news_md if k not in news]
     print(f"遊戲版本：{ver}")
-    print(f"介面字串 {len(used_ui)}/{len(src_en)}，名稱 {len(used_nm)}/{len(names)}；ro-zh.js {len(code.encode('utf-8')) // 1024} KB")
+    print(f"介面字串 {len(used_ui)}/{len(src_en)}，名稱 {len(used_nm)}/{len(names)}，"
+          f"公告 {len(news_md) - len(miss_news)}/{len(news_md)}；ro-zh.js {len(code.encode('utf-8')) // 1024} KB")
     if dup:
         print(f"（有 {dup} 筆重複翻譯，以後面檔案的為準）")
     for b in bad[:80]:
@@ -125,7 +146,9 @@ def main():
                 f.write(ids[k] + "\t" + src_en[k].replace("\n", "\\n") + "\n")
             for n in miss_nm:
                 f.write("@" + n + "\t\n")
-        print(f"todo.txt：介面 {len(miss_ui)} 筆、名稱 {len(miss_nm)} 筆")
+            for k in miss_news:
+                f.write(ids["news:" + k] + "\t" + news_md[k] + "\n")
+        print(f"todo.txt：介面 {len(miss_ui)} 筆、名稱 {len(miss_nm)} 筆、公告 {len(miss_news)} 筆")
 
 
 if __name__ == "__main__":

@@ -6,8 +6,8 @@
    中文表用西文原文當鍵；沒翻到的字退回遊戲自己的英文。
    怪物、物品、卡片、技能名是遊戲直接顯示的英文原名，不經過翻譯函式，另外在畫面文字（DOM、canvas）換成台版譯名。
    設定存檔時把 lang 存回原本的語言，沒點書籤時遊戲不會變成西文。 */
-const VERSION = 'V1';
-/*ZH*/const ZH = {"ui":{},"names":{}};/*END*/
+const VERSION = 'V2';
+/*ZH*/const ZH = {"ui":{},"names":{},"news":{}};/*END*/
 (() => {
   const W = window;
   if (W.__roZh) { W.__roZh.activate(true); return; }
@@ -105,9 +105,48 @@ const VERSION = 'V1';
     }
     addOptButton(root);
   }
+  /* ---------- 遊戲公告（最新消息）：遊戲顯示英文版 markdown，這裡逐段換成中文 ---------- */
+  const NEWS = ZH.news || {};
+  const NEWS_TAG = { new: '新增', change: '調整', better: '改善', fix: '修正', other: null };
+  const MONTHS = { January: 1, February: 2, March: 3, April: 4, May: 5, June: 6, July: 7, August: 8, September: 9, October: 10, November: 11, December: 12 };
+  const escH = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const mdHtml = s => escH(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  const norm = s => s.replace(/\s+/g, ' ').trim();
+  function translateNews() {
+    const body = document.getElementById('news-body');
+    if (!body || !isZh()) return;
+    for (const el of body.querySelectorAll('h2, h3, p, li')) {
+      if (el.dataset.zh) continue;
+      el.dataset.zh = '1';
+      if (el.tagName === 'H2') {
+        const m = /^(.*?)\s+[—–-]\s+([A-Z][a-z]+) (\d{1,2}), (\d{4})$/.exec(norm(el.textContent));
+        if (m && MONTHS[m[2]]) el.textContent = `${m[1]} — ${m[4]} 年 ${MONTHS[m[2]]} 月 ${m[3]} 日`;
+        continue;
+      }
+      if (el.tagName === 'P' && el.classList.contains('news-empty')) continue;
+      const tag = el.tagName === 'LI' ? el.querySelector('.news-tag') : null;
+      const clone = el.cloneNode(true);
+      const ct = clone.querySelector('.news-tag');
+      if (ct) ct.remove();
+      const zh = NEWS[norm(clone.textContent)];
+      if (tag) {
+        const kind = (/tag-(\w+)/.exec(tag.className) || [])[1];
+        if (NEWS_TAG[kind]) tag.textContent = NEWS_TAG[kind];
+      }
+      if (zh === undefined) { walk(el); continue; }   /* 還沒翻的段落：至少把名稱換成中文 */
+      if (tag) { el.innerHTML = ''; el.appendChild(tag); el.insertAdjacentHTML('beforeend', ' ' + mdHtml(zh)); }
+      else el.innerHTML = mdHtml(zh);
+    }
+  }
+  let newsTimer = 0;
+  const queueNews = () => { if (!newsTimer) newsTimer = setTimeout(() => { newsTimer = 0; translateNews(); }, 0); };
+
   const mo = new MutationObserver(muts => {
     if (!isZh()) { for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) addOptButton(n); return; }
     for (const m of muts) {
+      /* 公告區先不做名稱替換（會讓英文對不上翻譯表），交給 translateNews */
+      const tgt = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (tgt && tgt.closest('#news-body')) { queueNews(); continue; }
       if (m.type === 'characterData') fixText(m.target);
       else if (m.type === 'attributes') fixAttr(m.target, m.attributeName);
       else for (const n of m.addedNodes) walk(n);
@@ -152,6 +191,7 @@ const VERSION = 'V1';
   function onLang() {
     if (!isZh()) return;
     document.documentElement.lang = 'zh-Hant';
+    translateNews();
     walk(document.body);
   }
   addEventListener('ro-lang', onLang);
