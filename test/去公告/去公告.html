@@ -85,6 +85,7 @@
   .dots{display:flex; justify-content:center; gap:6px; margin-top:10px;}
   .dots span{width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.2); cursor:pointer; transition:all .2s;}
   .dots span.active{width:20px; background:#38BDF8;}
+.btn-drag[data-pre]::before{content:attr(data-pre)}.btn-drag[data-post]::after{content:attr(data-post)}
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </head>
@@ -95,9 +96,9 @@
 
   <div class="card">
     <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
-    <a id="drag-btn-1" class="btn btn-drag" href="#" draggable="true">👉 拖我到書籤列（按鈕1：關閉公告）</a>
-    <a id="drag-btn-2" class="btn btn-drag" href="#" draggable="true" style="margin-top:10px;">🚀 拖我到書籤列（按鈕2：加快離線載入速度）</a>
-    <a id="drag-btn-3" class="btn btn-drag" href="#" draggable="true" style="margin-top:10px;">✨ 拖我到書籤列（按鈕3：關閉公告＋加快載入）</a>
+    <a id="drag-btn-1" class="btn btn-drag" href="#" draggable="true" data-pre="👉 拖我到書籤列（" data-post="）">按鈕1：關閉公告</a>
+    <a id="drag-btn-2" class="btn btn-drag" href="#" draggable="true" style="margin-top:10px;" data-pre="🚀 拖我到書籤列（" data-post="）">按鈕2：加快離線載入速度</a>
+    <a id="drag-btn-3" class="btn btn-drag" href="#" draggable="true" style="margin-top:10px;" data-pre="✨ 拖我到書籤列（" data-post="）">按鈕3：關閉公告＋加快載入</a>
     <div class="hint">找不到書籤列？先按 <b>Ctrl+Shift+B</b>（Mac：⌘+Shift+B）顯示書籤列，再拖曳。三個按鈕請分別拖曳成三個獨立的書籤。</div>
   </div>
 

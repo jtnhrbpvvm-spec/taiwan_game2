@@ -87,6 +87,7 @@
  .dots{display:flex; justify-content:center; gap:6px; margin-top:10px;}
  .dots span{width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.2); cursor:pointer; transition:all .2s;}
  .dots span.active{width:20px; background:#38BDF8;}
+.btn-drag[data-pre]::before{content:attr(data-pre)}.btn-drag[data-post]::after{content:attr(data-post)}
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </head>
@@ -97,7 +98,7 @@
 
   <div class="card">
     <h2>💻 電腦（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
-    <a id="drag-btn" class="btn btn-drag" href="#" draggable="true">👉 拖我到書籤列（無級工具）</a>
+    <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" data-pre="👉 拖我到書籤列（" data-post="）">無級工具</a>
     <div class="hint">找不到書籤列？先按 <b>Ctrl+Shift+B</b>（Mac：⌘+Shift+B）顯示書籤列，再拖曳。</div>
     <div class="hint">電腦打開遊戲會停在「請用手機遊玩」畫面，這時點書籤，在「電腦版」分頁選存檔就能直接進入。每次重新整理後要再點一次。</div>
   </div>

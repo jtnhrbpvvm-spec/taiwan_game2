@@ -223,6 +223,7 @@
     background: #fff4e5; color: #24304f; font-size: 16px; line-height: 1.8; }
   .ie-warn b { color: #c0392b; }
   @supports (display: grid) { .ie-warn { display: none; } }
+.btn-drag[data-pre]::before{content:attr(data-pre)}.btn-drag[data-post]::after{content:attr(data-post)}
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </head>
@@ -256,7 +257,7 @@
   <section class="card" id="pc">
     <h2>💻 電腦瀏覽器（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
     <div class="body">
-      <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列">✦ 拖我到書籤列（RO 繁體中文）</a>
+      <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列" data-pre="✦ 拖我到書籤列（" data-post="）">RO 繁體中文</a>
       <ol class="hint">
         <li>按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>（Mac：<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>）叫出書籤列。</li>
         <li>用滑鼠<b>按住</b>上面的藍色按鈕，<b>拖曳</b>到書籤列上放開（直接點按鈕不會安裝）。</li>
