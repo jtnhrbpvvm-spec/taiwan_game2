@@ -257,11 +257,11 @@
   <section class="card" id="pc">
     <h2>💻 電腦瀏覽器（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
     <div class="body">
-      <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列" data-pre="✦ 拖我到書籤列（" data-post="）">RO 繁體中文</a>
+      <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列" data-pre="✦ 拖我到書籤列（" data-post="）">RO倖存者 繁體中文</a>
       <ol class="hint">
         <li>按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>（Mac：<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>）叫出書籤列。</li>
         <li>用滑鼠<b>按住</b>上面的藍色按鈕，<b>拖曳</b>到書籤列上放開（直接點按鈕不會安裝）。</li>
-        <li>打開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">遊戲頁面</a>，在標題畫面點一下書籤列上的「RO 繁體中文」。</li>
+        <li>打開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">遊戲頁面</a>，在標題畫面點一下書籤列上的「RO倖存者 繁體中文」。</li>
       </ol>
     </div>
   </section>
@@ -302,7 +302,7 @@
       <div class="hint" style="margin-top:18px;font-weight:900;color:var(--blue-3)">書籤程式碼（第 1 步要複製的）</div>
       <button class="btn btn-copy" id="copy-btn" style="margin-top:8px">📋 複製書籤程式碼</button>
       <textarea id="code-box" readonly></textarea>
-      <div class="note-box">建議把書籤名稱取成 <b>RO 繁體中文</b>，Android 之後在網址列打「RO」就找得到。</div>
+      <div class="note-box">建議把書籤名稱取成 <b>RO倖存者 繁體中文</b>，Android 之後在網址列打「RO」就找得到。</div>
     </div>
   </section>
 
@@ -311,7 +311,7 @@
     <h2>🎮 使用方式</h2>
     <div class="body">
       <div class="flow">
-        <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>，在<b>標題畫面</b>點書籤「RO 繁體中文」。<div class="hint">手機 Android：在網址列輸入「RO」，點下方出現的書籤（從書籤清單點不會執行）。</div></div></div>
+        <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>，在<b>標題畫面</b>點書籤「RO倖存者 繁體中文」。<div class="hint">手機 Android：在網址列輸入「RO」，點下方出現的書籤（從書籤清單點不會執行）。</div></div></div>
         <div class="flow-step"><div class="num">2</div><div>畫面上方出現「繁體中文已啟用」，遊戲文字馬上變成繁體中文。標題畫面右上角的語言選單、遊戲中的<b>「選項 → 語言」</b>都會多一個 <b>繁體中文</b>，可以隨時切回 English／Español。</div></div>
         <div class="flow-step"><div class="num">3</div><div><b>重新整理頁面後</b>要再點一次書籤。沒點書籤時遊戲會是英文。</div></div>
       </div>
@@ -429,7 +429,7 @@
   const tutorialPage = `
     <div class="bar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
     <div class="page blue">
-      <div style="text-align:center;color:#fff;font-weight:900;text-shadow:1px 1px 0 #1d2d57">✦ RO 繁體中文</div>
+      <div style="text-align:center;color:#fff;font-weight:900;text-shadow:1px 1px 0 #1d2d57">✦ RO倖存者 繁體中文</div>
       <div class="mini-btn" style="background:#fff;border:1px solid #a3b2db;color:#2a3a6a;position:relative">📋 複製書籤程式碼
         <div class="ring" style="inset:-5px"></div></div>
       <div class="mini-code">${codeShort}</div>
@@ -441,7 +441,7 @@
   const STEPS = {
     ios: [
       { cap: '複製書籤程式碼', desc: '在這一頁按「📋 複製書籤程式碼」。', html: tutorialPage + `<div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span>📖</span><span>⧉</span></div>` },
-      { cap: '分享 → 加入書籤', desc: '點 Safari 下方的「分享 ⬆︎」，選「加入書籤」，名稱取成「RO 繁體中文」後儲存。', html: `
+      { cap: '分享 → 加入書籤', desc: '點 Safari 下方的「分享 ⬆︎」，選「加入書籤」，名稱取成「RO倖存者 繁體中文」後儲存。', html: `
         <div class="bar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
         <div class="page blue" style="opacity:.5"></div>
         <div class="sheet">
@@ -449,23 +449,23 @@
           <div class="sheet-row" style="position:relative"><b>加入書籤</b><span>📖</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
           <div class="sheet-row"><span>加入到主畫面</span><span>⊕</span></div>
         </div>` },
-      { cap: '打開書籤 → 編輯', desc: '點下方「📖」打開書籤清單，按右下角「編輯」，再點剛剛的「RO 繁體中文」。', html: `
+      { cap: '打開書籤 → 編輯', desc: '點下方「📖」打開書籤清單，按右下角「編輯」，再點剛剛的「RO倖存者 繁體中文」。', html: `
         <div class="bar"></div>
         <div class="navbar"><span></span><b>書籤</b><span class="blue-t">完成</span></div>
         <div class="page" style="background:#fff">
           <div class="sheet-row" style="background:#f4f4f6">⭐ 我的最愛</div>
-          <div class="sheet-row" style="background:#f4f4f6;position:relative">✦ RO 繁體中文<span class="blue-t">›</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
+          <div class="sheet-row" style="background:#f4f4f6;position:relative">✦ RO倖存者 繁體中文<span class="blue-t">›</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
         </div>
         <div class="toolbar" style="justify-content:flex-end;padding-right:14px;font-size:12px"><span class="blue-t" style="position:relative">編輯<span class="tap" style="left:4px;top:-2px"></span></span></div>` },
       { cap: '網址換成程式碼 → 完成', desc: '把網址欄位整個清空，貼上剛剛複製的程式碼，按「完成」。', html: `
         <div class="bar"></div>
         <div class="navbar"><span class="blue-t">‹ 書籤</span><b>編輯書籤</b><span class="blue-t">完成</span></div>
         <div class="form" style="background:#fff;flex:1">
-          <label>名稱</label><div class="field">RO 繁體中文</div>
+          <label>名稱</label><div class="field">RO倖存者 繁體中文</div>
           <label style="margin-top:8px">網址</label>
           <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
         </div>` },
-      { cap: '在遊戲頁面點書籤', desc: '打開 ro-survivors.com，在標題畫面點「📖」→「RO 繁體中文」，遊戲就變成中文。', html: `
+      { cap: '在遊戲頁面點書籤', desc: '打開 ro-survivors.com，在標題畫面點「📖」→「RO倖存者 繁體中文」，遊戲就變成中文。', html: `
         <div class="bar" style="background:#111"></div><div class="url" style="background:#333;color:#ccc">ro-survivors.com</div>
         <div style="margin-top:6px;flex:1;display:flex">${gameZh}</div>
         <div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span style="position:relative">📖<span class="tap" style="left:-3px;top:-3px"></span></span><span>⧉</span></div>` },
@@ -479,18 +479,18 @@
           <div>新分頁</div><div>書籤</div><div>記錄</div></div>` },
       { cap: '點「編輯」', desc: '下方會跳出「已加入書籤」，點右邊的「編輯」。（錯過的話：⋮ → 書籤 → 長按它 → 編輯）', html: tutorialPage + `
         <div class="snack"><span>已加入書籤</span><span style="color:#8ab4f8;font-weight:bold;position:relative">編輯<span class="tap" style="left:2px;top:-4px"></span></span></div>` },
-      { cap: '名稱與網址 → 儲存', desc: '名稱改成「RO 繁體中文」，網址整個換成剛剛複製的程式碼，按左上「←」儲存。', html: `
+      { cap: '名稱與網址 → 儲存', desc: '名稱改成「RO倖存者 繁體中文」，網址整個換成剛剛複製的程式碼，按左上「←」儲存。', html: `
         <div class="bar"></div>
         <div class="navbar" style="justify-content:flex-start;gap:10px;background:#fff"><span>←</span><b>編輯書籤</b></div>
         <div class="form" style="background:#fff;flex:1">
-          <label>名稱</label><div class="field focus">RO 繁體中文</div>
+          <label>名稱</label><div class="field focus">RO倖存者 繁體中文</div>
           <label style="margin-top:8px">URL</label>
           <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
         </div>` },
-      { cap: '在遊戲頁面從網址列啟動', desc: '打開 ro-survivors.com，點網址列輸入「RO」，點下方出現的「RO 繁體中文」書籤。（從書籤清單點不會執行）', html: `
+      { cap: '在遊戲頁面從網址列啟動', desc: '打開 ro-survivors.com，點網址列輸入「RO」，點下方出現的「RO倖存者 繁體中文」書籤。（從書籤清單點不會執行）', html: `
         <div class="bar" style="background:#111"></div>
         <div class="url" style="background:#fff;color:#111;border:2px solid #2563eb">RO|</div>
-        <div class="suggest" style="margin-top:6px;position:relative">☆ <div><b>RO 繁體中文</b><div style="color:#888;font-size:9px">javascript:import(…</div></div><div class="ring" style="inset:-2px;border-radius:6px"></div></div>
+        <div class="suggest" style="margin-top:6px;position:relative">☆ <div><b>RO倖存者 繁體中文</b><div style="color:#888;font-size:9px">javascript:import(…</div></div><div class="ring" style="inset:-2px;border-radius:6px"></div></div>
         ${gameZh}` },
     ],
   };
