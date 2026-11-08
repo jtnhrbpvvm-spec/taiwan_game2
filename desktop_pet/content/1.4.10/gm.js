@@ -1,11 +1,12 @@
 // 線上GM（遊戲裡的 NPC〔復活節兔子〕）出現時間的提醒。
 // 拿〔天上之蛋〕跟他擲十八啦，贏了可以換到特殊的蛋，但他只會不定期出現在歡喜城。
 //
-// 出現的規則抄自遊戲 bundle（2026-10-08 20:51 那版的 bb / xb / Sb / Cb），跟黑店匯率一樣只看時間，
-// 所以可以事先算出來，不用問遊戲：
+// 出現的規則抄自遊戲 bundle（2026-11-08 那版的 TT / ET / DT / AT；10-08 版是一次 1 小時、9 個開始時間），
+// 跟黑店匯率一樣只看時間，所以可以事先算出來，不用問遊戲：
 //   - 一律用台灣時間（UTC+8），跟電腦設的時區無關
 //   - 每天從早上 6 點起分成兩段，每段 9 小時：06:00～15:00、15:00～24:00
-//   - 每段出現一次、一次 1 小時，開始時間是那一段裡的某個整點（第 0～8 個小時，用段落編號當亂數種子決定）
+//   - 每段出現一次、一次 2 小時，開始時間是那一段裡的某個整點（第 0～7 個小時，用段落編號當亂數種子決定；
+//     遊戲寫成 floor(7 小時 ÷ 1 小時) + 1 種，確保 2 小時一定落在那一段裡）
 //   - 凌晨 0～6 點不會出現
 // 遊戲哪天改了規則，這裡報的時間就會錯；自我測試會拿遊戲自己算的 gmWakeInMs() 來對帳。
 const { rng } = require("./mall");
@@ -16,8 +17,8 @@ const TAIWAN_OFFSET_MS = 8 * HOUR_MS;
 const DAY_STARTS_AT_MS = 6 * HOUR_MS; // 每天從早上 6 點起算
 const WINDOWS_PER_DAY = 2;
 const PERIOD_MS = 9 * HOUR_MS;
-const START_SLOTS = 9; // 開始時間可以落在那一段的第 0～8 個小時
-const DURATION_MS = HOUR_MS;
+const DURATION_MS = 2 * HOUR_MS; // 2026-11-04 起一次 2 小時（之前 1 小時）
+const START_SLOTS = Math.floor((PERIOD_MS - DURATION_MS) / HOUR_MS) + 1; // 8：開始時間可以落在那一段的第 0～7 個小時
 const SEED = 1735222371;
 const REMIND_BEFORE_MS = HOUR_MS;
 const TOWN = "歡喜城";

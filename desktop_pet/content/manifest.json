@@ -1,5 +1,5 @@
 {
-  "version": "1.4.9",
+  "version": "1.4.10",
   "shell": 1,
   "files": [
     {
@@ -9,8 +9,8 @@
     },
     {
       "path": "gm.js",
-      "sha256": "958c154e465a1e3545bb555b3b319bedf7e8727395a55c66245689bfa41d7505",
-      "size": 4229
+      "sha256": "b3f7258d458d8cb1e47d1cc626418b17ca198f90806b96077d6852bf07076ed5",
+      "size": 4486
     },
     {
       "path": "income-preload.js",
