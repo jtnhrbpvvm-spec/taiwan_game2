@@ -330,7 +330,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
 <div id="toastArea"></div>
 
 <div id="topbar">
-  <span class="bar-title">🧭 希望存檔修改器v60</span>
+  <span class="bar-title">🧭 希望存檔修改器v61</span>
   <span class="bar-sep">|</span>
   <label class="btn btn-accent">📂 載入存檔<input type="file" id="fileInput" accept=".json"></label>
   <button class="btn" id="exportBtn" disabled>💾 匯出存檔</button>
@@ -388,6 +388,7 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
     <div class="nav-item" data-panel="buffs">🌟 輔助狀態</div>
     <div class="nav-item" data-panel="gems">💎 技能寶石</div>
     <div class="nav-item" data-panel="stones">💠 鑲嵌石</div>
+    <div class="nav-item" data-panel="skillattr">🔮 技能鑑定</div>
 
     <div class="nav-section">角色狀態</div>
     <div class="nav-item" data-panel="pets" id="petsNavItem">🐾 寵物</div>
@@ -615,6 +616,16 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
         這裡列出每顆石頭目前的能力，並且可以把「變更次數」補回上限；「完全修改」可以在遊戲規則內自己設定階數和能力。
       </div>
       <div id="stonePanelBody"></div>
+    </div>
+
+    <!-- ══ 技能鑑定 ══ -->
+    <div class="panel" id="panel-skillattr">
+      <div class="panel-title">🔮 技能鑑定</div>
+      <div class="panel-desc">
+        2026-11-08 改版新增：有技能池的裝備可以找技能鑑定師鑑定出一個「技能 +N」。
+        這裡可以直接指定背包裡每件裝備的技能和等級（只能選那件裝備池裡有的技能，等級不超過上限）。
+      </div>
+      <div id="skillAttrPanelBody"></div>
     </div>
 
     <!-- ══ 寵物 ══ -->
@@ -887,26 +898,27 @@ html:not([data-theme="classic"]) #content::-webkit-scrollbar-thumb{background:va
   </div>
 </div>
 
-<script src="data/items.js?v=60"></script>
-<script src="data/equipSlots.js?v=60"></script>
-<script src="data/jobs.js?v=60"></script>
-<script src="data/jobs2.js?v=60"></script>
-<script src="data/maps.js?v=60"></script>
-<script src="data/skills.js?v=60"></script>
-<script src="data/pets.js?v=60"></script>
-<script src="data/battlePets.js?v=60"></script>
-<script src="data/individuality.js?v=60"></script>
-<script src="data/quests.js?v=60"></script>
-<script src="data/missions.js?v=60"></script>
-<script src="data/daily.js?v=60"></script>
-<script src="data/gems.js?v=60"></script>
-<script src="data/stones.js?v=60"></script>
-<script src="data/aura.js?v=60"></script>
-<script src="data/enchant.js?v=60"></script>
-<script src="data/questLines.js?v=60"></script>
-<script src="data/monsterDex.js?v=60"></script>
-<script src="data/boxes.js?v=60"></script>
-<script src="data/smith.js?v=60"></script>
-<script src="data/app.js?v=60"></script>
+<script src="data/items.js?v=61"></script>
+<script src="data/equipSlots.js?v=61"></script>
+<script src="data/jobs.js?v=61"></script>
+<script src="data/jobs2.js?v=61"></script>
+<script src="data/maps.js?v=61"></script>
+<script src="data/skills.js?v=61"></script>
+<script src="data/pets.js?v=61"></script>
+<script src="data/battlePets.js?v=61"></script>
+<script src="data/individuality.js?v=61"></script>
+<script src="data/quests.js?v=61"></script>
+<script src="data/missions.js?v=61"></script>
+<script src="data/daily.js?v=61"></script>
+<script src="data/gems.js?v=61"></script>
+<script src="data/stones.js?v=61"></script>
+<script src="data/skillAttr.js?v=61"></script>
+<script src="data/aura.js?v=61"></script>
+<script src="data/enchant.js?v=61"></script>
+<script src="data/questLines.js?v=61"></script>
+<script src="data/monsterDex.js?v=61"></script>
+<script src="data/boxes.js?v=61"></script>
+<script src="data/smith.js?v=61"></script>
+<script src="data/app.js?v=61"></script>
 </body>
 </html>

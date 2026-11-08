@@ -56,7 +56,7 @@
   }
 
   // ---------- 側邊欄面板切換 ----------
-  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "stones", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
+  var LOCKED_PANELS = ["basic", "attrs", "equip", "inventory", "warehouse", "enchant", "appraisal", "skills", "buffs", "gems", "stones", "skillattr", "pets", "battlepet", "potions", "records", "spot", "individuality", "quests", "daily", "missions", "dungeon", "party", "advanced", "sellkeep", "json"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
@@ -112,6 +112,7 @@
     { panel: "buffs", icon: "🌟", title: "輔助狀態", desc: "點選啟用/停用輔助技能，可批次套用等級改變持續時間。" },
     { panel: "gems", icon: "💎", title: "技能寶石", desc: "開寶石位置、指定技能與寶石、新增寶石並設定每一格的強化結果。" },
     { panel: "stones", icon: "💠", title: "鑲嵌石", desc: "查看四顆石頭目前的能力，把變更次數補回上限。" },
+    { panel: "skillattr", icon: "🔮", title: "技能鑑定", desc: "直接設定裝備鑑定出的技能和等級（照遊戲的技能池）。" },
     { panel: "pets", icon: "🐾", title: "寵物", desc: "新增寵物、調整成長階段、經驗、飽食度。" },
     { panel: "potions", icon: "🧪", title: "藥水設定", desc: "自動回血 / 回 AP 的閾值與藥水種類。" },
     { panel: "records", icon: "📖", title: "物品紀錄", desc: "已見過物品清單、追蹤中的掉落物清單。" },
@@ -660,6 +661,7 @@
     renderBuffsPanel(c);
     renderGems(c);
     renderStones(c);
+    renderSkillAttr(c);
     renderPets(c);
     renderBattlePet(c);
     renderPotions(c);
@@ -4041,6 +4043,116 @@
       row.appendChild(btn);
       wrap.appendChild(row);
     });
+  }
+
+  // ---------- 技能鑑定（2026-11-08 改版新增）----------
+  // 裝備有 iopt 才能鑑定（0 = 全職業池、其他 = 那個職業碼的池）。結果存 stack.skillAttr = {skillId, level}。
+  // 只能選那件裝備的池裡有的技能，等級 1～池裡寫的上限（遊戲載入時舊技能不在池裡會被 repairSkillAttrs() 換掉）。
+  // 穿著時加到「已經學會」的同名技能上，最多加到技能表最高等級；沒學的不加。
+  var SKILL_ATTR = window.SKILL_ATTR || null;
+  var skillAttrNameCache = null;
+  function saSkillInfo(skillId) {
+    if (!skillAttrNameCache) {
+      skillAttrNameCache = {};
+      var all = window.SKILLS || {};
+      Object.keys(all).forEach(function (job) {
+        (all[job] || []).forEach(function (s) { if (!skillAttrNameCache[s.id]) skillAttrNameCache[s.id] = { name: s.name, job: job }; });
+      });
+    }
+    return skillAttrNameCache[skillId] || { name: "技能 #" + skillId, job: "" };
+  }
+  function saJobLabel(job) {
+    var j = (window.JOBS || []).find(function (x) { return x.id === job; });
+    return j ? j.name : job;
+  }
+  // 這件裝備的池：[{id, cap}]，同技能取最高上限
+  function saChoices(item) {
+    if (!SKILL_ATTR || !item || item.iopt == null) return [];
+    var codes = Number(item.iopt) === 0 ? SKILL_ATTR.anyJobs : [item.iopt];
+    var cap = {}, order = [];
+    codes.forEach(function (code) {
+      (SKILL_ATTR.pools[String(code)] || []).forEach(function (e) {
+        if (cap[e[0]] === undefined) order.push(e[0]);
+        cap[e[0]] = Math.max(cap[e[0]] || 0, e[1]);
+      });
+    });
+    return order.map(function (id) { return { id: id, cap: cap[id] }; });
+  }
+  function saPoolLabel(item) {
+    return Number(item.iopt) === 0 ? "全職業池" : ((SKILL_ATTR.jobNames || {})[String(item.iopt)] || ("#" + item.iopt)) + "職業池";
+  }
+  function renderSkillAttr(c) {
+    var wrap = document.getElementById("skillAttrPanelBody");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!SKILL_ATTR) { wrap.appendChild(el("div", { class: "panel-desc", text: "找不到技能鑑定資料（data/skillAttr.js），請重新執行 update_data.py。" })); return; }
+    var worn = {};
+    Object.keys(c.loadout || {}).forEach(function (k) { worn[c.loadout[k]] = true; });
+    var learned = {};
+    (c.skills || []).forEach(function (p) { learned[p[0]] = p[1]; });
+    var stacks = (c.stacks || []).filter(function (s) { var it = ITEMS[String(s.itemId)]; return it && it.iopt != null; });
+    stacks.sort(function (a, b) { return (worn[b.id] ? 1 : 0) - (worn[a.id] ? 1 : 0); });
+    if (!stacks.length) {
+      wrap.appendChild(el("div", { class: "panel-desc", text: "背包裡沒有可以技能鑑定的裝備（裝備資料有 iopt 的才可以）。" }));
+      return;
+    }
+    var table = el("table", { class: "etable" });
+    table.innerHTML = "<thead><tr><th>裝備</th><th>技能池</th><th>技能</th><th style=\"width:90px;\">等級</th><th style=\"width:120px;\"></th></tr></thead>";
+    var tb = el("tbody");
+    stacks.forEach(function (s) {
+      var item = ITEMS[String(s.itemId)];
+      var choices = saChoices(item);
+      var cur = s.skillAttr || null;
+      var skillSel = el("select");
+      skillSel.appendChild(el("option", { value: "", text: "（未鑑定）" }));
+      choices.forEach(function (ch) {
+        var info = saSkillInfo(ch.id);
+        var lv = learned[ch.id];
+        var opt = el("option", { value: String(ch.id), text: info.name + "（" + saJobLabel(info.job) + "，最高 +" + ch.cap + (lv ? "，已學 Lv" + lv : "，沒學") + "）" });
+        if (cur && cur.skillId === ch.id) opt.selected = true;
+        skillSel.appendChild(opt);
+      });
+      if (cur && !choices.some(function (ch) { return ch.id === cur.skillId; })) {
+        var bad = el("option", { value: String(cur.skillId), text: saSkillInfo(cur.skillId).name + "（不在這件的池裡）" });
+        bad.selected = true;
+        skillSel.appendChild(bad);
+      }
+      var lvSel = el("select");
+      function fillLevels() {
+        lvSel.innerHTML = "";
+        var ch = choices.find(function (x) { return String(x.id) === skillSel.value; });
+        var capLv = ch ? ch.cap : 0;
+        for (var i = 1; i <= capLv; i++) lvSel.appendChild(el("option", { value: String(i), text: "+" + i }));
+        lvSel.disabled = !ch;
+        if (ch) lvSel.value = String(Math.min(capLv, cur && String(cur.skillId) === skillSel.value ? cur.level : capLv));
+      }
+      fillLevels();
+      skillSel.addEventListener("change", fillLevels);
+      var applyBtn = el("button", { class: "btn btn-sm", text: "套用" });
+      applyBtn.addEventListener("click", function () {
+        if (!skillSel.value) {
+          delete s.skillAttr;
+          toast("「" + itemName(s.itemId) + "」回到未鑑定", "ok");
+        } else {
+          var ch = choices.find(function (x) { return String(x.id) === skillSel.value; });
+          if (!ch) { toast("這個技能不在這件裝備的池裡", "warn"); return; }
+          var lv = Math.max(1, Math.min(ch.cap, parseInt(lvSel.value, 10) || ch.cap));
+          s.skillAttr = { skillId: ch.id, level: lv };
+          toast("「" + itemName(s.itemId) + "」→ " + saSkillInfo(ch.id).name + " +" + lv, "ok");
+        }
+        renderSkillAttr(c);
+      });
+      var maxBtn = el("button", { class: "btn btn-sm", text: "最高", style: "margin-left:4px;" });
+      maxBtn.addEventListener("click", function () {
+        var ch = choices.find(function (x) { return String(x.id) === skillSel.value; });
+        if (ch) lvSel.value = String(ch.cap);
+      });
+      var nameCell = el("td", { text: itemName(s.itemId) + (s.refine ? " +" + s.refine : "") + (worn[s.id] ? "（穿著中）" : "") });
+      tb.appendChild(el("tr", null, [nameCell, el("td", { text: saPoolLabel(item) }), el("td", null, [skillSel]), el("td", null, [lvSel]), el("td", null, [applyBtn, maxBtn])]));
+    });
+    table.appendChild(tb);
+    wrap.appendChild(table);
+    wrap.appendChild(el("div", { class: "note", style: "margin-top:8px;", text: "只列出那件裝備的技能池裡有的技能，等級最高到池裡寫的上限。穿著時才有效，而且只加到已經學會的技能上（沒學的不會加），最多加到技能表的最高等級。選「（未鑑定）」再套用就是清掉。" }));
   }
 
   function renderDungeon(c) {

@@ -1100,7 +1100,8 @@
   // 光環／時裝強化／哈比兔大富翁（2026-10-10 新增的系統）：沒有對應的資料檔就不顯示
   [["gems", "💎 技能寶石", window.GEMS], ["aura", "✨ 光環", window.AURA], ["costume", "👗 時裝強化", window.COSTUME], ["marble", "🎲 哈比兔大富翁", window.MARBLE],
     ["events", "🎉 節慶活動・特賣", window.EVENTS], ["couple", "💞 情侶", window.EVENTS && window.EVENTS.couple],
-    ["lotto", "🎱 大樂透", window.EVENTS && window.EVENTS.lotto], ["cp", "⚔️ 戰力", window.COMBAT_POWER]].forEach(function (def) {
+    ["lotto", "🎱 大樂透", window.EVENTS && window.EVENTS.lotto], ["cp", "⚔️ 戰力", window.COMBAT_POWER],
+    ["skillattr", "🔮 技能鑑定", window.SKILL_ATTR]].forEach(function (def) {
     if (!def[2]) return;
     var chip = document.createElement("span");
     chip.className = "hint-chip";
@@ -1218,6 +1219,7 @@
     else if (kind === "couple") showCoupleGuide();
     else if (kind === "lotto") showLottoGuide();
     else if (kind === "cp") showCombatPowerGuide();
+    else if (kind === "skillattr") showSkillAttrGuide(id);
   }
   // 換了詳細頁內容之後捲到看得到的位置：桌機兩欄時詳細頁就在右上，捲回頂端；
   // 手機單欄（≤820px，跟 CSS .cols 的斷點一致）時詳細頁在搜尋區和結果清單下面，捲回頂端反而看不到，改捲到詳細頁開頭。
@@ -1406,6 +1408,7 @@
     if (window.EVENTS) add("🎉", "節慶活動・特賣", "每年的節慶活動、釣魚活動、特賣會商人限時特賣", ["活動", "節慶", "代幣", "特賣", "特賣會商人", "旅行商人", "釣魚活動", "萬聖節", "聖誕"], "events", "", F);
     if (window.EVENTS && window.EVENTS.couple) add("💞", "情侶", "情侶點數、玫瑰花商店、情人節／七夕", ["情侶", "玫瑰", "結婚", "情人節", "七夕"], "couple", "", F);
     if (window.EVENTS && window.EVENTS.lotto) add("🎱", "大樂透", "下注規則、開獎時間、獎金表", ["樂透", "彩券", "大樂透", "開獎"], "lotto", "", F);
+    if (window.SKILL_ATTR) add("🔮", "技能鑑定", "裝備鑑定出技能 +N：費用、技能池、機率", ["技能鑑定", "技能屬性", "魯魯", "鑑定師", "初始化卷軸"], "skillattr", "", F);
     if (window.COMBAT_POWER) add("⚔️", "戰力", "戰力怎麼算、職業權重、戰力增益門檻", ["戰力", "戰鬥力", "戰力增益"], "cp", "", F);
 
     dungeonIds.forEach(function (did) {
@@ -1943,7 +1946,7 @@
       SKILL_INDEX = window.SKILL_INDEX || { jobs: [], skills: {} };
       var list = skillIndexWaiting; skillIndexWaiting = null;
       // 載入期間使用者可能已經點去別頁，只跑最後一個、而且還停在技能頁才畫
-      if (list.length && currentView && (currentView.kind === "skills" || currentView.kind === "skill")) list[list.length - 1]();
+      if (list.length && currentView && (currentView.kind === "skills" || currentView.kind === "skill" || currentView.kind === "skillattr")) list[list.length - 1]();
       onSkillIndexLoaded();
     };
     s.onerror = function () {
@@ -3667,6 +3670,7 @@
       html += fusionAuxRowHtml(id);
       html += refineTableHtml(eq);
       html += apprSectionHtml(eq);
+      html += skillAttrItemHtml(eq);
       html += fusionSectionHtml(id, eq);
     } else if (FUSION_BPET[id]) {
       // 2026-11 改版：戰寵裝備可以 G 化（戰寵專用的融合書），頭／身體／武器也能拿去當輔 G
@@ -4999,6 +5003,115 @@
     var c = EVENTS.couple.coefficient, r = c[Math.min(lv, c.length - 1)] || 0;
     return Math.floor((points * Math.round(r * 100) + 50) / 100);
   }
+  // 技能鑑定（11-08 新增，skillAttrIndex.js SKILL_ATTR）：裝備 iopt 決定用哪個技能池；規則照 bundle（見 update_data.py build_skill_attr）
+  var SKILL_ATTR = window.SKILL_ATTR || null;
+  function saSkillJob(skillId) { // 技能 id → 所屬職業（SKILL_INDEX 依職業分組）
+    var jobs = (SKILL_INDEX && SKILL_INDEX.skills) || {};
+    for (var j in jobs) if (jobs[j].some(function (s) { return String(s.id) === String(skillId); })) return j;
+    return null;
+  }
+  function saSkillHtml(skillId) {
+    var j = saSkillJob(skillId);
+    return j ? skillLinkHtml(j, skillId) : '<span style="opacity:.6;">技能 #' + escapeHtml(String(skillId)) + '</span>';
+  }
+  function saPoolOf(code) { // iopt 0 = 全職業池（anyJobs 攤平）
+    if (Number(code) === 0) return [].concat.apply([], SKILL_ATTR.anyJobs.map(function (c) { return SKILL_ATTR.pools[String(c)] || []; }));
+    return SKILL_ATTR.pools[String(code)] || [];
+  }
+  function saPoolName(code) {
+    return Number(code) === 0 ? '全職業' : (SKILL_ATTR.jobNames[String(code)] || '#' + code) + '職業';
+  }
+  // 等級機率：levels 照權重，超過這個技能上限的權重全部併到上限那一級（bundle Pd()）
+  function saLevelChances(cap) {
+    var out = [], total = 0;
+    SKILL_ATTR.levels.forEach(function (l) {
+      if (l[0] <= cap) out.push([l[0], l[1]]); else out[out.length - 1][1] += l[1];
+      total += l[1];
+    });
+    return out.map(function (l) { return [l[0], l[1] / total]; });
+  }
+  function saPct(p) { return (Math.round(p * 10000) / 100) + '%'; }
+  function saPoolTableHtml(code) {
+    var pool = saPoolOf(code);
+    var total = pool.reduce(function (s, e) { return s + e[2]; }, 0) || 1;
+    // 全職業池裡同一個技能可能在好幾個職業池都有，合併機率
+    var merged = {}, order = [];
+    pool.forEach(function (e) {
+      var k = e[0] + ':' + e[1];
+      if (!merged[k]) { merged[k] = { id: e[0], cap: e[1], w: 0 }; order.push(k); }
+      merged[k].w += e[2];
+    });
+    var html = '<div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>技能</th><th>抽到機率</th><th>最高</th><th>等級機率</th></tr></thead><tbody>';
+    order.forEach(function (k) {
+      var m = merged[k];
+      html += '<tr><td>' + saSkillHtml(m.id) + '</td><td>' + saPct(m.w / total) + '</td><td>+' + m.cap + '</td><td style="font-size:12px;">' +
+        saLevelChances(m.cap).map(function (l) { return '+' + l[0] + ' ' + saPct(l[1]); }).join('、') + '</td></tr>';
+    });
+    return html + '</tbody></table></div>';
+  }
+  function skillAttrItemHtml(eq) {
+    if (!SKILL_ATTR || eq.iopt == null) return '';
+    var code = eq.iopt, costs = SKILL_ATTR.costs || {};
+    var cost = Number(code) === 0 ? fmtNum(costs.any) + ' 金幣（指定職業 ' + fmtNum(costs.pick) + '）' : fmtNum(costs.own) + ' 金幣';
+    // 技能名稱在 skillIndex.js（延遲載入），表格等展開時才畫（saFillPool）
+    return '<details class="fold-section" data-sa-pool="' + code + '"><summary class="section-title">技能鑑定・' + escapeHtml(saPoolName(code)) + '技能池<span class="fold-hint">點擊展開</span></summary>' +
+      '<div class="empty-note" style="padding:0 0 8px;">這件裝備可以找<b>' + escapeHtml((SKILL_ATTR.npc && SKILL_ATTR.npc.name) || '技能鑑定師') + '</b>鑑定出一個技能等級加成，費用 ' + cost + '。' +
+      '穿著時，已經學會的那個技能等級會加上去。</div><div class="sa-pool-body"></div>' +
+      sysGuideLinkHtml("skillattr", "看技能鑑定完整說明") + '</details>';
+  }
+  function saFillPool(det) {
+    var body = det.querySelector('.sa-pool-body');
+    if (!body || body.getAttribute('data-done')) return;
+    var code = det.getAttribute('data-sa-pool');
+    if (!SKILL_INDEX) {
+      body.innerHTML = '<div class="empty-note">技能資料載入中…</div>';
+      loadSkillIndex();
+      var wait = setInterval(function () { if (SKILL_INDEX) { clearInterval(wait); saFillPool(det); } }, 200);
+      return;
+    }
+    body.setAttribute('data-done', '1');
+    body.innerHTML = saPoolTableHtml(code);
+  }
+  document.addEventListener('toggle', function (e) {
+    var det = e.target;
+    if (det && det.open && det.getAttribute && det.getAttribute('data-sa-pool') != null) saFillPool(det);
+  }, true);
+  function showSkillAttrGuide(openCode) {
+    currentDetail = null;
+    if (!SKILL_ATTR) { $detail.innerHTML = sysOldDataHtml("🔮 技能鑑定"); return; }
+    if (!SKILL_INDEX) {
+      $detail.innerHTML = '<div class="empty-note">技能資料載入中…</div>';
+      loadSkillIndex(function () { showSkillAttrGuide(openCode); });
+      return;
+    }
+    var npc = SKILL_ATTR.npc || {}, costs = SKILL_ATTR.costs || {};
+    var levelTotal = SKILL_ATTR.levels.reduce(function (s, l) { return s + l[1]; }, 0) || 1;
+    var html = backButtonHtml() + '<h2 style="margin-top:0;">🔮 技能鑑定</h2>';
+    html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
+      '・找<b>' + escapeHtml(npc.name || '技能鑑定師') + '</b>' + ((npc.towns || []).length ? '（' + npc.towns.map(function (t) { return escapeHtml(townName(t)); }).join('、') + '）' : '') +
+      '，可以幫<b>有技能池的裝備</b>鑑定出一個「技能 +N」（物品頁有寫用哪個池）。<br>' +
+      '・費用：職業專屬池 ' + fmtNum(costs.own) + '；全職業池 ' + fmtNum(costs.any) + '；全職業池可以改成<b>指定職業</b>，只從那一職的池抽，' + fmtNum(costs.pick) + '。<br>' +
+      '・先照機率抽技能，再抽等級（下表）；超過那個技能上限的機率全部算在上限那一級。<br>' +
+      '・<b>穿著時</b>，把等級加到你<b>已經學會</b>的同名技能上（沒學的不會加），最多加到技能表的最高等級。好幾件同技能會疊加。<br>' +
+      '・已鑑定的裝備要用' + (SKILL_ATTR.resetItem ? itemChip(SKILL_ATTR.resetItem) : '技能屬性初始化卷軸') + '（名品館）回到未鑑定，才能再鑑定一次。' +
+      '</div>';
+    html += '<div class="section-title">等級機率（技能上限 +5 時）</div><table class="dtable"><thead><tr>' +
+      SKILL_ATTR.levels.map(function (l) { return '<th>+' + l[0] + '</th>'; }).join('') + '</tr></thead><tbody><tr>' +
+      SKILL_ATTR.levels.map(function (l) { return '<td>' + saPct(l[1] / levelTotal) + '</td>'; }).join('') + '</tr></tbody></table>';
+    var codes = ['0'].concat(Object.keys(SKILL_ATTR.pools).sort(function (a, b) { return Number(a) - Number(b); }));
+    html += '<div class="section-title">技能池 <span class="count">(' + codes.length + ')</span></div>';
+    if ((SKILL_ATTR.pickJobs || []).length) {
+      html += '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:6px;">全職業池可以指定的職業：' +
+        SKILL_ATTR.pickJobs.map(function (c) { return escapeHtml(SKILL_ATTR.jobNames[String(c)] || '#' + c); }).join('、') + '</div>';
+    }
+    codes.forEach(function (code) {
+      html += '<details class="fold-section" data-sa-pool="' + code + '"' + (String(openCode) === code ? ' open' : '') + '><summary class="section-title">' + escapeHtml(saPoolName(code)) + '技能池' +
+        ' <span class="count">(' + Object.keys(saPoolOf(code).reduce(function (o, e) { o[e[0]] = 1; return o; }, {})).length + ' 個技能)</span><span class="fold-hint">點擊展開</span></summary><div class="sa-pool-body"></div></details>';
+    });
+    $detail.innerHTML = html;
+    Array.prototype.forEach.call($detail.querySelectorAll('details[data-sa-pool][open]'), saFillPool);
+  }
+
   // 大樂透（11-04 新增，eventIndex.js EVENTS.lotto）：只寫玩家看得到的規則和獎金表
   function showLottoGuide() {
     currentDetail = null;
