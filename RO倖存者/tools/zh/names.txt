@@ -846,3 +846,4 @@
 # 爬蟲抽不到、畫面上看到的英文（手動補）
 @Prontera	普隆德拉
 @Job	職業
+@Endless Tower	無盡之塔

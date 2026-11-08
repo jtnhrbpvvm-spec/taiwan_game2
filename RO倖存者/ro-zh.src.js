@@ -6,7 +6,7 @@
    中文表用西文原文當鍵；沒翻到的字退回遊戲自己的英文。
    怪物、物品、卡片、技能名是遊戲直接顯示的英文原名，不經過翻譯函式，另外在畫面文字（DOM、canvas）換成台版譯名。
    設定存檔時把 lang 存回原本的語言，沒點書籤時遊戲不會變成西文。 */
-const VERSION = 'V2';
+const VERSION = 'V3';
 /*ZH*/const ZH = {"ui":{},"names":{},"news":{}};/*END*/
 (() => {
   const W = window;
@@ -74,12 +74,112 @@ const VERSION = 'V2';
   Number.prototype.toLocaleString = function (loc, opt) {
     return numLoc.call(this, isZh() && loc === 'es-ES' ? 'en-US' : loc, opt);
   };
+  /* 中文模式下遊戲顯示的時間（維修開始時間、封鎖到期日等）一律用台灣時區 */
   for (const fn of ['toLocaleString', 'toLocaleDateString', 'toLocaleTimeString']) {
     const orig = Date.prototype[fn];
     Date.prototype[fn] = function (loc, opt) {
-      return orig.call(this, isZh() && /^(es|en)-/.test(loc || '') ? 'zh-TW' : loc, opt);
+      if (!(isZh() && /^(es|en)-/.test(loc || ''))) return orig.call(this, loc, opt);
+      const o = Object.assign({}, opt);
+      if (!o.timeZone) o.timeZone = TW_TZ;
+      if ((o.hour || o.timeStyle) && !o.hour12 && !o.hourCycle) o.hourCycle = 'h23';
+      let r = orig.call(this, 'zh-TW', o);
+      if (o.timeZone === TW_TZ) r = r.replace(/\s*\[?(GMT|UTC)\+8\]?/, '（台灣時間）');
+      return r;
     };
   }
+
+  /* ---------- 維修公告：伺服器的 status.json 是自由文字「西文 || 英文」，時間寫成「22:00 (Madrid time)」。
+     這裡把時間換算成台灣時間、常見句子翻成中文，改寫成「中文 || 英文」（中文模式下遊戲顯示 || 前面那段） ---------- */
+  const TW_TZ = 'Asia/Taipei';
+  const ZONES = [
+    [/madrid|spain|españa|espana|peninsular|\bCES?T\b|hora española/i, 'Europe/Madrid'],
+    [/\b(UTC|GMT)\b/i, 'UTC'],
+  ];
+  const partsIn = (t, tz) => {
+    const p = {};
+    for (const x of new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).formatToParts(t)) p[x.type] = +x.value;
+    return p;
+  };
+  /* 某時區的「幾點幾分」→ 接下來第一個那樣的時刻（3 小時內剛過的也算，可能正在維修） */
+  function wallToDate(h, m, tz) {
+    const now = Date.now(), p = partsIn(now, tz);
+    let best = null;
+    for (const dd of [-1, 0, 1, 2]) {
+      const guess = Date.UTC(p.year, p.month - 1, p.day + dd, h, m);
+      let t = guess;
+      for (let i = 0; i < 2; i++) {   /* 兩次修正夏令時間 */
+        const q = partsIn(t, tz);
+        t = guess - (Date.UTC(q.year, q.month - 1, q.day, q.hour, q.minute) - Math.floor(t / 60000) * 60000);
+      }
+      if (t > now - 3 * 3600e3 && (best === null || t < best)) best = t;
+    }
+    return new Date(best);
+  }
+  const WEEK = '日一二三四五六';
+  function twTime(d) {
+    const p = partsIn(d, TW_TZ), wd = new Date(Date.UTC(p.year, p.month - 1, p.day)).getUTCDay();
+    return `台灣時間 ${p.month}/${p.day}（${WEEK[wd]}）${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
+  }
+  /* 「22:00 (Madrid time)」「22h (Madrid)」「22:00 CET」→ 台灣時間 */
+  const TIME_RE = /\b(\d{1,2})(?:[:.h](\d{2}))?\s*h?\s*(?:\(([^)]{2,30})\)|(CEST|CET|UTC|GMT|Madrid time|hora de Madrid|hora peninsular))/gi;
+  function convTimes(s, cb) {
+    return s.replace(TIME_RE, (all, h, m, paren, word) => {
+      const z = paren || word, hit = ZONES.find(([re]) => re.test(z));
+      if (!hit || +h > 23 || +(m || 0) > 59) return all;
+      return cb(twTime(wallToDate(+h, +(m || 0), hit[1])), all);
+    });
+  }
+  /* 常見句子（英文或西文），{T} 是換算好的台灣時間；新句型加在這裡 */
+  const MAINT_SENT = [
+    [/^(?:scheduled )?maintenance (?:at|starts at|begins at) \{T\}\.?$/i, '{T} 開始維修。'],
+    [/^mantenimiento (?:a las|empieza a las|programado a las) \{T\}\.?$/i, '{T} 開始維修。'],
+    [/^(?:scheduled )?maintenance (?:from )?\{T\} ?(?:to|until|-|–) ?\{T\}\.?$/i, '維修時間：{T} ～ {T}。'],
+    [/^(?:the )?server (?:will be|is) (?:down|offline) (?:at|from) \{T\}\.?$/i, '伺服器將在 {T} 關閉維修。'],
+    [/^(?:we(?:'|’)ll be|we will be) back (?:at|by|around) \{T\}\.?$/i, '預計 {T} 恢復。'],
+    [/^finish your (.+?) runs? before (?:then|that)\.?$/i, '請在那之前打完{1}的遊戲局。'],
+    [/^finish your (.+?) before (?:then|that)\.?$/i, '請在那之前完成{1}。'],
+    [/^termina antes tus partidas de (?:la |el )?(.+?)\.?$/i, '請在那之前打完{1}的遊戲局。'],
+    [/^(?:it|maintenance) (?:will|should) (?:take|last) (?:about |around )?(\d+) minutes\.?$/i, '預計維修約 {1} 分鐘。'],
+    [/^(?:it|maintenance) (?:will|should) (?:take|last) (?:about |around )?(\d+) hours?\.?$/i, '預計維修約 {1} 小時。'],
+    [/^thanks? (?:you )?for (?:your )?(?:patience|understanding)[.!]*$/i, '感謝耐心等候！'],
+    [/^sorry for the inconvenience[.!]*$/i, '造成不便，敬請見諒。'],
+  ];
+  function maintZh(text) {
+    const times = [];
+    const s = convTimes(text, t => { times.push(t); return '{T}'; });
+    return s.split(/(?<=[.!?。])\s+/).map(sen => {
+      let out = null;
+      for (const [re, zh] of MAINT_SENT) {
+        const m = re.exec(sen.trim());
+        if (m) { out = zh.replace(/\{(\d)\}/g, (_, i) => tn(m[+i]).replace(/^the /i, '')); break; }
+      }
+      if (out === null) out = tn(sen);   /* 沒對到的句子：保留原文，只換名稱 */
+      return out.replace(/\{T\}/g, () => times.shift() || '');
+    }).join(' ').replace(/([。！？]) (?=\S)/g, '$1');
+  }
+  function maintMsg(msg) {
+    const [es, en] = msg.split('||').map(x => (x || '').trim());
+    const src = en || es;
+    if (!src) return msg;
+    return `${maintZh(src)} || ${convTimes(src, (t, all) => `${all} [${t.replace('台灣時間', 'Taiwan')}]`)}`;
+  }
+  const origFetch = W.fetch;
+  W.fetch = function (input, init) {
+    const p = origFetch.apply(this, arguments);
+    const url = typeof input === 'string' ? input : input && input.url;
+    if (!url || !/(^|\/)status\.json(\?|$)/.test(String(url))) return p;
+    return p.then(async r => {
+      try {
+        if (!r.ok) return r;
+        const j = await r.clone().json();
+        if (!j || typeof j.message !== 'string' || !j.message.trim()) return r;
+        j.message = maintMsg(j.message);
+        return new Response(JSON.stringify(j), { status: r.status, headers: { 'content-type': 'application/json' } });
+      } catch (e) { return r; }
+    });
+  };
+  /* 書籤載入前遊戲已經讀過一次 status.json：觸發遊戲重讀 */
+  setTimeout(() => { if (document.visibilityState === 'visible') document.dispatchEvent(new Event('visibilitychange')); }, 0);
 
   /* ---------- 畫面上的英文名稱 ---------- */
   const SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, NOSCRIPT: 1 };
@@ -222,6 +322,6 @@ const VERSION = 'V2';
 
   mo.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
   addOptButton(document.body);
-  W.__roZh = { VERSION, activate, tn, dict, ZH };
+  W.__roZh = { VERSION, activate, tn, dict, ZH, maintMsg };
   activate(true);
 })();
