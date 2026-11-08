@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V60';
+const D2ZH_VERSION = 'V61';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -174,6 +174,8 @@ if (!best || cost < best.cost) best = { cost, text: a + '\n' + (n > 2 ? d2zhSpli
 }
 return best.text;
 }
+// 物品過濾新增的兩個選項：魔法以下用魔法物品的藍色、稀有以下用遊戲的金色（遊戲 ui 色表的 blue／gold）
+const D2ZH_FORCE_COLOR = { 'SELL MAGIC AND BELOW': [105, 105, 255], 'SELL RARE AND BELOW': [199, 179, 119] };
 function d2zhPaint(c, st) {
 const lang = d2zhLang();
 st.lang = lang;
@@ -219,7 +221,8 @@ ctx.textBaseline = 'middle';
 ctx.lineJoin = 'round';
 ctx.lineWidth = stroke;
 ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
-const fill = `rgb(${st.color[0]}, ${st.color[1]}, ${st.color[2]})`;
+const col = D2ZH_FORCE_COLOR[st.src] || st.color;   // 書籤自己加的選項，遊戲畫英文時沒有顏色，這裡補上
+const fill = `rgb(${col[0]}, ${col[1]}, ${col[2]})`;
 lines.forEach((line, i) => {
 const w = widths[i];
 const inner = c.width - pad * 2 - s;
@@ -1950,9 +1953,149 @@ function d2ecWorldInstall() {
 if (Object.prototype.hasOwnProperty('tristram')) return;
 Object.defineProperty(Object.prototype, 'tristram', {
 configurable: true, enumerable: false,
-get() { if (this && Array.isArray(this.pickups) && typeof this.carry === 'function') D2ED.world = this; return undefined; },
+get() { if (this && Array.isArray(this.pickups) && typeof this.carry === 'function') { D2ED.world = this; d2lootWrap(this); } return undefined; },
 set(v) { Object.defineProperty(this, 'tristram', { value: v, writable: true, enumerable: true, configurable: true }); },
 });
+}
+// ====== 物品過濾：每一行都能選「撿取並出售魔法以下」「撿取並出售稀有以下」，赫拉迪克法典也能選「保留」 ======
+// 遊戲（saveTransfer-*.js）每行可選的值放在模組常數陣列：一般行 [pick, keep, hide, sell, hidesell]、法典 [pick, hide, sell, hidesell]，
+// 已收藏／符文之語是一般行再加 better。選單切換（匯出的 cycle 函式）和讀檔驗證都照這兩個陣列，所以把新值直接加進陣列，
+// 選單就能選、存檔也會留著。陣列拿不到，用 cycle 函式跑一次、攔它呼叫的 indexOf 認出來。
+// 遊戲判斷只認得原本的值（新值在它的嚴格度表裡沒有分數，等於「拿起」），真正的出售由書籤包住 world.loot 決定。
+// 網頁版點書籤前遊戲已經讀過檔，新值會被當成不認得的值丟掉：書籤把新值另存一份（d2zh:lootExt），之後補回遊戲記憶體裡的設定，
+// 由遊戲自己寫檔（存檔封印照常，不會被標成修改過）。
+const D2LOOT_CAP = { zhSellMagic: 1, zhSellRare: 2 };   // 出售到哪個稀有度為止：白色 0、魔法 1、稀有 2
+const D2LOOT_LABEL = { zhSellMagic: 'SELL MAGIC AND BELOW', zhSellRare: 'SELL RARE AND BELOW' };
+const D2LOOT_GEAR = new Set(['weapon', 'shield', 'quiver', 'head', 'body', 'gloves', 'belt', 'boots', 'ring', 'amulet', 'charm', 'jewel']);
+const D2LOOT_KEY = 'd2zh:lootExt';
+const D2LOOT = { ready: false, forClass: null, mode: 'sc', mirror: { sc: {}, hc: {} }, done: {}, live: {}, pending: null };
+const d2lootIsExt = (rule, v) => D2LOOT_CAP[v] !== undefined || (rule === 'codex' && v === 'keep');
+const d2lootIsSave = o => !!o && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, 'inventoryByClass') && Object.prototype.hasOwnProperty.call(o, 'gold');
+const d2lootModeOf = save => save && save.mode === 'hc' ? 'hc' : 'sc';
+function d2lootExtRows(filter) {
+const out = {};
+if (filter && typeof filter === 'object') for (const [rule, v] of Object.entries(filter)) if (d2lootIsExt(rule, v)) out[rule] = v;
+return out;
+}
+function d2lootSaveMirror() {
+try { localStorage.setItem(D2LOOT_KEY, JSON.stringify(D2LOOT.mirror)); } catch (_) { /* 存不了：只是重開後要重選 */ }
+}
+// 補回新值：只補還是預設值（沒有這個欄位）的行；玩家已經改成別的值的行不動
+function d2lootRestore(filter, mode) {
+for (const [rule, v] of Object.entries(D2LOOT.mirror[mode] || {})) if (filter[rule] === undefined) filter[rule] = v;
+D2LOOT.done[mode] = true;
+D2LOOT.live[mode] = filter;
+}
+function d2lootSync(mode, filter) {
+const rows = d2lootExtRows(filter);
+if (JSON.stringify(rows) !== JSON.stringify(D2LOOT.mirror[mode] || {})) { D2LOOT.mirror[mode] = rows; d2lootSaveMirror(); }
+}
+function d2lootValue(filter, rule) {
+const v = filter && filter[rule];
+return v !== undefined ? v : rule === 'charm' || rule === 'jewel' ? 'keep' : 'pick';
+}
+// 遊戲判斷完再加上新選項：遊戲已經隱藏／出售的照遊戲；有「保留」的行就不賣（跟遊戲「保留優先」一樣）
+function d2lootDecide(world, item, r) {
+if (d2lootIsExt('codex', r)) r = 'pick';   // 已收藏／符文之語／法典那幾行，遊戲會把新值原樣傳回來：它們都比稀有高，等於拿起
+if (r !== 'pick' || !item || item.type === 'essence' || !D2LOOT_GEAR.has(item.type)) return r;
+const rank = { normal: 0, magic: 1, rare: 2 }[item.rarity];
+if (rank === undefined) return r;
+const filter = D2LOOT.live[D2LOOT.mode] !== undefined ? D2LOOT.live[D2LOOT.mode] : D2LOOT.mirror[D2LOOT.mode];
+const rows = rank > 0 ? [item.rarity, item.type] : [item.type];
+let forClass = true;
+const cls = world && world.player && world.player.cls;
+if (D2LOOT.forClass && cls) { try { forClass = !!D2LOOT.forClass(item, cls); } catch (_) { /* 判斷不了就當本職業 */ } }
+if (!forClass) rows.push('other');
+const vals = rows.map(row => d2lootValue(filter, row));
+if (vals.includes('keep')) return r;
+return vals.some(v => D2LOOT_CAP[v] !== undefined && rank <= D2LOOT_CAP[v]) ? 'sell' : r;
+}
+function d2lootWrap(world) {
+if (!world || typeof world.loot !== 'function' || world.loot.__d2zhLoot) return;
+const orig = world.loot;
+const wrapped = function (item) {
+const r = orig.apply(this, arguments);
+if (!D2LOOT.ready) return r;
+try { return d2lootDecide(world, item, r); } catch (_) { return r; }
+};
+wrapped.__d2zhLoot = true;
+world.loot = wrapped;
+}
+function d2lootInstall() {
+try { const m = JSON.parse(localStorage.getItem(D2LOOT_KEY) || 'null'); if (m && typeof m === 'object') D2LOOT.mirror = { sc: m.sc || {}, hc: m.hc || {} }; } catch (_) { /* 沒有就從空的開始 */ }
+try { D2LOOT.mode = localStorage.getItem('d2-survivors/mode/v1') === 'hardcore' ? 'hc' : 'sc'; } catch (_) { /* 預設一般模式 */ }
+// 存檔沒有 lootFilter（全部預設）時遊戲讀到的是這裡：要補新值就幫它建一個；遊戲寫入時照一般欄位寫在物件自己身上
+if (!Object.prototype.hasOwnProperty('lootFilter')) {
+Object.defineProperty(Object.prototype, 'lootFilter', {
+configurable: true, enumerable: false,
+get() {
+if (!D2LOOT.ready || !d2lootIsSave(this)) return undefined;
+const mode = d2lootModeOf(this);
+if (D2LOOT.done[mode] || mode !== D2LOOT.mode || !Object.keys(D2LOOT.mirror[mode] || {}).length) return undefined;
+const filter = {};
+Object.defineProperty(this, 'lootFilter', { value: filter, writable: true, enumerable: true, configurable: true });
+d2lootRestore(filter, mode);
+return filter;
+},
+set(v) { Object.defineProperty(this, 'lootFilter', { value: v, writable: true, enumerable: true, configurable: true }); },
+});
+}
+// 遊戲寫檔：先 JSON.stringify({...存檔, seal: undefined})，接著寫進 localStorage。讀檔驗證封印也會 stringify 同樣的東西但不寫入，
+// 所以 stringify 時只記下來，等真的寫入存檔才處理（驗證時改內容會讓封印對不上）。這裡不能讀 v.lootFilter（會觸發上面的 getter）。
+const rawStringify = JSON.stringify;
+JSON.stringify = function (v) {
+if (v && typeof v === 'object' && Object.prototype.hasOwnProperty.call(v, 'seal') && v.seal === undefined && d2lootIsSave(v)) {
+D2LOOT.pending = { mode: d2lootModeOf(v), filter: Object.prototype.hasOwnProperty.call(v, 'lootFilter') ? v.lootFilter : null };
+}
+return rawStringify.apply(this, arguments);
+};
+const rawSet = Storage.prototype.setItem;
+Storage.prototype.setItem = function (key, value) {
+const p = D2LOOT.pending;
+if (p && this === window.localStorage && /^d2-survivors\/(save|hc)\/v1$/.test(key)) {
+D2LOOT.pending = null;
+if (D2LOOT.ready) {
+D2LOOT.mode = p.mode;
+const filter = p.filter && typeof p.filter === 'object' ? p.filter : null;
+if (!D2LOOT.done[p.mode]) {
+if (filter) d2lootRestore(filter, p.mode);   // 寫完後補進記憶體裡的設定，遊戲下次寫檔就會存進去
+else if (!Object.keys(D2LOOT.mirror[p.mode] || {}).length) D2LOOT.done[p.mode] = true;
+} else {
+D2LOOT.live[p.mode] = filter;
+d2lootSync(p.mode, filter);
+}
+}
+}
+return rawSet.apply(this, arguments);
+};
+d2lootSetup().catch(() => { /* 認不出遊戲程式：維持遊戲原本的選項 */ });
+}
+async function d2lootSetup() {
+const urls = [...new Set([...performance.getEntriesByType('resource').map(e => e.name), ...[...document.querySelectorAll('script[src]')].map(e => e.src), ...[...document.querySelectorAll('link[rel=modulepreload]')].map(e => e.href)])].filter(n => /\/assets\/[^/]+\.js(\?|$)/.test(n) && !/\/ko-/.test(n));
+const mods = await Promise.all(urls.map(url => Promise.race([import(url), new Promise((_, no) => setTimeout(no, 3000))]).catch(() => null)));
+let cycle = null, labels = null;
+for (const m of mods) for (const v of m ? Object.values(m) : []) {
+if (typeof v === 'function') {
+const s = Function.prototype.toString.call(v);
+if (/\.indexOf\(\w+\(e,t\)\)\+n\+(\w+)\.length\)%\1\.length\]/.test(s)) cycle = v;
+// 「是不是本職業的裝備」：底材表查得到、職業能用、物品上的職業技能都屬於這個職業
+else if (/^function \w+\(e,t\)\{let n=\w+\.get\(e\.base\);return!!n&&\w+\(t,n\)&&\w+\(e\)\.every\(e=>e===t\)\}$/.test(s)) D2LOOT.forClass = v;
+} else if (v && typeof v === 'object' && !Array.isArray(v) && typeof v.pick === 'string' && typeof v.keep === 'string' && typeof v.hidesell === 'string') labels = v;
+}
+if (!cycle || !labels) throw new Error('loot filter not found');
+const grab = rule => {
+const seen = [], rawIndexOf = Array.prototype.indexOf;
+Array.prototype.indexOf = function () { if (rawIndexOf.call(this, 'hidesell') >= 0) seen.push(this); return rawIndexOf.apply(this, arguments); };
+try { cycle({}, rule, 1); } finally { Array.prototype.indexOf = rawIndexOf; }
+return seen[0];
+};
+const common = grab('magic'), codex = grab('codex');
+if (!common || !codex || common === codex || Object.isFrozen(common) || Object.isFrozen(codex)) throw new Error('loot filter lists not found');
+for (const v of Object.keys(D2LOOT_CAP)) { if (!common.includes(v)) common.push(v); if (!codex.includes(v)) codex.push(v); }
+if (!codex.includes('keep')) codex.splice(1, 0, 'keep');
+Object.assign(labels, D2LOOT_LABEL);
+D2LOOT.ready = true;
+if (D2ED.world) d2lootWrap(D2ED.world);
 }
 function d2ecTr(s) {
 try { return (window.D2I18N && window.D2I18N.translate(s)) || s; } catch (_) { return s; }
@@ -2563,6 +2706,10 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V61', date: '2026-11-09', game: '遊戲 20261105.3', items: [
+'物品過濾每一行都多了兩個選項：「撿取並出售魔法以下」（藍字）會把這一類的白色和魔法物品撿起來直接賣掉、稀有物品留著；「撿取並出售稀有以下」（金字）連稀有物品也一起賣。有一行設成「保留」的物品不會被賣（跟遊戲原本一樣保留優先）；獨特、套裝和符文之語不受影響',
+'物品過濾的赫拉迪克法典也可以選「保留」',
+'修正物品過濾「已收藏」和「符文之語」底下的開關看起來像重複的兩行：改成「└ 無形必撿」，表示是上面那一行的附屬開關'] },
 { ver: 'V60', date: '2026-11-08', game: '遊戲 20261105.3', items: [
 '用拉蘇克的精華打洞失敗時會說出原因：哪一種物品不能打洞（只有武器、頭盔、身體護甲和盾牌可以；戒指、護身符、腰帶、手套、靴子、箭筒、護符、珠寶和投擲武器都不行）、符文之語或獨特／套裝本身就有洞、或這件已經打過洞',
 '把拉蘇克的精華拖到物品上時，提示要按右鍵（手機長按）使用；拖過去只會交換位置，不會打洞',
@@ -2871,6 +3018,8 @@ d2sockInstall();
 d2quivInstall();
 d2ecWorldInstall();
 d2edKeepLeaderboardOff();
+d2lootInstall();
+D2ED.loot = D2LOOT;   // 除錯用：ready、mirror、live
 d2edPerfApplyDpr();
 d2edPerfMigrate();
 setTimeout(d2edPerfApplyGame, 1500);   // 等遊戲模組載完
@@ -2896,7 +3045,7 @@ D2ED.player = key;
 D2ED.extras = v;
 }
 // 遊戲也拿「這一輪的世界」（地上物品 pickups、舞台 stage）當 WeakMap 的鍵：記下來給小地圖標記任務道具用
-if (key && typeof key === 'object' && key !== D2ED.world && Array.isArray(key.pickups) && key.player && key.stage) D2ED.world = key;
+if (key && typeof key === 'object' && key !== D2ED.world && Array.isArray(key.pickups) && key.player && key.stage) { D2ED.world = key; d2lootWrap(key); }
 return v;
 };
 const style = document.createElement('style');
@@ -3082,7 +3231,11 @@ text: {
 "HIDE MAGIC": "隱藏魔法物品",
 "SELL MAGIC": "出售魔法物品",
 "SELL MAGIC AND RARE": "出售魔法和稀有物品",
-"ETHEREAL ONLY": "無形必撿",
+// 「已收藏」和「符文之語」底下各有一行開關，英文兩行都叫 ETHEREAL ONLY：加「└」表示是上面那一行的附屬開關（V61）
+"ETHEREAL ONLY": "└ 無形必撿",
+// 書籤加的兩個選項（d2lootInstall）
+"SELL MAGIC AND BELOW": "撿取並出售魔法以下",
+"SELL RARE AND BELOW": "撿取並出售稀有以下",
 "At ON, ethereal copies are always picked up and the line above acts on the rest": "開啟時一律撿起無形的物品，上面那一行的設定只套用在其他物品",
 "Not shown on the floor. Sold when you walk onto it or click where it lies": "不會顯示在地上。走過去或點擊它所在的位置就會直接賣掉",
 "Once: double or lose all tempers": "限一次：淬鍊全部加倍或全部失去",
