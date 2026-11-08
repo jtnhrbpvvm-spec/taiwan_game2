@@ -1,0 +1,1 @@
+{"version":"0.0.1","configurations":[{"name":"rs-offline","runtimeExecutable":"python","runtimeArgs":["C:\\Users\\a2095\\Desktop\\爬蟲\\ro-survivors-tool\\rs_crawler.py","--serve","--no-browser"],"port":8381}]}
