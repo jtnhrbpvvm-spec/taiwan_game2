@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.3"
+TOOL_VERSION = "1.4"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -74,14 +74,114 @@ GM_PATCHES = [
     ("power", re.compile(rb"function (\w+)\((\w),(\w)=\2\.refine\?\?0\)\{"),
      lambda m: b"window.__gmHa=" + m.group(1) + b";" + m.group(0)),
 ]
-GM_STATUS = {}
+# 一般模式和 GM 模式都會套用的修補：離線也能玩無盡之塔、隱藏職業全部開放
+OFFLINE_PATCHES = [
+    # 無盡之塔開局：沒有登入（拿不到伺服器憑證）時遊戲直接退回 → 拿掉這個 else，改用遊戲內建的本機模式
+    # （本機模式本來就會記錄最高樓層、給塔的點數、存強化，只是平常走不到）
+    ("towerStart", re.compile(rb"else return void (\w+)\(\w\.id\)\}(\w+)\[s\]\|\|\(s=\"prontera\"\)"),
+     lambda m: b"}" + m.group(2) + b"[s]||(s=\"prontera\")"),
+    # 塔守衛視窗的「開始新的一局」按鈕：(已登入||否) → (已登入||是)
+    ("towerButton", re.compile(rb"(\w+=\$d\(\w\)&&\w>0&&\(\w\|\|)!1\)"), lambda m: m.group(1) + b"!0)"),
+    # 「無盡之塔需要註冊帳號」的提示不顯示
+    ("towerNotice", re.compile(rb"\w\|\|(\w\.push\(\w\(\"La Endless Tower necesita)"), lambda m: b"!0||" + m.group(1)),
+    # 隱藏職業（忍者、槍手…）：「這個職業解鎖了嗎」一律回答是
+    ("jobs", re.compile(rb"function (\w+)\((\w)\)\{return \w+\(\)\.unlocks\.includes\(\2\)\}"),
+     lambda m: b"function " + m.group(1) + b"(" + m.group(2) + b"){return!0}"),
+]
+PATCH_STATUS = {}
 
 
-def gm_patch(code):
-    for name, rx, rep in GM_PATCHES:
+def patch_main(code):
+    for name, rx, rep in OFFLINE_PATCHES + (GM_PATCHES if GM else []):
         code, n = rx.subn(rep, code, count=1)
-        GM_STATUS[name] = bool(n)
+        PATCH_STATUS[name] = bool(n)
     return code
+
+
+def patch_status():
+    """還沒載過主程式時，先修補一次看結果（給 GM 面板和啟動訊息用）。"""
+    if not PATCH_STATUS:
+        try:
+            for f in os.listdir(os.path.join(GAME, "build")):
+                if re.match(r"main-[\w-]+\.js$", f):
+                    with open(os.path.join(GAME, "build", f), "rb") as fh:
+                        patch_main(fh.read())
+        except OSError:
+            pass
+    return PATCH_STATUS
+
+
+# ---------------- 離線工具自己的更新（從 GitHub Pages） ----------------
+# version.json 由 tools\pack_offline.py 產生：{"version": "1.4", "files": {"檔名": "sha256", ...}}
+TOOL_URL = os.environ.get("RS_OFFLINE_UPDATE_URL") or \
+    "https://jtnhrbpvvm-spec.github.io/taiwan_game2/" + urllib.parse.quote("RO倖存者") + "/offline/"
+# .bat 正在執行中不能換（cmd 是邊讀邊執行的，換掉內容會亂跳），有新版只提醒
+RUNNING_FILES = (".bat",)
+
+
+def ver_tuple(v):
+    return tuple(int(x) for x in re.findall(r"\d+", str(v)))
+
+
+def sha256_file(path):
+    import hashlib
+    try:
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return None
+
+
+def self_update():
+    """檢查 GitHub 上有沒有新版的離線工具；有就下載換上。回傳 True 表示換了新版、要重新啟動。"""
+    print("檢查離線工具有沒有新版…")
+    try:
+        info = json.loads(fetch(TOOL_URL + "version.json?t=%d" % int(time.time()), timeout=10).decode("utf-8"))
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        print("  無法檢查（%s），繼續使用目前版本 v%s。" % (getattr(e, "reason", e), TOOL_VERSION))
+        return False
+    remote = str(info.get("version", ""))
+    if ver_tuple(remote) <= ver_tuple(TOOL_VERSION):
+        print("  已經是最新版 v%s。" % TOOL_VERSION)
+        return False
+    files = info.get("files") or {}
+    changed = [n for n, h in files.items() if sha256_file(inside(HERE, n) or "") != h]
+    bats = [n for n in changed if n.lower().endswith(RUNNING_FILES)]
+    todo = [n for n in changed if n not in bats]
+    print("  發現新版 v%s（目前 v%s），更新 %d 個檔案…" % (remote, TOOL_VERSION, len(todo)))
+    new = {}
+    for n in todo:
+        if not inside(HERE, n) or "/" in n or "\\" in n:
+            continue
+        try:
+            data = fetch(TOOL_URL + urllib.parse.quote(n) + "?t=%d" % int(time.time()), timeout=30)
+        except (urllib.error.URLError, OSError) as e:
+            print("  %s 下載失敗（%s），這次先不更新。" % (n, e))
+            return False
+        import hashlib
+        if hashlib.sha256(data).hexdigest() != files[n]:
+            print("  %s 內容和版本資訊對不上（GitHub 可能還在更新），這次先不更新。" % n)
+            return False
+        if n.endswith(".py"):
+            try:
+                compile(data, n, "exec")
+            except SyntaxError as e:
+                print("  %s 有錯誤（%s），這次先不更新。" % (n, e))
+                return False
+        new[n] = data
+    # 全部下載、檢查完才換：舊檔放 _backup\，萬一新版有問題可以拿回來
+    backup = os.path.join(HERE, "_backup")
+    os.makedirs(backup, exist_ok=True)
+    for n, data in new.items():
+        dst = os.path.join(HERE, n)
+        if os.path.isfile(dst):
+            shutil.copyfile(dst, os.path.join(backup, n))
+        write(dst, data)
+        print("    [更新] %s" % n)
+    if bats:
+        print("  另外這些啟動檔也有新版，請到說明頁重新下載 zip：" + "、".join(bats))
+        print("  " + TOOL_URL)
+    return bool(new)
 
 
 def fetch(url, timeout=30):
@@ -324,26 +424,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self._send(f.read(), "text/javascript; charset=utf-8")
             except OSError:
                 return self._send(b"alert('\\u627e\\u4e0d\\u5230 gm.js')", "text/javascript")
-        if GM and path == "/__gm_status.json":
-            if not GM_STATUS:   # 還沒載過主程式：先修補一次看結果
-                for f in os.listdir(os.path.join(GAME, "build")):
-                    if re.match(r"main-[\w-]+\.js$", f):
-                        with open(os.path.join(GAME, "build", f), "rb") as fh:
-                            gm_patch(fh.read())
-            return self._send(json.dumps(GM_STATUS).encode(), "application/json")
+        if path in ("/__gm_status.json", "/__offline_status.json"):
+            return self._send(json.dumps(patch_status()).encode(), "application/json")
 
         for base in (GAME, CACHE):
             full = inside(base, rel)
             if full and os.path.isfile(full):
                 with open(full, "rb") as f:
                     data = f.read()
-                if GM and base == GAME:
-                    if rel == "index.html":
+                if base == GAME:
+                    if GM and rel == "index.html":
                         tag = b'<script src="/__gm.js"></script>'
                         pos = data.rfind(b"</body>")
                         data = data[:pos] + tag + data[pos:] if pos >= 0 else data + tag
                     elif re.match(r"build[\\/]main-[\w-]+\.js$", rel):
-                        data = gm_patch(data)
+                        data = patch_main(data)
                 return self._send(data, ctype)
 
         # 本機沒有：從官網下載一次存起來
@@ -379,6 +474,10 @@ def serve(open_browser=True):
     if GM:
         print("GM 模式的存檔和一般離線版分開，互相看不到。")
         print("在物品欄、卡片頁按「＋ 創造」，或按右下角紅色「GM」按鈕修改。")
+    st = patch_status()
+    tower = st.get("towerStart") and st.get("towerButton")
+    print("無盡之塔：" + ("離線可以玩（二轉角色到普隆德拉的塔之守護者）" if tower else "這版遊戲對不上，離線版暫時不能玩"))
+    print("隱藏職業：" + ("全部開放" if st.get("jobs") else "這版遊戲對不上，暫時無法開放"))
     print("玩的時候這個視窗要開著；玩完直接關掉這個視窗就好。")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
@@ -395,11 +494,17 @@ def main():
     ap.add_argument("--no-browser", action="store_true", help="不要自動開瀏覽器")
     ap.add_argument("--refresh-assets", action="store_true", help="圖片音效全部重新下載（畫面怪怪的時候用）")
     ap.add_argument("--gm", action="store_true", help="GM 模式：可以創造道具、修改數值（存檔和一般模式分開）")
+    ap.add_argument("--no-self-update", action="store_true", help="不檢查離線工具本身有沒有新版")
     args = ap.parse_args()
     global GM
     GM = args.gm
     print("RO 倖存者離線版（非官方）v" + TOOL_VERSION + ("　【GM 模式】" if GM else ""))
     print("提醒：離線版不能登入、不能雲端存檔，進度不會同步到官方帳號。\n")
+    if not args.no_self_update and self_update():
+        # 換上新版程式了：用新的 rs_offline.py 重新執行一次（同樣的參數）
+        print("\n離線工具已更新，重新啟動…\n")
+        import subprocess
+        return subprocess.call([sys.executable, os.path.abspath(__file__)] + sys.argv[1:] + ["--no-self-update"])
     if args.no_update:
         ok = os.path.isfile(os.path.join(GAME, "index.html"))
         if not ok:

@@ -18,3 +18,18 @@ with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
     for name in FILES:
         z.write(os.path.join(OFF, name), "RO倖存者離線版/" + name)
 print("已打包：%s（%d bytes）" % (OUT, os.path.getsize(OUT)))
+
+# version.json：玩家的離線工具啟動時會從 GitHub Pages 讀它，版本比較新就自動下載換上
+import hashlib
+import json
+import re
+
+with open(os.path.join(OFF, "rs_offline.py"), encoding="utf-8") as f:
+    version = re.search(r'TOOL_VERSION = "([^"]+)"', f.read()).group(1)
+files = {}
+for name in FILES:
+    with open(os.path.join(OFF, name), "rb") as f:
+        files[name] = hashlib.sha256(f.read()).hexdigest()
+with open(os.path.join(OFF, "version.json"), "w", encoding="utf-8", newline="\n") as f:
+    json.dump({"version": version, "files": files}, f, ensure_ascii=False, indent=1)
+print("已產生 version.json（v%s）" % version)

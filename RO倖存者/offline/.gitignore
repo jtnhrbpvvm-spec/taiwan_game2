@@ -4,4 +4,5 @@ game_new/
 game_old/
 cache/
 __pycache__/
+_backup/
 *.part

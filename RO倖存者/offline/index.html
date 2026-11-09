@@ -46,7 +46,7 @@ details[open] summary{margin-bottom:6px}
 <body>
 <div class="wrap">
 
-<h1>RO 倖存者離線版 <small>非官方・v1.3</small></h1>
+<h1>RO 倖存者離線版 <small>非官方・v1.4</small></h1>
 <p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
 
 <div class="card warn">
@@ -60,9 +60,12 @@ details[open] summary{margin-bottom:6px}
   <tr><td>建立訪客角色、出發打怪、升級、轉職</td><td class="yes">可以</td></tr>
   <tr><td>沒有網路也能玩</td><td class="yes">可以（第一次下載完之後）</td></tr>
   <tr><td>自動更新到官網最新版本</td><td class="yes">可以</td></tr>
+  <tr><td>無盡之塔（Endless Tower）</td><td class="yes">可以（離線版自己記錄，不會上排行榜）</td></tr>
+  <tr><td>隱藏職業（忍者、槍手）</td><td class="yes">全部開放</td></tr>
+  <tr><td>離線工具自動更新</td><td class="yes">每次啟動自動檢查</td></tr>
   <tr><td>GM 模式：創造道具、修改等級素質和點數</td><td class="yes">可以</td></tr>
   <tr><td>登入帳號、雲端存檔</td><td class="no">不行</td></tr>
-  <tr><td>廣場交易、好友、聊天、排行榜</td><td class="no">不行</td></tr>
+  <tr><td>廣場交易、好友、聊天、組隊、排行榜</td><td class="no">不行</td></tr>
   <tr><td>進度帶到官網</td><td class="no">不行</td></tr>
 </table>
 
@@ -75,7 +78,23 @@ details[open] summary{margin-bottom:6px}
   <li><b>雙擊「開始遊戲.bat」</b>。第一次會從官網下載遊戲（約 50 MB，大約 3 分鐘），完成後自動用瀏覽器開遊戲。</li>
   <li>玩的時候<b>黑色視窗要開著</b>；玩完直接關掉黑色視窗就好。</li>
 </ol>
-<p>之後每次開啟都會自動檢查官網有沒有新版本，有就更新；沒有網路時直接用上次下載的版本。</p>
+<p>之後每次開啟都會自動檢查兩件事，有新版就自動更新；沒有網路時直接用上次的版本：</p>
+<ul>
+  <li><b>遊戲本身</b>：官網有沒有新版本。</li>
+  <li><b>離線工具</b>：這個網頁有沒有新版的離線工具（主程式、GM 模式）。舊檔會備份在 <code>_backup</code> 資料夾。
+    只有「開始遊戲.bat」這類啟動檔有新版時，會提醒你回到這裡重新下載 zip。</li>
+</ul>
+
+<h2 id="tower">無盡之塔與隱藏職業</h2>
+<div class="card">
+  <ul>
+    <li><b>無盡之塔</b>：正式版要登入帳號才能玩，離線版改用遊戲內建的本機模式，訪客角色也能玩。
+      進塔條件和正式版一樣：角色要<b>二轉</b>，並打倒關卡的 MVP 來開放樓層。到普隆德拉的「塔之守護者」那裡進入。
+      最高樓層、塔的點數、強化都記在離線存檔裡；過第 50 層一樣會解鎖染色「Blood Savage」。
+      因為沒有伺服器，<b>不會上排行榜</b>，也不能中途存檔下次繼續。</li>
+    <li><b>隱藏職業</b>：正式版要找到「秘密」才能解鎖的<b>忍者、槍手</b>，離線版建立角色時直接可以選。</li>
+  </ul>
+</div>
 
 <h2 id="gm">GM 模式</h2>
 <p>雙擊「<b>以GM模式開始遊戲.bat</b>」，遊戲流程跟一般模式一樣，另外多了這些功能：</p>
@@ -180,7 +199,8 @@ details[open] summary{margin-bottom:6px}
 <h2>安全性</h2>
 <div class="card">
   <ul>
-    <li>程式只連到 <code>ro-survivors.com</code> 下載遊戲檔案，<b>不會上傳任何東西</b>。</li>
+    <li>程式只連到兩個地方：<code>ro-survivors.com</code>（下載遊戲檔案）和這個網頁所在的 <code>jtnhrbpvvm-spec.github.io</code>（檢查離線工具的新版），<b>不會上傳任何東西</b>。</li>
+    <li>離線工具自動更新時，每個檔案都會先比對指紋（SHA-256），對不上就不更新；舊檔備份在 <code>_backup</code>。</li>
     <li>本機伺服器只綁在 <code>127.0.0.1</code>，只有你自己的電腦連得到，區域網路的其他人連不到。</li>
     <li>只用 Python 內建功能，不用安裝其他套件；程式碼完全公開，可以用記事本打開檢查。</li>
   </ul>
