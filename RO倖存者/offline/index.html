@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RO 倖存者離線版</title>
+<meta name="description" content="RO Survivors 非官方離線版：在自己電腦開遊戲的小工具，含 Python 安裝教學。">
+<style>
+:root{--bg:#0f1a2e;--card:#18263f;--line:#2b3f63;--text:#e8eef9;--muted:#9fb0cc;--acc:#4ea1ff;--acc2:#7cc4ff;--warn:#ffcf5c;--bad:#ff7a7a;--ok:#6fdc8c;--code:#0b1424}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.75 "Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:28px;margin:8px 0 4px}
+h1 small{font-size:13px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;vertical-align:middle}
+.sub{color:var(--muted);margin:0 0 20px}
+h2{font-size:21px;margin:36px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:17px;margin:22px 0 8px;color:var(--acc2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.warn{border-color:#6b5a26;background:#2a2617}
+.warn b{color:var(--warn)}
+a{color:var(--acc2)}
+.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;margin:6px 8px 6px 0}
+.btn:hover{background:#3b8ae6}
+.btn.ghost{background:transparent;border:1px solid var(--acc);color:var(--acc2)}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+ol.steps>li{counter-increment:s;position:relative;padding:4px 0 14px 44px}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:4px;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+code,kbd{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-family:Consolas,"Cascadia Mono",monospace;font-size:14px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;font-family:Consolas,"Cascadia Mono",monospace;font-size:14px;margin:8px 0}
+.mark{color:var(--warn);font-weight:700}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+.tabs button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.pane{display:none}.pane.on{display:block}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#1d2e4b;white-space:nowrap}
+.yes{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+details summary{cursor:pointer;font-weight:700}
+details[open] summary{margin-bottom:6px}
+.foot{color:var(--muted);font-size:13px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:600px){h1{font-size:23px}h1 small{display:inline-block;margin:4px 0 0}th,td{padding:6px}table{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>RO 倖存者離線版 <small>非官方・v1.3</small></h1>
+<p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
+
+<div class="card warn">
+  <b>⚠ 先看這裡：</b>離線版<b>不會連到官方伺服器</b>。不能登入帳號、不能雲端存檔、沒有廣場和排行榜，
+  進度<b>不會同步到你的官方帳號</b>。正式遊玩請到官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>。
+</div>
+
+<h2>能做什麼、不能做什麼</h2>
+<table>
+  <tr><th>功能</th><th>離線版</th></tr>
+  <tr><td>建立訪客角色、出發打怪、升級、轉職</td><td class="yes">可以</td></tr>
+  <tr><td>沒有網路也能玩</td><td class="yes">可以（第一次下載完之後）</td></tr>
+  <tr><td>自動更新到官網最新版本</td><td class="yes">可以</td></tr>
+  <tr><td>GM 模式：創造道具、修改等級素質和點數</td><td class="yes">可以</td></tr>
+  <tr><td>登入帳號、雲端存檔</td><td class="no">不行</td></tr>
+  <tr><td>廣場交易、好友、聊天、排行榜</td><td class="no">不行</td></tr>
+  <tr><td>進度帶到官網</td><td class="no">不行</td></tr>
+</table>
+
+<h2>使用步驟</h2>
+<ol class="steps">
+  <li><b>安裝 Python 3</b>（只要裝一次）：照下面的<a href="#python">安裝教學</a>做。</li>
+  <li><b>下載離線版</b>，解壓縮到任何資料夾（例如桌面）。<span class="mark">不要直接在壓縮檔裡面執行。</span><br>
+    <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載離線版（zip，約 20 KB）</a>
+  </li>
+  <li><b>雙擊「開始遊戲.bat」</b>。第一次會從官網下載遊戲（約 50 MB，大約 3 分鐘），完成後自動用瀏覽器開遊戲。</li>
+  <li>玩的時候<b>黑色視窗要開著</b>；玩完直接關掉黑色視窗就好。</li>
+</ol>
+<p>之後每次開啟都會自動檢查官網有沒有新版本，有就更新；沒有網路時直接用上次下載的版本。</p>
+
+<h2 id="gm">GM 模式</h2>
+<p>雙擊「<b>以GM模式開始遊戲.bat</b>」，遊戲流程跟一般模式一樣，另外多了這些功能：</p>
+<table>
+  <tr><th>在哪裡</th><th>可以做什麼</th></tr>
+  <tr><td>角色視窗（C）→ 物品欄的「＋ 創造」</td><td>創造任何裝備，可以選等階（1～3）、品質（普通～傳說）、精煉 +0～+10、數量，並即時顯示這件裝備的攻擊力／防禦力。附加能力由遊戲依等階和品質自動產生</td></tr>
+  <tr><td>角色視窗（C）→ 卡片的「＋ 創造」</td><td>創造任何卡片，再用遊戲內的鑲嵌功能裝上</td></tr>
+  <tr><td>右下角紅色「GM」按鈕</td><td>修改 Base Lv、職業 Lv、六項素質（每項 1～99，可以超過正常可分配的點數）、卡普拉點數</td></tr>
+  <tr><td>遊戲局中按「GM」</td><td>修改這一局的金幣（zeny），馬上生效</td></tr>
+</table>
+<div class="card">
+  <ul>
+    <li>改裝備、卡片、等級、素質、點數時，頁面會<b>自動重新載入並回到你的角色</b>，大約 3 秒。</li>
+    <li>遊戲局進行中只能改金幣；其他修改請先結束這一局、回到城鎮再改。</li>
+    <li><b>GM 模式的存檔和一般模式分開</b>（網址 <code>http://127.0.0.1:8382/</code>），一般模式的角色不會被影響，也看不到 GM 模式的角色。</li>
+    <li>一般模式和 GM 模式不要同時開。</li>
+  </ul>
+</div>
+
+<h2 id="python">安裝 Python 3</h2>
+<div class="tabs" role="tablist">
+  <button class="on" data-pane="win">Windows</button>
+  <button data-pane="store">Windows（Microsoft Store）</button>
+  <button data-pane="mac">Mac</button>
+</div>
+
+<div class="pane on" id="win">
+<div class="card">
+<ol class="steps">
+  <li>打開 Python 官網下載頁，按黃色的「<b>Download Python 3.x.x</b>」按鈕。<br>
+    <a class="btn" href="https://www.python.org/downloads/" target="_blank" rel="noopener">開啟 python.org 下載頁</a></li>
+  <li>執行下載的安裝檔（檔名像 <code>python-3.x.x-amd64.exe</code>）。</li>
+  <li>安裝畫面最下面，<span class="mark">一定要勾選「Add python.exe to PATH」</span>，再按「<b>Install Now</b>」。</li>
+  <li>出現「Setup was successful」就裝好了，按 Close 關掉。</li>
+  <li>回到離線版資料夾，雙擊「開始遊戲.bat」。</li>
+</ol>
+</div>
+<details>
+  <summary>想確認有沒有裝好？</summary>
+  按 <kbd>Win</kbd> + <kbd>R</kbd>，輸入 <code>cmd</code> 按 Enter，在黑色視窗輸入：
+  <pre>py --version</pre>
+  看到 <code>Python 3.x.x</code> 就是裝好了。
+</details>
+</div>
+
+<div class="pane" id="store">
+<div class="card">
+<ol class="steps">
+  <li>按開始功能表，打開「<b>Microsoft Store</b>」。</li>
+  <li>搜尋「<b>Python 3</b>」，選發行者是 <b>Python Software Foundation</b> 的最新版本（例如 Python 3.13）。</li>
+  <li>按「取得」或「安裝」，等它裝好。</li>
+  <li>回到離線版資料夾，雙擊「開始遊戲.bat」。</li>
+</ol>
+</div>
+<p class="sub">Store 版不用勾選 PATH，比較簡單；兩種裝法擇一即可。</p>
+</div>
+
+<div class="pane" id="mac">
+<div class="card">
+<ol class="steps">
+  <li>到 <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org 下載頁</a>下載 macOS 版，照畫面安裝。</li>
+  <li>「開始遊戲.bat」是 Windows 用的。Mac 請打開「終端機」，輸入 <code>cd </code>（後面有空白），把離線版資料夾拖進終端機視窗，按 Enter。</li>
+  <li>再輸入下面這行，按 Enter：
+    <pre>python3 rs_offline.py</pre></li>
+</ol>
+</div>
+</div>
+
+<h2>常見問題</h2>
+<details>
+  <summary>雙擊後出現「Windows 已保護您的電腦」</summary>
+  這是 Windows 對網路下載的檔案的一般提醒。按「<b>其他資訊</b>」→「<b>仍要執行</b>」即可。
+  不放心的話，可以先用記事本打開 <code>開始遊戲.bat</code>、<code>rs_offline.py</code>、<code>gm.js</code> 檢查內容，全部都是純文字。
+</details>
+<details>
+  <summary>黑色視窗說找不到 Python，然後打開這個網頁</summary>
+  代表 Python 還沒裝好，或安裝時沒勾「Add python.exe to PATH」。
+  重新執行 Python 安裝檔，選「Modify」或直接重裝並勾選 PATH；或改用 Microsoft Store 版。裝好後要<b>重新雙擊</b>「開始遊戲.bat」。
+</details>
+<details>
+  <summary>我的角色不見了</summary>
+  離線版的進度存在瀏覽器裡，網址是 <code>http://127.0.0.1:8381/</code>。以下情況會看不到：
+  換了另一個瀏覽器、清除了瀏覽器的網站資料、或用無痕視窗。
+  另外，如果黑色視窗顯示 8381 被占用、改用別的號碼，也會看不到之前的進度，把其他離線版視窗關掉再開就好。
+</details>
+<details>
+  <summary>畫面圖片怪怪的、缺圖</summary>
+  打開離線版資料夾，在檔案總管上方的網址列輸入 <code>cmd</code> 按 Enter，然後輸入下面這行，會把圖片音效全部重新下載：
+  <pre>py rs_offline.py --refresh-assets</pre>
+  也可以直接刪掉 <code>cache</code> 資料夾，下次開啟會重新下載。
+</details>
+<details>
+  <summary>會不會被封帳號？</summary>
+  離線版完全不會連到官方的帳號伺服器，也不會上傳任何東西，跟你的官方帳號沒有關係。
+  但離線版的進度也沒辦法帶到官網。
+</details>
+<details>
+  <summary>要佔多少空間？</summary>
+  遊戲程式約 4 MB，圖片音效約 50 MB。不想玩了直接把整個資料夾刪掉即可，不會留下其他東西（瀏覽器裡的進度除外）。
+</details>
+
+<h2>安全性</h2>
+<div class="card">
+  <ul>
+    <li>程式只連到 <code>ro-survivors.com</code> 下載遊戲檔案，<b>不會上傳任何東西</b>。</li>
+    <li>本機伺服器只綁在 <code>127.0.0.1</code>，只有你自己的電腦連得到，區域網路的其他人連不到。</li>
+    <li>只用 Python 內建功能，不用安裝其他套件；程式碼完全公開，可以用記事本打開檢查。</li>
+  </ul>
+</div>
+
+<p class="foot">
+  本工具為玩家自製，與官方無關，不包含任何遊戲檔案；遊戲檔案都是執行時從官網下載到你自己的電腦。
+  遊戲內容版權屬於 RO Survivors（作者 Reven4nt）與 Gravity。請支持官方。
+</p>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === b.dataset.pane));
+}));
+if (/Mac/i.test(navigator.platform || '')) document.querySelector('.tabs button[data-pane="mac"]').click();
+</script>
+</body>
+</html>

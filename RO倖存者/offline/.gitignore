@@ -1,0 +1,7 @@
+# 在這個資料夾直接執行離線版時，下載的遊戲檔案（別人的東西）不要上傳
+game/
+game_new/
+game_old/
+cache/
+__pycache__/
+*.part
