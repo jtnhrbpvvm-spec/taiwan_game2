@@ -5,24 +5,49 @@ r"""
 改了 offline\ 裡下面 FILES 列的任何檔案之後要重跑：
     python tools\pack_offline.py
 zip 裡只有這幾個檔案，放在「RO倖存者離線版\」資料夾底下；不包含任何遊戲檔案。
+打包前會先把 tools\zh\names.txt 的譯名填進 offline\zh.js（補翻譯後也要重跑這支）。
 """
+import json
 import os
+import re
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OFF = os.path.join(os.path.dirname(HERE), "offline")
-FILES = ["開始遊戲.bat", "以GM模式開始遊戲.bat", "rs_offline.py", "gm.js", "說明.txt"]
+FILES = ["開始遊戲.bat", "以GM模式開始遊戲.bat", "rs_offline.py", "gm.js", "zh.js", "說明.txt"]
 OUT = os.path.join(OFF, "ro-survivors-offline.zip")
+
+# ---- 譯名：names.txt（@英文<Tab>中文）→ zh.js 的 NAMES ----
+names = {}
+with open(os.path.join(HERE, "zh", "names.txt"), encoding="utf-8") as f:
+    for line in f:
+        line = line.rstrip("\r\n")
+        if line.startswith("@") and "\t" in line:
+            en, zh = line[1:].split("\t", 1)
+            if en.strip() and zh.strip():
+                names[en.strip()] = zh.strip()
+zh_path = os.path.join(OFF, "zh.js")
+with open(zh_path, encoding="utf-8") as f:
+    src = f.read()
+line = "/*NAMES*/const NAMES = " + json.dumps(names, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + ";/*END*/"
+new, n = re.subn(r"/\*NAMES\*/.*?/\*END\*/", lambda m: line, src, count=1, flags=re.S)
+if not n:
+    raise SystemExit("zh.js 裡找不到 /*NAMES*/…/*END*/")
+if new != src:
+    with open(zh_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(new)
+    print("zh.js 譯名已更新（%d 個）" % len(names))
+else:
+    print("zh.js 譯名沒有變化（%d 個）" % len(names))
 
 with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
     for name in FILES:
         z.write(os.path.join(OFF, name), "RO倖存者離線版/" + name)
 print("已打包：%s（%d bytes）" % (OUT, os.path.getsize(OUT)))
 
-# version.json：玩家的離線工具啟動時會從 GitHub Pages 讀它，版本比較新就自動下載換上
+# version.json：玩家的離線工具啟動時會從 GitHub Pages 讀它，
+# 版本比較新、或版本相同但檔案內容不同（例如只補了翻譯）就自動下載換上
 import hashlib
-import json
-import re
 
 with open(os.path.join(OFF, "rs_offline.py"), encoding="utf-8") as f:
     version = re.search(r'TOOL_VERSION = "([^"]+)"', f.read()).group(1)

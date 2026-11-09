@@ -41,7 +41,7 @@
     <div id="jewel-list"></div>
 
     <h2 id="drops">掉率</h2>
-    <p>異界地圖依階級 T1→T15 線性增加；一般地圖依怪物等級換算成階級。<b>不吃地圖掉寶詞綴</b>。試煉是首次打倒試煉首領時另外抽一次。<b>寶珠只有首領會掉，一般怪不掉；天賦石一般怪也會掉。</b></p>
+    <p>異界地圖依階級 T1→T15 線性增加；一般地圖依怪物等級換算成階級。<b>不吃地圖掉寶詞綴</b>。試煉是首次打倒試煉首領時另外抽一次。<b>寶珠和天賦石一般怪、首領都會掉</b>，一般怪機率很低，首領高得多。</p>
     <div id="drop-list"></div>
     <p>掉到寶珠時的種類：一般 <span id="p-n"></span>、轉化 <span id="p-r"></span>、星團 <span id="p-c"></span>。一般寶珠魔法 <span id="q-m"></span>、稀有 <span id="q-r"></span>；星團小型 <span id="s-s"></span>、中型 <span id="s-m"></span>、大型 <span id="s-l"></span>；同類別內各款平均抽。</p>
 </main>
@@ -99,7 +99,7 @@ renderTable($('#drop-list'), [
     { label: '來源', html: r => r.name },
     ...TIERS.map(t => ({ label: `T${t}`, num: true, html: r => pct(lerp(r.a, t)) })),
 ], [
-    { name: '💠 寶珠・首領', a: D.jewel.boss }, { name: '💠 寶珠・首次試煉', a: D.jewel.trial },
+    { name: '💠 寶珠・一般怪', a: D.jewel.normal }, { name: '💠 寶珠・首領', a: D.jewel.boss }, { name: '💠 寶珠・首次試煉', a: D.jewel.trial },
     { name: '🪨 天賦石・一般怪', a: D.stone.normal }, { name: '🪨 天賦石・首領', a: D.stone.boss }, { name: '🪨 天賦石・首次試煉', a: D.stone.trial },
 ]);
 set('p-n', pct(D.pool.normal)); set('p-r', pct(D.pool.radius)); set('p-c', pct(D.pool.cluster));

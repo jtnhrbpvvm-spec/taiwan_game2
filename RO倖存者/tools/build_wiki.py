@@ -11,6 +11,7 @@ dump 由 tools\wiki_dump.js 在離線版遊戲（繁體中文）裡產生，流�
 import io
 import json
 import os
+import re
 import sys
 from datetime import datetime
 
@@ -154,6 +155,9 @@ def main():
     skills = []
     for s in d['skills']:
         row = dict(s)
+        # 官方中文漏翻、還是英文的技能名（Ruwach、Kihop…）：用 names.txt 的譯名
+        if isinstance(row.get('name'), str) and re.fullmatch(r"[A-Za-z][A-Za-z' -]*", row['name']) and row['name'] in NM:
+            row['name'] = NM[row['name']]
         row['jobs'] = skill_jobs.get(s['id'], [])
         skills.append(row)
 

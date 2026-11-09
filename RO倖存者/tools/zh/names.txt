@@ -848,3 +848,11 @@
 @Job	職業
 @Endless Tower	無盡之塔
 @1st job	一轉
+# 遊戲內建中文沒翻到的技能名（2026-11-10，遊戲 00ec63b；離線版 zh.js 也用）
+@Ruwach	光獵
+@Signum Crucis	十字驅魔
+@Aqua Benedicta	製造聖水
+@Angelus	天使之護
+@Kihop	氣合
+@Peco Peco	大嘴鳥
+@Vanilmirth	凡米爾斯

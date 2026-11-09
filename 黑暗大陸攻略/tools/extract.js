@@ -284,7 +284,7 @@ const talent = {
     socketTypes: plain(G('TALENT_SOCKET_TYPES')), jewels: plain(G('TALENT_JEWEL_CATALOG')), clusters: plain(TALENT_CLUSTER_FAMILIES), clusterSizes: plain(G('TALENT_CLUSTER_SIZES')),
     // 掉率只寫在後端（tools/talent-system.sql 的 talent_loot_items，codex.js 也是這組）：T1→T15 線性增加
     // 2026-11-02 起寶珠只有首領掉（遊戲第 274 節），天賦石小怪照掉
-    drops: { jewel: { boss: [0.01, 0.05], trial: [0.02, 0.1] }, stone: { normal: [0.0005, 0.005], boss: [0.02, 0.1], trial: [0.05, 0.2] },
+    drops: { jewel: { normal: [0.0002, 0.003], boss: [0.01, 0.05], trial: [0.02, 0.1] }, stone: { normal: [0.0005, 0.005], boss: [0.02, 0.1], trial: [0.05, 0.2] },
         pool: { normal: 0.7, radius: 0.1, cluster: 0.2 }, normalQuality: { magic: 0.7, rare: 0.3 }, clusterSize: { small: 0.6, medium: 0.3, large: 0.1 } },
 };
 

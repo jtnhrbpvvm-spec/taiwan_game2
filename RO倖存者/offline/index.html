@@ -46,7 +46,7 @@ details[open] summary{margin-bottom:6px}
 <body>
 <div class="wrap">
 
-<h1>RO 倖存者離線版 <small>非官方・v1.4</small></h1>
+<h1>RO 倖存者離線版 <small>非官方・v1.5</small></h1>
 <p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
 
 <div class="card warn">
@@ -62,6 +62,7 @@ details[open] summary{margin-bottom:6px}
   <tr><td>自動更新到官網最新版本</td><td class="yes">可以</td></tr>
   <tr><td>無盡之塔（Endless Tower）</td><td class="yes">可以（離線版自己記錄，不會上排行榜）</td></tr>
   <tr><td>隱藏職業（忍者、槍手）</td><td class="yes">全部開放</td></tr>
+  <tr><td>裝備、卡片、怪物名稱顯示中文（官方還沒翻的部分）</td><td class="yes">遊戲語言選繁體中文時自動顯示</td></tr>
   <tr><td>離線工具自動更新</td><td class="yes">每次啟動自動檢查</td></tr>
   <tr><td>GM 模式：創造道具、修改等級素質和點數</td><td class="yes">可以</td></tr>
   <tr><td>登入帳號、雲端存檔</td><td class="no">不行</td></tr>
@@ -73,7 +74,7 @@ details[open] summary{margin-bottom:6px}
 <ol class="steps">
   <li><b>安裝 Python 3</b>（只要裝一次）：照下面的<a href="#python">安裝教學</a>做。</li>
   <li><b>下載離線版</b>，解壓縮到任何資料夾（例如桌面）。<span class="mark">不要直接在壓縮檔裡面執行。</span><br>
-    <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載離線版（zip，約 20 KB）</a>
+    <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載離線版（zip，約 40 KB）</a>
   </li>
   <li><b>雙擊「開始遊戲.bat」</b>。第一次會從官網下載遊戲（約 50 MB，大約 3 分鐘），完成後自動用瀏覽器開遊戲。</li>
   <li>玩的時候<b>黑色視窗要開著</b>；玩完直接關掉黑色視窗就好。</li>
@@ -90,9 +91,20 @@ details[open] summary{margin-bottom:6px}
   <ul>
     <li><b>無盡之塔</b>：正式版要登入帳號才能玩，離線版改用遊戲內建的本機模式，訪客角色也能玩。
       進塔條件和正式版一樣：角色要<b>二轉</b>，並打倒關卡的 MVP 來開放樓層。到普隆德拉的「塔之守護者」那裡進入。
-      最高樓層、塔的點數、強化都記在離線存檔裡；過第 50 層一樣會解鎖染色「Blood Savage」。
+      最高樓層、塔的點數、強化都記在離線存檔裡；過第 50 層一樣會解鎖染色「血腥狂暴（Blood Savage）」。
       因為沒有伺服器，<b>不會上排行榜</b>，也不能中途存檔下次繼續。</li>
     <li><b>隱藏職業</b>：正式版要找到「秘密」才能解鎖的<b>忍者、槍手</b>，離線版建立角色時直接可以選。</li>
+  </ul>
+</div>
+
+<h2 id="zh">中文名稱</h2>
+<div class="card">
+  <ul>
+    <li>遊戲已經內建繁體中文，但<b>裝備、卡片、怪物名稱</b>和少數技能名還是英文。離線版會自動換成台版譯名（例如 Katana → 太刀、Poring → 波利），
+      裝備字尾也會改成中文語序（「太刀 of Strength」→「力量之太刀」）。</li>
+    <li>只有遊戲語言選<b>繁體中文</b>時才會顯示；切成 English／Español 就是原文。</li>
+    <li>圖書館員的百科搜尋可以直接打中文名稱；GM 模式的創造搜尋中文、英文都找得到。</li>
+    <li>遊戲更新後新出現的裝備會先顯示英文，補上翻譯後離線工具會自動更新。</li>
   </ul>
 </div>
 

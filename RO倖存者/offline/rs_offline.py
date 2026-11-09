@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.4"
+TOOL_VERSION = "1.5"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +63,8 @@ ONLINE = False                    # 這次啟動連得到官網嗎（連不到�
 GM_PORT = 8382
 GM = False
 GM_JS = os.path.join(HERE, "gm.js")
+# 補中文（裝備、卡片、怪物名稱）：一般模式和 GM 模式都在 index.html 的 <head> 最前面載入
+ZH_JS = os.path.join(HERE, "zh.js")
 # 對遊戲主程式的修補（變數名稱每版都會變，用正規表示式找；找不到就略過，GM 面板會顯示提醒）
 GM_PATCHES = [
     # 素質點數超過可分配點數時，遊戲會把素質重置 → GM 模式不檢查
@@ -88,6 +90,15 @@ OFFLINE_PATCHES = [
     ("jobs", re.compile(rb"function (\w+)\((\w)\)\{return \w+\(\)\.unlocks\.includes\(\2\)\}"),
      lambda m: b"function " + m.group(1) + b"(" + m.group(2) + b"){return!0}"),
 ]
+# 對 build/soul_linker-*.js 的修補（中文用，見 zh.js）
+CORE_PATCHES = [
+    # 裝備全名 function yV(a,e){return e?`${E_(a)} ${e}`:E_(a)}（e＝「of Strength」這類字尾）
+    # → 交給 zh.js 排成中文語序「力量之太刀」；對不上就維持「太刀 of Strength」
+    ("zhSuffix", re.compile(rb"function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{\3\}`:\4\(\2\)\}"),
+     lambda m: (b"function %s(%s,%s){return %s?(window.__rsZh?window.__rsZh.full(%s(%s),%s):`${%s(%s)} ${%s}`):%s(%s)}" % (
+         m.group(1), m.group(2), m.group(3), m.group(3), m.group(4), m.group(2), m.group(3),
+         m.group(4), m.group(2), m.group(3), m.group(4), m.group(2)))),
+]
 PATCH_STATUS = {}
 
 
@@ -98,14 +109,22 @@ def patch_main(code):
     return code
 
 
+def patch_core(code):
+    for name, rx, rep in CORE_PATCHES:
+        code, n = rx.subn(rep, code, count=1)
+        PATCH_STATUS[name] = bool(n)
+    return code
+
+
 def patch_status():
     """還沒載過主程式時，先修補一次看結果（給 GM 面板和啟動訊息用）。"""
     if not PATCH_STATUS:
         try:
             for f in os.listdir(os.path.join(GAME, "build")):
-                if re.match(r"main-[\w-]+\.js$", f):
-                    with open(os.path.join(GAME, "build", f), "rb") as fh:
-                        patch_main(fh.read())
+                for rx, fn in ((r"main-[\w-]+\.js$", patch_main), (r"soul_linker-[\w-]+\.js$", patch_core)):
+                    if re.match(rx, f):
+                        with open(os.path.join(GAME, "build", f), "rb") as fh:
+                            fn(fh.read())
         except OSError:
             pass
     return PATCH_STATUS
@@ -141,14 +160,22 @@ def self_update():
         print("  無法檢查（%s），繼續使用目前版本 v%s。" % (getattr(e, "reason", e), TOOL_VERSION))
         return False
     remote = str(info.get("version", ""))
-    if ver_tuple(remote) <= ver_tuple(TOOL_VERSION):
+    if ver_tuple(remote) < ver_tuple(TOOL_VERSION):
         print("  已經是最新版 v%s。" % TOOL_VERSION)
         return False
     files = info.get("files") or {}
     changed = [n for n, h in files.items() if sha256_file(inside(HERE, n) or "") != h]
     bats = [n for n in changed if n.lower().endswith(RUNNING_FILES)]
     todo = [n for n in changed if n not in bats]
-    print("  發現新版 v%s（目前 v%s），更新 %d 個檔案…" % (remote, TOOL_VERSION, len(todo)))
+    if ver_tuple(remote) == ver_tuple(TOOL_VERSION):
+        # 版本相同：只有內容不同（例如補了翻譯 zh.js）才更新；.bat 不提醒（版本沒變，多半是換行之類的差異）
+        if not todo:
+            print("  已經是最新版 v%s。" % TOOL_VERSION)
+            return False
+        bats = []
+        print("  有更新的檔案（v%s），更新 %d 個檔案…" % (TOOL_VERSION, len(todo)))
+    else:
+        print("  發現新版 v%s（目前 v%s），更新 %d 個檔案…" % (remote, TOOL_VERSION, len(todo)))
     new = {}
     for n in todo:
         if not inside(HERE, n) or "/" in n or "\\" in n:
@@ -424,6 +451,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self._send(f.read(), "text/javascript; charset=utf-8")
             except OSError:
                 return self._send(b"alert('\\u627e\\u4e0d\\u5230 gm.js')", "text/javascript")
+        if path == "/__zh.js":
+            try:
+                with open(ZH_JS, "rb") as f:
+                    return self._send(f.read(), "text/javascript; charset=utf-8")
+            except OSError:
+                return self._send(b"", "text/javascript")
         if path in ("/__gm_status.json", "/__offline_status.json"):
             return self._send(json.dumps(patch_status()).encode(), "application/json")
 
@@ -433,12 +466,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 with open(full, "rb") as f:
                     data = f.read()
                 if base == GAME:
+                    if rel == "index.html":
+                        # 中文名稱要比遊戲程式早執行（攔 manifest.json），放在 <head> 最前面
+                        zh = b'<script src="/__zh.js"></script>'
+                        m = re.search(rb"<head[^>]*>", data, re.I)
+                        data = data[:m.end()] + zh + data[m.end():] if m else zh + data
                     if GM and rel == "index.html":
                         tag = b'<script src="/__gm.js"></script>'
                         pos = data.rfind(b"</body>")
                         data = data[:pos] + tag + data[pos:] if pos >= 0 else data + tag
                     elif re.match(r"build[\\/]main-[\w-]+\.js$", rel):
                         data = patch_main(data)
+                    elif re.match(r"build[\\/]soul_linker-[\w-]+\.js$", rel):
+                        data = patch_core(data)
                 return self._send(data, ctype)
 
         # 本機沒有：從官網下載一次存起來
@@ -478,6 +518,7 @@ def serve(open_browser=True):
     tower = st.get("towerStart") and st.get("towerButton")
     print("無盡之塔：" + ("離線可以玩（二轉角色到普隆德拉的塔之守護者）" if tower else "這版遊戲對不上，離線版暫時不能玩"))
     print("隱藏職業：" + ("全部開放" if st.get("jobs") else "這版遊戲對不上，暫時無法開放"))
+    print("中文名稱：裝備、卡片、怪物" + ("" if st.get("zhSuffix") else "（這版遊戲對不上，裝備字尾維持英文，例如「太刀 of Strength」）"))
     print("玩的時候這個視窗要開著；玩完直接關掉這個視窗就好。")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()

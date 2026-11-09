@@ -60,8 +60,11 @@
     const texts = list => (list || []).map(b => { try { return b.text(1); } catch (e) { return ''; } }).filter(Boolean);
     const slotName = {};
     for (const s of gearSlots) slotName[s.gear] = slotName[s.gear] || s.name;
-    const slotOf = s => slotName[s] || (/^acc/.test(s) ? (slotName.acc || slotName.acc1 || '飾品') : s);
+    const slotOf = s => slotName[s] || (/^acc/.test(s) ? (slotName.acc || slotName.acc1 || '飾品') : /^head/.test(s) ? '頭部' : s);
     const iconOf = id => (man.items && man.items[id] && man.items[id].icon) ? 'assets/' + man.items[id].icon : '';
+    // 名稱：GM 面板一律中文（zh.js 的譯名表）；原文留著給搜尋用，打中文或英文都找得到
+    const enOf = m => m.nameEN || m.name || '';
+    const zhOf = en => (window.__rsZh && en) ? window.__rsZh.name(en) : en;
     const itemList = Object.values(items).map(i => {
       const m = (man.items || {})[i.id] || {};
       // 能力：固定加成＋★ 專屬加成。不顯示 ATK／DEF：遊戲不用資料表的數字，
@@ -69,11 +72,13 @@
       const stats = texts(i.bonuses);
       try { if (signature) stats.push(...texts(signature(i.id, 0))); } catch (e) { /* 沒有專屬加成 */ }
       const type = i.wtype && wtypeName ? wtypeName(i.wtype) : slotOf(i.slot);
-      return { id: i.id, name: m.name || ('#' + i.id), icon: iconOf(i.id), slot: i.slot, slotName: slotOf(i.slot), type, stats };
+      const en = enOf(m);
+      return { id: i.id, name: zhOf(en) || ('#' + i.id), en, icon: iconOf(i.id), slot: i.slot, slotName: slotOf(i.slot), type, stats };
     }).sort((a, b) => a.id - b.id);
     const cardList = Object.values(cards).map(c => {
       const m = (man.cards || {})[c.id] || {};
-      return { id: c.id, name: m.name || ('#' + c.id), icon: iconOf(c.id) || (m.image ? 'assets/' + m.image : ''),
+      const en = enOf(m);
+      return { id: c.id, name: zhOf(en) || ('#' + c.id), en, icon: iconOf(c.id) || (m.image ? 'assets/' + m.image : ''),
         stats: texts(c.bonuses), on: slotOf(c.compound) };
     }).sort((a, b) => a.id - b.id);
     // 物品等階（1～3，越高攻防越高；遊戲的 [{tier, mult, weaponMult}]）
@@ -157,10 +162,10 @@
     const q = ($('#gm-q') || {}).value || '';
     const slot = ($('#gm-slot') || {}).value || '';
     const kw = q.trim().toLowerCase();
-    const list = D.itemList.filter(i => (!slot || i.slotName === slot) && (!kw || [i.name, i.id, i.type, ...i.stats].join(' ').toLowerCase().includes(kw)));
+    const list = D.itemList.filter(i => (!slot || i.slotName === slot) && (!kw || [i.name, i.en, i.id, i.type, ...i.stats].join(' ').toLowerCase().includes(kw)));
     const slots = [...new Set(D.itemList.map(i => i.slotName))];
     return `
-<div class="row"><input id="gm-q" placeholder="搜尋名稱、能力或種類（例如 Sword、爆擊、短劍）" value="${esc(q)}" style="flex:1;min-width:180px">
+<div class="row"><input id="gm-q" placeholder="搜尋名稱（中英文都可以）、能力或種類（例如 太刀、Katana、爆擊、短劍）" value="${esc(q)}" style="flex:1;min-width:180px">
 <select id="gm-slot"><option value="">全部部位</option>${slots.map(s => `<option${s === slot ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
 <div class="list">${list.map(i => `<div class="it${pick === i.id ? ' on' : ''}" data-item="${i.id}">${i.icon ? `<img src="${esc(i.icon)}" alt="">` : ''}<div>${esc(i.name)}<small>${[...i.stats, i.type].map(esc).join(' / ')}</small></div></div>`).join('') || '<div class="muted">找不到</div>'}</div>
 <div class="row" style="margin-top:10px">
@@ -193,9 +198,9 @@
   function renderCards() {
     const q = ($('#gm-cq') || {}).value || '';
     const kw = q.trim().toLowerCase();
-    const list = D.cardList.filter(c => !kw || [c.name, c.id, c.on, ...c.stats].join(' ').toLowerCase().includes(kw));
+    const list = D.cardList.filter(c => !kw || [c.name, c.en, c.id, c.on, ...c.stats].join(' ').toLowerCase().includes(kw));
     return `
-<div class="row"><input id="gm-cq" placeholder="搜尋卡片名稱、能力或部位（例如 Poring、爆擊、護甲）" value="${esc(q)}" style="flex:1"></div>
+<div class="row"><input id="gm-cq" placeholder="搜尋卡片名稱（中英文都可以）、能力或部位（例如 波利、Poring、爆擊、護甲）" value="${esc(q)}" style="flex:1"></div>
 <div class="list">${list.map(c => `<div class="it${pickCard === c.id ? ' on' : ''}" data-card="${c.id}">${c.icon ? `<img src="${esc(c.icon)}" alt="">` : ''}<div>${esc(c.name)}<small>${[...c.stats, c.on].filter(Boolean).map(esc).join(' / ')}</small></div></div>`).join('') || '<div class="muted">找不到</div>'}</div>
 <div class="row" style="margin-top:10px"><b>${pickCard ? esc((D.cardList.find(c => c.id === pickCard) || {}).name) : '先點上面的卡片'}</b>
 <label>數量 <input id="gm-ccount" type="number" min="1" max="99" value="1"></label>
