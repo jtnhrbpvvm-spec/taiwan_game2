@@ -194,8 +194,10 @@ function openEquipSlotPicker(itemId){
 
   const gridEl = document.getElementById('equipSlotPickerGrid');
   if(gridEl && typeof EQ_SLOTS !== 'undefined'){
+    // 新系統的物品（手環、聖紋…）只能放對應的格子；其他物品不能放進新系統的格子
     gridEl.innerHTML = EQ_SLOTS
       .filter(sl => !sl.hidden && !sl.spacer && !sl.isRemains)
+      .filter(sl => sl.sysSlot ? sl.sysSlot === db.slot : !EQ_SLOTS.some(s => s.sysSlot && s.sysSlot === db.slot))
       .map(sl => `<button class="btn btn-sm" style="width:100%" onclick="assignEquipToSlot('${sl.id}')">${sl.label}</button>`)
       .join('');
   }
@@ -292,7 +294,8 @@ function sendPendingEquipTo(type){
 // 背包/倉庫搜尋涵蓋整個 ITEM_DB，所以列出全部20種分類。
 function _initSlotFilterDropdowns(){
   const equipOrder = ['', 'wpn', 'helm', 'armor', 'shield', 'cloak', 'tshirt', 'gloves', 'boots', 'shin',
-                       'ring', 'amulet', 'ear', 'belt', 'eye', 'doll', 'petarm', 'petwpn', 'rem'];
+                       'ring', 'amulet', 'ear', 'belt', 'eye', 'doll', 'petarm', 'petwpn', 'rem',
+                       'holy', 'bracelet', 'engrave', 'mio', 'sigil'];
   const fullOrder  = equipOrder.concat(['skillbk', 'general']);
   // 武器細分子選項（縮排顯示；值為 wpn:1h / wpn:2h / wpn:bow，由 _matchSlotFilter 處理）
   const WPN_SUB = [
@@ -313,14 +316,15 @@ function _initSlotFilterDropdowns(){
   });
 }
 
-setTimeout(() => {
+// 等所有 <script> 都跑完再初始化（JUNK_PREF_SLOT_LABEL 在後面的 20-advanced-junk-siege.js；物品資料表很大，固定等 100ms 不一定夠）
+document.addEventListener('DOMContentLoaded', () => {
   _initSlotFilterDropdowns();
   const input = document.getElementById('equipSearchInput');
   if(input){
     input.addEventListener('input', renderEquipSearch);
     renderEquipSearch();
   }
-}, 100);
+});
 
 // 通用物品資料庫搜尋（背包/倉庫共用；不限裝備類型，搜尋全部 ITEM_DB）
 function renderItemRefSearch(inputId, resultId, slotFilterId){

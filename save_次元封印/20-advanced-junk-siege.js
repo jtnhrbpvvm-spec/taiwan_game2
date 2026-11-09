@@ -127,6 +127,11 @@ const JUNK_PREF_SLOT_LABEL = {
   petarm:     '🐾 寵物防具',
   petwpn:     '🐾 寵物武器',
   rem:        '🦴 席琳遺骸',
+  holy:       '🪲 聖物',
+  bracelet:   '⭕ 手環',
+  engrave:    '🎖️ 遠征徽記',
+  mio:        '🃏 密奧之卡',
+  sigil:      '🔣 聖紋',
   skillbk:    '📖 技能書',
   general:    '📦 一般道具',
 };

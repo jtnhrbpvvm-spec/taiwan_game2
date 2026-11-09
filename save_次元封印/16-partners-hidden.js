@@ -341,7 +341,7 @@ function renderPartnerEq(p, i){
   return `
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
     ${EQ_SLOTS.map(sl => {
-      if(sl.hidden) return '';
+      if(sl.hidden || sl.sysSlot) return '';   // 新系統裝備格只有主角有
       if(sl.spacer) return `<div id="pp_${i}_remSetSummary" class="rem-set-summary">${remSetSummaryHTML(p.eq)}</div>`;
       const d  = (p.eq && p.eq[sl.id]) || {};
 

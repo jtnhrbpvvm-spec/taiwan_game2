@@ -37,7 +37,9 @@ DUMP_JS = r"""async () => {
   // 地圖：先照遊戲的分類，分類裡沒有的（副本、隱藏地圖）放到其他
   const seen = {}, CAT = { village:'村莊', wild:'野外', dungeon:'地監', special:'特殊', tower:'傲慢之塔', rift:'時空裂痕', pirate_island:'海賊島' };
   out.maps = Object.entries(MAP_CATEGORIES).map(([k, list]) => ({ label: CAT[k] || k, list: list.map(m => { seen[m.v] = 1; return { v: m.v, t: m.t }; }) }));
-  out.maps.push({ label: '其他（副本、隱藏地圖）', list: Object.entries(DB.maps).filter(([k]) => !seen[k]).map(([k, m]) => ({ v: k, t: (m && (m.n || m.name)) || k })) });
+  // 副本地圖的 DB.maps 只放怪物清單，名稱要問遊戲自己的 AFK_EXTRA.mapName
+  const mapNm = (k, m) => { try { const t = window.AFK_EXTRA && AFK_EXTRA.mapName && AFK_EXTRA.mapName(k); if (t && t !== k) return t; } catch (e) {} return (m && (m.n || m.name)) || k; };
+  out.maps.push({ label: '其他（副本、隱藏地圖）', list: Object.entries(DB.maps).filter(([k]) => !seen[k]).map(([k, m]) => ({ v: k, t: mapNm(k, m) })) });
   // 卡片收集對象
   const mobLv = {}; Object.values(DB.mobs).forEach(m => { if (m && m.n && !(m.n in mobLv)) mobLv[m.n] = m.lv || 0; });
   out.cards = Object.keys(CARD_MOB_INFO).map(n => ({ n, lv: mobLv[n] || 0 })).sort((a, b) => a.lv - b.lv);

@@ -66,6 +66,27 @@ function renderEqPanel(){
       </div>`;
     }
 
+    if(sl.sysSlot){
+      const opts = _sysSlotItems(sl.sysSlot);
+      const unknown = d.id && !opts.some(o => o[0] === d.id);
+      return `
+      <div class="eq-slot eq-slot-sys">
+        <div class="eq-slot-title">${sl.label}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${sl.note || ''}</div>
+        <select id="eq_${sl.id}_id" style="width:100%" onchange="onSysSlotChange('${sl.id}')">
+          <option value="">── 未裝備 ──</option>
+          ${unknown ? `<option value="${d.id}">${d.id}（資料表裡沒有）</option>` : ''}
+          ${opts.map(([id, n]) => `<option value="${id}">${n}</option>`).join('')}
+        </select>
+        <div class="eq-slot-row" style="margin-top:6px">
+          <label class="eq-flag">
+            <input type="checkbox" id="eq_${sl.id}_lock"
+                   onchange="onSysSlotChange('${sl.id}')" ${d.lock?'checked':''}> 鎖定
+          </label>
+        </div>
+      </div>`;
+    }
+
     if(sl.isRemains){
       return `
       <div class="eq-slot eq-slot-rem">
@@ -152,6 +173,7 @@ function renderEqPanel(){
     if(sl.hidden || sl.spacer) return;
     const d = (G.p.eq && G.p.eq[sl.id]) || {};
     if(sl.isSimpleToggle) return;   // 只有checkbox，沒有下拉選單需要同步selected狀態
+    if(sl.sysSlot){ _setSelectVal(`eq_${sl.id}_id`, d.id || ''); return; }
     if(sl.isRemains){
       _setSelectVal(`eq_${sl.id}_seteff`, d.seteff || '');
       return;
@@ -223,8 +245,37 @@ function onSimpleToggleFieldChange(slotId){
   });
 }
 
+// ── 新系統裝備格（聖物、手環、遠征徽記、密奧、聖紋）
+// 列出 ITEM_DB 裡 slot 對得上的物品：[[id, 名稱], …]
+function _sysSlotItems(itemSlot){
+  return Object.entries(ITEM_DB).filter(([, v]) => v && v.slot === itemSlot).map(([id, v]) => [id, v.n || id]);
+}
+function isSysSlot(slotId){
+  const sl = EQ_SLOTS.find(s => s.id === slotId);
+  return sl && sl.sysSlot ? sl.sysSlot : '';
+}
+function onSysSlotChange(slotId){
+  if(!G.p.eq) G.p.eq = {};
+  const id = document.getElementById(`eq_${slotId}_id`)?.value || '';
+  if(!id){ G.p.eq[slotId] = null; return; }
+  const orig = G.p.eq[slotId] || {};
+  const keep = orig.id === id ? orig : {};   // 換成別件時不沿用舊物品的欄位
+  G.p.eq[slotId] = Object.assign({}, keep, {
+    id,
+    uid:   keep.uid || genUID(),
+    cnt:   1,
+    en:    keep.en || 0,
+    bless: keep.bless || false,
+    anc:   keep.anc || false,
+    attr:  keep.attr || false,
+    lock:  !!document.getElementById(`eq_${slotId}_lock`)?.checked,
+    junk:  false,
+  });
+}
+
 // ── 欄位變更即時同步
 function onEqFieldChange(slotId){
+  if(isSysSlot(slotId)) return onSysSlotChange(slotId);
   const idVal = (document.getElementById(`eq_${slotId}_id`)?.value || '').trim();
   const orig  = G.p.eq[slotId] || {};
 

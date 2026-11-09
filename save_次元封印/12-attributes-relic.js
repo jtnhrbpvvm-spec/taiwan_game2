@@ -150,6 +150,14 @@ const EQ_SLOTS = [
   {id:'arrow',  label:'箭矢'     },
   {id:'pet',    label:'寵物裝備', hidden:true },
   {id:'doll',   label:'魔法娃娃' },
+  // 🔽 次元封印新系統的裝備格（裝備視窗第二頁）：只放得進對應部位的物品，用下拉選單選，不需要強化／詞綴欄位。
+  //    守護者之戒（eq.guard）不在這裡：遊戲把它做成不存檔的唯讀格，配戴哪一枚是由 p.afkGuard 的主誓約決定。
+  {id:'holy',      label:'聖物',     sysSlot:'holy',     note:'日輪聖甲蟲；等級記在角色資料，不在這格' },
+  {id:'bracelet',  label:'手環 1',   sysSlot:'bracelet', note:'轉生後開放' },
+  {id:'bracelet2', label:'手環 2',   sysSlot:'bracelet', note:'轉生後開放' },
+  {id:'engrave',   label:'遠征徽記', sysSlot:'engrave',  note:'轉生後開放' },
+  {id:'mio',       label:'密奧之卡', sysSlot:'mio',      note:'卡片升級進度記在角色資料，不在這格' },
+  {id:'sigil',     label:'聖紋',     sysSlot:'sigil',    note:'只能裝一個' },
   {id:'_spacer_rem', label:'', spacer:true },
   {id:'rem_claw',  label:'席琳之爪', isRemains:true },
   {id:'rem_eye',   label:'席琳之眼', isRemains:true },
@@ -179,6 +187,7 @@ const RELIC_SLOT_LABEL = {
   gloves:'手套', boots:'靴子', shin:'護脛（腳脛部位）', ring:'戒指', amulet:'項鍊',
   ear:'耳環', belt:'腰帶', arrow:'箭矢', petwpn:'寵物武器', petarm:'寵物防具',
   doll:'魔法娃娃', eye:'魔眼飾品',
+  holy:'聖物', bracelet:'手環', engrave:'遠征徽記', mio:'密奧之卡', sigil:'聖紋', guard:'守護者之戒',
   rem_claw:'席琳之爪', rem_eye:'席琳之眼', rem_blood:'席琳之血', rem_flesh:'席琳之肉',
   rem_heart:'席琳之心', rem_bone:'席琳之骨', rem_fang:'席琳之牙', rem_scale:'席琳之鱗',
 };
