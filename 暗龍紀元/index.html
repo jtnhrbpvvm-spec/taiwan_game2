@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>龍脈紀元 輔助書籤</title>
+<meta name="description" content="龍脈紀元（dragonvein.raby.com.tw）非官方輔助書籤：魔力低自動喝藍色藥水、練功效率資訊面板、怪物物品技能查詢、介面調整、背包負重體力提醒、存檔備份匯出。">
+<meta name="theme-color" content="#0a0806">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  :root {
+    --gold: #c9a24a; --gold2: #7d5f22; --gold3: #f1d68a;
+    --line: #5b4f3f; --ink: #ece2cb; --soft: #a89c86; --hp: #c4262c; --mp: #2b55c4;
+    --f: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --fs: "Noto Serif TC", "PingFang TC", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink); font: 500 15px/1.75 var(--f);
+    background:
+      radial-gradient(ellipse 80% 420px at 50% 0%, rgba(201,162,74,.18), transparent 70%),
+      linear-gradient(180deg, #1a1511, #0a0806 60%) fixed;
+    padding: 0 16px 72px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  a { color: var(--gold3); font-weight: 700; }
+
+  /* 標題 */
+  .hero { text-align: center; padding: 40px 0 22px; }
+  .logo { font: 900 54px var(--fs); letter-spacing: .12em; line-height: 1.1;
+    background: linear-gradient(#fff4c8, #f1d68a 40%, #b9781c); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 3px 0 #3a1d06) drop-shadow(0 6px 12px rgba(0,0,0,.7)); }
+  .logo-sub { display: inline-block; margin-top: 4px; padding: 3px 22px; font: 900 15px var(--fs); letter-spacing: .5em; color: #ffd0c8;
+    background: linear-gradient(180deg, #6a1c1c, #320c0c); border: 1px solid var(--hp); border-radius: 4px; }
+  h1 { margin: 16px 0 0; font: 900 26px var(--fs); color: var(--gold3); letter-spacing: .12em; text-shadow: 0 2px 0 #000; }
+  @media (max-width: 600px) { h1 { font-size: 18px; letter-spacing: .04em; } .logo { font-size: 44px; } }
+  .play-link { display: inline-block; margin-top: 10px; font-size: 18px; color: var(--gold3); text-decoration: none; padding: 6px 24px; border-radius: 6px;
+    background: linear-gradient(#5a4524, #2f2414); border: 1px solid var(--gold); box-shadow: 0 3px 0 #000, inset 0 1px rgba(255,230,170,.2); }
+  .play-link:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 16px; }
+  .chip { font-size: 12px; font-weight: 700; padding: 2px 11px; border-radius: 999px; color: var(--gold3); background: #0c0b0a; border: 1px solid var(--gold2); }
+  .toc { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+  .toc a { font-size: 13px; text-decoration: none; padding: 5px 14px; border-radius: 6px; color: var(--ink);
+    background: linear-gradient(#3a3229, #1c1814); border: 1px solid var(--gold2); }
+  .toc a:hover { border-color: var(--gold3); }
+
+  /* 石頭視窗 */
+  .card { margin-bottom: 20px; border-radius: 6px; overflow: hidden; background: linear-gradient(180deg, #2f2a24, #1b1815);
+    border: 2px solid var(--gold2); box-shadow: inset 0 0 0 1px #000, inset 0 1px 0 rgba(255,230,170,.12), 0 8px 24px rgba(0,0,0,.6); }
+  .card h2 { margin: 0; display: flex; align-items: center; gap: 8px; padding: 9px 16px; font: 900 17px var(--fs); color: var(--gold3); letter-spacing: .1em;
+    background: linear-gradient(#3a3229, #241f1a); border-bottom: 1px solid var(--line); }
+  .card h2::before { content: ""; width: 7px; height: 7px; flex: none; background: var(--gold); transform: rotate(45deg); box-shadow: 0 0 6px var(--gold); }
+  .card .body { padding: 18px 18px 20px; }
+  .tag { margin-left: auto; font: 700 11px var(--f); letter-spacing: 0; padding: 1px 9px; border-radius: 4px; color: var(--soft); background: #0c0b0a; border: 1px solid var(--line); }
+  .hint { font-size: 13.5px; color: var(--soft); }
+  .hint b, li b, .flow b { color: var(--gold3); }
+  kbd { font: 700 12px ui-monospace, Consolas, monospace; padding: 1px 6px; border-radius: 4px; background: #0c0b0a; border: 1px solid var(--line); border-bottom-width: 2px; color: var(--ink); }
+  ol, ul { margin: 8px 0 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+
+  /* 按鈕 */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px; padding: 8px 14px; border-radius: 6px;
+    font: 900 16px var(--f); text-decoration: none; cursor: pointer; user-select: none; transition: transform .08s, filter .15s; }
+  .btn:hover { filter: brightness(1.12); }
+  .btn-drag { cursor: grab; color: var(--gold3); background: linear-gradient(#5a4524, #2f2414); border: 1px solid var(--gold);
+    box-shadow: 0 4px 0 #000, inset 0 1px rgba(255,230,170,.25), 0 0 18px rgba(201,162,74,.25); }
+  .btn-drag:active { cursor: grabbing; transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+  .btn-drag[data-pre]::before { content: attr(data-pre); } .btn-drag[data-post]::after { content: attr(data-post); }
+  .btn-copy { color: var(--ink); background: linear-gradient(#3a3229, #1c1814); border: 1px solid var(--gold2); box-shadow: 0 3px 0 #000; }
+  .btn-copy:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+  textarea { width: 100%; height: 74px; margin-top: 10px; resize: none; padding: 10px; background: #050404; color: #9fe3a6;
+    border: 1px solid var(--line); border-radius: 6px; font: 12px/1.5 ui-monospace, Consolas, monospace; }
+
+  /* 分頁切換 */
+  .switch { display: flex; gap: 6px; margin: 0 0 14px; }
+  .switch button { flex: 1; padding: 8px; border-radius: 6px; cursor: pointer; font: 700 14px var(--f); color: var(--ink);
+    background: #0c0b0a; border: 1px solid var(--line); }
+  .switch button.on { color: var(--gold3); border-color: var(--gold); background: #2a2110; }
+
+  /* 手機示意 */
+  .demo { display: grid; grid-template-columns: 240px 1fr; gap: 18px; align-items: center; }
+  @media (max-width: 600px) { .demo { grid-template-columns: 1fr; justify-items: center; } }
+  .phone { position: relative; width: 240px; height: 440px; border-radius: 30px; padding: 10px; background: #111; border: 2px solid #3a3229;
+    box-shadow: 0 18px 40px -12px rgba(0,0,0,.9), inset 0 0 0 2px #222; }
+  .phone::before { content: ""; position: absolute; left: 50%; top: 14px; width: 70px; height: 16px; transform: translateX(-50%); border-radius: 999px; background: #000; z-index: 3; }
+  .screens { position: relative; width: 100%; height: 100%; border-radius: 22px; overflow: hidden; background: #f4f4f6; }
+  .scr { position: absolute; inset: 0; opacity: 0; transition: opacity .35s; display: flex; flex-direction: column; color: #222; font-size: 11px; font-weight: 600; }
+  .scr.on { opacity: 1; }
+  .sbar { height: 30px; flex: none; }
+  .url { margin: 0 10px; padding: 5px 10px; border-radius: 9px; background: #e3e3e8; color: #555; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .page { flex: 1; padding: 10px; display: grid; align-content: start; gap: 6px; }
+  .page.dark { background: linear-gradient(180deg, #1a1511, #0a0806); color: var(--ink); }
+  .mini-btn { padding: 6px; border-radius: 6px; text-align: center; font-weight: 800; font-size: 10px; }
+  .mini-code { background: #050404; color: #9fe3a6; font: 8px/1.4 ui-monospace, monospace; padding: 6px; border-radius: 5px; word-break: break-all; }
+  .toolbar { flex: none; display: flex; justify-content: space-around; align-items: center; height: 42px; background: #fafafa; border-top: 1px solid #ddd; font-size: 16px; color: #2563eb; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #ececf1; border-radius: 16px 16px 0 0; padding: 10px; box-shadow: 0 -8px 20px rgba(0,0,0,.25); display: grid; gap: 6px; }
+  .sheet-row { background: #fff; border-radius: 9px; padding: 8px 10px; display: flex; justify-content: space-between; }
+  .form { padding: 10px; display: grid; gap: 4px; }
+  .form label { font-size: 9px; color: #6b7280; }
+  .field { border-bottom: 2px solid #c7c7cc; padding: 4px 0; font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .field.focus { border-color: #2563eb; color: #111; }
+  .navbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; font-size: 11px; background: #f8f8f8; border-bottom: 1px solid #ddd; }
+  .navbar b { font-size: 12px; }
+  .blue-t { color: #2563eb; }
+  .snack { position: absolute; left: 8px; right: 8px; bottom: 50px; padding: 8px 10px; border-radius: 8px; background: #323232; color: #fff; display: flex; justify-content: space-between; font-size: 10px; }
+  .menu { position: absolute; right: 6px; top: 34px; width: 140px; background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.25); padding: 4px 0; }
+  .menu div { padding: 6px 10px; }
+  .menu .icons { display: flex; justify-content: space-around; border-bottom: 1px solid #eee; font-size: 14px; }
+  .suggest { background: #fff; border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; gap: 8px; align-items: center; }
+  .game { flex: 1; position: relative; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #3a4a2a, #1a2210 70%); }
+  .game .glogo { font: 900 20px var(--fs); color: var(--gold3); text-shadow: 0 2px 0 #000; text-align: center; letter-spacing: .1em; }
+  .game .gpanel { position: absolute; right: 8px; top: 8px; width: 100px; padding: 4px 6px; border: 1px solid var(--gold2); border-radius: 4px; background: #241f1a; color: var(--ink); font-size: 8px; line-height: 1.5; }
+  .game .gpanel b { display: block; color: var(--gold3); font-size: 9px; }
+  .game .gbar { height: 4px; border-radius: 2px; background: #000; overflow: hidden; margin: 2px 0; }
+  .game .gbar i { display: block; height: 100%; width: 28%; background: #2b55c4; }
+  .ring { position: absolute; border: 3px solid #ffb300; border-radius: 999px; pointer-events: none; box-shadow: 0 0 0 4px rgba(255,179,0,.25); animation: ring 1.4s ease-in-out infinite; }
+  @keyframes ring { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .tap { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,179,0,.55); border: 2px solid #fff; animation: tap 1.4s ease-in-out infinite; pointer-events: none; }
+  @keyframes tap { 0%,100% { transform: scale(.8); opacity: .9; } 50% { transform: scale(1.2); opacity: .5; } }
+  .steps-side { min-width: 0; }
+  .badge { display: inline-block; padding: 1px 10px; border-radius: 4px; font-size: 12px; font-weight: 900; color: var(--gold3); background: #2a2110; border: 1px solid var(--gold2); }
+  .cap { margin: 8px 0 4px; font: 900 17px var(--fs); color: var(--gold3); }
+  .cap-desc { color: var(--soft); font-size: 14px; min-height: 3.4em; }
+  .ctrl { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .ctrl button.nav { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; font-weight: 900; color: var(--gold3); background: #0c0b0a; border: 1px solid var(--gold2); }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 8px; height: 8px; border-radius: 999px; background: #4a3f30; cursor: pointer; transition: all .2s; }
+  .dots span.on { width: 22px; background: var(--gold); }
+
+  /* 功能卡 */
+  .flow { display: grid; gap: 10px; }
+  .flow-step { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+  .num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; color: var(--gold3);
+    background: radial-gradient(circle at 35% 35%, #5a4524, #2f2414); border: 1px solid var(--gold); }
+  .feat { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .feat > div { padding: 10px 12px; border-radius: 4px; background: #0c0b0a; border: 1px solid #3a3229; }
+  .feat b { color: var(--gold3); font-family: var(--fs); }
+  .feat div div { font-size: 13px; color: var(--soft); margin-top: 4px; }
+  .note-box { margin-top: 14px; padding: 10px 12px; border-radius: 4px; font-size: 13.5px; background: #0c0b0a; border: 1px solid var(--line); }
+  .note-box.warn { border-color: #8a3a22; background: #1e0e0a; color: #ffd0c8; }
+  .note-box.warn b { color: #ff9a7a; }
+
+  /* 成品展示 */
+  .showcase { position: relative; padding: 14px; border-radius: 4px; overflow: hidden;
+    background: radial-gradient(circle at 30% 40%, #4a5e34, #2a3a1c 60%, #141c0c); min-height: 280px; }
+  .sc-panel { width: 270px; max-width: 100%; margin-left: auto; font-size: 12.5px; line-height: 1.5; background: linear-gradient(180deg, #2f2a24, #1b1815);
+    border: 2px solid var(--gold2); border-radius: 6px; box-shadow: inset 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
+  .sc-hd { padding: 5px 8px; border-bottom: 1px solid var(--line); color: var(--gold3); font: 900 13px var(--fs); }
+  .sc-tabs { display: flex; gap: 3px; padding: 6px 8px 0; }
+  .sc-tabs span { flex: 1; text-align: center; font-size: 11px; border: 1px solid var(--line); border-radius: 3px; background: #0c0b0a; }
+  .sc-tabs span.on { border-color: var(--gold); color: var(--gold3); background: #2a2110; }
+  .sc-bd { padding: 8px; }
+  .sc-cell { display: flex; justify-content: space-between; background: #0c0b0a; border: 1px solid #3a3229; border-radius: 3px; padding: 2px 8px; margin: 3px 0; }
+  .sc-cell b { color: var(--gold3); }
+  .sc-mp { height: 8px; background: #0a0808; border: 1px solid #000; border-radius: 4px; overflow: hidden; margin: 2px 0 6px; }
+  .sc-mp i { display: block; height: 100%; width: 27%; background: linear-gradient(#7aa0ff, #2b55c4); }
+  .sc-float { position: absolute; left: 22%; top: 46%; font: 900 18px var(--f); color: #8fb0ff; text-shadow: 0 2px 0 #000; animation: up 2s ease-out infinite; }
+  @keyframes up { 0% { transform: translateY(10px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-30px); opacity: 0; } }
+  .sc-hero { position: absolute; left: 18%; top: 58%; width: 28px; height: 40px; border-radius: 8px 8px 4px 4px; background: linear-gradient(#c9a24a, #6a4a2a); box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+  @media (max-width: 600px) { .sc-hero, .sc-float { display: none; } .sc-panel { margin: 0 auto; } }
+
+  /* 問答 */
+  details { border-top: 1px solid var(--line); padding: 10px 0; }
+  details:first-of-type { border-top: 0; padding-top: 0; }
+  summary { cursor: pointer; font-weight: 900; color: var(--gold3); }
+  details p { margin: 6px 0 0; color: var(--soft); font-size: 14px; }
+  code { font: 12px ui-monospace, Consolas, monospace; background: #0c0b0a; border: 1px solid #3a3229; padding: 0 5px; border-radius: 3px; color: var(--ink); }
+
+  footer { text-align: center; color: var(--soft); font-size: 12px; margin-top: 30px; line-height: 1.7; }
+  footer p { margin: 0 0 10px; }
+  footer b { color: var(--gold3); }
+
+  .toast { position: fixed; left: 50%; bottom: 26px; z-index: 99; transform: translate(-50%, 20px); padding: 10px 20px; border-radius: 6px; font-weight: 900; font-size: 14px;
+    pointer-events: none; color: var(--gold3); background: linear-gradient(#5a4524, #2f2414); border: 1px solid var(--gold); box-shadow: 0 6px 20px rgba(0,0,0,.6); opacity: 0; transition: all .25s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .ie-warn { margin: 20px 0 0; padding: 16px 18px; border: 2px solid #c0392b; border-radius: 8px; background: #fff4e5; color: #24304f; font-size: 16px; line-height: 1.8; }
+  .ie-warn b { color: #c0392b; }
+  .ie-warn a { color: #24418e; }
+  @supports (display: grid) { .ie-warn { display: none; } }
+</style>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="ie-warn">
+    <b>⚠ 你正在用 Internet Explorer（IE）開這一頁。</b><br>
+    IE 已經停止支援，<b>遊戲和書籤都無法在 IE 執行</b>。請改用 <b>Microsoft Edge</b> 或 <b>Google Chrome</b> 開啟本頁：<br>
+    ・<a href="microsoft-edge:https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E6%9A%97%E9%BE%8D%E7%B4%80%E5%85%83/">點這裡用 Edge 開啟本頁</a><br>
+    ・沒有 Chrome：<a href="https://www.google.com/chrome/" target="_blank" rel="noopener">下載 Google Chrome</a>
+  </div>
+
+  <header class="hero">
+    <div class="logo">龍脈紀元</div>
+    <div class="logo-sub">輔助書籤</div>
+    <h1>魔力自動喝水・練功資訊・資料查詢</h1>
+    <p><a class="play-link" href="https://dragonvein.raby.com.tw/" target="_blank" rel="noopener">▶ 龍脈紀元這邊玩</a></p>
+    <div class="chips">
+      <span class="chip">自動喝藍色藥水</span><span class="chip">經驗／金幣效率</span><span class="chip">怪物掉落查詢</span>
+      <span class="chip">介面調整・靜音</span><span class="chip">背包負重提醒</span><span class="chip">存檔備份</span>
+    </div>
+    <nav class="toc">
+      <a href="#pc">💻 電腦安裝</a><a href="#mobile">📱 手機安裝</a><a href="#feat">🧰 功能介紹</a>
+      <a href="#use">🎮 使用方式</a><a href="#show">🖼️ 成品展示</a><a href="#faq">❓ 常見問題</a>
+    </nav>
+  </header>
+
+  <!-- 電腦 -->
+  <section class="card" id="pc">
+    <h2>💻 電腦瀏覽器（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
+    <div class="body">
+      <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列" data-pre="✦ 拖我到書籤列（" data-post="）">龍脈輔助</a>
+      <ol class="hint">
+        <li>按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>（Mac：<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>）叫出書籤列。</li>
+        <li>用滑鼠<b>按住</b>上面的金色按鈕，<b>拖曳</b>到書籤列上放開（直接點按鈕不會安裝）。</li>
+        <li>打開 <a href="https://dragonvein.raby.com.tw/" target="_blank" rel="noopener">遊戲頁面</a>，登入並<b>進入角色</b>後，點一下書籤列上的「龍脈輔助」。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 手機 -->
+  <section class="card" id="mobile">
+    <h2>📱 手機（iPhone / Android）<span class="tag">貼上安裝</span></h2>
+    <div class="body">
+      <div class="switch" role="tablist">
+        <button class="on" data-os="ios" role="tab">iPhone（Safari）</button>
+        <button data-os="android" role="tab">Android（Chrome）</button>
+      </div>
+      <div class="demo">
+        <div class="phone"><div class="screens" id="screens"></div></div>
+        <div class="steps-side">
+          <span class="badge" id="badge">STEP 1/5</span>
+          <div class="cap" id="cap"></div>
+          <div class="cap-desc" id="cap-desc"></div>
+          <div class="ctrl">
+            <button class="nav" id="prev" aria-label="上一步">‹</button>
+            <div class="dots" id="dots"></div>
+            <button class="nav" id="next" aria-label="下一步">›</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:18px;font-weight:900;color:var(--gold3)">書籤程式碼（第 1 步要複製的）</div>
+      <button class="btn btn-copy" id="copy-btn" style="margin-top:8px">📋 複製書籤程式碼</button>
+      <textarea id="code-box" readonly></textarea>
+      <div class="note-box">建議把書籤名稱取成 <b>龍脈輔助</b>，Android 之後在網址列打「龍脈」就找得到。</div>
+    </div>
+  </section>
+
+  <!-- 功能 -->
+  <section class="card" id="feat">
+    <h2>🧰 功能介紹</h2>
+    <div class="body">
+      <div class="feat">
+        <div><b>💧 自動喝藍色藥水</b><div>魔力低於設定的百分比（預設 30%）就自動喝藍色藥水，沒有藍水時改喝氣泡可樂、能量飲料。可以設定只在「自動戰鬥」時才喝。每秒最多一瓶。</div></div>
+        <div><b>📊 練功資訊</b><div>即時顯示每小時經驗、每小時金幣、預估升級時間、負重、背包格數，以及紅水、橙水、藍水、加速藥水、回村卷軸的存量。</div></div>
+        <div><b>🔍 資料查詢</b><div>輸入名稱查怪物（等級、HP、經驗、掉落物與機率）、物品（數值、說明、哪些怪會掉、背包持有數）和技能（魔力、冷卻）。</div></div>
+        <div><b>🖥️ 介面調整</b><div>一鍵把音樂和音效全部靜音、隱藏任務框或小地圖、調整下方狀態列大小。</div></div>
+        <div><b>🔔 提醒</b><div>背包快滿、負重 50% 以上（不會自然回復）、體力過低、藥水快用完時，畫面上方閃一下並寫在聊天框。</div></div>
+        <div><b>💾 存檔備份</b><div>把這台瀏覽器裡的角色存檔下載成 .json 檔留底，只讀不改，而且不包含登入憑證。</div></div>
+      </div>
+      <div class="note-box">體力的自動喝水遊戲已經內建：開「自動戰鬥」時，在角色視窗設定 HP 百分比即可。這個書籤補上遊戲沒有的<b>魔力</b>部分。</div>
+    </div>
+  </section>
+
+  <!-- 使用方式 -->
+  <section class="card" id="use">
+    <h2>🎮 使用方式</h2>
+    <div class="body">
+      <div class="flow">
+        <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://dragonvein.raby.com.tw/" target="_blank" rel="noopener">dragonvein.raby.com.tw</a>，登入並選好角色進入遊戲。<div class="hint">在標題畫面點也可以，進入遊戲後就會開始運作。</div></div></div>
+        <div class="flow-step"><div class="num">2</div><div>點書籤「龍脈輔助」，畫面右邊出現金框的<b>「龍脈輔助」面板</b>。按住面板標題可以拖到別的位置，按 <b>－</b> 收合。</div></div>
+        <div class="flow-step"><div class="num">3</div><div>在「自動喝水」頁設定魔力百分比，其他頁照需要打開。設定會記住，下次點書籤自動套用。</div></div>
+        <div class="flow-step"><div class="num">4</div><div>按面板的 <b>✕</b> 或再點一次書籤可以隱藏面板，<b>自動喝水會繼續運作</b>。<b>重新整理頁面</b>後書籤會失效，要再點一次。</div></div>
+      </div>
+      <div class="note-box warn"><b>請注意</b>　自動喝水屬於輔助操作，是否允許以遊戲營運方的規定為準，使用前請先確認官方公告。書籤不會修改等級、金幣、鑽石或物品，也不會送任何資料到伺服器。</div>
+    </div>
+  </section>
+
+  <!-- 成品展示 -->
+  <section class="card" id="show">
+    <h2>🖼️ 成品展示</h2>
+    <div class="body">
+      <div class="hint" style="margin-bottom:12px">示意圖：魔力降到 30% 以下時自動喝藍色藥水。</div>
+      <div class="showcase" aria-label="輔助面板示意">
+        <div class="sc-hero"></div><div class="sc-float">+18 MP</div>
+        <div class="sc-panel">
+          <div class="sc-hd">龍脈輔助 <small style="color:var(--soft);font:500 10px sans-serif">V1</small></div>
+          <div class="sc-tabs"><span class="on">自動喝水</span><span>資訊</span><span>查詢</span><span>介面</span></div>
+          <div class="sc-bd">
+            <div class="sc-cell"><span>☑ 魔力低於 30% 自動喝藍水</span></div>
+            <div class="sc-cell"><span>1. 藍色藥水</span><b>86</b></div>
+            <div class="sc-cell"><span>2. 氣泡可樂</span><b>0</b></div>
+            <div class="sc-cell"><span>魔力</span><b>23 / 85</b></div>
+            <div class="sc-mp"><i></i></div>
+            <div class="sc-cell"><span>這次已自動喝</span><b>14</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 常見問題 -->
+  <section class="card" id="faq">
+    <h2>❓ 常見問題</h2>
+    <div class="body">
+      <details>
+        <summary>點了書籤沒有反應？</summary>
+        <p>確認是在 dragonvein.raby.com.tw 的遊戲頁面上點，而且遊戲已經載入完成（不是「載入中…」畫面）。Android Chrome 要從<b>網址列</b>輸入書籤名稱再點建議項目，從書籤清單點不會執行。iPhone 請確認網址欄位是整段 <code>javascript:</code> 開頭的程式碼，前面沒有多出空白或 https://。</p>
+      </details>
+      <details>
+        <summary>為什麼沒有自動喝藍水？</summary>
+        <p>請確認：面板的「魔力低於設定值自動喝藍水」有勾、背包裡有藍色藥水、魔力真的低於設定的百分比。如果勾了「只在自動戰鬥開啟時喝」，要開啟遊戲的自動戰鬥才會喝。重新整理頁面後要再點一次書籤。</p>
+      </details>
+      <details>
+        <summary>會不會被當成作弊、存檔被還原？</summary>
+        <p>書籤只呼叫遊戲本身的喝藥水功能，跟你手動點藥水一樣會扣藥水，不改任何數值、不碰存檔、不送資料到伺服器，所以不會觸發「存檔異常」。不過自動喝水算不算違規由營運方決定，請以官方規定為準。</p>
+      </details>
+      <details>
+        <summary>存檔備份可以拿來還原或修改嗎？</summary>
+        <p>不建議。正式網站的角色進度以雲端帳號為準，伺服器會檢查存檔，被改過的存檔會被判定異常並還原。備份檔是讓你留紀錄、對照背包內容用的。</p>
+      </details>
+      <details>
+        <summary>書籤需要自己更新嗎？</summary>
+        <p>不用。書籤每次點都會載入最新版本，裝一次就好。遊戲改版後如果有功能失效，等書籤更新即可。</p>
+      </details>
+      <details>
+        <summary>手機可以用嗎？</summary>
+        <p>可以。手機畫面上面板會自動變寬、固定在上方，可以按 <b>－</b> 收合，不擋畫面。</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>聲明</b>　這是玩家自製的非官方輔助工具，與龍脈紀元的開發與營運單位無關，也未獲其授權或背書。本工具免費提供，只在玩家自己的瀏覽器上運作，不包含也不散布遊戲本身的程式、圖片、音效。遊戲內容的權利屬於各自的權利人。如果權利人認為本工具不妥，請透過 <a href="https://github.com/jtnhrbpvvm-spec/taiwan_game2" target="_blank" rel="noopener">GitHub</a> 聯絡我們，我們會立即修正或下架。</p>
+    <p>書籤版本 <span id="ver">V1</span></p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const code = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E6%9A%97%E9%BE%8D%E7%B4%80%E5%85%83/dv-tool.js?v=%27+Date.now())";
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // 電腦：拖曳安裝
+  const dragBtn = document.getElementById('drag-btn');
+  dragBtn.setAttribute('href', code);
+  dragBtn.addEventListener('click', (e) => { e.preventDefault(); toast('請用「拖曳」的方式拖到書籤列'); });
+
+  // 手機：複製程式碼
+  const box = document.getElementById('code-box');
+  box.value = code;
+  box.addEventListener('click', () => { box.select(); box.setSelectionRange(0, 99999); });
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    box.select(); box.setSelectionRange(0, 99999);
+    const done = () => toast('已複製書籤程式碼');
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, () => { document.execCommand('copy'); done(); });
+    else { document.execCommand('copy'); done(); }
+  });
+
+  // 書籤版本
+  fetch('dv-tool.js?v=' + Date.now()).then((r) => r.text()).then((t) => {
+    const m = t.match(/VERSION = '([^']+)'/);
+    if (m) document.getElementById('ver').textContent = m[1];
+  }).catch(() => {});
+
+  // 手機步驟示意
+  const codeShort = "javascript:import('https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E6%9A%97%E9%BE%8D%E7%B4%80%E5%85%83/dv-tool.js?v=…";
+  const tutorialPage = `
+    <div class="sbar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
+    <div class="page dark">
+      <div style="text-align:center;color:#f1d68a;font-weight:900">✦ 龍脈紀元 輔助書籤</div>
+      <div class="mini-btn" style="background:#3a3229;border:1px solid #7d5f22;color:#ece2cb;position:relative">📋 複製書籤程式碼<div class="ring" style="inset:-5px"></div></div>
+      <div class="mini-code">${codeShort}</div>
+    </div>`;
+  const gameView = `
+    <div class="game">
+      <div class="glogo">龍脈紀元</div>
+      <div class="gpanel"><b>龍脈輔助</b>☑ 魔力 &lt; 30% 喝藍水<div class="gbar"><i></i></div>藍色藥水 86</div>
+    </div>`;
+  const STEPS = {
+    ios: [
+      { cap: '複製書籤程式碼', desc: '在這一頁按「📋 複製書籤程式碼」。', html: tutorialPage + `<div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span>📖</span><span>⧉</span></div>` },
+      { cap: '分享 → 加入書籤', desc: '點 Safari 下方的「分享 ⬆︎」，選「加入書籤」，名稱取成「龍脈輔助」後儲存。', html: `
+        <div class="sbar"></div><div class="url">jtnhrbpvvm-spec.github.io</div>
+        <div class="page dark" style="opacity:.5"></div>
+        <div class="sheet">
+          <div class="sheet-row"><span>拷貝</span><span>⧉</span></div>
+          <div class="sheet-row" style="position:relative"><b>加入書籤</b><span>📖</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
+          <div class="sheet-row"><span>加入到主畫面</span><span>⊕</span></div>
+        </div>` },
+      { cap: '打開書籤 → 編輯', desc: '點下方「📖」打開書籤清單，按右下角「編輯」，再點剛剛的「龍脈輔助」。', html: `
+        <div class="sbar"></div>
+        <div class="navbar"><span></span><b>書籤</b><span class="blue-t">完成</span></div>
+        <div class="page" style="background:#fff">
+          <div class="sheet-row" style="background:#f4f4f6">⭐ 我的最愛</div>
+          <div class="sheet-row" style="background:#f4f4f6;position:relative">✦ 龍脈輔助<span class="blue-t">›</span><div class="ring" style="inset:-4px;border-radius:11px"></div></div>
+        </div>
+        <div class="toolbar" style="justify-content:flex-end;padding-right:14px;font-size:12px"><span class="blue-t" style="position:relative">編輯<span class="tap" style="left:4px;top:-2px"></span></span></div>` },
+      { cap: '網址換成程式碼 → 完成', desc: '把網址欄位整個清空，貼上剛剛複製的程式碼，按「完成」。', html: `
+        <div class="sbar"></div>
+        <div class="navbar"><span class="blue-t">‹ 書籤</span><b>編輯書籤</b><span class="blue-t">完成</span></div>
+        <div class="form" style="background:#fff;flex:1">
+          <label>名稱</label><div class="field">龍脈輔助</div>
+          <label style="margin-top:8px">網址</label>
+          <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
+        </div>` },
+      { cap: '在遊戲頁面點書籤', desc: '打開 dragonvein.raby.com.tw 進入角色，點「📖」→「龍脈輔助」，右上角就會出現輔助面板。', html: `
+        <div class="sbar" style="background:#111"></div><div class="url" style="background:#333;color:#ccc">dragonvein.raby.com.tw</div>
+        <div style="margin-top:6px;flex:1;display:flex">${gameView}</div>
+        <div class="toolbar"><span>‹</span><span>›</span><span>⬆︎</span><span style="position:relative">📖<span class="tap" style="left:-3px;top:-3px"></span></span><span>⧉</span></div>` },
+    ],
+    android: [
+      { cap: '複製書籤程式碼', desc: '在這一頁按「📋 複製書籤程式碼」。', html: tutorialPage },
+      { cap: '⋮ → ☆ 加入書籤', desc: '點 Chrome 右上角「⋮」，再點上排的「☆」，把這一頁加入書籤。', html: `
+        <div class="sbar"></div><div class="url" style="margin-right:30px">jtnhrbpvvm-spec.github.io</div>
+        <div class="page dark" style="opacity:.6"></div>
+        <div class="menu"><div class="icons"><span>→</span><span style="position:relative">☆<span class="tap" style="left:-5px;top:-3px"></span></span><span>⬇</span><span>ⓘ</span><span>⟳</span></div>
+          <div>新分頁</div><div>書籤</div><div>記錄</div></div>` },
+      { cap: '點「編輯」', desc: '下方會跳出「已加入書籤」，點右邊的「編輯」。（錯過的話：⋮ → 書籤 → 長按它 → 編輯）', html: tutorialPage + `
+        <div class="snack"><span>已加入書籤</span><span style="color:#8ab4f8;font-weight:bold;position:relative">編輯<span class="tap" style="left:2px;top:-4px"></span></span></div>` },
+      { cap: '名稱與網址 → 儲存', desc: '名稱改成「龍脈輔助」，網址整個換成剛剛複製的程式碼，按左上「←」儲存。', html: `
+        <div class="sbar"></div>
+        <div class="navbar" style="justify-content:flex-start;gap:10px;background:#fff"><span>←</span><b>編輯書籤</b></div>
+        <div class="form" style="background:#fff;flex:1">
+          <label>名稱</label><div class="field focus">龍脈輔助</div>
+          <label style="margin-top:8px">URL</label>
+          <div class="field focus" style="position:relative;white-space:normal;font:9px/1.4 ui-monospace,monospace;word-break:break-all">${codeShort}<div class="ring" style="inset:-6px;border-radius:8px"></div></div>
+        </div>` },
+      { cap: '在遊戲頁面從網址列啟動', desc: '打開 dragonvein.raby.com.tw 進入角色，點網址列輸入「龍脈」，點下方出現的「龍脈輔助」書籤。（從書籤清單點不會執行）', html: `
+        <div class="sbar" style="background:#111"></div>
+        <div class="url" style="background:#fff;color:#111;border:2px solid #2563eb">龍脈|</div>
+        <div class="suggest" style="margin-top:6px;position:relative">☆ <div><b>龍脈輔助</b><div style="color:#888;font-size:9px">javascript:import(…</div></div><div class="ring" style="inset:-2px;border-radius:6px"></div></div>
+        ${gameView}` },
+    ],
+  };
+
+  const screens = document.getElementById('screens');
+  const dots = document.getElementById('dots');
+  const badge = document.getElementById('badge');
+  const cap = document.getElementById('cap');
+  const capDesc = document.getElementById('cap-desc');
+  let os = 'ios', idx = 0, timer = null, resume = null;
+
+  function build() {
+    const steps = STEPS[os];
+    screens.innerHTML = steps.map((s) => `<div class="scr">${s.html}</div>`).join('');
+    dots.innerHTML = steps.map(() => '<span></span>').join('');
+    [...dots.children].forEach((d, i) => d.addEventListener('click', () => { idx = i; render(); pause(); }));
+    render();
+  }
+  function render() {
+    const steps = STEPS[os];
+    [...screens.children].forEach((el, i) => el.classList.toggle('on', i === idx));
+    [...dots.children].forEach((el, i) => el.classList.toggle('on', i === idx));
+    badge.textContent = `STEP ${idx + 1}/${steps.length}`;
+    cap.textContent = steps[idx].cap;
+    capDesc.textContent = steps[idx].desc;
+  }
+  const go = (d) => { const n = STEPS[os].length; idx = (idx + d + n) % n; render(); };
+  const start = () => { stop(); timer = setInterval(() => go(1), 3500); };
+  const stop = () => { clearInterval(timer); timer = null; };
+  const pause = () => { stop(); clearTimeout(resume); resume = setTimeout(start, 8000); };
+
+  document.getElementById('prev').addEventListener('click', () => { go(-1); pause(); });
+  document.getElementById('next').addEventListener('click', () => { go(1); pause(); });
+  document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.switch button').forEach((x) => x.classList.toggle('on', x === b));
+    os = b.dataset.os; idx = 0; build(); pause();
+  }));
+  let sx = null;
+  screens.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  screens.addEventListener('touchend', (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 40) { go(dx > 0 ? -1 : 1); pause(); }
+    sx = null;
+  });
+  screens.addEventListener('mouseenter', stop);
+  screens.addEventListener('mouseleave', () => { clearTimeout(resume); start(); });
+  if (/Android/i.test(navigator.userAgent)) document.querySelector('.switch [data-os="android"]').click();
+  build(); start();
+</script>
+</body>
+</html>
