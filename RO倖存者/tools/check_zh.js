@@ -101,4 +101,22 @@ const zhjs = fs.readFileSync(path.join(ROOT, 'offline', 'zh.js'), 'utf8');
 const newSfx = suffixes.filter(s => !zhjs.includes(`'${s}'`));
 console.log('   裝備字尾：' + suffixes.join('、') + (newSfx.length ? '\n   ⚠ zh.js 的 SUFFIX 沒有：' + newSfx.join('、') : '（zh.js 都有）'));
 if (!/CORE_PATCHES/.test(py)) console.log('   ⚠ rs_offline.py 沒有 CORE_PATCHES');
+/* 離線版所有修補（無盡之塔、隱藏職業、GM、中文）對新版程式還對不對得上：直接用 rs_offline.py 自己的正規表示式 */
+try {
+  const mainFile = path.join(build, pick(/^main-[\w-]+\.js$/));
+  const coreFile = path.join(build, pick(/^soul_linker-[\w-]+\.js$/));
+  const code = [
+    'import importlib.util, json, sys',
+    'spec = importlib.util.spec_from_file_location("rso", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)',
+    'main = open(sys.argv[2], "rb").read(); core = open(sys.argv[3], "rb").read(); r = {}',
+    'for n, rx, _ in m.OFFLINE_PATCHES + m.GM_PATCHES: r[n] = len(rx.findall(main))',
+    'for n, rx, _ in m.CORE_PATCHES: r[n] = len(rx.findall(core))',
+    'print(json.dumps(r))',
+  ].join('\n');
+  const out = require('child_process').execFileSync('python', ['-c', code, path.join(ROOT, 'offline', 'rs_offline.py'), mainFile, coreFile], { encoding: 'utf8' });
+  const r = JSON.parse(out.trim().split(/\r?\n/).pop());
+  const bad = Object.entries(r).filter(([, n]) => n !== 1);
+  console.log('   rs_offline.py 修補：' + Object.entries(r).map(([k, n]) => `${k}${n === 1 ? '✓' : '⚠' + n}`).join('、'));
+  if (bad.length) console.log('   ⚠ 對不上（0 次）或不只一處的要改 rs_offline.py：' + bad.map(([k]) => k).join('、'));
+} catch (e) { console.log('   ⚠ 無法檢查 rs_offline.py 的修補：' + e.message.split('\n')[0]); }
 console.log('\n補完 names.txt 後：python tools\\build_wiki.py（小百科）、python tools\\pack_offline.py（離線版 zh.js＋version.json），再推上 GitHub。');

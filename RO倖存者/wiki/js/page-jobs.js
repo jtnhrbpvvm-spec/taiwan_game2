@@ -33,7 +33,7 @@ ${firsts.map(j => `<h3>${R.img(j.icon)} ${R.esc(j.name)}${j.tier === 'extended' 
   ${base ? `<div class="small" style="margin-top:6px">由 ${R.jobLink(base.id)} 轉職而來，保留它的技能和天賦樹（50 點）。<a href="#promotion">轉職方法 →</a></div>` : ''}
   ${j.promotions.length ? `<div class="small" style="margin-top:6px">職業等級 50 可轉：${j.promotions.map(p => R.jobLink(p)).join('、')}　<a href="#promotion">轉職方法 →</a></div>` : ''}
   ${j.starter.length ? `<div class="small" style="margin-top:6px">初始裝備：${items(j.starter)}</div>` : ''}
-  ${j.story.length ? `<div class="small" style="margin-top:6px">沉船劇情獎勵武器：${items(j.story)}</div>` : ''}
+  ${j.story.length ? `<div class="small" style="margin-top:6px">失事輪劇情獎勵武器：${items(j.story)}</div>` : ''}
 </div>
 
 <h3>${j.rank === 2 ? '二轉技能（由天賦分支學會）' : '技能'}</h3>

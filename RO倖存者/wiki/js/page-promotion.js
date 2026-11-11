@@ -45,7 +45,7 @@ RSW.page({
     <td>${j.promotions.length ? j.promotions.map(p => { const q = ix.job[p]; return R.img(q.icon) + ' ' + R.jobLink(p) + (q.nameF ? '／' + R.esc(q.nameF) : ''); }).join('<br>') : '<span class="muted">目前沒有二轉</span>'}</td>
     <td class="small">${j.promotions.map(p => R.esc(ix.job[p].desc)).join('<br>')}</td></tr>`).join('')}
 </table></div>
-<p class="muted small">詩人和舞孃是同一個職業：男性角色是詩人，女性角色是舞孃。${firsts.filter(j => j.tier === 'extended').map(j => R.esc(j.name)).join('、')}是擴充職業，帳號要先解鎖才能建立；目前遊戲裡看不到公開的解鎖方式。</p>
+<p class="muted small">吟遊詩人和舞孃是同一個職業：男性角色是吟遊詩人，女性角色是舞孃。${firsts.filter(j => j.tier === 'extended').map(j => R.esc(j.name)).join('、')}是擴充職業，帳號要先解鎖才能建立；目前遊戲裡看不到公開的解鎖方式。</p>
 
 <h3>轉職後的變化</h3>
 <ul>

@@ -48,6 +48,31 @@ def main():
     NM = load_names()
     missing = set()
 
+    # 官方中文漏翻、還是英文的技能名（Esma、Ruwach…）：官方說明文字裡也夾著英文（「學習技能Esma:」）。
+    # 只改「含中文」的字串，英文原文欄位不動。
+    eng_skills = sorted({s['name'] for s in d.get('skills', [])
+                         if isinstance(s.get('name'), str) and re.fullmatch(r"[A-Za-z][A-Za-z' -]*", s['name']) and s['name'] in NM},
+                        key=len, reverse=True)
+    if eng_skills:
+        rx = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(n) for n in eng_skills) + r")(?![A-Za-z])")
+        cjk = re.compile(r"[一-鿿]")
+
+        eng_set = set(eng_skills)
+
+        def fix_text(o):
+            if isinstance(o, str):
+                if o in eng_set:      # 整個字串就是技能名（天賦名「Esma」）
+                    return NM[o]
+                return rx.sub(lambda m: NM[m.group(1)], o) if cjk.search(o) else o
+            if isinstance(o, list):
+                return [fix_text(x) for x in o]
+            if isinstance(o, dict):
+                return {k: (v if k in ('en', 'id') else fix_text(v)) for k, v in o.items()}
+            return o
+        for sec in ('skills', 'talents', 'branches', 'items', 'cards', 'pets', 'jobs'):
+            if sec in d:
+                d[sec] = fix_text(d[sec])
+
     def zh(en):
         if not en:
             return None

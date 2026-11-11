@@ -6,15 +6,15 @@
 @Acolyte	服事
 @Thief	盜賊
 @Merchant	商人
-@Taekwon	跆拳童子
+@Taekwon	跆拳少年
 @Ninja	忍者
-@Gunslinger	槍手
+@Gunslinger	神槍手
 @Knight	騎士
 @Crusader	十字軍
 @Wizard	巫師
 @Sage	賢者
 @Hunter	獵人
-@Bard	詩人
+@Bard	吟遊詩人
 @Dancer	舞孃
 @Priest	祭司
 @Monk	武僧
@@ -23,7 +23,7 @@
 @Blacksmith	鐵匠
 @Alchemist	鍊金術師
 @Star Gladiator	拳聖
-@Soul Linker	靈魂連結者
+@Soul Linker	悟靈士
 # NPC、角色
 @Selene	瑟琳
 @Lain	蕾恩
@@ -198,7 +198,7 @@
 @Cultivation	栽培
 @Dagger Throwing Practice	飛刀練習
 @Dancing Lesson	舞蹈練習
-@Decrease AGI	減速術
+@Decrease AGI	緩速術
 @Deep Freeze	深度冰凍
 @Deluge	洪水
 @Demon Bane	惡魔剋星
@@ -358,7 +358,7 @@
 @Spiral Pierce	螺旋刺擊
 @Spirit of the Alchemist	鍊金術師之魂
 @Spirit of the Assassin	刺客之魂
-@Spirit of the Bard and Dancer	詩人與舞孃之魂
+@Spirit of the Bard and Dancer	吟遊詩人與舞孃之魂
 @Spirit of the Blacksmith	鐵匠之魂
 @Spirit of the Crusader	十字軍之魂
 @Spirit of the Hunter	獵人之魂
@@ -366,7 +366,7 @@
 @Spirit of the Monk	武僧之魂
 @Spirit of the Priest	祭司之魂
 @Spirit of the Sage	賢者之魂
-@Spirit of the Soul Linker	靈魂連結者之魂
+@Spirit of the Soul Linker	悟靈士之魂
 @Spirit of the Star	拳聖之魂
 @Spirit of the Wizard	巫師之魂
 @Spread Attack	散射
@@ -410,12 +410,12 @@
 @Weapon Research	武器研究
 @Wind Walk	風之步
 @Zeny Rain	金錢雨
-@Esma	愛斯瑪
-@Estin	愛斯汀
-@Estun	愛斯頓
-@Kaizel	凱索
-@Kaahi	卡西
-@Kaupe	卡沛
+@Esma	艾斯麻
+@Estin	艾斯提
+@Estun	艾斯敦
+@Kaizel	凱易哲
+@Kaahi	凱阿希
+@Kaupe	凱誣僕
 # 物品
 @Advanced Book	進階書
 @Adventurer's Suit	冒險家套裝
@@ -850,8 +850,8 @@
 @1st job	一轉
 # 遊戲內建中文沒翻到的技能名（2026-11-10，遊戲 00ec63b；離線版 zh.js 也用）
 @Ruwach	光獵
-@Signum Crucis	十字驅魔
-@Aqua Benedicta	製造聖水
+@Signum Crucis	天使之光
+@Aqua Benedicta	天使之淚
 @Angelus	天使之護
 @Kihop	氣合
 @Peco Peco	大嘴鳥

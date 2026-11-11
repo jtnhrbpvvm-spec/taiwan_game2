@@ -1,0 +1,2 @@
+# 修補檔要跟 manifest.json 裡的 SHA-256 一個位元都不能差：不准 git 轉換換行
+* -text

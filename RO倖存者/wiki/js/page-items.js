@@ -61,7 +61,7 @@ ${rows.length ? `<div class="tw"><table class="t"><tr><th>方式</th><th>來源<
       const d = (it.sources || []).filter(x => x.type === 'drop').sort((a, b) => b.chance - a.chance)[0];
       if (d) return `${R.monLink(d.monster)} <span class="muted">${R.pct(d.chance)}</span>${it.sources.filter(x => x.type === 'drop').length > 1 ? ` <span class="muted small">等 ${it.sources.filter(x => x.type === 'drop').length} 種</span>` : ''}`;
       const o = (it.sources || [])[0];
-      if (o) return o.type === 'starter' ? `初始裝備（${R.jobLink(o.job)}）` : o.type === 'story' ? `沉船劇情（${R.jobLink(o.job)}）` : `${R.stageLink(o.stage)} 首次通關`;
+      if (o) return o.type === 'starter' ? `初始裝備（${R.jobLink(o.job)}）` : o.type === 'story' ? `失事輪劇情（${R.jobLink(o.job)}）` : `${R.stageLink(o.stage)} 首次通關`;
       return it.secret ? '<span class="muted">秘密</span>' : '<span class="muted">目前無法取得</span>';
     };
     const draw = () => {

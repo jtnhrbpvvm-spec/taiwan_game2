@@ -1,0 +1,65 @@
+{
+ "id": "1151111V1",
+ "date": "2026-11-11 20:27",
+ "notes": [
+  "存檔：瀏覽器資料被清掉、換瀏覽器或換埠號時，會自動從 saves 資料夾把角色還原（原本會被空白存檔蓋掉）；saves\\backup 每天自動備份",
+  "「重置所有角色與存檔.bat」現在真的會清掉角色（原本只清 saves 資料夾，遊戲裡角色還在）",
+  "分頁切到背景時 AUTO 掛機不再變慢停擺",
+  "聊天框指令 .rates .exp .drop .gold .lv .god .onehit .item .clear 現在有作用了",
+  "AUTO、怪物、召喚物走路會看牆，不再穿牆",
+  "新增自動更新：開始遊戲時自動檢查修補檔；也可以雙擊「更新遊戲.bat」（可同步官網程式、還原上一次更新）"
+ ],
+ "files": [
+  {
+   "path": "js/main.js",
+   "size": 303648,
+   "sha256": "a7d83a96fc8e744ceb5a012b5f0c05fd0c67c1c7441ad327e6a2280d47b78887"
+  },
+  {
+   "path": "js/offline-auto.js",
+   "size": 40539,
+   "sha256": "0c3934980486bd29c887c8faadad0d1cd1a84ba26858d1d30832e7f3e654021d"
+  },
+  {
+   "path": "js/offline-server.js",
+   "size": 117195,
+   "sha256": "13f2fbc645e53f3ab515bdff942a395c41240882f9256f85f33ba23ad9530c0b"
+  },
+  {
+   "path": "tools/auto_updater.py",
+   "size": 27529,
+   "sha256": "71d5ec7fdbf4f8c2bb6ac1c5ba724c6a1908071cb2f3b67672d7d61140dfa2d8"
+  },
+  {
+   "path": "webl1_offline.py",
+   "size": 16286,
+   "sha256": "cf96523c7a5255448488f896bcec10792350dd63d720cdbe085a40a4284d6fa1"
+  },
+  {
+   "path": "以GM模式開始遊戲.bat",
+   "size": 2128,
+   "sha256": "95e478699c9af094a3966abd0f4f953701f9795ae8a1a1f133ca96a326435f4c"
+  },
+  {
+   "path": "更新遊戲.bat",
+   "size": 2072,
+   "sha256": "c0cc89c27d0778af397d636881ab3e45adeec0af87ee034f0d08ecd45eb06a2b"
+  },
+  {
+   "path": "說明.txt",
+   "size": 5331,
+   "sha256": "e2809ada62175c9c0bc84cc5d5a5e3e0e51b62e14b04695f75c97f482fd2a11b"
+  },
+  {
+   "path": "重置所有角色與存檔.bat",
+   "size": 1074,
+   "sha256": "ec3799bf6a8a255ddb32c9c814be5e79a4a9649b94029e5572121f35e560fe00"
+  },
+  {
+   "path": "開始遊戲.bat",
+   "size": 2099,
+   "sha256": "c0cbbba4eb959e76dd751b4c9d211e09c773be344cf1161f3c9d2c99316cfa1a"
+  }
+ ],
+ "delete": []
+}

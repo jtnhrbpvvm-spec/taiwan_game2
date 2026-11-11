@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.5"
+TOOL_VERSION = "1.6"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -83,7 +83,8 @@ OFFLINE_PATCHES = [
     ("towerStart", re.compile(rb"else return void (\w+)\(\w\.id\)\}(\w+)\[s\]\|\|\(s=\"prontera\"\)"),
      lambda m: b"}" + m.group(2) + b"[s]||(s=\"prontera\")"),
     # 塔守衛視窗的「開始新的一局」按鈕：(已登入||否) → (已登入||是)
-    ("towerButton", re.compile(rb"(\w+=\$d\(\w\)&&\w>0&&\(\w\|\|)!1\)"), lambda m: m.group(1) + b"!0)"),
+    # （函式名每版會變：00ec63b 是 $d(L)、f254752 是 Td(T)，所以不寫死名稱）
+    ("towerButton", re.compile(rb"([\w$]+=[\w$]+\(\w\)&&\w>0&&\(\w\|\|)!1\)"), lambda m: m.group(1) + b"!0)"),
     # 「無盡之塔需要註冊帳號」的提示不顯示
     ("towerNotice", re.compile(rb"\w\|\|(\w\.push\(\w\(\"La Endless Tower necesita)"), lambda m: b"!0||" + m.group(1)),
     # 隱藏職業（忍者、槍手…）：「這個職業解鎖了嗎」一律回答是
