@@ -105,8 +105,8 @@
 "js/nodev.js": "5a085eaa0d8994995b61571db2bf49ca73e2dfb2c15ece9ec5d539edcd5173b2",
 "js/npc.js": "4e661e6375f3a575664dc59fb01e8f9169998bc57df19bb898fecd8c18287603",
 "js/npcmark.js": "b1061db8ad74d7363f04c679a8fad9305b9aceffb529ff9126bc69b2fb7b5941",
-"js/offline-auto.js": "85cf8f1a1913981def8dfc7a85bff47e2ee0beebcf2e5fcb5557c63ee9fb3e85",
-"js/offline-server.js": "4ee004994d935d6ca12a41ea7371af10f8d3528cffe1ffb44964be94d36cc941",
+"js/offline-auto.js": "0afb4699f2f8d08c7b43b9a9d5a0b37e0db075c3c435c1734960540bade18fdd",
+"js/offline-server.js": "533b2ef26d6a85b5957e5c98cf2dfa05f75d6b9fae3523a8297e3f7422e2975e",
 "js/opcodes.js": "e35dc12ea893e22e1cf6e5864fb36564866a225565b27d81899e20358cc4166b",
 "js/pack.js": "0d1059fb7739a2020c380c2a7d5a6677427793834205b0be571faa1d66ba25fe",
 "js/packet.js": "813a05a1dfaf9c41312128e3d327ca00deb34afc113b78bab2ef57d81602a7ad",
@@ -117,7 +117,7 @@
 "js/portals.js": "03ffc39516ddca30915715a6c7862a6ce1c2b03e4e09ad95fc69e4fa78590ad2",
 "js/prefsync.js": "088bed67ad3a9138a9fb8b2643a4dbf7cb86067ffef24e82999101bb7a87a264",
 "js/promo.js": "c10d3c8260edc924ece9d5f693f615528d6ffebb9222bcd2aab1fd447f149cde",
-"js/protocol.js": "abf9524a81609d0d3227b1131accba8032bc75c063213a30c6649a551f377cd9",
+"js/protocol.js": "aaded37d4172b83e8f2ad76696f902ca3a14b3285506d28a9155b26dbaa32aef",
 "js/pumpkin.js": "484b94c3e3cf11a783f422f2fda44eb5383eb8a8a1ec8d615f6825aa9df1024d",
 "js/push.js": "72c28395448d12c41a582068d9b323b7557550e97b49ee62e475b2699a00038b",
 "js/ranking.js": "73322ea503ad3d7274bf3ddc8c8112f56ab18d2d9fa5082f1238a8a14219ff20",
@@ -198,5 +198,7 @@
 "guide/guide.css": "dac46164cf1f2b10e1726b7ba892136c42b9c92fbbfbd9278bc940ef78a1b44c",
 "guide/guide.js": "8e2601df68d13987dde965516c2dc04f1b1efc19950d52ee37b0b8dc100113dd",
 "tools/auto_updater.py": "71d5ec7fdbf4f8c2bb6ac1c5ba724c6a1908071cb2f3b67672d7d61140dfa2d8",
-"更新遊戲.bat": "c0cc89c27d0778af397d636881ab3e45adeec0af87ee034f0d08ecd45eb06a2b"
+"更新遊戲.bat": "c0cc89c27d0778af397d636881ab3e45adeec0af87ee034f0d08ecd45eb06a2b",
+"data/npcspawn.json": "3a17514a77f464473e3c85065d48041de8443ca949c98b44cc259f6de266d6ba",
+"data/npcshop.json": "9aab141cee0d107653f1a4e896a020dac651110adac6bb71aafd3303ec4179c7"
 }

@@ -1,0 +1,845 @@
+// 離線伺服器：掛機設定（設定 → 狩獵／補給／魔法／召喚／名單）、怪物與頭目出生、村莊 NPC、傳送師
+//   掛在 OfflineServer.prototype 上（offline-server.js 最下面 Object.assign）。
+//   設定欄位、旗標的意義照網頁 hud.js 設定頁（AS_PAGE）與 protocol.js autoSettings：
+//     旗標 1 綠水、2 勇敢類（照職業）、4 藍水、8 慎重藥水、128 變身、256 魔法屏障卷軸、2048 自動買銀箭、
+//     16384 沒怪瞬移、65536 魔力不夠先休息、1048576 經驗藥水、2097152 撐不住先瞬移 3 次回村、1073741824 只喝選的那種藥水
+import { DX, DY } from './opcodes.js';
+
+const HOME_STONE = 49900;
+const TELE_SCROLL = 40100, HOME_SCROLL = 40079, POLY_SCROLL = 40088, BARRIER_SCROLL = 40889, WIS_POTION = 40016, SILVER_ARROW = 40744;
+const SUMMON_RING = 20284;
+export const PET_COLLAR = 40314, PET_FLUTE = 41160;   // 項圈（裡面裝寵物）、寵物召喚笛
+const NPC_VIEW = 30, NPC_DROP = 40;   // 照真的位置放的 NPC：幾格內送到畫面、超過幾格拿掉
+// 治癒藥水回復量
+export const HEAL_POTS = { 40010: 25, 40011: 60, 40012: 95, 40029: 35, 40022: 25, 40023: 55, 40024: 85, 140010: 35, 140011: 75, 140012: 115, 41337: 95 };
+const BRAVE_ITEM = { 0: 40031, 1: 40014, 2: 40068 };   // 王族 惡魔之血、騎士 勇敢藥水、妖精 精靈餅乾
+const EXP_POTS = [47004, 47003, 47002, 47001, 47000];  // 加成高的排前面
+// 各村莊的傳送師（data/npcfn.json 的鍵；動作字首＝出發地）
+const TOWN_TELEPORTER = {
+    '奇岩城鎮': '$1354|6377', '銀騎士村莊': '$947|6377', '肯特村莊': '$831|6377', '古魯丁村莊': '$830|6377', '風木村莊': '$946|6377',
+    '海音城鎮': '$1517|6377', '歐瑞村莊': '$1773|6377', '亞丁城鎮': '$2126|6377', '威頓村莊': '$1596|6377', '說話之島村莊': '$829|6377',
+};
+const SAFE_R = 26;        // 村莊中心幾格內算安全區
+const SPAWN_R = 20;       // 玩家幾格內的出生點會生怪
+const MOB_CAP = 12;
+const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+const rnd = n => Math.floor(Math.random() * n);
+const jsonGet = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+
+export const autoMixin = {
+    // ── 資料：召喚表、傳送師目的地、出生點索引（進世界後第一次用到才建）──
+    initAuto() {
+        if (this._autoInit) return;
+        this._autoInit = true;
+        this.summonData = null; this.npcTele = {};
+        jsonGet('/data/summons.json').then(d => { this.summonData = d; });
+        jsonGet('/data/npctele.json').then(d => { this.npcTele = d || {}; });
+        // 出生點（data/drops.json pts：地圖 → [怪物編號, x, y, …]）切成 16×16 的格子
+        this._pts = {};
+        for (const [m, a] of Object.entries((this.data.drops && this.data.drops.pts) || {})) {
+            const cells = new Map();
+            for (let i = 0; i + 2 < a.length; i += 3) {
+                const k = (a[i + 1] >> 4) + ':' + (a[i + 2] >> 4);
+                let l = cells.get(k);
+                if (!l) cells.set(k, l = []);
+                l.push(i);
+            }
+            this._pts[m] = { a, cells };
+        }
+        this._bossIds = new Set();
+        for (const l of Object.values(this.data.bosses || {})) for (const b of l) this._bossIds.add(b.id);
+        this._ptDead = new Map();     // 出生點 → 可以再生的時間
+        this._bossDead = new Map();   // 頭目出生點 → 可以再生的時間
+        this.towns = (this.data.teleports || []).filter(t => t.kind === '村莊').map(t => ({ map: t.map, x: t.x, y: t.y, name: t.name }));
+    },
+
+    nearSpawnPts(map, x, y, r) {
+        const idx = this._pts[map], out = [];
+        if (!idx) return out;
+        for (let cx = (x - r) >> 4; cx <= (x + r) >> 4; cx++) {
+            for (let cy = (y - r) >> 4; cy <= (y + r) >> 4; cy++) {
+                for (const i of idx.cells.get(cx + ':' + cy) || []) {
+                    if (Math.abs(idx.a[i + 1] - x) <= r && Math.abs(idx.a[i + 2] - y) <= r) out.push(i);
+                }
+            }
+        }
+        return out;
+    },
+
+    townAt(mapId, x, y, r = SAFE_R) {
+        this.initAuto();
+        return this.towns.find(t => t.map === mapId && Math.abs(t.x - x) <= r && Math.abs(t.y - y) <= r) || null;
+    },
+
+    isSafeTownSpot(mapId, x, y) { return !!this.townAt(mapId, x, y); },
+
+    // 最近的村莊（回村用）：同一張地圖最近的，沒有就奇岩
+    homeTown() {
+        const ch = this.curChar;
+        this.initAuto();
+        let best = null, bd = Infinity;
+        for (const t of this.towns) {
+            if (t.map !== ch.mapId) continue;
+            const d = cheb(t, ch);
+            if (d < bd) { bd = d; best = t; }
+        }
+        return best || this.towns.find(t => t.name === '奇岩城鎮') || { map: 4, x: 33438, y: 32796, name: '奇岩城鎮' };
+    },
+
+    // ── 村莊 NPC：每個村莊放一組服務 NPC，傳送師用那個村莊自己的 ──
+    spawnTownNpcs(mapId, px, py) {
+        // 有連線版抄下來的 NPC 位置（data/npcspawn.json）的地圖：照真的位置放，不放下面那組通用 NPC
+        const real = this.data.npcspawn && this.data.npcspawn[mapId];
+        if (Array.isArray(real) && real.length) { this.spawnRealNpcs(mapId, real); return; }
+        const town = this.townAt(mapId, px, py, 45);
+        const teleKey = (town && TOWN_TELEPORTER[town.name]) || (town ? '' : TOWN_TELEPORTER['奇岩城鎮']);
+        const defs = [
+            { key: '$846|1208', title: '鐵匠', dx: -4, dy: -2 },
+            { key: '$2690|1307', title: '製作工匠', dx: -2, dy: -4 },
+            { key: '$309|143', title: '倉庫管理員', dx: 3, dy: -3 },
+            teleKey && { key: teleKey, title: '傳送師', dx: 4, dy: 1 },
+            { key: '$3428|940', title: '收購商人', dx: -3, dy: 3 },
+            { key: '$840|792', title: '寵物商人', dx: 2, dy: 4 },
+            // 鍵要跟 data/npccards.json 一樣（名字碼|外型），畫面才認得是 NPC、點了會說話；原本寫「魔法商人|792」「艾利溫|1307」點了沒反應
+            { key: '$9157|2143', title: '魔法商人', dx: 0, dy: -4 },   // 倫德羅
+            { key: '$1780|2115', title: '精靈屬性', dx: -5, dy: 0 },   // 艾利溫
+        ].filter(Boolean);
+        const baseX = town ? town.x : px, baseY = town ? town.y : py;
+        for (const def of defs) {
+            const [nm, g] = def.key.split('|');
+            const npc = { id: this.nextObjId++, x: baseX + def.dx, y: baseY + def.dy, gfx: +g, name: def.name || nm, title: def.title, key: def.key, heading: 4, isPc: false, isNpc: true };
+            this.mapNpcs.push(npc);
+            if (!town) continue;   // 不在村莊：只列進遠端對話清單
+            this.objs.set(npc.id, npc);
+            this.emit('object', {
+                id: npc.id, x: npc.x, y: npc.y, gfx: npc.gfx, weapon: 0, action: 0, heading: 4, light: 0, speed: 0, exp: 0, lawful: 0,
+                name: npc.name, title: npc.title, status: 0, clanId: 0, clan: '', master: '', state: 0, hpRatio: 0xff, thirdSpeed: false, level: 50,
+            });
+        }
+        let extra = 0;
+        for (const [key, fn] of Object.entries(this.data.npcfn)) {
+            if (extra >= 25) break;
+            if (!(fn.shop && fn.shop.buy)) continue;
+            const [nm, g] = key.split('|');
+            this.mapNpcs.push({ id: this.nextObjId++, x: baseX + 5, y: baseY + 5, gfx: +g || 940, name: nm, title: this.data.npccards[key] || '商人', key, heading: 4, isPc: false, isNpc: true });
+            extra++;
+        }
+    },
+
+    // ── 照連線版位置放 NPC：整張地圖的都列進 mapNpcs（遠端對話清單），畫面上只送主人附近的（同連線版只送看得到的範圍）──
+    spawnRealNpcs(mapId, list) {
+        const cards = this.data.npccards || {};
+        for (const [name, gfx, x, y] of list) {
+            if (!name) continue;   // 沒名字的（地上的裝飾物件）不放
+            const key = name + '|' + gfx;
+            this.mapNpcs.push({ id: this.nextObjId++, x, y, gfx, name, title: cards[key] || '', key, mapKey: key + '@' + mapId, heading: 5, isPc: false, isNpc: true, real: true });
+        }
+        this._npcViewAt = null;
+        this.refreshNpcView(true);
+    },
+    // 主人附近 NPC_VIEW 格內的送出來、走遠超過 NPC_DROP 格的拿掉；走不到 4 格就不重算
+    refreshNpcView(force) {
+        const ch = this.curChar;
+        if (!ch) return;
+        const at = this._npcViewAt;
+        if (!force && at && at.map === ch.mapId && cheb(at, ch) < 4) return;
+        this._npcViewAt = { map: ch.mapId, x: ch.x, y: ch.y };
+        for (const npc of this.mapNpcs) {
+            if (!npc.real) continue;
+            const d = cheb(npc, ch), shown = this.objs.has(npc.id);
+            if (!shown && d <= NPC_VIEW) {
+                this.objs.set(npc.id, npc);
+                this.emit('object', {
+                    id: npc.id, x: npc.x, y: npc.y, gfx: npc.gfx, weapon: 0, action: 0, heading: npc.heading, light: 0, speed: 0, exp: 0, lawful: 0,
+                    name: npc.name, title: npc.title, status: 0, clanId: 0, clan: '', master: '', state: 0, hpRatio: 0xff, thirdSpeed: false, level: 50,
+                });
+            } else if (shown && d > NPC_DROP) {
+                this.objs.delete(npc.id);
+                this.emit('remove', npc.id);
+            }
+        }
+    },
+
+    // ── 傳送師：動作字串（teleport 出發地-目的地）→ 目的地座標 ──
+    //   data/npctele.json（動作 → [地圖, x, y]）優先；沒有就拿目的地名稱對狩獵場傳送表（data/teleports.json）
+    teleDest(act, name) {
+        this.initAuto();
+        const t = this.npcTele[act];
+        if (t) return { map: t[0], x: t[1], y: t[2], name: name || '' };
+        const n = String(name || '').replace(/\s+/g, '');
+        const hit = n && (this.data.teleports || []).find(d => d.name === n);
+        return hit ? { map: hit.map, x: hit.x, y: hit.y, name: hit.name } : null;
+    },
+
+    npcTeleport(objId, act) {
+        const npc = this.objs.get(objId) || this.mapNpcs.find(n => n.id === objId);
+        const fn = npc && ((npc.mapKey && this.data.npcfn[npc.mapKey]) || this.data.npcfn[npc.key]);   // 「鍵@地圖」：同名同外型、不同地圖傳送清單不一樣
+        const row = fn && fn.tele ? fn.tele.find(t => t[0] === act) : null;
+        if (!row && !act.startsWith('teleport ')) return false;
+        const dest = this.teleDest(act, row && row[1]);
+        if (!dest) { this.sysMsg('「' + ((row && row[1]) || act) + '」的傳送座標還沒有建立，無法傳送。'); return true; }
+        const price = row ? row[2] | 0 : 0;
+        if (price > 0 && !this.spendGold(price)) { this.sysMsg('金幣不足，傳送需要 ' + price.toLocaleString() + ' 金幣。'); return true; }
+        this.teleportTo(dest.map, dest.x, dest.y, true);
+        this.sysMsg('傳送至「' + (dest.name || row[1]) + '」。');
+        return true;
+    },
+
+    // ── 怪物、頭目出生 ──
+    spawnMob(tplId, x, y, extra) {
+        const tpl = (this.data.drops && this.data.drops.mobs && this.data.drops.mobs[tplId]) || { n: '妖魔', lv: 5, hp: 30, ac: 8, mr: 0, exp: 25, gold: [20, 60], d: [] };
+        const now = Date.now(), maxHp = Math.max(5, tpl.hp || (tpl.lv || 1) * 12);
+        const mob = Object.assign({
+            id: this.nextObjId++, tplId: +tplId, name: tpl.n, level: tpl.lv || 1, hp: maxHp, maxHp,
+            ac: tpl.ac != null ? tpl.ac : 10, mr: tpl.mr || 0, dr: tpl.dr || 0,
+            exp: Math.max(5, tpl.exp || (tpl.lv || 1) * (tpl.lv || 1) * 2), drops: tpl.d || [], gold: tpl.gold || [10, 50],
+            x, y, gfx: this.getMobGfx(tpl.n), heading: rnd(8), isPc: false, isMob: true,
+            isUndead: !!tpl.u || /殭屍|骷髏|食屍鬼|鬼魂|幽靈|吸血鬼|木乃伊/.test(tpl.n), isLarge: !!tpl.sz,
+            aggro: !!tpl.ag || /狼人|侏儒|妖魔|歐克|蜥蜴人/.test(tpl.n), dead: false, lastMoveAt: now + Math.random() * 1500, lastAtkAt: 0,
+        }, extra || {});
+        this.mapMobs.push(mob);
+        this.objs.set(mob.id, mob);
+        this.emit('object', {
+            id: mob.id, x: mob.x, y: mob.y, gfx: mob.gfx, weapon: 0, action: 0, heading: mob.heading, light: 0, speed: 0, exp: 0, lawful: 0,
+            name: mob.name, title: '', status: 0, clanId: 0, clan: '', master: '', state: 0, hpRatio: 0xff, thirdSpeed: false, level: mob.level,
+        });
+        return mob;
+    },
+
+    // 頭目只在自己真正的出生點出現（data/bosses.json 的 x、y／pts），玩家走近才生；打倒後 10 分鐘再生
+    spawnBosses(now) {
+        const ch = this.curChar, mapKey = String(ch.mapId);
+        for (const b of (this.data.bosses && this.data.bosses[mapKey]) || []) {
+            const pts = b.pts || (b.x ? [[b.x, b.y]] : []);
+            for (const [bx, by] of pts) {
+                if (Math.max(Math.abs(bx - ch.x), Math.abs(by - ch.y)) > SPAWN_R + 2) continue;
+                const key = mapKey + ':' + b.id + ':' + bx + ':' + by;
+                if (this.mapMobs.some(m => m.bossKey === key)) continue;
+                if ((this._bossDead.get(key) || 0) > now) continue;
+                const raw = (this.data.drops.mobs && this.data.drops.mobs[b.id]) || {};
+                const hp = Math.max(1500, (raw.hp || (b.lv || 60) * 150) * 3);
+                const taken = this.mapMobs.some(m => !m.dead && m.x === bx && m.y === by);
+                const mob = this.spawnMob(b.id, bx + (taken ? rnd(5) - 2 : 0), by + (taken ? rnd(5) - 2 : 0), {
+                    name: '★ ' + b.n, level: b.lv || raw.lv || 60, hp, maxHp: hp, ac: raw.ac != null ? raw.ac : -30, mr: raw.mr != null ? raw.mr : 70, dr: 5,
+                    exp: Math.max(2000, (b.lv || 60) * 300), gold: [2000, 10000], gfx: this.getMobGfx(b.n), isBoss: true, isLarge: true, aggro: true, bossKey: key,
+                    isUndead: !!raw.u || /死亡騎士|不死|卡士伯|黑長者/.test(b.n),
+                });
+                this.sysMsg('⚠️ 警告：首領【' + mob.name + '】就在附近！');
+            }
+        }
+    },
+
+    maintainMonsters() {
+        const ch = this.curChar;
+        if (!ch) return;
+        this.initAuto();
+        const now = Date.now(), mapKey = String(ch.mapId);
+        this.mapMobs = this.mapMobs.filter(m => {
+            const gone = m.dead ? now - m.deadAt > 2500 : cheb(m, ch) > 26;
+            if (!gone) return true;
+            if (m.dead && m.pt != null) this._ptDead.set(mapKey + ':' + m.pt, now + 10000);
+            if (m.dead && m.bossKey) this._bossDead.set(m.bossKey, now + 600000);
+            this.objs.delete(m.id);
+            this.emit('remove', m.id);
+            return false;
+        });
+        this.spawnBosses(now);
+        if (this.isSafeTownSpot(ch.mapId, ch.x, ch.y)) return;
+        let alive = this.mapMobs.filter(m => !m.dead && !m.isBoss).length;
+        const idx = this._pts[mapKey];
+        if (idx) {
+            // 有出生點資料的地圖（大陸）：怪生在牠真正的出生點
+            const used = new Set(this.mapMobs.filter(m => m.pt != null).map(m => m.pt));
+            const cand = this.nearSpawnPts(mapKey, ch.x, ch.y, SPAWN_R).filter(i => !used.has(i) && !this._bossIds.has(idx.a[i])
+                && (this._ptDead.get(mapKey + ':' + i) || 0) <= now && (idx.a[i + 1] !== ch.x || idx.a[i + 2] !== ch.y));
+            while (alive < MOB_CAP && cand.length) {
+                const i = cand.splice(rnd(cand.length), 1)[0];
+                this.spawnMob(idx.a[i], idx.a[i + 1], idx.a[i + 2], { pt: i });
+                alive++;
+            }
+            return;
+        }
+        // 沒有出生點資料的地圖（地監…）：這張地圖會出的怪，生在玩家周圍
+        const ids = ((this.data.drops && this.data.drops.maps && this.data.drops.maps[mapKey]) || []).filter(id => !this._bossIds.has(id));
+        if (!ids.length) return;
+        for (; alive < MOB_CAP; alive++) {
+            let dx = 0, dy = 0;
+            for (let t = 0; t < 12 && Math.abs(dx) < 2 && Math.abs(dy) < 2; t++) { dx = rnd(15) - 7; dy = rnd(15) - 7; }
+            this.spawnMob(ids[rnd(ids.length)], ch.x + dx, ch.y + dy);
+        }
+    },
+
+    // ── 掛機設定：預設值、存檔裡舊設定的整理 ──
+    learned(sid) { const ch = this.curChar; return !!(sid > 0 && ch && ch.skills && ch.skills.includes(sid)); },
+    skillTpl(sid) { return this.data.skills.find(s => s.sid === sid) || null; },
+    canCast(sid) {
+        const ch = this.curChar, sk = this.learned(sid) ? this.skillTpl(sid) : null;
+        return !!(sk && ch.mp >= (sk.mp || 0) && ch.hp > (sk.hp || 0));
+    },
+
+    sendAutoSettings() {
+        const ch = this.curChar;
+        if (!ch) return;
+        let s = ch.autoSettings;
+        // 舊存檔的法師、妖精沒有攻擊／召喚／洗魔魔法（設定 → 魔法、召喚 沒東西可選）：補一次新角色會有的那幾個
+        if (!ch.kit2) {
+            ch.kit2 = 1;
+            const kit = [4].concat(ch.type === 3 ? [6, 7, 10, 15, 16, 17, 22, 25, 28, 34, 38, 45, 46, 51, 57] : ch.type === 2 ? [6, 7, 15, 130, 154] : []).filter(sid => !this.learned(sid));
+            if (kit.length) { ch.skills = (ch.skills || []).concat(kit); this.sendSkills(); this.sendLearnMagicList(); }
+        }
+        const firstOf = f => { const k = this.data.skills.find(x => this.learned(x.sid) && f(x)); return k ? k.sid : 0; };
+        const atk = firstOf(x => (x.type & 64) && x.sid !== 108 && x.sid !== 72);
+        const aoe = firstOf(x => (x.type & 64) && x.area !== 0 && x.sid !== 72);
+        const heal = firstOf(x => x.type & 16), hpk = firstOf(x => x.sid === 130 || x.sid === 146), sum = firstOf(x => x.sid === 51 || x.sid === 154 || x.sid === 162);
+        if (!s || !s.rev) {
+            // 新角色，或舊版離線伺服器留下的設定（開關跟實際沒對上）：重設成合理的預設
+            const old = s || {};
+            s = ch.autoSettings = {
+                rev: 2,
+                potion: 40029, potKeep: 40029, hpPct: 70,
+                homeHpPct: 30, homeKeep: 30, repairMode: 0,
+                roamRange: 25, teleSec: 10,
+                flags: 1 | 2 | (ch.type === 3 || ch.type === 2 ? 4 : 0),
+                greenPot: 40018, bluePot: 40015, breathPot: 40032, expPot: 0, blessPot: 49904, cureBy: 0,
+                poly: typeof old.poly === 'string' ? old.poly : '',
+                buffs: [],
+                openSkill: 0, openKeep: atk, openMpPct: 50,
+                aoeSkill: 0, aoeKeep: aoe, aoeCount: 3, aoeMpPct: 50,
+                atkSkill: ch.type === 3 ? atk : 0, atkKeep: atk, atkMpPct: 30,
+                healSkill: heal, healKeep: heal, healHpPct: 50,
+                hpSkill: 0, hpKeep: hpk, hpSkillPct: 80, hpSkillMp: 40,
+                restMpPct: 30, restMpUp: 60, petMpPct: 0,
+                summonSkill: 0, sumKeep: sum, ringNpc: 0, dollItem: 0,
+                dollAuto: 0, dollKeep: (ch.dolls && ch.dolls.worn) || 0,
+                boss: old.boss || {}, ignore: old.ignore || {}, sell: old.sell || [], pets: [],
+            };
+        }
+        // 只認學會的魔法（沒學會的關掉、記著的換成學會的）
+        const fix = (use, keep, def) => {
+            if (!this.learned(s[use])) s[use] = 0;
+            if (!this.learned(s[keep])) s[keep] = def;
+        };
+        fix('openSkill', 'openKeep', atk); fix('aoeSkill', 'aoeKeep', aoe); fix('atkSkill', 'atkKeep', atk);
+        fix('healSkill', 'healKeep', heal); fix('hpSkill', 'hpKeep', hpk); fix('summonSkill', 'sumKeep', sum);
+        s.buffs = (s.buffs || []).filter(b => this.learned(b));
+        for (const k of ['boss', 'ignore']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
+        if (!Array.isArray(s.sell)) s.sell = [];
+        if (!Array.isArray(s.pets)) s.pets = [];
+        delete s.roamCenter;
+        // 網頁靠這些標記決定要不要顯示各列（protocol.js S_Web 2）
+        Object.assign(s, { hasHome: true, feat: 3, maxSell: 100, clash: null,
+            v2: true, v3: true, v4: true, v5: true, v6: true, v7: true, v8: true, v9: true, v10: false, v11: true, v12: true, v14: false, v15: false, v16: false, v17: true, v18: true, v19: true });
+        this.emit('autoSettings', JSON.parse(JSON.stringify(s)));
+        this.emit('autoState', { on: !!this.autoOn, reason: '', card: false });
+    },
+
+    autoSettings(cfg) {
+        const ch = this.curChar;
+        if (!ch) return;
+        ch.autoSettings = Object.assign({}, ch.autoSettings || {}, cfg, { rev: 2 });
+        this.sendAutoSettings();
+        this.save();
+    },
+
+    autoStatusText(text, warn) {
+        if (this._autoText === text) return;
+        this._autoText = text;
+        this.emit('autoStatus', { code: this.autoOn ? 1 : 0, warn: !!warn, text });
+    },
+
+    autoToggle(on, reason) {
+        const ch = this.curChar;
+        this.autoOn = !!on && !!ch;
+        this.autoTargetId = 0;
+        this._resting = false; this._escapes = []; this._noMobAt = 0; this._autoText = null;
+        // 巡邏範圍從開 AUTO 的地方算起；在村莊裡開的＝走出去打到第一隻怪的地方
+        this.autoCenter = this.autoOn && !this.isSafeTownSpot(ch.mapId, ch.x, ch.y) ? { x: ch.x, y: ch.y } : null;
+        this.emit('autoState', { on: this.autoOn, reason: reason || '', card: false });
+        this.autoStatusText(this.autoOn ? '自動尋怪狩獵中' : '');
+    },
+
+    // ── 道具：背包沒有就照商店價買（data/shopbuy.json：[價錢, 一組幾個]）──
+    autoBuy(itemId, n) {
+        const sb = this.data.shopbuy[itemId];
+        if (!sb) return null;
+        const pack = sb[1] || 1, packs = Math.ceil(n / pack), cost = (sb[0] || 0) * packs;
+        if (!this.spendGold(cost)) {
+            if (this._noGoldFor !== itemId) { this._noGoldFor = itemId; this.sysMsg('金幣不足，無法自動購買補給品。'); }
+            return null;
+        }
+        return this.giveItem(itemId, packs * pack);
+    },
+    needItem(itemId, buyN) { return this.findInvByItemId(itemId) || (buyN ? this.autoBuy(itemId, buyN) : null); },
+
+    randomTeleport() {
+        const ch = this.curChar;
+        this.teleportTo(ch.mapId, ch.x + rnd(41) - 20, ch.y + rnd(41) - 20, true);
+    },
+    // 用瞬間移動卷軸逃（沒有就買 1 張）；學會瞬間移動術、魔力夠就用魔法
+    autoEscapeTele() {
+        const ch = this.curChar, sc = this.needItem(TELE_SCROLL, 1);
+        if (sc) this.consumeItem(sc.id, 1);
+        else if (this.canCast(5)) ch.mp -= this.skillTpl(5).mp || 0;
+        else return false;
+        this.randomTeleport();
+        return true;
+    },
+    autoGoHome(reason) {
+        const ch = this.curChar, sc = this.findInvByItemId(HOME_SCROLL) || this.findInvByItemId(HOME_STONE) || this.autoBuy(HOME_SCROLL, 1);
+        if (!sc) return false;
+        this.consumeItem(sc.id, 1);
+        const t = this.homeTown();
+        this.autoToggle(false, reason);
+        this.teleportTo(t.map, t.x, t.y, true);
+        this.sysMsg('⚠️ ' + reason + '（' + t.name + '）');
+        return true;
+    },
+
+    // ── 補給、治癒、輔助魔法：掛機沒開也會做 ──
+    tickCare(now) {
+        const ch = this.curChar, s = ch.autoSettings;
+        if (!s) return;
+        const f = s.flags | 0, hpPct = ch.hp * 100 / ch.maxHp, mpPct = ch.mp * 100 / ch.maxMp;
+        // 喝水：開關開著（potion > 0）、體力低於設定才喝；喝完看「喝完先喝身上別種」，都沒有就買選的那種
+        if (s.potion > 0 && hpPct < (s.hpPct || 70) && now - (this._potAt || 0) >= 600) {
+            let pot = this.findInvByItemId(s.potion);
+            if (!pot && !(f & 1073741824)) pot = (ch.inv || []).find(it => HEAL_POTS[it.itemId]);
+            if (!pot) pot = this.autoBuy(s.potion, 100);
+            if (pot) { this._potAt = now; this.useConsumable(pot); }
+        }
+        // 治癒魔法
+        if (s.healSkill > 0 && hpPct < (s.healHpPct || 50) && now - (this._castAt || 0) >= 1000 && this.canCast(s.healSkill)) {
+            this.useSkill(s.healSkill, { id: ch.id });
+            return;
+        }
+        if (now - (this._careAt || 0) < 1000) return;
+        const did = () => { this._careAt = now; return true; };
+        const drink = (itemId, buyN) => { const it = this.needItem(itemId, buyN); if (it) { this.useConsumable(it); return did(); } return false; };
+        if ((f & 1) && !this.hasHaste() && drink(s.greenPot === 40018 ? 40018 : 40013, 1)) return;
+        if ((f & 2) && BRAVE_ITEM[ch.type] && !this.hasBrave() && drink(BRAVE_ITEM[ch.type], 1)) return;
+        if ((f & 4) && !this.hasEffect(1002) && !this.hasEffect(1028) && drink(s.bluePot === 40736 ? 40736 : 40015, s.bluePot === 40736 ? 0 : 5)) return;
+        if ((f & 8) && ch.type === 3 && !this.hasEffect(1004) && drink(WIS_POTION, 5)) return;
+        if ((f & 256) && !this.hasEffect(31) && drink(BARRIER_SCROLL, 0)) return;
+        if ((f & 128) && !this.hasEffect(67)) {
+            const sc = this.needItem(POLY_SCROLL, 1);
+            if (sc) {
+                const pool = (this.data.polys || []).filter(p => p.g && (p.lv || 1) <= ch.level);
+                const name = s.poly || (pool.length ? pool[rnd(pool.length)].n : '');
+                if (name) { this.consumeItem(sc.id, 1); this.applyPoly(name, 1800); did(); return; }
+            }
+        }
+        if ((f & 2048) && (ch.weaponVisual === 20) && !(ch.inv || []).some(it => /箭/.test(it.nid || '') || it.itemId === SILVER_ARROW) && this.autoBuy(SILVER_ARROW, 500)) { did(); return; }
+        if ((f & 1048576) && this.autoOn && !(ch.expPotUntil > now)) {
+            const ids = s.expPot ? [s.expPot] : EXP_POTS, it = ids.map(id => this.findInvByItemId(id)).find(Boolean);
+            if (it) { this.useConsumable(it); did(); return; }
+        }
+        // 沒有娃娃時自動召喚選的那隻（要擁有）
+        if (s.dollAuto > 0 && ch.dolls && !ch.dolls.worn && ch.dolls.own && ch.dolls.own[s.dollAuto] > 0) { this.dollWear(s.dollAuto); did(); return; }
+        if (now - (this._castAt || 0) < 1000) return;
+        // 洗魔：體力高於、魔力低於設定，安全區不放
+        if (s.hpSkill > 0 && hpPct > (s.hpSkillPct || 0) && mpPct < (s.hpSkillMp || 40) && this.canCast(s.hpSkill) && !this.isSafeTownSpot(ch.mapId, ch.x, ch.y)) {
+            this.useSkill(s.hpSkill);
+            return;
+        }
+        // 輔助魔法：效果沒了就補
+        for (const sid of s.buffs || []) {
+            if (!this.hasEffect(sid) && this.canCast(sid)) { this.useSkill(sid, { id: ch.id }); return; }
+        }
+        // 召喚：掛機時身邊沒有召喚物就施放
+        if (this.autoOn && s.summonSkill > 0 && !this.summon && this.canCast(s.summonSkill)) this.useSkill(s.summonSkill);
+    },
+
+    // ── 召喚物：跟著主人、打主人在打的怪 ──
+    castSummon(sk) {
+        const ch = this.curChar, d = this.summonData, s = ch.autoSettings || {};
+        if (!d) return;
+        const hasRing = (ch.inv || []).some(it => it.equipped && it.itemId === SUMMON_RING);
+        const ring = hasRing && s.ringNpc ? ((d.ring && d.ring.list) || []).find(r => r.npc === s.ringNpc && ch.level >= (r.need || 0)) : null;
+        const list = (d.auto && d.auto.list) || [];
+        const pick = ring || list.find(l => ch.level >= l.from && (l.to == null || ch.level <= l.to)) || list[0];
+        if (!pick) return;
+        this.dismissSummon();
+        const hp = Math.max(50, pick.lv * 20);
+        this.summon = { id: this.nextObjId++, isSummon: true, kind: sk.sid === 51 ? 2 : sk.sid === 154 ? 4 : 5, name: pick.nid || pick.name, cname: pick.name, gfx: pick.gfx,
+            level: pick.lv, hp, maxHp: hp, x: ch.x + 1, y: ch.y, heading: ch.heading, until: Date.now() + 3600000, lastAtkAt: 0, lastMoveAt: 0 };
+        this.showSummon();
+        this.sendCompanions();
+        this.sysMsg('召喚了「' + pick.name + '」。');
+    },
+    showSummon(c = this.summon) {
+        const ch = this.curChar;
+        if (!c || !ch) return;
+        this.objs.set(c.id, c);
+        this.emit('object', {
+            id: c.id, x: c.x, y: c.y, gfx: c.gfx, weapon: 0, action: 0, heading: c.heading, light: 0, speed: 0, exp: 0, lawful: 0,
+            name: c.name, title: '', status: 0, clanId: 0, clan: '', master: ch.name, state: 0, hpRatio: 100, thirdSpeed: false, level: c.level,
+        });
+    },
+    dismissSummon() {
+        const c = this.summon;
+        if (!c) return;
+        this.summon = null;
+        this.objs.delete(c.id);
+        this.emit('remove', c.id);
+        this.sendCompanions();
+    },
+    sendCompanions() {
+        const list = [];
+        for (const c of [this.pet, this.summon]) {
+            if (!c) continue;
+            const x = { id: c.id, kind: c.kind, name: c.name, tname: c.name, gfx: c.gfx, lv: c.level, hp: c.hp, mhp: c.maxHp, mp: 0, mmp: 0,
+                wpn: '', arm: '', pct: 0, pot: 0, green: false, gmode: 0, heal: 0, st: 1, collar: c.collar || 0 };
+            if (c.isPet) x.exp = Math.min(100, Math.floor((c.exp || 0) * 100 / this.petNeed(c.level)));
+            else x.endAt = performance.now() + (c.until - Date.now());
+            list.push(x);
+        }
+        this.emit('companions', { canHaste: false, list });
+    },
+
+    // ── 寵物：跟寵物商買項圈（裡面 Lv5），用項圈叫出來／收回去；跟著主人打怪、升級（最高到主人等級）──
+    petInfo(npcId) {   // data/npcfn.json 各寵物商的 pet 清單：[動作, 名字, 價錢, 外型]
+        for (const fn of Object.values(this.data.npcfn || {})) {
+            const p = (fn.pet || []).find(r => r[0] === 'buypet ' + npcId);
+            if (p) return { npc: npcId, name: p[1], price: +p[2] || 50000, gfx: +p[3] };
+        }
+        return null;
+    },
+    petNeed(lv) { return Math.max(100, lv * lv * 20); },   // 升下一級要的經驗
+    petMaxHp(lv) { return 30 + lv * 12; },
+    petBuy(act) {
+        const ch = this.curChar, info = this.petInfo(parseInt(act.slice(7), 10));
+        if (!ch || !info) return;
+        if (!this.spendGold(info.price)) { this.sysMsg('金幣不足，購買' + info.name + '需要 ' + info.price.toLocaleString() + ' 金幣。'); return; }
+        // 項圈不能疊：每個項圈各自一隻寵物（不走 giveItem，那個會疊在一起）
+        const it = this.makeItemInstance(PET_COLLAR, 1, 0, null, false);
+        it.pet = { npc: info.npc, name: info.name, gfx: info.gfx, lv: 5, exp: 0 };
+        it.name = this.formatItemName(it);
+        this.addInvInstance(it);
+        this.sysMsg('獲得項圈[Lv.5 ' + info.name + ']，在背包點兩下項圈就能叫出寵物。');
+        this.sendPetCollars();
+        this.save();
+    },
+    petToggle(col) {
+        if (this.pet && this.pet.collar === col.id) { this.petStash(); return; }
+        this.petSummon(col);
+    },
+    petSummon(col) {
+        const ch = this.curChar;
+        if (!ch || !col || !col.pet) return;
+        this.petStash(true);
+        const p = col.pet, hp = this.petMaxHp(p.lv);
+        this.pet = { id: this.nextObjId++, isPet: true, kind: 1, collar: col.id, name: p.name, cname: p.name, gfx: p.gfx, level: p.lv, exp: p.exp || 0,
+            hp, maxHp: hp, x: ch.x + 1, y: ch.y, heading: ch.heading, until: Infinity, lastAtkAt: 0, lastMoveAt: 0 };
+        this.showSummon(this.pet);
+        this.sendCompanions();
+        this.sendPetCollars();
+        this.sysMsg('叫出了寵物「' + p.name + '」。');
+    },
+    petStash(quiet) {   // 收回項圈
+        const c = this.pet;
+        if (!c) return;
+        this.pet = null;
+        this.objs.delete(c.id);
+        this.emit('remove', c.id);
+        this.sendCompanions();
+        if (!quiet) { this.sendPetCollars(); this.sysMsg('「' + c.name + '」回到項圈裡了。'); }
+    },
+    petRelease() {   // 放生：寵物消失、項圈也消失
+        const c = this.pet;
+        if (!c) return;
+        this.petStash(true);
+        this.consumeItem(c.collar, 1);
+        this.sendPetCollars();
+        this.sysMsg('放生了「' + c.name + '」。');
+        this.save();
+    },
+    petFlute() {
+        const ch = this.curChar;
+        if (!ch) return;
+        if (this.pet) { const c = this.pet; c.x = ch.x + 1; c.y = ch.y; this.showSummon(c); this.sysMsg('「' + c.name + '」回到你身邊了。'); return; }
+        const col = (ch.inv || []).find(it => it.itemId === PET_COLLAR && it.pet);
+        if (!col) { this.sysMsg('你沒有寵物。可以到寵物商人那裡購買。'); return; }
+        this.petSummon(col);
+    },
+    petGainExp(c, mob) {
+        const ch = this.curChar, col = ch && (ch.inv || []).find(it => it.id === c.collar);
+        if (!col || !col.pet) return;
+        c.exp = (c.exp || 0) + Math.max(5, (mob.level || 1) * 5);
+        let up = false;
+        while (c.level < Math.max(5, ch.level) && c.exp >= this.petNeed(c.level)) { c.exp -= this.petNeed(c.level); c.level++; up = true; }
+        if (c.level >= ch.level) c.exp = Math.min(c.exp, this.petNeed(c.level) - 1);
+        col.pet.lv = c.level; col.pet.exp = c.exp;
+        if (up) {
+            c.maxHp = this.petMaxHp(c.level); c.hp = c.maxHp;
+            col.name = this.formatItemName(col);
+            this.emit('invUpdate', { id: col.id, count: col.count, name: col.name });
+            this.sysMsg('「' + c.name + '」升到 Lv.' + c.level + '！');
+            this.sendPetCollars();
+            this.save();
+        }
+        this.sendCompanions();
+    },
+    // 設定 → 召喚 的寵物卡：背包裡有寵物的項圈（state 0 收著、1 在身邊）
+    sendPetCollars() {
+        const ch = this.curChar;
+        if (!ch) return;
+        const list = (ch.inv || []).filter(it => it.itemId === PET_COLLAR && it.pet).map(it => {
+            const out = this.pet && this.pet.collar === it.id, mhp = this.petMaxHp(it.pet.lv);
+            return { collar: it.id, name: it.pet.name, tname: it.pet.name, gfx: it.pet.gfx, lv: it.pet.lv, hp: out ? this.pet.hp : mhp, mhp, state: out ? 1 : 0 };
+        });
+        list.ext = false;
+        this.emit('petCollars', list);
+    },
+    // 夥伴視窗「寄放」／收回：寵物回項圈、召喚物消失
+    compDismiss(id) {
+        if (this.pet && this.pet.id === id) this.petStash();
+        else if (this.summon && this.summon.id === id) this.dismissSummon();
+    },
+    compList() { this.sendCompanions(); },
+
+    tickSummon(now) {
+        this.tickFollower(this.summon, now);
+        this.tickFollower(this.pet, now);
+    },
+    tickFollower(c, now) {
+        const ch = this.curChar;
+        if (!c) return;
+        if (now >= c.until) { this.dismissSummon(); this.sysMsg('召喚物的時間到了。'); return; }
+        if (!this.objs.has(c.id) || cheb(c, ch) > 12) { c.x = ch.x + 1; c.y = ch.y; this.showSummon(c); }   // 換地圖、離太遠：回到主人身邊
+        const step = (tx, ty) => {
+            if (now - c.lastMoveAt < 300) return;
+            c.lastMoveAt = now;
+            const dir = this.freeDir(c.x, c.y, this.dirBetween(c.x, c.y, tx, ty)), ox = c.x, oy = c.y;
+            if (dir < 0) return;
+            c.x += DX[dir]; c.y += DY[dir]; c.heading = dir;
+            this.emit('move', { id: c.id, x: ox, y: oy, heading: dir });
+        };
+        const tgt = this.mapMobs.find(m => !m.dead && m.id === this.autoTargetId) || this.mapMobs.find(m => !m.dead && m.aggro && cheb(m, ch) <= 2);
+        if (!tgt) { if (cheb(c, ch) > 2) step(ch.x, ch.y); return; }
+        if (cheb(c, tgt) > 1) { step(tgt.x, tgt.y); return; }
+        if (now - c.lastAtkAt < 1200) return;
+        c.lastAtkAt = now;
+        const dmg = this.gmRates.oneHit ? tgt.hp : Math.max(1, Math.floor(c.level / 2) + rnd(Math.max(1, Math.floor(c.level / 2))) - (tgt.dr || 0));
+        const dir = this.dirBetween(c.x, c.y, tgt.x, tgt.y);
+        tgt.hp = Math.max(0, tgt.hp - dmg);
+        tgt.aggro = true;
+        this.emit('attack', { act: 1, atk: c.id, tgt: tgt.id, dmg, heading: dir, gfx: 0, use: 0, x: c.x, y: c.y, tx: tgt.x, ty: tgt.y });
+        this.emit('hpMeter', { id: tgt.id, ratio: Math.round(tgt.hp * 100 / tgt.maxHp) });
+        if (tgt.hp <= 0) { this.onMobKilled(tgt); if (c.isPet) this.petGainExp(c, tgt); }
+    },
+
+    // ── 怪物 AI（近戰、弓箭怪、法師怪）──
+    tickMobs(now) {
+        const ch = this.curChar;
+        for (const mob of this.mapMobs) {
+            if (mob.dead) continue;
+            const dist = cheb(mob, ch);
+            const ranged = mob.isBoss || /弓|箭|哈維|妖精|法師|思克巴|長者|巫妖/.test(mob.name);
+            if (mob.aggro && (dist <= 1 || (ranged && dist <= 6))) {
+                if (now - mob.lastAtkAt < 1300) continue;
+                mob.lastAtkAt = now;
+                const dir = this.dirBetween(mob.x, mob.y, ch.x, ch.y);
+                mob.heading = dir;
+                let dmg = this.gmRates.godMode ? 0 : Math.max(1, Math.floor((mob.level || 1) * 0.9) - Math.max(0, Math.floor((10 - ch.ac) * 0.25)));
+                if (mob.isBoss && dmg) dmg = Math.max(15, dmg * 2);
+                if (dmg) dmg = Math.max(1, dmg - (ch.dr | 0));   // 傷害減免（強化過安定值的防具）
+                ch.hp = Math.max(1, ch.hp - dmg);
+                const magic = ranged && /法師|長者|思克巴|巫妖/.test(mob.name), gfx = dist <= 1 ? 0 : magic ? 129 : ranged ? 66 : 0;
+                this.emit('attack', { act: 1, atk: mob.id, tgt: ch.id, dmg, heading: dir, gfx, use: gfx ? 6 : 0, x: mob.x, y: mob.y, tx: ch.x, ty: ch.y });
+                this.sendOwnStatus();
+            } else if (now - mob.lastMoveAt >= 1400) {
+                mob.lastMoveAt = now + Math.random() * 600;
+                const dir = this.freeDir(mob.x, mob.y, mob.aggro && dist <= 8 ? this.dirBetween(mob.x, mob.y, ch.x, ch.y) : rnd(8));
+                if (dir < 0) continue;   // 四周都是牆：這次不動
+                const ox = mob.x, oy = mob.y;
+                mob.x += DX[dir]; mob.y += DY[dir]; mob.heading = dir;
+                this.emit('move', { id: mob.id, x: ox, y: oy, heading: dir });
+            }
+        }
+    },
+
+    // 主循環每 250 毫秒跑一次。分頁切到背景時瀏覽器會把頁面上的計時器放慢到 1 秒一次（5 分鐘後更慢），
+    //   掛機幾乎停擺 → 改由 Worker 裡的計時器來敲（Worker 不會被放慢）；開不了 Worker 才退回原本的 setInterval
+    startLoops() {
+        const run = () => { try { this.tick(); } catch (e) { console.error('[OfflineServer] tick', e); } };
+        let fallback = 0;
+        const useInterval = () => { if (!fallback) fallback = setInterval(run, 250); };
+        try {
+            const w = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},250)'], { type: 'text/javascript' })));
+            w.onmessage = run;
+            w.onerror = () => { try { w.terminate(); } catch (e) { } useInterval(); };
+        } catch (e) { useInterval(); }
+    },
+
+    tick() {
+        const ch = this.curChar;
+        if (!ch) return;
+        const now = Date.now();
+        this.initAuto();
+        // 每 3 秒：自然回復、補怪、掛機時間
+        if (now - (this._lastRegen || 0) >= 3000) {
+            this._lastRegen = now;
+            if (ch.hp < ch.maxHp || ch.mp < ch.maxMp) {
+                ch.hp = Math.min(ch.maxHp, ch.hp + Math.max(5, Math.floor(ch.maxHp * 0.04)));
+                ch.mp = Math.min(ch.maxMp, ch.mp + Math.max(3, Math.floor(ch.maxMp * 0.05)));
+                this.sendOwnStatus();
+            }
+            this.maintainMonsters();
+            if (this.autoOn && this.autoLog) { this.autoLog.sec += 3; this.autoLog.dur = this.autoLog.sec; }
+        }
+        this.tickCare(now);
+        this.tickMobs(now);
+        this.tickSummon(now);
+        if (this.autoOn) this.tickAuto(now);
+    },
+
+    // ── 牆、柱子、水（地圖的通行資料在畫面那邊：world.js flags／canStep，main.js 掛在 window.__world）──
+    //   原本 AUTO、怪、召喚物走路都直接朝目標加座標，不看牆 → 穿牆、走進水裡。手動點地面走本來就會繞（world.findPath）
+    //   拿不到資料（地圖還沒載好、這張圖沒有畫面資料、自己腳下那區還沒載）＝照原本直走，不卡住
+    walkWorld(x, y) {
+        const w = typeof window !== 'undefined' && window.__world, ch = this.curChar;
+        if (!w || !w.map || !w.map.d || !ch || w.map.id !== ch.mapId) return null;
+        const d = w.map.d;
+        return w.pass(x - d.gameX0, y - d.gameY0) ? w : null;
+    },
+    // 從 (x,y) 往 (tx,ty) 繞路走的下一步方向（八方向 A*，同手動點地面）；-1＝已經在走得到的最近處（過不去）
+    pathDir(x, y, tx, ty) {
+        const w = this.walkWorld(x, y);
+        if (!w) return this.dirBetween(x, y, tx, ty);
+        const r = w.astar(x, y, tx, ty, null, 24, true);
+        return r && r.path && r.path.length ? r.path[0] : -1;
+    },
+    // 怪、召喚物走一步：朝 dir 走不過去就試左右各偏一格、兩格；都不行＝-1（這次不動）
+    freeDir(x, y, dir) {
+        const w = this.walkWorld(x, y);
+        if (!w) return dir;
+        for (const k of [0, 1, 7, 2, 6]) { const h = (dir + k) & 7; if (w.canStep(x, y, h, null, true)) return h; }
+        return -1;
+    },
+
+    // 回 false＝走不到那裡（被牆、水隔開）
+    autoStep(tx, ty, now) {
+        const ch = this.curChar;
+        if (now - (this.lastStepAt || 0) < (this.hasHaste() ? 260 : 360)) return true;
+        const dir = this.pathDir(ch.x, ch.y, tx, ty);
+        if (dir < 0) return false;
+        this.lastStepAt = now;
+        const ox = ch.x, oy = ch.y;
+        ch.x += DX[dir]; ch.y += DY[dir]; ch.heading = dir;
+        this.emit('move', { id: ch.id, x: ox, y: oy, heading: dir });
+        return true;
+    },
+
+    // ── AUTO：狩獵（巡邏範圍、沒怪瞬移、回村、撐不住瞬移）、名單（不打／瞬移）、魔法（開怪／範圍／攻擊／休息回魔）──
+    tickAuto(now) {
+        const ch = this.curChar, s = ch.autoSettings || {}, f = s.flags | 0;
+        const hpPct = ch.hp * 100 / ch.maxHp, mpPct = ch.mp * 100 / ch.maxMp;
+        // 體力低於 N% 回村（開關＝homeHpPct > 0）
+        if (s.homeHpPct > 0 && hpPct < s.homeHpPct && this.autoGoHome('體力過低，自動回村並停止掛機')) return;
+        // 撐不住先瞬移，一分鐘內第 3 次就回村（大陸不瞬移）
+        if ((f & 2097152) && hpPct < 25 && ch.mapId !== 4 && now - (this._escAt || 0) >= 3000) {
+            this._escAt = now;
+            this._escapes = (this._escapes || []).filter(t => now - t < 60000);
+            if (this._escapes.length >= 2) { if (this.autoGoHome('一分鐘內逃了 3 次，自動回村並停止掛機')) return; }
+            else if (this.autoEscapeTele()) { this._escapes.push(now); this.sysMsg('⚡ 快撐不住了，先瞬間移動離開。'); return; }
+        }
+        // 名單「瞬移」：看到就用瞬間移動卷軸離開
+        const tpList = (s.boss && s.boss[ch.mapId]) || [];
+        if (tpList.length && now - (this._escAt || 0) >= 3000) {
+            const bad = this.mapMobs.find(m => !m.dead && tpList.includes(m.tplId) && cheb(m, ch) <= 13);
+            if (bad) {
+                this._escAt = now;
+                if (this.autoEscapeTele()) { this.sysMsg('⚡ 看到名單上的【' + bad.name + '】，瞬間移動離開。'); return; }
+            }
+        }
+        // 魔力不夠先休息回魔（法師、妖精）：低於 restMpPct 停手，回到 restMpUp 再打；被打照樣還手
+        if ((f & 65536) && (ch.type === 3 || ch.type === 2)) {
+            if (!this._resting && mpPct < (s.restMpPct || 30)) this._resting = true;
+            else if (this._resting && mpPct >= (s.restMpUp || 60)) this._resting = false;
+        } else this._resting = false;
+
+        const R = s.roamRange | 0, center = this.autoCenter;
+        const inRoam = m => !R || !center || cheb(m, center) <= R;
+        const hitsMe = m => m.aggro && cheb(m, ch) <= 2;
+        // 名單「不打」：不主動打，牠打我照樣還手
+        const igList = (s.ignore && s.ignore[ch.mapId]) || [];
+        const ok = m => !m.dead && (hitsMe(m) || (!this._resting && inRoam(m) && !(m.noReachUntil > now) && !igList.includes(m.tplId) && !tpList.includes(m.tplId)));
+
+        let target = this.mapMobs.find(m => m.id === this.autoTargetId && ok(m));
+        if (!target) {
+            let bd = Infinity;
+            for (const m of this.mapMobs) {
+                if (!ok(m)) continue;
+                const d = cheb(m, ch) - (hitsMe(m) ? 100 : 0);
+                if (d < bd) { bd = d; target = m; }
+            }
+            this.autoTargetId = target ? target.id : 0;
+        }
+        if (!target) {
+            if (this._resting) { this.autoStatusText('魔力不足，休息回魔中'); return; }
+            this.autoStatusText('尋找怪物中');
+            if (!this._noMobAt) this._noMobAt = now;
+            // 沒怪 N 秒自動瞬移（大陸不瞬移）
+            if ((f & 16384) && ch.mapId !== 4 && now - this._noMobAt >= Math.max(3, s.teleSec || 10) * 1000) {
+                this._noMobAt = now;
+                if (this.autoEscapeTele()) this.sysMsg('🧭 周圍沒有怪物，瞬間移動找怪。');
+                return;
+            }
+            // 走回巡邏中心；在中心也沒怪就往最近的出生點走（不超出巡邏範圍）
+            if (R && center && cheb(ch, center) > R) { this.autoStep(center.x, center.y, now); return; }
+            const idx = this._pts[String(ch.mapId)];
+            if (idx) {
+                let best = -1, bd = Infinity;
+                for (const i of this.nearSpawnPts(String(ch.mapId), ch.x, ch.y, 90)) {
+                    const p = { x: idx.a[i + 1], y: idx.a[i + 2] };
+                    if (this._bossIds.has(idx.a[i]) || igList.includes(idx.a[i]) || tpList.includes(idx.a[i]) || !inRoam(p)) continue;
+                    if (this._noReachPts && this._noReachPts.has(ch.mapId + ':' + i)) continue;   // 走不到的出生點（隔著牆、水）
+                    const d = cheb(p, ch);
+                    if (d < bd) { bd = d; best = i; }
+                }
+                if (best >= 0 && bd > 3 && !this.autoStep(idx.a[best + 1], idx.a[best + 2], now)) {
+                    if (!this._noReachPts || this._noReachPts.size > 500) this._noReachPts = new Set();
+                    this._noReachPts.add(ch.mapId + ':' + best);
+                }
+            }
+            return;
+        }
+        this._noMobAt = 0;
+        if (!this.autoCenter) this.autoCenter = { x: ch.x, y: ch.y };
+        this.autoStatusText(this._resting ? '魔力不足，休息回魔中' : '自動尋怪狩獵中');
+
+        const isBow = ch.weaponVisual === 20 || ch.weaponVisual === 62;
+        const dist = cheb(target, ch), castOk = !this._resting && now - (this._castAt || 0) >= 1000;
+        if (castOk) {
+            // 開怪技能：每隻怪第一下
+            if (s.openSkill > 0 && !target.opened && dist <= 8 && mpPct >= (s.openMpPct | 0) && this.canCast(s.openSkill)) {
+                target.opened = true;
+                this.useSkill(s.openSkill, { id: target.id, x: target.x, y: target.y });
+                return;
+            }
+            // 範圍技能：周圍 3 格有 N 隻以上
+            if (s.aoeSkill > 0 && mpPct >= (s.aoeMpPct | 0) && this.canCast(s.aoeSkill)
+                && this.mapMobs.filter(m => !m.dead && cheb(m, ch) <= 3).length >= Math.max(2, s.aoeCount | 0 || 3)) {
+                this.useSkill(s.aoeSkill, { id: target.id, x: target.x, y: target.y });
+                return;
+            }
+            // 攻擊技能
+            if (s.atkSkill > 0 && dist <= 6 && mpPct >= (s.atkMpPct | 0) && this.canCast(s.atkSkill)) {
+                target.opened = true;
+                this.useSkill(s.atkSkill, { id: target.id, x: target.x, y: target.y });
+                return;
+            }
+        }
+        if (dist <= (isBow ? 8 : 1)) {
+            if (now - (this.lastAttackAt || 0) >= (this.hasHaste() ? 480 : 640)) {
+                this.lastAttackAt = now;
+                target.opened = true;
+                this.attack(target.id, target.x, target.y);
+            }
+        } else if (!this.autoStep(target.x, target.y, now)) {
+            // 被牆、水隔開走不到：這隻先放 20 秒，換別隻（牠自己走過來打我照樣還手）
+            target.noReachUntil = now + 20000;
+            this.autoTargetId = 0;
+        }
+    },
+};
