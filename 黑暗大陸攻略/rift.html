@@ -61,17 +61,18 @@
     <h2 id="autocraft">⚒️ 自動打造地圖</h2>
     <p>在排程畫面啟用（預設關閉），<b>全部排程共用一份設定</b>。每次輪到一張地圖才處理那一張：未鑑定的先鑑定，再照設定用通貨洗詞綴。傳奇財寶地圖不改造。</p>
     <ul>
-        <li><b>不要的詞綴</b>：勾選後，地圖出現這些詞綴就重洗，魔法地圖用<a data-item="curAlt">重鑄石</a>、稀有地圖用<a data-item="curChaos">混沌石</a>，洗到乾淨或用到上限為止。</li>
+        <li><b>不要的詞綴</b>：勾選後，地圖出現這些詞綴就重洗，魔法地圖用<a data-item="curAlt">重鑄石</a>、稀有地圖用<a data-item="curChaos">混沌石</a>，<b>洗到乾淨為止</b>（每張不設上限，只受下面的保留數限制）。</li>
         <li><b>升級</b>（可選）：普通地圖用<a data-item="curAug">點化石</a>升魔法、魔法地圖用<a data-item="curRegal">晉升石</a>升稀有。</li>
-        <li><b>每張最多用幾顆</b>（0～99，預設 <span id="mc-max"></span>）、<b>每種通貨保留幾顆不用</b>（預設 <span id="mc-keep"></span>），通貨會真的扣掉。</li>
-        <li><b>用到上限仍有不要的詞綴</b>：預設略過這張（從排程拿掉、留在背包，已經鑑定和洗過的結果會保留，排程顯示「詞綴不合略過 N 張」）；取消勾選就照樣開圖。</li>
+        <li><b>每種通貨保留幾顆不用</b>（預設 <span id="mc-keep"></span>），通貨會真的扣掉。</li>
+        <li><b>防止燒光通貨</b>：不要的詞綴勾太多、不可能洗乾淨時不洗——魔法地圖至少要留 1 種、稀有地圖至少要留 4 種沒勾（稀有地圖 3～4 條詞綴且不重複）。</li>
+        <li><b>通貨用完仍有不要的詞綴</b>：預設略過這張（從排程拿掉、留在背包，已經鑑定和洗過的結果會保留，排程顯示「詞綴不合略過 N 張」）；取消勾選就照樣開圖。</li>
     </ul>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>
 <script>
 const C = W.consts;
-$('#d1').textContent = pct(C.MAP_DROP_P); $('#d2').textContent = pct(C.MAP_DROP_IN_MAP_P); $('#qm').textContent = C.MAP_QTY_MAX; $('#rb').textContent = pct(C.RES_MAP_BOSS_P); $('#tp').textContent = pct(C.TREASURE_MAP_DROP_P); $('#qn').textContent = C.MAP_QUEUE_MAX; $('#mc-max').textContent = W.mapCraftDefault.max; $('#mc-keep').textContent = W.mapCraftDefault.keep;
+$('#d1').textContent = pct(C.MAP_DROP_P); $('#d2').textContent = pct(C.MAP_DROP_IN_MAP_P); $('#qm').textContent = C.MAP_QTY_MAX; $('#rb').textContent = pct(C.RES_MAP_BOSS_P); $('#tp').textContent = pct(C.TREASURE_MAP_DROP_P); $('#qn').textContent = C.MAP_QUEUE_MAX; $('#mc-keep').textContent = W.mapCraftDefault.keep;
 renderTable($('#tier-list'), [
     { label: '地圖', html: t => itemLink('map' + t.t) },
     { label: '對應地區', html: t => zoneLink(t.zone) },
