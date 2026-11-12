@@ -46,7 +46,7 @@ details[open] summary{margin-bottom:6px}
 <body>
 <div class="wrap">
 
-<h1>RO 倖存者離線版 <small>非官方・v1.9</small></h1>
+<h1>RO 倖存者離線版 <small>非官方・v1.10</small></h1>
 <p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
 
 <div class="card warn">
@@ -55,6 +55,15 @@ details[open] summary{margin-bottom:6px}
 </div>
 
 <h2 id="news">更新公告</h2>
+<div class="card">
+  <b>v1.10（2026-11-12）：卡在「正在進入普隆德拉…」會自動排除</b>
+  <ul>
+    <li>載入畫面 20 秒沒有動靜，會自動重新整理，並<b>自動選回同一個角色進入普隆德拉</b>，不用自己操作（5 分鐘內最多自動 2 次）。</li>
+    <li>3D 地圖貼圖等太久（超過 10 秒）時不再一直等，先讓你進遊戲，貼圖會隨後補上。</li>
+    <li>自動排除後還是卡住，1 分鐘時才會出現「回報問題」按鈕。</li>
+    <li>不用重新下載，下次開遊戲會自動更新。</li>
+  </ul>
+</div>
 <div class="card">
   <b>v1.9（2026-11-12）：載入卡住可以一鍵回報</b>
   <ul>
@@ -75,7 +84,7 @@ details[open] summary{margin-bottom:6px}
     <li><span class="mark">舊版的玩家請重新下載 zip</span>（啟動檔有改），解壓縮後蓋過原本的檔案即可，存檔不會不見。</li>
     <li>如果卡在藍色的「正在進入普隆德拉…」畫面，請看<a href="#stuck">常見問題</a>。</li>
   </ul>
-  <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載 v1.9（zip）</a>
+  <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載 v1.10（zip）</a>
   <a class="btn ghost" href="python-manager-26.4.msix" download>單獨下載 Python 安裝管理員（msix）</a>
 </div>
 
@@ -224,7 +233,7 @@ details[open] summary{margin-bottom:6px}
     <li>瀏覽器的<b>硬體加速</b>要開著（Chrome／Edge：設定 → 系統 → 「使用圖形加速功能」），改完重開瀏覽器。換 Chrome 或 Edge 最新版試試。</li>
     <li>用同一台電腦開官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>，如果官網也卡在同一個畫面，就是顯示卡／瀏覽器不支援 3D（WebGL），跟離線版無關。</li>
   </ol>
-  v1.9 起卡住超過 1 分鐘，畫面右下角會出現「回報問題」按鈕，會自動檢查上面幾項並可以把結果傳給作者。
+  v1.10 起卡住 20 秒會自動重新整理並自動進入；還是不行，1 分鐘時畫面右下角會出現「回報問題」按鈕，會自動檢查上面幾項並可以把結果傳給作者。
 </details>
 <details>
   <summary>我的角色不見了</summary>

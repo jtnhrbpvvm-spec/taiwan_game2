@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.9"
+TOOL_VERSION = "1.10"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -94,7 +94,15 @@ OFFLINE_PATCHES = [
     # 隱藏職業（忍者、槍手…）：「這個職業解鎖了嗎」一律回答是
     ("jobs", re.compile(rb"function (\w+)\((\w)\)\{return \w+\(\)\.unlocks\.includes\(\2\)\}"),
      lambda m: b"function " + m.group(1) + b"(" + m.group(2) + b"){return!0}"),
+    # 進地圖（普隆德拉、關卡）的 await Promise.all([…loadMap…]) → report.js 的 __rsAll：記錄每一項花多久、哪個沒完成
+    ("enterAll", re.compile(rb"await Promise\.all\(\[(?=[^\]]{0,200}\.loadMap\()"),
+     lambda m: b"await(window.__rsAll||Promise.all.bind(Promise))(["),
+    # 3D 畫面等貼圖上傳完才關載入畫面 → report.js 的 __rsReady：超過 10 秒或出錯就不等（玩家回報卡在「正在進入普隆德拉…」）
+    ("ready", re.compile(rb"([\w$]+)\.world3d\.whenReady\(\)"),
+     lambda m: b"(window.__rsReady?window.__rsReady(" + m.group(1) + b".world3d):" + m.group(1) + b".world3d.whenReady())"),
 ]
+# 大部分修補只換第 1 處；這些要全部換，數字是 00ec63b～de125da 的處數（check_zh.js 用來檢查）
+PATCH_COUNT = {"enterAll": 2, "ready": 2}
 # 對 build/soul_linker-*.js 的修補（中文用，見 zh.js）
 CORE_PATCHES = [
     # 裝備全名 function yV(a,e){return e?`${E_(a)} ${e}`:E_(a)}（e＝「of Strength」這類字尾）
@@ -110,7 +118,7 @@ PATCH_STATUS = {}
 
 def patch_main(code):
     for name, rx, rep in OFFLINE_PATCHES + (GM_PATCHES if GM else []):
-        code, n = rx.subn(rep, code, count=1)
+        code, n = rx.subn(rep, code, count=0 if name in PATCH_COUNT else 1)
         PATCH_STATUS[name] = bool(n)
     return code
 

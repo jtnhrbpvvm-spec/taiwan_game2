@@ -2,6 +2,11 @@
  * 載入畫面（#loading）連續顯示超過 1 分鐘 → 右下角跳出「回報問題」按鈕。
  * 按下後自動檢查：本機伺服器、WebGL／硬體加速、載入失敗的檔案、程式錯誤、cache 缺檔，
  * 先把偵測結果和建議給玩家看，玩家按「送出」才傳到 Google 表單（不含帳號、存檔）。
+ *
+ * v1.10 起先自動排除，排除不了才跳回報：
+ *  - rs_offline.py 修補遊戲：進地圖的 Promise.all 改走 __rsAll（記錄地圖／角色／寵物各花多久、哪個沒完成），
+ *    world3d.whenReady() 改走 __rsReady（3D 貼圖重新上傳超過 10 秒或出錯 → 不等了，直接顯示畫面，貼圖之後自己補上）。
+ *  - 載入畫面 20 秒沒有任何變化 → 自動重新整理；原本是要進普隆德拉的話，重新整理後自動選同一個角色進入（5 分鐘內最多 2 次）。
  */
 (function () {
   'use strict';
@@ -13,8 +18,96 @@
   var T0 = Date.now();
   var errors = [], badFiles = [], slowFiles = {}, sent = false;
 
+  var READY_MS = 10000, AUTO_MS = 20000, AUTO_KEY = 'rs-offline.autoEnter', AUTO_MAX = 2, AUTO_WINDOW = 300000;
+  var stages = [], readyLog = [], autoInfo = null;
+
   function push(list, item, max) { if (list.length < max) list.push(item); }
   function sec() { return Math.round((Date.now() - T0) / 1000); }
+  function errText(e) { return String((e && e.message) || e).slice(0, 160); }
+
+  // ---------- 進入地圖的步驟追蹤（rs_offline.py 把遊戲的 Promise.all([loadMap…]) 換成這個） ----------
+  // 順序是遊戲寫的：普隆德拉＝[地圖, 角色, 寵物]；關卡＝[角色, 地圖, 怪物圖]
+  window.__rsAll = function (arr) {
+    var t = Date.now(), st = { at: (t - T0) / 1000, items: arr.map(function () { return '等待中'; }) };
+    stages.push(st);
+    if (stages.length > 8) stages.shift();
+    arr.forEach(function (p, i) {
+      Promise.resolve(p).then(function () { st.items[i] = (Date.now() - t) / 1000; }, function (e) { st.items[i] = '失敗：' + errText(e); });
+    });
+    return Promise.all(arr).then(function (v) { st.ok = (Date.now() - t) / 1000; return v; }, function (e) { st.fail = errText(e); throw e; });
+  };
+  // 3D 畫面的貼圖上傳（whenReady）：太久或出錯就不等了，畫面先出來，貼圖之後自己補上
+  window.__rsReady = function (w) {
+    var p = w.whenReady(), st = { at: sec(), state: '等待中' };
+    readyLog.push(st);
+    if (readyLog.length > 8) readyLog.shift();
+    return new Promise(function (resolve) {
+      var t = setTimeout(function () {
+        st.state = '超過 ' + READY_MS / 1000 + ' 秒，略過等待';
+        if (w.restoring) w.restoring = null;
+        resolve();
+      }, READY_MS);
+      p.then(function () { clearTimeout(t); st.state = (sec() - st.at) + ' 秒'; resolve(); },
+        function (e) { clearTimeout(t); st.state = '出錯，略過：' + errText(e); if (w.restoring) w.restoring = null; resolve(); });
+    });
+  };
+
+  // ---------- 自動排除：重新整理後自動選同一個角色進入 ----------
+  function readAuto() {
+    try { var s = JSON.parse(sessionStorage.getItem(AUTO_KEY) || 'null'); return s && Date.now() - s.first < AUTO_WINDOW ? s : null; } catch (e) { return null; }
+  }
+  function writeAuto(s) { try { sessionStorage.setItem(AUTO_KEY, JSON.stringify(s)); return true; } catch (e) { return false; } }
+  autoInfo = readAuto();
+  function toast(msg, ms) {
+    var d = document.getElementById('rsr-toast');
+    if (!d) {
+      d = document.createElement('div'); d.id = 'rsr-toast';
+      d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483646;background:#18263fee;color:#e8eef9;border:1px solid #2b3f63;border-radius:10px;padding:8px 16px;font:14px/1.6 "Segoe UI","Microsoft JhengHei",sans-serif;box-shadow:0 4px 16px #0008;max-width:calc(100vw - 32px);text-align:center';
+      (document.body || document.documentElement).appendChild(d);
+    }
+    d.textContent = msg;
+    clearTimeout(d._t);
+    if (ms) d._t = setTimeout(function () { d.remove(); }, ms);
+  }
+  function tryRecover(entering) {
+    var s = readAuto() || { n: 0, first: Date.now(), log: [] };
+    if (s.n >= AUTO_MAX) return false;
+    var slots = [].slice.call(document.querySelectorAll('#slots .slot'));
+    var sel = document.querySelector('#slots .slot.selected');
+    s.n++;
+    s.log.push({ at: sec(), screen: loadingText(), stages: stages.slice(-2), ready: readyLog.slice(-2) });
+    s.enter = entering && sel && !sel.classList.contains('empty') ? { slot: slots.indexOf(sel), name: (sel.querySelector('.slot-name') || {}).textContent || '' } : null;
+    s.until = Date.now() + 90000;
+    if (!writeAuto(s)) return false;
+    toast('載入卡住了，自動重新進入中…（第 ' + s.n + ' 次）');
+    setTimeout(function () { location.reload(); }, 800);
+    return true;
+  }
+  // 重新整理後：等開頭畫面載完 → 按「開始遊戲」→ 選回原本的角色 → 按「開始遊戲」
+  (function autoEnter() {
+    var s = autoInfo;
+    if (!s || !s.enter || Date.now() > s.until) return;
+    var step = 0, tries = 0;
+    var iv = setInterval(function () {
+      if (tries === 0 && document.body) toast('自動重新進入普隆德拉…');
+      if (++tries > 240) { clearInterval(iv); toast('自動進入沒有成功，請自己按「開始遊戲」', 6000); return; }
+      if (step === 0) {
+        var sp = document.getElementById('sp-play');
+        if (sp && sp.classList.contains('ready')) { sp.click(); step = 1; }
+      } else if (step === 1) {
+        var slots = document.querySelectorAll('#slots .slot');
+        var slot = slots[s.enter.slot];
+        if (!slot) return;
+        var name = (slot.querySelector('.slot-name') || {}).textContent || '';
+        if (s.enter.name && name !== s.enter.name) { clearInterval(iv); toast('請選擇角色後按「開始遊戲」', 6000); return; }
+        slot.click();
+        step = 2;
+      } else if (step === 2) {
+        var btn = document.getElementById('btn-play');
+        if (btn && !btn.disabled) { btn.click(); clearInterval(iv); s.enter = null; writeAuto(s); toast('自動重新進入中…', 4000); }
+      }
+    }, 250);
+  })();
 
   // ---------- 從一開始就記錄：程式錯誤、載入失敗的檔案 ----------
   window.addEventListener('error', function (e) {
@@ -68,15 +161,22 @@
     var el = document.querySelector('#loading .loading-text');
     return el ? el.textContent.trim() : (loadingEl() ? '' : '（找不到載入畫面）');
   }
+  var lastText = '', sameSince = 0, recovering = false;
   setInterval(function () {
     if (isLoading()) {
-      if (!shownAt) shownAt = Date.now();
-      if (Date.now() - shownAt >= STUCK_MS && !btn && !sent) showButton();
+      var now = Date.now(), txt = loadingText();
+      if (!shownAt) shownAt = sameSince = now;
+      if (txt !== lastText) { lastText = txt; sameSince = now; }   // 畫面文字有變（例如百分比）＝還在動，不算卡住
+      // 這次載入畫面出現後，遊戲有開始進地圖（__rsAll）＝是在進普隆德拉／關卡
+      var last = stages[stages.length - 1];
+      var entering = !!last && T0 + last.at * 1000 >= shownAt - 2000;
+      if (!recovering && !panel && now - sameSince >= AUTO_MS) recovering = tryRecover(entering);
+      if (now - shownAt >= STUCK_MS && !btn && !sent && !recovering) showButton();
     } else {
       shownAt = 0;
       if (btn && !panel) { btn.remove(); btn = null; }
     }
-  }, 2000);
+  }, 1000);
 
   // ---------- 畫面 ----------
   var CSS = '#rsr-btn,#rsr-panel{position:fixed;z-index:2147483646;font:15px/1.6 "Segoe UI","Microsoft JhengHei",sans-serif;color:#e8eef9}' +
@@ -184,6 +284,7 @@
         storage: storage ? { usedMB: Math.round(storage.usage / 1048576), quotaMB: Math.round(storage.quota / 1048576) } : null,
         lsOk: (function () { try { localStorage.setItem('__rsr', '1'); localStorage.removeItem('__rsr'); return true; } catch (e) { return false; } })(),
         errors: errors, badFiles: badFiles, pending: pending,
+        stages: stages, ready: readyLog, auto: readAuto() || autoInfo,
         resCount: res.length,
         lastRes: res.sort(function (a, b) { return b.end - a.end; }).slice(0, 8),
         slowRes: res.filter(function (e) { return e.d > 10000; }).slice(0, 8)
@@ -202,6 +303,12 @@
     if (i.badFiles.length) out.push({ bad: 1, code: 'files', text: '有 ' + i.badFiles.length + ' 個檔案載入失敗，例如 ' + i.badFiles.slice(0, 2).map(function (f) { return f.url; }).join('、'), fix: '可能是 cache 不完整：關掉黑色視窗，刪掉離線版資料夾裡的 cache 資料夾後重新開始遊戲（第一次會重新下載約 3 分鐘）。' });
     if (s.missing > 0) out.push({ bad: 1, code: 'cache', text: '圖片音效還有 ' + s.missing + ' 個沒下載（共 ' + s.assets + ' 個）', fix: s.online ? '網路可能不穩，重新開始遊戲讓它補下載。' : '這次啟動連不上官網，所以沒辦法補檔；確認網路後重新開始遊戲。' });
     if (i.pending.length) out.push({ bad: 1, code: 'pending', text: '有 ' + i.pending.length + ' 個檔案一直等不到回應，例如 ' + i.pending[0].url, fix: '防毒軟體或防火牆可能擋住了，暫時關掉再試，或重新開始遊戲。' });
+    var st = i.stages[i.stages.length - 1];
+    if (st && !st.ok) {
+      var waiting = st.items.map(function (v, k) { return typeof v === 'number' ? null : '第 ' + (k + 1) + ' 項' + (v === '等待中' ? '沒有完成' : v); }).filter(Boolean);
+      if (waiting.length) out.push({ bad: 1, code: 'stage', text: '進地圖時卡在讀取：' + waiting.join('、'), fix: '重新整理一次；還是一樣請送出回報。' });
+    }
+    if (i.auto && i.auto.n) out.push({ bad: 0, code: 'auto', text: '已經自動重新進入 ' + i.auto.n + ' 次' });
     if (i.errors.length) out.push({ bad: 1, code: 'error', text: '遊戲程式出錯：' + i.errors[0].msg.split('\n')[0].slice(0, 120), fix: '重新整理一次；還是一樣請送出回報。' });
     if (s.patches) {
       var off = Object.keys(s.patches).filter(function (k) { return !s.patches[k]; });

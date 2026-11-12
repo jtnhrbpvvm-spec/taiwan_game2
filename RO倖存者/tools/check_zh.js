@@ -111,6 +111,7 @@ try {
     'main = open(sys.argv[2], "rb").read(); core = open(sys.argv[3], "rb").read(); r = {}',
     'for n, rx, _ in m.OFFLINE_PATCHES + m.GM_PATCHES: r[n] = len(rx.findall(main))',
     'for n, rx, _ in m.CORE_PATCHES: r[n] = len(rx.findall(core))',
+    'r["__count"] = getattr(m, "PATCH_COUNT", {})',
     'print(json.dumps(r))',
   ].join('\n');
   // WindowsApps 的 python.exe 可能是空殼（只會開商店），優先用實際安裝的 Python
@@ -118,8 +119,9 @@ try {
   const PY = process.env.PYTHON || (fs.existsSync(realPy) ? realPy : 'python');
   const out = require('child_process').execFileSync(PY, ['-c', code, path.join(ROOT, 'offline', 'rs_offline.py'), mainFile, coreFile], { encoding: 'utf8' });
   const r = JSON.parse(out.trim().split(/\r?\n/).pop());
-  const bad = Object.entries(r).filter(([, n]) => n !== 1);
-  console.log('   rs_offline.py 修補：' + Object.entries(r).map(([k, n]) => `${k}${n === 1 ? '✓' : '⚠' + n}`).join('、'));
+  const want = r.__count || {}; delete r.__count;   // PATCH_COUNT：要全部換的修補，應該有幾處
+  const bad = Object.entries(r).filter(([k, n]) => n !== (want[k] || 1));
+  console.log('   rs_offline.py 修補：' + Object.entries(r).map(([k, n]) => `${k}${n === (want[k] || 1) ? '✓' : '⚠' + n}`).join('、'));
   if (bad.length) console.log('   ⚠ 對不上（0 次）或不只一處的要改 rs_offline.py：' + bad.map(([k]) => k).join('、'));
 } catch (e) { console.log('   ⚠ 無法檢查 rs_offline.py 的修補：' + e.message.split('\n')[0]); }
 console.log('\n補完 names.txt 後：python tools\\build_wiki.py（小百科）、python tools\\pack_offline.py（離線版 zh.js＋version.json），再推上 GitHub。');
