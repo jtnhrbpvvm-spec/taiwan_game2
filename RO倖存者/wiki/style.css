@@ -99,7 +99,29 @@ details.fold > .in { padding: 0 12px 12px; }
 .stat b { color: var(--blue-3); }
 .empty { padding: 30px; text-align: center; color: var(--muted); }
 
+/* LINE 群組按鈕（遊戲風格：立體綠色按鈕） */
+.line-ico { display: inline-flex; align-items: center; justify-content: center; font: 900 9px/1 Nunito, sans-serif; letter-spacing: .2px;
+  color: #06c755; background: #fff; border-radius: 6px; padding: 3px 4px; margin-right: 6px; box-shadow: 0 1px 0 #0002; }
+.line-ico.big { font-size: 13px; padding: 9px 7px; border-radius: 10px; margin: 0; }
+.top .line-btn { display: inline-flex; align-items: center; color: #fff; font-weight: 900; font-size: 14px; padding: 4px 14px 4px 6px; border-radius: 999px; white-space: nowrap;
+  background: linear-gradient(180deg, #5fe08f 0%, #22c35e 48%, #06a84a 52%, #04863a 100%);
+  border: 1px solid #036b2e; box-shadow: inset 0 1px 0 #ffffff80, 0 2px 0 #024f22; text-shadow: 0 1px 0 #036b2e; transition: transform .08s, filter .15s; }
+.top .line-btn:hover { text-decoration: none; filter: brightness(1.08); }
+.top .line-btn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 #ffffff80, 0 0 0 #024f22; }
+.line-banner { display: flex; align-items: center; gap: 12px; margin: 4px 0 14px; padding: 10px 14px; border-radius: 12px; color: #fff;
+  background: linear-gradient(180deg, #5fe08f 0%, #22c35e 48%, #06a84a 52%, #04863a 100%);
+  border: 1px solid #036b2e; box-shadow: inset 0 1px 0 #ffffff80, 0 3px 0 #024f22, 0 8px 18px rgba(4, 134, 58, .25); transition: transform .08s, filter .15s; }
+.line-banner:hover { text-decoration: none; filter: brightness(1.06); }
+.line-banner:active { transform: translateY(3px); box-shadow: inset 0 1px 0 #ffffff80, 0 0 0 #024f22; }
+.line-banner .lb-text { flex: 1; min-width: 0; text-shadow: 0 1px 0 #036b2e; }
+.line-banner .lb-text b { display: block; font-size: 17px; font-weight: 900; }
+.line-banner .lb-text small { display: block; font-size: 13px; opacity: .95; }
+.line-banner .lb-go { flex: none; font-weight: 900; font-size: 15px; color: #24418e; padding: 6px 16px; border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #eaf0fb 50%, #d3dcf2 100%); border: 1px solid #6b7ba8; box-shadow: 0 2px 0 #3a559a; }
+
 @media (max-width: 640px) {
+  .line-banner { padding: 9px 10px; gap: 10px; }
+  .line-banner .lb-go { padding: 5px 12px; font-size: 14px; }
   body { padding: 8px 6px 24px; }
   main#app { padding: 12px; }
   .top { padding: 10px 12px; }
