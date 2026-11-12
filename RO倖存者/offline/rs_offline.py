@@ -1,26 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 r"""
-RO 倖存者離線版（非官方）
-==========================
-雙擊「開始遊戲.bat」就會：
-  1. 連到官網 https://ro-survivors.com/ 檢查有沒有新版本，有的話下載遊戲程式到 game\ 資料夾
-     （連不上官網時，直接用上次下載的版本）
-  2. 在自己的電腦開一個小伺服器（只有本機連得到），用瀏覽器開遊戲
-  3. 第一次會把圖片、音效全部下載到 cache\ 資料夾（約 50 MB、3 分鐘左右），之後沒網路也能玩
+RO 倖存者離線版（非官方）── 最終版
+====================================
+遊戲作者已經封鎖離線遊玩，離線版到這個版本為止，不再下載、也不再開啟遊戲。
 
-限制：
-  - 離線版不會連到官方伺服器：帳號登入、雲端存檔、排行榜都不能用，進度也不會同步到官方帳號。
-  - 離線版的進度存在瀏覽器裡（網址 http://127.0.0.1:8381/ 底下），清除瀏覽器資料就會不見。
-  - 本程式不包含任何遊戲檔案，遊戲檔案都是執行時從官網下載到你自己的電腦。
-    遊戲內容版權屬於 RO Survivors 與 Gravity。
+雙擊「開始遊戲.bat」會在瀏覽器開一個公告頁：
+  作者已經封鎖離線遊玩，請直接前往線上版暢玩（https://ro-survivors.com/）。
+  按下「確定」後，刪除之前下載到這個資料夾的遊戲程式和圖片音效（game\、cache\ 等）。
+刪除完就可以把整個資料夾刪掉。
 
 只用 Python 內建模組，不用另外安裝套件。需要 Python 3.7 以上。
-其他用法（在命令提示字元執行）：
-  python rs_offline.py --no-update   不檢查更新，直接用已下載的版本
-  python rs_offline.py --update-only 只檢查更新、下載，不開遊戲
-  python rs_offline.py --gm          GM 模式（以GM模式開始遊戲.bat）：載入 gm.js，可以創造道具、改數值；
-                                     用 8382 埠號，存檔跟一般模式分開
 """
 import argparse
 import http.server
@@ -36,193 +26,43 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.10"
-ORIGIN = "https://ro-survivors.com/"
-PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
+TOOL_VERSION = "2.0"
+FINAL = True                      # 最終版：不再下載、開啟遊戲
+OFFICIAL = "https://ro-survivors.com/"
+PORT = 8381
+GM_PORT = 8382
 HERE = os.path.dirname(os.path.abspath(__file__))
-GAME = os.path.join(HERE, "game")            # 目前版本的遊戲程式
-CACHE = os.path.join(HERE, "cache")          # 圖片、音效（啟動時預先下載，漏掉的玩的時候再補）
-VERSION_FILE = os.path.join(GAME, "version.json")
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RO-Survivors-offline-player"}
-
-# 把遊戲的離線快取程式換成「清掉自己」的空殼，避免瀏覽器一直用舊版
+# 之前版本下載到這個資料夾的東西（遊戲程式、圖片音效、更新時的備份）
+DATA_DIRS = ["game", "game_new", "game_old", "cache", "_backup"]
+# 瀏覽器存檔在 http://127.0.0.1:8381/（GM 模式 8382）底下：公告頁開在同一個網址，按確定時由頁面清掉
 SW_STUB = (b"self.addEventListener('install',()=>self.skipWaiting());"
            b"self.addEventListener('activate',e=>e.waitUntil((async()=>{"
            b"for(const k of await caches.keys())await caches.delete(k);"
            b"await self.registration.unregister()})()));")
-TYPES = {".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".html": "text/html; charset=utf-8",
-         ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml", ".gif": "image/gif",
-         ".wav": "audio/wav", ".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".ico": "image/x-icon", ".woff2": "font/woff2",
-         ".woff": "font/woff", ".ttf": "font/ttf", ".webmanifest": "application/manifest+json", ".txt": "text/plain",
-         ".fnt": "text/plain", ".xml": "text/xml", ".atlas": "text/plain"}
-lock = threading.Lock()
-ONLINE = False                    # 這次啟動連得到官網嗎（連不到就不預先下載素材）
-
-# ---------------- GM 模式（以GM模式開始遊戲.bat） ----------------
-# 用另一個埠號：瀏覽器存檔跟著網址走，GM 存檔和一般離線存檔完全分開
-GM_PORT = 8382
-GM = False
-GM_JS = os.path.join(HERE, "gm.js")
-# 補中文（裝備、卡片、怪物名稱）：一般模式和 GM 模式都在 index.html 的 <head> 最前面載入
-ZH_JS = os.path.join(HERE, "zh.js")
-# 載入畫面卡住超過 1 分鐘跳出「回報問題」（report.js），偵測資料從 /__diag.json 拿
-REPORT_JS = os.path.join(HERE, "report.js")
-FAILED = []                       # 最近從官網補抓失敗的檔案（給錯誤回報看）
-STARTED = time.time()
-# 對遊戲主程式的修補（變數名稱每版都會變，用正規表示式找；找不到就略過，GM 面板會顯示提醒）
-GM_PATCHES = [
-    # 素質點數超過可分配點數時，遊戲會把素質重置 → GM 模式不檢查
-    ("statCheck", re.compile(rb"\w+\(e\.level,e\.stats\)<0&&\(e\.stats=\w+\(\)\)"), lambda m: b"!1"),
-    # 遊戲局的畫面物件建立時，把遊戲局資料交給 GM 面板（改金幣用）
-    ("game", re.compile(rb"this\.game=(\w+),(\w+)\(\"hud-name\"\)"),
-     lambda m: b"this.game=" + m.group(1) + b",window.__gmGame=" + m.group(1) + b"," + m.group(2) + b"(\"hud-name\")"),
-    # 裝備攻防的計算函式 function ha(a,e=a.refine??0){…}：交給 GM 面板顯示創造裝備的攻／防
-    ("power", re.compile(rb"function (\w+)\((\w),(\w)=\2\.refine\?\?0\)\{"),
-     lambda m: b"window.__gmHa=" + m.group(1) + b";" + m.group(0)),
-]
-# 一般模式和 GM 模式都會套用的修補：離線也能玩無盡之塔、隱藏職業全部開放
-OFFLINE_PATCHES = [
-    # 無盡之塔開局：沒有登入（拿不到伺服器憑證）時遊戲直接退回 → 拿掉這個 else，改用遊戲內建的本機模式
-    # （本機模式本來就會記錄最高樓層、給塔的點數、存強化，只是平常走不到）
-    ("towerStart", re.compile(rb"else return void (\w+)\(\w\.id\)\}(\w+)\[s\]\|\|\(s=\"prontera\"\)"),
-     lambda m: b"}" + m.group(2) + b"[s]||(s=\"prontera\")"),
-    # 塔守衛視窗的「開始新的一局」按鈕：(已登入||否) → (已登入||是)
-    # （函式名每版會變：00ec63b 是 $d(L)、f254752 是 Td(T)，所以不寫死名稱）
-    ("towerButton", re.compile(rb"([\w$]+=[\w$]+\(\w\)&&\w>0&&\(\w\|\|)!1\)"), lambda m: m.group(1) + b"!0)"),
-    # 「無盡之塔需要註冊帳號」的提示不顯示
-    ("towerNotice", re.compile(rb"\w\|\|(\w\.push\(\w\(\"La Endless Tower necesita)"), lambda m: b"!0||" + m.group(1)),
-    # 隱藏職業（忍者、槍手…）：「這個職業解鎖了嗎」一律回答是
-    ("jobs", re.compile(rb"function (\w+)\((\w)\)\{return \w+\(\)\.unlocks\.includes\(\2\)\}"),
-     lambda m: b"function " + m.group(1) + b"(" + m.group(2) + b"){return!0}"),
-    # 進地圖（普隆德拉、關卡）的 await Promise.all([…loadMap…]) → report.js 的 __rsAll：記錄每一項花多久、哪個沒完成
-    ("enterAll", re.compile(rb"await Promise\.all\(\[(?=[^\]]{0,200}\.loadMap\()"),
-     lambda m: b"await(window.__rsAll||Promise.all.bind(Promise))(["),
-    # 3D 畫面等貼圖上傳完才關載入畫面 → report.js 的 __rsReady：超過 10 秒或出錯就不等（玩家回報卡在「正在進入普隆德拉…」）
-    ("ready", re.compile(rb"([\w$]+)\.world3d\.whenReady\(\)"),
-     lambda m: b"(window.__rsReady?window.__rsReady(" + m.group(1) + b".world3d):" + m.group(1) + b".world3d.whenReady())"),
-]
-# 大部分修補只換第 1 處；這些要全部換，數字是 00ec63b～de125da 的處數（check_zh.js 用來檢查）
-PATCH_COUNT = {"enterAll": 2, "ready": 2}
-# 對 build/soul_linker-*.js 的修補（中文用，見 zh.js）
-CORE_PATCHES = [
-    # 裝備全名 function yV(a,e){return e?`${E_(a)} ${e}`:E_(a)}（e＝「of Strength」這類字尾）
-    # 11-11 起字尾多包一層葡萄牙文翻譯：function j7(t,e){return e?`${L1(t)} ${gy(e)}`:L1(t)}（中文模式下 gy(e) 還是英文）
-    # → 中文模式交給 zh.js 排成中文語序「力量之太刀」；其他語言照遊戲原本的寫法；對不上就維持「太刀 of Strength」
-    ("zhSuffix", re.compile(rb"function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{((?:[\w$]+\(\3\))|\3)\}`:\4\(\2\)\}"),
-     lambda m: (b"function %s(%s,%s){return %s?(window.__rsZh&&window.__rsZh.isZh()?window.__rsZh.full(%s(%s),%s):`${%s(%s)} ${%s}`):%s(%s)}" % (
-         m.group(1), m.group(2), m.group(3), m.group(3), m.group(4), m.group(2), m.group(3),
-         m.group(4), m.group(2), m.group(5), m.group(4), m.group(2)))),
-]
-PATCH_STATUS = {}
-
-
-def patch_main(code):
-    for name, rx, rep in OFFLINE_PATCHES + (GM_PATCHES if GM else []):
-        code, n = rx.subn(rep, code, count=0 if name in PATCH_COUNT else 1)
-        PATCH_STATUS[name] = bool(n)
-    return code
-
-
-def patch_core(code):
-    for name, rx, rep in CORE_PATCHES:
-        code, n = rx.subn(rep, code, count=1)
-        PATCH_STATUS[name] = bool(n)
-    return code
-
-
-def patch_status():
-    """還沒載過主程式時，先修補一次看結果（給 GM 面板和啟動訊息用）。"""
-    if not PATCH_STATUS:
-        try:
-            for f in os.listdir(os.path.join(GAME, "build")):
-                for rx, fn in ((r"main-[\w-]+\.js$", patch_main), (r"soul_linker-[\w-]+\.js$", patch_core)):
-                    if re.match(rx, f):
-                        with open(os.path.join(GAME, "build", f), "rb") as fh:
-                            fn(fh.read())
-        except OSError:
-            pass
-    return PATCH_STATUS
 
 
 # ---------------- 離線工具自己的更新（從 GitHub Pages） ----------------
-# version.json 由 tools\pack_offline.py 產生：{"version": "1.4", "files": {"檔名": "sha256", ...}}
+# 留著：萬一最終版的公告頁要修正，玩家還收得到
 TOOL_URL = os.environ.get("RS_OFFLINE_UPDATE_URL") or \
     "https://jtnhrbpvvm-spec.github.io/taiwan_game2/" + urllib.parse.quote("RO倖存者") + "/offline/"
-# .bat 正在執行中不能換（cmd 是邊讀邊執行的，換掉內容會亂跳），有新版只提醒
-RUNNING_FILES = (".bat",)
 
 
 def ver_tuple(v):
     return tuple(int(x) for x in re.findall(r"\d+", str(v)))
 
 
-def sha256_file(path):
+def sha256_bytes(data):
     import hashlib
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path):
     try:
         with open(path, "rb") as f:
-            return hashlib.sha256(f.read()).hexdigest()
+            return sha256_bytes(f.read())
     except OSError:
         return None
-
-
-def self_update():
-    """檢查 GitHub 上有沒有新版的離線工具；有就下載換上。回傳 True 表示換了新版、要重新啟動。"""
-    print("檢查離線工具有沒有新版…")
-    try:
-        info = json.loads(fetch(TOOL_URL + "version.json?t=%d" % int(time.time()), timeout=10).decode("utf-8"))
-    except (urllib.error.URLError, OSError, ValueError) as e:
-        print("  無法檢查（%s），繼續使用目前版本 v%s。" % (getattr(e, "reason", e), TOOL_VERSION))
-        return False
-    remote = str(info.get("version", ""))
-    if ver_tuple(remote) < ver_tuple(TOOL_VERSION):
-        print("  已經是最新版 v%s。" % TOOL_VERSION)
-        return False
-    files = info.get("files") or {}
-    changed = [n for n, h in files.items() if sha256_file(inside(HERE, n) or "") != h]
-    bats = [n for n in changed if n.lower().endswith(RUNNING_FILES)]
-    todo = [n for n in changed if n not in bats]
-    if ver_tuple(remote) == ver_tuple(TOOL_VERSION):
-        # 版本相同：只有內容不同（例如補了翻譯 zh.js）才更新；.bat 不提醒（版本沒變，多半是換行之類的差異）
-        if not todo:
-            print("  已經是最新版 v%s。" % TOOL_VERSION)
-            return False
-        bats = []
-        print("  有更新的檔案（v%s），更新 %d 個檔案…" % (TOOL_VERSION, len(todo)))
-    else:
-        print("  發現新版 v%s（目前 v%s），更新 %d 個檔案…" % (remote, TOOL_VERSION, len(todo)))
-    new = {}
-    for n in todo:
-        if not inside(HERE, n) or "/" in n or "\\" in n:
-            continue
-        try:
-            data = fetch(TOOL_URL + urllib.parse.quote(n) + "?t=%d" % int(time.time()), timeout=30)
-        except (urllib.error.URLError, OSError) as e:
-            print("  %s 下載失敗（%s），這次先不更新。" % (n, e))
-            return False
-        import hashlib
-        if hashlib.sha256(data).hexdigest() != files[n]:
-            print("  %s 內容和版本資訊對不上（GitHub 可能還在更新），這次先不更新。" % n)
-            return False
-        if n.endswith(".py"):
-            try:
-                compile(data, n, "exec")
-            except SyntaxError as e:
-                print("  %s 有錯誤（%s），這次先不更新。" % (n, e))
-                return False
-        new[n] = data
-    # 全部下載、檢查完才換：舊檔放 _backup\，萬一新版有問題可以拿回來
-    backup = os.path.join(HERE, "_backup")
-    os.makedirs(backup, exist_ok=True)
-    for n, data in new.items():
-        dst = os.path.join(HERE, n)
-        if os.path.isfile(dst):
-            shutil.copyfile(dst, os.path.join(backup, n))
-        write(dst, data)
-        print("    [更新] %s" % n)
-    if bats:
-        print("  另外這些啟動檔也有新版，請到說明頁重新下載 zip：" + "、".join(bats))
-        print("  " + TOOL_URL)
-    return bool(new)
 
 
 def fetch(url, timeout=30):
@@ -239,381 +79,221 @@ def write(path, data):
     os.replace(tmp, path)
 
 
-def read_json(path):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
-
-
 def inside(base, rel):
-    """rel 轉成 base 底下的完整路徑；跑出 base 外面就回 None（防止 ../ 讀到別的檔案）"""
     full = os.path.normpath(os.path.join(base, rel))
     return full if full.startswith(base + os.sep) else None
 
 
-# ----------------------------------------------------------------------------
-# 檢查更新、下載遊戲程式
-# ----------------------------------------------------------------------------
-def update():
-    """回傳 True 表示 game\\ 裡有可以玩的版本。"""
-    old = read_json(VERSION_FILE)
-    have = os.path.isfile(os.path.join(GAME, "index.html"))
-    print("檢查遊戲版本…")
+def self_update():
+    """GitHub 上的版本比較新（或同版本但檔案不同）就換上；回傳 True 表示要重新啟動。"""
     try:
-        sw = fetch(ORIGIN + "sw.js?t=%d" % int(time.time()), timeout=15).decode("utf-8", "replace")
-    except (urllib.error.URLError, OSError) as e:
-        if have:
-            print("  連不上官網（%s），使用上次下載的版本 %s。" % (e, old.get("name", "")))
-            return True
-        print("  連不上官網（%s），而且還沒有下載過遊戲。請確認網路後再試一次。" % e)
+        info = json.loads(fetch(TOOL_URL + "version.json?t=%d" % int(time.time()), timeout=10).decode("utf-8"))
+    except (urllib.error.URLError, OSError, ValueError):
         return False
-    global ONLINE
-    ONLINE = True
-
-    m = re.search(r"const PRECACHE = (\[.*?\]);", sw, re.S)
-    shell = (re.search(r"const SHELL = '([^']+)'", sw) or [None, None])[1]
-    assets_hash = (re.search(r"const ASSETS = '([^']+)'", sw) or [None, None])[1]
-    if not m or not shell:
-        print("  官網的檔案格式改了，這版離線程式讀不懂。" + ("先用上次下載的版本。" if have else ""))
-        return have
-    if have and old.get("shell") == shell:
-        print("  已經是最新版本（%s）。" % old.get("name", shell))
-        return True
-
-    files = [p[0] for p in json.loads(m.group(1))] + ["assets/manifest.json", "talents.html"]
-    print("  發現新版本，開始更新遊戲程式…" if have else "  第一次使用，開始下載遊戲程式（約 4 MB）…")
-    new_dir = GAME + "_new"
-    shutil.rmtree(new_dir, ignore_errors=True)
-    down = reuse = 0
-    try:
-        for p in files:
-            rel = p.replace("/", os.sep)
-            dst = inside(new_dir, rel)
-            if not dst:
-                continue
-            src = inside(GAME, rel)
-            # build\ 的檔名帶內容雜湊：檔名一樣＝內容一樣，直接沿用舊版，不用重抓
-            if p.startswith(("build/", "app-icons/")) and src and os.path.isfile(src):
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                shutil.copyfile(src, dst)
-                reuse += 1
-                continue
+    remote = str(info.get("version", ""))
+    if ver_tuple(remote) < ver_tuple(TOOL_VERSION):
+        return False
+    files = info.get("files") or {}
+    todo = [n for n, h in files.items()
+            if not n.lower().endswith(".bat") and "/" not in n and "\\" not in n
+            and inside(HERE, n) and sha256_file(inside(HERE, n)) != h]
+    if not todo:
+        return False
+    new = {}
+    for n in todo:
+        try:
+            data = fetch(TOOL_URL + urllib.parse.quote(n) + "?t=%d" % int(time.time()), timeout=30)
+        except (urllib.error.URLError, OSError):
+            return False
+        if sha256_bytes(data) != files[n]:
+            return False
+        if n.endswith(".py"):
             try:
-                data = fetch(ORIGIN + p)
-            except (urllib.error.URLError, OSError) as e:
-                if p == "talents.html":            # 天賦說明頁，少了也能玩
-                    continue
-                raise RuntimeError("%s 下載失敗：%s" % (p, e))
-            write(dst, data)
-            down += 1
-            print("    [下載] %s（%d KB）" % (p, len(data) // 1024))
-    except RuntimeError as e:
-        shutil.rmtree(new_dir, ignore_errors=True)
-        print("  " + str(e))
-        print("  下載沒完成。" + ("先用上次下載的版本。" if have else "請稍後再試。"))
-        return have
-
-    main_name = next((p for p in files if re.match(r"build/main-[\w-]+\.js$", p)), "")
-    name = shell
-    try:
-        with open(os.path.join(new_dir, main_name.replace("/", os.sep)), "r", encoding="utf-8") as f:
-            v = re.search(r'\{commit:"([0-9a-f]+)",date:"([^"]+)"\}', f.read())
-        if v:
-            name = v.group(2)[:10] + " (" + v.group(1) + ")"
-    except OSError:
-        pass
-    with open(os.path.join(new_dir, "version.json"), "w", encoding="utf-8") as f:
-        json.dump({"shell": shell, "assets": assets_hash, "name": name}, f, ensure_ascii=False)
-
-    # 換上新版
-    shutil.rmtree(GAME + "_old", ignore_errors=True)
-    if os.path.isdir(GAME):
-        os.rename(GAME, GAME + "_old")
-    os.rename(new_dir, GAME)
-    shutil.rmtree(GAME + "_old", ignore_errors=True)
-    print("  下載 %d 個、沿用舊版 %d 個。目前版本：%s" % (down, reuse, name))
-
+                compile(data, n, "exec")
+            except SyntaxError:
+                return False
+        new[n] = data
+    for n, data in new.items():
+        write(os.path.join(HERE, n), data)
+        print("  [更新] %s" % n)
     return True
 
 
-# ----------------------------------------------------------------------------
-# 預先下載圖片、音效（同時開多條連線，比瀏覽器一個一個要快很多；下載完就能完全離線玩）
-# ----------------------------------------------------------------------------
-def asset_list(manifest):
-    out = set()
-
-    def walk(o):
-        if isinstance(o, dict):
-            for v in o.values():
-                walk(v)
-        elif isinstance(o, list):
-            for v in o:
-                walk(v)
-        elif isinstance(o, str) and re.search(r"\.\w{2,5}$", o) and ".." not in o and not o.startswith(("http:", "https:", "/")):
-            out.add(o)
-    walk(manifest)
-    return sorted(out)
+# ---------------- 刪除下載的資料 ----------------
+def data_size():
+    files = size = 0
+    for d in DATA_DIRS:
+        for root, _, names in os.walk(os.path.join(HERE, d)):
+            for n in names:
+                files += 1
+                try:
+                    size += os.path.getsize(os.path.join(root, n))
+                except OSError:
+                    pass
+    return files, size
 
 
-def prefetch(refresh=False):
-    """下載 manifest 列出的所有素材；圖集 .json 裡指到的圖片也一起抓。回傳失敗數。"""
-    manifest = read_json(os.path.join(GAME, "assets", "manifest.json"))
-    todo = ["assets/" + p for p in asset_list(manifest)]
-    if not todo:
-        return 0
-    from concurrent.futures import ThreadPoolExecutor
-    done, fail, seen = [0], [0], set(todo)
-    extra = []
-
-    def need(p):
-        full = inside(CACHE, p.replace("/", os.sep))
-        return full and (refresh or not os.path.isfile(full))
-
-    def one(p):
-        full = inside(CACHE, p.replace("/", os.sep))
-        if not full:
-            return
-        data = None
-        if need(p):
-            try:
-                data = fetch(ORIGIN + p)
-                write(full, data)
-            except (urllib.error.URLError, OSError):
-                fail[0] += 1
-        elif p.endswith(".json"):
-            with open(full, "rb") as f:
-                data = f.read()
-        # 圖集 .json 的 meta.image 指到真正的圖片
-        if data and p.endswith(".json"):
-            try:
-                img = (json.loads(data.decode("utf-8")).get("meta") or {}).get("image")
-            except (ValueError, AttributeError):
-                img = None
-            if isinstance(img, str) and ".." not in img and not img.startswith(("http", "/")):
-                q = p.rsplit("/", 1)[0] + "/" + img
-                with lock:
-                    if q not in seen:
-                        seen.add(q)
-                        extra.append(q)
-        with lock:
-            done[0] += 1
-            if missing and done[0] % 200 == 0:
-                print("    %d / %d" % (done[0], len(seen)))
-
-    missing = sum(1 for p in todo if need(p))
-    if missing:
-        print("下載圖片、音效（%d 個，第一次約 50 MB，請稍等）…" % missing)
-    with ThreadPoolExecutor(16) as ex:
-        list(ex.map(one, todo))
-    while extra:
-        batch, extra[:] = list(extra), []
-        with ThreadPoolExecutor(16) as ex:
-            list(ex.map(one, batch))
-    if missing or fail[0]:
-        print("  完成。" + ("有 %d 個下載失敗，玩的時候會再試一次。" % fail[0] if fail[0] else ""))
-    return fail[0]
+def delete_data():
+    files, size = data_size()
+    left = []
+    for d in DATA_DIRS:
+        p = os.path.join(HERE, d)
+        if os.path.isdir(p):
+            shutil.rmtree(p, ignore_errors=True)
+            if os.path.exists(p):
+                left.append(d)
+    return {"files": files, "mb": round(size / 1048576, 1), "left": left}
 
 
-# ----------------------------------------------------------------------------
-# 本機伺服器
-# ----------------------------------------------------------------------------
+# ---------------- 公告頁 ----------------
+PAGE = """<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RO 倖存者離線版：最終版</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+         background: #1d2433; font-family: system-ui, "Segoe UI", "Microsoft JhengHei", sans-serif; color: #2b3a55; }
+  .box { width: 100%%; max-width: 460px; background: #fff; border-radius: 16px; padding: 32px 28px 28px;
+         text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+  h1 { margin: 0 0 14px; font-size: 22px; color: #b23a3a; }
+  p { margin: 10px 0; line-height: 1.7; font-size: 16px; }
+  .end { color: #5b6b85; font-size: 14px; }
+  button, a.btn { display: inline-block; margin-top: 18px; min-width: 160px; padding: 13px 26px; border: 0; border-radius: 10px;
+         font-size: 17px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  button { background: #c94a4a; color: #fff; }
+  button:disabled { opacity: .6; cursor: default; }
+  a.btn { background: #4a86d9; color: #fff; }
+  #done { display: none; }
+  .small { font-size: 13px; color: #7a879c; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div id="ask">
+    <h1>作者已經封鎖離線遊玩</h1>
+    <p>請直接前往線上版暢玩：<br><a href="%(url)s" target="_blank" rel="noopener">ro-survivors.com</a></p>
+    <p class="end">此版本到這邊為止。<br>按下「確定」後，開始刪除之前下載的遊戲資料（%(info)s）<br>和瀏覽器裡的離線版存檔。</p>
+    <button id="ok">確定</button>
+  </div>
+  <div id="done">
+    <h1 style="color:#2f7a4a">資料已刪除</h1>
+    <p id="result"></p>
+    <p>感謝大家一路以來的支持！</p>
+    <a class="btn" href="%(url)s">前往線上版暢玩</a>
+    <p class="small">黑色視窗可以關掉了，整個「RO倖存者離線版」資料夾也可以直接刪除。</p>
+  </div>
+</div>
+<script>
+document.getElementById('ok').onclick = async function () {
+  this.disabled = true; this.textContent = '刪除中…';
+  let r = {};
+  try { r = await (await fetch('/__delete', {method: 'POST'})).json(); } catch (e) {}
+  // 舊版存在這個網址底下的瀏覽器存檔（遊戲已經不在了，一起清掉）
+  try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
+  try { if (indexedDB.databases) for (const d of await indexedDB.databases()) indexedDB.deleteDatabase(d.name); } catch (e) {}
+  try { for (const k of await caches.keys()) await caches.delete(k); } catch (e) {}
+  document.getElementById('result').textContent = r.left && r.left.length
+    ? '有些檔案刪不掉（' + r.left.join('、') + '），請關掉黑色視窗後手動刪除整個資料夾。'
+    : '已刪除 ' + (r.files || 0) + ' 個檔案（' + (r.mb || 0) + ' MB）和瀏覽器裡的離線版存檔。';
+  document.getElementById('ask').style.display = 'none';
+  document.getElementById('done').style.display = 'block';
+};
+</script>
+</body>
+</html>
+"""
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args):   # 不要每個檔案都印一行
+    def log_message(self, fmt, *args):
         pass
 
     def _send(self, body, ctype, code=200):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
-
-    def do_POST(self):
-        # 存檔上傳、對局驗證等都要官方伺服器，離線版一律回「離線」
-        n = int(self.headers.get("Content-Length") or 0)
-        if n:
-            self.rfile.read(n)
-        self._send(b'{"error":"offline"}', "application/json", 503)
-
-    do_PUT = do_DELETE = do_PATCH = do_POST
 
     def do_HEAD(self):
         self.do_GET()
 
     def do_GET(self):
-        path = urllib.parse.unquote(self.path.split("?")[0].split("#")[0])
-        if path.startswith("/api/"):
-            return self._send(b'{"error":"offline"}', "application/json", 503)
-        if path == "/sw.js":
+        path = self.path.split("?")[0]
+        if path == "/sw.js":                       # 清掉舊版可能留下的快取程式
             return self._send(SW_STUB, "text/javascript")
-        if path == "/status.json":
-            return self._send(b'{"state":"ok"}', "application/json")
-        if path in ("", "/"):
-            path = "/index.html"
-        rel = path.lstrip("/").replace("/", os.sep)
-        if not rel or ".." in rel.split(os.sep):
-            return self._send(b"not found", "text/plain", 404)
-        ctype = TYPES.get(os.path.splitext(path)[1].lower(), "application/octet-stream")
+        if path in ("/", "/index.html"):
+            files, size = data_size()
+            info = "%d 個檔案、%.1f MB" % (files, size / 1048576) if files else "目前沒有需要刪除的檔案"
+            html = PAGE % {"url": OFFICIAL, "info": info}
+            return self._send(html.encode("utf-8"), "text/html; charset=utf-8")
+        if path == "/favicon.ico":
+            return self._send(b"", "image/x-icon", 404)
+        # 其他網址（舊版遊戲的書籤、分頁）一律回公告頁
+        self.send_response(302)
+        self.send_header("Location", "/")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
-        if GM and path == "/__gm.js":
-            try:
-                with open(GM_JS, "rb") as f:
-                    return self._send(f.read(), "text/javascript; charset=utf-8")
-            except OSError:
-                return self._send(b"alert('\\u627e\\u4e0d\\u5230 gm.js')", "text/javascript")
-        if path == "/__zh.js":
-            try:
-                with open(ZH_JS, "rb") as f:
-                    return self._send(f.read(), "text/javascript; charset=utf-8")
-            except OSError:
-                return self._send(b"", "text/javascript")
-        if path == "/__report.js":
-            try:
-                with open(REPORT_JS, "rb") as f:
-                    return self._send(f.read(), "text/javascript; charset=utf-8")
-            except OSError:
-                return self._send(b"", "text/javascript")
-        if path == "/__diag.json":
-            return self._send(json.dumps(diag(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
-        if path in ("/__gm_status.json", "/__offline_status.json"):
-            return self._send(json.dumps(patch_status()).encode(), "application/json")
-
-        for base in (GAME, CACHE):
-            full = inside(base, rel)
-            if full and os.path.isfile(full):
-                with open(full, "rb") as f:
-                    data = f.read()
-                if base == GAME:
-                    if rel == "index.html":
-                        # 中文名稱要比遊戲程式早執行（攔 manifest.json），放在 <head> 最前面
-                        zh = b'<script src="/__report.js"></script><script src="/__zh.js"></script>'
-                        m = re.search(rb"<head[^>]*>", data, re.I)
-                        data = data[:m.end()] + zh + data[m.end():] if m else zh + data
-                        # 流量統計（GoatCounter，跟說明頁同一個帳號）：localhost 預設不算，要 allow_local；路徑寫成「離線版」好跟網頁分開看
-                        gc = (b"<script>addEventListener('load',function(){window.goatcounter={allow_local:true,path:'/RO\\u5016\\u5b58\\u8005\\u96e2\\u7dda\\u7248/"
-                              + (b"GM" if GM else b"") + b"'};var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';"
-                              b"s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>")
-                        pos = data.rfind(b"</body>")
-                        data = data[:pos] + gc + data[pos:] if pos >= 0 else data + gc
-                    if GM and rel == "index.html":
-                        tag = b'<script src="/__gm.js"></script>'
-                        pos = data.rfind(b"</body>")
-                        data = data[:pos] + tag + data[pos:] if pos >= 0 else data + tag
-                    elif re.match(r"build[\\/]main-[\w-]+\.js$", rel):
-                        data = patch_main(data)
-                    elif re.match(r"build[\\/]soul_linker-[\w-]+\.js$", rel):
-                        data = patch_core(data)
-                return self._send(data, ctype)
-
-        # 本機沒有：從官網下載一次存起來
-        full = inside(CACHE, rel)
-        if not full or not os.path.splitext(rel)[1]:
-            return self._send(b"not found", "text/plain", 404)
-        try:
-            data = fetch(ORIGIN + path.lstrip("/"))
-        except (urllib.error.URLError, OSError) as e:
-            with lock:
-                FAILED[:] = FAILED[-19:] + ["%s（%s）" % (path, getattr(e, "code", None) or getattr(e, "reason", e))]
-            return self._send(b"not found", "text/plain", 404)
-        with lock:
-            write(full, data)
-        return self._send(data, ctype)
+    def do_POST(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        if n:
+            self.rfile.read(n)
+        if self.path.split("?")[0] != "/__delete":
+            return self._send(b'{"error":"offline"}', "application/json", 503)
+        r = delete_data()
+        print("\n已刪除下載的遊戲資料：%d 個檔案、%s MB。" % (r["files"], r["mb"]))
+        if r["left"]:
+            print("刪不掉的資料夾：%s（請關掉這個視窗後手動刪除）" % "、".join(r["left"]))
+        print("離線版到這邊為止，這個視窗可以關掉了。請前往線上版：" + OFFICIAL)
+        self._send(json.dumps(r, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
+        threading.Timer(1.0, self.server.shutdown).start()
 
 
-def diag():
-    """給 report.js 的偵測資料：版本、cache 缺檔、修補結果、最近下載失敗的檔案（不含任何個人資料）。"""
-    import platform
-    manifest = read_json(os.path.join(GAME, "assets", "manifest.json"))
-    assets = ["assets/" + p for p in asset_list(manifest)]
-    missing = [p for p in assets if not os.path.isfile(inside(CACHE, p.replace("/", os.sep)) or "")]
-    return {
-        "tool": TOOL_VERSION, "gm": GM, "game": read_json(VERSION_FILE).get("name", ""),
-        "python": platform.python_version(), "os": platform.platform(),
-        "online": ONLINE, "uptime": int(time.time() - STARTED),
-        "assets": len(assets), "missing": len(missing), "missingList": missing[:10],
-        "gameFiles": os.path.isfile(os.path.join(GAME, "index.html")),
-        "patches": patch_status(), "failed": FAILED[-10:],
-    }
-
-
-def serve(open_browser=True):
+def serve(port, open_browser=True):
     server = None
-    base_port = GM_PORT if GM else PORT
-    for port in [base_port] + list(range(PORT + 2, PORT + 20)):
+    for p in [port] + list(range(PORT + 2, PORT + 20)):
         try:
-            server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
+            server = http.server.ThreadingHTTPServer(("127.0.0.1", p), Handler)
             break
         except OSError:
             continue
     if server is None:
         print("找不到可以用的埠號，請先關掉其他離線版視窗再試。")
-        return
-    port = server.server_address[1]
-    url = "http://127.0.0.1:%d/" % port
-    print("\n%s已啟動：%s" % ("GM 模式" if GM else "離線版", url))
-    if port != base_port:
-        print("（注意：%d 被占用了，這次改用 %d，所以看不到之前的存檔。關掉其他離線版視窗再開就會恢復。）" % (base_port, port))
-    if GM:
-        print("GM 模式的存檔和一般離線版分開，互相看不到。")
-        print("在物品欄、卡片頁按「＋ 創造」，或按右下角紅色「GM」按鈕修改。")
-    st = patch_status()
-    tower = st.get("towerStart") and st.get("towerButton")
-    print("無盡之塔：" + ("離線可以玩（二轉角色到普隆德拉的塔之守護者）" if tower else "這版遊戲對不上，離線版暫時不能玩"))
-    print("隱藏職業：" + ("全部開放" if st.get("jobs") else "這版遊戲對不上，暫時無法開放"))
-    print("中文名稱：裝備、卡片、怪物" + ("" if st.get("zhSuffix") else "（這版遊戲對不上，裝備字尾維持英文，例如「太刀 of Strength」）"))
-    print("玩的時候這個視窗要開著；玩完直接關掉這個視窗就好。")
+        print("離線版已經停止提供，請前往線上版：" + OFFICIAL)
+        return 1
+    url = "http://127.0.0.1:%d/" % server.server_address[1]
+    print("公告頁：" + url)
+    print("在瀏覽器按「確定」就會刪除下載的遊戲資料。")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+    return 0
 
 
 def main():
-    ap = argparse.ArgumentParser(description="RO 倖存者離線版（非官方）")
-    ap.add_argument("--no-update", action="store_true", help="不檢查更新，直接用已下載的版本")
-    ap.add_argument("--update-only", action="store_true", help="只檢查更新、下載，不開遊戲")
-    ap.add_argument("--no-browser", action="store_true", help="不要自動開瀏覽器")
-    ap.add_argument("--refresh-assets", action="store_true", help="圖片音效全部重新下載（畫面怪怪的時候用）")
-    ap.add_argument("--gm", action="store_true", help="GM 模式：可以創造道具、修改數值（存檔和一般模式分開）")
-    ap.add_argument("--no-self-update", action="store_true", help="不檢查離線工具本身有沒有新版")
-    args = ap.parse_args()
-    global GM
-    GM = args.gm
-    print("RO 倖存者離線版（非官方）v" + TOOL_VERSION + ("　【GM 模式】" if GM else ""))
-    print("提醒：離線版不能登入、不能雲端存檔，進度不會同步到官方帳號。\n")
+    ap = argparse.ArgumentParser(description="RO 倖存者離線版（非官方）最終版")
+    ap.add_argument("--gm", action="store_true")
+    ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--no-self-update", action="store_true")
+    args, _ = ap.parse_known_args()          # 舊版的其他參數（--no-update 等）一律忽略
+    print("RO 倖存者離線版（非官方）v%s 最終版\n" % TOOL_VERSION)
+    print("作者已經封鎖離線遊玩，請直接前往線上版暢玩：" + OFFICIAL)
+    print("此版本到這邊為止，不會再下載或開啟遊戲。\n")
     if not args.no_self_update and self_update():
-        # 換上新版程式了：用新的 rs_offline.py 重新執行一次（同樣的參數）
-        print("\n離線工具已更新，重新啟動…\n")
         import subprocess
         return subprocess.call([sys.executable, os.path.abspath(__file__)] + sys.argv[1:] + ["--no-self-update"])
-    if args.no_update:
-        ok = os.path.isfile(os.path.join(GAME, "index.html"))
-        if not ok:
-            print("還沒有下載過遊戲，請先不加 --no-update 執行一次。")
-    else:
-        before = read_json(VERSION_FILE).get("assets")
-        ok = update()
-        if ok and ONLINE:
-            after = read_json(VERSION_FILE).get("assets")
-            # 遊戲換了圖片音效（sw.js 的 ASSETS 雜湊變了）→ 全部重抓，避免新舊混用
-            changed = bool(before and after and before != after)
-            if changed:
-                print("遊戲的圖片音效有更新，重新下載…")
-            try:
-                prefetch(refresh=changed or args.refresh_assets)
-            except (urllib.error.URLError, OSError) as e:
-                print("  圖片音效沒有全部下載完（%s），玩的時候會再補。" % e)
-    if not ok:
-        return 1
-    if not args.update_only:
-        serve(not args.no_browser)
-    return 0
+    # GM 模式的存檔在 8382 埠號：用同一個埠號開公告頁，按確定時才清得到那邊的瀏覽器存檔
+    return serve(GM_PORT if args.gm else PORT, not args.no_browser)
 
 
 if __name__ == "__main__":

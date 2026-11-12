@@ -4,282 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RO 倖存者離線版</title>
-<meta name="description" content="RO Survivors 非官方離線版：在自己電腦開遊戲的小工具，含 Python 安裝教學。">
+<meta name="description" content="RO Survivors 非官方離線版已停止提供：作者已經封鎖離線遊玩，請直接前往線上版暢玩。">
 <style>
-:root{--bg:#0f1a2e;--card:#18263f;--line:#2b3f63;--text:#e8eef9;--muted:#9fb0cc;--acc:#4ea1ff;--acc2:#7cc4ff;--warn:#ffcf5c;--bad:#ff7a7a;--ok:#6fdc8c;--code:#0b1424}
+:root{--bg:#0f1a2e;--card:#18263f;--line:#2b3f63;--text:#e8eef9;--muted:#9fb0cc;--acc:#4ea1ff;--acc2:#7cc4ff;--bad:#ff8a8a;--code:#0b1424}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.75 "Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
-.wrap{max-width:860px;margin:0 auto;padding:24px 16px 60px}
-h1{font-size:28px;margin:8px 0 4px}
-h1 small{font-size:13px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;vertical-align:middle}
-.sub{color:var(--muted);margin:0 0 20px}
-h2{font-size:21px;margin:36px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-h3{font-size:17px;margin:22px 0 8px;color:var(--acc2)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
-.warn{border-color:#6b5a26;background:#2a2617}
-.warn b{color:var(--warn)}
-a{color:var(--acc2)}
-.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;margin:6px 8px 6px 0}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:16px/1.75 "Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:40px 16px 60px}
+.notice{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px 24px;text-align:center}
+.notice h1{margin:0 0 12px;font-size:26px;color:var(--bad)}
+.notice p{margin:10px 0}
+.end{color:var(--muted)}
+.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;font-size:18px;padding:13px 28px;border-radius:10px;margin-top:16px}
 .btn:hover{background:#3b8ae6}
-.btn.ghost{background:transparent;border:1px solid var(--acc);color:var(--acc2)}
-ol.steps{counter-reset:s;list-style:none;padding:0;margin:0}
-ol.steps>li{counter-increment:s;position:relative;padding:4px 0 14px 44px}
-ol.steps>li::before{content:counter(s);position:absolute;left:0;top:4px;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
-code,kbd{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-family:Consolas,"Cascadia Mono",monospace;font-size:14px}
-pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;font-family:Consolas,"Cascadia Mono",monospace;font-size:14px;margin:8px 0}
-.mark{color:var(--warn);font-weight:700}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
-.tabs button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
-.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.pane{display:none}.pane.on{display:block}
-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:15px}
-th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-th{background:#1d2e4b;white-space:nowrap}
-.yes{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
-details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
-details summary{cursor:pointer;font-weight:700}
-details[open] summary{margin-bottom:6px}
+h2{font-size:20px;margin:36px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+a{color:var(--acc2)}
+code{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-family:Consolas,"Cascadia Mono",monospace;font-size:14px}
 .foot{color:var(--muted);font-size:13px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
-@media (max-width:600px){h1{font-size:23px}h1 small{display:inline-block;margin:4px 0 0}th,td{padding:6px}table{font-size:14px}}
+@media (max-width:600px){.notice h1{font-size:22px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<h1>RO 倖存者離線版 <small>非官方・v1.10</small></h1>
-<p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
-
-<div class="card warn">
-  <b>⚠ 先看這裡：</b>離線版<b>不會連到官方伺服器</b>。不能登入帳號、不能雲端存檔、沒有廣場和排行榜，
-  進度<b>不會同步到你的官方帳號</b>。正式遊玩請到官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>。
+<div class="notice">
+  <h1>作者已經封鎖離線遊玩</h1>
+  <p>請直接前往線上版暢玩。RO Survivors 官方網站免費遊玩，進度會存在你的帳號裡。</p>
+  <p class="end">RO 倖存者離線版到這邊為止，不再提供下載。</p>
+  <a class="btn" href="https://ro-survivors.com/" target="_blank" rel="noopener">前往線上版暢玩</a>
 </div>
 
-<h2 id="news">更新公告</h2>
-<div class="card">
-  <b>v1.10（2026-11-12）：卡在「正在進入普隆德拉…」會自動排除</b>
-  <ul>
-    <li>載入畫面 20 秒沒有動靜，會自動重新整理，並<b>自動選回同一個角色進入普隆德拉</b>，不用自己操作（5 分鐘內最多自動 2 次）。</li>
-    <li>3D 地圖貼圖等太久（超過 10 秒）時不再一直等，先讓你進遊戲，貼圖會隨後補上。</li>
-    <li>自動排除後還是卡住，1 分鐘時才會出現「回報問題」按鈕。</li>
-    <li>不用重新下載，下次開遊戲會自動更新。</li>
-  </ul>
-</div>
-<div class="card">
-  <b>v1.9（2026-11-12）：載入卡住可以一鍵回報</b>
-  <ul>
-    <li>載入畫面（例如「正在進入普隆德拉…」）卡住超過 1 分鐘，右下角會跳出「⚠ 卡住了嗎？回報問題」。</li>
-    <li>按下去會自動檢查：黑色視窗（本機伺服器）有沒有在跑、3D 繪圖／硬體加速、有沒有檔案載入失敗、圖片音效有沒有下載完整，並告訴你怎麼排除。</li>
-    <li>還是不行可以按「送出回報」傳給作者（只有版本、偵測結果、瀏覽器與顯示卡型號，不含帳號、存檔）。</li>
-    <li>v1.5 以後的玩家<b>不用重新下載</b>，下次開遊戲會自動更新。</li>
-  </ul>
-</div>
-<div class="card">
-  <b>v1.8（2026-11-12）：沒有 Python 會自動幫你裝</b>
-  <ul>
-    <li>雙擊「開始遊戲.bat」時，如果電腦還沒有 Python 3，會<b>自動下載並安裝</b> Python 官方的「Python 安裝管理員」
-      （<code>python-manager-26.4.msix</code>，約 96 MB，Python Software Foundation 數位簽章），再用它裝好 Python 3，接著直接開始遊戲。
-      只裝在你自己的使用者帳號底下，不需要系統管理員權限，只要裝一次。</li>
-    <li>安裝檔先從這個網頁下載，下載不到時改從 Python 官網（python.org）下載；每次都會比對檔案指紋和數位簽章，對不上就不安裝。</li>
-    <li>自動安裝失敗時（例如 Windows 版本太舊），會跟以前一樣打開下面的<a href="#python">手動安裝教學</a>。</li>
-    <li><span class="mark">舊版的玩家請重新下載 zip</span>（啟動檔有改），解壓縮後蓋過原本的檔案即可，存檔不會不見。</li>
-    <li>如果卡在藍色的「正在進入普隆德拉…」畫面，請看<a href="#stuck">常見問題</a>。</li>
-  </ul>
-  <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載 v1.10（zip）</a>
-  <a class="btn ghost" href="python-manager-26.4.msix" download>單獨下載 Python 安裝管理員（msix）</a>
-</div>
-
-<h2>能做什麼、不能做什麼</h2>
-<table>
-  <tr><th>功能</th><th>離線版</th></tr>
-  <tr><td>建立訪客角色、出發打怪、升級、轉職</td><td class="yes">可以</td></tr>
-  <tr><td>沒有網路也能玩</td><td class="yes">可以（第一次下載完之後）</td></tr>
-  <tr><td>自動更新到官網最新版本</td><td class="yes">可以</td></tr>
-  <tr><td>無盡之塔（Endless Tower）</td><td class="yes">可以（離線版自己記錄，不會上排行榜）</td></tr>
-  <tr><td>隱藏職業（忍者、槍手）</td><td class="yes">全部開放</td></tr>
-  <tr><td>裝備、卡片、怪物名稱顯示中文（官方還沒翻的部分）</td><td class="yes">遊戲語言選繁體中文時自動顯示</td></tr>
-  <tr><td>離線工具自動更新</td><td class="yes">每次啟動自動檢查</td></tr>
-  <tr><td>GM 模式：創造道具、修改等級素質和點數</td><td class="yes">可以</td></tr>
-  <tr><td>登入帳號、雲端存檔</td><td class="no">不行</td></tr>
-  <tr><td>廣場交易、好友、聊天、組隊、排行榜</td><td class="no">不行</td></tr>
-  <tr><td>進度帶到官網</td><td class="no">不行</td></tr>
-</table>
-
-<h2>使用步驟</h2>
-<ol class="steps">
-  <li><b>Python 3</b>：v1.8 起<b>不用先裝</b>，第一次雙擊「開始遊戲.bat」時，沒有 Python 會自動幫你裝好（Windows 10 1809 以後）。
-    自動安裝失敗時再照下面的<a href="#python">安裝教學</a>手動裝。</li>
-  <li><b>下載離線版</b>，解壓縮到任何資料夾（例如桌面）。<span class="mark">不要直接在壓縮檔裡面執行。</span><br>
-    <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載離線版（zip，約 40 KB）</a>
-  </li>
-  <li><b>雙擊「開始遊戲.bat」</b>。第一次會從官網下載遊戲（約 50 MB，大約 3 分鐘），完成後自動用瀏覽器開遊戲。</li>
-  <li>玩的時候<b>黑色視窗要開著</b>；玩完直接關掉黑色視窗就好。</li>
-</ol>
-<p>之後每次開啟都會自動檢查兩件事，有新版就自動更新；沒有網路時直接用上次的版本：</p>
+<h2>已經下載過離線版的玩家</h2>
 <ul>
-  <li><b>遊戲本身</b>：官網有沒有新版本。</li>
-  <li><b>離線工具</b>：這個網頁有沒有新版的離線工具（主程式、GM 模式）。舊檔會備份在 <code>_backup</code> 資料夾。
-    只有「開始遊戲.bat」這類啟動檔有新版時，會提醒你回到這裡重新下載 zip。</li>
+  <li>再雙擊一次「開始遊戲.bat」，離線工具會自動更新成<b>最終版（v2.0）</b>，瀏覽器會出現公告。</li>
+  <li>按下公告的「<b>確定</b>」，會刪除之前下載的遊戲程式、圖片音效（<code>game</code>、<code>cache</code> 資料夾）和瀏覽器裡的離線版存檔。</li>
+  <li>刪除完把整個「RO倖存者離線版」資料夾刪掉就可以了。</li>
+  <li>不想執行也沒關係，直接把整個資料夾刪掉即可。</li>
 </ul>
 
-<h2 id="tower">無盡之塔與隱藏職業</h2>
-<div class="card">
-  <ul>
-    <li><b>無盡之塔</b>：正式版要登入帳號才能玩，離線版改用遊戲內建的本機模式，訪客角色也能玩。
-      進塔條件和正式版一樣：角色要<b>二轉</b>，並打倒關卡的 MVP 來開放樓層。到普隆德拉的「塔之守護者」那裡進入。
-      最高樓層、塔的點數、強化都記在離線存檔裡；過第 50 層一樣會解鎖染色「血腥狂暴（Blood Savage）」。
-      因為沒有伺服器，<b>不會上排行榜</b>，也不能中途存檔下次繼續。</li>
-    <li><b>隱藏職業</b>：正式版要找到「秘密」才能解鎖的<b>忍者、槍手</b>，離線版建立角色時直接可以選。</li>
-  </ul>
-</div>
-
-<h2 id="zh">中文名稱</h2>
-<div class="card">
-  <ul>
-    <li>遊戲已經內建繁體中文，但<b>裝備、卡片、怪物名稱</b>和少數技能名還是英文。離線版會自動換成台版譯名（例如 Katana → 太刀、Poring → 波利），
-      裝備字尾也會改成中文語序（「太刀 of Strength」→「力量之太刀」）。</li>
-    <li>只有遊戲語言選<b>繁體中文</b>時才會顯示；切成 English／Español 就是原文。</li>
-    <li>圖書館員的百科搜尋可以直接打中文名稱；GM 模式的創造搜尋中文、英文都找得到。</li>
-    <li>遊戲更新後新出現的裝備會先顯示英文，補上翻譯後離線工具會自動更新。</li>
-  </ul>
-</div>
-
-<h2 id="gm">GM 模式</h2>
-<p>雙擊「<b>以GM模式開始遊戲.bat</b>」，遊戲流程跟一般模式一樣，另外多了這些功能：</p>
-<table>
-  <tr><th>在哪裡</th><th>可以做什麼</th></tr>
-  <tr><td>角色視窗（C）→ 物品欄的「＋ 創造」</td><td>創造任何裝備，可以選等階（1～3）、品質（普通～傳說）、精煉 +0～+10、數量，並即時顯示這件裝備的攻擊力／防禦力。附加能力由遊戲依等階和品質自動產生</td></tr>
-  <tr><td>角色視窗（C）→ 卡片的「＋ 創造」</td><td>創造任何卡片，再用遊戲內的鑲嵌功能裝上</td></tr>
-  <tr><td>右下角紅色「GM」按鈕</td><td>修改 Base Lv、職業 Lv、六項素質（每項 1～99，可以超過正常可分配的點數）、卡普拉點數</td></tr>
-  <tr><td>遊戲局中按「GM」</td><td>修改這一局的金幣（zeny），馬上生效</td></tr>
-</table>
-<div class="card">
-  <ul>
-    <li>改裝備、卡片、等級、素質、點數時，頁面會<b>自動重新載入並回到你的角色</b>，大約 3 秒。</li>
-    <li>遊戲局進行中只能改金幣；其他修改請先結束這一局、回到城鎮再改。</li>
-    <li><b>GM 模式的存檔和一般模式分開</b>（網址 <code>http://127.0.0.1:8382/</code>），一般模式的角色不會被影響，也看不到 GM 模式的角色。</li>
-    <li>一般模式和 GM 模式不要同時開。</li>
-  </ul>
-</div>
-
-<h2 id="python">安裝 Python 3</h2>
-<div class="tabs" role="tablist">
-  <button class="on" data-pane="win">Windows</button>
-  <button data-pane="store">Windows（Microsoft Store）</button>
-  <button data-pane="mac">Mac</button>
-</div>
-
-<div class="pane on" id="win">
-<div class="card">
-<ol class="steps">
-  <li>打開 Python 官網下載頁，按黃色的「<b>Download Python 3.x.x</b>」按鈕。<br>
-    <a class="btn" href="https://www.python.org/downloads/" target="_blank" rel="noopener">開啟 python.org 下載頁</a></li>
-  <li>執行下載的安裝檔（檔名像 <code>python-3.x.x-amd64.exe</code>）。</li>
-  <li>安裝畫面最下面，<span class="mark">一定要勾選「Add python.exe to PATH」</span>，再按「<b>Install Now</b>」。</li>
-  <li>出現「Setup was successful」就裝好了，按 Close 關掉。</li>
-  <li>回到離線版資料夾，雙擊「開始遊戲.bat」。</li>
-</ol>
-</div>
-<details>
-  <summary>想確認有沒有裝好？</summary>
-  按 <kbd>Win</kbd> + <kbd>R</kbd>，輸入 <code>cmd</code> 按 Enter，在黑色視窗輸入：
-  <pre>py --version</pre>
-  看到 <code>Python 3.x.x</code> 就是裝好了。
-</details>
-</div>
-
-<div class="pane" id="store">
-<div class="card">
-<ol class="steps">
-  <li>按開始功能表，打開「<b>Microsoft Store</b>」。</li>
-  <li>搜尋「<b>Python 3</b>」，選發行者是 <b>Python Software Foundation</b> 的最新版本（例如 Python 3.13）。</li>
-  <li>按「取得」或「安裝」，等它裝好。</li>
-  <li>回到離線版資料夾，雙擊「開始遊戲.bat」。</li>
-</ol>
-</div>
-<p class="sub">Store 版不用勾選 PATH，比較簡單；兩種裝法擇一即可。</p>
-</div>
-
-<div class="pane" id="mac">
-<div class="card">
-<ol class="steps">
-  <li>到 <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org 下載頁</a>下載 macOS 版，照畫面安裝。</li>
-  <li>「開始遊戲.bat」是 Windows 用的。Mac 請打開「終端機」，輸入 <code>cd </code>（後面有空白），把離線版資料夾拖進終端機視窗，按 Enter。</li>
-  <li>再輸入下面這行，按 Enter：
-    <pre>python3 rs_offline.py</pre></li>
-</ol>
-</div>
-</div>
-
-<h2>常見問題</h2>
-<details>
-  <summary>雙擊後出現「Windows 已保護您的電腦」</summary>
-  這是 Windows 對網路下載的檔案的一般提醒。按「<b>其他資訊</b>」→「<b>仍要執行</b>」即可。
-  不放心的話，可以先用記事本打開 <code>開始遊戲.bat</code>、<code>rs_offline.py</code>、<code>gm.js</code> 檢查內容，全部都是純文字。
-</details>
-<details>
-  <summary>黑色視窗說找不到 Python，然後打開這個網頁</summary>
-  代表自動安裝沒有成功（黑色視窗裡會寫原因，例如網路斷線、Windows 版本太舊），或 Python 安裝時沒勾「Add python.exe to PATH」。
-  可以先<a href="python-manager-26.4.msix" download>下載 Python 安裝管理員</a>，雙擊它按「安裝」，再雙擊「開始遊戲.bat」；
-  或照上面的教學從 python.org 安裝並勾選 PATH。裝好後要<b>重新雙擊</b>「開始遊戲.bat」。
-</details>
-<details id="stuck">
-  <summary>一直卡在藍色的「正在進入普隆德拉…」畫面</summary>
-  能看到這個畫面代表 Python 和離線版都已經正常啟動了，卡住的是瀏覽器載入 3D 地圖。請依序試試看：
-  <ol>
-    <li>確認<b>黑色視窗還開著</b>，而且最後一行是「玩的時候這個視窗要開著」。關掉黑色視窗遊戲就讀不到檔案。</li>
-    <li>網址要是 <code>http://127.0.0.1:8381/</code>，不要直接雙擊 <code>game</code> 資料夾裡的 <code>index.html</code>。</li>
-    <li>按 <kbd>Ctrl</kbd> + <kbd>F5</kbd> 重新整理。</li>
-    <li>圖片音效可能沒下載完整（防毒軟體或網路中斷）：刪掉離線版資料夾裡的 <code>cache</code> 資料夾，再雙擊「開始遊戲.bat」重新下載。</li>
-    <li>瀏覽器的<b>硬體加速</b>要開著（Chrome／Edge：設定 → 系統 → 「使用圖形加速功能」），改完重開瀏覽器。換 Chrome 或 Edge 最新版試試。</li>
-    <li>用同一台電腦開官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>，如果官網也卡在同一個畫面，就是顯示卡／瀏覽器不支援 3D（WebGL），跟離線版無關。</li>
-  </ol>
-  v1.10 起卡住 20 秒會自動重新整理並自動進入；還是不行，1 分鐘時畫面右下角會出現「回報問題」按鈕，會自動檢查上面幾項並可以把結果傳給作者。
-</details>
-<details>
-  <summary>我的角色不見了</summary>
-  離線版的進度存在瀏覽器裡，網址是 <code>http://127.0.0.1:8381/</code>。以下情況會看不到：
-  換了另一個瀏覽器、清除了瀏覽器的網站資料、或用無痕視窗。
-  另外，如果黑色視窗顯示 8381 被占用、改用別的號碼，也會看不到之前的進度，把其他離線版視窗關掉再開就好。
-</details>
-<details>
-  <summary>畫面圖片怪怪的、缺圖</summary>
-  打開離線版資料夾，在檔案總管上方的網址列輸入 <code>cmd</code> 按 Enter，然後輸入下面這行，會把圖片音效全部重新下載：
-  <pre>py rs_offline.py --refresh-assets</pre>
-  也可以直接刪掉 <code>cache</code> 資料夾，下次開啟會重新下載。
-</details>
-<details>
-  <summary>會不會被封帳號？</summary>
-  離線版完全不會連到官方的帳號伺服器，也不會上傳任何東西，跟你的官方帳號沒有關係。
-  但離線版的進度也沒辦法帶到官網。
-</details>
-<details>
-  <summary>要佔多少空間？</summary>
-  遊戲程式約 4 MB，圖片音效約 50 MB。不想玩了直接把整個資料夾刪掉即可，不會留下其他東西（瀏覽器裡的進度除外）。
-</details>
-
-<h2>安全性</h2>
-<div class="card">
-  <ul>
-    <li>程式只連到兩個地方：<code>ro-survivors.com</code>（下載遊戲檔案）和這個網頁所在的 <code>jtnhrbpvvm-spec.github.io</code>（檢查離線工具的新版），<b>不會上傳任何東西</b>。
-      沒有 Python 時，啟動檔會另外從這個網頁或 <code>python.org</code> 下載 Python 官方安裝管理員，比對指紋和數位簽章後才安裝。</li>
-    <li>離線工具自動更新時，每個檔案都會先比對指紋（SHA-256），對不上就不更新；舊檔備份在 <code>_backup</code>。</li>
-    <li>本機伺服器只綁在 <code>127.0.0.1</code>，只有你自己的電腦連得到，區域網路的其他人連不到。</li>
-    <li>只用 Python 內建功能，不用安裝其他套件；程式碼完全公開，可以用記事本打開檢查。</li>
-  </ul>
-</div>
-
 <p class="foot">
-  本工具為玩家自製，與官方無關，不包含任何遊戲檔案；遊戲檔案都是執行時從官網下載到你自己的電腦。
-  遊戲內容版權屬於 RO Survivors（作者 Reven4nt）與 Gravity。請支持官方。
+  遊戲內容版權屬於 RO Survivors（作者 Reven4nt）與 Gravity。感謝大家一路以來的支持，請支持官方。
 </p>
 </div>
-<script>
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === b.dataset.pane));
-}));
-if (/Mac/i.test(navigator.platform || '')) document.querySelector('.tabs button[data-pane="mac"]').click();
-</script>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </body>
 </html>
