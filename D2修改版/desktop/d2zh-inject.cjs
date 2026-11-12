@@ -92,7 +92,25 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 4, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 4, cleanLaunch: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+}
+
+// 上榜模式：遊戲會比對 app.asar 雜湊，被中文化改過就拒收排行榜紀錄。
+// 交給 install.ps1 -CleanLaunch：等遊戲關閉 → 把 app.asar 換回官方原版 → 開一次乾淨的英文遊戲。
+// 之後用「D2 Survivors 中文版」捷徑開遊戲時會自動重新套用中文。
+function cleanLaunch() {
+  const script = path.join(DIR, 'install.ps1');
+  let text = '';
+  try { text = fs.readFileSync(script, 'utf8'); } catch (_) { /* 沒有安裝程式 */ }
+  if (!text.includes('CleanLaunch')) return { ok: false, reason: 'old-installer' };
+  const { spawn } = require('child_process');
+  const ps = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const child = spawn(ps, ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', script, '-CleanLaunch'],
+    { detached: true, stdio: 'ignore', windowsHide: true });
+  child.unref();
+  log('clean launch: started');
+  setTimeout(() => app.quit(), 800);   // 讓頁面先顯示「正在關閉」；正常關閉，遊戲會照常存檔
+  return { ok: true };
 }
 
 // 書籤修改面板用到遊戲的物品函式。網頁版它們分在不同檔案、有匯出；電腦版全打包在 moved-*.js，只有內部用的就不匯出，頁面拿不到。
@@ -190,6 +208,13 @@ app.on('web-contents-created', (_event, contents) => {
         .catch(e => { log(`replies: ${e.message}`); return { ok: false }; })
         .then(result => contents.executeJavaScript(`window.__d2zhRepliesDone && window.__d2zhRepliesDone(${JSON.stringify(result)});0`, true))
         .catch(e => log(`replies notify: ${e && e.message}`));
+      return;
+    }
+    if (text === '__D2ZH__:clean') {
+      let result;
+      try { result = cleanLaunch(); } catch (e) { log(`clean launch: ${e && e.message}`); result = { ok: false, reason: String(e && e.message) }; }
+      contents.executeJavaScript(`window.__d2zhCleanDone && window.__d2zhCleanDone(${JSON.stringify(result)});0`, true)
+        .catch(e => log(`clean notify: ${e && e.message}`));
       return;
     }
     if (text !== '__D2ZH__:update') return;

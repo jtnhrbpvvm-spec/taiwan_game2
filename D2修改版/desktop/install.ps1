@@ -11,6 +11,8 @@ param(
     [switch]$Launch,
     [string]$PatchAsar,      # 內部用：以系統管理員身分只做 app.asar 修改
     [string]$UnpatchAsar,    # 內部用：以系統管理員身分只做 app.asar 還原
+    [switch]$CleanLaunch,    # 上榜模式：等遊戲關閉，把 app.asar 換回官方原版（雜湊對得上 app.asar.sha256），開一次乾淨的英文遊戲
+    [string]$RestoreAsar,    # 內部用：以系統管理員身分把 app.asar.d2zh-backup 複製回 app.asar
     [string]$GameDir,        # 遊戲裝在別的地方時指定（例如 -GameDir "D:\Games\D2 Survivors"）
     [switch]$ShortcutOnly,   # 只在桌面建立「D2 Survivors 中文版」捷徑（建立桌面捷徑.cmd 用）
     [switch]$Quiet
@@ -177,6 +179,32 @@ function Unpatch-Asar([string]$asarPath) {
     return 'unpatched'
 }
 
+# ---- 上榜模式：官方原版 app.asar ----
+# 遊戲會比對 app.asar 和安裝時附的 app.asar.sha256，對不上就把排行榜紀錄標成 patched 拒收。
+# 修改 app.asar 前備份的 app.asar.d2zh-backup 就是官方原版（遊戲更新後重新套用時會換成新版的備份）。
+function Get-OfficialHash([string]$asarPath) {
+    $file = "$asarPath.sha256"
+    if (-not (Test-Path -LiteralPath $file)) { return $null }
+    $m = [regex]::Match((Get-Content -LiteralPath $file -Raw), '[0-9a-fA-F]{64}')
+    if ($m.Success) { return $m.Value.ToLower() } else { return $null }
+}
+
+function Test-OfficialAsar([string]$path, [string]$want) {
+    return ($want -and (Test-Path -LiteralPath $path) -and ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLower() -eq $want))
+}
+
+function Restore-Asar([string]$asarPath) {
+    $want = Get-OfficialHash $asarPath
+    $backup = "$asarPath.d2zh-backup"
+    if (Test-OfficialAsar $asarPath $want) { return 'clean' }
+    if (-not (Test-OfficialAsar $backup $want)) { throw '找不到官方原版的遊戲檔（備份和 app.asar.sha256 對不上）' }
+    $tmp = "$asarPath.d2zh-tmp"
+    Copy-Item -LiteralPath $backup -Destination $tmp -Force
+    Move-Item -LiteralPath $tmp -Destination $asarPath -Force
+    if (-not (Test-OfficialAsar $asarPath $want)) { throw '還原後檢查失敗' }
+    return 'restored'
+}
+
 function Test-GameRunning([string]$gameDir) {
     $exe = Join-Path $gameDir 'D2 Survivors.exe'
     return [bool](Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe })
@@ -190,9 +218,9 @@ function Test-Writable([string]$dir) {
 
 function Invoke-Asar([string]$mode, [string]$asarPath) {
     if (Test-Writable (Split-Path $asarPath -Parent)) {
-        if ($mode -eq 'patch') { return Patch-Asar $asarPath } else { return Unpatch-Asar $asarPath }
+        if ($mode -eq 'patch') { return Patch-Asar $asarPath } elseif ($mode -eq 'restore') { return Restore-Asar $asarPath } else { return Unpatch-Asar $asarPath }
     }
-    $arg = if ($mode -eq 'patch') { '-PatchAsar' } else { '-UnpatchAsar' }
+    $arg = if ($mode -eq 'patch') { '-PatchAsar' } elseif ($mode -eq 'restore') { '-RestoreAsar' } else { '-UnpatchAsar' }
     try {
         $p = Start-Process powershell.exe -Verb RunAs -Wait -PassThru -WindowStyle Hidden -ArgumentList @(
             '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", $arg, "`"$asarPath`"", '-Quiet')
@@ -229,6 +257,7 @@ function Copy-ZhFiles([string]$game) {
 try {
     if ($PatchAsar) { [void](Patch-Asar $PatchAsar); exit 0 }
     if ($UnpatchAsar) { [void](Unpatch-Asar $UnpatchAsar); exit 0 }
+    if ($RestoreAsar) { [void](Restore-Asar $RestoreAsar); exit 0 }
 
     $game = Find-Game
     if (-not $game -and -not $Quiet) { $game = Select-GameDir }
@@ -241,6 +270,28 @@ try {
         if (-not (Test-Patched $asarPath)) {
             if (Test-GameRunning $game) { Start-Process -FilePath $exe; exit 0 }   # 遊戲已開著就只切到前面
             try { [void](Invoke-Asar 'patch' $asarPath) } catch { Say "遊戲更新後重新套用中文失敗，這次先以英文開啟。`n`n$($_.Exception.Message)" }
+        }
+        Start-Process -FilePath $exe
+        exit 0
+    }
+
+    if ($CleanLaunch) {
+        # 遊戲頁面的「上榜模式」叫 d2zh-inject.cjs 啟動這裡，然後遊戲自己關閉。等它完全關掉（最多 60 秒）再換檔。
+        # 之後用「D2 Survivors 中文版」捷徑開遊戲時，-Launch 看到 app.asar 沒被修改，就會重新套用中文。
+        $deadline = (Get-Date).AddSeconds(60)
+        while ((Test-GameRunning $game) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+        if (Test-GameRunning $game) { Say '遊戲還沒有關閉，無法切換成上榜模式。請先關閉遊戲，再從遊戲裡按一次「上榜模式」。'; exit 1 }
+        Start-Sleep -Seconds 2   # 遊戲關閉時若有待安裝的更新，安裝程式會接著換檔；稍等再檢查
+        try {
+            $want = Get-OfficialHash $asarPath
+            if (-not (Test-OfficialAsar $asarPath $want)) {   # 已經是原版就不用系統管理員權限
+                if (-not (Test-OfficialAsar "$asarPath.d2zh-backup" $want)) { throw '找不到官方原版的遊戲檔（備份和 app.asar.sha256 對不上）' }
+                [void](Invoke-Asar 'restore' $asarPath)
+            }
+        } catch {
+            Say ("無法切換成上榜模式：$($_.Exception.Message)`n`n" +
+                 "請到 d2survivors.lol 重新下載官方安裝程式，覆蓋安裝一次就是乾淨的英文版。之後想用中文，再用「D2 Survivors 中文版」捷徑開遊戲即可。")
+            exit 1
         }
         Start-Process -FilePath $exe
         exit 0
