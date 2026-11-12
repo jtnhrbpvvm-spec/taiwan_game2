@@ -493,6 +493,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         zh = b'<script src="/__report.js"></script><script src="/__zh.js"></script>'
                         m = re.search(rb"<head[^>]*>", data, re.I)
                         data = data[:m.end()] + zh + data[m.end():] if m else zh + data
+                        # 流量統計（GoatCounter，跟說明頁同一個帳號）：localhost 預設不算，要 allow_local；路徑寫成「離線版」好跟網頁分開看
+                        gc = (b"<script>addEventListener('load',function(){window.goatcounter={allow_local:true,path:'/RO\\u5016\\u5b58\\u8005\\u96e2\\u7dda\\u7248/"
+                              + (b"GM" if GM else b"") + b"'};var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';"
+                              b"s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>")
+                        pos = data.rfind(b"</body>")
+                        data = data[:pos] + gc + data[pos:] if pos >= 0 else data + gc
                     if GM and rel == "index.html":
                         tag = b'<script src="/__gm.js"></script>'
                         pos = data.rfind(b"</body>")

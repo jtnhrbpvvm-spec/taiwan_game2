@@ -3,7 +3,7 @@
  "files": {
   "開始遊戲.bat": "3a540d1ddb5b87d1f1a6dfc0b08e342054a060dc441ed8dbcac3b95164c9aabf",
   "以GM模式開始遊戲.bat": "71ac4f60432f4a4136cc9062572f355109bbdc3a499c5b96fb69fb10dddd65aa",
-  "rs_offline.py": "1d3cb84749ce56c7552daeedf14da3819a8fc50fa2b1ee86f4ac45668f05db77",
+  "rs_offline.py": "78eae001e98a19fd0fe816bd336b56d3a64bbcd9d29cee3aa0ebf6bb368380ef",
   "gm.js": "62fe0ff5a9ad1d9783571e3eb5cba69a001881f5c2722347286965fe3ccbebf5",
   "zh.js": "11f8afe93afdf66a67426c6c49d352b48d2f2a41be9c32aceb6d3cd8cc5d0df1",
   "report.js": "435c10358a95db3fb5840e0ba2a06098537ed9b5b128a276ee02042393e39c8f",
