@@ -14,7 +14,7 @@ import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OFF = os.path.join(os.path.dirname(HERE), "offline")
-FILES = ["開始遊戲.bat", "以GM模式開始遊戲.bat", "rs_offline.py", "gm.js", "zh.js", "install_python.ps1", "說明.txt"]
+FILES = ["開始遊戲.bat", "以GM模式開始遊戲.bat", "rs_offline.py", "gm.js", "zh.js", "report.js", "install_python.ps1", "說明.txt"]
 # python-manager-26.4.msix（約 96 MB）不放進 zip：只有沒 Python 的人才由 install_python.ps1 從說明頁下載
 OUT = os.path.join(OFF, "ro-survivors-offline.zip")
 

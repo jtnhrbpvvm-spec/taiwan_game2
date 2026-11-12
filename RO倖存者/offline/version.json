@@ -1,11 +1,12 @@
 {
- "version": "1.8",
+ "version": "1.9",
  "files": {
   "開始遊戲.bat": "3a540d1ddb5b87d1f1a6dfc0b08e342054a060dc441ed8dbcac3b95164c9aabf",
   "以GM模式開始遊戲.bat": "71ac4f60432f4a4136cc9062572f355109bbdc3a499c5b96fb69fb10dddd65aa",
-  "rs_offline.py": "9037caeb7b21803c36aa437c94a5c20098a6fe1360f627bb448bf34f941125fb",
+  "rs_offline.py": "dffd89b71b3dd92ac8bb244a9c9c6b6f710d62cfae4288b61faccbcbb1f01df5",
   "gm.js": "62fe0ff5a9ad1d9783571e3eb5cba69a001881f5c2722347286965fe3ccbebf5",
   "zh.js": "11f8afe93afdf66a67426c6c49d352b48d2f2a41be9c32aceb6d3cd8cc5d0df1",
+  "report.js": "3ebb6ba95f768be16d91b90d3dee8f8d2d413026d8d868d0d83ae3414997eabb",
   "install_python.ps1": "5558cc52ef85e25344463144751f8be9166c7372870953a6c6af22dd26ce53bb",
   "說明.txt": "404d1be2a4679f4ae3d0b6f90a4e793f2facd63a673abcb6844f61b2ecf36638"
  }

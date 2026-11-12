@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.8"
+TOOL_VERSION = "1.9"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -65,6 +65,10 @@ GM = False
 GM_JS = os.path.join(HERE, "gm.js")
 # 補中文（裝備、卡片、怪物名稱）：一般模式和 GM 模式都在 index.html 的 <head> 最前面載入
 ZH_JS = os.path.join(HERE, "zh.js")
+# 載入畫面卡住超過 1 分鐘跳出「回報問題」（report.js），偵測資料從 /__diag.json 拿
+REPORT_JS = os.path.join(HERE, "report.js")
+FAILED = []                       # 最近從官網補抓失敗的檔案（給錯誤回報看）
+STARTED = time.time()
 # 對遊戲主程式的修補（變數名稱每版都會變，用正規表示式找；找不到就略過，GM 面板會顯示提醒）
 GM_PATCHES = [
     # 素質點數超過可分配點數時，遊戲會把素質重置 → GM 模式不檢查
@@ -459,6 +463,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self._send(f.read(), "text/javascript; charset=utf-8")
             except OSError:
                 return self._send(b"", "text/javascript")
+        if path == "/__report.js":
+            try:
+                with open(REPORT_JS, "rb") as f:
+                    return self._send(f.read(), "text/javascript; charset=utf-8")
+            except OSError:
+                return self._send(b"", "text/javascript")
+        if path == "/__diag.json":
+            return self._send(json.dumps(diag(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
         if path in ("/__gm_status.json", "/__offline_status.json"):
             return self._send(json.dumps(patch_status()).encode(), "application/json")
 
@@ -470,7 +482,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if base == GAME:
                     if rel == "index.html":
                         # 中文名稱要比遊戲程式早執行（攔 manifest.json），放在 <head> 最前面
-                        zh = b'<script src="/__zh.js"></script>'
+                        zh = b'<script src="/__report.js"></script><script src="/__zh.js"></script>'
                         m = re.search(rb"<head[^>]*>", data, re.I)
                         data = data[:m.end()] + zh + data[m.end():] if m else zh + data
                     if GM and rel == "index.html":
@@ -489,11 +501,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._send(b"not found", "text/plain", 404)
         try:
             data = fetch(ORIGIN + path.lstrip("/"))
-        except (urllib.error.URLError, OSError):
+        except (urllib.error.URLError, OSError) as e:
+            with lock:
+                FAILED[:] = FAILED[-19:] + ["%s（%s）" % (path, getattr(e, "code", None) or getattr(e, "reason", e))]
             return self._send(b"not found", "text/plain", 404)
         with lock:
             write(full, data)
         return self._send(data, ctype)
+
+
+def diag():
+    """給 report.js 的偵測資料：版本、cache 缺檔、修補結果、最近下載失敗的檔案（不含任何個人資料）。"""
+    import platform
+    manifest = read_json(os.path.join(GAME, "assets", "manifest.json"))
+    assets = ["assets/" + p for p in asset_list(manifest)]
+    missing = [p for p in assets if not os.path.isfile(inside(CACHE, p.replace("/", os.sep)) or "")]
+    return {
+        "tool": TOOL_VERSION, "gm": GM, "game": read_json(VERSION_FILE).get("name", ""),
+        "python": platform.python_version(), "os": platform.platform(),
+        "online": ONLINE, "uptime": int(time.time() - STARTED),
+        "assets": len(assets), "missing": len(missing), "missingList": missing[:10],
+        "gameFiles": os.path.isfile(os.path.join(GAME, "index.html")),
+        "patches": patch_status(), "failed": FAILED[-10:],
+    }
 
 
 def serve(open_browser=True):
