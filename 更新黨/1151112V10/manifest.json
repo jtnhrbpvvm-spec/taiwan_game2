@@ -1,0 +1,21 @@
+{
+ "id": "1151112V10",
+ "date": "2026-11-12 13:38",
+ "notes": [
+  "修正：遊戲還沒載完就按「登錄」或 Enter，畫面會變成只有 {ok:true} 的空白頁；現在載入中按登入不會跳走，載完再按就能登入",
+  "就算還是被送出，也會自動回到遊戲首頁，不會停在 {ok:true}"
+ ],
+ "files": [
+  {
+   "path": "index.html",
+   "size": 12911,
+   "sha256": "2ce1cceee22f4db7306f5efa80cdb4b133098c17196a39ca758f98f32bbe2386"
+  },
+  {
+   "path": "webl1_offline.py",
+   "size": 16708,
+   "sha256": "ef2c1ffaab93986b37a8a4b50745b5d96221f1fe0878d6481af74054844c2a0d"
+  }
+ ],
+ "delete": []
+}

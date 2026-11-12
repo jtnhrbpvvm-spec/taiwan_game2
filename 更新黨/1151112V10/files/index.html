@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script src="js/errlog.js"></script><!-- 第 298 項：前端錯誤回報（要最先載入，main.js 載入就壞也收得到） -->
+<!-- maximum-scale=1：iPhone 點到字小於 16px 的輸入框（聊天、數量、搜尋…）不會整頁自動放大；iOS 照樣能兩指縮放 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<!-- 網站圖示（站長 2026-10-25 給的「網頁奇岩城」圖，.scratch/ico/make.mjs 產各尺寸） -->
+<link rel="icon" href="/icons/favicon.ico?v=20261101g" sizes="any">
+<link rel="icon" type="image/png" href="/icons/icon-192.png?v=20261101g">
+<!-- 加到主畫面＝全螢幕 App（js/homeapp.js 提示玩家加）：Android 看 manifest，iPhone 看下面三行 -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="網頁奇岩城">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=20261101g">
+<title>網頁奇岩城</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="start.css?v=20261109b">
+<link rel="stylesheet" href="lmui.css?v=20261110ps">
+<link rel="stylesheet" href="newbie.css">
+<link rel="stylesheet" href="tutorial.css?v=20261108t">
+<link rel="stylesheet" href="signin.css?v=20261105">
+<link rel="stylesheet" href="invite.css?v=20261108p"><!-- 第 703 項：邀請好友（js/invite.js） -->
+<link rel="stylesheet" href="promo.css?v=20261109t"><!-- 第 710 項：推廣系統（js/promo.js） -->
+<link rel="stylesheet" href="pcui.css">
+<link rel="stylesheet" href="dolls.css">
+<link rel="stylesheet" href="dollwin.css">
+<link rel="stylesheet" href="guide.css">
+<link rel="stylesheet" href="trial.css">
+<link rel="stylesheet" href="ranking.css">
+<link rel="stylesheet" href="top1.css">
+<link rel="stylesheet" href="top3.css?v=20261110a"><!-- 第 758 項：榮耀卡前三名（js/top3.js） -->
+<link rel="stylesheet" href="silh.css">
+<link rel="stylesheet" href="market.css?v=20261105">
+<link rel="stylesheet" href="mail.css">
+<link rel="stylesheet" href="candle.css">
+<link rel="stylesheet" href="shop.css">
+<link rel="stylesheet" href="paydone.css"><!-- 儲值成功慶祝畫面（js/paydone.js） -->
+<link rel="stylesheet" href="sellcard.css">
+<link rel="stylesheet" href="tax.css">
+<link rel="stylesheet" href="stone.css">
+<link rel="stylesheet" href="craft.css">
+<link rel="stylesheet" href="toibook.css">
+<link rel="stylesheet" href="huntdex.css">
+<link rel="stylesheet" href="collect.css?v=20261104">
+<link rel="stylesheet" href="treasure.css">
+<link rel="stylesheet" href="pumpkin.css"><!-- 南瓜種植（js/pumpkin.js） -->
+<link rel="stylesheet" href="supply.css">
+<link rel="stylesheet" href="spellshop.css">
+<link rel="stylesheet" href="fruit.css"><!-- 進化果實選寵物（js/fruit.js） -->
+<link rel="stylesheet" href="boxall.css"><!-- 守護團獎金箱子開啟／全開（js/boxall.js） -->
+</head>
+<body>
+<!-- 電腦版面先套好（站長 2026-10-25「電腦版會先跳直式再跳橫式」）：js/pcui.js 是 module、最後才跑，那之前畫面照手機直式排 → 這裡照同一套判斷（寬≥高；放得下 1 倍就鎖 800×600 舞台，同 stage.js setStage）先加 class，pcui.js 跑的時候接手 -->
+<script>(function () { try {
+  if (!matchMedia('(min-aspect-ratio: 1/1)').matches) return;
+  var de = document.documentElement, W = de.clientWidth || innerWidth, H = de.clientHeight || innerHeight;
+  var k = Math.max(0.5, Math.min(3, Math.round(Math.min(H / 540, (W - 400) / 258) * 4) / 4));
+  document.body.classList.add('pcui');
+  if (k >= 1) { var s = Math.min(W / 800, H / 600); de.style.setProperty('--sts', String(s)); de.style.setProperty('--stx', Math.round((W - 800 * s) / 2) + 'px'); de.style.setProperty('--sty', Math.round((H - 600 * s) / 2) + 'px'); de.classList.add('stage43'); de.style.setProperty('--pk', '1'); }
+  else { de.style.setProperty('--pk', String(k)); document.body.classList.add('pcui-sm'); }
+} catch (e) { } })();</script>
+
+<!-- 登入、選角、建角：照搬單機版 idle-lineage-class 的 index.html（#creation-screen 那一段），背後接 L1J 伺服器（js/start.js） -->
+<div id="creation-screen">
+  <div id="login-art-stage">
+    <img id="login-bg-image" src="/start-land/login-p.webp" alt="" draggable="false">
+    <!-- 真的 <form>＋submit：瀏覽器（含 iPhone Safari）看到表單送出才會問要不要儲存密碼；display:contents 不影響原本的絕對定位 -->
+    <form id="login-form" action="#" method="post" autocomplete="on" style="display:contents" onsubmit="return false">
+      <input class="login-field-hint login-field-account" id="login-account" name="username" type="text" placeholder="帳號" aria-label="帳號" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="13">
+      <input class="login-field-hint login-field-password" id="login-password" name="password" type="password" placeholder="密碼" aria-label="密碼" autocomplete="current-password" maxlength="16">
+    </form>
+    <label class="login-remember"><input type="checkbox" id="login-remember-cb"><span>記住帳號密碼</span></label>
+    <button type="button" class="login-register" id="login-register-btn">註冊帳號</button>
+    <!-- 站長 2026-11-01：遊戲指南（/guide.html），左上角，跟右上角 LINE 對稱 -->
+    <a class="login-register login-guide" id="login-guide-btn" href="/guide.html">📖 遊戲指南</a>
+    <div class="login-msg" id="login-msg" aria-live="polite"></div>
+    <div class="login-deco" aria-hidden="true">
+      <div class="login-logo"><span class="ll-sub">網頁</span><span class="ll-main" data-t="奇岩城">奇岩城</span></div>
+      <div class="login-sword-fx"></div>
+      <i class="login-gem"></i><i class="login-glint lg1"></i><i class="login-glint lg2"></i>
+      <i class="login-candle"></i>
+    </div>
+    <div class="login-scroll-note"><div class="lsn-rates" hidden><span></span></div><small>新玩家請先按「註冊帳號」</small><small class="lsn-legal">登入即表示同意<a href="/terms.html" target="_blank" rel="noopener">服務條款</a>與<a href="/privacy.html" target="_blank" rel="noopener">隱私權政策</a></small></div>
+
+    <div class="login-slash" aria-hidden="true">
+      <img class="ls-patch" src="/start-land/p-patch.webp" alt="" draggable="false">
+      <div class="ls-dim"></div>
+      <img class="ls-sword" src="/start-land/p-sword.webp" alt="" draggable="false">
+      <div class="ls-hole"></div>
+      <div class="ls-half ls-a"><img src="/start-land/login-p.webp" alt="" draggable="false"></div>
+      <div class="ls-half ls-b"><img src="/start-land/login-p.webp" alt="" draggable="false"></div>
+      <div class="ls-trail"></div>
+      <div class="ls-cut"></div>
+      <img class="ls-cover" src="/start-land/p-logo-cover.webp" alt="" draggable="false">
+      <div class="ls-flash"></div>
+    </div>
+    <div id="main-menu">
+      <button id="btn-start-menu" type="submit" form="login-form" aria-label="登錄"></button>
+    </div>
+  </div>
+
+  <!-- 選擇角色：教堂拱門，一頁 3 隻；伺服器每個帳號可建的角色數比 3 多時分頁 -->
+  <div id="load-select-panel" class="hidden" aria-label="選擇角色">
+    <div id="load-art-stage">
+      <div id="load-select-frame">
+        <img id="load-select-bg" src="/public-assets/login/select.webp" alt="" draggable="false">
+        <button id="load-back-button" type="button" aria-label="返回登入"><img src="/public-assets/create/btn-back.png" alt="返回" draggable="false"></button>
+        <h2 id="load-select-title">選擇角色</h2>
+        <div id="load-slot-grid" aria-label="角色"></div>
+        <div id="load-pager" class="hidden"><button type="button" id="load-prev" aria-label="上一頁">◀</button><span id="load-page"></span><button type="button" id="load-next" aria-label="下一頁">▶</button></div>
+        <section id="load-info-panel" class="hidden" aria-live="polite">
+          <div id="load-info-head"><strong id="load-info-name"></strong><span id="load-info-sub"></span></div>
+          <!-- 橫式才看得到（start.css body.pcui）：填進 3.5C 選角底圖畫好的血盟、種族、相性、等級欄 -->
+          <div id="load-info-land"><b id="load-info-clan"></b><b id="load-info-cls"></b><b id="load-info-law"></b><b id="load-info-lv"></b></div>
+          <div id="load-info-vitals">
+            <span>HP <b id="load-info-hp"></b></span><span>MP <b id="load-info-mp"></b></span><span>AC <b id="load-info-ac"></b></span>
+          </div>
+          <div id="load-info-stats">
+            <span>力量 <b id="load-info-str"></b></span><span>敏捷 <b id="load-info-dex"></b></span><span>體質 <b id="load-info-con"></b></span>
+            <span>智力 <b id="load-info-int"></b></span><span>精神 <b id="load-info-wis"></b></span><span>魅力 <b id="load-info-cha"></b></span>
+          </div>
+          <div id="load-info-actions">
+            <button id="load-btn-enter" type="button">進入遊戲</button>
+            <button id="load-btn-delete" type="button">刪除角色</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 建立角色（能力基本值、可分配點數照伺服器 C_CreateChar） -->
+  <div id="creation-panel" class="hidden" aria-label="建立角色">
+    <div id="creation-stage">
+      <img id="creation-title" src="/public-assets/create/title.png" alt="建立角色" draggable="false">
+      <div id="creation-avatar-stage" aria-hidden="true">
+        <img id="class-preview-img" src="/assets/start/prince/714.png" alt="" draggable="false">
+      </div>
+      <nav id="creation-class-list" aria-label="職業與性別">
+        <button data-type="0" id="btn-class-base-royal" class="creation-tile creation-class-btn tile-left" style="--row:0" type="button"><img src="/public-assets/create/ico-royal.png" alt=""><span>王族</span></button>
+        <button data-type="1" id="btn-class-base-knight" class="creation-tile creation-class-btn tile-left" style="--row:1" type="button"><img src="/public-assets/create/ico-knight.png" alt=""><span>騎士</span></button>
+        <button data-type="3" id="btn-class-base-mage" class="creation-tile creation-class-btn tile-left" style="--row:2" type="button"><img src="/public-assets/create/ico-mage.png" alt=""><span>法師</span></button>
+        <button data-sex="0" id="btn-gender-m" class="creation-tile creation-gender-btn tile-left" style="--row:3" type="button"><img src="/public-assets/create/ico-male.png" alt=""><span>男</span></button>
+        <button data-type="2" id="btn-class-base-elf" class="creation-tile creation-class-btn tile-right" style="--row:0" type="button"><img src="/public-assets/create/ico-elf.png" alt=""><span>妖精</span></button>
+        <button data-type="4" id="btn-class-base-dark" class="creation-tile creation-class-btn tile-right" style="--row:1" type="button"><img class="ico-recolor" src="/assets/logo/黑暗妖精logo.png" alt=""><span>黑暗妖精</span></button>
+        <button data-sex="1" id="btn-gender-f" class="creation-tile creation-gender-btn tile-right" style="--row:3" type="button"><img src="/public-assets/create/ico-female.png" alt=""><span>女</span></button>
+      </nav>
+      <div id="creation-name-row">
+        <label for="creation-name">名字</label>
+        <input id="creation-name" type="text" maxlength="10" placeholder="2～10 個字" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="creation-hint" aria-live="polite"></div>
+      <div id="stat-allocation" aria-label="能力配點"></div>
+      <div id="creation-pts-row">剩餘點數 <span id="creation-pts"></span></div>
+      <button id="creation-back-button" type="button"><img src="/public-assets/create/btn-back.png" alt="返回" draggable="false"></button>
+      <button id="btn-start" class="creation-start-button" type="button" disabled><img src="/public-assets/create/btn-create.png" alt="建立角色" draggable="false"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 遊戲（介面由 js/hud.js 建，沿用單機版天堂M介面） -->
+<section id="game" class="hidden">
+  <canvas id="cv"></canvas>
+  <div id="maptip" class="hidden"></div>
+  <div id="deadbox" class="hidden"><button type="button" id="btn-restart">重新開始</button></div>
+  <div id="relink" class="hidden" role="status"><div class="rl-box"><b>重新連線中…</b><div class="rl-bar"><i></i></div></div></div>
+</section>
+
+<script src="js/nodev.js"></script>
+<script type="module" src="js/main.js?v=20261110w"></script>
+<script type="module" src="js/fullscr.js"></script>
+<script type="module" src="js/homeapp.js"></script>
+</body>
+</html>
