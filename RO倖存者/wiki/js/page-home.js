@@ -10,6 +10,12 @@ RSW.page({
 <h2 class="pt">RO 倖存者小百科</h2>
 <p class="lead">RO Survivors 是以仙境傳說（Ragnarok Online）為靈感的免費網頁倖存者遊戲。這裡整理遊戲裡的職業、技能、轉職、物品、卡片與怪物資料，名稱採用台版仙境傳說譯名。</p>
 
+<a class="line-banner" href="https://line.me/ti/g2/XlXXru75ACQ9_p_XHQtgsCsPtuA40BJ1lQASjQ?utm_source=invitation&amp;utm_medium=link_copy&amp;utm_campaign=default" target="_blank" rel="noopener">
+  <span class="line-ico big">LINE</span>
+  <span class="lb-text"><b>加入 RO 倖存者 LINE 群組</b><small>一起討論配點、轉職、掉寶，遊戲更新第一時間分享！</small></span>
+  <span class="lb-go">▶ 加入</span>
+</a>
+
 <div class="grid">
   ${count(first.length + ' 個一轉', '職業與技能、天賦樹', '#jobs')}
   ${count(R.jobs.list.filter(j => j.rank === 2).length + ' 個二轉', '轉職條件與方法', '#promotion')}
