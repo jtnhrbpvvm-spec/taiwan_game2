@@ -49,7 +49,7 @@ function objNamed(name) {
 }
 
 /* 1. 官方中文表 */
-const lang = /([\w$]+)=\{es:null,en:([\w$]+),"zh-TW":([\w$]+)\}/.exec(core);
+const lang = /([\w$]+)=\{es:null,en:([\w$]+),"zh-TW":([\w$]+)[,}]/.exec(core);  // 11-11 起後面多了 "pt-BR"
 let ZH = {};
 if (!lang) console.log('⚠ 找不到語言表 {es:null,en:…,"zh-TW":…}（遊戲改了寫法）');
 else {
@@ -94,7 +94,7 @@ if (!n3) console.log('   （全部都有）');
 
 /* 4. 離線版修補 */
 const py = fs.readFileSync(path.join(ROOT, 'offline', 'rs_offline.py'), 'utf8');
-const sfx = /function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{\3\}`:\4\(\2\)\}/.test(core);
+const sfx = /function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{(?:[\w$]+\(\3\)|\3)\}`:\4\(\2\)\}/.test(core);
 console.log('\n4. 離線版修補：zhSuffix（裝備字尾中文語序）' + (sfx ? '對得上' : '⚠ 對不上，要改 rs_offline.py 的 CORE_PATCHES'));
 const suffixes = [...core.matchAll(/suffix:"([^"]+)"/g)].map(m => m[1]);
 const zhjs = fs.readFileSync(path.join(ROOT, 'offline', 'zh.js'), 'utf8');
@@ -113,7 +113,10 @@ try {
     'for n, rx, _ in m.CORE_PATCHES: r[n] = len(rx.findall(core))',
     'print(json.dumps(r))',
   ].join('\n');
-  const out = require('child_process').execFileSync('python', ['-c', code, path.join(ROOT, 'offline', 'rs_offline.py'), mainFile, coreFile], { encoding: 'utf8' });
+  // WindowsApps 的 python.exe 可能是空殼（只會開商店），優先用實際安裝的 Python
+  const realPy = path.join(process.env.LOCALAPPDATA || '', 'Python', 'bin', 'python.exe');
+  const PY = process.env.PYTHON || (fs.existsSync(realPy) ? realPy : 'python');
+  const out = require('child_process').execFileSync(PY, ['-c', code, path.join(ROOT, 'offline', 'rs_offline.py'), mainFile, coreFile], { encoding: 'utf8' });
   const r = JSON.parse(out.trim().split(/\r?\n/).pop());
   const bad = Object.entries(r).filter(([, n]) => n !== 1);
   console.log('   rs_offline.py 修補：' + Object.entries(r).map(([k, n]) => `${k}${n === 1 ? '✓' : '⚠' + n}`).join('、'));

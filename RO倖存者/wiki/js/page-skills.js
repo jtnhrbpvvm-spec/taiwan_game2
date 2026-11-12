@@ -14,7 +14,10 @@ RSW.page({
 <p>${s.tagNames.map(t => `<span class="tag">${R.esc(t)}</span>`).join(' ')} <span class="tag">最高 ${s.maxLevel} 級</span></p>
 <div class="box">${R.esc(s.desc1 || '（沒有說明）')}${s.descMax ? `<p class="muted small">每升一級：${R.esc(s.descMax)}</p>` : ''}</div>
 <h3>哪些職業可以用</h3>
-${how.length ? `<ul>${how.map(h => `<li>${h}</li>`).join('')}</ul>` : '<p class="muted">不屬於任何職業（可能是神祇、寵物或特殊技能）。</p>'}`;
+${how.length ? `<ul>${how.map(h => `<li>${h}</li>`).join('')}</ul>` : '<p class="muted">不屬於任何職業（可能是神祇、寵物或特殊技能）。</p>'}
+${(R.deities && R.deities.skills[s.id]) ? `<h3>神祇效果 <a class="small" href="#deities">什麼是神祇？</a></h3>
+<div class="tw"><table class="t"><tr><th>等級</th><th>效果</th></tr>
+  ${[1, 5, 10].map(r => `<tr><td class="num">${r}</td><td class="small">${R.deities.skills[s.id][r - 1].map(R.esc).join('<br>')}</td></tr>`).join('')}</table></div>` : ''}`;
     }
     const jobs = R.jobs.list;
     return `<h2 class="pt">技能</h2>

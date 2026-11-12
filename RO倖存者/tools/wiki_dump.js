@@ -187,14 +187,33 @@ const petRules = {};
   if (!tiers.length || !c1 || !c2 || !egg) note('⚠ 寵物規則數字有些沒抓到：' + JSON.stringify(petRules));
 }
 
-const versionM = /commit:"(\w+)",\s*date:"(\d{4})-(\d\d)-(\d\d)/.exec(mainSrc);
+/* ---------- 神祇（寶箱第五格：技能神祇 1～10 級、屬性神祇） ---------- */
+const deityOut = { skills: {}, stats: [] };
+{
+  const cls = find('神祇效果', v => typeof v === 'function' && typeof v.deityTexts === 'function');
+  if (cls && skills) for (const [id, s] of Object.entries(skills)) {
+    const inst = safe(() => s.create && s.create());
+    if (!inst) continue;
+    const ranks = [];
+    for (let r = 1; r <= 10; r++) ranks.push(safe(() => cls.deityTexts(inst, r), []));
+    if (ranks[0].length) deityOut.skills[id] = ranks;
+  }
+  const statTbl = find('屬性神祇', v => isObj(v) && Object.values(v).some(x => x && x.slot === 'deity' && x.range));
+  for (const x of Object.values(statTbl || {})) if (x && x.slot === 'deity') {
+    const m = (man.items || {})[x.icon] || {};
+    deityOut.stats.push({ id: x.id, name: T(x.name), icon: m.icon || icon(x.icon), min: safe(() => x.text(x.range[0])), max: safe(() => x.text(x.range[1])) });
+  }
+  if (!Object.keys(deityOut.skills).length) note('⚠ 技能神祇是空的');
+}
+
+const versionM =/commit:"(\w+)",\s*date:"(\d{4})-(\d\d)-(\d\d)/.exec(mainSrc);
 const dump = {
   version: versionM ? versionM[2] + versionM[3] + versionM[4] + '_' + versionM[1] : null, dumpedAt: new Date().toISOString(),
   jobs: jobOut, skills: skillOut, talents: talentOut, branches: branchOut,
   items: itemOut, cards: cardOut, monsters: monOut, drops: dropOut, monInfo,
   labels: { races, elements, sizes, slots: slotName, qualities: (qualities || []).map(q => ({ id: q.id, name: q.name, mult: q.mult })) },
   stages: stageOut, scripts: scriptOut,
-  pets: petOut, petRules,
+  pets: petOut, petRules, deities: deityOut,
   log,
 };
 const body = JSON.stringify(dump);

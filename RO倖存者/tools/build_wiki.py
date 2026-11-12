@@ -69,7 +69,7 @@ def main():
             if isinstance(o, dict):
                 return {k: (v if k in ('en', 'id') else fix_text(v)) for k, v in o.items()}
             return o
-        for sec in ('skills', 'talents', 'branches', 'items', 'cards', 'pets', 'jobs'):
+        for sec in ('skills', 'talents', 'branches', 'items', 'cards', 'pets', 'jobs', 'deities'):
             if sec in d:
                 d[sec] = fix_text(d[sec])
 
@@ -224,6 +224,7 @@ def main():
         'monsters.js': write_js('monsters.js', 'monsters', monsters),
         'stages.js': write_js('stages.js', 'stages', stages),
         'pets.js': write_js('pets.js', 'pets', {'list': pets, 'rules': rules}),
+        'deities.js': write_js('deities.js', 'deities', d.get('deities') or {'skills': {}, 'stats': []}),
     }
     print('遊戲版本：%s' % version)
     print('職業 %d、技能 %d、天賦 %d、物品 %d、卡片 %d、怪物 %d、關卡 %d、寵物 %d' % (

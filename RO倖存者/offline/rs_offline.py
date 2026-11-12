@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.6"
+TOOL_VERSION = "1.7"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -94,11 +94,12 @@ OFFLINE_PATCHES = [
 # 對 build/soul_linker-*.js 的修補（中文用，見 zh.js）
 CORE_PATCHES = [
     # 裝備全名 function yV(a,e){return e?`${E_(a)} ${e}`:E_(a)}（e＝「of Strength」這類字尾）
-    # → 交給 zh.js 排成中文語序「力量之太刀」；對不上就維持「太刀 of Strength」
-    ("zhSuffix", re.compile(rb"function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{\3\}`:\4\(\2\)\}"),
-     lambda m: (b"function %s(%s,%s){return %s?(window.__rsZh?window.__rsZh.full(%s(%s),%s):`${%s(%s)} ${%s}`):%s(%s)}" % (
+    # 11-11 起字尾多包一層葡萄牙文翻譯：function j7(t,e){return e?`${L1(t)} ${gy(e)}`:L1(t)}（中文模式下 gy(e) 還是英文）
+    # → 中文模式交給 zh.js 排成中文語序「力量之太刀」；其他語言照遊戲原本的寫法；對不上就維持「太刀 of Strength」
+    ("zhSuffix", re.compile(rb"function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{((?:[\w$]+\(\3\))|\3)\}`:\4\(\2\)\}"),
+     lambda m: (b"function %s(%s,%s){return %s?(window.__rsZh&&window.__rsZh.isZh()?window.__rsZh.full(%s(%s),%s):`${%s(%s)} ${%s}`):%s(%s)}" % (
          m.group(1), m.group(2), m.group(3), m.group(3), m.group(4), m.group(2), m.group(3),
-         m.group(4), m.group(2), m.group(3), m.group(4), m.group(2)))),
+         m.group(4), m.group(2), m.group(5), m.group(4), m.group(2)))),
 ]
 PATCH_STATUS = {}
 

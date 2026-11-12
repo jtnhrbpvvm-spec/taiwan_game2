@@ -1,9 +1,9 @@
 {
- "version": "1.6",
+ "version": "1.7",
  "files": {
   "開始遊戲.bat": "975d543db89fb791e50727e708691be1fca4b110eb721091b4bbc5f310ec5f4f",
   "以GM模式開始遊戲.bat": "5d780e38c6ff30dad1e0a1bacd99addcb5ce862c245f5c20845b6169e837f94c",
-  "rs_offline.py": "48d6bfe38c3f28f7afb70c3602fab28692405572af0ca35e509293658f1eac55",
+  "rs_offline.py": "46a53230a861fd1491ffb926767697ca036d70cdf817496b628e596216dc3bdb",
   "gm.js": "62fe0ff5a9ad1d9783571e3eb5cba69a001881f5c2722347286965fe3ccbebf5",
   "zh.js": "11f8afe93afdf66a67426c6c49d352b48d2f2a41be9c32aceb6d3cd8cc5d0df1",
   "說明.txt": "18823bdbe86d65a489ca0ddd1b5d3332117ad9d587517aa602c1bc8e38cdb896"

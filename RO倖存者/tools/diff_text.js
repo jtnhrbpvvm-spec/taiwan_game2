@@ -14,14 +14,14 @@ function literal(src, start) {
 }
 function tables(v) {
   const s = file(v, /^soul_linker-.*\.js$/);
-  const m = /([\w$]+)=\{es:null,en:([\w$]+),"zh-TW":([\w$]+)\}/.exec(s);
+  const m = /([\w$]+)=\{es:null,en:([\w$]+),"zh-TW":([\w$]+)[,}]/.exec(s);  // 11-11 起後面多了 "pt-BR"
   const get = n => { const mm = new RegExp('[,;\\s]' + n.replace(/\$/g, '\\$') + '=\\{').exec(s); return literal(s, mm.index + mm[0].length - 1); };
   return { en: get(m[2]), zh: get(m[3]) };
 }
 function tri(v) {
   const s = file(v, /^main-.*\.js$/);
   const out = new Map();
-  const re = /\bb\(("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*")\)/g;
+  const re = /\bb\(("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*")(?:,"(?:[^"\\]|\\.)*")?\)/g;  // 11-11 起多第 4 個（葡萄牙文）
   for (const m of s.matchAll(re)) { try { out.set(JSON.parse(m[1]), [JSON.parse(m[2]), JSON.parse(m[3])]); } catch (e) {} }
   return out;
 }

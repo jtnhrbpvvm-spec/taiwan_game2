@@ -24,7 +24,7 @@ RSW.page({
       const jobs = it.jobs ? it.jobs.map(R.jobLink).join('、') : '所有職業';
       return `<p class="small"><a href="#items">← 所有物品</a></p>
 <h2 class="pt">${R.img(it.icon, 'ico lg')} ${R.esc(R.itemName(it))} <span class="muted small">${R.esc(it.en)}</span>
-  ${it.rare ? '<span class="tag star">稀有</span>' : ''}${it.secret ? '<span class="tag mvp">秘密</span>' : ''}${it.starter ? '<span class="tag">初始裝備</span>' : ''}</h2>
+  ${it.rare ? '<span class="tag star">稀有</span>' : ''}${it.secret ? '<span class="tag mvp">秘密</span>' : ''}${it.starter ? '<span class="tag">初始裝備</span><span class="tag">不可交易</span>' : ''}</h2>
 <div class="box">
   <span class="stat">部位 <b>${R.esc(R.slotName(it))}</b></span>
   <span class="stat">卡片插槽 <b>${it.cardSlots}</b></span>
@@ -32,7 +32,7 @@ RSW.page({
   ${it.gender ? `<span class="stat">限 <b>${it.gender === 'f' ? '女性' : '男性'}</b></span>` : ''}
   <div class="small" style="margin-top:6px">可裝備：${jobs}</div>
   ${it.bonuses.length ? `<div class="small" style="margin-top:6px">固定效果：${it.bonuses.map(R.esc).join('、')}</div>` : ''}
-  ${it.sig.length ? `<div class="small" style="margin-top:6px">專屬加成：${it.sig.map(R.esc).join('、')}${it.sigMax.join() !== it.sig.join() ? `（最高品質：${it.sigMax.map(R.esc).join('、')}）` : ''}</div>` : ''}
+  ${it.sig.length ? `<div class="small" style="margin-top:6px">★ 專屬加成：${it.sig.map(R.esc).join('、')}${it.sigMax.join() !== it.sig.join() ? `（最高品質：${it.sigMax.map(R.esc).join('、')}）` : ''}<span class="muted">　數值再乘上掉落關卡的階級和精煉</span></div>` : ''}
 </div>
 <h3>取得方式</h3>
 ${rows.length ? `<div class="tw"><table class="t"><tr><th>方式</th><th>來源</th><th>地點</th><th>機率</th></tr>
