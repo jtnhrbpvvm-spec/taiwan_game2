@@ -36,7 +36,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-TOOL_VERSION = "1.7"
+TOOL_VERSION = "1.8"
 ORIGIN = "https://ro-survivors.com/"
 PORT = 8381                       # 固定埠號：瀏覽器的存檔跟著網址走，換埠號會看不到舊存檔
 HERE = os.path.dirname(os.path.abspath(__file__))

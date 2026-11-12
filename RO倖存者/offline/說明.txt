@@ -6,9 +6,10 @@ RO 倖存者離線版（非官方）
 官網維修、連線不穩的時候可以先玩玩看，或拿來研究遊戲。
 
 【怎麼用】
-1. 先安裝 Python 3（只要裝一次）。
-   安裝教學：https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO倖存者/offline/
-   安裝時記得勾選「Add python.exe to PATH」。
+1. 需要 Python 3，但 v1.8 起不用先裝：第一次雙擊「開始遊戲.bat」時，
+   沒有 Python 會自動下載安裝 Python 官方的「Python 安裝管理員」（約 96 MB），裝好就直接開始遊戲。
+   自動安裝失敗時，照這裡的教學手動裝（記得勾選「Add python.exe to PATH」）：
+   https://jtnhrbpvvm-spec.github.io/taiwan_game2/RO倖存者/offline/
 2. 把整個資料夾解壓縮到任何地方（不要直接在壓縮檔裡執行）。
 3. 雙擊「開始遊戲.bat」。
    第一次會從官網下載遊戲（約 50 MB，大約 3 分鐘），完成後自動用瀏覽器開遊戲。
@@ -48,6 +49,7 @@ RO 倖存者離線版（非官方）
 rs_offline.py        主程式（純文字，可以用記事本打開看內容）
 gm.js                GM 模式的面板（純文字）
 zh.js                中文名稱（純文字）
+install_python.ps1   沒有 Python 時自動安裝用（純文字）
 game\          自動下載的遊戲程式（刪掉也沒關係，下次會重新下載）
 cache\         自動下載的圖片、音效（刪掉也沒關係，下次會重新下載）
 _backup\       離線工具自動更新前的舊檔（新版有問題時可以拿回來）
@@ -55,6 +57,8 @@ _backup\       離線工具自動更新前的舊檔（新版有問題時可以�
 【安全性】
 - 程式只連到 ro-survivors.com（下載遊戲檔案）和說明頁所在的 jtnhrbpvvm-spec.github.io
   （檢查離線工具新版），不會上傳任何東西。
+  沒有 Python 時，啟動檔會從說明頁或 python.org 下載 Python 官方安裝管理員，
+  比對檔案指紋和數位簽章（Python Software Foundation）後才安裝。
 - 本機伺服器只有你自己的電腦連得到（127.0.0.1），區域網路的其他人連不到。
 - 程式碼完全公開，可以用記事本打開 rs_offline.py 檢查。
 

@@ -46,12 +46,28 @@ details[open] summary{margin-bottom:6px}
 <body>
 <div class="wrap">
 
-<h1>RO 倖存者離線版 <small>非官方・v1.7</small></h1>
+<h1>RO 倖存者離線版 <small>非官方・v1.8</small></h1>
 <p class="sub">在自己的電腦開 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的小工具。官網維修、連線不穩的時候可以先玩玩看。</p>
 
 <div class="card warn">
   <b>⚠ 先看這裡：</b>離線版<b>不會連到官方伺服器</b>。不能登入帳號、不能雲端存檔、沒有廣場和排行榜，
   進度<b>不會同步到你的官方帳號</b>。正式遊玩請到官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>。
+</div>
+
+<h2 id="news">更新公告</h2>
+<div class="card">
+  <b>v1.8（2026-11-12）：沒有 Python 會自動幫你裝</b>
+  <ul>
+    <li>雙擊「開始遊戲.bat」時，如果電腦還沒有 Python 3，會<b>自動下載並安裝</b> Python 官方的「Python 安裝管理員」
+      （<code>python-manager-26.4.msix</code>，約 96 MB，Python Software Foundation 數位簽章），再用它裝好 Python 3，接著直接開始遊戲。
+      只裝在你自己的使用者帳號底下，不需要系統管理員權限，只要裝一次。</li>
+    <li>安裝檔先從這個網頁下載，下載不到時改從 Python 官網（python.org）下載；每次都會比對檔案指紋和數位簽章，對不上就不安裝。</li>
+    <li>自動安裝失敗時（例如 Windows 版本太舊），會跟以前一樣打開下面的<a href="#python">手動安裝教學</a>。</li>
+    <li><span class="mark">舊版的玩家請重新下載 zip</span>（啟動檔有改），解壓縮後蓋過原本的檔案即可，存檔不會不見。</li>
+    <li>如果卡在藍色的「正在進入普隆德拉…」畫面，請看<a href="#stuck">常見問題</a>。</li>
+  </ul>
+  <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載 v1.8（zip）</a>
+  <a class="btn ghost" href="python-manager-26.4.msix" download>單獨下載 Python 安裝管理員（msix）</a>
 </div>
 
 <h2>能做什麼、不能做什麼</h2>
@@ -72,7 +88,8 @@ details[open] summary{margin-bottom:6px}
 
 <h2>使用步驟</h2>
 <ol class="steps">
-  <li><b>安裝 Python 3</b>（只要裝一次）：照下面的<a href="#python">安裝教學</a>做。</li>
+  <li><b>Python 3</b>：v1.8 起<b>不用先裝</b>，第一次雙擊「開始遊戲.bat」時，沒有 Python 會自動幫你裝好（Windows 10 1809 以後）。
+    自動安裝失敗時再照下面的<a href="#python">安裝教學</a>手動裝。</li>
   <li><b>下載離線版</b>，解壓縮到任何資料夾（例如桌面）。<span class="mark">不要直接在壓縮檔裡面執行。</span><br>
     <a class="btn" href="ro-survivors-offline.zip" download>⬇ 下載離線版（zip，約 40 KB）</a>
   </li>
@@ -183,8 +200,21 @@ details[open] summary{margin-bottom:6px}
 </details>
 <details>
   <summary>黑色視窗說找不到 Python，然後打開這個網頁</summary>
-  代表 Python 還沒裝好，或安裝時沒勾「Add python.exe to PATH」。
-  重新執行 Python 安裝檔，選「Modify」或直接重裝並勾選 PATH；或改用 Microsoft Store 版。裝好後要<b>重新雙擊</b>「開始遊戲.bat」。
+  代表自動安裝沒有成功（黑色視窗裡會寫原因，例如網路斷線、Windows 版本太舊），或 Python 安裝時沒勾「Add python.exe to PATH」。
+  可以先<a href="python-manager-26.4.msix" download>下載 Python 安裝管理員</a>，雙擊它按「安裝」，再雙擊「開始遊戲.bat」；
+  或照上面的教學從 python.org 安裝並勾選 PATH。裝好後要<b>重新雙擊</b>「開始遊戲.bat」。
+</details>
+<details id="stuck">
+  <summary>一直卡在藍色的「正在進入普隆德拉…」畫面</summary>
+  能看到這個畫面代表 Python 和離線版都已經正常啟動了，卡住的是瀏覽器載入 3D 地圖。請依序試試看：
+  <ol>
+    <li>確認<b>黑色視窗還開著</b>，而且最後一行是「玩的時候這個視窗要開著」。關掉黑色視窗遊戲就讀不到檔案。</li>
+    <li>網址要是 <code>http://127.0.0.1:8381/</code>，不要直接雙擊 <code>game</code> 資料夾裡的 <code>index.html</code>。</li>
+    <li>按 <kbd>Ctrl</kbd> + <kbd>F5</kbd> 重新整理。</li>
+    <li>圖片音效可能沒下載完整（防毒軟體或網路中斷）：刪掉離線版資料夾裡的 <code>cache</code> 資料夾，再雙擊「開始遊戲.bat」重新下載。</li>
+    <li>瀏覽器的<b>硬體加速</b>要開著（Chrome／Edge：設定 → 系統 → 「使用圖形加速功能」），改完重開瀏覽器。換 Chrome 或 Edge 最新版試試。</li>
+    <li>用同一台電腦開官網 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">ro-survivors.com</a>，如果官網也卡在同一個畫面，就是顯示卡／瀏覽器不支援 3D（WebGL），跟離線版無關。</li>
+  </ol>
 </details>
 <details>
   <summary>我的角色不見了</summary>
@@ -211,7 +241,8 @@ details[open] summary{margin-bottom:6px}
 <h2>安全性</h2>
 <div class="card">
   <ul>
-    <li>程式只連到兩個地方：<code>ro-survivors.com</code>（下載遊戲檔案）和這個網頁所在的 <code>jtnhrbpvvm-spec.github.io</code>（檢查離線工具的新版），<b>不會上傳任何東西</b>。</li>
+    <li>程式只連到兩個地方：<code>ro-survivors.com</code>（下載遊戲檔案）和這個網頁所在的 <code>jtnhrbpvvm-spec.github.io</code>（檢查離線工具的新版），<b>不會上傳任何東西</b>。
+      沒有 Python 時，啟動檔會另外從這個網頁或 <code>python.org</code> 下載 Python 官方安裝管理員，比對指紋和數位簽章後才安裝。</li>
     <li>離線工具自動更新時，每個檔案都會先比對指紋（SHA-256），對不上就不更新；舊檔備份在 <code>_backup</code>。</li>
     <li>本機伺服器只綁在 <code>127.0.0.1</code>，只有你自己的電腦連得到，區域網路的其他人連不到。</li>
     <li>只用 Python 內建功能，不用安裝其他套件；程式碼完全公開，可以用記事本打開檢查。</li>
