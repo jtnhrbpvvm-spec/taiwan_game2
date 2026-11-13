@@ -1,0 +1,25 @@
+{
+ "id": "1151113V7",
+ "date": "2026-11-13 19:59",
+ "notes": [
+  "AUTO 掛機的攻擊、走路速度跟手動一樣了：加速、勇敢類（名譽貨幣、惡魔之血、精靈餅乾）、巧克力蛋糕都會疊加（原本一開 AUTO 只算綠水，其他速度加成全部沒效）"
+ ],
+ "files": [
+  {
+   "path": "js/offline-auto.js",
+   "size": 98106,
+   "sha256": "39ea33db63804814505e053aeb011bfa371e8180b8db84c89c6dc3c3cd4f9c2e"
+  },
+  {
+   "path": "js/offline-server.js",
+   "size": 171488,
+   "sha256": "a73fe8b6c159b063ea66f612c1158010df1b2add1fade69786ae1b9f68cb528d"
+  },
+  {
+   "path": "webl1_offline.py",
+   "size": 17129,
+   "sha256": "35226ca9a1d63a617eb0f8dfe15cdfa01069d826d8b2bee077e9c7bb4b13c30a"
+  }
+ ],
+ "delete": []
+}

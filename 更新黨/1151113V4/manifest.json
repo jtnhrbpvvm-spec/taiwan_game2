@@ -1,0 +1,41 @@
+{
+ "id": "1151113V4",
+ "date": "2026-11-13 19:34",
+ "notes": [
+  "AUTO 補給可以設定自動吃巧克力蛋糕（效果沒了就吃，背包有才吃）；法師、黑暗妖精可以設定自動喝名譽貨幣，王族、騎士、妖精沒有本職業的勇敢類時也會改喝名譽貨幣",
+  "城鎮的藥水、雜貨商人開賣名譽貨幣，每個 1 萬金幣；賣回商店每個 10 金幣"
+ ],
+ "files": [
+  {
+   "path": "data/npcshop.json",
+   "size": 50325,
+   "sha256": "0e489f46b749e0ae6b45b90f43e5dc66ceb19245b224bc42387366eaa2769b19"
+  },
+  {
+   "path": "data/shopbuy.json",
+   "size": 8238,
+   "sha256": "98762767da164bc25a8ebd2091f62e932029176ac0d52cb39d534053f683c815"
+  },
+  {
+   "path": "data/shopitems.json",
+   "size": 1981,
+   "sha256": "73fccfbcff81aa4429c1201c805a6345fe7c67e6873b5134e7c7c308f8c49e2c"
+  },
+  {
+   "path": "data/shopsell.json",
+   "size": 12544,
+   "sha256": "49b17673f03c03638f4366a7b176460862f13b65653703b75eb7d479bfdc2b51"
+  },
+  {
+   "path": "js/hud.js",
+   "size": 423007,
+   "sha256": "03e407e4c2c3c5b55948351157648f7c3280c178261277111fa9a10ac450c33e"
+  },
+  {
+   "path": "js/offline-auto.js",
+   "size": 78261,
+   "sha256": "4be088575acb84345c5d3d35ae32570e48178cb4e60b29fabcc5ed0445c2e15d"
+  }
+ ],
+ "delete": []
+}
