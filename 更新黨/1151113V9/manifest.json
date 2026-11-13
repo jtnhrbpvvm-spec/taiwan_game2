@@ -1,0 +1,25 @@
+{
+ "id": "1151113V9",
+ "date": "2026-11-13 20:37",
+ "notes": [
+  "優化遊戲"
+ ],
+ "files": [
+  {
+   "path": "data/drops.json",
+   "size": 585104,
+   "sha256": "5b30cdadeb2e47f2efab0f555d44f15189008e5e6dde50e7a03806cd2cbd09bf"
+  },
+  {
+   "path": "js/hud.js",
+   "size": 423079,
+   "sha256": "853104abc2e3d5096633cdcfd2e53c6ac927520743f5f76432fcb1ef75b4d13a"
+  },
+  {
+   "path": "js/offline-auto.js",
+   "size": 98307,
+   "sha256": "eda633dae4e3b50cd9e109694a85b859c1d85878959533dc39a71299cc4b47a6"
+  }
+ ],
+ "delete": []
+}
