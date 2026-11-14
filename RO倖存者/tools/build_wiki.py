@@ -203,6 +203,16 @@ def main():
         pets.append(dict(p, en=mon.get('en') or p['id'], zh=mon.get('zh'), boss=mon.get('boss'),
                          eggZh=zh(p.get('eggEN')), accZh=zh(p.get('accEN'))))
 
+    # ---------- 外觀（只收有取得方式的；其他的遊戲也不顯示） ----------
+    cos_raw = d.get('cosmetics') or {}
+    cosmetics = []
+    for c in cos_raw.get('list', []):
+        if not (c.get('kills') or c.get('tower')):
+            continue
+        cosmetics.append({'id': c['id'], 'en': c['nameEN'], 'zh': zh(c['nameEN']), 'icon': c['icon'], 'slot': c['slot'],
+                          'kills': c.get('kills'), 'tower': c.get('tower'), 'covers': c.get('covers') or []})
+    cosmetics.sort(key=lambda c: (c['tower'] or 0, c['id']))
+
     # 遊戲沒翻到的職業類型
     SCALING = {'melee': '近戰', 'ranged': '遠程', 'magic': '魔法'}
     for j in d['jobs']:
@@ -225,6 +235,7 @@ def main():
         'stages.js': write_js('stages.js', 'stages', stages),
         'pets.js': write_js('pets.js', 'pets', {'list': pets, 'rules': rules}),
         'deities.js': write_js('deities.js', 'deities', d.get('deities') or {'skills': {}, 'stats': []}),
+        'cosmetics.js': write_js('cosmetics.js', 'cosmetics', {'list': cosmetics, 'kills': cos_raw.get('kills') or 200}),
     }
     print('遊戲版本：%s' % version)
     print('職業 %d、技能 %d、天賦 %d、物品 %d、卡片 %d、怪物 %d、關卡 %d、寵物 %d' % (

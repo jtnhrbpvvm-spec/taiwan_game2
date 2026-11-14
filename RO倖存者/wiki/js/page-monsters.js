@@ -18,6 +18,7 @@ RSW.page({
   ${m.ranged ? '<span class="tag">遠程攻擊</span>' : ''}${m.speed === 0 ? '<span class="tag">不會移動</span>' : ''}
 </div>
 <h3>出現地點</h3><p>${R.whereText(m)}</p>
+${cosOf(m.id) ? `<p>🎩 擊敗 ${R.cosmetics.kills} 次${cosOf(m.id).kills.length > 1 ? '（三隻塔羅鼠合計）' : ''}可以拿到外觀：<a href="#cosmetics">${R.img(cosOf(m.id).icon)} ${R.esc(cosOf(m.id).zh || cosOf(m.id).en)}</a> <span class="tag dev">即將開放</span></p>` : ''}
 ${petOf(m.id) ? `<p>🐾 這隻怪物有寵物：<a href="#pets/${m.id}">${R.esc(R.monName(m))}寵物</a>${petOf(m.id).from ? '（由進化取得）' : `（掉蛋 ${R.pct(m.boss === 'mvp' ? R.pets.rules.eggMvp : R.pets.rules.eggNormal)}）`}</p>` : ''}
 <h3>掉落物</h3>
 ${drops.length || card ? `<div class="tw"><table class="t"><tr><th>物品</th><th>部位</th><th>每隻機率</th></tr>

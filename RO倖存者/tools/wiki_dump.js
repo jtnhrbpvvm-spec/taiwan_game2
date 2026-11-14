@@ -45,7 +45,9 @@ const cards = find('卡片', v => isObj(v) && v[4001] && v[4001].monster);
 const monsters = find('怪物', v => isObj(v) && v.poring && v.poring.hp && v.poring.level);
 const drops = find('掉落', v => isObj(v) && Array.isArray(v.poring) && v.poring[0] && 'rate' in v.poring[0]);
 const scripts = find('關卡腳本', v => isObj(v) && v.prontera && v.prontera.waves);
-const xt = find('素材清單', v => isObj(v) && v.manifest && v.manifest.items);
+// 素材清單：遊戲載入素材後才會填進 manifest；還沒載入（例如停在建立帳號畫面）就直接讀 manifest.json
+let xt = V.find(v => { try { return isObj(v) && v.manifest && v.manifest.items; } catch (e) { return false; } }) || null;
+if (!xt) { try { xt = { manifest: await (await fetch('/assets/manifest.json')).json() }; } catch (e) { note('⚠ 找不到：素材清單'); } }
 const tagLabels = find('技能標籤', v => isObj(v) && typeof v.melee === 'string' && typeof v.single === 'string');
 const gearSlots = find('裝備欄位', v => Array.isArray(v) && v.length >= 8 && v.every(s => s && s.id && s.name && s.gear));
 const qualities = find('品質', v => Array.isArray(v) && v.length >= 4 && v.every(q => q && 'mult' in q && 'name' in q));
@@ -87,6 +89,13 @@ for (const [job, list] of Object.entries(branches || {})) {
 }
 
 /* ---------- 物品 ---------- */
+const coreSrc = await (await fetch(core)).text();
+// 秘密裝備：11-13 起不再有 secret:!0，改成 const X=new Set,Y=(t,e,a,o={})=>{X.add(t),…} 再 Y(1413,…) 這樣登記
+const secretIds = new Set();
+{
+  const m = /const ([\w$]+)=new Set,([\w$]+)=\(\w,\w,\w,\w=\{\}\)=>\{\1\.add\(\w\)/.exec(coreSrc);
+  if (m) for (const c of coreSrc.matchAll(new RegExp('[;,{]' + m[2].replace(/\$/g, '\\$') + '\\((\\d+),', 'g'))) secretIds.add(+c[1]);
+}
 const qFirst = qualities && qualities[0], qLast = qualities && qualities[qualities.length - 1];
 const sigText = (id, q) => safe(() => signature(id, q.id).map(b => b.text(1)), []);
 const itemOut = Object.values(items || {}).map(i => {
@@ -94,7 +103,7 @@ const itemOut = Object.values(items || {}).map(i => {
   return {
     id: i.id, nameEN: m.name || null, icon: m.icon || null, slot: i.slot, cardSlots: i.cardSlots,
     base: i.base || null, jobs: i.jobs || null, wtype: i.wtype || null, wtypeName: i.wtype && W ? W(i.wtype) : null,
-    rare: !!i.rare, starter: !!i.starter, secret: !!i.secret, gender: i.gender || null,
+    rare: !!i.rare, starter: !!i.starter, secret: !!i.secret || secretIds.has(i.id), gender: i.gender || null,
     bonuses: (i.bonuses || []).map(b => safe(() => b.text(1), '')),
     sig: qFirst ? sigText(i.id, qFirst) : [], sigMax: qLast ? sigText(i.id, qLast) : [],
     type: (m.description || []).find(l => /^Type:/.test(l)) || null,
@@ -157,13 +166,14 @@ const petRules = {};
 {
   const imp = /import\{([^}]*)\}from"\.\/soul_linker[^"]*"/.exec(mainSrc);
   const local2export = {};
-  if (imp) for (const p of imp[1].matchAll(/(\$?\w+) as (\$?\w+)/g)) local2export[p[2]] = p[1];
-  const pushFn = /function (\w+)\(a,e,t,s,n\)\{\w+\.push\(\{id:a,egg:e,acc:t,bonuses:s,from:n\}\)\}/.exec(mainSrc);
+  if (imp) for (const p of imp[1].matchAll(/([\w$]+) as ([\w$]+)/g)) local2export[p[2]] = p[1];
+  // 參數名每版會變（11-13 起 (s,e,t,a,n)），不寫死
+  const pushFn = /function ([\w$]+)\((\w),(\w),(\w),(\w),(\w)\)\{[\w$]+\.push\(\{id:\2,egg:\3,acc:\4,bonuses:\5,from:\6\}\)\}/.exec(mainSrc);
   if (!pushFn) note('⚠ 找不到寵物清單（main.js 結構改了）');
   else {
     const callRe = new RegExp(pushFn[1].replace(/\$/g, '\\$') + '\\("(\\w+)",(\\d+),(void 0|\\d+),\\[([^\\]]*)\\](?:,"(\\w+)")?\\)', 'g');
     for (const m of mainSrc.matchAll(callRe)) {
-      const bonus = mult => [...m[4].matchAll(/(\$?\w+)\(([^()]*)\)/g)].map(b => {
+      const bonus = mult => [...m[4].matchAll(/([\w$]+)\(([^()]*)\)/g)].map(b => {  // 名稱可能是 U$、G$
         const fn = M[local2export[b[1]]];
         return fn ? safe(() => fn(Number(b[2])).text(mult), '?') : '?';
       });
@@ -178,11 +188,11 @@ const petRules = {};
   const tiers = [...mainSrc.matchAll(/\{name:"(Neutral|Cordial|Leal)",min:(\d+),mult:([\d.]+)\}/g)].map(t => ({ id: t[1], name: T(t[1]), min: +t[2], mult: +t[3] }));
   const c1 = /const \w+=(1e3|\d+),\w+=(\d+),\w+=(\d+),\w+=\[\{name:"Neutral"/.exec(mainSrc);
   const c2 = /mult:1\}\],\w+=\w+\[2\]\.min,\w+=([\d.]+),\w+=(\d+),\w+=\w+\[1\]\.min,\w+=(\d+)/.exec(mainSrc);
-  const egg = /function \w+\(a\)\{return a\?([\d.e-]+):([\d.e-]+)\}const \w+=1e3/.exec(mainSrc);
+  const egg = /function [\w$]+\((\w)\)\{return \1\?([\d.e-]+):([\d.e-]+)\}const [\w$]+=1e3/.exec(mainSrc);
   Object.assign(petRules, {
     tiers, max: c1 ? Number(c1[1]) : null, start: c1 ? +c1[2] : null, secondsPerPoint: c1 ? +c1[3] : null,
     accMult: c2 ? +c2[1] : null, accPrice: c2 ? +c2[2] : null, evolveKills: c2 ? +c2[3] : null,
-    eggMvp: egg ? Number(egg[1]) : null, eggNormal: egg ? Number(egg[2]) : null,
+    eggMvp: egg ? Number(egg[2]) : null, eggNormal: egg ? Number(egg[3]) : null,
   });
   if (!tiers.length || !c1 || !c2 || !egg) note('⚠ 寵物規則數字有些沒抓到：' + JSON.stringify(petRules));
 }
@@ -206,6 +216,24 @@ const deityOut = { skills: {}, stats: [] };
   if (!Object.keys(deityOut.skills).length) note('⚠ 技能神祇是空的');
 }
 
+/* ---------- 外觀（11-13 起：首領擊殺 200 次、無盡之塔樓層解鎖；沒有取得方式的遊戲也不顯示，這裡照抓但標 obtain:null） ---------- */
+const cosOut = [];
+let cosKills = null;
+{
+  const tbl = find('外觀', v => isObj(v) && Object.values(v).length > 10 &&
+    Object.values(v).every(x => x && typeof x.id === 'number' && typeof x.slot === 'string' && !('cardSlots' in x)) &&
+    Object.values(v).some(x => Array.isArray(x.kills)));
+  for (const x of Object.values(tbl || {})) {
+    const m = (man.items || {})[x.id] || {};
+    cosOut.push({ id: x.id, nameEN: m.name || null, icon: m.icon || null, slot: x.slot, kills: x.kills || null,
+      tower: x.tower || null, covers: x.covers || [], wtype: x.wtype || null, wtypeName: x.wtype && W ? W(x.wtype) : null });
+  }
+  const k = /const [\w$]+=\["head_top","head_mid","head_low","weapon","shield"\],[\w$]+=\["head_top","head_mid","head_low"\],[\w$]+=(\d+)/;
+  const km = k.exec(coreSrc);
+  cosKills = km ? +km[1] : null;
+  if (!cosKills) note('⚠ 找不到外觀擊殺次數（預設 200）');
+}
+
 const versionM =/commit:"(\w+)",\s*date:"(\d{4})-(\d\d)-(\d\d)/.exec(mainSrc);
 const dump = {
   version: versionM ? versionM[2] + versionM[3] + versionM[4] + '_' + versionM[1] : null, dumpedAt: new Date().toISOString(),
@@ -214,6 +242,7 @@ const dump = {
   labels: { races, elements, sizes, slots: slotName, qualities: (qualities || []).map(q => ({ id: q.id, name: q.name, mult: q.mult })) },
   stages: stageOut, scripts: scriptOut,
   pets: petOut, petRules, deities: deityOut,
+  cosmetics: { list: cosOut, kills: cosKills || 200 },
   log,
 };
 const body = JSON.stringify(dump);

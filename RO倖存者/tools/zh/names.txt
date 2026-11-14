@@ -856,3 +856,29 @@
 @Kihop	氣合
 @Peco Peco	大嘴鳥
 @Vanilmirth	凡米爾斯
+# 外觀（2026-11-14，遊戲 8ea3785e：首領擊殺 200 次、無盡之塔獎勵；Blood Savage 照官方中文保留英文）
+@Tiger Mask	老虎面具
+@Angelring Hat	天使波利帽
+@Moonlight Flower Hat	月夜貓帽
+@Drooping Ninetail	趴趴九尾貓
+@Devilring Hat	惡魔波利帽
+@Triple Poring Hat	三層波利帽
+@Yao Jun Hat	惠君帽
+@Fish Head Hat	魚頭帽
+@Crab Nipper Hat	螃蟹鉗帽
+@Wandering Wolf King Helmet	流浪狼王頭盔
+@Shark Hat	鯊魚帽
+@Lunatic Hat	瘋兔帽
+@Frog Prince Hat	青蛙王子帽
+@Octopus Hat	章魚帽
+@Musical Note Headband	音符髮帶
+@Dragon General Helm	龍將軍頭盔
+@Dragonfly Monocle	蜻蜓單眼鏡
+@Queen Scaraba Crown	聖甲蟲女王皇冠
+@Mouse Hat	老鼠帽
+@Ghostring Tall Hat	幽靈波利高帽
+@Blood Savage Helm	Blood Savage 頭盔
+@Blood Savage Eyepatch	Blood Savage 眼罩
+@Blood Savage Scarf	Blood Savage 圍巾
+@Ghost Ship Captain's Hat	幽靈船長帽
+@Octopus Leg In Mouth	嘴叼章魚腳

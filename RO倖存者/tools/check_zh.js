@@ -92,36 +92,6 @@ for (const m of core.matchAll(/[\w$]+\("([a-z][a-z0-9_]*)","([A-Z][A-Za-z' ]+)",
 if (!skillCount) console.log('   ⚠ 一個技能定義都沒找到（遊戲改了寫法），技能名要在遊戲裡看');
 if (!n3) console.log('   （全部都有）');
 
-/* 4. 離線版修補 */
-const py = fs.readFileSync(path.join(ROOT, 'offline', 'rs_offline.py'), 'utf8');
-const sfx = /function ([\w$]+)\((\w),(\w)\)\{return \3\?`\$\{([\w$]+)\(\2\)\} \$\{(?:[\w$]+\(\3\)|\3)\}`:\4\(\2\)\}/.test(core);
-console.log('\n4. 離線版修補：zhSuffix（裝備字尾中文語序）' + (sfx ? '對得上' : '⚠ 對不上，要改 rs_offline.py 的 CORE_PATCHES'));
-const suffixes = [...core.matchAll(/suffix:"([^"]+)"/g)].map(m => m[1]);
-const zhjs = fs.readFileSync(path.join(ROOT, 'offline', 'zh.js'), 'utf8');
-const newSfx = suffixes.filter(s => !zhjs.includes(`'${s}'`));
-console.log('   裝備字尾：' + suffixes.join('、') + (newSfx.length ? '\n   ⚠ zh.js 的 SUFFIX 沒有：' + newSfx.join('、') : '（zh.js 都有）'));
-if (!/CORE_PATCHES/.test(py)) console.log('   ⚠ rs_offline.py 沒有 CORE_PATCHES');
-/* 離線版所有修補（無盡之塔、隱藏職業、GM、中文）對新版程式還對不對得上：直接用 rs_offline.py 自己的正規表示式 */
-try {
-  const mainFile = path.join(build, pick(/^main-[\w-]+\.js$/));
-  const coreFile = path.join(build, pick(/^soul_linker-[\w-]+\.js$/));
-  const code = [
-    'import importlib.util, json, sys',
-    'spec = importlib.util.spec_from_file_location("rso", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)',
-    'main = open(sys.argv[2], "rb").read(); core = open(sys.argv[3], "rb").read(); r = {}',
-    'for n, rx, _ in m.OFFLINE_PATCHES + m.GM_PATCHES: r[n] = len(rx.findall(main))',
-    'for n, rx, _ in m.CORE_PATCHES: r[n] = len(rx.findall(core))',
-    'r["__count"] = getattr(m, "PATCH_COUNT", {})',
-    'print(json.dumps(r))',
-  ].join('\n');
-  // WindowsApps 的 python.exe 可能是空殼（只會開商店），優先用實際安裝的 Python
-  const realPy = path.join(process.env.LOCALAPPDATA || '', 'Python', 'bin', 'python.exe');
-  const PY = process.env.PYTHON || (fs.existsSync(realPy) ? realPy : 'python');
-  const out = require('child_process').execFileSync(PY, ['-c', code, path.join(ROOT, 'offline', 'rs_offline.py'), mainFile, coreFile], { encoding: 'utf8' });
-  const r = JSON.parse(out.trim().split(/\r?\n/).pop());
-  const want = r.__count || {}; delete r.__count;   // PATCH_COUNT：要全部換的修補，應該有幾處
-  const bad = Object.entries(r).filter(([k, n]) => n !== (want[k] || 1));
-  console.log('   rs_offline.py 修補：' + Object.entries(r).map(([k, n]) => `${k}${n === (want[k] || 1) ? '✓' : '⚠' + n}`).join('、'));
-  if (bad.length) console.log('   ⚠ 對不上（0 次）或不只一處的要改 rs_offline.py：' + bad.map(([k]) => k).join('、'));
-} catch (e) { console.log('   ⚠ 無法檢查 rs_offline.py 的修補：' + e.message.split('\n')[0]); }
-console.log('\n補完 names.txt 後：python tools\\build_wiki.py（小百科）、python tools\\pack_offline.py（離線版 zh.js＋version.json），再推上 GitHub。');
+/* 4. 離線版修補：2026-11-13 作者封鎖離線遊玩，離線版 v2.0 為最終版（只剩公告頁），不再檢查 */
+console.log('\n4. 離線版：已停止（v2.0 最終版），不檢查修補。');
+console.log('\n補完 names.txt 後：python tools\\build_wiki.py（小百科），再推上 GitHub。');

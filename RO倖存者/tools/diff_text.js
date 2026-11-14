@@ -21,8 +21,12 @@ function tables(v) {
 function tri(v) {
   const s = file(v, /^main-.*\.js$/);
   const out = new Map();
-  const re = /\bb\(("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*")(?:,"(?:[^"\\]|\\.)*")?\)/g;  // 11-11 起多第 4 個（葡萄牙文）
-  for (const m of s.matchAll(re)) { try { out.set(JSON.parse(m[1]), [JSON.parse(m[2]), JSON.parse(m[3])]); } catch (e) {} }
+  // 11-11 起多第 4 個（葡萄牙文）；11-13 起函式名從 b 變 v → 不限名稱，取出現最多次的那個
+  const re = /(?<![\w$.])([\w$]{1,3})\(("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*"),("(?:[^"\\]|\\.)*")(?:,"(?:[^"\\]|\\.)*")?\)/g;
+  const all = [...s.matchAll(re)], cnt = {};
+  for (const m of all) cnt[m[1]] = (cnt[m[1]] || 0) + 1;
+  const fn = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+  for (const m of all) if (m[1] === fn) { try { out.set(JSON.parse(m[2]), [JSON.parse(m[3]), JSON.parse(m[4])]); } catch (e) {} }
   return out;
 }
 const ta = tables(A), tb = tables(B);

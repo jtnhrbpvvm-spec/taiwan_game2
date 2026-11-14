@@ -8,7 +8,7 @@ RSW.page({
     const slots = [...new Set(R.items.map(i => i.slot))];
     return `<h2 class="pt">物品與取得</h2>
 <p class="lead">遊戲裡全部 ${R.items.length} 件裝備。點物品看哪隻怪物、哪個關卡會掉，以及掉率。</p>
-<div class="note small">首領每件 10%～15%（武器固定 5%），一般怪物每件 0.015%～0.03%。調高難度最多讓戰利品加倍。掉下來的裝備會隨機附帶加成，威力看掉落關卡的階級。</div>
+<div class="note small">首領每件 10%～15%（武器固定 5%），一般怪物每件 0.015%～0.03%。調高難度可以增加戰利品（單人最高 ×2.5、組隊 ×2）。關卡中掉的裝備要等結算後才鑑定出詞綴。掉下來的裝備會隨機附帶加成，威力看掉落關卡的階級。</div>
 <div class="filters">
   <select id="it-slot"><option value="">全部部位</option>${slots.map(s => `<option value="${s}">${R.esc(R.meta.labels.slots[s] || s)}</option>`).join('')}</select>
   <select id="it-job"><option value="">全部職業</option>${R.jobs.list.filter(j => j.rank === 1).map(j => `<option value="${j.id}">${R.esc(j.name)}</option>`).join('')}</select>
