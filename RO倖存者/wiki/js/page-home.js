@@ -10,6 +10,18 @@ RSW.page({
 <h2 class="pt">RO 倖存者小百科</h2>
 <p class="lead">RO Survivors 是以仙境傳說（Ragnarok Online）為靈感的免費網頁倖存者遊戲。這裡整理遊戲裡的職業、技能、轉職、物品、卡片與怪物資料，名稱採用台版仙境傳說譯名。</p>
 
+<section class="author-card">
+  <div class="ac-head">
+    <span class="ac-badge">原作者</span>
+    <span class="ac-name">Reven4nt</span>
+  </div>
+  <p class="ac-desc">RO Survivors 是 Reven4nt 一個人製作的免費粉絲遊戲，沒有廣告也沒有付費內容。本小百科是玩家自製的非官方整理，喜歡這款遊戲請支持原作者！</p>
+  <div class="ac-links">
+    <a class="ac-btn site" href="https://ro-survivors.com/" target="_blank" rel="noopener">🌐 官方網站</a>
+    <a class="ac-btn x" href="https://x.com/Reven4nt" target="_blank" rel="noopener">𝕏 作者 X（@Reven4nt）</a>
+    <a class="ac-btn dc" href="https://discord.gg/74hhp8MhXe" target="_blank" rel="noopener">💬 官方 Discord</a>  </div>
+</section>
+
 <a class="line-banner" href="https://line.me/ti/g2/XlXXru75ACQ9_p_XHQtgsCsPtuA40BJ1lQASjQ?utm_source=invitation&amp;utm_medium=link_copy&amp;utm_campaign=default" target="_blank" rel="noopener">
   <span class="line-ico big">LINE</span>
   <span class="lb-text"><b>加入 RO 倖存者 LINE 群組</b><small>一起討論配點、轉職、掉寶，遊戲更新第一時間分享！</small></span>
