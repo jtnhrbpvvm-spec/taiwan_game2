@@ -1,0 +1,6 @@
+updates/objects/*.gz -text -diff -filter -merge
+updates/latest.json text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.pem text eol=lf
+*.bat text eol=crlf
