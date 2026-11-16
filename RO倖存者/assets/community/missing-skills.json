@@ -1,0 +1,602 @@
+[
+  {
+    "id": "demoralizing_shout",
+    "name": "降低士氣的吶喊",
+    "icon": "icons/dc_scream.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "shield_bash",
+    "name": "盾牌衝擊",
+    "icon": "icons/sm_shieldbash.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "arrow_rain",
+    "name": "箭矢暴雨",
+    "icon": "icons/ac_arrowrain.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "retreat",
+    "name": "撤退",
+    "icon": "icons/ac_retreat.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "arcane_shot",
+    "name": "奧術射擊",
+    "icon": "icons/ac_arcaneshot.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "fire_arrow",
+    "name": "火焰箭",
+    "icon": "icons/ac_firearrow.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "holy_smite",
+    "name": "神聖重擊",
+    "icon": "icons/pr_macemastery.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "poison_bomb",
+    "name": "毒藥瓶",
+    "icon": "icons/tf_poisonbomb.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "shadowstep",
+    "name": "影步",
+    "icon": "icons/tf_shadowstep.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "fan_of_knives",
+    "name": "飛刀扇",
+    "icon": "icons/tf_fanofknives.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "caltrops",
+    "name": "撒菱",
+    "icon": "icons/tf_caltrops.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "zeny_rain",
+    "name": "金幣雨",
+    "icon": "icons/mc_zenyrain.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "cart_rush",
+    "name": "手推車衝撞",
+    "icon": "icons/mc_cartrush.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "tornado_kick",
+    "name": "迴旋踢",
+    "icon": "icons/tk_stormkick.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "heel_drop",
+    "name": "砸踢",
+    "icon": "icons/tk_downkick.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "roundhouse",
+    "name": "轉身踢",
+    "icon": "icons/tk_turnkick.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "counter_kick",
+    "name": "還擊踢",
+    "icon": "icons/tk_counter.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "peaceful_break",
+    "name": "平安的休息",
+    "icon": "icons/tk_hptime.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "kihop",
+    "name": "氣合",
+    "icon": "icons/tk_power.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "mild_wind",
+    "name": "溫和之風",
+    "icon": "icons/tk_sevenwind.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "shuriken",
+    "name": "投擲飛鏢",
+    "icon": "icons/nj_syuriken.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "kunai",
+    "name": "投擲飛刀",
+    "icon": "icons/nj_kunai.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "dagger_throwing",
+    "name": "飛刀修練",
+    "icon": "icons/nj_tobidougu.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "cicada",
+    "name": "金蟬脫殼",
+    "icon": "icons/nj_utsusemi.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "triple_action",
+    "name": "三連攻擊",
+    "icon": "icons/gs_tripleaction.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "rapid_shower",
+    "name": "五連擊",
+    "icon": "icons/gs_rapidshower.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "spread_attack",
+    "name": "火力全開",
+    "icon": "icons/gs_spreadattack.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "desperado",
+    "name": "亡命之徒",
+    "icon": "icons/gs_desperado.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "tracking",
+    "name": "百步穿楊",
+    "icon": "icons/gs_tracking.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "single_action",
+    "name": "單槍射擊",
+    "icon": "icons/gs_singleaction.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "snake_eye",
+    "name": "瞄準之眼",
+    "icon": "icons/gs_snakeeye.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "chain_action",
+    "name": "連鎖衝擊",
+    "icon": "icons/gs_chainaction.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "atk_bow",
+    "name": "攻擊：弓",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_gun",
+    "name": "攻擊：槍",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_shuriken",
+    "name": "攻擊：風魔手裡劍",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_rod",
+    "name": "攻擊：法杖",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_infused",
+    "name": "攻擊：屬性附加",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_infused_melee",
+    "name": "攻擊：屬性附加（近戰）",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_sword",
+    "name": "攻擊：劍",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_twohand",
+    "name": "攻擊：雙手劍",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_axe",
+    "name": "攻擊：斧",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_axe2",
+    "name": "攻擊：雙手斧",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_spear",
+    "name": "攻擊：長矛",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_lance",
+    "name": "攻擊：雙手長矛",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_dagger",
+    "name": "攻擊：短劍",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_blunt",
+    "name": "攻擊：鈍器",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_fist",
+    "name": "攻擊：拳頭",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_katar",
+    "name": "攻擊：拳刃",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_knuckle",
+    "name": "攻擊：拳套",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_book",
+    "name": "攻擊：書",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_instrument",
+    "name": "攻擊：樂器",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "atk_whip",
+    "name": "攻擊：鞭子",
+    "icon": null,
+    "reason": "未定義圖示"
+  },
+  {
+    "id": "peco",
+    "name": "大嘴鳥",
+    "icon": "icons/kn_riding.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "brandish_spear",
+    "name": "騎乘攻擊",
+    "icon": "icons/pr_brandishspear.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "charge_attack",
+    "name": "衝鋒攻擊",
+    "icon": "icons/kn_chargeatk.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "pierce",
+    "name": "連刺攻擊",
+    "icon": "icons/kn_pierce.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "spear_boomerang",
+    "name": "投擲長矛攻擊",
+    "icon": "icons/kn_spearboomerang.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "auto_counter",
+    "name": "反擊",
+    "icon": "icons/kn_autocounter.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "spear_quicken",
+    "name": "長矛加速術",
+    "icon": "icons/cr_spearquicken.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "shield_charge",
+    "name": "盾擊",
+    "icon": "icons/cr_shieldcharge.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "holy_cross",
+    "name": "聖十字攻擊",
+    "icon": "icons/cr_holycross.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "shield_boomerang",
+    "name": "迴旋盾擊",
+    "icon": "icons/cr_shieldboomerang.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "auto_guard",
+    "name": "自動防禦",
+    "icon": "icons/cr_autoguard.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "hindsight",
+    "name": "自動念咒",
+    "icon": "icons/sa_autospell.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "abracadabra",
+    "name": "隨機技能",
+    "icon": "icons/sa_abracadabra.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "detecting",
+    "name": "獵鷹尋敵",
+    "icon": "icons/ht_detecting.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "sandman",
+    "name": "睡魔陷阱",
+    "icon": "icons/ht_sandman.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "beast_strafing",
+    "name": "動物猛擊",
+    "icon": "icons/ht_beastbane.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "phantasmic_arrow",
+    "name": "幻影箭",
+    "icon": "icons/ht_phantasmic.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "safety_wall",
+    "name": "暗之障壁",
+    "icon": "icons/pr_safetywall.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "benedictio",
+    "name": "聖母之祈福",
+    "icon": "icons/pr_benedictio.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "chain_combo",
+    "name": "連環全身掌",
+    "icon": "icons/mo_chaincombo.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "combo_finish",
+    "name": "猛龍誇強",
+    "icon": "icons/mo_combofinish.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "fury",
+    "name": "爆氣",
+    "icon": "icons/mo_explosionspirits.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "sonic_blow",
+    "name": "音速投擲",
+    "icon": "icons/as_sonicblow.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "grimtooth",
+    "name": "無影之牙",
+    "icon": "icons/as_grimtooth.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "enchant_poison",
+    "name": "塗毒",
+    "icon": "icons/as_enchantpoison.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "venom_dust",
+    "name": "病毒散撥",
+    "icon": "icons/as_venomdust.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "cloaking",
+    "name": "偽裝",
+    "icon": "icons/as_cloaking.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "venom_knife",
+    "name": "毒刃",
+    "icon": "icons/as_venomknife.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "back_stab",
+    "name": "背刺",
+    "icon": "icons/rg_backstap.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "raid",
+    "name": "潛擊",
+    "icon": "icons/rg_raid.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "intimidate",
+    "name": "脅持",
+    "icon": "icons/rg_intimidate.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "steal_coin",
+    "name": "偷錢",
+    "icon": "icons/rg_stealcoin.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "graffiti",
+    "name": "塗鴉",
+    "icon": "icons/rg_graffiti.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "axe_tornado",
+    "name": "旋風斧",
+    "icon": "icons/nc_axetornado.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "axe_boomerang",
+    "name": "回力斧",
+    "icon": "icons/nc_axeboomerang.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "weapon_perfection",
+    "name": "無視體型攻擊",
+    "icon": "icons/bs_weaponperfect.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "rush_quake",
+    "name": "衝擊震地",
+    "icon": "icons/mt_rush_quake.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "greed",
+    "name": "貪婪",
+    "icon": "icons/bs_greed.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "ore_discovery",
+    "name": "尋找礦石",
+    "icon": "icons/bs_findingore.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "homunculus",
+    "name": "凡米爾斯",
+    "icon": "icons/am_callhomun.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "call_homunculus",
+    "name": "生命體召喚",
+    "icon": "icons/am_callhomun.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "potion_pitcher",
+    "name": "藥水投擲",
+    "icon": "icons/am_potionpitcher.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "chemical_protection",
+    "name": "化學保護",
+    "icon": "icons/am_cp_armor.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "warmth_sun",
+    "name": "太陽的溫暖",
+    "icon": "icons/sg_sun_warm.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "solar_burst",
+    "name": "太陽爆發",
+    "icon": "icons/sj_solarburst.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "full_moon_kick",
+    "name": "滿月踢",
+    "icon": "icons/sj_fullmoonkick.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "union",
+    "name": "太陽和月亮和星星的融合",
+    "icon": "icons/sg_fusion.png",
+    "reason": "尚未在來源中精確配對"
+  },
+  {
+    "id": "kaahi",
+    "name": "凱阿希",
+    "icon": "icons/sl_kaahi.png",
+    "reason": "尚未在來源中精確配對"
+  }
+]

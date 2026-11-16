@@ -144,3 +144,8 @@ details.fold > .in { padding: 0 12px 12px; }
   .grid { grid-template-columns: 1fr; }
   table.t { font-size: 13px; }
 }
+
+.image-sources { margin-top: 18px; line-height: 1.8; overflow-wrap: anywhere; }
+.image-sources h2 { font-size: 16px; color: var(--text); }
+.image-sources li { margin: 10px 0; }
+.image-sources a { text-decoration: underline; }

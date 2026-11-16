@@ -10,7 +10,7 @@ window.RSW = window.RSW || {};
 
   /* ---------- 文字 ---------- */
   R.esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  R.img = (path, cls = 'ico', alt = '') => path ? `<img class="${cls}" src="${IMG_BASE}${R.esc(path)}" alt="${R.esc(alt)}" loading="lazy">` : '';
+  R.img = (path, cls = 'ico', alt = '') => path ? `<img class="${cls}" src="${R.esc((R.localImages && R.localImages[path]) || (IMG_BASE + path))}" alt="${R.esc(alt)}" loading="lazy">` : '';
   R.pct = x => {
     if (x == null) return '—';
     const p = x * 100;
