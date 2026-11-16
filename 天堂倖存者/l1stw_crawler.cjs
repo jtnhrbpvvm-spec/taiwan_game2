@@ -222,6 +222,7 @@ class Crawler {
     // 音樂首選改為確實下載成功的格式，避免離線時依序測試不存在的格式。
     let audio=this.texts.get('audio.js');
     if(audio&&audio.includes('a.src=musUrl(id,exts[0]);')){audio=audio.replace('a.src=musUrl(id,exts[0]);',`a.src=(${JSON.stringify(this.musicMap)})[id]||musUrl(id,exts[0]);`);save(path.join(this.pub,'audio.js'),audio);}
+    save(path.join(this.pub,'lg.js'),accountOnlyLogin(this.texts.get('lg.js')));
     require('./repatch_local.cjs').installGM(this.pub);
     require('./policy.cjs').applyPolicy(this.pub);
   }
@@ -230,7 +231,7 @@ class Crawler {
     const records=[...this.records.values()];
     // 網站同時列出舊、新地圖路徑：新路徑存在時，舊路徑的 404 是可忽略的替代來源。
     for(const f of failures)if(/^assets\/map(\d+)\/map\.js$/.test(f.path)){const id=/^assets\/map(\d+)/.exec(f.path)[1];if(this.records.has(`maps/map${id}/map.js`)){f.optional=true;f.reason='已下載另一個地圖來源 maps/map'+id+'/map.js';}}
-    const generated=['index.html','cloud.js','game.js','audio.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
+    const generated=['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
     const report={source:ORIGIN,started:this.started,finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:records.filter(r=>r.from==='network').length,requiredFailures:failures.filter(r=>!r.optional),optionalFailures:failures.filter(r=>r.optional),musicMissing:this.musicMissing,warnings:this.warnings,records,generated};
     save(path.join(this.root,'download-report.json'),JSON.stringify(report,null,2));
     save(path.join(this.root,'catalog.json'),JSON.stringify(Object.fromEntries(Object.entries(this.values).map(([k,v])=>[k,typeof v==='object'&&v?Object.keys(v).length:typeof v])),null,2));
@@ -259,4 +260,36 @@ class Crawler {
 if(require.main===module) {
   try {const o=args(process.argv.slice(2));if(o.help)console.log('node l1stw_crawler.cjs [--output 路徑] [--cache 舊資源路徑] [--refresh] [--concurrency 1-16]');else new Crawler(o).run().catch(e=>{console.error(e);process.exitCode=1;});}catch(e){console.error(e.message);process.exitCode=1;}
 }
-module.exports={Crawler,args,expression,localPath,assertOutput};
+module.exports={Crawler,args,expression,localPath,assertOutput,accountOnlyLogin,offlineLogin};
+
+function accountOnlyLogin(source){
+ if(typeof source!=='string')throw Error('缺少原始 lg.js，請先重新下載遊戲程式');
+ const start=source.indexOf('function login(){'),end=source.indexOf('// ---------- 2. 選擇角色',start);
+ if(start<0||end<0)throw Error('登入程式格式變更，請檢查後再套用更新');
+ return (source.slice(0,start)+'// OFFLINE_ACCOUNT_ONLY_V1\n'+offlineLogin.toString().replace('function offlineLogin(){','function login(){')+'\n\n'+source.slice(end)).replace('if(/[?&]ui=new/.test(location.search))','if(!window.__L1STW_OFFLINE&&/[?&]ui=new/.test(location.search))');
+}
+function offlineLogin(){
+ if(!window.__L1STW_OFFLINE||window.L1S_API)throw Error('LOCAL_ONLY_V1');
+ if(!AGREED){disclaimer();return;}
+ clear();const lk=Math.min(Math.max(innerHeight/476,1.6),innerWidth/200),hy=innerHeight/2/lk;view('login',lk,495,Math.max(hy,Math.min(346,478-hy)));I(310,0,0);
+ const info=E('div','',PTV()?392:34,PTV()?30:80);info.style.cssText+='width:172px;color:#c8d9e9;text-align:center;font:13px/1.7 "Microsoft JhengHei",sans-serif;text-shadow:1px 1px #000;pointer-events:none';
+ info.innerHTML='<div style="color:#ffd98e;font-size:18px;margin-bottom:12px">天堂倖存者</div>輸入帳號即可開始遊玩。<br>新帳號會自動建立。<br><br>不同帳號分開保存角色，<br>輸入原帳號即可繼續。';
+ const card=E('div','',390,250);card.style.cssText+='width:218px;height:190px;box-sizing:border-box;border:1px solid #a28350;border-radius:8px;background:rgba(20,16,10,.94);box-shadow:0 5px 24px #0009;color:#f3deb0;font:13px "Microsoft JhengHei",sans-serif';
+ T('存檔帳號',16,15,card,'font-size:15px;color:#f3deb0');
+ const idI=E('input','lgin',16,47,card);idI.id='offlineAccount';idI.setAttribute('aria-label','存檔帳號');idI.style.cssText+='width:184px;height:32px;background:#090a08;border:1px solid #826d45;border-radius:4px;padding:4px 8px';idI.maxLength=14;idI.autocomplete='off';idI.spellcheck=false;
+ try{idI.value=localStorage.getItem('l1s_lastacct')||'';}catch{}
+ T('2～14 個英文字母、數字或底線',16,86,card,'font-size:11px;color:#b9aa8e');
+ const doLogin=()=>{
+  const id=idI.value.trim();if(!/^[A-Za-z0-9_]{2,14}$/.test(id)){msg('帳號請輸入 2～14 個\n英文字母、數字或底線。');return;}
+  const d=DB.get();if(!Object.prototype.hasOwnProperty.call(d,id)){
+   Object.defineProperty(d,id,{value:{pw:'',chars:[]},enumerable:true,writable:true,configurable:true});DB.set(d);
+   if(!Object.prototype.hasOwnProperty.call(DB.get(),id)){msg('無法保存新帳號，請檢查瀏覽器儲存空間。');return;}
+  }
+  acct=id;try{localStorage.setItem('l1s_lastacct',id);}catch{}selIdx=0;select();
+ };
+ function button(text,x,width,fn,id){const b=E('button','lgb',x,112,card);b.type='button';if(id)b.id=id;b.textContent=text;b.style.cssText+='width:'+width+'px;height:32px;border:1px solid #a28350;border-radius:4px;background:#4b3820;color:#ffe9b9;font:14px "Microsoft JhengHei",sans-serif';b.onclick=fn;return b;}
+ button('開始遊玩',16,112,doLogin,'offlineLogin');button('離開',138,62,()=>{try{window.close();}catch{}location.href='about:blank';});
+ T('同一瀏覽器保留各帳號的遊戲進度',16,157,card,'font-size:11px;color:#b9aa8e');
+ idI.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}};setTimeout(()=>idI.focus(),50);
+ try{if(sessionStorage.getItem('l1s_idlekick')){sessionStorage.removeItem('l1s_idlekick');setTimeout(()=>msg('已保存遊戲進度，輸入原帳號即可繼續。'),300);}}catch{}
+}

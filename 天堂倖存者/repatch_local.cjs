@@ -14,10 +14,10 @@ async function launch({dir=__dirname,gameRoot=defaultGameRoot(),run,exists=fs.ex
 function repatch(root=defaultGameRoot()){
  root=path.resolve(root);assertOutput(root);const reportFile=path.join(root,'download-report.json');
  if(!fs.existsSync(reportFile))throw Error('請先執行更新下載，取得桌面的遊戲原始檔。');
- const r=JSON.parse(fs.readFileSync(reportFile,'utf8')),temp=fs.mkdtempSync(path.join(root,'.patch-stage-')),pub=path.join(root,'public'),names=['index.html','cloud.js','game.js','audio.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'];let applied=[];
+ const r=JSON.parse(fs.readFileSync(reportFile,'utf8')),temp=fs.mkdtempSync(path.join(root,'.patch-stage-')),pub=path.join(root,'public'),names=['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'];let applied=[];
  try{
   const c=new Crawler({output:root,concurrency:4});c.pub=path.join(temp,'new');fs.mkdirSync(c.pub);
-  for(const p of ['index.html','cloud.js','game.js','audio.js'])c.texts.set(p,fs.readFileSync(path.join(root,'source',p),'utf8'));
+  for(const p of ['index.html','cloud.js','game.js','audio.js','lg.js'])c.texts.set(p,fs.readFileSync(path.join(root,'source',p),'utf8'));
   c.musicMap={};for(const f of r.records){const m=/^assets\/(?:mus\/(?:music)?(\d+)\.(?:mp3|ogg|wav)|snd\/music(\d+)\.mp3)$/.exec(f.path);if(m)c.musicMap[m[1]||m[2]]=f.path;}
   c.patch();offlineCheck(c.pub);
   for(const n of names)if(fs.existsSync(path.join(pub,n)))save(path.join(temp,'backup',n),fs.readFileSync(path.join(pub,n)));
