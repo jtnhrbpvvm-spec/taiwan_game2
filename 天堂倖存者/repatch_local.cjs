@@ -2,7 +2,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const {Crawler,assertOutput}=require('./l1stw_crawler.cjs'),{defaultGameRoot,save,sha,offlineCheck}=require('./update-common.cjs');
-function ensureGMLauncher(dir=__dirname){return writeLauncher(dir,'GM模式.bat','repatch_local.cjs',['--launch','--gm']);}
+function ensureGMLauncher(dir=__dirname){return writeLauncher(dir,'GM模式.bat','repatch_local.cjs',['--launch','--choose-mode']);}
 async function launch({dir=__dirname,gameRoot=defaultGameRoot(),run,exists=fs.existsSync,open=true,checkUpdate=true,checkAssets=true,gm=false}={}){
  const execute=run||((file,args=[])=>new Promise((resolve,reject)=>{const p=require('node:child_process').spawn(process.execPath,[path.join(dir,file),...args],{cwd:dir,windowsHide:true,stdio:'inherit'});p.once('error',reject);p.once('exit',(code,signal)=>resolve(signal?1:(code??1)));}));
  if(checkUpdate)await execute('update_client.cjs');
@@ -27,7 +27,7 @@ function repatch(root=defaultGameRoot()){
  }catch(e){for(const n of applied){const b=path.join(temp,'backup',n),p=path.join(pub,n);if(fs.existsSync(b))fs.copyFileSync(b,p);else if(fs.existsSync(p))fs.unlinkSync(p);}throw e;}
  finally{if(path.resolve(temp).startsWith(root+path.sep+'.patch-stage-'))fs.rmSync(temp,{recursive:true,force:true});}
 }
-module.exports={repatch,launch,ensureGMLauncher,ensureWindowsLaunchers,windowsBootstrap,installGM,gmBridge,installOfflineTrades,offlineTradeBridge};
+module.exports={repatch,launch,ensureGMLauncher,ensureWindowsLaunchers,windowsBootstrap,modePickerPowerShell,installGM,gmBridge,installOfflineTrades,offlineTradeBridge};
 if(require.main===module){try{ensureWindowsLaunchers();}catch(e){console.error(e.message);process.exitCode=1;}if(process.argv.includes('--launch'))launch({gm:process.argv.includes('--gm'),open:!process.argv.includes('--no-open'),checkUpdate:!process.argv.includes('--no-update'),checkAssets:!process.argv.includes('--no-assets-check')}).then(code=>{process.exitCode=code;}).catch(e=>{console.error(e.message);process.exitCode=1;});else try{repatch();}catch(e){console.error(e.message);process.exitCode=1;}}
 
 function windowsBootstrap(entry,args=[],installer={name:'node-v26.13.1-x64.msi',sha256:'0398ced8446e119478c724d1aa37c5afd6aa1a76fceab12787eb9714c5ed8b45'}){
@@ -45,9 +45,11 @@ function Find-UsableNode {
  foreach ($candidate in ($paths | Select-Object -Unique)) { if (Test-UsableNode $candidate) { return $candidate } }
  return $null
 }
+${args.includes('--choose-mode')?modePickerPowerShell():''}
 # RUN_BOOTSTRAP
 try {
  $root = (Get-Location).ProviderPath
+ ${args.includes('--choose-mode')?`$launchArgs = @(${args.filter(a=>a!=='--choose-mode').map(quote).join(',')})\n $mode = Show-GameModeDialog\n if (!$mode) { exit 0 }\n if ($mode -eq 'gm') { $launchArgs += '--gm' }`:''}
  $node = Find-UsableNode
  if (!$node) {
   $arch = $env:PROCESSOR_ARCHITEW6432; if (!$arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
@@ -65,9 +67,62 @@ try {
   if ($process.ExitCode -eq 3010) { Write-Host 'Windows recommends a restart later. Node.js is ready; continuing now.' }
  }
  Write-Host ('Using Node.js: '+$node)
- & $node (Join-Path $root ${quote(entry)})${args.map(a=>' '+quote(a)).join('')}
+ & $node (Join-Path $root ${quote(entry)})${args.includes('--choose-mode')?' @launchArgs':args.map(a=>' '+quote(a)).join('')}
  exit $LASTEXITCODE
 } catch { Write-Host ('ERROR: '+$_.Exception.Message) -ForegroundColor Red; exit 1 }
+`;
+}
+function modePickerPowerShell(){
+ const encoded=s=>Buffer.from(s,'utf8').toString('base64'),t=s=>`([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encoded(s)}')))`;
+ return `function Show-GameModeDialog {
+ Add-Type -AssemblyName System.Windows.Forms
+ Add-Type -AssemblyName System.Drawing
+ [System.Windows.Forms.Application]::EnableVisualStyles()
+ $form = New-Object System.Windows.Forms.Form
+ $form.Text = ${t('天堂倖存者')}
+ $form.ClientSize = New-Object System.Drawing.Size(438,242)
+ $form.StartPosition = 'CenterScreen'
+ $form.FormBorderStyle = 'FixedDialog'
+ $form.MaximizeBox = $false
+ $form.MinimizeBox = $false
+ $form.AutoScaleMode = 'Dpi'
+ $form.Font = New-Object System.Drawing.Font('Microsoft JhengHei',10)
+ $form.KeyPreview = $true
+ $form.Tag = $null
+ $heading = New-Object System.Windows.Forms.Label
+ $heading.Text = ${t('請選擇遊玩模式')}
+ $heading.Location = New-Object System.Drawing.Point(24,20)
+ $heading.Size = New-Object System.Drawing.Size(390,30)
+ $heading.Font = New-Object System.Drawing.Font('Microsoft JhengHei',14,[System.Drawing.FontStyle]::Bold)
+ $hint = New-Object System.Windows.Forms.Label
+ $hint.Text = ${t('兩種模式共用角色存檔；一般模式不顯示 GM 選單。')}
+ $hint.Location = New-Object System.Drawing.Point(24,59)
+ $hint.Size = New-Object System.Drawing.Size(390,40)
+ $normal = New-Object System.Windows.Forms.Button
+ $normal.Name = 'ModeNormal'
+ $normal.Text = ${t('一般模式')}
+ $normal.Location = New-Object System.Drawing.Point(24,111)
+ $normal.Size = New-Object System.Drawing.Size(185,55)
+ $normal.TabIndex = 0
+ $normal.Add_Click({ $owner = $this.FindForm(); $owner.Tag = 'normal'; $owner.Close() })
+ $gm = New-Object System.Windows.Forms.Button
+ $gm.Name = 'ModeGM'
+ $gm.Text = ${t('GM 模式')}
+ $gm.Location = New-Object System.Drawing.Point(229,111)
+ $gm.Size = New-Object System.Drawing.Size(185,55)
+ $gm.TabIndex = 1
+ $gm.Add_Click({ $owner = $this.FindForm(); $owner.Tag = 'gm'; $owner.Close() })
+ $foot = New-Object System.Windows.Forms.Label
+ $foot.Text = ${t('切換模式前，請先關閉舊的遊戲與伺服器視窗。')}
+ $foot.Location = New-Object System.Drawing.Point(24,187)
+ $foot.Size = New-Object System.Drawing.Size(390,38)
+ $form.Controls.AddRange(@($heading,$hint,$normal,$gm,$foot))
+ $form.AcceptButton = $normal
+ $form.Add_KeyDown({ if ($_.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $this.Close() } })
+ $form.Add_Shown({ $this.Activate() })
+ # SHOW_MODE_DIALOG
+ try { [void]$form.ShowDialog(); return $form.Tag } finally { $form.Dispose() }
+}
 `;
 }
 function writeLauncher(dir,name,entry,args){
@@ -75,7 +130,7 @@ function writeLauncher(dir,name,entry,args){
  const p=path.join(dir,name),s=(pre.join('\n')+'\n'+windowsBootstrap(entry,args)).replace(/\r?\n/g,'\r\n');if(!fs.existsSync(p)||fs.readFileSync(p,'ascii')!==s)fs.writeFileSync(p,s,'ascii');return p;
 }
 function ensureWindowsLaunchers(dir=__dirname){
- const entries={'開啟離線版.bat':['repatch_local.cjs',['--launch']],'GM模式.bat':['repatch_local.cjs',['--launch','--gm']],'更新下載.bat':['l1stw_crawler.cjs',[]],'重新補抓缺檔.bat':['retry_missing.cjs',['--concurrency','8']],'產生GitHub更新包.bat':['publish_update.cjs',[]],'檢查更新.bat':['update_client.cjs',['--repair']]};
+ const entries={'開啟離線版.bat':['repatch_local.cjs',['--launch','--choose-mode']],'GM模式.bat':['repatch_local.cjs',['--launch','--choose-mode']],'更新下載.bat':['l1stw_crawler.cjs',[]],'重新補抓缺檔.bat':['retry_missing.cjs',['--concurrency','8']],'產生GitHub更新包.bat':['publish_update.cjs',[]],'檢查更新.bat':['update_client.cjs',['--repair']]};
  return Object.entries(entries).map(([name,[entry,args]])=>writeLauncher(dir,name,entry,args));
 }
 

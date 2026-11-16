@@ -20,9 +20,11 @@ function Find-UsableNode {
  foreach ($candidate in ($paths | Select-Object -Unique)) { if (Test-UsableNode $candidate) { return $candidate } }
  return $null
 }
+
 # RUN_BOOTSTRAP
 try {
  $root = (Get-Location).ProviderPath
+ 
  $node = Find-UsableNode
  if (!$node) {
   $arch = $env:PROCESSOR_ARCHITEW6432; if (!$arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
