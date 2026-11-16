@@ -2,7 +2,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const {Crawler,assertOutput}=require('./l1stw_crawler.cjs'),{defaultGameRoot,save,sha,offlineCheck}=require('./update-common.cjs');
-function ensureGMLauncher(dir=__dirname){const p=path.join(dir,'GM模式.bat'),s=['@echo off','setlocal','cd /d "%~dp0"','where node >nul 2>nul','if errorlevel 1 (',' echo Node.js 18 or newer is required.',' pause',' exit /b 1',')','node repatch_local.cjs --launch --gm','if errorlevel 1 pause',''].join('\r\n');if(!fs.existsSync(p)||fs.readFileSync(p,'ascii')!==s)fs.writeFileSync(p,s,'ascii');return p;}
+function ensureGMLauncher(dir=__dirname){return writeLauncher(dir,'GM模式.bat','repatch_local.cjs',['--launch','--gm']);}
 async function launch({dir=__dirname,gameRoot=defaultGameRoot(),run,exists=fs.existsSync,open=true,checkUpdate=true,checkAssets=true,gm=false}={}){
  const execute=run||((file,args=[])=>new Promise((resolve,reject)=>{const p=require('node:child_process').spawn(process.execPath,[path.join(dir,file),...args],{cwd:dir,windowsHide:true,stdio:'inherit'});p.once('error',reject);p.once('exit',(code,signal)=>resolve(signal?1:(code??1)));}));
  if(checkUpdate)await execute('update_client.cjs');
@@ -27,8 +27,57 @@ function repatch(root=defaultGameRoot()){
  }catch(e){for(const n of applied){const b=path.join(temp,'backup',n),p=path.join(pub,n);if(fs.existsSync(b))fs.copyFileSync(b,p);else if(fs.existsSync(p))fs.unlinkSync(p);}throw e;}
  finally{if(path.resolve(temp).startsWith(root+path.sep+'.patch-stage-'))fs.rmSync(temp,{recursive:true,force:true});}
 }
-module.exports={repatch,launch,ensureGMLauncher,installGM,gmBridge};
-if(require.main===module){try{ensureGMLauncher();}catch(e){console.error(e.message);process.exitCode=1;}if(process.argv.includes('--launch'))launch({gm:process.argv.includes('--gm'),open:!process.argv.includes('--no-open'),checkUpdate:!process.argv.includes('--no-update'),checkAssets:!process.argv.includes('--no-assets-check')}).then(code=>{process.exitCode=code;}).catch(e=>{console.error(e.message);process.exitCode=1;});else try{repatch();}catch(e){console.error(e.message);process.exitCode=1;}}
+module.exports={repatch,launch,ensureGMLauncher,ensureWindowsLaunchers,windowsBootstrap,installGM,gmBridge};
+if(require.main===module){try{ensureWindowsLaunchers();}catch(e){console.error(e.message);process.exitCode=1;}if(process.argv.includes('--launch'))launch({gm:process.argv.includes('--gm'),open:!process.argv.includes('--no-open'),checkUpdate:!process.argv.includes('--no-update'),checkAssets:!process.argv.includes('--no-assets-check')}).then(code=>{process.exitCode=code;}).catch(e=>{console.error(e.message);process.exitCode=1;});else try{repatch();}catch(e){console.error(e.message);process.exitCode=1;}}
+
+function windowsBootstrap(entry,args=[],installer={name:'node-v26.13.1-x64.msi',sha256:'0398ced8446e119478c724d1aa37c5afd6aa1a76fceab12787eb9714c5ed8b45'}){
+ const quote=s=>"'"+String(s).replace(/'/g,"''")+"'";
+ return `$ErrorActionPreference = 'Stop'
+function Test-UsableNode([string]$Candidate) {
+ if (!$Candidate -or !(Test-Path -LiteralPath $Candidate -PathType Leaf)) { return $false }
+ try { $v = & $Candidate -p "process.versions.node" 2>$null; return ($LASTEXITCODE -eq 0 -and [string]$v -match '^v?(\\d+)\\.' -and [int]$Matches[1] -ge 18) } catch { return $false }
+}
+function Find-UsableNode {
+ $paths = @(); $command = Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue
+ if ($command) { $paths += $command[0].Source }
+ foreach ($base in @($env:ProgramW6432,$env:ProgramFiles,\${env:ProgramFiles(x86)})) { if ($base) { $paths += Join-Path $base 'nodejs\\node.exe' } }
+ if ($env:LOCALAPPDATA) { $paths += Join-Path $env:LOCALAPPDATA 'Programs\\nodejs\\node.exe' }
+ foreach ($candidate in ($paths | Select-Object -Unique)) { if (Test-UsableNode $candidate) { return $candidate } }
+ return $null
+}
+# RUN_BOOTSTRAP
+try {
+ $root = (Get-Location).ProviderPath
+ $node = Find-UsableNode
+ if (!$node) {
+  $arch = $env:PROCESSOR_ARCHITEW6432; if (!$arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
+  if ($arch -ne 'AMD64') { throw 'This bundled installer requires 64-bit Intel/AMD Windows. Install Node.js 18 or newer for your CPU, then retry.' }
+  $installer = Join-Path $root ${quote(installer.name)}
+  if (!(Test-Path -LiteralPath $installer -PathType Leaf)) { throw ('Node.js is missing. Keep '+${quote(installer.name)}+' beside this launcher and retry. Do not use a Python installer.') }
+  if ((Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash -ne ${quote(installer.sha256)}) { throw 'The bundled Node.js installer is damaged or has been replaced. Installation was stopped.' }
+  Write-Host 'Node.js is missing or too old. Starting the bundled Windows installer...'
+  Write-Host 'Allow the Windows administrator prompt. Please wait for installation to finish.'
+  $process = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\\msiexec.exe') -ArgumentList @('/i',('"'+$installer+'"'),'/passive','/norestart') -Wait -PassThru
+  if ($process.ExitCode -eq 1602) { throw 'Node.js installation was cancelled. Run this launcher again when ready.' }
+  if ($process.ExitCode -notin @(0,3010)) { throw ('Node.js installation failed. Windows Installer code: '+$process.ExitCode) }
+  $node = Find-UsableNode
+  if (!$node) { if ($process.ExitCode -eq 3010) { throw 'Restart Windows to complete Node.js installation, then run this launcher again.' }; throw 'Installation finished, but Node.js 18 or newer was not found. Repair the Node.js installation and retry.' }
+  if ($process.ExitCode -eq 3010) { Write-Host 'Windows recommends a restart later. Node.js is ready; continuing now.' }
+ }
+ Write-Host ('Using Node.js: '+$node)
+ & $node (Join-Path $root ${quote(entry)})${args.map(a=>' '+quote(a)).join('')}
+ exit $LASTEXITCODE
+} catch { Write-Host ('ERROR: '+$_.Exception.Message) -ForegroundColor Red; exit 1 }
+`;
+}
+function writeLauncher(dir,name,entry,args){
+ const pre=['@echo off','setlocal','cd /d "%~dp0"','set "L1STW_ENTRY=%~f0"',`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:L1STW_ENTRY); & ([scriptblock]::Create(($s -split '(?m)^# POWERSHELL_BOOTSTRAP\\r?$',2)[1]))"`,'set "L1STW_EXIT=%errorlevel%"','if not "%L1STW_EXIT%"=="0" pause','exit /b %L1STW_EXIT%','# POWERSHELL_BOOTSTRAP'];
+ const p=path.join(dir,name),s=(pre.join('\n')+'\n'+windowsBootstrap(entry,args)).replace(/\r?\n/g,'\r\n');if(!fs.existsSync(p)||fs.readFileSync(p,'ascii')!==s)fs.writeFileSync(p,s,'ascii');return p;
+}
+function ensureWindowsLaunchers(dir=__dirname){
+ const entries={'開啟離線版.bat':['repatch_local.cjs',['--launch']],'GM模式.bat':['repatch_local.cjs',['--launch','--gm']],'更新下載.bat':['l1stw_crawler.cjs',[]],'重新補抓缺檔.bat':['retry_missing.cjs',['--concurrency','8']],'產生GitHub更新包.bat':['publish_update.cjs',[]],'檢查更新.bat':['update_client.cjs',['--repair']]};
+ return Object.entries(entries).map(([name,[entry,args]])=>writeLauncher(dir,name,entry,args));
+}
 
 function installGM(root){
  const gameFile=path.join(root,'game.js');let game=fs.readFileSync(gameFile,'utf8');const marker=/if\(!ONLINE\)window\.__game=\{[^\r\n]+\};/;

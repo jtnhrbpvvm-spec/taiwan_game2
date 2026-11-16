@@ -4,3 +4,4 @@ updates/latest.json text eol=lf
 *.json text eol=lf
 *.pem text eol=lf
 *.bat text eol=crlf
+*.msi -text -diff -filter -merge

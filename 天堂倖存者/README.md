@@ -1,6 +1,10 @@
 # 天堂倖存者下載工具與工具自動更新
 
-需要 Node.js 18 以上，不需 npm install。
+需要 Node.js 18 以上，不需 npm install。Windows x64 玩家不必預先手動安裝：六個批次入口會先檢查 PATH 與常見安裝位置；找不到可用版本時，會執行同一資料夾隨附的 `node-v26.13.1-x64.msi`。請允許 Windows 管理員提示並等候安裝完成，啟動器會接著執行原本功能。取消或安裝失敗時會停止並顯示原因，不會繼續啟動。
+
+打包給玩家時，請把上述 MSI 與啟動器一起保留。啟動器會驗證固定的 SHA-256，損壞或被替換的安裝包不會執行；不會自動下載安裝包。此 MSI 適用 Intel／AMD 64 位元 Windows；ARM64 或 32 位元系統須自行安裝相容的 Node.js。若 Windows 要求重新開機且尚無法使用 Node.js，重新開機後再啟動。
+
+隨附檔案來源：使用者自 Node.js 官方下載的 Windows Installer，OpenJS Foundation 數位簽章驗證有效。MSI 只放在兩個工具資料夾根目錄，沒有放入 `updates/objects/`，工具自動更新不搬運安裝包。更換 MSI 版本時也必須更新啟動器內的檔名與雜湊。ZIP 是免安裝壓縮包，本次採用 MSI 安裝流程。
 
 ## 資料放置規則
 
@@ -51,7 +55,7 @@ GitHub 自動更新只更新工具與離線化程式；完整取得原站新遊�
 ## 檢查
 
 ```powershell
-node --test tests.cjs update-tests.cjs windows-launch-tests.cjs asset-recovery-tests.cjs gm-tests.cjs
+node --test tests.cjs update-tests.cjs windows-launch-tests.cjs asset-recovery-tests.cjs gm-tests.cjs node-bootstrap-tests.cjs
 node verify.cjs
 node update_client.cjs --check
 ```
