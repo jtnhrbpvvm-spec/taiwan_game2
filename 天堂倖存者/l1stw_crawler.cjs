@@ -211,6 +211,13 @@ class Crawler {
     let game=this.texts.get('game.js');
     if(!game?.includes('function netURL(){'))throw Error('game.js 的村莊連線格式變更，請檢查');
     game=game.replace('function netURL(){','function netURL(){if(window.__L1STW_OFFLINE)return "";');
+    // Remove the community invitation widget from the offline edition.
+    const community=/\/\/ ---- LINE 討論區：[^\r\n]*\r?\n\(function\(\)\{[\s\S]*?\r?\n\}\)\(\);/;
+    if(game.includes("b.id='lineBtn'")){
+      const block=game.match(community)?.[0];
+      if(!block?.includes('https://line.me/')||!block.includes("b.id='lineBtn'"))throw Error('LINE 連結區塊格式變更，請檢查後再套用更新');
+      game=game.replace(community,'// OFFLINE_COMMUNITY_LINK_REMOVED_V1');
+    }
     save(path.join(this.pub,'game.js'),game);
     // 音樂首選改為確實下載成功的格式，避免離線時依序測試不存在的格式。
     let audio=this.texts.get('audio.js');
