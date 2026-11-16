@@ -64,12 +64,18 @@ window.RSW = window.RSW || {};
     return it.wtypeName ? `${s}・${it.wtypeName}` : s;
   };
   R.roleTag = w => w.role === 'mvp' ? '<span class="tag mvp">MVP</span>' : w.role === 'mini' ? '<span class="tag mini">小首領</span>'
+    : w.role === 'optional' ? '<span class="tag mvp">條件式 MVP</span>' : w.role === 'summon' ? '<span class="tag">蛇王召喚</span>'
     : w.role === 'planned' ? '<span class="tag dev">尚未開放</span>' : '<span class="tag">一般</span>';
+  R.festivalBall = id => R.festival && R.festival.balls.find(b => b.id === id);
+  R.ballLink = id => {
+    const b = R.festivalBall(id);
+    return b ? `<a href="#events/lantern-festival">${R.img(b.icon)} ${R.esc(b.name)}</a>` : '燈籠節扭蛋';
+  };
 
   /* 怪物出現在哪裡（一行文字） */
   R.whereText = m => {
     if (!m.where || !m.where.length) return '<span class="muted">目前關卡沒有出現</span>';
-    return m.where.map(w => `${R.stageLink(w.stage)}${w.story ? '（劇情）' : ''} ${R.roleTag(w)}${w.minute ? ' <span class="muted small">' + R.min(w.minute) + '</span>' : ''}`).join('<br>');
+    return m.where.map(w => `${R.stageLink(w.stage)}${w.story ? '（劇情）' : ''} ${R.roleTag(w)}${w.minute ? ' <span class="muted small">' + R.min(w.minute) + '</span>' : ''}${w.role === 'optional' ? ' <span class="muted small">部分場次，白素貞倒下後召喚</span>' : ''}`).join('<br>');
   };
 
   /* 物品的取得方式 */
@@ -80,6 +86,7 @@ window.RSW = window.RSW || {};
         const m = R.index().monster[s.monster];
         rows.push({ how: '怪物掉落', who: R.monLink(s.monster), where: m ? R.whereText(m) : '', chance: s.chance });
       } else if (s.type === 'starter') rows.push({ how: '初始裝備', who: R.jobLink(s.job), where: '建立角色時就有', chance: 1 });
+      else if (s.type === 'festival') rows.push({ how: '燈籠節扭蛋', who: R.ballLink(s.ball), where: '<a href="#events/lantern-festival">普隆德拉的節慶主持人</a>', chance: null });
       else if (s.type === 'story') rows.push({ how: '劇情獎勵', who: R.jobLink(s.job), where: R.stageLink('sunken') + '（劇情）通關，依職業給武器', chance: 1 });
       else if (s.type === 'reward') rows.push({ how: '首次通關獎勵', who: '—', where: R.stageLink(s.stage), chance: 1 });
     }

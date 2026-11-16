@@ -28,6 +28,8 @@ RSW.page({
   <span class="lb-go">▶ 加入</span>
 </a>
 
+${R.festival ? `<div class="note event-intro"><b>燈籠節已開放</b>：洛陽季節關卡、${R.festival.gear.length} 件專屬裝備、${R.festival.balls.reduce((n, b) => n + b.cosmetics.length, 0)} 件外觀與 ${R.festival.balls.reduce((n, b) => n + b.cards.length, 0)} 張活動卡片。<a href="#events/lantern-festival">查看入口、頭目時間表與扭蛋收藏 →</a></div>` : ''}
+
 <div class="grid">
   ${count(first.length + ' 個一轉', '職業與技能、天賦樹', '#jobs')}
   ${count(R.jobs.list.filter(j => j.rank === 2).length + ' 個二轉', '轉職條件與方法', '#promotion')}
@@ -37,7 +39,7 @@ RSW.page({
   ${count(open.length + ' 個關卡', '開放條件、首領時間表', '#stages')}
   ${count(R.pets.list.length + ' 隻寵物', '蛋的掉率、進化、親密度', '#pets')}
   ${count(Object.keys(R.deities.skills).length + ' 個技能神祇', '寶箱第五格：改造技能', '#deities')}
-  ${count(R.cosmetics.list.length + ' 個外觀', '首領成就、無盡之塔（即將開放）', '#cosmetics')}
+  ${count(R.cosmetics.list.length + ' 個外觀', '首領成就、無盡之塔、燈籠節', '#cosmetics')}
 </div>
 
 <h3>新手流程</h3>
@@ -58,7 +60,7 @@ RSW.page({
     <td>${R.esc(s.levels)}</td><td class="num">${s.gsMin ?? '—'}</td><td class="num">${s.jobCap ?? '—'}</td>
     <td>${s.bosses && s.bosses.length ? R.monLink(s.bosses[s.bosses.length - 1].id) : s.planned && s.planned.mvp ? R.monLink(s.planned.mvp) : '—'}</td></tr>`).join('')}
 </table></div>
-<p class="muted small">每個關卡都要用同一個角色打倒前一關的 MVP，並且身上裝備的裝備分數達到門檻才能進入。</p>
+<p class="muted small">一般關卡要用同一個角色打倒前一關的 MVP，並達到裝備分數門檻。燈籠節是季節活動，所有角色都能進入。</p>
 
 <h3>掉寶怎麼算</h3>
 <div class="note">

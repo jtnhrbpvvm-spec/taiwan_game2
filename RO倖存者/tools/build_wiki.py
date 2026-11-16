@@ -13,7 +13,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -47,6 +47,9 @@ def main():
     d = json.load(io.open(dump_path, encoding='utf-8'))
     NM = load_names()
     missing = set()
+    festival = d.get('festival')
+    festival_balls = festival['balls'] if festival else []
+    festival_cards = {cid: ball['id'] for ball in festival_balls for cid in ball['cards']}
 
     # 官方中文漏翻、還是英文的技能名（Esma、Ruwach…）：官方說明文字裡也夾著英文（「學習技能Esma:」）。
     # 只改「含中文」的字串，英文原文欄位不動。
@@ -119,6 +122,16 @@ def main():
             for i, b in enumerate(si['bosses']):
                 seen(b['id'], st['id'], 'mvp' if i == len(si['bosses']) - 1 else 'mini', round(b['t'] / 60, 1), True)
 
+    if festival:
+        st = next(s for s in stages if s['id'] == festival['stage'])
+        scheduled = {b['id'] for b in st.get('bosses', [])}
+        st['optionalBosses'] = [mid for mid in festival['bossBalls'] if mid not in scheduled]
+        for mid in st['optionalBosses']:
+            seen(mid, st['id'], 'optional')
+        for mid in ('ink_snake', 'ink_serpent'):
+            if any(m['id'] == mid for m in d['monsters']):
+                seen(mid, st['id'], 'summon')
+
     # ---------- 怪物 ----------
     card_of = {c['monster']: c['id'] for c in d['cards']}
     monsters = []
@@ -130,6 +143,10 @@ def main():
             'ranged': bool(m.get('ranged')), **info,
             'drops': d['drops'].get(m['id'], []), 'card': card_of.get(m['id']),
             'where': mon_where.get(m['id'], []),
+            'festivalBall': festival['bossBalls'].get(m['id']) if festival else None,
+            'seasonOnly': bool(mon_where.get(m['id'])) and all(
+                next((s.get('season') for s in stages if s['id'] == w['stage']), False)
+                for w in mon_where[m['id']]),
         })
     mon_by_id = {m['id']: m for m in monsters}
 
@@ -147,6 +164,11 @@ def main():
     for st in stages:
         if st.get('reward'):
             sources.setdefault(st['reward'], []).append({'type': 'reward', 'stage': st['id']})
+    if festival:
+        for it in d['items']:
+            if it.get('season'):
+                sources[it['id']] = [{'type': 'festival', 'stage': festival['stage'], 'ball': b['id']}
+                                     for b in festival_balls]
     items = []
     for it in d['items']:
         row = {k: it[k] for k in ('id', 'icon', 'slot', 'cardSlots', 'base', 'jobs', 'wtype', 'wtypeName', 'rare',
@@ -154,6 +176,7 @@ def main():
         row['en'] = it['nameEN']
         row['zh'] = zh(it['nameEN'])
         row['sources'] = sources.get(it['id'], [])
+        row['season'] = it.get('season')
         items.append(row)
     item_ids = {i['id'] for i in items}
     orphan = [iid for iid in sources if iid not in item_ids]
@@ -167,7 +190,9 @@ def main():
                       'compound': c['compound'],
                       'compoundName': SLOT_FIX.get(c['compoundName'], c['compoundName']) if c['compoundName'] == c['compound'] else c['compoundName'],
                       'bonuses': c['bonuses'],
-                      'boss': mon.get('boss')})
+                      'boss': mon.get('boss'),
+                      'sources': [{'type': 'festival', 'stage': festival['stage'], 'ball': festival_cards[c['id']]}]
+                      if c['id'] in festival_cards else [{'type': 'drop', 'monster': c['monster']}]})
 
     # ---------- 技能：屬於哪個職業 ----------
     skill_jobs = {}
@@ -207,10 +232,10 @@ def main():
     cos_raw = d.get('cosmetics') or {}
     cosmetics = []
     for c in cos_raw.get('list', []):
-        if not (c.get('kills') or c.get('tower')):
+        if not (c.get('kills') or c.get('tower') or c.get('ball') is not None):
             continue
         cosmetics.append({'id': c['id'], 'en': c['nameEN'], 'zh': zh(c['nameEN']), 'icon': c['icon'], 'slot': c['slot'],
-                          'kills': c.get('kills'), 'tower': c.get('tower'), 'covers': c.get('covers') or []})
+                          'kills': c.get('kills'), 'tower': c.get('tower'), 'ball': c.get('ball'), 'covers': c.get('covers') or []})
     cosmetics.sort(key=lambda c: (c['tower'] or 0, c['id']))
 
     # 遊戲沒翻到的職業類型
@@ -221,7 +246,7 @@ def main():
 
     version = d.get('version') or ''
     meta = {
-        'version': version, 'dumpedAt': d.get('dumpedAt'), 'builtAt': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'version': version, 'dumpedAt': d.get('dumpedAt'), 'builtAt': datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M JST'),
         'labels': d['labels'], 'jobNames': job_name,
     }
     sizes = {
@@ -236,6 +261,8 @@ def main():
         'pets.js': write_js('pets.js', 'pets', {'list': pets, 'rules': rules}),
         'deities.js': write_js('deities.js', 'deities', d.get('deities') or {'skills': {}, 'stats': []}),
         'cosmetics.js': write_js('cosmetics.js', 'cosmetics', {'list': cosmetics, 'kills': cos_raw.get('kills') or 200}),
+        'events.js': write_js('events.js', 'festival', dict(festival, version=version,
+            checkedAt=d.get('dumpedAt'), gear=[i['id'] for i in items if i.get('season')]) if festival else None),
     }
     print('遊戲版本：%s' % version)
     print('職業 %d、技能 %d、天賦 %d、物品 %d、卡片 %d、怪物 %d、關卡 %d、寵物 %d' % (

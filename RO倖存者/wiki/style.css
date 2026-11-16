@@ -149,3 +149,8 @@ details.fold > .in { padding: 0 12px 12px; }
 .image-sources h2 { font-size: 16px; color: var(--text); }
 .image-sources li { margin: 10px 0; }
 .image-sources a { text-decoration: underline; }
+
+.event-intro { border-left: 4px solid var(--accent, #7289bc); }
+.event-details { margin: 12px 0; padding: 12px 16px; border: 1px solid var(--line, #d6deeb); border-radius: 10px; }
+.event-details summary { cursor: pointer; font-weight: 800; }
+.event-details[open] summary { margin-bottom: 12px; }

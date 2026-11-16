@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RO 倖存者小百科</title>
-<meta name="description" content="RO Survivors（ro-survivors.com）繁體中文小百科：各職業技能與天賦、二轉轉職條件與方法、物品與卡片取得方式、怪物圖鑑、關卡資料。">
+<meta name="description" content="RO Survivors（ro-survivors.com）繁體中文小百科：各職業技能與天賦、二轉轉職條件與方法、物品與卡片取得方式、怪物圖鑑、關卡與燈籠節活動資料。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
-<link rel="stylesheet" href="wiki/style.css?v=10">
+<link rel="stylesheet" href="wiki/style.css?v=11">
 </head>
 <body>
 <div class="shell">
@@ -26,47 +26,52 @@
 
 <section class="image-sources" aria-labelledby="image-source-title">
 <h2 id="image-source-title">圖片來源、配對方式與版權說明</h2>
+<p>本版已從 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 原站下載百科使用的技能、天賦、職業、物品、卡片與外觀圖片，優先載入本站副本。逐圖原始網址、遊戲版本與 SHA-256 見 <a href="assets/game/sources.json">遊戲原站圖片來源表</a>。圖片權利仍屬原權利人，下載與標示來源不代表取得開源授權。</p>
+<details><summary>先前社群補圖版本的備援來源與說明</summary>
 <p>整理日期：2026 年 11 月 16 日。本百科為非官方資料整理站，與 Gravity、各地區營運商及以下社群專案均無隸屬、合作或官方認證關係。</p>
-<p>本次以原始技能代碼精確配對，已補入 99／199 筆技能項目的圖示；23 個職業皆有本地圖示。不同項目可能共用同一圖片；未配對的技能仍保留原網站圖片來源，不代表已補齊。實際逐圖來源見下方對照表。</p>
+<p>先前社群修補包以原始技能代碼精確配對，補入 99／199 筆技能項目的圖示；23 個職業皆有備援圖示。這份舊對照仍保留作備援；目前顯示優先採用上方遊戲原站版本。備援逐圖來源見下方對照表。</p>
 <ol><li><a href="https://github.com/raistlin-hess/ragnarok-online-skill-simulator" target="_blank" rel="noopener">raistlin-hess/ragnarok-online-skill-simulator</a>：技能代碼相同的 BMP 圖示，轉為 PNG，並將純洋紅背景轉為透明。<br>採用版本：<a href="https://github.com/raistlin-hess/ragnarok-online-skill-simulator/tree/607acccaa8662278788bb57afa2db93f4b0efbe5" target="_blank" rel="noopener"><code>607acccaa866</code></a></li><li><a href="https://github.com/finnar-bin/ragnarok_database_cs2" target="_blank" rel="noopener">finnar-bin/ragnarok_database_cs2</a>：技能代碼相同的 SVG 內嵌點陣圖，取出後存為 PNG。<br>採用版本：<a href="https://github.com/finnar-bin/ragnarok_database_cs2/tree/e6020ec1ce777c9efa79b29011e805c5af1b255a" target="_blank" rel="noopener"><code>e6020ec1ce77</code></a></li><li><a href="https://github.com/ZhoufangErqiangu/skill-simulator" target="_blank" rel="noopener">ZhoufangErqiangu/skill-simulator</a>：職業技能圖示橫向圖集，裁切第一格作職業代表技能圖示。<br>採用版本：<a href="https://github.com/ZhoufangErqiangu/skill-simulator/tree/158980ea9813a060933546687652cea0ceb8c0f7" target="_blank" rel="noopener"><code>158980ea9813</code></a></li></ol>
 <p><strong>職業圖示的替代方式：</strong>跆拳少年、忍者、神槍手、騎士、十字軍、巫師、賢者、獵人、吟遊詩人、祭司、武僧、刺客、流氓、鐵匠、鍊金術師、拳聖、悟靈士採用該職業技能圖集的第一格作代表技能圖示，並非人物立繪或原網站的職業徽章。其餘職業沿用已精確配對的原技能圖示。</p>
 <p>以上 GitHub 專案是本次檔案取得來源。公開可下載或專案程式碼附有開源授權，不代表其中的 Ragnarok Online 圖片亦取得相同授權。圖片及其相關角色權利仍屬原權利人；本頁來源標示不構成授權證明。</p>
 <p>© Gravity Co., Ltd. &amp; Lee MyoungJin(studio DTDS). All Rights Reserved. 日本版相關內容由 GungHo Online Entertainment, Inc. 發行；其他地區營運權利依各官方公告。RO Survivors 自行創作或修改之素材仍依其作者授權。本次未將社群 RO 圖片宣稱為 CC0、MIT 或 GPL 素材。</p>
-<p>原百科尚未替換的圖片仍嘗試載入 <a href="https://ro-survivors.com/" target="_blank" rel="noopener">RO Survivors</a> 的 assets 路徑，可能受來源網站的存取限制影響。裝備、卡片等圖片不在本次技能與職業修補範圍。</p>
+<p>社群修補包當時僅涵蓋部分技能與職業圖片；本版另加入的遊戲原站圖片含物品、卡片、天賦及活動收藏，使用新的來源表記錄。</p>
 <p>來源規範參考：<a href="https://ragnarokonline.gungho.jp/support/play-manner/copyright.html" target="_blank" rel="noopener">日本 RO 官方著作物利用規範</a>（僅說明其適用內容的使用條件，不是所有來源素材的通用許可）。本百科會在收到權利人通知後核對並處理相關素材。</p>
 <p><a href="assets/community/sources.json">逐圖來源、原始網址、裁切方式與檔案 SHA-256</a> · <a href="assets/community/missing-skills.json">尚未配對技能清單</a></p>
+</details>
 </section>
 </footer>
 </div>
 <!-- 共用程式 -->
-<script src="wiki/data/local-images.js?v=10"></script>
-<script src="wiki/js/core.js?v=10"></script>
+<script src="wiki/data/local-images.js?v=11"></script>
+<script src="wiki/data/game-images.js?v=11"></script>
+<script src="wiki/js/core.js?v=11"></script>
 <!-- 資料（tools\build_wiki.py 產生） -->
-<script src="wiki/data/meta.js?v=9"></script>
-<script src="wiki/data/jobs.js?v=9"></script>
-<script>RSW.jobs.list.forEach(function(j){if(RSW.jobImageOverrides[j.id])j.icon=RSW.jobImageOverrides[j.id];});</script>
-<script src="wiki/data/skills.js?v=9"></script>
-<script src="wiki/data/talents.js?v=9"></script>
-<script src="wiki/data/items.js?v=9"></script>
-<script src="wiki/data/cards.js?v=9"></script>
-<script src="wiki/data/monsters.js?v=9"></script>
-<script src="wiki/data/stages.js?v=9"></script>
-<script src="wiki/data/pets.js?v=9"></script>
-<script src="wiki/data/deities.js?v=9"></script>
-<script src="wiki/data/cosmetics.js?v=9"></script>
+<script src="wiki/data/meta.js?v=11"></script>
+<script src="wiki/data/jobs.js?v=11"></script>
+<script src="wiki/data/skills.js?v=11"></script>
+<script src="wiki/data/talents.js?v=11"></script>
+<script src="wiki/data/items.js?v=11"></script>
+<script src="wiki/data/cards.js?v=11"></script>
+<script src="wiki/data/monsters.js?v=11"></script>
+<script src="wiki/data/stages.js?v=11"></script>
+<script src="wiki/data/pets.js?v=11"></script>
+<script src="wiki/data/deities.js?v=11"></script>
+<script src="wiki/data/cosmetics.js?v=11"></script>
+<script src="wiki/data/events.js?v=11"></script>
 <!-- 各功能頁（照導覽列順序） -->
-<script src="wiki/js/page-home.js?v=9"></script>
-<script src="wiki/js/page-promotion.js?v=9"></script>
-<script src="wiki/js/page-jobs.js?v=9"></script>
-<script src="wiki/js/page-skills.js?v=9"></script>
-<script src="wiki/js/page-items.js?v=9"></script>
-<script src="wiki/js/page-cards.js?v=9"></script>
-<script src="wiki/js/page-monsters.js?v=9"></script>
-<script src="wiki/js/page-stages.js?v=9"></script>
-<script src="wiki/js/page-pets.js?v=9"></script>
-<script src="wiki/js/page-deities.js?v=9"></script>
-<script src="wiki/js/page-cosmetics.js?v=9"></script>
-<script src="wiki/js/page-search.js?v=9"></script>
+<script src="wiki/js/page-home.js?v=11"></script>
+<script src="wiki/js/page-events.js?v=11"></script>
+<script src="wiki/js/page-promotion.js?v=11"></script>
+<script src="wiki/js/page-jobs.js?v=11"></script>
+<script src="wiki/js/page-skills.js?v=11"></script>
+<script src="wiki/js/page-items.js?v=11"></script>
+<script src="wiki/js/page-cards.js?v=11"></script>
+<script src="wiki/js/page-monsters.js?v=11"></script>
+<script src="wiki/js/page-stages.js?v=11"></script>
+<script src="wiki/js/page-pets.js?v=11"></script>
+<script src="wiki/js/page-deities.js?v=11"></script>
+<script src="wiki/js/page-cosmetics.js?v=11"></script>
+<script src="wiki/js/page-search.js?v=11"></script>
 <script>RSW.start();</script>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
 </body>

@@ -104,6 +104,7 @@ const itemOut = Object.values(items || {}).map(i => {
     id: i.id, nameEN: m.name || null, icon: m.icon || null, slot: i.slot, cardSlots: i.cardSlots,
     base: i.base || null, jobs: i.jobs || null, wtype: i.wtype || null, wtypeName: i.wtype && W ? W(i.wtype) : null,
     rare: !!i.rare, starter: !!i.starter, secret: !!i.secret || secretIds.has(i.id), gender: i.gender || null,
+    season: i.season || null,
     bonuses: (i.bonuses || []).map(b => safe(() => b.text(1), '')),
     sig: qFirst ? sigText(i.id, qFirst) : [], sigMax: qLast ? sigText(i.id, qLast) : [],
     type: (m.description || []).find(l => /^Type:/.test(l)) || null,
@@ -139,7 +140,7 @@ for (const m of mainSrc.matchAll(stageRe)) {
   stageOut.push({
     id: m[1], name: T(m[2]), place: T(m[3]), levels: m[4], tier: +m[5],
     gsMin: num('gsMin'), jobLvMin: num('jobLvMin'), story: str('story'),
-    open: !!sc, secret: /secret:\{job:"(\w+)"/.exec(rest)?.[1] || null,
+    open: !!sc, season: sc?.season || null, secret: /secret:\{job:"(\w+)"/.exec(rest)?.[1] || null,
     planned: sc ? null : { monsters: (/monsters:\[([^\]]*)\]/.exec(rest)?.[1] || '').match(/\w+/g) || [],
       mvp: /mvp:\{id:"(\w+)"/.exec(rest)?.[1] || null },
   });
@@ -148,7 +149,7 @@ if (!stageOut.length) note('⚠ 找不到關卡清單（main.js 結構改了）'
 const scriptOut = {};
 for (const [id, s] of Object.entries(scripts || {})) {
   scriptOut[id] = { map: s.map, mapName: null, runLength: s.runLength, jobCap: s.jobCap, jobExp: s.jobExp,
-    story: s.story || null, storyOnly: !!s.storyOnly, reward: s.reward || null, jobWeapon: !!s.jobWeapon, bosses: (s.bosses || []).map(b => ({ t: b.t, id: b.id })),
+    story: s.story || null, storyOnly: !!s.storyOnly, season: s.season || null, reward: s.reward || null, jobWeapon: !!s.jobWeapon, bosses: (s.bosses || []).map(b => ({ t: b.t, id: b.id })),
     pool: [...new Set((s.waves || []).flatMap(w => w.pool || []))] };
 }
 
@@ -226,13 +227,26 @@ let cosKills = null;
   for (const x of Object.values(tbl || {})) {
     const m = (man.items || {})[x.id] || {};
     cosOut.push({ id: x.id, nameEN: m.name || null, icon: m.icon || null, slot: x.slot, kills: x.kills || null,
-      tower: x.tower || null, covers: x.covers || [], wtype: x.wtype || null, wtypeName: x.wtype && W ? W(x.wtype) : null });
+      tower: x.tower || null, ball: x.ball ?? null, covers: x.covers || [], wtype: x.wtype || null, wtypeName: x.wtype && W ? W(x.wtype) : null });
   }
   const k = /const [\w$]+=\["head_top","head_mid","head_low","weapon","shield"\],[\w$]+=\["head_top","head_mid","head_low"\],[\w$]+=(\d+)/;
   const km = k.exec(coreSrc);
   cosKills = km ? +km[1] : null;
   if (!cosKills) note('⚠ 找不到外觀擊殺次數（預設 200）');
 }
+
+/* 季節扭蛋：只讀客戶端公開的收藏、卡片與素材對照，不呼叫抽獎 API。 */
+const festivalMatch = /fragments:(\d+)\},[\w$]+=\{([^}]+)\},[\w$]+=(\["Bola del Festival"[^\]]*\]),[\w$]+=(\[[\d,]+\]),[\w$]+=(\[\[[\d,]+\](?:,\[[\d,]+\])*\]),[\w$]+=(\[[\d,]+\])/.exec(mainSrc);
+let festival = null;
+if (festivalMatch) {
+  const names = JSON.parse(festivalMatch[3]), icons = JSON.parse(festivalMatch[4]);
+  const cardPools = JSON.parse(festivalMatch[5]), fragments = JSON.parse(festivalMatch[6]);
+  const bossBalls = Object.fromEntries([...festivalMatch[2].matchAll(/(\w+):(\d)/g)].map(m => [m[1], +m[2]]));
+  festival = { id: 'lantern-festival', stage: 'louyang', fragmentsPerRoll: +festivalMatch[1], bossBalls,
+    balls: names.map((name, id) => ({ id, name: T(name), icon: man.items?.[icons[id]]?.icon || null,
+      fragment: fragments[id], fragmentIcon: man.items?.[fragments[id]]?.icon || null,
+      cards: cardPools[id], cosmetics: cosOut.filter(c => c.ball === id).map(c => c.id) })) };
+} else if (scripts?.louyang?.season) note('⚠ 找不到燈籠節扭蛋對照');
 
 const versionM =/commit:"(\w+)",\s*date:"(\d{4})-(\d\d)-(\d\d)/.exec(mainSrc);
 const dump = {
@@ -243,6 +257,7 @@ const dump = {
   stages: stageOut, scripts: scriptOut,
   pets: petOut, petRules, deities: deityOut,
   cosmetics: { list: cosOut, kills: cosKills || 200 },
+  festival,
   log,
 };
 const body = JSON.stringify(dump);

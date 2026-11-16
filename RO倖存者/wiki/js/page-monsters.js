@@ -6,6 +6,7 @@ RSW.page({
     const R = RSW, ix = R.index(), L = R.meta.labels;
     if (arg && ix.monster[arg]) {
       const m = ix.monster[arg], card = m.card && ix.card[m.card];
+      const cardFestival = card && (card.sources || []).find(s => s.type === 'festival');
       const drops = (m.drops || []).slice().sort((a, b) => b.chance - a.chance);
       return `<p class="small"><a href="#monsters">← 所有怪物</a></p>
 <h2 class="pt">${R.esc(R.monName(m))} <span class="muted small">${R.esc(m.en)}</span>${m.boss === 'mvp' ? '<span class="tag mvp">MVP</span>' : m.boss === 'mini' ? '<span class="tag mini">小首領</span>' : ''}</h2>
@@ -18,13 +19,14 @@ RSW.page({
   ${m.ranged ? '<span class="tag">遠程攻擊</span>' : ''}${m.speed === 0 ? '<span class="tag">不會移動</span>' : ''}
 </div>
 <h3>出現地點</h3><p>${R.whereText(m)}</p>
-${cosOf(m.id) ? `<p>🎩 擊敗 ${R.cosmetics.kills} 次${cosOf(m.id).kills.length > 1 ? '（三隻塔羅鼠合計）' : ''}可以拿到外觀：<a href="#cosmetics">${R.img(cosOf(m.id).icon)} ${R.esc(cosOf(m.id).zh || cosOf(m.id).en)}</a> <span class="tag dev">即將開放</span></p>` : ''}
+${cosOf(m.id) ? `<p>🎩 擊敗 ${R.cosmetics.kills} 次${cosOf(m.id).kills.length > 1 ? '（三隻塔羅鼠合計）' : ''}可以拿到外觀：<a href="#cosmetics">${R.img(cosOf(m.id).icon)} ${R.esc(cosOf(m.id).zh || cosOf(m.id).en)}</a></p>` : ''}
 ${petOf(m.id) ? `<p>🐾 這隻怪物有寵物：<a href="#pets/${m.id}">${R.esc(R.monName(m))}寵物</a>${petOf(m.id).from ? '（由進化取得）' : `（掉蛋 ${R.pct(m.boss === 'mvp' ? R.pets.rules.eggMvp : R.pets.rules.eggNormal)}）`}</p>` : ''}
 <h3>掉落物</h3>
+${m.seasonOnly ? `<div class="note">燈籠節關卡不直接掉裝備、卡片或寵物蛋。${m.festivalBall != null ? `這隻頭目掉 ${R.ballLink(m.festivalBall)}。` : ''}${cardFestival ? `對應卡片由 ${R.ballLink(cardFestival.ball)} 抽出，機率未公布。` : ''}<a href="#events/lantern-festival">活動規則與收藏 →</a></div>` : ''}
 ${drops.length || card ? `<div class="tw"><table class="t"><tr><th>物品</th><th>部位</th><th>每隻機率</th></tr>
   ${drops.map(d => { const it = ix.item[d.id]; return `<tr><td>${R.itemLink(d.id)}</td><td class="small">${it ? R.esc(R.slotName(it)) : ''}</td><td class="num">${R.pct(d.chance)}</td></tr>`; }).join('')}
-  ${card ? `<tr><td>${R.img(card.image, 'ico')} ${R.cardLink(card.id)}</td><td class="small">卡片（${R.esc(card.compoundName)}）</td><td class="num">非常稀有</td></tr>` : ''}
-</table></div>` : '<p class="muted">沒有裝備或卡片掉落。</p>'}`;
+  ${card ? `<tr><td>${R.img(card.image, 'ico')} ${R.cardLink(card.id)}</td><td class="small">卡片（${R.esc(card.compoundName)}）</td><td class="num">${cardFestival ? '由活動扭蛋抽出' : '非常稀有'}</td></tr>` : ''}
+</table></div>` : '<p class="muted">沒有裝備或卡片直接掉落。</p>'}`;
     }
     return `<h2 class="pt">怪物圖鑑</h2>
 <p class="lead">遊戲裡全部 ${R.monsters.length} 種怪物，點進去看出現地點和掉落物。</p>
@@ -51,7 +53,7 @@ ${drops.length || card ? `<div class="tw"><table class="t"><tr><th>物品</th><t
         ${list.map(m => `<tr><td>${R.monLink(m.id)}<br><span class="muted small">${R.esc(m.en)}</span></td><td class="num">${m.level ?? ''}</td><td class="num">${R.num(m.hp)}</td>
           <td class="small">${R.esc(L.races[m.race] || '')}／${R.esc(L.elements[m.element] || '')}</td>
           <td class="small">${[...new Set(m.where.map(w => w.stage))].map(R.stageLink).join('、') || '—'}</td>
-          <td class="small">${m.drops.length ? m.drops.length + ' 件' : ''}${m.card ? (m.drops.length ? '＋' : '') + '卡片' : ''}</td></tr>`).join('')}</table>` : '<div class="empty">沒有符合的怪物</div>';
+          <td class="small">${m.seasonOnly ? (m.festivalBall != null ? R.ballLink(m.festivalBall) : '無直接掉落') : `${m.drops.length ? m.drops.length + ' 件' : ''}${m.card ? (m.drops.length ? '＋' : '') + '卡片' : ''}`}</td></tr>`).join('')}</table>` : '<div class="empty">沒有符合的怪物</div>';
     };
     for (const s of ['#mo-stage', '#mo-boss']) $(s).onchange = draw;
     $('#mo-q').oninput = draw;
