@@ -211,6 +211,7 @@ class Crawler {
     let game=this.texts.get('game.js');
     if(!game?.includes('function netURL(){'))throw Error('game.js 的村莊連線格式變更，請檢查');
     game=game.replace('function netURL(){','function netURL(){if(window.__L1STW_OFFLINE)return "";');
+    game=game.replace('function mresFetch(){','function mresFetch(){if(window.__L1STW_OFFLINE)return;');
     // Remove the community invitation widget from the offline edition.
     const community=/\/\/ ---- LINE 討論區：[^\r\n]*\r?\n\(function\(\)\{[\s\S]*?\r?\n\}\)\(\);/;
     if(game.includes("b.id='lineBtn'")){
@@ -223,6 +224,7 @@ class Crawler {
     let audio=this.texts.get('audio.js');
     if(audio&&audio.includes('a.src=musUrl(id,exts[0]);')){audio=audio.replace('a.src=musUrl(id,exts[0]);',`a.src=(${JSON.stringify(this.musicMap)})[id]||musUrl(id,exts[0]);`);save(path.join(this.pub,'audio.js'),audio);}
     save(path.join(this.pub,'lg.js'),accountOnlyLogin(this.texts.get('lg.js')));
+    require('./repatch_local.cjs').installOfflineTrades(this.pub);
     require('./repatch_local.cjs').installGM(this.pub);
     require('./policy.cjs').applyPolicy(this.pub);
   }

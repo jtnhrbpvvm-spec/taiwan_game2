@@ -42,5 +42,18 @@ async function startupCheck({output=defaultGameRoot(),fetcher=fetch,performRetry
   return {status:changed?'retried-update':transient?'retried-network':'unchanged',remaining:remaining.length};
  }catch(e){log('原站更新檢查或補抓未完成：'+e.message+'；繼續使用現有離線版。');return {status:'unavailable',error:e.message};}
 }
+async function checkDailyTasks({output=defaultGameRoot(),fetcher=fetch,log=console.log,read=p=>fs.readFileSync(p,'utf8'),write=(p,b)=>{fs.writeFileSync(p+'.tmp',b);fs.renameSync(p+'.tmp',p);}}={}){
+ const root=path.resolve(output);assertOutput(root);const statePath=path.join(root,'.daily-task-check.json');let state={};try{state=JSON.parse(read(statePath));}catch{}
+ const headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0 L1STW-Offline-Task-Check/1.0'};
+ try{
+  const page=await fetcher('https://l1stw.com/index.html',{redirect:'manual',signal:AbortSignal.timeout(5000),headers});if(!page.ok){await page.body?.cancel();throw Error('HTTP '+page.status);}const html=await page.text();if(Buffer.byteLength(html)>2*1048576)throw Error('首頁大小不符');
+  let gameURL='https://l1stw.com/game.js';for(const m of html.matchAll(/<script\b[^>]*src\s*=\s*["']([^"']+)["']/gi)){const u=new URL(m[1],'https://l1stw.com/');if(u.origin==='https://l1stw.com'&&u.pathname==='/game.js')gameURL=u.href;}
+  const h={...headers};if(state.gameURL===gameURL&&state.etag)h['If-None-Match']=state.etag;
+  const response=await fetcher(gameURL,{redirect:'manual',signal:AbortSignal.timeout(5000),headers:h});
+  if(response.status!==304){if(!response.ok){await response.body?.cancel();throw Error('HTTP '+response.status);}const code=await response.text();if(Buffer.byteLength(code)>4*1048576||!code.includes('function dailyList'))throw Error('每日任務格式已變更，保留本機任務');state={gameURL,etag:response.headers?.get?.('etag')||'',fingerprint:sha(code),status:code.includes("srvDo('dqGet'")?'requires-login':'changed-needs-review'};}
+  state.checkedAt=new Date().toISOString();state.offlineFallback=true;write(statePath,JSON.stringify(state,null,2));
+  log(state.status==='requires-login'?'已檢查線上每日任務：原站任務資料仍需正式登入；使用本機每日任務。':'已檢查線上每日任務：原站格式有變更，保留本機每日任務，等待相容更新。');return state;
+ }catch(e){log('線上每日任務檢查未完成：'+e.message+'；本機每日任務仍可使用。');return {status:'unavailable',error:e.message};}
+}
 if(require.main===module){try{const argv=process.argv.slice(2),startup=argv.includes('--startup'),o=args(argv.filter(a=>a!=='--startup'));(startup?startupCheck(o):retry(o)).catch(e=>{console.error(e);process.exitCode=1;});}catch(e){console.error(e);process.exitCode=1;}}
-module.exports={retry,sourceFingerprint,startupCheck};
+module.exports={retry,sourceFingerprint,startupCheck,checkDailyTasks};
