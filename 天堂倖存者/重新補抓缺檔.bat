@@ -1,5 +1,11 @@
 @echo off
-chcp 65001 >nul
+setlocal
 cd /d "%~dp0"
-node retry_missing.cjs --output "%USERPROFILE%\Desktop\天堂倖存者\離線遊戲" --concurrency 8
+where node >nul 2>nul
+if errorlevel 1 (
+ echo Node.js 18 or newer is required.
+ pause
+ exit /b 1
+)
+node retry_missing.cjs --concurrency 8
 pause

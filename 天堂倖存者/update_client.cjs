@@ -13,7 +13,7 @@ async function get(url,maxBytes,fetcher,timeout=35000){
  if(+(r.headers.get('content-length')||0)>maxBytes)throw Error('Update response too large');let length=0;const chunks=[];
  for await(const c of r.body){length+=c.length;if(length>maxBytes)throw Error('Update response too large');chunks.push(c);}return Buffer.concat(chunks);
 }
-function stateFor(root,m){return {version:m.version,installed:new Date().toISOString(),files:m.files.map(f=>{const s=fs.statSync(target(root,f));return {area:f.area,path:f.path,sha256:f.sha256,bytes:s.size,mtimeMs:s.mtimeMs};})};}
+function stateFor(root,m){return {version:m.version,releaseCreated:m.created,installed:new Date().toISOString(),files:m.files.map(f=>{const s=fs.statSync(target(root,f));return {area:f.area,path:f.path,sha256:f.sha256,bytes:s.size,mtimeMs:s.mtimeMs};})};}
 async function performUpdate({root=__dirname,fetcher=fetch,allowLoopback=false,ignoreBusy=false,repair=false,checkOnly=false,onBeforeCommit}={}){
  root=path.resolve(root);let port=8379;try{port=JSON.parse(fs.readFileSync(path.join(root,'update-config.json'),'utf8')).port||8379;}catch{}
  if(!ignoreBusy&&await busy(port)){console.log('遊戲執行中，請關閉遊戲與伺服器後再更新。');return {status:'busy'};}
@@ -22,7 +22,8 @@ async function performUpdate({root=__dirname,fetcher=fetch,allowLoopback=false,i
  const m=readSigned(await get(url.href,16*1048576,fetcher,8000),fs.readFileSync(path.join(root,'trusted-key.pem')));
  let previous={files:[]};try{previous=JSON.parse(fs.readFileSync(path.join(root,STATE),'utf8'));}catch{}
  if(checkOnly){console.log('可用更新版本',m.version.slice(0,12));return {status:'checked',version:m.version};}
- if(!repair&&previous.version===m.version){console.log('目前已是最新離線版本。');return {status:'current',version:m.version};}
+ if(previous.version!==m.version&&previous.releaseCreated&&Date.parse(m.created)<Date.parse(previous.releaseCreated)){console.log('遠端發布版本較舊，保留目前已安裝的工具。');return {status:'older',version:previous.version};}
+ if(!repair&&previous.version===m.version){if(!previous.releaseCreated)save(path.join(root,STATE),JSON.stringify({...previous,releaseCreated:m.created}));console.log('目前已是最新離線版本。');return {status:'current',version:m.version};}
  const old=new Map((previous.files||[]).map(f=>[f.area+'/'+f.path,f])),changed=[];
  for(const f of m.files){const dest=target(root,f);noLinks(root,dest);let valid=false;try{const st=fs.statSync(dest),before=old.get(f.area+'/'+f.path);valid=st.isFile()&&st.size===f.bytes&&(!repair&&before?.sha256===f.sha256&&before.mtimeMs===st.mtimeMs||sha(fs.readFileSync(dest))===f.sha256);}catch{}if(!valid)changed.push(f);}
  if(!changed.length){save(path.join(root,STATE),JSON.stringify(stateFor(root,m)));console.log('檔案已符合最新版本。');return {status:'current',version:m.version};}

@@ -1,16 +1,11 @@
 @echo off
-chcp 65001 >nul
+setlocal
 cd /d "%~dp0"
-node update_client.cjs
-if not exist "%USERPROFILE%\Desktop\天堂倖存者\離線遊戲\public\index.html" (
- echo 請先執行更新下載.bat
- pause
- exit /b 1
-)
-node repatch_local.cjs
+where node >nul 2>nul
 if errorlevel 1 (
+ echo Node.js 18 or newer is required.
  pause
  exit /b 1
 )
-node offline_server.cjs --open
-pause
+node repatch_local.cjs --launch
+if errorlevel 1 pause

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
-const {defaultGameRoot}=require('./update-common.cjs');
+const {defaultGameRoot,annotateFailure,printFailureSummary,isSource404}=require('./update-common.cjs');
 const ORIGIN = 'https://l1stw.com';
 const EXT = /\.(?:html|js|json|css|png|webp|jpe?g|gif|svg|ico|mp3|ogg|wav|woff2?|webmanifest)$/i;
 const TEXT = /\.(?:html|js|json|css|webmanifest)$/i;
@@ -98,7 +98,7 @@ class Crawler {
       this.failed.delete(rel);
       if(TEXT.test(rel)){save(localPath(this.raw,rel),b);this.texts.set(rel,b.toString('utf8'));this.scan(b.toString('utf8'),url);}
     }catch(e){this.failed.set(rel,{path:rel,url,error:e.message,optional:this.optional.has(rel)});}
-    if(++this.count%200===0){console.log('已處理',this.count,'下載成功',this.records.size,'待處理',this.queue.length,'失敗',this.failed.size);save(path.join(this.root,'crawl-progress.json'),JSON.stringify({time:new Date().toISOString(),done:this.count,queued:this.queue.length,files:this.records.size,failed:[...this.failed.values()]},null,2));}
+    if(++this.count%200===0){console.log('已處理',this.count,'已保存',this.records.size,'待處理',this.queue.length);printFailureSummary([...this.failed.values()]);save(path.join(this.root,'crawl-progress.json'),JSON.stringify({time:new Date().toISOString(),done:this.count,queued:this.queue.length,files:this.records.size,failed:[...this.failed.values()].map(annotateFailure)},null,2));}
   }
   async drain() {
     // 任一工作完成立即接下一個，避免一個慢檔案拖住整批下載。
@@ -215,20 +215,22 @@ class Crawler {
     // 音樂首選改為確實下載成功的格式，避免離線時依序測試不存在的格式。
     let audio=this.texts.get('audio.js');
     if(audio&&audio.includes('a.src=musUrl(id,exts[0]);')){audio=audio.replace('a.src=musUrl(id,exts[0]);',`a.src=(${JSON.stringify(this.musicMap)})[id]||musUrl(id,exts[0]);`);save(path.join(this.pub,'audio.js'),audio);}
+    require('./repatch_local.cjs').installGM(this.pub);
     require('./policy.cjs').applyPolicy(this.pub);
   }
   report() {
-    const failures=[...this.failed.values()].map(r=>({...r,optional:this.optional.has(r.path)}));
+    const failures=[...this.failed.values()].map(r=>annotateFailure({...r,optional:this.optional.has(r.path)}));
     const records=[...this.records.values()];
     // 網站同時列出舊、新地圖路徑：新路徑存在時，舊路徑的 404 是可忽略的替代來源。
     for(const f of failures)if(/^assets\/map(\d+)\/map\.js$/.test(f.path)){const id=/^assets\/map(\d+)/.exec(f.path)[1];if(this.records.has(`maps/map${id}/map.js`)){f.optional=true;f.reason='已下載另一個地圖來源 maps/map'+id+'/map.js';}}
-    const generated=['index.html','cloud.js','game.js','audio.js','offline-runtime.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
+    const generated=['index.html','cloud.js','game.js','audio.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
     const report={source:ORIGIN,started:this.started,finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:records.filter(r=>r.from==='network').length,requiredFailures:failures.filter(r=>!r.optional),optionalFailures:failures.filter(r=>r.optional),musicMissing:this.musicMissing,warnings:this.warnings,records,generated};
     save(path.join(this.root,'download-report.json'),JSON.stringify(report,null,2));
     save(path.join(this.root,'catalog.json'),JSON.stringify(Object.fromEntries(Object.entries(this.values).map(([k,v])=>[k,typeof v==='object'&&v?Object.keys(v).length:typeof v])),null,2));
-    console.log('完成：',report.files,'個檔案，',(report.bytes/1048576).toFixed(1),'MB；必要資源失敗',report.requiredFailures.length,'；可選資源缺少',report.optionalFailures.length);
+    console.log('完成：已保存',report.files,'個檔案，',(report.bytes/1048576).toFixed(1),'MB');
+    printFailureSummary(failures);
     console.log('下載報告：',path.join(this.root,'download-report.json'));
-    if(report.requiredFailures.length)process.exitCode=2;
+    if(report.requiredFailures.some(f=>!isSource404(f)))process.exitCode=2;
     return report;
   }
   async run() {
