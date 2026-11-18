@@ -228,20 +228,24 @@ class Crawler {
     require('./repatch_local.cjs').installGM(this.pub);
     require('./policy.cjs').applyPolicy(this.pub);
   }
-  report() {
+  report({patchError=null}={}) {
     const failures=[...this.failed.values()].map(r=>annotateFailure({...r,optional:this.optional.has(r.path)}));
     const records=[...this.records.values()];
     // 網站同時列出舊、新地圖路徑：新路徑存在時，舊路徑的 404 是可忽略的替代來源。
     for(const f of failures)if(/^assets\/map(\d+)\/map\.js$/.test(f.path)){const id=/^assets\/map(\d+)/.exec(f.path)[1];if(this.records.has(`maps/map${id}/map.js`)){f.optional=true;f.reason='已下載另一個地圖來源 maps/map'+id+'/map.js';}}
-    const generated=['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
-    const report={source:ORIGIN,started:this.started,finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:records.filter(r=>r.from==='network').length,requiredFailures:failures.filter(r=>!r.optional),optionalFailures:failures.filter(r=>r.optional),musicMissing:this.musicMissing,warnings:this.warnings,records,generated};
+    const generated=patchError?[]:['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
+    const report={source:ORIGIN,started:this.started,finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:records.filter(r=>r.from==='network').length,requiredFailures:failures.filter(r=>!r.optional),optionalFailures:failures.filter(r=>r.optional),musicMissing:this.musicMissing,warnings:this.warnings,records,generated,patchStatus:patchError?'failed':'complete',...(patchError?{patchError}:{}),...(this.retrySummary?{retry:this.retrySummary}:{})};
     save(path.join(this.root,'download-report.json'),JSON.stringify(report,null,2));
     save(path.join(this.root,'catalog.json'),JSON.stringify(Object.fromEntries(Object.entries(this.values).map(([k,v])=>[k,typeof v==='object'&&v?Object.keys(v).length:typeof v])),null,2));
-    console.log('完成：已保存',report.files,'個檔案，',(report.bytes/1048576).toFixed(1),'MB');
+    console.log(patchError?'下載檔案已保留：':'完成：已保存',report.files,'個檔案，',(report.bytes/1048576).toFixed(1),'MB');
     printFailureSummary(failures);
     console.log('下載報告：',path.join(this.root,'download-report.json'));
     if(report.requiredFailures.some(f=>!isSource404(f)))process.exitCode=2;
     return report;
+  }
+  finalize(){
+    try{this.patch();}catch(e){this.report({patchError:e.message});throw Error(e.message+'；下載紀錄與素材已保留，更新工具後可直接再次啟動，不必重新下載全部素材。',{cause:e});}
+    return this.report();
   }
   async run() {
     assertOutput(this.root);
@@ -256,7 +260,7 @@ class Crawler {
     await this.drain();
     // 新下載的延遲地圖描述檔需再解析一次。
     this.evaluateData();this.discover();await this.drain();
-    await this.music();this.patch();return this.report();
+    await this.music();return this.finalize();
   }
 }
 if(require.main===module) {

@@ -13,7 +13,7 @@ async function launch({dir=__dirname,gameRoot=defaultGameRoot(),run,exists=fs.ex
 }
 function repatch(root=defaultGameRoot()){
  root=path.resolve(root);assertOutput(root);const reportFile=path.join(root,'download-report.json');
- if(!fs.existsSync(reportFile))throw Error('請先執行更新下載，取得桌面的遊戲原始檔。');
+ if(!fs.existsSync(reportFile))recoverDownloadReport(root);
  const r=JSON.parse(fs.readFileSync(reportFile,'utf8')),temp=fs.mkdtempSync(path.join(root,'.patch-stage-')),pub=path.join(root,'public'),names=['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'];let applied=[];
  try{
   const c=new Crawler({output:root,concurrency:4});c.pub=path.join(temp,'new');fs.mkdirSync(c.pub);
@@ -23,11 +23,11 @@ function repatch(root=defaultGameRoot()){
   for(const n of names)if(fs.existsSync(path.join(pub,n)))save(path.join(temp,'backup',n),fs.readFileSync(path.join(pub,n)));
   const generated=names.map(p=>{const b=fs.readFileSync(path.join(c.pub,p));return {path:p,bytes:b.length,sha256:sha(b)};});
   for(const n of names){applied.push(n);fs.renameSync(path.join(c.pub,n),path.join(pub,n));}
-  save(path.join(temp,'report.json'),JSON.stringify({...r,generated},null,2));fs.renameSync(path.join(temp,'report.json'),reportFile);console.log('已從桌面原始檔套用最新離線化程式。');return {files:names.length};
+  const {patchError,...cleanReport}=r;save(path.join(temp,'report.json'),JSON.stringify({...cleanReport,generated,patchStatus:'complete'},null,2));fs.renameSync(path.join(temp,'report.json'),reportFile);console.log('已從桌面原始檔套用最新離線化程式。');return {files:names.length};
  }catch(e){for(const n of applied){const b=path.join(temp,'backup',n),p=path.join(pub,n);if(fs.existsSync(b))fs.copyFileSync(b,p);else if(fs.existsSync(p))fs.unlinkSync(p);}throw e;}
  finally{if(path.resolve(temp).startsWith(root+path.sep+'.patch-stage-'))fs.rmSync(temp,{recursive:true,force:true});}
 }
-module.exports={repatch,launch,ensureGMLauncher,ensureWindowsLaunchers,windowsBootstrap,modePickerPowerShell,installGM,gmBridge,installOfflineTrades,offlineTradeBridge};
+module.exports={repatch,launch,recoverDownloadReport,insertGameBridge,ensureGMLauncher,ensureWindowsLaunchers,windowsBootstrap,modePickerPowerShell,installGM,gmBridge,installOfflineTrades,offlineTradeBridge};
 if(require.main===module){try{ensureWindowsLaunchers();}catch(e){console.error(e.message);process.exitCode=1;}if(process.argv.includes('--launch'))launch({gm:process.argv.includes('--gm'),open:!process.argv.includes('--no-open'),checkUpdate:!process.argv.includes('--no-update'),checkAssets:!process.argv.includes('--no-assets-check')}).then(code=>{process.exitCode=code;}).catch(e=>{console.error(e.message);process.exitCode=1;});else try{repatch();}catch(e){console.error(e.message);process.exitCode=1;}}
 
 function windowsBootstrap(entry,args=[],installer={name:'node-v26.13.1-x64.msi',sha256:'0398ced8446e119478c724d1aa37c5afd6aa1a76fceab12787eb9714c5ed8b45'}){
@@ -134,8 +134,28 @@ function ensureWindowsLaunchers(dir=__dirname){
  return Object.entries(entries).map(([name,[entry,args]])=>writeLauncher(dir,name,entry,args));
 }
 
+function insertGameBridge(game,code,tag){
+ if(game.includes('/* '+tag+' */'))return game;
+ const startup=[...game.matchAll(/^[ \t]*resetGame\s*\(\s*\)\s*;[ \t]*running\s*=\s*false\s*;/gm)];
+ let at;if(startup.length===1)at=startup[0].index;
+ else if(startup.length>1)throw Error('遊戲初始化位置不唯一，已停止套用以保護原始檔');
+ else{const legacy=/if\(!ONLINE\)window\.__game=\{[^\r\n]+\};/.exec(game);if(!legacy)throw Error('找不到遊戲初始化位置，請保留已下載檔案並更新工具');at=legacy.index;}
+ return game.slice(0,at)+'/* '+tag+' */\n'+code+'\n'+game.slice(at);
+}
+function recoverDownloadReport(root){
+ root=path.resolve(root);const pub=path.join(root,'public'),raw=path.join(root,'source'),target=path.join(root,'download-report.json');
+ for(const f of ['index.html','game.js','cloud.js','audio.js','lg.js'])if(!fs.existsSync(path.join(raw,f)))throw Error('缺少原始 '+f+'，請執行「更新下載.bat」；已下載的素材會沿用');
+ console.log('找到已下載的原始檔，正在重建下載紀錄；不會重新下載素材。');
+ const skipped=new Set(['offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md']),found=new Map();
+ function walk(dir,prefer){if(!fs.existsSync(dir))return;for(const e of fs.readdirSync(dir,{withFileTypes:true})){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);if(e.isDirectory())walk(p,prefer);else if(e.isFile()){const rel=path.relative(prefer?raw:pub,p).replaceAll('\\','/');if(skipped.has(rel))continue;if(!prefer&&found.has(rel))continue;found.set(rel,p);}}}
+ walk(pub,false);walk(raw,true);const records=[];for(const [rel,p]of found){const b=fs.readFileSync(p);records.push({path:rel,bytes:b.length,sha256:sha(b),from:'recovered-local'});}
+ let progress={};try{progress=JSON.parse(fs.readFileSync(path.join(root,'crawl-progress.json'),'utf8'));}catch{}
+ const {annotateFailure}=require('./update-common.cjs'),failures=(progress.failed||[]).filter(f=>!found.has(f.path)).map(annotateFailure);
+ const report={source:'https://l1stw.com',started:progress.time||new Date().toISOString(),finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:0,records,generated:[],requiredFailures:failures.filter(f=>!f.optional),optionalFailures:failures.filter(f=>f.optional),warnings:['Recovered from local files after an interrupted offline patch.'],patchStatus:'pending',recoveredAt:new Date().toISOString()};
+ save(target+'.recover.tmp',JSON.stringify(report,null,2));fs.renameSync(target+'.recover.tmp',target);return report;
+}
 function installGM(root){
- const gameFile=path.join(root,'game.js');let game=fs.readFileSync(gameFile,'utf8');const marker=/if\(!ONLINE\)window\.__game=\{[^\r\n]+\};/;
+ const gameFile=path.join(root,'game.js');let game=fs.readFileSync(gameFile,'utf8');
  if(game.includes("b.textContent='GM測試'")&&!game.includes('OFFLINE_LEGACY_GM_GATE_V1')){
   const legacy=/(\(function\(\)\{\s*\/\/ GM 測試面板：[^\r\n]*\r?\n)/;
   if(!legacy.test(game))throw Error('原有 GM 選單格式改變，請檢查');
@@ -147,7 +167,7 @@ function installGM(root){
  game=game.replaceAll('(window.CLOUD&&CLOUD.gm)||!ONLINE','(window.CLOUD&&CLOUD.gm)||(window.__L1STW_OFFLINE?!!window.__L1STW_GM_MODE:!ONLINE)');
  game=game.replace("(!SRV()?'<span class=\"btn\" id=\"talBxB\">","(!SRV()&&(!window.__L1STW_OFFLINE||window.__L1STW_GM_MODE)?'<span class=\"btn\" id=\"talBxB\">");
  game=game.replace("if(!SRV())rows.push({icon:49100,name:'【離線測試】","if(!SRV()&&(!window.__L1STW_OFFLINE||window.__L1STW_GM_MODE))rows.push({icon:49100,name:'【離線測試】");
- if(!game.includes('OFFLINE_GM_BRIDGE_V1')&&marker.test(game))game=game.replace(marker,m=>m+'\n/* OFFLINE_GM_BRIDGE_V1 */\n('+gmBridge.toString()+')();');
+ game=insertGameBridge(game,'('+gmBridge.toString()+')();','OFFLINE_GM_BRIDGE_V1');
  fs.writeFileSync(gameFile,game);
  const index=path.join(root,'index.html');let html=fs.readFileSync(index,'utf8');if(!html.includes('src="offline-mode.js"'))html=html.replace('<script src="offline-runtime.js"></script>','<script src="offline-mode.js"></script>\n<script src="offline-runtime.js"></script>');if(!html.includes('src="offline-gm.js"'))html=html.replace(/<\/body>/i,'<script defer src="offline-gm.js"></script>\n</body>');fs.writeFileSync(index,html);fs.writeFileSync(path.join(root,'offline-gm.js'),'('+gmBrowserPanel.toString()+')();\n');
  return {bridge:game.includes('OFFLINE_GM_BRIDGE_V1')};
@@ -155,9 +175,8 @@ function installGM(root){
 
 function installOfflineTrades(root){
  const p=path.join(root,'game.js');let game=fs.readFileSync(p,'utf8');if(game.includes('OFFLINE_TRADES_V1'))return;
- const marker=/if\(!ONLINE\)window\.__game=\{[^\r\n]+\};/;if(!marker.test(game))throw Error('離線商店安裝位置改變，請檢查');
  game=game.replace('const mkOn=()=>{if(!SRV()){','const mkOn=()=>{if(!SRV()&&!window.__L1STW_OFFLINE){');
- game=game.replace(marker,'/* OFFLINE_TRADES_V1 */\n('+offlineTradeBridge.toString()+')('+JSON.stringify(offlineTradeData())+','+offlineNPCBridge.toString()+');\n$&');fs.writeFileSync(p,game);
+ game=insertGameBridge(game,'('+offlineTradeBridge.toString()+')('+JSON.stringify(offlineTradeData())+','+offlineNPCBridge.toString()+');','OFFLINE_TRADES_V1');fs.writeFileSync(p,game);
 }
 function offlineTradeBridge(data,installNPC){
  'use strict';if(!window.__L1STW_OFFLINE||ONLINE)return;

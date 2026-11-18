@@ -51,6 +51,8 @@ GitHub 自動更新只更新工具與離線化程式；完整取得原站新遊�
 
 原站回覆 404 的檔案會標成待補，備註「該遊戲沒有此檔案，未來遊戲有更新啟動遊戲時會補上」，不會當成本機檔案損壞。原站版本不變時不反覆重抓上千個已知 404；版本更新後重試，原站真的提供該檔案時才會保存並移除待補紀錄。逾時或連線失敗會分開顯示，並於啟動時重試。沒有網路時仍可使用既有離線版。
 
+若下載最後出現「離線商店安裝位置改變」，先執行 `檢查更新.bat` 取得新版工具，再執行 `開啟離線版.bat`。新版使用遊戲初始化位置安裝離線功能，支援原站移除 `__game` 除錯介面的程式。已保存的原始檔與素材會沿用；缺少下載報告時會重建本機紀錄，無須整包重抓。未來離線修補失敗，也會保存下載報告供恢復；修補完成前會明確標為失敗。
+
 ## 手動發布工具更新
 
 更新來源已設定為 `jtnhrbpvvm-spec/taiwan_game2` 的 `main/天堂倖存者/updates/latest.json`。
@@ -69,7 +71,7 @@ GitHub 自動更新只更新工具與離線化程式；完整取得原站新遊�
 ## 檢查
 
 ```powershell
-node --test tests.cjs update-tests.cjs windows-launch-tests.cjs asset-recovery-tests.cjs gm-tests.cjs node-bootstrap-tests.cjs daily-check-tests.cjs mode-picker-tests.cjs
+node --test tests.cjs update-tests.cjs windows-launch-tests.cjs asset-recovery-tests.cjs gm-tests.cjs node-bootstrap-tests.cjs daily-check-tests.cjs mode-picker-tests.cjs source-compat-tests.cjs
 node verify.cjs
 node update_client.cjs --check
 ```

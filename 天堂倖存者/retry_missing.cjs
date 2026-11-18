@@ -13,9 +13,9 @@ async function retry(options){
  read(c.raw);const attempted=failures.filter(f=>options.only!=='transient'||!isSource404(f));console.log('重新嘗試待補資源',attempted.length);await c.drain();
  c.evaluateData();c.discover();await c.drain();
  c.musicMap={};for(const id of c.musicIds||[])for(const rel of [`assets/mus/${id}.mp3`,`assets/mus/${id}.ogg`,`assets/mus/${id}.wav`,`assets/mus/music${id}.mp3`,`assets/snd/music${id}.mp3`])if(c.records.has(rel)){c.musicMap[id]=rel;break;}
- c.musicMissing=(c.musicIds||[]).filter(id=>!c.musicMap[id]);c.patch();
+ c.musicMissing=(c.musicIds||[]).filter(id=>!c.musicMap[id]);
  c.retrySummary={started:c.started,previousMissing:failures.length,attempted:attempted.length,recovered:failures.filter(f=>c.records.has(f.path)).length};
- const report=c.report();report.retry=c.retrySummary;fs.writeFileSync(path.join(root,'download-report.json'),JSON.stringify(report,null,2));
+ const report=c.finalize();report.retry=c.retrySummary;fs.writeFileSync(path.join(root,'download-report.json'),JSON.stringify(report,null,2));
  console.log('本次補回',c.retrySummary.recovered,'個；其餘項目已依原站 404 與連線錯誤分開記錄');return report;
 }
 function sourceFingerprint(html){
