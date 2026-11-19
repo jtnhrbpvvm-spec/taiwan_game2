@@ -157,9 +157,10 @@ function recoverDownloadReport(root){
 function installGM(root){
  const gameFile=path.join(root,'game.js');let game=fs.readFileSync(gameFile,'utf8');
  if(game.includes("b.textContent='GM測試'")&&!game.includes('OFFLINE_LEGACY_GM_GATE_V1')){
-  const legacy=/(\(function\(\)\{\s*\/\/ GM 測試面板：[^\r\n]*\r?\n)/;
-  if(!legacy.test(game))throw Error('原有 GM 選單格式改變，請檢查');
-  game=game.replace(legacy,'$1  /* OFFLINE_LEGACY_GM_GATE_V1 */\n  if(window.__L1STW_OFFLINE&&!window.__L1STW_GM_MODE)return;\n');
+  // 以「GM測試」按鈕所在的頂層 IIFE 定位；原站新版會刪除註解，不能依賴註解標題。
+  const id="b.textContent='GM測試'",at=game.indexOf(id),open=game.lastIndexOf('\n(function(){',at),lineEnd=open<0?-1:game.indexOf('\n',open+1);
+  if(game.indexOf(id,at+1)>=0||open<0||lineEnd<0||lineEnd>at||game.lastIndexOf('\n})();',at)>open)throw Error('原有 GM 選單格式改變，請檢查');
+  game=game.slice(0,lineEnd+1)+'  /* OFFLINE_LEGACY_GM_GATE_V1 */\n  if(window.__L1STW_OFFLINE&&!window.__L1STW_GM_MODE)return;\n'+game.slice(lineEnd+1);
  }
  game=game.replace('if(ONLINE){for(let i=VNPC.length-1','if(ONLINE||window.__L1STW_OFFLINE){for(let i=VNPC.length-1');
  game=game.replace('const gm=!!(window.CLOUD&&CLOUD.gm);for(const n of GMNPC)','const gm=window.__L1STW_OFFLINE?!!window.__L1STW_GM_MODE:!!(window.CLOUD&&CLOUD.gm);for(const n of GMNPC)');

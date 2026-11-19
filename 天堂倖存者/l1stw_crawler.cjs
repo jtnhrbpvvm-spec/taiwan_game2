@@ -30,6 +30,21 @@ function localPath(root, rel) {
   return p;
 }
 function save(p,b) {fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,b);}
+// 移除離線版的 LINE 討論區按鈕。以 lineBtn 所在的頂層 IIFE 定位，不依賴原站可能刪改的註解標題。
+function removeCommunityLink(game){
+  const id="b.id='lineBtn'",at=game.indexOf(id);
+  if(at<0)return game;
+  const fail=()=>{throw Error('LINE 連結區塊格式變更，請檢查後再套用更新');};
+  if(game.indexOf(id,at+1)>=0)fail();
+  const open=game.lastIndexOf('\n(function(){',at),close=game.indexOf('\n})();',at);
+  if(open<0||close<0||game.lastIndexOf('\n})();',at)>open)fail();
+  let start=open+1;const end=close+'\n})();'.length;
+  const prevStart=game.lastIndexOf('\n',open-1)+1,prev=game.slice(prevStart,open).replace(/\r$/,'');
+  if(/^\/\/ ---- LINE 討論區：/.test(prev))start=prevStart;
+  const block=game.slice(start,end);
+  if(!block.includes('https://line.me/'))fail();
+  return game.slice(0,start)+'// OFFLINE_COMMUNITY_LINK_REMOVED_V1'+game.slice(end);
+}
 function assertOutput(output){const root=path.dirname(defaultGameRoot()),dest=path.resolve(output);if(dest.toLowerCase()!==root.toLowerCase()&&!dest.toLowerCase().startsWith(root.toLowerCase()+path.sep))throw Error('下載資料只能存到桌面「天堂倖存者」資料夾');}
 async function request(url) {
   for(let attempt=0;attempt<3;attempt++) {
@@ -212,13 +227,7 @@ class Crawler {
     if(!game?.includes('function netURL(){'))throw Error('game.js 的村莊連線格式變更，請檢查');
     game=game.replace('function netURL(){','function netURL(){if(window.__L1STW_OFFLINE)return "";');
     game=game.replace('function mresFetch(){','function mresFetch(){if(window.__L1STW_OFFLINE)return;');
-    // Remove the community invitation widget from the offline edition.
-    const community=/\/\/ ---- LINE 討論區：[^\r\n]*\r?\n\(function\(\)\{[\s\S]*?\r?\n\}\)\(\);/;
-    if(game.includes("b.id='lineBtn'")){
-      const block=game.match(community)?.[0];
-      if(!block?.includes('https://line.me/')||!block.includes("b.id='lineBtn'"))throw Error('LINE 連結區塊格式變更，請檢查後再套用更新');
-      game=game.replace(community,'// OFFLINE_COMMUNITY_LINK_REMOVED_V1');
-    }
+    game=removeCommunityLink(game);
     save(path.join(this.pub,'game.js'),game);
     // 音樂首選改為確實下載成功的格式，避免離線時依序測試不存在的格式。
     let audio=this.texts.get('audio.js');
@@ -266,7 +275,7 @@ class Crawler {
 if(require.main===module) {
   try {const o=args(process.argv.slice(2));if(o.help)console.log('node l1stw_crawler.cjs [--output 路徑] [--cache 舊資源路徑] [--refresh] [--concurrency 1-16]');else new Crawler(o).run().catch(e=>{console.error(e);process.exitCode=1;});}catch(e){console.error(e.message);process.exitCode=1;}
 }
-module.exports={Crawler,args,expression,localPath,assertOutput,accountOnlyLogin,offlineLogin};
+module.exports={Crawler,args,expression,localPath,assertOutput,accountOnlyLogin,offlineLogin,removeCommunityLink};
 
 function accountOnlyLogin(source){
  if(typeof source!=='string')throw Error('缺少原始 lg.js，請先重新下載遊戲程式');
