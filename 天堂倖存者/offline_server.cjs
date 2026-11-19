@@ -26,6 +26,10 @@ const server=http.createServer((req,res)=>{
   if(name==='/offline-mode.js'){const b=Buffer.from('window.__L1STW_GM_MODE='+JSON.stringify(GM_MODE)+';\n');res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','Content-Length':b.length});res.end(req.method==='HEAD'?undefined:b);return;}
   // 原站以 maint.json 公告維護狀態（目前內容為 {"on":false}）；離線版永遠不進維護畫面，由本機直接回應。
   if(name==='/maint.json'){const b=Buffer.from('{"on":false}\n');res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Content-Length':b.length});res.end(req.method==='HEAD'?undefined:b);return;}
+  // skx_test.js：遊戲在沒有連線 API 時才會載入的開發者測試腳本，原站沒有公開。線上版不會載入它，離線版回應空腳本即可。
+  if(name==='/skx_test.js'){const b=Buffer.from('// 原站開發測試腳本，離線版不需要。\n');res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','Content-Length':b.length});res.end(req.method==='HEAD'?undefined:b);return;}
+  // talk.png：原站也沒有這張對話游標，線上版一樣改用 CSS 裡的備用游標（手形指標）。維持 404 讓瀏覽器使用備用游標，但不顯示缺檔提示。
+  if(name==='/assets/cursor/talk.png'&&!fs.existsSync(path.join(ROOT,'assets','cursor','talk.png'))){res.writeHead(404);res.end();return;}
   if(name.startsWith('/api/')){res.writeHead(503,{'Content-Type':'application/json'});res.end('{"ok":false,"error":"Offline mode"}');return;}
   if(name==='/')name='/index.html';
   const dest=path.resolve(ROOT,'.'+name);
