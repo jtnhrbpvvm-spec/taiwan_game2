@@ -30,6 +30,21 @@ function localPath(root, rel) {
   return p;
 }
 function save(p,b) {fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,b);}
+// 從原始碼文字補找資料分析看不到的素材：
+// 1. 以敘述加入的道具，例如 ITEMS[40079]={id:40079,...,kind:'etc'} 或 Object.assign(ITEMS,{...})。
+// 2. 小工具函式組出的圖片，例如 const pic=(img,...)=>'<img src="assets/codex/'+img+'.png">' 及 pic('6022',...)。
+function discoverTextAssets(texts){
+  const out=new Set();
+  for(const s of texts){
+    if(typeof s!=='string')continue;
+    for(const m of s.matchAll(/\{\s*["']?id["']?\s*:\s*(\d+)\s*,[^{}]*?["']?kind["']?\s*:\s*["'](?:weapon|armor|etc|item|material)["']/g))out.add('assets/icons/'+m[1]+'.png');
+    for(const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*\(\s*(\w+)[^)]*\)\s*=>[^\n]*?["']assets\/([\w/-]+\/)["']\s*\+\s*\2\s*\+\s*["'](\.(?:png|webp|jpe?g|gif))["']/g)){
+      const [,fn,,dir,ext]=m;
+      for(const c of s.matchAll(new RegExp('\\b'+fn+'\\(\\s*["\']([\\w-]+)["\']','g')))out.add('assets/'+dir+c[1]+ext);
+    }
+  }
+  return [...out];
+}
 // 移除離線版的 LINE 討論區按鈕。以 lineBtn 所在的頂層 IIFE 定位，不依賴原站可能刪改的註解標題。
 function removeCommunityLink(game){
   const id="b.id='lineBtn'",at=game.indexOf(id);
@@ -171,12 +186,15 @@ class Crawler {
       const flatten=o=>{if(typeof o==='string'||typeof o==='number'){if(o!=='u_orb'&&/^[\w-]+$/.test(String(o))){let dir=/CODEX/.test(name)?'codex':/UIC|NEWIC|NEWPASS/.test(name)?'spell':/DOGPORT/.test(name)?'dog':/CLS/.test(name)?'old':null;if(dir)this.add(`assets/${dir}/${dir==='dog'?'dog':''}${o}.png`,undefined,true);}}else if(o&&typeof o==='object')for(const v of Object.values(o))flatten(v);};flatten(obj);
     }
     for(const id of Object.keys(this.values.GRD||{}))this.add('assets/ground/'+this.values.GRD[id]+'.png',undefined,true);
+    for(const p of discoverTextAssets([...this.texts.values()]))this.add(p,undefined,true);
     // 舊版登入 UI 以 I(編號)、B([編號]) 及靜態常數組合檔名。
     const lg=this.texts.get('lg.js')||'';
     const game=this.texts.get('game.js')||'',optStart=game.indexOf("const IMG=n=>");
     if(optStart>=0)for(const m of game.slice(optStart,optStart+12000).matchAll(/["'](10[89]\d\d)["']/g))this.add(`assets/ui2/o${m[1]}.png`,undefined,true);
     for(const m of lg.matchAll(/\b(?:I|bg)\(\s*(\d+|["'][\w-]+["'])/g))this.add('assets/old/'+m[1].replace(/["']/g,'')+'.png',undefined,true);
     for(const m of lg.matchAll(/["']([\w-]+)["']/g))if(/^\d+[ch]$|^(?:accn|hporb|xpgem)$/.test(m[1]))this.add('assets/old/'+m[1]+'.png',undefined,true);
+    // 以陣列逐一產生的按鈕，例如性別按鈕 [[306,307,0],[304,305,1]].forEach(...)。
+    for(const m of lg.matchAll(/\[\s*(\[[\d,\s]+\](?:\s*,\s*\[[\d,\s]+\])*)\s*\]\s*\.forEach/g))for(const n of m[1].matchAll(/\d{3,}/g))this.add(`assets/old/${n[0]}.png`,undefined,true);
     for(const m of lg.matchAll(/\bB\(\s*\[([^\]]+)\]/g))for(const n of m[1].matchAll(/(?:^|,)\s*(\d+)\s*(?=,|$)/g))this.add(`assets/old/${n[1]}.png`,undefined,true);
     for(const row of this.values.CLS||[]) {
       for(const id of row.slice(1,3))this.add(`assets/old/${id}.png`);
@@ -275,7 +293,7 @@ class Crawler {
 if(require.main===module) {
   try {const o=args(process.argv.slice(2));if(o.help)console.log('node l1stw_crawler.cjs [--output 路徑] [--cache 舊資源路徑] [--refresh] [--concurrency 1-16]');else new Crawler(o).run().catch(e=>{console.error(e);process.exitCode=1;});}catch(e){console.error(e.message);process.exitCode=1;}
 }
-module.exports={Crawler,args,expression,localPath,assertOutput,accountOnlyLogin,offlineLogin,removeCommunityLink};
+module.exports={Crawler,args,expression,localPath,assertOutput,accountOnlyLogin,offlineLogin,removeCommunityLink,discoverTextAssets};
 
 function accountOnlyLogin(source){
  if(typeof source!=='string')throw Error('缺少原始 lg.js，請先重新下載遊戲程式');
