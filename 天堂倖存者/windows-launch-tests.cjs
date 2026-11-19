@@ -13,9 +13,12 @@ test('cmd executes all six batch files from a path with spaces and Chinese chara
  }finally{if(path.resolve(base).startsWith(path.resolve(os.tmpdir())+path.sep+'l1stw-launch-test-'))fs.rmSync(base,{recursive:true,force:true});}
 });
 test('launch preserves offline fallback and stops on missing data or a failed patch',async()=>{
- const calls=[],run=async(file,args=[])=>{calls.push([file,args]);return file==='update_client.cjs'?1:0;};assert.equal(await launch({run,exists:()=>true}),0);assert.deepEqual(calls,[['update_client.cjs',[]],['retry_missing.cjs',['--startup']],['repatch_local.cjs',[]],['offline_server.cjs',['--open']]]);
- const missing=[];await assert.rejects(launch({exists:()=>false,run:async f=>{missing.push(f);return 0;}}),/尚未下載/);assert.deepEqual(missing,['update_client.cjs']);
- const failed=[];await assert.rejects(launch({exists:()=>true,run:async f=>{failed.push(f);return f==='repatch_local.cjs'?2:0;}}),/準備失敗/);assert.deepEqual(failed,['update_client.cjs','retry_missing.cjs','repatch_local.cjs']);
+ // 開啟前不等待網路更新：只套用已下載好的新版、離線化、啟動伺服器。
+ const calls=[],run=async(file,args=[])=>{calls.push([file,args]);return file==='update_client.cjs'?1:0;};assert.equal(await launch({run,exists:()=>true}),0);assert.deepEqual(calls,[['retry_missing.cjs',['--startup']],['repatch_local.cjs',[]],['offline_server.cjs',['--open']]]);
+ const missing=[];await assert.rejects(launch({exists:()=>false,run:async f=>{missing.push(f);return 0;}}),/尚未下載/);assert.deepEqual(missing,[]);
+ const failed=[];await assert.rejects(launch({exists:()=>true,run:async f=>{failed.push(f);return f==='repatch_local.cjs'?2:0;}}),/準備失敗/);assert.deepEqual(failed,['retry_missing.cjs','repatch_local.cjs','update_client.cjs','repatch_local.cjs']);
+ // 離線化失敗時先更新工具再試，成功就照常開啟。
+ let tries=0;const fixed=[];assert.equal(await launch({exists:()=>true,run:async f=>{fixed.push(f);return f==='repatch_local.cjs'&&++tries===1?2:0;}}),0);assert.deepEqual(fixed,['retry_missing.cjs','repatch_local.cjs','update_client.cjs','repatch_local.cjs','offline_server.cjs']);
  const local=[];await launch({checkUpdate:false,checkAssets:false,open:false,exists:()=>true,run:async(f,a=[])=>{local.push([f,a]);return 0;}});assert.deepEqual(local,[['repatch_local.cjs',[]],['offline_server.cjs',[]]]);
 });
 test('published batch files are normalized to CRLF and reject non-ASCII commands',()=>{

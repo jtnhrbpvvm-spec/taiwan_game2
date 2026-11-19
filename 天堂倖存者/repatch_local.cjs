@@ -5,10 +5,13 @@ const {Crawler,assertOutput}=require('./l1stw_crawler.cjs'),{defaultGameRoot,sav
 function ensureGMLauncher(dir=__dirname){return writeLauncher(dir,'GM模式.bat','repatch_local.cjs',['--launch','--choose-mode']);}
 async function launch({dir=__dirname,gameRoot=defaultGameRoot(),run,exists=fs.existsSync,open=true,checkUpdate=true,checkAssets=true,gm=false}={}){
  const execute=run||((file,args=[])=>new Promise((resolve,reject)=>{const p=require('node:child_process').spawn(process.execPath,[path.join(dir,file),...args],{cwd:dir,windowsHide:true,stdio:'inherit'});p.once('error',reject);p.once('exit',(code,signal)=>resolve(signal?1:(code??1)));}));
- if(checkUpdate)await execute('update_client.cjs');
+ // 不在開啟前等待網路：工具更新與原站新版都在玩家登入後於背景處理（見 offline_server.cjs）。
  if(!exists(path.join(gameRoot,'public','index.html')))throw Error('尚未下載遊戲。請先執行「更新下載.bat」。');
  if(checkAssets)await execute('retry_missing.cjs',['--startup']);
- const patched=await execute('repatch_local.cjs');if(patched!==0)throw Error('離線版準備失敗，請查看上方錯誤訊息。');
+ let patched=await execute('repatch_local.cjs');
+ // 原站改版導致離線化失敗時，立即更新工具再試一次，避免玩家卡在無法開啟、也等不到背景更新。
+ if(patched!==0&&checkUpdate){console.log('離線化失敗，正在檢查是否有修正工具…');await execute('update_client.cjs');patched=await execute('repatch_local.cjs');}
+ if(patched!==0)throw Error('離線版準備失敗，請查看上方錯誤訊息。');
  return execute('offline_server.cjs',[...(open?['--open']:[]),...(gm?['--gm']:[])]);
 }
 function repatch(root=defaultGameRoot()){

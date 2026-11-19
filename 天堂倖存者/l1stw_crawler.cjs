@@ -38,6 +38,8 @@ function discoverTextAssets(texts){
   for(const s of texts){
     if(typeof s!=='string')continue;
     for(const m of s.matchAll(/\{\s*["']?id["']?\s*:\s*(\d+)\s*,[^{}]*?["']?kind["']?\s*:\s*["'](?:weapon|armor|etc|item|material)["']/g))out.add('assets/icons/'+m[1]+'.png');
+    // 3. 以敘述補上的動畫，例如 FXMETA[2127]={"0":{...}}（升級特效）。
+    for(const m of s.matchAll(/\b(FXMETA|META|CLSMETA|DOLLMETA|SUMMETA|DOGMETA)\[\s*["']?(\w+)["']?\s*\]\s*=\s*(\{[^\n;]*\})\s*;/g)){let v;try{v=JSON.parse(m[3]);}catch{continue;}const g=m[2];for(const f of Object.keys(v))if(/^\d+$/.test(f))out.add(m[1]==='FXMETA'?`assets/fx/${g}/${g}-${f}.png`:`assets/${g}/${g}-${f}.png`);}
     for(const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*\(\s*(\w+)[^)]*\)\s*=>[^\n]*?["']assets\/([\w/-]+\/)["']\s*\+\s*\2\s*\+\s*["'](\.(?:png|webp|jpe?g|gif))["']/g)){
       const [,fn,,dir,ext]=m;
       for(const c of s.matchAll(new RegExp('\\b'+fn+'\\(\\s*["\']([\\w-]+)["\']','g')))out.add('assets/'+dir+c[1]+ext);
@@ -98,6 +100,11 @@ class Crawler {
     vm.createContext(this.ctx,{codeGeneration:{strings:false,wasm:false}});
     this.started=new Date().toISOString();this.count=0;
   }
+  // 暫存模式（options.stage）：圖片、音效等素材直接存入 public（只會新增檔案，不影響正在玩的版本）；
+  // 程式文字檔、離線化結果與下載報告存到暫存資料夾，下次開啟時才一次套用。
+  get textPub(){return this.o.stage?path.join(this.o.stage,'public'):this.pub;}
+  get textRaw(){return this.o.stage?path.join(this.o.stage,'source'):this.raw;}
+  get reportRoot(){return this.o.stage||this.root;}
   add(input,base=ORIGIN+'/',optional=false) {
     try {
       const u=new URL(input,base);
@@ -116,19 +123,19 @@ class Crawler {
     for(const m of text.matchAll(/["']([\w./-]+\.js(?:\?[^\s"']*)?)["']/g))this.add(m[1],base,true);
   }
   async download(job) {
-    const {rel,url}=job,dest=localPath(this.pub,rel);let b,from='network';
+    const {rel,url}=job,text=TEXT.test(rel),dest=localPath(text?this.textPub:this.pub,rel);let b,from='network';
     try {
-      if(!TEXT.test(rel)&&!this.o.refresh) {
+      if(!text&&!this.o.refresh) {
         if(fs.existsSync(dest)){b=fs.readFileSync(dest);from='existing';}
         else if(this.o.cache){const p=localPath(this.o.cache,rel);if(fs.existsSync(p)){b=fs.readFileSync(p);from='cache';}}
       }
-      if(!b?.length)b=await request(url);
-      save(dest,b);
+      if(!b?.length){b=await request(url);if(this.o.pace)await new Promise(r=>setTimeout(r,this.o.pace));}
+      if(from!=='existing')save(dest,b);
       this.records.set(rel,{path:rel,bytes:b.length,sha256:hash(b),from});
       this.failed.delete(rel);
-      if(TEXT.test(rel)){save(localPath(this.raw,rel),b);this.texts.set(rel,b.toString('utf8'));this.scan(b.toString('utf8'),url);}
+      if(text){save(localPath(this.textRaw,rel),b);this.texts.set(rel,b.toString('utf8'));this.scan(b.toString('utf8'),url);}
     }catch(e){this.failed.set(rel,{path:rel,url,error:e.message,optional:this.optional.has(rel)});}
-    if(++this.count%200===0){console.log('已處理',this.count,'已保存',this.records.size,'待處理',this.queue.length);printFailureSummary([...this.failed.values()]);save(path.join(this.root,'crawl-progress.json'),JSON.stringify({time:new Date().toISOString(),done:this.count,queued:this.queue.length,files:this.records.size,failed:[...this.failed.values()].map(annotateFailure)},null,2));}
+    if(++this.count%200===0){console.log('已處理',this.count,'已保存',this.records.size,'待處理',this.queue.length);printFailureSummary([...this.failed.values()]);save(path.join(this.reportRoot,'crawl-progress.json'),JSON.stringify({time:new Date().toISOString(),done:this.count,queued:this.queue.length,files:this.records.size,failed:[...this.failed.values()].map(annotateFailure)},null,2));}
   }
   async drain() {
     // 任一工作完成立即接下一個，避免一個慢檔案拖住整批下載。
@@ -233,40 +240,40 @@ class Crawler {
     html=html.replace(api,'window.L1S_API="";');
     html=html.replace(/<head([^>]*)>/i,'<head$1>\n<meta http-equiv="Content-Security-Policy" content="default-src \'self\' data: blob:; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; media-src \'self\' blob:; connect-src \'self\' blob: data:; worker-src \'none\'">\n<script src="offline-runtime.js"></script>');
     html=html.replace(/<title>(.*?)<\/title>/i,'<title>$1（離線版）</title>');
-    save(path.join(this.pub,'index.html'),html);
+    save(path.join(this.textPub,'index.html'),html);
     let cloud=this.texts.get('cloud.js');
     const marker="if(!API&&location.protocol==='file:')return;";
     if(!cloud?.includes(marker))throw Error('cloud.js 的本機模式格式變更，請檢查');
     cloud=cloud.replace(marker,'if(window.__L1STW_OFFLINE||(!API&&location.protocol===\'file:\'))return;');
-    save(path.join(this.pub,'cloud.js'),cloud);
+    save(path.join(this.textPub,'cloud.js'),cloud);
     const runtime=`'use strict';\n// LOCAL_ONLY_V1\nif(!['127.0.0.1','localhost','[::1]','::1'].includes(location.hostname)){document.documentElement.innerHTML='';throw Error('LOCAL_ONLY_V1');}\nwindow.__L1STW_OFFLINE=true;\n// Initial audio preferences.\ntry{const k='l1s_opt';const o=JSON.parse(localStorage.getItem(k)||'{}');if(!localStorage.getItem('l1stw_offline_initialized')){o.musOn=false;o.sfxOn=false;localStorage.setItem(k,JSON.stringify(o));localStorage.setItem('l1stw_offline_initialized','1');}}catch{}\n`;
-    save(path.join(this.pub,'offline-runtime.js'),runtime);
+    save(path.join(this.textPub,'offline-runtime.js'),runtime);
     let game=this.texts.get('game.js');
     if(!game?.includes('function netURL(){'))throw Error('game.js 的村莊連線格式變更，請檢查');
     game=game.replace('function netURL(){','function netURL(){if(window.__L1STW_OFFLINE)return "";');
     game=game.replace('function mresFetch(){','function mresFetch(){if(window.__L1STW_OFFLINE)return;');
     game=removeCommunityLink(game);
-    save(path.join(this.pub,'game.js'),game);
+    save(path.join(this.textPub,'game.js'),game);
     // 音樂首選改為確實下載成功的格式，避免離線時依序測試不存在的格式。
     let audio=this.texts.get('audio.js');
-    if(audio&&audio.includes('a.src=musUrl(id,exts[0]);')){audio=audio.replace('a.src=musUrl(id,exts[0]);',`a.src=(${JSON.stringify(this.musicMap)})[id]||musUrl(id,exts[0]);`);save(path.join(this.pub,'audio.js'),audio);}
-    save(path.join(this.pub,'lg.js'),accountOnlyLogin(this.texts.get('lg.js')));
-    require('./repatch_local.cjs').installOfflineTrades(this.pub);
-    require('./repatch_local.cjs').installGM(this.pub);
-    require('./policy.cjs').applyPolicy(this.pub);
+    if(audio&&audio.includes('a.src=musUrl(id,exts[0]);')){audio=audio.replace('a.src=musUrl(id,exts[0]);',`a.src=(${JSON.stringify(this.musicMap)})[id]||musUrl(id,exts[0]);`);save(path.join(this.textPub,'audio.js'),audio);}
+    save(path.join(this.textPub,'lg.js'),accountOnlyLogin(this.texts.get('lg.js')));
+    require('./repatch_local.cjs').installOfflineTrades(this.textPub);
+    require('./repatch_local.cjs').installGM(this.textPub);
+    require('./policy.cjs').applyPolicy(this.textPub);
   }
   report({patchError=null}={}) {
     const failures=[...this.failed.values()].map(r=>annotateFailure({...r,optional:this.optional.has(r.path)}));
     const records=[...this.records.values()];
     // 網站同時列出舊、新地圖路徑：新路徑存在時，舊路徑的 404 是可忽略的替代來源。
     for(const f of failures)if(/^assets\/map(\d+)\/map\.js$/.test(f.path)){const id=/^assets\/map(\d+)/.exec(f.path)[1];if(this.records.has(`maps/map${id}/map.js`)){f.optional=true;f.reason='已下載另一個地圖來源 maps/map'+id+'/map.js';}}
-    const generated=patchError?[]:['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.pub,p))).map(p=>{const b=fs.readFileSync(path.join(this.pub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
+    const generated=patchError?[]:['index.html','cloud.js','game.js','audio.js','lg.js','offline-runtime.js','offline-gm.js','.ai-policy.json','AGENTS.md'].filter(p=>fs.existsSync(path.join(this.textPub,p))).map(p=>{const b=fs.readFileSync(path.join(this.textPub,p));return {path:p,bytes:b.length,sha256:hash(b)};});
     const report={source:ORIGIN,started:this.started,finished:new Date().toISOString(),files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),network:records.filter(r=>r.from==='network').length,requiredFailures:failures.filter(r=>!r.optional),optionalFailures:failures.filter(r=>r.optional),musicMissing:this.musicMissing,warnings:this.warnings,records,generated,patchStatus:patchError?'failed':'complete',...(patchError?{patchError}:{}),...(this.retrySummary?{retry:this.retrySummary}:{})};
-    save(path.join(this.root,'download-report.json'),JSON.stringify(report,null,2));
-    save(path.join(this.root,'catalog.json'),JSON.stringify(Object.fromEntries(Object.entries(this.values).map(([k,v])=>[k,typeof v==='object'&&v?Object.keys(v).length:typeof v])),null,2));
+    save(path.join(this.reportRoot,'download-report.json'),JSON.stringify(report,null,2));
+    save(path.join(this.reportRoot,'catalog.json'),JSON.stringify(Object.fromEntries(Object.entries(this.values).map(([k,v])=>[k,typeof v==='object'&&v?Object.keys(v).length:typeof v])),null,2));
     console.log(patchError?'下載檔案已保留：':'完成：已保存',report.files,'個檔案，',(report.bytes/1048576).toFixed(1),'MB');
     printFailureSummary(failures);
-    console.log('下載報告：',path.join(this.root,'download-report.json'));
+    console.log('下載報告：',path.join(this.reportRoot,'download-report.json'));
     if(report.requiredFailures.some(f=>!isSource404(f)))process.exitCode=2;
     return report;
   }
@@ -318,7 +325,10 @@ function offlineLogin(){
    Object.defineProperty(d,id,{value:{pw:'',chars:[]},enumerable:true,writable:true,configurable:true});DB.set(d);
    if(!Object.prototype.hasOwnProperty.call(DB.get(),id)){msg('無法保存新帳號，請檢查瀏覽器儲存空間。');return;}
   }
-  acct=id;try{localStorage.setItem('l1s_lastacct',id);}catch{}selIdx=0;select();
+  acct=id;try{localStorage.setItem('l1s_lastacct',id);}catch{}
+  // 通知本機伺服器玩家已登入，開始在背景檢查並下載更新（只連本機，不連外網）。
+  try{fetch('/__offline/session',{method:'POST',keepalive:true}).catch(()=>{});}catch{}
+  selIdx=0;select();
  };
  function button(text,x,width,fn,id){const b=E('button','lgb',x,112,card);b.type='button';if(id)b.id=id;b.textContent=text;b.style.cssText+='width:'+width+'px;height:32px;border:1px solid #a28350;border-radius:4px;background:#4b3820;color:#ffe9b9;font:14px "Microsoft JhengHei",sans-serif';b.onclick=fn;return b;}
  button('開始遊玩',16,112,doLogin,'offlineLogin');button('離開',138,62,()=>{try{window.close();}catch{}location.href='about:blank';});

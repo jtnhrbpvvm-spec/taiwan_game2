@@ -50,5 +50,7 @@ async function update(options={}){
  if(fd===undefined)throw Error('Cannot acquire update lock');
  try{return await performUpdate({...options,root});}finally{fs.closeSync(fd);fs.unlinkSync(lock);}
 }
-if(require.main===module)update({repair:process.argv.includes('--repair'),checkOnly:process.argv.includes('--check')}).catch(e=>{console.log('更新未套用：'+e.message+'。可繼續使用本機離線版本。');if(!fs.existsSync(path.join(__dirname,'離線遊戲','public','index.html')))process.exitCode=1;});
+// --background：玩家登入後由本機伺服器啟動。工具檔不是遊戲畫面載入的檔案，遊戲執行中也可安全替換，下次開啟時生效。
+if(require.main===module&&process.argv.includes('--background'))update({ignoreBusy:true}).then(r=>{if(r.status==='updated')console.log('工具已在背景更新，下次開啟遊戲時生效。');}).catch(e=>console.log('背景工具更新未完成：'+e.message+'；目前遊玩不受影響。'));
+else if(require.main===module)update({repair:process.argv.includes('--repair'),checkOnly:process.argv.includes('--check')}).catch(e=>{console.log('更新未套用：'+e.message+'。可繼續使用本機離線版本。');if(!fs.existsSync(path.join(__dirname,'離線遊戲','public','index.html')))process.exitCode=1;});
 module.exports={update,recover,stateFor};
