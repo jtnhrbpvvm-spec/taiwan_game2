@@ -1,5 +1,5 @@
 {
-  "retrievedAt": "2026-11-19T02:59:44.000Z",
+  "retrievedAt": "2026-11-19T04:24:09.000Z",
   "gameVersion": "20261118_f7ad3c447",
   "sourceManifest": "https://ro-survivors.com/assets/manifest.json",
   "copyright": "RO Survivors / Reven4nt; Ragnarok Online assets belong to Gravity Co., Ltd. & Lee MyoungJin (studio DTDS). Source attribution does not grant an open-source image license.",
@@ -14288,6 +14288,15 @@
       "height": 24
     },
     {
+      "original": "items/12016.png",
+      "local": "assets/game/items/12016.png",
+      "source": "https://ro-survivors.com/assets/items/12016.png",
+      "sha256": "2596a35775ee2033170be11cd2605e65e7a34b97605959f4b1d0e70d816e35d5",
+      "bytes": 367,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/1202.png",
       "local": "assets/game/items/1202.png",
       "source": "https://ro-survivors.com/assets/items/1202.png",
@@ -14329,6 +14338,15 @@
       "source": "https://ro-survivors.com/assets/items/1210.png",
       "sha256": "6f0b3a2886f497ba03672f206461e8cad035befd50dc744d054ed648456713f8",
       "bytes": 215,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12114.png",
+      "local": "assets/game/items/12114.png",
+      "source": "https://ro-survivors.com/assets/items/12114.png",
+      "sha256": "771e63be3225bad380920070960f746a9ff72869aeb45fd37611d58ebc798aa9",
+      "bytes": 425,
       "width": 24,
       "height": 24
     },
@@ -14396,11 +14414,83 @@
       "height": 24
     },
     {
+      "original": "items/12202.png",
+      "local": "assets/game/items/12202.png",
+      "source": "https://ro-survivors.com/assets/items/12202.png",
+      "sha256": "449dc25f80718279eca338178d7cd2d3a46bb74499d7fe9e9a4c193dec60e40c",
+      "bytes": 447,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12203.png",
+      "local": "assets/game/items/12203.png",
+      "source": "https://ro-survivors.com/assets/items/12203.png",
+      "sha256": "33b02bb8e779ffa2f8e523e1c8e9778ab3ff1cff85b56998e97f228c24973ce4",
+      "bytes": 480,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12204.png",
+      "local": "assets/game/items/12204.png",
+      "source": "https://ro-survivors.com/assets/items/12204.png",
+      "sha256": "b00f1624950f0bb499c6972991dd175827e6bd02a7919449b6473f63c584465d",
+      "bytes": 419,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12205.png",
+      "local": "assets/game/items/12205.png",
+      "source": "https://ro-survivors.com/assets/items/12205.png",
+      "sha256": "a506046b5f6a8efd250a871fc41fd006a12af311ce2521747f30bc6af04f2d34",
+      "bytes": 355,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12206.png",
+      "local": "assets/game/items/12206.png",
+      "source": "https://ro-survivors.com/assets/items/12206.png",
+      "sha256": "5dda036c48ff0fead1dba7e23fcd8e57c0837338049b89e48a25ef0d3f9ce3bb",
+      "bytes": 405,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12207.png",
+      "local": "assets/game/items/12207.png",
+      "source": "https://ro-survivors.com/assets/items/12207.png",
+      "sha256": "607aefe8e84a33783b49ea4bca1ee7bb2811cb4fea446dca7b216253bad5f4ae",
+      "bytes": 421,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/1221.png",
       "local": "assets/game/items/1221.png",
       "source": "https://ro-survivors.com/assets/items/1221.png",
       "sha256": "c61c23a2562c7ccb4be6a492ef4c9cc33a5a383f49bb7b3ec3d57d43b9487f8a",
       "bytes": 277,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12215.png",
+      "local": "assets/game/items/12215.png",
+      "source": "https://ro-survivors.com/assets/items/12215.png",
+      "sha256": "f3eed945fa3c17b3cdde4e4772e43b2da9e12295e13d62ee3032072194491f46",
+      "bytes": 399,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12219.png",
+      "local": "assets/game/items/12219.png",
+      "source": "https://ro-survivors.com/assets/items/12219.png",
+      "sha256": "0e4aef1a732aa2b9883507ad6bce426187b5ab538eab4536863bc46cde1f700d",
+      "bytes": 431,
       "width": 24,
       "height": 24
     },
@@ -14414,11 +14504,65 @@
       "height": 24
     },
     {
+      "original": "items/12220.png",
+      "local": "assets/game/items/12220.png",
+      "source": "https://ro-survivors.com/assets/items/12220.png",
+      "sha256": "07ed23d717e60de6bd94746b5c2dc5a484a956fb71b659c87b1b9dfb832646c3",
+      "bytes": 401,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12259.png",
+      "local": "assets/game/items/12259.png",
+      "source": "https://ro-survivors.com/assets/items/12259.png",
+      "sha256": "4f85e7b74451a6efb5257463488a177a7abccd73de36a1fbe5bf7832e4d8abfb",
+      "bytes": 345,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12279.png",
+      "local": "assets/game/items/12279.png",
+      "source": "https://ro-survivors.com/assets/items/12279.png",
+      "sha256": "ab1fdfc0f95a2b8bb63c969991083b6f3440628619c9a745c444acb641ee710e",
+      "bytes": 383,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/1228.png",
       "local": "assets/game/items/1228.png",
       "source": "https://ro-survivors.com/assets/items/1228.png",
       "sha256": "cc99da0d81b85fea22e3e7579c8d219a9662f9658a5d24f52a0a07277c2cd338",
       "bytes": 296,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12299.png",
+      "local": "assets/game/items/12299.png",
+      "source": "https://ro-survivors.com/assets/items/12299.png",
+      "sha256": "f00d3cd738c7f0938ff6538b54b66682e8f079d7a6ffa29b9dcc57e7a571d171",
+      "bytes": 412,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12303.png",
+      "local": "assets/game/items/12303.png",
+      "source": "https://ro-survivors.com/assets/items/12303.png",
+      "sha256": "9e23f09cb77f2b423581aa8b0ab1349c7abc822eff7297ad7f257adaf299118a",
+      "bytes": 319,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/12315.png",
+      "local": "assets/game/items/12315.png",
+      "source": "https://ro-survivors.com/assets/items/12315.png",
+      "sha256": "2e791ab11ef7ef4861396f78490cec69e89eceab4fcc4e51f0dd437c52c6276b",
+      "bytes": 492,
       "width": 24,
       "height": 24
     },
@@ -16934,6 +17078,15 @@
       "height": 24
     },
     {
+      "original": "items/501.png",
+      "local": "assets/game/items/501.png",
+      "source": "https://ro-survivors.com/assets/items/501.png",
+      "sha256": "ad15b06a8f6c1cac034a4d83e4a70538b2a9bfbdf80cd4205076a83171ce4d75",
+      "bytes": 354,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5012.png",
       "local": "assets/game/items/5012.png",
       "source": "https://ro-survivors.com/assets/items/5012.png",
@@ -16970,6 +17123,24 @@
       "height": 24
     },
     {
+      "original": "items/502.png",
+      "local": "assets/game/items/502.png",
+      "source": "https://ro-survivors.com/assets/items/502.png",
+      "sha256": "4409181649f897952eb75fbf8a5f1ac706a2bd8e8be393e972587cb22980225f",
+      "bytes": 377,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/503.png",
+      "local": "assets/game/items/503.png",
+      "source": "https://ro-survivors.com/assets/items/503.png",
+      "sha256": "fa88f141bfdeba5dfd0ca4c7d40720005c59ad83cb8e500f9c3c1045f47c8f49",
+      "bytes": 383,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5035.png",
       "local": "assets/game/items/5035.png",
       "source": "https://ro-survivors.com/assets/items/5035.png",
@@ -16988,11 +17159,38 @@
       "height": 24
     },
     {
+      "original": "items/504.png",
+      "local": "assets/game/items/504.png",
+      "source": "https://ro-survivors.com/assets/items/504.png",
+      "sha256": "d85281b650ef2c306b5ca1eca48bfdd3c04e279b4bb8312785436b5c7784ab17",
+      "bytes": 373,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5046.png",
       "local": "assets/game/items/5046.png",
       "source": "https://ro-survivors.com/assets/items/5046.png",
       "sha256": "1f8a7ef17ea9c4c561482e0416dbce93821106a153437fcae28c25b89bcc86f0",
       "bytes": 425,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/505.png",
+      "local": "assets/game/items/505.png",
+      "source": "https://ro-survivors.com/assets/items/505.png",
+      "sha256": "cdb54d8ce2f32704b03e085f0df64b9cfe7b5471c06beed2d188e1b83d249f97",
+      "bytes": 369,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/506.png",
+      "local": "assets/game/items/506.png",
+      "source": "https://ro-survivors.com/assets/items/506.png",
+      "sha256": "82b3f940c8ab11c8c6d0bdc1f9493d469ea34b162cae68f66167c7fc369db503",
+      "bytes": 387,
       "width": 24,
       "height": 24
     },
@@ -17096,6 +17294,24 @@
       "height": 24
     },
     {
+      "original": "items/522.png",
+      "local": "assets/game/items/522.png",
+      "source": "https://ro-survivors.com/assets/items/522.png",
+      "sha256": "948b824c89fe49ed1d8eea8bcae77102af1038043810cfe226f56026989d88c2",
+      "bytes": 408,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/525.png",
+      "local": "assets/game/items/525.png",
+      "source": "https://ro-survivors.com/assets/items/525.png",
+      "sha256": "ee844ce778f5174cfdb290bf242c0b46a52432ca6be82fb735964ea7f3d34e06",
+      "bytes": 407,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5252.png",
       "local": "assets/game/items/5252.png",
       "source": "https://ro-survivors.com/assets/items/5252.png",
@@ -17119,6 +17335,15 @@
       "source": "https://ro-survivors.com/assets/items/5255.png",
       "sha256": "f880542cd82c8d277ba2d182c28dcf97f9831a47ba9f0111f1cc8813ccb877d0",
       "bytes": 439,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/526.png",
+      "local": "assets/game/items/526.png",
+      "source": "https://ro-survivors.com/assets/items/526.png",
+      "sha256": "d041a9fb177f945f6c7969eae220e1bd181b98442081a10f5bba46c8521d88ec",
+      "bytes": 368,
       "width": 24,
       "height": 24
     },
@@ -17204,6 +17429,15 @@
       "height": 24
     },
     {
+      "original": "items/545.png",
+      "local": "assets/game/items/545.png",
+      "source": "https://ro-survivors.com/assets/items/545.png",
+      "sha256": "37b6537ac73480f26515633e4a373f5987b330559219eab1d1f0aafcb22d18d6",
+      "bytes": 402,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5451.png",
       "local": "assets/game/items/5451.png",
       "source": "https://ro-survivors.com/assets/items/5451.png",
@@ -17231,11 +17465,29 @@
       "height": 24
     },
     {
+      "original": "items/546.png",
+      "local": "assets/game/items/546.png",
+      "source": "https://ro-survivors.com/assets/items/546.png",
+      "sha256": "780554cd7aa8f26cbb381b54f89a934bbda80ec373b6882f4d5c67daeb35dd71",
+      "bytes": 387,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/5464.png",
       "local": "assets/game/items/5464.png",
       "source": "https://ro-survivors.com/assets/items/5464.png",
       "sha256": "f43018a80e9b89946c9e95dcd740412fe17d04799cb5843d35cf3806483afeb4",
       "bytes": 582,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/547.png",
+      "local": "assets/game/items/547.png",
+      "source": "https://ro-survivors.com/assets/items/547.png",
+      "sha256": "c2bbb47d2383a1e048aebff117ed40e1db2e35e781c7668e5128c22ca76b7171",
+      "bytes": 357,
       "width": 24,
       "height": 24
     },
@@ -17348,11 +17600,47 @@
       "height": 24
     },
     {
+      "original": "items/607.png",
+      "local": "assets/game/items/607.png",
+      "source": "https://ro-survivors.com/assets/items/607.png",
+      "sha256": "73c4ced6b280f4e75f037fb920b1101629d1f67a5db1dd88a94c85ed84662cdd",
+      "bytes": 372,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/645.png",
+      "local": "assets/game/items/645.png",
+      "source": "https://ro-survivors.com/assets/items/645.png",
+      "sha256": "2384e384e6edc7e38ec1919d02f371446a0202140b6555d93768f20d2401b44c",
+      "bytes": 395,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/6481.png",
       "local": "assets/game/items/6481.png",
       "source": "https://ro-survivors.com/assets/items/6481.png",
       "sha256": "d82481b0481d4c6bffd247a35854795c7b3d1d0e0457641719066a45580bbb49",
       "bytes": 358,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/656.png",
+      "local": "assets/game/items/656.png",
+      "source": "https://ro-survivors.com/assets/items/656.png",
+      "sha256": "b9c98c57b5600e01ea4a8c269fe127841dc8925473319759ec538c09f3c49d31",
+      "bytes": 383,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/657.png",
+      "local": "assets/game/items/657.png",
+      "source": "https://ro-survivors.com/assets/items/657.png",
+      "sha256": "89a0ae7080efe3c7e60c88a76631acd1be33b3dbcd44f42133c4dffedc2022cf",
+      "bytes": 386,
       "width": 24,
       "height": 24
     },
@@ -17375,6 +17663,15 @@
       "height": 24
     },
     {
+      "original": "items/686.png",
+      "local": "assets/game/items/686.png",
+      "source": "https://ro-survivors.com/assets/items/686.png",
+      "sha256": "a29869d2e154fe2183d49a1a899df6787e46667606da435550d0e3b3ce6cfeaa",
+      "bytes": 403,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/7019.png",
       "local": "assets/game/items/7019.png",
       "source": "https://ro-survivors.com/assets/items/7019.png",
@@ -17389,6 +17686,42 @@
       "source": "https://ro-survivors.com/assets/items/7058.png",
       "sha256": "c8242bcb63983016b24baa8677d56b52853c262489d7c9aee7a2f7412f39dd0a",
       "bytes": 291,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/715.png",
+      "local": "assets/game/items/715.png",
+      "source": "https://ro-survivors.com/assets/items/715.png",
+      "sha256": "3722b9fc93a9d0dfa9ee9f8ffdd5285459e3fb60455e24067bf7168957661b61",
+      "bytes": 245,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/717.png",
+      "local": "assets/game/items/717.png",
+      "source": "https://ro-survivors.com/assets/items/717.png",
+      "sha256": "a51acf780e9ba6ef937fe99128d1c59c822de4626a959048956d000b29a24a25",
+      "bytes": 280,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/7308.png",
+      "local": "assets/game/items/7308.png",
+      "source": "https://ro-survivors.com/assets/items/7308.png",
+      "sha256": "6bc88025923560ab7ed4da875f94a5bf5f1134f0eefa8dee5035f3572adca091",
+      "bytes": 379,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/7433.png",
+      "local": "assets/game/items/7433.png",
+      "source": "https://ro-survivors.com/assets/items/7433.png",
+      "sha256": "2fc61ff51abb7dae93fe48e342de07fab4840d599215b74a03fe5430b9896583",
+      "bytes": 360,
       "width": 24,
       "height": 24
     },
@@ -17623,6 +17956,294 @@
       "source": "https://ro-survivors.com/assets/items/9148.png",
       "sha256": "1665ff4e7982870b93261cf741d0ee720bf723b4a73f86b7ef0471e2fe86605a",
       "bytes": 769,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_area.png",
+      "local": "assets/game/runitems/b_area.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_area.png",
+      "sha256": "a02324149cc2bf9a034e9c5513cfca5f0c491a438b29152313ba9743ef11d5d9",
+      "bytes": 399,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_cast.png",
+      "local": "assets/game/runitems/b_cast.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_cast.png",
+      "sha256": "f93ea70761f2a182c078dd44cbc328483d0a7e5c5cfc0a590e333e85c1afdee0",
+      "bytes": 400,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_cd.png",
+      "local": "assets/game/runitems/b_cd.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_cd.png",
+      "sha256": "a8a1b2b3414c9fc153f26f08ed15610efff99aea9235e7b40db83fdbf1970c5f",
+      "bytes": 399,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_dmg.png",
+      "local": "assets/game/runitems/b_dmg.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_dmg.png",
+      "sha256": "adf0210c23aa3f240474735200583276227af3c25b2efa2448a9947285b3b0ec",
+      "bytes": 397,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_double.png",
+      "local": "assets/game/runitems/b_double.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_double.png",
+      "sha256": "aa4268600ea2a7b12f262f4eb822700c3b34559eff3312c14e7591ba97809636",
+      "bytes": 399,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_lifesteal.png",
+      "local": "assets/game/runitems/b_lifesteal.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_lifesteal.png",
+      "sha256": "4d52971be6bb93542c554af6525317b83f61984908f8c5841280df1e69bca2bf",
+      "bytes": 400,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_plenty.png",
+      "local": "assets/game/runitems/b_plenty.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_plenty.png",
+      "sha256": "e9ca10ecef1c7ca551a8581f50a4d545d3e6c85e1bdf5d736ced1f2d1e5c6263",
+      "bytes": 399,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_reach.png",
+      "local": "assets/game/runitems/b_reach.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_reach.png",
+      "sha256": "461984e3e27657a39b03088df6db04f42ad3e77a4df27310275a336fd1546d16",
+      "bytes": 400,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_regen.png",
+      "local": "assets/game/runitems/b_regen.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_regen.png",
+      "sha256": "8843ba0c91cda63ee5cc39661b4e8a5ad28d87c3423548d39670e271bb1dce19",
+      "bytes": 395,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/b_wisdom.png",
+      "local": "assets/game/runitems/b_wisdom.png",
+      "source": "https://ro-survivors.com/assets/runitems/b_wisdom.png",
+      "sha256": "12665eb0d4b748a434c9daf0fae187707a92d7ccc3c0ead43f6140669dade58d",
+      "bytes": 401,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_area.png",
+      "local": "assets/game/runitems/e_area.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_area.png",
+      "sha256": "672960c3ee70dd6c08642b8681b8bf2865615710ab9205cfb6dd5b4beff848a6",
+      "bytes": 394,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_armor.png",
+      "local": "assets/game/runitems/e_armor.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_armor.png",
+      "sha256": "03645f6cb190c50ad92bf34ccbfbaae16095d13dc7a04937ee5a336e8fe051db",
+      "bytes": 394,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_cast.png",
+      "local": "assets/game/runitems/e_cast.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_cast.png",
+      "sha256": "40cd41709bc9b39e6bed784adf467f7dd4a28520bea97054d907acb46cef11b0",
+      "bytes": 393,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_crit.png",
+      "local": "assets/game/runitems/e_crit.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_crit.png",
+      "sha256": "f915f067cba35be5aaafadf083be4052e1c1371618886a5413bb1f944790b012",
+      "bytes": 397,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_critdmg.png",
+      "local": "assets/game/runitems/e_critdmg.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_critdmg.png",
+      "sha256": "4c91e5de727a903255999e830d700aa4c677d276255b8bb7665947f74a30acb5",
+      "bytes": 395,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_dmg.png",
+      "local": "assets/game/runitems/e_dmg.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_dmg.png",
+      "sha256": "eb1c77f9f15a885f8344547c6c56d4a4f077f37bc59021b712cdba10fbb9e279",
+      "bytes": 397,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_dodge.png",
+      "local": "assets/game/runitems/e_dodge.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_dodge.png",
+      "sha256": "9f82090fe93384ddca88d5a44c94e3aa9fe4db956e2b0cc09f57ac1a39212d0a",
+      "bytes": 395,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_dot.png",
+      "local": "assets/game/runitems/e_dot.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_dot.png",
+      "sha256": "d937039ae145958baac5e7cbff66f12062ff4f2f459873cb0b63eb3180859d5b",
+      "bytes": 395,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_hp.png",
+      "local": "assets/game/runitems/e_hp.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_hp.png",
+      "sha256": "47ce22c90340f9ea3548c6ef3bc68e3597d6236c27e8b1f75a92a68a1288a9cb",
+      "bytes": 397,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/e_surprise.png",
+      "local": "assets/game/runitems/e_surprise.png",
+      "source": "https://ro-survivors.com/assets/runitems/e_surprise.png",
+      "sha256": "3a691e7d719677528778b1b455686245f24c8e968ca3551e46536f3ba999b475",
+      "bytes": 397,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_area.png",
+      "local": "assets/game/runitems/p_area.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_area.png",
+      "sha256": "69e5e5f2e1180c744c98f8cefe2bd2b566bc9ca3b1f52430546fe4f460fc6d39",
+      "bytes": 355,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_armor.png",
+      "local": "assets/game/runitems/p_armor.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_armor.png",
+      "sha256": "a92d2e81fc508e567fec07f66ae697a4d4f7e19495f08f6e50d13c24363d9af4",
+      "bytes": 353,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_cast.png",
+      "local": "assets/game/runitems/p_cast.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_cast.png",
+      "sha256": "e2cbeb80aae99db58e7096559043bd4201c4ffd7231ad90ace4f039a3fc4cda4",
+      "bytes": 353,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_cd.png",
+      "local": "assets/game/runitems/p_cd.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_cd.png",
+      "sha256": "0e1a903fc6be2de70a3b69663d630b079c44933c5d71ad2acffe43ce21343d82",
+      "bytes": 352,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_discovery.png",
+      "local": "assets/game/runitems/p_discovery.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_discovery.png",
+      "sha256": "c060b50d2b0130780b695356504b59d0e3dc2c36ef35150e0f353f26fc6c60e7",
+      "bytes": 356,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_dmg.png",
+      "local": "assets/game/runitems/p_dmg.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_dmg.png",
+      "sha256": "d04c45f9bcc488df09c4a9fddbeb6c5c50a294128072fd6ac8157f66f454b0bb",
+      "bytes": 346,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_greed.png",
+      "local": "assets/game/runitems/p_greed.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_greed.png",
+      "sha256": "bd7e068928e116024f5030415c3d75817c23cf5939a0f59f44c48ec268c4f232",
+      "bytes": 352,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_hp.png",
+      "local": "assets/game/runitems/p_hp.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_hp.png",
+      "sha256": "1b7252c2483c24d20660b489e552a8300b2b1c1c72e5bbf6b0ec713824459444",
+      "bytes": 354,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_pickup.png",
+      "local": "assets/game/runitems/p_pickup.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_pickup.png",
+      "sha256": "c664356915fcf84fef833a7ffabd427df26dbfd436b54dd030bcfafe1e9ab41b",
+      "bytes": 352,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_reach.png",
+      "local": "assets/game/runitems/p_reach.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_reach.png",
+      "sha256": "748b3c934b05983f330fff44d0b72e5df653e59a394d8268e4edf2fb860c2839",
+      "bytes": 355,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_regen.png",
+      "local": "assets/game/runitems/p_regen.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_regen.png",
+      "sha256": "9c82cf0c097118b1a2f24ee4570ada3853a96638f53dea337b68c42dd2c3e178",
+      "bytes": 347,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "runitems/p_speed.png",
+      "local": "assets/game/runitems/p_speed.png",
+      "source": "https://ro-survivors.com/assets/runitems/p_speed.png",
+      "sha256": "b7992ff047ebe78f3ab6e6f172ecd1b539aa8405e1d4871d9191e067b9fd90f0",
+      "bytes": 355,
       "width": 24,
       "height": 24
     }

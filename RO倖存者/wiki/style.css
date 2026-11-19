@@ -95,6 +95,11 @@ table.t th, table.t td { padding: 6px 9px; border-bottom: 1px solid var(--line);
 table.t th { background: var(--panel-2); color: var(--blue-3); font-weight: 900; white-space: nowrap; }
 table.t tr:last-child td { border-bottom: 0; }
 table.t td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.t td.nw { white-space: nowrap; }
+table.t tr.hl td { background: #fff8e1; }
+/* 品質顏色（照遊戲：普通灰、優良綠、稀有藍、史詩紫、傳說橘） */
+.qn { font-weight: 900; color: var(--muted); }
+.qn.q1 { color: #2f8f45; } .qn.q2 { color: #2f6fd6; } .qn.q3 { color: #8a3fd6; } .qn.q4 { color: #c8711a; }
 .tw { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }

@@ -14,6 +14,7 @@ RSW.page({
       ['卡片', R.cards.filter(c => has(c.zh, c.en)).map(c => R.cardLink(c.id))],
       ['怪物', R.monsters.filter(m => has(m.zh, m.en)).map(m => R.monLink(m.id))],
       ['關卡', R.stages.filter(s => has(s.name, s.place)).map(s => R.stageLink(s.id))],
+      ['藥水與秘藥', ((R.runItems || {}).list || []).filter(x => has(x.name, ...x.vals)).map(x => `${R.img(x.img || x.icon)} <a href="#runitems/${x.id}">${R.esc(x.name)}</a>`)],
       ['寵物', R.pets.list.filter(p => has(p.zh, p.en, p.eggZh, p.accZh)).map(p => `<a href="#pets/${p.id}">${R.esc(p.zh || p.en)}</a>`)],
       ['外觀', R.cosmetics.list.filter(c => has(c.zh, c.en)).map(c => `${R.img(c.icon)} <a href="${c.ball != null ? '#events/lantern-festival' : '#cosmetics'}">${R.esc(c.zh || c.en)}</a>`)],
       ['天賦', Object.entries(R.talents).flatMap(([job, ts]) => ts.filter(t => has(t.name)).map(t => `${R.esc(t.name)} <span class="muted small">（${R.jobLink(job)}）</span>`))],

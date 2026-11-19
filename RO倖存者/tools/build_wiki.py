@@ -89,7 +89,7 @@ def main():
             if isinstance(o, dict):
                 return {k: (v if k in ('en', 'id') else fix_text(v)) for k, v in o.items()}
             return o
-        for sec in ('skills', 'talents', 'branches', 'items', 'cards', 'pets', 'jobs', 'deities'):
+        for sec in ('skills', 'talents', 'branches', 'items', 'cards', 'pets', 'jobs', 'deities', 'runItems'):
             if sec in d:
                 d[sec] = fix_text(d[sec])
 
@@ -284,6 +284,7 @@ def main():
         'stages.js': write_js('stages.js', 'stages', stages),
         'pets.js': write_js('pets.js', 'pets', {'list': pets, 'rules': rules}),
         'deities.js': write_js('deities.js', 'deities', d.get('deities') or {'skills': {}, 'stats': []}),
+        'runitems.js': write_js('runitems.js', 'runItems', d.get('runItems') or {'slots': [], 'list': []}),
         'cosmetics.js': write_js('cosmetics.js', 'cosmetics', {'list': cosmetics, 'kills': cos_raw.get('kills') or 200}),
         'events.js': write_js('events.js', 'festival', dict(festival, version=version,
             checkedAt=d.get('dumpedAt'), gear=[i['id'] for i in items if i.get('season')]) if festival else None),

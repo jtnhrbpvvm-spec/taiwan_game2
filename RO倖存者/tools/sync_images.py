@@ -31,7 +31,7 @@ MAP_JS = os.path.join(DATA, 'game-images.js')
 BASE = 'https://ro-survivors.com/assets/'
 CACHE = os.path.join(os.path.expanduser('~'), 'Desktop', '爬蟲', 'ro-survivors-tool', 'rs-crawl', '_assets', 'assets')
 SKIP = {'game-images.js', 'local-images.js'}
-PATH_RE = re.compile(r'"((?:items|cards|icons)/[\w./-]+\.png)"')
+PATH_RE = re.compile(r'"((?:items|cards|icons|runitems)/[\w./-]+\.png)"')
 PNG_SIG = b'\x89PNG\r\n\x1a\n'
 
 

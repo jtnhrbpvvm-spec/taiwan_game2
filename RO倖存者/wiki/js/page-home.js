@@ -38,6 +38,7 @@ ${R.festival ? `<div class="note event-intro"><b>燈籠節已開放</b>：洛陽
   ${count(R.monsters.length + ' 種怪物', '出現關卡、掉落物', '#monsters')}
   ${count(open.length + ' 個關卡', '開放條件、首領時間表', '#stages')}
   ${count(R.pets.list.length + ' 隻寵物', '蛋的掉率、進化、親密度', '#pets')}
+  ${R.runItems && R.runItems.list.length ? count(R.runItems.list.length + ' 種寶箱道具', '藥水、秘藥、祝福、料理', '#runitems') : ''}
   ${count(Object.keys(R.deities.skills).length + ' 個技能神祇', '寶箱第五格：改造技能', '#deities')}
   ${count(R.cosmetics.list.length + ' 個外觀', '首領成就、無盡之塔、燈籠節', '#cosmetics')}
 </div>

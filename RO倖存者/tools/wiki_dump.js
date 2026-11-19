@@ -219,6 +219,29 @@ const deityOut = { skills: {}, stats: [] };
   if (!Object.keys(deityOut.skills).length) note('⚠ 技能神祇是空的');
 }
 
+/* ---------- 寶箱道具（11-19 起）：藥水、秘藥、祝福、料理（神祇另外在上面） ----------
+   數值 = range[0] + (range[1]-range[0]) × 品質/4（unit 的四捨五入）；同一格再選同一個就疊加。 */
+const runItems = { slots: [], list: [], useless: {}, chest: null };
+{
+  const slotTbl = find('寶箱欄位', v => Array.isArray(v) && v.length >= 4 && v.some(s => s && s.id === 'potion') && v.some(s => s && s.id === 'deity'));
+  runItems.slots = (slotTbl || []).map(s => ({ id: s.id, name: T(s.name) }));
+  const tbl = find('寶箱道具', v => isObj(v) && Object.values(v).some(x => x && x.slot === 'potion' && x.range));
+  const maxQ = Math.max(1, (qualities || []).length - 1);
+  for (const x of Object.values(tbl || {})) if (x && x.slot !== 'deity' && x.range) {
+    const m = (man.items || {})[x.icon] || {};
+    const vals = [];
+    for (let q = 0; q <= maxQ; q++) { const v = x.range[0] + (x.range[1] - x.range[0]) * q / maxQ; vals.push(safe(() => x.text(x.unit ? Math.round(v) : v), '')); }
+    runItems.list.push({ id: x.id, slot: x.slot, name: T(x.name), img: x.img || null, icon: m.icon || icon(x.icon), iconId: x.icon,
+      range: x.range, unit: !!x.unit, late: !!x.late, vals });
+  }
+  const useless = find('寶箱無用道具', v => isObj(v) && Array.isArray(v.melee) && Array.isArray(v.cast) && Array.isArray(v.dot));
+  if (useless) runItems.useless = useless;
+  const cm = /chestCost\(\)\{\s*const ([\w$]+)=this\.chestsOpened;\s*return Math\.round\(\(([\d.]+)\+([\d.]+)\*\1\+([\d.]+)\*\1\*\1\)/.exec(mainSrc);
+  runItems.chest = cm ? { base: +cm[2], lin: +cm[3], sq: +cm[4] } : null;
+  if (!cm) note('⚠ 找不到寶箱價格公式');
+  if (!runItems.list.length) note('⚠ 寶箱道具是空的');
+}
+
 /* ---------- 外觀（11-13 起：首領擊殺 200 次、無盡之塔樓層解鎖；沒有取得方式的遊戲也不顯示，這裡照抓但標 obtain:null） ---------- */
 const cosOut = [];
 let cosKills = null;
@@ -267,9 +290,9 @@ const dump = {
   version: versionM ? versionM[2] + versionM[3] + versionM[4] + '_' + versionM[1] : null, dumpedAt: new Date().toISOString(),
   jobs: jobOut, skills: skillOut, talents: talentOut, branches: branchOut,
   items: itemOut, cards: cardOut, monsters: monOut, drops: dropOut, monInfo,
-  labels: { races, elements, sizes, slots: slotName, qualities: (qualities || []).map(q => ({ id: q.id, name: q.name, mult: q.mult })) },
+  labels: { races, elements, sizes, slots: slotName, qualities: (qualities || []).map(q => ({ id: q.id, name: q.name, mult: q.mult, weight: q.weight ?? null })) },
   stages: stageOut, scripts: scriptOut,
-  pets: petOut, petRules, deities: deityOut,
+  pets: petOut, petRules, deities: deityOut, runItems,
   cosmetics: { list: cosOut, kills: cosKills || 200 },
   festival,
   log,
