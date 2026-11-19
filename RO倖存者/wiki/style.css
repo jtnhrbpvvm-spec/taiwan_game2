@@ -52,9 +52,17 @@ nav.tabs a.on { background: var(--blue-2); color: #fff; }
 
 main#app { flex: 1; min-width: 0; padding: 16px 20px 26px; min-height: 60vh; }
 
+.nav-toggle-hint { display: none; }
+
 @media (max-width: 760px) {
+  /* 手機版頁首順序：標題＋開始遊戲 → 搜尋 → 「展開詳細」選單鈕＋加入賴群（同一行，跟加入賴群一樣大）；電腦版不變 */
+  .top h1 { order: 1; }
+  .top .play { order: 2; margin-left: auto; }
+  .top .search { order: 3; flex-basis: 100%; }
+  .nav-toggle { order: 4; padding: 4px 16px 4px 12px; }
+  .top .line-btn { order: 5; }
   .nav-toggle-txt { display: none; }
-  .nav-toggle { padding: 9px 8px; }
+  .nav-toggle-hint { display: inline; }
   nav.tabs, .nav-off nav.tabs { display: flex; position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; width: min(240px, 78vw);
     padding: 16px 10px; overflow-y: auto; border-right: 1px solid var(--border); box-shadow: 6px 0 24px rgba(36, 65, 142, .3);
     transform: translateX(-105%); transition: transform .2s ease; visibility: hidden; }
