@@ -6,7 +6,8 @@ r"""RO 倖存者小百科：把遊戲資料轉成 wiki\data\*.js
     python tools\build_wiki.py 某個dump.json   指定 dump 檔
 
 dump 由 tools\wiki_dump.js 在離線版遊戲（繁體中文）裡產生，流程寫在 翻譯說明.md 的「小百科」一節。
-怪物、物品、卡片名稱遊戲只有英文，這裡用 tools\zh\names.txt（台版譯名）補中文。
+怪物、物品、卡片名稱：優先用官方譯名（tools\zh\official.json，check_zh.js 產生），
+官方沒翻的才用 tools\zh\names.txt（台版譯名）。
 """
 import io
 import json
@@ -33,6 +34,15 @@ def load_names():
     return names
 
 
+def load_official():
+    """官方譯名（tools\\check_zh.js 從遊戲程式抽出，2026-11-18 起遊戲自己翻物品、卡片、怪物名稱）。"""
+    path = os.path.join(HERE, 'zh', 'official.json')
+    if not os.path.exists(path):
+        return '', {}
+    o = json.load(io.open(path, encoding='utf-8'))
+    return o.get('version', ''), o.get('names', {})
+
+
 def write_js(name, var, data):
     os.makedirs(OUT, exist_ok=True)
     text = '/* 由 tools\\build_wiki.py 產生，不要手動改 */\nRSW.%s = %s;\n' % (var, json.dumps(data, ensure_ascii=False, separators=(',', ':')))
@@ -46,6 +56,13 @@ def main():
     dump_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_DUMP
     d = json.load(io.open(dump_path, encoding='utf-8'))
     NM = load_names()
+    off_ver, OFFICIAL = load_official()
+    dump_ver = d.get('version') or ''
+    if not OFFICIAL:
+        print('⚠ 沒有 tools\\zh\\official.json：先跑 node tools\\check_zh.js（名稱會只用 names.txt）')
+    elif dump_ver and off_ver != dump_ver:
+        print('⚠ official.json 是 %s 的，資料是 %s 的：先跑 node tools\\check_zh.js %s' % (off_ver, dump_ver, dump_ver))
+    NM.update(OFFICIAL)          # 官方有翻就用官方的，names.txt 只補官方沒翻的
     missing = set()
     festival = d.get('festival')
     festival_balls = festival['balls'] if festival else []
@@ -122,6 +139,8 @@ def main():
             for i, b in enumerate(si['bosses']):
                 seen(b['id'], st['id'], 'mvp' if i == len(si['bosses']) - 1 else 'mini', round(b['t'] / 60, 1), True)
 
+    if festival and festival.get('incense'):
+        festival['incense']['zh'] = zh(festival['incense'].get('nameEN'))
     if festival:
         st = next(s for s in stages if s['id'] == festival['stage'])
         scheduled = {b['id'] for b in st.get('bosses', [])}

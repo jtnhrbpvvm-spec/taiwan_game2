@@ -59,13 +59,24 @@ else {
   for (const k of miss.slice(0, 50)) console.log('   ' + JSON.stringify(EN[k]));
 }
 
+/* 官方名稱表（2026-11-18 起遊戲自己翻物品、卡片、怪物名稱）：
+   物品／卡片／裝備字尾：{"of Strength":"力量之",…}；職業／技能／怪物：{Novice:"初心者",…}。
+   同樣的表還有葡文、日文版，用中文的第一個值認。 */
+const im = /[,;\s]([\w$]+)=\{"of Strength":"力量之"/.exec(core);
+const ITEM_ZH = im ? objNamed(im[1]) : {};
+if (!im) console.log('\n⚠ 找不到官方物品名稱表 {"of Strength":"力量之",…}（舊版遊戲沒有，或改了寫法）');
+const nm = /[,;\s]([\w$]+)=\{Novice:"初心者"/.exec(core) || /[,;\s]([\w$]+)=\{Novice:"/.exec(core);
+const OFFICIAL_NAMES = nm ? objNamed(nm[1]) : {};
+const official = Object.assign({}, OFFICIAL_NAMES, ITEM_ZH);
+const has = en => !!(official[en] || names[en]);
+
 /* 2. manifest 物品、卡片 */
 const man = JSON.parse(fs.readFileSync(path.join(base, 'assets', 'manifest.json'), 'utf8'));
-console.log('\n2. 物品／卡片名稱沒有譯名的（加到 tools\\zh\\names.txt）：');
+console.log(`\n2. 物品／卡片名稱：官方表 ${Object.keys(ITEM_ZH).length} 條。官方沒翻、names.txt 也沒有的（加到 tools\\zh\\names.txt）：`);
 let n2 = 0;
 for (const sec of ['items', 'cards']) {
   for (const [id, v] of Object.entries(man[sec] || {})) {
-    if (v && v.name && !names[v.name]) { console.log(`   @${v.name}\t    （${sec} ${id}）`); n2++; }
+    if (v && v.name && !has(v.name)) { console.log(`   @${v.name}\t    （${sec} ${id}）`); n2++; }
   }
 }
 if (!n2) console.log('   （全部都有）');
@@ -75,12 +86,10 @@ console.log('\n3. 怪物／技能名稱沒有譯名、官方也沒翻的：');
 let n3 = 0;
 const seen = new Set();
 for (const m of core.matchAll(/\b[\w$]+\(\{id:"([\w]+)",name:"([^"]+)",level:\d+,hp:/g)) {
-  if (!names[m[2]] && !seen.has(m[2])) { seen.add(m[2]); console.log(`   @${m[2]}\t    （怪物 ${m[1]}）`); n3++; }
+  if (!has(m[2]) && !seen.has(m[2])) { seen.add(m[2]); console.log(`   @${m[2]}\t    （怪物 ${m[1]}）`); n3++; }
 }
 /* 技能名：定義長這樣 wa("kihop","Kihop","tk_power",…)（id、英文名、圖示）。
    遊戲會用官方翻譯表（ZH）和名稱表（{Novice:"初心者",…}）翻；兩邊都沒有、names.txt 也沒有才列出 */
-const nm = /[,;\s]([\w$]+)=\{Novice:"/.exec(core);
-const OFFICIAL_NAMES = nm ? objNamed(nm[1]) : {};
 if (!nm) console.log('   ⚠ 找不到官方名稱表 {Novice:"初心者",…}，技能檢查可能不準');
 let skillCount = 0;
 for (const m of core.matchAll(/[\w$]+\("([a-z][a-z0-9_]*)","([A-Z][A-Za-z' ]+)","([a-z][a-z0-9_]*)"/g)) {
@@ -91,6 +100,17 @@ for (const m of core.matchAll(/[\w$]+\("([a-z][a-z0-9_]*)","([A-Z][A-Za-z' ]+)",
 }
 if (!skillCount) console.log('   ⚠ 一個技能定義都沒找到（遊戲改了寫法），技能名要在遊戲裡看');
 if (!n3) console.log('   （全部都有）');
+
+/* 官方譯名存給 build_wiki.py（官方有翻就用官方的，names.txt 只補官方沒翻的） */
+const OUT = path.join(ROOT, 'tools', 'zh', 'official.json');
+fs.writeFileSync(OUT, JSON.stringify({ version: dir, names: official }, null, 0));
+console.log(`\n官方譯名 ${Object.keys(official).length} 條 → tools\\zh\\official.json（build_wiki.py 優先使用）`);
+const diff = Object.keys(names).filter(en => official[en] && official[en] !== names[en]);
+if (diff.length) {
+  console.log(`   names.txt 和官方不同的 ${diff.length} 條（小百科照官方；names.txt 可以不改）：`);
+  for (const en of diff.slice(0, 40)) console.log(`   ${en}：${names[en]} → 官方 ${official[en]}`);
+  if (diff.length > 40) console.log(`   …還有 ${diff.length - 40} 條`);
+}
 
 /* 4. 離線版修補：2026-11-13 作者封鎖離線遊玩，離線版 v2.0 為最終版（只剩公告頁），不再檢查 */
 console.log('\n4. 離線版：已停止（v2.0 最終版），不檢查修補。');

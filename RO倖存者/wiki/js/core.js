@@ -115,9 +115,40 @@ window.RSW = window.RSW || {};
   }
   R.go = hash => { if (location.hash === hash) route(); else location.hash = hash; };
 
+  /* ---------- 左側功能列：電腦版可收合（記住選擇），手機版是抽屜（預設收起） ---------- */
+  function setupNav(nav) {
+    const shell = document.querySelector('.shell');
+    const btn = document.getElementById('nav-toggle');
+    const backdrop = document.getElementById('nav-backdrop');
+    if (!shell || !btn) return;
+    const mobile = window.matchMedia('(max-width: 760px)');
+    const KEY = 'rsw.navHidden';
+    let hidden = false;
+    try { hidden = localStorage.getItem(KEY) === '1'; } catch (e) { /* 無痕模式等 */ }
+    const sync = () => {
+      shell.classList.toggle('nav-off', hidden);
+      const open = mobile.matches ? shell.classList.contains('nav-open') : !hidden;
+      btn.setAttribute('aria-expanded', String(open));
+      if (backdrop) backdrop.hidden = !(mobile.matches && open);
+    };
+    const setOpen = open => { shell.classList.toggle('nav-open', open); sync(); };
+    btn.addEventListener('click', () => {
+      if (mobile.matches) { setOpen(!shell.classList.contains('nav-open')); return; }
+      hidden = !hidden;
+      try { localStorage.setItem(KEY, hidden ? '1' : '0'); } catch (e) { /* 存不了就只在這次有效 */ }
+      sync();
+    });
+    nav.addEventListener('click', e => { if (mobile.matches && e.target.closest('a')) setOpen(false); });
+    if (backdrop) backdrop.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && shell.classList.contains('nav-open')) { setOpen(false); btn.focus(); } });
+    (mobile.addEventListener ? mobile.addEventListener('change', () => setOpen(false)) : mobile.addListener(() => setOpen(false)));
+    sync();
+  }
+
   R.start = () => {
     const nav = document.querySelector('nav.tabs');
     nav.innerHTML = pages.filter(p => p.nav).map(p => `<a href="#${p.id}" data-page="${p.id}">${p.nav}</a>`).join('');
+    setupNav(nav);
     const q = document.getElementById('q');
     q.addEventListener('keydown', e => { if (e.key === 'Enter' && q.value.trim()) R.go('#search/' + encodeURIComponent(q.value.trim())); });
     const m = R.meta;

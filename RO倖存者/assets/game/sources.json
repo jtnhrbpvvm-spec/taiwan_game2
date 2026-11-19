@@ -1,6 +1,6 @@
 {
-  "retrievedAt": "2026-11-16T07:53:53.378Z",
-  "gameVersion": "20261115_09c52f73",
+  "retrievedAt": "2026-11-19T02:40:46.000Z",
+  "gameVersion": "20261118_f7ad3c447",
   "sourceManifest": "https://ro-survivors.com/assets/manifest.json",
   "copyright": "RO Survivors / Reven4nt; Ragnarok Online assets belong to Gravity Co., Ltd. & Lee MyoungJin (studio DTDS). Source attribution does not grant an open-source image license.",
   "images": [
@@ -17393,6 +17393,15 @@
       "height": 24
     },
     {
+      "original": "items/7555.png",
+      "local": "assets/game/items/7555.png",
+      "source": "https://ro-survivors.com/assets/items/7555.png",
+      "sha256": "42e6d77d0aa4591946f81723ffc20ea9600d14f432550deb0749f53d7bb2cfcb",
+      "bytes": 285,
+      "width": 24,
+      "height": 24
+    },
+    {
       "original": "items/9001.png",
       "local": "assets/game/items/9001.png",
       "source": "https://ro-survivors.com/assets/items/9001.png",
@@ -17605,6 +17614,15 @@
       "source": "https://ro-survivors.com/assets/items/9138.png",
       "sha256": "f7bb56f46ecc422f2963cfa01bcce17207799da78848c8ec7cba874222618762",
       "bytes": 404,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "original": "items/9148.png",
+      "local": "assets/game/items/9148.png",
+      "source": "https://ro-survivors.com/assets/items/9148.png",
+      "sha256": "1665ff4e7982870b93261cf741d0ee720bf723b4a73f86b7ef0471e2fe86605a",
+      "bytes": 769,
       "width": 24,
       "height": 24
     }

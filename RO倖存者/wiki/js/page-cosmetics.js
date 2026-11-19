@@ -32,7 +32,7 @@ ${festival.map(c => `<tr><td>${R.img(c.icon)} ${name(c)}</td><td>${R.esc(slot(c.
   ${tower.map(c => `<tr><td>${R.img(c.icon)} ${name(c)}</td><td>${R.esc(slot(c.slot))}</td><td>通過第 ${c.tower} 層</td></tr>`).join('')}
   <tr><td>Blood Savage 染料</td><td>髮色／服裝</td><td>通過第 50 層（到廣場造型師換上）</td></tr>
 </table></div>
-<p class="muted small">本版外觀收藏未列出舊版預告的 Blood Savage 頭盔、眼罩與圍巾，因此暫不列其第 55／60／65 層取得條件。第 50 層染料仍有公告依據；Bronze Sentry、Black Guard 與 Shadow 染料的後續開放情況依遊戲公告。</p>
+<p class="muted small">本版外觀收藏未列出舊版預告的嗜血狂戰士頭盔、眼罩與圍巾（Blood Savage），因此暫不列其第 55／60／65 層取得條件。第 50 層染料仍有公告依據；Bronze Sentry、Black Guard 與 Shadow 染料的後續開放情況依遊戲公告。</p>
 
 <h3>首領成就（擊敗 ${C.kills} 次）</h3>
 <div class="tw"><table class="t"><tr><th>外觀</th><th>部位</th><th>首領</th><th>出現在</th></tr>

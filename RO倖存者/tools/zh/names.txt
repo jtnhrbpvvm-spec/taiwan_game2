@@ -882,3 +882,5 @@
 @Blood Savage Scarf	Blood Savage 圍巾
 @Ghost Ship Captain's Hat	幽靈船長帽
 @Octopus Leg In Mouth	嘴叼章魚腳
+@Dark Lord Egg	蛇王寵物蛋
+@Green Incense	綠香

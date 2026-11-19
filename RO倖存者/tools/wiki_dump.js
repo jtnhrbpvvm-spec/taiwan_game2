@@ -150,6 +150,7 @@ const scriptOut = {};
 for (const [id, s] of Object.entries(scripts || {})) {
   scriptOut[id] = { map: s.map, mapName: null, runLength: s.runLength, jobCap: s.jobCap, jobExp: s.jobExp,
     story: s.story || null, storyOnly: !!s.storyOnly, season: s.season || null, reward: s.reward || null, jobWeapon: !!s.jobWeapon, bosses: (s.bosses || []).map(b => ({ t: b.t, id: b.id })),
+    rare: s.rare ? { id: s.rare.id, t: s.rare.t, chance: s.rare.chance } : null,   // 11-18：燈籠節蛇王機率出現
     pool: [...new Set((s.waves || []).flatMap(w => w.pool || []))] };
 }
 
@@ -169,10 +170,11 @@ const petRules = {};
   const local2export = {};
   if (imp) for (const p of imp[1].matchAll(/([\w$]+) as ([\w$]+)/g)) local2export[p[2]] = p[1];
   // 參數名每版會變（11-13 起 (s,e,t,a,n)），不寫死
-  const pushFn = /function ([\w$]+)\((\w),(\w),(\w),(\w),(\w)\)\{[\w$]+\.push\(\{id:\2,egg:\3,acc:\4,bonuses:\5,from:\6\}\)\}/.exec(mainSrc);
+  // 11-18 起多一個參數：kt(a,e,t,s,n,o){…from:n,...o}，第 6 個是 {secret:!0,scale:.55} 這類額外設定
+  const pushFn = /function ([\w$]+)\((\w),(\w),(\w),(\w),(\w)(?:,(\w))?\)\{[\w$]+\.push\(\{id:\2,egg:\3,acc:\4,bonuses:\5,from:\6(?:,\.\.\.\7)?\}\)\}/.exec(mainSrc);
   if (!pushFn) note('⚠ 找不到寵物清單（main.js 結構改了）');
   else {
-    const callRe = new RegExp(pushFn[1].replace(/\$/g, '\\$') + '\\("(\\w+)",(\\d+),(void 0|\\d+),\\[([^\\]]*)\\](?:,"(\\w+)")?\\)', 'g');
+    const callRe = new RegExp(pushFn[1].replace(/\$/g, '\\$') + '\\("(\\w+)",(\\d+),(void 0|\\d+),\\[([^\\]]*)\\](?:,(?:"(\\w+)"|void 0))?(?:,\\{([^{}]*)\\})?\\)', 'g');
     for (const m of mainSrc.matchAll(callRe)) {
       const bonus = mult => [...m[4].matchAll(/([\w$]+)\(([^()]*)\)/g)].map(b => {  // 名稱可能是 U$、G$
         const fn = M[local2export[b[1]]];
@@ -182,7 +184,7 @@ const petRules = {};
       petOut.push({
         id: m[1], egg, eggEN: (man.items || {})[egg]?.name || null, eggIcon: (man.items || {})[egg]?.icon || null,
         acc, accEN: acc ? (man.items || {})[acc]?.name || null : null, accIcon: acc ? (man.items || {})[acc]?.icon || null : null,
-        from: m[5] || null, neutral: bonus(0.5), cordial: bonus(0.75), loyal: bonus(1), loyalAcc: bonus(1.5),
+        from: m[5] || null, secret: /secret:!0/.test(m[6] || ''), neutral: bonus(0.5), cordial: bonus(0.75), loyal: bonus(1), loyalAcc: bonus(1.5),
       });
     }
   }
@@ -236,16 +238,28 @@ let cosKills = null;
 }
 
 /* 季節扭蛋：只讀客戶端公開的收藏、卡片與素材對照，不呼叫抽獎 API。 */
-const festivalMatch = /fragments:(\d+)\},[\w$]+=\{([^}]+)\},[\w$]+=(\["Bola del Festival"[^\]]*\]),[\w$]+=(\[[\d,]+\]),[\w$]+=(\[\[[\d,]+\](?:,\[[\d,]+\])*\]),[\w$]+=(\[[\d,]+\])/.exec(mainSrc);
+// 11-15 版：{…fragments:N},{首領:球},["Bola del Festival",…],[球圖示],[[卡片]…],[碎片]
+// 11-18 版：碎片改成做「焚香」：{incense:[20,10,5],incenseChance:.5},{首領:球},[…],[…],[[…]],[碎片],焚香物品id
+// 兩種都認：從 ["Bola del Festival" 開始往後讀，前面的設定物件另外找。
+const festivalMatch = /[\w$]+=\{([^{}]+)\},[\w$]+=(\["Bola del Festival"[^\]]*\]),[\w$]+=(\[[\d,]+\]),[\w$]+=(\[\[[\d,]+\](?:,\[[\d,]+\])*\]),[\w$]+=(\[[\d,]+\])(?:,[\w$]+=(\d+))?/.exec(mainSrc);
 let festival = null;
 if (festivalMatch) {
-  const names = JSON.parse(festivalMatch[3]), icons = JSON.parse(festivalMatch[4]);
-  const cardPools = JSON.parse(festivalMatch[5]), fragments = JSON.parse(festivalMatch[6]);
-  const bossBalls = Object.fromEntries([...festivalMatch[2].matchAll(/(\w+):(\d)/g)].map(m => [m[1], +m[2]]));
-  festival = { id: 'lantern-festival', stage: 'louyang', fragmentsPerRoll: +festivalMatch[1], bossBalls,
+  const head = mainSrc.slice(Math.max(0, festivalMatch.index - 300), festivalMatch.index);
+  const oldFrag = /fragments:(\d+)\},$/.exec(head);
+  const inc = /\{incense:\[([\d,]+)\],incenseChance:([\d.]+)\},$/.exec(head);
+  const names = JSON.parse(festivalMatch[2]), icons = JSON.parse(festivalMatch[3]);
+  const cardPools = JSON.parse(festivalMatch[4]), fragments = JSON.parse(festivalMatch[5]);
+  const bossBalls = Object.fromEntries([...festivalMatch[1].matchAll(/(\w+):(\d)/g)].map(m => [m[1], +m[2]]));
+  const incenseCost = inc ? JSON.parse('[' + inc[1] + ']') : null;
+  const incenseId = festivalMatch[6] ? +festivalMatch[6] : null;
+  festival = { id: 'lantern-festival', stage: 'louyang', fragmentsPerRoll: oldFrag ? +oldFrag[1] : null, bossBalls,
+    incense: inc ? { id: incenseId, nameEN: man.items?.[incenseId]?.name || null, icon: man.items?.[incenseId]?.icon || null,
+      chance: +inc[2], rare: scripts?.louyang?.rare ? { id: scripts.louyang.rare.id, chance: scripts.louyang.rare.chance } : null } : null,
     balls: names.map((name, id) => ({ id, name: T(name), icon: man.items?.[icons[id]]?.icon || null,
       fragment: fragments[id], fragmentIcon: man.items?.[fragments[id]]?.icon || null,
+      incenseCost: incenseCost ? incenseCost[id] : null,
       cards: cardPools[id], cosmetics: cosOut.filter(c => c.ball === id).map(c => c.id) })) };
+  if (!oldFrag && !inc) note('⚠ 燈籠節：碎片用途（換抽／焚香）沒抓到');
 } else if (scripts?.louyang?.season) note('⚠ 找不到燈籠節扭蛋對照');
 
 const versionM =/commit:"(\w+)",\s*date:"(\d{4})-(\d\d)-(\d\d)/.exec(mainSrc);

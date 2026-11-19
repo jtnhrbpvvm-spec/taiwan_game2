@@ -10,6 +10,7 @@ RSW.page({
     const name = p => R.esc(p.zh || p.en);
     const icon = p => R.img(p.eggIcon, 'ico', p.eggZh || p.eggEN);
     const howGet = p => {
+      if (p.secret) return '隱藏寵物：怪物不會掉牠的蛋，官方還沒公開取得方式（擁有後才會出現在遊戲的寵物清單）';
       if (p.from) {
         const f = petOf(p.from);
         return `由 <a href="#pets/${p.from}">${f ? name(f) : p.from}</a> 進化（${R.esc(loyal.name)}＋打倒${name(p)} ${rules.evolveKills} 次）`;
@@ -33,7 +34,7 @@ RSW.page({
 <h3>怎麼取得</h3>
 <ul>
   <li><b>蛋</b>：由對應的怪物掉落，一般怪物 <b>${R.pct(rules.eggNormal)}</b>、MVP <b>${R.pct(rules.eggMvp)}</b>。已經擁有的寵物不會再掉蛋。</li>
-  <li><b>進化</b>：首領寵物不會從蛋孵出來，要讓前一隻寵物達到「${R.esc(loyal.name)}」，並打倒那隻首領 ${rules.evolveKills} 次，再到廣場的寵物飼育員進化。原本那隻會留著。</li>
+${P.list.some(p => p.secret) ? `  <li><b>隱藏寵物</b>：${P.list.filter(p => p.secret).map(p => `<a href="#pets/${p.id}">${name(p)}</a>`).join('、')}不會從怪物掉蛋，官方還沒公開取得方式。</li>\n` : ''}  <li><b>進化</b>：首領寵物不會從蛋孵出來，要讓前一隻寵物達到「${R.esc(loyal.name)}」，並打倒那隻首領 ${rules.evolveKills} 次，再到廣場的寵物飼育員進化。原本那隻會留著。</li>
 </ul>
 ${chains.length ? `<p class="small">進化路線：${chains.map(c => c.map(p => `<a href="#pets/${p.id}">${name(p)}</a>`).join(' → ')).join('　｜　')}</p>` : ''}
 
@@ -55,7 +56,7 @@ ${chains.length ? `<p class="small">進化路線：${chains.map(c => c.map(p => 
         ...(p.acc ? [[`${R.esc(loyal.name)}＋飾品（×${loyal.mult * rules.accMult}）`, p.loyalAcc]] : [])];
       const next = P.list.filter(q => q.from === p.id);
       return `<p class="small"><a href="#pets">← 所有寵物</a></p>
-<h2 class="pt">${icon(p)} ${name(p)} <span class="muted small">${R.esc(p.en)}</span>${p.from ? '<span class="tag mvp">進化寵物</span>' : ''}</h2>
+<h2 class="pt">${icon(p)} ${name(p)} <span class="muted small">${R.esc(p.en)}</span>${p.from ? '<span class="tag mvp">進化寵物</span>' : ''}${p.secret ? '<span class="tag dev">隱藏寵物</span>' : ''}</h2>
 <div class="box">
   <div>取得：${howGet(p)}</div>
   ${!p.from ? `<div class="small" style="margin-top:6px">蛋：${R.esc(p.eggZh || p.eggEN || '')}</div>` : ''}
@@ -82,6 +83,7 @@ ${chains.length ? `<p class="small">進化路線：${chains.map(c => c.map(p => 
           <td class="small">${p.acc ? R.img(p.accIcon) + ' ' + R.esc(p.accZh || p.accEN || '') : '—'}</td></tr>`).join('')}</table>`;
     };
     function howGetShort(p) {
+      if (p.secret) return '隱藏寵物，取得方式未公開';
       if (p.from) { const f = petOf(p.from); return `由 <a href="#pets/${p.from}">${R.esc(f ? f.zh || f.en : p.from)}</a> 進化`; }
       return `${R.monLink(p.id)} 掉蛋 <span class="muted">${R.pct(p.boss === 'mvp' ? P.rules.eggMvp : P.rules.eggNormal)}</span>`;
     }
