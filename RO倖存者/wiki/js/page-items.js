@@ -13,7 +13,7 @@ RSW.page({
   <select id="it-slot"><option value="">全部部位</option>${slots.map(s => `<option value="${s}">${R.esc(R.meta.labels.slots[s] || s)}</option>`).join('')}</select>
   <select id="it-job"><option value="">全部職業</option>${R.jobs.list.filter(j => j.rank === 1).map(j => `<option value="${j.id}">${R.esc(j.name)}</option>`).join('')}</select>
   <select id="it-src"><option value="">全部取得方式</option><option value="boss">首領掉落</option><option value="drop">一般怪物掉落</option>
-    <option value="starter">初始裝備</option><option value="story">劇情／通關獎勵</option><option value="festival">燈籠節扭蛋</option><option value="secret">秘密裝備</option><option value="none">目前無法取得</option></select>
+    <option value="starter">初始裝備</option><option value="story">劇情／通關獎勵</option><option value="festival">燈籠節扭蛋</option><option value="none">目前無法取得</option></select>
   <input id="it-q" type="search" placeholder="名稱（中英文皆可）…">
   <span class="count" id="it-n"></span>
 </div>
@@ -24,7 +24,7 @@ RSW.page({
       const jobs = it.jobs ? it.jobs.map(R.jobLink).join('、') : '所有職業';
       return `<p class="small"><a href="#items">← 所有物品</a></p>
 <h2 class="pt">${R.img(it.icon, 'ico lg')} ${R.esc(R.itemName(it))} <span class="muted small">${R.esc(it.en)}</span>
-  ${it.rare ? '<span class="tag star">稀有</span>' : ''}${it.secret ? '<span class="tag mvp">秘密</span>' : ''}${it.starter ? '<span class="tag">初始裝備</span><span class="tag">不可交易</span>' : ''}${it.season ? '<span class="tag">燈籠節</span><span class="tag">綁定帳號</span>' : ''}</h2>
+  ${it.rare ? '<span class="tag star">稀有</span>' : ''}${it.starter ? '<span class="tag">初始裝備</span><span class="tag">不可交易</span>' : ''}${it.season ? '<span class="tag">燈籠節</span><span class="tag">綁定帳號</span>' : ''}</h2>
 <div class="box">
   <span class="stat">部位 <b>${R.esc(R.slotName(it))}</b></span>
   <span class="stat">卡片插槽 <b>${it.cardSlots}</b></span>
@@ -38,8 +38,7 @@ RSW.page({
 ${it.season ? '<div class="note">燈籠節的三種扭蛋隨機抽取，只抽到目前角色能穿的裝備。階級固定為 2，裝備綁定帳號；節慶扭蛋為普通／優良／稀有，白素貞為史詩，蛇王為傳說。<a href="#events/lantern-festival">活動規則 →</a></div>' : ''}
 ${rows.length ? `<div class="tw"><table class="t"><tr><th>方式</th><th>來源</th><th>地點</th><th>機率</th></tr>
   ${rows.map(r => `<tr><td>${r.how}</td><td>${r.who}</td><td class="small">${r.where}</td><td class="num">${r.chance === 1 ? '必得' : r.chance == null ? '未公布' : R.pct(r.chance)}</td></tr>`).join('')}</table></div>`
-    : it.secret ? '<div class="note warn">秘密裝備：遊戲裡有隱藏的取得方式，目前沒有公開。</div>'
-      : '<div class="note">目前沒有任何怪物或劇情會給這件裝備。多半是舊版留下的物品（舊存檔或玩家交易才會有），之後改版可能重新加入掉落。</div>'}
+    : '<div class="note">目前沒有任何怪物或劇情會給這件裝備。多半是舊版留下的物品（舊存檔或玩家交易才會有），之後改版可能重新加入掉落。</div>'}
 <p class="muted small">${it.season ? '公告未提供各件裝備的抽中機率；燈籠節不受一般關卡難度加成影響。' : '機率是每隻怪物死亡時的掉落機率，難度加成前的數字。'}</p>`;
     }
   },
@@ -54,7 +53,6 @@ ${rows.length ? `<div class="tw"><table class="t"><tr><th>方式</th><th>來源<
         if (x.type === 'drop') { const m = R.index().monster[x.monster]; t.add(m && m.boss ? 'boss' : 'drop'); }
         else if (x.type === 'reward') t.add('story'); else t.add(x.type);
       }
-      if (it.secret) t.add('secret');
       if (!t.size) t.add('none');
       return t;
     };
@@ -64,7 +62,7 @@ ${rows.length ? `<div class="tw"><table class="t"><tr><th>方式</th><th>來源<
       if (d) return `${R.monLink(d.monster)} <span class="muted">${R.pct(d.chance)}</span>${it.sources.filter(x => x.type === 'drop').length > 1 ? ` <span class="muted small">等 ${it.sources.filter(x => x.type === 'drop').length} 種</span>` : ''}`;
       const o = (it.sources || [])[0];
       if (o) return o.type === 'starter' ? `初始裝備（${R.jobLink(o.job)}）` : o.type === 'story' ? `失事輪劇情（${R.jobLink(o.job)}）` : `${R.stageLink(o.stage)} 首次通關`;
-      return it.secret ? '<span class="muted">秘密</span>' : '<span class="muted">目前無法取得</span>';
+      return '<span class="muted">目前無法取得</span>';
     };
     const draw = () => {
       const slot = $('#it-slot').value, job = $('#it-job').value, src = $('#it-src').value, kw = $('#it-q').value.trim().toLowerCase();

@@ -188,8 +188,13 @@ def main():
             if it.get('season'):
                 sources[it['id']] = [{'type': 'festival', 'stage': festival['stage'], 'ball': b['id']}
                                      for b in festival_balls]
+    # 作者刻意設計成「遊戲不會給」的裝備（soul_linker 的 new Set 登記，程式會檢查它們不在任何掉落裡）：
+    # 改存檔拿到會被封帳號。小百科不收，避免誤導玩家去找或改存檔。
+    hidden_items = [it for it in d['items'] if it.get('secret')]
     items = []
     for it in d['items']:
+        if it.get('secret'):
+            continue
         row = {k: it[k] for k in ('id', 'icon', 'slot', 'cardSlots', 'base', 'jobs', 'wtype', 'wtypeName', 'rare',
                                   'starter', 'secret', 'gender', 'bonuses', 'sig', 'sigMax')}
         row['en'] = it['nameEN']
@@ -289,6 +294,9 @@ def main():
     print('輸出：' + '、'.join('%s %dKB' % (k, v // 1024) for k, v in sizes.items()))
     if d.get('log'):
         print('抽取紀錄：' + '；'.join(d['log']))
+    if hidden_items:
+        print('不收的陷阱裝備 %d 件（遊戲不會給，改存檔拿到會被封）：%s' % (
+            len(hidden_items), '、'.join('%s %s' % (i['id'], i.get('nameEN')) for i in hidden_items)))
     if orphan:
         print('⚠ 有取得方式但物品表沒有的 id：%s' % orphan)
     if missing:
