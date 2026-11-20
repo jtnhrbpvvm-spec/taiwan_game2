@@ -1,5 +1,5 @@
 {
- "version": "20261108e",
+ "version": "20261119a",
  "classes": {
   "royal": {
    "name": "王族",
@@ -2334,10 +2334,14 @@
   "forgottenIsle": "紫霧遺跡",
   "giantTomb": "泰坦墓穴",
   "tower": "永夜之塔",
+  "infinite": "無限塔",
   "lairAntharas": "格爾莫斯的巢穴",
   "lairFafurion": "瑟拉恩的巢穴",
   "lairLindvior": "維斯塔爾的巢穴",
-  "lairValakas": "莫爾加斯的巢穴"
+  "lairValakas": "莫爾加斯的巢穴",
+  "frostBoneFortress": "霜骨要塞",
+  "ashCatacombs": "灰燼地宮",
+  "riftRoyalCourt": "裂界王庭"
  },
  "items": {
   "dagger": "匕首",
@@ -2998,6 +3002,9 @@
   "map13": "異界地圖 T13",
   "map14": "異界地圖 T14",
   "map15": "異界地圖 T15",
+  "map16": "異界地圖 T16",
+  "map17": "異界地圖 T17",
+  "map18": "異界地圖 T18",
   "gem_multistrike": "輔助寶石・多重打擊",
   "gem_aoeExpand": "輔助寶石・範圍擴大",
   "gem_addFireG": "輔助寶石・附加火焰",
@@ -3049,6 +3056,7 @@
   "talentJewel_cluster-bulwark-small": "小型壁壘星團",
   "talentJewel_cluster-bulwark-medium": "中型壁壘星團",
   "talentJewel_cluster-bulwark-large": "大型壁壘星團",
-  "talentStone": "天賦石"
+  "talentStone": "天賦石",
+  "memoryCandle": "回憶蠟燭"
  }
 }

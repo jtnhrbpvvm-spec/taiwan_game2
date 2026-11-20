@@ -75,7 +75,7 @@ $('#lair-list').innerHTML = lairs.map(z => {
         <p><span class="tag red">需要 Lv.${z.reqLv}</span><span class="tag">傳送 ${fmt(z.fee)}</span><span class="tag">冷卻 ${z.cdH} 小時</span>${z.prev ? `<span class="tag">先討伐 ${esc(W.monsters[z.prev].name)}</span>` : ''}</p>
         <div class="msec"><h4>掉落</h4><small>${m.drops.map(d => `${itemLink(d.id)} ${pct(d.p)}`).join('<br>')}</small></div></div>`;
 }).join('');
-const rares = W.zones.filter(z => z.rare).map(z => ({ z, id: z.rare.id, m: W.monsters[z.rare.id] }));
+const rares = W.zones.filter(z => z.rare && !z.mapTier).map(z => ({ z, id: z.rare.id, m: W.monsters[z.rare.id] }));
 renderTable($('#boss-list'), [
     { label: '首領', v: r => r.m.name, html: r => monLink(r.id) },
     { label: 'Lv', num: true, v: r => r.m.lv, html: r => r.m.lv },

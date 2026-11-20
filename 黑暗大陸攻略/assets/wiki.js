@@ -49,7 +49,7 @@ function classUseHtml(ok) {
 }
 const weaponClassIds = type => Object.keys(W.classes).filter(id => (W.classes[id].weapons || []).includes(type));
 const weaponClassText = type => classUseHtml(weaponClassIds(type));
-const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', dragon: '龍穴' };
+const ZONE_TYPE = { field: '野外', dungeon: '地監', tower: '高塔', infinite: '挑戰', dragon: '龍穴' };
 const SKILL_TYPE = { spell: '攻擊魔法', heal: '治癒', buff: '增益', strike: '物理技能', passive: '被動' };
 const CAT_EMO = { weapon: '⚔️', armor: '🛡️', potion: '🧪', scroll: '📜', ammo: '🏹', elixir: '⚗️', material: '💎', quest: '🔖', currency: '🔹', book: '📖', map: '🗺️', doll: '🧸', mercRune: '🔷', talentJewel: '💠', gem: '🔶' };
 // 元素（桌寵的資料可能沒帶 W.elements，留預設）
@@ -183,7 +183,7 @@ function sourceText(s, id) {
             return `🤝 傭兵專用符石，<a href="merc.html#runes">鑲在傭兵四格技能槽</a>，不能購買。` + (!dr ? '' :
                 `<b>${basic ? '基本' : '特殊'}符石</b>：<a href="rift.html">黃色稀有異界地圖</a>首領 <b>${pct(dr.bossP)}</b>、<a href="dragons.html#raid">團隊副本</a>勝利每人 <b>${pct(dr.bossP)}</b>（基本、特殊各自判定）`); }
         case 'doll': { const dl = W.dolls[d.doll];
-            return dl && dl.quality === 'T4' ? `🧸 鑽石商人露米販售（登入帳號，每隻 ${fmt(W.consts.DOLL_SHOP_PRICE)} 鑽石，送進帳號共用倉庫）` : '🧸 （尚未開放）'; }
+            return dl && dl.quality === 'T4' ? `🧸 鑽石商人露米販售（登入帳號，每隻 ${fmt(W.consts.DOLL_SHOP_PRICE)} 鑽石，送進帳號共用倉庫）` : `🎎 不能購買：用<a href="dolls.html#upgrade">娃娃升級卷軸</a>從${dl ? { T3: 'T4', T2: 'T3', T1: 'T2', T0: 'T1' }[dl.quality] || '低一階' : '低一階'}娃娃進化（成功率 5%，卷軸只在<a href="tower.html#infinite">無限塔</a>拿得到）`; }
         case 'unique': { const u = W.uniques;
             return `🌟 只有<a href="rift.html">稀有（黃色）異界地圖</a> T11～T15 的異界首領會掉${u ? `（${Object.entries(u.dropP).map(([t, p]) => `T${t} ${pct(p)}`).join('、')}）` : ''}，可交易。<a href="uniques.html">傳奇裝備一覽</a>`; }
         case 'gem': { const g = W.gems;
@@ -196,6 +196,7 @@ function sourceText(s, id) {
         case 'talent': { const r = W.talent && W.talent.drops[id === 'talentStone' ? 'stone' : 'jewel'], t = a => `${pct(a[0])}→${pct(a[1])}`;
             return r ? `🌌 地圖越高階越容易掉（T1→T15）：${r.normal ? `一般怪 ${t(r.normal)}、` : ''}首領 ${t(r.boss)}、首次<a href="talent.html#points">星盤試煉</a> ${t(r.trial)}${r.normal ? '' : '（一般怪不掉）'}` : `🌌 ${id === 'talentStone' ? '怪物' : '首領'}掉落，地圖越高階越容易掉`; }
         case 'dismantle': return `🧸 鑽石商人分解傳說品質裝備（每件 ${W.consts.DOLL_DISMANTLE_CRYSTALS} 個）；鑽石商人也賣魔法結晶包（50 鑽石 1,000 個）`;
+        case 'candle': return `💎 鑽石商人露米販售（登入帳號，每支 ${fmt(s.price)} 鑽石，送進帳號共用倉庫）。只能在村莊點燃，<a href="guide.html#candle">用法說明</a>`;
         case 'random': return `🎲 隨機裝備掉落（Lv.${s.minLv} 以上怪物；一般怪 ${pct(W.consts.RANDOM_EQUIP_P)}、首領 50%，可能帶品質詞綴）`;
     }
     return esc(s.type);
@@ -250,7 +251,7 @@ function monTags(m) {
 function monDetailHtml(id) {
     const m = W.monsters[id];
     if (!m) return '找不到這隻怪物';
-    const where = m.zones.map(zoneLink).concat(m.rareIn.map(r => `${zoneLink(r.zone)}（${r.lair ? '巢穴首領' : '約每 60～90 分鐘定時出現'}）`));
+    const where = m.zones.map(zoneLink).concat(m.rareIn.map(r => `${zoneLink(r.zone)}（${r.lair ? '巢穴首領' : r.mapBoss ? '異界首領，清完怪後出現' : '約每 60～90 分鐘定時出現'}）`));
     return `<div class="mhead">${monIcon(id, true)}<div><h3>${esc(m.name)}</h3><span class="tag gold">Lv.${m.lv}</span>${monTags(m)}${elemResHtml(m.elemRes)}</div></div>
         <div class="stats"><span>HP <b>${fmt(m.hp)}</b></span><span>防禦 <b>${10 - m.ac}</b></span><span>命中 <b>${m.hit}</b></span><span>攻擊 <b>${range(m.dmg)}</b></span>
         <span>攻擊間隔 <b>${m.spd}ms</b></span><span>魔防 <b>${m.mr}</b></span><span>經驗 <b>${fmt(m.exp)}</b></span><span>金幣 <b>${range(m.gold)}</b></span></div>

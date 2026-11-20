@@ -12,7 +12,7 @@ const IMG_BASE = 'https://k559610142-art.github.io/-username-.github.io-/%E5%B1%
 
 // 只載入「資料＋規則」的檔案；介面、連線的檔案不需要
 // 順序照遊戲 index.html（2026-11-08 加 uniques 傳奇裝備、elite 精英詞條、elements 元素、gems 開孔寶石）
-const FILES = 'config classes skills items spellbook monsters zones quests advance resonance uniques boss-enchant doll-abilities mercenary afflict player enchant affix craft maps elite elements gems combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons guild-core guild-missions'.split(' ');
+const FILES = 'config classes skills items spellbook monsters zones quests advance resonance uniques boss-enchant doll-abilities mercenary afflict player enchant affix craft maps elite elements gems combat town talent-jewels talent talent-tree talent-layout talent-planner talent-live icons memory-candle guild-core guild-missions'.split(' ');
 
 // 瀏覽器物件用假的代替（載入時只會碰到一點點）
 const stub = new Proxy(function () {}, {
@@ -142,14 +142,17 @@ const afflicts = {
     defs: Object.fromEntries(Object.entries(AFFLICTS).map(([k, d]) => [k, pick(d, ['name', 'emoji', 'ms', 'bossMs', 'imm', 'k', 'dot', 'lethal', 'antiheal', 'control', 'breakOnHit', 'skip', 'ac', 'mr', 'hit', 'taken'])])),
     defaultP: plain(AFFLICT_DEFAULT_P), mons: afflictList,
 };
-for (const z of ZONES) {
+// 2026-11-19 起 T16～T18 的專屬地區只能用異界地圖進入（zones.js 的 MAP_ONLY_ZONES，不在 ZONES 裡）
+const MAP_ONLY = G('typeof MAP_ONLY_ZONES === "undefined" ? [] : MAP_ONLY_ZONES');
+const ALL_ZONES = [...ZONES, ...MAP_ONLY];
+for (const z of ALL_ZONES) {
     (z.mons || []).forEach(id => monsters[id] && monsters[id].zones.push(z.id));
-    if (z.rare && monsters[z.rare.id]) monsters[z.rare.id].rareIn.push({ zone: z.id, p: z.rare.p });
+    if (z.rare && monsters[z.rare.id]) monsters[z.rare.id].rareIn.push(z.mapTier ? { zone: z.id, mapBoss: true } : { zone: z.id, p: z.rare.p });
     if (z.boss && monsters[z.boss]) monsters[z.boss].rareIn.push({ zone: z.id, lair: true });
 }
 
 // ── 地區、村莊 ──
-const zones = ZONES.map(z => plain(pick(z, ['id', 'name', 'icon', 'type', 'lv', 'town', 'fee', 'mons', 'drops', 'desc', 'rare', 'noMap', 'boss', 'reqLv', 'cdH', 'prev'])));
+const zones = ALL_ZONES.map(z => plain(pick(z, ['id', 'name', 'icon', 'type', 'lv', 'town', 'fee', 'mons', 'drops', 'desc', 'rare', 'noMap', 'boss', 'reqLv', 'cdH', 'prev', 'mapTier'])));
 const towns = plain(G('TOWNS'));
 const shopByTier = {};
 for (const t of [1, 2, 3, 4]) shopByTier[t] = Object.keys(ITEMS).filter(id => ITEMS[id].price && ITEMS[id].tier <= t);
@@ -206,6 +209,7 @@ for (const id in ITEMS) {
     }
 }
 addSrc('magicCrystal', { type: 'dismantle' });
+addSrc('memoryCandle', { type: 'candle', price: G('CANDLE_PRICE') });   // 2026-11-13 回憶蠟燭：鑽石商人（memory-candle.js）
 for (const id of G('UNIQUE_IDS')) addSrc(id, { type: 'unique' });
 for (const id of G('SUPPORT_GEM_IDS')) addSrc(id, { type: 'gem' });
 

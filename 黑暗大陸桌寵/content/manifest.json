@@ -1,5 +1,5 @@
 {
-  "version": "1.5.3",
+  "version": "1.5.4",
   "shell": 2,
   "files": [
     {
@@ -34,18 +34,18 @@
     },
     {
       "path": "income.js",
-      "sha256": "bacb78849e258a5c7089c4038659e454d79c2ed20e01e78a51a1a9db1856f702",
-      "size": 4334
+      "sha256": "b5717a70791a0f771fb886d2c626027349455ca886527c7759eead0d35cd07b5",
+      "size": 4527
     },
     {
       "path": "main.js",
-      "sha256": "3624c5c3241e434bfbcbfc41730dc4f083af1753aeb1f6c6792665fbfbe4311c",
-      "size": 78895
+      "sha256": "fdd632265c3a836bf0e94d94e4e5896047b824f96e40918cee1356b9f3806ac4",
+      "size": 79252
     },
     {
       "path": "names.json",
-      "sha256": "24657fa4440fa322eb7418b1cbbec99b947e5cc6b1fe5175a78f3ea9fbb5897b",
-      "size": 73759
+      "sha256": "46e73013eed8cd37047b748d2e7807c81b5740089268a53470679e48f9c9ec5a",
+      "size": 74022
     },
     {
       "path": "peers.js",
@@ -144,8 +144,8 @@
     },
     {
       "path": "zones.js",
-      "sha256": "275bc27cca82ac93e89811f86ee2f900fdce6afe37e85da780e81eb6fa5a0ac5",
-      "size": 443725
+      "sha256": "c722e72006ff22399eee8c44aaaa08a2016f128a6ffee999ade0545eb59815b9",
+      "size": 454131
     }
   ]
 }

@@ -63,6 +63,14 @@
     const zone = G.zones[loc.id];
     if (!zone) return `<p class="dim">攻略資料裡沒有這張地圖（地圖 #${esc(loc.id)}），可能是遊戲新加的，等攻略更新。</p>`;
     const url = `${G.guideUrl}zones.html#${encodeURIComponent(loc.id)}`;
+    // 無限塔（2026-11-13）：挑戰地圖，沒有經驗、掉寶，怪物等級看樓層；只列規則
+    if (zone.type === "infinite") {
+      return `<div class="zg">
+      <p class="zg-head"><b>${esc(zone.icon || "")} ${esc(zone.name)}</b>　<a href="${esc(G.guideUrl)}tower.html#infinite" data-guide="${esc(G.guideUrl)}tower.html#infinite">看攻略 ›</a></p>
+      <p class="dim">${esc(zone.desc || "")}</p>
+      <p class="dim">怪物等級＝50＋（樓層−1）×2.5，每 5 層有首領。第 10 層起每 5 層擊殺首領各得 1 張娃娃升級卷軸（要登入帳號）。</p>
+    </div>`;
+    }
     let head = `<b>${esc(zone.icon || "")} ${esc(zone.name)}</b>　<span class="tagz">Lv.${zone.lv[0]}～${zone.lv[1]}</span>`;
     let rows = "";
     let monIds = [...(zone.mons || [])];
@@ -84,7 +92,7 @@
     }
     const rare = zone.rare && G.monsters[zone.rare.id];
     if (rare) {
-      rows += `<tr class="rare"><td>★ ${monA(zone.rare.id, rare)}<small>約每 60～90 分鐘定時出現</small></td><td>Lv.${rare.lv}</td><td>${num(rare.hp)}</td><td>${num(rare.exp)}</td></tr>`;
+      rows += `<tr class="rare"><td>★ ${monA(zone.rare.id, rare)}<small>${zone.mapTier ? "異界首領，清完怪後出現" : "約每 60～90 分鐘定時出現"}</small></td><td>Lv.${rare.lv}</td><td>${num(rare.hp)}</td><td>${num(rare.exp)}</td></tr>`;
       monIds.push(zone.rare.id);
     }
     const boss = zone.boss && G.monsters[zone.boss];

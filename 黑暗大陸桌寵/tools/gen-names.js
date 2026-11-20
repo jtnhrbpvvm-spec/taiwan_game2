@@ -19,7 +19,8 @@ if (!gameDir) {
 // affix／craft（通貨）、maps（異界地圖）、gems（輔助寶石 gem_*）、talent-*（天賦寶珠、天賦石）；其他是戰鬥、畫面，桌寵用不到，而且會碰到 document
 // 2026-11-08：原本少了 advance／uniques／gems／talent，那些道具撿到時桌寵不飄名字
 const FILES = ["config", "classes", "skills", "items", "spellbook", "monsters", "zones", "quests", "advance", "resonance", "uniques", "boss-enchant", "doll-abilities", "mercenary", "player", "enchant", "affix", "craft", "maps", "gems",
-  "talent-jewels", "talent", "talent-tree", "talent-layout", "talent-planner", "talent-live"];
+  "talent-jewels", "talent", "talent-tree", "talent-layout", "talent-planner", "talent-live", "memory-candle"];
+// 2026-11-20：加 memory-candle（回憶蠟燭道具）；地圖另外加 MAP_ONLY_ZONES（T16～T18 異界專屬地區，不在 ZONES 裡）
 
 const noop = () => {};
 const storage = { getItem: () => null, setItem: noop, removeItem: noop, key: () => null, length: 0 };
@@ -48,7 +49,7 @@ vm.runInContext(`${code}
   morphForms: Object.fromEntries(MORPH_FORMS.map((f) => [f.id, { name: f.name, sprite: f.sprite ?? null }])),
   defaultMorph: ITEMS.polyScroll && ITEMS.polyScroll.morph,
   towns: Object.fromEntries(Object.entries(TOWNS).map(([k, t]) => [k, t.name])),
-  zones: Object.fromEntries(ZONES.map((z) => [z.id, z.name])),
+  zones: Object.fromEntries([...ZONES, ...(typeof MAP_ONLY_ZONES === "undefined" ? [] : MAP_ONLY_ZONES)].map((z) => [z.id, z.name])),
   items: Object.fromEntries(Object.entries(ITEMS).map(([k, i]) => [k, i.name])),
 };`, sandbox, { filename: "game-data.js" });
 

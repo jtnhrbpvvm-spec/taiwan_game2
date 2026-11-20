@@ -1399,7 +1399,9 @@ function summarize(slot, data) {
   const exp = Number(p.exp) || 0;
   return { id: `${slot}:${p.created ?? p.name}`, t: data.t, name: p.name, cls: p.cls, level: p.lv, exp, totalExp: totalExp(p.lv, exp),
     gold: Number(p.gold) || 0, kills: Number(p.kills) || 0, deaths: Number(p.deaths) || 0, morph: morphOf(p, data.t),
-    loc: p.loc ?? {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
+    loc: p.loc ?? {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag,
+    // 回憶蠟燭（遊戲 2026-11-13）：回到 Lv.1 再原地升回，進行中存檔有 player.candleRb；這段期間的等級／經驗變化不是打怪來的
+    ...(p.candleRb ? { candle: true } : {}) };
 }
 
 /** 角色現在人在哪、在做什麼。 */
@@ -1417,7 +1419,9 @@ function describePlace(s, screenId) {
 /** 比對前後兩次存檔，整理成桌寵要演出來的事件。 */
 function diffEvents(prev, next) {
   const events = [];
-  if (next.level > prev.level) events.push({ kind: "levelup", level: next.level });
+  const candle = prev.candle || next.candle; // 回憶蠟燭升回原等級中：不演升級、不飄經驗
+  if (candle) { /* 略過 */ }
+  else if (next.level > prev.level) events.push({ kind: "levelup", level: next.level });
   else if (next.exp > prev.exp) events.push({ kind: "exp", n: next.exp - prev.exp });
   if (next.gold > prev.gold) events.push({ kind: "gold", n: next.gold - prev.gold });
   const loot = [];

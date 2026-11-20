@@ -25,7 +25,7 @@ const zones = {};
 const monIds = new Set();
 for (const z of W.zones) {
   zones[z.id] = { name: z.name, icon: z.icon, type: z.type, lv: z.lv, desc: z.desc || "", mons: z.mons || [], drops: (z.drops || []).map(drop),
-    rare: z.rare ? { id: z.rare.id, p: z.rare.p } : null, boss: z.boss || null };
+    rare: z.rare ? { id: z.rare.id, p: z.rare.p } : null, boss: z.boss || null, ...(z.mapTier ? { mapTier: z.mapTier } : {}) };   // mapTier：T16～T18 異界專屬地區（2026-11-19）
   (z.mons || []).forEach((id) => monIds.add(id));
   if (z.rare) monIds.add(z.rare.id);
   if (z.boss) monIds.add(z.boss);

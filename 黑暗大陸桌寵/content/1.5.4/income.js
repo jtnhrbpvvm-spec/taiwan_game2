@@ -46,9 +46,11 @@ function recordSave(index, s) {
   const prev = b.last;
   b.character = { name: s.name, cls: s.cls, level: s.level };
   if (prev && prev.id === s.id) {
+    // 回憶蠟燭（s.candle：回到 Lv.1 再升回原等級）期間與做完那一筆的等級／經驗變化不算收入
+    const candle = s.candle || prev.candle;
     const exp = s.totalExp - prev.totalExp;
-    if (exp > 0) b.exp += exp; // 死亡扣經驗不算進來
-    if (s.level > prev.level) b.levels += s.level - prev.level;
+    if (exp > 0 && !candle) b.exp += exp; // 死亡扣經驗不算進來
+    if (s.level > prev.level && !candle) b.levels += s.level - prev.level;
     b.gold += s.gold - prev.gold;
     if (s.kills > prev.kills) b.kills += s.kills - prev.kills;
     if (s.deaths > prev.deaths) b.deaths += s.deaths - prev.deaths;

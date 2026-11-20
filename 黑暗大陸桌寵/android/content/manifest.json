@@ -1,11 +1,11 @@
 {
-  "version": "1.5.4",
+  "version": "1.5.5",
   "shell": 1,
   "files": [
     {
       "path": "agent.js",
-      "sha256": "10e4d76d36e6fae966e7ef3256d3f4598bf6d6b802eccd369ac1d8fa24a80d66",
-      "size": 19044
+      "sha256": "78e3bd679c4bbf7127fbe0f45ffec75a4a4775bcc6c705624b5a1bcefa663543",
+      "size": 19703
     },
     {
       "path": "panel/index.html",
@@ -14,13 +14,13 @@
     },
     {
       "path": "names.json",
-      "sha256": "24657fa4440fa322eb7418b1cbbec99b947e5cc6b1fe5175a78f3ea9fbb5897b",
-      "size": 73759
+      "sha256": "46e73013eed8cd37047b748d2e7807c81b5740089268a53470679e48f9c9ec5a",
+      "size": 74022
     },
     {
       "path": "zones.js",
-      "sha256": "275bc27cca82ac93e89811f86ee2f900fdce6afe37e85da780e81eb6fa5a0ac5",
-      "size": 443725
+      "sha256": "c722e72006ff22399eee8c44aaaa08a2016f128a6ffee999ade0545eb59815b9",
+      "size": 454131
     }
   ]
 }

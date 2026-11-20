@@ -73,13 +73,13 @@ npm run zones        # 黑暗大陸攻略重新產生資料後（../黑暗大陸
 | `peers.js` | 每隻桌寵（每個程式）之間的具名管道：編號鎖、誰還活著（`scan`）、互相傳話 |
 | `accounts.js`、`accounts-preload.js`、`ui/accounts.*` | 帳號檔（加密存密碼）與帳號管理視窗 |
 | `zones.js`、`tools/gen-zones.js`、`tools/zone-guide-helper.js` | 收入總覽「目前地圖」：每張地圖的等級、怪物分布（Lv／HP／經驗、稀有首領）、可獲得物品（機率、來源）、可掉的魔法書／技能書（每隻怪的掉書率與書單）＋「看攻略」連結。點物品／怪物／書名跳出跟攻略網一樣的說明視窗：程式是攻略 `assets/wiki.js` 標「桌寵共用」那段原樣抄進來（`window.GUIDE_WIKI`），資料是攻略資料的一部分（`ZONE_GUIDE.wiki`）；說明視窗裡的攻略網頁連結用瀏覽器開。資料來自 `../黑暗大陸攻略/data/wiki-data.js`；電腦版、安卓版設定畫面都用 `../zones.js` 載入（安卓版的內容更新也帶這個檔） |
-| `income.js`、`income-preload.js`、`ui/income.*` | 收入總覽（這次啟動以來；每隻啟動時清掉自己的 `income-N.json` 重記，看別隻時讀牠的檔）。拿到／賣出的東西來自遊戲「掉落紀錄」訊息框（`main.js` 的 `LOOT_COLLECTOR`，遊戲藏著時會幫忙打開） |
+| `income.js`、`income-preload.js`、`ui/income.*` | 收入總覽（回憶蠟燭進行中＝存檔有 `player.candleRb`，`summarize` 標 `candle`，那段與做完那一筆的等級／經驗變化不算收入、桌寵不演升級；這次啟動以來；每隻啟動時清掉自己的 `income-N.json` 重記，看別隻時讀牠的檔）。拿到／賣出的東西來自遊戲「掉落紀錄」訊息框（`main.js` 的 `LOOT_COLLECTOR`，遊戲藏著時會幫忙打開） |
 | `boot.js`、`shell/content-store.js`、`shell/updates.js`、`update-source.json` | 外殼：選這次跑哪份內容、壞版退回、小檔案更新（必要時改下載完整安裝檔） |
 | `updates.js` | 遊戲版本檢查；桌寵自己的更新交給外殼（`global.petShell.updates`） |
 | `tools/release.js`、`tools/publish-content.js` | 發佈：安裝檔三個檔（也會改教學網頁的下載按鈕）、小檔案內容 `content/` |
 | `index.html` | 給玩家看的下載與教學網頁（風格配合遊戲；封面、職業動作圖直接用遊戲站上的）。GitHub Pages 網址：`https://jtnhrbpvvm-spec.github.io/taiwan_game2/黑暗大陸桌寵/` |
 | `save-reader.js` | 解開遊戲加密的本機存檔（照抄遊戲 `guard.js` 的解法，只讀） |
-| `names.json` | 職業動作圖、變身外觀（`morphs`／`morphForms`／`defaultMorph`，變身時桌寵跟著變）、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |
+| `names.json` | （2026-11-20 起地圖含 `MAP_ONLY_ZONES` 的 T16～T18 異界專屬地區、道具含回憶蠟燭；「目前地圖」在無限塔只顯示規則）職業動作圖、變身外觀（`morphs`／`morphForms`／`defaultMorph`，變身時桌寵跟著變）、村莊／地圖／道具名稱（`tools/gen-names.js` 從遊戲原始資料產生；線上版混淆過，讀不到遊戲裡的資料） |
 | `game-preload.js` | 讓遊戲永遠以為自己開在畫面上（`document.hidden` 一律 false）。**不能**回報「在背景」：遊戲在背景時大地圖的 `sceneUpdate` 停掉、不走過去找怪，節奏跟看著時不同，實際不會掉寶（使用者 2026-10-26 回報）。**節約效能模式**（`main.js` 的 `setGameHidden`／`setPowerSave`）只把藏著的遊戲 `devicePixelRatio` 回報成 0.5，地圖畫布少畫很多像素，邏輯照常；不改遊戲程式、不碰防改檔（存檔簽章、記憶體數值）。**畫面每秒最多幾格**（預設 60，右鍵「節約效能模式 › 畫面更新率」可選 48／55／60／120／144／不限制，每隻各自設定 `settings.petFps`，勾「套用到全部桌寵」`fpsApplyAll` 時一起換；`main.js` 的 `setGameFps` → `__petMaxFps`。桌寵動畫 `pet.js` 照所有桌寵裡最快的那個）：玩家回報 144Hz 螢幕、4 隻 PC 16:9 視窗都開著時整個桌寵佔 26% CPU（2026-10-29） |
 | `main.js` 的 `parkGame`／`showGame` | 遊戲視窗「藏起來」＝停在螢幕外只露 1～2 像素、幾乎透明、不在工作列、滑鼠穿過，但仍是顯示中的視窗。沒顯示（hide／show:false）的視窗遊戲畫面迴圈一秒只跑 1～2 次（2026-10-26 實測；顯示中 165 次），找怪節奏會不對；安卓版也是 1 像素懸浮視窗 |
 | `main.js` 的 `openGame`（保持狀態列） | 右鍵「顯示遊戲視窗（保持狀態列）」：之後關掉遊戲視窗時照樣停到螢幕外，但工作列留著按鈕、視窗可以拿焦點，點工作列按鈕（`focus`）就叫回來，看起來像縮小到工作列（使用者 2026-10-26 指定）。不能真的最小化，理由同上。別的視窗縮小時 Windows 也會把焦點交給下一個視窗（玩家回報縮小 B 時 A 跳出來），所以要分辨：滑鼠在工作列上（`cursorOnTaskbar`），而且 `WM_ACTIVATEAPP` 講焦點是工作列的執行緒讓出來的（`isTaskbarThread`，檔案總管的執行緒清單問 PowerShell）才叫出來，其他情況把焦點讓開；連點工作列按鈕縮小別的程式也分得出來（2026-11-01 實測）。另外 `setFocusable` 在 Windows 會順便丟焦點，已經能拿焦點時不要再呼叫。用一般的「顯示遊戲視窗」叫出來就恢復成完全藏起來。每隻上次選哪一種、遊戲視窗擺在哪，記在 `pet-settings.json` 的 `gameWindows`（`savedGameWindow`／`rememberGameWindow`），下次打開桌寵照上次的（快捷鍵、點兩下桌寵也照上次的選項） |

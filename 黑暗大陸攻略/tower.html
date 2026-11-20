@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>永夜之塔｜黑暗大陸攻略百科</title>
-<meta name="description" content="黑暗大陸永夜之塔 1～100F：逐層解鎖規則、各樓層怪物等級與數值、十位守關首領、專屬材料與掉落。">
+<meta name="description" content="黑暗大陸永夜之塔 1～100F：逐層解鎖規則、各樓層怪物等級與數值、十位守關首領、專屬材料與掉落；無限塔門票、樓層規則與娃娃升級卷軸。">
 <link rel="stylesheet" href="assets/wiki.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%3C/text%3E%3C/svg%3E">
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -39,6 +39,32 @@
 
     <h2>塔內一般掉落（每隻怪）</h2>
     <div id="drops"></div>
+
+    <h2 id="infinite">🗼 無限塔（2026-11-13）</h2>
+    <p>跟永夜之塔是不同的地方：一張特殊的挑戰地圖，怪物源源不絕湧出，看你能撐過幾層。畫面、狀態列、快捷欄跟一般狩獵一樣，技能、藥水照你的快捷欄設定使用。</p>
+    <div class="cols2">
+        <div class="box"><h3 style="margin-top:0">進入與門票</h3>
+            <ul>
+                <li><b>入口</b>：大地圖紫霧遺跡的「無限塔守門人」（站在他旁邊點他），或世界地圖直接傳送。</li>
+                <li><b>門票</b>：每次 <b>1,000 萬金幣</b>，每個角色<b>每天最多 3 次</b>（每天 00:00 重置）。</li>
+                <li><b>沒有經驗、金幣與掉寶</b>；藥水、彈藥照常消耗。</li>
+                <li><b>只有倒下才算失敗</b>：沒有死亡懲罰（不扣經驗、不回村），HP 回 30%、送回塔門口。再挑戰要重新買票。2026-11-14 起怪物數量沒有上限。</li>
+            </ul></div>
+        <div class="box"><h3 style="margin-top:0">樓層規則</h3>
+            <ul>
+                <li><b>每層 30 秒</b>，時間到直接進下一層（不等你打完）；每層固定出 30 隻怪，沒打完的會留下來跟下一層疊加（地圖上同時最多 200 隻）。</li>
+                <li>怪物等級 ＝ 50 ＋（樓層 − 1）× 2.5，越往上越強；一出生就朝你衝過來，身邊 4 格內的怪全部會攻擊你（貼身的近戰、其他的遠程），同時最多 40 隻圍攻。</li>
+                <li><b>每 5 層有首領</b>（血量 ×12、傷害 ×1.4，會放首領之怒），名稱標示樓層，例如「巨大牛人（10F）」。打不完的首領會留在場上。</li>
+                <li>每層抽能力：1～5 層 1 個、6～12 層 2 個、13 層起 3 個（第 1 層只會是疾風／再生／護盾）。</li>
+            </ul></div>
+    </div>
+    <div class="box tip"><b>唯一獎勵：<a href="dolls.html#upgrade">🎎 娃娃升級卷軸</a></b>：第 10 層起每 5 層（10、15、20、25、30…沒有上限）<b>擊殺該層首領</b>各得 1 張；只撐過樓層、沒打倒首領拿不到（第 5 層首領不給）。留在場上的首領之後擊殺一樣算。要<b>登入帳號</b>才領得到（卷軸存在伺服器）。</div>
+    <h3>樓層能力</h3>
+    <div class="tw"><table><thead><tr><th>能力</th><th>效果</th></tr></thead><tbody>
+        <tr><td>疾風</td><td>移動速度 +60%</td></tr><tr><td>狂暴</td><td>攻擊速度 +40%</td></tr><tr><td>蠻力</td><td>傷害 +30%</td></tr>
+        <tr><td>鋼皮</td><td>防禦 +15、魔防 +30</td></tr><tr><td>巨人</td><td>血量 ×2、傷害 +30%</td></tr><tr><td>護盾</td><td>血量 +40%</td></tr>
+        <tr><td>再生</td><td>每秒回復 3% 生命</td></tr><tr><td>分裂</td><td>死亡時再冒出 2 隻</td></tr><tr><td>射手</td><td>會用遠程魔法攻擊</td></tr><tr><td>閃現</td><td>會瞬移到你身邊</td></tr>
+    </tbody></table></div>
 </main>
 <script src="data/wiki-data.js"></script>
 <script src="assets/wiki.js"></script>

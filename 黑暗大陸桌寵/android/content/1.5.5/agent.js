@@ -161,7 +161,9 @@
       const exp = Number(p.exp) || 0;
       return { id: slot + ":" + (p.created || p.name), t: data.t, name: p.name, cls: p.cls, level: p.lv, exp, totalExp: totalExp(p.lv, exp),
         gold: Number(p.gold) || 0, kills: Number(p.kills) || 0, deaths: Number(p.deaths) || 0, morph: morphOf(p, data.t),
-        loc: p.loc || {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag };
+        loc: p.loc || {}, hunting: !!p.hunting, mapRun: !!p.mapRun, bag,
+        // 回憶蠟燭（遊戲 2026-11-13）：回到 Lv.1 再原地升回，進行中存檔有 player.candleRb
+        candle: !!p.candleRb };
     } catch (e) {
       return undefined;
     }
@@ -224,7 +226,8 @@
   /** 比對前後兩次存檔，整理成桌寵要演出來的事件。遊戲大約 20 秒自動存一次，所以是一批一批來的。 */
   function diffEvents(prev, next) {
     const events = [];
-    if (next.level > prev.level) events.push({ kind: "levelup", level: next.level });
+    if (prev.candle || next.candle) { /* 回憶蠟燭升回原等級中：不演升級、不飄經驗 */ }
+    else if (next.level > prev.level) events.push({ kind: "levelup", level: next.level });
     else if (next.exp > prev.exp) events.push({ kind: "exp", n: next.exp - prev.exp });
     if (next.gold > prev.gold) events.push({ kind: "gold", n: next.gold - prev.gold });
     let loot = 0;
@@ -252,6 +255,7 @@
   }
 
   let lastSave;
+  let lastReal; // 最近一筆不是回憶蠟燭進行中的 { id, level, totalExp }
 
   /** options.hidden：遊戲視窗藏著（收入總覽要幫忙打開掉落紀錄）。 */
   function tick(options) {
@@ -274,11 +278,14 @@
     // 換角色之後第一筆只當基準，不然整個背包都會被當成「剛撿到」
     if (lastSave && lastSave.id === s.id && lastSave.t !== s.t) out.events = diffEvents(lastSave, s);
     lastSave = s;
-    Object.assign(out, { hasSave: true, name: s.name, cls: s.cls, level: s.level, morph: s.morph,
+    // 回憶蠟燭進行中：收入總覽（Income.kt 比總經驗、等級）照用點蠟燭前的數字，升回去的經驗、等級不算收入
+    if (!s.candle || !lastReal || lastReal.id !== s.id) lastReal = { id: s.id, level: s.level, totalExp: s.totalExp };
+    const real = s.candle ? lastReal : s;
+    Object.assign(out, { hasSave: true, name: s.name, cls: s.cls, level: real.level, morph: s.morph,
       // 收入總覽的「目前地圖」用：存檔的 loc（{ type, id, floor }）；標題畫面時不給
       loc: out.screen && out.screen !== "screen-game" ? null : s.loc,
       // 收入總覽用：每次存檔的時間、角色、總經驗、金幣、擊殺、死亡
-      save: { id: s.id, t: s.t, totalExp: s.totalExp, gold: s.gold, kills: s.kills, deaths: s.deaths } }, describePlace(s, out.screen));
+      save: { id: s.id, t: s.t, totalExp: real.totalExp, gold: s.gold, kills: s.kills, deaths: s.deaths } }, describePlace(s, out.screen));
     return JSON.stringify(out);
   }
 

@@ -48,5 +48,7 @@ node tools/extract.js
 - 頁面上的數值大多直接讀 `wiki-data.js`，重跑就會更新。
 - 文字說明（攻略、規則）是依遊戲的 `ARCHITECTURE.md` 整理的，遊戲改規則時要手動改對應頁面。
 - 星盤寶珠與天賦石的掉率只寫在遊戲後端，`extract.js` 裡是手抄的（`talent.drops`），改版時要對照遊戲的 `tools/talent-system.sql`。
+- 異界專屬地區（T16～T18，遊戲 `zones.js` 的 `MAP_ONLY_ZONES`）也會抽出來，帶 `mapTier`；地圖頁、練功路線、稀有首領表會把它們分開。回憶蠟燭（`memory-candle.js`）一起載入，來源寫 `candle`。
+- 無限塔、娃娃升級卷軸的規則在後端與 `survivor.js`／`doll-upgrade.js`，`tower.html#infinite`、`dolls.html#upgrade` 是手寫的。
 - 野外首領 60～90 分鐘、鑽石每日上限也只寫在後端（`tools/boss-timer.sql`、`tools/vault.sql`），頁面上是手寫的。
 - 圖片直接引用遊戲線上版網址（`IMG_BASE`，在 `tools/extract.js`），不複製圖檔；圖片版權屬遊戲作者。
