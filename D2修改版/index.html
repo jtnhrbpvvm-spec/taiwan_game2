@@ -216,6 +216,16 @@
   .ie-warn b { color: #ff8a66; }
   .ie-warn a { color: #f0c94a; font-weight: bold; }
   @supports (display: grid) { .ie-warn { display: none; } }
+
+  /* ── 網頁版停止營運公告 ── */
+  .shutdown { margin: 18px 0 14px; text-align: left; padding: 18px 20px; border: 2px solid var(--red); border-radius: 10px;
+    background: linear-gradient(180deg, #2e1410, #1d0d0a); box-shadow: 0 0 24px -6px rgba(255,107,91,.45); }
+  .shutdown h2 { margin: 0 0 8px; font-size: 19px; color: #ff8a66; }
+  .shutdown p { margin: 6px 0; }
+  .shutdown b { color: var(--cream); }
+  .dl-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 14px 0 6px; }
+  .dl-row .btn { min-height: 46px; font-size: 15px; }
+  .dl-row .btn small { font-weight: normal; opacity: .75; }
 .btn-drag[data-pre]::before{content:attr(data-pre)}.btn-drag[data-post]::after{content:attr(data-post)}
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -235,19 +245,30 @@
   <header class="hero">
     <div class="emblem">中</div>
     <h1>D2倖存者 中文化書籤</h1>
-    <p class="sub"><a class="play-link" href="https://d2survivors.lol/" target="_blank" rel="noopener">暗黑2倖存者這邊玩</a></p>
+    <section class="shutdown" id="news">
+      <h2>⚠ 網頁版已停止營運（2026/11/21）</h2>
+      <p>作者 framara 收到 Activision Blizzard 的正式要求，<b>d2survivors.lol 網頁版、wiki 和網站排行榜都已經下線</b>，瀏覽器和手機都不能再玩，所以<b>網頁版書籤也沒辦法用了</b>。</p>
+      <p><b>電腦版（桌面版）還能繼續玩</b>：用你自己的 Diablo II／D2R 檔案，存檔留在你的電腦裡，作者表示會繼續更新。排行榜改成只在遊戲內。中文化請看下方的 <a href="#desktop">🖥️ 電腦版遊戲</a>。</p>
+      <div class="dl-row">
+        <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-Setup-win-x64.exe">⬇ Windows <small>約 110 MB</small></a>
+        <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-mac-arm64.dmg">⬇ Mac <small>約 128 MB</small></a>
+        <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-linux-x64.AppImage">⬇ Linux <small>約 115 MB</small></a>
+      </div>
+      <p class="hint">下載連結取自官方 Discord（<a href="https://discord.com/invite/QPdAMTSeNu" target="_blank" rel="noopener">D2Survivors</a>）的 #links-and-donations 頻道，後續消息請看 #announcements。中文化 zip 目前只支援 Windows。</p>
+    </section>
     <div class="chips">
       <span class="chip">選單介面</span><span class="chip">技能說明</span><span class="chip">裝備名稱</span>
       <span class="chip">物品屬性</span><span class="chip">怪物與地區</span><span class="chip">中英切換</span>
     </div>
     <nav class="toc">
-      <a href="#pc">💻 電腦安裝</a><a href="#desktop">🖥️ 電腦版遊戲</a><a href="#mobile">📱 手機安裝</a><a href="#use">🎮 使用方式</a><a href="#pad">🕹️ 遊戲手把</a>
+      <a href="#pc" hidden>💻 電腦安裝</a><a href="#desktop">🖥️ 電腦版遊戲</a><a href="#mobile" hidden>📱 手機安裝</a><a href="#use" hidden>🎮 使用方式</a><a href="#pad">🕹️ 遊戲手把</a>
       <a href="#show">🖼️ 成品展示</a><a href="#faq">❓ 常見問題</a>
     </nav>
   </header>
 
   <!-- 電腦 -->
-  <section class="card" id="pc">
+  <!-- 網頁版已停止營運（2026/11/21），書籤教學先隱藏 -->
+  <section class="card" id="pc" hidden>
     <h2>💻 電腦瀏覽器（Chrome / Edge）<span class="tag">拖曳安裝</span></h2>
     <a id="drag-btn" class="btn btn-drag" href="#" draggable="true" title="拖曳到書籤列" data-pre="中 拖我到書籤列（" data-post="）">D2 繁體中文</a>
     <ol class="hint">
@@ -262,7 +283,7 @@
   <section class="card" id="desktop">
     <h2>🖥️ 電腦版遊戲（D2 Survivors.exe）<span class="tag">Windows 專用</span></h2>
     <div class="note-box warn app-note" style="margin-top:0">
-      <div><b>這是電腦安裝版專用的檔案。</b>只給從 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">d2survivors.lol</a> 下載、安裝在 Windows 上的遊戲（D2 Survivors.exe）用。在瀏覽器或手機上玩，請用上面的書籤。</div>
+      <div><b>這是電腦安裝版專用的檔案。</b>只給從 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">d2survivors.lol</a> 下載、安裝在 Windows 上的遊戲（D2 Survivors.exe）用。</div>
       <div style="margin-top:8px;color:#ff8a66"><b>⚠ 安裝電腦版本身需要有暗黑破壞神主程式（Diablo II 或 Diablo II: Resurrected），否則無法執行！</b></div>
       <figure>
         <img src="desktop/get-desktop-app.png" width="568" height="199" alt="d2survivors.lol 網站上的 GET DESKTOP APP（for Windows）按鈕">
@@ -291,7 +312,7 @@
   </section>
 
   <!-- 手機 -->
-  <section class="card" id="mobile">
+  <section class="card" id="mobile" hidden>
     <h2>📱 手機（iPhone / Android）<span class="tag">貼上安裝</span></h2>
 
     <div class="switch" role="tablist">
@@ -330,7 +351,7 @@
   </section>
 
   <!-- 使用方式 -->
-  <section class="card" id="use">
+  <section class="card" id="use" hidden>
     <h2>🎮 使用方式</h2>
     <div class="flow">
       <div class="flow-step"><div class="num">1</div><div>打開 <a href="https://d2survivors.lol/" target="_blank" rel="noopener">d2survivors.lol</a>，點書籤「D2 繁體中文」。<div class="hint">手機 Android：在網址列輸入「D2」，點下方出現的書籤（從書籤清單點不會執行）。</div></div></div>
@@ -393,7 +414,7 @@
   <!-- 常見問題 -->
   <section class="card" id="faq">
     <h2>❓ 常見問題</h2>
-    <details>
+    <details hidden>
       <summary>點了書籤沒有反應？</summary>
       <p>確認是在 d2survivors.lol 的遊戲頁面上點，在其他網頁點會跳出提示。Android Chrome 要從<b>網址列</b>輸入書籤名稱再點建議項目，從書籤清單點不會執行。iPhone 請確認網址欄位是整段 <code>javascript:</code> 開頭的程式碼，前面沒有多出空白或 https://。</p>
     </details>
@@ -401,7 +422,7 @@
       <summary>手把沒有反應？</summary>
       <p>按一下手把上的任何鍵（瀏覽器要等你按鍵才會讓網頁讀到手把），遊戲分頁要在前景。手機請先在「設定 → 藍牙」配對好手把；iPhone 需要 iOS 14.5 以上。手把震動或按鍵不順手，請到遊戲的「選項 → 手把」調整。</p>
     </details>
-    <details>
+    <details hidden>
       <summary>書籤需要自己更新嗎？</summary>
       <p>不用。書籤每次點都會載入最新版本的翻譯，裝一次就好。</p>
     </details>
