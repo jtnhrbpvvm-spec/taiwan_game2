@@ -226,6 +226,8 @@
   .dl-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 14px 0 6px; }
   .dl-row .btn { min-height: 46px; font-size: 15px; }
   .dl-row .btn small { font-weight: normal; opacity: .75; }
+  .save-box { margin: 14px 0 6px; padding: 12px 14px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); }
+  .save-box .btn { margin-top: 10px; min-height: 44px; font-size: 15px; }
 .btn-drag[data-pre]::before{content:attr(data-pre)}.btn-drag[data-post]::after{content:attr(data-post)}
 </style>
 <script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
@@ -253,6 +255,15 @@
         <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-Setup-win-x64.exe">⬇ Windows <small>約 110 MB</small></a>
         <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-mac-arm64.dmg">⬇ Mac <small>約 128 MB</small></a>
         <a class="btn btn-dl" href="https://d2survivors.lol/download/D2-Survivors-linux-x64.AppImage">⬇ Linux <small>約 115 MB</small></a>
+      </div>
+      <div class="save-box">
+        <b>📦 取回網頁版存檔</b>：網頁版的存檔還留在你玩過的瀏覽器裡，作者有開一個頁面讓你下載，再匯入電腦版，英雄和裝備都會保留。
+        <a class="btn btn-copy" href="https://d2survivors.lol/save/" target="_blank" rel="noopener">⬇ 下載網頁版存檔（d2survivors.lol/save）</a>
+        <ol class="hint">
+          <li>用<b>當初玩遊戲的同一個瀏覽器</b>（同一個設定檔）打開上面的頁面，下載 <code>.txt</code> 存檔。換瀏覽器或用無痕視窗會找不到存檔。</li>
+          <li>打開電腦版遊戲，在主選單按 <b>SAVES</b> → <b>Open a save file</b>，選剛剛下載的 <code>.txt</code> 檔。</li>
+          <li>專家模式（Hardcore）的存檔沒辦法搬移。</li>
+        </ol>
       </div>
       <p class="hint">下載連結取自官方 Discord（<a href="https://discord.com/invite/QPdAMTSeNu" target="_blank" rel="noopener">D2Survivors</a>）的 #links-and-donations 頻道，後續消息請看 #announcements。中文化 zip 目前只支援 Windows。</p>
     </section>
