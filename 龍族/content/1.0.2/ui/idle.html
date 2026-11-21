@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://play.17raja.com; style-src 'self' 'unsafe-inline'" />
+    <title>掛機設置</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 14px 16px 18px; background: #0d0b08; color: #e9e4d8; font: 14px/1.6 "Microsoft JhengHei", sans-serif; }
+      h1 { margin: 0 0 4px; font-size: 18px; color: #f2bb4f; }
+      h2 { margin: 0 0 4px; font-size: 15px; color: #f2bb4f; }
+      section { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #17130e; border: 1px solid #3a2f20; }
+      .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 10px; }
+      .tabs button { padding: 7px 0; border: 1px solid #3a2f20; border-radius: 8px; background: #17130e; color: #98a2b6; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .tabs button[aria-selected="true"] { background: #3a2c14; color: #f2bb4f; border-color: #8a6a2a; }
+      .item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid #2a2218; flex-wrap: wrap; }
+      .item:first-of-type { border-top: 0; }
+      .item .name { flex: 1; min-width: 120px; font-weight: bold; }
+      .hint { width: 100%; font-size: 12px; color: #98a2b6; line-height: 1.5; }
+      .seg { display: inline-grid; grid-auto-flow: column; gap: 2px; padding: 2px; border-radius: 8px; background: #0d0b08; }
+      .seg button { padding: 3px 10px; border: 0; border-radius: 6px; background: transparent; color: #98a2b6; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .seg button[aria-checked="true"] { background: #3a2c14; color: #fff; font-weight: bold; }
+      .switch { position: relative; width: 38px; height: 20px; border: 0; border-radius: 10px; background: #3a3a3a; cursor: pointer; flex-shrink: 0; }
+      .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 0.15s; }
+      .switch[aria-checked="true"] { background: #c9973f; }
+      .switch[aria-checked="true"]::after { left: 20px; }
+      .switch:disabled { opacity: 0.4; cursor: default; }
+      input[type="range"] { flex: 1; min-width: 140px; accent-color: #c9973f; }
+      select { padding: 3px 6px; border-radius: 6px; border: 1px solid #5a4a30; background: #0d0b08; color: #fff; font: inherit; max-width: 100%; }
+      .checks { display: flex; gap: 6px; width: 100%; }
+      .checks button { flex: 1; padding: 5px 0; border: 1px solid #3a2f20; border-radius: 8px; background: #17130e; color: #98a2b6; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .checks button[aria-pressed="true"] { background: #3a2c14; color: #f2bb4f; border-color: #8a6a2a; font-weight: bold; }
+      .skill { margin-top: 8px; padding: 8px; border-radius: 8px; background: #0d0b08; border: 1px solid #2a2218; }
+      .skill .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .skill img { width: 32px; height: 32px; image-rendering: pixelated; border-radius: 6px; background: #000; }
+      .skill .slot { font-size: 11px; color: #98a2b6; }
+      .skill .seg { display: grid; grid-auto-flow: row; grid-template-columns: repeat(5, 1fr); width: 100%; }
+      .skill .seg.four { grid-template-columns: repeat(4, 1fr); }
+      .skill .seg button { padding: 5px 2px; font-size: 12px; }
+      .targets { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; font-size: 12px; color: #98a2b6; }
+      .targets .seg { display: inline-flex; width: auto; }
+      .small { padding: 3px 10px; border: 1px solid #5a4a30; border-radius: 6px; background: #17130e; color: #e9e4d8; font: 12px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .small:disabled { opacity: 0.4; cursor: default; }
+      #status { font-size: 13px; }
+      .warn { color: #ffb46a; }
+      .ok { color: #8fe08a; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <h1>掛機設置</h1>
+    <div id="status">讀取遊戲設定中…</div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="general" aria-selected="true">一般</button>
+      <button type="button" role="tab" data-tab="idle" aria-selected="false">掛機自動化</button>
+    </div>
+
+    <section id="tab-general">
+      <div class="item"><span class="name">畫面品質</span><span class="seg" id="graphics"></span>
+        <div class="hint">推薦：依這台裝置自動調整。效能優先：更省記憶體與電，畫面稍糊、特效粒子減半，適合長時間掛機。畫面優先：圖片多留、流光完整、2 倍解析度，比較吃記憶體。</div></div>
+      <div class="item"><span class="name">特效</span><span class="seg" id="effects"></span>
+        <div class="hint">高：全部顯示。中：別人的法術特效淡一點、粒子少一點。低：別人的攻擊法術特效不顯示（補助照常），粒子減半。自己和怪物的特效一律顯示。</div></div>
+      <div class="item"><span class="name">音效</span><button type="button" class="switch" role="switch" id="soundOn"></button>
+        <div class="hint">戰鬥、按鈕與環境音。（桌寵的遊戲視窗本身是靜音的，這裡只是記住遊戲裡的設定）</div></div>
+      <div class="item" id="soundVolumeRow"><span class="name">音效音量</span><input type="range" id="soundVolume" min="0" max="100" step="5" /><span id="soundVolumeText"></span></div>
+      <div class="item"><span class="name">背景音樂</span><button type="button" class="switch" role="switch" id="musicOn"></button>
+        <div class="hint">各地圖的音樂（新手村沒有音樂）。</div></div>
+      <div class="item" id="musicVolumeRow"><span class="name">音樂音量</span><input type="range" id="musicVolume" min="0" max="100" step="5" /><span id="musicVolumeText"></span></div>
+      <div class="item"><span class="name">打擊震動</span><button type="button" class="switch" role="switch" id="shake"></button>
+        <div class="hint">暴擊、被重擊、首領倒下時鏡頭輕微震動（最多 5 像素）。長時間掛機想要畫面完全不動可以關掉。</div></div>
+      <div class="item"><span class="name">自動喝藥</span><span class="seg" id="potionAt"></span>
+        <div class="hint">血量低於這個比例就自動喝背包裡的紅水（用完會提醒）；魔力不夠放快捷欄的法術、戰技時自動喝藍水。</div></div>
+      <div class="item"><span class="name">優先紅水</span><select id="hpItem"></select></div>
+      <div class="item"><span class="name">優先藍水</span><select id="mpItem"></select>
+        <div class="hint">套用到自動喝藥與快捷欄，用完會切到同類備用藥。</div></div>
+      <div class="item" id="shareRow" hidden><span class="name">公開裝備</span><button type="button" class="switch" role="switch" id="share"></button>
+        <div class="hint">允許其他玩家查看這個角色身上穿的裝備。（存在伺服器，要連線才讀得到）</div></div>
+    </section>
+
+    <section id="tab-idle" hidden>
+      <div class="item"><span class="name">原地自動戰鬥</span><button type="button" class="switch" role="switch" id="hold"></button>
+        <div class="hint">自動戰鬥時站在原地不走動：只打武器、魔法打得到的怪，不追怪、不走去撿東西。自己點地面或搖桿移動不受影響。</div></div>
+      <div class="item"><span class="name">自動幫隊友施法</span><button type="button" class="switch" role="switch" id="allyCast"></button>
+        <div class="hint">自動戰鬥時，快捷欄的治療、保護和增益會支援隊友。回溯聖言會先救同隊，再救射程內的同國玩家。關掉後仍可手動指定目標。</div></div>
+      <div class="item"><span class="name">自動修理</span><button type="button" class="switch" role="switch" id="repair"></button>
+        <div class="hint">身上裝備耐久低於 20% 時，照一般修理費自動全修；壞掉卸下的裝備也會修好並穿回去；掛機修理不會降低耐久上限。</div></div>
+      <div class="item"><span class="name">撿裝備</span><span class="seg" id="pickupMin"></span>
+        <div class="hint">掛機時撿哪些裝備。★、獨特、符合追蹤詞綴、比身上好又穿得上的一律會撿；藥水、材料等道具與金幣照撿。沒撿的留在地上，一分鐘後消失。</div></div>
+      <div class="item"><span class="name">停止角色升級</span><button type="button" class="switch" role="switch" id="expLock"></button>
+        <div class="hint">打怪不加角色經驗，熟練照常加。角色比怪高越多，熟練漲得越慢；想先把熟練練上去可以開著。</div></div>
+      <div class="item"><span class="name">背包快滿時自動賣裝</span><button type="button" class="switch" role="switch" id="sell"></button>
+        <div class="hint">背包剩 20 格以下時，賣掉下面勾選稀有度的裝備（鎖定、★、追蹤詞綴、裝備組、強化或升階過、壞掉的不賣）。</div>
+        <div class="checks" id="sellRarity"></div></div>
+
+      <h2 style="margin-top: 12px">自動施放設定</h2>
+      <div class="hint">新放入快捷欄的技能預設只手動施放。可在這裡選擇掛機時要用的招式。技能要放進快捷欄，請在遊戲的魔法／戰技頁設定。</div>
+      <div style="margin-top: 6px"><button type="button" class="small" id="allOff">全部關閉</button> <span id="ruleCount" class="hint"></span></div>
+      <div id="skills"></div>
+    </section>
+    <script src="idle.js"></script>
+  </body>
+</html>

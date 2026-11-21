@@ -1,0 +1,126 @@
+{
+  "version": "1.0.2",
+  "shell": 1,
+  "files": [
+    {
+      "path": "accounts-preload.js",
+      "sha256": "c9cb9bdf82866f557ec823b6fe6c5fa5fcbd0e52f316c2d7c6f8f8e527597003",
+      "size": 807
+    },
+    {
+      "path": "accounts.js",
+      "sha256": "6f28232d2cd3a5ba6077502a4761c742a7e67f6edc6cdb7b79b0d9ae85a46cc9",
+      "size": 5123
+    },
+    {
+      "path": "art.json",
+      "sha256": "e2ee2b154d4783de6958ca8a7b79149210202e19abdf6fb5e375c603e8e4d258",
+      "size": 46127
+    },
+    {
+      "path": "auto-preload.js",
+      "sha256": "805d88124e8c0074538237ac50d83341d02540d5ac4636d480ad4379e46275e9",
+      "size": 353
+    },
+    {
+      "path": "build/icon.png",
+      "sha256": "c32da0b340f038ee4cd8c96f60f5b43c597b5a139fac805ea0c2cfcd2f5717b6",
+      "size": 53271
+    },
+    {
+      "path": "companion.js",
+      "sha256": "4f3757f812253cba06462d08edd40b8ace18a5cddf6891f518d4c4cc86daf6f6",
+      "size": 35266
+    },
+    {
+      "path": "game-hook.js",
+      "sha256": "96d2d5d1504da2db1df7fed0b7a801d933444e0e7f6df0e135b41973931847ef",
+      "size": 35667
+    },
+    {
+      "path": "game-patch.js",
+      "sha256": "3d72180c8fb621813d802cc08c3211feec5ab0d9a8ccf0031fc0cfbe424a731b",
+      "size": 8464
+    },
+    {
+      "path": "game-preload.js",
+      "sha256": "507bf89be3da07dcbe9c3cc79f7c16f13c7377df590cd34b1e8eccf8f747bf33",
+      "size": 8430
+    },
+    {
+      "path": "idle-preload.js",
+      "sha256": "4365b145071c01f64217d331a670231338266f799214f4ed4077e0f4284d92bd",
+      "size": 404
+    },
+    {
+      "path": "login-browser.js",
+      "sha256": "972feada0ab570e892cd939b5fc8beedf17a733540c85197832de45df8bfdee0",
+      "size": 8578
+    },
+    {
+      "path": "main.js",
+      "sha256": "24560d611c07e2576a7507b7a8753a4f91a9c17beef633e51f45dee1aee033fe",
+      "size": 8811
+    },
+    {
+      "path": "pet-preload.js",
+      "sha256": "02b178485cc0b6da36cb68f1a6fa3faea0e8de0725fc476bc25150ebbe933c47",
+      "size": 1299
+    },
+    {
+      "path": "pet/index.html",
+      "sha256": "1caa7731ebe76ff8d71bcf2683dc5399aa35fefc781675a6fe7aaa0eca87cd82",
+      "size": 3337
+    },
+    {
+      "path": "pet/pet.js",
+      "sha256": "6de5dab96c6b39bdcbad81c2549c568f2215e8344fe169409bb67632e13a5d7e",
+      "size": 19667
+    },
+    {
+      "path": "potion-supply.js",
+      "sha256": "8e458a78cf3c2d177437bf437125b85ff349aea84f162992fe5855638eb7a5d9",
+      "size": 1952
+    },
+    {
+      "path": "tools/fill-login.ps1",
+      "sha256": "2d87b91e8e265486b450e2e0f3f3dde0fd15f7f30d56f289510d36456ffc0e15",
+      "size": 2981
+    },
+    {
+      "path": "tools/legacy-account-crypto.cjs",
+      "sha256": "a79122268270df0ca537c5ee61d4cc15ebd34b7126a925c7f3ac2fcdd7a3ec2f",
+      "size": 1634
+    },
+    {
+      "path": "ui/accounts.html",
+      "sha256": "e796612efcab85973d4976efea7c4e0839b540a4d371ed986fc12999cef6089c",
+      "size": 3358
+    },
+    {
+      "path": "ui/accounts.js",
+      "sha256": "1227f06e7d9b1a8aef58b3e65b3592c8507e5563eea676e3387206c4b2c32e17",
+      "size": 4108
+    },
+    {
+      "path": "ui/auto.html",
+      "sha256": "e1c45c5935494ea6d0c9ee144ea6283dd9db513d279ad63b9ab89e725b25e8ac",
+      "size": 5789
+    },
+    {
+      "path": "ui/auto.js",
+      "sha256": "5e15f416feb06f9960c448eb91e09b8732e7e384378eca28851470785011c4b7",
+      "size": 6132
+    },
+    {
+      "path": "ui/idle.html",
+      "sha256": "4a582a07f8e8ab16d8cb1102d2a7776fc990cdf4a9cdc91b044368f5c17c6b05",
+      "size": 9838
+    },
+    {
+      "path": "ui/idle.js",
+      "sha256": "0265989c75a8b668073dd62384f5dbf4e2ad704998ac8b95db98be078fa1e632",
+      "size": 8875
+    }
+  ]
+}
