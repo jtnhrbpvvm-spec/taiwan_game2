@@ -52,6 +52,7 @@ function addItem(type){
   const enId  = type === 'inv' ? 'invEn'    : 'whEn';
   const id    = document.getElementById(selId).value;
   if(!id){ toast('請先選擇物品', 'err'); return; }
+  if(!ITEM_DB[id]){ toast('⚠️ 遊戲中沒有這個物品：' + id, 'err', 4000); return; }
   const item = {
     id, uid:genUID(),
     cnt:   parseInt(document.getElementById(cntId).value) || 1,

@@ -671,6 +671,7 @@ function pAddItem(idx){
   const id  = document.getElementById(`pInvSel_${idx}`)?.value;
   const cnt = parseInt(document.getElementById(`pInvCnt_${idx}`)?.value)||1;
   if(!id){ toast('請先選擇物品','err'); return; }
+  if(!ITEM_DB[id]){ toast('⚠️ 遊戲中沒有這個物品：'+id,'err',4000); return; }
   if(!G.p.allies[idx].inv) G.p.allies[idx].inv=[];
   G.p.allies[idx].inv.push({id,uid:genUID(),cnt,en:0,bless:false,lock:false,junk:false,attr:false,anc:false,seteff:false});
   savePartnerToG(idx);

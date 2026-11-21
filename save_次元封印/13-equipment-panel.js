@@ -259,6 +259,7 @@ function onSysSlotChange(slotId){
   const id = document.getElementById(`eq_${slotId}_id`)?.value || '';
   if(!id){ G.p.eq[slotId] = null; return; }
   const orig = G.p.eq[slotId] || {};
+  if(!ITEM_DB[id] && id !== orig.id){ toast('⚠️ 遊戲中沒有這個物品：' + id, 'err', 4000); return; }
   const keep = orig.id === id ? orig : {};   // 換成別件時不沿用舊物品的欄位
   G.p.eq[slotId] = Object.assign({}, keep, {
     id,
@@ -282,6 +283,13 @@ function onEqFieldChange(slotId){
   if(!idVal){
     G.p.eq[slotId] = null;
     _refreshEqPreview(slotId, null, null);
+    return;
+  }
+  // 遊戲裡沒有的物品不能放（讀檔會報錯）；存檔原本就有的照舊保留
+  if(!ITEM_DB[idVal] && idVal !== orig.id){
+    toast('⚠️ 遊戲中沒有這個物品：' + idVal, 'err', 4000);
+    const inp = document.getElementById(`eq_${slotId}_id`);
+    if(inp) inp.value = orig.id || '';
     return;
   }
 
