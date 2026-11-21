@@ -42,7 +42,7 @@ javascript:(function awTools() {
 
   /* 書籤版本號：每次修改這個檔案就加 1，會顯示在「技能配置模擬」視窗的標題旁，
    * 用來確認書籤裡貼的是不是最新版 */
-  const VERSION = 'V46';
+  const VERSION = 'V47';
 
   /* ===== 設定 ===== */
   const CFG = {
@@ -521,9 +521,12 @@ javascript:(function awTools() {
     const tray = () => S.gems.filter(g => !gems.some(o => o.u === g.u) && !(held && held.u === g.u));
 
     /* 暫時把模擬配置換進遊戲存檔，呼叫遊戲自己的算式，再立刻換回來 */
+    /* 遊戲 v0.3.600 起 placed() 有快取 GP（同一個陣列、長度沒變就沿用上次的結果），
+     * 模擬盤會直接改寶石的 x／y，所以換進換出時都把快取清掉，免得拿到舊的配置 */
+    const gpReset = () => { try { if (typeof GP !== 'undefined') GP = null; } catch (e) {} };
     const withGems = (list, fn) => {
       const keep = S.gems;
-      try { S.gems = list; return fn(); } catch (e) { return null; } finally { S.gems = keep; }
+      try { S.gems = list; gpReset(); return fn(); } catch (e) { return null; } finally { S.gems = keep; gpReset(); }
     };
     const dpsOf = list => { const r = withGems(list, () => calc()); return r ? r.dps : 0; };
 
@@ -646,8 +649,9 @@ javascript:(function awTools() {
       if (gVul) T *= 1 + CRS.vu.v * M.crs * Math.min(1, CRS.vu.t / cdOfGem(gVul));
       /* 詛咒之戒：易傷詛咒變成光環，放在盤上（不一定要啟用）就一直有效 */
       else if (n('crsRing') && placed().some(t => t.id === 'cvul')) T *= 1 + CRS.vu.v * M.crs;
-      const gTnt = acts.find(g => g.id === 'taunt');
-      if (gTnt && n('tntVul')) T *= 1 + n('tntVul') * Math.min(1, (TNT_T + n('tntT')) / cdOfGem(gTnt));
+      /* 威壓（tntVul）：v0.3.550 起守護英靈嘲諷的敵人也算「被嘲諷」，盤上有啟用的守護英靈就當成一直有效 */
+      const gTnt = acts.find(g => g.id === 'taunt'), gGrd = has('guard');
+      if ((gTnt || gGrd) && n('tntVul')) T *= 1 + n('tntVul') * (gGrd ? 1 : Math.min(1, (TNT_T + n('tntT')) / cdOfGem(gTnt)));
       if (n('psnVul') && (p.length || acts.some(g => SKILLS[g.id].tg.includes('psn')))) T *= 1 + n('psnVul');
       if (!fixedHit && has('frenzy')) T *= 1.35 + n('frz');
       for (const h of HIT_MUL) if (h.est) T *= h.est(M, n);
@@ -1502,7 +1506,7 @@ javascript:(function awTools() {
    * 分解的做法都照遊戲自己的按鈕：裝備呼叫 salvage()，石板加 slateAsh()，符文加 runeAsh()，
    * 變異寶石加 MUT.ash；一般技能寶石在遊戲裡本來就不能分解。
    * 物品結構：ilvl 等級、rar 稀有度、af 詞綴陣列（a 詞綴代號、v 數值、t 階級，數字越小越好）、
-   *          uq 獨特代號、my 神話獨特、sock 插槽、lk 已鎖定、wd 武器數值、arm／eva 基礎護甲閃避；
+   *          uq 獨特代號、my 神話獨特、sock 插槽、lk 已鎖定、wd 武器數值、arm／eva 基礎護甲閃避、blf 腰帶基礎生命、dt 基底種類；
    *          石板另有 b 種類、v 主數值、dg 危險詞綴；符文只有一條 a／t／v 或 uq；
    *          技能寶石有 id、x／y（小於 0 代表沒放）、sh（變異形狀）。
    */
@@ -1522,6 +1526,9 @@ javascript:(function awTools() {
     const isSlotted = it => slotted().includes(it);
     const afText = a => { try { return (a.t != null ? 'T' + a.t + ' ' : '') + AFFIX[a.a].f(a.v); } catch (e) { return ''; } };
     const uqLine = it => { try { return '獨特：' + uqText(it.uq, it.cm || 1); } catch (e) { return ''; } };
+    const BELT_DT_N = { a: '護甲', e: '閃避', h: '混合', l: '生命' };
+    /* 基底品質（遊戲 baseQ，0～100；沒有基底數值的裝備是 -1） */
+    const baseQOf = it => { try { const v = typeof baseQ === 'function' ? baseQ(it) : -1; return v >= 0 ? Math.round(100 * v) : -1; } catch (e) { return -1; } };
 
     const KINDS = {
       equip: {
@@ -1535,8 +1542,13 @@ javascript:(function awTools() {
         lines: it => {
           const out = [];
           if (it.wd) out.push('傷害 ' + it.wd[0] + '-' + it.wd[1] + '・攻速 ' + it.wd[2] + '・暴擊 ' + it.wd[3] + '%');
+          /* 腰帶的基底（遊戲 setBase：dt 是 a 護甲、e 閃避、h 護甲＋閃避、l 生命；生命型的基礎生命存在 blf） */
+          if (it.slot === 'belt' && BELT_DT_N[it.dt]) out.push(BELT_DT_N[it.dt] + '基底');
           if (it.arm) out.push('護甲 ' + it.arm);
           if (it.eva) out.push('閃避 ' + it.eva);
+          if (it.blf) out.push('生命 ' + it.blf);
+          const bq = baseQOf(it);
+          if (bq >= 0) out.push('基底品質 ' + bq + '%');
           if (it.sock) out.push('插槽 ' + it.sock.n + ' 孔');
           if (it.uq) out.push(uqLine(it));
           for (const a of (it.af || [])) out.push(afText(a));
@@ -1668,6 +1680,8 @@ javascript:(function awTools() {
       if (f === '孔' || f === '插槽') return cmp(it.sock ? it.sock.n : 0);
       if (f === '基礎護甲') return cmp(it.arm || 0);
       if (f === '基礎閃避') return cmp(it.eva || 0);
+      if (f === '基礎生命') return cmp(it.blf || 0);
+      if (f === '品質' || f === '基底品質') { const v = baseQOf(it); return v >= 0 && cmp(v); }
       if (f === '武器傷害上限') return !!it.wd && cmp(it.wd[1]);
       if (f === 't' || f === '階級') return af.some(a => a.t != null && cmp(a.t));
       /* 其餘當成詞綴名稱：有完全同名的詞綴就只比那一種，否則比名稱或文字包含這個詞的詞綴 */
@@ -1724,7 +1738,7 @@ javascript:(function awTools() {
         '<details' + (window.innerHeight >= 700 ? ' open' : '') + ' style="color:#a89a84;font-size:12px;margin-top:4px"><summary style="cursor:pointer">搜尋說明</summary>' +
           '空白分隔多個條件（全部都要符合），前面加 - 代表排除。<br>' +
           '文字：名稱、部位、稀有度、詞綴文字，以及裝備中、已鎖定、使用中、配置中、變異等狀態。<br>' +
-          '數值：詞綴名稱或 等級／LV、T（階級，越小越好）、灰燼、詞綴數、孔、基礎護甲、基礎閃避、武器傷害上限，後面接 &gt; &lt; &gt;= &lt;= = 和數字。' +
+          '數值：詞綴名稱或 等級／LV、T（階級，越小越好）、灰燼、詞綴數、孔、基礎護甲、基礎閃避、基礎生命（腰帶）、基底品質、武器傷害上限，後面接 &gt; &lt; &gt;= &lt;= = 和數字。' +
         '</details>' +
       '</div>';
     document.body.appendChild(root);
@@ -1784,9 +1798,16 @@ javascript:(function awTools() {
      *   rar  稀有度 ≥ r（0 普通 … 3 傳奇、4 獨特或插槽）
      *   slot 部位在 s 裡    lv 物品等級 ≥ l    dv 神眷詞綴階級 ≤ t    sock 插槽數在 h 裡
      *   uq   獨特裝備；u 是指定的獨特代號清單，留空代表任何獨特（v0.2.415 起可以指定）
-     *   條件加上 not: 1 代表反過來
-     * 神話裝備、神話獨特、插槽裝備本來就不會被自動分解，不用寫規則。 */
-    const RAR5 = ['普通', '魔法', '稀有', '傳奇', '獨特', '插槽'];
+     *   dt   防具基底 bt：a 護甲、e 閃避；腰帶另有 h 混合（護甲＋閃避）、l 生命
+     *        （遊戲畫面只能選 a／e，這裡匯入 h／l 遊戲照樣會判斷，只是遊戲的下拉選單顯示不出來）
+     *   q    基底品質 ≥ q%    xt 可萃取    cor 已腐化    hv 神聖值 ≥ v    fg 聖鑄詞（f 留空代表任何）
+     *   條件加上 not: 1 代表反過來；off: 1 是篩選用的停用條件
+     * v0.3.616 起清單裡可以有群組標題 { h: 1, nm: 名稱, ho: 整組是否啟用, fo: 是否摺疊 }，
+     *   標題之後到下一個標題之前的規則都屬於這一組，ho 為 0 時整組都不生效。
+     * 神話裝備、神話獨特、插槽裝備本來就不會被自動分解，不用寫規則。
+     * auto 第七格（v0.3.x 起）是「神話」稀有度的自動分解。 */
+    const RAR5 = ['普通', '魔法', '稀有', '傳奇', '獨特', '插槽', '神話'];
+    const DT_N = { a: '護甲', e: '閃避', h: '混合（腰帶）', l: '生命（腰帶）' };
     const afName = a => (AFFIX[a] ? AFFIX[a].n : a);
     const condText = c => {
       const tier = 'T' + c.t + ' 以上';
@@ -1800,26 +1821,45 @@ javascript:(function awTools() {
       else if (c.k === 'uq') t = '獨特裝備' + (c.u && c.u.length ? '：' + c.u.map(x => (UNIQUE[x] ? UNIQUE[x].n : x)).join('、') : '（任何一件）');
       else if (c.k === 'dv') t = '有 T' + (c.t == null ? 99 : c.t) + ' 以上的神眷詞綴';
       else if (c.k === 'sock') t = '插槽裝備' + (c.h ? '（' + c.h.join('／') + ' 孔）' : '');
+      else if (c.k === 'dt') t = '防具基底是' + (DT_N[c.bt] || c.bt);
+      else if (c.k === 'q') t = '基底品質 ≥ ' + c.q + '%';
+      else if (c.k === 'xt') t = '可萃取';
+      else if (c.k === 'cor') t = '已腐化';
+      else if (c.k === 'hv') t = '神聖值 ≥ ' + c.v;
+      else if (c.k === 'fg') t = '聖鑄詞' + (c.f && c.f.length ? '：' + c.f.map(x => (typeof FORGE === 'object' && FORGE[x] ? FORGE[x].n : x)).join('、') : '（任何一種）');
       else t = '（不認得的條件 ' + c.k + '）';
       return (c.not ? '不是：' : '') + t;
     };
+    /* 規則清單轉成文字：群組標題另起一行，組內規則縮排 */
+    const listText = (list, out) => {
+      let i = 0, inG = false, gOn = true;
+      for (const g of list) {
+        if (g.h) { inG = true; gOn = !!g.ho; out.push('【群組' + (g.nm ? '「' + g.nm + '」' : '') + (g.ho ? '' : '（整組停用）') + '】'); continue; }
+        out.push((inG ? '  ' : '') + (++i) + '. ' + (g.on && gOn ? '' : '［停用］') + (g.nm ? '「' + g.nm + '」' : '') + (g.c || []).map(condText).join(' 而且 '));
+      }
+      if (!list.length) out.push('（沒有）');
+    };
     const rulesText = r => {
       const out = ['自動分解：' + (RAR5.filter((_, i) => r.auto[i]).join('、') || '都不分解'), '', '保留規則（符合任何一條就留下）：'];
-      r.keep.forEach((g, i) => out.push((i + 1) + '. ' + (g.on ? '' : '［停用］') + g.c.map(condText).join(' 而且 ')));
-      if (!r.keep.length) out.push('（沒有）');
+      listText(r.keep, out);
       if (r.xr) {
         out.push('', '批次萃取規則（符合任何一條就會被萃取；神話、已鎖定的不會）：');
-        r.xr.forEach((g, i) => out.push((i + 1) + '. ' + (g.on ? '' : '［停用］') + g.c.map(condText).join(' 而且 ')));
-        if (!r.xr.length) out.push('（沒有）');
+        listText(r.xr, out);
       }
       return out.join('\n');
     };
+    const isHead = g => !!(g && g.h);
     /* 檢查匯入的內容，回傳錯誤訊息；空字串代表沒問題 */
     const rulesCheck = r => {
-      if (!r || !Array.isArray(r.auto) || r.auto.length < 5 || r.auto.length > 6 || !Array.isArray(r.keep)) return '格式不對，要有 auto（5 或 6 個數字）和 keep（陣列）';
+      if (!r || !Array.isArray(r.auto) || r.auto.length < 3 || r.auto.length > RAR5.length || !Array.isArray(r.keep)) return '格式不對，要有 auto（3～' + RAR5.length + ' 個數字）和 keep（陣列）';
       if (r.xr != null && !Array.isArray(r.xr)) return 'xr（萃取規則）要是陣列';
-      if (r.keep.length > KEEP_MAXG || (r.xr || []).length > KEEP_MAXG) return '每一組規則最多 ' + KEEP_MAXG + ' 條';
+      const MAXG = typeof KEEP_MAXG === 'number' ? KEEP_MAXG : 24;
+      for (const list of [r.keep, r.xr || []]) {
+        if (list.filter(g => !isHead(g)).length > MAXG) return '每一組最多 ' + MAXG + ' 條規則';
+        if (list.filter(isHead).length > MAXG) return '每一組最多 ' + MAXG + ' 個群組';
+      }
       for (const g of r.keep.concat(r.xr || [])) {
+        if (isHead(g)) continue;
         if (!g || !Array.isArray(g.c) || !g.c.length) return '每條規則都要有條件';
         if (g.c.length > KEEP_MAXC) return '每條規則最多 ' + KEEP_MAXC + ' 個條件';
         for (const c of g.c) {
@@ -1839,7 +1879,11 @@ javascript:(function awTools() {
       try { r = JSON.parse(text); } catch (e) {}
       const err = rulesCheck(r);
       if (err) { uiAlert('沒有套用：' + err); return; }
-      r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(g => ({ on: g.on ? 1 : 0, c: g.c })), xr: r.xr ? r.xr.map(g => ({ on: g.on ? 1 : 0, c: g.c })) : null };
+      /* 規則保留名稱（nm）和摺疊（fo）；群組標題保留 h／nm／ho／fo */
+      const tidy = g => isHead(g)
+        ? Object.assign({ h: 1, ho: g.ho ? 1 : 0, on: 0, c: [] }, g.nm ? { nm: String(g.nm).slice(0, 8) } : {}, g.fo ? { fo: 1 } : {})
+        : Object.assign({ on: g.on ? 1 : 0, c: g.c }, g.nm ? { nm: String(g.nm).slice(0, 8) } : {}, g.fo ? { fo: 1 } : {});
+      r = { auto: r.auto.map(x => (x ? 1 : 0)), keep: r.keep.map(tidy), xr: r.xr ? r.xr.map(tidy) : null };
       if (!await uiConfirm('要把裝備的規則改成這樣嗎？\n\n' + rulesText(r) + '\n\n之後撿到不符合保留規則、又在自動分解範圍內的裝備會直接變成灰燼。' + (r.xr ? '' : '\n（這串沒有帶萃取規則，萃取規則維持原樣）'))) return;
       backupNow('改拾取規則前自動備份');
       S.set.auto = r.auto;
@@ -2321,7 +2365,8 @@ javascript:(function awTools() {
         if (t.uq && hi >= CFG.uqKeepHi) return false;
         if (autoSalv(t)) return true;
         if (!t.uq || t.my || t.sock || t.lk || t.rar >= 4 || !S.set.auto[4]) return false;
-        const others = (S.set.keep || []).filter(g => !(g.c.length === 1 && g.c[0].k === 'uq' && !g.c[0].not && !(g.c[0].u && g.c[0].u.length)));
+        /* v0.3.616 起規則清單裡會有群組標題（h），它沒有 c，要原樣留著（keepMatch 靠它決定整組開關） */
+        const others = (S.set.keep || []).filter(g => g.h || !(g.c && g.c.length === 1 && g.c[0].k === 'uq' && !g.c[0].not && !(g.c[0].u && g.c[0].u.length)));
         return !keepMatch(t, others);
       };
       RULES.push([/\bautoSalv\(/g, '__awSalv(']);
