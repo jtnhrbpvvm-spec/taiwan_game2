@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V64';
+const D2ZH_VERSION = 'V65';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
@@ -1597,8 +1597,9 @@ return box;
 // 等待傳送的紀錄（localStorage d2s:leaderboard-queue）不讓它寫入，直接送往 /api/leaderboard/ 的 POST 也擋掉。
 const D2ED_UNLOCK_KEY = 'd2zh:editUnlocked';
 const D2ED_LB_QUEUE_KEY = 'd2s:leaderboard-queue';
+// 2026-11-21 遊戲排行榜已經關閉：修改功能預設開啟，玩家自己按「關閉修改功能」才存 '0'
 function d2edUnlocked() {
-try { return localStorage.getItem(D2ED_UNLOCK_KEY) === '1'; } catch (_) { return false; }
+try { return localStorage.getItem(D2ED_UNLOCK_KEY) !== '0'; } catch (_) { return true; }
 }
 function d2edKeepLeaderboardOff() {
 const rawSet = Storage.prototype.setItem;
@@ -1642,9 +1643,13 @@ return raw.apply(this, arguments);
 }
 function d2edLockSection() {
 return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, '修改功能'),
-d2edEl('p', { class: 'd2ed-note' }, '遊戲中可以修改這一局的人物；在主選單可以修改恰西的永久升級。修改後遊戲的排行榜會拒收你的紀錄。'),
-d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: d2edConfirmUnlock }, '啟用修改功能')));
+d2edEl('p', { class: 'd2ed-note' }, '遊戲中可以修改這一局的人物；在主選單可以修改恰西的永久升級。'),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: () => {
+try { localStorage.setItem(D2ED_UNLOCK_KEY, '1'); } catch (e) { alert('無法啟用：' + e); return; }
+d2edRender(); d2edToast('已啟用修改功能');
+} }, '啟用修改功能')));
 }
+// 排行榜還在時用的確認窗（2026-11-21 起不再使用，保留給排行榜恢復時）
 function d2edConfirmUnlock() {
 const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
 if (!card || card.querySelector('.d2ed-modal')) return;
@@ -1680,10 +1685,10 @@ const card = D2ED.panel && D2ED.panel.querySelector('.d2ed-card');
 if (!card || card.querySelector('.d2ed-modal')) return;
 const modal = d2edEl('div', { class: 'd2ed-modal' });
 const close = () => modal.remove();
-const relock = () => { try { localStorage.removeItem(D2ED_UNLOCK_KEY); } catch (_) { /* 無痕視窗 */ } close(); d2edRender(); };
+const relock = () => { try { localStorage.setItem(D2ED_UNLOCK_KEY, '0'); } catch (_) { /* 無痕視窗 */ } close(); d2edRender(); };
 modal.append(d2edEl('div', { class: 'd2ed-modal-box', role: 'alertdialog', 'aria-label': '確認關閉修改功能' },
 d2edEl('b', {}, '關閉修改功能？'),
-d2edEl('p', { style: 'margin: 6px 0; color: #d8d0c0' }, '隱藏修改功能，書籤不再強制關閉排行榜上傳。要恢復上傳，請到營地儲物箱旁的排行榜書自行開啟「傳送我的紀錄」（改過的存檔仍可能被排行榜拒收）。'),
+d2edEl('p', { style: 'margin: 6px 0; color: #d8d0c0' }, '隱藏人物和永久升級的修改區塊。之後要用，再按「啟用修改功能」就會出現。'),
 d2edEl('div', { class: 'd2ed-row' },
 d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: relock }, '確認'),
 d2edEl('button', { type: 'button', onclick: close }, '取消'))));
@@ -1909,6 +1914,374 @@ d2edEl('p', { class: 'd2ed-note' }, '開啟後，技能樹開著時技能選單�
 d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉技能格調整大小' : '開啟技能格調整大小'),
 d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')));
 }
+// ====== 鐵砧必定成功、裝備修改（指定強化／自選詞綴） ======
+// 遊戲本體（Game-*.js）有匯出 Game 類別：改它的 prototype 就能包住正在跑的遊戲實例的方法。
+// tick 每一格都會跑，順便記下遊戲實例（D2GAME.game），裝備修改要用它的 save、kit、changeGear（改完會存檔並重算角色數值）。
+// 鐵砧的結果由伺服器決定，伺服器會記住每件物品的淬鍊紀錄：
+// - 淬鍊失敗：把花掉的精華退回物品欄，再送一次，直到成功（每次都是真的向伺服器淬鍊，紀錄一致）。
+// - 地獄熔爐失敗（淬鍊全部消失）：伺服器只給一次機會，改成在本機把淬鍊加倍；伺服器的紀錄仍是失敗，這件物品之後再放上鐵砧時，遊戲會改回伺服器的紀錄。
+const D2GAME = { proto: null, game: null, tries: 0 };
+const D2FORGE_KEY = 'd2zh:forgeSure';   // 缺省＝開，'0'＝關
+// 電腦版遊戲內排行榜還在（2026-11-21 確認），使用者決定先隱藏「必定成功」和「自選詞綴」；要恢復把這兩個改成 true
+const D2FORGE_SHOW = false;
+const D2IE_AFFIX_SHOW = false;
+function d2forgeSureOn() {
+if (!D2FORGE_SHOW) return false;
+try { return localStorage.getItem(D2FORGE_KEY) !== '0'; } catch (_) { return true; }
+}
+function d2gameUrls() {
+return [...new Set([...performance.getEntriesByType('resource').map(e => e.name), ...[...document.querySelectorAll('script[src]')].map(e => e.src), ...[...document.querySelectorAll('link[rel=modulepreload]')].map(e => e.href)])].filter(n => /\/assets\/[^/]+\.js(\?|$)/.test(n) && !/\/ko-/.test(n));
+}
+async function d2gameInstall() {
+if (D2GAME.proto) return true;
+const urls = d2gameUrls();
+const first = urls.filter(u => /\/Game-[\w-]+\.js/.test(u));
+for (const url of [...first, ...urls.filter(u => !first.includes(u))]) {
+let m;
+try { m = await Promise.race([import(url), new Promise((_, no) => setTimeout(no, 3000))]); } catch (_) { continue; }
+for (const v of Object.values(m)) {
+const P = v && typeof v === 'function' && v.prototype;
+if (P && typeof P.forgeTry === 'function' && typeof P.tick === 'function' && typeof P.changeGear === 'function') { d2gamePatch(P); return true; }
+}
+if (first.includes(url)) continue;
+}
+// 遊戲模組可能還沒載完：過幾秒再找（最多 10 次）
+if (++D2GAME.tries < 10) setTimeout(d2gameInstall, 3000);
+return false;
+}
+function d2gamePatch(P) {
+if (P.__d2zhPatched) { D2GAME.proto = P; return; }
+P.__d2zhPatched = true;
+D2GAME.proto = P;
+const rawTick = P.tick;
+P.tick = function () { D2GAME.game = this; return rawTick.apply(this, arguments); };
+const rawTry = P.forgeTry;
+P.forgeTry = async function (kit, level, act) {
+D2GAME.game = this;
+if (!d2forgeSureOn() || (act !== 'temper' && act !== 'hellforge')) return rawTry.apply(this, arguments);
+if (act === 'temper') {
+let r;
+for (let i = 0; i < 60; i++) {
+r = await rawTry.apply(this, arguments);
+if (!r || r.text !== 'The temper failed') return r;
+// 失敗會吃掉 1 個精華：退回物品欄（物品欄滿了退不回就停，免得一直扣）
+if (typeof this.giveEssences !== 'function' || this.giveEssences(kit, 1) !== 0) return r;
+}
+return r;
+}
+const before = d2gameFindItem(this.save, this.anvil);
+const t0 = before && before.forge && before.forge.t ? { ...before.forge.t } : null;
+const r = await rawTry.apply(this, arguments);
+if (r && r.text === 'All tempers lost' && t0 && Object.keys(t0).length) {
+const it = d2gameFindItem(this.save, this.anvil);
+if (it) {
+const t = {};
+for (const [k, n] of Object.entries(t0)) t[k] = n * 2;
+this.changeGear(kit, () => { it.forge = { ...(it.forge || {}), t, hf: 1 }; });
+return { ...r, text: 'All tempers doubled', color: 'gold' };
+}
+}
+return r;
+};
+}
+// 在存檔裡找某個 id 的物品（身上、副武器、物品欄、儲物箱、傭兵身上都可能）
+function d2gameFindItem(save, id) {
+if (!save || !id) return null;
+const seen = new Set();
+const walk = (o, depth) => {
+if (!o || typeof o !== 'object' || seen.has(o) || depth > 7) return null;
+seen.add(o);
+if (o.id === id && typeof o.base === 'string') return o;
+for (const v of Array.isArray(o) ? o : Object.values(o)) {
+const hit = walk(v, depth + 1);
+if (hit) return hit;
+}
+return null;
+};
+return walk(save, 0);
+}
+function d2edForgeSection() {
+const on = d2forgeSureOn();
+const toggle = () => {
+try { localStorage.setItem(D2FORGE_KEY, on ? '0' : '1'); } catch (e) { alert('無法儲存設定：' + e); return; }
+d2edRender(); d2edToast(on ? '鐵砧必定成功已關閉' : '鐵砧必定成功已開啟');
+};
+const game = D2GAME.game;
+const ready = !!(game && game.kit && game.save);
+return d2edEl('section', { class: 'd2ed-sec' }, d2edEl('h3', {}, D2FORGE_SHOW ? '鐵砧與裝備修改' : '裝備修改'),
+D2FORGE_SHOW ? d2edEl('p', { class: 'd2ed-note' }, '鐵砧必定成功：淬鍊失敗時自動退回精華再試，直到成功；地獄熔爐一定是「淬鍊全部加倍」。') : null,
+D2FORGE_SHOW ? d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: on ? '' : 'd2ed-main', onclick: toggle }, on ? '關閉鐵砧必定成功' : '開啟鐵砧必定成功'),
+d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前：開啟' : '目前：關閉')) : null,
+d2edEl('p', { class: 'd2ed-note' }, D2IE_AFFIX_SHOW ? '選身上或物品欄的裝備，直接指定每一行的強化次數，或自己挑選、調整裝備上的詞綴。' : '選身上或物品欄的裝備，直接指定每一行能力的強化次數（跟恰西鐵砧一樣，每件最多 10 次）。'),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', ...(!ready && { disabled: '' }), onclick: d2ieShow }, '裝備修改'),
+ready ? null : d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, '選好英雄（進營地或遊戲中）後才能使用')));
+}
+// ---- 裝備修改視窗（借用裝備創造的版面樣式 #d2ec-overlay） ----
+const D2IE = { overlay: null, pick: null, pools: new Map() };
+const D2IE_SLOT = { weapon: '武器', shield: '副手', helm: '頭盔', head: '頭盔', body: '身體護甲', armor: '身體護甲', gloves: '手套', belt: '腰帶', boots: '靴子', amulet: '護身符', ring: '戒指', ring1: '左戒指', ring2: '右戒指', ringLeft: '左戒指', ringRight: '右戒指' };
+// 每件裝備的強化總數上限＝遊戲鐵砧的上限 10 次；地獄熔爐成功過（hf）的裝備遊戲本身就是加倍後的 20 次
+const D2IE_TEMPER_MAX = 10;
+const d2ieTemperCap = item => (item.forge && item.forge.hf ? D2IE_TEMPER_MAX * 2 : D2IE_TEMPER_MAX);
+function d2ieGame() {
+const g = D2GAME.game;
+return g && g.kit && g.save ? g : null;
+}
+function d2ieEntries() {
+const g = d2ieGame();
+if (!g) return [];
+const kit = g.kit.id, save = g.save, out = [];
+const ok = it => it && typeof it === 'object' && typeof it.base === 'string' && it.id && it.type !== 'quest' && it.type !== 'essence' && Array.isArray(it.mods);
+for (const [slot, it] of Object.entries((save.equippedByClass || {})[kit] || {})) if (ok(it)) out.push({ where: '身上・' + (D2IE_SLOT[slot] || slot), item: it });
+const sets = (save.weaponSets || {})[kit];
+if (sets && typeof sets === 'object') for (const [slot, it] of Object.entries(sets)) if (ok(it)) out.push({ where: '副武器組・' + (D2IE_SLOT[slot] || slot), item: it });
+for (const it of (save.inventoryByClass || {})[kit] || []) if (ok(it)) out.push({ where: '物品欄', item: it });
+return out;
+}
+function d2ieLevel() {
+const g = d2ieGame();
+return (D2ED.player && D2ED.player.level) || (g && g.world && g.world.player && g.world.player.level) || 1;
+}
+// 鐵砧畫面用的行列表（遊戲函式）：[{ text, key（可以淬鍊才有）, held（已淬鍊次數） }]
+function d2ieAnvilLines(item) {
+const f = D2EC.api && D2EC.api.anvilLines;
+if (!f) return null;
+try { return f(item, 0, d2ieLevel(), 1).lines || []; } catch (_) { return null; }
+}
+// 單一詞綴（魔法／稀有物品的 mods）的說明文字
+function d2ieModText(item, mod) {
+const lines = d2ieAnvilLines({ ...item, mods: [mod], stats: undefined, bonus: undefined, forge: undefined, sockets: undefined, socketed: undefined, rarity: 'magic' });
+const text = lines && lines.map(l => l.text).filter(Boolean).join('、');
+return text ? d2ecTr(text) : `${d2ecModName(mod.stat)} ${mod.value}`;
+}
+const d2ieIsAffix = m => !m.implicit && !m.auto && !m.staff;
+// 這種底材可能出現的詞綴：用遊戲的掉落產生器產生一批魔法／稀有物品，收集出現過的詞綴和最大值（每種底材只收一次）
+function d2ieAffixPool(base) {
+if (D2IE.pools.has(base)) return D2IE.pools.get(base);
+const pool = new Map();
+for (const roll of (D2EC.api && D2EC.api.rollers) || []) {
+for (let n = 0; n < 600; n++) {
+let it;
+try { it = roll({ base }, 1 + (n % 99), 99, undefined); } catch (_) { break; }
+for (const m of (it && it.mods) || []) {
+if (!d2ieIsAffix(m) || typeof m.stat !== 'string' || typeof m.value !== 'number') continue;
+const p = pool.get(m.stat);
+if (!p) pool.set(m.stat, { stat: m.stat, lo: m.value, hi: m.value, mod: { ...m } });
+else { p.lo = Math.min(p.lo, m.value); p.hi = Math.max(p.hi, m.value); }
+}
+}
+}
+D2IE.pools.set(base, pool);
+return pool;
+}
+function d2ieClose() {
+if (!D2IE.overlay) return;
+D2IE.overlay.remove();
+D2IE.overlay = null;
+D2IE.pick = null;
+}
+function d2ieMsg(text, bad) {
+const msg = D2IE.overlay && D2IE.overlay.querySelector('.d2ec-editor .d2ec-msg');
+if (!msg) return;
+msg.textContent = text;
+msg.style.color = bad ? '#ff8a7a' : '';
+clearTimeout(msg._h);
+msg._h = setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+// 改物品：交給遊戲的 changeGear（改完會存檔，身上的裝備也會重算角色數值）
+function d2ieChange(item, fn) {
+const g = d2ieGame();
+if (!g) return false;
+g.changeGear(g.kit.id, () => fn(item));
+return true;
+}
+// 用遊戲的驗證函式整理新資料，通過才換掉原本的物品（同一個 id、同一個物件）
+function d2ieReplace(item, next) {
+delete next.roll;   // 有 roll 的物品讀檔時會照種子重骰，改過的詞綴會不見
+let ready = null;
+try { ready = D2EC.api.normalize(JSON.parse(JSON.stringify(next))); } catch (_) { ready = null; }
+if (!ready) return false;
+return d2ieChange(item, it => {
+for (const k of Object.keys(it)) delete it[k];
+Object.assign(it, ready);
+});
+}
+async function d2ieShow() {
+if (D2IE.overlay || D2EC.overlay) return;
+if (!d2ieGame()) { d2edToast('還沒抓到遊戲資料，請進營地或遊戲後再試'); return; }
+const list = d2edEl('div', { class: 'd2ec-results' }, d2edEl('p', { class: 'd2ec-hint' }, '讀取裝備資料中…'));
+const overlay = D2IE.overlay = d2edEl('div', { id: 'd2ec-overlay', role: 'dialog', 'aria-label': '裝備修改' },
+d2edEl('div', { class: 'd2ec-head' }, d2edEl('b', {}, '裝備修改'), d2edEl('span', { class: 'd2ec-grow' }),
+d2edEl('button', { type: 'button', class: 'd2ec-x', 'aria-label': '關閉', onclick: d2ieClose }, '×')),
+d2edEl('div', { class: 'd2ec-main' }, list, d2edEl('div', { class: 'd2ec-editor' }, d2edEl('p', { class: 'd2ec-hint' }, '從左邊選一件裝備。'))));
+for (const type of ['keydown', 'keyup', 'keypress']) overlay.addEventListener(type, e => {
+e.stopPropagation();
+if (type === 'keydown' && e.key === 'Escape') d2ieClose();
+});
+document.body.append(overlay);
+const api = await d2ecLoad();
+if (D2IE.overlay !== overlay) return;
+if (!api) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, d2ecFailText())); return; }
+d2ieList();
+}
+function d2ieList() {
+const list = D2IE.overlay && D2IE.overlay.querySelector('.d2ec-results');
+if (!list) return;
+const entries = d2ieEntries();
+if (!entries.length) { list.replaceChildren(d2edEl('p', { class: 'd2ec-hint' }, '身上和物品欄沒有可以修改的裝備。')); return; }
+list.replaceChildren(...entries.map(en => {
+const it = en.item;
+const b = d2edEl('button', { type: 'button', class: 'd2ec-result d2ec-r-' + it.rarity, onclick: () => d2ieSelect(it) },
+d2ecIcon(it.rarity, it.name, it.base), d2edEl('span', {}, d2ecTr(it.name), d2edEl('small', {}, en.where)));
+b.classList.toggle('on', D2IE.pick === it);
+return b;
+}));
+}
+function d2ieSelect(item) {
+D2IE.pick = item;
+d2ieList();
+const box = D2IE.overlay.querySelector('.d2ec-editor');
+const rarityZh = { normal: '普通', magic: '魔法', rare: '稀有', unique: '獨特', set: '套裝', runeword: '符文之語' }[item.rarity] || item.rarity;
+const head = d2edEl('div', { class: 'd2ec-title d2ec-r-' + item.rarity }, d2ecIcon(item.rarity, item.name, item.base),
+d2edEl('div', {}, d2edEl('b', {}, d2ecTr(item.name)), d2edEl('small', {}, `${rarityZh}・${d2ecTr(item.base)}`)));
+box.replaceChildren(head, ...d2ieTemperPart(item), ...(D2IE_AFFIX_SHOW ? d2ieAffixPart(item) : []), d2edEl('div', { class: 'd2ec-actions' }, d2edEl('span', { class: 'd2ec-msg' })));
+}
+// 指定強化：每一行可以淬鍊的能力直接填次數（數量型每次 +20%（至少 +1），技能等級型每次 +1 級）
+function d2ieTemperPart(item) {
+const out = [d2edEl('h4', {}, '指定強化')];
+const lines = d2ieAnvilLines(item);
+if (!lines) { out.push(d2edEl('p', { class: 'd2ec-fixed' }, '讀不到鐵砧的資料，這個版本無法指定強化。')); return out; }
+const rows = lines.filter(l => l.key);
+if (!rows.length) { out.push(d2edEl('p', { class: 'd2ec-fixed' }, '這件裝備沒有可以強化的能力。')); return out; }
+const held = (item.forge && item.forge.t) || {};
+const cap = d2ieTemperCap(item);
+const reads = [];
+const total = d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' });
+const showTotal = () => {
+const sum = reads.reduce((a, [, read]) => a + read(), 0);
+total.textContent = `合計 ${sum} / ${cap} 次`;
+total.style.color = sum > cap ? '#ff8a7a' : '';
+};
+for (const l of rows) {
+const row = d2ecNumberRow(v => `${d2ecTr(l.text)}（強化 ${v} 次）`, 0, cap, Math.min(cap, held[l.key] || 0), read => reads.push([l.key, read]));
+row.querySelector('input').addEventListener('input', showTotal);
+out.push(row);
+}
+showTotal();
+out.push(total);
+const apply = clear => {
+const t = {};
+if (!clear) for (const [key, read] of reads) { const n = read(); if (n > 0) t[key] = n; }
+const sum = Object.values(t).reduce((a, b) => a + b, 0);
+if (sum > cap) { d2ieMsg(`強化合計 ${sum} 次，超過上限 ${cap} 次，沒有套用`, true); return; }
+const ok = d2ieChange(item, it => {
+const f = { ...(it.forge || {}) };
+if (Object.keys(t).length) f.t = t; else delete f.t;
+if (Object.keys(f).length) it.forge = f; else delete it.forge;
+});
+if (!ok) { d2ieMsg('找不到遊戲資料，沒有套用', true); return; }
+d2ieSelect(item);
+d2ieMsg(clear ? '已清除所有強化' : '已套用強化');
+};
+out.push(d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, cap > D2IE_TEMPER_MAX ? '數量型能力每強化一次 +20%（至少 +1），技能等級每次 +1 級。這件經過地獄熔爐加倍，上限是 20 次。' : '數量型能力每強化一次 +20%（至少 +1），技能等級每次 +1 級。每件最多 10 次，跟恰西鐵砧的上限一樣。'),
+d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, '用這裡改過強化的裝備，之後再放上恰西的鐵砧時，遊戲會改回鐵砧伺服器上的紀錄。'),
+d2edEl('div', { class: 'd2ed-row', style: 'margin: 6px 0' },
+d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: () => apply(false) }, '套用強化'),
+d2edEl('button', { type: 'button', onclick: () => apply(true) }, '全部清除')));
+return out;
+}
+function d2ieAffixPart(item) {
+const out = [d2edEl('h4', {}, '詞綴')];
+if (item.stats) return out.concat(d2ieStatsPart(item));
+if (item.rarity !== 'magic' && item.rarity !== 'rare') { out.push(d2edEl('p', { class: 'd2ec-fixed' }, '普通品質的裝備沒有詞綴。')); return out; }
+const pool = d2ieAffixPool(item.base);
+const keep = item.mods.filter(m => !d2ieIsAffix(m));
+const rows = item.mods.filter(d2ieIsAffix).map(m => ({ mod: { ...m } }));
+const wrap = d2edEl('div', {});
+const keepValues = () => { for (const r of rows) if (r.read) r.mod.value = r.read(); };
+const draw = () => {
+wrap.replaceChildren();
+rows.forEach((r, k) => {
+const p = pool.get(r.mod.stat);
+const lo = Math.min(1, r.mod.value), hi = Math.max(p ? p.hi : r.mod.value, r.mod.value);
+const del = d2edEl('button', { type: 'button', onclick: () => { keepValues(); rows.splice(k, 1); draw(); } }, '移除');
+const row = d2ecNumberRow(v => d2ieModText(item, { ...r.mod, value: v }), lo, hi, r.mod.value, read => { r.read = read; });
+row.append(del);
+wrap.append(row);
+});
+if (!rows.length) wrap.append(d2edEl('p', { class: 'd2ec-fixed' }, '（沒有詞綴）'));
+};
+draw();
+const opts = [...pool.values()].map(p => [p.stat, d2ieModText(item, { ...p.mod, value: p.hi })]).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+const pick = d2edEl('select', {}, d2edEl('option', { value: '' }, opts.length ? '選擇要加入的詞綴…' : '找不到這種底材的詞綴資料'), ...opts.map(([v, t]) => d2edEl('option', { value: v }, t)));
+const add = () => {
+const p = pool.get(pick.value);
+if (!p) return;
+keepValues();
+rows.push({ mod: { ...p.mod, value: p.hi } });
+pick.value = '';
+draw();
+};
+const limit = item.rarity === 'magic' ? '魔法物品原本最多 2 條詞綴（前綴、後綴各一）。' : '稀有物品原本最多 6 條詞綴（前綴、後綴各三）。';
+const apply = () => {
+const affixes = rows.map(r => ({ ...r.mod, value: r.read ? r.read() : r.mod.value }));
+const min = affixes.find(m => /MinDamage$|mindam$/.test(m.stat));
+if (min) for (const m of affixes) if (m.stat === min.stat.replace(/Min/, 'Max').replace(/min/, 'max') && m.value < min.value) m.value = min.value;
+const next = { ...JSON.parse(JSON.stringify(item)), mods: [...keep.map(m => ({ ...m })), ...affixes] };
+// 強化次數是照 mods 的位置記的（m3＝第 3 條）：詞綴增減後位置會變，照同一種能力搬到新位置，被移除的就拿掉
+const t = item.forge && item.forge.t;
+if (t) {
+const used = new Set(), moved = {};
+for (const [key, n] of Object.entries(t)) {
+if (key[0] !== 'm') { moved[key] = n; continue; }
+const old = item.mods[Number(key.slice(1))];
+const at = old ? next.mods.findIndex((m, i) => !used.has(i) && m.stat === old.stat && !!m.implicit === !!old.implicit) : -1;
+if (at >= 0) { used.add(at); moved['m' + at] = n; }
+}
+next.forge = { ...next.forge };
+if (Object.keys(moved).length) next.forge.t = moved; else delete next.forge.t;
+if (!Object.keys(next.forge).length) delete next.forge;
+}
+if (!d2ieReplace(item, next)) { d2ieMsg('遊戲不接受這樣的詞綴組合，沒有套用', true); return; }
+d2ieSelect(item);
+d2ieMsg('已套用詞綴');
+};
+out.push(wrap, d2edEl('label', { class: 'd2ec-row' }, pick, d2edEl('button', { type: 'button', onclick: add }, '加入')),
+d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, `數值上限是這種底材掉落時出現過的最大值。${limit}遊戲不接受的組合會顯示「沒有套用」，裝備不會被改。`),
+d2edEl('div', { class: 'd2ed-row', style: 'margin: 6px 0' }, d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: apply }, '套用詞綴')));
+return out;
+}
+// 獨特、套裝、符文之語：每一行能力在物品表的上下限內調整（跟裝備創造一樣）
+function d2ieStatsPart(item) {
+const api = D2EC.api;
+const def = api.all.find(d => d.rarity === item.rarity && d.name === item.name);
+let groups = null;
+const clone = JSON.parse(JSON.stringify(item));
+try { if (def) groups = d2ecGroups(def, item.base, clone); } catch (_) { groups = null; }
+if (!groups) return [d2edEl('p', { class: 'd2ec-fixed' }, '這件裝備的能力和物品表對不起來，無法調整。')];
+const out = [];
+for (const g of groups) {
+const stats = g.at === 'stats' ? clone.stats : clone.bonus[g.at];
+if (g.tag) out.push(d2edEl('h4', {}, g.tag));
+for (const row of g.rows) {
+const cur = stats[row.slots[0].i][row.slots[0].field];
+if (d2ecLineTexts(row.idxs.map(i => ({ ...stats[i] }))).length) out.push(d2ecNumberRow(v => d2ecRowText(row, stats, v), row.lo, row.hi, Math.min(row.hi, Math.max(row.lo, Math.trunc(cur))), read => { row.read = read; }));
+}
+for (const line of d2ecLineTexts(g.fixed.map(s => ({ ...s })))) out.push(d2edEl('p', { class: 'd2ec-fixed' }, line));
+}
+const apply = () => {
+const next = JSON.parse(JSON.stringify(item));
+for (const g of groups) {
+const stats = g.at === 'stats' ? next.stats : next.bonus[g.at];
+for (const row of g.rows) if (row.read) for (const s of row.slots) stats[s.i][s.field] = row.read();
+}
+if (!d2ieReplace(item, next)) { d2ieMsg('遊戲不接受這些數值，沒有套用', true); return; }
+d2ieSelect(item);
+d2ieMsg('已套用詞綴');
+};
+out.push(d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, '每一行可以在這件裝備的能力範圍內調整。'),
+d2edEl('div', { class: 'd2ed-row', style: 'margin: 6px 0' }, d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: apply }, '套用詞綴')));
+return out;
+}
 // ====== 裝備創造（只在遊戲中出現）：獨特、套裝、符文之語，能力數值由玩家在上下限內指定 ======
 // 遊戲的物品表、產生與驗證函式都在已載入的模組裡，但匯出名稱每次改版都會變，所以用函式內容認。
 // 表裡的每一列（props）依序對應物品 stats 的欄位，規則照遊戲 B6：func 15／16／11／19 和有 par 的 17 是固定值，其他在 min～max 骰一個數。
@@ -2119,6 +2492,7 @@ runewordStats: find((s, f) => f.length === 4 && /\.runewords\?\.\[/.test(s) && /
 size: find(s => /\.size\?\?\[1,1\]/.test(s)),
 baseInfo: find(s => /itype:\w+\.itype/.test(s) && s.includes('bothHands')),
 isType: find((s, f) => f.length === 2 && s.includes('.equiv')),
+anvilLines: find(s => s.includes('hellforge:{open:')),   // 鐵砧畫面的行列表（裝備修改的指定強化用，找不到不影響裝備創造）
 makers: fns.filter(([f, s]) => f.length === 3 && /\.roll=\[\d,/.test(s)).map(([f]) => f),   // 20261103 起 roll 版本從 1 變 2
 cats: exportsAll.find(v => Array.isArray(v) && v[0] && Array.isArray(v[0].uniques) && v[0].label),
 make: {},
@@ -2664,7 +3038,7 @@ function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
 // 遊戲中改這一局的人物；在主選單（不在一局裡）改恰西的永久升級
 const inRun = !document.body.classList.contains('no-run');
-const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()] : [d2edLockSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()];
+const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edForgeSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()] : [d2edLockSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()];
 body.replaceChildren(...sections.filter(Boolean));
 }
 // ====== 問題回報（Google 表單，不需登入、不收集信箱） ======
@@ -2752,6 +3126,8 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V65', date: '2026-11-21', game: '遊戲 20261105.3', items: [
+'功能優化'] },
 { ver: 'V64', date: '2026-11-12', game: '遊戲 20261105.3', items: [
 '「書籤修改」上方新增「上榜模式」按鈕：使用書籤或電腦版中文化時，排行榜會把紀錄拒收（顯示 patched）。按下確定後，網頁版會重新整理頁面、停止書籤；電腦版會關閉遊戲，換回官方原版檔案，開啟乾淨的英文版。想上榜時請不要再執行書籤或中文化；電腦版之後用「D2 Survivors 中文版」捷徑開遊戲就會恢復中文',
 '電腦版第一次使用上榜模式前，要先用「D2 Survivors 中文版」捷徑重開一次遊戲，讓中文化程式自動更新',
@@ -3073,6 +3449,8 @@ d2edBuildInstall();
 d2sockInstall();
 d2quivInstall();
 d2ecWorldInstall();
+d2gameInstall();
+D2ED.forge = { game: D2GAME, find: d2gameFindItem, show: d2ieShow, entries: d2ieEntries, select: d2ieSelect, lines: d2ieAnvilLines, pool: d2ieAffixPool };   // 除錯／測試用
 d2edKeepLeaderboardOff();
 d2lootInstall();
 D2ED.loot = D2LOOT;   // 除錯用：ready、mirror、live
