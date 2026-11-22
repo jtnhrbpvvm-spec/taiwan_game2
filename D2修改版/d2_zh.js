@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V67';
+const D2ZH_VERSION = 'V68';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -2108,8 +2108,9 @@ d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' }, on ? '目前
 const D2GAME = { proto: null, game: null, tries: 0 };
 const D2FORGE_KEY = 'd2zh:forgeSure';   // 缺省＝開，'0'＝關
 // 電腦版遊戲內排行榜還在（2026-11-21 確認），使用者決定先隱藏「必定成功」和「自選詞綴」；要恢復把這兩個改成 true
-const D2FORGE_SHOW = false;
-const D2IE_AFFIX_SHOW = false;
+// 2026-11-22：離線遊戲沒有排行榜（線上模式書籤只翻譯），使用者決定恢復顯示
+const D2FORGE_SHOW = true;
+const D2IE_AFFIX_SHOW = true;
 function d2forgeSureOn() {
 if (!D2FORGE_SHOW) return false;
 try { return localStorage.getItem(D2FORGE_KEY) !== '0'; } catch (_) { return true; }
@@ -2141,16 +2142,18 @@ D2GAME.proto = P;
 const rawTick = P.tick;
 P.tick = function () { D2GAME.game = this; return rawTick.apply(this, arguments); };
 const rawTry = P.forgeTry;
-P.forgeTry = async function (kit, level, act) {
+// 20261120.1 起：forgeTry(職業, 等級, 動作, 回呼)，離線的淬鍊結果在本機用亂數決定（不再問伺服器），也沒有 giveEssences 了。
+// 淬鍊失敗：把這次扣掉的精華在存檔裡補回去再試；地獄熔爐失敗：照遊戲的成功規則在本機把每行加倍（單行上限 100000）。
+P.forgeTry = async function (cls, level, act) {
 D2GAME.game = this;
 if (!d2forgeSureOn() || (act !== 'temper' && act !== 'hellforge')) return rawTry.apply(this, arguments);
 if (act === 'temper') {
 let r;
 for (let i = 0; i < 60; i++) {
+const snap = d2forgeEssenceSnap(this.save);
 r = await rawTry.apply(this, arguments);
 if (!r || r.text !== 'The temper failed') return r;
-// 失敗會吃掉 1 個精華：退回物品欄（物品欄滿了退不回就停，免得一直扣）
-if (typeof this.giveEssences !== 'function' || this.giveEssences(kit, 1) !== 0) return r;
+if (!d2forgeEssenceRestore(this, cls, snap)) return r;   // 補不回去就停，免得一直扣
 }
 return r;
 }
@@ -2161,13 +2164,37 @@ if (r && r.text === 'All tempers lost' && t0 && Object.keys(t0).length) {
 const it = d2gameFindItem(this.save, this.anvil);
 if (it) {
 const t = {};
-for (const [k, n] of Object.entries(t0)) t[k] = n * 2;
-this.changeGear(kit, () => { it.forge = { ...(it.forge || {}), t, hf: 1 }; });
+for (const [k, n] of Object.entries(t0)) t[k] = Math.min(n * 2, 1e5);
+this.changeGear(cls, () => { it.forge = { ...(it.forge || {}), t, hf: 1 }; });
 return { ...r, text: 'All tempers doubled', color: 'gold' };
 }
 }
 return r;
 };
+}
+// 燃燒的恐懼精華（type 'essence'，數量在 count）：記下每一堆所在的陣列、位置和數量，淬鍊失敗後照原樣補回（整堆用完被移除的也放回去）
+function d2forgeEssenceSnap(save) {
+const out = [], seen = new Set();
+const walk = (o, depth) => {
+if (!o || typeof o !== 'object' || seen.has(o) || depth > 7) return;
+seen.add(o);
+if (Array.isArray(o)) o.forEach((v, i) => { if (v && typeof v === 'object' && v.type === 'essence' && typeof v.count === 'number') out.push({ arr: o, i, item: v, count: v.count, copy: JSON.parse(JSON.stringify(v)) }); });
+for (const v of Array.isArray(o) ? o : Object.values(o)) walk(v, depth + 1);
+};
+walk(save, 0);
+return out;
+}
+function d2forgeEssenceRestore(game, cls, snap) {
+const fix = snap.filter(s => !s.arr.includes(s.item) || s.item.count < s.count);
+if (!fix.length || typeof game.changeGear !== 'function') return false;
+game.changeGear(cls, () => {
+for (const s of fix) {
+if (s.arr.includes(s.item)) s.item.count = s.count;
+else if (s.arr[s.i] == null) s.arr[s.i] = s.copy;
+else s.arr.splice(s.i, 0, s.copy);
+}
+});
+return true;
 }
 // 在存檔裡找某個 id 的物品（身上、副武器、物品欄、儲物箱、傭兵身上都可能）
 function d2gameFindItem(save, id) {
@@ -2204,9 +2231,15 @@ ready ? null : d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' 
 // ---- 裝備修改視窗（借用裝備創造的版面樣式 #d2ec-overlay） ----
 const D2IE = { overlay: null, pick: null, pools: new Map() };
 const D2IE_SLOT = { weapon: '武器', shield: '副手', helm: '頭盔', head: '頭盔', body: '身體護甲', armor: '身體護甲', gloves: '手套', belt: '腰帶', boots: '靴子', amulet: '護身符', ring: '戒指', ring1: '左戒指', ring2: '右戒指', ringLeft: '左戒指', ringRight: '右戒指' };
-// 每件裝備的強化總數上限＝遊戲鐵砧的上限 10 次；地獄熔爐成功過（hf）的裝備遊戲本身就是加倍後的 20 次
+// 每件裝備的強化總數上限（20261120.1 起）：每一行可淬鍊的能力 2 次、最多 10 次；地獄熔爐成功過（hf）加倍。
+// 超過上限的部分遊戲讀檔時會削掉並退精華，所以照遊戲鐵砧畫面的 cap；讀不到就用同樣的公式算。
 const D2IE_TEMPER_MAX = 10;
-const d2ieTemperCap = item => (item.forge && item.forge.hf ? D2IE_TEMPER_MAX * 2 : D2IE_TEMPER_MAX);
+function d2ieTemperCap(item, lines) {
+let cap = null;
+try { const v = D2EC.api.anvilLines(item, 0, d2ieLevel(), 1); if (v && typeof v.cap === 'number') cap = v.cap; } catch (_) { /* 用公式 */ }
+if (cap === null) cap = Math.min(D2IE_TEMPER_MAX, 2 * (lines || []).filter(l => l.key).reduce((a, l) => a + (l.rolls || 1), 0)) * (item.forge && item.forge.hf ? 2 : 1);
+return cap;
+}
 function d2ieGame() {
 const g = D2GAME.game;
 return g && g.kit && g.save ? g : null;
@@ -2340,7 +2373,7 @@ if (!lines) { out.push(d2edEl('p', { class: 'd2ec-fixed' }, '讀不到鐵砧的�
 const rows = lines.filter(l => l.key);
 if (!rows.length) { out.push(d2edEl('p', { class: 'd2ec-fixed' }, '這件裝備沒有可以強化的能力。')); return out; }
 const held = (item.forge && item.forge.t) || {};
-const cap = d2ieTemperCap(item);
+const cap = d2ieTemperCap(item, rows);
 const reads = [];
 const total = d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' });
 const showTotal = () => {
@@ -2369,7 +2402,7 @@ if (!ok) { d2ieMsg('找不到遊戲資料，沒有套用', true); return; }
 d2ieSelect(item);
 d2ieMsg(clear ? '已清除所有強化' : '已套用強化');
 };
-out.push(d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, cap > D2IE_TEMPER_MAX ? '數量型能力每強化一次 +20%（至少 +1），技能等級每次 +1 級。這件經過地獄熔爐加倍，上限是 20 次。' : '數量型能力每強化一次 +20%（至少 +1），技能等級每次 +1 級。每件最多 10 次，跟恰西鐵砧的上限一樣。'),
+out.push(d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, `數量型能力每強化一次 +40%（至少 +1），技能等級每次 +1 級。這件最多 ${cap} 次（每一行 2 次、最多 10 次${item.forge && item.forge.hf ? '，經過地獄熔爐加倍' : ''}），跟恰西鐵砧的上限一樣。`),
 d2edEl('p', { class: 'd2ec-range', style: 'margin: 4px 0' }, '用這裡改過強化的裝備，之後再放上恰西的鐵砧時，遊戲會改回鐵砧伺服器上的紀錄。'),
 d2edEl('div', { class: 'd2ed-row', style: 'margin: 6px 0' },
 d2edEl('button', { type: 'button', class: 'd2ec-ok', onclick: () => apply(false) }, '套用強化'),
@@ -3333,6 +3366,8 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V68', date: '2026-11-22', game: '遊戲 20261120.1', items: [
+'功能優化'] },
 { ver: 'V67', date: '2026-11-22', game: '遊戲 20261120.1', items: [
 '線上遊戲只提供中文翻譯，「書籤修改」等其他功能請在離線遊戲使用（線上模式打開會顯示「線上模式不可使用」）',
 '功能優化'] },
