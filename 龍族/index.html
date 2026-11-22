@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0c1017" />
+  <meta name="description" content="龍族桌寵下載與使用教學：讓遊戲角色走進桌面。電腦多帳號、藥水補給、狩獵地圖、專注模式與小檔更新，一次看懂。" />
+  <title>龍族桌寵｜下載與冒險手冊</title>
+  <link rel="icon" href="assets/icon.png" />
+  <link rel="stylesheet" href="guide.css" />
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#start">直接閱讀教學</a>
+  <header class="site-header">
+    <a class="brand" href="#top"><img src="assets/icon.png" width="34" height="34" alt="" /><span>龍族桌寵<small>冒險手冊</small></span></a>
+    <nav aria-label="頁首導覽"><a href="#start">開始使用</a><a href="#automation">掛機設定</a><a href="#questions">常見問題</a></nav>
+    <a class="header-link" href="https://play.17raja.com/" target="_blank" rel="noopener noreferrer">遊戲官網</a>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="ornament" aria-hidden="true">✧</span> DRAGON RAJA · DESKTOP COMPANION</div>
+        <h1 id="hero-title">冒險繼續，<br />角色就在你身邊。</h1>
+        <p class="hero-lead">把熟悉的龍族角色，帶到桌面。<br />遊戲在背景掛機，你的紙娃娃陪著你工作。</p>
+        <div class="platform-tabs" role="tablist" aria-label="選擇版本">
+          <button id="tab-pc" role="tab" aria-selected="true" aria-controls="platform-pc" data-platform="pc"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 21h8M12 16v5"/></svg>Windows 電腦版</button>
+          <button id="tab-android" role="tab" aria-selected="false" aria-controls="platform-android" data-platform="android" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg>Android 手機版</button>
+        </div>
+        <div id="platform-pc" role="tabpanel" aria-labelledby="tab-pc" class="download-panel">
+          <!-- DOWNLOAD:START -->
+          <a id="download-pc" class="button primary" href="./raja-pet-setup-1.0.8.exe" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>下載 Windows 安裝版</a>
+          <p class="download-meta">安裝版 1.0.8 · 78.1 MB · Windows 10／11 · 64 位元</p>
+          <!-- DOWNLOAD:END -->
+          <p class="download-note">已裝過 1.0.2 以上版本？用桌寵的「檢查更新」即可更新內容。<a href="#updates">了解小檔更新</a></p>
+        </div>
+        <div id="platform-android" role="tabpanel" aria-labelledby="tab-android" class="download-panel" hidden>
+          <!-- ANDROID:START -->
+          <a id="download-android" class="button primary" href="./raja-pet-0.2.0.apk" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>下載 Android APK</a>
+          <p class="download-meta">安卓版 0.2.0 · Android 8 以上 · 測試版</p>
+          <!-- ANDROID:END -->
+          <p class="download-note">已在模擬器測試，尚無實機驗證。安卓版目前不支援自動更新。</p>
+        </div>
+        <p id="ios-note" class="notice compact" role="alert" hidden>蘋果系統不支援：目前沒有 iPhone／iPad 版本；你仍可切換分頁閱讀教學。</p>
+      </div>
+      <figure class="hero-art"><img src="assets/dragon-raja-art.webp" alt="龍族原作的戰士角色美術" width="800" height="600" /><figcaption><span>熟悉的世界，換一種陪伴。</span><small>美術取自遊戲登入畫面</small></figcaption></figure>
+    </section>
+
+    <section class="desktop-demo" aria-label="桌寵外觀與專注模式示意">
+      <div class="demo-toolbar"><span><i class="tiny-diamond" aria-hidden="true"></i><span id="demo-caption">桌面上的冒險隊伍</span></span><button id="focus-demo" aria-pressed="false">體驗專注模式</button></div>
+      <div class="demo-stage" id="demo-stage">
+        <div class="demo-work"><span class="work-line"></span><span class="work-line short"></span><span class="work-line"></span><span class="work-line medium"></span><div class="work-caption">你的工作，照常進行。</div></div>
+        <div class="pet-preview mage"><div class="pet-label">法師</div><div class="sprite" role="img" aria-label="法師紙娃娃示意"></div><span class="pet-float">+1,280 EXP</span></div>
+        <div class="pet-preview archer"><div class="pet-label">弓手</div><div class="sprite" role="img" aria-label="弓手紙娃娃示意"></div><span class="pet-float">+240 金幣</span></div>
+        <div class="pet-preview priest"><div class="pet-label">祭司</div><div class="sprite" role="img" aria-label="祭司紙娃娃示意"></div></div>
+        <div class="demo-taskbar"><span class="taskbar-logo" aria-hidden="true">✧</span><span>龍族桌寵</span><span class="taskbar-right">外觀示意，非即時遊戲</span></div>
+      </div>
+      <p class="demo-footnote" id="demo-help">外觀跟隨角色的性別、膚色與裝備。點上方按鈕，看看只留下半透明娃娃的專注模式。</p>
+    </section>
+
+    <div class="guide-layout">
+      <aside class="guide-nav" aria-label="手冊章節"><div class="nav-title">冒險手冊</div><a href="#start">第一次使用</a><a href="#accounts">帳號與多開</a><a href="#automation">補給與狩獵</a><a href="#growth" class="pc-only">養成與裝備</a><a href="#controls">操作與專注</a><a href="#updates">版本更新</a><a href="#questions">常見問題</a><span class="nav-footer">往下讀，慢慢設定就好。</span></aside>
+      <div class="guide-content">
+        <section id="start" class="guide-section">
+          <div class="section-kicker">從這裡出發</div><h2>第一次使用</h2>
+          <p class="section-intro pc-only">裝好桌寵，登入你的帳號，再讓角色出發。人機驗證仍由你自己完成。</p>
+          <p class="section-intro android-only" hidden>安卓版會在其他 App 上顯示桌寵，第一次需要完成安裝與懸浮視窗設定。</p>
+          <ol class="steps pc-only">
+            <li><span class="step-number">1</span><div><h3>安裝並開啟桌寵</h3><p>下載並執行 <code>raja-pet-setup-x.x.x.exe</code>，依安裝精靈完成設定，之後從桌面或開始功能表開啟「龍族桌寵」。</p></div></li>
+            <li><span class="step-number">2</span><div><h3>記住帳號，完成登入</h3><p>點系統匣圖示，或右鍵桌寵開啟「帳號與桌寵管理」。新增帳號後按「開啟桌寵」。需要登入時會開專用 Chrome／Edge，幫你填已儲存的帳密；自己通過人機驗證並按登入。</p></div></li>
+            <li><span class="step-number">3</span><div><h3>進入遊戲，再把視窗收起來</h3><p>在 Chrome 進到遊戲後關閉該登入視窗，或從桌寵選「登入好了」。登入狀態接回後，確認狩獵地圖與自動戰鬥已開啟，再藏起遊戲視窗繼續掛機。</p></div></li>
+          </ol>
+          <ol class="steps android-only" hidden>
+            <li><span class="step-number">1</span><div><h3>安裝 Android APK</h3><p>下載 <code>raja-pet-0.2.0.apk</code> 並依手機提示完成安裝。請確認檔案來自你信任的發布位置。</p></div></li>
+            <li><span class="step-number">2</span><div><h3>開啟桌寵需要的顯示權限</h3><p>開啟 App，依畫面指引允許「顯示在其他應用程式上層」（有些手機稱為浮動視窗或懸浮視窗），並確認前景服務通知可以顯示。</p></div></li>
+            <li><span class="step-number">3</span><div><h3>新增帳號，在遊戲畫面登入</h3><p>透過帳號管理新增帳號，開啟對應桌寵。登入畫面會填入已儲存的帳密，人機驗證與按登入仍由你自己完成。點桌寵可開關遊戲畫面。</p></div></li>
+          </ol>
+          <div class="notice"><strong>一個帳號，同時只在一個地方上線。</strong><p>同帳號若同時在手機、瀏覽器與桌寵登入，可能互相踢下線。桌寵需要持續連網；角色與背包進度由遊戲伺服器處理。</p></div>
+          <p class="muted pc-only">目前啟動時先開帳號清單的第一隻；要多開，再到管理視窗逐隻開啟。</p>
+        </section>
+
+        <section id="accounts" class="guide-section">
+          <div class="section-kicker">每個角色，都有自己的位置</div><h2>帳號與多開</h2>
+          <div class="account-explainer"><div class="large-number"><span id="pet-limit">5</span><small>同時開啟的上限</small></div><div><h3>一隻桌寵，對應一個帳號。</h3><p>每個帳號的登入資料與自動功能設定分開保存。管理視窗能查看已登入、連線中或被踢下線的狀態，也能個別開啟、關閉。</p><p class="muted">同一個帳號不會重複開成兩隻；名稱可以取成「法師」「弓手」等方便辨識的標籤。</p></div></div>
+          <div class="table-wrap"><table><thead><tr><th scope="col">管理視窗的操作</th><th scope="col">會發生什麼</th></tr></thead><tbody><tr><th scope="row">開啟桌寵</th><td>為該帳號建立桌寵，接回已保留的登入狀態。</td></tr><tr><th scope="row">遊戲</th><td>顯示或收起該帳號的遊戲畫面。</td></tr><tr><th scope="row">重新登入</th><td>需要重新登入時使用，帳密可選擇記住。</td></tr><tr><th scope="row">關閉桌寵</th><td>只停止這個帳號；其他桌寵繼續運作。</td></tr></tbody></table></div>
+          <p class="muted pc-only">電腦版密碼使用 Windows 加密儲存；換電腦或換 Windows 使用者後，請重新輸入。修改密碼時留白會保留原密碼。</p>
+          <p class="muted android-only" hidden>安卓版最多 3 隻，每個帳號使用獨立網頁設定檔與補給設定；同一時間只顯示一個遊戲視窗。密碼使用 Android Keystore 加密。</p>
+        </section>
+
+        <section id="automation" class="guide-section">
+          <div class="section-kicker">準備好，再出發</div><h2>補給與狩獵地圖</h2>
+          <p class="section-intro"><span class="pc-only">右鍵桌寵，開啟「自動補給、合成與配點…」設定補給。</span><span class="android-only" hidden>手機版請長按桌寵，再進入自動功能設定。</span>自動功能要先手動開啟，門檻由你決定。</p>
+          <div class="supply-example"><div class="example-title"><span class="tiny-diamond" aria-hidden="true"></span>補給設定示意</div><div class="example-row"><span>回哪個主城</span><b>雷諾斯市</b></div><div class="example-row"><span>補給後前往</span><b>最後狩獵區（預設）</b></div><div class="example-row"><span><i class="potion red" aria-hidden="true"></i>紅水種類</span><b>中級治療藥水</b></div><div class="example-row"><span>紅水數量</span><b>少於 <em>10</em> 瓶，補到 <em>100</em> 瓶</b></div><div class="example-row"><span><i class="potion blue" aria-hidden="true"></i>藍水種類</span><b>初級魔力藥水</b></div><p class="example-note">示範數字，請依角色消耗速度與背包空間調整。</p></div>
+          <div class="travel-flow" aria-label="自動補給流程"><span>狩獵中藥水不足</span><i aria-hidden="true"></i><span>回主城找商人</span><i aria-hidden="true"></i><span>購買後返回狩獵區</span></div>
+          <dl class="explanations">
+            <div><dt>種類選定後，只計算那一種</dt><dd>紅水、藍水各有初級、中級、高級、半數與全滿類選項。「自動選擇」沿用遊戲快速補給的選法；「少於」填 0，表示不檢查該項。</dd></div>
+            <div><dt>最後狩獵區，也可以自己指定</dt><dd>預設回最後待過的狩獵地圖；也能從下拉選單指定目的地。地圖旁顯示地區怪物等級，並列出主要怪物等級，方便挑選適合的位置。</dd></div>
+            <div><dt>買不到時，先看補給狀態</dt><dd>主城沒賣、金幣不夠或背包滿時會留下原因。電腦版遇背包滿會嘗試縮小購買量；連一份都放不下則留在主城等待整理，再重試補給。</dd></div>
+          </dl>
+          <p class="note-line pc-only">電腦版把遊戲視窗叫出來時，補給、合成與自動配點會暫停；藏回去才繼續。首次使用「最後狩獵區」時，先進一次狩獵地圖讓桌寵記錄。</p>
+          <p class="note-line android-only" hidden>安卓版與電腦版的更新版本不同，設定項目以 App 實際顯示為準；安卓版補給、合成與復活尚未完成實機流程驗證。</p>
+        </section>
+
+        <section id="growth" class="guide-section pc-only">
+          <div class="section-kicker">把例行事務安排好</div><h2>養成與裝備</h2>
+          <div class="feature-rows"><article><span class="feature-mark" aria-hidden="true">✧</span><div><h3>自動復活</h3><p>倒下後回主城念咒語復活，可選擇先補給再返回狩獵區。10 分鐘內倒下 3 次會先停在主城；調整地圖或設定後重新儲存，再讓角色出發。</p></div></article><article><span class="feature-mark" aria-hidden="true">◇</span><div><h3>自動合成</h3><p>普通、稀有、高級三檔分別設定。湊到指定件數後，照遊戲規則取 5 件合成；預設避開鎖定、保留、追蹤與強化等裝備。合成失敗仍可能消耗材料。</p></div></article><article><span class="feature-mark" aria-hidden="true">＋</span><div><h3>自動配點與裝備小百科</h3><p>在設定中選擇配點比例，或到「小百科（裝備）…」檢查裝備條件與缺少的能力點。先確認角色需求，再開啟自動分配。</p></div></article><article><span class="feature-mark" aria-hidden="true">☷</span><div><h3>掛機設置</h3><p>右鍵的「掛機設置…」對應遊戲本身設定，可調整自動喝藥、優先藥水、自動修理、撿裝備及自動施放等項目。</p></div></article></div>
+        </section>
+
+        <section id="controls" class="guide-section">
+          <div class="section-kicker">想操作時，隨時叫回來</div><h2>操作與專注模式</h2>
+          <div class="table-wrap pc-only"><table><thead><tr><th scope="col">操作</th><th scope="col">用途</th></tr></thead><tbody><tr><th scope="row">滑鼠移上桌寵</th><td>查看角色、等級、所在地與血量。</td></tr><tr><th scope="row">點一下／按住拖曳</th><td>讓娃娃跳一下，或拖到桌面底部的其他位置。</td></tr><tr><th scope="row">點兩下</th><td>顯示或收起這隻桌寵的遊戲視窗。</td></tr><tr><th scope="row">右鍵</th><td>開啟該帳號的設定與功能選單。</td></tr><tr><th scope="row"><kbd>Ctrl</kbd>＋<kbd>Alt</kbd>＋<kbd>R</kbd></th><td>顯示／藏起最近操作帳號的遊戲視窗。</td></tr><tr><th scope="row"><kbd>Ctrl</kbd>＋<kbd>Alt</kbd>＋<kbd>P</kbd></th><td>切換最近操作桌寵的專注模式。</td></tr></tbody></table></div>
+          <div class="table-wrap android-only" hidden><table><thead><tr><th scope="col">手機操作</th><th scope="col">用途</th></tr></thead><tbody><tr><th scope="row">點一下桌寵</th><td>開啟或收起遊戲畫面。</td></tr><tr><th scope="row">按住拖曳</th><td>調整桌寵位置。</td></tr><tr><th scope="row">長按桌寵</th><td>開啟設定；多開帳號各自調整。</td></tr></tbody></table></div>
+          <div class="focus-callout pc-only"><div class="focus-glyph" aria-hidden="true">◒</div><div><h3>專注模式，只留下半透明娃娃。</h3><p>隱藏該桌寵的名稱、飄字、提示與睡覺文字，滑鼠能直接穿過去操作底下的視窗。</p><p><strong>想再操作：</strong>先按住 <kbd>Ctrl</kbd>，把滑鼠移到娃娃身上，再按右鍵。也可用 <kbd>Ctrl</kbd>＋<kbd>Alt</kbd>＋<kbd>P</kbd> 解除，或從系統匣取消勾選。</p></div></div>
+        </section>
+
+        <section id="updates" class="guide-section">
+          <div class="section-kicker">讓冒險持續</div><h2>更新方式</h2>
+          <div class="pc-only"><p>已安裝 <strong>1.0.2 以上版本</strong>，一般功能修正走小檔更新，通常不需要重下載整個安裝檔。</p><ol class="plain-list"><li>桌寵啟動約 30 秒後會檢查更新，之後每 6 小時再查一次；也可右鍵選「檢查更新」。</li><li>新版下載完成後，選「重新啟動並更新」，或下次開啟桌寵時自動套用。</li><li>只有更新外殼、程式提示需要新安裝檔時，才重新下載安裝版。</li></ol><p class="muted">帳號與設定留在本機，不放進更新包。新功能需先套用相應內容版本；網頁教學可能比你目前開著的版本新。</p></div>
+          <div class="android-only" hidden><p>安卓版 0.2.0 <strong>尚未提供 App 內自動更新</strong>。有新版時，請從原發布位置下載 APK。</p><p class="muted">同簽章正式版可覆蓋更新；不需要先解除安裝。解除安裝可能清除本機登入與設定。</p></div>
+        </section>
+
+        <section id="questions" class="guide-section">
+          <div class="section-kicker">卡住時，先看這裡</div><h2>常見問題</h2>
+          <details class="pc-only"><summary>開了專注模式，點不到娃娃？</summary><p>按 <kbd>Ctrl</kbd>＋<kbd>Alt</kbd>＋<kbd>P</kbd> 解除。若要用右鍵，先按住 Ctrl 並移到娃娃身上再按；舊版若無反應，請先套用小檔更新。快捷鍵被占用時，改從系統匣的帳號子選單取消「專注模式」。</p></details>
+          <details><summary>角色站著不打怪，是桌寵停了嗎？</summary><p>先打開遊戲畫面，確認角色沒有倒下、人在狩獵地圖，而且遊戲的「自動戰鬥」已開。站在主城本來就不會打怪；若頻繁倒下，請降低地圖難度。</p></details>
+          <details><summary>藥水喝光，為什麼沒有買？</summary><p>確認已勾選自動補給、種類與門檻設定正確，並查看「補給狀態」和最近紀錄。電腦版顯示遊戲視窗時補給會暫停；背包已滿、金幣不足或主城沒賣指定藥水，也會造成補給失敗。先處理原因，再收起遊戲等待檢查。</p></details>
+          <details class="pc-only"><summary>Chrome 登入完成，要怎麼接回桌寵？</summary><p>在專用 Chrome 進入遊戲後，關閉該登入視窗，或對桌寵按右鍵選「登入好了」。如果登入帳號與這隻桌寵綁定的帳號不同，桌寵會拒絕接入，請改登入正確帳號。</p></details>
+          <details><summary>帳號還在，但修改時密碼欄是空白？</summary><p>這是為了不把已儲存的密碼顯示回畫面。留白表示不修改原密碼；換電腦或換系統使用者後，如果無法解密，再重新輸入即可。</p></details>
+          <details class="pc-only"><summary>重新開啟後，怎麼只有一隻桌寵？</summary><p>目前啟動時先開帳號清單中的第一隻。要多開，從系統匣進入「帳號與桌寵管理」，再按其他帳號的「開啟桌寵」，最多五隻。</p></details>
+          <details class="android-only" hidden><summary>手機鎖屏後，掛機容易中斷？</summary><p>確認桌寵的前景服務通知仍在，並檢查手機是否限制背景執行。不同品牌省電機制不同，安卓版目前只有模擬器測試，鎖屏掛機與耗電仍需要實機驗證。</p></details>
+          <details><summary>能把同一個帳號也開在其他地方嗎？</summary><p>不建議。同帳號同時登入可能互相踢下線。若要多開，請每隻使用不同帳號。</p></details>
+          <p class="note-line">遊戲規則與帳號處理以遊戲方為準；自動化功能請自行評估後使用。</p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer><a class="brand footer-brand" href="#top">龍族桌寵<span>DRAGON RAJA</span></a><p>遊戲繼續冒險，桌面保留陪伴。</p><p class="footer-note">非官方桌寵工具。遊戲名稱、角色美術與素材屬原權利人；本頁為下載與使用說明。</p><a href="#top">回到頁首</a></footer>
+</body>
+</html>

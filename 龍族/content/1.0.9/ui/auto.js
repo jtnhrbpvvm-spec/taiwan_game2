@@ -19,6 +19,7 @@ function fill(st) {
   });
   $("rev-on").checked = !!a.revive?.enabled;
   $("rev-supply").checked = a.revive?.supply !== false;
+  $("rev-spot").checked = a.revive?.spot !== false;
   $("al-on").checked = !!a.alloc?.enabled;
   filled = true;
 }
@@ -89,6 +90,39 @@ function fillHuntMaps(st) {
   sel.value = want;
   sel.dataset.initialized = "true";
   showHuntInfo(st);
+  fillMobs(st);
+}
+
+// 指定怪物：列出「補給後前往」那張圖（沒指定就最後狩獵區）的怪，跟遊戲「怪物」選單一樣顯示等級、首領
+const mobMapId = (st) => $("sup-hunt").value || st.lastHuntMap?.id || "";
+function fillMobs(st) {
+  const sel = $("sup-mob");
+  const mapId = mobMapId(st);
+  const map = (st.huntMaps || []).find((m) => m.id === mapId);
+  const saved = st.settings.supply;
+  const want = sel.dataset.initialized ? Number(sel.value) || 0 : (saved.huntMob || 0);
+  const wantMap = sel.dataset.initialized ? sel.dataset.map : saved.huntMobMap || "";
+  const key = JSON.stringify([mapId, map?.monsters || []]);
+  if (sel.dataset.key !== key) {
+    sel.dataset.key = key;
+    const lv = (m) => `Lv ${m.levelMin === m.levelMax ? m.levelMin : `${m.levelMin}～${m.levelMax}`}`;
+    sel.replaceChildren(new Option("不指定（照自動戰鬥）", "0"),
+      ...(map?.monsters || []).map((m) => new Option(`${m.boss ? "【首領】" : ""}${m.name}｜${lv(m)}`, String(m.no))));
+    if (!map) sel.append(new Option(mapId ? "（地圖資料還沒讀到，連上遊戲後會列出）" : "（先選地圖，或到練功圖打一下）", "-1"));
+  }
+  // 換了地圖：原本指定的怪不在新地圖就改回不指定；地圖資料還沒讀到就先留著已儲存的
+  const sameMap = !wantMap || wantMap === mapId;
+  let value = "0";
+  if (want > 0 && sameMap && map?.monsters?.some((m) => m.no === want)) value = String(want);
+  else if (want > 0 && sameMap && !map) {
+    if (![...sel.options].some((o) => o.value === String(want))) sel.append(new Option(`已儲存：#${want}`, String(want)));
+    value = String(want);
+  }
+  sel.value = value;
+  sel.dataset.map = mapId;
+  sel.dataset.initialized = "true";
+  const state = st.mobState;
+  $("mob-state").textContent = state ? `狀態：${state}` : "";
 }
 
 // ── 自動配點 ──
@@ -164,13 +198,15 @@ function render(st) {
 }
 
 $("save").addEventListener("click", () => {
-  const supply = { enabled: $("sup-on").checked, town: $("sup-town").value, huntMap: $("sup-hunt").value, hpItem: Number($("hp-item").value) || 0, mpItem: Number($("mp-item").value) || 0 };
+  const mob = Math.max(0, Number($("sup-mob").value) || 0);
+  const supply = { enabled: $("sup-on").checked, town: $("sup-town").value, huntMap: $("sup-hunt").value, hpItem: Number($("hp-item").value) || 0, mpItem: Number($("mp-item").value) || 0,
+    huntMob: mob, huntMobMap: mob ? $("sup-mob").dataset.map || "" : "" };
   for (const [id, key] of Object.entries(FIELDS)) supply[key] = Number($(id).value) || 0;
   if (supply.hpTo < supply.hpMin) supply.hpTo = supply.hpMin;
   if (supply.mpTo < supply.mpMin) supply.mpTo = supply.mpMin;
   if (supply.ammoTo < supply.ammoMin) supply.ammoTo = supply.ammoMin;
   const fuse = [0, 1, 2].map((i) => ({ enabled: $(`f${i}-on`).checked, count: Math.max(5, Number($(`f${i}-n`).value) || 5) }));
-  const revive = { enabled: $("rev-on").checked, supply: $("rev-supply").checked };
+  const revive = { enabled: $("rev-on").checked, supply: $("rev-supply").checked, spot: $("rev-spot").checked };
   const alloc = { enabled: $("al-on").checked, ratio: ratioNow() };
   window.autoApi.set({ supply, fuse, revive, alloc });
   for (const [id, key] of Object.entries(FIELDS)) $(id).value = supply[key];
@@ -181,5 +217,5 @@ $("save").addEventListener("click", () => {
 });
 
 window.autoApi.onStatus(render);
-$("sup-hunt").addEventListener("change", () => latestStatus && showHuntInfo(latestStatus));
+$("sup-hunt").addEventListener("change", () => { if (latestStatus) { showHuntInfo(latestStatus); fillMobs(latestStatus); } });
 window.autoApi.get().then(render);

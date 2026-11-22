@@ -41,6 +41,9 @@
       <div class="row"><label class="name" for="sup-town">回哪個主城</label><select id="sup-town"></select></div>
       <div class="row"><label class="name" for="sup-hunt">補給後前往</label><select id="sup-hunt"><option value="">最後狩獵區（預設）</option></select></div>
       <div id="hunt-info" class="hint"></div>
+      <div class="row"><label class="name" for="sup-mob">指定怪物</label><select id="sup-mob"><option value="0">不指定（照自動戰鬥）</option></select></div>
+      <div id="mob-info" class="hint">跟遊戲小地圖下方「怪物」選單一樣：走到最近一隻指定的怪，走到旁邊就開自動戰鬥放技能打；被別的怪貼身時先打掉再找。只在那張地圖生效（不用開自動補給也有效），遊戲視窗開著或自己關掉自動戰鬥時不找。</div>
+      <div id="mob-state" class="hint"></div>
       <div class="row"><label class="name" for="hp-item">紅水種類</label><select id="hp-item"></select></div>
       <div class="row"><label class="name" for="hp-min">紅水數量</label>少於 <input type="number" id="hp-min" min="0" /> 瓶，補到 <input type="number" id="hp-to" min="0" /> 瓶</div>
       <div class="row"><label class="name" for="mp-item">藍水種類</label><select id="mp-item"></select></div>
@@ -54,6 +57,7 @@
       <div class="hint">角色倒下時，跟按「回主城」「念咒語復活」一樣：回上面選的主城（沒選就回本國主城）念咒語復活，再回練功地圖（上面指定的，沒指定就回倒下前那張），自動戰鬥照舊。<br />
         10 分鐘內倒下 3 次就先停在主城、不再自動回去，免得一直送死（遊戲自己也會在常死的圖暫停自動戰鬥）。</div>
       <div class="row"><label class="switch"><input type="checkbox" id="rev-supply" /> 復活後先照「自動補給」的藥水設定買到「補到」的數量</label></div>
+      <div class="row"><label class="switch"><input type="checkbox" id="rev-spot" /> 回到同一張練功圖後，走回倒下的地方附近（路上看到怪就先開自動戰鬥打）</label></div>
     </section>
 
     <section>

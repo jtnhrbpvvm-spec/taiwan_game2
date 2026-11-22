@@ -74,6 +74,8 @@ const FINDERS = [
   { keys: ["skillAlly"], re: new RegExp(`(${N})=e=>\\(${N}\\(e\\)\\|\\|${N}\\(e\\)\\)&&e!==178&&`) },
   // 傳送介面的練功地圖（含怪物等級），只列遊戲提供的可選地區。
   { keys: ["huntMaps"], re: new RegExp(`(${N})=${N}\\.filter\\(e=>${N}\\.some\\(t=>t\\.mapId===e\\.id\\)\\)`) },
+  // 小地圖下方「怪物」選單的清單：地圖 → { monsters:[{no,name,levelMin,levelMax,boss}] …}（同名怪合併、首領排後面）
+  { keys: ["mapMonsters"], re: new RegExp(`function (${N})\\(e\\)\\{let t=${N}\\.get\\(e\\.id\\);if\\(t\\)return t;let n=\\[\\.\\.\\.e\\.monsters\\.map\\(e=>\\(\\{m:e,boss:!1\\}\\)\\)`) },
 ];
 
 /** 回傳 { code, found:{key:name}, missing:[key] }；code 是加了接出程式的主程式。 */

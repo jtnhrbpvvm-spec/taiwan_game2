@@ -94,6 +94,14 @@
   };
   let helloTimer = 0;
   const deathTimes = []; // 最近倒下的時間（自動復活判斷是不是一直送死）
+  // 最後一次倒下的地方 { mapId, x, y, at }：復活回到同一張練功圖後走回這附近（使用者 2026-11-22）
+  let deathSpot = null;
+  function noteDeathSpot() {
+    try {
+      const p = window.__rajaGame && window.__rajaGame.selfPos && window.__rajaGame.selfPos();
+      if (S.mapId && !S.town && Array.isArray(p)) deathSpot = { mapId: S.mapId, x: p[0], y: p[1], at: Date.now() };
+    } catch {}
+  }
   const mergeChar =(o, fields) => { S.character = { ...(S.character || {}), ...pick(o, fields) }; };
 
   function readInv(inv) {
@@ -164,14 +172,16 @@
         if (msg.mep) mergeChar(msg.mep, ME_FIELDS); // 只有變動的欄位（遊戲程式叫 stats patch），打怪時的經驗、金幣、血量都在這裡
         // 倒下：血量 0＋事件 [6, 自己]；復活：事件 [7, 自己]（2026-11-21 在 Chrome 實錄）
         if (msg.mep && typeof msg.mep.hp === "number") {
-          if (msg.mep.hp <= 0) S.dead = true;
-          else S.dead = false;
+          if (msg.mep.hp <= 0) {
+            if (!S.dead) { deathTimes.push(Date.now()); noteDeathSpot(); } // 血量 0 跟事件 [6] 常在同一包，先到的這邊就要記
+            S.dead = true;
+          } else S.dead = false;
         }
         if (Array.isArray(msg.ev)) {
           for (const ev of msg.ev) {
             if (!Array.isArray(ev) || ev[1] !== S.selfId) continue;
             if (ev[0] === 6) {
-              if (!S.dead) deathTimes.push(Date.now());
+              if (!S.dead) { deathTimes.push(Date.now()); noteDeathSpot(); }
               S.dead = true;
             } else if (ev[0] === 7) S.dead = false;
           }
@@ -415,7 +425,9 @@
   const partyNow = () => { try { return G().state().party || null; } catch { return null; } };
   const roomCode = () => { try { const st = G().state(); return st.room && st.room.status === "in" ? st.roomMeta && st.roomMeta.code : undefined; } catch { return undefined; } };
   const myName = () => (S.character && S.character.name) || "";
-  const teamDest = () => (TEAM && partyNow() && partyNow().destination) || null;
+  // 隊伍正在練功的房間（遊戲「跟上隊伍」按鈕用的同一份 party.destination）。
+  // 不限桌寵的「組隊練功」：桌寵重開後 TEAM 清掉了但遊戲裡隊伍還在，隊長回城補給、復活後也要回隊伍那間（使用者 2026-11-22）
+  const teamDest = () => { const p = partyNow(); return (p && p.destination) || null; };
   async function partyReq(body) {
     const r = await timed(G().net.request({ op: "party", ...body }), 20000, "組隊");
     if (r && r.error) throw new Error(errText(r.error));
@@ -966,11 +978,22 @@
     const g = G();
     // 組隊中：回隊伍的房間；隊員還沒有隊伍房間就留在主城等隊長
     const dest = teamDest();
-    if (dest) { await humanPause(); await joinTeamRoom(dest, autoMode, what); return; }
-    if (TEAM && TEAM.role === "member") { log(`${what}，組隊中：留在主城等 ${TEAM.leader}`); return; }
-    if (LIFE_ON) { log(`${what}，練生活技能中：留在主城`); return; }
-    if (!target) { log(`${what}，不知道要回哪張練功地圖，先停在主城`, "warn"); return; }
-    await humanPause();
+    if (dest) {
+      await humanPause();
+      try {
+        await joinTeamRoom(dest, autoMode, what);
+        await walkBackToSpot(autoMode);
+        return;
+      } catch (e) {
+        if (TEAM || !target) throw e;
+        log(`${what}：${errText(e)}，改回「${target.name}」`, "warn"); // 不是桌寵組隊、隊伍的房間又進不去：照一般回練功圖
+      }
+    } else {
+      if (TEAM && TEAM.role === "member") { log(`${what}，組隊中：留在主城等 ${TEAM.leader}`); return; }
+      if (LIFE_ON) { log(`${what}，練生活技能中：留在主城`); return; }
+      if (!target) { log(`${what}，不知道要回哪張練功地圖，先停在主城`, "warn"); return; }
+      await humanPause();
+    }
     const err2 = await timed(g.joinRoom(target.id, {}), 30000, "回狩獵地圖");
     if (err2) throw new Error(`回不了狩獵地圖「${target.name}」（${err2}）`);
     if (!(await waitFor(() => !S.town && S.mapId === target.id, 20000))) throw new Error(`等太久還沒進到狩獵地圖「${target.name}」`);
@@ -978,6 +1001,130 @@
     const now = g.state().auto && g.state().auto.mode;
     if (autoMode && now !== autoMode && g.toggleAuto) g.toggleAuto();
     log(`${what}，回到「${target.name}」繼續打`);
+    await walkBackToSpot(autoMode);
+  }
+
+  // ---------- 練功圖裡走位：復活後走回倒下的地方、指定怪物 ----------
+  // 2026-11-22 在主帳號實測遊戲指令：
+  //   move{x,y}：伺服器自己找路走過去（遠的也行），自動戰鬥暫時變 manual，走到後約 3 秒自己恢復自動戰鬥
+  //   seek{no}：小地圖下方「怪物」選單用的，走到最近一隻這種怪、用普攻開打（manual，打死後約 3 秒恢復自動）
+  //   setAuto{locked:false}：manual 中送出就馬上回到自動戰鬥、目標不變，會照快捷欄設定放技能
+  // auto.mode：auto＝自動戰鬥開著；locked＝玩家關掉自動戰鬥；manual＝自己操作中（過一下會自己恢復）。
+  // 實體陣列：[id, 種類(1＝怪物), x, y, 方向, hp, maxHp, 外觀, 動作, 等級, …, 怪物編號(12)]
+  const SPOT_NEAR = 4, MOB_NEAR = 6, SPOT_MAX_MS = 3 * 60 * 1000, SPOT_TTL_MS = 30 * 60 * 1000;
+  let pendingSpot = null; // 復活時記下要走回去的地方，回到練功圖後才走
+  let walking = false;
+  const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+  const autoOn = () => G().net.post({ op: "setAuto", locked: false });
+  function liveMonsters() {
+    const w = G().world;
+    const out = [];
+    if (!w || !w.entities) return out;
+    for (const e of w.entities.values()) if (Array.isArray(e) && e[1] === 1 && e[5] > 0) out.push(e);
+    return out;
+  }
+  /** 現在的戰鬥目標（活著的怪），沒有就 null。 */
+  function currentTarget() {
+    const w = G().world;
+    const id = w && w.control && w.control[1];
+    const e = id && w.entities.get(id);
+    return Array.isArray(e) && e[1] === 1 && e[5] > 0 ? e : null;
+  }
+  /** 復活回到倒下的那張練功圖後，走回倒下的地方附近；路上看到怪就先開自動戰鬥打（會放技能），打完再走。 */
+  async function walkBackToSpot(autoMode) {
+    const spot = pendingSpot;
+    pendingSpot = null;
+    if (!spot || S.mapId !== spot.mapId || S.town || Date.now() - spot.at > SPOT_TTL_MS) return;
+    const g = G();
+    if (!g.world || !g.selfPos) return;
+    if ((autoMode || (g.state().auto || {}).mode) === "locked") return; // 玩家關著自動戰鬥：不幫他走
+    const here = g.selfPos();
+    if (!here || cheb(here, [spot.x, spot.y]) <= SPOT_NEAR) return;
+    log(`走回倒下的地方附近（${spot.x}, ${spot.y}），路上看到怪就先打`);
+    walking = true;
+    try {
+      const end = Date.now() + SPOT_MAX_MS;
+      let lastMove = 0, lastPos = null, stillSince = Date.now();
+      while (Date.now() < end) {
+        if (S.dead || S.town || S.mapId !== spot.mapId || S.status !== "ingame") return;
+        const me = g.selfPos();
+        if (!me) return;
+        if (cheb(me, [spot.x, spot.y]) <= SPOT_NEAR) { log("已走到倒下的地方附近，繼續打"); break; }
+        if (!lastPos || cheb(me, lastPos) > 0) { lastPos = me; stillSince = Date.now(); }
+        const mode = (g.state().auto || {}).mode;
+        const near = liveMonsters().some((e) => cheb(me, [e[2], e[3]]) <= MOB_NEAR);
+        const tgt = currentTarget();
+        if (near || (mode === "auto" && tgt && cheb(me, [tgt[2], tgt[3]]) <= MOB_NEAR)) {
+          if (mode !== "auto") autoOn(); // 看到怪：馬上開自動戰鬥（放技能）
+        } else if (mode === "auto" || Date.now() - stillSince > 3000 || Date.now() - lastMove > 8000) {
+          g.net.post({ op: "move", x: spot.x, y: spot.y });
+          lastMove = Date.now();
+          stillSince = Date.now();
+        }
+        await sleep(1000);
+      }
+      if (Date.now() >= end) log("走回倒下的地方太久了，就地繼續打", "warn");
+    } finally {
+      walking = false;
+      try { if ((g.state().auto || {}).mode === "manual") autoOn(); } catch {}
+    }
+  }
+
+  // 指定怪物（自動補給設定裡選的；只在那隻怪出現的地圖生效）：
+  //   目標不是指定的怪、身邊 MOB_NEAR 格內也沒有正在打的 → 用遊戲「怪物」選單的 seek 走過去；走到旁邊就開回自動戰鬥（放技能）。
+  //   被別的怪貼身（目前目標在 3 格內）就先照自動戰鬥打掉再找（使用者 2026-11-22 選「先打身邊的再找」）。
+  let lastSeekAt = 0, seekMissUntil = 0, seekNo = 0, seekPending = false;
+  function mobTick() {
+    const sup = AUTO && AUTO.supply;
+    const no = sup && sup.huntMob;
+    const g = G();
+    const mode = g && g.state && (g.state().auto || {}).mode;
+    const me = g && g.world && g.selfPos && g.selfPos();
+    if (!no || busy || walking || watching || S.dead || S.town || S.status !== "ingame" || !me || !g.net || (g.net.supports && !g.net.supports("seek")) ||
+      (sup.huntMobMap && sup.huntMobMap !== S.mapId) || mode === "locked") { // locked＝玩家關掉自動戰鬥
+      seekPending = false; // 中斷過就重新算
+      return;
+    }
+    if (no !== seekNo) { seekNo = no; seekMissUntil = 0; seekPending = false; }
+    const now = Date.now();
+    const tgt = currentTarget();
+    if (tgt && tgt[12] === no) {
+      seekPending = false;
+      if (mode === "manual" && cheb(me, [tgt[2], tgt[3]]) <= 3) autoOn();
+      return;
+    }
+    if (seekPending) {
+      if (now - lastSeekAt < 8000) return; // 還在走過去
+      // 8 秒都沒對上這種怪：大概這附近沒有，20 秒後再找，中間照自動戰鬥打
+      seekPending = false;
+      seekMissUntil = now + 20000;
+      if (mode === "manual") autoOn();
+      return;
+    }
+    if (tgt && cheb(me, [tgt[2], tgt[3]]) <= 3) return; // 先打身邊的
+    if (now < seekMissUntil || now - lastSeekAt < 3000) return;
+    g.net.post({ op: "seek", no });
+    lastSeekAt = now;
+    seekPending = true;
+  }
+  setInterval(() => { try { mobTick(); } catch {} }, 1500);
+  /** 設定視窗顯示用：指定怪物現在在做什麼。 */
+  function mobState() {
+    const sup = AUTO && AUTO.supply;
+    if (!sup || !sup.huntMob) return "";
+    if (walking) return "走回倒下的地方中";
+    if (watching) return "遊戲視窗開著，暫停找怪";
+    if (S.dead || S.town || S.status !== "ingame") return "不在練功圖，回到練功圖後開始找";
+    if (sup.huntMobMap && sup.huntMobMap !== S.mapId) return "不在指定怪物的地圖，照一般自動戰鬥";
+    try {
+      const g = G();
+      if ((g.state().auto || {}).mode === "locked") return "自動戰鬥關著，不找怪";
+      const tgt = currentTarget();
+      if (tgt && tgt[12] === sup.huntMob) return "正在打指定的怪";
+      if (Date.now() < seekMissUntil) return "附近找不到指定的怪，稍後再找（先打身邊的）";
+      if (seekPending) return "走去找指定的怪";
+      return tgt ? "先打身邊的怪" : "找怪中";
+    } catch { return ""; }
   }
 
   async function supplyRun(cfg, opts = {}) {
@@ -1114,6 +1261,8 @@
     let target;
     try { target = huntTarget(scfg); } catch {}
     const autoMode = autoBeforeDeath;
+    // 復活回到同一張練功圖後要不要走回倒下的地方（設定預設開著）
+    pendingSpot = rcfg.spot !== false && deathSpot && Date.now() - deathSpot.at < SPOT_TTL_MS ? deathSpot : null;
     log(`倒下了：回「${town.name}」念咒語復活`);
     if (!(S.town && S.mapId === town.mapId)) {
       const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
@@ -1291,7 +1440,13 @@
       reviveHold ? "頻繁倒下，停在主城等待調整設定" : S.dead ? "倒下中，等待復活後補給" : !has(SUPPLY_NEED) ? "遊戲補給介面尚未就緒" :
       Date.now() < nextSupplyAt ? `${supplyError || "補給完成後稍候"}（約 ${Math.ceil((nextSupplyAt - Date.now()) / 1000)} 秒後檢查）` :
       busy ? "正在執行補給、復活或合成" : "每 5 秒檢查藥水，主城內也會補給";
-    auto.huntMaps = (g.huntMaps || []).map(m => ({ id: m.id, name: m.name, levelMin: m.levelMin, levelMax: m.levelMax, coreLevelMin: m.coreLevelMin, coreLevelMax: m.coreLevelMax }));
+    // 每張圖的怪物（跟遊戲小地圖下方「怪物」選單同一份：同名合併、等級範圍、首領）
+    const mobsOf = (m) => {
+      try { if (g.mapMonsters) return g.mapMonsters(m).monsters.map(x => ({ no: x.no, name: x.name, levelMin: x.levelMin, levelMax: x.levelMax, boss: !!x.boss })); } catch {}
+      return (m.monsters || []).map(x => ({ no: x.no, name: `#${x.no}`, levelMin: x.levelMin, levelMax: x.levelMax, boss: false }));
+    };
+    auto.huntMaps = (g.huntMaps || []).map(m => ({ id: m.id, name: m.name, levelMin: m.levelMin, levelMax: m.levelMax, coreLevelMin: m.coreLevelMin, coreLevelMax: m.coreLevelMax, monsters: mobsOf(m) }));
+    auto.mobState = mobState();
     // 目前有幾瓶、各檔可以合幾件（設定視窗顯示，方便決定數字）
     try {
       const inv = g.store && g.invView ? invNow() : null;
@@ -1350,6 +1505,7 @@
   // 主程式用 executeJavaScript 呼叫 window.__rajaPetPrefs。
   const GRAPHICS = ["auto", "performance", "quality"], EFFECTS = ["auto", "high", "mid", "low"];
   const POTION_AT = [0, 30, 40, 50, 60];
+  const ALLY_SUPPORT = ["self", "party", "nearby"];
   const RULE_OFF = 4, RULES = [0, 1, 2, 3, 4]; // 一直用、只打首領、HP 低於一半、身邊 2 隻怪以上、關閉
   const vol = (v) => Math.max(0, Math.min(100, Math.round(Number(v) / 5) * 5 || 0));
   function prefsSnapshot() {
@@ -1370,7 +1526,9 @@
     }));
     get("upkeep", () => {
       const u = g.upkeepGet();
-      return { hold: u.hold, allyCast: u.allyCast, repair: u.repair, pickupMin: u.lootFilter?.pickupMin ?? 0, expLock: u.expLock,
+      // 遊戲 beta-v1.2.2264 起「自動幫隊友施法」開關改成「支援對象」三選一（allySupport：self／party／nearby）；舊版只有 allyCast
+      const allySupport = ALLY_SUPPORT.includes(u.allySupport) ? u.allySupport : u.allyCast === false ? "self" : "party";
+      return { hold: u.hold, allySupport, allySupportNew: "allySupport" in u, repair: u.repair, pickupMin: u.lootFilter?.pickupMin ?? 0, expLock: u.expLock,
         sell: u.sell, sellRarity: u.sellRarity, rules: u.rules, allyTargets: u.allyTargets };
     });
     get("quickAutoOff", () => !!g.feature("quickAutoOff"));
@@ -1400,7 +1558,13 @@
         if (n === 0 || g.potionChoices[kind].some((t) => t.itemNo === n)) g.potionPrioritySet(kind, n);
         break;
       }
-      case "hold": case "allyCast": case "repair": case "expLock": case "sell": setUpkeep({ [key]: !!v }); break;
+      case "hold": case "repair": case "expLock": case "sell": setUpkeep({ [key]: !!v }); break;
+      case "allySupport": {
+        if (!ALLY_SUPPORT.includes(v)) break;
+        if ("allySupport" in g.upkeepGet()) setUpkeep({ allySupport: v });
+        else setUpkeep({ allyCast: v !== "self" }); // 舊版遊戲：只有開／關
+        break;
+      }
       case "pickupMin": if ([0, 1, 2].includes(v)) setUpkeep({ lootFilter: { ...g.upkeepGet().lootFilter, pickupMin: v } }); break;
       case "sellRarity": if (Number.isInteger(v) && v >= 0 && v <= 7) setUpkeep({ sellRarity: v }); break;
       case "rule": {

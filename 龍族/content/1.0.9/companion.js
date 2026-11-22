@@ -142,13 +142,15 @@ function cleanAuto(a) {
       enabled: !!s.enabled,
       town: typeof s.town === "string" ? s.town.slice(0, 40) : "",
       huntMap: typeof s.huntMap === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(s.huntMap) ? s.huntMap : "",
+      huntMob: num(s.huntMob, 0, 999999), // 指定怪物（遊戲怪物編號，0＝不指定）
+      huntMobMap: typeof s.huntMobMap === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(s.huntMobMap) ? s.huntMobMap : "",
       hpItem: potions.selection("hp", s.hpItem), mpItem: potions.selection("mp", s.mpItem),
       hpMin: num(s.hpMin, 0, 9999), hpTo: num(s.hpTo, 0, 9999),
       mpMin: num(s.mpMin, 0, 9999), mpTo: num(s.mpTo, 0, 9999),
       ammoMin: num(s.ammoMin, 0, 9999), ammoTo: num(s.ammoTo, 0, 9999),
     },
     fuse: [0, 1, 2].map((i) => ({ enabled: !!a?.fuse?.[i]?.enabled, count: num(a?.fuse?.[i]?.count ?? 5, 5, 96) })),
-    revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false },
+    revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false, spot: a?.revive?.spot !== false },
     sell: cleanSell(a?.sell),
     life: cleanLife(a?.life),
     alloc: {
@@ -369,6 +371,7 @@ function autoStatus() {
     fusable: a?.fusable ?? null,
     supplyOk: !!a?.supplyOk,
     supplyState: a?.supplyState || "",
+    mobState: a?.mobState || "",
     fuseOk: !!a?.fuseOk,
     char: a?.char ?? null,
     allocTarget: allocInfo(),
@@ -482,7 +485,7 @@ function openIdleSettings() {
   idleWin.on("closed", () => (idleWin = undefined));
 }
 const PREF_KEYS = new Set(["graphics", "effects", "soundOn", "soundVolume", "musicOn", "musicVolume", "shake", "potionAt", "hpItem", "mpItem",
-  "hold", "allyCast", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget"]);
+  "hold", "allySupport", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget"]);
 function inGame(code) {
   if (!game.win || game.win.isDestroyed() || game.loading) return Promise.resolve({ ready: false });
   return game.win.webContents.executeJavaScript(`window.__rajaPetPrefs ? ${code} : { ready: false }`).catch(() => ({ ready: false }));

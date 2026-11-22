@@ -12,6 +12,7 @@ const GRAPHICS = [["auto", "推薦"], ["performance", "效能優先"], ["quality
 const EFFECTS = [["auto", "推薦"], ["high", "高"], ["mid", "中"], ["low", "低"]];
 const POTION_AT = [[0, "關"], [30, "30%"], [40, "40%"], [50, "50%"], [60, "60%"]];
 const PICKUP = [[0, "全部"], [1, "稀有以上"], [2, "高級以上"]];
+const ALLY_SUPPORT = [["self", "自己"], ["party", "隊伍"], ["nearby", "附近本國"]];
 const RARITY = [[1, "普通"], [2, "稀有"], [4, "高級"]];
 const RULE_OFF = 4;
 const RULES = [[4, "關閉"], [0, "一直用"], [1, "只打首領"], [2, "HP 低於一半"], [3, "身邊 2 隻怪以上"]];
@@ -88,7 +89,9 @@ function render(s) {
 
   const u = s.upkeep;
   if (u) {
-    for (const k of ["hold", "allyCast", "repair", "expLock", "sell"]) sw($(k), u[k], (v) => set(k, v));
+    for (const k of ["hold", "repair", "expLock", "sell"]) sw($(k), u[k], (v) => set(k, v));
+    // 舊版遊戲沒有「附近本國」，只有開（隊伍）／關（自己）
+    seg($("allySupport"), u.allySupportNew === false ? ALLY_SUPPORT.slice(0, 2) : ALLY_SUPPORT, u.allySupport, (v) => set("allySupport", v));
     seg($("pickupMin"), PICKUP, u.pickupMin, (v) => set("pickupMin", v));
     const checks = $("sellRarity");
     checks.hidden = !u.sell;

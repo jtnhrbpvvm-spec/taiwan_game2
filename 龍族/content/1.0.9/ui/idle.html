@@ -80,8 +80,8 @@
     <section id="tab-idle" hidden>
       <div class="item"><span class="name">原地自動戰鬥</span><button type="button" class="switch" role="switch" id="hold"></button>
         <div class="hint">自動戰鬥時站在原地不走動：只打武器、魔法打得到的怪，不追怪、不走去撿東西。自己點地面或搖桿移動不受影響。</div></div>
-      <div class="item"><span class="name">自動幫隊友施法</span><button type="button" class="switch" role="switch" id="allyCast"></button>
-        <div class="hint">自動戰鬥時，快捷欄的治療、保護和增益會支援隊友。回溯聖言會先救同隊，再救射程內的同國玩家。關掉後仍可手動指定目標。</div></div>
+      <div class="item"><span class="name">支援對象</span><span class="seg" id="allySupport"></span>
+        <div class="hint" id="allySupportHint">自動戰鬥時，快捷欄的治療、保護和增益要支援誰。自己：只有自己；隊伍：自己和隊友；附近本國：再加上射程內沒組隊的本國玩家（開 PK 或交戰中的不補）。回溯聖言會先救同隊，再救同國玩家。補助隊伍以外的人不算熟練、不給經驗。選哪種都仍可手動指定目標。</div></div>
       <div class="item"><span class="name">自動修理</span><button type="button" class="switch" role="switch" id="repair"></button>
         <div class="hint">身上裝備耐久低於 20% 時，照一般修理費自動全修；壞掉卸下的裝備也會修好並穿回去；掛機修理不會降低耐久上限。</div></div>
       <div class="item"><span class="name">撿裝備</span><span class="seg" id="pickupMin"></span>
