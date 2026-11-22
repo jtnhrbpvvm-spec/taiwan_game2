@@ -92,7 +92,7 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 4, cleanLaunch: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 5, cleanLaunch: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 上榜模式：遊戲會比對 app.asar 雜湊，被中文化改過就拒收排行榜紀錄。
@@ -127,8 +127,9 @@ const EXPORT_PATTERNS = [
   /[,;\s]([\w$]+)=[\w$]+\(\),[\w$]+=\1\.flatMap\([\w$]+=>[\w$]+\.uniques\)/g,
   /function ([\w$]+)\([\w$]+\)\{(?:(?!function ).){0,120}?itype:[\w$]+\.itype(?:(?!function ).){0,120}?bothHands/g,
   // V56：掉落產生器（隨機稀有度、稀有），裝備創造用來收集符文之語底材的隨機職業技能和自帶屬性
-  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{let [\w$]+=[\w$]+\.get\([\w$]+\.base\),[\w$]+=Math\.random\(\),[\w$]+=[\w$]+<[\d.e-]+\?`unique`/g,
-  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{return [\w$]+\([\w$]+\.get\([\w$]+\.base\),`rare`,/g,
+  // 20261120.1 起 Math.random() 換成遊戲自己的亂數函式；稀有產生器前面多了「這個底材有獨特就做獨特」
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{let [\w$]+=[\w$]+\.get\([\w$]+\.base\),[\w$]+=(?:Math\.random|[\w$]+)\(\),[\w$]+=[\w$]+<[\d.e-]+\?`unique`/g,
+  /function ([\w$]+)\([\w$]+,[\w$]+,[\w$]+,[\w$]+\)\{(?:let [^;{}]{0,40};)?return [^;{}]{0,120}?[\w$]+\([\w$]+\.get\([\w$]+\.base\),`rare`,/g,
 ];
 function addExports(text) {
   const names = new Set();

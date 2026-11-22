@@ -32,8 +32,15 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V65';
+const D2ZH_VERSION = 'V67';
 window.__D2ZH_VERSION = D2ZH_VERSION;
+// 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
+// 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
+// 線上模式只提供翻譯：書籤修改、裝備創造、物品過濾擴充、碎片感應、效能模式等所有修改與輔助功能都不安裝，面板只顯示「線上模式不可使用」。
+const D2ZH_ONLINE = (() => {
+try { const m = sessionStorage.getItem('d2s:online'); return m === 'softcore' || m === 'hardcore' ? m : ''; } catch (_) { return ''; }
+})();
+window.__D2ZH_ONLINE = D2ZH_ONLINE;
 const D2_FONTS = {"font6":{"h":11,"lh":14,"adv":[7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,4,7,6,9,7,2,3,3,5,6,3,4,3,4,7,4,5,5,6,5,5,5,5,6,3,3,6,7,6,6,9,6,6,7,7,6,6,7,7,4,5,7,5,8,7,7,6,7,7,5,6,7,7,9,6,6,6,3,4,3,6,6,3,7,6,5,6,6,5,6,7,4,5,7,4,8,6,6,6,6,5,6,5,6,6,9,6,7,5,4,2,5,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,2,2,7,7,7,7,7,7,7,7,7,7,7,7,7,5,5,6,6,6,6,2,5,5,8,5,5,5,5,8,4,4,6,4,4,3,7,5,5,4,3,5,5,9,8,9,6,7,7,7,7,7,7,9,7,6,6,6,6,4,4,4,4,7,7,7,7,7,7,7,6,7,7,7,7,7,7,6,8,6,6,6,6,6,6,9,5,6,6,6,6,3,3,3,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7]},"font8":{"h":14,"lh":18,"adv":[8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,4,9,7,10,8,3,5,5,7,10,4,4,4,4,7,7,7,7,7,7,7,7,7,7,4,4,10,10,10,7,12,8,8,9,9,8,7,9,9,4,4,8,6,11,9,9,8,9,8,8,7,9,8,12,8,8,8,5,4,5,12,7,7,8,8,7,8,7,5,8,7,4,4,7,4,12,8,7,8,8,6,7,5,8,7,10,7,7,7,7,7,7,10,8,8,8,4,7,6,12,7,7,7,15,8,4,12,8,8,8,8,4,4,6,6,7,7,12,7,10,7,4,12,8,7,8,7,4,7,7,8,7,7,7,7,10,6,6,10,4,10,7,5,10,5,5,7,7,7,4,7,5,6,6,11,11,11,7,8,8,8,8,8,8,11,9,8,8,8,8,4,4,4,4,9,9,9,9,9,9,9,10,9,9,9,9,9,8,8,8,8,8,8,8,8,8,11,7,7,7,7,7,4,4,4,4,7,8,7,7,7,7,7,10,7,8,8,8,8,7,7,7]},"font16":{"h":16,"lh":20,"adv":[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,8,13,12,4,5,5,6,8,5,5,5,9,12,5,9,8,9,9,8,8,7,8,5,5,6,7,6,8,11,12,7,9,10,8,8,10,9,5,5,9,8,12,10,11,9,12,10,7,11,12,13,16,12,12,10,5,9,5,5,9,5,10,7,8,8,7,7,9,7,4,4,8,7,10,9,10,7,10,9,7,9,10,10,13,10,10,7,6,3,6,6,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,5,6,12,12,12,12,12,12,12,12,12,12,12,12,12,8,8,7,8,7,12,3,6,6,11,9,7,10,4,11,9,7,9,7,7,5,13,9,7,7,3,8,8,11,13,12,8,12,12,12,12,12,12,11,10,8,7,8,8,5,5,5,7,11,11,11,11,11,12,11,10,11,13,13,13,12,12,8,9,11,10,10,10,10,10,10,8,7,6,7,7,4,5,4,5,8,9,10,9,9,10,10,8,10,10,10,10,10,10,7,10]},"font24":{"h":26,"lh":32,"adv":[17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,11,11,11,18,17,6,8,7,8,10,6,8,6,12,17,8,12,12,13,12,12,12,11,12,6,8,9,9,9,12,17,18,12,15,15,12,12,14,14,7,7,14,11,17,15,17,12,17,15,11,16,18,18,24,18,18,13,7,12,7,8,10,7,14,11,11,13,9,10,11,11,6,6,11,10,15,13,13,10,14,13,9,14,15,15,20,14,14,12,9,4,10,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,7,7,17,17,17,17,17,17,17,17,17,17,17,17,17,12,12,10,12,11,17,4,10,9,16,12,11,15,8,17,8,9,11,9,9,7,19,11,11,12,5,11,11,16,16,18,12,18,18,17,17,18,17,17,14,11,11,11,11,8,7,7,8,16,16,17,17,17,16,17,12,16,18,18,18,19,17,12,13,15,15,14,14,15,15,14,12,9,9,9,9,6,6,7,7,11,13,15,14,14,14,14,11,14,15,15,15,15,15,10,15]},"font30":{"h":30,"lh":38,"adv":[22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,16,16,14,14,15,23,21,8,10,9,11,12,8,10,8,16,22,9,15,15,16,15,14,15,15,14,8,8,10,12,10,15,21,22,15,17,18,15,15,17,16,8,8,17,14,22,19,21,14,21,18,14,20,23,23,31,22,22,16,9,16,8,10,15,8,19,12,15,16,13,12,15,14,7,8,14,12,19,16,18,13,18,16,13,17,19,19,24,18,19,14,12,6,12,11,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,8,8,21,21,21,21,21,21,21,21,21,21,21,21,21,16,16,13,14,14,22,7,12,10,21,14,14,18,10,21,10,11,15,11,11,9,24,15,14,15,7,14,13,20,20,22,15,22,23,22,22,22,22,21,17,15,15,15,15,9,9,9,10,18,19,21,21,20,21,21,15,21,23,24,23,23,22,14,16,18,18,18,18,18,19,18,15,13,12,12,12,8,8,9,9,14,16,18,18,18,18,18,14,18,19,19,19,19,18,12,18]},"font42":{"h":41,"lh":51,"adv":[29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,19,19,31,28,10,12,12,14,16,11,13,10,21,29,12,21,20,22,20,19,20,19,20,10,11,13,15,13,19,28,30,20,23,24,20,19,23,22,11,11,23,19,30,26,28,20,28,25,19,28,31,31,41,29,29,22,11,21,11,12,21,12,26,17,20,21,17,17,20,19,10,10,19,17,24,21,23,17,24,21,16,23,25,26,33,24,24,18,16,7,15,13,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,12,11,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,18,20,19,29,6,16,14,28,19,17,24,13,28,13,14,20,15,14,11,32,20,20,19,9,18,18,27,25,30,19,29,30,30,30,30,30,29,23,19,18,19,19,13,13,13,14,25,26,28,28,29,29,29,20,28,30,31,31,32,30,19,22,26,25,25,25,25,25,24,20,16,16,16,15,11,11,11,11,18,22,24,24,24,24,24,18,24,25,25,26,26,24,16,24]},"fontexocet10":{"h":18,"lh":22,"adv":[13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,9,9,10,9,9,14,13,6,7,7,7,11,6,9,5,9,13,6,9,9,9,9,9,10,8,9,6,6,9,10,9,9,12,13,9,10,11,9,9,10,11,6,7,12,9,15,11,12,9,12,12,9,12,14,14,18,14,13,10,6,10,6,8,10,7,11,8,9,10,8,8,9,10,5,7,11,8,13,10,11,8,11,10,8,11,12,12,17,13,11,9,7,3,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,7,7,12,12,12,12,12,12,12,12,12,12,12,12,12,9,9,8,10,9,14,3,7,7,12,8,9,12,8,12,11,6,11,5,5,6,14,10,8,8,5,9,9,12,12,13,9,14,14,14,14,14,14,15,10,9,9,9,9,7,7,6,8,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,10,14,14,14,14,14,14,15,10,9,9,9,9,6,7,6,7,11,11,12,12,12,12,12,9,13,14,14,14,14,14,9,14]},"fontformal12":{"h":20,"lh":25,"adv":[11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,6,6,6,13,10,15,12,3,6,6,9,14,6,6,6,5,10,10,10,10,10,10,10,10,10,10,6,6,14,14,14,9,17,12,11,12,12,11,10,13,13,6,6,11,9,15,13,13,10,13,11,10,10,12,12,16,11,11,11,6,5,6,17,9,9,11,11,9,11,10,7,11,10,5,5,10,5,16,11,10,11,11,8,9,7,11,9,13,10,10,9,9,9,9,14,11,11,11,6,10,8,17,9,9,9,22,10,6,17,11,11,11,11,6,6,8,8,10,9,17,9,14,9,6,16,11,9,11,10,6,10,10,11,10,9,9,9,14,8,8,14,6,14,9,6,14,7,7,9,10,9,6,9,7,8,8,15,15,15,9,12,12,12,12,12,12,16,12,11,11,11,11,6,6,6,6,13,13,13,13,13,13,13,14,13,12,12,12,12,11,10,11,11,11,11,11,11,11,16,9,10,10,10,10,5,5,5,5,10,11,10,10,10,10,10,14,10,11,11,11,11,10,10,10]}};
 const D2ZH_STATE = new WeakMap();
 const D2ZH_CTX = CanvasRenderingContext2D.prototype;
@@ -300,6 +307,164 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261120.1
+"A run that starts with the sound muted says so, and how to turn it back on": "開局時若聲音是靜音，會提示並告訴你怎麼重新開啟",
+"In Terror, every item that drops in the Cow tier rolls with +100% Magic Find": "恐懼層的奶牛層掉落的每件物品都以 +100% 尋獲魔法物品機率擲骰",
+"Charsi's Imbue makes a unique of the base she shows, where it made a rare": "恰西的灌注改成把她展示的底材做成獨特物品，原本是稀有物品",
+"A run's page on the website's leaderboards now lists every one of Charsi's ranks the hero bought": "網站排行榜上每一局的頁面，現在會列出英雄買過的所有恰西等級",
+"The Quest Log's Six Evolutions says how many of the six evolutions your build holds now": "任務紀錄的「六次進化」會顯示你的配置目前有幾個進化",
+"The automap marks a unique or set item not yet in your collection with a purple star": "自動地圖會用紫色星號標出還沒收藏的獨特或套裝物品",
+"The automap marks gear a loot filter line at KEEP names": "自動地圖會標出物品過濾中設為「保留」的那幾行所指定的裝備",
+"The uber keys and organs on the floor now have the Horadric Codex's red diamond on the automap": "地上的超級鑰匙和器官，現在在自動地圖上會和赫拉迪克法典一樣顯示紅色菱形",
+"The mouse pointer hides while you play with a gamepad, and comes back as soon as you move the mouse": "用手把玩時滑鼠游標會隱藏，一移動滑鼠就會重新出現",
+"On Apple phones and tablets, SOUND OPTIONS has an OTHER MUSIC switch that lets your own music play on under the game's sound": "在 Apple 手機和平板上，音效選項多了「其他音樂」開關，可以讓你自己的音樂和遊戲音效一起播放",
+"In Terror, the bosses of Acts III and IV drop one more Burning Essence of Terror, since those acts have no Pandemonium key": "恐懼層第三幕和第四幕的首領多掉 1 個燃燒的恐懼精華，因為這兩幕沒有混沌鑰匙",
+"As an act's portal opens, the uber keys, organs and essences left on the floor fly to your hero with its gold": "每一幕的傳送門打開時，留在地上的超級鑰匙、器官和精華會跟金幣一起飛到英雄身上",
+"In Terror, a Pandemonium key's drop is sometimes two keys (16%) and rarely three (4%)": "恐懼層的混沌鑰匙有時會一次掉 2 把（16%），偶爾掉 3 把（4%）",
+"A Terror tier's boss drops one more Burning Essence of Terror every 50 tiers, two from tier 50 and three from tier 100": "恐懼層首領每 50 層多掉 1 個燃燒的恐懼精華：第 50 層起掉 2 個，第 100 層起掉 3 個",
+"At level 99 the Experience Shrine gives +200% Magic Find instead of experience": "99 級時，經驗神殿改給 +200% 尋獲魔法物品機率，不再給經驗值",
+"The stash has six shared tabs instead of three, numbered 1 to 6 on their buttons, and your items stay where they were": "儲物箱的共用分頁從 3 個增加到 6 個，按鈕上標 1 到 6，原本的物品位置不變",
+"Online play opens in the desktop app, where PLAY ONLINE signs you in to climb the Softcore and Hardcore Terror boards": "電腦版開放線上遊戲：按「線上遊戲」登入，就能挑戰一般模式和專家模式的恐懼層排行榜",
+"Online heroes start from zero, and your offline heroes and saves stay as they are, offline": "線上英雄從零開始，你的離線英雄和存檔會照原樣留在離線模式",
+"Sales and a full inventory now show as a small line over the mana globe, out of the middle of the screen": "出售和物品欄已滿的訊息改成在魔力球上方顯示一小行，不再擋在畫面中間",
+"A new Controller line in Options turns the gamepad off, so a pad you use in another program does nothing here": "選項新增「手把」開關可以關閉手把，這樣你在其他程式用的手把就不會影響遊戲",
+"Gheed's gamble now offers Arrows and Bolts to the Amazon, as magic or rare quivers at the gamble's odds": "基德的賭博現在會賣箭矢和彈矢給亞馬遜，照賭博機率出魔法或稀有箭筒",
+"A temper at Charsi's Forge now raises a line by 40% of its roll instead of 20%, items already tempered too": "恰西熔爐的淬鍊每次提升該行數值的 40%，原本是 20%，已淬鍊過的物品也一樣",
+"The Hellforge now fails 30% of the time instead of 60%, and doubles every temper the other 70%": "地獄熔爐失敗率從 60% 降為 30%，其餘 70% 會把所有淬鍊加倍",
+"The screen no longer turns itself off while a run plays untouched": "遊戲進行中即使沒有操作，螢幕也不會自動關閉",
+"Fire, Cold and Lightning Mastery add +8% fire, +8% cold and +14% lightning damage at level 5, and still lower enemy resistance": "火焰、冰寒與閃電支配在 5 級時分別增加 +8% 火焰、+8% 冰寒和 +14% 閃電傷害，而且仍會降低敵人抗性",
+"The Assassin's traps and charge-up releases grow with your weapon's damage, so tempering your weapon raises them": "刺客的陷阱和蓄能釋放會隨武器傷害成長，所以淬鍊武器也會提升它們",
+"The Assassin's traps also grow with Strength, Dexterity and physical damage bonuses, as charge-up releases do": "刺客的陷阱也會像蓄能釋放一樣，隨力量、敏捷和物理傷害加成成長",
+"The Shadow Warrior and Shadow Master fight with your charge-ups, Dragon Claw, Dragon Flight and Blade Fury, as in Diablo II": "影子戰士和支配影子會使用你的蓄能技能、雙龍爪、飛龍在天和刃之怒戰鬥，和暗黑破壞神 II 一樣",
+"Sixteen of D2R's runewords now drop, among them Mist, Obsession, Plague, Unbending Will, Mosaic and Metamorphosis": "新增 16 個 D2R 的符文之語，包括迷霧、執念、瘟疫、不屈意志、馬賽克和變形",
+"Mosaic's finishing moves can keep their charges, and Metamorphosis grants the Druid Mark of the Wolf and Mark of the Bear": "馬賽克的終結技有機率不消耗蓄能，變形會讓德魯伊獲得狼之印記和熊之印記",
+"Charsi's Forge is one window, with Temper, Undo, Clean, Hellforge and Upgrade buttons under the anvil": "恰西的熔爐合併成一個視窗，鐵砧下方有淬鍊、復原、清除、地獄熔爐和升級按鈕",
+"Undo takes back the temper that just landed, for 3 Burning Essences of Terror": "復原可以花 3 個燃燒的恐懼精華，取消剛剛成功的那次淬鍊",
+"The anvil shows an item's tempers against its cap, and every item box reads Tempered (3/6)": "鐵砧會顯示物品的淬鍊次數和上限，每個物品說明框也會顯示「已淬鍊 (3/6)」",
+"Play on the website may show a short Ko-fi note, at most once a week, and never in the game or the desktop app": "網頁版可能會顯示一則簡短的 Ko-fi 贊助訊息，每週最多一次，遊戲中和電腦版都不會出現",
+"When an act's portal opens, the floor's gear and chests fly to the ground around your hero for you to pick up": "每一幕的傳送門打開時，地上的裝備和寶箱會飛到英雄周圍的地面，讓你撿取",
+"Charsi now asks before buying an item your hero is wearing, while items from the inventory still sell with one tap": "恰西收購英雄身上穿著的物品前會先詢問，物品欄裡的物品仍然點一下就賣",
+"PULL LOOT in GAME OPTIONS can be turned off, so an act's gear and chests stay where they fell instead of flying to your hero": "遊戲選項的「吸取掉落物」可以關閉，這樣每一幕的裝備和寶箱會留在原地，不會飛到英雄身邊",
+"Undo at Charsi's anvil asks for a second press, so a stray click no longer throws away a temper": "恰西鐵砧的復原要按兩次，不會因為誤點而丟掉一次淬鍊",
+"Terror tiers past tier 100 hold more monsters, half as many again by tier 700": "超過第 100 層的恐懼層怪物變多，到第 700 層時多 50%",
+"A Terror tier's boss past tier 100 is a real fight, with over 5 times the life at tier 300 and nearly 7 times at tier 700": "超過第 100 層的恐懼層首領變得難纏：第 300 層生命超過 5 倍，第 700 層接近 7 倍",
+"Online clears in a board's best 10 are checked first, and the rest of the best 100 wait for the server's spare time": "排行榜前 10 名的線上紀錄會優先驗證，前 100 名的其他紀錄等伺服器有空時再驗證",
+"Ghosts and Wraiths no longer leave a tall column of mist standing where they died, as in Diablo II": "鬼魂和怨靈死後不會再留下一道高高的霧柱，和暗黑破壞神 II 一樣",
+"The Cow tier's colours now drift gently all through, where after four minutes they cycled round the whole colour wheel": "奶牛層的顏色現在會一直緩慢變化，以前四分鐘後會把整個色環轉一圈",
+"An Oblivion Knight's Decrepify now shows its curse over your hero": "遺忘騎士的衰老詛咒現在會顯示在英雄頭上",
+"A monster's Conviction aura now shows under your hero while you stand in it, as in Diablo II": "站在怪物的信念靈氣範圍內時，英雄腳下會顯示靈氣，和暗黑破壞神 II 一樣",
+"The loot filter now says that a second copy of a unique, set item or runeword you keep goes by its own line, never AMULETS or RINGS": "物品過濾現在會說明：已保留的獨特、套裝物品或符文之語，第二件看它自己那一行，不看「護身符」或「戒指」",
+"Gear that falls onto a well lands just outside it, where you can pick it up": "掉到井上的裝備會落在井旁邊，讓你撿得到",
+"An item box's \"Not in your collection\" line is purple now, no longer the green of a set item's bonuses": "物品說明框的「尚未收藏」改成紫色，不再和套裝加成一樣是綠色",
+"Every curse on a monster shows its own overlay in turn, so Decrepify no longer hides under another curse": "怪物身上的每個詛咒會輪流顯示，衰老不會再被其他詛咒蓋住",
+"On a phone held upright, the I / II weapon swap button now sits at the right edge, off your gold and your mercenary's portrait": "手機直立時，I / II 武器切換按鈕改到右邊，不再擋住金幣和傭兵頭像",
+"The Amazon's Decoy wears your hero's gear instead of standing bare with a plain bow": "亞馬遜的誘餌會穿上英雄的裝備，不再光著身子拿一把普通的弓",
+"Heart of Wolverine from gear (Wisp Projector) adds its damage to the physical blows of every class's summons, as in Diablo II": "裝備提供的狼獾之心（鬼火投射者）會增加所有職業召喚物的物理攻擊傷害，和暗黑破壞神 II 一樣",
+"The loot filter's MAGIC ITEMS and RARE ITEMS lines now name the lines at KEEP, such as charms and jewels, that still pick theirs up": "物品過濾的「魔法物品」和「稀有物品」行，現在會寫出仍會撿起的「保留」行，例如護符和珠寶",
+"Vitality placed on the character screen shows all the life it gives at once, Battle Orders' share too, where it showed less until reopened": "在角色畫面加體力時，會馬上顯示增加的全部生命（含戰鬥體制的部分），以前要重新打開才會顯示完整數值",
+"Picking a hero at the bonfire whose art didn't load tries again, instead of failing every time until the page is reloaded": "在營火選擇圖片沒載入的英雄時會重試，不會一直失敗到重新載入頁面為止",
+"On phones, Nihlathak and the other Terror key holders no longer run off as soon as they come, taking the monsters around them along": "手機上，尼拉塞克和其他恐懼鑰匙守護者不會一出現就帶著周圍的怪物跑掉",
+"Larzuk's Essence's box now says to right-click it, or hold it on a phone, then pick the item to socket": "拉蘇克的精華說明框現在會寫：按右鍵（手機長按），再點要打洞的物品",
+"A tempered runeword bow's own Bow and Crossbow Skills line no longer vanishes from its box, though your hero always kept the skills": "淬鍊過的符文之語弓，說明框裡的弓和十字弓技能行不會再消失（英雄其實一直有這些技能）",
+"A tempered resistance on a Paladin shield's runeword now reads its own number in the box, not the other resistances'": "聖騎士盾牌符文之語上淬鍊過的抗性，說明框會顯示它自己的數值，不再顯示其他抗性的數值",
+"The desktop app no longer loses its backup of your save after two launches that start with an empty save": "電腦版連續兩次以空存檔開啟後，不會再弄丟存檔備份",
+"A save that can't be read now comes back from the game's backup copy instead of starting empty": "讀不到的存檔會從遊戲的備份還原，不會變成空的",
+"The loot filter's two ETHEREAL ONLY switches are now ETHEREAL UNIQUES and ETHEREAL RUNEWORDS, so they no longer read as one line twice": "物品過濾的兩個「無形必撿」開關改名為「無形獨特必撿」和「無形符文之語必撿」，不會再看起來像同一行出現兩次",
+"Tempering an item's All Resistances or +to all Attributes raises all four together, as one line": "淬鍊物品的所有抗性或所有屬性時，四項會當成一行一起提升",
+"The character sheet's Defense page now shows the Assassin's Weapon Block chance, which turns hits aside with any weapon or none": "角色畫面的防禦頁現在會顯示刺客的武器格擋機率，拿任何武器或空手都能格擋攻擊",
+"Charsi's Forge no longer shows a set bonus or a socketed jewel's line as the one a temper raised": "恰西的熔爐不會再把套裝加成或鑲嵌珠寶的屬性行顯示成淬鍊提升的那一行",
+"A tempered line that a socketed jewel adds to now shows its tempers in the item's box": "鑲嵌的珠寶有加到的淬鍊行，現在會在物品說明框顯示淬鍊次數",
+"Runs still waiting to reach the Ladder when the hero dies are no longer marked as played from an older copy of the save": "英雄死亡時還在等待上天梯的紀錄，不會再被標成用舊存檔玩的",
+"Uber Tristram no longer crashes on phones, where Mephisto, Diablo and Baal now load fewer animations to fit in memory": "超級崔斯特姆在手機上不會再當掉：墨菲斯托、迪亞布羅和巴爾會少載入一些動畫以節省記憶體",
+"On phones, Uber Tristram's monsters are drawn at half resolution so the fight fits in memory": "手機上，超級崔斯特姆的怪物以一半解析度繪製，讓戰鬥不會超出記憶體",
+"Uber Tristram's exit portal no longer opens behind the town's stone fence or in a wall, but on your screen where you can walk to it": "超級崔斯特姆的出口傳送門不會再開在鎮上的石牆後面或牆裡，而是開在畫面上走得到的地方",
+"The loot filter warns when NOT FOR MY CLASS hides or sells quivers, which only the Amazon uses": "「非本職業」隱藏或出售箭筒時（只有亞馬遜能用），物品過濾會提醒你",
+"The waypoint's Replay a cleared tier row no longer goes missing when Act I's tab is full, and no row runs past the close button": "傳送點的「重玩已通過的層」那一行，在第一幕分頁滿了時不會再消失，也不會有行超出關閉按鈕",
+"The Cow King now drops a Burning Essence of Terror in the Cow tier, as every Terror tier's boss does": "奶牛之王在奶牛層會掉落燃燒的恐懼精華，和每個恐懼層首領一樣",
+"The loot filter's BETTER ONLY no longer sells a Hellfire Torch of another class than the one in your collection, whatever it rolled": "物品過濾的「只撿更好的」不會再賣掉和已收藏的職業不同的地獄火炬，不論數值如何",
+"The character sheet's Defense page now lists the Absorb that the Paladin's resist auras and Salvation give": "角色畫面的防禦頁現在會列出聖騎士抗性靈氣和救助提供的吸收",
+"A tempered runeword line its runes add to, such as Infinity's Crushing Blow, now shows its tempers in the item's box and at Charsi's Forge": "符文會加到的符文之語淬鍊行（例如無限的壓碎性打擊），現在會在物品說明框和恰西的熔爐顯示淬鍊次數",
+"A tempered item with two Enhanced Damage lines, such as a rare quiver, now shows its tempers in the item's box and at Charsi's Forge": "有兩行增強傷害的淬鍊物品（例如稀有箭筒），現在會在物品說明框和恰西的熔爐顯示淬鍊次數",
+"The loot filter's BETTER ONLY picks up a copy only when it rolls higher than yours on a stat and lower on none": "物品過濾的「只撿更好的」只會撿有任一數值比你的高、且沒有任何數值比較低的那件",
+"A tempered set item worn with its set now shows its green set bonuses as on in its box, as an untempered one does": "淬鍊過的套裝物品在湊齊套裝時，說明框會和未淬鍊的一樣顯示已啟用的綠色套裝加成",
+"M'avina's Caster, Kuko Shakaku, Lycander's Aim, Blood Raven's Charge and Melody now raise the Amazon's Bow and Crossbow Skills": "瑪維娜的施法者、社角久子、雷山德的指標、血鳥的襲擊和旋律現在會提升亞馬遜的弓和十字弓技能",
+"A controller can now reach the item on Charsi's anvil, to see its stats and take it off": "手把現在可以選到恰西鐵砧上的物品，查看數值或拿下來",
+"Your save comes back from the game's backup copy even after the game opened once on an empty save": "即使遊戲曾以空存檔開啟過一次，存檔仍可以從遊戲的備份還原",
+"The automap's marks now show what each thing is, with skulls for monsters and a big red horned skull for the boss": "自動地圖的標記現在會顯示各是什麼：怪物是骷髏，首領是一個帶角的紅色大骷髏",
+"The wiki's Getting started page has a legend of every automap mark": "維基的入門頁面有所有自動地圖標記的圖例",
+"A Terror tier's death screen shows the damage each skill dealt again, as the other difficulties' do": "恐懼層的死亡畫面又會顯示每個技能造成的傷害，和其他難度一樣",
+"Clicking the weapon set I or II tab now works with an item in hand, so a weapon from the stash can go straight into set II": "手上拿著物品時也能點武器組 I 或 II 分頁，所以儲物箱裡的武器可以直接放進第二武器組",
+"Items' +% Skill Damage now multiplies the Sorceress's, Necromancer's, Druid's and Assassin's spells instead of adding to Energy's bonus": "物品的 +% 技能傷害現在會乘算到女巫、死靈法師、德魯伊和刺客的法術上，不再和精力的加成相加",
+"Revive's army grows with items' +skills as much as Raise Skeleton does": "重生的軍隊會像復甦骷髏一樣隨物品的 +技能 增加",
+"Clay, Blood and Iron Golem grow faster with items' +skills, as Fire Golem does": "黏土、鮮血和鋼鐵石魔會像火焰石魔一樣，隨物品的 +技能 成長得更快",
+"Tiger Strike's charges grow with items' +skills": "虎擊的蓄能會隨物品的 +技能 增加",
+"Lightning Sentry and Death Sentry recharge in 1.9 seconds instead of 3, as Charged Bolt Sentry does": "雷光守衛和亡者守衛的充能時間從 3 秒改為 1.9 秒，和電能守衛一樣",
+"SAVES moved from the main menu to the screen after PLAY, beside START, with the reminder to keep a copy of your save": "「存檔」從主選單移到按「開始遊戲」後的畫面，在「開始」旁邊，並附上提醒你備份存檔",
+"START OVER moved from GAME OPTIONS to SAVES, beside export and import": "「重新開始」從遊戲選項移到「存檔」，在匯出和匯入旁邊",
+"The main menu keeps its EXIT only in the desktop app, under OPTIONS, as a game on the website closes with its browser tab": "主選單的「離開」只留在電腦版，移到「選項」底下；網頁版關掉瀏覽器分頁就是離開",
+"REPORT no longer asks you to shorten your text when the text wasn't the problem, and a big screenshot no longer gets a report refused": "回報問題不會再在文字不是問題時要你縮短文字，太大的截圖也不會再讓回報被拒收",
+"On phones and tablets, a long item description no longer covers the Drop and Sell buttons, held upright or sideways": "手機和平板上，不論直立或橫放，太長的物品說明都不會再蓋住丟棄和出售按鈕",
+"Your Valkyries' portraits in the top-left corner now show their life bars, as your vines' and your mercenary's do": "左上角的女武神頭像現在會顯示生命條，和藤蔓、傭兵一樣",
+"Summons raised by an item now keep fighting for your hero after you take it off, instead of standing frozen in place": "物品召喚出來的召喚物，在你卸下物品後會繼續為英雄戰鬥，不會呆站在原地",
+"A new waypoint run over a saved Normal, Nightmare or Hell run now costs that run's levels, as a death there does": "在已存檔的普通、惡夢或地獄局上從傳送點開新局，會失去那一局的等級，和在那裡死亡一樣",
+"An item holds 2 tempers for each line a temper can raise, up to 10, so items with more good lines are worth more": "物品每一行可淬鍊的屬性能淬鍊 2 次，最多 10 次，所以好屬性越多的物品越有價值",
+"The Hellforge opens once an item holds its own cap of tempers, instead of always at 10": "物品淬鍊到自己的上限就能用地獄熔爐，不再固定要 10 次",
+"Items tempered past their new cap lose the extra tempers, and you get back the essences those tempers cost": "淬鍊次數超過新上限的物品會失去多出的淬鍊，並退還那些淬鍊花掉的精華",
+"W and the I / II tabs swap your weapon set with your mercenary's panel open, as in Diablo II": "開著傭兵面板時，按 W 或 I / II 分頁也能切換武器組，和暗黑破壞神 II 一樣",
+"Online runs start on your own D2R files, which now give Diablo II 1.14's set bonuses and mercenaries": "線上遊戲使用你自己的 D2R 檔案開始，現在套裝加成和傭兵改成暗黑破壞神 II 1.14 版",
+"Poison Explosion's and Poison Dagger's poison lasts as long as in Diablo II, 9.6 seconds at full points and longer with +skills": "毒爆和淬毒匕首的中毒時間和暗黑破壞神 II 一樣：點滿是 9.6 秒，有 +技能 會更久",
+"Hovering an item no longer shows your hero's current life lower on the character screen": "滑鼠移到物品上時，角色畫面不會再把英雄目前的生命顯示得比較低",
+"The trade window no longer shows a Skill Tree tab that did nothing beside Charsi, Gamble and Stash": "交易視窗不會再在恰西、賭博和儲物箱旁邊顯示沒有作用的技能樹分頁",
+"The life globe no longer flashes empty the first time a monster poisons you": "第一次被怪物下毒時，生命球不會再閃一下變空",
+"Energy Shield now shows its orb over your Sorceress's head, as in Diablo II": "能量護盾現在會在女巫頭上顯示法球，和暗黑破壞神 II 一樣",
+"Back from Tristram or the Secret Cow Level, the automap keeps what you had explored of the act": "從崔斯特姆或秘密奶牛關回來後，自動地圖會保留你在這一幕探索過的區域",
+"The Druid's ravens no longer vanish while they fly in some directions": "德魯伊的烏鴉往某些方向飛時不會再消失",
+"The weapon swap's I and II tabs no longer show over the Charms window or swap weapons when clicked there": "武器切換的 I 和 II 分頁不會再顯示在護符視窗上，在那裡點擊也不會切換武器",
+"Freeing Deckard Cain shows \"Quest completed\" once, not once for each difficulty it completes": "救出迪卡·凱恩時只顯示一次「任務完成」，不會每個完成的難度各顯示一次",
+"Clicking Deckard Cain or anyone else in the camp walks your hero up to them and talks, wherever on them you click": "在營地點迪卡·凱恩或其他人，不論點在他們身上哪裡，英雄都會走過去對話",
+"Online, talking to Deckard Cain now hands over your quest reward and shows it in the Quest Log at once": "線上遊戲中，和迪卡·凱恩對話會給你任務獎勵，並馬上顯示在任務紀錄",
+"Swapping weapons while Decoys stand no longer makes the screen flicker": "誘餌還在場時切換武器，畫面不會再閃爍",
+"On a touch screen, an item you tapped up can be dragged with your finger, and goes down where you lift it": "觸控螢幕上，點起來的物品可以用手指拖曳，放開手指的位置就是放下的地方",
+"In Korean, the character screen's crowded stat pages no longer cut off the tops of the letters, and their Casting lines read as one sentence": "韓文版角色畫面中擁擠的數值頁不會再切掉文字上緣，施法相關的行也會連成一句",
+"The stat points' hover tells a mouse to Shift-click to spend every point, and a touch screen to hold": "屬性點數的提示會告訴你：滑鼠用 Shift＋點擊、觸控螢幕用長按，可以一次投入全部點數",
+"On a phone restarted with lighter graphics, online monsters show their own art within seconds instead of blank placeholder shapes": "手機以低畫質重新啟動後，線上遊戲的怪物會在幾秒內顯示正常圖片，不再是空白的替代圖形",
+"Plague's Lower Resist no longer stays on your hero after Plague comes off, and monsters it already cursed keep it to its end": "卸下瘟疫後，降低抵抗不會再留在英雄身上；已被詛咒的怪物會持續到效果結束",
+"Tapping an item in the stash picks it up and shows its box again, where another hero's item left in hand made taps do nothing": "在儲物箱點一下物品又能拿起並顯示說明框，以前其他英雄的物品留在手上時點了沒反應",
+"Online runs that spend part of a stack you started with, such as a Larzuk's Essence on a socket, are no longer refused": "線上遊戲中用掉開局時帶的部分堆疊物品（例如用拉蘇克的精華打洞），紀錄不會再被拒收",
+"In online runs, a Necromancer's revived monsters and a Paladin's converted ones no longer vanish while they stand still": "線上遊戲中，死靈法師重生的怪物和聖騎士改信的怪物站著不動時不會再消失",
+"Online runs where you pressed O, W or a belt potion while the Esc menu was open are no longer refused": "線上遊戲中開著 Esc 選單時按了 O、W 或腰帶藥水，紀錄不會再被拒收",
+"Long sessions stutter less, as fallen monsters and their art are no longer loaded again and again": "長時間遊玩比較不會卡頓，因為倒下的怪物和它們的圖片不會再一直重複載入",
+"Online runs started with PLAY AGAIN while your hero still had Akara's re-draft picks waiting are no longer refused": "線上遊戲中英雄還有阿卡拉的重抽選擇沒選完就按「再玩一次」，紀錄不會再被拒收",
+"Monsters walk round rocks and walls in their way instead of getting stuck against them": "怪物會繞過擋路的岩石和牆壁，不會再卡住",
+"Online runs played while some of the game's pictures hadn't loaded yet, such as the red portal's or a chest's, are no longer refused": "線上遊戲中有些圖片還沒載入（例如紅色傳送門或寶箱），紀錄不會再被拒收",
+"Pandemonium levels and Uber Tristram are now offered beside your three Terror offers, so Act I stays open while your hero holds a set": "混沌關卡和超級崔斯特姆改成放在三個恐懼層選項旁邊，所以英雄持有整組鑰匙或器官時第一幕仍然可以選",
+"Online runs longer than about an hour and a half are now proven and count, along with the runs you played after them": "超過約一個半小時的線上紀錄現在可以驗證並計入，之後玩的紀錄也一樣",
+"On a phone restarted with lighter graphics, monsters are drawn at half resolution offline too, so long Terror runs stop closing the game": "手機以低畫質重新啟動後，離線時怪物也以一半解析度繪製，長時間的恐懼層不會再讓遊戲關閉",
+"Starting something else over a saved Uber Tristram or Pandemonium run now warns that its organs or keys are lost": "在已存檔的超級崔斯特姆或混沌關卡上開始別的局時，會警告器官或鑰匙將會失去",
+"In the camp's stash, clicking the weapon set I or II tab with an item in hand swaps weapons again": "在營地的儲物箱，手上拿著物品點武器組 I 或 II 分頁又能切換武器",
+"W with an item in hand now has your hero say \"I can't\", as in Diablo II, instead of doing nothing": "手上拿著物品按 W 時，英雄會說「我辦不到」，和暗黑破壞神 II 一樣，不再沒有反應",
+"A controller's swap button now works over the mercenary's panel and a vendor's window, and W over the camp's waypoint and people's menus": "手把的切換武器鍵在傭兵面板和商人視窗上也能用，W 鍵在營地的傳送點和 NPC 選單上也能用",
+"Online runs opened from a link with extra text in its address are no longer refused when Rakanishu or Treehead guards the Search for Cain": "從網址帶有額外文字的連結開啟的線上遊戲，在拉卡尼休或木拳樹頭守護「尋找凱恩」時，紀錄不會再被拒收",
+"Online runs played while a scenery picture of the first area never loaded are no longer refused": "線上遊戲中第一個區域的場景圖片一直沒載入，紀錄不會再被拒收",
+"Gear put on during a run now shows the same numbers on the character screen as its preview, auras such as Dream's Holy Shock included": "遊戲中穿上的裝備，角色畫面的數值會和預覽一樣，包括夢境的神聖衝擊等靈氣",
+"Online, a page whose Diablo II menus fail to load opens the Rogue Encampment, instead of a hero select that refused every run": "線上遊戲中，暗黑破壞神 II 選單載入失敗的頁面會開啟羅格營地，不再進入每局都被拒收的英雄選擇畫面",
+"When some Rogue Encampment pictures fail to load, the campfire says why and stands in, and the camp tries again after your next run": "羅格營地有些圖片載入失敗時，會說明原因並暫時用營火代替，下一局結束後營地會再試一次",
+"Cure's and Plague's Cleansing now shortens poison and curses on your hero every 2 seconds, as in Diablo II": "治癒和瘟疫的淨化現在每 2 秒縮短英雄身上的中毒和詛咒時間，和暗黑破壞神 II 一樣",
+"In Terror, a Cold Enchanted monster's death no longer chills your hero for over a minute, at most as long as in Hell": "恐懼層中，冰寒強化怪物死亡時不會再讓英雄冰冷超過一分鐘，最多和地獄難度一樣久",
+"Slow Missiles from your gear no longer stays on your hero after the item comes off, and monsters it already slowed keep it to its end": "卸下裝備後，裝備提供的慢速箭不會再留在英雄身上；已被緩速的怪物會持續到效果結束",
+"Online runs are no longer refused when AUTO STATS or PULL LOOT was turned on and off again while paused": "暫停時把自動配點或吸取掉落物開了又關，線上紀錄不會再被拒收",
+"Peace no longer summons Valkyrie after Valkyrie when your Valkyrie has Shieldmaidens or Huntress on": "女武神開啟持盾少女或女獵手技能改造時，和平不會再一直召喚女武神",
+"Online runs continued past Baal are no longer refused when gear was left lying where he fell": "巴爾倒下處留著裝備時，打完巴爾後繼續的線上紀錄不會再被拒收",
+"An online run still open when an update is undone now ends as an update ends it, keeping everything saved before, instead of being refused": "更新被撤回時還在進行的線上局，會像更新時一樣結束並保留之前存好的一切，不會被拒收",
+"Metamorphosis's Marks of the Bear and the Wolf no longer take away your weapon's damage, while they hold or for the rest of the run": "變形的熊之印記和狼之印記不會再在效果期間或這一局剩下的時間拿走武器傷害",
+"On a phone, the game no longer closes when a hero wearing Wolfhowl turns into a werewolf in Uber Tristram": "手機上，戴著狼嚎的英雄在超級崔斯特姆變成狼人時，遊戲不會再關閉",
+"START OVER now sticks when the browser's storage is full, instead of bringing the old save back on the next visit": "瀏覽器儲存空間滿了時，重新開始也會生效，下次開啟不會再回到舊存檔",
+"SAVES says when the browser couldn't store an imported save, instead of \"Save imported.\"": "瀏覽器無法儲存匯入的存檔時，「存檔」會說明，不再顯示「存檔已匯入。」",
+"A temper on Chains of Honor's All Resistances +65 now raises all of it, 26 each time, as on any line a runeword's runes add to": "淬鍊榮譽之鏈的所有抗性 +65 會提升整個數值，每次 26，和符文會加到的任何符文之語屬性行一樣",
+"The character screen's damage counts your mercenary's auras in the camp too, such as the Desert Mercenary's Might": "角色畫面的傷害在營地也會算入傭兵的靈氣，例如沙漠傭兵的力量",
+"The Damage line's hover says what only the damage meter counts, such as every monster hit, curses on them, Static Field and Crushing Blow": "傷害行的提示會說明哪些只有傷害統計會算，例如打中的每隻怪物、怪物身上的詛咒、靜態力場和壓碎性打擊",
+"A Terror tier the server ended while the game was in the background no longer gets your hero's next tier refused": "遊戲在背景時被伺服器結束的恐懼層，不會再讓英雄的下一層被拒收",
+"Online runs where you opened Akara's re-draft just as the run began, then sold at a smith during the run, are no longer refused": "線上遊戲中一開局就打開阿卡拉的重抽，之後在鐵匠賣東西，紀錄不會再被拒收",
 // 20261105.3
 "Magic and rare quivers drop with a bow's affixes, Arrows to wear beside a bow and Bolts beside a crossbow": "會掉落帶有弓類詞綴的魔法和稀有箭筒：箭矢配弓、彈矢配十字弓",
 "Terror's end screens replay the same tier in one press (R), and a tier's portal waits for you rather than taking you past its loot": "恐懼層的結束畫面按一下（R）就能重玩同一層，而且該層的傳送門會等你，不會把你帶走而錯過掉落物",
@@ -1029,11 +1194,30 @@ window.__d2zhSocketText = d2sockReason;
 const D2QUIV = { save: null, snap: null };
 function d2quivInstall() {
 if (Object.prototype.hasOwnProperty('cursor')) return;
+// 注意：Chromium 的 element.style.cursor 是「具名屬性」，原型鏈上（含 Object.prototype）有同名屬性時會被蓋過。
+// 遊戲 20261120.1 起用 document.body.style.cursor 設定暗黑手套游標（PixiJS 也用 canvas.style.cursor），
+// 不轉給 CSS 的話寫入會變成普通屬性、游標不會套用（玩家回報「滑鼠游標消失」），所以樣式物件要照原本的方式讀寫。
+const isStyle = o => typeof CSSStyleDeclaration === 'function' && o instanceof CSSStyleDeclaration;
 Object.defineProperty(Object.prototype, 'cursor', {
 configurable: true, enumerable: false,
-get() { if (this && this.equippedByClass && this.inventoryByClass && D2QUIV.save !== this) { D2QUIV.save = this; D2QUIV.snap = null; } return undefined; },
-set(v) { Object.defineProperty(this, 'cursor', { value: v, writable: true, enumerable: true, configurable: true }); },
+get() {
+if (isStyle(this)) return this.getPropertyValue('cursor');
+if (this && this.equippedByClass && this.inventoryByClass && D2QUIV.save !== this) { D2QUIV.save = this; D2QUIV.snap = null; }
+return undefined;
+},
+set(v) {
+if (isStyle(this)) { this.setProperty('cursor', v == null ? '' : String(v)); return; }
+Object.defineProperty(this, 'cursor', { value: v, writable: true, enumerable: true, configurable: true });
+},
 });
+// 書籤載入前後已經被寫成普通屬性的（例如 body.style），改回真的 CSS
+for (const el of [document.documentElement, document.body, ...document.querySelectorAll('canvas')]) {
+const s = el && el.style;
+if (!s || !Object.prototype.hasOwnProperty.call(s, 'cursor')) continue;
+const v = s.cursor;
+delete s.cursor;
+s.setProperty('cursor', v == null ? '' : String(v));
+}
 setInterval(d2quivCheck, 400);
 }
 function d2quivState(save) {
@@ -1807,6 +1991,7 @@ function d2edBgMuteOn() {
 try { return localStorage.getItem(D2ED_BGMUTE_KEY) !== '0'; } catch (_) { return true; }
 }
 (function d2edBgMuteInstall() {
+if (D2ZH_ONLINE) return;   // 線上模式只翻譯
 const contexts = new Set();
 const proto = window.BaseAudioContext?.prototype ?? window.AudioContext?.prototype;
 const desc = proto && Object.getOwnPropertyDescriptor(proto, 'currentTime');
@@ -2062,7 +2247,9 @@ for (const roll of (D2EC.api && D2EC.api.rollers) || []) {
 for (let n = 0; n < 600; n++) {
 let it;
 try { it = roll({ base }, 1 + (n % 99), 99, undefined); } catch (_) { break; }
-for (const m of (it && it.mods) || []) {
+// 20261120.1 起稀有產生器遇到有獨特的底材會直接做獨特，獨特的能力不是詞綴，跳過
+if (!it || (it.rarity !== 'magic' && it.rarity !== 'rare')) continue;
+for (const m of it.mods || []) {
 if (!d2ieIsAffix(m) || typeof m.stat !== 'string' || typeof m.value !== 'number') continue;
 const p = pool.get(m.stat);
 if (!p) pool.set(m.stat, { stat: m.stat, lo: m.value, hi: m.value, mod: { ...m } });
@@ -2572,7 +2759,8 @@ for (const roll of D2EC.api.rollers || []) {
 for (let n = 0; n < 700; n++) {
 let item;
 try { item = roll({ base }, 1 + (n % 99), 99, undefined); } catch (_) { break; }
-const mods = (item && item.mods) || [];
+if (!item || (item.rarity !== 'magic' && item.rarity !== 'rare')) continue;   // 20261120.1 起可能直接做成獨特
+const mods = item.mods || [];
 for (const m of mods) if (m.staff && typeof m.stat === 'string') staff.set(m.stat, Math.max(staff.get(m.stat) || 0, m.value));
 const row = mods.filter(m => m.auto && typeof m.stat === 'string');
 if (!row.length) continue;
@@ -3036,6 +3224,25 @@ card.append(modal);
 }
 function d2edRender() {
 const body = D2ED.panel.querySelector('.d2ed-body');
+if (D2ZH_ONLINE) {
+// 線上連線失敗時，遊戲會刪掉 d2s:online、在同一頁改成離線（不重新載入）；這時書籤仍是線上模式，重新載入頁面就會恢復
+let fellBack = false;
+try { fellBack = !sessionStorage.getItem('d2s:online'); } catch (_) { /* 讀不到就當仍在線上 */ }
+if (fellBack) {
+body.replaceChildren(d2edEl('div', {},
+d2edEl('h3', {}, '線上連線沒有成功'),
+d2edEl('p', {}, '遊戲已改成離線，但書籤是在線上模式載入的，所以修改功能還沒啟用。重新載入遊戲後就能使用。'),
+d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: () => location.reload() }, '重新載入'))),
+...[d2edUpdateSection()].filter(Boolean));
+return;
+}
+body.replaceChildren(d2edEl('div', {},
+d2edEl('h3', {}, '線上模式不可使用'),
+d2edEl('p', {}, `目前是線上遊戲（${D2ZH_ONLINE === 'hardcore' ? '專家模式' : '一般模式'}），書籤只提供中文翻譯。`),
+d2edEl('p', { class: 'd2ed-note' }, '書籤修改、裝備創造、裝備修改、物品過濾擴充、碎片感應、過關吸取物品、低效能模式、背景靜音等功能，只能在離線遊戲使用。回主選單改玩「離線遊戲」就會恢復。')),
+...[d2edUpdateSection()].filter(Boolean));
+return;
+}
 // 遊戲中改這一局的人物；在主選單（不在一局裡）改恰西的永久升級
 const inRun = !document.body.classList.contains('no-run');
 const sections = d2edUnlocked() ? [inRun ? d2edRunSection() : d2edSaveSection(), d2edForgeSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()] : [d2edLockSection(), d2edPerfSection(), d2edBgMuteSection(), d2edShardSection(), d2edEndPullSection(), d2edSkillZoomSection(), d2edUpdateSection()];
@@ -3126,6 +3333,12 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V67', date: '2026-11-22', game: '遊戲 20261120.1', items: [
+'線上遊戲只提供中文翻譯，「書籤修改」等其他功能請在離線遊戲使用（線上模式打開會顯示「線上模式不可使用」）',
+'功能優化'] },
+{ ver: 'V66', date: '2026-11-22', game: '遊戲 20261120.1', items: [
+'翻譯遊戲 20261120.1 新增的文字：線上遊戲（登入、排隊、斷線）、恰西熔爐的復原與淬鍊上限、物品過濾的新說明、16 個新的符文之語，以及這次的更新紀錄',
+'修正暗黑風格的滑鼠游標不見、變回系統箭頭的問題'] },
 { ver: 'V65', date: '2026-11-21', game: '遊戲 20261105.3', items: [
 '功能優化'] },
 { ver: 'V64', date: '2026-11-12', game: '遊戲 20261105.3', items: [
@@ -3330,6 +3543,7 @@ const D2ZH_NEWS_KEY = 'd2zh:newsSeen';
 const d2zhVerNum = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
 // 更新說明裡的「開啟低效能模式」：按下直接開啟（解析度馬上變低；技能特效要重新載入才變淡），已開啟就只顯示狀態
 function d2zhNewsPerfButton() {
+if (D2ZH_ONLINE) return null;   // 線上模式只翻譯
 const note = d2edEl('span', { class: 'd2ed-note', style: 'align-self: center' });
 const btn = d2edEl('button', { type: 'button', class: 'd2ed-main' }, '開啟低效能模式');
 const shown = () => { btn.disabled = true; btn.className = ''; btn.textContent = '低效能模式已開啟'; note.textContent = '技能特效重新載入遊戲後才會變淡'; };
@@ -3444,6 +3658,8 @@ document.body.append(box);
 }
 function d2edInstall() {
 window.__D2ED = D2ED; // 除錯用（在主控台看抓到的人物、選單位置）
+// 線上模式：不裝任何修改用的攔截（人物、存檔、物品、過濾、效能），只留面板按鈕顯示「線上模式不可使用」
+if (!D2ZH_ONLINE) {
 D2ED.ec = { load: d2ecLoad, baseItem: d2ecBaseItem, groups: d2ecGroups, bases: d2ecRunewordBases, lines: d2ecLineTexts, baseMods: d2ecBaseMods, show: d2ecShow, select: d2ecSelect, create: d2ecCreate };
 d2edBuildInstall();
 d2sockInstall();
@@ -3457,6 +3673,7 @@ D2ED.loot = D2LOOT;   // 除錯用：ready、mirror、live
 d2edPerfApplyDpr();
 d2edPerfMigrate();
 setTimeout(d2edPerfApplyGame, 1500);   // 等遊戲模組載完
+}
 // 電腦版：開遊戲時的背景檢查做完會呼叫這裡（d2zh-inject.cjs）。下載到比這個頁面新的翻譯檔時：
 // 剛開遊戲、還在選單（不在一局裡）就直接重新載入用新版；否則記下來，「書籤修改」面板會出現「重新載入」按鈕。
 window.__d2zhAutoChecked = result => {
@@ -3471,7 +3688,7 @@ if (newer && performance.now() < 30000 && idle) { location.reload(); return; }
 if (D2ED.panel) d2edRender();
 };
 const rawGet = WeakMap.prototype.get;
-WeakMap.prototype.get = function (key) {
+if (!D2ZH_ONLINE) WeakMap.prototype.get = function (key) {
 const v = rawGet.call(this, key);
 if (v && key && typeof key === 'object' && key.mastery && key.cls && key.weaponDamage !== undefined && typeof v.crit === 'number') {
 if (D2ED.player !== key) d2edKeepSchedule(key);
@@ -3658,6 +3875,286 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 遊戲 20261120.1：線上遊戲（帳號、排隊、斷線）、恰西熔爐復原／淬鍊上限、物品過濾新行、16 個 D2R 符文之語
+"After an update, the beta reloads itself into the new version when you're in the menus or the camp, never during a run": "更新後，測試版會在你待在選單或營地時自動重新載入成新版本，不會在遊戲進行中重新載入",
+"Click again to sell": "再點一次出售",
+"Tap again to sell": "再點一下出售",
+"Sell *?": "出售{0}？",
+"Fire Absorb from Auras": "靈氣提供的火焰吸收",
+"Cold Absorb from Auras": "靈氣提供的冰寒吸收",
+"Lightning Absorb from Auras": "靈氣提供的閃電吸收",
+"Picks up a copy that rolls higher than yours on a stat and lower on none, and sells the rest": "只撿有任一數值比你的高、且沒有任何數值比較低的那件，其餘出售",
+"One of each adds a Pandemonium level beside your Terror offers": "三種各一把，會在恐懼層選項旁多一個混沌關卡",
+"The Forge's lock message now says the lock is for good and the item still works": "熔爐的鎖定訊息現在會說明是永久鎖定，而且物品仍然可以使用",
+"Imbue it into a unique": "灌注成獨特物品",
+"On one monster with no resistance of its own: your -% to Enemy Resistance and your hireling's auras count": "以單一隻本身沒有抗性的怪物計算：會算入你的降低敵人抗性和傭兵的靈氣",
+"Not in it: more monsters hit at once, curses and auras on them (Battle Cry, Conviction), Static Field, Crushing Blow and items' skills": "不包含：同時打中多隻怪物、怪物身上的詛咒和靈氣（戰嗥、信念）、靜態力場、壓碎性打擊和物品附帶的技能",
+"On the beta, an imported save, START OVER and your progress are kept after a reload, even when the phone's storage is nearly full": "測試版中，匯入的存檔、重新開始和你的進度在重新載入後都會保留，即使手機儲存空間快滿了也一樣",
+"This browser would not store the imported save: its storage is full, or turned off. It plays only until this page is closed. Free up space, or allow this site to keep data, then import it again.": "這個瀏覽器無法儲存匯入的存檔：儲存空間已滿或被關閉。關閉這個頁面後就會消失。請釋放空間，或允許這個網站儲存資料，再重新匯入一次。",
+"Shift-click: all points": "Shift＋點擊：投入全部點數",
+"Hold: all points": "長按：投入全部點數",
+"Sound is off. Press * to turn it on": "聲音已關閉。按 {0} 開啟",
+"Sound is off. Turn it on in SOUND OPTIONS": "聲音已關閉。請到「音效選項」開啟",
+"The screenshot was refused. Leave it out and try again.": "截圖被拒收。請拿掉截圖再試一次。",
+"The server refused the report, and not for its text. Try again later, or copy the diagnostics and send them on Discord.": "伺服器拒收了這份回報，原因不是文字內容。請稍後再試，或複製診斷資訊到 Discord 傳送。",
+"Evolutions held: * of *": "已有進化：{0} / {1}",
+"ETHEREAL UNIQUES": "└ 無形獨特必撿",
+"ETHEREAL RUNEWORDS": "└ 無形符文之語必撿",
+"Leaves magic items except charms and jewels on the floor, unnamed": "魔法物品（護符和珠寶除外）留在地上，不顯示名稱",
+"Sells magic items except charms and jewels as you pick them up": "撿起魔法物品（護符和珠寶除外）時直接出售",
+"Sells magic and rare items except charms and jewels as you pick them up": "撿起魔法和稀有物品（護符和珠寶除外）時直接出售",
+"Hides blue items except those kept by *": "隱藏藍色物品，{0}保留的除外",
+"Hides blue items except those kept by the * line": "隱藏藍色物品，「{0}」這一行保留的除外",
+"Hides blue items except those kept by the * and * lines": "隱藏藍色物品，「{0}」和「{1}」這兩行保留的除外",
+"Hides blue items except those kept by the *, * and * lines": "隱藏藍色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Hides blue items except those kept by the *, * and * more lines": "隱藏藍色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Hides yellow items except those kept by *": "隱藏黃色物品，{0}保留的除外",
+"Hides yellow items except those kept by the * line": "隱藏黃色物品，「{0}」這一行保留的除外",
+"Hides yellow items except those kept by the * and * lines": "隱藏黃色物品，「{0}」和「{1}」這兩行保留的除外",
+"Hides yellow items except those kept by the *, * and * lines": "隱藏黃色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Hides yellow items except those kept by the *, * and * more lines": "隱藏黃色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Sells blue items except those kept by *": "出售藍色物品，{0}保留的除外",
+"Sells blue items except those kept by the * line": "出售藍色物品，「{0}」這一行保留的除外",
+"Sells blue items except those kept by the * and * lines": "出售藍色物品，「{0}」和「{1}」這兩行保留的除外",
+"Sells blue items except those kept by the *, * and * lines": "出售藍色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Sells blue items except those kept by the *, * and * more lines": "出售藍色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Sells yellow items except those kept by *": "出售黃色物品，{0}保留的除外",
+"Sells yellow items except those kept by the * line": "出售黃色物品，「{0}」這一行保留的除外",
+"Sells yellow items except those kept by the * and * lines": "出售黃色物品，「{0}」和「{1}」這兩行保留的除外",
+"Sells yellow items except those kept by the *, * and * lines": "出售黃色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Sells yellow items except those kept by the *, * and * more lines": "出售黃色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Hides and sells blue items except those kept by *": "隱藏並出售藍色物品，{0}保留的除外",
+"Hides and sells blue items except those kept by the * line": "隱藏並出售藍色物品，「{0}」這一行保留的除外",
+"Hides and sells blue items except those kept by the * and * lines": "隱藏並出售藍色物品，「{0}」和「{1}」這兩行保留的除外",
+"Hides and sells blue items except those kept by the *, * and * lines": "隱藏並出售藍色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Hides and sells blue items except those kept by the *, * and * more lines": "隱藏並出售藍色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Hides and sells yellow items except those kept by *": "隱藏並出售黃色物品，{0}保留的除外",
+"Hides and sells yellow items except those kept by the * line": "隱藏並出售黃色物品，「{0}」這一行保留的除外",
+"Hides and sells yellow items except those kept by the * and * lines": "隱藏並出售黃色物品，「{0}」和「{1}」這兩行保留的除外",
+"Hides and sells yellow items except those kept by the *, * and * lines": "隱藏並出售黃色物品，「{0}」、「{1}」和「{2}」這幾行保留的除外",
+"Hides and sells yellow items except those kept by the *, * and * more lines": "隱藏並出售黃色物品，「{0}」、「{1}」和另外 {2} 行保留的除外",
+"Sells what isn't for your class, except charms and jewels": "出售不是本職業用的物品，護符和珠寶除外",
+"Keeps only charms, jewels and the rares your class can use": "只保留護符、珠寶和本職業能用的稀有物品",
+"NOT FOR MY CLASS hides quivers too. Set QUIVERS to KEEP to keep them": "「非本職業」也會隱藏箭筒。要留著箭筒請把「箭筒」設為「保留」",
+"NOT FOR MY CLASS sells quivers too. Set QUIVERS to KEEP to keep them": "「非本職業」也會出售箭筒。要留著箭筒請把「箭筒」設為「保留」",
+"A second copy of a unique or set item in your Uniques tab goes by IN MY COLLECTION alone, a runeword's by RUNEWORDS": "獨特物品分頁裡已有的獨特或套裝物品，第二件只看「已收藏」這一行；符文之語則看「符文之語」這一行",
+"This ends your Uber Tristram run: its organs are lost. Click again": "這會結束你的超級崔斯特姆：器官會失去。再點一次確認",
+"This ends your Uber Tristram run: its organs are lost. Tap again": "這會結束你的超級崔斯特姆：器官會失去。再點一下確認",
+"This ends your Pandemonium run: its keys are lost. Click again": "這會結束你的混沌關卡：鑰匙會失去。再點一次確認",
+"This ends your Pandemonium run: its keys are lost. Tap again": "這會結束你的混沌關卡：鑰匙會失去。再點一下確認",
+"Summons a shadow that mimics your skills at #% damage. # life at level #.": "召喚一個模仿你技能的影子，造成 {0}% 傷害。{2} 級時有 {1} 生命。",
+"Summons a powerful shadow that mimics your skills at #% damage. # life at level #.": "召喚一個模仿你技能的強大影子，造成 {0}% 傷害。{2} 級時有 {1} 生命。",
+"+#% fire damage. Lowers enemy fire resistance #%, a fifth of that if immune.": "+{0}% 火焰傷害。降低敵人火焰抗性 {1}%，對免疫的敵人只有五分之一。",
+"+#% cold damage. Lowers enemy cold resistance #%, a fifth of that if immune.": "+{0}% 冰寒傷害。降低敵人冰寒抗性 {1}%，對免疫的敵人只有五分之一。",
+"+#% lightning damage. Lowers enemy lightning resistance #%, a fifth of that if immune.": "+{0}% 閃電傷害。降低敵人閃電抗性 {1}%，對免疫的敵人只有五分之一。",
+"Flickering Flame": "閃爍火焰",
+"Mist": "迷霧",
+"Obsession": "執念",
+"Pattern": "圖紋",
+"Unbending Will": "不屈意志",
+"Wisdom": "智慧",
+"Hysteria": "歇斯底里",
+"Mania": "狂躁",
+"Mosaic": "馬賽克",
+"Metamorphosis": "變形",
+"Ground": "接地",
+"Hearth": "爐火",
+"Cure": "治癒",
+"+*% chance for finishing moves to not consume charges": "+{0}% 機率終結技不消耗蓄能",
+"Mark of the Bear": "熊之印記",
+"Right Click, then click the item to socket": "按右鍵，再點要鑲嵌的物品",
+"Hold, then tap the item to socket": "長按，再點一下要鑲嵌的物品",
+"* went to the stash, shared tab *": "{0}已放進儲物箱共用分頁 {1}",
+"* went to your personal stash tab": "{0}已放進你的個人儲物箱分頁",
+"Locked for good after an older save was loaded. The item still works": "讀取較舊的存檔後已永久鎖定。物品仍然可以使用",
+"Your experience brings you fortune.": "你的經驗為你帶來好運。",
+"Pending": "等待中",
+"PLAY ONLINE": "線上遊戲",
+"PLAY OFFLINE": "離線遊戲",
+"Email address": "電子郵件地址",
+"ENTER THE CODE": "輸入驗證碼",
+"Six digits": "六位數字",
+"CHOOSE A NAME": "取一個名字",
+"DELETE YOUR ACCOUNT?": "要刪除你的帳號嗎？",
+"That isn't an email address.": "這不是電子郵件地址。",
+"The check that you're not a script didn't pass. Try again.": "真人驗證沒有通過，請再試一次。",
+"Too many tries. Wait a while, then try again.": "嘗試太多次了，請等一下再試。",
+"The code is six digits.": "驗證碼是六位數字。",
+"The email couldn't be sent just now. Try again in a minute.": "郵件暫時無法寄出，請一分鐘後再試。",
+"Wrong code. # tries left.": "驗證碼錯誤，還可以試 {0} 次。",
+"SEND CODE": "寄送驗證碼",
+"SIGN IN": "登入",
+"NEW CODE": "重寄驗證碼",
+"SIGN OUT": "登出",
+"DELETE ACCOUNT": "刪除帳號",
+"Online play didn't open": "線上遊戲無法開啟",
+"ONLINE PLAY DIDN'T OPEN": "線上遊戲無法開啟",
+"SIGN IN WITH GOOGLE": "用 Google 登入",
+"SIGN IN WITH DISCORD": "用 Discord 登入",
+"SIGN IN WITH EMAIL": "用電子郵件登入",
+"ACCOUNT": "帳號",
+"You sign in with": "你的登入方式",
+"Email": "電子郵件",
+"The server is full": "伺服器已滿",
+"The server is full.": "伺服器已滿。",
+"THE SERVER IS FULL": "伺服器已滿",
+"START HERE": "在這裡開始",
+"LAY TO REST": "安息",
+"Something went wrong on our side. Try again in a minute.": "我們這邊出了問題，請一分鐘後再試。",
+"Online: *, *": "線上：{0}，{1}",
+"Connecting to the server...": "正在連線到伺服器…",
+"Signing in...": "正在登入…",
+"Online heroes are kept on the server, and only they rank on the boards.": "線上英雄存在伺服器上，只有線上英雄會列入排行榜。",
+"A code comes to this address. No password.": "驗證碼會寄到這個信箱，不需要密碼。",
+"One more step: tick Cloudflare's box below.": "還差一步：請勾選下方的 Cloudflare 驗證框。",
+"Please wait...": "請稍候…",
+"Your browser opened to sign in with *. Finish there, and the game goes on by itself.": "已開啟瀏覽器用 {0} 登入。在瀏覽器完成後，遊戲會自動繼續。",
+"Closed it by mistake? CANCEL, then sign in again.": "不小心關掉了？按「取消」，再重新登入。",
+"Sign-in with * was cancelled.": "已取消用 {0} 登入。",
+"Sign-in with * didn't finish. Try again.": "用 {0} 登入沒有完成，請再試一次。",
+"A 6-digit code went to": "6 位數驗證碼已寄到",
+"It works for 10 minutes. Not there? Look in spam, or send a new one.": "驗證碼 10 分鐘內有效。沒收到？請看垃圾郵件，或重寄一封。",
+"A new code is on its way.": "新的驗證碼已寄出。",
+"Other players see it on the boards. 2 to 15 letters, with one - or _ inside at most.": "其他玩家會在排行榜上看到這個名字。2 到 15 個字元，中間最多只能有一個 - 或 _。",
+"A moderator reset your name: a name may not insult, show hate or pretend to be someone else. Keep this one or choose another.": "管理員重設了你的名字：名字不能辱罵他人、帶有仇恨或冒充別人。可以保留這個名字，或另外取一個。",
+"Too many wrong codes. Wait an hour, then send a new one.": "驗證碼錯太多次了。請等一小時後再重寄一封。",
+"That code ran out. Send a new one.": "這個驗證碼已過期，請重寄一封。",
+"Wrong code, and that was the last try. Send a new one.": "驗證碼錯誤，而且這是最後一次機會。請重寄一封。",
+"That name is taken.": "這個名字已經有人用了。",
+"That name can't be used.": "這個名字不能使用。",
+"BETA CODE": "測試邀請碼",
+"Online beta is invite-only. Enter your code.": "線上測試只限受邀玩家，請輸入你的邀請碼。",
+"Beta code": "測試邀請碼",
+"That code isn't right. Check it and try again.": "邀請碼不正確，請檢查後再試一次。",
+"That code was already used. Ask for a new one.": "這個邀請碼已經用過了，請索取新的邀請碼。",
+"That code no longer works. Ask for a new one.": "這個邀請碼已經失效，請索取新的邀請碼。",
+"Online beta is invite-only. PLAY ONLINE to enter your code.": "線上測試只限受邀玩家。按「線上遊戲」輸入你的邀請碼。",
+"Email can't be sent to that address. Try another.": "無法寄信到這個信箱，請換一個。",
+"ONLINE HEROES": "線上英雄",
+"Online heroes start from nothing. Your offline heroes stay on this device, as they are.": "線上英雄從零開始。你的離線英雄會照原樣留在這台裝置上。",
+"Carried over from this device:": "從這台裝置帶過去的：",
+"Tyrael's Wings, for *": "泰瑞爾之翼，給{0}",
+"The golden glow, for the * *": "金色光芒，給{0}{1}",
+"Nothing from the * save: the game marks it edited.": "{0}存檔的內容都不會帶過去：遊戲把它標記為修改過。",
+"Nothing from the * save: another account claimed it.": "{0}存檔的內容都不會帶過去：已被另一個帳號領取。",
+"Pick a mode. Each has its own online heroes.": "選擇模式。每個模式有各自的線上英雄。",
+"WAITING IN LINE": "排隊中",
+"You go in on your own as soon as a place frees. Keep this screen open.": "一有空位就會自動進入。請讓這個畫面保持開啟。",
+"Place in line: #": "排隊順位：{0}",
+"Your online heroes, their gear, the stash and your runs on the boards, Softcore's and Hardcore's, are deleted for good.": "你的線上英雄、他們的裝備、儲物箱，以及你在一般模式和專家模式排行榜上的紀錄，都會永久刪除。",
+"This can't be undone.": "這個動作無法復原。",
+"ACCOUNT DELETED": "帳號已刪除",
+"Your account and its heroes are gone. Signing in again makes a new account.": "你的帳號和英雄都已刪除。重新登入會建立新的帳號。",
+"CAN'T CONNECT": "無法連線",
+"The server can't be reached. Check your connection, then try again.": "無法連上伺服器。請檢查網路連線後再試一次。",
+"Offline play is open meanwhile.": "這段時間仍然可以離線遊戲。",
+"ONLINE PLAY IS CLOSED": "線上遊戲暫停中",
+"Online play is closed for a while. Your online heroes are safe on the server.": "線上遊戲暫停一段時間。你的線上英雄安全地存在伺服器上。",
+"Online play closed for a while. Your hero is safe on the server, as of your last change.": "線上遊戲暫停一段時間。你的英雄安全地存在伺服器上，保留到你最後一次變更為止。",
+"A NEW BUILD IS OUT": "新版本已推出",
+"Online play needs the newest build. Reload to update. Nothing is lost.": "線上遊戲需要最新版本。重新載入即可更新，不會失去任何東西。",
+"Online play needs the newest build. The app is downloading it: restart once it's ready.": "線上遊戲需要最新版本。程式正在下載，下載好後請重新開啟。",
+"ONLINE NEEDS HOSTED FILES": "線上遊戲需要線上檔案",
+"Online play needs the game's hosted files for now. Your heroes are kept.": "線上遊戲目前需要使用遊戲的線上檔案。你的英雄會保留。",
+"ACCOUNT CLOSED": "帳號已停用",
+"This account can no longer play online. Offline play is still yours.": "這個帳號不能再進行線上遊戲，仍然可以離線遊戲。",
+"To ask why, write on the Discord.": "想知道原因，請到 Discord 詢問。",
+"The server can't be reached, so the game opened offline. Your online heroes are safe on the server. PLAY ONLINE tries again.": "無法連上伺服器，所以遊戲以離線模式開啟。你的線上英雄安全地存在伺服器上。按「線上遊戲」可以重試。",
+"SIGNED OUT": "已登出",
+"Your session ended, so the game opened offline. PLAY ONLINE to sign in again.": "你的登入已過期，所以遊戲以離線模式開啟。按「線上遊戲」重新登入。",
+"You were away over 10 minutes, and the server filled meanwhile. Wait for a place under PLAY ONLINE.": "你離開超過 10 分鐘，這段時間伺服器已經滿了。請到「線上遊戲」排隊等候空位。",
+"Nothing in the Training Ground is saved, online or offline": "訓練場裡的一切都不會存檔，不論線上或離線",
+"Can't reach the server. Your changes are kept and sent once it's back.": "無法連上伺服器。你的變更會保留，連線恢復後再送出。",
+"Pick Softcore or Hardcore under PLAY ONLINE": "請在「線上遊戲」選擇一般模式或專家模式",
+"Starting the run...": "正在開始這一局…",
+"THE RUN DIDN'T START": "這一局無法開始",
+"This run couldn't start. Try again in a moment.": "這一局無法開始，請稍後再試。",
+"THIS HERO IS IN A RUN": "這位英雄正在遊戲中",
+"A run is under way on another device. Starting here ends that run, and it won't rank.": "另一台裝置上正在進行一局。在這裡開始會結束那一局，而且那一局不會列入排行榜。",
+"A lost connection never kills. Your hero can play again once the run's last seconds are saved.": "斷線不會害英雄死亡。這一局最後幾秒存好後，英雄就可以再玩。",
+"Your hero keeps what it earned up to then.": "英雄會保留到那時為止獲得的東西。",
+"CONNECTION LOST": "連線中斷",
+"The connection was lost for over a minute, so the run ended. It won't rank.": "連線中斷超過一分鐘，這一局已結束，不會列入排行榜。",
+"Your hero keeps what it earned before the connection dropped.": "英雄會保留斷線前獲得的東西。",
+"The run stopped and won't rank.": "這一局已停止，不會列入排行榜。",
+"THE RUN ENDED": "這一局已結束",
+"The game was closed or reloaded during the run, so the run ended. It won't rank.": "遊戲中途被關閉或重新載入，這一局已結束，不會列入排行榜。",
+"YOUR HERO IS WAITING": "英雄等待中",
+"This hero's last run is still being saved. It can play again once that's done, usually within a minute.": "這位英雄的上一局還在存檔中。存好後就可以再玩，通常在一分鐘內。",
+"This hero's last run is still on the device that played it. Open the game online on that device to save it.": "這位英雄的上一局還在玩那一局的裝置上。請在那台裝置上以線上模式開啟遊戲來存檔。",
+"Still waiting after a day? LAY TO REST counts this hero as dead, and the class starts again.": "等了一天還沒好？按「安息」會把這位英雄算成死亡，這個職業重新開始。",
+"LAY THIS HERO TO REST?": "要讓這位英雄安息嗎？",
+"Your hero is buried as a death in Hardcore, with the gear worn. A new hero of the class can start at once.": "英雄會連同身上的裝備，以專家模式死亡的方式埋葬。這個職業可以馬上建立新英雄。",
+"LAY TO REST opens once this hero has waited a whole day": "這位英雄等滿一整天後才能按「安息」",
+"Your hero's last run is saved. It can play again.": "英雄的上一局已存好，可以再玩了。",
+"YOUR HERO HAS DIED": "你的英雄已死亡",
+"Your hero fell in the last run, just before the connection was lost.": "你的英雄在上一局斷線前就已陣亡。",
+"Connection lost. The run ends in # seconds unless it's back.": "連線中斷。若沒有恢復，這一局將在 {0} 秒後結束。",
+"A lost connection never kills.": "斷線不會害英雄死亡。",
+"Connection back.": "連線已恢復。",
+"Online update in # minutes. Finish your run or SAVE AND EXIT: your hero is kept.": "線上更新將在 {0} 分鐘後開始。請打完這一局或「儲存並離開」：英雄會保留。",
+"Online update in # minute. Finish your run or SAVE AND EXIT: your hero is kept.": "線上更新將在 {0} 分鐘後開始。請打完這一局或「儲存並離開」：英雄會保留。",
+"Online update in 1 minute. Finish your run or SAVE AND EXIT: your hero is kept.": "線上更新將在 1 分鐘後開始。請打完這一局或「儲存並離開」：英雄會保留。",
+"Online update in # minutes. New runs can start once it's done.": "線上更新將在 {0} 分鐘後開始。更新完成後才能開新的一局。",
+"Online update in # minute. New runs can start once it's done.": "線上更新將在 {0} 分鐘後開始。更新完成後才能開新的一局。",
+"Online update in 1 minute. New runs can start once it's done.": "線上更新將在 1 分鐘後開始。更新完成後才能開新的一局。",
+"Too many short runs this hour. Your hero can start a new run in # minutes.": "這一小時內太多短局了。英雄 {0} 分鐘後才能開新的一局。",
+"Too many short runs this hour. Your hero can start a new run in # minute.": "這一小時內太多短局了。英雄 {0} 分鐘後才能開新的一局。",
+"Too many short runs this hour. Your hero can start a new run in 1 minute.": "這一小時內太多短局了。英雄 1 分鐘後才能開新的一局。",
+"ONLINE IS UPDATING": "線上更新中",
+"Back at about *. Your hero is safe on the server. Offline play is open meanwhile.": "預計 {0} 左右恢復。你的英雄安全地存在伺服器上。這段時間仍然可以離線遊戲。",
+"Back in a few minutes. Your hero is safe on the server. Offline play is open meanwhile.": "幾分鐘後恢復。你的英雄安全地存在伺服器上。這段時間仍然可以離線遊戲。",
+"Online is updating. Your run goes on and is kept: play it out.": "線上正在更新。你這一局會繼續並保留：請把它打完。",
+"Your run is kept. Online is back at about *.": "你這一局已保留。線上預計 {0} 左右恢復。",
+"Your run is kept. Online is back in a few minutes.": "你這一局已保留。線上幾分鐘後恢復。",
+"Online is back, with a new version. RELOAD to play it.": "線上已恢復，並有新版本。按「重新載入」開始玩。",
+"Online is back, with a new version. The app is downloading it: restart once it's ready.": "線上已恢復，並有新版本。程式正在下載，下載好後請重新開啟。",
+"ONLINE IS BACK": "線上已恢復",
+"This run may pause # more minutes and still rank.": "這一局還可以暫停 {0} 分鐘，仍會列入排行榜。",
+"This run may pause 1 more minute and still rank.": "這一局還可以暫停 1 分鐘，仍會列入排行榜。",
+"Paused over 10 minutes, so this run no longer ranks.": "已暫停超過 10 分鐘，這一局不再列入排行榜。",
+"Pause # more minutes and this run no longer ranks.": "再暫停 {0} 分鐘，這一局就不會列入排行榜。",
+"Undo": "復原",
+"UNDO": "復原",
+"Temper and improve items": "淬鍊並強化物品",
+"Taken back:": "已復原：",
+"Undo only takes back a temper that just landed": "復原只能取消剛剛成功的那次淬鍊",
+"Takes back the temper that just landed": "取消剛剛成功的那次淬鍊",
+"Temper stops at #": "淬鍊最多 {0} 次",
+"Temper stops at #: use the Hellforge": "淬鍊最多 {0} 次：請改用地獄熔爐",
+"The Hellforge needs # tempers": "地獄熔爐需要 {0} 次淬鍊",
+"Up to # tempers on this item": "這件物品最多淬鍊 {0} 次",
+"2 tempers a line, up to 10 an item": "每一行 2 次，每件物品最多 10 次",
+"Tempers: # / #": "淬鍊：{0} / {1}",
+"Tempered (#/#)": "已淬鍊 ({0}/{1})",
+"Each line gives 2 tempers, up to 10": "每一行可淬鍊 2 次，最多 10 次",
+"This item holds its # tempers: Hellforge or Undo": "這件物品已淬鍊滿 {0} 次：可以用地獄熔爐或復原",
+"(this item: # lines)": "（這件物品：{0} 行）",
+"(this item: 1 line)": "（這件物品：1 行）",
+"OTHER MUSIC": "其他音樂",
+"Plays beside other apps' music, and follows the silent switch": "可以和其他 App 的音樂同時播放，並遵循靜音開關",
+"Confirm": "確認",
+"Press again to undo the last temper": "再按一次取消上一次淬鍊",
+"PULL LOOT": "吸取掉落物",
+"Gear and chests fly to you": "裝備和寶箱會飛到你身邊",
+"THE CAMP DIDN'T LOAD": "營地沒有載入",
+"Some of the Rogue Encampment's pictures didn't load, so the campfire stands in. The camp tries again after your next run, and reloading the page tries at once.": "羅格營地有些圖片沒有載入，所以暫時用營火代替。下一局結束後營地會再試一次，重新載入頁面則會馬上重試。",
+"TRY AGAIN": "再試一次",
+"'NefPulVex'": "'內夫・普爾・伐克斯'",
+"'ChamShaelGulThulIth'": "'查姆・夏・古爾・書爾・伊司'",
+"'ZodIstLemLumIoNef'": "'薩德・伊斯特・藍姆・盧姆・伊歐・內夫'",
+"'TalOrtThul'": "'塔爾・歐特・書爾'",
+"'ChamShaelUm'": "'查姆・夏・烏姆'",
+"'FalIoIthEldElHel'": "'法爾・伊歐・伊司・艾德・艾爾・海爾'",
+"'PulIthEld'": "'普爾・伊司・艾德'",
+"'ShaelKoEld'": "'夏・科・艾德'",
+"'MalGulAmn'": "'馬爾・古爾・安姆'",
+"'IoChamFal'": "'伊歐・查姆・法爾'",
+"'ShaelIoOrt'": "'夏・伊歐・歐特'",
+"'ShaelIoRal'": "'夏・伊歐・拉爾'",
+"'ShaelIoThul'": "'夏・伊歐・書爾'",
+"'ShaelIoTal'": "'夏・伊歐・塔爾'",
+"'ShaelIoSol'": "'夏・伊歐・索爾'",
 // 遊戲 20261105.2／.3：箭筒、物品過濾「隱藏並出售」「無形必撿」、淬鍊上限、恐懼層重玩、角色畫面多 3 頁數值、獨特物品分頁的符文之語底材
 "QUIVERS": "箭筒",
 "HIDE AND SELL": "隱藏並出售",
@@ -6549,7 +7046,7 @@ if (was !== !!pad) { render(); if (pad && dlg) toast('已連接遊戲手把：' 
 }
 };
 }
-d2padInstall();
+if (!D2ZH_ONLINE) d2padInstall();   // 線上模式只翻譯
 // ====== 技能進化提示補全 ======
 // 遊戲規則：技能練滿＋持有某個被動（＋角色等級）→ 寶箱把技能進化成新技能（遊戲自己的設定，build 20261020）。
 // 遊戲只在「技能」那一邊一定寫出要哪個被動；「被動」那一邊：
@@ -6636,7 +7133,7 @@ for (const n of r.addedNodes) if (n.nodeType === 1 && (n.matches('#hoverbox, .d2
 }).observe(document.body, { subtree: true, childList: true });
 window.addEventListener('d2-language-changed', schedule);
 }
-d2evoInstall();
+if (!D2ZH_ONLINE) d2evoInstall();   // 線上模式只翻譯
 // ====== 生命血球裡：可重生次數 ======
 // 恰西賣的「復活」每級每輪多一次半血復活（最多 2 級）：遊戲把剩下的次數放在 player.revives，上限是存檔的 ranks.resurrect。
 // 放在血球（#d2-life）的同一層、玻璃反光之上，位置每次照血球重算（直向手機血球會換位置）。
@@ -6664,7 +7161,7 @@ el.style.top = `${globe.offsetTop + globe.offsetHeight / 2}px`;
 el.style.color = p.revives > 0 ? '#e8dfcc' : '#ff5c5c';
 }, 250);
 }
-d2revivesInstall();
+if (!D2ZH_ONLINE) d2revivesInstall();   // 線上模式只翻譯
 // ====== 說明框不要超出視窗 ======
 // 遊戲在說明框出現時，用當下的高度決定位置（框在圖示上方時是「底邊對齊」）；之後中文合併字詞、補上「進化：…」那一行，
 // 框變高就往上長，最上面的技能名稱被視窗切掉。框的大小或位置一變，就把它推回視窗裡。
@@ -6794,7 +7291,7 @@ if (n.nodeType === 1 && (n.matches('.lb-naming') || n.querySelector?.('input.lb-
 if (records.some(r => r.target.nodeType === 1 && r.target.closest('#leaderboard'))) youNote();
 }).observe(document.body, { subtree: true, childList: true });
 }
-d2lbFindInstall();
+if (!D2ZH_ONLINE) d2lbFindInstall();   // 線上模式只翻譯
 // ====== 技能選單大小 ======
 // 點技能按鈕跳出的選單（#skill-popup）是「被動一排、主動一排」，各 8 格排很寬，開著技能樹時會蓋住技能樹。
 // 技能樹開著時用 transform 縮放選單（不影響遊戲算的位置；往選單靠螢幕邊的那個下角縮），旁邊放 ＋／－ 按鈕讓玩家自己調：
@@ -6891,7 +7388,7 @@ ctl.style.left = left + 'px'; ctl.style.top = top + 'px';
 }
 setInterval(update, 200);
 }
-d2skillPopupInstall();
+if (!D2ZH_ONLINE) d2skillPopupInstall();   // 線上模式只翻譯
 // ====== 儲物箱／獨特物品分頁的搜尋可以打中文 ======
 // 遊戲把物品的英文名稱、底材、屬性和稀有度（英文＋韓文，例如「unique 고유」）接成一串再 toLowerCase() 拿來比對，
 // 儲物箱用換行接（每行一項）、獨特物品分頁用空格接。這裡攔 toLowerCase，認出這種字串就把中文譯名接在後面，
@@ -6977,7 +7474,7 @@ mark.circle(x, y, 10 * pulse * k).stroke({ width: 5 * k, color: 0x000000, alpha:
 } catch (e) { /* 遊戲結構改了就不畫，不影響遊戲 */ }
 }, 100);
 }
-d2questInstall();
+if (!D2ZH_ONLINE) d2questInstall();   // 線上模式只翻譯
 // ====== 地上的護符：閃爍 ======
 // 護符沒有掉落圖，遊戲用一個依稀有度上色的圓點（art.pickups.item）代替，很容易漏看。這裡讓地上護符的圓點一閃一閃、微微放大縮小。
 function d2charmBlinkInstall() {
@@ -6999,7 +7496,7 @@ s.scale.set(b.x * k, b.y * k);
 } catch (e) { /* 遊戲結構改了就不閃，不影響遊戲 */ }
 }, 50);
 }
-d2charmBlinkInstall();
+if (!D2ZH_ONLINE) d2charmBlinkInstall();   // 線上模式只翻譯
 // ====== 過關吸取物品：打完這一幕時，地上的裝備和物品（鑰匙、精華、器官…）也一起飛到英雄身邊 ======
 // 遊戲過關後等傳送門時（Game-*.js 的 waitForPortal），每格呼叫 itemArt 的 Pb()：只把經驗寶石和金幣設成 magnet 飛過來，
 // 裝備類（pickup 有 item）不管，進傳送門時 travel→sweepFloor 只收寶石和寶箱，地上的裝備就消失了。
@@ -7047,7 +7544,7 @@ if (p.label && !p.label.destroyed) { p.label.x += dx; p.label.y += dy; if (typeo
 };
 requestAnimationFrame(step);
 }
-d2endPullInstall();
+if (!D2ZH_ONLINE) d2endPullInstall();   // 線上模式只翻譯
 // ====== 碎片感應：破碎之光的碎片位置 ======
 // 跟遊戲算碎片的方式一樣（build 20261027.4，keepSave-*.js 的 gc／cc／uc／_c）：
 // 每一幕最多一塊，下一塊是「已找到 + 1」。第 1 塊在第一幕，第 2～5 塊在第二～五幕，第 6～10 塊在惡夢／地獄任何一幕；恐懼層每層都可能有。
@@ -7347,5 +7844,5 @@ if (mapDot && !mapDot.destroyed) mapDot.visible = visible;
 }
 }, 33);
 }
-d2shardInstall();
+if (!D2ZH_ONLINE) d2shardInstall();   // 線上模式只翻譯
 })();
