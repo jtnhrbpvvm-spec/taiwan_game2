@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
-    <title>自動補給與合成</title>
+    <title>自動補給、合成與配點</title>
     <style>
       :root { color-scheme: dark; }
       body { margin: 0; padding: 14px 16px 18px; background: #0d0b08; color: #e9e4d8; font: 14px/1.6 "Microsoft JhengHei", sans-serif; }
@@ -21,11 +21,18 @@
       #log { margin-top: 6px; max-height: 150px; overflow: auto; font-size: 12px; color: #c9c2b2; white-space: pre-wrap; background: #0d0b08; border-radius: 6px; padding: 6px 8px; border: 1px solid #2a2218; }
       .switch { display: flex; align-items: center; gap: 6px; cursor: pointer; }
       button { margin-top: 12px; padding: 6px 18px; border: 0; border-radius: 8px; background: #c9973f; color: #1b120a; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      button.small { margin-top: 4px; padding: 3px 10px; font-size: 13px; background: #3a2f20; color: #f2d9a6; }
+      #al-table { margin-top: 8px; border-collapse: collapse; width: 100%; font-size: 13px; }
+      #al-table th { color: #c9b58a; font-weight: normal; text-align: right; padding: 2px 6px; border-bottom: 1px solid #3a2f20; }
+      #al-table td { text-align: right; padding: 2px 6px; }
+      #al-table th:first-child, #al-table td:first-child { text-align: left; }
+      #al-table input { width: 52px; }
+      #al-table tr.dim td { color: #6f6656; }
       #saved { margin-left: 10px; font-size: 13px; color: #8fe08a; opacity: 0; transition: opacity 0.3s; }
     </style>
   </head>
   <body>
-    <h1>自動補給與合成</h1>
+    <h1>自動補給、合成與配點</h1>
     <div id="status"></div>
 
     <section>
@@ -57,13 +64,31 @@
       <div class="row"><label class="switch"><input type="checkbox" id="f2-on" /> 高級 → 史詩</label>，湊到 <input type="number" id="f2-n" min="5" /> 件就合</div>
     </section>
 
+    <section>
+      <h2><label class="switch"><input type="checkbox" id="al-on" /> 自動配點</label></h2>
+      <div class="hint">有「可分配點數」時，照下面的比例自動分配（跟在「能力」頁按「分配」一樣）。比例是指<b>自己配出去的點數</b>（目前能力扣掉職業初始值），每一點都加給目前最落後比例的那一項，所以之前配歪了也會慢慢補回指定比例。到能力上限的那項就不再加。比例填 0＝不加這一項。</div>
+      <div id="al-class" class="hint"></div>
+      <div id="al-target" class="hint"></div>
+      <table id="al-table">
+        <thead><tr><th>能力</th><th>比例</th><th>目前能力</th><th>自己配的</th><th>目前占比</th><th>目標占比</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="row">
+        <button id="al-recommend" type="button" class="small">套用遊戲建議比例</button>
+        <button id="al-clear" type="button" class="small">全部清成 0</button>
+      </div>
+      <div id="al-preview" class="hint"></div>
+    </section>
+
     <button id="save" type="button">儲存</button><span id="saved">已儲存</span>
-    <div class="hint">遊戲視窗叫出來（你在玩）的時候，自動補給和合成都會暫停，藏回去才繼續。</div>
+    <div class="hint">遊戲視窗叫出來（你在玩）的時候，自動補給、合成、配點都會暫停，藏回去才繼續。</div>
 
     <section>
       <h2>最近做了什麼</h2>
       <div id="log">（還沒有）</div>
     </section>
+    <script src="../codex-data.js"></script>
+    <script src="../stat-alloc.js"></script>
     <script src="auto.js"></script>
   </body>
 </html>

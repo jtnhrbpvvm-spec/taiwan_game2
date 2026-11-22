@@ -7,6 +7,9 @@ const art = require("./art.json");
 const { loginWithBrowser, findBrowser } = require("./login-browser");
 const accounts = require("./accounts");
 const potions = require("./potion-supply");
+const codex = require("./codex-data");
+const statAlloc = require("./stat-alloc");
+const { cleanRules, cleanSell } = require("./sell-rules");
 const { spawn } = require("child_process");
 
 const GAME_ORIGIN = "https://play.17raja.com";
@@ -31,7 +34,7 @@ let bootPatch;
 
 
 // 每隻桌寵擁有自己的視窗、遊戲 Session、登入流程、角色外觀、事件與自動設定。
-module.exports = function createCompanion({ accountId = null, slot = 0, onChange, onClose, managerMenu }) {
+module.exports = function createCompanion({ accountId = null, slot = 0, onChange, onClose, managerMenu, onTeamLog }) {
   const events = new Map(), handlers = new Map();
   const ipcMain = { on: (name, fn) => events.set(name, fn), handle: (name, fn) => handlers.set(name, fn) };
   const currentAccount = () => accountId;
@@ -52,11 +55,85 @@ const DEFAULT_AUTO = {
   fuse: [{ enabled: false, count: 5 }, { enabled: false, count: 5 }, { enabled: false, count: 5 }],
   // 自動復活：倒下後回主城念咒語復活；supply＝復活後照「自動補給」的設定買藥，再回練功地圖
   revive: { enabled: false, supply: true },
+  // 自動配點：有可分配點數就照 ratio（{int:6, wsps:3, con:1}）分，見 stat-alloc.js
+  // target＝小百科指定的目標裝備 { itemNo, setAt }：先配到剛好能用它（不管 enabled），達成就清掉；history＝以前的目標紀錄
+  alloc: { enabled: false, ratio: {}, target: null, history: [] },
+  // 自動販售（這隻自己的規則）：useGlobal＝也套用「全部桌寵」的規則；背包剩 freeSlots 格以下就回城賣；sellPrecious＝稀有、強化等貴重的也賣
+  sell: { enabled: false, rules: [], useGlobal: true, freeSlots: 10, sellPrecious: false },
+  // 生活技能：在主城練製作技能（ui/life.html）。mode "best"＝只做目前最高等級能做的、"recipe"＝指定配方；count 0＝一直做
+  life: { enabled: false, skill: 0, mode: "best", recipe: 0, count: 0, buy: false, chain: true },
 };
 // 要記的遊戲掛機設定（localStorage 的鍵），跟 game-preload.js 一樣
 const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
 let settings = { size: 100, stay: false, gameBounds: undefined, autoStart: false, auto: DEFAULT_AUTO };
 const num = (v, min, max) => Math.max(min, Math.min(max, Math.floor(Number(v)) || 0));
+// ── 生活技能 ──
+function cleanLife(l) {
+  const skill = codex.craftSkills.some((s) => s.skill === l?.skill) ? l.skill : codex.craftSkills[0].skill;
+  const recipe = codex.recipes.find((r) => r[0] === l?.recipe && r[3] === skill) ? l.recipe : 0;
+  return { enabled: !!l?.enabled && (l?.mode !== "recipe" || recipe > 0), skill, mode: l?.mode === "recipe" ? "recipe" : "best", recipe, count: num(l?.count, 0, 100000), buy: !!l?.buy, chain: l?.chain !== false };
+}
+
+// ── 配點目標（小百科「設為配點目標」）──
+const HISTORY_MAX = 30;
+const codexItem = (no) => codex.items.find((i) => i.no === Number(no));
+const time = (t) => (Number.isFinite(t) && t > 0 ? Math.floor(t) : 0);
+function cleanTarget(t) {
+  const it = t && codexItem(t.itemNo);
+  return it ? { itemNo: it.no, setAt: time(t.setAt) || Date.now() } : null;
+}
+function cleanHistory(h) {
+  const it = h && codexItem(h.itemNo);
+  if (!it || !["done", "canceled", "replaced"].includes(h.result)) return null;
+  return { itemNo: it.no, name: it.name, setAt: time(h.setAt), endAt: time(h.endAt), result: h.result };
+}
+/** 目前目標結束（達成、取消、換別件），記到紀錄最前面。 */
+function endTarget(result) {
+  const t = settings.auto.alloc.target;
+  if (!t) return;
+  const it = codexItem(t.itemNo);
+  settings.auto.alloc.history = [{ itemNo: t.itemNo, name: it?.name || String(t.itemNo), setAt: t.setAt, endAt: Date.now(), result }, ...settings.auto.alloc.history].slice(0, HISTORY_MAX);
+  settings.auto.alloc.target = null;
+}
+function setAllocTarget(itemNo) {
+  const it = itemNo == null ? null : codexItem(itemNo);
+  if (itemNo != null && !it) return { error: "找不到這件裝備" };
+  const ch = game.state?.auto?.char;
+  if (it && ch && it.classes && !it.classes.includes(ch.classId)) return { error: "這件裝備你的職業不能用，不能設成目標" };
+  if (it && ch && statAlloc.targetShort(codex, it, ch).overCap.length) return { error: "這件裝備要求的能力超過你目前職業、轉職的上限，配點配不到" };
+  if (settings.auto.alloc.target?.itemNo === it?.no) return {};
+  endTarget(it ? "replaced" : "canceled");
+  if (it) {
+    settings.auto.alloc.target = { itemNo: it.no, setAt: Date.now() };
+    logGame(`配點目標：${it.name}`);
+  }
+  saveSettings();
+  sendAuto();
+  checkAllocTarget();
+  return {};
+}
+/** 角色能力已經夠用目標裝備（能力類條件都滿足）：記成達成、清掉目標、冒泡說一聲。 */
+function checkAllocTarget() {
+  const t = settings.auto.alloc.target, ch = game.state?.auto?.char;
+  const it = t && codexItem(t.itemNo);
+  if (!it || !ch || !Array.isArray(ch.ab)) return;
+  if (statAlloc.targetShort(codex, it, ch).total > 0) return;
+  endTarget("done");
+  saveSettings();
+  sendAuto();
+  notice(`配點目標達成：能力已經夠用「${it.name}」了`);
+  logGame(`配點目標達成：${it.name}`);
+}
+function allocInfo() {
+  const a = settings.auto.alloc, ch = game.state?.auto?.char;
+  const it = a.target && codexItem(a.target.itemNo);
+  return {
+    target: it ? { itemNo: it.no, name: it.name, setAt: a.target.setAt, ...(ch ? { short: statAlloc.targetShort(codex, it, ch) } : {}) } : null,
+    history: a.history,
+    enabled: a.enabled,
+  };
+}
+
 /** 設定視窗送來的值不能全信，整理成合法的數字。 */
 function cleanAuto(a) {
   const s = a?.supply ?? {};
@@ -72,6 +149,14 @@ function cleanAuto(a) {
     },
     fuse: [0, 1, 2].map((i) => ({ enabled: !!a?.fuse?.[i]?.enabled, count: num(a?.fuse?.[i]?.count ?? 5, 5, 96) })),
     revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false },
+    sell: cleanSell(a?.sell),
+    life: cleanLife(a?.life),
+    alloc: {
+      enabled: !!a?.alloc?.enabled,
+      ratio: Object.fromEntries(codex.statKeys.map((k) => [k, num(a?.alloc?.ratio?.[k], 0, 100)]).filter(([, v]) => v > 0)),
+      target: cleanTarget(a?.alloc?.target),
+      history: (Array.isArray(a?.alloc?.history) ? a.alloc.history : []).map(cleanHistory).filter(Boolean).slice(0, HISTORY_MAX),
+    },
   };
 }
 function loadSettings() {
@@ -255,8 +340,20 @@ function showGame(on) {
 // ── 自動補給、自動合成 ────────────────────────────────────
 
 const autoLog = []; // 最近的紀錄（設定視窗顯示）
+// 組隊練功（main.js 的組隊視窗指定）：team＝{role:"leader",members,mapId,mapName}／{role:"member",leader}；teamLeave＝解散的時間（叫遊戲離隊一次）
+// 只放在記憶體：重開桌寵就不再自動組隊
+let team = null, teamLeave = 0;
+// 指定交易（main.js 的物品欄視窗指定）：{ id, role:"give", to, items, gold } 或 { id, role:"take", from, count, gold, meet }
+let trade = null;
+// 「全部桌寵」的販售規則（main.js 管、存在 sell-global.json）：{ enabled, rules }
+let sellGlobal = { enabled: false, rules: [] };
+/** 這隻實際要用的販售規則＝自己的（有開）＋全部桌寵的（有開、這隻也套用）。 */
+function sellRules() {
+  const own = settings.auto.sell;
+  return cleanRules([...(own.enabled ? own.rules : []), ...(sellGlobal.enabled && own.useGlobal ? sellGlobal.rules : [])]);
+}
 function sendAuto() {
-  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", settings.auto, game.shown, settings.lastHuntMap ?? null);
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", { ...settings.auto, team, teamLeave, trade, sellRules: sellRules() }, game.shown, settings.lastHuntMap ?? null);
   autoWin?.webContents.send("auto:status", autoStatus());
 }
 function autoStatus() {
@@ -273,6 +370,10 @@ function autoStatus() {
     supplyOk: !!a?.supplyOk,
     supplyState: a?.supplyState || "",
     fuseOk: !!a?.fuseOk,
+    char: a?.char ?? null,
+    allocTarget: allocInfo(),
+    stats: { keys: codex.statKeys, names: codex.statNames },
+    classes: codex.classes.map((c) => ({ id: c.id, name: c.name, base: c.base, recommend: c.recommend })),
     missing: a?.missing ?? bootPatch?.missing ?? [],
     connected: game.state?.status === "ingame",
     watching: game.shown,
@@ -287,7 +388,8 @@ ipcMain.on("game:auto-log", (e, entry) => {
   if (autoLog.length > 200) autoLog.splice(0, autoLog.length - 200);
   logGame(`自動：${text}`);
   // 頭上只冒重要的（開始補給、完成、出問題、合成結果），買了幾瓶這種細項只記在設定視窗
-  if (/^補給：回|補給完成|沒有完成|停止|完成：|金幣不夠|沒有賣|出錯|^倒下|^復活/.test(text)) notice(text);
+  if (/^補給：回|補給完成|沒有完成|停止|完成：|金幣不夠|沒有賣|出錯|^倒下|^復活|^組隊：(加入|帶隊伍|已進|跟上|回「)|^交易：成功|^販售：(賣了|背包只剩)|^生活技能：(完成|材料不夠)/.test(text)) notice(text);
+  onTeamLog?.();
   autoWin?.webContents.send("auto:status", autoStatus());
 });
 
@@ -297,7 +399,7 @@ function openAutoSettings() {
   autoWin = new BrowserWindow({
     width: 520,
     height: 720,
-    title: "自動補給與合成",
+    title: "自動補給、合成與配點",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "build", "icon.png"),
     webPreferences: { preload: path.join(__dirname, "auto-preload.js") },
@@ -308,10 +410,62 @@ function openAutoSettings() {
 ipcMain.handle("auto:get", () => autoStatus());
 ipcMain.on("auto:set", (e, a) => {
   if (!autoWin || e.sender !== autoWin.webContents) return;
+  const keep = settings.auto.alloc;
   settings.auto = cleanAuto(a);
+  if (a?.alloc?.target === null && keep.target) { settings.auto.alloc.target = keep.target; endTarget("canceled"); } // 設定視窗按了「取消目標」
+  else settings.auto.alloc.target = keep.target;
+  settings.auto.alloc.history = keep.history;
   saveSettings();
   sendAuto();
 });
+// ── 生活技能（ui/life.html：選技能、配方或「最高等級」，材料不夠要不要買、要不要先用原料做中間材料） ──
+let lifeWin;
+function openLife() {
+  if (lifeWin && !lifeWin.isDestroyed()) return lifeWin.focus();
+  lifeWin = new BrowserWindow({
+    width: 900,
+    height: 780,
+    title: `生活技能・${accountLabel()}`,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "life-preload.js") },
+  });
+  lifeWin.loadFile(path.join(__dirname, "ui", "life.html"));
+  lifeWin.on("closed", () => (lifeWin = undefined));
+}
+const fromLife = (e) => lifeWin && !lifeWin.isDestroyed() && e.sender === lifeWin.webContents;
+const lifeInfo = () => ({
+  name: game.state?.character?.name || "", status: game.state?.status || "connecting", town: !!game.state?.town, watching: game.shown,
+  now: game.state?.auto?.life ?? null, cfg: settings.auto.life, log: autoLog.filter((l) => / 生活技能/.test(l)).slice(-12),
+});
+handlers.set("life:get", (e) => (fromLife(e) ? lifeInfo() : null));
+handlers.set("life:set", (e, cfg) => {
+  if (!fromLife(e)) return { error: "not allowed" };
+  settings.auto.life = cleanLife(cfg);
+  saveSettings();
+  sendAuto();
+  return lifeInfo();
+});
+
+// ── 小百科（ui/codex.html：裝備能力、使用限制；用目前角色的能力標出能不能用） ──
+let codexWin;
+function openCodex() {
+  if (codexWin && !codexWin.isDestroyed()) return codexWin.focus();
+  codexWin = new BrowserWindow({
+    width: 900,
+    height: 760,
+    title: `小百科・${accountLabel()}`,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "codex-preload.js") },
+  });
+  codexWin.loadFile(path.join(__dirname, "ui", "codex.html"));
+  codexWin.on("closed", () => (codexWin = undefined));
+}
+const fromCodex = (e) => codexWin && !codexWin.isDestroyed() && e.sender === codexWin.webContents;
+handlers.set("codex:char", (e) => (fromCodex(e) ? { char: game.state?.auto?.char ?? null, name: game.state?.character?.name || "", alloc: allocInfo() } : null));
+handlers.set("codex:set-target", (e, itemNo) => (fromCodex(e) ? setAllocTarget(itemNo) : { error: "not allowed" }));
+
 // ── 掛機設置（照遊戲「設置」頁，讀寫都透過遊戲網頁裡的 window.__rajaPetPrefs，見 game-hook.js） ──
 let idleWin;
 function openIdleSettings() {
@@ -521,6 +675,7 @@ ipcMain.on("game:state", (e, s) => {
   const prev = game.state;
   if (s.status === "login" || s.status === "expired") s = { ...s, character: undefined };
   game.state = s;
+  if (s.auto?.char && JSON.stringify(s.auto.char) !== JSON.stringify(prev?.auto?.char)) checkAllocTarget();
   if (s.status === "ingame" && s.lastHuntMap && /^[A-Za-z0-9_-]{1,64}$/.test(s.lastHuntMap.id) &&
       (settings.lastHuntMap?.id !== s.lastHuntMap.id || settings.lastHuntMap?.name !== s.lastHuntMap.name)) {
     settings.lastHuntMap = { id: s.lastHuntMap.id, name: String(s.lastHuntMap.name || s.lastHuntMap.id).slice(0, 100) };
@@ -734,7 +889,9 @@ function buildMenu() {
     ...managerMenu(),
     { type: "separator" },
     { label: "掛機設置…", click: openIdleSettings },
-    { label: "自動補給與合成…", click: openAutoSettings },
+    { label: "自動補給、合成與配點…", click: openAutoSettings },
+    { label: "小百科（裝備）…", click: openCodex },
+    { label: settings.auto.life.enabled ? "生活技能（練習中）…" : "生活技能…", click: openLife },
     { label: "原地不走動", type: "checkbox", checked: settings.stay, click: (i) => setStay(i.checked) },
     { label: "大小", submenu: SIZE_CHOICES.map((n) => ({ label: `${n}%`, type: "radio", checked: settings.size === n, click: () => setSize(n) })) },
     { label: "專注模式（滑鼠穿過桌寵）", type: "checkbox", accelerator: CLICK_THROUGH_KEY, checked: clickThrough, click: (i) => setClickThrough(i.checked) },
@@ -748,7 +905,45 @@ function buildMenu() {
 
   return {
     accountId, events, handlers,
-    owns(sender) { return [petWin, game.win, autoWin, idleWin].some(w => w && !w.isDestroyed() && w.webContents === sender); },
+    /** 組隊練功：主程式指定這隻當隊長／隊員；null＝不組隊（leave＝順便離開遊戲裡的隊伍）。 */
+    setTeam(t, leave = false) {
+      team = t || null;
+      if (leave) teamLeave = Date.now();
+      if (team) logGame(`組隊：${team.role === "leader" ? `當隊長，帶 ${team.members.join("、")} 去「${team.mapName}」` : `當隊員，等 ${team.leader}`}`);
+      else if (leave) logGame("組隊：解散");
+      sendAuto();
+    },
+    /** 指定交易：主程式指定這隻要給／收；null＝取消。 */
+    setTrade(job) {
+      trade = job || null;
+      if (trade && !trade.meet) logGame(`交易：${trade.role === "give" ? `交給 ${trade.to}` : `收 ${trade.from} 的`}`);
+      sendAuto();
+    },
+    /** 全部桌寵的販售規則（主程式改了就送來）。 */
+    setSellGlobal(g) { sellGlobal = g || { enabled: false, rules: [] }; sendAuto(); },
+    /** 這隻自己的販售設定（物品欄視窗改的）。 */
+    setSell(cfg) { settings.auto.sell = cleanSell(cfg); saveSettings(); sendAuto(); },
+    invInfo() {
+      const s = game.state, a = s?.auto;
+      return {
+        accountId, label: accountLabel(), status: s?.status || "connecting", name: s?.character?.name || "", level: s?.character?.level,
+        town: !!s?.town, dead: !!s?.dead, watching: game.shown, inv: a?.inv ?? null, trade: a?.trade ?? null, job: trade,
+        sell: settings.auto.sell, sellNow: a?.sell ?? null, sellActive: sellRules().length,
+        log: autoLog.filter((l) => / 交易/.test(l)).slice(-8),
+      };
+    },
+    teamInfo() {
+      const s = game.state, a = s?.auto;
+      return {
+        accountId, label: accountLabel(), status: s?.status || "connecting",
+        name: s?.character?.name || "", level: s?.character?.level, classId: a?.char?.classId,
+        mapId: s?.mapId, town: !!s?.town, dead: !!s?.dead, watching: game.shown,
+        huntMaps: a?.huntMaps ?? [], lastHuntMap: s?.lastHuntMap ?? settings.lastHuntMap ?? null, huntMap: settings.auto.supply.huntMap || "",
+        party: a?.party ?? null, teamState: a?.teamState || "", team,
+        log: autoLog.filter((l) => / 組隊|復活|倒下/.test(l)).slice(-8),
+      };
+    },
+    owns(sender) { return [petWin, game.win, autoWin, idleWin, codexWin, lifeWin].some(w => w && !w.isDestroyed() && w.webContents === sender); },
     start() { loadSettings(); createPetWindow(); createGame(); },
     show: showPet, toggleGame, login: startBrowserLogin, openAutoSettings, openIdleSettings, say: notice,
     finishLogin() { browserLogin?.done(); },

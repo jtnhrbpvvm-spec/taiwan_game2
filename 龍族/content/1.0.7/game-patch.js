@@ -43,8 +43,11 @@ const FINDERS = [
   { keys: ["npcSheet", "npcFunctions"], re: new RegExp(`function ${N}\\(e,t\\)\\{${N}=void 0,${N}&&=\\(clearTimeout\\(${N}\\),void 0\\),${N}\\(\\)\\.closeSheet\\(\\),(${N})\\.getState\\(\\)\\.show\\(\\{npc:e,functions:(${N})\\(e\\)`) },
   // 小地圖下方「NPC」按鈕的清單：[{label, npcIndex, fn}]；按下去遊戲做的就是 talkNpc(npcIndex, fn)（自動導航）
   { keys: ["npcList"], re: new RegExp(`function (${N})\\(\\)\\{let e=${N}\\(\\);return e\\?\\[\\.\\.\\.${N}\\.flatMap\\(\\(e,t\\)=>${N}\\(t\\)\\.length\\?\\[\\{kind:\`shop\`,shop:t\\}\\]`) },
-  // 自己現在站的格子 [x, y]
-  { keys: ["selfPos"], re: new RegExp(`function (${N})\\(\\)\\{let e=${N}\\.self;return e\\?\\[e\\[2\\],e\\[3\\]\\]:void 0\\}`) },
+  // 自己現在站的格子 [x, y]；房間裡的人物（world.entities：id → [..., x, y]，交易要走到對方 5 格內）
+  { keys: ["selfPos", "world"], re: new RegExp(`function (${N})\\(\\)\\{let e=(${N})\\.self;return e\\?\\[e\\[2\\],e\\[3\\]\\]:void 0\\}`) },
+  // 道具資料（遊戲調整過的，名稱、類型）、道具標籤（稀有度、+強化、G 階級…，物品欄顯示用）
+  { keys: ["item"], re: new RegExp(`(${N})=e=>${N}\\.get\\(e\\),${N}=e=>!!e&&\\(e\\.itemKind===16`) },
+  { keys: ["itemTags"], re: new RegExp(`function (${N})\\(e,t=\\[\\]\\)\\{let n=${N}\\(e\\[0\\]\\);if\\(n&&!${N}\\(n\\)\\)\\{let e=${N}\\(n\\);return e\\?\\[e\\]:\\[\\]\\}`) },
   // ── 遊戲「設置」頁（桌寵的「掛機設置」視窗用遊戲自己的這些函式讀寫，跟在遊戲裡按一樣） ──
   // 音效（enabled、volume、setEnabled、setVolume）、背景音樂（musicEnabled、musicVolume、setMusicEnabled、setMusicVolume）
   { keys: ["sound", "music"], re: new RegExp(`let\\[e,t\\]=\\(0,${N}\\.useState\\)\\((${N})\\.enabled\\),\\[n,r\\]=\\(0,${N}\\.useState\\)\\((${N})\\.musicEnabled\\)`) },
@@ -53,6 +56,11 @@ const FINDERS = [
   // 畫面品質、特效（狀態倉庫：choice、setChoice）
   { keys: ["graphicsStore"], re: new RegExp(`"aria-label":\`畫面品質\`[\\s\\S]{0,300}?onClick:\\(\\)=>(${N})\\.getState\\(\\)\\.setChoice\\(t\\)`) },
   { keys: ["effectsStore"], re: new RegExp(`"aria-label":\`特效\`[\\s\\S]{0,300}?onClick:\\(\\)=>(${N})\\.getState\\(\\)\\.setChoice\\(n\\)`) },
+  // 商店的道具分類（自動販售的下拉選單用）：大類 weapon/armor/potion/material/tool/other、武器小類（弓、法杖與令牌、單手劍術…）
+  { keys: ["itemCat"], re: new RegExp(`function (${N})\\(e\\)\\{return e\\.type===6\\|\\|${N}\\(e\\)\\|\\|${N}\\(e\\)\\?\`weapon\``) },
+  { keys: ["itemSub"], re: new RegExp(`function (${N})\\(e\\)\\{return ${N}\\(e\\)\\?\`箭矢\``) },
+  // 商店「賣」能不能賣、價錢、貴重標籤（{sell, price, precious:[稀有、+強化、追蹤詞綴…]}；鎖定的不能賣）
+  { keys: ["sellCheck"], re: new RegExp(`function (${N})\\(e,t=\\[\\]\\)\\{return ${N}\\(e\\)\\?\\{sell:!1,reason:\`已鎖定\`\\}`) },
   // 自動喝藥門檻：讀、優先藥水倉庫、寫門檻
   { keys: ["potionAtGet", "potionPriority", "potionAtSet"], re: new RegExp(`let\\[e,t\\]=\\(0,${N}\\.useState\\)\\((${N})\\),n=(${N})\\(\\),r=e=>\\{t\\(e\\),(${N})\\(e\\)\\};return[\\s\\S]{0,300}?自動喝藥`) },
   // 優先紅水／藍水：可選的藥水清單 {hp:[…], mp:[…]}、設定（種類, 物品編號）

@@ -1,5 +1,5 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.7",
   "shell": 1,
   "files": [
     {
@@ -28,29 +28,54 @@
       "size": 53271
     },
     {
+      "path": "codex-data.js",
+      "sha256": "a554c4174acd7eb71ceb13da0a0117b8b03cab0077163db29bb4703dbce62d57",
+      "size": 232899
+    },
+    {
+      "path": "codex-preload.js",
+      "sha256": "734e62f74d0d121124ce56a2475269da95ccd8732d8218bcef894ae3c0b46348",
+      "size": 424
+    },
+    {
       "path": "companion.js",
-      "sha256": "4e350073360f1d95ed927c57637b8196b24b37d64644d6b21dbae8083b52f25e",
-      "size": 35765
+      "sha256": "36a9c3833fd2ad72e5043cd22e2544b5f6cc4427bbc9ec930c5a574bcf46abfa",
+      "size": 46882
     },
     {
       "path": "game-hook.js",
-      "sha256": "36307c8aab6927c15a0f3ed38b8dea5e4b2937819c6ec6d705267b9ab95a2fc4",
-      "size": 39135
+      "sha256": "820f1c17436cfe4b2f28bcfa213bf1f33678bc35b8a4874ad3ce58e464e6c08b",
+      "size": 79961
     },
     {
       "path": "game-patch.js",
-      "sha256": "3d72180c8fb621813d802cc08c3211feec5ab0d9a8ccf0031fc0cfbe424a731b",
-      "size": 8464
+      "sha256": "529a35d462ab949cc3c5e03639816eb98b45a7b11c3078cceaf2431f76b1aa1c",
+      "size": 9674
     },
     {
       "path": "game-preload.js",
-      "sha256": "507bf89be3da07dcbe9c3cc79f7c16f13c7377df590cd34b1e8eccf8f747bf33",
-      "size": 8430
+      "sha256": "3df397e5af896cb24407576271ce1f7cb541fe798f492b09336e4321eb7a6135",
+      "size": 9029
     },
     {
       "path": "idle-preload.js",
       "sha256": "4365b145071c01f64217d331a670231338266f799214f4ed4077e0f4284d92bd",
       "size": 404
+    },
+    {
+      "path": "inv-preload.js",
+      "sha256": "24f0493c6011a5939b99ea4e6130222aa7e959c1b8812d545728809a966d976b",
+      "size": 588
+    },
+    {
+      "path": "life-plan.js",
+      "sha256": "792f98337914ab66c1a15a709913669af2b6012f6113284f5e733f4c1a566762",
+      "size": 5443
+    },
+    {
+      "path": "life-preload.js",
+      "sha256": "a32c54469d422ecb7b3ba5928ac7bfd0398e37f77879d3a666a8f5a2a103d162",
+      "size": 356
     },
     {
       "path": "login-browser.js",
@@ -59,8 +84,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "24560d611c07e2576a7507b7a8753a4f91a9c17beef633e51f45dee1aee033fe",
-      "size": 8811
+      "sha256": "330d6f5bb081dba640e0e6dbf2fa42d54f18cd1ea09055721e55c2d041fe6cef",
+      "size": 19685
     },
     {
       "path": "pet-preload.js",
@@ -81,6 +106,21 @@
       "path": "potion-supply.js",
       "sha256": "8e458a78cf3c2d177437bf437125b85ff349aea84f162992fe5855638eb7a5d9",
       "size": 1952
+    },
+    {
+      "path": "sell-rules.js",
+      "sha256": "36fddfc2646c42d2acaa1650a6d96c22f006c85f1d7d237df9d13048d473abdc",
+      "size": 1650
+    },
+    {
+      "path": "stat-alloc.js",
+      "sha256": "26c2a318450d7041a526d67b9899d4642726c4db81403f8fdf5dd3ca00f6ca45",
+      "size": 7731
+    },
+    {
+      "path": "team-preload.js",
+      "sha256": "98ac6d6e4dd4d3bffdfc7e8c7cb29317860ef12a87595871e73fa5ffc46fe006",
+      "size": 370
     },
     {
       "path": "tools/fill-login.ps1",
@@ -104,13 +144,23 @@
     },
     {
       "path": "ui/auto.html",
-      "sha256": "e1c45c5935494ea6d0c9ee144ea6283dd9db513d279ad63b9ab89e725b25e8ac",
-      "size": 5789
+      "sha256": "612495bff2ccb99ed719c57fb5f6a17187e55587ca8c795c91a240087b813479",
+      "size": 7566
     },
     {
       "path": "ui/auto.js",
-      "sha256": "44c7b329e0b584bd6731bf37cab0ce00d013886102b5ad8422e45721303aa0df",
-      "size": 6334
+      "sha256": "e57eddd326c12445898cad30d7a5672d6d131b01aeabdd990984e197b22fc29c",
+      "size": 10887
+    },
+    {
+      "path": "ui/codex.html",
+      "sha256": "a14ce5218b34cbc018d25e238d769c5dbaa179a481c42fb08ad619b266003fa0",
+      "size": 5499
+    },
+    {
+      "path": "ui/codex.js",
+      "sha256": "474c696be0c8674e651088dac4ad49311a5ad8c4a4d27d641c4f68f8c5e8ff55",
+      "size": 13648
     },
     {
       "path": "ui/idle.html",
@@ -121,6 +171,36 @@
       "path": "ui/idle.js",
       "sha256": "0265989c75a8b668073dd62384f5dbf4e2ad704998ac8b95db98be078fa1e632",
       "size": 8875
+    },
+    {
+      "path": "ui/inv.html",
+      "sha256": "5fa871c545694170b17f3252bace7fc12093a3128e2fc629882a9fbbaffc93d0",
+      "size": 7624
+    },
+    {
+      "path": "ui/inv.js",
+      "sha256": "db06444a3578673c5da436c4182f1bc4b8dc93e279cd50986e4ccc3c65be3ac8",
+      "size": 14577
+    },
+    {
+      "path": "ui/life.html",
+      "sha256": "707704c500253955f7648055698bcaf866459c3d503c25d39d657b171aa19bab",
+      "size": 5309
+    },
+    {
+      "path": "ui/life.js",
+      "sha256": "8608341296bcf1cb9b42ba9e40069a0b04df61e00bf0f7d26c40bb9ea0574db4",
+      "size": 8612
+    },
+    {
+      "path": "ui/team.html",
+      "sha256": "71350826ef3025889dd3ab29289e6ced9690ef23620644991d78e76fa99d1f39",
+      "size": 3504
+    },
+    {
+      "path": "ui/team.js",
+      "sha256": "4d153c6612e65255f62df1e8366d2bd9873f2f2a3c36064e389e880da830eefc",
+      "size": 4948
     }
   ]
 }

@@ -19,6 +19,7 @@ function fill(st) {
   });
   $("rev-on").checked = !!a.revive?.enabled;
   $("rev-supply").checked = a.revive?.supply !== false;
+  $("al-on").checked = !!a.alloc?.enabled;
   filled = true;
 }
 
@@ -90,9 +91,73 @@ function fillHuntMaps(st) {
   showHuntInfo(st);
 }
 
+// ── 自動配點 ──
+const codex = window.RajaCodex, statAlloc = window.RajaStatAlloc;
+let ratioFilled = false;
+function buildAllocTable() {
+  const body = $("al-table").querySelector("tbody");
+  body.replaceChildren(...codex.statKeys.map((k) => {
+    const tr = document.createElement("tr");
+    tr.dataset.key = k;
+    tr.innerHTML = `<td>${codex.statNames[k]}</td><td><input type="number" min="0" max="100" data-ratio="${k}" /></td><td data-col="ab"></td><td data-col="own"></td><td data-col="now"></td><td data-col="goal"></td>`;
+    return tr;
+  }));
+  body.addEventListener("input", () => latestStatus && showAlloc(latestStatus));
+}
+const ratioNow = () => Object.fromEntries(codex.statKeys.map((k) => [k, Math.max(0, Math.min(100, Math.floor(Number(document.querySelector(`[data-ratio="${k}"]`).value) || 0)))]).filter(([, v]) => v > 0));
+function setRatio(r) { for (const k of codex.statKeys) document.querySelector(`[data-ratio="${k}"]`).value = r?.[k] || 0; }
+const pct = (n) => `${(n * 100).toFixed(1)}%`;
+function showAlloc(st) {
+  const ch = st.char;
+  const cls = ch && codex.classes.find((c) => c.id === ch.classId);
+  if (!ratioFilled) {
+    const saved = st.settings.alloc?.ratio || {};
+    // 沒設定過比例：先填遊戲的建議比例（開關還是關著，要自己勾）
+    if (Object.keys(saved).length) { setRatio(saved); ratioFilled = true; }
+    else if (cls) { setRatio(cls.recommend); ratioFilled = true; }
+  }
+  const ratio = ratioNow();
+  const wSum = Object.values(ratio).reduce((a, b) => a + b, 0);
+  const own = ch ? statAlloc.allocated(codex, ch.classId, ch.ab) : null;
+  const ownSum = own ? codex.statKeys.reduce((s, k, i) => s + (ratio[k] ? own[i] : 0), 0) : 0;
+  for (const tr of $("al-table").querySelectorAll("tbody tr")) {
+    const k = tr.dataset.key, i = codex.statKeys.indexOf(k);
+    const cell = (c) => tr.querySelector(`[data-col="${c}"]`);
+    cell("ab").textContent = ch ? `${ch.ab[i]}／${statAlloc.cap(codex, ch.classId, ch.ds, k)}` : "";
+    cell("own").textContent = own ? own[i] : "";
+    cell("now").textContent = own && ratio[k] && ownSum ? pct(own[i] / ownSum) : "";
+    cell("goal").textContent = ratio[k] ? pct(ratio[k] / wSum) : "";
+    tr.className = ratio[k] ? "" : "dim";
+  }
+  $("al-class").textContent = ch ? `目前角色：${cls?.name || ch.classId}　Lv.${ch.level}　${ch.ds ? `${ch.ds} 轉　` : ""}可分配點數 ${ch.point}　（遊戲建議：${Object.entries(cls?.recommend || {}).map(([k, v]) => `${codex.statNames[k]} ${v}`).join("：")}）` : "遊戲連上、進到角色後才會顯示目前能力。";
+  const t = st.allocTarget?.target;
+  const tShort = t?.short ? codex.statKeys.map((k, i) => (t.short.short[i] > 0 ? `${codex.statNames[k]} ${t.short.short[i]}` : "")).filter(Boolean).join("、") : "";
+  $("al-target").innerHTML = t
+    ? `<span class="ok">配點目標：${t.name.replace(/[&<>]/g, "")}</span>${t.short ? (t.short.total ? `（還差 ${tShort}，共 ${t.short.total} 點）` : "（能力已經夠了）") : ""}——有點數時會先配到剛好能用這件，達成後才照下面的比例分。要換或取消請到右鍵「小百科（裝備）」。`
+    : "配點目標：沒有（可以在右鍵「小百科（裝備）」的裝備詳細頁按「設為配點目標」）。";  const preview = $("al-preview");
+  if (!ch) preview.textContent = "";
+  else if (!wSum && !t) preview.textContent = "還沒設定比例。";
+  else if (!(ch.point > 0)) preview.textContent = "目前沒有可分配點數，升級拿到點數後會自動分配。";
+  else {
+    const item = t && codex.items.find((i) => i.no === t.itemNo);
+    const add = statAlloc.planWithTarget(codex, ch, item, ratio, $("al-on").checked).add;
+    preview.textContent = add.some((n) => n > 0) ? `現在的 ${ch.point} 點會加：${statAlloc.describe(codex, add)}${item ? `（先配目標「${item.name}」）` : ""}` : "有比例的能力都已經到上限，沒辦法再加。";
+  }
+}
+buildAllocTable();
+$("al-recommend").addEventListener("click", () => {
+  const ch = latestStatus?.char;
+  const cls = ch && codex.classes.find((c) => c.id === ch.classId);
+  if (cls) setRatio(cls.recommend);
+  latestStatus && showAlloc(latestStatus);
+});
+$("al-clear").addEventListener("click", () => { setRatio({}); latestStatus && showAlloc(latestStatus); });
+$("al-on").addEventListener("change", () => latestStatus && showAlloc(latestStatus));
+
 function render(st) {
   latestStatus = st;
   if (!filled) fill(st);
+  showAlloc(st);
   fillTowns(st);
   fillHuntMaps(st);
   showStatus(st);
@@ -106,7 +171,8 @@ $("save").addEventListener("click", () => {
   if (supply.ammoTo < supply.ammoMin) supply.ammoTo = supply.ammoMin;
   const fuse = [0, 1, 2].map((i) => ({ enabled: $(`f${i}-on`).checked, count: Math.max(5, Number($(`f${i}-n`).value) || 5) }));
   const revive = { enabled: $("rev-on").checked, supply: $("rev-supply").checked };
-  window.autoApi.set({ supply, fuse, revive });
+  const alloc = { enabled: $("al-on").checked, ratio: ratioNow() };
+  window.autoApi.set({ supply, fuse, revive, alloc });
   for (const [id, key] of Object.entries(FIELDS)) $(id).value = supply[key];
   fuse.forEach((f, i) => ($(`f${i}-n`).value = f.count));
   const saved = $("saved");

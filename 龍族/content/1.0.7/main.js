@@ -1,0 +1,338 @@
+"use strict";
+const { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, globalShortcut } = require("electron");
+const fs = require("fs");
+const path = require("path");
+const accounts = require("./accounts");
+const createCompanion = require("./companion");
+const sellRules = require("./sell-rules");
+const MAX_PETS = 5;
+const pets = new Map();
+let tray, accountsWin, selected = null, quitting = false;
+let lastInfo;
+let snapTimer;
+const rosterFile = () => path.join(app.getPath("userData"), "active-pets.json");
+const owner = e => [...pets.values()].find(p => p.owns(e.sender));
+const activePet = () => pets.get(selected) || pets.values().next().value;
+function saveRoster() { fs.writeFileSync(rosterFile(), JSON.stringify([...pets.keys()])); }
+function accountsInfo() {
+  return { accounts: accounts.all(), pets: [...pets.values()].map(p => p.info()), maxPets: MAX_PETS };
+}
+function changed() {
+  if (quitting) return;
+  const info = accountsInfo();
+  const key = JSON.stringify(info);
+  if (key !== lastInfo) accountsWin?.webContents.send("accounts:changed", info);
+  lastInfo = key;
+  tray?.setToolTip(`龍族桌寵（${pets.size}/${MAX_PETS}）`);
+}
+function closePet(id) {
+  const pet = pets.get(id);
+  if (!pet) return;
+  if (currentTrade && (currentTrade.fromId === id || currentTrade.toId === id)) endTrade("error", "有一隻桌寵關掉了");
+  if (currentTeam && (currentTeam.leaderId === id || currentTeam.memberIds.includes(id))) {
+    // 隊長關掉就整隊結束；隊員關掉就把他從名單拿掉
+    if (currentTeam.leaderId === id) stopTeam();
+    else currentTeam.memberIds = currentTeam.memberIds.filter((m) => m !== id);
+  }
+  pets.delete(id); pet.dispose(); saveRoster(); changed();
+  if (!pets.size && !quitting) openAccounts();
+}
+function openPet(id, restoring = false) {
+  if (id !== null && !accounts.find(id)) throw new Error("找不到這個帳號");
+  const existing = pets.get(id);
+  if (existing) { selected = id; existing.show(); return existing; }
+  if (pets.size >= MAX_PETS) throw new Error("最多同時開啟五隻桌寵，請先關閉其中一隻");
+  if (!restoring && id !== null && pets.size === 1 && pets.has(null) && !pets.get(null).info().character) {
+    pets.get(null).dispose(); pets.delete(null);
+  }
+  const usedSlots = new Set([...pets.values()].map(p => p.slot));
+  const slot = [0, 1, 2, 3, 4].find(n => !usedSlots.has(n));
+  const pet = createCompanion({ accountId: id, slot, onChange: changed, onClose: () => closePet(id), managerMenu, onTeamLog: sendTeamStatus });
+  pet.slot = slot; pets.set(id, pet); selected = id;
+  pet.start(); pet.setSellGlobal(sellGlobal()); saveRoster(); changed();
+  return pet;
+}
+// 外殼（boot.js）給的自動更新；直接用 electron main.js 跑的舊方式沒有外殼，就沒有更新
+const shell = global.petShell;
+function managerMenu() {
+  return [
+    ...(shell ? [shell.updates.menuItem()] : []),
+    { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
+    { label: currentTeam ? "組隊練功（進行中）…" : "組隊練功…", enabled: pets.size > 1 || !!currentTeam, click: openTeam },
+    { label: currentTrade ? "物品欄與交易（交易中）…" : "物品欄與交易…", click: openInv },
+    { label: "其他桌寵", enabled: !!pets.size, submenu: [...pets.values()].map(p => ({
+      label: `${p.info().label}${p.info().character ? `・${p.info().character}` : ""}`,
+      click: () => { selected = p.accountId; p.show(); p.toggleGame(); },
+    })) },
+  ];
+}
+function openAccounts() {
+  if (accountsWin && !accountsWin.isDestroyed()) { accountsWin.show(); accountsWin.focus(); return; }
+  accountsWin = new BrowserWindow({
+    width: 760, height: 700, minWidth: 650, title: "多帳號與桌寵管理", autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "accounts-preload.js") },
+  });
+  accountsWin.loadFile(path.join(__dirname, "ui", "accounts.html"));
+  accountsWin.on("closed", () => { accountsWin = undefined; });
+}
+const fromAccounts = e => accountsWin && !accountsWin.isDestroyed() && e.sender === accountsWin.webContents;
+function accountAction(name, action) {
+  ipcMain.handle(name, (e, value) => {
+    if (!fromAccounts(e)) return { error: "not allowed" };
+    try { const extra = action(value) || {}; changed(); return { ...extra, ...accountsInfo() }; }
+    catch (err) { return { error: err.message, ...accountsInfo() }; }
+  });
+}
+accountAction("accounts:list", () => ({}));
+accountAction("accounts:save", a => {
+  const existing = a?.id && accounts.find(a.id);
+  if (existing && pets.has(a.id) && existing.username.toLowerCase() !== String(a.username).trim().toLowerCase()) {
+    throw new Error("請先關閉這個帳號的桌寵，再修改登入帳號");
+  }
+  return { ok: true, account: accounts.upsert(a || {}) };
+});
+accountAction("accounts:remove", id => { closePet(id); accounts.remove(id); });
+accountAction("accounts:use", id => { openPet(id); });
+accountAction("accounts:close", id => { closePet(id); });
+accountAction("accounts:login", id => { openPet(id).login(); });
+accountAction("accounts:finish-login", id => { pets.get(id)?.finishLogin(); });
+accountAction("accounts:show-game", id => { const p = openPet(id); selected = id; p.toggleGame(); });
+
+// ── 組隊練功（ui/team.html）：指定一隻當隊長、勾選其他桌寵當隊員 ──
+// 隊長桌寵建隊、邀請隊員，到齊（最多等 2 分鐘）後帶隊進私人房；隊員桌寵先回主城等邀請、自動接受、跟上隊長的房間，
+// 倒下復活、補給完都回同一間（細節在 game-hook.js 的 teamTick）。只放記憶體，重開桌寵就結束。
+let teamWin, currentTeam = null, teamTimer;
+function teamStatus() {
+  return { pets: [...pets.values()].map((p) => p.teamInfo()), team: currentTeam };
+}
+function sendTeamStatus() {
+  if (teamWin && !teamWin.isDestroyed()) teamWin.webContents.send("team:status", teamStatus());
+}
+function openTeam() {
+  if (teamWin && !teamWin.isDestroyed()) { teamWin.show(); teamWin.focus(); return; }
+  teamWin = new BrowserWindow({
+    width: 640, height: 720, title: "組隊練功", autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "team-preload.js") },
+  });
+  teamWin.loadFile(path.join(__dirname, "ui", "team.html"));
+  teamTimer = setInterval(sendTeamStatus, 2000);
+  teamWin.on("closed", () => { teamWin = undefined; clearInterval(teamTimer); });
+}
+const fromTeam = (e) => teamWin && !teamWin.isDestroyed() && e.sender === teamWin.webContents;
+function stopTeam() {
+  if (!currentTeam) return;
+  for (const id of [currentTeam.leaderId, ...currentTeam.memberIds]) pets.get(id)?.setTeam(null, true);
+  currentTeam = null;
+}
+ipcMain.handle("team:get", (e) => (fromTeam(e) ? teamStatus() : null));
+ipcMain.handle("team:start", (e, req) => {
+  if (!fromTeam(e)) return { error: "not allowed" };
+  const leader = pets.get(req?.leaderId ?? null);
+  const L = leader?.teamInfo();
+  if (!L || L.status !== "ingame" || !L.name) return { error: "隊長的桌寵還沒進到遊戲" };
+  const memberIds = (Array.isArray(req.memberIds) ? req.memberIds : []).filter((id) => id !== req.leaderId && pets.has(id));
+  const members = memberIds.map((id) => pets.get(id).teamInfo());
+  if (!members.length) return { error: "至少要勾一隻其他桌寵當隊員" };
+  const notReady = members.filter((m) => m.status !== "ingame" || !m.name);
+  if (notReady.length) return { error: `這幾隻還沒進到遊戲：${notReady.map((m) => m.label).join("、")}` };
+  if (members.length > 7) return { error: "遊戲隊伍最多 8 人" };
+  const map = L.huntMaps.find((m) => m.id === req.mapId);
+  if (!map) return { error: "請選要去的練功地圖" };
+  stopTeam();
+  currentTeam = { leaderId: req.leaderId, memberIds, mapId: map.id, mapName: map.name, startedAt: Date.now() };
+  leader.setTeam({ role: "leader", members: members.map((m) => m.name), mapId: map.id, mapName: map.name });
+  for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name });
+  sendTeamStatus();
+  return {};
+});
+ipcMain.handle("team:stop", (e) => { if (!fromTeam(e)) return { error: "not allowed" }; stopTeam(); sendTeamStatus(); return {}; });
+
+// ── 物品欄與指定交易（ui/inv.html）：看每隻角色的背包、身上裝備；選物品＋金幣交給另一隻 ──
+// 給的桌寵回主城（tradeGive），主程式把它的房號轉給收的桌寵（tradeTake 用房號進同一間、走過去），
+// 兩邊用遊戲自己的交易（邀請、放物品、雙方 OK）。收的一方只在物品件數、金幣跟指定的一樣時才按 OK。只放記憶體。
+let invWin, invTimer, currentTrade = null, tradeSeq = 0;
+const tradeLog = []; // 最近的交易結果（最多 20 筆）
+// ── 自動販售：「全部桌寵」的規則（sell-global.json）、遊戲送來的道具分類清單（item-catalog.json，下拉選單用） ──
+const globalSellFile = () => path.join(app.getPath("userData"), "sell-global.json");
+const catalogFile = () => path.join(app.getPath("userData"), "item-catalog.json");
+let sellGlobalCache, catalogCache;
+function sellGlobal() {
+  if (!sellGlobalCache) { try { sellGlobalCache = sellRules.cleanGlobal(JSON.parse(fs.readFileSync(globalSellFile(), "utf8"))); } catch { sellGlobalCache = sellRules.cleanGlobal({}); } }
+  return sellGlobalCache;
+}
+function setSellGlobal(g) {
+  sellGlobalCache = sellRules.cleanGlobal(g);
+  try { fs.writeFileSync(globalSellFile(), JSON.stringify(sellGlobalCache, null, 1)); } catch {}
+  for (const p of pets.values()) p.setSellGlobal(sellGlobalCache);
+}
+function catalog() {
+  if (catalogCache === undefined) { try { catalogCache = JSON.parse(fs.readFileSync(catalogFile(), "utf8")); } catch { catalogCache = null; } }
+  return catalogCache;
+}
+ipcMain.on("game:catalog", (e, c) => {
+  if (!owner(e) || !c || !Array.isArray(c.items) || c.items.length > 5000) return;
+  const items = c.items.filter((r) => Array.isArray(r) && r.length === 4 && Number.isInteger(r[0]) && typeof r[1] === "string" && typeof r[2] === "string" && typeof r[3] === "string")
+    .map((r) => [r[0], r[1].slice(0, 40), r[2].slice(0, 20), r[3].slice(0, 30)]);
+  const cats = Object.fromEntries(Object.entries(c.cats || {}).filter(([k, v]) => sellRules.SELL_CATS.includes(k) && typeof v === "string").map(([k, v]) => [k, v.slice(0, 10)]));
+  catalogCache = { cats, items, at: Date.now() };
+  try { fs.writeFileSync(catalogFile(), JSON.stringify(catalogCache)); } catch {}
+});
+function invStatus() {
+  return { pets: [...pets.values()].map((p) => p.invInfo()), trade: currentTrade, history: tradeLog, sellGlobal: sellGlobal() };
+}
+function sendInvStatus() {
+  if (invWin && !invWin.isDestroyed()) invWin.webContents.send("inv:status", invStatus());
+}
+function openInv() {
+  if (invWin && !invWin.isDestroyed()) { invWin.show(); invWin.focus(); return; }
+  invWin = new BrowserWindow({
+    width: 980, height: 780, title: "物品欄與交易", autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "inv-preload.js") },
+  });
+  invWin.loadFile(path.join(__dirname, "ui", "inv.html"));
+  invWin.on("closed", () => { invWin = undefined; });
+}
+const fromInv = (e) => invWin && !invWin.isDestroyed() && e.sender === invWin.webContents;
+function endTrade(result, text) {
+  if (!currentTrade) return;
+  const t = currentTrade;
+  currentTrade = null;
+  for (const id of [t.fromId, t.toId]) pets.get(id)?.setTrade(null);
+  tradeLog.unshift({ at: Date.now(), from: t.fromName, to: t.toName, items: t.items.map((i) => i.label), gold: t.gold, result, text });
+  tradeLog.splice(20);
+  sendInvStatus();
+}
+// 交易進行中：把給的那隻的房號轉給收的那隻；兩邊都做完（或有一邊失敗）就結束
+setInterval(() => {
+  if (!currentTrade) return;
+  const t = currentTrade, giver = pets.get(t.fromId), taker = pets.get(t.toId);
+  if (!giver || !taker) return endTrade("error", "有一隻桌寵關掉了");
+  const g = giver.invInfo().trade, r = taker.invInfo().trade;
+  const gs = g?.id === t.id ? g : null, rs = r?.id === t.id ? r : null;
+  if (gs?.meet?.code && t.meet?.code !== gs.meet.code) { t.meet = gs.meet; taker.setTrade({ ...t.takeJob, meet: gs.meet }); }
+  if (gs?.error || rs?.error) return endTrade("error", (gs?.error && gs.step) || rs.step);
+  if (gs?.ok && rs?.ok) return endTrade("ok", "交易成功");
+  if (Date.now() - t.startedAt > 10 * 60 * 1000) return endTrade("error", "超過 10 分鐘沒有完成，已取消");
+  sendInvStatus();
+}, 1000);
+setInterval(() => { if (invWin && !invWin.isDestroyed() && !currentTrade) sendInvStatus(); }, 3000);
+ipcMain.handle("inv:get", (e) => (fromInv(e) ? invStatus() : null));
+ipcMain.handle("inv:catalog", (e) => (fromInv(e) ? catalog() : null));
+// 改販售設定：scope "global"＝全部桌寵；其他＝那隻桌寵的 accountId（"null" 是沒有帳號的那隻）
+ipcMain.handle("inv:sell-set", (e, scope, cfg) => {
+  if (!fromInv(e)) return { error: "not allowed" };
+  if (scope === "global") setSellGlobal(cfg);
+  else { const p = pets.get(scope === "null" ? null : scope); if (!p) return { error: "找不到這隻桌寵" }; p.setSell(cfg); }
+  sendInvStatus();
+  return {};
+});
+ipcMain.handle("inv:trade", (e, req) => {
+  if (!fromInv(e)) return { error: "not allowed" };
+  if (currentTrade) return { error: "已經有一筆交易在進行，先等它完成或取消" };
+  const giver = pets.get(req?.fromId ?? null), taker = pets.get(req?.toId ?? null);
+  if (!giver || !taker || giver === taker) return { error: "請選要交給哪一隻桌寵" };
+  const G = giver.invInfo(), T = taker.invInfo();
+  for (const p of [G, T]) {
+    if (p.status !== "ingame" || !p.name) return { error: `${p.label} 還沒進到遊戲` };
+    if ((p.level || 0) < 25) return { error: `${p.name} 等級未滿 25，遊戲不能交易` };
+  }
+  const bag = G.inv?.bag || [];
+  const items = (Array.isArray(req.items) ? req.items : []).map((it) => bag.find((b) => b && b.slot === it.slot && b.sig === it.sig)).filter(Boolean);
+  if (items.length !== (req.items || []).length) return { error: "有選的物品已經不在背包裡了，請重新選" };
+  if (items.length > 20) return { error: "一次最多交易 20 格物品" };
+  const gold = Math.max(0, Math.floor(Number(req.gold) || 0));
+  if (gold > (G.inv?.gold || 0)) return { error: `${G.name} 的金幣不夠` };
+  if (!items.length && !gold) return { error: "請選物品或填金幣" };
+  const id = `t${Date.now()}-${++tradeSeq}`;
+  const giveJob = { id, role: "give", to: T.name, items: items.map((i) => ({ slot: i.slot, sig: i.sig, name: i.name })), gold };
+  const takeJob = { id, role: "take", from: G.name, count: items.length, gold, meet: null };
+  currentTrade = { id, fromId: req.fromId ?? null, toId: req.toId ?? null, fromName: G.name, toName: T.name, gold, startedAt: Date.now(), takeJob,
+    items: items.map((i) => ({ ...i, label: `${i.name}${i.n > 1 ? ` ×${i.n}` : ""}` })) };
+  giver.setTrade(giveJob);
+  taker.setTrade(takeJob);
+  sendInvStatus();
+  return {};
+});
+ipcMain.handle("inv:cancel", (e) => { if (!fromInv(e)) return { error: "not allowed" }; endTrade("canceled", "手動取消"); return {}; });
+
+// 依來源視窗路由，遊戲和桌寵的訊息只能影響自己的帳號。
+for (const name of ["game:state", "game:auto-log", "game:pending-storage", "game:saved-prefs", "game:prefs", "auto:set", "pet:interactive", "pet:toggle-game", "pet:menu"]) {
+  ipcMain.on(name, (e, ...args) => {
+    const p = owner(e);
+    if (!p) { if (name === "game:pending-storage" || name === "game:saved-prefs") e.returnValue = null; return; }
+    if (name === "pet:menu" || name === "pet:toggle-game") selected = p.accountId;
+    p.events.get(name)?.(e, ...args);
+  });
+}
+for (const name of ["auto:get", "codex:char", "codex:set-target", "life:get", "life:set", "idle:get", "idle:set", "idle:share", "pet:asset", "pet:art"]) {
+  ipcMain.handle(name, (e, ...args) => owner(e)?.handlers.get(name)?.(e, ...args));
+}
+
+if (!app.requestSingleInstanceLock()) app.quit();
+else {
+  app.on("second-instance", openAccounts);
+  app.whenReady().then(() => {
+    accounts.load();
+    let roster;
+    try { roster = JSON.parse(fs.readFileSync(rosterFile(), "utf8")); } catch {}
+    if (!Array.isArray(roster)) {
+      let old;
+      try { old = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "pet-settings.json"), "utf8")); } catch {}
+      roster = [old?.account && accounts.find(old.account) ? old.account : null];
+      if (old && roster[0]) {
+        const dest = path.join(app.getPath("userData"), `pet-settings-${roster[0]}.json`);
+        if (!fs.existsSync(dest)) fs.writeFileSync(dest, JSON.stringify(old));
+      }
+    }
+    // 剛啟動只開一隻：帳號清單裡的第一個帳號（不寫死哪個帳號，給其他玩家用也一樣；清單沒有帳號才用上次開著的）；
+    // 要多開由玩家自己到「帳號與桌寵管理」一隻一隻加（使用者 2026-11-21 指定）
+    const main = accounts.all()[0]?.id;
+    const first = main ?? [...new Set(roster)].find(id => id === null || accounts.find(id));
+    if (first !== undefined) openPet(first, true);
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "build", "icon.png")).resize({ width: 16, height: 16 }));
+    const trayMenu = () => Menu.buildFromTemplate([
+      ...managerMenu(), { type: "separator" },
+      ...[...pets.values()].map(p => ({ label: p.info().label, submenu: p.menu() })),
+      { type: "separator" }, { label: "結束全部桌寵", click: () => app.quit() },
+    ]);
+    tray.on("click", openAccounts);
+    tray.on("right-click", () => tray.popUpContextMenu(trayMenu()));
+    globalShortcut.register("Control+Alt+R", () => activePet()?.toggleGame());
+    globalShortcut.register("Control+Alt+P", () => activePet()?.focusMode());
+    changed();
+    if (shell) {
+      // 更新的消息由目前選到的那隻桌寵講
+      shell.updates.start({ say: (text) => activePet()?.say(text) });
+      // 啟動 20 秒還好好的：告訴外殼這一份內容能跑（新下載的版本才不會被當成壞的退回去）
+      setTimeout(() => { if (!quitting) shell.markHealthy(); }, 20000);
+    }
+    if (!pets.size || process.argv.includes("--accounts")) openAccounts();
+    if (process.argv.includes("--show-game")) activePet()?.toggleGame();
+    if (process.argv.includes("--open-auto")) activePet()?.openAutoSettings();
+    if (process.argv.includes("--open-idle")) activePet()?.openIdleSettings();
+    if (process.argv.includes("--login")) activePet()?.login();
+    if (process.argv.includes("--snap")) {
+      let capturing = false;
+      snapTimer = setInterval(async () => {
+        if (capturing || quitting) return;
+        capturing = true;
+        try {
+          const dir = app.getPath("userData");
+          let first = true;
+          for (const p of pets.values()) {
+            await p.snapshot(dir, `-${p.accountId || "legacy"}`);
+            if (first) { await p.snapshot(dir); first = false; }
+          }
+          if (accountsWin) fs.writeFileSync(path.join(dir, "snap-accounts.png"), (await accountsWin.webContents.capturePage()).toPNG());
+        } catch (err) { console.error("snap", err.message); }
+        finally { capturing = false; }
+      }, 10000);
+    }
+  });
+}
+app.on("before-quit", () => { quitting = true; clearInterval(snapTimer); for (const p of pets.values()) p.dispose(); });
+app.on("will-quit", () => globalShortcut.unregisterAll());
+app.on("window-all-closed", () => {});

@@ -11,6 +11,10 @@ const path = require("path");
 
 const hook = fs.readFileSync(path.join(__dirname, "game-hook.js"), "utf8");
 const potionSupply = fs.readFileSync(path.join(__dirname, "potion-supply.js"), "utf8");
+// 自動配點：職業初始能力、上限、比例分配（codex-data.js 是 tools/build-codex.mjs 從遊戲資料產生的）
+const codexData = fs.readFileSync(path.join(__dirname, "codex-data.js"), "utf8");
+const statAlloc = fs.readFileSync(path.join(__dirname, "stat-alloc.js"), "utf8");
+const lifePlan = fs.readFileSync(path.join(__dirname, "life-plan.js"), "utf8");
 // 剛用 Chrome 登入（login-browser.js）：遊戲存在網頁裡的登入設定，要在遊戲程式之前放進去
 const pending = ipcRenderer.sendSync("game:pending-storage");
 // 桌寵記住的遊戲掛機設定（自動施放、自動喝藥、撿物賣物…），載入時在遊戲程式之前寫回去，見下面 PREF_RE
@@ -106,6 +110,9 @@ webFrame.executeJavaScript(`(() => {
   };
 })();
 ${potionSupply}
+${codexData}
+${statAlloc}
+${lifePlan}
 ${hook}`);
 
 window.addEventListener("message", (e) => {
@@ -113,6 +120,8 @@ window.addEventListener("message", (e) => {
   if (e.data.__rajaPet) ipcRenderer.send("game:state", e.data.__rajaPet);
   // 自動補給、自動合成做了什麼（game-hook.js 的 log）
   if (e.data.__rajaPetLog) ipcRenderer.send("game:auto-log", e.data.__rajaPetLog);
+  // 道具清單（商店分類，自動販售的下拉選單用；每次進遊戲送一次）
+  if (e.data.__rajaPetCatalog) ipcRenderer.send("game:catalog", e.data.__rajaPetCatalog);
 });
 
 // 遊戲的掛機設定（localStorage）有變就送給主程式存起來：
