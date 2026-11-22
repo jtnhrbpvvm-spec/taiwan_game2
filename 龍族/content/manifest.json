@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "shell": 1,
   "files": [
     {
@@ -29,13 +29,13 @@
     },
     {
       "path": "companion.js",
-      "sha256": "4f3757f812253cba06462d08edd40b8ace18a5cddf6891f518d4c4cc86daf6f6",
-      "size": 35266
+      "sha256": "3772ed9fe53be112832f85399dfb842ab0da7d1288da9b7f12a3a2975507c176",
+      "size": 35305
     },
     {
       "path": "game-hook.js",
-      "sha256": "96d2d5d1504da2db1df7fed0b7a801d933444e0e7f6df0e135b41973931847ef",
-      "size": 35667
+      "sha256": "c7d958b771bda27cfde19d3f4adf06e64f2d40e45cd36c1a5615318c0325afe9",
+      "size": 37698
     },
     {
       "path": "game-patch.js",
@@ -109,8 +109,8 @@
     },
     {
       "path": "ui/auto.js",
-      "sha256": "5e15f416feb06f9960c448eb91e09b8732e7e384378eca28851470785011c4b7",
-      "size": 6132
+      "sha256": "44c7b329e0b584bd6731bf37cab0ce00d013886102b5ad8422e45721303aa0df",
+      "size": 6334
     },
     {
       "path": "ui/idle.html",
