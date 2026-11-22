@@ -223,6 +223,8 @@
   let watching = false;
   let busy = false;
   let nextSupplyAt = 0, nextFuseAt = 0;
+  let supplyError = "";
+  let supplyResumeMode;
   // 補給要先走到賣那樣東西的商人旁邊、商店打開了才買（使用者 2026-11-21：站在原地就買像外掛），所以走路、NPC 視窗那幾個也是必要的
   const SUPPLY_NEED = ["joinRoom", "store", "invView", "state", "quickPotion", "potionKinds", "countHp", "countMp", "net", "towns",
     "talkNpc", "currentTown", "npcSheet", "npcList"];
@@ -247,6 +249,12 @@
     return false;
   }
   const errText = (e) => (e && (e.code || e.message)) || String(e);
+  /** 跟伺服器要東西最多等 ms；斷線時遊戲的 promise 可能永遠不回，會讓 busy 一直卡著、之後都不再檢查藥水。 */
+  const timed = (p, ms, what) => new Promise((resolve, reject) => {
+    let done = false;
+    Promise.resolve(p).then((v) => { done = true; resolve(v); }, (e) => { done = true; reject(e); });
+    setTimeout(() => Promise.resolve().then(() => { if (!done) reject(new Error(`${what}等太久沒有回應`)); }), ms);
+  });
 
   window.addEventListener("message", (e) => {
     if (e.source !== window || !e.data || !e.data.__rajaPetCmd) return;
@@ -255,6 +263,8 @@
       AUTO = c.settings || null;
       if (!S.lastHuntMap && c.lastHuntMap && typeof c.lastHuntMap.id === "string") S.lastHuntMap = c.lastHuntMap;
       watching = !!c.watching;
+      nextSupplyAt = 0; // 儲存設定或收起遊戲後，不沿用之前失敗的等待時間
+      supplyError = "";
       nextFuseAt = 0;
       reviveHold = false; // 玩家重新存了設定（可能換了地圖）：再給自動復活一次機會
       nextReviveAt = 0;
@@ -324,17 +334,22 @@
   async function buy(plan, units, what) {
     const g = G();
     if (units <= 0) return;
-    // 走不到就不買這樣（不站在原地買），其他照常、最後照樣回練功圖
-    try {
-      await walkToShop(plan.shop);
-    } catch (e) {
-      log(`補給：${errText(e)}（${what}）`, "warn");
-      return;
+    await walkToShop(plan.shop);
+    // 一次買太多可能放不下；伺服器拒絕後縮小數量，絕不丟棄或出售物品。
+    let amount = units;
+    for (;;) {
+      try {
+        const result = await timed(g.net.request({ op: "buy", shop: plan.shop, item: plan.itemNo, n: amount }), 30000, "購買");
+        if (result?.error) throw new Error(errText(result.error));
+        log(`補給：買了${what.replace(/\d+ 份$/, `${amount} 份`)}`);
+        await sleep(800);
+        return amount;
+      } catch (e) {
+        if (errText(e) !== "BAG_FULL") throw e;
+        if (amount <= 1) throw new Error("背包已滿（BAG_FULL），連一份藥水也放不下，請先整理背包");
+        amount = Math.max(1, Math.floor(amount / 2));
+      }
     }
-    const result = await g.net.request({ op: "buy", shop: plan.shop, item: plan.itemNo, n: units });
-    if (result?.error) throw new Error(errText(result.error));
-    log(`補給：買了${what}`);
-    await sleep(800);
   }
 
   /** 要回去的練功地圖：設定指定的 > 現在所在的練功圖 > 最後一次待過的練功圖。 */
@@ -354,7 +369,7 @@
   async function backToHunt(target, autoMode, what) {
     const g = G();
     await humanPause();
-    const err2 = await g.joinRoom(target.id, {});
+    const err2 = await timed(g.joinRoom(target.id, {}), 30000, "回狩獵地圖");
     if (err2) throw new Error(`回不了狩獵地圖「${target.name}」（${err2}）`);
     if (!(await waitFor(() => !S.town && S.mapId === target.id, 20000))) throw new Error(`等太久還沒進到狩獵地圖「${target.name}」`);
     await sleep(1000);
@@ -369,37 +384,53 @@
     if (!town) throw new Error("設定的主城不在遊戲的主城清單裡");
     const target = huntTarget(cfg);
     const back = target.id, backName = target.name;
-    const autoMode = opts.autoMode || (g.state().auto && g.state().auto.mode);
+    const autoMode = opts.autoMode || supplyResumeMode || (g.state().auto && g.state().auto.mode);
+    supplyResumeMode = autoMode;
     // 已經在這個主城（例如剛復活）就不用再進一次
     if (!(S.town && S.mapId === town.mapId)) {
       log(`補給：回「${town.name}」買東西`);
-      const err = await g.joinRoom(town.mapId, { town: true });
+      const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
       if (err) throw new Error(`回不了主城（${err}）`);
       if (!(await waitFor(() => S.town && S.mapId === town.mapId, 20000))) throw new Error("等太久還沒進到主城");
       await sleep(1500);
     }
     const c = S.character || {};
     // 指定種類只計算並購買該種；未指定時保留遊戲快速補給的選法。
-    for (const [kind, to, max, name] of [["hp", cfg.hpTo, c.maxHp, "紅水"], ["mp", cfg.mpTo, c.maxMp, "藍水"]]) {
+    const before = invNow();
+    if (!before) throw new Error("背包資料尚未載入，沒有購買藥水");
+    const order = [["hp", cfg.hpTo, c.maxHp, "紅水"], ["mp", cfg.mpTo, c.maxMp, "藍水"]];
+    const priority = kind => {
+      const n = potionCount(cfg, before, kind), min = cfg[`${kind}Min`] || 0;
+      return min > 0 && n < min ? (n === 0 ? 0 : 1) : 2;
+    };
+    order.sort((a, b) => priority(a[0]) - priority(b[0]));
+    for (const [kind, to, max, name] of order) {
       if (!(to > 0)) continue;
-      const inv = invNow();
-      if (!inv) throw new Error("背包資料尚未載入，沒有購買藥水");
-      const selected = potions.selection(kind, cfg[`${kind}Item`]);
-      if (selected) {
-        const title = potions.name(kind, selected);
-        const plan = potions.plan(g, inv, selected, to, (S.character || {}).gold || 0, town.shops);
-        if (plan.status === "enough") continue;
-        if (plan.status === "unavailable") { log(`補給：這一版遊戲無法讀取指定藥水的商店資料，沒有購買${title}`, "warn"); continue; }
-        if (plan.status === "not-sold") { log(`補給：「${town.name}」沒有販售${title}，請換主城或藥水種類`, "warn"); continue; }
-        if (plan.status === "no-gold") { log(`補給：金幣不夠買${title}`, "warn"); continue; }
-        await buy(plan, plan.units, `${title} ${plan.units} 份`);
-        continue;
+      // 遊戲一次最多只能買 99 份（buyLimit），設 300 瓶就要分好幾次買，直到身上的數量到設定值
+      for (let round = 0; round < 30; round++) {
+        const inv = invNow();
+        if (!inv) throw new Error("背包資料尚未載入，沒有購買藥水");
+        const have = potionCount(cfg, inv, kind);
+        const selected = potions.selection(kind, cfg[`${kind}Item`]);
+        let plan, title = name;
+        if (selected) {
+          title = potions.name(kind, selected);
+          plan = potions.plan(g, inv, selected, to, (S.character || {}).gold || 0, town.shops);
+          if (plan.status === "enough") break;
+          if (plan.status === "unavailable") { log(`補給：這一版遊戲無法讀取指定藥水的商店資料，沒有購買${title}`, "warn"); break; }
+          if (plan.status === "not-sold") { log(`補給：「${town.name}」沒有販售${title}，請換主城或藥水種類`, "warn"); break; }
+          if (plan.status === "no-gold") { if (!round) log(`補給：金幣不夠買${title}`, "warn"); break; }
+        } else {
+          plan = g.quickPotion(inv, (S.character || {}).gold || 0, to, g.potionKinds[kind === "hp" ? 2 : 3], max || 1);
+          if (plan === g.potionKinds[4]) { if (!round) log(`補給：金幣不夠買${name}`, "warn"); break; }
+          if (!plan) break; // 已經夠了
+          if (!town.shops.has(plan.shop)) { log(`補給：「${town.name}」沒有賣這種${name}的店，換一個主城試試`, "warn"); break; }
+        }
+        const bought = await buy(plan, plan.units, `${title} ${plan.units} 份`);
+        if (!bought) break;
+        // 等背包數量更新再算下一次要買多少；數量沒變（伺服器沒給）就不再重複買
+        if (!(await waitFor(() => { const b = invNow(); return b && potionCount(cfg, b, kind) > have; }, 5000))) break;
       }
-      const plan = g.quickPotion(inv, (S.character || {}).gold || 0, to, g.potionKinds[kind === "hp" ? 2 : 3], max || 1);
-      if (plan === g.potionKinds[4]) { log(`補給：金幣不夠買${name}`, "warn"); continue; }
-      if (!plan) continue; // 已經夠了
-      if (!town.shops.has(plan.shop)) { log(`補給：「${town.name}」沒有賣這種${name}的店，換一個主城試試`, "warn"); continue; }
-      await buy(plan, plan.units, `${name} ${plan.units} 份`);
     }
     // 彈藥
     const inv = invNow();
@@ -422,9 +453,14 @@
       else if (plan) await buy(plan, units, `${ammo.name} ${units} 份`);
     }
     closeShop();
+    // 沒買到足以越過門檻的藥水就先留在主城，避免空手回去又倒下。
+    if (!(await waitFor(() => { const bag = invNow(); return bag && !lacking(cfg, bag).length; }, 3000))) {
+      throw new Error(`補給後仍不足：${lacking(cfg, invNow()).join("、")}，先留在主城等待補給`);
+    }
     // 回指定地圖或最後狩獵區，自動戰鬥恢復成原本的樣子。
     // 練功圖和主城可能是同一張地圖（例如雷諾市練功房和雷諾斯市主城都是 RENES_C，差在進的是不是主城），所以不比地圖名稱，一律回去
     if (back) await backToHunt({ id: back, name: backName }, autoMode, opts.doneText || "補給完成");
+    supplyResumeMode = undefined;
   }
 
   // ---------- 自動復活 ----------
@@ -446,7 +482,7 @@
     const autoMode = autoBeforeDeath;
     log(`倒下了：回「${town.name}」念咒語復活`);
     if (!(S.town && S.mapId === town.mapId)) {
-      const err = await g.joinRoom(town.mapId, { town: true });
+      const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
       if (err) throw new Error(`回不了主城（${err}）`);
       if (!(await waitFor(() => S.town && S.mapId === town.mapId, 20000))) throw new Error("等太久還沒進到主城");
       await sleep(1500);
@@ -490,7 +526,7 @@
     while (slots.length >= 5) {
       const pick = g.fusePick(bag, tier, new Set(slots), g.rng);
       if (!pick) break;
-      const r = await g.fuse(pick.from, pick.use);
+      const r = await timed(g.fuse(pick.from, pick.use), 30000, "合成");
       if (r && r.error) { log(`合成（${TIER_NAMES[tier]}）停止：${r.error}`, "warn"); break; }
       r && r.success ? ok++ : fail++;
       await sleep(1500);
@@ -520,17 +556,22 @@
         return; // 這一輪只做復活
       }
       const sup = AUTO.supply;
-      if (sup && sup.enabled && !S.town && Date.now() >= nextSupplyAt && has(SUPPLY_NEED) && S.character && S.character.hp > 0) {
+      if (sup && sup.enabled && !reviveHold && !S.dead && Date.now() >= nextSupplyAt && has(SUPPLY_NEED) && S.character && S.character.hp > 0) {
         const inv = invNow();
         const low = inv ? lacking(sup, inv) : [];
         if (low.length) {
           log(`補給：${low.join("、")}，低於設定`);
           try {
             await supplyRun(sup);
+            supplyError = "";
             nextSupplyAt = Date.now() + 60000;
           } catch (e) {
-            log(`補給沒有完成：${errText(e)}。5 分鐘後再試`, "warn");
-            nextSupplyAt = Date.now() + 300000;
+            supplyError = errText(e);
+            // 身上已經一瓶都沒有的話不能等 5 分鐘（使用者 2026-11-22：沒魔力水還一直在練功區）
+            const empty = (() => { const b = invNow(); return !!b && ["hp", "mp"].some(k => sup[`${k}Min`] > 0 && potionCount(sup, b, k) === 0); })();
+            const delay = /BAG_FULL|背包已滿|補給後仍不足/.test(supplyError) ? 30000 : empty ? 60000 : 300000;
+            log(`補給沒有完成：${supplyError}。${delay === 30000 ? "30 秒" : delay === 60000 ? "1 分鐘" : "5 分鐘"}後再試`, "warn");
+            nextSupplyAt = Date.now() + delay;
           }
         }
       }
@@ -551,6 +592,10 @@
     if (!g) return;
     const towns = (g.towns || []).map((t) => ({ mapId: t.mapId, name: t.name, nation: t.nation }));
     const auto = { towns, missing: g.missing || [], supplyOk: has(SUPPLY_NEED), fuseOk: has(FUSE_NEED), nation: S.nation };
+    auto.supplyState = !AUTO?.supply?.enabled ? "自動補給未開啟" : watching ? "遊戲視窗開著，補給暫停；收起遊戲後會檢查" :
+      reviveHold ? "頻繁倒下，停在主城等待調整設定" : S.dead ? "倒下中，等待復活後補給" : !has(SUPPLY_NEED) ? "遊戲補給介面尚未就緒" :
+      Date.now() < nextSupplyAt ? `${supplyError || "補給完成後稍候"}（約 ${Math.ceil((nextSupplyAt - Date.now()) / 1000)} 秒後檢查）` :
+      busy ? "正在執行補給、復活或合成" : "每 5 秒檢查藥水，主城內也會補給";
     auto.huntMaps = (g.huntMaps || []).map(m => ({ id: m.id, name: m.name, levelMin: m.levelMin, levelMax: m.levelMax, coreLevelMin: m.coreLevelMin, coreLevelMax: m.coreLevelMax }));
     // 目前有幾瓶、各檔可以合幾件（設定視窗顯示，方便決定數字）
     try {
