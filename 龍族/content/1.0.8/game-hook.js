@@ -320,6 +320,7 @@
   }
 
   const randMs = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const STUCK_MS = 10000; // 走去商人時，站著不動這麼久就放棄
 
   /** 用小地圖下方「NPC」清單的自動導航走到這間店（shop 編號）的商人旁邊，等遊戲把商店打開
    *  （跟玩家按 NPC 清單那一項一樣：遊戲自己找路、走過去、到了才開）。 */
@@ -343,8 +344,16 @@
     await sleep(randMs(800, 2000));
     const tryNpc = async (i) => {
       g.talkNpc(i, fnOf);
-      // 遊戲自己等 5 秒＋每格 1 秒，走不到就放棄；這邊最多等 40 秒
-      if (await waitFor(() => openNpc() === area.npcs[i], 40000)) {
+      // 走得動就一直等到商店打開（最多 45 秒）；站著 10 秒都沒動＝找不到路或被擋住，放棄（使用者 2026-11-22：不要一直卡著）
+      let last = g.selfPos && g.selfPos(), movedAt = Date.now();
+      const start = Date.now();
+      const done = await waitFor(() => {
+        if (openNpc() === area.npcs[i]) return true;
+        const p = g.selfPos && g.selfPos();
+        if (p && last && (p[0] !== last[0] || p[1] !== last[1])) { last = p; movedAt = Date.now(); }
+        return Date.now() - movedAt > STUCK_MS || Date.now() - start > 45000;
+      }, 46000);
+      if (done && openNpc() === area.npcs[i]) {
         log(`商店：走到「${nameOf(i)}」旁邊`);
         await sleep(randMs(1000, 2500)); // 打開商店後看一下再買
         return true;
@@ -352,25 +361,11 @@
       if (!S.town) throw new Error("走去商人的途中離開了主城");
       return false;
     };
-    // 第一次：走去最近的那位
+    // 走去最近的那位；10 秒走不動就直接換別的主城（buyAnywhere／sellHere 接 unreachable）
     if (await tryNpc(indexes[0])) return nameOf(indexes[0]);
-    // 被其他人物擋住：往旁邊走幾步換個位置，再試一次（有別的商人也賣就也試試）（使用者 2026-11-22）
-    log(`補給：走不到「${nameOf(indexes[0])}」，換個位置再試`);
-    await stepAside();
-    for (const i of indexes) if (await tryNpc(i)) return nameOf(i);
-    const err = new Error(`走不到「${nameOf(indexes[0])}」旁邊（可能被其他人物擋住）`);
+    const err = new Error(`走不到「${nameOf(indexes[0])}」旁邊（10 秒沒有走動，可能被擋住或找不到路）`);
     err.unreachable = true;
     throw err;
-  }
-  /** 往旁邊隨便走 2～4 格（跟玩家點地上一樣送 move，伺服器自己找路）。 */
-  async function stepAside() {
-    const g = G();
-    const p = g.selfPos && g.selfPos();
-    if (!p) { await sleep(randMs(2000, 4000)); return; }
-    const d = () => (Math.random() < 0.5 ? -1 : 1) * randMs(2, 4);
-    g.net.post({ op: "move", x: Math.max(0, p[0] + d()), y: Math.max(0, p[1] + d()) });
-    await waitFor(() => { const q = g.selfPos(); return q && (q[0] !== p[0] || q[1] !== p[1]); }, 4000);
-    await sleep(randMs(1500, 3000));
   }
   function closeShop() {
     try { G().npcSheet.getState().close(); } catch {}
@@ -453,9 +448,36 @@
       throw new Error(`跟不上隊伍（${err}）`);
     }
     if (!(await waitFor(() => roomCode() === dest.code, 20000))) throw new Error("等太久還沒進到隊伍的房間");
+    clearPartyGo();
     await sleep(1000);
     restoreAuto(autoMode || teamAutoMode);
     log(`${what}，回到隊伍的房間（${dest.from} 帶隊）繼續打`);
+  }
+  /** 組隊的人互加好友（遊戲「社交」的加好友；使用者 2026-11-22：先變好友比較好組隊）。每個人只試一次。 */
+  const teamFriended = new Set();
+  async function ensureFriends(names) {
+    const todo = names.filter((n) => n && !teamFriended.has(n));
+    if (!todo.length) return;
+    let list = [];
+    try { const r = await timed(G().net.request({ op: "friends" }), 20000, "好友清單"); list = (r && r.list) || []; } catch {}
+    const have = new Set(list.map((f) => f && f[0]));
+    for (const n of todo) {
+      teamFriended.add(n);
+      if (have.has(n)) continue;
+      try { await timed(G().net.request({ op: "addFriend", name: n }), 20000, "加好友"); log(`組隊：加 ${n} 為好友`); }
+      catch (e) { log(`組隊：加 ${n} 為好友沒成功（${errText(e)}），照樣組隊`, "warn"); }
+      await sleep(randMs(600, 1200));
+    }
+  }
+  /** 隊伍要去的房間：伺服器記的 party.destination，或剛收到的「隊長出發」（state.partyGo）。 */
+  function teamTarget(st, party, leader) {
+    if (party && party.destination) return party.destination;
+    const go = st.partyGo;
+    return go && go.code && (!leader || go.from === leader) ? go : null;
+  }
+  /** 關掉「隊長出發」對話框（遊戲自己按「跟上」後也是這樣關；不關會在畫面上留 60 秒）。 */
+  function clearPartyGo() {
+    try { const st = G().state(); if (st.partyGo && st.setPartyGo) st.setPartyGo(null); } catch {}
   }
   /** 組隊狀態每 5 秒看一次，該做的做一步。 */
   async function teamTick() {
@@ -467,6 +489,9 @@
     const team = TEAM, me = myName();
     if (!team || !me || S.dead || Date.now() < nextTeamAt) return;
     const st = g.state(), party = st.party || null;
+    // 已經在「隊長出發」說的那間房（或自己就是隊長）：對話框不用留著
+    if (st.partyGo && (roomCode() === st.partyGo.code || st.partyGo.from === me)) clearPartyGo();
+    await ensureFriends(team.role === "member" ? [team.leader] : team.members || []);
     if (team.role === "member") {
       if (party && party.leader !== team.leader) { await partyReq({ act: "leave" }); log(`組隊：先離開原本 ${party.leader} 的隊伍`); return; }
       if (!party) {
@@ -489,7 +514,7 @@
         }
         return;
       }
-      const dest = party.destination;
+      const dest = teamTarget(st, party, team.leader);
       if (dest && roomCode() !== dest.code) {
         await sleep(randMs(2000, 5000));
         await joinTeamRoom(dest, teamAutoMode, `組隊：跟上 ${dest.from}`);
@@ -753,7 +778,8 @@
     const shops = [...((town && town.shops) || [])];
     let opened = false;
     for (const shop of shops) {
-      try { await walkToShop(shop); opened = true; break; } catch (e) { log(`販售：${errText(e)}，換一位商人`, "warn"); }
+      try { await walkToShop(shop); opened = true; break; }
+      catch (e) { if (e && e.unreachable) break; log(`販售：${errText(e)}，換一位商人`, "warn"); } // 走不動（被擋住）就不在這個主城耗時間
     }
     if (!opened) throw new Error("主城裡走不到任何商人旁邊，這次沒有賣");
     let sold = 0, gold = 0;
@@ -1177,7 +1203,10 @@
     // 遊戲視窗開著（玩家在看）時補給、合成先停，但倒下了照樣自動復活（使用者 2026-11-21：看著弓手倒下卻沒復活）
     const rev = AUTO.revive;
     const reviveNow = rev && rev.enabled && S.dead && !reviveHold && Date.now() >= nextReviveAt && has(REVIVE_NEED);
-    if (watching && !reviveNow) return;
+    // 組隊、指定交易是玩家下的指令：遊戲視窗開著也照做（使用者 2026-11-22：看著遊戲時「隊長出發」不會按）
+    const teamNow = !!TEAM || !!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone);
+    const tradeNow = !!(TRADE && TRADE.id && !tradeDone[TRADE.id]);
+    if (watching && !reviveNow && !teamNow && !tradeNow) return;
     busy = true;
     try {
       if (reviveNow) {
@@ -1191,6 +1220,14 @@
       }
       // 指定交易（物品欄視窗）：比補給優先，做完才繼續其他自動功能
       if (TRADE && TRADE.id && !tradeDone[TRADE.id] && !S.dead) { await tradeRun(TRADE); return; }
+      if (watching) {
+        // 玩家在看：只做組隊，其他自動功能（補給、販售、合成、配點、生活技能）等藏回去再做
+        if (teamNow) {
+          try { await teamTick(); }
+          catch (e) { log(`組隊沒有完成：${errText(e)}。30 秒後再試`, "warn"); nextTeamAt = Date.now() + 30000; }
+        }
+        return;
+      }
       const sup = AUTO.supply;
       if (sup && sup.enabled && !reviveHold && !S.dead && Date.now() >= nextSupplyAt && has(SUPPLY_NEED) && S.character && S.character.hp > 0) {
         const inv = invNow();
