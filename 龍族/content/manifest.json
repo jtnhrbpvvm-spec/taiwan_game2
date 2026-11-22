@@ -1,5 +1,5 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "shell": 1,
   "files": [
     {
@@ -29,8 +29,8 @@
     },
     {
       "path": "companion.js",
-      "sha256": "3772ed9fe53be112832f85399dfb842ab0da7d1288da9b7f12a3a2975507c176",
-      "size": 35305
+      "sha256": "4e350073360f1d95ed927c57637b8196b24b37d64644d6b21dbae8083b52f25e",
+      "size": 35765
     },
     {
       "path": "game-hook.js",
@@ -69,13 +69,13 @@
     },
     {
       "path": "pet/index.html",
-      "sha256": "1caa7731ebe76ff8d71bcf2683dc5399aa35fefc781675a6fe7aaa0eca87cd82",
-      "size": 3337
+      "sha256": "dad73f4990972fc73b95c70746bb7299803e5cc0ffdf16e9df5be6eed5dcc7ee",
+      "size": 3402
     },
     {
       "path": "pet/pet.js",
-      "sha256": "6de5dab96c6b39bdcbad81c2549c568f2215e8344fe169409bb67632e13a5d7e",
-      "size": 19667
+      "sha256": "76a864bce5fdbb03fe876a0703e30cd808bee0f815d42cc9f5395f65209aaeaa",
+      "size": 19651
     },
     {
       "path": "potion-supply.js",

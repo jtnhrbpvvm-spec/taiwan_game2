@@ -1,0 +1,775 @@
+"use strict";
+const { app, BrowserWindow, Menu, Tray, screen, globalShortcut, shell, Notification, nativeImage, session } = require("electron");
+const { patchBoot } = require("./game-patch");
+const fs = require("fs");
+const path = require("path");
+const art = require("./art.json");
+const { loginWithBrowser, findBrowser } = require("./login-browser");
+const accounts = require("./accounts");
+const potions = require("./potion-supply");
+const { spawn } = require("child_process");
+
+const GAME_ORIGIN = "https://play.17raja.com";
+const GAME_URL = GAME_ORIGIN + "/";
+// 每個帳號各自一份遊戲資料（登入、遊戲設定）和登入用的 Chrome 設定檔，換帳號不會互相蓋掉。
+// 沒指定帳號（0.1 版留下來的登入）用原本的 persist:raja 和 login-browser
+const partitionOf = (id) => (id ? `persist:raja-acct-${id}` : "persist:raja");
+const loginDirOf = (id) => path.join(app.getPath("userData"), id ? `login-browser-${id}` : "login-browser");
+const TOGGLE_KEY = "Control+Alt+R"; // 叫出／藏起遊戲視窗
+const CLICK_THROUGH_KEY = "Control+Alt+P"; // 專注模式（桌寵不擋滑鼠）
+const PET_STRIP_HEIGHT = 300;
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 760;
+const LOGIN_WAIT_MS = 8000; // 載入後這麼久還是「還沒登入」，就把遊戲叫出來讓玩家登入
+const NO_STATE_WAIT_MS = 30000; // 載入後這麼久都沒收到任何狀態（遊戲沒連上），也叫出來
+const GAME_RETRY_MS = 30000;
+const ASSET_KEEP_MS = 7 * 24 * 60 * 60 * 1000; // 角色圖在本機留 7 天
+const SIZE_CHOICES = [60, 80, 100, 130, 160, 200];
+const MAX_LOOT_SHOWN = 4;
+const patchedSessions = new WeakSet();
+let bootPatch;
+
+
+// 每隻桌寵擁有自己的視窗、遊戲 Session、登入流程、角色外觀、事件與自動設定。
+module.exports = function createCompanion({ accountId = null, slot = 0, onChange, onClose, managerMenu }) {
+  const events = new Map(), handlers = new Map();
+  const ipcMain = { on: (name, fn) => events.set(name, fn), handle: (name, fn) => handlers.set(name, fn) };
+  const currentAccount = () => accountId;
+  const gameSession = () => session.fromPartition(partitionOf(accountId));
+  const accountLabel = () => { const a = accounts.find(accountId); return a ? a.label || a.username : "舊的登入"; };
+let petWin;
+let quitting = false;
+let clickThrough = false;
+let petInteractive = false;
+const game = { win: undefined, shown: false, loading: false, failures: 0, retryTimer: undefined, loadedAt: 0, asked: false, state: undefined, lastState: undefined };
+
+// ── 設定 ──────────────────────────────────────────────────
+
+const settingsFile = () => path.join(app.getPath("userData"), accountId ? `pet-settings-${accountId}.json` : "pet-settings.json");
+// 自動補給、自動合成的設定（設定視窗 ui/auto.html）。預設全部關閉；門檻填 0＝不看這一種
+const DEFAULT_AUTO = {
+  supply: { enabled: false, town: "", huntMap: "", hpItem: 0, mpItem: 0, hpMin: 0, hpTo: 0, mpMin: 0, mpTo: 0, ammoMin: 0, ammoTo: 0 },
+  fuse: [{ enabled: false, count: 5 }, { enabled: false, count: 5 }, { enabled: false, count: 5 }],
+  // 自動復活：倒下後回主城念咒語復活；supply＝復活後照「自動補給」的設定買藥，再回練功地圖
+  revive: { enabled: false, supply: true },
+};
+// 要記的遊戲掛機設定（localStorage 的鍵），跟 game-preload.js 一樣
+const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
+let settings = { size: 100, stay: false, gameBounds: undefined, autoStart: false, auto: DEFAULT_AUTO };
+const num = (v, min, max) => Math.max(min, Math.min(max, Math.floor(Number(v)) || 0));
+/** 設定視窗送來的值不能全信，整理成合法的數字。 */
+function cleanAuto(a) {
+  const s = a?.supply ?? {};
+  return {
+    supply: {
+      enabled: !!s.enabled,
+      town: typeof s.town === "string" ? s.town.slice(0, 40) : "",
+      huntMap: typeof s.huntMap === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(s.huntMap) ? s.huntMap : "",
+      hpItem: potions.selection("hp", s.hpItem), mpItem: potions.selection("mp", s.mpItem),
+      hpMin: num(s.hpMin, 0, 9999), hpTo: num(s.hpTo, 0, 9999),
+      mpMin: num(s.mpMin, 0, 9999), mpTo: num(s.mpTo, 0, 9999),
+      ammoMin: num(s.ammoMin, 0, 9999), ammoTo: num(s.ammoTo, 0, 9999),
+    },
+    fuse: [0, 1, 2].map((i) => ({ enabled: !!a?.fuse?.[i]?.enabled, count: num(a?.fuse?.[i]?.count ?? 5, 5, 96) })),
+    revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false },
+  };
+}
+function loadSettings() {
+  try {
+    settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) };
+  } catch {}
+  if (!SIZE_CHOICES.includes(settings.size)) settings.size = 100;
+  settings.auto = cleanAuto(settings.auto);
+  settings.gamePrefs = cleanPrefs(settings.gamePrefs);
+}
+function saveSettings() {
+  try {
+    fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 1));
+  } catch {}
+}
+
+function logGame(text) {
+  const line = `[${accountId || "舊的登入"}] ${new Date().toLocaleString("zh-TW", { hour12: false })} ${text}\n`;
+  console.log(line.trim());
+  try {
+    const file = path.join(app.getPath("userData"), "game-log.txt");
+    if (fs.existsSync(file) && fs.statSync(file).size > 200 * 1024) fs.writeFileSync(file, fs.readFileSync(file, "utf8").slice(-100 * 1024));
+    fs.appendFileSync(file, line);
+  } catch {}
+}
+
+// ── 遊戲視窗 ──────────────────────────────────────────────
+
+/** 跟一般 Chrome 一樣的 User-Agent（拿掉 Electron／程式名稱）：Cloudflare 人機驗證看到 Electron 比較容易判定成機器人。 */
+function chromeUserAgent(ses) {
+  return ses.getUserAgent().replace(/\s(?:Electron|raja-desktop-pet|龍族桌寵)\/\S+/g, "");
+}
+
+// 遊戲主程式（app/boot-*.js）載入時在最後加一行，把遊戲自己的傳送、買東西、合成函式接出來（game-patch.js）。
+// 其他請求原封不動放行。只影響桌寵的遊戲視窗。
+const BOOT_RE = /^https:\/\/play\.17raja\.com\/app\/boot-[\w-]+\.js(\?.*)?$/;
+function installBootPatch(ses) {
+  if (patchedSessions.has(ses)) return;
+  patchedSessions.add(ses);
+  ses.protocol.handle("https", async (req) => {
+    const pass = () => ses.fetch(req, { bypassCustomProtocolHandlers: true });
+    if (req.method !== "GET" || !BOOT_RE.test(req.url)) return pass();
+    const res = await pass();
+    if (!res.ok) return res;
+    const { code, found, missing } = patchBoot(await res.text());
+    bootPatch = { found: Object.keys(found).length, missing };
+    if (missing.length) logGame(`遊戲改版：找不到 ${missing.join("、")}，用到的自動功能會停用`);
+    const headers = new Headers(res.headers);
+    headers.delete("content-length");
+    headers.delete("content-encoding");
+    return new Response(code, { status: res.status, headers });
+  });
+}
+
+function createGame() {
+  const ses = gameSession();
+  ses.setUserAgent(chromeUserAgent(ses));
+  installBootPatch(ses);
+  // 之前裝過的 Service Worker、它存的主程式清掉（不然會直接用沒加料的舊檔，見 game-preload.js）
+  ses.clearStorageData({ storages: ["serviceworkers", "cachestorage"] }).catch(() => {});
+  const acct = currentAccount() && accounts.find(currentAccount());
+  game.win = new BrowserWindow({
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+    show: false,
+    skipTaskbar: true,
+    title: `17玩龍族（桌寵${acct ? `・${acct.label || acct.username}` : ""}）`,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: {
+      session: ses,
+      backgroundThrottling: false,
+      contextIsolation: true,
+      sandbox: false, // preload 要讀 game-hook.js
+      preload: path.join(__dirname, "game-preload.js"),
+    },
+  });
+  game.win.webContents.setAudioMuted(true);
+  parkGame();
+  game.win.on("close", (e) => {
+    if (quitting) return;
+    e.preventDefault();
+    showGame(false);
+  });
+  // 最小化的視窗 Chromium 不畫畫面，當成藏起來
+  game.win.on("minimize", () => {
+    game.win.restore();
+    showGame(false);
+  });
+  game.win.on("page-title-updated", (e) => e.preventDefault());
+  game.win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:/.test(url)) shell.openExternal(url);
+    return { action: "deny" };
+  });
+  game.win.webContents.on("render-process-gone", (_e, d) => {
+    if (quitting) return;
+    logGame(`遊戲網頁當掉（${d.reason}），重新載入`);
+    setTimeout(() => game.win && !game.win.isDestroyed() && loadGame(), 1000);
+  });
+  game.win.webContents.on("did-finish-load", () => {
+    game.loadedAt = Date.now();
+    game.asked = false;
+    syncParked();
+    sendAuto();
+  });
+  loadGame();
+}
+
+async function loadGame() {
+  clearTimeout(game.retryTimer);
+  game.loading = true;
+  game.state = undefined;
+  try {
+    const win = game.win;
+    if (quitting || !win || win.isDestroyed()) return;
+    await win.loadURL(GAME_URL);
+    game.failures = 0;
+  } catch (e) {
+    if (quitting || !game.win || game.win.isDestroyed()) return;
+    logGame(`遊戲載入失敗，稍後再試：${e.message}`);
+    game.retryTimer = setTimeout(loadGame, game.failures++ === 0 ? 2000 : GAME_RETRY_MS);
+  } finally {
+    game.loading = false;
+  }
+}
+
+/** 藏起來＝停在螢幕外只露 1 像素、幾乎透明、滑鼠穿過，但還是「顯示中」的視窗（沒顯示的視窗 Chromium 會停掉畫面和計時器）。 */
+function parkGame() {
+  const area = screen.getPrimaryDisplay().workArea;
+  const { width, height } = game.win.getBounds();
+  game.win.setSkipTaskbar(true);
+  game.win.setIgnoreMouseEvents(true);
+  game.win.setFocusable(false);
+  game.win.setOpacity(0.01);
+  game.win.setBounds({ x: area.x - width + 1, y: area.y - height + 1, width, height });
+  if (!game.win.isVisible()) game.win.showInactive();
+}
+
+/** 藏著而且已經進到遊戲才降低畫面格數；載入、登入的時候照常（遊戲載入進度是一格一格跑的，降格數會載很久）。 */
+function syncParked() {
+  const parked = !game.shown && game.state?.status === "ingame";
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.executeJavaScript(`window.__rajaPetParked && __rajaPetParked(${parked})`).catch(() => {});
+}
+
+function showGame(on) {
+  if (!game.win || game.win.isDestroyed()) return;
+  if (on === game.shown) {
+    if (on) game.win.focus();
+    return;
+  }
+  game.shown = on;
+  game.autoShown = false;
+  logGame(on ? "叫出遊戲視窗" : "藏起遊戲視窗");
+  if (on) {
+    const area = screen.getPrimaryDisplay().workArea;
+    const width = Math.min(GAME_WIDTH, area.width - 40), height = Math.min(GAME_HEIGHT, area.height - 40);
+    const at = settings.gameBounds ?? { x: area.x + Math.round((area.width - width) / 2), y: area.y + Math.round((area.height - height) / 2) };
+    game.win.setBounds({
+      x: Math.max(area.x, Math.min(at.x, area.x + area.width - width)),
+      y: Math.max(area.y, Math.min(at.y, area.y + area.height - height)),
+      width, height,
+    });
+    game.win.setOpacity(1);
+    game.win.setIgnoreMouseEvents(false);
+    game.win.setFocusable(true);
+    game.win.setSkipTaskbar(false);
+    game.win.show();
+    game.win.focus();
+    if (game.win.webContents.isCrashed()) loadGame();
+  } else {
+    const { x, y } = game.win.getBounds();
+    settings.gameBounds = { x, y };
+    saveSettings();
+    parkGame();
+  }
+  game.win.webContents.setAudioMuted(true);
+  syncParked();
+  sendAuto(); // 遊戲叫出來（玩家在看）時自動功能先停，藏回去再繼續
+}
+
+// ── 自動補給、自動合成 ────────────────────────────────────
+
+const autoLog = []; // 最近的紀錄（設定視窗顯示）
+function sendAuto() {
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", settings.auto, game.shown, settings.lastHuntMap ?? null);
+  autoWin?.webContents.send("auto:status", autoStatus());
+}
+function autoStatus() {
+  const a = game.state?.auto;
+  return {
+    settings: settings.auto,
+    potions: potions.types,
+    towns: a?.towns ?? [],
+    huntMaps: a?.huntMaps ?? [],
+    lastHuntMap: game.state?.lastHuntMap ?? settings.lastHuntMap ?? null,
+    nation: a?.nation,
+    counts: a?.counts ?? null,
+    fusable: a?.fusable ?? null,
+    supplyOk: !!a?.supplyOk,
+    supplyState: a?.supplyState || "",
+    fuseOk: !!a?.fuseOk,
+    missing: a?.missing ?? bootPatch?.missing ?? [],
+    connected: game.state?.status === "ingame",
+    watching: game.shown,
+    log: autoLog.slice(-30),
+  };
+}
+ipcMain.on("game:auto-log", (e, entry) => {
+  if (!game.win || e.sender !== game.win.webContents || !entry || typeof entry.text !== "string") return;
+  const text = entry.text.slice(0, 200);
+  const line = `${new Date().toLocaleTimeString("zh-TW", { hour12: false })} ${text}`;
+  autoLog.push(line);
+  if (autoLog.length > 200) autoLog.splice(0, autoLog.length - 200);
+  logGame(`自動：${text}`);
+  // 頭上只冒重要的（開始補給、完成、出問題、合成結果），買了幾瓶這種細項只記在設定視窗
+  if (/^補給：回|補給完成|沒有完成|停止|完成：|金幣不夠|沒有賣|出錯|^倒下|^復活/.test(text)) notice(text);
+  autoWin?.webContents.send("auto:status", autoStatus());
+});
+
+let autoWin;
+function openAutoSettings() {
+  if (autoWin && !autoWin.isDestroyed()) return autoWin.focus();
+  autoWin = new BrowserWindow({
+    width: 520,
+    height: 720,
+    title: "自動補給與合成",
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "auto-preload.js") },
+  });
+  autoWin.loadFile(path.join(__dirname, "ui", "auto.html"));
+  autoWin.on("closed", () => (autoWin = undefined));
+}
+ipcMain.handle("auto:get", () => autoStatus());
+ipcMain.on("auto:set", (e, a) => {
+  if (!autoWin || e.sender !== autoWin.webContents) return;
+  settings.auto = cleanAuto(a);
+  saveSettings();
+  sendAuto();
+});
+// ── 掛機設置（照遊戲「設置」頁，讀寫都透過遊戲網頁裡的 window.__rajaPetPrefs，見 game-hook.js） ──
+let idleWin;
+function openIdleSettings() {
+  if (idleWin && !idleWin.isDestroyed()) return idleWin.focus();
+  idleWin = new BrowserWindow({
+    width: 520,
+    height: 760,
+    title: `掛機設置・${accountLabel()}`,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "idle-preload.js") },
+  });
+  idleWin.loadFile(path.join(__dirname, "ui", "idle.html"));
+  idleWin.on("closed", () => (idleWin = undefined));
+}
+const PREF_KEYS = new Set(["graphics", "effects", "soundOn", "soundVolume", "musicOn", "musicVolume", "shake", "potionAt", "hpItem", "mpItem",
+  "hold", "allyCast", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget"]);
+function inGame(code) {
+  if (!game.win || game.win.isDestroyed() || game.loading) return Promise.resolve({ ready: false });
+  return game.win.webContents.executeJavaScript(`window.__rajaPetPrefs ? ${code} : { ready: false }`).catch(() => ({ ready: false }));
+}
+const fromIdle = (e) => idleWin && !idleWin.isDestroyed() && e.sender === idleWin.webContents;
+handlers.set("idle:get", (e) => (fromIdle(e) ? inGame("window.__rajaPetPrefs.get()") : null));
+handlers.set("idle:set", (e, key, value) => {
+  if (!fromIdle(e) || !PREF_KEYS.has(key)) return null;
+  return inGame(`window.__rajaPetPrefs.set(${JSON.stringify(key)}, ${JSON.stringify(value ?? null)})`);
+});
+handlers.set("idle:share", (e, on) => {
+  if (!fromIdle(e)) return null;
+  return inGame(`window.__rajaPetPrefs.share(${typeof on === "boolean" ? on : "undefined"})`);
+});
+
+const toggleGame = () => showGame(!game.shown);
+
+// 沒登入的話開 Chrome 讓玩家自己登入（人機驗證只能自己點，而且桌寵自己的遊戲視窗過不了，見 login-browser.js）。
+// 遊戲視窗開著也一樣（例如玩家在裡面登出想換帳號）：把它收起來改開 Chrome，不讓玩家在桌寵的視窗裡登入（使用者 2026-11-21 指定）。
+let noStateReloaded = false;
+const loginTimer = setInterval(() => {
+  if (!game.win || game.win.isDestroyed() || game.asked || browserLogin || !game.loadedAt) return;
+  const waited = Date.now() - game.loadedAt;
+  const status = game.state?.status;
+  if ((status === "login" || status === "expired") && waited > LOGIN_WAIT_MS) {
+    game.asked = true;
+    startBrowserLogin();
+    return;
+  }
+  // 遊戲完全沒連上（連「還沒登入」都沒收到）：先重新載入一次，還是不行才把遊戲視窗叫出來給玩家看是怎麼了
+  if (!game.state && !game.shown && waited > NO_STATE_WAIT_MS) {
+    game.asked = true;
+    if (!noStateReloaded) {
+      noStateReloaded = true;
+      logGame("遊戲一直沒連上，重新載入");
+      loadGame();
+    } else {
+      notice("遊戲好像沒有連上，把遊戲視窗叫出來給你看看");
+      showGame(true);
+      game.autoShown = true; // 之後連上了就自己藏回去
+    }
+  }
+}, 2000);
+
+// ── 用 Chrome 登入，再把登入狀態接到桌寵的遊戲視窗 ─────────────────
+
+let browserLogin; // 進行中的 { promise, cancel }
+let pendingStorage; // 要在遊戲程式之前放進網頁的 localStorage／sessionStorage（game-preload.js 來拿一次）
+
+const SAME_SITE = { Strict: "strict", Lax: "lax", None: "no_restriction" };
+
+async function importLogin({ cookies, local, session: sess }) {
+  const jar = gameSession().cookies;
+  for (const c of cookies) {
+    const host = c.domain.replace(/^\./, "");
+    await jar.set({
+      url: `https://${host}${c.path || "/"}`,
+      name: c.name,
+      value: c.value,
+      ...(c.domain.startsWith(".") ? { domain: c.domain } : {}),
+      path: c.path || "/",
+      secure: !!c.secure,
+      httpOnly: !!c.httpOnly,
+      ...(c.expires > 0 ? { expirationDate: c.expires } : {}),
+      sameSite: SAME_SITE[c.sameSite] ?? "unspecified",
+    }).catch((e) => logGame(`Cookie ${c.name} 放不進去：${e.message}`));
+  }
+  pendingStorage = { local: local ?? {}, session: sess ?? {} };
+  await gameSession().cookies.flushStore().catch(() => {});
+  logGame(`從瀏覽器接回登入狀態：Cookie ${cookies.length} 個、設定 ${Object.keys(pendingStorage.local).length + Object.keys(pendingStorage.session).length} 項`);
+}
+ipcMain.on("game:pending-storage", (e) => {
+  e.returnValue = game.win && e.sender === game.win.webContents ? pendingStorage ?? null : null;
+  if (game.win && e.sender === game.win.webContents) pendingStorage = undefined;
+});
+
+// 遊戲自己的掛機設定（自動施放、自動喝藥、撿物賣物…）：桌寵記一份，載入時寫回遊戲（見 game-preload.js）
+function cleanPrefs(o) {
+  if (!o || typeof o !== "object") return undefined;
+  const out = {};
+  for (const [k, v] of Object.entries(o).slice(0, 50)) {
+    if (k.length <= 80 && PREF_RE.test(k) && typeof v === "string" && v.length <= 20000) out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+ipcMain.on("game:saved-prefs", (e) => {
+  e.returnValue = game.win && e.sender === game.win.webContents ? settings.gamePrefs ?? null : null;
+});
+ipcMain.on("game:prefs", (e, o) => {
+  if (!game.win || e.sender !== game.win.webContents) return;
+  const prefs = cleanPrefs(o);
+  if (!prefs || JSON.stringify(prefs) === JSON.stringify(settings.gamePrefs)) return;
+  settings.gamePrefs = prefs;
+  saveSettings();
+  logGame("記下遊戲的掛機設定（自動施放等）");
+});
+
+function startBrowserLogin() {
+  if (quitting || browserLogin) return;
+  if (!findBrowser()) {
+    notice("找不到 Chrome 或 Edge，只好用桌寵的遊戲視窗登入（人機驗證可能過不了）");
+    showGame(true);
+    return;
+  }
+  showGame(false);
+  const id = currentAccount();
+  const acct = id && accounts.find(id);
+  browserLogin = loginWithBrowser({
+    url: GAME_URL,
+    origin: GAME_ORIGIN,
+    userDataDir: loginDirOf(id),
+    onStatus: (t) => notice(t),
+    // 有記帳號就幫忙填帳號密碼（沒存密碼就只填帳號），人機驗證和按登入還是玩家自己來
+    fill: acct ? { username: acct.username, password: accounts.password(id) } : undefined,
+  });
+  browserLogin.promise
+    .then(async (got) => {
+      // 綁定帳號必須吻合，避免將另一個帳號的角色接到這隻娃娃。
+      let who;
+      try {
+        who = JSON.parse(got.local?.["idle:profileLogin"] || "null")?.username;
+      } catch {}
+      if (acct && (!who || who.toLowerCase() !== acct.username.toLowerCase())) throw new Error("登入帳號與這隻桌寵綁定的帳號不符，請重新登入指定帳號");
+      if (quitting || id !== currentAccount()) return; // 登入途中換了帳號，這份不是現在要的
+      await importLogin(got);
+      if (quitting) return;
+      notice("登入狀態接過來了，桌寵的遊戲重新連線中…");
+      game.asked = false;
+      loadGame();
+    })
+    .catch((e) => {
+      if (quitting) return;
+      logGame(`用瀏覽器登入沒有完成：${e.message}`);
+      notice(`登入沒有完成（${e.message}）。要再試一次請對我按右鍵「用 Chrome 登入」`);
+    })
+    .finally(() => { browserLogin = undefined; onChange(); });
+  onChange();
+}
+
+// ── 遊戲狀態 → 桌寵 ───────────────────────────────────────
+
+const STATUS_TEXT = { connecting: "連線中…", login: "還沒登入", kicked: "被踢下線（別的地方登入了）", expired: "登入過期，請重新登入", closed: "斷線，重新連線中…" };
+
+function describe(s) {
+  const c = s?.character;
+  const place = s?.roomName || s?.mapId || "";
+  return {
+    name: c?.name,
+    level: c?.level,
+    classId: c?.classId,
+    hp: c?.hp,
+    maxHp: c?.maxHp,
+    place: s?.status === "ingame" ? place : STATUS_TEXT[s?.status] ?? "載入中…",
+    doing: s?.status !== "ingame" ? "" : s.dead ? "倒下了" : s.town ? "在主城休息" : "狩獵中",
+    sleeping: s?.status === "ingame" && !!s.town,
+    offline: s?.status !== "ingame",
+  };
+}
+
+function lookOf(s) {
+  const c = s?.character;
+  if (!c) return undefined;
+  const sex = s.sex === 0 || s.sex === 1 ? s.sex : c.gender === 0 ? 0 : 1;
+  return { sex, gear: s.gear ?? [0, 0, 0, 0, 0], colors: s.colors ?? null };
+}
+
+const itemName = (id) => art.items[id] ?? `物品 ${id}`;
+
+/** 比較前後兩次狀態，找出要演出來的事：升級、經驗、金幣、撿到東西。 */
+function diffEvents(prev, next) {
+  const a = prev?.character, b = next?.character;
+  if (!a || !b || a.name !== b.name || prev.status !== "ingame" || next.status !== "ingame") return [];
+  const events = [];
+  if (b.level > a.level) events.push({ kind: "levelup", level: b.level });
+  else if (b.exp > a.exp) events.push({ kind: "exp", n: b.exp - a.exp });
+  if (b.gold > a.gold) events.push({ kind: "gold", n: b.gold - a.gold });
+  const loot = [];
+  // 剛連上時前一次的背包是空的（還沒收到），整個背包都會變成「撿到」：這種時候不算
+  const prevBagKnown = Object.keys(prev.bag ?? {}).length > 0;
+  for (const [id, n] of prevBagKnown ? Object.entries(next.bag ?? {}) : []) {
+    const before = prev.bag?.[id] ?? 0;
+    if (n > before) loot.push({ kind: "loot", name: itemName(id), n: n - before });
+  }
+  // 一次拿很多種（例如剛從倉庫拿出來）就不一個一個冒，只講前幾個
+  return events.concat(loot.slice(0, MAX_LOOT_SHOWN));
+}
+
+ipcMain.on("game:state", (e, s) => {
+  if (!game.win || e.sender !== game.win.webContents || !s || typeof s !== "object") return;
+  const prev = game.state;
+  if (s.status === "login" || s.status === "expired") s = { ...s, character: undefined };
+  game.state = s;
+  if (s.status === "ingame" && s.lastHuntMap && /^[A-Za-z0-9_-]{1,64}$/.test(s.lastHuntMap.id) &&
+      (settings.lastHuntMap?.id !== s.lastHuntMap.id || settings.lastHuntMap?.name !== s.lastHuntMap.name)) {
+    settings.lastHuntMap = { id: s.lastHuntMap.id, name: String(s.lastHuntMap.name || s.lastHuntMap.id).slice(0, 100) };
+    saveSettings();
+  }
+  if (prev?.status !== s.status) {
+    logGame(`狀態：${s.status}`);
+    if (s.status === "kicked") notice("在別的地方登入了，這邊被踢下線。要接回來請對我按右鍵「重新連線」");
+    if (s.status === "ingame" && game.shown && game.autoShown) showGame(false);
+    if (s.status === "ingame") {
+      // 登入資料（Cookie、localStorage）瀏覽器是隔一陣子才寫進硬碟的；程式被強制結束、當機、關機時還沒寫的就沒了，
+      // 下次打開會接回舊帳號（2026-11-21 換帳號時踩到）。進到遊戲就馬上寫一次
+      setTimeout(() => {
+        const ses = gameSession();
+        ses.flushStorageData();
+        ses.cookies.flushStore().catch(() => {});
+      }, 3000);
+      game.autoShown = false;
+      game.asked = false; // 之後又變成沒登入（登出、過期）時可以再開 Chrome
+      noStateReloaded = false;
+    }
+    syncParked();
+  }
+  sendState();
+  onChange();
+  queueEvents(diffEvents(prev, s));
+  if (autoWin && (prev?.status !== s.status || JSON.stringify(prev?.auto) !== JSON.stringify(s.auto) || JSON.stringify(prev?.lastHuntMap) !== JSON.stringify(s.lastHuntMap))) autoWin.webContents.send("auto:status", autoStatus());
+  if (prev && prev.town !== s.town) logGame(s.town ? `回到主城（${s.roomName ?? s.mapId}）` : `出城：${s.roomName ?? s.mapId}`);
+});
+
+// 打怪時狀態大約每 0.3 秒就變一次，一筆一筆冒字太吵：經驗、金幣、撿到的東西累積 EVENT_BATCH_MS 再一起冒；升級馬上演
+const EVENT_BATCH_MS = 2500;
+let pendingEvents = [];
+let eventTimer;
+function queueEvents(events) {
+  if (!events.length) return;
+  if (events.some((e) => e.kind === "levelup")) {
+    flushEvents(events);
+    return;
+  }
+  pendingEvents.push(...events);
+  eventTimer ??= setTimeout(() => flushEvents([]), EVENT_BATCH_MS);
+}
+function flushEvents(extra) {
+  clearTimeout(eventTimer);
+  eventTimer = undefined;
+  const all = pendingEvents.concat(extra);
+  pendingEvents = [];
+  const sum = (kind) => all.filter((e) => e.kind === kind).reduce((n, e) => n + e.n, 0);
+  const loot = new Map();
+  for (const e of all) if (e.kind === "loot") loot.set(e.name, (loot.get(e.name) ?? 0) + e.n);
+  const out = [
+    ...all.filter((e) => e.kind === "levelup").slice(-1),
+    ...(sum("exp") ? [{ kind: "exp", n: sum("exp") }] : []),
+    ...(sum("gold") ? [{ kind: "gold", n: sum("gold") }] : []),
+    ...[...loot].slice(0, MAX_LOOT_SHOWN).map(([name, n]) => ({ kind: "loot", name, n })),
+  ];
+  if (!out.length) return;
+  petWin?.webContents.send("pet:events", out);
+  if (process.argv.includes("--snap")) logGame(`事件：${out.map((e) => (e.kind === "loot" ? `${e.name}×${e.n}` : `${e.kind} ${e.n ?? e.level}`)).join("、")}`);
+}
+
+function sendState() {
+  if (!petWin || petWin.isDestroyed()) return;
+  petWin.webContents.send("pet:state", { ...describe(game.state), account: accountLabel(), status: game.state?.status || "connecting" });
+  const look = lookOf(game.state);
+  const key = JSON.stringify(look);
+  if (key !== game.lastLook) {
+    game.lastLook = key;
+    petWin.webContents.send("pet:look", look);
+  }
+}
+
+// ── 角色圖：從遊戲站抓，存在本機 ──────────────────────────
+
+const ASSET_RE = /^assets\/players\/[01]\/(movement\.json|movement-\d+\.webp|gear\/\d+\.json|gear\/\d+-\d+\.webp)$/;
+const assetFetches = new Map();
+
+async function getAsset(rel) {
+  if (typeof rel !== "string" || !ASSET_RE.test(rel)) throw new Error("bad asset path");
+  const file = path.join(app.getPath("userData"), "assets", ...rel.split("/"));
+  try {
+    const st = fs.statSync(file);
+    if (Date.now() - st.mtimeMs < ASSET_KEEP_MS) return fs.readFileSync(file);
+  } catch {}
+  if (!assetFetches.has(rel)) {
+    assetFetches.set(rel, (async () => {
+      try {
+        const res = await gameSession().fetch(`${GAME_ORIGIN}/${rel}`);
+        // 網站找不到檔案會回首頁（200 + HTML），不能當成圖存
+        if (!res.ok || (res.headers.get("content-type") || "").includes("text/html")) throw new Error(`HTTP ${res.status}`);
+        const buf = Buffer.from(await res.arrayBuffer());
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, buf);
+        return buf;
+      } catch (e) {
+        if (fs.existsSync(file)) return fs.readFileSync(file); // 舊的總比沒有好
+        throw e;
+      } finally {
+        assetFetches.delete(rel);
+      }
+    })());
+  }
+  return assetFetches.get(rel);
+}
+ipcMain.handle("pet:asset", (_e, rel) => getAsset(rel));
+ipcMain.handle("pet:art", () => ({ gear: art.gear, order: art.order, layerOrders: art.layerOrders, actions: art.actions }));
+
+// ── 桌寵視窗 ──────────────────────────────────────────────
+
+function createPetWindow() {
+  const area = screen.getPrimaryDisplay().workArea;
+  petWin = new BrowserWindow({
+    x: area.x,
+    y: area.y + area.height - PET_STRIP_HEIGHT,
+    width: area.width,
+    height: PET_STRIP_HEIGHT,
+    transparent: true,
+    frame: false,
+    resizable: false,
+    movable: false,
+    skipTaskbar: true,
+    focusable: false,
+    hasShadow: false,
+    alwaysOnTop: true,
+    webPreferences: { preload: path.join(__dirname, "pet-preload.js") },
+  });
+  petWin.setAlwaysOnTop(true, "screen-saver");
+  petWin.on("minimize", () => {
+    petWin.restore();
+    petWin.setAlwaysOnTop(true, "screen-saver");
+  });
+  petWin.setIgnoreMouseEvents(true, { forward: true });
+  petWin.loadFile(path.join(__dirname, "pet", "index.html"));
+  petWin.webContents.on("did-finish-load", () => {
+    petInteractive = false;
+    petWin.setIgnoreMouseEvents(true, { forward: true });
+    petWin.webContents.send("pet:size", settings.size);
+    petWin.webContents.send("pet:stay", settings.stay);
+    if (clickThrough) petWin.webContents.send("pet:click-through", true);
+    petWin.webContents.send("pet:position", (slot + 1) / 6);
+    game.lastLook = undefined;
+    sendState();
+  });
+}
+
+ipcMain.on("pet:interactive", (e, on) => {
+  if (!petWin || petWin.isDestroyed() || e.sender !== petWin.webContents) return;
+  // renderer 已在勿擾模式下檢查 Ctrl；此處仍須接受暫時互動，否則永遠收不到右鍵。
+  petInteractive = on === true;
+  petWin.setIgnoreMouseEvents(!petInteractive, { forward: true });
+});
+ipcMain.on("pet:toggle-game", toggleGame);
+ipcMain.on("pet:menu", () => buildMenu().popup({ window: petWin }));
+
+function notice(text) {
+  if (quitting || clickThrough) return;
+  if (petShown() && !clickThrough) petWin.webContents.send("pet:notice", text);
+  else if (Notification.isSupported()) new Notification({ title: "龍族桌寵", body: text }).show();
+}
+
+const petShown = () => !!petWin && petWin.isVisible() && !petWin.isMinimized();
+function showPet() {
+  if (petWin.isMinimized()) petWin.restore();
+  petWin.showInactive();
+  petWin.setAlwaysOnTop(true, "screen-saver");
+}
+
+function setClickThrough(on) {
+  clickThrough = on;
+  if (on) petInteractive = false;
+  petWin.setIgnoreMouseEvents(!petInteractive, { forward: true });
+  petWin.webContents.send("pet:click-through", on);
+}
+
+function setSize(size) {
+  settings.size = size;
+  saveSettings();
+  petWin.webContents.send("pet:size", size);
+}
+
+function setStay(on) {
+  settings.stay = on;
+  saveSettings();
+  petWin.webContents.send("pet:stay", on);
+}
+
+function setAutoStart(on) {
+  settings.autoStart = on;
+  saveSettings();
+  if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: on });
+}
+
+function reconnect() {
+  game.state = undefined;
+  sendState();
+  loadGame();
+}
+
+function buildMenu() {
+  const s = game.state;
+  return Menu.buildFromTemplate([
+    { label: `${accountLabel()}・${s?.character?.name ? `${s.character.name}（Lv.${s.character.level}）` : "尚未登入角色"}`, enabled: false },
+    { type: "separator" },
+    { label: game.shown ? "藏起遊戲視窗" : "顯示遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
+    { label: "重新連線（重新載入遊戲）", click: reconnect },
+    ...(browserLogin ? [{ label: "登入好了，接到桌寵（幫你關掉 Chrome）", click: () => browserLogin?.done() }] : []),
+    browserLogin
+      ? { label: "取消用 Chrome 登入", click: () => browserLogin?.cancel() }
+      : { label: currentAccount() ? "重新登入（開 Chrome，幫你填帳號密碼）…" : "登入（開 Chrome）…", click: startBrowserLogin },
+    ...managerMenu(),
+    { type: "separator" },
+    { label: "掛機設置…", click: openIdleSettings },
+    { label: "自動補給與合成…", click: openAutoSettings },
+    { label: "原地不走動", type: "checkbox", checked: settings.stay, click: (i) => setStay(i.checked) },
+    { label: "大小", submenu: SIZE_CHOICES.map((n) => ({ label: `${n}%`, type: "radio", checked: settings.size === n, click: () => setSize(n) })) },
+    { label: "專注模式（滑鼠穿過桌寵）", type: "checkbox", accelerator: CLICK_THROUGH_KEY, checked: clickThrough, click: (i) => setClickThrough(i.checked) },
+    { label: "開機自動啟動", type: "checkbox", checked: app.isPackaged ? app.getLoginItemSettings().openAtLogin : false, enabled: app.isPackaged, click: (i) => setAutoStart(i.checked) },
+    { type: "separator" },
+    { label: "關閉這隻桌寵", click: onClose },
+    { label: "結束全部桌寵", click: () => app.quit() },
+  ]);
+}
+
+
+  return {
+    accountId, events, handlers,
+    owns(sender) { return [petWin, game.win, autoWin, idleWin].some(w => w && !w.isDestroyed() && w.webContents === sender); },
+    start() { loadSettings(); createPetWindow(); createGame(); },
+    show: showPet, toggleGame, login: startBrowserLogin, openAutoSettings, openIdleSettings, say: notice,
+    finishLogin() { browserLogin?.done(); },
+    menu: buildMenu,
+    focusMode() { setClickThrough(!clickThrough); },
+    async snapshot(dir, suffix = "") {
+      if (quitting) return;
+      fs.writeFileSync(path.join(dir, `snap-pet${suffix}.png`), (await petWin.webContents.capturePage()).toPNG());
+      fs.writeFileSync(path.join(dir, `snap-game${suffix}.png`), (await game.win.webContents.capturePage()).toPNG());
+      if (autoWin) fs.writeFileSync(path.join(dir, `snap-auto${suffix}.png`), (await autoWin.webContents.capturePage()).toPNG());
+      if (idleWin) fs.writeFileSync(path.join(dir, `snap-idle${suffix}.png`), (await idleWin.webContents.capturePage()).toPNG());
+      const s = game.state ? { ...game.state, bag: Object.keys(game.state.bag ?? {}).length } : null;
+      fs.writeFileSync(path.join(dir, `snap-state${suffix}.json`), JSON.stringify({ accountId, shown: game.shown, state: s, describe: describe(game.state), look: lookOf(game.state) }, null, 1));
+    },
+    info() { return { accountId, label: accountLabel(), status: game.state?.status || "connecting", character: game.state?.character?.name || "", level: game.state?.character?.level, loggingIn: !!browserLogin }; },
+    dispose() {
+      quitting = true;
+      browserLogin?.cancel();
+      clearInterval(loginTimer); clearTimeout(game.retryTimer); clearTimeout(eventTimer);
+      pendingStorage = undefined; pendingEvents = [];
+      for (const w of [autoWin, idleWin, game.win, petWin]) if (w && !w.isDestroyed()) w.destroy();
+    },
+  };
+};
