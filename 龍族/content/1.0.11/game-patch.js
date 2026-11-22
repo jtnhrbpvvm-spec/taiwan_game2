@@ -32,7 +32,11 @@ const FINDERS = [
   { keys: ["unitOf"], re: new RegExp(`function (${N})\\(e,t\\)\\{let n=${N}\\(e\\);if\\(!n\\|\\|n\\.price<=0\\)return;`) },
   // 遊戲自己的「進房間」（傳送用的就是它，會順便更新遊戲記住的目前地圖）
   // （遊戲 2026-11-21 改版多了第 4 個參數 r=`orig`、區域變數也換名字，所以參數和變數名都放寬）
-  { keys: ["joinRoom"], re: new RegExp(`async function (${N})\\(e,t=\\{\\},n=!1(?:,${N}=[^)]*)?\\)\\{let ${N}=\\+\\+${N},${N}=${N}\\(\\)\\.room`) },
+  // （遊戲 2026-11-22 beta-v1.2.2318 起外面多包一層：同樣的進房間請求同時只送一次，真正做事的函式沒有預設參數了；先找外層，找不到再找舊樣式）
+  { keys: ["joinRoom"], res: [
+    new RegExp(`function (${N})\\(e,t=\\{\\},n=!1(?:,${N}=[^)]*)?\\)\\{let ${N}=JSON\\.stringify\\(\\[e,t,n`),
+    new RegExp(`async function (${N})\\(e,t=\\{\\},n=!1(?:,${N}=[^)]*)?\\)\\{let ${N}=\\+\\+${N},${N}=${N}\\(\\)\\.room`),
+  ] },
   // 自動戰鬥開關
   { keys: ["toggleAuto"], re: new RegExp(`function (${N})\\(\\)\\{${N}=!1,${N}=0,${N}\\(\\)\\.toggleAutoLock\\(\\);`) },
   // 各國主城清單（mapId、name、nation、npcs）
@@ -82,7 +86,8 @@ const FINDERS = [
 function patchBoot(code) {
   const found = {}, missing = [];
   for (const f of FINDERS) {
-    const m = code.match(f.re);
+    let m = null;
+    for (const re of f.res || [f.re]) if ((m = code.match(re))) break; // 有好幾種樣式的：依序試，第一個找到的算
     f.keys.forEach((k, i) => (m ? (found[k] = m[i + 1]) : missing.push(k)));
   }
   // 每個各自 try：萬一某個名字不在最外層（拿不到），不會連累其他的

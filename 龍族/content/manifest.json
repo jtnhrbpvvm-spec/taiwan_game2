@@ -1,5 +1,5 @@
 {
-  "version": "1.0.9",
+  "version": "1.0.11",
   "shell": 1,
   "files": [
     {
@@ -29,8 +29,8 @@
     },
     {
       "path": "codex-data.js",
-      "sha256": "d78a266939537ec091c502697ce16439bd8ed02a1f3bd7ca2a3ef718000c8959",
-      "size": 239405
+      "sha256": "53752667e84234300b18f7ae975512cd682f43052bb2bb0ed75e71a6c60da215",
+      "size": 239773
     },
     {
       "path": "codex-preload.js",
@@ -39,18 +39,18 @@
     },
     {
       "path": "companion.js",
-      "sha256": "2b6e1a86005a40f468a63514c56c430586616c708c2e3d058439c1187841a0f3",
-      "size": 47167
+      "sha256": "dd3e0715c1cb229e4289ed38cc2a89d9010893c349363a9d60b8617f03ab7b1d",
+      "size": 50837
     },
     {
       "path": "game-hook.js",
-      "sha256": "2c9e27aa6e1a498ee6e2bbb28bdb3f38b7fa018f6fb117cae7ccb7ab3d38f981",
-      "size": 91707
+      "sha256": "c472b3fe034157c8d6cfbfe17af1278fbf25bee2ccee9ae2a6dc74017de3e46b",
+      "size": 92901
     },
     {
       "path": "game-patch.js",
-      "sha256": "51f8db98ad5802c33393304da3ec58e37eb6c6a75a735be4023a933147e32a49",
-      "size": 10014
+      "sha256": "49f6f00ce6bc002708a6e612658d635a7e36b57a959f39374607aa3dc2296e5d",
+      "size": 10453
     },
     {
       "path": "game-preload.js",
@@ -84,8 +84,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "330d6f5bb081dba640e0e6dbf2fa42d54f18cd1ea09055721e55c2d041fe6cef",
-      "size": 19685
+      "sha256": "c057ddf5e2d4004d4c59b7fc0f17be034408266924cc99aaacce7ea9d26f21a0",
+      "size": 20174
     },
     {
       "path": "pet-preload.js",
@@ -194,13 +194,13 @@
     },
     {
       "path": "ui/team.html",
-      "sha256": "71350826ef3025889dd3ab29289e6ced9690ef23620644991d78e76fa99d1f39",
-      "size": 3504
+      "sha256": "60ad0dcce982c8b140252b4c24b62484e9860574fa96cf8adb15151c3a8e9ea3",
+      "size": 4058
     },
     {
       "path": "ui/team.js",
-      "sha256": "4d153c6612e65255f62df1e8366d2bd9873f2f2a3c36064e389e880da830eefc",
-      "size": 4948
+      "sha256": "c4f5be574fafc94e8618213367187bc607846d31425a58090ac923b50fef3825",
+      "size": 6131
     }
   ]
 }

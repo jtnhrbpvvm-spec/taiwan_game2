@@ -503,15 +503,23 @@ handlers.set("idle:share", (e, on) => {
 
 const toggleGame = () => showGame(!game.shown);
 
-// 沒登入的話開 Chrome 讓玩家自己登入（人機驗證只能自己點，而且桌寵自己的遊戲視窗過不了，見 login-browser.js）。
+// 沒登入的話開 Chrome 讓玩家自己登入（人機驗證只能自己點，而且桌寵自己的遊戲視窗過不了，見 login-browser.js；
+// 2026-11-22 又試過在遊戲視窗登入：Cloudflare 時過時不過，不開除錯埠也會要求手動勾、勾了也失敗，所以維持 Chrome）。
 // 遊戲視窗開著也一樣（例如玩家在裡面登出想換帳號）：把它收起來改開 Chrome，不讓玩家在桌寵的視窗裡登入（使用者 2026-11-21 指定）。
 let noStateReloaded = false;
 const loginTimer = setInterval(() => {
-  if (!game.win || game.win.isDestroyed() || game.asked || browserLogin || !game.loadedAt) return;
+  if (!game.win || game.win.isDestroyed() || game.asked || browserLogin || !game.loadedAt || game.loading) return;
   const waited = Date.now() - game.loadedAt;
   const status = game.state?.status;
   if ((status === "login" || status === "expired") && waited > LOGIN_WAIT_MS) {
     game.asked = true;
+    // 剛從 Chrome 接回登入狀態、遊戲卻還是沒登入：不要馬上又開 Chrome（會先把剛接回的資料清掉，變成一直重登），讓玩家決定
+    if (game.importedAt && Date.now() - game.importedAt < 2 * 60 * 1000) {
+      game.importedAt = 0;
+      logGame(`接回登入狀態後遊戲還是「${STATUS_TEXT[status] || status}」，先不自動重開 Chrome`);
+      notice("接回登入狀態後遊戲還是沒登入：要再試請對我按右鍵「重新登入」");
+      return;
+    }
     startBrowserLogin();
     return;
   }
@@ -555,11 +563,13 @@ async function importLogin({ cookies, local, session: sess }) {
   }
   pendingStorage = { local: local ?? {}, session: sess ?? {} };
   await gameSession().cookies.flushStore().catch(() => {});
-  logGame(`從瀏覽器接回登入狀態：Cookie ${cookies.length} 個、設定 ${Object.keys(pendingStorage.local).length + Object.keys(pendingStorage.session).length} 項`);
+  game.importedAt = Date.now();
+  // 只記名字（不記內容：裡面有登入用的 id），方便查接回後為什麼沒登入
+  logGame(`從瀏覽器接回登入狀態：Cookie ${cookies.length} 個（${cookies.map((c) => c.name).join("、")}）、設定 ${Object.keys(pendingStorage.local).length + Object.keys(pendingStorage.session).length} 項（${Object.keys(pendingStorage.local).join("、")}）`);
 }
+// 接回來的登入資料留到真的進遊戲（ingame）才丟：中途重新載入（斷線重連、載入失敗重試）時每次都再放一次，不會弄丟
 ipcMain.on("game:pending-storage", (e) => {
   e.returnValue = game.win && e.sender === game.win.webContents ? pendingStorage ?? null : null;
-  if (game.win && e.sender === game.win.webContents) pendingStorage = undefined;
 });
 
 // 遊戲自己的掛機設定（自動施放、自動喝藥、撿物賣物…）：桌寵記一份，載入時寫回遊戲（見 game-preload.js）
@@ -583,6 +593,39 @@ ipcMain.on("game:prefs", (e, o) => {
   logGame("記下遊戲的掛機設定（自動施放等）");
 });
 
+/**
+ * 登入前先清乾淨（使用者 2026-11-22）：桌寵遊戲視窗帶著舊的登入憑證（Cookie session=scoped）連著伺服器時，
+ * 同一個帳號又在 Chrome 重新登入，伺服器會卡住（Chrome 一直「伺服器回應太慢」）或互踢。所以：
+ *   1. 桌寵的遊戲視窗先離開遊戲（about:blank，斷線），清掉遊戲網站的 Cookie、localStorage 等登入資料（遊戲設定照樣由 gamePrefs 寫回）
+ *   2. 登入用的 Chrome 設定檔整個刪掉，從乾淨的登入頁開始（刪不掉＝之前開的登入 Chrome 還開著，請玩家先關掉）
+ * 回傳清遊戲視窗的 Promise（接回登入狀態前要等它清完）；Chrome 設定檔刪不掉時回傳 null。
+ */
+function cleanBeforeLogin(id) {
+  const dir = loginDirOf(id);
+  try {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 2 });
+  } catch (e) {
+    logGame(`登入用的 Chrome 設定檔刪不掉（${e.code || e.message}）：之前開的登入 Chrome 可能還開著`);
+    notice("之前開的登入用 Chrome 還開著：請先把它關掉，再對我按右鍵「重新登入」");
+    return null;
+  }
+  const win = game.win;
+  return (async () => {
+    try {
+      if (win && !win.isDestroyed()) await win.loadURL("about:blank").catch(() => {});
+      game.state = undefined;
+      sendState();
+      const ses = gameSession();
+      await ses.clearStorageData({ origin: GAME_ORIGIN, storages: ["cookies", "localstorage", "indexdb", "serviceworkers", "cachestorage", "websql"] });
+      await ses.cookies.flushStore().catch(() => {});
+      ses.flushStorageData();
+      logGame("登入前清掉遊戲視窗的舊登入資料、登入用 Chrome 的設定檔");
+    } catch (e) {
+      logGame(`清遊戲視窗的登入資料沒成功：${e.message}`);
+    }
+  })();
+}
+
 function startBrowserLogin() {
   if (quitting || browserLogin) return;
   if (!findBrowser()) {
@@ -593,6 +636,8 @@ function startBrowserLogin() {
   showGame(false);
   const id = currentAccount();
   const acct = id && accounts.find(id);
+  const cleaned = cleanBeforeLogin(id);
+  if (!cleaned) return;
   browserLogin = loginWithBrowser({
     url: GAME_URL,
     origin: GAME_ORIGIN,
@@ -610,16 +655,23 @@ function startBrowserLogin() {
       } catch {}
       if (acct && (!who || who.toLowerCase() !== acct.username.toLowerCase())) throw new Error("登入帳號與這隻桌寵綁定的帳號不符，請重新登入指定帳號");
       if (quitting || id !== currentAccount()) return; // 登入途中換了帳號，這份不是現在要的
+      await cleaned;
       await importLogin(got);
       if (quitting) return;
       notice("登入狀態接過來了，桌寵的遊戲重新連線中…");
       game.asked = false;
+      // 重新算等待時間：不然「遊戲一直沒連上」的計時（從登入前的 about:blank 算起）會馬上又重新載入一次，
+      // 把剛載入、已經拿走登入資料的那次打斷（2026-11-22 實測：接回後變成「還沒登入」又開 Chrome）
+      game.loadedAt = Date.now();
+      noStateReloaded = false;
       loadGame();
     })
     .catch((e) => {
       if (quitting) return;
       logGame(`用瀏覽器登入沒有完成：${e.message}`);
-      notice(`登入沒有完成（${e.message}）。要再試一次請對我按右鍵「用 Chrome 登入」`);
+      notice(`登入沒有完成（${e.message}）。要再試一次請對我按右鍵「重新登入」`);
+      // 遊戲視窗登入前被斷線了：載回遊戲（會停在登入頁）
+      cleaned.then(() => { if (!quitting && game.win && !game.win.isDestroyed()) loadGame(); });
     })
     .finally(() => { browserLogin = undefined; onChange(); });
   onChange();
@@ -699,6 +751,7 @@ ipcMain.on("game:state", (e, s) => {
       game.autoShown = false;
       game.asked = false; // 之後又變成沒登入（登出、過期）時可以再開 Chrome
       noStateReloaded = false;
+      pendingStorage = undefined; // 接回的登入資料已經用上了
     }
     syncParked();
   }
@@ -706,7 +759,8 @@ ipcMain.on("game:state", (e, s) => {
   onChange();
   queueEvents(diffEvents(prev, s));
   if (autoWin && (prev?.status !== s.status || JSON.stringify(prev?.auto) !== JSON.stringify(s.auto) || JSON.stringify(prev?.lastHuntMap) !== JSON.stringify(s.lastHuntMap))) autoWin.webContents.send("auto:status", autoStatus());
-  if (prev && prev.town !== s.town) logGame(s.town ? `回到主城（${s.roomName ?? s.mapId}）` : `出城：${s.roomName ?? s.mapId}`);
+  // 斷線重連的一瞬間房間名稱、地圖都還沒有：那次不記（不然會記成「出城：undefined」）
+  if (prev && prev.town !== s.town && (s.roomName ?? s.mapId)) logGame(s.town ? `回到主城（${s.roomName ?? s.mapId}）` : `出城：${s.roomName ?? s.mapId}`);
 });
 
 // 打怪時狀態大約每 0.3 秒就變一次，一筆一筆冒字太吵：經驗、金幣、撿到的東西累積 EVENT_BATCH_MS 再一起冒；升級馬上演

@@ -298,8 +298,9 @@
         nextTeamAt = 0;
         teamInvited = {};
         teamWentTown = false;
-        // 開始組隊時記下自動戰鬥的樣子，進私人房後照這個恢復
-        try { if (team) teamAutoMode = (G().state().auto && G().state().auto.mode) || autoBeforeDeath; } catch {}
+        // 組隊練功一律開自動戰鬥（使用者 2026-11-22：進地圖後沒馬上開打——在主城時自動戰鬥是關的，原本照「開始組隊時的樣子」恢復就一直關著）
+        if (team) teamAutoMode = "auto";
+        teamAutoDone = false;
       }
     }
   });
@@ -421,7 +422,7 @@
   //   邀請 party{act:"invite",name}、接受 party{act:"accept"}（收到的邀請在 state.partyAsk {id,from}）、建隊 party{act:"create",open:false}、離隊 party{act:"leave"}
   //   隊長帶隊去私人房＝joinRoom(地圖,{hunt:"private"})，伺服器把房間記在 state.party.destination {from,mapId,code}，隊員收到「隊長出發」
   //   隊員「跟上隊伍」＝joinRoom(destination.mapId,{code})；倒下、補給回來也用同一個 code 回到同一間
-  let TEAM = null, teamStartAt = 0, nextTeamAt = 0, teamInvited = {}, teamWentTown = false, teamAutoMode, teamLeaveDone = 0;
+  let TEAM = null, teamStartAt = 0, nextTeamAt = 0, teamInvited = {}, teamWentTown = false, teamAutoMode, teamLeaveDone = 0, teamAutoDone = false;
   const partyNow = () => { try { return G().state().party || null; } catch { return null; } };
   const roomCode = () => { try { const st = G().state(); return st.room && st.room.status === "in" ? st.roomMeta && st.roomMeta.code : undefined; } catch { return undefined; } };
   const myName = () => (S.character && S.character.name) || "";
@@ -433,10 +434,12 @@
     if (r && r.error) throw new Error(errText(r.error));
     return r;
   }
+  /** 自動戰鬥恢復成 mode：auto＝開（用 setAuto，manual 時也能直接開；toggleAuto 從 manual 會切成 locked＝關），locked＝關。 */
   function restoreAuto(mode) {
     const g = G();
     const now = g.state().auto && g.state().auto.mode;
-    if (mode && now !== mode && g.toggleAuto) g.toggleAuto();
+    if (mode === "auto" && now !== "auto") g.net.post({ op: "setAuto", locked: false });
+    else if (mode === "locked" && now === "auto" && g.toggleAuto) g.toggleAuto();
   }
   /** 隊長帶隊伍進私人房（隊員會收到「隊長出發」）。 */
   async function enterPrivate(team) {
@@ -462,7 +465,8 @@
     if (!(await waitFor(() => roomCode() === dest.code, 20000))) throw new Error("等太久還沒進到隊伍的房間");
     clearPartyGo();
     await sleep(1000);
-    restoreAuto(autoMode || teamAutoMode);
+    // 組隊練功中一律開自動戰鬥（倒下前若是關著，autoMode 會是 locked，照它恢復弓手就一直不打：2026-11-22 實測）
+    restoreAuto(TEAM ? teamAutoMode : autoMode || teamAutoMode);
     log(`${what}，回到隊伍的房間（${dest.from} 帶隊）繼續打`);
   }
   /** 組隊的人互加好友（遊戲「社交」的加好友；使用者 2026-11-22：先變好友比較好組隊）。每個人只試一次。 */
@@ -503,6 +507,9 @@
     const st = g.state(), party = st.party || null;
     // 已經在「隊長出發」說的那間房（或自己就是隊長）：對話框不用留著
     if (st.partyGo && (roomCode() === st.partyGo.code || st.partyGo.from === me)) clearPartyGo();
+    // 開始組隊時已經在隊伍的房間（例如剛復活回來）就不會再進一次房間：這種時候也要把自動戰鬥開起來（每次開始組隊做一次）
+    const dest0 = party && party.destination;
+    if (!teamAutoDone && dest0 && roomCode() === dest0.code) { teamAutoDone = true; restoreAuto(teamAutoMode); }
     await ensureFriends(team.role === "member" ? [team.leader] : team.members || []);
     if (team.role === "member") {
       if (party && party.leader !== team.leader) { await partyReq({ act: "leave" }); log(`組隊：先離開原本 ${party.leader} 的隊伍`); return; }
@@ -998,8 +1005,7 @@
     if (err2) throw new Error(`回不了狩獵地圖「${target.name}」（${err2}）`);
     if (!(await waitFor(() => !S.town && S.mapId === target.id, 20000))) throw new Error(`等太久還沒進到狩獵地圖「${target.name}」`);
     await sleep(1000);
-    const now = g.state().auto && g.state().auto.mode;
-    if (autoMode && now !== autoMode && g.toggleAuto) g.toggleAuto();
+    restoreAuto(autoMode);
     log(`${what}，回到「${target.name}」繼續打`);
     await walkBackToSpot(autoMode);
   }
@@ -1075,7 +1081,8 @@
   //   被別的怪貼身（目前目標在 3 格內）就先照自動戰鬥打掉再找（使用者 2026-11-22 選「先打身邊的再找」）。
   let lastSeekAt = 0, seekMissUntil = 0, seekNo = 0, seekPending = false;
   function mobTick() {
-    const sup = AUTO && AUTO.supply;
+    // 組隊練功有指定怪物就用組隊的（只在組隊那張圖），不然用自動補給設定裡的
+    const sup = TEAM && TEAM.mob ? { huntMob: TEAM.mob, huntMobMap: TEAM.mapId || "" } : AUTO && AUTO.supply;
     const no = sup && sup.huntMob;
     const g = G();
     const mode = g && g.state && (g.state().auto || {}).mode;
@@ -1110,7 +1117,7 @@
   setInterval(() => { try { mobTick(); } catch {} }, 1500);
   /** 設定視窗顯示用：指定怪物現在在做什麼。 */
   function mobState() {
-    const sup = AUTO && AUTO.supply;
+    const sup = TEAM && TEAM.mob ? { huntMob: TEAM.mob, huntMobMap: TEAM.mapId || "" } : AUTO && AUTO.supply;
     if (!sup || !sup.huntMob) return "";
     if (walking) return "走回倒下的地方中";
     if (watching) return "遊戲視窗開著，暫停找怪";
@@ -1262,7 +1269,9 @@
     try { target = huntTarget(scfg); } catch {}
     const autoMode = autoBeforeDeath;
     // 復活回到同一張練功圖後要不要走回倒下的地方（設定預設開著）
-    pendingSpot = rcfg.spot !== false && deathSpot && Date.now() - deathSpot.at < SPOT_TTL_MS ? deathSpot : null;
+    // 組隊練功時照組隊頁的勾選，不然照自動復活設定
+    const wantSpot = TEAM && typeof TEAM.spot === "boolean" ? TEAM.spot : rcfg.spot !== false;
+    pendingSpot = wantSpot && deathSpot && Date.now() - deathSpot.at < SPOT_TTL_MS ? deathSpot : null;
     log(`倒下了：回「${town.name}」念咒語復活`);
     if (!(S.town && S.mapId === town.mapId)) {
       const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");

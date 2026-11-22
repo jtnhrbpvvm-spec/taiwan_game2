@@ -140,10 +140,16 @@ ipcMain.handle("team:start", (e, req) => {
   if (members.length > 7) return { error: "遊戲隊伍最多 8 人" };
   const map = L.huntMaps.find((m) => m.id === req.mapId);
   if (!map) return { error: "請選要去的練功地圖" };
+  // 指定怪物（這張圖的怪，0＝不指定）、倒下復活後走回倒下的地方（使用者 2026-11-22 加在組隊頁）
+  const mobNo = Number(req.mob) || 0;
+  const mob = mobNo && (map.monsters || []).find((m) => m.no === mobNo);
+  if (mobNo && !mob) return { error: "指定的怪物不在這張地圖" };
+  const spot = req.spot !== false;
   stopTeam();
-  currentTeam = { leaderId: req.leaderId, memberIds, mapId: map.id, mapName: map.name, startedAt: Date.now() };
-  leader.setTeam({ role: "leader", members: members.map((m) => m.name), mapId: map.id, mapName: map.name });
-  for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name });
+  currentTeam = { leaderId: req.leaderId, memberIds, mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0, mobName: mob ? mob.name : "", spot, startedAt: Date.now() };
+  const shared = { mapId: map.id, mob: mob ? mob.no : 0, spot };
+  leader.setTeam({ role: "leader", members: members.map((m) => m.name), mapName: map.name, ...shared });
+  for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name, ...shared });
   sendTeamStatus();
   return {};
 });

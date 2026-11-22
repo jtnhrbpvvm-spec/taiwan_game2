@@ -14,6 +14,21 @@ function petLine(p) {
     (p.teamState ? `<br />${esc(p.teamState)}` : "");
 }
 
+/** 指定怪物：列出選定地圖的怪（等級、首領），跟遊戲小地圖下方「怪物」選單同一份。換地圖就重列、沒有的怪改回不指定。 */
+function fillMobs(maps, team) {
+  const sel = $("mob");
+  const map = maps.find((m) => m.id === $("map").value);
+  const mobs = map?.monsters || [];
+  const sig = JSON.stringify([map?.id, mobs.map((m) => m.no)]);
+  const want = team ? String(team.mob || 0) : sel.value || "0";
+  if (sel.dataset.sig !== sig) {
+    const lv = (m) => `Lv ${m.levelMin === m.levelMax ? m.levelMin : `${m.levelMin}～${m.levelMax}`}`;
+    sel.replaceChildren(new Option("不指定（照自動戰鬥）", "0"), ...mobs.map((m) => new Option(`${m.boss ? "【首領】" : ""}${m.name}｜${lv(m)}`, String(m.no))));
+    sel.dataset.sig = sig;
+  }
+  sel.value = [...sel.options].some((o) => o.value === want) ? want : "0";
+}
+
 function render(st) {
   latest = st;
   const team = st.team;
@@ -36,6 +51,8 @@ function render(st) {
     mapSel.dataset.sig = mapSig;
   }
   if ([...mapSel.options].some((o) => o.value === mapWant)) mapSel.value = mapWant;
+  fillMobs(maps, team);
+  $("spot").checked = team ? team.spot !== false : $("spot").checked;
 
   $("pets").replaceChildren(...st.pets.filter((p) => key(p.accountId) !== leaderSel.value).map((p) => {
     const div = document.createElement("div");
@@ -47,13 +64,13 @@ function render(st) {
   }));
   if (!st.pets.some((p) => key(p.accountId) !== leaderSel.value)) $("pets").innerHTML = `<div class="hint">只有一隻桌寵。先到「帳號與桌寵管理」多開幾隻，登入後再來組隊。</div>`;
 
-  for (const id of ["leader", "map"]) $(id).disabled = !!team;
+  for (const id of ["leader", "map", "mob", "spot"]) $(id).disabled = !!team;
   $("start").disabled = !!team;
   $("stop").disabled = !team;
 
   if (team) {
     const L = st.pets.find((p) => key(p.accountId) === key(team.leaderId));
-    const lines = [`<span class="ok">組隊中</span>：隊長 <b>${esc(L?.name || "?")}</b>，目的地「${esc(team.mapName)}」（${new Date(team.startedAt).toLocaleTimeString("zh-TW", { hour12: false })} 開始）`];
+    const lines = [`<span class="ok">組隊中</span>：隊長 <b>${esc(L?.name || "?")}</b>，目的地「${esc(team.mapName)}」${team.mobName ? `，指定怪物「${esc(team.mobName)}」` : ""}（${new Date(team.startedAt).toLocaleTimeString("zh-TW", { hour12: false })} 開始）`];
     lines.push(`隊長：${L ? petLine(L) : "桌寵已關閉"}`);
     $("now").innerHTML = lines.join("<br />");
   } else $("now").textContent = "沒有在組隊。";
@@ -66,9 +83,11 @@ $("pets").addEventListener("change", (e) => {
   if (k === undefined) return;
   if (e.target.checked) picked.add(k); else picked.delete(k);
 });
+$("map").addEventListener("change", () => latest && render(latest));
 $("leader").addEventListener("change", () => { picked.delete($("leader").value); $("map").dataset.sig = ""; $("map").value = ""; latest && render(latest); });
 $("start").addEventListener("click", async () => {
-  const r = await window.teamApi.start({ leaderId: unkey($("leader").value), memberIds: [...picked].filter((k) => k !== $("leader").value).map(unkey), mapId: $("map").value });
+  const r = await window.teamApi.start({ leaderId: unkey($("leader").value), memberIds: [...picked].filter((k) => k !== $("leader").value).map(unkey), mapId: $("map").value,
+    mob: Number($("mob").value) || 0, spot: $("spot").checked });
   $("msg").className = r?.error ? "bad" : "ok";
   $("msg").textContent = r?.error || "已開始：隊員回城等邀請中";
   render(await window.teamApi.get());
