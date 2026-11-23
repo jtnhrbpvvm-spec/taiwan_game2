@@ -7,6 +7,8 @@ const STAT_LABELS = new Set([...Object.values(codex.statNames), "智慧或智力
 const BONUS_NAMES = { ...codex.statNames, ws: "魔法力量（法師）", ps: "魔法力量（祭司）" };
 const SPECIAL_NAMES = { lifeMax: "HP 上限", manaMax: "MP 上限", divineMax: "神力上限", hitRate: "命中", defenseRate: "防禦率" };
 
+// 網頁版（tools/build-web-codex.mjs 包成單一 HTML，放 GitHub 龍族資料夾）沒有桌寵：不連角色、沒有配點目標
+const WEB = !window.codexApi;
 let me = null; // 角色（game-hook 的 auto.char）
 let alloc = null; // 配點目標、紀錄（主程式 allocInfo()）
 let sortKey = "level", sortDir = 1, selected = null;
@@ -44,16 +46,19 @@ function statusText(j) {
 function fillFilters() {
   $("slot").append(...Object.entries(codex.slots).map(([v, n]) => new Option(n, v)), new Option("投擲武器", "thrown"));
   $("cls").append(...codex.classes.map((c) => new Option(c.name, c.id)));
+  const kinds = new Set(codex.items.flatMap(sourceKinds)); // 只列這版資料裡真的有的
+  $("src").append(...Object.entries(SOURCE_KINDS).filter(([v]) => kinds.has(v)).map(([v, n]) => new Option(n, v)));
   $("ver").textContent = `遊戲資料 ${codex.gameVersion}（${codex.builtAt} 整理）`;
 }
 
 function filtered() {
   const q = $("q").value.trim();
-  const slot = $("slot").value, cls = $("cls").value, usable = $("usable").value;
+  const slot = $("slot").value, cls = $("cls").value, usable = $("usable").value, src = $("src").value;
   return codex.items.map((it) => ({ it, j: judge(it) })).filter(({ it, j }) => {
     if (q && !it.name.includes(q)) return false;
     if (slot === "thrown" ? !it.thrown : slot && String(it.slot) !== slot) return false;
     if (cls && it.classes && !it.classes.includes(cls)) return false;
+    if (src && !sourceKinds(it).includes(src)) return false;
     if (usable === "ok" && j.state !== "ok") return false;
     if (usable === "points" && j.state !== "points") return false;
     if (usable === "no" && j.state === "ok") return false;
@@ -99,6 +104,7 @@ function renderDetail(no) {
   if (it.maxDuration && !it.thrown) base.push(["耐久", it.maxDuration]);
   if (it.weight) base.push(["重量", it.weight]);
   html += `<h3>基本能力</h3>${base.length ? rows(base) : `<div class="muted">沒有</div>`}`;
+  html += sourceBlock(it);
   const bonus = Object.entries(it.bonus || {}).map(([k, v]) => [BONUS_NAMES[k] || k, `${v > 0 ? "+" : ""}${v}`]);
   const resist = Object.entries(it.resist || {}).map(([k, v]) => [`${codex.resistNames[k] || k}抵抗`, `${v > 0 ? "+" : ""}${v}`]);
   if (bonus.length || resist.length) html += `<h3>穿上後加的能力</h3>${rows([...bonus, ...resist])}`;
@@ -121,10 +127,43 @@ function renderDetail(no) {
     if (need.dualStep) limits.push(["轉職", `${need.dualStep} 轉`]);
     if (need.fame) limits.push(["名聲", need.fame]);
     if (need.gender) limits.push(["性別", need.gender === 1 ? "男" : "女"]);
-    html += rows(limits) + `<div class="hint">遊戲連上、進到角色後，會標出你能不能用、差多少。</div>`;
+    html += rows(limits) + (WEB ? "" : `<div class="hint">遊戲連上、進到角色後，會標出你能不能用、差多少。</div>`);
   }
   html += targetBlock(it, j);
   $("detail").innerHTML = html;
+}
+
+// ── 取得方式（遊戲「如何取得」同一套算法，tools/build-sources.cjs 整理）──
+const SOURCE_KINDS = { shop: "商店買", craft: "製作", drop: "打怪掉落", unique: "獨特裝備掉落", gather: "採集", none: "沒有固定取得方式" };
+function sourceKinds(it) {
+  const s = it.src || {};
+  const k = [];
+  if (s.shop) k.push("shop");
+  if (s.craft) k.push("craft");
+  if (s.drops || s.pelts) k.push("drop");
+  if (s.unique) k.push("unique");
+  if (s.gather) k.push("gather");
+  return k.length ? k : ["none"];
+}
+function sourceBlock(it) {
+  const s = it.src;
+  let html = `<h3>取得方式</h3>`;
+  if (!s) return html + `<div class="muted">目前沒有固定的取得方式（活動或 GM 發放才有）。</div>`;
+  const li = [];
+  if (s.shop) li.push(`<b>商店買</b>：主城的「${esc(s.shop)}」有賣。`);
+  if (s.unique) li.push(`<b>獨特裝備掉落</b>：${esc(s.unique)}`);
+  if (s.gather) li.push(`<b>採集</b>：在主城帶著工具掛「${esc(s.gather.name)}」，技能 Lv ${s.gather.level} 以上採得到。`);
+  if (s.craft) li.push(`<b>製作</b>：生活→製作→${esc(s.craft.skill)}（Lv ${s.craft.min} 起），材料：${s.craft.materials.map(([n, a]) => `${esc(n)}×${a}`).join("、")}。`);
+  if (s.pelts) li.push(`<b>打怪掉落（皮、毛、羽毛）</b>：${s.pelts.map(esc).join("、")}`);
+  if (s.drops) {
+    // 桌寵裡：地圖、怪物可以點，開組隊練功頁帶入（網頁版沒有桌寵，只顯示字）
+    const link = (text, map, mob = "") => WEB ? esc(text) : `<a href="#" class="go" data-map="${esc(map)}" data-mob="${esc(mob)}" title="開組隊練功，帶入這張地圖${mob ? "和這隻怪" : ""}">${esc(text)}</a>`;
+    const line = ([map, mobs]) => `<div class="src-map"><span class="src-mapname">${link(map, map)}</span>：${mobs.map((m) => link(m, map, m)).join("、")}</div>`;
+    const shown = s.drops.slice(0, 6).map(line).join("");
+    const more = s.drops.length > 6 ? `<details class="src-more"><summary>還有 ${s.drops.length - 6} 張圖</summary>${s.drops.slice(6).map(line).join("")}</details>` : "";
+    li.push(`<b>打怪掉落</b>（${s.drops.length} 張圖）${WEB ? "" : `<span class="hint" style="margin-left:6px">點地圖或怪物 → 組隊練功／自己打</span>`}${shown}${more}`);
+  }
+  return html + `<ul class="src">${li.map((x) => `<li>${x}</li>`).join("")}</ul>`;
 }
 
 // ── 配點目標 ──
@@ -134,6 +173,7 @@ const shortText = (short) => codex.statKeys.map((k, i) => (short[i] > 0 ? `${cod
 
 /** 裝備詳細頁下面的「設為配點目標」區塊。 */
 function targetBlock(it, j) {
+  if (WEB) return "";
   const isTarget = alloc?.target?.itemNo === it.no;
   const hasStatNeed = ["str", "dex", "con", "endu", "cha", "mor", "movp", "luck", "wis", "int", "ws", "ps"].some((k) => it.need?.[k] > 0);
   let html = `<h3>配點目標</h3>`;
@@ -203,7 +243,7 @@ async function refreshMe(force = false) {
 }
 
 fillFilters();
-for (const id of ["q", "slot", "cls", "usable"]) $(id).addEventListener("input", () => { if (id === "cls") $("cls").dataset.touched = "1"; renderList(); });
+for (const id of ["q", "slot", "cls", "usable", "src"]) $(id).addEventListener("input", () => { if (id === "cls") $("cls").dataset.touched = "1"; renderList(); });
 document.querySelector("#list thead").addEventListener("click", (e) => {
   const k = e.target.dataset?.sort;
   if (!k) return;
@@ -220,6 +260,8 @@ $("rows").addEventListener("click", (e) => {
   renderDetail(selected);
 });
 $("detail").addEventListener("click", (e) => {
+  const go = e.target.closest?.("a.go");
+  if (go) { e.preventDefault(); window.codexApi?.openTeam?.(go.dataset.map, go.dataset.mob || ""); return; }
   const act = e.target.dataset?.act;
   if (act === "set") setTarget(Number(e.target.dataset.no));
   else if (act === "cancel") setTarget(null);
@@ -232,5 +274,12 @@ $("target-show").addEventListener("click", () => {
   renderDetail(selected);
 });
 renderList();
-refreshMe();
-setInterval(refreshMe, 5000);
+if (WEB) {
+  for (const id of ["target-bar", "usable"]) $(id).hidden = true;
+  document.body.classList.add("web"); // 沒有角色：「能不能用」那欄藏起來
+  $("me").textContent = "共 " + codex.items.length + " 件裝備。點一件看能力、使用限制和取得方式。";
+  for (const el of document.querySelectorAll(".app-only")) el.hidden = true;
+} else {
+  refreshMe();
+  setInterval(refreshMe, 5000);
+}

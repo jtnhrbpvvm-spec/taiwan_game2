@@ -34,7 +34,7 @@ let bootPatch;
 
 
 // 每隻桌寵擁有自己的視窗、遊戲 Session、登入流程、角色外觀、事件與自動設定。
-module.exports = function createCompanion({ accountId = null, slot = 0, onChange, onClose, managerMenu, onTeamLog }) {
+module.exports = function createCompanion({ accountId = null, slot = 0, onChange, onClose, managerMenu, onTeamLog, openTeam }) {
   const events = new Map(), handlers = new Map();
   const ipcMain = { on: (name, fn) => events.set(name, fn), handle: (name, fn) => handlers.set(name, fn) };
   const currentAccount = () => accountId;
@@ -69,9 +69,11 @@ let settings = { size: 100, stay: false, gameBounds: undefined, autoStart: false
 const num = (v, min, max) => Math.max(min, Math.min(max, Math.floor(Number(v)) || 0));
 // ── 生活技能 ──
 function cleanLife(l) {
-  const skill = codex.craftSkills.some((s) => s.skill === l?.skill) ? l.skill : codex.craftSkills[0].skill;
+  // 製作技能或採集技能（採礦、伐木…，2026-11-23 加）
+  const gather = codex.gatherSkills.some((s) => s.skill === l?.skill);
+  const skill = gather || codex.craftSkills.some((s) => s.skill === l?.skill) ? l.skill : codex.craftSkills[0].skill;
   const recipe = codex.recipes.find((r) => r[0] === l?.recipe && r[3] === skill) ? l.recipe : 0;
-  return { enabled: !!l?.enabled && (l?.mode !== "recipe" || recipe > 0), skill, mode: l?.mode === "recipe" ? "recipe" : "best", recipe, count: num(l?.count, 0, 100000), buy: !!l?.buy, chain: l?.chain !== false };
+  return { enabled: !!l?.enabled && (gather || l?.mode !== "recipe" || recipe > 0), skill, mode: l?.mode === "recipe" ? "recipe" : "best", recipe, count: num(l?.count, 0, 100000), buy: !!l?.buy, chain: l?.chain !== false, useUp: !!l?.useUp };
 }
 
 // ── 配點目標（小百科「設為配點目標」）──
@@ -225,8 +227,7 @@ function createGame() {
     height: GAME_HEIGHT,
     show: false,
     skipTaskbar: true,
-    title: `17玩龍族（桌寵${acct ? `・${acct.label || acct.username}` : ""}）`,
-    autoHideMenuBar: true,
+    title: `桌寵，${acct ? acct.label || acct.username : "龍族"}`,
     icon: path.join(__dirname, "build", "icon.png"),
     webPreferences: {
       session: ses,
@@ -237,6 +238,7 @@ function createGame() {
     },
   });
   game.win.webContents.setAudioMuted(true);
+  updateGameMenu();
   parkGame();
   game.win.on("close", (e) => {
     if (quitting) return;
@@ -265,6 +267,38 @@ function createGame() {
     sendAuto();
   });
   loadGame();
+}
+
+// 遊戲視窗上方：標題「桌寵，角色名(經驗%)」、選單列一個「停止練功／開始練功」按鈕（使用者 2026-11-23）
+function gameTitle() {
+  const s = game.state;
+  const name = s?.character?.name || accountLabel();
+  const pct = typeof s?.expPct === "number" ? `(${s.expPct.toFixed(2)}%)` : "";
+  return `桌寵，${name}${pct}${settings.paused ? "　停止練功中" : ""}`;
+}
+function updateGameTitle() {
+  if (!game.win || game.win.isDestroyed()) return;
+  const t = gameTitle();
+  if (game.win.getTitle() !== t) game.win.setTitle(t);
+}
+function updateGameMenu() {
+  if (!game.win || game.win.isDestroyed()) return;
+  game.win.setMenu(Menu.buildFromTemplate([
+    { label: settings.paused ? "▶ 開始練功" : "⏸ 停止練功", click: togglePause },
+  ]));
+  game.win.setAutoHideMenuBar(false);
+  game.win.setMenuBarVisibility(true);
+}
+/** 停止練功：回主城待著，補給、組隊跟隨、販售等自動功能先停（倒下照樣復活）；開始練功：回練功區／隊伍打。記在設定裡，重開也一樣。 */
+function togglePause() {
+  settings.paused = !settings.paused;
+  saveSettings();
+  logGame(settings.paused ? "停止練功" : "開始練功");
+  notice(settings.paused ? "停止練功，回主城休息" : "開始練功");
+  updateGameMenu();
+  updateGameTitle();
+  sendAuto();
+  onChange();
 }
 
 async function loadGame() {
@@ -345,6 +379,8 @@ const autoLog = []; // 最近的紀錄（設定視窗顯示）
 // 組隊練功（main.js 的組隊視窗指定）：team＝{role:"leader",members,mapId,mapName}／{role:"member",leader}；teamLeave＝解散的時間（叫遊戲離隊一次）
 // 只放在記憶體：重開桌寵就不再自動組隊
 let team = null, teamLeave = 0;
+// 不組隊自己打：{ id, mapId }，hook 看到新的 id 就去那張圖一次（只放記憶體）
+let goHunt = null;
 // 指定交易（main.js 的物品欄視窗指定）：{ id, role:"give", to, items, gold } 或 { id, role:"take", from, count, gold, meet }
 let trade = null;
 // 「全部桌寵」的販售規則（main.js 管、存在 sell-global.json）：{ enabled, rules }
@@ -355,7 +391,7 @@ function sellRules() {
   return cleanRules([...(own.enabled ? own.rules : []), ...(sellGlobal.enabled && own.useGlobal ? sellGlobal.rules : [])]);
 }
 function sendAuto() {
-  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", { ...settings.auto, team, teamLeave, trade, sellRules: sellRules() }, game.shown, settings.lastHuntMap ?? null);
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", { ...settings.auto, paused: !!settings.paused, team, teamLeave, goHunt, trade, sellRules: sellRules() }, game.shown, settings.lastHuntMap ?? null);
   autoWin?.webContents.send("auto:status", autoStatus());
 }
 function autoStatus() {
@@ -468,6 +504,12 @@ function openCodex() {
 const fromCodex = (e) => codexWin && !codexWin.isDestroyed() && e.sender === codexWin.webContents;
 handlers.set("codex:char", (e) => (fromCodex(e) ? { char: game.state?.auto?.char ?? null, name: game.state?.character?.name || "", alloc: allocInfo() } : null));
 handlers.set("codex:set-target", (e, itemNo) => (fromCodex(e) ? setAllocTarget(itemNo) : { error: "not allowed" }));
+// 小百科「打怪掉落」點地圖／怪物：開組隊練功頁、帶入這隻桌寵和那張地圖（使用者 2026-11-23）
+handlers.set("codex:open-team", (e, p) => {
+  if (!fromCodex(e) || typeof p?.mapName !== "string") return { error: "not allowed" };
+  openTeam?.({ mapName: p.mapName.slice(0, 60), mobName: typeof p.mobName === "string" ? p.mobName.slice(0, 60) : "" });
+  return {};
+});
 
 // ── 掛機設置（照遊戲「設置」頁，讀寫都透過遊戲網頁裡的 window.__rajaPetPrefs，見 game-hook.js） ──
 let idleWin;
@@ -730,6 +772,7 @@ ipcMain.on("game:state", (e, s) => {
   const prev = game.state;
   if (s.status === "login" || s.status === "expired") s = { ...s, character: undefined };
   game.state = s;
+  updateGameTitle();
   if (s.auto?.char && JSON.stringify(s.auto.char) !== JSON.stringify(prev?.auto?.char)) checkAllocTarget();
   if (s.status === "ingame" && s.lastHuntMap && /^[A-Za-z0-9_-]{1,64}$/.test(s.lastHuntMap.id) &&
       (settings.lastHuntMap?.id !== s.lastHuntMap.id || settings.lastHuntMap?.name !== s.lastHuntMap.name)) {
@@ -843,6 +886,19 @@ ipcMain.handle("pet:art", () => ({ gear: art.gear, order: art.order, layerOrders
 
 // ── 桌寵視窗 ──────────────────────────────────────────────
 
+/** 桌寵長條該在的位置：主螢幕工作區（不含工作列）最下面、全寬。 */
+function petStripBounds() {
+  const area = screen.getPrimaryDisplay().workArea;
+  return { x: area.x, y: area.y + area.height - PET_STRIP_HEIGHT, width: area.width, height: PET_STRIP_HEIGHT };
+}
+function fitPetWindow() {
+  if (!petWin || petWin.isDestroyed()) return;
+  const want = petStripBounds(), now = petWin.getBounds();
+  if (["x", "y", "width", "height"].every((k) => Math.abs(now[k] - want[k]) <= 1)) return;
+  petWin.setBounds(want);
+  logGame(`螢幕變了：桌寵放回螢幕底部（${now.width}×${now.height} → ${want.width}×${want.height}）`);
+}
+
 function createPetWindow() {
   const area = screen.getPrimaryDisplay().workArea;
   petWin = new BrowserWindow({
@@ -866,6 +922,18 @@ function createPetWindow() {
     petWin.setAlwaysOnTop(true, "screen-saver");
   });
   petWin.setIgnoreMouseEvents(true, { forward: true });
+  // 螢幕設定變了（休眠醒來、螢幕重新接上、縮放比例改了）Windows 會把視窗縮小或移走，桌寵就浮在半空、跑出畫面（使用者 2026-11-23）：
+  // 收到螢幕變動就重新貼回底部；另外每 30 秒對一次位置（有些變動不會發事件）
+  let fitTimer;
+  const fitSoon = () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitPetWindow, 1500); };
+  const screenEvents = ["display-metrics-changed", "display-added", "display-removed"];
+  if (typeof screen.on === "function") screenEvents.forEach((ev) => screen.on(ev, fitSoon));
+  const fitCheck = setInterval(fitPetWindow, 30000);
+  petWin.on("closed", () => {
+    if (typeof screen.removeListener === "function") screenEvents.forEach((ev) => screen.removeListener(ev, fitSoon));
+    clearInterval(fitCheck);
+    clearTimeout(fitTimer);
+  });
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
     petInteractive = false;
@@ -938,6 +1006,7 @@ function buildMenu() {
     { label: `${accountLabel()}・${s?.character?.name ? `${s.character.name}（Lv.${s.character.level}）` : "尚未登入角色"}`, enabled: false },
     { type: "separator" },
     { label: game.shown ? "藏起遊戲視窗" : "顯示遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
+    { label: "停止練功（回主城休息）", type: "checkbox", checked: !!settings.paused, click: togglePause },
     { label: "重新連線（重新載入遊戲）", click: reconnect },
     ...(browserLogin ? [{ label: "登入好了，接到桌寵（幫你關掉 Chrome）", click: () => browserLogin?.done() }] : []),
     browserLogin
@@ -969,6 +1038,21 @@ function buildMenu() {
       if (team) logGame(`組隊：${team.role === "leader" ? `當隊長，帶 ${team.members.join("、")} 去「${team.mapName}」` : `當隊員，等 ${team.leader}`}`);
       else if (leave) logGame("組隊：解散");
       sendAuto();
+    },
+    /** 不組隊自己打（組隊練功頁）：離開隊伍，練功地圖、指定怪物記進自動補給設定，馬上去那張圖開打；停止練功中也一併恢復。 */
+    goSolo({ mapId, mapName, mob, mobName, spot }) {
+      team = null;
+      teamLeave = Date.now();
+      const sup = settings.auto.supply;
+      settings.auto.supply = { ...sup, huntMap: mapId, huntMob: mob || 0, huntMobMap: mob ? mapId : "" };
+      settings.auto.revive = { ...settings.auto.revive, spot: spot !== false };
+      settings.auto = cleanAuto(settings.auto);
+      if (settings.paused) { settings.paused = false; updateGameMenu(); updateGameTitle(); }
+      goHunt = { id: Date.now(), mapId };
+      saveSettings();
+      logGame(`自己打：去「${mapName}」${mobName ? `，指定怪物「${mobName}」` : ""}`);
+      sendAuto();
+      onChange();
     },
     /** 指定交易：主程式指定這隻要給／收；null＝取消。 */
     setTrade(job) {

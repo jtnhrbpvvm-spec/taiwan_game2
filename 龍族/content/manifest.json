@@ -1,5 +1,5 @@
 {
-  "version": "1.0.11",
+  "version": "1.0.12",
   "shell": 1,
   "files": [
     {
@@ -29,28 +29,28 @@
     },
     {
       "path": "codex-data.js",
-      "sha256": "53752667e84234300b18f7ae975512cd682f43052bb2bb0ed75e71a6c60da215",
-      "size": 239773
+      "sha256": "73fc6ffd407354d646abed2ae6cc2db7797d5a130bd19da399c510f4b008c6f3",
+      "size": 526361
     },
     {
       "path": "codex-preload.js",
-      "sha256": "734e62f74d0d121124ce56a2475269da95ccd8732d8218bcef894ae3c0b46348",
-      "size": 424
+      "sha256": "52f8203f5ec316ac11fc62b380d7a1be4745871eea22077f35a9537e3c8e4c36",
+      "size": 594
     },
     {
       "path": "companion.js",
-      "sha256": "dd3e0715c1cb229e4289ed38cc2a89d9010893c349363a9d60b8617f03ab7b1d",
-      "size": 50837
+      "sha256": "16197fb5ecdc147622012a99d4e25845d32c7e1de583837a0db7f904f55658e8",
+      "size": 55456
     },
     {
       "path": "game-hook.js",
-      "sha256": "c472b3fe034157c8d6cfbfe17af1278fbf25bee2ccee9ae2a6dc74017de3e46b",
-      "size": 92901
+      "sha256": "2141a5247f43baab1b4738f5b144d0d0b8300b4d74a636e9c487fc5fab50177d",
+      "size": 103638
     },
     {
       "path": "game-patch.js",
-      "sha256": "49f6f00ce6bc002708a6e612658d635a7e36b57a959f39374607aa3dc2296e5d",
-      "size": 10453
+      "sha256": "48088ba3ef7b2edcc965df32baf83c85099198f303760983437a8b0ad0ec2d39",
+      "size": 10807
     },
     {
       "path": "game-preload.js",
@@ -84,8 +84,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "c057ddf5e2d4004d4c59b7fc0f17be034408266924cc99aaacce7ea9d26f21a0",
-      "size": 20174
+      "sha256": "9982b5e1311ddd38346c28b6e9a30930df7fc160d44d26881c0f5e4540fc041f",
+      "size": 22415
     },
     {
       "path": "pet-preload.js",
@@ -99,8 +99,8 @@
     },
     {
       "path": "pet/pet.js",
-      "sha256": "76a864bce5fdbb03fe876a0703e30cd808bee0f815d42cc9f5395f65209aaeaa",
-      "size": 19651
+      "sha256": "3171de4dc807ddae13df2ab400eb5054b6a4d22005f9cb6b9795eb67f47c44c0",
+      "size": 20031
     },
     {
       "path": "potion-supply.js",
@@ -119,8 +119,8 @@
     },
     {
       "path": "team-preload.js",
-      "sha256": "98ac6d6e4dd4d3bffdfc7e8c7cb29317860ef12a87595871e73fa5ffc46fe006",
-      "size": 370
+      "sha256": "6e848f993f5c4523cd442792d3e8b3dff394e24f28281871cd8ce0c28743e24d",
+      "size": 494
     },
     {
       "path": "tools/fill-login.ps1",
@@ -154,13 +154,13 @@
     },
     {
       "path": "ui/codex.html",
-      "sha256": "a14ce5218b34cbc018d25e238d769c5dbaa179a481c42fb08ad619b266003fa0",
-      "size": 5499
+      "sha256": "9feedae7f3776692f9edb375ed40e17981e31730cd79763339222ca4b0448a57",
+      "size": 6604
     },
     {
       "path": "ui/codex.js",
-      "sha256": "474c696be0c8674e651088dac4ad49311a5ad8c4a4d27d641c4f68f8c5e8ff55",
-      "size": 13648
+      "sha256": "be694f390b5ef644221aacd95873e9e7052c6b8d2dd280d0539870cdedbdfd17",
+      "size": 17116
     },
     {
       "path": "ui/idle.html",
@@ -184,23 +184,23 @@
     },
     {
       "path": "ui/life.html",
-      "sha256": "707704c500253955f7648055698bcaf866459c3d503c25d39d657b171aa19bab",
-      "size": 5309
+      "sha256": "d18cc76873cf0cc279a4a2d6fa1f8f68eda09448ed74844a92d5387395b81458",
+      "size": 6143
     },
     {
       "path": "ui/life.js",
-      "sha256": "8608341296bcf1cb9b42ba9e40069a0b04df61e00bf0f7d26c40bb9ea0574db4",
-      "size": 8612
+      "sha256": "a263aa6a99702f187c93a252c115e8ac45064ef2d4b6e3e3ee0e1242de686bdd",
+      "size": 11072
     },
     {
       "path": "ui/team.html",
-      "sha256": "60ad0dcce982c8b140252b4c24b62484e9860574fa96cf8adb15151c3a8e9ea3",
-      "size": 4058
+      "sha256": "6ad5297725236d2a62403e4c23b2d9187cde02eed8052e971476f7ff32183cfd",
+      "size": 4600
     },
     {
       "path": "ui/team.js",
-      "sha256": "c4f5be574fafc94e8618213367187bc607846d31425a58090ac923b50fef3825",
-      "size": 6131
+      "sha256": "0115581c6ba79c107529265d84d3553f27d213a438d777534cc0f6bc7b5fda6c",
+      "size": 8198
     }
   ]
 }

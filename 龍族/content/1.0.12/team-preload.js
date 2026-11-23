@@ -5,5 +5,7 @@ contextBridge.exposeInMainWorld("teamApi", {
   get: () => ipcRenderer.invoke("team:get"),
   start: (req) => ipcRenderer.invoke("team:start", req),
   stop: () => ipcRenderer.invoke("team:stop"),
+  solo: (req) => ipcRenderer.invoke("team:solo", req),
+  onPreset: (cb) => ipcRenderer.on("team:preset", (_e, p) => cb(p)),
   onStatus: (cb) => ipcRenderer.on("team:status", (_e, st) => cb(st)),
 });

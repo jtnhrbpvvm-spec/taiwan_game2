@@ -227,6 +227,12 @@
   let postTimer = 0;
   function post() {
     postTimer = 0;
+    // 經驗 %（遊戲視窗標題用）：遊戲自己的經驗條算法，找不到就不放
+    try {
+      const c = S.character, f = window.__rajaGame && window.__rajaGame.expProgress;
+      const x = c && f && typeof c.level === "number" && typeof c.exp === "number" ? f(c.level, c.exp) : null;
+      S.expPct = x && x.needed > 0 ? Math.min(100, Math.floor((x.current / x.needed) * 10000) / 100) : undefined;
+    } catch { S.expPct = undefined; }
     window.postMessage({ __rajaPet: JSON.parse(JSON.stringify(S)) }, location.origin);
   }
   function schedulePost() {
@@ -239,6 +245,8 @@
   let AUTO = null; // { supply:{enabled,town,hpMin,hpTo,mpMin,mpTo,ammoMin,ammoTo}, fuse:[{enabled,count}×3] }
   let watching = false;
   let busy = false;
+  // 停止練功：PAUSED＝主程式說停；pauseTownDone＝停下後已經回過主城（之後玩家自己出城就不再拉回）；resumePending＝按了開始，等著回去打
+  let PAUSED = false, pauseTownDone = false, resumePending = false, resumeAt = 0;
   let nextSupplyAt = 0, nextFuseAt = 0;
   let supplyError = "";
   let supplyResumeMode;
@@ -283,8 +291,12 @@
       nextSupplyAt = 0; // 儲存設定或收起遊戲後，不沿用之前失敗的等待時間
       supplyError = "";
       nextFuseAt = 0;
-      reviveHold = false; // 玩家重新存了設定（可能換了地圖）：再給自動復活一次機會
       nextReviveAt = 0;
+      // 停止練功（遊戲視窗上方「停止練功／開始練功」按鈕）：停下時回主城一次；按開始就回去打，順便取消倒下太多次的休息
+      const paused = !!(AUTO && AUTO.paused);
+      if (paused && !PAUSED) { pauseTownDone = false; resumePending = false; }
+      if (!paused && PAUSED) { resumePending = true; resumeAt = 0; reviveHoldUntil = 0; }
+      PAUSED = paused;
       TRADE = (AUTO && AUTO.trade) || null;
       // 生活技能關掉：如果正在做就叫遊戲停
       const lifeOn = !!(AUTO && AUTO.life && AUTO.life.enabled);
@@ -917,11 +929,60 @@
     log(`生活技能：${name} 做了 ${count} 次，得到 ${made} 個`);
     return made;
   }
+  // 斷線重連（遊戲網頁重新載入）後接著做同一件工作：做了幾件記在 sessionStorage（同一個視窗重新載入還在）
+  const LIFE_SAVE = "rajaPet:life";
+  function saveLifeProgress(clear = false) {
+    try { if (clear) sessionStorage.removeItem(LIFE_SAVE); else sessionStorage.setItem(LIFE_SAVE, JSON.stringify({ key: lifeKey, made: lifeMade })); } catch {}
+  }
+  try { const s = JSON.parse(sessionStorage.getItem(LIFE_SAVE) || "null"); if (s && typeof s.key === "string") { lifeKey = s.key; lifeMade = Number(s.made) || 0; } } catch {}
+
+  /** 採集（採礦、伐木…）：跟遊戲「生活→採集」按開始一樣，在主城帶著工具送 gather{skill}，遊戲每 3 秒採一次、一直採；character.gat＝正在採的技能。
+   *  斷線重連、被打斷（背包滿以外）後會再開始。 */
+  let gatherStartedAt = 0;
+  async function gatherTick(cfg, sk) {
+    const g = G(), ch = charNow();
+    if (ch.gat === sk.skill) { lifeState = `採集中：${sk.name}`; lifeError = ""; return; }
+    if (ch.mk) { lifeState = "製作中（等這一批做完再採集）"; return; }
+    if (ch.gat) { await timed(g.net.request({ op: "gather", skill: 0 }), 20000, "停止採集"); await sleep(1000); return; } // 在採別的：先停
+    const town = townInfo(S.mapId);
+    if (sk.tool > 0 && !hasToolKind(sk.tool)) {
+      const no = town && toolFor(sk.tool, town);
+      const toolName = (codex.toolNames && codex.toolNames[sk.tool]) || "工具";
+      if (!cfg.buy || no === null || no === undefined) {
+        lifeError = `缺工具「${toolName}」${cfg.buy ? "（這個主城買不到）" : "（可以勾「自動購買」）"}`;
+        lifeState = lifeError;
+        log(`生活技能：${lifeError}，1 分鐘後再看`, "warn");
+        nextLifeAt = Date.now() + 60000;
+        return;
+      }
+      lifeState = `買工具「${toolName}」`;
+      await buyItem(no, (bagCounts()[no] || 0) + 1, town);
+      closeShop();
+    }
+    // 剛開始沒多久遊戲就自己停了：多半是背包滿了
+    const free = rawBag().filter((s) => !s || !s.length).length;
+    if (!free || (gatherStartedAt && Date.now() - gatherStartedAt < 20000)) {
+      lifeError = free ? "採集一開始就停下（可能背包滿了或這裡採不到）" : "背包滿了，採集停下";
+      lifeState = lifeError;
+      log(`生活技能：${lifeError}，5 分鐘後再試`, "warn");
+      gatherStartedAt = 0;
+      nextLifeAt = Date.now() + 300000;
+      return;
+    }
+    const r = await timed(g.net.request({ op: "gather", skill: sk.skill }), 20000, "採集");
+    if (r && r.error) throw new Error(errText(r.error));
+    gatherStartedAt = Date.now();
+    lifeError = "";
+    lifeState = `採集中：${sk.name}`;
+    log(`生活技能：開始採集「${sk.name}」`);
+  }
+
   async function lifeTick(cfg) {
     const g = G(), ch = charNow();
     if (!LP || !ch || !Array.isArray(ch.life)) return;
-    const key = JSON.stringify([cfg.skill, cfg.mode, cfg.recipe, cfg.count]);
-    if (key !== lifeKey) { lifeKey = key; lifeMade = 0; lifeError = ""; lifeDoneLogged = false; }
+    const gsk = (window.RajaCodex.gatherSkills || []).find((s) => s.skill === cfg.skill);
+    const key = JSON.stringify([cfg.skill, cfg.mode, cfg.recipe, cfg.count, !!cfg.useUp]);
+    if (key !== lifeKey) { lifeKey = key; lifeMade = 0; lifeError = ""; lifeDoneLogged = false; gatherStartedAt = 0; saveLifeProgress(); }
     if (Date.now() < nextLifeAt) return;
     const own = (g.towns || []).find((t) => t.nation === S.nation);
     const home = (AUTO.supply && AUTO.supply.town && townInfo(AUTO.supply.town)) || (own && townInfo(own.mapId));
@@ -935,11 +996,14 @@
       await sleep(1500);
       return;
     }
+    if (gsk) { await gatherTick(cfg, gsk); return; }
+    if (ch.gat) { await timed(g.net.request({ op: "gather", skill: 0 }), 20000, "停止採集"); await sleep(1000); return; } // 改練製作：先停採集
     if (ch.mk) { lifeState = "製作中（等這一批做完）"; return; }
     const remaining = cfg.count > 0 ? cfg.count - lifeMade : Infinity;
-    if (remaining <= 0) {
-      lifeState = `完成：做了 ${lifeMade} 件`;
-      if (!lifeDoneLogged) { lifeDoneLogged = true; log(`生活技能：完成，做了 ${lifeMade} 件`); }
+    const doneText = () => `完成：做了 ${lifeMade} 件${cfg.useUp ? "，身上原料能做的都做完了" : ""}`;
+    if (remaining <= 0 && !cfg.useUp) {
+      lifeState = doneText();
+      if (!lifeDoneLogged) { lifeDoneLogged = true; log(`生活技能：${lifeState}`); }
       return;
     }
     const town = townInfo(S.mapId) || home;
@@ -949,8 +1013,25 @@
     const candidates = cfg.mode === "best" ? LP.bestOrder(cfg.skill, ch.life) : [LP.byNo.get(cfg.recipe)].filter(Boolean);
     if (!candidates.length) throw new Error(cfg.mode === "best" ? "這個技能現在沒有能做的配方" : "找不到指定的配方");
     if (cfg.mode !== "best" && !LP.unlocked(candidates[0], ch.life)) throw new Error(`技能等級不夠（要 ${candidates[0].min} 級）`);
-    let chosen = null, batch = 0;
-    for (const r of candidates) {
+    let chosen = null, batch = 0, useOpts = opts, extra = false;
+    // 儘量用光身上原料（使用者 2026-11-23）：先只用背包現有的（不買），目標配方做不了就改做這個技能其他做得出來的（等級高的先）；
+    // 指定數量做完也繼續，直到背包裡的原料什麼都做不出來為止。現有的都用不上了才照「自動購買」去買。
+    if (cfg.useUp) {
+      const noBuy = { ...opts, buy: false };
+      const others = LP.bestOrder(cfg.skill, ch.life).filter((r) => !candidates.includes(r));
+      const pool = remaining > 0 ? [...candidates, ...others] : LP.bestOrder(cfg.skill, ch.life);
+      for (const r of pool) {
+        const main = remaining > 0 && candidates.includes(r);
+        const n = LP.maxCount(r, have, noBuy, main ? Math.min(remaining, 20) : 20);
+        if (n > 0) { chosen = r; batch = n; useOpts = noBuy; extra = !main; break; }
+      }
+      if (!chosen && remaining <= 0) {
+        lifeState = doneText();
+        if (!lifeDoneLogged) { lifeDoneLogged = true; log(`生活技能：${lifeState}`); }
+        return;
+      }
+    }
+    if (!chosen) for (const r of candidates) {
       batch = LP.maxCount(r, have, opts, Math.min(remaining, 20));
       if (batch > 0) { chosen = r; break; }
     }
@@ -964,7 +1045,8 @@
       return;
     }
     lifeError = "";
-    const p = LP.plan(chosen, batch, have, opts);
+    lifeDoneLogged = false;
+    const p = LP.plan(chosen, batch, have, useOpts);
     for (const kind of p.tools) {
       const no = toolFor(kind, town);
       lifeState = `買工具「${codex.toolNames[kind] || kind}」`;
@@ -976,8 +1058,9 @@
     }
     const step = p.steps[0];
     const made = await craftRun(step.recipe, step.count);
-    if (step.recipe.no === chosen.no) lifeMade += made;
-    lifeState = step.recipe.no === chosen.no ? `已做 ${lifeMade} 件${cfg.count > 0 ? ` / ${cfg.count}` : ""}` : "做好中間材料，繼續";
+    if (step.recipe.no === chosen.no && !extra) { lifeMade += made; saveLifeProgress(); }
+    lifeState = step.recipe.no !== chosen.no ? "做好中間材料，繼續" : extra ? `用光原料：做了 ${(g.item(chosen.itemNo) || {}).name || chosen.itemNo}` :
+      `已做 ${lifeMade} 件${cfg.count > 0 ? ` / ${cfg.count}` : ""}`;
   }
 
   /** 回練功地圖，自動戰鬥恢復成 autoMode（離開練功圖前的樣子）。 */
@@ -1257,8 +1340,12 @@
   const REVIVE_WORDS = "以宇宙和大風暴的艾德布洛伊之名";
   const REVIVE_NEED = ["joinRoom", "net", "state", "towns"];
   const DEATH_LIMIT = 3, DEATH_WINDOW_MS = 10 * 60 * 1000;
+  const REVIVE_REST_MS = 30 * 60 * 1000;
   let autoBeforeDeath; // 倒下前的自動戰鬥模式（倒下後遊戲可能自己關掉）
-  let reviveHold = false; // 一直送死：先停在主城，等玩家改設定（重新存設定會解除）
+  // 一直送死：先在主城休息到這個時間（倒下照樣復活，只是不回練功區、組隊也不跟），時間到自己回去（使用者 2026-11-23：
+  // 原本停住後組隊又把角色帶回去，再倒下就不復活，躺了一整晚）
+  let reviveHoldUntil = 0;
+  const reviveHolding = () => Date.now() < reviveHoldUntil;
 
   async function reviveRun(rcfg, scfg) {
     const g = G();
@@ -1288,10 +1375,13 @@
     if (S.dead) throw new Error("念了咒語還是沒有復活");
     log("復活了");
     await sleep(1000);
+    if (PAUSED) { log("復活：停止練功中，留在主城"); return; }
+    if (reviveHolding()) { log("復活：休息中，留在主城"); return; }
     const recent = deathTimes.filter((t) => Date.now() - t < DEATH_WINDOW_MS);
     if (recent.length >= DEATH_LIMIT) {
-      reviveHold = true;
-      log(`復活：10 分鐘內倒下 ${recent.length} 次，先停在主城不回去了（調整設定或換地圖後重新儲存設定就會恢復）`, "warn");
+      reviveHoldUntil = Date.now() + REVIVE_REST_MS;
+      deathTimes.length = 0; // 休息完重新算
+      log(`復活：10 分鐘內倒下 ${recent.length} 次，先在主城休息 30 分鐘再回去（按「停止練功」再「開始練功」可以馬上回去）`, "warn");
       return;
     }
     const wantSupply = rcfg.supply && scfg && (scfg.hpTo > 0 || scfg.mpTo > 0 || scfg.ammoTo > 0);
@@ -1300,6 +1390,62 @@
       await supplyRun({ ...scfg, town: scfg.town || town.mapId }, { autoMode, doneText: "復活、補給完成" });
     } else if (target || teamDest() || (TEAM && TEAM.role === "member")) await backToHunt(target, autoMode, "復活完成");
     else log("復活：不知道要回哪張練功地圖，先停在主城（在設定裡指定練功地圖就會自動回去）", "warn");
+  }
+
+  /** 停止練功：回主城（補給設定的主城，沒設就本國主城）待著；只做一次，之後玩家自己出城不再拉回。 */
+  async function pauseRun() {
+    pauseTownDone = true;
+    if (S.town) { log("停止練功：留在主城"); return; }
+    const g = G(), sup = AUTO && AUTO.supply;
+    const own = (g.towns || []).find((t) => t.nation === S.nation);
+    const town = (sup && sup.town && townInfo(sup.town)) || (own && townInfo(own.mapId));
+    if (!town) { restoreAuto("locked"); log("停止練功：找不到主城，先關掉自動戰鬥", "warn"); return; }
+    log(`停止練功：回「${town.name}」休息`);
+    try {
+      const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
+      if (err) throw new Error(err);
+    } catch (e) {
+      restoreAuto("locked");
+      log(`停止練功：回不了主城（${errText(e)}），先關掉自動戰鬥`, "warn");
+    }
+  }
+  /** 開始練功（或休息完）：在主城就回練功區／隊伍的房間，自動戰鬥打開；已經在外面就只把自動戰鬥打開。 */
+  async function resumeRun() {
+    resumePending = false;
+    if (!S.town) { restoreAuto("auto"); log("開始練功：開啟自動戰鬥"); return; }
+    let target = null;
+    try { target = huntTarget(AUTO && AUTO.supply); } catch {}
+    if (TEAM) { nextTeamAt = 0; log("開始練功：照組隊回隊伍"); return; } // 組隊的進出交給 teamTick
+    try { await backToHunt(target, "auto", "開始練功"); }
+    catch (e) { log(`開始練功沒有完成：${errText(e)}。1 分鐘後再試`, "warn"); resumePending = true; resumeAt = Date.now() + 60000; }
+  }
+
+  /** 不組隊自己打：離開遊戲裡的隊伍，去指定的練功地圖（一般房間）開自動戰鬥；指定怪物由 mobTick 照自動補給設定的 huntMob 找。 */
+  let goHuntDone = 0, goHuntAt = 0;
+  async function goHuntRun(job) {
+    const g = G();
+    reviveHoldUntil = 0;
+    resumePending = false;
+    try {
+      if (partyNow()) {
+        await partyReq({ act: "leave" });
+        if (AUTO.teamLeave) teamLeaveDone = AUTO.teamLeave;
+        log("自己打：已離開隊伍");
+      }
+      const target = huntTarget({ huntMap: job.mapId });
+      if (S.town || S.mapId !== target.id) { // 已經在這張圖就不換房間
+        const err = await timed(g.joinRoom(target.id, {}), 30000, "去練功地圖");
+        if (err) throw new Error(`進不了「${target.name}」（${err}）`);
+        if (!(await waitFor(() => !S.town && S.mapId === target.id, 20000))) throw new Error(`等太久還沒進到「${target.name}」`);
+        await sleep(1000);
+      }
+      restoreAuto("auto");
+      goHuntDone = job.id;
+      log(`自己打：到「${target.name}」開打`);
+    } catch (e) {
+      log(`自己打沒有完成：${errText(e)}。30 秒後再試`, "warn");
+      goHuntAt = Date.now() + 30000;
+    }
   }
 
   async function fuseTier(tier, cfg) {
@@ -1360,11 +1506,20 @@
     if (busy || !AUTO || S.status !== "ingame") return;
     // 遊戲視窗開著（玩家在看）時補給、合成先停，但倒下了照樣自動復活（使用者 2026-11-21：看著弓手倒下卻沒復活）
     const rev = AUTO.revive;
-    const reviveNow = rev && rev.enabled && S.dead && !reviveHold && Date.now() >= nextReviveAt && has(REVIVE_NEED);
+    // 倒下就復活（休息中、停止練功中也一樣，只是復活後留在主城）
+    const reviveNow = rev && rev.enabled && S.dead && Date.now() >= nextReviveAt && has(REVIVE_NEED);
+    // 休息時間到了：回去繼續打（跟按「開始練功」一樣）
+    if (reviveHoldUntil && !reviveHolding()) { reviveHoldUntil = 0; if (!PAUSED) { resumePending = true; log("復活：休息 30 分鐘了，回去繼續打"); } }
+    // 停止練功、開始練功、休息中都是玩家看著遊戲時也要照做的（按鈕就在遊戲視窗上）
+    const pauseNow = PAUSED && !pauseTownDone && !S.dead && has(REVIVE_NEED);
+    const resumeNow = !PAUSED && resumePending && Date.now() >= resumeAt && !S.dead && !reviveHolding() && has(REVIVE_NEED);
+    // 不組隊自己打（組隊練功頁的按鈕）：玩家下的指令，看著遊戲也照做
+    const goNow = !!(AUTO.goHunt && AUTO.goHunt.id && AUTO.goHunt.id !== goHuntDone) && !S.dead && Date.now() >= goHuntAt && has(REVIVE_NEED);
+    const resting = PAUSED || reviveHolding();
     // 組隊、指定交易是玩家下的指令：遊戲視窗開著也照做（使用者 2026-11-22：看著遊戲時「隊長出發」不會按）
-    const teamNow = !!TEAM || !!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone);
+    const teamNow = !resting && (!!TEAM || !!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone));
     const tradeNow = !!(TRADE && TRADE.id && !tradeDone[TRADE.id]);
-    if (watching && !reviveNow && !teamNow && !tradeNow) return;
+    if (watching && !reviveNow && !goNow && !pauseNow && !resumeNow && !teamNow && !tradeNow) return;
     busy = true;
     try {
       if (reviveNow) {
@@ -1375,6 +1530,14 @@
           nextReviveAt = Date.now() + 60000;
         }
         return; // 這一輪只做復活
+      }
+      if (goNow) { await goHuntRun(AUTO.goHunt); return; }
+      if (pauseNow) { await pauseRun(); return; }
+      if (resumeNow) { await resumeRun(); return; }
+      if (resting) {
+        // 停止練功／休息中：只照指定交易（玩家下的指令），其他自動功能（補給、組隊跟隨、販售、合成…）都先停
+        if (tradeNow && !S.dead) await tradeRun(TRADE);
+        return;
       }
       // 指定交易（物品欄視窗）：比補給優先，做完才繼續其他自動功能
       if (TRADE && TRADE.id && !tradeDone[TRADE.id] && !S.dead) { await tradeRun(TRADE); return; }
@@ -1387,7 +1550,7 @@
         return;
       }
       const sup = AUTO.supply;
-      if (sup && sup.enabled && !reviveHold && !S.dead && Date.now() >= nextSupplyAt && has(SUPPLY_NEED) && S.character && S.character.hp > 0) {
+      if (sup && sup.enabled && !reviveHolding() && !S.dead && Date.now() >= nextSupplyAt && has(SUPPLY_NEED) && S.character && S.character.hp > 0) {
         const inv = invNow();
         const low = inv ? lacking(sup, inv) : [];
         if (low.length) {
@@ -1416,7 +1579,7 @@
         catch (e) { log(`組隊沒有完成：${errText(e)}。30 秒後再試`, "warn"); nextTeamAt = Date.now() + 30000; }
       }
       // 自動販售：背包快滿就回城賣；在主城閒著就直接賣
-      if (AUTO.sellRules && AUTO.sellRules.length && !S.dead && !reviveHold) {
+      if (AUTO.sellRules && AUTO.sellRules.length && !S.dead && !reviveHolding()) {
         try { await sellTick(AUTO.sell || {}); sellError = ""; }
         catch (e) { sellError = errText(e); log(`販售沒有完成：${sellError}。5 分鐘後再試`, "warn"); nextSellAt = Date.now() + 300000; }
       }
@@ -1424,6 +1587,8 @@
       if (lifeStopPending) {
         lifeStopPending = false;
         try { const ch = charNow(); if (ch && ch.mk) { await timed(G().net.request({ op: "craft", recipe: 0, count: 0 }), 20000, "停止製作"); log("生活技能：已停止製作"); } } catch {}
+        try { const ch = charNow(); if (ch && ch.gat) { await timed(G().net.request({ op: "gather", skill: 0 }), 20000, "停止採集"); log("生活技能：已停止採集"); } } catch {}
+        saveLifeProgress(true);
         lifeState = "";
       }
       if (LIFE_ON && !S.dead) {
@@ -1446,7 +1611,7 @@
     const towns = (g.towns || []).map((t) => ({ mapId: t.mapId, name: t.name, nation: t.nation }));
     const auto = { towns, missing: g.missing || [], supplyOk: has(SUPPLY_NEED), fuseOk: has(FUSE_NEED), nation: S.nation };
     auto.supplyState = !AUTO?.supply?.enabled ? "自動補給未開啟" : watching ? "遊戲視窗開著，補給暫停；收起遊戲後會檢查" :
-      reviveHold ? "頻繁倒下，停在主城等待調整設定" : S.dead ? "倒下中，等待復活後補給" : !has(SUPPLY_NEED) ? "遊戲補給介面尚未就緒" :
+      PAUSED ? "停止練功中" : reviveHolding() ? `頻繁倒下，在主城休息（約 ${Math.ceil((reviveHoldUntil - Date.now()) / 60000)} 分鐘後回去）` : S.dead ? "倒下中，等待復活後補給" : !has(SUPPLY_NEED) ? "遊戲補給介面尚未就緒" :
       Date.now() < nextSupplyAt ? `${supplyError || "補給完成後稍候"}（約 ${Math.ceil((nextSupplyAt - Date.now()) / 1000)} 秒後檢查）` :
       busy ? "正在執行補給、復活或合成" : "每 5 秒檢查藥水，主城內也會補給";
     // 每張圖的怪物（跟遊戲小地圖下方「怪物」選單同一份：同名合併、等級範圍、首領）
@@ -1475,7 +1640,7 @@
     // 生活技能（生活技能視窗要用）
     try {
       const ch = charNow();
-      if (ch) auto.life = { life: Array.isArray(ch.life) ? ch.life.slice() : [], mk: ch.mk || 0, mkn: ch.mkn || 0, made: lifeMade, state: lifeState, error: lifeError, have: bagCounts() };
+      if (ch) auto.life = { life: Array.isArray(ch.life) ? ch.life.slice() : [], mk: ch.mk || 0, mkn: ch.mkn || 0, gat: ch.gat || 0, made: lifeMade, state: lifeState, error: lifeError, have: bagCounts() };
     } catch {}
     // 物品欄、交易進度、自動販售預覽（物品欄視窗要用）
     try { auto.inv = invSummary(); } catch {}

@@ -470,6 +470,12 @@ window.petApi.onLook((l) => {
   if (art) loadDoll(l ?? { sex: 1, gear: [0, 0, 0, 0, 0], colors: null });
 });
 window.petApi.onPosition((ratio) => { pet.x = window.innerWidth * ratio; });
+// 視窗被縮小（螢幕設定變了）時把桌寵拉回畫面裡；「原地不走動」的桌寵不會自己走回來（使用者 2026-11-23：早上少一隻）
+window.addEventListener("resize", () => {
+  const max = Math.max(EDGE_MARGIN, window.innerWidth - EDGE_MARGIN);
+  pet.x = clamp(pet.x, EDGE_MARGIN, max);
+  pet.targetX = clamp(pet.targetX, EDGE_MARGIN, max);
+});
 window.petApi.onEvents(playEvents);
 window.petApi.onNotice((text) => spawnFloater("hint", text));
 window.petApi.onSize((n) => {

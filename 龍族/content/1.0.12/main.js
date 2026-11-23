@@ -47,7 +47,7 @@ function openPet(id, restoring = false) {
   }
   const usedSlots = new Set([...pets.values()].map(p => p.slot));
   const slot = [0, 1, 2, 3, 4].find(n => !usedSlots.has(n));
-  const pet = createCompanion({ accountId: id, slot, onChange: changed, onClose: () => closePet(id), managerMenu, onTeamLog: sendTeamStatus });
+  const pet = createCompanion({ accountId: id, slot, onChange: changed, onClose: () => closePet(id), managerMenu, onTeamLog: sendTeamStatus, openTeam: (preset) => openTeam({ ...preset, petId: id }) });
   pet.slot = slot; pets.set(id, pet); selected = id;
   pet.start(); pet.setSellGlobal(sellGlobal()); saveRoster(); changed();
   return pet;
@@ -58,7 +58,7 @@ function managerMenu() {
   return [
     ...(shell ? [shell.updates.menuItem()] : []),
     { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
-    { label: currentTeam ? "組隊練功（進行中）…" : "組隊練功…", enabled: pets.size > 1 || !!currentTeam, click: openTeam },
+    { label: currentTeam ? "組隊練功（進行中）…" : "組隊練功…", enabled: !!pets.size, click: () => openTeam() },
     { label: currentTrade ? "物品欄與交易（交易中）…" : "物品欄與交易…", click: openInv },
     { label: "其他桌寵", enabled: !!pets.size, submenu: [...pets.values()].map(p => ({
       label: `${p.info().label}${p.info().character ? `・${p.info().character}` : ""}`,
@@ -109,14 +109,17 @@ function teamStatus() {
 function sendTeamStatus() {
   if (teamWin && !teamWin.isDestroyed()) teamWin.webContents.send("team:status", teamStatus());
 }
-function openTeam() {
-  if (teamWin && !teamWin.isDestroyed()) { teamWin.show(); teamWin.focus(); return; }
+/** preset＝從小百科「打怪掉落」點過來：{ petId, mapName, mobName }，帶入那隻桌寵、地圖、怪物（使用者 2026-11-23）。 */
+function openTeam(preset) {
+  const sendPreset = () => preset && teamWin.webContents.send("team:preset", preset);
+  if (teamWin && !teamWin.isDestroyed()) { teamWin.show(); teamWin.focus(); sendPreset(); return; }
   teamWin = new BrowserWindow({
-    width: 640, height: 720, title: "組隊練功", autoHideMenuBar: true,
+    width: 640, height: 760, title: "組隊練功", autoHideMenuBar: true,
     icon: path.join(__dirname, "build", "icon.png"),
     webPreferences: { preload: path.join(__dirname, "team-preload.js") },
   });
   teamWin.loadFile(path.join(__dirname, "ui", "team.html"));
+  teamWin.webContents.once("did-finish-load", () => setTimeout(sendPreset, 300));
   teamTimer = setInterval(sendTeamStatus, 2000);
   teamWin.on("closed", () => { teamWin = undefined; clearInterval(teamTimer); });
 }
@@ -152,6 +155,25 @@ ipcMain.handle("team:start", (e, req) => {
   for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name, ...shared });
   sendTeamStatus();
   return {};
+});
+// 不組隊自己打（使用者 2026-11-23）：選的那幾隻（隊長欄＋勾選的）各自去同一張地圖、各打各的。
+// 有在組隊就先解散、離開遊戲裡的隊伍；地圖、指定怪物記成每隻「自動補給」的練功地圖和指定怪物（之後補給、復活也回這裡）
+ipcMain.handle("team:solo", (e, req) => {
+  if (!fromTeam(e)) return { error: "not allowed" };
+  const ids = [...new Set(Array.isArray(req?.ids) ? req.ids : [])].filter((id) => pets.has(id));
+  if (!ids.length) return { error: "請選要去打的桌寵" };
+  const infos = ids.map((id) => pets.get(id).teamInfo());
+  const notReady = infos.filter((m) => m.status !== "ingame" || !m.name);
+  if (notReady.length) return { error: `這幾隻還沒進到遊戲：${notReady.map((m) => m.label).join("、")}` };
+  const map = infos[0].huntMaps.find((m) => m.id === req.mapId);
+  if (!map) return { error: "請選要去的練功地圖" };
+  const mobNo = Number(req.mob) || 0;
+  const mob = mobNo && (map.monsters || []).find((m) => m.no === mobNo);
+  if (mobNo && !mob) return { error: "指定的怪物不在這張地圖" };
+  stopTeam();
+  for (const id of ids) pets.get(id).goSolo({ mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0, mobName: mob ? mob.name : "", spot: req.spot !== false });
+  sendTeamStatus();
+  return { names: infos.map((m) => m.name), mapName: map.name };
 });
 ipcMain.handle("team:stop", (e) => { if (!fromTeam(e)) return { error: "not allowed" }; stopTeam(); sendTeamStatus(); return {}; });
 
@@ -199,21 +221,26 @@ function openInv() {
     webPreferences: { preload: path.join(__dirname, "inv-preload.js") },
   });
   invWin.loadFile(path.join(__dirname, "ui", "inv.html"));
-  invWin.on("closed", () => { invWin = undefined; });
+  invTimer = setInterval(() => { if (invWin && !invWin.isDestroyed() && !currentTrade) sendInvStatus(); }, 3000);
+  invWin.on("closed", () => { invWin = undefined; clearInterval(invTimer); invTimer = undefined; });
 }
 const fromInv = (e) => invWin && !invWin.isDestroyed() && e.sender === invWin.webContents;
 function endTrade(result, text) {
   if (!currentTrade) return;
   const t = currentTrade;
   currentTrade = null;
+  clearInterval(tradeTimer); tradeTimer = undefined;
   for (const id of [t.fromId, t.toId]) pets.get(id)?.setTrade(null);
   tradeLog.unshift({ at: Date.now(), from: t.fromName, to: t.toName, items: t.items.map((i) => i.label), gold: t.gold, result, text });
   tradeLog.splice(20);
   sendInvStatus();
 }
 // 交易進行中：把給的那隻的房號轉給收的那隻；兩邊都做完（或有一邊失敗）就結束
-setInterval(() => {
-  if (!currentTrade) return;
+// 計時器只在交易中開著（endTrade 會關），物品欄視窗的更新也只在視窗開著時跑：桌寵全關後不留計時器
+let tradeTimer;
+function startTradeWatch() { if (!tradeTimer) tradeTimer = setInterval(tradeWatch, 1000); }
+function tradeWatch() {
+  if (!currentTrade) { clearInterval(tradeTimer); tradeTimer = undefined; return; }
   const t = currentTrade, giver = pets.get(t.fromId), taker = pets.get(t.toId);
   if (!giver || !taker) return endTrade("error", "有一隻桌寵關掉了");
   const g = giver.invInfo().trade, r = taker.invInfo().trade;
@@ -223,8 +250,7 @@ setInterval(() => {
   if (gs?.ok && rs?.ok) return endTrade("ok", "交易成功");
   if (Date.now() - t.startedAt > 10 * 60 * 1000) return endTrade("error", "超過 10 分鐘沒有完成，已取消");
   sendInvStatus();
-}, 1000);
-setInterval(() => { if (invWin && !invWin.isDestroyed() && !currentTrade) sendInvStatus(); }, 3000);
+}
 ipcMain.handle("inv:get", (e) => (fromInv(e) ? invStatus() : null));
 ipcMain.handle("inv:catalog", (e) => (fromInv(e) ? catalog() : null));
 // 改販售設定：scope "global"＝全部桌寵；其他＝那隻桌寵的 accountId（"null" 是沒有帳號的那隻）
@@ -259,6 +285,7 @@ ipcMain.handle("inv:trade", (e, req) => {
     items: items.map((i) => ({ ...i, label: `${i.name}${i.n > 1 ? ` ×${i.n}` : ""}` })) };
   giver.setTrade(giveJob);
   taker.setTrade(takeJob);
+  startTradeWatch();
   sendInvStatus();
   return {};
 });
@@ -273,7 +300,7 @@ for (const name of ["game:state", "game:auto-log", "game:pending-storage", "game
     p.events.get(name)?.(e, ...args);
   });
 }
-for (const name of ["auto:get", "codex:char", "codex:set-target", "life:get", "life:set", "idle:get", "idle:set", "idle:share", "pet:asset", "pet:art"]) {
+for (const name of ["auto:get", "codex:char", "codex:set-target", "codex:open-team", "life:get", "life:set", "idle:get", "idle:set", "idle:share", "pet:asset", "pet:art"]) {
   ipcMain.handle(name, (e, ...args) => owner(e)?.handlers.get(name)?.(e, ...args));
 }
 

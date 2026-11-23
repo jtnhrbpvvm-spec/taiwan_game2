@@ -13,16 +13,20 @@ function formNow() {
   return {
     skill: Number($("skill").value), mode: document.querySelector("input[name=mode]:checked")?.value || "best",
     recipe: Number($("recipe").value) || 0, count: Math.max(0, Math.floor(Number($("count").value) || 0)),
-    chain: $("chain").checked, buy: $("buy").checked,
+    chain: $("chain").checked, buy: $("buy").checked, useUp: $("useUp").checked,
   };
 }
+// 採集技能（採礦、伐木…）：選了就在主城一直採，不用配方（2026-11-23 加）
+const gatherSkill = (skill) => (codex.gatherSkills || []).find((s) => s.skill === skill);
 function fillForm(cfg) {
-  $("skill").replaceChildren(...codex.craftSkills.map((s) => new Option(s.name, String(s.skill))));
+  const group = (label, list) => { const g = document.createElement("optgroup"); g.label = label; g.append(...list.map((s) => new Option(s.name, String(s.skill)))); return g; };
+  $("skill").replaceChildren(group("製作", codex.craftSkills), group("採集", codex.gatherSkills || []));
   $("skill").value = String(cfg.skill);
   for (const r of document.querySelectorAll("input[name=mode]")) r.checked = r.value === cfg.mode;
   $("count").value = cfg.count;
   $("chain").checked = cfg.chain;
   $("buy").checked = cfg.buy;
+  $("useUp").checked = !!cfg.useUp;
   fillRecipes(cfg.recipe);
 }
 function fillRecipes(want) {
@@ -36,7 +40,24 @@ function renderLevels() {
   const all = [...codex.craftSkills.map((s) => ({ ...s, kind: "製作" })), ...codex.gatherSkills.map((s) => ({ ...s, kind: "採集" }))];
   $("levels").innerHTML = info?.now ? all.map((s) => `<span class="lv">${esc(s.name)} <b class="gold">${Math.trunc((life()[s.group] || 0) / 10000)}</b></span>`).join("") : "遊戲連上、進到角色後才會顯示。";
 }
+function renderGatherMode() {
+  const g = gatherSkill(Number($("skill").value));
+  $("craftOnly").hidden = !!g;
+  $("useUp").closest(".row").hidden = !!g;
+  $("gatherNote").hidden = !g;
+  $("recipeTable").hidden = !!g;
+  $("gatherBox").hidden = !g;
+  if (g) {
+    const lvNow = Math.trunc((life()[g.group] || 0) / 10000);
+    const tool = g.tool > 0 ? codex.toolNames[g.tool] || `工具${g.tool}` : "";
+    $("recipes-title").textContent = `${g.name}（採集，你 ${lvNow} 級）`;
+    $("gatherBox").innerHTML = `在主城帶著工具掛「${esc(g.name)}」，每 3 秒採一次。${tool ? `<br />需要工具：${esc(tool)}（身上或背包要有；勾「自動購買」會在主城買）` : ""}` +
+      (info?.now?.gat === g.skill ? `<br /><span class="ok">遊戲正在採：${esc(g.name)}</span>` : "");
+  }
+  return !!g;
+}
 function renderRecipes() {
+  if (renderGatherMode()) return;
   const skill = Number($("skill").value);
   const s = codex.craftSkills.find((x) => x.skill === skill);
   $("recipes-title").textContent = `${s?.name || ""}的配方（你 ${lv(skill)} 級）`;
@@ -58,6 +79,8 @@ function renderPreview() {
   const f = formNow();
   const out = [];
   if (!info?.now) { $("preview").textContent = "遊戲連上後才能預覽。"; return; }
+  const gs = gatherSkill(f.skill);
+  if (gs) { $("preview").textContent = `採集「${gs.name}」：回主城後開始採，一直採到停止或背包滿。`; return; }
   const n = f.count > 0 ? Math.min(f.count, 20) : 20;
   const opts = { life: life(), chain: f.chain, buy: f.buy, hasTool: () => true, canBuy: () => true, canBuyTool: () => true };
   let r = f.mode === "recipe" ? LP.byNo.get(f.recipe) : null, skipped = null;
@@ -83,6 +106,14 @@ function renderPreview() {
   } else {
     out.push(`<span class="bad">做 ${batch} 次材料不夠：缺 ${p.missing.map((m) => `${esc(nameOf(m.itemNo))} ${m.amount}`).join("、")}</span>${f.buy ? "" : "（可以勾「自動購買不足的材料」）"}`);
   }
+  if (f.useUp) {
+    // 跟桌寵一樣：先只用背包現有的（不買），指定的做不了就換這個技能其他做得出來的
+    const noBuy = { ...opts, buy: false };
+    const pool = [r, ...LP.bestOrder(f.skill, life()).filter((x) => x !== r)];
+    const can = pool.map((x) => [x, LP.maxCount(x, have(), noBuy, 999)]).filter(([, n]) => n > 0);
+    out.push(can.length ? `用光原料：身上的材料還能做 ${can.slice(0, 5).map(([x, n]) => `${esc(nameOf(x.itemNo))} ${n} 次`).join("、")}${can.length > 5 ? "…" : ""}`
+      : `<span class="muted">用光原料：背包裡的材料這個技能已經做不出東西</span>`);
+  }
   const tool = LP.toolKind(r);
   if (tool) out.push(`需要工具：${esc(codex.toolNames[tool] || tool)}（身上或背包要有）`);
   $("preview").innerHTML = out.join("<br />");
@@ -91,10 +122,13 @@ function renderNow() {
   const now = info?.now, cfg = info?.cfg;
   $("who").textContent = info ? `${info.name || "（未登入）"}・${info.status !== "ingame" ? "遊戲還沒連上" : info.town ? "在主城" : "不在主城"}${info.watching ? "・遊戲視窗開著（暫停）" : ""}` : "";
   const lines = [];
-  lines.push(cfg?.enabled ? `<span class="ok">練習中</span>：${esc(codex.craftSkills.find((s) => s.skill === cfg.skill)?.name || "")}・${cfg.mode === "best" ? "最高等級能做的" : esc(nameOf(LP.byNo.get(cfg.recipe)?.itemNo))}・${cfg.count ? `${cfg.count} 件` : "一直做"}` : "沒有在練。");
+  const gs = cfg && gatherSkill(cfg.skill);
+  lines.push(!cfg?.enabled ? "沒有在練。" : gs ? `<span class="ok">練習中</span>：採集「${esc(gs.name)}」` :
+    `<span class="ok">練習中</span>：${esc(codex.craftSkills.find((s) => s.skill === cfg.skill)?.name || "")}・${cfg.mode === "best" ? "最高等級能做的" : esc(nameOf(LP.byNo.get(cfg.recipe)?.itemNo))}・${cfg.count ? `${cfg.count} 件` : "一直做"}${cfg.useUp ? "・用光原料" : ""}`);
   if (now?.mk) { const r = LP.byNo.get(now.mk); lines.push(`遊戲正在做：${esc(nameOf(r?.itemNo))}${now.mkn ? `（還有 ${now.mkn}）` : ""}`); }
+  if (now?.gat) lines.push(`遊戲正在採：${esc(gatherSkill(now.gat)?.name || now.gat)}`);
   if (now?.state) lines.push(esc(now.state));
-  if (cfg?.enabled && now) lines.push(`這次已做：${now.made} 件`);
+  if (cfg?.enabled && now && !gs) lines.push(`這次已做：${now.made} 件（斷線重連後接著算）`);
   $("now").innerHTML = lines.join("<br />");
   $("log").textContent = (info?.log || []).slice().reverse().join("\n");
   $("start").textContent = cfg?.enabled ? "套用變更" : "開始練習";
@@ -109,7 +143,7 @@ function render() {
 }
 async function save(enabled) {
   const cfg = { ...formNow(), enabled };
-  if (enabled && cfg.mode === "recipe" && !cfg.recipe) { $("msg").className = "bad"; $("msg").textContent = "請選要做的物品"; return; }
+  if (enabled && !gatherSkill(cfg.skill) && cfg.mode === "recipe" && !cfg.recipe) { $("msg").className = "bad"; $("msg").textContent = "請選要做的物品"; return; }
   info = await window.lifeApi.set(cfg);
   $("msg").className = "ok";
   $("msg").textContent = enabled ? "已開始（回主城後開始做）" : "已停止";
@@ -118,7 +152,7 @@ async function save(enabled) {
 
 $("skill").addEventListener("change", () => { fillRecipes(0); render(); });
 $("recipe").addEventListener("change", () => { document.querySelector("input[name=mode][value=recipe]").checked = true; render(); });
-for (const id of ["count", "chain", "buy"]) $(id).addEventListener("input", render);
+for (const id of ["count", "chain", "buy", "useUp"]) $(id).addEventListener("input", render);
 for (const r of document.querySelectorAll("input[name=mode]")) r.addEventListener("change", render);
 $("recipes").addEventListener("click", (e) => {
   const tr = e.target.closest("tr.pick");
