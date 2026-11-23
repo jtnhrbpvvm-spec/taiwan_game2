@@ -1,9 +1,21 @@
 /* 龍脈紀元 輔助書籤（非官方）
  * 功能：自動喝藍色藥水、資訊面板、資料查詢、介面調整、提醒、存檔備份匯出。
- * 只呼叫遊戲自己的喝藥函式（會正常扣藥水），不修改等級、金幣、鑽石、物品，也不送任何資料到伺服器。
+ * 只呼叫遊戲自己的喝藥函式（會正常扣藥水），不修改等級、金幣、鑽石、物品，不送帳號或存檔資料；僅回報匿名工具啟動次數。
  * 載入方式：javascript:import('…/dv-tool.js?v='+Date.now())
  */
 const VERSION = 'V1';
+// 使用次數：每個工具在同一遊戲分頁只計一次，不包含帳號或存檔。
+(() => {
+  try {
+    const key = "__tg2Count:暗龍紀元";
+    if (window[key]) return;
+    window[key] = true;
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent("/書籤/暗龍紀元")
+      + '&t=' + encodeURIComponent("書籤：暗龍紀元") + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    if (!navigator.sendBeacon || !navigator.sendBeacon(url)) new Image().src = url;
+  } catch (_) {} // 計數服務失敗不影響工具。
+})();
+
 const CFG_KEY = 'dvtool-cfg'; // 刻意不用 dragonvein 開頭，避免被遊戲的雲端同步帶走
 
 (() => {

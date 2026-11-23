@@ -24,6 +24,18 @@
  */
 (() => {
   'use strict';
+// 使用次數：每個工具在同一遊戲分頁只計一次，不包含帳號或存檔。
+(() => {
+  try {
+    const key = "__tg2Count:希望改機面板";
+    if (window[key]) return;
+    window[key] = true;
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent("/書籤/希望改機面板")
+      + '&t=' + encodeURIComponent("書籤：希望改機面板") + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    if (!navigator.sendBeacon || !navigator.sendBeacon(url)) new Image().src = url;
+  } catch (_) {} // 計數服務失敗不影響工具。
+})();
+
 
   const PANEL_ID = 'idle-seal-cheat-panel';
   if (document.getElementById(PANEL_ID)) return;

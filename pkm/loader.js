@@ -3,7 +3,19 @@
 
   // 每次改完程式碼記得手動更新這個版本號，
   // 面板標題會顯示它，方便確認玩家載入到的是不是最新版（沒吃到快取的舊版）。
-  const SCRIPT_VERSION = 'v1.3';
+  const SCRIPT_VERSION = 'v1.4';
+// 使用次數：每個工具在同一遊戲分頁只計一次，不包含帳號或存檔。
+(() => {
+  try {
+    const key = "__tg2Count:pkm";
+    if (window[key]) return;
+    window[key] = true;
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent("/書籤/pkm")
+      + '&t=' + encodeURIComponent("書籤：pkm") + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    if (!navigator.sendBeacon || !navigator.sendBeacon(url)) new Image().src = url;
+  } catch (_) {} // 計數服務失敗不影響工具。
+})();
+
 
   // ====== 0. 防止重複載入造成的疊加問題 ======
   if (window.__pokechillCleanup) {

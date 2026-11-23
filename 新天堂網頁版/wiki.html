@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d0b09">
+<title>小百科｜新天堂網頁版</title>
+<meta name="description" content="新天堂網頁版小百科：道具、怪物、BOSS、地圖、技能、製作、變身卡、魔法娃娃、武魂查詢。只收錄目前遊戲裡拿得到的內容。">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/wiki-data.js" defer></script>
+<script src="assets/wiki.js" defer></script>
+<script>addEventListener('load',function(){if(location.protocol==='file:')return;var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';s.setAttribute('data-goatcounter','https://taiwangame2.goatcounter.com/count');document.head.appendChild(s);});</script>
+</head>
+<body>
+<a class="skip" href="#list">跳到資料清單</a>
+<header class="top">
+  <a class="brand" href="index.html"><span class="mark">天</span><span>新天堂網頁版<small>攻略．小百科</small></span></a>
+  <nav aria-label="網站導覽"><a href="index.html">首頁</a><a href="guide.html">攻略</a><a href="wiki.html" aria-current="page">小百科</a></nav>
+</header>
+<main>
+  <div class="wiki-head">
+    <h1>小百科</h1>
+    <span class="tag gold">只收錄目前拿得到的內容</span>
+  </div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="資料分類"></div>
+  <div class="filters" id="filters"></div>
+  <div id="list" class="list" aria-live="polite"></div>
+  <div id="more"></div>
+</main>
+<div class="sheet" id="sheet" hidden><div class="pane" id="pane" role="dialog" aria-modal="true" aria-label="詳細資料"></div></div>
+<footer>資料由遊戲本體自動整理；機率為遊戲內設定值，實際以遊戲為準。</footer>
+</body>
+</html>

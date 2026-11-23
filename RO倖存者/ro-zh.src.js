@@ -7,6 +7,18 @@
    怪物、物品、卡片、技能名是遊戲直接顯示的英文原名，不經過翻譯函式，另外在畫面文字（DOM、canvas）換成台版譯名。
    設定存檔時把 lang 存回原本的語言，沒點書籤時遊戲不會變成西文。 */
 const VERSION = 'V4';
+// 使用次數：每個工具在同一遊戲分頁只計一次，不包含帳號或存檔。
+(() => {
+  try {
+    const key = "__tg2Count:RO倖存者";
+    if (window[key]) return;
+    window[key] = true;
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent("/書籤/RO倖存者")
+      + '&t=' + encodeURIComponent("書籤：RO倖存者") + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    if (!navigator.sendBeacon || !navigator.sendBeacon(url)) new Image().src = url;
+  } catch (_) {} // 計數服務失敗不影響工具。
+})();
+
 /*ZH*/const ZH = {"ui":{},"names":{},"news":{}};/*END*/
 (() => {
   const W = window;

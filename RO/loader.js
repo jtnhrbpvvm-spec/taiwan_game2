@@ -14,7 +14,19 @@
 // 新增的成就資料）沒送過來，畫面看起來就是空的，卻很難第一時間看出是哪邊沒更新。
 // 這個版本號會透過 init 訊息送給修改器，修改器畫面上會顯示「loader Lxx」，
 // 兩邊版本號同時看得到，比對得出來是不是漏傳了。
-const LOADER_VERSION = 'L11';
+const LOADER_VERSION = 'L12';
+// 使用次數：每個工具在同一遊戲分頁只計一次，不包含帳號或存檔。
+(() => {
+  try {
+    const key = "__tg2Count:RO";
+    if (window[key]) return;
+    window[key] = true;
+    const url = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent("/書籤/RO")
+      + '&t=' + encodeURIComponent("書籤：RO") + '&e=true&rnd=' + Math.random().toString(36).slice(2);
+    if (!navigator.sendBeacon || !navigator.sendBeacon(url)) new Image().src = url;
+  } catch (_) {} // 計數服務失敗不影響工具。
+})();
+
 
 const STYLE_ID = 'ro-idle-mobile-ui-style';
 const isTouch = window.matchMedia('(pointer: coarse)').matches;

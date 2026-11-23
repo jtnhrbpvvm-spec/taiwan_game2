@@ -1,5 +1,5 @@
 {
-  "version": "1.0.13",
+  "version": "1.0.14",
   "shell": 1,
   "files": [
     {
@@ -84,8 +84,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "9982b5e1311ddd38346c28b6e9a30930df7fc160d44d26881c0f5e4540fc041f",
-      "size": 22415
+      "sha256": "6ff048417891c628805b0ef9771ac4e608eac191aaeac7ff31ddb64970c7b42c",
+      "size": 23331
     },
     {
       "path": "pet-preload.js",
