@@ -54,7 +54,7 @@ const DEFAULT_AUTO = {
   supply: { enabled: false, town: "", huntMap: "", hpItem: 0, mpItem: 0, hpMin: 0, hpTo: 0, mpMin: 0, mpTo: 0, ammoMin: 0, ammoTo: 0 },
   fuse: [{ enabled: false, count: 5 }, { enabled: false, count: 5 }, { enabled: false, count: 5 }],
   // 自動復活：倒下後回主城念咒語復活；supply＝復活後照「自動補給」的設定買藥，再回練功地圖
-  revive: { enabled: false, supply: true },
+  revive: { enabled: false, supply: true, rest: true },
   // 自動配點：有可分配點數就照 ratio（{int:6, wsps:3, con:1}）分，見 stat-alloc.js
   // target＝小百科指定的目標裝備 { itemNo, setAt }：先配到剛好能用它（不管 enabled），達成就清掉；history＝以前的目標紀錄
   alloc: { enabled: false, ratio: {}, target: null, history: [] },
@@ -152,7 +152,7 @@ function cleanAuto(a) {
       ammoMin: num(s.ammoMin, 0, 9999), ammoTo: num(s.ammoTo, 0, 9999),
     },
     fuse: [0, 1, 2].map((i) => ({ enabled: !!a?.fuse?.[i]?.enabled, count: num(a?.fuse?.[i]?.count ?? 5, 5, 96) })),
-    revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false, spot: a?.revive?.spot !== false },
+    revive: { enabled: !!a?.revive?.enabled, supply: a?.revive?.supply !== false, spot: a?.revive?.spot !== false, rest: a?.revive?.rest !== false },
     sell: cleanSell(a?.sell),
     life: cleanLife(a?.life),
     alloc: {

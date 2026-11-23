@@ -20,6 +20,7 @@ function fill(st) {
   $("rev-on").checked = !!a.revive?.enabled;
   $("rev-supply").checked = a.revive?.supply !== false;
   $("rev-spot").checked = a.revive?.spot !== false;
+  $("rev-rest").checked = a.revive?.rest !== false;
   $("al-on").checked = !!a.alloc?.enabled;
   filled = true;
 }
@@ -205,7 +206,7 @@ $("save").addEventListener("click", () => {
   if (supply.mpTo < supply.mpMin) supply.mpTo = supply.mpMin;
   if (supply.ammoTo < supply.ammoMin) supply.ammoTo = supply.ammoMin;
   const fuse = [0, 1, 2].map((i) => ({ enabled: $(`f${i}-on`).checked, count: Math.max(5, Number($(`f${i}-n`).value) || 5) }));
-  const revive = { enabled: $("rev-on").checked, supply: $("rev-supply").checked, spot: $("rev-spot").checked };
+  const revive = { enabled: $("rev-on").checked, supply: $("rev-supply").checked, spot: $("rev-spot").checked, rest: $("rev-rest").checked };
   const alloc = { enabled: $("al-on").checked, ratio: ratioNow() };
   window.autoApi.set({ supply, fuse, revive, alloc });
   for (const [id, key] of Object.entries(FIELDS)) $(id).value = supply[key];

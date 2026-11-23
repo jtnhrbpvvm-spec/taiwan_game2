@@ -329,6 +329,8 @@
       if (paused && !PAUSED) { pauseTownDone = false; resumePending = false; }
       if (!paused && PAUSED) { resumePending = true; resumeAt = 0; reviveHoldUntil = 0; }
       PAUSED = paused;
+      // 休息中把「頻繁倒下先休息」取消勾選：馬上結束休息、回去打
+      if (AUTO && AUTO.revive && AUTO.revive.rest === false && reviveHoldUntil > Date.now()) { reviveHoldUntil = 0; if (!PAUSED) resumePending = true; resumeAt = 0; }
       TRADE = (AUTO && AUTO.trade) || null;
       // 生活技能關掉：如果正在做就叫遊戲停
       // 組隊練功中先不練生活技能（2026-11-23 實測：隊長一進練功房，生活技能就把它拉回主城，隊伍出不了門）；解散後自動接著練
@@ -1611,7 +1613,8 @@
     if (PAUSED) { log("復活：停止練功中，留在主城"); return; }
     if (reviveHolding()) { log("復活：休息中，留在主城"); return; }
     const recent = deathTimes.filter((t) => Date.now() - t < DEATH_WINDOW_MS);
-    if (recent.length >= DEATH_LIMIT) {
+    // 「頻繁倒下先休息」可關（使用者 2026-11-23）：沒勾就不休息，一直回去打
+    if (recent.length >= DEATH_LIMIT && rcfg.rest !== false) {
       reviveHoldUntil = Date.now() + REVIVE_REST_MS;
       deathTimes.length = 0; // 休息完重新算
       log(`復活：10 分鐘內倒下 ${recent.length} 次，先在主城休息 30 分鐘再回去（按「停止練功」再「開始練功」可以馬上回去）`, "warn");
