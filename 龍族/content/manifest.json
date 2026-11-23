@@ -1,5 +1,5 @@
 {
-  "version": "1.0.17",
+  "version": "1.0.19",
   "shell": 1,
   "files": [
     {
@@ -44,13 +44,13 @@
     },
     {
       "path": "companion.js",
-      "sha256": "406dc24c0d18159809c09a899f7a12d657d5b172b95ea43ef4760c51a9dad2e6",
-      "size": 59465
+      "sha256": "8da44380d99c815a865ef76c2c2519a0628550259822255b08bcf7e5da9b8af9",
+      "size": 62930
     },
     {
       "path": "game-hook.js",
-      "sha256": "00395b8954f666de9fd9e831fc76695448c7519aa5d21308b7320d9ec18d8acc",
-      "size": 121052
+      "sha256": "a6f6b722adac9c77a4bd168c79945356a92dd120ec9dcf8f855649fb44d3509f",
+      "size": 131380
     },
     {
       "path": "game-patch.js",
@@ -89,8 +89,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "140501c10c7b634edcd4f8f5d7d5e0c233dd76e92fe55238b17d362d0548d53d",
-      "size": 23711
+      "sha256": "8756742e963c54d97b1f246747afc5f3184603d9b762a199c3a92a73482288a3",
+      "size": 30507
     },
     {
       "path": "pet-preload.js",
@@ -124,8 +124,8 @@
     },
     {
       "path": "team-preload.js",
-      "sha256": "6e848f993f5c4523cd442792d3e8b3dff394e24f28281871cd8ce0c28743e24d",
-      "size": 494
+      "sha256": "9e84e6b132e4d92037c13c8b8b69cbd14fbed2b770500ffffc0f45790752ebde",
+      "size": 606
     },
     {
       "path": "tools/fill-login.ps1",
@@ -149,13 +149,13 @@
     },
     {
       "path": "ui/auto.html",
-      "sha256": "38658422078560fa4393b806d11544ed3c9d62e73b7a33b3f91ca61c8ca77fd5",
-      "size": 8318
+      "sha256": "fc693f283919bff04fd12658eabdb6b75c3e7de2be6e8652e23912fd93191dc4",
+      "size": 8312
     },
     {
       "path": "ui/auto.js",
-      "sha256": "0b9f1d1bd46ab2ea8e9a209f53d9deeaa73d3ed0d6b1953a052d46c88cb68af0",
-      "size": 12988
+      "sha256": "97ab67b18648b035a535212390370ee98a3dc6259ed7a2c1ed0d659c2af5cbe2",
+      "size": 12874
     },
     {
       "path": "ui/chat.html",
@@ -189,8 +189,8 @@
     },
     {
       "path": "ui/inv.html",
-      "sha256": "5fa871c545694170b17f3252bace7fc12093a3128e2fc629882a9fbbaffc93d0",
-      "size": 7624
+      "sha256": "f44dece9d1c6d5ae9c22bbf511158a1fecdcbcf690f67aa5effad92c30cdcb22",
+      "size": 7585
     },
     {
       "path": "ui/inv.js",
@@ -209,13 +209,13 @@
     },
     {
       "path": "ui/team.html",
-      "sha256": "6ad5297725236d2a62403e4c23b2d9187cde02eed8052e971476f7ff32183cfd",
-      "size": 4600
+      "sha256": "91a9475280b6617b4f3301fbe784018ab980a67d3ac3d8cc6c503a99f08b4eed",
+      "size": 5426
     },
     {
       "path": "ui/team.js",
-      "sha256": "0115581c6ba79c107529265d84d3553f27d213a438d777534cc0f6bc7b5fda6c",
-      "size": 8198
+      "sha256": "a2a832934a759274a3d1222335f22c035c9de1f5cae4eb23b54a63b95b3b6060",
+      "size": 15022
     }
   ]
 }

@@ -41,7 +41,6 @@ function fillTowns(st) {
 function showStatus(st) {
   const parts = [];
   if (!st.connected) parts.push(`<span class="warn">遊戲還沒連上（或還沒登入），連上後才會開始自動補給、合成。</span>`);
-  else if (st.watching) parts.push(`<span class="warn">遊戲視窗正開著：自動功能暫停中。</span>`);
   else parts.push(`<span class="ok">遊戲已連上。</span>`);
   if (st.connected && !st.supplyOk) parts.push(`<span class="warn">這一版遊戲找不到補給要用的函式，自動補給停用。</span>`);
   if (st.connected && !st.fuseOk) parts.push(`<span class="warn">這一版遊戲找不到合成要用的函式，自動合成停用。</span>`);

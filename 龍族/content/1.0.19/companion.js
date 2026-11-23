@@ -283,8 +283,10 @@ function updateGameTitle() {
 }
 function updateGameMenu() {
   if (!game.win || game.win.isDestroyed()) return;
+  // 使用者 2026-11-23：原本的「停止練功」鈕換成跟右鍵一樣的「停止目前所有動作」（停止戰鬥／停止生活技能／全部停止）；停著時多「開始練功」
   game.win.setMenu(Menu.buildFromTemplate([
-    { label: settings.paused ? "▶ 開始練功" : "⏸ 停止練功", click: togglePause },
+    { label: "停止目前所有動作", submenu: stopMenuItems() },
+    ...(settings.paused ? [{ label: "▶ 開始練功", click: togglePause }] : []),
   ]));
   game.win.setAutoHideMenuBar(false);
   game.win.setMenuBarVisibility(true);
@@ -295,6 +297,31 @@ function togglePause() {
   saveSettings();
   logGame(settings.paused ? "停止練功" : "開始練功");
   notice(settings.paused ? "停止練功，回主城休息" : "開始練功");
+  updateGameMenu();
+  updateGameTitle();
+  sendAuto();
+  onChange();
+}
+
+/** 右鍵「停止目前所有動作」：fight＝停止戰鬥（同「停止練功」：回主城休息、自動功能都停）；life＝關掉生活技能；all＝兩個都做。 */
+function stopMenuItems() {
+  return [
+    { label: settings.paused ? "停止戰鬥（已停止，回主城休息中）" : "停止戰鬥（回主城休息）", enabled: !settings.paused, click: () => stopActions("fight") },
+    { label: settings.auto.life.enabled ? "停止生活技能" : "停止生活技能（沒有在練）", enabled: !!settings.auto.life.enabled, click: () => stopActions("life") },
+    { type: "separator" },
+    { label: "全部停止", enabled: !settings.paused || !!settings.auto.life.enabled, click: () => stopActions("all") },
+    { type: "separator" },
+    { label: "要繼續：練功設定 →「停止練功」取消勾選；生活技能到生活技能頁開啟", enabled: false },
+  ];
+}
+function stopActions(kind) {
+  const done = [];
+  if ((kind === "fight" || kind === "all") && !settings.paused) { settings.paused = true; done.push("戰鬥"); }
+  if ((kind === "life" || kind === "all") && settings.auto.life.enabled) { settings.auto.life = cleanLife({ ...settings.auto.life, enabled: false }); done.push("生活技能"); }
+  if (!done.length) return;
+  saveSettings();
+  logGame(`停止目前動作：${done.join("、")}`);
+  notice(`已停止${done.join("、")}${done.includes("戰鬥") ? "，回主城休息" : ""}`);
   updateGameMenu();
   updateGameTitle();
   sendAuto();
@@ -485,6 +512,7 @@ handlers.set("life:set", (e, cfg) => {
   settings.auto.life = cleanLife(cfg);
   saveSettings();
   sendAuto();
+  updateGameMenu(); // 遊戲視窗「停止目前所有動作」裡的停止生活技能跟著開關
   return lifeInfo();
 });
 
@@ -1059,6 +1087,8 @@ function buildMenu() {
     { label: "對話…", click: openChat }, // 使用者 2026-11-23 指定放最上面這區
     ...(m.update ? [m.update] : []),
     m.others,
+    // 使用者 2026-11-23：開遊戲畫面不再自動暫停，要停由玩家自己按（放在「其他桌寵」下面）
+    { label: "停止目前所有動作", submenu: stopMenuItems() },
     { type: "separator" },
     { label: browserLogin ? "登入設定（登入中）" : "登入設定", submenu: [
       { label: "重新連線（重新載入遊戲）", click: reconnect },
@@ -1066,7 +1096,6 @@ function buildMenu() {
       browserLogin
         ? { label: "取消用 Chrome 登入", click: () => browserLogin?.cancel() }
         : { label: currentAccount() ? "重新登入（開 Chrome，幫你填帳號密碼）…" : "登入（開 Chrome）…", click: startBrowserLogin },
-      m.accounts,
       { label: "開機自動啟動", type: "checkbox", checked: app.isPackaged ? app.getLoginItemSettings().openAtLogin : false, enabled: app.isPackaged, click: (i) => setAutoStart(i.checked) },
     ] },
     { type: "separator" },
@@ -1102,6 +1131,26 @@ function buildMenu() {
       if (team) logGame(`組隊：${team.role === "leader" ? `當隊長，帶 ${team.members.join("、")} 去「${team.mapName}」` : `當隊員，等 ${team.leader}`}`);
       else if (leave) logGame("組隊：解散");
       sendAuto();
+    },
+    /** 組隊中隊長換房間（私人房／公開房 N／快速加入）。 */
+    setTeamRoom(room, where = {}) {
+      if (!team) return;
+      team = { ...team, ...where, room, ...(team.role === "member" ? { dest: null } : {}) };
+      logGame(`組隊：換到「${team.mapName || team.mapId}」${room.kind === "public" ? (room.no ? `公開房 ${room.no}` : "公開房（快速加入）") : "私人房"}`);
+      sendAuto();
+    },
+    /** 公開房組隊：主程式把隊長進的公開房（{mapId,no,code}）轉給隊員。 */
+    setTeamDest(dest) {
+      if (!team || team.role !== "member") return;
+      team = { ...team, dest: dest || null };
+      if (dest) logGame(`組隊：${team.leader} 在公開房 ${dest.no}，跟過去`);
+      sendAuto();
+    },
+    /** 讀公開房清單（組隊頁用，經隊長的遊戲連線讀）。 */
+    async listRooms(mapId, after) {
+      if (!game.win || game.win.isDestroyed() || game.loading || game.state?.status !== "ingame") return { error: "這隻桌寵還沒進到遊戲" };
+      const args = [String(mapId || "").slice(0, 32), Number(after) || 0].map((v) => JSON.stringify(v)).join(",");
+      return game.win.webContents.executeJavaScript(`window.__rajaPetRooms ? window.__rajaPetRooms.list(${args}) : { error: "遊戲還沒載入" }`).catch(() => ({ error: "讀不到公開房" }));
     },
     /** 不組隊自己打（組隊練功頁）：離開隊伍，練功地圖、指定怪物記進自動補給設定，馬上去那張圖開打；停止練功中也一併恢復。 */
     goSolo({ mapId, mapName, mob, mobName, spot }) {
@@ -1144,7 +1193,7 @@ function buildMenu() {
         name: s?.character?.name || "", level: s?.character?.level, classId: a?.char?.classId,
         mapId: s?.mapId, town: !!s?.town, dead: !!s?.dead, watching: game.shown,
         huntMaps: a?.huntMaps ?? [], lastHuntMap: s?.lastHuntMap ?? settings.lastHuntMap ?? null, huntMap: settings.auto.supply.huntMap || "",
-        party: a?.party ?? null, teamState: a?.teamState || "", team,
+        party: a?.party ?? null, teamState: a?.teamState || "", team, teamRoom: a?.teamRoom ?? null, room: a?.room ?? null,
         log: autoLog.filter((l) => / 組隊|復活|倒下/.test(l)).slice(-8),
       };
     },

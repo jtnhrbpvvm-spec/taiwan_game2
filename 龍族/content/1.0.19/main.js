@@ -50,7 +50,7 @@ function closePet(id) {
   if (currentTeam && (currentTeam.leaderId === id || currentTeam.memberIds.includes(id))) {
     // 隊長關掉就整隊結束；隊員關掉就把他從名單拿掉
     if (currentTeam.leaderId === id) stopTeam();
-    else currentTeam.memberIds = currentTeam.memberIds.filter((m) => m !== id);
+    else { currentTeam.memberIds = currentTeam.memberIds.filter((m) => m !== id); saveTeam(); }
   }
   pets.delete(id); pet.dispose(); saveRoster(); changed();
   if (!pets.size && !quitting) openAccounts();
@@ -79,16 +79,21 @@ function managerMenu() {
     accounts: { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
     team: { label: currentTeam ? "組隊／單人練功（進行中）…" : "組隊／單人練功…", enabled: !!pets.size, click: () => openTeam() },
     inv: { label: currentTrade ? "物品欄與交易（交易中）…" : "物品欄與交易…", click: openInv },
-    others: { label: "其他桌寵", enabled: !!pets.size, submenu: [...pets.values()].map(p => ({
-      label: `${p.info().label}${p.info().character ? `・${p.info().character}` : ""}`,
-      click: () => { selected = p.accountId; p.show(); p.toggleGame(); },
-    })) },
+    // 「帳號與桌寵管理」放在其他桌寵子選單最上面（使用者 2026-11-23：從登入設定移過來）
+    others: { label: "其他桌寵", submenu: [
+      { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
+      ...(pets.size ? [{ type: "separator" }] : []),
+      ...[...pets.values()].map(p => ({
+        label: `${p.info().label}${p.info().character ? `・${p.info().character}` : ""}`,
+        click: () => { selected = p.accountId; p.show(); p.toggleGame(); },
+      })),
+    ] },
   };
 }
 /** 系統匣選單用的平鋪版本。 */
 function managerList() {
   const m = managerMenu();
-  return [m.update, m.accounts, m.team, m.inv, m.others].filter(Boolean);
+  return [m.update, m.team, m.inv, m.others].filter(Boolean); // 帳號與桌寵管理在「其他桌寵」裡
 }
 function openAccounts() {
   if (accountsWin && !accountsWin.isDestroyed()) { accountsWin.show(); accountsWin.focus(); return; }
@@ -149,9 +154,64 @@ function openTeam(preset) {
 }
 const fromTeam = (e) => teamWin && !teamWin.isDestroyed() && e.sender === teamWin.webContents;
 function stopTeam() {
-  if (!currentTeam) return;
+  pendingTeam = null;
+  if (!currentTeam) { saveTeam(); return; }
   for (const id of [currentTeam.leaderId, ...currentTeam.memberIds]) pets.get(id)?.setTeam(null, true);
   currentTeam = null;
+  saveTeam();
+}
+// ── 組隊存檔：重開桌寵後自動接回（使用者 2026-11-23：重開後隊員顯示「沒有用桌寵組隊」）──
+// 開始／換房間／解散都寫 team.json；啟動時讀回來當 pendingTeam，等隊長和開著的隊員都進到遊戲就照原設定重新開始組隊
+// （遊戲裡隊伍還在就不會重新邀請，直接回隊伍的房間）。晚開的隊員進到遊戲後自動加回來。
+const teamFile = () => path.join(app.getPath("userData"), "team.json");
+let pendingTeam = null, savedTeam = null, teamResumeTimer;
+function saveTeam() {
+  savedTeam = currentTeam ? { ...currentTeam, dest: null } : null;
+  try { if (savedTeam) fs.writeFileSync(teamFile(), JSON.stringify(savedTeam)); else fs.rmSync(teamFile(), { force: true }); } catch {}
+}
+function petReady(id) {
+  const p = pets.get(id)?.teamInfo();
+  return p && p.status === "ingame" && p.name ? p : null;
+}
+/** 照存下來的設定開始組隊（leaderId、memberIds 是要帶的隊員；只帶已經進遊戲的）。 */
+function applyTeam(t, memberIds) {
+  const leader = pets.get(t.leaderId), L = petReady(t.leaderId);
+  const map = (L?.huntMaps || []).find((m) => m.id === t.mapId);
+  if (!leader || !L || !map) return false;
+  const members = memberIds.map(petReady);
+  const shared = { mapId: map.id, mob: t.mob || 0, spot: t.spot !== false, room: t.room || { kind: "private", rev: 0 } };
+  currentTeam = { ...t, memberIds, mapName: map.name, dest: null };
+  leader.setTeam({ role: "leader", members: members.map((m) => m.name), mapName: map.name, ...shared });
+  for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name, ...shared });
+  startTeamRelay();
+  sendTeamStatus();
+  return true;
+}
+function resumeTeamTick() {
+  if (quitting) return;
+  // 1. 還沒接回：隊長＋至少一隻開著的隊員進到遊戲（其他開著的隊員也都進遊戲了）就開始
+  if (pendingTeam && !currentTeam) {
+    const t = pendingTeam;
+    if (!petReady(t.leaderId)) return;
+    const open = t.memberIds.filter((id) => pets.has(id));
+    if (!open.length || open.some((id) => !petReady(id))) return;
+    if (applyTeam(t, open)) {
+      pendingTeam = null;
+      pets.get(t.leaderId)?.say?.("重開前在組隊：已自動接回組隊練功");
+    }
+    return;
+  }
+  // 2. 接回後：存檔名單裡晚開的隊員進到遊戲 → 加回隊伍（隊長重新邀請、隊員跟上）
+  if (currentTeam && savedTeam && savedTeam.leaderId === currentTeam.leaderId) {
+    const late = savedTeam.memberIds.filter((id) => !currentTeam.memberIds.includes(id) && petReady(id));
+    if (late.length) applyTeam(currentTeam, [...currentTeam.memberIds, ...late]);
+  }
+}
+function loadTeam() {
+  try { savedTeam = JSON.parse(fs.readFileSync(teamFile(), "utf8")); } catch { savedTeam = null; }
+  if (!savedTeam || !Array.isArray(savedTeam.memberIds) || typeof savedTeam.mapId !== "string") { savedTeam = null; return; }
+  pendingTeam = savedTeam;
+  teamResumeTimer = setInterval(resumeTeamTick, 3000);
 }
 ipcMain.handle("team:get", (e) => (fromTeam(e) ? teamStatus() : null));
 ipcMain.handle("team:start", (e, req) => {
@@ -172,13 +232,65 @@ ipcMain.handle("team:start", (e, req) => {
   const mob = mobNo && (map.monsters || []).find((m) => m.no === mobNo);
   if (mobNo && !mob) return { error: "指定的怪物不在這張地圖" };
   const spot = req.spot !== false;
+  const room = cleanTeamRoom(req.room, 0);
+  if (room.kind === "public" && members.length + 1 > 16) return { error: "公開房最多 16 人" };
   stopTeam();
-  currentTeam = { leaderId: req.leaderId, memberIds, mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0, mobName: mob ? mob.name : "", spot, startedAt: Date.now() };
-  const shared = { mapId: map.id, mob: mob ? mob.no : 0, spot };
+  currentTeam = { leaderId: req.leaderId, memberIds, mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0, mobName: mob ? mob.name : "", spot, room, dest: null, startedAt: Date.now() };
+  const shared = { mapId: map.id, mob: mob ? mob.no : 0, spot, room };
   leader.setTeam({ role: "leader", members: members.map((m) => m.name), mapName: map.name, ...shared });
   for (const id of memberIds) pets.get(id).setTeam({ role: "member", leader: L.name, ...shared });
+  startTeamRelay();
+  saveTeam();
   sendTeamStatus();
   return {};
+});
+// 公開房組隊（使用者 2026-11-23）：遊戲自己去公開房不會通知隊友，所以由主程式把隊長進的公開房房號轉給隊員。
+// room＝{ kind:"private" } 或 { kind:"public", no:房號（0＝快速加入） }；rev＝第幾次指定（組隊中換房間 +1）
+function cleanTeamRoom(r, rev) {
+  if (r && r.kind === "public") return { kind: "public", no: Math.max(0, Math.min(1e6, Math.floor(Number(r.no) || 0))), rev };
+  return { kind: "private", rev };
+}
+let teamRelayTimer;
+function startTeamRelay() {
+  clearInterval(teamRelayTimer);
+  teamRelayTimer = setInterval(() => {
+    if (!currentTeam) { clearInterval(teamRelayTimer); teamRelayTimer = undefined; return; }
+    const L = pets.get(currentTeam.leaderId)?.teamInfo();
+    const tr = currentTeam.room.kind === "public" && L?.teamRoom && L.teamRoom.rev === currentTeam.room.rev ? L.teamRoom : null;
+    const dest = tr ? { mapId: tr.mapId, no: tr.no, code: tr.code } : null;
+    if (!dest || JSON.stringify(dest) === JSON.stringify(currentTeam.dest)) return;
+    currentTeam.dest = dest;
+    for (const id of currentTeam.memberIds) pets.get(id)?.setTeamDest(dest);
+    sendTeamStatus();
+  }, 2000);
+}
+// 組隊中隊長換房間：私人房／公開房 N／快速加入，隊員跟著過去
+ipcMain.handle("team:room", (e, req) => {
+  if (!fromTeam(e)) return { error: "not allowed" };
+  if (!currentTeam) return { error: "沒有在組隊" };
+  const room = cleanTeamRoom(req, (currentTeam.room?.rev || 0) + 1);
+  if (room.kind === "public" && currentTeam.memberIds.length + 1 > 16) return { error: "公開房最多 16 人" };
+  // 組隊中也能換地圖（使用者 2026-11-23：「去哪練功」組隊中選不了）；指定怪物不在新地圖就改不指定
+  const L = pets.get(currentTeam.leaderId)?.teamInfo();
+  const map = (L?.huntMaps || []).find((m) => m.id === (req?.mapId || currentTeam.mapId));
+  if (!map) return { error: "請選要去的練功地圖" };
+  const mobNo = Number(req?.mob ?? currentTeam.mob) || 0;
+  const mob = mobNo && (map.monsters || []).find((m) => m.no === mobNo);
+  Object.assign(currentTeam, { room, dest: null, mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0, mobName: mob ? mob.name : "" });
+  const where = { mapId: map.id, mapName: map.name, mob: mob ? mob.no : 0 };
+  pets.get(currentTeam.leaderId)?.setTeamRoom(room, where);
+  for (const id of currentTeam.memberIds) pets.get(id)?.setTeamRoom(room, where);
+  saveTeam();
+  sendTeamStatus();
+  return {};
+});
+// 讀某張地圖的公開房（用指定那隻桌寵的遊戲連線）
+ipcMain.handle("team:rooms", async (e, req) => {
+  if (!fromTeam(e)) return { error: "not allowed" };
+  const pet = pets.get(req?.petId ?? null);
+  if (!pet) return { error: "找不到這隻桌寵" };
+  if (typeof req.mapId !== "string" || !req.mapId) return { error: "請選地圖" };
+  return pet.listRooms(req.mapId, req.after);
 });
 // 不組隊自己打（使用者 2026-11-23）：選的那幾隻（隊長欄＋勾選的）各自去同一張地圖、各打各的。
 // 有在組隊就先解散、離開遊戲裡的隊伍；地圖、指定怪物記成每隻「自動補給」的練功地圖和指定怪物（之後補給、復活也回這裡）
@@ -199,7 +311,14 @@ ipcMain.handle("team:solo", (e, req) => {
   sendTeamStatus();
   return { names: infos.map((m) => m.name), mapName: map.name };
 });
-ipcMain.handle("team:stop", (e) => { if (!fromTeam(e)) return { error: "not allowed" }; stopTeam(); sendTeamStatus(); return {}; });
+ipcMain.handle("team:stop", (e) => {
+  if (!fromTeam(e)) return { error: "not allowed" };
+  // 沒有桌寵組隊、但遊戲裡還在隊伍（例如重開桌寵後）：在隊伍裡的每隻都離隊（使用者 2026-11-23：解散鈕不能用）
+  if (!currentTeam) for (const p of pets.values()) if (p.teamInfo().party) p.setTeam(null, true);
+  stopTeam();
+  sendTeamStatus();
+  return {};
+});
 
 // ── 物品欄與指定交易（ui/inv.html）：看每隻角色的背包、身上裝備；選物品＋金幣交給另一隻 ──
 // 給的桌寵回主城（tradeGive），主程式把它的房號轉給收的桌寵（tradeTake 用房號進同一間、走過去），
@@ -334,6 +453,7 @@ else {
   app.whenReady().then(() => {
     countStartup();
     accounts.load();
+    loadTeam();
     let roster;
     try { roster = JSON.parse(fs.readFileSync(rosterFile(), "utf8")); } catch {}
     if (!Array.isArray(roster)) {

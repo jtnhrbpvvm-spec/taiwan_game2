@@ -317,7 +317,9 @@
     if (c.type === "settings") {
       AUTO = c.settings || null;
       if (!S.lastHuntMap && c.lastHuntMap && typeof c.lastHuntMap.id === "string") S.lastHuntMap = c.lastHuntMap;
-      watching = !!c.watching;
+      // 遊戲視窗開著也照常掛機（使用者 2026-11-23：開遊戲畫面就停止掛機不好，要停由玩家用右鍵「停止目前所有動作」）。
+      // watching 留著但一律 false，原本「看著遊戲就暫停」的判斷都不再生效
+      watching = false;
       nextSupplyAt = 0; // 儲存設定或收起遊戲後，不沿用之前失敗的等待時間
       supplyError = "";
       nextFuseAt = 0;
@@ -329,13 +331,20 @@
       PAUSED = paused;
       TRADE = (AUTO && AUTO.trade) || null;
       // 生活技能關掉：如果正在做就叫遊戲停
-      const lifeOn = !!(AUTO && AUTO.life && AUTO.life.enabled);
+      // 組隊練功中先不練生活技能（2026-11-23 實測：隊長一進練功房，生活技能就把它拉回主城，隊伍出不了門）；解散後自動接著練
+      const lifeOn = !!(AUTO && AUTO.life && AUTO.life.enabled) && !(AUTO && AUTO.team);
       if (!lifeOn && LIFE_ON) lifeStopPending = true;
       LIFE_ON = lifeOn;
       nextLifeAt = 0;
       const team = (AUTO && AUTO.team) || null;
-      if (JSON.stringify(team) !== JSON.stringify(TEAM)) {
-        TEAM = team;
+      // room（隊長換房間）、dest（主程式轉來的隊長公開房）變了只換內容，不算重新開始組隊
+      // 組隊中換地圖也一樣（mapId/mapName/mob 跟著 room.rev 一起變，由 rev 觸發隊長換房）
+      const core = (t) => t && JSON.stringify({ ...t, room: undefined, dest: undefined, mapId: undefined, mapName: undefined, mob: undefined });
+      const restart = core(team) !== core(TEAM);
+      TEAM = team;
+      if (restart) {
+        leaderPub = null;
+        leaderPrivRev = (team && team.room && team.room.rev) || 0;
         teamStartAt = Date.now();
         nextTeamAt = 0;
         teamInvited = {};
@@ -480,7 +489,66 @@
   const myName = () => (S.character && S.character.name) || "";
   // 隊伍正在練功的房間（遊戲「跟上隊伍」按鈕用的同一份 party.destination）。
   // 不限桌寵的「組隊練功」：桌寵重開後 TEAM 清掉了但遊戲裡隊伍還在，隊長回城補給、復活後也要回隊伍那間（使用者 2026-11-22）
-  const teamDest = () => { const p = partyNow(); return (p && p.destination) || null; };
+  // 公開房組隊（使用者 2026-11-23）：遊戲的「帶隊伍去」只有私人房，隊長自己去公開房時遊戲不會通知隊員（party.destination 不變）。
+  //   所以隊長進了公開房後把房號回報（auto.teamRoom），主程式轉給隊員（TEAM.dest），隊員用遊戲「選擇房間」同樣的 joinRoom(地圖,{hunt:"public",room:房號}) 進去。
+  //   TEAM.room＝{ kind:"private" } 或 { kind:"public", no:房號（0＝快速加入）, rev:第幾次指定 }；組隊中隊長換房間 rev 會 +1。
+  let leaderPub = null; // 隊長目前帶隊的公開房 { rev, mapId, no, code }
+  let leaderPrivRev = 0; // 隊長最近一次開私人房時的 room.rev
+  const teamPublic = () => !!(TEAM && TEAM.room && TEAM.room.kind === "public");
+  const roomMetaNow = () => { try { const st = G().state(); return st.room && st.room.status === "in" ? st.roomMeta || null : null; } catch { return null; } };
+  /** 現在是不是在 dest 那間：公開房比地圖＋房號，私人房比 code。 */
+  function inRoom(dest) {
+    if (!dest) return false;
+    if (!dest.pub) return roomCode() === dest.code;
+    const m = roomMetaNow();
+    return !!m && m.vis === 0 && m.no === dest.no && !S.town && S.mapId === dest.mapId;
+  }
+  const teamDest = () => {
+    if (teamPublic()) {
+      if (TEAM.role === "leader") return leaderPub ? { pub: true, from: myName(), mapId: leaderPub.mapId, no: leaderPub.no, code: leaderPub.code } : null;
+      return TEAM.dest ? { pub: true, from: TEAM.leader, ...TEAM.dest } : null;
+    }
+    const p = partyNow(); return (p && p.destination) || null;
+  };
+  /** 讀公開房清單（跟遊戲傳送頁「選擇房間」一樣：listRooms{publicHunts,huntMap,huntAfter}），回 { total, rooms:[[房號,人數]], more }。 */
+  async function listPublicRooms(mapId, after) {
+    const r = await timed(G().net.request({ op: "listRooms", publicHunts: true, ...(mapId ? { huntMap: mapId } : {}), ...(after ? { huntAfter: after } : {}) }), 20000, "讀公開房");
+    if (!r || r.op !== "rooms" || !r.huntCounts) throw new Error("遊戲沒有回公開房清單");
+    const counts = new Map(r.huntCounts);
+    const m = roomMetaNow();
+    return { total: counts.get(mapId) || 0, rooms: (r.huntRooms || []).map((x) => [x[0], x[1]]), more: r.huntMore === true, max: 16,
+      here: m && m.vis === 0 && S.mapId === mapId ? m.no : null };
+  }
+  Object.defineProperty(window, "__rajaPetRooms", { value: Object.freeze({
+    list: (mapId, after) => listPublicRooms(String(mapId || ""), Number(after) || 0).catch((e) => ({ error: errText(e) })),
+  }) });
+  /** 進公開房：no＝房號，0／沒有＝快速加入（遊戲幫你挑一間）。回傳進到的房號。 */
+  async function enterPublic(mapId, no, name) {
+    const g = G();
+    const err = await timed(g.joinRoom(mapId, { hunt: "public", ...(no ? { room: no } : {}) }), 30000, "進公開房");
+    if (err) throw new Error(`進不了「${name}」公開房${no ? ` ${no}` : ""}（${err}）`);
+    if (!(await waitFor(() => { const m = roomMetaNow(); return !!m && m.vis === 0 && !S.town && S.mapId === mapId; }, 20000))) throw new Error(`等太久還沒進到「${name}」公開房`);
+    await sleep(1000);
+    const m = roomMetaNow();
+    return { no: m && m.no, code: m && m.code };
+  }
+  /** 隊長帶隊去公開房（TEAM.room 指定的那間；滿了／沒了就快速加入），記下房號給主程式轉給隊員。 */
+  async function leaderToPublic(team) {
+    const want = team.room, name = team.mapName || team.mapId;
+    let got;
+    try {
+      log(`組隊：帶隊伍去「${name}」${want.no ? `公開房 ${want.no}` : "公開房（快速加入）"}`);
+      got = await enterPublic(team.mapId, want.no || 0, name);
+    } catch (e) {
+      if (!want.no) throw e;
+      log(`組隊：${errText(e)}，改快速加入`, "warn");
+      got = await enterPublic(team.mapId, 0, name);
+    }
+    leaderPub = { rev: want.rev || 0, mapId: team.mapId, no: got.no, code: got.code };
+    restoreAuto(teamAutoMode);
+    schedulePost();
+    log(`組隊：已進「${name}」公開房 ${got.no ?? ""}，隊員會跟上`);
+  }
   async function partyReq(body) {
     const r = await timed(G().net.request({ op: "party", ...body }), 20000, "組隊");
     if (r && r.error) throw new Error(errText(r.error));
@@ -508,13 +576,27 @@
   /** 回到隊伍的房間（隊長出發的那間）。隊長回不去（房間沒了）就重開一間私人房。 */
   async function joinTeamRoom(dest, autoMode, what) {
     const g = G();
-    if (roomCode() === dest.code) return;
-    const err = await timed(g.joinRoom(dest.mapId, { code: dest.code }), 30000, "跟上隊伍");
-    if (err) {
-      if (TEAM && TEAM.role === "leader" && TEAM.mapId) { log(`組隊：回不了原本的房間（${err}），重開一間私人房`, "warn"); await enterPrivate(TEAM); return; }
-      throw new Error(`跟不上隊伍（${err}）`);
+    if (inRoom(dest)) return;
+    if (dest.pub) {
+      // 公開房：用房號進（跟遊戲「選擇房間」一樣）。隊長回不去（滿了／房間沒了）就另找一間，隊員會跟著換
+      try { await enterPublic(dest.mapId, dest.no, dest.mapId); }
+      catch (e) {
+        if (TEAM && TEAM.role === "leader" && TEAM.mapId) {
+          log(`組隊：回不了公開房 ${dest.no}（${errText(e)}），快速加入別間`, "warn");
+          await leaderToPublic({ ...TEAM, room: { kind: "public", no: 0, rev: (TEAM.room && TEAM.room.rev) || 0 } });
+          return;
+        }
+        throw new Error(`跟不上隊伍（${errText(e)}）`);
+      }
+      if (!inRoom(dest)) throw new Error(`進到的不是隊長的公開房 ${dest.no}`);
+    } else {
+      const err = await timed(g.joinRoom(dest.mapId, { code: dest.code }), 30000, "跟上隊伍");
+      if (err) {
+        if (TEAM && TEAM.role === "leader" && TEAM.mapId) { log(`組隊：回不了原本的房間（${err}），重開一間私人房`, "warn"); await enterPrivate(TEAM); return; }
+        throw new Error(`跟不上隊伍（${err}）`);
+      }
+      if (!(await waitFor(() => roomCode() === dest.code, 20000))) throw new Error("等太久還沒進到隊伍的房間");
     }
-    if (!(await waitFor(() => roomCode() === dest.code, 20000))) throw new Error("等太久還沒進到隊伍的房間");
     clearPartyGo();
     await sleep(1000);
     // 組隊練功中一律開自動戰鬥（倒下前若是關著，autoMode 會是 locked，照它恢復弓手就一直不打：2026-11-22 實測）
@@ -560,8 +642,8 @@
     // 已經在「隊長出發」說的那間房（或自己就是隊長）：對話框不用留著
     if (st.partyGo && (roomCode() === st.partyGo.code || st.partyGo.from === me)) clearPartyGo();
     // 開始組隊時已經在隊伍的房間（例如剛復活回來）就不會再進一次房間：這種時候也要把自動戰鬥開起來（每次開始組隊做一次）
-    const dest0 = party && party.destination;
-    if (!teamAutoDone && dest0 && roomCode() === dest0.code) { teamAutoDone = true; restoreAuto(teamAutoMode); }
+    const dest0 = teamDest();
+    if (!teamAutoDone && dest0 && inRoom(dest0)) { teamAutoDone = true; restoreAuto(teamAutoMode); }
     await ensureFriends(team.role === "member" ? [team.leader] : team.members || []);
     if (team.role === "member") {
       if (party && party.leader !== team.leader) { await partyReq({ act: "leave" }); log(`組隊：先離開原本 ${party.leader} 的隊伍`); return; }
@@ -585,8 +667,9 @@
         }
         return;
       }
-      const dest = teamTarget(st, party, team.leader);
-      if (dest && roomCode() !== dest.code) {
+      // 公開房：只跟主程式轉來的隊長房號（party.destination 可能還是之前私人房的）
+      const dest = teamPublic() ? teamDest() : teamTarget(st, party, team.leader);
+      if (dest && !inRoom(dest)) {
         await sleep(randMs(2000, 5000));
         await joinTeamRoom(dest, teamAutoMode, `組隊：跟上 ${dest.from}`);
       }
@@ -604,11 +687,41 @@
         catch (e) { log(`組隊：邀請 ${n} 沒成功（${errText(e)}），20 秒後再試`, "warn"); }
         await sleep(randMs(800, 1500));
       }
+      if (teamPublic()) {
+        const rev = team.room.rev || 0;
+        // 重開桌寵自動接回／加隊員重新開始時，人已經在這張圖的公開房（指定的那間或快速加入）就直接沿用，不重新進房
+        const m = roomMetaNow();
+        if (!leaderPub && m && m.vis === 0 && !S.town && S.mapId === team.mapId && (!team.room.no || m.no === team.room.no)) {
+          leaderPub = { rev, mapId: team.mapId, no: m.no, code: m.code };
+          schedulePost();
+          log(`組隊：已經在「${team.mapName || team.mapId}」公開房 ${m.no}，隊員會跟上`);
+          return;
+        }
+        if (!leaderPub || leaderPub.rev !== rev) {
+          // 第一次出發等大家進隊（同私人房）；組隊中換房間就直接去
+          if (!leaderPub && missing.length && Date.now() - teamStartAt < 120000) return;
+          await humanPause();
+          await leaderToPublic(team);
+          return;
+        }
+        const dest = teamDest();
+        if (!inRoom(dest)) await joinTeamRoom(dest, teamAutoMode, "組隊：隊長");
+        return;
+      }
+      // 組隊中隊長從公開房換回私人房：重開一間私人房（隊員照遊戲「跟上隊伍」過來）
+      const privRev = (team.room && team.room.rev) || 0;
+      if (party.destination && privRev !== leaderPrivRev) {
+        await humanPause();
+        await enterPrivate(team);
+        leaderPrivRev = privRev;
+        return;
+      }
       if (!party.destination) {
         // 等大家都進隊（最多 2 分鐘，沒到齊也先出發，晚到的之後收到邀請、跟上）
         if (missing.length && Date.now() - teamStartAt < 120000) return;
         await humanPause();
         await enterPrivate(team);
+        leaderPrivRev = privRev;
         return;
       }
       if (roomCode() !== party.destination.code) await joinTeamRoom(party.destination, teamAutoMode, "組隊：隊長");
@@ -617,15 +730,16 @@
   function teamState() {
     const party = partyNow();
     if (!TEAM) return party ? `在 ${party.leader} 的隊伍（沒有用桌寵組隊）` : "";
-    const dest = party && party.destination;
-    const here = dest && roomCode() === dest.code;
+    const dest = teamDest();
+    const here = inRoom(dest);
+    const kind = dest && dest.pub ? `公開房 ${dest.no ?? ""}` : "私人房";
     if (TEAM.role === "leader") {
       if (!party) return "隊長：建立隊伍中";
       const n = party.members.length;
-      return dest ? `隊長：${here ? "在" : "回"}私人房「${TEAM.mapName || dest.mapId}」，隊伍 ${n} 人` : `隊長：邀請隊員中（${n}/${(TEAM.members || []).length + 1}）`;
+      return dest ? `隊長：${here ? "在" : "回"}「${TEAM.mapName || dest.mapId}」${kind}，隊伍 ${n} 人` : `隊長：邀請隊員中（${n}/${(TEAM.members || []).length + 1}）`;
     }
     if (!party) return `隊員：等 ${TEAM.leader} 邀請`;
-    return dest ? (here ? `隊員：在 ${TEAM.leader} 的私人房` : `隊員：跟上 ${TEAM.leader} 中`) : `隊員：已入隊，等 ${TEAM.leader} 出發`;
+    return dest ? (here ? `隊員：在 ${TEAM.leader} 的${kind}` : `隊員：跟上 ${TEAM.leader}（${kind}）中`) : `隊員：已入隊，等 ${TEAM.leader} 出發`;
   }
 
   // ---------- 指定交易（主程式協調兩隻桌寵，見 main.js 的物品欄視窗）----------
@@ -1140,9 +1254,51 @@
       `已做 ${lifeMade} 件${cfg.count > 0 ? ` / ${cfg.count}` : ""}`;
   }
 
+  /**
+   * 在主城先喝藥把 HP／MP 補滿再回練功（使用者 2026-11-23：復活後、補給回城後先用設定的藥水補滿）。
+   * 跟遊戲快捷列喝藥一樣送 useItem{from:背包格}；用自動補給設定的紅水／藍水，沒指定就用背包裡回得最少的那種（省著用好藥）。
+   * 差不到半瓶的量就不喝（免得浪費一整瓶）；喝了沒回、出錯幾次就停，不影響回練功。
+   */
+  async function topUpInTown(what, supplyCfg) {
+    const g = G(), c = S.character;
+    if (!c || S.dead || !S.town || !g.net || !g.store || !g.invView || !(c.maxHp > 0)) return;
+    const cfg = supplyCfg || (AUTO && AUTO.supply) || {};
+    const heals = (kind) => { try { return new Map((g.potionChoices[kind] || []).map((t) => [t.itemNo, kind === "hp" ? t.healHp : t.healMp])); } catch { return new Map(); } };
+    const used = { hp: 0, mp: 0 };
+    for (const kind of ["hp", "mp"]) {
+      const maxKey = kind === "hp" ? "maxHp" : "maxMp";
+      const heal = heals(kind);
+      const pinned = potions.selection(kind, cfg[`${kind}Item`]);
+      const ids = pinned ? [pinned] : potions.types[kind].map(([id]) => id);
+      let fails = 0;
+      for (let n = 0; n < 60 && fails < 3; n++) {
+        const max = c[maxKey], cur = c[kind];
+        if (!(max > 0) || !(cur < max) || S.dead || !S.town) break;
+        const bag = (invNow() || {}).bag || [];
+        // 沒指定：挑背包裡有的、回最少的那種
+        const choices = ids.filter((id) => potions.count({ bag }, id) > 0).sort((a, b) => (heal.get(a) || 0) - (heal.get(b) || 0));
+        const id = choices[0];
+        if (!id) break;
+        const h = heal.get(id) || 0;
+        if (h > 0 && max - cur < h / 2) break;
+        const slot = bag.findIndex((s) => Array.isArray(s) && s[0] === id);
+        try {
+          const r = await timed(g.net.request({ op: "useItem", from: slot }), 30000, "喝藥");
+          if (r && r.error) throw new Error(errText(r.error));
+        } catch (e) { fails++; await sleep(1200); continue; }
+        used[kind]++;
+        if (!(await waitFor(() => c[kind] > cur, 3000))) { fails++; continue; }
+        fails = 0;
+        await sleep(randMs(300, 700));
+      }
+    }
+    if (used.hp || used.mp) log(`${what}：回練功前喝藥補滿（紅水 ${used.hp} 瓶、藍水 ${used.mp} 瓶，HP ${c.hp}/${c.maxHp}、MP ${c.mp}/${c.maxMp}）`);
+  }
+
   /** 回練功地圖，自動戰鬥恢復成 autoMode（離開練功圖前的樣子）。 */
-  async function backToHunt(target, autoMode, what) {
+  async function backToHunt(target, autoMode, what, supplyCfg) {
     const g = G();
+    try { await topUpInTown(what, supplyCfg); } catch (e) { log(`${what}：喝藥補滿沒有完成（${errText(e)}），照樣回去`, "warn"); }
     // 組隊中：回隊伍的房間；隊員還沒有隊伍房間就留在主城等隊長
     const dest = teamDest();
     if (dest) {
@@ -1407,7 +1563,7 @@
     }
     // 回指定地圖或最後狩獵區，自動戰鬥恢復成原本的樣子。
     // 練功圖和主城可能是同一張地圖（例如雷諾市練功房和雷諾斯市主城都是 RENES_C，差在進的是不是主城），所以不比地圖名稱，一律回去
-    if (back) await backToHunt({ id: back, name: backName }, autoMode, opts.doneText || "補給完成");
+    if (back) await backToHunt({ id: back, name: backName }, autoMode, opts.doneText || "補給完成", cfg);
     supplyResumeMode = undefined;
   }
 
@@ -1769,8 +1925,13 @@
     // 組隊（組隊練功視窗要用）
     try {
       const party = partyNow();
-      auto.party = party ? { leader: party.leader, members: party.members.map((m) => m[0]), destination: party.destination || null, here: !!party.destination && roomCode() === party.destination.code } : null;
+      const td = teamDest();
+      auto.party = party ? { leader: party.leader, members: party.members.map((m) => m[0]), destination: td || party.destination || null, here: inRoom(td || party.destination) } : null;
       auto.teamState = teamState();
+      // 隊長帶隊的公開房（主程式轉給隊員）
+      auto.teamRoom = TEAM && TEAM.role === "leader" && teamPublic() && leaderPub ? { mapId: leaderPub.mapId, no: leaderPub.no, code: leaderPub.code, rev: leaderPub.rev } : null;
+      const rm = roomMetaNow();
+      auto.room = rm && !S.town ? { mapId: S.mapId, vis: rm.vis, no: rm.no } : null;
     } catch {}
     // 角色能力（自動配點、小百科「我能不能用」要用）
     try {
