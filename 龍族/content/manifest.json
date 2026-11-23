@@ -1,5 +1,5 @@
 {
-  "version": "1.0.14",
+  "version": "1.0.15",
   "shell": 1,
   "files": [
     {
@@ -44,8 +44,8 @@
     },
     {
       "path": "game-hook.js",
-      "sha256": "aa854741fdbf4ee1d56e6dec1bf851dfdfec357def67765e3e6ede5df2f36116",
-      "size": 104354
+      "sha256": "1229d84015576131bc3f57b1c7dfc275489017b62769bd8c5c333a999bbf20d7",
+      "size": 106172
     },
     {
       "path": "game-patch.js",

@@ -938,10 +938,13 @@
 
   /** 採集（採礦、伐木…）：跟遊戲「生活→採集」按開始一樣，在主城帶著工具送 gather{skill}，遊戲每 3 秒採一次、一直採；character.gat＝正在採的技能。
    *  斷線重連、被打斷（背包滿以外）後會再開始。 */
-  let gatherStartedAt = 0;
+  let gatherStartedAt = 0, gatherQuickStops = 0;
   async function gatherTick(cfg, sk) {
     const g = G(), ch = charNow();
-    if (ch.gat === sk.skill) { lifeState = `採集中：${sk.name}`; lifeError = ""; return; }
+    if (ch.gat === sk.skill) {
+      if (gatherStartedAt && Date.now() - gatherStartedAt >= 20000) gatherQuickStops = 0; // 有好好採一陣子：之前的「一開始就停」不算
+      lifeState = `採集中：${sk.name}`; lifeError = ""; return;
+    }
     if (ch.mk) { lifeState = "製作中（等這一批做完再採集）"; return; }
     if (ch.gat) { await timed(g.net.request({ op: "gather", skill: 0 }), 20000, "停止採集"); await sleep(1000); return; } // 在採別的：先停
     const town = townInfo(S.mapId);
@@ -959,16 +962,19 @@
       await buyItem(no, (bagCounts()[no] || 0) + 1, town);
       closeShop();
     }
-    // 剛開始沒多久遊戲就自己停了：多半是背包滿了
+    // 背包滿了：等 5 分鐘。剛開始沒多久就停（可能被玩家走位打斷，也可能採不到）：30 秒後再試，連續 3 次才等 5 分鐘
     const free = rawBag().filter((s) => !s || !s.length).length;
-    if (!free || (gatherStartedAt && Date.now() - gatherStartedAt < 20000)) {
-      lifeError = free ? "採集一開始就停下（可能背包滿了或這裡採不到）" : "背包滿了，採集停下";
+    const quickStop = gatherStartedAt && Date.now() - gatherStartedAt < 20000;
+    if (quickStop) gatherQuickStops++;
+    if (!free || gatherQuickStops >= 3) {
+      lifeError = free ? "採集一開始就停下好幾次（可能這裡採不到）" : "背包滿了，採集停下";
       lifeState = lifeError;
       log(`生活技能：${lifeError}，5 分鐘後再試`, "warn");
-      gatherStartedAt = 0;
+      gatherStartedAt = 0; gatherQuickStops = 0;
       nextLifeAt = Date.now() + 300000;
       return;
     }
+    if (quickStop) { lifeState = "採集剛開始就停了，30 秒後再開"; gatherStartedAt = 0; nextLifeAt = Date.now() + 30000; return; }
     const r = await timed(g.net.request({ op: "gather", skill: sk.skill }), 20000, "採集");
     if (r && r.error) throw new Error(errText(r.error));
     gatherStartedAt = Date.now();
@@ -1512,9 +1518,20 @@
   }
   Object.defineProperty(window, "__rajaPetPowerSave", { value: (on) => { wantPowerSave = !!on; applyPowerSave(); } });
 
+  // 生活技能停多久了：遊戲沒在製作（mk）也沒在採集（gat）時開始算，有在做就歸零（每 5 秒更新）
+  const LIFE_WATCH_MS = 30000;
+  let lifeIdleSince = 0;
+  function lifeIdleFor(ms) { return !!lifeIdleSince && Date.now() - lifeIdleSince >= ms; }
+  function noteLifeIdle() {
+    const ch = charNow();
+    if (!LIFE_ON || !ch || ch.mk || ch.gat) lifeIdleSince = 0;
+    else if (!lifeIdleSince) lifeIdleSince = Date.now();
+  }
+
   let nextReviveAt = 0;
   setInterval(async () => {
     applyPowerSave();
+    noteLifeIdle();
     // 記下還活著時的自動戰鬥模式，復活回去後照這個恢復
     if (!S.dead) try { autoBeforeDeath = (G() && G().state && G().state().auto && G().state().auto.mode) || autoBeforeDeath; } catch {}
     if (busy || !AUTO || S.status !== "ingame") return;
@@ -1533,7 +1550,10 @@
     // 組隊、指定交易是玩家下的指令：遊戲視窗開著也照做（使用者 2026-11-22：看著遊戲時「隊長出發」不會按）
     const teamNow = !resting && (!!TEAM || !!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone));
     const tradeNow = !!(TRADE && TRADE.id && !tradeDone[TRADE.id]);
-    if (watching && !reviveNow && !goNow && !pauseNow && !resumeNow && !teamNow && !tradeNow) return;
+    // 生活技能每 30 秒檢查有沒有在做（使用者 2026-11-23：玩家點畫面走位、斷線重連後遊戲就停了，遊戲視窗又開著，桌寵就一直沒接下去）：
+    // 遊戲那邊停了（沒在製作也沒在採集）超過 30 秒就接著做。看著遊戲時只在主城接，不把玩家拉回主城。
+    const lifeWatchNow = watching && LIFE_ON && !resting && !S.dead && S.town && lifeIdleFor(LIFE_WATCH_MS);
+    if (watching && !reviveNow && !goNow && !pauseNow && !resumeNow && !teamNow && !tradeNow && !lifeWatchNow) return;
     busy = true;
     try {
       if (reviveNow) {
@@ -1560,6 +1580,12 @@
         if (teamNow) {
           try { await teamTick(); }
           catch (e) { log(`組隊沒有完成：${errText(e)}。30 秒後再試`, "warn"); nextTeamAt = Date.now() + 30000; }
+        }
+        if (lifeWatchNow) {
+          log("生活技能：停下來 30 秒了，接著做");
+          lifeIdleSince = Date.now(); // 這次沒接成功也再等 30 秒
+          try { await lifeTick(AUTO.life); }
+          catch (e) { lifeError = errText(e); lifeState = lifeError; log(`生活技能沒有完成：${lifeError}`, "warn"); }
         }
         return;
       }
