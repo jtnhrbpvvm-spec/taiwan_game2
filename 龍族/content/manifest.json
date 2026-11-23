@@ -1,5 +1,5 @@
 {
-  "version": "1.0.16",
+  "version": "1.0.17",
   "shell": 1,
   "files": [
     {
@@ -34,8 +34,8 @@
     },
     {
       "path": "codex-data.js",
-      "sha256": "012cdec8b519324e9359cb833fee3088155f87c528fee4e1af0056afa79dfaf6",
-      "size": 526361
+      "sha256": "5b4cc6f12db377dd45baf40759a2883e8ba684329ad42a573af1ffb7c2453585",
+      "size": 527204
     },
     {
       "path": "codex-preload.js",
@@ -44,13 +44,13 @@
     },
     {
       "path": "companion.js",
-      "sha256": "9e1055ca26d1b1323659de96fc2d3b4addaefdf09ba841afa884e94ded18526b",
-      "size": 59298
+      "sha256": "406dc24c0d18159809c09a899f7a12d657d5b172b95ea43ef4760c51a9dad2e6",
+      "size": 59465
     },
     {
       "path": "game-hook.js",
-      "sha256": "fb71ea214225f1e66201d8a3fa609b932cfe0c3d403c595b3d96f025ddfe23cd",
-      "size": 115757
+      "sha256": "00395b8954f666de9fd9e831fc76695448c7519aa5d21308b7320d9ec18d8acc",
+      "size": 121052
     },
     {
       "path": "game-patch.js",
@@ -179,13 +179,13 @@
     },
     {
       "path": "ui/idle.html",
-      "sha256": "d119f7b1e289d78bc50a578453b4f26562d58bcb7195c25acd0a40f3d7ee640e",
-      "size": 12060
+      "sha256": "f3a8c7456622ffd5b7986ed79acad72a03092382952c5bf288fd81d0371e33a1",
+      "size": 14473
     },
     {
       "path": "ui/idle.js",
-      "sha256": "f1c776ff7d375cc68b5cf1a8356dc9b4867d7b9e304938a83767972e1e51d40a",
-      "size": 12957
+      "sha256": "ca93600bd4e911ad2033f9b8eabcd0e8631a1bfc00819aa944a42f570de55cde",
+      "size": 17333
     },
     {
       "path": "ui/inv.html",
@@ -204,8 +204,8 @@
     },
     {
       "path": "ui/life.js",
-      "sha256": "942ff37f8f8318907848e5ec6e0d058e967eca0d01e56770b2031353992a9565",
-      "size": 11189
+      "sha256": "ea3feba49dabd968637a1416d822f48a8b3a07f8b259c1b423fa3088c344aa69",
+      "size": 11258
     },
     {
       "path": "ui/team.html",

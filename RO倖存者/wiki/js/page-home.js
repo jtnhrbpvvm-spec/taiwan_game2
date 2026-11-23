@@ -9,6 +9,7 @@ RSW.page({
     return `
 <h2 class="pt">RO 倖存者小百科</h2>
 <p class="lead">RO Survivors 是以仙境傳說（Ragnarok Online）為靈感的免費網頁倖存者遊戲。這裡整理遊戲裡的職業、技能、轉職、物品、卡片與怪物資料，名稱採用台版仙境傳說譯名。</p>
+<div class="note"><b>11 月 23 日 Beta 0.8／0.8.1 已更新</b>：技能傷害、二轉曲線、卡片、神祇與燈籠節資料已同步。<a href="#updates">技能傷害為什麼大減？看完整改版整理 →</a></div>
 
 <section class="author-card">
   <div class="ac-head">

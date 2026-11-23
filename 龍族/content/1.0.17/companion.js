@@ -476,6 +476,7 @@ function openLife() {
 const fromLife = (e) => lifeWin && !lifeWin.isDestroyed() && e.sender === lifeWin.webContents;
 const lifeInfo = () => ({
   name: game.state?.character?.name || "", status: game.state?.status || "connecting", town: !!game.state?.town, watching: game.shown,
+  gold: typeof game.state?.character?.gold === "number" ? game.state.character.gold : undefined, // 使用者 2026-11-23：生活技能頁要看到金幣
   now: game.state?.auto?.life ?? null, cfg: settings.auto.life, log: autoLog.filter((l) => / 生活技能/.test(l)).slice(-12),
 });
 handlers.set("life:get", (e) => (fromLife(e) ? lifeInfo() : null));
@@ -566,7 +567,7 @@ function openIdleSettings() {
 }
 const PREF_KEYS = new Set(["graphics", "effects", "soundOn", "soundVolume", "musicOn", "musicVolume", "shake", "potionAt", "hpItem", "mpItem",
   "hold", "allySupport", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget",
-  "castStyle", "follow", "followRange", "followStay", "skillSetSave", "skillSetDelete", "skillSetApply"]);
+  "castStyle", "follow", "followRange", "followStay", "skillSetSave", "skillSetDelete", "skillSetApply", "quickSlot"]);
 function inGame(code) {
   if (!game.win || game.win.isDestroyed() || game.loading) return Promise.resolve({ ready: false });
   return game.win.webContents.executeJavaScript(`window.__rajaPetPrefs ? ${code} : { ready: false }`).catch(() => ({ ready: false }));

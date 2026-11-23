@@ -13,6 +13,7 @@ RSW.page({
   ${R.img(c.image, 'cardimg', R.cardName(c))}
   <div>
     <div class="stat">插入部位 <b>${R.esc(c.compoundName)}</b></div>
+    ${c.tier != null ? `<div class="stat">卡片階級 <b>${c.tier}</b></div>` : ''}
     <h3 style="margin-top:8px">效果</h3><ul>${c.bonuses.map(b => `<li>${R.esc(b)}</li>`).join('')}</ul>
   </div>
 </div>
@@ -21,11 +22,12 @@ ${festival ? `<div class="note">由 ${R.ballLink(festival.ball)} 極少見抽出
 <div class="tw"><table class="t"><tr><th>掉落怪物</th><th>出現地點</th></tr>
   <tr><td>${R.monLink(c.monster, true)}</td><td class="small">${m ? R.whereText(m) : ''}</td></tr></table></div>
 <div class="note small">一般關卡的怪物可能掉自己的卡片，機率非常低，首領（小首領、MVP）比較容易掉。調高一般關卡難度可以提高戰利品。</div>`}
-<p class="small">卡片從角色面板插進裝備的插槽，穿著那件裝備時才有效果。</p>`;
+<p class="small">卡片從角色面板插進裝備的插槽，穿著那件裝備時才有效果。裝備視窗可一次移除所有卡片並收回卡冊。</p>`;
     }
     const comps = [...new Set(R.cards.map(c => c.compoundName))];
     return `<h2 class="pt">卡片與取得</h2>
 <p class="lead">遊戲裡全部 ${R.cards.length} 張卡片。一般卡片由怪物掉落；11 張燈籠節卡片由對應扭蛋抽出。</p>
+<div class="note">Beta 0.8 起普通卡片效果隨掉落關卡階級計算，多數效果下修、部分改為其他能力，持有舊卡片也會自動更新。0.8.1 已恢復小頭目與 MVP 卡片的舊效果。<a href="#updates">查看前後效果差異 →</a></div>
 <div class="filters">
   <select id="cd-slot"><option value="">全部部位</option>${comps.map(s => `<option>${R.esc(s)}</option>`).join('')}</select>
   <select id="cd-boss"><option value="">全部怪物</option><option value="boss">首領的卡片</option><option value="normal">一般怪物的卡片</option></select>

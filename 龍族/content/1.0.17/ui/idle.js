@@ -16,7 +16,7 @@ const ALLY_SUPPORT = [["self", "自己"], ["party", "隊伍"], ["nearby", "附�
 const RARITY = [[1, "普通"], [2, "稀有"], [4, "高級"]];
 const RULE_OFF = 4;
 const RULES = [[4, "關閉"], [0, "一直用"], [1, "只打首領"], [2, "HP 低於一半"], [3, "身邊 2 隻怪以上"]];
-const RULE_NO_SUPPORT = [5, "沒人需要補助才放"]; // 遊戲 beta-v1.2.2483 起，只給補助技能
+const RULE_NO_SUPPORT = [5, "沒人需要補助才放"]; // 遊戲 beta-v1.2.2483 起，只給攻擊魔法
 const CAST_STYLES = [[0, "均衡"], [1, "補助優先"], [2, "戰鬥優先"]];
 const FOLLOW_RANGES = [[4, "4 格"], [6, "6 格"], [8, "8 格"]];
 let setsKey = "";
@@ -27,6 +27,8 @@ async function set(key, value) {
   try {
     const s = await api.set(key, value);
     if (s && s.ready) render(s);
+    if (s?.turnedOff?.length) skillMsg(`已自動關掉：${s.turnedOff.join("、")}`, "warn");
+    else if (s?.error && (key === "quickSlot" || key === "rule")) skillMsg(`沒有成功：${s.error}`, "warn");
     return s;
   } finally {
     busy = false;
@@ -168,7 +170,83 @@ function renderSkillSets(s) {
   }));
 }
 
+function skillMsg(text, cls = "ok") {
+  const el = $("skillMsg");
+  el.textContent = text;
+  el.className = `hint ${cls}`;
+}
+
+// ── 快捷欄 12 格：點一格就跳出學會的魔法／戰技，選了就放進去（使用者 2026-11-23） ──
+let pickSlot = null, barKey = "";
+function renderBar(s) {
+  const all = s.quickAll || [];
+  const byId = new Map((s.learned || []).map((l) => [l.id, l]));
+  const key = JSON.stringify([all, (s.quick || []).map((q) => [q.id, q.icon])]);
+  if (key === barKey) return;
+  barKey = key;
+  const bar = $("quickBar");
+  bar.replaceChildren(...all.map((id, slot) => {
+    const q = (s.quick || []).find((x) => x.slot === slot);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `qslot${id ? "" : " empty"}`;
+    b.title = id ? `快捷第 ${slot + 1} 格：${q?.name || byId.get(id)?.name || id}（點一下換技能）` : `快捷第 ${slot + 1} 格：空（點一下放技能）`;
+    const n = document.createElement("span"); n.className = "n"; n.textContent = slot + 1;
+    b.append(n);
+    const ic = q?.icon || byId.get(id)?.icon;
+    if (ic) { const img = document.createElement("img"); img.src = ic; img.alt = ""; b.append(img); }
+    else { const t = document.createElement("span"); t.className = "t"; t.textContent = id ? (q?.name || byId.get(id)?.name || id) : "空"; b.append(t); }
+    b.addEventListener("click", () => openPicker(slot));
+    return b;
+  }));
+}
+function openPicker(slot) {
+  pickSlot = slot;
+  const s = snap;
+  const cur = (s.quickAll || [])[slot] || 0;
+  $("pickTitle").textContent = `快捷第 ${slot + 1} 格：選要放的技能`;
+  const order = ["攻擊", "治療", "保護", "增益", "結界", "詛咒", "其他", "戰技"];
+  const list = [...(s.learned || [])].sort((a, b) => (order.indexOf(a.type) - order.indexOf(b.type)) || a.id - b.id);
+  const box = $("pickList");
+  const groups = new Map();
+  for (const l of list) { if (!groups.has(l.type)) groups.set(l.type, []); groups.get(l.type).push(l); }
+  box.replaceChildren(...[...groups].map(([type, items]) => {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="ptype">${type || "其他"}</div>`;
+    const grid = document.createElement("div");
+    grid.className = "pgrid";
+    grid.append(...items.map((l) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = `pitem${l.id === cur ? " cur" : ""}`;
+      if (l.icon) { const img = document.createElement("img"); img.src = l.icon; img.alt = ""; b.append(img); }
+      b.append(document.createTextNode(l.name));
+      const inBar = (s.quickAll || []).indexOf(l.id);
+      if (inBar >= 0 && inBar !== slot) { const t = document.createElement("small"); t.textContent = `（在第 ${inBar + 1} 格）`; b.append(t); }
+      b.addEventListener("click", () => pick(l.id));
+      return b;
+    }));
+    sec.append(grid);
+    return sec;
+  }));
+  if (!list.length) box.innerHTML = '<div class="hint">還沒學會魔法或戰技（遊戲連上後才讀得到）。</div>';
+  $("pickClear").disabled = !cur;
+  $("picker").hidden = false;
+}
+async function pick(skill) {
+  const slot = pickSlot;
+  $("picker").hidden = true;
+  if (slot === null) return;
+  const r = await set("quickSlot", { slot, skill });
+  if (r && !r.error) skillMsg(skill ? `已放進快捷第 ${slot + 1} 格（新放的技能先只手動施放，要掛機用請在下面開自動施放）` : `已清空快捷第 ${slot + 1} 格`);
+}
+$("pickClear").addEventListener("click", () => pick(0));
+$("pickClose").addEventListener("click", () => ($("picker").hidden = true));
+$("picker").addEventListener("click", (e) => { if (e.target === $("picker")) $("picker").hidden = true; });
+
 function renderSkills(s) {
+  renderBar(s);
+  if (s.conflictsFixed?.length) skillMsg(`已自動關掉：${s.conflictsFixed.join("、")}`, "warn");
   const quick = s.quick || [];
   const u = s.upkeep;
   const offAllowed = !!s.quickAutoOff;
@@ -182,7 +260,7 @@ function renderSkills(s) {
   $("allOff").disabled = active === 0;
   // 技能、隊友名單變了才整個重畫，不然只更新選中的格子
   const newRules = !!u.newOptions;
-  const key = JSON.stringify([quick, s.party, offAllowed, newRules]);
+  const key = JSON.stringify([quick.map((q) => [q.slot, q.id, q.ally, q.attack, q.group]), s.party, offAllowed, newRules]);
   const box = $("skills");
   if (key !== skillsKey) {
     skillsKey = key;
@@ -210,7 +288,13 @@ function renderSkills(s) {
       t.append(name);
       head.append(t);
       const rules = document.createElement("div");
-      const n = (offAllowed ? 5 : 4) + (q.ally && newRules ? 1 : 0);
+      if (q.group) {
+        const tag = document.createElement("div");
+        tag.className = "slot";
+        tag.textContent = `${q.group}類：跟同類的會互相蓋掉，自動施放只能開一個`;
+        t.append(tag);
+      }
+      const n = (offAllowed ? 5 : 4) + (q.attack && newRules ? 1 : 0);
       rules.className = `seg rules${n === 4 ? " four" : n === 6 ? " six" : ""}`;
       div.append(head, rules);
       if (q.ally) {
@@ -223,9 +307,9 @@ function renderSkills(s) {
   }
   for (const div of box.querySelectorAll(".skill")) {
     const slot = Number(div.dataset.slot);
-    // 「沒人需要補助才放」只給補助技能（跟遊戲一樣；萬一已經選了也照樣顯示）
-    const ally = !!div.querySelector(".targets");
-    const choices = [...RULES.filter(([v]) => offAllowed || v !== RULE_OFF), ...((ally && newRules) || shown(slot) === 5 ? [RULE_NO_SUPPORT] : [])];
+    // 「沒人需要補助才放」只給攻擊魔法（跟遊戲一樣；萬一已經選了也照樣顯示）
+    const attack = !!quick.find((q) => q.slot === slot)?.attack;
+    const choices = [...RULES.filter(([v]) => offAllowed || v !== RULE_OFF), ...((attack && newRules) || shown(slot) === 5 ? [RULE_NO_SUPPORT] : [])];
     seg(div.querySelector(".rules"), choices, shown(slot), (v) => set("rule", { slot, rule: v }));
     const tg = div.querySelector(".targets");
     if (tg) {

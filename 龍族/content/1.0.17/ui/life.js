@@ -122,7 +122,7 @@ function renderPreview() {
 }
 function renderNow() {
   const now = info?.now, cfg = info?.cfg;
-  $("who").textContent = info ? `${info.name || "（未登入）"}・${info.status !== "ingame" ? "遊戲還沒連上" : info.town ? "在主城" : "不在主城"}${info.watching ? "・遊戲視窗開著（暫停）" : ""}` : "";
+  $("who").textContent = info ? `${info.name || "（未登入）"}・${info.status !== "ingame" ? "遊戲還沒連上" : info.town ? "在主城" : "不在主城"}${info.watching ? "・遊戲視窗開著" : ""}${typeof info.gold === "number" ? `・金幣 ${info.gold.toLocaleString()}` : ""}` : "";
   const lines = [];
   const gs = cfg && gatherSkill(cfg.skill);
   lines.push(!cfg?.enabled ? "沒有在練。" : gs ? `<span class="ok">練習中</span>：採集「${esc(gs.name)}」` :

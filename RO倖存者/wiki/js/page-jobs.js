@@ -41,7 +41,7 @@ ${skillTable(j.rank === 2 ? (j.skills.length ? j.skills : learned) : j.skills)}
 ${j.rank === 1 && learned.length ? `<h3>天賦學會的技能</h3>${skillTable(learned)}` : ''}
 
 <h3>天賦樹</h3>
-<p class="small">${j.rank === 2 ? '二轉有 50 點，但只能投在一個分支（專精）。第一個點投在哪裡就決定專精，換專精找廣場的職業大師（300 卡普拉點數）。'
+<p class="small">${j.rank === 2 ? '二轉有 50 點，只能投在一個專精分支。先按該天賦樹的「專精」，可在天賦面板重置後重選（Beta 0.7.7 起）。'
     : '50 點天賦（每個職業等級 1 點），隨意分配到三個分支。'}每個分支投滿 5 點開放下一排。</p>
 ${brs.map((b, bi) => branch(b, bi)).join('')}`;
 

@@ -115,7 +115,7 @@ const itemOut = Object.values(items || {}).map(i => {
 const slotName = Object.fromEntries((gearSlots || []).map(s => [s.gear, s.name]));
 const cardOut = Object.values(cards || {}).map(c => {
   const m = (man.cards || {})[c.id] || {};
-  return { id: c.id, nameEN: m.name || null, image: m.image || null, monster: c.monster, compound: c.compound,
+  return { id: c.id, nameEN: m.name || null, image: m.image || null, monster: c.monster, compound: c.compound, tier: c.tier ?? null,
     compoundName: slotName[c.compound] || (/^acc/.test(c.compound) ? slotName.acc || slotName.acc1 : null) || c.compound,
     bonuses: (c.bonuses || []).map(b => safe(() => b.text(1), '')) };
 });
@@ -189,7 +189,7 @@ const petRules = {};
     }
   }
   const tiers = [...mainSrc.matchAll(/\{name:"(Neutral|Cordial|Leal)",min:(\d+),mult:([\d.]+)\}/g)].map(t => ({ id: t[1], name: T(t[1]), min: +t[2], mult: +t[3] }));
-  const c1 = /const \w+=(1e3|\d+),\w+=(\d+),\w+=(\d+),\w+=\[\{name:"Neutral"/.exec(mainSrc);
+  const c1 = /const [\w$]+=(1e3|\d+),[\w$]+=(\d+),[\w$]+=(\d+),[\w$]+=\[\{name:"Neutral"/.exec(mainSrc);
   const c2 = /mult:1\}\],\w+=\w+\[2\]\.min,\w+=([\d.]+),\w+=(\d+),\w+=\w+\[1\]\.min,\w+=(\d+)/.exec(mainSrc);
   const egg = /function [\w$]+\((\w)\)\{return \1\?([\d.e-]+):([\d.e-]+)\}const [\w$]+=1e3/.exec(mainSrc);
   Object.assign(petRules, {
@@ -264,7 +264,7 @@ let cosKills = null;
 // 11-15 版：{…fragments:N},{首領:球},["Bola del Festival",…],[球圖示],[[卡片]…],[碎片]
 // 11-18 版：碎片改成做「焚香」：{incense:[20,10,5],incenseChance:.5},{首領:球},[…],[…],[[…]],[碎片],焚香物品id
 // 兩種都認：從 ["Bola del Festival" 開始往後讀，前面的設定物件另外找。
-const festivalMatch = /[\w$]+=\{([^{}]+)\},[\w$]+=(\["Bola del Festival"[^\]]*\]),[\w$]+=(\[[\d,]+\]),[\w$]+=(\[\[[\d,]+\](?:,\[[\d,]+\])*\]),[\w$]+=(\[[\d,]+\])(?:,[\w$]+=(\d+))?/.exec(mainSrc);
+const festivalMatch = /[\w$]+=\{([^{}]+)\},(?:[\w$]+=\[[\d,\[\]]+\],)?[\w$]+=(\["Bola del Festival"[^\]]*\]),[\w$]+=(\[[\d,]+\]),[\w$]+=(\[\[[\d,]+\](?:,\[[\d,]+\])*\]),[\w$]+=(\[[\d,]+\])(?:,[\w$]+=(\d+))?/.exec(mainSrc);
 let festival = null;
 if (festivalMatch) {
   const head = mainSrc.slice(Math.max(0, festivalMatch.index - 300), festivalMatch.index);

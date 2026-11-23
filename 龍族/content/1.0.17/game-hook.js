@@ -967,7 +967,10 @@
     const busyNow = () => { const ch = charNow(); return !!ch && ch.mk === recipe.no; };
     const t0 = Date.now();
     await waitFor(busyNow, 5000);
-    await waitFor(() => !busyNow(), count * 2500 + 30000);
+    // 做到一半設定改了或關掉生活技能：不等這批做完，交給下一輪去停、換新的（使用者 2026-11-23：最高等級改指定物品按套用沒馬上換）
+    const cfgChanged = () => !LIFE_ON || !AUTO || !AUTO.life || lifeKeyOf(AUTO.life) !== lifeKey;
+    await waitFor(() => !busyNow() || cfgChanged(), count * 2500 + 30000);
+    if (cfgChanged()) { lifeRunOn = false; lifeState = "設定改了，換新的"; return 0; }
     // 一件 1.5 秒：做的時間夠長＝自己做完（或材料用完），不是被玩家走位打斷 → 看著遊戲時也馬上接下一批
     lifeRunOn = Date.now() - t0 >= count * 1500 * 0.7;
     await sleep(800);
@@ -1797,6 +1800,32 @@
   // 跟隨隊友 follow（名字）＋範圍 followRange（4／6／8 格）＋不追怪 followStay、快捷技能組（localStorage idle:skillsets:<角色編號>，6 組，op applySkillSet）
   const RULE_NO_SUPPORT = 5, CAST_STYLES = [0, 1, 2], FOLLOW_RANGES = [4, 6, 8], SKILLSET_N = 6;
   const newUpkeep = (u) => "castStyle" in u; // 新版遊戲才有的欄位，用來判斷新選項能不能用
+  // 魔法分類（codex magicTypes＝遊戲魔法表的 magicType）：
+  //   攻擊魔法＝50～59（遊戲「沒人需要補助才放」只給這種）
+  //   互相覆蓋（2026-11-23 用法師實測）：21 保護類身上只能有一個（後放的換掉前一個）、33 魔力微增／增幅、32 武器加持／祈禱／高階祈禱（遊戲說明）
+  const magicType = (id) => (window.RajaCodex && window.RajaCodex.magicTypes && window.RajaCodex.magicTypes[id]) ?? null;
+  const isAttackMagic = (id) => { const t = magicType(id); return t !== null && Math.trunc(t / 10) === 5; };
+  const CONFLICT = { 21: "保護", 32: "物理加攻", 33: "魔法增幅" };
+  const conflictGroup = (id) => { const t = magicType(id); return t in CONFLICT ? t : 0; };
+  const COMBAT_FIRST = 215; // 戰技編號從 215 起，combatSkills.levels[i] 是第 215+i 號的等級
+  /** 快捷欄裡同一類（互相覆蓋）都開了自動施放的：只留 keepSlot（沒給就留最前面那格），其他關掉。回傳關掉的技能名。 */
+  function fixConflicts(keepSlot) {
+    const g = G();
+    if (!g.feature || !g.feature("quickAutoOff")) return [];
+    const u = g.upkeepGet(), quick = g.state().combatSkills?.quick ?? [], rules = [...u.rules], off = [];
+    const kept = {};
+    if (keepSlot !== undefined) { const k = conflictGroup(quick[keepSlot]); if (k && rules[keepSlot] !== RULE_OFF) kept[k] = keepSlot; }
+    quick.forEach((id, slot) => {
+      const k = id && conflictGroup(id);
+      if (!k || (rules[slot] ?? RULE_OFF) === RULE_OFF) return;
+      if (kept[k] === undefined) { kept[k] = slot; return; }
+      if (kept[k] === slot) return;
+      rules[slot] = RULE_OFF;
+      off.push(`${g.skillName(id)}（跟${g.skillName(quick[kept[k]])}同屬${CONFLICT[k]}，會互相蓋掉）`);
+    });
+    if (off.length) setUpkeep({ rules });
+    return off;
+  }
   const skillSetKey = () => `idle:skillsets:${G().state().character?.id}`;
   function readSkillSets() {
     const out = Array(SKILLSET_N).fill(null);
@@ -1855,9 +1884,21 @@
     });
     get("skillSets", () => readSkillSets().map((s) => s && { name: s.name, skills: s.quick.filter(Boolean).map((id) => g.skillName(id)) }));
     get("quickAutoOff", () => !!g.feature("quickAutoOff"));
+    const icon = (id) => { try { return g.skillIcon(id) ? new URL(g.skillIcon(id), location.origin).href : null; } catch { return null; } };
     get("quick", () => (g.state().combatSkills?.quick ?? []).flatMap((id, slot) => (id ? [{
-      slot, id, name: g.skillName(id), icon: g.skillIcon(id) ? new URL(g.skillIcon(id), location.origin).href : null, ally: !!g.skillAlly(id),
+      slot, id, name: g.skillName(id), icon: icon(id), ally: !!g.skillAlly(id), attack: isAttackMagic(id), group: CONFLICT[conflictGroup(id)] || "",
     }] : [])));
+    get("quickAll", () => Array.from({ length: 12 }, (_, i) => g.state().combatSkills?.quick?.[i] ?? 0));
+    // 學會的魔法（state.magic）和戰技（combatSkills.levels 大於 0 的）：快捷格選技能用
+    get("learned", () => {
+      const st = g.state();
+      const magic = (st.magic || []).map((id) => ({ id, kind: "魔法", t: magicType(id) }));
+      const combat = (st.combatSkills?.levels || []).flatMap((lv, i) => (lv > 0 ? [{ id: COMBAT_FIRST + i, kind: "戰技", lv }] : []));
+      const label = (t) => t === null ? "" : t === 11 ? "治療" : t === 21 ? "保護" : t === 22 || t === 23 ? "結界" : t >= 31 && t <= 36 ? "增益" : t >= 41 && t <= 45 ? "詛咒" : t === 9 || Math.trunc(t / 10) === 5 ? "攻擊" : "其他";
+      return [...magic, ...combat].map((s) => ({ id: s.id, kind: s.kind, type: s.kind === "戰技" ? "戰技" : label(s.t), name: g.skillName(s.id) || `#${s.id}`, icon: icon(s.id) }));
+    });
+    // 互衝的自動施放：打開掛機設置時看到就關掉（使用者 2026-11-23）
+    get("conflictsFixed", () => fixConflicts());
     get("party", () => { const st = g.state(); const me = st.character?.name; return (st.party?.members ?? []).map((m) => m[0]).filter((n) => n !== me); });
     return out;
   }
@@ -1891,12 +1932,33 @@
       case "pickupMin": if ([0, 1, 2].includes(v)) setUpkeep({ lootFilter: { ...g.upkeepGet().lootFilter, pickupMin: v } }); break;
       case "sellRarity": if (Number.isInteger(v) && v >= 0 && v <= 7) setUpkeep({ sellRarity: v }); break;
       case "rule": {
-        const okRule = RULES.includes(v?.rule) || (v?.rule === RULE_NO_SUPPORT && newUpkeep(g.upkeepGet()));
+        // 「沒人需要補助才放」只給攻擊魔法（跟遊戲一樣）
+        const quickId = g.state().combatSkills?.quick?.[v?.slot];
+        const okRule = RULES.includes(v?.rule) || (v?.rule === RULE_NO_SUPPORT && newUpkeep(g.upkeepGet()) && isAttackMagic(quickId));
         if (!v || !Number.isInteger(v.slot) || v.slot < 0 || v.slot > 11 || !okRule) break;
         const rules = [...g.upkeepGet().rules];
         rules[v.slot] = v.rule;
         setUpkeep({ rules });
+        // 開了自動施放：同一類（會互相蓋掉）的其他格自動關掉
+        const off = v.rule !== RULE_OFF ? fixConflicts(v.slot) : [];
+        if (off.length) return { ...prefsSnapshot(), turnedOff: off };
         break;
+      }
+      case "quickSlot": {
+        // 把技能放進快捷第 slot 格（0＝清空）：跟遊戲快捷欄拖技能一樣送 setQuickSkill；換了技能、遊戲有「自動關閉」時新技能先只手動施放
+        if (!v || !Number.isInteger(v.slot) || v.slot < 0 || v.slot > 11 || !Number.isInteger(v.skill) || v.skill < 0 || v.skill > 250) break;
+        const st = g.state();
+        const learned = v.skill === 0 || (st.magic || []).includes(v.skill) || ((st.combatSkills?.levels || [])[v.skill - COMBAT_FIRST] > 0);
+        if (!learned) return { ...prefsSnapshot(), error: "還沒學會這個技能" };
+        const changed = (st.combatSkills?.quick?.[v.slot] ?? 0) !== v.skill;
+        const rule = changed && g.feature && g.feature("quickAutoOff") ? RULE_OFF : undefined;
+        return timed(g.net.request({ op: "setQuickSkill", slot: v.slot, skill: v.skill, ...(rule === undefined ? {} : { rule }) }), 20000, "設定快捷格")
+          .then(async (r) => {
+            if (r && r.error) return { ...prefsSnapshot(), error: errText(r.error) };
+            if (rule !== undefined) { const rules = [...g.upkeepGet().rules]; rules[v.slot] = rule; setUpkeep({ rules }); }
+            await waitFor(() => (g.state().combatSkills?.quick?.[v.slot] ?? 0) === v.skill, 3000);
+            return prefsSnapshot();
+          }, (e) => ({ ...prefsSnapshot(), error: errText(e) }));
       }
       case "allRulesOff": setUpkeep({ rules: Array(12).fill(RULE_OFF) }); break;
       case "castStyle": if (CAST_STYLES.includes(v) && newUpkeep(g.upkeepGet())) setUpkeep({ castStyle: v }); break;

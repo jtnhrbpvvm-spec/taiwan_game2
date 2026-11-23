@@ -211,7 +211,7 @@ def main():
     for c in d['cards']:
         mon = mon_by_id.get(c['monster'], {})
         cards.append({'id': c['id'], 'en': c['nameEN'], 'zh': zh(c['nameEN']), 'image': c['image'], 'monster': c['monster'],
-                      'compound': c['compound'],
+                      'compound': c['compound'], 'tier': c.get('tier'),
                       'compoundName': SLOT_FIX.get(c['compoundName'], c['compoundName']) if c['compoundName'] == c['compound'] else c['compoundName'],
                       'bonuses': c['bonuses'],
                       'boss': mon.get('boss'),
