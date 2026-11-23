@@ -1499,8 +1499,22 @@
     }
   }
 
+  // 遊戲視窗藏起來時自動開遊戲的「省電掛機」，叫出來時關掉（使用者 2026-11-23）。主程式用 __rajaPetPowerSave(on) 指定；
+  // 遊戲自己可能把它關掉（例如畫面重建），所以每 5 秒對一次。只在遊戲中才開。
+  let wantPowerSave = false;
+  function applyPowerSave() {
+    try {
+      const ps = G() && G().powerSave;
+      if (!ps || !ps.getState) return;
+      const want = wantPowerSave && S.status === "ingame";
+      if (!!ps.getState().active !== want) ps.getState().setActive(want);
+    } catch {}
+  }
+  Object.defineProperty(window, "__rajaPetPowerSave", { value: (on) => { wantPowerSave = !!on; applyPowerSave(); } });
+
   let nextReviveAt = 0;
   setInterval(async () => {
+    applyPowerSave();
     // 記下還活著時的自動戰鬥模式，復活回去後照這個恢復
     if (!S.dead) try { autoBeforeDeath = (G() && G().state && G().state().auto && G().state().auto.mode) || autoBeforeDeath; } catch {}
     if (busy || !AUTO || S.status !== "ingame") return;

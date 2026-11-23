@@ -334,7 +334,8 @@ function parkGame() {
 /** 藏著而且已經進到遊戲才降低畫面格數；載入、登入的時候照常（遊戲載入進度是一格一格跑的，降格數會載很久）。 */
 function syncParked() {
   const parked = !game.shown && game.state?.status === "ingame";
-  if (game.win && !game.win.isDestroyed()) game.win.webContents.executeJavaScript(`window.__rajaPetParked && __rajaPetParked(${parked})`).catch(() => {});
+  // 藏著＝也開遊戲的「省電掛機」（畫面全停，比只降格數更省）；叫出遊戲視窗就關掉（使用者 2026-11-23）
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.executeJavaScript(`window.__rajaPetParked && __rajaPetParked(${parked}); window.__rajaPetPowerSave && __rajaPetPowerSave(${parked})`).catch(() => {});
 }
 
 function showGame(on) {

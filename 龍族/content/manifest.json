@@ -1,5 +1,5 @@
 {
-  "version": "1.0.12",
+  "version": "1.0.13",
   "shell": 1,
   "files": [
     {
@@ -39,18 +39,18 @@
     },
     {
       "path": "companion.js",
-      "sha256": "16197fb5ecdc147622012a99d4e25845d32c7e1de583837a0db7f904f55658e8",
-      "size": 55456
+      "sha256": "86712d3f077769ec5bce77f4029e4eb6278abe37f97989a566295ce979b00cf1",
+      "size": 55662
     },
     {
       "path": "game-hook.js",
-      "sha256": "2141a5247f43baab1b4738f5b144d0d0b8300b4d74a636e9c487fc5fab50177d",
-      "size": 103638
+      "sha256": "aa854741fdbf4ee1d56e6dec1bf851dfdfec357def67765e3e6ede5df2f36116",
+      "size": 104354
     },
     {
       "path": "game-patch.js",
-      "sha256": "48088ba3ef7b2edcc965df32baf83c85099198f303760983437a8b0ad0ec2d39",
-      "size": 10807
+      "sha256": "3ed03f23f29b1d786ffdd64013b4ccc7869fa6d7d569fb7540be9f27e8726f46",
+      "size": 11143
     },
     {
       "path": "game-preload.js",

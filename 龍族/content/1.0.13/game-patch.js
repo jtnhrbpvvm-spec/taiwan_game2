@@ -80,6 +80,8 @@ const FINDERS = [
   { keys: ["huntMaps"], re: new RegExp(`(${N})=${N}\\.filter\\(e=>${N}\\.some\\(t=>t\\.mapId===e\\.id\\)\\)`) },
   // 小地圖下方「怪物」選單的清單：地圖 → { monsters:[{no,name,levelMin,levelMax,boss}] …}（同名怪合併、首領排後面）
   { keys: ["mapMonsters"], re: new RegExp(`function (${N})\\(e\\)\\{let t=${N}\\.get\\(e\\.id\\);if\\(t\\)return t;let n=\\[\\.\\.\\.e\\.monsters\\.map\\(e=>\\(\\{m:e,boss:!1\\}\\)\\)`) },
+  // 遊戲「省電掛機」（設置→掛機自動化，黑屏繼續掛機）的開關倉庫：getState().active／setActive(on)。打開時遊戲停掉畫面、特效、音效，連線和伺服器掛機照常
+  { keys: ["powerSave"], re: new RegExp(`(${N})=${N}\\(e=>\\(\\{active:!1,setActive:t=>e\\(\\{active:t\\}\\)\\}\\)\\)`) },
   // 經驗條：(等級, 總經驗) → { current:這一級已拿到, needed:這一級總共要 }（遊戲角色頁的經驗 % 用同一個；遊戲視窗標題顯示用）
   { keys: ["expProgress"], re: new RegExp(`function (${N})\\(e,t\\)\\{let n=${N}\\(e\\);return\\{current:Math\\.max\\(0,t-n\\.expMin\\),needed:n\\.expMax-n\\.expMin\\+1\\}\\}`) },
 ];
