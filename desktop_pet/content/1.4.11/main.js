@@ -11,6 +11,8 @@ const petShell = global.petShell;
 const mall = require("./mall");
 const income = require("./income");
 const gm = require("./gm");
+const { assetRequest } = require("./game-data");
+let gameDataVersions = {};
 
 const GAME_URL = "https://idle-seal.pp771007.workers.dev/";
 // 同網域的純文字檔。要動 localStorage／sessionStorage 時先開這個，不要開遊戲本身：
@@ -970,9 +972,14 @@ function buildMenu(petIndex = 0) {
 // ── 遊戲資料：動畫表、怪物對照 ──────────────────────────────
 
 async function fetchBytes(relPath) {
-  const res = await net.fetch(GAME_URL + relPath);
+  const res = await net.fetch(GAME_URL + assetRequest(relPath, gameDataVersions).url, { cache: "no-store", signal: AbortSignal.timeout(60000) });
   if (!res.ok) throw new Error(`${relPath} → HTTP ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const bytes = Buffer.from(await res.arrayBuffer());
+  if (relPath.endsWith(".json")) JSON.parse(bytes.toString("utf8"));
+  if (relPath.endsWith(".webp") && (bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WEBP")) {
+    throw new Error(`${relPath} 不是有效的 WebP 圖片`);
+  }
+  return bytes;
 }
 
 const SPRITE_KEEP_MS = 7 * 24 * 60 * 60 * 1000; // 圖檔在本機留 7 天，過了才重新下載一次
@@ -982,7 +989,7 @@ const SPRITE_KEEP_MS = 7 * 24 * 60 * 60 * 1000; // 圖檔在本機留 7 天，�
  * keepMs 有給的話：本機那份還沒超過這麼久就直接用，不再連網路下載（圖檔很少改，看過的就留在本機）。
  */
 async function cachedBytes(relPath, keepMs = 0) {
-  const file = path.join(app.getPath("userData"), "game-cache", relPath);
+  const file = path.join(app.getPath("userData"), "game-cache", assetRequest(relPath, gameDataVersions).cachePath);
   if (keepMs > 0) {
     try {
       if (Date.now() - fs.statSync(file).mtimeMs < keepMs) return fs.readFileSync(file);
@@ -1001,6 +1008,13 @@ async function cachedBytes(relPath, keepMs = 0) {
 
 /** 載入桌寵用得到的遊戲資料。哪一份失敗就少那一塊功能（顯示不出名字／圖示），其他照常。 */
 async function loadGameData() {
+  try {
+    const versions = JSON.parse((await cachedBytes("data-manifest.json")).toString("utf8"));
+    if (!versions || typeof versions !== "object" || typeof versions["items.json"] !== "string" || typeof versions["icons.json"] !== "string") throw new Error("資料版本清單格式錯誤");
+    gameDataVersions = versions;
+  } catch (error) {
+    console.error("資料版本清單載入失敗，沿用舊版下載方式：", error.message);
+  }
   const load = async (relPath, apply) => {
     try {
       apply(JSON.parse((await cachedBytes(relPath)).toString("utf8")));

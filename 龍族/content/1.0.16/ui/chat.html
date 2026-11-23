@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>對話</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { height: 100%; }
+      body { margin: 0; display: flex; flex-direction: column; background: #0d0b08; color: #e9e4d8; font: 14px/1.5 "Microsoft JhengHei", sans-serif; }
+      .tabs { display: flex; gap: 3px; padding: 8px 8px 0; flex-wrap: wrap; }
+      .tabs button { padding: 3px 10px; border: 1px solid #3a2f20; border-radius: 8px; background: #17130e; color: #98a2b6; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .tabs button[aria-selected="true"] { background: #3a2c14; color: #f2bb4f; border-color: #8a6a2a; font-weight: bold; }
+      .tabs .unread::after { content: " •"; color: #ff7a7a; }
+      #log { flex: 1; overflow-y: auto; margin: 8px; padding: 6px 8px; border-radius: 10px; background: #17130e; border: 1px solid #3a2f20; }
+      .line { padding: 1px 0; word-break: break-all; }
+      .line .t { color: #6b7280; font-size: 11px; margin-right: 4px; }
+      .line .who { font-weight: bold; cursor: pointer; }
+      .line .who:hover { text-decoration: underline; }
+      .ch0 .who { color: #e9e4d8; }
+      .ch1, .ch1 .who { color: #e58bff; }
+      .ch2 .who, .ch2 .tag { color: #7fc8ff; }
+      .ch3 { color: #f2bb4f; }
+      .ch4 .who, .ch4 .tag { color: #8fe08a; }
+      .ch5 .who, .ch5 .tag { color: #ffb46a; }
+      .me .who { color: #f2bb4f; }
+      .tag { font-size: 12px; margin-right: 3px; }
+      .empty { color: #6b7280; padding: 10px 0; text-align: center; }
+      form { display: flex; gap: 6px; padding: 0 8px 8px; align-items: center; flex-wrap: wrap; }
+      select, input { padding: 5px 6px; border-radius: 6px; border: 1px solid #5a4a30; background: #17130e; color: #fff; font: inherit; }
+      #to { width: 90px; }
+      #text { flex: 1; min-width: 120px; }
+      button.send { padding: 5px 14px; border: 0; border-radius: 6px; background: #c9973f; color: #1a1408; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      #msg { width: 100%; font-size: 12px; color: #ffb46a; min-height: 0; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="tabs" id="tabs"></div>
+    <div id="log"></div>
+    <form id="form">
+      <select id="ch">
+        <option value="0">一般</option>
+        <option value="1">密語</option>
+        <option value="2">國家</option>
+        <option value="4">公會</option>
+        <option value="5">世界</option>
+      </select>
+      <input id="to" placeholder="對象名字" maxlength="32" hidden />
+      <input id="text" placeholder="說點什麼…（Enter 送出）" maxlength="120" autocomplete="off" />
+      <button type="submit" class="send">送出</button>
+      <div id="msg"></div>
+    </form>
+    <script src="chat.js"></script>
+  </body>
+</html>

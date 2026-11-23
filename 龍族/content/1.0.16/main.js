@@ -72,17 +72,23 @@ function openPet(id, restoring = false) {
 }
 // 外殼（boot.js）給的自動更新；直接用 electron main.js 跑的舊方式沒有外殼，就沒有更新
 const shell = global.petShell;
+/** 全部桌寵共用的選單項目，各隻桌寵的右鍵選單照分類拿去放（companion.js buildMenu）。 */
 function managerMenu() {
-  return [
-    ...(shell ? [shell.updates.menuItem()] : []),
-    { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
-    { label: currentTeam ? "組隊練功（進行中）…" : "組隊練功…", enabled: !!pets.size, click: () => openTeam() },
-    { label: currentTrade ? "物品欄與交易（交易中）…" : "物品欄與交易…", click: openInv },
-    { label: "其他桌寵", enabled: !!pets.size, submenu: [...pets.values()].map(p => ({
+  return {
+    update: shell ? shell.updates.menuItem() : null,
+    accounts: { label: `帳號與桌寵管理（${pets.size}/${MAX_PETS}）…`, click: openAccounts },
+    team: { label: currentTeam ? "組隊／單人練功（進行中）…" : "組隊／單人練功…", enabled: !!pets.size, click: () => openTeam() },
+    inv: { label: currentTrade ? "物品欄與交易（交易中）…" : "物品欄與交易…", click: openInv },
+    others: { label: "其他桌寵", enabled: !!pets.size, submenu: [...pets.values()].map(p => ({
       label: `${p.info().label}${p.info().character ? `・${p.info().character}` : ""}`,
       click: () => { selected = p.accountId; p.show(); p.toggleGame(); },
     })) },
-  ];
+  };
+}
+/** 系統匣選單用的平鋪版本。 */
+function managerList() {
+  const m = managerMenu();
+  return [m.update, m.accounts, m.team, m.inv, m.others].filter(Boolean);
 }
 function openAccounts() {
   if (accountsWin && !accountsWin.isDestroyed()) { accountsWin.show(); accountsWin.focus(); return; }
@@ -310,7 +316,7 @@ ipcMain.handle("inv:trade", (e, req) => {
 ipcMain.handle("inv:cancel", (e) => { if (!fromInv(e)) return { error: "not allowed" }; endTrade("canceled", "手動取消"); return {}; });
 
 // 依來源視窗路由，遊戲和桌寵的訊息只能影響自己的帳號。
-for (const name of ["game:state", "game:auto-log", "game:pending-storage", "game:saved-prefs", "game:prefs", "auto:set", "pet:interactive", "pet:toggle-game", "pet:menu"]) {
+for (const name of ["game:state", "game:auto-log", "game:chat", "game:pending-storage", "game:saved-prefs", "game:prefs", "auto:set", "pet:interactive", "pet:toggle-game", "pet:menu"]) {
   ipcMain.on(name, (e, ...args) => {
     const p = owner(e);
     if (!p) { if (name === "game:pending-storage" || name === "game:saved-prefs") e.returnValue = null; return; }
@@ -318,7 +324,7 @@ for (const name of ["game:state", "game:auto-log", "game:pending-storage", "game
     p.events.get(name)?.(e, ...args);
   });
 }
-for (const name of ["auto:get", "codex:char", "codex:set-target", "codex:open-team", "life:get", "life:set", "idle:get", "idle:set", "idle:share", "pet:asset", "pet:art"]) {
+for (const name of ["auto:get", "codex:char", "codex:set-target", "codex:open-team", "life:get", "life:set", "chat:get", "chat:send", "idle:get", "idle:set", "idle:share", "pet:asset", "pet:art"]) {
   ipcMain.handle(name, (e, ...args) => owner(e)?.handlers.get(name)?.(e, ...args));
 }
 
@@ -346,7 +352,7 @@ else {
     if (first !== undefined) openPet(first, true);
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "build", "icon.png")).resize({ width: 16, height: 16 }));
     const trayMenu = () => Menu.buildFromTemplate([
-      ...managerMenu(), { type: "separator" },
+      ...managerList(), { type: "separator" },
       ...[...pets.values()].map(p => ({ label: p.info().label, submenu: p.menu() })),
       { type: "separator" }, { label: "結束全部桌寵", click: () => app.quit() },
     ]);

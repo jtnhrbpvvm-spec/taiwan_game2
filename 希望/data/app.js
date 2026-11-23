@@ -1210,6 +1210,11 @@
   //             souls = [{itemId: 結晶, options: [{kind, value, unit: 0}]}]（鑲上去的結晶，最多 soulSlots 顆）
   // 穿著的光環是 loadout.aura = 那一疊的 id，上面「光環 (aura)」那一格就是在改它。
   var AURA = window.AURA || null;
+  function auraSlotRule(itemId) {
+    var rule = AURA.slotRules && AURA.slotRules[String(itemId)];
+    return rule ? { min: rule.heldMin, max: rule.heldMax, initialMax: rule.max } :
+      { min: AURA.slots.min, max: AURA.slots.max, initialMax: AURA.slots.max };
+  }
   function renderAura(c) {
     var wrap = document.getElementById("auraFields");
     if (!wrap) return;
@@ -1223,8 +1228,7 @@
     wrap.appendChild(el("div", { class: "section-title", text: "光環的靈魂結晶" }));
     wrap.appendChild(el("div", {
       style: "font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px;",
-      text: "列出背包裡每一件光環。可以改階級、精煉值、結晶欄數（遊戲正常是 " + AURA.slots.min + "~" + AURA.slots.max +
-        " 欄），以及鑲在上面的靈魂結晶（顏色決定能選哪些屬性，每顆最多 " + AURA.maxOptions + " 條）。" +
+      text: "列出背包裡每一件光環。可以改階級、精煉值、結晶欄數（依裝備規則，G 化可保留原有欄數），以及鑲在上面的靈魂結晶（顏色決定能選哪些屬性，每顆最多 " + AURA.maxOptions + " 條）。" +
         "數值旁邊的範圍是遊戲正常做得出來的範圍，超過也能存，但正常玩不會出現。"
     }));
 
@@ -1234,7 +1238,7 @@
       btn.addEventListener("click", function () {
         var newId = c.nextStackId || 1;
         c.nextStackId = newId + 1;
-        c.stacks.push({ id: newId, itemId: itemId, count: 1, soulSlots: AURA.slots.max });
+        c.stacks.push({ id: newId, itemId: itemId, count: 1, soulSlots: auraSlotRule(itemId).initialMax });
         rerender();
         renderStacks(c);
       });
@@ -1248,6 +1252,7 @@
       return;
     }
     auras.forEach(function (stack) {
+      var slots = auraSlotRule(stack.itemId);
       var worn = c.loadout.aura === stack.id;
       var card = el("div", { style: "border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;" });
       var head = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;" });
@@ -1272,9 +1277,9 @@
         function () { return String(stack.refine || 0); },
         function (v) { stack.refine = Number(v); rerender(); renderStacks(c); }));
       var slotOpts = [];
-      for (var sv = AURA.slots.min; sv <= AURA.slots.max; sv++) slotOpts.push({ value: String(sv), label: sv + " 欄" });
+      for (var sv = slots.min; sv <= slots.max; sv++) slotOpts.push({ value: String(sv), label: sv + " 欄" });
       // 存檔裡是範圍外的數字（例如手動改過）也要列出來，不能默默換掉
-      if (stack.soulSlots != null && (stack.soulSlots < AURA.slots.min || stack.soulSlots > AURA.slots.max)) {
+      if (stack.soulSlots != null && (stack.soulSlots < slots.min || stack.soulSlots > slots.max)) {
         slotOpts.push({ value: String(stack.soulSlots), label: stack.soulSlots + " 欄（超出正常範圍）" });
       }
       if (stack.soulSlots == null) slotOpts.unshift({ value: "", label: "（還沒決定，進遊戲時隨機）" });
@@ -1284,7 +1289,7 @@
       card.appendChild(grid);
 
       var souls = stack.souls || [];
-      var slotCount = stack.soulSlots == null ? AURA.slots.max : stack.soulSlots;
+      var slotCount = stack.soulSlots == null ? slots.initialMax : stack.soulSlots;
       souls.forEach(function (soul, soulIdx) {
         var color = colorOf(soul.itemId);
         var box = el("div", { style: "border-top:1px dashed var(--border);padding-top:10px;margin-top:10px;" });

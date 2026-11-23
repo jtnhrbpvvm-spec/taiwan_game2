@@ -189,6 +189,15 @@
         if (msg.inv) readInv(msg.inv);
         if (Array.isArray(msg.up)) msg.up.forEach(readEntity);
         break;
+      case "chat":
+        // 聊天（遊戲 parse：from、name、text、ch 頻道 0 一般／1 密語／2 國家／3 系統／4 公會／5 世界、to 密語對象、item [道具號,…]、gm）
+        pushChat({ ch: typeof msg.ch === "number" ? msg.ch : 0, name: msg.name || "", text: msg.text || "", to: msg.to || "", gm: !!msg.gm,
+          item: Array.isArray(msg.item) ? msg.item[0] : undefined });
+        return;
+      case "chats":
+        // 進房間時的頭上對話（[編號, 名字, 內容]）
+        if (Array.isArray(msg.list)) for (const r of msg.list) if (Array.isArray(r)) pushChat({ ch: 0, name: r[1] || "", text: r[2] || "", recent: true });
+        return;
       case "trade":
         // 交易視窗的狀態（遊戲 vK()）：view {partner, state 0 被邀請／1 等回覆／2 交易中, mine/theirs {items, slots, gold, ok}}；結束時 end（1＝成交）
         tradeMsg = { view: msg.view || null, end: msg.end, at: Date.now() };
@@ -222,6 +231,27 @@
   }
 
   let tradeMsg = null; // 最近一次交易訊息（見 onMessage 的 trade）
+
+  // ---------- 聊天（桌寵的對話視窗用，使用者 2026-11-23：不用開遊戲視窗也能看、能回）----------
+  function pushChat(c) {
+    let text = String(c.text).slice(0, 240);
+    if (c.item !== undefined) { try { const n = window.__rajaGame?.item(c.item)?.name; if (n) text = text.replace("[道具]", `[${n}]`); } catch {} }
+    window.postMessage({ __rajaPetChat: { at: Date.now(), ch: c.ch, name: String(c.name).slice(0, 32), text, to: String(c.to || "").slice(0, 32), gm: !!c.gm, recent: !!c.recent,
+      me: !!S.character && c.name === S.character.name } }, location.origin);
+  }
+  const CHAT_SEND = [0, 1, 2, 4, 5]; // 能發話的頻道：一般、密語、國家、公會、世界（系統不行）
+  /** 跟遊戲聊天框按送出一樣（遊戲 Oj）：拿掉控制字元，送 chat{text, ch, to}。 */
+  function chatSend(text, ch = 0, to = "") {
+    const g = window.__rajaGame;
+    const t = [...String(text || "").replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, "")].slice(0, 120).join("").trim();
+    if (!t) return { error: "沒有內容" };
+    if (!CHAT_SEND.includes(ch)) return { error: "這個頻道不能說話" };
+    if (ch === 1 && !to) return { error: "密語要填對象" };
+    if (S.status !== "ingame" || !g || !g.net) return { error: "還沒連上遊戲" };
+    g.net.post({ op: "chat", text: t, ...(ch ? { ch } : {}), ...(ch === 1 ? { to: String(to).slice(0, 32) } : {}) });
+    return {};
+  }
+  Object.defineProperty(window, "__rajaPetChat", { value: Object.freeze({ send: chatSend }) });
 
   // ---------- 交給 preload ----------
   let postTimer = 0;
@@ -347,7 +377,7 @@
 
   /** 用小地圖下方「NPC」清單的自動導航走到這間店（shop 編號）的商人旁邊，等遊戲把商店打開
    *  （跟玩家按 NPC 清單那一項一樣：遊戲自己找路、走過去、到了才開）。 */
-  async function walkToShop(shop) {
+  async function walkToShop(shop, patient = false) {
     const g = G();
     const area = g.currentTown();
     if (!area) throw new Error("還沒進到主城，沒辦法去找商人");
@@ -386,6 +416,16 @@
     };
     // 走去最近的那位；10 秒走不動就直接換別的主城（buyAnywhere／sellHere 接 unreachable）
     if (await tryNpc(indexes[0])) return nameOf(indexes[0]);
+    // 生活技能買材料（patient）：不能換主城，改試同城其他賣這間店的商人，最後再走一次第一位
+    // （使用者 2026-11-23 弓手裁縫：連兩次「走不到武器店老闆」，第三次就走到了）
+    if (patient) {
+      for (const i of [...indexes.slice(1), indexes[0]]) {
+        if (!S.town) break;
+        g.npcSheet.getState().close();
+        await sleep(randMs(1500, 3000));
+        if (await tryNpc(i)) return nameOf(i);
+      }
+    }
     const err = new Error(`走不到「${nameOf(indexes[0])}」旁邊（10 秒沒有走動，可能被擋住或找不到路）`);
     err.unreachable = true;
     throw err;
@@ -397,7 +437,7 @@
   async function buy(plan, units, what) {
     const g = G();
     if (units <= 0) return;
-    await walkToShop(plan.shop);
+    await walkToShop(plan.shop, !!plan.patient);
     // 一次買太多可能放不下；伺服器拒絕後縮小數量，絕不丟棄或出售物品。
     let amount = units;
     for (;;) {
@@ -865,6 +905,9 @@
   const LP = window.RajaLifePlan && window.RajaCodex && window.RajaCodex.recipes ? window.RajaLifePlan.make(window.RajaCodex) : null;
   let LIFE_ON = false;
   let lifeKey = "", lifeMade = 0, lifeState = "", lifeError = "", nextLifeAt = 0, lifeStopPending = false, lifeDoneLogged = false;
+  let lifeRunOn = false; // 上一批是自己做完的：遊戲視窗開著時不用等 30 秒，馬上接著做
+  let lifeSwitch = false; // 設定剛改過：正在做／採的先停，換成新的
+  const lifeKeyOf = (cfg) => JSON.stringify([cfg.skill, cfg.mode, cfg.recipe, cfg.count, !!cfg.useUp]);
   function bagCounts() {
     const out = {};
     for (const s of rawBag()) if (s && s.length) out[s[0]] = (out[s[0]] || 0) + (s.length === 2 ? s[1] : 1);
@@ -908,7 +951,7 @@
       const gold = (g.state().character && g.state().character.gold) || 0;
       const units = Math.min(Math.ceil((qty - have) / (s.unit.count || 1)), Math.floor(gold / s.unit.price), g.buyLimit ? g.buyLimit(itemNo) : 99);
       if (!(units > 0)) throw new Error(`金幣不夠買${name}`);
-      const bought = await buy({ shop: s.shop, itemNo }, units, `${name} ${units} 份`);
+      const bought = await buy({ shop: s.shop, itemNo, patient: true }, units, `${name} ${units} 份`);
       if (!bought || !(await waitFor(() => (bagCounts()[itemNo] || 0) > have, 5000))) throw new Error(`買不到${name}`);
     }
   }
@@ -922,8 +965,11 @@
     const r = await timed(g.net.request({ op: "craft", recipe: recipe.no, count }), 20000, "製作");
     if (r && r.error) throw new Error(errText(r.error));
     const busyNow = () => { const ch = charNow(); return !!ch && ch.mk === recipe.no; };
+    const t0 = Date.now();
     await waitFor(busyNow, 5000);
     await waitFor(() => !busyNow(), count * 2500 + 30000);
+    // 一件 1.5 秒：做的時間夠長＝自己做完（或材料用完），不是被玩家走位打斷 → 看著遊戲時也馬上接下一批
+    lifeRunOn = Date.now() - t0 >= count * 1500 * 0.7;
     await sleep(800);
     const made = Math.max(0, (bagCounts()[recipe.itemNo] || 0) - before);
     log(`生活技能：${name} 做了 ${count} 次，得到 ${made} 個`);
@@ -983,13 +1029,33 @@
     log(`生活技能：開始採集「${sk.name}」`);
   }
 
+  /** 生活技能做完一批後合成：照「自動合成」勾的等級和件數，都沒勾就三種等級都合（5 件起）。合成失敗不影響繼續練。 */
+  async function lifeFuse() {
+    if (!has(FUSE_NEED)) return;
+    const list = Array.isArray(AUTO.fuse) ? AUTO.fuse : [];
+    const any = list.some((f) => f && f.enabled);
+    for (let t = 0; t < 3; t++) {
+      const f = list[t] || {};
+      if (any && !f.enabled) continue;
+      try { await fuseTier(t, { count: f.count || 5 }); }
+      catch (e) { log(`合成（${TIER_NAMES[t]}）沒有完成：${errText(e)}`, "warn"); }
+    }
+  }
+
   async function lifeTick(cfg) {
     const g = G(), ch = charNow();
+    lifeRunOn = false;
     if (!LP || !ch || !Array.isArray(ch.life)) return;
     const gsk = (window.RajaCodex.gatherSkills || []).find((s) => s.skill === cfg.skill);
-    const key = JSON.stringify([cfg.skill, cfg.mode, cfg.recipe, cfg.count, !!cfg.useUp]);
-    if (key !== lifeKey) { lifeKey = key; lifeMade = 0; lifeError = ""; lifeDoneLogged = false; gatherStartedAt = 0; saveLifeProgress(); }
+    const key = lifeKeyOf(cfg);
+    // 設定改了（換技能、換配方…）：馬上換，不等之前的等待時間，正在做／採的先停（使用者 2026-11-23：法師伐木中換技能按套用沒切換）
+    if (key !== lifeKey) { lifeKey = key; lifeMade = 0; lifeError = ""; lifeDoneLogged = false; gatherStartedAt = 0; gatherQuickStops = 0; nextLifeAt = 0; lifeSwitch = true; saveLifeProgress(); }
     if (Date.now() < nextLifeAt) return;
+    if (lifeSwitch) {
+      lifeSwitch = false;
+      if (ch.mk) { await timed(g.net.request({ op: "craft", recipe: 0, count: 0 }), 20000, "停止製作"); log("生活技能：設定改了，先停下目前的製作"); await sleep(1000); return lifeTick(cfg); }
+      if (ch.gat && ch.gat !== cfg.skill) { await timed(g.net.request({ op: "gather", skill: 0 }), 20000, "停止採集"); log("生活技能：設定改了，先停下目前的採集"); await sleep(1000); return lifeTick(cfg); }
+    }
     const own = (g.towns || []).find((t) => t.nation === S.nation);
     const home = (AUTO.supply && AUTO.supply.town && townInfo(AUTO.supply.town)) || (own && townInfo(own.mapId));
     if (!S.town) {
@@ -1065,6 +1131,8 @@
     const step = p.steps[0];
     const made = await craftRun(step.recipe, step.count);
     if (step.recipe.no === chosen.no && !extra) { lifeMade += made; saveLifeProgress(); }
+    // 做完一批：看物品欄能不能合成（使用者 2026-11-23：裁縫做的帽子、手套直接合上去）
+    if (cfg.fuse !== false && made > 0) await lifeFuse();
     lifeState = step.recipe.no !== chosen.no ? "做好中間材料，繼續" : extra ? `用光原料：做了 ${(g.item(chosen.itemNo) || {}).name || chosen.itemNo}` :
       `已做 ${lifeMade} 件${cfg.count > 0 ? ` / ${cfg.count}` : ""}`;
   }
@@ -1465,11 +1533,11 @@
     };
     let { bag, slots } = allowed();
     if (slots.length < Math.max(5, cfg.count || 5)) return;
-    let ok = 0, fail = 0;
-    log(`合成（${TIER_NAMES[tier]}）：可合的裝備 ${slots.length} 件，開始合成`);
+    let ok = 0, fail = 0, started = false;
     while (slots.length >= 5) {
       const pick = g.fusePick(bag, tier, new Set(slots), g.rng);
-      if (!pick) break;
+      if (!pick) break; // 件數夠但湊不成一組（遊戲挑不出來）：不記「開始合成」，免得每批生活技能做完都洗一行
+      if (!started) { started = true; log(`合成（${TIER_NAMES[tier]}）：可合的裝備 ${slots.length} 件，開始合成`); }
       const r = await timed(g.fuse(pick.from, pick.use), 30000, "合成");
       if (r && r.error) { log(`合成（${TIER_NAMES[tier]}）停止：${r.error}`, "warn"); break; }
       r && r.success ? ok++ : fail++;
@@ -1552,7 +1620,11 @@
     const tradeNow = !!(TRADE && TRADE.id && !tradeDone[TRADE.id]);
     // 生活技能每 30 秒檢查有沒有在做（使用者 2026-11-23：玩家點畫面走位、斷線重連後遊戲就停了，遊戲視窗又開著，桌寵就一直沒接下去）：
     // 遊戲那邊停了（沒在製作也沒在採集）超過 30 秒就接著做。看著遊戲時只在主城接，不把玩家拉回主城。
-    const lifeWatchNow = watching && LIFE_ON && !resting && !S.dead && S.town && lifeIdleFor(LIFE_WATCH_MS);
+    // 上一批是自己做完的（lifeRunOn）就不用等 30 秒，馬上接下一批（使用者 2026-11-23：弓手裁縫每做一批都停 30 秒）
+    const lifeNext = lifeRunOn && !!lifeIdleSince && Date.now() >= nextLifeAt;
+    // 生活技能設定剛改過：遊戲視窗開著、遊戲還在做／採舊的也馬上換（不然一直在採，30 秒閒置永遠不會到）
+    const lifeChanged = LIFE_ON && !!AUTO.life && lifeKeyOf(AUTO.life) !== lifeKey;
+    const lifeWatchNow = watching && LIFE_ON && !resting && !S.dead && S.town && (lifeNext || lifeChanged || lifeIdleFor(LIFE_WATCH_MS));
     if (watching && !reviveNow && !goNow && !pauseNow && !resumeNow && !teamNow && !tradeNow && !lifeWatchNow) return;
     busy = true;
     try {
@@ -1582,7 +1654,7 @@
           catch (e) { log(`組隊沒有完成：${errText(e)}。30 秒後再試`, "warn"); nextTeamAt = Date.now() + 30000; }
         }
         if (lifeWatchNow) {
-          log("生活技能：停下來 30 秒了，接著做");
+          if (!lifeNext && !lifeChanged) log("生活技能：停下來 30 秒了，接著做");
           lifeIdleSince = Date.now(); // 這次沒接成功也再等 30 秒
           try { await lifeTick(AUTO.life); }
           catch (e) { lifeError = errText(e); lifeState = lifeError; log(`生活技能沒有完成：${lifeError}`, "warn"); }
@@ -1721,6 +1793,41 @@
   const POTION_AT = [0, 30, 40, 50, 60];
   const ALLY_SUPPORT = ["self", "party", "nearby"];
   const RULE_OFF = 4, RULES = [0, 1, 2, 3, 4]; // 一直用、只打首領、HP 低於一半、身邊 2 隻怪以上、關閉
+  // 遊戲 beta-v1.2.2483 起：施放條件多「沒人需要補助才放」(5，只給補助技能)、施法風格 castStyle（0 均衡／1 補助優先／2 戰鬥優先）、
+  // 跟隨隊友 follow（名字）＋範圍 followRange（4／6／8 格）＋不追怪 followStay、快捷技能組（localStorage idle:skillsets:<角色編號>，6 組，op applySkillSet）
+  const RULE_NO_SUPPORT = 5, CAST_STYLES = [0, 1, 2], FOLLOW_RANGES = [4, 6, 8], SKILLSET_N = 6;
+  const newUpkeep = (u) => "castStyle" in u; // 新版遊戲才有的欄位，用來判斷新選項能不能用
+  const skillSetKey = () => `idle:skillsets:${G().state().character?.id}`;
+  function readSkillSets() {
+    const out = Array(SKILLSET_N).fill(null);
+    try {
+      const saved = JSON.parse(localStorage.getItem(skillSetKey()) || "[]");
+      for (let i = 0; i < SKILLSET_N; i++) {
+        const r = saved?.[i];
+        if (r && typeof r.name === "string" && [r.quick, r.rules, r.allyTargets].every((a) => Array.isArray(a) && a.length === 12)) out[i] = r;
+      }
+    } catch {}
+    return out;
+  }
+  async function skillSetApply(index) {
+    const g = G(), set = readSkillSets()[index];
+    if (!set) return { error: "這一組是空的" };
+    if (S.status !== "ingame") return { error: "還沒連上遊戲" };
+    const id = g.state().character?.id;
+    const r = await timed(g.net.request({ op: "applySkillSet", quick: set.quick, rules: set.rules, allyTargets: set.allyTargets }), 20000, "套用技能組");
+    if (r && r.error) return { error: errText(r.error) };
+    if (g.state().character?.id === id) setUpkeep({ rules: set.rules, allyTargets: set.allyTargets }); // 跟遊戲一樣：伺服器換好快捷欄後，施放條件也跟著換
+    return {};
+  }
+  function skillSetSave(index, name) {
+    const g = G(), sets = readSkillSets(), u = g.upkeepGet(), quick = g.state().combatSkills?.quick;
+    if (!quick) return { error: "還沒讀到快捷欄" };
+    sets[index] = { name: String(name || `技能組 ${index + 1}`).slice(0, 24),
+      quick: Array.from({ length: 12 }, (_, i) => quick[i] ?? 0), rules: Array.from({ length: 12 }, (_, i) => u.rules[i] ?? RULE_OFF),
+      allyTargets: Array.from({ length: 12 }, (_, i) => u.allyTargets[i] ?? "") };
+    localStorage.setItem(skillSetKey(), JSON.stringify(sets));
+    return {};
+  }
   const vol = (v) => Math.max(0, Math.min(100, Math.round(Number(v) / 5) * 5 || 0));
   function prefsSnapshot() {
     const g = G();
@@ -1743,8 +1850,10 @@
       // 遊戲 beta-v1.2.2264 起「自動幫隊友施法」開關改成「支援對象」三選一（allySupport：self／party／nearby）；舊版只有 allyCast
       const allySupport = ALLY_SUPPORT.includes(u.allySupport) ? u.allySupport : u.allyCast === false ? "self" : "party";
       return { hold: u.hold, allySupport, allySupportNew: "allySupport" in u, repair: u.repair, pickupMin: u.lootFilter?.pickupMin ?? 0, expLock: u.expLock,
-        sell: u.sell, sellRarity: u.sellRarity, rules: u.rules, allyTargets: u.allyTargets };
+        sell: u.sell, sellRarity: u.sellRarity, rules: u.rules, allyTargets: u.allyTargets,
+        newOptions: newUpkeep(u), castStyle: u.castStyle ?? 0, follow: u.follow || "", followRange: u.followRange ?? 6, followStay: !!u.followStay };
     });
+    get("skillSets", () => readSkillSets().map((s) => s && { name: s.name, skills: s.quick.filter(Boolean).map((id) => g.skillName(id)) }));
     get("quickAutoOff", () => !!g.feature("quickAutoOff"));
     get("quick", () => (g.state().combatSkills?.quick ?? []).flatMap((id, slot) => (id ? [{
       slot, id, name: g.skillName(id), icon: g.skillIcon(id) ? new URL(g.skillIcon(id), location.origin).href : null, ally: !!g.skillAlly(id),
@@ -1782,13 +1891,30 @@
       case "pickupMin": if ([0, 1, 2].includes(v)) setUpkeep({ lootFilter: { ...g.upkeepGet().lootFilter, pickupMin: v } }); break;
       case "sellRarity": if (Number.isInteger(v) && v >= 0 && v <= 7) setUpkeep({ sellRarity: v }); break;
       case "rule": {
-        if (!v || !Number.isInteger(v.slot) || v.slot < 0 || v.slot > 11 || !RULES.includes(v.rule)) break;
+        const okRule = RULES.includes(v?.rule) || (v?.rule === RULE_NO_SUPPORT && newUpkeep(g.upkeepGet()));
+        if (!v || !Number.isInteger(v.slot) || v.slot < 0 || v.slot > 11 || !okRule) break;
         const rules = [...g.upkeepGet().rules];
         rules[v.slot] = v.rule;
         setUpkeep({ rules });
         break;
       }
       case "allRulesOff": setUpkeep({ rules: Array(12).fill(RULE_OFF) }); break;
+      case "castStyle": if (CAST_STYLES.includes(v) && newUpkeep(g.upkeepGet())) setUpkeep({ castStyle: v }); break;
+      case "followRange": if (FOLLOW_RANGES.includes(v) && newUpkeep(g.upkeepGet())) setUpkeep({ followRange: v }); break;
+      case "followStay": if (newUpkeep(g.upkeepGet())) setUpkeep({ followStay: !!v }); break;
+      case "follow": {
+        // 遊戲：原地掛機（hold）開著時不能跟隨；只能選隊伍裡的人
+        if (typeof v !== "string" || v.length > 24 || !newUpkeep(g.upkeepGet())) break;
+        const party = (g.state().party?.members ?? []).map((m) => m[0]);
+        if (v && !party.includes(v)) break;
+        setUpkeep(v ? { follow: v, hold: false } : { follow: "" });
+        break;
+      }
+      case "skillSetSave": if (v && Number.isInteger(v.index) && v.index >= 0 && v.index < SKILLSET_N) { const r = skillSetSave(v.index, v.name); if (r.error) return { ...prefsSnapshot(), error: r.error }; } break;
+      case "skillSetDelete": if (Number.isInteger(v) && v >= 0 && v < SKILLSET_N) { const sets = readSkillSets(); sets[v] = null; localStorage.setItem(skillSetKey(), JSON.stringify(sets)); } break;
+      case "skillSetApply":
+        if (!Number.isInteger(v) || v < 0 || v >= SKILLSET_N) break;
+        return skillSetApply(v).then((r) => ({ ...prefsSnapshot(), ...(r.error ? { error: r.error } : {}) }));
       case "allyTarget": {
         if (!v || !Number.isInteger(v.slot) || v.slot < 0 || v.slot > 11 || typeof v.name !== "string" || v.name.length > 24) break;
         const allyTargets = [...g.upkeepGet().allyTargets];

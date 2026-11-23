@@ -1,5 +1,5 @@
 {
-  "version": "1.0.15",
+  "version": "1.0.16",
   "shell": 1,
   "files": [
     {
@@ -28,8 +28,13 @@
       "size": 53271
     },
     {
+      "path": "chat-preload.js",
+      "sha256": "35412b971be64d98f94e1122e206d158adcef5d53e1424e235716e56654fac0d",
+      "size": 385
+    },
+    {
       "path": "codex-data.js",
-      "sha256": "73fc6ffd407354d646abed2ae6cc2db7797d5a130bd19da399c510f4b008c6f3",
+      "sha256": "012cdec8b519324e9359cb833fee3088155f87c528fee4e1af0056afa79dfaf6",
       "size": 526361
     },
     {
@@ -39,13 +44,13 @@
     },
     {
       "path": "companion.js",
-      "sha256": "86712d3f077769ec5bce77f4029e4eb6278abe37f97989a566295ce979b00cf1",
-      "size": 55662
+      "sha256": "9e1055ca26d1b1323659de96fc2d3b4addaefdf09ba841afa884e94ded18526b",
+      "size": 59298
     },
     {
       "path": "game-hook.js",
-      "sha256": "1229d84015576131bc3f57b1c7dfc275489017b62769bd8c5c333a999bbf20d7",
-      "size": 106172
+      "sha256": "fb71ea214225f1e66201d8a3fa609b932cfe0c3d403c595b3d96f025ddfe23cd",
+      "size": 115757
     },
     {
       "path": "game-patch.js",
@@ -54,8 +59,8 @@
     },
     {
       "path": "game-preload.js",
-      "sha256": "3df397e5af896cb24407576271ce1f7cb541fe798f492b09336e4321eb7a6135",
-      "size": 9029
+      "sha256": "54aff0111bc534c8d65bc5a3a91b6b8e95ac133dd07d2a8c7cf7ef9af1dad16b",
+      "size": 9168
     },
     {
       "path": "idle-preload.js",
@@ -84,8 +89,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "6ff048417891c628805b0ef9771ac4e608eac191aaeac7ff31ddb64970c7b42c",
-      "size": 23331
+      "sha256": "140501c10c7b634edcd4f8f5d7d5e0c233dd76e92fe55238b17d362d0548d53d",
+      "size": 23711
     },
     {
       "path": "pet-preload.js",
@@ -153,6 +158,16 @@
       "size": 12988
     },
     {
+      "path": "ui/chat.html",
+      "sha256": "d03d22f9591278f3489d7083521162fcafb1bfe8554abb74b470cf01914b556a",
+      "size": 2990
+    },
+    {
+      "path": "ui/chat.js",
+      "sha256": "eebf48f63d3ca33b211432c845f51f3f89e0777bc8e3b715f378753127165312",
+      "size": 3394
+    },
+    {
       "path": "ui/codex.html",
       "sha256": "9feedae7f3776692f9edb375ed40e17981e31730cd79763339222ca4b0448a57",
       "size": 6604
@@ -164,13 +179,13 @@
     },
     {
       "path": "ui/idle.html",
-      "sha256": "4b7d6884c8cca7006ed8dab0f91bfdbb3698d8f772397dc53e8ebfb4b461008e",
-      "size": 10005
+      "sha256": "d119f7b1e289d78bc50a578453b4f26562d58bcb7195c25acd0a40f3d7ee640e",
+      "size": 12060
     },
     {
       "path": "ui/idle.js",
-      "sha256": "3c5076e354a5ce781dd75f300ed4f80a71017d884eab94ee274663a76fefab91",
-      "size": 9183
+      "sha256": "f1c776ff7d375cc68b5cf1a8356dc9b4867d7b9e304938a83767972e1e51d40a",
+      "size": 12957
     },
     {
       "path": "ui/inv.html",
@@ -184,13 +199,13 @@
     },
     {
       "path": "ui/life.html",
-      "sha256": "d18cc76873cf0cc279a4a2d6fa1f8f68eda09448ed74844a92d5387395b81458",
-      "size": 6143
+      "sha256": "79b5bb0b5932a831ffb20e6dd0bd1e9f1976a762c7f46926a02c31d421220a28",
+      "size": 6504
     },
     {
       "path": "ui/life.js",
-      "sha256": "a263aa6a99702f187c93a252c115e8ac45064ef2d4b6e3e3ee0e1242de686bdd",
-      "size": 11072
+      "sha256": "942ff37f8f8318907848e5ec6e0d058e967eca0d01e56770b2031353992a9565",
+      "size": 11189
     },
     {
       "path": "ui/team.html",

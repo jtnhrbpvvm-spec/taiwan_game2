@@ -13,7 +13,7 @@ function formNow() {
   return {
     skill: Number($("skill").value), mode: document.querySelector("input[name=mode]:checked")?.value || "best",
     recipe: Number($("recipe").value) || 0, count: Math.max(0, Math.floor(Number($("count").value) || 0)),
-    chain: $("chain").checked, buy: $("buy").checked, useUp: $("useUp").checked,
+    chain: $("chain").checked, buy: $("buy").checked, useUp: $("useUp").checked, fuse: $("fuse").checked,
   };
 }
 // 採集技能（採礦、伐木…）：選了就在主城一直採，不用配方（2026-11-23 加）
@@ -27,6 +27,7 @@ function fillForm(cfg) {
   $("chain").checked = cfg.chain;
   $("buy").checked = cfg.buy;
   $("useUp").checked = !!cfg.useUp;
+  $("fuse").checked = cfg.fuse !== false;
   fillRecipes(cfg.recipe);
 }
 function fillRecipes(want) {
@@ -44,6 +45,7 @@ function renderGatherMode() {
   const g = gatherSkill(Number($("skill").value));
   $("craftOnly").hidden = !!g;
   $("useUp").closest(".row").hidden = !!g;
+  $("fuse").closest(".row").hidden = !!g;
   $("gatherNote").hidden = !g;
   $("recipeTable").hidden = !!g;
   $("gatherBox").hidden = !g;
@@ -152,7 +154,7 @@ async function save(enabled) {
 
 $("skill").addEventListener("change", () => { fillRecipes(0); render(); });
 $("recipe").addEventListener("change", () => { document.querySelector("input[name=mode][value=recipe]").checked = true; render(); });
-for (const id of ["count", "chain", "buy", "useUp"]) $(id).addEventListener("input", render);
+for (const id of ["count", "chain", "buy", "useUp", "fuse"]) $(id).addEventListener("input", render);
 for (const r of document.querySelectorAll("input[name=mode]")) r.addEventListener("change", render);
 $("recipes").addEventListener("click", (e) => {
   const tr = e.target.closest("tr.pick");

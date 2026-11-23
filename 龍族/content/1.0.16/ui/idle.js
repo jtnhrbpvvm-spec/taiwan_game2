@@ -16,6 +16,10 @@ const ALLY_SUPPORT = [["self", "自己"], ["party", "隊伍"], ["nearby", "附�
 const RARITY = [[1, "普通"], [2, "稀有"], [4, "高級"]];
 const RULE_OFF = 4;
 const RULES = [[4, "關閉"], [0, "一直用"], [1, "只打首領"], [2, "HP 低於一半"], [3, "身邊 2 隻怪以上"]];
+const RULE_NO_SUPPORT = [5, "沒人需要補助才放"]; // 遊戲 beta-v1.2.2483 起，只給補助技能
+const CAST_STYLES = [[0, "均衡"], [1, "補助優先"], [2, "戰鬥優先"]];
+const FOLLOW_RANGES = [[4, "4 格"], [6, "6 格"], [8, "8 格"]];
+let setsKey = "";
 
 /** 送一個設定給遊戲，拿回最新的狀態重畫。 */
 async function set(key, value) {
@@ -23,6 +27,7 @@ async function set(key, value) {
   try {
     const s = await api.set(key, value);
     if (s && s.ready) render(s);
+    return s;
   } finally {
     busy = false;
   }
@@ -109,8 +114,58 @@ function render(s) {
       b.setAttribute("aria-pressed", String(on));
       b.textContent = `${on ? "✓ " : ""}${RARITY[i][1]}`;
     });
+    // 新版遊戲才有的：施法風格、跟隨隊友、技能組（舊版遊戲整區藏起來）
+    for (const el of document.querySelectorAll(".newOpt")) el.hidden = !u.newOptions;
+    if (u.newOptions) {
+      seg($("castStyle"), CAST_STYLES, u.castStyle, (v) => set("castStyle", v));
+      const party = s.party || [];
+      const names = u.follow && !party.includes(u.follow) ? [...party, u.follow] : party;
+      seg($("follow"), [["", "不跟隨"], ...names.map((n) => [n, n])], u.follow, (v) => set("follow", v));
+      $("followHint").textContent = party.length
+        ? "自動戰鬥時跟著這位隊友走（開了會關掉「原地自動戰鬥」）。隊友不在房間、倒下、離太遠會暫停，回來後繼續。"
+        : "組隊後可以選隊友。自動戰鬥時跟著這位隊友走（開了會關掉「原地自動戰鬥」）。";
+      $("followOpts").hidden = !u.follow;
+      seg($("followRange"), FOLLOW_RANGES, u.followRange, (v) => set("followRange", v));
+      sw($("followStay"), u.followStay, (v) => set("followStay", v));
+      renderSkillSets(s);
+    }
     renderSkills(s);
   }
+}
+
+function renderSkillSets(s) {
+  const sets = s.skillSets || [];
+  const key = JSON.stringify(sets);
+  const box = $("skillSets");
+  if (key === setsKey && box.childElementCount) return;
+  if (box.contains(document.activeElement)) return; // 正在打名字：先不要重畫
+  setsKey = key;
+  box.replaceChildren(...Array.from({ length: 6 }, (_, i) => {
+    const st = sets[i];
+    const row = document.createElement("div");
+    row.className = `set${st ? "" : " empty"}`;
+    const name = document.createElement("input");
+    name.type = "text"; name.maxLength = 24; name.className = "sname"; name.value = st ? st.name : `技能組 ${i + 1}`;
+    name.style.cssText = "padding:2px 6px;border-radius:6px;border:1px solid #3a2f20;background:#17130e;color:#e9e4d8;font:inherit;width:110px";
+    const skills = document.createElement("span");
+    skills.className = "skills";
+    skills.textContent = st ? (st.skills.length ? st.skills.join("、") : "（快捷欄是空的）") : "（空）";
+    const btn = (text, fn, cls = "small") => { const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = text; b.addEventListener("click", fn); return b; };
+    const msg = (t, ok) => { $("setMsg").textContent = t; $("setMsg").className = `hint ${ok ? "ok" : "warn"}`; };
+    row.append(name, skills);
+    if (st) row.append(btn("套用", async (e) => {
+      e.target.disabled = true;
+      const r = await set("skillSetApply", i);
+      msg(r?.error ? `套用失敗：${r.error}` : `已套用「${st.name}」`, !r?.error);
+      e.target.disabled = false;
+    }));
+    row.append(btn(st ? "存成目前的" : "把目前的存進來", async () => {
+      const r = await set("skillSetSave", { index: i, name: name.value.trim() || `技能組 ${i + 1}` });
+      msg(r?.error ? `存不進去：${r.error}` : `已儲存「${name.value.trim() || `技能組 ${i + 1}`}」`, !r?.error);
+    }));
+    if (st) row.append(btn("刪除", () => set("skillSetDelete", i)));
+    return row;
+  }));
 }
 
 function renderSkills(s) {
@@ -126,7 +181,8 @@ function renderSkills(s) {
   $("allOff").hidden = !offAllowed;
   $("allOff").disabled = active === 0;
   // 技能、隊友名單變了才整個重畫，不然只更新選中的格子
-  const key = JSON.stringify([quick, s.party, offAllowed]);
+  const newRules = !!u.newOptions;
+  const key = JSON.stringify([quick, s.party, offAllowed, newRules]);
   const box = $("skills");
   if (key !== skillsKey) {
     skillsKey = key;
@@ -154,7 +210,8 @@ function renderSkills(s) {
       t.append(name);
       head.append(t);
       const rules = document.createElement("div");
-      rules.className = `seg rules${offAllowed ? "" : " four"}`;
+      const n = (offAllowed ? 5 : 4) + (q.ally && newRules ? 1 : 0);
+      rules.className = `seg rules${n === 4 ? " four" : n === 6 ? " six" : ""}`;
       div.append(head, rules);
       if (q.ally) {
         const tg = document.createElement("div");
@@ -166,7 +223,9 @@ function renderSkills(s) {
   }
   for (const div of box.querySelectorAll(".skill")) {
     const slot = Number(div.dataset.slot);
-    const choices = RULES.filter(([v]) => offAllowed || v !== RULE_OFF);
+    // 「沒人需要補助才放」只給補助技能（跟遊戲一樣；萬一已經選了也照樣顯示）
+    const ally = !!div.querySelector(".targets");
+    const choices = [...RULES.filter(([v]) => offAllowed || v !== RULE_OFF), ...((ally && newRules) || shown(slot) === 5 ? [RULE_NO_SUPPORT] : [])];
     seg(div.querySelector(".rules"), choices, shown(slot), (v) => set("rule", { slot, rule: v }));
     const tg = div.querySelector(".targets");
     if (tg) {

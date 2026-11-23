@@ -64,7 +64,7 @@ const DEFAULT_AUTO = {
   life: { enabled: false, skill: 0, mode: "best", recipe: 0, count: 0, buy: false, chain: true },
 };
 // 要記的遊戲掛機設定（localStorage 的鍵），跟 game-preload.js 一樣
-const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
+const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|skillsets:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
 let settings = { size: 100, stay: false, gameBounds: undefined, autoStart: false, auto: DEFAULT_AUTO };
 const num = (v, min, max) => Math.max(min, Math.min(max, Math.floor(Number(v)) || 0));
 // ── 生活技能 ──
@@ -73,7 +73,7 @@ function cleanLife(l) {
   const gather = codex.gatherSkills.some((s) => s.skill === l?.skill);
   const skill = gather || codex.craftSkills.some((s) => s.skill === l?.skill) ? l.skill : codex.craftSkills[0].skill;
   const recipe = codex.recipes.find((r) => r[0] === l?.recipe && r[3] === skill) ? l.recipe : 0;
-  return { enabled: !!l?.enabled && (gather || l?.mode !== "recipe" || recipe > 0), skill, mode: l?.mode === "recipe" ? "recipe" : "best", recipe, count: num(l?.count, 0, 100000), buy: !!l?.buy, chain: l?.chain !== false, useUp: !!l?.useUp };
+  return { enabled: !!l?.enabled && (gather || l?.mode !== "recipe" || recipe > 0), skill, mode: l?.mode === "recipe" ? "recipe" : "best", recipe, count: num(l?.count, 0, 100000), buy: !!l?.buy, chain: l?.chain !== false, useUp: !!l?.useUp, fuse: l?.fuse !== false };
 }
 
 // ── 配點目標（小百科「設為配點目標」）──
@@ -487,6 +487,43 @@ handlers.set("life:set", (e, cfg) => {
   return lifeInfo();
 });
 
+// ── 對話（ui/chat.html：遊戲聊天，不用開遊戲視窗也能看、能回；使用者 2026-11-23） ──
+const CHAT_MAX = 300;
+const chatLog = [];
+let chatWin;
+ipcMain.on("game:chat", (e, c) => {
+  if (!game.win || e.sender !== game.win.webContents || !c || typeof c.text !== "string") return;
+  const entry = { at: Number(c.at) || Date.now(), ch: Number.isInteger(c.ch) ? c.ch : 0, name: String(c.name || "").slice(0, 32), text: c.text.slice(0, 240),
+    to: String(c.to || "").slice(0, 32), gm: !!c.gm, me: !!c.me, recent: !!c.recent };
+  // 進房間時遊戲會再送一次頭上的對話：已經有的就不重複
+  if (entry.recent && chatLog.some((x) => x.name === entry.name && x.text === entry.text && entry.at - x.at < 600000)) return;
+  chatLog.push(entry);
+  if (chatLog.length > CHAT_MAX) chatLog.splice(0, chatLog.length - CHAT_MAX);
+  // 別人密語我：桌寵頭上冒出來（對話視窗沒開著的時候）
+  if (entry.ch === 1 && !entry.me && !(chatWin && !chatWin.isDestroyed() && chatWin.isVisible())) notice(`${entry.name} 密語：${entry.text}`);
+  chatWin?.webContents.send("chat:new", entry);
+});
+function openChat() {
+  if (chatWin && !chatWin.isDestroyed()) { chatWin.show(); return chatWin.focus(); }
+  chatWin = new BrowserWindow({
+    width: 460, height: 560, minWidth: 320, minHeight: 300,
+    title: `對話・${accountLabel()}`,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "build", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "chat-preload.js") },
+  });
+  chatWin.loadFile(path.join(__dirname, "ui", "chat.html"));
+  chatWin.on("closed", () => (chatWin = undefined));
+}
+const fromChat = (e) => chatWin && !chatWin.isDestroyed() && e.sender === chatWin.webContents;
+handlers.set("chat:get", (e) => (fromChat(e) ? { name: game.state?.character?.name || "", status: game.state?.status || "connecting", log: chatLog } : null));
+handlers.set("chat:send", async (e, m) => {
+  if (!fromChat(e) || !m || typeof m.text !== "string") return { error: "not allowed" };
+  if (!game.win || game.win.isDestroyed() || game.loading) return { error: "遊戲還沒載入" };
+  const args = [m.text.slice(0, 200), Number.isInteger(m.ch) ? m.ch : 0, typeof m.to === "string" ? m.to.slice(0, 32) : ""].map((v) => JSON.stringify(v)).join(",");
+  return game.win.webContents.executeJavaScript(`window.__rajaPetChat ? window.__rajaPetChat.send(${args}) : { error: "遊戲還沒載入" }`).catch(() => ({ error: "送不出去" }));
+});
+
 // ── 小百科（ui/codex.html：裝備能力、使用限制；用目前角色的能力標出能不能用） ──
 let codexWin;
 function openCodex() {
@@ -528,7 +565,8 @@ function openIdleSettings() {
   idleWin.on("closed", () => (idleWin = undefined));
 }
 const PREF_KEYS = new Set(["graphics", "effects", "soundOn", "soundVolume", "musicOn", "musicVolume", "shake", "potionAt", "hpItem", "mpItem",
-  "hold", "allySupport", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget"]);
+  "hold", "allySupport", "repair", "expLock", "sell", "pickupMin", "sellRarity", "rule", "allRulesOff", "allyTarget",
+  "castStyle", "follow", "followRange", "followStay", "skillSetSave", "skillSetDelete", "skillSetApply"]);
 function inGame(code) {
   if (!game.win || game.win.isDestroyed() || game.loading) return Promise.resolve({ ready: false });
   return game.win.webContents.executeJavaScript(`window.__rajaPetPrefs ? ${code} : { ready: false }`).catch(() => ({ ready: false }));
@@ -1001,31 +1039,55 @@ function reconnect() {
   loadGame();
 }
 
+/** 選單最上面那行：「職業，角色名（Lv.等級 經驗%）」。 */
+function menuTitle() {
+  const c = game.state?.character;
+  if (!c?.name) return `${accountLabel()}・尚未登入角色`;
+  const cls = codex.classes?.find((x) => x.id === c.classId)?.name;
+  const pct = typeof game.state?.expPct === "number" ? ` ${game.state.expPct.toFixed(2)}%` : "";
+  return `${cls ? `${cls}，` : ""}${c.name}（Lv.${c.level}${pct}）`;
+}
+
+// 右鍵選單分類（使用者 2026-11-23 指定）：新功能照性質放進「登入設定／練功設定／桌寵設定」，分不出來就先問使用者
 function buildMenu() {
-  const s = game.state;
+  const m = managerMenu();
   return Menu.buildFromTemplate([
-    { label: `${accountLabel()}・${s?.character?.name ? `${s.character.name}（Lv.${s.character.level}）` : "尚未登入角色"}`, enabled: false },
+    { label: menuTitle(), enabled: false },
     { type: "separator" },
-    { label: game.shown ? "藏起遊戲視窗" : "顯示遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
-    { label: "停止練功（回主城休息）", type: "checkbox", checked: !!settings.paused, click: togglePause },
-    { label: "重新連線（重新載入遊戲）", click: reconnect },
-    ...(browserLogin ? [{ label: "登入好了，接到桌寵（幫你關掉 Chrome）", click: () => browserLogin?.done() }] : []),
-    browserLogin
-      ? { label: "取消用 Chrome 登入", click: () => browserLogin?.cancel() }
-      : { label: currentAccount() ? "重新登入（開 Chrome，幫你填帳號密碼）…" : "登入（開 Chrome）…", click: startBrowserLogin },
-    ...managerMenu(),
+    { label: game.shown ? "隱藏遊戲視窗" : "開啟遊戲視窗", accelerator: TOGGLE_KEY, click: toggleGame },
+    { label: "對話…", click: openChat }, // 使用者 2026-11-23 指定放最上面這區
+    ...(m.update ? [m.update] : []),
+    m.others,
     { type: "separator" },
-    { label: "掛機設置…", click: openIdleSettings },
-    { label: "自動補給、合成與配點…", click: openAutoSettings },
-    { label: "小百科（裝備）…", click: openCodex },
-    { label: settings.auto.life.enabled ? "生活技能（練習中）…" : "生活技能…", click: openLife },
-    { label: "原地不走動", type: "checkbox", checked: settings.stay, click: (i) => setStay(i.checked) },
-    { label: "大小", submenu: SIZE_CHOICES.map((n) => ({ label: `${n}%`, type: "radio", checked: settings.size === n, click: () => setSize(n) })) },
-    { label: "專注模式（滑鼠穿過桌寵）", type: "checkbox", accelerator: CLICK_THROUGH_KEY, checked: clickThrough, click: (i) => setClickThrough(i.checked) },
-    { label: "開機自動啟動", type: "checkbox", checked: app.isPackaged ? app.getLoginItemSettings().openAtLogin : false, enabled: app.isPackaged, click: (i) => setAutoStart(i.checked) },
+    { label: browserLogin ? "登入設定（登入中）" : "登入設定", submenu: [
+      { label: "重新連線（重新載入遊戲）", click: reconnect },
+      ...(browserLogin ? [{ label: "登入好了，接到桌寵（幫你關掉 Chrome）", click: () => browserLogin?.done() }] : []),
+      browserLogin
+        ? { label: "取消用 Chrome 登入", click: () => browserLogin?.cancel() }
+        : { label: currentAccount() ? "重新登入（開 Chrome，幫你填帳號密碼）…" : "登入（開 Chrome）…", click: startBrowserLogin },
+      m.accounts,
+      { label: "開機自動啟動", type: "checkbox", checked: app.isPackaged ? app.getLoginItemSettings().openAtLogin : false, enabled: app.isPackaged, click: (i) => setAutoStart(i.checked) },
+    ] },
     { type: "separator" },
-    { label: "關閉這隻桌寵", click: onClose },
-    { label: "結束全部桌寵", click: () => app.quit() },
+    { label: "練功設定", submenu: [
+      { label: "停止練功（回主城休息）", type: "checkbox", checked: !!settings.paused, click: togglePause },
+      { type: "separator" },
+      m.team,
+      m.inv,
+      { label: "掛機設置…", click: openIdleSettings },
+      { label: "自動補給、合成與配點…", click: openAutoSettings },
+      { label: "小百科（裝備）…", click: openCodex },
+      { label: settings.auto.life.enabled ? "生活技能（練習中）…" : "生活技能…", click: openLife },
+    ] },
+    { type: "separator" },
+    { label: "桌寵設定", submenu: [
+      { label: "原地不走動", type: "checkbox", checked: settings.stay, click: (i) => setStay(i.checked) },
+      { label: "大小", submenu: SIZE_CHOICES.map((n) => ({ label: `${n}%`, type: "radio", checked: settings.size === n, click: () => setSize(n) })) },
+      { label: "專注模式（滑鼠穿過桌寵）", type: "checkbox", accelerator: CLICK_THROUGH_KEY, checked: clickThrough, click: (i) => setClickThrough(i.checked) },
+    ] },
+    { type: "separator" },
+    { label: "關閉此桌寵", click: onClose },
+    { label: "關閉全部桌寵", click: () => app.quit() },
   ]);
 }
 
@@ -1085,7 +1147,7 @@ function buildMenu() {
         log: autoLog.filter((l) => / 組隊|復活|倒下/.test(l)).slice(-8),
       };
     },
-    owns(sender) { return [petWin, game.win, autoWin, idleWin, codexWin, lifeWin].some(w => w && !w.isDestroyed() && w.webContents === sender); },
+    owns(sender) { return [petWin, game.win, autoWin, idleWin, codexWin, lifeWin, chatWin].some(w => w && !w.isDestroyed() && w.webContents === sender); },
     start() { loadSettings(); createPetWindow(); createGame(); },
     show: showPet, toggleGame, login: startBrowserLogin, openAutoSettings, openIdleSettings, say: notice,
     finishLogin() { browserLogin?.done(); },
@@ -1106,7 +1168,7 @@ function buildMenu() {
       browserLogin?.cancel();
       clearInterval(loginTimer); clearTimeout(game.retryTimer); clearTimeout(eventTimer);
       pendingStorage = undefined; pendingEvents = [];
-      for (const w of [autoWin, idleWin, game.win, petWin]) if (w && !w.isDestroyed()) w.destroy();
+      for (const w of [autoWin, idleWin, chatWin, game.win, petWin]) if (w && !w.isDestroyed()) w.destroy();
     },
   };
 };

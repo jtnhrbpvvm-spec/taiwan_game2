@@ -4520,6 +4520,19 @@
   }
   // 放 powder 個粉末（scroll：有沒有用卷軸）時，做出 0～N 條屬性的機率
   function auraCountChances(powder, scroll) {
+    if (AURA.soul.scroll.step != null) {
+      var soul = AURA.soul, weights = soul.countWeights.slice(), last = weights.length - 1;
+      var step = scroll ? soul.scroll.step : 1, first = 0;
+      for (var amount = soul.minPowder; amount < Math.floor(powder); amount++) {
+        while (first < last && weights[first] <= 0) first++;
+        if (first >= last) break;
+        var moved = Math.min(step, weights[first]);
+        weights[first] = weights[first] - moved < 1e-9 ? 0 : weights[first] - moved;
+        for (var j = first + 1; j <= last; j++) weights[j] += moved / (last - first);
+      }
+      var sum = weights.reduce(function (a, b) { return a + b; }, 0) || 1;
+      return weights.map(function (value) { return value / sum * 100; });
+    }
     var s = AURA.soul, r = Math.floor(powder * (scroll ? s.scroll.mult : 1)) / s.minPowder;
     var w = s.countWeights.map(function (x, i) { return x * Math.pow(r, i); });
     var total = w.reduce(function (a, b) { return a + b; }, 0) || 1;
@@ -4538,8 +4551,18 @@
       '・<b>精煉</b>（裝備 → 加工 → 精煉）：只吃' + (refineMat ? '「' + escapeHtml(stoneItemName(refineMat)) + '」' : '材料') + '，不用金幣；失敗會掉階，但<b>不會爆</b>。<br>' +
       '・<b>G 化</b>：精煉到 +' + maxRefine + ' 之後找 ' + sysNpcText(AURA.npc) + ' 升一階，<b>失敗整件光環會消失</b>。<br>' +
       '・<b>靈魂結晶</b>：同一個 NPC 用「' + powder + '」做結晶，鑲進光環的空欄，結晶上的屬性就加在身上。每件光環有 ' +
-      AURA.slots.min + '~' + AURA.slots.max + ' 個欄位（拿到那一刻隨機決定，之後不會變）。' +
+      AURA.slots.min + '~' + AURA.slots.max + ' 個欄位（依裝備分別設定；G 化可保留原有欄數）。' +
       '</div>';
+
+    if (AURA.slotRules) {
+      html += '<div class="section-title">各光環的結晶欄數</div><div style="overflow-x:auto;"><table class="dtable"><thead><tr><th>光環</th><th>新取得</th><th>含 G 化保留</th></tr></thead><tbody>';
+      tiers.forEach(function (tier) {
+        var rule = AURA.slotRules[String(tier.id)];
+        if (!rule) return;
+        html += '<tr><td>' + itemChip(tier.id) + '</td><td>' + rule.min + '~' + rule.max + '</td><td>' + rule.heldMin + '~' + rule.heldMax + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
 
     html += '<div class="section-title">相關道具（點進去看取得方式）</div>';
     var matIds = tiers.map(function (t) { return t.id; });
@@ -4597,7 +4620,7 @@
     html += '<div class="section-title">靈魂結晶：製作</div>';
     html += '<div class="equip-box" style="font-size:13px;color:var(--text-dim);line-height:1.9;">' +
       '・一次最少放 ' + fmtNum(s.minPowder) + ' 個' + powder + '，製作費＝粉末數 × ' + fmtNum(s.powderFee) + ' 金幣（' + fmtNum(s.minPowder) + ' 個就是 ' + bigNumHtml(s.minPowder * s.powderFee) + '）。<br>' +
-      '・<b>粉末放越多，屬性條數越多</b>（0～' + maxCount + ' 條，0 條就是空的結晶）。勾「' + escapeHtml(stoneItemName(s.scroll.item)) + '」會消耗 1 張，粉末當成 ' + s.scroll.mult + ' 倍來算條數，製作費不變。<br>' +
+      '・<b>粉末放越多，屬性條數越多</b>（0～' + maxCount + ' 條，0 條就是空的結晶）。勾「' + escapeHtml(stoneItemName(s.scroll.item)) + '」會消耗 1 張，每多放 1 個粉末，會把最低條數的權重往較高條數平均移轉；使用卷軸時每次移轉 ' + s.scroll.step + '，不用卷軸時每次移轉 1，製作費不變。<br>' +
       '・<b>顏色</b>：' + s.colors.length + ' 色各 ' + s.colorPct + '%。放增強劑的話那一色每個 +' + s.enhancerPct + '%，放滿 ' + s.enhancerMax + ' 個必定出那一色。<br>' +
       '・每一條屬性從那個顏色的清單裡<b>平均抽一種</b>（同一種可以重複抽到），數值在範圍內平均抽。' +
       '</div>';

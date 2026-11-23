@@ -36,6 +36,7 @@
       .skill .slot { font-size: 11px; color: #98a2b6; }
       .skill .seg { display: grid; grid-auto-flow: row; grid-template-columns: repeat(5, 1fr); width: 100%; }
       .skill .seg.four { grid-template-columns: repeat(4, 1fr); }
+      .skill .seg.six { grid-template-columns: repeat(3, 1fr); }
       .skill .seg button { padding: 5px 2px; font-size: 12px; }
       .targets { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; font-size: 12px; color: #98a2b6; }
       .targets .seg { display: inline-flex; width: auto; }
@@ -44,6 +45,10 @@
       #status { font-size: 13px; }
       .warn { color: #ffb46a; }
       .ok { color: #8fe08a; }
+      .set { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: #0d0b08; border: 1px solid #2a2218; flex-wrap: wrap; }
+      .set .sname { font-weight: bold; min-width: 80px; }
+      .set .skills { flex: 1; font-size: 12px; color: #98a2b6; min-width: 140px; }
+      .set.empty .sname { color: #6b7280; font-weight: normal; }
       [hidden] { display: none !important; }
     </style>
   </head>
@@ -82,6 +87,13 @@
         <div class="hint">自動戰鬥時站在原地不走動：只打武器、魔法打得到的怪，不追怪、不走去撿東西。自己點地面或搖桿移動不受影響。</div></div>
       <div class="item"><span class="name">支援對象</span><span class="seg" id="allySupport"></span>
         <div class="hint" id="allySupportHint">自動戰鬥時，快捷欄的治療、保護和增益要支援誰。自己：只有自己；隊伍：自己和隊友；附近本國：再加上射程內沒組隊的本國玩家（開 PK 或交戰中的不補）。回溯聖言會先救同隊，再救同國玩家。補助隊伍以外的人不算熟練、不給經驗。選哪種都仍可手動指定目標。</div></div>
+      <div class="item newOpt"><span class="name">施法風格</span><span class="seg" id="castStyle"></span>
+        <div class="hint">自動戰鬥時補助和攻擊誰先。均衡：照原本。補助優先：先補血、續保護和增益再打，連發魔法之間也會插補。戰鬥優先：自己或隊友低於 25% 才補，保護和增益等附近沒怪可打時才續。</div></div>
+      <div class="item newOpt"><span class="name">跟隨隊友</span><span class="seg" id="follow"></span>
+        <div class="hint" id="followHint">自動戰鬥時跟著這位隊友走（開了會關掉「原地自動戰鬥」）。隊友不在房間、倒下、離太遠會暫停，回來後繼續。</div></div>
+      <div class="item newOpt" id="followOpts"><span class="name">跟隨範圍</span><span class="seg" id="followRange"></span>
+        <span class="name" style="flex:0 0 auto;min-width:0;margin-left:8px">不追怪</span><button type="button" class="switch" role="switch" id="followStay"></button>
+        <div class="hint">離隊友超過幾格就走回去。不追怪：跟隨時只打打得到的怪、不追過去。</div></div>
       <div class="item"><span class="name">自動修理</span><button type="button" class="switch" role="switch" id="repair"></button>
         <div class="hint">身上裝備耐久低於 20% 時，照一般修理費自動全修；壞掉卸下的裝備也會修好並穿回去；掛機修理不會降低耐久上限。</div></div>
       <div class="item"><span class="name">撿裝備</span><span class="seg" id="pickupMin"></span>
@@ -96,6 +108,13 @@
       <div class="hint">新放入快捷欄的技能預設只手動施放。可在這裡選擇掛機時要用的招式。技能要放進快捷欄，請在遊戲的魔法／戰技頁設定。</div>
       <div style="margin-top: 6px"><button type="button" class="small" id="allOff">全部關閉</button> <span id="ruleCount" class="hint"></span></div>
       <div id="skills"></div>
+
+      <div class="newOpt">
+        <h2 style="margin-top: 14px">快捷技能組</h2>
+        <div class="hint">跟遊戲快捷列的「技能組」一樣：最多 6 組，每組記住快捷欄 12 格的技能、自動施放條件和指定隊友，一鍵切換。存在這隻桌寵的遊戲視窗裡（跟 Chrome 裡玩的分開），桌寵也會備份一份。</div>
+        <div id="skillSets"></div>
+        <div id="setMsg" class="hint"></div>
+      </div>
     </section>
     <script src="idle.js"></script>
   </body>

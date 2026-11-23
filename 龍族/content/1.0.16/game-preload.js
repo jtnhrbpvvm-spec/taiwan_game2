@@ -120,6 +120,8 @@ window.addEventListener("message", (e) => {
   if (e.data.__rajaPet) ipcRenderer.send("game:state", e.data.__rajaPet);
   // 自動補給、自動合成做了什麼（game-hook.js 的 log）
   if (e.data.__rajaPetLog) ipcRenderer.send("game:auto-log", e.data.__rajaPetLog);
+  // 聊天訊息（桌寵的對話視窗）
+  if (e.data.__rajaPetChat) ipcRenderer.send("game:chat", e.data.__rajaPetChat);
   // 道具清單（商店分類，自動販售的下拉選單用；每次進遊戲送一次）
   if (e.data.__rajaPetCatalog) ipcRenderer.send("game:catalog", e.data.__rajaPetCatalog);
 });
@@ -127,7 +129,7 @@ window.addEventListener("message", (e) => {
 // 遊戲的掛機設定（localStorage）有變就送給主程式存起來：
 //   idle:upkeep＝自動施放條件（每格快捷技能）、幫隊友施法、撿物、賣物、修理…；idle:autoPotion／idle:potionPriority＝自動喝藥；
 //   idle:junk:<角色>、idle:tracked-affixes:<角色>＝賣物時要留的（跟 upkeep 一起送給伺服器）
-const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
+const PREF_RE = /^idle:(upkeep|autoPotion|potionPriority|junk:.+|tracked-affixes:.+|skillsets:.+|sound|soundVolume|music|musicVolume|graphics|effects|shake)$/;
 let lastPrefs = "";
 function reportPrefs() {
   if (location.origin !== "https://play.17raja.com") return;

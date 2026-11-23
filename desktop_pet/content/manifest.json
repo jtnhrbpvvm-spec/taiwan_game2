@@ -1,7 +1,12 @@
 {
-  "version": "1.4.10",
+  "version": "1.4.11",
   "shell": 1,
   "files": [
+    {
+      "path": "game-data.js",
+      "sha256": "d35d25a61b29ff24e44b0551afb240588bd862abeb2afe8a9ea5618317c8da0b",
+      "size": 563
+    },
     {
       "path": "game-preload.js",
       "sha256": "44a8940472e0aa3c4859789f568a92aaa125d7d25d15630eeaf75445cbba9f87",
@@ -24,8 +29,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "2ab17e5b7235812a1875e94414722143799828a721271fc3de8e1874a0edfe4e",
-      "size": 57014
+      "sha256": "5415ac8070a206f17dd3c569ce1da7522de1e74df0b83bde4dc5d6c4851a79dd",
+      "size": 57962
     },
     {
       "path": "mall.js",

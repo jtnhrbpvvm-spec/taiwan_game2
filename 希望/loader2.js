@@ -217,11 +217,21 @@
     //   giveDrop(id) → dropsUnidentified(id) ? giveUnidentified(id,1) : give(id,1)
     // give() 建出來的堆疊沒有 unidentified 旗標，鑑定守門會判成 'done'，
     // 結果就是一堆永遠白色、永遠不能鑑定的裝備。
-    // 改 dropMultiplier 連離線掛機結算也一起生效。
-    wrap('dropMultiplier', (orig) => function (...args) {
-      const v = orig.apply(this, args);
-      return typeof v === 'number' && Number.isFinite(v) ? v * mults.drop : v;
-    });
+    // 2026-11 新版把 dropMultiplier 拆成 dropPlanOf 的 scale／rolls。
+    // 只放大原有 scale，保留遊戲的擲骰次數與舊版倍率行為；戰鬥、圖鑑、離線結算共用這個入口。
+    if (typeof proto.dropPlanOf === 'function') {
+      wrap('dropPlanOf', (orig) => function (...args) {
+        const plan = orig.apply(this, args);
+        return plan && typeof plan.scale === 'number' && Number.isFinite(plan.scale)
+          ? { ...plan, scale: plan.scale * mults.drop }
+          : plan;
+      });
+    } else {
+      wrap('dropMultiplier', (orig) => function (...args) {
+        const v = orig.apply(this, args);
+        return typeof v === 'number' && Number.isFinite(v) ? v * mults.drop : v;
+      });
+    }
 
     // 掉落數量：打一隻怪 ＝ 平常打 N 隻的收穫。
     //

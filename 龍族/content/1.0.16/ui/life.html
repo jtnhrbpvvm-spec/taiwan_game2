@@ -66,13 +66,14 @@
           <div class="row"><label><input type="checkbox" id="buy" /> 自動購買不足的材料（缺工具也會買；主城有賣才買得到）</label></div>
           <div class="row"><label><input type="checkbox" id="useUp" /> 儘量把身上的原料用光：先用背包現有的做，指定的做不了就改做這個技能其他做得出來的（等級高的先）；
             指定數量做完也繼續，做到身上原料什麼都做不出來為止（用光後才照上面「自動購買」去買）</label></div>
+          <div class="row"><label><input type="checkbox" id="fuse" /> 每做完一批就看物品欄，能合成就合成上去（照「自動合成」勾的等級和件數；都沒勾就三種等級都合，5 件起合。鎖定、追蹤的不會合）</label></div>
           <div id="gatherNote" class="hint" hidden>採集：在主城帶著工具一直採（跟遊戲「生活→採集」按開始一樣，每 3 秒一次）；缺工具時勾「自動購買」會在主城買。斷線重連後會自己再開始；背包滿了會停下、5 分鐘後再看。</div>
           <div class="row">
             <button id="start" type="button">開始練習</button>
             <button id="stop" type="button" class="secondary">停止</button>
             <span id="msg"></span>
           </div>
-          <div class="hint">練習時會回主城、待在主城（補給、販售完也不回練功地圖）；遊戲視窗開著時暫停。停止後要回去練功請自己傳送或用組隊／自動補給的設定。</div>
+          <div class="hint">練習時會回主城、待在主城（補給、販售完也不回練功地圖）；遊戲視窗開著時也會在主城接著做（一批做完馬上接下一批；被玩家打斷的話等 30 秒再接）。停止後要回去練功請自己傳送或用組隊／自動補給的設定。</div>
         </section>
         <section>
           <h2 style="margin-top:0">預覽（照現在背包）</h2>
