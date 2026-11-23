@@ -32,7 +32,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V68';
+const D2ZH_VERSION = 'V69';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -307,6 +307,24 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261122.1
+"The desktop app helps check other players' runs while it's open, unless you turn off HELP CHECK RUNS in GAME OPTIONS": "電腦版開著時會協助檢查其他玩家的紀錄，不想要的話可以在遊戲選項關閉「協助檢查紀錄」",
+"The Necromancer's revived monsters are no longer drawn as black boxes": "死靈法師重生的怪物不會再顯示成黑色方塊",
+"The inventory and the vendors' windows open faster, every item's picture already in place": "物品欄和商人的視窗開得更快，每件物品的圖片都已經先準備好",
+"The Terror Cow tier's drifting colours no longer make its fight about nine times as heavy to draw as an act's": "恐懼層奶牛層變化的顏色，不會再讓戰鬥畫面的負擔比一般的幕重上大約九倍",
+"When the desktop app's setup stops copying the game files, it says the step's own error, not a picture's that failed after it": "電腦版設定在複製遊戲檔案時中斷，會顯示這個步驟本身的錯誤，而不是之後某張圖片失敗的錯誤",
+"When online play can't use your game files, the desktop app says so and offers to extract them again": "線上遊戲無法使用你的遊戲檔案時，電腦版會告訴你，並提供重新解壓縮",
+"An online run now waits for your hero's animation data before it starts, so a slow first load no longer gets an honest run refused": "線上遊戲現在會等英雄的動畫資料載入完才開局，第一次載入較慢時，正常的紀錄不會再被拒收",
+"Esc closes the Esc menu and C closes the character screen again on PCs where the keys did nothing and only the buttons worked": "在按鍵沒反應、只能點按鈕的電腦上，Esc 又可以關閉 Esc 選單、C 又可以關閉角色畫面",
+"When an update reads the game files differently, the desktop app copies them all again and keeps the old ones until the copy is complete": "更新後讀取遊戲檔案的方式改變時，電腦版會重新複製全部檔案，複製完成前會保留舊檔",
+"The stash's Collect button no longer takes an item you tempered or upgraded at Charsi's Forge out of your inventory or stash": "儲物箱的「收集」按鈕不會再把你在恰西鐵砧淬鍊或升級過的物品，從物品欄或儲物箱拿走",
+"The Cairn Stones no longer rise inside a bush or behind rocks, so every stone can be reached and lit": "石塊陣不會再立在樹叢裡或岩石後面，每塊石頭都走得到、點得亮",
+"In Uber Tristram, the three Prime Evils now show the act boss's map mark, as Uber Baal's clones do": "超級崔斯特姆的三大魔王現在會像超級巴爾的分身一樣，在地圖上顯示幕首領的標記",
+"Online runs where you used a Larzuk's Essence from your stack and then picked up another are no longer refused": "線上遊戲中從堆疊用掉一個拉蘇克的精華、之後又撿到一個，紀錄不會再被拒收",
+"Clicking someone in the camp right before an online run no longer gets an honest run refused": "線上遊戲開局前剛點過營地裡的人物，正常的紀錄不會再被拒收",
+"Picking a skill card that replaces one of your skills no longer gets your next online run refused": "選了會取代現有技能的技能卡，下一局線上遊戲的紀錄不會再被拒收",
+"Online runs where you gambled at a smith, left the smith's window and came back before the purchase went through are no longer refused": "線上遊戲中在鐵匠賭博、購買還沒完成就離開再回到鐵匠視窗，紀錄不會再被拒收",
+"Online runs where you hovered gear on the character screen, then swapped away from a weapon with an aura, are no longer refused": "線上遊戲中在角色畫面把滑鼠移到裝備上、再從帶靈氣的武器換掉，紀錄不會再被拒收",
 // 20261120.1
 "A run that starts with the sound muted says so, and how to turn it back on": "開局時若聲音是靜音，會提示並告訴你怎麼重新開啟",
 "In Terror, every item that drops in the Cow tier rolls with +100% Magic Find": "恐懼層的奶牛層掉落的每件物品都以 +100% 尋獲魔法物品機率擲骰",
@@ -3366,6 +3384,8 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V69', date: '2026-11-23', game: '遊戲 20261122.1', items: [
+'翻譯遊戲 20261122.1 新增的文字：遊戲選項的「協助檢查紀錄」、線上遊戲的「重新解壓縮」遊戲檔案說明，以及這次的更新紀錄'] },
 { ver: 'V68', date: '2026-11-22', game: '遊戲 20261120.1', items: [
 '功能優化'] },
 { ver: 'V67', date: '2026-11-22', game: '遊戲 20261120.1', items: [
@@ -3910,6 +3930,13 @@ prefix: { Beast: '野獸', Eagle: '老鷹', Raven: '渡鴉', Viper: '蝮蛇', Gh
 suffix: { Bite: '咬', Scratch: '抓', Scalpel: '小刀', Fang: '尖牙', Gutter: '血槽', Thirst: '渴望', Razor: '剃刀', Scythe: '鐮刀', Edge: '刃', Saw: '鋸', Splitter: '劈裂者', Cleaver: '切肉刀', Sever: '斷裂者', Sunder: '撕碎者', Rend: '撕裂', Mangler: '亂砍者', Slayer: '屠殺者', Reaver: '強奪者', Spawn: '子嗣', Gnash: '咬牙', Star: '星', Blow: '重擊', Smasher: '擊碎者', Bane: '剋星', Crusher: '壓碎者', Breaker: '破壞者', Grinder: '研磨者', Crack: '破裂', Mallet: '木槌', Knell: '喪鐘', Lance: '長槍', Spike: '釘', Impaler: '刺穿者', Skewer: '串列者', Prod: '戳刺', Scourge: '鞭', Wand: '魔杖', Wrack: '摧殘', Barb: '倒鉤', Needle: '針', Dart: '鏢', Bolt: '箭矢', Quarrel: '弩箭', Fletch: '箭雨', Flight: '翔', Nock: '箭尾', Horn: '角', Stinger: '有刺者', Quill: '羽', Goad: '刺棒', Branch: '枝', Spire: '尖塔', Song: '歌', Call: '呼喚', Cry: '哭號', Spell: '法術', Chant: '吟唱', Weaver: '編織者', Gnarl: '樹瘤', Visage: '臉', Crest: '頂飾', Circlet: '飾環', Veil: '面紗', Hood: '兜帽', Mask: '面具', Brow: '額頭', Casque: '盔', Visor: '面甲', Cowl: '蒙頭斗蓬', Hide: '獸皮', Pelt: '毛皮', Carapace: '甲殼', Coat: '外衣', Wrap: '包裹', Suit: '套裝', Cloak: '斗蓬', Shroud: '壽衣', Jack: '皮甲', Mantle: '披風', Guard: '守衛', Badge: '徽章', Rock: '磐石', Aegis: '庇護', Ward: '保護', Tower: '高塔', Shield: '盾護', Wing: '翼', Mark: '標記', Emblem: '象徵', Hand: '手', Fist: '拳', Claw: '爪', Clutches: '手爪', Grip: '緊握', Grasp: '抓取', Hold: '掌握', Touch: '觸碰', Finger: '手指', Knuckle: '指節', Shank: '脛', Spur: '馬刺', Tread: '踏步', Stalker: '潛行者', Greaves: '脛甲', Blazer: '烈焰', Nails: '釘', Trample: '蹂躪', Brogues: '粗皮鞋', Track: '足跡', Slippers: '便鞋', Clasp: '扣鉤', Buckle: '釦帶', Harness: '挽具', Lock: '鎖', Fringe: '邊飾', Winding: '捲繞', Chain: '鏈條', Strap: '皮帶', Lash: '鞭笞', Cord: '繩索', Knot: '繩結', Circle: '環', Loop: '圈', Eye: '之眼', Turn: '迴旋', Spiral: '螺旋', Coil: '盤繞', Gyre: '旋迴', Band: '箍', Whorl: '螺層', Talisman: '護符', Heart: '心', Noose: '套索', Necklace: '項鍊', Collar: '項圈', Beads: '串珠', Torc: '金絲項圈', Gorget: '頸甲', Scarab: '聖甲蟲', Wood: '木', Brand: '烙印', Bludgeon: '棍棒', Cudgel: '木棒', Loom: '織布機', Harp: '豎琴', Master: '專家', Bar: '鐵棒', Hew: '劈砍', Crook: '鉤', Mar: '損毀', Shell: '甲殼', Stake: '棍子', Picket: '尖木', Pale: '尖樁', Flange: '凸緣' }
 },
 text: {
+// 遊戲 20261122.1：協助檢查紀錄、線上遊戲重新解壓縮遊戲檔案
+"HELP CHECK RUNS": "協助檢查紀錄",
+"HELP CHECK RUNS: *": "協助檢查紀錄：{0}",
+"Helps check other players' runs while the app is open": "電腦版開著時，協助檢查其他玩家的紀錄",
+"Online play needs this build's copy of your game files, and yours differs. RE-EXTRACT copies them again from your Diablo II.": "線上遊戲需要用這個版本複製的遊戲檔案，但你的檔案不一樣。按「重新解壓縮」會從你的暗黑破壞神 II 重新複製。",
+"Your heroes are kept. Re-extract game files is also in the app menu. Online play needs an unmodded Diablo II.": "你的英雄都會保留。程式選單裡也有「重新解壓縮遊戲檔案」。線上遊戲需要沒有安裝模組的暗黑破壞神 II。",
+"RE-EXTRACT": "重新解壓縮",
 // 遊戲 20261120.1：線上遊戲（帳號、排隊、斷線）、恰西熔爐復原／淬鍊上限、物品過濾新行、16 個 D2R 符文之語
 "After an update, the beta reloads itself into the new version when you're in the menus or the camp, never during a run": "更新後，測試版會在你待在選單或營地時自動重新載入成新版本，不會在遊戲進行中重新載入",
 "Click again to sell": "再點一次出售",
