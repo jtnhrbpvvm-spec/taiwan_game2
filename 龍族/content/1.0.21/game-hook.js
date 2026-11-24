@@ -179,6 +179,7 @@
         }
         if (Array.isArray(msg.ev)) {
           for (const ev of msg.ev) {
+            if (Array.isArray(ev) && ev[0] === 18) { noteUpkeep(ev); continue; } // 掛機自動化的通知（遊戲右上角跳的那種）
             if (!Array.isArray(ev) || ev[1] !== S.selfId) continue;
             if (ev[0] === 6) {
               if (!S.dead) { deathTimes.push(Date.now()); noteDeathSpot(); }
@@ -496,6 +497,7 @@
   //   TEAM.room＝{ kind:"private" } 或 { kind:"public", no:房號（0＝快速加入）, rev:第幾次指定 }；組隊中隊長換房間 rev 會 +1。
   let leaderPub = null; // 隊長目前帶隊的公開房 { rev, mapId, no, code }
   let leaderPrivRev = 0; // 隊長最近一次開私人房時的 room.rev
+  let memberFail = null; // 隊員跟不上公開房 { no:房號, n:連續失敗次數 }
   const teamPublic = () => !!(TEAM && TEAM.room && TEAM.room.kind === "public");
   const roomMetaNow = () => { try { const st = G().state(); return st.room && st.room.status === "in" ? st.roomMeta || null : null; } catch { return null; } };
   /** 現在是不是在 dest 那間：公開房比地圖＋房號，私人房比 code。 */
@@ -527,18 +529,49 @@
   /** 進公開房：no＝房號，0／沒有＝快速加入（遊戲幫你挑一間）。回傳進到的房號。 */
   async function enterPublic(mapId, no, name) {
     const g = G();
-    const err = await timed(g.joinRoom(mapId, { hunt: "public", ...(no ? { room: no } : {}) }), 30000, "進公開房");
+    const go = () => timed(g.joinRoom(mapId, { hunt: "public", ...(no ? { room: no } : {}) }), 30000, "進公開房");
+    let err = await go();
+    // 剛進過一次房（例如原本的房間已解散）馬上再進，伺服器會回「操作太頻繁了」：等幾秒再試一次（2026-11-24 卡在一直回同一間）
+    if (err && /頻繁/.test(String(err))) { await sleep(randMs(5000, 8000)); err = await go(); }
     if (err) throw new Error(`進不了「${name}」公開房${no ? ` ${no}` : ""}（${err}）`);
     if (!(await waitFor(() => { const m = roomMetaNow(); return !!m && m.vis === 0 && !S.town && S.mapId === mapId; }, 20000))) throw new Error(`等太久還沒進到「${name}」公開房`);
     await sleep(1000);
     const m = roomMetaNow();
     return { no: m && m.no, code: m && m.code };
   }
+  /** 自動挑人數最多、還擠得下全隊的公開房（使用者 2026-11-23）。回房號清單（多的在前），沒有就空陣列。 */
+  async function bestPublicRooms(mapId, size, skip) {
+    const all = [];
+    let after = 0;
+    for (let page = 0; page < 10; page++) {
+      const r = await listPublicRooms(mapId, after);
+      all.push(...r.rooms);
+      if (!r.more || !r.rooms.length) break;
+      after = r.rooms[r.rooms.length - 1][0];
+      await sleep(randMs(300, 700));
+    }
+    return all.filter(([no, n]) => no !== skip && n + size <= 16).sort((a, b) => b[1] - a[1]);
+  }
   /** 隊長帶隊去公開房（TEAM.room 指定的那間；滿了／沒了就快速加入），記下房號給主程式轉給隊員。 */
-  async function leaderToPublic(team) {
+  async function leaderToPublic(team, skip) {
     const want = team.room, name = team.mapName || team.mapId;
     let got;
-    try {
+    if (want.best) {
+      const size = (team.members || []).length + 1;
+      let list = [];
+      try { list = await bestPublicRooms(team.mapId, size, skip || want.skip); } catch (e) { log(`組隊：讀不到公開房（${errText(e)}），改快速加入`, "warn"); }
+      for (const [no, n] of list.slice(0, 3)) {
+        try {
+          log(`組隊：帶隊伍去「${name}」人最多的公開房 ${no}（${n} 人，全隊 ${size} 人）`);
+          got = await enterPublic(team.mapId, no, name);
+          break;
+        } catch (e) { log(`組隊：${errText(e)}，換下一間`, "warn"); await sleep(randMs(1000, 2000)); }
+      }
+      if (!got) {
+        if (!list.length) log(`組隊：「${name}」沒有擠得下全隊 ${size} 人的公開房，改快速加入`, "warn");
+        got = await enterPublic(team.mapId, 0, name);
+      }
+    } else try {
       log(`組隊：帶隊伍去「${name}」${want.no ? `公開房 ${want.no}` : "公開房（快速加入）"}`);
       got = await enterPublic(team.mapId, want.no || 0, name);
     } catch (e) {
@@ -584,10 +617,17 @@
       try { await enterPublic(dest.mapId, dest.no, dest.mapId); }
       catch (e) {
         if (TEAM && TEAM.role === "leader" && TEAM.mapId) {
-          log(`組隊：回不了公開房 ${dest.no}（${errText(e)}），快速加入別間`, "warn");
-          await leaderToPublic({ ...TEAM, room: { kind: "public", no: 0, rev: (TEAM.room && TEAM.room.rev) || 0 } });
+          const best = !!(TEAM.room && TEAM.room.best);
+          log(`組隊：回不了公開房 ${dest.no}（${errText(e)}），${best ? "改找人最多的別間" : "快速加入別間"}`, "warn");
+          // 原本的房間不要再記著：不然換房沒成功（例如操作太頻繁）時，下次又回去試那間已經沒了的房間，一直卡住（使用者 2026-11-24）
+          if (leaderPub && leaderPub.no === dest.no && leaderPub.mapId === dest.mapId) { leaderPub = null; schedulePost(); }
+          await sleep(randMs(3000, 5000));
+          await leaderToPublic({ ...TEAM, room: { kind: "public", no: 0, best, rev: (TEAM.room && TEAM.room.rev) || 0 } }, dest.no);
           return;
         }
+        // 隊員連續 2 次進不了：回報給主程式，「自動進人最多的房間」時讓隊長換一間（使用者 2026-11-23：房間滿了／解散了）
+        memberFail = memberFail && memberFail.no === dest.no ? { no: dest.no, n: memberFail.n + 1 } : { no: dest.no, n: 1 };
+        if (memberFail.n >= 2) schedulePost();
         throw new Error(`跟不上隊伍（${errText(e)}）`);
       }
       if (!inRoom(dest)) throw new Error(`進到的不是隊長的公開房 ${dest.no}`);
@@ -693,7 +733,7 @@
         const rev = team.room.rev || 0;
         // 重開桌寵自動接回／加隊員重新開始時，人已經在這張圖的公開房（指定的那間或快速加入）就直接沿用，不重新進房
         const m = roomMetaNow();
-        if (!leaderPub && m && m.vis === 0 && !S.town && S.mapId === team.mapId && (!team.room.no || m.no === team.room.no)) {
+        if (!leaderPub && m && m.vis === 0 && !S.town && S.mapId === team.mapId && (!team.room.no || m.no === team.room.no) && m.no !== team.room.skip) {
           leaderPub = { rev, mapId: team.mapId, no: m.no, code: m.code };
           schedulePost();
           log(`組隊：已經在「${team.mapName || team.mapId}」公開房 ${m.no}，隊員會跟上`);
@@ -759,10 +799,14 @@
     const a = G().selfPos && G().selfPos(), b = posOf(id);
     return !!a && !!b && Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1])) <= 4; // 遊戲要 5 格內，留一格餘裕
   }
-  function walkNextTo(id) {
+  /** 走到對方旁邊；try＝第幾次（旁邊被人站住就換一個方向的空位）。 */
+  function walkNextTo(id, tryNo = 0) {
     const a = G().selfPos && G().selfPos(), b = posOf(id);
     if (!a || !b) return;
-    G().net.post({ op: "move", x: b[0] + (a[0] <= b[0] ? -1 : 1), y: b[1] });
+    const side = a[0] <= b[0] ? -1 : 1;
+    const offs = [[side, 0], [0, -1], [0, 1], [-side, 0], [side * 2, 0], [side, -1], [side, 1]];
+    const [dx, dy] = offs[tryNo % offs.length];
+    G().net.post({ op: "move", x: b[0] + dx, y: b[1] + dy });
   }
   async function tradeReq(body) {
     const r = await timed(G().net.request(body), 20000, "交易");
@@ -781,11 +825,25 @@
       return i;
     });
   }
-  async function tradeTown() {
+  /** 交易挑人最少的主城（使用者 2026-11-23：回城被人群擋住走不到對方旁邊）。
+   *  遊戲傳送頁「城鎮」同一份資料：listRooms → towns [[地圖, 人數, 分流數]]；只有一個分流的優先（兩隻才會進到同一間）。 */
+  async function quietTown() {
     const g = G();
-    if (S.town) return;
+    try {
+      const r = await timed(g.net.request({ op: "listRooms" }), 20000, "讀主城人數");
+      const rows = (r && r.towns) || [];
+      const known = new Set((g.towns || []).map((t) => t.mapId));
+      const pick = rows.filter((x) => known.has(x[0])).sort((a, b) => ((a[2] || 1) > 1) - ((b[2] || 1) > 1) || a[1] - b[1] || (townInfo(b[0]).nation === S.nation) - (townInfo(a[0]).nation === S.nation))[0];
+      if (pick) { const t = townInfo(pick[0]); log(`交易：挑人最少的主城「${t.name}」（${pick[1]} 人${(pick[2] || 1) > 1 ? `、${pick[2]} 個分流` : ""}）`); return t; }
+    } catch (e) { log(`交易：讀不到主城人數（${errText(e)}），照平常回城`, "warn"); }
+    return null;
+  }
+  async function tradeTown(quiet) {
+    const g = G();
+    const pick = quiet ? await quietTown() : null;
+    if (S.town && (!pick || S.mapId === pick.mapId)) return;
     const own = (g.towns || []).find((t) => t.nation === S.nation);
-    const town = (AUTO.supply && AUTO.supply.town && townInfo(AUTO.supply.town)) || (own && townInfo(own.mapId));
+    const town = pick || (AUTO.supply && AUTO.supply.town && townInfo(AUTO.supply.town)) || (own && townInfo(own.mapId));
     if (!town) throw new Error("找不到要去的主城");
     log(`交易：回「${town.name}」`);
     const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
@@ -796,15 +854,16 @@
   /** 交易途中的等待：主程式取消（換了交易或按取消）就馬上停。 */
   async function tradeWait(job, pred, ms) {
     const alive = () => !!TRADE && TRADE.id === job.id;
-    const ok = await waitFor(() => !alive() || pred(), ms);
+    const ok = await waitFor(() => !alive() || S.dead || pred(), ms);
     if (!alive()) throw new Error("交易已取消");
+    if (S.dead) throw new Error("角色倒下了，交易中止");
     return ok;
   }
   async function approach(job, name, ms) {
     let m = null;
     if (!(await tradeWait(job, () => (m = memberByName(name)), ms))) return null;
-    for (let i = 0; i < 3 && !isNear(m[0]); i++) {
-      walkNextTo(m[0]);
+    for (let i = 0; i < 6 && !isNear(m[0]); i++) {
+      walkNextTo(m[0], i);
       if (await tradeWait(job, () => isNear(m[0]), 8000)) break;
     }
     return m;
@@ -813,13 +872,17 @@
     if (!(await tradeWait(job, () => tradeMsg && tradeMsg.end !== undefined, 90000))) throw new Error("等太久交易都沒有成交");
     if (tradeMsg.end !== 1) throw new Error(TRADE_END[tradeMsg.end] || `交易結束（${tradeMsg.end}）`);
   }
+  // 交易一律在主城做（使用者 2026-11-23：練功地點就地交易太危險，交易到一半被打死）。
+  // 兩邊都先回主城；收的一方到了給的一方那座主城、看到人、走到旁邊後回報 ready，給的一方才發邀請（避免邀請比對方準備好還早到）。
   async function tradeGive(job) {
-    await tradeTown();
-    setTradeStep(job.id, `在主城等 ${job.to} 過來`, { meet: { mapId: S.mapId, code: roomCode() } });
+    await tradeTown(true);
+    setTradeStep(job.id, `在主城等 ${job.to} 過來`, { meet: { mapId: S.mapId, code: roomCode(), town: true } });
     log(`交易：在主城等 ${job.to}`);
     const m = await approach(job, job.to, 180000);
-    if (!m) throw new Error(`等了 3 分鐘 ${job.to} 都沒有進到同一個房間`);
+    if (!m) throw new Error(`等了 3 分鐘 ${job.to} 都沒有到主城同一個房間`);
     if (!(await tradeWait(job, () => isNear(m[0]), 30000))) throw new Error(`走不到 ${job.to} 旁邊（要 5 格內）`);
+    setTradeStep(job.id, `等 ${job.to} 準備好`);
+    if (!(await tradeWait(job, () => TRADE.ready, 60000))) throw new Error(`${job.to} 一直沒有準備好`);
     await sleep(randMs(1000, 2000));
     tradeMsg = null;
     setTradeStep(job.id, `邀請 ${job.to} 交易`);
@@ -835,25 +898,44 @@
     setTradeStep(job.id, "按了 OK，等對方確認");
     await tradeFinish(job);
   }
-  async function tradeTake(job) {
+  /** 收的一方：進給的一方那座主城、找到人。先照一般回城進那座主城；不在同一間再試好友清單的房間碼、對方回報的房間碼。 */
+  async function tradeMeet(job, meet) {
     const g = G();
-    setTradeStep(job.id, `等 ${job.from} 到主城`);
-    if (!(await tradeWait(job, () => TRADE && TRADE.id === job.id && TRADE.meet && TRADE.meet.code, 180000))) throw new Error(`等了 3 分鐘 ${job.from} 都沒有到主城`);
-    const meet = TRADE.meet;
-    if (roomCode() !== meet.code) {
-      log(`交易：去 ${job.from} 所在的房間`);
-      const err = await timed(g.joinRoom(meet.mapId, { code: meet.code }), 30000, "進同一個房間");
-      if (err) throw new Error(`進不了 ${job.from} 的房間（${err}）`);
-      if (!(await tradeWait(job, () => roomCode() === meet.code, 20000))) throw new Error(`等太久還沒進到 ${job.from} 的房間`);
-      await sleep(1500);
+    const here = () => !!memberByName(job.from);
+    if (S.town && S.mapId === meet.mapId && here()) return;
+    const tries = [];
+    if (!(S.town && S.mapId === meet.mapId)) tries.push({ mapId: meet.mapId, opts: { town: true } });
+    await ensureFriends([job.from]);
+    try {
+      const r = await timed(g.net.request({ op: "friends" }), 20000, "好友清單");
+      const f = ((r && r.list) || []).find((x) => x && x[0] === job.from);
+      if (f && f[2] && f[3]) tries.push({ mapId: f[2], opts: { code: f[3] } });
+    } catch {}
+    if (meet.code && !tries.some((t) => t.opts.code === meet.code)) tries.push({ mapId: meet.mapId, opts: { code: meet.code } });
+    let lastErr = `主城裡沒看到 ${job.from}`;
+    for (const t of tries) {
+      log(`交易：去 ${job.from} 所在的主城`);
+      const err = await timed(g.joinRoom(t.mapId, t.opts), 30000, "進同一個房間");
+      if (!err && (await tradeWait(job, () => S.town && here(), 10000))) return;
+      lastErr = err || `進去了但沒看到 ${job.from}`;
+      await sleep(randMs(1500, 2500));
     }
+    throw new Error(`到不了 ${job.from} 那裡（${lastErr}）`);
+  }
+  async function tradeTake(job) {
+    await tradeTown(); // 先回主城等（不在練功地點等）；對方挑好人最少的主城後再過去
+    setTradeStep(job.id, `等 ${job.from} 到主城`);
+    if (!(await tradeWait(job, () => TRADE.meet && TRADE.meet.mapId, 180000))) throw new Error(`等了 3 分鐘 ${job.from} 都沒有到主城`);
+    await tradeMeet(job, TRADE.meet);
+    await sleep(1500);
     setTradeStep(job.id, `走到 ${job.from} 旁邊`);
-    tradeMsg = null;
     const m = await approach(job, job.from, 30000);
-    if (!m) throw new Error(`房間裡找不到 ${job.from}`);
-    setTradeStep(job.id, `等 ${job.from} 發交易邀請`);
-    if (!(await tradeWait(job, () => tradeMsg && tradeMsg.view && tradeMsg.view.state === 0, 90000))) throw new Error(`${job.from} 沒有發交易邀請`);
-    if (tradeMsg.view.partner !== job.from) { await tradeReq({ op: "tradeAnswer", accept: false }); throw new Error(`收到的是 ${tradeMsg.view.partner} 的交易邀請，已拒絕`); }
+    if (!m) throw new Error(`主城裡找不到 ${job.from}`);
+    // 等邀請：不清掉 tradeMsg，已經收到的邀請（state 0）也算
+    setTradeStep(job.id, `等 ${job.from} 發交易邀請`, { ready: true });
+    log(`交易：到 ${job.from} 旁邊了，等交易邀請`);
+    const invited = () => tradeMsg && tradeMsg.view && tradeMsg.view.state === 0 && tradeMsg.view.partner === job.from;
+    if (!(await tradeWait(job, invited, 90000))) throw new Error(`${job.from} 沒有發交易邀請`);
     await sleep(randMs(800, 1500));
     await tradeReq({ op: "tradeAnswer", accept: true });
     // 對方放的東西要跟指定的一樣（件數、金幣）才按 OK
@@ -883,7 +965,7 @@
       setTradeStep(job.id, errText(e), { done: true, error: true });
       log(`交易沒有完成：${errText(e)}`, "warn");
     }
-    if (wasHunting) { try { await backToHunt(back, autoMode, "交易結束"); } catch (e) { log(`交易後回練功地圖失敗：${errText(e)}`, "warn"); } }
+    if (wasHunting && !S.dead) { try { await backToHunt(back, autoMode, "交易結束"); } catch (e) { log(`交易後回練功地圖失敗：${errText(e)}`, "warn"); } }
   }
   /** 物品欄（物品欄視窗顯示、選要交易的物品）：用遊戲自己的道具名稱、標籤（稀有度、+強化…）。 */
   function invSummary() {
@@ -1315,6 +1397,13 @@
       }
     } else {
       if (TEAM && TEAM.role === "member") { log(`${what}，組隊中：留在主城等 ${TEAM.leader}`); return; }
+      // 公開房組隊的隊長，原本的房間已經沒了（leaderPub 清掉）：照組隊設定重新找一間，隊員會跟上
+      if (TEAM && TEAM.role === "leader" && teamPublic() && TEAM.mapId) {
+        await humanPause();
+        await leaderToPublic(TEAM);
+        await walkBackToSpot(autoMode);
+        return;
+      }
       if (LIFE_ON) { log(`${what}，練生活技能中：留在主城`); return; }
       if (!target) { log(`${what}，不知道要回哪張練功地圖，先停在主城`, "warn"); return; }
       await humanPause();
@@ -1433,6 +1522,42 @@
     seekPending = true;
   }
   setInterval(() => { try { mobTick(); } catch {} }, 1500);
+
+  // ---------- 自動戰鬥忽然停掉（使用者 2026-11-24：角色站樁被打死） ----------
+  // 遊戲伺服器自己會停自動戰鬥／站著不動的情況（2026-11-24 讀遊戲程式，事件 [18, 種類, n, r]）：
+  //   種類 5＝5 分鐘內死了 n 次「這張圖太難了：已暫停自動戰鬥」
+  //   種類 10＝設置→掛機的「跟隨隊友」：n===1 隊友回來繼續跟隨；否則暫停跟隨、原地不動（r：1 不在房間、2 不在隊伍、3 倒下、4 太遠、5 走不過去）
+  // 這兩種寫進紀錄；組隊練功中（一律開自動戰鬥）自動戰鬥被關掉超過 10 秒就打開，manual 卡超過 20 秒也接回自動。
+  const FOLLOW_WHY = { 1: "不在這個房間", 2: "不在隊伍裡", 3: "倒下了", 4: "離太遠", 5: "走不過去" };
+  function noteUpkeep(ev) {
+    const [, kind, n, r] = ev;
+    if (kind === 5) log(`遊戲：5 分鐘內死了 ${n} 次，遊戲暫停了自動戰鬥`, "warn");
+    else if (kind === 10) {
+      let who = "隊友";
+      try { who = (G().upkeepGet && G().upkeepGet().follow) || who; } catch {}
+      log(n === 1 ? `遊戲：${who} 回來了，繼續跟隨` : `遊戲：${who}${FOLLOW_WHY[r] || "走不過去"}，暫停跟隨（設置→掛機的「跟隨隊友」，暫停時原地不動）`, n === 1 ? "info" : "warn");
+    }
+  }
+  let modeNow = "", modeSince = 0, lastAutoFixAt = 0;
+  function autoWatch() {
+    const g = G();
+    if (!g || !g.state || !g.net) return;
+    const mode = (g.state().auto || {}).mode || "";
+    if (mode !== modeNow) { modeNow = mode; modeSince = Date.now(); }
+    if (mode === "auto" || !AUTO || S.dead || S.town || S.status !== "ingame" || busy || walking || watching || PAUSED || reviveHolding()) return;
+    const held = Date.now() - modeSince;
+    if (Date.now() - lastAutoFixAt < 30000) return;
+    if (mode === "locked" && TEAM && held > 10000) {
+      lastAutoFixAt = Date.now();
+      autoOn();
+      log("自動戰鬥被關掉了（組隊練功中），重新打開", "warn");
+    } else if (mode === "manual" && held > 20000) {
+      lastAutoFixAt = Date.now();
+      autoOn();
+      log("自動戰鬥卡在手動操作 20 秒，接回自動戰鬥", "warn");
+    }
+  }
+  setInterval(() => { try { autoWatch(); } catch {} }, 2000);
   /** 設定視窗顯示用：指定怪物現在在做什麼。 */
   function mobState() {
     const sup = TEAM && TEAM.mob ? { huntMob: TEAM.mob, huntMobMap: TEAM.mapId || "" } : AUTO && AUTO.supply;
@@ -1933,6 +2058,8 @@
       auto.teamState = teamState();
       // 隊長帶隊的公開房（主程式轉給隊員）
       auto.teamRoom = TEAM && TEAM.role === "leader" && teamPublic() && leaderPub ? { mapId: leaderPub.mapId, no: leaderPub.no, code: leaderPub.code, rev: leaderPub.rev } : null;
+      if (memberFail && (!TEAM || TEAM.role !== "member" || !teamPublic() || !td || inRoom(td) || td.no !== memberFail.no)) memberFail = null;
+      auto.teamStuck = memberFail && memberFail.n >= 2 ? memberFail.no : null;
       const rm = roomMetaNow();
       auto.room = rm && !S.town ? { mapId: S.mapId, vis: rm.vis, no: rm.no } : null;
     } catch {}

@@ -104,6 +104,8 @@ function renderDetail(no) {
   if (it.maxDuration && !it.thrown) base.push(["耐久", it.maxDuration]);
   if (it.weight) base.push(["重量", it.weight]);
   html += `<h3>基本能力</h3>${base.length ? rows(base) : `<div class="muted">沒有</div>`}`;
+  if (it.unique) html += `<h3>獨特能力</h3><div class="hint"><b>${esc(it.unique.power)}</b>：${esc(it.unique.effect)}</div>` +
+    `<div class="muted">外型底子：${esc(it.unique.base || "")}。獨特裝備沒有能力點需求，到等級就能穿。</div>`;
   html += sourceBlock(it);
   const bonus = Object.entries(it.bonus || {}).map(([k, v]) => [BONUS_NAMES[k] || k, `${v > 0 ? "+" : ""}${v}`]);
   const resist = Object.entries(it.resist || {}).map(([k, v]) => [`${codex.resistNames[k] || k}抵抗`, `${v > 0 ? "+" : ""}${v}`]);

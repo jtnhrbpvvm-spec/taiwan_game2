@@ -37,7 +37,10 @@ function curRoomKey() {
   return roomKeyOf(team ? key(team.leaderId) : $("leader").value, $("map").value);
 }
 function roomValue(r) { return r && r.kind === "public" ? `pub:${r.no || 0}` : "private"; }
-function parseRoom(v) { return v && v.startsWith("pub:") ? { kind: "public", no: Number(v.slice(4)) || 0 } : { kind: "private" }; }
+function parseRoom(v) {
+  if ($("roomBest").checked) return { kind: "public", no: 0, best: true }; // 自動進人數最多的公開房（使用者 2026-11-23）
+  return v && v.startsWith("pub:") ? { kind: "public", no: Number(v.slice(4)) || 0 } : { kind: "private" };
+}
 function fillRooms() {
   const sel = $("room"), team = latest?.team;
   const ok = rooms && rooms.key === curRoomKey() && !rooms.error;
@@ -56,11 +59,14 @@ function fillRooms() {
   const sig = JSON.stringify(opts.map((o) => [o.value, o.text, o.disabled]));
   if (sel.dataset.sig !== sig) { sel.replaceChildren(...opts); sel.dataset.sig = sig; }
   sel.value = opts.some((o) => o.value === want && !o.disabled) ? want : "private";
+  const best = $("roomBest");
+  if (!best.dataset.user) best.checked = team ? !!team.room?.best : best.checked;
+  sel.disabled = best.checked;
   $("roomsMore").hidden = !(ok && rooms.more);
   $("roomsLoad").disabled = !!rooms?.loading;
   $("roomsMore").disabled = !!rooms?.loading;
   $("roomGo").hidden = !team;
-  $("roomGo").disabled = !team || (sel.value === using && $("map").value === team.mapId && $("mob").value === String(team.mob || 0));
+  $("roomGo").disabled = !team || ((best.checked ? !!team.room?.best : sel.value === using && !team.room?.best) && $("map").value === team.mapId && $("mob").value === String(team.mob || 0));
   const hint = $("roomHint");
   if (rooms?.loading) hint.dataset.state = "正在讀取公開房…";
   else if (rooms?.error && rooms.key === curRoomKey()) hint.dataset.state = `讀不到公開房：${rooms.error}`;
@@ -89,11 +95,12 @@ async function loadRooms(more) {
 $("roomsLoad").addEventListener("click", () => loadRooms(false));
 $("roomsMore").addEventListener("click", () => loadRooms(true));
 $("room").addEventListener("change", () => { $("room").dataset.user = $("room").value; fillRooms(); });
+$("roomBest").addEventListener("change", () => { $("roomBest").dataset.user = "1"; fillRooms(); });
 $("roomGo").addEventListener("click", async () => {
   const r = await window.teamApi.room({ ...parseRoom($("room").value), mapId: $("map").value, mob: Number($("mob").value) || 0 });
   $("msg").className = r?.error ? "bad" : "ok";
   $("msg").textContent = r?.error || "隊長換地圖／房間中，隊員會跟過去";
-  if (!r?.error) for (const id of ["room", "map", "mob"]) delete $(id).dataset.user;
+  if (!r?.error) for (const id of ["room", "map", "mob", "roomBest"]) delete $(id).dataset.user;
   render(await window.teamApi.get());
 });
 let roomAutoKey = "";
@@ -176,7 +183,7 @@ function render(st) {
   if (team) {
     const L = st.pets.find((p) => key(p.accountId) === key(team.leaderId));
     const lines = [`<span class="ok">組隊中</span>：隊長 <b>${esc(L?.name || "?")}</b>，目的地「${esc(team.mapName)}」` +
-      `${team.room?.kind === "public" ? `公開房${team.dest ? ` ${esc(team.dest.no)}` : team.room.no ? ` ${esc(team.room.no)}（隊長前往中）` : "（快速加入，隊長前往中）"}` : "私人房"}${team.mobName ? `，指定怪物「${esc(team.mobName)}」` : ""}（${new Date(team.startedAt).toLocaleTimeString("zh-TW", { hour12: false })} 開始）`];
+      `${team.room?.kind === "public" ? `公開房${team.room.best ? "（自動挑人最多的）" : ""}${team.dest ? ` ${esc(team.dest.no)}` : team.room.no ? ` ${esc(team.room.no)}（隊長前往中）` : team.room.best ? " 隊長找房間中" : "（快速加入，隊長前往中）"}` : "私人房"}${team.mobName ? `，指定怪物「${esc(team.mobName)}」` : ""}（${new Date(team.startedAt).toLocaleTimeString("zh-TW", { hour12: false })} 開始）`];
     lines.push(`隊長：${L ? petLine(L) : "桌寵已關閉"}`);
     $("now").innerHTML = lines.join("<br />");
   } else $("now").textContent = "沒有在組隊。";
@@ -197,7 +204,7 @@ $("start").addEventListener("click", async () => {
     mob: Number($("mob").value) || 0, spot: $("spot").checked, room: parseRoom($("room").value) });
   $("msg").className = r?.error ? "bad" : "ok";
   $("msg").textContent = r?.error || "已開始：隊員回城等邀請中";
-  if (!r?.error) delete $("room").dataset.user;
+  if (!r?.error) { delete $("room").dataset.user; delete $("roomBest").dataset.user; }
   render(await window.teamApi.get());
 });
 // 不組隊自己打：上面「隊長」那隻＋勾選的，各自去選的地圖打（使用者 2026-11-23）

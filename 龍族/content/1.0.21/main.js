@@ -247,6 +247,8 @@ ipcMain.handle("team:start", (e, req) => {
 // 公開房組隊（使用者 2026-11-23）：遊戲自己去公開房不會通知隊友，所以由主程式把隊長進的公開房房號轉給隊員。
 // room＝{ kind:"private" } 或 { kind:"public", no:房號（0＝快速加入） }；rev＝第幾次指定（組隊中換房間 +1）
 function cleanTeamRoom(r, rev) {
+  // best＝自動進人數最多、擠得下全隊的公開房（使用者 2026-11-23）；skip＝這次不要挑的房號（隊員進不去的那間）
+  if (r && r.kind === "public" && r.best) return { kind: "public", no: 0, best: true, rev, ...(Number(r.skip) > 0 ? { skip: Math.floor(Number(r.skip)) } : {}) };
   if (r && r.kind === "public") return { kind: "public", no: Math.max(0, Math.min(1e6, Math.floor(Number(r.no) || 0))), rev };
   return { kind: "private", rev };
 }
@@ -256,6 +258,19 @@ function startTeamRelay() {
   teamRelayTimer = setInterval(() => {
     if (!currentTeam) { clearInterval(teamRelayTimer); teamRelayTimer = undefined; return; }
     const L = pets.get(currentTeam.leaderId)?.teamInfo();
+    // 自動進人最多的房間：隊員連續進不了隊長那間（滿了／解散了）→ 隊長換一間人最多、擠得下全隊的
+    const cd = currentTeam.dest;
+    if (currentTeam.room.best && cd && Date.now() > (currentTeam.stuckAt || 0) + 60000 &&
+        currentTeam.memberIds.some((id) => pets.get(id)?.teamInfo()?.teamStuck === cd.no)) {
+      currentTeam.stuckAt = Date.now();
+      const room = cleanTeamRoom({ kind: "public", best: true, skip: cd.no }, (currentTeam.room.rev || 0) + 1);
+      Object.assign(currentTeam, { room, dest: null });
+      const where = { mapId: currentTeam.mapId, mapName: currentTeam.mapName, mob: currentTeam.mob || 0 };
+      for (const id of [currentTeam.leaderId, ...currentTeam.memberIds]) pets.get(id)?.setTeamRoom(room, where);
+      saveTeam();
+      sendTeamStatus();
+      return;
+    }
     const tr = currentTeam.room.kind === "public" && L?.teamRoom && L.teamRoom.rev === currentTeam.room.rev ? L.teamRoom : null;
     const dest = tr ? { mapId: tr.mapId, no: tr.no, code: tr.code } : null;
     if (!dest || JSON.stringify(dest) === JSON.stringify(currentTeam.dest)) return;
@@ -388,7 +403,9 @@ function tradeWatch() {
   if (!giver || !taker) return endTrade("error", "有一隻桌寵關掉了");
   const g = giver.invInfo().trade, r = taker.invInfo().trade;
   const gs = g?.id === t.id ? g : null, rs = r?.id === t.id ? r : null;
-  if (gs?.meet?.code && t.meet?.code !== gs.meet.code) { t.meet = gs.meet; taker.setTrade({ ...t.takeJob, meet: gs.meet }); }
+  if (gs?.meet?.mapId && JSON.stringify(t.meet) !== JSON.stringify(gs.meet)) { t.meet = gs.meet; taker.setTrade({ ...t.takeJob, meet: gs.meet }); }
+  // 收的一方在主城走到旁邊、準備好了，才叫給的一方發邀請
+  if (rs?.ready && !t.ready) { t.ready = true; giver.setTrade({ ...t.giveJob, ready: true }); }
   if (gs?.error || rs?.error) return endTrade("error", (gs?.error && gs.step) || rs.step);
   if (gs?.ok && rs?.ok) return endTrade("ok", "交易成功");
   if (Date.now() - t.startedAt > 10 * 60 * 1000) return endTrade("error", "超過 10 分鐘沒有完成，已取消");
@@ -424,7 +441,7 @@ ipcMain.handle("inv:trade", (e, req) => {
   const id = `t${Date.now()}-${++tradeSeq}`;
   const giveJob = { id, role: "give", to: T.name, items: items.map((i) => ({ slot: i.slot, sig: i.sig, name: i.name })), gold };
   const takeJob = { id, role: "take", from: G.name, count: items.length, gold, meet: null };
-  currentTrade = { id, fromId: req.fromId ?? null, toId: req.toId ?? null, fromName: G.name, toName: T.name, gold, startedAt: Date.now(), takeJob,
+  currentTrade = { id, fromId: req.fromId ?? null, toId: req.toId ?? null, fromName: G.name, toName: T.name, gold, startedAt: Date.now(), takeJob, giveJob,
     items: items.map((i) => ({ ...i, label: `${i.name}${i.n > 1 ? ` ×${i.n}` : ""}` })) };
   giver.setTrade(giveJob);
   taker.setTrade(takeJob);

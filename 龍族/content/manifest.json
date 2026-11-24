@@ -1,5 +1,5 @@
 {
-  "version": "1.0.20",
+  "version": "1.0.21",
   "shell": 1,
   "files": [
     {
@@ -34,8 +34,8 @@
     },
     {
       "path": "codex-data.js",
-      "sha256": "5b4cc6f12db377dd45baf40759a2883e8ba684329ad42a573af1ffb7c2453585",
-      "size": 527204
+      "sha256": "b261a0e4b12cb4acfba7b8626e7e640cd472cf91332c35ff299d0a17d2dd0fef",
+      "size": 550657
     },
     {
       "path": "codex-preload.js",
@@ -44,18 +44,18 @@
     },
     {
       "path": "companion.js",
-      "sha256": "fa3f50ac8889065a2eedb849a6b5d652361df139317552354b589179bac07586",
-      "size": 62975
+      "sha256": "7ccb99c46c5621cc20eb89e8965b4d8467cdc8c501c0773c7f92cbb2aab7ec9a",
+      "size": 64214
     },
     {
       "path": "game-hook.js",
-      "sha256": "a8d54e1269719f40f9185b10a98d0918d8a0db761bbf1c46a4e7bd4d5ac4aeed",
-      "size": 131770
+      "sha256": "de07837c75151e0501fa555decee4a26e9c481acf4f3ad47d3235b187a29d679",
+      "size": 140531
     },
     {
       "path": "game-patch.js",
-      "sha256": "3ed03f23f29b1d786ffdd64013b4ccc7869fa6d7d569fb7540be9f27e8726f46",
-      "size": 11143
+      "sha256": "d2875174b029afbcd44d18397d3820cd88658e16144d5c7bbdcb17fe876fe71d",
+      "size": 11348
     },
     {
       "path": "game-preload.js",
@@ -89,8 +89,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "8756742e963c54d97b1f246747afc5f3184603d9b762a199c3a92a73482288a3",
-      "size": 30507
+      "sha256": "bd06195cf5883f166b8da4f3279be2bd73cc3d65a7255ce5837f7f1885ebf5fe",
+      "size": 31884
     },
     {
       "path": "pet-preload.js",
@@ -174,8 +174,8 @@
     },
     {
       "path": "ui/codex.js",
-      "sha256": "be694f390b5ef644221aacd95873e9e7052c6b8d2dd280d0539870cdedbdfd17",
-      "size": 17116
+      "sha256": "8feff77d4ee6f45e1768b098516f0d1d125c9c183b23be466228b94718b50cad",
+      "size": 17384
     },
     {
       "path": "ui/idle.html",
@@ -209,13 +209,13 @@
     },
     {
       "path": "ui/team.html",
-      "sha256": "91a9475280b6617b4f3301fbe784018ab980a67d3ac3d8cc6c503a99f08b4eed",
-      "size": 5426
+      "sha256": "b33a2f5561162464198cee08f826a9f43a10788201530847c886e93bf170632d",
+      "size": 5674
     },
     {
       "path": "ui/team.js",
-      "sha256": "a2a832934a759274a3d1222335f22c035c9de1f5cae4eb23b54a63b95b3b6060",
-      "size": 15022
+      "sha256": "6232cc4715bf6f319fbd0ad235c7a84b2b4ef40548b994aa39590ddd76855bf3",
+      "size": 15608
     }
   ]
 }

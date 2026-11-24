@@ -954,6 +954,22 @@ ipcMain.handle("pet:art", () => ({ gear: art.gear, order: art.order, layerOrders
 
 // ── 桌寵視窗 ──────────────────────────────────────────────
 
+// 顯示卡程式（GPU process）當掉重開後，透明視窗會變成全透明、什麼都畫不出來，桌寵圖示就不見了，遊戲照跑
+// （使用者 2026-11-24：跑一段時間桌寵不見；當時 GPU 程式 09:29 重開過）。收到就把桌寵視窗整個重建。
+let gpuRebuildTimer;
+function rebuildPetWindow(why) {
+  if (quitting || !petWin) return;
+  const old = petWin;
+  logGame(`${why}：桌寵視窗重建`);
+  createPetWindow();
+  petWin.webContents.once("did-finish-load", () => setTimeout(() => { if (!old.isDestroyed()) old.destroy(); }, 500));
+}
+app.on("child-process-gone", (_e, d) => {
+  if (d.type !== "GPU" || quitting) return;
+  clearTimeout(gpuRebuildTimer);
+  gpuRebuildTimer = setTimeout(() => rebuildPetWindow(`顯示卡程式重開（${d.reason}）`), 3000);
+});
+
 /** 桌寵長條該在的位置：主螢幕工作區（不含工作列）最下面、全寬。 */
 function petStripBounds() {
   const area = screen.getPrimaryDisplay().workArea;
@@ -1003,6 +1019,12 @@ function createPetWindow() {
     clearTimeout(fitTimer);
   });
   petWin.loadFile(path.join(__dirname, "pet", "index.html"));
+  // 桌寵畫面那個程式當掉：重新載入
+  petWin.webContents.on("render-process-gone", (_e, d) => {
+    if (quitting || d.reason === "clean-exit") return;
+    logGame(`桌寵畫面停掉了（${d.reason}），重新載入`);
+    setTimeout(() => { if (petWin && !petWin.isDestroyed()) petWin.webContents.reload(); }, 1000);
+  });
   petWin.webContents.on("did-finish-load", () => {
     petInteractive = false;
     petWin.setIgnoreMouseEvents(true, { forward: true });
@@ -1136,7 +1158,7 @@ function buildMenu() {
     setTeamRoom(room, where = {}) {
       if (!team) return;
       team = { ...team, ...where, room, ...(team.role === "member" ? { dest: null } : {}) };
-      logGame(`組隊：換到「${team.mapName || team.mapId}」${room.kind === "public" ? (room.no ? `公開房 ${room.no}` : "公開房（快速加入）") : "私人房"}`);
+      logGame(`組隊：換到「${team.mapName || team.mapId}」${room.kind === "public" ? (room.no ? `公開房 ${room.no}` : room.best ? "人最多的公開房" : "公開房（快速加入）") : "私人房"}`);
       sendAuto();
     },
     /** 公開房組隊：主程式把隊長進的公開房（{mapId,no,code}）轉給隊員。 */
@@ -1170,7 +1192,7 @@ function buildMenu() {
     /** 指定交易：主程式指定這隻要給／收；null＝取消。 */
     setTrade(job) {
       trade = job || null;
-      if (trade && !trade.meet) logGame(`交易：${trade.role === "give" ? `交給 ${trade.to}` : `收 ${trade.from} 的`}`);
+      if (trade && !trade.meet && !trade.ready) logGame(`交易：${trade.role === "give" ? `交給 ${trade.to}` : `收 ${trade.from} 的`}`);
       sendAuto();
     },
     /** 全部桌寵的販售規則（主程式改了就送來）。 */
@@ -1193,7 +1215,7 @@ function buildMenu() {
         name: s?.character?.name || "", level: s?.character?.level, classId: a?.char?.classId,
         mapId: s?.mapId, town: !!s?.town, dead: !!s?.dead, watching: game.shown,
         huntMaps: a?.huntMaps ?? [], lastHuntMap: s?.lastHuntMap ?? settings.lastHuntMap ?? null, huntMap: settings.auto.supply.huntMap || "",
-        party: a?.party ?? null, teamState: a?.teamState || "", team, teamRoom: a?.teamRoom ?? null, room: a?.room ?? null,
+        party: a?.party ?? null, teamState: a?.teamState || "", team, teamRoom: a?.teamRoom ?? null, teamStuck: a?.teamStuck ?? null, room: a?.room ?? null,
         log: autoLog.filter((l) => / 組隊|復活|倒下/.test(l)).slice(-8),
       };
     },
