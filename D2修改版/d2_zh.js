@@ -37,7 +37,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V70';
+const D2ZH_VERSION = 'V71';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -67,6 +67,8 @@ function d2zhIsText(c) {
 return c instanceof HTMLCanvasElement && c.classList.contains('d2-text') && !c.classList.contains('d2-local-font');
 }
 function d2zhReadable([r, g, b]) {
+// 遊戲的紫色（174,0,255，例如「尚未收藏」）亮度很低，照下面的提亮會變成白色；改成稍亮的紫色保留顏色
+if (b > 150 && g < 60 && r > 100 && r < 230) return [190, 90, 255];
 const lum = 0.3 * r + 0.59 * g + 0.11 * b;
 if (lum >= 170) return [r, g, b];
 if (lum < 8) return [232, 223, 204];
@@ -143,7 +145,7 @@ if (min > 2 || max < W - 3 - pick.s) ragged = true;
 if (ragged) align = left ? 'left' : right ? 'right' : 'center';
 }
 return {
-src, en: img, w: W, h: H, lang: 'en',
+src, en: img, w: W, h: H, lang: 'en', noInk: !lit.length, fgLum: -1,
 size: pick.f.h, lh: pick.f.lh, shadow: pick.s, color, align, ink,
 maxWidth: pick.k > lines.length || pick.guess ? W - pick.s : 0,
 };
@@ -208,11 +210,13 @@ d2zhOwned.delete(c);
 return;
 }
 d2zhOwned.add(c);
-let text = cjk ? st.src.replace(/\u200b ?/g, '').replace(/\u00a0/g, ' ') : window.D2I18N.translate(st.src);
-let size = Math.max(10, st.size);
+let text = st.short || (cjk ? st.src.replace(/\u200b ?/g, '').replace(/\u00a0/g, ' ') : window.D2I18N.translate(st.src));
+let size = Math.max(st.minSize || 10, st.size);
+// \u5c0f\u5b57\uff08font6 \u7b49 12px \u4ee5\u4e0b\uff09\u7528\u7c97\u9ad4\u52a0\u9ed1\u6846\uff0c\u300c\u7d1a\u300d\u300c\u7d93\u300d\u7684\u7cf8\u5b57\u65c1\u6703\u7cca\u6210\u300c\u7ea7\u300d\u300c\u7ecf\u300d\uff0c\u770b\u8d77\u4f86\u50cf\u7c21\u9ad4\u5b57\uff1b\u5c0f\u5b57\u6539\u4e00\u822c\u7c97\u7d30\u3001\u7d30\u6846
+const weight = size <= 12 ? '' : 'bold ';
 // 大字型（選單用的 font24 以上）：中文高度對齊英文字母實際高度，不要用整個字框高度
 if (st.size >= 24 && st.ink > 0) size = Math.max(14, Math.min(size, Math.round(st.ink * 1.1)));
-let font = `bold ${size}px ${D2ZH_FONT}`;
+let font = `${weight}${size}px ${D2ZH_FONT}`;
 ctx.font = font;
 // 原文分成好幾行的短標籤（例如技能樹分頁 "Defensive\nAuras"）：中文也照行數拆開，太寬就縮小字，不要超出原本的框
 const inTab = !!c.closest('.tree-tab');
@@ -226,12 +230,12 @@ let widths = lines.map(l => ctx.measureText(l).width);
 const widest = Math.max(0, ...widths);
 if (boxed && widest > st.w) {
 size = Math.max(10, Math.floor(size * st.w / widest));
-font = `bold ${size}px ${D2ZH_FONT}`;
+font = `${weight}${size}px ${D2ZH_FONT}`;
 ctx.font = font;
 widths = lines.map(l => ctx.measureText(l).width);
 }
 const lh = Math.max(size + 2, st.lh), s = st.shadow;
-const stroke = size < 16 ? 1.5 : Math.max(2, Math.round(size / 9));
+const stroke = size <= 12 ? 1 : size < 16 ? 1.5 : Math.max(2, Math.round(size / 9));
 const pad = Math.ceil(stroke / 2);
 c.width = Math.max(1, Math.ceil(Math.max(0, ...widths)) + s + pad * 2);
 c.height = Math.max(1, Math.ceil(size + (lines.length - 1) * lh + s + pad * 2));
@@ -256,6 +260,34 @@ c.setAttribute('aria-label', text);
 } finally {
 d2zhBusy = false;
 }
+}
+// 整句都是漢字（書籤先翻好再交給遊戲畫的，例如物品說明框的獨特物品名稱）：遊戲 20261124.1 起點陣圖裡完全沒有筆畫，
+// 顏色分析只能用預設白色，獨特的金色、套裝的綠色都不見。顏色改從遊戲接著補畫漢字的 fillStyle 取：
+// 先畫陰影（黑）、外框（暗），最後才是本色，所以只收比之前亮的顏色，收到就照新顏色重畫
+// 遊戲 ui 色表（saveTransfer 的 white／red／green／blue／gold／grey／tan／orange／yellow／darkGreen／purple，黑色除外）
+const D2ZH_UI_COLORS = [[255, 255, 255], [255, 77, 77], [0, 255, 0], [105, 105, 255], [199, 179, 119], [105, 105, 105], [208, 194, 125], [255, 168, 0], [255, 255, 100], [0, 128, 0], [174, 0, 255]];
+function d2zhForeignColor(c, style) {
+const st = D2ZH_STATE.get(c);
+if (!st || !st.noInk) return;
+let rgb = null, m;
+if ((m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(style))) rgb = [m[1], m[2], m[3]].map(h => parseInt(h, 16));
+else if ((m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(style))) rgb = [+m[1], +m[2], +m[3]];
+if (!rgb) return;
+const lum = 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2];
+if (lum < 8 || lum <= st.fgLum) return;
+st.fgLum = lum;
+// 遊戲補畫的顏色＝色表顏色 × 字型亮度（約 0.8），直接用會偏暗；找比例 0.5～1.1 內最接近的色表顏色，用原色
+let best = null;
+for (const p of D2ZH_UI_COLORS) {
+const k = (rgb[0] * p[0] + rgb[1] * p[1] + rgb[2] * p[2]) / (p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+if (k < 0.5 || k > 1.1) continue;
+const err = Math.hypot(rgb[0] - k * p[0], rgb[1] - k * p[1], rgb[2] - k * p[2]);
+if (!best || err < best.err) best = { p, err };
+}
+const col = d2zhReadable(best && best.err < 40 ? best.p : rgb);
+if (col.join() === st.color.join()) return;
+st.color = col;
+d2zhPaint(c, st);
 }
 function d2zhCapture(c, img, src) {
 const st = d2zhAnalyze(img, src);
@@ -1047,7 +1079,7 @@ try { d2zhCapture(c, img, c.textContent || ''); } catch (e) { console.warn('[D2 
 return r;
 };
 D2ZH_CTX.fillText = function () {
-if (!d2zhBusy && d2zhOwned.has(this.canvas)) return;
+if (!d2zhBusy && d2zhOwned.has(this.canvas)) { d2zhForeignColor(this.canvas, this.fillStyle); return; }
 return D2ZH_FILL.apply(this, arguments);
 };
 D2ZH_CTX.strokeText = function () {
@@ -1072,7 +1104,7 @@ if (st && st.lang !== d2zhLang()) d2zhPaint(c, st);
 d2zhMergeAll(document.body);
 });
 new MutationObserver(records => {
-for (const r of records) for (const node of r.addedNodes) d2zhMergeAll(node);
+for (const r of records) for (const node of r.addedNodes) { d2zhMergeAll(node); d2zhShortLabels(node); }
 }).observe(document.body, { subtree: true, childList: true });
 for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) d2zhAdopt(c);
 d2sellAskFixInstall();
@@ -1081,6 +1113,22 @@ d2sellAskFixInstall();
 // 只要點在面板上就把「已詢問」清掉，第二下 click 又變成重新詢問，永遠賣不掉（遊戲本身的問題，20261124.1 仍在）。
 // 詢問框顯示時在商人／賭博面板按下，就不讓遊戲的 pointerdown 清掉，接著的 click 會照遊戲原本的流程賣出。
 // 遊戲的監聽在第一次開物品／交易視窗時才註冊（M4→A5e），書籤在開頁時就註冊，所以排在前面。只在離線模式（線上只提供翻譯）。
+// 角色畫面的標籤格很窄：完整譯名放不下會蓋到旁邊的數字，這裡只在角色畫面（#char-stats）改用短譯名
+const D2ZH_SHORT_LABELS = { 'Magic Find': '魔法尋獲' };
+function d2zhShortLabels(root) {
+if (!(root instanceof Element) || d2zhLang() !== 'zh-Hant') return;
+const list = root.matches('canvas.d2-text') ? [root] : root.querySelectorAll('canvas.d2-text');
+for (const c of list) {
+const st = D2ZH_STATE.get(c);
+if (!st || st.charStats || !c.closest('#char-stats')) continue;
+st.charStats = true;
+const short = D2ZH_SHORT_LABELS[st.src];
+if (short) st.short = short;
+// 角色畫面的「等級／經驗值／下一級」等是 11px 小字，放大顯示後「級」「經」糊得像簡體字；這裡的格子夠大，改用 13px
+if (st.size <= 12) st.minSize = 13;
+if (short || st.minSize) d2zhPaint(c, st);
+}
+}
 function d2sellAskFixInstall() {
 if (D2ZH_ONLINE || window.__d2sellAskFix) return;
 window.__d2sellAskFix = true;
@@ -3425,6 +3473,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V71', date: '2026-11-24', game: '遊戲 20261124.1', items: [
+'修正物品說明框裡獨特（金色）、套裝（綠色）等名稱的顏色變成白色的問題（遊戲這次更新改了畫中文字的方式，中文化跟著調整）',
+'「尚未收藏」改回遊戲原本的紫色',
+'角色畫面的「等級／經驗值／下一級」字太小糊成像簡體字，改用較大較清楚的字',
+'角色畫面的「尋獲魔法物品機率」太長蓋到數字，改為「魔法尋獲」'] },
 { ver: 'V70', date: '2026-11-24', game: '遊戲 20261124.1', items: [
 '遊戲新增了簡體中文，中文系統會被自動切成簡中、和中文化的字疊在一起：現在會自動維持繁體中文',
 '修正販售視窗等處的說明文字重疊',
