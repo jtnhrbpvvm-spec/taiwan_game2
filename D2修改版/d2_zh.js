@@ -12,7 +12,12 @@ return;
 let gameKo = false, chosenKo = false;
 try {
 const saved = localStorage.getItem('d2s:lang');
-gameKo = saved === 'ko' || (saved === null && (navigator.languages || [navigator.language]).some(l => /^ko\b/i.test(l)));
+// 遊戲 20261124.1 起多了簡體中文：沒選過語言時照系統語言挑（第一個 ko 或 zh 開頭的），中文系統會自動變簡中，
+// 譯文蓋不上去還會跟書籤畫的字疊在一起，所以簡中也跟韓文一樣換回英文底
+const sys = (navigator.languages || [navigator.language]).map(l => (/^(ko|zh)\b/i.exec(l) || [])[1]).find(Boolean);
+const gameZh = saved === 'zh' || (saved === null && /^zh$/i.test(sys || ''));
+gameKo = gameZh || saved === 'ko' || (saved === null && /^ko$/i.test(sys || ''));
+if (gameZh) chosenKo = false; else
 chosenKo = !!window.__D2ZH_DESKTOP && localStorage.getItem('d2-survivors-language') === 'ko';
 if (gameKo && !chosenKo) {
 localStorage.setItem('d2s:lang', 'en');
@@ -32,7 +37,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V69';
+const D2ZH_VERSION = 'V70';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -50,6 +55,11 @@ const D2ZH_FONT = '"Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC"
 const D2ZH_PUNCT = { 8208: 45, 8211: 45, 8212: 45, 8216: 39, 8217: 39, 8220: 34, 8221: 34, 8230: 46 };
 const D2ZH_CJK = /[㐀-鿿]/u;
 let d2zhBusy = false;
+// 遊戲 20261124.1 起會自己用 fillText 補畫漢字（點陣字型沒有的字，saveTransfer 的 drawForeign），時機在 putImageData 之後；
+// 書籤已經重畫成中文的畫布再被遊戲補畫一次，字就會疊在一起（販售視窗右下的操作提示等），所以書籤畫過的畫布不讓遊戲再畫字
+const d2zhOwned = new WeakSet();
+const D2ZH_FILL = D2ZH_CTX.fillText;
+const D2ZH_STROKE = D2ZH_CTX.strokeText;
 function d2zhLang() {
 return window.D2I18N ? window.D2I18N.language : 'en';
 }
@@ -194,8 +204,10 @@ const cjk = D2ZH_CJK.test(st.src) || st.src.includes('\u200b');
 if (!cjk && (lang !== 'zh-Hant' || !window.D2I18N.shouldUseLocalFont(st.src))) {
 if (c.width !== st.w || c.height !== st.h) { c.width = st.w; c.height = st.h; }
 D2ZH_PUT.call(ctx, st.en, 0, 0);
+d2zhOwned.delete(c);
 return;
 }
+d2zhOwned.add(c);
 let text = cjk ? st.src.replace(/\u200b ?/g, '').replace(/\u00a0/g, ' ') : window.D2I18N.translate(st.src);
 let size = Math.max(10, st.size);
 // 大字型（選單用的 font24 以上）：中文高度對齊英文字母實際高度，不要用整個字框高度
@@ -307,6 +319,10 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261124.1
+"The game now plays in Simplified Chinese, picked in Options or chosen by a Chinese system": "遊戲現在支援簡體中文，可以在選項中選擇，中文系統會自動使用",
+"The automap's marks for shrines, elites and floor items come back after the display is lost, instead of staying gone until a restart": "畫面中斷恢復後，自動地圖上的神殿、精英和地上物品標記會重新出現，不會再一直消失到重新啟動為止",
+"Online runs where you swapped weapons while the run was starting are no longer refused": "線上遊戲中在開局時切換武器，紀錄不會再被拒收",
 // 20261122.1
 "The desktop app helps check other players' runs while it's open, unless you turn off HELP CHECK RUNS in GAME OPTIONS": "電腦版開著時會協助檢查其他玩家的紀錄，不想要的話可以在遊戲選項關閉「協助檢查紀錄」",
 "The Necromancer's revived monsters are no longer drawn as black boxes": "死靈法師重生的怪物不會再顯示成黑色方塊",
@@ -1030,6 +1046,14 @@ try { d2zhCapture(c, img, c.textContent || ''); } catch (e) { console.warn('[D2 
 }
 return r;
 };
+D2ZH_CTX.fillText = function () {
+if (!d2zhBusy && d2zhOwned.has(this.canvas)) return;
+return D2ZH_FILL.apply(this, arguments);
+};
+D2ZH_CTX.strokeText = function () {
+if (!d2zhBusy && d2zhOwned.has(this.canvas)) return;
+return D2ZH_STROKE.apply(this, arguments);
+};
 D2ZH_CTX.drawImage = function (img) {
 if (!d2zhBusy && img instanceof HTMLCanvasElement && img.classList.contains('d2-text')) {
 try {
@@ -1051,6 +1075,23 @@ new MutationObserver(records => {
 for (const r of records) for (const node of r.addedNodes) d2zhMergeAll(node);
 }).observe(document.body, { subtree: true, childList: true });
 for (const c of document.querySelectorAll('canvas.d2-text')) if (d2zhIsText(c)) d2zhAdopt(c);
+d2sellAskFixInstall();
+}
+// 遊戲 20261120.1 起，身上穿著的裝備拿去給商人時會先問「出售…？再點一次出售」，但遊戲在 window 的 pointerdown（saveTransfer 的 A5e）
+// 只要點在面板上就把「已詢問」清掉，第二下 click 又變成重新詢問，永遠賣不掉（遊戲本身的問題，20261124.1 仍在）。
+// 詢問框顯示時在商人／賭博面板按下，就不讓遊戲的 pointerdown 清掉，接著的 click 會照遊戲原本的流程賣出。
+// 遊戲的監聽在第一次開物品／交易視窗時才註冊（M4→A5e），書籤在開頁時就註冊，所以排在前面。只在離線模式（線上只提供翻譯）。
+function d2sellAskFixInstall() {
+if (D2ZH_ONLINE || window.__d2sellAskFix) return;
+window.__d2sellAskFix = true;
+window.addEventListener('pointerdown', e => {
+const t = e.target;
+if (!(t instanceof Element) || !t.closest('#store-panel, #gamble-panel')) return;
+const asking = [...document.querySelectorAll('canvas.d2-text')]
+.some(c => c.getClientRects().length > 0 && [D2ZH_STATE.get(c)?.src, c.textContent, c.getAttribute('aria-label')]
+.some(s => /^(Click|Tap) again to sell$|^再點(一次|一下)出售$/.test(s || '')));   // 畫布內文會被 DOM 翻譯成中文，原文看 D2ZH_STATE
+if (asking) e.stopImmediatePropagation();
+}, true);
 }
 const D2ED = { player: null, extras: null, world: null, added: new WeakMap(), changed: new WeakMap(), kept: new WeakSet(), menuAt: 0, otherAt: 0, menuRect: null, button: null, panel: null, frame: 0 };
 const D2ED_SAVE_KEY = 'd2-survivors/save/v1';
@@ -3384,6 +3425,11 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V70', date: '2026-11-24', game: '遊戲 20261124.1', items: [
+'遊戲新增了簡體中文，中文系統會被自動切成簡中、和中文化的字疊在一起：現在會自動維持繁體中文',
+'修正販售視窗等處的說明文字重疊',
+{ warn: '【原始遊戲的問題，不是中文化造成的】\n把身上穿著的裝備拿去賣給商人時，遊戲會問「出售…？再點一次出售」，但第二下又會重新詢問，永遠賣不掉。\n離線遊戲：中文化已經幫你修好。\n線上遊戲：因為排行榜會檢查遊戲有沒有被改動，中文化在線上版無法修復，請等遊戲作者修正；暫時請先把裝備拿下來放進物品欄，再用 Shift＋左鍵出售。' },
+'翻譯這次的更新紀錄'] },
 { ver: 'V69', date: '2026-11-23', game: '遊戲 20261122.1', items: [
 '翻譯遊戲 20261122.1 新增的文字：遊戲選項的「協助檢查紀錄」、線上遊戲的「重新解壓縮」遊戲檔案說明，以及這次的更新紀錄'] },
 { ver: 'V68', date: '2026-11-22', game: '遊戲 20261120.1', items: [
@@ -3704,7 +3750,9 @@ d2edEl('div', { class: 'd2ed-body' },
 d2edEl('h3', {}, `${n.ver}　${n.date}`), d2edEl('p', { class: 'd2ed-note' }, `對應${n.game}`),
 ...(n.note || []).map(t => d2edEl('p', { style: 'margin: 6px 0; white-space: pre-line; line-height: 1.6;' }, t)),
 n.perf ? d2zhNewsPerfButton() : null,
-d2edEl('ul', { style: 'margin: 4px 0 8px; padding-left: 20px;' }, ...n.items.map(t => d2edEl('li', {}, t))),
+d2edEl('ul', { style: 'margin: 4px 0 8px; padding-left: 20px;' }, ...n.items.map(t => typeof t === 'string' ? d2edEl('li', {}, t)
+// { warn: '…' }：重要提醒，大紅字（例如遊戲本身的問題）
+: d2edEl('li', { style: 'color: #ff4040; font-size: 1.3em; font-weight: 700; line-height: 1.5; margin: 6px 0; white-space: pre-line;' }, t.warn))),
 n.report ? d2edEl('div', { class: 'd2ed-row' }, d2edEl('button', { type: 'button', onclick: d2zhReportOpen }, '問題回報')) : null))),
 // 「知道了」放在捲動內文外面，手機畫面矮也一直看得到
 d2edEl('div', { class: 'd2ed-row', style: 'flex: none; margin: 0; padding: 8px 14px 12px; border-top: 1px solid #4a3418;' }, d2edEl('button', { type: 'button', class: 'd2ed-main', onclick: close }, '知道了'))));

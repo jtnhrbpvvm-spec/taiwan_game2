@@ -58,6 +58,36 @@ function readWeb(asarPath) {
   } finally { fs.closeSync(fd); }
 }
 
+// 遊戲 20261124.1 起有官方簡體中文（assets/zh-*.js，格式和 ko 表一樣：英文 → 簡中，佔位符是 {0}{1}…）。
+// 2026-11-24 比對過：句子大致可用，但物品／技能／怪物名稱用的是國服譯名（刺客＝猎法者、冰寒＝冰霜、淬鍊＝淬火…），
+// 和書籤（易牙居、台灣用語）差很多，所以不直接換成簡轉繁，只在這裡當「簡中參考」，加新翻譯時省得從頭翻。
+// 簡轉繁用 Windows 內建的 LCMapString（逐字轉換），再用下面的表改成書籤用語、補逐字轉換轉錯的字。
+const SC_TERMS = [
+  ['獵法者', '刺客'], ['冰霜', '冰寒'], ['淬火', '淬鍊'], ['透視地圖', '自動地圖'], ['魔壇', '神殿'], ['赫拉迪姆', '赫拉迪克'],
+  ['暗黑破壞神2', '暗黑破壞神 II'], ['在線', '線上'], ['游戲', '遊戲'], ['范圍', '範圍'], ['復制', '複製'], ['并', '並'],
+  ['數據', '資料'], ['文件夾', '資料夾'], ['文件', '檔案'], ['保存', '儲存'], ['刷新', '重新整理'], ['加載', '載入'], ['默認', '預設'],
+  ['設置', '設定'], ['菜單', '選單'], ['鼠標', '滑鼠'], ['屏幕', '螢幕'], ['信息', '訊息'], ['用戶', '使用者'], ['幾率', '機率'],
+  ['剩余', '剩餘'], ['其余', '其餘'], ['多余', '多餘'], ['墻', '牆'], ['佈', '布'], ['程序', '程式'], ['網絡', '網路'], ['軟件', '軟體'],
+];
+function scToTc(list) {
+  if (!list.length || process.platform !== 'win32') return list.map(() => '');
+  const os = require('os'), { execFileSync } = require('child_process');
+  const tmp = path.join(os.tmpdir(), `d2sc-${process.pid}.json`);
+  fs.writeFileSync(tmp, JSON.stringify(list));
+  try {
+    const ps = `Add-Type -AssemblyName Microsoft.VisualBasic; $j = [IO.File]::ReadAllText('${tmp}') | ConvertFrom-Json; ` +
+      `$o = @($j | ForEach-Object { [Microsoft.VisualBasic.Strings]::StrConv([string]$_, [Microsoft.VisualBasic.VbStrConv]::TraditionalChinese, 0x0804) }); ` +
+      `[IO.File]::WriteAllText('${tmp}', (ConvertTo-Json -InputObject $o -Compress), [Text.UTF8Encoding]::new($false))`;
+    execFileSync('powershell', ['-NoProfile', '-Command', ps], { stdio: 'ignore' });
+    const out = JSON.parse(fs.readFileSync(tmp, 'utf8').replace(/^﻿/, ''));
+    return (Array.isArray(out) ? out : [out]).map(s => {
+      let t = String(s || '');
+      for (const [a, b] of SC_TERMS) t = t.split(a).join(b);
+      return t.replace(/(?<![皇王天])后/g, '後').replace(/(這|那|哪|心|家)里/g, '$1裡').replace(/\{\d+\}/g, '*');
+    });
+  } catch (_) { return list.map(() => ''); } finally { try { fs.unlinkSync(tmp); } catch (_) { /* 已刪 */ } }
+}
+
 // 遊戲寫死在程式裡的英文（不在 ko 表）：取反引號字串，${…} 統一成 ${}，免得變數改名被當成新句子
 function literals(texts) {
   const set = new Set();
@@ -180,10 +210,18 @@ async function main() {
   const clStart = source.indexOf('const D2ZH_CHANGELOG = {');
   const clText = source.slice(clStart, source.indexOf('\n};', clStart));
   const fresh = baseBuild ? changelog.filter(b => b.build > baseBuild) : changelog.slice(0, 1);
-  console.log(`\n== 更新紀錄（${baseBuild ? `${baseBuild} 之後` : '最新一版'}）==`);
+  // 簡中字串表（沒有就是舊版遊戲，參考欄留空）
+  const zhPath = [...web.keys()].find(p => /^assets\/zh-[^/]+\.js$/.test(p));
+  const sc = zhPath ? parseKo(web.get(zhPath)) : {};
+  const scRef = (keys) => { const tc = scToTc(keys.map(k => sc[k] || '')); return new Map(keys.map((k, i) => [k, sc[k] ? tc[i] : ''])); };
+  const clRef = scRef(fresh.flatMap(b => b.lines.map(l => l.text)).filter(t => !clText.includes(JSON.stringify(t) + ':')));
+  console.log(`\n== 更新紀錄（${baseBuild ? `${baseBuild} 之後` : '最新一版'}）==${zhPath ? '（缺譯文的附簡中轉繁參考，名稱要改成書籤用語）' : ''}`);
   for (const b of fresh) {
     console.log(`\n[${b.build}] ${b.date}`);
-    for (const l of b.lines) console.log(`  ${clText.includes(JSON.stringify(l.text) + ':') ? '　' : '缺'}｜${l.kind === 'new' ? '新' : '修'}｜${l.text}`);
+    for (const l of b.lines) {
+      console.log(`  ${clText.includes(JSON.stringify(l.text) + ':') ? '　' : '缺'}｜${l.kind === 'new' ? '新' : '修'}｜${l.text}`);
+      if (clRef.get(l.text)) console.log(`      簡中參考：${clRef.get(l.text)}`);
+    }
   }
   const clMissing = fresh.flatMap(b => b.lines).filter(l => !clText.includes(JSON.stringify(l.text) + ':')).length;
   console.log(`\n更新紀錄缺譯文：${clMissing} 行（標「缺」的要加到 D2ZH_CHANGELOG 最前面）`);
@@ -208,7 +246,12 @@ async function main() {
   const added = prev ? Object.keys(ko).filter(k => !(k in prev) && !skip.has(k)) : [];
   console.log(`\n== 字串表 ${path.basename(koPath)}：共 ${Object.keys(ko).length} 句，${prev ? `新增 ${added.length} 句（不含更新紀錄）` : '沒有基準'} ==`);
   console.log(`還沒翻到${SHOW_ALL || !prev ? '' : '（這次新增）'}：${unique.length} 句`);
-  for (const r of unique) console.log(`  ${r.isNew ? '＋' : '　'} ${r.en}\n      現在：${r.zh}\n      韓文：${r.kr}`);
+  const keyOf = new Map(Object.keys(ko).map(k => [k.replace(/^[a-z]+:(?=\S)/, ''), k]));
+  const koRef = scRef(unique.map(r => keyOf.get(r.en) || r.en));
+  for (const r of unique) {
+    const ref = koRef.get(keyOf.get(r.en) || r.en);
+    console.log(`  ${r.isNew ? '＋' : '　'} ${r.en}\n      現在：${r.zh}\n      韓文：${r.kr}${ref ? `\n      簡中參考：${ref}` : ''}`);
+  }
   if (prev && added.length) {
     console.log('\n== 新增句子目前的翻譯（翻過但不通順的也要看）==');
     for (const k of added) console.log(`  ${k}\n    → ${translate(k.replace(/^[a-z]+:(?=\S)/, '').replace(/#/g, '12'))}`);
@@ -216,10 +259,11 @@ async function main() {
 
   // 寫死在程式裡的新句子（不在 ko 表）
   if (baseFiles) {
-    const jsNow = [...web].filter(([p]) => /^assets\/[^/]+\.js$/.test(p) && !/\/ko-/.test(p)).map(([, t]) => t);
-    const jsOld = baseFiles.filter(([n]) => n.endsWith('.js') && !/^ko-/.test(n)).map(([, t]) => t);
+    const jsNow = [...web].filter(([p]) => /^assets\/[^/]+\.js$/.test(p) && !/\/(ko|zh)-/.test(p)).map(([, t]) => t);
+    const jsOld = baseFiles.filter(([n]) => n.endsWith('.js') && !/^(ko|zh)-/.test(n)).map(([, t]) => t);
     const old = literals(jsOld);
-    const lit = [...literals(jsNow)].filter(s => !old.has(s) && !skip.has(s) && !(s in ko) && !(s.replace(/\$\{\}/g, '*') in ko) && !(s.replace(/\$\{\}/g, '#') in ko));
+    // 含漢字的是遊戲簡中模式才顯示的句子（網頁版下載說明等），書籤固定英文底，不用翻
+    const lit = [...literals(jsNow)].filter(s => !old.has(s) && !/[一-鿿]/.test(s) && !skip.has(s) && !(s in ko) && !(s.replace(/\$\{\}/g, '*') in ko) && !(s.replace(/\$\{\}/g, '#') in ko));
     console.log(`\n== 程式裡寫死的新句子（不在字串表）：${lit.length} 句 ==`);
     for (const s of lit) console.log(`  ${s}\n    → ${translate(s.replace(/\$\{\}/g, '12'))}`);
   }
