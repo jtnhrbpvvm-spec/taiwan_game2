@@ -6,7 +6,7 @@ const {load}=require('./load-game.cjs');
 const SITE=path.resolve(__dirname,'..');
 const GAME=process.argv[2]||path.resolve(SITE,'../../idle-lineage-class/-username-.github.io-/天堂網頁版');
 const g=load(GAME);
-for(const e of g.errors)if(!/login-video|character-actions/.test(e[0]))console.warn('載入警告',e[0],e[1]);
+for(const e of g.errors)if(!/login-video|character-actions/.test(e[0]))throw new Error('遊戲資料載入失敗，停止更新：'+e.join(' '));
 const R=c=>g.run(c);
 
 const CATALOG=R('INTERFACE_CATALOG.items');
@@ -38,6 +38,8 @@ const TowerScrolls=R('TowerScrolls');
 const setGlobal=(k,v)=>{g.ctx[k]=v;};
 
 const nameOf=id=>byId.get(id)?.name||('#'+id);
+const usable=R('ITEM_USE_RULES.definitions');
+const available=id=>{const it=byId.get(id);return !!it&&!removed.has(id)&&!!usable[it.kind+':'+id];};
 const blocked=id=>id===39288||removed.has(id)||dropRemoved.has(id)||/娃娃/.test(byId.get(id)?.name||'');
 
 // ---------- 地圖 ----------
@@ -50,6 +52,7 @@ const npcOf=s=>s.npc||templates[s.npcId];
 const monsters=new Map(),residents=new Map();
 const isBoss=(s,n)=>!!s.boss||/BOSS/i.test(n.name)||(s.count===1&&n.hp>=1500);
 for(const s of spawns){
+  if(!(s.count>0))continue;
   const n=npcOf(s);if(!n)continue;
   if(s.resident||n.kind!=='L1Monster'){
     if(!residents.has(s.npcId))residents.set(s.npcId,{id:s.npcId,name:n.name.replace(/\^/g,' '),kind:n.kind,places:[]});
@@ -78,14 +81,14 @@ for(const m of monsters.values()){const merged=new Map();for(const p of m.places
 const sources=new Map(); // itemId -> {drop:[], shop:[], craft:[], box:[], quest:[], starter:[], gacha:[], other:[]}
 const src=id=>{if(!sources.has(id))sources.set(id,{drop:[],mapdrop:[],shop:[],craft:[],box:[],quest:[],starter:[],other:[]});return sources.get(id);};
 const obtain=new Set();
-const give=(id,kind,info)=>{if(!byId.has(id)||removed.has(id)||id===39288)return false;src(id)[kind].push(info);const fresh=!obtain.has(id);obtain.add(id);return fresh;};
+const give=(id,kind,info)=>{if(!available(id))return false;src(id)[kind].push(info);const fresh=!obtain.has(id);obtain.add(id);return fresh;};
 
 // 怪物掉落
 const pct=c=>c/10000; // 百萬分率 → %
 for(const m of monsters.values()){
   m.drops=[];
   for(const d of drops[m.id]||[]){
-    if(blocked(d.id)||!byId.has(d.id)||!(d.chance>0))continue;
+    if(blocked(d.id)||!available(d.id)||!(d.chance>0)||!(d.max>0)||!(rates.RateDropItems>0)&&d.id!==40308)continue;
     const coin=d.id===40308;
     const chance=Math.min(1000000,d.chance*(coin?1:rates.RateDropItems));
     const row={id:d.id,min:Math.floor(Math.min(d.min,d.max)*(coin?rates.RateDropAdena:1)),max:Math.floor(Math.max(d.min,d.max)*(coin?rates.RateDropAdena:1)),p:pct(chance)};
@@ -107,11 +110,11 @@ for(const m of monsters.values()){
   m.drops.sort((a,b)=>b.p-a.p);
 }
 // 全圖／地圖掉落
-const globalDrops=rows('怪物掉落全圖設置').filter(r=>!blocked(r['道具'])&&byId.has(r['道具'])).map(r=>({id:r['道具'],min:r['最小量'],max:r['最大量'],p:pct(r['道具']===39287?50000:r['機率'])}));
+const globalDrops=rows('怪物掉落全圖設置').filter(r=>!blocked(r['道具'])&&available(r['道具'])&&r['機率']>0&&r['最大量']>0).map(r=>({id:r['道具'],min:r['最小量'],max:r['最大量'],p:pct(r['道具']===39287?50000:r['機率'])}));
 for(const d of globalDrops)give(d.id,'mapdrop',{map:'all',p:d.p});
 const spawnMaps=new Set([...monsters.values()].flatMap(m=>m.places.map(p=>p.map)));
 const mapDrops={};
-for(const r of rows('droplist_map')){if(!spawnMaps.has(r.mapid)||blocked(r.itemid)||!byId.has(r.itemid))continue;(mapDrops[r.mapid]??=[]).push({id:r.itemid,min:r.min,max:r.max,p:pct(r.chance*rates.RateDropItems)});give(r.itemid,'mapdrop',{map:r.mapid,p:pct(r.chance)});}
+for(const r of rows('droplist_map')){if(!spawnMaps.has(r.mapid)||blocked(r.itemid)||!available(r.itemid)||!(r.chance*rates.RateDropItems>0)||!(r.max>0))continue;(mapDrops[r.mapid]??=[]).push({id:r.itemid,min:r.min,max:r.max,p:pct(r.chance*rates.RateDropItems)});give(r.itemid,'mapdrop',{map:r.mapid,p:pct(r.chance)});}
 for(const [map,ids] of [[19,[40515,40503,40505,40519]],[20,[3,19,20]],[21,[89,100,41351]]])if(spawnMaps.has(map))for(const id of ids){if(blocked(id))continue;(mapDrops[map]??=[]).push({id,min:1,max:1,p:2});give(id,'mapdrop',{map,p:2});}
 
 // 新手背包
@@ -145,8 +148,8 @@ const quests=QUESTS.map(q=>{
 for(const id of [990101,49138,44104,990102])give(id,'other',{text:'每日任務'});
 
 // 扭蛋（目前免費）
-for(const t of DOLL_GACHA.tiers)for(const id of t.ids)give(id,'other',{text:'魔法娃娃扭蛋機（'+t.tier+'）'});
-for(const t of WUHUN_GACHA.tiers)for(const id of t.ids)give(id,'other',{text:'武魂扭蛋機（'+t.tier+'）'});
+for(const t of DOLL_GACHA.tiers)if(t.rate>0)for(const id of t.ids)give(id,'other',{text:'魔法娃娃扭蛋機（'+t.tier+'）'});
+for(const t of WUHUN_GACHA.tiers)if(t.rate>0)for(const id of t.ids)give(id,'other',{text:'武魂扭蛋機（'+t.tier+'）'});
 
 // 寶箱與製作：反覆展開直到沒有新東西
 const boxFixed=rows('etcitem_boxs'),boxRandom=rows('etcitem_box');
@@ -154,21 +157,22 @@ const recipes=[];{
   const seen=new Set(),split=v=>String(v??'').split(',').filter(Boolean).map(Number);
   for(const r of DB.craftRecipes()){
     const item=byId.get(+r.new_item),mats=split(r.materials);
-    if(!item||!mats.length||mats.some(id=>!byId.has(id)))continue;
+    if(!item||!available(item.id)||!(r.rnd>0)||!(r.new_item_counts>0)||!mats.length||mats.some(id=>!available(id)))continue;
     const sig=JSON.stringify(Object.keys(r).sort().filter(k=>!['id','action','note','npcname'].includes(k)).map(k=>[k,r[k]]));if(seen.has(sig))continue;seen.add(sig);
     const counts=split(r.materials_count),ench=split(r.materials_enchants);
     recipes.push({id:r.id,out:+r.new_item,n:r.new_item_counts||1,outEnchant:r.new_item_Enchantlvl||0,rate:r.rnd,level:r.checkLevel||0,cls:r.checkClass?'黑妖':'',hp:r.hpConsume||0,mp:r.mpConsume||0,
       elf:DB.isElvenCraft(r),cat:item.type==='arrow'?'arrow':DB.craftCategory(item),
-      mats:mats.map((id,i)=>({id,n:counts[i]||1,e:ench[i]||0})),bonus:r.bonus_item?{id:+r.bonus_item,n:r.bonus_item_count||1}:null,residue:r.residue_item?{id:+r.residue_item,n:r.residue_count||1}:null});
+      mats:mats.map((id,i)=>({id,n:counts[i]||1,e:ench[i]||0})),bonus:r.bonus_item&&r.bonus_item_count>0&&available(+r.bonus_item)?{id:+r.bonus_item,n:r.bonus_item_count}:null,residue:r.rnd<100&&r.residue_item&&r.residue_count>0&&available(+r.residue_item)?{id:+r.residue_item,n:r.residue_count}:null});
   }
 }
 let changed=true;
 while(changed){
   changed=false;
-  for(const b of boxFixed)if(obtain.has(b.box_item_id)&&!src(b.get_item_id).box.some(x=>x.box===b.box_item_id))changed=give(b.get_item_id,'box',{box:b.box_item_id,n:b.count,fixed:true})||changed;
+  for(const b of boxFixed)if(b.count>0&&(b.use_type&31)!==0&&obtain.has(b.box_item_id)&&!src(b.get_item_id).box.some(x=>x.box===b.box_item_id))changed=give(b.get_item_id,'box',{box:b.box_item_id,n:b.count,fixed:true})||changed;
   const groups={};for(const b of boxRandom)(groups[b.box_item_id]??=[]).push(b);
   for(const [box,list] of Object.entries(groups)){if(!obtain.has(+box))continue;const total=list[0].randomint||1000000;
-    for(const b of list)if(!src(b.get_item_id).box.some(x=>x.box===+box))changed=give(b.get_item_id,'box',{box:+box,p:b.random/total*100,min:b.min_count,max:b.max_count})||changed;}
+    let sum=0;
+    for(const b of list.filter(b=>!removed.has(b.get_item_id))){const weight=Math.max(0,Math.min(total,sum+b.random)-sum);sum+=b.random;if(weight>0&&b.max_count>0&&!src(b.get_item_id).box.some(x=>x.box===+box))changed=give(b.get_item_id,'box',{box:+box,p:weight/total*100,min:b.min_count,max:b.max_count})||changed;}}
   for(const r of recipes){if(r.ok||!r.mats.every(m=>obtain.has(m.id)))continue;r.ok=true;changed=true;
     give(r.out,'craft',{recipe:r.id});if(r.bonus)give(r.bonus.id,'craft',{recipe:r.id,bonus:true});if(r.residue)give(r.residue.id,'craft',{recipe:r.id,residue:true});}
 }
@@ -196,24 +200,26 @@ const GRADES=['','一般','高級','稀有','英雄','傳說','神話','超越',
 const portraitUrl=c=>{try{return R('TransformCards.portrait')(c)}catch{return ''}};
 const cards=cardBook.filter(c=>!c.unavailable&&(gradeWeights[c.g]||0)>0).map(c=>({n:c.dn||c.n,g:GRADES[c.g],gi:c.g,lv:c.p?.lv??c.lv??0,fx:c.fx||[],pb:c.pb?.fx||[],icon:portraitUrl(c)||'',atk:!c.noAttack,cast:c.p?.m!==0}));
 const cardRates={};for(const [gi,w] of Object.entries(gradeWeights)){const n=cards.filter(c=>c.gi===+gi).length;if(n&&w>0)cardRates[GRADES[gi]]={rate:w,count:n};}
-const dollGacha=new Map();for(const t of DOLL_GACHA.tiers)for(const id of t.ids)dollGacha.set(id,t.tier);
+const dollGacha=new Map();for(const t of DOLL_GACHA.tiers)if(t.rate>0)for(const id of t.ids)if(available(id))dollGacha.set(id,t.tier);
 const fam=id=>{try{return DollEvolution.family(id)}catch{return null}};
-const dollList=dolls.map(d=>{const f=fam(d.id),pathOf=f?.paths?.find(p=>p.includes(d.id));const stage=pathOf?pathOf.indexOf(d.id):0;
+const reachableDolls=new Set(dollGacha.keys());
+if(obtain.has(60219))for(const d of dolls){const f=fam(d.id);for(const p of f?.paths||[])for(let i=1;i<p.length;i++)if(reachableDolls.has(p[i-1]))reachableDolls.add(p[i]);}
+const dollList=dolls.filter(d=>reachableDolls.has(d.id)).map(d=>{const f=fam(d.id),pathOf=f?.paths?.find(p=>p.includes(d.id));const stage=pathOf?pathOf.indexOf(d.id):0;
   return {id:d.id,name:d.name,tier:dollTier(d.id),fx:d.effects||[],mats:(d.materials||[]).map(([id,n])=>({id,n})),time:d.time||1800,
     img:d.img?'assets/interface/catalog-portraits/'+d.img:'',gacha:dollGacha.get(d.id)||'',stage:stage+1,root:pathOf?pathOf[0]:d.id,prev:stage>0?pathOf[stage-1]:null,next:pathOf&&stage<pathOf.length-1?pathOf[stage+1]:null};});
-const wuhunGacha=new Map();for(const t of WUHUN_GACHA.tiers)for(const id of t.ids)wuhunGacha.set(id,t.tier);
+const wuhunGacha=new Map();for(const t of WUHUN_GACHA.tiers)if(t.rate>0)for(const id of t.ids)wuhunGacha.set(id,t.tier);
 const craftWuhun=new Set(okRecipes.map(r=>r.out));
 const wuhun=wuhunData.filter(w=>wuhunGacha.has(w.id)||craftWuhun.has(w.id)).map(w=>({id:w.id,name:w.name,tier:w.tier,core:w.core,fx:w.fx||[],gacha:wuhunGacha.has(w.id),craft:craftWuhun.has(w.id)}));
 const ENCHANT_FX={惡魔:'風刃 2 段，各 20～35 傷害',不死鳥:'40～80 傷害，自己血量低於 30% 時傷害 ×2',古代巨人:'50～90 傷害',巨蟻女皇:'中毒：每秒 10，持續 6 秒',
   冰之女王:'目標周圍 2 格內每隻 25～45 傷害',傑尼斯女王:'30～50 傷害，並讓目標 5 秒內受到的傷害 +10%',幻象眼魔:'35～60 傷害',吸血鬼:'25～65 傷害並回血 15',
   殭屍王:'20～40 傷害並回魔 5',黑豹:'再普攻 2 次',木乃伊王:'疾病：每秒 6，持續 10 秒＋破壞盔甲 10 秒',艾莉絲:'30～50 傷害，怪物血量低於 30% 時 ×3',
   騎士范德:'40～70 傷害＋暈眩 0.5 秒',巫妖:'扣目標目前血量 3%（BOSS 最多 300）',鐮刀死神:'目標身邊 1 格內每隻 35～60 傷害',死亡騎士:'60～100 傷害'};
-const enchants=bossEnchantData.map(e=>({id:e.id,stone:e.stone,boss:e.boss,fx:ENCHANT_FX[e.boss]||e.skill,levels:e.levels.map(l=>({name:l.name,rate:l.rate,proc:l.proc}))}));
+const enchants=bossEnchantData.filter(e=>obtain.has(e.id)).map(e=>({id:e.id,stone:e.stone,boss:e.boss,fx:ENCHANT_FX[e.boss]||e.skill,levels:e.levels.map(l=>({name:l.name,rate:l.rate,proc:l.proc}))}));
 
 // ---------- 傳送點 ----------
-const removedNames=new Set(CATALOG.filter(i=>i.id===81017||dropRemoved.has(i.id)).map(i=>i.name));
+const obtainableNames=new Set([...obtain].map(id=>byId.get(id).name));
 const teleports=routes.map(r=>({id:r.id,name:r.name,group:r.group||'',cat:r.category,map:r.mapId,price:r.price,minLv:r.minLevel,levels:r.levels,
-  mobs:(r.monsterDetails||[]).map(d=>({id:d.id,name:d.name,level:d.level,count:d.count})),drops:(r.drops||[]).filter(n=>!removedNames.has(n))}));
+  mobs:(r.monsterDetails||[]).map(d=>({id:d.id,name:d.name,level:d.level,count:d.count})),drops:(r.drops||[]).filter(n=>obtainableNames.has(n))}));
 
 // ---------- 道具輸出 ----------
 const usedMobs=new Set();
@@ -282,13 +288,25 @@ const ver=(fs.readFileSync(path.join(GAME,'index.html'),'utf8').match(/\?v=([\w.
 
 const monsterList=[...monsters.values()].sort((a,b)=>a.level-b.level||a.id-b.id);
 const WIKI={
-  built:new Date().toISOString().slice(0,10),gameVer:ver,rates,
+  built:new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }),gameVer:ver,rates,
   classes:Object.fromEntries(Object.entries(classes).map(([k,c])=>[k,{base:c.base,points:c.points,hp:c.hp,intro:c.intro}])),
   starterKit,expTable,
   items,monsters:monsterList,maps:Object.values(maps).sort((a,b)=>a.id-b.id),globalDrops,npcs,shops,
   recipes:okRecipes.map(({ok,...r})=>r),skills,quests,cards,cardRates,dolls:dollList,dollRates:DOLL_GACHA.tiers.map(t=>({tier:t.tier,rate:t.rate,count:t.ids.length})),
   wuhun,wuhunRates:WUHUN_GACHA.tiers.map(t=>({tier:t.tier,rate:t.rate,count:t.ids.length})),enchants,teleports
 };
+// 公開資料中的每個道具參照都必須有正常取得來源；檢查失敗時保留上次資料。
+const visibleIds=new Set(items.map(i=>i.id));
+const checkItem=id=>{if(id!=null&&!visibleIds.has(id))throw new Error('道具取得來源尚未確認，停止更新（ID '+id+'）');};
+for(const m of monsterList)for(const d of m.drops)checkItem(d.id);
+for(const d of globalDrops)checkItem(d.id);
+for(const m of Object.values(maps))for(const d of m.drops)checkItem(d.id);
+for(const s of shops)for(const i of s.items)checkItem(i.id);
+for(const r of okRecipes){checkItem(r.out);for(const m of r.mats)checkItem(m.id);checkItem(r.bonus?.id);checkItem(r.residue?.id);}
+for(const q of quests){for(const r of q.reward)checkItem(r.id);for(const t of q.targets)checkItem(t.item);}
+for(const s of skills)checkItem(s.mat?.id);
+for(const d of dollList)for(const m of d.mats)checkItem(m.id);
+for(const e of enchants)checkItem(e.id);
 fs.mkdirSync(path.join(SITE,'data'),{recursive:true});
 const json=JSON.stringify(WIKI);
 fs.writeFileSync(path.join(SITE,'data/wiki-data.js'),'// 由 tools/build-data.cjs 自動產生，請勿手改\nwindow.WIKI='+json+';\n');

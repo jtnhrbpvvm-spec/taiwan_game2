@@ -1,5 +1,5 @@
 {
- "version": "20261119a",
+ "version": "20261120a",
  "classes": {
   "royal": {
    "name": "王族",
@@ -2899,6 +2899,12 @@
   "uq_dualflame": "冰火同源",
   "uq_stormeye": "風暴之眼",
   "uq_elementalist": "元素使徒",
+  "uq_frostBoneBoots": "霜骨戰靴",
+  "frostBoneCore": "霜骨軍督的冰核",
+  "uq_ashRing": "灰燼指環",
+  "ashFireSeal": "灰燼大祭司的火印",
+  "uq_riftRoyalAmulet": "裂界王權墜飾",
+  "riftCrownShard": "裂界君王的王冠碎片",
   "soul_spiderVenom": "劇毒侵蝕封魂石",
   "soul_treantHeart": "古樹荊棘封魂石",
   "soul_drakeFang": "裂地岩刺封魂石",

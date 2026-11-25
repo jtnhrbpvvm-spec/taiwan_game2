@@ -338,7 +338,7 @@ const specialAffixes = Object.fromEntries(Object.entries(G('SPECIAL_AFFIXES')).m
 
 const C = n => G(n);
 const data = {
-    meta: { title: C('GAME_TITLE'), version: C('GAME_VERSION'), generated: new Date().toISOString().slice(0, 10), imgBase: IMG_BASE },
+    meta: { title: C('GAME_TITLE'), version: C('GAME_VERSION'), generated: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }), imgBase: IMG_BASE },
     consts: Object.fromEntries(['CREATE_TOTAL', 'CREATE_STAT_MAX', 'STAT_CAP', 'ELIXIR_MAX', 'BONUS_STAT_LEVEL', 'MAX_LEVEL', 'EXP_RATE',
         'OFFLINE_MIN_MS', 'OFFLINE_MAX_MS', 'OFFLINE_RATE', 'OFFLINE_SAMPLE_MS', 'POTION_CD_MS', 'WEIGHT_NO_REGEN', 'WEIGHT_NO_MP_REGEN', 'ENCHANT_MAX',
         'TOWN_TRAVEL_FEE', 'BOOK_DROP_P', 'BOOK_BOSS_P', 'CURRENCY_DROP_P', 'CURRENCY_BOSS_P', 'MAP_DROP_P', 'MAP_DROP_IN_MAP_P', 'RANDOM_EQUIP_P',
