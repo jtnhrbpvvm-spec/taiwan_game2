@@ -7,17 +7,18 @@ alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個�
 return;
 }
 // ====== 版本標記：這一版中文化對應的遊戲版本（每次跟上遊戲改版都要改成新的 build，tools/check-update.js 會提醒） ======
-// 電腦版的遊戲比這個版本新（中文化還沒跟上）時，整個工具先不啟動，讓玩家用遊戲內建的官方繁體中文，避免兩邊的中文疊字；
+// 電腦版的遊戲比這個版本新（中文化還沒跟上）時進入「官方繁中模式」（D2ZH_OFFICIAL）：遊戲換成內建的官方繁體中文，
+// 書籤不翻譯（跟韓文模式一樣 language='en'，只照遊戲原文），避免兩邊的中文疊字；離線的修改功能照常可用，但開面板前會先警告並提供備份存檔。
 // 等中文化更新、這裡改成相符的版本後，下面的語言檢查會把遊戲換回英文底，恢復由中文化主導。
 const D2ZH_GAME_BUILD = '20261125.1';
+let D2ZH_OFFICIAL = null;   // 官方繁中模式時是遊戲的 build，否則 null
 {
 const build = window.__D2ZH_DESKTOP && window.__D2ZH_DESKTOP.gameBuild;
 const parts = b => String(b).split('.').map(n => parseInt(n, 10) || 0);
 const newer = (a, b) => { const x = parts(a), y = parts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
 if (build && newer(build, D2ZH_GAME_BUILD)) {
+D2ZH_OFFICIAL = build;
 window.__D2ZH_WAITING = build;
-// 開遊戲時背景下載到新版中文化：重新載入一次，新版若已跟上這個遊戲版本就會直接接手
-window.__d2zhAutoChecked = r => { if (r && Array.isArray(r.changed) && r.changed.includes('d2_zh.js')) location.reload(); };
 try {
 const saved = localStorage.getItem('d2s:lang');
 if (saved !== 'zh-TW' && saved !== 'ko') {
@@ -27,18 +28,17 @@ if (localStorage.getItem('d2s:lang') === 'zh-TW') { location.reload(); return; }
 } catch (_) { /* 存不了就維持遊戲原本的語言 */ }
 if (location.host === 'game') {
 const note = document.createElement('div');
-note.textContent = `遊戲已更新到 ${build}，中文化工具還在跟進中，先使用遊戲內建的官方繁體中文；中文化更新後會自動切回。`;
+note.textContent = `遊戲已更新到 ${build}，中文化工具還在跟進中，先使用遊戲內建的官方繁體中文；中文化更新後會自動切回。離線的書籤修改功能仍可使用。`;
 note.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;max-width:min(680px,92vw);padding:8px 14px;' +
 'background:rgba(20,13,8,.92);border:1px solid #8a6a2a;border-radius:6px;color:#f0c94a;font:14px/1.5 "Microsoft JhengHei",sans-serif;pointer-events:none;';
 const show = () => { document.body.append(note); setTimeout(() => note.remove(), 10000); };
 if (document.body) setTimeout(show, 3000); else addEventListener('DOMContentLoaded', () => setTimeout(show, 3000));
 }
-return;
 }
 }
 // 翻譯是對著英文字串做的，遊戲是韓文時蓋不上去。不是自己在電腦版選韓文的話，就換回英文底（畫面仍是繁中）再重新載入
-// 網頁版按書籤就是要中文，所以不看記住的選擇；韓文要用書籤的語言按鈕切換，電腦版才會記住
-{
+// 網頁版按書籤就是要中文，所以不看記住的選擇；韓文要用書籤的語言按鈕切換，電腦版才會記住（官方繁中模式不換）
+if (!D2ZH_OFFICIAL) {
 let gameKo = false, chosenKo = false;
 try {
 const saved = localStorage.getItem('d2s:lang');
@@ -68,7 +68,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V72';
+const D2ZH_VERSION = 'V73';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -1127,7 +1127,10 @@ if (!d2zhBusy && img instanceof HTMLCanvasElement && img.classList.contains('d2-
 try {
 const st = D2ZH_STATE.get(img) || (d2zhIsText(img) ? d2zhAdopt(img) : null);
 if (st && st.lang !== d2zhLang()) d2zhPaint(img, st);
-if (st) d2edOnTextDraw(this, img, arguments, st.src === 'PREVIOUS MENU' || st.src === "이전 메뉴");
+// 「返回上一個選單」畫出來就是選項選單（書籤修改按鈕放旁邊）；官方繁中模式是遊戲自己的「上一選單」
+const menu = s => s === 'PREVIOUS MENU' || s === "이전 메뉴" || s === '上一選單';
+if (st) d2edOnTextDraw(this, img, arguments, menu(st.src) || (D2ZH_OFFICIAL && menu((img.textContent || '').trim())));
+else if (D2ZH_OFFICIAL) d2edOnTextDraw(this, img, arguments, menu((img.textContent || '').trim()));
 } catch (e) { console.warn('[D2 中文]', e); }
 }
 return D2ZH_DRAW.apply(this, arguments);
@@ -1582,7 +1585,7 @@ return { left: l, top, right: r, bottom, canvas: rect };
 }
 // 排手把、書籤修改、語言三個按鈕：先試原本的位置（返回上一個選單右邊），蓋到文字就沿畫面右緣、左緣由上往下找空位。
 function d2edLayoutButtons(m, h, pad) {
-const b = D2ED.button, sw = D2ED.switcher, texts = D2ED.menuTexts || [];
+const b = D2ED.button, sw = D2ZH_OFFICIAL ? null : D2ED.switcher, texts = D2ED.menuTexts || [];
 const c = m.canvas, minX = 0, maxX = innerWidth, minY = 0, maxY = innerHeight;   // 整個視窗都能放（選單畫布可能只佔中間）
 const size = (e, w0, h0) => ({ e, w: e.offsetWidth || w0, h: e.offsetHeight || h0 });
 const hits = (s, list) => list.some(r => s.x < r.right + 4 && s.x + s.w > r.left - 4 && s.y < r.bottom + 4 && s.y + s.h > r.top - 4);
@@ -1634,7 +1637,7 @@ apply(spots);
 }
 function d2edPlaceButton() {
 D2ED.frame++;
-const b = D2ED.button, sw = D2ED.switcher;
+const b = D2ED.button, sw = D2ZH_OFFICIAL ? null : D2ED.switcher;   // 官方繁中模式不顯示語言按鈕（沒有語言可切）
 const show = D2ED.menuRect && D2ED.menuAt >= D2ED.otherAt && performance.now() - D2ED.menuAt < 4000 && !D2ED.panel;
 b.style.display = show ? 'block' : 'none';
 if (sw) sw.style.display = show && !D2ED.swHidden ? 'flex' : 'none';
@@ -3489,8 +3492,73 @@ status,
 d2edEl('div', { class: 'd2ed-row' }, okBtn, cancelBtn)));
 card.append(modal);
 }
+// ====== 官方繁中模式（遊戲比中文化新）：開書籤修改面板前先警告，並讓玩家選要不要備份存檔 ======
+// 每次開遊戲（頁面載入）第一次按「書籤修改」時問一次；不管選是或否，關掉後都照常打開面板。
+function d2edBackupSave() {
+const data = { tool: 'D2 Survivors 中文化存檔備份', toolVersion: D2ZH_VERSION, gameBuild: D2ZH_OFFICIAL || '', time: new Date().toISOString(), localStorage: {} };
+for (let i = 0; i < localStorage.length; i++) {
+const k = localStorage.key(i);
+if (k && (k.startsWith('d2-survivors') || k.startsWith('d2s:') || k.startsWith('d2zh:'))) data.localStorage[k] = localStorage.getItem(k);
+}
+const text = JSON.stringify(data, null, 1);
+const p = n => String(n).padStart(2, '0'), d = new Date();
+const name = `D2Survivors存檔備份-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+const desk = window.__D2ZH_DESKTOP;
+if (desk && typeof desk === 'object') {
+// 電腦版：頁面的另存檔案（會直接取消）和下載（會開成新視窗）都不能用，交給主程序跳另存新檔視窗
+if (!desk.backup) return Promise.reject(new Error('中文化程式需要更新：請關閉遊戲再重新開一次（會自動更新）後再備份'));
+return new Promise((resolve, reject) => {
+window.__d2zhBackupData = { name, text };
+window.__d2zhBackupDone = r => {
+window.__d2zhBackupData = null;
+if (r && r.ok) resolve(r.path);
+else if (r && r.canceled) reject(Object.assign(new Error('canceled'), { name: 'AbortError' }));
+else reject(new Error((r && r.reason) || '未知錯誤'));
+};
+console.log('__D2ZH__:backup');
+});
+}
+if (window.showSaveFilePicker) {
+return window.showSaveFilePicker({ suggestedName: name, types: [{ description: '存檔備份', accept: { 'application/json': ['.json'] } }] })
+.then(async h => { const w = await h.createWritable(); await w.write(text); await w.close(); return h.name; });
+}
+const a = d2edEl('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name });
+document.body.append(a); a.click(); a.remove();
+return Promise.resolve(name);
+}
+function d2edOfficialWarn(next) {
+const box = d2edEl('div', { id: 'd2ed-overlay' });
+const status = d2edEl('p', { class: 'd2ed-note', style: 'margin: 6px 12px; color: #f0c94a' });
+const go = () => { D2ED.officialWarned = true; box.remove(); next(); };
+const yes = d2edEl('button', { type: 'button', class: 'd2ed-main' }, '是，備份存檔');
+const no = d2edEl('button', { type: 'button', onclick: go }, '否，直接使用');
+yes.onclick = () => {
+yes.disabled = no.disabled = true;
+status.textContent = '請在視窗中選擇存檔備份要放的位置……';
+d2edBackupSave().then(name => {
+status.textContent = `已備份：${name}`;
+setTimeout(go, 1200);
+}).catch(e => {
+yes.disabled = no.disabled = false;
+status.textContent = e && e.name === 'AbortError' ? '已取消備份。可以再按一次「是」選位置，或按「否」直接使用。' : `備份失敗（${(e && e.message) || e}），可以再試一次或按「否」直接使用。`;
+});
+};
+box.append(d2edEl('div', { class: 'd2ed-card', role: 'alertdialog', 'aria-label': '版本不符警告' },
+d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', { style: 'color: #ff5a4a;' }, '版本不符警告'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION)),
+d2edEl('div', { class: 'd2ed-body', style: 'line-height: 1.7; color: #e8e2d0;' },
+d2edEl('p', { style: 'color: #ff5a4a; font-weight: bold;' }, '目前跟遊戲版本不符，修改功能可能會有問題，請靜待作者確認後更新。'),
+d2edEl('p', {}, '您還是可以繼續使用此功能，但是請備份好存檔。'),
+d2edEl('p', { class: 'd2ed-note' }, `遊戲版本 ${D2ZH_OFFICIAL}／中文化對應 ${D2ZH_GAME_BUILD}`),
+d2edEl('p', { style: 'margin-top: 10px; color: #f0c94a; font-weight: bold;' }, '您要備份存檔嗎？')),
+status,
+d2edEl('div', { class: 'd2ed-row', style: 'padding: 0 12px 12px;' }, yes, no)));
+box.addEventListener('keydown', e => e.stopPropagation());
+document.body.append(box);
+yes.focus();
+}
 function d2edOpen() {
 if (D2ED.panel) return;
+if (D2ZH_OFFICIAL && !D2ZH_ONLINE && !D2ED.officialWarned) { if (!document.querySelector('[aria-label="版本不符警告"]')) d2edOfficialWarn(d2edOpen); return; }
 const close = () => { D2ED.panel.remove(); D2ED.panel = null; };
 D2ED.panel = d2edEl('div', { id: 'd2ed-overlay', onclick: e => { if (e.target.id === 'd2ed-overlay') close(); } },
 d2edEl('div', { class: 'd2ed-card', role: 'dialog', 'aria-label': '書籤修改' },
@@ -3509,6 +3577,10 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V73', date: '2026-11-25', game: '遊戲 20261125.1', items: [
+'之後遊戲改版、中文化還沒跟上時：畫面先用遊戲內建的官方繁體中文（避免疊字），離線的書籤修改功能仍可使用；第一次打開時會提醒版本不符，並可先備份存檔',
+'電腦版：存檔很大時匯入會顯示「作為存檔代碼，這太長了」的限制已放寬（重開遊戲一次後生效）',
+] },
 { ver: 'V72', date: '2026-11-25', game: '遊戲 20261125.1', items: [
 '翻譯遊戲 20261125.1 的更新內容',
 '遊戲加入官方繁體中文：開著中文化工具時會自動使用本工具的翻譯，不會兩種中文疊在一起',
@@ -7000,7 +7072,7 @@ let language = 'zh-Hant';
 try {
 // 'en' 是「不翻譯、照遊戲原文」：現在只有選韓文才會用到（存成 'ko'，開頭已確認遊戲真的是韓文）；舊版存的 'en' 回到繁中
 const saved = localStorage.getItem(STORAGE_KEY);
-if (saved === 'ko' && window.__D2ZH_DESKTOP) language = 'en';
+if (D2ZH_OFFICIAL || (saved === 'ko' && window.__D2ZH_DESKTOP)) language = 'en';   // 官方繁中模式：不翻譯，照遊戲原文
 else if (saved === 'en') localStorage.setItem(STORAGE_KEY, language);
 } catch (_) { /* Storage can be disabled; Traditional Chinese remains the default. */ }
 const textRecords = new WeakMap();
@@ -7056,7 +7128,8 @@ while ((node = walker.nextNode())) processTextNode(node);
 if (root.querySelectorAll) root.querySelectorAll('*').forEach(processAttributes);
 }
 function applyLanguage() {
-document.documentElement.lang = language === 'zh-Hant' ? 'zh-Hant' : 'ko';
+if (!D2ZH_OFFICIAL) document.documentElement.lang = language === 'zh-Hant' ? 'zh-Hant' : 'ko';   // 官方繁中模式照遊戲設的 zh-Hant-TW
+if (switcher && D2ZH_OFFICIAL) switcher.style.display = 'none';   // 官方繁中模式沒有語言可切
 if (document.body) {
 document.body.classList.toggle('d2zh-hant', language === 'zh-Hant');
 scan(document.body);

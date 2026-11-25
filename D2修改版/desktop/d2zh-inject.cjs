@@ -92,7 +92,7 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 5, cleanLaunch: 1, uninstall: 1, gameBuild: readGameBuild(), fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 5, cleanLaunch: 1, uninstall: 1, backup: 1, saveLimits: SAVE_LIMIT_RAISE, gameBuild: readGameBuild(), fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 上榜模式：遊戲會比對 app.asar 雜湊，被中文化改過就拒收排行榜紀錄。
@@ -177,6 +177,20 @@ function addExports(text) {
   if (!names.size) return null;
   return `${text}\nexport{${[...names].map((name, i) => `${name} as __d2zh${i}`).join(',')}};\n`;
 }
+// 匯入存檔的長度上限：遊戲擋「代碼超過 100 萬字」「檔案超過 2MB（＝2×代碼上限）」「解壓後超過 8MB」，
+// 存檔大（例如物品很多）時會顯示「作為存檔代碼，這太長了」。這裡把三個上限各放大 100 倍；存檔內容的檢查照遊戲原本的做。
+// 遊戲改版時用內容認（變數名稱會變），認不到就不改。
+const SAVE_LIMIT_RAISE = 100;
+function liftSaveLimits(text) {
+  if (!text.includes("That's too long to be a save code")) return null;
+  let out = text, hits = 0;
+  // 代碼上限、解壓上限：`D2S`,版本,代碼上限=1e6,解壓上限=8e6,
+  out = out.replace(/(=`D2S`,[\w$]+=\d+,[\w$]+=)(\d+(?:\.\d+)?e\d+)(,[\w$]+=)(\d+(?:\.\d+)?e\d+)(,)/, (_, a, code, b, raw, c) => { hits++; return `${a}${Number(code) * SAVE_LIMIT_RAISE}${b}${Number(raw) * SAVE_LIMIT_RAISE}${c}`; });
+  // 匯入時直接寫死的代碼長度判斷
+  out = out.replace(/(\.length>)(\d+(?:\.\d+)?e\d+)(\)return\{error:`That's too long to be a save code\.`\})/, (_, a, n, b) => { hits++; return `${a}${Number(n) * SAVE_LIMIT_RAISE}${b}`; });
+  log(`save limits: ${hits}/2`);
+  return hits ? out : null;
+}
 try {
   const handle = protocol.handle;
   protocol.handle = function (scheme, handler) {
@@ -185,7 +199,9 @@ try {
       try {
         if (scheme !== 'app' || !/^app:\/\/game\/assets\/[^/]+\.js$/.test(request.url) || /\/ko-/.test(request.url) || !response.ok) return response;
         const text = await response.clone().text();
-        const patched = text.includes('strModEnhancedDamage') ? addExports(text) : null;
+        let patched = text.includes('strModEnhancedDamage') ? addExports(text) : null;
+        const lifted = liftSaveLimits(patched || text);
+        if (lifted) patched = lifted;
         if (!patched) return response;
         const headers = new Headers(response.headers);
         headers.delete('content-length');
@@ -246,6 +262,23 @@ app.on('web-contents-created', (_event, contents) => {
         .catch(e => { log(`replies: ${e.message}`); return { ok: false }; })
         .then(result => contents.executeJavaScript(`window.__d2zhRepliesDone && window.__d2zhRepliesDone(${JSON.stringify(result)});0`, true))
         .catch(e => log(`replies notify: ${e && e.message}`));
+      return;
+    }
+    // 備份存檔（官方繁中模式開面板前的警告）：遊戲頁面的另存檔案、下載都用不了，由這裡跳出另存新檔視窗再寫檔
+    if (text === '__D2ZH__:backup') {
+      const { dialog, BrowserWindow } = require('electron');
+      const done = r => contents.executeJavaScript(`window.__d2zhBackupDone && window.__d2zhBackupDone(${JSON.stringify(r)});0`, true).catch(e => log(`backup notify: ${e && e.message}`));
+      (async () => {
+        const data = await contents.executeJavaScript('window.__d2zhBackupData || null', true);
+        if (!data || typeof data.text !== 'string') return { ok: false, reason: 'no-data' };
+        const win = BrowserWindow.fromWebContents(contents);
+        const opts = { title: '備份存檔', defaultPath: path.join(app.getPath('documents'), String(data.name || 'D2Survivors存檔備份.json').replace(/[\\/:*?"<>|]/g, '_')), filters: [{ name: '存檔備份', extensions: ['json'] }] };
+        const pick = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+        if (pick.canceled || !pick.filePath) return { ok: false, canceled: true };
+        fs.writeFileSync(pick.filePath, data.text, 'utf8');
+        log(`backup: ${pick.filePath}`);
+        return { ok: true, path: pick.filePath };
+      })().catch(e => { log(`backup: ${e && e.message}`); return { ok: false, reason: String(e && e.message) }; }).then(done);
       return;
     }
     if (text === '__D2ZH__:clean' || text === '__D2ZH__:uninstall') {
