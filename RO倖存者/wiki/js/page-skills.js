@@ -15,7 +15,7 @@ RSW.page({
 <div class="box">${R.esc(s.desc1 || '（沒有說明）')}${s.descMax ? `<p class="muted small">每升一級：${R.esc(s.descMax)}</p>` : ''}</div>
 ${R.balanceNotes2 && R.balanceNotes2[s.id] ? `<div class="note"><b>Beta 0.8.2～0.8.4 調整：</b>${R.esc(R.balanceNotes2[s.id])}</div>` : ''}
 ${R.bossResist && R.bossResist.skills[s.id] ? `<div class="note small">小頭目／MVP 對這個技能（含其天賦與神祇）只受 <b>${Math.round(R.bossResist.skills[s.id] * 100)}%</b> 傷害。<a href="#updates">頭目抗性表 →</a></div>` : ''}
-${R.balanceNotes && R.balanceNotes[s.id] ? `<div class="note"><b>Beta 0.8 調整：</b>${R.esc(R.balanceNotes[s.id])} <a href="#updates">共同傷害規則 →</a></div>` : ''}
+${R.balanceNotes && R.balanceNotes[s.id] ? `<details class="note"><summary>歷史調整：Beta 0.8（部分規則已被後續版本取代）</summary>${R.esc(R.balanceNotes[s.id])} <a href="#updates">改版紀錄 →</a></details>` : ''}
 <h3>哪些職業可以用</h3>
 ${how.length ? `<ul>${how.map(h => `<li>${h}</li>`).join('')}</ul>` : '<p class="muted">不屬於任何職業（可能是神祇、寵物或特殊技能）。</p>'}
 ${(R.deities && R.deities.skills[s.id]) ? `<h3>神祇效果 <a class="small" href="#deities">什麼是神祇？</a></h3>

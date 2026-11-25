@@ -107,7 +107,8 @@ RSW.page({
 <details><summary>查看卡片效果恢復前後（${u2.counts.cards.changed} 張）</summary><div class="tw"><table class="t"><tr><th>卡片</th><th>0.8～0.8.1</th><th>0.8.2 起</th></tr>${u2.changes.cards.filter(c=>c.fields?.some(f=>f.key==='bonuses')).map(cardRows).join('')}</table></div></details>
 <p class="muted small">來源：遊戲內「最新消息」Beta 0.8.2、0.8.3、0.8.4 與 ${R.esc(u2.to)} 客戶端資料（比對 ${R.esc(u2.from)}）。頭目抗性取自遊戲程式內的抗性表。</p>
 <hr>`:'';
-    return `${newer}<h2 class="pt">Beta 0.8／0.8.1：改版與傷害調整</h2>
+    return `${newer}<h2 class="pt">Beta 0.8／0.8.1：歷史改版紀錄</h2>
+<div class="note small">以下保留 11 月 23 日當時的改動，包含後來被取代的規則。頭目 5% 上限、普通卡片與神祇等目前規則，請以上方 Beta 0.8.2～0.8.4 整理及各資料頁為準。</div>
 <p class="lead">2026 年 11 月 23 日職業平衡大改。技能係數、二轉成長、屬性、卡片與命中次數會一起影響實際輸出。</p>
 <p class="small">比對 ${R.esc(u.from)} → ${R.esc(u.to)}。以下百分比依遊戲內官方繁中公告整理；資料表依本機爬取程式抽出，並非角色實戰 DPS 測量。</p>
 <h3>為什麼傷害大減</h3><div class="tw"><table class="t"><tr><th>原因</th><th>新規則</th></tr>${reasons.map(([name,text])=>`<tr><td>${name}</td><td>${R.esc(text)}</td></tr>`).join('')}</table></div>

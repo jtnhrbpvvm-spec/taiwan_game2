@@ -27,7 +27,7 @@ ${festival ? `<div class="note">由 ${R.ballLink(festival.ball)} 極少見抽出
     const comps = [...new Set(R.cards.map(c => c.compoundName))];
     return `<h2 class="pt">卡片與取得</h2>
 <p class="lead">遊戲裡全部 ${R.cards.length} 張卡片。一般卡片由怪物掉落；11 張燈籠節卡片由對應扭蛋抽出。</p>
-<div class="note">Beta 0.8 起普通卡片效果隨掉落關卡階級計算，多數效果下修、部分改為其他能力，持有舊卡片也會自動更新。0.8.1 已恢復小頭目與 MVP 卡片的舊效果。<a href="#updates">查看前後效果差異 →</a></div>
+<div class="note">Beta 0.8.2 已恢復一般怪物卡片在 0.8 之前的效果與能力種類，持有舊卡片也會自動更新；小頭目與 MVP 卡片已於 0.8.1 恢復。本頁列出目前實際效果，卡片不會因裝備精煉而增強。<a href="#updates">查看前後效果差異 →</a></div>
 <div class="filters">
   <select id="cd-slot"><option value="">全部部位</option>${comps.map(s => `<option>${R.esc(s)}</option>`).join('')}</select>
   <select id="cd-boss"><option value="">全部怪物</option><option value="boss">首領的卡片</option><option value="normal">一般怪物的卡片</option></select>
