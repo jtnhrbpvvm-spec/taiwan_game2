@@ -1,5 +1,5 @@
 {
-  "version": "1.0.21",
+  "version": "1.0.22",
   "shell": 1,
   "files": [
     {
@@ -44,18 +44,18 @@
     },
     {
       "path": "companion.js",
-      "sha256": "7ccb99c46c5621cc20eb89e8965b4d8467cdc8c501c0773c7f92cbb2aab7ec9a",
-      "size": 64214
+      "sha256": "55eb7b1753d33f577ffb56a64c10eeda5218ca26b363adac101b0f2db23e1288",
+      "size": 67021
     },
     {
       "path": "game-hook.js",
-      "sha256": "de07837c75151e0501fa555decee4a26e9c481acf4f3ad47d3235b187a29d679",
-      "size": 140531
+      "sha256": "6ccd4da0ad1d3f0ed853f231c75e53324cab4e094ece067688cb7fbe31be668b",
+      "size": 143706
     },
     {
       "path": "game-patch.js",
-      "sha256": "d2875174b029afbcd44d18397d3820cd88658e16144d5c7bbdcb17fe876fe71d",
-      "size": 11348
+      "sha256": "868ed5bb267ad4dc7712308aafbe2de70384b4c630a2c4eed5df9d9e4a9afe09",
+      "size": 12920
     },
     {
       "path": "game-preload.js",
@@ -194,8 +194,8 @@
     },
     {
       "path": "ui/inv.js",
-      "sha256": "db06444a3578673c5da436c4182f1bc4b8dc93e279cd50986e4ccc3c65be3ac8",
-      "size": 14577
+      "sha256": "8121f5dc3104db3900570cc2db0faa70726508c5776725c70f702d4b7ad23c05",
+      "size": 14676
     },
     {
       "path": "ui/life.html",

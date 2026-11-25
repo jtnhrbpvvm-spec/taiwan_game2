@@ -274,7 +274,7 @@ function gameTitle() {
   const s = game.state;
   const name = s?.character?.name || accountLabel();
   const pct = typeof s?.expPct === "number" ? `(${s.expPct.toFixed(2)}%)` : "";
-  return `桌寵，${name}${pct}${settings.paused ? "　停止練功中" : ""}`;
+  return `桌寵，${name}${pct}${settings.paused ? "　停止練功中" : trainMode() === "life" ? "　練生活技能" : ""}`;
 }
 function updateGameTitle() {
   if (!game.win || game.win.isDestroyed()) return;
@@ -286,7 +286,7 @@ function updateGameMenu() {
   // 使用者 2026-11-23：原本的「停止練功」鈕換成跟右鍵一樣的「停止目前所有動作」（停止戰鬥／停止生活技能／全部停止）；停著時多「開始練功」
   game.win.setMenu(Menu.buildFromTemplate([
     { label: "停止目前所有動作", submenu: stopMenuItems() },
-    ...(settings.paused ? [{ label: "▶ 開始練功", click: togglePause }] : []),
+    ...(settings.paused ? [{ label: trainMode() === "life" ? "▶ 開始練生活技能" : "▶ 開始練功", click: togglePause }] : []),
   ]));
   game.win.setAutoHideMenuBar(false);
   game.win.setMenuBarVisibility(true);
@@ -295,12 +295,38 @@ function updateGameMenu() {
 function togglePause() {
   settings.paused = !settings.paused;
   saveSettings();
-  logGame(settings.paused ? "停止練功" : "開始練功");
-  notice(settings.paused ? "停止練功，回主城休息" : "開始練功");
+  const what = trainMode() === "life" ? "練生活技能" : "練功";
+  logGame(settings.paused ? "停止練功" : `開始${what}`);
+  notice(settings.paused ? "停止練功，回主城休息" : `開始${what}`);
   updateGameMenu();
   updateGameTitle();
   sendAuto();
   onChange();
+}
+
+// 練功設定最上面三選一（使用者 2026-11-25：要練生活技能時一直被拉回練功地點）：
+//   停止練功＝paused；打怪練功＝trainMode "hunt"（生活技能關掉）；練生活技能＝trainMode "life"（待在主城練，不回練功地圖、不跟組隊出門）
+const trainMode = () => (settings.trainMode === "life" ? "life" : "hunt");
+function setTrainMode(mode) {
+  if (mode === "stop") { if (!settings.paused) togglePause(); return; }
+  const wasPaused = !!settings.paused;
+  settings.paused = false;
+  settings.trainMode = mode;
+  let needLife = false;
+  if (mode === "hunt") {
+    if (settings.auto.life.enabled) settings.auto.life = cleanLife({ ...settings.auto.life, enabled: false });
+  } else {
+    settings.auto.life = cleanLife({ ...settings.auto.life, enabled: true });
+    needLife = !settings.auto.life.enabled; // 指定配方卻沒選配方：先去生活技能頁選
+  }
+  saveSettings();
+  logGame(mode === "life" ? "切換：練生活技能" : "切換：打怪練功");
+  notice(mode === "life" ? (needLife ? "練生活技能：先在生活技能頁選好要練的" : "練生活技能，回主城練") : (wasPaused ? "開始打怪練功" : "打怪練功（生活技能已關）"));
+  updateGameMenu();
+  updateGameTitle();
+  sendAuto();
+  onChange();
+  if (needLife) openLife();
 }
 
 /** 右鍵「停止目前所有動作」：fight＝停止戰鬥（同「停止練功」：回主城休息、自動功能都停）；life＝關掉生活技能；all＝兩個都做。 */
@@ -311,7 +337,7 @@ function stopMenuItems() {
     { type: "separator" },
     { label: "全部停止", enabled: !settings.paused || !!settings.auto.life.enabled, click: () => stopActions("all") },
     { type: "separator" },
-    { label: "要繼續：練功設定 →「停止練功」取消勾選；生活技能到生活技能頁開啟", enabled: false },
+    { label: "要繼續：練功設定 → 勾「打怪練功」或「練生活技能」", enabled: false },
   ];
 }
 function stopActions(kind) {
@@ -419,7 +445,7 @@ function sellRules() {
   return cleanRules([...(own.enabled ? own.rules : []), ...(sellGlobal.enabled && own.useGlobal ? sellGlobal.rules : [])]);
 }
 function sendAuto() {
-  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", { ...settings.auto, paused: !!settings.paused, team, teamLeave, goHunt, trade, sellRules: sellRules() }, game.shown, settings.lastHuntMap ?? null);
+  if (game.win && !game.win.isDestroyed()) game.win.webContents.send("auto:settings", { ...settings.auto, paused: !!settings.paused, lifeOnly: trainMode() === "life", team, teamLeave, goHunt, trade, sellRules: sellRules() }, game.shown, settings.lastHuntMap ?? null);
   autoWin?.webContents.send("auto:status", autoStatus());
 }
 function autoStatus() {
@@ -478,7 +504,9 @@ ipcMain.handle("auto:get", () => autoStatus());
 ipcMain.on("auto:set", (e, a) => {
   if (!autoWin || e.sender !== autoWin.webContents) return;
   const keep = settings.auto.alloc;
-  settings.auto = cleanAuto(a);
+  // 設定視窗只送補給／合成／復活／配點；販售規則（物品欄視窗管）、生活技能（生活技能視窗管）要沿用，
+  // 不然每按一次「儲存」就被清空（使用者 2026-11-24：自動販售清單一直消失）
+  settings.auto = cleanAuto({ ...a, sell: settings.auto.sell, life: settings.auto.life });
   if (a?.alloc?.target === null && keep.target) { settings.auto.alloc.target = keep.target; endTarget("canceled"); } // 設定視窗按了「取消目標」
   else settings.auto.alloc.target = keep.target;
   settings.auto.alloc.history = keep.history;
@@ -509,10 +537,19 @@ const lifeInfo = () => ({
 handlers.set("life:get", (e) => (fromLife(e) ? lifeInfo() : null));
 handlers.set("life:set", (e, cfg) => {
   if (!fromLife(e)) return { error: "not allowed" };
+  const wasOn = settings.auto.life.enabled;
   settings.auto.life = cleanLife(cfg);
+  // 在生活技能頁打開：練功設定跟著切到「練生活技能」（不然打怪練功會把它拉回練功地點）
+  if (settings.auto.life.enabled && !wasOn && (trainMode() !== "life" || settings.paused)) {
+    settings.trainMode = "life";
+    settings.paused = false;
+    logGame("切換：練生活技能");
+  }
   saveSettings();
   sendAuto();
   updateGameMenu(); // 遊戲視窗「停止目前所有動作」裡的停止生活技能跟著開關
+  updateGameTitle();
+  onChange();
   return lifeInfo();
 });
 
@@ -1122,7 +1159,9 @@ function buildMenu() {
     ] },
     { type: "separator" },
     { label: "練功設定", submenu: [
-      { label: "停止練功（回主城休息）", type: "checkbox", checked: !!settings.paused, click: togglePause },
+      { label: "停止練功（回主城休息）", type: "radio", checked: !!settings.paused, click: () => setTrainMode("stop") },
+      { label: "打怪練功", type: "radio", checked: !settings.paused && trainMode() === "hunt", click: () => setTrainMode("hunt") },
+      { label: "練生活技能（待在主城）", type: "radio", checked: !settings.paused && trainMode() === "life", click: () => setTrainMode("life") },
       { type: "separator" },
       m.team,
       m.inv,
@@ -1182,7 +1221,11 @@ function buildMenu() {
       settings.auto.supply = { ...sup, huntMap: mapId, huntMob: mob || 0, huntMobMap: mob ? mapId : "" };
       settings.auto.revive = { ...settings.auto.revive, spot: spot !== false };
       settings.auto = cleanAuto(settings.auto);
-      if (settings.paused) { settings.paused = false; updateGameMenu(); updateGameTitle(); }
+      // 自己打＝打怪練功：停止練功、練生活技能都切回來（生活技能開著會把它拉回主城）
+      settings.paused = false;
+      settings.trainMode = "hunt";
+      if (settings.auto.life.enabled) settings.auto.life = cleanLife({ ...settings.auto.life, enabled: false });
+      updateGameMenu(); updateGameTitle();
       goHunt = { id: Date.now(), mapId };
       saveSettings();
       logGame(`自己打：去「${mapName}」${mobName ? `，指定怪物「${mobName}」` : ""}`);

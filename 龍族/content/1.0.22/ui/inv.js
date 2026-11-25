@@ -131,7 +131,7 @@ function renderSell(st) {
       ? `<div class="row"><label><input type="checkbox" data-k="enabled" ${cfg.enabled ? "checked" : ""} /> 啟用「全部桌寵」的規則</label></div><div class="hint">每隻桌寵可以在「只有這隻」裡取消套用全部桌寵的規則。</div>`
       : `<div class="row"><label><input type="checkbox" data-k="enabled" ${cfg.enabled ? "checked" : ""} /> 啟用這隻自己的規則</label></div>
          <div class="row"><label><input type="checkbox" data-k="useGlobal" ${cfg.useGlobal ? "checked" : ""} /> 也套用「全部桌寵」的規則${st.sellGlobal.enabled ? "" : `<span class="muted">（全部桌寵的規則目前沒開）</span>`}</label></div>
-         <div class="row">背包剩 <input type="number" data-k="freeSlots" min="0" max="90" value="${cfg.freeSlots}" style="width:70px" /> 格以下就回城賣</div>
+         <div class="row">背包剩 <input type="number" data-k="freeSlots" min="0" max="90" value="${cfg.freeSlots}" style="width:70px" /> 格以下就回城賣<span class="muted">（平常在練功地圖直接賣，遊戲不讓就地賣時才回城）</span></div>
          <div class="row"><label><input type="checkbox" data-k="sellPrecious" ${cfg.sellPrecious ? "checked" : ""} /> <span class="warn">稀有、+強化、追蹤詞綴等「貴重」的也賣</span></label></div>`;
   }
   $("rules-title").textContent = g ? "全部桌寵的規則" : `${p.name || p.label} 自己的規則`;

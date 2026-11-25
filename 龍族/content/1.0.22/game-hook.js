@@ -278,6 +278,8 @@
   let busy = false;
   // 停止練功：PAUSED＝主程式說停；pauseTownDone＝停下後已經回過主城（之後玩家自己出城就不再拉回）；resumePending＝按了開始，等著回去打
   let PAUSED = false, pauseTownDone = false, resumePending = false, resumeAt = 0;
+  // 練生活技能模式：LIFE_ONLY＝主程式說只練生活技能；lifeTownPending＝剛切過來，還沒回過主城
+  let LIFE_ONLY = false, lifeTownPending = false;
   let nextSupplyAt = 0, nextFuseAt = 0;
   let supplyError = "";
   let supplyResumeMode;
@@ -335,7 +337,12 @@
       TRADE = (AUTO && AUTO.trade) || null;
       // 生活技能關掉：如果正在做就叫遊戲停
       // 組隊練功中先不練生活技能（2026-11-23 實測：隊長一進練功房，生活技能就把它拉回主城，隊伍出不了門）；解散後自動接著練
-      const lifeOn = !!(AUTO && AUTO.life && AUTO.life.enabled) && !(AUTO && AUTO.team);
+      // 練功設定選「練生活技能」（LIFE_ONLY，使用者 2026-11-25）：不管組隊，待在主城練；不回練功地圖、不跟隊伍出門
+      const lifeOnly = !!(AUTO && AUTO.lifeOnly);
+      if (lifeOnly && !LIFE_ONLY) lifeTownPending = true;
+      LIFE_ONLY = lifeOnly;
+      if (LIFE_ONLY) resumePending = false;
+      const lifeOn = !!(AUTO && AUTO.life && AUTO.life.enabled) && (LIFE_ONLY || !(AUTO && AUTO.team));
       if (!lifeOn && LIFE_ON) lifeStopPending = true;
       LIFE_ON = lifeOn;
       nextLifeAt = 0;
@@ -550,7 +557,11 @@
       after = r.rooms[r.rooms.length - 1][0];
       await sleep(randMs(300, 700));
     }
-    return all.filter(([no, n]) => no !== skip && n + size <= 16).sort((a, b) => b[1] - a[1]);
+    // 遊戲 2026-11-24 起有分流：別的分流的房間進去要切分流，隊伍（在原本的分流上）就散了 → 同分流的房間排前面（遊戲「快速加入」也是先找同分流）
+    const g = G(), line = (no) => { try { const v = g.lines.view; return v.count > 1 ? g.roomLine(no, v.count) : 0; } catch { return 0; } };
+    let self = 0; try { self = g.lines.view.self || 0; } catch {}
+    return all.filter(([no, n]) => no !== skip && n + size <= 16)
+      .sort((a, b) => (line(a[0]) === self ? 0 : 1) - (line(b[0]) === self ? 0 : 1) || b[1] - a[1]);
   }
   /** 隊長帶隊去公開房（TEAM.room 指定的那間；滿了／沒了就快速加入），記下房號給主程式轉給隊員。 */
   async function leaderToPublic(team, skip) {
@@ -585,7 +596,15 @@
     log(`組隊：已進「${name}」公開房 ${got.no ?? ""}，隊員會跟上`);
   }
   async function partyReq(body) {
-    const r = await timed(G().net.request({ op: "party", ...body }), 20000, "組隊");
+    const g = G();
+    // 遊戲 2026-11-24 起有分流：隊伍在別的分流時，遊戲自己的組隊函式會先切過去再接受／加入（直接送封包會回 PARTY_NONE）。
+    // 它成功回 null、失敗回錯誤文字；切分流要連線重來，所以時間放寬
+    if (g.partyAct && (body.act === "accept" || body.act === "join")) {
+      const err = await timed(g.partyAct(body), 45000, "組隊");
+      if (err) throw new Error(errText(err));
+      return null;
+    }
+    const r = await timed(g.net.request({ op: "party", ...body }), 20000, "組隊");
     if (r && r.error) throw new Error(errText(r.error));
     return r;
   }
@@ -1041,7 +1060,6 @@
   const freeSlots = () => rawBag().filter((s) => !s || !s.length).length;
   /** 在主城：走到商人旁賣掉。賣了幾件。 */
   async function sellHere(cfg, town) {
-    const g = G();
     let plan = sellPlan(cfg);
     if (!plan.slots.length) return 0;
     const shops = [...((town && town.shops) || [])];
@@ -1051,6 +1069,11 @@
       catch (e) { if (e && e.unreachable) break; log(`販售：${errText(e)}，換一位商人`, "warn"); } // 走不動（被擋住）就不在這個主城耗時間
     }
     if (!opened) throw new Error("主城裡走不到任何商人旁邊，這次沒有賣");
+    try { return await sellRun(cfg, plan, ""); } finally { closeShop(); }
+  }
+  /** 照 plan 一批最多 20 格送 sellMany，賣到沒有要賣的。where＝紀錄裡的地點說明。賣了幾件。 */
+  async function sellRun(cfg, plan, where) {
+    const g = G();
     let sold = 0, gold = 0;
     for (let round = 0; round < 10 && plan.slots.length; round++) {
       const slots = plan.slots.slice(0, 20), bag = rawBag();
@@ -1063,15 +1086,31 @@
       await sleep(randMs(600, 1200));
       plan = sellPlan(cfg);
     }
-    closeShop();
-    log(`販售：賣了 ${sold} 件${gold ? `，得到 ${gold.toLocaleString()} 金幣` : ""}`);
+    log(`販售：${where}賣了 ${sold} 件${gold ? `，得到 ${gold.toLocaleString()} 金幣` : ""}`);
     return sold;
+  }
+  // 遊戲 2026-11-24 起物品欄點道具就能賣，不用回城、不用找商人（使用者 2026-11-24）。
+  // 先就地賣；伺服器不讓（例如之後又改回要在商店）就記下來，改回原本「回主城找商人賣」的做法。
+  let sellNeedShopUntil = 0; // 就地賣失敗後 30 分鐘內改回城賣，之後再試就地（一次失敗可能只是連線不穩）
+  async function sellInPlace(cfg, plan) {
+    try { return await sellRun(cfg, plan, "就地"); }
+    catch (e) {
+      sellNeedShopUntil = Date.now() + 30 * 60000;
+      log(`販售：就地賣不了（${errText(e)}），改回主城找商人賣`, "warn");
+      return -1;
+    }
   }
   /** 背包快滿（剩 freeSlots 格以下）又有要賣的：回主城賣完再回去練功。在主城閒著就直接賣。 */
   async function sellTick(cfg) {
     if (Date.now() < nextSellAt) return;
     const plan = sellPlan(cfg);
     if (!plan.slots.length) { nextSellAt = Date.now() + 30000; return; }
+    if (Date.now() >= sellNeedShopUntil) {
+      // 就地賣：有要賣的就賣（不用等背包快滿），之後每分鐘看一次
+      const n = await sellInPlace(cfg, plan);
+      nextSellAt = Date.now() + 60000;
+      if (n >= 0) return;
+    }
     const g = G();
     const own = (g.towns || []).find((t) => t.nation === S.nation);
     const town = (AUTO.supply && AUTO.supply.town && townInfo(AUTO.supply.town)) || (own && townInfo(own.mapId));
@@ -1382,6 +1421,7 @@
   /** 回練功地圖，自動戰鬥恢復成 autoMode（離開練功圖前的樣子）。 */
   async function backToHunt(target, autoMode, what, supplyCfg) {
     const g = G();
+    if (LIFE_ONLY) { log(`${what}，練生活技能中：留在主城`); return; }
     try { await topUpInTown(what, supplyCfg); } catch (e) { log(`${what}：喝藥補滿沒有完成（${errText(e)}），照樣回去`, "warn"); }
     // 組隊中：回隊伍的房間；隊員還沒有隊伍房間就留在主城等隊長
     const dest = teamDest();
@@ -1408,7 +1448,7 @@
       if (!target) { log(`${what}，不知道要回哪張練功地圖，先停在主城`, "warn"); return; }
       await humanPause();
     }
-    const err2 = await timed(g.joinRoom(target.id, {}), 30000, "回狩獵地圖");
+    const err2 =await timed(g.joinRoom(target.id, {}), 30000, "回狩獵地圖");
     if (err2) throw new Error(`回不了狩獵地圖「${target.name}」（${err2}）`);
     if (!(await waitFor(() => !S.town && S.mapId === target.id, 20000))) throw new Error(`等太久還沒進到狩獵地圖「${target.name}」`);
     await sleep(1000);
@@ -1754,20 +1794,20 @@
   }
 
   /** 停止練功：回主城（補給設定的主城，沒設就本國主城）待著；只做一次，之後玩家自己出城不再拉回。 */
-  async function pauseRun() {
-    pauseTownDone = true;
-    if (S.town) { log("停止練功：留在主城"); return; }
+  async function pauseRun(what = "停止練功", doing = "休息") {
+    if (what === "停止練功") pauseTownDone = true; else lifeTownPending = false;
+    if (S.town) { log(`${what}：留在主城`); return; }
     const g = G(), sup = AUTO && AUTO.supply;
     const own = (g.towns || []).find((t) => t.nation === S.nation);
     const town = (sup && sup.town && townInfo(sup.town)) || (own && townInfo(own.mapId));
-    if (!town) { restoreAuto("locked"); log("停止練功：找不到主城，先關掉自動戰鬥", "warn"); return; }
-    log(`停止練功：回「${town.name}」休息`);
+    if (!town) { restoreAuto("locked"); log(`${what}：找不到主城，先關掉自動戰鬥`, "warn"); return; }
+    log(`${what}：回「${town.name}」${doing}`);
     try {
       const err = await timed(g.joinRoom(town.mapId, { town: true }), 30000, "回主城");
       if (err) throw new Error(err);
     } catch (e) {
       restoreAuto("locked");
-      log(`停止練功：回不了主城（${errText(e)}），先關掉自動戰鬥`, "warn");
+      log(`${what}：回不了主城（${errText(e)}），先關掉自動戰鬥`, "warn");
     }
   }
   /** 開始練功（或休息完）：在主城就回練功區／隊伍的房間，自動戰鬥打開；已經在外面就只把自動戰鬥打開。 */
@@ -1898,12 +1938,14 @@
     if (reviveHoldUntil && !reviveHolding()) { reviveHoldUntil = 0; if (!PAUSED) { resumePending = true; log("復活：休息 30 分鐘了，回去繼續打"); } }
     // 停止練功、開始練功、休息中都是玩家看著遊戲時也要照做的（按鈕就在遊戲視窗上）
     const pauseNow = PAUSED && !pauseTownDone && !S.dead && has(REVIVE_NEED);
-    const resumeNow = !PAUSED && resumePending && Date.now() >= resumeAt && !S.dead && !reviveHolding() && has(REVIVE_NEED);
+    // 切到「練生活技能」：回主城一次（之後由生活技能自己待在主城）
+    const lifeTownNow = LIFE_ONLY && !PAUSED && lifeTownPending && !S.dead && has(REVIVE_NEED);
+    const resumeNow = !PAUSED && !LIFE_ONLY && resumePending &&Date.now() >= resumeAt && !S.dead && !reviveHolding() && has(REVIVE_NEED);
     // 不組隊自己打（組隊練功頁的按鈕）：玩家下的指令，看著遊戲也照做
     const goNow = !!(AUTO.goHunt && AUTO.goHunt.id && AUTO.goHunt.id !== goHuntDone) && !S.dead && Date.now() >= goHuntAt && has(REVIVE_NEED);
     const resting = PAUSED || reviveHolding();
     // 組隊、指定交易是玩家下的指令：遊戲視窗開著也照做（使用者 2026-11-22：看著遊戲時「隊長出發」不會按）
-    const teamNow = !resting && (!!TEAM || !!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone));
+    const teamNow = !resting && !LIFE_ONLY && (!!TEAM ||!!(AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone));
     const tradeNow = !!(TRADE && TRADE.id && !tradeDone[TRADE.id]);
     // 生活技能每 30 秒檢查有沒有在做（使用者 2026-11-23：玩家點畫面走位、斷線重連後遊戲就停了，遊戲視窗又開著，桌寵就一直沒接下去）：
     // 遊戲那邊停了（沒在製作也沒在採集）超過 30 秒就接著做。看著遊戲時只在主城接，不把玩家拉回主城。
@@ -1912,7 +1954,7 @@
     // 生活技能設定剛改過：遊戲視窗開著、遊戲還在做／採舊的也馬上換（不然一直在採，30 秒閒置永遠不會到）
     const lifeChanged = LIFE_ON && !!AUTO.life && lifeKeyOf(AUTO.life) !== lifeKey;
     const lifeWatchNow = watching && LIFE_ON && !resting && !S.dead && S.town && (lifeNext || lifeChanged || lifeIdleFor(LIFE_WATCH_MS));
-    if (watching && !reviveNow && !goNow && !pauseNow && !resumeNow && !teamNow && !tradeNow && !lifeWatchNow) return;
+    if (watching && !reviveNow && !goNow && !pauseNow && !lifeTownNow && !resumeNow && !teamNow && !tradeNow && !lifeWatchNow) return;
     busy = true;
     try {
       if (reviveNow) {
@@ -1926,6 +1968,7 @@
       }
       if (goNow) { await goHuntRun(AUTO.goHunt); return; }
       if (pauseNow) { await pauseRun(); return; }
+      if (lifeTownNow) { await pauseRun("練生活技能", "練"); return; }
       if (resumeNow) { await resumeRun(); return; }
       if (resting) {
         // 停止練功／休息中：只照指定交易（玩家下的指令），其他自動功能（補給、組隊跟隨、販售、合成…）都先停
@@ -1973,7 +2016,7 @@
         for (let t = 0; t < 3; t++) if (AUTO.fuse[t] && AUTO.fuse[t].enabled) await fuseTier(t, AUTO.fuse[t]);
       }
       // 組隊練功：邀請／接受／帶隊進私人房／跟上隊伍（主程式指定角色）
-      if (TEAM || (AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone)) {
+      if (!LIFE_ONLY && (TEAM || (AUTO.teamLeave && AUTO.teamLeave !== teamLeaveDone))) {
         try { await teamTick(); }
         catch (e) { log(`組隊沒有完成：${errText(e)}。30 秒後再試`, "warn"); nextTeamAt = Date.now() + 30000; }
       }
