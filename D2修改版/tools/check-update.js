@@ -191,6 +191,8 @@ async function main() {
   if (!build) throw new Error('app.asar 裡沒有 changelog.json');
   console.log(`遊戲檔：${asarPath}`);
   console.log(`遊戲版本：${build}（${changelog[0].date}）`);
+  const marked = (/const D2ZH_GAME_BUILD = '([^']+)'/.exec(fs.readFileSync(path.join(ROOT, 'd2_zh.js'), 'utf8')) || [])[1];
+  if (marked !== build) console.log(`⚠ d2_zh.js 的版本標記 D2ZH_GAME_BUILD 是 ${marked || '（沒有）'}：補完這一版的翻譯、實測後改成 '${build}'，玩家才會從官方繁中切回中文化`);
 
   // 存下這一版的遊戲檔，當下次的比對基準
   const mine = path.join(CACHE, `assets-${build}`);

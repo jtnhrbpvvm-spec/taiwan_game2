@@ -6,6 +6,36 @@ if (!document.getElementById('d2-files') && !window.__D2ZH_DESKTOP) {
 alert('請在 D2 Survivors 遊戲頁面（https://d2survivors.lol/）按這個書籤。');
 return;
 }
+// ====== 版本標記：這一版中文化對應的遊戲版本（每次跟上遊戲改版都要改成新的 build，tools/check-update.js 會提醒） ======
+// 電腦版的遊戲比這個版本新（中文化還沒跟上）時，整個工具先不啟動，讓玩家用遊戲內建的官方繁體中文，避免兩邊的中文疊字；
+// 等中文化更新、這裡改成相符的版本後，下面的語言檢查會把遊戲換回英文底，恢復由中文化主導。
+const D2ZH_GAME_BUILD = '20261125.1';
+{
+const build = window.__D2ZH_DESKTOP && window.__D2ZH_DESKTOP.gameBuild;
+const parts = b => String(b).split('.').map(n => parseInt(n, 10) || 0);
+const newer = (a, b) => { const x = parts(a), y = parts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+if (build && newer(build, D2ZH_GAME_BUILD)) {
+window.__D2ZH_WAITING = build;
+// 開遊戲時背景下載到新版中文化：重新載入一次，新版若已跟上這個遊戲版本就會直接接手
+window.__d2zhAutoChecked = r => { if (r && Array.isArray(r.changed) && r.changed.includes('d2_zh.js')) location.reload(); };
+try {
+const saved = localStorage.getItem('d2s:lang');
+if (saved !== 'zh-TW' && saved !== 'ko') {
+localStorage.setItem('d2s:lang', 'zh-TW');
+if (localStorage.getItem('d2s:lang') === 'zh-TW') { location.reload(); return; }
+}
+} catch (_) { /* 存不了就維持遊戲原本的語言 */ }
+if (location.host === 'game') {
+const note = document.createElement('div');
+note.textContent = `遊戲已更新到 ${build}，中文化工具還在跟進中，先使用遊戲內建的官方繁體中文；中文化更新後會自動切回。`;
+note.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;max-width:min(680px,92vw);padding:8px 14px;' +
+'background:rgba(20,13,8,.92);border:1px solid #8a6a2a;border-radius:6px;color:#f0c94a;font:14px/1.5 "Microsoft JhengHei",sans-serif;pointer-events:none;';
+const show = () => { document.body.append(note); setTimeout(() => note.remove(), 10000); };
+if (document.body) setTimeout(show, 3000); else addEventListener('DOMContentLoaded', () => setTimeout(show, 3000));
+}
+return;
+}
+}
 // 翻譯是對著英文字串做的，遊戲是韓文時蓋不上去。不是自己在電腦版選韓文的話，就換回英文底（畫面仍是繁中）再重新載入
 // 網頁版按書籤就是要中文，所以不看記住的選擇；韓文要用書籤的語言按鈕切換，電腦版才會記住
 {
@@ -15,7 +45,8 @@ const saved = localStorage.getItem('d2s:lang');
 // 遊戲 20261124.1 起多了簡體中文：沒選過語言時照系統語言挑（第一個 ko 或 zh 開頭的），中文系統會自動變簡中，
 // 譯文蓋不上去還會跟書籤畫的字疊在一起，所以簡中也跟韓文一樣換回英文底
 const sys = (navigator.languages || [navigator.language]).map(l => (/^(ko|zh)\b/i.exec(l) || [])[1]).find(Boolean);
-const gameZh = saved === 'zh' || (saved === null && /^zh$/i.test(sys || ''));
+// 20261125.1 起還有官方繁中 'zh-TW'：遊戲只在玩家沒自己選過語言時才會讓給書籤，選過的也一樣換回英文底
+const gameZh = saved === 'zh' || saved === 'zh-TW' || (saved === null && /^zh$/i.test(sys || ''));
 gameKo = gameZh || saved === 'ko' || (saved === null && /^ko$/i.test(sys || ''));
 if (gameZh) chosenKo = false; else
 chosenKo = !!window.__D2ZH_DESKTOP && localStorage.getItem('d2-survivors-language') === 'ko';
@@ -37,7 +68,7 @@ if (!window.__D2ZH_DESKTOP) {
 try { if (!window.__tg2Count) { window.__tg2Count = 1; var __tg2u = 'https://taiwangame2.goatcounter.com/count?p=' + encodeURIComponent('/書籤/D2修改版') + '&t=' + encodeURIComponent('書籤：D2修改版') + '&e=true&rnd=' + Math.random().toString(36).slice(2); if (navigator.sendBeacon) navigator.sendBeacon(__tg2u); else new Image().src = __tg2u; } } catch (__tg2e) {}
 }
 // 中文化版本號：每次發布更新加一（顯示在「書籤修改」面板標題旁）
-const D2ZH_VERSION = 'V71';
+const D2ZH_VERSION = 'V72';
 window.__D2ZH_VERSION = D2ZH_VERSION;
 // 線上模式（遊戲 20261120.1 起，電腦版「線上遊戲」）：遊戲選了一般／專家模式的線上遊戲，會把模式寫進 sessionStorage 'd2s:online' 再重新載入頁面；
 // 回到離線遊戲時刪掉再重新載入。所以書籤載入時看一次就知道整個頁面是不是線上模式。
@@ -351,6 +382,11 @@ for (const box of root.querySelectorAll('.d2-parts')) d2zhMergeParts(box);
 // 這裡在 split 時換成整句中文、切成一格一格讓遊戲照寬度斷行；d2zhPaint 再把格間的空白拿掉。沒翻到的句子維持原本的逐行翻譯。
 // 新句子加在最前面（遊戲只顯示最近 14 天）
 const D2ZH_CHANGELOG = {
+// 20261125.1
+"The game now plays in Traditional Chinese, picked in Options or chosen by a Taiwan or Hong Kong system": "遊戲現在支援繁體中文，可以在選項中選擇，台灣或香港的系統會自動使用",
+"Online runs where you left a smith's window while the server was slow to answer are no longer refused": "線上遊戲中在伺服器回應較慢時離開鐵匠視窗，紀錄不會再被拒收",
+"In Hardcore online, playing another hero after a lost connection no longer leaves your first hero waiting for good": "專家模式線上遊戲中，斷線後改玩其他英雄，第一個英雄不會再一直卡在等待狀態",
+"Chinese text no longer shows twice, one over the other, on some players' screens": "部分玩家畫面上中文字重疊顯示兩次的問題已修正",
 // 20261124.1
 "The game now plays in Simplified Chinese, picked in Options or chosen by a Chinese system": "遊戲現在支援簡體中文，可以在選項中選擇，中文系統會自動使用",
 "The automap's marks for shrines, elites and floor items come back after the display is lost, instead of staying gone until a restart": "畫面中斷恢復後，自動地圖上的神殿、精英和地上物品標記會重新出現，不會再一直消失到重新啟動為止",
@@ -3473,6 +3509,12 @@ d2edRender();
 // 每次中文化版本更新後第一次開啟，跳出這次（以及上次看過之後）的改版內容；「書籤修改」面板的「更新說明」可以重看。
 // 新版本加在最前面。note：作者的話（照原本分行顯示）；perf：作者的話後面加「開啟低效能模式」按鈕；report：最後加「問題回報」按鈕。
 const D2ZH_NEWS = [
+{ ver: 'V72', date: '2026-11-25', game: '遊戲 20261125.1', items: [
+'翻譯遊戲 20261125.1 的更新內容',
+'遊戲加入官方繁體中文：開著中文化工具時會自動使用本工具的翻譯，不會兩種中文疊在一起',
+'之後遊戲改版、中文化還沒跟上時，會先自動使用遊戲內建的官方繁體中文（避免疊字），中文化更新後自動切回',
+'官方推出繁體中文後，本工具未來僅維護離線模式相關功能及在地化語意；想挑戰線上模式排行榜的玩家，可以在開遊戲時跳出的詢問選擇移除本工具（只會詢問一次）',
+] },
 { ver: 'V71', date: '2026-11-24', game: '遊戲 20261124.1', items: [
 '修正物品說明框裡獨特（金色）、套裝（綠色）等名稱的顏色變成白色的問題（遊戲這次更新改了畫中文字的方式，中文化跟著調整）',
 '「尚未收藏」改回遊戲原本的紫色',
@@ -3740,7 +3782,70 @@ d2zhReplyLoad()
 // 開遊戲時：回應.txt 跟玩家上次看過的不一樣（作者新增或修改了回覆）就先跳出來，新的行標成金色並捲到第一行新內容；
 // 玩家按「我知道了」才記成看過。讀不到（離線、電腦版舊主程序）就略過，直接跳更新說明。
 const D2ZH_REPLY_SEEN_KEY = 'd2zh:replySeen';
+// ====== 官方繁中推出後的一次性詢問：要不要移除中文化工具（只問一次，確定要再確認一次） ======
+// 只在電腦版、而且主程序 d2zh-inject.cjs 已經是會移除的版本（info().uninstall）時才問；舊版主程序等下次重開更新後再問
+const D2ZH_OFFICIAL_ASK_KEY = 'd2zh:officialAsk';
+function d2zhOfficialAsk(after) {
+const desk = window.__D2ZH_DESKTOP;
+let asked = null;
+try { asked = localStorage.getItem(D2ZH_OFFICIAL_ASK_KEY); } catch (_) { /* 讀不到就當沒問過 */ }
+// 設定頁（app://setup，解壓縮遊戲檔）也會注入書籤，但主程序只聽遊戲頁的指令，所以只在遊戲頁問
+if (asked || !desk || typeof desk !== 'object' || !desk.uninstall || location.host !== 'game' || D2ED.panel || document.getElementById('d2ed-overlay')) { after(); return; }
+const markAsked = v => { try { localStorage.setItem(D2ZH_OFFICIAL_ASK_KEY, v); } catch (_) { /* 存不了：下次再問 */ } };
+const box = d2edEl('div', { id: 'd2ed-overlay' });
+const card = d2edEl('div', { class: 'd2ed-card', role: 'alertdialog', 'aria-label': '官方繁體中文' });
+const finish = v => { markAsked(v); box.remove(); after(); };
+const btn = (text, onclick, main) => d2edEl('button', { type: 'button', class: main ? 'd2ed-main' : '', onclick }, text);
+const step1 = () => card.replaceChildren(
+d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', {}, '中文化工具通知'), d2edEl('span', { class: 'd2ed-ver', title: '中文化版本' }, D2ZH_VERSION)),
+d2edEl('div', { class: 'd2ed-body', style: 'line-height: 1.7; color: #e8e2d0;' },
+d2edEl('p', {}, '官方已經正式推出【繁體中文】'),
+d2edEl('p', {}, '本工具未來僅維護離線模式相關功能及在地化語意，如果您是想挑戰線上模式排行榜玩家！可以選此移除目前工具！'),
+d2edEl('p', { class: 'd2ed-note' }, '這個詢問只會出現一次。選「繼續使用」之後，想移除可以關閉遊戲後執行「移除中文版.cmd」。')),
+d2edEl('div', { class: 'd2ed-row', style: 'padding: 0 12px 12px;' }, btn('確定（移除工具）', step2, false), btn('繼續使用', () => finish('keep'), true)));
+const status = d2edEl('p', { class: 'd2ed-note', style: 'margin: 6px 12px; color: #f0c94a' });
+function step2() {
+const okBtn = btn('確定移除', null, false);
+const backBtn = btn('取消', () => finish('keep'), true);
+okBtn.style.cssText = 'color: #fff; background: #8a1f14; border-color: #d0402e;';
+okBtn.onclick = () => {
+okBtn.disabled = backBtn.disabled = true;
+status.textContent = '正在關閉遊戲並移除工具……如果跳出系統管理員確認，請按「是」。完成後會開啟官方版遊戲。';
+window.__d2zhUninstallDone = r => {
+if (r && r.ok) {
+markAsked('removed');
+// 移除後官方遊戲直接用繁中（用屬性寫入，不經過書籤擋語言的 setItem）
+try { localStorage['d2s:lang'] = 'zh-TW'; } catch (_) { /* 存不了就讓玩家自己到選項選 */ }
+return;
+}
+okBtn.disabled = backBtn.disabled = false;
+status.textContent = r && r.reason === 'old-installer'
+? '中文化程式需要更新才能移除：請關閉遊戲再重新開一次（會自動更新），或關閉遊戲後執行「移除中文版.cmd」。'
+: `無法開始移除（${(r && r.reason) || '未知錯誤'}）。可以關閉遊戲後執行「移除中文版.cmd」。`;
+};
+console.log('__D2ZH__:uninstall');
+};
+card.replaceChildren(
+d2edEl('div', { class: 'd2ed-head' }, d2edEl('b', { style: 'color: #ff5a4a;' }, '請再次確認！')),
+d2edEl('div', { class: 'd2ed-body', style: 'line-height: 1.7; color: #e8e2d0;' },
+d2edEl('p', { style: 'color: #ff5a4a; font-size: 1.15em; font-weight: bold;' }, '請再次確認！即將開始移除程序！！'),
+d2edEl('ul', {},
+d2edEl('li', {}, '遊戲會先自動存檔並關閉，接著換回官方原版、刪除中文化工具與桌面「D2 Survivors 中文版」捷徑，再開啟官方遊戲（語言會設成官方繁體中文）。'),
+!document.body.classList.contains('no-run') ? d2edEl('li', {}, '目前在遊戲中，這一局沒存到的進度會不見。') : null,
+d2edEl('li', {}, '可能跳出系統管理員確認，請按「是」。'),
+d2edEl('li', {}, '書籤修改的功能（裝備創造、鐵砧必定成功等）都會一起移除。'))),
+status,
+d2edEl('div', { class: 'd2ed-row', style: 'padding: 0 12px 12px;' }, okBtn, backBtn));
+}
+step1();
+box.append(card);
+box.addEventListener('keydown', e => e.stopPropagation());
+document.body.append(box);
+}
 function d2zhStartupPopups() {
+d2zhOfficialAsk(d2zhStartupPopupsRest);
+}
+function d2zhStartupPopupsRest() {
 const news = () => d2zhNewsOpen(false);
 let seen = null;
 try { seen = localStorage.getItem(D2ZH_REPLY_SEEN_KEY); } catch (_) { /* 存不了就每次比對都當新的 */ }

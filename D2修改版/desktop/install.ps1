@@ -15,6 +15,7 @@ param(
     [string]$RestoreAsar,    # 內部用：以系統管理員身分把 app.asar.d2zh-backup 複製回 app.asar
     [string]$GameDir,        # 遊戲裝在別的地方時指定（例如 -GameDir "D:\Games\D2 Survivors"）
     [switch]$ShortcutOnly,   # 只在桌面建立「D2 Survivors 中文版」捷徑（建立桌面捷徑.cmd 用）
+    [switch]$WaitClose,      # 和 -Uninstall 一起用：遊戲裡選「移除」時由 d2zh-inject.cjs 啟動，先等遊戲關閉，移除後開官方原版
     [switch]$Quiet
 )
 $ErrorActionPreference = 'Stop'
@@ -303,6 +304,34 @@ try {
         New-Shortcut $game
         Say ("已在桌面建立「D2 Survivors 中文版」捷徑。`n`n" +
              "用這個捷徑開遊戲就是中文：第一次開（以及每次遊戲更新後）會跳出一次系統管理員確認，按「是」即可。")
+        exit 0
+    }
+
+    if ($Uninstall -and $WaitClose) {
+        # 遊戲裡的「移除工具」：遊戲自己關閉後，換回官方原版 app.asar（排行榜比對雜湊用），刪掉捷徑和中文檔，再開官方遊戲
+        $deadline = (Get-Date).AddSeconds(60)
+        while ((Test-GameRunning $game) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+        if (Test-GameRunning $game) { Say '遊戲還沒有關閉，無法移除。請先關閉遊戲，再執行「移除中文版.cmd」，或重新開遊戲再選一次移除。'; exit 1 }
+        Start-Sleep -Seconds 2   # 遊戲關閉時若有待安裝的更新，安裝程式會接著換檔；稍等再檢查
+        try {
+            $want = Get-OfficialHash $asarPath
+            if (-not (Test-OfficialAsar $asarPath $want)) {
+                if (Test-OfficialAsar "$asarPath.d2zh-backup" $want) { [void](Invoke-Asar 'restore' $asarPath) }
+                elseif (Test-Patched $asarPath) { [void](Invoke-Asar 'unpatch' $asarPath) }
+            }
+            if (Test-Patched $asarPath) { throw '遊戲檔案沒有還原成功' }
+        } catch {
+            Say ("移除沒有完成：$($_.Exception.Message)`n`n" +
+                 "可以到 d2survivors.lol 重新下載官方安裝程式覆蓋安裝一次，就是乾淨的官方版。")
+            exit 1
+        }
+        Remove-Item -LiteralPath "$asarPath.d2zh-backup" -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath (Join-Path $DesktopDir $ShortcutName) -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $ZhDir -Recurse -Force -ErrorAction SilentlyContinue
+        Say ("已移除中文化工具，遊戲恢復成官方原版。`n`n" +
+             "・官方繁體中文可以在遊戲「選項」的語言切換。`n" +
+             "・以後請直接用官方的遊戲捷徑開啟。")
+        Start-Process -FilePath $exe
         exit 0
     }
 

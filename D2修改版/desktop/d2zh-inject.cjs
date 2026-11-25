@@ -92,25 +92,62 @@ function checkForUpdates(reason) {
 function info() {
   let fileTime = null;
   try { fileTime = fs.statSync(path.join(DIR, 'd2_zh.js')).mtimeMs; } catch (_) { /* 沒有檔案 */ }
-  return { updater: 1, replies: 1, ecExports: 5, cleanLaunch: 1, fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
+  return { updater: 1, replies: 1, ecExports: 5, cleanLaunch: 1, uninstall: 1, gameBuild: readGameBuild(), fileTime, lastCheck, autoUpdate: !fs.existsSync(path.join(DIR, 'no-auto-update')) };
 }
 
 // 上榜模式：遊戲會比對 app.asar 雜湊，被中文化改過就拒收排行榜紀錄。
 // 交給 install.ps1 -CleanLaunch：等遊戲關閉 → 把 app.asar 換回官方原版 → 開一次乾淨的英文遊戲。
 // 之後用「D2 Survivors 中文版」捷徑開遊戲時會自動重新套用中文。
-function cleanLaunch() {
+// 移除工具（官方推出繁體中文後的一次性詢問）：交給 install.ps1 -Uninstall -WaitClose，
+// 等遊戲關閉 → 換回官方原版 app.asar → 刪捷徑和 %APPDATA%\D2SurvivorsZH → 開官方遊戲
+function cleanLaunch(mode = 'clean') {
   const script = path.join(DIR, 'install.ps1');
   let text = '';
   try { text = fs.readFileSync(script, 'utf8'); } catch (_) { /* 沒有安裝程式 */ }
-  if (!text.includes('CleanLaunch')) return { ok: false, reason: 'old-installer' };
-  const { spawn } = require('child_process');
+  if (!text.includes(mode === 'uninstall' ? 'WaitClose' : 'CleanLaunch')) return { ok: false, reason: 'old-installer' };
+  const { spawn, spawnSync } = require('child_process');
   const ps = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
-  const child = spawn(ps, ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', script, '-CleanLaunch'],
-    { detached: true, stdio: 'ignore', windowsHide: true });
-  child.unref();
-  log('clean launch: started');
+  const args = mode === 'uninstall' ? ['-Uninstall', '-WaitClose'] : ['-CleanLaunch'];
+  // 遊戲（或啟動它的程式）若在 Windows「工作物件」裡，遊戲關閉時直接 spawn 的子程序會跟著被結束，腳本根本跑不到。
+  // 所以先請 WMI 開（WMI 開的程序不屬於遊戲），失敗才退回直接 spawn。WMI 開的程序不繼承環境變數，要自己帶過去。
+  const q = s => `'${String(s).replace(/'/g, "''")}'`;
+  const envs = ['APPDATA', 'D2S_USER_DATA', 'D2ZH_DESKTOP_DIR'].filter(k => process.env[k]).map(k => `$env:${k}=${q(process.env[k])};`).join(' ');
+  const enc = s => Buffer.from(s, 'utf16le').toString('base64');
+  const inner = `${envs} & ${q(script)} ${args.join(' ')}`;
+  const cmdLine = `"${ps}" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -EncodedCommand ${enc(inner)}`;
+  let started = false;
+  try {
+    const r = spawnSync(ps, ['-NoProfile', '-NonInteractive', '-EncodedCommand',
+      enc(`(Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = ${q(cmdLine)} }).ReturnValue`)],
+      { encoding: 'utf8', windowsHide: true, timeout: 20000 });
+    started = String(r.stdout || '').trim() === '0';
+    if (!started) log(`${mode}: wmi ${r.status} ${String(r.stdout || '').trim()} ${String(r.stderr || '').trim().slice(0, 300)}`);
+  } catch (e) {
+    log(`${mode}: wmi ${e && e.message}`);
+  }
+  if (!started) {
+    const child = spawn(ps, ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', script, ...args],
+      { detached: true, stdio: 'ignore', windowsHide: true });
+    child.unref();
+  }
+  log(`${mode}: started (${started ? 'wmi' : 'spawn'})`);
   setTimeout(() => app.quit(), 800);   // 讓頁面先顯示「正在關閉」；正常關閉，遊戲會照常存檔
   return { ok: true };
+}
+
+// 這個遊戲的版本（app.asar 裡 desktop/dist/web/changelog.json 第一筆的 build，例如 20261125.1）。
+// 書籤用它判斷是不是已經跟上這一版：還沒跟上就先讓玩家用遊戲內建的繁體中文，避免兩邊的中文疊在一起。
+let gameBuild;
+function readGameBuild() {
+  if (gameBuild !== undefined) return gameBuild;
+  gameBuild = null;
+  try {
+    const list = JSON.parse(fs.readFileSync(path.join(app.getAppPath(), 'desktop', 'dist', 'web', 'changelog.json'), 'utf8'));
+    if (list && list[0] && list[0].build) gameBuild = String(list[0].build);
+  } catch (e) {
+    log(`game build: ${e && e.message}`);
+  }
+  return gameBuild;
 }
 
 // 書籤修改面板用到遊戲的物品函式。網頁版它們分在不同檔案、有匯出；電腦版全打包在 moved-*.js，只有內部用的就不匯出，頁面拿不到。
@@ -211,10 +248,12 @@ app.on('web-contents-created', (_event, contents) => {
         .catch(e => log(`replies notify: ${e && e.message}`));
       return;
     }
-    if (text === '__D2ZH__:clean') {
+    if (text === '__D2ZH__:clean' || text === '__D2ZH__:uninstall') {
+      const mode = text === '__D2ZH__:uninstall' ? 'uninstall' : 'clean';
+      const done = mode === 'uninstall' ? '__d2zhUninstallDone' : '__d2zhCleanDone';
       let result;
-      try { result = cleanLaunch(); } catch (e) { log(`clean launch: ${e && e.message}`); result = { ok: false, reason: String(e && e.message) }; }
-      contents.executeJavaScript(`window.__d2zhCleanDone && window.__d2zhCleanDone(${JSON.stringify(result)});0`, true)
+      try { result = cleanLaunch(mode); } catch (e) { log(`${mode}: ${e && e.message}`); result = { ok: false, reason: String(e && e.message) }; }
+      contents.executeJavaScript(`window.${done} && window.${done}(${JSON.stringify(result)});0`, true)
         .catch(e => log(`clean notify: ${e && e.message}`));
       return;
     }
