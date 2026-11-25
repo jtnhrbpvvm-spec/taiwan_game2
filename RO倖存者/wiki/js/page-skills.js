@@ -13,6 +13,8 @@ RSW.page({
 <h2 class="pt">${R.img(s.icon, 'ico lg')} ${R.esc(s.name)}</h2>
 <p>${s.tagNames.map(t => `<span class="tag">${R.esc(t)}</span>`).join(' ')} <span class="tag">最高 ${s.maxLevel} 級</span></p>
 <div class="box">${R.esc(s.desc1 || '（沒有說明）')}${s.descMax ? `<p class="muted small">每升一級：${R.esc(s.descMax)}</p>` : ''}</div>
+${R.balanceNotes2 && R.balanceNotes2[s.id] ? `<div class="note"><b>Beta 0.8.2～0.8.4 調整：</b>${R.esc(R.balanceNotes2[s.id])}</div>` : ''}
+${R.bossResist && R.bossResist.skills[s.id] ? `<div class="note small">小頭目／MVP 對這個技能（含其天賦與神祇）只受 <b>${Math.round(R.bossResist.skills[s.id] * 100)}%</b> 傷害。<a href="#updates">頭目抗性表 →</a></div>` : ''}
 ${R.balanceNotes && R.balanceNotes[s.id] ? `<div class="note"><b>Beta 0.8 調整：</b>${R.esc(R.balanceNotes[s.id])} <a href="#updates">共同傷害規則 →</a></div>` : ''}
 <h3>哪些職業可以用</h3>
 ${how.length ? `<ul>${how.map(h => `<li>${h}</li>`).join('')}</ul>` : '<p class="muted">不屬於任何職業（可能是神祇、寵物或特殊技能）。</p>'}
@@ -23,7 +25,7 @@ ${(R.deities && R.deities.skills[s.id]) ? `<h3>神祇效果 <a class="small" hre
     const jobs = R.jobs.list;
     return `<h2 class="pt">技能</h2>
 <p class="lead">遊戲裡全部 ${R.skills.length} 個技能。局內升級時從你職業的技能卡裡選，天賦也能學會額外技能。</p>
-<div class="note"><b>Beta 0.8 傷害大改</b>：二轉曲線下修、屬性相剋、頭目每次技能施放最多扣 5% 生命，且多項技能與卡片削弱。<a href="#updates">查看原因與各技能調整 →</a></div>
+<div class="note"><b>Beta 0.8.2～0.8.4</b>：頭目的「每次施放最多扣 5% 生命」已取消，改成小頭目／MVP 抵抗部分技能；一般卡片恢復舊效果；盜賊、弓箭手、商人多項技能加強。<a href="#updates">查看頭目抗性表與各技能調整 →</a></div>
 <div class="filters">
   <select id="sk-job"><option value="">全部職業</option>${jobs.map(j => `<option value="${j.id}">${R.esc(j.name)}</option>`).join('')}<option value="-">不屬於職業</option></select>
   <input id="sk-q" type="search" placeholder="技能名稱或說明…">

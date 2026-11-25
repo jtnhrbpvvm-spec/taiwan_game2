@@ -20,5 +20,7 @@ for(const section of ['jobs','skills','talents','items','cards','monsters','stag
 const deityIds=new Set([...Object.keys(a.deities.skills),...Object.keys(b.deities.skills)]);
 const deities=[...deityIds].filter(id=>JSON.stringify(a.deities.skills[id])!==JSON.stringify(b.deities.skills[id]));
 const report={from:a.version,to:b.version,checkedAt:b.dumpedAt,counts,deities,changes};
-fs.writeFileSync(path.join(__dirname,'../wiki/data/updates.js'),'/* 由 tools/build_update_report.cjs 產生 */\nRSW.updates = '+JSON.stringify(report)+';\n');
+// 第三個參數＝輸出名稱（預設 updates → wiki/data/updates.js、RSW.updates）；每次改版各存一份，舊的改版頁才不會被蓋掉
+const outName=process.argv[4]||'updates';
+fs.writeFileSync(path.join(__dirname,`../wiki/data/${outName}.js`),`/* 由 tools/build_update_report.cjs 產生 */\nRSW[${JSON.stringify(outName)}] = `+JSON.stringify(report)+';\n');
 console.log(JSON.stringify({from:report.from,to:report.to,counts,deities:deities.length},null,2));

@@ -1,4 +1,4 @@
-/* 藥水、秘藥、祝福、料理：遊戲局裡開寶箱拿到的本局加成（神祇另有一頁） */
+/* 藥水、秘藥、祝福、料理：遊戲局裡開寶箱拿到的本局加成（神器、神祇另有一頁） */
 RSW.page({
   id: 'runitems', nav: '藥水與秘藥', title: () => '藥水、秘藥與祝福',
   render() {
@@ -9,12 +9,16 @@ RSW.page({
     const groups = D.slots.filter(s => s.id !== 'deity' && D.list.some(x => x.slot === s.id));
     const cost = n => D.chest ? Math.round(D.chest.base + D.chest.lin * n + D.chest.sq * n * n) : null;
     const cn = [1, 2, 3, 4, 5, 6, 8, 10, 15, 20];
+    /* Beta 0.8.2 起：技能神祇（slot skill）不從寶箱出，屬性神祇改名「神器」（slot deity）仍從寶箱出 */
+    const chestSlots = D.slots.filter(s => s.id !== 'skill');
+    const artName = (D.slots.find(s => s.id === 'deity') || {}).name || '神器';
     return `<h2 class="pt">藥水、秘藥與祝福</h2>
-<p class="lead">遊戲局裡用金幣打開寶箱，可以拿到${groups.map(s => R.esc(s.name)).join('、')}和<a href="#deities">神祇</a>。效果只在<b>這一局</b>有效，結束就消失。共有 ${D.list.length} 種（不含神祇）。</p>
+<p class="lead">遊戲局裡用金幣打開寶箱，可以拿到${groups.map(s => R.esc(s.name)).join('、')}和<a href="#deities">${R.esc(artName)}</a>。效果只在<b>這一局</b>有效，結束就消失。共有 ${D.list.length} 種（不含${R.esc(artName)}）。</p>
 
 <h3>寶箱怎麼開</h3>
 <ul>
-  <li>每次打開寶箱，會從 ${D.slots.length} 種欄位（${D.slots.map(s => s.id === 'deity' ? '<a href="#deities">神祇</a>' : R.esc(s.name)).join('、')}）隨機挑 <b>3 種不同的欄位</b>，各出一個道具，選一個拿走。</li>
+  <li>每次打開寶箱，會從 ${chestSlots.length} 種欄位（${chestSlots.map(s => s.id === 'deity' ? `<a href="#deities">${R.esc(s.name)}</a>` : R.esc(s.name)).join('、')}）隨機挑 <b>3 種不同的欄位</b>，各出一個道具，選一個拿走。</li>
+  <li><b>技能神祇不再從寶箱出現</b>（Beta 0.8.2 起）：達到 Lv 20 時自己選一個，詳見<a href="#deities">神祇頁</a>。</li>
   <li><b>每一種欄位這局只能裝一個道具。</b>選了某瓶藥水後，之後寶箱的藥水欄位只會再出現<b>同一瓶</b>，再選它就把數值<b>疊加</b>上去（精煉）。所以第一次選要想清楚。</li>
   <li>效果大小看<b>品質</b>，品質越高數值越大（下面表格可以切換品質看）。尋寶率越高，越容易開出高品質。</li>
   <li>用不到的道具不會出現：例如沒有近戰技能就不會出現「近戰攻擊範圍」，沒有需要詠唱的技能就不會出現詠唱類（詳見表格的備註）。</li>

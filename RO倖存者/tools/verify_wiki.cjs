@@ -7,7 +7,8 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const scripts=[...html.matchAll(/<script src="([^"?]+)(?:\?[^"]*)?"><\/script>/g)].map(m=>m[1]);
 for(const file of scripts){assert(fs.existsSync(path.join(root,file)),file);vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});}
 const R=context.RSW;
-assert(R.meta.version===R.updates.to,'Update report version mismatch');
+assert(R.meta.version===R.updates0825.to,'Update report version mismatch');
+for(const id of [...Object.keys(R.balanceNotes2),...Object.keys(R.bossResist.skills)])assert(R.index().skill[id],'Broken 0.8.2 skill: '+id);
 assert(R.skills.length===199 && R.cards.length===98 && R.jobs.list.length===23,'Missing tables');
 assert(R.festival.incense.chance===1 && R.festival.incense.rare.chance===.2,'Festival rates');
 assert(R.festival.balls.flatMap(b=>b.cards).length===11,'Festival cards lost');

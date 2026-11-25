@@ -50,6 +50,9 @@
   if (oldAlchemyShowBtn) oldAlchemyShowBtn.remove();
   var oldRespawnFab = document.getElementById("iw-respawn-fab");
   if (oldRespawnFab) oldRespawnFab.remove();
+  var oldPetCareBackdrop = document.getElementById("iw-petcare-backdrop");
+  if (oldPetCareBackdrop) oldPetCareBackdrop.remove();
+  if (window.__iwPetCareTimer) { clearInterval(window.__iwPetCareTimer); window.__iwPetCareTimer = null; }
   // .iw-mall-qty / .iw-mall-total 是舊版留下的「購買數量」欄，現在不做了，但還是要清掉
   document.querySelectorAll(".iw-mall-hint,.iw-mall-extra,.iw-mall-max-tag,.iw-mall-qty,.iw-mall-total,.iw-mall-multi-tag").forEach(function (el) { el.remove(); });
   document.querySelectorAll(".iw-mall-max").forEach(function (el) { el.classList.remove("iw-mall-max"); });
@@ -139,21 +142,21 @@
     "box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #163a42,0 3px 6px rgba(0,0,0,.18);}",
     ".iw-inline-btn:hover{background:linear-gradient(180deg,#3f8796,var(--iw-go-lift),var(--iw-go));}",
     ".iw-inline-btn:active{transform:translateY(2px);box-shadow:inset 0 3px 6px rgba(0,0,0,.3);}",
-    "#iw-enhance-backdrop,#iw-alchemy-backdrop,#iw-stone-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999998;",
+    "#iw-enhance-backdrop,#iw-alchemy-backdrop,#iw-stone-backdrop,#iw-petcare-backdrop{position:fixed;inset:0;background:rgba(40,26,14,.55);z-index:999998;",
     "display:flex;align-items:center;justify-content:center;padding:16px;}",
-    "#iw-enhance-modal,#iw-alchemy-modal,#iw-stone-modal{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;",
+    "#iw-enhance-modal,#iw-alchemy-modal,#iw-stone-modal,#iw-petcare-modal{background:var(--iw-panel);color:var(--iw-text);border:2px solid var(--iw-edge);border-radius:14px;",
     "width:100%;max-width:440px;max-height:88vh;overflow-y:auto;padding:0 20px 20px;box-shadow:0 10px 30px rgba(0,0,0,.35);position:relative;}",
-    "#iw-enhance-modal h2,#iw-alchemy-modal h2,#iw-stone-modal h2{margin:0 -20px 14px;padding:12px 44px 11px 20px;font-size:16px;color:var(--iw-text);",
+    "#iw-enhance-modal h2,#iw-alchemy-modal h2,#iw-stone-modal h2,#iw-petcare-modal h2{margin:0 -20px 14px;padding:12px 44px 11px 20px;font-size:16px;color:var(--iw-text);",
     "background:linear-gradient(180deg,#fdf3e0,#f1dcb4);border-bottom:1px solid rgba(162,131,88,.55);",
     "border-top:4px solid var(--iw-go);position:sticky;top:0;z-index:1;}",
-    "#iw-enhance-modal label,#iw-alchemy-modal label,#iw-stone-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--iw-accent);margin:12px 0 4px;}",
-    "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number],#iw-stone-modal select,#iw-stone-modal input[type=number]{width:100%;padding:8px 9px;",
+    "#iw-enhance-modal label,#iw-alchemy-modal label,#iw-stone-modal label,#iw-petcare-modal label{display:block;font-size:12.5px;font-weight:700;color:var(--iw-accent);margin:12px 0 4px;}",
+    "#iw-enhance-modal select,#iw-enhance-modal input[type=number],#iw-alchemy-modal select,#iw-alchemy-modal input[type=number],#iw-stone-modal select,#iw-stone-modal input[type=number],#iw-petcare-modal select{width:100%;padding:8px 9px;",
     "background:var(--iw-inset);border:1px solid #b99b6c;border-radius:8px;color:var(--iw-text);font-size:13.5px;",
     "box-shadow:inset 0 2px 4px rgba(0,0,0,.08);}",
     "#iw-enhance-modal select:focus,#iw-enhance-modal input:focus,#iw-alchemy-modal select:focus,#iw-alchemy-modal input:focus,#iw-stone-modal select:focus,#iw-stone-modal input:focus{outline:none;",
     "border-color:var(--iw-go);box-shadow:inset 0 2px 4px rgba(0,0,0,.08),0 0 0 3px rgba(47,107,120,.16);}",
-    "#iw-enhance-modal input[type=checkbox],#iw-alchemy-modal input[type=checkbox]{accent-color:var(--iw-go);width:16px;height:16px;}",
-    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target,#iw-stone-modal .iw-target{font-size:14px;color:var(--iw-text);background:rgba(255,250,240,.8);",
+    "#iw-enhance-modal input[type=checkbox],#iw-alchemy-modal input[type=checkbox],#iw-petcare-modal input[type=checkbox]{accent-color:var(--iw-go);width:16px;height:16px;}",
+    "#iw-enhance-modal .iw-target,#iw-alchemy-modal .iw-target,#iw-stone-modal .iw-target,#iw-petcare-modal .iw-target{font-size:14px;color:var(--iw-text);background:rgba(255,250,240,.8);",
     "border:1px solid rgba(162,131,88,.5);border-left:4px solid var(--iw-go);border-radius:10px;padding:9px 10px;}",
     "#iw-enhance-modal .iw-warn{font-size:11.5px;color:var(--iw-warn);background:rgba(168,65,47,.07);border:1px solid rgba(168,65,47,.35);",
     "border-radius:8px;padding:6px 9px;margin-top:6px;line-height:1.6;display:none;}",
@@ -172,13 +175,13 @@
     ".iw-mode-btn.active{background:linear-gradient(180deg,#f5e1bd,#fbeed3);border-color:var(--iw-go);color:var(--iw-go);font-weight:700;",
     "box-shadow:inset 0 3px 7px rgba(0,0,0,.22);transform:translateY(1px);}",
     ".iw-btn:disabled{opacity:.45;cursor:not-allowed;}",
-    "#iw-enhance-log,#iw-alchemy-log{margin-top:14px;background:var(--iw-inset);color:var(--iw-text);border:1px solid rgba(162,131,88,.5);border-radius:10px;",
+    "#iw-enhance-log,#iw-alchemy-log,#iw-petcare-log{margin-top:14px;background:var(--iw-inset);color:var(--iw-text);border:1px solid rgba(162,131,88,.5);border-radius:10px;",
     "box-shadow:inset 0 2px 5px rgba(0,0,0,.08);padding:10px;font-size:12.5px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;}",
     "#iw-enhance-summary,#iw-alchemy-summary{margin-top:12px;font-size:13px;line-height:1.8;}",
     "#iw-enhance-summary:not(:empty),#iw-alchemy-summary:not(:empty){background:rgba(255,250,240,.8);border:1px solid rgba(162,131,88,.5);border-radius:10px;padding:10px 12px;}",
     "#iw-enhance-summary b,#iw-alchemy-summary b,#iw-alchemy-status-summary b{color:var(--iw-ink);}",
     // ✕ 用 sticky + float 釘在標題列右上角，視窗內容往下捲也不會跟著捲走
-    "#iw-enhance-close,#iw-alchemy-close,#iw-stone-close{position:sticky;float:right;top:12px;margin:12px -6px -40px 0;z-index:3;width:28px;height:28px;padding:0;line-height:24px;",
+    "#iw-enhance-close,#iw-alchemy-close,#iw-stone-close,#iw-petcare-close{position:sticky;float:right;top:12px;margin:12px -6px -40px 0;z-index:3;width:28px;height:28px;padding:0;line-height:24px;",
     "background:linear-gradient(180deg,var(--iw-btn-top),var(--iw-btn-bottom));border:2px solid var(--iw-edge);border-radius:50%;",
     "color:var(--iw-text);font-size:13px;cursor:pointer;box-shadow:0 2px 0 #4a3119;}",
     "#iw-enhance-modal::-webkit-scrollbar,#iw-alchemy-modal::-webkit-scrollbar,#iw-enhance-log::-webkit-scrollbar,#iw-alchemy-log::-webkit-scrollbar{width:8px;}",
@@ -2098,6 +2101,301 @@
   dropFab.style.cssText = "padding:9px 16px;font-size:13px;align-self:stretch;";
   dropFab.addEventListener("click", openDropQuery);
   alchemyFabWrap.appendChild(dropFab);
+
+  // ==========================================================================
+  // 🐾 寵物照顧：出戰寵物養滿自動進化、不能進化就換下一隻還沒養滿的出戰、便當盒空了提醒。
+  // 餵食本身遊戲會自己做（每 181 秒從便當盒拿一份），這裡只管「養滿之後」的事。
+  // 規則跟桌寵的 petcare.js 是同一份（改這裡要一起改那裡），註解寫在那邊：
+  //   進化 evolvePet(uid, 配方序號, 材料)；換寵物 equipPet(uid)；只在出戰寵物養滿時才換（卸下沒養滿的會掉這一段經驗）。
+  // 桌寵也開了這個功能的話（遊戲頁面上 __iwPetCareOwner 一直有在更新），書籤這邊就不跑，避免兩邊各換各的。
+  // ==========================================================================
+  function iwPetCareTick(session, cfg, st) {
+    var out = [];
+    if (!session || !session.data || !session.data.petById || !Array.isArray(session.pets) || typeof session.activePet !== "function") return out;
+    var data = session.data, player = session.player || {};
+    st = st || {};
+
+    function need(def, grow) { return Math.round(def.feedFull * (10 + grow) / 10); }
+    function isFull(p, def) { return p.grow >= 9 && p.exp >= need(def, 9); }
+    function feedLeft(p, def) {
+      var n = Math.max(0, need(def, p.grow) - p.exp);
+      for (var g = p.grow + 1; g <= 9; g++) n += need(def, g);
+      return n;
+    }
+    // 寵物可能有好幾百隻，同一次檢查裡材料數量只查一次
+    var haveCache = {};
+    function have(id) {
+      if (!(id in haveCache)) { try { haveCache[id] = session.usableCount(id, "petEvolve") || 0; } catch (e) { haveCache[id] = 0; } }
+      return haveCache[id];
+    }
+    function fostering(uid) {
+      try { return typeof session.fosterSlotOf === "function" && session.fosterSlotOf(uid) !== undefined; } catch (e) { return false; }
+    }
+    function canEquip(def) {
+      var fame = (player.fame && player.fame.total) || 0;
+      return (player.level || 0) >= (def.lv || 0) && fame >= (def.fame || 0);
+    }
+    function nameOf(id) { var d = data.petById.get(id); return d ? d.name : "寵物 #" + id; }
+
+    function plan(r) {
+      if (!r || !Array.isArray(r.targets) || !r.targets.length || !Array.isArray(r.mats)) return null;
+      if (r.rates) {
+        var best = -1;
+        for (var i = 0; i < r.mats.length; i++) {
+          if (have(r.mats[i]) > 0 && (best < 0 || (r.rates[i] || 0) > (r.rates[best] || 0))) best = i;
+        }
+        return best < 0 ? null : { mats: [r.mats[best]], rate: Math.min(100, r.rates[best] || 0) };
+      }
+      var maxN = Math.min(10, r.mats.length), minN = Math.min(5, r.mats.length), seen = {};
+      var list = r.mats.map(function (id, i) { return { id: id, i: i, n: have(id) }; })
+        .filter(function (x) { if (x.n <= 0 || seen[x.id]) return false; seen[x.id] = 1; return true; })
+        .sort(function (a, b) { return b.n - a.n || a.i - b.i; })
+        .slice(0, maxN);
+      return list.length < minN ? null : { mats: list.map(function (x) { return x.id; }), rate: Math.min(100, list.length * 10) };
+    }
+    function allowed(def, rate) {
+      if (rate >= 100) return true;
+      if (cfg.evolveMode === "any") return true;
+      if (cfg.evolveMode === "noloss") return (def.tier || 0) <= 3;
+      return false;
+    }
+
+    function tryEvolve(p) {
+      var def = data.petById.get(p.id);
+      if (!def || !isFull(p, def) || !Array.isArray(def.evolve)) return false;
+      var best = null;
+      def.evolve.forEach(function (r, i) {
+        var pl = plan(r);
+        if (pl && allowed(def, pl.rate) && (!best || pl.rate > best.rate)) best = { i: i, mats: pl.mats, rate: pl.rate };
+      });
+      if (!best) return false;
+      var ok = false;
+      try { ok = session.evolvePet(p.uid, best.i, best.mats); } catch (e) { ok = false; }
+      if (!ok) return false;
+      haveCache = {}; // 材料用掉了，重查
+      var after = session.pets.find(function (x) { return x.uid === p.uid; });
+      if (after && after.id !== p.id) {
+        out.push({ kind: "evolve", text: def.name + " 進化成 " + nameOf(after.id) + "！" });
+      } else {
+        var lost = after && after.grow < p.grow ? "，掉回 +" + after.grow : after && after.exp < p.exp ? "，這一段經驗歸零" : "";
+        out.push({ kind: "evolveFail", text: def.name + " 進化失敗（成功率 " + best.rate + "%）" + lost });
+      }
+      return true;
+    }
+
+    var act = session.activePet();
+
+    if (cfg.evolve) {
+      if (act) tryEvolve(act);
+      if (cfg.evolveBag) {
+        session.pets.slice().forEach(function (p) {
+          if (act && p.uid === act.uid) return;
+          if (fostering(p.uid)) return;
+          tryEvolve(p);
+        });
+      }
+    }
+
+    act = session.activePet();
+    var actDef = act && data.petById.get(act.id);
+
+    if (cfg.switch && act && actDef) {
+      if (isFull(act, actDef)) {
+        var cands = [];
+        session.pets.forEach(function (p, i) {
+          var d = data.petById.get(p.id);
+          if (!d || p.uid === act.uid || isFull(p, d) || !canEquip(d) || fostering(p.uid)) return;
+          if (cfg.switchTier === "same" && d.tier !== actDef.tier) return;
+          cands.push({ p: p, d: d, i: i, left: feedLeft(p, d) });
+        });
+        cands.sort(cfg.switchOrder === "order"
+          ? function (a, b) { return a.i - b.i; }
+          : function (a, b) { return a.left - b.left || a.i - b.i; });
+        var moved = false;
+        for (var k = 0; k < cands.length && !moved; k++) {
+          try { moved = !!session.equipPet(cands[k].p.uid); } catch (e) { moved = false; }
+          if (moved) out.push({ kind: "switch", text: actDef.name + " 養滿了，換 " + cands[k].d.name + "（+" + cands[k].p.grow + "）出戰" });
+        }
+        if (!moved && !st.allFullSaid) {
+          st.allFullSaid = true;
+          out.push({ kind: "allFull", text: actDef.name + " 養滿了，背包裡沒有還沒養滿、能出戰的" + (cfg.switchTier === "same" ? (actDef.tier || "?") + " 階" : "") + "寵物可以換" });
+        }
+        if (moved) st.allFullSaid = false;
+      } else {
+        st.allFullSaid = false;
+      }
+    }
+
+    if (cfg.warnEmpty) {
+      act = session.activePet();
+      actDef = act && data.petById.get(act.id);
+      var empty = false;
+      if (act && actDef && typeof session.petHunger === "function") {
+        try { var h = session.petHunger(act, actDef); empty = !!(h && h.kind === "empty"); } catch (e) { empty = false; }
+      }
+      if (empty && !st.emptySaid) out.push({ kind: "empty", text: "寵物便當盒空了，" + actDef.name + " 沒東西吃" });
+      st.emptySaid = empty;
+    }
+
+    return out;
+  }
+
+  var PETCARE_KEY = "iw-petcare-v1";
+  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", warnEmpty: false };
+  var PETCARE_MS = 5000;
+  function petCareLoad() {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(PETCARE_KEY) || "{}") || {}; } catch (e) { saved = {}; }
+    var cfg = {};
+    for (var k in PETCARE_DEFAULT) cfg[k] = Object.prototype.hasOwnProperty.call(saved, k) ? saved[k] : PETCARE_DEFAULT[k];
+    return cfg;
+  }
+  var petCareCfg = petCareLoad();
+  var petCareState = {};
+  var petCareLog = [];
+  function petCareSave() { try { localStorage.setItem(PETCARE_KEY, JSON.stringify(petCareCfg)); } catch (e) { /* 存不了就只在這次有效 */ } }
+  function petCareOn() { return !!(petCareCfg.evolve || petCareCfg.switch || petCareCfg.warnEmpty); }
+  function petCareByDesktopPet() { return !!window.__iwPetCareOwner && Date.now() - window.__iwPetCareOwner < 15000; }
+
+  function petCareStatusHtml() {
+    var act = null, def = null;
+    try { act = session.activePet(); def = act && session.data.petById.get(act.id); } catch (e) { act = null; }
+    var lines = [];
+    if (!act || !def) {
+      lines.push("目前沒有出戰寵物。");
+    } else {
+      var needNow = Math.round(def.feedFull * (10 + act.grow) / 10);
+      var full = act.grow >= 9 && act.exp >= Math.round(def.feedFull * 19 / 10);
+      lines.push("出戰：<b>" + escapeHtmlLite(def.name) + "</b>（" + (def.tier || "?") + " 階）+" + act.grow +
+        (full ? "　<b>已養滿</b>" : "　這一段 " + Math.floor(Math.min(1, act.exp / needNow) * 100) + "%"));
+    }
+    var box = 0;
+    try { (session.petLunchbox || []).forEach(function (row) { (row.stacks || []).forEach(function (s) { box += s.count || 0; }); }); } catch (e) { box = 0; }
+    lines.push("便當盒：" + fmt(box) + " 份（遊戲每 3 分鐘自動餵一份）");
+    return lines.join("<br>");
+  }
+
+  function petCareRun() {
+    if (myAlchemyGeneration !== window.__iwAlchemyGeneration) return;
+    var done = [];
+    if (petCareOn() && !petCareByDesktopPet()) {
+      try { done = iwPetCareTick(session, petCareCfg, petCareState); } catch (e) { console.error("[寵物照顧] 執行失敗", e); }
+    }
+    done.forEach(function (d) {
+      var t = new Date();
+      petCareLog.unshift(("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) + "　" + d.text);
+      // 進化成功／失敗遊戲自己會寫進訊息欄，其他的幫它補一行
+      if (d.kind !== "evolve" && d.kind !== "evolveFail" && typeof session.push === "function") {
+        try { session.push("🐾 " + d.text, "sys"); } catch (e) { /* 寫不進去就算了 */ }
+      }
+    });
+    if (petCareLog.length > 30) petCareLog.length = 30;
+    updatePetCareFab();
+    updatePetCareView();
+  }
+
+  var petCareFab = document.createElement("button");
+  petCareFab.id = "iw-petcare-fab";
+  petCareFab.className = "iw-fab";
+  petCareFab.title = "寵物養滿自動進化、自動換下一隻、便當盒空了提醒";
+  petCareFab.style.cssText = "padding:9px 16px;font-size:13px;align-self:stretch;";
+  function updatePetCareFab() {
+    petCareFab.textContent = "🐾 寵物照顧：" + (!petCareOn() ? "關閉" : petCareByDesktopPet() ? "交給桌寵" : "開啟");
+  }
+  updatePetCareFab();
+  petCareFab.addEventListener("click", openPetCareModal);
+  alchemyFabWrap.appendChild(petCareFab);
+
+  function updatePetCareView() {
+    var st = document.getElementById("iw-pc-status");
+    if (st) st.innerHTML = petCareStatusHtml();
+    var owner = document.getElementById("iw-pc-owner");
+    if (owner) owner.style.display = petCareByDesktopPet() ? "block" : "none";
+    var log = document.getElementById("iw-petcare-log");
+    if (log) {
+      log.style.display = petCareLog.length ? "block" : "none";
+      log.textContent = petCareLog.join("\n");
+    }
+  }
+
+  function closePetCareModal() {
+    var bd = document.getElementById("iw-petcare-backdrop");
+    if (bd) bd.remove();
+  }
+
+  function openPetCareModal() {
+    closePetCareModal();
+    var backdrop = document.createElement("div");
+    backdrop.id = "iw-petcare-backdrop";
+    var modal = document.createElement("div");
+    modal.id = "iw-petcare-modal";
+    function check(id, key, text) {
+      return '<div class="iw-checkrow"><input type="checkbox" id="' + id + '"' + (petCareCfg[key] ? " checked" : "") + '><label for="' + id + '">' + text + "</label></div>";
+    }
+    function opt(key, value, text) {
+      return '<option value="' + value + '"' + (petCareCfg[key] === value ? " selected" : "") + ">" + text + "</option>";
+    }
+    modal.innerHTML =
+      '<button id="iw-petcare-close">✕</button>' +
+      "<h2>🐾 寵物照顧</h2>" +
+      '<div class="iw-target" id="iw-pc-status"></div>' +
+      check("iw-pc-evolve", "evolve", "出戰寵物養滿（+9、經驗滿）自動進化") +
+      "<label>進化條件</label>" +
+      '<select id="iw-pc-mode">' +
+      opt("evolveMode", "safe", "成功率 100% 才進化") +
+      opt("evolveMode", "noloss", "失敗不會倒退的也進化（1～3 階寵物）") +
+      opt("evolveMode", "any", "不管成功率都進化（4 階失敗經驗歸零、5 階以上掉回 +0）") +
+      "</select>" +
+      check("iw-pc-bag", "evolveBag", "背包裡其他養滿的寵物也一起進化（寄養中的不動）") +
+      check("iw-pc-switch", "switch", "自動更換出戰：出戰寵物養滿就換下一隻還沒養滿的（有開自動進化會先試進化）") +
+      "<label>換哪一隻</label>" +
+      '<select id="iw-pc-order">' +
+      opt("switchOrder", "fast", "最快養滿的先（剩下要吃的最少）") +
+      opt("switchOrder", "order", "照寵物欄順序") +
+      "</select>" +
+      "<label>換哪一階</label>" +
+      '<select id="iw-pc-tier">' +
+      opt("switchTier", "any", "不限，哪一階都可以") +
+      opt("switchTier", "same", "只換跟出戰中同一階的（例：一階養滿換下一隻一階）") +
+      "</select>" +
+      check("iw-pc-empty", "warnEmpty", "便當盒空了提醒我（寫在遊戲訊息欄）") +
+      '<div style="font-size:11.5px;color:var(--iw-dim);margin-top:12px;line-height:1.7;">' +
+      "・餵食是遊戲自己做的：每 3 分鐘從便當盒拿一份餵出戰寵物，便當盒要自己補。<br>" +
+      "・進化材料自動挑：每種材料成功率不同的配方挑成功率最高的那一種；其他配方放庫存最多的 5～10 種（每種 +10%）。有好幾條配方時挑成功率最高的。<br>" +
+      "・只在出戰寵物養滿時才換寵物，不會損失經驗；寄養中的、等級或名聲不夠的寵物不會被換上。<br>" +
+      "・每 5 秒檢查一次，這個分頁要開著才會跑。</div>" +
+      '<div id="iw-pc-owner" class="iw-target" style="display:none;margin-top:10px;">桌寵也開了寵物自動照顧，現在由桌寵負責（這邊的設定先不用）。</div>' +
+      '<div id="iw-petcare-log" style="display:none;"></div>';
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    function bindCheck(id, key) {
+      document.getElementById(id).addEventListener("change", function (e) {
+        petCareCfg[key] = !!e.target.checked;
+        petCareSave();
+        petCareRun();
+      });
+    }
+    function bindSelect(id, key) {
+      document.getElementById(id).addEventListener("change", function (e) {
+        petCareCfg[key] = e.target.value;
+        petCareSave();
+        petCareRun();
+      });
+    }
+    bindCheck("iw-pc-evolve", "evolve");
+    bindCheck("iw-pc-bag", "evolveBag");
+    bindCheck("iw-pc-switch", "switch");
+    bindCheck("iw-pc-empty", "warnEmpty");
+    bindSelect("iw-pc-mode", "evolveMode");
+    bindSelect("iw-pc-order", "switchOrder");
+    bindSelect("iw-pc-tier", "switchTier");
+    document.getElementById("iw-petcare-close").addEventListener("click", closePetCareModal);
+    backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePetCareModal(); });
+    updatePetCareView();
+  }
+
+  window.__iwPetCareTimer = setInterval(petCareRun, PETCARE_MS);
 
   var alchemyShowBtn = document.createElement("button");
   alchemyShowBtn.id = "iw-alchemy-show-btn";

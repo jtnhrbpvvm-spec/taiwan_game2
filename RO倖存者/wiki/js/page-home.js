@@ -9,7 +9,7 @@ RSW.page({
     return `
 <h2 class="pt">RO 倖存者小百科</h2>
 <p class="lead">RO Survivors 是以仙境傳說（Ragnarok Online）為靈感的免費網頁倖存者遊戲。這裡整理遊戲裡的職業、技能、轉職、物品、卡片與怪物資料，名稱採用台版仙境傳說譯名。</p>
-<div class="note"><b>11 月 23 日 Beta 0.8／0.8.1 已更新</b>：技能傷害、二轉曲線、卡片、神祇與燈籠節資料已同步。<a href="#updates">技能傷害為什麼大減？看完整改版整理 →</a></div>
+<div class="note"><b>11 月 25 日 Beta 0.8.2～0.8.4 已更新</b>：技能神祇改成 Lv 20 自選、屬性神祇改名神器、一般卡片恢復舊效果、頭目改為技能抗性（取消 5% 上限）、新增卡普拉預設組合。<a href="#updates">看完整改版整理 →</a></div>
 
 <section class="author-card">
   <div class="ac-head">
@@ -40,7 +40,7 @@ ${R.festival ? `<div class="note event-intro"><b>燈籠節已開放</b>：洛陽
   ${count(open.length + ' 個關卡', '開放條件、首領時間表', '#stages')}
   ${count(R.pets.list.length + ' 隻寵物', '蛋的掉率、進化、親密度', '#pets')}
   ${R.runItems && R.runItems.list.length ? count(R.runItems.list.length + ' 種寶箱道具', '藥水、秘藥、祝福、料理', '#runitems') : ''}
-  ${count(Object.keys(R.deities.skills).length + ' 個技能神祇', '寶箱第五格：改造技能', '#deities')}
+  ${count(Object.keys(R.deities.skills).length + ' 個技能神祇', 'Lv 20 自選、每 10 級升級；另有神器', '#deities')}
   ${count(R.cosmetics.list.length + ' 個外觀', '首領成就、無盡之塔、燈籠節', '#cosmetics')}
 </div>
 

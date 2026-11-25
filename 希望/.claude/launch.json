@@ -10,7 +10,7 @@
     {
       "name": "hope-offline-game",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set OFFLINE_NO_BROWSER=1&& python C:\\Users\\a2095\\Desktop\\爬蟲\\11082252\\_offline_server.py"],
+      "runtimeArgs": ["/c", "set OFFLINE_NO_BROWSER=1&& py -3 C:\\Users\\a2095\\Desktop\\爬蟲\\hope-game-tool\\crawls\\20261123\\_offline_server.py"],
       "port": 8377
     }
   ]
