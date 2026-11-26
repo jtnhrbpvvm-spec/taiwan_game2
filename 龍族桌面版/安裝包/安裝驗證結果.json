@@ -1,0 +1,40 @@
+{
+  "Version": "2026.11.26.10",
+  "ReadyForDistribution": true,
+  "ArchiveBytes": 67518332,
+  "LimitBytes": 500000000,
+  "WithinLimit": true,
+  "BlockedUpdaterIncluded": false,
+  "Completed": {
+    "SignedManifestAndPathChecks": 14,
+    "FirstInstallation": {
+      "Version": "2026.11.26.9",
+      "ExitCode": 0,
+      "Files": 18911,
+      "FullHashPassed": true
+    },
+    "FreshDatabaseChecks": 126,
+    "StandaloneDatabaseInitialization": true,
+    "CrossVersionUpgrade": {
+      "From": "2026.11.26.9",
+      "To": "2026.11.26.10",
+      "ExitCode": 0,
+      "AccountPreserved": true,
+      "Files": 18911,
+      "FullHashPassed": true
+    },
+    "NativeLauncherVerify": "PASS",
+    "IncrementalReconstruction": {
+      "Passed": true,
+      "ChangedBlobs": 5,
+      "DownloadBytes": 112921,
+      "FullCabBytes": 14041046
+    }
+  },
+  "NotVerified": [
+    "Live gameplay on the installed test package",
+    "Compatibility with every antivirus product"
+  ],
+  "AntivirusSettingsChanged": false,
+  "Uploaded": false
+}

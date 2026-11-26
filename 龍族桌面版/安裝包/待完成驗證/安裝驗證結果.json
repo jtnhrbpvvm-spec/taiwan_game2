@@ -1,0 +1,33 @@
+{
+  "Version": "2026.11.26.9",
+  "ReadyForDistribution": false,
+  "ArchiveBytes": 67516254,
+  "LimitBytes": 500000000,
+  "WithinLimit": true,
+  "BlockedUpdaterIncluded": false,
+  "CurrentInstallerMode": "Windows Installer file installation followed by user-context database initialization",
+  "Completed": {
+    "SignedManifestAndPathChecks": 14,
+    "BaselineFullFileVerification": {
+      "Version": "2026.11.26.4",
+      "Files": 18911,
+      "Passed": true
+    },
+    "FreshDatabaseChecks": 126,
+    "BaselineRepeatedInstallationExitCode": 0,
+    "IncrementalBlobSimulation": {
+      "Version": "2026.11.26.3",
+      "ChangedBlobBytes": 112921,
+      "FullCabBytes": 14038560,
+      "Passed": true
+    }
+  },
+  "Pending": [
+    "Final version first installation and standalone database initialization",
+    "Cross-version update preserving the test account",
+    "Live game play checks"
+  ],
+  "Blocker": "Windows Installer error 1618: previous installation recovery has not released the installer; restart Windows before final testing",
+  "AntivirusSettingsChanged": false,
+  "Uploaded": false
+}

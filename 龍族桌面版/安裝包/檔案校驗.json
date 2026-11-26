@@ -1,0 +1,22 @@
+{
+  "Version": "2026.11.26.10",
+  "Archive": "C:\\Users\\a2095\\Desktop\\【龙族OL】VM一键单机版-隐盟整理\\本機版製作\\發佈工具\\dist\\龍族原版升級安裝包-2026.11.26.10.zip",
+  "Bytes": 67518332,
+  "LimitBytes": 500000000,
+  "WithinLimit": true,
+  "SHA256": "D244E4DCD784F6AE0A785B00113DD0607DC7001AC12396D1F7C22355003C8453",
+  "Installer": "Windows Installer MSI",
+  "ContainsBlockedUpdater": false,
+  "OriginalReuseBytes": 1832509690,
+  "Uploaded": false,
+  "Channel": {
+    "Version": "2026.11.26.10",
+    "ReleaseFile": "packages/2026.11.26.10/release.json",
+    "MsiFile": "packages/2026.11.26.10/DragonRaja.metadata.msi",
+    "CabFile": "packages/2026.11.26.10/GamePatch.cab",
+    "MsiSHA256": "1CBE44692EDC9806E25281B2F3B4C88B0BA1827D53ACCEEE8292C4038D2BC222",
+    "CabSHA256": "7418DDB7DE7419FD355F38AECA4C9F4D94EF9405DEEFC5663B3A01F1C3780B0A",
+    "MsiBytes": 126976,
+    "CabBytes": 14041046
+  }
+}
