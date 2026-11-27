@@ -2136,6 +2136,7 @@
       return (player.level || 0) >= (def.lv || 0) && fame >= (def.fame || 0);
     }
     function nameOf(id) { var d = data.petById.get(id); return d ? d.name : "寵物 #" + id; }
+    function nameOf2(id) { try { var it = data.itemById && data.itemById.get(id); return it ? it.name : "#" + id; } catch (e) { return "#" + id; } }
 
     // 這條配方現在能放哪些材料、成功率多少（材料不夠就回傳 null）
     function plan(r) {
@@ -2224,6 +2225,30 @@
       return goalRank(p.seed >>> 0, p.id, 0) < 0;
     }
 
+    // 自動購買（cfg.autoBuy）：這條配方的材料湊不到最高成功率時，到商店（session.buy，要在村莊）把缺的種類各買 1 個。
+    //   例：6 階進化材料商人的進化之石、櫻花花瓣（2,500 萬～3,000 萬一個）。商店沒賣的（進化的樹葉等）不買；買不齊或錢不夠就整批不買。
+    function buyPlan(r) {
+      if (!cfg.autoBuy || r.rates || !data.shopPrice || typeof session.buy !== "function") return null;
+      var inVillage = false;
+      try { inVillage = !!session.inVillage; } catch (e) { inVillage = false; }
+      if (!inVillage) return null;
+      var maxN = Math.min(10, r.mats.length), seen = {}, owned = 0, shop = [];
+      r.mats.forEach(function (id) {
+        if (seen[id]) return;
+        seen[id] = 1;
+        if (have(id) > 0) { owned++; return; }
+        var price = data.shopPrice.get(id);
+        if (price !== undefined) shop.push({ id: id, price: price });
+      });
+      if (owned >= maxN || shop.length < maxN - owned) return null;
+      shop.sort(function (a, b) { return a.price - b.price; });
+      var list = shop.slice(0, maxN - owned), cost = 0;
+      list.forEach(function (x) { cost += x.price; });
+      var wallet = 0;
+      try { wallet = session.wallet || 0; } catch (e) { wallet = 0; }
+      return cost > wallet ? null : { list: list, cost: cost, rate: Math.min(100, maxN * 10) };
+    }
+
     function tryEvolve(p) {
       var def = data.petById.get(p.id);
       if (!def || !isFull(p, def) || !Array.isArray(def.evolve)) return false;
@@ -2233,9 +2258,20 @@
       def.evolve.forEach(function (r, i) {
         if (!r || !Array.isArray(r.targets) || !r.targets.length || !ok0(i, r)) return;
         var pl = plan(r);
-        if (pl && allowed(def, pl.rate) && (!best || pl.rate > best.rate)) best = { i: i, mats: pl.mats, rate: pl.rate };
+        if (pl && allowed(def, pl.rate) && (!best || pl.rate > best.rate || pl.rate === best.rate && best.buy)) best = { i: i, mats: pl.mats, rate: pl.rate };
+        var bp = buyPlan(r);
+        if (bp && (!pl || bp.rate > pl.rate) && allowed(def, bp.rate) && (!best || bp.rate > best.rate || bp.rate === best.rate && best.buy && bp.cost < best.buy.cost)) best = { i: i, rate: bp.rate, buy: bp, r: r };
       });
       if (!best) return false;
+      if (best.buy) {
+        best.buy.list.forEach(function (x) { try { session.buy(x.id, 1); } catch (e) { /* 買不到就算了，下面會重查 */ } });
+        haveCache = {};
+        var pl2 = plan(best.r);
+        if (!pl2 || !allowed(def, pl2.rate)) return false;
+        best.mats = pl2.mats;
+        best.rate = pl2.rate;
+        out.push({ kind: "buy", text: "為了讓 " + def.name + " 進化，買了 " + best.buy.list.map(function (x) { return nameOf2(x.id); }).join("、") + "（共 " + Number(best.buy.cost).toLocaleString() + " 金幣）" });
+      }
       var ok = false;
       try { ok = session.evolvePet(p.uid, best.i, best.mats); } catch (e) { ok = false; }
       if (!ok) return false;
@@ -2269,16 +2305,22 @@
     if (cfg.switch && act && actDef) {
       if (isFull(act, actDef)) {
         var cands = [];
+        // 倉庫的寵物：照遊戲寵物欄的「含倉庫」開關（readsWarehouse("petEquip")），開了才拿得到（equipStoredPet）
+        var whOn = false;
+        try { whOn = typeof session.equipStoredPet === "function" && typeof session.readsWarehouse === "function" && !!session.readsWarehouse("petEquip"); } catch (e) { whOn = false; }
+        var whPets = session.warehouse && Array.isArray(session.warehouse.pets) ? session.warehouse.pets : [];
+        var why = { wh: 0, lv: 0, tier: 0, route: 0 }; // 沒養滿、卻沒被選上的原因（沒得換時告訴玩家）
         function addCand(p, i, stored) {
           var d = data.petById.get(p.id);
-          if (!d || p.uid === act.uid && !stored || isFull(p, d) || !canEquip(d) || !stored && fostering(p.uid)) return;
-          if (cfg.switchTier === "same" && d.tier !== actDef.tier) return;
-          if (offRouteSkip(p)) return;
+          if (!d || p.uid === act.uid && !stored || isFull(p, d) || !stored && fostering(p.uid)) return;
+          if (stored && !whOn) { why.wh++; return; }
+          if (!canEquip(d)) { why.lv++; return; }
+          if (cfg.switchTier === "same" && d.tier !== actDef.tier) { why.tier++; return; }
+          if (offRouteSkip(p)) { why.route++; return; }
           cands.push({ p: p, d: d, i: i, left: feedLeft(p, d), stored: stored });
         }
         session.pets.forEach(function (p, i) { addCand(p, i, false); });
-        var wh = cfg.switchStored && typeof session.equipStoredPet === "function" && session.warehouse && Array.isArray(session.warehouse.pets) ? session.warehouse.pets : [];
-        wh.forEach(function (p, i) { addCand(p, 100000 + i, true); });
+        whPets.forEach(function (p, i) { addCand(p, 100000 + i, true); });
         cands.sort(cfg.switchOrder === "order"
           ? function (a, b) { return a.i - b.i; }
           : function (a, b) { return a.left - b.left || a.i - b.i; });
@@ -2289,9 +2331,13 @@
         }
         if (!moved && !st.allFullSaid) {
           st.allFullSaid = true;
-          out.push({ kind: "allFull", text: actDef.name + " 養滿了，背包裡沒有還沒養滿、能出戰的" + (cfg.switchTier === "same" ? (actDef.tier || "?") + " 階" : "") + "寵物可以換" });
-        }
-        if (moved) st.allFullSaid = false;
+          var notes = [];
+          if (why.wh) notes.push("倉庫有 " + why.wh + " 隻，要打開寵物欄的「含倉庫」");
+          if (why.lv) notes.push(why.lv + " 隻等級或名聲不夠");
+          if (why.tier) notes.push(why.tier + " 隻不是 " + (actDef.tier || "?") + " 階");
+          if (why.route) notes.push(why.route + " 隻到不了目標");
+          out.push({ kind: "allFull", text: actDef.name + " 養滿了，" + (whOn ? "背包和倉庫" : "背包") + "裡沒有還沒養滿、能出戰的寵物可以換" + (notes.length ? "（" + notes.join("、") + "）" : "") });
+        }      if (moved) st.allFullSaid = false;
       } else {
         st.allFullSaid = false;
       }
@@ -2312,7 +2358,7 @@
   }
 
   var PETCARE_KEY = "iw-petcare-v1";
-  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", switchStored: false, warnEmpty: false,
+  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", switchStored: false, autoBuy: false, warnEmpty: false,
     routeMode: "best", branch: {}, goals: [], offRoute: "keep" };
   var PETCARE_MS = 5000;
   function petCareLoad() {
@@ -2679,7 +2725,7 @@
     }
     modal.innerHTML =
       '<button id="iw-petcare-close">✕</button>' +
-      "<h2>🐾 寵物照顧</h2>" +
+      "<h2>🐾 寵物照顧 V1</h2>" +
       '<div class="iw-target" id="iw-pc-status"></div>' +
       check("iw-pc-evolve", "evolve", "出戰寵物養滿（+9、經驗滿）自動進化") +
       "<label>進化條件</label>" +
@@ -2689,7 +2735,8 @@
       opt("evolveMode", "any", "不管成功率都進化（4 階失敗經驗歸零、5 階以上掉回 +0）") +
       "</select>" +
       check("iw-pc-bag", "evolveBag", "背包裡其他養滿的寵物也一起進化（寄養中的不動）") +
-      check("iw-pc-switch", "switch", "自動更換出戰：出戰寵物養滿就換下一隻還沒養滿的（有開自動進化會先試進化）") +
+      check("iw-pc-buy", "autoBuy", "進化材料不夠時自動到商店買（要在村莊；例：5 階升 6 階的進化之石、櫻花花瓣，一個 2,500 萬～3,000 萬）") +
+      check("iw-pc-switch", "switch", "自動更換出戰：出戰寵物養滿就換下一隻還沒養滿的（有開自動進化會先試進化；要換倉庫裡的，打開遊戲寵物欄的「含倉庫」）") +
       "<label>換哪一隻</label>" +
       '<select id="iw-pc-order">' +
       opt("switchOrder", "fast", "最快養滿的先（剩下要吃的最少）") +
@@ -2700,7 +2747,6 @@
       opt("switchTier", "any", "不限，哪一階都可以") +
       opt("switchTier", "same", "只換跟出戰中同一階的（例：一階養滿換下一隻一階）") +
       "</select>" +
-      check("iw-pc-stored", "switchStored", "換寵物時倉庫裡的也算（遊戲要開「倉庫物品可用於寵物出戰」）") +
       check("iw-pc-empty", "warnEmpty", "便當盒空了提醒我（寫在遊戲訊息欄）") +
       "<label>進化路線（2 階、3 階有好幾條配方可以選分支）</label>" +
       '<select id="iw-pc-route">' +
@@ -2737,9 +2783,9 @@
     }
     bindCheck("iw-pc-evolve", "evolve");
     bindCheck("iw-pc-bag", "evolveBag");
+    bindCheck("iw-pc-buy", "autoBuy");
     bindCheck("iw-pc-switch", "switch");
     bindCheck("iw-pc-empty", "warnEmpty");
-    bindCheck("iw-pc-stored", "switchStored");
     document.getElementById("iw-pc-route").addEventListener("change", function (e) {
       petCareCfg.routeMode = e.target.value;
       petCareSave();
