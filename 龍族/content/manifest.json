@@ -1,5 +1,5 @@
 {
-  "version": "1.0.22",
+  "version": "1.0.23",
   "shell": 1,
   "files": [
     {
@@ -29,13 +29,13 @@
     },
     {
       "path": "chat-preload.js",
-      "sha256": "35412b971be64d98f94e1122e206d158adcef5d53e1424e235716e56654fac0d",
-      "size": 385
+      "sha256": "f3a240f7e5afba805cbadf30e44904d0696c45108e6130de98f9a5d9d62ce64d",
+      "size": 800
     },
     {
       "path": "codex-data.js",
-      "sha256": "b261a0e4b12cb4acfba7b8626e7e640cd472cf91332c35ff299d0a17d2dd0fef",
-      "size": 550657
+      "sha256": "ec19c6493e8edf27f75c0468e3bdb81ffe8439f57159673200f6396a9b8e9054",
+      "size": 552914
     },
     {
       "path": "codex-preload.js",
@@ -44,18 +44,23 @@
     },
     {
       "path": "companion.js",
-      "sha256": "55eb7b1753d33f577ffb56a64c10eeda5218ca26b363adac101b0f2db23e1288",
-      "size": 67021
+      "sha256": "6170e200b24df9d87d250450b5f33a4c6b3734b505293b72e8128eeb850b8dfb",
+      "size": 72407
+    },
+    {
+      "path": "dismantle-preload.js",
+      "sha256": "bb1fac4865cc6a01c19f4c4f1b235cd0a2aacdc180a5ac007604b0312a7c41cf",
+      "size": 422
     },
     {
       "path": "game-hook.js",
-      "sha256": "6ccd4da0ad1d3f0ed853f231c75e53324cab4e094ece067688cb7fbe31be668b",
-      "size": 143706
+      "sha256": "5fd69f927cee1b30fc4bdc4e207f2287d49177446a99e6b7c0c93d8f56415f83",
+      "size": 161665
     },
     {
       "path": "game-patch.js",
-      "sha256": "868ed5bb267ad4dc7712308aafbe2de70384b4c630a2c4eed5df9d9e4a9afe09",
-      "size": 12920
+      "sha256": "0184b6fa2c887ee748d8cb9cef5ac8e49ca28dbdbaf25e4572f80e4c7b5103fa",
+      "size": 14436
     },
     {
       "path": "game-preload.js",
@@ -89,8 +94,8 @@
     },
     {
       "path": "main.js",
-      "sha256": "bd06195cf5883f166b8da4f3279be2bd73cc3d65a7255ce5837f7f1885ebf5fe",
-      "size": 31884
+      "sha256": "dee5a51dc2817df596666d5d688f80636630ab32687a577bdb6047c13b33f234",
+      "size": 32002
     },
     {
       "path": "pet-preload.js",
@@ -149,23 +154,23 @@
     },
     {
       "path": "ui/auto.html",
-      "sha256": "d1b9c2bd32e9aeb61456ac0eb53f60b43fea82aba2781c65eb3e8b98f15e54cb",
-      "size": 8389
+      "sha256": "a0233f794c073ac4a4a2da85cfaab8482bfb4bea2d18760f9cf217c1ac82966d",
+      "size": 9035
     },
     {
       "path": "ui/auto.js",
-      "sha256": "199210cf1d2798e956a5d62c507f51985006c7d397ff6a73c031fb6aa0d4a2f3",
-      "size": 12955
+      "sha256": "76eb12b4a39460685ec0a5d085cde88bbbc09ab75b077927d6de6aebeacb813b",
+      "size": 13066
     },
     {
       "path": "ui/chat.html",
-      "sha256": "d03d22f9591278f3489d7083521162fcafb1bfe8554abb74b470cf01914b556a",
-      "size": 2990
+      "sha256": "013b8eb24b83cf9cf3cfa2910ca07d15fe0d67f2ea3fcf8a3b66955bfff85ad1",
+      "size": 6169
     },
     {
       "path": "ui/chat.js",
-      "sha256": "eebf48f63d3ca33b211432c845f51f3f89e0777bc8e3b715f378753127165312",
-      "size": 3394
+      "sha256": "e6d33eed25ed892b26db66d61f07e9c327fb64e20fb3a67ee53caae2df2fbb81",
+      "size": 9136
     },
     {
       "path": "ui/codex.html",
@@ -178,14 +183,24 @@
       "size": 17384
     },
     {
+      "path": "ui/dismantle.html",
+      "sha256": "36e1b998f4170cf38442ba234a2720e7eb5a3a18605acd4b184eb3ede92acee6",
+      "size": 5491
+    },
+    {
+      "path": "ui/dismantle.js",
+      "sha256": "7cdfb5ec1e61870136ecb9ca206c8dd3b21582e086b40b3a8457eb813416d57a",
+      "size": 9270
+    },
+    {
       "path": "ui/idle.html",
       "sha256": "f3a8c7456622ffd5b7986ed79acad72a03092382952c5bf288fd81d0371e33a1",
       "size": 14473
     },
     {
       "path": "ui/idle.js",
-      "sha256": "ca93600bd4e911ad2033f9b8eabcd0e8631a1bfc00819aa944a42f570de55cde",
-      "size": 17333
+      "sha256": "dd2f15dfe42af5f656472c8117030c54c33c9616120213be9b5350bcc85247ca",
+      "size": 17498
     },
     {
       "path": "ui/inv.html",

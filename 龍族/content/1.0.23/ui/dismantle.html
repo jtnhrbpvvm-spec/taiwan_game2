@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>分解</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; background: #0d0b08; color: #e9e4d8; font: 14px/1.5 "Microsoft JhengHei", sans-serif; }
+      main { padding: 12px 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+      section { background: #17130e; border: 1px solid #3a2f20; border-radius: 12px; padding: 10px 12px; }
+      h2 { margin: 0 0 6px; font-size: 15px; color: #f2bb4f; }
+      .hint { color: #98a2b6; font-size: 12px; margin: 2px 0 6px; }
+      .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+      input[type="number"] { width: 56px; padding: 3px 5px; border-radius: 6px; border: 1px solid #5a4a30; background: #0d0b08; color: #fff; font: inherit; }
+      label { cursor: pointer; }
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      th, td { padding: 4px 6px; border-bottom: 1px solid #2a2218; text-align: left; vertical-align: top; }
+      #tiers td:first-child { white-space: nowrap; }
+      th { color: #98a2b6; font-weight: normal; font-size: 12px; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .r0 { color: #e9e4d8; } .r1 { color: #84b0ff; } .r2 { color: #f6e268; } .r3 { color: #c896ff; }
+      .mat { display: inline-block; margin: 1px 6px 1px 0; }
+      .scrap { color: #8a8f9c; font-size: 11px; }
+      .seal { color: #f2bb4f; font-weight: bold; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border: 1px solid #3a2f20; border-radius: 999px; background: #0d0b08; }
+      .chip .n { color: #98a2b6; font-size: 12px; }
+      .tier { font-size: 11px; color: #98a2b6; white-space: nowrap; }
+      .why { color: #8a8f9c; font-size: 12px; }
+      .muted { color: #6b7280; }
+      button { padding: 6px 14px; border: 0; border-radius: 8px; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .save { background: #c9973f; color: #1a1408; }
+      .run { background: #7a2e22; color: #ffe; }
+      button:disabled { opacity: .5; cursor: default; }
+      #msg { color: #ffb46a; font-size: 13px; }
+      #log { font-size: 12px; color: #c9c2b2; white-space: pre-wrap; max-height: 160px; overflow-y: auto; }
+      details summary { cursor: pointer; color: #98a2b6; font-size: 13px; }
+      .bar { position: sticky; bottom: 0; background: #0d0b08; padding: 8px 14px; border-top: 1px solid #3a2f20; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="status" class="hint"></div>
+      <section>
+        <h2><label><input type="checkbox" id="on" /> 自動分解</label></h2>
+        <div class="row">背包剩 <input type="number" id="free" min="0" max="90" /> 格以下，就把下面勾選的裝備分解成素材（不用回主城，會在自動販售之前做）</div>
+      </section>
+
+      <section>
+        <h2>要分解的稀有度</h2>
+        <div class="hint">跟遊戲的「分解」視窗一樣照稀有度挑。稀有度越高，拿到的素材越多、越容易出高一檔的素材和印記（下表是遊戲的設定表；實際抽到什麼由伺服器決定）。</div>
+        <table>
+          <thead><tr><th></th><th>稀有度</th><th class="num">素材數量</th><th class="num">跳一檔</th><th class="num">跳兩檔</th><th class="num">印記</th><th class="num">背包符合</th></tr></thead>
+          <tbody id="rarities"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>要分解的部位</h2>
+        <div class="chips" id="parts"></div>
+      </section>
+
+      <section>
+        <h2>三種等級檔次：可能拿到的素材</h2>
+        <div class="hint" id="tier-hint"></div>
+        <table>
+          <thead><tr><th>檔次</th><th>等級</th><th>可能拿到的素材</th></tr></thead>
+          <tbody id="tiers"></tbody>
+        </table>
+        <div class="hint" id="seal-hint"></div>
+      </section>
+
+      <section>
+        <h2>目前背包符合的裝備 <span id="match-n" class="muted"></span></h2>
+        <div class="hint">照上面勾的稀有度、部位即時列出。「物品等級」＝生活技能能製作這件的等級（配方的最低等級）；不能製作的裝備改用會掉它的怪物裡等級最低的那隻，標「掉落」。遊戲網頁端沒有物品等級，這是推估。</div>
+        <table>
+          <thead><tr><th>裝備</th><th>部位</th><th class="num">物品等級</th><th>對應檔次</th></tr></thead>
+          <tbody id="match"></tbody>
+        </table>
+        <details id="skip-box"><summary id="skip-sum"></summary>
+          <table><tbody id="skip"></tbody></table>
+        </details>
+      </section>
+
+      <section>
+        <h2>分解紀錄</h2>
+        <div id="log" class="muted">還沒有紀錄</div>
+      </section>
+    </main>
+    <div class="bar">
+      <button type="button" class="save" id="save">儲存設定</button>
+      <button type="button" class="run" id="run">照勾選的馬上分解</button>
+      <span id="msg"></span>
+    </div>
+    <script src="../codex-data.js"></script>
+    <script src="dismantle.js"></script>
+  </body>
+</html>

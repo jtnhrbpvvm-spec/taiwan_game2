@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob:; style-src 'self' 'unsafe-inline'" />
+    <title>龍族桌寵</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; }
+      #pet { position: absolute; left: 0; top: 0; will-change: transform; image-rendering: pixelated; transition: opacity 0.2s; }
+      body.focus #pet { opacity: 0.5; }
+      body.focus #nameplate, body.focus #bubble, body.focus .floater, body.focus .zzz { display: none; }
+      body.offline #pet { filter: grayscale(0.8) brightness(0.8); }
+      #bubble {
+        position: absolute; left: 0; top: 0; padding: 4px 10px; border-radius: 8px;
+        font: 13px/1.4 "Microsoft JhengHei", sans-serif; color: #f1e2bf; white-space: nowrap;
+        background: rgba(13, 11, 8, 0.92); border: 1px solid #b08a3e; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+        opacity: 0; transition: opacity 0.15s; pointer-events: none; z-index: 2;
+      }
+      #bubble.on { opacity: 1; }
+      #nameplate { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; color: #f1e2bf; background: rgba(13,11,8,.8); border-radius: 5px; padding: 2px 6px; font: 11px/1.4 "Microsoft JhengHei", sans-serif; }
+      #bubble small { display: block; font-size: 12px; color: #c9b58a; }
+      #bubble .hp { display: block; height: 4px; margin-top: 3px; border-radius: 2px; background: #3a1d18; overflow: hidden; }
+      #bubble .hp i { display: block; height: 100%; background: #d8433a; }
+      .floater {
+        position: absolute; left: 0; top: 0;
+        font: bold 14px/1 "Microsoft JhengHei", sans-serif; color: #fff; white-space: nowrap; pointer-events: none;
+        text-shadow: 0 0 3px #1a0f06, 0 1px 2px #1a0f06, 0 0 6px #1a0f06;
+        animation: float-up 2.2s linear forwards;
+      }
+      .floater.exp { color: #b9f2a1; }
+      .floater.gold { color: #ffe27a; }
+      .floater.loot { color: #f3d7ff; }
+      .floater.levelup { color: #f2bb4f; font-size: 20px; }
+      .floater.hint { font-size: 13px; font-weight: normal; animation-duration: 7s; }
+      .zzz { position: absolute; left: 0; top: 0; width: 46px; height: 50px; pointer-events: none; z-index: 1; }
+      .zzz span {
+        position: absolute; font: bold 12px/1 "Comic Sans MS", "Microsoft JhengHei", sans-serif; color: #dfe8ff; opacity: 0;
+        text-shadow: 0 0 3px #10162a, 0 1px 2px #10162a, 0 0 6px #10162a;
+        animation: zzz 2.4s ease-out infinite;
+      }
+      .zzz span:nth-child(1) { left: 0; bottom: 0; }
+      .zzz span:nth-child(2) { left: 12px; bottom: 14px; font-size: 17px; animation-delay: 0.8s; }
+      .zzz span:nth-child(3) { left: 26px; bottom: 30px; font-size: 23px; animation-delay: 1.6s; }
+      @keyframes zzz {
+        from { opacity: 0; translate: -3px 5px; }
+        25% { opacity: 1; }
+        70% { opacity: 1; }
+        to { opacity: 0; translate: 4px -6px; }
+      }
+      @keyframes float-up {
+        from { opacity: 0; translate: 0 8px; }
+        15% { opacity: 1; }
+        70% { opacity: 1; }
+        to { opacity: 0; translate: 0 -130px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="pet"></canvas>
+    <div id="bubble"></div>
+    <div id="nameplate"></div>
+    <script src="pet.js"></script>
+  </body>
+</html>

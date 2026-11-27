@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>小百科</title>
+    <style>
+      :root { color-scheme: dark; }
+      [hidden] { display: none !important; }
+      body.web #list th:last-child, body.web #list td:last-child { display: none; }
+      @media (max-width: 760px) {
+        body { height: auto; min-height: 100vh; }
+        main { flex-direction: column; }
+        #list { flex: none; max-height: 55vh; border-right: 0; border-bottom: 1px solid #3a2f20; }
+        #detail { flex: none; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: #0d0b08; color: #e9e4d8; font: 14px/1.5 "Microsoft JhengHei", sans-serif; }
+      header { padding: 12px 16px 8px; border-bottom: 1px solid #3a2f20; }
+      h1 { margin: 0; font-size: 18px; color: #f2bb4f; display: flex; align-items: baseline; gap: 12px; }
+      h1 small { font-size: 12px; color: #98a2b6; font-weight: normal; }
+      #me { margin-top: 4px; font-size: 13px; color: #c9b58a; }
+      .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+      input, select { padding: 4px 8px; border-radius: 6px; border: 1px solid #5a4a30; background: #17130e; color: #fff; font: inherit; }
+      input[type="search"] { width: 180px; }
+      label.chk { display: flex; align-items: center; gap: 4px; color: #c9b58a; cursor: pointer; }
+      main { flex: 1; display: flex; min-height: 0; }
+      #list { flex: 1 1 55%; overflow: auto; border-right: 1px solid #3a2f20; }
+      #detail { flex: 1 1 45%; overflow: auto; padding: 12px 16px; }
+      table { border-collapse: collapse; width: 100%; }
+      #list th { position: sticky; top: 0; background: #17130e; color: #c9b58a; font-weight: normal; text-align: left; padding: 4px 8px; border-bottom: 1px solid #3a2f20; cursor: pointer; white-space: nowrap; font-size: 13px; }
+      #list td { padding: 3px 8px; border-bottom: 1px solid #1f1a12; white-space: nowrap; font-size: 13px; }
+      #list td.num, #list th.num { text-align: right; }
+      #list tr.item { cursor: pointer; }
+      #list tr.item:hover { background: #1d1810; }
+      #list tr.sel { background: #2a2113; }
+      .ok { color: #8fe08a; }
+      .bad { color: #ff8f7a; }
+      .near { color: #ffd36a; }
+      .muted { color: #8a8170; }
+      #detail h2 { margin: 0 0 4px; font-size: 17px; color: #f2bb4f; }
+      #detail h3 { margin: 14px 0 4px; font-size: 14px; color: #c9b58a; border-bottom: 1px solid #3a2f20; }
+      #detail td { padding: 2px 6px; font-size: 13px; }
+      #detail td:first-child { color: #c9b58a; width: 40%; }
+      #count { color: #98a2b6; font-size: 12px; }
+      .hint { font-size: 12px; color: #98a2b6; margin-top: 6px; }
+      #target-bar { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: #17130e; border: 1px solid #3a2f20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+      #target b { color: #f2bb4f; }
+      #hist { width: 100%; font-size: 12px; }
+      #hist summary { cursor: pointer; color: #c9b58a; }
+      #hist-list div { padding: 1px 0; }
+      button { padding: 5px 14px; border: 0; border-radius: 8px; background: #c9973f; color: #1b120a; font: bold 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      button.small { padding: 2px 10px; font-size: 12px; background: #3a2f20; color: #f2d9a6; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      .target-tag { margin-left: 6px; padding: 0 6px; border-radius: 6px; background: #5a3f12; color: #ffd36a; font-size: 11px; }
+      #target-msg { margin-left: 8px; font-size: 12px; }
+      ul.src { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+      ul.src li { margin: 3px 0; }
+      ul.src b { color: #f2d9a6; font-weight: normal; }
+      .src-map { padding-left: 4px; color: #d8d0bd; }
+      .src-mapname { color: #c9b58a; }
+      a.go { color: inherit; text-decoration: underline dotted #8a7a5a; text-underline-offset: 3px; }
+      a.go:hover { color: #ffd36a; }
+      .src-more summary { cursor: pointer; color: #98a2b6; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>小百科・裝備 <small id="ver"></small></h1>
+      <div id="me">讀取角色中…</div>
+      <div id="target-bar">
+        <span id="target">配點目標：（沒有）</span>
+        <button type="button" id="target-show" class="small" hidden>看這件</button>
+        <button type="button" id="target-cancel" class="small" hidden>取消目標</button>
+        <details id="hist"><summary>目標紀錄</summary><div id="hist-list" class="muted">（還沒有）</div></details>
+      </div>
+      <div class="filters">
+        <input type="search" id="q" placeholder="搜尋名稱" />
+        <select id="slot"><option value="">全部位置</option></select>
+        <select id="cls"><option value="">全部職業</option></select>
+        <select id="src"><option value="">全部取得方式</option></select>
+        <select id="usable">
+          <option value="">能不能用都列</option>
+          <option value="ok">只列現在能用的</option>
+          <option value="points">只差能力點（可分配點數夠就能用）</option>
+          <option value="no">只列還不能用的</option>
+        </select>
+        <span id="count"></span>
+      </div>
+    </header>
+    <main>
+      <div id="list"><table><thead><tr>
+        <th data-sort="name">名稱</th><th data-sort="slot">位置</th><th data-sort="level" class="num">等級</th>
+        <th data-sort="damage" class="num">攻擊</th><th data-sort="ar" class="num">AC</th><th data-sort="status">能不能用</th>
+      </tr></thead><tbody id="rows"></tbody></table></div>
+      <div id="detail"><div class="muted">點左邊的裝備看詳細能力和使用限制。</div>
+        <div class="hint">數值是遊戲資料裡的基本值（遊戲對法師衣帽、少數道具的調整已經算進去），不含強化、稀有詞綴。<br />
+          <span class="app-only">「能不能用」用角色本身的能力判斷，不含身上裝備的能力加成，所以實際可能比這裡寬一點。<br /></span>
+          取得方式跟遊戲裡「如何取得」用同一套算法；遊戲的「獨特裝備」不在這份清單裡。</div>
+      </div>
+    </main>
+    <script src="../codex-data.js"></script>
+    <script src="../stat-alloc.js"></script>
+    <script src="codex.js"></script>
+  </body>
+</html>

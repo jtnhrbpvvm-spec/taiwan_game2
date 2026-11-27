@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://play.17raja.com" />
+    <title>對話</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { height: 100%; }
+      body { margin: 0; display: flex; flex-direction: column; background: #0d0b08; color: #e9e4d8; font: 14px/1.5 "Microsoft JhengHei", sans-serif; }
+      .tabs { display: flex; gap: 3px; padding: 8px 8px 0; flex-wrap: wrap; }
+      .tabs button { padding: 3px 10px; border: 1px solid #3a2f20; border-radius: 8px; background: #17130e; color: #98a2b6; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .tabs button[aria-selected="true"] { background: #3a2c14; color: #f2bb4f; border-color: #8a6a2a; font-weight: bold; }
+      .tabs .unread::after { content: " •"; color: #ff7a7a; }
+      #log { flex: 1; overflow-y: auto; margin: 8px; padding: 6px 8px; border-radius: 10px; background: #17130e; border: 1px solid #3a2f20; }
+      .line { padding: 1px 0; word-break: break-all; }
+      .line .t { color: #6b7280; font-size: 11px; margin-right: 4px; }
+      .line .who { font-weight: bold; cursor: pointer; }
+      .line .who:hover { text-decoration: underline; }
+      .ch0 .who { color: #e9e4d8; }
+      .ch1, .ch1 .who { color: #e58bff; }
+      .ch2 .who, .ch2 .tag { color: #7fc8ff; }
+      .ch3 { color: #f2bb4f; }
+      .ch4 .who, .ch4 .tag { color: #8fe08a; }
+      .ch5 .who, .ch5 .tag { color: #ffb46a; }
+      .me .who { color: #f2bb4f; }
+      .tag { font-size: 12px; margin-right: 3px; }
+      .empty { color: #6b7280; padding: 10px 0; text-align: center; }
+      form { display: flex; gap: 6px; padding: 0 8px 8px; align-items: center; flex-wrap: wrap; }
+      select, input { padding: 5px 6px; border-radius: 6px; border: 1px solid #5a4a30; background: #17130e; color: #fff; font: inherit; }
+      #to { width: 90px; }
+      #text { flex: 1; min-width: 120px; }
+      button.send { padding: 5px 14px; border: 0; border-radius: 6px; background: #c9973f; color: #1a1408; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      #msg { width: 100%; font-size: 12px; color: #ffb46a; min-height: 0; }
+      [hidden] { display: none !important; }
+      /* 貼的道具：顏色照遊戲（普通白、稀有藍、高級黃、史詩紫；不是裝備的綠） */
+      .item { font-weight: bold; cursor: pointer; text-decoration: underline dotted; background: none; border: 0; padding: 0; font: inherit; }
+      .r-1 { color: #96dc1e; } .r0 { color: #e9e4d8; } .r1 { color: #84b0ff; } .r2 { color: #f6e268; } .r3 { color: #c896ff; }
+      .tools { display: flex; gap: 4px; padding: 0 8px 6px; }
+      .tools button { padding: 3px 9px; border: 1px solid #3a2f20; border-radius: 8px; background: #17130e; color: #c9c2b2; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .tools button[aria-pressed="true"] { background: #3a2c14; color: #f2bb4f; border-color: #8a6a2a; }
+      #panel { margin: 0 8px 6px; padding: 6px; max-height: 180px; overflow-y: auto; border-radius: 10px; background: #20222a; border: 1px solid #3a3d48; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 2px; }
+      .grid button { height: 40px; border: 0; border-radius: 8px; background: none; font-size: 20px; cursor: pointer; color: #fff; }
+      .grid button:hover, .list button:hover { background: #ffffff1a; }
+      .grid img { max-width: 34px; max-height: 34px; image-rendering: pixelated; }
+      .list { display: flex; flex-direction: column; gap: 2px; }
+      .list button { text-align: left; padding: 5px 8px; border: 0; border-radius: 6px; background: #ffffff0a; color: #e9e4d8; font: 13px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      .list .sub { color: #8a8f9c; font-size: 11px; margin-left: 6px; }
+      .phr { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+      .hint2 { color: #8a8f9c; font-size: 12px; padding: 2px 4px 4px; }
+      #detail { position: fixed; inset: 0; background: #000a; display: flex; align-items: center; justify-content: center; padding: 16px; }
+      #detail .box { max-width: 380px; width: 100%; max-height: 90%; overflow-y: auto; background: #17130e; border: 1px solid #8a6a2a; border-radius: 12px; padding: 12px 14px; }
+      #detail h3 { margin: 0 0 8px; font-size: 15px; }
+      #detail pre { white-space: pre-wrap; margin: 0; font: 13px/1.6 "Microsoft JhengHei", sans-serif; color: #e9e4d8; }
+      #detail button { margin-top: 10px; padding: 5px 14px; border: 0; border-radius: 6px; background: #c9973f; color: #1a1408; font-weight: bold; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="tabs" id="tabs"></div>
+    <div id="log"></div>
+    <div id="panel" hidden></div>
+    <div class="tools" id="tools">
+      <button type="button" data-panel="emoji" title="在訊息裡插入表情符號">😀 表情</button>
+      <button type="button" data-panel="emote" title="角色頭上的表情動作（跟遊戲「角色表情」一樣）">角色表情</button>
+      <button type="button" data-panel="phrase" title="遊戲的快捷語">快捷語</button>
+      <button type="button" data-panel="item" title="把身上或背包的道具貼到聊天（送到下面選的頻道）">貼道具</button>
+    </div>
+    <div id="detail" hidden><div class="box"><h3 id="d-title"></h3><pre id="d-text"></pre><button type="button" id="d-close">關閉</button></div></div>
+    <form id="form">
+      <select id="ch">
+        <option value="0">一般</option>
+        <option value="1">密語</option>
+        <option value="2">國家</option>
+        <option value="4">公會</option>
+        <option value="5">世界</option>
+      </select>
+      <input id="to" placeholder="對象名字" maxlength="32" hidden />
+      <input id="text" placeholder="說點什麼…（Enter 送出）" maxlength="120" autocomplete="off" />
+      <button type="submit" class="send">送出</button>
+      <div id="msg"></div>
+    </form>
+    <script src="chat.js"></script>
+  </body>
+</html>

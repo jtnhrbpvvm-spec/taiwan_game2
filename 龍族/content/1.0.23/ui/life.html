@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>生活技能</title>
+    <style>
+      :root { color-scheme: dark; }
+      [hidden] { display: none !important; }
+      * { box-sizing: border-box; }
+      body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: #0d0b08; color: #e9e4d8; font: 14px/1.5 "Microsoft JhengHei", sans-serif; }
+      header { padding: 10px 16px 6px; border-bottom: 1px solid #3a2f20; }
+      h1 { margin: 0; font-size: 18px; color: #f2bb4f; }
+      #who { font-size: 13px; color: #c9b58a; }
+      main { flex: 1; display: flex; min-height: 0; }
+      #left { flex: 1 1 52%; overflow: auto; padding: 10px 16px; border-right: 1px solid #3a2f20; }
+      #right { flex: 1 1 48%; overflow: auto; padding: 10px 16px; }
+      h2 { margin: 10px 0 4px; font-size: 14px; color: #c9b58a; border-bottom: 1px solid #3a2f20; }
+      section { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: #17130e; border: 1px solid #3a2f20; }
+      .row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+      select, input { padding: 3px 6px; border-radius: 6px; border: 1px solid #5a4a30; background: #0d0b08; color: #fff; font: inherit; }
+      select { max-width: 100%; }
+      input[type="number"] { width: 90px; }
+      table { border-collapse: collapse; width: 100%; }
+      td, th { padding: 2px 6px; font-size: 13px; border-bottom: 1px solid #1f1a12; text-align: left; vertical-align: top; }
+      th { color: #c9b58a; font-weight: normal; position: sticky; top: 0; background: #0d0b08; }
+      td.num { text-align: right; white-space: nowrap; }
+      tr.locked td { color: #6f6656; }
+      tr.pick { cursor: pointer; }
+      tr.pick:hover { background: #1d1810; }
+      tr.sel { background: #2a2113; }
+      .muted { color: #8a8170; } .ok { color: #8fe08a; } .bad { color: #ff8f7a; } .warn { color: #ffb46a; } .gold { color: #f2bb4f; }
+      .hint { margin-top: 6px; font-size: 12px; color: #98a2b6; }
+      .lv { display: inline-block; min-width: 96px; margin: 2px 8px 2px 0; font-size: 13px; }
+      button { padding: 6px 18px; border: 0; border-radius: 8px; background: #c9973f; color: #1b120a; font: bold 14px "Microsoft JhengHei", sans-serif; cursor: pointer; }
+      button.secondary { background: #3a2f20; color: #f2d9a6; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      #log { margin-top: 6px; max-height: 150px; overflow: auto; font-size: 12px; color: #c9c2b2; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>生活技能</h1>
+      <div id="who">讀取中…</div>
+    </header>
+    <main>
+      <div id="left">
+        <h2>技能等級</h2>
+        <div id="levels" class="hint"></div>
+        <h2 id="recipes-title">配方</h2>
+        <div class="hint">點一列選成「指定物品」。灰色＝等級還不夠（要先練到最低等級）。成功率照你現在的等級算；「現在能做」只算背包裡現成的材料。</div>
+        <div id="gatherBox" class="hint" hidden></div>
+        <table id="recipeTable"><thead><tr><th>成品</th><th class="num">等級</th><th class="num">成功率</th><th>材料</th><th class="num">現在能做</th></tr></thead><tbody id="recipes"></tbody></table>
+      </div>
+      <div id="right">
+        <section>
+          <h2 style="margin-top:0">練習設定</h2>
+          <div class="row">技能 <select id="skill"></select></div>
+          <div id="craftOnly">
+          <div class="row"><label><input type="radio" name="mode" value="best" /> 只做目前最高等級能做的物品（練等用，升級後自動換成更高的）</label></div>
+          <div class="row"><label><input type="radio" name="mode" value="recipe" /> 指定物品</label> <select id="recipe"></select></div>
+          <div class="row">做 <input type="number" id="count" min="0" /> 件 <span class="hint" style="margin:0">（0＝一直做到材料用完、買不到為止）</span></div>
+          <h2>材料不夠時</h2>
+          <div class="row"><label><input type="checkbox" id="chain" /> 先用身上的原料做中間材料（例如原木→木材→木板，再做指定物品）</label></div>
+          </div>
+          <div class="row"><label><input type="checkbox" id="buy" /> 自動購買不足的材料（缺工具也會買；主城有賣才買得到）</label></div>
+          <div class="row"><label><input type="checkbox" id="useUp" /> 儘量把身上的原料用光：先用背包現有的做，指定的做不了就改做這個技能其他做得出來的（等級高的先）；
+            指定數量做完也繼續，做到身上原料什麼都做不出來為止（用光後才照上面「自動購買」去買）</label></div>
+          <div class="row"><label><input type="checkbox" id="fuse" /> 每做完一批就看物品欄，能合成就合成上去（照「自動合成」勾的等級和件數；都沒勾就三種等級都合，5 件起合。鎖定、追蹤的不會合）</label></div>
+          <div id="gatherNote" class="hint" hidden>採集：在主城帶著工具一直採（跟遊戲「生活→採集」按開始一樣，每 3 秒一次）；缺工具時勾「自動購買」會在主城買。斷線重連後會自己再開始；背包滿了會停下、5 分鐘後再看。</div>
+          <div class="row">
+            <button id="start" type="button">開始練習</button>
+            <button id="stop" type="button" class="secondary">停止</button>
+            <span id="msg"></span>
+          </div>
+          <div class="hint">練習時會回主城、待在主城（補給、販售完也不回練功地圖）；遊戲視窗開著時也會在主城接著做（一批做完馬上接下一批；被玩家打斷的話等 30 秒再接）。停止後要回去練功請自己傳送或用組隊／自動補給的設定。</div>
+        </section>
+        <section>
+          <h2 style="margin-top:0">預覽（照現在背包）</h2>
+          <div id="preview" class="hint"></div>
+        </section>
+        <section>
+          <h2 style="margin-top:0">目前狀態</h2>
+          <div id="now" class="hint"></div>
+          <div id="log"></div>
+        </section>
+      </div>
+    </main>
+    <script src="../codex-data.js"></script>
+    <script src="../life-plan.js"></script>
+    <script src="life.js"></script>
+  </body>
+</html>
