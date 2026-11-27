@@ -2137,6 +2137,7 @@
     }
     function nameOf(id) { var d = data.petById.get(id); return d ? d.name : "寵物 #" + id; }
 
+    // 這條配方現在能放哪些材料、成功率多少（材料不夠就回傳 null）
     function plan(r) {
       if (!r || !Array.isArray(r.targets) || !r.targets.length || !Array.isArray(r.mats)) return null;
       if (r.rates) {
@@ -2160,11 +2161,78 @@
       return false;
     }
 
+    // ── 進化路線 ──
+    function rng01(s) {
+      s = (s + 1831565813) >>> 0;
+      var e = Math.imul(s ^ (s >>> 15), 1 | s);
+      e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+      return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+    }
+    // 這隻寵物（seed）用配方 r 從 id 進化，會變成哪一隻（遊戲 d_ 的第二段）
+    function predictTo(seed, id, r) {
+      var sum = 0;
+      r.targets.forEach(function (t) { sum += t.rate; });
+      var x = rng01((seed ^ Math.imul(id, 2654435761)) >>> 0) * Math.max(100, sum);
+      for (var i = 0; i < r.targets.length; i++) { x -= r.targets[i].rate; if (x < 0) return r.targets[i].to; }
+      return r.targets[r.targets.length - 1].to;
+    }
+    var goals = cfg.routeMode === "goal" && Array.isArray(cfg.goals) ? cfg.goals.map(Number) : [];
+    function recipes(id) {
+      var d = data.petById.get(id);
+      return d && Array.isArray(d.evolve) ? d.evolve.filter(function (r) { return r && Array.isArray(r.targets) && r.targets.length; }) : [];
+    }
+    // 不看亂數，這一系有沒有可能走到任何一個目標
+    var everMemo = {};
+    function canEver(id, depth) {
+      if (goals.indexOf(id) >= 0) return true;
+      if (id in everMemo) return everMemo[id];
+      everMemo[id] = false;
+      var ok = (depth || 0) < 8 && recipes(id).some(function (r) { return r.targets.some(function (t) { return canEver(t.to, (depth || 0) + 1); }); });
+      return (everMemo[id] = ok);
+    }
+    // 這隻（seed 固定）從 id 出發，最多能走到 goals 裡第幾個（越小越優先，-1 到不了）
+    function goalRank(seed, id, depth) {
+      var g = goals.indexOf(id);
+      if (g >= 0) return g;
+      if (depth > 8) return -1;
+      var best = -1;
+      recipes(id).forEach(function (r) {
+        var k = goalRank(seed, predictTo(seed, id, r), depth + 1);
+        if (k >= 0 && (best < 0 || k < best)) best = k;
+      });
+      return best;
+    }
+    // 回傳 null：這隻不要進化；否則回傳 function(配方序號, 配方) → 這條能不能用
+    function routeFilter(p) {
+      var any = function () { return true; };
+      if (cfg.routeMode === "branch") {
+        var b = cfg.branch && cfg.branch[p.id];
+        if (b === undefined || b === null || b === "") return any;
+        return function (i) { return i === Number(b); };
+      }
+      if (goals.length) {
+        if (goals.indexOf(p.id) >= 0) return null; // 已經是目標了
+        if (!canEver(p.id, 0)) return any;
+        var seed = p.seed >>> 0, rank = goalRank(seed, p.id, 0);
+        if (rank < 0) return cfg.offRoute === "evolve" ? any : null;
+        return function (i, r) { return goalRank(seed, predictTo(seed, p.id, r), 1) === rank; };
+      }
+      return any;
+    }
+    // 目標模式下，這一隻怎麼走都到不了、又設定「不進化」→ 養它也沒用，不拿來換
+    function offRouteSkip(p) {
+      if (!goals.length || cfg.offRoute === "evolve" || goals.indexOf(p.id) >= 0 || !canEver(p.id, 0)) return false;
+      return goalRank(p.seed >>> 0, p.id, 0) < 0;
+    }
+
     function tryEvolve(p) {
       var def = data.petById.get(p.id);
       if (!def || !isFull(p, def) || !Array.isArray(def.evolve)) return false;
+      var ok0 = routeFilter(p);
+      if (!ok0) return false;
       var best = null;
       def.evolve.forEach(function (r, i) {
+        if (!r || !Array.isArray(r.targets) || !r.targets.length || !ok0(i, r)) return;
         var pl = plan(r);
         if (pl && allowed(def, pl.rate) && (!best || pl.rate > best.rate)) best = { i: i, mats: pl.mats, rate: pl.rate };
       });
@@ -2202,19 +2270,23 @@
     if (cfg.switch && act && actDef) {
       if (isFull(act, actDef)) {
         var cands = [];
-        session.pets.forEach(function (p, i) {
+        function addCand(p, i, stored) {
           var d = data.petById.get(p.id);
-          if (!d || p.uid === act.uid || isFull(p, d) || !canEquip(d) || fostering(p.uid)) return;
+          if (!d || p.uid === act.uid && !stored || isFull(p, d) || !canEquip(d) || !stored && fostering(p.uid)) return;
           if (cfg.switchTier === "same" && d.tier !== actDef.tier) return;
-          cands.push({ p: p, d: d, i: i, left: feedLeft(p, d) });
-        });
+          if (offRouteSkip(p)) return;
+          cands.push({ p: p, d: d, i: i, left: feedLeft(p, d), stored: stored });
+        }
+        session.pets.forEach(function (p, i) { addCand(p, i, false); });
+        var wh = cfg.switchStored && typeof session.equipStoredPet === "function" && session.warehouse && Array.isArray(session.warehouse.pets) ? session.warehouse.pets : [];
+        wh.forEach(function (p, i) { addCand(p, 100000 + i, true); });
         cands.sort(cfg.switchOrder === "order"
           ? function (a, b) { return a.i - b.i; }
           : function (a, b) { return a.left - b.left || a.i - b.i; });
         var moved = false;
         for (var k = 0; k < cands.length && !moved; k++) {
-          try { moved = !!session.equipPet(cands[k].p.uid); } catch (e) { moved = false; }
-          if (moved) out.push({ kind: "switch", text: actDef.name + " 養滿了，換 " + cands[k].d.name + "（+" + cands[k].p.grow + "）出戰" });
+          try { moved = !!(cands[k].stored ? session.equipStoredPet(cands[k].p.uid) : session.equipPet(cands[k].p.uid)); } catch (e) { moved = false; }
+          if (moved) out.push({ kind: "switch", text: actDef.name + " 養滿了，換 " + (cands[k].stored ? "倉庫裡的 " : "") + cands[k].d.name + "（+" + cands[k].p.grow + "）出戰" });
         }
         if (!moved && !st.allFullSaid) {
           st.allFullSaid = true;
@@ -2241,7 +2313,8 @@
   }
 
   var PETCARE_KEY = "iw-petcare-v1";
-  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", warnEmpty: false };
+  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", switchStored: false, warnEmpty: false,
+    routeMode: "best", branch: {}, goals: [], offRoute: "keep" };
   var PETCARE_MS = 5000;
   function petCareLoad() {
     var saved = {};
@@ -2318,6 +2391,240 @@
     }
   }
 
+  // ── 進化路線：分支選擇、最終目標與機率 ──
+  function pcPets() { try { return Array.from(session.data.petById.values()); } catch (e) { return []; } }
+  function pcDef(id) { try { return session.data.petById.get(Number(id)); } catch (e) { return null; } }
+  function pcName(id) { var d = pcDef(id); return d ? d.name : "#" + id; }
+  function pcRecipes(id) {
+    var d = pcDef(id);
+    return d && Array.isArray(d.evolve) ? d.evolve.map(function (r, i) { return { r: r, i: i }; }).filter(function (x) { return x.r && Array.isArray(x.r.targets) && x.r.targets.length; }) : [];
+  }
+  // 配方 r 在亂數 u（0～1）時變成誰（跟遊戲 d_ 同一套扣法）
+  function pcTargetAt(r, u) {
+    var sum = 0;
+    r.targets.forEach(function (t) { sum += t.rate; });
+    var x = u * Math.max(100, sum);
+    for (var i = 0; i < r.targets.length; i++) { x -= r.targets[i].rate; if (x < 0) return r.targets[i].to; }
+    return r.targets[r.targets.length - 1].to;
+  }
+  var pcEverMemo = {};
+  function pcCanEver(id, goal, depth) {
+    if (id === goal) return true;
+    var key = goal + ":" + id;
+    if (key in pcEverMemo) return pcEverMemo[key];
+    pcEverMemo[key] = false;
+    var ok = depth < 8 && pcRecipes(id).some(function (x) { return x.r.targets.some(function (t) { return pcCanEver(t.to, goal, depth + 1); }); });
+    return (pcEverMemo[key] = ok);
+  }
+  // 這批寵物到得了目標的比例，寫成 x/100（例：1000 隻有 2 隻 → 0.2/100）
+  function pcRatioText(yes, total) {
+    if (!total) return "0/100";
+    var v = yes / total * 100;
+    var s = v === 0 ? "0" : v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : Number(v.toPrecision(2)).toString();
+    if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+    return s + "/100";
+  }
+  // 這隻寵物（seed 固定）照路線能不能走到 goal：遊戲每條配方變成誰是固定的，所以答案是確定的
+  function pcSeedReaches(seed, id, goal, depth) {
+    if (id === goal) return true;
+    if ((depth || 0) > 8) return false;
+    var u = (function (s) {
+      s = (s + 1831565813) >>> 0;
+      var e = Math.imul(s ^ (s >>> 15), 1 | s);
+      e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+      return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+    })((seed ^ Math.imul(id, 2654435761)) >>> 0);
+    return pcRecipes(id).some(function (x) { return pcSeedReaches(seed, pcTargetAt(x.r, u), goal, (depth || 0) + 1); });
+  }
+  function pcAllOwned() {
+    var list = [];
+    try { (session.pets || []).forEach(function (p) { list.push({ p: p, stored: false }); }); } catch (e) { /* 讀不到 */ }
+    try { ((session.warehouse && session.warehouse.pets) || []).forEach(function (p) { list.push({ p: p, stored: true }); }); } catch (e) { /* 讀不到 */ }
+    return list;
+  }
+  function renderPetRoute() {
+    var box = document.getElementById("iw-pc-route-body");
+    if (!box) return;
+    var mode = petCareCfg.routeMode, html = "";
+    if (mode === "branch") {
+      var forks = pcPets().filter(function (d) { return pcRecipes(d.id).length > 1; })
+        .sort(function (a, b) { return a.tier - b.tier || a.id - b.id; });
+      var own = {};
+      pcAllOwned().forEach(function (x) { own[x.p.id] = (own[x.p.id] || 0) + 1; });
+      html += '<div style="font-size:11.5px;color:var(--iw-dim);margin:6px 0;line-height:1.6;">每條配方用的材料不同，選了之後只用那條（材料不夠就等）。括號是遊戲寫的機率。</div>';
+      forks.forEach(function (d) {
+        var cur = petCareCfg.branch && petCareCfg.branch[d.id];
+        html += '<div style="margin-top:8px;font-size:12.5px;"><b>' + escapeHtmlLite(d.name) + "</b>（" + d.tier + " 階" + (own[d.id] ? "，你有 " + own[d.id] + " 隻" : "") + "）</div>" +
+          '<select data-pc-branch="' + d.id + '"><option value="">不指定（挑材料夠、成功率最高的）</option>' +
+          pcRecipes(d.id).map(function (x) {
+            var t = x.r.targets.map(function (g) { return pcName(g.to) + " " + g.rate + "%"; }).join("、");
+            return '<option value="' + x.i + '"' + (String(cur) === String(x.i) ? " selected" : "") + ">配方 " + (x.i + 1) + "：" + escapeHtmlLite(t) + "</option>";
+          }).join("") + "</select>";
+      });
+    } else if (mode === "goal") {
+      var goals = (petCareCfg.goals || []).map(Number);
+      var cands = pcPets().filter(function (d) { return d.tier >= 3 && goals.indexOf(d.id) < 0; })
+        .sort(function (a, b) { return a.tier - b.tier || a.id - b.id; });
+      var groups = {};
+      cands.forEach(function (d) { (groups[d.tier] = groups[d.tier] || []).push(d); });
+      html += '<div style="display:flex;gap:8px;margin-top:6px;"><select id="iw-pc-goal-pick" style="flex:1;">' +
+        Object.keys(groups).map(function (t) {
+          return '<optgroup label="' + t + ' 階">' + groups[t].map(function (d) { return '<option value="' + d.id + '">' + escapeHtmlLite(d.name) + "</option>"; }).join("") + "</optgroup>";
+        }).join("") + '</select><button class="iw-inline-btn" id="iw-pc-goal-add" style="margin:0;">加入目標</button></div>';
+      html += '<label>到不了目標的寵物</label><select id="iw-pc-offroute">' +
+        opt2("offRoute", "keep", "不進化、也不拿來養（留著自己處理）") +
+        opt2("offRoute", "evolve", "照一般規則進化") + "</select>";
+      if (!goals.length) html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;">還沒有目標，先在上面選一隻按「加入目標」。</div>';
+      var owned = pcAllOwned();
+      goals.forEach(function (g, gi) {
+        var d = pcDef(g);
+        if (!d) return;
+        // 背包＋倉庫裡這一系的寵物，照路線走會有幾隻變成目標（每隻的結果是固定的），只顯示 x/100
+        var yes = 0, line = 0;
+        owned.forEach(function (x) {
+          if (x.p.id === g || !pcCanEver(x.p.id, g, 0)) return;
+          line++;
+          if (pcSeedReaches(x.p.seed >>> 0, x.p.id, g, 0)) yes++;
+        });
+        html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;line-height:1.7;">' +
+          '<button data-pc-goal-del="' + g + '" style="float:right;border:0;background:none;cursor:pointer;font-size:14px;" title="移除">✕</button>' +
+          "<b>🎯 " + escapeHtmlLite(d.name) + "</b>　<b>" + (line ? pcRatioText(yes, line) : "—") + "</b>" +
+          "</div>";
+      });
+    } else {
+      html = "";
+    }
+    box.innerHTML = html;
+    function opt2(key, value, text) { return '<option value="' + value + '"' + (petCareCfg[key] === value ? " selected" : "") + ">" + text + "</option>"; }
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-branch]"), function (sel) {
+      sel.addEventListener("change", function () {
+        var b = Object.assign({}, petCareCfg.branch || {});
+        if (sel.value === "") delete b[sel.getAttribute("data-pc-branch")];
+        else b[sel.getAttribute("data-pc-branch")] = Number(sel.value);
+        petCareCfg.branch = b;
+        petCareSave();
+        petCareRun();
+      });
+    });
+    var add = document.getElementById("iw-pc-goal-add");
+    if (add) add.addEventListener("click", function () {
+      var v = Number(document.getElementById("iw-pc-goal-pick").value);
+      if (!v) return;
+      petCareCfg.goals = (petCareCfg.goals || []).concat([v]);
+      petCareSave();
+      renderPetRoute();
+      renderPetBank();
+      petCareRun();
+    });
+    var off = document.getElementById("iw-pc-offroute");
+    if (off) off.addEventListener("change", function () { petCareCfg.offRoute = off.value; petCareSave(); petCareRun(); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-goal-del]"), function (b) {
+      b.addEventListener("click", function () {
+        var g = Number(b.getAttribute("data-pc-goal-del"));
+        petCareCfg.goals = (petCareCfg.goals || []).filter(function (x) { return Number(x) !== g; });
+        petCareSave();
+        renderPetRoute();
+        renderPetBank();
+        petCareRun();
+      });
+    });
+  }
+
+  // ── 倉庫寵物：照種類分組，存入／提領 ──
+  function renderPetBank() {
+    var box = document.getElementById("iw-pc-bank");
+    if (!box) return;
+    var inVillage = false;
+    try { inVillage = !!session.inVillage; } catch (e) { inVillage = false; }
+    var act = null;
+    try { act = session.activePet(); } catch (e) { act = null; }
+    var groups = {};
+    pcAllOwned().forEach(function (x) {
+      var g = groups[x.p.id] = groups[x.p.id] || { id: x.p.id, bag: [], wh: [] };
+      if (x.stored) g.wh.push(x.p);
+      else if (!(act && act.uid === x.p.uid) && !pcFostering(x.p.uid)) g.bag.push(x.p);
+    });
+    var list = Object.keys(groups).map(function (k) { return groups[k]; }).filter(function (g) { return g.bag.length || g.wh.length; });
+    var goals = petCareCfg.routeMode === "goal" ? (petCareCfg.goals || []).map(Number) : [];
+    list.sort(function (a, b) {
+      var da = pcDef(a.id) || {}, db = pcDef(b.id) || {};
+      return (b.wh.length > 0) - (a.wh.length > 0) || (db.tier || 0) - (da.tier || 0) || a.id - b.id;
+    });
+    var whTotal = 0;
+    list.forEach(function (g) { whTotal += g.wh.length; });
+    var html = '<div style="font-size:12px;color:var(--iw-dim);margin-bottom:6px;">倉庫共 ' + whTotal + " 隻" +
+      (inVillage ? "" : '　<span style="color:var(--iw-warn);">⚠️ 不在村莊，現在不能存入／提領</span>') +
+      '　<button class="iw-inline-btn" id="iw-pc-bank-refresh" style="padding:2px 9px;font-size:11.5px;">🔄 重新整理</button></div>' +
+      '<div style="max-height:260px;overflow-y:auto;border:1px solid rgba(162,131,88,.5);border-radius:10px;background:var(--iw-inset);">';
+    if (!list.length) html += '<div style="padding:10px;font-size:12.5px;">背包（出戰、寄養中的不算）和倉庫都沒有寵物。</div>';
+    var dis = inVillage ? "" : " disabled";
+    list.forEach(function (g) {
+      var d = pcDef(g.id) || { name: "#" + g.id, tier: "?" };
+      var tag = "";
+      if (goals.length) {
+        if (goals.indexOf(g.id) >= 0) tag = "　🎯已是目標";
+        else {
+          var all = g.bag.concat(g.wh), y = 0;
+          var related = goals.some(function (go) { return pcCanEver(g.id, go, 0); });
+          if (related) {
+            all.forEach(function (p) { if (goals.some(function (go) { return pcSeedReaches(p.seed >>> 0, p.id, go, 0); })) y++; });
+            tag = "　🎯會到目標 " + y + " 隻";
+          }
+        }
+      }
+      var btn = function (attr, text, off) {
+        return '<button class="iw-inline-btn" ' + attr + ' style="padding:2px 8px;font-size:11.5px;margin:2px 4px 2px 0;"' + (off ? " disabled" : dis) + ">" + text + "</button>";
+      };
+      html += '<div style="padding:6px 9px;border-bottom:1px solid rgba(162,131,88,.25);font-size:12.5px;">' +
+        "<b>" + escapeHtmlLite(d.name) + "</b>（" + d.tier + " 階）　背包 " + g.bag.length + "／倉庫 " + g.wh.length + tag + "<br>" +
+        btn('data-pc-dep="' + g.id + '" data-n="1"', "存入 1", !g.bag.length) +
+        btn('data-pc-dep="' + g.id + '" data-n="all"', "全部存入", !g.bag.length) +
+        btn('data-pc-wd="' + g.id + '" data-n="1"', "提領 1", !g.wh.length) +
+        btn('data-pc-wd="' + g.id + '" data-n="all"', "全部提領", !g.wh.length) +
+        "</div>";
+    });
+    html += "</div>" +
+      '<div style="font-size:11.5px;color:var(--iw-dim);margin-top:6px;line-height:1.6;">・出戰中、寄養中的不會被存入。存入 1／提領 1 挑成長最高的那隻；開了「選最終目標」時，會到目標的優先提領、到不了的優先存入。</div>';
+    box.innerHTML = html;
+
+    function pickOrder(arr, wantReach) {
+      return arr.slice().sort(function (a, b) {
+        if (goals.length) {
+          var ra = goals.some(function (go) { return pcSeedReaches(a.seed >>> 0, a.id, go, 0); });
+          var rb = goals.some(function (go) { return pcSeedReaches(b.seed >>> 0, b.id, go, 0); });
+          if (ra !== rb) return (wantReach ? rb - ra : ra - rb);
+        }
+        return b.grow - a.grow || b.exp - a.exp;
+      });
+    }
+    function done() { renderPetBank(); renderPetRoute(); updatePetCareView(); }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-dep]"), function (b) {
+      b.addEventListener("click", function () {
+        var g = groups[b.getAttribute("data-pc-dep")];
+        if (!g) return;
+        var pets = pickOrder(g.bag, false);
+        if (b.getAttribute("data-n") === "1") pets = pets.slice(0, 1);
+        try { session.depositMany([], pets.map(function (p) { return p.uid; }), false, [], false); } catch (e) { console.error("[寵物照顧] 存入失敗", e); }
+        done();
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-wd]"), function (b) {
+      b.addEventListener("click", function () {
+        var g = groups[b.getAttribute("data-pc-wd")];
+        if (!g) return;
+        var pets = pickOrder(g.wh, true);
+        if (b.getAttribute("data-n") === "1") pets = pets.slice(0, 1);
+        try { session.withdrawMany([], pets.map(function (p) { return p.uid; }), undefined, [], false); } catch (e) { console.error("[寵物照顧] 提領失敗", e); }
+        done();
+      });
+    });
+    document.getElementById("iw-pc-bank-refresh").addEventListener("click", done);
+  }
+  function pcFostering(uid) {
+    try { return typeof session.fosterSlotOf === "function" && session.fosterSlotOf(uid) !== undefined; } catch (e) { return false; }
+  }
+
   function closePetCareModal() {
     var bd = document.getElementById("iw-petcare-backdrop");
     if (bd) bd.remove();
@@ -2358,7 +2665,17 @@
       opt("switchTier", "any", "不限，哪一階都可以") +
       opt("switchTier", "same", "只換跟出戰中同一階的（例：一階養滿換下一隻一階）") +
       "</select>" +
+      check("iw-pc-stored", "switchStored", "換寵物時倉庫裡的也算（遊戲要開「倉庫物品可用於寵物出戰」）") +
       check("iw-pc-empty", "warnEmpty", "便當盒空了提醒我（寫在遊戲訊息欄）") +
+      "<label>進化路線（2 階、3 階有好幾條配方可以選分支）</label>" +
+      '<select id="iw-pc-route">' +
+      opt("routeMode", "best", "不指定：挑材料夠、成功率最高的配方") +
+      opt("routeMode", "branch", "自己選每個分支要走哪一條") +
+      opt("routeMode", "goal", "選最終目標，照路線幫我進化") +
+      "</select>" +
+      '<div id="iw-pc-route-body"></div>' +
+      "<label>🏦 倉庫裡的寵物（存入／提領要在村莊裡）</label>" +
+      '<div id="iw-pc-bank"></div>' +
       '<div style="font-size:11.5px;color:var(--iw-dim);margin-top:12px;line-height:1.7;">' +
       "・餵食是遊戲自己做的：每 3 分鐘從便當盒拿一份餵出戰寵物，便當盒要自己補。<br>" +
       "・進化材料自動挑：每種材料成功率不同的配方挑成功率最高的那一種；其他配方放庫存最多的 5～10 種（每種 +10%）。有好幾條配方時挑成功率最高的。<br>" +
@@ -2387,6 +2704,15 @@
     bindCheck("iw-pc-bag", "evolveBag");
     bindCheck("iw-pc-switch", "switch");
     bindCheck("iw-pc-empty", "warnEmpty");
+    bindCheck("iw-pc-stored", "switchStored");
+    document.getElementById("iw-pc-route").addEventListener("change", function (e) {
+      petCareCfg.routeMode = e.target.value;
+      petCareSave();
+      renderPetRoute();
+      petCareRun();
+    });
+    renderPetRoute();
+    renderPetBank();
     bindSelect("iw-pc-mode", "evolveMode");
     bindSelect("iw-pc-order", "switchOrder");
     bindSelect("iw-pc-tier", "switchTier");
