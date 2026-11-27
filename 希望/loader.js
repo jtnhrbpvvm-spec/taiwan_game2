@@ -2288,7 +2288,20 @@
 
     var act = session.activePet();
 
-    if (cfg.evolve) {
+    // 下拉選單還停在「請選擇」的功能先暫停，提醒一次（玩家要自己看過選項再選）
+    var missing = [];
+    if (cfg.evolve && !cfg.evolveMode) missing.push("進化條件");
+    if (cfg.evolve && !cfg.routeMode) missing.push("進化路線");
+    if (cfg.evolve && cfg.routeMode === "goal" && !cfg.offRoute) missing.push("到不了目標的寵物");
+    if (cfg.switch && !cfg.switchOrder) missing.push("換哪一隻");
+    if (cfg.switch && !cfg.switchTier) missing.push("換哪一階");
+    var evolveReady = cfg.evolve && !!cfg.evolveMode && !!cfg.routeMode && (cfg.routeMode !== "goal" || !!cfg.offRoute);
+    var switchReady = cfg.switch && !!cfg.switchOrder && !!cfg.switchTier;
+    var missKey = missing.join("、");
+    if (missKey && st.missSaid !== missKey) out.push({ kind: "needPick", text: "寵物照顧還沒選「" + missKey + "」，相關功能先暫停" });
+    st.missSaid = missKey;
+
+    if (evolveReady) {
       if (act) tryEvolve(act);
       if (cfg.evolveBag) {
         session.pets.slice().forEach(function (p) {
@@ -2302,7 +2315,7 @@
     act = session.activePet();
     var actDef = act && data.petById.get(act.id);
 
-    if (cfg.switch && act && actDef) {
+    if (switchReady && act && actDef) {
       if (isFull(act, actDef)) {
         var cands = [];
         // 倉庫的寵物：照遊戲寵物欄的「含倉庫」開關（readsWarehouse("petEquip")），開了才拿得到（equipStoredPet）
@@ -2358,14 +2371,21 @@
   }
 
   var PETCARE_KEY = "iw-petcare-v1";
-  var PETCARE_DEFAULT = { evolve: false, evolveMode: "safe", evolveBag: false, switch: false, switchOrder: "fast", switchTier: "any", switchStored: false, autoBuy: false, warnEmpty: false,
-    routeMode: "best", branch: {}, goals: [], offRoute: "keep" };
+  var PETCARE_DEFAULT = { evolve: false, evolveMode: "", evolveBag: false, switch: false, switchOrder: "", switchTier: "", switchStored: false, autoBuy: false, warnEmpty: false,
+    routeMode: "", branch: {}, goals: [], offRoute: "", pickReset: 0 };
+  var PETCARE_PICK_RESET = 1;
   var PETCARE_MS = 5000;
   function petCareLoad() {
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(PETCARE_KEY) || "{}") || {}; } catch (e) { saved = {}; }
     var cfg = {};
     for (var k in PETCARE_DEFAULT) cfg[k] = Object.prototype.hasOwnProperty.call(saved, k) ? saved[k] : PETCARE_DEFAULT[k];
+    // 2026-11-27：下拉選單改成「請選擇」，已經存過設定的玩家也重設一次（只做一次，之後記住玩家選的）
+    if (saved.pickReset !== PETCARE_PICK_RESET) {
+      ["evolveMode", "switchOrder", "switchTier", "routeMode", "offRoute"].forEach(function (key) { cfg[key] = ""; });
+      cfg.pickReset = PETCARE_PICK_RESET;
+      try { localStorage.setItem(PETCARE_KEY, JSON.stringify(cfg)); } catch (e) { /* 存不了就只在這次有效 */ }
+    }
     return cfg;
   }
   var petCareCfg = petCareLoad();
@@ -2390,6 +2410,13 @@
     var box = 0;
     try { (session.petLunchbox || []).forEach(function (row) { (row.stacks || []).forEach(function (s) { box += s.count || 0; }); }); } catch (e) { box = 0; }
     lines.push("便當盒：" + fmt(box) + " 份（遊戲每 3 分鐘自動餵一份）");
+    var c = petCareCfg, miss = [];
+    if (c.evolve && !c.evolveMode) miss.push("進化條件");
+    if (c.evolve && !c.routeMode) miss.push("進化路線");
+    if (c.evolve && c.routeMode === "goal" && !c.offRoute) miss.push("到不了目標的寵物");
+    if (c.switch && !c.switchOrder) miss.push("換哪一隻");
+    if (c.switch && !c.switchTier) miss.push("換哪一階");
+    if (miss.length) lines.push('<span style="color:var(--iw-warn);">⚠️ 還沒選「' + miss.join("、") + "」，相關功能先暫停</span>");
     return lines.join("<br>");
   }
 
@@ -2528,11 +2555,12 @@
         .sort(function (a, b) { return a.tier - b.tier || a.id - b.id; });
       var groups = {};
       cands.forEach(function (d) { (groups[d.tier] = groups[d.tier] || []).push(d); });
-      html += '<div style="display:flex;gap:8px;margin-top:6px;"><select id="iw-pc-goal-pick" style="flex:1;">' +
+      html += '<div style="display:flex;gap:8px;margin-top:6px;"><select id="iw-pc-goal-pick" style="flex:1;"><option value="" disabled selected hidden>請選擇</option>' +
         Object.keys(groups).map(function (t) {
           return '<optgroup label="' + t + ' 階">' + groups[t].map(function (d) { return '<option value="' + d.id + '">' + escapeHtmlLite(d.name) + "</option>"; }).join("") + "</optgroup>";
         }).join("") + '</select><button class="iw-inline-btn" id="iw-pc-goal-add" style="margin:0;">加入第 ' + (goals.length + 1) + ' 目標</button></div>';
       html += '<label>到不了目標的寵物</label><select id="iw-pc-offroute">' +
+        (petCareCfg.offRoute ? "" : '<option value="" disabled selected hidden>請選擇</option>') +
         opt2("offRoute", "keep", "不進化、也不拿來養（留著自己處理）") +
         opt2("offRoute", "evolve", "照一般規則進化") + "</select>";
       if (!goals.length) html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;">還沒有目標，先在上面選一隻按「加入目標」。</div>';
@@ -2720,6 +2748,8 @@
     function check(id, key, text) {
       return '<div class="iw-checkrow"><input type="checkbox" id="' + id + '"' + (petCareCfg[key] ? " checked" : "") + '><label for="' + id + '">' + text + "</label></div>";
     }
+    // 下拉選單預設停在「請選擇」，讓玩家自己看過每個選項再選（沒選時規則跟最保守的那個一樣）
+    function pick(key) { return petCareCfg[key] ? "" : '<option value="" disabled selected hidden>請選擇</option>'; }
     function opt(key, value, text) {
       return '<option value="' + value + '"' + (petCareCfg[key] === value ? " selected" : "") + ">" + text + "</option>";
     }
@@ -2729,7 +2759,7 @@
       '<div class="iw-target" id="iw-pc-status"></div>' +
       check("iw-pc-evolve", "evolve", "出戰寵物養滿（+9、經驗滿）自動進化") +
       "<label>進化條件</label>" +
-      '<select id="iw-pc-mode">' +
+      '<select id="iw-pc-mode">' + pick("evolveMode") +
       opt("evolveMode", "safe", "成功率 100% 才進化") +
       opt("evolveMode", "noloss", "失敗不會倒退的也進化（1～3 階寵物）") +
       opt("evolveMode", "any", "不管成功率都進化（4 階失敗經驗歸零、5 階以上掉回 +0）") +
@@ -2738,18 +2768,18 @@
       check("iw-pc-buy", "autoBuy", "進化材料不夠時自動到商店買（要在村莊；例：5 階升 6 階的進化之石、櫻花花瓣，一個 2,500 萬～3,000 萬）") +
       check("iw-pc-switch", "switch", "自動更換出戰：出戰寵物養滿就換下一隻還沒養滿的（有開自動進化會先試進化；要換倉庫裡的，打開遊戲寵物欄的「含倉庫」）") +
       "<label>換哪一隻</label>" +
-      '<select id="iw-pc-order">' +
+      '<select id="iw-pc-order">' + pick("switchOrder") +
       opt("switchOrder", "fast", "最快養滿的先（剩下要吃的最少）") +
       opt("switchOrder", "order", "照寵物欄順序") +
       "</select>" +
       "<label>換哪一階</label>" +
-      '<select id="iw-pc-tier">' +
+      '<select id="iw-pc-tier">' + pick("switchTier") +
       opt("switchTier", "any", "不限，哪一階都可以") +
       opt("switchTier", "same", "只換跟出戰中同一階的（例：一階養滿換下一隻一階）") +
       "</select>" +
       check("iw-pc-empty", "warnEmpty", "便當盒空了提醒我（寫在遊戲訊息欄）") +
       "<label>進化路線（2 階、3 階有好幾條配方可以選分支）</label>" +
-      '<select id="iw-pc-route">' +
+      '<select id="iw-pc-route">' + pick("routeMode") +
       opt("routeMode", "best", "不指定：挑材料夠、成功率最高的配方") +
       opt("routeMode", "branch", "自己選每個分支要走哪一條") +
       opt("routeMode", "goal", "選最終目標，照路線幫我進化") +
