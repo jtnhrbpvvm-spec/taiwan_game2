@@ -2488,7 +2488,7 @@
         });
         html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;line-height:1.7;">' +
           '<button data-pc-goal-del="' + g + '" style="float:right;border:0;background:none;cursor:pointer;font-size:14px;" title="移除">✕</button>' +
-          "<b>🎯 " + escapeHtmlLite(d.name) + "</b>　<b>" + (line ? pcRatioText(yes, line) : "—") + "</b>" +
+          "<b>🎯 " + escapeHtmlLite(d.name) + "</b>　<b>" + (line ? pcRatioText(yes, line) : "無法達成") + "</b>" +
           "</div>";
       });
     } else {
