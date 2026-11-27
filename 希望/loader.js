@@ -2190,12 +2190,11 @@
       var ok = (depth || 0) < 8 && recipes(id).some(function (r) { return r.targets.some(function (t) { return canEver(t.to, (depth || 0) + 1); }); });
       return (everMemo[id] = ok);
     }
-    // 這隻（seed 固定）從 id 出發，最多能走到 goals 裡第幾個（越小越優先，-1 到不了）
+    // 這隻（seed 固定）從 id 出發（含 id 自己），最多能走到 goals 裡第幾個（越小越優先，-1 到不了）
+    // 例：第 2 目標是第 1 目標的前一階，停在第 2 目標的寵物如果還走得到第 1 目標，就繼續進化
     function goalRank(seed, id, depth) {
-      var g = goals.indexOf(id);
-      if (g >= 0) return g;
-      if (depth > 8) return -1;
-      var best = -1;
+      var best = goals.indexOf(id);
+      if (depth > 8) return best;
       recipes(id).forEach(function (r) {
         var k = goalRank(seed, predictTo(seed, id, r), depth + 1);
         if (k >= 0 && (best < 0 || k < best)) best = k;
@@ -2211,10 +2210,10 @@
         return function (i) { return i === Number(b); };
       }
       if (goals.length) {
-        if (goals.indexOf(p.id) >= 0) return null; // 已經是目標了
         if (!canEver(p.id, 0)) return any;
         var seed = p.seed >>> 0, rank = goalRank(seed, p.id, 0);
         if (rank < 0) return cfg.offRoute === "evolve" ? any : null;
+        if (rank === goals.indexOf(p.id)) return null; // 已經是能到的最優先目標了
         return function (i, r) { return goalRank(seed, predictTo(seed, p.id, r), 1) === rank; };
       }
       return any;
@@ -2436,6 +2435,22 @@
     })((seed ^ Math.imul(id, 2654435761)) >>> 0);
     return pcRecipes(id).some(function (x) { return pcSeedReaches(seed, pcTargetAt(x.r, u), goal, (depth || 0) + 1); });
   }
+  // 同上，但有好幾個目標：回傳這隻最多走到第幾個（含自己現在就是目標；-1 都到不了）
+  function pcSeedRank(seed, id, goals, depth) {
+    var best = goals.indexOf(id);
+    if (depth > 8) return best;
+    var u = (function (s) {
+      s = (s + 1831565813) >>> 0;
+      var e = Math.imul(s ^ (s >>> 15), 1 | s);
+      e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+      return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+    })((seed ^ Math.imul(id, 2654435761)) >>> 0);
+    pcRecipes(id).forEach(function (x) {
+      var k = pcSeedRank(seed, pcTargetAt(x.r, u), goals, depth + 1);
+      if (k >= 0 && (best < 0 || k < best)) best = k;
+    });
+    return best;
+  }
   function pcAllOwned() {
     var list = [];
     try { (session.pets || []).forEach(function (p) { list.push({ p: p, stored: false }); }); } catch (e) { /* 讀不到 */ }
@@ -2470,25 +2485,30 @@
       html += '<div style="display:flex;gap:8px;margin-top:6px;"><select id="iw-pc-goal-pick" style="flex:1;">' +
         Object.keys(groups).map(function (t) {
           return '<optgroup label="' + t + ' 階">' + groups[t].map(function (d) { return '<option value="' + d.id + '">' + escapeHtmlLite(d.name) + "</option>"; }).join("") + "</optgroup>";
-        }).join("") + '</select><button class="iw-inline-btn" id="iw-pc-goal-add" style="margin:0;">加入目標</button></div>';
+        }).join("") + '</select><button class="iw-inline-btn" id="iw-pc-goal-add" style="margin:0;">加入第 ' + (goals.length + 1) + ' 目標</button></div>';
       html += '<label>到不了目標的寵物</label><select id="iw-pc-offroute">' +
         opt2("offRoute", "keep", "不進化、也不拿來養（留著自己處理）") +
         opt2("offRoute", "evolve", "照一般規則進化") + "</select>";
       if (!goals.length) html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;">還沒有目標，先在上面選一隻按「加入目標」。</div>';
-      var owned = pcAllOwned();
+      // 每隻寵物會走到第幾目標（第 1 目標到不了才算第 2…），跟自動進化的規則一樣
+      var owned = pcAllOwned().map(function (x) { return { p: x.p, rank: pcSeedRank(x.p.seed >>> 0, x.p.id, goals, 0) }; });
+      var mini = "border:0;background:none;cursor:pointer;font-size:13px;padding:0 3px;";
       goals.forEach(function (g, gi) {
         var d = pcDef(g);
         if (!d) return;
-        // 背包＋倉庫裡這一系的寵物，照路線走會有幾隻變成目標（每隻的結果是固定的），只顯示 x/100
+        // 背包＋倉庫裡這一系的寵物，照路線走會有幾隻變成這個目標，只顯示 x/100
         var yes = 0, line = 0;
         owned.forEach(function (x) {
           if (x.p.id === g || !pcCanEver(x.p.id, g, 0)) return;
           line++;
-          if (pcSeedReaches(x.p.seed >>> 0, x.p.id, g, 0)) yes++;
+          if (x.rank === gi) yes++;
         });
         html += '<div class="iw-target" style="margin-top:8px;font-size:12.5px;line-height:1.7;">' +
-          '<button data-pc-goal-del="' + g + '" style="float:right;border:0;background:none;cursor:pointer;font-size:14px;" title="移除">✕</button>' +
-          "<b>🎯 " + escapeHtmlLite(d.name) + "</b>　<b>" + (line ? pcRatioText(yes, line) : "無法達成") + "</b>" +
+          '<span style="float:right;">' +
+          (gi > 0 ? '<button data-pc-goal-up="' + gi + '" style="' + mini + '" title="往前">▲</button>' : "") +
+          (gi < goals.length - 1 ? '<button data-pc-goal-down="' + gi + '" style="' + mini + '" title="往後">▼</button>' : "") +
+          '<button data-pc-goal-del="' + g + '" style="' + mini + 'font-size:14px;" title="移除">✕</button></span>' +
+          "第 " + (gi + 1) + " 目標　<b>🎯 " + escapeHtmlLite(d.name) + "</b>　<b>" + (line ? pcRatioText(yes, line) : "無法達成") + "</b>" +
           "</div>";
       });
     } else {
@@ -2519,6 +2539,21 @@
     });
     var off = document.getElementById("iw-pc-offroute");
     if (off) off.addEventListener("change", function () { petCareCfg.offRoute = off.value; petCareSave(); petCareRun(); });
+    function moveGoal(i, j) {
+      var list = (petCareCfg.goals || []).slice();
+      if (i < 0 || j < 0 || i >= list.length || j >= list.length) return;
+      var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+      petCareCfg.goals = list;
+      petCareSave();
+      renderPetRoute();
+      petCareRun();
+    }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-goal-up]"), function (b) {
+      b.addEventListener("click", function () { var i = Number(b.getAttribute("data-pc-goal-up")); moveGoal(i, i - 1); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pc-goal-down]"), function (b) {
+      b.addEventListener("click", function () { var i = Number(b.getAttribute("data-pc-goal-down")); moveGoal(i, i + 1); });
+    });
     Array.prototype.forEach.call(box.querySelectorAll("[data-pc-goal-del]"), function (b) {
       b.addEventListener("click", function () {
         var g = Number(b.getAttribute("data-pc-goal-del"));
