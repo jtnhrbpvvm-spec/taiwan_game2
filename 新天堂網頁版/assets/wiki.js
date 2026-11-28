@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=n=>Number(n||0).toLocaleString('zh-TW');
 const pct=p=>p>=100?'必掉':p>=1?(+p.toFixed(2))+'%':p>=0.01?(+p.toFixed(3))+'%':(+p.toFixed(5))+'%';
 const range=(a,b)=>a===b?num(a):num(a)+'～'+num(b);
-const XP=W.rates.RateXp||1;
+const XP=W.rates.RateXp||1,XPW=W.rates.WeekendRateXp||XP;
 
 const items=new Map(W.items.map(i=>[i.id,i]));
 const mobs=new Map(W.monsters.map(m=>[m.id,m]));
@@ -25,7 +25,7 @@ const TYPE={dagger:'匕首',sword:'單手劍',tohandsword:'雙手劍',claw:'鋼�
 const KIND={weapon:'武器',armor:'防具',etcitem:'道具'};
 const STAT={str:'力量',dex:'敏捷',con:'體質',int:'智力',wis:'精神',cha:'魅力',hp:'HP',mp:'MP'};
 const RULE={safenchant:'安定值',m_def:'魔防',damage_reduction:'傷害減免',haste_item:'加速效果',range:'射程',hitmodifier:'命中',dmgmodifier:'額外傷害'};
-const CLASSES=['王族','騎士','法師','妖精','黑妖','龍騎士','幻術師','戰士'];
+const CLASSES=['王族','騎士','法師','妖精','黑妖','龍騎士','幻術師','戰士','油傘女'];
 const CAT={weapon:'武器',armor:'防具',acc:'飾品',rune:'符石',arrow:'箭矢',potion:'藥品',scroll:'卷軸',gem:'魔石',material:'材料',item:'道具',wuhun:'武魂',box:'寶箱',pet:'寵物',doll:'娃娃'};
 const SRC={drop:'怪物掉落',map:'地圖掉落',shop:'商店',craft:'製作',box:'寶箱',quest:'任務',starter:'新手背包',other:'其他'};
 const respawnText=r=>{if(!r)return '任務期間';const [a,b]=r;const f=s=>s>=3600?(+(s/3600).toFixed(1))+' 小時':s>=60?Math.round(s/60)+' 分':s+' 秒';return a===b?f(a):f(a)+'～'+f(b);};
@@ -132,7 +132,7 @@ function itemDetail(id){
 function mobDetail(id){
  const m=mobs.get(+id);if(!m)return null;
  let html=`<h2>${esc(m.name)}</h2><div class="muted small">#${m.id}${m.boss?' · <span class="tag red">BOSS</span>':''}${m.quest?' · <span class="tag gold">任務怪</span>':''}${m.aggressive?' · <span class="tag red">主動攻擊</span>':''}</div>`;
- html+=kv([['等級',m.level],['HP',num(m.hp)],['MP',num(m.mp)],['防禦',-m.ac],['魔防',m.mr],['經驗',num(m.exp*XP)+'（已含 '+XP+' 倍）'],['正義值',m.lawful<0?'+'+(-m.lawful):'0'],['攻擊距離',m.ranged>1?m.ranged+' 格（遠程）':'近戰']]);
+ html+=kv([['等級',m.level],['HP',num(m.hp)],['MP',num(m.mp)],['防禦',-m.ac],['魔防',m.mr],['經驗',num(m.exp*XP)+(XPW!==XP?'（週末 '+num(Math.floor(m.exp*XPW))+'）':'')],['正義值',m.lawful<0?'+'+(-m.lawful):'0'],['攻擊距離',m.ranged>1?m.ranged+' 格（遠程）':'近戰']]);
  html+=section('出現地點',chips(m.places.map(p=>mapChip(p.map,(p.zone&&p.zone!=='任務'?p.zone+' · ':'')+(p.quest?'任務期間 ':'')+'×'+p.count+(m.boss&&p.respawn?' · 重生 '+respawnText(p.respawn):'')))));
  const q=W.quests.filter(q=>q.targets.some(t=>t.mobs.includes(m.id)));
  html+=section('相關等級任務',q.length?chips(q.map(x=>chip('quests:'+x.id,x.name,x.roles.join('、')+' Lv'+x.level))):'');
@@ -147,7 +147,7 @@ function mapDetail(id){
  html+=kv([['怪物等級',m.lv?m.lv[0]+'～'+m.lv[1]:'—'],['怪物種類',list.length],['BOSS',m.boss.length||'無'],t&&['狩獵場傳送',num(t.price)+' 金幣'],m.exp&&['經驗加成',m.exp.map(e=>`Lv${e.min}～${e.max} ×${e.x}`).join('、')]]);
  html+=section('BOSS',m.boss.length?chips(m.boss.map(b=>mobChip(b))):'');
  html+=section('怪物',`<div class="tbl-wrap"><table><thead><tr><th>怪物</th><th class="num">等級</th><th class="num">HP</th><th class="num">經驗</th><th class="num">數量</th></tr></thead><tbody>${list.map(([x,n])=>`<tr><td><a href="#monsters:${x.id}">${esc(x.name)}</a>${x.boss?' <span class="tag red">BOSS</span>':''}${x.quest?' <span class="tag gold">任務</span>':''}</td><td class="num">${x.level}</td><td class="num">${num(x.hp)}</td><td class="num">${num(x.exp*XP)}</td><td class="num">${n}</td></tr>`).join('')}</tbody></table></div>`);
- html+=section('這張地圖額外掉落',m.drops.length?chips(m.drops.map(d=>itemChip(d.id,pct(d.p)))):'');
+ html+=section('這張地圖額外掉落',m.drops.length?chips(m.drops.map(d=>itemChip(d.id,(d.max>1?range(d.min,d.max)+' 個 · ':'')+pct(d.p)+(d.fallback?' · 怪物本身沒掉金幣時才掉':'')))):'');
  html+=`<p class="small muted">全部地圖的怪物另外都會掉：${W.globalDrops.map(d=>`<a href="#items:${d.id}">${esc(items.get(d.id)?.name)}</a>（${pct(d.p)}）`).join('、')}。</p>`;
  return html;
 }
@@ -231,7 +231,7 @@ function enchantDetail(id){
 }
 function expTable(box){
  const rows=W.expTable.map(([lv,need],i)=>{const next=W.expTable[i+1];return `<tr><td class="num">${lv}</td><td class="num">${num(need)}</td><td class="num">${next?num(next[1]-need):'—'}</td></tr>`;}).join('');
- box.innerHTML=`<p class="small muted">「累積經驗」是到達該等級需要的總經驗；怪物經驗在小百科裡已經乘上伺服器 ${XP} 倍。</p><div class="tbl-wrap" style="max-height:70vh"><table><thead><tr><th class="num">等級</th><th class="num">累積經驗</th><th class="num">升下一級還要</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ box.innerHTML=`<p class="small muted">「累積經驗」是到達該等級需要的總經驗。打怪經驗平日 ×${XP}、週末 ×${XPW}（週五 19:00～週一 07:00）。</p><div class="tbl-wrap" style="max-height:70vh"><table><thead><tr><th class="num">等級</th><th class="num">累積經驗</th><th class="num">升下一級還要</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // ---------- 畫面 ----------

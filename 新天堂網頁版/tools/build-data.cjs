@@ -90,7 +90,10 @@ for(const m of monsters.values()){
   for(const d of drops[m.id]||[]){
     if(blocked(d.id)||!available(d.id)||!(d.chance>0)||!(d.max>0)||!(rates.RateDropItems>0)&&d.id!==40308)continue;
     const coin=d.id===40308;
-    const chance=Math.min(1000000,d.chance*(coin?1:rates.RateDropItems));
+    // player-progression.js：遺忘之島(1700)不掉封印裝備；舊傲慢之塔奇美拉之皮平日固定 5%
+    if(m.places.every(p=>p.map===1700)&&(d.id===56466||d.id>=67005&&d.id<=67012))continue;
+    const chimera=d.id>=40397&&d.id<=40400&&m.places.some(p=>p.map>=101&&p.map<=110);
+    const chance=chimera?50000:Math.min(1000000,d.chance*(coin?1:rates.RateDropItems));
     const row={id:d.id,min:Math.floor(Math.min(d.min,d.max)*(coin?rates.RateDropAdena:1)),max:Math.floor(Math.max(d.min,d.max)*(coin?rates.RateDropAdena:1)),p:pct(chance)};
     m.drops.push(row);give(d.id,'drop',{mob:m.id,p:row.p});
   }
@@ -114,12 +117,35 @@ const globalDrops=rows('怪物掉落全圖設置').filter(r=>!blocked(r['道具'
 for(const d of globalDrops)give(d.id,'mapdrop',{map:'all',p:d.p});
 const spawnMaps=new Set([...monsters.values()].flatMap(m=>m.places.map(p=>p.map)));
 const mapDrops={};
-for(const r of rows('droplist_map')){if(!spawnMaps.has(r.mapid)||blocked(r.itemid)||!available(r.itemid)||!(r.chance*rates.RateDropItems>0)||!(r.max>0))continue;(mapDrops[r.mapid]??=[]).push({id:r.itemid,min:r.min,max:r.max,p:pct(r.chance*rates.RateDropItems)});give(r.itemid,'mapdrop',{map:r.mapid,p:pct(r.chance)});}
-for(const [map,ids] of [[19,[40515,40503,40505,40519]],[20,[3,19,20]],[21,[89,100,41351]]])if(spawnMaps.has(map))for(const id of ids){if(blocked(id))continue;(mapDrops[map]??=[]).push({id,min:1,max:1,p:2});give(id,'mapdrop',{map,p:2});}
-
+// 地圖額外掉落直接問遊戲（DBGameRules.extraDrops），全圖共通的另外列
+const globalIds=new Set(rows('怪物掉落全圖設置').map(r=>r['道具']));
+const extraOf=spawn=>{try{return DB.extraDrops({spawn})||[]}catch{return []}};
+for(const map of spawnMaps){
+  for(const d of extraOf({mapId:map,npcId:-1,npc:{name:''}})){
+    if(globalIds.has(d.id)||blocked(d.id)||!available(d.id)||!(d.chance>0)||!(d.max>0))continue;
+    const p=pct(Math.min(1000000,d.chance*(d.fixedRate?1:rates.RateDropItems)));
+    if((mapDrops[map]??=[]).some(x=>x.id===d.id))continue;
+    const k=d.id===40308?rates.RateDropAdena:1;
+    mapDrops[map].push({id:d.id,min:Math.floor(d.min*k),max:Math.floor(d.max*k),p,...(map===303&&d.id===40308?{fallback:true}:{})});give(d.id,'mapdrop',{map,p});
+  }
+}
+// BOSS 才有的地圖掉落（例如 BOSS 證明）
+for(const m of monsters.values()){
+  if(!m.boss)continue;
+  const p0=m.places[0];if(!p0)continue;
+  const normal=new Set((mapDrops[p0.map]||[]).map(d=>d.id));
+  for(const d of extraOf({mapId:p0.map,npcId:m.id,boss:true,npc:{name:m.name}})){
+    if(globalIds.has(d.id)||normal.has(d.id)||blocked(d.id)||!available(d.id)||!(d.chance>0)||m.drops.some(x=>x.id===d.id))continue;
+    const p=pct(Math.min(1000000,d.chance*(d.fixedRate?1:rates.RateDropItems)));
+    m.drops.push({id:d.id,min:d.min,max:d.max,p});give(d.id,'drop',{mob:m.id,p});
+  }
+  m.drops.sort((a,b)=>b.p-a.p);
+}
 // 新手背包
 const starterKit={common:[[990103,1],[40308,100000],[40013,50],[40010,1000],[40079,10],[20028,1],[20082,1],[20126,1],[20173,1],[20206,1],[20232,1],[20282,1]],
-  '黑妖':[[73,1]],'王族':[[7,1]],'騎士':[[7,1]],'法師':[[7,1]],'妖精':[[175,1],[7,1],[40743,1000]],'戰士':[[147,1]],'龍騎士':[[35,1]],'幻術師':[[120,1]]};
+  '黑妖':[[73,1]],'王族':[[7,1]],'騎士':[[7,1]],'法師':[[7,1]],'妖精':[[175,1],[7,1],[40743,1000]],'戰士':[[147,1]],'龍騎士':[[35,1]],'幻術師':[[120,1]],'油傘女':[[980010,1],[980040,1]]};
+// 油傘女不拿皮盾牌（db-game-rules.js starter）
+const starterNoShield=['油傘女'];
 // 跟遊戲比對（避免日後改了沒跟上）
 try{const src=fs.readFileSync(path.join(GAME,'data/db-game-rules.js'),'utf8');if(!src.includes('common:[[990103,1],[40308,100000],[40013,50],[40010,1000],[40079,10]'))console.warn('注意：新手背包設定可能已變更，請更新 build-data.cjs 的 starterKit');}catch{}
 for(const [role,list] of Object.entries(starterKit))for(const [id] of list)give(id,'starter',{role});
@@ -192,7 +218,7 @@ for(const s of Object.values(skillData.skills)){
   for(const b of books)if(obtain.has(b.id))for(const [role,lv] of Object.entries(b.min))if(!learn[role]||learn[role].how!=='auto')learn[role]={lv,how:'book',book:b.id,element:b.element};
   if(!Object.keys(learn).length)continue;
   const ic=skillIcons.get(s.id);
-  skills.push({id:s.id,name:s.name,circle:s.circle,mp:s.mp,hp:s.hp,mat:s.material&&s.materialCount?{id:s.material,n:s.materialCount}:null,reuse:s.reuse,dur:s.duration,target:s.target,dmg:s.damage,range:s.range,icon:ic?.icon||'',learn});
+  skills.push({id:s.id,name:s.name,circle:s.circle,mp:s.mp,hp:s.hp,mat:s.material&&s.materialCount?{id:s.material,n:s.materialCount}:null,reuse:s.reuse,dur:s.duration,target:s.target,dmg:s.damage,range:s.range,icon:ic?.icon||'',learn,...(s.description?{desc:s.description}:{})});
 }
 
 // ---------- 變身卡、娃娃、武魂、附魔 ----------
@@ -289,7 +315,7 @@ const ver=(fs.readFileSync(path.join(GAME,'index.html'),'utf8').match(/\?v=([\w.
 const monsterList=[...monsters.values()].sort((a,b)=>a.level-b.level||a.id-b.id);
 const WIKI={
   built:new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }),gameVer:ver,rates,
-  classes:Object.fromEntries(Object.entries(classes).map(([k,c])=>[k,{base:c.base,points:c.points,hp:c.hp,intro:c.intro}])),
+  classes:Object.fromEntries(Object.entries(classes).map(([k,c])=>[k,{base:c.base,points:c.points,hp:c.hp,intro:c.intro,gender:c.gender}])),starterNoShield,
   starterKit,expTable,
   items,monsters:monsterList,maps:Object.values(maps).sort((a,b)=>a.id-b.id),globalDrops,npcs,shops,
   recipes:okRecipes.map(({ok,...r})=>r),skills,quests,cards,cardRates,dolls:dollList,dollRates:DOLL_GACHA.tiers.map(t=>({tier:t.tier,rate:t.rate,count:t.ids.length})),

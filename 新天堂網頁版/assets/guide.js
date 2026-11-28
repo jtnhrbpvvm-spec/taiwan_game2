@@ -10,15 +10,21 @@ const table=(head,rows)=>`<div class="tbl-wrap"><table><thead><tr>${head.map(h=>
 const GEN={
  // 職業
  classes(){
-  const pics={騎士:'knight',法師:'mage',王族:'royal',妖精:'elf',黑妖:'darkelf',龍騎士:'dragonknight',幻術師:'illusionist',戰士:'warrior'};
+  const pics={騎士:'knight',法師:'mage',王族:'royal',妖精:'elf',黑妖:'darkelf',龍騎士:'dragonknight',幻術師:'illusionist',戰士:'warrior',油傘女:'oilparasol'};
   const lab={str:'力',dex:'敏',con:'體',wis:'精',cha:'魅',int:'智'};
-  return '<div class="grid2">'+Object.entries(W.classes).map(([k,c])=>`<div class="box" style="display:flex;gap:12px"><img src="img/site/class-${pics[k]}.jpg" alt="" width="84" height="110" style="object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line2);flex:0 0 84px"><div><h4>${k}</h4><p>${esc(c.intro)}</p><p class="small muted" style="margin-top:6px">基礎：${Object.entries(c.base).map(([s,v])=>lab[s]+v).join(' ')} · 擲骰額外 ${c.points} 點 · 初始 HP ${c.hp}</p></div></div>`).join('')+'</div>';
+  return '<div class="grid2">'+Object.entries(W.classes).map(([k,c])=>`<div class="box" style="display:flex;gap:12px"><img src="img/site/class-${pics[k]}.jpg" alt="" width="84" height="110" style="object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line2);flex:0 0 84px"><div><h4>${k}${c.gender===1?' <span class="tag purple">限女性</span>':''}</h4><p>${esc(c.intro)}</p><p class="small muted" style="margin-top:6px">基礎：${Object.entries(c.base).map(([s,v])=>lab[s]+v).join(' ')} · 擲骰額外 ${c.points} 點 · 初始 HP ${c.hp}</p></div></div>`).join('')+'</div>';
  },
  // 新手背包
  starter(){
   const common=W.starterKit.common.map(([id,n])=>itemLink(id,n)).join('、');
   const per=Object.entries(W.starterKit).filter(([k])=>k!=='common').map(([k,l])=>`<tr><td>${k}</td><td>${l.map(([id,n])=>itemLink(id,n)).join('、')}</td></tr>`);
-  return `<p><b>所有職業：</b>${common}</p>`+table(['職業','職業武器'],per);
+  return `<p><b>所有職業：</b>${common}</p>`+table(['職業','職業專屬'],per)+((W.starterNoShield||[]).length?`<p class="small muted">${W.starterNoShield.join('、')}不能用盾牌，所以沒有皮盾牌。</p>`:'');
+ },
+ // 油傘女技能
+ oil(){
+  const list=W.skills.filter(s=>s.learn['油傘女']).sort((a,b)=>a.learn['油傘女'].lv-b.learn['油傘女'].lv||a.id-b.id);
+  return table(['等級','技能','MP','說明','秘笈掉落'],list.map(s=>{const l=s.learn['油傘女'],b=l.book&&items.get(l.book),mobsTxt=b?.src.drop?b.src.drop.slice(0,3).map(([id,p])=>esc(mobs.get(id)?.name||id)+' '+p+'%').join('、'):'';
+   return `<tr><td class="num">${l.lv}</td><td><a href="wiki.html#skills:${s.id}">${esc(s.name)}</a></td><td class="num">${s.mp||0}</td><td>${esc(s.desc||'')}</td><td class="small">${b?.src.starter?'新手背包附贈':mobsTxt}</td></tr>`;}));
  },
  // 練功地圖：依怪物等級分段
  leveling(){
@@ -45,7 +51,7 @@ const GEN={
  },
  // 等級任務
  quests(){
-  const order=['王族','騎士','法師','妖精','黑妖','龍騎士','幻術師','戰士'];
+  const order=['王族','騎士','法師','妖精','黑妖','龍騎士','幻術師','戰士','油傘女'];
   const list=[...W.quests].sort((a,b)=>order.indexOf(a.roles[0])-order.indexOf(b.roles[0])||a.level-b.level);
   return table(['職業','等級','任務','要打的怪','獎勵'],list.map(q=>`<tr><td>${q.roles.join('、')}</td><td class="num">${q.level}</td><td><a href="wiki.html#quests:${q.id}">${esc(q.name)}</a></td><td>${[...new Set(q.targets.flatMap(t=>t.mobs))].map(id=>esc(mobs.get(id)?.name||id)).join('、')}</td><td>${q.reward.map(r=>itemLink(r.id,r.n)).join(q.choice?' 或 ':'、')}</td></tr>`));
  },
