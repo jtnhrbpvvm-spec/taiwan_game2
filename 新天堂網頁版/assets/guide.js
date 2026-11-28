@@ -12,7 +12,7 @@ const GEN={
  classes(){
   const pics={騎士:'knight',法師:'mage',王族:'royal',妖精:'elf',黑妖:'darkelf',龍騎士:'dragonknight',幻術師:'illusionist',戰士:'warrior',油傘女:'oilparasol'};
   const lab={str:'力',dex:'敏',con:'體',wis:'精',cha:'魅',int:'智'};
-  return '<div class="grid2">'+Object.entries(W.classes).map(([k,c])=>`<div class="box" style="display:flex;gap:12px"><img src="img/site/class-${pics[k]}.jpg" alt="" width="84" height="110" style="object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line2);flex:0 0 84px"><div><h4>${k}${c.gender===1?' <span class="tag purple">限女性</span>':''}</h4><p>${esc(c.intro)}</p><p class="small muted" style="margin-top:6px">基礎：${Object.entries(c.base).map(([s,v])=>lab[s]+v).join(' ')} · 擲骰額外 ${c.points} 點 · 初始 HP ${c.hp}</p></div></div>`).join('')+'</div>';
+  return '<div class="grid2">'+Object.entries(W.classes).map(([k,c])=>`<div class="box" style="display:flex;gap:12px"><img src="img/site/class-${pics[k]}.jpg" alt="" width="84" height="110" style="object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--line2);flex:0 0 84px"><div><h4><a href="wiki.html#classes:${encodeURIComponent(k)}">${k}</a>${c.gender===1?' <span class="tag purple">限女性</span>':''}</h4><p>${esc(c.intro)}</p><p class="small muted" style="margin-top:6px">基礎：${Object.entries(c.base).map(([s,v])=>lab[s]+v).join(' ')} · 擲骰額外 ${c.points} 點 · 初始 HP ${c.hp}</p></div></div>`).join('')+'</div>';
  },
  // 新手背包
  starter(){

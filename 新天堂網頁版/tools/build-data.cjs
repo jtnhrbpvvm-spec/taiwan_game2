@@ -26,6 +26,7 @@ const skillIcons=new Map(R('INTERFACE_CATALOG.skills').map(s=>[s.id,s]));
 const QUESTS=R('LEVEL_QUESTS');
 const routes=R('PORTABLE_TELEPORT_ROUTES');
 const classes=R('CreationRules.classes');
+const CLASS_NAMES=Object.keys(classes),canEquip=R('CreationRules.canEquip');
 const dolls=R('gameCatalogData.dolls');
 const dollTier=R('dollTier');
 const DollEvolution=R('DollEvolution');
@@ -255,7 +256,8 @@ for(const id of obtain){
   const o={id,name:it.name,kind:it.kind,type:it.type,icon:it.icon||'',w:Math.round((it.weight||0)/1000)};
   if(it.kind==='weapon'){o.dmg=it.damage;o.two=!!it.twoHand;}
   if(it.kind==='armor'||it.ac)o.ac=it.ac;
-  if(it.allowed&&it.allowed.length<8)o.cls=it.allowed;
+  if(it.kind==='weapon'||it.kind==='armor'){const eq=CLASS_NAMES.filter(c=>{try{return canEquip(c,it)}catch{return false}});if(eq.length<CLASS_NAMES.length)o.eq=eq;}
+  else if(it.allowed&&CLASS_NAMES.some(c=>!it.allowed.includes(c)))o.cls=it.allowed.filter(c=>CLASS_NAMES.includes(c));
   const b=Object.entries(it.bonuses||{}).filter(([,v])=>v);if(b.length)o.b=Object.fromEntries(b);
   const sr=it.sourceRules||{};const keep={};for(const k of ['safenchant','range','hitmodifier','dmgmodifier','m_def','damage_reduction','sp','hpr','mpr','exp_point','min_lvl','max_lvl','defense_water','defense_wind','defense_fire','defense_earth','regist_stone','regist_sleep','regist_freeze','regist_sustain','regist_stun','regist_blind','bowhitrate','bowdmgrate','double_dmg_chance','magicdmgmodifier','haste_item','weight_reduction'])if(sr[k]!==undefined&&sr[k]!==0&&sr[k]!=='')keep[k]=sr[k];
   if(Object.keys(keep).length)o.r=keep;

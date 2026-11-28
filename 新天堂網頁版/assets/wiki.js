@@ -19,7 +19,7 @@ const teleByMap=new Map();for(const t of W.teleports)if(!teleByMap.has(t.map))te
 const mapName=id=>id==='all'?'全部地圖':maps.get(id)?.name||W.npcs[Object.keys(W.npcs).find(k=>W.npcs[k].places.some(p=>p.map===id))]?.places.find(p=>p.map===id)?.mapName||('地圖 '+id);
 const npcName=id=>W.npcs[id]?.name||('NPC '+id);
 
-const TYPE={dagger:'匕首',sword:'單手劍',tohandsword:'雙手劍',claw:'鋼爪',edoryu:'雙刀',spear:'長矛',singlespear:'單手矛',staff:'魔杖',tohandstaff:'雙手魔杖',blunt:'鈍器',bow:'弓',singlebow:'單手弓',kiringku:'奇古獸',chainsword:'鎖鏈劍',
+const TYPE={dagger:'匕首',sword:'單手劍',tohandsword:'雙手劍',claw:'鋼爪',edoryu:'雙刀',spear:'長矛',singlespear:'單手矛',staff:'魔杖',tohandstaff:'雙手魔杖',blunt:'鈍器',bow:'弓',singlebow:'單手弓',kiringku:'奇古獸',chainsword:'鎖鏈劍',parasol:'油傘',
  helm:'頭盔',cloak:'斗篷',tshirt:'內衣',armor:'盔甲',glove:'手套',boots:'長靴',shield:'盾牌',necklace:'項鍊',ring:'戒指',belt:'腰帶',guarder:'臂甲',earring:'耳環',runeword_left:'符文',talisman:'符石',talisman2:'符石',pants:'褲子',
  other:'其他',scroll:'卷軸',gem:'寶石／魔石',treasure_box:'寶箱',light:'照明',wand:'魔杖道具',potion:'藥水',food:'食物',totem:'圖騰',firecracker:'煙火',material:'材料',spellbook:'技能書',questitem:'任務道具',arrow:'箭',petitem:'寵物道具'};
 const KIND={weapon:'武器',armor:'防具',etcitem:'道具'};
@@ -42,12 +42,16 @@ const chips=list=>list.length?'<div class="chips">'+list.join('')+'</div>':'';
 // ---------- 分頁定義 ----------
 const itemTypeOptions=kind=>[...new Set(W.items.filter(i=>!kind||i.kind===kind).map(i=>i.type))].sort((a,b)=>(TYPE[a]||a).localeCompare(TYPE[b]||b,'zh-Hant'));
 const TABS=[
+ {id:'classes',name:'職業',count:Object.keys(W.classes).length,
+  filters:()=>'',rows:f=>Object.keys(W.classes).filter(c=>match(f.q,c+W.classes[c].intro)),
+  row:c=>[CLASS_ART[c],c,W.classes[c].intro,'classes:'+c,'',true],
+  detail:classDetail},
  {id:'items',name:'道具',count:W.items.length,
   filters:()=>`<select data-f="kind"><option value="">全部種類</option>${Object.entries(KIND).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
    <select data-f="type"><option value="">全部類型</option>${itemTypeOptions().map(t=>`<option value="${t}">${esc(TYPE[t]||t)}</option>`).join('')}</select>
    <select data-f="cls"><option value="">全部職業</option>${CLASSES.map(c=>`<option>${c}</option>`).join('')}</select>
    <select data-f="src"><option value="">全部取得方式</option>${Object.entries(SRC).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>`,
-  rows:f=>W.items.filter(i=>(!f.kind||i.kind===f.kind)&&(!f.type||i.type===f.type)&&(!f.cls||!i.cls||i.cls.includes(f.cls))&&(!f.src||i.src[f.src])&&match(f.q,i.name)),
+  rows:f=>W.items.filter(i=>(!f.kind||i.kind===f.kind)&&(!f.type||i.type===f.type)&&(!f.cls||!(i.eq||i.cls)||(i.eq||i.cls).includes(f.cls))&&(!f.src||i.src[f.src])&&match(f.q,i.name)),
   row:i=>[i.icon,i.name,[KIND[i.kind],TYPE[i.type]||i.type,i.dmg?'傷害 '+i.dmg.join('/'):'',i.kind==='armor'&&i.ac?'防禦 '+(-i.ac):''].filter(Boolean).join(' · '),'items:'+i.id],
   detail:itemDetail},
  {id:'monsters',name:'怪物',count:W.monsters.length,
@@ -112,6 +116,48 @@ const TABS=[
 const tabById=new Map(TABS.map(t=>[t.id,t]));
 function match(q,text){if(!q)return true;q=q.trim().toLowerCase();return String(text).toLowerCase().includes(q);}
 
+// ---------- 職業 ----------
+const CLASS_ART={騎士:'img/site/class-knight.jpg',法師:'img/site/class-mage.jpg',王族:'img/site/class-royal.jpg',妖精:'img/site/class-elf.jpg',黑妖:'img/site/class-darkelf.jpg',龍騎士:'img/site/class-dragonknight.jpg',幻術師:'img/site/class-illusionist.jpg',戰士:'img/site/class-warrior.jpg',油傘女:'img/site/class-oilparasol.jpg'};
+const SRC_SHORT={drop:'打怪',map:'地圖掉落',shop:'商店',craft:'製作',box:'寶箱',quest:'任務',starter:'新手',other:'扭蛋／每日'};
+const srcTags=i=>Object.keys(i.src||{}).filter(k=>SRC_SHORT[k]).map(k=>SRC_SHORT[k]);
+const canUse=(i,c)=>!(i.eq||i.cls)||(i.eq||i.cls).includes(c);
+const STAT_ORDER=[['str','力量'],['dex','敏捷'],['con','體質'],['int','智力'],['wis','精神'],['cha','魅力']];
+function howToGet(itemId){
+ const i=items.get(itemId);if(!i)return '';const s=i.src,out=[];
+ if(s.starter)out.push('新手背包');
+ if(s.quest)out.push('任務：'+s.quest.map(q=>`<a href="#quests:${q}">${esc(quests.get(q)?.name||q)}</a>`).join('、'));
+ if(s.shop)out.push('商店 '+num(s.shop[0][1])+' 金幣');
+ if(s.craft)out.push(`<a href="#craft:${s.craft[0]}">製作</a>`);
+ if(s.drop)out.push('打怪：'+s.drop.slice(0,3).map(([m,p])=>`<a href="#monsters:${m}">${esc(mobs.get(m)?.name||m)}</a> ${pct(p)}`).join('、')+(s.drop.length>3||s.dropMore?' 等':''));
+ if(s.map)out.push('地圖掉落');
+ if(s.box)out.push('開寶箱：'+s.box.slice(0,2).map(([b])=>`<a href="#items:${b}">${esc(items.get(b)?.name||b)}</a>`).join('、'));
+ if(s.other)out.push(s.other.map(esc).join('、'));
+ return out.join('；');
+}
+function gearGroups(list){
+ const groups=new Map();for(const i of list){const k=TYPE[i.type]||i.type;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(i);}
+ return [...groups].map(([k,arr])=>`<h4 style="margin:12px 0 6px;color:var(--muted);font-size:14px">${esc(k)}（${arr.length}）</h4>`+chips(arr.map(i=>itemChip(i.id,srcTags(i).join('・'))))).join('');
+}
+function classDetail(name){
+ const c=W.classes[name];if(!c)return null;
+ const kit=[...(W.starterKit.common||[]).filter(([id])=>!((W.starterNoShield||[]).includes(name)&&id===20232)),...(W.starterKit[name]||[])];
+ const qs=W.quests.filter(q=>q.roles.includes(name)).sort((a,b)=>a.level-b.level);
+ const sk=W.skills.filter(s=>s.learn[name]).sort((a,b)=>a.learn[name].lv-b.learn[name].lv||a.id-b.id);
+ const weapons=W.items.filter(i=>i.kind==='weapon'&&canUse(i,name));
+ const armors=W.items.filter(i=>i.kind==='armor'&&canUse(i,name));
+ const exclusive=armors.filter(i=>i.eq&&i.eq.length<=3);
+ let html=`<div class="dhead"><div class="ic" style="width:96px;height:126px;flex-basis:96px;overflow:hidden"><img src="${CLASS_ART[name]||''}" alt="" style="max-width:none;max-height:none;width:100%;height:100%;object-fit:cover;object-position:top"></div><div><h2>${esc(name)}</h2>${c.gender===1?'<span class="tag purple">限女性</span> ':''}<p style="margin:6px 0 0">${esc(c.intro)}</p></div></div>`;
+ html+=kv([...STAT_ORDER.map(([k,l])=>[l+'（基礎）',c.base[k]]),['擲骰額外點數',c.points],['初始 HP',c.hp]]);
+ html+=`<p class="small muted">建立角色時能力值是擲骰產生的，六項總和 75、單項最高 20。</p>`;
+ html+=section('新手背包',chips(kit.map(([id,n])=>itemChip(id,n>1?'×'+num(n):''))));
+ html+=section('等級任務',qs.length?chips(qs.map(q=>chip('quests:'+q.id,'Lv'+q.level+' '+q.name,q.reward.map(r=>items.get(r.id)?.name).filter(Boolean).join(q.choice?' 或 ':'、')))):'<p class="muted small">目前沒有這個職業的等級任務。</p>');
+ html+=section('技能（'+sk.length+'）',`<div class="tbl-wrap"><table><thead><tr><th class="num">等級</th><th>技能</th><th class="num">MP</th><th>取得方式</th></tr></thead><tbody>${sk.map(s=>{const l=s.learn[name];return `<tr><td class="num">${l.lv}</td><td><a href="#skills:${s.id}">${s.icon?`<img src="${esc(s.icon)}" alt="" width="18" height="18" style="vertical-align:-4px;margin-right:4px">`:''}${esc(s.name)}</a></td><td class="num">${s.mp||0}</td><td class="small">${l.how==='auto'?'等級到自動學會':`<a href="#items:${l.book}">${esc(items.get(l.book)?.name||l.book)}</a>${l.element?'（'+esc(l.element)+'屬性）':''}<br>${howToGet(l.book)}`}</td></tr>`;}).join('')}</tbody></table></div>`);
+ html+=section('可用武器（'+weapons.length+'）',weapons.length?gearGroups(weapons):'<p class="muted small">目前沒有可取得的武器。</p>');
+ html+=section('職業專屬防具（'+exclusive.length+'）',exclusive.length?gearGroups(exclusive):'<p class="muted small">沒有只限少數職業的防具。</p>');
+ html+=`<p class="small">這個職業可穿的防具共 ${armors.length} 件（含所有職業共用的）。<a href="#items?kind=armor&cls=${encodeURIComponent(name)}">在道具清單查看全部 →</a>　<a href="#items?kind=weapon&cls=${encodeURIComponent(name)}">武器清單 →</a></p>`;
+ html+=`<p class="small muted">只列出目前拿得到的裝備；標籤是取得方式（打怪、商店、製作、寶箱、任務、扭蛋／每日等），點進去看詳細來源。</p>`;
+ return html;
+}
 // ---------- 詳細頁 ----------
 function itemDetail(id){
  const i=items.get(+id);if(!i)return null;const s=i.src;
@@ -237,7 +283,7 @@ function expTable(box){
 // ---------- 畫面 ----------
 const tabsEl=$('#tabs'),filtersEl=$('#filters'),listEl=$('#list'),countEl=$('#count'),sheet=$('#sheet'),pane=$('#pane'),moreEl=$('#more');
 moreEl.onclick=e=>{if(e.target.closest('button')){limit+=240;render();}};
-let current='items',state={},limit=120;
+let current='classes',state={},limit=120;
 tabsEl.innerHTML=TABS.map(t=>`<button role="tab" data-tab="${t.id}">${t.name}<small>${t.count}</small></button>`).join('');
 tabsEl.onclick=e=>{const b=e.target.closest('button');if(b)location.hash=b.dataset.tab;};
 function setTab(id){
@@ -267,13 +313,13 @@ function openDetail(tab,id){
 sheet.addEventListener('click',e=>{if(e.target===sheet)location.hash=current;});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!sheet.hidden)location.hash=current;});
 function route(){
- const h=decodeURIComponent(location.hash.slice(1));const [tab,...rest]=h.split(':');const id=rest.join(':');
- const target=tabById.has(tab)?tab:'items';
+ const h=decodeURIComponent(location.hash.slice(1));const [main,qs]=h.split('?');const [tab,...rest]=main.split(':');const id=rest.join(':');
+ const target=tabById.has(tab)?tab:'classes';
  const listTab=id&&target==='monsters'&&current==='bosses'?'bosses':target;
  setTab(listTab);
+ if(qs){const params=new URLSearchParams(qs);for(const [k,v] of params){state[k]=v;const el=filtersEl.querySelector(`[data-f="${k}"]`);if(el)el.value=v;}limit=120;render();}
  if(id)openDetail(target,id);else{sheet.hidden=true;document.title='小百科｜新天堂網頁版';}
-}
-addEventListener('hashchange',route);
+}addEventListener('hashchange',route);
 // 首頁搜尋框帶過來的 ?q=
 route();
 const q0=new URLSearchParams(location.search).get('q');
